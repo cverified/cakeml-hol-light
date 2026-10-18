@@ -303,7 +303,8 @@ let gc_move_list_ok = cake_theorem "gc_move_list_ok"
 
 (* HOL4 copying_gcScript.sml:619-620: ML code, not ported *)
 
-let gc_move_loop_ok = cake_alias "gc_move_loop_ok" cmlPEG_th;;
+(* HOL4 copying_gcScript.sml:622-623: a theorem that HOL4 states as
+   the value of an ML expression: gc_move_loop_ok *)
 
 let gc_move_list_IMP_LENGTH = cake_theorem "gc_move_list_IMP_LENGTH"
   (fun () ->

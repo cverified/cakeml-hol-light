@@ -15,7 +15,6 @@ needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_space.ml";;
-needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -476,7 +475,7 @@ let do_space_alt = cake_theorem "do_space_alt"
 
 let Seq_Skip = cake_theorem "Seq_Skip"
   (fun () ->
-    `evaluate ((Seq c Skip:live_tree),s) = evaluate (c,s)`)
+    `evaluate (word_bignum_Seq c Skip,s) = evaluate (c,s)`)
   CHEAT_TAC;;
 
 let evaluate_safe_alt = cake_theorem "evaluate_safe_alt"
@@ -1665,8 +1664,7 @@ let cut_state_opt_cc_co_full =
   cake_theorem "cut_state_opt_cc_co_full[local]"
   (fun () ->
     `dataSem_state_locals
-       (t:('b,'ffi)dataSem_state) = dataSem_state_locals
-         (s:('a,'ffi)dataSem_state) ==>
+       (t) = dataSem_state_locals (s) ==>
        dataSem_cut_state_opt names_opt t =
        OPTION_MAP (\u. dataSem_state_locals_fupd (K
          (dataSem_state_locals u)) t) (dataSem_cut_state_opt names_opt
@@ -1675,8 +1673,7 @@ let cut_state_opt_cc_co_full =
 
 let cut_cc_co = cake_theorem "cut_cc_co[local]"
   (fun () ->
-    `cc_co_only_diff (s:('a,'ffi)dataSem_state)
-  (t:('b,'ffi)dataSem_state) /\
+    `cc_co_only_diff (s) (t) /\
      dataSem_cut_state_opt names_opt s = SOME s1 ==>
      (?t1. dataSem_cut_state_opt names_opt t = SOME t1 /\
        cc_co_only_diff s1 t1)`)
@@ -1684,7 +1681,7 @@ let cut_cc_co = cake_theorem "cut_cc_co[local]"
 
 let evaluate_cc_co_only_diff = cake_theorem "evaluate_cc_co_only_diff"
   (fun () ->
-    `!prog (s:('a,'ffi)dataSem_state) res s1 (t:('b,'ffi)dataSem_state).
+    `!prog (s) res s1 (t).
        evaluate (prog,s) = (res,s1) /\ dataSem_state_safe_for_space
        s1 /\
        cc_co_only_diff s t ==> (?t1. evaluate (prog,t) = (res,t1)

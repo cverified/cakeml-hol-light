@@ -297,7 +297,7 @@ hol4_overload "addr" "labSem_addr";;
 let is_Loc_def = cake_define
   `is_Loc x1 =
         match x1 with
-          (Loc _39 _40:semanticPrimitives_v) -> T
+          wordLang_Loc _39 _40 -> T
         | _41 -> F`;;
 
 let mem_store_def = cake_define

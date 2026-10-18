@@ -21,6 +21,8 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/typeSystem.ml";;
 
+cake_hide ["C"];;
+
 (* resolve ambiguity between semanticsPrimitives$result and wordSem$result
    in latter's favour
 *)
@@ -402,3 +404,5 @@ let evaluate_three_to_two_reg_prog =
      every_inst distinct_tar_reg prog ==>
      wordSem_evaluate (three_to_two_reg_prog t prog,s) = (res,s')`)
   CHEAT_TAC;;
+
+cake_hide [];;

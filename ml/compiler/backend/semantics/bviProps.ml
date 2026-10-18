@@ -612,9 +612,9 @@ let do_app_cfg_swap = cake_theorem "do_app_cfg_swap[local]"
 
 let do_app_cfg_swap_Rval = cake_theorem "do_app_cfg_swap_Rval[local]"
   (fun () ->
-    `!op args (s:('a,'ffi)bviSem_state) (s1:('a,'ffi)bviSem_state)
-         (t:('b,'ffi)bviSem_state) value. ~(op = closLang_Install)
-           /\ domain (state_code s) = domain (state_code t) /\
+    `!op args (s) (s1)
+         (t) value. ~(op = closLang_Install) /\ domain (state_code
+           s) = domain (state_code t) /\
        do_app op args s = Rval (value,s1) ==>
        do_app op args
          (state_ffi_fupd (K (state_ffi s))
@@ -629,9 +629,8 @@ let do_app_cfg_swap_Rval = cake_theorem "do_app_cfg_swap_Rval[local]"
 
 let do_app_cfg_swap_Rerr = cake_theorem "do_app_cfg_swap_Rerr[local]"
   (fun () ->
-    `!op args (s:('a,'ffi)bviSem_state) (t:('b,'ffi)bviSem_state)
-  error'. ~(op = closLang_Install) /\ domain (state_code s) = domain
-  (state_code t) /\
+    `!op args (s) (t) error'. ~(op = closLang_Install) /\ domain
+  (state_code s) = domain (state_code t) /\
        do_app op args s = Rerr error' ==>
        do_app op args
          (state_ffi_fupd (K (state_ffi s))
@@ -647,15 +646,11 @@ let do_install_Rerr_type = cake_theorem "do_install_Rerr_type[local]"
 
 let do_install_adj_orac = cake_theorem "do_install_adj_orac[local]"
   (fun () ->
-    `!args (s:('a,'ffi)bviSem_state) v t cc (f:'a->'b).
+    `!args (s) v t cc (f).
        adj_orac_ok cc f s /\
-       (do_install args
-         s:(bvlSem_v#('a,'ffi)bviSem_state
-         ,exn_or_ret)semanticPrimitives_result) =
+       (do_install args s) =
          Rval (v,t) ==>
-       (do_install args (adj_orac cc f
-         s):(bvlSem_v#('b,'ffi)bviSem_state
-         ,exn_or_ret)semanticPrimitives_result) =
+       (do_install args (adj_orac cc f s)) =
          Rval (v,adj_orac cc f t) /\
        adj_orac_ok cc f t`)
   CHEAT_TAC;;
@@ -674,8 +669,8 @@ let do_app_adj_orac = cake_theorem "do_app_adj_orac[local]"
 
 let evaluate_adj_orac_rel = cake_theorem "evaluate_adj_orac_rel[local]"
   (fun () ->
-    `!xs env (s:('a,'ffi)bviSem_state).
-       !res t1 cc f (s2:('b,'ffi)bviSem_state).
+    `!xs env (s).
+       !res t1 cc f (s2).
          evaluate (xs,env,s) = (res,t1) /\ ~(res = Rerr (Rabort
            Rtype_error)) /\
          bviProps_adj_orac_rel cc f s s2 ==>

@@ -11,14 +11,13 @@
 
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_simp.ml";;
-needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "semantics/evaluate.ml";;
 
 let evaluate_Seq_Skip = cake_theorem "evaluate_Seq_Skip[local]"
   (fun () ->
-    `!c s. evaluate ((Seq c Skip:live_tree),s) = evaluate (c,s)`)
+    `!c s. evaluate (word_bignum_Seq c Skip,s) = evaluate (c,s)`)
   CHEAT_TAC;;
 
 let evaluate_pSeq = cake_theorem "evaluate_pSeq[local]"

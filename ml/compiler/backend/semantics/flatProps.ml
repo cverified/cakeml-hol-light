@@ -21,6 +21,8 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["C"];;
+
 let ctor_same_type_OPTREL = cake_theorem "ctor_same_type_OPTREL"
   (fun () ->
     `!c1 c2. ctor_same_type c1 c2 <=> OPTREL (inv_image (=) SND) c1 c2`)
@@ -37,12 +39,10 @@ let pats_bindings_FLAT_MAP = cake_theorem "pats_bindings_FLAT_MAP"
 
 let pmatch_state = cake_theorem "pmatch_state"
   (fun () ->
-    `(!(st:('c,'ffi)flatSem_state) p v l (st':('d,'ffi)flatSem_state)
-  res.
+    `(!(st) p v l (st') res.
        pmatch st p v l = res /\ state_refs
        st = state_refs st' ==> pmatch st' p v l = res) /\
-     (!(st:('c,'ffi)flatSem_state) p vs l
-       (st':('d,'ffi)flatSem_state) res.
+     (!(st) p vs l (st') res.
        pmatch_list st p vs l = res /\ state_refs
        st = state_refs st' ==> pmatch_list st' p vs l = res)`)
   CHEAT_TAC;;
@@ -573,8 +573,8 @@ let flatProps_elist_globals_append = cake_theorem "elist_globals_append"
 
 let flatProps_elist_globals_FOLDR = cake_theorem "elist_globals_FOLDR"
   (fun () ->
-    `flatProps_elist_globals es = (BAG_UNION) FOLDR (EMPTY_BAG (MAP
-  flatProps_set_globals es))`)
+    `flatProps_elist_globals es = ITLIST (BAG_UNION) (MAP
+  flatProps_set_globals es) EMPTY_BAG`)
   CHEAT_TAC;;
 
 let elist_globals_REVERSE = cake_theorem "elist_globals_REVERSE"
@@ -898,3 +898,5 @@ let mk_flat_install_conf_def = cake_define
   `flatProps_mk_flat_install_conf cc co =
      (mk_install_config cc co:'c install_config)`;;
 hol4_overload "mk_flat_install_conf" "flatProps_mk_flat_install_conf";;
+
+cake_hide [];;

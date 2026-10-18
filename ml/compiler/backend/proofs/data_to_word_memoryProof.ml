@@ -3021,7 +3021,7 @@ let word_addr_def = cake_define
         match x2 with
           gc_shared_Data (Loc l1 l2) -> Loc l1 0
         | (gc_shared_Data (wordLang_Word v)) -> wordLang_Word (v &&
-          (--(n2w 1)))
+          (word_not (n2w 1)))
         | (gc_shared_Pointer n w) -> wordLang_Word (get_addr conf
           n w)`;;
 
@@ -6080,8 +6080,8 @@ let memory_rel_bounds_check = cake_theorem "memory_rel_bounds_check"
     `memory_rel c be ts refs sp st m dm ((Number i1,wordLang_Word (w1:'a
   word)) :: vars) /\
       small_int (:'a) (&n) /\ good_dimindex (:'a) ==>
-      (word_ror w1 2 <+ n2w n <=> 0 <= i1 /\ i1 < &n) /\
-      (word_ror w1 2 <=+ n2w n <=> 0 <= i1 /\ i1 <= &n)`)
+      (word_ror w1 2 <+ n2w n <=> (&0) <= i1 /\ i1 < &n) /\
+      (word_ror w1 2 <=+ n2w n <=> (&0) <= i1 /\ i1 <= &n)`)
   CHEAT_TAC;;
 
 let memory_rel_ByteArray_IMP_store =

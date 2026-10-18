@@ -7,8 +7,6 @@
 (* ======================================================== *)
 
 needs "lib/numposrep.ml";;
-
-cake_hide ["domain"];;
 (* HOL4 ancestors outside the port: bit words *)
 
 new_type_abbrev("bitstring",`: bool list`);;
@@ -51,5 +49,3 @@ let add_def = cake_define
   `add a b =
      (let m = MAX (LENGTH a) (LENGTH b) in
        zero_extend m (n2v (v2n a + v2n b)))`;;
-
-cake_hide [];;

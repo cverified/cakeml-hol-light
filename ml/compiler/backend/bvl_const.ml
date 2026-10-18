@@ -190,10 +190,8 @@ let SmartOp2_def = cake_define
 (* NOTE: the space after case and pmatch is important *)
 (* HOL4 bvl_constScript.sml:196-198: ML code, not ported *)
 
-let SmartOp2_pmatch = cake_theorem "SmartOp2_pmatch"
-  (fun () ->
-    `tm`)
-  CHEAT_TAC;;
+(* HOL4 bvl_constScript.sml:200-205: a theorem whose statement the
+   port cannot state yet: SmartOp2_pmatch *)
 (* HOL4 bvl_constScript.sml:206: ML code, not ported *)
 
 

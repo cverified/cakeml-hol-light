@@ -743,7 +743,7 @@ let gc_move_refs_ok = cake_theorem "gc_move_refs_ok"
     `!conf s. gc_state_ok (gc_move_refs conf s) ==> gc_state_ok s`)
   CHEAT_TAC;;
 
-let gen_gc_gc_move_loop_ok = cake_theorem "gc_move_loop_ok"
+let gc_move_loop_ok = cake_theorem "gc_move_loop_ok"
   (fun () ->
     `!conf s c. gc_state_ok (gen_gc_gc_move_loop conf s c) ==>
   gc_state_ok s`)

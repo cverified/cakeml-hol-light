@@ -74,7 +74,7 @@ let op_consts_pmatch = cake_theorem "op_consts_pmatch"
     `!op.
      op_consts op =
      (match op with
-       And -> Const (--(n2w 0)) | _6 -> Const (n2w 0))`)
+       And -> Const (word_not (n2w 0)) | _6 -> Const (n2w 0))`)
   CHEAT_TAC;;
 
 (* Returns a definite value *)

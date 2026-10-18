@@ -425,10 +425,8 @@ let source_compile_pattern_cfg =
 (* HOL4 backendProofScript.sml:414-417: the ML values that the
    definitions below antiquote *)
 
-let cake_orac_config_eqs = cake_theorem "cake_orac_config_eqs"
-  (fun () ->
-    `orac_eq_prop`)
-  CHEAT_TAC;;
+(* HOL4 backendProofScript.sml:419-442: a theorem whose statement the
+   port cannot state yet: cake_orac_config_eqs *)
 
 let decide_inline_reset_spt = cake_theorem "decide_inline_reset_spt"
   (fun () ->

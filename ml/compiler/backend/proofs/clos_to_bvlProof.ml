@@ -38,7 +38,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["all"; "next_loc"];;
+cake_hide ["C"; "all"; "next_loc"];;
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_const.ml";;
@@ -69,7 +69,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["all"; "next_loc"];;
+cake_hide ["C"; "all"; "next_loc"];;
 
 (* TODO: move? *)
 
@@ -2337,8 +2337,8 @@ let set_globals_SND_renumber_code_locs =
 
 let elist_globals_FLAT = cake_theorem "elist_globals_FLAT"
   (fun () ->
-    `closProps_elist_globals (FLAT ls) = (BAG_UNION) FOLDR (EMPTY_BAG
-  (MAP closProps_elist_globals ls))`)
+    `closProps_elist_globals (FLAT ls) = ITLIST (BAG_UNION) (MAP
+  closProps_elist_globals ls) EMPTY_BAG`)
   CHEAT_TAC;;
 
 let elist_globals_SND_renumber_code_locs_list =

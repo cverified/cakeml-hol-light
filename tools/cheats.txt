@@ -1,3 +1,5 @@
+NTproperties firstSetML_def
+NTproperties nullableML_def
 asmProps all_pcs_def
 bviProps get_code_labels_def
 bviSem evaluate_def
@@ -23,12 +25,17 @@ bvl_inline tick_inline_def
 bvl_jump JumpList_def
 bvl_to_bvi compile_exps_def
 bvl_to_bvi compile_exps_sing_def
+closProps app_call_dests_def
 closProps code_locs_def
 closProps contains_App_SOME_def
 closProps every_Fn_SOME_def
 closProps every_Fn_vs_NONE_def
 closProps every_Fn_vs_SOME_def
 closProps fv_def
+closProps get_code_labels_def
+closProps no_Labels_def
+closProps obeys_max_app_def
+closProps set_globals_def
 closSem do_eq_def
 closSem evaluate_def
 clos_annotate alt_free_def
@@ -161,6 +168,7 @@ reg_alloc st_ex_PARTITION_def
 semanticPrimitives concrete_v_def
 semanticPrimitives do_eq_def
 semanticPrimitives pmatch_def
+semanticPrimitivesProps FV_def
 simpleSexpParse print_sexp_def
 source_to_flat compile_decs_def
 source_to_flat compile_exp_def

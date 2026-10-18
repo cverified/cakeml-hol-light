@@ -29,7 +29,7 @@ needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 
-cake_hide ["num_from_hex_string"; "num_to_hex_string"];;
+cake_hide ["C"; "num_from_hex_string"; "num_to_hex_string"];;
 (* HOL4 ancestors outside the port: alist arithmetic blast bag combin
    container list pred_set finite_map rich_list llist option pair
    relation bit words string address path res_quan *)
@@ -89,12 +89,12 @@ let times_add_o = cake_theorem "times_add_o"
 let SORTED_inv_image_LESS_PLUS =
   cake_theorem "SORTED_inv_image_LESS_PLUS"
   (fun () ->
-    `SORTED (inv_image (<) (arithmetic (+) k)) = SORTED (<)`)
+    `SORTED (inv_image (<) ((+) k)) = SORTED (<)`)
   CHEAT_TAC;;
 
 let SORTED_GENLIST_TIMES = cake_theorem "SORTED_GENLIST_TIMES"
   (fun () ->
-    `0 < k ==> (!n. SORTED prim_rec (<) (GENLIST ((*) k) n))`)
+    `0 < k ==> (!n. SORTED (<) (GENLIST ((*) k) n))`)
   CHEAT_TAC;;
 
 (* this is
@@ -1403,12 +1403,14 @@ let MULT_LE_EXP = cake_theorem "MULT_LE_EXP"
 
 let domain_rrestrict_subset = cake_theorem "domain_rrestrict_subset"
   (fun () ->
-    `domain (rrestrict r s) SUBSET domain r INTER s`)
+    `set_relation_domain (rrestrict r s) SUBSET set_relation_domain r
+  INTER s`)
   CHEAT_TAC;;
 
 let range_rrestrict_subset = cake_theorem "range_rrestrict_subset"
   (fun () ->
-    `range (rrestrict r s) SUBSET range r INTER s`)
+    `set_relation_range (rrestrict r s) SUBSET set_relation_range r
+  INTER s`)
   CHEAT_TAC;;
 
 let PERM_MAP_BIJ = cake_theorem "PERM_MAP_BIJ"
@@ -1479,7 +1481,7 @@ let ALL_DISTINCT_APPEND_APPEND_IMP =
 
 let GSPEC_o = cake_theorem "GSPEC_o"
   (fun () ->
-    `GSPEC f o g = {x | ?y. (g x,T) = f y}`)
+    `hol4_GSPEC f o g = {x | ?y. (g x,T) = f y}`)
   CHEAT_TAC;;
 
 
@@ -2185,7 +2187,7 @@ let BAG_ALL_DISTINCT_FOLDR_BAG_UNION =
   cake_theorem "BAG_ALL_DISTINCT_FOLDR_BAG_UNION"
   (fun () ->
     `!ls b0.
-     BAG_ALL_DISTINCT ((BAG_UNION) FOLDR (b0 ls)) <=>
+     BAG_ALL_DISTINCT (ITLIST (BAG_UNION) ls b0) <=>
      BAG_ALL_DISTINCT b0 /\
      (!n. n < LENGTH ls ==>
           BAG_DISJOINT (EL n ls) b0 /\ BAG_ALL_DISTINCT (EL n ls)

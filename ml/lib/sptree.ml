@@ -6,8 +6,6 @@
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)
-
-cake_hide ["PERM"; "SORTED"];;
 (* HOL4 ancestors outside the port: arithmetic logroot list alist
    pred_set rich_list *)
 
@@ -340,5 +338,3 @@ let spts_to_alist_def = cake_define_wf
 
 let toSortedAList_def = cake_define
   `toSortedAList spt = spts_to_alist 0 [(1,spt)] []`;;
-
-cake_hide [];;

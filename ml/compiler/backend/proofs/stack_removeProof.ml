@@ -30,7 +30,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["code_buffer"; "data_buffer"; "gen_gc"; "num_stubs"];;
+cake_hide ["C"; "code_buffer"; "data_buffer"; "gen_gc"; "num_stubs"];;
 
 (* HOL4 stack_removeProofScript.sml:16: ML code, not ported *)
 (* HOL4 stack_removeProofScript.sml:17: the overload num_stubs, which

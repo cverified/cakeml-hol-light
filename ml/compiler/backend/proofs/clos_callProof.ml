@@ -22,7 +22,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["vars"];;
+cake_hide ["C"; "vars"];;
 
 (* TODO These are the same. Put in closLang? *)
 

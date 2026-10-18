@@ -551,7 +551,9 @@ let ctors_of_dec_def = cake_define
 
 (* free vars *)
 
-let FV_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let FV_def = cake_define_list_cheat CHEAT_TAC
   [`FV (ast_Raise e:ast_exp) = FV e`;
    `FV (ast_Handle e pes:ast_exp) = FV e UNION FV_pes pes`;
    `FV (ast_Lit _21:ast_exp) = {}`;

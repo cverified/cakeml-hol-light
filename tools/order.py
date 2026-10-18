@@ -30,6 +30,7 @@ MOVED = {
   # the ML of word_bignum that builds the deep embedding runs from
   # Skip_tm to mc_use_fac_def, and HOL4 states all_code_defs in the
   # middle of it (the port has a pointer at it after the OCaml)
+  ('word_bignum', 403): 'inside the ML that the port has in OCaml',
   ('word_bignum', 414): 'inside the ML that the port has in OCaml',
 }
 

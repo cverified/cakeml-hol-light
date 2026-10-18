@@ -1191,10 +1191,8 @@ let single_add_word_imp_0_1 =
 (* HOL4 word_bignumProofScript.sml:2172-2186: the ML values that the
    definitions below antiquote *)
 
-let lemma1 = cake_theorem "lemma1"
-  (fun () ->
-    `goal1`)
-  CHEAT_TAC;;
+(* HOL4 word_bignumProofScript.sml:2188-2209: a theorem that HOL4
+   states as the value of an ML expression: lemma1 *)
 (* HOL4 word_bignumProofScript.sml:2188-2209: the ML values that the
    definitions below antiquote *)
 

@@ -17,9 +17,12 @@ let nullable_def = cake_define
    the names that the port gives the constants *)
 (* HOL4 NTpropertiesScript.sml:120-132: the tactic that proves the
    termination *)
-let nullableML_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let nullableML_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
      LENGTH`)
+  CHEAT_TAC
   [`nullableML G seen [] = T`;
    `nullableML G seen (grammar_TOK t :: _1) = F`;
    `nullableML G seen (grammar_NT n :: rest) =
@@ -36,9 +39,12 @@ let firstSet_def = cake_define
    the names that the port gives the constants *)
 (* HOL4 NTpropertiesScript.sml:368-380: the tactic that proves the
    termination *)
-let firstSetML_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let firstSetML_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
      LENGTH`)
+  CHEAT_TAC
   [`firstSetML G seen [] = {}`;
    `firstSetML G seen (grammar_TOK t :: _2) = {t}`;
    `firstSetML G seen (grammar_NT n :: rest) =

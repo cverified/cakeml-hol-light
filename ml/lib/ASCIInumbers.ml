@@ -38,6 +38,17 @@ let num_to_dec_string_def = cake_define
 let num_to_hex_string_def = cake_define
   `num_to_hex_string = n2s 16 HEX`;;
 
+(* HOL4 wordsScript.sml:76,114: the definitions of w2s and of
+   word_to_hex_string, which the port has here because they need
+   the n2s of this theory, while the words layer of the port is
+   loaded before it *)
+
+let w2s_def = cake_define
+  `w2s b f (w:'a word) = n2s b f (w2n w)`;;
+
+let word_to_hex_string_def = cake_define
+  `word_to_hex_string = w2s 16 HEX`;;
+
 hol4_overload "toString" "num_to_dec_string";;
 (* HOL4 ASCIInumbersScript.sml:232: the overload toNum, which the
    port expands *)

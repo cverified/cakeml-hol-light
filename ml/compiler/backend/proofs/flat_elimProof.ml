@@ -331,7 +331,8 @@ let decs_closed_reduce_HD = cake_theorem "decs_closed_reduce_HD"
 
 (* s = state, t = removed state *)
 let flat_state_rel_def = cake_define
-  `flat_state_rel reachable (s:('c,'ffi)flatSem_state) t <=> state_clock
+  `flat_state_rel reachable (s:('c,'ffi)flatSem_state)
+  (t:('c,'ffi)flatSem_state) <=> state_clock
      s = state_clock t /\ state_refs s = state_refs t /\ state_ffi
      s = state_ffi t /\ globals_rel reachable (flatSem_state_globals
        s) (flatSem_state_globals t) /\
@@ -484,11 +485,11 @@ let do_app_SOME_flat_state_rel =
 
 let flat_state_rel_pmatch = cake_theorem "flat_state_rel_pmatch"
   (fun () ->
-    `(!new_state p a env.
+    `(!((new_state:('c,'ffi)flatSem_state)) p a env.
        flat_state_rel reachable new_state new_removed_state ==>
        pmatch new_removed_state p a env =
        pmatch new_state p a env) /\
-     (!new_state p a env.
+     (!((new_state:('c,'ffi)flatSem_state)) p a env.
        flat_state_rel reachable new_state new_removed_state ==>
        pmatch_list new_removed_state p a env =
        pmatch_list new_state p a env)`)
@@ -557,7 +558,7 @@ let has_Eval_def = cake_theorem "has_Eval_def[local]"
 let evaluate_keep_flat_state_rel_eq_lemma =
   cake_theorem "evaluate_keep_flat_state_rel_eq_lemma"
   (fun () ->
-    `(!env state exprL new_state
+    `(!env ((state:('c,'ffi)flatSem_state)) exprL new_state
          result (reachable:1 spt) removed_state.
          flatSem_evaluate env state exprL = (new_state,result) /\
          domain (find_lookupsL exprL) SUBSET domain reachable /\
@@ -580,7 +581,7 @@ let evaluate_keep_flat_state_rel_eq_lemma =
 let evaluate_sing_keep_flat_state_rel_eq =
   cake_theorem "evaluate_sing_keep_flat_state_rel_eq"
   (fun () ->
-    `!env state exprL new_state result expr
+    `!env ((state:('c,'ffi)flatSem_state)) exprL new_state result expr
        reachable removed_state.
        flatSem_evaluate (flatSem_environment_v_fupd (K []) env)
          state exprL = (new_state,result) /\
@@ -600,7 +601,7 @@ let evaluate_sing_keep_flat_state_rel_eq =
 let evaluate_dec_flat_state_rel =
   cake_theorem "evaluate_dec_flat_state_rel"
   (fun () ->
-    `!state dec new_state result
+    `!((state:('c,'ffi)flatSem_state)) dec new_state result
        reachable removed_state.
        evaluate_dec state dec = (new_state,result) /\
        decs_closed reachable [dec] /\
@@ -638,7 +639,7 @@ let EXISTS_total_pat = cake_theorem "EXISTS_total_pat"
 let evaluate_flat_state_rel_lemma =
   cake_theorem "evaluate_flat_state_rel_lemma"
   (fun () ->
-    `(!env state exprL new_state result
+    `(!env ((state:('c,'ffi)flatSem_state)) exprL new_state result
          reachable removed_state.
          flatSem_evaluate env state exprL = (new_state,result) /\
          EVERY flat_elim_is_pure exprL /\
@@ -677,7 +678,7 @@ let evaluate_sing_notKeep_flat_state_rel =
 
 let flat_decs_removal_lemma = cake_theorem "flat_decs_removal_lemma"
   (fun () ->
-    `!state decs new_state result
+    `!((state:('c,'ffi)flatSem_state)) decs new_state result
         reachable removed_decs removed_state.
         evaluate_decs state decs = (new_state,result) /\ ~(result =
           SOME (Rabort Rtype_error)) /\

@@ -7,8 +7,6 @@
 (* ======================================================== *)
 
 needs "lib/sorting.ml";;
-
-cake_hide ["negate"];;
 (* HOL4 ancestors outside the port: pred_set arithmetic list
    rich_list option pair relation *)
 
@@ -120,5 +118,3 @@ let mergesortN_tail_def = cake_define_wf
 
 let mergesort_tail_def = cake_define
   `mergesort_tail R l = mergesortN_tail F R (LENGTH l) l`;;
-
-cake_hide [];;

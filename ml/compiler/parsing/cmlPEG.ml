@@ -699,17 +699,13 @@ let peg0_choicel = cake_theorem "peg0_choicel[simp]"
        peg0 G (choicel t))`)
   CHEAT_TAC;;
 
-let th = cake_theorem "th"
-  (fun () ->
-    `~(peg0 cmlPEG (cmlPEG_pnt t))`)
-  CHEAT_TAC;;
+(* HOL4 cmlPEGScript.sml:681-695: a theorem that HOL4 states as the
+   value of an ML expression: th *)
 
 (* HOL4 cmlPEGScript.sml:697-717: ML code, not ported *)
 
-let cmlPEG_th = cake_theorem "th"
-  (fun () ->
-    `wfpeg cmlPEG (cmlPEG_pnt t)`)
-  CHEAT_TAC;;
+(* HOL4 cmlPEGScript.sml:719-732: a theorem that HOL4 states as the
+   value of an ML expression: th *)
 
 (* HOL4 cmlPEGScript.sml:734-757: the ML values that the definitions
    below antiquote *)

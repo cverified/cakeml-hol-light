@@ -2386,7 +2386,7 @@ let get_var_isT_OR_isF = cake_theorem "get_var_isT_OR_isF"
   CHEAT_TAC;;
 
 let mk_loc_def = cake_define
-  `mk_loc (SOME (t1,d1,d2)) = Loc d1 d2`;;
+  `mk_loc (SOME (t1,d1,d2)) = wordLang_Loc d1 d2`;;
 
 let cut_env_IMP_cut_env = cake_theorem "cut_env_IMP_cut_env"
   (fun () ->
@@ -2470,7 +2470,7 @@ let inter_union_lemma = cake_theorem "inter_union_lemma"
 
 let state_rel_pop_env_IMP = cake_theorem "state_rel_pop_env_IMP"
   (fun () ->
-    `state_rel c q l s1 t1 xs locs /\
+    `state_rel c q l ((s1:('c,'ffi)dataSem_state)) t1 xs locs /\
       pop_env s1 = SOME s2 ==>
       (?t2 l8 l9 ll.
         pop_env t1 = SOME t2 /\ locs = (l8,l9) :: ll /\
@@ -2486,7 +2486,8 @@ let inter_insert_union = cake_theorem "inter_insert_union"
 let state_rel_pop_env_set_var_IMP =
   cake_theorem "state_rel_pop_env_set_var_IMP"
   (fun () ->
-    `state_rel c q l s1 t1 (SOME [(a,w)]) locs /\
+    `state_rel c q l ((s1:('c,'ffi)dataSem_state)) t1 (SOME [(a,w)])
+  locs /\
       pop_env s1 = SOME s2 ==>
       (?t2 l8 l9 ll.
         pop_env t1 = SOME t2 /\ locs = (l8,l9) :: ll /\
@@ -2850,7 +2851,8 @@ let state_rel_cut_state_opt_get_var =
     `state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE locs /\
      cut_state_opt names_opt s = SOME x /\
      get_var v (state_locals x) = SOME w ==>
-     (?s'. state_rel c l1 l2 s' t NONE locs /\
+     (?s'. state_rel c l1 l2 ((s':('c,'ffi)dataSem_state)) t NONE
+       locs /\
           get_var v (state_locals s') = SOME w)`)
   CHEAT_TAC;;
 

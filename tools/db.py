@@ -57,7 +57,8 @@ def hl_names():
 
 
 # the hand written files of the library layer
-HANDWRITTEN = ['hol4.ml', 'words4.ml', 'finite_map.ml', 'llist.ml']
+HANDWRITTEN = ['hol4.ml', 'words4.ml', 'finite_map.ml', 'llist.ml',
+               'path.ml']
 
 
 # the HOL4 theory that every hand written file of ml/lib stands
@@ -68,7 +69,7 @@ HANDWRITTEN = ['hol4.ml', 'words4.ml', 'finite_map.ml', 'llist.ml']
 # sptree's everywhere else)
 HANDWRITTEN_THY = {'hol4.ml': None, 'words4.ml': 'words',
                    'finite_map.ml': 'finite_map',
-                   'llist.ml': 'llist'}
+                   'llist.ml': 'llist', 'path.ml': 'path'}
 
 
 def provided_thys():

@@ -255,11 +255,11 @@ let do_int_app_eq_some = cake_theorem "do_int_app_eq_some"
        (?n1 n2. vs = [Number n1; Number n2] /\ res = Number (n1 *
          n2))) /\
      (do_int_app (Div) vs = SOME res ==>
-       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = 0) /\ res =
-         Number (n1 / n2))) /\
+       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = (&0)) /\ res
+         = Number (n1 / n2))) /\
      (do_int_app (Mod) vs = SOME res ==>
-       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = 0) /\ res =
-         Number (n1 % n2))) /\
+       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = (&0)) /\ res
+         = Number (n1 % n2))) /\
      (do_int_app (Less) vs = SOME res ==>
        (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 <
          n2))) /\
@@ -273,8 +273,8 @@ let do_int_app_eq_some = cake_theorem "do_int_app_eq_some"
        (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 >=
          n2))) /\
      (!n. do_int_app (closLang_LessConstSmall n) vs = SOME res ==>
-       (?i. vs = [Number i] /\ 0 <= i /\ i <= 1000000 /\ n <
-         (&1000000) /\ res = Boolv (i < &n)))`)
+       (?i. vs = [Number i] /\ (&0) <= i /\ i <= (&1000000) /\ n
+         < 1000000 /\ res = Boolv (i < &n)))`)
   CHEAT_TAC;;
 
 (* same as closSem$do_word_app *)

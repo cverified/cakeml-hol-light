@@ -352,8 +352,15 @@ class Porter:
           else: self.ctx.names[n] = old2
     except Exception as ex:
       self.warn.append('%s %s: %s' % (b.kind, nm, ex))
-      self.out.append(self.at(b, 'a theorem whose statement the'
-                                 ' port cannot state yet: %s' % nm))
+      # a theorem that the ML code of a source states itself is one
+      # of its ML, whatever the reason the port has for not stating
+      # it, so the pointer at it says that (the lines it points at
+      # are ML and no Theorem of the source)
+      self.out.append(self.at(
+        b, ('a theorem that HOL4 states as the value of an ML'
+            ' expression: %s' % nm) if b.kind == 'ML' else
+           ('a theorem whose statement the port cannot state yet:'
+            ' %s' % nm)))
       return
     head = 'let %s = cake_theorem "%s%s"' % (name, nm, attrs)
     if len(head) > 72:

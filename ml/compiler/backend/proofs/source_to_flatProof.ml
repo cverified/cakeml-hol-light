@@ -725,7 +725,7 @@ let do_conversion_INR = cake_theorem "do_conversion_INR[local]"
 
 let source_to_flatProof_do_app = cake_theorem "do_app[local]"
   (fun () ->
-    `!genv s1 s2 op vs r s1_i1 vs_i1.
+    `!genv s1 s2 op vs r ((s1_i1:('f_orac_st,'ffi)flatSem_state)) vs_i1.
        do_app s1 op vs = SOME (s2,r) /\
        LIST_REL (sv_rel genv) (FST s1) (TL (state_refs s1_i1)) /\
        ~(NULL (state_refs s1_i1)) /\
@@ -1911,8 +1911,9 @@ let source_to_flatProof_abort_simps = cake_theorem "abort_simps[simp]"
 
 let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
   (fun () ->
-    `(!s env es s' r genv comp_map env_i1
-  (s_i1:('f_orac_st,'ffi)flatSem_state) es_i1 locals t ts gen idxs.
+    `(!((s:'ffi semanticPrimitives_state)) env es s' r genv comp_map
+  env_i1 (s_i1:('f_orac_st,'ffi)flatSem_state) es_i1 locals t ts gen
+  idxs.
        evaluate s env es = (s',r) /\
        source_to_flatProof_invariant interp g gen genv idxs s s_i1
          /\
@@ -1939,8 +1940,9 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
          genv SUBMAP global_env_c genv' /\ global_env_tys
          genv SUBMAP global_env_tys genv' /\
          subglobals (global_env_v genv) (global_env_v genv')))) /\
-     (!s env v pes err_v genv comp_map s' r env_i1
-       (s_i1:('f_orac_st,'ffi)flatSem_state) v_i1 pes_i1
+     (!((s:'ffi semanticPrimitives_state)) env v pes err_v genv
+       comp_map s' r env_i1 (s_i1:('f_orac_st,'ffi)flatSem_state) v_i1
+       pes_i1
             err_v_i1 locals t ts gen idxs.
        evaluate_evaluate_match s env v pes err_v = (s',r) /\
        source_to_flatProof_invariant interp g gen genv idxs s s_i1
@@ -1972,8 +1974,8 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
          genv SUBMAP global_env_c genv' /\ global_env_tys
          genv SUBMAP global_env_tys genv' /\
          subglobals (global_env_v genv) (global_env_v genv')))) /\
-     (!s env ds s' r path' t idx end_idx os comp_map
-       (s_i1:('f_orac_st,'ffi)flatSem_state) idx'
+     (!((s:'ffi semanticPrimitives_state)) env ds s' r path' t idx
+       end_idx os comp_map (s_i1:('f_orac_st,'ffi)flatSem_state) idx'
            comp_map' ds_i1 t' genv gen gen'.
        evaluate_evaluate_decs s env ds = (s',r) /\
        source_to_flatProof_invariant interp g gen genv
@@ -1986,7 +1988,7 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
        env_gen_future_rel interp gen'
          (semanticPrimitives_state_eval_state s) /\
        idx_prev idx' end_idx ==>
-       (?s1_i1 genv' r_i1.
+       (?((s1_i1:('f_orac_st,'ffi)flatSem_state)) genv' r_i1.
        flatSem_evaluate_decs s_i1 ds_i1 = (s1_i1,r_i1) /\
        s_rel genv' s' s1_i1 /\
        (~(abort r) ==>

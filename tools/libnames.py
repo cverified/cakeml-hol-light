@@ -60,13 +60,32 @@ def build_index(root, cache):
   return out
 
 
+def lib_names():
+  """the constants that the files of ml/lib define: the library
+     layer of the port, which a ported library theory is part of
+     (ASCIInumbers has the w2s of HOL4's words theory, because the
+     hand written words layer is loaded before it)"""
+  names = set()
+  for f in sorted(os.listdir(T + '../ml/lib')):
+    if not f.endswith('.ml'): continue
+    text = open(T + '../ml/lib/' + f).read()
+    for m in re.finditer(r'(?:cake_define\w*|new_(?:recursive_)?'
+                         r'definition)[^`]*`\s*\(?\s*'
+                         r"([A-Za-z_][A-Za-z0-9_']*)", text):
+      names.add(m.group(1))
+    for m in re.finditer(r"let ([A-Za-z_][A-Za-z0-9_']*)_def\s*=",
+                         text):
+      names.add(m.group(1))
+  return names
+
+
 def main():
   db = dbmod.Db()
   idx = build_index(T + '../hol4-src', T + '../tmp/hol4defs.txt')
   import overrides
   have = (set(db.defs) | set(db.hl) | set(db.provided) |
           set(db.rename.values()) | set(overrides.NAME_MAP) |
-          set(overrides.TYPE_MAP))
+          set(overrides.TYPE_MAP) | lib_names())
   cnt = collections.Counter()
   where = collections.defaultdict(set)
   for thy, path, kind in dbmod.load_order():
@@ -74,8 +93,18 @@ def main():
     for b in hol4.parse(path):
       if b.kind not in ('Theorem', 'Triviality'): continue
       body = hol4.strip_comments(b.body or '')
+      # a name after a dot is a field of a record and no constant
+      # (lab_to_targetProof's c'.labels), and a name that the
+      # statement itself binds is a variable of it (bvi_to_data
+      # quantifies over tail, and path has a constant of that name)
+      bound = set()
+      for m in re.finditer(u'[\u2200\u2203\u03bb!?\\\\]'
+                           u"((?:\\s*[A-Za-z][A-Za-z0-9_']*)+)",
+                           body):
+        bound |= set(m.group(1).split())
+      body = re.sub(r"\.\s*[A-Za-z][A-Za-z0-9_']*", '', body)
       for n in set(re.findall(r"[A-Za-z][A-Za-z0-9_']*", body)):
-        if n in have or n not in idx: continue
+        if n in have or n not in idx or n in bound: continue
         # a short lower case name is a variable of the statement
         if len(n) <= 3 and n.islower(): continue
         cnt[n] += 1

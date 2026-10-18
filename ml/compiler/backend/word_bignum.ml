@@ -484,6 +484,9 @@ let mc_fac_final_code_def = to_deep mc_fac_final_def;;
 let mc_fac_code_def = to_deep mc_fac_def;;
 let mc_use_fac_code_def = to_deep mc_use_fac_def;;
 
+(* HOL4 word_bignumScript.sml:403-405: code that the source has in a
+   comment *)
+
 (* HOL4 word_bignumScript.sml:414-415: a theorem that HOL4 states as
    the value of an ML expression: all_code_defs *)
 

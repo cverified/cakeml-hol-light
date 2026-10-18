@@ -9,47 +9,33 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 9625: the three axioms of HOL
-Light and 9622 for the 455 definitions below.
+`length (axioms ())` is 10328: the three axioms of HOL
+Light and 10325 for the 447 definitions below.
 
-Of these 455 definitions
+Of these 447 definitions
 
-- 290 have only their **termination** assumed, so the
+- 293 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
 - 14 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
-- 151 are **not made** at all, which is the work that is
+- 140 are **not made** at all, which is the work that is
   left.
 
 Why they are assumed:
 
-- 290: termination (CHEAT_TAC)
+- 293: termination (CHEAT_TAC)
 - 132: equation of a tail recursion assumed
 - 14: declared (no value)
-- 2: free: semanticPrimitivesProps_sv_rel:(flatSem_v->flatSem_v->bool)-
-- 2: free: gc_fun_ok:((('a)word_loc)list#(('a)word->('a)word_loc)#(('a)
-- 1: free: G:(?211897,?211899)grammar
-- 1: free: G:(?212069,?212065)grammar
-- 1: TAC_PROOF: Unsolved goals
-- 1: free: exc_rel:(exn_or_ret->exn_or_ret->bool)->(exn_or_ret)error_re
-- 1: free: semanticPrimitivesProps_result_rel:((bvlSem_v)list->(bvlSem_
-- 1: free: closProps_elist_globals:(?1503224)list->?1503218->num
-- 1: free: closProps_set_globals:closLang_exp->?1503822->num
-- 1: free: closProps_elist_globals:?1506215->num->num
-- 1: free: closProps_elist_globals:?1508072->num->num
-- 1: free: closProps_elist_globals:(closLang_exp)list->?1514601->num, c
-- 1: free: closProps_elist_globals:(closLang_exp)list->mlstring->num
-- 1: free: no_Labels:closLang_exp->bool
-- 1: free: obeys_max_app:?1516653->closLang_exp->bool
-- 1: free: semanticPrimitivesProps_sv_rel:(semanticPrimitives_v->semant
-- 1: free: compile_common_inc:clos_to_bvl_config->((num#bvl_exp)spt#num
+- 6: timeout in measure
+- 2: tryfind: /\
 
 | definition | file | why |
 |---|---|---|
-| `nullableML` | `lib/NTproperties.ml` | free: G:(?211897,?211899)grammar |
-| `firstSetML` | `lib/NTproperties.ml` | free: G:(?212069,?212065)grammar |
+| `nullableML` | `lib/NTproperties.ml` | tryfind: /\ |
+| `firstSetML` | `lib/NTproperties.ml` | tryfind: /\ |
 | `print_sexp` | `lib/simpleSexpParse.ml` | termination (CHEAT_TAC) |
-| `mw_shift` | `lib/multiword.ml` | TAC_PROOF: Unsolved goals |
+| `mw_shift` | `lib/multiword.ml` | termination (CHEAT_TAC) |
+| `mw_shift` | `lib/multiword.ml` | termination (CHEAT_TAC) |
 | `mc_cmp` | `` | equation of a tail recursion assumed |
 | `mc_cmp_pre` | `` | equation of a tail recursion assumed |
 | `mc_compare` | `` | equation of a tail recursion assumed |
@@ -341,6 +327,7 @@ Why they are assumed:
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
 | `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | termination (CHEAT_TAC) |
 | `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | termination (CHEAT_TAC) |
+| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | timeout in measure |
 | `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
 | `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
 | `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
@@ -437,10 +424,8 @@ Why they are assumed:
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
-| `opt_res_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | free: exc_rel:(exn_or_ret->exn_or_ret->bool)->(exn_or_ret)er |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
-| `hypothesis` | `compiler/backend/proofs/bvi_tmcProof.ml` | free: semanticPrimitivesProps_result_rel:((bvlSem_v)list->(b |
 | `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
@@ -453,18 +438,15 @@ Why they are assumed:
 | `every_Fn_vs_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
+| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
+| `no_Labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
+| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
+| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
 | `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
 | `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
-| `unique_set_globals` | `compiler/backend/proofs/clos_knownProof.ml` | free: closProps_elist_globals:(?1503224)list->?1503218->num |
-| `val_approx_sgc_free` | `compiler/backend/proofs/clos_knownProof.ml` | free: closProps_set_globals:closLang_exp->?1503822->num |
-| `gapprox_disjoint` | `compiler/backend/proofs/clos_knownProof.ml` | free: closProps_elist_globals:?1506215->num->num |
-| `mglobals_disjoint` | `compiler/backend/proofs/clos_knownProof.ml` | free: closProps_elist_globals:?1508072->num->num |
 | `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | termination (CHEAT_TAC) |
 | `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | termination (CHEAT_TAC) |
-| `clos_knownProof_syntax_ok` | `compiler/backend/proofs/clos_knownProof.ml` | free: closProps_elist_globals:(closLang_exp)list->?1514601-> |
-| `clos_knownProof_syntax_oracle_ok` | `compiler/backend/proofs/clos_knownProof.ml` | free: closProps_elist_globals:(closLang_exp)list->mlstring-> |
-| `val_approx_no_Labels` | `compiler/backend/proofs/clos_knownProof.ml` | free: no_Labels:closLang_exp->bool |
-| `val_approx_obeys_max_app` | `compiler/backend/proofs/clos_knownProof.ml` | free: obeys_max_app:?1516653->closLang_exp->bool |
 | `memcpy` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
 | `word_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
 | `word_gen_gc_partial_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
@@ -474,12 +456,12 @@ Why they are assumed:
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
-| `flatProps_simple_state_rel` | `compiler/backend/semantics/flatProps.ml` | free: semanticPrimitivesProps_sv_rel:(flatSem_v->flatSem_v-> |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | termination (CHEAT_TAC) |
@@ -494,12 +476,7 @@ Why they are assumed:
 | `even_labels_strong` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
 | `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
 | `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
-| `flat_patternProof_state_rel` | `compiler/backend/proofs/flat_patternProof.ml` | free: semanticPrimitivesProps_sv_rel:(flatSem_v->flatSem_v-> |
-| `source_evalProof_s_rel` | `compiler/backend/proofs/source_evalProof.ml` | free: semanticPrimitivesProps_sv_rel:(semanticPrimitives_v-> |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
-| `word_to_stackProof_state_rel` | `compiler/backend/proofs/word_to_stackProof.ml` | free: gc_fun_ok:((('a)word_loc)list#(('a)word->('a)word_loc) |
-| `init_state_ok` | `compiler/backend/proofs/word_to_stackProof.ml` | free: gc_fun_ok:((('a)word_loc)list#(('a)word->('a)word_loc) |
-| `backend_from_flat_tuple_cc` | `compiler/backend/proofs/backendProof.ml` | free: compile_common_inc:clos_to_bvl_config->((num#bvl_exp)s |
 
-455 definitions.
+447 definitions.

@@ -2,8 +2,8 @@
 (*  linear_scan: ported from HOL4's
     compiler/backend/reg_alloc/linear_scanScript.sml
     A definition theory, with 67 definitions, 4 datatypes and 5
-    theorems.  Needed by dataProps.ml, data_simpProof.ml,
-    linear_scanProof.ml, word_alloc.ml and word_allocProof.ml.  *)
+    theorems.  Needed by linear_scanProof.ml, word_alloc.ml and
+    word_allocProof.ml.  *)
 (* ======================================================== *)
 
 (*

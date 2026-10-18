@@ -834,7 +834,8 @@ let flat_patternProof_evaluate_decs_sing =
 
 let compile_exps_evaluate = cake_theorem "compile_exps_evaluate"
   (fun () ->
-    `(!env1 s1 xs t1 r1 i sg ys N env2 s2 cfg.
+    `(!env1 ((s1:('c,'ffi)flatSem_state)) xs t1 r1 i sg ys N env2 s2
+  cfg.
        evaluate env1 s1 xs = (t1,r1) /\
        flat_pattern_compile_exps cfg xs = (i,sg,ys) /\
        flat_patternProof_env_rel N env1 env2 /\
@@ -845,7 +846,7 @@ let compile_exps_evaluate = cake_theorem "compile_exps_evaluate"
            flat_patternProof_v_rel) flat_patternProof_v_rel r1 r2 /\
          flat_patternProof_state_rel s_cfg t1 t2 /\
          evaluate env2 s2 ys = (t2,r2))) /\
-     (!s1 decs s2 t1 cfg decs' res.
+     (!((s1:('c,'ffi)flatSem_state)) decs s2 t1 cfg decs' res.
        evaluate_decs s1 decs = (t1,res) /\
        decs' = MAP (compile_dec cfg) decs /\
        flat_patternProof_state_rel s_cfg s1 s2 /\ ~(res = SOME

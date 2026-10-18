@@ -127,7 +127,7 @@ let wf_step = cake_theorem "wf_step"
 
 let wf_steps = cake_theorem "wf_steps"
   (fun () ->
-    `!s1 s2. (wf) s1 /\ (RTC (backend_common_Cons)) s1 s2 ==> (wf) s2`)
+    `!s1 s2. (wf) s1 /\ (RTC (step)) s1 s2 ==> (wf) s2`)
   CHEAT_TAC;;
 
 (* semantics of moves *)
@@ -237,16 +237,16 @@ let step_sem = cake_theorem "step_sem[local]"
 
 let steps_sem = cake_theorem "steps_sem"
   (fun () ->
-    `!s1 s2. (RTC (backend_common_Cons)) s1 s2 /\ (wf) s1 ==> (!rho.
-  eqenv (sem s1 rho) (sem s2 rho))`)
+    `!s1 s2. (RTC (step)) s1 s2 /\ (wf) s1 ==> (!rho. eqenv (sem s1
+  rho) (sem s2 rho))`)
   CHEAT_TAC;;
 
 let steps_correct = cake_theorem "steps_correct"
   (fun () ->
     `windmill mu /\
      EVERY IS_SOME (MAP FST mu) /\
-     EVERY IS_SOME (MAP SND mu) /\ (RTC (backend_common_Cons))
-       (mu,[],[]) ([],[],tau) ==>
+     EVERY IS_SOME (MAP SND mu) /\ (RTC (step)) (mu,[],[])
+       ([],[],tau) ==>
      (!rho. eqenv (parsem mu rho) (seqsem (REVERSE tau) rho))`)
   CHEAT_TAC;;
 
@@ -281,14 +281,12 @@ let dstep_rules = cake_inductive
    their proof to work *)
 let dstep_step = cake_theorem "dstep_step[local]"
   (fun () ->
-    `!s1 s2. (dstep) s1 s2 ==> (wf) s1 ==> (RTC (backend_common_Cons))
-  s1 s2`)
+    `!s1 s2. (dstep) s1 s2 ==> (wf) s1 ==> (RTC (step)) s1 s2`)
   CHEAT_TAC;;
 
 let dsteps_steps = cake_theorem "dsteps_steps"
   (fun () ->
-    `!s1 s2. (RTC (dstep)) s1 s2 ==> (wf) s1 ==> (RTC
-  (backend_common_Cons)) s1 s2`)
+    `!s1 s2. (RTC (dstep)) s1 s2 ==> (wf) s1 ==> (RTC (step)) s1 s2`)
   CHEAT_TAC;;
 
 (* functional algorithm *)
@@ -427,8 +425,7 @@ let steps_not_use_temp_before_assign =
   (fun () ->
     `!s1 s2.
       (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST
-        (SND s1) ++ SND (SND s1)))) s1 /\ (RTC (backend_common_Cons)) s1
-        s2 ==>
+        (SND s1) ++ SND (SND s1)))) s1 /\ (RTC (step)) s1 s2 ==>
       (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST
         (SND s1) ++ SND (SND s1)))) s2`)
   CHEAT_TAC;;
@@ -467,8 +464,7 @@ let ALL_DISTINCT_steps = cake_theorem "ALL_DISTINCT_steps"
   (fun () ->
     `!s1 s2.
       (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST
-        (SND s1) ++ (SND (SND s1)))))) s1 /\ (RTC (backend_common_Cons))
-        s1 s2 ==>
+        (SND s1) ++ (SND (SND s1)))))) s1 /\ (RTC (step)) s1 s2 ==>
       (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST
         (SND s1) ++ (SND (SND s1)))))) s2`)
   CHEAT_TAC;;
@@ -503,7 +499,7 @@ let steps_preserves_moves = cake_theorem "steps_preserves_moves"
   (fun () ->
     `!s1 s2.
       (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s1 /\
-        (RTC (backend_common_Cons)) s1 s2 ==>
+        (RTC (step)) s1 s2 ==>
       (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s2`)
   CHEAT_TAC;;
 
@@ -538,8 +534,8 @@ let step_inj_on_state = cake_theorem "step_inj_on_state"
 
 let steps_inj_on_state = cake_theorem "steps_inj_on_state"
   (fun () ->
-    `!s1 s2. inj_on_state f s1 /\ (RTC (backend_common_Cons)) s1 s2
-  ==> inj_on_state f s2`)
+    `!s1 s2. inj_on_state f s1 /\ (RTC (step)) s1 s2 ==> inj_on_state
+  f s2`)
   CHEAT_TAC;;
 
 let step_MAP_INJ = cake_theorem "step_MAP_INJ"
@@ -550,9 +546,9 @@ let step_MAP_INJ = cake_theorem "step_MAP_INJ"
 
 let steps_MAP_INJ = cake_theorem "steps_MAP_INJ[local]"
   (fun () ->
-    `!s1 s2. (RTC (backend_common_Cons)) s1 s2 ==>
-       inj_on_state f s1 ==> (RTC (backend_common_Cons))
-         (map_state f s1) (map_state f s2)`)
+    `!s1 s2. (RTC (step)) s1 s2 ==>
+       inj_on_state f s1 ==> (RTC (step)) (map_state f s1)
+         (map_state f s2)`)
   CHEAT_TAC;;
 
 let fstep_MAP_INJ = cake_theorem "fstep_MAP_INJ"

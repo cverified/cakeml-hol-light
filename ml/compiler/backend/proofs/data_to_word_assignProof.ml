@@ -86,7 +86,7 @@ let state_rel_IMP_tstamps = cake_theorem "state_rel_IMP_tstamps"
 
 let INT_EQ_NUM_LEMMA = cake_theorem "INT_EQ_NUM_LEMMA"
   (fun () ->
-    `0 <= (i:int) <=> (?index. i = &index)`)
+    `(&0) <= (i:int) <=> (?index. i = &index)`)
   CHEAT_TAC;;
 
 let push_if = cake_theorem "push_if[local]"
@@ -328,7 +328,7 @@ let data_to_word_assignProof_set_vars_sing =
 
 let NONNEG_INT = cake_theorem "NONNEG_INT"
   (fun () ->
-    `0 <= (i:int) ==> (?j. i = &j)`)
+    `(&0) <= (i:int) ==> (?j. i = &j)`)
   CHEAT_TAC;;
 
 let BIT_X_1 = cake_theorem "BIT_X_1"
@@ -550,7 +550,7 @@ let state_rel_IMP_test_zero = cake_theorem "state_rel_IMP_test_zero"
     `state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) vs locs /\
       get_var i (state_locals s) = SOME (Number n) ==>
       (?w. get_var (adjust_var i) t = SOME (wordLang_Word w) /\
-        (w = (n2w 0) <=> (n = 0)))`)
+        (w = (n2w 0) <=> (n = (&0))))`)
   CHEAT_TAC;;
 
 let state_rel_get_var_Number_IMP =
@@ -1864,7 +1864,7 @@ let assign_ListAppend = cake_theorem "assign_ListAppend"
 
 let do_app_AllocThunk = cake_theorem "do_app_AllocThunk"
   (fun () ->
-    `do_app (ThunkOp (AllocThunk m):closLang_op) [v] x =
+    `do_app (ThunkOp (AllocThunk m):ast_op) [v] x =
       (match consume_space (1 + 1) x with
         NONE -> Rerr (Rabort Rtype_error) | SOME s1 ->
         (if bad_thunk_update m v (state_refs s1) then Rerr (Rabort
@@ -2276,7 +2276,7 @@ let do_app_RefByte_eq = cake_theorem "do_app_RefByte_eq[local]"
      (?ptr. v = RefPtr T ptr /\ ptr = (LEAST (\p. ~(p IN domain
        (state_refs s)))) /\ (&0) <= i /\
            s' = dataSem_state_peak_heap_length_fupd (K
-                    ((\k op_args (s:('c,'ffi)dataSem_state). MAX
+                    ((\k op_args s. MAX
                       (dataSem_state_peak_heap_length s)
                       (size_of_heap_args op_args s + k))
                       (space_consumed s (closLang_MemOp
@@ -2295,7 +2295,7 @@ let do_app_RefByte_eq = cake_theorem "do_app_RefByte_eq[local]"
                        small_num (limits_arch_64_bit
                          (dataSem_state_limits s)) i) /\
                       no_thunks_in_refs (state_refs s) /\
-                      (\k op_args (s:('c,'ffi)dataSem_state).
+                      (\k op_args s.
                      dataSem_state_safe_for_space s /\
                        size_of_heap_args op_args s + k <=
                        limits_heap_limit (dataSem_state_limits s))

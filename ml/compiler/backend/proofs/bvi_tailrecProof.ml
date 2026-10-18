@@ -132,13 +132,14 @@ let list_to_v_imp = cake_theorem "list_to_v_imp"
 
 let term_ok_int_SING = cake_theorem "term_ok_int_SING"
   (fun () ->
-    `!ts exp env s1 r t.
+    `!ts exp env ((s:('c,'ffi)bviSem_state)) r t.
        term_ok_int ts exp /\
        ty_rel env ts /\
        evaluate ([exp],env,s) = (r,t) ==>
          s = t /\
          (?v. r = Rval [v] /\
-         (!s1. evaluate ([exp],env,s) = (r,s)) /\
+         (!((s:('c,'ffi)bviSem_state)). evaluate ([exp],env,s) =
+           (r,s)) /\
          (?k. v = bvlSem_Number k))`)
   CHEAT_TAC;;
 
@@ -146,25 +147,27 @@ let term_ok_int_SING = cake_theorem "term_ok_int_SING"
 
 let term_ok_any_SING = cake_theorem "term_ok_any_SING"
   (fun () ->
-    `(!ts list' exp env s1 r t.
+    `(!ts list' exp env ((s:('c,'ffi)bviSem_state)) r t.
        term_ok_any ts list' exp /\
        ty_rel env ts /\
        evaluate ([exp],env,s) = (r,t) ==>
          s = t /\
          (?v. r = Rval [v] /\
-         (!s1. evaluate ([exp],env,s) = (r,s)) /\
+         (!((s:('c,'ffi)bviSem_state)). evaluate ([exp],env,s) =
+           (r,s)) /\
          (list' ==> (?ys. bvlSem_v_to_list v = SOME ys))))`)
   CHEAT_TAC;;
 
 let term_ok_SING = cake_theorem "term_ok_SING"
   (fun () ->
-    `!ts ty exp env s1 r t.
+    `!ts ty exp env ((s:('c,'ffi)bviSem_state)) r t.
        term_ok ts ty exp /\
        ty_rel env ts /\
        evaluate ([exp],env,s) = (r,t) ==>
          s = t /\
          (?v. r = Rval [v] /\
-         (!s1. evaluate ([exp],env,s) = (r,s)) /\
+         (!((s:('c,'ffi)bviSem_state)). evaluate ([exp],env,s) =
+           (r,s)) /\
          (match ty with
            Int -> (?k. v = bvlSem_Number k) | List -> (?ys.
              bvlSem_v_to_list v = SOME ys) | _1 -> T))`)
@@ -239,7 +242,8 @@ let code_rel_domain = cake_theorem "code_rel_domain"
 
 let evaluate_let_wrap = cake_theorem "evaluate_let_wrap"
   (fun () ->
-    `!x op vs s1 r t. ~(op = bvi_tailrec_Noop) ==>
+    `!x op vs ((s:('c,'ffi)bviSem_state)) r t. ~(op = bvi_tailrec_Noop)
+  ==>
        evaluate ([let_wrap (LENGTH vs) (id_from_op op) x],vs,s) =
        evaluate ([x],vs ++ [op_id_val op] ++ vs,s)`)
   CHEAT_TAC;;
@@ -254,7 +258,8 @@ let evaluate_complete_ind = cake_theorem "evaluate_complete_ind"
           t <= state_clock s \/ state_clock t < state_clock s ==>
           P ys t) ==>
         P xs s) ==>
-      (!(xs:bvi_exp list) s. P xs s)`)
+      (!(xs:bvi_exp list) ((s:(num#'c,'ffi)bviSem_state)). P xs
+        s)`)
   CHEAT_TAC;;
 
 let EVERY_LAST1 = cake_theorem "EVERY_LAST1"
@@ -721,7 +726,8 @@ let op_type_lem = cake_theorem "op_type_lem[simp]"
 
 let evaluate_rewrite_tail = cake_theorem "evaluate_rewrite_tail"
   (fun () ->
-    `!xs s env1 r t opt s' acc env2 loc ts ty.
+    `!xs ((s:(num#'c,'ffi)bviSem_state)) env1 r t opt s' acc env2 loc ts
+  ty.
        evaluate (xs,env1,s) = (r,t) /\
        bvi_tailrecProof_env_rel ty opt acc env1 env2 /\
        bvi_tailrecProof_state_rel s s' /\

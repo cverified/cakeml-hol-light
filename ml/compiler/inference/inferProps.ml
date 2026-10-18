@@ -22,6 +22,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+cake_hide ["C"];;
+
 let ienv_unchanged = cake_theorem "ienv_unchanged[simp]"
   (fun () ->
     `(inf_env_inf_v_fupd (K (inf_env_inf_v ienv)) ienv) = ienv /\
@@ -1755,3 +1757,5 @@ let infer_d_wfs = cake_theorem "infer_d_wfs"
        t_wfs (infer_st_subst st) ==>
        t_wfs (infer_st_subst st'))`)
   CHEAT_TAC;;
+
+cake_hide [];;

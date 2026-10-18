@@ -10,8 +10,6 @@ needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
 needs "lib/mergesort.ml";;
 needs "lib/sorting.ml";;
-
-cake_hide ["fmap_inj"; "nullable"];;
 (* HOL4 ancestors outside the port: option pair relation arithmetic
    pred_set bag container list rich_list string regexp_map oset
    finite_map vec_map charset regexp *)
@@ -25,5 +23,3 @@ let sub_def = cake_define
 
 let length_def = cake_define
   `length (Vector l) = LENGTH l`;;
-
-cake_hide [];;

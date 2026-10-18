@@ -414,10 +414,9 @@ let do_app_state_swap = cake_theorem "do_app_state_swap[local]"
 let do_app_state_swap_Rval =
   cake_theorem "do_app_state_swap_Rval[local]"
   (fun () ->
-    `!op args (s:('c,'ffi)bviSem_state)
-         (source_state:('c,'ffi)bviSem_state)
-         (t:('d,'ffi)bviSem_state) value. ~(op = closLang_Install)
-           /\
+    `!op args (s)
+         (source_state)
+         (t) value. ~(op = closLang_Install) /\
        do_app op args s = Rval (value,source_state) /\
        domain (state_code s) SUBSET domain (state_code t) ==>
        do_app op args
@@ -436,9 +435,8 @@ let do_app_state_swap_Rval =
 let do_app_state_swap_Rerr =
   cake_theorem "do_app_state_swap_Rerr[local]"
   (fun () ->
-    `!op args (s:('c,'ffi)bviSem_state)
-         (t:('d,'ffi)bviSem_state) error'. ~(op = closLang_Install)
-           /\
+    `!op args (s)
+         (t) error'. ~(op = closLang_Install) /\
        do_app op args s = Rerr error' /\
        (domain (state_code t) SUBSET domain (state_code s) \/
          ~(error' = Rabort Rtype_error)) ==>

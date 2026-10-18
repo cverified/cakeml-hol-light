@@ -68,14 +68,12 @@ let pair_lam_lem = cake_theorem "pair_lam_lem[local]"
 
 let do_app_Rval_swap = cake_theorem "do_app_Rval_swap"
   (fun () ->
-    `do_app op a (s1:('a,'b)bvlSem_state) = Rval (x0,x1) /\ ~(op =
-  closLang_Install) /\
+    `do_app op a (s1) = Rval (x0,x1) /\ ~(op = closLang_Install) /\
       (domain (state_code s1)) SUBSET (domain (state_code t1)) ==>
       do_app op a
         (state_ffi_fupd (K (state_ffi s1)) (state_clock_fupd (K
           (state_clock s1)) (state_refs_fupd (K (state_refs s1))
-          (state_globals_fupd (K (state_globals s1))
-          (t1:('c,'d)bvlSem_state))))) =
+          (state_globals_fupd (K (state_globals s1)) (t1))))) =
       Rval
         (x0,state_ffi_fupd (K (state_ffi x1)) (state_clock_fupd
           (K (state_clock x1)) (state_refs_fupd (K (state_refs x1))
@@ -95,14 +93,12 @@ let do_app_with_code = cake_theorem "do_app_with_code"
 
 let do_app_Rerr_swap = cake_theorem "do_app_Rerr_swap"
   (fun () ->
-    `do_app op a (s1:('a,'b)bvlSem_state) = Rerr e /\ ~(op =
-  closLang_Install) /\
+    `do_app op a (s1) = Rerr e /\ ~(op = closLang_Install) /\
      (domain (state_code t1)) SUBSET (domain (state_code s1)) ==>
      do_app op a
       (state_ffi_fupd (K (state_ffi s1)) (state_clock_fupd (K
         (state_clock s1)) (state_refs_fupd (K (state_refs s1))
-        (state_globals_fupd (K (state_globals s1))
-        (t1:('c,'d)bvlSem_state))))) = Rerr e`)
+        (state_globals_fupd (K (state_globals s1)) (t1))))) = Rerr e`)
   CHEAT_TAC;;
 
 let do_app_with_code_err_not_Install =
