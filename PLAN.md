@@ -56,11 +56,39 @@ the prompt of the toplevel as far as the scripts are concerned._
   subscript in a name (mlstring's `s₁`), and the name of an
   `Overload` as HOL4 escapes it (parmove's `"\226\137\161"` is
   `≡`).
-- **Two readings that were wrong.**  A prefix of HOL Light takes
-  the atom after it and no more, so `~MEM x l` is `(~MEM) x l`
-  there: the port parenthesises the operand now.  And the value
-  of a record update stops at an equation, so HOL4's `tenv with v
-  := tenv.v = tenv` is the equation it looks like.
+- **The readings that were wrong.**  What the statements of phase
+  two brought to light, each of which the port now reads as HOL4
+  does:
+  - a prefix of HOL Light takes the atom after it and no more, so
+    `~MEM x l` is `(~MEM) x l` there (467 lines of 70 files, and
+    stackSem's `evaluate` was assumed because of it);
+  - the value of a record update stops at an equation, and the
+    update itself is a postfix of the whole application
+    (`initial_state f c co cc k with clock := k1`);
+  - the finite map and function postfixes bind to the atom before
+    them (`FAPPLY tf⟨ts2 ↦ x⟩`);
+  - a statement is not a definition, so its left hand side binds
+    nothing: 122 statements had a constant of HOL Light in them as
+    a primed variable (`MAP (SND' o SND')`);
+  - the body of an overload is read in the theory that declares it
+    (labSem's `read_reg` is `s.regs` of a labSem state);
+  - a token that a theory overloads itself is read as its own, and
+    the grammar of a file is in place before its overloads are
+    read (parmove's `▷*` is the `RTC` of its own `step`, and
+    backend_common overloads the same token with its `Cons`);
+  - an ambiguous constructor is the one of the closest theory of
+    the ancestry, as HOL4's overload resolution takes the one that
+    its own ancestry loads last (`Loc` of data_to_word_gcProof is
+    wordLang's);
+  - only the symbol of `BAG_UNION`, `FUNION` and `BAG_IN` is an
+    infix, and `LEX` and `o_f` are infixes by name;
+  - HOL4 unifies the type variables that a statement writes and
+    HOL Light does not, so the port leaves the annotations of the
+    thirteen statements that need the unification out
+    (`overrides.THM_NO_TYVARS`);
+  - a theory in front of a symbolic name is dropped
+    (`prim_rec$<`), a subscript in a name is a digit, and the
+    name of an `Overload` is read through `sml_string`.
 - **The library layer of the statements.**  The statements of the
   sources now seed the set of definitions that the port needs of
   a HOL4 library theory, which `TotOrd`, `good_cmp`, `SORTS` and
