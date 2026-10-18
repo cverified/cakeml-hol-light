@@ -39,8 +39,8 @@ def hidden_names():
 def field_overloads():
   """the names that overload the accessors of a record field"""
   try:
-    return set(l.strip() for l in open(T + '../tmp/fieldovl.txt')
-               if l.strip())
+    return set(l.split('\t')[0].strip()
+               for l in open(T + '../tmp/fieldovl.txt') if l.strip())
   except OSError:
     return set()
 

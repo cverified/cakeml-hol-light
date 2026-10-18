@@ -13,13 +13,24 @@ let slurp_lines f =
    with End_of_file -> ());
   close_in ic; rev !out;;
 
+(* the overloads of the accessors of a record field: the name and
+   the constant of every one (tools/fieldovl.py writes them) *)
+
 let field_ovl =
-  slurp_lines "/home/freek/claude/hol-light/cakeml/tmp/fieldovl.txt";;
+  map (fun l ->
+         let i = String.index l '\t' in
+         String.sub l 0 i,
+         String.sub l (i + 1) (String.length l - i - 1))
+      (filter (fun l -> String.contains l '\t')
+         (slurp_lines
+            "/home/freek/claude/hol-light/cakeml/tmp/fieldovl.txt"));;
 
 let as_vars f =
   let saved = !the_interface in
+  (* as cake_as_vars does: only the accessors of a field go, so a
+     name that a constant of its own has as well keeps it *)
   the_interface :=
-    filter (fun (n,_) -> not (mem n field_ovl)) saved;
+    filter (fun (n,(c,_)) -> not (mem (n,c) field_ovl)) saved;
   let fin () = the_interface := saved in
   try let x = f () in fin (); x with e -> (fin (); raise e);;
 

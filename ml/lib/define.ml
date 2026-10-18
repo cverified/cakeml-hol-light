@@ -1942,19 +1942,26 @@ let hol4_overload_last name cname =
    own, and cake_theorem reads one that does with these overloads
    taken away. *)
 
-let the_field_overloads = ref ([]:string list);;
+(* the name of a field and the accessor that it overloads: a name
+   that a constant of its own has as well (bvl_to_bvi's compile
+   against the compile of a state) keeps that constant, because
+   only the accessors of a field are what HOL4 has no bare name
+   of *)
+
+let the_field_overloads = ref ([]:(string * string) list);;
 
 let hol4_field_overload name cname =
   hol4_overload name cname;
-  if not (mem name (!the_field_overloads)) then
-    the_field_overloads := name :: !the_field_overloads;;
+  if not (mem (name,cname) (!the_field_overloads)) then
+    the_field_overloads := (name,cname) :: !the_field_overloads;;
 
 (* read a term with the names of the record fields as variables *)
 
 let cake_as_vars f =
   let saved = !the_interface in
   the_interface :=
-    filter (fun (n,_) -> not (mem n (!the_field_overloads))) saved;
+    filter (fun (n,(c,_)) -> not (mem (n,c) (!the_field_overloads)))
+           saved;
   let fin () = the_interface := saved in
   try let x = f () in fin (); x
   with e -> (fin (); raise e);;
