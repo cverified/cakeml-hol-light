@@ -1401,6 +1401,9 @@ ANTIQ = {}             # the ML values that a source antiquotes
 # a term that HOL4 builds with ML code, and the port cannot state
 # it (tools/port.py sets this while it reads a statement)
 ANTIQ_STRICT = [False]
+# with this, an annotation that has a type variable in it is left
+# out of a statement (overrides.THM_NO_TYVARS)
+DROP_TYVAR_ANNOT = [False]
 
 
 def set_monad(m):
@@ -1550,6 +1553,15 @@ class Printer:
       return '(' + self.pr(e.e, 0) + ')'
     if k == 'typed':
       ty = self.pr_type(e.ty)
+      # HOL4 unifies the type variables that a statement writes
+      # and HOL Light does not (a type variable of a term is rigid
+      # there), so a statement about two states of types ('a,'b)
+      # and ('c,'d) whose fields have to agree does not typecheck.
+      # Where the port is told to, it drops such an annotation and
+      # lets HOL Light infer the type, which is the type that HOL4
+      # gives the theorem (overrides.THM_NO_TYVARS).
+      if DROP_TYVAR_ANNOT[0] and "'" in ty:
+        return self.pr(e.e, prec)
       # a record literal may say its type, which is the only thing
       # that tells which record type it is where several of them
       # have the fields that it gives

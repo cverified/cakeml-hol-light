@@ -523,6 +523,28 @@ INT_NUMERALS = set([
 # cannot typecheck ("n cannot have type num and int
 # simultaneously"), which tools/mkintvars.py turns into this
 # table.
+# the statements whose type variables the port leaves out: HOL4
+# unifies the type variables that a statement writes and HOL Light
+# does not, so a statement about two states of types ('a,'b) and
+# ('c,'d) whose fields have to agree does not typecheck there.
+# Without the annotations HOL Light infers the types, which are
+# the ones that HOL4 gives the theorem.
+THM_NO_TYVARS = set([
+  ('bvi_inlineProof', 'do_app_state_swap_Rval'),
+  ('bvi_inlineProof', 'do_app_state_swap_Rerr'),
+  ('bviProps', 'do_app_cfg_swap_Rval'),
+  ('bviProps', 'do_app_cfg_swap_Rerr'),
+  ('bviProps', 'do_install_adj_orac'),
+  ('bviProps', 'evaluate_adj_orac_rel'),
+  ('bvlProps', 'do_app_Rval_swap'),
+  ('bvlProps', 'do_app_Rerr_swap'),
+  ('closProps', 'evaluate_adj_orac'),
+  ('dataProps', 'cut_state_opt_cc_co_full'),
+  ('dataProps', 'cut_cc_co'),
+  ('dataProps', 'evaluate_cc_co_only_diff'),
+  ('flatProps', 'pmatch_state'),
+])
+
 THM_INT_VARS = {
   ('bvlSem', 'do_int_app_eq_some'): ['n2'],
   ('data_to_word_assignProof', 'INT_EQ_NUM_LEMMA'): ['i'],
