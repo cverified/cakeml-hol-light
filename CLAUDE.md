@@ -42,10 +42,24 @@ The work has three phases:
    of whether phase one got the definitions, the types, the
    notation and the names right.
 
+   Attributes (`[simp]`, `[compute]`, `[local]`,
+   `[allow_rebind]`) are kept, because they are part of what the
+   source says, but they are not load bearing: phase three does
+   not replay HOL4's automation.
+
 3. _Phase three (later):_ the proofs.  Every `CHEAT_TAC` of
-   phases one and two is replaced by a real proof -- HOL4's own
-   proof, transliterated -- until `length (axioms ())` is 3.
-   Then the port is done.
+   phases one and two is replaced by a real proof, until
+   `length (axioms ())` is 3.  Then the port is done.
+
+   **Phase three does not start until phase two is finished.**
+   Not one theory ahead, not "the easy ones first": the
+   statements are all in and the port loads, and only then does
+   a proof get written.
+
+   **The proofs of phase three are written by hand.**  They are
+   not a mechanical conversion of HOL4's tactics: the HOL4 proof
+   is read, understood and then written as a HOL Light proof.
+   Do not build a tactic translator.
 
 **In phases one and two proofs are irrelevant.**  Not "kept
 short", irrelevant: no time goes on one.  HOL Light will not
@@ -72,6 +86,24 @@ cheat, and a cheat that another cheat depends on is fine.
   same file names (`fooScript.sml` becomes `foo.ml`), same
   order of the blocks, same names of constants and of theorems,
   and the original comments kept in place.
+- **No HOL4 code in the port.**  Not in a definition, not in a
+  proof and not in a comment: no SML, no HOL4 tactic, no HOL4
+  quotation, not even one line of it.  Where the port cannot say
+  what the source says (the ML code of a source that builds a
+  term, the tactic of a `Termination`, an `Overload` or a `Type`
+  that the port expands), it puts a comment that **points at the
+  HOL4 source** instead -- the file and the line range, or
+  something more precise:
+
+  ```
+  (* HOL4 word_bignumScript.sml:243-389: the ML code that builds
+     the deep embedding *)
+  ```
+
+  The port's own prose about what HOL4 does is not HOL4 code and
+  stays.  The reference material is in `cakeml-src/`, which is
+  always there to read; copying it into the port only makes two
+  copies of it to keep in step.
 - The HOL Light files must **load efficiently**.  A definition
   that takes minutes to process is a bug; fix it (or record the
   timing in a comment if there really is no alternative).
