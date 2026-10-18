@@ -1,0 +1,22 @@
+#!/bin/sh
+# diagparts [session] : split the statements that the last run
+# could not read into their parts (tools/bisect.py --unstated) and
+# say of every part whether a session that has the port loaded can
+# read it (hol-try by default, a clone of the session of the run).
+# A statement whose parts all read and that does not is one where
+# two parts disagree about a name, which is what HOL Light's
+# message "overload resolution" comes to.
+#
+# tools/bin/diag writes tmp/stmts.txt itself (every statement of
+# the port), so this one calls diag_run on the parts instead.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-try}
+cd $C
+python3 -I tools/fieldovl.py
+python3 -I tools/bisect.py --unstated || exit 1
+TIMEOUT=300 repl-step $s "loadt \"$C/tools/diag.ml\";;" \
+  > /dev/null 2>&1
+TIMEOUT=${TIMEOUT:-3600} repl-step $s \
+  "diag_run \"$C/tmp/stmts.txt\" \"$C/tmp/parts.out\";;" 2>&1 | tail -2
+cut -f1 $C/tmp/parts.out | sort | uniq -c
