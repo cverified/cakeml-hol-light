@@ -340,9 +340,19 @@ let get_full_prog inp tm =
                                         (lhs (concl th)))
                                         (!immediate_deps))
                                (!code_defs))) in
+  (* the name of the head of a term, so that the patterns below
+     are only matched against a term that can match one of them
+     (a run of the translation walks every term that it has made
+     so far, which is slow enough as it is) *)
+  let head_name tm =
+    try fst (dest_const (fst (strip_comb tm))) with Failure _ -> "" in
   let is_delete tm =
+    head_name tm = "word_bignum_Delete" &&
     can (term_match [] `(word_bignum_Delete n):(A)mini`) tm in
   let is_assign tm =
+    mem (head_name tm)
+        ["word_bignum_Assign"; "word_bignum_Load"; "word_bignum_Add";
+         "word_bignum_Sub"; "word_bignum_Mul"; "word_bignum_Div"] &&
     exists (fun pat -> can (term_match [] pat) tm)
       [`(word_bignum_Assign n):(A)wordLang_exp->(A)mini`;
        `(word_bignum_Load n):num->address->(A)mini`;
