@@ -16,6 +16,8 @@
 #   attrs     a statement has the attributes of its theorem
 #   stmtshape a statement has the connectives of the source's
 #   defshape  a definition has the connectives of the source's
+#   freenames a name of the shape of an accessor that the port
+#             has no constant of (needs tools/constants.txt)
 #   lines     no line of ml/ outside a comment is longer than 72
 #             characters (a comment of a source is unaltered)
 C=/home/freek/claude/hol-light/cakeml
@@ -44,5 +46,7 @@ echo "=== the connectives of the statements"
 python3 -I tools/stmtshape.py 2>&1 | tail -3
 echo "=== the connectives of the definitions"
 python3 -I tools/defshape.py 2>&1 | tail -3
+echo "=== the names that look like an accessor"
+python3 -I tools/freenames.py 2>&1 | tail -4
 echo "=== lines over 72 characters"
 python3 -I tools/lines.py 2>&1 | tail -6
