@@ -1954,6 +1954,13 @@ class Printer:
         while v.kind in ('paren', 'typed'): v = v.e
         rec = (self.ctx.fieldvar.get(v.name)
                if v.kind == 'id' else None)
+        # the record of a variable holds for the fields that it
+        # has: the s of data_to_word_memoryProof is a state of
+        # dataSem in most of its statements and a gc_state in the
+        # ones about the garbage collector, whose h2 and r4 only
+        # the gc_state has
+        if rec and e.fld not in self.ctx.recs.get(rec, []):
+          rec = None
       acc = (rec + '_' + e.fld) if rec else self.ctx.field(e.fld)
       return self.paren(acc + ' ' + self.pr(e.e, APP),
                         PRE_APP, prec)
