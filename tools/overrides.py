@@ -242,7 +242,10 @@ FIELD_VAR = {
   # the c of the three definitions that have one is the
   # configuration of clos_to_bvl, whose max_app the state of
   # closSem has as well
-  'clos_to_bvlProof': {'c': 'clos_to_bvl_config'},
+  # the configuration of clos_to_bvl, whose max_app the state of
+  # closSem has as well
+  'clos_to_bvlProof': {'c': 'clos_to_bvl_config',
+                       "c'": 'clos_to_bvl_config'},
   # the v of genv is the one of the global_env of the file (what
   # FIELD_OF says), of env the one of a sem_env, of comp_map the
   # one of source_to_flat's environment and of the local
@@ -1036,6 +1039,11 @@ CON_OF = {
   ('data_simpProof', 'evaluate_Seq_Skip'):
     {'Seq': 'dataLang', 'Skip': 'dataLang'},
   ('dataProps', 'Seq_Skip'): {'Seq': 'dataLang', 'Skip': 'dataLang'},
+  # the expressions that this one relates are bvi's, and the port
+  # read its Var as the one of db_vars and annotated it with the
+  # type of that one (the wildcard says the theory of every
+  # constructor name of bvi that the port overloads)
+  ('bvi_inlineProof', 'exp_rel_inv'): {'*': 'bvi'},
   # the ThunkOp that the do_app of dataSem takes is closLang's (ast
   # has one as well, and it is the closer theory of the two here),
   # which the port annotated the operation of the statement with
