@@ -1417,6 +1417,44 @@ ANTIQ_STRICT = [False]
 # with this, an annotation that has a type variable in it is left
 # out of a statement (overrides.THM_NO_TYVARS)
 DROP_TYVAR_ANNOT = [False]
+# with this, the type variables of an annotation of a statement are
+# the ones of the first annotation of the same type operator in it:
+# HOL4 unifies the type variables that a statement writes and HOL
+# Light reads a written one as rigid, so the two states of
+# bvlProps$do_app_Rval_swap (('a,'b) and ('c,'d)) are one state
+# there and two here (overrides.THM_TYVARS).  Leaving the
+# annotation out is worse: it takes the record type with it, and
+# nothing then says which semantics the statement is about.
+UNIFY_TYVAR_ANNOT = [False]
+TYVAR_SEEN = {}
+
+# an annotation of a type operator applied to type variables, which
+# is the only kind that is unified: ('a,'b)bvlSem_state and the
+# one argument form 'ffi semanticPrimitives_state
+ANNOT_ARGS = re.compile(r"^\(([^()]*)\)([A-Za-z0-9_']+)$")
+ANNOT_ARG = re.compile(r"^('[A-Za-z0-9_]+)\s+([A-Za-z0-9_']+)$")
+TYVAR = re.compile(r"^'[A-Za-z0-9_]+$")
+
+
+def unify_annot(ty):
+  """the annotation with the type variables of the first annotation
+     of the same type operator in this statement"""
+  m = ANNOT_ARGS.match(ty)
+  if m:
+    args = [a.strip() for a in m.group(1).split(',')]
+    op = m.group(2)
+  else:
+    m = ANNOT_ARG.match(ty)
+    if not m: return ty
+    args, op = [m.group(1)], m.group(2)
+  if not all(TYVAR.match(a) for a in args): return ty
+  key = (op, len(args))
+  if key not in TYVAR_SEEN:
+    TYVAR_SEEN[key] = args
+    return ty
+  args = TYVAR_SEEN[key]
+  return ('(%s)%s' % (','.join(args), op) if len(args) > 1
+          else '%s %s' % (args[0], op))
 
 
 def set_monad(m):
@@ -1573,7 +1611,9 @@ class Printer:
       # Where the port is told to, it drops such an annotation and
       # lets HOL Light infer the type, which is the type that HOL4
       # gives the theorem (overrides.THM_NO_TYVARS).
-      if DROP_TYVAR_ANNOT[0] and "'" in ty:
+      if UNIFY_TYVAR_ANNOT[0] and "'" in ty:
+        ty = unify_annot(ty)
+      elif DROP_TYVAR_ANNOT[0] and "'" in ty:
         return self.pr(e.e, prec)
       # a record literal may say its type, which is the only thing
       # that tells which record type it is where several of them

@@ -571,6 +571,20 @@ THM_NAMES = {
   ('cmlNTProps', 'BIGUNION_singletons'): {'GSPEC': 'hol4_GSPEC'},
 }
 
+# the statements whose annotations say the same type with other
+# type variables, which HOL4 unifies and HOL Light cannot (a type
+# variable that a quotation writes is rigid there): the port writes
+# the type variables of the first annotation of a type operator in
+# every other annotation of it, which is the type that HOL4 gives
+# the theorem.  THM_NO_TYVARS leaves such an annotation out
+# instead, which loses the record type with it.
+THM_TYVARS = set([
+  # the two states of these are one state in HOL4: the result of
+  # the do_app of the one is compared with a value of the other
+  ('bvlProps', 'do_app_Rval_swap'),
+  ('bvlProps', 'do_app_Rerr_swap'),
+])
+
 THM_NO_TYVARS = set([
   ('bvi_inlineProof', 'do_app_state_swap_Rval'),
   ('bvi_inlineProof', 'do_app_state_swap_Rerr'),
@@ -578,8 +592,6 @@ THM_NO_TYVARS = set([
   ('bviProps', 'do_app_cfg_swap_Rerr'),
   ('bviProps', 'do_install_adj_orac'),
   ('bviProps', 'evaluate_adj_orac_rel'),
-  ('bvlProps', 'do_app_Rval_swap'),
-  ('bvlProps', 'do_app_Rerr_swap'),
   ('closProps', 'evaluate_adj_orac'),
   ('dataProps', 'cut_state_opt_cc_co_full'),
   ('dataProps', 'cut_cc_co'),

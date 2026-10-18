@@ -353,12 +353,16 @@ class Porter:
       hterm.ANTIQ_STRICT[0] = True
       hterm.DROP_TYVAR_ANNOT[0] = ((self.thy, nm)
                                    in overrides.THM_NO_TYVARS)
+      hterm.UNIFY_TYVAR_ANNOT[0] = ((self.thy, nm)
+                                    in overrides.THM_TYVARS)
+      hterm.TYVAR_SEEN.clear()
       try:
         stmt = fmt(self.term(body, defn=False), indent=5, width=72,
                    last=2)
       finally:
         hterm.ANTIQ_STRICT[0] = False
         hterm.DROP_TYVAR_ANNOT[0] = False
+        hterm.UNIFY_TYVAR_ANNOT[0] = False
         if fv: self.ctx.fieldvar = self.fieldvar
         self.ctx.reclits = []
         for n, old2 in was.items():
