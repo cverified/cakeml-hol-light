@@ -379,10 +379,18 @@ class Porter:
     # (overrides.CON_OF, which a definition takes the same way):
     # the Seq of data_simpProof's evaluate_Seq_Skip is dataLang's,
     # which the evaluate of the statement does not say
-    self.conof_said = {k: v for k, v in
-                       overrides.CON_OF.get((self.thy, nm),
-                                            {}).items()
-                       if k != '*'}
+    conof = dict(overrides.CON_OF.get((self.thy, nm), {}))
+    # a wildcard says the theory of every constructor name of it
+    # that the port overloads, as it does for a definition: a
+    # statement about one intermediate language has the If, the
+    # Call and the Var of that language and of a dozen others
+    if '*' in conof:
+      t = conof.pop('*')
+      for (t2, ty), (cons, _) in self.db.datatypes.items():
+        if t2 != t: continue
+        for c in cons:
+          if c in self.ctx.overloaded: conof.setdefault(c, t)
+    self.conof_said = conof
     try:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
