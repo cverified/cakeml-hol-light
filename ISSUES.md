@@ -739,6 +739,42 @@ is the complement in the two's complement subtraction) is ported
 by hand with `word_1comp`, the name that the words layer gives
 HOL Light's `word_not`.
 
+## The record that a field of a statement is of
+
+Every intermediate language of CakeML has a state with a `clock`,
+a `code` and a `ffi`, and the sources have four kinds of
+environment with a `v` and a `c`, so the port overloads the
+accessors of a field with the name of the field and leaves it to
+HOL Light to resolve them by the type, as HOL4 does.  Where
+nothing in the statement says the type, that fails, and these are
+the things that say it:
+
+- an **annotation of the record** (`(s:('a,'c,'ffi)labSem$state)`),
+  which the port now reads: it takes the annotations of a term
+  before it prints it, so an annotated variable has the record of
+  its annotation wherever the statement reads a field of it;
+- the **record of a variable** of a theory (`overrides.FIELD_VAR`:
+  the `t` of data_to_word_gcProof is a state of wordSem) or of one
+  definition or statement (`FIELD_VAR_DEF`: the `s` of
+  stack_to_labProof is a state of stackSem in most of its
+  statements and one of labSem in two of them);
+- the **record of a literal**, in the order of the literals of a
+  statement (`THM_RECLITS`: the two literals of
+  source_to_flatProof's `global_env_inv_extend` are an environment
+  of source_to_flat and a sem_env, and both give a `v` and a `c`);
+- the **accessor** itself, for one statement (`THM_ACCESSORS`),
+  where the record is of a term and not of a variable (the third
+  `v` of `nsAll_extend_env` is the one of the environment that
+  `extend_env` gives).
+
+A statement that uses the name of a field for a variable of its
+own is read with the overloads of the field names taken away
+(`cake_as_vars`, which 423 statements need).  That cannot work for
+a statement that does both, so the fields of those statements are
+written out: `lab_to_targetProof$asm_fetch_NOT_ffi_entry_pcs` has
+a variable `ffi_names` and reads the `ffi_names` of its machine
+configuration.
+
 ## The constants that HOL4 hides from its parser
 
 HOL4's `relationTheory` does `Parse.hide "C"`, so the `C` of
@@ -750,7 +786,25 @@ port has HOL Light's `C` (the combinator that swaps two
 arguments), so those statements are read with it hidden:
 `overrides.HOL4_HIDDEN` names it and `tools/db.py`'s `hidden_for`
 puts it in the `cake_hide` of every file whose statements write
-it.
+it.  A statement that does mean the combinator writes `combin$C`
+for it, which the port reads as the `hol4_C` of the library layer
+-- a constant that the `cake_hide` of `C` does not touch.
+
+HOL4 cannot have a constant called `val` at all, because `val` is
+a keyword of SML, while HOL Light's words library has one (the
+number of a word), so `val` is hidden the same way.
+
+A name that the port **overloads** is hidden as well where no
+theory of the ancestry defines it: `linear_scanProof`'s `id` is
+`linear_scanProof_id` and `id` is an overload of it, so
+`source_to_flatProof$declare_env_store_env_id` read its own
+variable `id` as that constant.
+
+What the ancestry is, for all of this, is the Ancestors **and the
+Libs** of the source: a `Libs` entry brings the grammar of the
+theory of that name, and `misc` has `ASCIInumbersLib` in its
+`Libs` and uses the `num_to_hex_string` of `ASCIInumbersTheory`,
+which is in no `Ancestors` block of it.
 
 ## What is not ported
 

@@ -6,18 +6,30 @@ its proof, and every comment of the source in its place
 (`CLAUDE.md`).  The test is to read a source and its port next to
 each other: they have to read "the same"._
 
-_State: the port has 10,131 of the 10,688 theorems of the 270
-files with their statement and 557 as a pointer that names them
-(`tools/coverage.py` counts both; `PENDING.md` says what the 557
-are).  Of the statements, the run of 18:21 could read all but
-141, and **every one of the 270 files loaded to the end**: the
+_State: the port has 10,128 of the 10,688 theorems of the 270
+files with their statement and 560 as a pointer that names them
+(`tools/coverage.py` counts both; `PENDING.md` says what the 560
+are).  Of the statements, the run of 20:17 could read all but
+**100**, and **every one of the 270 files loads to the end**: the
 first phase-two run of 14:03 could not read 688 statements, the
-one of 16:30 could not read 295.  422 statements are read with the
-overloads of the record field names taken away.  Of the 141, the
-re-port after that run changed 35 (the ten of parmove among them,
-which had the `Cons` of backend_common where the source has the
-`step` of parmove itself), so the run of 20:17 measures what is
-really left._
+one of 16:30 could not read 295 and the one of 18:21 could not
+read 141.  423 statements are read with the overloads of the
+record field names taken away._
+
+_What the hundred are, and what the round after that run did about
+them: eighteen are about bags and say `<=` where HOL4's bagTheory
+means `SUB_BAG`, three say `INT_MIN` where it means the integer of
+`integer_wordTheory` and not the number of `wordsTheory`, one says
+`gcd`, which takes a pair in HOL Light and two arguments in HOL4,
+and four are about the `var_corr` of dataProps, whose own
+definition read the `get_var` of stackSem where dataSem's is
+meant.  Of the rest, the record of a field or of a literal
+settles twenty (`overrides.FIELD_VAR`, `FIELD_VAR_DEF`,
+`THM_RECLITS`, `THM_ACCESSORS` and the annotations of the
+statement itself, which the port now reads), the theory of a
+constructor three, and three are an ML expression that the port
+cannot evaluate and now points at.  The run of 22:57 measures
+what is left of them._
 
 _What the run of 16:30 also found: `tools/bin/checkseq` read the
 word "timeout" anywhere in the output of a step as the timeout of
