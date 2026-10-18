@@ -1036,6 +1036,11 @@ CON_OF = {
   ('data_simpProof', 'evaluate_Seq_Skip'):
     {'Seq': 'dataLang', 'Skip': 'dataLang'},
   ('dataProps', 'Seq_Skip'): {'Seq': 'dataLang', 'Skip': 'dataLang'},
+  # the ThunkOp that the do_app of dataSem takes is closLang's (ast
+  # has one as well, and it is the closer theory of the two here),
+  # which the port annotated the operation of the statement with
+  ('data_to_word_assignProof', 'do_app_AllocThunk'):
+    {'ThunkOp': 'closLang'},
   ('word_to_stackProof', 'evaluate_Seq_Skip'):
     {'Seq': 'stackLang', 'Skip': 'stackLang'},
   # the right hand sides build flatLang expressions, where the
