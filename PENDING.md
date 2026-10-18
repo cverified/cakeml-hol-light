@@ -80,6 +80,30 @@ preface of such a file says), and the theorems of it that a proof
 of phase three needs are proved when that proof needs them.  The
 10,613 are the theorems of the CakeML sources.
 
+# Definitions that the port assumes with a free variable
+
+Fifteen of the definitions that `ml/CHEATS.md` lists are assumed
+with a **free variable** in them (`free: ...`), which is the kind
+of cheat that a decision or a missing piece has to settle and not
+a proof:
+
+- a **mutual recursion of two functions** that the port writes as
+  two definitions, so that each clause of the one mentions the
+  other as a free variable (closProps' `set_globals` and
+  `elist_globals` are one `Definition` of HOL4, with a
+  `sum_size` measure; the same for `semanticPrimitivesProps`'
+  `sv_rel` and `result_rel`, and for `exc_rel`).  The clauses of
+  the two have to go to HOL Light as one definition, which the
+  define layer can do where the recursion is over one datatype
+  family.
+- a definition whose body uses a constant that the port does not
+  have (`gc_fun_ok` of `data_to_word_gcProof`).
+
+Until then the constant is there with the right type and its
+clauses are assumed, so the statements about it typecheck; what
+is wrong is the clause, which is an axiom over the free variable
+as well.  Phase three has to make the definition.
+
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
