@@ -357,6 +357,10 @@ INFIX = {
   # s <| t (with a triangle)
   '◁':     (700, 'r', 'walkstar', None),
   'f_o_f': (800, 'r', 'f_o_f', 26),
+  # HOL4 declares these infixes by name (pairTheory's LEX with
+  # new_infixr_definition, finite_mapTheory's o_f)
+  'LEX':   (490, 'r', 'LEX', 14),
+  'o_f':   (800, 'r', 'o_f', 26),
   # the composition of two relations of HOL4's relationTheory
   'O':     (800, 'r', 'O', None),
   # the relation between two functions of HOL4's transfer library

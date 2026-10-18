@@ -773,6 +773,21 @@ class Db:
     return {nm: txt for (t, nm), (txt, local) in self.overloads.items()
             if t == thy or (t in anc and not local)}
 
+  def overload_thy_for(self, thy):
+    """the theory that declares every overload in the scope of this
+       one: the body of an overload is read in the context of that
+       theory, where the record field that it mentions is the one
+       that HOL4 means (labSem's read_reg is s.regs of a labSem
+       state, also in a theory that has stackSem's regs in scope)"""
+    anc = self.scope(thy)
+    rank = {t: i for i, (t, _, _) in enumerate(self.order)}
+    out = {}
+    for (t, nm), (txt, local) in self.overloads.items():
+      if not (t == thy or (t in anc and not local)): continue
+      if nm not in out or rank.get(t, -1) > rank.get(out[nm], -1):
+        out[nm] = t
+    return out
+
   def abbrevs_for(self, thy):
     anc = self.scope(thy) | {thy}
     rank = {t: i for i, (t, _, _) in enumerate(self.order)}

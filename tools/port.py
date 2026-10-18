@@ -271,13 +271,20 @@ class Porter:
                       for t, k in db.defs.get(nm, []))
            and not self.is_overloaded(nm, txt)}
     self.raw_overloads = raw
+    # which theory declares every overload: its body is read with
+    # the record fields of that theory, where the field it
+    # mentions is the one that HOL4 means (labSem's read_reg is
+    # s.regs of a labSem state, also in a theory that has
+    # stackSem's regs in scope as well)
+    self.ovl_thy = db.overload_thy_for(thy)
     for _ in range(3):
       for nm, txt in raw.items():
         # the name of the overload itself is the constant in its
         # own body (stack_to_lab overloads Asm with
         # \a. Asm (Asmi a), whose Asm is labLang's)
         old = self.ctx.overloads.pop(nm, None)
-        try: self.ctx.overloads[nm] = self.term(txt)
+        try: self.ctx.overloads[nm] = self.in_thy(
+                 self.ovl_thy.get(nm), lambda: self.term(txt))
         except Exception:
           if old is not None: self.ctx.overloads[nm] = old
     self.bound = set()
@@ -1057,6 +1064,27 @@ class Porter:
         text = 'hol4_overload "%s"\n  "%s";;' % (nm, new)
       out.append(text)
     return out
+
+  def in_thy(self, thy, f):
+    """run f with the record fields of another theory, which is
+       what the body of an overload that that theory declares
+       means (db.overload_thy_for)"""
+    if not thy or thy == self.thy: return f()
+    fields, amb = self.db.fields_for(thy)
+    was = (self.ctx.fields, self.ctx.accessors, self.ctx.updaters,
+           self.ctx.fieldvar, self.ctx.recs)
+    flds = {k: v for k, v in fields.items() if v}
+    flds.update(overrides.FIELD_OF.get(thy, {}))
+    self.ctx.fields = flds
+    self.ctx.accessors = overrides.ACCESSORS.get(thy, {})
+    self.ctx.updaters = overrides.UPDATERS.get(thy, {})
+    self.ctx.fieldvar = overrides.FIELD_VAR.get(thy, {})
+    self.ctx.recs = self.db.recs_for(thy)
+    try:
+      return f()
+    finally:
+      (self.ctx.fields, self.ctx.accessors, self.ctx.updaters,
+       self.ctx.fieldvar, self.ctx.recs) = was
 
   def nm_defined(self, n):
     """the name of the constant that a block defines"""
