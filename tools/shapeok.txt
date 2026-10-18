@@ -12,8 +12,8 @@ typeSysProps$type_pes_def the restricted quantifier of HOL4
   (!(p,e)::set pes), which the port writes as RES_FORALL
 parmove$NoRead_path the overload NoRead, which the port expands
 parmove$parsem_NoRead the overload NoRead, which the port expands
-fromSexp$isAlpha_isUpper_isLower the overloads of char_lt, which
-  the port expands
+fromSexp$isAlpha_isUpper_isLower the <=/= of HOL4 (the xor of two
+  truth values), which the port writes as ~(x = y)
 dataProps$do_app_with_stack the overloads do_app_safe and
   do_app_peak, which the port expands
 dataProps$do_app_with_stack_and_locals the same two overloads
@@ -21,14 +21,12 @@ dataProps$do_app_with_locals the same two overloads
 dataProps$do_app_locals the same two overloads
 dataProps$do_space_alt the overload do_space_peak, which the port
   expands
-bvi_to_dataProof$compile_correct the overloads of the compiler of
-  the state, which the port expands
-wordProps$stack_size_perm the overload stack_size, which the port
-  expands
+bvi_to_dataProof$compile_correct the overloads isException and
+  isRet of HOL4 (each an existential), which the port expands
+wordProps$stack_size_perm the overload PERM_STACK, which the port
+  expands (a match of two stack frames)
 wordProps$permute_swap_lemma2 the same overload
 wordProps$permute_swap_lemma3 the same overload
-data_to_word_memoryProof$xor_bytes_bytes_to_word the overload
-  that the port expands
 data_to_word_assignProof$do_app_RefByte_eq the overload that the
   port expands
 lab_to_targetProof$line_similar_len_no_lab the overload
