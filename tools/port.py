@@ -331,9 +331,22 @@ class Porter:
     # a name that this statement means another constant by
     # (overrides.THM_NAMES)
     was = {}
+    wasovl = set()
     for n, new in overrides.THM_NAMES.get((self.thy, nm), {}).items():
-      was[n] = self.ctx.names.get(n)
-      self.ctx.names[n] = new
+      # the entry of the theory as well: a name that the port
+      # resolves for the whole file (an ambiguous constructor) has
+      # one, and that one wins over the bare name
+      for k in (n, (self.thy, n)):
+        was[k] = self.ctx.names.get(k)
+        self.ctx.names[k] = new
+      # a name that the port overloads is written as it stands, so
+      # a statement that means one constant of it has the overload
+      # taken off for this statement (the Seq of data_simpProof's
+      # evaluate_Seq_Skip is dataLang's, which nothing in the
+      # statement says)
+      if n in self.ctx.overloaded:
+        self.ctx.overloaded.discard(n)
+        wasovl.add(n)
     # the record type of a variable, for this statement only
     # (overrides.FIELD_VAR_DEF, which a definition takes the same
     # way): the env of source_to_flatProof is a sem_env in most of
@@ -346,6 +359,14 @@ class Porter:
     # order in which they stand in it (overrides.THM_RECLITS)
     self.ctx.reclits = list(
       overrides.THM_RECLITS.get((self.thy, nm), []))
+    # the theory whose constructor a name of this statement means
+    # (overrides.CON_OF, which a definition takes the same way):
+    # the Seq of data_simpProof's evaluate_Seq_Skip is dataLang's,
+    # which the evaluate of the statement does not say
+    self.conof_said = {k: v for k, v in
+                       overrides.CON_OF.get((self.thy, nm),
+                                            {}).items()
+                       if k != '*'}
     try:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
@@ -365,9 +386,11 @@ class Porter:
         hterm.UNIFY_TYVAR_ANNOT[0] = False
         if fv: self.ctx.fieldvar = self.fieldvar
         self.ctx.reclits = []
-        for n, old2 in was.items():
-          if old2 is None: self.ctx.names.pop(n, None)
-          else: self.ctx.names[n] = old2
+        self.conof_said = {}
+        self.ctx.overloaded |= wasovl
+        for k, old2 in was.items():
+          if old2 is None: self.ctx.names.pop(k, None)
+          else: self.ctx.names[k] = old2
     except Exception as ex:
       self.warn.append('%s %s: %s' % (b.kind, nm, ex))
       # a theorem that the ML code of a source states itself is one

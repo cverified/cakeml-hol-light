@@ -908,6 +908,16 @@ ONE_QUOTATION = set([
 # Inst of wordLang comes later)
 CON_OF = {
   ('stack_remove', 'single_stack_free_def'): {'Inst': 'stackLang'},
+  # the Seq and the Skip of these two statements are the ones of
+  # the language that the theory is about, which the evaluate in
+  # them does not say: every intermediate language has both, and
+  # the port read the Seq of the one as word_bignum's and of the
+  # other as wordLang's
+  ('data_simpProof', 'evaluate_Seq_Skip'):
+    {'Seq': 'dataLang', 'Skip': 'dataLang'},
+  ('dataProps', 'Seq_Skip'): {'Seq': 'dataLang', 'Skip': 'dataLang'},
+  ('word_to_stackProof', 'evaluate_Seq_Skip'):
+    {'Seq': 'stackLang', 'Skip': 'stackLang'},
   # the right hand sides build flatLang expressions, where the
   # patterns are the constructors of ast, which has the same
   # names ('*' is every constructor name of that theory)
