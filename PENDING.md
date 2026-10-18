@@ -63,18 +63,15 @@ names the theorem: a statement with a free variable where the
 source has a constant would say something else than the source
 does, which is worse than saying nothing.
 
-Three statements use a constant of a HOL4 library that the port
-does not have, so a name of them is a free variable and the
-statement says less than the source's does.  `tools/libnames.py`
-is the check that finds them (the `domain` and the `range` of a
-relation and HOL4's `GSPEC` were three more, which the library
-layer has now under a name of its own, and
-`overrides.THM_NAMES` says which statements mean them):
+No statement uses a constant of a HOL4 library that the port does
+not have any more; `tools/libnames.py` is the check.  There were
+six, and each has its name in the library layer now:
 
-| theorem | what it needs |
+| theorem | what it needed |
 |---|---|
-| `misc$toPath_fromList`, `misc$steps_rel_okpath` | `pathTheory`: the type of a path (a state and a lazy list of transitions), with `toPath`, `stopped_at`, `pcons` and `okpath` |
-| `presLang$num_to_hex_eq` | `words$word_to_hex_string`, which is `w2s 16 HEX` and needs the `n2s` of ASCIInumbers, a theory that the hand written library layer is loaded before |
+| `misc$domain_rrestrict_subset`, `misc$range_rrestrict_subset`, `misc$GSPEC_o` | the `domain` and the `range` of `set_relationTheory` and HOL4's `GSPEC`, which `ml/lib/hol4.ml` has under a name of its own (`overrides.THM_NAMES` says which statements mean them) |
+| `misc$toPath_fromList`, `misc$steps_rel_okpath` | `pathTheory`: the type of a path (a state and a lazy list of transitions), with `toPath`, `stopped_at`, `pcons` and `okpath`, which `ml/lib/path.ml` has (HOL Light has no greatest fixed point, so the one that `okpath` is of HOL4's `okpath_f` is written out) |
+| `presLang$num_to_hex_eq` | `words$word_to_hex_string`, which is `w2s 16 HEX` and needs the `n2s` of ASCIInumbers: HOL4 has both in its words theory and the port has them at the end of `ml/lib/ASCIInumbers.ml`, because the hand written words layer of the port is loaded before that theory |
 
 The theorems of the **HOL4 library theories** of `ml/lib` are not
 in the port either, and are not counted: of a library theory the

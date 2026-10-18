@@ -6,14 +6,18 @@ its proof, and every comment of the source in its place
 (`CLAUDE.md`).  The test is to read a source and its port next to
 each other: they have to read "the same"._
 
-_State: the port has 10,137 of the 10,688 theorems of the 270
-files with their statement and 551 as a pointer that names them
-(`tools/coverage.py` counts both; `PENDING.md` says what the 551
-are).  Of the statements, the run of 16:30 could read all but
-295 -- the first phase-two run of 14:03 could not read 688 of
-them -- and the run of 18:16 measures what the machinery below
-and the repairs of the tail have made of that.  390 statements
-are read with the overloads of the record field names taken away._
+_State: the port has 10,131 of the 10,688 theorems of the 270
+files with their statement and 557 as a pointer that names them
+(`tools/coverage.py` counts both; `PENDING.md` says what the 557
+are).  Of the statements, the run of 18:21 could read all but
+141, and **every one of the 270 files loaded to the end**: the
+first phase-two run of 14:03 could not read 688 statements, the
+one of 16:30 could not read 295.  422 statements are read with the
+overloads of the record field names taken away.  Of the 141, the
+re-port after that run changed 35 (the ten of parmove among them,
+which had the `Cons` of backend_common where the source has the
+`step` of parmove itself), so the run of 20:17 measures what is
+really left._
 
 _What the run of 16:30 also found: `tools/bin/checkseq` read the
 word "timeout" anywhere in the output of a step as the timeout of
@@ -24,6 +28,22 @@ them).  The test is the line that `repl-step` writes, and the
 message of a statement that HOL Light cannot read goes out as one
 line now, because a line of the output that starts with a `#` is
 the prompt of the toplevel as far as the scripts are concerned._
+
+_What the checks of the statements say (`tools/bin/checks`, none
+of which needs a session): the blocks of every one of the 228
+ported files that have one are in the **order** of the source and
+so are the comments (`tools/order.py`), every statement has the
+**attributes** of its theorem (`tools/attrs.py`), no statement
+lost a **constant** of the source (`tools/stmtnames.py`), no
+statement uses a name of a HOL4 **library** that the port has not
+(`tools/libnames.py`), every **comment** of a source is in its
+port or a pointer says where the code in it is
+(`tools/comments.py`), and no statement counts the
+**connectives** of the source differently but the 22 that
+`tools/shapeok.txt` accounts for, where the port writes out what
+HOL4 says with a name (`tools/stmtshape.py`).  The last of those
+is what found that the port read the `~0w` of HOL4 (the word of
+all ones) as the negation of a number._
 
 - **A theorem is a cheat of its own.**  `cake_theorem name mkterm
   tac` (`ml/lib/theorem.ml`) reads the statement in a function,
@@ -97,6 +117,13 @@ the prompt of the toplevel as far as the scripts are concerned._
   definitions of HOL4's core theories that the statements use
   (`transitive`, `StrongLinearOrder`, `BAG_IMAGE`, `f_o_f`,
   `FUN_REL`, `RPROD`, `BIT`, `COMPL`, `AFUPDKEY`, `surj`, ...).
+  The last gaps of it are closed as well (`PENDING.md` has the
+  table): `ml/lib/path.ml` is the part of HOL4's `pathTheory`
+  that the two statements of `misc` about a path need, and
+  `w2s` and `word_to_hex_string` are at the end of the port's
+  `ASCIInumbers`, because HOL4 has them in its words theory and
+  the hand written words layer of the port is loaded before
+  `ASCIInumbers` -- they need its `n2s`.
 
 _What is left of phase two:_
 
