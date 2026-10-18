@@ -1922,6 +1922,18 @@ let hol4_numeral_form cname =
   the_interface :=
     !the_interface @ [("&",(cname,get_const_type cname))];;
 
+(* An overload of HOL4 that it sends to the back of the resolution
+   order (send_to_back_overload), so that the constant of HOL Light
+   keeps its place in front of it: the <= of two bags is HOL4's
+   SUB_BAG and the <= of two numbers is still the one of numbers.
+   The interface of HOL Light is tried from the front, so such an
+   overload goes at the end of it. *)
+
+let hol4_overload_last name cname =
+  (try make_overloadable name `:A` with Failure _ -> ());
+  the_interface :=
+    !the_interface @ [(name,(cname,get_const_type cname))];;
+
 (* The accessors of a record field that several record types have
    are overloaded with the name of the field (CLAUDE.md), which is
    a name that HOL4 does not have a constant of: there a field is

@@ -13,6 +13,16 @@ let BAG_INN = new_definition
 let SUB_BAG = new_definition
   `SUB_BAG b1 (b2:A->num) <=> !x n. BAG_INN x n b1 ==> BAG_INN x n b2`;;
 
+let PSUB_BAG = new_definition
+  `PSUB_BAG b1 (b2:A->num) <=> SUB_BAG b1 b2 /\ ~(b1 = b2)`;;
+
+(* HOL4 overloads <= and < with these, and sends them to the back
+   of the resolution order, so that the <= of two numbers is still
+   the one of numbers (bagScript.sml:599-602) *)
+
+hol4_overload_last "<=" "SUB_BAG";;
+hol4_overload_last "<" "PSUB_BAG";;
+
 let BAG_IN = new_definition
   `BAG_IN (e:A) b <=> BAG_INN e 1 b`;;
 
