@@ -67,6 +67,19 @@ preface of such a file says), and the theorems of it that a proof
 of phase three needs are proved when that proof needs them.  The
 10,613 are the theorems of the CakeML sources.
 
+# Statements that the port cannot read yet
+
+Of the 10,128 statements of the port the run of 20:17 could not
+read 100, and the round after it worked them down (`PLAN.md` says
+what the classes were).  What is left after that round, and what
+each of them needs, is what the next run says; the ones that are
+known to need more than a reading of the sources are:
+
+| statement | what it needs |
+|---|---|
+| four of `linear_scanProof` (`get_intervals_beg_less_end` and the three about `get_intervals_ct_monad`) | a numeral under HOL4's `the` beside a variable whose type is an `int` map is an integer (`the 0 (lookup r beg_in)`), which the table of the integer arguments of a constant does not say: it says which arguments *are* integers, not which hold a map of them |
+| `bvi_tmcProof$evaluate_cb`, `clos_to_bvlProof$do_build_const_thm`, `source_to_flatProof$compile_correct` and a handful more | a session with the port in it to bisect (`tools/bin/diagparts`), because HOL Light says only "overload resolution": no assignment of constants to the names of the statement fits, and which name is the one that does not is what the parts say |
+
 # Definitions that the port assumes with a free variable
 
 Fifteen of the definitions that `ml/CHEATS.md` lists are assumed
