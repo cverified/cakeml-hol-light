@@ -1,11 +1,19 @@
 # Theorems whose statement the port does not have
 
 Phase two states every theorem of the sources with its name, its
-attributes and its statement (`CLAUDE.md`).  Two kinds it cannot
-state, and for each of them the port has a comment that points at
-the lines of the source and names the theorem:
+attributes and its statement (`CLAUDE.md`).  Of the 10,688
+theorems of the 270 sources the port states 10,137 and points at
+551 with a comment that names them:
 
-- **479 theorems that HOL4 states as the value of an ML
+| | stated | a pointer |
+|---|---|---|
+| `Theorem` (and `Triviality`) | 10,091 | 43 |
+| `ThmValue` (the value of an ML expression) | 12 | 467 |
+| a theorem that ML code states (`Q.prove`) | 34 | 41 |
+
+What the 551 are, and why the port cannot state them:
+
+- **467 theorems that HOL4 states as the value of an ML
   expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
   foo_def`, `Theorem bar = SIMP_RULE bool_ss [] baz`, `Theorem
   baz = theorem"baz_ind"`).  The statement is not in the source:
@@ -14,6 +22,10 @@ the lines of the source and names the theorem:
   three, where it has the theorem that the expression starts from
   and HOL Light's own rules to apply, but none of it is a
   statement that phase two can read off the source.
+- **41 theorems that ML code states as the value of a rule
+  applied to another one** (`val foo = Q.prove(...) |> SIMP_RULE
+  ...`, `save_thm("foo", th)`): the same case, with the statement
+  of the theorem that the rule starts from in the source.
 - **three theorems whose statement is an ML expression**:
   `word_to_stackProof$comp_correct`,
   `clos_to_bvlProof$not_isClos` and
