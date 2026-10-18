@@ -643,33 +643,51 @@ CakeML theories that instantiate the compiler for one concrete
 target, the basis library program with the proof producing
 translator and characteristic formulae, and Pancake.
 
-The thirteen theories of `tools/excluded.txt` are the encoder of
-each of the six targets and the configuration that has one in it.
-An encoder needs the machine model of its target, which is a
-theory of HOL4's `examples/l3-machine-code` (`x64_step`,
-`arm8_step`, ...) and not part of the CakeML sources; the one
-model that the CakeML sources do have, `ag32` (the Silver ISA),
-is a file that L3 generated, and it builds its types and its
-definitions by calling the ML of HOL4's `Import` library, which a
-source level port cannot follow.  `compiler$parse_target_64` and
-`parse_target_32` only pass the twelve constants of those
-theories on, so the port declares them (`PENDING.md`).  The
-theory that exports the code of a target needs only `export`, so
-those six are ported.
+The seven theories of `tools/excluded.txt` are the encoder of
+each of the six targets and the one machine model that the CakeML
+sources do have.  An encoder needs the machine model of its
+target, which is a theory of HOL4's `examples/l3-machine-code`
+(`x64_step`, `arm8_step`, ...) and not part of the CakeML
+sources; the model that the sources do have, `ag32` (the Silver
+ISA), is a file that L3 generated, and it builds its types and
+its definitions by calling the ML of HOL4's `Import` library,
+which a source level port cannot follow.  Of each of those
+theories `compiler$parse_target_64` and `parse_target_32` pass on
+one constant, `<target>_config`, the asm configuration, whose
+`encode` field is the encoder, so the port declares those six
+(`PENDING.md`).
+
+What a concrete target has besides its encoder is in the port:
+the configuration of the backend and the register names
+(`compiler/backend/<target>/<target>_configScript.sml`, which
+needs nothing of the machine model) and the theory that exports
+its code (which needs only `export`).
 
 Of the HOL4 library theories (in `ml/lib/`) only the definitions
 that the port needs are ported, not the whole theories.
 
-The five definitions of `compiler` that compile Pancake
-(`compile_pancake`, `compile_pancake_64`, `compile_pancake_32`
-and the two command line drivers `full_compile_64` and
-`full_compile_32`, which compile Pancake when the flag says so)
-are in the port all the same, because they are definitions of a
-ported source: the port declares the three entry points that they
-go through (`panPtreeConversion$parse_topdecs_to_ast`,
+The three definitions of `compiler` that compile Pancake
+(`compile_pancake`, `compile_pancake_64` and
+`compile_pancake_32`) are in the port all the same, because they
+are definitions of a ported source: the port declares the three
+entry points that they go through
+(`panPtreeConversion$parse_topdecs_to_ast`,
 `panStatic$static_check` and `pan_passes$pan_compile_tap`) and
 has what their type is made of -- `panLang`, the abstract syntax
 of Pancake, whose ancestors the port has anyway, the datatype of
 the static errors and the `error` of `errorMonad`.
 `compiler$compile`, which the correctness theorem is about, does
 not use them.
+
+The two command line drivers of the compiler binary
+(`full_compile_64` and `full_compile_32`, which call those three
+when the flag says so) are the only two definition blocks of a
+ported source that the port does not have, and for another
+reason: they read the input of the binary and write its output,
+so their type is the file system of the basis library
+(`fsFFI$IO_fs`), and the three constants that they use
+(`add_stdout`, `add_stderr`, `fastForwardFD`) are of `fsFFIProps`
+and of `TextIOProof`, whose ancestors are the characteristic
+formulae and the proof producing translator.  That is the part of
+CakeML that the scope of the port leaves out, and
+`compilerProof$compile_correct` does not mention these two.

@@ -163,12 +163,16 @@ Not ported (and why):
 
 - the L3 instruction set models (`x64_step`, `arm8_step`,
   `arm_step`, `mips_step`, `riscv_step`) and the CakeML
-  theories that instantiate the compiler for a concrete
-  target (`compiler/encoders/*/..._target`,
-  `compiler/backend/*/..._config`, `export_*`, `ag32`).
-  These are machine-generated HOL4 models of real processors,
-  they live outside CakeML, and the main correctness theorem
-  is generic in the target (`mc`, `asm_config`).
+  theories that encode the instructions of a concrete target
+  with one of them (`compiler/encoders/*/..._target`, and
+  `ag32`, which is L3's model of the Silver ISA).  These are
+  machine-generated HOL4 models of real processors, they live
+  outside CakeML, and the main correctness theorem is generic
+  in the target (`mc`, `asm_config`).  What the port does have
+  of a concrete target is what needs no model of it: the
+  configuration of the backend and the register names
+  (`compiler/backend/*/..._config`) and the theory that
+  exports its code (`export_*`).
 - the basis library program (`basisProg`), the proof-producing
   translator and characteristic formulae (`translator/`,
   `characteristic/`): `compiler$compile` takes the prelude as
