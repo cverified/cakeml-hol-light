@@ -135,13 +135,32 @@ def ml_terms(text):
                          (m.group(2), m.group(4)))]
   out += [(m.group(1), '(%s:%s)' % (m.group(2), m.group(3).strip()))
           for m in ML_MKVAR.finditer(text)]
+  # a variable that ML code makes with the type of another one
+  # (flat_elimProof's state is a mk_var of the type of its s, and
+  # source_to_flatProof's s1_i1 of the type of its s_i1)
+  tyof = {}
+  for nm, txt in out:
+    m = re.match(r"^\(?\s*([A-Za-z0-9_']+)\s*:\s*(.*?)\)?$",
+                 txt.strip(), re.S)
+    if m: tyof[nm] = m.group(2).strip()
+  for _ in range(3):
+    for m in ML_MKVAR_OF.finditer(text):
+      ty = tyof.get(m.group(3))
+      if ty is None: continue
+      out.append((m.group(1), '(%s:%s)' % (m.group(2), ty)))
+      tyof[m.group(1)] = ty
   return out
 
 
 ML_PROVE = re.compile(r"val\s+([A-Za-z0-9_']+)\s*=\s*(?:Q\.)?prove\s*"
                      r"\(\s*(``|`|\u201c)", re.S)
 
-QEND = {'`': '`', '``': '``', '\u201c': '\u201d'}
+ML_MKVAR_OF = re.compile(
+  r'val\s+([A-Za-z0-9_\']+)\s*=\s*mk_var\s*\(\s*"([^"]+)"\s*,'
+  r'\s*type_of\s+([A-Za-z0-9_\']+)\s*\)', re.S)
+
+
+QEND = {'`': '`', '``': '``', '\\u201c': '\\u201d'}
 
 
 def ml_theorems(text):
@@ -215,6 +234,15 @@ def thmvalue_alias(text):
      Theorem foo = bar), if its value is just a name"""
   m = ALIAS_VALUE.search(text)
   return m.group(1) if m else None
+
+
+def ml_var_types(text):
+  """the variables that ML code makes with the type of another one
+     (name, the name of the variable, the other name): the other
+     one may be in an earlier ML block of the source, which
+     tools/port.py knows from the values it has kept"""
+  return [(m.group(1), m.group(2), m.group(3))
+          for m in ML_MKVAR_OF.finditer(text)]
 
 
 def hol_reln(text):

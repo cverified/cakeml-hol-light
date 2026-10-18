@@ -667,6 +667,23 @@ hand, and two constants are declared without a value because HOL4
 computes them with ML code; `PENDING.md` lists them all, with the
 reason.
 
+## The order in which the port is loaded
+
+The files of the port are loaded in the order of
+`tools/load.txt` (what `tools/bin/runall` does), and a file's
+`needs` lines name what it needs, so loading one file loads its
+own closure.  One thing depends on the order all the same: a
+definition whose constant has the **name of its own theory**
+keeps that name (`evaluate$evaluate` is `evaluate` in the port,
+not `evaluate_evaluate`, and so are `semantics`, `term`, `walk`
+and `asm`), and the other theories that define a constant of that
+name overload it.  The definition is read before those overloads
+exist, which the load order gives; read after them, the name of
+the constant that it defines would be one of the overloads and the
+definition would not typecheck.  So a file of the port is loaded
+in the order of the port, which is what a run does and what every
+`needs` chain gives.
+
 ## The scope of the dependency closure
 
 A source may have more than one `Ancestors` block: the second one

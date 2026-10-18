@@ -621,6 +621,15 @@ class Porter:
           # the ML values that the file antiquotes into its terms
           for nm, v in hol4.ml_terms(b.text):
             hterm.ANTIQ[nm] = v
+          # a variable that the ML code makes with the type of a
+          # value of an earlier block (data_to_word_gcProof's s1
+          # has the type of its s, which is in another block)
+          for nm, var, other in hol4.ml_var_types(b.text):
+            m = re.match(r"^\(?\s*[A-Za-z0-9_']+\s*:\s*(.*?)\)?$",
+                         (hterm.ANTIQ.get(other) or '').strip(),
+                         re.S)
+            if m:
+              hterm.ANTIQ[nm] = '(%s:%s)' % (var, m.group(1))
           # and the ones that ML code computes, which the
           # overrides give as the expression that HOL4 evaluates
           for (t, nm), v in overrides.ANTIQUOTE.items():
