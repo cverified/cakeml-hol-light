@@ -1699,6 +1699,49 @@ cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
 # a definition of the port that goes after the one of the source
 # that it belongs behind
 EXTRA_AFTER = {
+  # HOL4's Datatype defines the case constant of every type it
+  # makes (foo_CASE v f1 ... fn), which the statements of the
+  # sources use; the port's define_datatype does not, so the four
+  # types whose case constant a statement needs have it here.  The
+  # ones of the types that HOL Light has are in ml/lib/hol4.ml
+  # (list_CASE, option_CASE, sum_CASE, pair_CASE).
+  ('term', 'pair_count_def'): r"""
+(* HOL4 termScript.sml: the case constant that its Datatype makes *)
+
+let term_CASE = new_recursive_definition term_RECURSION
+  `(term_CASE (term_Var n) vf pf cf = vf n) /\
+   (term_CASE (term_Pair t1 t2) vf pf cf = pf t1 t2) /\
+   (term_CASE (term_Const c) vf pf cf = cf c)`;;
+""",
+  ('infer_t', 'id_to_string_def'): r"""
+(* HOL4 infer_tScript.sml: the case constant that its Datatype
+   makes *)
+
+let infer_t_CASE = new_recursive_definition infer_t_RECURSION
+  `(infer_t_CASE (Infer_Tvar_db n) dbf appf uvf = dbf n) /\
+   (infer_t_CASE (Infer_Tapp its n) dbf appf uvf = appf its n) /\
+   (infer_t_CASE (Infer_Tuvar n) dbf appf uvf = uvf n)`;;
+""",
+  ('reg_alloc', 'st_ex_FOREACH_def'): r"""
+(* HOL4 reg_allocScript.sml: the case constant that its Datatype
+   makes for the tag of a register *)
+
+let reg_alloc_tag_CASE =
+  new_recursive_definition reg_alloc_tag_RECURSION
+  `(reg_alloc_tag_CASE (Fixed n) ff af sf = ff n) /\
+   (reg_alloc_tag_CASE Atemp ff af sf = af) /\
+   (reg_alloc_tag_CASE Stemp ff af sf = sf)`;;
+""",
+  ('unify', 'apply_kclkont_def'): r"""
+(* HOL4 unifyScript.sml: the case constant that its Datatype makes
+   for the continuation of the walk *)
+
+let kclkont_CASE = new_recursive_definition kclkont_RECURSION
+  `(kclkont_CASE (DBk n) dbf appf uvf consf = dbf n) /\
+   (kclkont_CASE (APPk its n) dbf appf uvf consf = appf its n) /\
+   (kclkont_CASE (UVk n) dbf appf uvf consf = uvf n) /\
+   (kclkont_CASE (CONSk its n) dbf appf uvf consf = consf its n)`;;
+""",
   # HOL4 has w2s and word_to_hex_string in its words theory, which
   # the port cannot: the hand written words layer of the port is
   # loaded before this theory and the two need its n2s.  The

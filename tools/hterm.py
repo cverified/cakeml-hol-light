@@ -1143,12 +1143,23 @@ class Ctx:
     if ty == base: return None
     return ty + '_size'
 
+  def case_name(self, n, thy=None):
+    """the name of the case constant of a datatype, which HOL4
+       calls after the type (its tag_CASE is the case constant of
+       reg_alloc's tag, which the port calls reg_alloc_tag)"""
+    if not n.endswith('_CASE'): return None
+    base = n[:-len('_CASE')]
+    if not base: return None
+    ty = self.tyname(base if thy is None else thy + '$' + base)
+    if ty == base: return None
+    return ty + '_CASE'
+
   def name(self, n):
     if '$' in n:
       thy, n2 = n.split('$')
       if (thy, n2) in self.names or n2 in self.names:
         return self.names.get((thy, n2), self.names.get(n2, n2))
-      return self.size_name(n2, thy) or n2
+      return self.size_name(n2, thy) or self.case_name(n2, thy) or n2
     if n in NAME_MAP: return NAME_MAP[n]
     # the block that defines a name uses the name of the constant,
     # and everything else the name that HOL4 overloads with it
@@ -1167,6 +1178,12 @@ class Ctx:
         and n not in self.names and n not in self.defnames):
       sz = self.size_name(n)
       if sz: return sz
+    # the case constant of a datatype follows the name of the type
+    # as well (HOL4's tag_CASE is reg_alloc_tag_CASE here)
+    if (n.endswith('_CASE') and (self.thy, n) not in self.names
+        and n not in self.names and n not in self.defnames):
+      cs = self.case_name(n)
+      if cs: return cs
     return self.names.get((self.thy, n), self.names.get(n, n))
 
   def tyname(self, n):
