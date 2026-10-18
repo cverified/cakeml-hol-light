@@ -149,7 +149,8 @@ let fstep_def = cake_define
                    (NONE,d) :: l) else (t,b,(d,s) :: l)))
        t)`;;
 
-(* HOL4 parmoveScript.sml:547: ML code, not ported *)
+(* HOL4 parmoveScript.sml:547: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 parmoveScript.sml:610-638: the tactic that proves the
    termination *)

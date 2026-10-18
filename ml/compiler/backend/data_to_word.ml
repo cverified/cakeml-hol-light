@@ -3040,7 +3040,8 @@ let compile_0_def = cake_define
 
 (* compute bignum call graph *)
 
-(* HOL4 data_to_wordScript.sml:2856-2867: ML code, not ported *)
+(* HOL4 data_to_wordScript.sml:2856-2867: the ML values that the
+   definitions below antiquote *)
 
 let AnyArith_call_tree_def = cake_define
   `AnyArith_call_tree =

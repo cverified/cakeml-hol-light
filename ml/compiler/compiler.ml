@@ -74,7 +74,8 @@ let print_option_def = cake_define
          strcat x y) ((\x y. strcat x y) h (implode " ")) y) (implode
          "\n"))`;;
 
-(* HOL4 compilerScript.sml:136-145: ML code, not ported *)
+(* HOL4 compilerScript.sml:136-145: the ML values that the
+   definitions below antiquote *)
 
 let current_build_info_str_def = cake_define
   `current_build_info_str =

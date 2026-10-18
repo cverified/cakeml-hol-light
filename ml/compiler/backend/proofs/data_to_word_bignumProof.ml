@@ -68,7 +68,8 @@ let arith_code_def = cake_define
      Seq (Assign 6 (wordLang_Const (n2w (4 * index))))
        (Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
 
-(* HOL4 data_to_word_bignumProofScript.sml:1145: ML code, not ported *)
+(* HOL4 data_to_word_bignumProofScript.sml:1145: the ML values that
+   the definitions below antiquote *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:1147: ML code, not ported *)
 

@@ -355,6 +355,8 @@ let cond_call_compile_inc_def = cake_define
 
 (* HOL4 clos_callScript.sml:464: ML code, not ported *)
   (* example code *)
-(* HOL4 clos_callScript.sml:466-469: ML code, not ported *)
+(* HOL4 clos_callScript.sml:466-469: the ML values that the
+   definitions below antiquote *)
   (* compiler evaluation *)
-(* HOL4 clos_callScript.sml:471-474: ML code, not ported *)
+(* HOL4 clos_callScript.sml:471-474: the ML values that the
+   definitions below antiquote *)

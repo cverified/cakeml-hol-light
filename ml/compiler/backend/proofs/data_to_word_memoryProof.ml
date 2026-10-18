@@ -45,7 +45,8 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 data_to_word_memoryProofScript.sml:28: the overload
    good_dimindex, which the port expands *)
 
-(* HOL4 data_to_word_memoryProofScript.sml:30-32: ML code, not ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:30-32: the ML values that
+   the definitions below antiquote *)
 
 (* MutBlock payloads have the shape l ++ [c] ++ r, which simplifiers
    split
@@ -396,8 +397,8 @@ let evaluated_thunk_ptr_def = cake_define
   `evaluated_thunk_ptr refs n <=> (?v. lookup n refs = SOME (Thunk
   Evaluated v))`;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:725-730: ML code, not
-   ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:725-730: the ML values
+   that the definitions below antiquote *)
 
 let gc_inline_rel = cake_inductive
   `(gc_inline_rel inline h1 x x) /\
@@ -930,8 +931,8 @@ let copy_list_def = cake_define
 
 (* HOL4 data_to_word_memoryProofScript.sml:11090: ML code, not ported *)
 
-(* HOL4 data_to_word_memoryProofScript.sml:11655-11657: ML code, not
-   ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:11655-11657: the ML values
+   that the definitions below antiquote *)
 
 let hide_memory_rel_def = cake_define
   `hide_memory_rel = memory_rel`;;
@@ -948,8 +949,8 @@ let hide_heap_in_memory_store_def = cake_define
    header, whose bits 2 and 3 are both clear, so the conclusion below
      fails *)
 
-(* HOL4 data_to_word_memoryProofScript.sml:12767-12769: ML code, not
-   ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:12767-12769: the ML values
+   that the definitions below antiquote *)
 
 let word_cmp_res_def = cake_define
   `word_cmp_res i (j:int) =

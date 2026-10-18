@@ -26,7 +26,8 @@ let arm7_names_def = cake_define
       insert 10 12 o
       insert 14 13) LN:num spt)`;;
 
-(* HOL4 arm7_configScript.sml:35-41: ML code, not ported *)
+(* HOL4 arm7_configScript.sml:35-41: the ML values that the
+   definitions below antiquote *)
 
 let arm7_backend_config_def = cake_define
   `arm7_backend_config =

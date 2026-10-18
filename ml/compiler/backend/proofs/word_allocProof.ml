@@ -148,7 +148,8 @@ gc doesn't touch other components*)
 
 (*Less powerful form*)
 
-(* HOL4 word_allocProofScript.sml:657: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:657: the ML values that the
+   definitions below antiquote *)
 
 (*Main proof of liveness theorem starts here*)
 (* HOL4 word_allocProofScript.sml:734-742: code that the source has
@@ -403,7 +404,8 @@ Also, the cases are basically copy pasted... *)
 
 (* HOL4 word_allocProofScript.sml:5857-5860: ML code, not ported *)
 
-(* HOL4 word_allocProofScript.sml:5876: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:5876: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_allocProofScript.sml:5878-5892: ML code, not ported *)
 

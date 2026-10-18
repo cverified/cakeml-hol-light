@@ -279,7 +279,8 @@ let mk_code_g_def = cake_define
 
 (* compiler correctness *)
 
-(* HOL4 clos_callProofScript.sml:2429: ML code, not ported *)
+(* HOL4 clos_callProofScript.sml:2429: the ML values that the
+   definitions below antiquote *)
 
 (*
 max_print_depth := 8

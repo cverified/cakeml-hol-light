@@ -33,13 +33,17 @@ hol4_overload "++" "OPTION_CHOICE";;
 
 (* TODO: move*)
 
-(* HOL4 fromSexpScript.sml:103-108: ML code, not ported *)
+(* HOL4 fromSexpScript.sml:103-108: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 fromSexpScript.sml:110-115: ML code, not ported *)
+(* HOL4 fromSexpScript.sml:110-115: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 fromSexpScript.sml:117-122: ML code, not ported *)
+(* HOL4 fromSexpScript.sml:117-122: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 fromSexpScript.sml:124-129: ML code, not ported *)
+(* HOL4 fromSexpScript.sml:124-129: the ML values that the
+   definitions below antiquote *)
 
 (* end TODO *)
 

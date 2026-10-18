@@ -375,7 +375,8 @@ let set_sorted_moves_def = cake_define
    reg_alloc makes, which the port uses *)
 hol4_overload "failwith" "raise_Fail";;
 
-(* HOL4 linear_scanScript.sml:358-359: ML code, not ported *)
+(* HOL4 linear_scanScript.sml:358-359: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 makes the manipulators of the fixed size arrays with
    ML code (define_MFarray_manip_funs of ml_monadBaseLib);

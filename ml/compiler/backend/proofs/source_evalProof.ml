@@ -100,7 +100,8 @@ hol4_overload "env_rel" "source_evalProof_env_rel";;
 
 (* various trivia *)
 
-(* HOL4 source_evalProofScript.sml:208: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:208: the ML values that the
+   definitions below antiquote *)
 
 (* first step. switch over to recording semantics and move envs
    out of Env values and into the state *)
@@ -203,7 +204,8 @@ let match_result_rel_def = cake_define
   Match_type_error | Match x -> (?y. mr2 = Match y /\ R x y))`;;
 hol4_overload "match_result_rel" "source_evalProof_match_result_rel";;
 
-(* HOL4 source_evalProofScript.sml:373: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:373: the ML values that the
+   definitions below antiquote *)
 
 let abort_def = cake_define
   `source_evalProof_abort r <=> (match r with Rerr (Rabort a) -> T |

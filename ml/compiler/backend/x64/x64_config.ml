@@ -30,12 +30,15 @@ let x64_names_def = cake_define
       insert 14 4 o
       insert 15 5) LN:num spt)`;;
 
-(* HOL4 x64_configScript.sml:41-43: ML code, not ported *)
+(* HOL4 x64_configScript.sml:41-43: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 x64_configScript.sml:45-46: ML code, not ported *)
+(* HOL4 x64_configScript.sml:45-46: the ML values that the
+   definitions below antiquote *)
 (* perf_calls=T yields an unverified binary suitable for
    `perf record --call-graph fp` profiling (x64 only). *)
-(* HOL4 x64_configScript.sml:49-50: ML code, not ported *)
+(* HOL4 x64_configScript.sml:49-50: the ML values that the
+   definitions below antiquote *)
 
 let x64_backend_config_def = cake_define
   `x64_backend_config =

@@ -82,9 +82,11 @@ let interp_assum_def = cake_define
            state_clock t1)) t1) =
          (res,t2) /\ clos_interpProof_state_rel s2 t2))`;;
 
-(* HOL4 clos_interpProofScript.sml:171-172: ML code, not ported *)
+(* HOL4 clos_interpProofScript.sml:171-172: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 clos_interpProofScript.sml:174-175: ML code, not ported *)
+(* HOL4 clos_interpProofScript.sml:174-175: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 clos_interpProofScript.sml:177-179: ML code, not ported *)
 

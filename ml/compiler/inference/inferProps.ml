@@ -30,7 +30,8 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* TODO: update *)
 
-(* HOL4 inferPropsScript.sml:502-507: ML code, not ported *)
+(* HOL4 inferPropsScript.sml:502-507: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 inferPropsScript.sml:509-511: ML code, not ported *)
 
@@ -38,7 +39,8 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* HOL4 inferPropsScript.sml:521-523: ML code, not ported *)
 
-(* HOL4 inferPropsScript.sml:539-550: ML code, not ported *)
+(* HOL4 inferPropsScript.sml:539-550: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 inferPropsScript.sml:565-567: ML code, not ported *)
 

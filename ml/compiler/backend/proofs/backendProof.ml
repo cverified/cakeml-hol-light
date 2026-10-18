@@ -229,11 +229,13 @@ let config_tuple1_def = cake_define
      FST (clos_to_bvl_config_call_state (backend_config_clos_conf
        c)),config_tuple2 c)`;;
 
-(* HOL4 backendProofScript.sml:404-409: ML code, not ported *)
+(* HOL4 backendProofScript.sml:404-409: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 backendProofScript.sml:411-412: ML code, not ported *)
 
-(* HOL4 backendProofScript.sml:414-417: ML code, not ported *)
+(* HOL4 backendProofScript.sml:414-417: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 backendProofScript.sml:583-586: ML code, not ported *)
 

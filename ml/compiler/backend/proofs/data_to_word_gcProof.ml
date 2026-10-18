@@ -72,7 +72,8 @@ let flat_def = cake_define
         join_env env vs ++ flat xs ys
         | (_11,_12) -> []`;;
 
-(* HOL4 data_to_word_gcProofScript.sml:583: ML code, not ported *)
+(* HOL4 data_to_word_gcProofScript.sml:583: the ML values that the
+   definitions below antiquote *)
 
 let can_select_def = cake_define
   `can_select k n w <=> ((word_bits (k - 1) n) (w << n) = w)`;;
@@ -208,7 +209,8 @@ let limits_inv_def = cake_define
      lims = c_has_fp_ops /\ limits_has_fp_tops
      lims = c_has_fp_tern`;;
 
-(* HOL4 data_to_word_gcProofScript.sml:4501: ML code, not ported *)
+(* HOL4 data_to_word_gcProofScript.sml:4501: the ML values that the
+   definitions below antiquote *)
 
 let state_rel_thm = cake_define
   `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
@@ -319,7 +321,8 @@ let loc_ok_def = cake_define
         (Loc m n:semanticPrimitives_v) -> (n = 0)
       | _24 -> T`;;
 
-(* HOL4 data_to_word_gcProofScript.sml:6232: ML code, not ported *)
+(* HOL4 data_to_word_gcProofScript.sml:6232: the ML values that the
+   definitions below antiquote *)
 
 let loc_merge_def = cake_define_list
   [`loc_merge [] ys = []`;

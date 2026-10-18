@@ -1616,7 +1616,8 @@ let bvl_to_strs_def = cake_define
                     display_to_str_tree o
                     bvl_fun_to_display names) xs`;;
 
-(* HOL4 presLangScript.sml:1513-1521: ML code, not ported *)
+(* HOL4 presLangScript.sml:1513-1521: the ML values that the
+   definitions below antiquote *)
 
 let bvi_to_strs_def = cake_define
   `bvi_to_strs names xs =
@@ -1624,7 +1625,8 @@ let bvi_to_strs_def = cake_define
                     display_to_str_tree o
                     bvi_fun_to_display names) xs`;;
 
-(* HOL4 presLangScript.sml:1530-1538: ML code, not ported *)
+(* HOL4 presLangScript.sml:1530-1538: the ML values that the
+   definitions below antiquote *)
 
 let data_to_strs_def = cake_define
   `data_to_strs names xs =
@@ -1632,7 +1634,8 @@ let data_to_strs_def = cake_define
                     display_to_str_tree o
                     data_fun_to_display names) xs`;;
 
-(* HOL4 presLangScript.sml:1547-1555: ML code, not ported *)
+(* HOL4 presLangScript.sml:1547-1555: the ML values that the
+   definitions below antiquote *)
 
 let word_to_strs_def = cake_define
   `word_to_strs names xs =
@@ -1652,7 +1655,8 @@ let lab_to_strs_def = cake_define
                     display_to_str_tree o
                     lab_fun_to_display names) xs`;;
 
-(* HOL4 presLangScript.sml:1578-1586: ML code, not ported *)
+(* HOL4 presLangScript.sml:1578-1586: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 presLangScript.sml:1588-1600: code that the source has in a
    comment *)

@@ -16,7 +16,8 @@ needs "semantics/ast.ml";;
 let ag32_names_def = cake_define
   `ag32_names = (LN:num spt)`;;
 
-(* HOL4 ag32_configScript.sml:17-23: ML code, not ported *)
+(* HOL4 ag32_configScript.sml:17-23: the ML values that the
+   definitions below antiquote *)
 
 let ag32_backend_config_def = cake_define
   `ag32_backend_config =

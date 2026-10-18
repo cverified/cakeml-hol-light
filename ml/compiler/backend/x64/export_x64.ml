@@ -123,11 +123,14 @@ let ffi_asm_def = cake_define_list
            (implode "\n")]) (export_x64_ffi_asm ffis)`];;
 hol4_overload "ffi_asm" "export_x64_ffi_asm";;
 
-(* HOL4 export_x64Script.sml:87-115: ML code, not ported *)
+(* HOL4 export_x64Script.sml:87-115: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_x64Script.sml:117-119: ML code, not ported *)
+(* HOL4 export_x64Script.sml:117-119: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_x64Script.sml:121-122: ML code, not ported *)
+(* HOL4 export_x64Script.sml:121-122: the ML values that the
+   definitions below antiquote *)
 
 let windows_ffi_asm_def = cake_define_list
   [`windows_ffi_asm [] = misc_Nil`;
@@ -141,13 +144,17 @@ let windows_ffi_asm_def = cake_define_list
            (implode "     jmp     cdecl(ffi"); ffi; (implode ")\n");
            (implode "\n")]) (windows_ffi_asm ffis)`];;
 
-(* HOL4 export_x64Script.sml:137-160: ML code, not ported *)
+(* HOL4 export_x64Script.sml:137-160: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_x64Script.sml:162-164: ML code, not ported *)
+(* HOL4 export_x64Script.sml:162-164: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_x64Script.sml:166-167: ML code, not ported *)
+(* HOL4 export_x64Script.sml:166-167: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_x64Script.sml:169-235: ML code, not ported *)
+(* HOL4 export_x64Script.sml:169-235: the ML values that the
+   definitions below antiquote *)
 
 let export_func_def = cake_define
   `export_x64_export_func appl (name,label,start',len) =

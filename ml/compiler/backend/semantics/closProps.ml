@@ -396,8 +396,10 @@ let check_closures_def = cake_define
 
 (* HOL4 closPropsScript.sml:1512-1516: ML code, not ported *)
 
-(* HOL4 closPropsScript.sml:1565: ML code, not ported *)
-(* HOL4 closPropsScript.sml:1669-1671: ML code, not ported *)
+(* HOL4 closPropsScript.sml:1565: the ML values that the definitions
+   below antiquote *)
+(* HOL4 closPropsScript.sml:1669-1671: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 closPropsScript.sml:1673-1685: ML code, not ported *)
 

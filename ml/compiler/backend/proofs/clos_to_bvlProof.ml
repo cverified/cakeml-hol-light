@@ -320,7 +320,8 @@ hol4_overload "state_rel" "clos_to_bvlProof_state_rel";;
 
 (* semantic functions respect relation *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1490: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1490: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 clos_to_bvlProofScript.sml:1527-1528: ML code, not ported *)
 
@@ -334,7 +335,8 @@ let eq_res_def = cake_define
         Eq_val b -> Rval [bvlSem_Boolv b]
       | _5 -> Rerr (Rabort Rtype_error)`;;
 
-(* HOL4 clos_to_bvlProofScript.sml:1864: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1864: the ML values that the
+   definitions below antiquote *)
 
 (* compiler correctness *)
 
@@ -374,7 +376,8 @@ let get_cl_env_def = cake_define
 
 (* HOL4 clos_to_bvlProofScript.sml:2209-2240: ML code, not ported *)
 
-(* HOL4 clos_to_bvlProofScript.sml:2277: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2277: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 clos_to_bvlProofScript.sml:2279-2285: ML code, not ported *)
 
@@ -431,7 +434,8 @@ let dest_closure'_def = cake_define
 
 (* HOL4 clos_to_bvlProofScript.sml:2788-2812: ML code, not ported *)
 
-(* HOL4 clos_to_bvlProofScript.sml:2831: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2831: the ML values that the
+   definitions below antiquote *)
 
 
 (* HOL4 clos_to_bvlProofScript.sml:2834: ML code, not ported *)
@@ -529,9 +533,11 @@ let clos_state_cc_def = cake_define
   cc:'a#'b->closLang_exp list#(num#num#closLang_exp) list->(word8
   list#word64 list#'a#'b) option)`;;
 
-(* HOL4 clos_to_bvlProofScript.sml:7118-7122: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:7118-7122: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 clos_to_bvlProofScript.sml:7179: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:7179: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 clos_to_bvlProofScript.sml:7285-7293: ML code, not ported *)
 
@@ -550,7 +556,8 @@ let compile_inc_post_kcompile_def = cake_define
 
 (* HOL4 clos_to_bvlProofScript.sml:7498: ML code, not ported *)
 
-(* HOL4 clos_to_bvlProofScript.sml:7500: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:7500: the ML values that the
+   definitions below antiquote *)
 
 let syntax_oracle_ok_def = cake_define
   `clos_to_bvlProof_syntax_oracle_ok c c' es co <=>
@@ -614,7 +621,8 @@ let can_extract_def = cake_define
          exps = Op t (closLang_IntOp (closLang_Const (&n))) [] ::
            exps')`;;
 
-(* HOL4 clos_to_bvlProofScript.sml:7965-7972: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:7965-7972: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 clos_to_bvlProofScript.sml:8035-8036: ML code, not ported *)
 

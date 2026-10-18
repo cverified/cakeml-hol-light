@@ -164,7 +164,8 @@ let state_rel_def = cake_define
      good_dimindex (:'a)`;;
 hol4_overload "state_rel" "stack_to_labProof_state_rel";;
 
-(* HOL4 stack_to_labProofScript.sml:926: ML code, not ported *)
+(* HOL4 stack_to_labProofScript.sml:926: the ML values that the
+   definitions below antiquote *)
 
 let result_view_INDUCT,result_view_RECURSION = define_datatype
   "result_view = Vloc (num) (num) | Vcont (num) (num) | Vtimeout | \

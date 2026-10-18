@@ -125,7 +125,8 @@ hol4_overload "compile_oracle" "dataSem_state_compile_oracle";;
 hol4_overload "compile_oracle_fupd"
   "dataSem_state_compile_oracle_fupd";;
 
-(* HOL4 dataSemScript.sml:76-77: ML code, not ported *)
+(* HOL4 dataSemScript.sml:76-77: the ML values that the definitions
+   below antiquote *)
 
 let arch_size_def = cake_define
   `arch_size lims = (if limits_arch_64_bit lims then 64 else 32:num)`;;

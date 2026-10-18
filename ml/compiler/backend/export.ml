@@ -32,7 +32,8 @@ let split16_def = cake_define_try_tac (fun () ->
         let xs2 = DROP 16 xs in
           SmartAppend (f xs1) (split16 f xs2))`;;
 
-(* HOL4 exportScript.sml:22-72: ML code, not ported *)
+(* HOL4 exportScript.sml:22-72: the ML values that the definitions
+   below antiquote *)
 let preamble_def = cake_define
   `preamble = ((MAP (\n. implode (n ++ "\n"))
        [("/* Preprocessor to get around Mac OS, Windows, and" ++

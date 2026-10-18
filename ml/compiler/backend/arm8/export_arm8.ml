@@ -98,13 +98,17 @@ let ffi_asm_def = cake_define_list
            (implode "\n")]) (export_arm8_ffi_asm ffis)`];;
 hol4_overload "ffi_asm" "export_arm8_ffi_asm";;
 
-(* HOL4 export_arm8Script.sml:82-106: ML code, not ported *)
+(* HOL4 export_arm8Script.sml:82-106: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_arm8Script.sml:108-110: ML code, not ported *)
+(* HOL4 export_arm8Script.sml:108-110: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_arm8Script.sml:112-113: ML code, not ported *)
+(* HOL4 export_arm8Script.sml:112-113: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_arm8Script.sml:115-193: ML code, not ported *)
+(* HOL4 export_arm8Script.sml:115-193: the ML values that the
+   definitions below antiquote *)
 
 let export_func_def = cake_define
   `export_arm8_export_func appl (name,label,start',len) =

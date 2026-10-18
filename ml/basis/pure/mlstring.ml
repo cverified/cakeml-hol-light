@@ -16,7 +16,8 @@ needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: toto *)
 
-(* HOL4 mlstringScript.sml:13-14: ML code, not ported *)
+(* HOL4 mlstringScript.sml:13-14: the ML values that the definitions
+   below antiquote *)
 
 (* Defines strings as a separate type from char list. This theory should
    be
@@ -25,7 +26,8 @@ needs "misc/misc.ml";;
 
 let mlstring_INDUCT,mlstring_RECURSION = define_datatype
   "mlstring = implode (string)";;
-(* HOL4 mlstringScript.sml:22: ML code, not ported *)
+(* HOL4 mlstringScript.sml:22: the ML values that the definitions
+   below antiquote *)
 
 (* backwards compatibility: strlit used to be the mlstring constructor
    and

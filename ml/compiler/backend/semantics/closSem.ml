@@ -161,7 +161,8 @@ let v_to_words_def = cake_define
   ns))`;;
 hol4_overload "v_to_words" "closSem_v_to_words";;
 
-(* HOL4 closSemScript.sml:132: ML code, not ported *)
+(* HOL4 closSemScript.sml:132: the ML values that the definitions
+   below antiquote *)
 
 let do_install_def = cake_define
   `closSem_do_install vs (s:('c,'ffi)closSem_state) =

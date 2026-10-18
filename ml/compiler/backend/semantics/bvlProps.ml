@@ -14,7 +14,8 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 bvlPropsScript.sml:14: ML code, not ported *)
+(* HOL4 bvlPropsScript.sml:14: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 bvlPropsScript.sml:34-42: ML code, not ported *)
 

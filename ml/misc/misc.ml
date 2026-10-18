@@ -573,7 +573,8 @@ let bytes_in_mem_def = cake_define_list
 let good_dimindex_def = cake_define
   `good_dimindex (:'a) <=> dimindex (:'a) = 32 \/ dimindex (:'a) = 64`;;
 
-(* HOL4 miscScript.sml:4351-4353: ML code, not ported *)
+(* HOL4 miscScript.sml:4351-4353: the ML values that the definitions
+   below antiquote *)
 
 (* helpful theorems for _size *)
 

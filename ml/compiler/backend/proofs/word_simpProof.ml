@@ -15,7 +15,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_simp.ml";;
 (* HOL4 ancestors outside the port: alist *)
 
-(* HOL4 word_simpProofScript.sml:10: ML code, not ported *)
+(* HOL4 word_simpProofScript.sml:10: the ML values that the
+   definitions below antiquote *)
 
 (** verification of Seq_assoc **)
 

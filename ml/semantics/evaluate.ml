@@ -323,8 +323,11 @@ hol4_overload "evaluate_match" "evaluate_evaluate_match";;
 
 (* store evaluate_def and evaluate_ind in parts *)
 
-(* HOL4 evaluateScript.sml:322-326: ML code, not ported *)
+(* HOL4 evaluateScript.sml:322-326: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 evaluateScript.sml:328-332: ML code, not ported *)
+(* HOL4 evaluateScript.sml:328-332: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 evaluateScript.sml:334-338: ML code, not ported *)
+(* HOL4 evaluateScript.sml:334-338: the ML values that the
+   definitions below antiquote *)

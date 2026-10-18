@@ -428,7 +428,8 @@ let tick_before_def = cake_define
 
 (* HOL4 word_bignumProofScript.sml:1629-1640: ML code, not ported *)
 
-(* HOL4 word_bignumProofScript.sml:1642-1647: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1642-1647: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:1649-1650: ML code, not ported *)
 
@@ -441,7 +442,8 @@ let tick_before_def = cake_define
 (* order: clock then array then reg_write *)
 (* HOL4 word_bignumProofScript.sml:1662-1684: ML code, not ported *)
 
-(* HOL4 word_bignumProofScript.sml:1686-1690: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1686-1690: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:1692-1698: ML code, not ported *)
 
@@ -454,7 +456,8 @@ let tick_before_def = cake_define
 (* HOL4 word_bignumProofScript.sml:1746-1748: code that the source
    has in a comment *)
 
-(* HOL4 word_bignumProofScript.sml:1750-1773: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1750-1773: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:1781-1782: ML code, not ported *)
 
@@ -464,7 +467,8 @@ let tick_before_def = cake_define
 
 (* HOL4 word_bignumProofScript.sml:1808-1809: ML code, not ported *)
 
-(* HOL4 word_bignumProofScript.sml:1811-1832: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1811-1832: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:1834-1840: ML code, not ported *)
 
@@ -478,11 +482,14 @@ let tick_before_def = cake_define
 
 (* HOL4 word_bignumProofScript.sml:1915-1926: ML code, not ported *)
 
-(* HOL4 word_bignumProofScript.sml:1928-1937: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1928-1937: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 word_bignumProofScript.sml:1939-1941: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1939-1941: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 word_bignumProofScript.sml:1943-1956: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1943-1956: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:1958: code that the source has in
    a comment *)
@@ -492,25 +499,31 @@ let tick_before_def = cake_define
   (* look up definitions *)
 (* HOL4 word_bignumProofScript.sml:1963-1970: ML code, not ported *)
   (* compute ret and cont Corr thms *)
-(* HOL4 word_bignumProofScript.sml:1972-2008: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1972-2008: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:2010-2058: ML code, not ported *)
 
 (* HOL4 word_bignumProofScript.sml:2060-2072: ML code, not ported *)
   (* -- *)
-(* HOL4 word_bignumProofScript.sml:2074-2129: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:2074-2129: the ML values that the
+   definitions below antiquote *)
 
 (*
   max_print_depth := 15
 *)
 
-(* HOL4 word_bignumProofScript.sml:2135-2170: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:2135-2170: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 word_bignumProofScript.sml:2172-2186: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:2172-2186: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 word_bignumProofScript.sml:2188-2209: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:2188-2209: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 word_bignumProofScript.sml:2211-2224: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:2211-2224: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:2226-2228: ML code, not ported *)
 
@@ -523,7 +536,8 @@ let tick_before_def = cake_define
 
 (* HOL4 word_bignumProofScript.sml:2260-2262: ML code, not ported *)
 
-(* HOL4 word_bignumProofScript.sml:2264: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:2264: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:2266: ML code, not ported *)
 

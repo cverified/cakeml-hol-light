@@ -12,7 +12,8 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "lib/mergesort.ml";;
 needs "lib/sptree.ml";;
 
-(* HOL4 clos_knownPropsScript.sml:10: ML code, not ported *)
+(* HOL4 clos_knownPropsScript.sml:10: the ML values that the
+   definitions below antiquote *)
 
 (* See merge as a join operation on a semi-lattice: it's a join because
    it's

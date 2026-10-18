@@ -53,7 +53,8 @@ let approx_of_def = cake_define_try_tac (fun () ->
         | [Block ts tag vs] ->
        approx_of lims vs refs + LENGTH vs + 1`;;
 
-(* HOL4 dataPropsScript.sml:85: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:85: the ML values that the definitions
+   below antiquote *)
 
 (* ops that are not allowed_op have stack_consumed = NONE, which has to
    propagate through do_stack's safe_for_space computation *)

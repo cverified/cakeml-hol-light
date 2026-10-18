@@ -26,7 +26,8 @@ let mips_names_def = cake_define
       insert 24 0 o
       insert 31 1) LN:num spt)`;;
 
-(* HOL4 mips_configScript.sml:38-44: ML code, not ported *)
+(* HOL4 mips_configScript.sml:38-44: the ML values that the
+   definitions below antiquote *)
 
 let mips_backend_config_def = cake_define
   `mips_backend_config =

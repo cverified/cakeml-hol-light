@@ -13,7 +13,8 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_unreach.ml";;
 
-(* HOL4 word_unreachProofScript.sml:10: ML code, not ported *)
+(* HOL4 word_unreachProofScript.sml:10: the ML values that the
+   definitions below antiquote *)
 
 (* -- proofs about semantics -- *)
 

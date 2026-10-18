@@ -92,7 +92,8 @@ let finalise_cons_def = cake_define_try_tac (fun () ->
         | v -> SOME (v,refs)`;;
 hol4_overload "finalise_cons" "bviSem_finalise_cons";;
 
-(* HOL4 bviSemScript.sml:79: ML code, not ported *)
+(* HOL4 bviSemScript.sml:79: the ML values that the definitions below
+   antiquote *)
 
 let do_app_aux_def = cake_define
   `bviSem_do_app_aux op (vs:bvlSem_v list) (s:('c,'ffi)bviSem_state) =

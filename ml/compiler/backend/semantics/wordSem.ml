@@ -261,7 +261,8 @@ let isException_def = cake_define
         | _20 -> F`;;
 hol4_overload "isException" "wordSem_isException";;
 
-(* HOL4 wordSemScript.sml:260: ML code, not ported *)
+(* HOL4 wordSemScript.sml:260: the ML values that the definitions
+   below antiquote *)
 
 let dec_clock_def = cake_define
   `wordSem_dec_clock (s:('a,'c,'ffi)wordSem_state) =

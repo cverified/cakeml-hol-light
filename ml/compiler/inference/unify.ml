@@ -84,7 +84,8 @@ let cwalk_def = cake_define
   `cwalk s it = decode_infer_t (swalk (sptree_map encode_infer_t s)
   (encode_infer_t it))`;;
 
-(* HOL4 unifyScript.sml:286-287: ML code, not ported *)
+(* HOL4 unifyScript.sml:286-287: the ML values that the definitions
+   below antiquote *)
 
 let coc_def = cake_define
   `coc s it n = soc (sptree_map encode_infer_t s) (encode_infer_t it)
@@ -125,7 +126,8 @@ let cwalkstar_def = cake_define
 
 (* HOL4 unifyScript.sml:750-760: ML code, not ported *)
 
-(* HOL4 unifyScript.sml:762: ML code, not ported *)
+(* HOL4 unifyScript.sml:762: the ML values that the definitions below
+   antiquote *)
 
 cake_declare "cvwalk_code" `:infer_t spt -> num -> num + infer_t`;;
 
@@ -176,7 +178,8 @@ let dfkcocl_def = cake_define
 let kcocwl_def = cake_define
   `kcocwl s n ts = apply_kcockont s n ts F`;;
 
-(* HOL4 unifyScript.sml:1008-1014: ML code, not ported *)
+(* HOL4 unifyScript.sml:1008-1014: the ML values that the definitions
+   below antiquote *)
 
 cake_declare "kcocwl_code"
   `:infer_t spt -> num -> kcockont -> kcockont + bool`;;
@@ -269,7 +272,8 @@ let kcwalkstarwlR_def = cake_define
               MEASURE (\b. if b then 0 else 1))
              (\(v,its,k). (star_workbag v its k,LENGTH k,k,v))`;;
 
-(* HOL4 unifyScript.sml:1391: ML code, not ported *)
+(* HOL4 unifyScript.sml:1391: the ML values that the definitions
+   below antiquote *)
 cake_declare "kcwalkstarwl_code"
   `:infer_t spt -> bool#infer_t list#kclkont list ->
     (bool#infer_t list#kclkont list) + infer_t list`;;

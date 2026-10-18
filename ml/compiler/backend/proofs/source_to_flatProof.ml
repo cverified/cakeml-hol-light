@@ -269,7 +269,8 @@ hol4_overload "match_result_rel"
 
 (* semantic functions respect relation *)
 
-(* HOL4 source_to_flatProofScript.sml:1061-1062: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:1061-1062: the ML values that
+   the definitions below antiquote *)
 
 (* compiler correctness *)
 
@@ -540,9 +541,11 @@ let orac_forward_rel_def = cake_define
 
 (* FIXME also in flat_pattern *)
 
-(* HOL4 source_to_flatProofScript.sml:3704-3706: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3704-3706: the ML values that
+   the definitions below antiquote *)
 
-(* HOL4 source_to_flatProofScript.sml:3708-3710: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3708-3710: the ML values that
+   the definitions below antiquote *)
 
 let abort_def = cake_define
   `source_to_flatProof_abort r <=> (match r with Rerr (Rabort a) -> T

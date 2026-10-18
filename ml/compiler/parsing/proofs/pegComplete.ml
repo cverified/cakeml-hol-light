@@ -41,7 +41,8 @@ needs "semantics/proofs/gramProps.ml";;
 
 (* HOL4 pegCompleteScript.sml:168-169: ML code, not ported *)
 
-(* HOL4 pegCompleteScript.sml:171-173: ML code, not ported *)
+(* HOL4 pegCompleteScript.sml:171-173: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 pegCompleteScript.sml:201-203: ML code, not ported *)
 
@@ -482,10 +483,12 @@ hol4_overload "stoppers" "pegComplete_stoppers";;
 
 (* HOL4 pegCompleteScript.sml:2028: ML code, not ported *)
 
-(* HOL4 pegCompleteScript.sml:2030: ML code, not ported *)
+(* HOL4 pegCompleteScript.sml:2030: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 pegCompleteScript.sml:2032-2036: ML code, not ported *)
 
 (* HOL4 pegCompleteScript.sml:2038-2041: ML code, not ported *)
 
-(* HOL4 pegCompleteScript.sml:2087: ML code, not ported *)
+(* HOL4 pegCompleteScript.sml:2087: the ML values that the
+   definitions below antiquote *)

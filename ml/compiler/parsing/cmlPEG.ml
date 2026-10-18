@@ -21,7 +21,8 @@ needs "semantics/tokenUtils.ml";;
    expands *)
 hol4_overload "assert" "OPTION_GUARD";;
 
-(* HOL4 cmlPEGScript.sml:17-29: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:17-29: the ML values that the definitions
+   below antiquote *)
 
 let sumID_def = cake_define_list
   [`cmlPEG_sumID (INL x) = x`;
@@ -624,22 +625,27 @@ let cmlPEG_def = cake_define
                   pegf (peg_empty []) (bindNT
                     nNonETopLevelDecs)])])`;;
 
-(* HOL4 cmlPEGScript.sml:526-532: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:526-532: the ML values that the definitions
+   below antiquote *)
 (* HOL4 cmlPEGScript.sml:533-538: code that the source has in a
    comment *)
-(* HOL4 cmlPEGScript.sml:539-541: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:539-541: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 cmlPEGScript.sml:543-559: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:543-559: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 cmlPEGScript.sml:568-571: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:573: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:573: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 cmlPEGScript.sml:582-586: ML code, not ported *)
 
 (* HOL4 cmlPEGScript.sml:594-597: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:599: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:599: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 cmlPEGScript.sml:601-613: ML code, not ported *)
 
@@ -647,7 +653,8 @@ let cmlPEG_def = cake_define
 
 (* HOL4 cmlPEGScript.sml:620-629: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:631-642: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:631-642: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 cmlPEGScript.sml:644-647: ML code, not ported *)
 
@@ -657,7 +664,8 @@ let cmlPEG_def = cake_define
 
 (* HOL4 cmlPEGScript.sml:719-732: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:734-757: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:734-757: the ML values that the definitions
+   below antiquote *)
 
 (*
 set_diff (TypeBase.constructors_of ``:MMLnonT``)

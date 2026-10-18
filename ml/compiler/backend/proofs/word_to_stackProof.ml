@@ -49,9 +49,11 @@ needs "semantics/ast.ml";;
 (* HOL4 word_to_stackProofScript.sml:34-35: the overload word_cmp,
    which the port expands *)
 
-(* HOL4 word_to_stackProofScript.sml:37: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:37: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 word_to_stackProofScript.sml:39-40: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:39-40: the ML values that the
+   definitions below antiquote *)
 
 (* TODO: move to word/stackProps? *)
 
@@ -445,7 +447,8 @@ EL (x + offset) stack' = EL (x) stack'*)
 
 (* Used in backendProof *)
 
-(* HOL4 word_to_stackProofScript.sml:5719-5752: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:5719-5752: the ML values that
+   the definitions below antiquote *)
 
 (* HOL4 word_to_stackProofScript.sml:5754: ML code, not ported *)
 
@@ -591,7 +594,8 @@ EL (x + offset) stack' = EL (x) stack'*)
 
 (* HOL4 word_to_stackProofScript.sml:10080-10088: ML code, not ported *)
 
-(* HOL4 word_to_stackProofScript.sml:10123-10131: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:10123-10131: the ML values that
+   the definitions below antiquote *)
 
 (* HOL4 word_to_stackProofScript.sml:10133-10134: ML code, not ported *)
 

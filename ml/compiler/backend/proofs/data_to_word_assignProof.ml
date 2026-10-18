@@ -72,11 +72,11 @@ let is_env_def = cake_define
 (* HOL4 data_to_word_assignProofScript.sml:1387-1391: ML code, not
    ported *)
 
-(* HOL4 data_to_word_assignProofScript.sml:1765-1778: ML code, not
-   ported *)
+(* HOL4 data_to_word_assignProofScript.sml:1765-1778: the ML values
+   that the definitions below antiquote *)
 
-(* HOL4 data_to_word_assignProofScript.sml:1780-1781: ML code, not
-   ported *)
+(* HOL4 data_to_word_assignProofScript.sml:1780-1781: the ML values
+   that the definitions below antiquote *)
 
 let w2w_upper_def = cake_define
   `w2w_upper (w:word64) =
@@ -219,11 +219,11 @@ let sane_locals_size_def = cake_define
                          t = sptree_lookup Equal1_location
                            (wordSem_state_stack_size t))`;;
 
-(* HOL4 data_to_word_assignProofScript.sml:13152-13154: ML code, not
-   ported *)
+(* HOL4 data_to_word_assignProofScript.sml:13152-13154: the ML values
+   that the definitions below antiquote *)
 
-(* HOL4 data_to_word_assignProofScript.sml:13734-13736: ML code, not
-   ported *)
+(* HOL4 data_to_word_assignProofScript.sml:13734-13736: the ML values
+   that the definitions below antiquote *)
 
 (* HOL4 data_to_word_assignProofScript.sml:13990-13992: ML code, not
    ported *)

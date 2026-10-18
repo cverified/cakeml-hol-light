@@ -115,11 +115,14 @@ let initial_state'_def = cake_define
                               else closSem_Unit)] FEMPTY ffi k cc co
                               code ma`;;
 
-(* HOL4 flat_to_closProofScript.sml:232-233: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:232-233: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 flat_to_closProofScript.sml:235-242: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:235-242: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 flat_to_closProofScript.sml:244-252: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:244-252: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 flat_to_closProofScript.sml:300-302: ML code, not ported *)
 
@@ -147,7 +150,8 @@ let initial_state'_def = cake_define
 
 (* HOL4 flat_to_closProofScript.sml:556-558: ML code, not ported *)
 
-(* HOL4 flat_to_closProofScript.sml:634-643: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:634-643: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 flat_to_closProofScript.sml:1778-1949: ML code, not ported *)
 

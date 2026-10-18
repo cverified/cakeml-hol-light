@@ -15,7 +15,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_copy.ml";;
 needs "lib/sptree.ml";;
 
-(* HOL4 word_copyProofScript.sml:10: ML code, not ported *)
+(* HOL4 word_copyProofScript.sml:10: the ML values that the
+   definitions below antiquote *)
 
 let CPstate_inv_def = cake_define
   `CPstate_inv cs = (

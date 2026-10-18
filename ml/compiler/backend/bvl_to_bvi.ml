@@ -35,7 +35,8 @@ let destLet_def = cake_define
           ((Let xs b):bvl_exp) -> (xs,b)
         | _1 -> ([],Var 0)`;;
 
-(* HOL4 bvl_to_bviScript.sml:37: ML code, not ported *)
+(* HOL4 bvl_to_bviScript.sml:37: the ML values that the definitions
+   below antiquote *)
 
 let compile_int_def = cake_define
   `compile_int (i:int) =

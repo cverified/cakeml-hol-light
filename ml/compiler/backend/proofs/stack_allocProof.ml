@@ -76,11 +76,13 @@ let word_gc_move_bitmap_def = cake_define
 
 (* HOL4 stack_allocProofScript.sml:718-740: ML code, not ported *)
 
-(* HOL4 stack_allocProofScript.sml:742-744: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:742-744: the ML values that the
+   definitions below antiquote *)
 
 (* gc_kind = Generational *)
 
-(* HOL4 stack_allocProofScript.sml:1717: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:1717: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 stack_allocProofScript.sml:1719-1729: ML code, not ported *)
 
@@ -161,9 +163,11 @@ let word_gen_gc_partial_move_bitmap_def = cake_define
 
 (* HOL4 stack_allocProofScript.sml:2225-2247: ML code, not ported *)
 
-(* HOL4 stack_allocProofScript.sml:2249-2251: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:2249-2251: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 stack_allocProofScript.sml:2253-2255: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:2253-2255: the ML values that the
+   definitions below antiquote *)
 
 (* gc_kind = None *)
 

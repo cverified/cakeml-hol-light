@@ -161,7 +161,8 @@ let v_to_words_def = cake_define
   ns))`;;
 hol4_overload "v_to_words" "bvlSem_v_to_words";;
 
-(* HOL4 bvlSemScript.sml:127: ML code, not ported *)
+(* HOL4 bvlSemScript.sml:127: the ML values that the definitions
+   below antiquote *)
 
 let do_install_def = cake_define
   `bvlSem_do_install vs (s:('c,'ffi)bvlSem_state) =

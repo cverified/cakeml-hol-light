@@ -542,7 +542,11 @@ class Porter:
       if self.grammar_block(b):
         return
       self.warn.append('ML code skipped: ' + b.text.strip()[:60])
-      self.out.append(self.at(b, 'ML code, not ported'))
+      # the ML of a source that binds a term is not lost: the
+      # definitions that antiquote it have the term in them
+      self.out.append(self.at(
+        b, 'the ML values that the definitions below antiquote'
+           if hol4.ml_terms(b.text) else 'ML code, not ported'))
     else:
       self.warn.append('unknown block ' + k)
 

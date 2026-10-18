@@ -185,7 +185,8 @@ hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 let in_ns_def = cake_define
   `in_ns k n <=> n MOD bvl_to_bvi_namespaces = k`;;
 
-(* HOL4 bvl_to_bviProofScript.sml:2007: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:2007: the ML values that the
+   definitions below antiquote *)
 
 (* the compiled bvi Call handler post-processes its result, rejecting an
    escaping Ret; a mapped bvl handler result (raised values lifted
@@ -194,7 +195,8 @@ let in_ns_def = cake_define
 
 (* HOL4 bvl_to_bviProofScript.sml:2182: ML code, not ported *)
 
-(* HOL4 bvl_to_bviProofScript.sml:2184-2199: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:2184-2199: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 bvl_to_bviProofScript.sml:2232-3504: ML code, not ported *)
     (* the ops reserved for bvi_tmc are the remaining ones compile_op

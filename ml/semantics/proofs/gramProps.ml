@@ -55,9 +55,11 @@ let NT_rank_def = cake_define
            nAndFDecls then 3 else if n = nFDecl then 2 else if n =
            nTyVarList then 2 else if n = nTyvarN then 1 else 0))`;;
 
-(* HOL4 gramPropsScript.sml:104-131: ML code, not ported *)
+(* HOL4 gramPropsScript.sml:104-131: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 gramPropsScript.sml:162-167: ML code, not ported *)
+(* HOL4 gramPropsScript.sml:162-167: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 gramPropsScript.sml:169-175: ML code, not ported *)
 
@@ -66,7 +68,8 @@ let NT_rank_def = cake_define
 (* HOL4 gramPropsScript.sml:179: ML code, not ported *)
 
 
-(* HOL4 gramPropsScript.sml:197-243: ML code, not ported *)
+(* HOL4 gramPropsScript.sml:197-243: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 gramPropsScript.sml:245-249: ML code, not ported *)
 

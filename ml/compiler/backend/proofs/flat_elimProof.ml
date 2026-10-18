@@ -88,7 +88,8 @@ let find_sem_prim_res_globals_def = cake_define_list
             find_result_globals (SOME e)`;
    `find_sem_prim_res_globals (Rval e) = find_v_globalsL e`];;
 
-(* HOL4 flat_elimProofScript.sml:303-306: ML code, not ported *)
+(* HOL4 flat_elimProofScript.sml:303-306: the ML values that the
+   definitions below antiquote *)
 
 let _ = size_thms "flatSem_v";;
 (* HOL4 flat_elimProofScript.sml:317-324: the tactic that proves the
@@ -146,7 +147,8 @@ let flat_state_rel_def = cake_define
 (**************************** FLATLANG LEMMAS
    *****************************)
 
-(* HOL4 flat_elimProofScript.sml:462: ML code, not ported *)
+(* HOL4 flat_elimProofScript.sml:462: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 flat_elimProofScript.sml:479-481: ML code, not ported *)
 

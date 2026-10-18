@@ -80,13 +80,17 @@ let ffi_asm_def = cake_define_list
            (implode "\n")]) (export_riscv_ffi_asm ffis)`];;
 hol4_overload "ffi_asm" "export_riscv_ffi_asm";;
 
-(* HOL4 export_riscvScript.sml:65-89: ML code, not ported *)
+(* HOL4 export_riscvScript.sml:65-89: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_riscvScript.sml:91-93: ML code, not ported *)
+(* HOL4 export_riscvScript.sml:91-93: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_riscvScript.sml:95-96: ML code, not ported *)
+(* HOL4 export_riscvScript.sml:95-96: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 export_riscvScript.sml:98-181: ML code, not ported *)
+(* HOL4 export_riscvScript.sml:98-181: the ML values that the
+   definitions below antiquote *)
 
 let export_func_def = cake_define
   `export_riscv_export_func appl (name,label,start',len) =

@@ -335,7 +335,8 @@ new_type_abbrev("gram_NT",`: MMLnonT+num`);;
 
 new_type_abbrev("mlptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 
-(* HOL4 gramScript.sml:240-252: ML code, not ported *)
+(* HOL4 gramScript.sml:240-252: the ML values that the definitions
+   below antiquote *)
 
 let ndl_def = cake_define
   `(Ndl n l = Nd (n,unknown_loc) l)`;;
@@ -343,7 +344,8 @@ let ndl_def = cake_define
 let lfl_def = cake_define
   `(Lfl t = Lf (t,unknown_loc))`;;
 
-(* HOL4 gramScript.sml:264-275: ML code, not ported *)
+(* HOL4 gramScript.sml:264-275: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 gramScript.sml:277-282: ML code, not ported *)
 

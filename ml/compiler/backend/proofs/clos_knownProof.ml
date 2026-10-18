@@ -28,13 +28,17 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* fixeqs flips any equations in the assumption that have evaluate on
    the rhs *)
-(* HOL4 clos_knownProofScript.sml:25: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:25: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 clos_knownProofScript.sml:27: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:27: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 clos_knownProofScript.sml:29: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:29: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 clos_knownProofScript.sml:31: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:31: the ML values that the
+   definitions below antiquote *)
 
 (* simple properties of constants from clos_known: i.e., merge and known
    *)
@@ -115,7 +119,8 @@ let fv_max_def = cake_define
 
 (* HOL4 clos_knownProofScript.sml:612-615: ML code, not ported *)
 
-(* HOL4 clos_knownProofScript.sml:705-709: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:705-709: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 clos_knownProofScript.sml:883: ML code, not ported *)
 
@@ -326,7 +331,8 @@ let co_every_Fn_vs_NONE_def = cake_define
        every_Fn_vs_NONE exps /\
        every_Fn_vs_NONE (MAP (SND o SND) aux))`;;
 
-(* HOL4 clos_knownProofScript.sml:2960-2970: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:2960-2970: the ML values that the
+   definitions below antiquote *)
 
 
 (* Set globals in all future installs is disjoint from currently mapped
@@ -349,7 +355,8 @@ hol4_overload "syntax_ok" "clos_knownProof_syntax_ok";;
 (* HOL4 clos_knownProofScript.sml:5010: the overload fvs_compile,
    which the port expands *)
 
-(* HOL4 clos_knownProofScript.sml:5012: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:5012: the ML values that the
+   definitions below antiquote *)
 
 let syntax_oracle_ok_def = cake_define
   `clos_knownProof_syntax_oracle_ok c xs co conf <=>

@@ -94,7 +94,8 @@ hol4_overload "state_rel" "bvi_to_dataProof_state_rel";;
 (* HOL4 bvi_to_dataProofScript.sml:158: the overload isResult, which
    the port expands *)
 
-(* HOL4 bvi_to_dataProofScript.sml:160: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:160: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 bvi_to_dataProofScript.sml:162: ML code, not ported *)
 

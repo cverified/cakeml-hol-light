@@ -26,9 +26,11 @@ let arm8_names_def = cake_define
       insert 29 18 o
       insert 30 26) LN:num spt)`;;
 
-(* HOL4 arm8_configScript.sml:35-37: ML code, not ported *)
+(* HOL4 arm8_configScript.sml:35-37: the ML values that the
+   definitions below antiquote *)
 (* TODO: this config may need to change *)
-(* HOL4 arm8_configScript.sml:39-42: ML code, not ported *)
+(* HOL4 arm8_configScript.sml:39-42: the ML values that the
+   definitions below antiquote *)
 
 let arm8_backend_config_def = cake_define
   `arm8_backend_config =

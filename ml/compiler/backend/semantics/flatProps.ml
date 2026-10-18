@@ -16,7 +16,8 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 flatPropsScript.sml:31-33: ML code, not ported *)
+(* HOL4 flatPropsScript.sml:31-33: the ML values that the definitions
+   below antiquote *)
 
 (* Alternate definition for build_rec_env *)
 
@@ -125,7 +126,8 @@ let isClosure_def = cake_define
      (?vs n x. exp = Closure vs n x) \/
      (?vs fs x. exp = Recclosure vs fs x))`;;
 
-(* HOL4 flatPropsScript.sml:921-923: ML code, not ported *)
+(* HOL4 flatPropsScript.sml:921-923: the ML values that the
+   definitions below antiquote *)
 
 let simple_basic_val_rel_def = cake_define_list
   [`simple_basic_val_rel (Litv l:flatSem_v) v = (v = (Litv
@@ -188,7 +190,8 @@ let evaluate_match_def = cake_define
            (Rabort Rtype_error))))`;;
 hol4_overload "evaluate_match" "flatProps_evaluate_match";;
 
-(* HOL4 flatPropsScript.sml:1432-1446: ML code, not ported *)
+(* HOL4 flatPropsScript.sml:1432-1446: the ML values that the
+   definitions below antiquote *)
 
 let store_v_vs_def = cake_define_list
   [`flatProps_store_v_vs (semanticPrimitives_Varray vs) = vs`;

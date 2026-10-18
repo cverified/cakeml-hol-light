@@ -529,9 +529,11 @@ hol4_overload "state_rel" "lab_to_targetProof_state_rel";;
 
 (* HOL4 lab_to_targetProofScript.sml:1210-1212: ML code, not ported *)
 
-(* HOL4 lab_to_targetProofScript.sml:1240: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:1240: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 lab_to_targetProofScript.sml:1281-1284: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:1281-1284: the ML values that
+   the definitions below antiquote *)
 
 (* read/write bytearrays for FFI *)
 
@@ -545,7 +547,8 @@ hol4_overload "state_rel" "lab_to_targetProof_state_rel";;
 
 (* HOL4 lab_to_targetProofScript.sml:2955-2979: ML code, not ported *)
 
-(* HOL4 lab_to_targetProofScript.sml:2981: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:2981: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 lab_to_targetProofScript.sml:3052: ML code, not ported *)
 
@@ -1070,7 +1073,8 @@ let make_init_def = cake_define
        SOME n -> n | _77 -> 0)`;;
 hol4_overload "make_init" "lab_to_targetProof_make_init";;
 
-(* HOL4 lab_to_targetProofScript.sml:9586: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:9586: the ML values that the
+   definitions below antiquote *)
 
 let compiler_oracle_ok_def = cake_define
   `compiler_oracle_ok coracle init_labs init_pos c ffis <=>

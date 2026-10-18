@@ -82,7 +82,8 @@ hol4_overload "state_ffi_fupd" "flatSem_state_ffi_fupd";;
 hol4_overload "state_globals" "flatSem_state_globals";;
 hol4_overload "state_globals_fupd" "flatSem_state_globals_fupd";;
 
-(* HOL4 flatSemScript.sml:66: ML code, not ported *)
+(* HOL4 flatSemScript.sml:66: the ML values that the definitions
+   below antiquote *)
 
 let list_id_def = cake_define
   `list_id = 1`;;

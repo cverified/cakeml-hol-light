@@ -34,7 +34,8 @@ Main lemmas:
 
 (* HOL4 wordPropsScript.sml:43-45: ML code, not ported *)
 
-(* HOL4 wordPropsScript.sml:47-49: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:47-49: the ML values that the definitions
+   below antiquote *)
 
 (* -- *)
 (*drulel takes a list and tries to apply drule
@@ -71,9 +72,11 @@ f is a record update like (λs. s with clock := k)
 
 (* TODO: generated names *)
 
-(* HOL4 wordPropsScript.sml:1303-1309: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:1303-1309: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 wordPropsScript.sml:1327-1332: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:1327-1332: the ML values that the
+   definitions below antiquote *)
 
 (******CONST LEMMAS END *****)
 

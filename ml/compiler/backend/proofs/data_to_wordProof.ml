@@ -147,7 +147,8 @@ inst_ok_less_def
 
 (* slow... *)
 
-(* HOL4 data_to_wordProofScript.sml:2750: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:2750: the ML values that the
+   definitions below antiquote *)
 
 (* TODO: move somewhere better *)
 let stubs_fst_def = cake_define

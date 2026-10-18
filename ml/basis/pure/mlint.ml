@@ -28,7 +28,8 @@ let padLen_DEC_def = cake_define
 let maxSmall_DEC_def1 = cake_define
   `maxSmall_DEC = 10 EXP exp_for_dec_enc`;;
 
-(* HOL4 mlintScript.sml:37-38: ML code, not ported *)
+(* HOL4 mlintScript.sml:37-38: the ML values that the definitions
+   below antiquote *)
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)

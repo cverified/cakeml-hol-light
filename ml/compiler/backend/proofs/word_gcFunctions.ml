@@ -24,7 +24,8 @@ needs "semantics/ast.ml";;
 
 (* move candidates *)
 
-(* HOL4 word_gcFunctionsScript.sml:30: ML code, not ported *)
+(* HOL4 word_gcFunctionsScript.sml:30: the ML values that the
+   definitions below antiquote *)
 
 (* -------------------------------------------------------
     definition and verification of GC functions

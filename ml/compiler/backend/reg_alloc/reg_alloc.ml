@@ -227,7 +227,8 @@ let handle_Subscript_def = cake_define
 
 hol4_overload "failwith" "raise_Fail";;
 
-(* HOL4 reg_allocScript.sml:109-110: ML code, not ported *)
+(* HOL4 reg_allocScript.sml:109-110: the ML values that the
+   definitions below antiquote *)
 
 (* Fixed-size array manipulators *)
 (* HOL4 makes the manipulators of the fixed size arrays with

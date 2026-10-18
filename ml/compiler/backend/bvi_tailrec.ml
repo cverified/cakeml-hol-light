@@ -497,9 +497,11 @@ let has_rec_sing_def = cake_define_list_cheat CHEAT_TAC
    `has_rec_list loc (x :: xs) =
         (if has_rec_sing loc x then T else has_rec_list loc xs)`];;
 
-(* HOL4 bvi_tailrecScript.sml:744: ML code, not ported *)
+(* HOL4 bvi_tailrecScript.sml:744: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 bvi_tailrecScript.sml:751: ML code, not ported *)
+(* HOL4 bvi_tailrecScript.sml:751: the ML values that the definitions
+   below antiquote *)
 
 let check_exp_def = cake_define
   `check_exp loc arity exp =
@@ -550,12 +552,17 @@ hol4_overload "compile_prog" "bvi_tailrec_compile_prog";;
 
 (* --- Test rewriting --- *)
 
-(* HOL4 bvi_tailrecScript.sml:860-865: ML code, not ported *)
+(* HOL4 bvi_tailrecScript.sml:860-865: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 bvi_tailrecScript.sml:867-873: ML code, not ported *)
+(* HOL4 bvi_tailrecScript.sml:867-873: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 bvi_tailrecScript.sml:887-895: ML code, not ported *)
+(* HOL4 bvi_tailrecScript.sml:887-895: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 bvi_tailrecScript.sml:897-906: ML code, not ported *)
+(* HOL4 bvi_tailrecScript.sml:897-906: the ML values that the
+   definitions below antiquote *)
 
-(* HOL4 bvi_tailrecScript.sml:908: ML code, not ported *)
+(* HOL4 bvi_tailrecScript.sml:908: the ML values that the definitions
+   below antiquote *)

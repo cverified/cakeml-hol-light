@@ -40,7 +40,8 @@ let ALOOKUP_rel_def = cake_define
 (* HOL4 flat_patternProofScript.sml:382-401: code that the source has
    in a comment *)
 
-(* HOL4 flat_patternProofScript.sml:411-412: ML code, not ported *)
+(* HOL4 flat_patternProofScript.sml:411-412: the ML values that the
+   definitions below antiquote *)
 
 (* a note on 'naming' below. the existing (encoded) names in the program
    (in the original x and exp)
@@ -52,11 +53,13 @@ let ALOOKUP_rel_def = cake_define
      original
    program. also new/old names mix in env, thus the many filters. *)
 
-(* HOL4 flat_patternProofScript.sml:651-653: ML code, not ported *)
+(* HOL4 flat_patternProofScript.sml:651-653: the ML values that the
+   definitions below antiquote *)
 (* on the right side of the state relation, the pattern compiler's
    config is
    also needed in the compiler state *)
-(* HOL4 flat_patternProofScript.sml:656: ML code, not ported *)
+(* HOL4 flat_patternProofScript.sml:656: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 flat_patternProofScript.sml:658: ML code, not ported *)
 
@@ -86,7 +89,8 @@ let v_rel = cake_inductive
 hol4_overload "env_rel" "flat_patternProof_env_rel";;
 hol4_overload "v_rel" "flat_patternProof_v_rel";;
 
-(* HOL4 flat_patternProofScript.sml:688-689: ML code, not ported *)
+(* HOL4 flat_patternProofScript.sml:688-689: the ML values that the
+   definitions below antiquote *)
 
 let install_conf_rel_def = cake_define
   `install_conf_rel pat_cfg ic1 ic2 <=>

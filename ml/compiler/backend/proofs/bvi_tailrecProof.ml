@@ -33,7 +33,8 @@ let ty_rel_def = cake_define
      (\v t. (t = Int ==> (?k. v = bvlSem_Number k)) /\
             (t = List ==> (?ys. bvlSem_v_to_list v = SOME ys)))`;;
 
-(* HOL4 bvi_tailrecProofScript.sml:120-122: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:120-122: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 bvi_tailrecProofScript.sml:133-135: ML code, not ported *)
 

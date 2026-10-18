@@ -29,7 +29,8 @@ let riscv_names_def = cake_define
     insert 29 3 o
     insert 30 4) LN:num spt)`;;
 
-(* HOL4 riscv_configScript.sml:48-54: ML code, not ported *)
+(* HOL4 riscv_configScript.sml:48-54: the ML values that the
+   definitions below antiquote *)
 
 let riscv_backend_config_def = cake_define
   `riscv_backend_config =

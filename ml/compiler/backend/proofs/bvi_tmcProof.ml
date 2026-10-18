@@ -21,7 +21,8 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 bvi_tmcProofScript.sml:10: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:10: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 bvi_tmcProofScript.sml:12: the overload in_ns_3, which the
    port expands *)

@@ -16,7 +16,8 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 clos_mtiProofScript.sml:18: ML code, not ported *)
+(* HOL4 clos_mtiProofScript.sml:18: the ML values that the
+   definitions below antiquote *)
 
 (* code relation *)
 
@@ -150,6 +151,7 @@ let evaluate_apps_def = cake_define_list
 
 (* syntax well-formedness *)
 
-(* HOL4 clos_mtiProofScript.sml:1469-1481: ML code, not ported *)
+(* HOL4 clos_mtiProofScript.sml:1469-1481: the ML values that the
+   definitions below antiquote *)
 
 (* preservation of observable semantics *)

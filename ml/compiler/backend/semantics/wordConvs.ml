@@ -399,13 +399,15 @@ let not_created_subprogs_def = cake_define
 
 (* no_alloc specialisation *)
 
-(* HOL4 wordConvsScript.sml:566: ML code, not ported *)
+(* HOL4 wordConvsScript.sml:566: the ML values that the definitions
+   below antiquote *)
 
 let no_alloc_subprogs_def = cake_define
   `no_alloc p = not_created_subprogs (((\x y. ~(x = y)) (Alloc 0
   (LN,LN)))) p`;;
 
-(* HOL4 wordConvsScript.sml:576: ML code, not ported *)
+(* HOL4 wordConvsScript.sml:576: the ML values that the definitions
+   below antiquote *)
 
 let no_install_subprogs_def = cake_define
   `wordConvs_no_install p = not_created_subprogs (((\x y. ~(x = y))
@@ -414,7 +416,8 @@ hol4_overload "no_install" "wordConvs_no_install";;
 
 (****** no_mt : no MustTerminate ******)
 
-(* HOL4 wordConvsScript.sml:588: ML code, not ported *)
+(* HOL4 wordConvsScript.sml:588: the ML values that the definitions
+   below antiquote *)
 
 let no_mt_subprogs_def = cake_define
   `no_mt p = not_created_subprogs (((\x y. ~(x = y))
@@ -422,7 +425,8 @@ let no_mt_subprogs_def = cake_define
 
 (* no_share_inst: no ShareInst *)
 
-(* HOL4 wordConvsScript.sml:600: ML code, not ported *)
+(* HOL4 wordConvsScript.sml:600: the ML values that the definitions
+   below antiquote *)
 
 let no_share_inst_subprogs_def = cake_define
   `no_share_inst p = not_created_subprogs (((\x y. ~(x = y))
