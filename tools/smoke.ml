@@ -277,3 +277,16 @@ print_string
         (sort (<) (frees (concl (let _,_,th = last (cake_theorems ()) in
                                   th))))) ^
    " (sfld,smoke_opaque)\n");;
+
+(* ---------------------------------------------------------------- *)
+(* a theorem that a source states as the value of another one
+   (HOL4's Theorem foo = bar), which the port binds with
+   cake_alias so that the name of the source is in the port *)
+
+let smoke_same = cake_alias "smoke_same[simp]" smoke_thm;;
+
+print_string
+  ("\nSMOKEALIAS " ^
+   (let n,a,th = hd (rev (cake_theorems ())) in
+    n ^ " " ^ String.concat "," a ^ " " ^
+    string_of_bool (th == smoke_thm)) ^ " (smoke_same simp true)\n");;
