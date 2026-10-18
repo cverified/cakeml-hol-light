@@ -93,6 +93,14 @@ of a file from the one that failed on, in a clone of `hol-seq`
 (the session `hol-try`), so that a fix is tried without loading
 the ancestors again.
 
+**A clone of `hol-seq` does not survive the retemplate**: it is a
+child of the process of `hol-seq`, which is a child of the one of
+the template, so `tools/bin/retemplate` takes all three.  So
+everything that a session with the port in it is needed for
+(`tools/bin/diag`, `tools/bin/trydef`, `tools/bin/retry`) happens
+**before** the library layer is made again -- between the reports
+of a run and the retemplate of the next cycle.
+
 ## Interrupting and killing
 
 A clone is forked from another HOL Light process, so it is not a

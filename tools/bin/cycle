@@ -13,10 +13,13 @@
 #     smoke test on it
 #   6 the next run
 # With NORUN=1 it stops after the smoke test, which is what to use
-# when the port still has to be changed before the next run.  It
-# always leaves hol-try, a clone of the session of the run, which
-# survives the reports, the retemplate and the next run
-# (tools/bin/diag try, S=try tools/bin/trydef).
+# when the port still has to be changed before the next run.
+# It clones the session of the run to hol-try first, which the
+# reports can then not lose (tools/bin/diag try, S=try
+# tools/bin/trydef) -- but a clone is a child of the process it is
+# forked from, so the retemplate of step 5 takes hol-try with
+# hol-seq and the template: a diagnosis that needs the port
+# loaded has to happen BEFORE the cycle (or between its steps).
 B=/home/freek/claude/hol-light
 PATH=$B/bin:$B/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
@@ -27,10 +30,10 @@ ps -eo args --no-headers | grep -q '[c]heckseq' && {
 # the reports are heavy enough to lose the session of the run
 # (hol-seq died of the free variables once), and the next run
 # kills it, so the cycle always keeps a clone of it
-# a clone of the session of the run, which survives the reports,
-# the retemplate and the next run: tools/bin/diag and
-# tools/bin/trydef take it (S=try), and without it there is no
-# session with the port in it while the next run goes
+# a clone of the session of the run, which the reports cannot
+# lose: tools/bin/diag and tools/bin/trydef take it (S=try).  The
+# retemplate below does take it, so a diagnosis goes before the
+# cycle
 repl-kill try > /dev/null 2>&1
 rm -f /home/freek/claude/hol-light/bin/fifo/hol-try
 repl-clone hol-seq try > /dev/null 2>&1 &&
