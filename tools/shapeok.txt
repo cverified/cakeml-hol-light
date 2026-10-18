@@ -6,7 +6,10 @@
 # stands for has connectives of its own, and the source has them
 # nowhere, so the counts differ and the statement says the same.
 #
-# one line per statement: <theory>$<name> <why>
+# one line per statement (or definition, for tools/defshape.py):
+# <theory>$<name> <why>
+typeSysProps$type_pes_def the restricted quantifier of HOL4
+  (!(p,e)::set pes), which the port writes as RES_FORALL
 parmove$NoRead_path the overload NoRead, which the port expands
 parmove$parsem_NoRead the overload NoRead, which the port expands
 fromSexp$isAlpha_isUpper_isLower the overloads of char_lt, which

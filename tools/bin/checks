@@ -15,6 +15,7 @@
 #   order     the blocks of a port are in the order of the source
 #   attrs     a statement has the attributes of its theorem
 #   stmtshape a statement has the connectives of the source's
+#   defshape  a definition has the connectives of the source's
 #   lines     no line of ml/ outside a comment is longer than 72
 #             characters (a comment of a source is unaltered)
 C=/home/freek/claude/hol-light/cakeml
@@ -41,5 +42,7 @@ echo "=== the attributes of the statements"
 python3 -I tools/attrs.py 2>&1 | tail -3
 echo "=== the connectives of the statements"
 python3 -I tools/stmtshape.py 2>&1 | tail -3
+echo "=== the connectives of the definitions"
+python3 -I tools/defshape.py 2>&1 | tail -3
 echo "=== lines over 72 characters"
 python3 -I tools/lines.py 2>&1 | tail -6

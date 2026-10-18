@@ -45,17 +45,25 @@ OPS = [
   # HOL4's x <> y is the port's ~(x = y) and its x NOTIN s is
   # ~(x IN s), so an inequality and a non-membership of the
   # source count as a negation
-  ('~', [u'¬', '~', u'≠', '<>', u'∉', 'NOTIN'], ['~']),
+  # HOL4's $~ is the negation as a function, which the port
+  # writes as (~) or, of a number, as (--)
+  ('~', [u'¬', '~', u'≠', '<>', u'∉', 'NOTIN'],
+   ['~', '(--)']),
   # the complement of a word: HOL4 writes ~0w for the word of
-  # all ones, which the port writes as word_not (n2w 0)
-  ('word_not', ['word_not'], ['word_not']),
+  # all ones, which the port writes as word_not (n2w 0), and
+  # the library layer's name for HOL4's word_1comp is the
+  # same word_not
+  ('word_not', ['word_not', 'word_1comp'],
+   ['word_not', 'word_1comp']),
 ]
 
 
 # the symbols of HOL4 that have a connective in them and are not
 # one: the function relation of its transfer library (|==> and
-# ===>), which the port writes as FUN_REL
-NOT_OPS = ['|==>', '===>']
+# ===>), which the port writes as FUN_REL, the ~> of its PEG
+# library (the ignoreL of two expressions) and the !! and ?? of
+# its words theory (the or and the xor of two words)
+NOT_OPS = ['|==>', '===>', '~>', '<~', '!!', '??']
 
 
 # a character or a string of a source can have a connective in it
