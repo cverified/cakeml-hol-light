@@ -24,14 +24,16 @@ cd $C
 ps -eo args --no-headers | grep -q '[c]heckseq' && {
   echo "cycle: a run is going"; exit 1; }
 # the reports are heavy enough to lose the session of the run
-# (hol-seq died of the free variables once), and with NORUN=1 the
-# point of the cycle is to keep it: a clone of it is cheap, and
-# tools/bin/trydef takes S=try
-[ "$NORUN" = 1 ] && {
-  repl-kill try > /dev/null 2>&1
-  rm -f /home/freek/claude/hol-light/bin/fifo/hol-try
-  repl-clone hol-seq try > /dev/null 2>&1 &&
-    echo "hol-try is a clone of the session of the run"; }
+# (hol-seq died of the free variables once), and the next run
+# kills it, so the cycle always keeps a clone of it
+# a clone of the session of the run, which survives the reports,
+# the retemplate and the next run: tools/bin/diag and
+# tools/bin/trydef take it (S=try), and without it there is no
+# session with the port in it while the next run goes
+repl-kill try > /dev/null 2>&1
+rm -f /home/freek/claude/hol-light/bin/fifo/hol-try
+repl-clone hol-seq try > /dev/null 2>&1 &&
+  echo "hol-try is a clone of the session of the run"
 echo "=== the reports of the run"
 postrun > tmp/report.txt 2>&1
 sed -n '/=== axioms and cheats/,/=== timings/p' tmp/report.txt |
