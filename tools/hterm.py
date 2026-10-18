@@ -1278,6 +1278,12 @@ def int_fn_arg_pos(nm):
      integer argument of their own"""
   return INT_ARGS_OF.get(nm, (set(), {}))[1]
 
+# the constants that give an element of a list, a map or an option:
+# a numeral beside one of them applied to a container of integers
+# is an integer itself
+ELEM_FUNS = set(['the', 'THE', 'EL', 'HD', 'LAST', 'sptree_lookup',
+                 'FLOOKUP', 'FAPPLY'])
+
 NUMERIC_FUNS = set(['int_of_num', 'num_of_int', 'w2i', 'i2w', 'ival',
                     'iword', 'int_add', 'int_sub', 'int_mul',
                     'int_neg', 'ABS', 'abs', 'Num'])
@@ -1600,11 +1606,17 @@ class Printer:
       return self.intvar(e.e)
     # an application of a constant whose result is an integer
     # holds one (linear_scanProof's 0 <= size_of_live_tree lt,
-    # whose size is an integer: tools/intres.txt)
+    # whose size is an integer: tools/intres.txt), and so does an
+    # element of a list, a map or an option of integers
+    # (linear_scanProof's the 0 (lookup r beg_in), whose beg_in is
+    # a map of integers)
     if e.kind == 'app':
-      h, _ = strip_app(e)
+      h, args = strip_app(e)
       if h.kind == 'id' and self.ctx.name(h.name) in INT_RESULT_FNS:
         return True
+      if (h.kind == 'id' and args
+          and self.ctx.name(h.name) in ELEM_FUNS):
+        return any(self.intvar(a) for a in args)
     # a term that the source annotates with int holds one, and so
     # does the Num of one (data_to_word's 0 <= (i:int))
     if e.kind == 'typed':

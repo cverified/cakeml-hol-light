@@ -716,6 +716,14 @@ THM_NO_TYVARS = set([
 
 THM_INT_VARS = {
   ('bvlSem', 'do_int_app_eq_some'): ['n2'],
+  # the maps of the beginnings and the ends of the intervals of
+  # linear_scan hold integers, so the 0 of the the that reads one
+  # of them is an integer (the type of get_intervals says it, and
+  # the table of the integer arguments of a constant says which
+  # arguments are integers themselves and not which hold a map of
+  # them)
+  ('linear_scanProof', 'get_intervals_beg_less_end'):
+    ['beg_in', 'end_in', 'beg_out', 'end_out'],
   ('data_to_word_assignProof', 'INT_EQ_NUM_LEMMA'): ['i'],
   ('data_to_word_assignProof', 'NONNEG_INT'): ['i'],
   ('data_to_word_assignProof', 'do_app_RefByte_eq'): ['i'],
