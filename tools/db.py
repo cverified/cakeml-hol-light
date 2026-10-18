@@ -600,8 +600,15 @@ class Db:
        for a variable of its own), and HOL Light has no scope of
        its own to keep them apart.  The statements of the theory
        are read with these constants hidden; only the names that
-       the statements of the source use are in the list."""
-    anc = self.scope(thy) | {thy}
+       the statements of the source use are in the list.
+
+       The test is the whole ancestry of the theory, and not the
+       scope that a set_grammar_ancestry of the source restricts
+       its grammar to: HOL4 reads a name that one ancestor
+       defines as that constant, whether the grammar of the
+       theory has it or not (backendProof restricts its grammar
+       and uses closProps' obeys_max_app all the same)."""
+    anc = self.ancestors(thy) | {thy}
     ids = set()
     for b in blocks:
       if b.kind in ('Theorem', 'Triviality'):
