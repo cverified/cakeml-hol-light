@@ -13,9 +13,10 @@
 #     smoke test on it
 #   6 the next run
 # With NORUN=1 it stops after the smoke test, which is what to use
-# when a definition still has to be looked at in the session of
-# the run: it then clones hol-seq to hol-try first, which survives
-# both the reports and the next run (S=try tools/bin/trydef).
+# when the port still has to be changed before the next run.  It
+# always leaves hol-try, a clone of the session of the run, which
+# survives the reports, the retemplate and the next run
+# (tools/bin/diag try, S=try tools/bin/trydef).
 B=/home/freek/claude/hol-light
 PATH=$B/bin:$B/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
