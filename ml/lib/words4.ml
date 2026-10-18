@@ -197,6 +197,26 @@ let INT_MAX = new_definition
 let UINT_MAX = new_definition
   `UINT_MAX (:N) = dimword (:N) - 1`;;
 
+(* HOL4's integer_wordTheory has an INT_MAX and an INT_MIN of its
+   own (integer_wordScript.sml:43-49): the integers that a word of
+   the type can hold, where the ones of wordsTheory above are
+   numbers.  Both names are overloaded with both constants, as
+   HOL4 has them, and the type says which one a statement means
+   (the ones of this theory keep their place in front, so a
+   number is a number). *)
+
+let integer_word_INT_MAX = new_definition
+  `integer_word_INT_MAX (:N) = ((&(INT_MIN (:N)) - &1):int)`;;
+
+let integer_word_INT_MIN = new_definition
+  `integer_word_INT_MIN (:N) =
+   ((--(integer_word_INT_MAX (:N)) - &1):int)`;;
+
+hol4_overload "INT_MAX" "INT_MAX";;
+hol4_overload "INT_MIN" "INT_MIN";;
+hol4_overload_last "INT_MAX" "integer_word_INT_MAX";;
+hol4_overload_last "INT_MIN" "integer_word_INT_MIN";;
+
 let word_L = new_definition
   `word_L = (word (INT_MIN (:N)):(N)word)`;;
 
