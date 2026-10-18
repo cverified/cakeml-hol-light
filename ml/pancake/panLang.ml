@@ -250,8 +250,11 @@ let _ = size_thms "panLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 termination: >> simp[MEM_MAP, EXISTS_PROD] >> rw [MEM_SPLIT]
    >> simp [list_size_append] *)
-let var_exp_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let var_exp_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\e. panLang_exp_size ARB e)`)
+  CHEAT_TAC
   [`var_exp (panLang_Const w) = ([]:mlstring list)`;
    `var_exp (panLang_Var panLang_Local v) = (([v]):mlstring list)`;
    `var_exp (panLang_Var panLang_Global v) = (([]):mlstring list)`;
@@ -281,8 +284,11 @@ let _ = size_thms "panLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 termination: >> rpt strip_tac >> imp_res_tac MEM_IMP_exp_size
    >> TRY (first_x_assum (assume_tac o Q.SPEC `ARB`)) >> decide_tac *)
-let global_var_exp_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let global_var_exp_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\e. panLang_exp_size ARB e)`)
+  CHEAT_TAC
   [`global_var_exp (panLang_Const w) = ([]:mlstring list)`;
    `global_var_exp (panLang_Var panLang_Local v) = (([]):mlstring
   list)`;

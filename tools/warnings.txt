@@ -96,56 +96,6 @@ stackLang	Overload load_inst
 stackLang	Overload store_inst
 wordLang	Overload ShiftN
 wordLang	Overload shift
-word_bignum	ML code skipped: val Skip_tm = ``Skip:'a word_bignum$mini`` val Swap_tm = ``S
-word_bignum	ML code skipped: local val s = HolKernel.syntax_fns1 "word_bignum" in   val (
-word_bignum	ML code skipped: local val s = HolKernel.syntax_fns1 "asm" in   val (Imm_tm,m
-word_bignum	ML code skipped: val If_pat = ``word_bignum$If c r (ri:'a reg_imm) p1 p2`` fu
-word_bignum	ML code skipped: fun my_dest_let tm = let   val (x,y) = pairSyntax.dest_anyle
-word_bignum	ML code skipped: local   val word_ty = ``:'a word`` in   fun dest_reg v = let
-word_bignum	ML code skipped: val binops = [(word_add_def,``asm$Add``),               (wor
-word_bignum	ML code skipped: val shifts = [(word_lsr_def,``ast$Lsr``),               (wor
-word_bignum	ML code skipped: fun get_exp x =
-word_bignum	ML code skipped: val n = dest_reg x   in wordLangSyntax.mk_Var n end handle H
-word_bignum	ML code skipped: val _ = wordsSyntax.dest_n2w x   in wordLangSyntax.mk_Const 
-word_bignum	ML code skipped: val (_,name) = first (fn (pat,_) => can (match_term pat) x) 
-word_bignum	ML code skipped: val (_,name) = first (fn (pat,_) => can (match_term pat) x) 
-word_bignum	ML code skipped: val r = wordsSyntax.dest_word_1comp x   in get_exp ``word_xo
-word_bignum	ML code skipped: val cmps = [(word_lo_def,``asm$Lower``),             (word_l
-word_bignum	ML code skipped: fun dest_reg_imm ri =   mk_Reg (dest_reg ri) handle HOL_ERR 
-word_bignum	ML code skipped: fun get_guard b = (* Op *) let   val (_,name) = first (fn (p
-word_bignum	ML code skipped: local   val LUPDATE_pat = ``LUPDATE a (w2n (r:'a word)) (zs:
-word_bignum	ML code skipped: local   val EL_pat = ``EL (w2n (r:'a word)) (zs:'b list)`` i
-word_bignum	ML code skipped: local   val add_pat = ``single_add_word r0 r1 ri``   val sub
-word_bignum	ML code skipped: local   val mul_pat = ``single_mul r0 r2 0w`` in   fun dest_
-word_bignum	ML code skipped: local   val div_pat = ``single_div r2 r0 r1`` in   fun dest_
-word_bignum	ML code skipped: fun get_let tm =
-word_bignum	ML code skipped: let     val (r,i,a,rest) = dest_el_let tm   in (mk_Load(dest
-word_bignum	ML code skipped: let     val (r,i,rest) = dest_lupdate_let tm   in (mk_Store(
-word_bignum	ML code skipped: let     val ((v,x),rest) = my_dest_let tm     val n = dest_r
-word_bignum	ML code skipped: let     val ((v,x),rest) = my_dest_let tm     val _ = pairSy
-word_bignum	ML code skipped: let     val (a1,a2,r1,r2,r3,rest) = dest_single_add_let tm  
-word_bignum	ML code skipped: let     val (a1,a2,r1,r2,r3,rest) = dest_single_sub_let tm  
-word_bignum	ML code skipped: let     val (a1,a2,r1,r2,rest) = dest_single_mul_let tm   in
-word_bignum	ML code skipped: let     val (a1,a2,r1,r2,r3,rest) = dest_single_div_let tm  
-word_bignum	ML code skipped: val code_defs = ref TRUTH; val prev_trans = ref ([]: (term *
-word_bignum	ML code skipped: exception UnableToTranslate of string;
-word_bignum	ML code skipped: val def = mc_mul_zero_def val tm = def |> concl |> rand val 
-word_bignum	ML code skipped: fun dest_tuple tm = let   val (x,y) = dest_pair tm   in dest
-word_bignum	ML code skipped: fun get_full_prog inp tm = let   val immediate_deps = ref ([
-word_bignum	ML code skipped: fun dest_num_let tm =     if (dest_let tm |> snd |> type_of)
-word_bignum	ML code skipped: fun get_prog tm =
-word_bignum	ML code skipped: if is_var tm orelse pairSyntax.is_pair tm     then (ret_vars
-word_bignum	ML code skipped: val (x,rest) = get_let tm     in mk_Seq(x,get_prog rest) end
-word_bignum	ML code skipped: val ((v,x),rest) = my_dest_let tm     val f = x |> repeat ra
-word_bignum	ML code skipped: val (saves,call,rest) = dest_rec_let tm     val saves = save
-word_bignum	ML code skipped: val (b,t1,t2) = dest_cond tm     val (x1,x2,x3) = get_guard 
-word_bignum	ML code skipped: val init_prog = get_prog tm
-word_bignum	ML code skipped: val x = !code_defs |> CONJUNCTS              |> filter (fn t
-word_bignum	ML code skipped: fun to_deep def = let
-word_bignum	ML code skipped: val f = def |> SPEC_ALL |> concl |> dest_eq |> fst |> repeat
-word_bignum	ML code skipped: val name = mk_var((f |> dest_const |> fst) ^ "_code", type_o
-word_bignum	ML code skipped: val def = mc_cmp_def |> to_deep val def = mc_compare_def |> 
-word_bignum	ML code skipped: val def = mc_fac_init_def |> to_deep val def = mc_fac_final_
 word_bignum	ML code skipped: val _ = (max_print_depth := 25);
 semanticPrimitives	Overload w64lit
 semanticPrimitives	Overload f64lit

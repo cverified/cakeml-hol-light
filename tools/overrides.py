@@ -1215,6 +1215,18 @@ ANTIQUOTE = {
 }
 
 NOT_YET = {
+  # the two command line drivers of the compiler binary: they read
+  # the input and write the output of the binary, so their type is
+  # the file system of the basis library (fsFFI's IO_fs), which
+  # needs the characteristic formulae of HOL4's cfHeapsBase, and
+  # the port has neither.  `compiler$compile`, which the
+  # correctness theorem is about, does not use them
+  ('compiler', 'full_compile_64_def'):
+    'the file system of the basis library, which the port does'
+    '\nnot have (add_stdout, add_stderr, fastForwardFD)',
+  ('compiler', 'full_compile_32_def'):
+    'the file system of the basis library, which the port does'
+    '\nnot have (add_stdout, add_stderr, fastForwardFD)',
   # the step functions of the tail recursive versions of the
   # unification algorithm, which HOL4 makes with ML code
   # (tcallify_th of tcallUnifLib turns the equation of a function

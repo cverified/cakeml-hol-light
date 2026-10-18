@@ -52,9 +52,8 @@ that has neither in it, so the value does not depend on them; the
 port instantiates the type with `:1` and the configuration with
 `ARB`, which is therefore the same call graph.
 
-The five definitions of `compiler` that compile Pancake (the
-three that do and the two command line drivers that call them)
-are stated with three declared constants.  Pancake is a second
+The three definitions of `compiler` that compile Pancake are
+stated with three declared constants.  Pancake is a second
 source language of the same backend, which the correctness
 theorem does not mention, so its parser, its static checker and
 its own backend are outside the port, and the port declares
@@ -114,6 +113,16 @@ code, so it declares `cvwalk_code`, `kcocwl_code`,
 `TAILREC` uses them at, and the seven definitions that use them
 (`tcvwalk`, `tcwalk`, `tcocwl`, `tcwalkstarwl`, `tcwalkstar_p1`,
 `tcwalkstar_p2` and `tcunify`) are ported as they stand.
+
+Two definitions of `compiler` are not ported: `full_compile_64`
+and `full_compile_32`, the command line drivers of the compiler
+binary.  They read the input of the binary and write its output,
+so their type is the file system of the basis library
+(`fsFFI$IO_fs`), which needs the characteristic formulae of
+`cfHeapsBase`, and the port has neither (`add_stdout`,
+`add_stderr` and `fastForwardFD` are the three constants that
+they use).  `compiler$compile`, which the correctness theorem is
+about, does not use them.
 
 One definition of the first pass is not ported, because HOL4
 makes it from a theorem that the second pass has to prove first

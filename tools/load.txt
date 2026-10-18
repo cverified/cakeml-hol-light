@@ -15,6 +15,7 @@ lib/ASCIInumbers.ml
 lib/integer_word.ml
 lib/lprefix_lub.ml
 lib/set_sep.ml
+lib/tailrec.ml
 lib/state_transformer.ml
 lib/errorMonad.ml
 lib/binary_ieee.ml

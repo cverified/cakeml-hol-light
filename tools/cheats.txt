@@ -141,6 +141,8 @@ linear_scan st_ex_FOLDL_def
 mloption getOpt_def
 mlsexp lex_aux_def
 namespaceProps nsSub_compute_def
+panLang global_var_exp_def
+panLang var_exp_def
 pattern_comp pat_to_guard_def
 pattern_exh exh_all_def
 pattern_exh exh_matrix_def

@@ -9,22 +9,25 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 205: the three axioms of HOL
-Light and 202 for the 323 definitions below.
+`length (axioms ())` is 208: the three axioms of HOL
+Light and 205 for the 323 definitions below.
 
 Of these 323 definitions
 
-- 299 have only their **termination** assumed, so the
+- 298 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
-- 24 are a constant that is **declared** without a
+- 21 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
-- 0 are **not made** at all, which is the work that is
+- 4 are **not made** at all, which is the work that is
   left.
 
 Why they are assumed:
 
-- 299: termination (CHEAT_TAC)
-- 24: declared (no value)
+- 298: termination (CHEAT_TAC)
+- 21: declared (no value)
+- 2: tryfind: /\
+- 1: free: add_stderr:?933662->mlstring->?933662, add_stdout:?933666->m
+- 1: free: add_stderr:?934531->mlstring->?934531, add_stdout:?934535->m
 
 | definition | file | why |
 |---|---|---|
@@ -98,6 +101,8 @@ Why they are assumed:
 | `get_src_names` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `var_exp` | `pancake/panLang.ml` | tryfind: /\ |
+| `global_var_exp` | `pancake/panLang.ml` | tryfind: /\ |
 | `mc_iop_code` | `compiler/backend/word_bignum.ml` | declared (no value) |
 | `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
 | `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
@@ -235,25 +240,24 @@ Why they are assumed:
 | `lex_aux_alt` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
 | `lex_impl_all` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
 | `lex_impl_all_tokens` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
+| `parse_topdecs_to_ast` | `compiler/compiler.ml` | declared (no value) |
+| `static_check` | `compiler/compiler.ml` | declared (no value) |
+| `pan_compile_tap` | `compiler/compiler.ml` | declared (no value) |
 | `x64_backend_config` | `compiler/compiler.ml` | declared (no value) |
 | `x64_config` | `compiler/compiler.ml` | declared (no value) |
-| `x64_export` | `compiler/compiler.ml` | declared (no value) |
 | `arm8_backend_config` | `compiler/compiler.ml` | declared (no value) |
 | `arm8_config` | `compiler/compiler.ml` | declared (no value) |
-| `arm8_export` | `compiler/compiler.ml` | declared (no value) |
 | `mips_backend_config` | `compiler/compiler.ml` | declared (no value) |
 | `mips_config` | `compiler/compiler.ml` | declared (no value) |
-| `mips_export` | `compiler/compiler.ml` | declared (no value) |
 | `riscv_backend_config` | `compiler/compiler.ml` | declared (no value) |
 | `riscv_config` | `compiler/compiler.ml` | declared (no value) |
-| `riscv_export` | `compiler/compiler.ml` | declared (no value) |
 | `arm7_backend_config` | `compiler/compiler.ml` | declared (no value) |
 | `arm7_config` | `compiler/compiler.ml` | declared (no value) |
-| `arm7_export` | `compiler/compiler.ml` | declared (no value) |
 | `ag32_backend_config` | `compiler/compiler.ml` | declared (no value) |
 | `ag32_config` | `compiler/compiler.ml` | declared (no value) |
-| `ag32_export` | `compiler/compiler.ml` | declared (no value) |
 | `basis` | `compiler/compiler.ml` | declared (no value) |
+| `full_compile_64` | `compiler/compiler.ml` | free: add_stderr:?933662->mlstring->?933662, add_stdout:?933 |
+| `full_compile_32` | `compiler/compiler.ml` | free: add_stderr:?934531->mlstring->?934531, add_stdout:?934 |
 | `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
 | `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
 | `size_of` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
@@ -292,7 +296,6 @@ Why they are assumed:
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
-| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |

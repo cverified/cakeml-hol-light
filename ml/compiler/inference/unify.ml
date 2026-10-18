@@ -17,6 +17,7 @@ needs "lib/fmsp.ml";;
 needs "lib/rmfmap.ml";;
 needs "lib/sptree.ml";;
 needs "lib/subst.ml";;
+needs "lib/tailrec.ml";;
 needs "lib/tcallUnif.ml";;
 needs "lib/term.ml";;
 needs "lib/unifDef.ml";;

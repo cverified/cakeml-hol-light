@@ -19,8 +19,8 @@ needs "lib/mc_multiword.ml";;
 needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
+needs "lib/tailrec.ml";;
 needs "semantics/ast.ml";;
-(* HOL4 ancestors outside the port: tailrec *)
 
 (* HOL4 ML code, not ported:
 val good_dimindex_def = miscTheory.good_dimindex_def;
