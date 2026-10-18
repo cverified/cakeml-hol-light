@@ -28,7 +28,10 @@ def kind(msg):
 
 
 def files_of_names():
-  """the file of the port that states a theorem of each name"""
+  """the files of the port that state a theorem of each name (the
+     sources bind the same name in more than one theory, so a name
+     that does not parse can be in several files: the report says
+     all of them)"""
   out = {}
   ml = T + '../ml/'
   for dp, _, fs in os.walk(ml):
@@ -37,7 +40,7 @@ def files_of_names():
       p = os.path.join(dp, f)
       for m in re.finditer(r'cake_(?:theorem|alias)\s*\n?\s*'
                            r'"([^"\[]+)', open(p).read()):
-        out.setdefault(m.group(1), os.path.relpath(p, ml))
+        out.setdefault(m.group(1), []).append(os.path.relpath(p, ml))
   return out
 
 
@@ -57,8 +60,9 @@ def main():
     print('%6d  %s' % (n, k))
   # which files they are in, which is where the work is
   where = files_of_names()
-  byfile = collections.Counter(where.get(nm, '?') for nm, _ in rows)
-  print('the files:')
+  byfile = collections.Counter(
+    f for nm, _ in rows for f in where.get(nm, ['?']))
+  print('the files (a name that more than one states is in each):')
   for f, n in byfile.most_common(10):
     print('%6d  %s' % (n, f))
 
