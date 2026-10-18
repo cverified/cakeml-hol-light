@@ -274,6 +274,6 @@ print_string
    String.concat "," (cake_fieldvars ()) ^ " (smoke_fieldvar), free " ^
    String.concat ","
      (map (fun v -> fst (dest_var v))
-        (sort (<) (frees (concl (let _,_,th = hd (cake_theorems ()) in
-                                 th))))) ^
+        (sort (<) (frees (concl (let _,_,th = last (cake_theorems ()) in
+                                  th))))) ^
    " (sfld,smoke_opaque)\n");;

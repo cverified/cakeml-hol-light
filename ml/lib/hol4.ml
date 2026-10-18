@@ -423,7 +423,8 @@ let BIT = new_definition
    HOL4 writes with a pattern for the pair *)
 
 let AFUPDKEY = new_recursive_definition list_RECURSION
-  `(AFUPDKEY (k:A) (f:B->B) [] = []) /   (AFUPDKEY k f (CONS kv rest) =
+  `(AFUPDKEY (k:A) (f:B->B) [] = []) /\
+   (AFUPDKEY k f (CONS kv rest) =
     if k = FST kv then CONS (k,f (SND kv)) rest
     else CONS kv (AFUPDKEY k f rest))`;;
 
