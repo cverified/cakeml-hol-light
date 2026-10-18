@@ -310,6 +310,15 @@ FIELD_VAR_DEF = {
   # the ones of its own global_env
   ('source_to_flatProof', 'env_domain_eq_def'):
     {'var_map': 'source_to_flat_environment'},
+  # the s of these two is the state of dataSem whose locals
+  # AllocVar cuts and the r the state of wordSem that the
+  # evaluate of it gives (the s of the statements about the
+  # garbage collector is a gc_state, which has an r and an h of
+  # its own)
+  ('data_to_word_gcProof', 'AllocVar_thm_gen'):
+    {'s': 'dataSem_state', 'r': 'wordSem_state'},
+  ('data_to_word_gcProof', 'AllocVar_thm'):
+    {'s': 'dataSem_state', 'r': 'wordSem_state'},
   # the t that the evaluate of halt_assum gives is a state of
   # stackSem, where the s of this theory is one of labSem
   ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
