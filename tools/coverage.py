@@ -63,7 +63,7 @@ def main():
       elif b.kind in THMKINDS:
         if not p.wanted(b): continue
         twant += 1
-        if b.name and re.search(r'cake_theorem\s*"%s[]["]'
+        if b.name and re.search(r'cake_(?:theorem|alias)\s*"%s[]["]'
                                 % re.escape(b.name), text):
           thave += 1
         else:
@@ -76,8 +76,8 @@ def main():
         if p.kind == 'lib': continue
         for nm, _, _ in hol4.ml_theorems(b.text or ''):
           twant += 1
-          if re.search(r'cake_theorem\s*"%s[]["]' % re.escape(nm),
-                       text):
+          if re.search(r'cake_(?:theorem|alias)\s*"%s[]["]'
+                       % re.escape(nm), text):
             thave += 1
           else:
             tmissing.append('ML %s' % nm)

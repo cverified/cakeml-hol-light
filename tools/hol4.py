@@ -207,6 +207,16 @@ def thmvalue_statement(text):
   return m.group(2).strip() if m else None
 
 
+ALIAS_VALUE = re.compile(r"=\s*([A-Za-z0-9_']+)\s*;?\s*$", re.S)
+
+
+def thmvalue_alias(text):
+  """the theorem that a ThmValue block is an alias of (HOL4's
+     Theorem foo = bar), if its value is just a name"""
+  m = ALIAS_VALUE.search(text)
+  return m.group(1) if m else None
+
+
 def hol_reln(text):
   """the name and the rules of an ML block that calls Hol_reln"""
   m = HOL_RELN.match(text.strip())

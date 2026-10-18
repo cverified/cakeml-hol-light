@@ -38,8 +38,12 @@ for f in "$@"; do
   # a file that takes too long is interrupted, so that the session
   # is free for the files after it
   slow=
+  # repl-step says "timeout" on a line of its own when the step
+  # did not finish; the word may also be in what the file prints
+  # (the statements of CakeML are full of Rtimeout_error), and a
+  # grep that matched that interrupted a file that was loading
   TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$h\";;" 2>&1 |
-    grep -qi timeout && slow=yes
+    grep -qx timeout && slow=yes
   [ -n "$slow" ] && { repl-int $s > /dev/null 2>&1; sleep 1; }
   # the file was loaded under the name of the instrumented copy, so
   # it is registered under its own name, or the files that need it

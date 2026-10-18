@@ -335,6 +335,9 @@ class Porter:
                 % (name, nm, attrs))
     self.out.append('%s\n  (fun () ->\n    `%s`)\n  CHEAT_TAC;;'
                     % (head, stmt))
+    # the binding is there, so a source that states a theorem as
+    # the value of this one (Theorem foo = bar) can use it
+    self.db.thmbind[nm] = name
 
   def thmname(self, name):
     """the OCaml binding that a theorem of this theory gets: its
@@ -712,6 +715,21 @@ class Porter:
       stmt = hol4.thmvalue_statement(b.text)
       if stmt and b.name:
         self.state(b, b.name, b.attrs, stmt)
+        return
+      # where the value is another theorem of a source, and the
+      # port has that theorem, the name is that theorem of the
+      # port (HOL4's Theorem foo = bar)
+      alias = hol4.thmvalue_alias(b.text)
+      if alias and b.name and alias in self.db.thmbind:
+        nm = self.thmname(b.name)
+        at = ('[' + ','.join(b.attrs) + ']') if b.attrs else ''
+        text = ('let %s = cake_alias "%s%s" %s;;'
+                % (nm, b.name, at, self.db.thmbind[alias]))
+        if len(text) > 72:
+          text = ('let %s =\n  cake_alias "%s%s"\n    %s;;'
+                  % (nm, b.name, at, self.db.thmbind[alias]))
+        self.out.append(text)
+        self.db.thmbind[b.name] = nm
         return
       # a theorem that HOL4 binds to the value of an ML
       # expression: the statement is what that expression

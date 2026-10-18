@@ -89,6 +89,15 @@ let note_unstated nm what s =
    axiom, which length(axioms()) counts; in phase three it is a
    proof of its own and no axiom is added. *)
 
+(* a theorem that a source states as the value of another one
+   (HOL4's Theorem foo = bar): the name is the one of the source
+   and the theorem the one that the port has for the other name *)
+
+let cake_alias name th =
+  let nm,attrs = cake_split_attrs name in
+  the_theorems := (nm,attrs,th) :: !the_theorems;
+  th;;
+
 let cake_theorem name mkterm tac =
   let nm,attrs = cake_split_attrs name in
   (* a statement that uses the name of a record field for a
@@ -108,7 +117,11 @@ let cake_theorem name mkterm tac =
             string_of_type (type_of tm)); None)
     with Failure s -> (note_unstated nm "NOT STATED" s; None)
        | Invalid_argument s ->
-           (note_unstated nm "NOT STATED" s; None) in
+           (note_unstated nm "NOT STATED" s; None)
+       | Not_found -> (note_unstated nm "NOT STATED" "Not_found";
+                       None)
+       | Stack_overflow ->
+           (note_unstated nm "NOT STATED" "Stack_overflow"; None) in
   match tm with
     None -> TRUTH
   | Some tm ->
@@ -117,6 +130,12 @@ let cake_theorem name mkterm tac =
           Failure s ->
             (note_unstated nm "NOT PROVED" s; mk_thm ([],tm))
         | Invalid_argument s ->
-            (note_unstated nm "NOT PROVED" s; mk_thm ([],tm)) in
+            (note_unstated nm "NOT PROVED" s; mk_thm ([],tm))
+        | Not_found ->
+            (note_unstated nm "NOT PROVED" "Not_found";
+             mk_thm ([],tm))
+        | Stack_overflow ->
+            (note_unstated nm "NOT PROVED" "Stack_overflow";
+             mk_thm ([],tm)) in
       the_theorems := (nm,attrs,th) :: !the_theorems;
       th;;

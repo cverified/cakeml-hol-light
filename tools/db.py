@@ -127,6 +127,11 @@ class Db:
     # (a theorem keeps its own name where no other theory and no
     # name of HOL Light has it)
     self.thmnames = set()
+    # the OCaml binding that the port gives a theorem of a source,
+    # by the name that HOL4 gives it: a source that states a
+    # theorem as the value of another one (Theorem foo = bar) is
+    # that binding in the port
+    self.thmbind = {}
     self._ambflds = None
     self.ty_params = {}        # (thy,type) -> the type parameters
     self.monads = {'option': {'bind': 'OPTION_BIND',
