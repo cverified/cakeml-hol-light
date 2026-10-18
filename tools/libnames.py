@@ -13,7 +13,15 @@ statement say something else than the source does.
 This says which names those are and which HOL4 theory of
 `hol4-src/src` defines them, so that the library layer can gain
 them (or `tools/libs.txt` the theory).  A short lower case name
-is left out: it is a variable of the statement, not a constant.
+is left out, as is a name that the statement binds itself and a
+name after a dot (a field of a record): those are no constants.
+
+What is left of it are the names that a statement leaves free,
+which HOL4 generalises -- a variable of the statement there as
+well, whatever theory of HOL4 has a constant of that name.  What
+says whether the port reads such a name as a constant where HOL4
+reads a variable is `tools/diag.py`, which needs a session with
+the port in it.
 """
 import sys, os, re, collections
 
