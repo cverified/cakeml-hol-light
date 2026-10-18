@@ -27,6 +27,20 @@ def kind(msg):
   return msg[:60]
 
 
+def files_of_names():
+  """the file of the port that states a theorem of each name"""
+  out = {}
+  ml = T + '../ml/'
+  for dp, _, fs in os.walk(ml):
+    for f in sorted(fs):
+      if not f.endswith('.ml'): continue
+      p = os.path.join(dp, f)
+      for m in re.finditer(r'cake_(?:theorem|alias)\s*\n?\s*'
+                           r'"([^"\[]+)', open(p).read()):
+        out.setdefault(m.group(1), os.path.relpath(p, ml))
+  return out
+
+
 def main():
   rows = []
   try:
@@ -41,6 +55,12 @@ def main():
   print('%d statements that the port cannot state yet' % len(rows))
   for k, n in cnt.most_common(20):
     print('%6d  %s' % (n, k))
+  # which files they are in, which is where the work is
+  where = files_of_names()
+  byfile = collections.Counter(where.get(nm, '?') for nm, _ in rows)
+  print('the files:')
+  for f, n in byfile.most_common(10):
+    print('%6d  %s' % (n, f))
 
 
 if __name__ == '__main__':
