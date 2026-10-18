@@ -1527,6 +1527,23 @@ cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
 # a definition of the port that goes after the one of the source
 # that it belongs behind
 EXTRA_AFTER = {
+  # HOL4 has w2s and word_to_hex_string in its words theory, which
+  # the port cannot: the hand written words layer of the port is
+  # loaded before this theory and the two need its n2s.  The
+  # statement of presLang$num_to_hex_eq is about this
+  # word_to_hex_string, which was a free variable of it before
+  ('ASCIInumbers', 'num_to_hex_string_def'): r'''
+(* HOL4 wordsScript.sml:76,114: the definitions of w2s and of
+   word_to_hex_string, which the port has here because they need
+   the n2s of this theory, while the words layer of the port is
+   loaded before it *)
+
+let w2s_def = cake_define
+  `w2s b f (w:'a word) = n2s b f (w2n w)`;;
+
+let word_to_hex_string_def = cake_define
+  `word_to_hex_string = w2s 16 HEX`;;
+''',
   # HOL4 makes unify with new_specification, out of a theorem
   # that says that the tail recursive tunify satisfies the
   # equation for a wellfounded substitution.  The port cannot
