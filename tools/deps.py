@@ -7,6 +7,7 @@ for dp, dn, fn in os.walk(root):
     if f.endswith('Script.sml'): files.append(os.path.join(dp,f))
 thy2file = {}
 deps = {}
+nogram = {}
 for path in files:
   src = open(path, encoding='utf-8', errors='replace').read()
   m = re.search(r'^Theory\s+(\S+)', src, re.M)
@@ -40,5 +41,22 @@ for path in files:
     for w in mm.group(1).split():
       if w.endswith('Theory'): anc.append(w[:-6])
   deps[thy] = sorted(set(anc))
-json.dump({'thy2file': thy2file, 'deps': deps}, open('/home/freek/claude/hol-light/cakeml/tools/deps.json','w'), indent=1)
+  # an Ancestors[ignore_grammar] block is an ancestor whose names
+  # the parser of the theory does not have: a statement that means
+  # one of them writes the theory in front of it, and a bare name
+  # of that spelling is a variable of its own
+  # (clos_to_bvlProof$do_build_const_thm has a variable parts and
+  # clos_constantProof, which has a constant of that name, is one
+  # of its ignore_grammar ancestors)
+  ng = []
+  for m in re.finditer(r'^Ancestors\[([^\]]*)\](.*?)(?=^\S|\Z)',
+                       src, re.M | re.S):
+    if 'ignore_grammar' not in m.group(1): continue
+    body = re.sub(r'\[[^\]]*\]', '', m.group(2))
+    body = re.sub(r'\(\*.*?\*\)', '', body, flags=re.S)
+    ng += body.split()
+  nogram[thy] = sorted(set(ng))
+json.dump({'thy2file': thy2file, 'deps': deps, 'nogram': nogram},
+          open('/home/freek/claude/hol-light/cakeml/tools/deps.json',
+               'w'), indent=1)
 print(len(thy2file), 'theories')

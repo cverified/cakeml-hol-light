@@ -115,7 +115,11 @@ class Db:
     self.provided = provided_names()
     self.provided_thy = provided_thys()
     self.read_fixities()
-    self.deps = json.load(open(T + 'deps.json'))['deps']
+    d = json.load(open(T + 'deps.json'))
+    self.deps = d['deps']
+    # the ancestors of a theory whose names its parser does not
+    # have (an Ancestors[ignore_grammar] block)
+    self.nogram = d.get('nogram', {})
     self.defs = collections.defaultdict(list)   # name -> [(thy,kind)]
     self.datatypes = {}        # (thy,ty) -> ([cons],[fields])
     self.recs = {}             # (thy,ty) -> [fields]
@@ -539,6 +543,25 @@ class Db:
     p = re.sub(r'^.*/cakeml-src/', '', p)
     return re.sub(r'Script\.sml$', '.ml', p)
 
+  def gram_ancestors(self, thy):
+    """the ancestors whose names the parser of a theory has: the
+       ones of its Ancestors blocks and all of theirs, but not the
+       ones that only an Ancestors[ignore_grammar] block brings.
+       The grammar of an ancestor has the names of its own
+       ancestors in it, so closLang's constructors are in the scope
+       of clos_to_bvlProof (through closSem) although its
+       ignore_grammar block names closLang, while
+       clos_constantProof's parts is not: nothing else of the
+       theory depends on it, and the statement that writes parts
+       means a variable of its own (it writes the other names of
+       that theory with the theory in front of them)"""
+    ng = set(self.nogram.get(thy, []))
+    out = {thy}
+    for t in self.deps.get(thy, []):
+      if t in ng: continue
+      out |= self.ancestors(t)
+    return out
+
   def scope(self, thy):
     """the theories whose names a theory can use without writing
        the theory in front of them: its ancestors, or, where the
@@ -638,7 +661,7 @@ class Db:
        defines as that constant, whether the grammar of the
        theory has it or not (backendProof restricts its grammar
        and uses closProps' obeys_max_app all the same)."""
-    anc = self.ancestors(thy) | {thy}
+    anc = self.gram_ancestors(thy)
     ids = set()
     for b in blocks:
       if b.kind in ('Theorem', 'Triviality'):
