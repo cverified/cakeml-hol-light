@@ -541,6 +541,15 @@ THM_INT_VARS = {
   ('source_evalProof', 'Num_11'): ['i'],
 }
 
+# the constants of HOL4's own libraries that HOL4 hides from its
+# parser (relationTheory and hrealScript both say Parse.hide "C"
+# of combinTheory's C), so that a source writes the name for a
+# variable of its own: the statements of a file that uses one are
+# read with that constant hidden (db.hidden_for), and a
+# definition that means the constant writes it qualified
+# (mips_target's mips_enc is a combin$C of LIST_BIND)
+HOL4_HIDDEN = set(['C'])
+
 # HOL4's Definition foo[schematic] has a free variable in its
 # body, which HOL4 makes the first argument of the constant:
 # NTproperties defines nullableML and firstSetML for a grammar G

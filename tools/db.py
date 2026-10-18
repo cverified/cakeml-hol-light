@@ -620,6 +620,10 @@ class Db:
         ids |= set(re.findall(r"[A-Za-z][A-Za-z0-9_']*", b.body or ''))
     out = set()
     for n in ids:
+      # a constant that HOL4 hides from its parser is a variable
+      # of a statement that writes it (overrides.HOL4_HIDDEN)
+      if n in overrides.HOL4_HIDDEN:
+        out.add(n); continue
       if n in self.hl or n in self.provided: continue
       ts = {t for t, k in self.defs.get(n, [])
             if k in ('def', 'con', 'rel')}
