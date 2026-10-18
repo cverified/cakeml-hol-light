@@ -1,0 +1,41 @@
+# the statements whose connectives the port counts differently
+# from the source, and that a reading has found right
+# (tools/stmtshape.py).  The port writes out what HOL4 says with a
+# name: an Overload that the port cannot declare, a restricted
+# quantifier, a record update of several fields.  What that name
+# stands for has connectives of its own, and the source has them
+# nowhere, so the counts differ and the statement says the same.
+#
+# one line per statement: <theory>$<name> <why>
+parmove$NoRead_path the overload NoRead, which the port expands
+parmove$parsem_NoRead the overload NoRead, which the port expands
+fromSexp$isAlpha_isUpper_isLower the overloads of char_lt, which
+  the port expands
+dataProps$do_app_with_stack the overloads do_app_safe and
+  do_app_peak, which the port expands
+dataProps$do_app_with_stack_and_locals the same two overloads
+dataProps$do_app_with_locals the same two overloads
+dataProps$do_app_locals the same two overloads
+dataProps$do_space_alt the overload do_space_peak, which the port
+  expands
+bvi_to_dataProof$compile_correct the overloads of the compiler of
+  the state, which the port expands
+wordProps$stack_size_perm the overload stack_size, which the port
+  expands
+wordProps$permute_swap_lemma2 the same overload
+wordProps$permute_swap_lemma3 the same overload
+data_to_word_memoryProof$xor_bytes_bytes_to_word the overload
+  that the port expands
+data_to_word_assignProof$do_app_RefByte_eq the overload that the
+  port expands
+lab_to_targetProof$line_similar_len_no_lab the overload
+  len_no_lab, which the port expands
+lab_to_targetProof$code_similar_len_no_lab the overload len_no_lab
+lab_to_targetProof$loc_to_pc_append the overload len_no_lab
+lab_to_targetProof$pos_val_append the overload len_no_lab
+lab_to_targetProof$sec_pos_val_acc the overload len_no_lab
+lab_to_targetProof$pos_val_acc the overload len_no_lab
+lab_to_targetProof$sec_loc_to_pc_bound the overload len_no_lab
+lab_to_targetProof$loc_to_pc_bound the overload len_no_lab
+infer_eComplete$infer_pes_complete the restricted quantifier of
+  HOL4 (!x::set pes), which the port writes as RES_FORALL

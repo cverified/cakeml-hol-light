@@ -1310,6 +1310,14 @@ def sym_space(op, s):
                      s[0] in SYMCHARS) else s
 
 
+def wordlit(e):
+  """is this term a word literal of HOL4 (0w, 1w, 0xFFw)?  The ~ of
+     a word is its complement and not the negation of a number, so
+     ~0w is the word of all ones and not 0w"""
+  while e.kind in ('paren', 'typed'): e = e.e
+  return e.kind == 'num' and e.text.endswith('w')
+
+
 def numeric(e):
   """is this term a number rather than a proposition?"""
   while e.kind == 'paren': e = e.e
@@ -1730,8 +1738,9 @@ class Printer:
         # HOL4 writes ~ for the negation of a number and for the
         # complement of a word as well as for the negation of a
         # proposition; HOL Light writes -- and word_not for those
-        if self.ctx.wordnot or (e.e.kind == 'id' and
-                                e.e.name in self.ctx.wordnotvars):
+        if (self.ctx.wordnot or wordlit(e.e) or
+            (e.e.kind == 'id' and
+             e.e.name in self.ctx.wordnotvars)):
           return self.paren('word_not ' + self.pr(e.e, APP),
                             PRE_APP, prec)
         # a prefix of HOL Light takes the atom after it and no
