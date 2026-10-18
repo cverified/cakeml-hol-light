@@ -6,6 +6,8 @@
 #   literals  the strings and the numerals of a definition survive
 #   lets      a let that binds a function abstracts its arguments
 #   nohol4    no HOL4 code is in the port, not even in a comment
+#   libnames  a name of HOL4's own libraries that a statement uses
+#             and that the port has not (a free variable then)
 #   stmtnames every constant of a statement of a source is in the
 #             statement that the port has for it
 #   comments  every comment of a source is in its port, or a
@@ -24,6 +26,8 @@ echo "=== lets"
 python3 -I tools/lets.py 2>&1 | tail -3
 echo "=== HOL4 code in the port"
 python3 -I tools/nohol4.py 2>&1 | tail -4
+echo "=== the names of HOL4's libraries that the port has not"
+python3 -I tools/libnames.py 2>&1 | head -1
 echo "=== the constants of the statements"
 python3 -I tools/stmtnames.py 2>&1 | tail -2
 echo "=== the comments of the sources"
