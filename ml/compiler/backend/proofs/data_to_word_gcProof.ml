@@ -45,6 +45,9 @@ needs "misc/misc.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
+
+cake_hide ["code_buffer"; "data_buffer"; "memory"; "stack_alloc";
+           "vars"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
 (* HOL4 data_to_word_gcProofScript.sml:19-23: ML code, not ported *)
@@ -4104,7 +4107,7 @@ let word_heap_non_empty_limit = cake_theorem "word_heap_non_empty_limit"
 
 let small_int_0 = cake_theorem "small_int_0"
   (fun () ->
-    `good_dimindex (:'a) ==> small_int (:'a) 0`)
+    `good_dimindex (:'a) ==> small_int (:'a) (&0)`)
   CHEAT_TAC;;
 
 let state_rel_imp_clock = cake_theorem "state_rel_imp_clock"

@@ -14,6 +14,8 @@ needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/word_remove.ml";;
 
+cake_hide ["code_buffer"; "data_buffer"; "memory"];;
+
 let compile_state_def = cake_define
   `compile_state clk c s = wordSem_state_compile_fupd (K c)
   (wordSem_state_compile_oracle_fupd (K ((I ## (MAP (I ## I ##

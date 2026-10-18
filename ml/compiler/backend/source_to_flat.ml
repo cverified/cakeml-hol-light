@@ -48,19 +48,22 @@ let environment_generation_store_FIELDS =
   ["next","num";
    "generation","num";
    "envs","source_to_flat_environment spt"];;
-hol4_overload "next" "environment_generation_store_next";;
-hol4_overload "next_fupd" "environment_generation_store_next_fupd";;
-hol4_overload "generation" "environment_generation_store_generation";;
-hol4_overload "generation_fupd"
+hol4_field_overload "next" "environment_generation_store_next";;
+hol4_field_overload "next_fupd"
+  "environment_generation_store_next_fupd";;
+hol4_field_overload "generation"
+  "environment_generation_store_generation";;
+hol4_field_overload "generation_fupd"
   "environment_generation_store_generation_fupd";;
-hol4_overload "envs" "environment_generation_store_envs";;
-hol4_overload "envs_fupd" "environment_generation_store_envs_fupd";;
+hol4_field_overload "envs" "environment_generation_store_envs";;
+hol4_field_overload "envs_fupd"
+  "environment_generation_store_envs_fupd";;
 
 let environment_store_FIELDS = define_record "environment_store"
   ["next","num";
    "env_gens","(source_to_flat_environment spt) spt"];;
-hol4_overload "next" "environment_store_next";;
-hol4_overload "next_fupd" "environment_store_next_fupd";;
+hol4_field_overload "next" "environment_store_next";;
+hol4_field_overload "next_fupd" "environment_store_next_fupd";;
 
 let compile_var_def = cake_define_list
   [`compile_var t (source_to_flat_Glob _1 i) = App t
@@ -511,10 +514,10 @@ let source_to_flat_config_FIELDS = define_record "source_to_flat_config"
    "mod_env","source_to_flat_environment";
    "pattern_cfg","flat_pattern_config";
    "envs","environment_store"];;
-hol4_overload "next" "source_to_flat_config_next";;
-hol4_overload "next_fupd" "source_to_flat_config_next_fupd";;
-hol4_overload "envs" "source_to_flat_config_envs";;
-hol4_overload "envs_fupd" "source_to_flat_config_envs_fupd";;
+hol4_field_overload "next" "source_to_flat_config_next";;
+hol4_field_overload "next_fupd" "source_to_flat_config_next_fupd";;
+hol4_field_overload "envs" "source_to_flat_config_envs";;
+hol4_field_overload "envs_fupd" "source_to_flat_config_envs_fupd";;
 
 let empty_config_def = cake_define
   `empty_config =

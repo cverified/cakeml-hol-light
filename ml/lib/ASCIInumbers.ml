@@ -39,3 +39,5 @@ let num_to_hex_string_def = cake_define
   `num_to_hex_string = n2s 16 HEX`;;
 
 hol4_overload "toString" "num_to_dec_string";;
+(* HOL4 ASCIInumbersScript.sml:232: the overload toNum, which the
+   port expands *)

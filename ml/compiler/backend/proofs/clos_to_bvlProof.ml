@@ -38,6 +38,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["all"; "next_loc"];;
+
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -66,6 +68,8 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
+
+cake_hide ["all"; "next_loc"];;
 
 (* TODO: move? *)
 

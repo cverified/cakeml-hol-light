@@ -22,6 +22,8 @@ needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+
+cake_hide ["dummy"; "memory"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 word_simpProofScript.sml:10: the ML values that the

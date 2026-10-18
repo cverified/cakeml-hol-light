@@ -60,47 +60,47 @@ let _ = size_thms "wordLang_prog";;
    replacing the CHEAT_TAC is all that is left *)
 let call_graph_def = cake_define_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
-         (\(funs,n,ns,total,p). (sptree_size funs,total - LENGTH
+         (\(funs,n,ns,total',p). (sptree_size funs,total' - LENGTH
            ns,wordLang_prog_size (K 0) p)))`)
   CHEAT_TAC
-  `call_graph funs n ns total x5 =
+  `call_graph funs n ns total' x5 =
         match x5 with
           wordLang_Seq p1 p2 ->
-        mk_Branch (call_graph funs n ns total p1) (call_graph funs n
-          ns total p2)
+        mk_Branch (call_graph funs n ns total' p1) (call_graph funs n
+          ns total' p2)
         | (If _1 _2 _3 p1 p2) ->
-        mk_Branch (call_graph funs n ns total p1) (call_graph funs n
-          ns total p2)
+        mk_Branch (call_graph funs n ns total' p1) (call_graph funs n
+          ns total' p2)
         | (Call ret dest args handler) ->
         (match dest with NONE -> word_depth_Unknown | SOME d ->
           (if MEM d ns /\ ret = NONE then word_depth_Leaf else
           match sptree_lookup d funs with NONE -> word_depth_Unknown
             | SOME ((a:num),body) ->
             (match ret with NONE ->
-              (if LENGTH ns < total then
+              (if LENGTH ns < total' then
                  mk_Branch (Call d (word_depth_Leaf))
-                   (call_graph funs d (d :: ns) total body) else
+                   (call_graph funs d (d :: ns) total' body) else
                      word_depth_Leaf) | SOME (_4,_5,ret_prog,_6,_7) ->
               (let new_funs = sptree_delete d funs in
                 match handler with NONE -> word_depth_Branch
                   (word_depth_Call n (word_depth_Call d
                   word_depth_Leaf))
                       (mk_Branch (Call n (call_graph new_funs d [d]
-                        total body))
-                              (call_graph funs n ns total ret_prog))
+                        total' body))
+                              (call_graph funs n ns total' ret_prog))
                                 | SOME (_8,p,_9,_10) ->
                                 word_depth_Branch (word_depth_Call n
                                 (Const 3 (word_depth_Call d
                                 word_depth_Leaf)))
                    (mk_Branch (Call n (Const 3 (call_graph new_funs d
-                     [d] total body)))
-                   (mk_Branch (call_graph funs n ns total p)
-                              (call_graph funs n ns total
+                     [d] total' body)))
+                   (mk_Branch (call_graph funs n ns total' p)
+                              (call_graph funs n ns total'
                                 ret_prog)))))))
-        | (wordLang_MustTerminate p) -> call_graph funs n ns total p
+        | (wordLang_MustTerminate p) -> call_graph funs n ns total' p
         | (Alloc _11 _12) -> Call n word_depth_Leaf
         | (Install _13 _14 _15 _16 _17) -> word_depth_Unknown
-        | (Loop _18 body _19) -> call_graph funs n ns total body
+        | (Loop _18 body _19) -> call_graph funs n ns total' body
         | _20 -> word_depth_Leaf`;;
 
 let full_call_graph_def = cake_define

@@ -20,6 +20,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["code_buffer"; "data_buffer"; "memory"];;
+
 (* HOL4 word_copyProofScript.sml:10: the ML values that the
    definitions below antiquote *)
 

@@ -28,6 +28,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["dummy"];;
+
 (***
   This theory should serve also as documentation for
   the syntactic properties of wordLang that gets preserved

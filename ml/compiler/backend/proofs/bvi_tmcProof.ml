@@ -24,6 +24,8 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["all"; "parts"; "vars"];;
+
 (* HOL4 bvi_tmcProofScript.sml:10: the ML values that the definitions
    below antiquote *)
 

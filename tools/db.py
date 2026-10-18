@@ -429,10 +429,20 @@ class Db:
     self.defining_block = {}         # (thy,name) -> block index
     for thy, path, kind in self.order:
       for b in hol4.parse(path):
+        # phase two states the theorems of the CakeML sources, so
+        # what their statements use is needed as well (the port of
+        # a HOL4 library theory has the definitions that CakeML
+        # needs, and mlstring's theorems need toto's TotOrd)
         if b.kind not in ('Datatype', 'Definition', 'Inductive',
-                          'CoInductive', 'Type', 'Overload'):
+                          'CoInductive', 'Type', 'Overload',
+                          'Theorem', 'Triviality'):
           continue
         names = []
+        if b.kind in ('Theorem', 'Triviality'):
+          body = hol4.strip_comments(b.body or '')
+          blocks.append((thy, [], set(re.findall(
+            r"[A-Za-z][A-Za-z0-9_']*", body)), kind))
+          continue
         if b.kind == 'Datatype':
           for ty, cons, flds in hol4.datatype_names(b.body):
             names += [ty] + cons + flds
@@ -581,6 +591,42 @@ class Db:
                if t in anc and k not in tykinds)
       if len(ts) > 1: out.add(nm)
     return out
+
+  def hidden_for(self, thy, blocks):
+    """the names that HOL4 reads as a variable in this theory, and
+       that the port has as a constant: no theory in the scope of
+       this one defines them (the unification library's vars is
+       not in scope in data_to_word_memoryProof, which uses vars
+       for a variable of its own), and HOL Light has no scope of
+       its own to keep them apart.  The statements of the theory
+       are read with these constants hidden; only the names that
+       the statements of the source use are in the list."""
+    anc = self.scope(thy) | {thy}
+    ids = set()
+    for b in blocks:
+      if b.kind in ('Theorem', 'Triviality'):
+        ids |= set(re.findall(r"[A-Za-z][A-Za-z0-9_']*", b.body or ''))
+    out = set()
+    for n in ids:
+      if n in self.hl or n in self.provided: continue
+      ts = {t for t, k in self.defs.get(n, [])
+            if k in ('def', 'con', 'rel')}
+      if not ts or (ts & anc): continue
+      # the port writes the name of the constant, so one that it
+      # renamed does not hide anything
+      if any(self.rename.get((t, n), n) == n for t in ts):
+        out.add(n)
+    return sorted(out)
+
+  def defnames_for(self, thy):
+    """the names that a theory in the scope of this one defines as
+       a constant of its own, which is what HOL4 reads such a name
+       as (and not, where the name ends in _size, as the size
+       function of a datatype of that name)"""
+    anc = self.scope(thy) | {thy}
+    return {nm for nm, v in self.defs.items()
+            if any(t in anc and k in ('def', 'con', 'rel')
+                   for t, k in v)}
 
   def names_for(self, thy, types=False):
     """the name mapping to use when translating theory thy; with

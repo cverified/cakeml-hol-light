@@ -38,10 +38,11 @@ let word_bignumProof_state_FIELDS =
   ["regs","(num,'a word)fmap";
    "arrays","address->('a word) list";
    "clock","num"];;
-hol4_overload "regs" "word_bignumProof_state_regs";;
-hol4_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
-hol4_overload "state_clock" "word_bignumProof_state_clock";;
-hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
+hol4_field_overload "regs" "word_bignumProof_state_regs";;
+hol4_field_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
+hol4_field_overload "state_clock" "word_bignumProof_state_clock";;
+hol4_field_overload "state_clock_fupd"
+  "word_bignumProof_state_clock_fupd";;
 
 let eval_exp_def = cake_define
   `eval_exp s (wordLang_Const w) = w /\

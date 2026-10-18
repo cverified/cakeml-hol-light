@@ -219,7 +219,8 @@ class Porter:
                          updaters=overrides.UPDATERS.get(thy, {}),
                          cons=db.cons_for(thy), abbrevs=self.abbrevs,
                          ambfields=db.ambiguous_fields(),
-                         con_argty=db.con_argty_for(thy))
+                         con_argty=db.con_argty_for(thy),
+                         defnames=db.defnames_for(thy))
     self.ctx.fieldvar = self.fieldvar
     # a name that LOCAL_NAMES gives this theory is written as that
     # name, also where the port overloads it (word_bignumProof's
@@ -295,6 +296,10 @@ class Porter:
     self.ctx.intneg = False
     self.intargs = set()
     self.intresult = False
+    # the variables of a statement that hold an integer, where
+    # nothing in the statement says so (overrides.THM_INT_VARS)
+    self.ctx.intvars = set(
+      overrides.THM_INT_VARS.get((self.thy, b.name), []))
     try:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
@@ -364,7 +369,21 @@ class Porter:
   def tnm(self, n):
     return self.ctx.tyname(n)
 
+  def expand_syms(self, text):
+    """a symbolic name that a source overloads and that is not an
+       infix of its grammar (parmove's turnstile for wf) is not a
+       token that the term grammar of the port reads, so the body
+       of the overload takes its place before the text is read"""
+    for nm in sorted(self.raw_overloads, key=len, reverse=True):
+      if (IDENT.match(nm) or nm in hterm.INFIX or nm in hterm.SYMS
+          or nm not in text):
+        continue
+      body = dbmod.strip_quote(self.raw_overloads[nm])
+      text = text.replace(nm, ' (' + body + ') ')
+    return text
+
   def term(self, text, annotate=False):
+    text = self.expand_syms(text)
     toks = hterm.tokenize(text)
     p = hterm.Parser(toks, self.ctx)
     e = p.parse()
@@ -522,8 +541,20 @@ class Porter:
                                     self.bound))
     needs = sorted(set('needs "%s";;' % self.db.mlpath_of(d)
                        for d in deps if d in self.db.thy_of_file))
-    return text.replace(NEEDS, '\n'.join(needs) if needs else
-                        '(* this file needs nothing of the port *)')
+    head = '\n'.join(needs) if needs else \
+           '(* this file needs nothing of the port *)'
+    # the names that HOL4 reads as variables here, because no
+    # theory in the scope of this one defines them
+    hide = self.db.hidden_for(self.thy, blocks)
+    if hide:
+      lines = ['cake_hide ["' + hide[0] + '"']
+      for n in hide[1:]:
+        if len(lines[-1]) + len(n) + 4 > 70:
+          lines.append('           "' + n + '"')
+        else:
+          lines[-1] += '; "' + n + '"'
+      head += '\n\n' + ';\n'.join(lines) + '];;'
+    return text.replace(NEEDS, head)
 
   def wanted(self, b):
     """of a HOL4 library theory only the needed definitions are ported"""
@@ -820,10 +851,15 @@ class Porter:
     for f, _ in flds:
       if f not in amb: continue
       for n, c in ((amb[f], f), (amb[f] + '_fupd', f + '_fupd')):
-        text = ('hol4_overload "%s" "%s_%s";;'
+        # the overload of a field name is one that HOL4 does not
+        # have (there r.stack is syntax and a bare stack is a
+        # variable), so the port keeps a list of them: a statement
+        # that uses such a name for a variable of its own is read
+        # with them taken away (ml/lib/theorem.ml)
+        text = ('hol4_field_overload "%s" "%s_%s";;'
                 % (n, self.tnm(ty), c))
         if len(text) > 72:
-          text = ('hol4_overload "%s"\n  "%s_%s";;'
+          text = ('hol4_field_overload "%s"\n  "%s_%s";;'
                   % (n, self.tnm(ty), c))
         self.out.append(text)
 

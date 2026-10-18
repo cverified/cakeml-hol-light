@@ -2,7 +2,7 @@
 (*  data_to_word: ported from HOL4's
     compiler/backend/data_to_wordScript.sml
     A definition theory, with 201 definitions, 3 datatypes and 40
-    theorems.  Needed by 21 files of the port.  *)
+    theorems.  Needed by 20 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -50,10 +50,11 @@ let data_to_word_config_FIELDS = define_record "data_to_word_config"
    "be","bool";
    "call_empty_ffi","bool";
    "gc_kind","gc_kind"];;
-hol4_overload "has_fp_ops" "data_to_word_config_has_fp_ops";;
-hol4_overload "has_fp_ops_fupd" "data_to_word_config_has_fp_ops_fupd";;
-hol4_overload "be" "data_to_word_config_be";;
-hol4_overload "be_fupd" "data_to_word_config_be_fupd";;
+hol4_field_overload "has_fp_ops" "data_to_word_config_has_fp_ops";;
+hol4_field_overload "has_fp_ops_fupd"
+  "data_to_word_config_has_fp_ops_fupd";;
+hol4_field_overload "be" "data_to_word_config_be";;
+hol4_field_overload "be_fupd" "data_to_word_config_be_fupd";;
 
 let adjust_var_def = cake_define
   `adjust_var n = 2 * n + (2:num)`;;

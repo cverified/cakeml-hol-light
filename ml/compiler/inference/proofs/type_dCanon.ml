@@ -18,6 +18,8 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/typeSystem.ml";;
 
+cake_hide ["all"];;
+
 (* TODO: move *)
 
 let tenv_equiv_def = cake_define

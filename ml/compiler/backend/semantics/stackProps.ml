@@ -19,6 +19,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["code_buffer"; "data_buffer"; "memory"];;
+
 
 (* HOL4 stackPropsScript.sml:11-18: a theorem that HOL4 states as the
    value of an ML expression *)

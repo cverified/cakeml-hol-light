@@ -9,6 +9,11 @@
 (* HOL4 ancestors outside the port: list rich_list llist pred_set
    option *)
 
+let lprefix_chain_def = cake_define
+  `lprefix_chain ls <=>
+     (!ll1 ll2. ll1 IN ls /\ ll2 IN ls ==> LPREFIX ll1 ll2 \/
+       LPREFIX ll2 ll1)`;;
+
 let lprefix_chain_nth_def = cake_define
   `lprefix_chain_nth n ls =
      some (\x. ?l. l IN ls /\ LNTH n l = SOME x)`;;

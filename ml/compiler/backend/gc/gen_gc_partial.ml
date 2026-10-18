@@ -21,10 +21,10 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
    "isRef","'a->bool";
    "gen_start","num";
    "refs_start","num"];;
-hol4_overload "limit" "gen_gc_partial_conf_limit";;
-hol4_overload "limit_fupd" "gen_gc_partial_conf_limit_fupd";;
-hol4_overload "isRef" "gen_gc_partial_conf_isRef";;
-hol4_overload "isRef_fupd" "gen_gc_partial_conf_isRef_fupd";;
+hol4_field_overload "limit" "gen_gc_partial_conf_limit";;
+hol4_field_overload "limit_fupd" "gen_gc_partial_conf_limit_fupd";;
+hol4_field_overload "isRef" "gen_gc_partial_conf_isRef";;
+hol4_field_overload "isRef_fupd" "gen_gc_partial_conf_isRef_fupd";;
 
 let gc_move_def = cake_define_list
   [`gen_gc_partial_gc_move conf state (gc_shared_Data d) =

@@ -9,6 +9,43 @@
 needs "lib/grammar.ml";;
 (* HOL4 ancestors outside the port: list pred_set *)
 
+let nullable_def = cake_define
+  `nullable G sf = (\G. RTC (derive G)) G sf []`;;
+(* HOL4 NTpropertiesScript.sml:32: the overload nullableNT, which the
+   port expands *)
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 NTpropertiesScript.sml:120-132: the tactic that proves the
+   termination *)
+let nullableML_def = cake_define_list_try (fun () ->
+  `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
+     LENGTH`)
+  [`nullableML seen [] = T`;
+   `nullableML seen (grammar_TOK t :: _1) = F`;
+   `nullableML seen (grammar_NT n :: rest) =
+        (if n IN FDOM (grammar_rules G) /\ ~(n IN seen) then
+          if FAPPLY (grammar_rules G) n INTER {r | nullableML
+            (n INSERT seen) r} = {} then F else nullableML seen
+            rest else F)`];;
+
 let firstSet_def = cake_define
   `firstSet G sf = {t | ?rest. (\G. RTC (derive G)) G sf (grammar_TOK
   t :: rest)}`;;
+
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 NTpropertiesScript.sml:368-380: the tactic that proves the
+   termination *)
+let firstSetML_def = cake_define_list_try (fun () ->
+  `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
+     LENGTH`)
+  [`firstSetML seen [] = {}`;
+   `firstSetML seen (grammar_TOK t :: _2) = {t}`;
+   `firstSetML seen (grammar_NT n :: rest) =
+      (if n IN FDOM (grammar_rules G) then
+        (if ~(n IN seen) then
+          BIGUNION (IMAGE (firstSetML (n INSERT seen))
+                          (FAPPLY (grammar_rules G) n)) else {})
+                            UNION
+        (if nullable G [grammar_NT n] then firstSetML seen rest
+          else {}) else {})`];;

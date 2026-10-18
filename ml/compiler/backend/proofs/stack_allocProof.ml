@@ -28,9 +28,12 @@ needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
 needs "lib/sptree.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
+
+cake_hide ["data_buffer"; "memory"; "stack_alloc"];;
 (* HOL4 ancestors outside the port: (* for memcpy *) *)
 
 (* HOL4 stack_allocProofScript.sml:16: ML code, not ported *)

@@ -412,7 +412,11 @@ def parse(path):
       # infix the source overloads with a constant)
       mm = re.match(r'^\w+\s+(?:([A-Za-z0-9_\']+)|"([^"]*)")'
                     r'\s*(\[[^\]]*\])?\s*=\s*(.*)$', text, re.S)
-      name = (mm.group(1) or mm.group(2)) if mm else None
+      # a symbolic name is an SML string literal, in which HOL4
+      # writes a character outside ASCII as its bytes in decimal
+      # (parmove's \226\137\161 is the infix of eqenv)
+      name = ((mm.group(1) or sml_string(mm.group(2)))
+              if mm else None)
       attrs = ((mm.group(3) or '')[1:-1].split(',')
                if mm and mm.group(3) else [])
       body = mm.group(4) if mm else ''

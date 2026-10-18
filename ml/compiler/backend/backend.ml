@@ -41,6 +41,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/primTypes.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+cake_hide ["bvl_to_bvi"];;
+
 let backend_config_FIELDS = define_record "backend_config"
   ["source_conf","source_to_flat_config";
    "clos_conf","clos_to_bvl_config";

@@ -13,6 +13,8 @@
 needs "basis/pure/mlstring.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/ternaryComparisons.ml";;
+
+cake_hide ["HEX"; "num_from_dec_string"; "num_to_dec_string"];;
 (* HOL4 ancestors outside the port: gcd *)
 
 let toChar_def = cake_define

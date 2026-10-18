@@ -75,10 +75,10 @@ let limits_FIELDS = define_record "limits"
    "arch_64_bit","bool";
    "has_fp_ops","bool";
    "has_fp_tops","bool"];;
-hol4_overload "stack_limit" "limits_stack_limit";;
-hol4_overload "stack_limit_fupd" "limits_stack_limit_fupd";;
-hol4_overload "has_fp_ops" "limits_has_fp_ops";;
-hol4_overload "has_fp_ops_fupd" "limits_has_fp_ops_fupd";;
+hol4_field_overload "stack_limit" "limits_stack_limit";;
+hol4_field_overload "stack_limit_fupd" "limits_stack_limit_fupd";;
+hol4_field_overload "has_fp_ops" "limits_has_fp_ops";;
+hol4_field_overload "has_fp_ops_fupd" "limits_has_fp_ops_fupd";;
 
 let dataSem_state_FIELDS = define_record "dataSem_state"
   ["locals","dataSem_v spt";
@@ -100,31 +100,32 @@ let dataSem_state_FIELDS = define_record "dataSem_state"
    "safe_for_space","bool";
    "peak_heap_length","num";
    "compile_oracle","num->'c#(num#num#dataLang_prog) list"];;
-hol4_overload "state_locals" "dataSem_state_locals";;
-hol4_overload "state_locals_fupd" "dataSem_state_locals_fupd";;
-hol4_overload "state_locals_size" "dataSem_state_locals_size";;
-hol4_overload "state_locals_size_fupd"
+hol4_field_overload "state_locals" "dataSem_state_locals";;
+hol4_field_overload "state_locals_fupd" "dataSem_state_locals_fupd";;
+hol4_field_overload "state_locals_size" "dataSem_state_locals_size";;
+hol4_field_overload "state_locals_size_fupd"
   "dataSem_state_locals_size_fupd";;
-hol4_overload "stack" "dataSem_state_stack";;
-hol4_overload "stack_fupd" "dataSem_state_stack_fupd";;
-hol4_overload "state_stack_max" "dataSem_state_stack_max";;
-hol4_overload "state_stack_max_fupd" "dataSem_state_stack_max_fupd";;
-hol4_overload "state_global" "dataSem_state_global";;
-hol4_overload "state_global_fupd" "dataSem_state_global_fupd";;
-hol4_overload "state_handler" "dataSem_state_handler";;
-hol4_overload "state_handler_fupd" "dataSem_state_handler_fupd";;
-hol4_overload "state_refs" "dataSem_state_refs";;
-hol4_overload "state_refs_fupd" "dataSem_state_refs_fupd";;
-hol4_overload "compile" "dataSem_state_compile";;
-hol4_overload "compile_fupd" "dataSem_state_compile_fupd";;
-hol4_overload "state_clock" "dataSem_state_clock";;
-hol4_overload "state_clock_fupd" "dataSem_state_clock_fupd";;
-hol4_overload "state_code" "dataSem_state_code";;
-hol4_overload "state_code_fupd" "dataSem_state_code_fupd";;
-hol4_overload "state_ffi" "dataSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "dataSem_state_ffi_fupd";;
-hol4_overload "compile_oracle" "dataSem_state_compile_oracle";;
-hol4_overload "compile_oracle_fupd"
+hol4_field_overload "stack" "dataSem_state_stack";;
+hol4_field_overload "stack_fupd" "dataSem_state_stack_fupd";;
+hol4_field_overload "state_stack_max" "dataSem_state_stack_max";;
+hol4_field_overload "state_stack_max_fupd"
+  "dataSem_state_stack_max_fupd";;
+hol4_field_overload "state_global" "dataSem_state_global";;
+hol4_field_overload "state_global_fupd" "dataSem_state_global_fupd";;
+hol4_field_overload "state_handler" "dataSem_state_handler";;
+hol4_field_overload "state_handler_fupd" "dataSem_state_handler_fupd";;
+hol4_field_overload "state_refs" "dataSem_state_refs";;
+hol4_field_overload "state_refs_fupd" "dataSem_state_refs_fupd";;
+hol4_field_overload "compile" "dataSem_state_compile";;
+hol4_field_overload "compile_fupd" "dataSem_state_compile_fupd";;
+hol4_field_overload "state_clock" "dataSem_state_clock";;
+hol4_field_overload "state_clock_fupd" "dataSem_state_clock_fupd";;
+hol4_field_overload "state_code" "dataSem_state_code";;
+hol4_field_overload "state_code_fupd" "dataSem_state_code_fupd";;
+hol4_field_overload "state_ffi" "dataSem_state_ffi";;
+hol4_field_overload "state_ffi_fupd" "dataSem_state_ffi_fupd";;
+hol4_field_overload "compile_oracle" "dataSem_state_compile_oracle";;
+hol4_field_overload "compile_oracle_fupd"
   "dataSem_state_compile_oracle_fupd";;
 
 (* HOL4 dataSemScript.sml:76-77: the ML values that the definitions

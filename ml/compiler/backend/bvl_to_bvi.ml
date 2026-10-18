@@ -31,6 +31,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["num_stubs"];;
+
 let destLet_def = cake_define
   `destLet x1 =
         match x1 with

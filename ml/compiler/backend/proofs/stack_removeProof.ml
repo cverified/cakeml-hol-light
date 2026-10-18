@@ -22,12 +22,15 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
+
+cake_hide ["code_buffer"; "data_buffer"; "gen_gc"; "num_stubs"];;
 
 (* HOL4 stack_removeProofScript.sml:16: ML code, not ported *)
 (* HOL4 stack_removeProofScript.sml:17: the overload num_stubs, which

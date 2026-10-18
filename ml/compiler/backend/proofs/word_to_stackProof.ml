@@ -27,12 +27,15 @@ needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
+
+cake_hide ["every"; "fv"; "memory"];;
 (* HOL4 ancestors outside the port: (* for extend_with_resource_limit
    *) (* for list_Seq *) (* for extract_labels *) (* for
    word_add_carry_def *) *)
@@ -54,12 +57,15 @@ needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
+
+cake_hide ["every"; "fv"; "memory"];;
 
 (* Set up ML bindings *)
 (* HOL4 word_to_stackProofScript.sml:18-20: ML code, not ported *)

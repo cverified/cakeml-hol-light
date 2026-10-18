@@ -3,7 +3,7 @@
 tokenize/parse a HOL4 term and print it as a HOL Light term,
 keeping the line structure of the original.
 """
-import re, sys
+import os, re, sys
 
 # ---------------------------------------------------------------
 # tokens
@@ -34,7 +34,8 @@ KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
             'do', 'od', 'with', 'otherwise', 'some']
 
 # symbols, longest first
-SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '&&',
+SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '!!',
+        '&&',
         '{|', '|}', '❲', '❳',
         '##',
         "''", '--', '%%',
@@ -114,9 +115,15 @@ SUPERSCRIPT = {'\u2070': '0', '\u00b9': '1', '\u00b2': '2',
                '\u2079': '9'}
 
 
+# and a name with a subscript (mlstring's isprefix_thm is about
+# s and s with a subscript one)
+SUBSCRIPT = {chr(0x2080 + i): str(i) for i in range(10)}
+
+
 def ascii_name(nm):
-  """the name with the superscripts of HOL4 as plain digits"""
-  return ''.join(SUPERSCRIPT.get(c, c) for c in nm)
+  """the name with the superscripts and the subscripts of HOL4 as
+     plain digits"""
+  return ''.join(SUPERSCRIPT.get(c, SUBSCRIPT.get(c, c)) for c in nm)
 
 
 def tokenize(s):
@@ -310,6 +317,8 @@ INFIX = {
   'EXP':   (700, 'r', 'EXP',    24),
   '&&':    (650, 'l', '&&',     20),
   '||':    (650, 'l', '||',     16),
+  # HOL4 writes the bitwise or of two words as || and as !!
+  '!!':    (650, 'l', '||',     16),
   '??':    (650, 'l', '??',     16),
   '<<':    (680, 'l', '<<',     23),
   '>>':    (680, 'l', '>>',     23),
@@ -322,6 +331,10 @@ INFIX = {
   'FUNION':(500, 'l', 'FUNION', None),
   'BAG_UNION':(500, 'l', 'BAG_UNION', None),
   'SUBMAP':(450, 'n', 'SUBMAP', 12),
+  'f_o_f': (800, 'r', 'f_o_f', 26),
+  'RSUBSET':(450, 'n', 'RSUBSET', None),
+  'RINTER':(600, 'l', 'RINTER', None),
+  'RUNION':(500, 'l', 'RUNION', None),
   '$':     (460,  'r', '$',      0),
   "'":     (2000, 'l', 'FAPPLY', 0),
   "''":    (350, 'l', 'word_slice', 0),
@@ -999,6 +1012,12 @@ def strip_app(e):
   return e, list(reversed(args))
 
 
+# the places where the port leaves a record field to HOL Light to
+# resolve: it writes the name that overloads the accessors of the
+# field, and the type of the record decides which one it is
+AMBUSE = []
+
+
 class Ctx:
   """what the printer needs to know about the port"""
 
@@ -1006,11 +1025,12 @@ class Ctx:
                overloads=None, accessors=None, cons=None,
                ambfields=None, updaters=None,
                abbrevs=None, tynames=None, overloaded=None,
-               con_argty=None):
+               con_argty=None, defnames=None):
     self.names = names or {}     # cakeml name -> hol light name
     self.tynames = tynames or {} # the same for the type names
     self.con_argty = con_argty or {}  # (con,index) -> type text
     self.overloaded = overloaded or set()  # names HOL4 overloads
+    self.defnames = defnames or set()  # the constants in scope
     self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
@@ -1070,8 +1090,13 @@ class Ctx:
     # the size function of a datatype is called after the type, so
     # it follows the name that the port gives the type (HOL4's
     # exp_size of closLang is closLang_exp_size)
+    # a name that a theory in scope defines as a constant of its
+    # own is that constant, not the size function of a datatype
+    # (wordSem's stack_size is a function of a stack frame list,
+    # and dataSem's stack is a datatype whose size function HOL4
+    # would call stack_size as well)
     if (n.endswith('_size') and (self.thy, n) not in self.names
-        and n not in self.names):
+        and n not in self.names and n not in self.defnames):
       sz = self.size_name(n)
       if sz: return sz
     return self.names.get((self.thy, n), self.names.get(n, n))
@@ -1093,6 +1118,7 @@ class Ctx:
     # overload of their accessors, which HOL Light resolves by the
     # type of the record, as HOL4 does
     if f in self.ambfields and f not in self.fields:
+      AMBUSE.append((self.thy, f, self.ambfields[f]))
       return self.ambfields[f]
     if f in self.fields: return self.fields[f] + '_' + f
     self.warn.append(f'unknown record field {f}')
@@ -1107,6 +1133,25 @@ class Ctx:
     self.wild += 1
     return '_' + str(self.wild)
 
+
+def _int_arg_pos():
+  """the arguments of the constants of the port whose type is int:
+     a numeral in such a place is &n in HOL Light.  The table comes
+     from the types that the port gives its constants, which
+     tools/bin/intargs dumps out of a session."""
+  out = {}
+  f = os.path.dirname(os.path.abspath(__file__)) + '/intargs.txt'
+  try:
+    for l in open(f):
+      nm, ps = l.rstrip('\n').split('\t')
+      if nm.startswith('_'): continue
+      out[nm] = set(int(p) for p in ps.split(','))
+  except OSError:
+    pass
+  return out
+
+
+INT_ARG_POS = _int_arg_pos()
 
 NUMERIC_FUNS = set(['int_of_num', 'num_of_int', 'w2i', 'i2w', 'ival',
                     'iword', 'int_add', 'int_sub', 'int_mul',
@@ -1455,6 +1500,11 @@ class Printer:
       if hop.kind == 'id' and \
          self.ctx.con_argty.get((hop.name.split('$')[-1],
                                  len(args) - 1)) in ('int', 'real'):
+        self.ctx.intnums = True
+      # and in an argument of a constant whose type says that the
+      # argument is an integer (small_int (:'a) (&0))
+      if hop.kind == 'id' and (len(args) - 1) in \
+         INT_ARG_POS.get(self.ctx.name(hop.name), ()):
         self.ctx.intnums = True
       arg = self.pr(e.arg, APP)
       self.ctx.intnums = oldint

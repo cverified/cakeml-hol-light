@@ -6,6 +6,8 @@
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)
+
+cake_hide ["PERM"; "SORTED"];;
 (* HOL4 ancestors outside the port: arithmetic logroot list alist
    pred_set rich_list *)
 

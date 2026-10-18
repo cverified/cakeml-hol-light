@@ -11,7 +11,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/data_live.ml";;
-needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -22,11 +21,14 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
+
+cake_hide ["code_buffer"; "data_buffer"; "memory"; "precondition"];;
 
 (*
 Main lemmas:

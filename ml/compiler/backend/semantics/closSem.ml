@@ -68,21 +68,21 @@ let closSem_state_FIELDS = define_record "closSem_state"
    list";
    "code","(num,num#closLang_exp)fmap";
    "max_app","num"];;
-hol4_overload "state_globals" "closSem_state_globals";;
-hol4_overload "state_globals_fupd" "closSem_state_globals_fupd";;
-hol4_overload "state_refs" "closSem_state_refs";;
-hol4_overload "state_refs_fupd" "closSem_state_refs_fupd";;
-hol4_overload "state_ffi" "closSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "closSem_state_ffi_fupd";;
-hol4_overload "state_clock" "closSem_state_clock";;
-hol4_overload "state_clock_fupd" "closSem_state_clock_fupd";;
-hol4_overload "compile" "closSem_state_compile";;
-hol4_overload "compile_fupd" "closSem_state_compile_fupd";;
-hol4_overload "compile_oracle" "closSem_state_compile_oracle";;
-hol4_overload "compile_oracle_fupd"
+hol4_field_overload "state_globals" "closSem_state_globals";;
+hol4_field_overload "state_globals_fupd" "closSem_state_globals_fupd";;
+hol4_field_overload "state_refs" "closSem_state_refs";;
+hol4_field_overload "state_refs_fupd" "closSem_state_refs_fupd";;
+hol4_field_overload "state_ffi" "closSem_state_ffi";;
+hol4_field_overload "state_ffi_fupd" "closSem_state_ffi_fupd";;
+hol4_field_overload "state_clock" "closSem_state_clock";;
+hol4_field_overload "state_clock_fupd" "closSem_state_clock_fupd";;
+hol4_field_overload "compile" "closSem_state_compile";;
+hol4_field_overload "compile_fupd" "closSem_state_compile_fupd";;
+hol4_field_overload "compile_oracle" "closSem_state_compile_oracle";;
+hol4_field_overload "compile_oracle_fupd"
   "closSem_state_compile_oracle_fupd";;
-hol4_overload "state_code" "closSem_state_code";;
-hol4_overload "state_code_fupd" "closSem_state_code_fupd";;
+hol4_field_overload "state_code" "closSem_state_code";;
+hol4_field_overload "state_code_fupd" "closSem_state_code_fupd";;
 
 (* helper functions *)
 

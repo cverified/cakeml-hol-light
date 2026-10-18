@@ -1910,6 +1910,31 @@ let hol4_overload name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
   overload_interface(name,mk_mconst(cname,get_const_type cname));;
 
+(* The accessors of a record field that several record types have
+   are overloaded with the name of the field (CLAUDE.md), which is
+   a name that HOL4 does not have a constant of: there a field is
+   syntax (r.stack), and a bare stack is a variable.  So a
+   statement of a source may use such a name for a variable of its
+   own, and cake_theorem reads one that does with these overloads
+   taken away. *)
+
+let the_field_overloads = ref ([]:string list);;
+
+let hol4_field_overload name cname =
+  hol4_overload name cname;
+  if not (mem name (!the_field_overloads)) then
+    the_field_overloads := name :: !the_field_overloads;;
+
+(* read a term with the names of the record fields as variables *)
+
+let cake_as_vars f =
+  let saved = !the_interface in
+  the_interface :=
+    filter (fun (n,_) -> not (mem n (!the_field_overloads))) saved;
+  let fin () = the_interface := saved in
+  try let x = f () in fin (); x
+  with e -> (fin (); raise e);;
+
 (* the overload that a file makes for an infix is taken back at
    the end of it, so that the files after it mean what HOL Light
    means: an overload stays in the interface until it is

@@ -51,6 +51,34 @@ let cake_split_attrs name =
         (String.sub name (i + 1) (String.length name - i - 2))
   with Not_found -> name,[];;
 
+(* The names that HOL4 reads as a variable in the file that is
+   being loaded: no theory in the scope of that file defines them,
+   while the port has every constant in one namespace (the
+   unification library's vars is not in scope in HOL4's
+   data_to_word_memoryProof, which uses vars for a variable of its
+   own).  A file of the port says which names these are, right
+   after its needs, and the statements of its theorems are read
+   with those constants hidden. *)
+
+let the_hidden = ref ([]:string list);;
+
+let cake_hide names = the_hidden := names;;
+
+let cake_hidden_read f =
+  let hid = !the_hidden in
+  do_list hide_constant hid;
+  let fin () = do_list unhide_constant hid in
+  try let x = f () in fin (); x
+  with e -> (fin (); raise e);;
+
+(* the theorems whose statement uses the name of a record field
+   for a variable of its own, which HOL4 does and the port reads
+   with the overloads of the field names taken away *)
+
+let the_fieldvars = ref ([]:string list);;
+
+let cake_fieldvars () = rev (!the_fieldvars);;
+
 let note_unstated nm what s =
   the_unstated := (nm,s) :: !the_unstated;
   print_string ("\ncake_theorem " ^ nm ^ " " ^ what ^ ": " ^ s ^ "\n");
@@ -63,16 +91,32 @@ let note_unstated nm what s =
 
 let cake_theorem name mkterm tac =
   let nm,attrs = cake_split_attrs name in
+  (* a statement that uses the name of a record field for a
+     variable is read again with those overloads taken away *)
+  let read () =
+    let hidden () = cake_hidden_read mkterm in
+    try hidden () with
+      Failure _ | Invalid_argument _ as e ->
+        (try let tm = cake_as_vars hidden in
+             the_fieldvars := nm :: !the_fieldvars; tm
+         with Failure _ | Invalid_argument _ -> raise e) in
   let tm =
-    try Some (mkterm ()) with
-      Failure s -> (note_unstated nm "NOT STATED" s; None)
-    | Invalid_argument s -> (note_unstated nm "NOT STATED" s; None) in
+    try let tm = read () in
+        if type_of tm = bool_ty then Some tm else
+        (note_unstated nm "NOT STATED"
+           ("not a formula but a term of type " ^
+            string_of_type (type_of tm)); None)
+    with Failure s -> (note_unstated nm "NOT STATED" s; None)
+       | Invalid_argument s ->
+           (note_unstated nm "NOT STATED" s; None) in
   match tm with
     None -> TRUTH
   | Some tm ->
       let th =
         try prove (tm,tac) with
-          Failure s -> (note_unstated nm "NOT PROVED" s;
-                        prove (tm,CHEAT_TAC)) in
+          Failure s ->
+            (note_unstated nm "NOT PROVED" s; mk_thm ([],tm))
+        | Invalid_argument s ->
+            (note_unstated nm "NOT PROVED" s; mk_thm ([],tm)) in
       the_theorems := (nm,attrs,th) :: !the_theorems;
       th;;

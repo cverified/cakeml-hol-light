@@ -11,6 +11,9 @@ needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
 
+let key_set_def = cake_define
+  `key_set cmp k = {k' | cmp k k' = EQUAL}`;;
+
 let balanced_map_INDUCT,balanced_map_RECURSION = define_datatype
   "balanced_map = Tip | Bin (num) ('k) ('v) (balanced_map) \
    (balanced_map)";;
@@ -269,6 +272,19 @@ let union_def = cake_define
         | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
 hol4_overload "union" "balanced_map_union";;
 
+let foldrWithKey_def = cake_define_list
+  [`foldrWithKey f z' Tip = z'`;
+   `foldrWithKey f z' (Bin _37 kx x l r) =
+      foldrWithKey f (f kx x (foldrWithKey f z' r)) l`];;
+
+let toAscList_def = cake_define
+  `toAscList t = foldrWithKey (\k x xs. (k,x) :: xs) [] t`;;
+
+let compare_def = cake_define
+  `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare (pair_compare
+  cmp1 cmp2) (toAscList t1) (toAscList t2)`;;
+hol4_overload "compare" "balanced_map_compare";;
+
 let mapWithKey_def = cake_define_list
   [`mapWithKey f Tip = Tip`;
    `mapWithKey f (Bin sx kx x l r) =
@@ -277,6 +293,12 @@ let mapWithKey_def = cake_define_list
 let map_def = cake_define
   `balanced_map_map f t = mapWithKey (\k x. f x) t`;;
 hol4_overload "map" "balanced_map_map";;
+
+let to_fmap_def = cake_define_list
+  [`to_fmap cmp Tip = FEMPTY`;
+   `to_fmap cmp (Bin s k v l r) =
+      (FUNION (to_fmap cmp l) (to_fmap cmp r)) |+ (key_set cmp
+        k,v)`];;
 
 let balanced_def = cake_define
   `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
@@ -306,7 +328,7 @@ hol4_overload "invariant" "balanced_map_invariant";;
 
 let exists_def = cake_define_list
   [`balanced_map_exists f Tip = F`;
-   `balanced_map_exists f (Bin _37 kx x l r) =
+   `balanced_map_exists f (Bin _38 kx x l r) =
       (if f kx x then
         T else if balanced_map_exists f l then
         T else if balanced_map_exists f r then

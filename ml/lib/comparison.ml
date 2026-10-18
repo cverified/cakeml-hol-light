@@ -5,11 +5,31 @@
     that CakeML needs.  Needed by 32 files of the port.  *)
 (* ======================================================== *)
 
-(* this file needs nothing of the port *)
+needs "lib/ternaryComparisons.ml";;
+needs "lib/toto.ml";;
 (* HOL4 ancestors outside the port: option pair string list
-   arithmetic toto *)
+   arithmetic *)
 hol4_overload "Less" "LESS";;
 hol4_overload "Equal" "EQUAL";;
 hol4_overload "Greater" "GREATER";;
+
+let good_cmp_def = cake_define
+  `good_cmp cmp <=>
+     (!x. cmp x x = EQUAL) /\
+     (!x y. cmp x y = EQUAL ==> cmp y x = EQUAL) /\
+     (!x y. cmp x y = GREATER <=> cmp y x = LESS) /\
+     (!x y z. cmp x y = EQUAL /\ cmp y z = LESS ==> cmp x z = LESS)
+       /\
+     (!x y z. cmp x y = LESS /\ cmp y z = EQUAL ==> cmp x z = LESS)
+       /\
+     (!x y z. cmp x y = EQUAL /\ cmp y z = EQUAL ==> cmp x z = EQUAL)
+       /\
+     (!x y z. cmp x y = LESS /\ cmp y z = LESS ==> cmp x z = LESS)`;;
+
+(* HOL4 comparisonScript.sml:54-56: the overload list_cmp, which the
+   port expands *)
+
+(* HOL4 comparisonScript.sml:58: the overload pair_cmp, which the
+   port expands *)
 
 hol4_overload "num_cmp" "num_compare";;

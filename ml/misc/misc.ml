@@ -27,9 +27,12 @@ needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
+needs "lib/toto.ml";;
+
+cake_hide ["num_from_hex_string"; "num_to_hex_string"];;
 (* HOL4 ancestors outside the port: alist arithmetic blast bag combin
    container list pred_set finite_map rich_list llist option pair
-   relation toto bit words string address path res_quan *)
+   relation bit words string address path res_quan *)
 
 (* Total version of THE *)
 let the_def = cake_define_list
@@ -853,13 +856,13 @@ let PERM_ZIP = cake_theorem "PERM_ZIP"
 let RTC_invariant = cake_theorem "RTC_invariant"
   (fun () ->
     `!R P. (!x y. P x /\ R x y ==> P y) ==> (!x y. RTC R x y ==> P x
-  ==> RTC (R RINTER (\x y. P x /\ P y)) x y)`)
+  ==> RTC (RINTER R (\x y. P x /\ P y)) x y)`)
   CHEAT_TAC;;
 
 (* never used *)
 let RTC_RSUBSET = cake_theorem "RTC_RSUBSET"
   (fun () ->
-    `!R1 R2. R1 RSUBSET R2 ==> (RTC R1) RSUBSET (RTC R2)`)
+    `!R1 R2. RSUBSET R1 R2 ==> RSUBSET (RTC R1) (RTC R2)`)
   CHEAT_TAC;;
 
 let PERM_PART = cake_theorem "PERM_PART"

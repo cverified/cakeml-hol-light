@@ -47,11 +47,14 @@ needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
+
+cake_hide ["code_buffer"; "data_buffer"];;
 
 (* HOL4 stack_to_labProofScript.sml:23-24: ML code, not ported *)
 

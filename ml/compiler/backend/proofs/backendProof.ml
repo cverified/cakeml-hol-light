@@ -75,6 +75,14 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
+cake_hide ["addresses"; "compute_limits"; "data_lang_safe_for_space";
+           "every_Fn_SOME"; "every_inst"; "flat_exp_conventions";
+           "full_cc"; "full_co"; "full_inst_ok_less"; "inst_ok_less";
+           "known_cc"; "known_co"; "labels_ok"; "labels_rel";
+           "mc_conf_ok"; "no_Labels"; "no_Mat_decs"; "no_mti";
+           "no_share_inst"; "obeys_max_app"; "post_alloc_conventions";
+           "src_orac_step_invs"; "two_reg_inst"];;
+
 (* TODO: move/rephrase *)
 
 let byte_aligned_mult = cake_theorem "byte_aligned_mult"

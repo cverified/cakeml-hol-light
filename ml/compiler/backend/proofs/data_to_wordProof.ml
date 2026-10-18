@@ -47,11 +47,14 @@ needs "lib/alignment.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "lib/term.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
+
+cake_hide ["all"; "code_buffer"; "data_buffer"; "memory"; "vars"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
 (* HOL4 data_to_wordProofScript.sml:23-24: a proof *)

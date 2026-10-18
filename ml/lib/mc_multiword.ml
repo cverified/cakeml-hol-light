@@ -42,6 +42,10 @@ let mc_compare_def,mc_compare_pre_def =
             list#('a word) list+num#'a word#('a word) list#('a word)
             list)#bool`;;
 
+let mc_header_def = cake_define
+  `mc_header (s,(xs:('a word) list)) = n2w (LENGTH xs * 2) + (if s
+  then (n2w 1) else (n2w 0):'a word)`;;
+
 let mc_icompare_def,mc_icompare_pre_def =
   tailrec_define "mc_icompare"
   `(\(l,r10,r11,xs,ys).

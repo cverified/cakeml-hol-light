@@ -7,7 +7,11 @@
 (* ======================================================== *)
 
 needs "lib/numposrep.ml";;
+
+cake_hide ["domain"];;
 (* HOL4 ancestors outside the port: bit words *)
+
+new_type_abbrev("bitstring",`: bool list`);;
 
 let boolify_def = cake_define_list
   [`boolify a [] = a`;
@@ -26,6 +30,22 @@ let v2n_def = cake_define
 
 let zero_extend_def = cake_define
   `zero_extend n v = PAD_LEFT F n v`;;
+
+let fixwidth_def = cake_define
+  `fixwidth n v =
+      (let l = LENGTH v in
+        if l < n then
+           zero_extend n v else
+           DROP (l - n) v)`;;
+
+let shiftr_def = cake_define
+  `shiftr (v:bool list) m = TAKE (LENGTH v - m) v`;;
+
+let field_def = cake_define
+  `field h l v = fixwidth (SUC h - l) (shiftr v l)`;;
+
+let testbit_def = cake_define
+  `testbit b v = (field b b v = [T])`;;
 
 let add_def = cake_define
   `add a b =

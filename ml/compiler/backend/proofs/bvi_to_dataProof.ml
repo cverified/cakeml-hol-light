@@ -31,6 +31,8 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["parts"];;
+
 (* value relation *)
 
 let code_rel_def = cake_define

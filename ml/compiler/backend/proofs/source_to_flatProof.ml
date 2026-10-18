@@ -35,6 +35,8 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
+cake_hide ["vars"];;
+
 (* HOL4 source_to_flatProofScript.sml:20: ML code, not ported *)
 
 let compile_exps_length = cake_theorem "compile_exps_length[local]"

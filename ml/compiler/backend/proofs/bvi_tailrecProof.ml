@@ -24,6 +24,8 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["all"];;
+
 (* TODO
 
    - It should be possible to prove that we can replace the simplified

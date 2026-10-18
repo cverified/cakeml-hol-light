@@ -17,6 +17,9 @@ let SORTED_DEF = cake_define_list
    `SORTED R [x] = T`;
    `SORTED R (x :: y :: rst) <=> R x y /\ SORTED R (y :: rst)`];;
 
+let SORTS_DEF = cake_define
+  `SORTS f R <=> (!l. PERM l (f R l) /\ SORTED R (f R l))`;;
+
 let PART_DEF = cake_define_list
   [`PART P [] l1 l2 = (l1,l2)`;
    `PART P (h :: rst) l1 l2 =

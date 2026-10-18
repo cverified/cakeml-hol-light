@@ -15,6 +15,10 @@ let b2n_def = cake_define_list
 let b2w_def = cake_define
   `b2w c = n2w (b2n c)`;;
 
+let mw2n_def = cake_define_list
+  [`mw2n [] = 0`;
+   `mw2n (x :: xs) = w2n (x:'a word) + dimword (:'a) * mw2n xs`];;
+
 (* HOL4 multiwordScript.sml:69-74: the tactic that proves the
    termination *)
 let n2mw_def = cake_define_wf
@@ -34,10 +38,35 @@ let single_sub_def = cake_define
   `single_sub (x:'a word) (y:'a word) c =
      single_add x (word_1comp y) c`;;
 
+let mw_sub_def = cake_define_list
+  [`mw_sub [] ys c = ([],c)`;
+   `mw_sub (x :: xs) [] c =
+        (let (z,c1) = single_sub x (n2w 0) c in
+        let (zs,c2) = mw_sub xs [] c1 in (z :: zs,c2))`;
+   `mw_sub (x :: xs) (y :: ys) c =
+        (let (z,c1) = single_sub x y c in
+        let (zs,c2) = mw_sub xs ys c1 in (z :: zs,c2))`];;
+
 let single_mul_def = cake_define
   `single_mul (x:'a word) (y:'a word) (c:'a word) =
      (x * y + c,(n2w ((w2n x * w2n y + w2n c) DIV dimword
        (:'a)):'a word))`;;
+
+let mw_shift_def = cake_define_list
+  [`mw_shift [] = []`;
+   `mw_shift [w] = [w >>> 1]`;
+   `mw_shift ((w:'a word) :: x :: xs) =
+         (w >>> 1 || x << (dimindex (:'a) - 1)) :: mw_shift (x
+           :: xs)`];;
+
+(* HOL4 multiwordScript.sml:1070-1076: the tactic that proves the
+   termination *)
+let mw_cmp_def = cake_define_wf
+  `MEASURE (LENGTH o FST)`
+  `mw_cmp xs ys = (if xs = [] then NONE else
+                  if LAST xs = LAST ys then
+                    mw_cmp (BUTLAST xs) (BUTLAST ys) else SOME
+                      (LAST xs <+ LAST ys))`;;
 
 let single_div_def = cake_define
   `(single_div (x1:'a word) (x2:'a word) (y:'a word) =
@@ -75,3 +104,21 @@ let int_op_def = cake_define_list
    `multiword_int_op (multiword_Dec:mw_op) (i:int) (j:int) =
   ((&0):int)`];;
 hol4_overload "int_op" "multiword_int_op";;
+
+let single_div_loop_def = cake_define
+  `single_div_loop ((k:'a word),(ns:('a word) list),(m:'a word),(is:('a
+  word) list)) =
+     (if k = (n2w 0) then (m,is) else
+       let ns = mw_shift ns in
+       let m = m << 1 in
+         if mw_cmp is ns = SOME T then
+           single_div_loop (k - (n2w 1),ns,m,is) else
+           let m = m + (n2w 1) in
+           let (is,_1) = mw_sub is ns T in
+             single_div_loop (k - (n2w 1),ns,m,is))`;;
+
+let single_div_full_def = cake_define
+  `single_div_full m2 (m1:'a word) n =
+     (let (m,is) = single_div_loop (n2w (dimindex (:'a)),[(n2w 0);
+       n],(n2w 0),[m1; m2]) in
+       (m,HD is))`;;

@@ -36,6 +36,8 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
+cake_hide ["contain"];;
+
 (* HOL4 lab_to_targetProofScript.sml:16: ML code, not ported *)
 
 let evaluate_ignore_clocks =

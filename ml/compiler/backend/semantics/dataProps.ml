@@ -29,6 +29,8 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["vars"];;
+
 let OPTION_CASE_OPTION_MAP =
   cake_theorem "OPTION_CASE_OPTION_MAP[local]"
   (fun () ->

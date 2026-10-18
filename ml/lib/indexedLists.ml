@@ -8,6 +8,10 @@
 (* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: list rich_list *)
 
+let FOLDRi_def = cake_define_list
+  [`FOLDRi f a [] = a`;
+   `FOLDRi f a (h :: t) = f 0 h (FOLDRi (f o SUC) a t)`];;
+
 let findi_def = cake_define_list
   [`indexedLists_findi x [] = 0`;
    `indexedLists_findi x (h :: t) = (if x = h then 0 else 1 +

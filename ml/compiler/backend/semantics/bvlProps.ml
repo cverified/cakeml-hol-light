@@ -19,6 +19,8 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["parts"];;
+
 (* HOL4 bvlPropsScript.sml:14: the ML values that the definitions
    below antiquote *)
 

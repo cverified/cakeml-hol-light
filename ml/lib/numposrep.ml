@@ -17,3 +17,6 @@ let l2n_def = cake_define_list
 let n2l_def = cake_define
   `n2l b n = (if n < b \/ b < 2 then [n MOD b] else n MOD b :: n2l b
   (n DIV b))`;;
+
+let num_from_bin_list_def = cake_define
+  `num_from_bin_list = l2n 2 o REVERSE`;;

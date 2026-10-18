@@ -19,6 +19,8 @@ needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+
+cake_hide ["dummy"; "gen_gc"];;
 (* HOL4 ancestors outside the port: (* for bytes_in_word *) *)
 
 

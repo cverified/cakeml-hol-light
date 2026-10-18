@@ -47,6 +47,8 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
+
+cake_hide ["memory"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:26-27: a proof *)
@@ -105,10 +107,10 @@ let push_env_insert_0 = cake_theorem "push_env_insert_0"
     `push_env (insert 0 x LN,LN) NONE t = wordSem_state_permute_fupd (K
   (\n. wordSem_state_permute t (n + 1))) (state_stack_max_fupd (K
                   (OPTION_MAP2 MAX (state_stack_max t)
-                    (dataSem_stack_size (StackFrame
-                      (state_locals_size t) [(0,x)] [] NONE :: stack
-                      t)))) (stack_fupd (K (StackFrame
-                      (state_locals_size t) [(0,x)] [] NONE :: stack t))
+                    (stack_size (StackFrame (state_locals_size t)
+                      [(0,x)] [] NONE :: stack t)))) (stack_fupd (K
+                      (StackFrame (state_locals_size t) [(0,x)] [] NONE
+                      :: stack t))
       t))`)
   CHEAT_TAC;;
 
@@ -215,7 +217,7 @@ let LongDiv1_thm' = cake_theorem "LongDiv1_thm'"
             t2))))) /\
          (max' = state_stack_max t2 \/ max' = OPTION_MAP2 MAX
            (state_stack_max t2)
-            (OPTION_MAP2 (+) (dataSem_stack_size (stack t2))
+            (OPTION_MAP2 (+) (stack_size (stack t2))
                (lookup LongDiv1_location
                  (wordSem_state_stack_size t2)))))`)
   CHEAT_TAC;;
@@ -247,7 +249,7 @@ let LongDiv1_thm = cake_theorem "LongDiv1_thm"
             (SOME 0)) (state_locals_fupd (K LN) (state_clock_fupd (K
             (state_clock t2 - k))
             t2))))) /\
-        (option_le (OPTION_MAP2 (+) (dataSem_stack_size (stack t2))
+        (option_le (OPTION_MAP2 (+) (stack_size (stack t2))
           (state_locals_size t2)) (state_stack_max t2) /\
           state_locals_size
              t2 = lookup LongDiv1_location
@@ -311,8 +313,8 @@ let AnyHeader_thm = cake_theorem "AnyHeader_thm"
           (i = (&0) ==>
              small_int (:'a) (&0) /\ i2mw i = (F,[]) /\
              a2 = (n2w 0) /\ a3 = (n2w 0)) /\
-          (small_int (:'a) i /\ ~(i = (&0)) ==>
-             i2mw i = ((i < (&0)),[a3]) /\
+          (small_int (:'a) i /\ ~(i = 0) ==>
+             i2mw i = ((i < 0),[a3]) /\
              FLOOKUP (wordSem_state_store t) (if a then OtherHeap
                else NextFree) = SOME (wordLang_Word a2)) /\
           (~small_int (:'a) i ==>
@@ -371,7 +373,7 @@ let IMP_LESS_MustTerminate_limit =
   cake_theorem "IMP_LESS_MustTerminate_limit[simp]"
   (fun () ->
     `i < dimword (:'a) ==>
-      i < MustTerminate_limit (:'a) - (&1)`)
+      i < MustTerminate_limit (:'a) - 1`)
   CHEAT_TAC;;
 
 let evaluate_LongDiv_code' = cake_theorem "evaluate_LongDiv_code'"
@@ -397,7 +399,7 @@ let evaluate_LongDiv_code' = cake_theorem "evaluate_LongDiv_code'"
              t))))) /\
        (max' = state_stack_max t \/ max' = OPTION_MAP2 MAX
          (state_stack_max t)
-            (OPTION_MAP2 (+) (dataSem_stack_size (stack t))
+            (OPTION_MAP2 (+) (stack_size (stack t))
                (lookup LongDiv1_location
                  (wordSem_state_stack_size t)))))`)
   CHEAT_TAC;;
@@ -423,7 +425,7 @@ let evaluate_LongDiv_code = cake_theorem "evaluate_LongDiv_code"
               (K (SOME 0)) (state_locals_fupd (K LN) (state_clock_fupd
               (K ck)
              t))))) /\
-        (option_le (OPTION_MAP2 (+) (dataSem_stack_size (stack t))
+        (option_le (OPTION_MAP2 (+) (stack_size (stack t))
           (state_locals_size t)) (state_stack_max t) /\
           state_locals_size
          t = lookup LongDiv1_location (wordSem_state_stack_size
@@ -504,7 +506,7 @@ let replicate_code_thm = cake_theorem "Replicate_code_thm"
              r))))) /\
           option_le m
             (OPTION_MAP2 MAX (state_stack_max r)
-               (OPTION_MAP2 (+) (dataSem_stack_size (stack r))
+               (OPTION_MAP2 (+) (stack_size (stack r))
                   (lookup Replicate_location
                     (wordSem_state_stack_size r)))))`)
   CHEAT_TAC;;
@@ -705,7 +707,7 @@ let eval_Call_Arith = cake_theorem "eval_Call_Arith"
                   [adjust_var a1; adjust_var a2] NONE),t)) = (q,r')
                     /\
           (let max' = OPTION_MAP2 MAX (state_stack_max s)
-                  (OPTION_MAP2 (+) (dataSem_stack_size (stack t))
+                  (OPTION_MAP2 (+) (stack_size (stack t))
                     (OPTION_MAP2 (+) (state_locals_size t)
                       (OPTION_MAP2 MAX (lookup (Arith_location
                         index) (wordSem_state_stack_size t))

@@ -510,6 +510,16 @@ INT_NUMERALS = set([
   ('clos_to_bvlProof', 'unpack_closure'),
 ])
 
+# the variables of the statement of a theorem that hold an
+# integer, where nothing in the statement says so: the port writes
+# the numerals that they are compared with as integers then.  The
+# entries come from what HOL Light says of a statement that it
+# cannot typecheck ("n cannot have type num and int
+# simultaneously"), which tools/mkintvars.py turns into this
+# table.
+THM_INT_VARS = {
+}
+
 # the arguments of a definition that hold an integer, where no
 # clause of it says so and the clauses would get different types
 # (multiword's int_op adds its two arguments in one clause and

@@ -1,7 +1,10 @@
 location	Overload end_locn
 location	Overload unknown_locn
+comparison	Overload list_cmp
+comparison	Overload pair_cmp
 sptree	Overload isEmpty
 sptree	Overload add_pause
+ASCIInumbers	Overload toNum
 binary_ieee	Overload tc
 binary_ieee	Overload fsign
 binary_ieee	Overload sign
@@ -11,6 +14,7 @@ peg	Overload EOF
 pegexec	Overload OME
 pegexec	Overload EOF
 grammar	Overload derives
+NTproperties	Overload nullableNT
 simpleSexp	Overload nil
 tcallUnif	Overload BAG_OF_LIST
 misc	ML code skipped: fun drule th =   first_assum(mp_tac o MATCH_MP (ONCE_REWRITE
@@ -21,17 +25,17 @@ misc	ML code skipped: val _ = augment_srw_ss [rewrites [map_some_eq,map_some_eq_
 misc	ML code skipped: val is_subseq_ind = theorem"is_subseq_ind";
 misc	ML code skipped: val steps_rel_ind = theorem"steps_rel_ind";
 misc	ML code skipped: val LESS4 = DECIDE ``n < 4 <=> (n = 0) \/ (n = 1) \/ (n = 2)
-misc	line 41 is 102 characters
-misc	line 43 is 73 characters
-misc	line 114 is 80 characters
-misc	line 251 is 77 characters
-misc	line 509 is 79 characters
-misc	line 605 is 73 characters
-misc	line 611 is 73 characters
-misc	line 842 is 74 characters
-misc	line 2190 is 92 characters
-misc	line 2843 is 78 characters
-mllist	line 23 is 80 characters
+misc	line 44 is 102 characters
+misc	line 46 is 73 characters
+misc	line 117 is 80 characters
+misc	line 254 is 77 characters
+misc	line 512 is 79 characters
+misc	line 608 is 73 characters
+misc	line 614 is 73 characters
+misc	line 845 is 74 characters
+misc	line 2193 is 92 characters
+misc	line 2846 is 78 characters
+mllist	line 25 is 80 characters
 mlstring	ML code skipped: val cpn_distinct = TypeBase.distinct_of ``:ordering`` val cp
 mlstring	ML code skipped: val _ = add_strliteral_form{inj=“implode”, ldelim = "«"};
 mlstring	Overload strlit
@@ -113,7 +117,7 @@ clos_op	Overload dest_Op_Constant
 clos_ticks	ML code skipped: val remove_ticks_ind = theorem "remove_ticks_ind";
 clos_known	ML code skipped: val get_size_aux_ind = theorem "get_size_aux_ind";
 clos_known	ML code skipped: val val_approx_size_def = definition "val_approx_size_def"
-clos_known	line 243 is 73 characters
+clos_known	line 245 is 73 characters
 clos_mti	ML code skipped: val collect_args_ind = theorem "collect_args_ind";
 clos_mti	ML code skipped: val collect_apps_ind = theorem "collect_apps_ind";
 clos_mti	ML code skipped: val intro_multi_ind = theorem "intro_multi_ind";
@@ -172,17 +176,17 @@ semanticPrimitives	line 7 is 75 characters
 semanticPrimitives	line 23 is 87 characters
 semanticPrimitives	line 178 is 74 characters
 semanticPrimitives	line 179 is 75 characters
-semanticPrimitives	line 294 is 75 characters
-semanticPrimitives	line 295 is 78 characters
-semanticPrimitives	line 296 is 79 characters
-semanticPrimitives	line 298 is 74 characters
-semanticPrimitives	line 299 is 74 characters
-semanticPrimitives	line 300 is 75 characters
-semanticPrimitives	line 364 is 80 characters
-semanticPrimitives	line 461 is 75 characters
-semanticPrimitives	line 605 is 74 characters
-semanticPrimitives	line 744 is 80 characters
-semanticPrimitives	line 746 is 79 characters
+semanticPrimitives	line 298 is 75 characters
+semanticPrimitives	line 299 is 78 characters
+semanticPrimitives	line 300 is 79 characters
+semanticPrimitives	line 302 is 74 characters
+semanticPrimitives	line 303 is 74 characters
+semanticPrimitives	line 304 is 75 characters
+semanticPrimitives	line 368 is 80 characters
+semanticPrimitives	line 465 is 75 characters
+semanticPrimitives	line 609 is 74 characters
+semanticPrimitives	line 748 is 80 characters
+semanticPrimitives	line 750 is 79 characters
 ml_monadBase	ML code skipped: DefnBase.export_cong "st_ex_ignore_bind_CONG";
 ml_monadBase	ML code skipped: DefnBase.export_cong "st_ex_bind_CONG";
 ml_monadBase	ML code skipped: val _ = add_infix ("otherwise", 400, HOLgrammars.RIGHT);
@@ -298,9 +302,9 @@ flatLang	ML code skipped: val exp_size_def = definition"exp_size_def";
 mlint	ML code skipped: val exp_thm = EVAL ``10n ** exp_for_dec_enc`` val exp_tm = r
 mlint	ML code skipped: val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
 mlint	ML code skipped: val fromChars_ind = theorem"fromChars_ind"
-mlint	line 24 is 79 characters
-mlint	line 25 is 74 characters
-mlint	line 345 is 73 characters
+mlint	line 26 is 79 characters
+mlint	line 27 is 74 characters
+mlint	line 347 is 73 characters
 labLang	line 50 is 77 characters
 lab_to_target	Overload all_enc_ok_light
 lab_to_target	ML code skipped: val prog_to_bytes_ind = theorem"prog_to_bytes_ind";
@@ -363,7 +367,7 @@ pattern_exh	line 748 is 75 characters
 pattern_exh	line 750 is 76 characters
 pattern_exh	line 784 is 75 characters
 pattern_exh	line 786 is 76 characters
-source_to_flat	line 594 is 73 characters
+source_to_flat	line 597 is 73 characters
 presLang	Overload list_to_display
 presLang	Overload option_to_display
 presLang	ML code skipped: val bvl_test =   “concat $ append $ bvl_to_strs      (insert
@@ -418,33 +422,15 @@ parmove	Overload NoRead
 parmove	ML code skipped: fun replace_quote from to (QUOTE s) = QUOTE(Portable.replace
 parmove	ML code skipped: val _ = add_infix("step",450,NONASSOC);
 parmove	ML code skipped: val _ = set_fixity"\226\150\183"(Infix(NONASSOC,450));
-parmove	Overload \226\150\183
 parmove	ML code skipped: val _ = set_fixity "\226\150\183*" (Infix(NONASSOC,450));
-parmove	Overload \226\150\183*
 parmove	Overload ⊢
-parmove	Theorem wf_init: tokenize: '⊢ (μ,[],[])'
-parmove	Theorem wf_step: tokenize: '⊢ s1 ⇒ ⊢ s2'
-parmove	Theorem wf_steps: tokenize: '⊢ s1 ∧ s1 ▷* s2 ⇒ ⊢ '
 parmove	ML code skipped: val seqsem_ind = theorem"seqsem_ind";
 parmove	ML code skipped: val _ = set_fixity"\226\137\161"(Infix(NONASSOC,450));
-parmove	Overload \226\137\161
-parmove	Theorem step_sem: tokenize: '⊢ s1 ⇒ (∀ρ. sem s1 ρ'
-parmove	Theorem steps_sem: tokenize: '⊢ s1 ⇒ (∀ρ. sem s1 ρ'
 parmove	ML code skipped: val _ = add_infix("dstep",450,NONASSOC);
 parmove	ML code skipped: val _ = set_fixity"\226\134\170"(Infix(NONASSOC,450));
-parmove	Overload \226\134\170
 parmove	ML code skipped: val _ = set_fixity "\226\134\170*" (Infix(NONASSOC,450));
-parmove	Overload \226\134\170*
-parmove	Theorem dstep_step: tokenize: '⊢ s1 ⇒ s1 ▷* s2'
-parmove	Theorem dsteps_steps: tokenize: '⊢ s1 ⇒ s1 ▷* s2'
 parmove	ML code skipped: val not_or = METIS_PROVE[]``¬a ∨ b ⇔ a ⇒ b``;
 parmove	ML code skipped: val pmov_ind = theorem"pmov_ind";
-parmove	Theorem step_not_use_temp_before_assign: tokenize: '⊢ s1 ∧\n    not_use_t'
-parmove	Theorem steps_not_use_temp_before_assign: tokenize: '⊢ s1 ∧ not_use_temp_'
-parmove	Theorem pmov_not_use_temp_before_assign: tokenize: '⊢ p ∧ not_use_temp_b'
-parmove	Theorem ALL_DISTINCT_pmov: tokenize: '⊢p ∧ ALL_DISTINCT (F'
-parmove	Theorem pmov_preserves_moves: tokenize: '⊢p ∧ MEM (x,y) (stat'
-parmove	Theorem pmov_MAP_INJ: tokenize: '⊢ p ∧ inj_on_state f'
 parmove	line 21 is 74 characters
 word_to_stack	line 320 is 78 characters
 word_to_stack	line 321 is 74 characters
@@ -477,12 +463,12 @@ bvlSem	ML code skipped: val s = ``(s:('c,'ffi) bvlSem$state)``
 bvlSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 bvlSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
 bvlSem	line 42 is 79 characters
-bvlSem	line 907 is 78 characters
+bvlSem	line 908 is 78 characters
 bviSem	Overload num_stubs
 bviSem	ML code skipped: val s = ``(s:('c,'ffi) bviSem$state)``;
 bviSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 bviSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-bviSem	line 403 is 78 characters
+bviSem	line 404 is 78 characters
 gram	ML code skipped: val tokmap0 =     List.foldl (fn ((s,t), acc) => Binarymap.i
 gram	ML code skipped: val ginfo = { tokmap = tokmap,               tokty = ``:toke
 gram	Overload mkNT
@@ -667,10 +653,10 @@ dataSem	Overload do_app_safe
 dataSem	Overload do_app_peak
 dataSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 dataSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-dataSem	line 227 is 74 characters
-dataSem	line 260 is 75 characters
-dataSem	line 932 is 74 characters
-dataSem	line 1818 is 78 characters
+dataSem	line 228 is 74 characters
+dataSem	line 261 is 75 characters
+dataSem	line 933 is 74 characters
+dataSem	line 1819 is 78 characters
 flatSem	ML code skipped: val s = ``s:('c,'ffi) flatSem$state``
 flatSem	ML code skipped: val eqs = LIST_CONJ (map TypeBase.case_eq_of   [``:op``, ``:
 flatSem	ML code skipped: val _ = map (can delete_const)   ["do_eq_UNION_aux","do_eq_U
@@ -685,7 +671,7 @@ gen_gc_partial	ML code skipped: val heap_lookup_heap_expand = isSomeDataElement_
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1359 is 75 characters
+wordSem	line 1362 is 75 characters
 targetSem	line 314 is 74 characters
 targetSem	line 507 is 79 characters
 targetSem	line 544 is 77 characters
@@ -781,15 +767,15 @@ dataProps	ML code skipped: val full_cases = fs [ list_case_eq,option_case_eq
 dataProps	ML code skipped: val basic_tac = fs [evaluate_def]                       \\ r
 dataProps	ML code skipped: val trivial_tac = qpat_x_assum `evaluate _ = (_,_)` (strip_a
 dataProps	ML code skipped: val basics_tac = fs [evaluate_def]                  \\ every
-dataProps	line 691 is 78 characters
-dataProps	line 692 is 82 characters
-dataProps	line 714 is 80 characters
-dataProps	line 1017 is 77 characters
-dataProps	line 1018 is 74 characters
-dataProps	line 1416 is 74 characters
-dataProps	line 1492 is 75 characters
-dataProps	line 1660 is 73 characters
-dataProps	line 1661 is 74 characters
+dataProps	line 693 is 78 characters
+dataProps	line 694 is 82 characters
+dataProps	line 716 is 80 characters
+dataProps	line 1019 is 77 characters
+dataProps	line 1020 is 74 characters
+dataProps	line 1418 is 74 characters
+dataProps	line 1494 is 75 characters
+dataProps	line 1662 is 73 characters
+dataProps	line 1663 is 74 characters
 data_liveProof	ML code skipped: fun cases_on_op q = Cases_on q >|   map (MAP_EVERY Cases_on)
 data_liveProof	ML code skipped: Resume evaluate_compile[Skip]:   (fs [evaluate_def,compile_d
 data_liveProof	ML code skipped: Resume evaluate_compile[Move]:   (fs [evaluate_def,compile_d
@@ -853,12 +839,12 @@ bvi_to_dataProof	ML code skipped: Resume compile_correct[LetCall]:    (note_tac 
 bvi_to_dataProof	ML code skipped: Finalise compile_correct;
 bvi_to_dataProof	ML code skipped: val compile_exp_lemma = compile_correct   |> Q.SPECL [`[exp]
 bvi_to_dataProof	Theorem compile_exp_correct: expected ')' but found '|>' at 24
-bvi_to_dataProof	line 45 is 73 characters
-bvi_to_dataProof	line 166 is 77 characters
-bvi_to_dataProof	line 179 is 73 characters
-bvi_to_dataProof	line 187 is 73 characters
-bvi_to_dataProof	line 374 is 79 characters
-bvi_to_dataProof	line 580 is 74 characters
+bvi_to_dataProof	line 47 is 73 characters
+bvi_to_dataProof	line 168 is 77 characters
+bvi_to_dataProof	line 181 is 73 characters
+bvi_to_dataProof	line 189 is 73 characters
+bvi_to_dataProof	line 376 is 79 characters
+bvi_to_dataProof	line 582 is 74 characters
 bvi_letProof	ML code skipped: Resume evaluate_env_rel[CONS]:   (fs [compile_def,evaluate_d
 bvi_letProof	ML code skipped: Resume evaluate_env_rel[Var]:   (fs [evaluate_def] \\ every_
 bvi_letProof	ML code skipped: Resume evaluate_env_rel[RaiseTick]:   (rw [] \\ fs [evaluate
@@ -961,26 +947,26 @@ bvi_tmcProof	ML code skipped: >> first_assum $ qspecl_then [‘[exp]’, ‘dec_
 bvi_tmcProof	ML code skipped: >> qmatch_asmsub_rename_tac                ‘evaluate ([body'
 bvi_tmcProof	ML code skipped: Resume evaluate_rewrite_tmc[return]:   gvs [evaluate_def]   
 bvi_tmcProof	ML code skipped: Finalise evaluate_rewrite_tmc;
-bvi_tmcProof	line 191 is 76 characters
-bvi_tmcProof	line 977 is 76 characters
-bvi_tmcProof	line 1080 is 74 characters
-bvi_tmcProof	line 1081 is 73 characters
-bvi_tmcProof	line 1093 is 75 characters
-bvi_tmcProof	line 1100 is 76 characters
-bvi_tmcProof	line 1107 is 77 characters
-bvi_tmcProof	line 1108 is 76 characters
-bvi_tmcProof	line 1152 is 74 characters
-bvi_tmcProof	line 1162 is 74 characters
-bvi_tmcProof	line 1171 is 78 characters
-bvi_tmcProof	line 1174 is 73 characters
-bvi_tmcProof	line 1177 is 78 characters
-bvi_tmcProof	line 1180 is 75 characters
-bvi_tmcProof	line 2062 is 79 characters
-bvi_tmcProof	line 2063 is 82 characters
-bvi_tmcProof	line 2137 is 76 characters
-bvi_tmcProof	line 2138 is 75 characters
+bvi_tmcProof	line 193 is 76 characters
+bvi_tmcProof	line 979 is 76 characters
+bvi_tmcProof	line 1082 is 74 characters
+bvi_tmcProof	line 1083 is 73 characters
+bvi_tmcProof	line 1095 is 75 characters
+bvi_tmcProof	line 1102 is 76 characters
+bvi_tmcProof	line 1109 is 77 characters
+bvi_tmcProof	line 1110 is 76 characters
+bvi_tmcProof	line 1154 is 74 characters
+bvi_tmcProof	line 1164 is 74 characters
+bvi_tmcProof	line 1173 is 78 characters
+bvi_tmcProof	line 1176 is 73 characters
+bvi_tmcProof	line 1179 is 78 characters
+bvi_tmcProof	line 1182 is 75 characters
+bvi_tmcProof	line 2064 is 79 characters
+bvi_tmcProof	line 2065 is 82 characters
 bvi_tmcProof	line 2139 is 76 characters
-bvi_tmcProof	line 2141 is 79 characters
+bvi_tmcProof	line 2140 is 75 characters
+bvi_tmcProof	line 2141 is 76 characters
+bvi_tmcProof	line 2143 is 79 characters
 bvl_inlineProof	ML code skipped: val state_rel_alt = state_rel_def
 bvl_inlineProof	ML code skipped: val state_rel_def =   state_rel_def |> SIMP_RULE (srw_ss()) 
 bvl_inlineProof	ML code skipped: val evaluate_remove_ticks_thm =   evaluate_remove_ticks   |>
@@ -1050,15 +1036,15 @@ bvl_to_bviProof	ML code skipped: Resume compile_exps_correct[Force]:   REPEAT ST
 bvl_to_bviProof	ML code skipped: Resume compile_exps_correct[Tick]:   REPEAT STRIP_TAC   \\ f
 bvl_to_bviProof	ML code skipped: Resume compile_exps_correct[Call]:   REPEAT STRIP_TAC   \\ f
 bvl_to_bviProof	ML code skipped: Finalise compile_exps_correct;
-bvl_to_bviProof	line 892 is 79 characters
-bvl_to_bviProof	line 932 is 78 characters
-bvl_to_bviProof	line 933 is 75 characters
-bvl_to_bviProof	line 1328 is 73 characters
-bvl_to_bviProof	line 1329 is 74 characters
-bvl_to_bviProof	line 1469 is 77 characters
-bvl_to_bviProof	line 1470 is 77 characters
-bvl_to_bviProof	line 1471 is 79 characters
-bvl_to_bviProof	line 1472 is 74 characters
+bvl_to_bviProof	line 894 is 79 characters
+bvl_to_bviProof	line 934 is 78 characters
+bvl_to_bviProof	line 935 is 75 characters
+bvl_to_bviProof	line 1330 is 73 characters
+bvl_to_bviProof	line 1331 is 74 characters
+bvl_to_bviProof	line 1471 is 77 characters
+bvl_to_bviProof	line 1472 is 77 characters
+bvl_to_bviProof	line 1473 is 79 characters
+bvl_to_bviProof	line 1474 is 74 characters
 closProps	ML code skipped: val evaluate_LENGTH_ind =   evaluate_ind   |> Q.SPEC `\(xs,s
 closProps	ML code skipped: val evaluate_LENGTH = prove(evaluate_LENGTH_ind |> concl |> 
 closProps	ML code skipped: val evaluate_const_ind =   evaluate_ind   |> Q.SPEC `\(xs,en
@@ -1191,7 +1177,7 @@ clos_to_bvlProof	ML code skipped: val known_co_req_intros = UNDISCH_ALL known_co
 clos_to_bvlProof	ML code skipped: val known_co_req_oracle = mk_to_oracle     ``\orac. clos_kno
 clos_to_bvlProof	ML code skipped: val number_compile_inc_req_intros = number_compile_inc_req  
 clos_to_bvlProof	ML code skipped: fun abbrev_adj_tac f = first_assum (fn t => if not     (mark
-clos_to_bvlProof	line 1386 is 74 characters
+clos_to_bvlProof	line 1390 is 74 characters
 wordProps	ML code skipped: val GENLIST_I =   GENLIST_EL |> Q.SPECL [`xs`,`\i. EL i xs`,
 wordProps	ML code skipped: val ALL_DISTINCT_EL = ``ALL_DISTINCT xs``   |> ONCE_REWRITE_
 wordProps	ML code skipped: fun drulel tl = FIRST (map (drule) tl)
@@ -1229,14 +1215,14 @@ wordProps	ML code skipped: Finalise locals_rel_evaluate_thm;
 wordProps	Overload PERM_STACK
 wordProps	ML code skipped: Resume permute_swap_lemma2[Loop]:   fs[evaluate_def] >>   Ca
 wordProps	ML code skipped: Finalise permute_swap_lemma2;
-wordProps	line 91 is 81 characters
-wordProps	line 1871 is 76 characters
+wordProps	line 93 is 81 characters
 wordProps	line 1873 is 76 characters
-wordProps	line 1876 is 106 characters
-wordProps	line 1979 is 85 characters
-wordProps	line 2006 is 87 characters
-wordProps	line 2167 is 73 characters
-wordProps	line 2407 is 77 characters
+wordProps	line 1875 is 76 characters
+wordProps	line 1878 is 106 characters
+wordProps	line 1981 is 85 characters
+wordProps	line 2008 is 87 characters
+wordProps	line 2169 is 73 characters
+wordProps	line 2409 is 77 characters
 word_simpProof	ML code skipped: val s = ``s:('a,'c,'ffi) wordSem$state``
 word_simpProof	ML code skipped: Resume evaluate_sf_gc_consts[Call]:   rpt gen_tac \\ rpt DIS
 word_simpProof	ML code skipped: Resume evaluate_sf_gc_consts[Loop]:   rpt gen_tac \\ rpt DIS
@@ -1274,50 +1260,50 @@ data_to_word_memoryProof	ML code skipped: val list_copy_bwd_alias_def = list_cop
 data_to_word_memoryProof	ML code skipped: val memory_rel_copy_array_NONE_lemma =   memory_rel_RefByte_
 data_to_word_memoryProof	Theorem memory_rel_IMP_MAP_UPDATE: tokenize: "⦇i ↦ b⦈ k, (map0'⦇i "
 data_to_word_memoryProof	Theorem xor_bytes_bytes_to_word: unparsed input at 108: 'XOR'
-data_to_word_memoryProof	line 68 is 74 characters
-data_to_word_memoryProof	line 69 is 76 characters
-data_to_word_memoryProof	line 164 is 94 characters
-data_to_word_memoryProof	line 169 is 74 characters
-data_to_word_memoryProof	line 170 is 77 characters
-data_to_word_memoryProof	line 317 is 76 characters
-data_to_word_memoryProof	line 1996 is 79 characters
-data_to_word_memoryProof	line 1997 is 73 characters
-data_to_word_memoryProof	line 2018 is 77 characters
-data_to_word_memoryProof	line 2019 is 76 characters
-data_to_word_memoryProof	line 2020 is 79 characters
-data_to_word_memoryProof	line 2033 is 78 characters
-data_to_word_memoryProof	line 2044 is 81 characters
-data_to_word_memoryProof	line 2055 is 74 characters
-data_to_word_memoryProof	line 2056 is 73 characters
-data_to_word_memoryProof	line 2093 is 78 characters
-data_to_word_memoryProof	line 2116 is 78 characters
-data_to_word_memoryProof	line 2133 is 73 characters
-data_to_word_memoryProof	line 2142 is 77 characters
-data_to_word_memoryProof	line 2143 is 74 characters
-data_to_word_memoryProof	line 2386 is 77 characters
-data_to_word_memoryProof	line 2388 is 78 characters
-data_to_word_memoryProof	line 2389 is 74 characters
-data_to_word_memoryProof	line 2390 is 75 characters
-data_to_word_memoryProof	line 2433 is 74 characters
-data_to_word_memoryProof	line 2434 is 75 characters
-data_to_word_memoryProof	line 2448 is 78 characters
-data_to_word_memoryProof	line 2453 is 73 characters
-data_to_word_memoryProof	line 2496 is 77 characters
-data_to_word_memoryProof	line 2508 is 78 characters
-data_to_word_memoryProof	line 3512 is 76 characters
-data_to_word_memoryProof	line 3800 is 77 characters
-data_to_word_memoryProof	line 3801 is 79 characters
-data_to_word_memoryProof	line 3802 is 76 characters
-data_to_word_memoryProof	line 3861 is 78 characters
-data_to_word_memoryProof	line 3862 is 73 characters
-data_to_word_memoryProof	line 3863 is 74 characters
-data_to_word_memoryProof	line 3864 is 79 characters
-data_to_word_memoryProof	line 3907 is 76 characters
-data_to_word_memoryProof	line 3936 is 77 characters
-data_to_word_memoryProof	line 4815 is 76 characters
-data_to_word_memoryProof	line 4837 is 75 characters
-data_to_word_memoryProof	line 4838 is 78 characters
-data_to_word_memoryProof	line 7085 is 79 characters
+data_to_word_memoryProof	line 70 is 74 characters
+data_to_word_memoryProof	line 71 is 76 characters
+data_to_word_memoryProof	line 166 is 94 characters
+data_to_word_memoryProof	line 171 is 74 characters
+data_to_word_memoryProof	line 172 is 77 characters
+data_to_word_memoryProof	line 319 is 76 characters
+data_to_word_memoryProof	line 1998 is 79 characters
+data_to_word_memoryProof	line 1999 is 73 characters
+data_to_word_memoryProof	line 2020 is 77 characters
+data_to_word_memoryProof	line 2021 is 76 characters
+data_to_word_memoryProof	line 2022 is 79 characters
+data_to_word_memoryProof	line 2035 is 78 characters
+data_to_word_memoryProof	line 2046 is 81 characters
+data_to_word_memoryProof	line 2057 is 74 characters
+data_to_word_memoryProof	line 2058 is 73 characters
+data_to_word_memoryProof	line 2095 is 78 characters
+data_to_word_memoryProof	line 2118 is 78 characters
+data_to_word_memoryProof	line 2135 is 73 characters
+data_to_word_memoryProof	line 2144 is 77 characters
+data_to_word_memoryProof	line 2145 is 74 characters
+data_to_word_memoryProof	line 2388 is 77 characters
+data_to_word_memoryProof	line 2390 is 78 characters
+data_to_word_memoryProof	line 2391 is 74 characters
+data_to_word_memoryProof	line 2392 is 75 characters
+data_to_word_memoryProof	line 2435 is 74 characters
+data_to_word_memoryProof	line 2436 is 75 characters
+data_to_word_memoryProof	line 2450 is 78 characters
+data_to_word_memoryProof	line 2455 is 73 characters
+data_to_word_memoryProof	line 2498 is 77 characters
+data_to_word_memoryProof	line 2510 is 78 characters
+data_to_word_memoryProof	line 3514 is 76 characters
+data_to_word_memoryProof	line 3802 is 77 characters
+data_to_word_memoryProof	line 3803 is 79 characters
+data_to_word_memoryProof	line 3804 is 76 characters
+data_to_word_memoryProof	line 3863 is 78 characters
+data_to_word_memoryProof	line 3864 is 73 characters
+data_to_word_memoryProof	line 3865 is 74 characters
+data_to_word_memoryProof	line 3866 is 79 characters
+data_to_word_memoryProof	line 3909 is 76 characters
+data_to_word_memoryProof	line 3938 is 77 characters
+data_to_word_memoryProof	line 4817 is 76 characters
+data_to_word_memoryProof	line 4839 is 75 characters
+data_to_word_memoryProof	line 4840 is 78 characters
+data_to_word_memoryProof	line 7087 is 79 characters
 word_bignumProof	ML code skipped: val good_dimindex_def = miscTheory.good_dimindex_def; val en
 word_bignumProof	ML code skipped: val shift_def = backend_commonTheory.word_shift_def
 word_bignumProof	ML code skipped: val raw_eval_cases = eval_cases;
@@ -1384,10 +1370,10 @@ data_to_word_gcProof	ML code skipped: val do_app = LIST_CONJ [dataSemTheory.do_a
 data_to_word_gcProof	ML code skipped: val alloc_alt_gen =   SPEC_ALL alloc_lemma_gen   |> ConseqCo
 data_to_word_gcProof	ML code skipped: val alloc_alt =   SPEC_ALL alloc_lemma   |> ConseqConv.WEAKE
 data_to_word_gcProof	ML code skipped: val alloc_fail_lemma = alloc_lemma   |> Q.INST [`k`|->`dimwo
-data_to_word_gcProof	line 3533 is 79 characters
-data_to_word_gcProof	line 3534 is 76 characters
-data_to_word_gcProof	line 3535 is 81 characters
-data_to_word_gcProof	line 3536 is 73 characters
+data_to_word_gcProof	line 3536 is 79 characters
+data_to_word_gcProof	line 3537 is 76 characters
+data_to_word_gcProof	line 3538 is 81 characters
+data_to_word_gcProof	line 3539 is 73 characters
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Call]:   rpt gen_tac   \\ 
 word_depthProof	ML code skipped: \\ PairCases_on `x` \\ simp []   \\ TOP_CASE_TAC \\ simp [] 
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Loop]:   rpt gen_tac \\ si
@@ -1430,77 +1416,77 @@ data_to_word_assignProof	ML code skipped: val assign_FP_top = SIMP_CONV (srw_ss(
 data_to_word_assignProof	ML code skipped: val assign_FP_bop = SIMP_CONV (srw_ss()) [assign_def]   ``((
 data_to_word_assignProof	ML code skipped: val assign_FP_uop = SIMP_CONV (srw_ss()) [assign_def]   ``((
 data_to_word_assignProof	ML code skipped: fun foldr1 f (x::xs) = foldr f x xs | foldr1 f [] = fail();
-data_to_word_assignProof	line 1034 is 80 characters
-data_to_word_assignProof	line 1041 is 79 characters
-data_to_word_assignProof	line 1065 is 86 characters
-data_to_word_assignProof	line 1079 is 77 characters
-data_to_word_assignProof	line 1080 is 73 characters
-data_to_word_assignProof	line 1081 is 74 characters
-data_to_word_assignProof	line 1964 is 75 characters
-data_to_word_assignProof	line 1965 is 75 characters
-data_to_word_assignProof	line 1970 is 75 characters
-data_to_word_assignProof	line 2113 is 74 characters
-data_to_word_assignProof	line 2114 is 75 characters
-data_to_word_assignProof	line 2117 is 77 characters
-data_to_word_assignProof	line 2133 is 79 characters
-data_to_word_assignProof	line 2134 is 80 characters
-data_to_word_assignProof	line 2135 is 81 characters
-data_to_word_assignProof	line 2136 is 80 characters
-data_to_word_assignProof	line 2167 is 79 characters
-data_to_word_assignProof	line 2168 is 80 characters
-data_to_word_assignProof	line 2169 is 78 characters
-data_to_word_assignProof	line 2170 is 75 characters
-data_to_word_assignProof	line 2194 is 74 characters
-data_to_word_assignProof	line 2280 is 80 characters
-data_to_word_assignProof	line 2281 is 76 characters
-data_to_word_assignProof	line 2344 is 85 characters
-data_to_word_assignProof	line 2396 is 83 characters
+data_to_word_assignProof	line 1036 is 80 characters
+data_to_word_assignProof	line 1043 is 79 characters
+data_to_word_assignProof	line 1067 is 86 characters
+data_to_word_assignProof	line 1081 is 77 characters
+data_to_word_assignProof	line 1082 is 73 characters
+data_to_word_assignProof	line 1083 is 74 characters
+data_to_word_assignProof	line 1961 is 75 characters
+data_to_word_assignProof	line 1962 is 75 characters
+data_to_word_assignProof	line 1967 is 75 characters
+data_to_word_assignProof	line 2109 is 74 characters
+data_to_word_assignProof	line 2110 is 75 characters
+data_to_word_assignProof	line 2113 is 77 characters
+data_to_word_assignProof	line 2129 is 79 characters
+data_to_word_assignProof	line 2130 is 80 characters
+data_to_word_assignProof	line 2131 is 81 characters
+data_to_word_assignProof	line 2132 is 80 characters
+data_to_word_assignProof	line 2163 is 79 characters
+data_to_word_assignProof	line 2164 is 80 characters
+data_to_word_assignProof	line 2165 is 78 characters
+data_to_word_assignProof	line 2166 is 75 characters
+data_to_word_assignProof	line 2190 is 74 characters
+data_to_word_assignProof	line 2276 is 80 characters
+data_to_word_assignProof	line 2277 is 76 characters
+data_to_word_assignProof	line 2340 is 85 characters
+data_to_word_assignProof	line 2392 is 83 characters
 wordConvsProof	ML code skipped: fun FIRST_THEN tacs tac = FIRST (map (fn t => t \\ tac) tacs
 wordConvsProof	ML code skipped: val try_cancel_labels_rel_append =   FIRST_THEN [ALL_TAC, ir
 wordConvsProof	ML code skipped: val convs = [flat_exp_conventions_def,full_inst_ok_less_def,
 wordConvsProof	ML code skipped: fun boring_tac def =   ho_match_mp_tac copy_prop_prog_ind   
 wordConvsProof	ML code skipped: val rmt_convs = [flat_exp_conventions_def, full_inst_ok_less
-wordConvsProof	line 47 is 78 characters
-wordConvsProof	line 50 is 73 characters
-wordConvsProof	line 57 is 74 characters
-wordConvsProof	line 62 is 76 characters
-wordConvsProof	line 66 is 74 characters
-wordConvsProof	line 67 is 79 characters
-wordConvsProof	line 68 is 77 characters
-wordConvsProof	line 72 is 74 characters
-wordConvsProof	line 80 is 73 characters
-wordConvsProof	line 81 is 76 characters
-wordConvsProof	line 82 is 76 characters
-wordConvsProof	line 86 is 84 characters
-wordConvsProof	line 88 is 80 characters
-wordConvsProof	line 92 is 76 characters
-wordConvsProof	line 93 is 84 characters
-wordConvsProof	line 94 is 96 characters
-wordConvsProof	line 95 is 79 characters
-wordConvsProof	line 98 is 80 characters
-wordConvsProof	line 99 is 85 characters
-wordConvsProof	line 100 is 83 characters
-wordConvsProof	line 109 is 80 characters
-wordConvsProof	line 118 is 76 characters
-wordConvsProof	line 120 is 78 characters
-wordConvsProof	line 121 is 73 characters
-wordConvsProof	line 122 is 80 characters
-wordConvsProof	line 123 is 84 characters
-wordConvsProof	line 126 is 78 characters
-wordConvsProof	line 127 is 81 characters
-wordConvsProof	line 128 is 81 characters
-wordConvsProof	line 136 is 73 characters
-wordConvsProof	line 141 is 76 characters
-wordConvsProof	line 142 is 74 characters
-wordConvsProof	line 153 is 98 characters
-wordConvsProof	line 162 is 79 characters
-wordConvsProof	line 170 is 81 characters
-wordConvsProof	line 171 is 81 characters
-wordConvsProof	line 176 is 98 characters
-wordConvsProof	line 177 is 107 characters
-wordConvsProof	line 246 is 75 characters
-wordConvsProof	line 247 is 76 characters
-wordConvsProof	line 248 is 76 characters
+wordConvsProof	line 49 is 78 characters
+wordConvsProof	line 52 is 73 characters
+wordConvsProof	line 59 is 74 characters
+wordConvsProof	line 64 is 76 characters
+wordConvsProof	line 68 is 74 characters
+wordConvsProof	line 69 is 79 characters
+wordConvsProof	line 70 is 77 characters
+wordConvsProof	line 74 is 74 characters
+wordConvsProof	line 82 is 73 characters
+wordConvsProof	line 83 is 76 characters
+wordConvsProof	line 84 is 76 characters
+wordConvsProof	line 88 is 84 characters
+wordConvsProof	line 90 is 80 characters
+wordConvsProof	line 94 is 76 characters
+wordConvsProof	line 95 is 84 characters
+wordConvsProof	line 96 is 96 characters
+wordConvsProof	line 97 is 79 characters
+wordConvsProof	line 100 is 80 characters
+wordConvsProof	line 101 is 85 characters
+wordConvsProof	line 102 is 83 characters
+wordConvsProof	line 111 is 80 characters
+wordConvsProof	line 120 is 76 characters
+wordConvsProof	line 122 is 78 characters
+wordConvsProof	line 123 is 73 characters
+wordConvsProof	line 124 is 80 characters
+wordConvsProof	line 125 is 84 characters
+wordConvsProof	line 128 is 78 characters
+wordConvsProof	line 129 is 81 characters
+wordConvsProof	line 130 is 81 characters
+wordConvsProof	line 138 is 73 characters
+wordConvsProof	line 143 is 76 characters
+wordConvsProof	line 144 is 74 characters
+wordConvsProof	line 155 is 98 characters
+wordConvsProof	line 164 is 79 characters
+wordConvsProof	line 172 is 81 characters
+wordConvsProof	line 173 is 81 characters
+wordConvsProof	line 178 is 98 characters
+wordConvsProof	line 179 is 107 characters
+wordConvsProof	line 248 is 75 characters
+wordConvsProof	line 249 is 76 characters
+wordConvsProof	line 250 is 76 characters
 reg_allocProof	ML code skipped: val msimps = [st_ex_bind_def,st_ex_ignore_bind_def,st_ex_ret
 reg_allocProof	ML code skipped: val get_eqns = [get_dim_def, get_unavail_moves_wl_def,get_av
 reg_allocProof	ML code skipped: val set_eqns = [set_dim_def, set_unavail_moves_wl_def,set_av
@@ -1521,7 +1507,7 @@ linear_scanProof	ML code skipped: val msimps = [st_ex_bind_def,st_ex_ignore_bind
 linear_scanProof	ML code skipped: val good_linear_scan_state_def' = let   val inj_rwt = Q.prov
 linear_scanProof	line 58 is 79 characters
 linear_scanProof	line 552 is 91 characters
-linear_scanProof	line 1179 is 79 characters
+linear_scanProof	line 1180 is 79 characters
 word_allocProof	ML code skipped: open reg_allocTheory reg_allocProofTheory linear_scanTheory 
 word_allocProof	ML code skipped: val size_tac= (full_simp_tac(srw_ss())[prog_size_def]>>DECID
 word_allocProof	ML code skipped: val ALL_DISTINCT_FST = ALL_DISTINCT_MAP |> Q.ISPEC `FST`
@@ -1684,15 +1670,15 @@ word_allocProof	ML code skipped: Resume ssa_cc_trans_full_inst_ok_less[Continue]
 word_allocProof	ML code skipped: Finalise ssa_cc_trans_full_inst_ok_less;
 word_allocProof	ML code skipped: val is_phy_var_tac =     full_simp_tac(srw_ss())[is_phy_var_
 word_allocProof	ML code skipped: val exp_tac3 =   assume_tac (Q.SPEC `exp` every_var_exp_get_
-word_allocProof	line 86 is 112 characters
-word_allocProof	line 131 is 74 characters
-word_allocProof	line 2010 is 75 characters
-word_allocProof	line 2300 is 73 characters
-word_allocProof	line 2301 is 73 characters
-word_allocProof	line 2347 is 77 characters
-word_allocProof	line 2348 is 79 characters
-word_allocProof	line 2349 is 75 characters
-word_allocProof	line 2540 is 73 characters
+word_allocProof	line 88 is 112 characters
+word_allocProof	line 133 is 74 characters
+word_allocProof	line 2012 is 75 characters
+word_allocProof	line 2302 is 73 characters
+word_allocProof	line 2303 is 73 characters
+word_allocProof	line 2349 is 77 characters
+word_allocProof	line 2350 is 79 characters
+word_allocProof	line 2351 is 75 characters
+word_allocProof	line 2542 is 73 characters
 word_copyProof	ML code skipped: val s = ``s:('a,'c,'ffi) wordSem$state``
 word_copyProof	ML code skipped: fun word_exp_cong_tac (asl,c) =   let     val (t,_) = dest_e
 word_copyProof	ML code skipped: end     | _ =>       if TypeBase.is_case t then
@@ -1738,67 +1724,67 @@ word_cseProof	ML code skipped: Resume comp_correct[StoreConsts]:   rpt gen_tac \
 word_cseProof	ML code skipped: Resume comp_correct[ShareInst]:   rpt gen_tac \\ strip_tac  
 word_cseProof	ML code skipped: Resume comp_correct[Loop]:   rpt gen_tac >> strip_tac >>   g
 word_cseProof	ML code skipped: Finalise comp_correct;
-word_cseProof	line 28 is 75 characters
-word_cseProof	line 34 is 75 characters
-word_cseProof	line 36 is 76 characters
-word_cseProof	line 37 is 76 characters
-word_cseProof	line 182 is 74 characters
-word_cseProof	line 184 is 74 characters
-word_cseProof	line 197 is 76 characters
-word_cseProof	line 198 is 75 characters
-word_cseProof	line 199 is 76 characters
-word_cseProof	line 212 is 75 characters
-word_cseProof	line 379 is 74 characters
-word_cseProof	line 380 is 74 characters
-word_cseProof	line 389 is 76 characters
-word_cseProof	line 419 is 74 characters
-word_cseProof	line 437 is 76 characters
-word_cseProof	line 438 is 80 characters
-word_cseProof	line 480 is 74 characters
-word_cseProof	line 481 is 75 characters
-word_cseProof	line 497 is 75 characters
-word_cseProof	line 500 is 74 characters
-word_cseProof	line 503 is 78 characters
-word_cseProof	line 573 is 75 characters
-word_cseProof	line 612 is 75 characters
-word_cseProof	line 626 is 73 characters
-word_cseProof	line 627 is 75 characters
-word_cseProof	line 636 is 75 characters
-word_cseProof	line 748 is 73 characters
-word_cseProof	line 749 is 74 characters
-word_cseProof	line 750 is 73 characters
-word_cseProof	line 751 is 75 characters
-word_cseProof	line 766 is 74 characters
-word_cseProof	line 825 is 75 characters
-word_cseProof	line 826 is 75 characters
-word_cseProof	line 827 is 73 characters
-word_cseProof	line 867 is 73 characters
-word_cseProof	line 868 is 74 characters
-word_cseProof	line 889 is 75 characters
-word_cseProof	line 890 is 78 characters
-word_cseProof	line 891 is 77 characters
-word_cseProof	line 892 is 78 characters
-word_cseProof	line 954 is 75 characters
-word_cseProof	line 997 is 75 characters
-word_cseProof	line 1096 is 75 characters
-word_cseProof	line 1112 is 74 characters
-word_cseProof	line 1126 is 74 characters
-word_cseProof	line 1148 is 75 characters
-word_cseProof	line 1160 is 75 characters
-word_cseProof	line 1165 is 75 characters
-word_cseProof	line 1167 is 78 characters
-word_cseProof	line 1174 is 75 characters
-word_cseProof	line 1212 is 75 characters
-word_cseProof	line 1220 is 78 characters
-word_cseProof	line 1284 is 75 characters
-word_cseProof	line 1370 is 78 characters
-word_cseProof	line 1371 is 76 characters
-word_cseProof	line 1458 is 74 characters
-word_cseProof	line 1487 is 73 characters
-word_cseProof	line 1534 is 75 characters
-word_cseProof	line 1551 is 74 characters
-word_cseProof	line 1660 is 75 characters
-word_cseProof	line 1666 is 78 characters
+word_cseProof	line 31 is 75 characters
+word_cseProof	line 37 is 75 characters
+word_cseProof	line 39 is 76 characters
+word_cseProof	line 40 is 76 characters
+word_cseProof	line 185 is 74 characters
+word_cseProof	line 187 is 74 characters
+word_cseProof	line 200 is 76 characters
+word_cseProof	line 201 is 75 characters
+word_cseProof	line 202 is 76 characters
+word_cseProof	line 215 is 75 characters
+word_cseProof	line 382 is 74 characters
+word_cseProof	line 383 is 74 characters
+word_cseProof	line 392 is 76 characters
+word_cseProof	line 422 is 74 characters
+word_cseProof	line 440 is 76 characters
+word_cseProof	line 441 is 80 characters
+word_cseProof	line 483 is 74 characters
+word_cseProof	line 484 is 75 characters
+word_cseProof	line 500 is 75 characters
+word_cseProof	line 503 is 74 characters
+word_cseProof	line 506 is 78 characters
+word_cseProof	line 576 is 75 characters
+word_cseProof	line 615 is 75 characters
+word_cseProof	line 629 is 73 characters
+word_cseProof	line 630 is 75 characters
+word_cseProof	line 639 is 75 characters
+word_cseProof	line 751 is 73 characters
+word_cseProof	line 752 is 74 characters
+word_cseProof	line 753 is 73 characters
+word_cseProof	line 754 is 75 characters
+word_cseProof	line 769 is 74 characters
+word_cseProof	line 828 is 75 characters
+word_cseProof	line 829 is 75 characters
+word_cseProof	line 830 is 73 characters
+word_cseProof	line 870 is 73 characters
+word_cseProof	line 871 is 74 characters
+word_cseProof	line 892 is 75 characters
+word_cseProof	line 893 is 78 characters
+word_cseProof	line 894 is 77 characters
+word_cseProof	line 895 is 78 characters
+word_cseProof	line 957 is 75 characters
+word_cseProof	line 1000 is 75 characters
+word_cseProof	line 1099 is 75 characters
+word_cseProof	line 1115 is 74 characters
+word_cseProof	line 1129 is 74 characters
+word_cseProof	line 1151 is 75 characters
+word_cseProof	line 1163 is 75 characters
+word_cseProof	line 1168 is 75 characters
+word_cseProof	line 1170 is 78 characters
+word_cseProof	line 1177 is 75 characters
+word_cseProof	line 1215 is 75 characters
+word_cseProof	line 1223 is 78 characters
+word_cseProof	line 1287 is 75 characters
+word_cseProof	line 1373 is 78 characters
+word_cseProof	line 1374 is 76 characters
+word_cseProof	line 1461 is 74 characters
+word_cseProof	line 1490 is 73 characters
+word_cseProof	line 1537 is 75 characters
+word_cseProof	line 1554 is 74 characters
+word_cseProof	line 1663 is 75 characters
+word_cseProof	line 1669 is 78 characters
 word_elimProof	ML code skipped: val get_stack_ind = theorem "get_stack_ind";
 word_elimProof	ML code skipped: Resume word_removal_lemma[Skip]:   simp[wordSemTheory.evalua
 word_elimProof	ML code skipped: Resume word_removal_lemma[Install]:   fs[no_install_def] QED
@@ -1825,10 +1811,10 @@ word_elimProof	ML code skipped: Resume word_removal_lemma[FFI]:   fs[wordSemTheo
 word_elimProof	ML code skipped: Resume word_removal_lemma[Call]:   simp[wordSemTheory.evalua
 word_elimProof	ML code skipped: Resume word_removal_lemma[Loop]:     simp[wordSemTheory.eval
 word_elimProof	ML code skipped: Finalise word_removal_lemma;
-word_elimProof	line 22 is 76 characters
-word_elimProof	line 295 is 73 characters
-word_elimProof	line 385 is 73 characters
-word_elimProof	line 650 is 77 characters
+word_elimProof	line 24 is 76 characters
+word_elimProof	line 297 is 73 characters
+word_elimProof	line 387 is 73 characters
+word_elimProof	line 652 is 77 characters
 word_instProof	ML code skipped: val pull_ops_every_var_exp = Q.prove(`   ∀ls acc.   EVERY (e
 word_instProof	ML code skipped: Resume inst_select_thm[Assign]:     full_simp_tac(srw_ss())[
 word_instProof	ML code skipped: Resume inst_select_thm[Set]:     full_simp_tac(srw_ss())[eva
@@ -1945,9 +1931,9 @@ data_to_wordProof	ML code skipped: fun cases_on_op q = Cases_on q >|   map (MAP_
 data_to_wordProof	Overload data_get_code_labels
 data_to_wordProof	Overload data_good_code_labels
 data_to_wordProof	ML code skipped: val th = EVAL``MAP FST (stubs (:'a) c)``;
-data_to_wordProof	line 150 is 77 characters
-data_to_wordProof	line 151 is 78 characters
-data_to_wordProof	line 233 is 79 characters
+data_to_wordProof	line 153 is 77 characters
+data_to_wordProof	line 154 is 78 characters
+data_to_wordProof	line 236 is 79 characters
 clos_interpProof	ML code skipped: val evaluate_If =   SIMP_CONV std_ss [evaluate_def] “evaluat
 clos_interpProof	ML code skipped: val evaluate_Var =   SIMP_CONV std_ss [evaluate_def] “evalua
 clos_interpProof	ML code skipped: val evaluate_TagLenEq =   SIMP_CONV (srw_ss()) [evaluate_def
@@ -1997,10 +1983,10 @@ lab_filterProof	ML code skipped: val upd_pc_tac =   first_assum(qspec_then`0` as
 lab_filterProof	ML code skipped: val share_mem_load_filter_correct_tac =   qexists `t1 with  
 lab_filterProof	ML code skipped: val share_mem_store_filter_correct_tac =   qexists `t1 with 
 lab_filterProof	line 76 is 73 characters
-stackProps	line 697 is 76 characters
-stackProps	line 824 is 80 characters
-stackProps	line 825 is 77 characters
-stackProps	line 948 is 81 characters
+stackProps	line 699 is 76 characters
+stackProps	line 826 is 80 characters
+stackProps	line 827 is 77 characters
+stackProps	line 950 is 81 characters
 stack_removeProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def
 stack_removeProof	Overload num_stubs
 stack_removeProof	ML code skipped: val write_fun2set2 = write_fun2set |> SIMP_RULE std_ss [GSYM
@@ -2102,12 +2088,12 @@ lab_to_targetProof	ML code skipped: \\ ONCE_REWRITE_TAC[WORD_ADD_COMM] >> rewrit
 lab_to_targetProof	ML code skipped: \\ spose_not_then assume_tac >> gvs[NOT_LESS]     \\ qpat_x_
 lab_to_targetProof	ML code skipped: Resume IMP_state_rel_make_init[ISR17]:   drule_then (drule_t
 lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
-lab_to_targetProof	line 617 is 74 characters
-lab_to_targetProof	line 618 is 76 characters
+lab_to_targetProof	line 619 is 74 characters
 lab_to_targetProof	line 620 is 76 characters
-lab_to_targetProof	line 2188 is 75 characters
-lab_to_targetProof	line 4401 is 75 characters
-lab_to_targetProof	line 4786 is 93 characters
+lab_to_targetProof	line 622 is 76 characters
+lab_to_targetProof	line 2190 is 75 characters
+lab_to_targetProof	line 4403 is 75 characters
+lab_to_targetProof	line 4788 is 93 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i
@@ -2170,8 +2156,8 @@ source_evalProof	ML code skipped: eval_cases_tac     \\ fs [Q.ISPEC `(a, b)` EQ_
 source_evalProof	ML code skipped: Resume insert_oracle_correct[Denv]:   rw []   \\ fs [option_
 source_evalProof	ML code skipped: Finalise insert_oracle_correct;
 source_evalProof	Overload s_adjust_oracle
-source_evalProof	line 312 is 73 characters
-source_evalProof	line 1213 is 78 characters
+source_evalProof	line 314 is 73 characters
+source_evalProof	line 1215 is 78 characters
 source_to_flatProof	ML code skipped: val build_rec_env_merge = flatPropsTheory.build_rec_env_merg
 source_to_flatProof	ML code skipped: val s_i1 = ``s_i1 : ('f_orac_st, 'ffi) flatSem$state``; val 
 source_to_flatProof	ML code skipped: val result_rel_imp = hd (RES_CANON result_rel_cases);
@@ -2217,21 +2203,21 @@ source_to_flatProof	ML code skipped: rveq >>   fs [] >>   first_x_assum (drule_t
 source_to_flatProof	ML code skipped: Finalise compile_correct;
 source_to_flatProof	ML code skipped: val COUNT_LIST_ADD_SYM = COUNT_LIST_ADD   |> CONV_RULE (SIMP
 source_to_flatProof	Theorem SUB_BAG_IMP: tokenize: '⋲ B1 ==> x ⋲ B2'
-source_to_flatProof	line 1098 is 73 characters
-source_to_flatProof	line 1199 is 76 characters
-source_to_flatProof	line 1200 is 73 characters
-source_to_flatProof	line 1201 is 77 characters
-source_to_flatProof	line 1205 is 73 characters
-source_to_flatProof	line 1207 is 77 characters
-source_to_flatProof	line 1208 is 73 characters
-source_to_flatProof	line 1210 is 74 characters
-source_to_flatProof	line 1227 is 74 characters
-source_to_flatProof	line 1228 is 73 characters
-source_to_flatProof	line 1263 is 73 characters
-source_to_flatProof	line 2340 is 79 characters
-source_to_flatProof	line 2366 is 79 characters
-source_to_flatProof	line 2396 is 79 characters
-source_to_flatProof	line 2425 is 79 characters
+source_to_flatProof	line 1100 is 73 characters
+source_to_flatProof	line 1201 is 76 characters
+source_to_flatProof	line 1202 is 73 characters
+source_to_flatProof	line 1203 is 77 characters
+source_to_flatProof	line 1207 is 73 characters
+source_to_flatProof	line 1209 is 77 characters
+source_to_flatProof	line 1210 is 73 characters
+source_to_flatProof	line 1212 is 74 characters
+source_to_flatProof	line 1229 is 74 characters
+source_to_flatProof	line 1230 is 73 characters
+source_to_flatProof	line 1265 is 73 characters
+source_to_flatProof	line 2342 is 79 characters
+source_to_flatProof	line 2368 is 79 characters
+source_to_flatProof	line 2398 is 79 characters
+source_to_flatProof	line 2427 is 79 characters
 stack_allocProof	ML code skipped: val _ = (max_print_depth := 18);
 stack_allocProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def val
 stack_allocProof	Overload good_dimindex
@@ -2344,9 +2330,9 @@ word_to_stackProof	ML code skipped: val init_state_ok_semantics' =   state_rel_I
 word_to_stackProof	ML code skipped: val wconvs = [post_alloc_conventions_def,wordConvsTheory.ful
 word_to_stackProof	ML code skipped: val reg_bound_ind = stackPropsTheory.reg_bound_ind val reg_b
 word_to_stackProof	ML code skipped: val get_code_labels_wReg = Q.prove(`   (∀n. get_code_labels 
-word_to_stackProof	line 699 is 75 characters
-word_to_stackProof	line 702 is 82 characters
-word_to_stackProof	line 3092 is 76 characters
+word_to_stackProof	line 705 is 75 characters
+word_to_stackProof	line 708 is 82 characters
+word_to_stackProof	line 3098 is 76 characters
 stack_to_labProof	ML code skipped: val get_labels_def = stackSemTheory.get_labels_def; val get_
 stack_to_labProof	Overload Loc
 stack_to_labProof	ML code skipped: val is_Label_def = labSemTheory.is_Label_def
@@ -2361,7 +2347,7 @@ stack_to_labProof	Overload stack_alloc_compile
 stack_to_labProof	Overload stack_remove_compile
 stack_to_labProof	ML code skipped: val sextract_labels_def = stackPropsTheory.extract_labels_de
 stack_to_labProof	ML code skipped: val stack_asm_ok_def = stackPropsTheory.stack_asm_ok_def
-stack_to_labProof	line 1094 is 75 characters
+stack_to_labProof	line 1097 is 75 characters
 backendProof	ML code skipped: val compile_tap_def = backend_passesTheory.compile_tap_def;
 backendProof	Overload bvl_inline_compile_prog
 backendProof	Overload bvi_tailrec_compile_prog
@@ -2397,7 +2383,7 @@ backendProof	ML code skipped: fun conseq xs = ConseqConv.CONSEQ_REWRITE_TAC (xs,
 backendProof	ML code skipped: fun qsubpat_x_assum tac = let     fun m t = can (find_term (
 backendProof	Overload mk_flat_install_conf
 backendProof	ML code skipped: val mk_flat_install_conf_def = flatPropsTheory.mk_flat_insta
-backendProof	line 1262 is 73 characters
+backendProof	line 1270 is 73 characters
 gramProps	ML code skipped: fun dsimp thl = asm_simp_tac (srw_ss() ++ DNF_ss) thl fun as
 gramProps	ML code skipped: fun qispl_then [] ttac = ttac   | qispl_then (q::qs) ttac = 
 gramProps	ML code skipped: fun erule k th = let   fun c th = let     val (vs, body) = s
@@ -2509,8 +2495,8 @@ pegComplete	ML code skipped: val list_case_eq = TypeBase.case_eq_of ``:'a list``
 pegComplete	ML code skipped: fun hasc cnm t = #1 (dest_const t) = cnm handle HOL_ERR _ =>
 pegComplete	ML code skipped: val pmap_cases =   rpt ((rename [`(_,_) = (_ ## _) pair`] >>
 pegComplete	ML code skipped: val loseRK = loseC “NT_rank”
-pegComplete	line 408 is 76 characters
-pegComplete	line 413 is 75 characters
-pegComplete	line 414 is 76 characters
-pegComplete	line 1201 is 77 characters
+pegComplete	line 410 is 76 characters
+pegComplete	line 415 is 75 characters
+pegComplete	line 416 is 76 characters
+pegComplete	line 1203 is 77 characters
 compilerProof	ML code skipped: rw [] \\ mp_tac (SPEC_ALL compile_correct_lemma)   \\ fs [] 

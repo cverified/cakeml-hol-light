@@ -50,6 +50,8 @@ needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
+
+cake_hide ["code_buffer"; "data_buffer"; "memory"; "parts"; "vars"];;
 (* HOL4 ancestors outside the port: (* for word_add_carry *)
    int_bitwise While *)
 
@@ -1340,8 +1342,7 @@ let CopyByteAdd_thm = cake_theorem "CopyByteAdd_thm"
                      (if n <+ (n2w 4) then state_stack_max
                        s else
                        OPTION_MAP2 MAX (state_stack_max s)
-                         (OPTION_MAP2 (+) (dataSem_stack_size
-                           (stack s))
+                         (OPTION_MAP2 (+) (stack_size (stack s))
                          (sptree_lookup ByteCopyAdd_location
                            (wordSem_state_stack_size s)))))
                            (state_locals_size_fupd (K (SOME 0))
@@ -1374,8 +1375,7 @@ let CopyByteSub_thm = cake_theorem "CopyByteSub_thm"
                      (if n <+ (n2w 4) then state_stack_max
                        s else
                        OPTION_MAP2 MAX (state_stack_max s)
-                         (OPTION_MAP2 (+) (dataSem_stack_size
-                           (stack s))
+                         (OPTION_MAP2 (+) (stack_size (stack s))
                          (sptree_lookup ByteCopySub_location
                            (wordSem_state_stack_size s)))))
                            (state_locals_size_fupd (K (SOME 0))
@@ -1533,8 +1533,7 @@ let evaluate_StringCmpLoop = cake_theorem "evaluate_StringCmpLoop"
           t1)))) /\
          (~(max_stack = state_stack_max t1) ==>
           max_stack = OPTION_MAP2 MAX (state_stack_max t1)
-                        (OPTION_MAP2 (+) (dataSem_stack_size (stack
-                          t1))
+                        (OPTION_MAP2 (+) (stack_size (stack t1))
                            (sptree_lookup StringCmpLoop_location
                              (wordSem_state_stack_size t1)))))`)
   CHEAT_TAC;;
@@ -1609,8 +1608,7 @@ let evaluate_XorLoop = cake_theorem "evaluate_XorLoop"
           t1))))) /\
          (~(max_stack = state_stack_max t1) ==>
           max_stack = OPTION_MAP2 MAX (state_stack_max t1)
-                        (OPTION_MAP2 (+) (dataSem_stack_size (stack
-                          t1))
+                        (OPTION_MAP2 (+) (stack_size (stack t1))
                            (sptree_lookup XorLoop_location
                              (wordSem_state_stack_size t1)))))`)
   CHEAT_TAC;;
@@ -1697,7 +1695,7 @@ let evaluate_AppendMainLoop_code =
                                 (wordSem_state_stack_size t))
                               (sptree_lookup AppendLenLoop_location
                                 (wordSem_state_stack_size t)))
-                            (dataSem_stack_size (stack t)))) /\
+                            (stack_size (stack t)))) /\
          (misc_word_list next_free (append_writes c ptr hdr ws
            tmp0) * frame)
            (fun2set (m1,wordSem_state_mdomain t)) /\
@@ -1759,12 +1757,12 @@ let evaluate_AppendMainLoop_code_alt =
              (n2w 0)]))
                t))))) with (res,s) -> (if wordSem_bad_fun_return
                  res then (SOME Error,s) else (res,s))) /\
-         option_le (OPTION_MAP2 (+) (dataSem_stack_size (stack t))
+         option_le (OPTION_MAP2 (+) (stack_size (stack t))
            (sptree_lookup AppendLenLoop_location
            (wordSem_state_stack_size t))) smx /\
          option_le smx
            (OPTION_MAP2 MAX (state_stack_max t)
-              (OPTION_MAP2 (+) (dataSem_stack_size (stack t))
+              (OPTION_MAP2 (+) (stack_size (stack t))
               (OPTION_MAP2 MAX
                  (sptree_lookup AppendLenLoop_location
                    (wordSem_state_stack_size t))
@@ -1812,8 +1810,7 @@ let evaluate_AppendLenLoop_code =
            + LENGTH xs)))) /\
          option_le (state_stack_max t) smx /\
          option_le smx (OPTION_MAP2 MAX (state_stack_max t)
-                         (OPTION_MAP2 (+) (dataSem_stack_size
-                           (stack t))
+                         (OPTION_MAP2 (+) (stack_size (stack t))
                          (sptree_lookup AppendLenLoop_location
                            (wordSem_state_stack_size t)))))`)
   CHEAT_TAC;;
@@ -2056,8 +2053,7 @@ let FromList1_code_thm = cake_theorem "FromList1_code_thm"
           a4; a5; a6] NONE,r) =
           (SOME (wordSem_Result (wordLang_Loc l1 l2)
             [ret_val]),state_stack_max_fupd (K (OPTION_MAP2 MAX
-            (state_stack_max r) (OPTION_MAP2 (+) (dataSem_stack_size
-            (stack r))
+            (state_stack_max r) (OPTION_MAP2 (+) (stack_size (stack r))
                               (sptree_lookup FromList1_location
                                 (wordSem_state_stack_size r)))))
                                 (wordSem_state_store_fupd (K
@@ -3311,8 +3307,8 @@ let compare1_code_thm = cake_theorem "Compare1_code_thm"
               LN) (state_clock_fupd (K ck)
              t)))) /\
           option_le smx (OPTION_MAP2 MAX (state_stack_max t)
-                              (OPTION_MAP2 (+) (dataSem_stack_size
-                                (stack t)) (state_locals_size t))) /\
+                              (OPTION_MAP2 (+) (stack_size (stack
+                                t)) (state_locals_size t))) /\
                                 state_clock
           t <= w2n l + ck)`)
   CHEAT_TAC;;
@@ -3358,8 +3354,8 @@ let compare_code_thm = cake_theorem "Compare_code_thm"
            t)))) /\
           option_le smx (OPTION_MAP2 MAX (state_stack_max
                            t)
-                             (OPTION_MAP2 (+) (dataSem_stack_size
-                               (stack t))
+                             (OPTION_MAP2 (+) (stack_size (stack
+                               t))
                               (sptree_lookup Compare1_location
                                 (wordSem_state_stack_size t)))))`)
   CHEAT_TAC;;
@@ -3576,7 +3572,7 @@ let equal_code_lemma = cake_theorem "Equal_code_lemma"
             t))))) /\
           option_le smx (OPTION_MAP2 MAX (state_stack_max t)
                               (OPTION_MAP2 (+)
-                              (dataSem_stack_size (stack t))
+                              (stack_size (stack t))
                               (eq_code_stack_max (wck + 1)
                                 (wordSem_state_stack_size t)))) /\
           l' <= ck)) /\
@@ -3612,7 +3608,7 @@ let equal_code_lemma = cake_theorem "Equal_code_lemma"
              t))))) /\
           option_le smx (OPTION_MAP2 MAX (state_stack_max t)
                               (OPTION_MAP2 (+)
-                              (dataSem_stack_size (stack t))
+                              (stack_size (stack t))
                               (eq_code_stack_max (wck + 1)
                                 (wordSem_state_stack_size t)))) /\
           l' <= ck))`)
@@ -3651,7 +3647,7 @@ let equal_code_thm = cake_theorem "Equal_code_thm"
           t))))) /\
        option_le smx (OPTION_MAP2 MAX (state_stack_max t)
                               (OPTION_MAP2 (+)
-                              (dataSem_stack_size (stack t))
+                              (stack_size (stack t))
                               (eq_code_stack_max (wck + 1)
                                 (wordSem_state_stack_size t)))) /\
        l' <= ck)`)
@@ -4316,7 +4312,7 @@ let MemCopy_thm = cake_theorem "MemCopy_thm"
            s))))) /\
         option_le smx
           (OPTION_MAP2 MAX (state_stack_max s)
-            (OPTION_MAP2 (+) (dataSem_stack_size (stack s))
+            (OPTION_MAP2 (+) (stack_size (stack s))
                             (sptree_lookup MemCopy_location
                               (wordSem_state_stack_size s)))))`)
   CHEAT_TAC;;

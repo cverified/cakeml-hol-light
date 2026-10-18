@@ -73,20 +73,21 @@ let bvlSem_state_FIELDS = define_record "bvlSem_state"
    "compile_oracle","num->'c#(num#num#bvl_exp) list";
    "code","(num#bvl_exp) spt";
    "ffi","'ffi ffi_state"];;
-hol4_overload "state_globals" "bvlSem_state_globals";;
-hol4_overload "state_globals_fupd" "bvlSem_state_globals_fupd";;
-hol4_overload "state_refs" "bvlSem_state_refs";;
-hol4_overload "state_refs_fupd" "bvlSem_state_refs_fupd";;
-hol4_overload "state_clock" "bvlSem_state_clock";;
-hol4_overload "state_clock_fupd" "bvlSem_state_clock_fupd";;
-hol4_overload "compile" "bvlSem_state_compile";;
-hol4_overload "compile_fupd" "bvlSem_state_compile_fupd";;
-hol4_overload "compile_oracle" "bvlSem_state_compile_oracle";;
-hol4_overload "compile_oracle_fupd" "bvlSem_state_compile_oracle_fupd";;
-hol4_overload "state_code" "bvlSem_state_code";;
-hol4_overload "state_code_fupd" "bvlSem_state_code_fupd";;
-hol4_overload "state_ffi" "bvlSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "bvlSem_state_ffi_fupd";;
+hol4_field_overload "state_globals" "bvlSem_state_globals";;
+hol4_field_overload "state_globals_fupd" "bvlSem_state_globals_fupd";;
+hol4_field_overload "state_refs" "bvlSem_state_refs";;
+hol4_field_overload "state_refs_fupd" "bvlSem_state_refs_fupd";;
+hol4_field_overload "state_clock" "bvlSem_state_clock";;
+hol4_field_overload "state_clock_fupd" "bvlSem_state_clock_fupd";;
+hol4_field_overload "compile" "bvlSem_state_compile";;
+hol4_field_overload "compile_fupd" "bvlSem_state_compile_fupd";;
+hol4_field_overload "compile_oracle" "bvlSem_state_compile_oracle";;
+hol4_field_overload "compile_oracle_fupd"
+  "bvlSem_state_compile_oracle_fupd";;
+hol4_field_overload "state_code" "bvlSem_state_code";;
+hol4_field_overload "state_code_fupd" "bvlSem_state_code_fupd";;
+hol4_field_overload "state_ffi" "bvlSem_state_ffi";;
+hol4_field_overload "state_ffi_fupd" "bvlSem_state_ffi_fupd";;
 
 let v_to_list_def = cake_define
   `bvlSem_v_to_list x1 =
@@ -254,11 +255,11 @@ let do_int_app_eq_some = cake_theorem "do_int_app_eq_some"
        (?n1 n2. vs = [Number n1; Number n2] /\ res = Number (n1 *
          n2))) /\
      (do_int_app (Div) vs = SOME res ==>
-       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = (&0)) /\ res
-         = Number (n1 / n2))) /\
+       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = 0) /\ res =
+         Number (n1 / n2))) /\
      (do_int_app (Mod) vs = SOME res ==>
-       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = (&0)) /\ res
-         = Number (n1 % n2))) /\
+       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = 0) /\ res =
+         Number (n1 % n2))) /\
      (do_int_app (Less) vs = SOME res ==>
        (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 <
          n2))) /\
@@ -272,8 +273,8 @@ let do_int_app_eq_some = cake_theorem "do_int_app_eq_some"
        (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 >=
          n2))) /\
      (!n. do_int_app (closLang_LessConstSmall n) vs = SOME res ==>
-       (?i. vs = [Number i] /\ (&0) <= i /\ i <= (&1000000) /\ n
-         < 1000000 /\ res = Boolv (i < &n)))`)
+       (?i. vs = [Number i] /\ 0 <= i /\ i <= 1000000 /\ n <
+         1000000 /\ res = Boolv (i < &n)))`)
   CHEAT_TAC;;
 
 (* same as closSem$do_word_app *)

@@ -22,9 +22,12 @@ needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-(* HOL4 ancestors outside the port: alist toto *)
+
+cake_hide ["memory"];;
+(* HOL4 ancestors outside the port: alist *)
 
 (* The reads of a stored arith fact, tracked as self-mappings in
    to_canonical (registered at fact creation), so that a later write to any

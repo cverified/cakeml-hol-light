@@ -45,8 +45,8 @@ let copy_state_FIELDS = define_record "copy_state"
    "from_eq","num spt";
    "store_to_eq","(store_name#num) list";
    "next","num"];;
-hol4_overload "next" "copy_state_next";;
-hol4_overload "next_fupd" "copy_state_next_fupd";;
+hol4_field_overload "next" "copy_state_next";;
+hol4_field_overload "next_fupd" "copy_state_next_fupd";;
 
 let empty_eq_def = cake_define
   `empty_eq =

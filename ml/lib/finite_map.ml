@@ -89,6 +89,17 @@ let o_f = new_definition
   `(g:B->C) o_f (fm:(A,B)fmap) = mk_fmap (\x. OPTION_MAP g (fmap_fn fm
     x))`;;
 
+parse_as_infix("f_o_f",(26,"right"));;
+
+(* HOL4's f_o_f: the composition of two finite maps, which it
+   introduces by a specification and the port defines with the
+   representing function *)
+
+let f_o_f = new_definition
+  `(f:(B,C)fmap) f_o_f (g:(A,B)fmap) =
+   mk_fmap (\x. if x IN FDOM g /\ fmap_apply g x IN FDOM f
+                then fmap_fn f (fmap_apply g x) else NONE)`;;
+
 let FMERGE = new_definition
   `FMERGE (m:B->B->B) (f:(A,B)fmap) g =
    mk_fmap (\x. if x IN FDOM f then

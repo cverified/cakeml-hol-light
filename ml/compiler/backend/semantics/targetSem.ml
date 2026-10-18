@@ -53,16 +53,16 @@ let machine_config_FIELDS = define_record "machine_config"
    "ccache_interfer","num->'a word#'a word#'b->'b";
    "target","('a,'b,'c)target";
    "mmio_info","(num#word8#'a asm_addr#num#'a word) list"];;
-hol4_overload "ffi_names" "machine_config_ffi_names";;
-hol4_overload "ffi_names_fupd" "machine_config_ffi_names_fupd";;
-hol4_overload "ptr_reg" "machine_config_ptr_reg";;
-hol4_overload "ptr_reg_fupd" "machine_config_ptr_reg_fupd";;
-hol4_overload "len_reg" "machine_config_len_reg";;
-hol4_overload "len_reg_fupd" "machine_config_len_reg_fupd";;
-hol4_overload "ptr2_reg" "machine_config_ptr2_reg";;
-hol4_overload "ptr2_reg_fupd" "machine_config_ptr2_reg_fupd";;
-hol4_overload "len2_reg" "machine_config_len2_reg";;
-hol4_overload "len2_reg_fupd" "machine_config_len2_reg_fupd";;
+hol4_field_overload "ffi_names" "machine_config_ffi_names";;
+hol4_field_overload "ffi_names_fupd" "machine_config_ffi_names_fupd";;
+hol4_field_overload "ptr_reg" "machine_config_ptr_reg";;
+hol4_field_overload "ptr_reg_fupd" "machine_config_ptr_reg_fupd";;
+hol4_field_overload "len_reg" "machine_config_len_reg";;
+hol4_field_overload "len_reg_fupd" "machine_config_len_reg_fupd";;
+hol4_field_overload "ptr2_reg" "machine_config_ptr2_reg";;
+hol4_field_overload "ptr2_reg_fupd" "machine_config_ptr2_reg_fupd";;
+hol4_field_overload "len2_reg" "machine_config_len2_reg";;
+hol4_field_overload "len2_reg_fupd" "machine_config_len2_reg_fupd";;
 
 let apply_oracle_def = cake_define
   `apply_oracle oracle' x =

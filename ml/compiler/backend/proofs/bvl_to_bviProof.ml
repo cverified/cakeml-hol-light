@@ -36,6 +36,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["parts"];;
+
 (* HOL4 bvl_to_bviProofScript.sml:22: ML code, not ported *)
 
 (* value relation *)

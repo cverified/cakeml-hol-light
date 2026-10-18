@@ -18,6 +18,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
+cake_hide ["code_buffer"; "memory"];;
+
 let rename_state_def = cake_define
   `rename_state compile_rest f s = stackSem_state_ffi_save_regs_fupd (K
   (IMAGE (tlookup f) (stackSem_state_ffi_save_regs s)))

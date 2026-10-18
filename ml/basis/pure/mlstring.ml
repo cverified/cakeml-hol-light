@@ -15,8 +15,8 @@
 needs "basis/pure/mllist.ml";;
 needs "lib/comparison.ml";;
 needs "lib/ternaryComparisons.ml";;
+needs "lib/toto.ml";;
 needs "misc/misc.ml";;
-(* HOL4 ancestors outside the port: toto *)
 
 (* HOL4 mlstringScript.sml:13-14: the ML values that the definitions
    below antiquote *)
@@ -517,12 +517,12 @@ let isprefix_thm_aux = cake_theorem "isprefix_thm_aux[local]"
 
 let isprefix_thm = cake_theorem "isprefix_thm"
   (fun () ->
-    `isPrefix s₁ s₂ <=> explode s₁ <<= explode s₂`)
+    `isPrefix s1 s2 <=> explode s1 <<= explode s2`)
   CHEAT_TAC;;
 
 let isprefix_strcat = cake_theorem "isprefix_strcat"
   (fun () ->
-    `!s₁ s₂. isPrefix s₁ s₂ = (?s₃. s₂ = strcat s₁ s₃)`)
+    `!s1 s2. isPrefix s1 s2 = (?s3. s2 = strcat s1 s3)`)
   CHEAT_TAC;;
 
 let isSuffix_def = cake_define

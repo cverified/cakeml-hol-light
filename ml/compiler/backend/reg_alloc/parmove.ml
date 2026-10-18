@@ -45,12 +45,10 @@ let step_rules = cake_inductive
     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
 (* HOL4 parmoveScript.sml:39: ML code, not ported *)
-(* HOL4 parmoveScript.sml:40: the overload \226\150\183, which the
-   port expands *)
+(* HOL4 parmoveScript.sml:40: the overload ▷, which the port expands *)
 
 (* HOL4 parmoveScript.sml:42: ML code, not ported *)
-(* HOL4 parmoveScript.sml:43: the overload \226\150\183*, which the
-   port expands *)
+(* HOL4 parmoveScript.sml:43: the overload ▷*, which the port expands *)
 
 (* invariant on states *)
 
@@ -113,16 +111,25 @@ let wf_def = cake_define
 hol4_overload "wf" "parmove_wf";;
 (* HOL4 parmoveScript.sml:129: the overload ⊢, which the port expands *)
 
-(* HOL4 parmoveScript.sml:131-138: a theorem whose statement the port
-   cannot state yet *)
+let wf_init = cake_theorem "wf_init"
+  (fun () ->
+    `windmill mu /\
+     EVERY IS_SOME (MAP FST mu) /\
+     EVERY IS_SOME (MAP SND mu) ==>
+      (wf) (mu,[],[])`)
+  CHEAT_TAC;;
 
 (* The invariant is preserved *)
 
-(* HOL4 parmoveScript.sml:142-150: a theorem whose statement the port
-   cannot state yet *)
+let wf_step = cake_theorem "wf_step"
+  (fun () ->
+    `!s1 s2. (step) s1 s2 ==> (wf) s1 ==> (wf) s2`)
+  CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:152-157: a theorem whose statement the port
-   cannot state yet *)
+let wf_steps = cake_theorem "wf_steps"
+  (fun () ->
+    `!s1 s2. (wf) s1 /\ (RTC (backend_common_Cons)) s1 s2 ==> (wf) s2`)
+  CHEAT_TAC;;
 
 (* semantics of moves *)
 
@@ -217,28 +224,32 @@ let sem_final = cake_theorem "sem_final"
 let eqenv_def = cake_define
   `eqenv rho1 rho2 <=> (!r. IS_SOME r ==> (rho1 r = rho2 r))`;;
 (* HOL4 parmoveScript.sml:361: ML code, not ported *)
-(* HOL4 parmoveScript.sml:362: the overload \226\137\161, which the
-   port expands *)
 
 let eqenv_sym = cake_theorem "eqenv_sym[local]"
   (fun () ->
-    `≡
-       p1 p2 ==> ≡ p2 p1`)
+    `eqenv
+       p1 p2 ==> eqenv p2 p1`)
   CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:370-445: a theorem whose statement the port
-   cannot state yet *)
+let step_sem = cake_theorem "step_sem[local]"
+  (fun () ->
+    `!s1 s2. (step) s1 s2 ==> (wf) s1 ==> (!rho. eqenv (sem s1 rho)
+  (sem s2 rho))`)
+  CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:447-457: a theorem whose statement the port
-   cannot state yet *)
+let steps_sem = cake_theorem "steps_sem"
+  (fun () ->
+    `!s1 s2. (RTC (backend_common_Cons)) s1 s2 /\ (wf) s1 ==> (!rho.
+  eqenv (sem s1 rho) (sem s2 rho))`)
+  CHEAT_TAC;;
 
 let steps_correct = cake_theorem "steps_correct"
   (fun () ->
     `windmill mu /\
      EVERY IS_SOME (MAP FST mu) /\
-     EVERY IS_SOME (MAP SND mu) /\ ▷*
+     EVERY IS_SOME (MAP SND mu) /\ (RTC (backend_common_Cons))
      (mu,[],[]) ([],[],tau) ==>
-     (!rho. ≡ (parsem mu rho) (seqsem (REVERSE tau) rho))`)
+     (!rho. eqenv (parsem mu rho) (seqsem (REVERSE tau) rho))`)
   CHEAT_TAC;;
 
 (* deterministic algorithm *)
@@ -262,21 +273,26 @@ let dstep_rules = cake_inductive
     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
 (* HOL4 parmoveScript.sml:494: ML code, not ported *)
-(* HOL4 parmoveScript.sml:495: the overload \226\134\170, which the
-   port expands *)
+(* HOL4 parmoveScript.sml:495: the overload ↪, which the port expands *)
 
 (* HOL4 parmoveScript.sml:497: ML code, not ported *)
-(* HOL4 parmoveScript.sml:498: the overload \226\134\170*, which the
-   port expands *)
+(* HOL4 parmoveScript.sml:498: the overload ↪*, which the port
+   expands *)
 
 (* ⊢ s1 condition not included in paper;
    not sure if necessary, but couldn't get
    their proof to work *)
-(* HOL4 parmoveScript.sml:503-515: a theorem whose statement the port
-   cannot state yet *)
+let dstep_step = cake_theorem "dstep_step[local]"
+  (fun () ->
+    `!s1 s2. (dstep) s1 s2 ==> (wf) s1 ==> (RTC (backend_common_Cons))
+  s1 s2`)
+  CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:517-522: a theorem whose statement the port
-   cannot state yet *)
+let dsteps_steps = cake_theorem "dsteps_steps"
+  (fun () ->
+    `!s1 s2. (RTC (dstep)) s1 s2 ==> (wf) s1 ==> (RTC
+  (backend_common_Cons)) s1 s2`)
+  CHEAT_TAC;;
 
 (* functional algorithm *)
 
@@ -299,7 +315,7 @@ let fstep_def = cake_define
 
 let fstep_dstep = cake_theorem "fstep_dstep"
   (fun () ->
-    `(!tau. ~(s = ([],[],tau))) ==> ↪ s (fstep s)`)
+    `(!tau. ~(s = ([],[],tau))) ==> (dstep) s (fstep s)`)
   CHEAT_TAC;;
 
 (* HOL4 parmoveScript.sml:610-638: the tactic that proves the
@@ -312,7 +328,7 @@ let pmov_def = cake_define_wf
 
 let pmov_dsteps = cake_theorem "pmov_dsteps"
   (fun () ->
-    `!s. ↪* s (pmov s)`)
+    `!s. (RTC (dstep)) s (pmov s)`)
   CHEAT_TAC;;
 
 let pmov_final = cake_theorem "pmov_final"
@@ -330,7 +346,7 @@ let parmove_def = cake_define
 let parmove_correct = cake_theorem "parmove_correct"
   (fun () ->
     `windmill xs ==>
-     (!rho. ≡ (seqsem (parmove xs) rho)
+     (!rho. eqenv (seqsem (parmove xs) rho)
          (parsem (MAP (\(x,y). (SOME x,SOME y)) xs) rho))`)
   CHEAT_TAC;;
 
@@ -398,14 +414,36 @@ let not_use_temp_before_assign_thm =
         (?j. find_index NONE (MAP FST ls) 0 = SOME j /\ j < i))`)
   CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:880-906: a theorem whose statement the port
-   cannot state yet *)
+let step_not_use_temp_before_assign =
+  cake_theorem "step_not_use_temp_before_assign"
+  (fun () ->
+    `!s1 s2. (step) s1 s2 ==>
+       (wf) s1 /\
+      not_use_temp_before_assign (REVERSE (FST (SND s1) ++ SND (SND
+        s1))) ==>
+      not_use_temp_before_assign (REVERSE (FST (SND s2) ++ SND
+        (SND s2)))`)
+  CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:908-918: a theorem whose statement the port
-   cannot state yet *)
+let steps_not_use_temp_before_assign =
+  cake_theorem "steps_not_use_temp_before_assign"
+  (fun () ->
+    `!s1 s2.
+      (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST
+        (SND s1) ++ SND (SND s1)))) s1 /\ (RTC (backend_common_Cons))
+      s1 s2 ==>
+      (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST
+        (SND s1) ++ SND (SND s1)))) s2`)
+  CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:920-930: a theorem whose statement the port
-   cannot state yet *)
+let pmov_not_use_temp_before_assign =
+  cake_theorem "pmov_not_use_temp_before_assign"
+  (fun () ->
+    `!p i.
+      (wf) p /\ not_use_temp_before_assign (REVERSE (FST (SND p)
+        ++ SND (SND p))) ==> not_use_temp_before_assign (REVERSE (FST
+        (SND (pmov p)) ++ SND (SND (pmov p))))`)
+  CHEAT_TAC;;
 
 let parmove_not_use_temp_before_assign =
   cake_theorem "parmove_not_use_temp_before_assign"
@@ -421,7 +459,7 @@ let parmove_not_use_temp_before_assign =
 
 let ALL_DISTINCT_step = cake_theorem "ALL_DISTINCT_step"
   (fun () ->
-    `!s1 s2. ▷ s1 s2 ==>
+    `!s1 s2. (step) s1 s2 ==>
       ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST (SND s1)
         ++ (SND (SND s1))))) ==>
       ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s2 ++ FST (SND
@@ -432,14 +470,19 @@ let ALL_DISTINCT_steps = cake_theorem "ALL_DISTINCT_steps"
   (fun () ->
     `!s1 s2.
       (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST
-        (SND s1) ++ (SND (SND s1)))))) s1 /\ ▷*
+        (SND s1) ++ (SND (SND s1)))))) s1 /\ (RTC (backend_common_Cons))
       s1 s2 ==>
       (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST
         (SND s1) ++ (SND (SND s1)))))) s2`)
   CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:991-1001: a theorem whose statement the
-   port cannot state yet *)
+let ALL_DISTINCT_pmov = cake_theorem "ALL_DISTINCT_pmov"
+  (fun () ->
+    `!p. (wf) p /\ ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST p ++ FST
+  (SND p) ++ SND (SND p)))) ==>
+         ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST (pmov p) ++
+           FST (SND (pmov p)) ++ SND (SND (pmov p)))))`)
+  CHEAT_TAC;;
 
 let ALL_DISTINCT_parmove = cake_theorem "ALL_DISTINCT_parmove"
   (fun () ->
@@ -454,7 +497,7 @@ let state_to_list_def = cake_define
 
 let step_preserves_moves = cake_theorem "step_preserves_moves"
   (fun () ->
-    `!s1 s2. ▷ s1 s2 ==>
+    `!s1 s2. (step) s1 s2 ==>
       (!x. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y)) ==>
           (?y. MEM (x,y) (state_to_list s2) /\ ~(x = y)))`)
   CHEAT_TAC;;
@@ -463,13 +506,16 @@ let steps_preserves_moves = cake_theorem "steps_preserves_moves"
   (fun () ->
     `!s1 s2.
       (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s1 /\
-        ▷*
+        (RTC (backend_common_Cons))
       s1 s2 ==>
       (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s2`)
   CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:1050-1061: a theorem whose statement the
-   port cannot state yet *)
+let pmov_preserves_moves = cake_theorem "pmov_preserves_moves"
+  (fun () ->
+    `!p. (wf) p /\ MEM (x,y) (state_to_list p) /\ ~(x = y) ==>
+      MEM x (MAP FST (state_to_list (pmov p)))`)
+  CHEAT_TAC;;
 
 let parmove_preserves_moves = cake_theorem "parmove_preserves_moves"
   (fun () ->
@@ -491,24 +537,25 @@ let inj_on_state_def = cake_define
 
 let step_inj_on_state = cake_theorem "step_inj_on_state"
   (fun () ->
-    `!s1 s2. ▷ s1 s2 ==> inj_on_state f s1 ==> inj_on_state f s2`)
+    `!s1 s2. (step) s1 s2 ==> inj_on_state f s1 ==> inj_on_state f s2`)
   CHEAT_TAC;;
 
 let steps_inj_on_state = cake_theorem "steps_inj_on_state"
   (fun () ->
-    `!s1 s2. inj_on_state f s1 /\ ▷* s1 s2 ==> inj_on_state f s2`)
+    `!s1 s2. inj_on_state f s1 /\ (RTC (backend_common_Cons)) s1 s2
+  ==> inj_on_state f s2`)
   CHEAT_TAC;;
 
 let step_MAP_INJ = cake_theorem "step_MAP_INJ"
   (fun () ->
-    `!s1 s2. ▷ s1 s2 ==> inj_on_state f s1 ==> ▷ (map_state f s1)
-  (map_state f s2)`)
+    `!s1 s2. (step) s1 s2 ==> inj_on_state f s1 ==> (step) (map_state
+  f s1) (map_state f s2)`)
   CHEAT_TAC;;
 
 let steps_MAP_INJ = cake_theorem "steps_MAP_INJ[local]"
   (fun () ->
-    `!s1 s2. ▷* s1 s2 ==>
-       inj_on_state f s1 ==> ▷*
+    `!s1 s2. (RTC (backend_common_Cons)) s1 s2 ==>
+       inj_on_state f s1 ==> (RTC (backend_common_Cons))
        (map_state f s1) (map_state f s2)`)
   CHEAT_TAC;;
 
@@ -518,8 +565,12 @@ let fstep_MAP_INJ = cake_theorem "fstep_MAP_INJ"
   (fstep p)`)
   CHEAT_TAC;;
 
-(* HOL4 parmoveScript.sml:1257-1292: a theorem whose statement the
-   port cannot state yet *)
+let pmov_MAP_INJ = cake_theorem "pmov_MAP_INJ"
+  (fun () ->
+    `!p.
+     (wf) p /\ inj_on_state f p ==> pmov (map_state f p) =
+       map_state f (pmov p)`)
+  CHEAT_TAC;;
 
 let parmove_MAP_INJ = cake_theorem "parmove_MAP_INJ"
   (fun () ->

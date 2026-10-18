@@ -17,6 +17,8 @@ needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["vars"];;
+
 let IMP_sptree_eq = cake_theorem "IMP_sptree_eq[local]"
   (fun () ->
     `sptree_wf x /\ sptree_wf y /\ (!a. lookup a x = lookup a y) ==>

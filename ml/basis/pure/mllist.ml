@@ -13,7 +13,9 @@ needs "lib/indexedLists.ml";;
 needs "lib/mergesort.ml";;
 needs "lib/sorting.ml";;
 needs "lib/ternaryComparisons.ml";;
-(* HOL4 ancestors outside the port: toto *)
+needs "lib/toto.ml";;
+
+cake_hide ["length"; "negate"];;
 
 let intersperse_def = cake_define
   `intersperse sep x2 =

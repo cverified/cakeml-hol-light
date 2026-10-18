@@ -28,6 +28,8 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+cake_hide ["code_buffer"; "data_buffer"; "sloc"];;
+
 (* Ensures we have the correct ML bindings *)
 (* HOL4 word_allocProofScript.sml:13-15: ML code, not ported *)
 

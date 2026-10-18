@@ -209,12 +209,13 @@ let eval_oracle_state_FIELDS = define_record "eval_oracle_state"
    list)#dec list) option";
    "envs","((semanticPrimitives_v sem_env) list) list";
    "generation","num"];;
-hol4_overload "oracle" "eval_oracle_state_oracle";;
-hol4_overload "oracle_fupd" "eval_oracle_state_oracle_fupd";;
-hol4_overload "envs" "eval_oracle_state_envs";;
-hol4_overload "envs_fupd" "eval_oracle_state_envs_fupd";;
-hol4_overload "generation" "eval_oracle_state_generation";;
-hol4_overload "generation_fupd" "eval_oracle_state_generation_fupd";;
+hol4_field_overload "oracle" "eval_oracle_state_oracle";;
+hol4_field_overload "oracle_fupd" "eval_oracle_state_oracle_fupd";;
+hol4_field_overload "envs" "eval_oracle_state_envs";;
+hol4_field_overload "envs_fupd" "eval_oracle_state_envs_fupd";;
+hol4_field_overload "generation" "eval_oracle_state_generation";;
+hol4_field_overload "generation_fupd"
+  "eval_oracle_state_generation_fupd";;
 
 let eval_state_INDUCT,eval_state_RECURSION = define_datatype
   "eval_state = EvalDecs (eval_decs_state) | EvalOracle \
@@ -228,12 +229,15 @@ let semanticPrimitives_state_FIELDS =
    "next_type_stamp","num";
    "next_exn_stamp","num";
    "eval_state","eval_state option"];;
-hol4_overload "state_clock" "semanticPrimitives_state_clock";;
-hol4_overload "state_clock_fupd" "semanticPrimitives_state_clock_fupd";;
-hol4_overload "state_refs" "semanticPrimitives_state_refs";;
-hol4_overload "state_refs_fupd" "semanticPrimitives_state_refs_fupd";;
-hol4_overload "state_ffi" "semanticPrimitives_state_ffi";;
-hol4_overload "state_ffi_fupd" "semanticPrimitives_state_ffi_fupd";;
+hol4_field_overload "state_clock" "semanticPrimitives_state_clock";;
+hol4_field_overload "state_clock_fupd"
+  "semanticPrimitives_state_clock_fupd";;
+hol4_field_overload "state_refs" "semanticPrimitives_state_refs";;
+hol4_field_overload "state_refs_fupd"
+  "semanticPrimitives_state_refs_fupd";;
+hol4_field_overload "state_ffi" "semanticPrimitives_state_ffi";;
+hol4_field_overload "state_ffi_fupd"
+  "semanticPrimitives_state_ffi_fupd";;
 
 (* Other primitives *)
 (* Check that a constructor is properly applied *)

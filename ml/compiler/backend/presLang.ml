@@ -45,6 +45,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
+cake_hide ["HEX"];;
+
 (* basics *)
 
 let empty_item_def = cake_define

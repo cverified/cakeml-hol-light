@@ -68,3 +68,23 @@ let mlt = new_definition
 (* HOL4 writes the union of two bags as an infix *)
 
 parse_as_infix("BAG_UNION",(16,"left"));;
+
+(* the bag of the elements of a list, and the image of a bag under
+   a function, for which HOL4 needs the size of a bag: it
+   specifies that one with a relation and only for a finite bag,
+   and the sum over the set of the bag is the same number *)
+
+let LIST_TO_BAG = new_recursive_definition list_RECURSION
+  `(LIST_TO_BAG [] = (EMPTY_BAG:A->num)) /\
+   (LIST_TO_BAG (CONS (h:A) t) = BAG_INSERT h (LIST_TO_BAG t))`;;
+
+let BAG_FILTER = new_definition
+  `BAG_FILTER (P:A->bool) b = (\x. if P x then b x else 0)`;;
+
+let BAG_CARD = new_definition
+  `BAG_CARD (b:A->num) = nsum (SET_OF_BAG b) b`;;
+
+let BAG_IMAGE = new_definition
+  `BAG_IMAGE (f:A->B) b =
+   (\e. let sb = BAG_FILTER (\e0. f e0 = e) b in
+        if FINITE_BAG sb then BAG_CARD sb else 1)`;;

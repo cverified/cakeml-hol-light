@@ -21,6 +21,8 @@ needs "lib/peg.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
 
+cake_hide ["sub"];;
+
 (* Set up ML bindings *)
 (* HOL4 pegCompleteScript.sml:13-14: ML code, not ported *)
 

@@ -591,7 +591,7 @@ let get_intervals_domain_eq_live_tree_registers =
   cake_theorem "get_intervals_domain_eq_live_tree_registers"
   (fun () ->
     `!lt n beg end.
-     (n,beg,end) = get_intervals (fix_domination lt) 0 LN LN ==>
+     (n,beg,end) = get_intervals (fix_domination lt) (&0) LN LN ==>
      domain beg = live_tree_registers (fix_domination lt) /\
      domain end = live_tree_registers (fix_domination lt)`)
   CHEAT_TAC;;
@@ -600,8 +600,8 @@ let get_intervals_withlive_domain_eq_live_tree_registers =
   cake_theorem "get_intervals_withlive_domain_eq_live_tree_registers"
   (fun () ->
     `!lt n beg end.
-     (n,beg,end) = get_intervals_withlive (fix_domination lt) 0 LN
-       LN LN ==>
+     (n,beg,end) = get_intervals_withlive (fix_domination lt) (&0)
+       LN LN LN ==>
      domain beg = live_tree_registers (fix_domination lt) /\
      domain end = live_tree_registers (fix_domination lt)`)
   CHEAT_TAC;;
@@ -610,9 +610,10 @@ let get_intervals_withlive_beg_eq_get_intervals_beg =
   cake_theorem "get_intervals_withlive_beg_eq_get_intervals_beg"
   (fun () ->
     `!lt n beg end n' beg' end'.
-     (n,beg,end) = get_intervals_withlive (fix_domination lt) 0 LN
-       LN LN /\
-     (n',beg',end') = get_intervals (fix_domination lt) 0 LN LN ==>
+     (n,beg,end) = get_intervals_withlive (fix_domination lt) (&0)
+       LN LN LN /\
+     (n',beg',end') = get_intervals (fix_domination lt) (&0) LN LN
+       ==>
      (!(r:num). sptree_lookup r beg = sptree_lookup r beg')`)
   CHEAT_TAC;;
 
@@ -640,11 +641,11 @@ let get_intervals_beg_less_live =
   cake_theorem "get_intervals_beg_less_live"
   (fun () ->
     `!lt live_in n_out beg_out end_out.
-     (n_out,beg_out,end_out) = get_intervals (fix_domination lt) 0
-       LN LN ==>
+     (n_out,beg_out,end_out) = get_intervals (fix_domination lt)
+       (&0) LN LN ==>
      check_number_property_strong (\n (live:1 spt). !r. r IN
        domain live ==> option_CASE (sptree_lookup r beg_out) n_out
-       (\x. x) <= n) (fix_domination lt) 0 LN`)
+       (\x. x) <= n) (fix_domination lt) (&0) LN`)
   CHEAT_TAC;;
 
 let get_intervals_intbeg_reduce =
@@ -727,8 +728,8 @@ let check_intervals_check_live_tree =
   cake_theorem "check_intervals_check_live_tree"
   (fun () ->
     `!lt n_out beg_out end_out f.
-     (n_out,beg_out,end_out) = get_intervals (fix_domination lt) 0
-       LN LN /\
+     (n_out,beg_out,end_out) = get_intervals (fix_domination lt)
+       (&0) LN LN /\
      check_intervals f beg_out end_out ==>
      (?liveout fliveout. check_live_tree f (fix_domination lt) LN
        LN = SOME (liveout,fliveout))`)
@@ -759,7 +760,7 @@ let get_intervals_ct_eq = cake_theorem "get_intervals_ct_eq"
     `!ct int_beg1 int_beg2 int_end1 int_end2 n1 n2.
      (n1,int_beg1,int_end1) = get_intervals_ct ct /\
      (n2,int_beg2,int_end2) = get_intervals (fix_domination
-       (get_live_tree ct)) 0 LN LN ==>
+       (get_live_tree ct)) (&0) LN LN ==>
      (!r. sptree_lookup r int_beg1 = sptree_lookup r int_beg2) /\
      (!r. sptree_lookup r int_end1 = sptree_lookup r int_end2)`)
   CHEAT_TAC;;

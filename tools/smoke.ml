@@ -247,3 +247,33 @@ print_string
    " not stated (1 and 1), attributes " ^
    (let _,a,_ = hd (cake_theorems ()) in
     String.concat "," a) ^ "\n");;
+
+(* ---------------------------------------------------------------- *)
+(* a statement that uses the name of a record field for a variable
+   of its own, which HOL4 does (a bare field name is not a
+   constant there), and one that uses a name that no theory in the
+   scope of this file defines, which a cake_hide takes care of *)
+
+let smoke_rec_FIELDS = define_record "smoke_rec" ["sfld","num"];;
+hol4_field_overload "sfld" "smoke_rec_sfld";;
+
+let smoke_opaque = new_definition
+  `smoke_opaque (n:num) = n + 1`;;
+
+cake_hide ["smoke_opaque"];;
+
+let smoke_fieldvar = cake_theorem "smoke_fieldvar"
+  (fun () ->
+    `sfld + smoke_opaque = 2`)
+  CHEAT_TAC;;
+
+cake_hide [];;
+
+print_string
+  ("\nSMOKEVARS fieldvars " ^
+   String.concat "," (cake_fieldvars ()) ^ " (smoke_fieldvar), free " ^
+   String.concat ","
+     (map (fun v -> fst (dest_var v))
+        (sort (<) (frees (concl (let _,_,th = hd (cake_theorems ()) in
+                                 th))))) ^
+   " (sfld,smoke_opaque)\n");;

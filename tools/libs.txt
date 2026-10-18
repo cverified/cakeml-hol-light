@@ -1,5 +1,6 @@
 location	examples/formal-languages/context-free/locationScript.sml
 ternaryComparisons	src/sort/ternaryComparisonsScript.sml
+toto	src/finite_maps/totoScript.sml
 comparison	src/finite_maps/comparisonScript.sml
 indexedLists	src/list/src/indexedListsScript.sml
 sorting	src/sort/sortingScript.sml

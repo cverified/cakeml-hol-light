@@ -25,6 +25,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
+cake_hide ["code_buffer"];;
+
 let extract_labels_def = cake_define
   `labProps_extract_labels x1 =
         match x1 with

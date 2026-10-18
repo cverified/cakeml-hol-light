@@ -308,6 +308,15 @@ let INDEX_FIND = new_recursive_definition list_RECURSION
    (INDEX_FIND i P (CONS h t) =
     if P h then SOME (i,h) else INDEX_FIND (SUC i) P t)`;;
 
+(* HOL4's FIND of listTheory and LIST_ELEM_COUNT of
+   rich_listTheory *)
+
+let FIND = new_definition
+  `FIND (P:A->bool) = OPTION_MAP SND o INDEX_FIND 0 P`;;
+
+let LIST_ELEM_COUNT = new_definition
+  `LIST_ELEM_COUNT (e:A) l = LENGTH (FILTER (\x. x = e) l)`;;
+
 let INDEX_OF = new_definition
   `INDEX_OF (x:A) l = OPTION_MAP FST (INDEX_FIND 0 (\y. y = x) l)`;;
 
@@ -373,6 +382,59 @@ let ISR = new_recursive_definition sum_RECURSION
 let TAILREC = new_definition
   `TAILREC (f:A->A+B) x =
    OUTR (f (WHILE (ISL o f) (OUTL o f) x))`;;
+
+(* HOL4's TAILCALL of WhileTheory: one step of a tail recursion,
+   which it writes with a case on the sum *)
+
+let TAILCALL = new_definition
+  `TAILCALL (f:A->B+C) k x =
+   if ISL (f x) then k (OUTL (f x)) else OUTR (f x)`;;
+
+(* ------------------------------------------------------------------ *)
+(* pred_setTheory, bitTheory, alistTheory, set_relationTheory and     *)
+(* transferTheory                                                     *)
+(* ------------------------------------------------------------------ *)
+
+let COMPL = new_definition
+  `COMPL (P:A->bool) = UNIV DIFF P`;;
+
+(* HOL4 sums a function over a set with ITSET, which says nothing
+   about an infinite set; HOL Light's nsum is the same sum *)
+
+let SUM_IMAGE = new_definition
+  `SUM_IMAGE (f:A->num) s = nsum s f`;;
+
+let SUM_SET = new_definition
+  `SUM_SET (s:num->bool) = nsum s I`;;
+
+let MOD_2EXP = new_definition
+  `MOD_2EXP x n = n MOD (2 EXP x)`;;
+
+let DIV_2EXP = new_definition
+  `DIV_2EXP x n = n DIV (2 EXP x)`;;
+
+let BITS = new_definition
+  `BITS h l n = MOD_2EXP (SUC h - l) (DIV_2EXP l n)`;;
+
+let BIT = new_definition
+  `BIT b n <=> BITS b b n = 1`;;
+
+(* the association list with the value of one key mapped, which
+   HOL4 writes with a pattern for the pair *)
+
+let AFUPDKEY = new_recursive_definition list_RECURSION
+  `(AFUPDKEY (k:A) (f:B->B) [] = []) /   (AFUPDKEY k f (CONS kv rest) =
+    if k = FST kv then CONS (k,f (SND kv)) rest
+    else CONS kv (AFUPDKEY k f rest))`;;
+
+let rrestrict = new_definition
+  `rrestrict (r:(A#A)->bool) s =
+   {kv | kv IN r /\ FST kv IN s /\ SND kv IN s}`;;
+
+(* the surjectivity of a relation, of HOL4's transfer library *)
+
+let surj = new_definition
+  `surj (R:A->B->bool) <=> !y. ?x. R x y`;;
 
 (* ------------------------------------------------------------------ *)
 (* The case constants of HOL4's datatypes                             *)

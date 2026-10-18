@@ -7,6 +7,8 @@
 (* ======================================================== *)
 
 needs "lib/sorting.ml";;
+
+cake_hide ["negate"];;
 (* HOL4 ancestors outside the port: pred_set arithmetic list
    rich_list option pair relation *)
 

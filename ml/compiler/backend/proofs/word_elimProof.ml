@@ -21,6 +21,8 @@ needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
+cake_hide ["memory"];;
+
 (**************************** ANALYSIS LEMMAS *****************************)
 
 let lookup_analyse_word_code = cake_theorem "lookup_analyse_word_code"

@@ -42,6 +42,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
+
+cake_hide ["do_partial"; "parts"; "vars"];;
 (* HOL4 ancestors outside the port: int_bitwise While *)
 
 

@@ -1,0 +1,24 @@
+#!/bin/sh
+# intargs [session] : write tools/intargs.txt, the arguments of the
+# constants of the port whose type is int, out of a session that
+# has the port loaded (hol-seq by default).  A numeral in such an
+# argument is &n in HOL Light, and tools/hterm.py writes it that
+# way.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-seq}
+TIMEOUT=180 repl-step $s \
+  "let cake_out = open_out \"$C/tools/intargs.txt\" in
+   do_list (fun (n,ty) ->
+       let args,_ = splitlist dest_fun_ty ty in
+       let ps = ref [] and i = ref 0 in
+       do_list (fun a ->
+           (if a = \`:int\` then ps := !i :: !ps); incr i) args;
+       if !ps <> [] && not (String.length n > 0 && n.[0] = '_') then
+         output_string cake_out
+           (n ^ \"\\t\" ^
+            String.concat \",\" (map string_of_int (rev !ps)) ^ \"\\n\"))
+     (constants ());
+   close_out cake_out; length (constants ());;" \
+  2>&1 | tail -2
+wc -l < $C/tools/intargs.txt

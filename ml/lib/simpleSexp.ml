@@ -26,6 +26,19 @@ let valid_symchar_def = cake_define
   `valid_symchar c <=> isGraph c /\ ~(c IN {(CHR 39),(CHR 40),(CHR
   41)})`;;
 
+let valid_symbol_def = cake_define_list
+  [`valid_symbol "" <=> F`;
+   `valid_symbol (c :: cs) <=> valid_first_symchar c /\ EVERY
+  valid_symchar cs`];;
+
+let valid_sexp_def = cake_define
+  `valid_sexp s =
+        match s with
+          SX_SYM s -> valid_symbol s
+        | (SX_CONS s1 s2) -> valid_sexp s1 /\ valid_sexp s2
+        | (SX_STR s) -> EVERY isPrint s
+        | s -> T`;;
+
 let arb_sexp_def = cake_define
   `arb_sexp = SX_NUM 0`;;
 
@@ -53,6 +66,9 @@ let strip_sxcons_def = cake_define
          SX_CONS h t -> OPTION_MAP (CONS h) (strip_sxcons t) |
            SX_SYM s -> (if s = "nil" then SOME [] else NONE) | _4 ->
            NONE)`;;
+
+let sxMEM_def = cake_define
+  `sxMEM e s <=> (?l. strip_sxcons s = SOME l /\ MEM e l)`;;
 
 let dstrip_sexp_def = cake_define
   `dstrip_sexp x1 =

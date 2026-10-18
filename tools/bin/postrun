@@ -19,6 +19,8 @@ echo "=== what changed since the last run"
 python3 -I tools/compare.py
 echo "=== axioms and cheats"
 cheats
+echo "=== the theorems of phase two"
+thms
 echo "=== timings"
 timings
 echo "=== shapes of the cheats"

@@ -22,10 +22,10 @@ hol4_overload "destTOK" "grammar_destTOK";;
 let grammar_FIELDS = define_record "grammar"
   ["start","'b+num";
    "rules","('b+num,((('a,'b)grammar_symbol) list->bool))fmap"];;
-hol4_overload "start" "grammar_start";;
-hol4_overload "start_fupd" "grammar_start_fupd";;
-hol4_overload "rules" "grammar_rules";;
-hol4_overload "rules_fupd" "grammar_rules_fupd";;
+hol4_field_overload "start" "grammar_start";;
+hol4_field_overload "start_fupd" "grammar_start_fupd";;
+hol4_field_overload "rules" "grammar_rules";;
+hol4_field_overload "rules_fupd" "grammar_rules_fupd";;
 
 let parsetree_INDUCT,parsetree_RECURSION = define_datatype
   "parsetree = Lf (('a,'b)grammar_symbol#'locs) | Nd (('b+num)#'locs) \
@@ -49,13 +49,18 @@ let valid_ptree_def = cake_define_list
           FAPPLY (grammar_rules G) nt' /\
         (!pt. pt IN set_of_list children ==> valid_ptree G pt)`];;
 
+let ptree_fringe_def = cake_define_list
+  [`ptree_fringe (Lf (t,_7)) = [t]`;
+   `ptree_fringe (Nd _8 children) = FLAT (MAP ptree_fringe
+  children)`];;
+
 let real_fringe_def = cake_define_list
   [`real_fringe (Lf t) = [t]`;
    `real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl)`];;
 
 let valid_locs_def = cake_define_list
-  [`valid_locs (Lf _7) <=> T`;
-   `valid_locs (Nd (_8,l) children) <=>
+  [`valid_locs (Lf _9) <=> T`;
+   `valid_locs (Nd (_10,l) children) <=>
          l = merge_list_locs (MAP ptree_loc children) /\
          (!pt. MEM pt children ==> valid_locs pt)`];;
 
