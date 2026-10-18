@@ -1,11 +1,12 @@
 (* ======================================================== *)
 (*  fromSexp: ported from HOL4's
-    compiler/parsing/fromSexpScript.sml  *)
+    compiler/parsing/fromSexpScript.sml
+    A definition theory, with 46 definitions and 129 theorems.
+    Needed by compiler.ml.  *)
 (* ======================================================== *)
 
 (*
-  Definitions of functions for conversion between an S-expression
-    encoding of
+  Definitions of functions for conversion between an S-expression encoding of
   the CakeML abstract syntax and the abstract syntax type itself.
 
   The S-expressions are parsed as *per* the PEG in HOL’s
@@ -237,10 +238,8 @@ let sexplit_def = cake_define
                (OPTION_GUARD (n < 2 EXP 64)) (
                SOME (ast_Float64 (n2w n)))))))`;;
 
-(* don't require Pvar constructors; bare strings can be pattern
-   variables.
-   Unclear if this sort of special-casing is ever likely to be helpful
-     *)
+(* don't require Pvar constructors; bare strings can be pattern variables.
+   Unclear if this sort of special-casing is ever likely to be helpful *)
 let _ = size_thms "simpleSexp_sexp";;
 (* HOL4 fromSexpScript.sml:582-594: the tactic that proves the
    termination *)

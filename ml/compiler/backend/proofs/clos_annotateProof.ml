@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_annotateProof: ported from HOL4's
-    compiler/backend/proofs/clos_annotateProofScript.sml  *)
+    compiler/backend/proofs/clos_annotateProofScript.sml
+    A proof theory about clos_annotate.ml, with 4 definitions and 67
+    theorems.  Needed by clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

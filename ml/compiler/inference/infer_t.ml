@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  infer_t: ported from HOL4's
-    compiler/inference/infer_tScript.sml  *)
+    compiler/inference/infer_tScript.sml
+    A definition theory, with 8 definitions, 1 datatype and 1
+    theorem.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*

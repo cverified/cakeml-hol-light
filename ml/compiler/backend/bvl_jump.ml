@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_jump: ported from HOL4's
-    compiler/backend/bvl_jumpScript.sml  *)
+    compiler/backend/bvl_jumpScript.sml
+    A definition theory, with 2 definitions and no theorems.  Needed
+    by bvl_jumpProof.ml, clos_to_bvl.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*

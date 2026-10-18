@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  targetSem: ported from HOL4's
-    compiler/backend/semantics/targetSemScript.sml  *)
+    compiler/backend/semantics/targetSemScript.sml
+    A definition theory, with 19 definitions, 2 datatypes and no
+    theorems.  Needed by compilerProof.ml, labSem.ml,
+    lab_to_targetProof.ml and targetProps.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -311,8 +314,7 @@ let mmio_pcs_min_index_def = cake_define
      (!j. x <= j /\ j < LENGTH ffi_names' ==>
           (?op. EL j ffi_names' = ffi_SharedMem op))))`;;
 
-(* start_pc_ok: machine configuration's saved pcs and initial pc are ok
-   *)
+(* start_pc_ok: machine configuration's saved pcs and initial pc are ok *)
 let start_pc_ok_def = cake_define
   `start_pc_ok mc_conf pc' <=> ~(machine_config_halt_pc
      mc_conf IN machine_config_prog_addresses mc_conf) /\
@@ -505,8 +507,7 @@ let post_ccache_asm_def = cake_define
     code (bytes) and ffi is installed in the machine (mc_conf, ms)
     using labLang (m, dm, cbspace) and
     target semantics (t) information as an intermediary
-  these are all destined to be assumptions on the top-level correctness
-    theorem
+  these are all destined to be assumptions on the top-level correctness theorem
 *)
 
 let good_init_state_def = cake_define
@@ -543,12 +544,10 @@ let good_init_state_def = cake_define
        n2w (n + LENGTH bytes) + asm_state_pc t IN dm)) /\
      cbspace + LENGTH bytes < dimword (:'a)`;;
 
-(* CakeML code, bytes, and code buffer space, cspace, and FFI functions,
-   ffi,
+(* CakeML code, bytes, and code buffer space, cspace, and FFI functions, ffi,
    are installed into the machine, mc_conf + ms
    r1 and r2 are the names of registers containing
-   the first address of the CakeML heap and the first address past the
-     CakeML stack
+   the first address of the CakeML heap and the first address past the CakeML stack
    i.e., the range of the data memory
 *)
 let installed_def = cake_define

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  bvi_tailrec: ported from HOL4's
-    compiler/backend/bvi_tailrecScript.sml  *)
+    compiler/backend/bvi_tailrecScript.sml
+    A definition theory, with 39 definitions, 2 datatypes and 35
+    theorems.  Needed by bvi_tailrecProof.ml, bvl_to_bvi.ml and
+    word_bignum.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -277,14 +280,11 @@ let op_ty_def = cake_define
 (* Gather information about expressions:
 
      - Build context by following order of evaluation during recursion
-       and set variable to Int only if interpretation of the expression
-         would
+       and set variable to Int only if interpretation of the expression would
        result in Rerr (Rabort Rtype_error) otherwise.
-     - Check if tail positions are arithmetic or variables typed as Int
-       in
+     - Check if tail positions are arithmetic or variables typed as Int in
        context.
-     - Check if tail positions carry suitable operation (Add/Mult) and
-       track
+     - Check if tail positions carry suitable operation (Add/Mult) and track
        branch of origin for the operation in conditionals.
 *)
 

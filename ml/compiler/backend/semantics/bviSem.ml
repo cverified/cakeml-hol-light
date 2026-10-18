@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bviSem: ported from HOL4's
-    compiler/backend/semantics/bviSemScript.sml  *)
+    compiler/backend/semantics/bviSemScript.sml
+    A definition theory, with 12 definitions, 3 datatypes and 7
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -370,8 +372,7 @@ hol4_overload "evaluate" "bviSem_evaluate";;
 (* We prove that the clock never increases. *)
 
 
-(* Finally, we remove fix_clock from the induction and definition
-   theorems. *)
+(* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* observational semantics *)
 

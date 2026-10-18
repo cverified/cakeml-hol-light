@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  stack_allocProof: ported from HOL4's
-    compiler/backend/proofs/stack_allocProofScript.sml  *)
+    compiler/backend/proofs/stack_allocProofScript.sml
+    A proof theory about stack_alloc.ml, with 11 definitions and 116
+    theorems.  Needed by stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*

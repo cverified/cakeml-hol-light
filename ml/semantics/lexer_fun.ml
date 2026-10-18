@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  lexer_fun: ported from HOL4's
-    semantics/lexer_funScript.sml  *)
+    semantics/lexer_funScript.sml
+    A definition theory, with 25 definitions, 1 datatype and 14
+    theorems.  Needed by compiler.ml, lexer_impl.ml and
+    semantics.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -177,8 +180,7 @@ let read_Ident_def = cake_define_list_try_tac (fun () ->
               acc) else read_Ident_ret acc n new_loc rest) else
         (ErrorS,loc,str))`];;
 
-(* next_sym reads the next symbol from a string, returning NONE if at
-   eof *)
+(* next_sym reads the next symbol from a string, returning NONE if at eof *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 lexer_funScript.sml:314-320: the tactic that proves the
@@ -251,8 +253,7 @@ let init_loc_def = cake_define
 
 (*
 
-  EVAL ``next_sym " (* hi (* there \" *) *)\n  ~4 \" (* *)\" <= ;; "
-    init_loc ``
+  EVAL ``next_sym " (* hi (* there \" *) *)\n  ~4 \" (* *)\" <= ;; " init_loc ``
   EVAL ``next_sym "0w10 +" init_loc``;
   EVAL ``next_sym "0wx1A +" init_loc``;
 

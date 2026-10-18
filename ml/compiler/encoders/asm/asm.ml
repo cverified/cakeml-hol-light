@@ -1,10 +1,11 @@
 (* ======================================================== *)
 (*  asm: ported from HOL4's
-    compiler/encoders/asm/asmScript.sml  *)
+    compiler/encoders/asm/asmScript.sml
+    A definition theory, with 11 definitions, 11 datatypes and no
+    theorems.  Needed by 49 files of the port.  *)
 (* ======================================================== *)
 
-(* ---------------------------------------------------------------------
-   ----
+(* -------------------------------------------------------------------------
 
    This script defines the syntax of a small general-purpose machine
    instruction description (without labels).
@@ -64,11 +65,9 @@
  * Determinism
 
    The assembly language must be deterministic. The current definition
-   of the semantics is relational but it only allows deterministic
-     behaviour.
+   of the semantics is relational but it only allows deterministic behaviour.
 
-   ---------------------------------------------------------------------
-     ---- *)
+   ------------------------------------------------------------------------- *)
 
 needs "lib/alignment.ml";;
 needs "semantics/ast.ml";;

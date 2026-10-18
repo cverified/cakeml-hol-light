@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  source_evalProof: ported from HOL4's
-    compiler/backend/proofs/source_evalProofScript.sml  *)
+    compiler/backend/proofs/source_evalProofScript.sml
+    A proof theory, with 27 definitions, 1 datatype and 93 theorems.
+    Needed by backendProof.ml, source_letProof.ml,
+    source_to_flatProof.ml and source_to_sourceProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -188,8 +191,7 @@ let es_forward_def = cake_define
    (!env_id env. lookup_env es env_id = SOME env ==>
      lookup_env es' env_id = SOME env)`;;
 
-(* a stronger notion that applies end-to-end over
-   evaluate/evaluate_decs,
+(* a stronger notion that applies end-to-end over evaluate/evaluate_decs,
    where the generation stack will match at either end and the previous
    generations will be untouched. *)
 let es_stack_forward_def = cake_define
@@ -358,8 +360,7 @@ let precond_eval_state_def = cake_define
            mk_compiler_fun_from_ci ci r = SOME x ==>
              orac i = r) | SOME (EvalOracle _19) -> F)`;;
 
-(* for use in source-to-source phases, a proof that the oracle can be
-   adjusted
+(* for use in source-to-source phases, a proof that the oracle can be adjusted
    by any stateless compiler *)
 
 let adjust_oracle_def = cake_define

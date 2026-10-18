@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  asmProps: ported from HOL4's
-    compiler/encoders/asm/asmPropsScript.sml  *)
+    compiler/encoders/asm/asmPropsScript.sml
+    A proof theory about asm.ml, with 9 definitions, 1 datatype and
+    31 theorems.  Needed by lab_to_targetProof.ml, targetProps.ml
+    and targetSem.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,8 +1,9 @@
 (* ======================================================== *)
-(*  numposrep[bare]: ported from HOL4's
-    src/list/src/numposrepScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
+(*  numposrep: ported from HOL4's
+    src/list/src/numposrepScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by ASCIInumbers.ml, bitstring.ml and
+    fromSexp.ml.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

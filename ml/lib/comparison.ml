@@ -1,8 +1,8 @@
 (* ======================================================== *)
 (*  comparison: ported from HOL4's
-    src/finite_maps/comparisonScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
+    src/finite_maps/comparisonScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 24 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

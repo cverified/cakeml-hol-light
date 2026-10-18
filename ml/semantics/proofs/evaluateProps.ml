@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  evaluateProps: ported from HOL4's
-    semantics/proofs/evaluatePropsScript.sml  *)
+    semantics/proofs/evaluatePropsScript.sml
+    A proof theory about evaluate.ml, with 5 definitions and 87
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*

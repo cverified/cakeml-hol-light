@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  mlsexp: ported from HOL4's
-    basis/pure/mlsexpScript.sml  *)
+    basis/pure/mlsexpScript.sml
+    A definition theory, with 25 definitions, 4 datatypes and 25
+    theorems.  Needed by compiler.ml, displayLang.ml and
+    presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -26,8 +29,7 @@ let mlsexp_sexp_INDUCT,mlsexp_sexp_RECURSION = define_datatype
 let mlsexp_token_INDUCT,mlsexp_token_RECURSION = define_datatype
   "mlsexp_token = OPEN | CLOSE | SYMBOL (mlstring)";;
 
-(* Functions may not consume the entire input (string), so they always
-   return
+(* Functions may not consume the entire input (string), so they always return
    the rest of the string, independent of success or failure. *)
 (* HOL4 mlsexpScript.sml:29: the type abbreviation result, which the
    port expands *)
@@ -77,8 +79,7 @@ let read_symbol_def = cake_define_list
       (if c = (CHR 41) \/ isSpace c then (implode (REVERSE
         acc),(c :: cs)) else read_symbol cs (c :: acc))`];;
 
-(* By tracking the depth, we can ensure we only lex one S-expression at
-   a
+(* By tracking the depth, we can ensure we only lex one S-expression at a
    time. *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -110,8 +111,7 @@ let lex_aux_def = cake_define_list_try_tac (fun () ->
               mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)))`];;
 hol4_overload "lex_aux" "mlsexp_lex_aux";;
 
-(* Tokenizes (at most) one S-expression, and returns the rest of the
-   input.
+(* Tokenizes (at most) one S-expression, and returns the rest of the input.
    Fails with an error message if parentheses are unbalanced or
    read_string fails on a string literal. *)
 let lex_def = cake_define
@@ -137,8 +137,7 @@ let parse_def = cake_define
            "parse: empty input"),rest) | (v :: _3) -> INR (v,rest)))`;;
 hol4_overload "parse" "mlsexp_parse";;
 
-(* Function for parsing in the style of the Standard ML basis library.
-   *)
+(* Function for parsing in the style of the Standard ML basis library. *)
 let fromString_def = cake_define
   `(mlsexp_fromString (input:mlstring):mlsexp_sexp option) =
      (match mlsexp_parse (explode input) with INL _4 -> NONE | INR

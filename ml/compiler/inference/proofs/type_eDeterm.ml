@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  type_eDeterm: ported from HOL4's
-    compiler/inference/proofs/type_eDetermScript.sml  *)
+    compiler/inference/proofs/type_eDetermScript.sml
+    A proof theory, with no definitions and 10 theorems.  Needed by
+    inferComplete.ml and inferSound.ml.  *)
 (* ======================================================== *)
 
 (*

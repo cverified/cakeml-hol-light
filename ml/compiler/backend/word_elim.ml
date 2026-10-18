@@ -1,14 +1,16 @@
 (* ======================================================== *)
 (*  word_elim: ported from HOL4's
-    compiler/backend/word_elimScript.sml  *)
+    compiler/backend/word_elimScript.sml
+    A definition theory, with 5 definitions and no theorems.  Needed
+    by wordConvsProof.ml, word_elimProof.ml and
+    word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*
   Implementation for wordLang dead-code elimination.
 
   Analyses code to give a next-step function as a num_set num_map.
-  Uses flat_elim functions to close the next-step function and give a
-    set of
+  Uses flat_elim functions to close the next-step function and give a set of
     reachable functions.
   Removes unreachable functions from the code.
 *)

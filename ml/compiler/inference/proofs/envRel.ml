@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  envRel: ported from HOL4's
-    compiler/inference/proofs/envRelScript.sml  *)
+    compiler/inference/proofs/envRelScript.sml
+    A proof theory, with 8 definitions and 37 theorems.  Needed by
+    compilerProof.ml, inferComplete.ml, inferSound.ml,
+    infer_eComplete.ml, infer_eSound.ml and type_eDeterm.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -19,8 +22,7 @@ needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* ---------- Converting infer types and envs to type system ones
-   ---------- *)
+(* ---------- Converting infer types and envs to type system ones ---------- *)
 
 let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
@@ -40,58 +42,39 @@ let convert_env_def = cake_define
 
 (* HOL4 envRelScript.sml:74: ML code, not ported *)
 
-(* ---------- relating inference and type system environments ----------
-   *)
+(* ---------- relating inference and type system environments ---------- *)
 
 
-(* We want tscheme_approx max_tvs s (tvs, t) (tvs', t') to hold iff
-   (tvs', t') is
- * more general than (tvs, t) under substitution s constraining
-   unification
+(* We want tscheme_approx max_tvs s (tvs, t) (tvs', t') to hold iff (tvs', t') is
+ * more general than (tvs, t) under substitution s constraining unification
  * variables.
  *
- * In general, there are 4 classes of variables that can appear in ts
-   and ts':
- * - de Bruijn variables less than tvs, and hence bound by the type
-   scheme,
- * - de Bruijn variables ≥ tvs that are bound in the enclosing context
-   which
+ * In general, there are 4 classes of variables that can appear in ts and ts':
+ * - de Bruijn variables less than tvs, and hence bound by the type scheme,
+ * - de Bruijn variables ≥ tvs that are bound in the enclosing context which
  *     binds max_tvs variables, appearing in t as tvs to tvs + max_tvs,
  * - unification variables constrained by s, and
  * - other unification variables.
  *
- * We assume that s only mentions de Bruijn variables bound in the
-   context, but
- * unlike in t, they appear as 0 to max_tvs (since the substitution is
-   not under
+ * We assume that s only mentions de Bruijn variables bound in the context, but
+ * unlike in t, they appear as 0 to max_tvs (since the substitution is not under
  * the typescheme binder).
  *
- * We'd like to instantiate the bound de Bruijn variables in t' so that
-   it
- * matches t. To do so, we must apply s to both t and t', since they may
-   contain
- * different bound unification variables that are constrained to be the
-   same by
- * s. However, since s may contain de Bruijn type variables, we have to
-   either
- * shift it by tvs/tvs' to avoid capture, or first instantiate both type
-   schemes.
+ * We'd like to instantiate the bound de Bruijn variables in t' so that it
+ * matches t. To do so, we must apply s to both t and t', since they may contain
+ * different bound unification variables that are constrained to be the same by
+ * s. However, since s may contain de Bruijn type variables, we have to either
+ * shift it by tvs/tvs' to avoid capture, or first instantiate both type schemes.
  * Since we have to instantiate one anyway, we choose the latter option.
  *
- * The main question is how to instantiate t. Crucially, we don't want
-   to
+ * The main question is how to instantiate t. Crucially, we don't want to
  * over-specialise t, so that a less general t' can be matched to t. One
  * approach would be to instantiate t with fresh variables of some sort;
- * however, that does not work well with our general setup which
-   requires all
- * type variables to be explicitly bound somewhere. Instead, we require
-   that t'
- * be able to match the result of any instantiation of t. In fact, we
-   slightly
- * restrict the form of instantiation to be on in which the
-   instantiation has
- * only good de Bruijn and unification variables, and the substitution
-   for t is
+ * however, that does not work well with our general setup which requires all
+ * type variables to be explicitly bound somewhere. Instead, we require that t'
+ * be able to match the result of any instantiation of t. In fact, we slightly
+ * restrict the form of instantiation to be on in which the instantiation has
+ * only good de Bruijn and unification variables, and the substitution for t is
  * also applied to the substitution for t'. So t''s substitution is just
  * matching t, and then instantiation of t is making things good for the
  * walkstar

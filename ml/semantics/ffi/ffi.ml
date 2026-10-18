@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  ffi: ported from HOL4's
-    semantics/ffi/ffiScript.sml  *)
+    semantics/ffi/ffiScript.sml
+    A definition theory, with 3 definitions, 10 datatypes and no
+    theorems.  Needed by 26 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -35,8 +37,7 @@ hol4_overload "SharedMem" "ffi_SharedMem";;
 (* HOL4 ffiScript.sml:32: the type abbreviation oracle, which the
    port expands *)
 
-(* An I/O event, IO_event s bytes bytes2, represents the call of FFI
-   function s with
+(* An I/O event, IO_event s bytes bytes2, represents the call of FFI function s with
  * immutable input bytes and mutable input map fst bytes2,
  * returning map snd bytes2 in the mutable array. *)
 

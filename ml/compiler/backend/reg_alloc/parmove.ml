@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  parmove: ported from HOL4's
-    compiler/backend/reg_alloc/parmoveScript.sml  *)
+    compiler/backend/reg_alloc/parmoveScript.sml
+    A definition theory, with 16 definitions and 57 theorems.
+    Needed by word_to_stack.ml and word_to_stackProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -17,8 +19,7 @@ needs "misc/misc.ml";;
 
 (* The state is three lists of moves:
    (to-process, being-processed, processed)
-   each step (roughly) shifts some move from left to right in the state
-     *)
+   each step (roughly) shifts some move from left to right in the state *)
 
 (* NONE is a temporary register; real registers are SOME x. *)
 

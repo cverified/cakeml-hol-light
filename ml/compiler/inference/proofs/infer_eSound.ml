@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  infer_eSound: ported from HOL4's
-    compiler/inference/proofs/infer_eSoundScript.sml  *)
+    compiler/inference/proofs/infer_eSoundScript.sml
+    A proof theory, with no definitions and 20 theorems.  Needed by
+    inferComplete.ml, inferSound.ml and type_eDeterm.ml.  *)
 (* ======================================================== *)
 
 (*

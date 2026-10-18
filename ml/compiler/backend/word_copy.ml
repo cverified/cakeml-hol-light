@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_copy: ported from HOL4's
-    compiler/backend/word_copyScript.sml  *)
+    compiler/backend/word_copyScript.sml
+    A definition theory, with 14 definitions, 1 datatype and no
+    theorems.  Needed by backend.ml, backend_passes.ml,
+    wordConvsProof.ml, word_copyProof.ml and word_to_word.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -216,8 +219,7 @@ let set_eq_def = cake_define
   If y has no equivalence class,
     create a singleton equivalence class for y
   Otherwise, reuse the existing class for y.
-  Note: SSA ensures y is always an alloc_var, so the else branch is dead
-    code.
+  Note: SSA ensures y is always an alloc_var, so the else branch is dead code.
 *)
 let set_store_eq_def = cake_define
   `set_store_eq cs s y =

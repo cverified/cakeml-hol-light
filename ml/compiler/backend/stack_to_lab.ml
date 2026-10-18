@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  stack_to_lab: ported from HOL4's
-    compiler/backend/stack_to_labScript.sml  *)
+    compiler/backend/stack_to_labScript.sml
+    A definition theory, with 9 definitions, 1 datatype and 1
+    theorem.  Needed by backend.ml, backendProof.ml,
+    backend_passes.ml and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*

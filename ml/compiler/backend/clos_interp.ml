@@ -1,11 +1,13 @@
 (* ======================================================== *)
 (*  clos_interp: ported from HOL4's
-    compiler/backend/clos_interpScript.sml  *)
+    compiler/backend/clos_interpScript.sml
+    A definition theory, with 17 definitions and 3 theorems.  Needed
+    by clos_interpProof.ml, flat_to_clos.ml and
+    flat_to_closProof.ml.  *)
 (* ======================================================== *)
 
 (*
-  Implementation of interpreter for closLang expressions written in
-    closLang.
+  Implementation of interpreter for closLang expressions written in closLang.
 *)
 
 needs "basis/pure/mlstring.ml";;

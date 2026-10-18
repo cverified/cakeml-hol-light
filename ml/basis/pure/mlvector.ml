@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  mlvector: ported from HOL4's
-    basis/pure/mlvectorScript.sml  *)
+    basis/pure/mlvectorScript.sml
+    A definition theory, with 26 definitions and 29 theorems.
+    Needed by export.ml.  *)
 (* ======================================================== *)
 
 (*

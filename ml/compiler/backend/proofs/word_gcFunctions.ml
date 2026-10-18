@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_gcFunctions: ported from HOL4's
-    compiler/backend/proofs/word_gcFunctionsScript.sml  *)
+    compiler/backend/proofs/word_gcFunctionsScript.sml
+    A proof theory, with 30 definitions and 32 theorems.  Needed by
+    5 files of the port.  *)
 (* ======================================================== *)
 
 (*

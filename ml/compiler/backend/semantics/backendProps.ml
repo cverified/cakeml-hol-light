@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  backendProps: ported from HOL4's
-    compiler/backend/semantics/backendPropsScript.sml  *)
+    compiler/backend/semantics/backendPropsScript.sml
+    A proof theory about backend.ml, with 14 definitions and 49
+    theorems.  Needed by 31 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -34,8 +36,7 @@ let state_co_def = cake_define
 let pure_co_def = cake_define
   `pure_co f = I ## f`;;
 
-(* somewhat generic wrappers for defining standard properties about
-   oracles *)
+(* somewhat generic wrappers for defining standard properties about oracles *)
 
 (* identifiers that appear in the initial state and in oracle steps
    increase monotonically in some sense. *)
@@ -57,8 +58,7 @@ let is_state_oracle_def = cake_define
          FST (FST (co (SUC n))) = FST (compile_inc_f (FST (FST (co
            n))) (SND (co n))))`;;
 
-(* constructive combinators for building up the config part of an oracle
-   *)
+(* constructive combinators for building up the config part of an oracle *)
 
 let syntax_to_full_oracle_def = cake_define
   `syntax_to_full_oracle mk progs i = (mk progs i,progs i)`;;

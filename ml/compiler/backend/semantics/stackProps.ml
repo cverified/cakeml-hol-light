@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  stackProps: ported from HOL4's
-    compiler/backend/semantics/stackPropsScript.sml  *)
+    compiler/backend/semantics/stackPropsScript.sml
+    A proof theory, with 24 definitions and 54 theorems.  Needed by
+    6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -139,8 +141,7 @@ let arith_name_def = cake_define
        (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==>
          ~(r1 = r3))`;;
 
-(* We could actually almost use fp_ok, except this needs to check reg_ok
-   for
+(* We could actually almost use fp_ok, except this needs to check reg_ok for
    some registers as well *)
 let fp_name_def = cake_define_list
   [`fp_name (FPLess r d1 d2) (c:'a asm_config) <=>
@@ -267,10 +268,8 @@ let stack_asm_remove_def = cake_define
            -> T)
         | _38 -> T`;;
 
-(* Various syntactic properties required for correctness of the
-   stackLang passes
-  All of these are trivially preserved from word_to_stack until the pass
-    that
+(* Various syntactic properties required for correctness of the stackLang passes
+  All of these are trivially preserved from word_to_stack until the pass that
   they are used.
 *)
 
@@ -393,8 +392,7 @@ let reg_bound_def = cake_define
         | (stackLang_StackStoreAny r r2) -> r < k /\ r2 < k
         | _66 -> T`;;
 
-(* Finally, stack_to_lab requires correct arguments for Call/FFI/Install
-   calls *)
+(* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let call_args_def = cake_define_cheat CHEAT_TAC

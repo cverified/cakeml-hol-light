@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_simpProof: ported from HOL4's
-    compiler/backend/proofs/data_simpProofScript.sml  *)
+    compiler/backend/proofs/data_simpProofScript.sml
+    A proof theory about data_simp.ml, with no definitions and 6
+    theorems.  Needed by bvi_to_dataProof.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  source_to_sourceProof: ported from HOL4's
-    compiler/backend/proofs/source_to_sourceProofScript.sml  *)
+    compiler/backend/proofs/source_to_sourceProofScript.sml
+    A proof theory about source_to_source.ml, with no definitions
+    and 2 theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*

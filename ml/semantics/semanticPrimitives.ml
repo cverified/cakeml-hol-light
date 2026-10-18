@@ -1,11 +1,12 @@
 (* ======================================================== *)
 (*  semanticPrimitives: ported from HOL4's
-    semantics/semanticPrimitivesScript.sml  *)
+    semantics/semanticPrimitivesScript.sml
+    A definition theory, with 101 definitions, 15 datatypes and no
+    theorems.  Needed by 61 files of the port.  *)
 (* ======================================================== *)
 
 (*
-  Definitions of semantic primitives (e.g., values, and functions for
-    doing
+  Definitions of semantic primitives (e.g., values, and functions for doing
   primitive operations) used in the semantics.
 *)
 
@@ -21,8 +22,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
-(* Constructors and exceptions need unique identities, which we
-   represent by stamps. *)
+(* Constructors and exceptions need unique identities, which we represent by stamps. *)
 let stamp_INDUCT,stamp_RECURSION = define_datatype
   "stamp = TypeStamp (mlstring) (num) | ExnStamp (num)";;
 
@@ -177,10 +177,8 @@ let store_assign_def = cake_define
        SOME (LUPDATE v n st) else NONE)`;;
 
 (* Compiler checker for Eval. The current design requires the compiler
-   to be run (as regular code within the semantics) before Eval is
-     called,
-   and these config parameters specify how to interpret the declarations
-     to
+   to be run (as regular code within the semantics) before Eval is called,
+   and these config parameters specify how to interpret the declarations to
    be evaluated and check that the compiler was run correctly.
 
    Before attempting build a state of this type, find out about
@@ -295,19 +293,13 @@ let boolv_def = cake_define
        (TypeStamp (implode "False") bool_type_num)) [])`;;
 hol4_overload "Boolv" "semanticPrimitives_Boolv";;
 
-(* A big-step pattern matcher.  If the value matches the pattern, return
-   an
- * environment with the pattern variables bound to the corresponding
-   sub-terms
- * of the value; this environment extends the environment given as an
-   argument.
+(* A big-step pattern matcher.  If the value matches the pattern, return an
+ * environment with the pattern variables bound to the corresponding sub-terms
+ * of the value; this environment extends the environment given as an argument.
  * No_match is returned when there is no match, but any constructors
- * encountered in determining the match failure are applied to the
-   correct
- * number of arguments, and constructors in corresponding positions in
-   the
- * pattern and value come from the same type.  Match_type_error is
-   returned
+ * encountered in determining the match failure are applied to the correct
+ * number of arguments, and constructors in corresponding positions in the
+ * pattern and value come from the same type.  Match_type_error is returned
  * when one of these conditions is violated *)
 let _ = size_thms "ast_pat";;
 (* the termination relation that HOL4 gives, with
@@ -371,8 +363,7 @@ let can_pmatch_all_def = cake_define_list
            Match_type_error then F else can_pmatch_all envC refs ps
            v)`];;
 
-(* Bind each function of a mutually recursive set of functions to its
-   closure *)
+(* Bind each function of a mutually recursive set of functions to its closure *)
 let build_rec_env_def = cake_define
   `(semanticPrimitives_build_rec_env:(mlstring#mlstring#ast_exp)
   list->semanticPrimitives_v
@@ -469,8 +460,7 @@ let do_opapp_def = cake_define
                 (sem_env_v env')))) env',e) else NONE) | _43 -> NONE)`;;
 hol4_overload "do_opapp" "semanticPrimitives_do_opapp";;
 
-(* If a value represents a list, get that list. Otherwise return Nothing
-   *)
+(* If a value represents a list, get that list. Otherwise return Nothing *)
 let v_to_list_def = cake_define
   `semanticPrimitives_v_to_list x1 =
       match x1 with
@@ -614,8 +604,7 @@ let declare_env_def = cake_define
                    (gen_envs ++ [env]) (eval_oracle_state_generation
                    s') (eval_oracle_state_envs s'))) s')))))`;;
 
-(* Concrete, or first-order values, which do not contain code closures
-   and
+(* Concrete, or first-order values, which do not contain code closures and
    are unchanged by many compiler phases. *)
 let _ = size_thms "semanticPrimitives_v";;
 (* the termination relation that HOL4 gives, with
@@ -754,11 +743,9 @@ let xor_bytes_def = cake_define
      - The values contain exactly one reference
      - The reference is valid
      - The reference points to a thunk
-   We distinguish between `BadRef` and `NotThunk` instead of returning
-     an option
+   We distinguish between `BadRef` and `NotThunk` instead of returning an option
    with `NONE` for both, because we want `update_thunk` to succeed when
-   `dest_thunk` fails but only when the reference actually exists and
-     points to
+   `dest_thunk` fails but only when the reference actually exists and points to
    something other than a thunk. *)
 let semanticPrimitives_dest_thunk_ret_INDUCT,
     semanticPrimitives_dest_thunk_ret_RECURSION =

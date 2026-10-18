@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_allocProof: ported from HOL4's
-    compiler/backend/proofs/word_allocProofScript.sml  *)
+    compiler/backend/proofs/word_allocProofScript.sml
+    A proof theory about word_alloc.ml, with 10 definitions and 220
+    theorems.  Needed by word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -37,8 +39,7 @@ hol4_overload "hide" "word_allocProof_hide";;
   2. get_clash_sets (TODO: redundant)
   3. connect check_clash_tree to colouring_ok
   4. word_alloc_correct (connect 1 and 3)
-  5. ssa_cc_trans correctness proof (including an invariant property),
-    followed by full_ssa_cc_trans correctness
+  5. ssa_cc_trans correctness proof (including an invariant property), followed by full_ssa_cc_trans correctness
   6. ssa syntactic things (pre_alloc_conventions, wf_cutsets)
   7. word_alloc syntactic things
   8. misc
@@ -83,8 +84,7 @@ let colouring_ok_def = cake_define
          INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV)`;;
 
 (*Equivalence on everything except permutation and locals*)
-(* should we add local_size here? may be no, as locals are not included
-   *)
+(* should we add local_size here? may be no, as locals are not included *)
 (*TODO this definition is bad for automation remove it with
 t = s with (...)*)
 let word_state_eq_rel_def = cake_define
@@ -412,8 +412,7 @@ Also, the cases are basically copy pasted... *)
 (*ordered such that its easy to drule*)
 
 
-(*Prove the properties that hold of ssa_cc_trans independent of
-   semantics*)
+(*Prove the properties that hold of ssa_cc_trans independent of semantics*)
 
 (* HOL4 word_allocProofScript.sml:6177-6200: a proof *)
 
@@ -437,22 +436,17 @@ let lt_ok_def = cake_define
 (* Evaluating a chain of fake_move r writes 0 to each register in rs,
    leaves the rest of state untouched. *)
 
-(* Bundles the (extend, fake_init, refresh) Loop-entry setup.
-   Establishes
-   ssa_locals_rel under ssa_refreshed and INJ on names/exit_names
-     domains
+(* Bundles the (extend, fake_init, refresh) Loop-entry setup. Establishes
+   ssa_locals_rel under ssa_refreshed and INJ on names/exit_names domains
    by construction. *)
 
 (* If P evaluates to (NONE, t), Seq P Q evaluates as Q from t. *)
 
 (* fromAList (MAP f (toAList LN)) behaves like LN in cut_env. *)
 
-(* Helper for Loop iter; target is the INNER Loop (not the full
-   translation),
-   so the clock-IH recursive call lines up with the inner Loop's
-     STOP-recursion
-   without re-running the outer fake_prog + refresh_mov setup each iter.
-     *)
+(* Helper for Loop iter; target is the INNER Loop (not the full translation),
+   so the clock-IH recursive call lines up with the inner Loop's STOP-recursion
+   without re-running the outer fake_prog + refresh_mov setup each iter. *)
 
 (* HOL4 word_allocProofScript.sml:7736-7738: a proof *)
 
@@ -499,8 +493,7 @@ let lt_ok_def = cake_define
 (* HOL4 word_allocProofScript.sml:8460-8468: a proof *)
         (*This went missing somewhere..*)
 (* HOL4 word_allocProofScript.sml:8470-8474: ML code, not ported *)
-        (*Now is a good place to establish the invariant
-           ssa_locals_rel*)
+        (*Now is a good place to establish the invariant ssa_locals_rel*)
 (* HOL4 word_allocProofScript.sml:8476-8546: a proof *)
         (*We set the return variables but it is never in the
           locals so the ssa_locals_rel property is preserved*)

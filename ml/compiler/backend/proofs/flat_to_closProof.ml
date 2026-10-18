@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flat_to_closProof: ported from HOL4's
-    compiler/backend/proofs/flat_to_closProofScript.sml  *)
+    compiler/backend/proofs/flat_to_closProofScript.sml
+    A proof theory about flat_to_clos.ml, with 7 definitions and 102
+    theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvlSem: ported from HOL4's
-    compiler/backend/semantics/bvlSemScript.sml  *)
+    compiler/backend/semantics/bvlSemScript.sml
+    A definition theory, with 23 definitions, 4 datatypes and 10
+    theorems.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -39,8 +41,7 @@ hol4_overload "ByteArray" "bvlSem_ByteArray";;
 hol4_overload "Thunk" "bvlSem_Thunk";;
 hol4_overload "MutBlock" "bvlSem_MutBlock";;
 
-(* these parts are shared by bytecode and, if bytecode is to be
-   supported, need
+(* these parts are shared by bytecode and, if bytecode is to be supported, need
    to move to a common ancestor *)
 
 let bvlSem_v_INDUCT,bvlSem_v_RECURSION = define_datatype
@@ -823,8 +824,7 @@ hol4_overload "evaluate" "bvlSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
-(* Finally, we remove fix_clock from the induction and definition
-   theorems. *)
+(* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* observational semantics *)
 

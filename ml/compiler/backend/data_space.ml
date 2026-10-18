@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_space: ported from HOL4's
-    compiler/backend/data_spaceScript.sml  *)
+    compiler/backend/data_spaceScript.sml
+    A definition theory, with 6 definitions and 1 theorem.  Needed
+    by bvi_to_data.ml, dataSem.ml, data_spaceProof.ml and export.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  targetProps: ported from HOL4's
-    compiler/backend/semantics/targetPropsScript.sml  *)
+    compiler/backend/semantics/targetPropsScript.sml
+    A proof theory, with 13 definitions, 1 datatype and 43 theorems.
+    Needed by lab_to_targetProof.ml.  *)
 (* ======================================================== *)
 
 (*

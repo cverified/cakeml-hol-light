@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_to_word: ported from HOL4's
-    compiler/backend/word_to_wordScript.sml  *)
+    compiler/backend/word_to_wordScript.sml
+    A definition theory, with 5 definitions, 1 datatype and 2
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*

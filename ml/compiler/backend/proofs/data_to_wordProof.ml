@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_to_wordProof: ported from HOL4's
-    compiler/backend/proofs/data_to_wordProofScript.sml  *)
+    compiler/backend/proofs/data_to_wordProofScript.sml
+    A proof theory about data_to_word.ml, with 3 definitions and 75
+    theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -46,10 +48,8 @@ needs "semantics/proofs/semanticsProps.ml";;
    state_rel_pop_env_set_vars_IMP below. *)
 (* HOL4 data_to_wordProofScript.sml:179-252: a proof *)
 
-(* multi-value generalisation of state_rel_pop_env_set_var_IMP
-   (gcProof): the
-   returning-Call reconstruction places the whole result list via
-     set_vars. *)
+(* multi-value generalisation of state_rel_pop_env_set_var_IMP (gcProof): the
+   returning-Call reconstruction places the whole result list via set_vars. *)
 
 (* HOL4 data_to_wordProofScript.sml:283-285: a proof *)
 
@@ -78,8 +78,7 @@ needs "semantics/proofs/semanticsProps.ml";;
 (* HOL4 data_to_wordProofScript.sml:909-932: a proof *)
 
 (* HOL4 data_to_wordProofScript.sml:934-970: a proof *)
-  (* dataSem now has the up-front `ALL_DISTINCT q` guard (matching
-     wordSem), so
+  (* dataSem now has the up-front `ALL_DISTINCT q` guard (matching wordSem), so
      `res <> Rtype_error` forces `ALL_DISTINCT q`. *)
 (* HOL4 data_to_wordProofScript.sml:973-1152: a proof *)
 

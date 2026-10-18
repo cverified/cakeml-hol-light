@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_letProof: ported from HOL4's
-    compiler/backend/proofs/bvi_letProofScript.sml  *)
+    compiler/backend/proofs/bvi_letProofScript.sml
+    A proof theory about bvi_let.ml, with 2 definitions and 19
+    theorems.  Needed by bvl_to_bviProof.ml and compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -34,12 +36,9 @@ hol4_overload "env_rel" "bvi_letProof_env_rel";;
 (* HOL4 bvi_letProofScript.sml:259-270: a proof *)
 
 (* HOL4 bvi_letProofScript.sml:272-287: a proof *)
-   (* the handler now post-processes its result (rejecting an escaping
-      Ret);
-      split that inner case (the Ret branch is impossible as res <> type
-        error),
-      then close each surviving handler outcome by the induction
-        hypothesis *)
+   (* the handler now post-processes its result (rejecting an escaping Ret);
+      split that inner case (the Ret branch is impossible as res <> type error),
+      then close each surviving handler outcome by the induction hypothesis *)
 (* HOL4 bvi_letProofScript.sml:291-297: a proof *)
 
 (* HOL4 bvi_letProofScript.sml:299-307: a proof *)

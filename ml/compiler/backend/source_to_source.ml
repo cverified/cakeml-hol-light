@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  source_to_source: ported from HOL4's
-    compiler/backend/source_to_sourceScript.sml  *)
+    compiler/backend/source_to_sourceScript.sml
+    A definition theory, with 1 definition and no theorems.  Needed
+    by backend.ml and source_to_sourceProof.ml.  *)
 (* ======================================================== *)
 
 (*

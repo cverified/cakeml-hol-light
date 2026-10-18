@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  infer: ported from HOL4's
-    compiler/inference/inferScript.sml  *)
+    compiler/inference/inferScript.sml
+    A definition theory, with 51 definitions, 3 datatypes and 22
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -137,8 +139,7 @@ let apply_subst_list_def = cake_define
      st_ex_bind read (\st.
         st_ex_return (MAP (t_walkstar (infer_st_subst st)) ts))`;;
 
-(* We use a state argument for the inferencer's typing environment. This
-   corresponds to the type system's typing environment
+(* We use a state argument for the inferencer's typing environment. This corresponds to the type system's typing environment
   The module and variable environment's types differ slightly.
 *)
 
@@ -147,10 +148,8 @@ let inf_env_FIELDS = define_record "inf_env"
    "inf_c","(mlstring,mlstring,mlstring list#t list#num)namespace";
    "inf_t","(mlstring,mlstring,mlstring list#t)namespace"];;
 
-(* Generalise the unification variables greater than m, starting at
-   deBruijn index n.
- * Return how many were generalised, the generalised type, and a
-   substitution
+(* Generalise the unification variables greater than m, starting at deBruijn index n.
+ * Return how many were generalised, the generalised type, and a substitution
  * that describes the generalisation *)
 let generalise_def = cake_define_list
   [`generalise m n s (Infer_Tapp ts tc) =
@@ -969,8 +968,7 @@ let infer_d_def = cake_define_list_cheat CHEAT_TAC
         ienv''.
         st_ex_return (extend_dec_ienv ienv'' ienv')))`];;
 
-(* The starting Id should be greater than Tlist_num :: (Tbool_num ::
-   prim_type_nums) *)
+(* The starting Id should be greater than Tlist_num :: (Tbool_num :: prim_type_nums) *)
 let start_type_id_def = cake_define
   `start_type_id =
      ITLIST MAX (Tlist_num :: Tbool_num :: prim_type_nums) 0 + 1`;;
@@ -995,8 +993,7 @@ let init_config_def = cake_define
        prim_tenv)`;;
 hol4_overload "init_config" "infer_init_config";;
 
-(* The following aren't needed to run the inferencer, but are useful in
-   the proofs
+(* The following aren't needed to run the inferencer, but are useful in the proofs
  * about it *)
 
 let infer_deBruijn_inc_def = cake_define_list
@@ -1035,12 +1032,9 @@ let check_s_def = cake_define
   `check_s tvs uvs s =
      (!uv. uv IN FDOM s ==> check_t tvs uvs (FAPPLY s uv))`;;
 
-(* Adding the constraints extra_constraints moves the constraint set
-   from s1 to
- * s2, and s2 is required to be complete in that it assigns to (at
-   least) all
- * the uvars ≤ next_uvar, and when we apply it to any uvar, we get back
-   a type
+(* Adding the constraints extra_constraints moves the constraint set from s1 to
+ * s2, and s2 is required to be complete in that it assigns to (at least) all
+ * the uvars ≤ next_uvar, and when we apply it to any uvar, we get back a type
  * without any uvars in it. *)
 let sub_completion_def = cake_define
   `sub_completion tvs next_uvar s1 extra_constraints s2 =

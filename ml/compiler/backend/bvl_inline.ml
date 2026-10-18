@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  bvl_inline: ported from HOL4's
-    compiler/backend/bvl_inlineScript.sml  *)
+    compiler/backend/bvl_inlineScript.sml
+    A definition theory, with 20 definitions and 14 theorems.
+    Needed by backend_passes.ml, bvl_inlineProof.ml and
+    bvl_to_bvi.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_to_word_bignumProof: ported from HOL4's
-    compiler/backend/proofs/data_to_word_bignumProofScript.sml  *)
+    compiler/backend/proofs/data_to_word_bignumProofScript.sml
+    A proof theory, with 4 definitions and 52 theorems.  Needed by
+    data_to_wordProof.ml and data_to_word_assignProof.ml.  *)
 (* ======================================================== *)
 
 (*

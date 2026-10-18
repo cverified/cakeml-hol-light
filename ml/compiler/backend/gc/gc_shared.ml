@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  gc_shared: ported from HOL4's
-    compiler/backend/gc/gc_sharedScript.sml  *)
+    compiler/backend/gc/gc_sharedScript.sml
+    A definition theory, with 29 definitions, 3 datatypes and 53
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  clos_to_bvl: ported from HOL4's
-    compiler/backend/clos_to_bvlScript.sml  *)
+    compiler/backend/clos_to_bvlScript.sml
+    A definition theory, with 45 definitions, 1 datatype and 24
+    theorems.  Needed by backend.ml, backend_passes.ml, bvlSem.ml,
+    clos_constantProof.ml, clos_to_bvlProof.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -13,43 +16,32 @@
   (the function's body). The table has the following layout.
 
   Entry i in the range 0 to max_app - 1 (inclusive):
-    generic application of a closure to i+1 arguments. Takes i+2
-      arguments
-    (the arguments and the closure). The closure might expect more or
-      less
-    than i+1 arguments, and this code would then allocate a partial
-      application
+    generic application of a closure to i+1 arguments. Takes i+2 arguments
+    (the arguments and the closure). The closure might expect more or less
+    than i+1 arguments, and this code would then allocate a partial application
     closure, or make repeated applications.
 
-  Entries in the range max_app to max_app + (max_app * (max_app - 1) DIV
-    2) - 1 (inclusive) :
+  Entries in the range max_app to max_app + (max_app * (max_app - 1) DIV 2) - 1 (inclusive) :
     code to fully apply a partially applied closure wrapper.
-    For a closure expecting tot number of arguments, which has already
-      been
+    For a closure expecting tot number of arguments, which has already been
     given prev number of arguments, the wrapper is in location
     max_app + tot * (tot - 1) DIV 2 + prev
     and takes tot - prev + 1 arguments
 
-  The next entry initialises a global variable that contains a jump
-    table used
+  The next entry initialises a global variable that contains a jump table used
   by the generic application stubs (0 argument).
 
   The num_stubs function gives the total number of these functions.
 
-  Starting at index num_stubs, there are 0 argument functions that
-    evaluate
-  each expression that should be evaluated, and then call the next
-    function.
+  Starting at index num_stubs, there are 0 argument functions that evaluate
+  each expression that should be evaluated, and then call the next function.
 
   Following these functions, at even numbers there are the bodies of
-  functions in the program, with one extra argument for the closure
-    value to be
-  passed in to them. The odd entries are the bodies of the functions
-    that have
+  functions in the program, with one extra argument for the closure value to be
+  passed in to them. The odd entries are the bodies of the functions that have
   no free variables, and so they don't have any extra arguments. Their
   correcponding odd entries just indirect to the even ones. (clos_call)
-  One entry might be skipped in between the expressions and the
-    source-level
+  One entry might be skipped in between the expressions and the source-level
   function bodies to get the alignment right.
 
 *)
@@ -302,11 +294,9 @@ let generate_generic_app_def = cake_define
                           + 1))))))))`;;
 
 (* The functions to complete the application of a partial closure.
- * We expect prev_args < total_args, also the function should take one
-   more
+ * We expect prev_args < total_args, also the function should take one more
  * argument than total, and have seen one more than prev (since there is
- * possiblity for a 0 argument function, or a partial application
-   wrapper that
+ * possiblity for a 0 argument function, or a partial application wrapper that
  * has seen no arguments yet. *)
 let generate_partial_app_closure_fn_def = cake_define
   `generate_partial_app_closure_fn total_args prev_args =

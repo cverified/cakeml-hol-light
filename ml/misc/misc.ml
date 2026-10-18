@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  misc: ported from HOL4's
-    misc/miscScript.sml  *)
+    misc/miscScript.sml
+    A definition theory, with 50 definitions, 1 datatype and 393
+    theorems.  Needed by 73 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -36,11 +38,9 @@ let opt_bind_def = cake_define
   `opt_bind n v e =
      (match n with NONE -> e | SOME n' -> (n',v) :: e)`;;
 
-(* Note: This globally hides constants over the reals that gets imported
-   through machine_ieeeTheory *)
+(* Note: This globally hides constants over the reals that gets imported through machine_ieeeTheory *)
 
-(* this is copied in preamble.sml, but needed here to avoid cyclic dep
-   *)
+(* this is copied in preamble.sml, but needed here to avoid cyclic dep *)
 (* HOL4 miscScript.sml:42-46: ML code, not ported *)
 (* -- *)
 
@@ -66,8 +66,7 @@ let shift_seq_def = cake_define
   `misc_shift_seq k s = (\i. s (i + (k:num)))`;;
 hol4_overload "shift_seq" "misc_shift_seq";;
 
-(* TODO: Used once in all of CakeML: could probably be pushed back to
-   use-site*)
+(* TODO: Used once in all of CakeML: could probably be pushed back to use-site*)
 
 (* only used in proof of tlookup_bij_iff *)
 
@@ -118,8 +117,7 @@ let SmartAppend_def = cake_define
    LENGTH_TAKE_EQ
 *)
 
-(* should be switched in orientation; looks like an attempt to get
-   congruence
+(* should be switched in orientation; looks like an attempt to get congruence
    rule *)
 
 (* only used in theorem immediately below *)
@@ -171,8 +169,7 @@ let max3_def = cake_define
   `max3 (x:num) y z = (if x > y then (if z > x then z else x) else
   (if z > y then z else y))`;;
 
-(* TODO - candidate for move to HOL, but in simpler form without
-   accumulator *)
+(* TODO - candidate for move to HOL, but in simpler form without accumulator *)
 (* only used in inferProg *)
 let anub_def = cake_define_list
   [`anub [] acc = []`;
@@ -188,11 +185,9 @@ new_type_abbrev("misc_num_set",`: 1 spt`);;
 (* HOL4 miscScript.sml:788: the type abbreviation num_map, which the
    port expands *)
 
-(* only used below in proof of theorem that is in turn used just twice
-   *)
+(* only used below in proof of theorem that is in turn used just twice *)
 
-(* only used below in proof of theorem that is in turn used just twice
-   *)
+(* only used below in proof of theorem that is in turn used just twice *)
 
 (* used only twice, both times in candle/set-theory *)
 
@@ -215,8 +210,7 @@ let find_index_def = cake_define_list
 
 (* HOL4 miscScript.sml:1138-1146: a proof *)
 
-(* surely better with UNZIP rather than ZIP: i.e., UNZIP l1 = (a,b)...
-   *)
+(* surely better with UNZIP rather than ZIP: i.e., UNZIP l1 = (a,b)...  *)
 
 (* never used *)
 
@@ -442,8 +436,7 @@ let insert_atI_def = cake_define
      TAKE n l2 ++ l1 ++ DROP (n + LENGTH l1) l2`;;
 
 (* TODO - candidate for move to HOL *)
-(* N.B.: there is a different is_subsequence defined in lcsTheory; these
-   should be merged *)
+(* N.B.: there is a different is_subsequence defined in lcsTheory; these should be merged *)
 let is_subseq_def = cake_define_list
   [`is_subseq ls [] <=> T`;
    `is_subseq [] (x :: xs) <=> F`;
@@ -578,8 +571,7 @@ let good_dimindex_def = cake_define
 
 (* helpful theorems for _size *)
 
-(* must be used instead of FUPDATE in defitions that go through
-   translation *)
+(* must be used instead of FUPDATE in defitions that go through translation *)
 let fmap_update_def = cake_define
   `fmap_update f k v = f |+ (k,v)`;;
 

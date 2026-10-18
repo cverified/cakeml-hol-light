@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  source_to_flat: ported from HOL4's
-    compiler/backend/source_to_flatScript.sml  *)
+    compiler/backend/source_to_flatScript.sml
+    A definition theory, with 31 definitions, 6 datatypes and 8
+    theorems.  Needed by backend.ml, presLang.ml and
+    source_to_flatProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -536,8 +539,7 @@ let compile_def = cake_define
        (c',p'))`;;
 hol4_overload "compile" "source_to_flat_compile";;
 
-(* note that flat_elim is always disabled in the eval/incremental case
-   *)
+(* note that flat_elim is always disabled in the eval/incremental case *)
 let inc_compile_def = cake_define
   `inc_compile env_id c p =
      (let (c',p') = inc_compile_prog env_id c p in

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_knownProof: ported from HOL4's
-    compiler/backend/proofs/clos_knownProofScript.sml  *)
+    compiler/backend/proofs/clos_knownProofScript.sml
+    A proof theory about clos_known.ml, with 40 definitions and 188
+    theorems.  Needed by clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -26,8 +28,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* HOL4 clos_knownProofScript.sml:21-22: ML code, not ported *)
 
-(* fixeqs flips any equations in the assumption that have evaluate on
-   the rhs *)
+(* fixeqs flips any equations in the assumption that have evaluate on the rhs *)
 (* HOL4 clos_knownProofScript.sml:25: the ML values that the
    definitions below antiquote *)
 
@@ -40,8 +41,7 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 clos_knownProofScript.sml:31: the ML values that the
    definitions below antiquote *)
 
-(* simple properties of constants from clos_known: i.e., merge and known
-   *)
+(* simple properties of constants from clos_known: i.e., merge and known *)
 
 (* Take the first n expression lists returned by the compile oracle. *)
 let first_n_exps_def = cake_define
@@ -335,8 +335,7 @@ let co_every_Fn_vs_NONE_def = cake_define
    definitions below antiquote *)
 
 
-(* Set globals in all future installs is disjoint from currently mapped
-   globals. *)
+(* Set globals in all future installs is disjoint from currently mapped globals. *)
 let state_oracle_mglobals_disjoint_def = cake_define
   `state_oracle_mglobals_disjoint s <=> (!n. mglobals_disjoint
   (closSem_state_globals s) (FST (SND (closSem_state_compile_oracle s

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  linear_scan: ported from HOL4's
-    compiler/backend/reg_alloc/linear_scanScript.sml  *)
+    compiler/backend/reg_alloc/linear_scanScript.sml
+    A definition theory, with 67 definitions, 4 datatypes and 5
+    theorems.  Needed by linear_scanProof.ml, word_alloc.ml and
+    word_allocProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -136,11 +139,8 @@ let get_intervals_def = cake_define_list
         int_end in
       get_intervals lt1 n2 int_beg2 int_end2)`];;
 
-(* compute the same thing as `get_intervals` (as says the
-   `get_intervals_withlive_beg_eq_get_intervals_beg` theorem),
- * but has the following invariant: !r. r IN domain live ==> r NOTIN
-   domain beg_in (as stated by the `get_intervals_withlive_live_intbeg`
-   theorem *)
+(* compute the same thing as `get_intervals` (as says the `get_intervals_withlive_beg_eq_get_intervals_beg` theorem),
+ * but has the following invariant: !r. r IN domain live ==> r NOTIN domain beg_in (as stated by the `get_intervals_withlive_live_intbeg` theorem *)
 let get_intervals_withlive_def = cake_define_list
   [`get_intervals_withlive (linear_scan_Writes l) (n:int) int_beg
   int_end live =

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  presLang: ported from HOL4's
-    compiler/backend/presLangScript.sml  *)
+    compiler/backend/presLangScript.sml
+    A definition theory, with 91 definitions, 1 datatype and 15
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*

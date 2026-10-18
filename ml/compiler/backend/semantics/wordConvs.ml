@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  wordConvs: ported from HOL4's
-    compiler/backend/semantics/wordConvsScript.sml  *)
+    compiler/backend/semantics/wordConvsScript.sml
+    A definition theory, with 22 definitions and 23 theorems.
+    Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -56,8 +58,7 @@ let flat_exp_conventions_def = cake_define
            prog))
         | _3 -> T`;;
 
-(*** Well-formed instructions. This also includes the FP conditions
-   since we do not allocate them ***)
+(*** Well-formed instructions. This also includes the FP conditions since we do not allocate them ***)
 let inst_ok_less_def = cake_define
   `inst_ok_less c x2 =
         match (c,x2) with
@@ -132,8 +133,7 @@ let inst_ok_less_def = cake_define
           fp_reg_ok d2 c
         | (_4,_5) -> T`;;
 
-(*** Instructions have distinct targets and read vars -- set by SSA form
-   ***)
+(*** Instructions have distinct targets and read vars -- set by SSA form ***)
 let distinct_tar_reg_def = cake_define
   `distinct_tar_reg x1 =
         match x1 with
@@ -295,8 +295,7 @@ let post_alloc_conventions_def = cake_define
      every_stack_var (\x. x >= 2 * k) prog /\
      call_arg_convention prog)`;;
 
-(*** This is for label preservation -- wordLang shouldn't need to
-   inspect the labels explicitly. ***)
+(*** This is for label preservation -- wordLang shouldn't need to inspect the labels explicitly. ***)
 let extract_labels_def = cake_define
   `wordConvs_extract_labels x1 =
         match x1 with
@@ -368,8 +367,7 @@ hol4_overload "good_code_labels" "wordConvs_good_code_labels";;
 
 (*** not_created_subprogs ***)
 
-(* Examines various syntactic elements within programs that some phases
-   are
+(* Examines various syntactic elements within programs that some phases are
    expected to possibly remove but not create. *)
 let not_created_subprogs_def = cake_define
   `not_created_subprogs P x2 =

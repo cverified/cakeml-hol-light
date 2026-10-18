@@ -1,9 +1,9 @@
 (* ======================================================== *)
 (*  walkstar: ported from HOL4's
     examples/algorithms/unification/triangular/first-order/
-      walkstarScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
+      walkstarScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 5 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/subst.ml";;

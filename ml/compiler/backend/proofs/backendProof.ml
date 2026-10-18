@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  backendProof: ported from HOL4's
-    compiler/backend/proofs/backendProofScript.sml  *)
+    compiler/backend/proofs/backendProofScript.sml
+    A proof theory about backend.ml, with 17 definitions and 152
+    theorems.  Needed by compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -256,8 +258,7 @@ let state_co_fun_def = cake_define
      let (_2,p') = f_inc cfg1 p in
      (cfg2,p'))`;;
 
-(* bvi_inline is name preserving, so the namespace-sliced projection
-   used
+(* bvi_inline is name preserving, so the namespace-sliced projection used
    by monotonic_labels_bvl_to_bvi cannot see it either. *)
 
 (*

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_to_bvlProof: ported from HOL4's
-    compiler/backend/proofs/clos_to_bvlProofScript.sml  *)
+    compiler/backend/proofs/clos_to_bvlProofScript.sml
+    A proof theory about clos_to_bvl.ml, with 31 definitions and 304
+    theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -381,8 +383,7 @@ let get_cl_env_def = cake_define
 
 (* HOL4 clos_to_bvlProofScript.sml:2279-2285: ML code, not ported *)
 
-(* Differs from check_loc and dest_closure by not checking that max_app
-   *)
+(* Differs from check_loc and dest_closure by not checking that max_app *)
 let check_loc'_def = cake_define_list
   [`check_loc' NONE loc num_params num_args so_far <=> T`;
    `check_loc' (SOME p) loc num_params num_args so_far <=>

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  lab_filterProof: ported from HOL4's
-    compiler/backend/proofs/lab_filterProofScript.sml  *)
+    compiler/backend/proofs/lab_filterProofScript.sml
+    A proof theory about lab_filter.ml, with 3 definitions and 22
+    theorems.  Needed by lab_to_targetProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -57,8 +59,7 @@ evaluate pc code with k for a clock = evaluate (pc+k) code
 
 (* 1)
 There is probably a neater way to prove this*)
-(*For any adjusted fetch, the original fetch is either equal or is a
-   skip
+(*For any adjusted fetch, the original fetch is either equal or is a skip
 This is probably the wrong direction*)
 
 (* 2) all_skips allow swapping pc for clock*)

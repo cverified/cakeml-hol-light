@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  export_x64: ported from HOL4's
-    compiler/backend/x64/export_x64Script.sml  *)
+    compiler/backend/x64/export_x64Script.sml
+    A definition theory, with 6 definitions and no theorems.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -24,8 +26,7 @@ RSI - first address of heap
 RDX - first address of stack
 RCX - first address past the stack
 
-In addition, the first address on the heap should store the address of
-  cake_bitmaps
+In addition, the first address on the heap should store the address of cake_bitmaps
 
 Note: this set up does NOT account for restoring clobbered registers
 *)
@@ -338,14 +339,11 @@ let x64_export_def = cake_define
         [])))`;;
 
 (*
-  EVAL``append(split16 (words_line «\t.quad » word_to_string)
-    [100w:word64;393w;392w])``
+  EVAL``append(split16 (words_line «\t.quad » word_to_string) [100w:word64;393w;392w])``
 
   EVAL ``append (x64_export ["getArgs";"putChar";"getChar"] 400 300
-    [3w;4w;5w;9w;11w;12w;13w;14w;79w;12w;91w;21w;34w;32w;53w;255w;128w;1
-      22w;127w]
-    [0w;3w;2w;9w;3w;299w;3w;4w;100w;200w;10w;1w;3w;2w;4w;500w;1000w;12w;
-      123w;93392039w;INT_MAXw])``
+    [3w;4w;5w;9w;11w;12w;13w;14w;79w;12w;91w;21w;34w;32w;53w;255w;128w;122w;127w]
+    [0w;3w;2w;9w;3w;299w;3w;4w;100w;200w;10w;1w;3w;2w;4w;500w;1000w;12w;123w;93392039w;INT_MAXw])``
   |> concl |> rand |> listSyntax.dest_list |> fst |> map rand
   |> map stringSyntax.fromHOLstring |> concat |> print
 *)

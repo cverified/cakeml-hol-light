@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flat_elimProof: ported from HOL4's
-    compiler/backend/proofs/flat_elimProofScript.sml  *)
+    compiler/backend/proofs/flat_elimProofScript.sml
+    A proof theory about flat_elim.ml, with 9 definitions and 63
+    theorems.  Needed by source_to_flatProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -144,8 +146,7 @@ let flat_state_rel_def = cake_define
        reachable /\
      EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs s)`;;
 
-(**************************** FLATLANG LEMMAS
-   *****************************)
+(**************************** FLATLANG LEMMAS *****************************)
 
 (* HOL4 flat_elimProofScript.sml:462: the ML values that the
    definitions below antiquote *)
@@ -168,15 +169,13 @@ let flat_state_rel_def = cake_define
 (******** EVALUATE_DEC ********)
 
 
-(********************** CASE: *NOT* keep reachable h
-   ***********************)
+(********************** CASE: *NOT* keep reachable h ***********************)
 
 (******** EVALUATE MUTUAL INDUCTION ********)
 
 (******** EVALUATE SPECIALISATION ********)
 
 
-(******************************* MAIN PROOFS
-   ******************************)
+(******************************* MAIN PROOFS ******************************)
 
 (* syntactic results *)

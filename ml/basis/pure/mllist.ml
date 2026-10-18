@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  mllist: ported from HOL4's
-    basis/pure/mllistScript.sml  *)
+    basis/pure/mllistScript.sml
+    A definition theory, with 26 definitions and 43 theorems.
+    Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -20,8 +22,7 @@ let intersperse_def = cake_define
       | [x] -> [x]
       | (x :: xs) -> x :: sep :: intersperse sep xs`;;
 
-(* ===== TODO: TO BE PORTED TO HOL (better theorems for mergesort_tail)
-   ===== *)
+(* ===== TODO: TO BE PORTED TO HOL (better theorems for mergesort_tail) ===== *)
 (* ^^^^^ TO BE PORTED TO HOL ^^^^^ *)
 
 let sort_def = cake_define

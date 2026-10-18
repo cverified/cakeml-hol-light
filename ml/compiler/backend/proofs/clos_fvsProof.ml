@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_fvsProof: ported from HOL4's
-    compiler/backend/proofs/clos_fvsProofScript.sml  *)
+    compiler/backend/proofs/clos_fvsProofScript.sml
+    A proof theory about clos_fvs.ml, with 5 definitions and 37
+    theorems.  Needed by clos_knownProof.ml and clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

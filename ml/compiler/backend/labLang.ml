@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  labLang: ported from HOL4's
-    compiler/backend/labLangScript.sml  *)
+    compiler/backend/labLangScript.sml
+    A definition theory, with 2 definitions, 5 datatypes and no
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -47,8 +49,7 @@ let line_INDUCT,line_RECURSION = define_datatype
 hol4_overload "Label" "labLang_Label";;
 hol4_overload "Asm" "labLang_Asm";;
 hol4_overload "LabAsm" "labLang_LabAsm";;
-                                  (* position, encoded instruction,
-                                     length *)
+                                  (* position, encoded instruction, length *)
 
 (* A section consists a name (num) and a list of assembly lines. *)
 

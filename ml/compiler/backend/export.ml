@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  export: ported from HOL4's
-    compiler/backend/exportScript.sml  *)
+    compiler/backend/exportScript.sml
+    A definition theory, with 17 definitions and 2 theorems.  Needed
+    by export_ag32.ml, export_arm7.ml, export_arm8.ml,
+    export_mips.ml, export_riscv.ml and export_x64.ml.  *)
 (* ======================================================== *)
 
 (*

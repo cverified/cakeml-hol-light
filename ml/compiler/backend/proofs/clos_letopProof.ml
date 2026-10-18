@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_letopProof: ported from HOL4's
-    compiler/backend/proofs/clos_letopProofScript.sml  *)
+    compiler/backend/proofs/clos_letopProofScript.sml
+    A proof theory about clos_letop.ml, with 6 definitions and 40
+    theorems.  Needed by clos_knownProof.ml.  *)
 (* ======================================================== *)
 
 (*

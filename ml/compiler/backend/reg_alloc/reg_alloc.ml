@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  reg_alloc: ported from HOL4's
-    compiler/backend/reg_alloc/reg_allocScript.sml  *)
+    compiler/backend/reg_alloc/reg_allocScript.sml
+    A definition theory, with 88 definitions, 5 datatypes and 6
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -27,8 +29,7 @@ hol4_overload "++" "otherwise";;
 
   1) In ra_state.coalesced, coalesced[x] = x iff x is not coalesced.
      For non-Fixed pairs, coalesces happen ``downwards'' (smaller index
-     survives). For Fixed-Atemp pairs, the Fixed node survives
-       regardless
+     survives). For Fixed-Atemp pairs, the Fixed node survives regardless
      of index, so coalesce_parent checks is_Fixed before the <= test.
 
   2) adjacency lists are ALWAYS sorted
@@ -38,8 +39,7 @@ hol4_overload "++" "otherwise";;
   The tag datatype representing the state of nodes:
 
   Fixed n : means it is fixed to color n
-  Atemp   : means that the node is allowed to be allocated to any
-    register or stack pos
+  Atemp   : means that the node is allowed to be allocated to any register or stack pos
   Stemp   : only allowed to be mapped to k, k+1, ... (stack positions)
 *)
 let reg_alloc_tag_INDUCT,reg_alloc_tag_RECURSION = define_datatype
@@ -48,8 +48,7 @@ let reg_alloc_tag_INDUCT,reg_alloc_tag_RECURSION = define_datatype
 (*
   Inputs are tagged with Fixed, Atemp , Stemp
 
-  At all times, maintain invariant that adjacent nodes cannot be both
-    Fixed
+  At all times, maintain invariant that adjacent nodes cannot be both Fixed
   to the same number
 
   First pass changes all Atemps to either Fixed or Stemp
@@ -926,10 +925,8 @@ let remove_colours_def = cake_define
          r.
          st_ex_return r))`;;
 
-(* First colouring -- turns all Atemps into Fixeds or Stemps drawing
-   from colors in ks *)
-(* Assign a tag to an Atemp node, skipping if it is not actually an
-   Atemp *)
+(* First colouring -- turns all Atemps into Fixeds or Stemps drawing from colors in ks *)
+(* Assign a tag to an Atemp node, skipping if it is not actually an Atemp *)
 
 let assign_Atemp_tag_def = cake_define
   `assign_Atemp_tag ks prefs n =
@@ -951,8 +948,7 @@ let assign_Atemp_tag_def = cake_define
                  one)`;;
 
 (* The first allocation step *)
-(* k = num registers, ls = heuristic list, prefs = coloring preference
-   *)
+(* k = num registers, ls = heuristic list, prefs = coloring preference *)
 let assign_Atemps_def = cake_define
   `assign_Atemps k ls prefs =
    st_ex_bind get_dim (\
@@ -963,8 +959,7 @@ let assign_Atemps_def = cake_define
      (st_ex_FOREACH ls (assign_Atemp_tag ks prefs)) (
      st_ex_FOREACH cs (assign_Atemp_tag ks prefs))))))`;;
 
-(* Default makes it easier to translate, doesn't matter for our purposes
-   what
+(* Default makes it easier to translate, doesn't matter for our purposes what
    the default is *)
 let tag_col_def = cake_define
   `tag_col x1 =
@@ -1024,8 +1019,7 @@ let first_match_col_def = cake_define_list
                 first_match_col ks xs) | _12 -> first_match_col ks
                 xs)`];;
 
-(* Clash tree representation of a program -- this is designed as an
-   interface:
+(* Clash tree representation of a program -- this is designed as an interface:
   wordLang program -> clash tree -> reg alloc
 
   It only represents wordLang programs, which do not have back-edges
@@ -1034,8 +1028,7 @@ let first_match_col_def = cake_define_list
   1) slightly more efficient checking of coloring oracles
   2) it gets compiled in to the clash graphs for the allocator
 
-  TODO: probably want to move the clash tree representation up and
-    separate it
+  TODO: probably want to move the clash tree representation up and separate it
   from the allocator
 *)
 
@@ -1054,8 +1047,7 @@ let numset_list_delete_def = cake_define_list
    `numset_list_delete (x :: xs) (t:'a spt) = numset_list_delete xs
   (sptree_delete x t)`];;
 
-(*Check that a numset is injective over the clash sets in an interpreted
-   tree*)
+(*Check that a numset is injective over the clash sets in an interpreted tree*)
 let check_col_def = cake_define
   `check_col f t =
      (let names = MAP (f o FST) (toAList t) in
@@ -1071,8 +1063,7 @@ let check_partial_col_def = cake_define_list
           NONE -> check_partial_col f xs (sptree_insert x one
             t) (sptree_insert (f x) one ft) | SOME one -> NONE))`];;
 
-(* The checking function, used by oracle, and also used as part of the
-   correctness proof *)
+(* The checking function, used by oracle, and also used as part of the correctness proof *)
 (* live = the liveset, flive = the liveset with f applied over it*)
 let check_clash_tree_def = cake_define_list
   [`check_clash_tree f (reg_alloc_Delta w r) live flive =
@@ -1168,8 +1159,7 @@ let mk_tags_def = cake_define
          update_node_tag i Stemp else
          update_node_tag i (Fixed (v DIV 2))))`;;
 
-(* Initializes the clash_graph using a clash_tree and a remapping
-   bijection *)
+(* Initializes the clash_graph using a clash_tree and a remapping bijection *)
 let mk_graph_def = cake_define_list
   [`mk_graph ta (reg_alloc_Delta w r) liveout =
         st_ex_bind (st_ex_return (MAP ta w)) (\
@@ -1218,13 +1208,11 @@ let extend_graph_def = cake_define_list
 
 (* sets up the register allocator init state with the clash_tree input
   TODO: should the sptrees be hidden right away?
-  It might be easier to transfer an sptree directly for the oracle
-    register
+  It might be easier to transfer an sptree directly for the oracle register
   allocator
 
   ct = clash_tree
-  forced = forced edges -- will need new proof that all forced edges are
-    in the tree
+  forced = forced edges -- will need new proof that all forced edges are in the tree
 *)
 let init_ra_state_def = cake_define
   `init_ra_state ct forced fs (ta,fa,n) =
@@ -1413,8 +1401,7 @@ let do_reg_alloc_def = cake_define
      spcol.
      st_ex_return spcol))))))))`;;
 
-(* As we are using fixed-size array, we need to define a different
-   record type for the initialization *)
+(* As we are using fixed-size array, we need to define a different record type for the initialization *)
 (* HOL4 makes the record of an initial state of ra_state and the
    run function with ML code (define_run of
    ml_monadBaseLib); an array field of it is the length and
@@ -1447,8 +1434,7 @@ let run_ira_state_def = cake_define
        (ira_state_move_related state))) (ira_state_stack state))`;;
 
 
-(* The top-level (non-monadic) reg_alloc call which should be modified
-   to fit
+(* The top-level (non-monadic) reg_alloc call which should be modified to fit
    the translator's requirements *)
 
 let reg_alloc_aux_def = cake_define

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_numberProof: ported from HOL4's
-    compiler/backend/proofs/clos_numberProofScript.sml  *)
+    compiler/backend/proofs/clos_numberProofScript.sml
+    A proof theory about clos_number.ml, with 2 definitions and 47
+    theorems.  Needed by clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

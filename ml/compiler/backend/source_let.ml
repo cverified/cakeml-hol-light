@@ -1,11 +1,12 @@
 (* ======================================================== *)
 (*  source_let: ported from HOL4's
-    compiler/backend/source_letScript.sml  *)
+    compiler/backend/source_letScript.sml
+    A definition theory, with 5 definitions and 4 theorems.  Needed
+    by source_letProof.ml and source_to_source.ml.  *)
 (* ======================================================== *)
 
 (*
-  This is a source-to-source transformation that lifts Let/Letrec
-    expressions
+  This is a source-to-source transformation that lifts Let/Letrec expressions
   that sit at the top of Dlet:s into their own Dlet/Dletrec:s.
  *)
 

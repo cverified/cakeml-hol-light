@@ -1,14 +1,15 @@
 (* ======================================================== *)
 (*  bvi_inline: ported from HOL4's
-    compiler/backend/bvi_inlineScript.sml  *)
+    compiler/backend/bvi_inlineScript.sml
+    A definition theory, with 8 definitions and 5 theorems.  Needed
+    by bvi_inlineProof.ml, bvl_to_bvi.ml and bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*
   A deliberately small BVI inliner for CPR worker-wrapper functions.
 
   This pass is name preserving.  It only substitutes wrappers satisfying
-  [wrapper_ok]; extending that predicate is the intended way to support
-    a
+  [wrapper_ok]; extending that predicate is the intended way to support a
   new worker-wrapper protocol.
 *)
 
@@ -38,8 +39,7 @@ let wrapper_ok_def = cake_define
 
 (* [cs] is a cache of code-table entries.  The correctness invariant
    needed for a hit is that the cached label, arity, and body correspond
-   to the code table (up to the expression relation used by the pass).
-     *)
+   to the code table (up to the expression relation used by the pass). *)
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)

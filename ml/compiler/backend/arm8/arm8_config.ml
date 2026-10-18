@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  arm8_config: ported from HOL4's
-    compiler/backend/arm8/arm8_configScript.sml  *)
+    compiler/backend/arm8/arm8_configScript.sml
+    A definition theory, with 2 definitions and 1 theorem.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*

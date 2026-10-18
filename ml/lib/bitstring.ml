@@ -1,8 +1,8 @@
 (* ======================================================== *)
 (*  bitstring: ported from HOL4's
-    src/n-bit/bitstringScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
+    src/n-bit/bitstringScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by export_arm8.ml and misc.ml.  *)
 (* ======================================================== *)
 
 needs "lib/numposrep.ml";;

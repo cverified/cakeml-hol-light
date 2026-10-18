@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  stack_removeProof: ported from HOL4's
-    compiler/backend/proofs/stack_removeProofScript.sml  *)
+    compiler/backend/proofs/stack_removeProofScript.sml
+    A proof theory about stack_remove.ml, with 23 definitions and
+    113 theorems.  Needed by backendProof.ml, lab_to_targetProof.ml
+    and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*

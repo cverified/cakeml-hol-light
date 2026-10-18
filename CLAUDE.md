@@ -86,6 +86,23 @@ cheat, and a cheat that another cheat depends on is fine.
   same file names (`fooScript.sml` becomes `foo.ml`), same
   order of the blocks, same names of constants and of theorems,
   and the original comments kept in place.
+- A comment of a source is kept **unaltered**, whatever it is
+  about -- a comment about HOL4 is a comment of the source and
+  stays as it stands.  It is not reflowed and not shortened, so
+  a line of one may be longer than 72 characters (691 of them
+  are); `tools/lines.py` is the check, and what it has to report
+  is no line over 72 _outside_ a comment.  The one thing that is
+  put right is a quote that OCaml would read as the start of a
+  string.
+- Every file of the port starts with a **preface**: a comment
+  that says what the file is (a definition theory of CakeML, a
+  proof theory and of which file, or a HOL4 library theory of
+  which the port has what CakeML needs), how many definitions,
+  datatypes and theorems its source has, and which files of the
+  port need it.  It is at most **eight lines**, the empty line
+  after it counted, and `tools/preface.py` writes it (after the
+  port, because which files need a file is only known when every
+  file has its `needs` lines).
 - **No HOL4 code in the port.**  Not in a definition, not in a
   proof and not in a comment: no SML, no HOL4 tactic, no HOL4
   quotation, not even one line of it.  Where the port cannot say

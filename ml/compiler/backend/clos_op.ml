@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_op: ported from HOL4's
-    compiler/backend/clos_opScript.sml  *)
+    compiler/backend/clos_opScript.sml
+    A definition theory, with 29 definitions and 11 theorems.
+    Needed by clos_known.ml and clos_opProof.ml.  *)
 (* ======================================================== *)
 
 (*

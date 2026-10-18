@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flat_pattern: ported from HOL4's
-    compiler/backend/flat_patternScript.sml  *)
+    compiler/backend/flat_patternScript.sml
+    A definition theory, with 20 definitions, 1 datatype and 5
+    theorems.  Needed by 5 files of the port.  *)
 (* ======================================================== *)
 
 (*

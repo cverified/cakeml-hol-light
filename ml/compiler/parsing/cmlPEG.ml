@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  cmlPEG: ported from HOL4's
-    compiler/parsing/cmlPEGScript.sml  *)
+    compiler/parsing/cmlPEGScript.sml
+    A definition theory, with 25 definitions and 17 theorems.
+    Needed by cmlParse.ml, pegComplete.ml and pegSound.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -101,11 +103,9 @@ let pnt_def = cake_define
   `cmlPEG_pnt ntsym = peg_nt ((INL:MMLnonT->MMLnonT+num) ntsym) I`;;
 hol4_overload "pnt" "cmlPEG_pnt";;
 
-(* ---------------------------------------------------------------------
-   -
+(* ----------------------------------------------------------------------
     PEG for types
-   ---------------------------------------------------------------------
-     - *)
+   ---------------------------------------------------------------------- *)
 
 let peg_UQConstructorName_def = cake_define
   `peg_UQConstructorName =

@@ -1,11 +1,12 @@
 (* ======================================================== *)
 (*  bvi_tmc: ported from HOL4's
-    compiler/backend/bvi_tmcScript.sml  *)
+    compiler/backend/bvi_tmcScript.sml
+    A definition theory, with 27 definitions, 1 datatype and 33
+    theorems.  Needed by bvi_tmcProof.ml and bvl_to_bvi.ml.  *)
 (* ======================================================== *)
 
 (*
-  Perform tailrec modulo cons optimisation to make more functions
-    tail-recursive.
+  Perform tailrec modulo cons optimisation to make more functions tail-recursive.
 *)
 
 needs "compiler/backend/backend_common.ml";;
@@ -51,12 +52,9 @@ let pure_exp_def = cake_define_list_try (fun () ->
    `pure_exps n [] = T`;
    `pure_exps n (h :: t) = (pure_exp n h /\ pure_exps n t)`];;
 
-(* The equations below express pure_exps without the auxiliary pure_exp.
-    This
-   is the shape the ml_translator prefers (cf. bvi_let$compile_def),
-     whereas the
-   mutually recursive pure_exp_def above is the shape cv_trans requires.
-     *)
+(* The equations below express pure_exps without the auxiliary pure_exp.  This
+   is the shape the ml_translator prefers (cf. bvi_let$compile_def), whereas the
+   mutually recursive pure_exp_def above is the shape cv_trans requires. *)
 
 let dest_Cons_def = cake_define
   `bvi_tmc_dest_Cons x1 =
@@ -71,8 +69,7 @@ hol4_overload "dest_Cons" "bvi_tmc_dest_Cons";;
    This is the "skeleton" of the BlockOp Cons
    - with the same tag,
    - where the recursive call is at the bottom of child,
-   - where left and right are de Bruijn indeces of the other args,
-     positions preserved,
+   - where left and right are de Bruijn indeces of the other args, positions preserved,
      with the original expressions assumed to be let bound.
  *)
 let call_block_INDUCT,call_block_RECURSION = define_datatype
@@ -104,16 +101,11 @@ let call_to_cb_def = cake_define
      match bvi_tmc_bind 0 call_args' with (vs,_46) ->
          SOME (call_args',RCall call_ts vs) else NONE)`;;
 
-(* Attempts to build a CallBlock from the tag and args of a BlockOp
-   Cons.
-   If no recursive call found, returns each op arg expression in a list
-     and (INL) a list of corresponding de Bruijn indeces.
-   If a recursive call is found, returns all extracted/let-bound
-     expressions and (INR) the call block.
-   If an effectful operation appears right of the recursive call, the
-     expression is not eligible for transformation and NONE is returned.
-   If multiple recursive calls are found, all but the last are let
-     bound. *)
+(* Attempts to build a CallBlock from the tag and args of a BlockOp Cons.
+   If no recursive call found, returns each op arg expression in a list and (INL) a list of corresponding de Bruijn indeces.
+   If a recursive call is found, returns all extracted/let-bound expressions and (INR) the call block.
+   If an effectful operation appears right of the recursive call, the expression is not eligible for transformation and NONE is returned.
+   If multiple recursive calls are found, all but the last are let bound. *)
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -248,10 +240,8 @@ let cb_to_bvi_worker_aux_def = cake_define_list_try_tac (fun () ->
          (cb_to_bvi_worker_aux (shift_cb 2 child) loc_opt 1
            (LENGTH right)))`];;
 
-(* Same as cb_to_bvi_worker_aux, but with the shift carried as an
-   accumulator
-   so that the recursion is on a subterm of the call block.  This
-     version is
+(* Same as cb_to_bvi_worker_aux, but with the shift carried as an accumulator
+   so that the recursion is on a subterm of the call block.  This version is
    the one used by the cv translation. *)
 let cb_to_bvi_worker_aux_alt_def = cake_define_list
   [`cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args') loc_opt ptr
@@ -311,8 +301,7 @@ let rewrite_wrapper_def = cake_define
              loc_opt)) | _72 -> NONE)
         | _73 -> NONE`;;
 
-(* Assumes that the function can and should be optimised - has been
-   checked by rewrite_wrapper. *)
+(* Assumes that the function can and should be optimised - has been checked by rewrite_wrapper. *)
 let rewrite_worker_def = cake_define
   `rewrite_worker loc loc_opt i_old_ptr i_old_idx n expr =
         match expr with

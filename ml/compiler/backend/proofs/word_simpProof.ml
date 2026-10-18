@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_simpProof: ported from HOL4's
-    compiler/backend/proofs/word_simpProofScript.sml  *)
+    compiler/backend/proofs/word_simpProofScript.sml
+    A proof theory about word_simp.ml, with 4 definitions and 72
+    theorems.  Needed by word_gcFunctions.ml and
+    word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*

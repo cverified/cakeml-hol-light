@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_known: ported from HOL4's
-    compiler/backend/clos_knownScript.sml  *)
+    compiler/backend/clos_knownScript.sml
+    A definition theory, with 29 definitions, 4 datatypes and 12
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -227,8 +229,7 @@ let contains_closures_def = cake_define_list
 
   This compiler transformation turns App NONEs into APP SOMEs.
   An App can carry a `SOME loc` if:
-   1) the closure value that is used there was created with location
-     loc;
+   1) the closure value that is used there was created with location loc;
    2) the closure value exepcts the number of arguments it gets here.
 
   This part of the compiler makes two passes. The first pass tracks

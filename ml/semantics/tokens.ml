@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  tokens: ported from HOL4's
-    semantics/tokensScript.sml  *)
+    semantics/tokensScript.sml
+    A definition theory, with no definitions, 2 datatypes and no
+    theorems.  Needed by gram.ml, lexer_fun.ml, lexer_impl.ml and
+    tokenUtils.ml.  *)
 (* ======================================================== *)
 
 (*

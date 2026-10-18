@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_depthProof: ported from HOL4's
-    compiler/backend/proofs/word_depthProofScript.sml  *)
+    compiler/backend/proofs/word_depthProofScript.sml
+    A proof theory about word_depth.ml, with no definitions and 12
+    theorems.  Needed by data_to_word_bignumProof.ml.  *)
 (* ======================================================== *)
 
 (*

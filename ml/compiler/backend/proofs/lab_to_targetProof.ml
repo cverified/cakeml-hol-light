@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  lab_to_targetProof: ported from HOL4's
-    compiler/backend/proofs/lab_to_targetProofScript.sml  *)
+    compiler/backend/proofs/lab_to_targetProofScript.sml
+    A proof theory about lab_to_target.ml, with 63 definitions and
+    383 theorems.  Needed by backendProof.ml and compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -332,13 +334,10 @@ let no_install_or_no_share_mem_def = cake_define
      EVERY (\x. ?s. x = ffi_ExtCall s) ffi_names') \/
      no_install code`;;
 
-(* The lab-level oracles record the register residues that the machine
-   run
-   starting from ms actually leaves behind: the k-th entry of each
-     family is
+(* The lab-level oracles record the register residues that the machine run
+   starting from ms actually leaves behind: the k-th entry of each family is
    read off the k-th interference application of that family.
-   This is positional, so it is kept out of state_rel (which is closed
-     under
+   This is positional, so it is kept out of state_rel (which is closed under
    shift_interfer) and threaded through compile_correct separately. *)
 let oracle_tie_def = cake_define
   `oracle_tie (mc_conf:('a,'state,'b)machine_config) ms
@@ -622,8 +621,7 @@ let sec_encd0_def = cake_define
 (* encd0 preservation *)
 
 (* invariant: annotated lengths are not too small *)
-(* this is a consequence of encd (below) and not treated separately much
-   *)
+(* this is a consequence of encd (below) and not treated separately much *)
 
 let line_length_leq_def = cake_define
   `line_length_leq x1 =
@@ -1088,8 +1086,7 @@ let compiler_oracle_ok_def = cake_define
          cfg = SOME ffis)`;;
 
 (* mc_conf_ok: conditions on the machine configuration
-   which will be discharged for the particular configuration of each
-     target
+   which will be discharged for the particular configuration of each target
 *)
 let mc_conf_ok_def = cake_define
   `mc_conf_ok (mc_conf:('a,'b,'c)machine_config) <=>
@@ -1163,8 +1160,7 @@ let line_to_info_def = cake_define
 (* HOL4 lab_to_targetProofScript.sml:10476-10481: a proof *)
     (* Apply DISJOINT to get contradiction *)
 (* HOL4 lab_to_targetProofScript.sml:10483-10489: a proof *)
-    (* Prove w2n equality: w2n(n2w a + n2w(pos_val) + get_pc ms) = a +
-       (w2n(pc) + pos_val) *)
+    (* Prove w2n equality: w2n(n2w a + n2w(pos_val) + get_pc ms) = a + (w2n(pc) + pos_val) *)
 (* HOL4 lab_to_targetProofScript.sml:10491-10493: a proof *)
     (* Show no overflow: a + pos_val + w2n(pc) < dimword *)
 (* HOL4 lab_to_targetProofScript.sml:10495-10508: a proof *)

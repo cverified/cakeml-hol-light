@@ -1,11 +1,12 @@
 (* ======================================================== *)
 (*  clos_interpProof: ported from HOL4's
-    compiler/backend/proofs/clos_interpProofScript.sml  *)
+    compiler/backend/proofs/clos_interpProofScript.sml
+    A proof theory about clos_interp.ml, with 6 definitions and 35
+    theorems.  Needed by flat_to_closProof.ml.  *)
 (* ======================================================== *)
 
 (*
-  Correctness proof for closLang interpreter used by the REPL, i.e.
-    Install,
+  Correctness proof for closLang interpreter used by the REPL, i.e. Install,
   to avoid spending time compiling simple run-once code in declarations.
 *)
 
@@ -17,11 +18,9 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* ---------------------------------------------------------------------
-   ---- *
+(* ------------------------------------------------------------------------- *
    correctness of interpreter
- * ---------------------------------------------------------------------
-   ---- *)
+ * ------------------------------------------------------------------------- *)
 
 let state_rel_def = cake_define
   `clos_interpProof_state_rel (s:('c,'ffi)closSem_state)
@@ -94,11 +93,9 @@ let interp_assum_def = cake_define
 
 (* HOL4 clos_interpProofScript.sml:187-190: a proof *)
 
-(* ---------------------------------------------------------------------
-   ---- *
+(* ------------------------------------------------------------------------- *
    not has_install ignores compiler oracle
- * ---------------------------------------------------------------------
-   ---- *)
+ * ------------------------------------------------------------------------- *)
 
 let _ = size_thms "closSem_v";;
 (* the termination relation that HOL4 gives, with
@@ -147,14 +144,10 @@ let state_rel'_def = cake_define
      t = pure_co (insert_interp ## I) o
        closSem_state_compile_oracle s`;;
 
-(* ---------------------------------------------------------------------
-   ---- *
+(* ------------------------------------------------------------------------- *
    preservation of observable semantics
- * ---------------------------------------------------------------------
-   ---- *)
+ * ------------------------------------------------------------------------- *)
 
-(* ---------------------------------------------------------------------
-   ---- *
+(* ------------------------------------------------------------------------- *
    syntactic lemmas
- * ---------------------------------------------------------------------
-   ---- *)
+ * ------------------------------------------------------------------------- *)

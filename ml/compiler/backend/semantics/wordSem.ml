@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  wordSem: ported from HOL4's
-    compiler/backend/semantics/wordSemScript.sml  *)
+    compiler/backend/semantics/wordSemScript.sml
+    A definition theory, with 77 definitions, 4 datatypes and 16
+    theorems.  Needed by 28 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -1275,8 +1277,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                                 | res -> res)))))))`];;
 hol4_overload "evaluate" "wordSem_evaluate";;
 
-(* We prove that the clock never increases and that termdep is constant.
-   *)
+(* We prove that the clock never increases and that termdep is constant. *)
 
 (* We store the theorems without fix_clock *)
 

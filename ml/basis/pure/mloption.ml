@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  mloption: ported from HOL4's
-    basis/pure/mloptionScript.sml  *)
+    basis/pure/mloptionScript.sml
+    A definition theory, with 6 definitions and no theorems.  Needed
+    by presLang.ml.  *)
 (* ======================================================== *)
 
 (*

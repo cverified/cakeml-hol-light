@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  pegComplete: ported from HOL4's
-    compiler/parsing/proofs/pegCompleteScript.sml  *)
+    compiler/parsing/proofs/pegCompleteScript.sml
+    A proof theory, with 9 definitions and 81 theorems.  Needed by
+    compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -121,16 +123,13 @@ let left_insert2_def = cake_define_list
 *)
 
 (*
-  The next reassociation scenario is the general story of a
-    left-associative
+  The next reassociation scenario is the general story of a left-associative
   binary operator, such that the rule is of the form
 
     P ::= P SEP C | C
 
-  Imagine you have a valid P-tree to the right, and a single C to the
-    left.
-  You can insert that C-tree into the valid P-tree in the leftmost
-    position,
+  Imagine you have a valid P-tree to the right, and a single C to the left.
+  You can insert that C-tree into the valid P-tree in the leftmost position,
   generating a new, valid P-tree.
 *)
 
@@ -472,8 +471,7 @@ hol4_overload "stoppers" "pegComplete_stoppers";;
 (* HOL4 pegCompleteScript.sml:1137: the overload RANK, which the port
    expands *)
 
-(* could generalise this slightly: allowing for nullable seps, but this
-   would
+(* could generalise this slightly: allowing for nullable seps, but this would
    require a more complicated condition on the sfx, something like
      (sfx ≠ [] ∧ ¬nullable cmlG [SEP] ⇒ HD sfx ∉ firstSet cmlG [SEP]) ∧
      (sfx ≠ [] ∧ nullable cmlG [SEP] ⇒ HD sfx ∉ firstSet cmlG [C])

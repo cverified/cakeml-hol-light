@@ -1,12 +1,13 @@
 (* ======================================================== *)
 (*  lexer_impl: ported from HOL4's
-    compiler/parsing/lexer_implScript.sml  *)
+    compiler/parsing/lexer_implScript.sml
+    A definition theory, with 13 definitions and 23 theorems.
+    Needed by compiler.ml.  *)
 (* ======================================================== *)
 
 (*
   Definition of the lexer: code for consuming tokens until a top-level
-  semicolon is found (semicolons can be hidden in `let`-`in`-`end`
-    blocks,
+  semicolon is found (semicolons can be hidden in `let`-`in`-`end` blocks,
   structures, signatures, and between parentheses).
 *)
 

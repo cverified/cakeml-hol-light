@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  inferProps: ported from HOL4's
-    compiler/inference/inferPropsScript.sml  *)
+    compiler/inference/inferPropsScript.sml
+    A proof theory about infer.ml, with 13 definitions and 158
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -50,11 +52,9 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* ---------- Dealing with the constraint set ---------- *)
 
-(* ---------- The next unification variable is monotone non-decreasing
-   ---------- *)
+(* ---------- The next unification variable is monotone non-decreasing ---------- *)
 
-(* ---------- The inferencer builds well-formed substitutions ----------
-   *)
+(* ---------- The inferencer builds well-formed substitutions ---------- *)
 
 (* ---------- The invariants of the inferencer ---------- *)
 

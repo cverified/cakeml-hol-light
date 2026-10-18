@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_letop: ported from HOL4's
-    compiler/backend/clos_letopScript.sml  *)
+    compiler/backend/clos_letopScript.sml
+    A definition theory, with 5 definitions and 2 theorems.  Needed
+    by clos_known.ml and clos_letopProof.ml.  *)
 (* ======================================================== *)
 
 (*

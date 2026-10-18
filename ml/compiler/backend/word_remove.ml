@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_remove: ported from HOL4's
-    compiler/backend/word_removeScript.sml  *)
+    compiler/backend/word_removeScript.sml
+    A definition theory, with 1 definition and 1 theorem.  Needed by
+    backend.ml, backend_passes.ml, wordConvsProof.ml,
+    word_removeProof.ml and word_to_word.ml.  *)
 (* ======================================================== *)
 
 (*

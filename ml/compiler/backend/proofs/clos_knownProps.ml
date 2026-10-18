@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_knownProps: ported from HOL4's
-    compiler/backend/proofs/clos_knownPropsScript.sml  *)
+    compiler/backend/proofs/clos_knownPropsScript.sml
+    A proof theory about clos_known.ml, with 2 definitions and 20
+    theorems.  Needed by clos_knownProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -15,10 +17,8 @@ needs "lib/sptree.ml";;
 (* HOL4 clos_knownPropsScript.sml:10: the ML values that the
    definitions below antiquote *)
 
-(* See merge as a join operation on a semi-lattice: it's a join because
-   it's
-   a little akin to a union: as merge is used, more and more values
-     might
+(* See merge as a join operation on a semi-lattice: it's a join because it's
+   a little akin to a union: as merge is used, more and more values might
    inhabit the approximation, with Other at the top corresponding to
    anything at all. *)
 

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  jsonLang: ported from HOL4's
-    compiler/backend/jsonLangScript.sml  *)
+    compiler/backend/jsonLangScript.sml
+    A definition theory, with 6 definitions, 1 datatype and no
+    theorems.  Needed by backend.ml, displayLang.ml, infer_t.ml and
+    presLang.ml.  *)
 (* ======================================================== *)
 
 (*

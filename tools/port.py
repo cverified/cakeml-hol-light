@@ -31,13 +31,15 @@ SRC = hol4.SRC
 
 HEAD = '''(* ======================================================== *)
 (*  %s: ported from HOL4's
-%s  *)%s
+%s  *)
 (* ======================================================== *)
 '''
 
-LIBNOTE = '''
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)'''
+# the theories that the second part of the first pass ports (the
+# proof theories, of which it takes the definitions)
+PROOFTHYS = set(l.split('\t')[0]
+                for l in open(T + 'order1b.txt').read().split('\n')
+                if l)
 
 
 # HOL4 declarations that only configure its parser or its
@@ -49,6 +51,23 @@ IGNORE_ML = [
   r'set_grammar_ancestry', r'type_abbrev', r'overload_on',
   r'Datatype\.', r'val _ = TeX', r'remove_ovl_mapping',
 ]
+
+
+def lay(pre, words, width=68):
+  """lay out the words in lines of at most width characters, the
+     first line starting with pre and the others indented like it,
+     with two spaces after a full stop"""
+  lines = []
+  cur = pre
+  for w in words:
+    sep = '' if cur == pre else '  ' if cur.endswith('.') else ' '
+    if len(cur) + len(sep) + len(w) <= width or cur == pre:
+      cur += sep + w
+    else:
+      lines.append(cur)
+      cur = pre + w
+  lines.append(cur)
+  return lines
 
 
 def fill(pre, words, width=70):
@@ -141,9 +160,21 @@ def balance_quotes(text):
   return text if nquotes(text) % 2 == 0 else text + ' ' + QUOTE
 
 
+def verbatim(text):
+  """a comment of a HOL4 source, as it stands.  The comments of
+     the sources are kept unaltered, whatever they are about, so
+     the lines of one may be longer than the port's own are (the
+     one thing that has to be put right is a quote that OCaml
+     would read as the start of a string)"""
+  out = '\n'.join(l.rstrip() for l in text.split('\n'))
+  if nquotes(out) % 2 == 0: return out
+  i = out.rfind('*)')
+  return out[:i] + QUOTE + ' ' + out[i:] if i >= 0 else out + ' ' + QUOTE
+
+
 def shorten(text, width=72):
-  """break the lines of a comment that are too long; a line that
-     opens the comment is continued under its (* """
+  """break the lines of a comment of the port's own that are too
+     long; a line that opens the comment is continued under its (* """
   out = '\n'.join(wrap(l.rstrip(), 0, width,
                        3 if l.lstrip().startswith('(*') else 2,
                        hard=True)
@@ -492,15 +523,14 @@ class Porter:
         self.out.append(self.at(b, 'code that the source has in a'
                                    ' comment'))
       elif comment_only(b.text):
-        self.out.append(shorten(b.text))
+        self.out.append(verbatim(b.text))
       else:
         self.out.append(self.at(b, 'a comment with ML code after it,'
                                    ' which the port does not have'))
     elif k == 'Theory':
       # the header of the port comes first, before the comments that
       # the HOL4 file has before its Theory line
-      self.head = HEAD % (b.name, self.srcname(),
-                          LIBNOTE if self.kind == 'lib' else '')
+      self.head = HEAD % (b.name, self.srcname())
     elif k == 'Ancestors':
       # an ancestor may be marked as [qualified]
       deps = [re.sub(r'\[.*\]', '', w) for w in b.body.split()] + \

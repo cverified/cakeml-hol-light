@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  source_to_flatProof: ported from HOL4's
-    compiler/backend/proofs/source_to_flatProofScript.sml  *)
+    compiler/backend/proofs/source_to_flatProofScript.sml
+    A proof theory about source_to_flat.ml, with 48 definitions, 2
+    datatypes and 188 theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -352,8 +354,7 @@ let src_orac_step_invs_def = cake_define
          c_orac (SUC k) = FST (inc_compile_prog env_id (c_orac k)
            (g decs))))) | _4 -> F)`;;
 
-(* the flatLang oracle is derived from the source oracle by
-   compile_prog,
+(* the flatLang oracle is derived from the source oracle by compile_prog,
    and the two compile oracles agree also *)
 let orac_rel_inner_def = cake_define
   `orac_rel_inner dec s (s_compiler:compiler_fun) (g:dec list->dec
@@ -438,25 +439,18 @@ let env_gen_future_rel_def = cake_define
            (envs c)) = SOME gen_final /\
          subspt (envs gen) gen_final) | NONE -> T)`;;
 
-(* indexes and ranges: the source-to-flat compiler allocates names in
-   order.
-   however, evaluation order is different to compile order. each block
-     of
-   decs is compiled together, but evaluated one at a time, and
-     evaluation may
+(* indexes and ranges: the source-to-flat compiler allocates names in order.
+   however, evaluation order is different to compile order. each block of
+   decs is compiled together, but evaluated one at a time, and evaluation may
    call Eval and jump to the processing of another block.
    so, index parameters (idx, end_idx, others) and fin_idx:
      - idx .. end_idx are the indices used in this block
-     - fin_idx is the final state after all completed compilation, so
-       the
+     - fin_idx is the final state after all completed compilation, so the
         indices after fin_idx are still available
-       + fin_idx changes with each Eval, so we keep it out of the index
-         tuple
-         to make the invariant (and inductive hyps) easier to
-           instantiate
+       + fin_idx changes with each Eval, so we keep it out of the index tuple
+         to make the invariant (and inductive hyps) easier to instantiate
      - other blocks may be on the stack of dec blocks being evaluated
-   all of those blocks of indices are disjoint, and they are also
-     disjoint
+   all of those blocks of indices are disjoint, and they are also disjoint
    from those indices that have actually been initialised. *)
 let idx_range_rel_def = cake_define
   `idx_range_rel interp genv s_n_ts s_n_en s_eval idxs <=>
@@ -473,10 +467,8 @@ let idx_range_rel_def = cake_define
      (!cn. cn >= s_n_en ==> ~(ExnStamp cn IN FRANGE (global_env_c
        genv))))`;;
 
-(* in eval mode, the length of the allocated globals space will end at
-   the
-   next vidx available for the next compilation. if no eval config,
-     we've
+(* in eval mode, the length of the allocated globals space will end at the
+   next vidx available for the next compilation. if no eval config, we've
    lost that information, but the prior end index will be before *)
 let fin_idx_match_def = cake_define
   `fin_idx_match len end_idx next_cfg = (match next_cfg with NONE ->
@@ -511,8 +503,7 @@ let invariant_def = cake_define
            (semanticPrimitives_state_eval_state s))`;;
 hol4_overload "invariant" "source_to_flatProof_invariant";;
 
-(* subsequent oracle config will still have the previous envs in store
-   *)
+(* subsequent oracle config will still have the previous envs in store *)
 let orac_config_envs_subspt_def = cake_define
   `orac_config_envs_subspt interp es1 es2 <=>
      OPTREL (\c c'. subspt (environment_store_env_gens (envs c))
@@ -697,8 +688,7 @@ let precondition1_def = cake_define
      semanticPrimitives_state_next_exn_stamp s1) init_genv_els /\ envs
    conf = envs empty_config`;;
 
-(* - connect semantics theorems of flat-to-flat passes
-   --------------------- *)
+(* - connect semantics theorems of flat-to-flat passes --------------------- *)
 
 let precondition_def = cake_define
   `precondition interp s env cfg ec prog <=>
@@ -706,14 +696,11 @@ let precondition_def = cake_define
      install_conf_rel (source_to_flat_config_pattern_cfg cfg) ec1
        ec)`;;
 
-(* - esgc_free theorems for compile_exp
-   ------------------------------------ *)
+(* - esgc_free theorems for compile_exp ------------------------------------ *)
 
-(* - esgc_free theorems for compile_decs
-   ----------------------------------- *)
+(* - esgc_free theorems for compile_decs ----------------------------------- *)
 
-(* - the source_to_flat compiler produces things which are esgc_free
-   ------- *)
+(* - the source_to_flat compiler produces things which are esgc_free ------- *)
 
 let _ = size_thms "dec";;
 let num_bindings_def = cake_define_wf

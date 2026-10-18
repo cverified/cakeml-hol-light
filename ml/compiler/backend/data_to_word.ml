@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_to_word: ported from HOL4's
-    compiler/backend/data_to_wordScript.sml  *)
+    compiler/backend/data_to_wordScript.sml
+    A definition theory, with 201 definitions, 3 datatypes and 40
+    theorems.  Needed by 18 files of the port.  *)
 (* ======================================================== *)
 
 (*

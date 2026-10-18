@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  evaluate: ported from HOL4's
-    semantics/evaluateScript.sml  *)
+    semantics/evaluateScript.sml
+    A definition theory, with 6 definitions and 13 theorems.  Needed
+    by 16 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -14,10 +16,8 @@ needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* The semantics is defined here using fix_clock so that HOL4 generates
- * provable termination conditions. However, after termination is
-   proved, we
- * clean up the definition (in HOL4) to remove occurrences of fix_clock.
-   *)
+ * provable termination conditions. However, after termination is proved, we
+ * clean up the definition (in HOL4) to remove occurrences of fix_clock. *)
 
 let fix_clock_def = cake_define
   `evaluate_fix_clock s (s',res) =
@@ -41,8 +41,7 @@ let do_eval_res_def = cake_define
        (semanticPrimitives_state_eval_state_fupd (K es1) s,Rval
        (env1,decs)))`;;
 
-(* list_result is equivalent to map_result (\v. [v]) I, where map_result
-   is
+(* list_result is equivalent to map_result (\v. [v]) I, where map_result is
  * defined in evalPropsTheory *)
 let list_result_def = cake_define_list
   [`list_result (Rval v) = Rval [v]`;

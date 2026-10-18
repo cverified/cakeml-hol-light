@@ -1,11 +1,13 @@
 (* ======================================================== *)
 (*  word_cse: ported from HOL4's
-    compiler/backend/word_cseScript.sml  *)
+    compiler/backend/word_cseScript.sml
+    A definition theory, with 44 definitions, 1 datatype and 10
+    theorems.  Needed by backend.ml, backend_passes.ml,
+    wordConvsProof.ml, word_cseProof.ml and word_to_word.ml.  *)
 (* ======================================================== *)
 
 (*
-  Defines a common sub-expression elimination pass on a wordLang
-    program.
+  Defines a common sub-expression elimination pass on a wordLang program.
   This pass is to run immediately after the SSA-like renaming.
 *)
 
@@ -102,11 +104,9 @@ let invalidate_regs_def = cake_define_list
    `invalidate_regs data (r :: rs) = invalidate_regs
   (invalidate_data data r) rs`];;
 
-(* Enter an odd register that a stored fact reads into the tracked set
-   as a
+(* Enter an odd register that a stored fact reads into the tracked set as a
   self-mapping, so that a later write to it resets the data. Registers
-  already tracked, and pre-allocated (EVEN) registers, are left alone.
-    *)
+  already tracked, and pre-allocated (EVEN) registers, are left alone. *)
 let register_read_def = cake_define
   `register_read data (r:num) =
      (if ~EVEN r /\ keep_data (knowledge_to_canonical data) r then
@@ -272,8 +272,7 @@ let memOpToNum_def = cake_define_list
    `memOpToNum asm_Store16 = ((24):num)`;
    `memOpToNum (asm_Store32:memop) = ((45):num)`];;
 
-(* Key for a load fact (kept in the separate loads_mem map): the memop
-   head
+(* Key for a load fact (kept in the separate loads_mem map): the memop head
    distinguishes the load widths; the address register is stored
    canonically. *)
 let loadToNumList_def = cake_define
@@ -309,8 +308,7 @@ let instToNumList_def = cake_define
 (*
 Principle:
 Each unique instruction is converted to a unique num list.
-Numbers between 0 and 99 corresponds to a unique identifier of an
-  instruction.
+Numbers between 0 and 99 corresponds to a unique identifier of an instruction.
 Numbers above 99 corresponds to a register or a word value.
 *)
 let OpCurrHeapToNumList_def = cake_define
@@ -328,8 +326,7 @@ let firstRegOfArith_def = cake_define_list
    `firstRegOfArith (asm_AddOverflow r _28 _29 _30) = r`;
    `firstRegOfArith (asm_SubOverflow r _31 _32 _33) = r`];;
 
-(* All registers an arith instruction writes (multi-output ops write
-   two), so
+(* All registers an arith instruction writes (multi-output ops write two), so
   that every written register is invalidated. *)
 let arithWrites_def = cake_define_list
   [`arithWrites (asm_Binop _34 r _35 _36) = [r]`;
@@ -357,8 +354,7 @@ let arithReads_def = cake_define
       | (asm_AddOverflow _76 r2 r3 _77) -> [r2; r3]
       | (asm_SubOverflow _78 r2 r3 _79) -> [r2; r3]`;;
 
-(* The general-purpose registers an fp instruction writes. Most write
-   only
+(* The general-purpose registers an fp instruction writes. Most write only
   fp-registers (disjoint from the tracked state), hence []. *)
 let fpWrites_def = cake_define
   `fpWrites x1 =
@@ -395,14 +391,10 @@ let add_to_data_def = cake_define
      (let i = instToNumList adjusted in
        add_to_data_aux data r i (Inst x))`;;
 
-(* As add_to_data, but for constants: a constant is rematerialisable for
-   free,
-   so a repeated Const is NOT replaced by a Move (which would only
-     extend the
-   holder's live range). The register equivalence is still recorded, so
-     later
-   instructions reading r are still canonicalised and can be CSE'd.
-     Caller
+(* As add_to_data, but for constants: a constant is rematerialisable for free,
+   so a repeated Const is NOT replaced by a Move (which would only extend the
+   holder's live range). The register equivalence is still recorded, so later
+   instructions reading r are still canonicalised and can be CSE'd. Caller
    guards ODD r. *)
 let add_to_data_const_def = cake_define
   `add_to_data_const data r w =
@@ -504,8 +496,7 @@ let dest_Var_def = cake_define
   branch: exactly the entries present with equal value on both sides. *)
 
 (* First-order equality-intersection for the instruction map (written
-  without higher-order functions so it can be translated by cv_trans).
-    *)
+  without higher-order functions so it can be translated by cv_trans). *)
 let bm_inter_eq_acc_def = cake_define_list
   [`bm_inter_eq_acc m2 Tip acc = acc`;
    `bm_inter_eq_acc m2 (Bin n k v l r) acc =
@@ -517,8 +508,7 @@ let bm_inter_eq_acc_def = cake_define_list
 let bm_inter_eq_def = cake_define
   `bm_inter_eq m1 m2 = bm_inter_eq_acc m2 m1 balanced_map_empty`;;
 
-(* to_latest is reset: its entries must stay within the domain of the
-   merged
+(* to_latest is reset: its entries must stay within the domain of the merged
   to_canonical, and they regenerate as soon as new facts are stored. *)
 let merge_data_def = cake_define
   `merge_data d1 d2 =
@@ -532,18 +522,14 @@ let merge_data_def = cake_define
 (*
 Principle:
   We keep track of a map containing all instructions already dealt with,
-    and we explore the program to find instructions matching one in the
-      map.
-  If we find one, we change the instruction by a simple move and we keep
-    track
+    and we explore the program to find instructions matching one in the map.
+  If we find one, we change the instruction by a simple move and we keep track
     of the registers equivalence.
-  If we don't find any, depending on the instruction, we store it into
-    the map
+  If we don't find any, depending on the instruction, we store it into the map
     under the shape of an num list.
 Signification of the terms:
     r -> registers or imm_registers
-    rs-> multiple registers associations ((num # num) list) (For the
-      Move)
+    rs-> multiple registers associations ((num # num) list) (For the Move)
     i -> instructions
     e -> expressions
     x -> "store_name"
@@ -667,39 +653,30 @@ let seqs_def = cake_define_list
   :: xs))`];;
 hol4_overload "Seqs" "word_cse_Seqs";;
 
-(* Concrete word type: the load-fact keys compare distinct offsets,
-   which is
+(* Concrete word type: the load-fact keys compare distinct offsets, which is
    only decidable at a fixed word width. *)
 
-(* Loads from the same canonical address at the same width are CSE'd
-   (and a
-   chain hanging off the loaded value then CSEs too); a different width
-     is a
+(* Loads from the same canonical address at the same width are CSE'd (and a
+   chain hanging off the loaded value then CSEs too); a different width is a
    different fact; any store invalidates all load facts but no register
    facts. *)
 
-(* Set CurrHeap conservatively resets all knowledge (it is not emitted
-   by
-   data_to_word, so a finer treatment is not worth its proof cost):
-     nothing
+(* Set CurrHeap conservatively resets all knowledge (it is not emitted by
+   data_to_word, so a finer treatment is not worth its proof cost): nothing
    after it is CSE'd. *)
 
 (* A repeated LocValue of the same label is CSE'd to a Move. *)
 
-(* LongMul clobbers both outputs (7 and 9), so the value previously
-   stored in
-   9 is invalidated and the later Add is NOT replaced by a Move from 9.
-     *)
+(* LongMul clobbers both outputs (7 and 9), so the value previously stored in
+   9 is invalidated and the later Add is NOT replaced by a Move from 9. *)
 
-(* An instruction that reads the register it writes is not stored as a
-   fact,
+(* An instruction that reads the register it writes is not stored as a fact,
    so the second Add (reading the NEW 7) is not replaced by a Move. *)
 
 (* Facts valid after both arms of an If survive the join: the Add fact
    (holder 7) is used both inside the first arm and after the join. *)
 
-(* An arm that clobbers a tracked register resets its branch knowledge,
-   so
+(* An arm that clobbers a tracked register resets its branch knowledge, so
    nothing survives the join and the trailing Add is not CSE'd. *)
 
 (* HOL4 word_cseScript.sml:905: ML code, not ported *)

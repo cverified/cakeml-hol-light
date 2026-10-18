@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  lab_filter: ported from HOL4's
-    compiler/backend/lab_filterScript.sml  *)
+    compiler/backend/lab_filterScript.sml
+    A definition theory, with 2 definitions and 1 theorem.  Needed
+    by backend_passes.ml, lab_filterProof.ml and lab_to_target.ml.  *)
 (* ======================================================== *)
 
 (*

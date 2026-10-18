@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  dataSem: ported from HOL4's
-    compiler/backend/semantics/dataSemScript.sml  *)
+    compiler/backend/semantics/dataSemScript.sml
+    A definition theory, with 73 definitions, 5 datatypes and 16
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -208,8 +210,7 @@ let stack_to_vs_def = cake_define
        extract_stack (stack s)) ++ global_to_vs (dataSem_state_global
        s)`;;
 
-(* Measures the amount of space everything in a dataLang "heap" would
-   need
+(* Measures the amount of space everything in a dataLang "heap" would need
    to fit in wordLang memory (over-approximation) *)
 let size_of_heap_def = cake_define
   `size_of_heap (s:('c,'ffi)dataSem_state) =
@@ -242,8 +243,7 @@ let add_space_def = cake_define
 (* Args-aware variant: cost reflects op_args + non-arg locals as the
    GC-root set, matching wordSem's view at the op's inner Alloc.
    stack_to_vs already covers s.locals (which, when the dataLang
-   evaluator hands the state to do_app, is the NARROW cut without args).
-     *)
+   evaluator hands the state to do_app, is the NARROW cut without args). *)
 let size_of_heap_args_def = cake_define
   `size_of_heap_args op_args (s:('c,'ffi)dataSem_state) =
      (let (n,_27,_28) = size_of (dataSem_state_limits s) (op_args ++
@@ -915,8 +915,7 @@ let bad_thunk_update_def = cake_define
      m = Evaluated /\ ~(dest_thunk v refs = NotThunk)`;;
 hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
 
-(* mirrors bviSem$finalise_cons, but threads the timestamp counter so
-   that
+(* mirrors bviSem$finalise_cons, but threads the timestamp counter so that
    each block produced by the finalisation gets a fresh time stamp *)
 (* HOL4 dataSemScript.sml:854-858: the tactic that proves the
    termination *)
@@ -1746,8 +1745,7 @@ let evaluate_peak_def = cake_define
 
 (* We prove that the clock never increases. *)
 
-(* Finally, we remove fix_clock from the induction and definition
-   theorems. *)
+(* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* observational semantics *)
 

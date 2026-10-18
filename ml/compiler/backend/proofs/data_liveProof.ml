@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_liveProof: ported from HOL4's
-    compiler/backend/proofs/data_liveProofScript.sml  *)
+    compiler/backend/proofs/data_liveProofScript.sml
+    A proof theory about data_live.ml, with 1 definition and 14
+    theorems.  Needed by bvi_to_dataProof.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_mtiProof: ported from HOL4's
-    compiler/backend/proofs/clos_mtiProofScript.sml  *)
+    compiler/backend/proofs/clos_mtiProofScript.sml
+    A proof theory about clos_mti.ml, with 10 definitions and 68
+    theorems.  Needed by clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

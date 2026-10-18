@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  compilerProof: ported from HOL4's
-    compiler/proofs/compilerProofScript.sml  *)
+    compiler/proofs/compilerProofScript.sml
+    A proof theory about compiler.ml, with 4 definitions and 8
+    theorems.  No file of the port needs it.  *)
 (* ======================================================== *)
 
 (*

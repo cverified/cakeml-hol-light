@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_callProof: ported from HOL4's
-    compiler/backend/proofs/clos_callProofScript.sml  *)
+    compiler/backend/proofs/clos_callProofScript.sml
+    A proof theory about clos_call.ml, with 22 definitions and 140
+    theorems.  Needed by clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

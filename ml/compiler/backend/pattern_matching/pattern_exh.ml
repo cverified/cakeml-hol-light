@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  pattern_exh: ported from HOL4's
-    compiler/backend/pattern_matching/pattern_exhScript.sml  *)
+    compiler/backend/pattern_matching/pattern_exhScript.sml
+    A definition theory, with 31 definitions, 1 datatype and 52
+    theorems.  Needed by pattern_comp.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -12,12 +14,9 @@
   expanding each row into its Or-free variants, then decides whether the
   resulting one-column pattern matrix covers every value.
 
-  The matrix algorithm (exh_matrix) works on a matrix of pattern
-    vectors.
-  Looking at the first column it computes, from the sibling information
-    in
-  the patterns, an over-approximation col_ctors of the set of
-    constructors
+  The matrix algorithm (exh_matrix) works on a matrix of pattern vectors.
+  Looking at the first column it computes, from the sibling information in
+  the patterns, an over-approximation col_ctors of the set of constructors
   a well-typed value can have there.
 
     - If that set is unknown (NONE) the matrix is exhaustive when the
@@ -25,8 +24,7 @@
       value whose constructor is not mentioned.
 
     - If the set is known, the matrix is exhaustive when every
-      specialised matrix is: each constructor of the set is considered
-        in
+      specialised matrix is: each constructor of the set is considered in
       turn, and its arguments are pushed onto the front of the vector.
 
   Only well-typed values matter, i.e. values for which no row of the
@@ -43,8 +41,7 @@ needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 
-(* --------------------------------------------------------------------
-   *
+(* -------------------------------------------------------------------- *
    Constructors of values.
 
    A well-typed value at a given position is a tagged term (TagC), an
@@ -52,8 +49,7 @@ needs "semantics/semanticPrimitives.ml";;
    are deliberately not constructors here: their type is (for all
    practical purposes) infinite, so a column of literals is never a
    complete signature.
- * --------------------------------------------------------------------
-   *)
+ * -------------------------------------------------------------------- *)
 
 let ctor_INDUCT,ctor_RECURSION = define_datatype
   "ctor = TagC (num) (num) | TupC (num) | RefC";;
@@ -68,15 +64,13 @@ let anys_def = cake_define_list
    `anys (SUC n) = pattern_semantics_Any :: anys n`];;
 
 
-(* --------------------------------------------------------------------
-   *
+(* -------------------------------------------------------------------- *
    Removing Or-patterns.
 
    expand p is the list of Or-free patterns p can be split into.  Given
    that pmatch does not type-fail, p matches a value exactly when one of
    the patterns in expand p does.
- * --------------------------------------------------------------------
-   *)
+ * -------------------------------------------------------------------- *)
 
 let add_head_def = cake_define_list
   [`add_head x [] = []`;
@@ -122,16 +116,14 @@ let or_rows_def = cake_define_list
    `or_rows ((p,e) :: rows) = mk_rows (expand p) ++ or_rows rows`];;
 
 
-(* --------------------------------------------------------------------
-   *
+(* -------------------------------------------------------------------- *
    The constructors a head pattern allows a well-typed value to have.
 
    NONE means "no information", i.e. every constructor is allowed.  Note
    that a missing sibling list (Cons (SOME (t,NONE)) _), which is how
    exceptions are encoded, gives no information, and neither does a
    literal pattern.
- * --------------------------------------------------------------------
-   *)
+ * -------------------------------------------------------------------- *)
 
 let tag_ctors_def = cake_define_list
   [`tag_ctors [] = []`;
@@ -174,17 +166,14 @@ let col_ctors_def = cake_define_list
   (col_ctors rows)`];;
 
 
-(* --------------------------------------------------------------------
-   *
+(* -------------------------------------------------------------------- *
    Specialised and default matrices.
 
    spec_row c takes the rows that can match a value whose head
    constructor is c, and replaces the head pattern by the patterns for
-   the arguments of c.  default_row keeps only the rows that start with
-     a
+   the arguments of c.  default_row keeps only the rows that start with a
    wildcard, dropping the head pattern.
- * --------------------------------------------------------------------
-   *)
+ * -------------------------------------------------------------------- *)
 
 let spec_row_def = cake_define
   `spec_row c x2 =
@@ -221,18 +210,15 @@ let default_mat_def = cake_define_list
    `default_mat (r :: rows) = default_row r ++ default_mat rows`];;
 
 
-(* --------------------------------------------------------------------
-   *
+(* -------------------------------------------------------------------- *
    Measures used for the termination of exh_matrix.
 
-   Specialising strictly decreases the number of constructor nodes in
-     the
+   Specialising strictly decreases the number of constructor nodes in the
    matrix, provided some head pattern is a constructor pattern -- which
    is exactly what col_ctors returning SOME guarantees.  Taking the
    default matrix does not increase that count, and strictly decreases
    the total number of columns.
- * --------------------------------------------------------------------
-   *)
+ * -------------------------------------------------------------------- *)
 
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
@@ -269,11 +255,9 @@ let mats_len_def = cake_define_list
    `mats_len (m :: ms) = MAX (mat_len m) (mats_len ms)`];;
 
 
-(* --------------------------------------------------------------------
-   *
+(* -------------------------------------------------------------------- *
    The matrix algorithm and the entry point.
- * --------------------------------------------------------------------
-   *)
+ * -------------------------------------------------------------------- *)
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -301,23 +285,20 @@ let exh_rows_def = cake_define
   `exh_rows rows = exh_matrix (or_rows rows)`;;
 
 
-(* --------------------------------------------------------------------
-   *
+(* -------------------------------------------------------------------- *
    A tail-recursive version, for execution.
 
    exh_matrix is a mutual recursion justified by a non-structural
    measure, which cv_translation cannot take.  exh_all is a single
    tail recursion that keeps the matrices still to be checked in a
-   worklist.  It computes exactly the same answer -- exh_rows_eq below
-     --
+   worklist.  It computes exactly the same answer -- exh_rows_eq below --
    so it is the equation the compiler is run through.
 
    Its termination is justified by counting the steps the original
    recursion takes: exh_steps has exactly the recursion structure of
    exh_matrix, hence exactly the same termination argument, and every
    step exh_all makes consumes one of those steps.
- * --------------------------------------------------------------------
-   *)
+ * -------------------------------------------------------------------- *)
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -359,8 +340,7 @@ let exh_all_def = cake_define_list_try_tac (fun () ->
            (spec_mats cs (r :: rows) ++ ms))`];;
 
 
-(* =====================================================================
-   = *
+(* ====================================================================== *
    Soundness
 
    The theorem to prove is the one that justifies replacing the last row
@@ -369,23 +349,18 @@ let exh_all_def = cake_define_list_try_tac (fun () ->
      match refs rows v <> NONE /\ exh_rows rows ==>
      match refs rows v <> SOME MatchFailure
 
-   Read through match_def that says: if no row type-fails on v, then
-     some
-   row succeeds on v.  Everything below is phrased in those terms, at
-     the
+   Read through match_def that says: if no row type-fails on v, then some
+   row succeeds on v.  Everything below is phrased in those terms, at the
    level of matrices: "ok" means no row type-fails, "hit" means some row
    succeeds.
- * =====================================================================
-   = *)
+ * ====================================================================== *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    pand combines the results of two matches performed one after the
    other.  It is exactly how pmatch_list glues a row together, and it
    makes the case analysis below disappear into two rewrite rules.
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)
 
 let pand_def = cake_define_list
   [`pand PMatchSuccess y = y`;
@@ -398,40 +373,32 @@ let pand_def = cake_define_list
    would compete with pmatch_list_cons and leave case expressions
    behind. *)
 
-(* Stated with the width as an argument rather than as LENGTH as, so
-   that
+(* Stated with the width as an argument rather than as LENGTH as, so that
    it also rewrites the anys (ctor_arity c) that spec_row produces. *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    What the first-order list-building helpers put into their results.
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    Expanding Or-patterns.
 
    An expanded pattern never type-fails where the original does not, and
    if an expanded pattern matches then so does the original.  (The
    converse also holds, but soundness does not need it.)
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    The constructor of a value, and its arguments.
 
-   dest_val is only defined for the values that a constructor pattern
-     can
+   dest_val is only defined for the values that a constructor pattern can
    possibly match; literals and Other have no constructor.  Note that a
    reference has a constructor only when the pointer is in the heap,
    which is exactly when Ref does not type-fail.
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)
 
 let dest_val_def = cake_define
   `dest_val refs x2 =
@@ -451,40 +418,31 @@ let dest_val_def = cake_define
 (* ... and therefore so does the intersection over a whole column. *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    Specialising and defaulting preserve match results.
 
    This is the one fact that makes the whole induction go through: every
    row of a transformed matrix gives exactly the same three-valued match
    result, against the transformed value vector, as the row it came from
    does against the original one.  Rows that are dropped simply have no
-   counterpart, which costs nothing here -- dropping rows can only make
-     a
+   counterpart, which costs nothing here -- dropping rows can only make a
    matrix less exhaustive, and soundness is the direction we need.
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    Soundness of the matrix algorithm.
 
    "ok" (no row type-fails) is inherited by the sub-matrices, and "hit"
    (some row succeeds) is reflected back out of them.
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    From the matrix back to match.
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)
 
 
-(* ---------------------------------------------------------------------
-   - *
+(* ---------------------------------------------------------------------- *
    Soundness of exh_rows: the theorem the pattern compiler needs.
- * ---------------------------------------------------------------------
-   - *)
+ * ---------------------------------------------------------------------- *)

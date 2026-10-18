@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_bignumProof: ported from HOL4's
-    compiler/backend/proofs/word_bignumProofScript.sml  *)
+    compiler/backend/proofs/word_bignumProofScript.sml
+    A proof theory about word_bignum.ml, with 25 definitions, 1
+    datatype and 74 theorems.  Needed by 4 files of the port.  *)
 (* ======================================================== *)
 
 (*

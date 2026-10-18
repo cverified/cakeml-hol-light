@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_inst: ported from HOL4's
-    compiler/backend/word_instScript.sml  *)
+    compiler/backend/word_instScript.sml
+    A definition theory, with 14 definitions and 7 theorems.  Needed
+    by backend.ml, backend_passes.ml, wordConvsProof.ml,
+    word_instProof.ml and word_to_word.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -139,8 +142,7 @@ let is_Lookup_CurrHeap_def = cake_define
 
 (*
   Maximal Munch instruction selection on (binary) expressions
-  c is an asm_config to check validity of imms (TODO: assume 0w is
-    accepted?)
+  c is an asm_config to check validity of imms (TODO: assume 0w is accepted?)
   Optimized munches (assumes Consts are on the RIGHT):
   --Load [Op Add [exp;Const w]]
   Op op [exp;Const w]
@@ -219,13 +221,11 @@ let inst_select_exp_def = cake_define_wf
 First munch
 EVAL ``inst_select_exp``
  x64_config 5 5 (Load (Op Add [Const 400w; Var 6]))``
-EVAL ``inst_select_exp x64_config 5 5 (Load (Op Add [Const 99999999999w;
-  Var 6]))``
+EVAL ``inst_select_exp x64_config 5 5 (Load (Op Add [Const 99999999999w; Var 6]))``
 
 Second munch
 EVAL ``inst_select_exp x64_config 0 99
-EVAL ``(pull_exp (Op And [Const (99w:64 word); Op Add [Op Add [];Op Or
-  []]]))``
+EVAL ``(pull_exp (Op And [Const (99w:64 word); Op Add [Op Add [];Op Or []]]))``
 *)
 
 (*Flattens all expressions in program, temp must a fresh var*)

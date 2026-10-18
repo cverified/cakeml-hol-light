@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  typeSoundInvariants: ported from HOL4's
-    semantics/proofs/typeSoundInvariantsScript.sml  *)
+    semantics/proofs/typeSoundInvariantsScript.sml
+    A proof theory, with 18 definitions, 1 datatype and no theorems.
+    Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -49,8 +51,7 @@ let tenv_val_exp_ok_def = cake_define_list
         check_freevars (tvs + num_tvs tenv) [] t /\
         tenv_val_exp_ok tenv`];;
 
-(* Global constructor type environments keyed by constructor name and
-   type
+(* Global constructor type environments keyed by constructor name and type
  * stamp. Contains the type variables, the type of the arguments, and
  * the identity of the type. *)
 new_type_abbrev("ctMap",`: (stamp,mlstring list#t list#num)fmap`);;
@@ -70,10 +71,8 @@ let ctMap_ok_def = cake_define
        FLOOKUP ctMap stamp2 = SOME (tvs2,ts2,ti) ==>
        same_type stamp1 stamp2)`;;
 
-(* Check that a constructor type environment is consistent with a
-   runtime type
- * enviroment, using the full type keyed constructor type environment to
-   ensure
+(* Check that a constructor type environment is consistent with a runtime type
+ * enviroment, using the full type keyed constructor type environment to ensure
  * that the correct types are used. *)
 let type_ctor_def = cake_define
   `type_ctor ctMap _2 (n,stamp) (tvs,ts,ti) <=>
@@ -186,8 +185,7 @@ let type_s_def = cake_define
            ==>
          type_sv ctMap tenvS sv st))`;;
 
-(* The global constructor type environment has the primitive exceptions
-   in it *)
+(* The global constructor type environment has the primitive exceptions in it *)
 let ctMap_has_exns_def = cake_define
   `ctMap_has_exns ctMap <=>
      FLOOKUP ctMap bind_stamp = SOME ([],[],Texn_num) /\
@@ -195,8 +193,7 @@ let ctMap_has_exns_def = cake_define
      FLOOKUP ctMap div_stamp = SOME ([],[],Texn_num) /\
      FLOOKUP ctMap subscript_stamp = SOME ([],[],Texn_num)`;;
 
-(* The global constructor type environment has the list primitives in it
-   *)
+(* The global constructor type environment has the list primitives in it *)
 let ctMap_has_lists_def = cake_define
   `ctMap_has_lists ctMap <=>
      FLOOKUP ctMap (TypeStamp (implode "[]") list_type_num) = SOME
@@ -207,8 +204,7 @@ let ctMap_has_lists_def = cake_define
      (!cn. ~(cn = (implode "::")) /\ ~(cn = (implode "[]")) ==>
        FLOOKUP ctMap (TypeStamp cn list_type_num) = NONE)`;;
 
-(* The global constructor type environment has the bool primitives in it
-   *)
+(* The global constructor type environment has the bool primitives in it *)
 let ctMap_has_bools_def = cake_define
   `ctMap_has_bools ctMap <=>
      FLOOKUP ctMap (TypeStamp (implode "True") bool_type_num) = SOME

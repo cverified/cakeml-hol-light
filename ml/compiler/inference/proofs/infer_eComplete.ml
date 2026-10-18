@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  infer_eComplete: ported from HOL4's
-    compiler/inference/proofs/infer_eCompleteScript.sml  *)
+    compiler/inference/proofs/infer_eCompleteScript.sml
+    A proof theory, with 1 definition and 48 theorems.  Needed by
+    inferComplete.ml, inferSound.ml and type_eDeterm.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -19,8 +21,7 @@ needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(*Useful lemmas about pure add constraints, some of these imply the
-   others*)
+(*Useful lemmas about pure add constraints, some of these imply the others*)
 
 (*t_compat is preserved over certain types of pure_add_constraints*)
 
@@ -40,15 +41,13 @@ needs "semantics/typeSystem.ml";;
 
 (*Adding a list of keys that did not already exist is safe*)
 
-(*t_compat preserves all grounded (no unification variable after walk)
-   terms*)
+(*t_compat preserves all grounded (no unification variable after walk) terms*)
 
 (*Remove every uvar in the FDOM if we walkstar using a completed map*)
 
 (*Double sided t_compat thm*)
 
-(*Free properties when extending the completed map with uvar->ground
-   var*)
+(*Free properties when extending the completed map with uvar->ground var*)
 
 (*This occurs when looking up a list updated fmap*)
 (* HOL4 infer_eCompleteScript.sml:629-645: a proof *)
@@ -99,8 +98,7 @@ let simp_tenv_invC_def = cake_define
 
 (*convert on both sides of eqn*)
 
-(*Substituting every tvs away with something that has no tvs leaves none
-   left*)
+(*Substituting every tvs away with something that has no tvs leaves none left*)
 
 (*Specialize check_t_less a bit since we use this form a lot*)
 

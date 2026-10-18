@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_to_bvi: ported from HOL4's
-    compiler/backend/bvl_to_bviScript.sml  *)
+    compiler/backend/bvl_to_bviScript.sml
+    A definition theory, with 34 definitions, 1 datatype and 17
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*

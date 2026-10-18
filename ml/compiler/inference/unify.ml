@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  unify: ported from HOL4's
-    compiler/inference/unifyScript.sml  *)
+    compiler/inference/unifyScript.sml
+    A definition theory, with 65 definitions, 2 datatypes and 224
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -202,11 +204,9 @@ let subterm_def = cake_define
 let tcocwl_def = cake_define
   `tcocwl s n is = TAILREC (kcocwl_code s n) is`;;
 
-(* ---------------------------------------------------------------------
-   -
+(* ----------------------------------------------------------------------
     tail-recursification of cwalkstar
-   ---------------------------------------------------------------------
-     - *)
+   ---------------------------------------------------------------------- *)
 
 let cwalkstarl_def = cake_define_list
   [`cwalkstarl s [] = []`;
@@ -409,8 +409,7 @@ let t_vR_def = cake_define
 let t_rangevars_def = cake_define
   `t_rangevars s = rangevars (encode_infer_t o_f s)`;;
 
-(* ---------- Lemmas about unification that don't need to go into the
-   encoding ----------*)
+(* ---------- Lemmas about unification that don't need to go into the encoding ----------*)
 
 (*Theorems about unification for completeness proof*)
 

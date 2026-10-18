@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flatLang: ported from HOL4's
-    compiler/backend/flatLangScript.sml  *)
+    compiler/backend/flatLangScript.sml
+    A definition theory, with 4 definitions, 3 datatypes and 8
+    theorems.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*

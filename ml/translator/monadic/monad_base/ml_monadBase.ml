@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  ml_monadBase: ported from HOL4's
-    translator/monadic/monad_base/ml_monadBaseScript.sml  *)
+    translator/monadic/monad_base/ml_monadBaseScript.sml
+    A definition theory, with 26 definitions, 2 datatypes and 27
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -10,8 +12,7 @@
 
 needs "semantics/semanticPrimitives.ml";;
 
-(* 'a is the type of the state, 'b is the type of successful
-   computations, and
+(* 'a is the type of the state, 'b is the type of successful computations, and
  * 'c is the type of exceptions *)
 
 let exc_INDUCT,exc_RECURSION = define_datatype

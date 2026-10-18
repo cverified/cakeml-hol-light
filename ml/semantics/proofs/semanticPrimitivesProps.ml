@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  semanticPrimitivesProps: ported from HOL4's
-    semantics/proofs/semanticPrimitivesPropsScript.sml  *)
+    semantics/proofs/semanticPrimitivesPropsScript.sml
+    A proof theory about semanticPrimitives.ml, with 20 definitions
+    and 61 theorems.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*

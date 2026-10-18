@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  gen_gc_partial: ported from HOL4's
-    compiler/backend/gc/gen_gc_partialScript.sml  *)
+    compiler/backend/gc/gen_gc_partialScript.sml
+    A definition theory, with 27 definitions, 2 datatypes and 110
+    theorems.  Needed by 5 files of the port.  *)
 (* ======================================================== *)
 
 (*

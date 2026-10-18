@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  riscv_config: ported from HOL4's
-    compiler/backend/riscv/riscv_configScript.sml  *)
+    compiler/backend/riscv/riscv_configScript.sml
+    A definition theory, with 2 definitions and 1 theorem.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*

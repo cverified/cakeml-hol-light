@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  linear_scanProof: ported from HOL4's
-    compiler/backend/reg_alloc/proofs/linear_scanProofScript.sml  *)
+    compiler/backend/reg_alloc/proofs/linear_scanProofScript.sml
+    A proof theory about linear_scan.ml, with 15 definitions and 188
+    theorems.  Needed by word_allocProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -22,11 +24,9 @@ hol4_overload "++" "otherwise";;
 
 (* TODO: clean up this file: e.g., move things upstream *)
 
-(* why breaking encapsulation like this? To get rid of the assumption
-   `wf s` *)
+(* why breaking encapsulation like this? To get rid of the assumption `wf s` *)
 
-(* This theorem looks like lipschitz continuity: it says something like
-   f(x+y) <= f(x)+y *)
+(* This theorem looks like lipschitz continuity: it says something like f(x+y) <= f(x)+y *)
 
 (* HOL4 linear_scanProofScript.sml:2130: ML code, not ported *)
 
@@ -112,8 +112,7 @@ let good_linear_scan_state_def = cake_define
 
 (* HOL4 linear_scanProofScript.sml:2444-2451: a proof *)
 
-(* TODO: this should be part of the standard library, but I couldn't
-   find it *)
+(* TODO: this should be part of the standard library, but I couldn't find it *)
 let IS_SPARSE_SUBLIST_def = cake_define_list
   [`IS_SPARSE_SUBLIST [] l2 = T`;
    `IS_SPARSE_SUBLIST (x :: xs) [] = F`;

@@ -1,15 +1,14 @@
 (* ======================================================== *)
 (*  compiler: ported from HOL4's
-    compiler/compilerScript.sml  *)
+    compiler/compilerScript.sml
+    A definition theory, with 48 definitions, 2 datatypes and no
+    theorems.  Needed by compilerProof.ml and dataSem.ml.  *)
 (* ======================================================== *)
 
 (*
-  Definition of the CakeML compiler as a function that takes a list of
-    command
-  line arguments and a string corresponding to standard input, and
-    produces a
-  pair of output strings for standard error and standard output (the
-    latter
+  Definition of the CakeML compiler as a function that takes a list of command
+  line arguments and a string corresponding to standard input, and produces a
+  pair of output strings for standard error and standard output (the latter
   containing the generated machine code if successful).
 *)
 
@@ -59,8 +58,7 @@ let staterr_INDUCT,staterr_RECURSION = define_datatype
 
 (* HOL4 compilerScript.sml:18-117: ML code, not ported *)
 
-(* == Build info
-   =========================================================== *)
+(* == Build info =========================================================== *)
 
 (* HOL4 compilerScript.sml:121: ML code, not ported *)
 (*"" *)
@@ -90,8 +88,7 @@ let current_build_info_str_def = cake_define
           implode "Version details:\n"; implode "";
           implode "\n"; commit; hol; poly])`;;
 
-(* =====================================================================
-   ==== *)
+(* ========================================================================= *)
 
 let compiler_config_FIELDS = define_record "compiler_config"
   ["inferencer_config","inf_env";
@@ -421,8 +418,7 @@ let is_error_msg_def = cake_define
   `is_error_msg x = isPrefix (implode "###") x`;;
 
 (* TODO: translator fails inside mlstringLib.mlstring_case_conv
-  when the following definition just matches against (strlit str)
-    directly *)
+  when the following definition just matches against (strlit str) directly *)
 let parse_num_def = cake_define
   `parse_num str =
    (let str = explode str in
@@ -775,18 +771,15 @@ let format_compiler_result_def = cake_define_list
       (bytes_export (the [] (lab_to_target_config_ffi_names
         (backend_config_lab_conf c))) bytes data,implode "")`];;
 
-(* FIXME TODO: this is an awful workaround to avoid implementing a file
-   writer
+(* FIXME TODO: this is an awful workaround to avoid implementing a file writer
    right now. *)
 let add_tap_output_def = cake_define
   `add_tap_output td out =
      (if td = misc_Nil then out else td:mlstring app_list)`;;
 
-(* The top-level compiler with everything instantiated except it doesn't
-   do exporting *)
+(* The top-level compiler with everything instantiated except it doesn't do exporting *)
 
-(* The top-level compiler with almost everything instantiated except the
-   top-level configuration *)
+(* The top-level compiler with almost everything instantiated except the top-level configuration *)
 cake_declare "basis" `:dec list`;;
 
 let compile_64_def = cake_define

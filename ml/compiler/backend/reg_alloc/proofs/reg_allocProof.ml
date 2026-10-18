@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  reg_allocProof: ported from HOL4's
-    compiler/backend/reg_alloc/proofs/reg_allocProofScript.sml  *)
+    compiler/backend/reg_alloc/proofs/reg_allocProofScript.sml
+    A proof theory about reg_alloc.ml, with 12 definitions and 119
+    theorems.  Needed by linear_scanProof.ml and word_allocProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -90,11 +92,9 @@ let good_pref_def = cake_define
 (* M_success conditions *)
 
 (* ---
-  TODO: These lemmas should be automatically generated for each array
-    used!
+  TODO: These lemmas should be automatically generated for each array used!
 
-  Note that they can be stated independently of the precise state
-    invariants
+  Note that they can be stated independently of the precise state invariants
   (as shown below)
 
   The array components we have are:
@@ -107,12 +107,10 @@ let good_pref_def = cake_define
 
 (* --- *)
 
-(* The following are also routine theorems, but slightly more
-   complicated.
+(* The following are also routine theorems, but slightly more complicated.
   TODO: can they be stated generically? *)
 
-(* This asserts, e.g. that the monadic map of (\i.node_tag_sub i)
-   returns
+(* This asserts, e.g. that the monadic map of (\i.node_tag_sub i) returns
    success if the input list were all within range *)
 (* --- *)
 
@@ -121,8 +119,7 @@ let good_pref_def = cake_define
 (* Correctness for the second step *)
 
 (*
-  Good negated preference oracle may only inspect, but not touch the
-    state
+  Good negated preference oracle may only inspect, but not touch the state
   Moreover, it must always select an element ≥ k not in the input list
 *)
 let good_neg_pref_def = cake_define

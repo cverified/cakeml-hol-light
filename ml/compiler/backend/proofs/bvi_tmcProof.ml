@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_tmcProof: ported from HOL4's
-    compiler/backend/proofs/bvi_tmcProofScript.sml  *)
+    compiler/backend/proofs/bvi_tmcProofScript.sml
+    A proof theory about bvi_tmc.ml, with 25 definitions and 169
+    theorems.  Needed by bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -169,8 +171,7 @@ let state_rel_def = cake_define
 hol4_overload "state_rel" "bvi_tmcProof_state_rel";;
 
 (* Structural facts about compile_each and the namespace allocation.
-   These follow bvi_tailrecProof; they only depend on the recursion
-     shape of
+   These follow bvi_tailrecProof; they only depend on the recursion shape of
    compile_each (NONE keeps an entry, SOME emits wrapper + worker). *)
 
 let eor_rel_def = cake_define
@@ -257,8 +258,7 @@ let mb_rel_def = cake_define_try_tac (fun () ->
                  F)
         | (_5,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`;;
 
-(* Install reads byte/word vectors out of values; these are lists of
-   Numbers
+(* Install reads byte/word vectors out of values; these are lists of Numbers
    resp. Word64s, which v_rel relates exactly. *)
 
 (* HOL4 bvi_tmcProofScript.sml:1520-1541: a proof *)
@@ -274,10 +274,8 @@ let mb_rel_def = cake_define_try_tac (fun () ->
 (* Allocating a fresh reference (Ref, RefByte, RefArray). *)
 (* HOL4 bvi_tmcProofScript.sml:1619-1640: a proof *)
 
-(* Reading a reference without changing the state, returning a fresh
-   value
-   (Length, LengthByte, DerefByte, BoundsCheckArray, BoundsCheckByte).
-     *)
+(* Reading a reference without changing the state, returning a fresh value
+   (Length, LengthByte, DerefByte, BoundsCheckArray, BoundsCheckByte). *)
 (* HOL4 bvi_tmcProofScript.sml:1644-1650: a proof *)
 
 (* Reading an element out of a ValueArray reference (El on a RefPtr). *)
@@ -289,26 +287,22 @@ let mb_rel_def = cake_define_try_tac (fun () ->
 (* Updating a ValueArray reference in place (Update). *)
 (* HOL4 bvi_tmcProofScript.sml:1673-1689: a proof *)
 
-(* Updating a ByteArray reference in place (UpdateByte, CopyByte,
-   XorByte).
+(* Updating a ByteArray reference in place (UpdateByte, CopyByte, XorByte).
    The byte arrays are equal on both sides, so the operations agree. *)
 (* HOL4 bvi_tmcProofScript.sml:1693-1703: a proof *)
 
 (* Turning a stack of mutable conses into a Block (FinaliseCons). *)
 (* HOL4 bvi_tmcProofScript.sml:1706-1713: a proof *)
 
-(* Mutating the hole of a MutBlock (UpdateCons) cannot happen:
-   state_ref_rel
+(* Mutating the hole of a MutBlock (UpdateCons) cannot happen: state_ref_rel
    never relates a MutBlock. *)
 (* HOL4 bvi_tmcProofScript.sml:1717-1719: a proof *)
 
 (* ConfigGC returns Unit and leaves the state unchanged. *)
 (* HOL4 bvi_tmcProofScript.sml:1722-1725: a proof *)
 
-(* Comparing two ByteArray references without changing the state
-   (StringCmp).
-   Both byte arrays are equal on the two sides, so the comparison
-     agrees. *)
+(* Comparing two ByteArray references without changing the state (StringCmp).
+   Both byte arrays are equal on the two sides, so the comparison agrees. *)
 (* HOL4 bvi_tmcProofScript.sml:1729-1734: a proof *)
 
 (* HOL4 bvi_tmcProofScript.sml:1768-1774: a proof *)
@@ -326,8 +320,7 @@ let mb_rel_def = cake_define_try_tac (fun () ->
 (* HOL4 bvi_tmcProofScript.sml:1863-1884: a proof *)
 
 (* Structural block operations with a fresh, state-preserving result
-   (Cons, TagLenEq, LenEq, TagEq, LengthBlock, BoolTest,
-     BoundsCheckBlock,
+   (Cons, TagLenEq, LenEq, TagEq, LengthBlock, BoolTest, BoundsCheckBlock,
    EqualConst on a Number/Word64). *)
 (* HOL4 bvi_tmcProofScript.sml:1889-1895: a proof *)
 
@@ -337,8 +330,7 @@ let mb_rel_def = cake_define_try_tac (fun () ->
 (* ElemAt reading an element out of a ValueArray reference. *)
 (* HOL4 bvi_tmcProofScript.sml:1908-1917: a proof *)
 
-(* ConsExtend: result is an append of (a prefix of) two related blocks.
-   *)
+(* ConsExtend: result is an append of (a prefix of) two related blocks. *)
 (* HOL4 bvi_tmcProofScript.sml:1920-1929: a proof *)
 
 (* FromList: convert a list value to a packed Block. *)
@@ -347,20 +339,16 @@ let mb_rel_def = cake_define_try_tac (fun () ->
 (* ListAppend: append two lists. *)
 (* HOL4 bvi_tmcProofScript.sml:1941-1945: a proof *)
 
-(* Equal: structural equality preserved by the renaming (uses
-   do_eq_v_rel). *)
+(* Equal: structural equality preserved by the renaming (uses do_eq_v_rel). *)
 (* HOL4 bvi_tmcProofScript.sml:1948-1956: a proof *)
 
-(* EqualConst on a string constant (a compare-by-contents byte array).
-   *)
+(* EqualConst on a string constant (a compare-by-contents byte array). *)
 (* HOL4 bvi_tmcProofScript.sml:1959-1966: a proof *)
 
-(* Build: evaluate a constant, possibly allocating byte arrays for
-   strings. *)
+(* Build: evaluate a constant, possibly allocating byte arrays for strings. *)
 (* HOL4 bvi_tmcProofScript.sml:1969-1977: a proof *)
 
-(* BoolNot: negates a boolean; the argument value is a Boolv, equal on
-   both
+(* BoolNot: negates a boolean; the argument value is a Boolv, equal on both
    sides, so the negation agrees. *)
 (* HOL4 bvi_tmcProofScript.sml:1981-1987: a proof *)
 
@@ -524,22 +512,16 @@ let dest_thunk_ret_rel_def = cake_define
 (* HOL4 bvi_tmcProofScript.sml:5601-5645: a proof *)
       (* callee inductive hypothesis (smaller clock) *)
 (* HOL4 bvi_tmcProofScript.sml:5647-5744: a proof *)
-          (* the wrapper-IH gives the target callee result for body';
-             rename to
-             controlled names and discard the spurious direct-IH result
-               for exp *)
+          (* the wrapper-IH gives the target callee result for body'; rename to
+             controlled names and discard the spurious direct-IH result for exp *)
 (* HOL4 bvi_tmcProofScript.sml:5747-5831: a proof *)
 
 (* HOL4 bvi_tmcProofScript.sml:5833-5869: a proof *)
 
 (* HOL4 bvi_tmcProofScript.sml:5871: a proof *)
 
-(* ---------------------------------------------------------------------
-   ----
-   Code labels: the pass only introduces calls to the fresh worker names
-     it
-   allocates, so every label of the output is a label of the input or
-     one of
+(* -------------------------------------------------------------------------
+   Code labels: the pass only introduces calls to the fresh worker names it
+   allocates, so every label of the output is a label of the input or one of
    the names strictly below the final next-name.
-   ---------------------------------------------------------------------
-     ---- *)
+   ------------------------------------------------------------------------- *)

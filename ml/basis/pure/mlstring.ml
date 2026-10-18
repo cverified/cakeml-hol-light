@@ -1,13 +1,14 @@
 (* ======================================================== *)
 (*  mlstring: ported from HOL4's
-    basis/pure/mlstringScript.sml  *)
+    basis/pure/mlstringScript.sml
+    A definition theory, with 49 definitions, 2 datatypes and 113
+    theorems.  Needed by 56 files of the port.  *)
 (* ======================================================== *)
 
 (*
   Pure functions for the String module.
 
-  Defines mlstring as a separate type from string in HOL's standard
-    library (a
+  Defines mlstring as a separate type from string in HOL's standard library (a
   synonym for char list).
 *)
 
@@ -19,18 +20,15 @@ needs "misc/misc.ml";;
 (* HOL4 mlstringScript.sml:13-14: the ML values that the definitions
    below antiquote *)
 
-(* Defines strings as a separate type from char list. This theory should
-   be
-   moved into HOL, either as its own theory, or as an addendum to
-     stringTheory *)
+(* Defines strings as a separate type from char list. This theory should be
+   moved into HOL, either as its own theory, or as an addendum to stringTheory *)
 
 let mlstring_INDUCT,mlstring_RECURSION = define_datatype
   "mlstring = implode (string)";;
 (* HOL4 mlstringScript.sml:22: the ML values that the definitions
    below antiquote *)
 
-(* backwards compatibility: strlit used to be the mlstring constructor
-   and
+(* backwards compatibility: strlit used to be the mlstring constructor and
    implode a simple wrapper. *)
 (* HOL4 mlstringScript.sml:26: the overload strlit, which the port
    expands *)
@@ -41,10 +39,8 @@ let strlen_def = cake_define
 let strsub_def = cake_define
   `strsub (implode s) n = EL n s`;;
 
-(* the test here is because underspecification is annoying (and SEG is
-   underspecified) *)
-(* the underlying primitive (CopyStrStr) raises an exception if the test
-   is false *)
+(* the test here is because underspecification is annoying (and SEG is underspecified) *)
+(* the underlying primitive (CopyStrStr) raises an exception if the test is false *)
 let substring_def = cake_define
   `substring (implode s) off len = implode (if off + len <= LENGTH s
   then SEG len off s else if off <= LENGTH s then DROP off s else "")`;;

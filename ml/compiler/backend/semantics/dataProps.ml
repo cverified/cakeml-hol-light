@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  dataProps: ported from HOL4's
-    compiler/backend/semantics/dataPropsScript.sml  *)
+    compiler/backend/semantics/dataPropsScript.sml
+    A proof theory, with 9 definitions and 149 theorems.  Needed by
+    10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -97,14 +99,11 @@ let var_corr_def = cake_define
 (* HOL4 dataPropsScript.sml:688-691: a proof *)
 
 
-(* The field-swap (stack_max/safe_for_space/peak_heap_length) commutes
-   through
-   the narrow cut in evaluate(Assign), since cut_state_opt only touches
-     locals. *)
+(* The field-swap (stack_max/safe_for_space/peak_heap_length) commutes through
+   the narrow cut in evaluate(Assign), since cut_state_opt only touches locals. *)
 
 (* When the swap leaves stack_max at its original value (the fl=F case),
-   the merged input update collapses to just
-     safe_for_space/peak_heap_length. *)
+   the merged input update collapses to just safe_for_space/peak_heap_length. *)
 
 let same_stack_size_def = cake_define
   `same_stack_size x y <=> size_of_stack_frame x =
@@ -115,10 +114,8 @@ let locals_ok_def = cake_define
      (!v x. (sptree_lookup v l1 = SOME x) ==> (sptree_lookup v l2
        = SOME x))`;;
 
-(* Under locals_ok, the narrow cut in evaluate(Assign) succeeds on the
-   larger
-   locals and yields a state equal up to (and locals_ok on) its locals.
-     *)
+(* Under locals_ok, the narrow cut in evaluate(Assign) succeeds on the larger
+   locals and yields a state equal up to (and locals_ok on) its locals. *)
 
 (* HOL4 dataPropsScript.sml:1868: code that the source has in a
    comment *)
@@ -155,8 +152,7 @@ let zero_limits_def = cake_define
 
 (* HOL4 dataPropsScript.sml:2311-2314: a proof *)
 
-(* The limits-swap commutes through the narrow cut in evaluate(Assign).
-   *)
+(* The limits-swap commutes through the narrow cut in evaluate(Assign). *)
 
 (* Stack frames equal up-to size component*)
 let stack_frame_size_rel_def = cake_define
@@ -170,8 +166,7 @@ let stack_frame_size_rel_def = cake_define
 
 (* HOL4 dataPropsScript.sml:2541-2545: a proof *)
 
-(* The locals_size/stack/stack_frame_sizes-swap commutes through the
-   narrow
+(* The locals_size/stack/stack_frame_sizes-swap commutes through the narrow
    cut in evaluate(Assign), and the cut preserves the stack. *)
 
 let cc_co_only_diff_def = cake_define
@@ -201,10 +196,8 @@ let cc_co_only_diff_def = cake_define
 (* HOL4 dataPropsScript.sml:3027: code that the source has in a
    comment *)
 
-(* The narrow cut in evaluate(Assign) only depends on locals (equal
-   under
-   cc_co_only_diff), so the t-side cut is determined by the s-side cut
-     and
+(* The narrow cut in evaluate(Assign) only depends on locals (equal under
+   cc_co_only_diff), so the t-side cut is determined by the s-side cut and
    preserves cc_co_only_diff. *)
 
 (* TODO: move *)

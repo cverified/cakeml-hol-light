@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  export_arm8: ported from HOL4's
-    compiler/backend/arm8/export_arm8Script.sml  *)
+    compiler/backend/arm8/export_arm8Script.sml
+    A definition theory, with 5 definitions and no theorems.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -25,8 +27,7 @@ x1 - first address of heap
 x2 - first address of stack
 x3 - first address past the stack
 
-In addition, the first address on the heap should store the address of
-  cake_bitmaps
+In addition, the first address on the heap should store the address of cake_bitmaps
 
 Note: this set up does NOT account for restoring clobbered registers
 *)

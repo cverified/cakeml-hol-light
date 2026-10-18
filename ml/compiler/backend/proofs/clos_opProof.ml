@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_opProof: ported from HOL4's
-    compiler/backend/proofs/clos_opProofScript.sml  *)
+    compiler/backend/proofs/clos_opProofScript.sml
+    A proof theory about clos_op.ml, with 2 definitions and 62
+    theorems.  Needed by clos_knownProof.ml.  *)
 (* ======================================================== *)
 
 (*

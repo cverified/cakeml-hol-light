@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_to_bviProof: ported from HOL4's
-    compiler/backend/proofs/bvl_to_bviProofScript.sml  *)
+    compiler/backend/proofs/bvl_to_bviProofScript.sml
+    A proof theory about bvl_to_bvi.ml, with 9 definitions and 123
+    theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -189,8 +191,7 @@ let in_ns_def = cake_define
    definitions below antiquote *)
 
 (* the compiled bvi Call handler post-processes its result, rejecting an
-   escaping Ret; a mapped bvl handler result (raised values lifted
-     through Exn)
+   escaping Ret; a mapped bvl handler result (raised values lifted through Exn)
    never raises a Ret, so the post-processing is the identity *)
 
 (* HOL4 bvl_to_bviProofScript.sml:2182: ML code, not ported *)
@@ -199,10 +200,8 @@ let in_ns_def = cake_define
    definitions below antiquote *)
 
 (* HOL4 bvl_to_bviProofScript.sml:2232-3504: a proof *)
-    (* the ops reserved for bvi_tmc are the remaining ones compile_op
-       does not
-       leave alone; each is ruled out by bvlSem$do_app being Error on it
-         *)
+    (* the ops reserved for bvi_tmc are the remaining ones compile_op does not
+       leave alone; each is ruled out by bvlSem$do_app being Error on it *)
 (* HOL4 bvl_to_bviProofScript.sml:3507-3519: a proof *)
 
 (* HOL4 bvl_to_bviProofScript.sml:3521-3527: a proof *)
@@ -270,19 +269,13 @@ let full_co_def = cake_define
 
 (* no_mutcons preservation: bvi_tailrec *)
 
-(* A name outside namespace 2 cannot be one of bvi_tailrec's fresh
-   names,
-   which are all congruent to num_stubs + 2 modulo the namespace count.
-     *)
+(* A name outside namespace 2 cannot be one of bvi_tailrec's fresh names,
+   which are all congruent to num_stubs + 2 modulo the namespace count. *)
 (* NB free_names must be qualified: bvi_tmcProof defines an identically
    printing (and identically stated) constant of the same name. *)
 
-(* The code-label containment for the whole pass boundary, composing all
-   four
-   stages of [compile]: bvl_inline, compile_prog, bvi_tailrec and
-     bvi_inline.
-   The last two only ever shrink the label set relative to the names
-     they keep,
-   so the shape matches compile_prog_get_code_labels above, widened by
-     the
+(* The code-label containment for the whole pass boundary, composing all four
+   stages of [compile]: bvl_inline, compile_prog, bvi_tailrec and bvi_inline.
+   The last two only ever shrink the label set relative to the names they keep,
+   so the shape matches compile_prog_get_code_labels above, widened by the
    fresh names bvi_tailrec allocates. *)

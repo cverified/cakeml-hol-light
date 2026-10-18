@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flat_patternProof: ported from HOL4's
-    compiler/backend/proofs/flat_patternProofScript.sml  *)
+    compiler/backend/proofs/flat_patternProofScript.sml
+    A proof theory about flat_pattern.ml, with 8 definitions and 123
+    theorems.  Needed by source_to_flatProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -45,18 +47,14 @@ let ALOOKUP_rel_def = cake_define
 
 (* a note on 'naming' below. the existing (encoded) names in the program
    (in the original x and exp)
-   are < j for starting val j. during the recursion, j increases to i,
-     with
-   new names i < nm < j appearing in the new env, and in *expressions*
-     in
-   n_bindings. note *names* in n_bindings/pre_bindings come from the
-     original
+   are < j for starting val j. during the recursion, j increases to i, with
+   new names i < nm < j appearing in the new env, and in *expressions* in
+   n_bindings. note *names* in n_bindings/pre_bindings come from the original
    program. also new/old names mix in env, thus the many filters. *)
 
 (* HOL4 flat_patternProofScript.sml:651-653: the ML values that the
    definitions below antiquote *)
-(* on the right side of the state relation, the pattern compiler's
-   config is
+(* on the right side of the state relation, the pattern compiler's config is
    also needed in the compiler state *)
 (* HOL4 flat_patternProofScript.sml:656: the ML values that the
    definitions below antiquote *)

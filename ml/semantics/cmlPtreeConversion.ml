@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  cmlPtreeConversion: ported from HOL4's
-    semantics/cmlPtreeConversionScript.sml  *)
+    semantics/cmlPtreeConversionScript.sml
+    A definition theory, with 61 definitions, 1 datatype and 8
+    theorems.  Needed by cmlParse.ml and semantics.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -73,22 +75,17 @@ let mpop_namedscope_def = cake_define
      match pcs with
        [] -> NONE | [_2] -> NONE | curr :: next' :: rest -> SOME
          (one,next' :: rest))`;;
-(* needs to be adjusted so that constructors (only) declared in the
-   current
-   scope get recorded in the next level up with the given name as a
-     prefix.
+(* needs to be adjusted so that constructors (only) declared in the current
+   scope get recorded in the next level up with the given name as a prefix.
 
-   Does nothing different at this stage, when I expect just to be
-     handling
+   Does nothing different at this stage, when I expect just to be handling
    fixities (which are handled in a non-exportable way).
  *)
 
 
-(* ---------------------------------------------------------------------
-   -
+(* ----------------------------------------------------------------------
     We'll be using the option monad quite a bit in what follows
-   ---------------------------------------------------------------------
-     - *)
+   ---------------------------------------------------------------------- *)
 
 hol4_overload "++" "OPTION_CHOICE";;
 
@@ -477,8 +474,7 @@ let isConstructor_def = cake_define
 
 (* third clause below will lead to a failure when the environment is
    consulted to reveal that the long-id given does not correspond to a
-   constructor.  We do this rather than fail to make the "totality"
-     theorem
+   constructor.  We do this rather than fail to make the "totality" theorem
    work *)
 let EtoPat_def = cake_define
   `EtoPat x1 =

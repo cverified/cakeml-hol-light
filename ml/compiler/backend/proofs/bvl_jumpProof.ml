@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_jumpProof: ported from HOL4's
-    compiler/backend/proofs/bvl_jumpProofScript.sml  *)
+    compiler/backend/proofs/bvl_jumpProofScript.sml
+    A proof theory about bvl_jump.ml, with no definitions and 3
+    theorems.  Needed by clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

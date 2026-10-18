@@ -1,11 +1,12 @@
 (* ======================================================== *)
 (*  cmlParse: ported from HOL4's
-    compiler/parsing/cmlParseScript.sml  *)
+    compiler/parsing/cmlParseScript.sml
+    A definition theory, with 8 definitions and no theorems.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*
-  Definition of the overall parsing functions that go from tokens to
-    abstract
+  Definition of the overall parsing functions that go from tokens to abstract
   syntax trees. In other words, these include calls to the functions in
   `../semantics/cmlPtreeConversion`.
 *)

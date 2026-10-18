@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_removeProof: ported from HOL4's
-    compiler/backend/proofs/word_removeProofScript.sml  *)
+    compiler/backend/proofs/word_removeProofScript.sml
+    A proof theory about word_remove.ml, with 1 definition and 32
+    theorems.  Needed by word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*

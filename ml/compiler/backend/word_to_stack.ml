@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_to_stack: ported from HOL4's
-    compiler/backend/word_to_stackScript.sml  *)
+    compiler/backend/word_to_stackScript.sml
+    A definition theory, with 45 definitions, 1 datatype and no
+    theorems.  Needed by backend.ml, backendProof.ml,
+    stack_to_lab.ml and word_to_stackProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -317,15 +320,11 @@ let StackArgs_def = cake_define
 
 (* Unverified x64 perf-mode instrumentation.
 
-   The idea is to "simulate" CakeML's call stack by pushing the return
-     address
-   and the frame pointer to the C stack, popping it when the call
-     returns.
-   This allows ‘perf record --call-graph fp’ to walk CakeML stack
-     traces.
+   The idea is to "simulate" CakeML's call stack by pushing the return address
+   and the frame pointer to the C stack, popping it when the call returns.
+   This allows ‘perf record --call-graph fp’ to walk CakeML stack traces.
 
-   Due to the presence of exceptions, we need to additionally (re)store
-     the
+   Due to the presence of exceptions, we need to additionally (re)store the
    base pointer and stack pointer (see PushHandler and raise_stub).
  *)
 

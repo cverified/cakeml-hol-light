@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  clos_annotate: ported from HOL4's
-    compiler/backend/clos_annotateScript.sml  *)
+    compiler/backend/clos_annotateScript.sml
+    A definition theory, with 13 definitions and 15 theorems.
+    Needed by bviSem.ml, bvlSem.ml, clos_annotateProof.ml,
+    clos_to_bvl.ml, clos_to_bvlProof.ml and dataProps.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -16,8 +19,7 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* alt_free calculates free variable annotations, and replaces unused
-   lets with dummies *)
+(* alt_free calculates free variable annotations, and replaces unused lets with dummies *)
 
 let const_0_def = cake_define
   `const_0 t = closLang_Op t (closLang_IntOp (closLang_Const (&0)))

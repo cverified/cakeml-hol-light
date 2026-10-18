@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi: ported from HOL4's
-    compiler/backend/bviScript.sml  *)
+    compiler/backend/bviScript.sml
+    A definition theory, with no definitions, 1 datatype and no
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -15,8 +17,7 @@ needs "compiler/backend/closLang.ml";;
 
 (* BVI = bytecode-value intermediate language *)
 
-(* BVI is a stepping stone on the way from BVL to dataLang. BVI is
-   almost
+(* BVI is a stepping stone on the way from BVL to dataLang. BVI is almost
    identical to BVL. The main differences are:
 
     - The Handle (exception) construct from BVL has been merged into
@@ -27,8 +28,7 @@ needs "compiler/backend/closLang.ml";;
       stack frame. To keep things simple and uniform, we merge all
       stack-frame creation into the Call construct. Note that BVL and
       BVI have no concept of stack frames. However, the next language,
-      dataLang, does have stack frames. BVI is a nice high-level
-        language
+      dataLang, does have stack frames. BVI is a nice high-level language
       where the Handle construct can cleanly be eliminated.
 
     - Each creation of a number constant must only produce constants

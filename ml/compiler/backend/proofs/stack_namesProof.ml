@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  stack_namesProof: ported from HOL4's
-    compiler/backend/proofs/stack_namesProofScript.sml  *)
+    compiler/backend/proofs/stack_namesProofScript.sml
+    A proof theory about stack_names.ml, with 2 definitions and 38
+    theorems.  Needed by stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*

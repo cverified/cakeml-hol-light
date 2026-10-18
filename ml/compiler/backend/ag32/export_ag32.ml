@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  export_ag32: ported from HOL4's
-    compiler/backend/ag32/export_ag32Script.sml  *)
+    compiler/backend/ag32/export_ag32Script.sml
+    A definition theory, with 1 definition and no theorems.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*

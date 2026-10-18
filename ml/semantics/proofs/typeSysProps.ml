@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  typeSysProps: ported from HOL4's
-    semantics/proofs/typeSysPropsScript.sml  *)
+    semantics/proofs/typeSysPropsScript.sml
+    A proof theory, with 4 definitions and 107 theorems.  Needed by
+    11 files of the port.  *)
 (* ======================================================== *)
 
 (*

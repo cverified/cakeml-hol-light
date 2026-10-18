@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flat_elim: ported from HOL4's
-    compiler/backend/flat_elimScript.sml  *)
+    compiler/backend/flat_elimScript.sml
+    A definition theory, with 15 definitions and 3 theorems.  Needed
+    by backend_passes.ml, flat_elimProof.ml and source_to_flat.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -17,11 +19,9 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(**************************** ANALYSIS FUNCTIONS
-   *****************************)
+(**************************** ANALYSIS FUNCTIONS *****************************)
 
-(* is_hidden exp = T means there is no direct execution of
-   GlobalVarLookup *)
+(* is_hidden exp = T means there is no direct execution of GlobalVarLookup *)
 let is_hidden_def = cake_define
   `is_hidden x1 =
         match x1 with
@@ -52,8 +52,7 @@ let total_pat_def = cake_define_list_cheat CHEAT_TAC
    `total_pat_list [] = T`;
    `total_pat_list (p :: ps) = (total_pat p /\ total_pat_list ps)`];;
 
-(* check if expression is pure in that it does not make any visible
-   changes
+(* check if expression is pure in that it does not make any visible changes
     (other than writing to globals) *)
 let _ = size_thms "flatLang_exp";;
 (* HOL4 flat_elimScript.sml:75-80: the tactic that proves the
@@ -213,8 +212,7 @@ let analyse_code_def = cake_define_list
         code_analysis_union (analyse_exp e) (analyse_code cs)`];;
 
 
-(**************************** REMOVAL FUNCTIONS
-   *****************************)
+(**************************** REMOVAL FUNCTIONS *****************************)
 
 let keep_def = cake_define
   `keep reachable e =

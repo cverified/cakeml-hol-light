@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  stack_to_labProof: ported from HOL4's
-    compiler/backend/proofs/stack_to_labProofScript.sml  *)
+    compiler/backend/proofs/stack_to_labProofScript.sml
+    A proof theory about stack_to_lab.ml, with 17 definitions, 1
+    datatype and 169 theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -322,8 +324,7 @@ let contain_def = cake_define
 (* HOL4 stack_to_labProofScript.sml:3627: ML code, not ported *)
 
 (* stack_name renames registers to obey non-clashing names
-  It should be sufficient that the incoming nregs < reg_count -
-    avoid_regs,
+  It should be sufficient that the incoming nregs < reg_count - avoid_regs,
   and that the mapping target for these avoids bad regs
 *)
 

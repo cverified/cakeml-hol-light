@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  arm7_config: ported from HOL4's
-    compiler/backend/arm7/arm7_configScript.sml  *)
+    compiler/backend/arm7/arm7_configScript.sml
+    A definition theory, with 2 definitions and 1 theorem.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*

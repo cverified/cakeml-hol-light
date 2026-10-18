@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_unreachProof: ported from HOL4's
-    compiler/backend/proofs/word_unreachProofScript.sml  *)
+    compiler/backend/proofs/word_unreachProofScript.sml
+    A proof theory about word_unreach.ml, with 1 definition and 19
+    theorems.  Needed by word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*

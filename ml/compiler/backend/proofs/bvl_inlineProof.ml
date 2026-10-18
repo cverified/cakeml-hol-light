@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_inlineProof: ported from HOL4's
-    compiler/backend/proofs/bvl_inlineProofScript.sml  *)
+    compiler/backend/proofs/bvl_inlineProofScript.sml
+    A proof theory about bvl_inline.ml, with 13 definitions and 35
+    theorems.  Needed by bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*

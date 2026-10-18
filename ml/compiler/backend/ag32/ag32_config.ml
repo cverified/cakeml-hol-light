@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  ag32_config: ported from HOL4's
-    compiler/backend/ag32/ag32_configScript.sml  *)
+    compiler/backend/ag32/ag32_configScript.sml
+    A definition theory, with 2 definitions and 1 theorem.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  type_dCanon: ported from HOL4's
-    compiler/inference/proofs/type_dCanonScript.sml  *)
+    compiler/inference/proofs/type_dCanonScript.sml
+    A proof theory, with 9 definitions and 61 theorems.  Needed by
+    compilerProof.ml and inferComplete.ml.  *)
 (* ======================================================== *)
 
 (*

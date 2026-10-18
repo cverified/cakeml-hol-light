@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_elimProof: ported from HOL4's
-    compiler/backend/proofs/word_elimProofScript.sml  *)
+    compiler/backend/proofs/word_elimProofScript.sml
+    A proof theory about word_elim.ml, with 12 definitions and 54
+    theorems.  Needed by word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -17,8 +19,7 @@ needs "compiler/backend/word_elim.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 
-(**************************** ANALYSIS LEMMAS
-   *****************************)
+(**************************** ANALYSIS LEMMAS *****************************)
 
 
 (**************************** DEFINITIONS *****************************)
@@ -150,11 +151,9 @@ let word_state_rel_def = cake_define
        domain (find_loc_state t) SUBSET domain (reachable)`;;
 
 
-(**************************** OTHER LEMMAS
-   *****************************)
+(**************************** OTHER LEMMAS *****************************)
 
-(**************************** WORD STATE REL
-   ***************************)
+(**************************** WORD STATE REL ***************************)
 
 (*TODO maybe depreciate?*)
 
@@ -215,5 +214,4 @@ let word_state_rel_def = cake_define
 
 (* HOL4 word_elimProofScript.sml:1601: a proof *)
 
-(**************************** WORD_REMOVAL_THM
-   *****************************)
+(**************************** WORD_REMOVAL_THM *****************************)

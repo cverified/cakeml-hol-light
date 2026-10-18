@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  closSem: ported from HOL4's
-    compiler/backend/semantics/closSemScript.sml  *)
+    compiler/backend/semantics/closSemScript.sml
+    A definition theory, with 30 definitions, 5 datatypes and 14
+    theorems.  Needed by 24 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -1005,8 +1007,7 @@ hol4_overload "evaluate" "closSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
-(* Finally, we remove fix_clock from the induction and definition
-   theorems. *)
+(* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* observational semantics *)
 

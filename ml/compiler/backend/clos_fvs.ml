@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_fvs: ported from HOL4's
-    compiler/backend/clos_fvsScript.sml  *)
+    compiler/backend/clos_fvsScript.sml
+    A definition theory, with 4 definitions and 3 theorems.  Needed
+    by clos_fvsProof.ml, clos_known.ml and clos_knownProof.ml.  *)
 (* ======================================================== *)
 
 (*

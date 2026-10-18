@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  backend_common: ported from HOL4's
-    compiler/backend/backend_commonScript.sml  *)
+    compiler/backend/backend_commonScript.sml
+    A definition theory, with 28 definitions, 2 datatypes and 3
+    theorems.  Needed by 55 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -63,8 +65,7 @@ let partial_app_tag_def = cake_define
 let clos_tag_shift_def = cake_define
   `clos_tag_shift tag = (if tag < 30 then tag:num else tag + 2)`;;
 
-(* Trace of an expression through the compiler, for exploring
-   transformations *)
+(* Trace of an expression through the compiler, for exploring transformations *)
 let tra_INDUCT,tra_RECURSION = define_datatype
   "tra = backend_common_SourceLoc (num) (num) (num) (num) | \
    backend_common_Cons (tra) (num) | backend_common_Union (tra) (tra) \
@@ -74,28 +75,20 @@ hol4_overload "Cons" "backend_common_Cons";;
 hol4_overload "Union" "backend_common_Union";;
 hol4_overload "None" "backend_common_None";;
 
-(* The code below replaces "Cons" in hol output with the chosen symbol
-   *)
+(* The code below replaces "Cons" in hol output with the chosen symbol *)
 (* HOL4 backend_commonScript.sml:83: ML code, not ported *)
 
-(* An "orphan" expression is one that originates directly from a
-   declaration.
-* This happens in source_to_mod, and in con_to_dec. It is an orphan
-  because
-* declarations don't come annotated with their source program locations
-  right
+(* An "orphan" expression is one that originates directly from a declaration.
+* This happens in source_to_mod, and in con_to_dec. It is an orphan because
+* declarations don't come annotated with their source program locations right
 * now point (but they might in the future).
-* This is a trace that can be used as a basis for traces for orphan
-  expressions.
-* It's structure guarantees it will not conflict with any trace
-  originating from
-* source, since the always start with four Cons, indicating source
-  position. *)
+* This is a trace that can be used as a basis for traces for orphan expressions.
+* It's structure guarantees it will not conflict with any trace originating from
+* source, since the always start with four Cons, indicating source position. *)
 let orphan_trace_def = cake_define
   `orphan_trace = backend_common_SourceLoc 2 2 1 1`;;
 
-(* Create new Cons trace, unless original trace is `None`, indicating
-   traces are
+(* Create new Cons trace, unless original trace is `None`, indicating traces are
 * turned off. *)
 let mk_cons_def = cake_define
   `mk_cons tr n =
@@ -149,8 +142,7 @@ let word_add_carry_def = cake_define
        0))))`;;
 
 (* TODO: prefer this over `FOLDR delete`? Consider upstreaming this and
-   its associated lemmas (e.g. `domain_list_delete` in loop_liveProof).
-     *)
+   its associated lemmas (e.g. `domain_list_delete` in loop_liveProof). *)
 let list_delete_def = cake_define_list
   [`list_delete [] s = s`;
    `list_delete (v :: vs) s = list_delete vs (sptree_delete v s)`];;

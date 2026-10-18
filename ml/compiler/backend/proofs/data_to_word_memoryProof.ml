@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_to_word_memoryProof: ported from HOL4's
-    compiler/backend/proofs/data_to_word_memoryProofScript.sml  *)
+    compiler/backend/proofs/data_to_word_memoryProofScript.sml
+    A proof theory, with 119 definitions, 1 datatype and 632
+    theorems.  Needed by 4 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -48,10 +50,8 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 data_to_word_memoryProofScript.sml:30-32: the ML values that
    the definitions below antiquote *)
 
-(* MutBlock payloads have the shape l ++ [c] ++ r, which simplifiers
-   split
-   into three membership tests; this puts EL_MEM into the same split
-     form *)
+(* MutBlock payloads have the shape l ++ [c] ++ r, which simplifiers split
+   into three membership tests; this puts EL_MEM into the same split form *)
 
 (* -- *)
 
@@ -100,16 +100,13 @@ let ThunkBlock_def = cake_define
 (* v_inv conf v refs (x,f,tf,heap)
    v    : the dataSem value
    x    : the abstract gc value
-   f    : reference values in dataLang to gc address (sort of like the
-     content of the pointer)
+   f    : reference values in dataLang to gc address (sort of like the content of the pointer)
    tf   : time-stamps in dataLang to gc addresses
    heap : is the gc abstract heap
  *)
 
-(* The word annotation carried by a pointer to a ref. It is 0 for
-   ordinary
-   refs, but a MutBlock must carry exactly the annotation its finalised
-     Block
+(* The word annotation carried by a pointer to a ref. It is 0 for ordinary
+   refs, but a MutBlock must carry exactly the annotation its finalised Block
    carries, since FinaliseCons is a no-op at word level. *)
 let ref_ptr_annot_def = cake_define
   `ref_ptr_annot conf x2 =
@@ -191,8 +188,7 @@ let v_inv_eq = cake_define
   `v_inv conf v refs (x,f,tf,heap) =
      (!ck. v_inv_ck ck conf v refs (x,f,tf,heap))`;;
 
-(* a compare-by-pointer RefPtr never points at a thunk or a MutBlock, so
-   its
+(* a compare-by-pointer RefPtr never points at a thunk or a MutBlock, so its
    pointer annotation is always 0 *)
 
 let _ = size_thms "dataSem_v";;
@@ -545,47 +541,33 @@ let RefBlock_inv_def = cake_define
      (!n x. (heap_lookup n heap2 = SOME x) /\ ~(isRefBlock x) ==>
             (heap_lookup n heap = SOME x))`;;
 
-(* inserting a *fresh* MutBlock ref cannot disturb any existing v_inv:
-   the only
-   way v_inv inspects refs is through a RefPtr, and those are confined
-     to
+(* inserting a *fresh* MutBlock ref cannot disturb any existing v_inv: the only
+   way v_inv inspects refs is through a RefPtr, and those are confined to
    FDOM f, which sits inside domain refs *)
 
-(* v_inv cannot see a MutBlock's finalised flag: ref_ptr_annot ignores
-   it and
-   dest_thunk sends every MutBlock to NotThunk.  Flipping the flag
-     therefore
-   preserves v_inv -- this is what makes FinaliseCons a no-op at word
-     level. *)
+(* v_inv cannot see a MutBlock's finalised flag: ref_ptr_annot ignores it and
+   dest_thunk sends every MutBlock to NotThunk.  Flipping the flag therefore
+   preserves v_inv -- this is what makes FinaliseCons a no-op at word level. *)
 
-(* bound variables deliberately avoid the names used at the use sites,
-   so that
+(* bound variables deliberately avoid the names used at the use sites, so that
    irule/MATCH_MP_TAC does not fail on a free/bound name clash *)
 
-(* ---- MutCons: the Cons allocation, but the value handed back is a
-   fresh ref *)
+(* ---- MutCons: the Cons allocation, but the value handed back is a fresh ref *)
 
-(* like all_ts_SUBSET_gen, but the witness on the right may be a
-   different
-   value, as long as it carries the timestamp -- needed when a value
-     only
+(* like all_ts_SUBSET_gen, but the witness on the right may be a different
+   value, as long as it carries the timestamp -- needed when a value only
    survives inside a newly built Block *)
 
-(* the only new edge leaves ptr and lands inside the payload, which is
-   exactly
+(* the only new edge leaves ptr and lands inside the payload, which is exactly
    what used to sit on the stack *)
 
-(* lifting a v_inv across the MutCons allocation: refs gains a fresh ref
-   and f
+(* lifting a v_inv across the MutCons allocation: refs gains a fresh ref and f
    gains its binding, and the heap only grew *)
 
-(* a value that is not a thunk cannot become one by adding a fresh ref
-   *)
+(* a value that is not a thunk cannot become one by adding a fresh ref *)
 
-(* mirrors cons_thm_alt: the allocation is the Cons allocation, but the
-   value
-   handed back is a RefPtr into refs, so f (not tf) gains a binding and
-     no
+(* mirrors cons_thm_alt: the allocation is the Cons allocation, but the value
+   handed back is a RefPtr into refs, so f (not tf) gains a binding and no
    timestamp is consumed *)
 
 (* HOL4 data_to_word_memoryProofScript.sml:4680-4689: a proof *)
@@ -602,36 +584,26 @@ let thunk_deref_def = cake_define
      (match heap_lookup a heap with SOME (DataElement xs l
        (ThunkTag NotEvaluated,[])) -> SOME xs | _30 -> NONE))`;;
 
-(* ---- UpdateCons: writing the hole of an unfinalised MutBlock.  The
-   cell is
+(* ---- UpdateCons: writing the hole of an unfinalised MutBlock.  The cell is
    laid out as a BlockRep, so the heap-level machinery is the RefBlock/
-   ThunkBlock machinery transposed to BlockRep.  What is new is that
-     v_inv can
-   read BlockRep cells, so rewriting one is only safe because no
-     timestamp
-   points at an unfinalised MutBlock -- exactly what bc_ref_inv records.
-     *)
+   ThunkBlock machinery transposed to BlockRep.  What is new is that v_inv can
+   read BlockRep cells, so rewriting one is only safe because no timestamp
+   points at an unfinalised MutBlock -- exactly what bc_ref_inv records. *)
 
-(* v_inv survives an in-place rewrite of a BlockRep cell that no
-   timestamp
-   points at: Bignum/Word64Rep/ThunkBlock cells cannot be that cell
-     because
+(* v_inv survives an in-place rewrite of a BlockRep cell that no timestamp
+   points at: Bignum/Word64Rep/ThunkBlock cells cannot be that cell because
    their tags differ, and a Block's cell is in the range of tf *)
 
-(* the binders are renamed apart from the names used at the application
-   sites,
+(* the binders are renamed apart from the names used at the application sites,
    so that qexists can name the witnesses *)
 
-(* v_inv cannot see what sits in a MutBlock's hole, only how long the
-   two
+(* v_inv cannot see what sits in a MutBlock's hole, only how long the two
    sides of it are *)
 
-(* the only new edges out of ptr land in the value that was written,
-   which is
+(* the only new edges out of ptr land in the value that was written, which is
    itself on the stack *)
 
-(* mirrors update_thunk_thm: the hole is rewritten in place, so f and
-   the heap
+(* mirrors update_thunk_thm: the hole is rewritten in place, so f and the heap
    layout are untouched and only tf shrinks *)
 
 (* update byte ref *)
@@ -851,8 +823,7 @@ let get_real_simple_addr_def = cake_define
        SOME (curr + w >>> shift_length conf <<
        backend_common_word_shift (:'a)) | _38 -> NONE)`;;
 
-(* mirrors memory_rel_Update: writing the hole of an unfinalised
-   MutBlock is
+(* mirrors memory_rel_Update: writing the hole of an unfinalised MutBlock is
    the same single memory write as updating a reference's payload *)
 
 let store_list_def = cake_define_list
@@ -865,31 +836,22 @@ let store_list_def = cake_define_list
              bytes_in_word) ws ((a =+ w) m) dm else NONE)`];;
 hol4_overload "store_list" "data_to_word_memoryProof_store_list";;
 
-(* mirrors memory_rel_Cons1: a MutBlock is laid out exactly like the
-   Block it
-   finalises to, so the allocation is the Cons allocation; what differs
-     is that
-   the abstract value handed back is a RefPtr into refs rather than a
-     Block,
+(* mirrors memory_rel_Cons1: a MutBlock is laid out exactly like the Block it
+   finalises to, so the allocation is the Cons allocation; what differs is that
+   the abstract value handed back is a RefPtr into refs rather than a Block,
    and no timestamp is consumed *)
 
-(* ---- FinaliseCons: the MutBlock at ptr keeps its payload and only
-   flips its
-   fin flag, and the value handed back is the Block that payload
-     denotes.
-   Neither all_ts, all_vs, ref_edge nor dest_thunk can observe fin, so
-     the
-   only real work is relocating the payload from the ref into the new
-     Block. *)
+(* ---- FinaliseCons: the MutBlock at ptr keeps its payload and only flips its
+   fin flag, and the value handed back is the Block that payload denotes.
+   Neither all_ts, all_vs, ref_edge nor dest_thunk can observe fin, so the
+   only real work is relocating the payload from the ref into the new Block. *)
 
-(* every value reachable after finalisation was reachable before, except
-   the
+(* every value reachable after finalisation was reachable before, except the
    new Block itself *)
 
 (* the hole of a MutBlock is reachable from the pointer to it *)
 
-(* the payload of the finalised cell moves into the new Block, so the
-   refs it
+(* the payload of the finalised cell moves into the new Block, so the refs it
    reaches are the ones the pointer used to reach *)
 
 let word_of_byte_def = cake_define
@@ -937,14 +899,11 @@ let hide_memory_rel_def = cake_define
 let hide_heap_in_memory_store_def = cake_define
   `hide_heap_in_memory_store = heap_in_memory_store`;;
 
-(* a compare-by-pointer RefPtr can never point at a MutBlock: v_inv's
-   RefPtr
+(* a compare-by-pointer RefPtr can never point at a MutBlock: v_inv's RefPtr
    case demands ~b when the ref is a MutBlock *)
 
-(* the MutBlock exclusion is needed: a MutBlock is laid out with a
-   BlockTag
-   header, whose bits 2 and 3 are both clear, so the conclusion below
-     fails *)
+(* the MutBlock exclusion is needed: a MutBlock is laid out with a BlockTag
+   header, whose bits 2 and 3 are both clear, so the conclusion below fails *)
 
 (* HOL4 data_to_word_memoryProofScript.sml:12767-12769: the ML values
    that the definitions below antiquote *)
@@ -1385,8 +1344,7 @@ let block_drop_def = cake_define
       | (SUC n,(Block ts tag [h; vl]:dataSem_v)) -> block_drop n vl
       | (_89,_90) -> NONE`;;
 
-(* ---------------------------------------------------------------------
-   ---- *)
+(* ------------------------------------------------------------------------- *)
 
 let build_part_words_def = cake_define_list
   [`build_part_words c m (Int i:const_part) (offset:'a word) =

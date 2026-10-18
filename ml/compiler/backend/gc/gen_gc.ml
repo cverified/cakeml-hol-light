@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  gen_gc: ported from HOL4's
-    compiler/backend/gc/gen_gcScript.sml  *)
+    compiler/backend/gc/gen_gcScript.sml
+    A definition theory, with 8 definitions, 1 datatype and 61
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -201,7 +203,6 @@ hol4_overload "gc_inv" "gen_gc_gc_inv";;
 (* HOL4 gen_gcScript.sml:264-266: ML code, not ported *)
 
 (* HOL4 gen_gcScript.sml:277: code that the source has in a comment *)
-(*   NOT_IN_heap_addresses_general |> Q.SPECL [`xs`,`0`] |> SIMP_RULE
-   std_ss []; *)
+(*   NOT_IN_heap_addresses_general |> Q.SPECL [`xs`,`0`] |> SIMP_RULE std_ss []; *)
 
 (* in gc_inv or prove lemma here *)

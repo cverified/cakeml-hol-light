@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_instProof: ported from HOL4's
-    compiler/backend/proofs/word_instProofScript.sml  *)
+    compiler/backend/proofs/word_instProofScript.sml
+    A proof theory about word_inst.ml, with 2 definitions and 31
+    theorems.  Needed by word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -15,8 +17,7 @@ needs "compiler/backend/word_inst.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "semantics/ast.ml";;
 
-(* resolve ambiguity between semanticsPrimitives$result and
-   wordSem$result
+(* resolve ambiguity between semanticsPrimitives$result and wordSem$result
    in latter's favour
 *)
 (* HOL4 word_instProofScript.sml:17: the type abbreviation result,
@@ -28,9 +29,7 @@ needs "semantics/ast.ml";;
 0) pull_exp correctness -- this does pull_ops and optimize_consts
 1) pull_exp syntax
 2) flatten_exp correctness -- makes stuff into binary branching trees
-3) flatten_exp syntax -- prove the above property (binary_branch_exp --
-  not counted as a "global" syntactic convention since it is only used
-  locally here)
+3) flatten_exp syntax -- prove the above property (binary_branch_exp -- not counted as a "global" syntactic convention since it is only used locally here)
 4) inst_select_exp and inst_select correctness
 5) inst_select syntax -- flat_exp_conventions and full_inst_ok_less
 6) three_to_two_reg correctness
@@ -59,9 +58,7 @@ let pull_ops_simp_def = cake_define_list
 
 (* flatten_exp correctness *)
 
-(*All ops are 2 args. Technically, we should probably check that Sub has
-   2 args. However, the semantics already checks that and it will get
-   removed later*)
+(*All ops are 2 args. Technically, we should probably check that Sub has 2 args. However, the semantics already checks that and it will get removed later*)
 let _ = size_thms "wordLang_exp";;
 (* HOL4 word_instProofScript.sml:403-409: the tactic that proves the
    termination *)
@@ -80,9 +77,7 @@ let binary_branch_exp_def = cake_define_wf
 (* flatten_exp syntax *)
 
 (* inst_select correctness
-  Main difficulty: Dealing with multiple choice of optimizations,
-    depending on whether we are allowed to use them w.r.t. to the asm
-    configuration
+  Main difficulty: Dealing with multiple choice of optimizations, depending on whether we are allowed to use them w.r.t. to the asm configuration
 *)
 
 (*  Main semantics theorem for inst selection:

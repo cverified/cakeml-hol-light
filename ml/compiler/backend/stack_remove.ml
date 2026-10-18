@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  stack_remove: ported from HOL4's
-    compiler/backend/stack_removeScript.sml  *)
+    compiler/backend/stack_removeScript.sml
+    A definition theory, with 27 definitions and 1 theorem.  Needed
+    by backendProof.ml, backend_passes.ml, stack_removeProof.ml and
+    stack_to_lab.ml.  *)
 (* ======================================================== *)
 
 (*

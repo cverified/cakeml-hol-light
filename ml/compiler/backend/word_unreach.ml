@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_unreach: ported from HOL4's
-    compiler/backend/word_unreachScript.sml  *)
+    compiler/backend/word_unreachScript.sml
+    A definition theory, with 5 definitions and 1 theorem.  Needed
+    by backend.ml, backend_passes.ml, wordConvsProof.ml,
+    word_to_word.ml, word_to_wordProof.ml and word_unreachProof.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  data_to_word_gcProof: ported from HOL4's
-    compiler/backend/proofs/data_to_word_gcProofScript.sml  *)
+    compiler/backend/proofs/data_to_word_gcProofScript.sml
+    A proof theory, with 26 definitions and 400 theorems.  Needed by
+    data_to_wordProof.ml, data_to_word_assignProof.ml,
+    data_to_word_bignumProof.ml and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -351,14 +354,10 @@ let traverse_heap = cake_inductive
       traverse_heap heap (n :: p1) xs p2 ==>
       traverse_heap heap p1 [gc_shared_Pointer n t] p2)`;;
 
-(* Root-set-generalised alloc chain: the _gen theorems bound the
-   NotEnoughSpace
-   heap usage over any roots2 with PERM roots2 (dups ++ canonical roots)
-     and
-   set dups SUBSET roots.  alloc_lemma / AllocVar_thm are corollaries
-     (dups:=[]);
-   AllocVar_thm_nary supplies the args-prepended narrow cut as roots2.
-     *)
+(* Root-set-generalised alloc chain: the _gen theorems bound the NotEnoughSpace
+   heap usage over any roots2 with PERM roots2 (dups ++ canonical roots) and
+   set dups SUBSET roots.  alloc_lemma / AllocVar_thm are corollaries (dups:=[]);
+   AllocVar_thm_nary supplies the args-prepended narrow cut as roots2. *)
 
 
 let cut_locals_def = cake_define

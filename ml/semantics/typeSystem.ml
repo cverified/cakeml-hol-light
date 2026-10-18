@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  typeSystem: ported from HOL4's
-    semantics/typeSystemScript.sml  *)
+    semantics/typeSystemScript.sml
+    A definition theory, with 63 definitions, 3 datatypes and no
+    theorems.  Needed by 23 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -119,10 +121,8 @@ let tword8array_def = cake_define
 let tdouble_def = cake_define
   `((Tdouble:t) = (Tapp [] Tdouble_num))`;;
 
-(* Check that the free type variables are in the given list. Every
-   deBruijn
- * variable must be smaller than the first argument. So if it is 0, no
-   deBruijn
+(* Check that the free type variables are in the given list. Every deBruijn
+ * variable must be smaller than the first argument. So if it is 0, no deBruijn
  * indices are permitted. *)
 let check_freevars_def = cake_define_list
   [`(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar tv) =
@@ -152,8 +152,7 @@ let type_subst_def = cake_define_list
        (Tapp (MAP (type_subst s) ts) tn)`;
    `(type_subst:(mlstring,t)fmap->t->t) s (Tvar_db n) = (Tvar_db n)`];;
 
-(* Increment the deBruijn indices in a type by n levels, skipping all
-   levels
+(* Increment the deBruijn indices in a type by n levels, skipping all levels
  * less than skip. *)
 let deBruijn_inc_def = cake_define_list
   [`(deBruijn_inc:num->num->t->t) skip n (Tvar tv) = (Tvar tv)`;
@@ -164,8 +163,7 @@ let deBruijn_inc_def = cake_define_list
    `(deBruijn_inc:num->num->t->t) skip n (Tapp ts tn) = (Tapp (MAP
   (deBruijn_inc skip n) ts) tn)`];;
 
-(* skip the lowest given indices and replace the next (LENGTH ts) with
-   the given types and reduce all the higher ones *)
+(* skip the lowest given indices and replace the next (LENGTH ts) with the given types and reduce all the higher ones *)
 let deBruijn_subst_def = cake_define_list
   [`(deBruijn_subst:num->t list->t->t) skip ts (Tvar tv) = (Tvar tv)`;
    `(deBruijn_subst:num->t list->t->t) skip ts (Tvar_db n) =
@@ -192,8 +190,7 @@ let bind_tvar_def = cake_define
   (0:num) then tenvE else typeSystem_Bind_tvar tvs tenvE))`;;
 
 
-(*val opt_bind_name : maybe varN -> nat -> t -> tenv_val_exp ->
-   tenv_val_exp*)
+(*val opt_bind_name : maybe varN -> nat -> t -> tenv_val_exp -> tenv_val_exp*)
 let opt_bind_name_def = cake_define
   `((opt_bind_name:mlstring option->num->t->tenv_val_exp->tenv_val_exp)
   n tvs t tenvE =
@@ -243,8 +240,7 @@ let lookup_varE_def = cake_define
       Short x -> tveLookup x ((0:num)) tenvE | _1 -> NONE)))`;;
 
 
-(*val lookup_var : id modN varN -> tenv_val_exp -> type_env -> maybe
-   (nat * t)*)
+(*val lookup_var : id modN varN -> tenv_val_exp -> type_env -> maybe (nat * t)*)
 let lookup_var_def = cake_define
   `((lookup_var:(mlstring
   ,mlstring)namespace_id->tenv_val_exp->type_env->(num#t) option) id'
@@ -263,8 +259,7 @@ let num_tvs_def = cake_define_list
   tenvE) = (num_tvs tenvE)`];;
 
 
-(*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp ->
-   tenv_val_exp*)
+(*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp -> tenv_val_exp*)
 let bind_var_list_def = cake_define_list
   [`(bind_var_list:num->(mlstring#t)
   list->tenv_val_exp->tenv_val_exp) tvs [] tenvE = tenvE`;
@@ -274,10 +269,8 @@ let bind_var_list_def = cake_define_list
        tenvE))`];;
 
 
-(* A pattern matches values of a certain type and extends the type
-   environment
- * with the pattern's binders. The number is the maximum deBruijn type
-   variable
+(* A pattern matches values of a certain type and extends the type environment
+ * with the pattern's binders. The number is the maximum deBruijn type variable
  * allowed. *)
 (*val type_p : nat -> type_env -> pat -> t -> list (varN * t) -> bool*)
 
@@ -287,12 +280,10 @@ let bind_var_list_def = cake_define_list
 (* A list of expressions has a list of types *)
 (*val type_es : type_env -> tenv_val_exp -> list exp -> list t -> bool*)
 
-(* Type a mutually recursive bundle of functions.  Unlike pattern
-   typing, the
+(* Type a mutually recursive bundle of functions.  Unlike pattern typing, the
  * resulting environment does not extend the input environment, but just
  * represents the functions *)
-(*val type_funs : type_env -> tenv_val_exp -> list (varN * varN * exp)
-   -> list (varN * t) -> bool*)
+(*val type_funs : type_env -> tenv_val_exp -> list (varN * varN * exp) -> list (varN * t) -> bool*)
 
 (* Check a declaration and update the top-level environments
  * The arguments are in order:
@@ -450,15 +441,11 @@ let type_name_subst_def = cake_define_list
         SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs
           args)) t | NONE -> Ttup args))`];;
 
-(* Check that a type definition defines no already defined types or
-   duplicate
- * constructors, and that the free type variables of each constructor
-   argument
- * type are included in the type's type parameters. Also check that all
-   of the
+(* Check that a type definition defines no already defined types or duplicate
+ * constructors, and that the free type variables of each constructor argument
+ * type are included in the type's type parameters. Also check that all of the
  * types mentioned are in scope. *)
-(*val check_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list
-   (conN * list ast_t)) -> bool*)
+(*val check_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> bool*)
 let check_ctor_tenv_def = cake_define_list
   [`(check_ctor_tenv:(mlstring,mlstring,mlstring
   list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list)
@@ -477,8 +464,7 @@ let check_ctor_tenv_def = cake_define_list
       check_ctor_tenv tenvT tds)`];;
 
 
-(*val build_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list
-   (conN * list ast_t)) -> list nat -> tenv_ctor*)
+(*val build_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> list nat -> tenv_ctor*)
 let build_ctor_tenv_def = cake_define
   `build_ctor_tenv tenvT x2 x3 =
         match (x2,x3) with
@@ -795,8 +781,7 @@ let type_d = cake_inductive
      (decls1 UNION decls2) (extend_dec_tenv tenv2 tenv1))`;;
 
 (*
-indreln [type_specs : list modN -> tenv_abbrev -> specs -> decls ->
-  type_env -> bool]
+indreln [type_specs : list modN -> tenv_abbrev -> specs -> decls -> type_env -> bool]
 
 empty : forall mn tenvT.
 true
@@ -810,27 +795,23 @@ sval : forall mn tenvT x t specs tenv fvs decls subst.
 check_freevars 0 fvs t &&
 check_type_names tenvT t &&
 type_specs mn tenvT specs decls tenv &&
-subst = alistToFmap (List_extra.zipSameLength fvs (List.map Tvar_db
-  (genlist (fun x -> x) (List.length fvs))))
+subst = alistToFmap (List_extra.zipSameLength fvs (List.map Tvar_db (genlist (fun x -> x) (List.length fvs))))
 ==>
 type_specs mn tenvT (Sval x t :: specs)
   decls
   (extend_dec_tenv tenv
-    <| v = nsSing x (List.length fvs, type_subst subst (type_name_subst
-      tenvT t));
+    <| v = nsSing x (List.length fvs, type_subst subst (type_name_subst tenvT t));
        c = nsEmpty;
        t = nsEmpty |>)
 
 and
 
 stype : forall mn tenvT tenv td specs decls' decls tenvT'.
-tenvT' = alist_to_ns (List.map (fun (tvs,tn,ctors) -> (tn, (tvs, Tapp
-  (List.map Tvar tvs) (TC_name (mk_id mn tn))))) td) &&
+tenvT' = alist_to_ns (List.map (fun (tvs,tn,ctors) -> (tn, (tvs, Tapp (List.map Tvar tvs) (TC_name (mk_id mn tn))))) td) &&
 check_ctor_tenv (nsAppend tenvT' tenvT) td &&
 type_specs mn (nsAppend tenvT' tenvT) specs decls tenv &&
 decls' = <| defined_mods = {};
-            defined_types = Set.fromList (List.map (fun (tvs,tn,ctors)
-              -> (mk_id mn tn)) td);
+            defined_types = Set.fromList (List.map (fun (tvs,tn,ctors) -> (mk_id mn tn)) td);
             defined_exns = {} |>
 ==>
 type_specs mn tenvT (Stype td :: specs)
@@ -850,8 +831,7 @@ tenvT' = nsSing tn (tvs,type_name_subst tenvT t) &&
 type_specs mn (nsAppend tenvT' tenvT) specs decls tenv
 ==>
 type_specs mn tenvT (Stabbrev tvs tn t :: specs)
-  decls (extend_dec_tenv tenv <| v = nsEmpty; c = nsEmpty; t = tenvT'
-    |>)
+  decls (extend_dec_tenv tenv <| v = nsEmpty; c = nsEmpty; t = tenvT' |>)
 
 and
 
@@ -861,25 +841,21 @@ type_specs mn tenvT specs decls tenv &&
 List.all (check_type_names tenvT) ts
 ==>
 type_specs mn tenvT (Sexn cn ts :: specs)
-  (union_decls decls <| defined_mods = {}; defined_types = {};
-    defined_exns = {mk_id mn cn} |>)
+  (union_decls decls <| defined_mods = {}; defined_types = {}; defined_exns = {mk_id mn cn} |>)
   (extend_dec_tenv tenv
    <| v = nsEmpty;
-      c = nsSing cn ([], List.map (type_name_subst tenvT) ts, TypeExn
-        (mk_id mn cn));
+      c = nsSing cn ([], List.map (type_name_subst tenvT) ts, TypeExn (mk_id mn cn));
       t = nsEmpty |>)
 
 and
 
 stype_opq : forall mn tenvT tenv tn specs tvs decls tenvT'.
 List.allDistinct tvs &&
-tenvT' = nsSing tn (tvs, Tapp (List.map Tvar tvs) (TC_name (mk_id mn
-  tn))) &&
+tenvT' = nsSing tn (tvs, Tapp (List.map Tvar tvs) (TC_name (mk_id mn tn))) &&
 type_specs mn (nsAppend tenvT' tenvT) specs decls tenv
 ==>
 type_specs mn tenvT (Stype_opq tvs tn :: specs)
-  (union_decls decls <| defined_mods = {}; defined_types = {mk_id mn
-    tn}; defined_exns = {} |>)
+  (union_decls decls <| defined_mods = {}; defined_types = {mk_id mn tn}; defined_exns = {} |>)
   (extend_dec_tenv tenv <| v = nsEmpty; c = nsEmpty; t = tenvT' |>)
 
 val weak_decls : decls -> decls -> bool
@@ -890,11 +866,9 @@ let weak_decls decls_impl decls_spec =
    *)
 
 (*
-val weak_tenvT : id modN typeN -> (list tvarN * t) -> (list tvarN * t)
-  -> bool
+val weak_tenvT : id modN typeN -> (list tvarN * t) -> (list tvarN * t) -> bool
 let weak_tenvT n (tvs_spec, t_spec) (tvs_impl, t_impl) =
-  (* For simplicity, we reject matches that differ only by renaming of
-     bound type variables *)
+  (* For simplicity, we reject matches that differ only by renaming of bound type variables *)
   tvs_spec = tvs_impl &&
   (t_spec = t_impl ||
    (* The specified type is opaque *)
@@ -917,8 +891,7 @@ let weak_tenv_def = cake_define
   nsSub weak_tenvT tenv_spec.t tenv_impl.t*)
 
 (*
-indreln [check_signature : list modN -> tenv_abbrev -> decls -> type_env
-  -> maybe specs -> decls -> type_env -> bool]
+indreln [check_signature : list modN -> tenv_abbrev -> decls -> type_env -> maybe specs -> decls -> type_env -> bool]
 
 none : forall mn tenvT decls tenv.
 true
@@ -932,15 +905,12 @@ weak_tenv tenv_impl tenv_spec &&
 weak_decls decls_impl decls_spec &&
 type_specs mn tenvT specs decls_spec tenv_spec
 ==>
-check_signature mn tenvT decls_impl tenv_impl (Just specs) decls_spec
-  tenv_spec
+check_signature mn tenvT decls_impl tenv_impl (Just specs) decls_spec tenv_spec
 
 let tenvLift mn tenv =
-  <| v = nsLift mn tenv.v; c = nsLift mn tenv.c; t = nsLift mn tenv.t;
-    |>
+  <| v = nsLift mn tenv.v; c = nsLift mn tenv.c; t = nsLift mn tenv.t; |>
 
-indreln [type_top : bool -> decls -> type_env -> top -> decls ->
-  type_env -> bool]
+indreln [type_top : bool -> decls -> type_env -> top -> decls -> type_env -> bool]
 
 tdec : forall extra_checks tenv d tenv' decls decls'.
 type_d extra_checks [] decls tenv d decls' tenv'
@@ -949,34 +919,27 @@ type_top extra_checks decls tenv (Tdec d) decls' tenv'
 
 and
 
-tmod : forall extra_checks tenv mn spec ds tenv_impl tenv_spec decls
-  decls_impl decls_spec.
+tmod : forall extra_checks tenv mn spec ds tenv_impl tenv_spec decls decls_impl decls_spec.
 not ([mn] IN decls.defined_mods) &&
 type_ds extra_checks [mn] decls tenv ds decls_impl tenv_impl &&
-check_signature [mn] tenv.t decls_impl tenv_impl spec decls_spec
-  tenv_spec
+check_signature [mn] tenv.t decls_impl tenv_impl spec decls_spec tenv_spec
 ==>
 type_top extra_checks decls tenv (Tmod mn spec ds)
-  (union_decls <| defined_mods = {[mn]}; defined_types = {};
-    defined_exns = {} |> decls_spec)
+  (union_decls <| defined_mods = {[mn]}; defined_types = {}; defined_exns = {} |> decls_spec)
   (tenvLift mn tenv_spec)
 
-indreln [type_prog : bool -> decls -> type_env -> list top -> decls ->
-  type_env -> bool]
+indreln [type_prog : bool -> decls -> type_env -> list top -> decls -> type_env -> bool]
 
 empty : forall extra_checks tenv decls.
 true
 ==>
-type_prog extra_checks decls tenv [] empty_decls <| v = nsEmpty; c =
-  nsEmpty; t = nsEmpty |>
+type_prog extra_checks decls tenv [] empty_decls <| v = nsEmpty; c = nsEmpty; t = nsEmpty |>
 
 and
 
-cons : forall extra_checks tenv top tops tenv1 tenv2 decls decls1
-  decls2.
+cons : forall extra_checks tenv top tops tenv1 tenv2 decls decls1 decls2.
 type_top extra_checks decls tenv top decls1 tenv1 &&
-type_prog extra_checks (union_decls decls1 decls) (extend_dec_tenv tenv1
-  tenv) tops decls2 tenv2
+type_prog extra_checks (union_decls decls1 decls) (extend_dec_tenv tenv1 tenv) tops decls2 tenv2
 ==>
 type_prog extra_checks decls tenv (top :: tops)
   (union_decls decls2 decls1) (extend_dec_tenv tenv2 tenv1)

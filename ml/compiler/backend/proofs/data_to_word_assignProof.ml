@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_to_word_assignProof: ported from HOL4's
-    compiler/backend/proofs/data_to_word_assignProofScript.sml  *)
+    compiler/backend/proofs/data_to_word_assignProofScript.sml
+    A proof theory, with 5 definitions and 319 theorems.  Needed by
+    data_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -88,11 +90,9 @@ let w2w_upper_def = cake_define
 (* HOL4 data_to_word_assignProofScript.sml:2210-2212: ML code, not
    ported *)
 
-(* cut_env is idempotent: cutting the same names twice gives the same
-   result. *)
+(* cut_env is idempotent: cutting the same names twice gives the same result. *)
 
-(* Two-stage cut: narrowing an args-augmented cut (list_insert args ns)
-   down to
+(* Two-stage cut: narrowing an args-augmented cut (list_insert args ns) down to
    ns gives the same env as cutting ns directly. *)
 
 (* A join_env pair-list over (l1,l2) is contained in the one over any
@@ -100,16 +100,12 @@ let w2w_upper_def = cake_define
    and the full env (with memory_rel_rearrange). *)
 
 (* The three heap-store FLOOKUPs follow directly from state_rel.
-   Reusable in any op that needs to inspect
-     t.store.{NextFree,CurrHeap,HeapLength}. *)
+   Reusable in any op that needs to inspect t.store.{NextFree,CurrHeap,HeapLength}. *)
 
 (* Evaluating a SilentFFI block (the c.call_empty_ffi=T form emitted by
-   op_requires_names ops, with var slot 3): if the word state's locals
-     can be
-   cut by the same names, the FFI call has empty payload and reduces to
-     a
-   locals-updated state. Reusable in any op whose generated code begins
-     or
+   op_requires_names ops, with var slot 3): if the word state's locals can be
+   cut by the same names, the FFI call has empty payload and reduces to a
+   locals-updated state. Reusable in any op whose generated code begins or
    resumes with `SilentFFI c 3 (adjust_sets <names>)`. *)
 
 (* size_of_heap monotonicity helpers *)
@@ -131,67 +127,48 @@ hol4_overload "STOP" "data_to_word_assignProof_STOP";;
 
 (* ConfigGC: assign-specific helper + body *)
 
-(* Prepending values to the size_of root list never shrinks the heap
-   count.
-   Basis for the args-aware do_space bridge (replaces the two-stage
-     size_of
+(* Prepending values to the size_of root list never shrinks the heap count.
+   Basis for the args-aware do_space bridge (replaces the two-stage size_of
    narrow/wide reconciliation helpers). *)
 (* size_of_LE_append and size_of_heap_LE_args are inherited from
    data_to_word_bignumProof (used there by eval_Call_Arith). *)
 
-(* The single narrow cut state IS cut_locals of the original:
-   alloc_lemma's
+(* The single narrow cut state IS cut_locals of the original: alloc_lemma's
    size_of_heap (cut_locals ns s) is exactly size_of_heap x. *)
 
-(* ---- helpers used by assign_FromList's NES/Success arms (also reused
-   by
-   assign_RefByte etc. below); hoisted above assign_FromList so they are
-     in
+(* ---- helpers used by assign_FromList's NES/Success arms (also reused by
+   assign_RefByte etc. below); hoisted above assign_FromList so they are in
    scope here. ---- *)
 
-(* do_app for FromList sets the result stack_max uniformly
-   (stack_consumed is
+(* do_app for FromList sets the result stack_max uniformly (stack_consumed is
    the same for the empty and nonempty cases), regardless of tstamps. *)
 
-(* do_app for FromList: the result safe_for_space field, uniform over
-   the empty
-   and nonempty cases (the empty case lacks the with_fresh_ts/check_lim
-     wrapper,
-   but its extra `LENGTH ys < 2 ** length_limit` conjunct is trivially
-     true). The
-   add_space_safe_args / the F terms are dataSem overloads; the
-     statement spells
+(* do_app for FromList: the result safe_for_space field, uniform over the empty
+   and nonempty cases (the empty case lacks the with_fresh_ts/check_lim wrapper,
+   but its extra `LENGTH ys < 2 ** length_limit` conjunct is trivially true). The
+   add_space_safe_args / the F terms are dataSem overloads; the statement spells
    them out so it parses without the abbreviation. *)
 
-(* do_app for FromList: the result value is a Block of the source list,
-   and the
-   non-stack/safe/space fields are preserved from the input state
-     (tstamps gains
-   a fresh stamp for nonempty lists). Used by assign_FromList's success
-     arm to
-   relate s2 (do_app on x) and s2_inner (do_app on s_pop): both share
-     these
+(* do_app for FromList: the result value is a Block of the source list, and the
+   non-stack/safe/space fields are preserved from the input state (tstamps gains
+   a fresh stamp for nonempty lists). Used by assign_FromList's success arm to
+   relate s2 (do_app on x) and s2_inner (do_app on s_pop): both share these
    fields because x and s_pop agree on locals/refs/tstamps/.... *)
 
-(* Variant of call_env_push_env_dec_clock_lift that also absorbs a
-   `locals
+(* Variant of call_env_push_env_dec_clock_lift that also absorbs a `locals
    := insert k v t.locals` field update inside the dec_clock. *)
 
 (* TODO: move to backendProps? *)
 
-(* Helper: do_app on RefByte gives a precise equation s' = s with
-   <known-update>
-   (args-aware single-cut form). Used to bridge s2_inner field
-     equalities in
+(* Helper: do_app on RefByte gives a precise equation s' = s with <known-update>
+   (args-aware single-cut form). Used to bridge s2_inner field equalities in
    assign_RefByte's Success arm. *)
 
-(* Helper: lift inner-with on a dec_clock'd state to outer-with on
-   call_env/push_env.
+(* Helper: lift inner-with on a dec_clock'd state to outer-with on call_env/push_env.
    Used to bridge the post-Call evaluate term to the shape expected by
    evaluate_IMP_domain_union (which has outer-with). *)
 
-(* Binary (two-argument) instance of AllocVar_thm_nary, used by
-   assign_RefArray. *)
+(* Binary (two-argument) instance of AllocVar_thm_nary, used by assign_RefArray. *)
 
 (* HOL4 data_to_word_assignProofScript.sml:9692-9693: ML code, not
    ported *)

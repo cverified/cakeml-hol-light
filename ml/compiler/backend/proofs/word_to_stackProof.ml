@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_to_stackProof: ported from HOL4's
-    compiler/backend/proofs/word_to_stackProofScript.sml  *)
+    compiler/backend/proofs/word_to_stackProofScript.sml
+    A proof theory about word_to_stack.ml, with 18 definitions and
+    364 theorems.  Needed by backendProof.ml and
+    stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -214,12 +217,10 @@ hol4_overload "stack_rel" "word_to_stackProof_stack_rel";;
 (*f is the size of the current frame + 1 most of the time
   (extra word for the bitmap pointer)
   f' is the size of the current frame
-  lens tracks the size of each remaining stack frame on the stackLang
-    stack
+  lens tracks the size of each remaining stack frame on the stackLang stack
 *)
 
-(* Stack size as predicted by the wordLang state is a conservative
-   estimate of the
+(* Stack size as predicted by the wordLang state is a conservative estimate of the
    actual stack usage. *)
 let stack_size_rel_def = cake_define
   `stack_size_rel f s_locals_size s_stack_limit s_stack_max s_stack
@@ -517,8 +518,7 @@ EL (x + offset) stack' = EL (x) stack'*)
 (* HOL4 word_to_stackProofScript.sml:7767-7798: a proof *)
     (* stack-overflow sub-case *)
 (* HOL4 word_to_stackProofScript.sml:7800-7828: a proof *)
-  (* non-stack-overflow: res_b = OPTION_MAP compile_result q, so IH's
-     "else"
+  (* non-stack-overflow: res_b = OPTION_MAP compile_result q, so IH's "else"
      branch gives us state_rel-like facts about r and t1_b per q. *)
 (* HOL4 word_to_stackProofScript.sml:7831-7832: a proof *)
     (* cont_loop q: either q = NONE or q = SOME (Continue 0) *)

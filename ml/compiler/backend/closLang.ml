@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  closLang: ported from HOL4's
-    compiler/backend/closLangScript.sml  *)
+    compiler/backend/closLangScript.sml
+    A definition theory, with 4 definitions, 9 datatypes and 1
+    theorem.  Needed by 60 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -207,8 +209,7 @@ let pure_op_def = cake_define
          closLang_Install -> F | ThunkOp _24 -> F | _25 -> T)`;;
 hol4_overload "pure_op" "closLang_pure_op";;
 
-(* pure e means e can neither raise an exception nor side-effect the
-   state *)
+(* pure e means e can neither raise an exception nor side-effect the state *)
 let pure_def = cake_define_list
   [`pure (Var _28 _29:closLang_exp) <=> T`;
    `pure (If _31 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure e2 /\

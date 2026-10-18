@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_simp: ported from HOL4's
-    compiler/backend/word_simpScript.sml  *)
+    compiler/backend/word_simpScript.sml
+    A definition theory, with 25 definitions and 7 theorems.  Needed
+    by wordConvsProof.ml, word_cseProof.ml, word_simpProof.ml and
+    word_to_word.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -42,8 +45,7 @@ let seq_assoc_def = cake_define
         SmartSeq p1 (Loop names (Seq_assoc Skip body) exit_names)
         | other -> SmartSeq p1 other`;;
 
-(* optimise certain consequtive If statements that arise from
-   data-to-word
+(* optimise certain consequtive If statements that arise from data-to-word
 
    If something (q1 ; n := X) (q2 ; n := Y) ;
    If (n == Z) p1 p2
@@ -93,16 +95,11 @@ let dest_Seq_Assign_Const_def = cake_define
    y := 5;
    z := 5;
 
-  Limitation: The current implementation forgets all constant values
-    after a
-  function call with a handler (for easier implementation and proofs).
-    This is
-  probably not difficult to improve, but would require some kind of
-    theorem
-  saying that a program does not change variables not mentioned in the
-    program
-  (because we cannot know beforehand/statically if the handler code is
-    going to
+  Limitation: The current implementation forgets all constant values after a
+  function call with a handler (for easier implementation and proofs). This is
+  probably not difficult to improve, but would require some kind of theorem
+  saying that a program does not change variables not mentioned in the program
+  (because we cannot know beforehand/statically if the handler code is going to
   run, so we must throw away all variables mentioned in the handler).
  *)
 
@@ -284,36 +281,26 @@ let const_fp_def = cake_define
   `const_fp p = FST (const_fp_loop p LN)`;;
 
 (*
-Optimise near-consecutive If/If pairs into a single If when there are
-  only two
+Optimise near-consecutive If/If pairs into a single If when there are only two
 possible control-flow paths.
 
 This case looks like:
   (if C then X else Y) ; Zs ; (if C2 then X2 else Y2)
 
-Also, the number of intermediate Zs is small, (X ; Zs) guarantees either
-  C2 or
-not C2, and (Y ; Zs) guarantees the opposite. The second If can be
-  removed at
+Also, the number of intermediate Zs is small, (X ; Zs) guarantees either C2 or
+not C2, and (Y ; Zs) guarantees the opposite. The second If can be removed at
 the cost of duplicating the Zs.
 
-The strategy here is (1) recognise the case, (2) expand the first If to
-  cover
-everything, hoisting copies of the second If into both branches and (3)
-  re-run
+The strategy here is (1) recognise the case, (2) expand the first If to cover
+everything, hoisting copies of the second If into both branches and (3) re-run
 the const_fp pass to simplify each branch down to a straight line.
 
-This means the correctness follows straightforwardly from that of
-  const_fp.
+This means the correctness follows straightforwardly from that of const_fp.
 
-To recognise the case (1), step through Seq sequences which we expect to
-  be
-right-associated, and incrementally build up their left-associated
-  variant
-(which we will need eventually to pull things into the first If). Give
-  up if
-this takes too many steps (too many Zs). When an If is found, test-run
-  the
+To recognise the case (1), step through Seq sequences which we expect to be
+right-associated, and incrementally build up their left-associated variant
+(which we will need eventually to pull things into the first If). Give up if
+this takes too many steps (too many Zs). When an If is found, test-run the
 const_fp pass to see if it would reduce the condition in the second If.
 *)
 
@@ -376,8 +363,7 @@ let simp_duplicate_if_def = cake_define
        -> Seq_assoc Skip p3) | Loop names body exit_names ->
      Loop names (simp_duplicate_if body) exit_names | _50 -> p)`;;
 
-(*Optimize pairs where one side is known to terminate due to a Raise or
-   a Return
+(*Optimize pairs where one side is known to terminate due to a Raise or a Return
 the flag is T when its known to halt and F otherwise
 
 *)

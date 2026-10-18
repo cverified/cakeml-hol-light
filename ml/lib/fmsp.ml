@@ -1,8 +1,8 @@
 (* ======================================================== *)
 (*  fmsp: ported from HOL4's
-    src/transfer/examples/fmspScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
+    src/transfer/examples/fmspScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by rmfmap.ml and unify.ml.  *)
 (* ======================================================== *)
 
 needs "lib/sptree.ml";;

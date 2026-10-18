@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_to_dataProof: ported from HOL4's
-    compiler/backend/proofs/bvi_to_dataProofScript.sml  *)
+    compiler/backend/proofs/bvi_to_dataProofScript.sml
+    A proof theory about bvi_to_data.ml, with 5 definitions and 55
+    theorems.  Needed by backendProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -35,8 +37,7 @@ let code_rel_def = cake_define
          exp)))`;;
 hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
 
-(* Projection from `dataSem$v` into `bvlSem$v` that basically gets rid
-   of
+(* Projection from `dataSem$v` into `bvlSem$v` that basically gets rid of
    timestamp information (note this make the function non-injective)
 *)
 
@@ -107,16 +108,13 @@ let data_to_bvi_result_def = cake_define
       | (Rerr (Rraise v)) -> Rerr (Rraise (Exn (data_to_bvi_v v)))
       | (Rerr (Rabort err)) -> Rerr (Rabort err)`;;
 
-(* All the `dataSem$v` values project to `bvlSem$Boolv b` satisfy
-   `isBool` *)
+(* All the `dataSem$v` values project to `bvlSem$Boolv b` satisfy `isBool` *)
 
 (* Lifting `data_to_bvi_v` projection to work over `bvlSem$v list` *)
 
-(* Special bijection for `data_to_bvi_v` with `dataSem$Number` + `MAP`
-   *)
+(* Special bijection for `data_to_bvi_v` with `dataSem$Number` + `MAP` *)
 
-(* Special bijection for `data_to_bvi_v` with `dataSem$Word64` + `MAP`
-   *)
+(* Special bijection for `data_to_bvi_v` with `dataSem$Word64` + `MAP` *)
 
 (* Bijection of `data_to_bvi_v (Number n)` over multiple maps *)
 
@@ -153,8 +151,7 @@ let data_to_bvi_result_def = cake_define
    in a comment *)
 
 (* bviSem$finalise_cons is simulated by dataSem$finalise_cons: the extra
-   time stamps taken by the dataLang version are invisible to the
-     projection *)
+   time stamps taken by the dataLang version are invisible to the projection *)
 
 (* HOL4 bvi_to_dataProofScript.sml:527-530: a proof *)
 
@@ -175,8 +172,7 @@ let data_to_bvi_result_def = cake_define
 (* HOL4 bvi_to_dataProofScript.sml:1126-1138: a proof *)
 
 (* HOL4 bvi_to_dataProofScript.sml:1140-1243: a proof *)
-   (* single-cut: do_app reads args from full t2.locals (pre-cut);
-      recover
+   (* single-cut: do_app reads args from full t2.locals (pre-cut); recover
       get_vars over t2.locals from the get_vars over the cut env1 *)
 (* HOL4 bvi_to_dataProofScript.sml:1246-1839: a proof *)
 

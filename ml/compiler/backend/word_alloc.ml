@@ -1,11 +1,13 @@
 (* ======================================================== *)
 (*  word_alloc: ported from HOL4's
-    compiler/backend/word_allocScript.sml  *)
+    compiler/backend/word_allocScript.sml
+    A definition theory, with 68 definitions and 4 theorems.  Needed
+    by backend.ml, backend_passes.ml, wordConvsProof.ml,
+    word_allocProof.ml, word_to_stack.ml and word_to_word.ml.  *)
 (* ======================================================== *)
 
 (*
-  This is the compiler's register allocator. It supports different
-    modes:
+  This is the compiler's register allocator. It supports different modes:
       0) simple allocator, no spill heuristics;
       1) simple allocator + spill heuristics;
       2) IRC allocator, no spill heuristics (default);
@@ -135,8 +137,7 @@ let fix_inconsistencies_def = cake_define
        (wordLang_Move (priority prio F) Rmov) Rseq,na'',ssa_L''))`;;
 
 (*ssa_cc_trans_inst does not need to interact with stack*)
-(* Note: this needs to return a prog to support specific registers for
-   AddCarry and other special insts
+(* Note: this needs to return a prog to support specific registers for AddCarry and other special insts
 *)
 let ssa_cc_trans_inst_def = cake_define
   `ssa_cc_trans_inst x ssa na =
@@ -307,8 +308,7 @@ let mk_prio_def = cake_define
    (if el = wordLang_Skip then SOME (INL one) else if er =
      wordLang_Skip then SOME (INR one) else NONE)`;;
 
-(*Generate reconciliation moves from current ssa to target ssa for vars
-   in ns.
+(*Generate reconciliation moves from current ssa to target ssa for vars in ns.
 
   For v ∈ ns ∩ domain cur_ssa: emit a Move from cur_ssa(v) to tgt_ssa(v)
   (skipped if they happen to be the same register).
@@ -329,10 +329,8 @@ let ssa_reconcile_def = cake_define
      if moves = [] then (Skip:'a wordLang_prog) else wordLang_Move
        1 moves)`;;
 
-(* Loop entry setup: refresh ssa for vars in (names ∪ exit_names) so
-   that
-   option_lookup ssa_refreshed is INJ on each. For vars already in ssa
-     we
+(* Loop entry setup: refresh ssa for vars in (names ∪ exit_names) so that
+   option_lookup ssa_refreshed is INJ on each. For vars already in ssa we
    emit a real Move; for vars not in ssa we allocate fresh ssa entries
    and fake_move-initialise the corresponding target registers. *)
 let loop_setup_def = cake_define
@@ -1068,8 +1066,7 @@ let get_writes_def = cake_define
 (* HOL4 word_allocScript.sml:1049-1083: code that the source has in a
    comment *)
 
-(* Potentially more efficient liveset representation for checking /
-   allocation*)
+(* Potentially more efficient liveset representation for checking / allocation*)
 let get_delta_inst_def = cake_define
   `get_delta_inst x =
         match x with
@@ -1242,10 +1239,8 @@ let get_prefs_def = cake_define
 
   Currently, this just treats FP as a "reg" instruction
 
-  This is meant to be small and quick to compute, because it has to be
-    applied
-  to the entire program just before register allocation, which can be
-    huge.
+  This is meant to be small and quick to compute, because it has to be applied
+  to the entire program just before register allocation, which can be huge.
 
 *)
 
@@ -1366,8 +1361,7 @@ let heu_merge_call_def = cake_define
   `heu_merge_call (t1:1 spt) t2 =
    sptree_union t1 t2`;;
 
-(* We use "lr" to approximate any new vars not already tracked in calls
-   *)
+(* We use "lr" to approximate any new vars not already tracked in calls *)
 let add_call_def = cake_define
   `(add_call lr calls':1 spt) =
    sptree_union (sptree_map (\v. one) lr) calls'`;;

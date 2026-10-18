@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl: ported from HOL4's
-    compiler/backend/bvlScript.sml  *)
+    compiler/backend/bvlScript.sml
+    A definition theory, with 2 definitions, 1 datatype and no
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*

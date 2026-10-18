@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_tailrecProof: ported from HOL4's
-    compiler/backend/proofs/bvi_tailrecProofScript.sml  *)
+    compiler/backend/proofs/bvi_tailrecProofScript.sml
+    A proof theory about bvi_tailrec.ml, with 9 definitions and 85
+    theorems.  Needed by bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*

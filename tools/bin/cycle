@@ -42,7 +42,7 @@ python3 -I tools/mkcheats.py > tmp/cheats.txt 2> tmp/mkcheats.err
 cat tmp/mkcheats.err
 mv tmp/cheats.txt tools/cheats.txt
 echo "=== the port"
-python3 -I tools/portall.py 2>&1 | grep -E 'FAILED|files,'
+python3 -I tools/portall.py 2>&1 | grep -E 'FAILED|files,|prefaces'
 python3 -I tools/loadorder.py > tools/load.txt
 checks
 echo "=== the template and the smoke test"

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_copyProof: ported from HOL4's
-    compiler/backend/proofs/word_copyProofScript.sml  *)
+    compiler/backend/proofs/word_copyProofScript.sml
+    A proof theory about word_copy.ml, with 3 definitions and 75
+    theorems.  Needed by word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*

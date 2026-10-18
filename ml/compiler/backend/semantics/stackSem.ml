@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  stackSem: ported from HOL4's
-    compiler/backend/semantics/stackSemScript.sml  *)
+    compiler/backend/semantics/stackSemScript.sml
+    A definition theory, with 51 definitions, 2 datatypes and 13
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*

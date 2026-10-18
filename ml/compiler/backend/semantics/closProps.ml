@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  closProps: ported from HOL4's
-    compiler/backend/semantics/closPropsScript.sml  *)
+    compiler/backend/semantics/closPropsScript.sml
+    A proof theory, with 35 definitions and 200 theorems.  Needed by
+    13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -457,8 +459,7 @@ let set_globals_def = cake_define_list_try_tac (fun () ->
 hol4_overload "elist_globals" "closProps_elist_globals";;
 hol4_overload "set_globals" "closProps_set_globals";;
 
-(* {foo}sgc_free: foo is free of SetGlobal closures, meaning closures
-   that
+(* {foo}sgc_free: foo is free of SetGlobal closures, meaning closures that
    include calls to SetGlobal, for
      foo = {(e)xpr, (v)alue, (r)esult, and (s)tate}
 *)

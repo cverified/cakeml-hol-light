@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  labProps: ported from HOL4's
-    compiler/backend/semantics/labPropsScript.sml  *)
+    compiler/backend/semantics/labPropsScript.sml
+    A proof theory, with 18 definitions and 91 theorems.  Needed by
+    lab_filterProof.ml, lab_to_targetProof.ml, stack_rawcallProof.ml
+    and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*

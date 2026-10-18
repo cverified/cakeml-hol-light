@@ -1,11 +1,12 @@
 (* ======================================================== *)
 (*  semanticsProps: ported from HOL4's
-    semantics/proofs/semanticsPropsScript.sml  *)
+    semantics/proofs/semanticsPropsScript.sml
+    A proof theory about semantics.ml, with 5 definitions and 20
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
-  Theorems about the top-level semantics, including totality and
-    determinism.
+  Theorems about the top-level semantics, including totality and determinism.
 *)
 
 needs "lib/lprefix_lub.ml";;

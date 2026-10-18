@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  wordProps: ported from HOL4's
-    compiler/backend/semantics/wordPropsScript.sml  *)
+    compiler/backend/semantics/wordPropsScript.sml
+    A proof theory, with 10 definitions and 197 theorems.  Needed by
+    17 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -48,8 +50,7 @@ Main lemmas:
 (*helps with existence proofs
 ?l'. (s with locals := l) = (s with locals := l')*)
 (*TODO does not work when given a goal like
-?k'. (s with <|locals := l; clock := k|>) = (s with <|locals := l, clock
-  := k |>)
+?k'. (s with <|locals := l; clock := k|>) = (s with <|locals := l, clock := k |>)
 *)
 
 (*TODO Weaken this simplification
@@ -86,15 +87,12 @@ f is a record update like (λs. s with clock := k)
 
 (* HOL4 wordPropsScript.sml:1436-1441: ML code, not ported *)
 
-(* This lemma is interesting in wordLang because of the use of
-   MustTerminate
+(* This lemma is interesting in wordLang because of the use of MustTerminate
 
-   To remove MustTerminate, we need to inject an exact number of clock
-     ticks
+   To remove MustTerminate, we need to inject an exact number of clock ticks
    corresponding to the ticks used in the MustTerminate block
 
-   The number of clock ticks is fixed for any program, and can be
-     characterized by st.clock - rst.clock *)
+   The number of clock ticks is fixed for any program, and can be characterized by st.clock - rst.clock *)
 
 (* IO and clock monotonicity *)
 
@@ -108,8 +106,7 @@ f is a record update like (λs. s with clock := k)
 
 (*--Stack Swap Lemma--*)
 
-(*Stacks look the same to the GC except for the keys (e.g. recoloured
-   and in order)*)
+(*Stacks look the same to the GC except for the keys (e.g. recoloured and in order)*)
 let s_frame_val_eq_def = cake_define
   `s_frame_val_eq x1 x2 =
         match (x1,x2) with
@@ -128,8 +125,7 @@ let s_val_eq_def = cake_define
                               s_frame_val_eq x y)
         | (_3,_4) -> F`;;
 
-(*Stacks look the same except for the values of the GC-ed cutsets (e.g.
-   result of gc)*)
+(*Stacks look the same except for the values of the GC-ed cutsets (e.g. result of gc)*)
 let s_frame_key_eq_def = cake_define
   `s_frame_key_eq x1 x2 =
         match (x1,x2) with
@@ -160,8 +156,7 @@ let s_key_eq_def = cake_define
 (*gc succeeds on all stacks related by stack_val and there are relations
   in the result*)
 
-(*Slightly more general theorem allows the unused locals to be
-   differnt*)
+(*Slightly more general theorem allows the unused locals to be differnt*)
 
 (*Most generalised gc_s_val_eq*)
 
@@ -172,8 +167,7 @@ let s_key_eq_def = cake_define
 (*--Stack Swap Lemma DONE--*)
 
 (*--Permute Swap Lemma--*)
-(*For any target result permute, we can find an initial permute such
-   that the
+(*For any target result permute, we can find an initial permute such that the
   final permute is equal to the target *)
 
 (* Locals extend lemma *)

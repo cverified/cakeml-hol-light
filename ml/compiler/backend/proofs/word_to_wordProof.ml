@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_to_wordProof: ported from HOL4's
-    compiler/backend/proofs/word_to_wordProofScript.sml  *)
+    compiler/backend/proofs/word_to_wordProofScript.sml
+    A proof theory about word_to_word.ml, with 2 definitions and 27
+    theorems.  Needed by data_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*

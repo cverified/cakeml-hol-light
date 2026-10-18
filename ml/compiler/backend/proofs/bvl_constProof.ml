@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_constProof: ported from HOL4's
-    compiler/backend/proofs/bvl_constProofScript.sml  *)
+    compiler/backend/proofs/bvl_constProofScript.sml
+    A proof theory about bvl_const.ml, with 2 definitions and 24
+    theorems.  Needed by bvl_handleProof.ml and bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*

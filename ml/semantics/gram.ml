@@ -1,12 +1,14 @@
 (* ======================================================== *)
 (*  gram: ported from HOL4's
-    semantics/gramScript.sml  *)
+    semantics/gramScript.sml
+    A definition theory, with 7 definitions and 2 theorems.  Needed
+    by cmlNTProps.ml, cmlPEG.ml, cmlParse.ml, cmlPtreeConversion.ml,
+    gramProps.ml, pegComplete.ml, pegSound.ml and semantics.ml.  *)
 (* ======================================================== *)
 
 (*
   Definition of CakeML's Context-Free Grammar.
-  The grammar specifies how token lists should be converted to syntax
-    trees.
+  The grammar specifies how token lists should be converted to syntax trees.
 *)
 
 needs "basis/pure/mlstring.ml";;

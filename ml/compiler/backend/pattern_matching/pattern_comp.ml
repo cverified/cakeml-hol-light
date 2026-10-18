@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  pattern_comp: ported from HOL4's
-    compiler/backend/pattern_matching/pattern_compScript.sml  *)
+    compiler/backend/pattern_matching/pattern_compScript.sml
+    A definition theory, with 16 definitions and 21 theorems.
+    Needed by flat_pattern.ml.  *)
 (* ======================================================== *)
 
 (*

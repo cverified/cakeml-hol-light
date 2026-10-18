@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  copying_gc: ported from HOL4's
-    compiler/backend/gc/copying_gcScript.sml  *)
+    compiler/backend/gc/copying_gcScript.sml
+    A definition theory, with 5 definitions and 23 theorems.  Needed
+    by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*

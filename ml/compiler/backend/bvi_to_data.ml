@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  bvi_to_data: ported from HOL4's
-    compiler/backend/bvi_to_dataScript.sml  *)
+    compiler/backend/bvi_to_dataScript.sml
+    A definition theory, with 7 definitions and 10 theorems.  Needed
+    by backend.ml, backendProof.ml, backend_passes.ml,
+    bvi_to_dataProof.ml and data_to_word_assignProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -251,8 +254,7 @@ let optimise_def = cake_define
   (data_live_compile prog LN)) dataLang_Skip)`;;
 hol4_overload "optimise" "bvi_to_data_optimise";;
 
-(* the top-level compiler includes the optimisations, because the
-   correctness
+(* the top-level compiler includes the optimisations, because the correctness
    proofs are combined *)
 
 let compile_exp_def = cake_define

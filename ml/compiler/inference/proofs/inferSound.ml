@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  inferSound: ported from HOL4's
-    compiler/inference/proofs/inferSoundScript.sml  *)
+    compiler/inference/proofs/inferSoundScript.sml
+    A proof theory, with 1 definition and 11 theorems.  Needed by
+    compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*

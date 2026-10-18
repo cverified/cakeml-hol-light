@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  inferComplete: ported from HOL4's
-    compiler/inference/proofs/inferCompleteScript.sml  *)
+    compiler/inference/proofs/inferCompleteScript.sml
+    A proof theory, with no definitions and 11 theorems.  Needed by
+    compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*

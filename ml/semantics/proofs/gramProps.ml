@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  gramProps: ported from HOL4's
-    semantics/proofs/gramPropsScript.sml  *)
+    semantics/proofs/gramPropsScript.sml
+    A proof theory about gram.ml, with 2 definitions and 12
+    theorems.  Needed by cmlNTProps.ml, pegComplete.ml and
+    pegSound.ml.  *)
 (* ======================================================== *)
 
 (*

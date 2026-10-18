@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  flatProps: ported from HOL4's
-    compiler/backend/semantics/flatPropsScript.sml  *)
+    compiler/backend/semantics/flatPropsScript.sml
+    A proof theory, with 16 definitions and 79 theorems.  Needed by
+    flat_elimProof.ml, flat_patternProof.ml, flat_to_closProof.ml
+    and source_to_flatProof.ml.  *)
 (* ======================================================== *)
 
 (*

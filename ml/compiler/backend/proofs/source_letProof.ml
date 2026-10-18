@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  source_letProof: ported from HOL4's
-    compiler/backend/proofs/source_letProofScript.sml  *)
+    compiler/backend/proofs/source_letProofScript.sml
+    A proof theory about source_let.ml, with no definitions and 9
+    theorems.  Needed by source_to_sourceProof.ml.  *)
 (* ======================================================== *)
 
 (*

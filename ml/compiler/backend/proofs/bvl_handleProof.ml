@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_handleProof: ported from HOL4's
-    compiler/backend/proofs/bvl_handleProofScript.sml  *)
+    compiler/backend/proofs/bvl_handleProofScript.sml
+    A proof theory about bvl_handle.ml, with 3 definitions and 57
+    theorems.  Needed by bvl_inlineProof.ml and bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*

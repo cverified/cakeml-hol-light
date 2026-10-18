@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_ticksProof: ported from HOL4's
-    compiler/backend/proofs/clos_ticksProofScript.sml  *)
+    compiler/backend/proofs/clos_ticksProofScript.sml
+    A proof theory about clos_ticks.ml, with 7 definitions and 46
+    theorems.  Needed by clos_knownProof.ml.  *)
 (* ======================================================== *)
 
 (*

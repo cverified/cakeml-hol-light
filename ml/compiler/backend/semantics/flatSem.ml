@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flatSem: ported from HOL4's
-    compiler/backend/semantics/flatSemScript.sml  *)
+    compiler/backend/semantics/flatSemScript.sml
+    A definition theory, with 40 definitions, 5 datatypes and 10
+    theorems.  Needed by 5 files of the port.  *)
 (* ======================================================== *)
 
 (*

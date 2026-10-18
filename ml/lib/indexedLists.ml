@@ -1,8 +1,8 @@
 (* ======================================================== *)
-(*  indexedLists[bare]: ported from HOL4's
-    src/list/src/indexedListsScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
+(*  indexedLists: ported from HOL4's
+    src/list/src/indexedListsScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  mlint: ported from HOL4's
-    basis/pure/mlintScript.sml  *)
+    basis/pure/mlintScript.sml
+    A definition theory, with 20 definitions and 41 theorems.
+    Needed by compiler.ml, displayLang.ml, export.ml, infer_t.ml,
+    jsonLang.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -15,10 +18,8 @@ let toChar_def = cake_define
   `toChar digit = (if digit < 10 then CHR (ORD (CHR 48) + digit) else
   CHR ((ORD (CHR 65) + digit) - 10))`;;
 
-(* decimal encoding is very slightly faster if we avoid dividing large
-   big-ints
-   by 10, and instead divide them by a power of 10 that fits in 28 bits
-     *)
+(* decimal encoding is very slightly faster if we avoid dividing large big-ints
+   by 10, and instead divide them by a power of 10 that fits in 28 bits *)
 let exp_for_dec_enc_def = cake_define
   `exp_for_dec_enc = 8`;;
 
@@ -149,8 +150,7 @@ let fromNatString_def = cake_define
 
 (* fromString proofs *)
 
-(* this formulation avoids a comparsion using = for better performance
-   *)
+(* this formulation avoids a comparsion using = for better performance *)
 let int_cmp_def = cake_define
   `mlint_int_cmp i (j:int) = (if i < j then LESS else
                        if j < i then GREATER else EQUAL)`;;

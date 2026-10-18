@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  export_mips: ported from HOL4's
-    compiler/backend/mips/export_mipsScript.sml  *)
+    compiler/backend/mips/export_mipsScript.sml
+    A definition theory, with 5 definitions and no theorems.  Needed
+    by compiler.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -25,8 +27,7 @@ a1 - first address of heap
 a2 - first address of stack
 a3 - first address past the stack
 
-In addition, the first address on the heap should store the address of
-  cake_bitmaps
+In addition, the first address on the heap should store the address of cake_bitmaps
 
 Note: this set up does NOT account for restoring clobbered registers
 *)

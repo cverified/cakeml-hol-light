@@ -1,8 +1,9 @@
 (* ======================================================== *)
 (*  mc_multiword: ported from HOL4's
-    examples/machine-code/multiword/mc_multiwordScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
+    examples/machine-code/multiword/mc_multiwordScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by word_bignum.ml and
+    word_bignumProof.ml.  *)
 (* ======================================================== *)
 
 needs "lib/multiword.ml";;

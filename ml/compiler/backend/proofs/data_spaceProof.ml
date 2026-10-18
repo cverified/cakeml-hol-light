@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  data_spaceProof: ported from HOL4's
-    compiler/backend/proofs/data_spaceProofScript.sml  *)
+    compiler/backend/proofs/data_spaceProofScript.sml
+    A proof theory about data_space.ml, with no definitions and 9
+    theorems.  Needed by bvi_to_dataProof.ml.  *)
 (* ======================================================== *)
 
 (*

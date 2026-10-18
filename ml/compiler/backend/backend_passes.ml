@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  backend_passes: ported from HOL4's
-    compiler/backend/backend_passesScript.sml  *)
+    compiler/backend/backend_passesScript.sml
+    A definition theory, with 18 definitions, 1 datatype and 20
+    theorems.  Needed by backendProof.ml and compiler.ml.  *)
 (* ======================================================== *)
 
 (*

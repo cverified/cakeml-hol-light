@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bviProps: ported from HOL4's
-    compiler/backend/semantics/bviPropsScript.sml  *)
+    compiler/backend/semantics/bviPropsScript.sml
+    A proof theory about bvi.ml, with 6 definitions and 82 theorems.
+    Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -66,16 +68,13 @@ let good_code_labels_def = cake_define
        SUBSET set_of_list (MAP FST p) UNION elabs`;;
 hol4_overload "good_code_labels" "bviProps_good_code_labels";;
 
-(* --- switching a compiler pass off
-   --------------------------------------
+(* --- switching a compiler pass off --------------------------------------
 
-   A pass that is configured off compiles with CURRY I, i.e. the
-     identity.
+   A pass that is configured off compiles with CURRY I, i.e. the identity.
    It still wraps the incremental compiler with state_cc/state_co, which
    moves one configuration component between the oracle's state and its
    config.  adj_orac below performs that move on a state; it is the BVI
-   analogue of closProps' adj_orac_rel.
-       *)
+   analogue of closProps' adj_orac_rel.                                    *)
 
 let adj_orac_def = cake_define
   `(adj_orac cc f (s:('a,'ffi)bviSem_state):('b,'ffi)bviSem_state) =

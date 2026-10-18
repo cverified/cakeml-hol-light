@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  stack_rawcallProof: ported from HOL4's
-    compiler/backend/proofs/stack_rawcallProofScript.sml  *)
+    compiler/backend/proofs/stack_rawcallProofScript.sml
+    A proof theory about stack_rawcall.ml, with 2 definitions and 21
+    theorems.  Needed by stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*

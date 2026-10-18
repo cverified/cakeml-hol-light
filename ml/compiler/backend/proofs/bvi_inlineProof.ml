@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_inlineProof: ported from HOL4's
-    compiler/backend/proofs/bvi_inlineProofScript.sml  *)
+    compiler/backend/proofs/bvi_inlineProofScript.sml
+    A proof theory about bvi_inline.ml, with 9 definitions and 70
+    theorems.  Needed by backendProof.ml and bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -24,8 +26,7 @@ let cache_code_labels_def = cake_define
      BIGUNION (set_of_list (MAP (bviProps_get_code_labels o SND)
        (sptree_toList cs)))`;;
 
-(* [exp_rel c] relates a source expression to its image under the
-   inlining
+(* [exp_rel c] relates a source expression to its image under the inlining
    phase, where [c] is the transformed target code table.
    [exp_rel_inline] is the only rule that removes a Call boundary. *)
 let exp_rel = cake_inductive
@@ -101,14 +102,11 @@ let in_state_rel_def = cake_define
                bvi_inlineProof_exp_rel (state_code t) exp exp1))`;;
 hol4_overload "in_state_rel" "bvi_inlineProof_in_state_rel";;
 
-(* Inversion of [exp_rel] on each source constructor. [~inline] is why
-   the
+(* Inversion of [exp_rel] on each source constructor. [~inline] is why the
    Call clause has a second disjunct. *)
 
-(* The inlined form of a Call evaluates exactly like the Call it
-   replaces:
-   the extra environment entries are unreachable, and the two differ on
-     a
+(* The inlined form of a Call evaluates exactly like the Call it replaces:
+   the extra environment entries are unreachable, and the two differ on a
    [Ret]-raise only, which the side condition excludes. *)
 
 (* HOL4 bvi_inlineProofScript.sml:877-907: a proof *)

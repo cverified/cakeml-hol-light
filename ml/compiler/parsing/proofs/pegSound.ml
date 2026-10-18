@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  pegSound: ported from HOL4's
-    compiler/parsing/proofs/pegSoundScript.sml  *)
+    compiler/parsing/proofs/pegSoundScript.sml
+    A proof theory, with 1 definition and 42 theorems.  Needed by
+    compilerProof.ml and pegComplete.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -34,8 +36,7 @@ let pegsym_to_sym_def = cake_define
 
 (* HOL4 pegSoundScript.sml:233: ML code, not ported *)
 
-(* left recursive rules in the grammar turn into calls to rpt in the
-   PEG,
+(* left recursive rules in the grammar turn into calls to rpt in the PEG,
    and this in turn requires inductions *)
 
 (* HOL4 pegSoundScript.sml:479-482: a proof *)
