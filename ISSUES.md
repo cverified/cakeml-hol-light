@@ -69,6 +69,35 @@ sources, and why.
   variables are called after, have a default record type instead
   (`FIELD_DEFAULT` of `tools/overrides.py`).
 
+## The statements of the theorems (phase two)
+
+- A theorem of a source is `cake_theorem "name[attrs]" (fun () ->
+  `...`) CHEAT_TAC`.  The statement is a quotation inside a
+  function so that one the port cannot read is a cheat of its own
+  (`cake_unstated ()`) and does not lose the rest of the file.
+- **The name of a record field is a variable.**  HOL4 has no
+  constant of the name of a field: `r.stack` is syntax there, and
+  a bare `stack` is a variable of the statement.  The port
+  overloads the accessors of a field that several record types
+  have with the name of the field, so a statement that uses that
+  name for a variable is read with those overloads taken away
+  (`cake_as_vars`).  The port says which statements those are
+  (`cake_fieldvars ()`).
+- **A name that no theory in scope defines is a variable.**  Each
+  file says which names these are (`cake_hide [...]`, right after
+  its `needs`), and its statements are read with those constants
+  hidden.  HOL4 reads such a name as a variable because the
+  theory that defines it is not an ancestor; the port has every
+  constant in one namespace, so it has to hide it.
+- A theorem that HOL4 states as the value of an ML expression is
+  a comment that points at the source and names the theorem: the
+  statement is not in the source, HOL4 computes it (`PENDING.md`).
+- A statement whose variables hold integers says so nowhere, so
+  the port reads it with the types of the constants it applies:
+  `tools/intargs.txt` says which argument of a constant is an
+  `int` (and which is a function of an `int`), and a numeral in
+  such a place is `&n`.
+
 ## Syntax
 
 - HOL4's `simpleSexp` writes an s-expression list as

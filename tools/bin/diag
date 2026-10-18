@@ -1,0 +1,20 @@
+#!/bin/sh
+# diag [session] : say of every statement of the port whether a
+# session that has the port loaded can read it (hol-seq by
+# default, or a clone of it: the reports and the next run do not
+# touch a clone).  It writes tmp/stmts.txt (every statement, with
+# the names that its file hides) and tmp/diag.out (one line per
+# statement that does not parse, that is not a formula, that has
+# free variables or that takes more than a second), and says how
+# many there are of each.  No run is needed for it.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-seq}
+cd $C
+python3 -I tools/thmcheck.py
+python3 -I tools/fieldovl.py
+TIMEOUT=300 repl-step $s "#use \"$C/tools/diag.ml\";;" > /dev/null 2>&1
+TIMEOUT=3600 repl-step $s \
+  "diag_run \"$C/tmp/stmts.txt\" \"$C/tmp/diag.out\";;" 2>&1 | tail -2
+cut -f1 $C/tmp/diag.out | sort | uniq -c
+python3 -I tools/diag.py
