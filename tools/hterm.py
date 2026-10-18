@@ -1234,6 +1234,23 @@ def _int_arg_pos():
 INT_ARGS_OF = _int_arg_pos()
 
 
+def _int_result_fns():
+  """the constants of the port whose result is an integer
+     (tools/intres.txt, which tools/bin/intargs writes out of a
+     session): a numeral beside an application of one is &n"""
+  out = set()
+  f = os.path.dirname(os.path.abspath(__file__)) + '/intres.txt'
+  try:
+    for l in open(f):
+      if l.strip(): out.add(l.strip())
+  except OSError:
+    pass
+  return out
+
+
+INT_RESULT_FNS = _int_result_fns()
+
+
 def int_arg_pos(nm):
   """the arguments of a constant whose type is int"""
   return INT_ARGS_OF.get(nm, (set(), {}))[0]
@@ -1564,6 +1581,13 @@ class Printer:
       return self.intvar(e.l) or self.intvar(e.r)
     if e.kind == 'prefix' and e.op in ('-', '~'):
       return self.intvar(e.e)
+    # an application of a constant whose result is an integer
+    # holds one (linear_scanProof's 0 <= size_of_live_tree lt,
+    # whose size is an integer: tools/intres.txt)
+    if e.kind == 'app':
+      h, _ = strip_app(e)
+      if h.kind == 'id' and self.ctx.name(h.name) in INT_RESULT_FNS:
+        return True
     # a term that the source annotates with int holds one, and so
     # does the Num of one (data_to_word's 0 <= (i:int))
     if e.kind == 'typed':

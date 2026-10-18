@@ -370,6 +370,10 @@ class Porter:
     if acc:
       self.ctx.accessors = dict(self.ctx.accessors)
       self.ctx.accessors.update(acc)
+    # a statement whose ~ is the complement of a word
+    # (overrides.WORD_NOT, which a definition takes the same way:
+    # word_bignumProof's evaluate_SeqTempImmNot is about Word (~w))
+    self.ctx.wordnot = (self.thy, nm) in overrides.WORD_NOT
     # the theory whose constructor a name of this statement means
     # (overrides.CON_OF, which a definition takes the same way):
     # the Seq of data_simpProof's evaluate_Seq_Skip is dataLang's,
@@ -395,6 +399,7 @@ class Porter:
         hterm.ANTIQ_STRICT[0] = False
         hterm.DROP_TYVAR_ANNOT[0] = False
         hterm.UNIFY_TYVAR_ANNOT[0] = False
+        self.ctx.wordnot = False
         if fv: self.ctx.fieldvar = self.fieldvar
         if acc:
           self.ctx.accessors = overrides.ACCESSORS.get(self.thy, {})

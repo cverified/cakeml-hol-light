@@ -846,6 +846,9 @@ WORD_NOT = set([
   ('data_to_word', 'assign_WordFromInt_def'),
   ('data_to_word', 'comp_def'),
   ('word_bignum', 'SeqTempImmNot_def'),
+  # the statement about that definition says Word (~w) of a word
+  # as well
+  ('word_bignumProof', 'evaluate_SeqTempImmNot'),
 ])
 
 # definitions in which the same variable name has different types in

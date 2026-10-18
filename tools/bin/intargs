@@ -34,4 +34,13 @@ TIMEOUT=180 repl-step $s \
      (constants ());
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -2
-wc -l < $C/tools/intargs.txt
+TIMEOUT=180 repl-step $s \
+  "let cake_out = open_out \"$C/tools/intres.txt\" in
+   do_list (fun (n,ty) ->
+       let _,r = splitlist dest_fun_ty ty in
+       if r = \`:int\` && not (String.length n > 0 && n.[0] = '_')
+       then output_string cake_out (n ^ \"\\n\"))
+     (constants ());
+   close_out cake_out; length (constants ());;" \
+  2>&1 | tail -1
+wc -l < $C/tools/intargs.txt; wc -l < $C/tools/intres.txt
