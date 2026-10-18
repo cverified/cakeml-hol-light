@@ -201,7 +201,13 @@ FIELD_VAR = {
   'data_to_word_gcProof': {'t': 'wordSem_state'},
   # s is the state of stackSem and t the one of labSem in the
   # invariant that these relate them with
-  'stack_to_labProof': {'s': 'stackSem_state', 't': 'labSem_state'},
+  # s and s1 are the states of stackSem that this theory relates
+  # with the states t, t1 and t2 of labSem (s1 is read with the
+  # mdomain, the memory and the be of a stackSem state, and t1 and
+  # t2 with the pc, the ptr_reg and the mem of a labSem one)
+  'stack_to_labProof': {'s': 'stackSem_state', 't': 'labSem_state',
+                        's1': 'stackSem_state', 't1': 'labSem_state',
+                        't2': 'labSem_state'},
   # the state that make_init makes is a stackSem state, and the
   # fields that it sets are of several records
   'stack_allocProof': {'s': 'stackSem_state'},
@@ -254,6 +260,10 @@ CON_BODY = {
 # make_init, which builds one out of a state of labSem)
 FIELD_VAR_DEF = {
   ('stack_to_labProof', 'make_init_def'): {'s': 'labSem_state'},
+  # the s2 of this statement is the state of labSem that the
+  # semantics is taken of, where the s2 of the statements about
+  # evaluate is the state of stackSem that it gives
+  ('stack_to_labProof', 'flatten_semantics'): {'s2': 'labSem_state'},
   # the env that make_varls is evaluated in is an environment of
   # flatSem, where the env of this theory is a sem_env
   ('source_to_flatProof', 'evaluate_make_varls'):

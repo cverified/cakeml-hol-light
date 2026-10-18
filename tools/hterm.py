@@ -1523,6 +1523,19 @@ class Printer:
   def paren(self, s, inner, outer):
     return '(' + s + ')' if inner < outer else s
 
+  def annot_rec(self, e):
+    """the record type that an annotation of a term says it is, if
+       the term has one: a field of an annotated record is read
+       with the accessor of that record and not with the
+       overloaded name of the field"""
+    while e.kind == 'paren': e = e.e
+    if e.kind != 'typed': return None
+    try: ty = self.pr_type(e.ty)
+    except Exception: return None
+    head = re.sub(r'^.*\)', '', ty).strip().split()
+    head = head[-1] if head else ''
+    return head if head in self.ctx.recs else None
+
   def pr_type(self, toks):
     try:
       ty = TypeParser(list(toks)).parse()
@@ -1868,9 +1881,13 @@ class Printer:
       # (typeSoundInvariants has the c of a sem_env and the c of
       # a type_env in one rule)
       v = e.e
-      while v.kind == 'paren': v = v.e
+      while v.kind in ('paren', 'typed'): v = v.e
       rec = (self.ctx.fieldvar.get(v.name)
              if v.kind == 'id' else None)
+      # an annotation of the record says which one it is itself
+      # (stack_to_labProof reads the code of
+      # (s1:('a,'c,'ffi)stackSem$state))
+      if not rec: rec = self.annot_rec(e.e)
       acc = (rec + '_' + e.fld) if rec else self.ctx.field(e.fld)
       return self.paren(acc + ' ' + self.pr(e.e, APP),
                         PRE_APP, prec)
