@@ -58,6 +58,24 @@ tail that the run of 16:30 measures._
   (`transitive`, `StrongLinearOrder`, `BAG_IMAGE`, `f_o_f`,
   `FUN_REL`, `RPROD`, `BIT`, `COMPL`, `AFUPDKEY`, `surj`, ...).
 
+_What is left of phase two:_
+
+1. _every statement that the port has **typechecks**: a run says
+   which do not (`tools/bin/thms` from `cake_unstated ()`), and
+   `tools/bin/diag` says the same without a run of its own;_
+2. _no statement is **silently weaker** than the source's:
+   `tools/diag.py` reports a statement that applies a name the
+   port made a variable, and `tools/libnames.py` a name of HOL4's
+   libraries that the port has not;_
+3. _then phase two is done, and phase three starts -- by hand,
+   one theorem at a time._
+
+_What is in: every `Theorem` of the 270 sources with its name, its
+attributes and its statement (10,131 of 10,134), the 33 theorems
+that the ML code of a source states itself, every comment (the
+prose of it), and a pointer that names each of the theorems whose
+statement HOL4 computes._
+
 _What the port does not state (`PENDING.md`): the 479 theorems
 that HOL4 states as the value of an ML expression (it computes
 the statement with `EVAL` or a rule, which the port cannot), and
