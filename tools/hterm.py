@@ -1403,6 +1403,9 @@ def set_equality(loose):
   INFIX['='] = (100 if loose else 450, assoc, hop, hprec)
 
 
+AUXSIZE = re.compile(r"^[A-Za-z][A-Za-z0-9_']*?\d+_size$")
+
+
 class Printer:
   def __init__(self, ctx):
     self.ctx = ctx
@@ -1469,7 +1472,17 @@ class Printer:
           return c
         return c if re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", c) \
                else '(' + c + ')'
-      return self.ctx.name(n)
+      n2 = self.ctx.name(n)
+      # HOL4's auxiliary size functions of a datatype family
+      # (exp1_size, exp2_size, ...) number the types of the family
+      # in another order than HOL Light does, so the port cannot
+      # say which type a name of one means; a term that uses one
+      # is a pointer at the source and not a statement with a free
+      # variable where HOL4 has a constant
+      if (AUXSIZE.match(n2) and n2 not in self.ctx.defnames
+          and n2 not in self.ctx.names.values()):
+        raise SyntaxError('the auxiliary size function ' + n2)
+      return n2
     if k == 'num':
       t = e.text
       if t.endswith('w'):

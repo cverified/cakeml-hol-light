@@ -27,6 +27,17 @@ Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
 what it reports missing is the two blocks below and these 482.
 
+**Forty statements use an auxiliary size function of a datatype
+family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's
+`Datatype` makes one of these for every type that the family
+needs besides the type itself (`exp1_size` of closLang is the
+size of a `(num # exp) list`), and HOL Light numbers the types of
+a family in another order, so a name of HOL4's says nothing about
+which function of the port it is.  The port writes a pointer that
+names the theorem: a statement with a free variable where the
+source has a constant would say something else than the source
+does, which is worse than saying nothing.
+
 Four statements use a constant of a HOL4 library that the port
 does not have, so a name of them is a free variable and the
 statement says less than the source's does.  `tools/libnames.py`
