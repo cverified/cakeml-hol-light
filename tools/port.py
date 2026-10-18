@@ -1015,7 +1015,20 @@ class Porter:
 
   # -- definitions -----------------------------------------------
 
+  def schematic(self, b):
+    """the schematic variables of a definition are its first
+       arguments: HOL4's Definition foo[schematic] takes the free
+       variables of the body into the constant, and the port has
+       to write them (overrides.SCHEMATIC)"""
+    sch = overrides.SCHEMATIC.get((self.thy, b.name))
+    if not sch: return
+    args = ' '.join(sch)
+    for nm in dbmod.definition_names(b.body):
+      b.body = re.sub(r"\b%s\b(?!')" % re.escape(nm),
+                      nm + ' ' + args, b.body)
+
   def definition(self, b):
+    self.schematic(b)
     name = ocaml_name(b.name)
     key = (self.thy, name)
     # what goes before the block goes there whether the block

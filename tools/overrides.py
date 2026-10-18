@@ -526,6 +526,19 @@ INT_NUMERALS = set([
 THM_INT_VARS = {
 }
 
+# HOL4's Definition foo[schematic] has a free variable in its
+# body, which HOL4 makes the first argument of the constant:
+# NTproperties defines nullableML and firstSetML for a grammar G
+# that the clauses do not take, and cmlNTProps applies them to
+# cmlG.  The port adds the variables of the list below as the
+# first arguments of the constant, which it has to do itself: the
+# port reads a definition as it stands, and a free variable in one
+# is a definition that it cannot make (ml/CHEATS.md).
+SCHEMATIC = {
+  ('NTproperties', 'nullableML_def'): ['G'],
+  ('NTproperties', 'firstSetML_def'): ['G'],
+}
+
 # the arguments of a definition that hold an integer, where no
 # clause of it says so and the clauses would get different types
 # (multiword's int_op adds its two arguments in one clause and

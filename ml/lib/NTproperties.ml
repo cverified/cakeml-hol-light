@@ -20,12 +20,12 @@ let nullable_def = cake_define
 let nullableML_def = cake_define_list_try (fun () ->
   `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
      LENGTH`)
-  [`nullableML seen [] = T`;
-   `nullableML seen (grammar_TOK t :: _1) = F`;
-   `nullableML seen (grammar_NT n :: rest) =
+  [`nullableML G seen [] = T`;
+   `nullableML G seen (grammar_TOK t :: _1) = F`;
+   `nullableML G seen (grammar_NT n :: rest) =
         (if n IN FDOM (grammar_rules G) /\ ~(n IN seen) then
-          if FAPPLY (grammar_rules G) n INTER {r | nullableML
-            (n INSERT seen) r} = {} then F else nullableML seen
+          if FAPPLY (grammar_rules G) n INTER {r | nullableML G
+            (n INSERT seen) r} = {} then F else nullableML G seen
             rest else F)`];;
 
 let firstSet_def = cake_define
@@ -39,13 +39,13 @@ let firstSet_def = cake_define
 let firstSetML_def = cake_define_list_try (fun () ->
   `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
      LENGTH`)
-  [`firstSetML seen [] = {}`;
-   `firstSetML seen (grammar_TOK t :: _2) = {t}`;
-   `firstSetML seen (grammar_NT n :: rest) =
+  [`firstSetML G seen [] = {}`;
+   `firstSetML G seen (grammar_TOK t :: _2) = {t}`;
+   `firstSetML G seen (grammar_NT n :: rest) =
       (if n IN FDOM (grammar_rules G) then
         (if ~(n IN seen) then
-          BIGUNION (IMAGE (firstSetML (n INSERT seen))
+          BIGUNION (IMAGE (firstSetML G (n INSERT seen))
                           (FAPPLY (grammar_rules G) n)) else {})
                             UNION
-        (if nullable G [grammar_NT n] then firstSetML seen rest
-          else {}) else {})`];;
+        (if nullable G [grammar_NT n] then firstSetML G seen
+          rest else {}) else {})`];;

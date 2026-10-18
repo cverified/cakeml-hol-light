@@ -79,7 +79,19 @@ let the_fieldvars = ref ([]:string list);;
 
 let cake_fieldvars () = rev (!the_fieldvars);;
 
+(* the message of HOL Light may have a line break in it (a type
+   that it prints does not fit in a line), and a line of the
+   output that starts with a # is the prompt of the toplevel as
+   far as the scripts that talk to a session are concerned: the
+   message goes out as one line *)
+
+let cake_oneline s =
+  String.concat " "
+    (filter (fun x -> x <> "")
+       (map String.trim (String.split_on_char '\n' s)));;
+
 let note_unstated nm what s =
+  let s = cake_oneline s in
   the_unstated := (nm,s) :: !the_unstated;
   print_string ("\ncake_theorem " ^ nm ^ " " ^ what ^ ": " ^ s ^ "\n");
   flush stdout;;
