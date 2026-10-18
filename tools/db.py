@@ -123,6 +123,7 @@ class Db:
     self.con_argty = {}        # (constructor,index) -> {type texts}
     self.con_argty_thy = {}    # (thy,constructor,index) -> type text
     self._overloaded = None
+    self._dist = {}
     # the OCaml bindings that the theorems of the port have taken
     # (a theorem keeps its own name where no other theory and no
     # name of HOL Light has it)
@@ -548,6 +549,29 @@ class Db:
     if not g: return self.ancestors(thy)
     out = {thy}
     for t in g: out |= self.ancestors(t)
+    return out
+
+  def distance(self, thy):
+    """how far every ancestor of a theory is from it: the length of
+       the shortest path of the Ancestors blocks.  A name that
+       several theories define is the one of the closest of them
+       (the Loc of data_to_word_gcProof is wordLang's, which is
+       three steps away, and not semanticPrimitives', which is
+       six), as HOL4 resolves it to the one of the theory that its
+       own ancestry loads last"""
+    if thy in self._dist: return self._dist[thy]
+    out = {thy: 0}
+    front = [thy]
+    d = 0
+    while front:
+      d += 1
+      nxt = []
+      for t in front:
+        for u in self.deps.get(t, []):
+          if u not in out:
+            out[u] = d; nxt.append(u)
+      front = nxt
+    self._dist[thy] = out
     return out
 
   def ancestors(self, thy):

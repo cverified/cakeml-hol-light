@@ -1420,6 +1420,14 @@ class Porter:
                      self.db.rename.get((t, ty), ty) ==
                      self.ctx.tyname(ty))]
       ts = same or ts
+    # of the theories that are left, the one closest to this one
+    # in the ancestry (the Loc of data_to_word_gcProof is
+    # wordLang's, one step away, and not semanticPrimitives',
+    # three steps away), and of those the last of the order, which
+    # is the one HOL4's overload resolution takes
+    dist = self.db.distance(self.thy)
+    near = min(dist.get(x, 99) for x in ts)
+    ts = [x for x in ts if dist.get(x, 99) == near] or ts
     rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
     return max(ts, key=lambda x: rank.get(x, -1))
 

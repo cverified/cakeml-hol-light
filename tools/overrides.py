@@ -913,6 +913,9 @@ CON_OF = {
   # pointer with the offset zero (the theorems about it filter a
   # list of word_locs with isWord)
   ('data_to_word_gcProof', 'loc_ok_def'): {'Loc': 'wordLang'},
+  # mk_loc gives the word_loc of wordLang that a handler of
+  # wordSem jumps to, which nothing in its clause says
+  ('data_to_word_gcProof', 'mk_loc_def'): {'Loc': 'wordLang'},
   # the program that this takes apart is stackLang's, which only
   # the annotation on the second component says
   ('stackSem', 'dest_Seq_def'): {'Seq': 'stackLang'},
