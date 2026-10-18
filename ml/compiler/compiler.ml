@@ -16,8 +16,11 @@
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/ag32/ag32_config.ml";;
 needs "compiler/backend/ag32/export_ag32.ml";;
+needs "compiler/backend/arm7/arm7_config.ml";;
 needs "compiler/backend/arm7/export_arm7.ml";;
+needs "compiler/backend/arm8/arm8_config.ml";;
 needs "compiler/backend/arm8/export_arm8.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
@@ -26,8 +29,11 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/mips/export_mips.ml";;
+needs "compiler/backend/mips/mips_config.ml";;
 needs "compiler/backend/riscv/export_riscv.ml";;
+needs "compiler/backend/riscv/riscv_config.ml";;
 needs "compiler/backend/x64/export_x64.ml";;
+needs "compiler/backend/x64/x64_config.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
@@ -44,9 +50,8 @@ needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
-(* HOL4 ancestors outside the port: basisProg x64_config arm8_config
-   riscv_config mips_config arm7_config ag32_config
-   panPtreeConversion pan_to_target panStatic pan_passes *)
+(* HOL4 ancestors outside the port: basisProg panPtreeConversion
+   pan_to_target panStatic pan_passes *)
 
 let staterr_INDUCT,staterr_RECURSION = define_datatype
   "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
@@ -828,17 +833,11 @@ let extend_conf_def = cake_define
                 get_err_str lab]))`;;
 
 (* Defaults to x64 if no target given *)
-cake_declare "x64_backend_config" `:backend_config`;;
 cake_declare "x64_config" `:(64)asm_config`;;
-cake_declare "arm8_backend_config" `:backend_config`;;
 cake_declare "arm8_config" `:(64)asm_config`;;
-cake_declare "mips_backend_config" `:backend_config`;;
 cake_declare "mips_config" `:(64)asm_config`;;
-cake_declare "riscv_backend_config" `:backend_config`;;
 cake_declare "riscv_config" `:(64)asm_config`;;
-cake_declare "arm7_backend_config" `:backend_config`;;
 cake_declare "arm7_config" `:(32)asm_config`;;
-cake_declare "ag32_backend_config" `:backend_config`;;
 cake_declare "ag32_config" `:(32)asm_config`;;
 
 let parse_target_64_def = cake_define

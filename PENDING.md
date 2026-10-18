@@ -1,8 +1,8 @@
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 262 files of the port: 4426
-blocks, of which every one is in (see `tools/coverage.py`); the
+`Definition` and `Inductive` of the 269 files of the port: 4444
+blocks, of which all but two are in (see `tools/coverage.py`); the
 ones that HOL4 makes in a way that the port has no counterpart
 for are declared constants (`cake_declare`, which adds no
 axiom), which the list below has.
@@ -89,19 +89,33 @@ as well: each is the `SHORT_TAILREC` of a step function
 proves there, is assumed -- 132 of the assumed theorems of the
 port are these.
 
-Twelve constants are declared for another reason: the encoder of
-a target needs a machine model of HOL4 (`x64_step` and the five
-others), which is not part of the CakeML sources, so the encoders
-and the configurations that have one in them are outside the port
-(`tools/excluded.txt`), and `compiler$parse_target_64` and
-`parse_target_32`, which the command line of the compiler goes
-through, only pass them on.  For each of `x64`, `arm8`, `mips`,
-`riscv` (64 bits) and `arm7`, `ag32` (32 bits) the port declares
-`<target>_backend_config` and `<target>_config`, with the types
-that the two definitions use them at (`EXTRA_BEFORE` in
-`tools/overrides.py` has the text).  The theory that exports the
-code of a target needs only `export`, which the port has, so
-`<target>_export` is a definition of the port.
+Six constants are declared for another reason: the one field of
+the asm configuration of a target that is not data is its
+encoder, and an encoder needs a machine model of HOL4 (`x64_step`
+and the five others), which is not part of the CakeML sources, so
+the six encoder theories are outside the port
+(`tools/excluded.txt`).  For each of `x64`, `arm8`, `mips`,
+`riscv` (64 bits) and `arm7`, `ag32` (32 bits) the port therefore
+declares `<target>_config`, with the type that
+`compiler$parse_target_64` and `parse_target_32`, which the
+command line of the compiler goes through, use it at
+(`EXTRA_BEFORE` in `tools/overrides.py` has the text).
+
+The configuration of the backend for a target is data, and is a
+definition of the port, in the file that HOL4 has it in: the six
+`compiler/backend/<target>/<target>_configScript.sml` are ported
+(`<target>_names`, the register names, and
+`<target>_backend_config`, the configuration of the eight passes),
+and they need nothing of the machine model.  HOL4 writes the
+configurations of `clos_to_bvl`, `bvl_to_bvi`, `data_to_word`,
+`word_to_word`, `word_to_stack`, `stack_to_lab` and
+`lab_to_target` into it with the ML code of the file, and the port
+states the expression that this ML code evaluates, as it does
+everywhere else (`tools/hol4.py` reads the quotation of a binding
+whose ML reads it, `rconc (EVAL ...)` as well as `eval ...`).
+The theory that exports the code of a target needs only `export`,
+which the port has, so `<target>_export` is a definition of the
+port as well.
 
 Four constants of the triangular unification algorithm are
 defined by the graph of their equation, because HOL4 defines

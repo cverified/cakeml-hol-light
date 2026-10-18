@@ -83,7 +83,10 @@ def monad_enabled(text):
   return m.group(1) if m else None
 
 
-ML_TERM = re.compile(r"val\s+([A-Za-z0-9_']+)\s*=\s*"
+# the ML that reads the quotation may be anything of the line
+# before it (`eval`, `rconc (EVAL`, ...): what it computes is the
+# value of the quotation, which is what the port keeps
+ML_TERM = re.compile(r"val\s+([A-Za-z0-9_']+)\s*=\s*[^`\n]*?"
                      r"(?:``|\u201c)(.*?)(?:``|\u201d)", re.S)
 
 # two terms in one binding, which the export theories of the

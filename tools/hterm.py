@@ -168,6 +168,23 @@ def tokenize(s):
       if nm:
         toks.append(Tok('id', nm, start, nl, icol))
         i = j; col += j - i; nl = 0; continue
+      # ^(name) : HOL4 splices in the value of the ML expression
+      # between the parentheses, which for the sources of the port
+      # is a name of ANTIQ (the configurations of the targets)
+      if s[i+1] == '(':
+        d, k = 0, i + 1
+        while k < n:
+          if s[k] == '(': d += 1
+          elif s[k] == ')':
+            d -= 1
+            if not d: break
+          k += 1
+        nm = s[i+2:k].strip()
+        if nm in ANTIQ:
+          toks.append(Tok('sym', '(', start, nl, icol))
+          toks += [x for x in tokenize(ANTIQ[nm]) if x.kind != 'eof']
+          toks.append(Tok('sym', ')', start, 0, icol))
+          i = k + 1; nl = 0; continue
       # ^( : the parenthesis that follows does the grouping
       i += 1; col += 1; continue
     if c == '«':

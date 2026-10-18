@@ -1245,27 +1245,22 @@ cake_declare "pan_compile_tap"
     ((((8)word)list#(('a)word)list#backend_config)option)#
     (mlstring)app_list`;;
 ''',
-  # the configurations of the targets: the encoders of the targets
-  # need the machine models of HOL4 (x64_step and the others),
-  # which are not part of the CakeML sources, so the encoders and
-  # the configurations that have one in them are outside the port
-  # (tools/excluded.txt), and the command line of the compiler
-  # only passes these constants on; the port declares them with
-  # the type that it uses them at and says nothing about their
-  # value.  (The theories that export the code of a target need
-  # only `export`, so the port has those.)
+  # the asm configuration of a target: the one field of it that
+  # is not data is the encoder, which needs a machine model of
+  # HOL4 (x64_step and the five others), and those are not part
+  # of the CakeML sources, so the six encoder theories are
+  # outside the port (tools/excluded.txt).  The port declares the
+  # six constants with the type that the command line of the
+  # compiler uses them at and says nothing about their value.
+  # (The configuration of the backend, `<target>_backend_config`,
+  # is data, and is a definition of the port, in the file of the
+  # target that HOL4 has it in.)
   ('compiler', 'parse_target_64_def'): r'''
-cake_declare "x64_backend_config" `:backend_config`;;
 cake_declare "x64_config" `:(64)asm_config`;;
-cake_declare "arm8_backend_config" `:backend_config`;;
 cake_declare "arm8_config" `:(64)asm_config`;;
-cake_declare "mips_backend_config" `:backend_config`;;
 cake_declare "mips_config" `:(64)asm_config`;;
-cake_declare "riscv_backend_config" `:backend_config`;;
 cake_declare "riscv_config" `:(64)asm_config`;;
-cake_declare "arm7_backend_config" `:backend_config`;;
 cake_declare "arm7_config" `:(32)asm_config`;;
-cake_declare "ag32_backend_config" `:backend_config`;;
 cake_declare "ag32_config" `:(32)asm_config`;;
 ''',
   # the termination of every evaluate: HOL4 proves it with

@@ -235,6 +235,9 @@ cmlPtreeConversion	Overload lift
 cmlParse	Overload cmlpegexec
 mlvector	ML code skipped: val toList_aux_ind = theorem"toList_aux_ind";
 export	ML code skipped: val preamble_tm =   ``(MAP (\n. strlit(n ++ "\n"))       ["/
+x64_config	ML code skipped: val clos_conf = rconc (EVAL ``clos_to_bvl$default_config``) 
+x64_config	ML code skipped: val x64_data_conf = ``<| tag_bits:=4; len_bits:=4; pad_bits:
+x64_config	ML code skipped: val x64_stack_conf = ``<|jump:=T;reg_names:=x64_names;perf_c
 export_x64	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
 export_x64	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
 export_x64	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
@@ -242,22 +245,28 @@ export_x64	ML code skipped: val windows_ffi_code' =   ``λret. SmartAppend     (
 export_x64	ML code skipped: val (windows_ffi_code_true,windows_ffi_code_false) =     (``
 export_x64	ML code skipped: val windows_ffi_code =   ``λret. if ret then ^windows_ffi_co
 export_x64	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+arm8_config	ML code skipped: val clos_conf = rconc (EVAL ``clos_to_bvl$default_config``) 
+arm8_config	ML code skipped: val arm8_data_conf = ``<| tag_bits:=4; len_bits:=4; pad_bits
 export_arm8	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
 export_arm8	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
 export_arm8	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
 export_arm8	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+arm7_config	ML code skipped: val clos_conf = rconc (EVAL ``clos_to_bvl$default_config``) 
 export_arm7	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
 export_arm7	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
 export_arm7	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
 export_arm7	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+mips_config	ML code skipped: val clos_conf = rconc (EVAL ``clos_to_bvl$default_config``) 
 export_mips	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
 export_mips	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
 export_mips	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
 export_mips	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+riscv_config	ML code skipped: val clos_conf = rconc (EVAL ``clos_to_bvl$default_config``) 
 export_riscv	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
 export_riscv	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
 export_riscv	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
 export_riscv	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+ag32_config	ML code skipped: val clos_conf = rconc (EVAL ``clos_to_bvl$default_config``) 
 fromSexp	Overload lift
 fromSexp	ML code skipped: val type_ind =   (TypeBase.induction_of``:ast_t``)   |> Q.SP
 fromSexp	ML code skipped: val pat_ind =   (TypeBase.induction_of``:pat``)   |> Q.SPECL

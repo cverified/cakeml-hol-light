@@ -1,13 +1,7 @@
 ag32	compiler/encoders/ag32/ag32Script.sml
 ag32_target	compiler/encoders/ag32/ag32_targetScript.sml
-ag32_config	compiler/backend/ag32/ag32_configScript.sml
 arm7_target	compiler/encoders/arm7/arm7_targetScript.sml
-arm7_config	compiler/backend/arm7/arm7_configScript.sml
 arm8_target	compiler/encoders/arm8/arm8_targetScript.sml
-arm8_config	compiler/backend/arm8/arm8_configScript.sml
 mips_target	compiler/encoders/mips/mips_targetScript.sml
-mips_config	compiler/backend/mips/mips_configScript.sml
 riscv_target	compiler/encoders/riscv/riscv_targetScript.sml
-riscv_config	compiler/backend/riscv/riscv_configScript.sml
 x64_target	compiler/encoders/x64/x64_targetScript.sml
-x64_config	compiler/backend/x64/x64_configScript.sml
