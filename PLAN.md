@@ -159,6 +159,25 @@ grammar that `grammarLib`'s `mk_grammar_def` makes out of a BNF
 
 `tools/portall.py` translates all of them (in seven seconds).
 
+What it cannot translate it **points at**.  The port holds no HOL4
+code, so where a source has ML code that builds something the port
+has no counterpart for, or a tactic that proves a termination, or
+an `Overload` or a `Type` that the port expands, or a definition
+that `PENDING.md` says is not ported, or a comment whose body is
+HOL4 code that the source has commented out, the port writes the
+file and the lines to read instead:
+
+```
+(* HOL4 x64_configScript.sml:41-43: the ML values that the
+   definitions below antiquote *)
+```
+
+`Porter.at` writes them, `tools/hol4.py` gives every block the
+lines of the source that it spans, and `tools/nohol4.py` is the
+check that nothing of HOL4 is left in `ml/`.  Taking the HOL4 code
+out of the port (phase one and a half) took it from 124158 lines
+to 83019.
+
 Not ported (and why):
 
 - the L3 instruction set models (`x64_step`, `arm8_step`,
@@ -315,6 +334,9 @@ The other checks:
 - `tools/lets.py`      a `let` that binds a function abstracts its
                        arguments (HOL Light takes the left hand
                        side of a binding for a pattern)
+- `tools/nohol4.py`    no HOL4 code is in the port, in a comment
+                       or anywhere else (a ground rule of
+                       `CLAUDE.md`)
 - `tools/bin/checks`   the checks above that need no session
 - `tools/bin/runall`   start a run on the whole load order
 - `tools/bin/postrun`  the reports of a run that finished, in the
