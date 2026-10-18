@@ -321,9 +321,9 @@ flatLang	Theorem exp_size_MEM: the auxiliary size function exp6_size
 mlint	ML code skipped: val exp_thm = EVAL ``10n ** exp_for_dec_enc`` val exp_tm = r
 mlint	ML code skipped: val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
 mlint	ML code skipped: val fromChars_ind = theorem"fromChars_ind"
-mlint	line 26 is 79 characters
-mlint	line 27 is 74 characters
-mlint	line 346 is 73 characters
+mlint	line 24 is 79 characters
+mlint	line 25 is 74 characters
+mlint	line 344 is 73 characters
 labLang	line 50 is 77 characters
 lab_to_target	Overload all_enc_ok_light
 lab_to_target	ML code skipped: val prog_to_bytes_ind = theorem"prog_to_bytes_ind";

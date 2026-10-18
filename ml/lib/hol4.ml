@@ -58,6 +58,16 @@ let FOLDR_THM = prove
    (!f e x xs. FOLDR f e (CONS x xs) = f x (FOLDR f e xs))`,
   REWRITE_TAC[FOLDR_def; ITLIST]);;
 
+(* HOL4's relationTheory hides the C of combinTheory from its
+   parser, so a statement that means that combinator writes
+   combin$C for it (misc's anub_eq_nil and two of clos_callProof),
+   and a statement that writes a bare C means a variable.  The
+   port reads the qualified name as this constant, which the
+   cake_hide of C does not touch *)
+
+let hol4_C = new_definition
+  `hol4_C (f:A->B->C) x y = f y x`;;
+
 (* HOL4's gcd takes its two arguments one at a time where HOL
    Light's takes a pair of them (gcdTheory against int.ml) *)
 

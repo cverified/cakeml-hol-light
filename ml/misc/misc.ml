@@ -29,7 +29,7 @@ needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 
-cake_hide ["C"; "num_cmp"; "num_from_hex_string"; "num_to_hex_string"];;
+cake_hide ["C"; "num_cmp"];;
 (* HOL4 ancestors outside the port: alist arithmetic blast bag combin
    container list pred_set finite_map rich_list llist option pair
    relation bit words string address path res_quan *)
@@ -539,7 +539,7 @@ let ALOOKUP_anub = cake_theorem "ALOOKUP_anub"
 
 let anub_eq_nil = cake_theorem "anub_eq_nil"
   (fun () ->
-    `anub x y = [] <=> EVERY (C MEM y) (MAP FST x)`)
+    `anub x y = [] <=> EVERY (hol4_C MEM y) (MAP FST x)`)
   CHEAT_TAC;;
 
 let EVERY_anub_suff = cake_theorem "EVERY_anub_suff"
@@ -672,7 +672,7 @@ let OPTREL_trans = cake_theorem "OPTREL_trans"
   CHEAT_TAC;;
 
 let UPDATE_LIST_def = cake_define
-  `UPDATE_LIST = FOLDL (C (UNCURRY UPDATE))`;;
+  `UPDATE_LIST = FOLDL (hol4_C (UNCURRY UPDATE))`;;
 
 let UPDATE_LIST_THM = cake_theorem "UPDATE_LIST_THM"
   (fun () ->

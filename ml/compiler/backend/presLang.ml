@@ -45,8 +45,6 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
-cake_hide ["HEX"];;
-
 (* basics *)
 
 let empty_item_def = cake_define
@@ -1743,5 +1741,3 @@ val data_prog_tm =
 val _ = data_to_strs data_prog_tm names_tm |> print_strs
 
 *)
-
-cake_hide [];;

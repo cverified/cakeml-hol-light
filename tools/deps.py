@@ -26,6 +26,15 @@ for path in files:
     # on compiler *)", whose words would be theories)
     body = re.sub(r'\(\*.*?\*\)', '', body, flags=re.S)
     anc += body.split()
+  # a Libs entry brings the grammar of the theory of that name as
+  # well (misc has ASCIInumbersLib in its Libs and uses the
+  # num_to_hex_string of ASCIInumbersTheory, which is in no
+  # Ancestors block of it)
+  for m in re.finditer(r'^Libs\b(.*?)(?=^\S|\Z)', src, re.M|re.S):
+    body = re.sub(r'\[[^\]]*\]', '', m.group(1))
+    body = re.sub(r'\(\*.*?\*\)', '', body, flags=re.S)
+    for w in body.split():
+      if w.endswith('Lib'): anc.append(w[:-3])
   # old style opens
   for mm in re.finditer(r'^\s*(?:val _ = )?open\s+([^;]*);', src, re.M):
     for w in mm.group(1).split():

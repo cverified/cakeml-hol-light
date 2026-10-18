@@ -485,6 +485,12 @@ ALSO_NEEDED = set([
 # hand written constants of ml/lib, so sptree's needs a name of
 # its own
 RENAME = {
+  # the C of combinTheory, which relationTheory hides from HOL4's
+  # parser: a statement that means the combinator writes combin$C
+  # and one that writes a bare C means a variable of its own, so
+  # the qualified name is a constant of the library layer that the
+  # cake_hide of C does not touch
+  ('combin', 'C'): 'hol4_C',
   ('sptree', 'fromList'): 'sptree_fromList',
   ('sptree', 'toList'): 'sptree_toList',
   # comparison overloads these with the constructors of the

@@ -518,7 +518,7 @@ let calls_wfg = cake_theorem "calls_wfg"
 let calls_fv1_subset = cake_theorem "calls_fv1_subset"
   (fun () ->
     `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-      LIST_REL (\x y. (C fv1) y SUBSET (C fv1) x) xs ys`)
+      LIST_REL (\x y. (hol4_C fv1) y SUBSET (hol4_C fv1) x) xs ys`)
   CHEAT_TAC;;
 
 let calls_fv_imp = cake_theorem "calls_fv_imp"
@@ -622,7 +622,7 @@ let calls_acc_0 = cake_theorem "calls_acc_0[local]"
   (fun () ->
     `!xs tmp x r.
         x ++ r = SND tmp ==>
-        calls xs tmp = (I ## I ## (C (++) r)) (calls xs (FST
+        calls xs tmp = (I ## I ## (hol4_C (++) r)) (calls xs (FST
           tmp,x))`)
   CHEAT_TAC;;
 

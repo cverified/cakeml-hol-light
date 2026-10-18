@@ -13,8 +13,6 @@
 needs "basis/pure/mlstring.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/ternaryComparisons.ml";;
-
-cake_hide ["HEX"; "num_from_dec_string"; "num_to_dec_string"];;
 (* HOL4 ancestors outside the port: gcd *)
 
 let toChar_def = cake_define
@@ -409,5 +407,3 @@ let num_to_str_APPEND_11 = cake_theorem "num_to_str_APPEND_11"
      ~(48 <= ORD x2 /\ ORD x2 <= 57) ==>
      n1 = n2 /\ x1 :: xs1 = x2 :: xs2`)
   CHEAT_TAC;;
-
-cake_hide [];;

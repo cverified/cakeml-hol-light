@@ -152,10 +152,11 @@ let map_match_eq_case = cake_theorem "map_match_eq_case"
 let flatProps_pmatch_append = cake_theorem "pmatch_append"
   (fun () ->
     `(!(s:('c,'ffi)flatSem_state) p v env pred_env.
-       map_match (C APPEND tail_env) (pmatch s p v env) =
+       map_match (hol4_C APPEND tail_env) (pmatch s p v env) =
          pmatch s p v (env ++ tail_env)) /\
      (!(s:('c,'ffi)flatSem_state) ps vs env n.
-       map_match (C APPEND tail_env) (pmatch_list s ps vs env) =
+       map_match (hol4_C APPEND tail_env) (pmatch_list s ps vs env)
+         =
         pmatch_list s ps vs (env ++ tail_env))`)
   CHEAT_TAC;;
 
