@@ -432,10 +432,25 @@ let rrestrict = new_definition
   `rrestrict (r:(A#A)->bool) s =
    {kv | kv IN r /\ FST kv IN s /\ SND kv IN s}`;;
 
-(* the surjectivity of a relation, of HOL4's transfer library *)
+(* the surjectivity of a relation, of HOL4's transfer library,
+   and the relation between two functions, which HOL4 writes
+   R1 |==> R2 (and quotientTheory R1 ===> R2) *)
 
 let surj = new_definition
   `surj (R:A->B->bool) <=> !y. ?x. R x y`;;
+
+let FUN_REL = new_definition
+  `FUN_REL (R1:A->B->bool) (R2:C->D->bool) f g <=>
+   !x y. R1 x y ==> R2 (f x) (g y)`;;
+
+(* the relation between two pairs, of HOL4's pairTheory, which it
+   writes R1 ### R2 (and overloads PAIR_REL with) *)
+
+let RPROD = new_definition
+  `RPROD (R1:A->B->bool) (R2:C->D->bool) p q <=>
+   R1 (FST p) (FST q) /\ R2 (SND p) (SND q)`;;
+
+let PAIR_REL = RPROD;;
 
 (* ------------------------------------------------------------------ *)
 (* The case constants of HOL4's datatypes                             *)

@@ -1,4 +1,71 @@
-# Plan for the first pass (all definitions)
+# Plan for phase two (the statements)
+
+_Phase two states every theorem of the CakeML sources: its name,
+its attributes and its statement, with `CHEAT_TAC` where HOL4 has
+its proof, and every comment of the source in its place
+(`CLAUDE.md`).  The test is to read a source and its port next to
+each other: they have to read "the same"._
+
+_State: the port has 10,610 of the 10,613 theorems of the 270
+files with their statement (`tools/coverage.py` counts both), and
+`tools/thmcheck.py` and a session of a run say which of those
+statements HOL Light cannot read.  The first phase-two run of
+14:03 said 688 of 10,096; the machinery below took that to the
+tail that the run of 16:30 measures._
+
+- **A theorem is a cheat of its own.**  `cake_theorem name mkterm
+  tac` (`ml/lib/theorem.ml`) reads the statement in a function,
+  so one that does not typecheck is recorded in
+  `cake_unstated ()` and the file goes on; `tools/bin/thms`
+  reports them per run.  No exception leaves it: five files died
+  on a statement that is not a formula in the first run and lost
+  everything after it.
+- **The name of a record field is a variable.**  HOL4 has no
+  constant of the name of a field (`r.stack` is syntax there), so
+  a statement that uses `stack` or `limit` or `pc` for a variable
+  of its own is read with the overloads of the field names taken
+  away (`cake_as_vars`, `cake_fieldvars ()`); 406 statements of
+  the port need it.
+- **A name out of scope is a variable.**  Every file says which
+  names no theory in the scope of its source defines
+  (`cake_hide`), and its statements are read with those constants
+  hidden: HOL4 reads them as variables, while the port has every
+  constant in one namespace (the unification library's `vars`
+  against the `vars` of data_to_word_memoryProof).
+- **A numeral of type int is `&n`.**  `tools/intargs.txt` has the
+  arguments of the constants of the port whose type is `int`
+  (`tools/bin/intargs` dumps it out of a session), and the
+  translator writes a numeral there as an integer.
+- **The notation of the statements.**  What phase one never met:
+  `|==>` and `===>` (the function relation of HOL4's transfer
+  library), `###` (the pair relation), `⋲` (bag membership), `⇎`
+  (`<>` on bool), `◁` (walkstar), `⊕` (the xor of two words),
+  `f⦇k ↦ v⦈` (a function update), `!!` (the or of two words), a
+  subscript in a name (mlstring's `s₁`), and the name of an
+  `Overload` as HOL4 escapes it (parmove's `"\226\137\161"` is
+  `≡`).
+- **Two readings that were wrong.**  A prefix of HOL Light takes
+  the atom after it and no more, so `~MEM x l` is `(~MEM) x l`
+  there: the port parenthesises the operand now.  And the value
+  of a record update stops at an equation, so HOL4's `tenv with v
+  := tenv.v = tenv` is the equation it looks like.
+- **The library layer of the statements.**  The statements of the
+  sources now seed the set of definitions that the port needs of
+  a HOL4 library theory, which `TotOrd`, `good_cmp`, `SORTS` and
+  `lprefix_chain` were missing for; `toto` is ported, and
+  `relation`, `bag`, `finite_map` and `hol4` gained the thirty
+  definitions of HOL4's core theories that the statements use
+  (`transitive`, `StrongLinearOrder`, `BAG_IMAGE`, `f_o_f`,
+  `FUN_REL`, `RPROD`, `BIT`, `COMPL`, `AFUPDKEY`, `surj`, ...).
+
+_What the port does not state (`PENDING.md`): the 479 theorems
+that HOL4 states as the value of an ML expression (it computes
+the statement with `EVAL` or a rule, which the port cannot), and
+three whose statement is itself an ML expression
+(`word_to_stackProof$comp_correct` and two others).  Each is a
+pointer at the source lines, with the name of the theorem in it._
+
+# Phase one (done): all definitions
 
 _Policy (2026-10-17, from the user): in this pass **proofs are
 irrelevant**, and the rule that nothing may depend on a cheat is

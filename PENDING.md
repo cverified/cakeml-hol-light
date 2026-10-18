@@ -1,3 +1,39 @@
+# Theorems whose statement the port does not have
+
+Phase two states every theorem of the sources with its name, its
+attributes and its statement (`CLAUDE.md`).  Two kinds it cannot
+state, and for each of them the port has a comment that points at
+the lines of the source and names the theorem:
+
+- **479 theorems that HOL4 states as the value of an ML
+  expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
+  foo_def`, `Theorem bar = SIMP_RULE bool_ss [] baz`, `Theorem
+  baz = theorem"baz_ind"`).  The statement is not in the source:
+  HOL4 computes it from another theorem, so writing it down means
+  doing the computation.  The port could do most of them in phase
+  three, where it has the theorem that the expression starts from
+  and HOL Light's own rules to apply, but none of it is a
+  statement that phase two can read off the source.
+- **three theorems whose statement is an ML expression**:
+  `word_to_stackProof$comp_correct`,
+  `clos_to_bvlProof$not_isClos` and
+  `bvi_to_dataProof$compile_exp_correct` are stated as
+  `^(ind_thm |> concl |> rand)` and the like -- the conclusion of
+  an induction theorem that HOL4's machinery built.  The same
+  case as the one above, with the expression in the statement
+  instead of in the place of it.
+
+Everything else of the sources is in: `tools/coverage.py` counts
+the blocks and the theorems of every source against its port, and
+what it reports missing is the two blocks below and these 482.
+
+The theorems of the **HOL4 library theories** of `ml/lib` are not
+in the port either, and are not counted: of a library theory the
+port has the definitions that CakeML needs (which is what the
+preface of such a file says), and the theorems of it that a proof
+of phase three needs are proved when that proof needs them.  The
+10,613 are the theorems of the CakeML sources.
+
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,

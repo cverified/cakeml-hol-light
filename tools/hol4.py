@@ -102,6 +102,14 @@ ML_TERM_PAIR = re.compile(
   r"\s*(?:``|\u201c)(.*?)(?:``|\u201d)", re.S)
 
 
+# a variable that ML code makes with mk_var, which the source
+# antiquotes into a statement (source_evalProof's ^ci is the
+# compiler instance that its theorems are about)
+ML_MKVAR = re.compile(
+  r'''val\s+([A-Za-z0-9_']+)\s*=\s*mk_var\s*\(\s*"([^"]+)"\s*,'''
+  r'''\s*(?:``|\u201c)\s*:(.*?)(?:``|\u201d)''', re.S)
+
+
 # a function that mc_multiword defines from its step function
 TAILREC_ML = re.compile(r'tailrec_define\s+"([A-Za-z0-9_\']+)"\s*'
                         r'(?:``|\u201c)(.*?)(?:``|\u201d)', re.S)
@@ -116,12 +124,17 @@ TDEFINE_ML = re.compile(r'tDefine\s+"([A-Za-z0-9_\']+)"\s*'
 def ml_terms(text):
   """the terms that an ML block keeps in a value, which the source
      may antiquote into a definition (dataSem's ^s)"""
+  # a quotation that starts with a colon is a type and not a term
+  # (source_evalProof's mk_var ("ci", ``: 'cfg compiler_instance``))
   out = [(m.group(1), m.group(2).strip())
-         for m in ML_TERM.finditer(text)]
+         for m in ML_TERM.finditer(text)
+         if not m.group(2).strip().startswith(':')]
   out += [(nm, tm.strip())
           for m in ML_TERM_PAIR.finditer(text)
           for nm, tm in ((m.group(1), m.group(3)),
                          (m.group(2), m.group(4)))]
+  out += [(m.group(1), '(%s:%s)' % (m.group(2), m.group(3).strip()))
+          for m in ML_MKVAR.finditer(text)]
   return out
 
 
@@ -434,7 +447,11 @@ def parse(path):
           and not lines[j].lstrip().startswith('(*'):
         j += 1
       text = '\n'.join(lines[i:j])
-      blocks.append(Block('ThmValue', None, [], text, text=text))
+      mm = re.match(r'^\w+\s+([A-Za-z0-9_\']+)\s*(\[[^\]]*\])?', line)
+      blocks.append(Block('ThmValue', mm.group(1) if mm else None,
+                          ((mm.group(2) or '')[1:-1].split(',')
+                           if mm and mm.group(2) else []),
+                          text, text=text))
       i = j; continue
     # block structures ending in End or QED
     if kind in ('Datatype', 'Definition', 'Inductive', 'CoInductive'):

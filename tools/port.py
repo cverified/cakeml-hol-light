@@ -308,7 +308,8 @@ class Porter:
     except Exception as ex:
       self.warn.append('%s %s: %s' % (b.kind, b.name, ex))
       self.out.append(self.at(b, 'a theorem whose statement the'
-                                 ' port cannot state yet'))
+                                 ' port cannot state yet: %s'
+                                 % b.name))
       return
     head = 'let %s = cake_theorem "%s%s"' % (name, b.name, attrs)
     if len(head) > 72:
@@ -649,7 +650,8 @@ class Porter:
       # expression: the statement is what that expression
       # computes, which the port cannot
       self.out.append(self.at(b, 'a theorem that HOL4 states as'
-                                 ' the value of an ML expression'))
+                                 ' the value of an ML expression:'
+                                 ' %s' % b.name))
     elif k == 'ML':
       if any(re.search(pat, b.text) for pat in IGNORE_ML):
         return
@@ -1504,7 +1506,14 @@ class Porter:
     head, args = hterm.strip_app(e.l)
     e.l = hterm.strip_app(e.l)[0]
     self.annotated = {}
-    base = self.contys
+    # the constant that the clause is about says which language
+    # the constructors of its arguments belong to: the evaluate of
+    # an equation about wordSem takes a prog of wordLang, and not
+    # the Seq of reg_alloc's clash_tree, which comes later in the
+    # order
+    hthy = (self.con_thy(head.name, ('con', 'def', 'rel'))
+            if head.kind == 'id' else None)
+    base = self.contys or (self.db.ancestors(hthy) if hthy else None)
     for i, a in enumerate(args):
       # an argument that is a tuple has a type of its own per
       # component (a semantics takes the program and the state

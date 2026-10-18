@@ -150,6 +150,12 @@ FIELD_VAR = {
   # inferencer, and an env an environment of flatSem in the
   # ones about the flat language
   'inferProps': {'tenv': 'type_env'},
+  # a tenv is a type environment in the theories about the type
+  # system and about the soundness of the inferencer as well
+  'typeSound': {'tenv': 'type_env'},
+  'typeSysProps': {'tenv': 'type_env'},
+  'infer_eSound': {'tenv': 'type_env'},
+  'infer_eComplete': {'tenv': 'type_env'},
   'envRel': {'tenv': 'type_env'},
   'type_dCanon': {'tenv1': 'type_env', 'tenv2': 'type_env',
                   'tenv': 'type_env'},

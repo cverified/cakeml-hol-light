@@ -14,8 +14,9 @@ UNI = {
   '∀': '!', '∃': '?', 'λ': '\\', '≤': '<=', '≥': '>=', '≠': '<>',
   '∈': 'IN', '∉': 'NOTIN', '⊆': 'SUBSET', '∪': 'UNION', '∩': 'INTER',
   '∅': '{}', '⧺': '++', '∘': 'o', '−': '-', '×': '*', '≼': '<<=',
-  '⊂': 'PSUBSET', '≥': '>=', '⊕': 'XOR',
+  '⊂': 'PSUBSET', '≥': '>=', '⊕': '??',
   '⊌': 'FUNION', '⊑': 'SUBMAP', '≪': '<<', '≫': '>>', '⋙': '>>>',
+  '⋲': 'BAG_IN', '⇎': '<>',
   '‖': '||', '↦': '|->', '⊎': 'BAG_UNION',
 }
 
@@ -35,6 +36,7 @@ KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
 
 # symbols, longest first
 SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '!!',
+        '|==>', '===>', '###', '◁', '⦇', '⦈',
         '&&',
         '{|', '|}', '❲', '❳',
         '##',
@@ -331,7 +333,16 @@ INFIX = {
   'FUNION':(500, 'l', 'FUNION', None),
   'BAG_UNION':(500, 'l', 'BAG_UNION', None),
   'SUBMAP':(450, 'n', 'SUBMAP', 12),
+  'BAG_IN':(450, 'n', 'BAG_IN', None),
+  # the walkstar of HOL4's unification library, which it writes
+  # s <| t (with a triangle)
+  '◁':     (700, 'r', 'walkstar', None),
   'f_o_f': (800, 'r', 'f_o_f', 26),
+  # the relation between two functions of HOL4's transfer library
+  # and the relation between two pairs of its pairTheory
+  '|==>':  (490, 'r', 'FUN_REL', None),
+  '===>':  (490, 'r', 'FUN_REL', None),
+  '###':   (490, 'r', 'RPROD', None),
   'RSUBSET':(450, 'n', 'RSUBSET', None),
   'RINTER':(600, 'l', 'RINTER', None),
   'RUNION':(500, 'l', 'RUNION', None),
@@ -506,6 +517,19 @@ class Parser:
       if t.text == '.' and self.peek(1).kind == 'id':
         self.next(); fld = self.next()
         e = Node('field', tok=t, e=e, fld=fld.text)
+      # HOL4 writes the update of a function f⦇k ↦ v⦈, which is
+      # the (k =+ v) f of its combinTheory
+      elif t.text == '⦇':
+        self.next()
+        while True:
+          k = self.parse(101)
+          self.expect('|->')
+          v = self.parse(0)
+          e = Node('app', tok=t, fn=Node('paren', tok=t,
+                     e=Node('infix', tok=t, op='=+', l=k, r=v)), arg=e)
+          if self.at(';'): self.next(); continue
+          break
+        self.expect('⦈')
       # l❲i❳ is EL i l and l❲i ↦ v❳ is LUPDATE v i l (the list
       # syntax of HOL4's combinpp)
       elif t.text == '❲':
@@ -565,8 +589,9 @@ class Parser:
         self.expect(':='); fn = False
       # the value of an update binds tighter than = and /\ in
       # HOL4 (D with locals := D.locals = D is an equation, and
-      # word_bignumProof's reg_write has a clause after the /\)
-      v = self.parse(450)
+      # word_bignumProof's reg_write has a clause after the /\),
+      # so it stops at an operator of the precedence of = as well
+      v = self.parse(451)
       upds.append((fld.text, v, fn))
       if single or not self.at(';'): break
       self.next()
@@ -844,11 +869,16 @@ class Parser:
           if run: b = Node('quant', tok=t, q=q, vs=run, body=b)
           return b
         return Node('quant', tok=t, q=q, vs=vs, body=b)
+      # a prefix takes the infixes that bind tighter than it does
+      # with it: the ' of HOL4 is the bit of a word, so
+      # data_to_word_memoryProof's ~(Smallnum i:'a word) ' 0 says
+      # that the bit is not set, and not that it is the bit of the
+      # complement
       if t.text == '~':
-        e = self.parse_atoms()
+        e = self.parse_infix(self.parse_atoms(), PREFIX['~'][0])
         return Node('prefix', tok=t, op='~', e=e)
       if t.text == '-':
-        e = self.parse_atoms()
+        e = self.parse_infix(self.parse_atoms(), PREFIX['-'][0])
         return Node('prefix', tok=t, op='-', e=e)
       if t.text == '&':
         # HOL4's & is a prefix that binds looser than application,
@@ -1406,6 +1436,10 @@ class Printer:
       if n in self.ctx.vars: return self.ctx.vars[n]
       if n in self.ctx.overloads:
         c = self.ctx.overloads[n]
+        # a variable with its type on it is parenthesised already
+        # (source_evalProof antiquotes (ci:'cfg compiler_instance))
+        if re.match(r"^\([A-Za-z_][A-Za-z0-9_']*:[^()]*\)$", c):
+          return c
         return c if re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", c) \
                else '(' + c + ')'
       return self.ctx.name(n)
@@ -1601,11 +1635,13 @@ class Printer:
                                 e.e.name in self.ctx.wordnotvars):
           return self.paren('word_not ' + self.pr(e.e, APP),
                             PRE_APP, prec)
+        # a prefix of HOL Light takes the atom after it and no
+        # more, so an application under one needs its parentheses
         op = '--' if numeric(e.e) or self.numctx else '~'
-        return self.paren(op + sym_space(op, self.pr(e.e, PRE_APP)),
+        return self.paren(op + sym_space(op, self.pr(e.e, APP)),
                           PRE_APP, prec)
       if e.op == '-':
-        return self.paren('--' + sym_space('--', self.pr(e.e, PRE_APP)),
+        return self.paren('--' + sym_space('--', self.pr(e.e, APP)),
                           PRE_APP, prec)
       if e.op == '&':
         # the argument of HOL4's & is a natural number, also in a
