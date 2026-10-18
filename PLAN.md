@@ -24,10 +24,10 @@ tail that the run of 16:30 measures._
   constant of the name of a field (`r.stack` is syntax there), so
   a statement that uses `stack` or `limit` or `pc` for a variable
   of its own is read with the overloads of the field names taken
-  away (`cake_as_vars`, `cake_fieldvars ()`); 406 statements of
-  the port need it.
+  away (`cake_as_vars`), and `cake_fieldvars ()` says which
+  statements of the port needed that.
 - **A name out of scope is a variable.**  Every file says which
-  names no theory in the scope of its source defines
+  names no theory in the ancestry of its source defines
   (`cake_hide`), and its statements are read with those constants
   hidden: HOL4 reads them as variables, while the port has every
   constant in one namespace (the unification library's `vars`
