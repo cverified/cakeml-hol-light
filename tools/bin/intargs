@@ -6,6 +6,10 @@
 # integer; tools/hterm.py writes them that way.  An entry i.j says
 # that the argument i is a function whose own argument j is an
 # integer, so that a lambda there binds an integer.
+# It writes tools/intres.txt as well (the constants whose result is
+# an integer, so that a numeral beside an application of one is &n)
+# and tools/constants.txt (the name of every constant of the
+# port, which tools/freenames.py checks the quotations against).
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 s=${1:-seq}
@@ -43,4 +47,11 @@ TIMEOUT=180 repl-step $s \
      (constants ());
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -1
+TIMEOUT=180 repl-step $s \
+  "let cake_out = open_out \"$C/tools/constants.txt\" in
+   do_list (fun (n,_) -> output_string cake_out (n ^ \"\\n\"))
+     (constants ());
+   close_out cake_out; length (constants ());;" \
+  2>&1 | tail -1
 wc -l < $C/tools/intargs.txt; wc -l < $C/tools/intres.txt
+wc -l < $C/tools/constants.txt
