@@ -291,7 +291,11 @@ class Porter:
        statement, with CHEAT_TAC where HOL4 has its proof (phase
        two; phase three puts a proof there)"""
     name = self.thmname(b.name)
-    attrs = ('[' + ','.join(b.attrs) + ']') if b.attrs else ''
+    # HOL4's Triviality is a Theorem with the attribute local
+    at = list(b.attrs)
+    if b.kind == 'Triviality' and 'local' not in at:
+      at.append('local')
+    attrs = ('[' + ','.join(at) + ']') if at else ''
     self.ctx.defining = set()
     self.ctx.intnums = False
     self.ctx.intneg = False
