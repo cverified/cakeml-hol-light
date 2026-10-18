@@ -104,8 +104,30 @@ all ones) as the negation of a number._
     infix, and `LEX` and `o_f` are infixes by name;
   - HOL4 unifies the type variables that a statement writes and
     HOL Light does not, so the port leaves the annotations of the
-    thirteen statements that need the unification out
-    (`overrides.THM_NO_TYVARS`);
+    eleven statements that need the unification out
+    (`overrides.THM_NO_TYVARS`) or, better, writes the type
+    variables of the first annotation of a type operator in every
+    other annotation of it, which is the type that HOL4 gives the
+    theorem (`overrides.THM_TYVARS`: leaving the annotation out
+    takes the record type with it);
+  - the `~` of a word literal is the complement of a word
+    (`~0w` is the word of all ones) and not the negation of a
+    number, and the `<=` of two bags is HOL4's `SUB_BAG` (its
+    `bagTheory` overloads `<=` and `<`, and sends both to the back
+    of its resolution order);
+  - a field of a record that a statement says the type of is read
+    with the accessor of that record and not with the overloaded
+    name of the field, and the states that a proof theory relates
+    say which record they are (`overrides.FIELD_VAR`, per theory,
+    and `FIELD_VAR_DEF`, per statement);
+  - the theory whose constructor a statement means is the one of
+    its own grammar (`overrides.CON_OF` per statement: the `Seq`
+    and the `Skip` of `data_simpProof$evaluate_Seq_Skip` are
+    dataLang's, and every intermediate language has both);
+  - a statement whose statement is an **ML expression** is a
+    pointer, also where the ML parses as a term (the two of
+    `wordProps` are `^(let fun sel s = ... end)`, a conjunction
+    that an ML function of the source builds);
   - a theory in front of a symbolic name is dropped
     (`prim_rec$<`), a subscript in a name is a digit, and the
     name of an `Overload` is read through `sml_string`.
