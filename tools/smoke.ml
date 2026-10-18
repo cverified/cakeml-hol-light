@@ -225,3 +225,25 @@ print_string (Printf.sprintf
   "SMOKEDECLARE axioms %d (was %d), cheats %d (was %d), why %s\n"
   (length(axioms())) a1 (length(cake_cheats())) n1
   (try assoc "c_opaque" (cake_cheat_why()) with Failure _ -> "?"));;
+
+(* ---------------------------------------------------------------- *)
+(* phase two: a theorem of a source, with CHEAT_TAC where HOL4 has  *)
+(* its proof, and one whose statement does not typecheck            *)
+(* ---------------------------------------------------------------- *)
+
+let smoke_thm = cake_theorem "smoke_thm[simp,local]"
+  (fun () ->
+    `!n. ge (IMove n) = 1`)
+  CHEAT_TAC;;
+
+let smoke_bad = cake_theorem "smoke_bad"
+  (fun () ->
+    `!n. ge n n n`)
+  CHEAT_TAC;;
+
+print_string
+  ("\nSMOKETHM " ^ string_of_int (length (cake_theorems ())) ^
+   " stated, " ^ string_of_int (length (cake_unstated ())) ^
+   " not stated (1 and 1), attributes " ^
+   (let _,a,_ = hd (cake_theorems ()) in
+    String.concat "," a) ^ "\n");;
