@@ -63,10 +63,13 @@ names the theorem: a statement with a free variable where the
 source has a constant would say something else than the source
 does, which is worse than saying nothing.
 
-Four statements use a constant of a HOL4 library that the port
+Three statements use a constant of a HOL4 library that the port
 does not have, so a name of them is a free variable and the
 statement says less than the source's does.  `tools/libnames.py`
-is the check that finds them:
+is the check that finds them (the `domain` and the `range` of a
+relation and HOL4's `GSPEC` were three more, which the library
+layer has now under a name of its own, and
+`overrides.THM_NAMES` says which statements mean them):
 
 | theorem | what it needs |
 |---|---|
