@@ -203,6 +203,15 @@ FIELD_VAR = {
   # its own as well
   'lab_to_targetProof': {'mc_conf': 'machine_config',
                          's1': 'labSem_state', 't1': 'asm_state'},
+  # the hidden state of the monad that linear_scan runs in: the
+  # port has two records of that name (the one of the arrays,
+  # whose int_beg is a list, and the one of the indices that the
+  # monad's define_run makes, whose int_beg is a pair), and the
+  # statements are about the first
+  'linear_scanProof': {'sth': 'linear_scan_hidden_state',
+                       'sthout': 'linear_scan_hidden_state',
+                       'sth1': 'linear_scan_hidden_state',
+                       'sth2': 'linear_scan_hidden_state'},
   'flat_elimProof': {'env': 'flatSem_environment'},
   'flat_patternProof': {'env1': 'flatSem_environment',
                         'env2': 'flatSem_environment',
