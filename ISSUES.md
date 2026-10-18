@@ -610,9 +610,10 @@ sources, and why.
 ## Hand written parts of the library layer
 
 HOL Light has no finite maps, no lazy lists, no bags, no closure
-of a relation and no words with HOL4's names, so
+of a relation, no paths and no words with HOL4's names, so
 `ml/lib/finite_map.ml`, `ml/lib/llist.ml`, `ml/lib/bag.ml`,
-`ml/lib/relation.ml` and `ml/lib/words4.ml` are written by hand:
+`ml/lib/relation.ml`, `ml/lib/path.ml` and `ml/lib/words4.ml` are
+written by hand:
 
 - a finite map is a function to an option type with a finite
   domain, and the operations are HOL4's;
@@ -628,6 +629,12 @@ of a relation and no words with HOL4's names, so
 - the fold over a finite map (`ITFMAP`) is the relation that says
   what a fold gives and a value that it gives, as HOL4's
   `finite_mapTheory` has it;
+- a path is a state and a lazy list of label and state pairs,
+  which is the type that HOL4's `pathTheory` makes the type of a
+  path of; HOL Light has no greatest fixed point, so the one that
+  `okpath` is of HOL4's `okpath_f` is written out, and HOL4's
+  `first` is `path_first`, because the port has one namespace and
+  `first` is a variable of statements of its own;
 - `FOLDR`, whose arguments are in another order than the
   `ITLIST` of HOL Light, and `cwc` of HOL4's `cpsScript` (the
   port does not have that theory), which `unify` uses.
@@ -710,9 +717,40 @@ every literal of every definition.
 ## The complement of a word
 
 HOL4 writes the complement of a word `~w`, as it writes the
-negation of a truth value: only the type tells the two apart,
-which the port cannot do, so the one definition that has it
-(`multiword$single_sub`) is ported by hand with `word_1comp`.
+negation of a truth value and the negation of a number: only the
+type tells the three apart, which a source level port cannot do
+in general.
+
+Where the argument is a word **literal** the port can: `~0w` is
+the word of all ones and `~1w` the one with every bit but the
+lowest set, so a `~` in front of a literal is `word_not`.  That
+is what `tools/stmtshape.py` found, by counting the connectives
+of a statement of a source and of the port's: the port read the
+`~0w` of `word_inst$op_consts` (the identity of `And`) and the
+`~1w` of `data_to_word_memoryProof$word_addr` (the mask that
+clears the tag bit) as the negation of a number and wrote
+`--(n2w 0)` and `--(n2w 1)`, which are `0w` and the word of all
+ones.
+
+Where the argument is a **variable** only the type says it, so
+the definitions that have one are listed
+(`overrides.WORD_NOT`), and `multiword$single_sub` (whose `~y`
+is the complement in the two's complement subtraction) is ported
+by hand with `word_1comp`, the name that the words layer gives
+HOL Light's `word_not`.
+
+## The constants that HOL4 hides from its parser
+
+HOL4's `relationTheory` does `Parse.hide "C"`, so the `C` of
+`combinTheory` is not a constant of the parser in any theory that
+has `relation` as an ancestor -- which every CakeML source has --
+and a statement that writes `C` means a variable of its own
+(`word_allocProof$INJ_union` is about `INJ f (A UNION B) C`).  The
+port has HOL Light's `C` (the combinator that swaps two
+arguments), so those statements are read with it hidden:
+`overrides.HOL4_HIDDEN` names it and `tools/db.py`'s `hidden_for`
+puts it in the `cake_hide` of every file whose statements write
+it.
 
 ## What is not ported
 
