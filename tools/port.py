@@ -731,6 +731,12 @@ class Porter:
     # dropped (they are ported, so there is no reason to keep them
     # in a comment)
     if k in ('ML', 'Comment') and self.ml_ported(b):
+      # a comment inside the ML that the port has in OCaml holds
+      # HOL4 code as well (word_bignum has a line of its ML
+      # commented out), so a pointer says where that code is
+      if k == 'Comment' and commented_code(b.text):
+        self.out.append(self.at(b, 'code that the source has in a'
+                                   ' comment'))
       return
     if k == 'Comment':
       # a comment block of the source can have ML code after the

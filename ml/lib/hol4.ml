@@ -460,6 +460,26 @@ let AFUPDKEY = new_recursive_definition list_RECURSION
     if k = FST kv then CONS (k,f (SND kv)) rest
     else CONS kv (AFUPDKEY k f rest))`;;
 
+(* the domain and the range of a relation, of HOL4's
+   set_relationTheory.  The port cannot have them under the names
+   that HOL4 gives them: its domain is the one of sptree
+   everywhere else, so the statements that mean these say so
+   (overrides.THM_NAMES) *)
+
+let set_relation_domain = new_definition
+  `set_relation_domain (r:(A#B)->bool) =
+   {x | ?y. (x,y) IN r}`;;
+
+let set_relation_range = new_definition
+  `set_relation_range (r:(A#B)->bool) =
+   {y | ?x. (x,y) IN r}`;;
+
+(* HOL4's GSPEC takes a function to a pair of an element and a
+   condition, where HOL Light's takes the predicate itself *)
+
+let hol4_GSPEC = new_definition
+  `hol4_GSPEC (f:B->A#bool) = {x | ?y. (x,T) = f y}`;;
+
 let rrestrict = new_definition
   `rrestrict (r:(A#A)->bool) s =
    {kv | kv IN r /\ FST kv IN s /\ SND kv IN s}`;;

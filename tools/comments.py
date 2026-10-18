@@ -18,7 +18,20 @@ ML = T + '../ml/'
 
 def body(text):
   """the words of a comment, without its (* and *) and without the
-     white space, so that a different layout is not a difference"""
+     white space, so that a different layout is not a difference.
+     A block of a source is whole lines, so a comment that has code
+     after it on its line (the ML of word_bignum has (* Var *) let)
+     is cut at the end of the comment itself"""
+  text = text.strip()
+  if text.startswith('(*'):
+    depth = i = 0
+    while i < len(text):
+      if text.startswith('(*', i): depth += 1; i += 2; continue
+      if text.startswith('*)', i):
+        depth -= 1; i += 2
+        if not depth: text = text[:i]; break
+        continue
+      i += 1
   text = re.sub(r'^\s*\(\*+|\*+\)\s*$', '', text.strip())
   return ' '.join(text.split())
 
@@ -57,6 +70,10 @@ def main():
       s = body(b.text)
       if not s: continue
       if s in inport: continue
+      # a comment with an odd number of quotes in it gets one more
+      # in the port, which OCaml would otherwise read as the start
+      # of a string (compilerScript.sml's (*"*))
+      if s + '"' in inport or s + ' "' in inport: continue
       # a comment that the port had to break into lines of its
       # own is in it as several comments
       if any(s in c or c in s for c in inport if len(c) > 20):

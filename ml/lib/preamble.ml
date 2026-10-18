@@ -18,6 +18,7 @@ needs "lib/records.ml";;
 needs "lib/words4.ml";;
 needs "lib/finite_map.ml";;
 needs "lib/llist.ml";;
+needs "lib/path.ml";;
 needs "lib/relation.ml";;
 needs "lib/bag.ml";;
 needs "lib/string4.ml";;
