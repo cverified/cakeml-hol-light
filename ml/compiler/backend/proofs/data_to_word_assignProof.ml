@@ -41,13 +41,13 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* HOL4 data_to_word_assignProofScript.sml:40-42: ML code, not ported *)
 
-(* HOL4 data_to_word_assignProofScript.sml:44-45: ML code, not ported *)
+(* HOL4 data_to_word_assignProofScript.sml:44-45: a proof *)
 
 (* HOL4 data_to_word_assignProofScript.sml:47-48: ML code, not ported *)
 
 (* HOL4 data_to_word_assignProofScript.sml:50-53: ML code, not ported *)
 
-(* HOL4 data_to_word_assignProofScript.sml:55-60: ML code, not ported *)
+(* HOL4 data_to_word_assignProofScript.sml:55-60: a proof *)
 
 (* This list must list all auxiliary definitions used in assign_def *)
 
@@ -59,8 +59,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 (*TODO: move to backendProps *)
 
-(* HOL4 data_to_word_assignProofScript.sml:629-631: ML code, not
-   ported *)
+(* HOL4 data_to_word_assignProofScript.sml:629-631: a proof *)
 
 let is_env_def = cake_define
   `is_env st = (?n vs. st = Env n vs)`;;

@@ -83,4 +83,4 @@ let is_safe_for_space_def = cake_define
 hol4_overload "is_safe_for_space" "compilerProof_is_safe_for_space";;
 (* HOL4 compilerProofScript.sml:280-281: a comment with ML code after
    it, which the port does not have *)
-(* HOL4 compilerProofScript.sml:282-289: ML code, not ported *)
+(* HOL4 compilerProofScript.sml:282-289: a proof *)

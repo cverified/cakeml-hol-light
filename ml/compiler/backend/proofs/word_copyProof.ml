@@ -54,12 +54,12 @@ let CPstate_models_def = cake_define
 (* HOL4 word_copyProofScript.sml:740-750: code that the source has in
    a comment *)
 
-(* HOL4 word_copyProofScript.sml:872-895: ML code, not ported *)
+(* HOL4 word_copyProofScript.sml:872-895: a proof *)
 (* HOL4 word_copyProofScript.sml:896-903: code that the source has in
    a comment *)
 (* HOL4 word_copyProofScript.sml:904-906: ML code, not ported *)
         (* use appropriate case_cong *)
-(* HOL4 word_copyProofScript.sml:908-916: ML code, not ported *)
+(* HOL4 word_copyProofScript.sml:908-916: a proof *)
 
 (* "inst" is constant wordSem$inst *)
 
@@ -70,8 +70,8 @@ let CPstate_models_def = cake_define
    preserves semantics when the body doesn't error, then the Loop
    transformation preserves semantics when the Loop doesn't error. *)
 
-(* HOL4 word_copyProofScript.sml:1386-1395: ML code, not ported *)
+(* HOL4 word_copyProofScript.sml:1386-1395: a proof *)
 
-(* HOL4 word_copyProofScript.sml:1397: ML code, not ported *)
+(* HOL4 word_copyProofScript.sml:1397: a proof *)
 
 (* Main semantics result *)

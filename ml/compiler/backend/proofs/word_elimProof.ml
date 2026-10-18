@@ -165,55 +165,55 @@ let word_state_rel_def = cake_define
 
 (**************************** MAIN LEMMAS *****************************)
 
-(* HOL4 word_elimProofScript.sml:989-992: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:989-992: a proof *)
 
-(* HOL4 word_elimProofScript.sml:994-996: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:994-996: a proof *)
 
-(* HOL4 word_elimProofScript.sml:998-1006: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:998-1006: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1008-1014: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1008-1014: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1016-1023: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1016-1023: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1025-1035: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1025-1035: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1037-1044: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1037-1044: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1046-1052: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1046-1052: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1054-1065: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1054-1065: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1067-1079: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1067-1079: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1081-1093: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1081-1093: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1095-1108: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1095-1108: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1110-1132: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1110-1132: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1134-1159: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1134-1159: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1161-1176: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1161-1176: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1178-1186: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1178-1186: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1188-1203: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1188-1203: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1205-1217: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1205-1217: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1219-1232: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1219-1232: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1234-1254: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1234-1254: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1256-1274: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1256-1274: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1276-1295: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1276-1295: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1297-1542: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1297-1542: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1544-1599: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1544-1599: a proof *)
 
-(* HOL4 word_elimProofScript.sml:1601: ML code, not ported *)
+(* HOL4 word_elimProofScript.sml:1601: a proof *)
 
 (**************************** WORD_REMOVAL_THM
    *****************************)

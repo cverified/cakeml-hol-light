@@ -479,7 +479,7 @@ hol4_overload "stoppers" "pegComplete_stoppers";;
      (sfx ≠ [] ∧ nullable cmlG [SEP] ⇒ HD sfx ∉ firstSet cmlG [C])
    and I can't be bothered with that right now. *)
 
-(* HOL4 pegCompleteScript.sml:2024-2026: ML code, not ported *)
+(* HOL4 pegCompleteScript.sml:2024-2026: a proof *)
 
 (* HOL4 pegCompleteScript.sml:2028: ML code, not ported *)
 
@@ -488,7 +488,7 @@ hol4_overload "stoppers" "pegComplete_stoppers";;
 
 (* HOL4 pegCompleteScript.sml:2032-2036: ML code, not ported *)
 
-(* HOL4 pegCompleteScript.sml:2038-2041: ML code, not ported *)
+(* HOL4 pegCompleteScript.sml:2038-2041: a proof *)
 
 (* HOL4 pegCompleteScript.sml:2087: the ML values that the
    definitions below antiquote *)

@@ -156,95 +156,95 @@ gc doesn't touch other components*)
    in a comment *)
 
 (*Frequently used tactics*)
-(* HOL4 word_allocProofScript.sml:798-800: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:798-800: a proof *)
 
-(* HOL4 word_allocProofScript.sml:802-809: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:802-809: a proof *)
 
-(* HOL4 word_allocProofScript.sml:811-813: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:811-813: a proof *)
 
 (*liveness theorem*)
 
-(* HOL4 word_allocProofScript.sml:1165-1167: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1165-1167: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1169-1193: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1169-1193: a proof *)
   (*NONE:
   Therefore n is not in l but it is in live and so it is not deleted
   *)
-(* HOL4 word_allocProofScript.sml:1197-1223: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1197-1223: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1225-1374: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1225-1374: a proof *)
   (* All the FP cases *)
-(* HOL4 word_allocProofScript.sml:1376-1394: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1376-1394: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1396-1403: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1396-1403: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1405-1411: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1405-1411: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1413-1419: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1413-1419: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1421-1431: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1421-1431: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1433-1447: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1433-1447: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1449-1480: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1449-1480: a proof *)
   (*Returning calls*)
-(* HOL4 word_allocProofScript.sml:1482-1592: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1482-1592: a proof *)
   (*Result*)
-(* HOL4 word_allocProofScript.sml:1594-1608: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1594-1608: a proof *)
   (*finally using IH*)
-(* HOL4 word_allocProofScript.sml:1610-1629: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1610-1629: a proof *)
   (* Strong locals rel *)
-(* HOL4 word_allocProofScript.sml:1631-1663: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1631-1663: a proof *)
   (*Exception*)
-(* HOL4 word_allocProofScript.sml:1665-1673: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1665-1673: a proof *)
   (*No handler*)
-(* HOL4 word_allocProofScript.sml:1675-1702: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1675-1702: a proof *)
   (*Handler*)
-(* HOL4 word_allocProofScript.sml:1704-1758: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1704-1758: a proof *)
   (*Use IH*)
-(* HOL4 word_allocProofScript.sml:1760-1769: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1760-1769: a proof *)
   (* Strong locals rel *)
-(* HOL4 word_allocProofScript.sml:1771-1799: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1771-1799: a proof *)
   (*Remaining Cases*)
-(* HOL4 word_allocProofScript.sml:1801-1809: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1801-1809: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1811-1831: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1811-1831: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1833-1881: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1833-1881: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1883-1892: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1883-1892: a proof *)
 
-(* HOL4 word_allocProofScript.sml:1894-1976: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1894-1976: a proof *)
       (* Strong locals rel *)
-(* HOL4 word_allocProofScript.sml:1978-2022: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:1978-2022: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2024-2060: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2024-2060: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2062-2067: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2062-2067: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2069-2084: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2069-2084: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2086-2090: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2086-2090: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2092-2096: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2092-2096: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2098-2100: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2098-2100: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2102-2117: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2102-2117: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2119-2131: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2119-2131: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2133-2162: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2133-2162: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2164-2171: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2164-2171: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2173-2180: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2173-2180: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2182-2205: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2182-2205: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2207-2266: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2207-2266: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2268: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2268: a proof *)
 
 (* TODO: get_clash_sets, made redundant by clash tree *)
 
@@ -258,17 +258,17 @@ gc doesn't touch other components*)
 
 (*TODO: This is true without wf*)
 
-(* HOL4 word_allocProofScript.sml:2791-2799: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2791-2799: a proof *)
 
-(* HOL4 word_allocProofScript.sml:2801-2804: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:2801-2804: a proof *)
 
-(* HOL4 word_allocProofScript.sml:3270-3279: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:3270-3279: a proof *)
 
-(* HOL4 word_allocProofScript.sml:3281-3289: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:3281-3289: a proof *)
 
-(* HOL4 word_allocProofScript.sml:3291-3299: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:3291-3299: a proof *)
 
-(* HOL4 word_allocProofScript.sml:3301: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:3301: a proof *)
 
 (*Actually, it should probably be exactly 0,2,4,6...*)
 let even_starting_locals_def = cake_define
@@ -299,61 +299,61 @@ let nlive_store_def = cake_define
        nlive_store nlive e1 /\ nlive_store nlive e2
         | _5 -> T`;;
 
-(* HOL4 word_allocProofScript.sml:3958-4029: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:3958-4029: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4031-4071: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4031-4071: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4073-4088: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4073-4088: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4090-4114: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4090-4114: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4116-4121: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4116-4121: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4123-4135: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4123-4135: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4137-4155: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4137-4155: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4157-4168: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4157-4168: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4170-4173: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4170-4173: a proof *)
   (* Reg: resolve get_var for register operand, then apply IH *)
-(* HOL4 word_allocProofScript.sml:4175-4193: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4175-4193: a proof *)
   (* Imm: apply IH directly *)
-(* HOL4 word_allocProofScript.sml:4195-4210: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4195-4210: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4212-4266: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4212-4266: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4268-4279: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4268-4279: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4281-4289: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4281-4289: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4291-4294: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4291-4294: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4296-4299: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4296-4299: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4301-4318: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4301-4318: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4320-4324: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4320-4324: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4326-4332: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4326-4332: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4334-4336: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4334-4336: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4338-4345: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4338-4345: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4347-4350: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4347-4350: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4352-4374: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4352-4374: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4376-4391: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4376-4391: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4393-4408: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4393-4408: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4410-4436: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4410-4436: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4438-4469: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4438-4469: a proof *)
 
-(* HOL4 word_allocProofScript.sml:4471: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4471: a proof *)
 
 (*SSA Proof*)
 
@@ -378,7 +378,7 @@ let ssa_map_ok_def = cake_define
    (!x y. sptree_lookup x ssa = SOME y ==>
      ~is_phy_var y /\ y < na)`;;
 
-(* HOL4 word_allocProofScript.sml:4594-4596: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:4594-4596: a proof *)
 
 (*Characterize result of merge_moves*)
 
@@ -392,7 +392,7 @@ Also, the cases are basically copy pasted... *)
 
 (* HOL4 word_allocProofScript.sml:5318-5325: ML code, not ported *)
 
-(* HOL4 word_allocProofScript.sml:5667-5671: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:5667-5671: a proof *)
 
 (*ordered such that its easy to drule*)
 
@@ -400,7 +400,7 @@ Also, the cases are basically copy pasted... *)
 
 (*ordered such that its easy to drule*)
 
-(* HOL4 word_allocProofScript.sml:5834-5836: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:5834-5836: a proof *)
 
 (* HOL4 word_allocProofScript.sml:5857-5860: ML code, not ported *)
 
@@ -415,17 +415,17 @@ Also, the cases are basically copy pasted... *)
 (*Prove the properties that hold of ssa_cc_trans independent of
    semantics*)
 
-(* HOL4 word_allocProofScript.sml:6177-6200: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:6177-6200: a proof *)
 
-(* HOL4 word_allocProofScript.sml:6202-6204: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:6202-6204: a proof *)
 
-(* HOL4 word_allocProofScript.sml:6206-6208: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:6206-6208: a proof *)
 
-(* HOL4 word_allocProofScript.sml:6210: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:6210: a proof *)
 
-(* HOL4 word_allocProofScript.sml:6294-6303: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:6294-6303: a proof *)
 
-(* HOL4 word_allocProofScript.sml:6305-6308: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:6305-6308: a proof *)
 (*TODO move*)
 
 let lt_ok_def = cake_define
@@ -454,113 +454,113 @@ let lt_ok_def = cake_define
    without re-running the outer fake_prog + refresh_mov setup each iter.
      *)
 
-(* HOL4 word_allocProofScript.sml:7736-7738: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:7736-7738: a proof *)
 
-(* HOL4 word_allocProofScript.sml:7740-7751: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:7740-7751: a proof *)
     (* The ssa'' map would have been fine to return without
       forcing the renames too *)
-(* HOL4 word_allocProofScript.sml:7754-7823: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:7754-7823: a proof *)
     (* but we force some new mappings *)
-(* HOL4 word_allocProofScript.sml:7825-7858: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:7825-7858: a proof *)
 
-(* HOL4 word_allocProofScript.sml:7860-7955: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:7860-7955: a proof *)
         (* is_x64 *)
-(* HOL4 word_allocProofScript.sml:7957-7982: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:7957-7982: a proof *)
 (* HOL4 word_allocProofScript.sml:7983-7996: code that the source has
    in a comment *)
-(* HOL4 word_allocProofScript.sml:7997-8182: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:7997-8182: a proof *)
           (* Nasty special case for 32-bit FPMovFromReg *)
-(* HOL4 word_allocProofScript.sml:8184-8207: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8184-8207: a proof *)
       (* Special case for two writes *)
-(* HOL4 word_allocProofScript.sml:8209-8222: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8209-8222: a proof *)
 
-(* HOL4 word_allocProofScript.sml:8224-8226: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8224-8226: a proof *)
 
-(* HOL4 word_allocProofScript.sml:8228-8230: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8228-8230: a proof *)
 
-(* HOL4 word_allocProofScript.sml:8232-8234: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8232-8234: a proof *)
 
-(* HOL4 word_allocProofScript.sml:8236-8249: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8236-8249: a proof *)
 
-(* HOL4 word_allocProofScript.sml:8251-8266: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8251-8266: a proof *)
 
-(* HOL4 word_allocProofScript.sml:8268-8296: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8268-8296: a proof *)
 
-(* HOL4 word_allocProofScript.sml:8298-8338: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8298-8338: a proof *)
     (*Establish invariants about ssa_cut to use later*)
-(* HOL4 word_allocProofScript.sml:8340-8351: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8340-8351: a proof *)
     (*Probably need to case split here to deal with the 2 cases*)
-(* HOL4 word_allocProofScript.sml:8353-8383: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8353-8383: a proof *)
       (*Important preservation step*)
-(* HOL4 word_allocProofScript.sml:8385-8392: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8385-8392: a proof *)
       (*Try to use cut_envs_lemma from word_live*)
-(* HOL4 word_allocProofScript.sml:8394-8458: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8394-8458: a proof *)
         (*Backwards chaining*)
-(* HOL4 word_allocProofScript.sml:8460-8468: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8460-8468: a proof *)
         (*This went missing somewhere..*)
 (* HOL4 word_allocProofScript.sml:8470-8474: ML code, not ported *)
         (*Now is a good place to establish the invariant
            ssa_locals_rel*)
-(* HOL4 word_allocProofScript.sml:8476-8546: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8476-8546: a proof *)
         (*We set the return variables but it is never in the
           locals so the ssa_locals_rel property is preserved*)
-(* HOL4 word_allocProofScript.sml:8549-8631: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8549-8631: a proof *)
         (*"Hot-swap" the suffix of perm, maybe move into lemma*)
-(* HOL4 word_allocProofScript.sml:8633-8645: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8633-8645: a proof *)
         (*Excepting without handler*)
-(* HOL4 word_allocProofScript.sml:8647-8677: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8647-8677: a proof *)
         (* 4 subgoals *)
-(* HOL4 word_allocProofScript.sml:8679-8685: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8679-8685: a proof *)
     (*Handler reasoning*)
-(* HOL4 word_allocProofScript.sml:8687-8719: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8687-8719: a proof *)
     (*Important preservation lemma*)
-(* HOL4 word_allocProofScript.sml:8721-8733: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8721-8733: a proof *)
     (*Try to use cut_env_lemma from word_live*)
-(* HOL4 word_allocProofScript.sml:8735-8786: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8735-8786: a proof *)
     (*More props theorems that will be useful*)
-(* HOL4 word_allocProofScript.sml:8788-9191: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:8788-9191: a proof *)
       (*"Hot-swap" the suffix of perm, maybe move into lemma*)
-(* HOL4 word_allocProofScript.sml:9193-9226: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9193-9226: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9228-9261: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9228-9261: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9263-9331: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9263-9331: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9333-9459: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9333-9459: a proof *)
     (*Establish invariants about ssa_cut to use later*)
-(* HOL4 word_allocProofScript.sml:9461-9606: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9461-9606: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9608-9647: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9608-9647: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9649-9654: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9649-9654: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9656-9687: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9656-9687: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9689-9692: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9689-9692: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9694-9704: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9694-9704: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9706-9708: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9706-9708: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9710-9858: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9710-9858: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9860-9862: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9860-9862: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9864-9866: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9864-9866: a proof *)
 
-(* HOL4 word_allocProofScript.sml:9868: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9868: a proof *)
     (*FFI*)
-(* HOL4 word_allocProofScript.sml:9870-10010: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:9870-10010: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10012-10045: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10012-10045: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10047-10096: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10047-10096: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10098-10115: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10098-10115: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10117-10134: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10117-10134: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10136: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10136: a proof *)
 
 (*For starting up*)
 
@@ -573,37 +573,37 @@ let lt_ok_def = cake_define
 (*Prove that the transform sets up arbitrary programs with
   the appropriate conventions*)
 
-(* HOL4 word_allocProofScript.sml:10716-10731: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10716-10731: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10733-10736: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10733-10736: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10738-10741: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10738-10741: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10743: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10743: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10922-10939: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10922-10939: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10941-10944: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10941-10944: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10946-10949: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10946-10949: a proof *)
 
-(* HOL4 word_allocProofScript.sml:10951: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:10951: a proof *)
 
-(* HOL4 word_allocProofScript.sml:11124-11140: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:11124-11140: a proof *)
 
-(* HOL4 word_allocProofScript.sml:11142-11145: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:11142-11145: a proof *)
 
-(* HOL4 word_allocProofScript.sml:11147-11150: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:11147-11150: a proof *)
 
-(* HOL4 word_allocProofScript.sml:11152: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:11152: a proof *)
 
 (* word_alloc syntactic stuff *)
 
-(* HOL4 word_allocProofScript.sml:11176-11180: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:11176-11180: a proof *)
 
 (*Composing with a function using apply_colour*)
 
-(* HOL4 word_allocProofScript.sml:11302-11305: ML code, not ported *)
+(* HOL4 word_allocProofScript.sml:11302-11305: a proof *)
 
 (*word_alloc preserves syntactic conventions*)
 

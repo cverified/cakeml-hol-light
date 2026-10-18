@@ -50,4 +50,4 @@ let state_rel_def = cake_define
              lookup n c = SOME (comp_top i b))))`;;
 hol4_overload "state_rel" "stack_rawcallProof_state_rel";;
 
-(* HOL4 stack_rawcallProofScript.sml:107-119: ML code, not ported *)
+(* HOL4 stack_rawcallProofScript.sml:107-119: a proof *)

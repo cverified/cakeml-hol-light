@@ -25,7 +25,7 @@ needs "semantics/typeSystem.ml";;
 
 (* Classifying values of basic types *)
 
-(* HOL4 typeSoundScript.sml:411-420: ML code, not ported *)
+(* HOL4 typeSoundScript.sml:411-420: a proof *)
 
 let store_type_extension_def = cake_define
   `store_type_extension tenvS1 tenvS2 =
@@ -36,8 +36,8 @@ let store_type_extension_def = cake_define
 (* HOL4 typeSoundScript.sml:618-632: code that the source has in a
    comment *)
 
-(* HOL4 typeSoundScript.sml:1125-1139: ML code, not ported *)
+(* HOL4 typeSoundScript.sml:1125-1139: a proof *)
 
 (* TODO: Move *)
 
-(* HOL4 typeSoundScript.sml:1920-1967: ML code, not ported *)
+(* HOL4 typeSoundScript.sml:1920-1967: a proof *)

@@ -541,11 +541,11 @@ hol4_overload "state_rel" "lab_to_targetProof_state_rel";;
 
 (* The lab and asm versions should be in their individual props *)
 
-(* HOL4 lab_to_targetProofScript.sml:2138-2144: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:2138-2144: a proof *)
 
 (* compile correct *)
 
-(* HOL4 lab_to_targetProofScript.sml:2955-2979: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:2955-2979: a proof *)
 
 (* HOL4 lab_to_targetProofScript.sml:2981: the ML values that the
    definitions below antiquote *)
@@ -593,7 +593,7 @@ let enc_lines_again_simp_def = cake_define_list
 
 (* code_similar preservation *)
 
-(* HOL4 lab_to_targetProofScript.sml:3402-3408: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:3402-3408: a proof *)
 
 (* implications of code_similar *)
 
@@ -950,85 +950,85 @@ let even_labels_strong_def = cake_define_list_cheat CHEAT_TAC
 
 (* HOL4 lab_to_targetProofScript.sml:6959-6967: ML code, not ported *)
 
-(* HOL4 lab_to_targetProofScript.sml:6969-6978: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:6969-6978: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:6980-7059: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:6980-7059: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7061-7157: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7061-7157: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7171-7200: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7171-7200: a proof *)
 
 (* move *)
 
 (* HOL4 lab_to_targetProofScript.sml:7526: ML code, not ported *)
 
-(* HOL4 lab_to_targetProofScript.sml:7560-7717: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7560-7717: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7719: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7719: a proof *)
 (* CBW *)
-(* HOL4 lab_to_targetProofScript.sml:7721-7805: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7721-7805: a proof *)
       (* non-overlap of cb with code *)
-(* HOL4 lab_to_targetProofScript.sml:7807-7812: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7807-7812: a proof *)
       (* non-overlap of cb with itself *)
-(* HOL4 lab_to_targetProofScript.sml:7814-7827: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7814-7827: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7829: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7829: a proof *)
 (* share_mem_op *)
-(* HOL4 lab_to_targetProofScript.sml:7831-7844: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7831-7844: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7846-7849: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7846-7849: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7851-7856: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7851-7856: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7858-7866: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7858-7866: a proof *)
 
 
-(* HOL4 lab_to_targetProofScript.sml:7927-7945: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7927-7945: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7947-7952: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7947-7952: a proof *)
 
 (* HOL4 lab_to_targetProofScript.sml:7954: ML code, not ported *)
 
-(* HOL4 lab_to_targetProofScript.sml:7956-7965: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7956-7965: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:7967: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7967: a proof *)
 (* Jump *)
-(* HOL4 lab_to_targetProofScript.sml:7969-8050: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:7969-8050: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:8052: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8052: a proof *)
 (* JumpCmp *)
-(* HOL4 lab_to_targetProofScript.sml:8054-8065: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8054-8065: a proof *)
 
 
-(* HOL4 lab_to_targetProofScript.sml:8068-8197: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8068-8197: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:8199: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8199: a proof *)
 (* Call *)
-(* HOL4 lab_to_targetProofScript.sml:8201-8212: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8201-8212: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:8214: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8214: a proof *)
 (* LocValue *)
-(* HOL4 lab_to_targetProofScript.sml:8216-8290: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8216-8290: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:8292: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8292: a proof *)
 (* CallFFI *)
-(* HOL4 lab_to_targetProofScript.sml:8294-8407: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8294-8407: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:8409-8467: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8409-8467: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:8469-8476: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8469-8476: a proof *)
   (* FFI_return *)
-(* HOL4 lab_to_targetProofScript.sml:8478-8752: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8478-8752: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:8754: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8754: a proof *)
 (* Install *)
-(* HOL4 lab_to_targetProofScript.sml:8756-9280: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:8756-9280: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:9282: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:9282: a proof *)
 (* Halt *)
-(* HOL4 lab_to_targetProofScript.sml:9284-9351: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:9284-9351: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:9353: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:9353: a proof *)
 
 (* relating observable semantics *)
 
@@ -1120,58 +1120,58 @@ let line_to_info_def = cake_define
 
 (* This is set up for the very first compile call *)
 
-(* HOL4 lab_to_targetProofScript.sml:10204-10222: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10204-10222: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10224-10234: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10224-10234: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10236-10242: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10236-10242: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10244-10252: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10244-10252: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10254-10256: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10254-10256: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10258-10260: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10258-10260: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10262-10264: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10262-10264: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10266-10272: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10266-10272: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10274-10277: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10274-10277: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10279-10281: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10279-10281: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10283-10285: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10283-10285: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10287-10328: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10287-10328: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10330-10332: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10330-10332: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10334-10336: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10334-10336: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10338-10349: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10338-10349: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10351-10446: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10351-10446: a proof *)
     (* TAKE case: asm_fetch_NOT_ffi_entry_pcs *)
-(* HOL4 lab_to_targetProofScript.sml:10448-10450: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10448-10450: a proof *)
     (* Get MEM in DROP via TAKE_DROP *)
-(* HOL4 lab_to_targetProofScript.sml:10452-10459: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10452-10459: a proof *)
     (* Get w2n version in DROP *)
-(* HOL4 lab_to_targetProofScript.sml:10461-10464: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10461-10464: a proof *)
     (* w2n x >= w2n(get_pc ms) from new_shmem_info structure *)
-(* HOL4 lab_to_targetProofScript.sml:10466-10474: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10466-10474: a proof *)
     (* a + pos_val < LENGTH prog *)
-(* HOL4 lab_to_targetProofScript.sml:10476-10481: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10476-10481: a proof *)
     (* Apply DISJOINT to get contradiction *)
-(* HOL4 lab_to_targetProofScript.sml:10483-10489: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10483-10489: a proof *)
     (* Prove w2n equality: w2n(n2w a + n2w(pos_val) + get_pc ms) = a +
        (w2n(pc) + pos_val) *)
-(* HOL4 lab_to_targetProofScript.sml:10491-10493: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10491-10493: a proof *)
     (* Show no overflow: a + pos_val + w2n(pc) < dimword *)
-(* HOL4 lab_to_targetProofScript.sml:10495-10508: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10495-10508: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10510-10512: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10510-10512: a proof *)
 
-(* HOL4 lab_to_targetProofScript.sml:10514: ML code, not ported *)
+(* HOL4 lab_to_targetProofScript.sml:10514: a proof *)
 
 (* TODO: move *)
 (* HOL4 lab_to_targetProofScript.sml:10827-10848: code that the

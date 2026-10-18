@@ -110,7 +110,7 @@ let good_linear_scan_state_def = cake_define
        EVERY (\c. mincol <= c) (linear_scan_state_colorpool st ++
          MAP (\r. EL r (linear_scan_hidden_state_colors sth)) l))`;;
 
-(* HOL4 linear_scanProofScript.sml:2444-2451: ML code, not ported *)
+(* HOL4 linear_scanProofScript.sml:2444-2451: a proof *)
 
 (* TODO: this should be part of the standard library, but I couldn't
    find it *)

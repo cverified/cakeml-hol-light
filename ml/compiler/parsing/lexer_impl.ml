@@ -17,7 +17,7 @@ needs "semantics/lexer_fun.ml";;
 needs "semantics/tokens.ml";;
 (* HOL4 ancestors outside the port: rich_list *)
 
-(* HOL4 lexer_implScript.sml:16-20: ML code, not ported *)
+(* HOL4 lexer_implScript.sml:16-20: a proof *)
 
 let unhex_alt_def = cake_define
   `unhex_alt x = (if isHexDigit x then UNHEX x else 0)`;;
@@ -157,7 +157,7 @@ let lex_until_top_semicolon_alt_def = cake_define
 let token_of_sym_loc_def = cake_define
   `token_of_sym_loc (t,l) = (token_of_sym t,l)`;;
 
-(* HOL4 lexer_implScript.sml:460-474: ML code, not ported *)
+(* HOL4 lexer_implScript.sml:460-474: a proof *)
 
 (* lex_impl_all *)
 

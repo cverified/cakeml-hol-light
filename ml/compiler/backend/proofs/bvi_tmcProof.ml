@@ -261,114 +261,114 @@ let mb_rel_def = cake_define_try_tac (fun () ->
    Numbers
    resp. Word64s, which v_rel relates exactly. *)
 
-(* HOL4 bvi_tmcProofScript.sml:1520-1541: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1520-1541: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1543-1549: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1543-1549: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1551-1563: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1551-1563: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1565-1593: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1565-1593: a proof *)
   (* SetGlobal *)
-(* HOL4 bvi_tmcProofScript.sml:1595-1616: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1595-1616: a proof *)
 
 (* Allocating a fresh reference (Ref, RefByte, RefArray). *)
-(* HOL4 bvi_tmcProofScript.sml:1619-1640: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1619-1640: a proof *)
 
 (* Reading a reference without changing the state, returning a fresh
    value
    (Length, LengthByte, DerefByte, BoundsCheckArray, BoundsCheckByte).
      *)
-(* HOL4 bvi_tmcProofScript.sml:1644-1650: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1644-1650: a proof *)
 
 (* Reading an element out of a ValueArray reference (El on a RefPtr). *)
-(* HOL4 bvi_tmcProofScript.sml:1653-1662: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1653-1662: a proof *)
 
 (* Reading an element out of a Block (El on a Block). *)
-(* HOL4 bvi_tmcProofScript.sml:1665-1670: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1665-1670: a proof *)
 
 (* Updating a ValueArray reference in place (Update). *)
-(* HOL4 bvi_tmcProofScript.sml:1673-1689: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1673-1689: a proof *)
 
 (* Updating a ByteArray reference in place (UpdateByte, CopyByte,
    XorByte).
    The byte arrays are equal on both sides, so the operations agree. *)
-(* HOL4 bvi_tmcProofScript.sml:1693-1703: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1693-1703: a proof *)
 
 (* Turning a stack of mutable conses into a Block (FinaliseCons). *)
-(* HOL4 bvi_tmcProofScript.sml:1706-1713: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1706-1713: a proof *)
 
 (* Mutating the hole of a MutBlock (UpdateCons) cannot happen:
    state_ref_rel
    never relates a MutBlock. *)
-(* HOL4 bvi_tmcProofScript.sml:1717-1719: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1717-1719: a proof *)
 
 (* ConfigGC returns Unit and leaves the state unchanged. *)
-(* HOL4 bvi_tmcProofScript.sml:1722-1725: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1722-1725: a proof *)
 
 (* Comparing two ByteArray references without changing the state
    (StringCmp).
    Both byte arrays are equal on the two sides, so the comparison
      agrees. *)
-(* HOL4 bvi_tmcProofScript.sml:1729-1734: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1729-1734: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1768-1774: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1768-1774: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1776-1784: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1776-1784: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1786-1796: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1786-1796: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1814-1817: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1814-1817: a proof *)
    (* UpdateThunk *)
-(* HOL4 bvi_tmcProofScript.sml:1819-1840: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1819-1840: a proof *)
   (* AllocThunk *)
-(* HOL4 bvi_tmcProofScript.sml:1842-1861: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1842-1861: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1863-1884: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1863-1884: a proof *)
 
 (* Structural block operations with a fresh, state-preserving result
    (Cons, TagLenEq, LenEq, TagEq, LengthBlock, BoolTest,
      BoundsCheckBlock,
    EqualConst on a Number/Word64). *)
-(* HOL4 bvi_tmcProofScript.sml:1889-1895: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1889-1895: a proof *)
 
 (* ElemAt reading an element out of a Block value. *)
-(* HOL4 bvi_tmcProofScript.sml:1898-1905: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1898-1905: a proof *)
 
 (* ElemAt reading an element out of a ValueArray reference. *)
-(* HOL4 bvi_tmcProofScript.sml:1908-1917: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1908-1917: a proof *)
 
 (* ConsExtend: result is an append of (a prefix of) two related blocks.
    *)
-(* HOL4 bvi_tmcProofScript.sml:1920-1929: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1920-1929: a proof *)
 
 (* FromList: convert a list value to a packed Block. *)
-(* HOL4 bvi_tmcProofScript.sml:1932-1938: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1932-1938: a proof *)
 
 (* ListAppend: append two lists. *)
-(* HOL4 bvi_tmcProofScript.sml:1941-1945: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1941-1945: a proof *)
 
 (* Equal: structural equality preserved by the renaming (uses
    do_eq_v_rel). *)
-(* HOL4 bvi_tmcProofScript.sml:1948-1956: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1948-1956: a proof *)
 
 (* EqualConst on a string constant (a compare-by-contents byte array).
    *)
-(* HOL4 bvi_tmcProofScript.sml:1959-1966: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1959-1966: a proof *)
 
 (* Build: evaluate a constant, possibly allocating byte arrays for
    strings. *)
-(* HOL4 bvi_tmcProofScript.sml:1969-1977: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1969-1977: a proof *)
 
 (* BoolNot: negates a boolean; the argument value is a Boolv, equal on
    both
    sides, so the negation agrees. *)
-(* HOL4 bvi_tmcProofScript.sml:1981-1987: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1981-1987: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:1989-1998: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:1989-1998: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:2000-2123: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:2000-2123: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:2125: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:2125: a proof *)
 
 let is_block_op_cons_def = cake_define
   `is_block_op_cons op <=>
@@ -385,7 +385,7 @@ let optimised_code_def = cake_define
        rewrite_worker loc loc_opt arity (arity + 1) arity body =
          body_work)`;;
 
-(* HOL4 bvi_tmcProofScript.sml:3031-3106: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:3031-3106: a proof *)
 
 let hypothesis_def = cake_define
   `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=> state_clock
@@ -466,47 +466,47 @@ let alloc_hole_has_val_def = cake_define
        FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag F left c
          right))`;;
 
-(* HOL4 bvi_tmcProofScript.sml:4209: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4209: a proof *)
   (* Phase 1 theorem in s *)
-(* HOL4 bvi_tmcProofScript.sml:4211-4216: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4211-4216: a proof *)
   (* Hypothesis on bs *)
-(* HOL4 bvi_tmcProofScript.sml:4218-4231: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4218-4231: a proof *)
   (* Phase 1 theorem in s' *)
-(* HOL4 bvi_tmcProofScript.sml:4233-4263: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4233-4263: a proof *)
   (* Phase 2 theorem *)
-(* HOL4 bvi_tmcProofScript.sml:4265-4418: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4265-4418: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:4420-4421: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4420-4421: a proof *)
   (* First inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:4423-4439: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4423-4439: a proof *)
   (* Second inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:4441-4488: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4441-4488: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:4490-4513: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4490-4513: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:4515-4518: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4515-4518: a proof *)
   (* First inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:4520-4652: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4520-4652: a proof *)
     (* Else inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:4654-4768: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4654-4768: a proof *)
   (* Error case *)
-(* HOL4 bvi_tmcProofScript.sml:4770-4792: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4770-4792: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:4794-4797: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4794-4797: a proof *)
   (* First inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:4799-4829: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4799-4829: a proof *)
   (* Second inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:4831-4936: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4831-4936: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:4938-4975: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4938-4975: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:4977-5026: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:4977-5026: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:5091-5095: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5091-5095: a proof *)
   (* xs inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:5097-5111: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5097-5111: a proof *)
   (* Error case *)
-(* HOL4 bvi_tmcProofScript.sml:5113-5445: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5113-5445: a proof *)
 
 let dest_thunk_ret_rel_def = cake_define
   `dest_thunk_ret_rel f t1 t2 <=>
@@ -517,22 +517,22 @@ let dest_thunk_ret_rel_def = cake_define
         tm1 = tm2 /\
         bvi_tmcProof_v_rel f v1 v2))`;;
 
-(* HOL4 bvi_tmcProofScript.sml:5496-5594: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5496-5594: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:5596-5599: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5596-5599: a proof *)
   (* args inductive hypothesis *)
-(* HOL4 bvi_tmcProofScript.sml:5601-5645: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5601-5645: a proof *)
       (* callee inductive hypothesis (smaller clock) *)
-(* HOL4 bvi_tmcProofScript.sml:5647-5744: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5647-5744: a proof *)
           (* the wrapper-IH gives the target callee result for body';
              rename to
              controlled names and discard the spurious direct-IH result
                for exp *)
-(* HOL4 bvi_tmcProofScript.sml:5747-5831: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5747-5831: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:5833-5869: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5833-5869: a proof *)
 
-(* HOL4 bvi_tmcProofScript.sml:5871: ML code, not ported *)
+(* HOL4 bvi_tmcProofScript.sml:5871: a proof *)
 
 (* ---------------------------------------------------------------------
    ----

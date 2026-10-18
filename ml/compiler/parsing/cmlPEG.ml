@@ -658,11 +658,11 @@ let cmlPEG_def = cake_define
 
 (* HOL4 cmlPEGScript.sml:644-647: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:681-695: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:681-695: a proof *)
 
 (* HOL4 cmlPEGScript.sml:697-717: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:719-732: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:719-732: a proof *)
 
 (* HOL4 cmlPEGScript.sml:734-757: the ML values that the definitions
    below antiquote *)
@@ -675,8 +675,8 @@ set_diff (TypeBase.constructors_of ``:MMLnonT``)
 
 (* HOL4 cmlPEGScript.sml:808-816: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:818-820: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:818-820: a proof *)
 
-(* HOL4 cmlPEGScript.sml:824-840: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:824-840: a proof *)
 
 (* HOL4 cmlPEGScript.sml:844: ML code, not ported *)

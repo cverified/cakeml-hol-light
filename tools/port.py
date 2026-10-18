@@ -546,7 +546,9 @@ class Porter:
       # definitions that antiquote it have the term in them
       self.out.append(self.at(
         b, 'the ML values that the definitions below antiquote'
-           if hol4.ml_terms(b.text) else 'ML code, not ported'))
+           if hol4.ml_terms(b.text) else
+           'a proof' if PROOF_ML.search(b.text) else
+           'ML code, not ported'))
     else:
       self.warn.append('unknown block ' + k)
 
@@ -2476,6 +2478,15 @@ def iscon(n):
   """is this the name of a constructor?  A CakeML source may write
      it with the name of its theory (fpSem$FP_Add)"""
   return n.split('$')[-1] in CONS
+
+
+# an ML block of a source that is a proof: HOL4's Resume and
+# Finalise continue the proof of a theorem, and a tactic that the
+# source has on its own does not parse as a block either
+PROOF_ML = re.compile(
+  r'^\s*(Resume|Finalise)\b|^\s*(>>|>-|\\\\|THEN\b)|'
+  r'\b(Cases_on|qexists_tac|qabbrev_tac|match_mp_tac|metis_tac|'
+  r'rw|fs|gvs|simp|rfs|strip_tac)\s*[\[(`]', re.M)
 
 
 # a comment of the source whose body is HOL4 code (a definition or

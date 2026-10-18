@@ -51,17 +51,17 @@ needs "semantics/typeSystem.ml";;
    var*)
 
 (*This occurs when looking up a list updated fmap*)
-(* HOL4 infer_eCompleteScript.sml:629-645: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:629-645: a proof *)
 
 (*Useful tactics, mainly for constrain_op*)
 
-(* HOL4 infer_eCompleteScript.sml:745-748: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:745-748: a proof *)
 
-(* HOL4 infer_eCompleteScript.sml:750-759: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:750-759: a proof *)
 
-(* HOL4 infer_eCompleteScript.sml:761-774: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:761-774: a proof *)
 
-(* HOL4 infer_eCompleteScript.sml:776-779: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:776-779: a proof *)
 
 (* copied from src/1/Tactical *)
 
@@ -73,15 +73,15 @@ needs "semantics/typeSystem.ml";;
 (* HOL4 infer_eCompleteScript.sml:794-796: ML code, not ported *)
 
 (*For grounded ones*)
-(* HOL4 infer_eCompleteScript.sml:799-804: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:799-804: a proof *)
 
 (* HOL4 infer_eCompleteScript.sml:806-813: ML code, not ported *)
 
-(* HOL4 infer_eCompleteScript.sml:815-826: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:815-826: a proof *)
 
-(* HOL4 infer_eCompleteScript.sml:828-831: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:828-831: a proof *)
 
-(* HOL4 infer_eCompleteScript.sml:833-840: ML code, not ported *)
+(* HOL4 infer_eCompleteScript.sml:833-840: a proof *)
 
 (* HOL4 infer_eCompleteScript.sml:842: ML code, not ported *)
 

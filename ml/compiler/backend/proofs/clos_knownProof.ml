@@ -117,7 +117,7 @@ let mglobals_extend_def = cake_define
 let fv_max_def = cake_define
   `fv_max n xs = (!v. fv v xs ==> v < n)`;;
 
-(* HOL4 clos_knownProofScript.sml:612-615: ML code, not ported *)
+(* HOL4 clos_knownProofScript.sml:612-615: a proof *)
 
 (* HOL4 clos_knownProofScript.sml:705-709: the ML values that the
    definitions below antiquote *)

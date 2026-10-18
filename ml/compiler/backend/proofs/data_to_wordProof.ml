@@ -36,7 +36,7 @@ needs "lib/sptree.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
-(* HOL4 data_to_wordProofScript.sml:23-24: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:23-24: a proof *)
 
 (* HOL4 data_to_wordProofScript.sml:26-27: ML code, not ported *)
 
@@ -44,46 +44,46 @@ needs "semantics/proofs/semanticsProps.ml";;
 
 (* shared conjunct tail for the two popped-frame cases (Env / Exc) of
    state_rel_pop_env_set_vars_IMP below. *)
-(* HOL4 data_to_wordProofScript.sml:179-252: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:179-252: a proof *)
 
 (* multi-value generalisation of state_rel_pop_env_set_var_IMP
    (gcProof): the
    returning-Call reconstruction places the whole result list via
      set_vars. *)
 
-(* HOL4 data_to_wordProofScript.sml:283-285: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:283-285: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:287-289: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:287-289: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:291: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:291: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:348-351: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:348-351: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:353-365: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:353-365: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:367-389: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:367-389: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:391-741: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:391-741: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:743-751: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:743-751: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:753-832: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:753-832: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:834-843: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:834-843: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:845-868: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:845-868: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:870-907: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:870-907: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:909-932: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:909-932: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:934-970: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:934-970: a proof *)
   (* dataSem now has the up-front `ALL_DISTINCT q` guard (matching
      wordSem), so
      `res <> Rtype_error` forces `ALL_DISTINCT q`. *)
-(* HOL4 data_to_wordProofScript.sml:973-1152: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:973-1152: a proof *)
 
-(* HOL4 data_to_wordProofScript.sml:1154: ML code, not ported *)
+(* HOL4 data_to_wordProofScript.sml:1154: a proof *)
 
 let state_rel_ext_def = cake_define
   `state_rel_ext c l1 l2 s u <=>

@@ -55,7 +55,7 @@ let pull_ops_simp_def = cake_define_list
 
 (* pull_exp syntax *)
 
-(* HOL4 word_instProofScript.sml:341-346: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:341-346: a proof *)
 
 (* flatten_exp correctness *)
 
@@ -90,27 +90,27 @@ let binary_branch_exp_def = cake_define_wf
     with possibly more locals used
 *)
 
-(* HOL4 word_instProofScript.sml:751-767: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:751-767: a proof *)
 
-(* HOL4 word_instProofScript.sml:769-786: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:769-786: a proof *)
 
-(* HOL4 word_instProofScript.sml:788-878: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:788-878: a proof *)
 
-(* HOL4 word_instProofScript.sml:880-888: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:880-888: a proof *)
 
-(* HOL4 word_instProofScript.sml:890-900: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:890-900: a proof *)
 
-(* HOL4 word_instProofScript.sml:902-974: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:902-974: a proof *)
 
-(* HOL4 word_instProofScript.sml:976-982: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:976-982: a proof *)
 
-(* HOL4 word_instProofScript.sml:1006-1021: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:1006-1021: a proof *)
   (* ret=SOME: full call *)
-(* HOL4 word_instProofScript.sml:1023-1064: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:1023-1064: a proof *)
 
-(* HOL4 word_instProofScript.sml:1133-1138: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:1133-1138: a proof *)
 
-(* HOL4 word_instProofScript.sml:1140: ML code, not ported *)
+(* HOL4 word_instProofScript.sml:1140: a proof *)
 
 (* three_to_two_reg semantics *)
 

@@ -38,4 +38,4 @@ let pegsym_to_sym_def = cake_define
    PEG,
    and this in turn requires inductions *)
 
-(* HOL4 pegSoundScript.sml:479-482: ML code, not ported *)
+(* HOL4 pegSoundScript.sml:479-482: a proof *)

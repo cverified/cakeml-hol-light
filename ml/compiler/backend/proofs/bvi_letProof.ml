@@ -25,31 +25,31 @@ let env_rel_def = cake_define
         | (_1,_2,_3) -> F`;;
 hol4_overload "env_rel" "bvi_letProof_env_rel";;
 
-(* HOL4 bvi_letProofScript.sml:220-237: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:220-237: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:239-249: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:239-249: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:251-257: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:251-257: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:259-270: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:259-270: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:272-287: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:272-287: a proof *)
    (* the handler now post-processes its result (rejecting an escaping
       Ret);
       split that inner case (the Ret branch is impossible as res <> type
         error),
       then close each surviving handler outcome by the induction
         hypothesis *)
-(* HOL4 bvi_letProofScript.sml:291-297: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:291-297: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:299-307: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:299-307: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:309-320: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:309-320: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:322-330: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:322-330: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:332-346: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:332-346: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:348-387: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:348-387: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:389: ML code, not ported *)
+(* HOL4 bvi_letProofScript.sml:389: a proof *)

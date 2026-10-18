@@ -38,7 +38,7 @@ let ty_rel_def = cake_define
 
 (* HOL4 bvi_tailrecProofScript.sml:133-135: ML code, not ported *)
 
-(* HOL4 bvi_tailrecProofScript.sml:171-175: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:171-175: a proof *)
 
 let op_id_val_def = cake_define_list
   [`op_id_val bvi_tailrec_Plus = bvlSem_Number (&0)`;
@@ -126,38 +126,38 @@ let state_rel_def = cake_define
        s 0)))`;;
 hol4_overload "state_rel" "bvi_tailrecProof_state_rel";;
 
-(* HOL4 bvi_tailrecProofScript.sml:1349-1351: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1349-1351: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:1353-1379: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1353-1379: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:1381-1386: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1381-1386: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:1388-1403: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1388-1403: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:1405-1413: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1405-1413: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:1415-1466: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1415-1466: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:1468-1681: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1468-1681: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:1683-1857: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1683-1857: a proof *)
 (* HOL4 bvi_tailrecProofScript.sml:1858: code that the source has in
    a comment *)
 (* HOL4 bvi_tailrecProofScript.sml:1859: code that the source has in
    a comment *)
 (* HOL4 bvi_tailrecProofScript.sml:1860: code that the source has in
    a comment *)
-(* HOL4 bvi_tailrecProofScript.sml:1861-1868: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1861-1868: a proof *)
 (* HOL4 bvi_tailrecProofScript.sml:1869: code that the source has in
    a comment *)
-(* HOL4 bvi_tailrecProofScript.sml:1870-2050: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:1870-2050: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:2052-2132: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:2052-2132: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:2134-2332: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:2134-2332: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:2334-2342: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:2334-2342: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:2344-2439: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:2344-2439: a proof *)
 
-(* HOL4 bvi_tailrecProofScript.sml:2441: ML code, not ported *)
+(* HOL4 bvi_tailrecProofScript.sml:2441: a proof *)

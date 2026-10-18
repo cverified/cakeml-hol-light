@@ -440,7 +440,7 @@ let tick_before_def = cake_define
 (* HOL4 word_bignumProofScript.sml:1658-1659: ML code, not ported *)
 
 (* order: clock then array then reg_write *)
-(* HOL4 word_bignumProofScript.sml:1662-1684: ML code, not ported *)
+(* HOL4 word_bignumProofScript.sml:1662-1684: a proof *)
 
 (* HOL4 word_bignumProofScript.sml:1686-1690: the ML values that the
    definitions below antiquote *)

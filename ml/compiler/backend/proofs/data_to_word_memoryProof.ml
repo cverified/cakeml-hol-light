@@ -39,7 +39,7 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 data_to_word_memoryProofScript.sml:13-14: ML code, not ported *)
 
 (* TODO: move? *)
-(* HOL4 data_to_word_memoryProofScript.sml:21-22: ML code, not ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:21-22: a proof *)
 
 (* HOL4 data_to_word_memoryProofScript.sml:24: ML code, not ported *)
 (* HOL4 data_to_word_memoryProofScript.sml:28: the overload
@@ -516,8 +516,7 @@ let list_to_BlockReps_def = cake_define_list
               conf cons_tag 2))] ::
               list_to_BlockReps conf t (a + 3) l)`];;
 
-(* HOL4 data_to_word_memoryProofScript.sml:2388-2390: ML code, not
-   ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:2388-2390: a proof *)
 
 let bind_each_def = cake_define_list
   [`bind_each tf ts (k:num) i 0 = tf`;
@@ -589,11 +588,9 @@ let RefBlock_inv_def = cake_define
      no
    timestamp is consumed *)
 
-(* HOL4 data_to_word_memoryProofScript.sml:4680-4689: ML code, not
-   ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:4680-4689: a proof *)
 
-(* HOL4 data_to_word_memoryProofScript.sml:4704-4713: ML code, not
-   ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:4704-4713: a proof *)
 
 let heap_deref_def = cake_define
   `(heap_deref a heap =

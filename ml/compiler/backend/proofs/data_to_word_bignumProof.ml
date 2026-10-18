@@ -32,11 +32,11 @@ needs "lib/set_sep.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
-(* HOL4 data_to_word_bignumProofScript.sml:26-27: ML code, not ported *)
+(* HOL4 data_to_word_bignumProofScript.sml:26-27: a proof *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:29-30: ML code, not ported *)
 
-(* HOL4 data_to_word_bignumProofScript.sml:32-36: ML code, not ported *)
+(* HOL4 data_to_word_bignumProofScript.sml:32-36: a proof *)
 
 let get_iop_def = cake_define
   `get_iop (n:num) =

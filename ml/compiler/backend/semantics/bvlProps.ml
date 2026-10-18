@@ -19,9 +19,9 @@ needs "semantics/ast.ml";;
 
 (* HOL4 bvlPropsScript.sml:34-42: ML code, not ported *)
 
-(* HOL4 bvlPropsScript.sml:213-223: ML code, not ported *)
+(* HOL4 bvlPropsScript.sml:213-223: a proof *)
 
-(* HOL4 bvlPropsScript.sml:417: ML code, not ported *)
+(* HOL4 bvlPropsScript.sml:417: a proof *)
 
 let inc_clock_def = cake_define
   `bvlProps_inc_clock ck s = bvlSem_state_clock_fupd (K

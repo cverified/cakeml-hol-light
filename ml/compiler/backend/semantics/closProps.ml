@@ -328,17 +328,17 @@ let fv1_def = cake_define
 
 (* HOL4 closPropsScript.sml:590-597: ML code, not ported *)
 
-(* HOL4 closPropsScript.sml:599-604: ML code, not ported *)
+(* HOL4 closPropsScript.sml:599-604: a proof *)
 
 (* HOL4 closPropsScript.sml:679-686: ML code, not ported *)
 
-(* HOL4 closPropsScript.sml:698-708: ML code, not ported *)
+(* HOL4 closPropsScript.sml:698-708: a proof *)
 
 (* HOL4 closPropsScript.sml:728-745: ML code, not ported *)
 
-(* HOL4 closPropsScript.sml:747-823: ML code, not ported *)
+(* HOL4 closPropsScript.sml:747-823: a proof *)
 
-(* HOL4 closPropsScript.sml:931-934: ML code, not ported *)
+(* HOL4 closPropsScript.sml:931-934: a proof *)
 
 let is_closure_def = cake_define
   `is_closure x1 =
@@ -401,7 +401,7 @@ let check_closures_def = cake_define
 (* HOL4 closPropsScript.sml:1669-1671: the ML values that the
    definitions below antiquote *)
 
-(* HOL4 closPropsScript.sml:1673-1685: ML code, not ported *)
+(* HOL4 closPropsScript.sml:1673-1685: a proof *)
 
 (* HOL4 closPropsScript.sml:1737: ML code, not ported *)
 
@@ -649,7 +649,7 @@ let simple_compile_state_rel_def = cake_define
 (* HOL4 closPropsScript.sml:2728: ML code, not ported *)
   (* CASE_TAC restricted to a particular type. Works in the proof below,
      but needs more code from BasicProvers to be robust. *)
-(* HOL4 closPropsScript.sml:2731-2736: ML code, not ported *)
+(* HOL4 closPropsScript.sml:2731-2736: a proof *)
 
 (* after do_install evaluate uses the LAST element, and this helps *)
 (* FIXME move *)

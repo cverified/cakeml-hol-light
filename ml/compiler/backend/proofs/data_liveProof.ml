@@ -33,50 +33,50 @@ hol4_overload "state_rel" "data_liveProof_state_rel";;
 
 (* HOL4 data_liveProofScript.sml:53-54: ML code, not ported *)
 
-(* HOL4 data_liveProofScript.sml:212-214: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:212-214: a proof *)
 
-(* HOL4 data_liveProofScript.sml:216-220: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:216-220: a proof *)
 
-(* HOL4 data_liveProofScript.sml:222-289: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:222-289: a proof *)
 
-(* HOL4 data_liveProofScript.sml:291-295: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:291-295: a proof *)
 
-(* HOL4 data_liveProofScript.sml:297-305: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:297-305: a proof *)
 
-(* HOL4 data_liveProofScript.sml:307-315: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:307-315: a proof *)
 
-(* HOL4 data_liveProofScript.sml:317-322: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:317-322: a proof *)
 
-(* HOL4 data_liveProofScript.sml:324-348: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:324-348: a proof *)
 
-(* HOL4 data_liveProofScript.sml:350-372: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:350-372: a proof *)
 
-(* HOL4 data_liveProofScript.sml:374-378: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:374-378: a proof *)
 
-(* HOL4 data_liveProofScript.sml:380-456: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:380-456: a proof *)
 
-(* HOL4 data_liveProofScript.sml:458-472: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:458-472: a proof *)
 
-(* HOL4 data_liveProofScript.sml:474-488: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:474-488: a proof *)
 
-(* HOL4 data_liveProofScript.sml:490-492: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:490-492: a proof *)
 
-(* HOL4 data_liveProofScript.sml:494-538: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:494-538: a proof *)
 
-(* HOL4 data_liveProofScript.sml:540-593: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:540-593: a proof *)
 
-(* HOL4 data_liveProofScript.sml:595-616: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:595-616: a proof *)
 
-(* HOL4 data_liveProofScript.sml:618: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:618: a proof *)
   (* Call from here onwards *)
-(* HOL4 data_liveProofScript.sml:620-621: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:620-621: a proof *)
   (* Call with SOME ret *)
-(* HOL4 data_liveProofScript.sml:623-628: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:623-628: a proof *)
 
-(* HOL4 data_liveProofScript.sml:630-705: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:630-705: a proof *)
 
-(* HOL4 data_liveProofScript.sml:707-847: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:707-847: a proof *)
 
-(* HOL4 data_liveProofScript.sml:849-1002: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:849-1002: a proof *)
 
-(* HOL4 data_liveProofScript.sml:1004: ML code, not ported *)
+(* HOL4 data_liveProofScript.sml:1004: a proof *)

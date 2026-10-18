@@ -382,85 +382,85 @@ let data_inv_def = cake_define
    full-reset cases).  Consumed by the If case of comp_correct for the
    not-taken branch. *)
 
-(* HOL4 word_cseProofScript.sml:2935-2937: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:2935-2937: a proof *)
 
-(* HOL4 word_cseProofScript.sml:2939-3092: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:2939-3092: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3094-3121: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3094-3121: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3123-3162: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3123-3162: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3164-3166: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3164-3166: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3168-3171: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3168-3171: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3173-3180: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3173-3180: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3182-3190: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3182-3190: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3192-3258: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3192-3258: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3260-3289: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3260-3289: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3291-3293: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3291-3293: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3295-3297: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3295-3297: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3299-3301: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3299-3301: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3303: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3303: a proof *)
 
 (* proof of the cases *)
 
-(* HOL4 word_cseProofScript.sml:3343-3345: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3343-3345: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3347-3349: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3347-3349: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3351-3355: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3351-3355: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3357-3484: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3357-3484: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3486-3488: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3486-3488: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3490-3547: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3490-3547: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3549-3600: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3549-3600: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3602-3615: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3602-3615: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3617-3619: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3617-3619: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3621-3628: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3621-3628: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3630-3645: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3630-3645: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3647-3662: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3647-3662: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3664-3668: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3664-3668: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3670-3674: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3670-3674: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3676-3697: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3676-3697: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3699-3706: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3699-3706: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3708-3710: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3708-3710: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3712-3717: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3712-3717: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3719-3724: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3719-3724: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3726-3728: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3726-3728: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3730-3732: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3730-3732: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3734-3740: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3734-3740: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3742-3763: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3742-3763: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3765-3791: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3765-3791: a proof *)
 
-(* HOL4 word_cseProofScript.sml:3793: ML code, not ported *)
+(* HOL4 word_cseProofScript.sml:3793: a proof *)
 
 (* ---------------------------------------------------------------------
    ---

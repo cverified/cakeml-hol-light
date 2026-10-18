@@ -48,7 +48,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* HOL4 data_to_word_gcProofScript.sml:32-33: ML code, not ported *)
 
-(* HOL4 data_to_word_gcProofScript.sml:35-36: ML code, not ported *)
+(* HOL4 data_to_word_gcProofScript.sml:35-36: a proof *)
 
 (* -- *)
 
@@ -368,9 +368,9 @@ let cut_locals_def = cake_define
        LN) s)`;;
 
 (* HOL4 data_to_word_gcProofScript.sml:7721-7724: ML code, not ported *)
-(* HOL4 data_to_word_gcProofScript.sml:7887-7892: ML code, not ported *)
+(* HOL4 data_to_word_gcProofScript.sml:7887-7892: a proof *)
 
-(* HOL4 data_to_word_gcProofScript.sml:8030-8035: ML code, not ported *)
+(* HOL4 data_to_word_gcProofScript.sml:8030-8035: a proof *)
 
 (* HOL4 data_to_word_gcProofScript.sml:8045-8049: ML code, not ported *)
 

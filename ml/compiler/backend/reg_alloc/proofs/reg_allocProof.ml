@@ -161,9 +161,9 @@ let sp_inverts_def = cake_define
      sptree_lookup m f = SOME fm ==>
      sptree_lookup fm g = SOME m)`;;
 
-(* HOL4 reg_allocProofScript.sml:814-835: ML code, not ported *)
+(* HOL4 reg_allocProofScript.sml:814-835: a proof *)
 
-(* HOL4 reg_allocProofScript.sml:879-919: ML code, not ported *)
+(* HOL4 reg_allocProofScript.sml:879-919: a proof *)
 
 (* Properties of the graph manipulating functions
    All of these simultaneously prove success
@@ -233,7 +233,7 @@ let colouring_satisfactory_def = cake_define
 
 (* do_coalesce *)
 
-(* HOL4 reg_allocProofScript.sml:2364-2382: ML code, not ported *)
+(* HOL4 reg_allocProofScript.sml:2364-2382: a proof *)
 
 (* do freeze *)
 
@@ -243,7 +243,7 @@ let colouring_satisfactory_def = cake_define
 
 (* The top-most correctness theorem *)
 
-(* HOL4 reg_allocProofScript.sml:3455-3457: ML code, not ported *)
+(* HOL4 reg_allocProofScript.sml:3455-3457: a proof *)
 
 (* The top-most correctness theorem *)
 (* --- --- *)

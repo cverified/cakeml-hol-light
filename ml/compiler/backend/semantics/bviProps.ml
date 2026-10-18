@@ -16,7 +16,7 @@ needs "semantics/ast.ml";;
 
 (* HOL4 bviPropsScript.sml:103-108: ML code, not ported *)
 
-(* HOL4 bviPropsScript.sml:127-137: ML code, not ported *)
+(* HOL4 bviPropsScript.sml:127-137: a proof *)
 
 let inc_clock_def = cake_define
   `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) = state_clock_fupd

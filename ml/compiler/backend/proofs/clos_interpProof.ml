@@ -90,9 +90,9 @@ let interp_assum_def = cake_define
 
 (* HOL4 clos_interpProofScript.sml:177-179: ML code, not ported *)
 
-(* HOL4 clos_interpProofScript.sml:181-185: ML code, not ported *)
+(* HOL4 clos_interpProofScript.sml:181-185: a proof *)
 
-(* HOL4 clos_interpProofScript.sml:187-190: ML code, not ported *)
+(* HOL4 clos_interpProofScript.sml:187-190: a proof *)
 
 (* ---------------------------------------------------------------------
    ---- *

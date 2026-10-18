@@ -124,44 +124,44 @@ let initial_state'_def = cake_define
 (* HOL4 flat_to_closProofScript.sml:244-252: the ML values that the
    definitions below antiquote *)
 
-(* HOL4 flat_to_closProofScript.sml:300-302: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:300-302: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:304-323: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:304-323: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:325-330: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:325-330: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:332-338: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:332-338: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:347-371: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:347-371: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:373-392: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:373-392: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:408-428: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:408-428: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:430-435: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:430-435: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:487-498: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:487-498: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:500-512: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:500-512: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:514-517: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:514-517: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:536-554: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:536-554: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:556-558: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:556-558: a proof *)
 
 (* HOL4 flat_to_closProofScript.sml:634-643: the ML values that the
    definitions below antiquote *)
 
-(* HOL4 flat_to_closProofScript.sml:1778-1949: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:1778-1949: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:1951-1962: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:1951-1962: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:1964-1968: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:1964-1968: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:1970-1993: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:1970-1993: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:1995: ML code, not ported *)
+(* HOL4 flat_to_closProofScript.sml:1995: a proof *)
 
 let install_config_rel_def = cake_define
   `install_config_rel ic co cc <=>

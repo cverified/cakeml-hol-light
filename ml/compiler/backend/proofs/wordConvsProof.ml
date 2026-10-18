@@ -251,7 +251,7 @@ needs "compiler/backend/word_unreach.ml";;
 (*** copy_prop ***)
 
 (* may not prove goal fully *)
-(* HOL4 wordConvsProofScript.sml:1855-1871: ML code, not ported *)
+(* HOL4 wordConvsProofScript.sml:1855-1871: a proof *)
 
 (* trivial and tedious *)
 

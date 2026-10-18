@@ -212,4 +212,4 @@ let heap_filter_aux_def = cake_define_list
 let heap_filter_def = cake_define
   `heap_filter = heap_filter_aux 0`;;
 
-(* HOL4 gc_sharedScript.sml:706-712: ML code, not ported *)
+(* HOL4 gc_sharedScript.sml:706-712: a proof *)

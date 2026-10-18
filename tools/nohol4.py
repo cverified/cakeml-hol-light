@@ -65,6 +65,70 @@ def code_free(text):
   return ''.join(out)
 
 
+# what the lines that a pointer points at have to look like, by
+# what the pointer says is there
+EXPECT = [
+  ('the ML values', r'^\s*(val|fun|local)\b'),
+  ('a proof', r'^\s*(Resume|Finalise)\b|^\s*(>>|>-|\\\\)|'
+              r'\b(Cases_on|qexists_tac|qabbrev_tac|match_mp_tac|'
+              r'metis_tac|rw|fs|gvs|simp|rfs|strip_tac)\s*[\[(`]'),
+  # a pointer that says ML code may not point at a block that the
+  # port is supposed to have ported
+  ('ML code', r'^(?!\s*(Definition|Theorem|Datatype|Inductive|'
+              r'Triviality|Type|Overload)\b)\s*\S'),
+  ('code that the source has in a comment', r'^\s*\(\*'),
+  ('a comment with ML code after it', r'^\s*\(\*'),
+  ('the tactic that proves the termination',
+   r'(Termination|WF_REL_TAC|tDefine|measure)'),
+  ('the Termination', r'Termination'),
+  ('the overload', r'^\s*Overload\b'),
+  ('the type abbreviation', r'^\s*Type\b'),
+  ('the definition', r'^\s*Definition\b'),
+]
+
+AT = re.compile(r'\s*HOL4 (\S+\.sml):(\d+)(?:-(\d+))?:\s*(.*)', re.S)
+
+
+def pointers():
+  """check that every pointer of the port points at lines of the
+     HOL4 source that hold what it says they hold"""
+  import db as dbmod
+  src = {re.sub(r'^.*/', '', path): path
+         for thy, path, kind in dbmod.load_order()}
+  n = bad = 0
+  for root, _, fs in os.walk(ML):
+    for f in sorted(fs):
+      if not f.endswith('.ml'): continue
+      rel = os.path.relpath(os.path.join(root, f), ML)
+      text = open(os.path.join(root, f)).read()
+      for line, body in comments(text):
+        m = AT.match(body)
+        if not m: continue
+        n += 1
+        name, a, z, what = m.group(1), int(m.group(2)), m.group(3), \
+                           ' '.join(m.group(4).split())
+        z = int(z) if z else a
+        path = src.get(name)
+        if path is None:
+          print('%s:%d: %s is not a source of the port' % (rel, line, name))
+          bad += 1; continue
+        lines = open(path).read().split('\n')
+        if not 1 <= a <= z <= len(lines):
+          print('%s:%d: %s has no lines %d-%d' % (rel, line, name, a, z))
+          bad += 1; continue
+        body = '\n'.join(lines[a-1:z])
+        pat = next((p for k, p in EXPECT if what.startswith(k)), None)
+        if pat is None:
+          print('%s:%d: no test for %r' % (rel, line, what[:40]))
+          bad += 1; continue
+        if not re.search(pat, body, re.M):
+          print('%s:%d: %s:%d-%d is not %r' % (rel, line, name, a, z,
+                                               what[:40]))
+          bad += 1
+  print('%d pointers, %d that do not point at what they say' % (n, bad))
+  return bad
+
+
 def main():
   bad = 0
   files = 0
@@ -91,7 +155,7 @@ def main():
           print('%s:%d: a line of a HOL4 script: %r'
                 % (rel, i + 1, l.strip()[:40]))
   print('%d files, %d with HOL4 code in them' % (files, bad))
-  return bad
+  return bad + pointers()
 
 
 if __name__ == '__main__':

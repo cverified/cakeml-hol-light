@@ -213,7 +213,7 @@ let find_index_def = cake_define_list
    `find_index y (x :: xs) n = (if x = y then SOME n else
   find_index y xs (n + 1))`];;
 
-(* HOL4 miscScript.sml:1138-1146: ML code, not ported *)
+(* HOL4 miscScript.sml:1138-1146: a proof *)
 
 (* surely better with UNZIP rather than ZIP: i.e., UNZIP l1 = (a,b)...
    *)

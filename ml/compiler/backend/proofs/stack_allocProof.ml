@@ -31,11 +31,11 @@ let get_bits_def = cake_define
 
 (* HOL4 stack_allocProofScript.sml:264-266: ML code, not ported *)
 
-(* HOL4 stack_allocProofScript.sml:372-377: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:372-377: a proof *)
 
-(* HOL4 stack_allocProofScript.sml:379-384: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:379-384: a proof *)
 
-(* HOL4 stack_allocProofScript.sml:386-388: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:386-388: a proof *)
 
 (* gc_kind = Simple *)
 
@@ -74,7 +74,7 @@ let word_gc_move_bitmap_def = cake_define
             match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
-(* HOL4 stack_allocProofScript.sml:718-740: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:718-740: a proof *)
 
 (* HOL4 stack_allocProofScript.sml:742-744: the ML values that the
    definitions below antiquote *)
@@ -161,7 +161,7 @@ let word_gen_gc_partial_move_bitmap_def = cake_define
             match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
-(* HOL4 stack_allocProofScript.sml:2225-2247: ML code, not ported *)
+(* HOL4 stack_allocProofScript.sml:2225-2247: a proof *)
 
 (* HOL4 stack_allocProofScript.sml:2249-2251: the ML values that the
    definitions below antiquote *)

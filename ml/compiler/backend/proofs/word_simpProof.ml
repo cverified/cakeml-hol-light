@@ -73,15 +73,15 @@ let get_above_handler_def = cake_define
 
 (*TODO move*)
 
-(* HOL4 word_simpProofScript.sml:761-851: ML code, not ported *)
+(* HOL4 word_simpProofScript.sml:761-851: a proof *)
 
-(* HOL4 word_simpProofScript.sml:853-891: ML code, not ported *)
+(* HOL4 word_simpProofScript.sml:853-891: a proof *)
 
-(* HOL4 word_simpProofScript.sml:893: ML code, not ported *)
+(* HOL4 word_simpProofScript.sml:893: a proof *)
 
-(* HOL4 word_simpProofScript.sml:1149-1156: ML code, not ported *)
+(* HOL4 word_simpProofScript.sml:1149-1156: a proof *)
 
-(* HOL4 word_simpProofScript.sml:1158: ML code, not ported *)
+(* HOL4 word_simpProofScript.sml:1158: a proof *)
 
 (* the duplicate-if pass *)
 

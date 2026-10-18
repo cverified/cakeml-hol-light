@@ -213,37 +213,37 @@ let abort_def = cake_define
 hol4_overload "abort" "source_evalProof_abort";;
 
 (* case splits for evaluate proofs *)
-(* HOL4 source_evalProofScript.sml:931-936: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:931-936: a proof *)
 
 (* take a step of forward-consistency-type reasoning *)
 (* HOL4 source_evalProofScript.sml:939-941: ML code, not ported *)
 
 (* quantifier instantiation based on s_rel, v_rel etc *)
-(* HOL4 source_evalProofScript.sml:944-957: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:944-957: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1049-1224: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1049-1224: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1226-1256: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1226-1256: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1258-1266: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1258-1266: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1268-1280: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1268-1280: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1282-1295: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1282-1295: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1297-1309: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1297-1309: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1311-1326: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1311-1326: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1328-1340: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1328-1340: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1358-1366: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1358-1366: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1368-1373: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1368-1373: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1375-1383: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1375-1383: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1385: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1385: a proof *)
 
 (* HOL4 source_evalProofScript.sml:1387: the overload shift_seq,
    which the port expands *)
@@ -297,25 +297,25 @@ let is_record_def = cake_define
   eval_oracle_state_custom_do_eval
          s = do_eval_record ci | _17 -> F)`;;
 
-(* HOL4 source_evalProofScript.sml:1624-1626: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1624-1626: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1628-1630: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1628-1630: a proof *)
 
 (* HOL4 source_evalProofScript.sml:1632-1636: ML code, not ported *)
 
-(* HOL4 source_evalProofScript.sml:1638-1641: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1638-1641: a proof *)
 
 (* HOL4 source_evalProofScript.sml:1643: ML code, not ported *)
 
-(* HOL4 source_evalProofScript.sml:1702-1706: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1702-1706: a proof *)
     (* Eval *)
-(* HOL4 source_evalProofScript.sml:1708-1730: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1708-1730: a proof *)
     (* Opapp *)
-(* HOL4 source_evalProofScript.sml:1732-1748: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1732-1748: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1750-1755: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1750-1755: a proof *)
 
-(* HOL4 source_evalProofScript.sml:1757: ML code, not ported *)
+(* HOL4 source_evalProofScript.sml:1757: a proof *)
 
 (* Constructs the oracle from an evaluation by using the recorded
    events, padding with null events if necessary. *)

@@ -155,7 +155,7 @@ let prim_tids_def = cake_define
      EVERY (\x. x IN tids <=> contain') (Tlist_num :: Tbool_num ::
        prim_type_nums)`;;
 
-(* HOL4 inferPropsScript.sml:2902-2940: ML code, not ported *)
+(* HOL4 inferPropsScript.sml:2902-2940: a proof *)
 
 let remap_tenv_def = cake_define
   `remap_tenv f tenv =

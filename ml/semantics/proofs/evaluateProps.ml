@@ -65,7 +65,7 @@ let adj_clock_def = cake_define
   `adj_clock inc dec s = (semanticPrimitives_state_clock_fupd (K
   ((semanticPrimitives_state_clock s + inc) - dec)) s)`;;
 
-(* HOL4 evaluatePropsScript.sml:321-326: ML code, not ported *)
+(* HOL4 evaluatePropsScript.sml:321-326: a proof *)
 
 (* HOL4 evaluatePropsScript.sml:407-411: ML code, not ported *)
 

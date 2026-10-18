@@ -163,9 +163,9 @@ hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 
 (* semantics lemmas *)
 
-(* HOL4 bvl_to_bviProofScript.sml:680-694: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:680-694: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:696-707: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:696-707: a proof *)
 
 (* HOL4 bvl_to_bviProofScript.sml:727: ML code, not ported *)
 
@@ -178,7 +178,7 @@ hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 
 (* HOL4 bvl_to_bviProofScript.sml:1086-1087: ML code, not ported *)
 
-(* HOL4 bvl_to_bviProofScript.sml:1105-1136: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:1105-1136: a proof *)
 
 (* HOL4 bvl_to_bviProofScript.sml:1921-1923: ML code, not ported *)
 
@@ -198,34 +198,34 @@ let in_ns_def = cake_define
 (* HOL4 bvl_to_bviProofScript.sml:2184-2199: the ML values that the
    definitions below antiquote *)
 
-(* HOL4 bvl_to_bviProofScript.sml:2232-3504: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:2232-3504: a proof *)
     (* the ops reserved for bvi_tmc are the remaining ones compile_op
        does not
        leave alone; each is ruled out by bvlSem$do_app being Error on it
          *)
-(* HOL4 bvl_to_bviProofScript.sml:3507-3519: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3507-3519: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3521-3527: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3521-3527: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3529-3585: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3529-3585: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3587-3595: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3587-3595: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3597-3665: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3597-3665: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3667-3785: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3667-3785: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3787-3808: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3787-3808: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3810-3965: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3810-3965: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:3967-4026: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:3967-4026: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:4028-4054: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:4028-4054: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:4056-4171: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:4056-4171: a proof *)
 
-(* HOL4 bvl_to_bviProofScript.sml:4173: ML code, not ported *)
+(* HOL4 bvl_to_bviProofScript.sml:4173: a proof *)
 
 (* composed compiler correctness *)
 

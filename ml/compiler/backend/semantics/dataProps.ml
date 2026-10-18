@@ -69,7 +69,7 @@ let var_corr_def = cake_define
 
 (* HOL4 dataPropsScript.sml:263: code that the source has in a
    comment *)
-(* HOL4 dataPropsScript.sml:264-268: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:264-268: a proof *)
 
 (* HOL4 dataPropsScript.sml:270: code that the source has in a
    comment *)
@@ -88,13 +88,13 @@ let var_corr_def = cake_define
 
 (* HOL4 dataPropsScript.sml:484: code that the source has in a
    comment *)
-(* HOL4 dataPropsScript.sml:485-509: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:485-509: a proof *)
 
-(* HOL4 dataPropsScript.sml:663-676: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:663-676: a proof *)
 
-(* HOL4 dataPropsScript.sml:678-686: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:678-686: a proof *)
 
-(* HOL4 dataPropsScript.sml:688-691: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:688-691: a proof *)
 
 
 (* The field-swap (stack_max/safe_for_space/peak_heap_length) commutes
@@ -153,7 +153,7 @@ let zero_limits_def = cake_define
   `zero_limits = (mk_limits 0 0 0 ARB ARB ARB:limits)`;;
 
 
-(* HOL4 dataPropsScript.sml:2311-2314: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:2311-2314: a proof *)
 
 (* The limits-swap commutes through the narrow cut in evaluate(Assign).
    *)
@@ -168,7 +168,7 @@ let stack_frame_size_rel_def = cake_define
        spt = spt'
         | (_16,_17) -> F`;;
 
-(* HOL4 dataPropsScript.sml:2541-2545: ML code, not ported *)
+(* HOL4 dataPropsScript.sml:2541-2545: a proof *)
 
 (* The locals_size/stack/stack_frame_sizes-swap commutes through the
    narrow

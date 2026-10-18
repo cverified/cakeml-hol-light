@@ -24,6 +24,6 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* ---------- Soundness ---------- *)
 
-(* HOL4 infer_eSoundScript.sml:435-450: ML code, not ported *)
+(* HOL4 infer_eSoundScript.sml:435-450: a proof *)
 
-(* HOL4 infer_eSoundScript.sml:518-560: ML code, not ported *)
+(* HOL4 infer_eSoundScript.sml:518-560: a proof *)

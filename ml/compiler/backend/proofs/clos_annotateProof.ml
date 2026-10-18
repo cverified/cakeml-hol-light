@@ -126,7 +126,7 @@ hol4_overload "state_rel" "clos_annotateProof_state_rel";;
 
 (* HOL4 clos_annotateProofScript.sml:573-577: ML code, not ported *)
 
-(* HOL4 clos_annotateProofScript.sml:579-584: ML code, not ported *)
+(* HOL4 clos_annotateProofScript.sml:579-584: a proof *)
 
 (* more correctness properties *)
 

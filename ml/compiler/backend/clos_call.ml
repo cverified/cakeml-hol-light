@@ -128,7 +128,7 @@ let free_sing_def = cake_define_list_cheat CHEAT_TAC
          let (c2,l2) = free_list xs in
            (c1 :: c2,mk_Union l1 l2))`];;
 
-(* HOL4 clos_callScript.sml:142-150: ML code, not ported *)
+(* HOL4 clos_callScript.sml:142-150: a proof *)
 let closed_def = cake_define
   `clos_call_closed x = (\t. t = LN) (db_to_set (SND (clos_call_free
   [x])))`;;

@@ -441,9 +441,9 @@ let map_var_def = cake_define_list_try (fun () ->
 (*NB this lemma can be slightly simpler with
 EL (x + offset) stack' = EL (x) stack'*)
 
-(* HOL4 word_to_stackProofScript.sml:5349-5357: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:5349-5357: a proof *)
   (*get_var_set_var?*)
-(* HOL4 word_to_stackProofScript.sml:5359: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:5359: a proof *)
 
 (* Used in backendProof *)
 
@@ -453,59 +453,59 @@ EL (x + offset) stack' = EL (x) stack'*)
 (* HOL4 word_to_stackProofScript.sml:5754: ML code, not ported *)
 
 
-(* HOL4 word_to_stackProofScript.sml:5790-5796: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:5790-5796: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:5798-5853: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:5798-5853: a proof *)
 
 (* HOL4 word_to_stackProofScript.sml:6040-6051: code that the source
    has in a comment *)
 
-(* HOL4 word_to_stackProofScript.sml:6053-6117: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6053-6117: a proof *)
 
 (* HOL4 word_to_stackProofScript.sml:6119-6130: code that the source
    has in a comment *)
 
-(* HOL4 word_to_stackProofScript.sml:6315-6326: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6315-6326: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6328-6331: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6328-6331: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6333-6354: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6333-6354: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6356-6374: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6356-6374: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6376-6392: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6376-6392: a proof *)
   (*TODO remove by changing word_exp_def*)
-(* HOL4 word_to_stackProofScript.sml:6394: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6394: a proof *)
   (*TODO remove by changing get_store_def*)
-(* HOL4 word_to_stackProofScript.sml:6396-6403: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6396-6403: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6405-6408: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6405-6408: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6410-6420: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6410-6420: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6422-6427: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6422-6427: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6429-6492: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6429-6492: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6494-6579: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6494-6579: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6626-6741: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6626-6741: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6767-6773: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6767-6773: a proof *)
   (* prevent splitting *)
-(* HOL4 word_to_stackProofScript.sml:6775-6903: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6775-6903: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6905-6923: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6905-6923: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:6943-7070: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:6943-7070: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:7072-7096: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7072-7096: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:7098-7123: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7098-7123: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:7125-7164: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7125-7164: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:7528-7544: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7528-7544: a proof *)
 
 (* TODO: clean up *)
 (* HOL4 word_to_stackProofScript.sml:7554-7587: ML code, not ported *)
@@ -514,80 +514,80 @@ EL (x + offset) stack' = EL (x) stack'*)
 
 (* HOL4 word_to_stackProofScript.sml:7722: ML code, not ported *)
 
-(* HOL4 word_to_stackProofScript.sml:7767-7798: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7767-7798: a proof *)
     (* stack-overflow sub-case *)
-(* HOL4 word_to_stackProofScript.sml:7800-7828: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7800-7828: a proof *)
   (* non-stack-overflow: res_b = OPTION_MAP compile_result q, so IH's
      "else"
      branch gives us state_rel-like facts about r and t1_b per q. *)
-(* HOL4 word_to_stackProofScript.sml:7831-7832: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7831-7832: a proof *)
     (* cont_loop q: either q = NONE or q = SOME (Continue 0) *)
-(* HOL4 word_to_stackProofScript.sml:7834-7835: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7834-7835: a proof *)
       (* TimeOut: s1 = flush_state T r, res = SOME TimeOut *)
-(* HOL4 word_to_stackProofScript.sml:7837-7846: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7837-7846: a proof *)
     (* recursive case: clock ≠ 0, recurse with dec_clock *)
-(* HOL4 word_to_stackProofScript.sml:7848-7908: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7848-7908: a proof *)
     (* passthrough: s1 = r, stack exit_loop matches *)
-(* HOL4 word_to_stackProofScript.sml:7910-7916: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7910-7916: a proof *)
   (* Break 0: s1 = cut_state (exit_names,LN) r *)
-(* HOL4 word_to_stackProofScript.sml:7918-7921: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7918-7921: a proof *)
 
 
-(* HOL4 word_to_stackProofScript.sml:7924-7933: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7924-7933: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:7935-8010: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:7935-8010: a proof *)
     (*preconditions for negation rules*)
-(* HOL4 word_to_stackProofScript.sml:8012-8164: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8012-8164: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:8166-8202: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8166-8202: a proof *)
     (* Two subgoals *)
-(* HOL4 word_to_stackProofScript.sml:8204-8247: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8204-8247: a proof *)
     (*TODO shouldn't be unfolding here*)
-(* HOL4 word_to_stackProofScript.sml:8249-8251: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8249-8251: a proof *)
     (*Get through the eval of stack_move*)
-(* HOL4 word_to_stackProofScript.sml:8253-8335: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8253-8335: a proof *)
       (*TODO this is very slow*)
-(* HOL4 word_to_stackProofScript.sml:8337-8449: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8337-8449: a proof *)
     (*This looks hacky but it works*)
-(* HOL4 word_to_stackProofScript.sml:8451-8615: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8451-8615: a proof *)
     (*hit stack limit during function call*)
-(* HOL4 word_to_stackProofScript.sml:8617-8665: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8617-8665: a proof *)
     (*2 subgoals*)
-(* HOL4 word_to_stackProofScript.sml:8667-8823: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8667-8823: a proof *)
       (* GC cutset *)
-(* HOL4 word_to_stackProofScript.sml:8825-8901: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8825-8901: a proof *)
       (* NON-GC cutset *)
-(* HOL4 word_to_stackProofScript.sml:8903-9010: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:8903-9010: a proof *)
       (*because it can't be the top frame of word_state, which is NONE*)
-(* HOL4 word_to_stackProofScript.sml:9012-9027: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9012-9027: a proof *)
   (*Space to store handler case*)
-(* HOL4 word_to_stackProofScript.sml:9029-9070: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9029-9070: a proof *)
   (* Needs to go in wordSem?*)
-(* HOL4 word_to_stackProofScript.sml:9072-9104: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9072-9104: a proof *)
   (*Space to store args*)
-(* HOL4 word_to_stackProofScript.sml:9106-9169: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9106-9169: a proof *)
     (*TODO this is very slow*)
-(* HOL4 word_to_stackProofScript.sml:9171-9232: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9171-9232: a proof *)
   (*space for the function local var*)
-(* HOL4 word_to_stackProofScript.sml:9234-9279: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9234-9279: a proof *)
   (*This looks hacky but it works*)
-(* HOL4 word_to_stackProofScript.sml:9281-9444: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9281-9444: a proof *)
   (*hit stack limit during function call*)
-(* HOL4 word_to_stackProofScript.sml:9446-9494: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9446-9494: a proof *)
   (*2 subgoals*)
-(* HOL4 word_to_stackProofScript.sml:9496-9674: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9496-9674: a proof *)
     (*GC cutset*)
-(* HOL4 word_to_stackProofScript.sml:9676-9751: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9676-9751: a proof *)
     (*NON-GC cutset*)
-(* HOL4 word_to_stackProofScript.sml:9753-9921: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9753-9921: a proof *)
       (*GC cutset *)
-(* HOL4 word_to_stackProofScript.sml:9923-10047: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:9923-10047: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:10049-10054: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:10049-10054: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:10056-10061: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:10056-10061: a proof *)
 
-(* HOL4 word_to_stackProofScript.sml:10063: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:10063: a proof *)
 
 (* match original comp_correct shape: n, sprog, bs', n' are free *)
 (* HOL4 word_to_stackProofScript.sml:10066-10072: ML code, not ported *)
@@ -658,7 +658,7 @@ hol4_overload "make_init" "word_to_stackProof_make_init";;
 (* Gluing all the conventions together *)
 
 (* this is the only property needed of the wRegs  *)
-(* HOL4 word_to_stackProofScript.sml:11698-11703: ML code, not ported *)
+(* HOL4 word_to_stackProofScript.sml:11698-11703: a proof *)
 
 (* no_install is preserved *)
 

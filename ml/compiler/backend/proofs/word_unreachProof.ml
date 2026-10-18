@@ -25,6 +25,6 @@ let copy_vars_def = cake_define_list
         (word_unreachProof_copy_vars rest from to)`];;
 hol4_overload "copy_vars" "word_unreachProof_copy_vars";;
 
-(* HOL4 word_unreachProofScript.sml:351-364: ML code, not ported *)
+(* HOL4 word_unreachProofScript.sml:351-364: a proof *)
 
-(* HOL4 word_unreachProofScript.sml:366: ML code, not ported *)
+(* HOL4 word_unreachProofScript.sml:366: a proof *)

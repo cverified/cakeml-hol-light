@@ -111,39 +111,39 @@ hol4_overload "in_state_rel" "bvi_inlineProof_in_state_rel";;
      a
    [Ret]-raise only, which the side condition excludes. *)
 
-(* HOL4 bvi_inlineProofScript.sml:877-907: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:877-907: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:910-912: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:910-912: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:915-936: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:915-936: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:939-955: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:939-955: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:958-972: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:958-972: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:975-989: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:975-989: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:992-1011: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:992-1011: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:1014-1028: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1014-1028: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:1031-1044: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1031-1044: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:1047-1137: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1047-1137: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1139-1198: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1139-1198: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:1201: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1201: a proof *)
 
 let clean_prog_def = cake_define
   `clean_prog prog =
@@ -171,30 +171,30 @@ let remove_state_rel_def = cake_define
        compile
      s = bvi_inlineProof_remove_ticks_cc (compile t)`;;
 
-(* HOL4 bvi_inlineProofScript.sml:1362-1366: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1362-1366: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1368-1394: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1368-1394: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1396-1418: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1396-1418: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1420-1432: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1420-1432: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1434-1443: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1434-1443: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1445-1523: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1445-1523: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1525-1552: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1525-1552: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1554-1580: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1554-1580: a proof *)
 
-(* HOL4 bvi_inlineProofScript.sml:1582-1655: ML code, not ported *)
-
-
-(* HOL4 bvi_inlineProofScript.sml:1658-1671: ML code, not ported *)
-
-(* HOL4 bvi_inlineProofScript.sml:1673-1677: ML code, not ported *)
-
-(* HOL4 bvi_inlineProofScript.sml:1679-1715: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1582-1655: a proof *)
 
 
-(* HOL4 bvi_inlineProofScript.sml:1718: ML code, not ported *)
+(* HOL4 bvi_inlineProofScript.sml:1658-1671: a proof *)
+
+(* HOL4 bvi_inlineProofScript.sml:1673-1677: a proof *)
+
+(* HOL4 bvi_inlineProofScript.sml:1679-1715: a proof *)
+
+
+(* HOL4 bvi_inlineProofScript.sml:1718: a proof *)

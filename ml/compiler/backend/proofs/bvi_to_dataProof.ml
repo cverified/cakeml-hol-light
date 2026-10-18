@@ -156,39 +156,39 @@ let data_to_bvi_result_def = cake_define
    time stamps taken by the dataLang version are invisible to the
      projection *)
 
-(* HOL4 bvi_to_dataProofScript.sml:527-530: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:527-530: a proof *)
 
 (* HOL4 bvi_to_dataProofScript.sml:817: ML code, not ported *)
 
-(* HOL4 bvi_to_dataProofScript.sml:878-883: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:878-883: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:885-917: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:885-917: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:919-937: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:919-937: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:939-1066: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:939-1066: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:1068-1101: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:1068-1101: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:1103-1124: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:1103-1124: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:1126-1138: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:1126-1138: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:1140-1243: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:1140-1243: a proof *)
    (* single-cut: do_app reads args from full t2.locals (pre-cut);
       recover
       get_vars over t2.locals from the get_vars over the cut env1 *)
-(* HOL4 bvi_to_dataProofScript.sml:1246-1839: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:1246-1839: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:1841-1857: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:1841-1857: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:1859-2089: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:1859-2089: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:2091-2613: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:2091-2613: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:2615-2890: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:2615-2890: a proof *)
 
-(* HOL4 bvi_to_dataProofScript.sml:2892: ML code, not ported *)
+(* HOL4 bvi_to_dataProofScript.sml:2892: a proof *)
 
 (* HOL4 bvi_to_dataProofScript.sml:2894-2897: ML code, not ported *)
 

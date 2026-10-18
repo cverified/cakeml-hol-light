@@ -17,7 +17,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* properties of renumber_code_locs *)
 
-(* HOL4 clos_numberProofScript.sml:20-36: ML code, not ported *)
+(* HOL4 clos_numberProofScript.sml:20-36: a proof *)
 
 (* value relation *)
 

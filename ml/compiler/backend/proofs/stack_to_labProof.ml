@@ -196,7 +196,7 @@ let halt_view_def = cake_define
           outcome))
         | _13 -> NONE`;;
 
-(* HOL4 stack_to_labProofScript.sml:966-1017: ML code, not ported *)
+(* HOL4 stack_to_labProofScript.sml:966-1017: a proof *)
 
 (* Proving that stack_to_lab generates labels_ok *)
 (* HOL4 stack_to_labProofScript.sml:1020: ML code, not ported *)

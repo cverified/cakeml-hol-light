@@ -16,9 +16,9 @@ needs "semantics/proofs/typeSound.ml";;
 needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semantics.ml";;
 
-(* HOL4 semanticsPropsScript.sml:76-80: ML code, not ported *)
+(* HOL4 semanticsPropsScript.sml:76-80: a proof *)
 
-(* HOL4 semanticsPropsScript.sml:82: ML code, not ported *)
+(* HOL4 semanticsPropsScript.sml:82: a proof *)
 
 let state_invariant_def = cake_define
   `state_invariant st <=>

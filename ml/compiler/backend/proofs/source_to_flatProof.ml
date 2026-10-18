@@ -554,78 +554,78 @@ hol4_overload "abort" "source_to_flatProof_abort";;
 
 (* HOL4 source_to_flatProofScript.sml:3869-3870: ML code, not ported *)
 
-(* HOL4 source_to_flatProofScript.sml:3872-3897: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3872-3897: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:3899-3913: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3899-3913: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:3915-3935: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3915-3935: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:3937-3946: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3937-3946: a proof *)
     (* tuple *)
-(* HOL4 source_to_flatProofScript.sml:3948-3953: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3948-3953: a proof *)
   (* named constructor *)
-(* HOL4 source_to_flatProofScript.sml:3955-3968: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3955-3968: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:3970-4023: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:3970-4023: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4025-4038: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4025-4038: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4145-4153: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4145-4153: a proof *)
     (* empty array creation *)
-(* HOL4 source_to_flatProofScript.sml:4155-4187: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4155-4187: a proof *)
     (* Rerr *)
-(* HOL4 source_to_flatProofScript.sml:4189-4282: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4189-4282: a proof *)
     (* Opapp *)
-(* HOL4 source_to_flatProofScript.sml:4284-4294: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4284-4294: a proof *)
       (* out of clock *)
-(* HOL4 source_to_flatProofScript.sml:4296-4490: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4296-4490: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4492-4527: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4492-4527: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4529-4550: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4529-4550: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4552-4575: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4552-4575: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4577-4585: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4577-4585: a proof *)
     (* anonymous bind *)
-(* HOL4 source_to_flatProofScript.sml:4587-4623: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4587-4623: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4625-4660: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4625-4660: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4662-4699: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4662-4699: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4701: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4701: a proof *)
   (* no decs *)
-(* HOL4 source_to_flatProofScript.sml:4703-4706: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4703-4706: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4751: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4751: a proof *)
   (* sequence of decs *)
-(* HOL4 source_to_flatProofScript.sml:4753-4800: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4753-4800: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4802-4888: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4802-4888: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4890-4929: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4890-4929: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4931-4966: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4931-4966: a proof *)
 (* HOL4 source_to_flatProofScript.sml:4967: code that the source has
    in a comment *)
-(* HOL4 source_to_flatProofScript.sml:4968-4991: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4968-4991: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4993-4997: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4993-4997: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:4999-5004: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:4999-5004: a proof *)
     (* incorrect eval state type *)
-(* HOL4 source_to_flatProofScript.sml:5006-5101: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:5006-5101: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:5103-5163: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:5103-5163: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:5165-5189: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:5165-5189: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:5191-5216: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:5191-5216: a proof *)
   (* result case *)
-(* HOL4 source_to_flatProofScript.sml:5218-5229: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:5218-5229: a proof *)
 
-(* HOL4 source_to_flatProofScript.sml:5231: ML code, not ported *)
+(* HOL4 source_to_flatProofScript.sml:5231: a proof *)
 
 let init_eval_state_ok_def = cake_define
   `init_eval_state_ok x1 =

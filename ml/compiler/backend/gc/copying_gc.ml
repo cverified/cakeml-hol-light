@@ -111,17 +111,17 @@ hol4_overload "gc_inv" "copying_gc_gc_inv";;
 
 (* Invariant maintained *)
 
-(* HOL4 copying_gcScript.sml:126-132: ML code, not ported *)
+(* HOL4 copying_gcScript.sml:126-132: a proof *)
 
 (* HOL4 copying_gcScript.sml:247: the ML values that the definitions
    below antiquote *)
 
-(* HOL4 copying_gcScript.sml:411-417: ML code, not ported *)
+(* HOL4 copying_gcScript.sml:411-417: a proof *)
 
 (* Lemmas about ok and a *)
 
 (* HOL4 copying_gcScript.sml:598-602: ML code, not ported *)
 
-(* HOL4 copying_gcScript.sml:604-617: ML code, not ported *)
+(* HOL4 copying_gcScript.sml:604-617: a proof *)
 
 (* HOL4 copying_gcScript.sml:619-620: ML code, not ported *)

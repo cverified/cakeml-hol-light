@@ -80,10 +80,10 @@ hol4_overload "state_rel" "lab_filterProof_state_rel";;
 
 (*May need strengthening*)
 
-(* HOL4 lab_filterProofScript.sml:556-563: ML code, not ported *)
+(* HOL4 lab_filterProofScript.sml:556-563: a proof *)
 
-(* HOL4 lab_filterProofScript.sml:565-576: ML code, not ported *)
+(* HOL4 lab_filterProofScript.sml:565-576: a proof *)
 
-(* HOL4 lab_filterProofScript.sml:594-602: ML code, not ported *)
+(* HOL4 lab_filterProofScript.sml:594-602: a proof *)
 
-(* HOL4 lab_filterProofScript.sml:604-612: ML code, not ported *)
+(* HOL4 lab_filterProofScript.sml:604-612: a proof *)

@@ -50,9 +50,9 @@ let remove_ticks_co_def = cake_define
      (I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x]))))`;;
 hol4_overload "remove_ticks_co" "bvl_inlineProof_remove_ticks_co";;
 
-(* HOL4 bvl_inlineProofScript.sml:329-331: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:329-331: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:563-566: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:563-566: a proof *)
 
 (* correctness of tick_inline *)
 
@@ -123,17 +123,17 @@ let in_state_rel_def = cake_define
                  [exp2]))`;;
 hol4_overload "in_state_rel" "bvl_inlineProof_in_state_rel";;
 
-(* HOL4 bvl_inlineProofScript.sml:641-649: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:641-649: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:663-669: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:663-669: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:671-674: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:671-674: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:676-685: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:676-685: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:737-742: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:737-742: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:751-758: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:751-758: a proof *)
 
 let in_co_def = cake_define
   `bvl_inlineProof_in_co limit' co = (\n.
@@ -143,17 +143,17 @@ let in_co_def = cake_define
           (cfg,progs)))`;;
 hol4_overload "in_co" "bvl_inlineProof_in_co";;
 
-(* HOL4 bvl_inlineProofScript.sml:1077-1088: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1077-1088: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1090-1142: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1090-1142: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1144-1158: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1144-1158: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1160-1186: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1160-1186: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1188-1202: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1188-1202: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1204-1413: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1204-1413: a proof *)
 
 (* let_op *)
 
@@ -176,47 +176,47 @@ let let_state_rel_def = cake_define
 
 (* HOL4 bvl_inlineProofScript.sml:1434-1435: ML code, not ported *)
 
-(* HOL4 bvl_inlineProofScript.sml:1444-1447: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1444-1447: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1449-1466: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1449-1466: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1468-1474: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1468-1474: a proof *)
 
 let let_op_cc_def = cake_define
   `let_op_cc q4 l4 cc =
       (\cfg prog. cc cfg (MAP (I ## let_opt q4 l4) prog))`;;
 
-(* HOL4 bvl_inlineProofScript.sml:1670-1869: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1670-1869: a proof *)
 
 (* combined theorems *)
 
-(* HOL4 bvl_inlineProofScript.sml:1873-1876: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1873-1876: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1878-1881: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1878-1881: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1883-1889: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1883-1889: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1891-1897: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1891-1897: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1899-1901: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1899-1901: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1903-1909: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1903-1909: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1911-1920: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1911-1920: a proof *)
 
 let let_opt_remove_def = cake_define
   `let_opt_remove b l (arity,prog) =
      let_opt b l (arity,HD (remove_ticks [prog]))`;;
 
-(* HOL4 bvl_inlineProofScript.sml:1927-1931: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1927-1931: a proof *)
 
 (* HOL4 bvl_inlineProofScript.sml:1939-1942: ML code, not ported *)
 
 (* HOL4 bvl_inlineProofScript.sml:1944-1947: ML code, not ported *)
 
-(* HOL4 bvl_inlineProofScript.sml:1949-1959: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1949-1959: a proof *)
 
-(* HOL4 bvl_inlineProofScript.sml:1961-1964: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1961-1964: a proof *)
 
 let bvl_inline_cc_def = cake_define
   `bvl_inline_cc limit' q4 l4 cc =
@@ -229,4 +229,4 @@ let bvl_inline_co_def = cake_define
            (bvl_inlineProof_remove_ticks_co (bvl_inlineProof_in_co
              limit' co x)))`;;
 
-(* HOL4 bvl_inlineProofScript.sml:1977-1982: ML code, not ported *)
+(* HOL4 bvl_inlineProofScript.sml:1977-1982: a proof *)

@@ -185,59 +185,59 @@ let locals_rel_def = cake_define
   do not affect evaluation
   TODO: theorem statement needs to be changed *)
 
-(* HOL4 wordPropsScript.sml:3622-3627: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3622-3627: a proof *)
 
-(* HOL4 wordPropsScript.sml:3629-3642: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3629-3642: a proof *)
 
-(* HOL4 wordPropsScript.sml:3644-3650: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3644-3650: a proof *)
 
-(* HOL4 wordPropsScript.sml:3652-3666: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3652-3666: a proof *)
 
-(* HOL4 wordPropsScript.sml:3668-3697: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3668-3697: a proof *)
 
-(* HOL4 wordPropsScript.sml:3699-3709: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3699-3709: a proof *)
 
-(* HOL4 wordPropsScript.sml:3711-3716: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3711-3716: a proof *)
 
-(* HOL4 wordPropsScript.sml:3718-3737: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3718-3737: a proof *)
 
-(* HOL4 wordPropsScript.sml:3739-3748: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3739-3748: a proof *)
 
-(* HOL4 wordPropsScript.sml:3750-3758: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3750-3758: a proof *)
 
-(* HOL4 wordPropsScript.sml:3760-3766: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3760-3766: a proof *)
 
-(* HOL4 wordPropsScript.sml:3768-3773: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3768-3773: a proof *)
 
-(* HOL4 wordPropsScript.sml:3775-3783: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3775-3783: a proof *)
 
-(* HOL4 wordPropsScript.sml:3785-3791: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3785-3791: a proof *)
 
-(* HOL4 wordPropsScript.sml:3793-3806: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3793-3806: a proof *)
 
-(* HOL4 wordPropsScript.sml:3808-3810: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3808-3810: a proof *)
 
-(* HOL4 wordPropsScript.sml:3812-3814: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3812-3814: a proof *)
 
-(* HOL4 wordPropsScript.sml:3816-3820: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3816-3820: a proof *)
 
-(* HOL4 wordPropsScript.sml:3822-3826: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3822-3826: a proof *)
 
-(* HOL4 wordPropsScript.sml:3828-3831: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3828-3831: a proof *)
 
-(* HOL4 wordPropsScript.sml:3833-3838: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3833-3838: a proof *)
 
-(* HOL4 wordPropsScript.sml:3840-3844: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3840-3844: a proof *)
 
-(* HOL4 wordPropsScript.sml:3846-3849: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3846-3849: a proof *)
 
-(* HOL4 wordPropsScript.sml:3851-3853: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3851-3853: a proof *)
 
-(* HOL4 wordPropsScript.sml:3855-3859: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3855-3859: a proof *)
 
-(* HOL4 wordPropsScript.sml:3861-3865: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3861-3865: a proof *)
 
-(* HOL4 wordPropsScript.sml:3867: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:3867: a proof *)
 
 let gc_fun_ok_def = cake_define
   `gc_fun_ok (f:('a word_loc) list#('a word->'a word_loc)#('a
@@ -278,6 +278,6 @@ let no_mt_code_def = cake_define
 (* HOL4 wordPropsScript.sml:4792-4795: the overload PERM_STACK, which
    the port expands *)
 
-(* HOL4 wordPropsScript.sml:5146-5166: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:5146-5166: a proof *)
 
-(* HOL4 wordPropsScript.sml:5168: ML code, not ported *)
+(* HOL4 wordPropsScript.sml:5168: a proof *)

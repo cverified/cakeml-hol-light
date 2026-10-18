@@ -21,6 +21,6 @@ let compile_state_def = cake_define
   (state_clock_fupd (K (state_clock s + clk))
      s))))`;;
 
-(* HOL4 word_removeProofScript.sml:401-428: ML code, not ported *)
+(* HOL4 word_removeProofScript.sml:401-428: a proof *)
 
-(* HOL4 word_removeProofScript.sml:430: ML code, not ported *)
+(* HOL4 word_removeProofScript.sml:430: a proof *)

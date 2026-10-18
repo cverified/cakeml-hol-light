@@ -306,17 +306,17 @@ let state_rel_def = cake_define
          clos_to_bvlProof_code_installed aux2 (state_code t)))`;;
 hol4_overload "state_rel" "clos_to_bvlProof_state_rel";;
 
-(* HOL4 clos_to_bvlProofScript.sml:1175-1193: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1175-1193: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1195-1201: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1195-1201: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1217-1232: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1217-1232: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1250-1266: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1250-1266: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1304-1323: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1304-1323: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1325-1331: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1325-1331: a proof *)
 
 (* semantic functions respect relation *)
 
@@ -340,7 +340,7 @@ let eq_res_def = cake_define
 
 (* compiler correctness *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1874-1887: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:1874-1887: a proof *)
 
 let num_remaining_args_def = cake_define
   `num_remaining_args x1 =
@@ -374,7 +374,7 @@ let get_cl_env_def = cake_define
         | (Recclosure loc args env fns i) -> SOME env
         | _9 -> NONE`;;
 
-(* HOL4 clos_to_bvlProofScript.sml:2209-2240: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2209-2240: a proof *)
 
 (* HOL4 clos_to_bvlProofScript.sml:2277: the ML values that the
    definitions below antiquote *)
@@ -421,18 +421,18 @@ let dest_closure'_def = cake_define
                  SOME (Partial_app (closSem_Recclosure loc (args
                    ++ arg_env) clo_env fns i))) | _10 -> NONE)`;;
 
-(* HOL4 clos_to_bvlProofScript.sml:2420-2431: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2420-2431: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:2444-2456: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2444-2456: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:2458-2480: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2458-2480: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:2668-2690: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2668-2690: a proof *)
 (* HOL4 clos_to_bvlProofScript.sml:2691: code that the source has in
    a comment *)
-(* HOL4 clos_to_bvlProofScript.sml:2692-2765: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2692-2765: a proof *)
 
-(* HOL4 clos_to_bvlProofScript.sml:2788-2812: ML code, not ported *)
+(* HOL4 clos_to_bvlProofScript.sml:2788-2812: a proof *)
 
 (* HOL4 clos_to_bvlProofScript.sml:2831: the ML values that the
    definitions below antiquote *)

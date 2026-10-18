@@ -212,7 +212,7 @@ let insert_each'_def = cake_define_list
 
 (* HOL4 clos_callProofScript.sml:965: ML code, not ported *)
 
-(* HOL4 clos_callProofScript.sml:1102-1114: ML code, not ported *)
+(* HOL4 clos_callProofScript.sml:1102-1114: a proof *)
 
 (* properties of value relation *)
 

@@ -134,15 +134,15 @@ hol4_overload "state_rel" "stack_removeProof_state_rel";;
 
 (* init code *)
 
-(* HOL4 stack_removeProofScript.sml:2617-2622: ML code, not ported *)
+(* HOL4 stack_removeProofScript.sml:2617-2622: a proof *)
 
-(* HOL4 stack_removeProofScript.sml:2624-2629: ML code, not ported *)
+(* HOL4 stack_removeProofScript.sml:2624-2629: a proof *)
 
 let mem_val_def = cake_define_list
   [`mem_val (regs':(num,'a word_loc)fmap) (INL w) = wordLang_Word w`;
    `mem_val (regs':(num,'a word_loc)fmap) (INR n) = FAPPLY regs' n`];;
 
-(* HOL4 stack_removeProofScript.sml:2723-2725: ML code, not ported *)
+(* HOL4 stack_removeProofScript.sml:2723-2725: a proof *)
 
 let read_mem_def = cake_define_list
   [`stack_removeProof_read_mem a m 0 = []`;
