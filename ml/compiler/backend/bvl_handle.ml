@@ -17,7 +17,6 @@ needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "lib/indexedLists.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 

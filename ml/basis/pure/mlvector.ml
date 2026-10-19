@@ -2,7 +2,7 @@
 (*  mlvector: ported from HOL4's
     basis/pure/mlvectorScript.sml
     A definition theory, with 26 definitions and 29 theorems.
-    Needed by 8 files of the port.  *)
+    Needed by bvi_tailrecProof.ml, bvi_tmcProof.ml and export.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -15,7 +15,6 @@ needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 
 cake_hide ["Equal"; "Greater"; "Less"];;
 

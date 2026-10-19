@@ -9,14 +9,11 @@
   The formal semantics of stackLang
 *)
 
-needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/data_live.ml";;
-needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "compiler/inference/infer.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
@@ -29,7 +26,6 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* for word_loc and word_cmp *) *)
 
 

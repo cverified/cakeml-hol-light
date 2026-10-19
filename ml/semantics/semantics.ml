@@ -9,13 +9,9 @@
   The top-level semantics of CakeML programs.
 *)
 
-needs "basis/pure/mlvector.ml";;
-needs "lib/errorMonad.ml";;
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/gram.ml";;

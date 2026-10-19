@@ -13,7 +13,6 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;

@@ -2,7 +2,7 @@
 (*  clos_known: ported from HOL4's
     compiler/backend/clos_knownScript.sml
     A definition theory, with 29 definitions, 4 datatypes and 12
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -420,7 +420,7 @@ let isGlobal_pmatch = cake_theorem "isGlobal_pmatch"
 let gO_destApx_def = cake_define
   `gO_destApx x1 =
         match x1 with
-          clos_known_Int i -> gO_Int i
+          (Int i:val_approx) -> gO_Int i
         | (clos_known_Tuple tag args) -> (if NULL args then
           gO_NullTuple tag else gO_None)
         | _19 -> gO_None`;;

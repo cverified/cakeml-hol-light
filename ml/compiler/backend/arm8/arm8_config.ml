@@ -11,10 +11,8 @@
 
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
-needs "lib/balanced_map.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: arm8_target *)
 
 let arm8_names_def = cake_define

@@ -16,19 +16,14 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
-needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/errorMonad.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* bitmaps_length stores the current length of the bitmaps *)
 let word_to_stack_config_FIELDS = define_record "word_to_stack_config"

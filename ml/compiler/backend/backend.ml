@@ -2,7 +2,7 @@
 (*  backend: ported from HOL4's
     compiler/backend/backendScript.sml
     A definition theory, with 34 definitions, 2 datatypes and 15
-    theorems.  Needed by 11 files of the port.  *)
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*

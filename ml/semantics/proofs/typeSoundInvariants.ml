@@ -11,11 +11,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "lib/peg.ml";;
-needs "misc/misc.ml";;
-needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;

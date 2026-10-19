@@ -13,11 +13,8 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/peg.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
-needs "lib/term.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["inst"];;

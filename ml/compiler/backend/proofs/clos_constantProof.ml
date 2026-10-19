@@ -2,8 +2,7 @@
 (*  clos_constantProof: ported from HOL4's
     compiler/backend/proofs/clos_constantProofScript.sml
     A proof theory, with 13 definitions and 14 theorems.  Needed by
-    clos_to_bvlProof.ml, lab_to_targetProof.ml and
-    source_to_flatProof.ml.  *)
+    clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

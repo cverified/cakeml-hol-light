@@ -11,12 +11,8 @@
 
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
-needs "compiler/encoders/asm/asm.ml";;
-needs "lib/balanced_map.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: mips_target *)
 
 let mips_names_def = cake_define

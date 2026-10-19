@@ -22,7 +22,6 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/peg.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;

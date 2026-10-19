@@ -62,8 +62,16 @@ def main():
       continue
     # the port writes a comment that stands inside a block as the
     # comment of a term of HOL Light (// and to the end of the
-    # line), so one of several lines is several of those
-    flat = ' '.join(re.sub(r'(?m)^\s*(`?)//', r'\1', port).split())
+    # line), so one of several lines is several of those; the one
+    # of a datatype stands in an OCaml string, where a quote and a
+    # backslash of it are escaped (lexer_fun's symbol)
+    lines = []
+    for l in port.split('\n'):
+      m = re.match(r'\s*(`?)//(.*)$', l)
+      if m:
+        l = m.group(1) + re.sub(r'\\(["\\])', r'\1', m.group(2))
+      lines.append(l)
+    flat = ' '.join('\n'.join(lines).split())
     inport = set()
     for m in re.finditer(r'\(\*.*?\*\)', port, re.S):
       inport.add(body(m.group(0)))

@@ -11,20 +11,15 @@
   This pass is to run immediately after the SSA-like renaming.
 *)
 
-needs "basis/pure/mllist.ml";;
-needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
-needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: words bool *)
 
 

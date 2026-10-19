@@ -2,12 +2,10 @@
 (*  balanced_map: ported from HOL4's
     examples/data-structures/balanced_bst/balanced_mapScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 14 files of the port.  *)
+    that CakeML needs.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/comparison.ml";;
-needs "lib/errorMonad.ml";;
-needs "lib/peg.ml";;
 needs "lib/sorting.ml";;
 needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: option pair string arithmetic

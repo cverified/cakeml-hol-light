@@ -2,7 +2,7 @@
 (*  reg_alloc: ported from HOL4's
     compiler/backend/reg_alloc/reg_allocScript.sml
     A definition theory, with 88 definitions, 5 datatypes and 6
-    theorems.  Needed by 14 files of the port.  *)
+    theorems.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -10,10 +10,6 @@
 *)
 
 needs "basis/pure/mllist.ml";;
-needs "compiler/backend/dataLang.ml";;
-needs "lib/bitstring.ml";;
-needs "lib/peg.ml";;
-needs "lib/pegexec.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;

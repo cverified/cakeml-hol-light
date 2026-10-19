@@ -2,7 +2,7 @@
 (*  word_bignum: ported from HOL4's
     compiler/backend/word_bignumScript.sml
     A definition theory, with 17 definitions, 2 datatypes and 2
-    theorems.  Needed by 19 files of the port.  *)
+    theorems.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*

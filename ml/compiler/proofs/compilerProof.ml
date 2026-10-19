@@ -11,7 +11,6 @@
 *)
 
 needs "basis/pure/mlsexp.ml";;
-needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/proofs/backendProof.ml";;
 needs "compiler/backend/proofs/bvi_letProof.ml";;
@@ -29,7 +28,6 @@ needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/proofs/pegComplete.ml";;
 needs "compiler/parsing/proofs/pegSound.ml";;
 needs "lib/peg.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;

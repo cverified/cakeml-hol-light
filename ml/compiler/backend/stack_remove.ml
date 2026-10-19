@@ -2,8 +2,8 @@
 (*  stack_remove: ported from HOL4's
     compiler/backend/stack_removeScript.sml
     A definition theory, with 27 definitions and 1 theorem.  Needed
-    by backendProof.ml, backend_passes.ml, data_to_word_gcProof.ml,
-    stack_removeProof.ml, stack_to_lab.ml and stack_to_labProof.ml.  *)
+    by backendProof.ml, backend_passes.ml, stack_removeProof.ml,
+    stack_to_lab.ml and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -13,17 +13,12 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvi_tailrec.ml";;
 needs "compiler/backend/stackLang.ml";;
-needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
-needs "lib/peg.ml";;
-needs "lib/regexp_compiler.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 cake_hide ["dummy"; "gc"; "gen_gc"];;
 (* HOL4 ancestors outside the port: (* for bytes_in_word *) *)

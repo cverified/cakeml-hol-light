@@ -55,9 +55,7 @@ needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
-needs "compiler/backend/data_space.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;

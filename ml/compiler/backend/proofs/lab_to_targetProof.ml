@@ -9,13 +9,9 @@
   Correctness proof for lab_to_target
 *)
 
-needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
 needs "compiler/backend/lab_to_target.ml";;
-needs "compiler/backend/pattern_matching/pattern_common.ml";;
-needs "compiler/backend/proofs/clos_constantProof.ml";;
 needs "compiler/backend/proofs/lab_filterProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -26,25 +22,19 @@ needs "compiler/backend/semantics/targetProps.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
-needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
-needs "compiler/inference/infer.ml";;
 needs "lib/alignment.ml";;
-needs "lib/balanced_map.ml";;
 needs "lib/byte.ml";;
-needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide ["contain"; "invariant"; "not"];;
 

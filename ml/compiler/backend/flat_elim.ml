@@ -14,15 +14,11 @@
   Removes unreachable globals from the code.
 *)
 
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flatLang.ml";;
-needs "lib/peg.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (**************************** ANALYSIS FUNCTIONS *****************************)
 

@@ -10,10 +10,7 @@
   succeeds.
 *)
 
-needs "basis/pure/mlvector.ml";;
 needs "compiler/inference/inferProps.ml";;
-needs "lib/bitstring.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;

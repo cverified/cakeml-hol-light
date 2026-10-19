@@ -12,7 +12,6 @@
 
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
-needs "lib/regexp_compiler.ml";;
 needs "misc/misc.ml";;
 
 cake_hide_consts

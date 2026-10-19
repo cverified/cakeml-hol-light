@@ -3,7 +3,7 @@
     basis/pure/mlsexpScript.sml
     A definition theory, with 25 definitions, 4 datatypes and 25
     theorems.  Needed by compiler.ml, compilerProof.ml,
-    displayLang.ml, presLang.ml and stack_to_labProof.ml.  *)
+    displayLang.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -12,14 +12,9 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/clos_call.ml";;
-needs "compiler/backend/data_space.ml";;
-needs "lib/bitstring.ml";;
-needs "lib/errorMonad.ml";;
 needs "lib/peg.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (*--------------------------------------------------------------*
    Definition of s-expression

@@ -2,7 +2,7 @@
 (*  data_to_word: ported from HOL4's
     compiler/backend/data_to_wordScript.sml
     A definition theory, with 201 definitions, 3 datatypes and 40
-    theorems.  Needed by 22 files of the port.  *)
+    theorems.  Needed by 21 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -17,7 +17,6 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
@@ -26,19 +25,11 @@ needs "compiler/backend/word_to_word.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
-needs "lib/errorMonad.ml";;
-needs "lib/machine_ieee.ml";;
 needs "lib/multiword.ml";;
-needs "lib/peg.ml";;
-needs "lib/pegexec.ml";;
-needs "lib/regexp_compiler.ml";;
-needs "lib/simpleSexp.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
-needs "semantics/semanticPrimitives.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let gc_kind_INDUCT,gc_kind_RECURSION = define_datatype
   "gc_kind = \

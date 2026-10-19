@@ -11,11 +11,7 @@
 
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
-needs "compiler/backend/word_bignum.ml";;
-needs "lib/balanced_map.ml";;
-needs "lib/errorMonad.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: riscv_target *)
 

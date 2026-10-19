@@ -11,14 +11,12 @@
 
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_rawcall.ml";;
-needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;

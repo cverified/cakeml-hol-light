@@ -12,8 +12,6 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_call.ml";;
-needs "compiler/backend/data_space.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 

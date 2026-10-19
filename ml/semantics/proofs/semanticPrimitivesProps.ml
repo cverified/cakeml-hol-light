@@ -556,19 +556,19 @@ let ctors_of_dec_def = cake_define
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let FV_def = cake_define_list_cheat CHEAT_TAC
-  [`FV (ast_Raise e) = FV e`;
-   `FV (ast_Handle e pes) = FV e UNION FV_pes pes`;
-   `FV (ast_Lit _21) = {}`;
-   `FV (ast_Con _23 ls) = FV_list ls`;
-   `FV (ast_Var id') = {id'}`;
-   `FV (ast_Fun x e) = FV e DIFF {Short x}`;
-   `FV (ast_App _25 es) = FV_list es`;
+  [`FV (ast_Raise e:ast_exp) = FV e`;
+   `FV (ast_Handle e pes:ast_exp) = FV e UNION FV_pes pes`;
+   `FV (ast_Lit _21:ast_exp) = {}`;
+   `FV (ast_Con _23 ls:ast_exp) = FV_list ls`;
+   `FV (ast_Var id':ast_exp) = {id'}`;
+   `FV (ast_Fun x e:ast_exp) = FV e DIFF {Short x}`;
+   `FV (ast_App _25 es:ast_exp) = FV_list es`;
    `FV (ast_Log _26 e1 e2) = FV e1 UNION FV e2`;
-   `FV (ast_If e1 e2 e3) = FV e1 UNION FV e2 UNION FV e3`;
-   `FV (ast_Mat e pes) = FV e UNION FV_pes pes`;
-   `FV (ast_Let xo e b) = FV e UNION (FV b DIFF (match xo with NONE
-  -> {} | SOME x -> {Short x}))`;
-   `FV (ast_Letrec defs b) = (FV_defs defs UNION FV b) DIFF
+   `FV (ast_If e1 e2 e3:ast_exp) = FV e1 UNION FV e2 UNION FV e3`;
+   `FV (ast_Mat e pes:ast_exp) = FV e UNION FV_pes pes`;
+   `FV (ast_Let xo e b:ast_exp) = FV e UNION (FV b DIFF (match xo
+  with NONE -> {} | SOME x -> {Short x}))`;
+   `FV (ast_Letrec defs b:ast_exp) = (FV_defs defs UNION FV b) DIFF
   set_of_list (MAP (Short o FST) defs)`;
    `FV (ast_Tannot e t) = FV e`;
    `FV (ast_Lannot e l) = FV e`;

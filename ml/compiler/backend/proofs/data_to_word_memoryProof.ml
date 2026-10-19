@@ -36,7 +36,6 @@ needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/multiword.ml";;
-needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;

@@ -2,7 +2,7 @@
 (*  wordLang: ported from HOL4's
     compiler/backend/wordLangScript.sml
     A definition theory, with 15 definitions, 3 datatypes and 3
-    theorems.  Needed by 43 files of the port.  *)
+    theorems.  Needed by 41 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -14,7 +14,6 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;

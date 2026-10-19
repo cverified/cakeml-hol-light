@@ -48,7 +48,6 @@
 
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 let extract_def = cake_define

@@ -21,15 +21,10 @@ needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/multiword.ml";;
-needs "lib/peg.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let memcpy_code_def = cake_define
   `memcpy_code =

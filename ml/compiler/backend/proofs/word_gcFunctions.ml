@@ -10,7 +10,6 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/proofs/word_simpProof.ml";;
@@ -20,7 +19,6 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
-needs "lib/errorMonad.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 

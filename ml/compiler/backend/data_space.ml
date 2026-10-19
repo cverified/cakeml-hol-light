@@ -2,7 +2,8 @@
 (*  data_space: ported from HOL4's
     compiler/backend/data_spaceScript.sml
     A definition theory, with 6 definitions and 1 theorem.  Needed
-    by 17 files of the port.  *)
+    by bvi_to_data.ml, dataProps.ml, dataSem.ml, data_spaceProof.ml,
+    data_to_word_memoryProof.ml and export.ml.  *)
 (* ======================================================== *)
 
 (*

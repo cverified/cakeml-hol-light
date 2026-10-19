@@ -16,7 +16,6 @@
 needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_exh.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;

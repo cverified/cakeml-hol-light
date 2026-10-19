@@ -2,7 +2,7 @@
 (*  ast: ported from HOL4's
     semantics/astScript.sml
     A definition theory, with 6 definitions, 16 datatypes and no
-    theorems.  Needed by 158 files of the port.  *)
+    theorems.  Needed by 154 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -323,43 +323,42 @@ hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
 let every_exp_def = cake_define_list
-  [`every_exp p (ast_Raise e) <=>
-                 p ((ast_Raise e:'s ast_exp)) /\ every_exp p e`;
-   `every_exp p (ast_Handle e pes) <=>
-                 p ((ast_Handle e pes:'s ast_exp)) /\ every_exp p
-                   e /\ EVERY (\(pat,e). every_exp p e) pes`;
+  [`every_exp p (ast_Raise e:ast_exp) <=>
+                 p ((ast_Raise e:ast_exp)) /\ every_exp p e`;
+   `every_exp p (ast_Handle e pes:ast_exp) <=>
+                 p ((ast_Handle e pes:ast_exp)) /\ every_exp p e
+                   /\ EVERY (\(pat,e). every_exp p e) pes`;
    `every_exp p (ast_Lit l) <=>
                  p (ast_Lit l)`;
-   `every_exp p (ast_Con cn es) <=>
-                 p ((ast_Con cn es:'s ast_exp)) /\ EVERY
-                   (every_exp p) es`;
-   `every_exp p (ast_Var v) <=>
-                 p ((ast_Var v:'s ast_exp))`;
-   `every_exp p (ast_Fun x e) <=>
-                 p ((ast_Fun x e:'s ast_exp)) /\ every_exp p e`;
-   `every_exp p (ast_App op es) <=>
-                 p ((ast_App op es:'s ast_exp)) /\ EVERY
-                   (every_exp p) es`;
+   `every_exp p (ast_Con cn es:ast_exp) <=>
+                 p ((ast_Con cn es:ast_exp)) /\ EVERY (every_exp
+                   p) es`;
+   `every_exp p (ast_Var v:ast_exp) <=>
+                 p ((ast_Var v:ast_exp))`;
+   `every_exp p (ast_Fun x e:ast_exp) <=>
+                 p ((ast_Fun x e:ast_exp)) /\ every_exp p e`;
+   `every_exp p (ast_App op es:ast_exp) <=>
+                 p ((ast_App op es:ast_exp)) /\ EVERY (every_exp
+                   p) es`;
    `every_exp p (ast_Log lop e1 e2) <=>
                  p (ast_Log lop e1 e2) /\ every_exp p e1 /\
                    every_exp p e2`;
-   `every_exp p (ast_If e1 e2 e3) <=>
-                 p ((ast_If e1 e2 e3:'s ast_exp)) /\ every_exp p
-                   e1 /\ every_exp p e2 /\ every_exp p e3`;
-   `every_exp p (ast_Mat e pes) <=>
-                 p ((ast_Mat e pes:'s ast_exp)) /\ every_exp p e
-                   /\ EVERY (\(pat,e). every_exp p e) pes`;
-   `every_exp p (ast_Let x e1 e2) <=>
-                 p ((ast_Let x e1 e2:'s ast_exp)) /\ every_exp p
-                   e1 /\ every_exp p e2`;
+   `every_exp p (ast_If e1 e2 e3:ast_exp) <=>
+                 p ((ast_If e1 e2 e3:ast_exp)) /\ every_exp p e1
+                   /\ every_exp p e2 /\ every_exp p e3`;
+   `every_exp p (ast_Mat e pes:ast_exp) <=>
+                 p ((ast_Mat e pes:ast_exp)) /\ every_exp p e /\
+                   EVERY (\(pat,e). every_exp p e) pes`;
+   `every_exp p (ast_Let x e1 e2:ast_exp) <=>
+                 p ((ast_Let x e1 e2:ast_exp)) /\ every_exp p e1
+                   /\ every_exp p e2`;
    `every_exp p (ast_Tannot e a) <=>
                  p (ast_Tannot e a) /\ every_exp p e`;
    `every_exp p (ast_Lannot e a) <=>
                  p (ast_Lannot e a) /\ every_exp p e`;
-   `every_exp p (ast_Letrec funs e) <=>
-                 p ((ast_Letrec funs e:'s ast_exp)) /\
-                   every_exp p e /\ EVERY (\(n,v,e). every_exp p e)
-                   funs`];;
+   `every_exp p (ast_Letrec funs e:ast_exp) <=>
+                 p ((ast_Letrec funs e:ast_exp)) /\ every_exp p
+                   e /\ EVERY (\(n,v,e). every_exp p e) funs`];;
 
 let seqs_def = cake_define_list
   [`ast_Seqs [] = ast_Con NONE []`;

@@ -11,12 +11,8 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/data_space.ml";;
-needs "compiler/backend/labLang.ml";;
-needs "compiler/inference/infer.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
-needs "lib/peg.ml";;
 needs "semantics/tokens.ml";;
 (* HOL4 ancestors outside the port: string list *)
 
@@ -31,7 +27,7 @@ needs "semantics/tokens.ml";;
 let lexer_fun_symbol_INDUCT,lexer_fun_symbol_RECURSION = define_datatype
   "lexer_fun_symbol = StringS (string) | CharS (char) | NumberS (int) \
    | WordS (num) | LongS (string list) (string) \
-   // ["Foo";"Bar"] "<" is Foo.Bar.<\n\
+   // [\"Foo\";\"Bar\"] \"<\" is Foo.Bar.<\n\
    | FFIS (string) | OtherS (string) | ErrorS";;
 
 (* helper functions *)

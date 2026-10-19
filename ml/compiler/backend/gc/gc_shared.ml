@@ -2,14 +2,13 @@
 (*  gc_shared: ported from HOL4's
     compiler/backend/gc/gc_sharedScript.sml
     A definition theory, with 29 definitions, 3 datatypes and 53
-    theorems.  Needed by 11 files of the port.  *)
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
   Types, functions and lemmas that are shared between GC definitions
 *)
 
-needs "basis/pure/mlvector.ml";;
 needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: finite_map words *)
 

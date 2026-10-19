@@ -12,9 +12,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/data_space.ml";;
-needs "compiler/backend/labLang.ml";;
-needs "compiler/inference/infer.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "misc/misc.ml";;

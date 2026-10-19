@@ -2,7 +2,7 @@
 (*  panLang: ported from HOL4's
     pancake/panLangScript.sml
     A definition theory, with 24 definitions, 10 datatypes and 2
-    theorems.  Needed by 7 files of the port.  *)
+    theorems.  Needed by compiler.ml, evaluateProps.ml and infer.ml.  *)
 (* ======================================================== *)
 
 (*

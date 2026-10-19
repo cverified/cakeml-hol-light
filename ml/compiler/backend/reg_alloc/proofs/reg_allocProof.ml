@@ -11,11 +11,9 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "lib/bitstring.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
-needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide_consts

@@ -27,7 +27,6 @@ needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;

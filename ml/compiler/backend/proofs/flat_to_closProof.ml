@@ -21,7 +21,6 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;

@@ -2,7 +2,7 @@
 (*  semanticPrimitives: ported from HOL4's
     semantics/semanticPrimitivesScript.sml
     A definition theory, with 101 definitions, 15 datatypes and no
-    theorems.  Needed by 79 files of the port.  *)
+    theorems.  Needed by 74 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -12,10 +12,7 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/wordLang.ml";;
 needs "lib/binary_ieee.ml";;
-needs "lib/bitstring.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/machine_ieee.ml";;
@@ -276,7 +273,7 @@ let do_con_check_def = cake_define
 let one_con_check_def = cake_define
   `one_con_check envc x2 =
       match x2 with
-        ast_Con cn es -> do_con_check envc cn (LENGTH es)
+        (ast_Con cn es:ast_exp) -> do_con_check envc cn (LENGTH es)
       | _11 -> T`;;
 
 let build_conv_def = cake_define

@@ -10,12 +10,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/labLang.ml";;
-needs "compiler/backend/wordLang.ml";;
 needs "lib/comparison.ml";;
-needs "lib/errorMonad.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -505,7 +500,7 @@ let build_ctor_tenv_def = cake_define
 let is_value_def = cake_define
   `is_value x1 =
         match x1 with
-          ast_Lit _18 -> T
+          (ast_Lit _18:ast_exp) -> T
         | (ast_Con _19 es) -> (EVERY is_value es)
         | (ast_Var _20) -> T
         | (ast_Fun _21 _22) -> T

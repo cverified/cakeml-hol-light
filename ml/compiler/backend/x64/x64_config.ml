@@ -12,7 +12,6 @@
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: x64_target *)
 

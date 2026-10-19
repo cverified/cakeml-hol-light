@@ -21,6 +21,10 @@ def clause_heads(phrase):
      has a quotation for each of them)"""
   out = set()
   for q in re.findall(r'`([^`]*)`', phrase, re.S):
+    # a comment of the source that stands inside the quotation is
+    # no clause of the definition (HOL Light reads // to the end
+    # of the line as a comment)
+    q = re.sub(r'(?m)//.*$', '', q)
     cl = re.split(r'/\\', q)[0].strip()
     while cl.startswith('('): cl = cl[1:].lstrip()
     cl = re.sub(r'^!\s*[^.]*\.\s*', '', cl)

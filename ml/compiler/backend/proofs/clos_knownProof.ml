@@ -1877,7 +1877,8 @@ let val_approx_every_Fn_SOME_def = cake_define_wf
   `MEASURE val_approx_size`
   `val_approx_every_Fn_SOME x1 =
         match x1 with
-          clos_known_Tuple _6 vs -> EVERY val_approx_every_Fn_SOME vs
+          (clos_known_Tuple _6 vs:val_approx) -> EVERY
+            val_approx_every_Fn_SOME vs
         | (clos_known_Clos _7 _8 b _9) -> every_Fn_SOME [b]
         | _10 -> T`;;
 
@@ -1935,7 +1936,7 @@ let val_approx_every_Fn_vs_NONE_def = cake_define_wf
   `MEASURE val_approx_size`
   `val_approx_every_Fn_vs_NONE x1 =
         match x1 with
-          clos_known_Tuple _12 vs -> EVERY
+          (clos_known_Tuple _12 vs:val_approx) -> EVERY
             val_approx_every_Fn_vs_NONE vs
         | (clos_known_Clos _13 _14 b _15) -> every_Fn_vs_NONE [b]
         | _16 -> T`;;

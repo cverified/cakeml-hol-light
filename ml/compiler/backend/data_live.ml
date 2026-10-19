@@ -14,9 +14,7 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;

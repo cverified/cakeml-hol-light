@@ -11,7 +11,6 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/export.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -30,7 +29,6 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide ["C"; "gen_gc"; "num_stubs"; "shift"];;
 

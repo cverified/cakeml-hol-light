@@ -11,13 +11,9 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/clos_call.ml";;
-needs "compiler/backend/data_space.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "compiler/inference/infer.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
@@ -32,7 +28,6 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: finite_map (* for call_FFI *) (*
    for build_lprefix_lub *) (* for FP *) (* for word_add_carry *) *)
 

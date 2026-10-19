@@ -14,7 +14,6 @@ needs "compiler/inference/inferProps.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/proofs/envRel.ml";;
 needs "compiler/inference/unify.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;

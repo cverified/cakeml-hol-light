@@ -9,7 +9,6 @@
   Correctness proof for stack_to_lab
 *)
 
-needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_jump.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
@@ -47,7 +46,6 @@ needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
-needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "lib/toto.ml";;

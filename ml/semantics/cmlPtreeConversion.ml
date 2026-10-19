@@ -489,8 +489,8 @@ let isConstructor_def = cake_define
 let EtoPat_def = cake_define
   `EtoPat x1 =
         match x1 with
-          ast_Con x args -> (if NULL args then SOME (ast_Pcon x [])
-            else NONE)
+          (ast_Con x args:ast_exp) -> (if NULL args then SOME
+            (ast_Pcon x []) else NONE)
         | (ast_Var (Short n)) -> SOME (ast_Pvar n)
         | (ast_Var (Long str n)) -> SOME (ast_Pcon (SOME (Long str
           n)) [])
@@ -695,7 +695,7 @@ let eseq_encode_def = cake_define
 let dest_Conk_def = cake_define
   `dest_Conk x1 k v =
         match x1 with
-          ast_Con x y -> k x y
+          (ast_Con x y:ast_exp) -> k x y
         | _72 -> v`;;
 
 let destFFIop_def = cake_define

@@ -12,7 +12,6 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_simp.ml";;
@@ -23,7 +22,6 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/compiler.ml";;
-needs "lib/bitstring.ml";;
 needs "lib/comparison.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
@@ -37,7 +35,6 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* TODO: immoral, shouldn't
    depend on *) *)
 

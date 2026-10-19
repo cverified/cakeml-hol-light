@@ -2,7 +2,8 @@
 (*  clos_call: ported from HOL4's
     compiler/backend/clos_callScript.sml
     A definition theory, with 12 definitions and 16 theorems.
-    Needed by 10 files of the port.  *)
+    Needed by backendProof.ml, clos_callProof.ml, clos_to_bvl.ml and
+    clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -16,7 +17,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 (* the first pass assumes the termination:

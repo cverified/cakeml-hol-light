@@ -15,14 +15,10 @@
 
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* Number of bytes per FFI *)
 let ffi_offset_def = cake_define

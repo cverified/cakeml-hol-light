@@ -53,7 +53,6 @@ needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/source_to_flat.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_alloc.ml";;
-needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/stack_to_lab.ml";;
 needs "compiler/backend/wordLang.ml";;

@@ -20,15 +20,9 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/bitstring.ml";;
-needs "lib/errorMonad.ml";;
-needs "lib/mergesort.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide ["inst"];;

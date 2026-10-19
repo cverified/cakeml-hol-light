@@ -3,7 +3,7 @@
     compiler/backend/bvi_tailrecScript.sml
     A definition theory, with 39 definitions, 2 datatypes and 35
     theorems.  Needed by bvi_tailrecProof.ml, bvl_to_bvi.ml,
-    bvl_to_bviProof.ml, stack_remove.ml and word_bignum.ml.  *)
+    bvl_to_bviProof.ml and word_bignum.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -13,11 +13,8 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
-needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "lib/comparison.ml";;
-needs "lib/simpleSexp.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;

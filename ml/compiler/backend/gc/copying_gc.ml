@@ -11,7 +11,6 @@
 
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "lib/integer_word.ml";;
-needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: words *)
 
 (* The GC is a copying collector which moves elements *)

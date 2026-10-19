@@ -2,7 +2,7 @@
 (*  closLang: ported from HOL4's
     compiler/backend/closLangScript.sml
     A definition theory, with 4 definitions, 9 datatypes and 1
-    theorem.  Needed by 76 files of the port.  *)
+    theorem.  Needed by 72 files of the port.  *)
 (* ======================================================== *)
 
 (*

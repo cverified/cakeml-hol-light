@@ -12,10 +12,6 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "lib/balanced_map.ml";;
-needs "lib/errorMonad.ml";;
-needs "lib/peg.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: integer *)
 

@@ -10,11 +10,9 @@
 *)
 
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: arithmetic integer words *)
 
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: (* for delete *) *)
 
 let opw_INDUCT,opw_RECURSION = define_datatype

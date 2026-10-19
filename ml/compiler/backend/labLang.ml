@@ -2,7 +2,7 @@
 (*  labLang: ported from HOL4's
     compiler/backend/labLangScript.sml
     A definition theory, with 2 definitions, 5 datatypes and no
-    theorems.  Needed by 16 files of the port.  *)
+    theorems.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*

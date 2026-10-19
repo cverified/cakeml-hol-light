@@ -10,13 +10,10 @@
   Relating inference and type system environments.
 *)
 
-needs "basis/pure/mlvector.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/inference/inferProps.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
-needs "lib/peg.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
