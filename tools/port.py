@@ -285,6 +285,14 @@ class Porter:
         # own body (stack_to_lab overloads Asm with
         # \a. Asm (Asmi a), whose Asm is labLang's)
         old = self.ctx.overloads.pop(nm, None)
+        # the accessor of a field in the body is written out: a
+        # statement that is read with the overloads of the field
+        # names taken away would read the name as its own variable
+        # (labSem's read_reg is \r s. s.regs r, and
+        # stack_to_labProof's compile_jump_correct has a variable
+        # regs).  Where the body of one overload reads a field of
+        # two records in one statement, that is one record too few
+        # (PENDING.md: lab_to_targetProof's word_cmp_lemma)
         self.ctx.qualfields = self.ovl_thy.get(nm) or ''
         try: self.ctx.overloads[nm] = self.in_thy(
                  self.ovl_thy.get(nm), lambda: self.term(txt))

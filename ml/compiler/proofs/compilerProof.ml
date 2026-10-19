@@ -203,11 +203,32 @@ let compile_correct_safe_for_space =
              machine_sem mc ffi ms = behaviours))`)
   CHEAT_TAC;;
 
-(* HOL4 compilerProofScript.sml:264-279: a theorem that HOL4 states
-   as the value of an ML expression: compile_correct *)
-(* HOL4 compilerProofScript.sml:280-281: a comment with ML code after
-   it, which the port does not have *)
-(* HOL4 compilerProofScript.sml:282-289: a proof *)
+let compilerProof_compile_correct = cake_theorem "compile_correct"
+  (fun () ->
+    `!(ffi:'ffi ffi_state) prelude input (cc:'a compiler_config) mc
+  data_sp cbspace.
+         config_ok cc mc ==>
+         (match FST (compiler_compile cc prelude input) with
+           M_failure (ParseError e) -> semantics_init ffi prelude input
+           = CannotParse | M_failure (TypeError e) -> semantics_init ffi
+           prelude input = IllTyped | M_failure AssembleError -> T |
+           M_failure (ConfigError e) -> T | M_success (code,data,c) ->
+           (?behaviours.
+             (semantics_init ffi prelude input = Execute
+               behaviours) /\
+             (!ms.
+               installed code cbspace data data_sp (ffi_names
+                 (backend_config_lab_conf c))
+                 (heap_regs (stack_to_lab_config_reg_names
+                   (backend_config_stack_conf
+                   (compiler_config_backend_config cc)))) mc
+                   (lab_to_target_config_shmem_extra
+                   (backend_config_lab_conf c)) ms ==>
+               machine_sem mc ffi ms SUBSET
+                 extend_with_resource_limit behaviours)))`)
+  CHEAT_TAC;;
+(* see the compile_correct_safe_for_space version above
+   for the one without the ⊆ and extend_with_resource_limit *)
 
 let type_config_ok = cake_theorem "type_config_ok"
   (fun () ->

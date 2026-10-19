@@ -2465,4 +2465,3 @@ pegComplete	line 428 is 76 characters
 pegComplete	line 433 is 75 characters
 pegComplete	line 434 is 76 characters
 pegComplete	line 1222 is 77 characters
-compilerProof	ML code skipped: rw [] \\ mp_tac (SPEC_ALL compile_correct_lemma)   \\ fs [] 

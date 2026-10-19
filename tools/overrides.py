@@ -250,6 +250,10 @@ FIELD_VAR = {
   # the state that make_init makes is a stackSem state, and the
   # fields that it sets are of several records
   'stack_allocProof': {'s': 'stackSem_state'},
+  # the compile of the s and the t of this theory is the field of
+  # a stackSem state, where a bare compile is the constant of a
+  # compiler pass (the port has 28 of those under that name)
+  'stack_namesProof': {'s': 'stackSem_state', 't': 'stackSem_state'},
   # t and u are the states of wordSem that state_rel_ext relates
   'data_to_wordProof': {'t': 'wordSem_state', 'u': 'wordSem_state'},
   # the c of the three definitions that have one is the

@@ -465,7 +465,7 @@ class Db:
           for ty, cons, flds in hol4.datatype_names(b.body):
             names += [ty] + cons + flds
         elif b.kind in ('Definition', 'Inductive', 'CoInductive'):
-          names += definition_names(b.body)
+          names += definition_names(b.body, b.name)
         elif b.name:
           names.append(b.name)
         body = hol4.strip_comments(b.body) + \
@@ -895,8 +895,13 @@ class Db:
     return out
 
 
-def definition_names(body):
-  """the constants that a Definition block defines, from its term"""
+def definition_names(body, name=None):
+  """the constants that a Definition block defines, from its term.
+     Where the term does not parse as a clause of them, the name
+     that the text gives is taken, as far as the name of the block
+     says it is the one (HOL4 reads the = of mw_ok xs = ~(xs = [])
+     ==> ~(LAST xs = 0w) as the one of the definition, and the
+     parser of the port as the one of the antecedent)"""
   try:
     toks = hterm.tokenize(hol4.strip_comments(body))
     e = hterm.Parser(toks).parse()
@@ -919,6 +924,9 @@ def definition_names(body):
     hop = hterm.head_of(cl.l)
     if hop.kind == 'id' and hop.name not in out:
       out.append(hop.name)
+  if not out and name:
+    out = [n for n in hol4.definition_names(body)
+           if n == name or name.startswith(n + '_')]
   return out
 
 

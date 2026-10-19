@@ -10,274 +10,274 @@ one; see `ml/CHEATS.md`).
 
 | file | seconds | axioms | first failure |
 |---|---|---|---|
-| `lib/location.ml` | 0.41 |  |  |
-| `lib/ternaryComparisons.ml` | 3.11 |  |  |
-| `lib/toto.ml` | 0.03 |  |  |
+| `lib/location.ml` | 0.46 |  |  |
+| `lib/ternaryComparisons.ml` | 3.38 |  |  |
+| `lib/toto.ml` | 0.04 |  |  |
 | `lib/comparison.ml` | 0.05 |  |  |
-| `lib/indexedLists.ml` | 0.08 |  |  |
+| `lib/indexedLists.ml` | 0.11 |  |  |
 | `lib/sorting.ml` | 0.24 |  |  |
-| `lib/mergesort.ml` | 6.02 |  |  |
-| `lib/balanced_map.ml` | 17.28 |  |  |
+| `lib/mergesort.ml` | 6.04 |  |  |
+| `lib/balanced_map.ml` | 17.30 |  |  |
 | `lib/regexp_compiler.ml` | 0.14 |  |  |
-| `lib/sptree.ml` | 3.86 |  |  |
-| `lib/alignment.ml` | 0.07 |  |  |
-| `lib/numposrep.ml` | 0.17 |  |  |
+| `lib/sptree.ml` | 4.03 |  |  |
+| `lib/alignment.ml` | 0.08 |  |  |
+| `lib/numposrep.ml` | 0.18 |  |  |
 | `lib/bitstring.ml` | 0.39 |  |  |
-| `lib/byte.ml` | 0.47 |  |  |
-| `lib/ASCIInumbers.ml` | 0.21 |  |  |
+| `lib/byte.ml` | 0.49 |  |  |
+| `lib/ASCIInumbers.ml` | 0.22 |  |  |
 | `lib/integer_word.ml` | 0.01 |  |  |
 | `lib/lprefix_lub.ml` | 0.12 |  |  |
-| `lib/set_sep.ml` | 0.16 |  |  |
-| `lib/tailrec.ml` | 0.09 |  |  |
+| `lib/set_sep.ml` | 0.17 |  |  |
+| `lib/tailrec.ml` | 0.08 |  |  |
 | `lib/state_transformer.ml` | 0.01 |  |  |
 | `lib/errorMonad.ml` | 0.07 |  |  |
-| `lib/binary_ieee.ml` | 2.46 |  |  |
-| `lib/machine_ieee.ml` | 0.40 |  |  |
-| `lib/grammar.ml` | 1.08 |  |  |
-| `lib/peg.ml` | 6.66 |  |  |
-| `lib/pegexec.ml` | 1.89 |  |  |
-| `lib/NTproperties.ml` | 1.41 | 3 |  |
-| `lib/simpleSexp.ml` | 1.68 |  |  |
-| `lib/simpleSexpPEG.ml` | 0.86 |  |  |
-| `lib/simpleSexpParse.ml` | 2.35 | 1 |  |
-| `lib/spt_closure.ml` | 0.28 |  |  |
-| `lib/multiword.ml` | 3.90 | 1 |  |
-| `lib/mc_multiword.ml` | 13.25 | 132 |  |
-| `lib/term.ml` | 0.60 |  |  |
+| `lib/binary_ieee.ml` | 2.47 |  |  |
+| `lib/machine_ieee.ml` | 0.42 |  |  |
+| `lib/grammar.ml` | 1.11 |  |  |
+| `lib/peg.ml` | 6.75 |  |  |
+| `lib/pegexec.ml` | 1.86 |  |  |
+| `lib/NTproperties.ml` | 1.39 | 3 |  |
+| `lib/simpleSexp.ml` | 1.63 |  |  |
+| `lib/simpleSexpPEG.ml` | 0.85 |  |  |
+| `lib/simpleSexpParse.ml` | 2.34 | 1 |  |
+| `lib/spt_closure.ml` | 0.33 |  |  |
+| `lib/multiword.ml` | 3.86 | 1 |  |
+| `lib/mc_multiword.ml` | 13.44 | 132 |  |
+| `lib/term.ml` | 0.70 |  |  |
 | `lib/subst.ml` | 0.36 |  |  |
 | `lib/walk.ml` | 0.22 |  |  |
 | `lib/walkstar.ml` | 0.12 |  |  |
 | `lib/unifDef.ml` | 0.17 |  |  |
 | `lib/collapse.ml` | 0.07 |  |  |
 | `lib/fmsp.ml` | 0.10 |  |  |
-| `lib/rmfmap.ml` | 0.17 |  |  |
+| `lib/rmfmap.ml` | 0.16 |  |  |
 | `lib/tcallUnif.ml` | 0.01 |  |  |
-| `misc/misc.ml` | 10.38 | 380 |  |
-| `basis/pure/mllist.ml` | 3.28 | 41 |  |
-| `basis/pure/mlstring.ml` | 5.37 | 112 |  |
-| `semantics/namespace.ml` | 3.02 |  |  |
-| `semantics/ast.ml` | 24.84 |  |  |
+| `misc/misc.ml` | 10.28 | 380 |  |
+| `basis/pure/mllist.ml` | 3.26 | 41 |  |
+| `basis/pure/mlstring.ml` | 5.35 | 112 |  |
+| `semantics/namespace.ml` | 2.99 |  |  |
+| `semantics/ast.ml` | 25.07 |  |  |
 | `compiler/backend/backend_common.ml` | 2.82 | 3 |  |
-| `semantics/fpSem.ml` | 2.82 |  |  |
-| `compiler/backend/closLang.ml` | 15.15 |  |  |
+| `semantics/fpSem.ml` | 2.75 |  |  |
+| `compiler/backend/closLang.ml` | 14.94 |  |  |
 | `compiler/backend/bvi.ml` | 1.78 |  |  |
-| `compiler/backend/dataLang.ml` | 1.96 |  |  |
-| `compiler/backend/data_live.ml` | 0.96 | 1 |  |
+| `compiler/backend/dataLang.ml` | 1.95 |  |  |
+| `compiler/backend/data_live.ml` | 0.94 | 1 |  |
 | `compiler/backend/data_simp.ml` | 0.54 |  |  |
 | `compiler/backend/data_space.ml` | 1.16 | 1 |  |
-| `compiler/backend/bvi_to_data.ml` | 18.99 | 12 |  |
-| `compiler/backend/bvi_inline.ml` | 14.93 | 6 |  |
+| `compiler/backend/bvi_to_data.ml` | 19.01 | 12 |  |
+| `compiler/backend/bvi_inline.ml` | 14.99 | 6 |  |
 | `compiler/backend/bvi_let.ml` | 18.93 | 5 |  |
-| `compiler/backend/bvi_tailrec.ml` | 19.29 | 32 |  |
-| `compiler/backend/bvi_tmc.ml` | 15.04 | 32 |  |
-| `compiler/backend/bvl.ml` | 1.44 |  |  |
-| `compiler/backend/bvl_const.ml` | 3.95 | 11 |  |
-| `compiler/backend/db_vars.ml` | 1.38 | 14 |  |
-| `compiler/backend/bvl_handle.ml` | 39.79 | 8 |  |
-| `compiler/backend/bvl_inline.ml` | 15.57 | 11 |  |
-| `compiler/backend/bvl_to_bvi.ml` | 26.75 | 9 |  |
-| `compiler/backend/bvl_jump.ml` | 0.55 | 1 |  |
-| `compiler/backend/clos_annotate.ml` | 37.88 | 18 |  |
-| `compiler/backend/clos_call.ml` | 30.60 | 19 |  |
-| `compiler/backend/clos_fvs.ml` | 2.72 | 3 |  |
-| `compiler/backend/clos_letop.ml` | 2.72 | 3 |  |
-| `compiler/backend/clos_op.ml` | 9.33 | 12 |  |
-| `compiler/backend/clos_ticks.ml` | 2.16 | 2 |  |
-| `compiler/backend/clos_known.ml` | 78.22 | 14 |  |
-| `compiler/backend/clos_mti.ml` | 3.76 | 12 |  |
-| `compiler/backend/clos_number.ml` | 9.38 | 2 |  |
-| `compiler/backend/clos_to_bvl.ml` | 46.18 | 24 |  |
+| `compiler/backend/bvi_tailrec.ml` | 19.25 | 32 |  |
+| `compiler/backend/bvi_tmc.ml` | 15.02 | 32 |  |
+| `compiler/backend/bvl.ml` | 1.38 |  |  |
+| `compiler/backend/bvl_const.ml` | 3.81 | 11 |  |
+| `compiler/backend/db_vars.ml` | 1.32 | 14 |  |
+| `compiler/backend/bvl_handle.ml` | 39.06 | 8 |  |
+| `compiler/backend/bvl_inline.ml` | 15.21 | 11 |  |
+| `compiler/backend/bvl_to_bvi.ml` | 26.49 | 9 |  |
+| `compiler/backend/bvl_jump.ml` | 0.54 | 1 |  |
+| `compiler/backend/clos_annotate.ml` | 37.93 | 18 |  |
+| `compiler/backend/clos_call.ml` | 30.59 | 19 |  |
+| `compiler/backend/clos_fvs.ml` | 2.74 | 3 |  |
+| `compiler/backend/clos_letop.ml` | 2.68 | 3 |  |
+| `compiler/backend/clos_op.ml` | 9.66 | 12 |  |
+| `compiler/backend/clos_ticks.ml` | 2.13 | 2 |  |
+| `compiler/backend/clos_known.ml` | 77.53 | 14 |  |
+| `compiler/backend/clos_mti.ml` | 3.60 | 12 |  |
+| `compiler/backend/clos_number.ml` | 9.52 | 2 |  |
+| `compiler/backend/clos_to_bvl.ml` | 46.83 | 24 |  |
 | `compiler/encoders/asm/asm.ml` | 19.57 |  |  |
-| `pancake/panLang.ml` | 51.41 | 2 |  |
-| `compiler/backend/stackLang.ml` | 19.32 |  |  |
-| `compiler/backend/wordLang.ml` | 52.93 |  |  |
-| `compiler/backend/word_bignum.ml` | 44.68 |  |  |
-| `compiler/backend/word_depth.ml` | 11.13 | 1 |  |
-| `semantics/ffi/ffi.ml` | 5.42 |  |  |
-| `semantics/semanticPrimitives.ml` | 67.87 | 3 |  |
-| `translator/monadic/monad_base/ml_monadBase.ml` | 5.59 | 26 |  |
-| `compiler/backend/reg_alloc/reg_alloc.ml` | 43.09 | 4 |  |
-| `compiler/backend/reg_alloc/linear_scan.ml` | 39.26 | 5 |  |
-| `compiler/backend/word_alloc.ml` | 81.35 | 9 |  |
-| `compiler/backend/word_copy.ml` | 9.70 |  |  |
-| `compiler/backend/word_cse.ml` | 23.18 | 10 |  |
-| `compiler/backend/word_inst.ml` | 13.89 | 7 |  |
-| `compiler/backend/word_remove.ml` | 1.42 | 1 |  |
-| `compiler/backend/word_simp.ml` | 17.25 | 5 |  |
-| `compiler/backend/word_unreach.ml` | 3.29 | 1 |  |
-| `compiler/backend/word_to_word.ml` | 8.00 | 2 |  |
-| `compiler/backend/data_to_word.ml` | 69.65 | 7 |  |
-| `compiler/backend/clos_interp.ml` | 17.15 | 4 |  |
-| `compiler/backend/flatLang.ml` | 14.95 | 1 |  |
-| `compiler/backend/flat_to_clos.ml` | 20.21 | 10 |  |
-| `basis/pure/mlint.ml` | 6.95 | 36 |  |
+| `pancake/panLang.ml` | 51.79 | 2 |  |
+| `compiler/backend/stackLang.ml` | 19.19 |  |  |
+| `compiler/backend/wordLang.ml` | 52.04 |  |  |
+| `compiler/backend/word_bignum.ml` | 47.25 |  |  |
+| `compiler/backend/word_depth.ml` | 11.16 | 1 |  |
+| `semantics/ffi/ffi.ml` | 5.37 |  |  |
+| `semantics/semanticPrimitives.ml` | 68.99 | 3 |  |
+| `translator/monadic/monad_base/ml_monadBase.ml` | 5.98 | 26 |  |
+| `compiler/backend/reg_alloc/reg_alloc.ml` | 44.23 | 4 |  |
+| `compiler/backend/reg_alloc/linear_scan.ml` | 39.27 | 5 |  |
+| `compiler/backend/word_alloc.ml` | 83.13 | 9 |  |
+| `compiler/backend/word_copy.ml` | 9.88 |  |  |
+| `compiler/backend/word_cse.ml` | 23.80 | 10 |  |
+| `compiler/backend/word_inst.ml` | 14.61 | 7 |  |
+| `compiler/backend/word_remove.ml` | 1.48 | 1 |  |
+| `compiler/backend/word_simp.ml` | 18.07 | 5 |  |
+| `compiler/backend/word_unreach.ml` | 3.32 | 1 |  |
+| `compiler/backend/word_to_word.ml` | 8.93 | 2 |  |
+| `compiler/backend/data_to_word.ml` | 74.64 | 7 |  |
+| `compiler/backend/clos_interp.ml` | 17.48 | 4 |  |
+| `compiler/backend/flatLang.ml` | 14.50 | 1 |  |
+| `compiler/backend/flat_to_clos.ml` | 20.59 | 10 |  |
+| `basis/pure/mlint.ml` | 7.14 | 36 |  |
 | `compiler/backend/jsonLang.ml` | 8.62 |  |  |
-| `compiler/backend/labLang.ml` | 5.31 |  |  |
-| `compiler/backend/lab_filter.ml` | 1.34 | 1 |  |
-| `compiler/backend/lab_to_target.ml` | 46.57 | 4 |  |
-| `basis/pure/mlsexp.ml` | 27.17 | 26 |  |
-| `compiler/backend/displayLang.ml` | 5.63 |  |  |
-| `basis/pure/mloption.ml` | 1.74 | 1 |  |
-| `semantics/evaluate.ml` | 12.77 | 6 |  |
-| `compiler/backend/flat_elim.ml` | 28.85 | 5 |  |
-| `compiler/backend/pattern_matching/pattern_common.ml` | 2.58 |  |  |
-| `compiler/backend/pattern_matching/pattern_semantics.ml` | 23.26 | 1 |  |
-| `compiler/backend/pattern_matching/pattern_exh.ml` | 19.62 | 55 |  |
-| `compiler/backend/pattern_matching/pattern_comp.ml` | 9.51 | 22 |  |
-| `compiler/backend/flat_pattern.ml` | 30.19 | 7 |  |
-| `compiler/backend/source_to_flat.ml` | 43.64 | 9 |  |
-| `compiler/backend/presLang.ml` | 172.45 | 19 |  |
-| `semantics/typeSystem.ml` | 32.20 |  |  |
-| `semantics/primTypes.ml` | 3.84 |  |  |
-| `compiler/backend/source_let.ml` | 3.24 | 4 |  |
+| `compiler/backend/labLang.ml` | 5.29 |  |  |
+| `compiler/backend/lab_filter.ml` | 1.33 | 1 |  |
+| `compiler/backend/lab_to_target.ml` | 46.20 | 4 |  |
+| `basis/pure/mlsexp.ml` | 27.60 | 26 |  |
+| `compiler/backend/displayLang.ml` | 5.73 |  |  |
+| `basis/pure/mloption.ml` | 1.70 | 1 |  |
+| `semantics/evaluate.ml` | 12.88 | 6 |  |
+| `compiler/backend/flat_elim.ml` | 28.78 | 5 |  |
+| `compiler/backend/pattern_matching/pattern_common.ml` | 2.50 |  |  |
+| `compiler/backend/pattern_matching/pattern_semantics.ml` | 23.29 | 1 |  |
+| `compiler/backend/pattern_matching/pattern_exh.ml` | 19.65 | 55 |  |
+| `compiler/backend/pattern_matching/pattern_comp.ml` | 9.71 | 22 |  |
+| `compiler/backend/flat_pattern.ml` | 30.16 | 7 |  |
+| `compiler/backend/source_to_flat.ml` | 43.81 | 9 |  |
+| `compiler/backend/presLang.ml` | 175.77 | 19 |  |
+| `semantics/typeSystem.ml` | 31.60 |  |  |
+| `semantics/primTypes.ml` | 4.13 |  |  |
+| `compiler/backend/source_let.ml` | 3.21 | 4 |  |
 | `compiler/backend/source_to_source.ml` | 0.15 |  |  |
-| `compiler/backend/stack_alloc.ml` | 14.82 | 1 |  |
-| `compiler/backend/stack_names.ml` | 4.61 |  |  |
-| `compiler/backend/stack_rawcall.ml` | 4.63 | 3 |  |
-| `compiler/backend/stack_remove.ml` | 12.08 | 1 |  |
-| `compiler/backend/reg_alloc/parmove.ml` | 9.10 | 57 |  |
-| `compiler/backend/word_to_stack.ml` | 32.69 | 1 |  |
-| `compiler/backend/stack_to_lab.ml` | 11.85 | 1 |  |
-| `compiler/backend/backend.ml` | 43.64 | 13 |  |
-| `compiler/encoders/asm/asmSem.ml` | 21.96 |  |  |
-| `compiler/backend/backend_passes.ml` | 25.40 | 23 |  |
-| `semantics/proofs/namespaceProps.ml` | 4.03 | 97 |  |
-| `semantics/proofs/semanticPrimitivesProps.ml` | 21.00 | 59 |  |
-| `compiler/backend/semantics/closSem.ml` | 46.25 | 13 |  |
-| `compiler/backend/semantics/backendProps.ml` | 5.41 | 44 |  |
-| `compiler/backend/semantics/bvlSem.ml` | 46.85 | 9 |  |
-| `compiler/backend/semantics/bviSem.ml` | 26.16 | 7 |  |
-| `semantics/tokens.ml` | 33.20 |  |  |
-| `semantics/gram.ml` | 42.02 | 2 |  |
-| `semantics/tokenUtils.ml` | 12.90 | 3 |  |
-| `compiler/parsing/cmlPEG.ml` | 15.17 | 8 |  |
-| `semantics/cmlPtreeConversion.ml` | 72.97 | 5 |  |
-| `compiler/parsing/cmlParse.ml` | 4.23 |  |  |
-| `basis/pure/mlvector.ml` | 12.71 | 26 |  |
-| `compiler/backend/export.ml` | 37.03 | 2 |  |
-| `compiler/backend/x64/x64_config.ml` | 0.63 |  |  |
-| `compiler/backend/x64/export_x64.ml` | 84.04 |  |  |
-| `compiler/backend/arm8/arm8_config.ml` | 0.63 |  |  |
-| `compiler/backend/arm8/export_arm8.ml` | 58.38 |  |  |
-| `compiler/backend/arm7/arm7_config.ml` | 0.61 |  |  |
-| `compiler/backend/arm7/export_arm7.ml` | 40.03 |  |  |
+| `compiler/backend/stack_alloc.ml` | 15.14 | 1 |  |
+| `compiler/backend/stack_names.ml` | 4.63 |  |  |
+| `compiler/backend/stack_rawcall.ml` | 4.65 | 3 |  |
+| `compiler/backend/stack_remove.ml` | 12.34 | 1 |  |
+| `compiler/backend/reg_alloc/parmove.ml` | 9.40 | 57 |  |
+| `compiler/backend/word_to_stack.ml` | 32.73 | 1 |  |
+| `compiler/backend/stack_to_lab.ml` | 11.60 | 1 |  |
+| `compiler/backend/backend.ml` | 43.61 | 13 |  |
+| `compiler/encoders/asm/asmSem.ml` | 21.32 |  |  |
+| `compiler/backend/backend_passes.ml` | 27.37 | 23 |  |
+| `semantics/proofs/namespaceProps.ml` | 4.18 | 97 |  |
+| `semantics/proofs/semanticPrimitivesProps.ml` | 20.89 | 59 |  |
+| `compiler/backend/semantics/closSem.ml` | 46.70 | 13 |  |
+| `compiler/backend/semantics/backendProps.ml` | 5.35 | 44 |  |
+| `compiler/backend/semantics/bvlSem.ml` | 46.99 | 9 |  |
+| `compiler/backend/semantics/bviSem.ml` | 26.40 | 7 |  |
+| `semantics/tokens.ml` | 32.81 |  |  |
+| `semantics/gram.ml` | 41.88 | 2 |  |
+| `semantics/tokenUtils.ml` | 12.92 | 3 |  |
+| `compiler/parsing/cmlPEG.ml` | 15.88 | 8 |  |
+| `semantics/cmlPtreeConversion.ml` | 73.38 | 5 |  |
+| `compiler/parsing/cmlParse.ml` | 4.33 |  |  |
+| `basis/pure/mlvector.ml` | 12.37 | 26 |  |
+| `compiler/backend/export.ml` | 39.61 | 2 |  |
+| `compiler/backend/x64/x64_config.ml` | 0.64 |  |  |
+| `compiler/backend/x64/export_x64.ml` | 92.47 |  |  |
+| `compiler/backend/arm8/arm8_config.ml` | 0.62 |  |  |
+| `compiler/backend/arm8/export_arm8.ml` | 64.34 |  |  |
+| `compiler/backend/arm7/arm7_config.ml` | 0.62 |  |  |
+| `compiler/backend/arm7/export_arm7.ml` | 44.91 |  |  |
 | `compiler/backend/mips/mips_config.ml` | 0.63 |  |  |
-| `compiler/backend/mips/export_mips.ml` | 51.62 |  |  |
-| `compiler/backend/riscv/riscv_config.ml` | 0.67 |  |  |
-| `compiler/backend/riscv/export_riscv.ml` | 52.51 |  |  |
-| `compiler/backend/ag32/ag32_config.ml` | 0.52 |  |  |
-| `compiler/backend/ag32/export_ag32.ml` | 0.61 |  |  |
-| `compiler/parsing/fromSexp.ml` | 94.95 | 136 |  |
-| `compiler/inference/infer_t.ml` | 12.72 |  |  |
-| `compiler/inference/unify.ml` | 35.88 | 175 |  |
-| `compiler/inference/infer.ml` | 123.22 | 20 |  |
-| `semantics/lexer_fun.ml` | 33.78 | 17 |  |
-| `compiler/parsing/lexer_impl.ml` | 20.96 | 25 |  |
-| `compiler/compiler.ml` | 72.75 |  |  |
-| `compiler/backend/gc/gc_shared.ml` | 38.47 | 50 |  |
-| `compiler/backend/gc/copying_gc.ml` | 9.73 | 24 |  |
-| `semantics/semantics.ml` | 11.03 |  |  |
-| `compiler/backend/semantics/dataSem.ml` | 121.82 | 16 |  |
-| `compiler/backend/semantics/flatSem.ml` | 79.49 | 10 |  |
-| `compiler/backend/gc/gen_gc.ml` | 18.04 | 62 |  |
-| `compiler/backend/gc/gen_gc_partial.ml` | 27.64 | 108 |  |
-| `compiler/backend/gc/gc_combined.ml` | 2.15 |  |  |
-| `compiler/backend/semantics/wordSem.ml` | 231.23 | 15 |  |
-| `compiler/encoders/asm/asmProps.ml` | 19.57 | 30 |  |
-| `semantics/proofs/evaluateProps.ml` | 6.79 | 81 |  |
-| `compiler/backend/semantics/targetSem.ml` | 47.75 | 1 |  |
-| `compiler/backend/semantics/labSem.ml` | 195.94 | 5 |  |
-| `compiler/backend/semantics/stackSem.ml` | 160.09 | 16 |  |
-| `compiler/backend/semantics/wordConvs.ml` | 26.42 | 17 |  |
-| `compiler/backend/word_elim.ml` | 5.74 |  |  |
-| `compiler/backend/semantics/bvlProps.ml` | 20.59 | 60 |  |
-| `compiler/backend/semantics/bviProps.ml` | 14.40 | 79 |  |
-| `compiler/backend/proofs/bvi_inlineProof.ml` | 7.50 | 69 |  |
-| `semantics/proofs/typeSoundInvariants.ml` | 12.41 |  |  |
-| `semantics/proofs/typeSysProps.ml` | 8.61 | 106 |  |
-| `semantics/proofs/primSemEnv.ml` | 0.08 | 1 |  |
-| `semantics/proofs/weakening.ml` | 2.32 | 31 |  |
-| `semantics/proofs/typeSound.ml` | 3.68 | 45 |  |
-| `semantics/proofs/semanticsProps.ml` | 2.02 | 20 |  |
-| `compiler/backend/semantics/dataProps.ml` | 14.15 | 143 |  |
-| `compiler/backend/proofs/data_liveProof.ml` | 1.11 | 14 |  |
-| `compiler/backend/proofs/data_simpProof.ml` | 0.16 | 6 |  |
-| `compiler/backend/proofs/data_spaceProof.ml` | 0.41 | 9 |  |
-| `compiler/backend/proofs/bvi_to_dataProof.ml` | 7.18 | 52 |  |
-| `compiler/backend/proofs/bvi_letProof.ml` | 2.38 | 17 |  |
-| `compiler/backend/proofs/bvi_tailrecProof.ml` | 8.91 | 84 |  |
-| `compiler/backend/proofs/bvi_tmcProof.ml` | 38.17 | 166 |  |
-| `compiler/backend/proofs/bvl_constProof.ml` | 3.00 | 23 |  |
-| `compiler/backend/proofs/bvl_handleProof.ml` | 10.29 | 53 |  |
-| `compiler/backend/proofs/bvl_inlineProof.ml` | 8.76 | 62 |  |
-| `compiler/backend/proofs/bvl_to_bviProof.ml` | 18.51 | 122 |  |
-| `compiler/backend/proofs/bvl_jumpProof.ml` | 0.18 | 3 |  |
-| `compiler/backend/semantics/closProps.ml` | 134.12 | 183 |  |
-| `compiler/backend/proofs/clos_annotateProof.ml` | 3.98 | 63 |  |
-| `compiler/backend/proofs/clos_callProof.ml` | 28.32 | 140 |  |
-| `compiler/backend/proofs/clos_constantProof.ml` | 13.91 | 14 |  |
-| `compiler/backend/proofs/clos_fvsProof.ml` | 2.68 | 36 |  |
-| `compiler/backend/proofs/clos_knownProps.ml` | 1.01 | 20 |  |
-| `compiler/backend/proofs/clos_letopProof.ml` | 3.27 | 39 |  |
-| `compiler/backend/proofs/clos_opProof.ml` | 2.78 | 61 |  |
-| `compiler/backend/proofs/clos_ticksProof.ml` | 4.95 | 45 |  |
-| `compiler/backend/proofs/clos_knownProof.ml` | 37.13 | 178 |  |
-| `compiler/backend/proofs/clos_mtiProof.ml` | 9.15 | 65 |  |
-| `compiler/backend/proofs/clos_numberProof.ml` | 2.81 | 46 |  |
-| `compiler/backend/proofs/clos_to_bvlProof.ml` | 41.45 | 298 |  |
-| `compiler/backend/semantics/wordProps.ml` | 17.92 | 194 |  |
-| `compiler/backend/proofs/word_simpProof.ml` | 5.99 | 72 |  |
-| `compiler/backend/proofs/word_gcFunctions.ml` | 45.25 | 36 |  |
-| `compiler/backend/proofs/data_to_word_memoryProof.ml` | 168.64 | 615 |  |
-| `compiler/backend/proofs/word_bignumProof.ml` | 32.81 | 70 |  |
-| `compiler/backend/proofs/data_to_word_gcProof.ml` | 42.53 | 378 |  |
-| `compiler/backend/proofs/word_depthProof.ml` | 0.70 | 12 |  |
-| `compiler/backend/proofs/data_to_word_bignumProof.ml` | 6.59 | 50 |  |
-| `compiler/backend/proofs/data_to_word_assignProof.ml` | 34.28 | 310 |  |
-| `compiler/backend/proofs/wordConvsProof.ml` | 3.79 | 198 |  |
-| `compiler/backend/reg_alloc/proofs/reg_allocProof.ml` | 12.23 | 117 |  |
-| `compiler/backend/reg_alloc/proofs/linear_scanProof.ml` | 21.54 | 182 |  |
-| `compiler/backend/proofs/word_allocProof.ml` | 19.81 | 220 |  |
-| `compiler/backend/proofs/word_copyProof.ml` | 3.71 | 75 |  |
-| `compiler/backend/proofs/word_cseProof.ml` | 9.48 | 136 |  |
-| `compiler/backend/proofs/word_elimProof.ml` | 13.20 | 54 |  |
-| `compiler/backend/proofs/word_instProof.ml` | 4.39 | 31 |  |
-| `compiler/backend/proofs/word_removeProof.ml` | 1.41 | 32 |  |
-| `compiler/backend/proofs/word_unreachProof.ml` | 1.89 | 19 |  |
-| `compiler/backend/proofs/word_to_wordProof.ml` | 2.80 | 24 |  |
-| `compiler/backend/proofs/data_to_wordProof.ml` | 6.27 | 73 |  |
-| `compiler/backend/proofs/clos_interpProof.ml` | 7.04 | 35 |  |
-| `compiler/backend/semantics/flatProps.ml` | 40.66 | 75 |  |
-| `compiler/backend/proofs/flat_to_closProof.ml` | 8.35 | 99 |  |
-| `compiler/backend/semantics/labProps.ml` | 16.91 | 90 |  |
-| `compiler/backend/proofs/lab_filterProof.ml` | 3.63 | 23 |  |
-| `compiler/backend/semantics/stackProps.ml` | 52.45 | 54 |  |
-| `compiler/backend/proofs/stack_removeProof.ml` | 26.99 | 113 |  |
-| `compiler/backend/semantics/targetProps.ml` | 16.27 | 43 |  |
-| `compiler/backend/proofs/lab_to_targetProof.ml` | 3.30 | 4 | Exception: Failure "typechecking error (initial type assignment): labSem_state_pc has type ('a,'c,'ffi)labSem_state->num, it cannot be used with type (?1983797,?1983798,?1983799)labSem_state->(_)word". [at 34: let asm_step_nop_def = cake_define of 476] |
-| `compiler/backend/proofs/flat_elimProof.ml` | 12.46 | 62 |  |
-| `compiler/backend/proofs/flat_patternProof.ml` | 10.11 | 115 |  |
-| `compiler/backend/proofs/source_evalProof.ml` | 35.20 | 87 |  |
-| `compiler/backend/proofs/source_to_flatProof.ml` | 42.71 | 182 |  |
-| `compiler/backend/proofs/source_letProof.ml` | 0.40 | 8 |  |
+| `compiler/backend/mips/export_mips.ml` | 58.16 |  |  |
+| `compiler/backend/riscv/riscv_config.ml` | 0.69 |  |  |
+| `compiler/backend/riscv/export_riscv.ml` | 58.80 |  |  |
+| `compiler/backend/ag32/ag32_config.ml` | 0.53 |  |  |
+| `compiler/backend/ag32/export_ag32.ml` | 0.65 |  |  |
+| `compiler/parsing/fromSexp.ml` | 101.38 | 136 |  |
+| `compiler/inference/infer_t.ml` | 14.11 |  |  |
+| `compiler/inference/unify.ml` | 37.00 | 176 |  |
+| `compiler/inference/infer.ml` | 128.69 | 20 |  |
+| `semantics/lexer_fun.ml` | 35.34 | 17 |  |
+| `compiler/parsing/lexer_impl.ml` | 21.74 | 25 |  |
+| `compiler/compiler.ml` | 75.84 |  |  |
+| `compiler/backend/gc/gc_shared.ml` | 38.88 | 50 |  |
+| `compiler/backend/gc/copying_gc.ml` | 9.89 | 24 |  |
+| `semantics/semantics.ml` | 11.31 |  |  |
+| `compiler/backend/semantics/dataSem.ml` | 123.52 | 16 |  |
+| `compiler/backend/semantics/flatSem.ml` | 81.44 | 10 |  |
+| `compiler/backend/gc/gen_gc.ml` | 18.62 | 62 |  |
+| `compiler/backend/gc/gen_gc_partial.ml` | 28.42 | 108 |  |
+| `compiler/backend/gc/gc_combined.ml` | 2.21 |  |  |
+| `compiler/backend/semantics/wordSem.ml` | 234.77 | 15 |  |
+| `compiler/encoders/asm/asmProps.ml` | 20.01 | 30 |  |
+| `semantics/proofs/evaluateProps.ml` | 7.67 | 82 |  |
+| `compiler/backend/semantics/targetSem.ml` | 48.28 | 1 |  |
+| `compiler/backend/semantics/labSem.ml` | 195.82 | 5 |  |
+| `compiler/backend/semantics/stackSem.ml` | 163.09 | 16 |  |
+| `compiler/backend/semantics/wordConvs.ml` | 27.43 | 17 |  |
+| `compiler/backend/word_elim.ml` | 5.84 |  |  |
+| `compiler/backend/semantics/bvlProps.ml` | 21.39 | 60 |  |
+| `compiler/backend/semantics/bviProps.ml` | 14.95 | 79 |  |
+| `compiler/backend/proofs/bvi_inlineProof.ml` | 8.56 | 70 |  |
+| `semantics/proofs/typeSoundInvariants.ml` | 12.80 |  |  |
+| `semantics/proofs/typeSysProps.ml` | 9.34 | 106 |  |
+| `semantics/proofs/primSemEnv.ml` | 0.10 | 1 |  |
+| `semantics/proofs/weakening.ml` | 2.44 | 31 |  |
+| `semantics/proofs/typeSound.ml` | 4.06 | 45 |  |
+| `semantics/proofs/semanticsProps.ml` | 2.10 | 20 |  |
+| `compiler/backend/semantics/dataProps.ml` | 15.11 | 143 |  |
+| `compiler/backend/proofs/data_liveProof.ml` | 1.21 | 14 |  |
+| `compiler/backend/proofs/data_simpProof.ml` | 0.17 | 6 |  |
+| `compiler/backend/proofs/data_spaceProof.ml` | 0.46 | 9 |  |
+| `compiler/backend/proofs/bvi_to_dataProof.ml` | 7.59 | 52 |  |
+| `compiler/backend/proofs/bvi_letProof.ml` | 2.52 | 17 |  |
+| `compiler/backend/proofs/bvi_tailrecProof.ml` | 9.73 | 85 |  |
+| `compiler/backend/proofs/bvi_tmcProof.ml` | 38.72 | 167 |  |
+| `compiler/backend/proofs/bvl_constProof.ml` | 3.22 | 23 |  |
+| `compiler/backend/proofs/bvl_handleProof.ml` | 10.70 | 53 |  |
+| `compiler/backend/proofs/bvl_inlineProof.ml` | 9.74 | 63 |  |
+| `compiler/backend/proofs/bvl_to_bviProof.ml` | 20.11 | 123 |  |
+| `compiler/backend/proofs/bvl_jumpProof.ml` | 0.20 | 3 |  |
+| `compiler/backend/semantics/closProps.ml` | 136.03 | 183 |  |
+| `compiler/backend/proofs/clos_annotateProof.ml` | 4.41 | 63 |  |
+| `compiler/backend/proofs/clos_callProof.ml` | 29.65 | 140 |  |
+| `compiler/backend/proofs/clos_constantProof.ml` | 14.17 | 14 |  |
+| `compiler/backend/proofs/clos_fvsProof.ml` | 2.91 | 36 |  |
+| `compiler/backend/proofs/clos_knownProps.ml` | 1.07 | 20 |  |
+| `compiler/backend/proofs/clos_letopProof.ml` | 3.56 | 39 |  |
+| `compiler/backend/proofs/clos_opProof.ml` | 3.13 | 61 |  |
+| `compiler/backend/proofs/clos_ticksProof.ml` | 5.23 | 45 |  |
+| `compiler/backend/proofs/clos_knownProof.ml` | 38.53 | 178 |  |
+| `compiler/backend/proofs/clos_mtiProof.ml` | 9.66 | 65 |  |
+| `compiler/backend/proofs/clos_numberProof.ml` | 3.06 | 46 |  |
+| `compiler/backend/proofs/clos_to_bvlProof.ml` | 44.93 | 301 |  |
+| `compiler/backend/semantics/wordProps.ml` | 19.94 | 194 |  |
+| `compiler/backend/proofs/word_simpProof.ml` | 6.48 | 72 |  |
+| `compiler/backend/proofs/word_gcFunctions.ml` | 47.87 | 36 |  |
+| `compiler/backend/proofs/data_to_word_memoryProof.ml` | 180.06 | 617 |  |
+| `compiler/backend/proofs/word_bignumProof.ml` | 34.24 | 71 |  |
+| `compiler/backend/proofs/data_to_word_gcProof.ml` | 46.88 | 378 |  |
+| `compiler/backend/proofs/word_depthProof.ml` | 0.78 | 12 |  |
+| `compiler/backend/proofs/data_to_word_bignumProof.ml` | 7.48 | 50 |  |
+| `compiler/backend/proofs/data_to_word_assignProof.ml` | 39.55 | 311 |  |
+| `compiler/backend/proofs/wordConvsProof.ml` | 4.17 | 198 |  |
+| `compiler/backend/reg_alloc/proofs/reg_allocProof.ml` | 13.13 | 118 |  |
+| `compiler/backend/reg_alloc/proofs/linear_scanProof.ml` | 24.12 | 187 |  |
+| `compiler/backend/proofs/word_allocProof.ml` | 22.02 | 220 |  |
+| `compiler/backend/proofs/word_copyProof.ml` | 4.19 | 75 |  |
+| `compiler/backend/proofs/word_cseProof.ml` | 10.46 | 136 |  |
+| `compiler/backend/proofs/word_elimProof.ml` | 13.69 | 54 |  |
+| `compiler/backend/proofs/word_instProof.ml` | 4.61 | 31 |  |
+| `compiler/backend/proofs/word_removeProof.ml` | 1.61 | 32 |  |
+| `compiler/backend/proofs/word_unreachProof.ml` | 2.01 | 19 |  |
+| `compiler/backend/proofs/word_to_wordProof.ml` | 3.13 | 24 |  |
+| `compiler/backend/proofs/data_to_wordProof.ml` | 7.03 | 73 |  |
+| `compiler/backend/proofs/clos_interpProof.ml` | 7.57 | 35 |  |
+| `compiler/backend/semantics/flatProps.ml` | 41.78 | 75 |  |
+| `compiler/backend/proofs/flat_to_closProof.ml` | 9.25 | 99 |  |
+| `compiler/backend/semantics/labProps.ml` | 17.52 | 90 |  |
+| `compiler/backend/proofs/lab_filterProof.ml` | 3.84 | 23 |  |
+| `compiler/backend/semantics/stackProps.ml` | 54.21 | 54 |  |
+| `compiler/backend/proofs/stack_removeProof.ml` | 28.67 | 113 |  |
+| `compiler/backend/semantics/targetProps.ml` | 18.34 | 43 |  |
+| `compiler/backend/proofs/lab_to_targetProof.ml` | 92.58 | 387 |  |
+| `compiler/backend/proofs/flat_elimProof.ml` | 13.34 | 62 |  |
+| `compiler/backend/proofs/flat_patternProof.ml` | 11.20 | 115 |  |
+| `compiler/backend/proofs/source_evalProof.ml` | 37.20 | 87 |  |
+| `compiler/backend/proofs/source_to_flatProof.ml` | 45.58 | 182 |  |
+| `compiler/backend/proofs/source_letProof.ml` | 0.44 | 8 |  |
 | `compiler/backend/proofs/source_to_sourceProof.ml` | 0.08 | 2 |  |
-| `compiler/backend/proofs/stack_allocProof.ml` | 42.00 | 114 |  |
-| `compiler/backend/proofs/stack_namesProof.ml` | 2.44 | 38 |  |
-| `compiler/backend/proofs/stack_rawcallProof.ml` | 1.79 | 20 |  |
-| `compiler/backend/proofs/word_to_stackProof.ml` | 49.40 | 361 |  |
-| `compiler/backend/proofs/stack_to_labProof.ml` | 28.01 | 165 |  |
-| `compiler/backend/proofs/backendProof.ml` | 23.83 | 143 |  |
-| `semantics/proofs/gramProps.ml` | 2.11 | 9 |  |
-| `compiler/parsing/proofs/cmlNTProps.ml` | 9.61 | 84 |  |
-| `compiler/inference/inferProps.ml` | 20.00 | 154 |  |
-| `compiler/inference/proofs/envRel.ml` | 6.67 | 37 |  |
-| `compiler/inference/proofs/infer_eComplete.ml` | 4.35 | 48 |  |
-| `compiler/inference/proofs/infer_eSound.ml` | 1.53 | 20 |  |
-| `compiler/inference/proofs/type_dCanon.ml` | 7.49 | 61 |  |
-| `compiler/inference/proofs/type_eDeterm.ml` | 0.94 | 9 |  |
-| `compiler/inference/proofs/inferComplete.ml` | 1.01 | 11 |  |
-| `compiler/inference/proofs/inferSound.ml` | 1.16 | 11 |  |
-| `compiler/parsing/proofs/pegSound.ml` | 3.10 | 40 |  |
-| `compiler/parsing/proofs/pegComplete.ml` | 21.79 | 74 |  |
-| `compiler/proofs/compilerProof.ml` | 1.66 | 9 |  |
-| **total** | **5349.4** | **10053** | |
+| `compiler/backend/proofs/stack_allocProof.ml` | 47.10 | 114 |  |
+| `compiler/backend/proofs/stack_namesProof.ml` | 2.59 | 36 |  |
+| `compiler/backend/proofs/stack_rawcallProof.ml` | 1.96 | 20 |  |
+| `compiler/backend/proofs/word_to_stackProof.ml` | 53.50 | 363 |  |
+| `compiler/backend/proofs/stack_to_labProof.ml` | 31.21 | 167 |  |
+| `compiler/backend/proofs/backendProof.ml` | 25.63 | 143 |  |
+| `semantics/proofs/gramProps.ml` | 2.29 | 10 |  |
+| `compiler/parsing/proofs/cmlNTProps.ml` | 11.10 | 84 |  |
+| `compiler/inference/inferProps.ml` | 21.90 | 154 |  |
+| `compiler/inference/proofs/envRel.ml` | 7.02 | 37 |  |
+| `compiler/inference/proofs/infer_eComplete.ml` | 4.93 | 48 |  |
+| `compiler/inference/proofs/infer_eSound.ml` | 1.75 | 20 |  |
+| `compiler/inference/proofs/type_dCanon.ml` | 8.04 | 61 |  |
+| `compiler/inference/proofs/type_eDeterm.ml` | 1.06 | 9 |  |
+| `compiler/inference/proofs/inferComplete.ml` | 1.15 | 11 |  |
+| `compiler/inference/proofs/inferSound.ml` | 1.15 | 11 |  |
+| `compiler/parsing/proofs/pegSound.ml` | 3.53 | 40 |  |
+| `compiler/parsing/proofs/pegComplete.ml` | 23.75 | 74 |  |
+| `compiler/proofs/compilerProof.ml` | 2.53 | 7 |  |
+| **total** | **5628.1** | **10457** | |

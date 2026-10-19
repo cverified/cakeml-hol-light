@@ -9,28 +9,26 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 10056: the three axioms of HOL
-Light and 10053 for the 451 definitions below.
+`length (axioms ())` is 10460: the three axioms of HOL
+Light and 10457 for the 456 definitions below.
 
-Of these 451 definitions
+Of these 456 definitions
 
-- 300 have only their **termination** assumed, so the
+- 307 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
 - 14 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
-- 137 are **not made** at all, which is the work that is
+- 135 are **not made** at all, which is the work that is
   left.
 
 Why they are assumed:
 
-- 300: termination (CHEAT_TAC)
+- 307: termination (CHEAT_TAC)
 - 132: equation of a tail recursion assumed
 - 14: declared (no value)
-- 1: free: backend_config_next_name3_fupd:(?799699->num)->?799696->bvl_
-- 1: free: backend_config_col_oracle_fupd:(?805270->(((num)spt)option)l
-- 1: free: backend_config_col_oracle_fupd:(?810110->(((num)spt)option)l
-- 1: free: mc_conf_ok:('a,?2179548,?2179549)machine_config->bool
-- 1: free: mc_conf_ok:('a,?2179699,?2179700)machine_config->bool
+- 1: free: backend_config_next_name3_fupd:(?799836->num)->?799833->bvl_
+- 1: free: backend_config_col_oracle_fupd:(?805407->(((num)spt)option)l
+- 1: free: backend_config_col_oracle_fupd:(?810247->(((num)spt)option)l
 
 | definition | file | why |
 |---|---|---|
@@ -330,9 +328,9 @@ Why they are assumed:
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
 | `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | termination (CHEAT_TAC) |
-| `to_bvi_all` | `compiler/backend/backend_passes.ml` | free: backend_config_next_name3_fupd:(?799699->num)->?799696 |
-| `to_word_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?805270->(((num)spt)op |
-| `from_word_0_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?810110->(((num)spt)op |
+| `to_bvi_all` | `compiler/backend/backend_passes.ml` | free: backend_config_next_name3_fupd:(?799836->num)->?799833 |
+| `to_word_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?805407->(((num)spt)op |
+| `from_word_0_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?810247->(((num)spt)op |
 | `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | termination (CHEAT_TAC) |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
@@ -433,7 +431,6 @@ Why they are assumed:
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
-| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
@@ -469,6 +466,7 @@ Why they are assumed:
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
@@ -479,11 +477,16 @@ Why they are assumed:
 | `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | termination (CHEAT_TAC) |
 | `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
 | `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
+| `has_odd_inst` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `has_io_name` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `all_enc_ok` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `num_pcs` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `all_enc_with_nop` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `even_labels` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `even_labels_strong` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
 | `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
 | `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
-| `config_ok` | `compiler/proofs/compilerProof.ml` | free: mc_conf_ok:('a,?2179548,?2179549)machine_config->bool |
-| `initial_condition` | `compiler/proofs/compilerProof.ml` | free: mc_conf_ok:('a,?2179699,?2179700)machine_config->bool |
 
-451 definitions.
+456 definitions.

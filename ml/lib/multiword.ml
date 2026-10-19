@@ -30,6 +30,9 @@ let n2mw_def = cake_define_wf
 let i2mw_def = cake_define
   `i2mw i = ((i < (&0)),n2mw (num_of_int (abs i)))`;;
 
+let mw_ok_def = cake_define
+  `mw_ok xs = (~(xs = []) ==> ~(LAST xs = (n2w 0)))`;;
+
 let single_add_def = cake_define
   `single_add (x:'a word) (y:'a word) c =
      (x + y + b2w c,(dimword (:'a) <= w2n x + w2n y + b2n c))`;;
