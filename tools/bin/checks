@@ -6,8 +6,9 @@
 #   literals  the strings and the numerals of a definition survive
 #   lets      a let that binds a function abstracts its arguments
 #   nohol4    no HOL4 code is in the port, not even in a comment
-#   overloads every Overload of a source has a counterpart in the
-#             port (an overload of HOL Light or a pointer)
+#   overloads every Overload and every Type of a source has a
+#             counterpart in the port (one of HOL Light or a
+#             pointer at the source)
 #   libnames  a name of HOL4's own libraries that a statement uses
 #             and that the port has not (a free variable then)
 #   stmtnames every constant of a statement of a source is in the
@@ -34,7 +35,7 @@ echo "=== lets"
 python3 -I tools/lets.py 2>&1 | tail -3
 echo "=== HOL4 code in the port"
 python3 -I tools/nohol4.py 2>&1 | tail -4
-echo "=== the overloads of the sources"
+echo "=== the overloads and the types of the sources"
 python3 -I tools/overloads.py 2>&1 | tail -2
 echo "=== the names of HOL4's libraries that the port has not"
 python3 -I tools/libnames.py 2>&1 | head -1
