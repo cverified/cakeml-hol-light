@@ -1658,10 +1658,9 @@ let byte_align_64_IMP = cake_theorem "byte_align_64_IMP[local]"
 
 let arith_upd_lemma = cake_theorem "arith_upd_lemma[local]"
   (fun () ->
-    `(!r. word_loc_val p labs ((\r s. labSem_state_regs s r) r s1) =
-  SOME (asm_state_regs t1 r)) /\ ~(failed (arith_upd a s1)) ==>
-      (!r. word_loc_val p labs ((\r s. labSem_state_regs s r) r
-        (arith_upd a s1)) =
+    `(!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME
+  (asm_state_regs t1 r)) /\ ~(failed (arith_upd a s1)) ==>
+      (!r. word_loc_val p labs (regs (arith_upd a s1) r) =
           SOME (regs (arith_upd a t1) r))`)
   CHEAT_TAC;;
 
@@ -1674,14 +1673,13 @@ let arith_upd_fp_regs = cake_theorem "arith_upd_fp_regs[simp]"
 
 let fp_upd_lemma = cake_theorem "fp_upd_lemma[local]"
   (fun () ->
-    `(!r. word_loc_val p labs ((\r s. labSem_state_regs s r) r s1) =
-  SOME (asm_state_regs t1 r)) /\
+    `(!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME
+  (asm_state_regs t1 r)) /\
      (!r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
       ~(failed (fp_upd f s1)) ==>
      (!r. fp_regs (fp_upd f s1) r = fp_regs (fp_upd f t1) r) /\
      (!r.
-       word_loc_val p labs ((\r s. labSem_state_regs s r) r (fp_upd
-         f s1)) =
+       word_loc_val p labs (regs (fp_upd f s1) r) =
        SOME (regs (fp_upd f t1) r))`)
   CHEAT_TAC;;
 
@@ -1793,10 +1791,9 @@ let EVEN_add_AND = cake_theorem "EVEN_add_AND"
 let word_cmp_lemma = cake_theorem "word_cmp_lemma[local]"
   (fun () ->
     `state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-       (word_cmp cmp ((\r s. labSem_state_regs s r) rr s1) (reg_imm
-         ri s1) = SOME x) ==>
-       (x = word_cmp cmp ((\r s. labSem_state_regs s r) rr t1)
-         (reg_imm ri t1))`)
+       (word_cmp cmp (labSem_state_regs s1 rr) (reg_imm ri s1) =
+         SOME x) ==>
+       (x = word_cmp cmp (asm_state_regs t1 rr) (reg_imm ri t1))`)
   CHEAT_TAC;;
 
 let list_add_if_fresh_simp =
@@ -4746,7 +4743,8 @@ let asm_fetch_NOT_ffi_entry_pcs =
            (machine_config_ffi_entry_pcs
          mc_conf) 0 = SOME index) /\
      bytes_in_mem (target_get_pc (machine_config_target mc_conf)
-       ms) (prog_to_bytes code2) (mem t) (machine_config_prog_addresses
+       ms) (prog_to_bytes code2) (labSem_state_mem t)
+       (machine_config_prog_addresses
         (mc_conf:('a,'state,'b)machine_config)) dm /\
      asm_fetch_aux pos code2 = SOME line /\
      a < LENGTH (line_bytes line) ==>

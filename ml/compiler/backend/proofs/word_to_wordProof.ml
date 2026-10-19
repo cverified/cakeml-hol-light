@@ -301,10 +301,9 @@ let compile_to_word_conventions =
        post_alloc_conventions (asm_config_reg_count ac - (5 +
          LENGTH (asm_config_avoid_regs ac))) prog /\
        (EVERY (\(n,m,prog). every_inst (inst_ok_less ac) prog) p /\
-        (\c. asm_offset_ok 0 (asm_config_addr_offset c)) ac (n2w 0)
-          /\ (\c. asm_offset_ok 0 (asm_config_hw_offset c)) ac (n2w 0)
-          /\ (\c. asm_offset_ok 0 (asm_config_byte_offset c)) ac (n2w 0)
-          ==>
+        asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
+          asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0) /\
+          asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
          full_inst_ok_less ac prog) /\
        (asm_config_two_reg_arith ac ==> every_inst two_reg_inst
          prog) /\

@@ -416,8 +416,8 @@ let data_to_wordProof_compile_semantics =
        Abbrev (tco = (I ## MAP (compile_part c)) o co) /\
        (!n. EVERY (\(n,_1). data_num_stubs <= n) (SND (co n))) /\
        code_rel_ext x1 (wordSem_state_code t) /\ domain x1 = domain
-         (wordSem_state_code t) /\ wordSem_state_be t = be c /\
-         wordSem_state_stack_max
+         (wordSem_state_code t) /\ wordSem_state_be t =
+         data_to_word_config_be c /\ wordSem_state_stack_max
        t = SOME 1 /\ wordSem_state_locals_size t = SOME 0 /\
          ~(wordSem_state_stack_limit t = 0) /\
          wordSem_state_compile_oracle
@@ -625,8 +625,8 @@ let assign_no_inst = cake_theorem "assign_no_inst[local]"
       (has_fp_ops a ==> 1 < asm_config_fp_reg_count ac) /\
       (data_to_word_config_has_fp_tern a ==> 2 <
         asm_config_fp_reg_count ac /\ asm_config_ISA ac = ARMv7) /\
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) ac (n2w 0) /\
-       (\c. asm_offset_ok 0 (asm_config_byte_offset c)) ac (n2w 0)) ==>
+     asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
+       asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0)) ==>
      every_inst (inst_ok_less ac) (FST (assign a b c d e f g))`)
   CHEAT_TAC;;
 
@@ -644,8 +644,8 @@ let comp_no_inst = cake_theorem "comp_no_inst"
      (has_fp_ops c ==> 1 < asm_config_fp_reg_count ac) /\
      (data_to_word_config_has_fp_tern c ==> 2 <
        asm_config_fp_reg_count ac /\ asm_config_ISA ac = ARMv7)) /\
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) ac (n2w 0) /\
-       (\c. asm_offset_ok 0 (asm_config_byte_offset c)) ac (n2w 0) ==>
+     asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
+       asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
      every_inst (inst_ok_less ac) (FST (comp c n m p))`)
   CHEAT_TAC;;
 
@@ -680,11 +680,10 @@ let data_to_word_compile_conventions =
        ac = x86_64)) /\
      (data_to_word_config_has_div data_conf ==> (asm_config_ISA ac
        IN {ARMv8,MIPS,RISC_V})) /\
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) ac (n2w 0) /\
-     (\c. asm_offset_ok 0 (asm_config_hw_offset c)) ac (n2w 0) /\
-     (!w. --(n2w 8) <= w /\ w <= (n2w 8) ==> (\c. asm_offset_ok 0
-       (asm_config_byte_offset c)) ac w) ==> full_inst_ok_less ac prog)
-       /\
+     asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
+     asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0) /\
+     (!w. --(n2w 8) <= w /\ w <= (n2w 8) ==> asm_offset_ok 0
+       (asm_config_byte_offset ac) w) ==> full_inst_ok_less ac prog) /\
      (asm_config_two_reg_arith ac ==> every_inst two_reg_inst prog)
        /\
      (no_share_inst prog \/ ~(asm_config_ISA ac = Ag32))) p)`)

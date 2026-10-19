@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  pegSound: ported from HOL4's
-    compiler/parsing/proofs/pegSoundScript.sml  *)
+    compiler/parsing/proofs/pegSoundScript.sml
+    A proof theory, with 1 definition and 42 theorems.  Needed by
+    compilerProof.ml and pegComplete.ml.  *)
 (* ======================================================== *)
 
 (*

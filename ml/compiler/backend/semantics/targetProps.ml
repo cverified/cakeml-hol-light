@@ -891,14 +891,15 @@ let ffi_interfer_ok_post_ffi_asm =
   cake_theorem "ffi_interfer_ok_post_ffi_asm"
   (fun () ->
     `ffi_interfer_ok pc mc_conf /\
-     index < LENGTH (ffi_names mc_conf) /\
-     mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+     index < LENGTH (machine_config_ffi_names mc_conf) /\
+     mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i
+       /\
      index < i /\ machine_config_prog_addresses
      mc_conf = asm_state_mem_domain t1 /\
      read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2) /\
      LENGTH new_bytes = LENGTH bytes2 /\
-     (EL index (ffi_names mc_conf) = ffi_ExtCall (implode "") ==>
-       new_bytes = bytes2) /\
+     (EL index (machine_config_ffi_names mc_conf) = ffi_ExtCall
+       (implode "") ==> new_bytes = bytes2) /\
      target_state_rel (machine_config_target mc_conf)
        (asm_state_pc_fupd (K (--(n2w ((3 + index) * ffi_offset)) +
          pc)) t1) ms2 /\

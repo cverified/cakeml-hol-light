@@ -264,8 +264,7 @@ let inst_select_exp_pmatch = cake_theorem "inst_select_exp_pmatch"
      inst_select_exp (c:'a asm_config) tar temp exp =
      (match exp with
        Load (wordLang_Op asm_Add [exp'; Const w]) ->
-         (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
-           then
+         (if asm_offset_ok 0 (asm_config_addr_offset c) w then
            let prog = inst_select_exp c temp temp exp' in
              Seq prog (Inst (asm_Mem asm_Load tar (Addr temp w)))
                else
@@ -401,8 +400,7 @@ let inst_select_pmatch = cake_theorem "inst_select_pmatch"
        Seq prog (Set store (Var temp))) | Store exp var ->
        (let exp = (flatten_exp o pull_exp) exp in
        match exp with wordLang_Op asm_Add [exp'; Const w] ->
-         (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
-           then
+         (if asm_offset_ok 0 (asm_config_addr_offset c) w then
            let prog = inst_select_exp c temp temp exp' in
              Seq prog (Inst (asm_Mem asm_Store var (Addr temp w)))
                else
@@ -420,14 +418,14 @@ let inst_select_pmatch = cake_theorem "inst_select_pmatch"
            c2) | wordLang_ShareInst op var exp ->
        (let exp = (flatten_exp o pull_exp) exp in
        match exp with wordLang_Op asm_Add [exp'; Const w] ->
-         (if ((op = Load \/ op = Store) /\ (\c. asm_offset_ok 0
-           (asm_config_addr_offset c)) c w) \/
-             ((op = asm_Load32 \/ op = asm_Store32) /\ (\c.
-               asm_offset_ok 0 (asm_config_addr_offset c)) c w) \/
-             ((op = asm_Load16 \/ op = asm_Store16) /\ (\c.
-               asm_offset_ok 0 (asm_config_hw_offset c)) c w) \/
-             ((op = asm_Load8 \/ op = asm_Store8) /\ (\c.
-               asm_offset_ok 0 (asm_config_byte_offset c)) c w) then
+         (if ((op = Load \/ op = Store) /\ asm_offset_ok 0
+           (asm_config_addr_offset c) w) \/
+             ((op = asm_Load32 \/ op = asm_Store32) /\
+               asm_offset_ok 0 (asm_config_addr_offset c) w) \/
+             ((op = asm_Load16 \/ op = asm_Store16) /\
+               asm_offset_ok 0 (asm_config_hw_offset c) w) \/
+             ((op = asm_Load8 \/ op = asm_Store8) /\ asm_offset_ok
+               0 (asm_config_byte_offset c) w) then
            let prog = inst_select_exp c temp temp exp' in
              Seq prog (wordLang_ShareInst op var (wordLang_Op
                asm_Add [Var temp; Const w])) else

@@ -1065,8 +1065,9 @@ let evaluate_wLive = cake_theorem "evaluate_wLive[local]"
          ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
          lens) 0 /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
-       LENGTH (stackSem_state_stack t5) = LENGTH (stack t) /\
-         stackSem_state_stack_space t5 = stackSem_state_stack_space t /\
+       LENGTH (stackSem_state_stack t5) = LENGTH
+         (stackSem_state_stack t) /\ stackSem_state_stack_space t5 =
+         stackSem_state_stack_space t /\
        (!i. ~(i = k) ==> get_var i t5 = get_var i t))`)
   CHEAT_TAC;;
 
@@ -1332,8 +1333,8 @@ let alloc_IMP_alloc = cake_theorem "alloc_IMP_alloc[local]"
          (if res = NONE then
            res1 = NONE /\
            word_to_stackProof_state_rel ac k f f' s1 t1 lens 0 /\
-           LENGTH (stackSem_state_stack t1) = LENGTH (stack t5) /\
-             stackSem_state_stack_space
+           LENGTH (stackSem_state_stack t1) = LENGTH
+             (stackSem_state_stack t5) /\ stackSem_state_stack_space
            t1 = stackSem_state_stack_space t5 else
            res = SOME wordSem_NotEnoughSpace /\ res1 = SOME (Halt
              (wordLang_Word (n2w 1))) /\ state_clock

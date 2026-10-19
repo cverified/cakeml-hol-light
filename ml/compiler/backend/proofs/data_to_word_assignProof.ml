@@ -4662,7 +4662,7 @@ let parts_to_words_NONE = cake_theorem "parts_to_words_NONE[local]"
        limits_inv (dataSem_state_limits s) (FLOOKUP
          (wordSem_state_store t) HeapLength) (wordSem_state_stack_limit
          t) (data_to_word_config_len_size
-                  c) (has_fp_ops c)
+                  c) (data_to_word_config_has_fp_ops c)
                     (data_to_word_config_has_fp_tern c) ==>
        EXISTS ((~) o lim_safe_part (dataSem_state_limits s))
          parts'`)

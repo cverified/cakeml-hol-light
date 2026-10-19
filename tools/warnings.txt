@@ -280,8 +280,8 @@ word_cse	line 839 is 74 characters
 word_cse	line 852 is 76 characters
 word_cse	line 882 is 74 characters
 word_inst	line 184 is 77 characters
-word_inst	line 320 is 83 characters
-word_inst	line 324 is 79 characters
+word_inst	line 319 is 83 characters
+word_inst	line 323 is 79 characters
 word_simp	Overload delete_all
 word_simp	line 67 is 74 characters
 word_simp	line 152 is 76 characters
@@ -781,15 +781,15 @@ dataProps	ML code skipped: val full_cases = fs [ list_case_eq,option_case_eq
 dataProps	ML code skipped: val basic_tac = fs [evaluate_def]                       \\ r
 dataProps	ML code skipped: val trivial_tac = qpat_x_assum `evaluate _ = (_,_)` (strip_a
 dataProps	ML code skipped: val basics_tac = fs [evaluate_def]                  \\ every
-dataProps	line 695 is 78 characters
-dataProps	line 696 is 82 characters
-dataProps	line 718 is 80 characters
-dataProps	line 1033 is 77 characters
-dataProps	line 1034 is 74 characters
-dataProps	line 1431 is 74 characters
-dataProps	line 1507 is 75 characters
-dataProps	line 1675 is 73 characters
-dataProps	line 1676 is 74 characters
+dataProps	line 728 is 78 characters
+dataProps	line 729 is 82 characters
+dataProps	line 751 is 80 characters
+dataProps	line 1066 is 77 characters
+dataProps	line 1067 is 74 characters
+dataProps	line 1464 is 74 characters
+dataProps	line 1540 is 75 characters
+dataProps	line 1708 is 73 characters
+dataProps	line 1709 is 74 characters
 data_liveProof	ML code skipped: fun cases_on_op q = Cases_on q >|   map (MAP_EVERY Cases_on)
 data_liveProof	ML code skipped: Resume evaluate_compile[Skip]:   (fs [evaluate_def,compile_d
 data_liveProof	ML code skipped: Resume evaluate_compile[Move]:   (fs [evaluate_def,compile_d
@@ -2056,12 +2056,12 @@ lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
 lab_to_targetProof	line 634 is 74 characters
 lab_to_targetProof	line 635 is 76 characters
 lab_to_targetProof	line 637 is 76 characters
-lab_to_targetProof	line 2247 is 75 characters
-lab_to_targetProof	line 3511 is 92 characters
-lab_to_targetProof	line 3516 is 77 characters
-lab_to_targetProof	line 3557 is 84 characters
-lab_to_targetProof	line 4505 is 75 characters
-lab_to_targetProof	line 4893 is 93 characters
+lab_to_targetProof	line 2244 is 75 characters
+lab_to_targetProof	line 3508 is 92 characters
+lab_to_targetProof	line 3513 is 77 characters
+lab_to_targetProof	line 3554 is 84 characters
+lab_to_targetProof	line 4502 is 75 characters
+lab_to_targetProof	line 4891 is 93 characters
 flat_elimProof	Theorem SUM_MAP_v3_size: the auxiliary size function v3_size
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
@@ -2294,7 +2294,7 @@ word_to_stackProof	ML code skipped: val wconvs = [post_alloc_conventions_def,wor
 word_to_stackProof	ML code skipped: val reg_bound_ind = stackPropsTheory.reg_bound_ind val reg_b
 word_to_stackProof	line 711 is 75 characters
 word_to_stackProof	line 714 is 82 characters
-word_to_stackProof	line 3116 is 76 characters
+word_to_stackProof	line 3117 is 76 characters
 stack_to_labProof	ML code skipped: val get_labels_def = stackSemTheory.get_labels_def; val get_
 stack_to_labProof	Overload Loc
 stack_to_labProof	ML code skipped: val is_Label_def = labSemTheory.is_Label_def
@@ -2309,7 +2309,7 @@ stack_to_labProof	Overload stack_alloc_compile
 stack_to_labProof	Overload stack_remove_compile
 stack_to_labProof	ML code skipped: val sextract_labels_def = stackPropsTheory.extract_labels_de
 stack_to_labProof	ML code skipped: val stack_asm_ok_def = stackPropsTheory.stack_asm_ok_def
-stack_to_labProof	line 1105 is 75 characters
+stack_to_labProof	line 1104 is 75 characters
 backendProof	ML code skipped: val compile_tap_def = backend_passesTheory.compile_tap_def;
 backendProof	Overload bvl_inline_compile_prog
 backendProof	Overload bvi_tailrec_compile_prog
@@ -2346,7 +2346,7 @@ backendProof	ML code skipped: fun conseq xs = ConseqConv.CONSEQ_REWRITE_TAC (xs,
 backendProof	ML code skipped: fun qsubpat_x_assum tac = let     fun m t = can (find_term (
 backendProof	Overload mk_flat_install_conf
 backendProof	ML code skipped: val mk_flat_install_conf_def = flatPropsTheory.mk_flat_insta
-backendProof	line 1262 is 73 characters
+backendProof	line 1261 is 73 characters
 gramProps	ML code skipped: fun dsimp thl = asm_simp_tac (srw_ss() ++ DNF_ss) thl fun as
 gramProps	ML code skipped: fun qispl_then [] ttac = ttac   | qispl_then (q::qs) ttac = 
 gramProps	ML code skipped: fun erule k th = let   fun c th = let     val (vs, body) = s

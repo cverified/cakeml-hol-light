@@ -1002,11 +1002,10 @@ let compile_to_word_conventions2 =
            (asm_config_avoid_regs ac))) prog /\
        (EVERY (\(n,m,prog).
                  every_inst (inst_ok_less ac) prog)
-              p /\ (\c. asm_offset_ok 0 (asm_config_addr_offset c))
-                ac (n2w 0) /\ (\c. asm_offset_ok 0 (asm_config_hw_offset
-                c)) ac (n2w 0) /\
-        (\c. asm_offset_ok 0 (asm_config_byte_offset c)) ac (n2w 0)
-          ==>
+              p /\ asm_offset_ok 0 (asm_config_addr_offset ac) (n2w
+                0) /\ asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0)
+                /\
+        asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
                   full_inst_ok_less ac prog) /\
                  (asm_config_two_reg_arith ac ==>
                   every_inst two_reg_inst prog) /\
@@ -2024,8 +2023,8 @@ let compile_correct_is_safe_for_space =
      ~(semantics_prog s env prog Fail) /\
      backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
        asm_conf c mc /\
-     installed bytes cbspace bitmaps data_sp (ffi_names
-       (backend_config_lab_conf c'))
+     installed bytes cbspace bitmaps data_sp
+       (lab_to_target_config_ffi_names (backend_config_lab_conf c'))
           (heap_regs (stack_to_lab_config_reg_names
             (backend_config_stack_conf c))) mc
             (lab_to_target_config_shmem_extra (backend_config_lab_conf

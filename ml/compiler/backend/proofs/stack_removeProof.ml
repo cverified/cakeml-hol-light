@@ -1299,7 +1299,7 @@ let init_pre_def = cake_define
 let evaluate_init_code = cake_theorem "evaluate_init_code"
   (fun () ->
     `init_pre gen_gc max_heap bitmaps data_sp k start s /\
-  compile_oracle
+  stackSem_state_compile_oracle
       s = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
       (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
         /\ stack_num_stubs <= i + 1) /\
@@ -1344,7 +1344,7 @@ let init_semantics = cake_theorem "init_semantics"
   2)) /\
       stack_removeProof_code_rel jump off k code (state_code s) /\
       init_pre gen_gc max_heap bitmaps data_sp k start s /\
-        compile_oracle
+        stackSem_state_compile_oracle
       s = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
       (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
         /\ stack_num_stubs <= i + 1) ==>
@@ -1361,7 +1361,7 @@ let make_init_opt_SOME_semantics =
   cake_theorem "make_init_opt_SOME_semantics"
   (fun () ->
     `init_pre gen_gc max_heap bitmaps data_sp k start s2 /\
-  compile_oracle
+  stackSem_state_compile_oracle
       s2 = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
       (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
         /\ stack_num_stubs <= i + 1) /\
@@ -1564,14 +1564,13 @@ let stack_remove_comp_stack_asm_name =
     `!jump off k p.
        stack_asm_name c p /\ stack_asm_remove (c:'a asm_config) p
          /\
-       (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c (n2w 0)
-         /\
+       asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
        good_dimindex (:'a) /\
        (!n. n <= max_stack_alloc ==> asm_config_valid_imm
        c (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
          asm_config_valid_imm
        c (INL Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
-       (!s. (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c
+       (!s. asm_offset_ok 0 (asm_config_addr_offset c)
          (store_offset s)) /\
        reg_name (k + 2) c /\
        reg_name (k + 1) c /\
@@ -1585,7 +1584,7 @@ let stack_remove_stack_asm_name =
   (fun () ->
     `EVERY (\(n,p). stack_asm_name c p) prog /\
      EVERY (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c (n2w 0) /\
+     asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
      good_dimindex (:'a) /\
      (!n. n <= max_stack_alloc ==> asm_config_valid_imm
      c (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
@@ -1594,8 +1593,8 @@ let stack_remove_stack_asm_name =
        asm_config_valid_imm
      c (INL Add) (n2w 4) /\ asm_config_valid_imm
      c (INL Add) (n2w 8) /\
-     (!s. (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c
-       (store_offset s)) /\
+     (!s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset
+       s)) /\
      reg_name 7 c /\
      reg_name (k + 2) c /\
      reg_name (k + 1) c /\

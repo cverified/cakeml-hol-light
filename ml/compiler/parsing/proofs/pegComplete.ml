@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  pegComplete: ported from HOL4's
-    compiler/parsing/proofs/pegCompleteScript.sml  *)
+    compiler/parsing/proofs/pegCompleteScript.sml
+    A proof theory, with 9 definitions and 81 theorems.  Needed by
+    compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -31,7 +33,7 @@ cake_hide ["C"; "sub"];;
 
 (* HOL4 pegCompleteScript.sml:23-25: ML code, not ported *)
 
-let option_case_eq = cake_theorem "option_case_eq[local]"
+let pegComplete_option_case_eq = cake_theorem "option_case_eq[local]"
   (fun () ->
     `(option_CASE optv n sf = v) <=>
         optv = NONE /\ n = v \/ (?v0. optv = SOME v0 /\ sf v0 =

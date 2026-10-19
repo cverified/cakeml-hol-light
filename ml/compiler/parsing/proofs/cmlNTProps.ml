@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  cmlNTProps: ported from HOL4's
-    compiler/parsing/proofs/cmlNTPropsScript.sml  *)
+    compiler/parsing/proofs/cmlNTPropsScript.sml
+    A proof theory, with no definitions and 84 theorems.  Needed by
+    pegComplete.ml.  *)
 (* ======================================================== *)
 
 (*

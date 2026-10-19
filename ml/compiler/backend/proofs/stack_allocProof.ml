@@ -2648,12 +2648,13 @@ let inst_correct = cake_theorem "inst_correct[local]"
          (state_code t))))) (stackSem_state_use_alloc_fupd (K F)
          (stackSem_state_use_store_fupd (K T)
          (stackSem_state_use_stack_fupd (K T) (state_gc_fun_fupd (K
-         anything) (compile_oracle_fupd (K ((I ## MAP prog_comp ## I) o
-         compile_oracle t)) (compile_fupd (K compile_rest)
-         (stackSem_state_regs_fupd (K regs1) t)))))))) /\
-         stackSem_state_regs
+         anything) (stackSem_state_compile_oracle_fupd (K ((I ## MAP
+         prog_comp ## I) o stackSem_state_compile_oracle t))
+         (compile_fupd (K compile_rest) (stackSem_state_regs_fupd (K
+         regs1) t)))))))) /\ stackSem_state_regs
        t SUBMAP regs1 /\
-       LENGTH (stack t) * (dimindex (:'a) DIV 8) < dimword (:'a) /\
+       LENGTH (stackSem_state_stack t) * (dimindex (:'a) DIV 8) <
+         dimword (:'a) /\
        LENGTH (buffer_buffer (state_data_buffer t)) + (LENGTH
          (stackSem_state_bitmaps t) + buffer_space_left
          (state_data_buffer t)) < dimword (:'a) - 1)`)
@@ -2880,7 +2881,7 @@ let stack_alloc_stack_asm_convs =
     `EVERY (\(n,p). stack_asm_name c p) prog /\
      EVERY (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
      conf_ok (:'a) conf /\
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c (n2w 0) /\
+     asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
      reg_name 10 c /\ good_dimindex (:'a) /\ asm_config_valid_imm
      c (INL Add) (n2w 8) /\ asm_config_valid_imm
      c (INL Add) (n2w 4) /\ asm_config_valid_imm

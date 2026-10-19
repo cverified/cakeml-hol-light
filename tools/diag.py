@@ -29,8 +29,10 @@ def hidden_names():
   out = {}
   cur = None
   for l in open(T + '../tmp/stmts.txt'):
-    if l.startswith('@@@HIDE'):
+    if l.startswith('@@@HIDE\t'):
       cur = l.split('\t')[1].split()
+    elif l.startswith('@@@HIDEC'):
+      pass
     elif l.startswith('@@@'):
       out[l.split('\t')[1]] = cur or []
     elif cur is not None and not l.startswith('@@@'):
@@ -47,42 +49,72 @@ def field_overloads():
     return set()
 
 
-def applied(name, f, nm):
-  """does the statement nm of the file f apply this name to an
-     argument?  A field of a record is a function, so a statement
-     that has one for a variable of its own (wordProps' alloc of a
-     state with clock := k has a variable compile_oracle) leaves a
-     free variable of a function type behind that is no error"""
+def reads_field(name, f, nm):
+  """does the HOL4 source of this statement read the field of that
+     name (s.name) or set it (with name := ...)?  Where it does
+     not, the name is a variable of the source as well and no
+     finding (the oracle of stack_allocProof's make_init_semantics
+     is a variable that the statement applies to a number)"""
+  import db as dbmod, hol4
+  global _DB, _SRC
   try:
-    sts = thmcheck.statements(T + '../ml/' + f)
+    _DB
+  except NameError:
+    _DB = dbmod.Db(); _SRC = {}
+  thy = None
+  for t, path, kind in dbmod.load_order():
+    if _DB.mlpath_of(t) == f: thy = t; break
+  if thy is None: return True
+  if thy not in _SRC:
+    out = {}
+    for b in hol4.parse(_DB.thy_of_file[thy]):
+      if b.kind in ('Theorem', 'Triviality', 'ThmValue') and b.name:
+        out[b.name] = b.body or b.text or ''
+    _SRC[thy] = out
+  body = _SRC[thy].get(re.sub(r'\[.*', '', nm))
+  if body is None: return True
+  return bool(re.search(r'\.\s*' + re.escape(name) + r'\b', body) or
+              re.search(r'\b' + re.escape(name) + r'\s*:=', body))
+
+
+def applied_rows():
+  """the variables that a statement applies to an argument, per
+     statement (the APPLIED lines that tools/diag.ml writes)"""
+  out = {}
+  try:
+    for l in open(T + '../tmp/diag.out'):
+      f = l.rstrip('\n').split('\t')
+      if len(f) >= 5 and f[0] == 'APPLIED':
+        out[(f[1], f[3])] = set(f[4].split())
   except OSError:
-    try:
-      sts = thmcheck.statements(f)
-    except OSError:
-      return True
-  pat = re.compile(r'\b' + re.escape(name) + r'\s*[A-Za-z0-9_(]')
-  for n2, line, stmt in sts:
-    if n2 == nm: return bool(pat.search(stmt))
-  return True
+    pass
+  return out
 
 
 def applied_hidden(rows_free, hid):
-  """a free variable of a statement that has a function type, that
-     the statement applies to an argument, and that has a name the
-     port hid (the hide list of the file, or the overloads of the
-     record fields that cake_as_vars takes away): the statement
-     applies a constant that the port made a variable, so it says
-     something else than the source does"""
+  """a free variable of a statement that the statement applies to
+     an argument and whose name overloads the accessors of a
+     record field, which cake_as_vars takes away where the
+     statement uses the name of a field for a variable of its own:
+     the statement reads a field through a name that the port made
+     a variable, so it says something else than the source does.
+
+     A name that the file hides is no finding: the port hides what
+     no theory in the scope of the source defines and what the
+     source hides itself (Parse.hide), and HOL4 reads a variable
+     there as well (word_elimProof hides mem, and its
+     FINITE_mdom_mem is about a variable mem of its own)."""
   out = []
   flds = field_overloads()
+  app = applied_rows()
   for f, nm, vs in rows_free:
     for v in vs.split():
       n, _, ty = v.partition(':')
       if '->' not in ty: continue
-      if n not in flds and n not in hid.get(f, []): continue
-      if not applied(n, f, nm): continue
-      out.append((f, nm, n, 'hidden' if n in hid.get(f, [])
-                            else 'a field'))
+      if n in hid.get(f, []) or n not in flds: continue
+      if n not in app.get((f, nm), ()): continue
+      if not reads_field(n, f, nm): continue
+      out.append((f, nm, n, 'a field'))
   return out
 
 

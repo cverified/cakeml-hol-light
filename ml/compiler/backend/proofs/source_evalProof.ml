@@ -1381,33 +1381,32 @@ let adjust_oracle_evaluate = cake_theorem "adjust_oracle_evaluate"
          s) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
          is_insert_oracle ci f (semanticPrimitives_state_eval_state
            s') /\
-         evaluate ((\ci f s.
-           semanticPrimitives_state_eval_state_fupd (adjust_oracle ci f)
-           s) ci (compile_decs o f) s) env exps =
-             ((\ci f s. semanticPrimitives_state_eval_state_fupd
-               (adjust_oracle ci f) s) ci (compile_decs o f) s',res)) /\
+         evaluate (semanticPrimitives_state_eval_state_fupd
+           (adjust_oracle ci (compile_decs o f)) s) env exps =
+             (semanticPrimitives_state_eval_state_fupd
+               (adjust_oracle ci (compile_decs o f)) s',res)) /\
      (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res.
        evaluate_evaluate_match s env x pes err_x = (s',res) /\
        is_insert_oracle ci f (semanticPrimitives_state_eval_state
          s) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
          is_insert_oracle ci f (semanticPrimitives_state_eval_state
            s') /\
-         evaluate_evaluate_match ((\ci f s.
-           semanticPrimitives_state_eval_state_fupd (adjust_oracle ci f)
-           s) ci (compile_decs o f) s) env x pes err_x =
-             ((\ci f s. semanticPrimitives_state_eval_state_fupd
-               (adjust_oracle ci f) s) ci (compile_decs o f) s',res)) /\
+         evaluate_evaluate_match
+           (semanticPrimitives_state_eval_state_fupd (adjust_oracle ci
+           (compile_decs o f)) s) env x pes err_x =
+             (semanticPrimitives_state_eval_state_fupd
+               (adjust_oracle ci (compile_decs o f)) s',res)) /\
      (!((s:'ffi semanticPrimitives_state)) env ds s' res.
        evaluate_evaluate_decs s env ds = (s',res) /\
        is_insert_oracle ci f (semanticPrimitives_state_eval_state
          s) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
          is_insert_oracle ci f (semanticPrimitives_state_eval_state
            s') /\
-         evaluate_evaluate_decs ((\ci f s.
-           semanticPrimitives_state_eval_state_fupd (adjust_oracle ci f)
-           s) ci (compile_decs o f) s) env ds =
-             ((\ci f s. semanticPrimitives_state_eval_state_fupd
-               (adjust_oracle ci f) s) ci (compile_decs o f) s',res))`)
+         evaluate_evaluate_decs
+           (semanticPrimitives_state_eval_state_fupd (adjust_oracle ci
+           (compile_decs o f)) s) env ds =
+             (semanticPrimitives_state_eval_state_fupd
+               (adjust_oracle ci (compile_decs o f)) s',res))`)
   CHEAT_TAC;;
 
 (* HOL4 source_evalProofScript.sml:2431-2435: a theorem that HOL4
@@ -1427,10 +1426,9 @@ let adjust_oracle_semantics_prog =
        ffi_Fail) /\
      semantics_prog ((s:'ffi semanticPrimitives_state)) env prog
        outcome ==>
-     semantics_prog ((\ci f s.
-       semanticPrimitives_state_eval_state_fupd (adjust_oracle ci f)
-       s) ci (compile' o f) ((s:'ffi semanticPrimitives_state))) env
-       prog outcome`)
+     semantics_prog (semanticPrimitives_state_eval_state_fupd
+       (adjust_oracle ci (compile' o f)) ((s:'ffi
+       semanticPrimitives_state))) env prog outcome`)
   CHEAT_TAC;;
 
 cake_hide [];;

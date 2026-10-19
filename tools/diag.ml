@@ -79,11 +79,25 @@ let diag_run infile outfile =
           (incr bad; say "BADTYPE" f l nm (string_of_type ty))
         else
           let vs = frees tm in
-          if vs <> [] then
+          if vs <> [] then begin
             say "FREE" f l nm
               (String.concat " "
                  (map (fun v -> fst (dest_var v)^":"^
-                                string_of_type (type_of v)) vs))
+                                string_of_type (type_of v)) vs));
+            (* a free variable that the statement applies to an
+               argument: where the port made it a variable and
+               HOL4 reads a constant there, the statement says
+               something else than the source does (tools/diag.py).
+               A field of a record is a function, so a variable
+               that only stands for one is no finding *)
+            let cs = find_terms is_comb tm in
+            let app =
+              filter (fun v -> exists (fun t -> rator t = v) cs) vs in
+            if app <> [] then
+              say "APPLIED" f l nm
+                (String.concat " " (map (fun v -> fst (dest_var v))
+                                      app))
+          end
        with Failure m -> (incr bad; say "FAIL" f l nm m)
           | Invalid_argument m -> (incr bad; say "FAIL" f l nm m));
       let dt = Sys.time () -. t0 in

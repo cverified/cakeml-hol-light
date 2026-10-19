@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  gram: ported from HOL4's
-    semantics/gramScript.sml  *)
+    semantics/gramScript.sml
+    A definition theory, with 7 definitions and 2 theorems.  Needed
+    by cmlNTProps.ml, cmlPEG.ml, cmlParse.ml, cmlPtreeConversion.ml,
+    gramProps.ml, pegComplete.ml, pegSound.ml and semantics.ml.  *)
 (* ======================================================== *)
 
 (*

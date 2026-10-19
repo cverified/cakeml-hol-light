@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  cmlPEG: ported from HOL4's
-    compiler/parsing/cmlPEGScript.sml  *)
+    compiler/parsing/cmlPEGScript.sml
+    A definition theory, with 25 definitions and 17 theorems.
+    Needed by cmlParse.ml, fromSexp.ml, infer.ml, pegComplete.ml and
+    pegSound.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -617,7 +617,7 @@ let inst_select_exp_full_inst_ok_less =
   cake_theorem "inst_select_exp_full_inst_ok_less[local]"
   (fun () ->
     `!c tar temp exp.
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c (n2w 0) ==>
+     asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) ==>
      full_inst_ok_less c (inst_select_exp c tar temp exp)`)
   CHEAT_TAC;;
 
@@ -625,11 +625,9 @@ let inst_select_full_inst_ok_less =
   cake_theorem "inst_select_full_inst_ok_less"
   (fun () ->
     `!c temp prog.
-       (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c (n2w 0)
-         /\
-       (\c. asm_offset_ok 0 (asm_config_hw_offset c)) c (n2w 0) /\
-       (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c (n2w 0)
-         /\
+       asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
+       asm_offset_ok 0 (asm_config_hw_offset c) (n2w 0) /\
+       asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
        every_inst (inst_ok_less c) prog ==>
        full_inst_ok_less c (inst_select c temp prog)`)
   CHEAT_TAC;;

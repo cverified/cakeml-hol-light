@@ -519,7 +519,7 @@ let state_rel_read_reg_FLOOKUP_regs =
   (fun () ->
     `state_rel s t /\
      FLOOKUP (stackSem_state_regs s) x = SOME y ==>
-     y = (\r s. labSem_state_regs s r) x t`)
+     y = labSem_state_regs t x`)
   CHEAT_TAC;;
 
 let state_rel_read_fp_reg_FLOOKUP_fp_regs =
@@ -569,7 +569,7 @@ let compile_jump_correct = cake_theorem "compile_jump_correct"
   (fun () ->
     `asm_fetch_aux pc code = SOME (compile_jump dest) /\
      loc_to_pc (dest_to_loc' regs dest) 0 code = SOME pc' /\
-     (!r. dest = INR r ==> (?p. (\r s. labSem_state_regs s r) r s =
+     (!r. dest = INR r ==> (?p. labSem_state_regs s r =
        wordLang_Loc p 0)) /\ labSem_state_pc
      (s:('a,'c,'ffi)labSem_state) = pc /\ labSem_state_code s =
        code /\ labSem_state_regs s = regs /\ ~(labSem_state_clock s = 0)
@@ -908,9 +908,8 @@ let halt_assum_lemma = cake_theorem "halt_assum_lemma[local]"
 let FLOOKUP_regs = cake_theorem "FLOOKUP_regs[local]"
   (fun () ->
     `!regs' n v f s.
-         FLOOKUP (FEMPTY |++ MAP (\r. (r,(\r s. labSem_state_regs s
-           r) r s)) regs') n = SOME v ==>
-         (\r s. labSem_state_regs s r) n s = v`)
+         FLOOKUP (FEMPTY |++ MAP (\r. (r,stackSem_state_regs s
+           r)) regs') n = SOME v ==> stackSem_state_regs s n = v`)
   CHEAT_TAC;;
 
 let state_rel_make_init = cake_theorem "state_rel_make_init"
@@ -1089,7 +1088,7 @@ let EVERY_sec_ends_with_label_MAP_prog_to_section =
 let flatten_line_ok_pre = cake_theorem "flatten_line_ok_pre[local]"
   (fun () ->
     `!t p n m cs bs ls a b c.
-     (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c (n2w 0) /\
+     asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
      stack_asm_ok c p /\
      stack_to_lab_flatten t p n m cs bs = (ls,a,b) ==>
      EVERY (line_ok_pre c) (append ls)`)
@@ -1097,7 +1096,7 @@ let flatten_line_ok_pre = cake_theorem "flatten_line_ok_pre[local]"
 
 let compile_all_enc_ok_pre = cake_theorem "compile_all_enc_ok_pre"
   (fun () ->
-    `(\c. asm_offset_ok 0 (asm_config_byte_offset c)) c (n2w 0) /\
+    `asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
      EVERY (\(n,p). stack_asm_ok c p) prog ==>
      (\c ls. EVERY (sec_ok_pre c) ls) c (MAP prog_to_section
        prog)`)
@@ -1117,9 +1116,9 @@ let stack_to_lab_compile_all_enc_ok =
        (asm_config_reg_count (c:'a asm_config)) (asm_config_avoid_regs
        c) /\
      fixed_names (stack_to_lab_config_reg_names c1) c /\
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c (n2w 0) /\
+     asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
        good_dimindex (:'a) /\
-     (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c (n2w 0) /\
+     asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
      (!n. n <= max_stack_alloc ==> asm_config_valid_imm
      c (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
        asm_config_valid_imm
@@ -1129,8 +1128,8 @@ let stack_to_lab_compile_all_enc_ok =
        1) /\ asm_config_valid_imm
      c (INL Add) (n2w 4) /\ asm_config_valid_imm c (INL Add) (n2w
        8) /\
-     (!s. (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c
-       (store_offset s)) /\ reg_name 10 c /\
+     (!s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset
+       s)) /\ reg_name 10 c /\
      reg_name (sp + 2) c /\ reg_name (sp + 1) c /\ reg_name sp c /\
      conf_ok (:'a) c2 /\ ~(sp = 0) ==>
      (\c ls. EVERY (sec_ok_pre c) ls) c (compile c1 c2 c3 sp

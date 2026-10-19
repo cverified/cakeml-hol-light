@@ -98,7 +98,11 @@ ACCESSORS = {
   # the field all the same: the mem of its statements is the one
   # of a labSem state
   'labProps': {'mem': 'labSem_state_mem',
-               'mem_fupd': 'labSem_state_mem_fupd'},
+               'mem_fupd': 'labSem_state_mem_fupd',
+               # four statements of it have a variable mem and
+               # read the mem_domain of a labSem state, which the
+               # name of the field would lose with the others
+               'mem_domain': 'labSem_state_mem_domain'},
 }
 
 # THM_ACCESSORS: the accessor that a statement reads a record
@@ -120,6 +124,41 @@ THM_ACCESSORS = {
   # gives that accessor, which keeps its overload)
   ('wordProps', 'get_var_imm_with_const'):
     {'stack': 'wordSem_state_stack'},
+  # these read a field through the name of it and have a variable
+  # of the name of another field, so the overloads of the field
+  # names are taken away and the accessor has to be written out
+  # (tools/diag.py finds them: it says which statement applies a
+  # name that the port made a variable, where the source reads a
+  # field of that name)
+  ('backendProof', 'compile_correct_is_safe_for_space'):
+    {'ffi_names': 'lab_to_target_config_ffi_names'},
+  ('data_to_wordProof', 'compile_semantics'):
+    {'be': 'data_to_word_config_be'},
+  ('data_to_word_assignProof', 'parts_to_words_NONE'):
+    {'has_fp_ops': 'data_to_word_config_has_fp_ops'},
+  # the t whose mem this one reads says nowhere which record it
+  # is of (an asm_state and a labSem state both have a mem of
+  # that type, and HOL4 takes the one of the theory that its
+  # grammar loads last, which is labSem's)
+  ('lab_to_targetProof', 'asm_fetch_NOT_ffi_entry_pcs'):
+    {'mem': 'labSem_state_mem'},
+  ('stack_allocProof', 'inst_correct'):
+    {'compile_oracle': 'stackSem_state_compile_oracle',
+     'stack': 'stackSem_state_stack'},
+  ('stack_removeProof', 'evaluate_init_code'):
+    {'compile_oracle': 'stackSem_state_compile_oracle'},
+  ('stack_removeProof', 'init_semantics'):
+    {'compile_oracle': 'stackSem_state_compile_oracle'},
+  ('stack_removeProof', 'make_init_opt_SOME_semantics'):
+    {'compile_oracle': 'stackSem_state_compile_oracle'},
+  # the stack that state_rel compares is the one of the stackSem
+  # state of the two
+  ('word_to_stackProof', 'evaluate_wLive'):
+    {'stack': 'stackSem_state_stack'},
+  ('word_to_stackProof', 'alloc_IMP_alloc'):
+    {'stack': 'stackSem_state_stack'},
+  ('targetProps', 'ffi_interfer_ok_post_ffi_asm'):
+    {'ffi_names': 'machine_config_ffi_names'},
 }
 
 # UPDATERS: the field updates that HOL4 declares with ML code
