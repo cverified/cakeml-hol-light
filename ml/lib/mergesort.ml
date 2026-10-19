@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  mergesort: ported from HOL4's
-    src/sort/mergesortScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by clos_knownProof.ml,
-    clos_knownProps.ml, mllist.ml and regexp_compiler.ml.  *)
+    src/sort/mergesortScript.sml  *)
 (* ======================================================== *)
 
 needs "lib/sorting.ml";;

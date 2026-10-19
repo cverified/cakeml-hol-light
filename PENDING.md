@@ -69,22 +69,14 @@ of phase three needs are proved when that proof needs them.  The
 
 # Statements that the port cannot read yet
 
-Of the 10,128 statements of the port the run of 22:57 could not
-read 26 (the run of 20:17 could not read 100, and `PLAN.md` says
-what both rounds were about).  **One** of the 26 is left, and the
-run of 01:30 says whether anything else is:
+Of the 10,129 statements of the port the run of 01:40 could not
+read four (the run of 22:57 could not read 26 and the one of
+20:17 a hundred; `PLAN.md` says what the rounds were about).
+Three of those four read now, and **one** is left:
 
 | statement | what it needs |
 |---|---|
-| `bvi_tmcProof$evaluate_cb` | the definition of `alloc_hole_has_val` of its own theory, whose `extras` the port made a list of dataSem's values: the `RefPtr` and the `MutBlock` of its body are bvlSem's, which is what `evaluate` of bviSem takes (`tools/bin/types` found it, and `overrides.CON_OF` says it now) |
-
-What the other 25 needed is in `PLAN.md`; the statements of
-`linear_scanProof` that needed a numeral to be an integer are
-among them, and the ones that said only "overload resolution"
-were four readings of the translation (a `Parse.hide` of the
-source, the name that HOL4 gives an accessor, the constant of a
-name that a field has as well, and the field in the body of an
-overload) and three constructors of the wrong theory.
+| `lab_to_targetProof$word_cmp_lemma` | the `read_reg` of it is the `regs` of a labSem state on one side of the equation and of an `asm_state` on the other.  HOL4 resolves the name of an `Overload` by the type of each occurrence; the port expands the body of one (`\r s. s.regs r`) once per theory, and writes the accessor of the field out there because a statement that uses the name of a field for a variable of its own is read with those names taken away.  What would settle it is to expand such an overload **per occurrence**, with the record of the argument that is there (the port knows it: `s1` is a labSem state and `t1` an `asm_state`), which is what a beta reduction of the application would come to |
 
 # Definitions that the port assumes with a free variable
 

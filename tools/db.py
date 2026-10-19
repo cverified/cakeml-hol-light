@@ -464,8 +464,17 @@ class Db:
         if b.kind == 'Datatype':
           for ty, cons, flds in hol4.datatype_names(b.body):
             names += [ty] + cons + flds
-        elif b.kind in ('Definition', 'Inductive', 'CoInductive'):
+        elif b.kind == 'Definition':
           names += definition_names(b.body, b.name)
+        elif b.kind in ('Inductive', 'CoInductive'):
+          # the rules of an inductive are implications, whose
+          # conclusions name the relations (the peg_eval of HOL4's
+          # pegTheory, which 67 statements of pegComplete read as
+          # a variable because nothing said that the library layer
+          # needs it)
+          names += (definition_names(b.body) or
+                    rule_names(b.body) or
+                    ([b.name] if b.name else []))
         elif b.name:
           names.append(b.name)
         body = hol4.strip_comments(b.body) + \

@@ -8,6 +8,8 @@ the reason that HOL Light gives, and which files they are in.
 import sys, os, re, collections
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
+sys.path.insert(0, T)
+import thmcheck
 
 
 def kind(msg):
@@ -45,22 +47,42 @@ def field_overloads():
     return set()
 
 
+def applied(name, f, nm):
+  """does the statement nm of the file f apply this name to an
+     argument?  A field of a record is a function, so a statement
+     that has one for a variable of its own (wordProps' alloc of a
+     state with clock := k has a variable compile_oracle) leaves a
+     free variable of a function type behind that is no error"""
+  try:
+    sts = thmcheck.statements(T + '../ml/' + f)
+  except OSError:
+    try:
+      sts = thmcheck.statements(f)
+    except OSError:
+      return True
+  pat = re.compile(r'\b' + re.escape(name) + r'\s*[A-Za-z0-9_(]')
+  for n2, line, stmt in sts:
+    if n2 == nm: return bool(pat.search(stmt))
+  return True
+
+
 def applied_hidden(rows_free, hid):
-  """a free variable of a statement that has a function type and a
-     name that the port hid (the hide list of the file, or the
-     overloads of the record fields that cake_as_vars takes away):
-     the statement applies a constant that the port made a
-     variable, so it says something else than the source does"""
+  """a free variable of a statement that has a function type, that
+     the statement applies to an argument, and that has a name the
+     port hid (the hide list of the file, or the overloads of the
+     record fields that cake_as_vars takes away): the statement
+     applies a constant that the port made a variable, so it says
+     something else than the source does"""
   out = []
   flds = field_overloads()
   for f, nm, vs in rows_free:
     for v in vs.split():
       n, _, ty = v.partition(':')
       if '->' not in ty: continue
-      if n in hid.get(f, []):
-        out.append((f, nm, n, 'hidden'))
-      elif n in flds:
-        out.append((f, nm, n, 'a field'))
+      if n not in flds and n not in hid.get(f, []): continue
+      if not applied(n, f, nm): continue
+      out.append((f, nm, n, 'hidden' if n in hid.get(f, [])
+                            else 'a field'))
   return out
 
 

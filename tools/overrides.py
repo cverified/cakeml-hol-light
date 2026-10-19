@@ -455,6 +455,10 @@ NOT_NEEDED = set([
   # of regexp_compiler the port only needs the vector that
   # mlvector is about, not the sets of a regular expression
   ('regexp_compiler', 'union'), ('regexp_compiler', 'set'),
+  # the occurs check of walkstar is in the hand written part of
+  # that file already (EXTRA_HEAD below), where its rules are
+  # closed over the substitution: HOL4 leaves that one free
+  ('walkstar', 'oc'),
 ])
 
 # theories that a file needs although HOL4's Ancestors do not say so

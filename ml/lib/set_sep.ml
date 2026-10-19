@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  set_sep: ported from HOL4's
-    examples/machine-code/hoare-triple/set_sepScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 12 files of the port.  *)
+    examples/machine-code/hoare-triple/set_sepScript.sml  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

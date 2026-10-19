@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  machine_ieee: ported from HOL4's
-    src/floating-point/machine_ieeeScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by asmSem.ml, fpSem.ml, misc.ml,
-    semanticPrimitives.ml and wordSem.ml.  *)
+    src/floating-point/machine_ieeeScript.sml  *)
 (* ======================================================== *)
 
 needs "lib/binary_ieee.ml";;
