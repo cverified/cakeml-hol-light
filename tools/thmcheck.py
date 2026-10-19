@@ -23,6 +23,13 @@ def statements(path):
   return scan(open(path).read())
 
 
+def strip_dslash(text):
+  """the text without the comments of a term of the port, which
+     stand after // and run to the end of the line (a comment of
+     the source that is inside a block keeps its place that way)"""
+  return re.sub(r'(?m)^(\s*)//.*$', r'\1', text)
+
+
 def scan(text):
   """the same of the text of a ported file"""
   for m in re.finditer(r'\bcake_theorem\b', text):
@@ -35,7 +42,8 @@ def scan(text):
     j = text.find('`', i + 1)
     if j < 0:
       continue
-    yield s.group(1), text[:m.start()].count('\n') + 1, text[i + 1:j]
+    yield (s.group(1), text[:m.start()].count('\n') + 1,
+           strip_dslash(text[i + 1:j]))
 
 
 def files():

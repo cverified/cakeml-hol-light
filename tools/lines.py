@@ -8,11 +8,12 @@ comment that a HOL4 source has, which the port keeps unaltered
 over 72 characters outside a comment are the ones to put right,
 and the ones inside a comment are counted and are the sources'.
 """
-import sys, os
+import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import nohol4
 
-ML = os.path.dirname(os.path.abspath(__file__)) + '/../ml/'
+ML = (sys.argv[1] if sys.argv[1:] else
+      os.path.dirname(os.path.abspath(__file__)) + "/../ml/")
 
 
 def main():
@@ -26,6 +27,12 @@ def main():
       bare = nohol4.code_free(text).split('\n')
       for i, l in enumerate(text.split('\n')):
         if len(l) <= 72: continue
+        # a comment of a source inside a term or a datatype
+        # specification, which the port writes as the comment of
+        # HOL Light (// and to the end of the line) and keeps
+        # unaltered, whatever the length of its lines
+        if re.match(r'\s*`?//', l):
+          incomment += 1; continue
         if bare[i].strip():
           bad += 1
           if bad <= 5:

@@ -358,3 +358,32 @@ print_string
       (map (fun v -> fst (dest_var v))
          (sort (<) (frees (concl th))))) ^
    " (smoke_hidec accessor true free r,smoke_opaque2)\n");;
+
+(* ---------------------------------------------------------------- *)
+(* a comment of a source that stands inside a block: the port keeps
+   it where it stands, as the comment of HOL Light (// and to the
+   end of the line) in a term and in the specification of a
+   datatype, and as a comment of OCaml between the fields of a
+   record *)
+
+let smoke_c_INDUCT,smoke_c_RECURSION = define_datatype
+  "smoke_c = \
+   // the first constructor\n\
+   SmokeA (num) | \
+   // the second one\n\
+   SmokeB";;
+
+let smoke_cfun_def = cake_define
+  `smoke_cfun x =
+     // a comment in a term
+     x + 1`;;
+
+let smoke_crec_FIELDS = define_record "smoke_crec"
+  ["cfld","num";
+   (* a comment between two fields *)
+   "cfld2","bool"];;
+
+print_string (Printf.sprintf
+  "\nSMOKECOMMENT datatype %B term %B record %B (true true true)\n"
+  (can get_const_type "SmokeB") (can get_const_type "smoke_cfun")
+  (can get_const_type "smoke_crec_cfld2"));;

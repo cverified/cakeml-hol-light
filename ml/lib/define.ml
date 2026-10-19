@@ -2011,7 +2011,23 @@ let check_type_names news s =
     else incr i
   done;;
 
+(* a comment of the source inside a datatype specification, which
+   the port writes as the comment of HOL Light (// and to the end
+   of the line) so that it keeps its place and its text *)
+
+let strip_dslash s =
+  let n = String.length s in
+  let b = Buffer.create n in
+  let i = ref 0 in
+  while !i < n do
+    (if !i + 1 < n && s.[!i] = '/' && s.[!i + 1] = '/' then
+       while !i < n && s.[!i] <> '\n' do incr i done
+     else (Buffer.add_char b s.[!i]; incr i))
+  done;
+  Buffer.contents b;;
+
 let parse_datatype_spec s =
+  let s = strip_dslash s in
   let split c s =
     let out = ref [] and cur = ref [] and depth = ref 0 in
     String.iter

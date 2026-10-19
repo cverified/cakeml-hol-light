@@ -1112,7 +1112,11 @@ class Porter:
   # -- datatypes -------------------------------------------------
 
   def datatype(self, b):
-    specs = hol4.split_top(hol4.strip_comments(b.body), ';')
+    # the comments of the body are kept: one that stands before an
+    # alternative is written as the // comment of HOL Light before
+    # it, which the parser of the specification skips
+    # (ml/lib/define.ml's strip_dslash)
+    specs = hol4.split_top(b.body, ';')
     # the names of this block are the ones of its own constants
     self.ctx.defining = set()
     for ty, cons, flds in hol4.datatype_names(b.body):
@@ -1120,6 +1124,13 @@ class Porter:
     parts = []
     for part in specs:
       if not part.strip(): continue
+      # a comment of the source before the name of the type
+      pre_cs = []
+      while True:
+        mm = re.match(r"\s*(\(\*.*?\*\))", part, re.S)
+        if not mm: break
+        pre_cs.append(hterm.comment_text(mm.group(1)))
+        part = part[mm.end():]
       m = re.match(r"\s*([A-Za-z][A-Za-z0-9_']*)\s*=\s*(.*)$", part, re.S)
       if not m: raise SyntaxError('datatype: ' + part[:40])
       ty, rhs = m.group(1), m.group(2).strip()
@@ -1127,29 +1138,61 @@ class Porter:
         self.record(ty, rhs)
         continue
       cons = []
+      # a comment of the source stands before the | of the
+      # alternative that it is about, so one that follows the
+      # constructor of an alternative belongs to the next
+      carry = list(pre_cs)
       for alt in hol4.split_top(rhs, '|'):
         alt = alt.strip()
         if not alt: continue
+        # a comment on the line of the constructor before it is
+        # about that one (ast's op_class has EvalOp (* Eval
+        # primitive *)); one that starts a line of its own is
+        # about the alternative after it
+        cs, same, nxt, seen = list(carry), [], [], False
+        carry = []
+        i = 0
+        while i < len(alt):
+          mm = re.compile(r'\(\*.*?\*\)', re.S).match(alt, i)
+          if mm:
+            txt = hterm.comment_text(mm.group(0))
+            if not seen: cs.append(txt)
+            else:
+              j = mm.start() - 1
+              while j >= 0 and alt[j] in ' \t': j -= 1
+              (same if j >= 0 and alt[j] != '\n' else nxt).append(txt)
+            i = mm.end(); continue
+          if not alt[i].isspace(): seen = True
+          i += 1
+        carry = nxt
+        alt = hol4.strip_comments(alt).strip()
+        if not alt:
+          carry = cs + carry
+          continue
         toks = hterm.tokenize(alt)
         cname = toks[0].text
         tp = hterm.TypeParser(toks[1:-1])
         argtys = []
         while tp.i < len(tp.toks):
           argtys.append(tp.parse_dtarg())
-        cons.append((cname, argtys))
+        cons.append((cname, argtys, cs, same))
       parts.append((ty, cons))
     if not parts: return
+    def alt(c, args, cs, after):
+      t = ' '.join([self.nm(c)] +
+                   ['(%s)' % self.typ_ast(a) for a in args])
+      return (''.join('@@' + l + '@@' for cm in cs for l in cm) + t +
+              ''.join('@@' + l + '@@' for cm in after for l in cm))
     spec = ';\n   '.join(
       '%s = %s' % (self.tnm(ty),
-                   ' | '.join(
-                     ' '.join([self.nm(c)] +
-                              ['(%s)' % self.typ_ast(a) for a in args])
-                     for c, args in cons))
+                   ' | '.join(alt(c, args, cs, af)
+                              for c, args, cs, af in cons))
       for ty, cons in parts)
     # HOL Light gives the type the type variables of the whole
     # specification, in the order in which it sorts them, so the
     # port knows how to write the type of a constructor
     params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*", spec)))
+    params = [x for x in params if x != "'@@"]
     for ty, _ in parts:
       self.db.ty_params[(self.thy, self.tnm(ty))] = params
     names = [ocaml_name(self.tnm(ty)) for ty, _ in parts]
@@ -1158,11 +1201,30 @@ class Porter:
     # the specification is laid out in lines of at most 72
     # characters; a line that is continued ends in a backslash,
     # which OCaml leaves out of the string
-    text = '\n'.join(
-      ' \\\n'.join(fill('  "' if k == 0 else '   ', part.split(), 69))
-      for k, part in enumerate(spec.split('\n')))
+    # a line that is continued ends in a backslash, which OCaml
+    # leaves out of the string; after a comment of the source the
+    # line break has to stay, or the rest of the specification
+    # would be in the comment, so that one ends in \n and a
+    # backslash
+    lines = []
+    for k, part in enumerate(spec.split('\n')):
+      pre = '  "' if k == 0 else '   '
+      first = True
+      for i, seg in enumerate(re.split(r'@@(.*?)@@', part)):
+        if i % 2:
+          lines.append(('   ' if not first else pre) + '// ' +
+                       seg.strip() + '\\n\\')
+          first = False
+          continue
+        if not seg.split(): continue
+        ls = fill(pre if first else '   ', seg.split(), 69)
+        lines += [l + ' \\' for l in ls]
+        first = False
+    text = '\n'.join(lines)
+    for end in (' \\', '\\n\\'):
+      if text.endswith(end): text = text[:-len(end)]
     overloads = self.overloads_of(
-      [c for _, cons in parts for c, _ in cons])
+      [c for _, cons in parts for c, _, _, _ in cons])
     head = 'let %s = define_datatype' % lhs
     if len(head) > 72:
       head = 'let %s =\n  define_datatype' % lhs
@@ -1261,8 +1323,25 @@ class Porter:
     src = []
     for f in hol4.split_top(inner, ';'):
       if not f.strip(): continue
+      # a comment of the source stands after the field that it is
+      # about, before or after the ; that follows it, so the ones
+      # before the name of a field belong to the field before it
+      before, after, seen = [], [], False
+      i2 = 0
+      while i2 < len(f):
+        mm = re.compile(r'\(\*.*?\*\)', re.S).match(f, i2)
+        if mm:
+          (after if seen else before).append(mm.group(0))
+          i2 = mm.end(); continue
+        if not f[i2].isspace(): seen = True
+        i2 += 1
+      f = hol4.strip_comments(f)
+      if not f.strip():
+        if flds: flds[-1][2].extend(before + after)
+        continue
+      if before and flds: flds[-1][2].extend(before)
       name, tytext = f.split(':', 1)
-      flds.append((name.strip(), self.typ(tytext.strip())))
+      flds.append([name.strip(), self.typ(tytext.strip()), after])
       try:
         src.append((name.strip(),
                     hterm.expand_type(
@@ -1273,21 +1352,33 @@ class Porter:
     # the monadic machinery of ml_monadBaseLib needs the fields of
     # the state record and their types
     self.rec_src[self.tnm(ty)] = src
-    lines = []
-    for i, (f, t) in enumerate(flds):
+    flds2 = [(f, t) for f, t, _ in flds]
+    # a comment of the source stands after the field that it is
+    # about, where the fields of the port are a list of strings of
+    # OCaml: it goes after the entry of that field, unaltered
+    body = ''
+    for i, (f, t, cs) in enumerate(flds):
       pre = '  [' if i == 0 else '   '
-      lines.append(' \\\n'.join(
-        fill(pre + '"%s","' % f, t.split(' '), 70)) + '"')
+      body += ' \\\n'.join(
+        fill(pre + '"%s","' % f, t.split(' '), 70)) + '"'
+      if i < len(flds) - 1: body += ';'
+      for c in cs:
+        body += '\n   ' + ' '.join(c.split())
+      body += '\n'
+    body = body.rstrip('\n')
+    # where the last field has a comment of the source after it,
+    # the bracket that closes the list goes on a line of its own
+    if flds and flds[-1][2]: body += '\n  '
     head = ('let %s_FIELDS = define_record "%s"'
             % (ocaml_name(self.tnm(ty)), self.tnm(ty)))
     if len(head) > 72:
       head = ('let %s_FIELDS =\n  define_record "%s"'
               % (ocaml_name(self.tnm(ty)), self.tnm(ty)))
-    self.out.append('%s\n%s];;' % (head, ';\n'.join(lines)))
+    self.out.append('%s\n%s];;' % (head, body))
     # the accessor and the update of a field that several record
     # types have become overloads of the name of the field
     amb = self.db.ambiguous_fields()
-    for f, _ in flds:
+    for f, _ in flds2:
       if f not in amb: continue
       for n, c in ((amb[f], f), (amb[f] + '_fupd', f + '_fupd')):
         # the overload of a field name is one that HOL4 does not
@@ -2494,7 +2585,10 @@ class Porter:
        typechecks every clause of a definition on its own, so the
        same variable name can have different types in two clauses,
        which one HOL Light quotation cannot"""
-    toks = hterm.tokenize(hol4.strip_comments(body))
+    # the comments of the body are kept: the tokenizer gives
+    # every one of them to the token after it, and the printer
+    # writes it there again
+    toks = hterm.tokenize(body)
     e = self.arg_cons(self.arm_intvars(
           self.lambda_cons(hterm.Parser(toks, self.ctx).parse())))
     if self.iffeq: e = self.iff_to_eq(e)
@@ -2690,7 +2784,7 @@ class Porter:
        is what HOL4's first match semantics means"""
     global CONS
     CONS = self.ctx.cons
-    toks = hterm.tokenize(hol4.strip_comments(body))
+    toks = hterm.tokenize(body)
     e = self.arg_cons(self.arm_intvars(
           self.lambda_cons(hterm.Parser(toks, self.ctx).parse())))
     # a bound variable whose name is a constant of the port is
@@ -2752,7 +2846,7 @@ class Porter:
     base = self.contys
     arms = []
     done = False
-    for _, args, r in cls:
+    for hd_, args, r in cls:
       sub = {args[i].name: names[i] for i in range(n)
              if i not in pats and args[i].kind == 'id'
              and not iscon(args[i].name)}
@@ -2779,17 +2873,28 @@ class Porter:
       for i in pats: vs |= self.int_vars_node(args[i])
       self.ctx.intvars = iv | vs
       try:
+        # a comment of the source before the clause goes before
+        # the arm that the port makes of it
+        cs = hterm.pop_comments(hd_)
         pat = ','.join(pr.pr(args[i], 60) for i in pats)
         if len(pats) > 1: pat = '(' + pat + ')'
         # the body of an arm needs its parentheses: a match, a let
         # or a conditional in it would swallow the arms after it
-        arms.append((pat, self.pr_body(pr, hterm.rename_ast(r, sub))))
+        arms.append((cs, pat,
+                     self.pr_body(pr, hterm.rename_ast(r, sub))))
       finally:
         self.ctx.intvars = iv
     scrut = ','.join(names[i] for i in pats)
     if len(pats) > 1: scrut = '(' + scrut + ')'
     head = pr.pr(hop, 0) + ' ' + ' '.join(names)
-    body = '\n     | '.join('%s -> %s' % (p, b) for p, b in arms)
+    # a comment of the source before a clause stands before the
+    # arm that the port makes of it, as it does in the source
+    def pre(cs):
+      return ''.join('// ' + l + '\n     '
+                     for cm in cs for l in cm)
+    body = pre(arms[0][0]) + '%s -> %s' % arms[0][1:]
+    for cs, p, b in arms[1:]:
+      body += '\n     ' + pre(cs) + '| %s -> %s' % (p, b)
     self.ctx.vars = {}
     return '%s =\n     match %s with\n       %s' % (head, scrut, body)
 
@@ -3322,6 +3427,10 @@ SAFE = '([,#+|'
 
 
 def wrap(line, indent, width, extra=2, hard=False):
+  # a comment of a term runs to the end of its line, so breaking
+  # it would put the rest of the line in the comment
+  if '//' in line: return line
+
   """break a line that is too long at a space (or, in a term, before
      a character that starts a token); the continuation is indented
      by extra, and with hard a line without any place to break is

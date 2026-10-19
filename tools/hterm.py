@@ -58,6 +58,7 @@ class Tok:
     self.pos = pos
     self.nl = nl         # number of newlines before this token
     self.indent = indent # the column of this token
+    self.comments = ()   # the comments of the source before it
 
   def __repr__(self):
     return f'{self.kind}:{self.text}'
@@ -134,10 +135,23 @@ def ascii_name(nm):
 QUAL_SYM = re.compile(r"\b[A-Za-z][A-Za-z0-9_']*\$(?=[-+*/<>=!?~^&|#%:@])")
 
 
+# the tokens that no term starts at: a comment before one of them
+# belongs to the term after it
+NOHEAD = set([')', ']', '|>', ';', ',', ':=', '.', '|', 'then',
+              'else', 'in', 'of', 'updated_by', '=>', '->',
+              # a bracket that opens is no term of its own either:
+              # the comment goes to the term inside it, which is
+              # where the port can write it again (the clauses of
+              # a definition are (f x = y) /\ (* a comment *) (f z
+              # = w), and the parentheses are gone by then)
+              '(', '['])
+
+
 def tokenize(s):
   s = expand_sx(s) if '\u27ea' in s else s
   s = QUAL_SYM.sub('$', s)
   toks = []
+  pend = []
   i = 0
   n = len(s)
   nl = 0
@@ -156,7 +170,16 @@ def tokenize(s):
         else:
           if s[j] == '\n': nl += 1
           j += 1
+      # the comment belongs to the token that follows it, which
+      # is where the port writes it again (as the // comment of
+      # HOL Light, which runs to the end of the line)
+      pend.append((j, s[i:j]))
       i = j; continue
+    # a // comment, so that the port can read its own terms again
+    if s.startswith('//', i):
+      j = s.find('\n', i)
+      i = n if j < 0 else j
+      continue
     start = i; icol = col
     if c in UNI:
       t = UNI[c]
@@ -293,6 +316,17 @@ def tokenize(s):
     else:
       raise SyntaxError(f'tokenize: {s[i:i+20]!r}')
   toks.append(Tok('eof', '', n, nl, 0))
+  # every comment of the source goes to the first token after it
+  # that a term can start at, which is where the printer writes it
+  # again: an operator or a bracket that closes is no such token
+  # (backend_common's word_num_stubs has stack_num_stubs + 1
+  # (* raise *) + 1, whose comment would be lost on the +)
+  for end, txt in pend:
+    for t in toks:
+      if (t.pos >= end and t.kind != 'eof' and t.text not in NOHEAD
+          and (t.kind != 'sym' or t.text not in INFIX)):
+        t.comments = t.comments + (txt,)
+        break
   return toks
 
 
@@ -1417,7 +1451,70 @@ def greek(toks):
   return any(t.kind == 'tyvar' and t.text.startswith("'g") for t in toks)
 
 
+def first_tok(e):
+  """the token of a term that comes first in the source"""
+  best = [None]
+
+  def go(x):
+    if not isinstance(x, Node): return
+    t = getattr(x, 'tok', None)
+    if t is not None and (best[0] is None or t.pos < best[0].pos):
+      best[0] = t
+    for k, v in x.__dict__.items():
+      if k == 'tok': continue
+      if isinstance(v, Node): go(v)
+      elif isinstance(v, (tuple, list)):
+        for y in v:
+          if isinstance(y, Node): go(y)
+          elif isinstance(y, (tuple, list)):
+            for z in y:
+              if isinstance(z, Node): go(z)
+
+  go(e)
+  return best[0]
+
+
+def pop_comments(e):
+  """the comments of the source before a term, taken off its first
+     token: a clause of a definition that the port writes as the
+     arm of a match is a term of its own there, and the comment
+     before it goes before the arm"""
+  t = first_tok(e)
+  if t is None or not t.comments: return []
+  cs = [comment_text(c) for c in t.comments
+        if not any(q in c for q in QUOTES)]
+  t.comments = ()
+  return cs
+
+
+def comment_text(c):
+  """the lines of a comment of a source, without its brackets and
+     without the indent that the source gave it"""
+  t = c[2:-2] if c.startswith('(*') and c.endswith('*)') else c
+  lines = [l.strip() for l in t.split('\n')]
+  while lines and not lines[0]: lines.pop(0)
+  while lines and not lines[-1]: lines.pop()
+  return lines or ['']
+
+
+# a comment that has a quotation in it would end the quotation of
+# OCaml that the term of the port stands in
+QUOTES = '`\u2018\u201c\u2019\u201d'
+
+
 def layout(tok, s):
+  cs = [c for c in (getattr(tok, 'comments', ()) if tok else ())
+        if not any(q in c for q in QUOTES)]
+  # a comment of the source that stands before this token: HOL
+  # Light reads // to the end of the line in a term quotation, so
+  # the comment keeps its place and its text
+  if cs:
+    ind = ' ' * max(tok.indent, 2)
+    out = '\n' * max(tok.nl, 1)
+    for c in cs:
+      out += '\n'.join(ind + '// ' + l for l in comment_text(c))
+      out += '\n'
+    return out + ind + s
   if tok is not None and tok.nl:
     return '\n' * tok.nl + ' ' * tok.indent + s
   return s
@@ -1426,7 +1523,10 @@ def layout(tok, s):
 def sameline(s):
   """the text without the line break that the layout of the source
      put in front of it: what the port writes before it (the ~( of
-     a negation) would be alone on a line of its own"""
+     a negation) would be alone on a line of its own.  A comment
+     that stands there keeps its line, or the term after it would
+     be in the comment"""
+  if re.match(r'^\n+[ ]*//', s): return s
   return re.sub(r'^\n+[ ]*', '', s)
 
 
@@ -1623,11 +1723,11 @@ class Printer:
     return out
 
   def updfn(self, v, rec, fld):
-    """the function of an updated_by: its argument is the field and
-       not the record, so a lambda there binds a variable of the
-       record type of the field (backend_passes' to_bvi_all has
-       c with clos_conf updated_by (\c. c with start := s), whose
-       inner c is a config of clos_to_bvl)"""
+    r"""the function of an updated_by: its argument is the field
+        and not the record, so a lambda there binds a variable of
+        the record type of the field (backend_passes' to_bvi_all
+        has c with clos_conf updated_by (\c. c with start := s),
+        whose inner c is a config of clos_to_bvl)"""
     w = v
     while w.kind == 'paren': w = w.e
     if not (w.kind == 'quant' and w.q == '\\' and len(w.vs) == 1
