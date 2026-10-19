@@ -675,9 +675,18 @@ theorem for the pair as well (`define_nested`).
 
 ## What is left of the first pass
 
-Every definition is in and the files load, but the definitions
-that none of the strategies of `cake_define` makes are _assumed_
-(`ml/CHEATS.md`).  Making them is the rest of the first pass:
+Every definition is in and the files load; no definition is
+assumed with a **free variable** in it any more, and every
+constant of the port is introduced by a definition -- the sixteen
+whose value HOL4 computes with the ML code of a source get an
+implicit one (`new_specification` of `?x. T`), which says nothing
+about the value and adds no axiom.  What is left are the 438
+definitions that `ml/CHEATS.md` lists: 306 whose **termination**
+is assumed (the constant, its type and its clauses are the real
+ones) and 132 that are the equation of a **tail recursion** that
+HOL4 proves in `mc_tailrecLib`.  Those are a proof each, which is
+phase three; a definition whose form is wrong is not, and these
+are the two shapes of that:
 
 - a definition whose clauses the port has to assume one by one is
   a bug of the port, not of HOL Light: the clauses are
