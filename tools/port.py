@@ -3058,7 +3058,11 @@ class Porter:
     # written as an application of the constant it stands for
     if (b.name in hterm.OWN_INFIX and
         b.name not in hterm.BASE_INFIX and IDENT.match(txt.strip())):
-      hterm.set_infix_name(b.name, self.ctx.name(txt.strip()))
+      c = self.ctx.name(txt.strip())
+      hterm.set_infix_name(b.name, c)
+      self.out.append(self.at(
+        b, 'the overload %s, which the port writes as an '
+           'application of %s' % (b.name, c)))
       return
     # an infix that the source overloads with a term of its own
     # is written as an application of that term (the ' of
