@@ -1452,7 +1452,7 @@ let get_var_imm_with_const = cake_theorem "get_var_imm_with_const[simp]"
        compile_oracle) y) = wordSem_get_var_imm x y /\
      wordSem_get_var_imm x (wordSem_state_termdep_fupd (K td) y) =
        wordSem_get_var_imm x y /\
-     wordSem_get_var_imm x (stack_fupd (K xs) y) =
+     wordSem_get_var_imm x (wordSem_state_stack_fupd (K xs) y) =
        wordSem_get_var_imm x y /\
      wordSem_get_var_imm x (wordSem_state_permute_fupd (K perm)
        y) = wordSem_get_var_imm x y`)

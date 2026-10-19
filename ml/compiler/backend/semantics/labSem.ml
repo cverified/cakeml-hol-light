@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  labSem: ported from HOL4's
-    compiler/backend/semantics/labSemScript.sml  *)
+    compiler/backend/semantics/labSemScript.sml
+    A definition theory, with 37 definitions, 2 datatypes and 2
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*

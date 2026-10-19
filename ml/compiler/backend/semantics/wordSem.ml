@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  wordSem: ported from HOL4's
-    compiler/backend/semantics/wordSemScript.sml  *)
+    compiler/backend/semantics/wordSemScript.sml
+    A definition theory, with 77 definitions, 4 datatypes and 16
+    theorems.  Needed by 31 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -645,14 +647,14 @@ let pop_env_def = cake_define
             (fromAList e0))) s)))) | _54 -> NONE)`;;
 hol4_overload "pop_env" "wordSem_pop_env";;
 
-let push_env_clock = cake_theorem "push_env_clock[local]"
+let wordSem_push_env_clock = cake_theorem "push_env_clock[local]"
   (fun () ->
     `wordSem_state_clock
        (wordSem_push_env env b ((s:('a,'c,'ffi)wordSem_state))) =
          wordSem_state_clock s`)
   CHEAT_TAC;;
 
-let pop_env_clock = cake_theorem "pop_env_clock[local]"
+let wordSem_pop_env_clock = cake_theorem "pop_env_clock[local]"
   (fun () ->
     `(wordSem_pop_env ((s:('a,'c,'ffi)wordSem_state)) = SOME s1) ==>
   (wordSem_state_clock s1 = wordSem_state_clock s)`)

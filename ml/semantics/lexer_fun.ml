@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  lexer_fun: ported from HOL4's
-    semantics/lexer_funScript.sml  *)
+    semantics/lexer_funScript.sml
+    A definition theory, with 25 definitions, 1 datatype and 14
+    theorems.  Needed by compiler.ml, compilerProof.ml,
+    lexer_impl.ml and semantics.ml.  *)
 (* ======================================================== *)
 
 (*

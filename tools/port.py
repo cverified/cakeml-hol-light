@@ -697,6 +697,7 @@ class Porter:
                         else self.db.hidden_for(self.thy, blocks))
     self.ctx.hidden = set(hide)
     self.hideconsts = hideconsts
+    self.hidmore = False
     self.db.base_grammar(self.thy)
     # an infix that an ancestor overloads with a constant is written
     # as an application of that constant
@@ -781,8 +782,11 @@ class Porter:
           % (tok, overrides.BASE_INFIX_CONST[tok])
           for tok in sorted(self.restore))
     # a hide list stays in the session until the next one, so a
-    # file that makes one takes it back at the end of itself
-    if hide:
+    # file that makes one takes it back at the end of itself --
+    # also where the list is one that a Parse.hide of the source
+    # added to (bvlSem hides str and labProps mem, and neither has
+    # a list of its own)
+    if hide or self.hidmore:
       text += '\ncake_hide [];;\n'
     if self.hideconsts:
       text += '\ncake_hide_consts [];;\n'
@@ -942,6 +946,7 @@ class Porter:
       hid = self.PARSE_HIDE.findall(b.text)
       if hid:
         self.ctx.hidden |= set(hid)
+        self.hidmore = True
         self.out.append('cake_hide_more [%s];;'
                         % '; '.join('"%s"' % h for h in hid))
       if any(re.search(pat, b.text) for pat in IGNORE_ML):

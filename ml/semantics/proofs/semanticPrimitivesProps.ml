@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  semanticPrimitivesProps: ported from HOL4's
-    semantics/proofs/semanticPrimitivesPropsScript.sml  *)
+    semantics/proofs/semanticPrimitivesPropsScript.sml
+    A proof theory about semanticPrimitives.ml, with 20 definitions
+    and 61 theorems.  Needed by 28 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -29,14 +31,15 @@ let unchanged_env = cake_theorem "unchanged_env[simp]"
      mk_sem_env (sem_env_v env) (sem_env_c env) = env`)
   CHEAT_TAC;;
 
-let with_same_clock = cake_theorem "with_same_clock"
+let semanticPrimitivesProps_with_same_clock =
+  cake_theorem "with_same_clock"
   (fun () ->
     `semanticPrimitives_state_clock_fupd (K
   (semanticPrimitives_state_clock st))
         (st:'ffi semanticPrimitives_state) = st`)
   CHEAT_TAC;;
 
-let boolv_11 = cake_theorem "Boolv_11[simp]"
+let semanticPrimitivesProps_Boolv_11 = cake_theorem "Boolv_11[simp]"
   (fun () ->
     `semanticPrimitives_Boolv b1 = semanticPrimitives_Boolv b2 <=> (b1
   = b2)`)
@@ -170,7 +173,8 @@ let pair_case_eq = cake_theorem "pair_case_eq[local]"
     `pair_CASE x f = v <=> (?x1 x2. x = (x1,x2) /\ f x1 x2 = v)`)
   CHEAT_TAC;;
 
-let pair_lam_lem = cake_theorem "pair_lam_lem[local]"
+let semanticPrimitivesProps_pair_lam_lem =
+  cake_theorem "pair_lam_lem[local]"
   (fun () ->
     `!f v z. (let (x,y) = z in f x y) = v <=> (?x1 x2. z = (x1,x2) /\
   (f x1 x2 = v))`)

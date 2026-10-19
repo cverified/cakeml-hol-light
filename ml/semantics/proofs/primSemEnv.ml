@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  primSemEnv: ported from HOL4's
-    semantics/proofs/primSemEnvScript.sml  *)
+    semantics/proofs/primSemEnvScript.sml
+    A proof theory, with no definitions and 2 theorems.  Needed by
+    backendProof.ml and typeSound.ml.  *)
 (* ======================================================== *)
 
 (*

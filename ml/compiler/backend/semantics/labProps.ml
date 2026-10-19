@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  labProps: ported from HOL4's
-    compiler/backend/semantics/labPropsScript.sml  *)
+    compiler/backend/semantics/labPropsScript.sml
+    A proof theory, with 18 definitions and 91 theorems.  Needed by
+    backendProof.ml, lab_filterProof.ml, lab_to_targetProof.ml,
+    stack_rawcallProof.ml and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -341,7 +344,7 @@ let share_mem_op_add_clock_same =
           state_clock r2)) r2)))`)
   CHEAT_TAC;;
 
-let evaluate_add_clock_io_events_mono =
+let labProps_evaluate_add_clock_io_events_mono =
   cake_theorem "evaluate_add_clock_io_events_mono"
   (fun () ->
     `!s. ffi_state_io_events (state_ffi
@@ -900,5 +903,7 @@ let no_share_mem_inst_def = cake_define
   `no_share_mem_inst code <=>
    (!p op re a inst' len. ~(asm_fetch_aux p code =
        SOME (labLang_Asm (ShareMem op re a) inst' len)))`;;
+
+cake_hide [];;
 
 cake_hide_consts [];;

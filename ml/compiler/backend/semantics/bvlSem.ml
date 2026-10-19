@@ -965,3 +965,5 @@ hol4_overload "semantics" "bvlSem_semantics";;
 (* clean up *)
 
 (* HOL4 bvlSemScript.sml:774: ML code, not ported *)
+
+cake_hide [];;

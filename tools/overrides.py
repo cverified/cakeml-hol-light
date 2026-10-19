@@ -113,6 +113,13 @@ THM_ACCESSORS = {
   # cannot say)
   ('source_to_flatProof', 'nsAll_extend_env'):
     {'v': 'source_to_flat_environment_v'},
+  # this one has a variable compile and a variable compile_oracle,
+  # so it is read with the overloads of the field names taken
+  # away, and the stack that it updates is the one of a wordSem
+  # state (the clock of it is read through the name that HOL4
+  # gives that accessor, which keeps its overload)
+  ('wordProps', 'get_var_imm_with_const'):
+    {'stack': 'wordSem_state_stack'},
 }
 
 # UPDATERS: the field updates that HOL4 declares with ML code

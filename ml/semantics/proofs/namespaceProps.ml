@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  namespaceProps: ported from HOL4's
-    semantics/proofs/namespacePropsScript.sml  *)
+    semantics/proofs/namespacePropsScript.sml
+    A proof theory about namespace.ml, with 3 definitions and 96
+    theorems.  Needed by 18 files of the port.  *)
 (* ======================================================== *)
 
 (*

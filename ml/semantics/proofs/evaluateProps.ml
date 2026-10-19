@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  evaluateProps: ported from HOL4's
-    semantics/proofs/evaluatePropsScript.sml  *)
+    semantics/proofs/evaluatePropsScript.sml
+    A proof theory about evaluate.ml, with 5 definitions and 87
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -124,13 +126,15 @@ let evaluate_decs_call_FFI_rel_imp =
          (semanticPrimitives_state_ffi s')`)
   CHEAT_TAC;;
 
-let do_app_io_events_mono = cake_theorem "do_app_io_events_mono"
+let evaluateProps_do_app_io_events_mono =
+  cake_theorem "do_app_io_events_mono"
   (fun () ->
     `semanticPrimitives_do_app (r,ffi) op vs = SOME ((r',ffi'),res)
   ==> io_events_mono ffi ffi'`)
   CHEAT_TAC;;
 
-let evaluate_io_events_mono = cake_theorem "evaluate_io_events_mono"
+let evaluateProps_evaluate_io_events_mono =
+  cake_theorem "evaluate_io_events_mono"
   (fun () ->
     `(!(s:'ffi semanticPrimitives_state) e exp.
         io_events_mono (semanticPrimitives_state_ffi s)
@@ -500,7 +504,7 @@ let evaluate_decs_clock_determ =
         s1 = semanticPrimitives_state_ffi s2 /\ r1 = r2)`)
   CHEAT_TAC;;
 
-let evaluate_add_to_clock_io_events_mono =
+let evaluateProps_evaluate_add_to_clock_io_events_mono =
   cake_theorem "evaluate_add_to_clock_io_events_mono"
   (fun () ->
     `(!(s:'ffi semanticPrimitives_state) e d extra.

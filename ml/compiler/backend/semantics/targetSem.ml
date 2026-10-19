@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  targetSem: ported from HOL4's
-    compiler/backend/semantics/targetSemScript.sml  *)
+    compiler/backend/semantics/targetSemScript.sml
+    A definition theory, with 19 definitions, 2 datatypes and no
+    theorems.  Needed by backendProof.ml, compilerProof.ml,
+    labSem.ml, lab_to_targetProof.ml and targetProps.ml.  *)
 (* ======================================================== *)
 
 (*

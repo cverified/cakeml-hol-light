@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  mlstring: ported from HOL4's
-    basis/pure/mlstringScript.sml  *)
+    basis/pure/mlstringScript.sml
+    A definition theory, with 49 definitions, 2 datatypes and 113
+    theorems.  Needed by 64 files of the port.  *)
 (* ======================================================== *)
 
 (*
