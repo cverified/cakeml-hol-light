@@ -108,8 +108,14 @@ The first pass ports every `Datatype`, `Type`, `Overload`,
 `Definition` and `Inductive` of the 269 files of the port: 4444
 blocks, of which all but two are in (see `tools/coverage.py`); the
 ones that HOL4 makes in a way that the port has no counterpart
-for are declared constants (`cake_declare`, which adds no
-axiom), which the list below has.
+for are declared constants (`cake_declare`), which the list below
+has.  A declared constant is no axiom: it gets an **implicit
+definition** (`new_specification` of `?x. T`), which says nothing
+about its value, because the value is one that HOL4 computes with
+the ML code of a source and the port cannot say it yet.  So every
+constant of the port is introduced by a definition, and the
+fourteen whose value is not said are counted in `ml/CHEATS.md`
+and named here.
 `tools/fidelity.py` checks that no definition lost a name or a
 constructor argument on the way, and `tools/literals.py` that
 its strings, its characters and its numerals are the same ones
@@ -193,18 +199,24 @@ as well: each is the `SHORT_TAILREC` of a step function
 proves there, is assumed -- 132 of the assumed theorems of the
 port are these.
 
-Six constants are declared for another reason (of the fourteen
-that the port declares in all): the one field of the asm
-configuration of a target that is not data is its
+Eight constants are declared for another reason: the one field of
+the asm configuration of a target that is not data is its
 encoder, and an encoder needs a machine model of HOL4 (`x64_step`
 and the five others), which is not part of the CakeML sources, so
 the six encoder theories are outside the port
-(`tools/excluded.txt`).  For each of `x64`, `arm8`, `mips`,
-`riscv` (64 bits) and `arm7`, `ag32` (32 bits) the port therefore
-declares `<target>_config`, with the type that
-`compiler$parse_target_64` and `parse_target_32`, which the
-command line of the compiler goes through, use it at
-(`EXTRA_BEFORE` in `tools/overrides.py` has the text).
+(`tools/excluded.txt`).  The configuration itself is data, so the
+port has it by hand, in the form the source gives it: for each of
+`x64`, `arm8`, `mips`, `riscv` (64 bits) and `arm7`, `ag32` (32
+bits) `<target>_config` is a definition of the port, with its
+sixteen fields as the source has them and `<target>_enc` declared
+-- and, for `arm8` and `arm7`, `<target>_valid_immediate` as
+well, because the one of `arm8` is data but for the
+`EncodeBitMask` of the model and the one of `arm7` is
+`IS_SOME o EncodeARMImmediate`.  Where the source antiquotes a
+word that its ML computes (`^min32`), the port writes the
+expression that the ML evaluates (`sw2sw (INT_MINw:word32)`), as
+it does everywhere else; `EXTRA_BEFORE` in `tools/overrides.py`
+has the text.
 
 The configuration of the backend for a target is data, and is a
 definition of the port, in the file that HOL4 has it in: the six

@@ -52,7 +52,9 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
             '- %d have only their **termination** assumed, so the\n'
             '  constant, its type and its clauses are the real ones;\n'
             '- %d are a constant that is **declared** without a\n'
-            '  value, because HOL4 computes the value with ML code;\n'
+            '  value, because HOL4 computes the value with ML code:\n'
+            '  the constant has an implicit definition, which says\n'
+            '  nothing about it and adds no axiom (PENDING.md);\n'
             '- %d are **not made** at all, which is the work that is\n'
             '  left.\n\n'
             % (len(names), kind['termination'], kind['declared'],

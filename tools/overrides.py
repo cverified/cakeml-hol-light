@@ -1668,12 +1668,177 @@ cake_declare "pan_compile_tap"
   # is data, and is a definition of the port, in the file of the
   # target that HOL4 has it in.)
   ('compiler', 'parse_target_64_def'): r'''
-cake_declare "x64_config" `:(64)asm_config`;;
-cake_declare "arm8_config" `:(64)asm_config`;;
-cake_declare "mips_config" `:(64)asm_config`;;
-cake_declare "riscv_config" `:(64)asm_config`;;
-cake_declare "arm7_config" `:(32)asm_config`;;
-cake_declare "ag32_config" `:(32)asm_config`;;
+(* HOL4 x64_targetScript.sml:226-248, arm8_targetScript.sml:298-341,
+   mips_targetScript.sml:118-337, riscv_targetScript.sml:88-303,
+   arm7_targetScript.sml:263-293 and ag32_targetScript.sml:243-265:
+   the asm configuration of the six targets.  Every field of one of
+   them is data, except the encoder -- and the valid_imm of arm8 and
+   of arm7, which needs the model as well (arm8's is data but for
+   the EncodeBitMask of it, arm7's is IS_SOME o EncodeARMImmediate).
+   Those get an implicit definition, which says nothing about their
+   value; the configurations themselves are definitions of the port.
+   The fields of an asm_config, in the order in which the port
+   declares them (compiler/encoders/asm/asm.ml), are ISA, encode,
+   big_endian, code_alignment, link_reg, avoid_regs, reg_count,
+   fp_reg_count, two_reg_arith, valid_imm, addr_offset, hw_offset,
+   byte_offset, jump_offset, cjump_offset and loc_offset; the
+   comments below name the ones of every line.  Where the source
+   antiquotes a word that its ML computes, the port writes the
+   expression that the ML evaluates, as it does everywhere else *)
+
+cake_declare "x64_enc" `:(64)asm->word8 list`;;
+cake_declare "arm8_enc" `:(64)asm->word8 list`;;
+cake_declare "mips_enc" `:(64)asm->word8 list`;;
+cake_declare "riscv_enc" `:(64)asm->word8 list`;;
+cake_declare "arm7_enc" `:(32)asm->word8 list`;;
+cake_declare "ag32_enc" `:(32)asm->word8 list`;;
+cake_declare "arm8_valid_immediate" `:binop+cmp->(64)word->bool`;;
+cake_declare "arm7_valid_immediate" `:(32)word->bool`;;
+
+let x64_config_def = cake_define
+  `x64_config =
+     mk_asm_config
+       // ISA encode big_endian code_alignment link_reg avoid_regs
+       x86_64 x64_enc F 0 NONE [4; 5]
+       // reg_count fp_reg_count two_reg_arith
+       16 8 T
+       // valid_imm
+       (\b i. sw2sw (INT_MINw:(32)word) <= i /\
+              i <= sw2sw (INT_MAXw:(32)word))
+       // addr_offset hw_offset byte_offset
+       (sw2sw (INT_MINw:(32)word),sw2sw (INT_MAXw:(32)word))
+       (sw2sw (INT_MINw:(32)word),sw2sw (INT_MAXw:(32)word))
+       (sw2sw (INT_MINw:(32)word),sw2sw (INT_MAXw:(32)word))
+       // jump_offset cjump_offset loc_offset
+       (sw2sw (INT_MINw:(32)word) + n2w 13,
+        sw2sw (INT_MAXw:(32)word) + n2w 5)
+       (sw2sw (INT_MINw:(32)word) + n2w 13,
+        sw2sw (INT_MAXw:(32)word) + n2w 5)
+       (sw2sw (INT_MINw:(32)word) + n2w 7,
+        sw2sw (INT_MAXw:(32)word) + n2w 7)`;;
+
+let arm8_config_def = cake_define
+  `arm8_config =
+     mk_asm_config
+       // ISA encode big_endian code_alignment link_reg
+       ARMv8 arm8_enc F 2 (SOME 30)
+       // avoid_regs: register x18 is reserved on some platforms,
+       // e.g., Apple platforms
+       [18; 26; 31]
+       // reg_count fp_reg_count two_reg_arith valid_imm
+       32 0 F arm8_valid_immediate
+       // addr_offset hw_offset, each (-off_max12 + off_min9,
+       // off_max12 + off_max9)
+       (--(w2w (UINT_MAXw:(12)word)) + sw2sw (INT_MINw:(9)word),
+        w2w (UINT_MAXw:(12)word) + sw2sw (INT_MAXw:(9)word))
+       (--(w2w (UINT_MAXw:(12)word)) + sw2sw (INT_MINw:(9)word),
+        w2w (UINT_MAXw:(12)word) + sw2sw (INT_MAXw:(9)word))
+       // byte_offset
+       (sw2sw (INT_MINw:(9)word),w2w (UINT_MAXw:(12)word))
+       // jump_offset cjump_offset loc_offset
+       (sw2sw (INT_MINw:(28)word),sw2sw (INT_MAXw:(28)word))
+       (sw2sw (INT_MINw:(21)word) + n2w 4,
+        sw2sw (INT_MAXw:(21)word) + n2w 4)
+       (sw2sw (INT_MINw:(32)word),sw2sw (INT_MAXw:(32)word))`;;
+
+let mips_config_def = cake_define
+  `mips_config =
+     mk_asm_config
+       // ISA encode big_endian code_alignment link_reg avoid_regs
+       MIPS mips_enc T 2 (SOME 31) [0; 1; 25; 26; 27; 28; 29; 30]
+       // reg_count fp_reg_count two_reg_arith
+       32
+       // 32
+       0 F
+       // valid_imm
+       (\b i. if b IN {INL And; INL Or; INL Xor; INR Test;
+                       INR NotTest}
+              then n2w 0 <= i /\ i <= w2w (UINT_MAXw:(16)word)
+              else (if b = INL Sub then sw2sw (INT_MINw:(16)word) < i
+                    else sw2sw (INT_MINw:(16)word) <= i) /\
+                   i <= sw2sw (INT_MAXw:(16)word))
+       // addr_offset hw_offset byte_offset
+       (sw2sw (INT_MINw:(16)word),sw2sw (INT_MAXw:(16)word))
+       (sw2sw (INT_MINw:(16)word),sw2sw (INT_MAXw:(16)word))
+       (sw2sw (INT_MINw:(16)word),sw2sw (INT_MAXw:(16)word))
+       // jump_offset cjump_offset loc_offset
+       (sw2sw (INT_MINw:(32)word) + n2w 12,
+        sw2sw (INT_MAXw:(32)word) + n2w 8)
+       (sw2sw (INT_MINw:(18)word) + n2w 8,
+        sw2sw (INT_MAXw:(18)word) + n2w 4)
+       (sw2sw (INT_MINw:(32)word) + n2w 12,
+        sw2sw (INT_MAXw:(32)word) + n2w 8)`;;
+
+let riscv_config_def = cake_define
+  `riscv_config =
+     mk_asm_config
+       // ISA encode big_endian code_alignment link_reg
+       RISC_V riscv_enc F 2 (SOME 1)
+       // avoid_regs: calling conventions:
+       // https://riscv.org/specifications/, p109
+       // 0 - hardwired zero
+       // 2 - stack pointer
+       // 3 - global pointer
+       // 4 - thread pointer
+       // 31 - used by encoder above
+       [0; 2; 3; 4; 31]
+       // reg_count fp_reg_count two_reg_arith
+       32 0 F
+       // valid_imm
+       (\b i. (if b = INL Sub then sw2sw (INT_MINw:(12)word) < i
+               else sw2sw (INT_MINw:(12)word) <= i) /\
+              i <= sw2sw (INT_MAXw:(12)word))
+       // addr_offset hw_offset byte_offset
+       (sw2sw (INT_MINw:(12)word),sw2sw (INT_MAXw:(12)word))
+       (sw2sw (INT_MINw:(12)word),sw2sw (INT_MAXw:(12)word))
+       (sw2sw (INT_MINw:(12)word),sw2sw (INT_MAXw:(12)word))
+       // jump_offset cjump_offset loc_offset
+       (sw2sw (INT_MINw:(32)word),n2w 2147481599)
+       (sw2sw (INT_MINw:(21)word) + n2w 8,
+        sw2sw (INT_MAXw:(21)word) + n2w 4)
+       (sw2sw (INT_MINw:(32)word),n2w 2147481599)`;;
+
+let arm7_config_def = cake_define
+  `arm7_config =
+     mk_asm_config
+       // ISA encode big_endian code_alignment link_reg avoid_regs
+       ARMv7 arm7_enc F 2 (SOME 14) [13; 15]
+       // reg_count fp_reg_count two_reg_arith
+       16 32 F
+       // valid_imm
+       (\c i. arm7_valid_immediate i)
+       // addr_offset
+       (--(w2w (UINT_MAXw:(12)word)),w2w (UINT_MAXw:(12)word))
+       // hw_offset
+       (--(w2w (UINT_MAXw:(8)word)),w2w (UINT_MAXw:(8)word))
+       // byte_offset
+       (--(w2w (UINT_MAXw:(12)word)),w2w (UINT_MAXw:(12)word))
+       // jump_offset cjump_offset loc_offset
+       (sw2sw (INT_MINw:(26)word) + n2w 8,
+        sw2sw (INT_MAXw:(26)word) + n2w 8)
+       (sw2sw (INT_MINw:(26)word) + n2w 12,
+        sw2sw (INT_MAXw:(26)word) + n2w 12)
+       (INT_MINw,INT_MAXw)`;;
+
+let ag32_config_def = cake_define
+  `ag32_config =
+     mk_asm_config
+       // ISA encode big_endian code_alignment link_reg avoid_regs
+       Ag32 ag32_enc F 2 (SOME 0) [63]
+       // reg_count fp_reg_count two_reg_arith
+       64 0 F
+       // valid_imm
+       (\i n. if ISL i
+              then --(n2w 8388607) <= n /\ n < n2w 8388607
+              else --(n2w 32) <= n /\ n < n2w 32)
+       // addr_offset hw_offset byte_offset
+       (--(n2w 8388607),n2w 8388607)
+       (--(n2w 8388607),n2w 8388607)
+       (--(n2w 32),n2w 31)
+       // jump_offset cjump_offset loc_offset
+       (--(n2w 2147483647) + n2w 4,n2w 2147483647)
+       (--(n2w 2147483647) + n2w 4,n2w 2147483647)
+       (--(n2w 2147483647) + n2w 4,n2w 2147483647)`;;
 ''',
   # the termination of every evaluate: HOL4 proves it with
   ('wordSem', 'evaluate_def'): r'''
