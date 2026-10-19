@@ -80,14 +80,15 @@ A source is not only its blocks: 2,435 blocks of the 270 are the
 ML code of HOL4 between them, and this is what the port has of
 each.
 
-- **the ML of a library theory** (about 600 of them): of a
+- **the ML of a library theory** (611): of a
   library theory the port has the definitions that CakeML needs,
   and nothing else is in.
 - **the bookkeeping of HOL4** (183): a parse option, a
   `temp_delsimps`, an `export_theory`, an `add_record_field`.
   There is nothing in it for the port to have (`IGNORE_ML` in
   `tools/port.py` is the list).
-- **the ML that states a theorem** (75): `val foo =
+- **the ML that states a theorem** (34 of the 75, the others
+  have a pointer): `val foo =
   Q.prove(`...`, tactic)` is a theorem named `foo`, and
   phase two states it where the quotation is what it says (35) and
   points at it where a rule of HOL4 makes something else of it
@@ -99,7 +100,7 @@ each.
   `flat_to_clos` builds with `check1`.  `ML_PORTED` and
   `EXTRA_BEFORE` in `tools/overrides.py` say where the OCaml
   goes, and it takes the place of the blocks that it covers.
-- **everything else** (1,470): a pointer at the lines of the
+- **everything else** (1,544): a pointer at the lines of the
   source says what is there (a proof, the ML values that the
   definitions below antiquote, or ML code that is not ported).
   `tools/nohol4.py` checks that every pointer points at what it
