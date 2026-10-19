@@ -63,14 +63,18 @@ def main():
     # the port writes a comment that stands inside a block as the
     # comment of a term of HOL Light (// and to the end of the
     # line), so one of several lines is several of those; the one
-    # of a datatype stands in an OCaml string, where a quote and a
-    # backslash of it are escaped (lexer_fun's symbol)
+    # of a datatype stands in an OCaml string, whose lines end in
+    # a continuation and where a quote and a backslash of the
+    # comment are escaped (lexer_fun's symbol)
     lines = []
     for l in port.split('\n'):
       m = re.match(r'\s*(`?)//(.*)$', l)
       if m:
-        l = m.group(1) + re.sub(r'\\(["\\])', r'\1', m.group(2))
-      lines.append(l)
+        t = re.sub(r'";;\s*$', '', m.group(2))
+        t = re.sub(r'\\n\\$', '', t)
+        lines.append(m.group(1) + re.sub(r'\\(["\\])', r'\1', t))
+      else:
+        lines.append(l)
     flat = ' '.join('\n'.join(lines).split())
     inport = set()
     for m in re.finditer(r'\(\*.*?\*\)', port, re.S):

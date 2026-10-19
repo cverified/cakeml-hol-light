@@ -245,6 +245,7 @@ class Porter:
     self.warn = []
     self.head = None
     self.deps = []
+    self.anc_comments = {}  # a comment of the Ancestors block
     self.restore = set()   # the infixes to put back at the end
     self.conof_said = {}   # the theory an override gives a name
     self.conof_arities = {}  # the theory per number of arguments
@@ -909,6 +910,18 @@ class Porter:
                                     self.bound))
     needs = sorted(set('needs "%s";;' % self.db.mlpath_of(d)
                        for d in deps if d in self.db.thy_of_file))
+    # a comment that the Ancestors block of the source has after an
+    # ancestor stands after the needs line of that one
+    cmt = dict((('needs "%s";;' % self.db.mlpath_of(t)), cs)
+               for t, cs in self.anc_comments.items()
+               if t in self.db.thy_of_file)
+    lines = []
+    for n in needs:
+      lines.append(n)
+      lines += cmt.pop(n, [])
+    for cs in cmt.values():
+      lines += cs
+    needs = lines
     head = '\n'.join(needs) if needs else \
            '(* this file needs nothing of the port *)'
     if hide:
@@ -994,18 +1007,46 @@ class Porter:
       # the HOL4 file has before its Theory line
       self.head = HEAD % (b.name, self.srcname())
     elif k == 'Ancestors':
-      # an ancestor may be marked as [qualified]
-      deps = [re.sub(r'\[.*\]', '', w) for w in b.body.split()] + \
+      # an ancestor may be marked as [qualified]; a comment of the
+      # block names no ancestor (dataSem's says "semantics
+      # shouldn't depend on compiler", whose words are theories of
+      # the port)
+      deps = [re.sub(r'\[.*\]', '', w)
+              for w in hol4.strip_comments(b.body).split()] + \
              overrides.EXTRA_NEEDS.get(self.thy, [])
+      # a comment of the block is about the ancestor before it, so
+      # it goes after the needs line of that one
+      last = None
+      # an ancestor may be marked, and the mark is no name
+      # (wordSem's "ffi[qualified] (* for call_FFI *)")
+      for m in re.finditer(r"\(\*.*?\*\)|[A-Za-z][A-Za-z0-9_']*",
+                           re.sub(r'\[[^\]]*\]', '', b.body or ''),
+                           re.S):
+        if m.group(0).startswith('(*'):
+          if last:
+            self.anc_comments.setdefault(last, []).append(
+              ' '.join(m.group(0).split()))
+        else:
+          last = m.group(0)
       # the needs are computed from the translation, which uses the
       # names that the port gives the constants, so they are filled
-      # in at the end of the run
-      self.deps = deps
-      self.out.append(NEEDS)
+      # in at the end of the run.  A source may have a second
+      # Ancestors block (word_to_stackProof's
+      # Ancestors[ignore_grammar]), whose ancestors the port needs
+      # as well and which is no second needs block
+      self.deps = sorted(set(self.deps) | set(deps))
+      if NEEDS not in self.out:
+        self.out.append(NEEDS)
       ext = [d for d in deps if d not in self.db.thy_of_file]
       if ext:
         self.out.append('\n'.join(
           fill('(* HOL4 ancestors outside the port:', ext, 69)) + ' *)')
+      # a comment of the source about an ancestor that the port
+      # does not have stands after that line (wordSem's "for
+      # call_FFI"), which is where the ancestor itself is
+      for d in ext:
+        for c in self.anc_comments.pop(d, []):
+          self.out.append(c)
       # definitions that HOL4 generates with ML code, and that the
       # port has by hand
       if self.thy in overrides.EXTRA_HEAD:
@@ -1179,6 +1220,12 @@ class Porter:
         while tp.i < len(tp.toks):
           argtys.append(tp.parse_dtarg())
         cons.append((cname, argtys, cs, same))
+      # a comment that stands after the last alternative has no
+      # next one to belong to, so it stays where it is: after the
+      # last constructor (reg_alloc's clash_tree)
+      if carry and cons:
+        c0, a0, cs0, sm0 = cons[-1]
+        cons[-1] = (c0, a0, cs0, sm0 + carry)
       parts.append((ty, cons))
     if not parts: return
     def alt(c, args, cs, after):
@@ -1333,6 +1380,9 @@ class Porter:
     inner = rhs[2:rhs.rindex('|>')]
     flds = []
     src = []
+    # a comment that stands before the first field belongs to no
+    # field, so it goes before the list (reg_alloc's ra_state)
+    lead = []
     for f in hol4.split_top(inner, ';'):
       if not f.strip(): continue
       # a comment of the source stands after the field that it is
@@ -1349,9 +1399,9 @@ class Porter:
         i2 += 1
       f = hol4.strip_comments(f)
       if not f.strip():
-        if flds: flds[-1][2].extend(before + after)
+        (flds[-1][2] if flds else lead).extend(before + after)
         continue
-      if before and flds: flds[-1][2].extend(before)
+      (flds[-1][2] if flds else lead).extend(before)
       name, tytext = f.split(':', 1)
       flds.append([name.strip(), self.typ(tytext.strip()), after])
       try:
@@ -1369,8 +1419,11 @@ class Porter:
     # about, where the fields of the port are a list of strings of
     # OCaml: it goes after the entry of that field, unaltered
     body = ''
+    for c in lead:
+      body += ('  [' if not body else '   ') + \
+              ' '.join(c.split()) + '\n'
     for i, (f, t, cs) in enumerate(flds):
-      pre = '  [' if i == 0 else '   '
+      pre = '  [' if i == 0 and not lead else '   '
       body += ' \\\n'.join(
         fill(pre + '"%s","' % f, t.split(' '), 70)) + '"'
       if i < len(flds) - 1: body += ';'
@@ -2915,6 +2968,9 @@ class Porter:
   def typeabbrev(self, b):
     txt = (overrides.TYPE_TEXT.get((self.thy, b.name)) or
            dbmod.strip_quote(b.body))
+    # a comment that stands after the type (wordLang's cutsets)
+    cs = [' '.join(m.group(0).split())
+          for m in re.finditer(r'\(\*.*?\*\)', b.body or '', re.S)]
     ty = hterm.parse_type_text(txt)
     params = hterm.type_vars_of(ty)
     if params:
@@ -2929,6 +2985,12 @@ class Porter:
       if max(len(l) for l in text.split('\n')) > 72:
         text = ('new_type_abbrev("%s",\n' % self.tnm(b.name) +
                 '\n'.join(fill('  `:', body.split(' '), 69)) + '`);;')
+      # the comment stands after the phrase, on its line where the
+      # source has it there and the line is not too long
+      for c in cs:
+        ls = text.split('\n')
+        text = (text + ' ' + c if len(ls[-1]) + len(c) + 1 <= 72
+                else text + '\n' + c)
       self.out.append(text)
 
   ETA = re.compile(r"^[\\\u03bb]\s*((?:[A-Za-z_][A-Za-z0-9_']*\s*)+)"
