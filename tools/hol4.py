@@ -255,9 +255,13 @@ PROVE_VALUE = re.compile(r'=\s*(?:Q\.)?prove\s*\(\s*(``|`|\u201c)',
                          re.S)
 
 # what may be applied to the theorem of such a prove without
-# changing its statement: check_thm gives its argument back (it
-# fails where the theorem depends on a cheat)
-HARMLESS = ('', 'check_thm')
+# changing what it says: check_thm gives its argument back (it
+# fails where the theorem depends on a cheat), and SPEC_ALL and
+# GEN_ALL take the quantifiers of the statement off and put them
+# back -- the theorem that HOL4 binds is then the one of the
+# quotation with its variables free or closed, which says the
+# same, and the port states the quotation as the source writes it
+HARMLESS = ('check_thm', 'SPEC_ALL', 'GEN_ALL')
 
 
 def close_paren(text, i):
@@ -304,7 +308,7 @@ def thmvalue_prove(text):
   if k >= len(text) or text[k] != ',': return None
   j = close_paren(text, text.index('(', m.start()))
   rest = text[j:].split(';')[0].replace('|>', ' ')
-  if ' '.join(rest.split()) not in HARMLESS: return None
+  if not all(w in HARMLESS for w in rest.split()): return None
   return strip_comments(stmt).strip()
 
 
