@@ -72,48 +72,52 @@ in the port either, and are not counted: of a library theory the
 port has the definitions that CakeML needs (which is what the
 preface of such a file says), and the theorems of it that a proof
 of phase three needs are proved when that proof needs them.  The
-10,613 are the theorems of the CakeML sources.
+10,688 are the theorems of the CakeML sources.
 
 # Statements that the port cannot read yet
 
-Of the 10,129 statements of the port the run of 01:40 could not
-read four (the run of 22:57 could not read 26 and the one of
-20:17 a hundred; `PLAN.md` says what the rounds were about).
-Three of those four read now, and **one** is left:
+**None.**  Of the 10,122 statements of the port the run of 15:18
+read every one (the run of 20:17 could not read a hundred, the one
+of 22:57 twenty-six, the one of 01:40 four; `PLAN.md` says what
+the rounds were about).  The last one to go was
+`lab_to_targetProof$word_cmp_lemma`, whose `read_reg` is the
+`regs` of a labSem state on one side of the equation and of an
+`asm_state` on the other: HOL4 resolves the name of an `Overload`
+by the type of each occurrence, and the port now expands the body
+of one (`\r s. s.regs r`) per occurrence, with the record of the
+argument that is there, which is a beta reduction of the
+application (`tools/port.py`'s `beta_overloads`).
 
-| statement | what it needs |
-|---|---|
-| `lab_to_targetProof$word_cmp_lemma` | the `read_reg` of it is the `regs` of a labSem state on one side of the equation and of an `asm_state` on the other.  HOL4 resolves the name of an `Overload` by the type of each occurrence; the port expands the body of one (`\r s. s.regs r`) once per theory, and writes the accessor of the field out there because a statement that uses the name of a field for a variable of its own is read with those names taken away.  What would settle it is to expand such an overload **per occurrence**, with the record of the argument that is there (the port knows it: `s1` is a labSem state and `t1` an `asm_state`), which is what a beta reduction of the application would come to |
+That a statement reads is not that it says what the source says,
+so three more checks run over them after every run: `tools/diag.py`
+says which statement applies a name that the port made a variable,
+`tools/stmtfree.py` which free variable of one is a name that a
+theory of the scope of its source defines (HOL4 reads a constant
+there), and `tools/bin/types` which constant of one has a type
+outside the scope of its theory.  All three are at zero.
 
 # Definitions that the port assumes with a free variable
 
-Fifteen of the definitions that `ml/CHEATS.md` lists are assumed
-with a **free variable** in them (`free: ...`), which is the kind
-of cheat that a decision or a missing piece has to settle and not
-a proof:
-
-- a **mutual recursion of two functions** that the port writes as
-  two definitions, so that each clause of the one mentions the
-  other as a free variable (closProps' `set_globals` and
-  `elist_globals` are one `Definition` of HOL4, with a
-  `sum_size` measure; the same for `semanticPrimitivesProps`'
-  `sv_rel` and `result_rel`, and for `exc_rel`).  The clauses of
-  the two have to go to HOL Light as one definition, which the
-  define layer can do where the recursion is over one datatype
-  family.
-- a definition whose body uses a constant that the port does not
-  have (`gc_fun_ok` of `data_to_word_gcProof`).
-
-Until then the constant is there with the right type and its
-clauses are assumed, so the statements about it typecheck; what
-is wrong is the clause, which is an axiom over the free variable
-as well.  Phase three has to make the definition.
+**None.**  Fifteen of the definitions of `ml/CHEATS.md` were once
+assumed with a **free variable** in them (`free: ...`), which is
+the kind of cheat that a decision or a missing piece has to settle
+and not a proof.  Two things settled them: the clauses of a mutual
+recursion that HOL4 writes as one `Definition` go to HOL Light as
+one definition as well (closProps' `set_globals` and
+`elist_globals`, semanticPrimitivesProps' `sv_rel`, `result_rel`
+and `exc_rel`), and the argument of a `with ... updated_by f` is
+the **field** and not the record, so the variable that such an `f`
+binds has the type of the field (`backend_passes`' `to_bvi_all`
+and the two like it).  `tools/bin/freevars` is the check, and the
+run of 15:18 reports no definition with a free variable.
 
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 269 files of the port: 4444
-blocks, of which all but two are in (see `tools/coverage.py`); the
+`Definition` and `Inductive` of the 270 files of the port: 4482
+blocks, of which all but two are in (`tools/coverage.py`, and
+`tools/overloads.py` for the `Overload` and the `Type` blocks);
+the
 ones that HOL4 makes in a way that the port has no counterpart
 for are declared constants (`cake_declare`), which the list below
 has.  A declared constant is no axiom: it gets an **implicit
