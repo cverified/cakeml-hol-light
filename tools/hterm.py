@@ -1622,6 +1622,32 @@ class Printer:
       out += txt
     return out
 
+  def updfn(self, v, rec, fld):
+    """the function of an updated_by: its argument is the field and
+       not the record, so a lambda there binds a variable of the
+       record type of the field (backend_passes' to_bvi_all has
+       c with clos_conf updated_by (\c. c with start := s), whose
+       inner c is a config of clos_to_bvl)"""
+    w = v
+    while w.kind == 'paren': w = w.e
+    if not (w.kind == 'quant' and w.q == '\\' and len(w.vs) == 1
+            and w.vs[0].kind == 'id'):
+      return self.pr(v, APP)
+    tys = ([self.ctx.rectys.get(rec, {}).get(fld)] if rec else
+           [ftys[fld] for ftys in self.ctx.rectys.values()
+            if fld in ftys])
+    tys = [t for t in tys if t]
+    if len(set(tys)) != 1: return self.pr(v, APP)
+    r2 = self.ctx.tyname(tys[0])
+    if r2 not in self.ctx.recs: return self.pr(v, APP)
+    old = self.ctx.fieldvar
+    self.ctx.fieldvar = dict(old)
+    self.ctx.fieldvar[w.vs[0].name] = r2
+    try:
+      return self.pr(v, APP)
+    finally:
+      self.ctx.fieldvar = old
+
   def fldtys(self, e):
     """the types that the field of a record expression can have:
        the one of the record that the annotation or the overrides
@@ -2029,7 +2055,8 @@ class Printer:
       for i, (fld, v, fn) in enumerate(e.upds):
         s = ((rec + '_' + fld + '_fupd' if rec
               else self.ctx.fupd(fld)) + ' ' +
-             (self.pr(v, APP) if fn else '(K ' + self.pr(v, APP) + ')')
+             (self.updfn(v, rec, fld) if fn
+              else '(K ' + self.pr(v, APP) + ')')
              + ' ' + s)
         if i < len(e.upds) - 1: s = '(' + s + ')'
       return self.paren(s, PRE_APP, prec)

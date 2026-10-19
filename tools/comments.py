@@ -52,7 +52,7 @@ def pointers(text):
 def main():
   want = set(sys.argv[1:])
   db = dbmod.Db()
-  n = bad = lost = 0
+  n = bad = lost = inside = 0
   for thy, path, kind in dbmod.load_order():
     if kind != 'cakeml' or (want and thy not in want): continue
     p = ML + db.mlpath_of(thy)
@@ -65,6 +65,18 @@ def main():
       inport.add(body(m.group(0)))
     at = pointers(port)
     for b in hol4.parse(path):
+      # a comment inside a block (the constructors of a Datatype,
+      # the body of a Definition, a statement) is no Comment block
+      # of its own, and the port drops it: HOL Light reads a
+      # comment of a quotation after // and to the end of the
+      # line, and the clauses of a definition of the port are
+      # quotations of their own, between which an OCaml comment
+      # stands (PENDING.md says where that stands)
+      if b.kind not in ('Comment', 'ML'):
+        for m in re.finditer(r'\(\*.*?\*\)', b.body or '', re.S):
+          t = ' '.join(m.group(0).split())
+          if t in port or t[3:-3].strip() in port: continue
+          inside += 1
       if b.kind != 'Comment': continue
       n += 1
       s = body(b.text)
@@ -89,6 +101,8 @@ def main():
         print('%s:%s: %s' % (re.sub(r'^.*/', '', path), a, s[:60]))
   print('%d comments of the sources, %d not in the port '
         '(%d of them with no pointer at them)' % (n, bad, lost))
+  print('%d comments inside a block of a source that the port '
+        'has not' % inside)
 
 
 if __name__ == '__main__':
