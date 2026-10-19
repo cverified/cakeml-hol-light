@@ -4,6 +4,12 @@
 
 says how many statements of the port a session cannot read, by
 the reason that HOL Light gives, and which files they are in.
+
+A statement of an early file may fail here and not in a run: the
+session has the whole port loaded, so a name that a later file
+overloads is read with that overload as well
+(bvl_to_bvi$compile_single_eq is the one of those).  What a run
+says is in tmp/unstated.txt.
 """
 import sys, os, re, collections
 

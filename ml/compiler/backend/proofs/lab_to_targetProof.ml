@@ -4743,7 +4743,7 @@ let asm_fetch_NOT_ffi_entry_pcs =
            (machine_config_ffi_entry_pcs
          mc_conf) 0 = SOME index) /\
      bytes_in_mem (target_get_pc (machine_config_target mc_conf)
-       ms) (prog_to_bytes code2) (labSem_state_mem t)
+       ms) (prog_to_bytes code2) (asm_state_mem t)
        (machine_config_prog_addresses
         (mc_conf:('a,'state,'b)machine_config)) dm /\
      asm_fetch_aux pos code2 = SOME line /\

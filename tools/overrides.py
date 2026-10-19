@@ -136,12 +136,12 @@ THM_ACCESSORS = {
     {'be': 'data_to_word_config_be'},
   ('data_to_word_assignProof', 'parts_to_words_NONE'):
     {'has_fp_ops': 'data_to_word_config_has_fp_ops'},
-  # the t whose mem this one reads says nowhere which record it
-  # is of (an asm_state and a labSem state both have a mem of
-  # that type, and HOL4 takes the one of the theory that its
-  # grammar loads last, which is labSem's)
+  # the t whose mem this one reads is a state of the target: the
+  # bytes_in_mem of the statement takes a memory of bytes, which
+  # the mem of an asm_state is and the mem of a labSem state
+  # (a memory of word_loc) is not
   ('lab_to_targetProof', 'asm_fetch_NOT_ffi_entry_pcs'):
-    {'mem': 'labSem_state_mem'},
+    {'mem': 'asm_state_mem'},
   ('stack_allocProof', 'inst_correct'):
     {'compile_oracle': 'stackSem_state_compile_oracle',
      'stack': 'stackSem_state_stack'},
@@ -429,6 +429,11 @@ FIELD_VAR_DEF = {
   # of its own t)
   ('stack_to_labProof', 'flatten_call_correct'):
     {'t': 'stackSem_state'},
+  # the s that the read_reg of this one reads is a state of
+  # labSem, where the s of the theory is one of stackSem (the
+  # port puts the argument into the body of the overload, so the
+  # record of that argument is the one it writes the accessor of)
+  ('stack_to_labProof', 'FLOOKUP_regs'): {'s': 'labSem_state'},
   # the t of memory_assumption is a state of labSem, where the
   # regs of this theory are the ones of stackSem; the s is the
   # variable of the overload read_reg (\r s. s.regs r)

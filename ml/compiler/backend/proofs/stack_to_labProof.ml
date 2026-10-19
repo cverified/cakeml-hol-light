@@ -908,8 +908,8 @@ let halt_assum_lemma = cake_theorem "halt_assum_lemma[local]"
 let FLOOKUP_regs = cake_theorem "FLOOKUP_regs[local]"
   (fun () ->
     `!regs' n v f s.
-         FLOOKUP (FEMPTY |++ MAP (\r. (r,stackSem_state_regs s
-           r)) regs') n = SOME v ==> stackSem_state_regs s n = v`)
+         FLOOKUP (FEMPTY |++ MAP (\r. (r,labSem_state_regs s r))
+           regs') n = SOME v ==> labSem_state_regs s n = v`)
   CHEAT_TAC;;
 
 let state_rel_make_init = cake_theorem "state_rel_make_init"

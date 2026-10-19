@@ -9,8 +9,8 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 10464: the three axioms of HOL
-Light and 10461 for the 456 definitions below.
+`length (axioms ())` is 10463: the three axioms of HOL
+Light and 10460 for the 456 definitions below.
 
 Of these 456 definitions
 
@@ -26,9 +26,9 @@ Why they are assumed:
 - 307: termination (CHEAT_TAC)
 - 132: equation of a tail recursion assumed
 - 14: declared (no value)
-- 1: free: backend_config_next_name3_fupd:(?801625->num)->?801622->bvl_
-- 1: free: backend_config_col_oracle_fupd:(?807196->(((num)spt)option)l
-- 1: free: backend_config_col_oracle_fupd:(?812036->(((num)spt)option)l
+- 1: free: backend_config_next_name3_fupd:(?801619->num)->?801616->bvl_
+- 1: free: backend_config_col_oracle_fupd:(?807190->(((num)spt)option)l
+- 1: free: backend_config_col_oracle_fupd:(?812030->(((num)spt)option)l
 
 | definition | file | why |
 |---|---|---|
@@ -328,9 +328,9 @@ Why they are assumed:
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
 | `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | termination (CHEAT_TAC) |
-| `to_bvi_all` | `compiler/backend/backend_passes.ml` | free: backend_config_next_name3_fupd:(?801625->num)->?801622 |
-| `to_word_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?807196->(((num)spt)op |
-| `from_word_0_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?812036->(((num)spt)op |
+| `to_bvi_all` | `compiler/backend/backend_passes.ml` | free: backend_config_next_name3_fupd:(?801619->num)->?801616 |
+| `to_word_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?807190->(((num)spt)op |
+| `from_word_0_all` | `compiler/backend/backend_passes.ml` | free: backend_config_col_oracle_fupd:(?812030->(((num)spt)op |
 | `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | termination (CHEAT_TAC) |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
