@@ -121,8 +121,11 @@ definition** (`new_specification` of `?x. T`), which says nothing
 about its value, because the value is one that HOL4 computes with
 the ML code of a source and the port cannot say it yet.  So every
 constant of the port is introduced by a definition, and the
-fourteen whose value is not said are counted in `ml/CHEATS.md`
-and named here.
+sixteen whose value is not said are counted in `ml/CHEATS.md`
+and named here: the four step functions of the unification
+algorithm, the three entry points of Pancake, the basis program,
+the six encoders of the targets and the two `valid_immediate` of
+`arm8` and `arm7`.
 `tools/fidelity.py` checks that no definition lost a name or a
 constructor argument on the way, and `tools/literals.py` that
 its strings, its characters and its numerals are the same ones
