@@ -5,6 +5,8 @@
 #   1 the reports of the run that finished (they talk to hol-seq,
 #     so they go before the retemplate), and the table of the
 #     arguments of the constants whose type is int
+#   1a what a session reads differently from the source, which
+#     talks to the clone as well
 #   2 the cheat list from ml/CHEATS.md, which says where the port
 #     writes a CHEAT_TAC
 #   3 the port, with that list
@@ -49,6 +51,13 @@ echo "=== the integer arguments of the constants"
 # numeral there is &n), out of the session of the run, which has
 # the port loaded; it has to happen before the retemplate
 intargs
+# what a session reads differently from the source: a statement
+# that applies a name the port made a variable (tools/diag.py) and
+# a free variable whose name a theory of the scope defines
+# (tools/stmtfree.py).  It talks to the clone, so it goes before
+# the retemplate as well
+echo "=== the statements as a session reads them"
+TIMEOUT=3600 diag try 2>&1 | tail -12
 echo "=== the cheat list"
 python3 -I tools/mkcheats.py > tmp/cheats.txt 2> tmp/mkcheats.err
 cat tmp/mkcheats.err
