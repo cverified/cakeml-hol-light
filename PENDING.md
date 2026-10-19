@@ -74,6 +74,37 @@ preface of such a file says), and the theorems of it that a proof
 of phase three needs are proved when that proof needs them.  The
 10,688 are the theorems of the CakeML sources.
 
+# What the port has of the ML code of a source
+
+A source is not only its blocks: 2,435 blocks of the 270 are the
+ML code of HOL4 between them, and this is what the port has of
+each.
+
+- **the ML of a library theory** (about 600 of them): of a
+  library theory the port has the definitions that CakeML needs,
+  and nothing else is in.
+- **the bookkeeping of HOL4** (183): a parse option, a
+  `temp_delsimps`, an `export_theory`, an `add_record_field`.
+  There is nothing in it for the port to have (`IGNORE_ML` in
+  `tools/port.py` is the list).
+- **the ML that states a theorem** (75): `val foo =
+  Q.prove(`...`, tactic)` is a theorem named `foo`, and
+  phase two states it where the quotation is what it says (35) and
+  points at it where a rule of HOL4 makes something else of it
+  (40).
+- **the ML that the port has in OCaml** (63): the code that
+  builds the deep embedding of `word_bignum`, the monadic
+  machinery of `reg_alloc` and `linear_scan`, the grammar of
+  `gram` and of `simpleSexpPEG`, and the terms that
+  `flat_to_clos` builds with `check1`.  `ML_PORTED` and
+  `EXTRA_BEFORE` in `tools/overrides.py` say where the OCaml
+  goes, and it takes the place of the blocks that it covers.
+- **everything else** (1,470): a pointer at the lines of the
+  source says what is there (a proof, the ML values that the
+  definitions below antiquote, or ML code that is not ported).
+  `tools/nohol4.py` checks that every pointer points at what it
+  says.
+
 # Statements that the port cannot read yet
 
 **None.**  Of the 10,122 statements of the port the run of 15:18
