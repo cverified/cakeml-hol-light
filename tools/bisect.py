@@ -67,6 +67,10 @@ def main():
       hid = thmcheck.hidden(ML + f)
       if hid:
         o.write('@@@HIDE\t%s\n' % ' '.join(hid))
+      hc = thmcheck.hidden_consts(ML + f)
+      if hc:
+        o.write('@@@HIDEC\t%s\n'
+                % ' '.join('%s,%s' % x for x in hc))
       for i, part in enumerate(parts(stmt)):
         o.write('@@@\t%s\t%d\t%s%s\n%s\n'
                 % (f, i, nm, '' if i == 0 else '/part%d' % i, part))

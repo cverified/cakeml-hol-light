@@ -215,6 +215,7 @@ class Porter:
                          tynames=db.names_for(thy, True),
                          overloaded=db.overloaded_for(thy),
                          recs=db.recs_for(thy), thy=thy,
+                         rectys=db.rectys_for(thy),
                          accessors=overrides.ACCESSORS.get(thy, {}),
                          updaters=overrides.UPDATERS.get(thy, {}),
                          cons=db.cons_for(thy), abbrevs=self.abbrevs,
@@ -284,10 +285,13 @@ class Porter:
         # own body (stack_to_lab overloads Asm with
         # \a. Asm (Asmi a), whose Asm is labLang's)
         old = self.ctx.overloads.pop(nm, None)
+        self.ctx.qualfields = self.ovl_thy.get(nm) or ''
         try: self.ctx.overloads[nm] = self.in_thy(
                  self.ovl_thy.get(nm), lambda: self.term(txt))
         except Exception:
           if old is not None: self.ctx.overloads[nm] = old
+        finally:
+          self.ctx.qualfields = ''
     self.bound = set()
 
   # -- helpers ---------------------------------------------------
@@ -689,8 +693,10 @@ class Porter:
     # because no theory in its ancestry defines them; of a HOL4
     # library theory the port has the definitions and no
     # statement, so it needs no list
-    hide = ([] if self.kind == 'lib'
-            else self.db.hidden_for(self.thy, blocks))
+    hide, hideconsts = (([], []) if self.kind == 'lib'
+                        else self.db.hidden_for(self.thy, blocks))
+    self.ctx.hidden = set(hide)
+    self.hideconsts = hideconsts
     self.db.base_grammar(self.thy)
     # an infix that an ancestor overloads with a constant is written
     # as an application of that constant
@@ -778,6 +784,8 @@ class Porter:
     # file that makes one takes it back at the end of itself
     if hide:
       text += '\ncake_hide [];;\n'
+    if self.hideconsts:
+      text += '\ncake_hide_consts [];;\n'
     # the files that the translation needs
     deps = sorted(set(self.deps) |
                   self.db.providers(self.thy, strip_ml(text),
@@ -794,6 +802,13 @@ class Porter:
         else:
           lines[-1] += '; "' + n + '"'
       head += '\n\n' + ';\n'.join(lines) + '];;'
+    # the constants of a name that the accessors of a record field
+    # have as well, which only the file that cannot see them takes
+    # out of the interface
+    if self.hideconsts:
+      head += ('\n\ncake_hide_consts\n  [' +
+               ';\n   '.join('"%s","%s"' % (n, c)
+                              for n, c in self.hideconsts) + '];;')
     return text.replace(NEEDS, head)
 
   def wanted(self, b):
@@ -921,6 +936,14 @@ class Porter:
                                  ' the value of an ML expression:'
                                  ' %s' % b.name))
     elif k == 'ML':
+      # Parse.hide of a source hides a name from there on, which
+      # the port says where the source says it: the statements
+      # after it read that name as a variable, as HOL4 does
+      hid = self.PARSE_HIDE.findall(b.text)
+      if hid:
+        self.ctx.hidden |= set(hid)
+        self.out.append('cake_hide_more [%s];;'
+                        % '; '.join('"%s"' % h for h in hid))
       if any(re.search(pat, b.text) for pat in IGNORE_ML):
         return
       if self.numeral_form(b):
@@ -1143,13 +1166,20 @@ class Porter:
         # have (there r.stack is syntax and a bare stack is a
         # variable), so the port keeps a list of them: a statement
         # that uses such a name for a variable of its own is read
-        # with them taken away (ml/lib/theorem.ml)
-        text = ('hol4_field_overload "%s" "%s_%s";;'
-                % (n, self.tnm(ty), c))
+        # with them taken away (ml/lib/theorem.ml).  The overload
+        # of the name that HOL4 gives the accessor itself
+        # (state_clock, where every record of the name is a state)
+        # is not one of them: HOL4 has that constant, and a
+        # statement that reads such a field through it would lose
+        # it with the others (stack_to_labProof's
+        # flatten_call_correct has the ffi of a state of stackSem)
+        fn = 'hol4_field_overload' if n == c else 'hol4_overload'
+        text = ('%s "%s" "%s_%s";;' % (fn, n, self.tnm(ty), c))
         if len(text) > 72:
-          text = ('hol4_field_overload "%s"\n  "%s_%s";;'
-                  % (n, self.tnm(ty), c))
+          text = ('%s "%s"\n  "%s_%s";;' % (fn, n, self.tnm(ty), c))
         self.out.append(text)
+
+  PARSE_HIDE = re.compile(r'Parse\.hide\s*"([^"]+)"')
 
   NUMERAL_FORM = re.compile(r'add_numeral_form\s*\(\s*#"."\s*,'
                            r'\s*SOME\s*"([A-Za-z0-9_\']+)"')
@@ -1194,7 +1224,7 @@ class Porter:
     if not thy or thy == self.thy: return f()
     fields, amb = self.db.fields_for(thy)
     was = (self.ctx.fields, self.ctx.accessors, self.ctx.updaters,
-           self.ctx.fieldvar, self.ctx.recs)
+           self.ctx.fieldvar, self.ctx.recs, self.ctx.rectys)
     flds = {k: v for k, v in fields.items() if v}
     flds.update(overrides.FIELD_OF.get(thy, {}))
     self.ctx.fields = flds
@@ -1202,11 +1232,12 @@ class Porter:
     self.ctx.updaters = overrides.UPDATERS.get(thy, {})
     self.ctx.fieldvar = overrides.FIELD_VAR.get(thy, {})
     self.ctx.recs = self.db.recs_for(thy)
+    self.ctx.rectys = self.db.rectys_for(thy)
     try:
       return f()
     finally:
       (self.ctx.fields, self.ctx.accessors, self.ctx.updaters,
-       self.ctx.fieldvar, self.ctx.recs) = was
+       self.ctx.fieldvar, self.ctx.recs, self.ctx.rectys) = was
 
   def nm_defined(self, n):
     """the name of the constant that a block defines"""

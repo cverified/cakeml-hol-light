@@ -690,6 +690,26 @@ def datatype_names(body):
   return res
 
 
+def datatype_fieldtypes(body):
+  """returns {tyname: {field: the text of its type}} of the record
+     types of a Datatype block"""
+  body = strip_comments(body)
+  res = {}
+  for part in split_top(body, ';'):
+    if not part.strip(): continue
+    mm = re.match(r'\s*(' + IDENT + r')\s*=\s*(.*)$', part, re.S)
+    if not mm: continue
+    ty = mm.group(1); rhs = mm.group(2).strip()
+    if not rhs.startswith('<|'): continue
+    out = {}
+    for f in split_top(rhs[2:rhs.rindex('|>')], ';'):
+      if not f.strip(): continue
+      n, _, t = f.partition(':')
+      if t.strip(): out[n.strip()] = ' '.join(t.split())
+    res[ty] = out
+  return res
+
+
 def split_top(s, sep):
   """split on sep, but not inside brackets or quotations"""
   out = []; depth = 0; cur = ''

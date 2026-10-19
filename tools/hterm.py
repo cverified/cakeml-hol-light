@@ -1090,7 +1090,7 @@ class Ctx:
                overloads=None, accessors=None, cons=None,
                ambfields=None, updaters=None,
                abbrevs=None, tynames=None, overloaded=None,
-               con_argty=None, defnames=None):
+               con_argty=None, defnames=None, rectys=None):
     self.names = names or {}     # cakeml name -> hol light name
     self.tynames = tynames or {} # the same for the type names
     self.con_argty = con_argty or {}  # (con,index) -> type text
@@ -1099,6 +1099,11 @@ class Ctx:
     self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
+    self.rectys = rectys or {}   # record type -> {field: type text}
+    self.qualfields = False      # write out the accessor of a
+                                 # field instead of the name that
+                                 # overloads the accessors of it
+    self.hidden = set()          # the names that this file hides
     self.ambfields = ambfields or {}  # field -> overloaded name
     self.reclit = None           # the record type of a literal
     self.reclits = []            # ... of the literals in order
@@ -1199,10 +1204,31 @@ class Ctx:
   def field(self, f):
     """the accessor of a record field, without its argument"""
     if f in self.accessors: return self.accessors[f]
+    # the body of an overload is read in the theory that declares
+    # it, so the accessor of a field of it is written out: a
+    # statement that uses the name of the field for a variable of
+    # its own is read with the overloads of the field names taken
+    # away, and the name in the body of the overload would be that
+    # variable then (labSem's read_reg is the regs of a labSem
+    # state, and stack_to_labProof's compile_jump_correct has a
+    # variable regs)
+    if self.qualfields:
+      if f in self.fields: return self.fields[f] + '_' + f
+      # the field is of several records in the scope of that
+      # theory, and the one it means is the record of the theory
+      # itself (the regs of labSem's read_reg is the one of a
+      # labSem state and not of an asm_state)
+      own = [r for r, fs in self.recs.items()
+             if f in fs and r.startswith(self.qualfields + '_')]
+      if len(own) == 1: return own[0] + '_' + f
     # the name of a field that several record types have is an
     # overload of their accessors, which HOL Light resolves by the
-    # type of the record, as HOL4 does
-    if f in self.ambfields and f not in self.fields:
+    # type of the record, as HOL4 does -- unless the file hides
+    # that name, where the accessor has to be written out
+    # (labProps hides mem, which HOL4's field syntax reads all the
+    # same: overrides.ACCESSORS says which record it is of)
+    if (f in self.ambfields and f not in self.fields
+        and self.ambfields[f] not in self.hidden):
       AMBUSE.append((self.thy, f, self.ambfields[f]))
       return self.ambfields[f]
     if f in self.fields: return self.fields[f] + '_' + f
@@ -1283,6 +1309,9 @@ def int_fn_arg_pos(nm):
 # is an integer itself
 ELEM_FUNS = set(['the', 'THE', 'EL', 'HD', 'LAST', 'sptree_lookup',
                  'FLOOKUP', 'FAPPLY'])
+
+# the type int in the text of the type of a field of a record
+INT_TY = re.compile(r"\bint\b")
 
 NUMERIC_FUNS = set(['int_of_num', 'num_of_int', 'w2i', 'i2w', 'ival',
                     'iword', 'int_add', 'int_sub', 'int_mul',
@@ -1593,6 +1622,25 @@ class Printer:
       out += txt
     return out
 
+  def fldtys(self, e):
+    """the types that the field of a record expression can have:
+       the one of the record that the annotation or the overrides
+       name, or the ones of every record in scope that has the
+       field"""
+    rec = self.annot_rec(e.e)
+    if rec and e.fld not in self.ctx.recs.get(rec, []): rec = None
+    if not rec:
+      v = e.e
+      while v.kind in ('paren', 'typed'): v = v.e
+      rec = (self.ctx.fieldvar.get(v.name)
+             if v.kind == 'id' else None)
+      if rec and e.fld not in self.ctx.recs.get(rec, []): rec = None
+    if rec:
+      t = self.ctx.rectys.get(rec, {}).get(e.fld)
+      return [t] if t else []
+    return [ftys[e.fld] for ftys in self.ctx.rectys.values()
+            if e.fld in ftys]
+
   def intvar(self, e):
     """does this expression hold an integer?  It does where it is
        a variable that holds one (a pattern binds such a variable
@@ -1617,6 +1665,12 @@ class Printer:
       if (h.kind == 'id' and args
           and self.ctx.name(h.name) in ELEM_FUNS):
         return any(self.intvar(a) for a in args)
+    # a field whose type is an integer, or a list or a map of
+    # them, holds one (linear_scanProof's 0 < EL i sth.int_beg,
+    # whose int_beg is a list of integers)
+    if e.kind == 'field':
+      tys = self.fldtys(e)
+      return bool(tys) and all(INT_TY.search(t) for t in tys)
     # a term that the source annotates with int holds one, and so
     # does the Num of one (data_to_word's 0 <= (i:int))
     if e.kind == 'typed':

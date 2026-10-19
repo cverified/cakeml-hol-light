@@ -40,3 +40,5 @@ lab_to_targetProof$sec_loc_to_pc_bound the overload len_no_lab
 lab_to_targetProof$loc_to_pc_bound the overload len_no_lab
 infer_eComplete$infer_pes_complete the restricted quantifier of
   HOL4 (!x::set pes), which the port writes as RES_FORALL
+word_bignumProof$evaluate_SeqTempImmNot the ~ of a word, which
+  the port writes as word_not (overrides.WORD_NOT)

@@ -51,9 +51,27 @@ HIDE = re.compile(r'^cake_hide \[(.*?)\];;', re.S | re.M)
 
 
 def hidden(path):
-  """the names that the file hides while it reads a statement"""
-  m = HIDE.search(open(path).read())
-  return re.findall(r'"([^"]+)"', m.group(1)) if m else []
+  """the names that the file hides while it reads a statement: the
+     list at the head of it and the ones that a Parse.hide of the
+     source adds further down (cake_hide_more), which this takes
+     for the whole file -- the statements before such a line do
+     not use the name, or the source could not hide it there"""
+  txt = open(path).read()
+  m = HIDE.search(txt)
+  out = re.findall(r'"([^"]+)"', m.group(1)) if m else []
+  for m in re.finditer(r'cake_hide_more \[([^]]*)\]', txt):
+    out += re.findall(r'"([^"]+)"', m.group(1))
+  return out
+
+
+def hidden_consts(path):
+  """the name and the constant of every pair that the file takes
+     out of the interface (cake_hide_consts)"""
+  out = []
+  for m in re.finditer(r'cake_hide_consts\s*\n?\s*\[([^]]*)\]',
+                       open(path).read()):
+    out += re.findall(r'"([^"]+)"\s*,\s*"([^"]+)"', m.group(1))
+  return out
 
 
 def main():
@@ -66,6 +84,10 @@ def main():
       hid = hidden(p)
       if hid:
         o.write('@@@HIDE\t%s\n' % ' '.join(hid))
+      hc = hidden_consts(p)
+      if hc:
+        o.write('@@@HIDEC\t%s\n'
+                % ' '.join('%s,%s' % x for x in hc))
       for name, line, stmt in statements(p):
         o.write('@@@\t%s\t%d\t%s\n%s\n' % (rel, line, name, stmt))
         n += 1

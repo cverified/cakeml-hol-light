@@ -93,6 +93,12 @@ TYPE_MAP = {
 
 ACCESSORS = {
   'location': {'row': 'locnrow', 'col': 'locncol'},
+  # labProps hides mem from its parser (its statements use it for
+  # a variable of their own), where the field syntax of HOL4 reads
+  # the field all the same: the mem of its statements is the one
+  # of a labSem state
+  'labProps': {'mem': 'labSem_state_mem',
+               'mem_fupd': 'labSem_state_mem_fupd'},
 }
 
 # THM_ACCESSORS: the accessor that a statement reads a record
@@ -299,6 +305,9 @@ SIZE_OF = {
   # has one)
   'bvi_tailrecProof': {'exp_size': 'bvi'},
   'bvi_tmcProof': {'exp_size': 'bvi'},
+  # the exp_size of the induction principle of this one is bvl's,
+  # the language of the evaluate that it is about
+  'bvl_to_bviProof': {'exp_size': 'bvl'},
   # the prog_size of the relation of dataSem's evaluate is the one
   # of dataLang (wordLang has a prog as well)
   'dataSem': {'prog_size': 'dataLang'},
@@ -325,8 +334,10 @@ FIELD_VAR_DEF = {
   # semantics is taken of, where the s2 of the statements about
   # evaluate is the state of stackSem that it gives
   ('stack_to_labProof', 'flatten_semantics'): {'s2': 'labSem_state'},
-  # the s1 of these three is a state of the target, where the s1
-  # of the theory is one of labSem
+  # the s1 of these four is a state of the target, where the s1
+  # of the theory is one of labSem (the asm_step_nop of the
+  # definition is a step of the target machine)
+  ('lab_to_targetProof', 'asm_step_nop_def'): {'s1': 'asm_state'},
   ('lab_to_targetProof', 'upd_pc_with_pc'): {'s1': 'asm_state'},
   ('lab_to_targetProof', 'evaluate_nop_steps'): {'s1': 'asm_state'},
   ('lab_to_targetProof', 'asm_step_IMP_evaluate_step_nop'):
@@ -362,6 +373,12 @@ FIELD_VAR_DEF = {
   # the t that the evaluate of halt_assum gives is a state of
   # stackSem, where the s of this theory is one of labSem
   ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
+  # the t that the evaluate of the hypothesis of this one gives is
+  # a state of stackSem, where the t of the theory is one of
+  # labSem (the halt_assum of the definition above says the same
+  # of its own t)
+  ('stack_to_labProof', 'flatten_call_correct'):
+    {'t': 'stackSem_state'},
   # the t of memory_assumption is a state of labSem, where the
   # regs of this theory are the ones of stackSem; the s is the
   # variable of the overload read_reg (\r s. s.regs r)
@@ -684,6 +701,11 @@ THM_NAMES = {
   ('misc', 'GSPEC_o'): {'GSPEC': 'hol4_GSPEC'},
   ('cmlNTProps', 'IMAGE_GSPEC1'): {'GSPEC': 'hol4_GSPEC'},
   ('cmlNTProps', 'BIGUNION_singletons'): {'GSPEC': 'hol4_GSPEC'},
+  ('gramProps', 'GSPEC_INTER'):
+    {'GSPEC': 'hol4_GSPEC', 'S': 'hol4_S'},
+  # the S of HOL4's combinTheory, which the port has under a name
+  # of its own because a source uses the name for a variable
+  ('word_allocProof', "LET_FORALL_ELIM'"): {'S': 'hol4_S'},
 }
 
 # the statements whose annotations say the same type with other
@@ -701,6 +723,9 @@ THM_TYVARS = set([
 ])
 
 THM_NO_TYVARS = set([
+  # the state of this one is of 'a and the ffi_state that it is
+  # updated with of 'b, which the update unifies in HOL4
+  ('evaluateProps', 'evaluate_ffi_intro'),
   ('bvi_inlineProof', 'do_app_state_swap_Rval'),
   ('bvi_inlineProof', 'do_app_state_swap_Rerr'),
   ('bviProps', 'do_app_cfg_swap_Rval'),
@@ -733,7 +758,12 @@ THM_INT_VARS = {
   ('data_to_word_memoryProof', 'memory_rel_Number_bignum_IMP'): ['i'],
   ('data_to_word_memoryProof', 'small_int_IMP_MIN_MAX'): ['i'],
   ('data_to_word_memoryProof', 'w2i_i2w_IMP'): ['i'],
-  ('linear_scanProof', 'get_intervals_ct_monad_aux_correct'): ['n'],
+  # the nout of this one is the number that
+  # get_intervals_ct_aux gives, which is an integer: the table of
+  # the integer arguments says the arguments of a constant and not
+  # the components of its result
+  ('linear_scanProof', 'get_intervals_ct_monad_aux_correct'):
+    ['n', 'nout'],
   ('linear_scanProof', 'numset_list_add_if_gt_monad_correct'): ['v'],
   ('linear_scanProof', 'numset_list_add_if_lt_monad_correct'): ['v'],
   ('mlint', 'fromString_toString_Num'): ['n'],
@@ -1059,6 +1089,20 @@ CON_OF = {
     {'ThunkOp': 'closLang'},
   ('word_to_stackProof', 'evaluate_Seq_Skip'):
     {'Seq': 'stackLang', 'Skip': 'stackLang'},
+  # the values of these are bvlSem's, which bviSem's evaluate
+  # takes: dataSem has a RefPtr and a MutBlock of its own, and the
+  # port read those, which made the extras of the definition a
+  # list of dataSem's values (tools/bin/types found it)
+  ('bvi_tmcProof', 'alloc_hole_has_val_def'):
+    {'RefPtr': 'bvlSem', 'MutBlock': 'bvlSem'},
+  ('bvi_tmcProof', 'evaluate_cb'): {'RefPtr': 'bvlSem'},
+  # the refs that this one relates are closSem's on the left and
+  # bvlSem's on the right (the ByteArray of the one takes a flag
+  # and of the other does not), and the port wrote the left hand
+  # ones out as bvlSem's
+  ('clos_to_bvlProof', 'ref_rel_simp'):
+    {'ValueArray': 'closSem', 'Thunk': 'closSem',
+     'ByteArray': 'closSem'},
   # the right hand sides build flatLang expressions, where the
   # patterns are the constructors of ast, which has the same
   # names ('*' is every constructor name of that theory)

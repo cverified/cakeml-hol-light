@@ -123,6 +123,8 @@ class Db:
     self.defs = collections.defaultdict(list)   # name -> [(thy,kind)]
     self.datatypes = {}        # (thy,ty) -> ([cons],[fields])
     self.recs = {}             # (thy,ty) -> [fields]
+    self.rectys = {}           # (thy,ty) -> {field: type text}
+    self._fldtoks = None
     self.abbrevs = {}          # (thy,name) -> (params, type text)
     self.overloads = {}        # (thy,name) -> term text
     self.con_argty = {}        # (constructor,index) -> {type texts}
@@ -272,6 +274,11 @@ class Db:
             for c in cons: self.defs[c].append((thy, 'con'))
             if flds:
               self.recs[(thy, ty)] = flds
+          try:
+            for ty, ftys in hol4.datatype_fieldtypes(b.body).items():
+              self.rectys[(thy, ty)] = ftys
+          except Exception:
+            pass
         elif b.kind == 'Definition':
           for nm in definition_names(b.body):
             self.defs[nm].append((thy, 'def'))
@@ -685,7 +692,33 @@ class Db:
       if any(self.rename.get((t, n), n) == n for t in ts) or \
          n in self.overloaded():
         out.add(n)
-    return sorted(out)
+    # a name that the accessors of a record field have as well is
+    # not hidden: hiding it would take those with it, and only the
+    # constant that the file cannot see is taken out of the
+    # interface (ml/lib/theorem.ml's cake_hide_consts)
+    flds = self.field_tokens()
+    consts = []
+    for n in sorted(out & flds):
+      ts = {t for t, k in self.defs.get(n, [])
+            if k in ('def', 'con', 'rel')}
+      for t in sorted(ts - anc):
+        consts.append((n, self.rename.get((t, n), n)))
+    return sorted(out - flds), consts
+
+  def field_tokens(self):
+    """the names that the port overloads with the accessor or the
+       update of a record field: the name of the field itself, or
+       the name that HOL4 gives the accessor where every record
+       that has the field is called the same (db.ambiguous_fields)
+       -- and the _fupd of each"""
+    if self._fldtoks is not None: return self._fldtoks
+    out = set()
+    for f, tok in self.ambiguous_fields().items():
+      out |= {tok, tok + '_fupd'}
+    for flds in self.recs.values():
+      for f in flds: out |= {f, f + '_fupd'}
+    self._fldtoks = out
+    return out
 
   def types_in_scope(self, thy):
     """the names of every type and type abbreviation that a theory
@@ -798,6 +831,14 @@ class Db:
     anc = self.scope(thy) | {thy}
     return {self.rename.get((t, ty), ty): flds
             for (t, ty), flds in self.recs.items() if t in anc}
+
+  def rectys_for(self, thy):
+    """the type of every field of every record in scope, by the
+       name that the port gives the record type (a numeral beside
+       an element of a field that holds integers is &n)"""
+    anc = self.scope(thy) | {thy}
+    return {self.rename.get((t, ty), ty): ftys
+            for (t, ty), ftys in self.rectys.items() if t in anc}
 
   def con_argty_for(self, thy):
     """the type of the argument of a constructor, as far as the

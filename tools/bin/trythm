@@ -1,0 +1,19 @@
+#!/bin/sh
+# trythm <theory> <name>... : port one theory again and say whether
+# a session that has the port loaded can read the statements named
+# (hol-t2 by default, a clone of the session of the last run, which
+# tools/diag.ml is loaded in).  This is the loop for a statement
+# that a run could not read: change the override, trythm, look.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${S:-t2}
+thy="$1"; shift
+cd $C
+python3 -I tools/port.py "$thy" 2>&1 | grep -E 'FAILED|cannot' | head -3
+f=$(CAKE_THY="$thy" python3 -I -c "
+import sys, os; sys.path.insert(0, 'tools'); import db
+print(db.Db().mlpath_of(os.environ['CAKE_THY']))")
+python3 -I tools/bisect.py "$f" "$@" > /dev/null || exit 1
+TIMEOUT=${TIMEOUT:-600} repl-step $s \
+  "diag_run \"$C/tmp/stmts.txt\" \"$C/tmp/try.out\";;" > /dev/null 2>&1
+cut -f1,4,5 $C/tmp/try.out

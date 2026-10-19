@@ -40,6 +40,11 @@ let diag_run infile outfile =
   let n = ref 0 and bad = ref 0 and fv = ref 0 in
   let hid = ref ([]:string list) in
   let nexthid = ref ([]:string list) in
+  (* the pairs that cake_hide_consts of the file takes out of the
+     interface: a name that the accessors of a record field have
+     as well keeps those *)
+  let hidc = ref ([]:(string * string) list) in
+  let nexthidc = ref ([]:(string * string) list) in
   let curfile = ref "" in
   let cur = ref ("","","") and buf = ref ([]:string list) in
   let say tag f l nm s =
@@ -53,7 +58,13 @@ let diag_run infile outfile =
       let t0 = Sys.time () in
       let read () =
         do_list hide_constant !hid;
-        let fin () = do_list unhide_constant !hid in
+        let saved = !the_interface in
+        if !hidc <> [] then
+          the_interface :=
+            filter (fun (n,(c,_)) -> not (mem (n,c) !hidc)) saved;
+        let fin () =
+          do_list unhide_constant !hid;
+          if !hidc <> [] then the_interface := saved in
         try let tm = parse_term s in fin (); tm
         with e -> (fin (); raise e) in
       (try
@@ -81,7 +92,18 @@ let diag_run infile outfile =
     buf := [] in
   (try while true do
     let line = input_line ic in
-    if String.length line > 7 && String.sub line 0 7 = "@@@HIDE" then
+    if String.length line > 8 && String.sub line 0 8 = "@@@HIDEC"
+    then
+      (one (); cur := ("","","");
+       nexthidc :=
+         map (fun w -> let i = String.index w ',' in
+                       String.sub w 0 i,
+                       String.sub w (i + 1) (String.length w - i - 1))
+           (filter (fun s -> String.contains s ',')
+              (String.split_on_char ' '
+                 (String.sub line 9 (String.length line - 9)))))
+    else if String.length line > 7 && String.sub line 0 7 = "@@@HIDE"
+    then
       (one (); cur := ("","","");
        nexthid := filter (fun s -> s <> "")
                     (String.split_on_char ' '
@@ -96,7 +118,8 @@ let diag_run infile outfile =
          the file before it *)
       let f,_,_ = !cur in
       if f <> !curfile then
-        (curfile := f; hid := !nexthid; nexthid := [])
+        (curfile := f; hid := !nexthid; nexthid := [];
+         hidc := !nexthidc; nexthidc := [])
     end else buf := line :: !buf
   done with End_of_file -> ());
   one ();
