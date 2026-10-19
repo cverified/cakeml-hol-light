@@ -20,7 +20,7 @@ import sys, os, re, collections
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
-import db as dbmod
+import db as dbmod, thmcheck, overrides
 
 
 def main():
@@ -29,6 +29,7 @@ def main():
   for thy, path, kind in dbmod.load_order():
     thy_of[db.mlpath_of(thy)] = thy
   flds = db.field_tokens()
+  hidden = {}
   rows = []
   for l in open(T + '../tmp/diag.out'):
     f = l.rstrip('\n').split('\t')
@@ -37,9 +38,14 @@ def main():
     thy = thy_of.get(p)
     if not thy: continue
     anc = db.gram_ancestors(thy)
+    # a name that the file hides is a variable of the statement
+    # because HOL4 hides it as well (a Parse.hide of the source,
+    # or a constant that HOL4 cannot have at all)
+    hid = set(hidden.setdefault(
+      p, thmcheck.hidden(T + '../ml/' + p))) | overrides.HOL4_HIDDEN
     for v in f[4].split():
       n = v.split(':')[0]
-      if n in flds: continue
+      if n in flds or n in hid: continue
       ts = sorted({t for t, k in db.defs.get(n, [])
                    if k in ('def', 'con', 'rel') and t in anc})
       if ts: rows.append((thy, f[3], n, ts[0]))
