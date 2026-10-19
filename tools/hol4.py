@@ -226,6 +226,66 @@ def thmvalue_statement(text):
   return m.group(2).strip() if m else None
 
 
+# a theorem that HOL4 states as the value of a prove of a
+# quotation of its statement (compilerProof's compile_correct, the
+# main correctness theorem of CakeML)
+PROVE_VALUE = re.compile(r'=\s*(?:Q\.)?prove\s*\(\s*(``|`|\u201c)',
+                         re.S)
+
+# what may be applied to the theorem of such a prove without
+# changing its statement: check_thm gives its argument back (it
+# fails where the theorem depends on a cheat)
+HARMLESS = ('', 'check_thm')
+
+
+def close_paren(text, i):
+  """the index after the parenthesis that the one at i closes,
+     skipping the quotations and the strings on the way"""
+  depth = 0
+  j = i
+  while j < len(text):
+    c = text[j]
+    if c in '`\u201c\u201d':
+      k = j + (2 if text[j:j+2] == '``' else 1)
+      e = QEND.get(text[j:j+2], QEND.get(c, c))
+      k2 = text.find(e, k)
+      if k2 < 0: break
+      j = k2 + len(e); continue
+    if c == '"':
+      j += 1
+      while j < len(text) and text[j] != '"':
+        j += 2 if text[j] == '\\' else 1
+      j += 1; continue
+    if c == '(': depth += 1
+    elif c == ')':
+      depth -= 1
+      if depth == 0: return j + 1
+    j += 1
+  return len(text)
+
+
+def thmvalue_prove(text):
+  """the statement of a ThmValue block whose value is a prove of a
+     quotation of it, where nothing but check_thm is applied to
+     the result"""
+  m = PROVE_VALUE.search(text)
+  if not m: return None
+  q = m.group(1)
+  end = text.find(QEND.get(q, q), m.end())
+  if end < 0: return None
+  stmt = text[m.end():end]
+  # the quotation is the whole statement only where the tactic
+  # follows it: stack_alloc's next_lab_pmatch is a prove of
+  # `!p aux.` @ (the ML that builds the rest of the statement)
+  k = end + len(q)
+  while k < len(text) and text[k] in ' \t\n': k += 1
+  if k >= len(text) or text[k] != ',': return None
+  j = close_paren(text, text.index('(', m.start()))
+  rest = text[j:].split(';')[0].replace('|>', ' ')
+  if ' '.join(rest.split()) not in HARMLESS: return None
+  return strip_comments(stmt).strip()
+
+
 ALIAS_VALUE = re.compile(r"=\s*([A-Za-z0-9_']+)\s*;?\s*$", re.S)
 
 
@@ -550,15 +610,45 @@ def parse(path):
                      line)
             and i + 1 < n and lines[i+1].lstrip().startswith('='))):
       j = i + 1
-      while j < n and lines[j].strip() and not HEAD.match(lines[j]) \
-          and not lines[j].lstrip().startswith('(*'):
+      incom = []
+      while j < n:
+        acc = '\n'.join(lines[i:j])
+        # a comment or a blank line inside the quotation belongs to
+        # the block: the statement of compilerProof's
+        # compile_correct has a comment in the middle of it, which
+        # cut the block in two and lost the statement with it.  The
+        # comments of such a quotation are kept apart, because the
+        # statement of the port is a quotation of HOL Light, where
+        # (* is no comment
+        if in_quote(acc):
+          if lines[j].lstrip().startswith('(*'):
+            k = j; depth = 0
+            while k < n:
+              depth += lines[k].count('(*') - lines[k].count('*)')
+              k += 1
+              if depth <= 0: break
+            c = '\n'.join(lines[j:k])
+            # the line that closes the comment goes on with the
+            # quotation (compile_correct has *)`, there), which is
+            # no part of the comment
+            c = c[:c.rindex('*)') + 2]
+            incom.append('\n'.join(
+              ('   ' + l.strip()) if i2 else l.lstrip()
+              for i2, l in enumerate(c.split('\n'))))
+            j = k; continue
+          j += 1; continue
+        if not lines[j].strip() or HEAD.match(lines[j]) or \
+           lines[j].lstrip().startswith('(*'):
+          break
         j += 1
       text = '\n'.join(lines[i:j])
       mm = re.match(r'^\w+\s+([A-Za-z0-9_\']+)\s*(\[[^\]]*\])?', line)
-      blocks.append(Block('ThmValue', mm.group(1) if mm else None,
-                          ((mm.group(2) or '')[1:-1].split(',')
-                           if mm and mm.group(2) else []),
-                          text, text=text))
+      b = Block('ThmValue', mm.group(1) if mm else None,
+                ((mm.group(2) or '')[1:-1].split(',')
+                 if mm and mm.group(2) else []),
+                text, text=text)
+      b.incomments = incom
+      blocks.append(b)
       i = j; continue
     # block structures ending in End or QED
     if kind in ('Datatype', 'Definition', 'Inductive', 'CoInductive'):

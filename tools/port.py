@@ -918,6 +918,19 @@ class Porter:
       if stmt and b.name:
         self.state(b, b.name, b.attrs, stmt)
         return
+      # where the value is a prove of a quotation and nothing but
+      # check_thm is applied to it, that quotation is the
+      # statement as well (compilerProof's compile_correct, the
+      # main correctness theorem of CakeML)
+      stmt = hol4.thmvalue_prove(b.text)
+      if stmt and b.name:
+        self.state(b, b.name, b.attrs, stmt)
+        # a comment inside the quotation of the statement: the
+        # statement of the port is a quotation of HOL Light, where
+        # (* is no comment, so it goes after the statement
+        for c in getattr(b, 'incomments', []):
+          self.out.append(verbatim(c))
+        return
       # where the value is another theorem of a source, and the
       # port has that theorem, the name is that theorem of the
       # port (HOL4's Theorem foo = bar)
