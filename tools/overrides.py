@@ -1751,7 +1751,7 @@ let mips_config_def = cake_define
        // 32
        0 F
        // valid_imm
-       (\b i. if b IN {INL And; INL Or; INL Xor; INR Test;
+       (\b i. if b IN {INL And,INL Or,INL Xor,INR Test,
                        INR NotTest}
               then n2w 0 <= i /\ i <= w2w (UINT_MAXw:(16)word)
               else (if b = INL Sub then sw2sw (INT_MINw:(16)word) < i
