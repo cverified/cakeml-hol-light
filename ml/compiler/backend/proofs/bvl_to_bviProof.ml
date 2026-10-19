@@ -39,6 +39,8 @@ needs "semantics/semanticPrimitives.ml";;
 
 cake_hide ["id"; "parts"];;
 
+cake_hide_more ["str"];;
+
 (* HOL4 bvl_to_bviProofScript.sml:22: ML code, not ported *)
 
 (* value relation *)
@@ -631,11 +633,11 @@ let eval_ind_alt = cake_theorem "eval_ind_alt"
           P ([If x1 x2 x3],env,s)) /\
        (!xs x2 env s.
           (!ys v2 s1 vs.
-             list_size flatLang_exp_size ys <= flatLang_exp_size x2
-               /\ evaluate (xs,env,s) = (v2,s1) ==>
+             list_size bvl_exp_size ys <= bvl_exp_size x2 /\
+               evaluate (xs,env,s) = (v2,s1) ==>
              P (ys,vs,s1)) /\
-          (!ys env. list_size flatLang_exp_size ys <=
-            flatLang_exp_size x2 ==> P (ys,env,s)) /\
+          (!ys env. list_size bvl_exp_size ys <= bvl_exp_size x2
+            ==> P (ys,env,s)) /\
           (!v2 s1 vs.
              evaluate (xs,env,s) = (v2,s1) /\ v2 = Rval vs ==>
              P ([x2],vs ++ env,s1)) /\
@@ -648,8 +650,8 @@ let eval_ind_alt = cake_theorem "eval_ind_alt"
              evaluate ([x1],env,s1) = (v3,s) /\ v3 = Rerr v8 /\
              v8 = Rraise v ==>
              P ([x2],v :: env,s)) /\
-          (!xs env. list_size flatLang_exp_size xs <=
-            flatLang_exp_size x1 ==> P (xs,env,s1)) ==>
+          (!xs env. list_size bvl_exp_size xs <= bvl_exp_size x1
+            ==> P (xs,env,s1)) ==>
           P ([Handle x1 x2],env,s1)) /\
        (!force_loc n env s.
           (!thunk_v v1 v v' args exp.

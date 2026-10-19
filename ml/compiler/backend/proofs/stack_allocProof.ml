@@ -33,7 +33,11 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 
-cake_hide ["data_buffer"; "memory"; "not"; "shift"; "stack_alloc"];;
+cake_hide ["not"; "shift"; "stack_alloc"];;
+
+cake_hide_consts
+  ["data_buffer","data_buffer";
+   "memory","memory"];;
 (* HOL4 ancestors outside the port: (* for memcpy *) *)
 
 (* HOL4 stack_allocProofScript.sml:16: ML code, not ported *)
@@ -2910,3 +2914,5 @@ let compile_has_fp_ops = cake_theorem "compile_has_fp_ops[simp]"
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

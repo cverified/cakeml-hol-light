@@ -19,7 +19,8 @@ needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["return"];;
+cake_hide_consts
+  ["return","errorMonad_return"];;
 
 (* HOL4 linear_scanProofScript.sml:12-13: ML code, not ported *)
 
@@ -287,7 +288,7 @@ let fix_domination_check_live_tree =
 let size_of_live_tree_positive =
   cake_theorem "size_of_live_tree_positive"
   (fun () ->
-    `!lt. 0 <= size_of_live_tree lt`)
+    `!lt. (&0) <= size_of_live_tree lt`)
   CHEAT_TAC;;
 
 let check_number_property_strong_monotone_weak =
@@ -2280,17 +2281,17 @@ let get_intervals_ct_monad_aux_correct =
        (linear_scan_hidden_state_int_end sthout))
        (linear_scan_hidden_state_int_beg_fupd (K
        (linear_scan_hidden_state_int_beg sthout)) sth) /\
-     nout <= 0)`)
+     nout <= (&0))`)
   CHEAT_TAC;;
 
 let get_intervals_ct_monad_correct =
   cake_theorem "get_intervals_ct_monad_correct"
   (fun () ->
     `!ct sth n int_beg int_end.
-     (!i. i < LENGTH (linear_scan_hidden_state_int_beg sth) ==> 0 <
-       EL i (linear_scan_hidden_state_int_beg sth)) /\
-     (!i. i < LENGTH (linear_scan_hidden_state_int_end sth) ==> 0 <
-       EL i (linear_scan_hidden_state_int_end sth)) /\
+     (!i. i < LENGTH (linear_scan_hidden_state_int_beg sth) ==>
+       (&0) < EL i (linear_scan_hidden_state_int_beg sth)) /\
+     (!i. i < LENGTH (linear_scan_hidden_state_int_end sth) ==>
+       (&0) < EL i (linear_scan_hidden_state_int_end sth)) /\
      get_intervals_ct ct = (n,int_beg,int_end) /\
      LENGTH (linear_scan_hidden_state_int_end sth) = LENGTH
        (linear_scan_hidden_state_int_beg sth) /\
@@ -2337,13 +2338,13 @@ let get_intervals_beg_less_end =
   cake_theorem "get_intervals_beg_less_end"
   (fun () ->
     `!lt n_in beg_in end_in n_out beg_out end_out.
-     (!r. r IN domain beg_in ==> the 0 (sptree_lookup r beg_in) <=
-       the 0 (sptree_lookup r end_in)) /\
+     (!r. r IN domain beg_in ==> the (&0) (sptree_lookup r beg_in)
+       <= the (&0) (sptree_lookup r end_in)) /\
      domain beg_in SUBSET domain end_in /\
      (n_out,beg_out,end_out) = get_intervals lt n_in beg_in end_in
        ==>
-     (!r. r IN domain beg_out ==> the 0 (sptree_lookup r beg_out)
-       <= the 0 (sptree_lookup r end_out)) /\
+     (!r. r IN domain beg_out ==> the (&0) (sptree_lookup r
+       beg_out) <= the (&0) (sptree_lookup r end_out)) /\
      domain beg_out SUBSET domain end_out`)
   CHEAT_TAC;;
 
@@ -2351,10 +2352,10 @@ let linear_reg_alloc_without_renaming_correct =
   cake_theorem "linear_reg_alloc_without_renaming_correct"
   (fun () ->
     `!k moves ct forced.
-     (!i. i < LENGTH (linear_scan_hidden_state_int_beg sth) ==> 0 <
-       EL i (linear_scan_hidden_state_int_beg sth)) /\
-     (!i. i < LENGTH (linear_scan_hidden_state_int_end sth) ==> 0 <
-       EL i (linear_scan_hidden_state_int_end sth)) /\
+     (!i. i < LENGTH (linear_scan_hidden_state_int_beg sth) ==>
+       (&0) < EL i (linear_scan_hidden_state_int_beg sth)) /\
+     (!i. i < LENGTH (linear_scan_hidden_state_int_end sth) ==>
+       (&0) < EL i (linear_scan_hidden_state_int_end sth)) /\
      LENGTH (linear_scan_hidden_state_int_end sth) = LENGTH
        (linear_scan_hidden_state_int_beg sth) /\
      (!r. MEM r reglist_unsorted <=> in_clash_tree ct r) /\
@@ -2550,4 +2551,4 @@ let linear_scan_reg_alloc_correct =
 
 hol4_only "++" "APPEND";;
 
-cake_hide [];;
+cake_hide_consts [];;

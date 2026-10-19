@@ -74,9 +74,9 @@ let paireq = cake_theorem "paireq[local]"
 
 let GSPEC_INTER = cake_theorem "GSPEC_INTER[local]"
   (fun () ->
-    `GSPEC f INTER Q =
-       GSPEC (S ((,) o FST o f) (S ((/\) o SND o f) (Q o FST o
-         f)))`)
+    `hol4_GSPEC f INTER Q =
+       hol4_GSPEC (hol4_S ((,) o FST o f) (hol4_S ((/\) o SND o
+         f) (Q o FST o f)))`)
   CHEAT_TAC;;
 
 let RIGHT_INTER_OVER_UNION =

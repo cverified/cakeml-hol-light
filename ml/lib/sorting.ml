@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  sorting: ported from HOL4's
-    src/sort/sortingScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 22 files of the port.  *)
+    src/sort/sortingScript.sml  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

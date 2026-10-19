@@ -26,7 +26,10 @@ needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["Greater"; "memory"];;
+cake_hide ["Greater"];;
+
+cake_hide_consts
+  ["memory","memory"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* The reads of a stored arith fact, tracked as self-mappings in
@@ -1722,3 +1725,5 @@ let full_inst_ok_less_word_common_subexp_elim =
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

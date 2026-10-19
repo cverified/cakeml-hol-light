@@ -54,7 +54,12 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["all"; "code_buffer"; "data_buffer"; "memory"; "vars"];;
+cake_hide ["all"; "vars"];;
+
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "data_buffer","data_buffer";
+   "memory","memory"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
 (* HOL4 data_to_wordProofScript.sml:23-24: a proof *)
@@ -898,3 +903,5 @@ let data_to_word_good_handlers_incr =
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

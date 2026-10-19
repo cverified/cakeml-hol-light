@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  semanticPrimitives: ported from HOL4's
-    semantics/semanticPrimitivesScript.sml
-    A definition theory, with 101 definitions, 15 datatypes and no
-    theorems.  Needed by 74 files of the port.  *)
+    semantics/semanticPrimitivesScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -229,15 +227,12 @@ let semanticPrimitives_state_FIELDS =
    "next_type_stamp","num";
    "next_exn_stamp","num";
    "eval_state","eval_state option"];;
-hol4_field_overload "state_clock" "semanticPrimitives_state_clock";;
-hol4_field_overload "state_clock_fupd"
-  "semanticPrimitives_state_clock_fupd";;
-hol4_field_overload "state_refs" "semanticPrimitives_state_refs";;
-hol4_field_overload "state_refs_fupd"
-  "semanticPrimitives_state_refs_fupd";;
-hol4_field_overload "state_ffi" "semanticPrimitives_state_ffi";;
-hol4_field_overload "state_ffi_fupd"
-  "semanticPrimitives_state_ffi_fupd";;
+hol4_overload "state_clock" "semanticPrimitives_state_clock";;
+hol4_overload "state_clock_fupd" "semanticPrimitives_state_clock_fupd";;
+hol4_overload "state_refs" "semanticPrimitives_state_refs";;
+hol4_overload "state_refs_fupd" "semanticPrimitives_state_refs_fupd";;
+hol4_overload "state_ffi" "semanticPrimitives_state_ffi";;
+hol4_overload "state_ffi_fupd" "semanticPrimitives_state_ffi_fupd";;
 
 (* Other primitives *)
 (* Check that a constructor is properly applied *)

@@ -15,7 +15,6 @@
 needs "compiler/backend/bvi_inline.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/db_vars.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
@@ -516,8 +515,8 @@ let in_do_app_lemma = cake_theorem "in_do_app_lemma[local]"
    Call clause has a second disjunct. *)
 let exp_rel_inv = cake_theorem "exp_rel_inv[local,simp]"
   (fun () ->
-    `(bvi_inlineProof_exp_rel c (Var n:db_var_set) y <=> y = (Var
-  n:db_var_set)) /\
+    `(bvi_inlineProof_exp_rel c (Var n:bvi_exp) y <=> y = (Var
+  n:bvi_exp)) /\
      (bvi_inlineProof_exp_rel c (Force loc n) y <=> y = Force loc
        n) /\
      (bvi_inlineProof_exp_rel c (If x1 x2 x3) y <=>

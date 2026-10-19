@@ -25,8 +25,40 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["Term"; "code_buffer"; "comp"; "compile"; "data_buffer";
-           "memory"; "precondition"];;
+cake_hide ["Term"; "comp"; "precondition"];;
+
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "compile","backend_compile";
+   "compile","bvi_let_compile";
+   "compile","bvi_to_data_compile";
+   "compile","bvl_const_compile";
+   "compile","bvl_handle_compile";
+   "compile","bvl_to_bvi_compile";
+   "compile","clos_annotate_compile";
+   "compile","clos_call_compile";
+   "compile","clos_fvs_compile";
+   "compile","clos_known_compile";
+   "compile","clos_mti_compile";
+   "compile","clos_to_bvl_compile";
+   "compile","compiler_compile";
+   "compile","data_live_compile";
+   "compile","data_space_compile";
+   "compile","data_to_word_compile";
+   "compile","flat_to_clos_compile";
+   "compile","lab_to_target_compile";
+   "compile","source_to_flat_compile";
+   "compile","source_to_source_compile";
+   "compile","stack_alloc_compile";
+   "compile","stack_names_compile";
+   "compile","stack_rawcall_compile";
+   "compile","stack_remove_compile";
+   "compile","stack_to_lab_compile";
+   "compile","word_bignum_compile";
+   "compile","word_to_stack_compile";
+   "compile","word_to_word_compile";
+   "data_buffer","data_buffer";
+   "memory","memory"];;
 
 (*
 Main lemmas:
@@ -98,10 +130,10 @@ let state_const = cake_theorem "state_const[simp]"
   (K l') s) <=> l = l') /\
      ((wordSem_state_permute_fupd (K p) s) =
        (wordSem_state_permute_fupd (K p') s) <=> p = p') /\
-     ((state_clock_fupd (K clk) s) = (state_clock_fupd (K clk') s)
-       <=> clk = clk') /\
-     ((stack_fupd (K xs) s) = (stack_fupd (K xs') s) <=> xs =
-       xs')`)
+     ((wordSem_state_clock_fupd (K clk) s) =
+       (wordSem_state_clock_fupd (K clk') s) <=> clk = clk') /\
+     ((wordSem_state_stack_fupd (K xs) s) =
+       (wordSem_state_stack_fupd (K xs') s) <=> xs = xs')`)
   CHEAT_TAC;;
 
 let PAIR_MAP_EQ_PAIR = cake_theorem "PAIR_MAP_EQ_PAIR[simp]"
@@ -765,7 +797,7 @@ let wordProps_pop_env_with_const =
   cake_theorem "pop_env_with_const[simp]"
   (fun () ->
     `wordSem_pop_env (state_clock_fupd (K k) z) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (wordSem_pop_env z) /\
+  wordSem_state_clock_fupd (K k) s) (wordSem_pop_env z) /\
      wordSem_pop_env (wordSem_state_compile_fupd (K c) z) =
        OPTION_MAP (\s. wordSem_state_compile_fupd (K c) s)
        (wordSem_pop_env z) /\
@@ -959,7 +991,7 @@ let gc_const = cake_theorem "gc_const"
 let gc_with_const = cake_theorem "gc_with_const[simp]"
   (fun () ->
     `wordSem_gc (state_clock_fupd (K k) x) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (wordSem_gc x) /\
+  wordSem_state_clock_fupd (K k) s) (wordSem_gc x) /\
      wordSem_gc (wordSem_state_compile_fupd (K c) x) = OPTION_MAP
        (\s. wordSem_state_compile_fupd (K c) s) (wordSem_gc x) /\
      wordSem_gc (wordSem_state_compile_oracle_fupd (K co) x) =
@@ -982,8 +1014,8 @@ let gc_with_const = cake_theorem "gc_with_const[simp]"
 let alloc_const = cake_theorem "alloc_const"
   (fun () ->
     `wordSem_alloc c names s = (r,s') ==> state_clock
-     s' = state_clock s /\ state_ffi
-     s' = state_ffi s /\ wordSem_state_code
+     s' = wordSem_state_clock s /\ state_ffi
+     s' = wordSem_state_ffi s /\ wordSem_state_code
      s' = wordSem_state_code s /\ wordSem_state_be
      s' = wordSem_state_be s /\ wordSem_state_code_buffer
      s' = wordSem_state_code_buffer s /\ wordSem_state_data_buffer
@@ -1016,8 +1048,8 @@ let alloc_code_gc_fun_const = cake_theorem "alloc_code_gc_fun_const"
 
 let alloc_with_const = cake_theorem "alloc_with_const[simp]"
   (fun () ->
-    `wordSem_alloc c names (state_clock_fupd (K k) s) = (I ## (\s.
-  state_clock_fupd (K k) s)) (wordSem_alloc c names s) /\
+    `wordSem_alloc c names (wordSem_state_clock_fupd (K k) s) = (I ##
+  (\s. wordSem_state_clock_fupd (K k) s)) (wordSem_alloc c names s) /\
      wordSem_alloc c names (wordSem_state_termdep_fupd (K t) s) =
        (I ## (\s. wordSem_state_termdep_fupd (K t) s)) (wordSem_alloc c
        names s) /\
@@ -1235,7 +1267,8 @@ let mem_store_with_const = cake_theorem "mem_store_with_const[simp]"
   OPTION_MAP (\s. wordSem_state_locals_fupd (K l) s) (wordSem_mem_store
   x z y) /\
      wordSem_mem_store x z (state_clock_fupd (K k) y) = OPTION_MAP
-       (\s. state_clock_fupd (K k) s) (wordSem_mem_store x z y) /\
+       (\s. wordSem_state_clock_fupd (K k) s) (wordSem_mem_store x z y)
+       /\
      wordSem_mem_store x z (wordSem_state_code_fupd (K code) y) =
        OPTION_MAP (\s. wordSem_state_code_fupd (K code) s)
        (wordSem_mem_store x z y) /\
@@ -1249,7 +1282,8 @@ let mem_store_with_const = cake_theorem "mem_store_with_const[simp]"
        = OPTION_MAP (\s. wordSem_state_permute_fupd (K perm) s)
        (wordSem_mem_store x z y) /\
      wordSem_mem_store x z (stack_fupd (K xs) y) = OPTION_MAP
-       (\s. stack_fupd (K xs) s) (wordSem_mem_store x z y)`)
+       (\s. wordSem_state_stack_fupd (K xs) s) (wordSem_mem_store x z
+       y)`)
   CHEAT_TAC;;
 
 let word_exp_with_const = cake_theorem "word_exp_with_const[simp]"
@@ -1299,7 +1333,7 @@ let assign_const = cake_theorem "assign_const"
 let assign_with_const = cake_theorem "assign_with_const[simp]"
   (fun () ->
     `wordSem_assign x y (state_clock_fupd (K k) z) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (wordSem_assign x y z) /\
+  wordSem_state_clock_fupd (K k) s) (wordSem_assign x y z) /\
      wordSem_assign x y (wordSem_state_code_fupd (K code) z) =
        OPTION_MAP (\s. wordSem_state_code_fupd (K code) s)
        (wordSem_assign x y z) /\
@@ -1313,13 +1347,13 @@ let assign_with_const = cake_theorem "assign_with_const[simp]"
        OPTION_MAP (\s. wordSem_state_permute_fupd (K perm) s)
        (wordSem_assign x y z) /\
      wordSem_assign x y (stack_fupd (K xs) z) = OPTION_MAP (\s.
-       stack_fupd (K xs) s) (wordSem_assign x y z)`)
+       wordSem_state_stack_fupd (K xs) s) (wordSem_assign x y z)`)
   CHEAT_TAC;;
 
 let inst_with_const = cake_theorem "inst_with_const[simp]"
   (fun () ->
-    `wordSem_inst i (state_clock_fupd (K k) s) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (wordSem_inst i s) /\
+    `wordSem_inst i (wordSem_state_clock_fupd (K k) s) = OPTION_MAP (\s.
+  wordSem_state_clock_fupd (K k) s) (wordSem_inst i s) /\
      wordSem_inst i (wordSem_state_code_fupd (K code) s) =
        OPTION_MAP (\s. wordSem_state_code_fupd (K code) s) (wordSem_inst
        i s) /\
@@ -1332,8 +1366,9 @@ let inst_with_const = cake_theorem "inst_with_const[simp]"
      wordSem_inst i (wordSem_state_permute_fupd (K perm) s) =
        OPTION_MAP (\s. wordSem_state_permute_fupd (K perm) s)
        (wordSem_inst i s) /\
-     wordSem_inst i (stack_fupd (K xs) s) = OPTION_MAP (\s.
-       stack_fupd (K xs) s) (wordSem_inst i s)`)
+     wordSem_inst i (wordSem_state_stack_fupd (K xs) s) =
+       OPTION_MAP (\s. wordSem_state_stack_fupd (K xs) s)
+       (wordSem_inst i s)`)
   CHEAT_TAC;;
 
 let inst_const_full = cake_theorem "inst_const_full"
@@ -1344,10 +1379,10 @@ let inst_const_full = cake_theorem "inst_const_full"
      s' = wordSem_state_data_buffer s /\ wordSem_state_compile
      s' = wordSem_state_compile s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ state_clock
-     s' = state_clock s /\ state_ffi
-     s' = state_ffi s /\ wordSem_state_handler
+     s' = wordSem_state_clock s /\ state_ffi
+     s' = wordSem_state_ffi s /\ wordSem_state_handler
      s' = wordSem_state_handler s /\ stack
-     s' = stack s /\ wordSem_state_locals_size
+     s' = wordSem_state_stack s /\ wordSem_state_locals_size
      s' = wordSem_state_locals_size s /\ wordSem_state_stack_limit
      s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
      s' = wordSem_state_stack_max s /\ wordSem_state_stack_size
@@ -1372,8 +1407,8 @@ let inst_code_gc_fun_const =
 let inst_const = cake_theorem "inst_const"
   (fun () ->
     `wordSem_inst i s = SOME s' ==> state_clock
-     s' = state_clock s /\ state_ffi
-     s' = state_ffi s`)
+     s' = wordSem_state_clock s /\ state_ffi
+     s' = wordSem_state_ffi s`)
   CHEAT_TAC;;
 
 let jump_exc_const = cake_theorem "jump_exc_const"
@@ -1388,8 +1423,8 @@ let jump_exc_const = cake_theorem "jump_exc_const"
      s' = wordSem_state_data_buffer s /\ wordSem_state_compile
      s' = wordSem_state_compile s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ state_clock
-     s' = state_clock s /\ state_ffi
-     s' = state_ffi s /\ wordSem_state_stack_limit
+     s' = wordSem_state_clock s /\ state_ffi
+     s' = wordSem_state_ffi s /\ wordSem_state_stack_limit
      s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
      s' = wordSem_state_stack_max s /\ wordSem_state_stack_size
      s' = wordSem_state_stack_size s`)
@@ -1398,8 +1433,8 @@ let jump_exc_const = cake_theorem "jump_exc_const"
 let wordProps_jump_exc_with_const =
   cake_theorem "jump_exc_with_const[simp]"
   (fun () ->
-    `wordSem_jump_exc (state_clock_fupd (K k) s) = OPTION_MAP (\(s,t).
-  (state_clock_fupd (K k) s,t)) (wordSem_jump_exc s) /\
+    `wordSem_jump_exc (wordSem_state_clock_fupd (K k) s) = OPTION_MAP
+  (\(s,t). (wordSem_state_clock_fupd (K k) s,t)) (wordSem_jump_exc s) /\
      wordSem_jump_exc (wordSem_state_permute_fupd (K perm) s) =
        OPTION_MAP (\(s,t). (wordSem_state_permute_fupd (K perm) s,t))
        (wordSem_jump_exc s)`)
@@ -1433,7 +1468,7 @@ let wordProps_dec_clock_const = cake_theorem "dec_clock_const[simp]"
         (wordSem_dec_clock s) = wordSem_state_fp_regs s /\
           wordSem_state_store
         (wordSem_dec_clock s) = wordSem_state_store s /\ stack
-        (wordSem_dec_clock s) = stack s /\
+        (wordSem_dec_clock s) = wordSem_state_stack s /\
           wordSem_state_stack_limit
         (wordSem_dec_clock s) = wordSem_state_stack_limit s /\
           wordSem_state_stack_max
@@ -1466,7 +1501,7 @@ let wordProps_dec_clock_const = cake_theorem "dec_clock_const[simp]"
         (wordSem_dec_clock s) = wordSem_state_code s /\
         (wordSem_state_be (wordSem_dec_clock s) <=>
           wordSem_state_be s) /\ state_ffi
-        (wordSem_dec_clock s) = state_ffi s /\ state_clock
+        (wordSem_dec_clock s) = wordSem_state_ffi s /\ state_clock
         (wordSem_dec_clock (wordSem_state_locals_fupd (K locs) s))
           = state_clock (wordSem_dec_clock s) /\ state_clock
         (wordSem_dec_clock (wordSem_state_permute_fupd (K p) s))
@@ -1476,7 +1511,7 @@ let wordProps_dec_clock_const = cake_theorem "dec_clock_const[simp]"
 let sh_mem_set_var_const = cake_theorem "sh_mem_set_var_const"
   (fun () ->
     `sh_mem_set_var r v s = (x,s') ==> state_clock
-     s' = state_clock s /\ wordSem_state_compile_oracle
+     s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
      s' = wordSem_state_compile s /\ wordSem_state_be
      s' = wordSem_state_be s /\ wordSem_state_gc_fun
@@ -1490,9 +1525,9 @@ let sh_mem_set_var_const = cake_theorem "sh_mem_set_var_const"
      s' = wordSem_state_handler s /\ wordSem_state_stack_limit
      s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
      s' = wordSem_state_stack_max s /\
-     (r = NONE ==> state_ffi s' = state_ffi s) /\
-     (r = SOME (FFI_final outcome) ==> state_ffi s' = state_ffi s)
-       /\
+     (r = NONE ==> state_ffi s' = wordSem_state_ffi s) /\
+     (r = SOME (FFI_final outcome) ==> state_ffi s' =
+       wordSem_state_ffi s) /\
      (r = NONE ==> wordSem_state_locals_size s' =
        wordSem_state_locals_size s) /\
      (r = SOME (FFI_return f l) ==> wordSem_state_locals_size s' =
@@ -1510,7 +1545,7 @@ let sh_mem_set_var_const = cake_theorem "sh_mem_set_var_const"
 let sh_mem_store_const = cake_theorem "sh_mem_store_const"
   (fun () ->
     `wordSem_sh_mem_store ad v s = (res,s') ==> state_clock
-     s' = state_clock s /\ wordSem_state_compile_oracle
+     s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
      s' = wordSem_state_compile s /\ wordSem_state_be
      s' = wordSem_state_be s /\ wordSem_state_gc_fun
@@ -1541,7 +1576,7 @@ let sh_mem_store_const = cake_theorem "sh_mem_store_const"
 let sh_mem_store_byte_const = cake_theorem "sh_mem_store_byte_const"
   (fun () ->
     `wordSem_sh_mem_store_byte ad v s = (res,s') ==> state_clock
-     s' = state_clock s /\ wordSem_state_compile_oracle
+     s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
      s' = wordSem_state_compile s /\ wordSem_state_be
      s' = wordSem_state_be s /\ wordSem_state_gc_fun
@@ -1572,7 +1607,7 @@ let sh_mem_store_byte_const = cake_theorem "sh_mem_store_byte_const"
 let sh_mem_store16_const = cake_theorem "sh_mem_store16_const"
   (fun () ->
     `wordSem_sh_mem_store16 ad v s = (res,s') ==> state_clock
-     s' = state_clock s /\ wordSem_state_compile_oracle
+     s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
      s' = wordSem_state_compile s /\ wordSem_state_be
      s' = wordSem_state_be s /\ wordSem_state_gc_fun
@@ -1603,7 +1638,7 @@ let sh_mem_store16_const = cake_theorem "sh_mem_store16_const"
 let sh_mem_store32_const = cake_theorem "sh_mem_store32_const"
   (fun () ->
     `wordSem_sh_mem_store32 ad v s = (res,s') ==> state_clock
-     s' = state_clock s /\ wordSem_state_compile_oracle
+     s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
      s' = wordSem_state_compile s /\ wordSem_state_be
      s' = wordSem_state_be s /\ wordSem_state_gc_fun
@@ -1644,7 +1679,7 @@ let share_inst_const = cake_theorem "share_inst_const"
      s' = wordSem_state_compile s /\ wordSem_state_compile_oracle
      s' = wordSem_state_compile_oracle s /\ wordSem_state_permute
      s' = wordSem_state_permute s /\ state_clock
-     s' = state_clock s /\ wordSem_state_handler
+     s' = wordSem_state_clock s /\ wordSem_state_handler
      s' = wordSem_state_handler s /\ wordSem_state_stack_limit
      s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
      s' = wordSem_state_stack_max s`)
@@ -1657,9 +1692,9 @@ let sh_mem_set_var_with_const =
     `sh_mem_set_var res v (wordSem_state_permute_fupd (K p) s) =
      (I ## (\s. wordSem_state_permute_fupd (K p) s))
        (sh_mem_set_var res v s) /\
-     sh_mem_set_var res v (state_clock_fupd (K k) s) =
-     (I ## (\s. state_clock_fupd (K k) s)) (sh_mem_set_var res v
-       s)`)
+     sh_mem_set_var res v (wordSem_state_clock_fupd (K k) s) =
+     (I ## (\s. wordSem_state_clock_fupd (K k) s))
+       (sh_mem_set_var res v s)`)
   CHEAT_TAC;;
 
 let sh_mem_load_with_const = cake_theorem "sh_mem_load_with_const[simp]"
@@ -1668,9 +1703,9 @@ let sh_mem_load_with_const = cake_theorem "sh_mem_load_with_const[simp]"
   wordSem_sh_mem_load a s /\
      wordSem_sh_mem_load a (wordSem_state_permute_fupd (K p) s) =
        wordSem_sh_mem_load a s /\
-     wordSem_sh_mem_load a (state_clock_fupd (K k) s) =
+     wordSem_sh_mem_load a (wordSem_state_clock_fupd (K k) s) =
        wordSem_sh_mem_load a s /\
-     wordSem_sh_mem_load a (stack_fupd (K xs) s) =
+     wordSem_sh_mem_load a (wordSem_state_stack_fupd (K xs) s) =
        wordSem_sh_mem_load a s`)
   CHEAT_TAC;;
 
@@ -1681,10 +1716,10 @@ let sh_mem_load_byte_with_const =
   wordSem_sh_mem_load_byte a s /\
      wordSem_sh_mem_load_byte a (wordSem_state_permute_fupd (K p)
        s) = wordSem_sh_mem_load_byte a s /\
-     wordSem_sh_mem_load_byte a (state_clock_fupd (K k) s) =
-       wordSem_sh_mem_load_byte a s /\
-     wordSem_sh_mem_load_byte a (stack_fupd (K xs) s) =
-       wordSem_sh_mem_load_byte a s`)
+     wordSem_sh_mem_load_byte a (wordSem_state_clock_fupd (K k) s)
+       = wordSem_sh_mem_load_byte a s /\
+     wordSem_sh_mem_load_byte a (wordSem_state_stack_fupd (K xs)
+       s) = wordSem_sh_mem_load_byte a s`)
   CHEAT_TAC;;
 
 let sh_mem_load16_with_const =
@@ -1694,10 +1729,10 @@ let sh_mem_load16_with_const =
   wordSem_sh_mem_load16 a s /\
      wordSem_sh_mem_load16 a (wordSem_state_permute_fupd (K p) s) =
        wordSem_sh_mem_load16 a s /\
-     wordSem_sh_mem_load16 a (state_clock_fupd (K k) s) =
+     wordSem_sh_mem_load16 a (wordSem_state_clock_fupd (K k) s) =
        wordSem_sh_mem_load16 a s /\
-     wordSem_sh_mem_load16 a (stack_fupd (K xs) s) =
-       wordSem_sh_mem_load16 a s`)
+     wordSem_sh_mem_load16 a (wordSem_state_stack_fupd (K xs) s)
+       = wordSem_sh_mem_load16 a s`)
   CHEAT_TAC;;
 
 let sh_mem_load32_with_const =
@@ -1707,10 +1742,10 @@ let sh_mem_load32_with_const =
   wordSem_sh_mem_load32 a s /\
      wordSem_sh_mem_load32 a (wordSem_state_permute_fupd (K p) s) =
        wordSem_sh_mem_load32 a s /\
-     wordSem_sh_mem_load32 a (state_clock_fupd (K k) s) =
+     wordSem_sh_mem_load32 a (wordSem_state_clock_fupd (K k) s) =
        wordSem_sh_mem_load32 a s /\
-     wordSem_sh_mem_load32 a (stack_fupd (K xs) s) =
-       wordSem_sh_mem_load32 a s`)
+     wordSem_sh_mem_load32 a (wordSem_state_stack_fupd (K xs) s)
+       = wordSem_sh_mem_load32 a s`)
   CHEAT_TAC;;
 
 let sh_mem_store_with_const =
@@ -1719,9 +1754,9 @@ let sh_mem_store_with_const =
     `wordSem_sh_mem_store a w (wordSem_state_permute_fupd (K p) s) =
      (I ## (\s. wordSem_state_permute_fupd (K p) s))
        (wordSem_sh_mem_store a w s) /\
-     wordSem_sh_mem_store a w (state_clock_fupd (K k) s) =
-     (I ## (\s. state_clock_fupd (K k) s)) (wordSem_sh_mem_store
-       a w s)`)
+     wordSem_sh_mem_store a w (wordSem_state_clock_fupd (K k) s) =
+     (I ## (\s. wordSem_state_clock_fupd (K k) s))
+       (wordSem_sh_mem_store a w s)`)
   CHEAT_TAC;;
 
 let sh_mem_store_byte_with_const =
@@ -1731,8 +1766,9 @@ let sh_mem_store_byte_with_const =
   =
      (I ## (\s. wordSem_state_permute_fupd (K p) s))
        (wordSem_sh_mem_store_byte a w s) /\
-     wordSem_sh_mem_store_byte a w (state_clock_fupd (K k) s) =
-     (I ## (\s. state_clock_fupd (K k) s))
+     wordSem_sh_mem_store_byte a w (wordSem_state_clock_fupd (K k)
+       s) =
+     (I ## (\s. wordSem_state_clock_fupd (K k) s))
        (wordSem_sh_mem_store_byte a w s)`)
   CHEAT_TAC;;
 
@@ -1742,8 +1778,9 @@ let sh_mem_store16_with_const =
     `wordSem_sh_mem_store16 a w (wordSem_state_permute_fupd (K p) s) =
      (I ## (\s. wordSem_state_permute_fupd (K p) s))
        (wordSem_sh_mem_store16 a w s) /\
-     wordSem_sh_mem_store16 a w (state_clock_fupd (K k) s) =
-     (I ## (\s. state_clock_fupd (K k) s))
+     wordSem_sh_mem_store16 a w (wordSem_state_clock_fupd (K k) s)
+       =
+     (I ## (\s. wordSem_state_clock_fupd (K k) s))
        (wordSem_sh_mem_store16 a w s)`)
   CHEAT_TAC;;
 
@@ -1753,8 +1790,9 @@ let sh_mem_store32_with_const =
     `wordSem_sh_mem_store32 a w (wordSem_state_permute_fupd (K p) s) =
      (I ## (\s. wordSem_state_permute_fupd (K p) s))
        (wordSem_sh_mem_store32 a w s) /\
-     wordSem_sh_mem_store32 a w (state_clock_fupd (K k) s) =
-     (I ## (\s. state_clock_fupd (K k) s))
+     wordSem_sh_mem_store32 a w (wordSem_state_clock_fupd (K k) s)
+       =
+     (I ## (\s. wordSem_state_clock_fupd (K k) s))
        (wordSem_sh_mem_store32 a w s)`)
   CHEAT_TAC;;
 
@@ -1763,14 +1801,15 @@ let share_inst_with_const = cake_theorem "share_inst_with_const[simp]"
     `share_inst op v c (wordSem_state_permute_fupd (K p) s) =
      (I ## (\s. wordSem_state_permute_fupd (K p) s)) (share_inst op
        v c s) /\
-     share_inst op v c (state_clock_fupd (K k) s) =
-     (I ## (\s. state_clock_fupd (K k) s)) (share_inst op v c s)`)
+     share_inst op v c (wordSem_state_clock_fupd (K k) s) =
+     (I ## (\s. wordSem_state_clock_fupd (K k) s)) (share_inst op
+       v c s)`)
   CHEAT_TAC;;
 
 let cut_state_with_const = cake_theorem "cut_state_with_const[simp]"
   (fun () ->
     `wordSem_cut_state x (state_clock_fupd (K k) z) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (wordSem_cut_state x z) /\
+  wordSem_state_clock_fupd (K k) s) (wordSem_cut_state x z) /\
      wordSem_cut_state x (wordSem_state_code_fupd (K code) z) =
        OPTION_MAP (\s. wordSem_state_code_fupd (K code) s)
        (wordSem_cut_state x z) /\
@@ -1784,7 +1823,7 @@ let cut_state_with_const = cake_theorem "cut_state_with_const[simp]"
        OPTION_MAP (\s. wordSem_state_permute_fupd (K perm) s)
        (wordSem_cut_state x z) /\
      wordSem_cut_state x (stack_fupd (K xs) z) = OPTION_MAP (\s.
-       stack_fupd (K xs) s) (wordSem_cut_state x z)`)
+       wordSem_state_stack_fupd (K xs) s) (wordSem_cut_state x z)`)
   CHEAT_TAC;;
 
 let cut_state_const = cake_theorem "cut_state_const"
@@ -1846,9 +1885,9 @@ let wordProps_evaluate_add_clock = cake_theorem "evaluate_add_clock"
     `!p s r s'.
        wordSem_evaluate (p,s) = (r,s') /\ ~(r = SOME
          wordSem_TimeOut) ==>
-       wordSem_evaluate (p,state_clock_fupd (K (state_clock s +
-         extra)) s) = (r,state_clock_fupd (K (state_clock s' + extra))
-         s')`)
+       wordSem_evaluate (p,wordSem_state_clock_fupd (K
+         (wordSem_state_clock s + extra)) s) = (r,state_clock_fupd (K
+         (state_clock s' + extra)) s')`)
   CHEAT_TAC;;
 
 (* HOL4 wordPropsScript.sml:1436-1441: ML code, not ported *)
@@ -1862,8 +1901,8 @@ let wordProps_evaluate_add_clock = cake_theorem "evaluate_add_clock"
 
 let with_locals_same_clock = cake_theorem "with_locals_same_clock[simp]"
   (fun () ->
-    `state_clock_fupd (K (state_clock s)) (wordSem_state_locals_fupd (K
-  l)
+    `wordSem_state_clock_fupd (K (wordSem_state_clock s))
+  (wordSem_state_locals_fupd (K l)
        s) = wordSem_state_locals_fupd (K l)
        s`)
   CHEAT_TAC;;
@@ -1878,8 +1917,8 @@ let evaluate_add_clock_body =
   (fun () ->
     `wordSem_evaluate (c,s) = (res,s') /\ wordSem_cont_loop res ==>
      (!extra.
-       wordSem_evaluate (c,state_clock_fupd (K (state_clock s +
-         extra)) s) =
+       wordSem_evaluate (c,wordSem_state_clock_fupd (K
+         (wordSem_state_clock s + extra)) s) =
        (res,state_clock_fupd (K (state_clock s' + extra)) s'))`)
   CHEAT_TAC;;
 
@@ -1898,8 +1937,8 @@ let wordProps_evaluate_io_events_mono =
   (fun () ->
     `!exps s1 res s2.
       wordSem_evaluate (exps,s1) = (res,s2) ==> ffi_state_io_events
-        (state_ffi
-      s1) <<= ffi_state_io_events (state_ffi s2)`)
+        (wordSem_state_ffi
+      s1) <<= ffi_state_io_events (wordSem_state_ffi s2)`)
   CHEAT_TAC;;
 
 let SND_alt_def = cake_theorem "SND_alt_def[local]"
@@ -1914,8 +1953,8 @@ let wordProps_evaluate_add_clock_io_events_mono =
     `!exps s extra. ffi_state_io_events (state_ffi
       (SND (wordSem_evaluate (exps,s)))) <<= ffi_state_io_events
         (state_ffi
-      (SND (wordSem_evaluate (exps,state_clock_fupd (K
-        (state_clock s + extra)) s))))`)
+      (SND (wordSem_evaluate (exps,wordSem_state_clock_fupd (K
+        (wordSem_state_clock s + extra)) s))))`)
   CHEAT_TAC;;
 
 let evaluate_consts = cake_theorem "evaluate_consts"
@@ -2123,7 +2162,8 @@ let dec_stack_stack_key_eq =
 (*gc preserves the stack_key relation*)
 let gc_s_key_eq = cake_theorem "gc_s_key_eq"
   (fun () ->
-    `!s x. wordSem_gc s = SOME x ==> s_key_eq (stack s) (stack x)`)
+    `!s x. wordSem_gc s = SOME x ==> s_key_eq (wordSem_state_stack s)
+  (stack x)`)
   CHEAT_TAC;;
 
 let s_val_eq_enc_stack = cake_theorem "s_val_eq_enc_stack[local]"
@@ -2142,10 +2182,10 @@ let s_val_eq_dec_stack = cake_theorem "s_val_eq_dec_stack[local]"
   in the result*)
 let gc_s_val_eq = cake_theorem "gc_s_val_eq"
   (fun () ->
-    `!s x st y. s_val_eq (stack s) st /\
+    `!s x st y. s_val_eq (wordSem_state_stack s) st /\
                wordSem_gc s = SOME y ==>
-        (?z. wordSem_gc (stack_fupd (K st) s) = SOME (stack_fupd (K
-          z) y) /\
+        (?z. wordSem_gc (wordSem_state_stack_fupd (K st) s) = SOME
+          (stack_fupd (K z) y) /\
             s_val_eq (stack y) z /\ s_key_eq z st)`)
   CHEAT_TAC;;
 
@@ -2153,11 +2193,11 @@ let gc_s_val_eq = cake_theorem "gc_s_val_eq"
 let gc_s_val_eq_word_state = cake_theorem "gc_s_val_eq_word_state"
   (fun () ->
     `!s tlocs tstack y.
-            s_val_eq (stack s) tstack /\
+            s_val_eq (wordSem_state_stack s) tstack /\
             wordSem_gc s = SOME y ==>
       (?zlocs zstack.
             wordSem_gc (wordSem_state_locals_fupd (K tlocs)
-              (stack_fupd (K tstack) s)) =
+              (wordSem_state_stack_fupd (K tstack) s)) =
             SOME (wordSem_state_locals_fupd (K zlocs) (stack_fupd
               (K zstack) y)) /\
             s_val_eq (stack y) zstack /\ s_key_eq zstack tstack)`)
@@ -2171,7 +2211,8 @@ let gc_s_val_eq_gen = cake_theorem "gc_s_val_eq_gen"
      s = wordSem_state_memory t /\ wordSem_state_mdomain
      s = wordSem_state_mdomain t /\ wordSem_state_store
      s = wordSem_state_store t /\
-     s_val_eq (stack s) (stack t) /\ wordSem_state_stack_size
+     s_val_eq (wordSem_state_stack s) (stack t) /\
+       wordSem_state_stack_size
      s = wordSem_state_stack_size t /\ wordSem_state_stack_max
      s = wordSem_state_stack_max t /\ wordSem_state_stack_limit
      s = wordSem_state_stack_limit t /\
@@ -2199,7 +2240,8 @@ let push_env_pop_env_s_key_eq = cake_theorem "push_env_pop_env_s_key_eq"
                        (toAList (FST x))) /\
                      (domain (SND x)) UNION (domain (FST x)) =
                        domain (wordSem_state_locals y) /\
-                     s_key_eq (stack s) (stack y))))`)
+                     s_key_eq (wordSem_state_stack s) (stack
+                       y))))`)
   CHEAT_TAC;;
 
 let get_vars_stack_swap = cake_theorem "get_vars_stack_swap[local]"
@@ -2327,62 +2369,76 @@ let wordProps_evaluate_stack_swap = cake_theorem "evaluate_stack_swap"
   (fun () ->
     `!c s.
        match wordSem_evaluate (c,s) with (SOME wordSem_Error,s1) ->
-         T | (SOME (wordSem_FinalFFI e),s1) -> stack s1 = [] /\
-         wordSem_state_locals s1 = LN /\
-                              (!xs. s_val_eq (stack s) xs ==>
-                              wordSem_evaluate (c,stack_fupd (K xs)
-                                s) =
+         T | (SOME (wordSem_FinalFFI e),s1) -> wordSem_state_stack s1 =
+         [] /\ wordSem_state_locals s1 = LN /\
+                              (!xs. s_val_eq (wordSem_state_stack
+                                s) xs ==>
+                              wordSem_evaluate
+                                (c,wordSem_state_stack_fupd (K xs) s) =
                               (SOME (wordSem_FinalFFI e),s1)) |
-                                (SOME wordSem_TimeOut,s1) -> stack s1 =
-                                [] /\ wordSem_state_locals s1 = LN /\
-                              (!xs. s_val_eq (stack s) xs ==>
-                              wordSem_evaluate (c,stack_fupd (K xs)
-                                s) =
+                                (SOME wordSem_TimeOut,s1) ->
+                                wordSem_state_stack s1 = [] /\
+                                wordSem_state_locals s1 = LN /\
+                              (!xs. s_val_eq (wordSem_state_stack
+                                s) xs ==>
+                              wordSem_evaluate
+                                (c,wordSem_state_stack_fupd (K xs) s) =
                               (SOME wordSem_TimeOut,s1)) | (SOME
-                                wordSem_NotEnoughSpace,s1) -> stack s1 =
-                                [] /\ wordSem_state_locals s1 = LN /\
-                              (!xs. s_val_eq (stack s) xs ==>
-                              wordSem_evaluate (c,stack_fupd (K xs)
-                                s) =
+                                wordSem_NotEnoughSpace,s1) ->
+                                wordSem_state_stack s1 = [] /\
+                                wordSem_state_locals s1 = LN /\
+                              (!xs. s_val_eq (wordSem_state_stack
+                                s) xs ==>
+                              wordSem_evaluate
+                                (c,wordSem_state_stack_fupd (K xs) s) =
                               (SOME wordSem_NotEnoughSpace,s1)) |
                                 (SOME (wordSem_Exception x y),s1) ->
-             (wordSem_state_handler s < LENGTH (stack s)) /\
+             (wordSem_state_handler s < LENGTH (wordSem_state_stack
+               s)) /\
              (?e0 e n ls m lss.
-                 (LASTN (wordSem_state_handler s + 1) (stack s) =
-                   StackFrame m e0 e (SOME n) :: ls) /\
+                 (LASTN (wordSem_state_handler s + 1)
+                   (wordSem_state_stack s) = StackFrame m e0 e (SOME n)
+                   :: ls) /\
                  Abbrev (m = wordSem_state_locals_size s1) /\
                  (MAP FST e = MAP FST lss /\ wordSem_state_locals
                     s1 = sptree_union (fromAList lss) (fromAList
                       e0)) /\
-                 (s_key_eq (stack s1) ls) /\ (wordSem_state_handler
-                   s1 = (match n with (a,b,c) -> a)) /\
+                 (s_key_eq (wordSem_state_stack s1) ls) /\
+                   (wordSem_state_handler s1 = (match n with (a,b,c) ->
+                   a)) /\
                  (!xs e0' e' ls'.
                             (LASTN (wordSem_state_handler s + 1) xs
                               =
                               StackFrame m e0' e' (SOME n) :: ls')
                                 /\
-                            (s_val_eq (stack s) xs) ==>
+                            (s_val_eq (wordSem_state_stack s) xs)
+                              ==>
                             (?st locs.
-                            (wordSem_evaluate (c,stack_fupd (K xs)
-                              s) =
+                            (wordSem_evaluate
+                              (c,wordSem_state_stack_fupd (K xs) s) =
                               (SOME (wordSem_Exception x
                                 y),wordSem_state_locals_fupd (K locs)
                                 (wordSem_state_handler_fupd (K (match n
-                                with (a,b,c) -> a)) (stack_fupd (K st)
+                                with (a,b,c) -> a))
+                                (wordSem_state_stack_fupd (K st)
                               s1))) /\
                              (?lss'. MAP FST e' = MAP FST lss' /\
                               locs = sptree_union (fromAList lss')
                                 (fromAList e0') /\
                               MAP SND lss = MAP SND lss') /\
-                             s_val_eq (stack s1) st /\ s_key_eq ls'
-                               st)))) | (res,s1) -> (s_key_eq (stack s)
-                               (stack s1)) /\ (wordSem_state_handler s1
-                               = wordSem_state_handler s) /\
-                     (!xs. s_val_eq (stack s) xs ==>
-                           (?st. wordSem_evaluate (c,stack_fupd (K
-                             xs) s) =
-                              (res,stack_fupd (K st) s1) /\
-                              s_val_eq (stack s1) st /\
+                             s_val_eq (wordSem_state_stack s1) st
+                               /\ s_key_eq ls' st)))) | (res,s1) ->
+                               (s_key_eq (wordSem_state_stack s)
+                               (wordSem_state_stack s1)) /\
+                               (wordSem_state_handler s1 =
+                               wordSem_state_handler s) /\
+                     (!xs. s_val_eq (wordSem_state_stack s) xs ==>
+                           (?st. wordSem_evaluate
+                             (c,wordSem_state_stack_fupd (K xs) s) =
+                              (res,wordSem_state_stack_fupd (K st)
+                                s1) /\
+                              s_val_eq (wordSem_state_stack s1) st
+                                /\
                               s_key_eq xs st))`)
   CHEAT_TAC;;
 
@@ -2624,8 +2680,9 @@ let set_store_stack_max_greater_bound =
   cake_theorem "set_store_stack_max_greater_bound"
   (fun () ->
     `!v x s t. wordSem_set_store v x s = t /\
-     option_le (OPTION_MAP2 (+) (stack_size (stack s))
-       (wordSem_state_locals_size s)) (wordSem_state_stack_max s) ==>
+     option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+       s)) (wordSem_state_locals_size s)) (wordSem_state_stack_max s)
+       ==>
         option_le (OPTION_MAP2 (+) (stack_size (stack t))
           (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`)
   CHEAT_TAC;;
@@ -2656,8 +2713,9 @@ let pop_env_option_le_stack_max_preserved =
   cake_theorem "pop_env_option_le_stack_max_preserved"
   (fun () ->
     `!s t.
-       option_le (OPTION_MAP2 (+) (stack_size (stack s))
-         (wordSem_state_locals_size s)) (wordSem_state_stack_max s) /\
+       option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+         s)) (wordSem_state_locals_size s)) (wordSem_state_stack_max s)
+         /\
        wordSem_pop_env s = SOME t ==>
          option_le (OPTION_MAP2 (+) (stack_size (stack t))
            (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`)
@@ -2694,8 +2752,9 @@ let flush_state_option_le_stack_max_preserved =
   cake_theorem "flush_state_option_le_stack_max_preserved"
   (fun () ->
     `!s p.
-        option_le (OPTION_MAP2 (+) (stack_size (stack s))
-          (wordSem_state_locals_size s)) (wordSem_state_stack_max s) ==>
+        option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+          s)) (wordSem_state_locals_size s)) (wordSem_state_stack_max s)
+          ==>
         (let t = wordSem_flush_state p s in
           option_le
             (OPTION_MAP2 (+) (stack_size (stack t))
@@ -2730,8 +2789,9 @@ let evaluate_option_le_stack_max_preserved =
   cake_theorem "evaluate_option_le_stack_max_preserved"
   (fun () ->
     `!p s r t. wordSem_evaluate (p,s) = (r,t) /\
-        option_le (OPTION_MAP2 (+) (stack_size (stack s))
-          (wordSem_state_locals_size s)) (wordSem_state_stack_max s) ==>
+        option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+          s)) (wordSem_state_locals_size s)) (wordSem_state_stack_max s)
+          ==>
         option_le (OPTION_MAP2 (+) (stack_size (stack t))
           (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`)
   CHEAT_TAC;;
@@ -2836,7 +2896,7 @@ let evaluate_call_push_dec_option_le_stack_max =
     `!p args sz env handler s res t ck.
        wordSem_evaluate (p,wordSem_call_env args sz
                   (wordSem_push_env env handler (wordSem_dec_clock
-                    (state_clock_fupd (K ck) s)))) = (res,t) ==>
+                    (wordSem_state_clock_fupd (K ck) s)))) = (res,t) ==>
        option_le (wordSem_state_stack_max (wordSem_call_env args
          sz (wordSem_push_env env handler s)))
          (wordSem_state_stack_max t)`)
@@ -2862,7 +2922,8 @@ let evaluate_NONE_stack_size_const =
   cake_theorem "evaluate_NONE_stack_size_const"
   (fun () ->
     `!p s t. wordSem_evaluate (p,s) = (NONE,t) ==>
-             stack_size (stack t) = stack_size (stack s)`)
+             stack_size (stack t) = stack_size
+               (wordSem_state_stack s)`)
   CHEAT_TAC;;
 
 let env_to_list_lookup_equiv = cake_theorem "env_to_list_lookup_equiv"
@@ -3028,3 +3089,5 @@ let word_cmp_Word_Word = cake_theorem "word_cmp_Word_Word[simp]"
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

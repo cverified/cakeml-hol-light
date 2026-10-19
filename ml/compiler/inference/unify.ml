@@ -845,6 +845,15 @@ let apply_kclkont_def = cake_define_list
     kcwalkstarl s cits (\xk'. apply_kclkont s k (Infer_Tapp its
       n :: xk'))`];;
 
+(* HOL4 unifyScript.sml: the case constant that its Datatype makes
+   for the continuation of the walk *)
+
+let kclkont_CASE = new_recursive_definition kclkont_RECURSION
+  `(kclkont_CASE (DBk n) dbf appf uvf consf = dbf n) /\
+   (kclkont_CASE (APPk its n) dbf appf uvf consf = appf its n) /\
+   (kclkont_CASE (UVk n) dbf appf uvf consf = uvf n) /\
+   (kclkont_CASE (CONSk its n) dbf appf uvf consf = consf its n)`;;
+
 let dfkcwalkstarl_def = cake_define
   `dfkcwalkstarl s t k = kcwalkstarl s t (apply_kclkont s k)`;;
 

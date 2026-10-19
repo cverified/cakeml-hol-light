@@ -21,7 +21,13 @@ needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-cake_hide ["addr"; "memory"];;
+cake_hide ["addr"];;
+
+cake_hide_consts
+  ["memory","memory"];;
+
+
+cake_hide_more ["mem"];;
 
 (**************************** ANALYSIS LEMMAS *****************************)
 
@@ -671,3 +677,5 @@ let word_removal_thm = cake_theorem "word_removal_thm"
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  tokenUtils: ported from HOL4's
-    semantics/tokenUtilsScript.sml
-    A definition theory, with 22 definitions and 3 theorems.  Needed
-    by cmlPEG.ml and cmlPtreeConversion.ml.  *)
+    semantics/tokenUtilsScript.sml  *)
 (* ======================================================== *)
 
 (*

@@ -55,7 +55,10 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-cake_hide ["code_buffer"; "data_buffer"; "failed"];;
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "data_buffer","data_buffer";
+   "failed","pegexec_failed"];;
 
 (* HOL4 stack_to_labProofScript.sml:23-24: ML code, not ported *)
 
@@ -516,7 +519,7 @@ let state_rel_read_reg_FLOOKUP_regs =
   (fun () ->
     `state_rel s t /\
      FLOOKUP (stackSem_state_regs s) x = SOME y ==>
-     y = (\r s. regs s r) x t`)
+     y = (\r s. labSem_state_regs s r) x t`)
   CHEAT_TAC;;
 
 let state_rel_read_fp_reg_FLOOKUP_fp_regs =
@@ -566,8 +569,8 @@ let compile_jump_correct = cake_theorem "compile_jump_correct"
   (fun () ->
     `asm_fetch_aux pc code = SOME (compile_jump dest) /\
      loc_to_pc (dest_to_loc' regs dest) 0 code = SOME pc' /\
-     (!r. dest = INR r ==> (?p. (\r s. regs s r) r s = wordLang_Loc
-       p 0)) /\ labSem_state_pc
+     (!r. dest = INR r ==> (?p. (\r s. labSem_state_regs s r) r s =
+       wordLang_Loc p 0)) /\ labSem_state_pc
      (s:('a,'c,'ffi)labSem_state) = pc /\ labSem_state_code s =
        code /\ labSem_state_regs s = regs /\ ~(labSem_state_clock s = 0)
        ==>
@@ -745,9 +748,9 @@ let flatten_call_correct = cake_theorem "flatten_call_correct"
            (stackSem_state_code s1) (stackSem_state_code s) /\
            ~(stackSem_state_clock s = 0) ==>
              (?t. evaluate (Call NONE (INL n) NONE,s) = (SOME (Halt
-               (wordLang_Word (n2w 0))),t) /\ labSem_state_ffi
-                 t = stackSem_state_ffi s /\ labSem_state_clock t =
-                   stackSem_state_clock s - 1)))) ==>
+               (wordLang_Word (n2w 0))),t) /\ stackSem_state_ffi
+                 t = stackSem_state_ffi s /\ stackSem_state_clock t
+                   = stackSem_state_clock s - 1)))) ==>
      (?ck r2 t2.
        evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1
          - 1 + ck)) (t1:('a,'c,'ffi)labSem_state)) = (r2,t2) /\
@@ -905,9 +908,9 @@ let halt_assum_lemma = cake_theorem "halt_assum_lemma[local]"
 let FLOOKUP_regs = cake_theorem "FLOOKUP_regs[local]"
   (fun () ->
     `!regs' n v f s.
-         FLOOKUP (FEMPTY |++ MAP (\r. (r,(\r s. regs s r) r s))
-           regs') n = SOME v ==>
-         (\r s. regs s r) n s = v`)
+         FLOOKUP (FEMPTY |++ MAP (\r. (r,(\r s. labSem_state_regs s
+           r) r s)) regs') n = SOME v ==>
+         (\r s. labSem_state_regs s r) n s = v`)
   CHEAT_TAC;;
 
 let state_rel_make_init = cake_theorem "state_rel_make_init"
@@ -1903,4 +1906,4 @@ let stack_to_lab_compile_no_install =
      labProps_no_install prog'`)
   CHEAT_TAC;;
 
-cake_hide [];;
+cake_hide_consts [];;

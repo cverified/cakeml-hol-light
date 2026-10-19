@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  asmSem: ported from HOL4's
-    compiler/encoders/asm/asmSemScript.sml
-    A definition theory, with 24 definitions, 1 datatype and no
-    theorems.  Needed by 6 files of the port.  *)
+    compiler/encoders/asm/asmSemScript.sml  *)
 (* ======================================================== *)
 
 (*

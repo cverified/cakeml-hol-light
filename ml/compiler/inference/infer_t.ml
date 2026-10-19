@@ -30,6 +30,14 @@ let id_to_string_def = cake_define_list
    `id_to_string (Long x id') =
         mlstring_concat [x; implode "."; id_to_string id']`];;
 
+(* HOL4 infer_tScript.sml: the case constant that its Datatype
+   makes *)
+
+let infer_t_CASE = new_recursive_definition infer_t_RECURSION
+  `(infer_t_CASE (Infer_Tvar_db n) dbf appf uvf = dbf n) /\
+   (infer_t_CASE (Infer_Tapp its n) dbf appf uvf = appf its n) /\
+   (infer_t_CASE (Infer_Tuvar n) dbf appf uvf = uvf n)`;;
+
 let get_tyname_def = cake_define_list
   [`get_tyname n (Bind [] []) = NONE`;
    `get_tyname n (Bind [] ((m,ys) :: xs)) =

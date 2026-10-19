@@ -123,36 +123,35 @@ hol4_field_overload "regs" "stackSem_state_regs";;
 hol4_field_overload "regs_fupd" "stackSem_state_regs_fupd";;
 hol4_field_overload "fp_regs" "stackSem_state_fp_regs";;
 hol4_field_overload "fp_regs_fupd" "stackSem_state_fp_regs_fupd";;
-hol4_field_overload "state_store" "stackSem_state_store";;
-hol4_field_overload "state_store_fupd" "stackSem_state_store_fupd";;
+hol4_overload "state_store" "stackSem_state_store";;
+hol4_overload "state_store_fupd" "stackSem_state_store_fupd";;
 hol4_field_overload "stack" "stackSem_state_stack";;
 hol4_field_overload "stack_fupd" "stackSem_state_stack_fupd";;
-hol4_field_overload "state_memory" "stackSem_state_memory";;
-hol4_field_overload "state_memory_fupd" "stackSem_state_memory_fupd";;
-hol4_field_overload "state_mdomain" "stackSem_state_mdomain";;
-hol4_field_overload "state_mdomain_fupd" "stackSem_state_mdomain_fupd";;
-hol4_field_overload "state_sh_mdomain" "stackSem_state_sh_mdomain";;
-hol4_field_overload "state_sh_mdomain_fupd"
-  "stackSem_state_sh_mdomain_fupd";;
+hol4_overload "state_memory" "stackSem_state_memory";;
+hol4_overload "state_memory_fupd" "stackSem_state_memory_fupd";;
+hol4_overload "state_mdomain" "stackSem_state_mdomain";;
+hol4_overload "state_mdomain_fupd" "stackSem_state_mdomain_fupd";;
+hol4_overload "state_sh_mdomain" "stackSem_state_sh_mdomain";;
+hol4_overload "state_sh_mdomain_fupd" "stackSem_state_sh_mdomain_fupd";;
 hol4_field_overload "compile" "stackSem_state_compile";;
 hol4_field_overload "compile_fupd" "stackSem_state_compile_fupd";;
 hol4_field_overload "compile_oracle" "stackSem_state_compile_oracle";;
 hol4_field_overload "compile_oracle_fupd"
   "stackSem_state_compile_oracle_fupd";;
-hol4_field_overload "state_code_buffer" "stackSem_state_code_buffer";;
-hol4_field_overload "state_code_buffer_fupd"
+hol4_overload "state_code_buffer" "stackSem_state_code_buffer";;
+hol4_overload "state_code_buffer_fupd"
   "stackSem_state_code_buffer_fupd";;
-hol4_field_overload "state_data_buffer" "stackSem_state_data_buffer";;
-hol4_field_overload "state_data_buffer_fupd"
+hol4_overload "state_data_buffer" "stackSem_state_data_buffer";;
+hol4_overload "state_data_buffer_fupd"
   "stackSem_state_data_buffer_fupd";;
-hol4_field_overload "state_gc_fun" "stackSem_state_gc_fun";;
-hol4_field_overload "state_gc_fun_fupd" "stackSem_state_gc_fun_fupd";;
-hol4_field_overload "state_clock" "stackSem_state_clock";;
-hol4_field_overload "state_clock_fupd" "stackSem_state_clock_fupd";;
-hol4_field_overload "state_code" "stackSem_state_code";;
-hol4_field_overload "state_code_fupd" "stackSem_state_code_fupd";;
-hol4_field_overload "state_ffi" "stackSem_state_ffi";;
-hol4_field_overload "state_ffi_fupd" "stackSem_state_ffi_fupd";;
+hol4_overload "state_gc_fun" "stackSem_state_gc_fun";;
+hol4_overload "state_gc_fun_fupd" "stackSem_state_gc_fun_fupd";;
+hol4_overload "state_clock" "stackSem_state_clock";;
+hol4_overload "state_clock_fupd" "stackSem_state_clock_fupd";;
+hol4_overload "state_code" "stackSem_state_code";;
+hol4_overload "state_code_fupd" "stackSem_state_code_fupd";;
+hol4_overload "state_ffi" "stackSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "stackSem_state_ffi_fupd";;
 hol4_field_overload "be" "stackSem_state_be";;
 hol4_field_overload "be_fupd" "stackSem_state_be_fupd";;
 

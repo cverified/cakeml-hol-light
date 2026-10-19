@@ -42,9 +42,8 @@ let word_bignumProof_state_FIELDS =
    "clock","num"];;
 hol4_field_overload "regs" "word_bignumProof_state_regs";;
 hol4_field_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
-hol4_field_overload "state_clock" "word_bignumProof_state_clock";;
-hol4_field_overload "state_clock_fupd"
-  "word_bignumProof_state_clock_fupd";;
+hol4_overload "state_clock" "word_bignumProof_state_clock";;
+hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
 
 let eval_exp_def = cake_define
   `eval_exp s (wordLang_Const w) = w /\
@@ -499,9 +498,9 @@ let evaluate_SeqTempImmNot =
                            (?w. FAPPLY (wordSem_state_store t)
                              (Temp (n2w r)) = wordLang_Word w) then
         wordSem_evaluate (p,wordSem_set_var i (match ri with Imm
-          w -> wordLang_Word (~w) | Reg r -> (match FAPPLY
+          w -> wordLang_Word (word_not w) | Reg r -> (match FAPPLY
           (wordSem_state_store t) (Temp (n2w r)) with wordLang_Word w
-          -> wordLang_Word (~w))) t) else wordSem_evaluate
+          -> wordLang_Word (word_not w))) t) else wordSem_evaluate
           (SeqTempImmNot i ri p,t))`)
   CHEAT_TAC;;
 

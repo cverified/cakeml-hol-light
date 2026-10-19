@@ -48,7 +48,9 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-cake_hide ["failed"; "memory"];;
+cake_hide_consts
+  ["failed","pegexec_failed";
+   "memory","memory"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:26-27: a proof *)
@@ -764,4 +766,4 @@ let eval_Call_Arith = cake_theorem "eval_Call_Arith"
              r' NONE locs /\ q = NONE)))`)
   CHEAT_TAC;;
 
-cake_hide [];;
+cake_hide_consts [];;

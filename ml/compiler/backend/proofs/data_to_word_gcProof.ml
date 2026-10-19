@@ -45,8 +45,12 @@ needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["code_buffer"; "data_buffer"; "memory"; "stack_alloc";
-           "vars"];;
+cake_hide ["stack_alloc"; "vars"];;
+
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "data_buffer","data_buffer";
+   "memory","memory"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
 (* HOL4 data_to_word_gcProofScript.sml:19-23: ML code, not ported *)
@@ -810,8 +814,7 @@ let word_gen_gc_move_thm = cake_theorem "word_gen_gc_move_thm"
 let gc_move_with_NIL = cake_theorem "gc_move_with_NIL"
   (fun () ->
     `!x s y t.
-        gen_gc_gc_move gen_conf s x = (y,t) /\ wordSem_state_ok t
-          ==>
+        gen_gc_gc_move gen_conf s x = (y,t) /\ gc_state_ok t ==>
         (let (y,s1) = gc_move gen_conf (gc_state_r4_fupd (K [])
           (gc_state_h2_fupd (K []) s)) x in
           (y,gc_state_r4_fupd (K (gc_state_r4 s1 ++ gc_state_r4
@@ -859,8 +862,8 @@ let gc_move_list_ok_irr = cake_theorem "gc_move_list_ok_irr"
 let gc_move_list_with_NIL = cake_theorem "gc_move_list_with_NIL"
   (fun () ->
     `!x s y t.
-        gen_gc_gc_move_list gen_conf s x = (y,t) /\
-          wordSem_state_ok t ==>
+        gen_gc_gc_move_list gen_conf s x = (y,t) /\ gc_state_ok t
+          ==>
         (let (y,s1) = gc_move_list gen_conf (gc_state_r4_fupd (K
           []) (gc_state_h2_fupd (K []) s)) x in
           (y,gc_state_r4_fupd (K (gc_state_r4 s1 ++ gc_state_r4
@@ -1454,8 +1457,8 @@ let gc_partial_move_ref_list_ok_irr =
 let gc_partial_move_with_NIL = cake_theorem "gc_partial_move_with_NIL"
   (fun () ->
     `!x s y t.
-        gen_gc_partial_gc_move gen_conf s x = (y,t) /\
-          wordSem_state_ok t ==>
+        gen_gc_partial_gc_move gen_conf s x = (y,t) /\ gc_state_ok
+          t ==>
         (let (y,s1) = gc_move gen_conf (gc_state_r4_fupd (K [])
           (gc_state_h2_fupd (K []) s)) x in
           (y,gc_state_r4_fupd (K (gc_state_r4 s1 ++ gc_state_r4
@@ -1487,7 +1490,7 @@ let gc_partial_move_list_with_NIL =
   (fun () ->
     `!x s y t.
         gen_gc_partial_gc_move_list gen_conf s x = (y,t) /\
-          wordSem_state_ok t ==>
+          gc_state_ok t ==>
         (let (y,s1) = gen_gc_partial_gc_move_list gen_conf
           (gc_state_r4_fupd (K []) (gc_state_h2_fupd (K []) s)) x in
          (y,gc_state_r4_fupd (K (gc_state_r4 s1 ++ gc_state_r4
@@ -1503,8 +1506,7 @@ let gc_partial_move_ref_list_with_NIL =
   cake_theorem "gc_partial_move_ref_list_with_NIL"
   (fun () ->
     `!x s y t.
-        gc_move_ref_list gen_conf s x = (y,t) /\ wordSem_state_ok t
-          ==>
+        gc_move_ref_list gen_conf s x = (y,t) /\ gc_state_ok t ==>
         (let (y,s1) = gc_move_ref_list gen_conf (gc_state_r4_fupd
           (K []) (gc_state_h2_fupd (K []) s)) x in
          (y,gc_state_r4_fupd (K (gc_state_r4 s1 ++ gc_state_r4
@@ -4336,3 +4338,5 @@ let get_vars_sing = cake_theorem "get_vars_sing"
    states as the value of an ML expression: word_ml_inv_get_var_IMP *)
 
 cake_hide [];;
+
+cake_hide_consts [];;

@@ -19,7 +19,10 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["code_buffer"; "data_buffer"; "memory"];;
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "data_buffer","data_buffer";
+   "memory","memory"];;
 
 
 (* HOL4 stackPropsScript.sml:11-18: a theorem that HOL4 states as the
@@ -1067,4 +1070,4 @@ let no_shmemop_def = cake_define
         | (stackLang_ShMemOp _123 _124 _125) -> F
         | _126 -> T`;;
 
-cake_hide [];;
+cake_hide_consts [];;

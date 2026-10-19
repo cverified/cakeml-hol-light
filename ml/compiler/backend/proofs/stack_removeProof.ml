@@ -30,8 +30,11 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["C"; "code_buffer"; "data_buffer"; "gen_gc"; "num_stubs";
-           "shift"];;
+cake_hide ["C"; "gen_gc"; "num_stubs"; "shift"];;
+
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "data_buffer","data_buffer"];;
 
 (* HOL4 stack_removeProofScript.sml:16: ML code, not ported *)
 (* HOL4 stack_removeProofScript.sml:17: the overload num_stubs, which
@@ -1618,3 +1621,5 @@ let stack_remove_call_args = cake_theorem "stack_remove_call_args"
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

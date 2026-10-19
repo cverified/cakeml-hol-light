@@ -41,21 +41,21 @@ let bviSem_state_FIELDS = define_record "bviSem_state"
    "compile_oracle","num->'c#(num#num#bvi_exp) list";
    "code","(num#bvi_exp) spt";
    "ffi","'ffi ffi_state"];;
-hol4_field_overload "state_refs" "bviSem_state_refs";;
-hol4_field_overload "state_refs_fupd" "bviSem_state_refs_fupd";;
-hol4_field_overload "state_clock" "bviSem_state_clock";;
-hol4_field_overload "state_clock_fupd" "bviSem_state_clock_fupd";;
-hol4_field_overload "state_global" "bviSem_state_global";;
-hol4_field_overload "state_global_fupd" "bviSem_state_global_fupd";;
+hol4_overload "state_refs" "bviSem_state_refs";;
+hol4_overload "state_refs_fupd" "bviSem_state_refs_fupd";;
+hol4_overload "state_clock" "bviSem_state_clock";;
+hol4_overload "state_clock_fupd" "bviSem_state_clock_fupd";;
+hol4_overload "state_global" "bviSem_state_global";;
+hol4_overload "state_global_fupd" "bviSem_state_global_fupd";;
 hol4_field_overload "compile" "bviSem_state_compile";;
 hol4_field_overload "compile_fupd" "bviSem_state_compile_fupd";;
 hol4_field_overload "compile_oracle" "bviSem_state_compile_oracle";;
 hol4_field_overload "compile_oracle_fupd"
   "bviSem_state_compile_oracle_fupd";;
-hol4_field_overload "state_code" "bviSem_state_code";;
-hol4_field_overload "state_code_fupd" "bviSem_state_code_fupd";;
-hol4_field_overload "state_ffi" "bviSem_state_ffi";;
-hol4_field_overload "state_ffi_fupd" "bviSem_state_ffi_fupd";;
+hol4_overload "state_code" "bviSem_state_code";;
+hol4_overload "state_code_fupd" "bviSem_state_code_fupd";;
+hol4_overload "state_ffi" "bviSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "bviSem_state_ffi_fupd";;
 
 let dec_clock_def = cake_define
   `bviSem_dec_clock x s = state_clock_fupd (K (state_clock s - x)) s`;;

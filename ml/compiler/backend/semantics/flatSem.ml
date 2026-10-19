@@ -75,14 +75,14 @@ let flatSem_state_FIELDS = define_record "flatSem_state"
    "ffi","'ffi ffi_state";
    "globals","(flatSem_v option) list";
    "eval_config","'c install_config"];;
-hol4_field_overload "state_clock" "flatSem_state_clock";;
-hol4_field_overload "state_clock_fupd" "flatSem_state_clock_fupd";;
-hol4_field_overload "state_refs" "flatSem_state_refs";;
-hol4_field_overload "state_refs_fupd" "flatSem_state_refs_fupd";;
-hol4_field_overload "state_ffi" "flatSem_state_ffi";;
-hol4_field_overload "state_ffi_fupd" "flatSem_state_ffi_fupd";;
-hol4_field_overload "state_globals" "flatSem_state_globals";;
-hol4_field_overload "state_globals_fupd" "flatSem_state_globals_fupd";;
+hol4_overload "state_clock" "flatSem_state_clock";;
+hol4_overload "state_clock_fupd" "flatSem_state_clock_fupd";;
+hol4_overload "state_refs" "flatSem_state_refs";;
+hol4_overload "state_refs_fupd" "flatSem_state_refs_fupd";;
+hol4_overload "state_ffi" "flatSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "flatSem_state_ffi_fupd";;
+hol4_overload "state_globals" "flatSem_state_globals";;
+hol4_overload "state_globals_fupd" "flatSem_state_globals_fupd";;
 
 (* HOL4 flatSemScript.sml:66: the ML values that the definitions
    below antiquote *)

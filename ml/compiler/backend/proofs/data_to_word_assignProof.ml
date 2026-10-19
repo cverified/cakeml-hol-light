@@ -50,7 +50,12 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["code_buffer"; "data_buffer"; "memory"; "parts"; "vars"];;
+cake_hide ["parts"; "vars"];;
+
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "data_buffer","data_buffer";
+   "memory","memory"];;
 (* HOL4 ancestors outside the port: (* for word_add_carry *)
    int_bitwise While *)
 
@@ -1888,7 +1893,7 @@ let assign_ListAppend = cake_theorem "assign_ListAppend"
 
 let do_app_AllocThunk = cake_theorem "do_app_AllocThunk"
   (fun () ->
-    `do_app (ThunkOp (AllocThunk m):ast_op) [v] x =
+    `do_app (ThunkOp (AllocThunk m):closLang_op) [v] x =
       (match consume_space (1 + 1) x with
         NONE -> Rerr (Rabort Rtype_error) | SOME s1 ->
         (if bad_thunk_update m v (state_refs s1) then Rerr (Rabort
@@ -4643,6 +4648,8 @@ let bignum_size = cake_theorem "bignum_size"
        (num_of_int (abs i)):('a word) list) + 1`)
   CHEAT_TAC;;
 
+cake_hide_more ["free"];;
+
 let parts_to_words_NONE = cake_theorem "parts_to_words_NONE[local]"
   (fun () ->
     `!parts' (off:'a word) m aa (t:('a,'c,'ffi)wordSem_state)
@@ -4718,3 +4725,5 @@ let assign_thm = cake_theorem "assign_thm"
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

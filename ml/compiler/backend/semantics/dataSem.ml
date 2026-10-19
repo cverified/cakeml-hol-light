@@ -100,30 +100,29 @@ let dataSem_state_FIELDS = define_record "dataSem_state"
    "safe_for_space","bool";
    "peak_heap_length","num";
    "compile_oracle","num->'c#(num#num#dataLang_prog) list"];;
-hol4_field_overload "state_locals" "dataSem_state_locals";;
-hol4_field_overload "state_locals_fupd" "dataSem_state_locals_fupd";;
-hol4_field_overload "state_locals_size" "dataSem_state_locals_size";;
-hol4_field_overload "state_locals_size_fupd"
+hol4_overload "state_locals" "dataSem_state_locals";;
+hol4_overload "state_locals_fupd" "dataSem_state_locals_fupd";;
+hol4_overload "state_locals_size" "dataSem_state_locals_size";;
+hol4_overload "state_locals_size_fupd"
   "dataSem_state_locals_size_fupd";;
 hol4_field_overload "stack" "dataSem_state_stack";;
 hol4_field_overload "stack_fupd" "dataSem_state_stack_fupd";;
-hol4_field_overload "state_stack_max" "dataSem_state_stack_max";;
-hol4_field_overload "state_stack_max_fupd"
-  "dataSem_state_stack_max_fupd";;
-hol4_field_overload "state_global" "dataSem_state_global";;
-hol4_field_overload "state_global_fupd" "dataSem_state_global_fupd";;
-hol4_field_overload "state_handler" "dataSem_state_handler";;
-hol4_field_overload "state_handler_fupd" "dataSem_state_handler_fupd";;
-hol4_field_overload "state_refs" "dataSem_state_refs";;
-hol4_field_overload "state_refs_fupd" "dataSem_state_refs_fupd";;
+hol4_overload "state_stack_max" "dataSem_state_stack_max";;
+hol4_overload "state_stack_max_fupd" "dataSem_state_stack_max_fupd";;
+hol4_overload "state_global" "dataSem_state_global";;
+hol4_overload "state_global_fupd" "dataSem_state_global_fupd";;
+hol4_overload "state_handler" "dataSem_state_handler";;
+hol4_overload "state_handler_fupd" "dataSem_state_handler_fupd";;
+hol4_overload "state_refs" "dataSem_state_refs";;
+hol4_overload "state_refs_fupd" "dataSem_state_refs_fupd";;
 hol4_field_overload "compile" "dataSem_state_compile";;
 hol4_field_overload "compile_fupd" "dataSem_state_compile_fupd";;
-hol4_field_overload "state_clock" "dataSem_state_clock";;
-hol4_field_overload "state_clock_fupd" "dataSem_state_clock_fupd";;
-hol4_field_overload "state_code" "dataSem_state_code";;
-hol4_field_overload "state_code_fupd" "dataSem_state_code_fupd";;
-hol4_field_overload "state_ffi" "dataSem_state_ffi";;
-hol4_field_overload "state_ffi_fupd" "dataSem_state_ffi_fupd";;
+hol4_overload "state_clock" "dataSem_state_clock";;
+hol4_overload "state_clock_fupd" "dataSem_state_clock_fupd";;
+hol4_overload "state_code" "dataSem_state_code";;
+hol4_overload "state_code_fupd" "dataSem_state_code_fupd";;
+hol4_overload "state_ffi" "dataSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "dataSem_state_ffi_fupd";;
 hol4_field_overload "compile_oracle" "dataSem_state_compile_oracle";;
 hol4_field_overload "compile_oracle_fupd"
   "dataSem_state_compile_oracle_fupd";;
@@ -252,8 +251,8 @@ let add_space_def = cake_define
   (dataSem_state_peak_heap_length s) (size_of_heap s + k)) k s))
   (dataSem_state_safe_for_space_fupd (K ((\k s.
             dataSem_state_safe_for_space s /\
-            no_thunks_in_refs (state_refs s) /\ size_of_heap s + k <=
-              limits_heap_limit (dataSem_state_limits s)) k s))
+            no_thunks_in_refs (dataSem_state_refs s) /\ size_of_heap
+              s + k <= limits_heap_limit (dataSem_state_limits s)) k s))
               (dataSem_state_space_fupd (K k)
      s))`;;
 
@@ -509,7 +508,7 @@ let do_space_def = cake_define
        (dataSem_state_safe_for_space_fupd (K ((\op vs s. if
        op_space_reset op then
                     dataSem_state_safe_for_space s /\
-                    no_thunks_in_refs (state_refs s) /\
+                    no_thunks_in_refs (dataSem_state_refs s) /\
                         size_of_heap_args vs s + space_consumed s
                           op vs <= limits_heap_limit
                           (dataSem_state_limits s) else

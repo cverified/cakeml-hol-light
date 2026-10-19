@@ -22,7 +22,10 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["addr"; "dummy"; "memory"];;
+cake_hide ["addr"; "dummy"];;
+
+cake_hide_consts
+  ["memory","memory"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 word_simpProofScript.sml:10: the ML values that the
@@ -675,3 +678,5 @@ let compile_exp_thm = cake_theorem "compile_exp_thm"
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

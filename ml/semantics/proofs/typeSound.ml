@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  typeSound: ported from HOL4's
-    semantics/proofs/typeSoundScript.sml
-    A proof theory, with 1 definition and 45 theorems.  Needed by
-    compilerProof.ml and semanticsProps.ml.  *)
+    semantics/proofs/typeSoundScript.sml  *)
 (* ======================================================== *)
 
 (*

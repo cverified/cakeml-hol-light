@@ -26,7 +26,35 @@ needs "semantics/fpSem.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["compile"];;
+cake_hide_consts
+  ["compile","backend_compile";
+   "compile","bvi_let_compile";
+   "compile","bvi_to_data_compile";
+   "compile","bvl_const_compile";
+   "compile","bvl_handle_compile";
+   "compile","bvl_to_bvi_compile";
+   "compile","clos_annotate_compile";
+   "compile","clos_call_compile";
+   "compile","clos_fvs_compile";
+   "compile","clos_known_compile";
+   "compile","clos_mti_compile";
+   "compile","clos_to_bvl_compile";
+   "compile","compiler_compile";
+   "compile","data_live_compile";
+   "compile","data_space_compile";
+   "compile","data_to_word_compile";
+   "compile","flat_to_clos_compile";
+   "compile","lab_to_target_compile";
+   "compile","source_to_flat_compile";
+   "compile","source_to_source_compile";
+   "compile","stack_alloc_compile";
+   "compile","stack_names_compile";
+   "compile","stack_rawcall_compile";
+   "compile","stack_remove_compile";
+   "compile","stack_to_lab_compile";
+   "compile","word_bignum_compile";
+   "compile","word_to_stack_compile";
+   "compile","word_to_word_compile"];;
 (* HOL4 ancestors outside the port: (* for opw_lookup_def and others
    *) *)
 
@@ -70,21 +98,21 @@ let closSem_state_FIELDS = define_record "closSem_state"
    list";
    "code","(num,num#closLang_exp)fmap";
    "max_app","num"];;
-hol4_field_overload "state_globals" "closSem_state_globals";;
-hol4_field_overload "state_globals_fupd" "closSem_state_globals_fupd";;
-hol4_field_overload "state_refs" "closSem_state_refs";;
-hol4_field_overload "state_refs_fupd" "closSem_state_refs_fupd";;
-hol4_field_overload "state_ffi" "closSem_state_ffi";;
-hol4_field_overload "state_ffi_fupd" "closSem_state_ffi_fupd";;
-hol4_field_overload "state_clock" "closSem_state_clock";;
-hol4_field_overload "state_clock_fupd" "closSem_state_clock_fupd";;
+hol4_overload "state_globals" "closSem_state_globals";;
+hol4_overload "state_globals_fupd" "closSem_state_globals_fupd";;
+hol4_overload "state_refs" "closSem_state_refs";;
+hol4_overload "state_refs_fupd" "closSem_state_refs_fupd";;
+hol4_overload "state_ffi" "closSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "closSem_state_ffi_fupd";;
+hol4_overload "state_clock" "closSem_state_clock";;
+hol4_overload "state_clock_fupd" "closSem_state_clock_fupd";;
 hol4_field_overload "compile" "closSem_state_compile";;
 hol4_field_overload "compile_fupd" "closSem_state_compile_fupd";;
 hol4_field_overload "compile_oracle" "closSem_state_compile_oracle";;
 hol4_field_overload "compile_oracle_fupd"
   "closSem_state_compile_oracle_fupd";;
-hol4_field_overload "state_code" "closSem_state_code";;
-hol4_field_overload "state_code_fupd" "closSem_state_code_fupd";;
+hol4_overload "state_code" "closSem_state_code";;
+hol4_overload "state_code_fupd" "closSem_state_code_fupd";;
 
 (* helper functions *)
 
@@ -1130,4 +1158,4 @@ let semantics_def = cake_define
                  (SND (closSem_evaluate (es,[],st k)))))) UNIV)))`;;
 hol4_overload "semantics" "closSem_semantics";;
 
-cake_hide [];;
+cake_hide_consts [];;

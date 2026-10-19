@@ -30,6 +30,8 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: (* for closure_tag and
    num_added_globals *) *)
 
+cake_hide_more ["str"];;
+
 (* --- Semantics of BVL --- *)
 
 let bvlSem_ref_INDUCT,bvlSem_ref_RECURSION = define_datatype
@@ -73,21 +75,21 @@ let bvlSem_state_FIELDS = define_record "bvlSem_state"
    "compile_oracle","num->'c#(num#num#bvl_exp) list";
    "code","(num#bvl_exp) spt";
    "ffi","'ffi ffi_state"];;
-hol4_field_overload "state_globals" "bvlSem_state_globals";;
-hol4_field_overload "state_globals_fupd" "bvlSem_state_globals_fupd";;
-hol4_field_overload "state_refs" "bvlSem_state_refs";;
-hol4_field_overload "state_refs_fupd" "bvlSem_state_refs_fupd";;
-hol4_field_overload "state_clock" "bvlSem_state_clock";;
-hol4_field_overload "state_clock_fupd" "bvlSem_state_clock_fupd";;
+hol4_overload "state_globals" "bvlSem_state_globals";;
+hol4_overload "state_globals_fupd" "bvlSem_state_globals_fupd";;
+hol4_overload "state_refs" "bvlSem_state_refs";;
+hol4_overload "state_refs_fupd" "bvlSem_state_refs_fupd";;
+hol4_overload "state_clock" "bvlSem_state_clock";;
+hol4_overload "state_clock_fupd" "bvlSem_state_clock_fupd";;
 hol4_field_overload "compile" "bvlSem_state_compile";;
 hol4_field_overload "compile_fupd" "bvlSem_state_compile_fupd";;
 hol4_field_overload "compile_oracle" "bvlSem_state_compile_oracle";;
 hol4_field_overload "compile_oracle_fupd"
   "bvlSem_state_compile_oracle_fupd";;
-hol4_field_overload "state_code" "bvlSem_state_code";;
-hol4_field_overload "state_code_fupd" "bvlSem_state_code_fupd";;
-hol4_field_overload "state_ffi" "bvlSem_state_ffi";;
-hol4_field_overload "state_ffi_fupd" "bvlSem_state_ffi_fupd";;
+hol4_overload "state_code" "bvlSem_state_code";;
+hol4_overload "state_code_fupd" "bvlSem_state_code_fupd";;
+hol4_overload "state_ffi" "bvlSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "bvlSem_state_ffi_fupd";;
 
 let v_to_list_def = cake_define
   `bvlSem_v_to_list x1 =

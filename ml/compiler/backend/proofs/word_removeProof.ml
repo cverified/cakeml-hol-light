@@ -15,7 +15,38 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/word_remove.ml";;
 needs "semantics/typeSystem.ml";;
 
-cake_hide ["code_buffer"; "compile"; "data_buffer"; "memory"];;
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "compile","backend_compile";
+   "compile","bvi_let_compile";
+   "compile","bvi_to_data_compile";
+   "compile","bvl_const_compile";
+   "compile","bvl_handle_compile";
+   "compile","bvl_to_bvi_compile";
+   "compile","clos_annotate_compile";
+   "compile","clos_call_compile";
+   "compile","clos_fvs_compile";
+   "compile","clos_known_compile";
+   "compile","clos_mti_compile";
+   "compile","clos_to_bvl_compile";
+   "compile","compiler_compile";
+   "compile","data_live_compile";
+   "compile","data_space_compile";
+   "compile","data_to_word_compile";
+   "compile","flat_to_clos_compile";
+   "compile","lab_to_target_compile";
+   "compile","source_to_flat_compile";
+   "compile","source_to_source_compile";
+   "compile","stack_alloc_compile";
+   "compile","stack_names_compile";
+   "compile","stack_rawcall_compile";
+   "compile","stack_remove_compile";
+   "compile","stack_to_lab_compile";
+   "compile","word_bignum_compile";
+   "compile","word_to_stack_compile";
+   "compile","word_to_word_compile";
+   "data_buffer","data_buffer";
+   "memory","memory"];;
 
 let compile_state_def = cake_define
   `compile_state clk c s = wordSem_state_compile_fupd (K c)
@@ -329,4 +360,4 @@ let word_remove_correct = cake_theorem "word_remove_correct"
 
 (* HOL4 word_removeProofScript.sml:430: a proof *)
 
-cake_hide [];;
+cake_hide_consts [];;

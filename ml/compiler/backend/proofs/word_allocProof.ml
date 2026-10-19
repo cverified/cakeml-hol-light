@@ -28,11 +28,44 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["C"; "code_buffer"; "compile"; "data_buffer"; "not"; "sloc";
-           "val"];;
+cake_hide ["C"; "not"; "sloc"; "val"];;
+
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "compile","backend_compile";
+   "compile","bvi_let_compile";
+   "compile","bvi_to_data_compile";
+   "compile","bvl_const_compile";
+   "compile","bvl_handle_compile";
+   "compile","bvl_to_bvi_compile";
+   "compile","clos_annotate_compile";
+   "compile","clos_call_compile";
+   "compile","clos_fvs_compile";
+   "compile","clos_known_compile";
+   "compile","clos_mti_compile";
+   "compile","clos_to_bvl_compile";
+   "compile","compiler_compile";
+   "compile","data_live_compile";
+   "compile","data_space_compile";
+   "compile","data_to_word_compile";
+   "compile","flat_to_clos_compile";
+   "compile","lab_to_target_compile";
+   "compile","source_to_flat_compile";
+   "compile","source_to_source_compile";
+   "compile","stack_alloc_compile";
+   "compile","stack_names_compile";
+   "compile","stack_rawcall_compile";
+   "compile","stack_remove_compile";
+   "compile","stack_to_lab_compile";
+   "compile","word_bignum_compile";
+   "compile","word_to_stack_compile";
+   "compile","word_to_word_compile";
+   "data_buffer","data_buffer"];;
 
 (* Ensures we have the correct ML bindings *)
 (* HOL4 word_allocProofScript.sml:13-15: ML code, not ported *)
+
+cake_hide_more ["mem"];;
 
 (*TODO: Move?*)
 let SUBSET_OF_INSERT = cake_theorem "SUBSET_OF_INSERT"
@@ -56,7 +89,7 @@ let word_allocProof_INJ_less = cake_theorem "INJ_less[local]"
 
 let LET_FORALL_ELIM' = cake_theorem "LET_FORALL_ELIM'[local]"
   (fun () ->
-    `LET f v <=> (!) (S ((==>) o (=) v) f)`)
+    `LET f v <=> (!) (hol4_S ((==>) o (=) v) f)`)
   CHEAT_TAC;;
 (* TODO: can we have a global for this *)
 let hide_def = cake_define
@@ -3014,3 +3047,5 @@ let word_alloc_full_inst_ok_less =
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

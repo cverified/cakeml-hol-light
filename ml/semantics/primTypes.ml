@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  primTypes: ported from HOL4's
-    semantics/primTypesScript.sml
-    A definition theory, with 5 definitions and no theorems.  Needed
-    by backend.ml, backendProof.ml, compilerProof.ml, infer.ml,
-    primSemEnv.ml and semantics.ml.  *)
+    semantics/primTypesScript.sml  *)
 (* ======================================================== *)
 
 (*

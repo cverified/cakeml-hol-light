@@ -263,7 +263,7 @@ let do_app_with_stack = cake_theorem "do_app_with_stack[local]"
         (dataSem_state_safe_for_space_fupd (K ((\op vs s. if allowed_op
         op (LENGTH vs) then ((\op vs s. if op_space_reset op then
                       dataSem_state_safe_for_space s /\
-                      no_thunks_in_refs (state_refs s) /\
+                      no_thunks_in_refs (dataSem_state_refs s) /\
                           size_of_heap_args vs s + space_consumed s
                             op vs <= limits_heap_limit
                             (dataSem_state_limits s) else
@@ -275,9 +275,10 @@ let do_app_with_stack = cake_theorem "do_app_with_stack[local]"
                                 (dataSem_state_stack_frame_sizes s)
                                 (dataSem_state_limits s) op vs)
                               (OPTION_MAP2 (+) (size_of_stack
-                                (stack s)) (dataSem_state_locals_size
-                                s))))) else F) op vs (stack_fupd (K z)
-                                s))) (stack_fupd (K z) y)))))
+                                (dataSem_state_stack s))
+                                (dataSem_state_locals_size s))))) else
+                                F) op vs (stack_fupd (K z) s)))
+                                (stack_fupd (K z) y)))))
                  I (do_app op vs s)`)
   CHEAT_TAC;;
 
@@ -303,7 +304,7 @@ let do_app_with_stack_and_locals =
        if allowed_op op (LENGTH vs) then ((\op vs s. if op_space_reset
        op then
                       dataSem_state_safe_for_space s /\
-                      no_thunks_in_refs (state_refs s) /\
+                      no_thunks_in_refs (dataSem_state_refs s) /\
                           size_of_heap_args vs s + space_consumed s
                             op vs <= limits_heap_limit
                             (dataSem_state_limits s) else
@@ -315,8 +316,9 @@ let do_app_with_stack_and_locals =
                                 (dataSem_state_stack_frame_sizes s)
                                 (dataSem_state_limits s) op vs)
                               (OPTION_MAP2 (+) (size_of_stack
-                                (stack s)) (dataSem_state_locals_size
-                                s))))) else F) op vs (stack_fupd (K z)
+                                (dataSem_state_stack s))
+                                (dataSem_state_locals_size s))))) else
+                                F) op vs (stack_fupd (K z)
                                 (dataSem_state_locals_size_fupd (K lsz)
                                 s)))) (dataSem_state_locals_size_fupd (K
                                 lsz) (stack_fupd (K z) y))))))
@@ -360,7 +362,7 @@ let do_app_with_locals = cake_theorem "do_app_with_locals"
        (dataSem_state_safe_for_space_fupd (K ((\op vs s. if allowed_op
        op (LENGTH vs) then ((\op vs s. if op_space_reset op then
                       dataSem_state_safe_for_space s /\
-                      no_thunks_in_refs (state_refs s) /\
+                      no_thunks_in_refs (dataSem_state_refs s) /\
                           size_of_heap_args vs s + space_consumed s
                             op vs <= limits_heap_limit
                             (dataSem_state_limits s) else
@@ -372,10 +374,11 @@ let do_app_with_locals = cake_theorem "do_app_with_locals"
                                 (dataSem_state_stack_frame_sizes s)
                                 (dataSem_state_limits s) op vs)
                               (OPTION_MAP2 (+) (size_of_stack
-                                (stack s)) (dataSem_state_locals_size
-                                s))))) else F) op vs
-                                (dataSem_state_locals_fupd (K z) s)))
-                                (dataSem_state_locals_fupd (K z) y)))))
+                                (dataSem_state_stack s))
+                                (dataSem_state_locals_size s))))) else
+                                F) op vs (dataSem_state_locals_fupd (K
+                                z) s))) (dataSem_state_locals_fupd (K z)
+                                y)))))
                           I (do_app op vs s)`)
   CHEAT_TAC;;
 
@@ -432,7 +435,7 @@ let do_app_locals = cake_theorem "do_app_locals"
              allowed_op op (LENGTH vs) then ((\op vs s. if
              op_space_reset op then
                      dataSem_state_safe_for_space s /\
-                     no_thunks_in_refs (state_refs s) /\
+                     no_thunks_in_refs (dataSem_state_refs s) /\
                          size_of_heap_args vs s + space_consumed s
                            op vs <= limits_heap_limit
                            (dataSem_state_limits s) else
@@ -444,11 +447,11 @@ let do_app_locals = cake_theorem "do_app_locals"
                                (dataSem_state_stack_frame_sizes s)
                                (dataSem_state_limits s) op vs)
                               (OPTION_MAP2 (+) (size_of_stack
-                                (stack s)) (dataSem_state_locals_size
-                                s))))) else F) op x
-                                (dataSem_state_locals_fupd (K extra)
-                                s))) (dataSem_state_locals_fupd (K
-                                extra) r)))))`)
+                                (dataSem_state_stack s))
+                                (dataSem_state_locals_size s))))) else
+                                F) op x (dataSem_state_locals_fupd (K
+                                extra) s))) (dataSem_state_locals_fupd
+                                (K extra) r)))))`)
   CHEAT_TAC;;
 
 let do_space_alt = cake_theorem "do_space_alt"
@@ -463,7 +466,7 @@ let do_space_alt = cake_theorem "do_space_alt"
            (dataSem_state_safe_for_space_fupd (K ((\op vs s. if
            op_space_reset op then
                       dataSem_state_safe_for_space s /\
-                      no_thunks_in_refs (state_refs s) /\
+                      no_thunks_in_refs (dataSem_state_refs s) /\
                           size_of_heap_args vs s + space_consumed
                             s op vs <= limits_heap_limit
                             (dataSem_state_limits s) else

@@ -326,6 +326,15 @@ let st_ex_FOREACH_def = cake_define_list
         (a x) (
         st_ex_FOREACH xs a)`];;
 
+(* HOL4 reg_allocScript.sml: the case constant that its Datatype
+   makes for the tag of a register *)
+
+let reg_alloc_tag_CASE =
+  new_recursive_definition reg_alloc_tag_RECURSION
+  `(reg_alloc_tag_CASE (Fixed n) ff af sf = ff n) /\
+   (reg_alloc_tag_CASE Atemp ff af sf = af) /\
+   (reg_alloc_tag_CASE Stemp ff af sf = sf)`;;
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_MAP_def = cake_define_list_cheat CHEAT_TAC

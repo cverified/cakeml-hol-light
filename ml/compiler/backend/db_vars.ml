@@ -2,7 +2,7 @@
 (*  db_vars: ported from HOL4's
     compiler/backend/db_varsScript.sml
     A definition theory, with 8 definitions, 1 datatype and 14
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*

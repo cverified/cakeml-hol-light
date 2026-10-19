@@ -53,6 +53,8 @@ cake_hide ["do_partial"; "not"; "parts"; "vars"];;
 (* HOL4 data_to_word_memoryProofScript.sml:21-22: a proof *)
 
 (* HOL4 data_to_word_memoryProofScript.sml:24: ML code, not ported *)
+
+cake_hide_more ["el"; "sign"];;
 (* HOL4 data_to_word_memoryProofScript.sml:28: the overload
    good_dimindex, which the port expands *)
 
@@ -3311,10 +3313,12 @@ let word_ml_inv_num_lemma = cake_theorem "word_ml_inv_num_lemma"
 
 let word_ml_inv_num = cake_theorem "word_ml_inv_num"
   (fun () ->
-    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (state_refs s) ws /\
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (dataSem_state_refs
+  s) ws /\
       good_dimindex (:'a) /\
       small_enough_int (&n) ==>
-      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (state_refs s)
+      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c
+        (dataSem_state_refs s)
         ((Number (&n),wordLang_Word (n2w (4 * n):'a word)) :: ws)`)
   CHEAT_TAC;;
 
@@ -3329,10 +3333,12 @@ let word_ml_inv_neg_num_lemma = cake_theorem "word_ml_inv_neg_num_lemma"
 
 let word_ml_inv_neg_num = cake_theorem "word_ml_inv_neg_num"
   (fun () ->
-    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (state_refs s) ws /\
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (dataSem_state_refs
+  s) ws /\
       good_dimindex (:'a) /\
       small_enough_int (--(&n)) /\ ~(n = 0) ==>
-      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (state_refs s)
+      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c
+        (dataSem_state_refs s)
         ((Number (--(&n)),wordLang_Word (--(n2w (4 * n):'a
           word))) :: ws)`)
   CHEAT_TAC;;
@@ -7161,6 +7167,8 @@ let least_notin_domain = cake_theorem "least_notin_domain"
   (fun () ->
     `~((LEAST (\ptr. ~(ptr IN domain refs))) IN domain (refs:'a spt))`)
   CHEAT_TAC;;
+
+cake_hide_more ["free"];;
 
 let memory_rel_do_build = cake_theorem "memory_rel_do_build"
   (fun () ->

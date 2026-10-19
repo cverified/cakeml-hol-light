@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  evaluateProps: ported from HOL4's
-    semantics/proofs/evaluatePropsScript.sml
-    A proof theory about evaluate.ml, with 5 definitions and 87
-    theorems.  Needed by 9 files of the port.  *)
+    semantics/proofs/evaluatePropsScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -126,15 +124,13 @@ let evaluate_decs_call_FFI_rel_imp =
          (semanticPrimitives_state_ffi s')`)
   CHEAT_TAC;;
 
-let evaluateProps_do_app_io_events_mono =
-  cake_theorem "do_app_io_events_mono"
+let do_app_io_events_mono = cake_theorem "do_app_io_events_mono"
   (fun () ->
     `semanticPrimitives_do_app (r,ffi) op vs = SOME ((r',ffi'),res)
   ==> io_events_mono ffi ffi'`)
   CHEAT_TAC;;
 
-let evaluateProps_evaluate_io_events_mono =
-  cake_theorem "evaluate_io_events_mono"
+let evaluate_io_events_mono = cake_theorem "evaluate_io_events_mono"
   (fun () ->
     `(!(s:'ffi semanticPrimitives_state) e exp.
         io_events_mono (semanticPrimitives_state_ffi s)
@@ -504,7 +500,7 @@ let evaluate_decs_clock_determ =
         s1 = semanticPrimitives_state_ffi s2 /\ r1 = r2)`)
   CHEAT_TAC;;
 
-let evaluateProps_evaluate_add_to_clock_io_events_mono =
+let evaluate_add_to_clock_io_events_mono =
   cake_theorem "evaluate_add_to_clock_io_events_mono"
   (fun () ->
     `(!(s:'ffi semanticPrimitives_state) e d extra.
@@ -652,28 +648,28 @@ let evaluateProps_do_app_ffi_unchanged =
 
 let evaluate_ffi_intro = cake_theorem "evaluate_ffi_intro"
   (fun () ->
-    `(!(s:'a semanticPrimitives_state) env e s' r.
+    `(!(s) env e s' r.
         evaluate s env e = (s',r) /\ semanticPrimitives_state_ffi
         s' = semanticPrimitives_state_ffi s /\
         (!outcome. ~(r = Rerr (Rabort (Rffi_error outcome)))) ==>
-        (!(nffi:'b) ffi_state.
+        (!nffi.
         evaluate (semanticPrimitives_state_ffi_fupd (K nffi) s) env
           e = (semanticPrimitives_state_ffi_fupd (K nffi) s',r))) /\
-     (!(s:'a semanticPrimitives_state) env v pes errv s' r.
+     (!(s) env v pes errv s' r.
         evaluate_evaluate_match s env v pes errv = (s',r) /\
           semanticPrimitives_state_ffi
         s' = semanticPrimitives_state_ffi s /\
         (!outcome. ~(r = Rerr (Rabort (Rffi_error outcome)))) ==>
-        (!(nffi:'b) ffi_state.
+        (!nffi.
         evaluate_evaluate_match (semanticPrimitives_state_ffi_fupd
           (K nffi) s) env v pes errv =
            (semanticPrimitives_state_ffi_fupd (K nffi) s',r))) /\
-     (!(s:'a semanticPrimitives_state) env ds s' r.
+     (!(s) env ds s' r.
         evaluate_evaluate_decs s env ds = (s',r) /\
           semanticPrimitives_state_ffi
         s' = semanticPrimitives_state_ffi s /\
         (!outcome. ~(r = Rerr (Rabort (Rffi_error outcome)))) ==>
-        (!(nffi:'b) ffi_state.
+        (!nffi.
         evaluate_evaluate_decs (semanticPrimitives_state_ffi_fupd
           (K nffi) s) env ds =
            (semanticPrimitives_state_ffi_fupd (K nffi) s',r)))`)

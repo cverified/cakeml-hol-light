@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  labProps: ported from HOL4's
-    compiler/backend/semantics/labPropsScript.sml
-    A proof theory, with 18 definitions and 91 theorems.  Needed by
-    backendProof.ml, lab_filterProof.ml, lab_to_targetProof.ml,
-    stack_rawcallProof.ml and stack_to_labProof.ml.  *)
+    compiler/backend/semantics/labPropsScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -25,7 +22,11 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["code_buffer"; "failed"];;
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "failed","pegexec_failed"];;
+
+cake_hide_more ["mem"];;
 
 let extract_labels_def = cake_define
   `labProps_extract_labels x1 =
@@ -119,7 +120,8 @@ let asm_inst_with_clock = cake_theorem "asm_inst_with_clock[simp]"
 
 let read_reg_inc_pc = cake_theorem "read_reg_inc_pc[simp]"
   (fun () ->
-    `(\r s. regs s r) r (inc_pc s) = (\r s. regs s r) r s`)
+    `(\r s. labSem_state_regs s r) r (inc_pc s) = (\r s.
+  labSem_state_regs s r) r s`)
   CHEAT_TAC;;
 
 let labProps_with_same_clock = cake_theorem "with_same_clock[simp]"
@@ -159,7 +161,8 @@ let update_simps = cake_theorem "update_simps[simp]"
         labSem_state_shared_mem_domain s) /\
       (failed (labSem_upd_pc x s) = failed s) /\
       (be (labSem_upd_pc x s) = be s) /\
-      (mem (labSem_upd_pc x s) = mem s) /\
+      (labSem_state_mem (labSem_upd_pc x s) = labSem_state_mem s)
+        /\
       (regs (labSem_upd_pc x s) = regs s) /\
       (fp_regs (labSem_upd_pc x s) = fp_regs s) /\
       (state_ffi (labSem_upd_pc x s) = state_ffi s) /\
@@ -183,7 +186,7 @@ let update_simps = cake_theorem "update_simps[simp]"
       (compile (inc_pc s) = compile s) /\
       (compile_oracle (inc_pc s) = compile_oracle s) /\
       (state_code_buffer (inc_pc s) = state_code_buffer s) /\
-      (mem (inc_pc s) = mem s) /\
+      (labSem_state_mem (inc_pc s) = labSem_state_mem s) /\
       (regs (inc_pc s) = regs s) /\
       (fp_regs (inc_pc s) = fp_regs s) /\
       (pc (inc_pc s) = pc s + 1) /\
@@ -203,8 +206,8 @@ let labProps_binop_upd_consts = cake_theorem "binop_upd_consts[simp]"
         (labSem_binop_upd a b c d x) = len2_reg x /\ link_reg
         (labSem_binop_upd a b c d x) = link_reg x /\ state_code
         (labSem_binop_upd a b c d x) = state_code x /\ be
-        (labSem_binop_upd a b c d x) = be x /\ mem
-        (labSem_binop_upd a b c d x) = mem x /\
+        (labSem_binop_upd a b c d x) = be x /\ labSem_state_mem
+        (labSem_binop_upd a b c d x) = labSem_state_mem x /\
           labSem_state_io_regs
         (labSem_binop_upd a b c d x) = labSem_state_io_regs x /\
           labSem_state_io_fp_regs
@@ -235,8 +238,9 @@ let labProps_arith_upd_consts = cake_theorem "arith_upd_consts[simp]"
         (labSem_arith_upd a x) = len2_reg x /\ link_reg
         (labSem_arith_upd a x) = link_reg x /\ state_code
         (labSem_arith_upd a x) = state_code x /\ be
-        (labSem_arith_upd a x) = be x /\ mem
-        (labSem_arith_upd a x) = mem x /\ labSem_state_io_regs
+        (labSem_arith_upd a x) = be x /\ labSem_state_mem
+        (labSem_arith_upd a x) = labSem_state_mem x /\
+          labSem_state_io_regs
         (labSem_arith_upd a x) = labSem_state_io_regs x /\
           labSem_state_io_fp_regs
         (labSem_arith_upd a x) = labSem_state_io_fp_regs x /\
@@ -273,8 +277,9 @@ let labProps_fp_upd_consts = cake_theorem "fp_upd_consts[simp]"
         (labSem_fp_upd f x) = state_code_buffer x /\ compile
         (labSem_fp_upd f x) = compile x /\ compile_oracle
         (labSem_fp_upd f x) = compile_oracle x /\ be
-        (labSem_fp_upd f x) = be x /\ mem
-        (labSem_fp_upd f x) = mem x /\ labSem_state_io_regs
+        (labSem_fp_upd f x) = be x /\ labSem_state_mem
+        (labSem_fp_upd f x) = labSem_state_mem x /\
+          labSem_state_io_regs
         (labSem_fp_upd f x) = labSem_state_io_regs x /\
           labSem_state_io_fp_regs
         (labSem_fp_upd f x) = labSem_state_io_fp_regs x /\ pc
@@ -336,7 +341,7 @@ let share_mem_op_add_clock_same =
           state_clock r2)) r2)))`)
   CHEAT_TAC;;
 
-let labProps_evaluate_add_clock_io_events_mono =
+let evaluate_add_clock_io_events_mono =
   cake_theorem "evaluate_add_clock_io_events_mono"
   (fun () ->
     `!s. ffi_state_io_events (state_ffi
@@ -355,8 +360,9 @@ let align_dm_const = cake_theorem "align_dm_const[simp]"
     `state_clock
         (align_dm s) = state_clock s /\ pc
         (align_dm s) = pc s /\ state_code
-        (align_dm s) = state_code s /\ mem
-        (align_dm s) = mem s /\ labSem_state_shared_mem_domain
+        (align_dm s) = state_code s /\ labSem_state_mem
+        (align_dm s) = labSem_state_mem s /\
+          labSem_state_shared_mem_domain
         (align_dm s) = labSem_state_shared_mem_domain s /\ be
         (align_dm s) = be s /\ len_reg
         (align_dm s) = len_reg s /\ link_reg
@@ -388,7 +394,8 @@ let asm_fetch_align_dm = cake_theorem "asm_fetch_align_dm[simp]"
 
 let read_reg_align_dm = cake_theorem "read_reg_align_dm[simp]"
   (fun () ->
-    `(\r s. regs s r) n (align_dm s) = (\r s. regs s r) n s`)
+    `(\r s. labSem_state_regs s r) n (align_dm s) = (\r s.
+  labSem_state_regs s r) n s`)
   CHEAT_TAC;;
 
 let upd_reg_align_dm = cake_theorem "upd_reg_align_dm[simp]"
@@ -440,8 +447,9 @@ let mem_load_align_dm = cake_theorem "mem_load_align_dm"
 
 let mem_load_32_align_dm = cake_theorem "mem_load_32_align_dm"
   (fun () ->
-    `mem_load_32 (mem s) (mem_domain s) be x = SOME y ==>
-     mem_load_32 (mem s) (mem_domain (align_dm s)) be x = SOME y`)
+    `mem_load_32 (labSem_state_mem s) (mem_domain s) be x = SOME y ==>
+     mem_load_32 (labSem_state_mem s) (mem_domain (align_dm s))
+       be x = SOME y`)
   CHEAT_TAC;;
 
 let mem_load32_align_dm = cake_theorem "mem_load32_align_dm"
@@ -454,9 +462,10 @@ let mem_load32_align_dm = cake_theorem "mem_load32_align_dm"
 let mem_load_byte_aux_align_dm =
   cake_theorem "mem_load_byte_aux_align_dm"
   (fun () ->
-    `mem_load_byte_aux (mem s) (mem_domain s) be x = SOME y ==>
-     mem_load_byte_aux (mem s) (mem_domain (align_dm s)) be x =
-       SOME y`)
+    `mem_load_byte_aux (labSem_state_mem s) (mem_domain s) be x = SOME y
+  ==>
+     mem_load_byte_aux (labSem_state_mem s) (mem_domain (align_dm
+       s)) be x = SOME y`)
   CHEAT_TAC;;
 
 let mem_load_byte_align_dm = cake_theorem "mem_load_byte_align_dm"
@@ -544,18 +553,19 @@ let read_bytearray_mem_load_byte_aux_align_dm =
   cake_theorem "read_bytearray_mem_load_byte_aux_align_dm[simp]"
   (fun () ->
     `!y x.
-      read_bytearray x y (mem_load_byte_aux (mem s) (mem_domain
-        (align_dm s)) (be s)) =
-     read_bytearray x y (mem_load_byte_aux (mem s) (mem_domain s)
-       (be s))`)
+      read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
+        (mem_domain (align_dm s)) (be s)) =
+     read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
+       (mem_domain s) (be s))`)
   CHEAT_TAC;;
 
 let write_bytearray_align_dm =
   cake_theorem "write_bytearray_align_dm[simp]"
   (fun () ->
-    `!y x. write_bytearray x y (mem s) (mem_domain (align_dm s)) (be s)
-  =
-     write_bytearray x y (mem s) (mem_domain s) (be s)`)
+    `!y x. write_bytearray x y (labSem_state_mem s) (mem_domain
+  (align_dm s)) (be s) =
+     write_bytearray x y (labSem_state_mem s) (mem_domain s) (be
+       s)`)
   CHEAT_TAC;;
 
 let share_mem_op_align_dm_simp =
@@ -598,8 +608,8 @@ let align_sdm_const = cake_theorem "align_sdm_const[simp]"
     `state_clock
         (align_sdm s) = state_clock s /\ pc
         (align_sdm s) = pc s /\ state_code
-        (align_sdm s) = state_code s /\ mem
-        (align_sdm s) = mem s /\ mem_domain
+        (align_sdm s) = state_code s /\ labSem_state_mem
+        (align_sdm s) = labSem_state_mem s /\ mem_domain
         (align_sdm s) = mem_domain s /\ be
         (align_sdm s) = be s /\ len_reg
         (align_sdm s) = len_reg s /\ link_reg
@@ -631,7 +641,8 @@ let asm_fetch_align_sdm = cake_theorem "asm_fetch_align_sdm[simp]"
 
 let read_reg_align_sdm = cake_theorem "read_reg_align_sdm[simp]"
   (fun () ->
-    `(\r s. regs s r) n (align_sdm s) = (\r s. regs s r) n s`)
+    `(\r s. labSem_state_regs s r) n (align_sdm s) = (\r s.
+  labSem_state_regs s r) n s`)
   CHEAT_TAC;;
 
 let upd_reg_align_sdm = cake_theorem "upd_reg_align_sdm[simp]"
@@ -750,18 +761,19 @@ let read_bytearray_mem_load_byte_aux_align_sdm =
   cake_theorem "read_bytearray_mem_load_byte_aux_align_sdm[simp]"
   (fun () ->
     `!y x.
-      read_bytearray x y (mem_load_byte_aux (mem s) (mem_domain
-        (align_sdm s)) (be s)) =
-     read_bytearray x y (mem_load_byte_aux (mem s) (mem_domain s)
-       (be s))`)
+      read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
+        (mem_domain (align_sdm s)) (be s)) =
+     read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
+       (mem_domain s) (be s))`)
   CHEAT_TAC;;
 
 let write_bytearray_align_sdm =
   cake_theorem "write_bytearray_align_sdm[simp]"
   (fun () ->
-    `!y x. write_bytearray x y (mem s) (mem_domain (align_sdm s)) (be s)
-  =
-     write_bytearray x y (mem s) (mem_domain s) (be s)`)
+    `!y x. write_bytearray x y (labSem_state_mem s) (mem_domain
+  (align_sdm s)) (be s) =
+     write_bytearray x y (labSem_state_mem s) (mem_domain s) (be
+       s)`)
   CHEAT_TAC;;
 
 let align_sdm_aligned = cake_theorem "align_sdm_aligned"
@@ -889,4 +901,4 @@ let no_share_mem_inst_def = cake_define
    (!p op re a inst' len. ~(asm_fetch_aux p code =
        SOME (labLang_Asm (ShareMem op re a) inst' len)))`;;
 
-cake_hide [];;
+cake_hide_consts [];;

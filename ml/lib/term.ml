@@ -21,6 +21,13 @@ let pair_count_def = cake_define_list
    `pair_count (term_Pair t1 t2) = 1 + pair_count t1 + pair_count
   t2`];;
 
+(* HOL4 termScript.sml: the case constant that its Datatype makes *)
+
+let term_CASE = new_recursive_definition term_RECURSION
+  `(term_CASE (term_Var n) vf pf cf = vf n) /\
+   (term_CASE (term_Pair t1 t2) vf pf cf = pf t1 t2) /\
+   (term_CASE (term_Const c) vf pf cf = cf c)`;;
+
 let vars_def = cake_define_list
   [`vars (term_Var x) = {x}`;
    `vars (term_Pair t1 t2) = vars t1 UNION vars t2`;

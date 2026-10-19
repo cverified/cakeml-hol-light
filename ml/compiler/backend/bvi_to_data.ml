@@ -88,6 +88,8 @@ let iAssign_def = cake_define
                 env)))
                   (dataLang_Assign n1 op vs NONE))`;;
 
+cake_hide_more ["tail"];;
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let compile_def = cake_define_list_cheat CHEAT_TAC

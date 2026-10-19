@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  wordSem: ported from HOL4's
-    compiler/backend/semantics/wordSemScript.sml
-    A definition theory, with 77 definitions, 4 datatypes and 16
-    theorems.  Needed by 31 files of the port.  *)
+    compiler/backend/semantics/wordSemScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -228,53 +226,51 @@ let wordSem_state_FIELDS = define_record "wordSem_state"
    "code","(num#'a wordLang_prog) spt";
    "be","bool";
    "ffi","'ffi ffi_state"];;
-hol4_field_overload "state_locals" "wordSem_state_locals";;
-hol4_field_overload "state_locals_fupd" "wordSem_state_locals_fupd";;
-hol4_field_overload "state_locals_size" "wordSem_state_locals_size";;
-hol4_field_overload "state_locals_size_fupd"
+hol4_overload "state_locals" "wordSem_state_locals";;
+hol4_overload "state_locals_fupd" "wordSem_state_locals_fupd";;
+hol4_overload "state_locals_size" "wordSem_state_locals_size";;
+hol4_overload "state_locals_size_fupd"
   "wordSem_state_locals_size_fupd";;
 hol4_field_overload "fp_regs" "wordSem_state_fp_regs";;
 hol4_field_overload "fp_regs_fupd" "wordSem_state_fp_regs_fupd";;
-hol4_field_overload "state_store" "wordSem_state_store";;
-hol4_field_overload "state_store_fupd" "wordSem_state_store_fupd";;
+hol4_overload "state_store" "wordSem_state_store";;
+hol4_overload "state_store_fupd" "wordSem_state_store_fupd";;
 hol4_field_overload "stack" "wordSem_state_stack";;
 hol4_field_overload "stack_fupd" "wordSem_state_stack_fupd";;
 hol4_field_overload "stack_limit" "wordSem_state_stack_limit";;
 hol4_field_overload "stack_limit_fupd"
   "wordSem_state_stack_limit_fupd";;
-hol4_field_overload "state_stack_max" "wordSem_state_stack_max";;
-hol4_field_overload "state_stack_max_fupd"
-  "wordSem_state_stack_max_fupd";;
-hol4_field_overload "state_memory" "wordSem_state_memory";;
-hol4_field_overload "state_memory_fupd" "wordSem_state_memory_fupd";;
-hol4_field_overload "state_mdomain" "wordSem_state_mdomain";;
-hol4_field_overload "state_mdomain_fupd" "wordSem_state_mdomain_fupd";;
-hol4_field_overload "state_sh_mdomain" "wordSem_state_sh_mdomain";;
-hol4_field_overload "state_sh_mdomain_fupd"
-  "wordSem_state_sh_mdomain_fupd";;
+hol4_overload "state_stack_max" "wordSem_state_stack_max";;
+hol4_overload "state_stack_max_fupd" "wordSem_state_stack_max_fupd";;
+hol4_overload "state_memory" "wordSem_state_memory";;
+hol4_overload "state_memory_fupd" "wordSem_state_memory_fupd";;
+hol4_overload "state_mdomain" "wordSem_state_mdomain";;
+hol4_overload "state_mdomain_fupd" "wordSem_state_mdomain_fupd";;
+hol4_overload "state_sh_mdomain" "wordSem_state_sh_mdomain";;
+hol4_overload "state_sh_mdomain_fupd" "wordSem_state_sh_mdomain_fupd";;
 hol4_field_overload "compile" "wordSem_state_compile";;
 hol4_field_overload "compile_fupd" "wordSem_state_compile_fupd";;
 hol4_field_overload "compile_oracle" "wordSem_state_compile_oracle";;
 hol4_field_overload "compile_oracle_fupd"
   "wordSem_state_compile_oracle_fupd";;
-hol4_field_overload "state_code_buffer" "wordSem_state_code_buffer";;
-hol4_field_overload "state_code_buffer_fupd"
+hol4_overload "state_code_buffer" "wordSem_state_code_buffer";;
+hol4_overload "state_code_buffer_fupd"
   "wordSem_state_code_buffer_fupd";;
-hol4_field_overload "state_data_buffer" "wordSem_state_data_buffer";;
-hol4_field_overload "state_data_buffer_fupd"
+hol4_overload "state_data_buffer" "wordSem_state_data_buffer";;
+hol4_overload "state_data_buffer_fupd"
   "wordSem_state_data_buffer_fupd";;
-hol4_field_overload "state_gc_fun" "wordSem_state_gc_fun";;
-hol4_field_overload "state_gc_fun_fupd" "wordSem_state_gc_fun_fupd";;
-hol4_field_overload "state_handler" "wordSem_state_handler";;
-hol4_field_overload "state_handler_fupd" "wordSem_state_handler_fupd";;
-hol4_field_overload "state_clock" "wordSem_state_clock";;
-hol4_field_overload "state_clock_fupd" "wordSem_state_clock_fupd";;
-hol4_field_overload "state_code" "wordSem_state_code";;
-hol4_field_overload "state_code_fupd" "wordSem_state_code_fupd";;
+hol4_overload "state_gc_fun" "wordSem_state_gc_fun";;
+hol4_overload "state_gc_fun_fupd" "wordSem_state_gc_fun_fupd";;
+hol4_overload "state_handler" "wordSem_state_handler";;
+hol4_overload "state_handler_fupd" "wordSem_state_handler_fupd";;
+hol4_overload "state_clock" "wordSem_state_clock";;
+hol4_overload "state_clock_fupd" "wordSem_state_clock_fupd";;
+hol4_overload "state_code" "wordSem_state_code";;
+hol4_overload "state_code_fupd" "wordSem_state_code_fupd";;
 hol4_field_overload "be" "wordSem_state_be";;
 hol4_field_overload "be_fupd" "wordSem_state_be_fupd";;
-hol4_field_overload "state_ffi" "wordSem_state_ffi";;
-hol4_field_overload "state_ffi_fupd" "wordSem_state_ffi_fupd";;
+hol4_overload "state_ffi" "wordSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "wordSem_state_ffi_fupd";;
 
 let stack_size_frame_def = cake_define
   `stack_size_frame x1 =
@@ -649,14 +645,14 @@ let pop_env_def = cake_define
             (fromAList e0))) s)))) | _54 -> NONE)`;;
 hol4_overload "pop_env" "wordSem_pop_env";;
 
-let wordSem_push_env_clock = cake_theorem "push_env_clock[local]"
+let push_env_clock = cake_theorem "push_env_clock[local]"
   (fun () ->
     `wordSem_state_clock
        (wordSem_push_env env b ((s:('a,'c,'ffi)wordSem_state))) =
          wordSem_state_clock s`)
   CHEAT_TAC;;
 
-let wordSem_pop_env_clock = cake_theorem "pop_env_clock[local]"
+let pop_env_clock = cake_theorem "pop_env_clock[local]"
   (fun () ->
     `(wordSem_pop_env ((s:('a,'c,'ffi)wordSem_state)) = SOME s1) ==>
   (wordSem_state_clock s1 = wordSem_state_clock s)`)

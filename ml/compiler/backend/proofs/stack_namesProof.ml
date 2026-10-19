@@ -18,7 +18,9 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-cake_hide ["code_buffer"; "memory"];;
+cake_hide_consts
+  ["code_buffer","code_buffer";
+   "memory","memory"];;
 
 let rename_state_def = cake_define
   `rename_state compile_rest f s = stackSem_state_ffi_save_regs_fupd (K
@@ -353,4 +355,4 @@ let stack_names_call_args = cake_theorem "stack_names_call_args"
                             (tlookup f 0)) (MAP SND p')`)
   CHEAT_TAC;;
 
-cake_hide [];;
+cake_hide_consts [];;

@@ -36,7 +36,10 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["every"; "fv"; "memory"];;
+cake_hide ["every"; "fv"];;
+
+cake_hide_consts
+  ["memory","memory"];;
 (* HOL4 ancestors outside the port: (* for extend_with_resource_limit
    *) (* for list_Seq *) (* for extract_labels *) (* for
    word_add_carry_def *) *)
@@ -67,7 +70,10 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["every"; "fv"; "memory"];;
+cake_hide ["every"; "fv"];;
+
+cake_hide_consts
+  ["memory","memory"];;
 
 (* Set up ML bindings *)
 (* HOL4 word_to_stackProofScript.sml:18-20: ML code, not ported *)
@@ -1154,7 +1160,7 @@ let word_stack_dec_stack_shape =
 
 let sorted_env_zip = cake_theorem "sorted_env_zip[local]"
   (fun () ->
-    `!(l:(num#'a word_loc) list) (ls:'a) word_loc list' x n.
+    `!(l:(num#'a word_loc) list) (ls:('a word_loc) list) x n.
      sorted_env (StackFrame n l0 l x) /\
      LENGTH ls = LENGTH l ==>
      sorted_env (StackFrame n l0 (ZIP (MAP FST l) ls) x)`)
@@ -1228,7 +1234,7 @@ let dec_stack_lemma = cake_theorem "dec_stack_lemma[local]"
            (stackSem_state_bitmaps t1) lens /\
        (LENGTH (enc_stack (wordSem_state_stack s1)) = LENGTH x0)
          ==>
-       (?(yy:'a) word_loc list'. dec_stack (stackSem_state_bitmaps
+       (?(yy:('a word_loc) list). dec_stack (stackSem_state_bitmaps
          t1) x0 (DROP (stackSem_state_stack_space t1)
          (stackSem_state_stack t1)) = SOME yy /\
             (stackSem_state_stack_space t1 + LENGTH yy = LENGTH
@@ -3993,3 +3999,5 @@ let word_to_stack_compile_no_install =
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

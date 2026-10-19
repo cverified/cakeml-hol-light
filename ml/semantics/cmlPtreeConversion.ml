@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  cmlPtreeConversion: ported from HOL4's
-    semantics/cmlPtreeConversionScript.sml
-    A definition theory, with 61 definitions, 1 datatype and 8
-    theorems.  Needed by cmlParse.ml and semantics.ml.  *)
+    semantics/cmlPtreeConversionScript.sml  *)
 (* ======================================================== *)
 
 (*

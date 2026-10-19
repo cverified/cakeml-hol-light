@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  weakening: ported from HOL4's
-    semantics/proofs/weakeningScript.sml
-    A proof theory, with 4 definitions and 31 theorems.  Needed by
-    typeSound.ml.  *)
+    semantics/proofs/weakeningScript.sml  *)
 (* ======================================================== *)
 
 (*

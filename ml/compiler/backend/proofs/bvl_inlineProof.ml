@@ -310,7 +310,7 @@ let bvl_inlineProof_evaluate_inline = cake_theorem "evaluate_inline"
   (fun () ->
     `!es env s1 res t1 s2 es2.
         bvl_inlineProof_in_state_rel limit s1 t1 /\
-          bvl_inlineProof_exp_rel (state_code s1) es es2 /\
+          bvl_inlineProof_exp_rel (bvlSem_state_code s1) es es2 /\
         evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
           Rtype_error)) ==>
         (?t2. evaluate (es2,env,t1) = (res,t2) /\
@@ -394,7 +394,8 @@ let in_evaluate_Call = cake_theorem "in_evaluate_Call"
               initial_state ffi0
                (fromAList (SND (tick_compile_prog limit LN prog)))
                  (bvl_inlineProof_in_co limit co) cc1 k) =
-             (res,t2) /\ state_ffi s2 = state_ffi t2)`)
+             (res,t2) /\ bvlSem_state_ffi s2 = bvlSem_state_ffi
+               t2)`)
   CHEAT_TAC;;
 
 let semantics_tick_inline = cake_theorem "semantics_tick_inline"

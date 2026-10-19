@@ -25,7 +25,10 @@ needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
-cake_hide ["assert"; "return"];;
+cake_hide ["assert"];;
+
+cake_hide_consts
+  ["return","errorMonad_return"];;
 (* HOL4 ancestors outside the port: quantHeuristics *)
 
 hol4_overload "++" "OPTION_CHOICE";;
@@ -1779,3 +1782,5 @@ let decsexp_valid = cake_theorem "decsexp_valid[simp]"
 hol4_only "++" "APPEND";;
 
 cake_hide [];;
+
+cake_hide_consts [];;

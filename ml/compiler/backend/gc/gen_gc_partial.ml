@@ -13,7 +13,8 @@ needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "lib/integer_word.ml";;
 
-cake_hide ["isRef"];;
+cake_hide_consts
+  ["isRef","data_to_word_memoryProof_isRef"];;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 gen_gc_partialScript.sml:14: ML code, not ported *)
@@ -1474,4 +1475,4 @@ let gen_gc_partial_partial_gc_IMP = cake_theorem "partial_gc_IMP"
                               curr /\ isRef c d)))`)
   CHEAT_TAC;;
 
-cake_hide [];;
+cake_hide_consts [];;

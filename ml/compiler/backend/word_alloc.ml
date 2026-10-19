@@ -1286,6 +1286,8 @@ let get_prefs_pmatch = cake_theorem "get_prefs_pmatch"
 
 new_type_abbrev("heu_data",`: num#num#num#num#num`);;
 
+cake_hide_more ["mem"];;
+
 let add1_lhs_const_def = cake_define
   `add1_lhs_const x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->

@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  asmProps: ported from HOL4's
-    compiler/encoders/asm/asmPropsScript.sml
-    A proof theory about asm.ml, with 9 definitions, 1 datatype and
-    31 theorems.  Needed by bvi_inlineProof.ml,
-    lab_to_targetProof.ml, targetProps.ml and targetSem.ml.  *)
+    compiler/encoders/asm/asmPropsScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -14,7 +11,10 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "misc/misc.ml";;
 
-cake_hide ["failed"; "state_ok"];;
+cake_hide_consts
+  ["failed","pegexec_failed";
+   "state_ok","bvl_to_bviProof_state_ok";
+   "state_ok","stack_rawcallProof_state_ok"];;
 
 (* -- semantics is deterministic -- *)
 
@@ -394,4 +394,4 @@ let RTC_asm_step_outside_mem_domain =
        asm_state_mem s1 a))`)
   CHEAT_TAC;;
 
-cake_hide [];;
+cake_hide_consts [];;

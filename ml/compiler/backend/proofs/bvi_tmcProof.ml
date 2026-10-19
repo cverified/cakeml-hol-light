@@ -77,11 +77,11 @@ let no_mutcons_op_def = cake_define
   `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp
   (closLang_MutCons tag i)))`;;
 
-let _ = size_thms "flatLang_exp";;
+let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let no_mutcons_def = cake_define_list_try (fun () ->
-  `MEASURE flatLang_exp_size`)
+  `MEASURE bvi_exp_size`)
   [`no_mutcons (Var n:bvi_exp) <=> T`;
    `no_mutcons (If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\ no_mutcons
   x2 /\ no_mutcons x3`;
@@ -1559,7 +1559,7 @@ let evaluate_rewrite_tmc = cake_theorem "evaluate_rewrite_tmc"
   (fun () ->
     `!n xs (s:(num#'c,'ffi)bviSem_state) env1 r t opt f s' env2 loc.
        evaluate (xs,env1,s) = (r,t) /\
-       n = (bviSem_state_clock s,list_size flatLang_exp_size xs) /\
+       n = (bviSem_state_clock s,list_size bvi_exp_size xs) /\
        bvi_tmcProof_env_rel opt f env1 env2 /\ EVERY (\x.
          no_mutcons x) xs /\
        bvi_tmcProof_state_rel f s s' /\
@@ -1698,7 +1698,7 @@ let alloc_hole_has_val_def = cake_define
   `alloc_hole_has_val f refs extras i_ptr c_idx c <=>
      (?hole_ptr tag left right.
        i_ptr < LENGTH extras /\ EL i_ptr
-       extras = RefPtr F hole_ptr /\
+       extras = bvlSem_RefPtr F hole_ptr /\
        c_idx = LENGTH left /\
        small_enough_int (&(LENGTH left)) /\ ~(hole_ptr IN FRANGE f)
          /\

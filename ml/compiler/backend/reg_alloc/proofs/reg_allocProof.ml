@@ -16,7 +16,8 @@ needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["return"];;
+cake_hide_consts
+  ["return","errorMonad_return"];;
 
 hol4_overload "++" "otherwise";;
 
@@ -98,7 +99,8 @@ let good_pref_def = cake_define
 let tag_case_st = cake_theorem "tag_case_st"
   (fun () ->
     `!t.
-     (tag_CASE t a b c) f = (tag_CASE t (\n. a n f) (b f) (c f))`)
+     (reg_alloc_tag_CASE t a b c) f = (reg_alloc_tag_CASE t (\n.
+       a n f) (b f) (c f))`)
   CHEAT_TAC;;
 
 let list_case_st = cake_theorem "list_case_st"
@@ -1502,4 +1504,4 @@ let reg_alloc_correct = cake_theorem "reg_alloc_correct"
 
 hol4_only "++" "APPEND";;
 
-cake_hide [];;
+cake_hide_consts [];;

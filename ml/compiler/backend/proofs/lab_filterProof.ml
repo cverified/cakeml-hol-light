@@ -19,7 +19,8 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["failed"];;
+cake_hide_consts
+  ["failed","pegexec_failed"];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -300,4 +301,4 @@ let sec_ends_with_label_filter_skip =
      EVERY sec_ends_with_label (filter_skip code)`)
   CHEAT_TAC;;
 
-cake_hide [];;
+cake_hide_consts [];;

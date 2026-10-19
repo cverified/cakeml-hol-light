@@ -36,7 +36,10 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["contain"; "failed"; "invariant"; "not"];;
+cake_hide ["contain"; "invariant"; "not"];;
+
+cake_hide_consts
+  ["failed","pegexec_failed"];;
 
 (* HOL4 lab_to_targetProofScript.sml:16: ML code, not ported *)
 
@@ -106,15 +109,15 @@ let enc_with_nop_thm = cake_theorem "enc_with_nop_thm[local]"
 
 let asm_step_nop_def = cake_define
   `asm_step_nop bytes c s1 i s2 <=>
-     bytes_in_memory (labSem_state_pc s1) bytes (labSem_state_mem s1)
-       (labSem_state_mem_domain s1) /\
+     bytes_in_memory (asm_state_pc s1) bytes (asm_state_mem s1)
+       (asm_state_mem_domain s1) /\
      enc_with_nop (asm_config_encode c) i bytes /\
-     (match link_reg c with NONE -> T | SOME r -> labSem_state_lr s1
-       = r) /\
-     (labSem_state_be s1 <=> asm_config_big_endian c) /\
-       labSem_state_align s1 = asm_config_code_alignment c /\
-     asmSem_asm i (labSem_state_pc s1 + n2w (LENGTH bytes)) s1 = s2
-       /\ ~(failed s2) /\
+     (match link_reg c with NONE -> T | SOME r -> asm_state_lr s1 =
+       r) /\
+     (asm_state_be s1 <=> asm_config_big_endian c) /\ asm_state_align
+       s1 = asm_config_code_alignment c /\
+     asmSem_asm i (asm_state_pc s1 + n2w (LENGTH bytes)) s1 = s2 /\
+       ~(failed s2) /\
      asm_ok i c`;;
 
 (* HOL4 lab_to_targetProofScript.sml:125-130: ML code, not ported *)
@@ -1655,10 +1658,10 @@ let byte_align_64_IMP = cake_theorem "byte_align_64_IMP[local]"
 
 let arith_upd_lemma = cake_theorem "arith_upd_lemma[local]"
   (fun () ->
-    `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME
-  (asm_state_regs t1 r)) /\ ~(failed (arith_upd a s1)) ==>
-      (!r. word_loc_val p labs ((\r s. regs s r) r (arith_upd a
-        s1)) =
+    `(!r. word_loc_val p labs ((\r s. labSem_state_regs s r) r s1) =
+  SOME (asm_state_regs t1 r)) /\ ~(failed (arith_upd a s1)) ==>
+      (!r. word_loc_val p labs ((\r s. labSem_state_regs s r) r
+        (arith_upd a s1)) =
           SOME (regs (arith_upd a t1) r))`)
   CHEAT_TAC;;
 
@@ -1671,13 +1674,14 @@ let arith_upd_fp_regs = cake_theorem "arith_upd_fp_regs[simp]"
 
 let fp_upd_lemma = cake_theorem "fp_upd_lemma[local]"
   (fun () ->
-    `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME
-  (asm_state_regs t1 r)) /\
+    `(!r. word_loc_val p labs ((\r s. labSem_state_regs s r) r s1) =
+  SOME (asm_state_regs t1 r)) /\
      (!r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
       ~(failed (fp_upd f s1)) ==>
      (!r. fp_regs (fp_upd f s1) r = fp_regs (fp_upd f t1) r) /\
      (!r.
-       word_loc_val p labs ((\r s. regs s r) r (fp_upd f s1)) =
+       word_loc_val p labs ((\r s. labSem_state_regs s r) r (fp_upd
+         f s1)) =
        SOME (regs (fp_upd f t1) r))`)
   CHEAT_TAC;;
 
@@ -1789,10 +1793,10 @@ let EVEN_add_AND = cake_theorem "EVEN_add_AND"
 let word_cmp_lemma = cake_theorem "word_cmp_lemma[local]"
   (fun () ->
     `state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-       (word_cmp cmp ((\r s. regs s r) rr s1) (reg_imm ri s1) =
-         SOME x) ==>
-       (x = word_cmp cmp ((\r s. regs s r) rr t1) (reg_imm ri
-         t1))`)
+       (word_cmp cmp ((\r s. labSem_state_regs s r) rr s1) (reg_imm
+         ri s1) = SOME x) ==>
+       (x = word_cmp cmp ((\r s. labSem_state_regs s r) rr t1)
+         (reg_imm ri t1))`)
   CHEAT_TAC;;
 
 let list_add_if_fresh_simp =
@@ -5146,3 +5150,5 @@ let lab_to_targetProof_semantics_compile =
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

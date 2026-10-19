@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  semanticsProps: ported from HOL4's
-    semantics/proofs/semanticsPropsScript.sml
-    A proof theory about semantics.ml, with 5 definitions and 20
-    theorems.  Needed by 12 files of the port.  *)
+    semantics/proofs/semanticsPropsScript.sml  *)
 (* ======================================================== *)
 
 (*

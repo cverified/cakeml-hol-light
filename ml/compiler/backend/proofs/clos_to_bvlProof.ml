@@ -38,7 +38,12 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["C"; "all"; "next_loc"];;
+cake_hide ["C"; "all"; "build_const'"; "globals_approx_every_Fn_SOME";
+           "globals_approx_every_Fn_vs_NONE"; "known_co"; "parts";
+           "syntax_ok"; "update_tag"];;
+
+cake_hide_consts
+  ["next_loc","next_loc"];;
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_const.ml";;
@@ -69,7 +74,12 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["C"; "all"; "next_loc"];;
+cake_hide ["C"; "all"; "build_const'"; "globals_approx_every_Fn_SOME";
+           "globals_approx_every_Fn_vs_NONE"; "known_co"; "parts";
+           "syntax_ok"; "update_tag"];;
+
+cake_hide_consts
+  ["next_loc","next_loc"];;
 
 (* TODO: move? *)
 
@@ -819,7 +829,7 @@ hol4_overload "ref_rel" "clos_to_bvlProof_ref_rel";;
 
 let clos_to_bvlProof_ref_rel_simp = cake_theorem "ref_rel_simp[simp]"
   (fun () ->
-    `(ref_rel R (bvlSem_ValueArray vs) y <=> (?ws. y = ValueArray ws /\
+    `(ref_rel R (closSem_ValueArray vs) y <=> (?ws. y = ValueArray ws /\
   LIST_REL R vs ws)) /\
      (ref_rel R (Thunk m v) y <=> (?w. y = Thunk m w /\ R v w)) /\
      (ref_rel R (ByteArray bs) y <=> y = ByteArray F bs)`)
@@ -3379,8 +3389,8 @@ let compile_every_Fn_SOME = cake_theorem "compile_every_Fn_SOME"
 
 let compile_common_max_app = cake_theorem "compile_common_max_app"
   (fun () ->
-    `compile_common c es = (c',es') ==> closSem_state_max_app c' =
-  clos_to_bvl_config_max_app c`)
+    `compile_common c es = (c',es') ==> clos_to_bvl_config_max_app c'
+  = clos_to_bvl_config_max_app c`)
   CHEAT_TAC;;
 
 let chain_exps_every_Fn_SOME = cake_theorem "chain_exps_every_Fn_SOME"
@@ -3664,3 +3674,5 @@ let clos_to_bvlProof_chain_exps_every_Fn_SOME =
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

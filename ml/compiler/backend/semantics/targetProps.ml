@@ -22,7 +22,9 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/typeSystem.ml";;
 
-cake_hide ["state_ok"];;
+cake_hide_consts
+  ["state_ok","bvl_to_bviProof_state_ok";
+   "state_ok","stack_rawcallProof_state_ok"];;
 
 let shift_interfer_def = cake_define
   `shift_interfer k s = machine_config_next_interfer_fupd (K
@@ -931,4 +933,4 @@ let ccache_interfer_ok_post_ccache_asm =
        (machine_config_ccache_interfer mc_conf k (a1,a2,ms2))`)
   CHEAT_TAC;;
 
-cake_hide [];;
+cake_hide_consts [];;

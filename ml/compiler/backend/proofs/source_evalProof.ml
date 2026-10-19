@@ -23,7 +23,38 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["compile"; "compile_decs"; "id"; "init_state"];;
+cake_hide ["compile_decs"; "id"];;
+
+cake_hide_consts
+  ["compile","backend_compile";
+   "compile","bvi_let_compile";
+   "compile","bvi_to_data_compile";
+   "compile","bvl_const_compile";
+   "compile","bvl_handle_compile";
+   "compile","bvl_to_bvi_compile";
+   "compile","clos_annotate_compile";
+   "compile","clos_call_compile";
+   "compile","clos_fvs_compile";
+   "compile","clos_known_compile";
+   "compile","clos_mti_compile";
+   "compile","clos_to_bvl_compile";
+   "compile","compiler_compile";
+   "compile","data_live_compile";
+   "compile","data_space_compile";
+   "compile","data_to_word_compile";
+   "compile","flat_to_clos_compile";
+   "compile","lab_to_target_compile";
+   "compile","source_to_flat_compile";
+   "compile","source_to_source_compile";
+   "compile","stack_alloc_compile";
+   "compile","stack_names_compile";
+   "compile","stack_rawcall_compile";
+   "compile","stack_remove_compile";
+   "compile","stack_to_lab_compile";
+   "compile","word_bignum_compile";
+   "compile","word_to_stack_compile";
+   "compile","word_to_word_compile";
+   "init_state","init_state"];;
 (* HOL4 ancestors outside the port: string *)
 
 (* The things the translator is expected to produce from the
@@ -1403,3 +1434,5 @@ let adjust_oracle_semantics_prog =
   CHEAT_TAC;;
 
 cake_hide [];;
+
+cake_hide_consts [];;

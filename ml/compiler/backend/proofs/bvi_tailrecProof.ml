@@ -253,8 +253,8 @@ let evaluate_complete_ind = cake_theorem "evaluate_complete_ind"
     `!P.
       (!xs s.
         (!ys t.
-          list_size flatLang_exp_size ys < list_size
-            flatLang_exp_size xs /\ state_clock
+          list_size bvi_exp_size ys < list_size bvi_exp_size xs /\
+            state_clock
           t <= bviSem_state_clock s \/ state_clock t <
             bviSem_state_clock s ==>
           P ys t) ==>
