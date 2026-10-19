@@ -527,6 +527,8 @@ class Porter:
       raise SyntaxError(f'unparsed input at {t.pos}: {t.text!r}')
     e = self.conof_arity(
           self.arg_cons(self.arm_intvars(self.lambda_cons(e))))
+    if not defn:
+      e = self.beta_overloads(e)
     old = self.ctx.vars
     oldint = self.ctx.intvars
     oldfv = self.ctx.fieldvar
@@ -560,6 +562,106 @@ class Porter:
       self.ctx.vars = old
       self.ctx.intvars = oldint
       self.ctx.fieldvar = oldfv
+
+  def ovl_lambdas(self):
+    """the overloads whose body is a lambda that reads a record
+       field, as (the variables it binds, the body): the record
+       of such a field is the one of the argument that the
+       application has, which is not the same in every statement
+       (the read_reg of lab_to_targetProof's word_cmp_lemma is the
+       regs of a labSem state on one side of the equation and of
+       an asm_state on the other)"""
+    if getattr(self, '_ovllam', None) is not None: return self._ovllam
+    out = {}
+    for nm, txt in self.raw_overloads.items():
+      try:
+        e = hterm.Parser(hterm.tokenize(dbmod.strip_quote(txt)),
+                         self.ctx).parse()
+      except Exception:
+        continue
+      while e.kind == 'paren': e = e.e
+      if e.kind != 'quant' or e.q != '\\': continue
+      if not all(v.kind == 'id' for v in e.vs): continue
+      if not self.has_field(e.body): continue
+      out[nm] = ([v.name for v in e.vs], e.body)
+    self._ovllam = out
+    return out
+
+  def has_field(self, e):
+    """does this term read a record field?"""
+    if not isinstance(e, hterm.Node): return False
+    if e.kind in ('field', 'recupd'): return True
+    for k, v in e.__dict__.items():
+      if k == 'tok': continue
+      if isinstance(v, hterm.Node):
+        if self.has_field(v): return True
+      elif isinstance(v, (tuple, list)):
+        for x in v:
+          if isinstance(x, hterm.Node) and self.has_field(x):
+            return True
+          if isinstance(x, (tuple, list)):
+            for y in x:
+              if isinstance(y, hterm.Node) and self.has_field(y):
+                return True
+    return False
+
+  def subst_node(self, e, sub):
+    """a copy of a term with the variables of sub replaced"""
+    if not isinstance(e, hterm.Node): return e
+    if e.kind == 'id' and e.name in sub: return sub[e.name]
+    # a binder of the body that binds one of them keeps it
+    if e.kind == 'quant':
+      sub = {k: v for k, v in sub.items()
+             if k not in [x.name for x in e.vs if x.kind == 'id']}
+      if not sub: return e
+    d = {}
+    for k, v in e.__dict__.items():
+      if k == 'tok': d[k] = v
+      elif isinstance(v, hterm.Node): d[k] = self.subst_node(v, sub)
+      elif isinstance(v, list):
+        d[k] = [self.subst_node(x, sub) if isinstance(x, hterm.Node)
+                else ([self.subst_node(y, sub)
+                       if isinstance(y, hterm.Node) else y
+                       for y in x] if isinstance(x, (tuple, list))
+                      else x) for x in v]
+      elif isinstance(v, tuple):
+        d[k] = tuple(self.subst_node(x, sub)
+                     if isinstance(x, hterm.Node) else x for x in v)
+      else: d[k] = v
+    n = hterm.Node(e.kind, **{k: v for k, v in d.items()
+                              if k != 'kind'})
+    return n
+
+  def beta_overloads(self, e):
+    """the applications of such an overload with the arguments put
+       in, so that the field of its body is read with the record of
+       the argument that is there"""
+    lam = self.ovl_lambdas()
+    if not lam: return e
+
+    def go(x):
+      if not isinstance(x, hterm.Node): return x
+      for k, v in list(x.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): setattr(x, k, go(v))
+        elif isinstance(v, list):
+          setattr(x, k, [go(y) if isinstance(y, hterm.Node) else
+                         (tuple(go(z) if isinstance(z, hterm.Node)
+                                else z for z in y)
+                          if isinstance(y, tuple) else y)
+                         for y in v])
+      if x.kind != 'app': return x
+      h, args = hterm.strip_app(x)
+      if h.kind != 'id' or h.name not in lam: return x
+      vs, body = lam[h.name]
+      if len(args) < len(vs): return x
+      sub = dict(zip(vs, args[:len(vs)]))
+      out = self.subst_node(body, sub)
+      for a in args[len(vs):]:
+        out = hterm.Node('app', tok=x.tok, fn=out, arg=a)
+      return out
+
+    return go(e)
 
   def int_vars_by_type(self, e):
     """the variables of a term that stand where a constant takes an
