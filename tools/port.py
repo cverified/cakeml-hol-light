@@ -1569,22 +1569,30 @@ class Porter:
     # port writes CHEAT_TAC where HOL4 has its tactic, and the
     # definition is made all the same
     cheat = (self.thy, name) in CHEATS
+    # the tactic that proves the termination condition, written by
+    # hand (phase three: overrides.TERMINATION).  It goes where
+    # the CHEAT_TAC of the first pass goes, and the definition is
+    # then made for real -- the next run says so, because the
+    # cheat list comes out of ml/CHEATS.md, which a run writes
+    tac = overrides.TERMINATION.get((self.thy, name))
+    if tac: cheat = True
+    tactext = tac or 'CHEAT_TAC'
     cheatnote = ('(* the first pass assumes the termination:\n'
                  '   replacing the CHEAT_TAC is all that is left *)\n'
-                 if cheat else '')
+                 if cheat and not tac else '')
     if cheat and term is None and rel is not None:
       text = (sizes + relnote + termnote + cheatnote +
               'let %s = cake_define_list_try_tac (fun () ->\n  `%s`)\n'
-              '  CHEAT_TAC\n  %s;;'
-              % (name, fmt(rel, last=2), clauses))
+              '  %s\n  %s;;'
+              % (name, fmt(rel, last=2), tactext, clauses))
     elif cheat and term is None:
       text = (sizes + cheatnote +
-              'let %s = cake_define_list_cheat CHEAT_TAC\n'
-              '  %s;;' % (name, clauses))
+              'let %s = cake_define_list_cheat %s\n'
+              '  %s;;' % (name, tactext, clauses))
     elif cheat and rel is not None:
       text = (sizes + relnote + cheatnote +
               'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
-              '  CHEAT_TAC\n  `%s`;;' % (name, rel, term))
+              '  %s\n  `%s`;;' % (name, rel, tactext, term))
     elif cheat and b.extra is not None and wf_relation(b.extra)[0]:
       wf, rest = wf_relation(b.extra)
       wftext = fmt(self.term(wf), last=1)
@@ -1593,11 +1601,11 @@ class Porter:
                      'Termination') + '\n'
       text = (size_prelude(wftext + ' ' + term) + note + cheatnote +
               'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
-              '  CHEAT_TAC\n  `%s`;;' % (name, wftext, term))
+              '  %s\n  `%s`;;' % (name, wftext, tactext, term))
     elif cheat:
       text = (sizes + cheatnote +
-              'let %s = cake_define_cheat CHEAT_TAC\n'
-              '  `%s`;;' % (name, term))
+              'let %s = cake_define_cheat %s\n'
+              '  `%s`;;' % (name, tactext, term))
     elif term is None and rel is not None:
       # the relation of a Termination is parsed in a function, so
       # that one that does not typecheck is no error of the file

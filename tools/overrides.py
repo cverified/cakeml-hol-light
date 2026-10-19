@@ -983,6 +983,14 @@ MATCH_FORM = set([
 
 # an explicit termination relation, where HOL Light cannot guess one
 # and the HOL4 source does not give one either
+# TERMINATION: the tactic that proves the termination condition of
+# a definition, written by hand (phase three).  It goes where the
+# CHEAT_TAC of the first pass goes; the definition is then made for
+# real, and the next run says so, because the cheat list comes out
+# of ml/CHEATS.md, which a run writes.
+TERMINATION = {
+}
+
 MEASURE = {
   # the elements of the vector that are left, which HOL4 gives in
   # the Termination of the definition
