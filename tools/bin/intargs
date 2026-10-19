@@ -49,7 +49,18 @@ TIMEOUT=180 repl-step $s \
   2>&1 | tail -1
 TIMEOUT=180 repl-step $s \
   "let cake_out = open_out \"$C/tools/constants.txt\" in
-   do_list (fun (n,_) -> output_string cake_out (n ^ \"\\n\"))
+   (* the witness of a type definition has a number of its own
+      in every session (_6090360, _mk_list_4556600), and is no
+      name of the port *)
+   let cake_internal n =
+     String.length n > 1 && n.[0] = '_' &&
+     (let i = try String.rindex n '_' with Not_found -> 0 in
+      i < String.length n - 1 &&
+      forall (fun j -> n.[j] >= '0' && n.[j] <= '9')
+             ((i + 1)--(String.length n - 1))) in
+   do_list (fun (n,_) ->
+       if not (cake_internal n) then
+         output_string cake_out (n ^ \"\\n\"))
      (constants ());
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -1
