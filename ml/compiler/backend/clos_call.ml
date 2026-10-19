@@ -2,8 +2,7 @@
 (*  clos_call: ported from HOL4's
     compiler/backend/clos_callScript.sml
     A definition theory, with 12 definitions and 16 theorems.
-    Needed by backendProof.ml, clos_callProof.ml, clos_to_bvl.ml and
-    clos_to_bvlProof.ml.  *)
+    Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -17,6 +16,7 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 (* the first pass assumes the termination:
@@ -268,12 +268,15 @@ let calls_def = cake_define_list_try_tac (fun () ->
                     1) (GENLIST_Var backend_common_None 2 (LENGTH
                     es)))],g) else ([App t loc_opt e1 es],g))`;
    `calls [closLang_Fn t loc_opt ws num_args x1] g =
+         // loc_opt ought to be SOME loc, with loc being EVEN
          (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
            in
          let new_g = insert_each loc 1 g in
          let (e1,new_g) = calls [x1] new_g in
          let new_g = (FST new_g,(loc + 1,num_args,HD e1) :: SND
            new_g) in
+           // Closedness is checked on the transformed program because
+           // the calls function can sometimes remove free variables.
            if clos_call_closed (closLang_Fn t loc_opt ws num_args
              (HD e1)) then
              ([closLang_Fn t loc_opt ws num_args
@@ -351,12 +354,15 @@ let calls_sing_def = cake_define_list_try_tac (fun () ->
                     1) (GENLIST_Var backend_common_None 2 (LENGTH
                     es))),g) else (App t loc_opt e1 es,g))`;
    `calls_sing (closLang_Fn t loc_opt ws num_args x1) g =
+         // loc_opt ought to be SOME loc, with loc being EVEN
          (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
            in
          let new_g = insert_each loc 1 g in
          let (e1,new_g) = calls_sing x1 new_g in
          let new_g = (FST new_g,(loc + 1,num_args,e1) :: SND new_g)
            in
+           // Closedness is checked on the transformed program because
+           // the calls function can sometimes remove free variables.
            if clos_call_closed (closLang_Fn t loc_opt ws num_args
              e1) then
              (closLang_Fn t loc_opt ws num_args

@@ -11,6 +11,7 @@
 
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "lib/integer_word.ml";;
+needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: words *)
 
 (* The GC is a copying collector which moves elements *)
@@ -93,9 +94,13 @@ let gc_inv_def = cake_define
      (n = heap_length (FILTER (\h. ~(isForwardPointer h)) heap)) /\ c
        /\
      (heap_length heap = limit') /\
+     // the initial heap is well-formed
      heap_ok heap0 limit' /\
+     // the initial heap is related to the current heap
      heaps_similar heap0 heap /\
+     // the new heap consists of only DataElements
      EVERY isDataElement h1 /\ EVERY isDataElement h2 /\
+     // the forward pointers consitute a bijection into the new heap
      BIJ (heap_map1 heap) (FDOM (heap_map 0 heap)) (heap_addresses 0
        (h1 ++ h2)) /\
      (!i j. (FLOOKUP (heap_map 0 heap) i = SOME j) ==>

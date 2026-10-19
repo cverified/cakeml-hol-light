@@ -27,7 +27,10 @@ needs "semantics/ast.ml";;
 
 
 let flat_pattern_config_FIELDS = define_record "flat_pattern_config"
-  ["pat_heuristic","num"];;
+  ["pat_heuristic","num"
+   (* pattern_matching$branch list *)
+   (* unit -> *)
+  ];;
 
 let init_config_def = cake_define
   `flat_pattern_init_config ph = mk_flat_pattern_config ph`;;
@@ -239,8 +242,10 @@ let compile_pats_def = cake_define
    if naive then
    naive_pattern_matches t v (ZIP (MAP FST ps) branches) default_x
      else let pats = MAPi (\j (p,_46). (encode_pat p,j)) ps in
-   let dt = pattern_comp_comp pats in decode_dtree t
-     (sptree_fromList branches) v default_x dt)`;;
+   let dt = pattern_comp_comp
+         // cfg.pat_heuristic
+         pats in decode_dtree t (sptree_fromList branches) v
+           default_x dt)`;;
 
 let max_dec_name_def = cake_define_list
   [`max_dec_name [] = 0`;

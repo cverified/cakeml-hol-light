@@ -12,6 +12,8 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_call.ml";;
+needs "compiler/backend/data_space.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
@@ -82,10 +84,14 @@ let renumber_code_locs_length = cake_theorem "renumber_code_locs_length"
 
 let compile_inc_def = cake_define
   `clos_number_compile_inc n xs =
+     // leave space in the naming for the daisy chaining of clos_to_bvl
      (let n1 = make_even (n + MAX (LENGTH xs) 1) in
      let (m,ys) = renumber_code_locs_list n1 xs in
-       (m,closLang_Op backend_common_None (closLang_IntOp
-         (closLang_Const (&n))) [] :: ys))`;;
+       (
+        // embed the name of the first free slot (n) in the code
+        // no code will be generated for this pure Const expression
+        m,closLang_Op backend_common_None (closLang_IntOp
+          (closLang_Const (&n))) [] :: ys))`;;
 hol4_overload "compile_inc" "clos_number_compile_inc";;
 
 let ignore_table_def = cake_define

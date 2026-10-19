@@ -36,6 +36,7 @@ needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/multiword.ml";;
+needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
@@ -113,8 +114,18 @@ let word_i2w_sub = cake_theorem "word_i2w_sub"
 let data_to_word_memoryProof_tag_INDUCT,
     data_to_word_memoryProof_tag_RECURSION =
   define_datatype
-  "data_to_word_memoryProof_tag = BlockTag (num) | RefTag | BytesTag \
-   (bool) (num) | ThunkTag (thunk_mode) | NumTag (bool) | Word64Tag";;
+  "data_to_word_memoryProof_tag = BlockTag (num) \
+   // immutable Block\n\
+   | RefTag \
+   // mutable arrays / references\n\
+   | BytesTag (bool) (num) \
+   // mutable byte arrays / immutable strings\n\
+   | ThunkTag (thunk_mode) \
+   // mutable thunks\n\
+   | NumTag (bool) \
+   // immutable bignum on the heap\n\
+   | Word64Tag \
+   // immutable word64 on the heap";;
 
 let BlockRep_def = cake_define
   `BlockRep tag xs = DataElement xs (LENGTH xs) (BlockTag tag,[])`;;
@@ -386,8 +397,18 @@ let bc_ref_inv_def = cake_define
             (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
             v_inv conf v refs (z,f,tf,heap)) | (SOME x,SOME
               (bvlSem_MutBlock tg fin l c r)) ->
-         (!gs. ~(data_to_word_config_gc_kind conf =
-           data_to_word_Generational gs)) /\
+         (
+          // a MutBlock is laid out exactly as the Block it finalises to; it is
+          // mutable but carries an immutable BlockTag, so it is invisible to the
+          // generational GC's isRef -- hence only the other GC kinds.
+          //
+          // While it is unfinalised, no timestamp may point at its cell: on
+          // finalisation the very same pointer becomes a Block, which adds a
+          // binding to tf, and INJ tf would break if one were there already.
+          // MutCons allocates out of the unused space, so this holds on
+          // creation; finalisation discharges it by setting fin.
+          !gs. ~(data_to_word_config_gc_kind conf =
+            data_to_word_Generational gs)) /\
          (~fin ==> ~(x IN IMAGE (FAPPLY tf) (FDOM tf))) /\
          (?zs. heap_lookup x heap = SOME (BlockRep tg zs) /\
                EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
@@ -2991,7 +3012,8 @@ let heap_store_unused_alt_IMP_length =
    ------------------------------------------------------- *)
 
 let pointer_bits_def = cake_define
-  `pointer_bits conf abs_heap n =
+  `// pointers have tag and len bits
+   pointer_bits conf abs_heap n =
      (match heap_lookup n abs_heap with SOME (DataElement xs l
        (BlockTag tag,[])) ->
          maxout_bits (LENGTH xs) (data_to_word_config_len_bits conf)
@@ -3038,35 +3060,49 @@ let thunk_tag_to_bits_def = cake_define_list
 
 let word_payload_def = cake_define_list
   [`word_payload ys l (BlockTag n) qs conf =
-         (make_header conf (n2w n << 2) (LENGTH ys),
+         (
+          // header: ...00[11] here i in ...i[11] must be 0 for the GC
+          make_header conf (n2w n << 2) (LENGTH ys),
           MAP (word_addr conf) ys,(
           (qs = []) /\ (LENGTH ys = l) /\
           encode_header conf (n * 4) (LENGTH ys) =
             SOME (make_header conf (n2w n << 2) (LENGTH ys):'a
               word)))`;
    `word_payload ys l RefTag qs conf =
-         (make_header conf (n2w 2) (LENGTH ys),
+         (
+          // header: ...010[11] here i in ...i[11] must be 0 for the GC
+          make_header conf (n2w 2) (LENGTH ys),
           MAP (word_addr conf) ys,(
           (qs = []) /\ (LENGTH ys = l)))`;
    `word_payload ys l (ThunkTag e) qs conf =
-         (make_header conf (thunk_tag_to_bits e << 3 || (n2w 6))
-           (LENGTH ys),
+         (
+          // header: ...e110[11] here i in ...i[11] must be 0 for the GC
+          make_header conf (thunk_tag_to_bits e << 3 || (n2w 6))
+            (LENGTH ys),
           MAP (word_addr conf) ys,(
           (qs = []) /\ (LENGTH ys = 1) /\ l = 1))`;
    `word_payload ys l Word64Tag qs conf =
-         (make_header conf (n2w 3) l,
+         (
+          // header: ...011[11] here i in ...i[11] must be 1 for the GC
+          make_header conf (n2w 3) l,
           qs,((ys = []) /\ (LENGTH qs = l) /\
               IS_SOME ((encode_header conf 3 l):('a word)
                 option)))`;
    `word_payload ys l (NumTag b) qs conf =
-         (make_header conf (b2w b << 2 || ((n2w 3):'a word)) (LENGTH
-           qs),
+         (
+          // header: ...111[11] or ...011[11]
+          // here i in ...i[11] must be 1 for GC
+          make_header conf (b2w b << 2 || ((n2w 3):'a word)) (LENGTH
+            qs),
           qs,((ys = []) /\ (LENGTH qs = l) /\
               IS_SOME ((encode_header conf (w2n (b2w b << 2 || ((n2w
                 3):'a word)))
                           (LENGTH qs)):('a word) option)))`;
    `word_payload ys l (BytesTag fl n) qs conf =
-         (((make_byte_header conf fl n):'a word),
+         (((
+           // header: ...101[11] or ...001[11] (compare-by-contents)
+           // here i in ...i[11] must be 1 for the GC
+           make_byte_header conf fl n):'a word),
           qs,((ys = []) /\ (LENGTH qs = l) /\
               (let k = (if dimindex (:'a) = 32 then 2 else 3) in
               n + 2 EXP k < 2 EXP (data_to_word_config_len_size
@@ -3127,12 +3163,16 @@ let glob_real_inv_def = cake_define
 let heap_in_memory_store_def = cake_define
   `heap_in_memory_store heap a sp sp1 gens c s m dm limit' <=>
      heap_length heap <= dimword (:'a) DIV 2 EXP shift_length c /\
-     (heap_length heap + 3) * (dimindex (:'a) DIV 8) < dimword (:'a)
-       /\
+     (
+      // +3 is breathing room for lists:
+      heap_length heap + 3) * (dimindex (:'a) DIV 8) < dimword (:'a)
+        /\
      backend_common_word_shift (:'a) <= shift_length c /\
        ~(data_to_word_config_len_size c = 0) /\
        data_to_word_config_len_size
-     c + 7 < dimindex (:'a) /\
+     c + 7 <
+             // 5 tag bits + 2-3 bits for byte arrays
+             dimindex (:'a) /\
      shift_length c < dimindex (:'a) /\ Globals IN FDOM s /\
      (?curr other.
        byte_aligned curr /\ byte_aligned other /\
@@ -4249,6 +4289,9 @@ let write_bytes_inj_lemma = cake_theorem "write_bytes_inj_lemma"
        /\
      LENGTH w1 = LENGTH w2 /\
      LENGTH bs' = LENGTH bs ==>
+     // ∧
+     // LENGTH bs ≤ LENGTH (w1:α word list) * (dimindex (:α) DIV 8)
+     // ∧ LENGTH (w1:α word list) ≤ LENGTH bs DIV (dimindex(:α) DIV 8) +1
      write_bytes bs' w1 be = write_bytes bs' w2 be)`)
   CHEAT_TAC;;
 
@@ -4463,6 +4506,7 @@ let memory_rel_Block_IMP = cake_theorem "memory_rel_Block_IMP"
   word_loc)) :: vars) /\
       good_dimindex (:'a) ==>
       (?w. v = wordLang_Word w /\
+          // ASK: If the Block has no vals then it's timestamp is 0
           (if vals = [] then
             w = n2w tag * (n2w 16) + (n2w 2) /\ ~(FAPPLY w 0) /\
             tag < dimword (:'a) DIV 16 /\ ts' = 0 else
@@ -4827,7 +4871,9 @@ let memory_rel_RefPtr_T_IMP = cake_theorem "memory_rel_RefPtr_T_IMP"
      good_dimindex (:'a) ==>
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\
-         (word_bit 3 x <=> ~(word_bit 2 x)) /\
+         (
+          // (word_bit 4 x ⇒ word_bit 2 x) ∧
+          word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)`)
@@ -4844,7 +4890,9 @@ let memory_rel_RefPtr_IMP = cake_theorem "memory_rel_RefPtr_IMP"
        fin l cv rs))) ==>
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\
-         (word_bit 3 x <=> ~(word_bit 2 x)) /\
+         (
+          // (word_bit 4 x ⇒ word_bit 2 x) ∧
+          word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)`)
@@ -4859,11 +4907,15 @@ let memory_rel_RefPtr_gen_IMP = cake_theorem "memory_rel_RefPtr_gen_IMP"
        (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
           (?a x. get_real_addr c st w = SOME a /\
                 m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
-                  0b111100)) = n2w ((0 + 6) * 4)))) | bvlSem_MutBlock
-                  _48 _49 _50 _51 _52 -> T | _53 ->
+                  0b111100)) = n2w ((0 + 6) * 4)))) |
+       // a MutBlock carries a BlockTag header, for which the bit pattern below
+       // does not hold; this theorem has no users, so the case is left trivial
+       bvlSem_MutBlock _48 _49 _50 _51 _52 -> T | _53 ->
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\
-         (word_bit 3 x <=> ~(word_bit 2 x)) /\
+         (
+          // (word_bit 4 x ⇒ word_bit 2 x) ∧
+          word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)))`)
@@ -5322,11 +5374,14 @@ let memory_rel_Number_cmp = cake_theorem "memory_rel_Number_cmp"
                    dm m = SOME (word_cmp_res i1 i2) else
              word_cmp_res i1 i2 =
              (if (x1 && (n2w 16)) = (n2w 0) then
+                // 0 <= i1
                 if (x2 && (n2w 16)) = (n2w 0) then
+                  // 0 <= i2
                   if decode_length c x1 <+ decode_length c x2 then
                     (n2w 0) else (n2w 2):'a word else
                   (n2w 2) else
                 if (x2 && (n2w 16)) = (n2w 0) then
+                  // 0 <= i2
                   (n2w 0) else
                   if decode_length c x1 <+ decode_length c x2
                     then (n2w 2) else (n2w 0))) else T))`)
@@ -5429,6 +5484,7 @@ let elements_list_def = cake_define_list
    `elements_list (v :: w :: vs) =
        (?ts t ls1 ls2.
          w = Block ts t (ls1 ++ [v] ++ ls2) /\
+         // EVERY (λe. ∀p. e ≠ RefPtr F p) ls1 ∧
          elements_list (w :: vs))`];;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13453: ML code, not ported *)
@@ -5672,17 +5728,27 @@ let word_eq_def = cake_define_try_tac (fun () ->
         match (word_header c st w1 dm m,word_header c st w2 dm m)
           with (SOME (a1,h1),SOME (a2,h2)) ->
             (if (h1 && (n2w 0b1100)) = (n2w 0) then
-              if word_is_clos c h1 then SOME ((n2w 1),l,ck) else
+              // is Block
+              if word_is_clos c h1 then
+                    // isClos
+                    SOME ((n2w 1),l,ck) else
               if ~(h1 = h2) then SOME ((n2w 0),l,ck) else
-              if l = 0 then NONE else
+              if l = 0 then
+                   // \/ ck = 0
+                   NONE else
                 word_eq_list c st dm m (l - 1) ck (decode_length c
                   h1)
                   (a1 + bytes_in_word) (a2 + bytes_in_word) else
             if ~(h1 = h2) then SOME ((n2w 0),l,ck) else
-            if ~(word_bit 2 h1) then SOME ((n2w 0),l,ck) else
+            if ~(word_bit 2 h1) then
+                     // is array
+                     SOME ((n2w 0),l,ck) else
             if ~(word_bit 3 h1) /\ word_bit 4 h1 then
+              // is cmp-by-pointer byte array
               SOME ((n2w 0),l,ck) else
-             (if l <= w2n (decode_length c h1) then NONE else
+             (
+              // must be a bignum or word64 or cmp-by-contents byte array
+              if l <= w2n (decode_length c h1) then NONE else
               match word_cmp_loop (decode_length c h1)
                 (a1 + bytes_in_word * (decode_length c h1))
                 (a2 + bytes_in_word * (decode_length c h1)) dm m with

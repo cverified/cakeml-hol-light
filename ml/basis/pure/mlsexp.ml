@@ -3,7 +3,7 @@
     basis/pure/mlsexpScript.sml
     A definition theory, with 25 definitions, 4 datatypes and 25
     theorems.  Needed by compiler.ml, compilerProof.ml,
-    displayLang.ml and presLang.ml.  *)
+    displayLang.ml, presLang.ml and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -12,9 +12,14 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/clos_call.ml";;
+needs "compiler/backend/data_space.ml";;
+needs "lib/bitstring.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/peg.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (*--------------------------------------------------------------*
    Definition of s-expression
@@ -42,8 +47,9 @@ let read_string_aux_def = cake_define_list
    `read_string_aux (c :: rest) acc =
       (if c = (CHR 34) then INR (implode (REVERSE acc),rest) else
       if c = (CHR 92) then
-        (match rest with [] -> read_string_aux rest acc | (e ::
-          rest) ->
+        (match rest with [] -> read_string_aux rest acc | (
+            // causes error: unterminated string
+            e :: rest) ->
              (if e = (CHR 92) then read_string_aux rest ((CHR 92) ::
                acc) else
               if e = (CHR 34) then read_string_aux rest ((CHR 34) ::
@@ -127,6 +133,15 @@ let lex_aux_def = cake_define_list_try_tac (fun () ->
           (msg,rest) | INR (s,rest) ->
             (if depth = 0 then INR ([SYMBOL s],rest) else
               mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)) else
+        // We know that c is not a closing parenthesis or a space, so read_symbol
+        // (c::cs) [] is equivalent to read_symbol cs [c].
+        //
+        // The choice is an implementation detail relevant in the context of
+        // streams: If we interpret the input string as a stream and use the
+        // latter version of the call, the case split can be seen as consuming the
+        // first character.  If we insist on the former version, the case split
+        // can only peek at (not consume) c, and we must add calls to consume c in
+        // the other branches.
         match read_symbol cs [c] with (s,rest) ->
             (if depth = 0 then INR ([SYMBOL s],rest) else
               mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)))`];;
@@ -275,7 +290,9 @@ let annotate_def = cake_define_list
    `mlsexp_annotate (Append b1 n b2:pretty) =
       (let b1 = mlsexp_annotate b1 in
        let b2 = mlsexp_annotate b2 in
-          ((Append b1 n b2:pretty)))`;
+          (
+           // Size (get_size b1 + get_size b2 + 1)
+           Append b1 n b2))`;
    `mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n
   (mlsexp_annotate b)`];;
 hol4_overload "annotate" "mlsexp_annotate";;

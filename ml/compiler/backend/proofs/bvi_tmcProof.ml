@@ -2080,7 +2080,9 @@ let bvi_tmcProof_evaluate_compile_each =
 let bvi_tmcProof_state_rel_const = cake_theorem "state_rel_const"
   (fun () ->
     `bvi_tmcProof_state_rel f s t ==> state_clock
+     // t.refs = s.refs ∧
      t = state_clock s /\ state_ffi
+     // t.global = s.global ∧
      t = state_ffi s`)
   CHEAT_TAC;;
 

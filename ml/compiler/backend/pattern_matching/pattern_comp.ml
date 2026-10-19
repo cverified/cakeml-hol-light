@@ -16,6 +16,7 @@
 needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_exh.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -53,6 +54,7 @@ let move_const_up_def = cake_define
      (let new_rows = take_until_Any rows in
        if 5 <= LENGTH new_rows \/ EXISTS is_Or_row new_rows then
          new_rows else
+         // long pattern rows should not be changed
          FILTER is_const_row new_rows ++
          FILTER (\x. ~(is_const_row x)) new_rows)`;;
 

@@ -60,13 +60,18 @@ cake_hide_consts
 
 let CPstate_inv_def = cake_define
   `CPstate_inv cs = (
-    (!v c. sptree_lookup v (copy_state_to_eq cs) = SOME c ==> c <
-      copy_state_next cs) /\
+    (
+     // cs.next is a fresh class
+     !v c. sptree_lookup v (copy_state_to_eq cs) = SOME c ==> c <
+       copy_state_next cs) /\
     (!c. c IN domain (copy_state_from_eq cs) ==> c < copy_state_next
       cs) /\
     (!s c. ALOOKUP (copy_state_store_to_eq cs) s = SOME c ==> c <
       copy_state_next cs) /\
-    (!c v. sptree_lookup c (copy_state_from_eq cs) = SOME v ==>
+    (
+     // if representative of equiv class c is var v,
+     // then class of v is c
+     !c v. sptree_lookup c (copy_state_from_eq cs) = SOME v ==>
       sptree_lookup v (copy_state_to_eq cs) = SOME c))`;;
 
 (* As a corollary, different classes have different representatives *)

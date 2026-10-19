@@ -21,7 +21,7 @@ import sys, os, re
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
-import db as dbmod, hol4, overrides, stmtshape
+import db as dbmod, hol4, overrides, stmtshape, thmcheck
 
 ML = T + '../ml/'
 
@@ -71,7 +71,10 @@ def main():
   for thy, path, kind in dbmod.load_order():
     if want and thy not in want: continue
     try:
-      text = open(ML + db.mlpath_of(thy)).read()
+      # the comments of a term of the port stand after // and run
+      # to the end of the line, and are the source's own
+      text = thmcheck.strip_dslash(
+               open(ML + db.mlpath_of(thy)).read())
     except (OSError, KeyError):
       continue
     # the quotations of the port, by the name that the phrase binds

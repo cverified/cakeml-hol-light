@@ -52,7 +52,12 @@ needs "semantics/semanticPrimitives.ml";;
  * -------------------------------------------------------------------- *)
 
 let ctor_INDUCT,ctor_RECURSION = define_datatype
-  "ctor = TagC (num) (num) | TupC (num) | RefC";;
+  "ctor = TagC (num) (num) \
+   // tag and arity of a Term (SOME tag)\n\
+   | TupC (num) \
+   // arity of a Term NONE\n\
+   | RefC \
+   // a RefPtr";;
 
 let ctor_arity_def = cake_define_list
   [`ctor_arity (TagC t a) = a`;

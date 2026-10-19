@@ -185,12 +185,14 @@ let infer_ds_complete = cake_theorem "infer_ds_complete"
   (fun () ->
     `type_ds T tenv ds ids tenv' /\
      envRel_env_rel tenv ienv /\
+     // do you need both of these?
      inf_set_tids_ienv (count (infer_st_next_id st1)) ienv /\
      set_tids_tenv (count (infer_st_next_id st1)) tenv /\
      DISJOINT ids (count (infer_st_next_id st1)) /\
      start_type_id <= infer_st_next_id st1 ==>
      (?g mapped_tenv' ienv' st2.
        infer_ds ienv ds st1 = (M_success ienv',st2) /\
+       // BIJ g (count st1.next_id ∪ count ids) (count (st1.next_id + ids)) ∧
        tenv_equiv (remap_tenv g tenv') mapped_tenv' /\
        envRel_env_rel mapped_tenv' ienv' /\ infer_st_next_id
        st2 = infer_st_next_id st1 + CARD ids)`)

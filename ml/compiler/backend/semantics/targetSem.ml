@@ -39,19 +39,27 @@ hol4_overload "TimeOut" "targetSem_TimeOut";;
 let machine_config_FIELDS = define_record "machine_config"
   ["prog_addresses","'a word->bool";
    "shared_addresses","'a word->bool";
+   (* FFI-specific configurations *)
    "ffi_entry_pcs","('a word) list";
    "ffi_names","ffiname list";
    "ptr_reg","num";
    "len_reg","num";
    "ptr2_reg","num";
    "len2_reg","num";
+   (* major interference by FFI calls *)
    "ffi_interfer","num->num#word8 list#'b->'b";
    "callee_saved_regs","num list";
+   (* minor interference during execution *)
    "next_interfer","num->'b->'b";
+   (* program exits successfully at halt_pc *)
    "halt_pc","'a word";
+   (* entry point for calling clear_cache *)
    "ccache_pc","'a word";
+   (* major interference by calling clear_cache *)
    "ccache_interfer","num->'a word#'a word#'b->'b";
+   (* target next-state function etc. *)
    "target","('a,'b,'c)target";
+   (* ffi_index -> byte_size, address, register to be updated/ stored, new pc value *)
    "mmio_info","(num#word8#'a asm_addr#num#'a word) list"];;
 hol4_field_overload "ffi_names" "machine_config_ffi_names";;
 hol4_field_overload "ffi_names_fupd" "machine_config_ffi_names_fupd";;
@@ -292,14 +300,20 @@ let code_loaded_def = cake_define
 let target_configured_def = cake_define
   `target_configured (t:'a asm_state) mc_conf <=>
      ~(asm_state_failed t) /\ asm_state_be
+     // (!q n.
+     // (n2w (2 ** t.align - 1) && q + (n2w n):'a word) = 0w <=>
+     // n MOD 2 ** t.align = 0) ∧
      t = asm_config_big_endian (target_config (machine_config_target
        mc_conf)) /\ asm_state_align
      t = asm_config_code_alignment (target_config
        (machine_config_target mc_conf)) /\ asm_state_mem_domain
      t = machine_config_prog_addresses mc_conf /\
-     (match asm_config_link_reg (target_config
-       (machine_config_target mc_conf)) with NONE -> T | SOME r ->
-       asm_state_lr t = r)`;;
+     (
+      // byte_aligned (t.regs mc_conf.ptr_reg) ∧
+      // byte_aligned (t.regs mc_conf.ptr2_reg) ∧
+      match asm_config_link_reg (target_config
+        (machine_config_target mc_conf)) with NONE -> T | SOME r ->
+        asm_state_lr t = r)`;;
 
 let get_reg_value_def = cake_define_list
   [`get_reg_value NONE w f = w`;
@@ -513,6 +527,7 @@ let good_init_state_def = cake_define
      t m dm sdm <=>
      target_state_rel (machine_config_target mc_conf) t ms /\
      target_configured t mc_conf /\ asm_state_pc
+     // starting pc assumptions
      t = target_get_pc (machine_config_target mc_conf) ms /\
      start_pc_ok mc_conf (asm_state_pc t) /\
      (n2w (2 EXP asm_state_align t - 1) && asm_state_pc t) = (n2w 0)
@@ -522,9 +537,11 @@ let good_init_state_def = cake_define
        (machine_config_prog_addresses mc_conf)) /\
      ffi_interfer_ok (asm_state_pc t) mc_conf /\
      ccache_interfer_ok (asm_state_pc t) mc_conf /\
+     // code memory relation
      code_loaded bytes mc_conf ms /\
      bytes_in_mem (asm_state_pc t) bytes (asm_state_mem t)
        (asm_state_mem_domain t) dm /\
+     // data memory relation -- note that this implies m contains no labels
      dm SUBSET asm_state_mem_domain t /\
      (!a. byte_align a IN dm ==> a IN dm) /\
      sdm = machine_config_shared_addresses mc_conf /\
@@ -535,7 +552,9 @@ let good_init_state_def = cake_define
        t a = get_byte a w (asm_config_big_endian (target_config
          (machine_config_target mc_conf))) /\
        m (byte_align a) = wordLang_Word w) /\
-     (!n. n < cbspace ==>
+     (
+      // code buffer constraints
+      !n. n < cbspace ==>
        n2w (n + LENGTH bytes) + asm_state_pc t IN
          asm_state_mem_domain t /\ ~(n2w (n + LENGTH bytes) +
          asm_state_pc t IN dm)) /\

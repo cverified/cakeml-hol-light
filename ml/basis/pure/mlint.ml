@@ -149,6 +149,7 @@ let fromChars_unsafe_def = cake_define_wf
   `fromChars_unsafe n str =
       match n with
         0 -> 0
+      // Shouldn't happend
       | n ->
      (if n <= padLen_DEC then fromChars_range_unsafe 0 n str else let
        n' = n - padLen_DEC in let
@@ -164,6 +165,7 @@ let fromChars_def = cake_define_wf
   `fromChars n str =
       match n with
         0 -> NONE
+      // Shouldn't happend
       | n ->
      (if n <= padLen_DEC then fromChars_range 0 n str else let n' = n
        - padLen_DEC in let

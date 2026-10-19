@@ -2,7 +2,7 @@
 (*  ml_monadBase: ported from HOL4's
     translator/monadic/monad_base/ml_monadBaseScript.sml
     A definition theory, with 26 definitions, 2 datatypes and 27
-    theorems.  Needed by 16 files of the port.  *)
+    theorems.  Needed by 30 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -74,7 +74,9 @@ let st_ex_bind_CONG = cake_theorem "st_ex_bind_CONG"
 
 
 let st_ex_return_def = cake_define
-  `(st_ex_return) x =
+  `(st_ex_return)
+       // : α -> (β, α, γ) M
+       x =
      (\s. (M_success x,s))`;;
 
 (* HOL4 ml_monadBaseScript.sml:91: ML code, not ported *)

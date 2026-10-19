@@ -75,6 +75,9 @@ let alt_free_def = cake_define_list_cheat CHEAT_TAC
    `alt_free [(Letrec t loc _3 fns x1:closLang_exp)] =
          (let m = LENGTH fns in
          let (c2,l2) = alt_free [x1] in
+         // if no_overlap m l2 then
+         // ([Let t (REPLICATE m (const_0 t)) (HD c2)], Shift m l2)
+         // else
          let res = MAP (\(n,x). let (c,l) = alt_free [x] in
                               ((n,HD c),Shift (n + m) l)) fns in
          let c1 = MAP FST res in
@@ -134,6 +137,9 @@ let alt_free_sing_def = cake_define_list_try_tac (fun () ->
    `alt_free_sing (Letrec t loc _6 fns x1:closLang_exp) =
          (let m = LENGTH fns in
          let (c2,l2) = alt_free_sing x1 in
+         // if no_overlap m l2 then
+         // ([Let t (REPLICATE m (const_0 t)) (HD c2)], Shift m l2)
+         // else
          let res = alt_free_letrec m fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in

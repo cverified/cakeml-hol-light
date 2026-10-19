@@ -2,7 +2,7 @@
 (*  semanticPrimitives: ported from HOL4's
     semantics/semanticPrimitivesScript.sml
     A definition theory, with 101 definitions, 15 datatypes and no
-    theorems.  Needed by 74 files of the port.  *)
+    theorems.  Needed by 79 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -12,7 +12,10 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/wordLang.ml";;
 needs "lib/binary_ieee.ml";;
+needs "lib/bitstring.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/machine_ieee.ml";;
@@ -24,22 +27,38 @@ needs "semantics/namespace.ml";;
 
 (* Constructors and exceptions need unique identities, which we represent by stamps. *)
 let stamp_INDUCT,stamp_RECURSION = define_datatype
-  "stamp = TypeStamp (mlstring) (num) | ExnStamp (num)";;
+  "stamp = \
+   // Each type gets a unique number, and the constructor name must be unique\n\
+   // inside of the type\n\
+   TypeStamp (mlstring) (num) | ExnStamp (num)";;
 
 let sem_env_FIELDS = define_record "sem_env"
   ["v","(mlstring,mlstring,'v)namespace";
+   (* Lexical mapping of constructor idents to arity, stamp pairs *)
    "c","(mlstring,mlstring,num#stamp)namespace"];;
 
 (* Value forms *)
 let semanticPrimitives_v_INDUCT,semanticPrimitives_v_RECURSION =
   define_datatype
   "semanticPrimitives_v = semanticPrimitives_Litv (lit) | \
+   // Constructor application. Can be a tuple or a given constructor of a given type\n\
    semanticPrimitives_Conv (stamp option) (semanticPrimitives_v list) \
-   | semanticPrimitives_Closure (semanticPrimitives_v sem_env) \
-   (mlstring) (ast_exp) | semanticPrimitives_Recclosure \
-   (semanticPrimitives_v sem_env) ((mlstring#mlstring#ast_exp) list) \
-   (mlstring) | semanticPrimitives_Loc (bool) (num) | \
-   semanticPrimitives_Vectorv (semanticPrimitives_v list) | \
+   | \
+   // Function closures\n\
+   // The environment is used for the free variables in the function\n\
+   semanticPrimitives_Closure (semanticPrimitives_v sem_env) \
+   (mlstring) (ast_exp) | \
+   // Function closure for recursive functions\n\
+   // * See Closure and Letrec above\n\
+   // * The last variable name indicates which function from the mutually\n\
+   // * recursive bundle this closure value represents\n\
+   semanticPrimitives_Recclosure (semanticPrimitives_v sem_env) \
+   ((mlstring#mlstring#ast_exp) list) (mlstring) | \
+   semanticPrimitives_Loc (bool) (num) \
+   // = is allowed\n\
+   // address\n\
+   | semanticPrimitives_Vectorv (semanticPrimitives_v list) | \
+   // Environment value for Eval, and its numeric identifier\n\
    semanticPrimitives_Env (semanticPrimitives_v sem_env) (num#num)";;
 hol4_overload "Litv" "semanticPrimitives_Litv";;
 hol4_overload "Conv" "semanticPrimitives_Conv";;
@@ -130,7 +149,9 @@ let semanticPrimitives_abort_INDUCT,semanticPrimitives_abort_RECURSION =
    Rffi_error (final_event)";;
 
 let error_result_INDUCT,error_result_RECURSION = define_datatype
-  "error_result = Rraise ('a) | Rabort (semanticPrimitives_abort)";;
+  "error_result = Rraise ('a) \
+   // Should only be a value of type exn\n\
+   | Rabort (semanticPrimitives_abort)";;
 
 let semanticPrimitives_result_INDUCT,
     semanticPrimitives_result_RECURSION =
@@ -139,10 +160,15 @@ let semanticPrimitives_result_INDUCT,
 
 (* Stores *)
 let store_v_INDUCT,store_v_RECURSION = define_datatype
-  "store_v = semanticPrimitives_Refv ('a) | \
+  "store_v = \
+   // A ref cell\n\
+   semanticPrimitives_Refv ('a) | \
+   // A byte array\n\
    semanticPrimitives_W8array (word8 list) | \
-   semanticPrimitives_Varray ('a list) | semanticPrimitives_Thunk \
-   (thunk_mode) ('a)";;
+   // An array of values\n\
+   semanticPrimitives_Varray ('a list) | \
+   // Thunk\n\
+   semanticPrimitives_Thunk (thunk_mode) ('a)";;
 hol4_overload "Refv" "semanticPrimitives_Refv";;
 hol4_overload "W8array" "semanticPrimitives_W8array";;
 hol4_overload "Varray" "semanticPrimitives_Varray";;
@@ -192,8 +218,10 @@ new_type_abbrev("compiler_fun",`: (num#num)#semanticPrimitives_v#dec
 let eval_decs_state_FIELDS = define_record "eval_decs_state"
   ["compiler","(num#num)#semanticPrimitives_v#dec \
    list->(semanticPrimitives_v#word8 list#word64 list) option";
+   (* state must be encoded as v somehow *)
    "compiler_state","semanticPrimitives_v";
    "env_id_counter","num#num#num";
+   (* decs must also be encoded as v *)
    "decode_decs","semanticPrimitives_v->(dec list) option"];;
 
 (* Alternative mode for Eval including an oracle.
@@ -248,7 +276,7 @@ let do_con_check_def = cake_define
 let one_con_check_def = cake_define
   `one_con_check envc x2 =
       match x2 with
-        (ast_Con cn es:ast_exp) -> do_con_check envc cn (LENGTH es)
+        ast_Con cn es -> do_con_check envc cn (LENGTH es)
       | _11 -> T`;;
 
 let build_conv_def = cake_define
@@ -879,7 +907,8 @@ let str_cmp_def = cake_define
       | (T,ast_Geq) -> fast_ge i j`;;
 
 let do_test_def = cake_define_list
-  [`semanticPrimitives_do_test (Equal:test) ty v1 v2 =
+  [`// TODO: extend with more cases
+    semanticPrimitives_do_test (Equal:test) ty v1 v2 =
       (if semanticPrimitives_check_type ty v1 /\
         semanticPrimitives_check_type ty v2 then
          (if ty = ast_Float64T then Eq_val (fp64_equal
@@ -967,18 +996,21 @@ let do_arith_def = cake_define
 let do_conversion_def = cake_define
   `do_conversion v x2 x3 =
         match (x2,x3) with
-          ((ast_WordT ast_W8:prim_type),(ast_IntT:prim_type)) ->
+          // Word to Int conversions
+        ((ast_WordT ast_W8:prim_type),(ast_IntT:prim_type)) ->
         SOME (INR (semanticPrimitives_Litv (ast_IntLit (&(w2n
           (the_Litv_Word8 v))))))
         | ((ast_WordT ast_W64),ast_IntT) ->
         SOME (INR (semanticPrimitives_Litv (ast_IntLit (&(w2n
           (the_Litv_Word64 v))))))
+        // Int to Word conversions
         | (ast_IntT,(ast_WordT ast_W8)) ->
         SOME (INR (semanticPrimitives_Litv (ast_Word8 (i2w
           (the_Litv_IntLit v)))))
         | (ast_IntT,(ast_WordT ast_W64)) ->
         SOME (INR (semanticPrimitives_Litv (ast_Word64 (i2w
           (the_Litv_IntLit v)))))
+        // Char/Int conversions
         | (ast_CharT,ast_IntT) ->
         SOME (INR (semanticPrimitives_Litv (ast_IntLit (&(ORD
           (the_Litv_Char v))))))
@@ -988,12 +1020,14 @@ let do_conversion_def = cake_define
             semanticPrimitives_chr_exn_v) else SOME (INR
             (semanticPrimitives_Litv (ast_Char (CHR (num_of_int (abs
             i)))))))
+        // Char/Word8 conversions
         | (ast_CharT,(ast_WordT ast_W8)) ->
         SOME (INR (semanticPrimitives_Litv (ast_Word8 (char_to_word8
           (the_Litv_Char v)))))
         | ((ast_WordT ast_W8),ast_CharT) ->
         SOME (INR (semanticPrimitives_Litv (ast_Char (word8_to_char
           (the_Litv_Word8 v)))))
+        // Float64/Word64 conversions (bit reinterpretation)
         | (ast_Float64T,(ast_WordT ast_W64)) ->
         SOME (INR (semanticPrimitives_Litv (ast_Word64
           (semanticPrimitives_the_Litv_Float64 v))))

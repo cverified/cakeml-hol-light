@@ -21,9 +21,13 @@ cake_hide_consts
 
 let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
   ["limit","num";
+   (* size of heap *)
    "isRef","'a->bool";
    "gen_start","num";
-   "refs_start","num"];;
+   (* start of generation *)
+   "refs_start","num"
+   (* start of references *)
+  ];;
 hol4_field_overload "limit" "gen_gc_partial_conf_limit";;
 hol4_field_overload "limit_fupd" "gen_gc_partial_conf_limit_fupd";;
 hol4_field_overload "isRef" "gen_gc_partial_conf_isRef";;
@@ -162,8 +166,11 @@ let partial_gc_def = cake_define
              (gen_gc_partial_conf_gen_start conf)) (gc_state_r2_fupd (K
              refs) (gc_state_old_fupd (K old) (gc_state_heap_fupd (K
              heap) empty_state)))) in
+       // process roots:
        let (roots,state) = gc_move_list conf state roots in
+       // process references:
        let (refs',state) = gc_move_ref_list conf state refs in
+       // process rest:
        let state = gc_move_data conf (gc_state_r2_fupd (K [])
          (gc_state_r1_fupd (K refs') state)) in
          (roots,state)))`;;
@@ -194,17 +201,28 @@ let heap_gen_ok_def = cake_define
        (SOME (old,current,refs) = heap_segment
          (gen_gc_partial_conf_gen_start
          conf,gen_gc_partial_conf_refs_start conf) heap) /\
-       (!ptr xs l d u. MEM (DataElement xs l d) old /\ MEM
-         (gc_shared_Pointer ptr u) xs ==>
+       (
+        // old points only to itself and references
+        !ptr xs l d u. MEM (DataElement xs l d) old /\ MEM
+          (gc_shared_Pointer ptr u) xs ==>
          (ptr < gen_gc_partial_conf_gen_start conf \/
            gen_gc_partial_conf_refs_start conf <= ptr)) /\
-       (!xs l d. MEM (DataElement xs l d) old ==> ~(isRef conf d)) /\
-       (!xs l d. MEM (DataElement xs l d) current ==> ~(isRef conf
-         d)) /\
-       (!xs l d. MEM (DataElement xs l d) refs ==> isRef conf d))`;;
+       (
+        // old contains no references
+        !xs l d. MEM (DataElement xs l d) old ==> ~(isRef conf d)) /\
+       (
+        // old contains no references
+        !xs l d. MEM (DataElement xs l d) current ==> ~(isRef conf
+          d)) /\
+       (
+        // refs only contains references
+        !xs l d. MEM (DataElement xs l d) refs ==> isRef conf d))`;;
 
 let data_sort_INDUCT,data_sort_RECURSION = define_datatype
-  "data_sort = Protected ('a) | Real ('b)";;
+  "data_sort = Protected ('a) \
+   // pointer to old generations\n\
+   | Real ('b) \
+   // data or pointer to current generation";;
 
 let to_gen_heap_address_def = cake_define_list
   [`to_gen_heap_address conf (gc_shared_Data a) = gc_shared_Data

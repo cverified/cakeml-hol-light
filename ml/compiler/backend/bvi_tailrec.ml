@@ -3,7 +3,7 @@
     compiler/backend/bvi_tailrecScript.sml
     A definition theory, with 39 definitions, 2 datatypes and 35
     theorems.  Needed by bvi_tailrecProof.ml, bvl_to_bvi.ml,
-    bvl_to_bviProof.ml and word_bignum.ml.  *)
+    bvl_to_bviProof.ml, stack_remove.ml and word_bignum.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -13,8 +13,11 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
+needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "lib/comparison.ml";;
+needs "lib/simpleSexp.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;
@@ -495,8 +498,11 @@ let scan_expr_def = cake_define_list_cheat CHEAT_TAC
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(Call t d xs h:bvi_exp)] =
   [(ts,bvi_tailrec_Any,F,NONE)]`;
-   `scan_expr ts loc [(bvi_Return xs:bvi_exp)] =
-  [(ts,bvi_tailrec_Any,F,NONE)]`;
+   `// multi-value calls/returns decline the tail-rec optimisation. TODO(multiret):
+    // to optimise them, is_rec/has_rec/scan_expr/rewrite must recognise LetCall
+    // self-calls and Return-based accumulation.
+    scan_expr ts loc [(bvi_Return xs:bvi_exp)] =
+      [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [bvi_LetCall rets t d xs y] =
   [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [(Op op xs:bvi_exp)] =
@@ -504,6 +510,7 @@ let scan_expr_def = cake_define_list_cheat CHEAT_TAC
         let opt = op_type opr in
           match opr with
             bvi_tailrec_Noop ->
+              // Constants?
               (if arg_ty op = Int then
                 match get_bin_args (Op op xs) with
                   NONE ->
@@ -516,8 +523,11 @@ let scan_expr_def = cake_define_list_cheat CHEAT_TAC
                       [(ts,bvi_tailrec_Any,F,NONE)]) else if op =
                         closLang_BlockOp (closLang_Cons 0) /\ xs = []
                         then
-                [(ts,List,F,NONE)] else
+                [(
+                  // list nil
+                  ts,List,F,NONE)] else
                 [(ts,bvi_tailrec_Any,F,NONE)]) | _54 ->
+              // Things we can optimize
               (if IS_SOME (check_op ts opr loc (Op op xs)) then
                 [(ts,opt,F,SOME opr)] else if term_ok ts opt (Op op
                   xs) then
@@ -566,6 +576,7 @@ let scan_expr_sing_def = cake_define_list
         let opt = op_type opr in
           match opr with
             bvi_tailrec_Noop ->
+              // Constants?
               (if arg_ty op = Int then
                 match get_bin_args (Op op xs) with
                   NONE ->
@@ -578,8 +589,11 @@ let scan_expr_sing_def = cake_define_list
                       (ts,bvi_tailrec_Any,F,NONE)) else if op =
                         closLang_BlockOp (closLang_Cons 0) /\ xs = []
                         then
-                (ts,List,F,NONE) else
+                (
+                 // list nil
+                 ts,List,F,NONE) else
                 (ts,bvi_tailrec_Any,F,NONE)) | _74 ->
+              // Things we can optimize
               (if IS_SOME (check_op ts opr loc (Op op xs)) then
                 (ts,opt,F,SOME opr) else if term_ok ts opt (Op op
                   xs) then

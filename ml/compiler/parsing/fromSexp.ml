@@ -1400,38 +1400,37 @@ let locssexp_11 = cake_theorem "locssexp_11[simp]"
   CHEAT_TAC;;
 
 let expsexp_def = cake_define_list
-  [`expsexp (ast_Raise e:ast_exp) = (SX_CONS (SX_SYM "Raise")
-  (SX_CONS (expsexp e) (SX_SYM "nil")))`;
-   `expsexp (ast_Handle e pes:ast_exp) =
+  [`expsexp (ast_Raise e) = (SX_CONS (SX_SYM "Raise") (SX_CONS
+  (expsexp e) (SX_SYM "nil")))`;
+   `expsexp (ast_Handle e pes) =
       (SX_CONS (SX_SYM "Handle") (SX_CONS (expsexp e) (SX_CONS (
        listsexp (MAP (\(p,e). SX_CONS (patsexp p) (expsexp e))
          pes)) (SX_SYM "nil"))))`;
-   `expsexp (ast_Lit l:ast_exp) = listsexp [SX_SYM "Lit"; litsexp l]`;
-   `expsexp (ast_Con cn es:ast_exp) =
+   `expsexp (ast_Lit l) = listsexp [SX_SYM "Lit"; litsexp l]`;
+   `expsexp (ast_Con cn es) =
       listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
                 listsexp (MAP expsexp es)]`;
-   `expsexp (ast_Var id':ast_exp) = listsexp [SX_SYM "Var"; idsexp
-  id']`;
-   `expsexp (ast_Fun x e:ast_exp) = listsexp [SX_SYM "Fun"; SEXSTR
-  (explode x); expsexp e]`;
-   `expsexp (ast_App op es:ast_exp) =
+   `expsexp (ast_Var id') = listsexp [SX_SYM "Var"; idsexp id']`;
+   `expsexp (ast_Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode
+  x); expsexp e]`;
+   `expsexp (ast_App op es) =
       listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp
         es)]`;
    `expsexp (ast_Log lop e1 e2) = (SX_CONS (SX_SYM "Log") (SX_CONS
   (logsexp lop) (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_SYM
   "nil")))))`;
-   `expsexp (ast_If e1 e2 e3:ast_exp) = (SX_CONS (SX_SYM "If")
-  (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_CONS (expsexp e3)
-  (SX_SYM "nil")))))`;
-   `expsexp (ast_Mat e pes:ast_exp) =
+   `expsexp (ast_If e1 e2 e3) = (SX_CONS (SX_SYM "If") (SX_CONS
+  (expsexp e1) (SX_CONS (expsexp e2) (SX_CONS (expsexp e3) (SX_SYM
+  "nil")))))`;
+   `expsexp (ast_Mat e pes) =
       (SX_CONS (SX_SYM "Mat") (SX_CONS (expsexp e) (SX_CONS (
        listsexp (MAP (\(p,e). SX_CONS (patsexp p) (expsexp e))
          pes)) (SX_SYM "nil"))))`;
-   `expsexp (ast_Let so e1 e2:ast_exp) =
+   `expsexp (ast_Let so e1 e2) =
       (SX_CONS (SX_SYM "Let") (SX_CONS (optsexp (OPTION_MAP
         (SEXSTR o explode) so)) (SX_CONS (expsexp e1) (SX_CONS
         (expsexp e2) (SX_SYM "nil")))))`;
-   `expsexp (ast_Letrec funs e:ast_exp) =
+   `expsexp (ast_Letrec funs e) =
     (SX_CONS (SX_SYM "Letrec") (SX_CONS (
      listsexp (MAP (\(x,y,z). SX_CONS (SEXSTR (explode x))
                               (SX_CONS (SEXSTR (explode y)) (expsexp

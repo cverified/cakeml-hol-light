@@ -36,8 +36,13 @@ cake_hide_more ["str"];;
 
 let bvlSem_ref_INDUCT,bvlSem_ref_RECURSION = define_datatype
   "bvlSem_ref = bvlSem_ValueArray ('a list) | bvlSem_ByteArray (bool) \
-   (word8 list) | bvlSem_Thunk (thunk_mode) ('a) | bvlSem_MutBlock \
-   (num) (bool) ('a list) ('a) ('a list)";;
+   (word8 list) | \
+   // T = compare-by-contents, immutable\n\
+   // F = compare-by-pointer, mutable\n\
+   // in closLang all are ByteArray F,\n\
+   // ByteArray T introduced in BVL to implement ByteVector\n\
+   bvlSem_Thunk (thunk_mode) ('a) | bvlSem_MutBlock (num) (bool) ('a \
+   list) ('a) ('a list)";;
 hol4_overload "ValueArray" "bvlSem_ValueArray";;
 hol4_overload "ByteArray" "bvlSem_ByteArray";;
 hol4_overload "Thunk" "bvlSem_Thunk";;
@@ -47,9 +52,16 @@ hol4_overload "MutBlock" "bvlSem_MutBlock";;
    to move to a common ancestor *)
 
 let bvlSem_v_INDUCT,bvlSem_v_RECURSION = define_datatype
-  "bvlSem_v = bvlSem_Number (int) | bvlSem_Word64 (word64) | \
-   bvlSem_Block (num) (bvlSem_v list) | bvlSem_CodePtr (num) | \
-   bvlSem_RefPtr (bool) (num)";;
+  "bvlSem_v = bvlSem_Number (int) \
+   // integer\n\
+   | bvlSem_Word64 (word64) \
+   // 64-bit word\n\
+   | bvlSem_Block (num) (bvlSem_v list) \
+   // cons block: tag and payload\n\
+   | bvlSem_CodePtr (num) \
+   // code pointer\n\
+   | bvlSem_RefPtr (bool) (num) \
+   // pointer to ref cell, bool is T if Eq test is allows";;
 hol4_overload "Number" "bvlSem_Number";;
 hol4_overload "Word64" "bvlSem_Word64";;
 hol4_overload "Block" "bvlSem_Block";;

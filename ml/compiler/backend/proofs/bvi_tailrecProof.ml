@@ -599,7 +599,10 @@ let state_rel_code_rel = cake_theorem "state_rel_code_rel"
 let code_rel_union = cake_theorem "code_rel_union"
   (fun () ->
     `bvi_tailrecProof_code_rel x y /\ bvi_tailrecProof_code_rel t s /\
+     // (∀a. a ∉ domain x ∧ a ∈ domain s ⇒ a ∉ domain y) ∧
+     // (∀a. a ∉ domain x ∧ a ∈ domain y ⇒ a ∉ domain s)
      DISJOINT (domain s) (domain y) ==>
+      // DISJOINT (domain s DIFF domain t) (domain y DIFF domain x)
       bvi_tailrecProof_code_rel (sptree_union x t) (sptree_union
         y s)`)
   CHEAT_TAC;;

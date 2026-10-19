@@ -20,9 +20,8 @@ needs "lib/sptree.ml";;
 
 let merge_Other = cake_theorem "merge_Other[simp]"
   (fun () ->
-    `merge (clos_known_Other:val_approx) a =
-  (clos_known_Other:val_approx) /\ merge a clos_known_Other =
-  clos_known_Other`)
+    `merge clos_known_Other a = (clos_known_Other:'returned'
+  val_approx) /\ merge a clos_known_Other = clos_known_Other`)
   CHEAT_TAC;;
 
 let merge_Impossible = cake_theorem "merge_Impossible[simp]"

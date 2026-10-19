@@ -298,6 +298,7 @@ let get_intervals_ct_def = cake_define
 
 let linear_scan_state_FIELDS = define_record "linear_scan_state"
   ["active","(int#num) list";
+   (* interval end # reg *)
    "colorpool","num list";
    "phyregs","1 spt";
    "colornum","num";
@@ -648,6 +649,7 @@ let find_spill_def = cake_define
 let linear_reg_alloc_step_aux_def = cake_define
   `linear_reg_alloc_step_aux st (forbidden:1 spt) preferred reg rend
   force =
+     // TODO: this might be slow
      (let preferred_filtered = FILTER (\c. MEM c
        (linear_scan_state_colorpool st)) preferred in
      match find_color_in_list preferred_filtered forbidden with SOME
@@ -819,6 +821,7 @@ let sort_regs_def = cake_define_try_tac (fun () ->
            (\
          m. st_ex_ignore_bind
          (swap_regs l (m - 1)) (
+         // TODO: this condition is necessary for the termination argument, but useless in practice
          if m <= l \/ r < m then
            st_ex_return one else
            st_ex_ignore_bind
@@ -876,6 +879,7 @@ let sort_moves_def = cake_define_try_tac (fun () ->
          piv. st_ex_bind (partition_moves (l + 1) (FST piv) r) (\
          m. st_ex_ignore_bind
          (swap_moves l (m - 1)) (
+         // TODO: this condition is necessary for the termination argument, but useless in practice
          if m <= l \/ r < m then
            st_ex_return one else
            st_ex_ignore_bind

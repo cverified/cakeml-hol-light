@@ -2,7 +2,7 @@
 (*  mlvector: ported from HOL4's
     basis/pure/mlvectorScript.sml
     A definition theory, with 26 definitions and 29 theorems.
-    Needed by bvi_tailrecProof.ml, bvi_tmcProof.ml and export.ml.  *)
+    Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -15,6 +15,7 @@ needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 
 cake_hide ["Equal"; "Greater"; "Less"];;
 
@@ -25,7 +26,8 @@ cake_hide ["Equal"; "Greater"; "Less"];;
    value of an ML expression: sub_def *)
 
 let sub_unsafe_def = cake_define
-  `sub_unsafe (Vector l) n = EL n l`;;
+  `// same as sub_def, but translator targets Vsub_unsafe
+   sub_unsafe (Vector l) n = EL n l`;;
 
 (* HOL4 mlvectorScript.sml:20-21: a theorem that HOL4 states as the
    value of an ML expression: length_def *)

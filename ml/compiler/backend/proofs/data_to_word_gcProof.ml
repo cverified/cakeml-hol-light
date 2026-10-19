@@ -31,16 +31,19 @@ needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "pancake/panLang.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -110,7 +113,8 @@ let word_index_test = cake_theorem "word_index_test"
 
 let word_and_one_eq_0_iff = cake_theorem "word_and_one_eq_0_iff"
   (fun () ->
-    `!w. ((w && (n2w 1)) = (n2w 0)) <=> ~(FAPPLY w 0)`)
+    `// same in stack_alloc
+     !w. ((w && (n2w 1)) = (n2w 0)) <=> ~(FAPPLY w 0)`)
   CHEAT_TAC;;
 
 let word_index_0 = cake_theorem "word_index_0"
@@ -1069,17 +1073,22 @@ let word_gen_gc_move_refs_thm = cake_theorem "word_gen_gc_move_refs_thm"
         data_to_word_config_len_size
       conf + 5 <= dimindex (:'a) /\
       (word_gen_gc_move_refs conf k
-         (p + bytes_in_word *
+         (
+           // r2a
+           p + bytes_in_word *
             n2w (heap_length (gc_state_h1 s ++ gc_state_h2 s ++
               gc_state_r4 s ++ gc_state_r3 s) + LENGTH xs),
+           // r1a
            p + bytes_in_word *
             n2w (heap_length (gc_state_h1 s ++ gc_state_h2 s ++
               gc_state_r4 s ++ gc_state_r3 s ++ gc_state_r2 s) + LENGTH
               xs),
           n2w (gc_state_a s),
+           // pa
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s)),
           n2w (gc_state_a s + gc_state_n s),
+           // pb
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s) + gc_state_n s),
           (curr:'a word),m,dm) =
@@ -1129,11 +1138,15 @@ let word_gen_gc_move_data_thm = cake_theorem "word_gen_gc_move_data_thm"
         data_to_word_config_len_size
       conf + 5 <= dimindex (:'a) /\
       (word_gen_gc_move_data conf k
-         (p + bytes_in_word * n2w (heap_length (gc_state_h1 s)),
+         (
+           // h2a
+           p + bytes_in_word * n2w (heap_length (gc_state_h1 s)),
           n2w (gc_state_a s),
+           // pa
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s)),
           n2w (gc_state_a s + gc_state_n s),
+           // pb
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s) + gc_state_n s),
           (curr:'a word),m,dm) =
@@ -1187,13 +1200,18 @@ let word_gen_gc_move_loop_thm = cake_theorem "word_gen_gc_move_loop_thm"
         data_to_word_config_len_size
       conf + 5 <= dimindex (:'a) /\
       (word_gen_gc_move_loop conf k
-         (p + bytes_in_word * n2w (heap_length (gc_state_h1 s)),
+         (
+           // pax
+           p + bytes_in_word * n2w (heap_length (gc_state_h1 s)),
           n2w (gc_state_a s),
+           // pa
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s)),
           n2w (gc_state_a s + gc_state_n s),
+           // pb
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s) + gc_state_n s),
+           // pbx
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s ++ gc_state_r4 s) + gc_state_n s),
           (curr:'a word),m,dm) =
@@ -1666,8 +1684,11 @@ let word_gen_gc_partial_move_data_thm =
       conf + 2 < dimindex (:'a) /\
       (!t r. (isRef gen_conf (t,r) <=> isMutTag t)) /\
       (word_gen_gc_partial_move_data conf k
-         (p + bytes_in_word * n2w (heap_length (gc_state_h1 s)),
+         (
+           // h2a
+           p + bytes_in_word * n2w (heap_length (gc_state_h1 s)),
           n2w (gc_state_a s),
+           // pa
            p + bytes_in_word * n2w (heap_length (gc_state_h1 s ++
              gc_state_h2 s)),
           (curr:'a word),m,dm,
@@ -2179,7 +2200,9 @@ let limits_inv_def = cake_define
 let state_rel_thm = cake_define
   `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
   (t:('a,'c,'ffi)wordSem_state) v1 locs <=>
-     (wordSem_state_ffi t = dataSem_state_ffi s) /\
+     (wordSem_state_ffi
+      // I/O, clock and handler are the same, GC is fixed, code is compiled
+      t = dataSem_state_ffi s) /\
      (wordSem_state_clock t = dataSem_state_clock s) /\
      (wordSem_state_handler t = dataSem_state_handler s) /\
      (wordSem_state_gc_fun t = word_gc_fun c) /\
@@ -2192,12 +2215,16 @@ let state_rel_thm = cake_define
      good_dimindex (:'a) /\
      shift_length c < dimindex (:'a) /\
      IS_SOME (dataSem_state_tstamps s) /\
+     // the store
      EVERY (\n. n IN FDOM (wordSem_state_store t)) [Globals] /\
-     (v1 = NONE ==> sptree_lookup 0 (wordSem_state_locals t) = SOME
-       (Loc l1 l2)) /\
+     (
+      // every local is represented in word lang
+      v1 = NONE ==> sptree_lookup 0 (wordSem_state_locals t) = SOME
+        (Loc l1 l2)) /\
      (!n. IS_SOME (sptree_lookup n (dataSem_state_locals s)) ==>
           IS_SOME (sptree_lookup (adjust_var n) (wordSem_state_locals
             t))) /\
+     // the stacks contain the same names, have same shape
      EVERY2 data_to_word_gcProof_stack_rel (dataSem_state_stack s)
        (wordSem_state_stack t) /\
      EVERY2 contains_loc (wordSem_state_stack t) locs /\
@@ -2212,6 +2239,7 @@ let state_rel_thm = cake_define
        (wordSem_state_store t) HeapLength) (wordSem_state_stack_limit t)
        (data_to_word_config_len_size c) (has_fp_ops c)
        (data_to_word_config_has_fp_tern c) /\
+     // there exists some GC-compatible abstraction
      memory_rel c (wordSem_state_be t) (THE (dataSem_state_tstamps
        s)) (dataSem_state_refs s) (dataSem_state_space s)
        (wordSem_state_store t) (wordSem_state_memory t)
@@ -2684,7 +2712,8 @@ let state_rel_call_env_push = cake_theorem "state_rel_call_env_push"
 let state_rel_call_env_push_env =
   cake_theorem "state_rel_call_env_push_env"
   (fun () ->
-    `!(opt:(num#'a wordLang_prog#num#num) option).
+    `// TODO: tidy up proof
+     !(opt:(num#'a wordLang_prog#num#num) option).
        state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs
          /\
        get_vars args (state_locals s) = SOME xs /\
@@ -2829,6 +2858,8 @@ let state_rel_lookup_globals = cake_theorem "state_rel_lookup_globals"
   (fun () ->
     `state_rel c l1 l2 s t v1 locs /\ dataSem_state_global s = SOME g
   ==>
+     // ∧
+     // FLOOKUP s.refs g = SOME (ValueArray gs)
      (?x u.
      FLOOKUP (wordSem_state_store t) Globals = SOME
        (wordLang_Word (get_addr c x u)))`)

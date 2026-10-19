@@ -11,15 +11,20 @@
   This pass is to run immediately after the SSA-like renaming.
 *)
 
+needs "basis/pure/mllist.ml";;
+needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
+needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: words bool *)
 
 
@@ -149,6 +154,9 @@ let map_insert_def = cake_define_list
 
 let canonicalMoveRegs_def = cake_define
   `canonicalMoveRegs data moves =
+   // Register the sources first: a register that is both a source and a
+   // destination is then tracked and fails the keep_data check below, so
+   // no equivalence is recorded across a self-interfering parallel move.
    (let data = register_reads data (MAP SND moves) in
    if EVERY (keep_data (knowledge_to_canonical data)) (MAP FST moves)
      then
@@ -291,7 +299,8 @@ let fpToNumList_def = cake_define_list
    `fpToNumList (FPMul r1 r2 r3) = [13; r2 + 100; r3 + 100]`;
    `fpToNumList (FPDiv r1 r2 r3) = [14; r2 + 100; r3 + 100]`;
    `fpToNumList (FPFma r1 r2 r3) = [15; r1 + 100; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPMov r1 r2) = [16; r2 + 100]`;
+   `// List never matched again
+    fpToNumList (FPMov r1 r2) = [16; r2 + 100]`;
    `fpToNumList (FPMovToReg r1 r2 r3) = [17; r2 + 100; r3 + 100]`;
    `fpToNumList (FPMovFromReg r1 r2 r3) = [18; r2 + 100; r3 + 100]`;
    `fpToNumList (FPToInt r1 r2) = [19; r2 + 100]`;
@@ -466,15 +475,21 @@ let word_cseInst_def = cake_define
         let data = invalidate_regs data (arithWrites a) in
         let a' = canonicalArith data a in
         let rds = arithReads a' in
+          // A fact whose reads include the written register would not describe
+          // the post-state, so it is not stored.
           if can_mem_arith a' /\ ~(MEM r rds) then
             add_to_data (register_reads data rds) r (Arith a') (Arith
               a) else
             (data,Inst (Arith a)))
         | (data,(asm_Mem op r (Addr a ofs))) ->
         (if is_store op then
-          (knowledge_loads_mem_fupd (K balanced_map_empty) data,Inst
-            (asm_Mem op r (Addr a ofs))) else
+          (knowledge_loads_mem_fupd (K balanced_map_empty)
+           // A store writes no register, but it writes memory: all load facts
+           // are invalidated. Register-only facts survive.
+           data,Inst (asm_Mem op r (Addr a ofs))) else
           let data = invalidate_data data r in
+            // A load fact whose address is the written register (a = r) would
+            // not describe the post-state; EVEN names are never tracked.
             if EVEN r \/ EVEN a \/ a = r then (data,Inst (asm_Mem op
               r (Addr a ofs))) else
               let a' = canonicalRegs' r data a in
@@ -571,9 +586,12 @@ let word_cse_def = cake_define_list
           let new_gets_mem = FILTER (\(m,n). ~(m = x))
             (knowledge_gets_mem data) in
             match dest_Var e with NONE -> (knowledge_gets_mem_fupd
-              (K new_gets_mem) data,wordLang_Set x e) | SOME v -> (if
-              EVEN v then (knowledge_gets_mem_fupd (K new_gets_mem)
-              data,wordLang_Set x e) else
+              (K new_gets_mem) data,wordLang_Set x e) |
+              // Only ODD source registers are tracked; storing a fact about a
+              // pre-allocated (EVEN) register would later reset all knowledge on
+              // any write to it, for a fact of little value.
+              SOME v -> (if EVEN v then (knowledge_gets_mem_fupd (K
+                new_gets_mem) data,wordLang_Set x e) else
                           (knowledge_to_canonical_fupd (K (insert v
                             (lookup_any v (knowledge_to_canonical data)
                             v) (knowledge_to_canonical
@@ -596,6 +614,8 @@ let word_cse_def = cake_define_list
           (merge_data data1 data2,wordLang_If c r1 r2 p1' p2'))`;
    `word_cse data ((OpCurrHeap b r1 r2):'a wordLang_prog) =
         (let data = invalidate_data data r1 in
+          // r2 = r1 reads the register the instruction overwrites; such a fact
+          // would not describe the post-state, so it is not stored.
           if EVEN r2 \/ r2 = r1 then (data,wordLang_OpCurrHeap b r1
             r2) else
             let r2' = canonicalRegs' r1 data r2 in
@@ -603,11 +623,16 @@ let word_cse_def = cake_define_list
               add_to_data_aux (register_read data r2') r1 pL
                 (wordLang_OpCurrHeap b r1 r2))`;
    `word_cse data (wordLang_LocValue r l) =
+        // Loc l 0 is a constant determined by l, so CSE it like an immediate.
+        // Tag 48 is distinct from every other stored hash head (0, 2, 3).
         (let data = invalidate_data data r in
           add_to_data_aux data r [48; l] (wordLang_LocValue r l))`;
    `word_cse data wordLang_Skip = (data,wordLang_Skip)`;
-   `word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
-  balanced_map_empty) data,wordLang_Store e r)`;
+   `// Store cannot occur in flat code, but it writes memory, so be sound:
+    // drop the load facts, keep the register-only facts.
+    word_cse data (wordLang_Store e r) =
+      (knowledge_loads_mem_fupd (K balanced_map_empty)
+      data,wordLang_Store e r)`;
    `word_cse data (wordLang_Assign r e) = (data,(wordLang_Assign r
   e:'a wordLang_prog))`;
    `word_cse data (wordLang_Raise r) = (data,wordLang_Raise r)`;
@@ -618,23 +643,31 @@ let word_cse_def = cake_define_list
   m)`;
    `word_cse data (wordLang_Install p l dp dl m) =
   (empty_data,wordLang_Install p l dp dl m)`;
-   `word_cse data (wordLang_CodeBufferWrite r1 r2) =
-  (data,wordLang_CodeBufferWrite r1 r2)`;
+   `// Buffer writes touch only the code/data buffers, nothing we track.
+    word_cse data (wordLang_CodeBufferWrite r1 r2) =
+      (data,wordLang_CodeBufferWrite r1 r2)`;
    `word_cse data (wordLang_DataBufferWrite r1 r2) =
   (data,wordLang_DataBufferWrite r1 r2)`;
-   `word_cse data (wordLang_FFI s p1 l1 p2 l2 m) =
-  (empty_data,wordLang_FFI s p1 l1 p2 l2 m)`;
-   `word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
-         (let data = invalidate_regs data [r1; r2; r3; r4] in
-            (knowledge_loads_mem_fupd (K balanced_map_empty)
-              data,wordLang_StoreConsts r1 r2 r3 r4 payload))`;
-   `word_cse data (wordLang_ShareInst op r exp) =
-         (let data = (if is_store op then data else invalidate_data
-           data r) in
-           (data,wordLang_ShareInst op r exp))`;
-   `word_cse data (wordLang_Loop names c exit_names) =
-         (let (_101,c') = word_cse empty_data c in
-           (empty_data,wordLang_Loop names c' exit_names))`;
+   `// FFI cuts the local environment, so all knowledge is stale.
+    word_cse data (wordLang_FFI s p1 l1 p2 l2 m) =
+      (empty_data,wordLang_FFI s p1 l1 p2 l2 m)`;
+   `// StoreConsts writes (or unsets) only its four register args and memory;
+    // the memory writes invalidate the load facts.
+    word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
+      (let data = invalidate_regs data [r1; r2; r3; r4] in
+         (knowledge_loads_mem_fupd (K balanced_map_empty)
+           data,wordLang_StoreConsts r1 r2 r3 r4 payload))`;
+   `// Shared-memory op: a load writes its var; a store writes no register.
+    // Shared memory (sh_mdomain) is disjoint from the heap memory that load
+    // facts describe, so loads_mem survives both.
+    word_cse data (wordLang_ShareInst op r exp) =
+      (let data = (if is_store op then data else invalidate_data
+        data r) in
+        (data,wordLang_ShareInst op r exp))`;
+   `// Conservative: optimise the loop body from empty state.
+    word_cse data (wordLang_Loop names c exit_names) =
+      (let (_101,c') = word_cse empty_data c in
+        (empty_data,wordLang_Loop names c' exit_names))`;
    `word_cse data (wordLang_Break k) = (data,wordLang_Break k)`;
    `word_cse data (wordLang_Continue k) = (data,wordLang_Continue
   k)`];;

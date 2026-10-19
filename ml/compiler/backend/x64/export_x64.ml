@@ -252,7 +252,9 @@ let x64_export_def = cake_define
          "     movq    %rdi, %rcx";
          "     jmp     cdecl(cml_clear)"] ++
         (if ret then
-          [] else ["windows_cml_exit:";
+          [] else [
+           // don't need to treat cake_exit as a function
+           "windows_cml_exit:";
           "     movq    %rcx, %r9";
           "     movq    %rdx, %r8";
           "     movq    %rsi, %rdx";

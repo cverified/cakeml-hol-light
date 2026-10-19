@@ -35,8 +35,10 @@ let bvl_exp_INDUCT,bvl_exp_RECURSION = define_datatype
   "bvl_exp = bvl_Var (num) | bvl_If (bvl_exp) (bvl_exp) (bvl_exp) | \
    bvl_Let (bvl_exp list) (bvl_exp) | bvl_Raise (bvl_exp) | \
    bvl_Handle (bvl_exp) (bvl_exp) | bvl_Tick (bvl_exp) | bvl_Call \
-   (num) (num option) (bvl_exp list) | bvl_Force (num) (num) | bvl_Op \
-   (closLang_op) (bvl_exp list)";;
+   (num) (num option) (bvl_exp list) | bvl_Force (num) (num) \
+   // loc to call for evaluation of unevaluated thunk\n\
+   // var holding thunk\n\
+   | bvl_Op (closLang_op) (bvl_exp list)";;
 hol4_overload "Var" "bvl_Var";;
 hol4_overload "If" "bvl_If";;
 hol4_overload "Let" "bvl_Let";;

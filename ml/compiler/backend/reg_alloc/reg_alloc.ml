@@ -2,7 +2,7 @@
 (*  reg_alloc: ported from HOL4's
     compiler/backend/reg_alloc/reg_allocScript.sml
     A definition theory, with 88 definitions, 5 datatypes and 6
-    theorems.  Needed by 13 files of the port.  *)
+    theorems.  Needed by 14 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -10,6 +10,10 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "compiler/backend/dataLang.ml";;
+needs "lib/bitstring.ml";;
+needs "lib/peg.ml";;
+needs "lib/pegexec.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
@@ -63,16 +67,29 @@ let reg_alloc_tag_INDUCT,reg_alloc_tag_RECURSION = define_datatype
 *)
 let ra_state_FIELDS = define_record "ra_state"
   ["adj_ls","(num list) list";
+   (* adjacency list -- arr of lists *)
    "node_tag","reg_alloc_tag list";
+   (* tags for each node -- arr *)
    "degrees","num list";
+   (* degrees for each node -- arr *)
    "dim","num";
+   (* num vertices in the graph *)
+   (* worklists *)
    "simp_wl","num list";
+   (* simp worklist -- list, non-move related deg < k *)
    "spill_wl","num list";
+   (* spill worklist -- list, deg >= k *)
    "freeze_wl","num list";
+   (* freeze worklist -- list, move related deg < k *)
    "avail_moves_wl","(num#num#num) list";
+   (* active moves -- list, sorted by pri *)
    "unavail_moves_wl","(num#num#num) list";
+   (* inactive moves -- list *)
+   (* book keeping *)
    "coalesced","num list";
+   (* keep track of coalesce target for each node -- arr *)
    "move_related","bool list";
+   (* fast check if a node is still move related -- arr *)
    "stack","num list"];;
 hol4_field_overload "stack" "ra_state_stack";;
 hol4_field_overload "stack_fupd" "ra_state_stack_fupd";;
@@ -433,6 +450,7 @@ let dec_degree_def = cake_define
   `dec_degree n =
    st_ex_bind get_dim (\
      d.
+     // TODO: check unnecessary
      if n < d then
      st_ex_bind (adj_ls_sub n) (\
        adjs.
@@ -486,6 +504,7 @@ let is_not_coalesced_def = cake_define
 let split_degree_def = cake_define
   `split_degree d k v =
    (if v < d then
+   // TODO: unnecessary
    st_ex_bind (degrees_sub v) (\
      vd. st_ex_bind (is_not_coalesced v) (\
      b.
@@ -533,6 +552,7 @@ let unspill_def = cake_define
      swl. st_ex_bind (st_ex_PARTITION (split_degree d k) swl [] [])
        (\
      (ltk,gtk). st_ex_ignore_bind
+     // The nodes in ltk have turned into low degree nodes
      (revive_moves ltk) (st_ex_bind (st_ex_PARTITION
        (move_related_sub) ltk [] []) (\
      (ltkfreeze,ltksimp). st_ex_ignore_bind
@@ -598,10 +618,13 @@ let is_Fixed_def = cake_define
 let do_coalesce_real_def = cake_define
   `do_coalesce_real x y case1 case2 =
    st_ex_ignore_bind
+     // mark y as coalesced to x
      (update_coalesced y x) (st_ex_bind (is_Fixed x) (\
+     // increment degree of x by new vertices
      bx. st_ex_ignore_bind
      (if bx then st_ex_return one else inc_deg x (LENGTH case2))
        (st_ex_ignore_bind
+     // add corresponding edges
      (list_insert_edge x case2) (st_ex_ignore_bind
      (st_ex_FOREACH case1 dec_deg) (
      push_stack y)))))`;;
@@ -653,18 +676,23 @@ let bg_ok_def = cake_define
    st_ex_bind (adj_ls_sub x) (\
      adjx. st_ex_bind (adj_ls_sub y) (\
      adjy.
+     // see do_coalesce_real for the cases
      let (case1,case2) = PARTITION (\v. sorted_mem v adjx) adjy in
      st_ex_bind (st_ex_FILTER (considered_var k) case1 []) (\
+       // the "true" case1 and 2s
        case1. st_ex_bind (st_ex_FILTER (considered_var k) case2 [])
          (\
        case2. st_ex_bind (st_ex_MAP (deg_or_inf k) case2) (\
+       // Check the George criterion
        case2degs.
        let c2len = LENGTH (FILTER (\x. x >= k) case2degs) in
        if c2len = 0 then st_ex_return (SOME (case1,case2)) else
+       // george criterion
        let case3 = FILTER (\v. ~(sorted_mem v adjy)) adjx in
        st_ex_bind (st_ex_FILTER (considered_var k) case3 []) (\
          case3. st_ex_bind (st_ex_MAP (deg_or_inf (k + 1)) case1) (\
          case1degs. st_ex_bind (st_ex_MAP (deg_or_inf k) case3) (\
+         // k+1 is infinity here..
          case3degs. st_ex_bind (st_ex_return (LENGTH (FILTER (\x. x -
            1 >= k) case1degs))) (\
          c1len. st_ex_bind (st_ex_return (LENGTH (FILTER (\x. x >= k)
@@ -687,8 +715,10 @@ let consistency_ok_def = cake_define
   `consistency_ok x y =
    (if x = y then
      st_ex_return F else
+   // check 1
    st_ex_bind (adj_ls_sub y) (\
      adjy.
+     // check 2
      if sorted_mem x adjy then st_ex_return F else
      st_ex_bind (is_Fixed x) (\
        bx. st_ex_bind (is_Fixed y) (\
@@ -708,6 +738,7 @@ let coalesce_parent_def = cake_define
    st_ex_bind (coalesced_sub x) (\
      xt. st_ex_bind (is_Fixed xt) (\
      bx.
+     // Special case where x is coalesced to a fixed color already
      if bx then
        st_ex_return xt else
        if x <= xt then
@@ -776,6 +807,7 @@ let do_coalesce_def = cake_define
            st_ex_return F) | SOME ((x,y),(case1,case2),ms) ->
      st_ex_ignore_bind
        (set_avail_moves_wl ms) (st_ex_ignore_bind
+       // coalesce y into x
        (do_coalesce_real x y case1 case2) (st_ex_ignore_bind
        (unspill k) (st_ex_ignore_bind
        (respill k x) (
@@ -801,9 +833,12 @@ let reset_move_related_def = cake_define
   `reset_move_related ls =
    st_ex_bind get_dim (\
      d. st_ex_ignore_bind
+     // zero out move_related
      (st_ex_FOREACH (COUNT_LIST d) (\x. update_move_related x F)) (
+     // reset to correct values
      st_ex_FOREACH ls (\(_4,(x,y)).
          st_ex_bind (is_Fixed x) (\
+           // make sure fixed are kept as NOT move_related
            bx. st_ex_bind (is_Fixed y) (\
            by. st_ex_ignore_bind
            (update_move_related x (~bx)) (
@@ -933,8 +968,11 @@ let rpt_do_step_def = cake_define_list
 let remove_colours_def = cake_define
   `remove_colours x1 ks =
         match (x1,ks) with
-          ((ls:num list),[]) -> st_ex_return []
+          // No more available colours
+        ((ls:num list),[]) -> st_ex_return []
+        // Some available colour after checking
         | ([],(ks:num list)) -> st_ex_return ks
+        // Do the check for vertex x
         | ((x :: xs),ks) ->
        st_ex_bind (node_tag_sub x) (\
          cx. st_ex_bind
@@ -961,6 +999,7 @@ let assign_Atemp_tag_def = cake_define
            [] -> update_node_tag n Stemp | (x :: _7) ->
            st_ex_bind (prefs n ks) (\
              c.
+             // Apply monadic preference oracle
              match c with
                NONE ->
                update_node_tag n (Fixed x) | SOME y ->
@@ -976,7 +1015,10 @@ let assign_Atemps_def = cake_define
      ls. st_ex_bind (st_ex_return (GENLIST (\x. x) k)) (\
      ks. st_ex_bind (st_ex_return (GENLIST (\x. x) d)) (\
      cs. st_ex_ignore_bind
+     // actually, only need to do those not already in ls
+     // Assign all the ones that the ls tells us to
      (st_ex_FOREACH ls (assign_Atemp_tag ks prefs)) (
+     // actually, assign_Atemp_tag already filters for Atemps, so just pass it all the nodes
      st_ex_FOREACH cs (assign_Atemp_tag ks prefs))))))`;;
 
 (* Default makes it easier to translate, doesn't matter for our purposes what
@@ -1053,9 +1095,12 @@ let first_match_col_def = cake_define_list
 *)
 
 let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
-  "clash_tree = reg_alloc_Delta (num list) (num list) | reg_alloc_Set \
-   (1 spt) | reg_alloc_Branch ((1 spt) option) (clash_tree) \
-   (clash_tree) | reg_alloc_Seq (clash_tree) (clash_tree)";;
+  "clash_tree = reg_alloc_Delta (num list) (num list) \
+   // (Writes list, Reads list)\n\
+   | reg_alloc_Set (1 spt) \
+   // Fixed set\n\
+   | reg_alloc_Branch ((1 spt) option) (clash_tree) (clash_tree) | \
+   reg_alloc_Seq (clash_tree) (clash_tree)";;
 hol4_overload "Delta" "reg_alloc_Delta";;
 hol4_overload "Set" "reg_alloc_Set";;
 hol4_overload "Branch" "reg_alloc_Branch";;
@@ -1102,6 +1147,7 @@ let check_clash_tree_def = cake_define_list
           NONE -> NONE | SOME (t2_out,ft2_out) ->
         (match topt with
           NONE ->
+            // This check can be done in either direction
             check_partial_col f (MAP FST (toAList (difference
               t2_out t1_out))) t1_out ft1_out | SOME t -> check_col f
               t)))`;
@@ -1247,6 +1293,7 @@ let init_ra_state_def = cake_define
   `init_ra_state ct forced fs (ta,fa,n) =
    st_ex_ignore_bind
      (mk_graph (sp_default ta) ct []) (st_ex_ignore_bind
+     // Put in the usual edges
      (extend_graph (sp_default ta) forced) (
      mk_tags n fs (sp_default fa)))`;;
 
@@ -1260,9 +1307,13 @@ let init_alloc1_heu_def = cake_define
   `init_alloc1_heu moves d k =
    st_ex_bind (st_ex_return (COUNT_LIST d)) (\
      ds. st_ex_bind (st_ex_FILTER is_Atemp ds []) (\
+     // make sure move_related is correct
      allocs. st_ex_ignore_bind
+     // only need to allocate Atemps
      (st_ex_FOREACH ds
-       (\i.
+       (
+        // Set the degree for each node
+        \i.
        st_ex_bind (adj_ls_sub i) (\
          adjls. st_ex_bind (st_ex_FILTER (\v. considered_var k v)
            adjls []) (\
@@ -1304,6 +1355,7 @@ let extract_color_def = cake_define
          t.
          st_ex_return (k,extract_tag t))) taa) (\
      itags.
+     // can make the sptree directly
      st_ex_return (fromAList itags)))`;;
 
 let pri_move_insert_def = cake_define
@@ -1366,11 +1418,13 @@ let full_consistency_ok_def = cake_define
   `full_consistency_ok k x y =
    (if x = y then
      st_ex_return F else
+   // check 1
    st_ex_bind get_dim (\
      d.
      if x >= d \/ y >= d then st_ex_return F else
      st_ex_bind (adj_ls_sub y) (\
        adjy.
+       // check 2
        if sorted_mem x adjy then st_ex_return F else
        st_ex_bind (is_Fixed_k k x) (\
          bx. st_ex_bind (is_Fixed_k k y) (\

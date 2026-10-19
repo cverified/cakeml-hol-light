@@ -12,6 +12,9 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/data_space.ml";;
+needs "compiler/backend/labLang.ml";;
+needs "compiler/inference/infer.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "misc/misc.ml";;
@@ -153,8 +156,11 @@ let next_sym_alt_def = cake_define_list_try (fun () ->
   [`next_sym_alt "" _1 = NONE`;
    `next_sym_alt (c :: str) loc =
          (if c = (CHR 10) then
+            // skip new line
             next_sym_alt str (next_line loc) else if isSpace c then
+           // skip blank space
            next_sym_alt str (next_loc 1 loc) else if isDigit c then
+           // read number
            if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
              if TL str = "" then SOME (ErrorS,Locs loc loc,"") else
                if isDigit (HD (TL str)) then
@@ -180,14 +186,17 @@ let next_sym_alt_def = cake_define_list_try (fun () ->
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else if c = (CHR 126) /\ ~(str = "") /\
                          isDigit (HD str) then
+           // read negative number
            let (n,rest) = read_while isDigit str [] in
              SOME (NumberS ((&0) - &(num_from_dec_string_alt n)),
                    Locs loc (next_loc (LENGTH n + 1) loc),
                    rest) else if c = (CHR 39) then
+           // read type variable
            let (n,rest) = read_while isAlphaNumPrime str [c] in
              SOME (OtherS n,
                    Locs loc (next_loc (LENGTH n - 1) loc),
                    rest) else if c = (CHR 34) then
+           // read string
            let (t,loc',rest) = lexer_fun_read_string str ""
              (next_loc 1 loc) in
              SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
@@ -270,7 +279,9 @@ let lex_aux_def = cake_define_try_tac (fun () ->
   CHEAT_TAC
   `lexer_impl_lex_aux acc (d:num) input loc =
      (match next_token input loc with
+       // case: end of input
        NONE -> NONE |
+       // case: token found
        SOME (token,Locs loc' loc'',rest) ->
          (let new_acc = ((token,Locs loc' loc'') :: acc) in
          let newloc = next_loc 1 loc'' in
@@ -318,7 +329,9 @@ let lex_aux_alt_def = cake_define_try_tac (fun () ->
   CHEAT_TAC
   `lex_aux_alt acc (d:num) input l =
      (match next_sym input l with
+       // case: end of input
        NONE -> NONE |
+       // case: token found
        SOME (token,Locs loc' loc'',rest) ->
          (let new_acc = ((token,Locs loc' loc'') :: acc) in
          let newloc = next_loc 1 loc'' in

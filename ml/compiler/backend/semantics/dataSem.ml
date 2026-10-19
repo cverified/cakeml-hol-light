@@ -12,6 +12,7 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_simp.ml";;
@@ -22,6 +23,7 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/compiler.ml";;
+needs "lib/bitstring.ml";;
 needs "lib/comparison.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
@@ -35,13 +37,21 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* TODO: immoral, shouldn't
    depend on *) *)
 
 let dataSem_v_INDUCT,dataSem_v_RECURSION = define_datatype
-  "dataSem_v = dataSem_Number (int) | dataSem_Word64 (word64) | \
-   dataSem_Block (num) (num) (dataSem_v list) | dataSem_CodePtr (num) \
-   | dataSem_RefPtr (bool) (num)";;
+  "dataSem_v = dataSem_Number (int) \
+   // integer\n\
+   | dataSem_Word64 (word64) \
+   // 64-bit word\n\
+   | dataSem_Block (num) (num) (dataSem_v list) \
+   // cons block: timestamp, tag and payload\n\
+   | dataSem_CodePtr (num) \
+   // code pointer\n\
+   | dataSem_RefPtr (bool) (num) \
+   // pointer to ref cell";;
 hol4_overload "Number" "dataSem_Number";;
 hol4_overload "Word64" "dataSem_Word64";;
 hol4_overload "Block" "dataSem_Block";;
@@ -63,18 +73,28 @@ hol4_overload "Unit" "dataSem_Unit";;
 
   *)
 let dataSem_stack_INDUCT,dataSem_stack_RECURSION = define_datatype
-  "dataSem_stack = dataSem_Env (num option) (dataSem_v spt) | \
+  "dataSem_stack = \
+   // Env  ss           env\n\
+   dataSem_Env (num option) (dataSem_v spt) | \
+   // Exc  ss           env        handler\n\
    dataSem_Exc (num option) (dataSem_v spt) (num)";;
 hol4_overload "Env" "dataSem_Env";;
 hol4_overload "Exc" "dataSem_Exc";;
 
 let limits_FIELDS = define_record "limits"
   ["heap_limit","num";
+   (* number of words in the heap *)
    "length_limit","num";
+   (* length field in a Block *)
    "stack_limit","num";
+   (* max stack size *)
    "arch_64_bit","bool";
+   (* the arch is either 64-bit or 32-bit *)
    "has_fp_ops","bool";
-   "has_fp_tops","bool"];;
+   (* the arch supports float ops *)
+   "has_fp_tops","bool"
+   (* the arch supports float ops *)
+  ];;
 hol4_field_overload "stack_limit" "limits_stack_limit";;
 hol4_field_overload "stack_limit_fupd" "limits_stack_limit_fupd";;
 hol4_field_overload "has_fp_ops" "limits_has_fp_ops";;
@@ -83,9 +103,12 @@ hol4_field_overload "has_fp_ops_fupd" "limits_has_fp_ops_fupd";;
 let dataSem_state_FIELDS = define_record "dataSem_state"
   ["locals","dataSem_v spt";
    "locals_size","num option";
+   (* size of locals when pushed to stack, NONE if unbounded *)
    "stack","dataSem_stack list";
    "stack_max","num option";
+   (* largest stack seen so far, NONE if unbounded *)
    "stack_frame_sizes","num spt";
+   (* stack frame sizes, unbounded if unmapped *)
    "global","num option";
    "handler","num";
    "refs","(dataSem_v bvlSem_ref) spt";
@@ -428,6 +451,7 @@ let stack_consumed_def = cake_define
        lookup StringCmpLoop_location sfs
         | ((closLang_BlockOp (closLang_ConsExtend _43)),vs) ->
        lookup MemCopy_location sfs
+        // MemCopy looks not always necessary. Could be refined for more precise bounds.
         | ((closLang_BlockOp (closLang_FromList _44)),vs) ->
        OPTION_MAP2 MAX
         (lookup FromList_location sfs)
@@ -481,13 +505,16 @@ let stack_consumed_def = cake_define
          OPTION_MAP2 MAX (lookup Add_location sfs)
            (max_depth sfs AnyArith_call_tree))
         | ((closLang_IntOp closLang_LessEq),vs) ->
+       // This is a conservative estimate --- no calls happen for smallnums
        OPTION_MAP2 MAX
         (lookup Compare_location sfs)
         (lookup Compare1_location sfs)
         | ((closLang_IntOp closLang_Less),vs) ->
+       // This is a conservative estimate --- no calls happen for smallnums
        OPTION_MAP2 MAX
         (lookup Compare_location sfs)
         (lookup Compare1_location sfs)
+        // TODO: add more clauses as the need arises
         | (p,vs) ->
         (if allowed_op p (LENGTH vs) then SOME 0 else NONE)`;;
 
@@ -583,12 +610,13 @@ let do_eq_def = cake_define_list_cheat CHEAT_TAC
               Eq_type_error)`;
    `dataSem_do_eq _86 (RefPtr _87 _88:dataSem_v) _89 = Eq_type_error`;
    `dataSem_do_eq _92 _93 (RefPtr _94 _95:dataSem_v) = Eq_type_error`;
-   `dataSem_do_eq refs (Block _98 t1 l1:dataSem_v) (Block _99 t2
-  l2:dataSem_v) =
-       (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
-         isClos t2 l2 then Eq_val T else Eq_type_error else if (t1 =
-         t2) /\ (LENGTH l1 = LENGTH l2) then dataSem_do_eq_list refs
-         l1 l2 else Eq_val F)`;
+   `// TODO: How time-stamps impact equality between blocks?
+    dataSem_do_eq refs (Block _98 t1 l1:dataSem_v) (Block _99 t2
+      l2:dataSem_v) =
+    (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
+      isClos t2 l2 then Eq_val T else Eq_type_error else if (t1 = t2)
+      /\ (LENGTH l1 = LENGTH l2) then dataSem_do_eq_list refs l1 l2
+      else Eq_val F)`;
    `dataSem_do_eq_list _100 [] [] = Eq_val T`;
    `dataSem_do_eq_list refs (v1 :: vs1) (v2 :: vs2) =
        (match dataSem_do_eq refs v1 v2 with Eq_val T ->
@@ -963,7 +991,9 @@ hol4_overload "finalise_cons" "dataSem_finalise_cons";;
 let do_app_aux_def = cake_define
   `dataSem_do_app_aux op (vs:dataSem_v list) (s:('c,'ffi)dataSem_state)
   =
-     (match (op,vs) with (closLang_Label l,xs) ->
+     (match (op,vs) with (
+        // bvi part
+        closLang_Label l,xs) ->
          (match xs with [] -> (if l IN domain (dataSem_state_code s)
            then
                     Rval (CodePtr l,s) else ((Rerr (Rabort
@@ -1074,8 +1104,9 @@ let do_app_aux_def = cake_define
                      Rtype_error) | (closLang_MemOp
                      closLang_ConcatByteVec,_155) -> Rerr (Rabort
                      Rtype_error) | (closLang_MemOp (closLang_CopyByte
-                     T),_156) -> Rerr (Rabort Rtype_error) |
-                     (closLang_BlockOp (closLang_Build parts'),[]) ->
+                     T),_156) -> Rerr (Rabort Rtype_error) | (
+        // bvl part
+        closLang_BlockOp (closLang_Build parts'),[]) ->
          (match do_build_const parts' (dataSem_state_refs s)
            (dataSem_state_tstamps s) with (v,s1,ts1) -> Rval
            (v,dataSem_state_tstamps_fupd (K ts1)
@@ -1240,15 +1271,17 @@ let do_app_aux_def = cake_define
            (dataSem_state_refs s)) with (SOME (ByteArray _189 ws),SOME
            (ByteArray fl ds)) ->
             (match copy_array (ws,srcoff) len (SOME (ds,dstoff)) with
-              SOME ds -> Rval (Unit,dataSem_state_refs_fupd (K (insert
-              dst (ByteArray fl ds) (dataSem_state_refs s))) s) | NONE
-              -> ((Rerr (Rabort
-              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
-              ,dataSem_v)semanticPrimitives_result)) | _190 -> ((Rerr
-              (Rabort
-              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
-              ,dataSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-              (closLang_TagEq n),[Block _191 tag xs]) ->
+               // no time-stamp
+               SOME ds -> Rval (Unit,dataSem_state_refs_fupd (K
+                 (insert dst (ByteArray fl ds) (dataSem_state_refs s)))
+                 s) | NONE -> ((Rerr (Rabort
+                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
+                 ,dataSem_v)semanticPrimitives_result)) | _190 -> ((Rerr
+                 (Rabort
+                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
+                 ,dataSem_v)semanticPrimitives_result)) |
+                 (closLang_BlockOp (closLang_TagEq n),[Block _191 tag
+                 xs]) ->
          Rval (Boolv (tag = n),s) | (closLang_BlockOp (closLang_LenEq
            l),[Block _192 tag xs]) ->
          Rval (Boolv (LENGTH xs = l),s) | (closLang_BlockOp
@@ -1693,8 +1726,10 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
              (res,s1))`;
    `dataSem_evaluate ((If n c1 c2:dataLang_prog),s) =
          (match get_var n (dataSem_state_locals s) with NONE ->
-           (SOME (Rerr (Rabort Rtype_error)),s) | SOME x -> (if isBool T
-           x then dataSem_evaluate (c1,s) else
+           (SOME (Rerr (Rabort Rtype_error)),s) |
+           // no time stamp
+           SOME x -> (if isBool T x then dataSem_evaluate (c1,s)
+             else
                      if isBool F x then dataSem_evaluate (c2,s) else
                        (SOME (Rerr (Rabort Rtype_error)),s)))`;
    `dataSem_evaluate ((Force ret loc src:dataLang_prog),s) =
@@ -1754,6 +1789,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
              (dataSem_state_stack_frame_sizes s) with NONE -> (SOME
              (Rerr (Rabort Rtype_error)),s) | SOME (args1,prog,ss) ->
               (match ret with NONE ->
+                 // tail call
                  (if handler = NONE then
                    if state_clock s = 0 then (SOME (Rerr (Rabort
                      Rtimeout_error)),
@@ -1763,6 +1799,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                        (Rerr (Rabort Rtype_error)),s) | (SOME res,s) ->
                        (SOME res,s)) else (SOME (Rerr (Rabort
                        Rtype_error)),s)) | SOME (ns,names) ->
+                 // returning call, returns into var n
                  (if ~(ALL_DISTINCT ns) then (SOME (Rerr (Rabort
                    Rtype_error)),s) else
                  (match dataSem_cut_env names (dataSem_state_locals
@@ -1784,7 +1821,9 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                                 s1)) else
                               (SOME (Rerr (Rabort Rtype_error)),s2))
                                 | (SOME (Rerr (Rraise x)),s2) ->
-                              (match handler with NONE -> (SOME
+                              (
+                              // if handler is present, then handle exc
+                              match handler with NONE -> (SOME
                                 (Rerr (Rraise x)),s2) | SOME (n,h)
                                 -> dataSem_evaluate
                                 (h,dataSem_set_var n x s2)) |

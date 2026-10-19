@@ -31,10 +31,18 @@ cake_hide ["id"; "pmatch"];;
 (* Most ops are inherited from ast$op via the Src wrapper.
  * GlobalVar ops, TagLenEq, LenEq, El, and Id are flatLang-specific. *)
 let flatLang_op_INDUCT,flatLang_op_RECURSION = define_datatype
-  "flatLang_op = flatLang_Src (ast_op) | flatLang_GlobalVarAlloc \
-   (num) | flatLang_GlobalVarInit (num) | flatLang_GlobalVarLookup \
-   (num) | flatLang_TagLenEq (num) (num) | flatLang_LenEq (num) | \
-   flatLang_El (num) | flatLang_Id";;
+  "flatLang_op = flatLang_Src (ast_op) | \
+   // Allocate the given number of new global variables\n\
+   flatLang_GlobalVarAlloc (num) | \
+   // Initialise given global variable\n\
+   flatLang_GlobalVarInit (num) | \
+   // Get the value of the given global variable\n\
+   flatLang_GlobalVarLookup (num) | \
+   // for pattern match compilation\n\
+   flatLang_TagLenEq (num) (num) | flatLang_LenEq (num) | flatLang_El \
+   (num) | \
+   // No-op step for a single value\n\
+   flatLang_Id";;
 hol4_overload "Src" "flatLang_Src";;
 hol4_overload "GlobalVarAlloc" "flatLang_GlobalVarAlloc";;
 hol4_overload "GlobalVarInit" "flatLang_GlobalVarInit";;

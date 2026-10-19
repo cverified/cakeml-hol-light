@@ -5,6 +5,9 @@ lib/comparison.ml
 lib/indexedLists.ml
 lib/sorting.ml
 lib/mergesort.ml
+lib/errorMonad.ml
+lib/grammar.ml
+lib/peg.ml
 lib/balanced_map.ml
 lib/regexp_compiler.ml
 lib/sptree.ml
@@ -18,11 +21,8 @@ lib/lprefix_lub.ml
 lib/set_sep.ml
 lib/tailrec.ml
 lib/state_transformer.ml
-lib/errorMonad.ml
 lib/binary_ieee.ml
 lib/machine_ieee.ml
-lib/grammar.ml
-lib/peg.ml
 lib/pegexec.ml
 lib/NTproperties.ml
 lib/simpleSexp.ml

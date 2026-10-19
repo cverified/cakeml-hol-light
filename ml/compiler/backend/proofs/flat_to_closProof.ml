@@ -21,6 +21,7 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -31,7 +32,8 @@ needs "semantics/semanticPrimitives.ml";;
 
 let LIST_REL_EL = cake_theorem "LIST_REL_EL"
   (fun () ->
-    `!xs ys r.
+    `// TODO: move
+     !xs ys r.
        LIST_REL r xs ys <=>
        (LENGTH xs = LENGTH ys) /\
        (!n. n < LENGTH ys ==> r (EL n xs) (EL n ys))`)
@@ -120,6 +122,7 @@ let state_rel_def = cake_define
      s = closSem_state_clock t /\
      store_rel (flatSem_state_refs s) (closSem_state_refs t) /\
        ~(LENGTH (closSem_state_globals t) = 0) /\
+     // HD t.globals = SOME (Closure NONE [] [] 1 clos_interpreter) ∧
      LIST_REL (OPTREL flat_to_closProof_v_rel) (flatSem_state_globals
        s) (TL (closSem_state_globals t)) /\
      install_config_rel' (flatSem_state_eval_config s)

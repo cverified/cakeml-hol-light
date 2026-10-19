@@ -27,6 +27,7 @@ needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -170,6 +171,7 @@ let AllocGlobal_code_def = cake_define
 
 let CopyGlobals_code_def = cake_define
   `CopyGlobals_code = ((3:num),
+     // ptr to new array, ptr to old array, index to copy
      Let [Op (closLang_MemOp closLang_Update) [Op (closLang_MemOp
        closLang_El) [Var 2; Var 1]; Var 2; Var 0]]
        (If (Op (closLang_BlockOp closLang_Equal) [Op (closLang_IntOp
@@ -195,6 +197,7 @@ let InitGlobals_code_def = cake_define
 
 let ListLength_code_def = cake_define
   `ListLength_code = (2,
+     // ptr to array, accumulated length
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
        (Var 1) (Call 0 (SOME ListLength_location)
                  [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
@@ -205,6 +208,7 @@ let ListLength_code_def = cake_define
 
 let FromListByte_code_def = cake_define
   `FromListByte_code = (3,
+     // list, current index, byte array
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
        (Var 2)
        (Let [Op (closLang_MemOp closLang_UpdateByte) [Op
@@ -219,6 +223,7 @@ let FromListByte_code_def = cake_define
 
 let ToListByte_code_def = cake_define
   `ToListByte_code = (3,
+     // list, current index, byte array
      If (Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
        (&0)))) [Var 1]) (Var 0)
        (Let [Op (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
@@ -231,6 +236,7 @@ let ToListByte_code_def = cake_define
 
 let SumListLength_code_def = cake_define
   `SumListLength_code = (2,
+     // ptr to list, accumulated length
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
        (Var 1)
        (Call 0 (SOME SumListLength_location)
@@ -244,6 +250,7 @@ let SumListLength_code_def = cake_define
 
 let ConcatByte_code_def = cake_define
   `ConcatByte_code = (3,
+     // list, current index, destination
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
        (Var 2)
        (Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
@@ -333,6 +340,7 @@ let compile_op_def = cake_define
                    [Var 0; Op (closLang_IntOp (closLang_Const (&0)))
                      []] NONE]] NONE) | closLang_MemOp
                      (closLang_CopyByte T) ->
+       // TODO: this should eventually be implemented in data_to_word instead for efficiency
        Let (if LENGTH c1 < 3 then (c1 ++ REPLICATE 3 (Op
          (closLang_IntOp (closLang_Const (&0))) [])) else c1)
          (Let [Op (closLang_MemOp (closLang_RefByte T)) [Op
@@ -346,13 +354,13 @@ let compile_op_def = cake_define
                 (closLang_BlockOp (closLang_Build ps)) c1 |
                 closLang_BlockOp (closLang_EqualConst p) -> Op
                 (closLang_BlockOp (closLang_EqualConst p)) c1 |
-                closLang_MemOp (closLang_MutCons tag i) -> Let c1 (Op
-                (closLang_IntOp (closLang_Const (&0))) []) |
-                closLang_MemOp closLang_UpdateCons -> Let c1 (Op
-                (closLang_IntOp (closLang_Const (&0))) []) |
-                closLang_MemOp closLang_FinaliseCons -> Let c1 (Op
-                (closLang_IntOp (closLang_Const (&0))) []) | _13 ->
-                Op op c1)`;;
+       // reserved for bvi_tmc; bvlSem$do_app is Error on these, so compile them out
+       closLang_MemOp (closLang_MutCons tag i) -> Let c1 (Op
+         (closLang_IntOp (closLang_Const (&0))) []) | closLang_MemOp
+         closLang_UpdateCons -> Let c1 (Op (closLang_IntOp
+         (closLang_Const (&0))) []) | closLang_MemOp
+         closLang_FinaliseCons -> Let c1 (Op (closLang_IntOp
+         (closLang_Const (&0))) []) | _13 -> Op op c1)`;;
 hol4_overload "compile_op" "bvl_to_bvi_compile_op";;
 
 (* HOL4 bvl_to_bviScript.sml:313-321: a theorem that HOL4 states as
@@ -389,6 +397,7 @@ let compile_exps_def = cake_define_try_tac (fun () ->
         ([If (HD c1) (HD c2) (HD c3)],aux1 ++ aux2 ++ aux3,n3))) /\
    (bvl_to_bvi_compile_exps n [Let xs x2] =
       (if NULL xs then
+        // i.e. a marker
         let (args,x0) = destLet x2 in
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
@@ -448,6 +457,7 @@ let compile_exps_sing_def = cake_define_try_tac (fun () ->
         (If c1 c2 c3,aux1 ++ aux2 ++ aux3,n3))) /\
    (compile_exps_sing n (Let xs x2) =
       (if NULL xs then
+        // i.e. a marker
         let (args,x0) = destLet x2 in
         let (c1,aux1,n1) = compile_exps_list n args in
         let (c2,aux2,n2) = compile_exps_sing n1 x0 in
@@ -543,7 +553,8 @@ let compile_list_def = cake_define_list
 hol4_overload "compile_list" "bvl_to_bvi_compile_list";;
 
 let compile_inc_def = cake_define
-  `bvl_to_bvi_compile_inc n prog =
+  `// incremental version used by Install
+   bvl_to_bvi_compile_inc n prog =
      (let (p1,n1) = bvl_to_bvi_compile_list n prog in
        (n1,append p1))`;;
 hol4_overload "compile_inc" "bvl_to_bvi_compile_inc";;
@@ -561,10 +572,15 @@ hol4_overload "compile_prog" "bvl_to_bvi_compile_prog";;
 
 let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
   ["inline_size_limit","num";
+   (* zero disables inlining *)
    "exp_cut","num";
+   (* huge number effectively disables exp splitting *)
    "split_main_at_seq","bool";
+   (* split main expression at Seqs *)
    "next_name1","num";
+   (* there should be as many of *)
    "next_name2","num";
+   (* these as bvl_to_bvi_namespaces-1 *)
    "next_name3","num";
    "do_tailrec","bool";
    "do_tmc","bool";

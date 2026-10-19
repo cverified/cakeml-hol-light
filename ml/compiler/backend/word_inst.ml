@@ -11,10 +11,12 @@
   Maximal Munch strategy.
 *)
 
+needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;
@@ -46,6 +48,7 @@ let rm_const_def = cake_define
   `rm_const x1 =
         match x1 with
           wordLang_Const w -> w
+        // Make it total
         | _4 -> (n2w 0)`;;
 
 let convert_sub_def = cake_define
@@ -113,7 +116,9 @@ let pull_exp_def = cake_define_wf
         | (wordLang_Op op []) -> op_consts op
         | (wordLang_Op op [x]) -> pull_exp x
         | (wordLang_Op op ls) ->
+       // First, pull all the inner expressions
        (let new_ls = MAP pull_exp ls in
+       // Then pull at the topmost
        let pull_ls = pull_ops op new_ls [] in
          optimize_consts op pull_ls)
         | (Load exp) -> Load (pull_exp exp)
@@ -222,6 +227,7 @@ let inst_select_exp_def = cake_define_wf
        wordLang_Move 0 [tar,v]
         | (c,tar,temp,(wordLang_Lookup store_name)) ->
        Get tar store_name
+        // All ops are binary branching
         | (c,tar,temp,(wordLang_Op op [e1; e2])) ->
        (if is_Lookup_CurrHeap e2 then
          (let p1 = inst_select_exp c temp temp e1 in
@@ -231,11 +237,14 @@ let inst_select_exp_def = cake_define_wf
            Seq p2 (OpCurrHeap op tar temp)) else
        let p1 = inst_select_exp c temp temp e1 in
        match e2 with Const w ->
+         // t = r op const
          (if asm_config_valid_imm c (INL op) w then
            Seq p1 (Inst (Arith (asm_Binop op tar temp (Imm w)))) else
-             if op = Add /\ asm_config_valid_imm c (INL Sub) (--w) then
+          // t = r + const --> t = r - const
+          if op = Add /\ asm_config_valid_imm c (INL Sub) (--w) then
            Seq p1 (Inst (Arith (asm_Binop asm_Sub tar temp (Imm
              (--w))))) else
+           // no immediates
            let p2 = Inst (asm_Const (temp + 1) w) in
            Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
              (temp + 1))))))) | _12 ->
@@ -256,6 +265,7 @@ let inst_select_exp_def = cake_define_wf
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
          Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg (temp
            + 1))))))))
+        // Make it total
         | (_14,_15,_16,_17) -> Skip`;;
 
 let inst_select_exp_pmatch = cake_theorem "inst_select_exp_pmatch"
@@ -276,7 +286,9 @@ let inst_select_exp_pmatch = cake_theorem "inst_select_exp_pmatch"
          Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
            0)))))) | Const w -> Inst (asm_Const tar w) | Var v ->
        wordLang_Move 0 [tar,v] | wordLang_Lookup store_name ->
-       Get tar store_name | wordLang_Op op [e1; e2] ->
+       Get tar store_name |
+       // All ops are binary branching
+       wordLang_Op op [e1; e2] ->
        (if is_Lookup_CurrHeap e2 then
          (let p1 = inst_select_exp c temp temp e1 in
            Seq p1 (OpCurrHeap op tar temp)) else if
@@ -285,12 +297,16 @@ let inst_select_exp_pmatch = cake_theorem "inst_select_exp_pmatch"
            Seq p2 (OpCurrHeap op tar temp)) else
         match e2 with
          Const w ->
+         // t = r op const
          (if asm_config_valid_imm c (INL op) w then
            Seq (inst_select_exp c temp temp e1) (Inst (Arith
-             (asm_Binop op tar temp (Imm w)))) else if op = Add /\
-             asm_config_valid_imm c (INL Sub) (--w) then
+             (asm_Binop op tar temp (Imm w)))) else
+          // t = r + const --> t = r - const
+          if op = Add /\ asm_config_valid_imm c (INL Sub) (--w)
+            then
            Seq (inst_select_exp c temp temp e1) (Inst (Arith
              (asm_Binop asm_Sub tar temp (Imm (--w))))) else
+           // no immediates
            let p2 = Inst (asm_Const (temp + 1) w) in
            Seq (inst_select_exp c temp temp e1) (Seq p2 (Inst
              (Arith (asm_Binop op tar temp (Reg (temp + 1))))))) | _18
@@ -311,7 +327,9 @@ let inst_select_exp_pmatch = cake_theorem "inst_select_exp_pmatch"
          (let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
          Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg
-           (temp + 1)))))))) | _20 -> Skip)`)
+           (temp + 1)))))))) |
+       // Make it total
+       _20 -> Skip)`)
   CHEAT_TAC;;
 
 (*

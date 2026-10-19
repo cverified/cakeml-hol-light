@@ -160,8 +160,10 @@ let unique_set_globals_subexps =
           /\
      (unique_set_globals [closLang_Op t opn xs] co ==>
         unique_set_globals xs co) /\
-     (unique_set_globals [closLang_Fn src_name loc_opt vsopt
-       num_args x1] co ==>
+     (
+      // /\ !n. BAG_ALL_DISTINCT (op_gbag opn ⊎ (elist_globals (first_n_exps co n)))
+      unique_set_globals [closLang_Fn src_name loc_opt vsopt
+        num_args x1] co ==>
         unique_set_globals [x1] co) /\
      (unique_set_globals [Letrec src_names loc_opt vsopt fns x1] co
        ==>
@@ -1058,6 +1060,7 @@ let known_correct_approx = cake_theorem "known_correct_approx"
   spt#'c,'ffi)closSem_state) res s.
      known c xs aenv g0 = (eas,g) /\
      closSem_evaluate (xs,env ++ extra,s0) = (res,s) /\
+     // fv_max (LENGTH env) xs /\
      unique_set_globals xs (closSem_state_compile_oracle s0) /\
      LIST_REL val_approx_val aenv env /\
      state_globals_approx s0 g0 /\
@@ -1874,8 +1877,7 @@ let val_approx_every_Fn_SOME_def = cake_define_wf
   `MEASURE val_approx_size`
   `val_approx_every_Fn_SOME x1 =
         match x1 with
-          (clos_known_Tuple _6 vs:val_approx) -> EVERY
-            val_approx_every_Fn_SOME vs
+          clos_known_Tuple _6 vs -> EVERY val_approx_every_Fn_SOME vs
         | (clos_known_Clos _7 _8 b _9) -> every_Fn_SOME [b]
         | _10 -> T`;;
 
@@ -1933,7 +1935,7 @@ let val_approx_every_Fn_vs_NONE_def = cake_define_wf
   `MEASURE val_approx_size`
   `val_approx_every_Fn_vs_NONE x1 =
         match x1 with
-          (clos_known_Tuple _12 vs:val_approx) -> EVERY
+          clos_known_Tuple _12 vs -> EVERY
             val_approx_every_Fn_vs_NONE vs
         | (clos_known_Clos _13 _14 b _15) -> every_Fn_vs_NONE [b]
         | _16 -> T`;;

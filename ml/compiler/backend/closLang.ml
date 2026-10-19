@@ -2,7 +2,7 @@
 (*  closLang: ported from HOL4's
     compiler/backend/closLangScript.sml
     A definition theory, with 4 definitions, 9 datatypes and 1
-    theorem.  Needed by 72 files of the port.  *)
+    theorem.  Needed by 76 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -31,10 +31,28 @@ hol4_overload "Str" "closLang_Str";;
 hol4_overload "W64" "closLang_W64";;
 
 let closLang_int_op_INDUCT,closLang_int_op_RECURSION = define_datatype
-  "closLang_int_op = closLang_Const (int) | closLang_Add | \
-   closLang_Sub | closLang_Mult | closLang_Div | closLang_Mod | \
-   closLang_Less | closLang_LessEq | closLang_Greater | \
-   closLang_GreaterEq | closLang_LessConstSmall (num)";;
+  "closLang_int_op = closLang_Const (int) \
+   // integer\n\
+   | closLang_Add \
+   // + over the integers\n\
+   | closLang_Sub \
+   // - over the integers\n\
+   | closLang_Mult \
+   // * over the integers\n\
+   | closLang_Div \
+   // div over the integers\n\
+   | closLang_Mod \
+   // mod over the integers\n\
+   | closLang_Less \
+   // < over the integers\n\
+   | closLang_LessEq \
+   // <= over the integers\n\
+   | closLang_Greater \
+   // > over the integers\n\
+   | closLang_GreaterEq \
+   // >= over the integers\n\
+   | closLang_LessConstSmall (num) \
+   // checks < const for small ints";;
 hol4_overload "Const" "closLang_Const";;
 hol4_overload "Add" "closLang_Add";;
 hol4_overload "Sub" "closLang_Sub";;
@@ -54,14 +72,42 @@ let closLang_word_op_INDUCT,closLang_word_op_RECURSION = define_datatype
    FP_uop (fp_uop) | FP_bop (fp_bop) | FP_top (fp_top)";;
 
 let block_op_INDUCT,block_op_RECURSION = define_datatype
-  "block_op = closLang_Cons (num) | closLang_ElemAt (num) | \
-   closLang_TagLenEq (num) (num) | closLang_LenEq (num) | \
-   closLang_TagEq (num) | closLang_LengthBlock | closLang_BoolTest \
-   (test) | closLang_BoolNot | closLang_BoundsCheckBlock | \
-   closLang_ConsExtend (num) | closLang_FromList (num) | \
-   closLang_ListAppend | closLang_Constant (const) | closLang_Equal | \
-   closLang_EqualConst (const_part) | closLang_Build (const_part \
-   list)";;
+  "block_op = closLang_Cons (num) \
+   // construct a Block with given tag\n\
+   | closLang_ElemAt (num) \
+   // same as El but for constant index\n\
+   | closLang_TagLenEq (num) (num) \
+   // check Block's tag and length\n\
+   | closLang_LenEq (num) \
+   // check Block's length\n\
+   | closLang_TagEq (num) \
+   // check Block's tag\n\
+   | closLang_LengthBlock \
+   // get length of Block\n\
+   | closLang_BoolTest (test) \
+   // tests for bools\n\
+   | closLang_BoolNot \
+   // boolean not\n\
+   | closLang_BoundsCheckBlock \
+   // check that vector index is within bounds\n\
+   | closLang_ConsExtend (num) \
+   // construct a Block with given tag. The first three\n\
+   // arguments should be a block followed by two numbers\n\
+   // indicating the first element, and how many, should be\n\
+   // copied into the end of the new block. The fourth\n\
+   // argument is the total size of the new block.\n\
+   | closLang_FromList (num) \
+   // convert list to packed Block\n\
+   | closLang_ListAppend \
+   // appends two lists\n\
+   | closLang_Constant (const) \
+   // produces a constant value\n\
+   | closLang_Equal \
+   // structural equality\n\
+   | closLang_EqualConst (const_part) \
+   // equal to integer/string/word constant\n\
+   | closLang_Build (const_part list) \
+   // implementation of Constant above";;
 hol4_overload "Cons" "closLang_Cons";;
 hol4_overload "ElemAt" "closLang_ElemAt";;
 hol4_overload "TagLenEq" "closLang_TagLenEq";;
@@ -80,9 +126,16 @@ hol4_overload "EqualConst" "closLang_EqualConst";;
 hol4_overload "Build" "closLang_Build";;
 
 let glob_op_INDUCT,glob_op_RECURSION = define_datatype
-  "glob_op = closLang_Global (num) | closLang_SetGlobal (num) | \
-   closLang_AllocGlobal | closLang_GlobalsPtr | \
-   closLang_SetGlobalsPtr";;
+  "glob_op = closLang_Global (num) \
+   // load global var with index\n\
+   | closLang_SetGlobal (num) \
+   // assign a value to a global\n\
+   | closLang_AllocGlobal \
+   // make space for a new global\n\
+   | closLang_GlobalsPtr \
+   // get pointer to globals array\n\
+   | closLang_SetGlobalsPtr \
+   // set pointer to globals array";;
 hol4_overload "Global" "closLang_Global";;
 hol4_overload "SetGlobal" "closLang_SetGlobal";;
 hol4_overload "AllocGlobal" "closLang_AllocGlobal";;
@@ -90,16 +143,49 @@ hol4_overload "GlobalsPtr" "closLang_GlobalsPtr";;
 hol4_overload "SetGlobalsPtr" "closLang_SetGlobalsPtr";;
 
 let closLang_mem_op_INDUCT,closLang_mem_op_RECURSION = define_datatype
-  "closLang_mem_op = closLang_Ref | closLang_Update | closLang_El | \
-   closLang_Length | closLang_LengthByte | closLang_RefByte (bool) | \
-   closLang_RefArray | closLang_DerefByte | closLang_UpdateByte | \
-   closLang_ConcatByteVec | closLang_CopyByte (bool) | \
-   closLang_FromListByte | closLang_ToListByte | \
-   closLang_LengthByteVec | closLang_DerefByteVec | \
-   closLang_StringCmp (bool) (opb) | closLang_XorByte | \
-   closLang_BoundsCheckArray | closLang_BoundsCheckByte (bool) | \
-   closLang_MutCons (num) (num) | closLang_UpdateCons | \
-   closLang_FinaliseCons | closLang_ConfigGC";;
+  "closLang_mem_op = closLang_Ref \
+   // makes a reference/array\n\
+   | closLang_Update \
+   // updates a reference/array\n\
+   | closLang_El \
+   // read index from block of reference/array\n\
+   | closLang_Length \
+   // get length of reference\n\
+   | closLang_LengthByte \
+   // get length of byte array\n\
+   | closLang_RefByte (bool) \
+   // makes a byte array, T = immutable/compare-by-contents\n\
+   | closLang_RefArray \
+   // makes an array by replicating a value\n\
+   | closLang_DerefByte \
+   // loads a byte from a byte array\n\
+   | closLang_UpdateByte \
+   // updates a byte array\n\
+   | closLang_ConcatByteVec \
+   // concatenate list of byte vectors\n\
+   | closLang_CopyByte (bool) \
+   // copy a slice of a byte array, T means target should be allocated\n\
+   | closLang_FromListByte \
+   // convert list of chars to ByteVector\n\
+   | closLang_ToListByte \
+   // convert ByteVector to list of chars\n\
+   | closLang_LengthByteVec \
+   // get length of ByteVector\n\
+   | closLang_DerefByteVec \
+   // load a byte from a ByteVector\n\
+   | closLang_StringCmp (bool) (opb) \
+   // string comparisons\n\
+   | closLang_XorByte \
+   // xor a btye vector into a byte array\n\
+   | closLang_BoundsCheckArray | closLang_BoundsCheckByte (bool) \
+   // T = loose (<=) bound\n\
+   | closLang_MutCons (num) (num) \
+   // allocate a cons with a mutable hole, tag, index of hole\n\
+   | closLang_UpdateCons \
+   // mutate the hole in a MutCons\n\
+   | closLang_FinaliseCons \
+   // turns a stack of MutCons into Cons\n\
+   | closLang_ConfigGC";;
 hol4_overload "Ref" "closLang_Ref";;
 hol4_overload "Update" "closLang_Update";;
 hol4_overload "El" "closLang_El";;
@@ -125,11 +211,15 @@ hol4_overload "FinaliseCons" "closLang_FinaliseCons";;
 hol4_overload "ConfigGC" "closLang_ConfigGC";;
 
 let closLang_op_INDUCT,closLang_op_RECURSION = define_datatype
-  "closLang_op = closLang_Label (num) | closLang_FFI (mlstring) | \
-   closLang_IntOp (closLang_int_op) | closLang_WordOp \
+  "closLang_op = closLang_Label (num) \
+   // constructs a CodePtr\n\
+   | closLang_FFI (mlstring) \
+   // calls the FFI\n\
+   | closLang_IntOp (closLang_int_op) | closLang_WordOp \
    (closLang_word_op) | closLang_BlockOp (block_op) | closLang_GlobOp \
-   (glob_op) | closLang_MemOp (closLang_mem_op) | closLang_Install | \
-   closLang_ThunkOp (ast_thunk_op)";;
+   (glob_op) | closLang_MemOp (closLang_mem_op) | closLang_Install \
+   // installs new code at runtime\n\
+   | closLang_ThunkOp (ast_thunk_op)";;
 hol4_overload "Label" "closLang_Label";;
 hol4_overload "FFI" "closLang_FFI";;
 hol4_overload "IntOp" "closLang_IntOp";;
@@ -146,12 +236,16 @@ let closLang_exp_INDUCT,closLang_exp_RECURSION = define_datatype
    (closLang_exp list) (closLang_exp) | closLang_Raise (tra) \
    (closLang_exp) | closLang_Handle (tra) (closLang_exp) \
    (closLang_exp) | closLang_Tick (tra) (closLang_exp) | \
-   closLang_Call (tra) (num) (num) (closLang_exp list) | closLang_App \
-   (tra) (num option) (closLang_exp) (closLang_exp list) | \
-   closLang_Fn (mlstring) (num option) ((num list) option) (num) \
-   (closLang_exp) | closLang_Letrec (mlstring list) (num option) \
-   ((num list) option) ((num#closLang_exp) list) (closLang_exp) | \
-   closLang_Op (tra) (closLang_op) (closLang_exp list)";;
+   closLang_Call (tra) (num) (num) (closLang_exp list) \
+   // ticks\n\
+   // loc\n\
+   // args\n\
+   | closLang_App (tra) (num option) (closLang_exp) (closLang_exp \
+   list) | closLang_Fn (mlstring) (num option) ((num list) option) \
+   (num) (closLang_exp) | closLang_Letrec (mlstring list) (num \
+   option) ((num list) option) ((num#closLang_exp) list) \
+   (closLang_exp) | closLang_Op (tra) (closLang_op) (closLang_exp \
+   list)";;
 hol4_overload "Var" "closLang_Var";;
 hol4_overload "If" "closLang_If";;
 hol4_overload "Let" "closLang_Let";;

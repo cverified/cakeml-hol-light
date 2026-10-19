@@ -2,7 +2,7 @@
 (*  word_bignum: ported from HOL4's
     compiler/backend/word_bignumScript.sml
     A definition theory, with 17 definitions, 2 datatypes and 2
-    theorems.  Needed by 13 files of the port.  *)
+    theorems.  Needed by 19 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -41,7 +41,9 @@ let mini_INDUCT,mini_RECURSION = define_datatype
    asm_reg_imm) | word_bignum_Mul (num) (num) (num) (num) | \
    word_bignum_Div (num) (num) (num) (num) (num) | word_bignum_Loop \
    (bool) (num list) (mini) | word_bignum_Continue | word_bignum_Rec \
-   (num list) (num list) | word_bignum_LoopBody (mini)";;
+   (num list) (num list) | \
+   // the following is only used by the semantics\n\
+   word_bignum_LoopBody (mini)";;
 hol4_overload "Skip" "word_bignum_Skip";;
 hol4_overload "Assign" "word_bignum_Assign";;
 hol4_overload "Delete" "word_bignum_Delete";;

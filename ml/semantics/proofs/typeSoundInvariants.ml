@@ -11,7 +11,11 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/peg.ml";;
+needs "misc/misc.ml";;
+needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
@@ -58,15 +62,22 @@ new_type_abbrev("ctMap",`: (stamp,mlstring list#t list#num)fmap`);;
 
 let ctMap_ok_def = cake_define
   `ctMap_ok ctMap <=>
+     // No free variables in the range
      FEVERY (\(stamp,(tvs,ts,_1)). EVERY (check_freevars 0 tvs) ts)
        ctMap /\
-     (!ex tvs ts ti. FLOOKUP ctMap (ExnStamp ex) = SOME (tvs,ts,ti)
-       ==>
+     (
+      // Exceptions have type exception, and no type variables
+      !ex tvs ts ti. FLOOKUP ctMap (ExnStamp ex) = SOME (tvs,ts,ti)
+        ==>
        tvs = [] /\ ti = Texn_num) /\
-     (!cn x tvs ts ti. FLOOKUP ctMap (TypeStamp cn x) = SOME
-       (tvs,ts,ti) ==>
+     (
+      // Primitive, non-constructor types are not mapped
+      !cn x tvs ts ti. FLOOKUP ctMap (TypeStamp cn x) = SOME
+        (tvs,ts,ti) ==>
        ~(MEM ti prim_type_nums)) /\
-     (!stamp1 tvs1 ts1 ti stamp2 tvs2 ts2.
+     (
+      // If type identities are equal then the stamps are from the same type
+      !stamp1 tvs1 ts1 ti stamp2 tvs2 ts2.
        FLOOKUP ctMap stamp1 = SOME (tvs1,ts1,ti) /\
        FLOOKUP ctMap stamp2 = SOME (tvs2,ts2,ti) ==>
        same_type stamp1 stamp2)`;;

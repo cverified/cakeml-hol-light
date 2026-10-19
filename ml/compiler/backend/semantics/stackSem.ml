@@ -9,11 +9,14 @@
   The formal semantics of stackLang
 *)
 
+needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/data_live.ml";;
+needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/inference/infer.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
@@ -26,6 +29,7 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* for word_loc and word_cmp *) *)
 
 
@@ -89,8 +93,10 @@ let read_bitmap_def = cake_define_list
   [`read_bitmap [] = NONE`;
    `read_bitmap ((w:'a word) :: ws) =
          (if word_msb w then
+           // there is a continuation
            match read_bitmap ws with NONE -> NONE | SOME bs -> SOME
              (GENLIST (\i. FAPPLY w i) (dimindex (:'a) - 1) ++ bs) else
+           // this is the last bitmap word
            SOME (GENLIST (\i. FAPPLY w i) (bit_length w - 1)))`];;
 
 let stackSem_state_FIELDS = define_record "stackSem_state"
@@ -118,7 +124,9 @@ let stackSem_state_FIELDS = define_record "stackSem_state"
    "code","('a stackLang_prog) spt";
    "ffi","'ffi ffi_state";
    "ffi_save_regs","num->bool";
-   "be","bool"];;
+   "be","bool"
+   (* is big-endian *)
+  ];;
 hol4_field_overload "regs" "stackSem_state_regs";;
 hol4_field_overload "regs_fupd" "stackSem_state_regs_fupd";;
 hol4_field_overload "fp_regs" "stackSem_state_fp_regs";;
@@ -471,15 +479,24 @@ hol4_overload "has_space" "stackSem_has_space";;
 
 let alloc_def = cake_define
   `stackSem_alloc (w:'a word) (s:('a,'c,'ffi)stackSem_state) =
+       // perform garbage collection
        (match gc (set_store AllocSize (wordLang_Word w) s) with NONE
          -> (SOME Error,s) | SOME s ->
-          (match FLOOKUP (stackSem_state_store s) AllocSize with NONE
-            -> (SOME Error,s) | SOME w ->
-            (match has_space w (stackSem_state_store s) with NONE ->
-              (SOME Error,s) | SOME T ->
-                         (NONE,s) | SOME F ->
-                         (SOME (Halt (wordLang_Word ((n2w 1):'a
-                           word))),stackSem_empty_env s))))`;;
+          (
+           // read how much space should be allocated
+           match FLOOKUP (stackSem_state_store s) AllocSize with NONE
+             -> (SOME Error,s) | SOME w ->
+            (
+             // check how much space there is
+             match has_space w (stackSem_state_store s) with NONE ->
+               (SOME Error,s) | SOME T ->
+                         (
+                          // success there is that much space
+                          NONE,s) | SOME F ->
+                         (
+                          // fail, GC didn't free up enough space
+                          SOME (Halt (wordLang_Word ((n2w 1):'a
+                            word))),stackSem_empty_env s))))`;;
 hol4_overload "alloc" "stackSem_alloc";;
 
 let assign_def = cake_define
@@ -938,7 +955,9 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                    Error,s) else (res,s)))) | _94 -> (SOME Error,s))
                    | _95 -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Call ret dest handler,s) =
-         (match ret with NONE ->
+         (match ret with
+           // tail call
+           NONE ->
            (match find_code dest (stackSem_state_regs s) (state_code
              s) with NONE -> (SOME Error,s) | SOME prog ->
                (if ~(handler = NONE) then (SOME Error,s) else
@@ -947,7 +966,9 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                  (match fix_clock (dec_clock s) (stackSem_evaluate
                    (prog,dec_clock s)) with (res,s) -> (if
                    bad_fun_return res then (SOME Error,s) else
-                   (res,s))))) | SOME (ret_handler,link_reg',l1,l2) ->
+                   (res,s))))) |
+           // returning call, returns into var n
+           SOME (ret_handler,link_reg',l1,l2) ->
            (match find_code dest (stackSem_state_regs s \\
              link_reg') (state_code s) with NONE -> (SOME Error,s) |
              SOME prog ->
@@ -961,8 +982,10 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                       (if ~(x = Loc l1 l2) then (SOME Error,s2) else
                         stackSem_evaluate (ret_handler,s2)) | (SOME
                         (Exception x),s2) ->
-                      (match handler with NONE -> (SOME (Exception
-                        x),s2) | SOME (h,l1,l2) ->
+                      (match handler with
+                         // if handler is present, then handle exc
+                         NONE -> (SOME (Exception x),s2) | SOME
+                           (h,l1,l2) ->
                           (if ~(x = Loc l1 l2) then (SOME Error,s2)
                             else
                             stackSem_evaluate (h,s2))) | (NONE,s)

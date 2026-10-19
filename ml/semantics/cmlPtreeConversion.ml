@@ -489,8 +489,8 @@ let isConstructor_def = cake_define
 let EtoPat_def = cake_define
   `EtoPat x1 =
         match x1 with
-          (ast_Con x args:ast_exp) -> (if NULL args then SOME
-            (ast_Pcon x []) else NONE)
+          ast_Con x args -> (if NULL args then SOME (ast_Pcon x [])
+            else NONE)
         | (ast_Var (Short n)) -> SOME (ast_Pvar n)
         | (ast_Var (Long str n)) -> SOME (ast_Pcon (SOME (Long str
           n)) [])
@@ -695,7 +695,7 @@ let eseq_encode_def = cake_define
 let dest_Conk_def = cake_define
   `dest_Conk x1 k v =
         match x1 with
-          (ast_Con x y:ast_exp) -> k x y
+          ast_Con x y -> k x y
         | _72 -> v`;;
 
 let destFFIop_def = cake_define
@@ -856,6 +856,7 @@ let ptree_Expr_def = cake_define_list_cheat CHEAT_TAC
                   (INL:MMLnonT->MMLnonT+num) nEmult then
           match subs with
             [t1; opt; t2] -> OPTION_BIND (ptree_Expr nEmult t1) (\
+              // s will be *, /, div, or mod
               a1. OPTION_BIND (ptree_Op opt) (\
               a_op. OPTION_BIND (ptree_Expr nEapp t2) (\
               a2.
@@ -1216,7 +1217,9 @@ let ptree_SpeclineList_def = cake_define_list
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLineList) then
         NONE else
         match args with
-            [] -> SOME one | [sl_pt; sll_pt] ->
+            [] -> SOME one | [
+             // []
+             sl_pt; sll_pt] ->
             (if tokcheck sl_pt tokens_SemicolonT then
               ptree_SpeclineList sll_pt else
               OPTION_BIND (ptree_SpecLine sl_pt) (\
@@ -1320,7 +1323,9 @@ let ptree_Decl_def = cake_define_list_cheat CHEAT_TAC
                               SOME (SOME sigv))) | _145 -> NONE)) (\
               asc. OPTION_BIND (ptree_Decls ds_pt) (\
               ds.
-              SOME (Dmod sname ds))))) | _146 -> NONE)`];;
+              SOME (Dmod sname
+                  // asc
+                  ds))))) | _146 -> NONE)`];;
 
 let ptree_TopLevelDecs_def = cake_define_list
   [`ptree_TopLevelDecs (Lf _147) = NONE`;

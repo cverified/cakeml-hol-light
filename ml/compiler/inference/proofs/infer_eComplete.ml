@@ -14,6 +14,7 @@ needs "compiler/inference/inferProps.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/proofs/envRel.ml";;
 needs "compiler/inference/unify.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
@@ -700,10 +701,15 @@ let infer_e_complete = cake_theorem "infer_e_complete"
     `(!tenv tenvE e t.
       type_e tenv tenvE e t ==>
       (!loc s ienv st constraints.
+        // Invariants on the typing and inferencer envs
+        // check_menv ienv.inf_m ∧
+        // menv_alpha ienv.inf_m tenv.m ∧
         ienv_ok (count (infer_st_next_uvar st)) ienv /\
+        // Invariants on inferencer state
         t_wfs (infer_st_subst st) /\
         FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar
           st) /\
+        // Subcompletion
         sub_completion (num_tvs tenvE) (infer_st_next_uvar st)
           (infer_st_subst st) constraints s /\
         FDOM s = count (infer_st_next_uvar st) /\
@@ -720,6 +726,8 @@ let infer_e_complete = cake_theorem "infer_e_complete"
      (!tenv tenvE es ts.
       type_es tenv tenvE es ts ==>
       (!loc s ienv st constraints.
+        // check_menv ienv.inf_m ∧
+        // menv_alpha ienv.inf_m tenv.m ∧
         ienv_ok (count (infer_st_next_uvar st)) ienv /\
         t_wfs (infer_st_subst st) /\
         FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar
@@ -740,6 +748,8 @@ let infer_e_complete = cake_theorem "infer_e_complete"
      (!tenv tenvE funs env.
       type_funs tenv tenvE funs env ==>
       (!loc s ienv st constraints.
+        // check_menv ienv.inf_m ∧
+        // menv_alpha ienv.inf_m tenv.m ∧
         ienv_ok (count (infer_st_next_uvar st)) ienv /\
         t_wfs (infer_st_subst st) /\
         FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar

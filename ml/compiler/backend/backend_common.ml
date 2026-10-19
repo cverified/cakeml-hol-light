@@ -10,9 +10,11 @@
 *)
 
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: arithmetic integer words *)
 
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: (* for delete *) *)
 
 let opw_INDUCT,opw_RECURSION = define_datatype
@@ -67,9 +69,14 @@ let clos_tag_shift_def = cake_define
 
 (* Trace of an expression through the compiler, for exploring transformations *)
 let tra_INDUCT,tra_RECURSION = define_datatype
-  "tra = backend_common_SourceLoc (num) (num) (num) (num) | \
-   backend_common_Cons (tra) (num) | backend_common_Union (tra) (tra) \
-   | backend_common_None";;
+  "tra = backend_common_SourceLoc (num) (num) (num) (num) \
+   // start-row\n\
+   // start-col\n\
+   // end-row\n\
+   // end-col\n\
+   | backend_common_Cons (tra) (num) | backend_common_Union (tra) \
+   (tra) | backend_common_None \
+   // Dead trace, do not make traces at all";;
 hol4_overload "SourceLoc" "backend_common_SourceLoc";;
 hol4_overload "Cons" "backend_common_Cons";;
 hol4_overload "Union" "backend_common_Union";;
@@ -112,13 +119,21 @@ let stack_num_stubs_def = cake_define
   `stack_num_stubs = 5`;;
 
 let word_num_stubs_def = cake_define
-  `word_num_stubs = stack_num_stubs + 1 + 1`;;
+  `word_num_stubs = stack_num_stubs + 1 +
+             // raise
+             1`;;
 
 let data_num_stubs_def = cake_define
-  `data_num_stubs = word_num_stubs + 32 + 23`;;
+  `data_num_stubs = word_num_stubs +
+          // general:
+          32 +
+              // bignum:
+              23`;;
 
 let bvl_num_stubs_def = cake_define
-  `bvl_num_stubs = data_num_stubs + 9 + 1`;;
+  `bvl_num_stubs = data_num_stubs + 9 +
+             // dummy to make it a multiple of 4
+             1`;;
 
 let bvl_to_bvi_namespaces_def = cake_define
   `bvl_to_bvi_namespaces = 4`;;
@@ -136,6 +151,9 @@ let bvl_num_stub_MOD = cake_theorem "bvl_num_stub_MOD"
 (* shift values, per dimindex(:α) *)
 let word_shift_def = cake_define
   `backend_common_word_shift (:'a) =
+     // this could be defined as LOG 2 (dimindex(:'a)) - 3, but I want
+     // to be sure that LOG doesn't unnecessarily end up in the
+     // generated CakeML code
      (if dimindex (:'a) = 32 then 2 else 3:num)`;;
 hol4_overload "word_shift" "backend_common_word_shift";;
 

@@ -64,6 +64,9 @@ let alt_fv = cake_theorem "alt_fv"
            + num_args) [x1]) /\
       (!x1 vs v8 n loc fns.
          alt_fv n [Letrec v8 loc vs fns x1] <=>
+           // if clos_annotate$no_overlap (LENGTH fns) (SND (alt_free [x1])) then
+           // alt_fv (n + LENGTH fns) [x1]
+           // else
            EXISTS (\(num_args,x). alt_fv (n + num_args + LENGTH
              fns) [x]) fns \/
            alt_fv (n + LENGTH fns) [x1]) /\

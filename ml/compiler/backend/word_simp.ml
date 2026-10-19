@@ -431,7 +431,8 @@ the flag is T when its known to halt and F otherwise
 
 *)
 let push_out_if_aux_def = cake_define
-  `push_out_if_aux p = (match p with wordLang_MustTerminate q ->
+  `// all of them together
+   push_out_if_aux p = (match p with wordLang_MustTerminate q ->
      (match (push_out_if_aux q) with (c,b) -> (wordLang_MustTerminate
        c,b)) | Return _54 _55 -> (p,T) | Raise _56 -> (p,T) | Call NONE
        _57 _58 _59 -> (p,T) | If cmp r1 ri c1 c2 -> (match
@@ -440,7 +441,9 @@ let push_out_if_aux_def = cake_define
        ri Skip c2') c1',F) | ((c1',T),(c2',F)) -> (Seq (If cmp r1 ri c1'
        Skip) c2',F) | ((c1',F),(c2',F)) -> (If cmp r1 ri c1' c2',F)) |
        Seq c1 c2 -> (match (push_out_if_aux c1) with (c1',T) -> ((Seq
-       c1' c2),T) | (c1',F) ->
+       c1' c2),T) | (
+                       // Don't have to bother as DCE will get rid of it
+                       c1',F) ->
                        (match (push_out_if_aux c2) with (c2',b) ->
                          (Seq c1' c2',b))) | Loop names body exit_names
                          ->

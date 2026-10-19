@@ -2,7 +2,7 @@
 (*  labLang: ported from HOL4's
     compiler/backend/labLangScript.sml
     A definition theory, with 2 definitions, 5 datatypes and no
-    theorems.  Needed by 13 files of the port.  *)
+    theorems.  Needed by 16 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -27,8 +27,9 @@ hol4_overload "Lab" "labLang_Lab";;
 let asm_with_lab_INDUCT,asm_with_lab_RECURSION = define_datatype
   "asm_with_lab = labLang_Jump (lab) | labLang_JumpCmp (cmp) (num) \
    ('a asm_reg_imm) (lab) | labLang_Call (lab) | labLang_LocValue \
-   (num) (lab) | labLang_CallFFI (mlstring) | labLang_Install | \
-   labLang_Halt";;
+   (num) (lab) | \
+   // following have no label, but have similar semantics\n\
+   labLang_CallFFI (mlstring) | labLang_Install | labLang_Halt";;
 hol4_overload "Jump" "labLang_Jump";;
 hol4_overload "JumpCmp" "labLang_JumpCmp";;
 hol4_overload "Call" "labLang_Call";;
@@ -43,9 +44,11 @@ let asm_or_cbw_INDUCT,asm_or_cbw_RECURSION = define_datatype
  (* Either an asm inst/jumpreg or code-buffer-write *)
 
 let line_INDUCT,line_RECURSION = define_datatype
-  "line = labLang_Label (num) (num) (num) | labLang_Asm ('a \
-   asm_or_cbw) (word8 list) (num) | labLang_LabAsm ('a asm_with_lab) \
-   ('a word) (word8 list) (num)";;
+  "line = labLang_Label (num) (num) (num) \
+   // section number, label number, length\n\
+   | labLang_Asm ('a asm_or_cbw) (word8 list) (num) \
+   // instruction, encoded instruction, length\n\
+   | labLang_LabAsm ('a asm_with_lab) ('a word) (word8 list) (num)";;
 hol4_overload "Label" "labLang_Label";;
 hol4_overload "Asm" "labLang_Asm";;
 hol4_overload "LabAsm" "labLang_LabAsm";;

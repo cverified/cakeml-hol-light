@@ -15,6 +15,7 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
@@ -42,7 +43,9 @@ needs "semantics/ast.ml";;
 
 let copy_state_FIELDS = define_record "copy_state"
   ["to_eq","num spt";
+   (* maps equivalence class to its representative *)
    "from_eq","num spt";
+   (* maps store names to an equivalence class *)
    "store_to_eq","(store_name#num) list";
    "next","num"];;
 hol4_field_overload "next" "copy_state_next";;
@@ -113,6 +116,7 @@ let copy_prop_inst_def = cake_define
        (Inst (Arith (asm_Div r1 r2' r3')),
            remove_eq cs r1))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
+       // r4 is both read from and written to
        (let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
@@ -191,7 +195,9 @@ let copy_prop_inst_def = cake_define
          let (r1'',r2'') = (if r1' = r2' then (r1,r2) else (r1',r2'))
            in
          (Inst (asm_FP (FPMovFromReg d r1'' r2'')),cs))
+        // Catchall: all FP
         | (asm_FP x) -> (Inst (asm_FP x),cs)
+        // Catchall: should not happen
         | _2 -> ARB`;;
 
 (* handle x := y by making x the new
@@ -280,6 +286,7 @@ let copy_prop_prog_def = cake_define
         | (wordLang_Move pri xs) ->
        (let tt = MAP FST xs in let ss = MAP SND xs in
        if EVERY (\t. ~(MEM t ss)) tt then
+         // set (MAP FST xs) ∩ set (MAP SND xs) = ∅
          let (xs',cs') = copy_prop_move xs cs in
          (wordLang_Move pri xs',cs') else (wordLang_Move pri
            xs,empty_eq))
@@ -308,6 +315,7 @@ let copy_prop_prog_def = cake_define
         | (If cmp r ri p1 p2) ->
         (let r' = lookup_eq cs r in
         let ri' = lookup_eq_imm cs ri in
+        // TODO: same mapping going in
         let (q1,cs') = copy_prop_prog p1 cs in
         let (q2,cs'') = copy_prop_prog p2 cs in
           (If cmp r' ri' q1 q2,
@@ -318,6 +326,7 @@ let copy_prop_prog_def = cake_define
          (let n' = lookup_eq cs n in
          (Set name (Var n'),set_store_eq cs name n)) | _4 -> (Set
            name exp,empty_eq))
+        // flat_exp
         | (Get n name) ->
        (match lookup_store_eq cs name with
          NONE ->
@@ -328,6 +337,8 @@ let copy_prop_prog_def = cake_define
            (wordLang_Move 0 xs',cs') else (Skip,cs)))
         | (Call ret dest args handler) ->
        (Call ret dest args handler,empty_eq)
+        // args will be 0,2,4,...
+        // TODO: are handlers worth analyzing?
         | (Alloc r live) ->
         (Alloc r live,empty_eq)
         | (StoreConsts a b c d ws) ->
@@ -351,6 +362,8 @@ let copy_prop_prog_def = cake_define
        (let exp' = copy_prop_share exp cs in
        (wordLang_ShareInst op v exp',
          remove_eq cs v))
+        // Conservative: optimizes body from empty state. Could be smarter by
+        // tracking copy facts across iterations via Break/Continue flow.
         | (Loop names c exit_names) ->
         (let (c',_5) = copy_prop_prog c empty_eq in
           (Loop names c' exit_names,empty_eq))

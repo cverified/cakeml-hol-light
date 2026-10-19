@@ -874,6 +874,8 @@ let EVERY_sec_label_ok = cake_theorem "EVERY_sec_label_ok"
   (fun () ->
     `EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0)) (labProps_extract_labels l)
   <=>
+      // ∧
+      // ALL_DISTINCT (extract_labels l)
       EVERY (sec_label_ok n) l`)
   CHEAT_TAC;;
 

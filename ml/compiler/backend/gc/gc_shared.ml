@@ -2,13 +2,14 @@
 (*  gc_shared: ported from HOL4's
     compiler/backend/gc/gc_sharedScript.sml
     A definition theory, with 29 definitions, 3 datatypes and 53
-    theorems.  Needed by 10 files of the port.  *)
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
   Types, functions and lemmas that are shared between GC definitions
 *)
 
+needs "basis/pure/mlvector.ml";;
 needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: finite_map words *)
 
@@ -26,17 +27,30 @@ let heap_element_INDUCT,heap_element_RECURSION = define_datatype
 
 let gc_state_FIELDS = define_record "gc_state"
   ["old","(('a,'b)heap_element) list";
+   (* old generations *)
    "h1","(('a,'b)heap_element) list";
+   (* final left heap *)
    "h2","(('a,'b)heap_element) list";
+   (* not updated left heap *)
    "r4","(('a,'b)heap_element) list";
+   (* not updated right heap *)
    "r3","(('a,'b)heap_element) list";
+   (* temp. final right heap *)
    "r2","(('a,'b)heap_element) list";
+   (* temp. not updated right heap *)
    "r1","(('a,'b)heap_element) list";
+   (* final right heap *)
    "a","num";
+   (* gen_start + heap_length (h1 ++ h2) *)
    "n","num";
+   (* unused heap space *)
    "ok","bool";
+   (* OK *)
    "heap","(('a,'b)heap_element) list";
-   "heap0","(('a,'b)heap_element) list"];;
+   (* old heap (w/ fwd pointers) *)
+   "heap0","(('a,'b)heap_element) list"
+   (* old heap *)
+  ];;
 
 let empty_state_def = cake_define
   `empty_state =
@@ -186,13 +200,18 @@ let isForwardPointer_def = cake_define
 let heap_ok_def = cake_define
   `heap_ok heap limit' = (
      (heap_length heap = limit') /\
-     (FILTER isForwardPointer heap = []) /\
-     (!xs l d ptr u. MEM (DataElement xs l d) heap /\ MEM
-       (gc_shared_Pointer ptr u) xs ==>
+     (
+      // no forward pointers
+      FILTER isForwardPointer heap = []) /\
+     (
+      // all pointers in DataElements point to some DataElement
+      !xs l d ptr u. MEM (DataElement xs l d) heap /\ MEM
+        (gc_shared_Pointer ptr u) xs ==>
                      isSomeDataElement (heap_lookup ptr heap)))`;;
 
 let gc_forward_ptr_def = cake_define_list
-  [`gc_forward_ptr a [] ptr d ok = ([],F)`;
+  [`// replace cell at a with a forwardpointer to ptr
+    gc_forward_ptr a [] ptr d ok = ([],F)`;
    `gc_forward_ptr a (x :: xs) ptr d ok =
          (if a = 0 then
            (ForwardPointer ptr d ((el_length x) - 1) ::

@@ -14,11 +14,15 @@
   Removes unreachable globals from the code.
 *)
 
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "lib/peg.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (**************************** ANALYSIS FUNCTIONS *****************************)
 
@@ -27,19 +31,32 @@ let is_hidden_def = cake_define
   `is_hidden x1 =
         match x1 with
           (Raise t e:flatLang_exp) -> is_hidden e
+        // raise exception
         | (Handle t e pes) -> F
+        // exception handler
         | (Lit t l) -> T
+        // literal
         | (Con t id_option es) -> EVERY is_hidden es
+        // constructor
         | (flatLang_Var_local t str) -> T
+        // local var
         | (Fun t name body) -> T
+        // function abstraction
         | (App t (flatLang_Src ast_Opapp) l) -> F
+        // function application
         | (App t (flatLang_GlobalVarInit g) [e]) -> is_hidden e
+        // GlobalVarInit
         | (App t (flatLang_GlobalVarLookup g) [e]) -> F
+        // GlobalVarLookup
         | (If t e1 e2 e3) -> (is_hidden e1 /\ is_hidden e2 /\
           is_hidden e3)
+        // if expression
         | (Mat t e1 [p,e2]) -> (is_hidden e1 /\ is_hidden e2)
+        // SINGLE pattern match
         | (Let t opt e1 e2) -> (is_hidden e1 /\ is_hidden e2)
+        // let-expression
         | (Letrec t funs e) -> is_hidden e
+        // local def of mutually recursive funs
         | _1 -> F`;;
 
 (* the first pass assumes the termination:
@@ -226,6 +243,11 @@ let analyse_code_def = cake_define_list
 
 let keep_def = cake_define
   `keep reachable e =
+       // if none of the global variables that e may assign to are in
+       // the reachable set, then e is candidate for removal
+       // -> if any are in, then keep e
+       // -> however if e is not pure (can have side-effects),
+       // then it must be kept
        (if (\t. t = LN) (inter (find_loc e) reachable) then
          (~(flat_elim_is_pure e)) else T)`;;
 

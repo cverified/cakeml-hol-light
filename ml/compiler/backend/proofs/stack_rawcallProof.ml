@@ -11,12 +11,14 @@
 
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_rawcall.ml";;
+needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
@@ -48,8 +50,14 @@ hol4_overload "state_ok" "stack_rawcallProof_state_ok";;
 let state_rel_def = cake_define
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
+       // co cc
        domain c = domain (state_code s) /\
        t = state_code_fupd (K c) s /\
+       // ;
+       // compile := cc ;
+       // compile_oracle := co
+       // s.compile = pure_cc compile t.compile /\
+       // t.compile_oracle = (I ## compile ## I) o s.compile_oracle /\
        stack_rawcallProof_state_ok i (state_code s) /\
        (!n b.
          sptree_lookup n (state_code s) = SOME b ==>

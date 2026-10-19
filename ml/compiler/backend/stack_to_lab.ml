@@ -168,7 +168,10 @@ let is_gen_gc_def = cake_define
 let stack_to_lab_config_FIELDS = define_record "stack_to_lab_config"
   ["reg_names","num spt";
    "jump","bool";
-   "perf_calls","bool"];;
+   (* whether to compile to JumpLower or If Lower ... in stack_remove*)
+   "perf_calls","bool"
+   (* unverified: emit C-stack shadowing for perf call graphs (x64 only) *)
+  ];;
 
 let compile_def = cake_define
   `stack_to_lab_compile stack_conf data_conf max_heap sp offset prog =

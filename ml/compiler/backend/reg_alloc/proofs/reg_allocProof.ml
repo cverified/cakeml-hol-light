@@ -11,9 +11,11 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "lib/bitstring.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
+needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide_consts
@@ -349,6 +351,7 @@ let assign_Atemps_correct = cake_theorem "assign_Atemps_correct"
      good_ra_state s' /\
      s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
      EVERY (\n. ~(n = Atemp)) (ra_state_node_tag s') /\
+     // The next one is probably necessary for coloring correctness
      (!m.
      m < LENGTH (ra_state_node_tag s) /\ ~(EL m (ra_state_node_tag
        s) = Atemp) ==>
@@ -1349,6 +1352,7 @@ let do_alloc1_success = cake_theorem "do_alloc1_success[local]"
      good_ra_state s' /\
      is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
        ra_state_dim
+     // This allows the coalescing phase to modify the adjacency list
      s' = ra_state_dim s /\ ra_state_node_tag
      s' = ra_state_node_tag s)`)
   CHEAT_TAC;;
@@ -1459,6 +1463,7 @@ let do_reg_alloc_correct = cake_theorem "do_reg_alloc_correct"
      st = [] ==> ra_state_coalesced
      st = REPLICATE n 0 ==> ra_state_move_related
      st = REPLICATE n F ==>
+     // Needs to be proved in wordLang
      EVERY (\(x,y). in_clash_tree ct x /\ in_clash_tree ct y)
        forced ==>
      (?spcol st' livein flivein.
@@ -1483,6 +1488,7 @@ let do_reg_alloc_correct = cake_theorem "do_reg_alloc_correct"
 let reg_alloc_correct = cake_theorem "reg_alloc_correct"
   (fun () ->
     `!alg scost k moves ct forced fs.
+     // Needs to be proved in wordLang
      EVERY (\(x,y). in_clash_tree ct x /\ in_clash_tree ct y)
        forced ==>
      (?spcol livein flivein.

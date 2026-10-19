@@ -38,8 +38,11 @@ let state_rel_def = cake_define
      s1 = dataSem_state_tstamps t1 /\ dataSem_state_limits
      s1 = dataSem_state_limits t1 /\ dataSem_state_stack_frame_sizes
      s1 = dataSem_state_stack_frame_sizes t1 /\
-     (!x. x IN domain live ==> (lookup x (dataSem_state_locals s1)
-       = lookup x (dataSem_state_locals t1)))`;;
+     (
+      // s1.safe_for_space = t1.safe_for_space /\
+      // ASK: Probably don't need it
+      !x. x IN domain live ==> (lookup x (dataSem_state_locals s1)
+        = lookup x (dataSem_state_locals t1)))`;;
 hol4_overload "state_rel" "data_liveProof_state_rel";;
 
 let state_rel_ID = cake_theorem "state_rel_ID[local]"

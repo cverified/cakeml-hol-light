@@ -53,6 +53,7 @@ needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/source_to_flat.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_alloc.ml";;
+needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/stack_to_lab.ml";;
 needs "compiler/backend/wordLang.ml";;
@@ -200,14 +201,16 @@ let mc_init_ok_def = cake_define
      (match link_reg (target_config (machine_config_target mc)) with
        NONE -> 0 | SOME n -> n) /\ be (backend_config_data_conf
    c) = asm_config_big_endian (target_config (machine_config_target
-     mc)) /\ ~((match link_reg (target_config (machine_config_target
-     mc)) with NONE -> 0 | SOME n -> n) = len_reg mc) /\ ~((match
-     link_reg (target_config (machine_config_target mc)) with NONE -> 0
-     | SOME n -> n) = ptr_reg mc) /\ ~((match link_reg (target_config
-     (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
-     len2_reg mc) /\ ~((match link_reg (target_config
-     (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
-     ptr2_reg mc) /\
+     mc)) /\ ~((
+    // the next four are implied by injectivity of find_name
+    match link_reg (target_config (machine_config_target mc)) with
+      NONE -> 0 | SOME n -> n) = len_reg mc) /\ ~((match link_reg
+      (target_config (machine_config_target mc)) with NONE -> 0 | SOME n
+      -> n) = ptr_reg mc) /\ ~((match link_reg (target_config
+      (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
+      len2_reg mc) /\ ~((match link_reg (target_config
+      (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
+      ptr2_reg mc) /\
    ~(MEM (match link_reg (target_config (machine_config_target mc))
      with NONE -> 0 | SOME n -> n) (machine_config_callee_saved_regs
      mc)) /\
@@ -599,8 +602,8 @@ let from_bvl_conf_EX = cake_theorem "from_bvl_conf_EX"
     `from_bvl asm_conf c names p = v ==>
      (?st bvlcu (names:mlstring spt) p.
        from_bvi asm_conf (backend_config_clos_conf_fupd (\c.
-         start_fupd (K st) c) (backend_config_bvl_conf_fupd bvlcu c))
-         names p = v)`)
+         clos_to_bvl_config_start_fupd (K st) c)
+         (backend_config_bvl_conf_fupd bvlcu c)) names p = v)`)
   CHEAT_TAC;;
 
 let from_bvi_conf_EX = cake_theorem "from_bvi_conf_EX"
@@ -876,10 +879,15 @@ let is_state_oracle_cake_orac_to_comp =
              bc,bvl_to_bvi_config_split_main_at_seq
            bc,bvl_to_bvi_config_exp_cut
              bc,bvl_to_bvi_config_do_tailrec bc,bvl_to_bvi_config_do_tmc
-             bc,mc)) o (\c. (backend_config_source_conf
-             c,backend_config_clos_conf c,backend_config_bvl_conf
-             c,backend_config_data_conf c,word_to_word_config_reg_alg
-             (backend_config_word_to_word_conf
+             bc,
+                       // f step
+                       mc)) o (\c. (backend_config_source_conf
+                         c,backend_config_clos_conf
+                         c,backend_config_bvl_conf
+                         c,backend_config_data_conf
+                         c,word_to_word_config_reg_alg
+                         (backend_config_word_to_word_conf
+               // g step
                c),backend_config_stack_conf c,(asm_conf:'a
                  asm_config)))) c'' = ((\(sc,cc,bc,mc).
                  (source_to_flat_config_pattern_cfg
@@ -902,6 +910,7 @@ let is_state_oracle_cake_orac_to_comp =
        (let (f_c',_6) = f_inc (FST (st_f c'')) (ps_f ps) in
        let ((g_c,_7),g_p) = adj (g c'',h ps) in
        let (g_c',_8) = g_inc g_c g_p in
+       // for some c''', if f step agrees, g step should agree
        f_c' = FST (st_f c''') ==> g_c' = FST (FST (adj (g
          c''',g_p'))))) ==>
      is_state_oracle g_inc (adj o cake_orac asm_conf c' syntax g
@@ -1414,6 +1423,10 @@ let monotonic_labels_bvl = cake_theorem "monotonic_labels_bvl"
 let good_code_lab_oracle = cake_theorem "good_code_lab_oracle"
   (fun () ->
     `compile asm_conf c prog = SOME (b,bm,c') /\
+     // validity of the code produced in the oracle at step i
+     // - the tricky bit is cfg.labels, which gathers past and current labels
+     // - older labels must always be there
+     // - newer labels should never overlap older ones
      cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o
        SND o config_tuple2)
        (\ps. backend_progs_lab_prog ps) i = (cfg,code) /\

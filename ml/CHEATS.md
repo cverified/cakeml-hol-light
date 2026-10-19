@@ -9,12 +9,12 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 10463: the three axioms of HOL
-Light and 10460 for the 456 definitions below.
+`length (axioms ())` is 10466: the three axioms of HOL
+Light and 10463 for the 457 definitions below.
 
-Of these 456 definitions
+Of these 457 definitions
 
-- 307 have only their **termination** assumed, so the
+- 308 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
 - 14 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
@@ -23,7 +23,7 @@ Of these 456 definitions
 
 Why they are assumed:
 
-- 307: termination (CHEAT_TAC)
+- 308: termination (CHEAT_TAC)
 - 132: equation of a tail recursion assumed
 - 14: declared (no value)
 - 1: free: backend_config_next_name3_fupd:(?801619->num)->?801616->bvl_
@@ -431,6 +431,7 @@ Why they are assumed:
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
+| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
@@ -489,4 +490,4 @@ Why they are assumed:
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 
-456 definitions.
+457 definitions.

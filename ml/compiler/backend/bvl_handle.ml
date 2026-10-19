@@ -17,6 +17,7 @@ needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "lib/indexedLists.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
@@ -218,7 +219,10 @@ let compile_def = cake_define_list
                in
                ([Handle (LetLet n (db_to_set l1) (HD y1)) (HD y2)],
                 mk_Union l1 (Shift 1 l2),
-                s2,nr2))`;
+                s2,
+                   // s1 intentionally left out because
+                   // it does not contrib to exp size in BVI
+                   nr2))`;
    `bvl_handle_compile l n [(Raise x1:bvl_exp)] =
          (let (dx,lx,s1,nr1) = bvl_handle_compile l n [x1] in
            OptionalLetLet (Raise (HD dx)) n lx (s1 + 1) l F)`;
@@ -268,7 +272,10 @@ let compile_sing_def = cake_define_list
                x2 in
                (Handle (LetLet n (db_to_set l1) y1) y2,
                 mk_Union l1 (Shift 1 l2),
-                s2,nr2))`;
+                s2,
+                   // s1 intentionally left out because
+                   // it does not contrib to exp size in BVI
+                   nr2))`;
    `bvl_handle_compile_sing l n (Raise x1:bvl_exp) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile_sing l n x1 in
            OptionalLetLet_sing (Raise dx) n lx (s1 + 1) l F)`;

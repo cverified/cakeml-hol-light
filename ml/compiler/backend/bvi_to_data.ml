@@ -2,7 +2,7 @@
 (*  bvi_to_data: ported from HOL4's
     compiler/backend/bvi_to_dataScript.sml
     A definition theory, with 7 definitions and 10 theorems.  Needed
-    by 6 files of the port.  *)
+    by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -173,8 +173,11 @@ let compile_def = cake_define_list_cheat CHEAT_TAC
   rets ticks dest xs y] =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
            if y = Return (GENLIST Var rets) then
-             (dataLang_Seq c1 (mk_ticks ticks (Call NONE (SOME dest)
-               vs NONE)),[n1],n1 + 1) else
+             (
+              // tailcall
+              dataLang_Seq c1 (mk_ticks ticks (Call NONE (SOME dest)
+                vs NONE)),[n1],n1 + 1) else
+             // non-tailcall
              let rs = GENLIST (\i. n1 + i) rets in
              let (c2,v,n2) = bvi_to_data_compile (n1 + rets) (rs ++
                env) tail live [y] in
@@ -268,8 +271,11 @@ let compile_sing_def = cake_define_list_try_tac (fun () ->
   (bvi_LetCall rets ticks dest xs y) =
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
            if y = Return (GENLIST Var rets) then
-             (dataLang_Seq c1 (mk_ticks ticks (Call NONE (SOME dest)
-               vs NONE)),n1,n1 + 1) else
+             (
+              // tailcall
+              dataLang_Seq c1 (mk_ticks ticks (Call NONE (SOME dest)
+                vs NONE)),n1,n1 + 1) else
+             // non-tailcall
              let rs = GENLIST (\i. n1 + i) rets in
              let (c2,v,n2) = bvi_to_data_compile_sing (n1 + rets)
                (rs ++ env) tail live y in

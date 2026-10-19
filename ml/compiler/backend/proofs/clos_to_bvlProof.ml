@@ -751,6 +751,7 @@ let env_rel_def = cake_define
         match (x5,ys) with
           ([],[]) -> T
         | ([],ys) -> T
+        // bvl env allowed to contain extra stuff
         | ((x :: xs),[]) -> F
         | ((x :: xs),(y :: ys)) ->
         v_rel max_app f refs code x y /\ clos_to_bvlProof_env_rel
@@ -1062,9 +1063,11 @@ let clos_to_bvlProof_do_app = cake_theorem "do_app[local]"
      state_rel f s1 t1 /\
      LIST_REL (v_rel (closSem_state_max_app s1) f (state_refs t1)
        (state_code t1)) xs ys /\
-     (~(op = closLang_MemOp closLang_Ref)) /\ (~(op =
-       closLang_MemOp closLang_Update)) /\ (~(op = closLang_MemOp
-       closLang_XorByte)) /\
+     (~(
+      // store updates need special treatment
+      op = closLang_MemOp closLang_Ref)) /\ (~(op = closLang_MemOp
+        closLang_Update)) /\ (~(op = closLang_MemOp closLang_XorByte))
+        /\
      (~(op = closLang_MemOp closLang_RefArray)) /\ (!f. ~(op =
        closLang_MemOp (closLang_RefByte f))) /\ (~(op = closLang_MemOp
        closLang_UpdateByte)) /\
@@ -2298,6 +2301,7 @@ let chain_installed_chain_exps =
 let chain_exps_semantics = cake_theorem "chain_exps_semantics"
   (fun () ->
     `~(semantics ffi max_app code co cc es = ffi_Fail) /\
+      // es ≠ [] ∧
       DISJOINT (IMAGE ((+) start) (count (LENGTH es))) (FDOM code)
         /\
       oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)

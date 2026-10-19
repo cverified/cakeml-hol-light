@@ -9,9 +9,13 @@
   Correctness proof for lab_to_target
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
 needs "compiler/backend/lab_to_target.ml";;
+needs "compiler/backend/pattern_matching/pattern_common.ml";;
+needs "compiler/backend/proofs/clos_constantProof.ml";;
 needs "compiler/backend/proofs/lab_filterProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -22,19 +26,25 @@ needs "compiler/backend/semantics/targetProps.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
+needs "compiler/inference/infer.ml";;
 needs "lib/alignment.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/byte.ml";;
+needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide ["contain"; "invariant"; "not"];;
 
@@ -408,6 +418,7 @@ let line_ok_def = cake_define
           (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
         | (c,(labLang_LabAsm (Call v24) w bytes l)) ->
         F
+        // Call not yet supported
         | (c,(labLang_LabAsm a w bytes l)) ->
         (match get_label a with labLang_Lab l1 l2 ->
         (match lab_lookup l1 l2 labs with
@@ -530,7 +541,10 @@ let num_pcs_def = cake_define_list_cheat CHEAT_TAC
 let share_mem_domain_code_rel_def = cake_define
   `share_mem_domain_code_rel mc_conf p code2 (s1_shared_mem_domain:'a
   word->bool) <=>
-     (!pc' op re a inst' len i.
+     (
+      // whenever the pc is accessing share mem, the pc is in ffi_entry_pcs
+      // * after mmio_pcs_min_index and the mmio_info for it is correct
+      !pc' op re a inst' len i.
          (asm_fetch_aux pc' code2 = SOME (labLang_Asm (ShareMem op re
            a) inst' len) /\
          mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
@@ -546,14 +560,19 @@ let share_mem_domain_code_rel_def = cake_define
              (
               ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
                 (nb,a,re,p + n2w (pos_val pc' 0 code2 + len)))))) /\
-     (!pc' line.
+     (
+      // if the bytes of the instruction intersect with the ffi_entry_pcs,
+      // * it must be fetching ShareMem instruction
+      !pc' line.
        asm_fetch_aux pc' code2 = SOME line /\
        (!op re a inst' len. ~(line = labLang_Asm (ShareMem op re a)
          inst' len)) ==>
        DISJOINT (set_of_list (machine_config_ffi_entry_pcs mc_conf))
          {p + n2w a + n2w (pos_val pc' 0 code2) |
            a < LENGTH (line_bytes line)}) /\
-      (!a.
+      (
+       // restriction for shared memory domain
+       !a.
          byte_align a IN s1_shared_mem_domain ==>
          a IN s1_shared_mem_domain) /\
       (machine_config_shared_addresses mc_conf =
@@ -562,7 +581,9 @@ let share_mem_domain_code_rel_def = cake_define
 let share_mem_state_rel_def = cake_define
   `share_mem_state_rel mc_conf
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
-      (!ms2 k index new_bytes t1 nb ad offs re pc' ad' st new_st i.
+      (
+       // ffi interfers for mapped read/write are ok
+       !ms2 k index new_bytes t1 nb ad offs re pc' ad' st new_st i.
        mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i
          /\
        i <= index /\ index < LENGTH (machine_config_ffi_names
@@ -574,14 +595,17 @@ let share_mem_state_rel_def = cake_define
          t1) /\
        ad' = target_get_reg (machine_config_target mc_conf) ms2 ad +
          offs /\
+       // eval the address value
        target_state_rel (machine_config_target mc_conf)
          (asm_state_pc_fupd (K (EL index
            (machine_config_ffi_entry_pcs mc_conf))) t1) ms2 ==>
        (?op. EL index (machine_config_ffi_names mc_conf) =
          ffi_SharedMem op /\
           (match op with MappedRead ->
-          ((if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
-            = 0 else T) /\
+          ((
+            // If we are doing mapped read, and addresses are fine
+            if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
+              = 0 else T) /\
           (ad' IN machine_config_shared_addresses mc_conf) /\
           is_valid_mapped_read (target_get_pc (machine_config_target
             mc_conf) ms2) nb (Addr ad offs) re pc'
@@ -598,8 +622,10 @@ let share_mem_state_rel_def = cake_define
                       t1))
                (machine_config_ffi_interfer mc_conf k
                  (index,new_bytes,ms2))) | MappedWrite ->
-          ((if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
-            = 0 else T) /\
+          ((
+            // If we are doing mapped write, and the addresses are fine
+            if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
+              = 0 else T) /\
            (ad' IN machine_config_shared_addresses mc_conf) /\
            is_valid_mapped_write (target_get_pc
              (machine_config_target mc_conf) ms2) nb (Addr ad offs) re
@@ -618,8 +644,10 @@ let share_mem_state_rel_def = cake_define
              (asm_state_pc_fupd (K pc') t1)
              (machine_config_ffi_interfer mc_conf k
                (index,new_bytes,ms2)))))) /\
-    (!index i. mmio_pcs_min_index (machine_config_ffi_names mc_conf)
-      = SOME i /\
+    (
+     // requirements for location of share memory access pcs
+     !index i. mmio_pcs_min_index (machine_config_ffi_names mc_conf)
+       = SOME i /\
        index < LENGTH (machine_config_ffi_names mc_conf) /\ i <=
          index ==> ~(machine_config_halt_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs mc_conf)))
@@ -829,13 +857,16 @@ let state_rel_def = cake_define
        mc_conf = labSem_state_len2_reg s1) /\
      reg_ok (labSem_state_link_reg s1) (target_config
        (machine_config_target mc_conf)) /\
-     (?i. mmio_pcs_min_index (machine_config_ffi_names mc_conf) =
-       SOME i /\
+     (
+      // FFI behaves correctly
+      ?i. mmio_pcs_min_index (machine_config_ffi_names mc_conf) =
+        SOME i /\
           (!index. if i <= index /\ index < LENGTH
             (machine_config_ffi_names mc_conf) then ?info. ALOOKUP
             (machine_config_mmio_info mc_conf) index = SOME info else
             ALOOKUP (machine_config_mmio_info mc_conf) index = NONE)) /\
      (!ms2 k index new_bytes t1 bytes bytes2 st new_st i.
+        // for normal ffis
         mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
           i /\
         index < i /\
@@ -872,7 +903,9 @@ let state_rel_def = cake_define
                                 target_get_reg (machine_config_target
                                 mc_conf) ms' a)) t1))))
              ms')) /\
-     (!ms2 t1 k a1 a2.
+     (
+      // clear cache behaves correctly
+      !ms2 t1 k a1 a2.
        target_state_rel (machine_config_target mc_conf)
          (asm_state_pc_fupd (K (p - n2w ((2 * ffi_offset)))) t1) ms2
            /\
@@ -905,7 +938,11 @@ let state_rel_def = cake_define
                (machine_config_target mc_conf))
                (lab_to_target_config_labels cfg) code /\
              no_share_mem_inst code /\
-             (k = 0 ==> lab_to_target_config_labels
+             (
+              // Initial configuration for oracle
+              // Note: this should not be stated as a record cfg = <|...|>
+              // because some parts of it can be freely chosen (e.g. the clock)
+              k = 0 ==> lab_to_target_config_labels
              cfg = labs /\ lab_to_target_config_pos
              cfg = LENGTH (prog_to_bytes code2) /\ ffi_names
              cfg = SOME (machine_config_ffi_names mc_conf)))) /\
@@ -916,8 +953,11 @@ let state_rel_def = cake_define
        (FILTER (\x. ?s. x = ffi_ExtCall s) (find_ffi_names
          (labSem_state_code s1))) (machine_config_ffi_names
        mc_conf)) /\
+     // this is possibly already implied
      EVEN (LENGTH (prog_to_bytes code2)) /\
-     (!name i.
+     (
+      // FFIs are located at the right positions
+      !name i.
          MEM name (machine_config_ffi_names mc_conf) /\
          mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
            i /\
@@ -938,40 +978,55 @@ let state_rel_def = cake_define
           (machine_config_ffi_entry_pcs
                     mc_conf) 0 = SOME (get_ffi_index
                       (machine_config_ffi_names mc_conf) name))) /\
-     (p - n2w ffi_offset = machine_config_halt_pc mc_conf) /\
+     (
+      // Halt/ClearCache are at the right positions
+      p - n2w ffi_offset = machine_config_halt_pc mc_conf) /\
      (p - n2w (2 * ffi_offset) = machine_config_ccache_pc mc_conf) /\
+     // Small interference oracle is okay
      interference_ok (machine_config_next_interfer mc_conf)
        (target_proj (machine_config_target mc_conf)
        (asm_state_mem_domain t1)) /\
      (!l1 l2 x2.
         (loc_to_pc l1 l2 (labSem_state_code s1) = SOME x2) ==>
         (lab_lookup l1 l2 labs = SOME (pos_val x2 0 code2))) /\
-     (!r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
+     (
+      // Relating register
+      !r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
      (!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME
        (asm_state_regs t1 r)) /\
-     (!a. byte_align a IN labSem_state_mem_domain s1 ==>
+     (
+      // Relating (data) memories
+      !a. byte_align a IN labSem_state_mem_domain s1 ==>
           a IN asm_state_mem_domain t1 /\ a IN
             labSem_state_mem_domain s1 /\
           (word_loc_val_byte p labs (labSem_state_mem s1) a
             (labSem_state_be s1) = SOME (asm_state_mem t1 a))) /\
-     (!n.
+     (
+      // Remaining space for code buffer exists
+      !n.
        n < buffer_space_left (labSem_state_code_buffer s1) ==>
        (let addr' = buffer_position (labSem_state_code_buffer s1) +
          n2w (LENGTH (buffer_buffer (labSem_state_code_buffer s1)) + n)
          in
        addr' IN asm_state_mem_domain t1 /\ ~(addr' IN
          labSem_state_mem_domain s1))) /\
+     // Position of code memory
      bytes_in_mem p (prog_to_bytes code2) (asm_state_mem
        t1) (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
          buffer_position (labSem_state_code_buffer
+     // Position of code buffer pointer
      s1) = p + n2w (LENGTH (prog_to_bytes code2)) /\
+     // Code buffer's bytes are in the right position
      bytes_in_mem (buffer_position (labSem_state_code_buffer s1))
        (buffer_buffer (labSem_state_code_buffer s1)) (asm_state_mem
        t1) (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+     // Code buffer writes do not overwrite memory
      LENGTH (prog_to_bytes code2) + LENGTH (buffer_buffer
        (labSem_state_code_buffer s1)) + buffer_space_left
        (labSem_state_code_buffer s1) < dimword (:'a) /\
-     (!bn.
+     (
+      // code buffer does not intersect with ffi_entry_pcs
+      !bn.
        bn < LENGTH (buffer_buffer (labSem_state_code_buffer s1)) +
          buffer_space_left (labSem_state_code_buffer s1) ==>
        ~(MEM (buffer_position (labSem_state_code_buffer s1) + n2w bn)
@@ -3689,9 +3744,12 @@ let remove_labels_loop_thm =
          /\
        DISJOINT (domain init_labs) (set_of_list (MAP Section_num
          code)) /\
+       // TODO this is stronger:
+       // get_labels code ⊆ get_code_labels code ∪ labs_domain init_labs ∧
        restrict_nonzero (get_labels code) SUBSET get_code_labels
          code UNION labs_domain init_labs /\
        (\c ls. EVERY (sec_ok_pre c) ls) c code /\
+       // new loop invariant
        (\enc l. EVERY (sec_encd0 enc) l) (asm_config_encode c) code
          /\
        enc_ok c /\
@@ -4491,9 +4549,11 @@ let oracle_tie_make_init = cake_theorem "oracle_tie_make_init"
 
 let compiler_oracle_ok_def = cake_define
   `compiler_oracle_ok coracle init_labs init_pos c ffis <=>
-     (!(k:num). let (cfg,code) = coracle k in
-       lab_to_targetProof_good_code c (lab_to_target_config_labels cfg)
-       code /\
+     (
+      // Assumptions about initial compile oracle
+      !(k:num). let (cfg,code) = coracle k in
+        lab_to_targetProof_good_code c (lab_to_target_config_labels cfg)
+        code /\
        no_share_mem_inst code) /\
      (let (cfg,code) = coracle 0 in lab_to_target_config_labels
          cfg = init_labs /\ lab_to_target_config_pos
@@ -5042,15 +5102,19 @@ let semantics_compile_lemma' =
        compiler_oracle_ok coracle (lab_to_target_config_labels c')
          (LENGTH bytes) (asm_conf:'a asm_config)
          (machine_config_ffi_names mc_conf)) /\
+     // Assumptions on input code
      lab_to_targetProof_good_code (target_config
        (machine_config_target mc_conf)) LN code /\
+     // Config state
      asm_conf = target_config (machine_config_target mc_conf) /\
        lab_to_target_config_labels
      c = LN /\ lab_to_target_config_pos c = 0 /\
      lab_to_target_compile asm_conf (c:lab_to_target_config) code =
        SOME (bytes,c') /\ ffi_names
+     // FFI is either given or computed
      c' = SOME (machine_config_ffi_names mc_conf) /\
      good_init_state mc_conf ms bytes cbspace t m dm sdm /\
+     // set up mmio_info and ffi_entry_pcs for mmio
      MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf)
        ms) + shmem_info_num_entry_pc rec)
        (lab_to_target_config_shmem_extra c') =
@@ -5071,11 +5135,14 @@ let semantics_compile_lemma' =
        mc_conf) /\
      (mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
        i) /\
+     // to avoid the ffi_entry_pc wraps around and overlaps with the program or code buffer
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a)
        /\
-     (!ffis. lab_to_target_config_ffi_names c = SOME ffis ==> EVERY
-       (\x. ?s. x = ffi_ExtCall s) ffis) /\ ~(semantics
-       (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms code
+     (
+      // the original ffi names provided does not contain MappedRead or MappedWrite
+      !ffis. lab_to_target_config_ffi_names c = SOME ffis ==> EVERY
+        (\x. ?s. x = ffi_ExtCall s) ffis) /\ ~(semantics
+        (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms code
        (lab_to_target_compile asm_conf) (target_get_pc
          (machine_config_target mc_conf) ms + n2w (LENGTH bytes))
          cbspace
@@ -5134,10 +5201,13 @@ let lab_to_targetProof_semantics_compile =
                               c')) /\
      no_install_or_no_share_mem code (machine_config_ffi_names
        mc_conf) /\
+     // to avoid the ffi_entry_pc wraps around and overlaps with the program or code buffer
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a)
        /\
-     (!ffis. ffi_names c = SOME ffis ==> EVERY (\x. ?s. x =
-       ffi_ExtCall s) ffis) ==>
+     (
+      // the original ffi names provided does not contain MappedRead or MappedWrite
+      !ffis. ffi_names c = SOME ffis ==> EVERY (\x. ?s. x =
+        ffi_ExtCall s) ffis) ==>
       implements' T (machine_sem mc_conf ffi ms)
         {semantics
            (lab_to_targetProof_make_init mc_conf ffi t m (dm INTER

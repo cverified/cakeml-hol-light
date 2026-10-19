@@ -518,6 +518,8 @@ let word_to_word_compile_semantics =
      no_mt_code (fromAList wprog0) /\
      ALL_DISTINCT (MAP FST wprog0) /\ wordSem_state_stack s = [] /\
        wordSem_state_code
+     // start = lc + first_name ∧
+     // EL lc wprog0 = (start, v) ∧
      t = fromAList wprog /\ lookup 0 (wordSem_state_locals t) =
        SOME (Loc 1 0) /\
      t = wordSem_state_code_fupd (K (wordSem_state_code t)) s /\

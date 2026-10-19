@@ -2,8 +2,8 @@
 (*  stack_remove: ported from HOL4's
     compiler/backend/stack_removeScript.sml
     A definition theory, with 27 definitions and 1 theorem.  Needed
-    by backendProof.ml, backend_passes.ml, stack_removeProof.ml,
-    stack_to_lab.ml and stack_to_labProof.ml.  *)
+    by backendProof.ml, backend_passes.ml, data_to_word_gcProof.ml,
+    stack_removeProof.ml, stack_to_lab.ml and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -13,12 +13,17 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/bvi_tailrec.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
+needs "lib/peg.ml";;
+needs "lib/regexp_compiler.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 cake_hide ["dummy"; "gc"; "gen_gc"];;
 (* HOL4 ancestors outside the port: (* for bytes_in_word *) *)
@@ -190,7 +195,9 @@ let copy_loop_def = cake_define
 
 let comp_def = cake_define
   `stack_remove_comp jump off k (p:'a stackLang_prog) =
-     (match p with stackLang_Get r name ->
+     (match p with
+       // remove store accesses
+       stackLang_Get r name ->
          (if name = CurrHeap then (\dest src. Inst (Arith (asm_Binop
            asm_Or dest src (Reg src)))) r (k + 2) else Inst (asm_Mem
            asm_Load r (Addr (k + 1) (store_offset name)))) |
@@ -200,9 +207,10 @@ let comp_def = cake_define
            asm_Store r (Addr (k + 1) (store_offset name)))) |
            stackLang_OpCurrHeap op r n ->
          Inst (Arith (asm_Binop op r n (Reg (k + 2)))) |
-           stackLang_StackFree n -> stack_remove_stack_free k n |
-           stackLang_StackAlloc n -> stack_alloc jump k n |
-           stackLang_StackStore r n ->
+       // remove stack operations
+       stackLang_StackFree n -> stack_remove_stack_free k n |
+         stackLang_StackAlloc n -> stack_alloc jump k n |
+         stackLang_StackStore r n ->
        (let w = word_offset n in
        if asm_offset_ok 0 off w then
          Inst (asm_Mem asm_Store r (Addr k w)) else
@@ -213,10 +221,12 @@ let comp_def = cake_define
          stackLang_Seq ((\dest src. Inst (Arith (asm_Binop asm_Or
            dest src (Reg src)))) r k) (stack_load r n)) |
            stackLang_DataBufferWrite r1 r2 -> Inst (asm_Mem asm_Store r2
-           (Addr r1 (n2w 0))) | stackLang_StackLoadAny r i ->
-           stackLang_Seq (stackLang_Seq ((\dest src. Inst (Arith
-           (asm_Binop asm_Or dest src (Reg src)))) r i) ((\r1 r2. Inst
-           (Arith (asm_Binop asm_Add r1 r1 (Reg r2)))) r k))
+           (Addr r1 (n2w 0))) |
+       // remove data buffer
+       stackLang_StackLoadAny r i -> stackLang_Seq (stackLang_Seq
+         ((\dest src. Inst (Arith (asm_Binop asm_Or dest src (Reg
+         src)))) r i) ((\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1
+         (Reg r2)))) r k))
                               (stackLang_Inst (asm_Mem asm_Load r
                                 (Addr r (n2w 0)))) |
                                 stackLang_StackStoreAny r i ->
@@ -262,13 +272,14 @@ let comp_def = cake_define
                    (\dest src. Inst (Arith (asm_Binop asm_Or dest src
                      (Reg src)))) t1 1;
                    (\dest src. Inst (Arith (asm_Binop asm_Or dest src
-                     (Reg src)))) t2 1] | stackLang_Seq p1 p2 ->
-                     stackLang_Seq (stack_remove_comp jump off k p1)
-                     (stack_remove_comp jump off k p2) | If c r ri p1 p2
-                     -> If c r ri (stack_remove_comp jump off k p1)
-                     (stack_remove_comp jump off k p2) | stackLang_Loop
-                     p1 -> stackLang_Loop (stack_remove_comp jump off k
-                     p1) | Call ret dest exc ->
+                     (Reg src)))) t2 1] |
+       // for the rest, just leave it unchanged
+       stackLang_Seq p1 p2 -> stackLang_Seq (stack_remove_comp jump
+         off k p1) (stack_remove_comp jump off k p2) | If c r ri p1 p2
+         -> If c r ri (stack_remove_comp jump off k p1)
+         (stack_remove_comp jump off k p2) | stackLang_Loop p1 ->
+         stackLang_Loop (stack_remove_comp jump off k p1) | Call ret
+         dest exc ->
          Call (match ret with NONE -> NONE | SOME (p1,lr,l1,l2) ->
            SOME (stack_remove_comp jump off k p1,lr,l1,l2))
            dest (match exc with NONE -> NONE | SOME (p2,l1,l2) ->
@@ -335,6 +346,7 @@ let init_code_def = cake_define
        dimword (:'a) then n2w max_heap * bytes_in_word else (n2w 0) -
        (n2w 1)) in
        stackLang_list_Seq [
+                 // compute the middle address, store in reg0
                  (\dest src. Inst (Arith (asm_Binop asm_Or dest src
                    (Reg src)))) 0 4;
                  (\r1 r2. Inst (Arith (asm_Binop asm_Sub r1 r1 (Reg
@@ -345,6 +357,8 @@ let init_code_def = cake_define
                    v))))) 0 (backend_common_word_shift (:'a));
                  (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1 (Reg
                    r2)))) 0 2;
+                 // if reg3 is not between start and end of memory, then put
+                 // it in the middle (i.e. split heap and stack evenly)
                  (\r w. Inst (asm_Const r w)) 5 (n2w max_stack_alloc
                    * (bytes_in_word:'a word));
                  (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1 (Reg
@@ -362,6 +376,7 @@ let init_code_def = cake_define
                    r2)))) 2 0;
                  (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1 (Reg
                    r2)))) 4 0;
+                 // shrink the heap if it is too big
                  (\dest src. Inst (Arith (asm_Binop asm_Or dest src
                    (Reg src)))) 0 3;
                  (\r1 r2. Inst (Arith (asm_Binop asm_Sub r1 r1 (Reg
@@ -371,6 +386,7 @@ let init_code_def = cake_define
                    Inst (Arith (asm_Binop asm_Or dest src (Reg src)))) 3
                    2) ((\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1
                    (Reg r2)))) 3 5)) stackLang_Skip;
+                 // ensure heap is even number of words
                  (\r1 r2. Inst (Arith (asm_Binop asm_Sub r1 r1 (Reg
                    r2)))) 3 2;
                  (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
@@ -379,12 +395,14 @@ let init_code_def = cake_define
                    v))))) 3 (backend_common_word_shift (:'a) + 1);
                  (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1 (Reg
                    r2)))) 3 2;
+                 // split heap into two, store heap length in 5
                  (\dest src. Inst (Arith (asm_Binop asm_Or dest src
                    (Reg src)))) 5 3;
                  (\r1 r2. Inst (Arith (asm_Binop asm_Sub r1 r1 (Reg
                    r2)))) 5 2;
                  (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
                    v))))) 5 1;
+                 // setup store, stack
                  (\dest src. Inst (Arith (asm_Binop asm_Or dest src
                    (Reg src)))) (k + 2) 2;
                  (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1 (Reg
@@ -437,6 +455,7 @@ hol4_overload "stub_names" "stack_remove_stub_names";;
 let check_init_stubs_length = cake_theorem "check_init_stubs_length"
   (fun () ->
     `LENGTH (init_stubs gen_gc max_heap k start) + 2 =
+     // gc + dummy
      stack_num_stubs`)
   CHEAT_TAC;;
 

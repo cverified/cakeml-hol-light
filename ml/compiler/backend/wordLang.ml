@@ -2,7 +2,7 @@
 (*  wordLang: ported from HOL4's
     compiler/backend/wordLangScript.sml
     A definition theory, with 15 definitions, 3 datatypes and 3
-    theorems.  Needed by 41 files of the port.  *)
+    theorems.  Needed by 43 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -14,6 +14,7 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -47,19 +48,35 @@ let wordLang_prog_INDUCT,wordLang_prog_RECURSION = define_datatype
    (store_name) ('a wordLang_exp) | wordLang_Store ('a wordLang_exp) \
    (num) | wordLang_MustTerminate (wordLang_prog) | wordLang_Call \
    ((num list#(1 spt#1 spt)#wordLang_prog#num#num) option) (num \
-   option) (num list) ((num#wordLang_prog#num#num) option) | \
+   option) (num list) ((num#wordLang_prog#num#num) option) \
+   // target of call\n\
+   // arguments\n\
+   | \
+   // return vars, cut-set, return-handler code, labels l1,l2\n\
+   // handler: varname, exception-handler code, labels l1,l2\n\
    wordLang_Seq (wordLang_prog) (wordLang_prog) | wordLang_If (cmp) \
    (num) ('a asm_reg_imm) (wordLang_prog) (wordLang_prog) | \
    wordLang_Loop (1 spt) (wordLang_prog) (1 spt) | wordLang_Alloc \
    (num) (1 spt#1 spt) | wordLang_StoreConsts (num) (num) (num) (num) \
    ((bool#'a word) list) | wordLang_Raise (num) | wordLang_Return \
-   (num) (num list) | wordLang_Break (num) | wordLang_Continue (num) \
-   | wordLang_Tick | wordLang_OpCurrHeap (binop) (num) (num) | \
-   wordLang_LocValue (num) (num) | wordLang_Install (num) (num) (num) \
-   (num) (1 spt#1 spt) | wordLang_CodeBufferWrite (num) (num) | \
-   wordLang_DataBufferWrite (num) (num) | wordLang_FFI (mlstring) \
-   (num) (num) (num) (num) (1 spt#1 spt) | wordLang_ShareInst (memop) \
-   (num) ('a wordLang_exp)";;
+   (num) (num list) \
+   // return lab, return values\n\
+   | wordLang_Break (num) | wordLang_Continue (num) | wordLang_Tick | \
+   wordLang_OpCurrHeap (binop) (num) (num) \
+   // special case compiled well in stackLang\n\
+   | wordLang_LocValue (num) (num) \
+   // assign v1 := Loc v2 0\n\
+   | wordLang_Install (num) (num) (num) (num) (1 spt#1 spt) \
+   // code buffer start, length of new code,\n\
+   // data buffer start, length of new data, cut-set\n\
+   | wordLang_CodeBufferWrite (num) (num) \
+   // code buffer address, byte to write\n\
+   | wordLang_DataBufferWrite (num) (num) \
+   // data buffer address, word to write\n\
+   | wordLang_FFI (mlstring) (num) (num) (num) (num) (1 spt#1 spt) \
+   // FFI name, conf_ptr, conf_len, array_ptr, array_len, cut-set\n\
+   | wordLang_ShareInst (memop) (num) ('a wordLang_exp) \
+   // memory operation, varname, expression for memory address";;
 hol4_overload "Skip" "wordLang_Skip";;
 hol4_overload "Move" "wordLang_Move";;
 hol4_overload "Inst" "wordLang_Inst";;
@@ -225,6 +242,7 @@ let every_stack_var_def = cake_define
          every_name P cutset /\
          every_stack_var P ret_handler /\
        (match h with
+         // Does not check the case where Calls are ill-formed
          NONE -> T | SOME (v,prog,l1,l2) ->
          every_stack_var P prog))
         | (Alloc num' numset) ->

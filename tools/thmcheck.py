@@ -27,7 +27,7 @@ def strip_dslash(text):
   """the text without the comments of a term of the port, which
      stand after // and run to the end of the line (a comment of
      the source that is inside a block keeps its place that way)"""
-  return re.sub(r'(?m)^(\s*)//.*$', r'\1', text)
+  return re.sub(r'(?m)^(\s*`?)//.*$', r'\1', text)
 
 
 def scan(text):

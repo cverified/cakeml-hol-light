@@ -15,10 +15,14 @@
 
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* Number of bytes per FFI *)
 let ffi_offset_def = cake_define
@@ -67,6 +71,7 @@ let enc_sec_list_def = cake_define
 let section_labels_def = cake_define_list
   [`section_labels pos [] labs = (pos,labs)`;
    `section_labels pos (labLang_Label _12 l2 len :: xs) labs =
+         // Ignore 0 labels
          (if l2 = 0 then
            section_labels (pos + len) xs labs else
            section_labels (pos + len) xs ((l2,pos + len) ::
@@ -97,6 +102,7 @@ let get_label_def = cake_define
         | (JumpCmp c r ri l) -> l
         | (Call l) -> l
         | (labLang_LocValue r l) -> l
+        // cannot happen
         | _18 -> labLang_Lab 0 0`;;
 
 (* It should never happen that get_ffi_index returns the default 0 ---
@@ -188,6 +194,7 @@ let line_ok_light_def = cake_define
         asm_ok (Jump w) c
         | (c,(labLang_LabAsm (Call v24) w bytes l)) ->
         F
+        // Call not yet supported
         | (c,(labLang_LabAsm a w bytes l)) ->
         asm_ok (lab_inst w a) c`;;
 
@@ -291,26 +298,41 @@ let zero_labs_acc_exist_def = cake_define
 
 let remove_labels_loop_def = cake_define
   `remove_labels_loop clock c pos init_labs ffis sec_list =
+     // compute labels
      (let labs = compute_labels_alt pos sec_list init_labs in
+     // update encodings and lengths (but not label lengths)
      let (sec_list,done') = enc_secs_again pos labs ffis
        (asm_config_encode c) sec_list in
+       // done ==> labs are still fine
        if done' then
+         // adjust label lengths
          let sec_list = upd_lab_len pos sec_list in
+         // compute labels again
          let labs = compute_labels_alt pos sec_list init_labs in
+         // update encodings
          let (sec_list,done') = enc_secs_again pos labs ffis
            (asm_config_encode c) sec_list in
+         // move label padding into instructions
          let sec_list = pad_code (asm_config_encode c (asm_Inst
            asm_Skip)) sec_list in
+           // it ought to be impossible for done to be false here
            if done' /\ (\c ls. EVERY (sec_ok_light c) ls) c sec_list
              /\
               zero_labs_acc_exist labs sec_list then SOME
                 (sec_list,labs) else NONE else
+         // repeat
          if clock = (0:num) then NONE else
            remove_labels_loop (clock - 1) c pos init_labs ffis
              sec_list)`;;
 
 let remove_labels_def = cake_define
   `remove_labels init_clock c pos labs ffis sec_list =
+     // Here init_clock puts an upper limit on the number of times the
+     // lengths can be adjusted. In many cases, clock = 0 should be
+     // enough. If this were to hit the clock limit for large values of
+     // init_clock, then something is badly wrong. Worth testing with
+     // the clock limit set to low values to see how many iterations
+     // are used.
      remove_labels_loop init_clock c pos labs ffis (enc_sec_list
        (asm_config_encode c) sec_list)`;;
 

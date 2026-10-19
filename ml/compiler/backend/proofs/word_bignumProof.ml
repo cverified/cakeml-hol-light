@@ -307,22 +307,28 @@ let div_code_assum_def = cake_define
 let state_rel_def = cake_define
   `word_bignumProof_state_rel s (t:('a,'c,'ffi)wordSem_state) cs t0
   frame <=> state_clock
+     // clock related
      s = wordSem_state_clock t /\
+     // array related
      array_rel (word_bignumProof_state_arrays s) (FLOOKUP
        (wordSem_state_store t) TempIn1)
                         (FLOOKUP (wordSem_state_store t) TempIn2)
                         (FLOOKUP (wordSem_state_store t) TempOut)
                           (wordSem_state_memory t)
                           (wordSem_state_mdomain t) frame /\
-     (!a v.
+     (
+      // regs related
+      !a v.
         FLOOKUP (word_bignumProof_state_regs s) a = SOME v ==>
         a < 25 /\
         FLOOKUP (wordSem_state_store t) (Temp (n2w a)) = SOME
           (wordLang_Word v)) /\
+     // code assumption
      word_bignumProof_code_rel cs (wordSem_state_code t) /\
      div_code_assum (:'ffi) (:'c) (wordSem_state_code t) /\
        ~(wordSem_state_termdep
      t = 0) /\ wordSem_state_gc_fun
+     // rest same as original
      t0 = wordSem_state_gc_fun t /\ wordSem_state_handler
      t0 = wordSem_state_handler t /\ wordSem_state_termdep
      t0 = wordSem_state_termdep t /\ wordSem_state_code
@@ -333,6 +339,8 @@ let state_rel_def = cake_define
      t0 = wordSem_state_compile_oracle t /\ wordSem_state_code_buffer
      t0 = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
      t0 = wordSem_state_data_buffer t /\ wordSem_state_stack_limit
+     // t0.locals_size = t.locals_size /\
+     // t0.stack_max = t.stack_max /\
      t0 = wordSem_state_stack_limit t /\ wordSem_state_stack_size
      t0 = wordSem_state_stack_size t /\
      FLOOKUP (wordSem_state_store t) TempOut = FLOOKUP

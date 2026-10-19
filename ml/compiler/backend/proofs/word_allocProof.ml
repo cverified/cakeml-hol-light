@@ -22,6 +22,7 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/peg.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
@@ -132,9 +133,11 @@ let colouring_ok_def = cake_define
   `colouring_ok f prog live lt =
         match prog with
           wordLang_Seq s1 s2 ->
+       // Normal live sets
        (let s2_live = get_live s2 live lt in
        let s1_live = get_live s1 s2_live lt in
          INJ f (domain s1_live) UNIV /\
+         // Internal clash sets
          colouring_ok f s2 live lt /\ colouring_ok f s1 s2_live lt)
         | (If cmp r1 ri e2 e3) ->
        (let e2_live = get_live e2 live lt in
@@ -143,15 +146,20 @@ let colouring_ok_def = cake_define
        let merged = (match ri with Reg r2 -> sptree_insert r2 one
          (sptree_insert r1 one union_live) | _1 -> sptree_insert r1 one
          union_live) in
+         // All of them must be live at once
          INJ f (domain merged) UNIV /\
+         // Internal clash sets
          colouring_ok f e2 live lt /\ colouring_ok f e3 live lt)
         | (Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h) ->
        (let args_set = numset_list_insert args LN in
        let all_names' = sptree_union (SND cutset) (FST cutset) in
        INJ f (domain (sptree_union all_names' args_set)) UNIV /\
        INJ f (domain (numset_list_insert v all_names')) UNIV /\
+       // returning handler
        colouring_ok f ret_handler live lt /\
-       (match h with NONE -> T | SOME (v,prog,l1,l2) ->
+       (
+        // exception handler
+        match h with NONE -> T | SOME (v,prog,l1,l2) ->
            INJ f (domain (sptree_insert v one all_names')) UNIV /\
            colouring_ok f prog live lt))
         | (wordLang_MustTerminate p) ->
@@ -161,6 +169,7 @@ let colouring_ok_def = cake_define
        INJ f (domain exit_names) UNIV /\
        colouring_ok f body names ((names,exit_names) :: lt))
         | prog ->
+       // live before must be fine, and clash set must be fine
        (let lset = get_live prog live lt in
        let iset = sptree_union (get_writes prog) live in
          INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV)`;;
@@ -379,6 +388,7 @@ let env_to_list_perm = cake_theorem "env_to_list_perm[local]"
      ?perm'.
        let (l',permute') = env_to_list x perm' in
          permute' = tperm /\
+         // Just change the first permute
          MAP (\(x,y). f x,y) l' = l)`)
   CHEAT_TAC;;
 
@@ -969,6 +979,7 @@ let clash_tree_colouring_ok = cake_theorem "clash_tree_colouring_ok"
      INJ f (domain live) UNIV /\
      check_clash_tree f (get_clash_tree prog lt) live flive = SOME
        (livein,flivein) ==>
+     // very slow when this is not hidden...
      hide (sptree_wf livein /\
      INJ f (domain livein) UNIV /\
      colouring_ok f prog live lt /\
@@ -2491,6 +2502,8 @@ let ssa_cc_trans_correct = cake_theorem "ssa_cc_trans_correct"
      word_state_eq_rel st cst /\
      ssa_locals_rel na ssa (wordSem_state_locals st)
        (wordSem_state_locals cst) /\
+     // The following 3 assumptions are from the transform properties and
+     // are independent of semantics
      is_alloc_var na /\
      wordLang_every_var (\x. x < na) prog /\
      ssa_map_ok na ssa /\

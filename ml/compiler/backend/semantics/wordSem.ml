@@ -11,9 +11,13 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/clos_call.ml";;
+needs "compiler/backend/data_space.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/inference/infer.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
@@ -28,6 +32,7 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: finite_map (* for call_FFI *) (*
    for build_lprefix_lub *) (* for FP *) (* for word_add_carry *) *)
 
@@ -193,7 +198,9 @@ let write_bytearray_def = cake_define_list
 
 let stack_frame_INDUCT,stack_frame_RECURSION = define_datatype
   "stack_frame = StackFrame (num option) ((num#'a word_loc) list) \
-   ((num#'a word_loc) list) ((num#num#num) option)";;
+   ((num#'a word_loc) list) ((num#num#num) option) \
+   // non-GCed cutset\n\
+   // GCed cutset";;
 
 (* HOL4 wordSemScript.sml:193-197: the type abbreviation gc_fun_type,
    which the port expands *)
@@ -204,16 +211,22 @@ let gc_bij_ok_def = cake_define
 let wordSem_state_FIELDS = define_record "wordSem_state"
   ["locals","('a word_loc) spt";
    "locals_size","num option";
+   (* size of locals when pushed to stack, NONE if unbounded *)
    "fp_regs","(num,word64)fmap";
+   (* FP regs are treated "globally" *)
    "store","(store_name,'a word_loc)fmap";
    "stack","('a stack_frame) list";
    "stack_limit","num";
+   (* max stack size *)
    "stack_max","num option";
+   (* largest stack seen so far, NONE if unbounded *)
    "stack_size","num spt";
+   (* stack frame size of function, unbounded if unmapped *)
    "memory","'a word->'a word_loc";
    "mdomain","'a word->bool";
    "sh_mdomain","'a word->bool";
    "permute","num->num->num";
+   (* sequence of bijective mappings *)
    "compile","'c->(num#num#'a wordLang_prog) list->(word8 list#('a \
    word) list#'c) option";
    "compile_oracle","num->'c#(num#num#'a wordLang_prog) list";
@@ -223,10 +236,13 @@ let wordSem_state_FIELDS = define_record "wordSem_state"
    word->bool)#(store_name,'a word_loc)fmap->(('a word_loc) list#('a \
    word->'a word_loc)#(store_name,'a word_loc)fmap) option";
    "handler","num";
+   (*position of current handle frame on stack*)
    "clock","num";
    "termdep","num";
+   (* count of how many MustTerminates we can still enter *)
    "code","(num#'a wordLang_prog) spt";
    "be","bool";
+   (*is big-endian*)
    "ffi","'ffi ffi_state"];;
 hol4_overload "state_locals" "wordSem_state_locals";;
 hol4_overload "state_locals_fupd" "wordSem_state_locals_fupd";;
@@ -574,8 +590,12 @@ hol4_overload "call_env" "wordSem_call_env";;
 
 let list_rearrange_def = cake_define
   `list_rearrange mover xs =
+     // if the mover function is actually a permutation,
+     // i.e. it bijects (or injects) the keys 0...n-1 to 0...n-1
+     // use it
      (if (BIJ mover (count (LENGTH xs)) (count (LENGTH xs))) then
        GENLIST (\i. EL (mover i) xs) (LENGTH xs) else
+       // if it isn't well-formed, just pretend it is I
        xs)`;;
 
 (* Compare on keys, if keys match (never), then compare on
@@ -737,7 +757,8 @@ let dec_stack_def = cake_define
 hol4_overload "dec_stack" "wordSem_dec_stack";;
 
 let gc_def = cake_define
-  `wordSem_gc (s:('a,'c,'ffi)wordSem_state) =
+  `// gc runs the garbage collector algorithm
+   wordSem_gc (s:('a,'c,'ffi)wordSem_state) =
      (let wl_list = wordSem_enc_stack (wordSem_state_stack s) in
        match wordSem_state_gc_fun s (wl_list,wordSem_state_memory
          s,wordSem_state_mdomain s,wordSem_state_store s) with NONE ->
@@ -760,23 +781,39 @@ hol4_overload "has_space" "wordSem_has_space";;
 (* to_ask: should we not update stack size here?  *)
 let alloc_def = cake_define
   `wordSem_alloc (w:'a word) names (s:('a,'c,'ffi)wordSem_state) =
+     // prune local names
      (match cut_envs names (wordSem_state_locals s) with NONE ->
        (SOME (wordSem_Error:'a wordSem_result),wordSem_flush_state T s)
        | SOME envs' ->
-      (match wordSem_gc (wordSem_push_env envs' (NONE:(num#'a
-        wordLang_prog#num#num) option) (wordSem_set_store AllocSize
-        (wordLang_Word w) s)) with NONE -> (SOME
-        wordSem_Error,wordSem_flush_state T s) | SOME s ->
-        (match wordSem_pop_env s with NONE -> (SOME
-          wordSem_Error,wordSem_flush_state T s) | SOME s ->
-          (match wordSem_get_store AllocSize s with NONE -> (SOME
-            wordSem_Error,s) | SOME w ->
-            (match wordSem_has_space w s with NONE -> (SOME
-              wordSem_Error,s) | SOME T ->
-                         (NONE,s) | SOME F ->
-                         (SOME
-                           wordSem_NotEnoughSpace,wordSem_flush_state
-                           T s))))))`;;
+      (
+       // perform garbage collection
+       match wordSem_gc (wordSem_push_env envs' (NONE:(num#'a
+         wordLang_prog#num#num) option) (wordSem_set_store AllocSize
+         (wordLang_Word w) s)) with NONE -> (SOME
+         wordSem_Error,wordSem_flush_state T s) | SOME s ->
+        (
+         // restore local variables
+         match wordSem_pop_env s with
+           // Here flush_state is ok because the stack must
+           // be empty for pop_env to return NONE
+           NONE -> (SOME wordSem_Error,wordSem_flush_state T s) |
+             SOME s ->
+          (
+           // read how much space should be allocated
+           match wordSem_get_store AllocSize s with NONE -> (SOME
+             wordSem_Error,s) | SOME w ->
+            (
+             // check how much space there is
+             match wordSem_has_space w s with NONE -> (SOME
+               wordSem_Error,s) | SOME T ->
+                         (
+                          // success there is that much space
+                          NONE,s) | SOME F ->
+                         (
+                          // fail, GC didn't free up enough space
+                          SOME
+                            wordSem_NotEnoughSpace
+                            ,wordSem_flush_state T s))))))`;;
 hol4_overload "alloc" "wordSem_alloc";;
 
 let assign_def = cake_define
@@ -1019,6 +1056,8 @@ let fix_clock_IMP_LESS_EQ = cake_theorem "fix_clock_IMP_LESS_EQ[local]"
 
 let MustTerminate_limit_def = cake_define
   `MustTerminate_limit (:'a) =
+     // This is just a number that's large enough for our purposes.
+     // It stated in a way that makes proofs easy.
      2 * dimword (:'a) +
      dimword (:'a) * dimword (:'a) +
      dimword (:'a) EXP dimword (:'a) +
@@ -1236,10 +1275,14 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                   (wordSem_state_data_buffer_fupd (K db)
                   (wordSem_state_code_buffer_fupd (K cb)
                     s))))))) in
-                  (NONE,s') else (SOME wordSem_Error,s)) | _125
-                    -> (SOME wordSem_Error,s))) | _126 -> (SOME
-                    wordSem_Error,s))) | _127 -> (SOME
-                    wordSem_Error,s)))`;
+                  (
+                   // For convenience --- stack size of installed code,
+                   // or any other code for that matter, doesn't matter
+                   // after Install.
+                   NONE,s') else (SOME wordSem_Error,s)) | _125
+                     -> (SOME wordSem_Error,s))) | _126 -> (SOME
+                     wordSem_Error,s))) | _127 -> (SOME
+                     wordSem_Error,s)))`;
    `wordSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var r2 s) with
           (SOME (wordLang_Word w1),SOME (wordLang_Word w2)) ->
@@ -1297,6 +1340,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                (wordSem_state_code s) (wordSem_state_stack_size s) with
                NONE -> (SOME wordSem_Error,s) | SOME (args1,prog,ss) ->
                  (match ret with NONE ->
+                     // tail call
                      (if handler = NONE then
                        if wordSem_state_clock s = 0 then (SOME
                          wordSem_TimeOut,wordSem_flush_state T s) else
@@ -1306,6 +1350,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                          wordSem_Error,s) else (res,s))) else (SOME
                          wordSem_Error,s)) | SOME
                          (n,names,ret_handler,l1,l2) ->
+                     // returning call, returns into var n
                      (if domain (FST names) = {} \/ ~(ALL_DISTINCT
                        n) then (SOME wordSem_Error,s) else
                        (match cut_envs names (wordSem_state_locals
@@ -1340,9 +1385,10 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                                 (ret_handler,wordSem_set_vars n ys s1)
                                 else (SOME wordSem_Error,s1)))) | (SOME
                                 (wordSem_Exception x y),s2) ->
-                              (match handler with NONE -> (SOME
-                                (wordSem_Exception x y),s2) | SOME
-                                (n,h,l1,l2) ->
+                              (match handler with
+                              // if handler is present, then handle exc
+                              NONE -> (SOME (wordSem_Exception x
+                                y),s2) | SOME (n,h,l1,l2) ->
                               (if ~(x = Loc l1 l2) then (SOME
                                 wordSem_Error,s2) else
                               (if domain (wordSem_state_locals

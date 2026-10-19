@@ -90,8 +90,18 @@ hol4_overload "FFI_outcome" "ffi_FFI_outcome";;
    avoided. For Diverge and Terminate, we keep track of what I/O
    events are valid I/O events for this behaviour. *)
 let behaviour_INDUCT,behaviour_RECURSION = define_datatype
-  "behaviour = ffi_Diverge (io_event llist) | ffi_Terminate (outcome) \
-   (io_event list) | ffi_Fail";;
+  "behaviour = \
+   // There cannot be any non-returning FFI calls in a diverging\n\
+   // exeuction. The list of I/O events can be finite or infinite,\n\
+   // hence the llist (lazy list) type.\n\
+   ffi_Diverge (io_event llist) | \
+   // Terminating executions can only perform a finite number of\n\
+   // FFI calls. The execution can be terminated by a non-returning\n\
+   // FFI call.\n\
+   ffi_Terminate (outcome) (io_event list) | \
+   // Failure is a behaviour which we prove cannot occur for any\n\
+   // well-typed program.\n\
+   ffi_Fail";;
 hol4_overload "Diverge" "ffi_Diverge";;
 hol4_overload "Terminate" "ffi_Terminate";;
 hol4_overload "Fail" "ffi_Fail";;

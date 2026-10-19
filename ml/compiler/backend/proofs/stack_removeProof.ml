@@ -11,6 +11,7 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/export.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -29,6 +30,7 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide ["C"; "gen_gc"; "num_stubs"; "shift"];;
 
@@ -173,8 +175,11 @@ let state_rel_def = cake_define
      s2 = stackSem_state_sh_mdomain s1 /\ stackSem_state_compile
      s1 = (\c p. compile s2 c (MAP (prog_comp jump off k) p)) /\
        compile_oracle
+     // s2.data_buffer = empty_buffer /\
      s2 = (\n. (I ## MAP (prog_comp jump off k) ## I)
-       (stackSem_state_compile_oracle s1 n)) /\
+       (stackSem_state_compile_oracle
+                              // K []
+                              s1 n)) /\
      (!n i p. MEM (i,p) (FST (SND (stackSem_state_compile_oracle s1
        n))) ==> reg_bound p k /\ stack_num_stubs <= i + 1) /\
      good_dimindex (:'a) /\
@@ -247,7 +252,9 @@ let stack_removeProof_state_rel_const = cake_theorem "state_rel_const"
      ~(stackSem_state_use_stack t) /\ stackSem_state_use_stack s /\
        state_ffi t = state_ffi s /\ compile_oracle
      t = (\n. (I ## MAP (prog_comp jump off k) ## I)
-       (compile_oracle s n)) /\ compile
+       (compile_oracle
+                              // K []
+                              s n)) /\ compile
      s = (\c p. compile t c (MAP (prog_comp jump off k) p))`)
   CHEAT_TAC;;
 
@@ -1082,6 +1089,9 @@ let init_code_pre_def = cake_define
        ptr2 <=+ ptr4 /\ (n2w 1024) * bytes_in_word <=+ ptr4 - ptr2 /\
        byte_aligned ptr2 /\ byte_aligned ptr4 /\ byte_aligned
          bitmap_ptr /\ buffer_buffer (state_code_buffer
+       // NOTE: The last conjunct only needs to hold if
+       // the entry checks hold. Probably can make more assumptions
+       // about the bitmap_ptr too
        s) = [] /\
        (misc_word_list bitmap_ptr (MAP wordLang_Word bitmaps) *
         word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
@@ -1570,8 +1580,10 @@ let stack_remove_comp_stack_asm_name =
        c (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
          asm_config_valid_imm
        c (INL Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
-       (!s. asm_offset_ok 0 (asm_config_addr_offset c)
-         (store_offset s)) /\
+       (
+        // Needed to implement the global store
+        !s. asm_offset_ok 0 (asm_config_addr_offset c)
+          (store_offset s)) /\
        reg_name (k + 2) c /\
        reg_name (k + 1) c /\
        reg_name k c /\ ~(k = 0) /\
@@ -1593,8 +1605,10 @@ let stack_remove_stack_asm_name =
        asm_config_valid_imm
      c (INL Add) (n2w 4) /\ asm_config_valid_imm
      c (INL Add) (n2w 8) /\
-     (!s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset
-       s)) /\
+     (
+      // Needed to implement the global store
+      !s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset
+        s)) /\
      reg_name 7 c /\
      reg_name (k + 2) c /\
      reg_name (k + 1) c /\

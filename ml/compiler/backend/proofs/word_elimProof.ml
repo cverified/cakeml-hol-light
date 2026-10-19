@@ -52,7 +52,8 @@ let remove_word_code_thm = cake_theorem "remove_word_code_thm"
 let dest_word_loc_def = cake_define
   `dest_word_loc x1 =
         match x1 with
-          wordLang_Loc n _2 -> SOME n
+          // 'a word_loc = Word ('a word) | Loc num num
+        wordLang_Loc n _2 -> SOME n
         | (_3:'a word_loc) -> NONE`;;
 
 let dest_result_loc_def = cake_define
@@ -67,7 +68,8 @@ let dest_result_loc_def = cake_define
 (* TODO could do alt def using toAList -
     not necessary though, may not be cleaner *)
 let get_locals_def = cake_define_list
-  [`get_locals (LN:('a word_loc) spt) = LN`;
+  [`// locals : ('a word_loc) num_map
+    get_locals (LN:('a word_loc) spt) = LN`;
    `get_locals (LS a) = (match (dest_word_loc a) with SOME n ->
   sptree_insert n one LN | NONE -> LN)`;
    `get_locals (BN t1 t2) = sptree_union (get_locals t1) (get_locals
@@ -102,7 +104,8 @@ let get_locals_insert = cake_theorem "get_locals_insert"
 
 (*TODO fix conflict with get_store in WordSem*)
 let get_store_def = cake_define
-  `word_elimProof_get_store (st:(store_name,'a word_loc)fmap) =
+  `// store : store_name |-> 'a word_loc
+   word_elimProof_get_store (st:(store_name,'a word_loc)fmap) =
        (let locSet = SET_TO_LIST (FRANGE st) in
        let locList = MAP THE (FILTER IS_SOME (MAP dest_word_loc
          locSet)) in
@@ -151,7 +154,8 @@ let get_locals_union_subset = cake_theorem "get_locals_union_subset"
   CHEAT_TAC;;
 
 let get_stack_def = cake_define_list
-  [`word_elimProof_get_stack [] = (LN:1 spt)`;
+  [`// stack : ('a stack_frame) list
+    word_elimProof_get_stack [] = (LN:1 spt)`;
    `word_elimProof_get_stack (StackFrame lsz e0 e _5 :: xs) =
             ((sptree_union (sptree_union (get_num_wordloc_alist
               e0) (get_num_wordloc_alist e))
@@ -201,7 +205,8 @@ let get_stack_dec_stack = cake_theorem "get_stack_dec_stack"
   CHEAT_TAC;;
 
 let get_memory_def = cake_define
-  `get_memory (mem':'a word->'a word_loc) (mdom:'a word->bool) =
+  `// 'a word -> 'a word_loc
+   get_memory (mem':'a word->'a word_loc) (mdom:'a word->bool) =
        (let locSet = SET_TO_LIST (IMAGE mem' mdom) in
        let locList = MAP THE (FILTER IS_SOME (MAP dest_word_loc
          locSet)) in

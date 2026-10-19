@@ -48,6 +48,7 @@
 
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 let extract_def = cake_define
@@ -97,6 +98,7 @@ let compile_def = cake_define_list_try_tac (fun () ->
            if l = 0 then bvi_let_compile env d [x2] else
              let k = l - 1 in
                if x2 = Var k then
+                 // moves the last exp into tail-position if the body is a Var
                  let ys = bvi_let_compile env d (BUTLAST xs) in
                    [Let ys (HD (bvi_let_compile (MAP ((+) k) env) (d
                      + k) [LAST xs]))] else
@@ -148,6 +150,7 @@ let compile_sing_def = cake_define_list_try_tac (fun () ->
            if l = 0 then bvi_let_compile_sing env d x2 else
              let k = l - 1 in
                if x2 = Var k then
+                 // moves the last exp into tail-position if the body is a Var
                  let ys = bvi_let_compile_list env d (BUTLAST xs) in
                    (Let ys ((bvi_let_compile_sing (MAP ((+) k) env)
                      (d + k) (LAST xs)))) else

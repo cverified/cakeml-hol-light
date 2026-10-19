@@ -60,6 +60,10 @@ def main():
       port = open(p).read()
     except OSError:
       continue
+    # the port writes a comment that stands inside a block as the
+    # comment of a term of HOL Light (// and to the end of the
+    # line), so one of several lines is several of those
+    flat = ' '.join(re.sub(r'(?m)^\s*(`?)//', r'\1', port).split())
     inport = set()
     for m in re.finditer(r'\(\*.*?\*\)', port, re.S):
       inport.add(body(m.group(0)))
@@ -74,8 +78,8 @@ def main():
       # stands (PENDING.md says where that stands)
       if b.kind not in ('Comment', 'ML'):
         for m in re.finditer(r'\(\*.*?\*\)', b.body or '', re.S):
-          t = ' '.join(m.group(0).split())
-          if t in port or t[3:-3].strip() in port: continue
+          t = ' '.join(m.group(0)[2:-2].split())
+          if t and t in flat: continue
           inside += 1
       if b.kind != 'Comment': continue
       n += 1

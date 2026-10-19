@@ -10,7 +10,12 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/labLang.ml";;
+needs "compiler/backend/wordLang.ml";;
 needs "lib/comparison.ml";;
+needs "lib/errorMonad.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -19,7 +24,15 @@ new_type_abbrev("type_ident",`: num`);;
 
 (* Types *)
 let t_INDUCT,t_RECURSION = define_datatype
-  "t = Tvar (mlstring) | Tvar_db (num) | Tapp (t list) (num)";;
+  "t = \
+   // Type variables that the user writes down ('a, 'b, etc.)\n\
+   Tvar (mlstring) | \
+   // deBruijn indexed type variables.\n\
+   Tvar_db (num) | \
+   // The two numbers represent the identity of the type constructor. The first\n\
+   // is the identity of the compilation unit that it was defined in, and the\n\
+   // second is its identity inside of that unit\n\
+   Tapp (t list) (num)";;
 
 
 (* Some abbreviations *)
@@ -176,9 +189,11 @@ let deBruijn_subst_def = cake_define_list
 
 (* Type environments *)
 let tenv_val_exp_INDUCT,tenv_val_exp_RECURSION = define_datatype
-  "tenv_val_exp = typeSystem_Empty | typeSystem_Bind_tvar (num) \
-   (tenv_val_exp) | typeSystem_Bind_name (mlstring) (num) (t) \
-   (tenv_val_exp)";;
+  "tenv_val_exp = typeSystem_Empty | \
+   // Binds several de Bruijn type variables\n\
+   typeSystem_Bind_tvar (num) (tenv_val_exp) | \
+   // The number is how many de Bruijn type variables the typescheme binds\n\
+   typeSystem_Bind_name (mlstring) (num) (t) (tenv_val_exp)";;
 hol4_overload "Empty" "typeSystem_Empty";;
 hol4_overload "Bind_tvar" "typeSystem_Bind_tvar";;
 hol4_overload "Bind_name" "typeSystem_Bind_name";;
@@ -333,14 +348,19 @@ let supported_arith_def = cake_define
 let supported_conversion_def = cake_define
   `supported_conversion x1 x2 =
         match (x1,x2) with
-          ((ast_WordT ast_W8:prim_type),(ast_IntT:prim_type)) -> T
+          // Word to Int conversions
+        ((ast_WordT ast_W8:prim_type),(ast_IntT:prim_type)) -> T
         | ((ast_WordT ast_W64),ast_IntT) -> T
+        // Int to Word conversions
         | (ast_IntT,(ast_WordT ast_W8)) -> T
         | (ast_IntT,(ast_WordT ast_W64)) -> T
+        // Char/Int conversions
         | (ast_CharT,ast_IntT) -> T
         | (ast_IntT,ast_CharT) -> T
+        // Char/Word8 conversions
         | (ast_CharT,(ast_WordT ast_W8)) -> T
         | ((ast_WordT ast_W8),ast_CharT) -> T
+        // Float64/Word64 conversions
         | (ast_Float64T,(ast_WordT ast_W64)) -> T
         | ((ast_WordT ast_W64),ast_Float64T) -> T
         | ((from_ty:prim_type),(to_ty:prim_type)) -> F`;;
@@ -485,7 +505,7 @@ let build_ctor_tenv_def = cake_define
 let is_value_def = cake_define
   `is_value x1 =
         match x1 with
-          (ast_Lit _18:ast_exp) -> T
+          ast_Lit _18 -> T
         | (ast_Con _19 es) -> (EVERY is_value es)
         | (ast_Var _20) -> T
         | (ast_Fun _21 _22) -> T
@@ -622,7 +642,15 @@ let type_e = cake_inductive
    (type_e tenv tenvE e1 t1 /\
    type_e tenv (opt_bind_name n ((0:num)) t1 tenvE) e2 t2) ==>
    type_e tenv tenvE (ast_Let n e1 e2) t2) /\
-   (!tenv tenvE funs e t bindings.
+   (
+       // and
+       //
+       // letrec : forall tenv tenvE funs e t tenv' tvs.
+       // type_funs tenv (bind_var_list 0 tenv' (bind_tvar tvs tenvE)) funs tenv' &&
+       // type_e tenv (bind_var_list tvs tenv' tenvE) e t
+       // ==>
+       // type_e tenv tenvE (Letrec funs e) t
+       !tenv tenvE funs e t bindings.
    (type_funs tenv (bind_var_list ((0:num)) bindings tenvE) funs
      bindings /\
    type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t) ==>
@@ -706,8 +734,13 @@ let type_d = cake_inductive
        nsEmpty)) /\
    (!extra_checks tenv p e t bindings locs.
    (
-   (extra_checks ==> (~(is_value e) /\ type_pe_determ tenv
-     typeSystem_Empty p e)) /\
+   (
+     // The following line makes sure that when the value restriction prohibits
+     // generalisation, a type error is given rather than picking an arbitrary
+     // instantiation. However, we should only do the check when the extra_checks
+     // argument tells us to.
+     extra_checks ==> (~(is_value e) /\ type_pe_determ tenv
+       typeSystem_Empty p e)) /\
    ALL_DISTINCT (ast_pat_bindings p) /\
    type_p ((0:num)) tenv p t bindings /\
    type_e tenv typeSystem_Empty e t) ==>

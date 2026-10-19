@@ -184,6 +184,7 @@ let ptPapply0_def = cake_define
   `ptPapply0 c x2 =
       match x2 with
         [] -> []
+      // can't happen
       | [pb_pt] -> bindNT nPapp [c; pb_pt]
       | (pb :: pbs) -> ptPapply0 (bindNT0 nPConApp [c; pb]) pbs`;;
 
@@ -191,7 +192,9 @@ let ptPapply_def = cake_define
   `ptPapply x1 =
       match x1 with
         [] -> []
+      // can't happen
       | [_3] -> []
+      // can't happen
       | (c :: rest) -> ptPapply0 (bindNT0 nPConApp [c]) rest`;;
 
 
@@ -492,8 +495,11 @@ let cmlPEG_def = cake_define
                           (\pts. if LENGTH pts = 1 then
                               bindNT nPapp (bindNT nPbase pts) else
                               match pts with
-                              [] -> [] | [c] -> [] | _4 -> ptPapply
-                                pts);
+                              [] -> [] | [
+                              // can't happen
+                              c] -> [] |
+                              // can't happen
+                              _4 -> ptPapply pts);
                          pegf (cmlPEG_pnt nPbase) (bindNT nPapp)]);
                ((INL:MMLnonT->MMLnonT+num) nPcons,
                 seql [cmlPEG_pnt nPapp;

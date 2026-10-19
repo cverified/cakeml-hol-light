@@ -15,6 +15,7 @@ needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/proofs/clos_constantProof.ml";;
 needs "compiler/backend/proofs/flat_elimProof.ml";;
 needs "compiler/backend/proofs/flat_patternProof.ml";;
 needs "compiler/backend/proofs/source_evalProof.ml";;
@@ -22,6 +23,7 @@ needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
 needs "compiler/backend/source_to_flat.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
@@ -191,7 +193,9 @@ let v_rel = cake_inductive
              :: MAP FST (flatSem_environment_v env_v_local'))
              (source_to_flat_environment_v comp_map))) comp_map)
            e))) /\
-   (!genv comp_map env env_v_local funs x env_v_local' t ts.
+   (
+    // For expression level let recs
+    !genv comp_map env env_v_local funs x env_v_local' t ts.
      source_to_flatProof_env_rel genv env_v_local
        (flatSem_environment_v env_v_local') /\
      global_env_inv genv comp_map (set_of_list (MAP FST
@@ -207,12 +211,18 @@ let v_rel = cake_inductive
              FST funs ++ MAP FST (flatSem_environment_v env_v_local'))
              (source_to_flat_environment_v comp_map))) comp_map) funs)
            x)) /\
-   (!genv comp_map env funs flat_env x y e new_vars t1 t2.
+   (
+    // For top-level let recs
+    !genv comp_map env funs flat_env x y e new_vars t1 t2.
      MAP FST new_vars = MAP FST (REVERSE funs) /\
      global_env_inv genv comp_map {} env /\ flatSem_environment_v
      flat_env = [] /\
      find_recfun x funs = SOME (y,e) /\
-     (!x. x IN set_of_list (MAP FST funs) ==>
+     (
+      // A syntactic way of relating the recursive function environment, rather
+      // * than saying that they build v_rel related environments, which looks to
+      // * require step-indexing
+      !x. x IN set_of_list (MAP FST funs) ==>
         (?n y e t1 t2 t3.
           ALOOKUP new_vars x = SOME (source_to_flat_Glob t1 n) /\
           n < LENGTH (global_env_v genv) /\
@@ -625,14 +635,16 @@ let source_to_flatProof_list_to_v_v_rel = cake_theorem "list_to_v_v_rel"
 
 let LIST_REL_IMP_EL2 = cake_theorem "LIST_REL_IMP_EL2"
   (fun () ->
-    `!P xs ys. LIST_REL P xs ys ==> (!i. i < LENGTH ys ==> P (EL i xs)
-  (EL i ys))`)
+    `// TODO: move
+     !P xs ys. LIST_REL P xs ys ==> (!i. i < LENGTH ys ==> P (EL
+       i xs) (EL i ys))`)
   CHEAT_TAC;;
 
 let LIST_REL_IMP_EL = cake_theorem "LIST_REL_IMP_EL"
   (fun () ->
-    `!P xs ys. LIST_REL P xs ys ==> (!i. i < LENGTH xs ==> P (EL i xs)
-  (EL i ys))`)
+    `// TODO: move
+     !P xs ys. LIST_REL P xs ys ==> (!i. i < LENGTH xs ==> P (EL
+       i xs) (EL i ys))`)
   CHEAT_TAC;;
 
 let NOT_NULL_EQ = cake_theorem "NOT_NULL_EQ[local]"
@@ -2515,7 +2527,9 @@ let compile_decs_num_bindings = cake_theorem "compile_decs_num_bindings"
 
 let MAPi_SNOC = cake_theorem "MAPi_SNOC"
   (fun () ->
-    `!xs x f. MAPi f (SNOC x xs) = SNOC (f (LENGTH xs) x) (MAPi f xs)`)
+    `// TODO: move
+     !xs x f. MAPi f (SNOC x xs) = SNOC (f (LENGTH xs) x) (MAPi f
+       xs)`)
   CHEAT_TAC;;
 
 let source_to_flatProof_compile_decs_elist_globals =

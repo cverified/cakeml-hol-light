@@ -12,6 +12,7 @@
 
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
+needs "lib/regexp_compiler.ml";;
 needs "misc/misc.ml";;
 
 cake_hide_consts
@@ -39,13 +40,17 @@ let offset_monotonic_def = cake_define
 
 let enc_ok_def = cake_define
   `enc_ok (c:'a asm_config) <=>
-     (2 EXP asm_config_code_alignment c = LENGTH (asm_config_encode c
-       (asm_Inst asm_Skip))) /\
+     (
+      // code alignment and length
+      2 EXP asm_config_code_alignment c = LENGTH (asm_config_encode c
+        (asm_Inst asm_Skip))) /\
      (!w. (LENGTH (asm_config_encode c w) MOD 2 EXP
        asm_config_code_alignment c = 0) /\ ~(LENGTH (asm_config_encode c
        w) = 0)) /\
-     (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2
-       (asm_Jump w1) (asm_Jump w2)) /\
+     (
+      // label instantiation predictably affects length of code
+      !w1 w2. offset_monotonic (asm_config_encode c) c w1 w2
+        (asm_Jump w1) (asm_Jump w2)) /\
      (!cmp r ri w1 w2.
         offset_monotonic (asm_config_encode c) c w1 w2
            (asm_JumpCmp cmp r ri w1) (asm_JumpCmp cmp r ri w2)) /\

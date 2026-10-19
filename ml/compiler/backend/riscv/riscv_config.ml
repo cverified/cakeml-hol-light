@@ -11,17 +11,39 @@
 
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
+needs "compiler/backend/word_bignum.ml";;
+needs "lib/balanced_map.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: riscv_target *)
 
 let riscv_names_def = cake_define
   `riscv_names =
-   ((insert 0 1 o
+   ((
+    // arguments: 10-17
+    // including return values: 10-11
+    // temporaries: 5-7, 28-31
+    // return address: 1
+    // saved regs: 8-9, 18-27
+    // 3 = global pointer, 4 = thread pointer
+    // 0 avoided (hardwired zero)
+    // 2 avoided (stack pointer)
+    // 3 avoided (global pointer)
+    // 4 avoided (thread pointer)
+    // 31 avoided (used by encoder)
+    // 5 avoid regs means 27 regs available for CakeML
+    // constraints:
+    // the last 3 of these (24, 25, 26) must be mapped to callee saved regs
+    // 0 must be mapped to link reg (1)
+    // 1-4 must be mapped to 1st-4st args (10-13)
+    insert 0 1 o
     insert 1 10 o
     insert 2 11 o
     insert 3 12 o
     insert 4 13 o
+    // the rest to make the mapping well-formed
     insert 10 27 o
     insert 11 28 o
     insert 12 29 o

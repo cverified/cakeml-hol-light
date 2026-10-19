@@ -285,8 +285,11 @@ let s_rel_def = cake_define
    dec_s = v_fun_abs (compiler_instance_decs_dom ci)
      (compiler_instance_decs_v ci) /\ eval_decs_state_compiler
    dec_s = mk_compiler_fun_from_ci ci /\
-   (0 = FST (FST (oracle orac_s' 0)) ==>
-     eval_decs_state_compiler_state
+   (
+    // (0 < FST (FST (orac_s.oracle 0)) ==>
+    // (FST (SND (orac_s.oracle 1))) = init_eds.compiler_state) /\
+    0 = FST (FST (oracle orac_s' 0)) ==>
+      eval_decs_state_compiler_state
      dec_s = compiler_instance_config_v ci
        (compiler_instance_init_state ci)) /\
    (0 < FST (FST (oracle orac_s' 0)) ==>

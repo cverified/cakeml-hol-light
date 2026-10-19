@@ -27,7 +27,8 @@ needs "semantics/semanticPrimitives.ml";;
    expands *)
 
 let exn_or_ret_INDUCT,exn_or_ret_RECURSION = define_datatype
-  "exn_or_ret = Exn (bvlSem_v) | Ret (bvlSem_v list)";;
+  "exn_or_ret = Exn (bvlSem_v) | Ret (bvlSem_v list) \
+   // exception or multi-value return";;
 
 new_type_abbrev("bvi_result",`: (bvlSem_v
    list,exn_or_ret)semanticPrimitives_result`);;

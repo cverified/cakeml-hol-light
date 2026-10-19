@@ -1966,6 +1966,7 @@ let evaluate_consts = cake_theorem "evaluate_consts"
        s1 = wordSem_state_sh_mdomain s2 /\ wordSem_state_be
        s1 = wordSem_state_be s2 /\ wordSem_state_compile
        s1 = wordSem_state_compile s2 /\ wordSem_state_stack_limit
+       // s1.stack_size = s2.stack_size ∧
        s1 = wordSem_state_stack_limit s2`)
   CHEAT_TAC;;
 
@@ -2391,11 +2392,16 @@ let wordProps_evaluate_stack_swap = cake_theorem "evaluate_stack_swap"
                                 s) xs ==>
                               wordSem_evaluate
                                 (c,wordSem_state_stack_fupd (K xs) s) =
-                              (SOME wordSem_NotEnoughSpace,s1)) |
-                                (SOME (wordSem_Exception x y),s1) ->
+                              (SOME wordSem_NotEnoughSpace,s1)) | (
+          // for both errors,
+          // the stack and locs should also be [] so the swapped stack
+          // result should be exactly the same
+          SOME (wordSem_Exception x y),s1) ->
              (wordSem_state_handler s < LENGTH (wordSem_state_stack
                s)) /\
-             (?e0 e n ls m lss.
+             (
+              // precondition for jump_exc
+              ?e0 e n ls m lss.
                  (LASTN (wordSem_state_handler s + 1)
                    (wordSem_state_stack s) = StackFrame m e0 e (SOME n)
                    :: ls) /\
@@ -2413,6 +2419,7 @@ let wordProps_evaluate_stack_swap = cake_theorem "evaluate_stack_swap"
                                 /\
                             (s_val_eq (wordSem_state_stack s) xs)
                               ==>
+                            // this implies n=n' and m=m' and MAP SND e0' = MAP SND e0
                             (?st locs.
                             (wordSem_evaluate
                               (c,wordSem_state_stack_fupd (K xs) s) =
@@ -2427,11 +2434,11 @@ let wordProps_evaluate_stack_swap = cake_theorem "evaluate_stack_swap"
                                 (fromAList e0') /\
                               MAP SND lss = MAP SND lss') /\
                              s_val_eq (wordSem_state_stack s1) st
-                               /\ s_key_eq ls' st)))) | (res,s1) ->
-                               (s_key_eq (wordSem_state_stack s)
-                               (wordSem_state_stack s1)) /\
-                               (wordSem_state_handler s1 =
-                               wordSem_state_handler s) /\
+                               /\ s_key_eq ls' st)))) | (
+          // NONE, SOME Result cases
+          res,s1) -> (s_key_eq (wordSem_state_stack s)
+            (wordSem_state_stack s1)) /\ (wordSem_state_handler s1 =
+            wordSem_state_handler s) /\
                      (!xs. s_val_eq (wordSem_state_stack s) xs ==>
                            (?st. wordSem_evaluate
                              (c,wordSem_state_stack_fupd (K xs) s) =
@@ -2452,6 +2459,7 @@ let permute_swap_lemma = cake_theorem "permute_swap_lemma"
     `!prog st perm.
      let (res,rst) = wordSem_evaluate (prog,st) in
        ~(res = SOME wordSem_Error) ==>
+       // Note: actually provable without this assum, but this is simpler
        (?perm'. wordSem_evaluate (prog,wordSem_state_permute_fupd
          (K perm') st) =
        (res,wordSem_state_permute_fupd (K perm) rst))`)

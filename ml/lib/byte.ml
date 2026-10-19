@@ -5,7 +5,7 @@
     that CakeML needs.  Needed by 20 files of the port.  *)
 (* ======================================================== *)
 
-(* this file needs nothing of the port *)
+needs "lib/regexp_compiler.ml";;
 (* HOL4 ancestors outside the port: arithmetic list words rich_list *)
 
 let byte_index_def = cake_define
@@ -40,7 +40,8 @@ let bytes_to_word_def = cake_define
          (bytes_to_word (k - 1) (a + (n2w 1)) bs w be') be')`;;
 
 let word_to_bytes_aux_def = cake_define_list
-  [`word_to_bytes_aux 0 (w:'a word) be' = []`;
+  [`// length, 'a word, endianness
+    word_to_bytes_aux 0 (w:'a word) be' = []`;
    `word_to_bytes_aux (SUC n) (w:'a word) be' =
       (word_to_bytes_aux n w be') ++ [get_byte (n2w n) w be']`];;
 

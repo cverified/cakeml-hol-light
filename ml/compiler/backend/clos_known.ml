@@ -2,7 +2,7 @@
 (*  clos_known: ported from HOL4's
     compiler/backend/clos_knownScript.sml
     A definition theory, with 29 definitions, 4 datatypes and 12
-    theorems.  Needed by 7 files of the port.  *)
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -255,10 +255,18 @@ let contains_closures_def = cake_define_list
    ----------------------------------------------------------------- *)
 
 let val_approx_INDUCT,val_approx_RECURSION = define_datatype
-  "val_approx = clos_known_ClosNoInline (num) (num) | clos_known_Clos \
-   (num) (num) (closLang_exp) (num) | clos_known_Tuple (num) \
-   (val_approx list) | clos_known_Int (int) | clos_known_Other | \
-   clos_known_Impossible";;
+  "val_approx = clos_known_ClosNoInline (num) (num) \
+   // location in code table, arity\n\
+   | clos_known_Clos (num) (num) (closLang_exp) (num) \
+   // loc, arity, body, body size\n\
+   | clos_known_Tuple (num) (val_approx list) \
+   // conses or tuples\n\
+   | clos_known_Int (int) \
+   // used to index tuples\n\
+   | clos_known_Other \
+   // unknown\n\
+   | clos_known_Impossible \
+   // value 'returned' by Raise";;
 hol4_overload "ClosNoInline" "clos_known_ClosNoInline";;
 hol4_overload "Clos" "clos_known_Clos";;
 hol4_overload "Tuple" "clos_known_Tuple";;
@@ -412,7 +420,7 @@ let isGlobal_pmatch = cake_theorem "isGlobal_pmatch"
 let gO_destApx_def = cake_define
   `gO_destApx x1 =
         match x1 with
-          (Int i:val_approx) -> gO_Int i
+          clos_known_Int i -> gO_Int i
         | (clos_known_Tuple tag args) -> (if NULL args then
           gO_NullTuple tag else gO_None)
         | _19 -> gO_None`;;
@@ -431,8 +439,11 @@ let inliningDecision_INDUCT,inliningDecision_RECURSION = define_datatype
 let clos_known_config_FIELDS = define_record "clos_known_config"
   ["inline_max_body_size","num";
    "inline_factor","num";
+   (* As in 'Inline expansion: when and how?' by Manuel Serrano *)
    "initial_inline_factor","num";
-   "val_approx_spt","val_approx spt"];;
+   "val_approx_spt","val_approx spt"
+   (* TODO: this could replace the explicit g argument in known_def *)
+  ];;
 
 let default_inline_factor_def = cake_define
   `default_inline_factor = 8`;;
@@ -469,9 +480,11 @@ let decide_inline_def = cake_define
                app_arity) /\
                  ~(contains_closures [body]) /\
                  clos_known_closed (closLang_Fn (implode "") NONE
-                   NONE app_arity body) then inlD_LetInline body else
-                   inlD_Annotate loc) else inlD_Nothing) | _20 ->
-                   inlD_Nothing)`;;
+                   NONE app_arity body) then
+                 // Consider moving these checks to the point where Clos approximations
+                 // are created, and bake them into the val_approx_val relation.
+                 inlD_LetInline body else inlD_Annotate loc) else
+                   inlD_Nothing) | _20 -> inlD_Nothing)`;;
 
 let decide_inline_LetInline = cake_theorem "decide_inline_LetInline"
   (fun () ->
@@ -557,10 +570,15 @@ let known_def = cake_define_list_try_tac (fun () ->
                    [body] (MAP SND ea2) g in
                  let (ebody,abody) = HD eabody in
                    if pure x then
-                     ([(Let (mk_cons t 0) (MAP FST ea2)
+                     ([(
+                        // We don't have to evaluate x
+                        Let (mk_cons t 0) (MAP FST ea2)
                               (clos_known_mk_Ticks t 1 (LENGTH xs)
                                 ebody),abody)],g) else
-                     ([(Let (mk_cons t 0) (SNOC e1 (MAP FST ea2))
+                     ([(
+                        // We need to evaluate x for its side-effects,
+                        // but we must do so after evaluating the args.
+                        Let (mk_cons t 0) (SNOC e1 (MAP FST ea2))
                               (clos_known_mk_Ticks t 1 (LENGTH
                                 xs) ebody),abody)],g)))`;
    `known c [closLang_Fn t loc_opt ws_opt num_args x1] vs (g:val_approx
@@ -578,6 +596,8 @@ let known_def = cake_define_list_try_tac (fun () ->
                        NONE -> REPLICATE (LENGTH fns)
                          clos_known_Other | SOME loc ->
                          clos_gen_noinline loc 0 fns) in
+         // The following ignores SetGlobal within fns, but it shouldn't
+         // appear there, and missing it just means this opt will do less.
          let new_fns = MAP (\(num_args,x).
                         let new_vs = REPLICATE num_args
                           clos_known_Other ++ clos ++ vs in

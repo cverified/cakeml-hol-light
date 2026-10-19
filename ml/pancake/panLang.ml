@@ -2,7 +2,7 @@
 (*  panLang: ported from HOL4's
     pancake/panLangScript.sml
     A definition theory, with 24 definitions, 10 datatypes and 2
-    theorems.  Needed by compiler.ml, evaluateProps.ml and infer.ml.  *)
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -42,7 +42,10 @@ let shape_INDUCT,shape_RECURSION = define_datatype
   "shape = One | Comb (shape list) | Named (mlstring)";;
 
 let panop_INDUCT,panop_RECURSION = define_datatype
-  "panop = panLang_Mul";;
+  "panop = \
+   // Div |\n\
+   panLang_Mul \
+   // | Mod";;
 hol4_overload "Mul" "panLang_Mul";;
 
 let varkind_INDUCT,varkind_RECURSION = define_datatype
@@ -55,8 +58,9 @@ let panLang_exp_INDUCT,panLang_exp_RECURSION = define_datatype
    (mlstring) | panLang_RStruct (panLang_exp list) | panLang_RField \
    (num) (panLang_exp) | panLang_NStruct (mlstring) \
    ((mlstring#panLang_exp) list) | panLang_NField (mlstring) \
-   (panLang_exp) | panLang_Load (shape) (panLang_exp) | \
-   panLang_Load32 (panLang_exp) | panLang_LoadByte (panLang_exp) | \
+   (panLang_exp) | panLang_Load (shape) (panLang_exp) \
+   // exp: start addr of value with given shape\n\
+   | panLang_Load32 (panLang_exp) | panLang_LoadByte (panLang_exp) | \
    panLang_Op (binop) (panLang_exp list) | panLang_Panop (panop) \
    (panLang_exp list) | panLang_Cmp (cmp) (panLang_exp) (panLang_exp) \
    | panLang_Shift (ast_shift) (panLang_exp) (panLang_exp) | \
@@ -88,22 +92,30 @@ hol4_overload "AddCarry" "panLang_AddCarry";;
 let panLang_prog_INDUCT,panLang_prog_RECURSION = define_datatype
   "panLang_prog = panLang_Skip | panLang_Dec (mlstring) (shape) ('a \
    panLang_exp) (panLang_prog) | panLang_Assign (varkind) (mlstring) \
-   ('a panLang_exp) | panLang_Primitive (mlstring) (primop) (('a \
-   panLang_exp) list) | panLang_Store ('a panLang_exp) ('a \
-   panLang_exp) | panLang_Store32 ('a panLang_exp) ('a panLang_exp) | \
-   panLang_StoreByte ('a panLang_exp) ('a panLang_exp) | panLang_Seq \
-   (panLang_prog) (panLang_prog) | panLang_If ('a panLang_exp) \
-   (panLang_prog) (panLang_prog) | panLang_While ('a panLang_exp) \
-   (panLang_prog) | panLang_Break | panLang_Continue | panLang_Call \
-   (((varkind#mlstring) option#(mlstring#mlstring#panLang_prog) \
-   option) option) (mlstring) (('a panLang_exp) list) | \
-   panLang_DecCall (mlstring) (shape) (mlstring) (('a panLang_exp) \
-   list) (panLang_prog) | panLang_ExtCall (mlstring) ('a panLang_exp) \
-   ('a panLang_exp) ('a panLang_exp) ('a panLang_exp) | panLang_Raise \
-   (mlstring) ('a panLang_exp) | panLang_Return ('a panLang_exp) | \
-   panLang_ShMemLoad (opsize) (varkind) (mlstring) ('a panLang_exp) | \
-   panLang_ShMemStore (opsize) ('a panLang_exp) ('a panLang_exp) | \
-   panLang_Tick | panLang_Annot (mlstring) (mlstring)";;
+   ('a panLang_exp) \
+   // dest, source\n\
+   | panLang_Primitive (mlstring) (primop) (('a panLang_exp) list) | \
+   // Primitives directly target constructs in wordLang.\n\
+   panLang_Store ('a panLang_exp) ('a panLang_exp) \
+   // dest, source\n\
+   | panLang_Store32 ('a panLang_exp) ('a panLang_exp) \
+   // dest, source\n\
+   | panLang_StoreByte ('a panLang_exp) ('a panLang_exp) \
+   // dest, source\n\
+   | panLang_Seq (panLang_prog) (panLang_prog) | panLang_If ('a \
+   panLang_exp) (panLang_prog) (panLang_prog) | panLang_While ('a \
+   panLang_exp) (panLang_prog) | panLang_Break | panLang_Continue | \
+   panLang_Call (((varkind#mlstring) \
+   option#(mlstring#mlstring#panLang_prog) option) option) (mlstring) \
+   (('a panLang_exp) list) | panLang_DecCall (mlstring) (shape) \
+   (mlstring) (('a panLang_exp) list) (panLang_prog) | \
+   panLang_ExtCall (mlstring) ('a panLang_exp) ('a panLang_exp) ('a \
+   panLang_exp) ('a panLang_exp) | \
+   // FFI name, conf_ptr, conf_len, array_ptr, array_len\n\
+   panLang_Raise (mlstring) ('a panLang_exp) | panLang_Return ('a \
+   panLang_exp) | panLang_ShMemLoad (opsize) (varkind) (mlstring) ('a \
+   panLang_exp) | panLang_ShMemStore (opsize) ('a panLang_exp) ('a \
+   panLang_exp) | panLang_Tick | panLang_Annot (mlstring) (mlstring)";;
 hol4_overload "Skip" "panLang_Skip";;
 hol4_overload "Dec" "panLang_Dec";;
 hol4_overload "Assign" "panLang_Assign";;
@@ -190,7 +202,8 @@ let size_of_shape_def = cake_define_list
 let shape_to_str_def = cake_define_list
   [`shape_to_str One = implode "1"`;
    `shape_to_str (Comb []) = implode "{}"`;
-   `shape_to_str (Comb (x :: xs)) =
+   `// should never happen
+    shape_to_str (Comb (x :: xs)) =
       mlstring_concat ((implode "{" :: shape_to_str x ::
               MAP (\x. (\x y. strcat x y) (implode ",") x) (MAP
                 shape_to_str xs)) ++
@@ -201,7 +214,8 @@ let shape_val_def = cake_define_list
   [`shape_val One = Const (n2w 0)`;
    `shape_val (Comb shapes) = panLang_RStruct (shape_vals shapes)`;
    `shape_val (Named nm) = Const (n2w 0)`;
-   `shape_vals [] = []`;
+   `// should never happen
+    shape_vals [] = []`;
    `shape_vals (sh :: shs) = shape_val sh :: shape_vals shs`];;
 
 (* HOL4 panLangScript.sml:198-208: a theorem whose statement the port

@@ -18,6 +18,7 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/jsonLang.ml";;
 needs "lib/integer_word.ml";;
+needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: (* for str_tree *) *)
 
 let sExp_INDUCT,sExp_RECURSION = define_datatype
@@ -47,7 +48,9 @@ let trace_to_json_def = cake_define_list
           jsonLang_Object [((implode "name"),String (implode
             "SourcePos"));
             ((implode "pos"),jsonLang_Array arr)])`;
-   `trace_to_json (backend_common_None:tra) = jsonLang_Null`];;
+   `// TODO: cancel entire trace when None, or verify that None will always be at
+    // * the top level of a trace.
+    trace_to_json (backend_common_None:tra) = jsonLang_Null`];;
 
 (* HOL4 displayLangScript.sml:45-49: a theorem whose statement the
    port cannot state yet: MEM_sExp_size *)

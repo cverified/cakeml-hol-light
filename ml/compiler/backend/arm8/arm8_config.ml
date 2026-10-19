@@ -11,13 +11,23 @@
 
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: arm8_target *)
 
 let arm8_names_def = cake_define
   `arm8_names =
-     ((insert 0 30 o
+     ((
+      // source can use 29 regs (0-28),
+      // target's r18 should be avoided (platform reserved),
+      // target's r26 must be avoided (extra encoding register),
+      // target's r31 must be avoided (stack pointer),
+      // source 0 must represent r30 (link register),
+      // source 1-4 must be r0-r3 (1st 4 args),
+      // top three (26-28) must be callee-saved (in r19-r28)
+      insert 0 30 o
       insert 1 0 o
       insert 2 1 o
       insert 3 2 o
@@ -25,6 +35,7 @@ let arm8_names_def = cake_define
       insert 18 4 o
       insert 25 29 o
       insert 26 25 o
+      // Next ones are for well-formedness only
       insert 29 18 o
       insert 30 26) LN:num spt)`;;
 

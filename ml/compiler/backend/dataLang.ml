@@ -2,7 +2,7 @@
 (*  dataLang: ported from HOL4's
     compiler/backend/dataLangScript.sml
     A definition theory, with 3 definitions, 1 datatype and no
-    theorems.  Needed by 20 files of the port.  *)
+    theorems.  Needed by 21 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -74,12 +74,16 @@ let op_requires_names_def = cake_define
 let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
   "dataLang_prog = dataLang_Skip | dataLang_Move (num) (num) | \
    dataLang_Call ((num list#1 spt) option) (num option) (num list) \
-   ((num#dataLang_prog) option) | dataLang_Assign (num) (closLang_op) \
-   (num list) ((1 spt) option) | dataLang_Seq (dataLang_prog) \
-   (dataLang_prog) | dataLang_If (num) (dataLang_prog) \
-   (dataLang_prog) | dataLang_MakeSpace (num) (1 spt) | \
-   dataLang_Raise (num) | dataLang_Return (num list) | dataLang_Tick \
-   | dataLang_Force ((num#1 spt) option) (num) (num)";;
+   ((num#dataLang_prog) option) \
+   // return var, cut-set\n\
+   // target of call\n\
+   // arguments\n\
+   // handler: varname, handler code\n\
+   | dataLang_Assign (num) (closLang_op) (num list) ((1 spt) option) \
+   | dataLang_Seq (dataLang_prog) (dataLang_prog) | dataLang_If (num) \
+   (dataLang_prog) (dataLang_prog) | dataLang_MakeSpace (num) (1 spt) \
+   | dataLang_Raise (num) | dataLang_Return (num list) | \
+   dataLang_Tick | dataLang_Force ((num#1 spt) option) (num) (num)";;
 hol4_overload "Skip" "dataLang_Skip";;
 hol4_overload "Move" "dataLang_Move";;
 hol4_overload "Call" "dataLang_Call";;

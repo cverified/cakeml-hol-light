@@ -13,8 +13,11 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/peg.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/term.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["inst"];;
@@ -139,8 +142,10 @@ let labels_rel_TRANS = cake_theorem "labels_rel_TRANS"
 let flat_exp_conventions_def = cake_define
   `flat_exp_conventions x1 =
         match x1 with
-          wordLang_Assign v exp -> F
+          // These should be converted to Insts
+        wordLang_Assign v exp -> F
         | (Store exp num') -> F
+        // The only place where top level (expression) vars are allowed
         | (Set store_name (Var r)) -> T
         | (Set store_name _1) -> F
         | (wordLang_ShareInst op v (Var r)) -> T
@@ -343,10 +348,12 @@ let inst_arg_convention_def = cake_define
         match x1 with
           asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r4 = 0
         | (Arith (asm_Shift _14 _15 _16 (Reg r))) -> r = 8
+        // Note: these are not necessary
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> r4 = 0
         | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> r4 = 0
         | (Arith (asm_LongMul r1 r2 r3 r4)) -> r1 = 6 /\ r2 = 0 /\ r3
           = 0 /\ r4 = 4
+        // LongDiv follows conventions for x86 as it is the only possibility
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> r1 = 0 /\ r2 = 6 /\
           r3 = 6 /\ r4 = 0
         | _17 -> T`;;
@@ -374,6 +381,7 @@ let call_arg_convention_def = cake_define
          (vs = GENLIST (\x. 2 * (x + 1)) (LENGTH vs)) /\
            call_arg_convention ret_handler /\
        (match h with
+         // Does not check the case where Calls are ill-formed
          NONE -> T | SOME (v,prog,l1,l2) ->
          (v = 2) /\ call_arg_convention prog))
         | (wordLang_MustTerminate s1) ->

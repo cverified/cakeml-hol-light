@@ -2,8 +2,7 @@
 (*  pattern_common: ported from HOL4's
     compiler/backend/pattern_matching/pattern_commonScript.sml
     A definition theory, with no definitions, 3 datatypes and no
-    theorems.  Needed by flat_pattern.ml, flat_patternProof.ml,
-    pattern_comp.ml, pattern_exh.ml and pattern_semantics.ml.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*

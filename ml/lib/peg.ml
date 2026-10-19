@@ -2,7 +2,7 @@
 (*  peg: ported from HOL4's
     examples/formal-languages/context-free/pegScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 22 files of the port.  *)
+    that CakeML needs.  Needed by 48 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/grammar.ml";;
@@ -137,14 +137,22 @@ let peg_eval = cake_inductive
 
 let peg0 = cake_inductive
   `(!c. peg0 G (peg_empty c)) /\
-   (!f. peggt0 G (peg_any f)) /\
+   (
+    // any
+    !f. peggt0 G (peg_any f)) /\
    (!f. pegfail G (peg_any f)) /\
-   (!t f. peggt0 G (peg_tok t f)) /\
+   (
+    // tok
+    !t f. peggt0 G (peg_tok t f)) /\
    (!t f. pegfail G (peg_tok t f)) /\
-   (!e f. pegfail G e ==> peg0 G (peg_rpt e f)) /\
+   (
+    // rpt
+    !e f. pegfail G e ==> peg0 G (peg_rpt e f)) /\
    (!e f. peggt0 G e ==> peggt0 G (peg_rpt e f)) /\
-   (!n f. n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) n)
-     ==>
+   (
+    // nt rules
+    !n f. n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) n)
+      ==>
           peg0 G (peg_nt n f)) /\
    (!n f. n IN FDOM (peg_rules G) /\ peggt0 G (FAPPLY (peg_rules G)
      n) ==>
@@ -152,22 +160,30 @@ let peg0 = cake_inductive
    (!n f. n IN FDOM (peg_rules G) /\ pegfail G (FAPPLY (peg_rules G)
      n) ==>
           pegfail G (peg_nt n f)) /\
-   (!e1 e2 f. pegfail G e1 \/ (peg0 G e1 /\ pegfail G e2) \/
+   (
+    // seq rules
+    !e1 e2 f. pegfail G e1 \/ (peg0 G e1 /\ pegfail G e2) \/
               (peggt0 G e1 /\ pegfail G e2) ==>
               pegfail G (peg_seq e1 e2 f)) /\
    (!e1 e2 f. peggt0 G e1 /\ (peg0 G e2 \/ peggt0 G e2) \/
               (peg0 G e1 \/ peggt0 G e1) /\ peggt0 G e2 ==>
               peggt0 G (peg_seq e1 e2 f)) /\
    (!e1 e2 f. peg0 G e1 /\ peg0 G e2 ==> peg0 G (peg_seq e1 e2 f)) /\
-   (!e1 e2 f. peg0 G e1 \/ (pegfail G e1 /\ peg0 G e2) ==>
+   (
+    // choice rules
+    !e1 e2 f. peg0 G e1 \/ (pegfail G e1 /\ peg0 G e2) ==>
               peg0 G (peg_choice e1 e2 f)) /\
    (!e1 e2 f. pegfail G e1 /\ pegfail G e2 ==> pegfail G (peg_choice
      e1 e2 f)) /\
    (!e1 e2 f. peggt0 G e1 \/ (pegfail G e1 /\ peggt0 G e2) ==>
               peggt0 G (peg_choice e1 e2 f)) /\
-   (!e c. pegfail G e ==> peg0 G (peg_not e c)) /\
+   (
+    // not
+    !e c. pegfail G e ==> peg0 G (peg_not e c)) /\
    (!e c. peg0 G e \/ peggt0 G e ==> pegfail G (peg_not e c)) /\
-   (!e. pegfail G (peg_error e))`;;
+   (
+    // error
+    !e. pegfail G (peg_error e))`;;
 
 let wfpeg = cake_inductive
   `((!n f. n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) n)

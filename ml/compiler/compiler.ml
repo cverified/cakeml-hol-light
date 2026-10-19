@@ -396,6 +396,7 @@ let error_to_str_def = cake_define_list
          concat [(implode "### ERROR: parse error\n"); s;
            (implode "\n")]`;
    `error_to_str (TypeError s) =
+         // if the first char in the message is a newline char then it isn't an error
          (if (if strlen s = 0 then T else
              if strsub s 0 = (CHR 10) then F else T) then
            concat [(implode "### ERROR: type error\n"); s;
@@ -627,6 +628,7 @@ let parse_data_conf_def = cake_define
    let gc' = parse_gc ls (data_to_word_config_gc_kind data) in
    match (tag_bits,len_bits,pad_bits,len_size,gc',empty_FFI) with
      (INL tb,INL lb,INL pb,INL ls,INL gc',INL empty_FFI) ->
+       // TODO: check conf_ok here and raise error if violated
        INL (data_to_word_config_call_empty_ffi_fupd (K empty_FFI)
          (data_to_word_config_gc_kind_fupd (K gc')
          (data_to_word_config_len_size_fupd (K ls)

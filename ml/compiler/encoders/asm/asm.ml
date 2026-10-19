@@ -2,7 +2,7 @@
 (*  asm: ported from HOL4's
     compiler/encoders/asm/asmScript.sml
     A definition theory, with 11 definitions, 11 datatypes and no
-    theorems.  Needed by 63 files of the port.  *)
+    theorems.  Needed by 64 files of the port.  *)
 (* ======================================================== *)
 
 (* -------------------------------------------------------------------------
@@ -120,13 +120,24 @@ hol4_overload "AddOverflow" "asm_AddOverflow";;
 hol4_overload "SubOverflow" "asm_SubOverflow";;
 
 let fp_INDUCT,fp_RECURSION = define_datatype
-  "fp = FPLess (num) (num) (num) | FPLessEqual (num) (num) (num) | \
-   FPEqual (num) (num) (num) | FPAbs (num) (num) | FPNeg (num) (num) \
-   | FPSqrt (num) (num) | FPAdd (num) (num) (num) | FPSub (num) (num) \
-   (num) | FPMul (num) (num) (num) | FPDiv (num) (num) (num) | FPFma \
-   (num) (num) (num) | FPMov (num) (num) | FPMovToReg (num) (num) \
-   (num) | FPMovFromReg (num) (num) (num) | FPToInt (num) (num) | \
-   FPFromInt (num) (num)";;
+  "fp = \
+   // orderings\n\
+   FPLess (num) (num) (num) | FPLessEqual (num) (num) (num) | FPEqual \
+   (num) (num) (num) | \
+   // unary ops\n\
+   FPAbs (num) (num) \
+   // IEEE754:2008\n\
+   | FPNeg (num) (num) \
+   // IEEE754:2008\n\
+   | FPSqrt (num) (num) | \
+   // binary ops\n\
+   FPAdd (num) (num) (num) | FPSub (num) (num) (num) | FPMul (num) \
+   (num) (num) | FPDiv (num) (num) (num) | \
+   // Ternary ops\n\
+   FPFma (num) (num) (num) | \
+   // moves and converts\n\
+   FPMov (num) (num) | FPMovToReg (num) (num) (num) | FPMovFromReg \
+   (num) (num) (num) | FPToInt (num) (num) | FPFromInt (num) (num)";;
 
 let asm_addr_INDUCT,asm_addr_RECURSION = define_datatype
   "asm_addr = Addr (num) ('a word)";;
@@ -177,6 +188,7 @@ let asm_config_FIELDS = define_record "asm_config"
    "avoid_regs","num list";
    "reg_count","num";
    "fp_reg_count","num";
+   (* set to 0 if float not available *)
    "two_reg_arith","bool";
    "valid_imm","binop+cmp->'a word->bool";
    "addr_offset","'a word#'a word";
@@ -198,15 +210,19 @@ let fp_reg_ok_def = cake_define
 let reg_imm_ok_def = cake_define_list
   [`reg_imm_ok b (Reg r) c = reg_ok r c`;
    `reg_imm_ok b (Imm w) c =
-         ((b = INL Xor) /\ (w = --(n2w 1)) \/
-           asm_config_valid_imm c b w)`];;
+         ((
+           // Always permit Xor by -1 in order to provide 1's complement
+           b = INL Xor) /\ (w = --(n2w 1)) \/
+             asm_config_valid_imm c b w)`];;
 
 
 (* Requires register inequality for some architectures *)
 let arith_ok_def = cake_define_list
   [`arith_ok (asm_Binop b r1 r2 ri) (c:'a asm_config) <=>
-         (asm_config_two_reg_arith c ==> (r1 = r2) \/ (b = Or) /\
-           (ri = Reg r2)) /\
+         (asm_config_two_reg_arith
+          // note: register to register moves can be implmented with
+          // "Or" on "two_reg_arith" architectures.
+          c ==> (r1 = r2) \/ (b = Or) /\ (ri = Reg r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\ reg_imm_ok (INL b) ri c`;
    `arith_ok (asm_Shift l r1 r2 ri) (c:'a asm_config) <=>
          (asm_config_two_reg_arith c ==> (r1 = r2)) /\

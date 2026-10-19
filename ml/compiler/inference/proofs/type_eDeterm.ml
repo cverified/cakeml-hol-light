@@ -62,6 +62,7 @@ let infer_pe_complete = cake_theorem "infer_pe_complete"
         t1 = convert_t (t_walkstar s' t') /\
         t1 = convert_t (t_walkstar s' t) /\
         t_wfs s /\
+        // This might be implied by something above
         EVERY (\(n,t). check_t tvs {} (t_walkstar s' t))
           new_bindings /\
         convert_env s' new_bindings = tenv1)`)
@@ -119,6 +120,15 @@ let type_pe_determ_infer_e = cake_theorem "type_pe_determ_infer_e"
   (fun () ->
     `!loc ienv p e st st' t t' new_bindings s.
       ALL_DISTINCT (MAP FST new_bindings) /\
+      // check_menv ienv.inf_m ∧
+      // menv_alpha ienv.inf_m tenv.m ∧
+      // tenv_ctor_ok tenv.c ∧
+      // ienv.inf_c = tenv.c ∧
+      // ienv.inf_t = tenv.t ∧
+      // tenv_tabbrev_ok tenv.t ∧
+      // check_env {} ienv.inf_v ∧
+      // num_tvs tenv.v = 0 ∧
+      // tenv_inv FEMPTY ienv.inf_v tenv.v ∧
       env_rel_sound FEMPTY ienv tenv typeSystem_Empty /\
       ienv_ok {} ienv /\
       infer_e loc ienv e (init_infer_state ss) = (M_success t,st)

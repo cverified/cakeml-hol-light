@@ -10,7 +10,10 @@
   succeeds.
 *)
 
+needs "basis/pure/mlvector.ml";;
 needs "compiler/inference/inferProps.ml";;
+needs "lib/bitstring.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
@@ -682,15 +685,21 @@ let type_d_type_d_canon = cake_theorem "type_d_type_d_canon"
     `(!extra_checks tenv d ids tenv'.
      type_d extra_checks tenv d ids tenv' ==>
      (!tids f n mapped_tenv.
+     // These restrict the kinds of type_d that we are thinking about
      extra_checks = T /\
      DISJOINT ids tids /\
+     // Over-approximation of the tids in tenv
      set_tids_tenv tids tenv /\
+     // f injects all of the tids already used in tenv into the canonical system
      BIJ f tids (count n) /\
+     // tids contains at least the primitive type numbers and f is identity on them
      prim_tids T tids /\ good_remap f /\
      tenv_equiv (remap_tenv f tenv) mapped_tenv ==>
        (?g mapped_tenv'.
+         // This is actually a property of the type system
          set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids /\
            FINITE ids /\
+         // This forces g to extend the injection on f
          BIJ g ids (count (CARD ids)) /\
          type_d_canon n mapped_tenv d (CARD ids) mapped_tenv' /\
          tenv_equiv (remap_tenv (extend_bij f g ids n) tenv')

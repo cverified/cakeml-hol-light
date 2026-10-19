@@ -30,6 +30,15 @@ def main():
     print('no tools/constants.txt: run tools/bin/intargs first')
     return 0
   db = dbmod.Db()
+  # the names of the types of the port, which a statement writes
+  # in an annotation and which are no accessors (cmlPEG writes
+  # (tokens_token,MMLnonT)grammar_symbol, the type of a symbol of
+  # a grammar, and grammar is a record of the port)
+  tys = set()
+  for (thy, nm), new in db.rename.items():
+    if any(k in ('type', 'tyabbrev')
+           for t, k in db.defs.get(nm, []) if t == thy):
+      tys.add(new)
   # the accessors that the records of the port can have
   recs = {}
   for (thy, ty), flds in db.recs.items():
@@ -44,7 +53,7 @@ def main():
       for m in re.finditer(r'`([^`]*)`', code):
         for i in set(re.findall(r"[A-Za-z][A-Za-z0-9_']*",
                                 m.group(1))):
-          if i in consts: continue
+          if i in consts or i in tys: continue
           # a name of the shape of an accessor of a record of the
           # port, which the port means as one
           rec = next((r for r in recs if i.startswith(r + '_')), None)

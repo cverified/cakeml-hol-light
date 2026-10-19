@@ -12,6 +12,10 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "lib/balanced_map.ml";;
+needs "lib/errorMonad.ml";;
+needs "lib/peg.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: integer *)
 
@@ -196,32 +200,45 @@ let bvi_to_cb_aux_def = cake_define_list_try_tac (fun () ->
          SOME (bs,INR (CallBlock tag [] cb [])) | _49 -> NONE)`;
    `bvi_to_cb_aux_sing n loc tag (Op op args:bvi_exp) =
        (match bvi_tmc_dest_Cons op with SOME tag' ->
-           (match bvi_to_cb_aux n loc tag' args with NONE -> NONE |
-             SOME (bs,INL vs) ->
+           (
+            // BlockOp Cons - try to recurse
+            match bvi_to_cb_aux n loc tag' args with NONE -> NONE |
+              SOME (bs,INL vs) ->
+                // No recursive call - whole thing gets let-bound
                 (if pure_exp n (Op op args) then
                   SOME ([Op op args],INL [0]) else NONE) | SOME
                     (bs,INR cb) ->
+                // Recursive call - inductive case of CallBlock
                 SOME (bs,INR (CallBlock tag [] cb []))) | NONE ->
+           // Not a BlockOp Cons - whole thing gets let-bound
            (if pure_exp n (Op op args) then
              SOME ([Op op args],INL [0]) else NONE))`;
    `bvi_to_cb_aux_sing n _50 _51 exp =
+       // Some other expression - whole thing gets let-bound
        (if pure_exp n exp then
          SOME ([exp],INL [0]) else NONE)`;
    `bvi_to_cb_aux _52 _53 _54 [] = SOME ([],INL [])`;
    `bvi_to_cb_aux n loc tag [exp] = bvi_to_cb_aux_sing n loc tag exp`;
    `bvi_to_cb_aux n loc tag (h :: t) =
+       // Recurse right to left to find last occurence of recursive call
        (match bvi_to_cb_aux n loc tag t with NONE -> NONE | SOME
          (bs2,INL vs2) ->
-           (match bvi_to_cb_aux_sing n loc tag h with NONE -> NONE |
-             SOME (bs1,INL vs1) ->
+           (
+            // No recursive call to the right. See if the first has one.
+            match bvi_to_cb_aux_sing n loc tag h with NONE -> NONE |
+              SOME (bs1,INL vs1) ->
+                // No recursive call, keep building binders.
                 (if small_enough_int (&(LENGTH vs1 + LENGTH vs2))
                   then
                   let vs2' = shift_vars (LENGTH bs1) vs2 in
                     SOME (bs1 ++ bs2,INL (vs1 ++ vs2')) else NONE) |
                       SOME (bs1,INR (CallBlock _55 [] child [])) ->
+                // We've constructed a CallBlock at this level with just h, pad the other args
+                // l and r are always empty if args is a singleton
                 (let vs2' = shift_vars (LENGTH bs1) vs2 in
                   SOME (bs1 ++ bs2,INR (CallBlock tag [] child
                     vs2'))) | _56 -> NONE) | SOME (bs2,INR cb) ->
+           // Recursive call found, first is let bound and added to the left
            (match shift_cb 1 cb with CallBlock tag l child r ->
                (let cb' = CallBlock tag (0 :: l) child r in
                  SOME (h :: bs2,INR cb')) | _57 -> NONE))`];;

@@ -28,6 +28,7 @@ needs "compiler/backend/flat_pattern.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/location.ml";;
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/namespace.ml";;
@@ -144,11 +145,11 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
      (pair_size mlstring_size ast_exp_size)) funs)`)
   CHEAT_TAC
   [`source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (Raise e:ast_exp) =
+  (env:source_to_flat_environment) (ast_Raise e) =
         flatLang_Raise backend_common_None
           (source_to_flat_compile_exp t env e)`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (Handle e pes:ast_exp) =
+  (env:source_to_flat_environment) (ast_Handle e pes) =
         flatLang_Handle backend_common_None
           (source_to_flat_compile_exp t env e) (compile_pes t env
           pes)`;
@@ -156,18 +157,19 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
   (env:source_to_flat_environment) (ast_Lit l) = flatLang_Lit
   backend_common_None l`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (Con cn es:ast_exp) =
+  (env:source_to_flat_environment) (ast_Con cn es) =
         flatLang_Con backend_common_None (OPTION_JOIN (OPTION_MAP
           (type_group_id_type o nsLookup (source_to_flat_environment_c
           env)) cn))
               (source_to_flat_compile_exps t env es)`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (ast_Var x:ast_exp) =
+  (env:source_to_flat_environment) (ast_Var x) =
         (match nsLookup (source_to_flat_environment_v env) x with
-          NONE -> flatLang_Var_local backend_common_None (implode "")
-          | SOME x -> compile_var backend_common_None x)`;
+          NONE -> flatLang_Var_local backend_common_None (implode "") |
+          // Can't happen
+          SOME x -> compile_var backend_common_None x)`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (Fun x e:ast_exp) =
+  (env:source_to_flat_environment) (ast_Fun x e) =
         flatLang_Fun (join_all_names t) x
           (source_to_flat_compile_exp t
             (source_to_flat_environment_v_fupd (K (nsBind x
@@ -203,9 +205,11 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
                           backend_common_None (implode "r")])))] else
         if op = ast_Env_id then (match es with [_8] -> (match
           source_to_flat_compile_exps t env es with x :: xs -> x | _9 ->
-          flatLang_Var_local backend_common_None (implode "")) | _10 ->
-          flatLang_App backend_common_None (flatLang_El 0)
-          (source_to_flat_compile_exps t env es)) else
+          flatLang_Var_local backend_common_None (implode "")) |
+            // Can't happen
+            // possible only if one of es raises an exception
+            _10 -> flatLang_App backend_common_None (flatLang_El 0)
+              (source_to_flat_compile_exps t env es)) else
           flatLang_App backend_common_None (astOp_to_flatOp op)
             (source_to_flat_compile_exps t env es))`;
    `source_to_flat_compile_exp (t:mlstring list)
@@ -220,18 +224,18 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
                (flatLang_Bool backend_common_None T)
                (source_to_flat_compile_exp t env e2))`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (If e1 e2 e3:ast_exp) =
+  (env:source_to_flat_environment) (ast_If e1 e2 e3) =
         flatLang_If backend_common_None
            (source_to_flat_compile_exp t env e1)
            (source_to_flat_compile_exp t env e2)
            (source_to_flat_compile_exp t env e3)`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (Mat e pes:ast_exp) =
+  (env:source_to_flat_environment) (ast_Mat e pes) =
         flatLang_Mat backend_common_None
           (source_to_flat_compile_exp t env e) (compile_pes t env
           pes)`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (Let (SOME x) e1 e2:ast_exp) =
+  (env:source_to_flat_environment) (ast_Let (SOME x) e1 e2) =
           flatLang_Let backend_common_None (SOME x)
             (source_to_flat_compile_exp (x :: t) env e1)
             (source_to_flat_compile_exp t
@@ -239,7 +243,7 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
               (source_to_flat_Local backend_common_None x)
               (source_to_flat_environment_v env))) env) e2)`;
    `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (Let NONE e1 e2:ast_exp) =
+  (env:source_to_flat_environment) (ast_Let NONE e1 e2) =
         flatLang_Let backend_common_None NONE
           (source_to_flat_compile_exp t env e1)
           (source_to_flat_compile_exp t env e2)`;
@@ -257,9 +261,10 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
    `source_to_flat_compile_exp (t:mlstring list)
   (env:source_to_flat_environment) (ast_Tannot e _11) =
   source_to_flat_compile_exp t env e`;
-   `source_to_flat_compile_exp (t:mlstring list)
-  (env:source_to_flat_environment) (ast_Lannot e (Locs st en)) =
-  source_to_flat_compile_exp t env e`;
+   `// When encountering a Lannot, we update the trace we are passing
+    source_to_flat_compile_exp (t:mlstring list)
+      (env:source_to_flat_environment) (ast_Lannot e (Locs st en)) =
+      source_to_flat_compile_exp t env e`;
    `source_to_flat_compile_exps (t:mlstring list)
   (env:source_to_flat_environment) [] = []`;
    `source_to_flat_compile_exps (t:mlstring list)

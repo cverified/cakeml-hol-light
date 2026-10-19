@@ -41,6 +41,7 @@ let SimpSeq_def = cake_define
            ->
              (match dest_Seq_Move p2 with NONE -> default | SOME
                (n2,l2,rest) ->
+                    // if n1 ≠ n2 then default else
                     (let l = word_unreach_merge_moves l1 l2 in
                       if rest = Skip then wordLang_Move (MAX n1
                         n2) l else Seq (wordLang_Move (MAX n1 n2) l)

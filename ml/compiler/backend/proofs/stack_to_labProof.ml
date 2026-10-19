@@ -9,6 +9,7 @@
   Correctness proof for stack_to_lab
 *)
 
+needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_jump.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
@@ -46,6 +47,7 @@ needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
+needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "lib/toto.ml";;
@@ -361,6 +363,7 @@ let labs_correct_hd = cake_theorem "labs_correct_hd"
 
 let labels_ok_def = cake_define
   `labels_ok code <=>
+   // Section names are distinct
    ALL_DISTINCT (MAP (\s. match s with Section n _7 -> n) code) /\
    EVERY (\s. match s with Section n lines ->
      (let labs = extract_labels lines in
@@ -428,6 +431,7 @@ let state_rel_def = cake_define
               (append (FST (stack_to_lab_flatten T prog n (next_lab
                 prog 2) [] []))) (labSem_state_code t) /\
             loc_to_pc n 0 (labSem_state_code t) = SOME pc')) /\
+     // These two conjuncts are needed for Install
      domain (stackSem_state_code s) = set_of_list (MAP Section_num
        (labSem_state_code t)) /\
      EVERY sec_labels_ok (labSem_state_code t) /\
@@ -439,8 +443,10 @@ let state_rel_def = cake_define
      ~(labSem_state_link_reg t IN stackSem_state_ffi_save_regs s) /\
      (!k i n. k IN stackSem_state_ffi_save_regs s ==>
        labSem_state_io_regs t n i k = NONE) /\
-     (!k n. k IN stackSem_state_ffi_save_regs s ==>
-       labSem_state_cc_regs t n k = NONE) /\
+     (
+      // might need to be cc_save_regs
+      !k n. k IN stackSem_state_ffi_save_regs s ==>
+        labSem_state_cc_regs t n k = NONE) /\
      (!x. x IN stackSem_state_mdomain s ==> w2n x MOD (dimindex (:'a)
        DIV 8) = 0) /\
      (!x. x IN stackSem_state_sh_mdomain s ==> w2n x MOD (dimindex
@@ -458,6 +464,7 @@ let state_rel_def = cake_define
          EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
            (extract_labels p) /\
          ALL_DISTINCT (extract_labels p)) ps /\
+         // This last conjunct might not be necessary
          ALL_DISTINCT (MAP FST ps)) /\
      ~(stackSem_state_use_stack s) /\
      ~(stackSem_state_use_store s) /\
@@ -762,6 +769,8 @@ let flatten_call_correct = cake_theorem "flatten_call_correct"
           Error)) /\
        (!n. res = SOME (Result (wordLang_Loc n 0)) ==> r2 = Halt
          ffi_Success) /\ labSem_state_ffi
+       // (evaluate (t1 with clock := t1.clock - 1 + ck) =
+       // (,t2)) ∧
        t2 = state_ffi s2 /\ ~(r2 = Error) /\ (res = SOME TimeOut
          ==> r2 = TimeOut))`)
   CHEAT_TAC;;
@@ -1490,6 +1499,7 @@ let stack_to_lab_stack_good_code_labels =
      MEM InitGlobals_location (MAP FST prog) /\
      stack_good_code_labels prog elabs /\
      EVERY sec_labels_ok prog' ==>
+     // TODO: pretty sure this is only ever used with elabs = {}
      get_labels prog' SUBSET get_code_labels prog' UNION IMAGE
        (\n. n,0) elabs UNION IMAGE (\n. n,1) elabs`)
   CHEAT_TAC;;

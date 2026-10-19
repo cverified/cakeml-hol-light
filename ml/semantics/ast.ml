@@ -2,7 +2,7 @@
 (*  ast: ported from HOL4's
     semantics/astScript.sml
     A definition theory, with 6 definitions, 16 datatypes and no
-    theorems.  Needed by 154 files of the port.  *)
+    theorems.  Needed by 158 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -97,19 +97,45 @@ hol4_overload "WordT" "ast_WordT";;
 hol4_overload "Float64T" "ast_Float64T";;
 
 let ast_op_INDUCT,ast_op_RECURSION = define_datatype
-  "ast_op = ast_Arith (ast_arith) (prim_type) | ast_FromTo \
-   (prim_type) (prim_type) | ast_Shift (word_size) (ast_shift) (num) \
-   | ast_Equality | ast_Test (test) (prim_type) | ast_Opapp | \
-   ast_Opassign | ast_Opref | ast_Opderef | ast_Aw8alloc | ast_Aw8sub \
-   | ast_Aw8length | ast_Aw8update | ast_CopyStrStr | ast_CopyStrAw8 \
-   | ast_CopyAw8Str | ast_CopyAw8Aw8 | ast_XorAw8Str_unsafe | \
+  "ast_op = \
+   // primitive operations for the primitive types: +, -, and, sqrt, etc.\n\
+   ast_Arith (ast_arith) (prim_type) | \
+   // conversions between primitive types: char<->int, word<->double, word<->int\n\
+   ast_FromTo (prim_type) (prim_type) | \
+   // Operations on words\n\
+   ast_Shift (word_size) (ast_shift) (num) | ast_Equality | ast_Test \
+   (test) (prim_type) | \
+   // Function application\n\
+   ast_Opapp | \
+   // Reference operations\n\
+   ast_Opassign | ast_Opref | ast_Opderef | \
+   // Word8Array operations\n\
+   ast_Aw8alloc | ast_Aw8sub | ast_Aw8length | ast_Aw8update | \
+   // string/bytearray conversions\n\
+   ast_CopyStrStr | ast_CopyStrAw8 | ast_CopyAw8Str | ast_CopyAw8Aw8 \
+   | ast_XorAw8Str_unsafe | \
+   // String operations\n\
    ast_Implode | ast_Explode | ast_Strsub | ast_Strlen | ast_Strcat | \
-   ast_VfromList | ast_Vsub | ast_Vlength | ast_Aalloc | \
-   ast_AallocEmpty | ast_AallocFixed | ast_Asub | ast_Alength | \
-   ast_Aupdate | ast_Vsub_unsafe | ast_Asub_unsafe | \
-   ast_Aupdate_unsafe | ast_Aw8sub_unsafe | ast_Aw8update_unsafe | \
-   ast_ThunkOp (ast_thunk_op) | ast_ListAppend | ast_ConfigGC | \
-   ast_FFI (mlstring) | ast_Eval | ast_Env_id";;
+   // Vector operations\n\
+   ast_VfromList | ast_Vsub | ast_Vlength | \
+   // Array operations\n\
+   ast_Aalloc | ast_AallocEmpty | ast_AallocFixed | ast_Asub | \
+   ast_Alength | ast_Aupdate | \
+   // Unsafe vector/array accesses\n\
+   ast_Vsub_unsafe | ast_Asub_unsafe | ast_Aupdate_unsafe | \
+   ast_Aw8sub_unsafe | ast_Aw8update_unsafe | \
+   // thunk operations\n\
+   ast_ThunkOp (ast_thunk_op) | \
+   // List operations\n\
+   ast_ListAppend | \
+   // Configure the GC\n\
+   ast_ConfigGC | \
+   // Call a given foreign function\n\
+   ast_FFI (mlstring) | \
+   // Evaluate new code in a given env\n\
+   ast_Eval | \
+   // Get the identifier of an env object\n\
+   ast_Env_id";;
 hol4_overload "Arith" "ast_Arith";;
 hol4_overload "FromTo" "ast_FromTo";;
 hol4_overload "Shift" "ast_Shift";;
@@ -156,7 +182,14 @@ hol4_overload "Env_id" "ast_Env_id";;
 
 (* Define operator classes, that allow to group their behavior later *)
 let op_class_INDUCT,op_class_RECURSION = define_datatype
-  "op_class = ast_EvalOp | ast_FunApp | ast_Force | ast_Simple";;
+  "op_class = ast_EvalOp \
+   // Eval primitive\n\
+   | ast_FunApp \
+   // function application\n\
+   | ast_Force \
+   // forcing a thunk\n\
+   | ast_Simple \
+   // arithmetic operation, no finite-precision/reals";;
 hol4_overload "EvalOp" "ast_EvalOp";;
 hol4_overload "FunApp" "ast_FunApp";;
 hol4_overload "Force" "ast_Force";;
@@ -170,15 +203,26 @@ let getOpClass_def = cake_define
 
 (* Types used in type annotations *)
 let ast_t_INDUCT,ast_t_RECURSION = define_datatype
-  "ast_t = Atvar (mlstring) | Atfun (ast_t) (ast_t) | Attup (ast_t \
-   list) | Atapp (ast_t list) ((mlstring,mlstring)namespace_id)";;
+  "ast_t = \
+   // Type variables that the user writes down ('a, 'b, etc.)\n\
+   Atvar (mlstring) | \
+   // Function type\n\
+   Atfun (ast_t) (ast_t) | \
+   // Tuple type\n\
+   Attup (ast_t list) | \
+   // Type constructor applications.\n\
+   // 0-ary type applications represent unparameterised types (e.g., num or string)\n\
+   Atapp (ast_t list) ((mlstring,mlstring)namespace_id)";;
 
 (* Patterns *)
 let ast_pat_INDUCT,ast_pat_RECURSION = define_datatype
   "ast_pat = ast_Pany | ast_Pvar (mlstring) | ast_Plit (lit) | \
+   // Constructor applications.\n\
+   // A Nothing constructor indicates a tuple pattern.\n\
    ast_Pcon (((mlstring,mlstring)namespace_id) option) (ast_pat list) \
-   | ast_Pref (ast_pat) | ast_Pas (ast_pat) (mlstring) | ast_Ptannot \
-   (ast_pat) (ast_t)";;
+   | ast_Pref (ast_pat) | \
+   // Pattern alias.\n\
+   ast_Pas (ast_pat) (mlstring) | ast_Ptannot (ast_pat) (ast_t)";;
 hol4_overload "Pany" "ast_Pany";;
 hol4_overload "Pvar" "ast_Pvar";;
 hol4_overload "Plit" "ast_Plit";;
@@ -194,15 +238,32 @@ let lop_INDUCT,lop_RECURSION = define_datatype
 (* Expressions *)
 let ast_exp_INDUCT,ast_exp_RECURSION = define_datatype
   "ast_exp = ast_Raise (ast_exp) | ast_Handle (ast_exp) \
-   ((ast_pat#ast_exp) list) | ast_Lit (lit) | ast_Con \
-   (((mlstring,mlstring)namespace_id) option) (ast_exp list) | \
-   ast_Var ((mlstring,mlstring)namespace_id) | ast_Fun (mlstring) \
-   (ast_exp) | ast_App (ast_op) (ast_exp list) | ast_Log (lop) \
-   (ast_exp) (ast_exp) | ast_If (ast_exp) (ast_exp) (ast_exp) | \
-   ast_Mat (ast_exp) ((ast_pat#ast_exp) list) | ast_Let (mlstring \
-   option) (ast_exp) (ast_exp) | ast_Letrec \
-   ((mlstring#mlstring#ast_exp) list) (ast_exp) | ast_Tannot \
-   (ast_exp) (ast_t) | ast_Lannot (ast_exp) (locs)";;
+   ((ast_pat#ast_exp) list) | ast_Lit (lit) | \
+   // Constructor application.\n\
+   // A Nothing constructor indicates a tuple pattern.\n\
+   ast_Con (((mlstring,mlstring)namespace_id) option) (ast_exp list) \
+   | ast_Var ((mlstring,mlstring)namespace_id) | ast_Fun (mlstring) \
+   (ast_exp) | \
+   // Application a primitive operator to arguments.\n\
+   // Includes function application.\n\
+   ast_App (ast_op) (ast_exp list) | \
+   // Logical operations (and, or)\n\
+   ast_Log (lop) (ast_exp) (ast_exp) | ast_If (ast_exp) (ast_exp) \
+   (ast_exp) | \
+   // Pattern matching\n\
+   ast_Mat (ast_exp) ((ast_pat#ast_exp) list) | \
+   // A let expression\n\
+   // A Nothing value for the binding indicates that this is a\n\
+   // sequencing expression, that is: (e1; e2).\n\
+   ast_Let (mlstring option) (ast_exp) (ast_exp) | \
+   // Local definition (potentially) mutually recursive\n\
+   // functions.\n\
+   // The first varN is the function's name, and the second varN\n\
+   // is its parameter.\n\
+   ast_Letrec ((mlstring#mlstring#ast_exp) list) (ast_exp) | \
+   ast_Tannot (ast_exp) (ast_t) | \
+   // Location annotated expressions, not expected in source programs\n\
+   ast_Lannot (ast_exp) (locs)";;
 hol4_overload "Raise" "ast_Raise";;
 hol4_overload "Handle" "ast_Handle";;
 hol4_overload "Lit" "ast_Lit";;
@@ -223,12 +284,27 @@ new_type_abbrev("type_def",`: (mlstring list#mlstring#(mlstring#ast_t
 
 (* Declarations *)
 let dec_INDUCT,dec_RECURSION = define_datatype
-  "dec = Dlet (locs) (ast_pat) (ast_exp) | Dletrec (locs) \
-   ((mlstring#mlstring#ast_exp) list) | Dtype (locs) ((mlstring \
-   list#mlstring#(mlstring#ast_t list) list) list) | Dtabbrev (locs) \
-   (mlstring list) (mlstring) (ast_t) | Dexn (locs) (mlstring) (ast_t \
-   list) | Dmod (mlstring) (dec list) | Dlocal (dec list) (dec list) \
-   | Denv (mlstring)";;
+  "dec = \
+   // Top-level bindings\n\
+   // * The pattern allows several names to be bound at once\n\
+   Dlet (locs) (ast_pat) (ast_exp) | \
+   // Mutually recursive function definition\n\
+   Dletrec (locs) ((mlstring#mlstring#ast_exp) list) | \
+   // Type definition\n\
+   // Defines several data types, each which has several\n\
+   // named variants, which can in turn have several arguments.\n\
+   Dtype (locs) ((mlstring list#mlstring#(mlstring#ast_t list) list) \
+   list) | \
+   // Type abbreviations\n\
+   Dtabbrev (locs) (mlstring list) (mlstring) (ast_t) | \
+   // New exceptions\n\
+   Dexn (locs) (mlstring) (ast_t list) | \
+   // Module\n\
+   Dmod (mlstring) (dec list) | \
+   // Local: local part, visible part\n\
+   Dlocal (dec list) (dec list) | \
+   // Store current lexical env in an env value\n\
+   Denv (mlstring)";;
 
 (* Computes the bindings of a pattern *)
 let pat_bindings_def = cake_define_list
@@ -247,42 +323,43 @@ hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
 let every_exp_def = cake_define_list
-  [`every_exp p (ast_Raise e:ast_exp) <=>
-                 p ((ast_Raise e:ast_exp)) /\ every_exp p e`;
-   `every_exp p (ast_Handle e pes:ast_exp) <=>
-                 p ((ast_Handle e pes:ast_exp)) /\ every_exp p e
-                   /\ EVERY (\(pat,e). every_exp p e) pes`;
+  [`every_exp p (ast_Raise e) <=>
+                 p ((ast_Raise e:'s ast_exp)) /\ every_exp p e`;
+   `every_exp p (ast_Handle e pes) <=>
+                 p ((ast_Handle e pes:'s ast_exp)) /\ every_exp p
+                   e /\ EVERY (\(pat,e). every_exp p e) pes`;
    `every_exp p (ast_Lit l) <=>
                  p (ast_Lit l)`;
-   `every_exp p (ast_Con cn es:ast_exp) <=>
-                 p ((ast_Con cn es:ast_exp)) /\ EVERY (every_exp
-                   p) es`;
-   `every_exp p (ast_Var v:ast_exp) <=>
-                 p ((ast_Var v:ast_exp))`;
-   `every_exp p (ast_Fun x e:ast_exp) <=>
-                 p ((ast_Fun x e:ast_exp)) /\ every_exp p e`;
-   `every_exp p (ast_App op es:ast_exp) <=>
-                 p ((ast_App op es:ast_exp)) /\ EVERY (every_exp
-                   p) es`;
+   `every_exp p (ast_Con cn es) <=>
+                 p ((ast_Con cn es:'s ast_exp)) /\ EVERY
+                   (every_exp p) es`;
+   `every_exp p (ast_Var v) <=>
+                 p ((ast_Var v:'s ast_exp))`;
+   `every_exp p (ast_Fun x e) <=>
+                 p ((ast_Fun x e:'s ast_exp)) /\ every_exp p e`;
+   `every_exp p (ast_App op es) <=>
+                 p ((ast_App op es:'s ast_exp)) /\ EVERY
+                   (every_exp p) es`;
    `every_exp p (ast_Log lop e1 e2) <=>
                  p (ast_Log lop e1 e2) /\ every_exp p e1 /\
                    every_exp p e2`;
-   `every_exp p (ast_If e1 e2 e3:ast_exp) <=>
-                 p ((ast_If e1 e2 e3:ast_exp)) /\ every_exp p e1
-                   /\ every_exp p e2 /\ every_exp p e3`;
-   `every_exp p (ast_Mat e pes:ast_exp) <=>
-                 p ((ast_Mat e pes:ast_exp)) /\ every_exp p e /\
-                   EVERY (\(pat,e). every_exp p e) pes`;
-   `every_exp p (ast_Let x e1 e2:ast_exp) <=>
-                 p ((ast_Let x e1 e2:ast_exp)) /\ every_exp p e1
-                   /\ every_exp p e2`;
+   `every_exp p (ast_If e1 e2 e3) <=>
+                 p ((ast_If e1 e2 e3:'s ast_exp)) /\ every_exp p
+                   e1 /\ every_exp p e2 /\ every_exp p e3`;
+   `every_exp p (ast_Mat e pes) <=>
+                 p ((ast_Mat e pes:'s ast_exp)) /\ every_exp p e
+                   /\ EVERY (\(pat,e). every_exp p e) pes`;
+   `every_exp p (ast_Let x e1 e2) <=>
+                 p ((ast_Let x e1 e2:'s ast_exp)) /\ every_exp p
+                   e1 /\ every_exp p e2`;
    `every_exp p (ast_Tannot e a) <=>
                  p (ast_Tannot e a) /\ every_exp p e`;
    `every_exp p (ast_Lannot e a) <=>
                  p (ast_Lannot e a) /\ every_exp p e`;
-   `every_exp p (ast_Letrec funs e:ast_exp) <=>
-                 p ((ast_Letrec funs e:ast_exp)) /\ every_exp p
-                   e /\ EVERY (\(n,v,e). every_exp p e) funs`];;
+   `every_exp p (ast_Letrec funs e) <=>
+                 p ((ast_Letrec funs e:'s ast_exp)) /\
+                   every_exp p e /\ EVERY (\(n,v,e). every_exp p e)
+                   funs`];;
 
 let seqs_def = cake_define_list
   [`ast_Seqs [] = ast_Con NONE []`;

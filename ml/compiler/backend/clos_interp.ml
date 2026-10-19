@@ -13,6 +13,7 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;
@@ -198,9 +199,11 @@ let clos_interp_rev_def = cake_define
 let clos_interpreter_body_def = cake_define
   `clos_interpreter_body =
        If backend_common_None ((Var backend_common_None) 1)
-         (If backend_common_None (closLang_Op backend_common_None
-           (closLang_BlockOp (closLang_LenEq 0)) [(Var
-           backend_common_None) 0]) ((Var backend_common_None) 0) (
+         (
+          // is _list version
+          If backend_common_None (closLang_Op backend_common_None
+            (closLang_BlockOp (closLang_LenEq 0)) [(Var
+            backend_common_None) 0]) ((Var backend_common_None) 0) (
             Let backend_common_None [(\env x. App backend_common_None
               NONE (closLang_App backend_common_None NONE (closLang_App
               backend_common_None NONE (closLang_Op backend_common_None
@@ -223,13 +226,17 @@ let clos_interpreter_body_def = cake_define
               (closLang_Op backend_common_None (closLang_BlockOp
                 (closLang_Cons 0)) [(Var backend_common_None) 1; (Var
                 backend_common_None) 0]))) (
+       // normal cases
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 0 2
-         (App backend_common_None NONE ((\env x. App
-           backend_common_None NONE (closLang_App backend_common_None
-           NONE (closLang_App backend_common_None NONE (closLang_Op
-           backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
+         (
+          // App
+          App backend_common_None NONE ((\env x. App
+            backend_common_None NONE (closLang_App backend_common_None
+            NONE (closLang_App backend_common_None NONE (closLang_Op
+            backend_common_None (closLang_GlobOp (closLang_Global 0))
+            [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -248,19 +255,25 @@ let clos_interpreter_body_def = cake_define
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 1 1
-         ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-           (closLang_ElemAt n)) [x]) 0 ((Var backend_common_None) 0)) (
+         (
+          // Constant
+          (\n x. closLang_Op backend_common_None (closLang_BlockOp
+            (closLang_ElemAt n)) [x]) 0 ((Var backend_common_None) 0)) (
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 2 1
-         (closLang_Op backend_common_None (closLang_GlobOp
-           (closLang_Global 0)) [(\n x. closLang_Op backend_common_None
-           (closLang_BlockOp (closLang_ElemAt n)) [x]) 0 ((Var
-           backend_common_None) 0)]) (
+         (
+          // Global
+          closLang_Op backend_common_None (closLang_GlobOp
+            (closLang_Global 0)) [(\n x. closLang_Op backend_common_None
+            (closLang_BlockOp (closLang_ElemAt n)) [x]) 0 ((Var
+            backend_common_None) 0)]) (
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 0 1
-         (Letrec [] NONE NONE
+         (
+          // Var
+          Letrec [] NONE NONE
             [(1,closLang_Fn (implode "") NONE NONE 1 clos_interp_el)]
             (App backend_common_None NONE (closLang_App
               backend_common_None NONE ((Var backend_common_None) 0)
@@ -270,10 +283,12 @@ let clos_interpreter_body_def = cake_define
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 1 2
-         (Let backend_common_None [(\env x. App backend_common_None
-           NONE (closLang_App backend_common_None NONE (closLang_App
-           backend_common_None NONE (closLang_Op backend_common_None
-           (closLang_GlobOp (closLang_Global 0)) [])
+         (
+          // Let
+          Let backend_common_None [(\env x. App backend_common_None
+            NONE (closLang_App backend_common_None NONE (closLang_App
+            backend_common_None NONE (closLang_Op backend_common_None
+            (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 1)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -293,10 +308,13 @@ let clos_interpreter_body_def = cake_define
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 2 2
-         (Handle backend_common_None ((\env x. App
-           backend_common_None NONE (closLang_App backend_common_None
-           NONE (closLang_App backend_common_None NONE (closLang_Op
-           backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
+         (
+          // Handle
+          Handle backend_common_None ((\env x. App
+            backend_common_None NONE (closLang_App backend_common_None
+            NONE (closLang_App backend_common_None NONE (closLang_Op
+            backend_common_None (closLang_GlobOp (closLang_Global 0))
+            [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -316,10 +334,12 @@ let clos_interpreter_body_def = cake_define
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 0 3
-         (If backend_common_None ((\env x. App backend_common_None
-           NONE (closLang_App backend_common_None NONE (closLang_App
-           backend_common_None NONE (closLang_Op backend_common_None
-           (closLang_GlobOp (closLang_Global 0)) [])
+         (
+          // If
+          If backend_common_None ((\env x. App backend_common_None
+            NONE (closLang_App backend_common_None NONE (closLang_App
+            backend_common_None NONE (closLang_Op backend_common_None
+            (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -348,10 +368,12 @@ let clos_interpreter_body_def = cake_define
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 3 1
-         (Raise backend_common_None ((\env x. App backend_common_None
-           NONE (closLang_App backend_common_None NONE (closLang_App
-           backend_common_None NONE (closLang_Op backend_common_None
-           (closLang_GlobOp (closLang_Global 0)) [])
+         (
+          // Raise
+          Raise backend_common_None ((\env x. App backend_common_None
+            NONE (closLang_App backend_common_None NONE (closLang_App
+            backend_common_None NONE (closLang_Op backend_common_None
+            (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -360,15 +382,18 @@ let clos_interpreter_body_def = cake_define
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 4 1
-         ((\env x. App backend_common_None NONE (closLang_App
-           backend_common_None NONE (closLang_App backend_common_None
-           NONE (closLang_Op backend_common_None (closLang_GlobOp
-           (closLang_Global 0)) [])
+         (
+          // Tick
+          (\env x. App backend_common_None NONE (closLang_App
+            backend_common_None NONE (closLang_App backend_common_None
+            NONE (closLang_Op backend_common_None (closLang_GlobOp
+            (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
                backend_common_None (closLang_BlockOp (closLang_ElemAt
                n)) [x]) 0 ((Var backend_common_None) 0))) (
+       // Cons for non-empty payload
        Let backend_common_None [(\env x. App backend_common_None NONE
          (closLang_App backend_common_None NONE (closLang_App
          backend_common_None NONE (closLang_Op backend_common_None
@@ -388,19 +413,22 @@ let clos_interpreter_body_def = cake_define
        Let backend_common_None [(Var backend_common_None) 3] (
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
-         len)) [(Var backend_common_None) 0])) 5 1 (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_FromList 0))
-         [(Var backend_common_None) 1]) (
+         len)) [(Var backend_common_None) 0])) 5 1 (
+            // Cons 0
+            closLang_Op backend_common_None (closLang_BlockOp
+              (closLang_FromList 0)) [(Var backend_common_None) 1]) (
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
-         len)) [(Var backend_common_None) 0])) 6 1 (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_FromList 1))
-         [(Var backend_common_None) 1]) (
+         len)) [(Var backend_common_None) 0])) 6 1 (
+            // Cons 1
+            closLang_Op backend_common_None (closLang_BlockOp
+              (closLang_FromList 1)) [(Var backend_common_None) 1]) (
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
-         len)) [(Var backend_common_None) 0])) 7 1 (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_FromList 2))
-         [(Var backend_common_None) 1])
+         len)) [(Var backend_common_None) 0])) 7 1 (
+            // Cons 2
+            closLang_Op backend_common_None (closLang_BlockOp
+              (closLang_FromList 2)) [(Var backend_common_None) 1])
        (closLang_Op backend_common_None (closLang_BlockOp
          (closLang_Cons 0)) [])))))))))))))))))`;;
 

@@ -2,7 +2,7 @@
 (*  backend: ported from HOL4's
     compiler/backend/backendScript.sml
     A definition theory, with 34 definitions, 2 datatypes and 15
-    theorems.  Needed by 10 files of the port.  *)
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -54,7 +54,9 @@ let backend_config_FIELDS = define_record "backend_config"
    "lab_conf","lab_to_target_config";
    "symbols","(mlstring#num#num) list";
    "tap_conf","tap_config";
-   "exported","mlstring list"];;
+   "exported","mlstring list"
+   (* field for Pancake entry points - empty for CakeML *)
+  ];;
 
 (* HOL4 backendScript.sml:32: ML code, not ported *)
 
@@ -403,9 +405,11 @@ let from_livesets_def = cake_define
                M_success col ->
                  (apply_colour (total_colour col) prog) | M_failure
                    _14 -> prog) in
-           (name_num,arg_count,remove_must_terminate cp)) | SOME
-             col_prog -> (name_num,arg_count,remove_must_terminate
-             col_prog)) prog_with_oracles in
+           (
+            // cannot happen
+            name_num,arg_count,remove_must_terminate cp)) | SOME
+              col_prog -> (name_num,arg_count,remove_must_terminate
+              col_prog)) prog_with_oracles in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
    from_word asm_conf c names p)`;;

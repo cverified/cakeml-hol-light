@@ -2,7 +2,7 @@
 (*  stackLang: ported from HOL4's
     compiler/backend/stackLangScript.sml
     A definition theory, with 3 definitions, 2 datatypes and 2
-    theorems.  Needed by 52 files of the port.  *)
+    theorems.  Needed by 55 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -30,24 +30,58 @@ let stackLang_prog_INDUCT,stackLang_prog_RECURSION = define_datatype
    stackLang_Get (num) (store_name) | stackLang_Set (store_name) \
    (num) | stackLang_OpCurrHeap (binop) (num) (num) | stackLang_Call \
    ((stackLang_prog#num#num#num) option) (num+num) \
-   ((stackLang_prog#num#num) option) | stackLang_Seq (stackLang_prog) \
-   (stackLang_prog) | stackLang_If (cmp) (num) ('a asm_reg_imm) \
-   (stackLang_prog) (stackLang_prog) | stackLang_Loop \
-   (stackLang_prog) | stackLang_JumpLower (num) (num) (num) | \
-   stackLang_Alloc (num) | stackLang_StoreConsts (num) (num) (num \
-   option) | stackLang_Raise (num) | stackLang_Return (num) | \
-   stackLang_Break (num) | stackLang_Continue (num) | stackLang_FFI \
-   (mlstring) (num) (num) (num) (num) (num) | stackLang_Tick | \
-   stackLang_LocValue (num) (num) (num) | stackLang_Install (num) \
-   (num) (num) (num) (num) | stackLang_ShMemOp (memop) (num) ('a \
-   asm_addr) | stackLang_CodeBufferWrite (num) (num) | \
-   stackLang_DataBufferWrite (num) (num) | stackLang_RawCall (num) | \
-   stackLang_StackAlloc (num) | stackLang_StackFree (num) | \
-   stackLang_StackStore (num) (num) | stackLang_StackStoreAny (num) \
-   (num) | stackLang_StackLoad (num) (num) | stackLang_StackLoadAny \
-   (num) (num) | stackLang_StackGetSize (num) | \
-   stackLang_StackSetSize (num) | stackLang_BitmapLoad (num) (num) | \
-   stackLang_Halt (num)";;
+   ((stackLang_prog#num#num) option) \
+   // target of call\n\
+   | \
+   // return-handler code, link reg, labels l1,l2\n\
+   // handler: exception-handler code, labels l1,l2\n\
+   stackLang_Seq (stackLang_prog) (stackLang_prog) | stackLang_If \
+   (cmp) (num) ('a asm_reg_imm) (stackLang_prog) (stackLang_prog) | \
+   stackLang_Loop (stackLang_prog) | stackLang_JumpLower (num) (num) \
+   (num) \
+   // reg, reg, target name\n\
+   | stackLang_Alloc (num) | stackLang_StoreConsts (num) (num) (num \
+   option) \
+   // reg, reg, stub name to call\n\
+   | stackLang_Raise (num) | stackLang_Return (num) | stackLang_Break \
+   (num) | stackLang_Continue (num) | stackLang_FFI (mlstring) (num) \
+   (num) (num) (num) (num) \
+   // FFI index, conf_ptr, conf_len,\n\
+   // array_ptr, array_len, ret_addr\n\
+   | stackLang_Tick | stackLang_LocValue (num) (num) (num) \
+   // assign v1 := Loc v2 v3\n\
+   | stackLang_Install (num) (num) (num) (num) (num) \
+   // code buffer start, length of new code,\n\
+   // data buffer start, length of new data, ret_addr\n\
+   | stackLang_ShMemOp (memop) (num) ('a asm_addr) \
+   // share memory operation, register, addr to load/store\n\
+   | stackLang_CodeBufferWrite (num) (num) \
+   // code buffer address, byte to write\n\
+   | stackLang_DataBufferWrite (num) (num) \
+   // data buffer address, word to write\n\
+   | \
+   // new in stackLang, compared to wordLang, below\n\
+   stackLang_RawCall (num) \
+   // tail-call into body of function (past stack alloc)\n\
+   | stackLang_StackAlloc (num) \
+   // allocate n slots on the stack\n\
+   | stackLang_StackFree (num) \
+   // free n slots on the stack\n\
+   | stackLang_StackStore (num) (num) \
+   // offset, fast\n\
+   | stackLang_StackStoreAny (num) (num) \
+   // reg contains offset, slow, used by GC\n\
+   | stackLang_StackLoad (num) (num) \
+   // offset, fast\n\
+   | stackLang_StackLoadAny (num) (num) \
+   // reg contains offset, slow, used by GC\n\
+   | stackLang_StackGetSize (num) \
+   // used when installing exc handler\n\
+   | stackLang_StackSetSize (num) \
+   // used by implementation of raise\n\
+   | stackLang_BitmapLoad (num) (num) \
+   // load word from read-only region\n\
+   | stackLang_Halt (num)";;
 hol4_overload "Skip" "stackLang_Skip";;
 hol4_overload "Inst" "stackLang_Inst";;
 hol4_overload "Get" "stackLang_Get";;

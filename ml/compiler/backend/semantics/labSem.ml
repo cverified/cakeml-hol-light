@@ -39,9 +39,18 @@ let labSem_state_FIELDS = define_record "labSem_state"
    "pc","num";
    "be","bool";
    "ffi","'ffi ffi_state";
+   (* oracle *)
+   (* oracle: sequence of havoc on registers at each FFI call *)
    "io_regs","num->ffiname->num->('a word) option";
+   (* seq number *)
+   (* ffi name *)
+   (* register *)
    "cc_regs","num->num->('a word) option";
+   (* same as io_regs but for calling clear cache *)
+   (* oracles: sequence of havoc on FP registers at each FFI call / clear-cache call; a SharedMem call consumes an io_fp_regs position without using it (the machine-level counter is shared with ExtCall) *)
    "io_fp_regs","num->num->word64";
+   (* seq number *)
+   (* FP register *)
    "cc_fp_regs","num->num->word64";
    "code","('a sec) list";
    "compile","'c->('a sec) list->(word8 list#'c) option";
@@ -597,12 +606,14 @@ let evaluate_def = cake_define_try_tac (fun () ->
               w2,loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
               (bytes,cb),SOME new_pc) ->
                (let (cfg,prog) = labSem_state_compile_oracle s 0 in
+               // the next oracle program
                let new_oracle = misc_shift_seq 1
                  (labSem_state_compile_oracle s) in
                  (match (labSem_state_compile s cfg prog,prog) with
                    (SOME (bytes',cfg'),Section k _78 :: _79) ->
                     (if bytes = bytes' /\ FST (new_oracle 0) = cfg'
                       then
+                      // the oracle was correct
                       labSem_evaluate
                         (labSem_state_clock_fupd (K
                           (labSem_state_clock s - 1))

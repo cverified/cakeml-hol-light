@@ -1299,13 +1299,23 @@ let mc_iop_def,mc_iop_pre_def =
         let r1 = r0 in
         let cond' = mc_iadd_pre (l,r1,r2,xs,ys,zs) in
         let (l,r10,xs,ys,zs) = mc_iadd (l,r1,r2,xs,ys,zs) in
-          (INR (l,r10,xs,ys,zs),cond')) else if r3 = (n2w 0x4) then
+          (INR (l,r10,xs,ys,zs),cond')) else
+      // else if r3 <+ 0x4w then
+      // (let r10 = r0 in
+      // let r11 = r1 in
+      // let cond = mc_full_cmp_pre (r3,r10,r11,xs,ys,zs) in
+      // let (r10,xs,ys,zs) = mc_full_cmp (r3,r10,r11,xs,ys,zs)
+      // in
+      // (INR (r10,xs,ys,zs,ss),cond))
+      if r3 = (n2w 0x4) then
        (let r2 = r1 in
         let r1 = r0 in
         let cond' = mc_imul_pre (l,r1,r2,xs,ys,zs) in
         let (l,r10,xs,ys,zs) = mc_imul (l,r1,r2,xs,ys,zs) in
           (INR (l,r10,xs,ys,zs),cond')) else
-       (let r3 = r3 - (n2w 0x5) in
+       (
+        // if r3 <+ 0x7w then
+        let r3 = r3 - (n2w 0x5) in
         let r10 = r0 in
         let r11 = r1 in
         let cond' = mc_idiv_pre (l,r3,r10,r11,xs,ys,zs) in

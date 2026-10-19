@@ -2,10 +2,12 @@
 (*  balanced_map: ported from HOL4's
     examples/data-structures/balanced_bst/balanced_mapScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 6 files of the port.  *)
+    that CakeML needs.  Needed by 14 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/comparison.ml";;
+needs "lib/errorMonad.ml";;
+needs "lib/peg.ml";;
 needs "lib/sorting.ml";;
 needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: option pair string arithmetic
@@ -82,6 +84,7 @@ let balanceL_def = cake_define
                               (Bin (1 + rs + balanced_map_size lrr) k
                                 x lrr (Bin rs k' v' l' r'))) | (_16,_17)
                                 -> Tip else
+       // error "Failure in Data.Map.balanceL"
        Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l'
          r'))`;;
 
@@ -118,6 +121,7 @@ let balanceR_def = cake_define
                   balanced_map_size rll) k x (Bin ls k' v' l' r') rll)
                               (Bin (1 + rrs + balanced_map_size rlr)
                                 rk rx rlr rr)) | (_33,_34) -> Tip else
+       // error "Failure in Data.Map.balanceR"
        Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl
          rr))`;;
 

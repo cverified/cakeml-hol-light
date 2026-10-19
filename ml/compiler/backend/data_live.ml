@@ -14,7 +14,9 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;
@@ -24,11 +26,14 @@ let is_pure_def = cake_define
         match x1 with
           (FFI _2:closLang_op) -> F
         | (closLang_IntOp closLang_Add) -> F
+        // TODO: these would be pure if space usage were not tracked
         | (closLang_IntOp closLang_Sub) -> F
+        // which could be a switch in the semantics
         | (closLang_IntOp closLang_Mult) -> F
         | (closLang_IntOp closLang_Div) -> F
         | (closLang_IntOp closLang_Mod) -> F
         | (closLang_IntOp closLang_Less) -> F
+        // TODO: are these really impure?
         | (closLang_IntOp closLang_LessEq) -> F
         | (closLang_WordOp (WordOpw ast_W64 _3)) -> F
         | (closLang_WordOp (WordShift ast_W64 _4 _5)) -> F

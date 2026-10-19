@@ -20,9 +20,15 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/bitstring.ml";;
+needs "lib/errorMonad.ml";;
+needs "lib/mergesort.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide ["inst"];;
@@ -58,6 +64,7 @@ let next_var_rename_def = cake_define
 let list_next_var_rename_def = cake_define_list
   [`list_next_var_rename [] ssa (na:num) = ([],ssa,na)`;
    `list_next_var_rename (x :: xs) ssa (na:num) =
+        // Write this way to make it ascending, can also use acc passing
         (let (y,ssa',na') = next_var_rename x ssa na in
         let (ys,ssa'',na'') = list_next_var_rename xs ssa' na' in
           (y :: ys,ssa'',na''))`];;
@@ -184,9 +191,13 @@ let ssa_cc_trans_inst_def = cake_define
        let mov_out = (wordLang_Move 1) [(r4'',0)] in
          (Seq mov_in (Seq (Inst (Arith (asm_AddCarry r1' r2' r3' 0)))
            mov_out),ssa'',na''))
+        // Note: for AddOverflow and SubOverflow, setting r4 to 0 is not necessary
+        // However, this helps with word_to_stack which currently only spills
+        // one register on writes
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
        (let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
+       // TODO: This might need to be made a strong preference
        let (r1',ssa',na') = next_var_rename r1 ssa na in
        let (r4'',ssa'',na'') = next_var_rename r4 ssa' na' in
        let mov_out = (wordLang_Move 1) [(r4'',0)] in
@@ -266,11 +277,13 @@ let ssa_cc_trans_inst_def = cake_define
          let r1' = option_lookup ssa r1 in
          let r2' = option_lookup ssa r2 in
          if r1' = r2' then
+           // force distinct with an extra Move
            let (r2'',ssa',na') = next_var_rename r2 ssa na in
            let mov_in = (wordLang_Move 0) [(r2'',r2')] in
            (Seq mov_in (Inst (asm_FP (FPMovFromReg d r1' r2''))),
            ssa',na') else
            (Inst (asm_FP (FPMovFromReg d r1' r2')),ssa,na))
+        // Catchall -- for future instructions to be added, and all other FP
         | x -> (Inst x,ssa,na)`;;
 
 (*Expressions only ever need to lookup a variable's current ssa map
@@ -394,33 +407,46 @@ let ssa_cc_trans_def = cake_define_list_cheat CHEAT_TAC
    `ssa_cc_trans (wordLang_MustTerminate s1) ssa na lt =
         (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
           (wordLang_MustTerminate s1',ssa',na'))`;
-   `ssa_cc_trans (wordLang_If cmp r1 ri e2 e3) ssa na lt =
-        (let r1' = option_lookup ssa r1 in
-        let ri' = (match ri with Reg r -> Reg (option_lookup ssa r)
-          | Imm v -> Imm v) in
-        let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
-        let (e3',ssa3,na3) = ssa_cc_trans e3 ssa na2 lt in
-        let prio = mk_prio e2' e3' in
-        let (e2_cons,e3_cons,na_fin,ssa_fin) =
-          fix_inconsistencies prio ssa2 ssa3 na3 in
-        (wordLang_If cmp r1' ri' (wordLang_Seq e2' e2_cons)
-          (wordLang_Seq e3' e3_cons),ssa_fin,na_fin))`;
-   `ssa_cc_trans (wordLang_Alloc num' numset) ssa na lt =
-        (let all_names' = sptree_union (FST numset) (SND numset) in
-        let ls = MAP FST (toAList all_names') in
-        let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
-          + 2) ls in
-        let num' = option_lookup ssa' num' in
-        let stack_set = apply_nummaps_key (option_lookup ssa')
-          numset in
-        let ssa_cut = inter ssa' all_names' in
-        let (ret_mov,ssa'',na'') =
-          list_next_var_rename_move ssa_cut (na' + 2) ls in
-        let prog = (wordLang_Seq (stack_mov)
-                   (wordLang_Seq ((wordLang_Move 1) [(2,num')])
-                   (wordLang_Seq (wordLang_Alloc 2 stack_set)
-                     (ret_mov)))) in
-        (prog,ssa'',na''))`;
+   `// Tricky pmatch 1: we need to merge the ssa results from both branches by
+    // unSSA-ing the phi functions
+    ssa_cc_trans (wordLang_If cmp r1 ri e2 e3) ssa na lt =
+     (let r1' = option_lookup ssa r1 in
+     let ri' = (match ri with Reg r -> Reg (option_lookup ssa r) |
+       Imm v -> Imm v) in
+     // ssa is the copy for both branches,
+     // however, we can use new na2 and ns2
+     let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
+     // ssa2 is the ssa map for the first branch
+     let (e3',ssa3,na3) = ssa_cc_trans e3 ssa na2 lt in
+     // ssa3 is the ssa map for the second branch, notice we
+     // continued using na2 here though!
+     // prioritizing original skips
+     let prio = mk_prio e2' e3' in
+     let (e2_cons,e3_cons,na_fin,ssa_fin) =
+       fix_inconsistencies prio ssa2 ssa3 na3 in
+     (wordLang_If cmp r1' ri' (wordLang_Seq e2' e2_cons)
+       (wordLang_Seq e3' e3_cons),ssa_fin,na_fin))`;
+   `// For cutsets, we must restart the ssa mapping to maintain consistency
+    ssa_cc_trans (wordLang_Alloc num' numset) ssa na lt =
+     (let all_names' = sptree_union (FST numset) (SND numset) in
+     let ls = MAP FST (toAList all_names') in
+     // This trick allows us to not keep the "next stack" variable by
+     // simply starting from the next available stack location
+     // Assuming na is an alloc var of course..
+     let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na +
+       2) ls in
+     let num' = option_lookup ssa' num' in
+     let stack_set = apply_nummaps_key (option_lookup ssa') numset
+       in
+     // Restart the ssa map
+     let ssa_cut = inter ssa' all_names' in
+     let (ret_mov,ssa'',na'') =
+       list_next_var_rename_move ssa_cut (na' + 2) ls in
+     let prog = (wordLang_Seq (stack_mov)
+                (wordLang_Seq ((wordLang_Move 1) [(2,num')])
+                (wordLang_Seq (wordLang_Alloc 2 stack_set)
+                  (ret_mov)))) in
+     (prog,ssa'',na''))`;
    `ssa_cc_trans (wordLang_Raise num') ssa na lt =
         (let num' = option_lookup ssa num' in
         let mov = (wordLang_Move 1) [(2,num')] in
@@ -516,6 +542,8 @@ let ssa_cc_trans_def = cake_define_list_cheat CHEAT_TAC
         let ssa_cut = inter ssa' all_names' in
         let (ret_mov,ssa'',na'') =
           list_next_var_rename_move ssa_cut (na' + 2) ls in
+        // ret_mov restores the cutset
+        // This recurses on the returning handler
         let (ret',ssa_2_p,na_2_p) = list_next_var_rename ret ssa''
           na'' in
         let (ren_ret_handler,ssa_2,na_2) =
@@ -561,38 +589,43 @@ let ssa_cc_trans_def = cake_define_list_cheat CHEAT_TAC
               exp',ssa,na) else
             let (v',ssa',na') = next_var_rename v ssa na in
               (wordLang_ShareInst op v' exp',ssa',na'))`;
-   `ssa_cc_trans (wordLang_Loop names body exit_names) ssa na lt =
-        (let (setup_prog,ssa_refreshed,na_refreshed) =
-          loop_setup names exit_names ssa na in
-        let ssa_names = apply_nummap_key (option_lookup
-          ssa_refreshed) names in
-        let ssa_exit = apply_nummap_key (option_lookup
-          ssa_refreshed) exit_names in
-        let ssa_body = inter ssa_refreshed names in
-        let (body',ssa',na') =
-          ssa_cc_trans body ssa_body na_refreshed
-            ((ssa_refreshed,names,exit_names) :: lt) in
-        let back_moves = ssa_reconcile ssa' ssa_refreshed names in
-        let body_final = (if back_moves = wordLang_Skip then body'
-          else wordLang_Seq body' back_moves) in
-        (wordLang_Seq setup_prog (wordLang_Loop ssa_names body_final
-          ssa_exit),
-         inter ssa_refreshed exit_names,na'))`;
-   `ssa_cc_trans (wordLang_Break n) ssa na lt =
-        (match oEL n lt with
-          NONE -> (wordLang_Break n,ssa,na) | SOME
-            (tgt_ssa,names,exit_names) ->
-            (let moves = ssa_reconcile ssa tgt_ssa exit_names in
-            ((if moves = wordLang_Skip then wordLang_Break n else
-              wordLang_Seq moves (wordLang_Break n)),ssa,na)))`;
-   `ssa_cc_trans (wordLang_Continue n) ssa na lt =
-        (match oEL n lt with
-          NONE -> (wordLang_Continue n,ssa,na) | SOME
-            (tgt_ssa,names,exit_names) ->
-            (let moves = ssa_reconcile ssa tgt_ssa names in
-            ((if moves = wordLang_Skip then wordLang_Continue n
-              else wordLang_Seq moves (wordLang_Continue
-              n)),ssa,na)))`];;
+   `// Loop: use loop_setup to refresh ssa for (names ∪ exit_names) before
+    // the Loop, establishing INJ on their domains by construction. Body sees
+    // ssa restricted to names; lt carries ssa_refreshed (full) for
+    // Break/Continue reconciliation.
+    ssa_cc_trans (wordLang_Loop names body exit_names) ssa na lt =
+     (let (setup_prog,ssa_refreshed,na_refreshed) =
+       loop_setup names exit_names ssa na in
+     let ssa_names = apply_nummap_key (option_lookup ssa_refreshed)
+       names in
+     let ssa_exit = apply_nummap_key (option_lookup ssa_refreshed)
+       exit_names in
+     let ssa_body = inter ssa_refreshed names in
+     let (body',ssa',na') =
+       ssa_cc_trans body ssa_body na_refreshed
+         ((ssa_refreshed,names,exit_names) :: lt) in
+     let back_moves = ssa_reconcile ssa' ssa_refreshed names in
+     let body_final = (if back_moves = wordLang_Skip then body' else
+       wordLang_Seq body' back_moves) in
+     (wordLang_Seq setup_prog (wordLang_Loop ssa_names body_final
+       ssa_exit),
+      inter ssa_refreshed exit_names,na'))`;
+   `// Break n: reconcile current ssa with target exit ssa
+    ssa_cc_trans (wordLang_Break n) ssa na lt =
+     (match oEL n lt with
+       NONE -> (wordLang_Break n,ssa,na) | SOME
+         (tgt_ssa,names,exit_names) ->
+         (let moves = ssa_reconcile ssa tgt_ssa exit_names in
+         ((if moves = wordLang_Skip then wordLang_Break n else
+           wordLang_Seq moves (wordLang_Break n)),ssa,na)))`;
+   `// Continue n: reconcile current ssa with target entry ssa
+    ssa_cc_trans (wordLang_Continue n) ssa na lt =
+     (match oEL n lt with
+       NONE -> (wordLang_Continue n,ssa,na) | SOME
+         (tgt_ssa,names,exit_names) ->
+         (let moves = ssa_reconcile ssa tgt_ssa names in
+         ((if moves = wordLang_Skip then wordLang_Continue n
+           else wordLang_Seq moves (wordLang_Continue n)),ssa,na)))`];;
 
 (*Recursively applying colours to a program*)
 
@@ -766,6 +799,7 @@ let get_live_inst_def = cake_define
        (sptree_insert r3 one (sptree_insert r2 one (sptree_delete r1
          live)))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
+       // r4 is live anyway
        sptree_insert r4 one (sptree_insert r3 one (sptree_insert r2
          one (sptree_delete r1 live)))
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
@@ -801,6 +835,7 @@ let get_live_inst_def = cake_define
         | (asm_FP (FPMovFromReg d r1 r2)) ->
        (if dimindex (:'a) = 64 then sptree_insert r1 one live else
          sptree_insert r2 one (sptree_insert r1 one live))
+        // Catchall -- for future instructions to be added
         | x -> live`;;
 
 let big_union_def = cake_define
@@ -827,20 +862,27 @@ let get_live_def = cake_define
   `get_live x1 live lt =
         match x1 with
           wordLang_Skip -> live
+        // All SNDs are read and all FSTs are written
         | (wordLang_Move pri ls) ->
        (let killed = ITLIST sptree_delete (MAP FST ls) live in
          numset_list_insert (MAP SND ls) killed)
         | (Inst i) -> get_live_inst i live
+        // num is written, exp is read
         | (wordLang_Assign num' exp) ->
        (let sub' = get_live_exp exp in
          sptree_union sub' (sptree_delete num' live))
         | (Get num' store) -> sptree_delete num' live
+        // Everything is read
         | (Store exp num') ->
        sptree_insert num' one (sptree_union (get_live_exp exp) live)
+        // Find liveset just before s2 which is the input liveset to s1
         | (Seq s1 s2) ->
        get_live s1 (get_live s2 live lt) lt
         | (wordLang_MustTerminate s1) ->
        get_live s1 live lt
+        // First pmatch where branching appears:
+        // We get the livesets for e2 and e3, union them, add the if variable
+        // then pass the resulting liveset upwards
         | (If cmp r1 ri e2 e3) ->
        (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
@@ -878,13 +920,23 @@ let get_live_def = cake_define
          if mop = Store \/ mop = asm_Store8 \/ mop = asm_Store16 \/
            mop = asm_Store32 then sptree_union sub' (sptree_insert v one
            live) else sptree_union sub' (sptree_delete v live))
+        // Loop: entry-live is names (for cut_state). Body's entry-live must be
+        // covered by cut state (domain names), handled via strong_locals_rel
+        // extension at proof time.
+        // Break/Continue handle exit_names/names via lt.
         | (Loop names body exit_names) -> names
+        // Break n: exit_names from enclosing Loop at nesting level n
         | (Break n) ->
        (match oEL n lt with
          NONE -> LN | SOME (names,exit_names) -> exit_names)
+        // Continue n: names from enclosing Loop at nesting level n
         | (Continue n) ->
        (match oEL n lt with
          NONE -> LN | SOME (names,exit_names) -> names)
+        // Cut-set must be live, args input must be live
+        // For tail calls, there shouldn't be a liveset since control flow will
+        // never return into the same instance
+        // Otherwise, both args + cutsets live
         | (Call NONE dest args h) -> numset_list_insert args LN
         | (Call (SOME (_10,cutset,_11)) dest args h) ->
        sptree_union (sptree_union (FST cutset) (SND cutset))
@@ -928,6 +980,7 @@ let remove_dead_inst_def = cake_define
        (if dimindex (:'a) = 64 then sptree_lookup r1 live = NONE else
          (sptree_lookup r1 live = NONE /\ (sptree_lookup r2 live =
          NONE)))
+        // Catchall -- for other instructions
         | (x,live) -> F`;;
 
 (* Delete dead code, w.r.t. a set of live variables.
@@ -985,6 +1038,8 @@ let remove_dead_def = cake_define_cheat CHEAT_TAC
            if s2 = Skip then s1 else Seq s1 s2) in
              (prog,s1live,s1nlive))
         | (wordLang_MustTerminate s1) ->
+       // This can technically be optimized away if it was a Skip,
+       // but we should never use MustTerminate to wrap completely dead code
        (let (s1,s1live,s1nlive) = remove_dead s1 live nlive lt in
          (wordLang_MustTerminate s1,s1live,s1nlive))
         | (If cmp r1 ri e2 e3) ->
@@ -1001,6 +1056,7 @@ let remove_dead_def = cake_define_cheat CHEAT_TAC
            e3) in
        (prog,liveset,nliveset))
         | (Call (SOME (v,cutsets,ret_handler,l1,l2)) dest args h) ->
+       // top level
        (let args_set = numset_list_insert args LN in
        let cutset = sptree_union (FST cutsets) (SND cutsets) in
        let live_set = sptree_union cutset args_set in
@@ -1012,6 +1068,11 @@ let remove_dead_def = cake_define_cheat CHEAT_TAC
            SOME (v',FST (remove_dead prog live nlive lt),l1,l2)) in
        (Call (SOME (v,cutsets,ret_handler,l1,l2)) dest args
          h,(live_set,[])))
+        // we should not remove the ShareInst Load instructions.
+        // * It produces a ffi event even if the variable is not in
+        // * the live set
+        // In the cases below, we either return nlive unchanged
+        // or we return [] because of control flow
         | (Call NONE a b c) ->
        (let prog = Call NONE a b c in
          (prog,get_live prog live lt,[]))
@@ -1024,10 +1085,17 @@ let remove_dead_def = cake_define_cheat CHEAT_TAC
         | (Return a b) ->
        (let prog = Return a b in
          (prog,get_live prog live lt,[]))
+        // Conservative: nlive reset to [] at Loop boundary so all stores are
+        // treated as live across loop iterations (otherwise backward nlive
+        // analysis could eliminate Sets whose overwrites live on a later
+        // iteration).  Cost: no store-DCE across Loops; ordinary locals-DCE
+        // inside the body still applies.
         | (Loop names body exit_names) ->
        (let lt' = (names,exit_names) :: lt in
        let (body',_15,_16) = remove_dead body names [] lt' in
        (Loop names body' exit_names,names,[]))
+        // Break/Continue reset nlive to [] because they jump past whatever
+        // follows, so store-DCE cannot propagate dead-set info across them.
         | (Break n) ->
        (let prog = Break n in
          (prog,get_live prog live lt,[]))
@@ -1129,6 +1197,7 @@ let get_delta_inst_def = cake_define
         | (asm_FP (FPMovFromReg d r1 r2)) ->
        (if dimindex (:'a) = 64 then reg_alloc_Delta [] [r1] else
          reg_alloc_Delta [] [r1; r2])
+        // Catchall -- for future instructions to be added
         | x -> reg_alloc_Delta [] []`;;
 
 let get_reads_exp_def = cake_define
@@ -1206,14 +1275,16 @@ let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
             (reg_alloc_Seq (get_clash_tree body ((names,exit_names)
               :: lt))
               (reg_alloc_Set names)))`;
-   `get_clash_tree (wordLang_Break n) lt =
-        (match oEL n lt with
-          NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
-            reg_alloc_Set exit_names)`;
-   `get_clash_tree (wordLang_Continue n) lt =
-        (match oEL n lt with
-          NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
-            reg_alloc_Set names)`;
+   `// Break n: exit_names vars must all be live
+    get_clash_tree (wordLang_Break n) lt =
+     (match oEL n lt with
+       NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
+         reg_alloc_Set exit_names)`;
+   `// Continue n: names vars must all be live
+    get_clash_tree (wordLang_Continue n) lt =
+     (match oEL n lt with
+       NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
+         reg_alloc_Set names)`;
    `get_clash_tree (wordLang_Call ret dest args h) lt =
         (let args_set = numset_list_insert args LN in
         match ret with
@@ -1221,6 +1292,7 @@ let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
             (vs,cutsets,ret_handler,_58,_59) ->
           (let cutset = sptree_union (FST cutsets) (SND cutsets) in
           let live_set = sptree_union cutset args_set in
+          // Might be inefficient..
           let ret_tree = reg_alloc_Seq (reg_alloc_Set
             (numset_list_insert vs cutset)) (get_clash_tree ret_handler
             lt) in
@@ -1332,14 +1404,18 @@ let get_heu_inst_def = cake_define
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
-           (add1_lhs_reg r1
+           (
+            // r1 := r2 op r3
+            add1_lhs_reg r1
            (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _65 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
         | (Arith (asm_Shift shift' r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
-           (add1_lhs_reg r1
+           (
+            // r1 := r2 (shift) r3
+            add1_lhs_reg r1
            (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _66 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
@@ -1347,19 +1423,29 @@ let get_heu_inst_def = cake_define
         (add1_lhs_reg r1
         (add1_rhs_reg r3 (add1_rhs_reg r2 tup)))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
-        (add1_lhs_reg r4 (add1_lhs_reg r1
+        (
+         // r1,r4 := r2,r3,r4
+         add1_lhs_reg r4 (add1_lhs_reg r1
         (add1_rhs_reg r4 (add1_rhs_reg r3 (add1_rhs_reg r2 tup)))))
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
-        (add1_lhs_reg r4 (add1_lhs_reg r1
+        (
+         // r1,r4 := r2,r3
+         add1_lhs_reg r4 (add1_lhs_reg r1
         (add1_rhs_reg r3 (add1_rhs_reg r2 tup))))
         | (Arith (asm_SubOverflow r1 r2 r3 r4)) ->
-        (add1_lhs_reg r4 (add1_lhs_reg r1
+        (
+         // r1,r4 := r2,r3
+         add1_lhs_reg r4 (add1_lhs_reg r1
         (add1_rhs_reg r3 (add1_rhs_reg r2 tup))))
         | (Arith (asm_LongMul r1 r2 r3 r4)) ->
-        (add1_lhs_reg r2 (add1_lhs_reg r1
+        (
+         // r1,r2 := r3,r4
+         add1_lhs_reg r2 (add1_lhs_reg r1
         (add1_rhs_reg r4 (add1_rhs_reg r3 tup))))
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
-        (add1_lhs_reg r2 (add1_lhs_reg r1
+        (
+         // r1,r2 := r3,r4,r5
+         add1_lhs_reg r2 (add1_lhs_reg r1
         (add1_rhs_reg r5 (add1_rhs_reg r4 (add1_rhs_reg r3 tup)))))
         | (asm_Mem asm_Load r (Addr a w)) ->
         (add1_lhs_mem r tup)
@@ -1383,6 +1469,7 @@ let get_heu_inst_def = cake_define
         (add1_lhs_reg r2 (add1_lhs_reg r1 tup))
         | (asm_FP (FPMovFromReg d r1 r2)) ->
         (add1_rhs_reg r2 (add1_rhs_reg r1 tup))
+        // Catchall -- for future instructions to be added, and all other FP
         | x -> tup`;;
 
 (* For Ifs, as a heuristic we take the max over branching paths *)
@@ -1393,6 +1480,7 @@ let heu_max_def = cake_define
 let heu_max_all_def = cake_define
   `heu_max_all t1 t2 =
    (let t1r = difference t1 t2 in
+   // everything in t1 not already in t2
    sptree_union
    t1r
    (mapi (\k v.
@@ -1423,6 +1511,7 @@ let get_heu_def = cake_define_cheat CHEAT_TAC
         | ((Set _67 exp),(lr,calls')) ->
        (match exp with (Var r) ->
           (add1_rhs_mem r lr,calls') | _68 -> (lr,calls'))
+        // General Set exp ignored
         | ((OpCurrHeap b dst src),(lr,calls')) ->
        (add1_lhs_reg dst (add1_rhs_reg src lr),calls')
         | ((LocValue r l1),(lr,calls')) ->
@@ -1468,6 +1557,10 @@ let get_heu_def = cake_define_cheat CHEAT_TAC
         | ((wordLang_ShareInst asm_Store32 r _84),(lr,calls')) ->
           (add1_rhs_mem r lr,calls')
         | ((Loop names body exit_names),lr) -> get_heu fc body lr
+        // The remaining ones are exps, or otherwise unimportant from the
+        // pov of register allocation, since all their temps are already forced into
+        // specific registers
+        // Omitted: Skip, Assign, Store, FFI, Alloc, Raise, Tick, Call NONE
         | (f,lrc) -> lrc`;;
 
 (* Forced edges for certain instructions *)
@@ -1595,6 +1688,8 @@ let oracle_colour_ok_def = cake_define
         = NONE)) then
         let prog = apply_colour tcol prog in
         if
+          // Note: possibly avoid these checks and instead check the oracle domain directly
+          // every_var is_phy_var prog ∧
           every_stack_var (\x. x >= 2 * k) prog /\
           EVERY (\(x,y). ~((tcol x) = (tcol y))) ls then
           SOME prog else
@@ -1756,6 +1851,7 @@ let word_alloc_def = cake_define
   `word_alloc fc c alg k prog col_opt =
    (let tree = get_clash_tree prog [] in
    let fs = get_stack_only prog in
+   // let moves = get_prefs_sp prog [] in
    let forced = get_forced c prog [] in
    match oracle_colour_ok k col_opt tree prog forced with
      NONE ->
@@ -1764,7 +1860,9 @@ let word_alloc_def = cake_define
          fs with
          M_success col ->
            apply_colour (total_colour col) prog | M_failure _96 ->
-             prog)) | SOME col_prog ->
+             prog)) |
+     // cannot happen
+     SOME col_prog ->
        col_prog)`;;
 
 (*The initial move, ssa and limit vars*)

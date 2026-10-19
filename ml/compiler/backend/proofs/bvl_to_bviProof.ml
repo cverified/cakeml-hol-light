@@ -155,6 +155,7 @@ let state_rel_def = cake_define
        SOME SumListLength_code) /\
      (sptree_lookup ConcatByte_location (bviSem_state_code t) = SOME
        ConcatByte_code) /\
+     // (lookup InitGlobals_location t.code = SOME InitGlobals_code start) ∧
      bvl_to_bviProof_names_ok (state_code s) (bviSem_state_code t)
        (compile_oracle s) /\
      (!name arity exp.
@@ -1022,6 +1023,7 @@ let compile_list_distinct_locs =
        FILTER (\n. in_ns 0 (n - bvl_num_stubs)) (MAP FST code) =
          MAP (\n. bvl_num_stubs + bvl_to_bvi_namespaces * n) (MAP
            FST prog) /\
+        // redundant, but useful
         EVERY ((<=) bvl_num_stubs) (MAP FST code) /\
        EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
          bvl_num_stubs)))

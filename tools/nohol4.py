@@ -62,12 +62,19 @@ def comments(text):
 
 
 def code_free(text):
-  """the text with its comments taken out, line numbering kept"""
+  """the text with its comments taken out, line numbering kept.
+     A comment of a source inside a term or a datatype
+     specification is the comment of HOL Light there (// and to
+     the end of the line), and is one of them"""
   out = []
   i = depth = 0
   while i < len(text):
     if text.startswith('(*', i): depth += 1; i += 2; continue
     if text.startswith('*)', i) and depth: depth -= 1; i += 2; continue
+    if not depth and text.startswith('//', i):
+      j = text.find('\n', i)
+      if j < 0: j = len(text)
+      out.append(' ' * (j - i)); i = j; continue
     out.append('\n' if text[i] == '\n' else
                (' ' if depth else text[i]))
     i += 1

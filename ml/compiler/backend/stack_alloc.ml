@@ -21,10 +21,15 @@ needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/multiword.ml";;
+needs "lib/peg.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let memcpy_code_def = cake_define
   `memcpy_code =
@@ -59,7 +64,9 @@ let word_gc_move_code_def = cake_define
           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
             (backend_common_word_shift (:'a));
           (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2)))) 0 1;
+          // here 0 is ptr_to_addr conf old w
           (\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 1 0;
+          // here 1 is m (ptr_to_addr conf old w)
           If Test 1 (Imm (n2w 3))
             (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm
               (n2w v))))) 1 2;
@@ -70,18 +77,22 @@ let word_gc_move_code_def = cake_define
                        (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
                          r2)))) 5 1])
             (list_Seq [
+                       // get len+1w
                        (\r v. Inst (Arith (asm_Shift Lsr r r (Imm
                          (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
                        (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                          (n2w 1))))) 1;
+                       // store len+1w for later
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 6 1;
+                       // memcpy
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 2 0;
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 0 1;
                        memcpy_code;
+                       // compute original header_addr
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 0 6;
                        (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
@@ -89,12 +100,14 @@ let word_gc_move_code_def = cake_define
                          (:'a));
                        (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
                          r2)))) 2 0;
+                       // store i << 2 into header_addr
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 0 4;
                        (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                          (n2w v))))) 0 2;
                        (\r a. Inst (asm_Mem Store r (Addr a (n2w
                          0)))) 0 2;
+                       // compute update_addr conf i w, where i in 4 and w in 5
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 1 4;
                        clear_top_inst 5 (small_shift_length conf -
@@ -103,6 +116,7 @@ let word_gc_move_code_def = cake_define
                          (n2w v))))) 1 (shift_length conf);
                        (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
                          r2)))) 5 1;
+                       // add to i in 4
                        (\r1 r2. Inst (Arith (asm_Binop Add r1 r1
                          (Reg r2)))) 4 6])])`;;
 
@@ -200,7 +214,9 @@ let word_gen_gc_move_code_def = cake_define
           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
             (backend_common_word_shift (:'a));
           (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2)))) 0 1;
+          // here 0 is ptr_to_addr conf old w
           (\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 1 0;
+          // here 1 is m (ptr_to_addr conf old w)
           If Test 1 (Imm (n2w 3))
             (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm
               (n2w v))))) 1 2;
@@ -211,8 +227,10 @@ let word_gen_gc_move_code_def = cake_define
                        (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
                          r2)))) 5 1])
             (list_Seq [
+                       // put header in 6
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 6 1;
+                       // get len+1w
                        (\r v. Inst (Arith (asm_Shift Lsr r r (Imm
                          (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
@@ -222,11 +240,16 @@ let word_gen_gc_move_code_def = cake_define
                        (\r1 r2. Inst (Arith (asm_Binop And r1 r1 (Reg
                          r2)))) 6 2;
                        If Equal 6 (Imm (n2w 8))
-                         (list_Seq [
+                         (
+                          // is_ref_header
+                          list_Seq [
                            Set (Temp (n2w 0)) 3;
                            Set (Temp (n2w 1)) 4;
                            Get 3 (Temp (n2w 2));
+                           // ib
                            Get 4 (Temp (n2w 3));
+                           // pb
+                           // store len+1w for later
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 6 1;
                            (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
@@ -237,7 +260,10 @@ let word_gen_gc_move_code_def = cake_define
                            (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1
                              (Reg r2)))) 3 1;
                            Set (Temp (n2w 2)) 3;
+                           // new ib
                            Set (Temp (n2w 3)) 4;
+                           // new pb
+                           // memcpy
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 2 0;
                            (\dest src. Inst (Arith (asm_Binop Or dest
@@ -245,11 +271,14 @@ let word_gen_gc_move_code_def = cake_define
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 6;
                            memcpy_code;
+                           // compute original header_addr
                            Get 0 (Temp (n2w 3));
+                           // fixed?
                            (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 2;
                            (\r a. Inst (asm_Mem Store r (Addr a (n2w
                              0)))) 0 4;
+                           // compute update_addr conf i w, where w in 5
                            Get 1 (Temp (n2w 3));
                            clear_top_inst 5 (small_shift_length conf
                              - 1);
@@ -260,13 +289,16 @@ let word_gen_gc_move_code_def = cake_define
                            Get 3 (Temp (n2w 0));
                            Get 4 (Temp (n2w 1))])
                          (list_Seq [
+                           // store len+1w for later
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 6 1;
+                           // memcpy
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 2 0;
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 1;
                            memcpy_code;
+                           // compute original header_addr
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 6;
                            (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
@@ -274,12 +306,14 @@ let word_gen_gc_move_code_def = cake_define
                              (:'a));
                            (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1
                              (Reg r2)))) 2 0;
+                           // store i << 2 into header_addr
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 4;
                            (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 2;
                            (\r a. Inst (asm_Mem Store r (Addr a (n2w
                              0)))) 0 2;
+                           // compute update_addr conf i w, where i in 4 and w in 5
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 1 4;
                            clear_top_inst 5 (small_shift_length conf
@@ -288,12 +322,14 @@ let word_gen_gc_move_code_def = cake_define
                              (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. Inst (Arith (asm_Binop Or r1 r1
                              (Reg r2)))) 5 1;
+                           // add to i in 4
                            (\r1 r2. Inst (Arith (asm_Binop Add r1
                              r1 (Reg r2)))) 4 6])])]):'a
                              stackLang_prog)`;;
 
 let word_gen_gc_partial_move_code_def = cake_define
   `word_gen_gc_partial_move_code conf =
+     // uses 0,1,2,6 as temps
      (If Test 5 (Imm ((n2w 1):'a word)) Skip
        (list_Seq
          [(\dest src. Inst (Arith (asm_Binop Or dest src (Reg src))))
@@ -310,7 +346,9 @@ let word_gen_gc_partial_move_code_def = cake_define
               Get 1 CurrHeap;
               (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2)))) 0
                 1;
+              // here 0 is ptr_to_addr conf old w
               (\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 1 0;
+              // here 1 is m (ptr_to_addr conf old w)
               If Test 1 (Imm (n2w 3))
                 (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm
                   (n2w v))))) 1 2;
@@ -321,20 +359,25 @@ let word_gen_gc_partial_move_code_def = cake_define
                            (\r1 r2. Inst (Arith (asm_Binop Or r1 r1
                              (Reg r2)))) 5 1])
                 (list_Seq [
+                           // put header in 6
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 6 1;
+                           // get len+1w
                            (\r v. Inst (Arith (asm_Shift Lsr r r (Imm
                              (n2w v))))) 1 (dimindex (:'a) -
                              data_to_word_config_len_size conf);
                            (\r1. Inst (Arith (asm_Binop Add r1 r1
                              (Imm (n2w 1))))) 1;
+                           // store len+1w for later
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 6 1;
+                           // memcpy
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 2 0;
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 1;
                            memcpy_code;
+                           // compute original header_addr
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 6;
                            (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
@@ -342,12 +385,14 @@ let word_gen_gc_partial_move_code_def = cake_define
                              (:'a));
                            (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1
                              (Reg r2)))) 2 0;
+                           // store i << 2 into header_addr
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 4;
                            (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 2;
                            (\r a. Inst (asm_Mem Store r (Addr a (n2w
                              0)))) 0 2;
+                           // compute update_addr conf i w, where i in 4 and w in 5
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 1 4;
                            clear_top_inst 5 (small_shift_length conf
@@ -356,6 +401,7 @@ let word_gen_gc_partial_move_code_def = cake_define
                              (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. Inst (Arith (asm_Binop Or r1 r1
                              (Reg r2)))) 5 1;
+                           // add to i in 4
                            (\r1 r2. Inst (Arith (asm_Binop Add r1
                              r1 (Reg r2)))) 4 6])])))]):'a
                              stackLang_prog)`;;
@@ -539,6 +585,7 @@ let word_gen_gc_partial_move_data_code_def = cake_define
 
 let word_gen_gc_move_refs_code_def = cake_define
   `word_gen_gc_move_refs_code conf =
+     // r2a in 8, r1a in 0 and Temp 4w
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 0
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
@@ -552,10 +599,14 @@ let word_gen_gc_move_refs_code_def = cake_define
 
 let word_gen_gc_move_loop_code_def = cake_define
   `word_gen_gc_move_loop_code conf =
+     // 7 is 0w iff pbx = pb and pax = pa, 1 is pbx (Temp 4w), 2 is pb,
+     // 8 is pax, 3 is pa
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotTest 7 (Reg
        7)
        (If Equal 1 (Reg 2)
-          (list_Seq [word_gen_gc_move_data_code conf;
+          (
+           // case: pax <> pa, i.e. move_data
+           list_Seq [word_gen_gc_move_data_code conf;
                      Get 5 (Temp (n2w 2));
                      Get 7 (Temp (n2w 4));
                      (\dest src. Inst (Arith (asm_Binop Or dest src
@@ -564,8 +615,10 @@ let word_gen_gc_move_loop_code_def = cake_define
                        (Reg src)))) 2 5;
                      (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
                        r2)))) 7 5])
-          (list_Seq [(\dest src. Inst (Arith (asm_Binop Or dest src
-            (Reg src)))) 0 1;
+          (
+           // case: pbx <> pb i.e. move_refs
+           list_Seq [(\dest src. Inst (Arith (asm_Binop Or dest src
+             (Reg src)))) 0 1;
                      Set (Temp (n2w 6)) 8;
                      (\dest src. Inst (Arith (asm_Binop Or dest src
                        (Reg src)))) 8 2;
@@ -573,21 +626,29 @@ let word_gen_gc_move_loop_code_def = cake_define
                      word_gen_gc_move_refs_code conf;
                      (\dest src. Inst (Arith (asm_Binop Or dest src
                        (Reg src)))) 7 8;
+                     // pbx'
                      Get 1 (Temp (n2w 5));
+                     // pb
                      Get 2 (Temp (n2w 5));
                      Set (Temp (n2w 4)) 2;
                      Get 2 (Temp (n2w 2));
+                     // pb'
                      (\dest src. Inst (Arith (asm_Binop Or dest src
                        (Reg src)))) 3 3;
+                     // pa'
                      (\dest src. Inst (Arith (asm_Binop Or dest src
                        (Reg src)))) 4 4;
+                     // i'
                      (\dest src. Inst (Arith (asm_Binop Or dest src
                        (Reg src)))) 7 1;
                      (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
                        r2)))) 7 2;
+                     // pbx' - pa'
                      Get 8 (Temp (n2w 6));
+                     // pax
                      (\dest src. Inst (Arith (asm_Binop Or dest src
                        (Reg src)))) 5 8;
+                     // pax - pa'
                      (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
                        r2)))) 5 3;
                      (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
@@ -691,7 +752,9 @@ let word_gc_code_def = cake_define
                   1 (n2w 1)) (stackLang_Halt 1)) Skip]) |
                   data_to_word_Generational gen_sizes ->
          ((word_gc_partial_or_full gen_sizes
-               [Set AllocSize 1;
+               [
+                // gen_gc_partial
+                Set AllocSize 1;
                 Set NextFree 0;
                 Get 4 GenStart;
                 Get 5 EndOfHeap;
@@ -757,7 +820,16 @@ let word_gc_code_def = cake_define
                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                   3 7;
                 Set GenStart 3]
-               [Set AllocSize 1;
+               [
+                // There is no need for a memory check here
+                // because the partial collector is guaranteed
+                // to get to a state where there is enough
+                // memory for the allocation. In contrast,
+                // the full collector below can hit a state
+                // where there is not enough memory, and so it
+                // can Halt execution.
+                // gen_gc_full
+                Set AllocSize 1;
                 Set NextFree 0;
                 (\r w. Inst (Const r w)) 1 ((n2w 0):'a word);
                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg

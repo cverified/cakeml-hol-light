@@ -48,8 +48,14 @@ let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
   "bvi_exp = bvi_Var (num) | bvi_If (bvi_exp) (bvi_exp) (bvi_exp) | \
    bvi_Let (bvi_exp list) (bvi_exp) | bvi_Raise (bvi_exp) | bvi_Tick \
    (bvi_exp) | bvi_Call (num) (num option) (bvi_exp list) (bvi_exp \
-   option) | bvi_Force (num) (num) | bvi_Op (closLang_op) (bvi_exp \
-   list) | bvi_LetCall (num) (num) (num) (bvi_exp list) (bvi_exp) | \
+   option) | bvi_Force (num) (num) \
+   // loc to call for evaluation of unevaluated thunk\n\
+   // var holding thunk\n\
+   | bvi_Op (closLang_op) (bvi_exp list) | \
+   // multi-value call and return:\n\
+   // let-and-call: num of return values, ticks, call target, args, body of let\n\
+   bvi_LetCall (num) (num) (num) (bvi_exp list) (bvi_exp) | \
+   // return-multi-value: returns values of given expressions\n\
    bvi_Return (bvi_exp list)";;
 hol4_overload "Var" "bvi_Var";;
 hol4_overload "If" "bvi_If";;

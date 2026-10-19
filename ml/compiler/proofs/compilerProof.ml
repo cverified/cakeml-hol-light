@@ -11,6 +11,7 @@
 *)
 
 needs "basis/pure/mlsexp.ml";;
+needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/proofs/backendProof.ml";;
 needs "compiler/backend/proofs/bvi_letProof.ml";;
@@ -28,6 +29,7 @@ needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/proofs/pegComplete.ml";;
 needs "compiler/parsing/proofs/pegSound.ml";;
 needs "lib/peg.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
@@ -43,6 +45,7 @@ let config_ok_def = cake_define
      env_rel prim_tenv (compiler_config_inferencer_config cc) /\
      inf_set_tids_ienv prim_type_ids
        (compiler_config_inferencer_config cc) /\
+     // TODO: ok?
      ~(compiler_config_input_is_sexp cc) /\
      ~(compiler_config_exclude_prelude cc) /\
      ~(compiler_config_skip_type_inference cc) /\
@@ -64,13 +67,16 @@ let initial_condition_def = cake_define
          (semantics_state_tenv st) /\
        FRANGE ((SND o SND) o_f ctMap) SUBSET semantics_state_type_ids
          st) /\
+     // TODO: is this OK?
      env_rel (semantics_state_tenv st)
        (compiler_config_inferencer_config cc) /\
        semantics_state_type_ids
+     // TODO: are these consistent (with the rest)? necessary?
      st = count start_type_id /\
      set_tids_tenv (count start_type_id) (semantics_state_tenv st) /\
      inf_set_tids_ienv (count start_type_id)
        (compiler_config_inferencer_config cc) /\
+     // --
      ~(compiler_config_input_is_sexp cc) /\
      ~(compiler_config_exclude_prelude cc) /\
      ~(compiler_config_skip_type_inference cc) /\
@@ -125,8 +131,11 @@ let compile_correct_gen = cake_theorem "compile_correct_gen"
       (match FST (compiler_compile cc prelude input) with M_failure
         (ParseError e) -> semantics st prelude input = CannotParse |
         M_failure (TypeError e) -> semantics st prelude input = IllTyped
-        | M_failure AssembleError -> T | M_failure (ConfigError e) -> T
-        | M_success (code,data,c) ->
+        | M_failure AssembleError -> T |
+        // see theorem about to_lab to avoid AssembleError
+        M_failure (ConfigError e) -> T |
+        // configuration string is malformed
+        M_success (code,data,c) ->
         (?behaviours source_decs.
           (semantics st prelude input = Execute behaviours) /\
           parse (lexer_fun input) = SOME source_decs /\
@@ -158,7 +167,10 @@ let compilerProof_compile_correct_lemma =
          M_failure (ParseError e) -> semantics_init ffi prelude input =
          CannotParse | M_failure (TypeError e) -> semantics_init ffi
          prelude input = IllTyped | M_failure AssembleError -> T |
-         M_failure (ConfigError e) -> T | M_success (code,data,c) ->
+         // see theorem about to_lab to avoid AssembleError
+         M_failure (ConfigError e) -> T |
+         // configuration string is malformed
+         M_success (code,data,c) ->
          (?behaviours source_decs.
            (semantics_init ffi prelude input = Execute behaviours)
              /\
@@ -192,7 +204,9 @@ let compile_correct_safe_for_space =
            parse (lexer_fun input) = SOME source_decs /\
            (!ms.
              is_safe_for_space ffi cc (prelude ++ source_decs)
-               (read_limits cc mc ms) /\
+               (
+                // cost semantics
+                read_limits cc mc ms) /\
              installed code cbspace data data_sp (ffi_names
                (backend_config_lab_conf c))
                (heap_regs (stack_to_lab_config_reg_names

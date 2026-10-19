@@ -55,7 +55,9 @@ needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
+needs "compiler/backend/data_space.ml";;
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;
@@ -279,7 +281,12 @@ let build_recc_lets_def = cake_define
 
 let num_stubs_def = cake_define
   `num_stubs max_app =
-              max_app + (max_app * (max_app - 1)) DIV 2 + 1 + 1`;;
+              // generic apps
+              max_app + (
+              // partial apps
+              max_app * (max_app - 1)) DIV 2 + 1 +
+       // code to install a jump table in global 0
+       1`;;
 
 let generic_app_fn_location_def = cake_define
   `generic_app_fn_location n = n`;;
@@ -312,10 +319,14 @@ let generate_generic_app_def = cake_define
      Let [Op (closLang_IntOp closLang_Sub) [mk_const (n + 1); (\b i.
        bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b]) (Var (n + 1))
        1]]
-         (bvl_If (bvl_Op (closLang_IntOp closLang_Less) [mk_const 0;
-           Var 0])
-             (bvl_jump_Jump ((\b i. bvl_Op (closLang_BlockOp
-               (closLang_ElemAt i)) [b]) (Var (n + 2)) 1)
+         (
+          // The number of arguments remaining - 1
+          bvl_If (bvl_Op (closLang_IntOp closLang_Less) [mk_const 0;
+            Var 0])
+             (
+              // Over application
+              bvl_jump_Jump ((\b i. bvl_Op (closLang_BlockOp
+                (closLang_ElemAt i)) [b]) (Var (n + 2)) 1)
                (GENLIST (\num_args.
                   Let [Call num_args
                             NONE
@@ -328,11 +339,15 @@ let generate_generic_app_def = cake_define
                     (mk_cl_call (Var 0) (GENLIST (\n. Var (n + 3)) (n
                       - num_args))))
                 max_app))
-             (mk_tick n
+             (
+              // Partial application
+              mk_tick n
              (If (Op (closLang_BlockOp (closLang_TagEq closure_tag))
                [Var (n + 2)])
-                 (Op (closLang_BlockOp (closLang_Cons
-                   partial_app_tag))
+                 (
+                  // Partial application of a normal closure
+                  Op (closLang_BlockOp (closLang_Cons
+                    partial_app_tag))
                      (REVERSE
                        (mk_el (Op (closLang_GlobOp (closLang_Global
                          0)) [])
@@ -343,11 +358,15 @@ let generate_generic_app_def = cake_define
                         Var 0 ::
                         Var (n + 2) ::
                         GENLIST (\n. Var (n + 1)) (n + 1))))
-                 (Let [Op (closLang_IntOp closLang_Sub) [mk_const 3;
-                   Op (closLang_BlockOp closLang_LengthBlock) [Var (n +
-                   2)]]]
-                   (bvl_Op (closLang_BlockOp (closLang_ConsExtend
-                     partial_app_tag))
+                 (
+                  // Partial application of a partially applied closure
+                  Let [Op (closLang_IntOp closLang_Sub) [mk_const 3;
+                    Op (closLang_BlockOp closLang_LengthBlock) [Var (n +
+                    2)]]]
+                   (
+                    // The number of previous args
+                    bvl_Op (closLang_BlockOp (closLang_ConsExtend
+                      partial_app_tag))
                      (REVERSE
                        (Var (n + 3) ::
                         mk_const 3 ::
@@ -360,8 +379,11 @@ let generate_generic_app_def = cake_define
                             (Op (closLang_IntOp closLang_Add) [Var 0;
                               Op (closLang_IntOp closLang_Add) [mk_const
                               (n + 1); Var 1]])
-                            (Op (closLang_IntOp closLang_Add) [Var 1;
-                              mk_const n])) ::
+                            (
+                             // Shift from Var0 to Var1 because of Let in
+                             // * partial_app_fn_location_code
+                             Op (closLang_IntOp closLang_Add) [Var 1;
+                               mk_const n])) ::
                         Var 1 ::
                         (\b i. bvl_Op (closLang_BlockOp
                           (closLang_ElemAt i)) [b]) (Var (n + 3)) 2 ::
@@ -427,7 +449,9 @@ let init_globals_def = cake_define
                      tot prev))
                    tot)
                max_app)))]]
-       (bvl_Call 0 (SOME start_loc) []))`;;
+       (
+        // Expect the real start of the program in code location 3
+        bvl_Call 0 (SOME start_loc) []))`;;
 
 let force_thunk_code_def = cake_define
   `force_thunk_code =
@@ -806,7 +830,9 @@ let compile_common_def = cake_define
   `compile_common c es =
      (let es = clos_mti_compile (clos_to_bvl_config_do_mti c)
        (clos_to_bvl_config_max_app c) es in
+     // Add space for functions to call the expressions
      let loc = clos_to_bvl_config_next_loc c + MAX 1 (LENGTH es) in
+     // Alignment padding
      let loc = (if loc MOD 2 = 0 then loc else loc + 1) in
      let (n,es) = renumber_code_locs_list loc es in
      let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf

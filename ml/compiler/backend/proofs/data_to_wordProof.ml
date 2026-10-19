@@ -9,6 +9,7 @@
   Correctness proof for data_to_word
 *)
 
+needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
@@ -17,6 +18,7 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
+needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
@@ -682,8 +684,12 @@ let data_to_word_compile_conventions =
        IN {ARMv8,MIPS,RISC_V})) /\
      asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
      asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0) /\
-     (!w. --(n2w 8) <= w /\ w <= (n2w 8) ==> asm_offset_ok 0
-       (asm_config_byte_offset ac) w) ==> full_inst_ok_less ac prog) /\
+     (
+      // NOTE: this condition is
+      // stricter than necessary, but we have much more byte_offset space
+      // anyway on all the targets
+      !w. --(n2w 8) <= w /\ w <= (n2w 8) ==> asm_offset_ok 0
+        (asm_config_byte_offset ac) w) ==> full_inst_ok_less ac prog) /\
      (asm_config_two_reg_arith ac ==> every_inst two_reg_inst prog)
        /\
      (no_share_inst prog \/ ~(asm_config_ISA ac = Ag32))) p)`)

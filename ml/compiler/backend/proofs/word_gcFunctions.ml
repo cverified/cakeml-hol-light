@@ -10,6 +10,7 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/proofs/word_simpProof.ml";;
@@ -19,6 +20,7 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
+needs "lib/errorMonad.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
@@ -261,6 +263,10 @@ let word_gen_gc_can_do_partial_def = cake_define
      (let allo = theWord (FAPPLY s AllocSize) in
      let trig = theWord (FAPPLY s TriggerGC) in
      let endh = theWord (FAPPLY s EndOfHeap) in
+       // A partial collection is allowed if the following is
+       // true. This condition guarantees that even if nothing is
+       // collected by the partial collection, the the requested space
+       // still exists.
        allo <=+ endh - trig)`;;
 
 let new_trig_def = cake_define
@@ -268,9 +274,17 @@ let new_trig_def = cake_define
      (let a = w2n alloc_pref in
      let g = w2n ((get_gen_size gs):'a word) in
      let h = w2n heap_space in
-       if a <= g then n2w (MIN h g) else
-       if h < a then n2w h else
-       if byte_aligned alloc_pref then alloc_pref else n2w h)`;;
+       if a <= g then
+               // allocation smaller than gen
+               n2w (MIN h g) else
+       if h < a then
+              // allocation too big
+              n2w h else
+       if byte_aligned alloc_pref then
+        // should always be the case
+        alloc_pref else
+           // very unlikely and a bad choice
+           n2w h)`;;
 
 let refs_to_addresses_def = cake_define
   `refs_to_addresses x1 =

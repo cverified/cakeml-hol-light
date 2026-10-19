@@ -1647,6 +1647,7 @@ let evaluate_option_le_stack_max =
 let cc_co_only_diff_def = cake_define
   `cc_co_only_diff (s:('a,'ffi)dataSem_state) (t:('b,'ffi)dataSem_state)
   <=> dataSem_state_locals
+     // defined this way to allow s and t to have different types
      s = dataSem_state_locals t /\ dataSem_state_locals_size
      s = dataSem_state_locals_size t /\ dataSem_state_stack
      s = dataSem_state_stack t /\ dataSem_state_stack_max

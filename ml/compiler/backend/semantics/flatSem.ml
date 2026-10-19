@@ -74,6 +74,7 @@ let flatSem_state_FIELDS = define_record "flatSem_state"
    "refs","(flatSem_v store_v) list";
    "ffi","'ffi ffi_state";
    "globals","(flatSem_v option) list";
+   (* eval or install mode *)
    "eval_config","'c install_config"];;
 hol4_overload "state_clock" "flatSem_state_clock";;
 hol4_overload "state_clock_fupd" "flatSem_state_clock_fupd";;
@@ -576,9 +577,11 @@ let do_app_def = cake_define
            (match store_assign lnum (semanticPrimitives_W8array ws')
              (state_refs s) with SOME s' -> SOME (state_ffi_fupd (K t')
              (state_refs_fupd (K s') s),Rval Unitv) | NONE -> NONE)) |
-             _109 -> NONE) | (flatLang_Src ast_Opapp,_110) -> NONE |
-             (flatLang_Src ast_Eval,_111) -> NONE | (flatLang_Src
-             (ast_ThunkOp th_op),vs) ->
+             _109 -> NONE) | (flatLang_Src ast_Opapp,_110) -> NONE | (
+      // handled specially in evaluate
+      flatLang_Src ast_Eval,_111) -> NONE | (
+      // handled specially in evaluate
+      flatLang_Src (ast_ThunkOp th_op),vs) ->
       (match (th_op,vs) with (AllocThunk m,[v]) ->
            (if bad_thunk_update m v (state_refs s) then NONE else
             let (r,n) = store_alloc (semanticPrimitives_Thunk m v)
@@ -589,8 +592,9 @@ let do_app_def = cake_define
             match store_assign lnum (semanticPrimitives_Thunk m v)
               (state_refs s) with SOME r -> SOME (state_refs_fupd (K r)
               s,Rval (Conv NONE [])) | NONE -> NONE) | _112 -> NONE) |
-              (flatLang_Src _113,_114) -> NONE |
-              (flatLang_GlobalVarAlloc n,[]) ->
+              (flatLang_Src _113,_114) -> NONE | (
+      // remaining ast ops have no semantics in flatLang
+      flatLang_GlobalVarAlloc n,[]) ->
      SOME (flatSem_state_globals_fupd (K (flatSem_state_globals s ++
        REPLICATE n NONE)) s,Rval Unitv) | (flatLang_GlobalVarInit n,[v])
        ->
@@ -631,14 +635,17 @@ let do_if_either_or = cake_theorem "do_if_either_or"
 
 let pmatch_stamps_ok = cake_inductive
   `(
+     // exception constructors
      pmatch_stamps_ok (SOME (cn,NONE)) (SOME (cn',NONE)) n_ps n_vs)
        /\
    (
+         // constructors
          ty_id = ty_id' /\ MEM (cn,n_ps) ctor_set /\ MEM (cn',n_vs)
            ctor_set ==> pmatch_stamps_ok (SOME (cn,(SOME
            (ty_id,ctor_set))))
      (SOME (cn',SOME ty_id')) n_ps n_vs) /\
    (
+     // tuples
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
 let _ = size_thms "flatLang_pat";;

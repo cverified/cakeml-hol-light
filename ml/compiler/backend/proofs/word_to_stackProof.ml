@@ -23,13 +23,18 @@ needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/inference/infer.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
+needs "lib/location.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/term.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
+needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -57,13 +62,18 @@ needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/inference/infer.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
+needs "lib/location.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/term.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
+needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -579,22 +589,32 @@ let abs_stack_def = cake_define_cheat CHEAT_TAC
          else NONE)
         | (bitmaps,(StackFrame n l0 l NONE :: xs),(w :: stack'),(len
           :: lens)) ->
-       (match full_read_bitmap bitmaps w with NONE -> NONE | SOME
-         bits ->
+       // Should cover the stack = [] case automatically
+       (match full_read_bitmap bitmaps w with NONE -> NONE |
+         // read_bitmap reads a bitmap and returns the liveness bits,
+         // the words read and the rest of the stack
+         SOME bits ->
            (if ~(LENGTH bits = len) then NONE else
            if LENGTH stack' < len then NONE else
+             // if the (len + 1) n ≠ len + 1 then NONE else
              let frame = TAKE len stack' in
              let rest = DROP len stack' in
                match abs_stack bitmaps xs rest lens with NONE -> NONE
                  | SOME ys -> SOME ((NONE,bits,frame) :: ys)))
         | (bitmaps,((StackFrame n l0 l (SOME _1)) :: xs),(w ::
           stack'),(len :: lens)) ->
+       // Index for bitmap for a handler frame
        (if ~(w = wordLang_Word (n2w 1)) then NONE else
-         (match stack' with loc :: hv :: w :: stack' ->
+         (match stack' with
+           // Read next 2 elements on the stack for the handler
+           loc :: hv :: w :: stack' ->
             (match full_read_bitmap bitmaps w with NONE -> NONE |
-              SOME bits ->
+               // read_bitmap reads a bitmap and returns the liveness bits,
+               // the words read and the rest of the stack
+               SOME bits ->
                  (if ~(LENGTH bits = len) then NONE else
                  if LENGTH stack' < len then NONE else
+                   // if the (len + 1) n ≠ len + 1 then NONE else
                    let frame = TAKE len stack' in
                    let rest = DROP len stack' in
                      match abs_stack bitmaps xs rest lens with NONE
@@ -644,6 +664,9 @@ let handler_val_def = cake_define_list
    `handler_val ((NONE,_6,frame) :: stack') =
         1 + LENGTH frame + handler_val stack'`;
    `handler_val ((SOME _7,_8,frame) :: stack') =
+        // 1 for handler bitmaps pointer
+        // + 2 more for the pointer and locs
+        // + 1 for the next bitmap pointer
         4 + LENGTH frame + handler_val stack'`];;
 
 let is_handler_frame_def = cake_define
@@ -823,6 +846,7 @@ let state_rel_def = cake_define
        t) (stackSem_state_stack_space t) (extra:num) /\
      (let stack' = DROP (stackSem_state_stack_space t + extra)
        (stackSem_state_stack t) in
+     // First f things on stack are the live stack vars
      let current_frame = TAKE f stack' in
      let rest_of_stack = DROP f stack' in
        word_to_stackProof_stack_rel k (wordSem_state_handler s)
@@ -1100,6 +1124,7 @@ let enc_stack_lemma = cake_theorem "enc_stack_lemma[local]"
          good_dimindex (:'a) /\
          LENGTH bs + 1 < dimword (:'a) /\
          abs_stack bs wstack sstack lens = SOME astack /\
+         // The first bitmap is the handler one
          1 <= LENGTH bs /\
          HD bs = (n2w 4) /\
          stack_rel_aux k len wstack astack ==>
@@ -1204,13 +1229,17 @@ let dec_stack_lemma1 = cake_theorem "dec_stack_lemma1[local]"
      good_dimindex (:'a) /\
      1 <= LENGTH bs /\
      HD bs = (n2w 4) /\
+     // The things going into GC are the same
      abs_stack bs wstack sstack lens = SOME astack /\
      stack_rel_aux k len wstack astack /\
+     // The word stack is successfully decoded
      dec_stack ls wstack = SOME wdec ==>
      (?sdec bstack.
+     // The stackLang stack is successfully decoded
      dec_stack bs ls sstack = SOME sdec /\
      abs_stack bs wdec sdec lens = SOME bstack /\
      stack_rel_aux k len wdec bstack /\
+     // They have exactly the same shape
      LIST_REL abs_frame_eq astack bstack)`)
   CHEAT_TAC;;
 
@@ -2343,12 +2372,17 @@ let evaluate_stack_move = cake_theorem "evaluate_stack_move[local]"
      (?t'_stack t'_regs.
      t' = stackSem_state_regs_fupd (K t'_regs) (stack_fupd (K
        t'_stack) t) /\
-     (!i. ~(i = k) ==> get_var i t' = get_var i t) /\
+     (
+      // All regs fixed except k
+      !i. ~(i = k) ==> get_var i t' = get_var i t) /\
+     // Unnecessary
      LENGTH (stack t) = LENGTH t'_stack /\
        stackSem_state_stack_space
      t' = stackSem_state_stack_space t /\
+     // Rest of stack is unchanged
      DROP (stackSem_state_stack_space t' + tar + n) t'_stack =
      DROP (stackSem_state_stack_space t + tar + n) (stack t) /\
+     // Copying the first frame
      (let stack' = DROP (stackSem_state_stack_space t' + tar)
        t'_stack in
      let stack' = DROP (stackSem_state_stack_space t + tar) (stack
@@ -3773,12 +3807,15 @@ let compile_word_to_stack_code_labels =
      EVERY (\(n,m,pp). good_handlers n pp) p /\
      perf = F /\
      compile_word_to_stack ac perf k p bs = (p',bs') ==>
+     // every label in the compiled code
      BIGUNION (IMAGE get_code_labels (set_of_list (MAP SND p')))
        SUBSET
      (raise_stub_location,0) INSERT
      (store_consts_stub_location,0) INSERT (
+     // either came from wordLang
      IMAGE (\n. (n,0)) (BIGUNION (set_of_list (MAP (\(n,m,pp).
        (get_code_labels pp)) p))) UNION
+     // or has been introduced into the handler labels
      BIGUNION (set_of_list (MAP (\(n,pp).
        (stack_get_handler_labels n pp)) p')))`)
   CHEAT_TAC;;

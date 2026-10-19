@@ -2,21 +2,22 @@
 (*  infer: ported from HOL4's
     compiler/inference/inferScript.sml
     A definition theory, with 51 definitions, 3 datatypes and 22
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
   Definition of CakeML's type inferencer.
 *)
 
+needs "basis/pure/mllist.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
+needs "lib/mergesort.ml";;
 needs "lib/peg.ml";;
-needs "lib/term.ml";;
 needs "misc/misc.ml";;
 needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
@@ -178,8 +179,9 @@ let infer_type_subst_def = cake_define_list
   [`infer_type_subst s (Tvar tv) =
       (match ALOOKUP s tv with SOME t -> t | NONE ->
         Infer_Tvar_db 0)`;
-   `infer_type_subst s (Tvar_db n) =
-      Infer_Tvar_db n`;
+   `// should not happen
+    infer_type_subst s (Tvar_db n) =
+    Infer_Tvar_db n`;
    `infer_type_subst s (Tapp ts tn) =
       Infer_Tapp (infer_type_subst_list s ts) tn`;
    `infer_type_subst_list s [] = []`;
@@ -191,7 +193,9 @@ let infer_type_subst_alt = cake_theorem "infer_type_subst_alt"
     `(infer_type_subst s (Tvar tv) =
        (match ALOOKUP s tv with SOME t -> t | NONE -> Infer_Tvar_db
          0)) /\
-     (infer_type_subst s (Tvar_db n) =
+     (
+       // should not happen
+       infer_type_subst s (Tvar_db n) =
        Infer_Tvar_db n) /\
      (infer_type_subst s (Tapp ts tn) =
        Infer_Tapp (MAP (infer_type_subst s) ts) tn)`)
@@ -201,6 +205,7 @@ let infer_deBruijn_subst_def = cake_define_list
   [`infer_deBruijn_subst s (Infer_Tvar_db n) =
       (if n < LENGTH s then
         EL n s else
+        // should not happen
         Infer_Tvar_db (n - LENGTH s))`;
    `infer_deBruijn_subst s (Infer_Tapp ts tn) =
       Infer_Tapp (infer_deBruijn_subst_list s ts) tn`;
@@ -216,6 +221,7 @@ let infer_deBruijn_subst_alt = cake_theorem "infer_deBruijn_subst_alt"
     `(infer_deBruijn_subst s (Infer_Tvar_db n) =
        (if n < LENGTH s then
          EL n s else
+         // should not happen
          Infer_Tvar_db (n - LENGTH s))) /\
      (infer_deBruijn_subst s (Infer_Tapp ts tn) =
        Infer_Tapp (MAP (infer_deBruijn_subst s) ts) tn) /\
@@ -771,24 +777,24 @@ let constrain_op_def = cake_define
                "Unsafe ops do not have a type")) s |
                (ast_Aw8sub_unsafe,_23) -> infer_failwith l ((implode
                "Unsafe ops do not have a type")) s |
-               (ast_Aw8update_unsafe,_24) -> infer_failwith l
-               ((implode "Unsafe ops do not have a type")) s |
-               (ast_XorAw8Str_unsafe,_25) -> infer_failwith l
-               ((implode "Unsafe ops do not have a type")) s |
+               (ast_Aw8update_unsafe,_24) -> infer_failwith l ((implode
+               "Unsafe ops do not have a type")) s |
+               (ast_XorAw8Str_unsafe,_25) -> infer_failwith l ((implode
+               "Unsafe ops do not have a type")) s |
                (ast_AallocFixed,_26) -> infer_failwith l ((implode
-               "Unsafe ops do not have a type")) s | (ast_Eval,_27)
-               -> infer_failwith l ((implode
-               "Unsafe ops do not have a type")) s | (ast_Env_id,_28)
-               -> infer_failwith l ((implode
-               "Unsafe ops do not have a type")) s | (ast_ThunkOp
-               _29,_30) -> infer_failwith l ((implode
-               "Thunk ops do not have a type")) s | (ast_Arith _31
-               _32,_33) -> infer_failwith l ((implode
-               "Type mismatch")) s | (ast_FromTo _34 _35,_36) ->
-               infer_failwith l ((implode "Type mismatch")) s |
-               (ast_Test _37 _38,_39) -> infer_failwith l ((implode
-               "Type mismatch")) s | _40 -> infer_failwith l
-               (op_n_args_msg op (LENGTH ts)) s)`;;
+               "Unsafe ops do not have a type")) s | (
+         // not actually unsafe
+         ast_Eval,_27) -> infer_failwith l ((implode
+           "Unsafe ops do not have a type")) s | (ast_Env_id,_28) ->
+           infer_failwith l ((implode
+           "Unsafe ops do not have a type")) s | (ast_ThunkOp
+           _29,_30) -> infer_failwith l ((implode
+           "Thunk ops do not have a type")) s | (ast_Arith _31
+           _32,_33) -> infer_failwith l ((implode "Type mismatch")) s
+           | (ast_FromTo _34 _35,_36) -> infer_failwith l ((implode
+           "Type mismatch")) s | (ast_Test _37 _38,_39) ->
+           infer_failwith l ((implode "Type mismatch")) s | _40 ->
+           infer_failwith l (op_n_args_msg op (LENGTH ts)) s)`;;
 
 (* HOL4 inferScript.sml:796-797: a theorem that HOL4 states as the
    value of an ML expression: constrain_op_case_def *)
@@ -832,38 +838,38 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
           list_size (pair_size mlstring_size
                (pair_size mlstring_size ast_exp_size)) funs)`)
   CHEAT_TAC
-  [`infer_e l ienv (ast_Raise e:ast_exp) =
+  [`infer_e l ienv (ast_Raise e) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
            one. st_ex_bind fresh_uvar (\
            t1.
            st_ex_return t1)))`;
-   `infer_e l ienv (ast_Handle e pes:ast_exp) =
+   `infer_e l ienv (ast_Handle e pes) =
         (if pes = [] then
           infer_failwith l ((implode "No patterns in handle")) else
           st_ex_bind (infer_e l ienv e) (\t1. st_ex_bind (infer_pes
             l ienv pes (Infer_Tapp [] Texn_num) t1) (\
              one.
              st_ex_return t1)))`;
-   `infer_e l ienv (ast_Lit (ast_IntLit i):ast_exp) =
+   `infer_e l ienv (ast_Lit (ast_IntLit i)) =
         st_ex_return (Infer_Tapp [] Tint_num)`;
-   `infer_e l ienv (ast_Lit (ast_Char c):ast_exp) =
+   `infer_e l ienv (ast_Lit (ast_Char c)) =
         st_ex_return (Infer_Tapp [] Tchar_num)`;
-   `infer_e l ienv (ast_Lit (ast_StrLit s):ast_exp) =
+   `infer_e l ienv (ast_Lit (ast_StrLit s)) =
         st_ex_return (Infer_Tapp [] Tstring_num)`;
-   `infer_e l ienv (ast_Lit (ast_Word8 w):ast_exp) =
+   `infer_e l ienv (ast_Lit (ast_Word8 w)) =
         st_ex_return (Infer_Tapp [] Tword8_num)`;
-   `infer_e l ienv (ast_Lit (ast_Word64 _42):ast_exp) =
+   `infer_e l ienv (ast_Lit (ast_Word64 _42)) =
         st_ex_return (Infer_Tapp [] Tword64_num)`;
-   `infer_e l ienv (ast_Lit (ast_Float64 _44):ast_exp) =
+   `infer_e l ienv (ast_Lit (ast_Float64 _44)) =
         st_ex_return (Infer_Tapp [] Tdouble_num)`;
-   `infer_e l ienv (Var id':ast_exp) =
+   `infer_e l ienv (ast_Var id') =
         st_ex_bind (lookup_st_ex l (implode "variable") id'
           (inf_env_inf_v ienv)) (\(tvs,t). st_ex_bind (n_fresh_uvar tvs)
           (\
            uvs.
            st_ex_return (infer_deBruijn_subst uvs t)))`;
-   `infer_e l ienv (ast_Con cn_opt es:ast_exp) =
+   `infer_e l ienv (ast_Con cn_opt es) =
         (match cn_opt with
             NONE ->
              st_ex_bind (infer_es l ienv es) (\ts.
@@ -884,13 +890,13 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
                                 (\
                 one.
                 st_ex_return (Infer_Tapp ts' tn)))))))`;
-   `infer_e l ienv (ast_Fun x e:ast_exp) =
+   `infer_e l ienv (ast_Fun x e) =
         st_ex_bind fresh_uvar (\t1. st_ex_bind (infer_e l
           (inf_env_inf_v_fupd (K (nsBind x (0,t1) (inf_env_inf_v ienv)))
           ienv) e) (\
            t2.
            st_ex_return (Infer_Tapp [t1; t2] Tfn_num)))`;
-   `infer_e l ienv (ast_App op es:ast_exp) =
+   `infer_e l ienv (ast_App op es) =
         st_ex_bind (infer_es l ienv es) (\ts. st_ex_bind
           (constrain_op l op ts) (\
            t.
@@ -904,7 +910,7 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
              Tbool_num)) (\
            one.
            st_ex_return (Infer_Tapp [] Tbool_num)))))`;
-   `infer_e l ienv (ast_If e1 e2 e3:ast_exp) =
+   `infer_e l ienv (ast_If e1 e2 e3) =
         st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind
           (add_constraint l t1 (Infer_Tapp [] Tbool_num)) (\
            one. st_ex_bind (infer_e l ienv e2) (\
@@ -912,7 +918,7 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
            t3. st_ex_bind (add_constraint l t2 t3) (\
            one.
            st_ex_return t2)))))`;
-   `infer_e l ienv (ast_Mat e pes:ast_exp) =
+   `infer_e l ienv (ast_Mat e pes) =
         (if pes = [] then
           infer_failwith l ((implode "No patterns in case")) else
           st_ex_bind (infer_e l ienv e) (\t1. st_ex_bind fresh_uvar
@@ -920,31 +926,55 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
              t2. st_ex_bind (infer_pes l ienv pes t1 t2) (\
              one.
              st_ex_return t2))))`;
-   `infer_e l ienv (ast_Let x e1 e2:ast_exp) =
+   `infer_e l ienv (ast_Let x e1 e2) =
+          // Don't do polymorphism for non-top-level lets
+          // if is_value e1 then
+          // do n <- get_next_uvar;
+          // t1 <- infer_e l ienv e1;
+          // t1' <- apply_subst t1;
+          // (num_gen,s,t1'') <- return (generalise n 0 FEMPTY t1');
+          // t2 <- infer_e l (ienv with inf_v:=(bind x (num_gen,t1'') ienv.inf_v)) e2;
+          // return t2
+          // od
+          // else
           st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind (infer_e l
             (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v
             ienv))) ienv) e2) (\
              t2.
              st_ex_return t2))`;
-   `infer_e l ienv (ast_Letrec funs e:ast_exp) =
-        st_ex_ignore_bind
-          (check_dups l (\n. mlstring_concat [(implode
-            "Duplicate function name "); n;
+   `// Don't do polymorphism for non-top-level let recs
+    // (infer_e l ienv (Letrec funs e) =
+    // do () <- guard (ALL_DISTINCT (MAP FST funs)) "Duplicate function name variable";
+    // next <- get_next_uvar;
+    // uvars <- n_fresh_uvar (LENGTH funs);
+    // env' <- return (merge (list$MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs uvars) env);
+    // funs_ts <- infer_funs l (ienv with inf_v := env') funs;
+    // () <- add_constraints l uvars funs_ts;
+    // ts <- apply_subst_list uvars;
+    // (num_gen,s,ts') <- return (generalise_list next 0 FEMPTY ts);
+    // env'' <- return (merge (list$MAP2 (\(f,x,e) t. (f,(num_gen,t))) funs ts') env);
+    // t <- infer_e l (ienv with inf_v := env'') e;
+    // return t
+    // od) ∧
+    infer_e l ienv (ast_Letrec funs e) =
+     st_ex_ignore_bind
+       (check_dups l (\n. mlstring_concat [(implode
+         "Duplicate function name "); n;
                               (implode
 
       " in mutually recursive function definition")])
-                       (MAP FST funs)) (st_ex_bind (n_fresh_uvar
-                         (LENGTH funs)) (\
-           uvars. st_ex_bind (st_ex_return (nsAppend (alist_to_ns
-             (MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs uvars))
-             (inf_env_inf_v ienv))) (\
-           env'. st_ex_bind (infer_funs l (inf_env_inf_v_fupd (K
-             env') ienv) funs) (\
-           funs_ts. st_ex_bind (add_constraints l uvars funs_ts) (\
-           one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K env')
-             ienv) e) (\
-           t.
-           st_ex_return t))))))`;
+                    (MAP FST funs)) (st_ex_bind (n_fresh_uvar
+                      (LENGTH funs)) (\
+        uvars. st_ex_bind (st_ex_return (nsAppend (alist_to_ns (MAP2
+          (\(f,x,e) uvar. (f,(0,uvar))) funs uvars)) (inf_env_inf_v
+          ienv))) (\
+        env'. st_ex_bind (infer_funs l (inf_env_inf_v_fupd (K env')
+          ienv) funs) (\
+        funs_ts. st_ex_bind (add_constraints l uvars funs_ts) (\
+        one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K env')
+          ienv) e) (\
+        t.
+        st_ex_return t))))))`;
    `infer_e l ienv (ast_Tannot e t) =
         st_ex_bind (infer_e l ienv e) (\t'. st_ex_bind
           (type_name_check_subst l
@@ -1246,6 +1276,7 @@ let inf_env_to_types_string_def = cake_define
      let xs = MAP (\(n,_56,t). mlstring_concat [n; (implode ": ");
                               inf_type_to_string (inf_env_inf_t s) t;
                               (implode "\n")]) l in
+        // sort mlstring_le
         REVERSE xs)`;;
 
 hol4_only "++" "APPEND";;

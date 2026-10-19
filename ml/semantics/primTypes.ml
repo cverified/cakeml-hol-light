@@ -74,14 +74,18 @@ let prim_tenv_def = cake_define
                 ((implode "double"),[],Tapp [] Tdouble_num);
                 ((implode "exn"),[],Tapp [] Texn_num);
                 ((implode "int"),[],Tapp [] Tint_num);
-                ((implode "list"),[(implode "'a")],Tapp [Tvar
-                  (implode "'a")] Tlist_num);
+                (
+                 // Tfn is ->, specially handled
+                 (implode "list"),[(implode "'a")],Tapp [Tvar
+                   (implode "'a")] Tlist_num);
                 ((implode "ref"),[(implode "'a")],Tapp [Tvar (implode
                   "'a")] Tref_num);
                 ((implode "string"),[],Tapp [] Tstring_num);
                 ((implode "unit"),[],Tapp [] Ttup_num);
-                ((implode "vector"),[(implode "'a")],Tapp [Tvar
-                  (implode "'a")] Tvector_num);
+                (
+                 // pairs are specially handled
+                 (implode "vector"),[(implode "'a")],Tapp [Tvar
+                   (implode "'a")] Tvector_num);
                 ((implode "word64"),[],Tapp [] Tword64_num);
                 ((implode "word8"),[],Tapp [] Tword8_num);
                 ((implode "word8array"),[],Tapp []

@@ -9,9 +9,13 @@
   The top-level semantics of CakeML programs.
 *)
 
+needs "basis/pure/mlvector.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/gram.ml";;
@@ -32,6 +36,7 @@ hol4_overload "parse" "semantics_parse";;
 let semantics_state_FIELDS = define_record "semantics_state"
   ["tenv","type_env";
    "type_ids","num->bool";
+   (* Semantics state *)
    "sem_st","'ffi semanticPrimitives_state";
    "sem_env","semanticPrimitives_v sem_env"];;
 
@@ -50,7 +55,10 @@ let evaluate_prog_with_clock_def = cake_define
 
 let semantics_prog_def = cake_define_list
   [`semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
-        (?k ffi r.
+        (
+         // there is a clock for which evaluation terminates, either internally or via
+         // FFI, and the accumulated io events match the given io_list
+         ?k ffi r.
           evaluate_prog_with_clock st env k prog = (ffi,r) /\
           (match r with Rerr (Rabort (Rffi_error outcome')) ->
              outcome = ffi_FFI_outcome (outcome') | r -> ~(r = Rerr
@@ -58,9 +66,13 @@ let semantics_prog_def = cake_define_list
           (io_list = ffi_state_io_events ffi) /\
           (~(r = Rerr (Rabort Rtype_error))))`;
    `semantics_prog st env prog (ffi_Diverge io_trace) <=>
-        (!k. ?ffi.
+        (
+         // for all clocks, evaluation times out
+         !k. ?ffi.
           (evaluate_prog_with_clock st env k prog =
               (ffi,Rerr (Rabort Rtimeout_error)))) /\
+         // the io_trace is the least upper bound of the set of traces
+         // produced for each clock
          lprefix_lub
            (IMAGE
              (\k. fromList (ffi_state_io_events (FST
@@ -68,6 +80,7 @@ let semantics_prog_def = cake_define_list
              UNIV)
            io_trace`;
    `semantics_prog st env prog (ffi_Fail:behaviour) <=>
+        // there is a clock for which evaluation produces a runtime type error
         (?k.
           SND (evaluate_prog_with_clock st env k prog) = Rerr
             (Rabort Rtype_error))`];;

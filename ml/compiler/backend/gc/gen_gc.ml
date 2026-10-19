@@ -37,6 +37,7 @@ let gc_move_def = cake_define_list
              state) in
            let n = gc_state_n state - (l + 1) in
             if gen_gc_conf_isRef conf dd then
+              // put refs in r4
               let r4 = (DataElement xs l dd) :: gc_state_r4 state in
               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
                 state) (gc_state_a state + n) d ok in
@@ -45,6 +46,7 @@ let gc_move_def = cake_define_list
                   d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K heap)
                   (gc_state_n_fupd (K n) (gc_state_r4_fupd (K r4)
                   state)))) else
+              // put data in h2
               let h2 = gc_state_h2 state ++ [DataElement xs l dd] in
               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
                 state) (gc_state_a state) d ok in
@@ -121,7 +123,8 @@ hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 let gc_move_refs_def = cake_define_try_tac (fun () ->
   `MEASURE (\(conf,state). heap_length (gc_state_r2 state))`)
   CHEAT_TAC
-  `gc_move_refs conf state =
+  `// maybe more refs (r4 could have more)
+   gc_move_refs conf state =
      (match gc_state_r2 state with [] -> gc_state_r1_fupd (K
        (gc_state_r3 state ++ gc_state_r1 state)) (gc_state_r3_fupd (K
        []) state) | ref :: r2 ->
@@ -178,8 +181,10 @@ let gc_inv_def = cake_define
                  heap_expand (gc_state_n state) ++ gc_state_r4
                  state ++ gc_state_r3 state ++ gc_state_r2 state ++
                    gc_state_r1 state in
-     (heap_length (gc_state_h1 state ++ gc_state_h2 state) =
-       gc_state_a state) /\
+     (
+      // lengths
+      heap_length (gc_state_h1 state ++ gc_state_h2 state) =
+        gc_state_a state) /\
      (gc_state_a state + gc_state_n state + heap_length (gc_state_r4
        state ++ gc_state_r3 state ++ gc_state_r2 state ++ gc_state_r1
        state) = gen_gc_conf_limit conf) /\
@@ -187,19 +192,24 @@ let gc_inv_def = cake_define
        state)) = gc_state_n state) /\
      ((heap_length (gc_state_heap state)) = gen_gc_conf_limit conf)
        /\ gc_state_ok
+     // ----
      state /\
      heap_ok heap0 (gen_gc_conf_limit conf) /\
      heaps_similar heap0 (gc_state_heap state) /\
+     // ----
      EVERY isDataElement (gc_state_h1 state) /\ EVERY isDataElement
        (gc_state_h2 state) /\
      EVERY isDataElement (gc_state_r1 state) /\ EVERY isDataElement
        (gc_state_r2 state) /\
      EVERY isDataElement (gc_state_r3 state) /\ EVERY isDataElement
        (gc_state_r4 state) /\
-     (!x l d. MEM (DataElement x l d) (gc_state_r4 state ++
-       gc_state_r3 state ++ gc_state_r2 state ++ gc_state_r1 state) ==>
-       gen_gc_conf_isRef
+     (
+      // ----
+      !x l d. MEM (DataElement x l d) (gc_state_r4 state ++
+        gc_state_r3 state ++ gc_state_r2 state ++ gc_state_r1 state) ==>
+        gen_gc_conf_isRef
            conf d) /\
+     // ----
      BIJ (heap_map1 (gc_state_heap state)) (FDOM (heap_map 0
        (gc_state_heap state)))
          (heap_addresses 0 (gc_state_h1 state ++ gc_state_h2 state)
@@ -207,6 +217,7 @@ let gc_inv_def = cake_define
           heap_addresses (gc_state_a state + gc_state_n state)
             (gc_state_r4 state ++ gc_state_r3 state ++ gc_state_r2
               state ++ gc_state_r1 state)) /\
+     // ----
      (!i j.
        (FLOOKUP (heap_map 0 (gc_state_heap state)) i = SOME j) ==>
        (?xs l d.

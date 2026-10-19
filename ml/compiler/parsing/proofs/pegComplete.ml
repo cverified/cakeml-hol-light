@@ -346,9 +346,11 @@ let left_insert2_def = cake_define_list
   [`left_insert2 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
    `left_insert2 pt (Nd (n,l0) subs) =
          (match subs with
-             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] |
-               [Nd _6 [tyop]] -> mkNd n [mkNd n [pt]; tyop] | x ::
-               ys -> mkNd n (left_insert2 pt x :: ys))`];;
+             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [Nd _6
+               [
+                  // nTbase
+                  tyop]] -> mkNd n [mkNd n [pt]; tyop] | x ::
+                    ys -> mkNd n (left_insert2 pt x :: ys))`];;
 
 let ptree_loc_left_insert2 = cake_theorem "ptree_loc_left_insert2"
   (fun () ->
@@ -1352,6 +1354,7 @@ let cmlG_unambiguous = cake_theorem "cmlG_unambiguous"
      valid_lptree cmlG pt2 /\ ptree_head pt2 = grammar_NT
        ((INL:MMLnonT->MMLnonT+num) N) /\
      (INL:MMLnonT->MMLnonT+num) N IN FDOM (rules cmlPEG) /\
+     // e.g., nTopLevelDecs
      real_fringe pt2 = real_fringe pt1 /\
      (!s. s IN set_of_list (ptree_fringe pt1) ==> (?t. s =
        grammar_TOK t)) ==>

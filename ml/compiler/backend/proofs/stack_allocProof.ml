@@ -13,6 +13,7 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
@@ -27,6 +28,7 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
@@ -2693,6 +2695,8 @@ let stack_allocProof_comp_correct = cake_theorem "comp_correct"
          dimword (:'a) /\ stackSem_state_regs
        s SUBMAP regs' /\ stackSem_state_use_stack
        s /\
+       // Necessary for the data buffer oracle
+       // Data buffer does not wrap around
        LENGTH (stackSem_state_bitmaps s) + LENGTH (buffer_buffer
          (stackSem_state_data_buffer s)) + buffer_space_left
          (stackSem_state_data_buffer s) < dimword (:'a) - 1 /\
@@ -2880,6 +2884,7 @@ let stack_alloc_stack_asm_convs =
   (fun () ->
     `EVERY (\(n,p). stack_asm_name c p) prog /\
      EVERY (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
+     // conf_ok is too strong, but we already have it anyway
      conf_ok (:'a) conf /\
      asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
      reg_name 10 c /\ good_dimindex (:'a) /\ asm_config_valid_imm

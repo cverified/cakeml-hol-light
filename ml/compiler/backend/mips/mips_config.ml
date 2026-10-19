@@ -11,17 +11,33 @@
 
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: mips_target *)
 
 let mips_names_def = cake_define
   `mips_names =
-     ((insert 0 31 o
+     ((
+      // source can use 24 regs (r2-r24,r31),
+      // target's r0 must be avoided (hardcoded to 0),
+      // target's r1 must be avoided (used by encoder in asm),
+      // target's r25 and r28 are used to set up PIC
+      // target's r29 must be avoided (stack pointer),
+      // target's r26-r27 avoided (reserved for OS kernel),
+      // target's r30 must be avoided (used by encoder in asm),
+      // source 0 must represent r31 (link register),
+      // source 1-4 must be r4-r7 (1st 4 args),
+      // top 3 (21-23) must be callee-saved (in 16-23, 28, 30)
+      insert 0 31 o
       insert 1 4 o
       insert 2 5 o
       insert 3 6 o
       insert 4 7 o
+      // the rest just ensures that the mapping is well-formed
       insert 7 2 o
       insert 5 24 o
       insert 6 3 o

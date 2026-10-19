@@ -11,8 +11,12 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/data_space.ml";;
+needs "compiler/backend/labLang.ml";;
+needs "compiler/inference/infer.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
+needs "lib/peg.ml";;
 needs "semantics/tokens.ml";;
 (* HOL4 ancestors outside the port: string list *)
 
@@ -26,8 +30,9 @@ needs "semantics/tokens.ml";;
 
 let lexer_fun_symbol_INDUCT,lexer_fun_symbol_RECURSION = define_datatype
   "lexer_fun_symbol = StringS (string) | CharS (char) | NumberS (int) \
-   | WordS (num) | LongS (string list) (string) | FFIS (string) | \
-   OtherS (string) | ErrorS";;
+   | WordS (num) | LongS (string list) (string) \
+   // ["Foo";"Bar"] "<" is Foo.Bar.<\n\
+   | FFIS (string) | OtherS (string) | ErrorS";;
 
 (* helper functions *)
 let mkCharS_def = cake_define
@@ -56,7 +61,9 @@ let is_single_char_symbol_def = cake_define
   `is_single_char_symbol c = MEM c "()[]{},;"`;;
 
 let isSymbol_def = cake_define
-  `isSymbol c = MEM c (CHR 96 :: "!%&$#+-/:<=>?@\\~^|*")`;;
+  `isSymbol c = MEM c (CHR 96 ::
+                // backquote
+                "!%&$#+-/:<=>?@\\~^|*")`;;
 
 let next_loc_def = cake_define
   `next_loc n x =
@@ -209,6 +216,7 @@ let read_Ident_def = cake_define_list_try_tac (fun () ->
   [`read_Ident [] loc acc = (ErrorS,loc,[])`;
    `read_Ident (c :: str) loc acc =
       (if is_single_char_symbol c then
+        // single character tokens, i.e. delimiters
         if NULL acc then
           (OtherS [c],next_loc 1 loc,str) else
           (ErrorS,loc,str) else if isSymbol c then
@@ -221,7 +229,9 @@ let read_Ident_def = cake_define_list_try_tac (fun () ->
             c1 :: rest1 ->
             (if c1 = (CHR 46) then read_Ident rest1 new_loc (n ::
               acc) else read_Ident_ret acc n new_loc rest) else
-        (ErrorS,loc,str))`];;
+        (
+         // input not recognised
+         ErrorS,loc,str))`];;
 
 (* next_sym reads the next symbol from a string, returning NONE if at eof *)
 (* the termination relation that HOL4 gives, with
@@ -233,8 +243,11 @@ let next_sym_def = cake_define_list_try (fun () ->
   [`next_sym "" _5 = NONE`;
    `next_sym (c :: str) loc =
          (if c = (CHR 10) then
+            // skip new line
             next_sym str (next_line loc) else if isSpace c then
+           // skip blank space
            next_sym str (next_loc 1 loc) else if isDigit c then
+           // read number
            if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
              if TL str = "" then SOME (ErrorS,Locs loc loc,"") else
                if isDigit (HD (TL str)) then
@@ -259,13 +272,16 @@ let next_sym_def = cake_define_list_try (fun () ->
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else if c = (CHR 126) /\ ~(str = "") /\
                          isDigit (HD str) then
+           // read negative number
            let (n,rest) = read_while isDigit str [] in
              SOME (NumberS ((&0) - &(num_from_dec_string n)),
                    Locs loc (next_loc (LENGTH n + 1) loc),
                    rest) else if c = (CHR 39) then
+           // read type variable
            let (n,rest) = read_while isAlphaNumPrime str [c] in
              SOME (OtherS n,Locs loc (next_loc (LENGTH n - 1) loc),
                    rest) else if c = (CHR 34) then
+           // read string
            let (t,loc',rest) = lexer_fun_read_string str ""
              (next_loc 1 loc) in
              SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::

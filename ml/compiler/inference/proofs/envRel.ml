@@ -10,10 +10,13 @@
   Relating inference and type system environments.
 *)
 
+needs "basis/pure/mlvector.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/inference/inferProps.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
+needs "lib/peg.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
@@ -385,9 +388,13 @@ let env_rel_complete_def = cake_define
      ienv = type_env_c tenv /\
      (!x tvs t.
        lookup_var x tenvE tenv = SOME (tvs,t) ==>
-       (?n. check_freevars n [] t) /\
+       (
+        // t cannot have tyvars inside
+        ?n. check_freevars n [] t) /\
        (?tvs' t'.
          nsLookup (inf_env_inf_v ienv) x = SOME (tvs',t') /\
+         // A stronger version is guaranteed by ienv_ok
+         // check_t (tvs' + num_tvs tenvE) {} t' ∧
          tscheme_approx (num_tvs tenvE) s (tvs,unconvert_t t)
            (tvs',t')))`;;
 
@@ -413,8 +420,10 @@ let env_rel_def = cake_define
   `envRel_env_rel tenv ienv <=>
     ienv_ok {} ienv /\
     tenv_ok tenv /\
-    (!x. nsLookupMod (inf_env_inf_v ienv) x = NONE <=> nsLookupMod
-      (type_env_v tenv) x = NONE) /\
+    (
+     // To rule out 1 env with an empty module and the other without that module at all
+     !x. nsLookupMod (inf_env_inf_v ienv) x = NONE <=> nsLookupMod
+       (type_env_v tenv) x = NONE) /\
     env_rel_sound FEMPTY ienv tenv typeSystem_Empty /\
     env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
 hol4_overload "env_rel" "envRel_env_rel";;

@@ -2,7 +2,7 @@
 (*  misc: ported from HOL4's
     misc/miscScript.sml
     A definition theory, with 50 definitions, 1 datatype and 393
-    theorems.  Needed by 95 files of the port.  *)
+    theorems.  Needed by 120 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -1854,6 +1854,7 @@ let the_nil_eq_cons = cake_theorem "the_nil_eq_cons"
 let splitlines_def = cake_define
   `splitlines ls =
    (let lines = FIELDS ((=) (CHR 10)) ls in
+   // discard trailing newline
    if NULL (LAST lines) then FRONT lines else lines)`;;
 
 let splitlines_next = cake_theorem "splitlines_next"
@@ -2777,8 +2778,9 @@ let WORD_LS_IMP = cake_theorem "WORD_LS_IMP"
 
 let size_fromAList = cake_theorem "size_fromAList"
   (fun () ->
-    `!xs. ALL_DISTINCT (MAP FST xs) ==> sptree_size (fromAList xs) =
-  LENGTH xs`)
+    `// TODO: move to HOL
+     !xs. ALL_DISTINCT (MAP FST xs) ==> sptree_size (fromAList
+       xs) = LENGTH xs`)
   CHEAT_TAC;;
 
 let ALL_DISTINCT_MAP_FST_toSortedAList =

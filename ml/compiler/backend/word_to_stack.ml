@@ -16,14 +16,19 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
+needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/errorMonad.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* bitmaps_length stores the current length of the bitmaps *)
 let word_to_stack_config_FIELDS = define_record "word_to_stack_config"
@@ -148,8 +153,11 @@ let wInst_def = cake_define
          (wRegWrite1 (\n1. Inst (Arith (asm_SubOverflow n1 n2 n3
            n4))) n1 kf))
         | (Arith (asm_LongMul n1 n2 n3 n4)) ->
-         (Inst (Arith (asm_LongMul 3 0 0 2)))
+         (
+          // n1 = 2, n2 = 0, n3 = 0, n4 = 1 no spills necessary
+          Inst (Arith (asm_LongMul 3 0 0 2)))
         | (Arith (asm_LongDiv n1 n2 n3 n4 n5)) ->
+       // n1 = 0, n2 = 2, n3 = 2, n4 = 0 no spills necessary
        (let (l,n5) = wReg1 n5 kf in
        wStackLoad l
          (Inst (Arith (asm_LongDiv 0 3 3 0 n5))))
@@ -202,6 +210,7 @@ let wInst_def = cake_define
        wStackLoad (l ++ l')
          (Inst (asm_FP (FPMovFromReg d n1 n2))))
         | (asm_FP f) -> Inst (asm_FP f)
+        // pass through the ones that don't use int registers
         | _1 -> Inst asm_Skip`;;
 
 let wShareInst_def = cake_define
@@ -293,6 +302,7 @@ let call_dest_def = cake_define
   `(call_dest (SOME pos) args kf = (Skip,INL pos)) /\
    (call_dest NONE args kf =
       (if LENGTH args = 0 then (Skip,INL raise_stub_location) else
+        // this case can never occur, raise_stub_location is convenient
         let (x1,r) = wReg2 (LAST args) kf in
           (wStackLoad x1 Skip,INR r)))`;;
 
@@ -339,10 +349,16 @@ let perf_rbp_def = cake_define
 let perf_call_prefix_def = cake_define
   `perf_call_prefix l1 l2 k =
      stackLang_list_Seq [
+       // k := return address
        LocValue k l1 l2;
+       // Write the new frame's slots BELOW perf_rsp first; do not adjust
+       // perf_rsp yet, so perf's fp-walker still sees the old (valid) frame
+       // while the new one is being built. After the final Sub, the layout
+       // will be (perf_rsp)=old_rbp, 8(perf_rsp)=ret_addr.
        Inst (asm_Mem asm_Store k (Addr perf_rsp (--(n2w 8))));
        Inst (asm_Mem asm_Store perf_rbp (Addr perf_rsp (--(n2w
          16))));
+       // Atomically commit the new frame, then sync perf_rbp := perf_rsp.
        Inst (Arith (asm_Binop asm_Sub perf_rsp perf_rsp (Imm (n2w
          16))));
        Inst (Arith (asm_Binop asm_Or perf_rbp perf_rsp (Reg
@@ -351,7 +367,9 @@ let perf_call_prefix_def = cake_define
 let perf_call_suffix_def = cake_define
   `perf_call_suffix =
      stackLang_list_Seq [
+       // pop saved %rbp
        Inst (asm_Mem asm_Load perf_rbp (Addr perf_rsp (n2w 0)));
+       // discard both slots (saved-rbp + ret_addr) in one atomic step
        Inst (Arith (asm_Binop asm_Add perf_rsp perf_rsp (Imm (n2w
          16))))]`;;
 
@@ -374,9 +392,11 @@ let PushHandler_def = cake_define
     (Seq (stackLang_StackStore k 2)
     (Seq (if perf then
             stackLang_list_Seq [
+              // slot 3: saved %rsp
               Inst (Arith (asm_Binop asm_Or k perf_rsp (Reg
                 perf_rsp)));
               stackLang_StackStore k 3;
+              // slot 4: saved %rbp
               Inst (Arith (asm_Binop asm_Or k perf_rbp (Reg
                 perf_rbp)));
               stackLang_StackStore k 4] else Skip)
@@ -493,8 +513,10 @@ let comp_def = cake_define_cheat CHEAT_TAC
           (Loop q1,bs))
         | (Set name exp) ->
        (if name = BitmapBase then (Skip,bs) else
+        // Impossible
         match exp with Var n -> (let (x1,r') = wReg1 n kf in
           (wStackLoad x1 (Set name r'),bs)) | _7 -> (Skip,bs))
+        // impossible
         | (Get n name) ->
         (wRegWrite1 (\r. Get r name) n kf,bs)
         | (Call ret dest args handler) ->
@@ -569,15 +591,21 @@ let raise_stub_def = cake_define
      (Seq (stackLang_StackSetSize k)
      (Seq (if perf then
              stackLang_list_Seq [
+               // restore %rsp from slot 3
                stackLang_StackLoad k 3;
                Inst (Arith (asm_Binop asm_Or perf_rsp k (Reg k)));
+               // restore %rbp from slot 4
                stackLang_StackLoad k 4;
                Inst (Arith (asm_Binop asm_Or perf_rbp k (Reg k)))]
                  else Skip)
      (Seq (stackLang_StackLoad k 2)
-     (Seq (Set Handler k)
+     (
+      // next handler
+      Seq (Set Handler k)
      (Seq (stackLang_StackLoad k 1)
-     (Seq (stackLang_StackFree (handler_slots perf))
+     (
+      // handler pc
+      Seq (stackLang_StackFree (handler_slots perf))
           (Raise k)))))))`;;
 
 let store_consts_stub_def = cake_define
@@ -615,6 +643,8 @@ let compile_def = cake_define
   `word_to_stack_compile asm_conf perf progs =
      (let k = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
+     // Since we increase the slots for the handler when perf=T, we need to
+     // update the bitmap to ensure that GC leaves the new entries alone.
      let init_bitmaps =
          (if perf then (misc_List [(n2w 16)],1) else (misc_List [(n2w
            4)],1)) in
