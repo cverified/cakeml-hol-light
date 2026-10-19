@@ -7,6 +7,10 @@
 # statement that does not parse, that is not a formula, that has
 # free variables or that takes more than a second), and says how
 # many there are of each.  No run is needed for it.
+# tools/diag.py then says which statements apply a name that the
+# port made a variable, and tools/stmtfree.py which free variable
+# of a statement is a name that a theory of the scope of its
+# source defines -- HOL4 reads a constant there.
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 s=${1:-seq}
@@ -18,3 +22,4 @@ TIMEOUT=3600 repl-step $s \
   "diag_run \"$C/tmp/stmts.txt\" \"$C/tmp/diag.out\";;" 2>&1 | tail -2
 cut -f1 $C/tmp/diag.out | sort | uniq -c
 python3 -I tools/diag.py
+python3 -I tools/stmtfree.py
