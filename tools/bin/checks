@@ -25,6 +25,8 @@
 #             has no constant of (needs tools/constants.txt)
 #   lines     no line of ml/ outside a comment is longer than 72
 #             characters (a comment of a source is unaltered)
+#   stale     every entry of an override table still names a
+#             block that the source it is about has
 C=/home/freek/claude/hol-light/cakeml
 cd $C
 echo "=== coverage"
@@ -57,3 +59,5 @@ echo "=== the names that look like an accessor"
 python3 -I tools/freenames.py 2>&1 | tail -4
 echo "=== lines over 72 characters"
 python3 -I tools/lines.py 2>&1 | tail -6
+echo "=== the entries of the override tables"
+python3 -I tools/stale.py 2>&1 | tail -3
