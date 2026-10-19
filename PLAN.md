@@ -6,33 +6,47 @@ its proof, and every comment of the source in its place
 (`CLAUDE.md`).  The test is to read a source and its port next to
 each other: they have to read "the same"._
 
-_State: the port has 10,129 of the 10,688 theorems of the 270
-files with their statement and 559 as a pointer that names them
-(`tools/coverage.py` counts both; `PENDING.md` says what the 559
-are).  **Every one of the 270 files loads to the end**, and of
-the statements the run of 01:40 could read all but **four**: the
-first phase-two run of 14:03 could not read 688 statements, the
-one of 16:30 could not read 295, the one of 18:21 141, the one of
-20:17 100 and the one of 22:57 26 (that run also stopped
-`lab_to_targetProof` at the 34th of its 476 blocks, where the
-`s1` of its `asm_step_nop` is a state of the target and the
-annotation of the theory made it one of labSem).  436 statements
-are read with the overloads of the record field names taken away._
+_State: **phase two is done**, but for what the port cannot say.
+The port has 10,146 of the 10,688 theorems of the 270 files with
+their statement and 542 as a pointer that names them
+(`tools/coverage.py` counts both; `PENDING.md` says what the 542
+are, and none of them is a statement that phase two can read off
+the source -- HOL4 computes it with ML code).  **Every one of the
+270 files loads to the end** and **every statement reads**: the
+run of 15:18 read all 10,122 of them, where the first phase-two
+run of 14:03 could not read 688 (then 295, 141, 100, 26, 4 and 1
+in the runs after it).  438 statements are read with the
+overloads of the record field names taken away._
 
-_Of those four, three read now: the `compile` of the `s` and the
-`t` of `stack_namesProof` is the field of a stackSem state (a
-bare `compile` is the constant of a compiler pass, and the port
-has 28 of those), and `mw_ok` of HOL4's `multiwordTheory` was not
-in the library layer at all.  The fourth is
-`lab_to_targetProof$word_cmp_lemma`, whose `read_reg` is the
-`regs` of a labSem state on one side of the equation and of an
-`asm_state` on the other: the port expands the body of an
-overload once per theory (with the accessor of the field written
-out, which a statement that is read with the field names taken
-away needs), and that is one record too few.  What would settle
-it is to expand such an overload **per occurrence**, with the
-record of the argument that is there, which comes to a beta
-reduction of the application; `PENDING.md` has it._
+_And no statement says less than the source does, as far as four
+checks can tell: none applies a name that the port made a
+variable (`tools/diag.py`), no free variable of one is a name
+that a theory of the scope of its source defines
+(`tools/stmtfree.py`), no constant of one has a type outside the
+scope of its theory (`tools/bin/types`), and the eleven names of
+HOL4's libraries that a statement uses and the port has not are
+variables in HOL4 as well (`tools/libnames.py`)._
+
+_Every comment of every source is in the port, in its place:
+2,344 comment blocks, of which 133 are HOL4 code with a pointer
+at it, and all 1,218 comments that stand **inside** a block --
+between the constructors of a `Datatype`, between the fields of a
+record, between the clauses of a `Definition` or in a statement
+-- which HOL Light reads as the `//` comment of a term
+(`tools/comments.py`).  Every `Overload` and every `Type` of a
+source has a counterpart as well (`tools/overloads.py`): an
+overload of HOL Light, or a pointer where the port writes out
+what the name stands for._
+
+_The last statement to read was `lab_to_targetProof$word_cmp_lemma`,
+whose `read_reg` is the `regs` of a labSem state on one side of
+the equation and of an `asm_state` on the other.  HOL4 resolves
+the name of an `Overload` by the type of each occurrence; the port
+expanded the body of one (`\r s. s.regs r`) once per theory, and
+that was one record too few.  It expands such an overload per
+occurrence now, with the record of the argument that is there,
+which is a beta reduction of the application
+(`tools/port.py`'s `beta_overloads`)._
 
 _**The main correctness theorem of CakeML is stated.**
 `compilerProof` gives `compile_correct` as the value of a `prove`
