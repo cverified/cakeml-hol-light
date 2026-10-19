@@ -217,14 +217,21 @@ print_string (Printf.sprintf "SMOKESTR %d characters, %B\n"
 
 (* ---------------------------------------------------------------- *)
 (* a constant whose value HOL4 computes with ML code: the port
-   declares it, which costs no axiom and counts as a cheat *)
+   declares it, which gives it an implicit definition -- the type
+   is the right one, the value is not said, no axiom is added and
+   it counts as a cheat *)
 let a1 = length(axioms());;
 let n1 = length(cake_cheats());;
+let d1 = length(definitions());;
 cake_declare "c_opaque" `:num list`;;
 print_string (Printf.sprintf
   "SMOKEDECLARE axioms %d (was %d), cheats %d (was %d), why %s\n"
   (length(axioms())) a1 (length(cake_cheats())) n1
   (try assoc "c_opaque" (cake_cheat_why()) with Failure _ -> "?"));;
+print_string (Printf.sprintf
+  "SMOKEDECLARE type %s definitions %d (was %d)\n"
+  (string_of_type (get_const_type "c_opaque"))
+  (length(definitions())) d1);;
 
 (* ---------------------------------------------------------------- *)
 (* phase two: a theorem of a source, with CHEAT_TAC where HOL4 has  *)
