@@ -6,33 +6,58 @@ its proof, and every comment of the source in its place
 (`CLAUDE.md`).  The test is to read a source and its port next to
 each other: they have to read "the same"._
 
-_State: the port has 10,128 of the 10,688 theorems of the 270
-files with their statement and 560 as a pointer that names them
-(`tools/coverage.py` counts both; `PENDING.md` says what the 560
-are).  Of the statements, the run of 22:57 could read all but
-**26**, and every one of the 270 files loads to the end but
-`lab_to_targetProof`, which stopped at the 34th of its 476 blocks
-(the `s1` of its `asm_step_nop` is a state of the target, and the
-annotation of the theory made it one of labSem): the first
-phase-two run of 14:03 could not read 688 statements, the one of
-16:30 could not read 295, the one of 18:21 could not read 141 and
-the one of 20:17 could not read 100.  404 statements are read
-with the overloads of the record field names taken away._
+_State: the port has 10,129 of the 10,688 theorems of the 270
+files with their statement and 559 as a pointer that names them
+(`tools/coverage.py` counts both; `PENDING.md` says what the 559
+are).  **Every one of the 270 files loads to the end**, and of
+the statements the run of 01:40 could read all but **four**: the
+first phase-two run of 14:03 could not read 688 statements, the
+one of 16:30 could not read 295, the one of 18:21 141, the one of
+20:17 100 and the one of 22:57 26 (that run also stopped
+`lab_to_targetProof` at the 34th of its 476 blocks, where the
+`s1` of its `asm_step_nop` is a state of the target and the
+annotation of the theory made it one of labSem).  436 statements
+are read with the overloads of the record field names taken away._
 
-_Of those 26, **25 read now**; the one that is left is
-`bvi_tmcProof$evaluate_cb`, which waits for the definition of
-`alloc_hole_has_val` of its own theory (the port gave it a list of
-dataSem's values, where bviSem's `evaluate` takes bvlSem's).  What
-they needed, beside the four readings below: the `GSPEC` and the
-`S` of HOL4's own theories, which the library layer now has under
-a name of its own; the type variables of `evaluate_ffi_intro`,
-which the update of a state unifies in HOL4 and not in HOL Light;
-the theory of a constructor of four statements
-(`overrides.CON_OF`, and `SIZE_OF` for the `exp_size` of
-`bvl_to_bviProof`); the record of a variable of two
-(`FIELD_VAR_DEF`); and the integer that the result of
-`get_intervals_ct_aux` holds (`THM_INT_VARS`).  The run of 01:30
-measures what is left of them._
+_Of those four, three read now: the `compile` of the `s` and the
+`t` of `stack_namesProof` is the field of a stackSem state (a
+bare `compile` is the constant of a compiler pass, and the port
+has 28 of those), and `mw_ok` of HOL4's `multiwordTheory` was not
+in the library layer at all.  The fourth is
+`lab_to_targetProof$word_cmp_lemma`, whose `read_reg` is the
+`regs` of a labSem state on one side of the equation and of an
+`asm_state` on the other: the port expands the body of an
+overload once per theory (with the accessor of the field written
+out, which a statement that is read with the field names taken
+away needs), and that is one record too few.  What would settle
+it is to expand such an overload **per occurrence**, with the
+record of the argument that is there, which comes to a beta
+reduction of the application; `PENDING.md` has it._
+
+_**The main correctness theorem of CakeML is stated.**
+`compilerProof` gives `compile_correct` as the value of a `prove`
+of a quotation of it with `check_thm` applied to the result, and
+that quotation has a comment in the middle of it, which cut the
+block in two: the port had a pointer where the statement was in
+the source all along._
+
+_What the round after the run of 01:40 also found, with the two
+checks that a session needs:_
+
+- _`tools/bin/types` (every constant's type only mentions types of
+  theories in its own scope) found that the `extras` of
+  `bvi_tmcProof$alloc_hole_has_val` were a list of dataSem's
+  values, where bviSem's `evaluate` takes bvlSem's.  It had
+  looked at the constants that the port renames only, which is
+  one in ten._
+- _`tools/stmtfree.py` (a free variable of a statement whose name
+  a theory of the scope defines) found that **67 statements of
+  `pegComplete`** read `peg_eval`, `peg0`, `peg_eval_list` and
+  `pegfail` as variables of their own: what a HOL4 library theory
+  has to provide is computed from the names that its blocks
+  define, and an `Inductive` names its relations in the
+  conclusions of its rules.  `ml/lib/peg.ml` makes the four
+  relations now._
 
 _What the run of 16:30 also found: `tools/bin/checkseq` read the
 word "timeout" anywhere in the output of a step as the timeout of
@@ -197,11 +222,16 @@ _What is left of phase two:_
 
 1. _every statement that the port has **typechecks**: a run says
    which do not (`tools/bin/thms` from `cake_unstated ()`), and
-   `tools/bin/diag` says the same without a run of its own;_
-2. _no statement is **silently weaker** than the source's:
-   `tools/diag.py` reports a statement that applies a name the
-   port made a variable, and `tools/libnames.py` a name of HOL4's
-   libraries that the port has not;_
+   `tools/bin/diag` says the same without a run of its own.  One
+   is left (`word_cmp_lemma`, above);_
+2. _no statement is **silently weaker** than the source's.  Four
+   checks say it, and `tools/bin/cycle` runs all four between two
+   runs: `tools/diag.py` reports a statement that applies a name
+   the port made a variable, `tools/stmtfree.py` a free variable
+   whose name a theory of the scope defines, `tools/bin/types` a
+   constant whose type mentions a theory outside its scope, and
+   `tools/libnames.py` a name of HOL4's libraries that the port
+   has not;_
 3. _then phase two is done, and phase three starts -- by hand,
    one theorem at a time._
 
