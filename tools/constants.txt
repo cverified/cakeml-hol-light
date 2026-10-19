@@ -2076,6 +2076,14 @@ riscv_config
 mips_config
 arm8_config
 x64_config
+arm7_valid_immediate
+arm8_valid_immediate
+ag32_enc
+arm7_enc
+riscv_enc
+mips_enc
+arm8_enc
+x64_enc
 extend_conf
 parse_lab_conf
 parse_tap_conf
