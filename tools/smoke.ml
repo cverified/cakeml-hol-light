@@ -312,3 +312,49 @@ print_string
    (let n,a,th = hd (rev (cake_theorems ())) in
     n ^ " " ^ String.concat "," a ^ " " ^
     string_of_bool (th == smoke_thm)) ^ " (smoke_same simp true)\n");;
+
+(* ---------------------------------------------------------------- *)
+(* a name that the accessors of a record field have as well: only
+   the constant that the file cannot see goes out of the interface
+   (cake_hide_consts), and the field keeps the name; and a name
+   that the source hides from there on (cake_hide_more, which adds
+   to the list of the file instead of replacing it) *)
+
+let smoke_rec2_FIELDS = define_record "smoke_rec2" ["sfld2","num"];;
+hol4_field_overload "sfld2" "smoke_rec2_sfld2";;
+
+(* a constant of the same name and the same type, which only the
+   hiding tells apart *)
+
+let smoke_other_sfld2 = new_definition
+  `smoke_other_sfld2 (r:smoke_rec2) = 7`;;
+hol4_overload "sfld2" "smoke_other_sfld2";;
+
+let smoke_opaque2 = new_definition
+  `smoke_opaque2 (n:num) = n + 2`;;
+
+cake_hide ["smoke_opaque"];;
+cake_hide_more ["smoke_opaque2"];;
+cake_hide_consts ["sfld2","smoke_other_sfld2"];;
+
+let smoke_hidec = cake_theorem "smoke_hidec"
+  (fun () ->
+    `sfld2 (r:smoke_rec2) = 1 /\ smoke_opaque2 = 2`)
+  CHEAT_TAC;;
+
+cake_hide [];;
+cake_hide_consts [];;
+
+print_string
+  ("\nSMOKEHIDEC " ^
+   (let n,_,th = last (cake_theorems ()) in
+    n ^ " accessor " ^
+    string_of_bool (mem "smoke_rec2_sfld2"
+                      (map (fun t -> fst (dest_const t))
+                         (filter is_const
+                            (find_terms is_const (concl th))))) ^
+    " free " ^
+    String.concat ","
+      (map (fun v -> fst (dest_var v))
+         (sort (<) (frees (concl th))))) ^
+   " (smoke_hidec accessor true free r,smoke_opaque2)\n");;

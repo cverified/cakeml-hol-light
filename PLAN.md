@@ -9,27 +9,30 @@ each other: they have to read "the same"._
 _State: the port has 10,128 of the 10,688 theorems of the 270
 files with their statement and 560 as a pointer that names them
 (`tools/coverage.py` counts both; `PENDING.md` says what the 560
-are).  Of the statements, the run of 20:17 could read all but
-**100**, and **every one of the 270 files loads to the end**: the
-first phase-two run of 14:03 could not read 688 statements, the
-one of 16:30 could not read 295 and the one of 18:21 could not
-read 141.  423 statements are read with the overloads of the
-record field names taken away._
+are).  Of the statements, the run of 22:57 could read all but
+**26**, and every one of the 270 files loads to the end but
+`lab_to_targetProof`, which stopped at the 34th of its 476 blocks
+(the `s1` of its `asm_step_nop` is a state of the target, and the
+annotation of the theory made it one of labSem): the first
+phase-two run of 14:03 could not read 688 statements, the one of
+16:30 could not read 295, the one of 18:21 could not read 141 and
+the one of 20:17 could not read 100.  404 statements are read
+with the overloads of the record field names taken away._
 
-_What the hundred are, and what the round after that run did about
-them: eighteen are about bags and say `<=` where HOL4's bagTheory
-means `SUB_BAG`, three say `INT_MIN` where it means the integer of
-`integer_wordTheory` and not the number of `wordsTheory`, one says
-`gcd`, which takes a pair in HOL Light and two arguments in HOL4,
-and four are about the `var_corr` of dataProps, whose own
-definition read the `get_var` of stackSem where dataSem's is
-meant.  Of the rest, the record of a field or of a literal
-settles twenty (`overrides.FIELD_VAR`, `FIELD_VAR_DEF`,
-`THM_RECLITS`, `THM_ACCESSORS` and the annotations of the
-statement itself, which the port now reads), the theory of a
-constructor three, and three are an ML expression that the port
-cannot evaluate and now points at.  The run of 22:57 measures
-what is left of them._
+_Of those 26, **25 read now**; the one that is left is
+`bvi_tmcProof$evaluate_cb`, which waits for the definition of
+`alloc_hole_has_val` of its own theory (the port gave it a list of
+dataSem's values, where bviSem's `evaluate` takes bvlSem's).  What
+they needed, beside the four readings below: the `GSPEC` and the
+`S` of HOL4's own theories, which the library layer now has under
+a name of its own; the type variables of `evaluate_ffi_intro`,
+which the update of a state unifies in HOL4 and not in HOL Light;
+the theory of a constructor of four statements
+(`overrides.CON_OF`, and `SIZE_OF` for the `exp_size` of
+`bvl_to_bviProof`); the record of a variable of two
+(`FIELD_VAR_DEF`); and the integer that the result of
+`get_intervals_ct_aux` holds (`THM_INT_VARS`).  The run of 01:30
+measures what is left of them._
 
 _What the run of 16:30 also found: `tools/bin/checkseq` read the
 word "timeout" anywhere in the output of a step as the timeout of
@@ -51,9 +54,15 @@ statement uses a name of a HOL4 **library** that the port has not
 (`tools/libnames.py`), every **comment** of a source is in its
 port or a pointer says where the code in it is
 (`tools/comments.py`), and no statement counts the
-**connectives** of the source differently but the 22 that
+**connectives** of the source differently but the 24 that
 `tools/shapeok.txt` accounts for, where the port writes out what
-HOL4 says with a name (`tools/stmtshape.py`).  The last of those
+HOL4 says with a name (`tools/stmtshape.py`).  What needs a
+session: `tools/bin/types` checks that the **type** of every
+constant of the port only mentions types of theories that its own
+theory has as an ancestor; it looked at the constants that the
+port renames only, which is one in ten, and with all of them it
+found that the `extras` of `bvi_tmcProof$alloc_hole_has_val` were
+a list of dataSem's values.  The last of those
 is what found that the port read the `~0w` of HOL4 (the word of
 all ones) as the negation of a number._
 
@@ -143,6 +152,31 @@ all ones) as the negation of a number._
   - a theory in front of a symbolic name is dropped
     (`prim_rec$<`), a subscript in a name is a digit, and the
     name of an `Overload` is read through `sml_string`.
+  - a `Parse.hide` of a source hides a name from there on, which
+    the port says where the source says it (`cake_hide_more`):
+    `data_to_word_memoryProof` hides `free`, `el` and `sign`, and
+    its statements after that line use them for variables of
+    their own;
+  - the overload of the name that HOL4 gives an accessor itself
+    (`state_ffi`, where every record of the name is a `state`) is
+    not one that `cake_as_vars` takes away, because HOL4 has that
+    constant: a statement that reads a field through it lost it
+    with the names of the fields;
+  - a name that the accessors of a field have as well is not
+    hidden either, and only the constant that the file cannot see
+    goes out of the interface (`cake_hide_consts`): the `failed`
+    of `labProps` is the field of a state and not the constructor
+    `failed` of pegexec's `kont`, which four files read as a
+    variable;
+  - the body of an overload is read in the theory that declares
+    it, so the accessor of a field in it is written out: labSem's
+    `read_reg` is the `regs` of a labSem state, where a statement
+    with a variable `regs` read that variable (ten statements of
+    two files);
+  - a numeral beside an element of a field that holds integers is
+    `&n` as well (`0 < EL i sth.int_beg` of `linear_scanProof`),
+    for which the types of the fields of a record are in the
+    database now.
 - **The library layer of the statements.**  The statements of the
   sources now seed the set of definitions that the port needs of
   a HOL4 library theory, which `TotOrd`, `good_cmp`, `SORTS` and

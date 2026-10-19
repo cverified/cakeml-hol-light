@@ -769,11 +769,30 @@ the things that say it:
 
 A statement that uses the name of a field for a variable of its
 own is read with the overloads of the field names taken away
-(`cake_as_vars`, which 423 statements need).  That cannot work for
+(`cake_as_vars`, which 404 statements need).  That cannot work for
 a statement that does both, so the fields of those statements are
 written out: `lab_to_targetProof$asm_fetch_NOT_ffi_entry_pcs` has
 a variable `ffi_names` and reads the `ffi_names` of its machine
 configuration.
+
+Two things are **not** taken away with them:
+
+- the overload of the name that HOL4 gives the accessor itself.
+  Where every record that has the field is called `state` in
+  HOL4, the name of the accessor there is `state_clock`, and the
+  port overloads that name and not `clock`: HOL4 has those
+  constants, so a statement that reads the field through one of
+  them keeps it where one that writes `clock` for a variable of
+  its own has the names of the fields taken away
+  (`stack_to_labProof$flatten_call_correct` reads the `ffi` of a
+  state of stackSem and has a variable `regs`).
+- the accessor in the **body of an overload**.  That body is read
+  in the theory that declares the overload, so the record of a
+  field in it is known and the accessor is written out: labSem's
+  `read_reg` is `\r s. s.regs r`, which ten statements of two
+  files read with the overloads taken away -- and the `regs` in
+  it was then the variable of the statement and not the field of
+  a labSem state.
 
 ## The constants that HOL4 hides from its parser
 
@@ -805,6 +824,34 @@ Libs** of the source: a `Libs` entry brings the grammar of the
 theory of that name, and `misc` has `ASCIInumbersLib` in its
 `Libs` and uses the `num_to_hex_string` of `ASCIInumbersTheory`,
 which is in no `Ancestors` block of it.
+
+A source hides a name of its own with `Parse.hide` as well, and
+from the line where it says so: `data_to_word_memoryProof` hides
+`el` and `sign` at its head and `free` in the middle of itself
+(line 17834 of 18,800), because the statements after that line
+use `free` for a variable and the port has the `free` of
+`clos_call`.  The port says it where the source says it, with
+`cake_hide_more`, which adds to the list of the file instead of
+replacing it.  47 such lines are in the sources, of 14 names;
+`mem` is 26 of them.
+
+A name that the accessors of a **record field** have as well is
+not hidden, because hiding it would take those with it: `failed`
+is the field of a labSem state and of an `asm_state`, and
+`pegexec` has a constructor `failed` of its `kont` that no theory
+in the ancestry of `labProps`, `lab_filterProof`,
+`lab_to_targetProof` or `gen_gc_partial` defines.  Hiding the
+name made those four files read `failed s` as a variable applied
+to a state, which typechecks and says something else than the
+source does.  `cake_hide_consts` takes the one constant out of
+the interface instead, so the accessors keep the name and HOL
+Light resolves them by the type of the record, as HOL4 does.
+
+Where HOL4 hides the name of a field that the port needs all the
+same, the accessor is written out: `labProps` hides `mem` (its
+statements use it for a variable), and HOL4's field syntax
+`s.mem` reads the field after that, so `overrides.ACCESSORS` says
+which record the `mem` of its statements is of.
 
 ## What is not ported
 

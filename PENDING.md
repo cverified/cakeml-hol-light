@@ -69,16 +69,22 @@ of phase three needs are proved when that proof needs them.  The
 
 # Statements that the port cannot read yet
 
-Of the 10,128 statements of the port the run of 20:17 could not
-read 100, and the round after it worked them down (`PLAN.md` says
-what the classes were).  What is left after that round, and what
-each of them needs, is what the next run says; the ones that are
-known to need more than a reading of the sources are:
+Of the 10,128 statements of the port the run of 22:57 could not
+read 26 (the run of 20:17 could not read 100, and `PLAN.md` says
+what both rounds were about).  **One** of the 26 is left, and the
+run of 01:30 says whether anything else is:
 
 | statement | what it needs |
 |---|---|
-| four of `linear_scanProof` (`get_intervals_beg_less_end` and the three about `get_intervals_ct_monad`) | a numeral under HOL4's `the` beside a variable whose type is an `int` map is an integer (`the 0 (lookup r beg_in)`), which the table of the integer arguments of a constant does not say: it says which arguments *are* integers, not which hold a map of them |
-| `bvi_tmcProof$evaluate_cb`, `clos_to_bvlProof$do_build_const_thm`, `source_to_flatProof$compile_correct` and a handful more | a session with the port in it to bisect (`tools/bin/diagparts`), because HOL Light says only "overload resolution": no assignment of constants to the names of the statement fits, and which name is the one that does not is what the parts say |
+| `bvi_tmcProof$evaluate_cb` | the definition of `alloc_hole_has_val` of its own theory, whose `extras` the port made a list of dataSem's values: the `RefPtr` and the `MutBlock` of its body are bvlSem's, which is what `evaluate` of bviSem takes (`tools/bin/types` found it, and `overrides.CON_OF` says it now) |
+
+What the other 25 needed is in `PLAN.md`; the statements of
+`linear_scanProof` that needed a numeral to be an integer are
+among them, and the ones that said only "overload resolution"
+were four readings of the translation (a `Parse.hide` of the
+source, the name that HOL4 gives an accessor, the constant of a
+name that a field has as well, and the field in the body of an
+overload) and three constructors of the wrong theory.
 
 # Definitions that the port assumes with a free variable
 
