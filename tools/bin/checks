@@ -1,7 +1,9 @@
 #!/bin/sh
 # checks : the checks of the port that do not need a session, so
 # that a cycle can run them after every re-port
-#   coverage  every definition of every ported source has a port
+#   coverage  every definition of every ported source has a port,
+#             and every theorem of one that the port does not
+#             state has a pointer that names it
 #   fidelity  no name of a definition is missing from its port
 #   literals  the strings and the numerals of a definition survive
 #   lets      a let that binds a function abstracts its arguments

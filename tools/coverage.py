@@ -31,6 +31,16 @@ def names_of(b, p):
   return [(nm, False) for nm in dbmod.definition_names(b.body)]
 
 
+def pointed(flat, name):
+  """does a pointer of the port name this theorem?  Where the port
+     cannot state a theorem it writes a comment that points at the
+     lines of the source and names it (CLAUDE.md), so a theorem
+     that is neither stated nor pointed at is one that a reader of
+     the two files side by side would miss"""
+  if not name: return True
+  return bool(re.search(r'\(\* HOL4 [^*]*%s' % re.escape(name), flat))
+
+
 def main():
   db = dbmod.Db()
   thys = sys.argv[1:] or [t for t, _, k in db.order]
@@ -41,11 +51,12 @@ def main():
     if not path: continue
     p = portmod.Porter(db, thy)
     try:
-      text = portmod.strip_ml(open(portmod.ML +
-                                   db.mlpath_of(thy)).read(), False)
+      raw = open(portmod.ML + db.mlpath_of(thy)).read()
+      text = portmod.strip_ml(raw, False)
+      flat = ' '.join(raw.split())
     except Exception:
-      text = ''
-    want = have = twant = thave = 0
+      text = flat = ''
+    want = have = twant = thave = nopoint = 0
     missing = []
     tmissing = []
     db.base_grammar(thy)
@@ -68,6 +79,7 @@ def main():
           thave += 1
         else:
           tmissing.append('%s %s' % (b.kind, b.name or '(a value)'))
+          if not pointed(flat, b.name): nopoint += 1
         continue
       elif b.kind == 'ML':
         # a theorem that the ML code of the source states itself
@@ -81,6 +93,7 @@ def main():
             thave += 1
           else:
             tmissing.append('ML %s' % nm)
+            if not pointed(flat, nm): nopoint += 1
         continue
       elif b.kind not in KINDS or not p.wanted(b):
         continue
@@ -98,6 +111,8 @@ def main():
                                   [n for n, _ in nms[:1]]))
     tot[0] += want; tot[1] += have; tot[2] += len(missing)
     tot[3] += twant; tot[4] += thave; tot[5] += len(tmissing)
+    tot.append(0) if len(tot) < 7 else None
+    tot[6] += nopoint
     rows.append((thy, want, have, missing, twant, thave, tmissing))
   print('%-28s %6s %6s %8s %6s' % ('theory', 'blocks', 'in',
                                    'theorems', 'in'))
@@ -110,6 +125,9 @@ def main():
         print('        not stated: and %d more' % (len(tmissing) - 4))
   print('%-28s %6d %6d %8d %6d  (%d blocks, %d theorems missing)'
         % ('TOTAL', tot[0], tot[1], tot[3], tot[4], tot[2], tot[5]))
+  print('%d of the %d theorems that the port does not state have no '
+        'pointer that names them' % (tot[6] if len(tot) > 6 else 0,
+                                     tot[5]))
 
 
 main()

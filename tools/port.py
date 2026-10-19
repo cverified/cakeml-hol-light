@@ -1134,7 +1134,13 @@ class Porter:
         self.hidmore = True
         self.out.append('cake_hide_more [%s];;'
                         % '; '.join('"%s"' % h for h in hid))
-      if any(re.search(pat, b.text) for pat in IGNORE_ML):
+      # the bookkeeping of HOL4 (a parse option, a temp_, an
+      # export_theory) says nothing that the port can have -- but a
+      # block that states a theorem is no bookkeeping block,
+      # whatever it mentions (asmProps saves all_pcs as the
+      # numLib.SUC_RULE of its definition)
+      if any(re.search(pat, b.text) for pat in IGNORE_ML) and \
+         not hol4.ml_theorems(b.text):
         return
       if self.numeral_form(b):
         return
