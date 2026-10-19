@@ -94,7 +94,9 @@ NEEDS = '(*__NEEDS__*)'
 def strip_ml(text, strings=True):
   """the text without its comments (and, with strings, without its
      strings), which is what the needs of a file are computed from;
-     a quotation is code, and a (* in one is not a comment"""
+     a quotation is code, and a (* in one is not a comment, but a
+     // in one is (that is what HOL Light reads it as), so the
+     words of a comment of the source are no names of the port"""
   out = []
   i = 0
   n = len(text)
@@ -111,7 +113,8 @@ def strip_ml(text, strings=True):
     if c == '`':
       j = text.find('`', i + 1)
       if j < 0: j = n
-      out.append(text[i+1:j]); i = j + 1; continue
+      out.append(re.sub(r'(?m)//.*$', '', text[i+1:j]))
+      i = j + 1; continue
     if c == '"' and strings:
       i += 1
       while i < n and text[i] != '"':
@@ -1190,9 +1193,12 @@ class Porter:
       for ty, cons in parts)
     # HOL Light gives the type the type variables of the whole
     # specification, in the order in which it sorts them, so the
-    # port knows how to write the type of a constructor
-    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*", spec)))
-    params = [x for x in params if x != "'@@"]
+    # port knows how to write the type of a constructor.  A
+    # comment of the source is no part of the specification: the
+    # apostrophe of one ("the function's name" of ast's exp) is
+    # not a type variable
+    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*",
+                                   re.sub(r'@@.*?@@', '', spec))))
     for ty, _ in parts:
       self.db.ty_params[(self.thy, self.tnm(ty))] = params
     names = [ocaml_name(self.tnm(ty)) for ty, _ in parts]
@@ -1212,8 +1218,13 @@ class Porter:
       first = True
       for i, seg in enumerate(re.split(r'@@(.*?)@@', part)):
         if i % 2:
+          # the specification is an OCaml string, so a quote or a
+          # backslash of the comment is escaped: what OCaml reads
+          # is the text of the source unaltered (lexer_fun's
+          # symbol has '["Foo";"Bar"] "<" is Foo.Bar.<')
+          cm = seg.strip().replace('\\', '\\\\').replace('"', '\\"')
           lines.append(('   ' if not first else pre) + '// ' +
-                       seg.strip() + '\\n\\')
+                       cm + '\\n\\')
           first = False
           continue
         if not seg.split(): continue
@@ -1300,7 +1311,8 @@ class Porter:
   def emit_datatype(self, spec):
     """a datatype specification, as define_datatype takes it"""
     pre, spec = ('\n', spec[1:]) if spec.startswith('\n') else ('', spec)
-    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*", spec)))
+    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*",
+                                   re.sub(r'(?m)//.*$', '', spec))))
     for part in spec.split(';\n'):
       ty = part.split('=')[0].strip()
       self.db.ty_params[(self.thy, ty)] = params
