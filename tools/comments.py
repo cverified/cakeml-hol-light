@@ -89,10 +89,10 @@ def main():
       # quotations of their own, between which an OCaml comment
       # stands (PENDING.md says where that stands)
       if b.kind not in ('Comment', 'ML'):
-        for m in re.finditer(r'\(\*.*?\*\)', b.body or '', re.S):
-          t = ' '.join(m.group(0)[2:-2].split())
+        for c in hol4.comments_of(b.body or ''):
+          t = ' '.join(c[2:-2].split())
           if t and t in flat: continue
-          inside += 1
+          if t: inside += 1
       if b.kind != 'Comment': continue
       n += 1
       s = body(b.text)

@@ -521,6 +521,21 @@ class Porter:
       text = text.replace(nm, ' (' + body + ') ')
     return text
 
+  def left_comments(self, toks, text, pos=False):
+    """the comments of these tokens that the text has not: one at
+       the end of a term, and one before a token that the port
+       writes out without a token of its own (the brace of a set),
+       has nothing to stand before, so it goes at the end
+       (word_copy's copy_prop_prog ends in (* impossible? *))"""
+    out = []
+    for t in toks:
+      for c in (t.comments or ()):
+        if any(q in c for q in hterm.QUOTES): continue
+        ls = hterm.comment_text(c)
+        if all(('// ' + l) in text for l in ls): continue
+        out += [(t.pos, l) for l in ls] if pos else ls
+    return out
+
   def term(self, text, annotate=False, defn=True):
     text = self.expand_syms(text)
     toks = hterm.tokenize(text)
@@ -561,7 +576,10 @@ class Porter:
       seen.add(nm)
       self.annotate(cl, not annotate)
     try:
-      return hterm.Printer(self.ctx).pr(e, 0)
+      out = hterm.Printer(self.ctx).pr(e, 0)
+      for l in self.left_comments(toks, out):
+        out += '\n  // ' + l
+      return out
     finally:
       self.ctx.vars = old
       self.ctx.intvars = oldint
@@ -2668,7 +2686,13 @@ class Porter:
       self.result_types(all)
       self.arg_types(all)
       cls = []
+      # a comment with a quote in it cannot stand in the
+      # quotation, so it stands before it, as a comment of OCaml
+      # (bvi_let's compile)
+      qcs = {}
       for i, cl in enumerate(all):
+        q = hterm.pop_quoted_comments(cl)
+        if q: qcs[i] = q
         # every clause has its own variables, so also its own ones
         # that hold an integer
         self.ctx.intvars = self.int_vars_node(cl) | self.intargs
@@ -2676,9 +2700,23 @@ class Porter:
                          self.annotate(cl, True, atys)),
                        indent=4,
                        last=5 if i == len(all) - 1 else 3))
+      # a comment that has no token of the clause to stand before
+      # (one at the end of it) goes at the end of that clause
+      starts = [(hterm.first_tok(cl).pos
+                 if hterm.first_tok(cl) is not None else 0)
+                for cl in all]
+      for q, l in self.left_comments(toks, '`'.join(cls), True):
+        k = max([i for i, x in enumerate(starts) if x <= q] or [0])
+        cls[k] += '\n    // ' + l
     finally:
       self.ctx.vars = old
-    return '[`' + '`;\n   `'.join(cls) + '`]'
+    text = '['
+    for i, c in enumerate(cls):
+      if i: text += ';\n   '
+      for cm in qcs.get(i, []):
+        text += ('(* ' + '\n      '.join(cm) + ' *)\n   ')
+      text += '`' + c + '`'
+    return text + ']'
 
   # -- a definition as one clause with a match -------------------
 
@@ -2961,7 +2999,11 @@ class Porter:
     for cs, p, b in arms[1:]:
       body += '\n     ' + pre(cs) + '| %s -> %s' % (p, b)
     self.ctx.vars = {}
-    return '%s =\n     match %s with\n       %s' % (head, scrut, body)
+    text = '%s =\n     match %s with\n       %s' % (head, scrut, body)
+    for l in self.left_comments(toks, text):
+      text += '\n     // ' + l
+    self.ctx.vars = {}
+    return text
 
   # -- type abbreviations, overloads, inductive relations --------
 

@@ -137,7 +137,7 @@ QUAL_SYM = re.compile(r"\b[A-Za-z][A-Za-z0-9_']*\$(?=[-+*/<>=!?~^&|#%:@])")
 
 # the tokens that no term starts at: a comment before one of them
 # belongs to the term after it
-NOHEAD = set([')', ']', '|>', ';', ',', ':=', '.', '|', 'then',
+NOHEAD = set([')', ']', '}', '|>', ';', ',', ':=', '.', '|', 'then',
               'else', 'in', 'of', 'updated_by', '=>', '->',
               # a bracket that opens is no term of its own either:
               # the comment goes to the term inside it, which is
@@ -327,6 +327,11 @@ def tokenize(s):
           and (t.kind != 'sym' or t.text not in INFIX)):
         t.comments = t.comments + (txt,)
         break
+    else:
+      # a comment at the end of the term has no token to stand
+      # before, and it goes to the end of the term itself
+      # (backend_common's word_num_stubs ends in (* store consts *))
+      toks[-1].comments = toks[-1].comments + (txt,)
   return toks
 
 
@@ -1485,6 +1490,21 @@ def pop_comments(e):
         if not any(q in c for q in QUOTES)]
   t.comments = ()
   return cs
+
+
+def pop_quoted_comments(e):
+  """the comments before a term that cannot stand in a quotation:
+     one with a quote in it would end the quotation of OCaml that
+     the term of the port stands in, so the port writes it outside
+     (bvi_let's compile has `Let xs (Return (GENLIST Var n))` in
+     one of its comments)"""
+  t = first_tok(e)
+  if t is None or not t.comments: return []
+  out = [comment_text(c) for c in t.comments
+         if any(q in c for q in QUOTES)]
+  t.comments = tuple(c for c in t.comments
+                     if not any(q in c for q in QUOTES))
+  return out
 
 
 def comment_text(c):

@@ -29,6 +29,28 @@ def strip_comments(s):
   return ''.join(out)
 
 
+def comments_of(s):
+  """the comments of a text, which a string of it is no part of
+     and whose brackets nest (lexer_fun's skip_comment matches on
+     the string "(*")"""
+  out = []; i = 0; n = len(s)
+  while i < n:
+    if s[i] == '"':
+      i += 1
+      while i < n and s[i] != '"':
+        i += 2 if s[i] == '\\' else 1
+      i += 1; continue
+    if s.startswith('(*', i):
+      depth = 1; j = i + 2
+      while j < n and depth:
+        if s.startswith('(*', j): depth += 1; j += 2
+        elif s.startswith('*)', j): depth -= 1; j += 2
+        else: j += 1
+      out.append(s[i:j]); i = j; continue
+    i += 1
+  return out
+
+
 # a relation that a source defines with ML code: the rules are a
 # quotation in which a symbol stands for the relation, and HOL4
 # replaces it by the name of the relation before parsing

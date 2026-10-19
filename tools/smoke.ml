@@ -383,6 +383,16 @@ let smoke_crec_FIELDS = define_record "smoke_crec"
    (* a comment between two fields *)
    "cfld2","bool"];;
 
+(* a comment of the source that stands at the end of a term, which
+   has no token to stand before, and one with a quote in it, which
+   cannot stand in the quotation at all *)
+
+let smoke_ceot_def = cake_define_list
+  [`smoke_ceot 0 = 1`;
+   (* a comment with a `quotation` in it *)
+   `smoke_ceot (SUC n) = 2
+    // should not happen`];;
+
 (* the apostrophe of a comment is no type variable of the datatype,
    and its quotes do not end the string that OCaml reads *)
 
@@ -392,3 +402,7 @@ print_string (Printf.sprintf
   (can get_const_type "SmokeB") (can get_const_type "smoke_cfun")
   (can get_const_type "smoke_crec_cfld2")
   (type_of `SmokeA 0` = `:smoke_c`));;
+
+print_string (Printf.sprintf
+  "\nSMOKECEOT end of term %B (true)\n"
+  (can get_const_type "smoke_ceot"));;
