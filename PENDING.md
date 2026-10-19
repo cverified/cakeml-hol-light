@@ -87,12 +87,11 @@ each.
   `temp_delsimps`, an `export_theory`, an `add_record_field`.
   There is nothing in it for the port to have (`IGNORE_ML` in
   `tools/port.py` is the list).
-- **the ML that states a theorem** (34 of the 75, the others
-  have a pointer): `val foo =
-  Q.prove(`...`, tactic)` is a theorem named `foo`, and
-  phase two states it where the quotation is what it says (35) and
-  points at it where a rule of HOL4 makes something else of it
-  (40).
+- **the ML that states a theorem** (75): a `val foo =
+  Q.prove(...)` of a source is a theorem named `foo`.  Phase two
+  states 35 of them, where the quotation is what the theorem
+  says, and points at the other 40, where a rule of HOL4 makes
+  something else of it (`|> SIMP_RULE ...`).
 - **the ML that the port has in OCaml** (63): the code that
   builds the deep embedding of `word_bignum`, the monadic
   machinery of `reg_alloc` and `linear_scan`, the grammar of
