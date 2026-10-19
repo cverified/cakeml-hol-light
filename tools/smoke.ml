@@ -229,9 +229,9 @@ print_string (Printf.sprintf
   (length(axioms())) a1 (length(cake_cheats())) n1
   (try assoc "c_opaque" (cake_cheat_why()) with Failure _ -> "?"));;
 print_string (Printf.sprintf
-  "SMOKEDECLARE type %s definitions %d (was %d)\n"
+  "SMOKEDECLARE type %s, %d definition more (num list, 1)\n"
   (string_of_type (get_const_type "c_opaque"))
-  (length(definitions())) d1);;
+  (length(definitions()) - d1));;
 
 (* ---------------------------------------------------------------- *)
 (* phase two: a theorem of a source, with CHEAT_TAC where HOL4 has  *)
