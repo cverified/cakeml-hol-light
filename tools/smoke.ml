@@ -368,9 +368,9 @@ print_string
 
 let smoke_c_INDUCT,smoke_c_RECURSION = define_datatype
   "smoke_c = \
-   // the first constructor\n\
+   // the first constructor's own comment\n\
    SmokeA (num) | \
-   // the second one\n\
+   // the second one: [\"Foo\";\"Bar\"] \"<\" is Foo.Bar.<\n\
    SmokeB";;
 
 let smoke_cfun_def = cake_define
@@ -383,7 +383,12 @@ let smoke_crec_FIELDS = define_record "smoke_crec"
    (* a comment between two fields *)
    "cfld2","bool"];;
 
+(* the apostrophe of a comment is no type variable of the datatype,
+   and its quotes do not end the string that OCaml reads *)
+
 print_string (Printf.sprintf
-  "\nSMOKECOMMENT datatype %B term %B record %B (true true true)\n"
+  "\nSMOKECOMMENT datatype %B term %B record %B nullary %B \
+(true true true true)\n"
   (can get_const_type "SmokeB") (can get_const_type "smoke_cfun")
-  (can get_const_type "smoke_crec_cfld2"));;
+  (can get_const_type "smoke_crec_cfld2")
+  (type_of `SmokeA 0` = `:smoke_c`));;
