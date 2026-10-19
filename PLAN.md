@@ -686,3 +686,39 @@ that none of the strategies of `cake_define` makes are _assumed_
   of the clos phases, each with its `_sing` companion) need is a
   faster way of proving the termination conditions, not another
   measure or another form.
+
+# Phase three (next): the proofs
+
+_Phase three replaces every `CHEAT_TAC` of the port by a proof,
+until `length (axioms ())` is 3 (the three axioms of HOL Light's
+kernel).  **The proofs are written by hand:** HOL4's proof is
+read, understood, and then written as a HOL Light proof.  There
+is no tactic translator and there will be none (`CLAUDE.md`)._
+
+_It does not start before phase two is finished -- the statements
+are all in and the port loads -- and then one theorem at a time,
+in an order that makes every proof stand on proofs and not on
+cheats:_
+
+1. _the **termination** of the definitions of phase one (300 of
+   them, `ml/CHEATS.md`): each is the condition that HOL Light's
+   machinery could not discharge, and HOL4's `Termination`
+   tactic says what the measure is.  Every definition of the port
+   rests on one, so these come first.  The 132 equations of the
+   tail recursions of the bignum library (`mc_multiword`) are of
+   the same kind: HOL4 proves each with `mc_tailrecLib`, and the
+   port has to unfold `SHORT_TAILREC` itself._
+2. _the **definitions that the port does not make** (14 declared
+   constants and 3 with a free variable, `PENDING.md`): each
+   needs a decision or a missing piece, not a proof._
+3. _the **theorems of the library theories** (`ml/lib/`), which
+   the CakeML theories rest on and which are small and standard._
+4. _the **theorems of the CakeML theories**, in the order of
+   `tools/load.txt` (which is HOL4's own order), file by file: a
+   theorem of a file only uses what the files before it and the
+   theorems before it in the file give._
+
+_What the port counts the whole time: `length (axioms ())`, which
+`tools/bin/postrun` reports per run, and `ml/CHEATS.md`, which
+says of every cheat what kind it is.  Phase three is done when
+both say 3 and nothing._
