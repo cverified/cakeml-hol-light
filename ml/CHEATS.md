@@ -11,14 +11,14 @@ port) is one axiom per clause.  A declared constant is
 no axiom: it has an implicit definition, which says
 nothing about its value.
 
-`length (axioms ())` is 10461: the three axioms of HOL
-Light and 10458 for the 452 definitions below.
+`length (axioms ())` is 10476: the three axioms of HOL
+Light and 10473 for the 455 definitions below.
 
-Of these 452 definitions
+Of these 455 definitions
 
-- 306 have only their **termination** assumed, so the
+- 307 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
-- 14 are a constant that is **declared** without a
+- 16 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code:
   the constant has an implicit definition, which says
   nothing about it and adds no axiom (PENDING.md);
@@ -28,9 +28,9 @@ Of these 452 definitions
 
 Why they are assumed:
 
-- 306: termination (CHEAT_TAC)
+- 307: termination (CHEAT_TAC)
 - 132: equation of a tail recursion assumed
-- 14: declared (no value)
+- 16: declared (no value)
 
 | definition | file | why |
 |---|---|---|
@@ -384,12 +384,14 @@ Why they are assumed:
 | `parse_topdecs_to_ast` | `compiler/compiler.ml` | declared (no value) |
 | `static_check` | `compiler/compiler.ml` | declared (no value) |
 | `pan_compile_tap` | `compiler/compiler.ml` | declared (no value) |
-| `x64_config` | `compiler/compiler.ml` | declared (no value) |
-| `arm8_config` | `compiler/compiler.ml` | declared (no value) |
-| `mips_config` | `compiler/compiler.ml` | declared (no value) |
-| `riscv_config` | `compiler/compiler.ml` | declared (no value) |
-| `arm7_config` | `compiler/compiler.ml` | declared (no value) |
-| `ag32_config` | `compiler/compiler.ml` | declared (no value) |
+| `x64_enc` | `compiler/compiler.ml` | declared (no value) |
+| `arm8_enc` | `compiler/compiler.ml` | declared (no value) |
+| `mips_enc` | `compiler/compiler.ml` | declared (no value) |
+| `riscv_enc` | `compiler/compiler.ml` | declared (no value) |
+| `arm7_enc` | `compiler/compiler.ml` | declared (no value) |
+| `ag32_enc` | `compiler/compiler.ml` | declared (no value) |
+| `arm8_valid_immediate` | `compiler/compiler.ml` | declared (no value) |
+| `arm7_valid_immediate` | `compiler/compiler.ml` | declared (no value) |
 | `basis` | `compiler/compiler.ml` | declared (no value) |
 | `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
 | `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
@@ -430,7 +432,6 @@ Why they are assumed:
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
-| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
@@ -466,9 +467,11 @@ Why they are assumed:
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
@@ -487,4 +490,4 @@ Why they are assumed:
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 
-452 definitions.
+455 definitions.

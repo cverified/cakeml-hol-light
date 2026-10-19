@@ -180,6 +180,9 @@ let sym_target_state_rel = cake_theorem "sym_target_state_rel"
          (asm_state_fp_regs s i = target_get_fp_reg t ms i))`)
   CHEAT_TAC;;
 
+(* HOL4 asmPropsScript.sml:195: a theorem that HOL4 states as the
+   value of an ML expression: all_pcs *)
+
 (* HOL4 asmPropsScript.sml:197-205: ML code, not ported *)
 (* HOL4 asmPropsScript.sml:206-207: a theorem that HOL4 states as the
    value of an ML expression: asserts_eval *)
