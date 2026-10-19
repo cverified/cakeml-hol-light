@@ -2,16 +2,16 @@
 
 Phase two states every theorem of the sources with its name, its
 attributes and its statement (`CLAUDE.md`).  Of the 10,688
-theorems of the 270 sources the port states 10,142 and points at
-546 with a comment that names them:
+theorems of the 270 sources the port states 10,146 and points at
+542 with a comment that names them:
 
 | | stated | a pointer |
 |---|---|---|
 | `Theorem` (and `Triviality`) | 10,086 | 48 |
 | `ThmValue` (the value of an ML expression) | 25 | 454 |
-| a theorem that ML code states (`Q.prove`) | 31 | 44 |
+| a theorem that ML code states (`Q.prove`) | 35 | 40 |
 
-What the 546 are, and why the port cannot state them:
+What the 542 are, and why the port cannot state them:
 
 - **454 theorems that HOL4 states as the value of an ML
   expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
@@ -22,7 +22,7 @@ What the 546 are, and why the port cannot state them:
   three, where it has the theorem that the expression starts from
   and HOL Light's own rules to apply, but none of it is a
   statement that phase two can read off the source.
-- **44 theorems that ML code states as the value of a rule
+- **40 theorems that ML code states as the value of a rule
   applied to another one** (`val foo = Q.prove(...) |> SIMP_RULE
   ...`, `save_thm("foo", th)`): the same case, with the statement
   of the theorem that the rule starts from in the source.
@@ -37,14 +37,14 @@ What the 546 are, and why the port cannot state them:
 
 Where the value is a `prove` of a quotation and nothing but
 `SPEC_ALL`, `GEN_ALL` or `check_thm` is applied to it, the
-quotation is the statement and the port states it: thirteen of the
-theorems above are these, and the theorem that HOL4 binds is the
-one of the quotation with its variables free or closed, which says
-the same.
+quotation is the statement and the port states it: seventeen of
+the theorems above are these, and the theorem that HOL4 binds is
+the one of the quotation with its variables free or closed, which
+says the same.
 
 Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
-what it reports missing is the two blocks below and these 502.
+what it reports missing is the two blocks below and these 498.
 
 **Forty-four statements use an auxiliary size function of a
 datatype family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's

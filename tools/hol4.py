@@ -223,8 +223,14 @@ def ml_theorems(text):
         depth -= 1
         if depth == 0: break
       j += 1
-    rest = text[j:j + 200]
-    whole = '|>' not in rest.split(';')[0]
+    rest = text[j:j + 200].split(';')[0]
+    # a rule that only takes the quantifiers of the statement off
+    # or puts them back leaves what the theorem says (HARMLESS)
+    if '|>' in rest:
+      rules = [' '.join(x.split()) for x in rest.split('|>')[1:]]
+      whole = all(x in HARMLESS for x in rules)
+    else:
+      whole = True
     out.append((m.group(1), stmt.strip(), whole))
   # a theorem that ML code saves under a name of its own, whose
   # statement is the one of the theorem it saves
