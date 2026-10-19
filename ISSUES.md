@@ -794,6 +794,17 @@ Two things are **not** taken away with them:
   it was then the variable of the statement and not the field of
   a labSem state.
 
+  Where such an overload is **applied**, the port puts the
+  arguments into the body (a beta reduction of the application),
+  so that the field is read with the record of the argument that
+  is there: HOL4 resolves the name of an `Overload` by the type
+  of each occurrence, and the `read_reg` of
+  `lab_to_targetProof$word_cmp_lemma` is the `regs` of a labSem
+  state on one side of the equation and of an `asm_state` on the
+  other.  It reads better as well
+  (`labSem_state_regs s1 r` for `(\r s. labSem_state_regs s r) r
+  s1`), and 45 files of the port have such an application.
+
 ## The constants that HOL4 hides from its parser
 
 HOL4's `relationTheory` does `Parse.hide "C"`, so the `C` of
