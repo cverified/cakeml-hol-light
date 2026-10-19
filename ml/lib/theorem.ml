@@ -64,10 +64,37 @@ let the_hidden = ref ([]:string list);;
 
 let cake_hide names = the_hidden := names;;
 
+(* a source hides a name from its parser with Parse.hide, from
+   there on: the port adds it to the list of the file where the
+   source does (the free of data_to_word_memoryProof, which the
+   statements before it do not use and the ones after it use for a
+   variable of their own) *)
+
+let cake_hide_more names = the_hidden := union names (!the_hidden);;
+
+(* a name that no theory in the ancestry of a file defines and
+   that the port overloads with a constant that the file does see
+   as well: the accessors of a record field have the name of the
+   field (the failed of a labSem state and of an asm_state), and
+   the constructor failed of pegexec's kont has it too.  Hiding
+   the name would take the accessors with it, so only the pairs
+   below are taken out of the interface *)
+
+let the_hidden_consts = ref ([]:(string * string) list);;
+
+let cake_hide_consts l = the_hidden_consts := l;;
+
 let cake_hidden_read f =
   let hid = !the_hidden in
+  let hc = !the_hidden_consts in
+  let saved = !the_interface in
   do_list hide_constant hid;
-  let fin () = do_list unhide_constant hid in
+  if hc <> [] then
+    the_interface :=
+      filter (fun (n,(c,_)) -> not (mem (n,c) hc)) saved;
+  let fin () =
+    do_list unhide_constant hid;
+    if hc <> [] then the_interface := saved in
   try let x = f () in fin (); x
   with e -> (fin (); raise e);;
 

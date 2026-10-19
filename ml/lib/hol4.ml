@@ -58,23 +58,6 @@ let FOLDR_THM = prove
    (!f e x xs. FOLDR f e (CONS x xs) = f x (FOLDR f e xs))`,
   REWRITE_TAC[FOLDR_def; ITLIST]);;
 
-(* IS_SUBLIST of HOL4's rich_listTheory: l2 is a contiguous part
-   of l1 (rich_listScript.sml:252-271, where HOL4 makes it with
-   new_specification out of the recursion theorem of a list) *)
-
-let IS_SUBLIST = new_recursive_definition list_RECURSION
-  `(IS_SUBLIST [] (l:A list) <=> (if NULL l then T else F)) /\
-   (IS_SUBLIST (CONS x t) l <=>
-    (if NULL l then T
-     else (x = HD l) /\ (TL l) <<= t \/ IS_SUBLIST t l))`;;
-
-(* IS_SUFFIX of the same theory: l2 is a suffix of l1, which HOL4
-   defines by recursion on a SNOC (rich_listScript.sml:288-304)
-   and its IS_SUFFIX_APPEND says is this *)
-
-let IS_SUFFIX = new_definition
-  `IS_SUFFIX l1 (l2:A list) <=> ?l. l1 = APPEND l l2`;;
-
 (* HOL4's relationTheory hides the C of combinTheory from its
    parser, so a statement that means that combinator writes
    combin$C for it (misc's anub_eq_nil and two of clos_callProof),
@@ -84,6 +67,15 @@ let IS_SUFFIX = new_definition
 
 let hol4_C = new_definition
   `hol4_C (f:A->B->C) x y = f y x`;;
+
+(* the S of the same theory, whose name a source of CakeML uses
+   for a variable of its own (the state of word_copyProof's
+   CPstate_models, whose Ancestors line leaves combin out of its
+   grammar), so the port gives the combinator a name of its own
+   as it does with C *)
+
+let hol4_S = new_definition
+  `hol4_S (f:A->B->C) (g:A->B) x = f x (g x)`;;
 
 (* HOL4's gcd takes its two arguments one at a time where HOL
    Light's takes a pair of them (gcdTheory against int.ml) *)
@@ -391,6 +383,23 @@ let isPREFIX = new_recursive_definition list_RECURSION
 
 parse_as_infix("<<=",(12,"right"));;
 override_interface("<<=",`isPREFIX:(A)list->(A)list->bool`);;
+
+(* IS_SUBLIST of HOL4's rich_listTheory: l2 is a contiguous part
+   of l1 (rich_listScript.sml:252-271, where HOL4 makes it with
+   new_specification out of the recursion theorem of a list) *)
+
+let IS_SUBLIST = new_recursive_definition list_RECURSION
+  `(IS_SUBLIST [] (l:A list) <=> (if NULL l then T else F)) /\
+   (IS_SUBLIST (CONS x t) l <=>
+    (if NULL l then T
+     else (x = HD l) /\ (TL l) <<= t \/ IS_SUBLIST t l))`;;
+
+(* IS_SUFFIX of the same theory: l2 is a suffix of l1, which HOL4
+   defines by recursion on a SNOC (rich_listScript.sml:288-304)
+   and its IS_SUFFIX_APPEND says is this *)
+
+let IS_SUFFIX = new_definition
+  `IS_SUFFIX l1 (l2:A list) <=> ?l. l1 = APPEND l l2`;;
 
 let LAST_DEF = new_definition
   `LAST_N n (l:A list) = DROP (LENGTH l - n) l`;;
