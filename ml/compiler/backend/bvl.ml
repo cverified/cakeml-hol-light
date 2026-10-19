@@ -28,8 +28,9 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
+(* for tags *)
 needs "compiler/backend/closLang.ml";;
-(* HOL4 ancestors outside the port: (* for op *) (* for tags *) *)
+(* for op *)
 
 let bvl_exp_INDUCT,bvl_exp_RECURSION = define_datatype
   "bvl_exp = bvl_Var (num) | bvl_If (bvl_exp) (bvl_exp) (bvl_exp) | \

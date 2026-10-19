@@ -26,8 +26,13 @@ def statements(path):
 def strip_dslash(text):
   """the text without the comments of a term of the port, which
      stand after // and run to the end of the line (a comment of
-     the source that is inside a block keeps its place that way)"""
-  return re.sub(r'(?m)^(\s*`?)//.*$', r'\1', text)
+     the source that is inside a block keeps its place that way).
+     What follows such a comment on its line is the quotation
+     closing around it, which stays: a comment of the port holds
+     no backquote (one would end the quotation of OCaml, so the
+     port writes such a comment outside it), and the one at the
+     end of a term has the closing ` of it on its own line"""
+  return re.sub(r'(?m)^(\s*`?)//[^`\n]*', r'\1', text)
 
 
 def scan(text):

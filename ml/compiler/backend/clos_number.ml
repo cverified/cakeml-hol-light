@@ -70,7 +70,8 @@ let renumber_code_locs_def = cake_define_list_try_tac (fun () ->
            (n,(Handle t x1 x2:closLang_exp)))`;
    `renumber_code_locs n (closLang_Call t ticks dest xs:closLang_exp) =
          (let (n,xs) = renumber_code_locs_list n xs in
-           (n,closLang_Op t (closLang_IntOp closLang_Add) xs))`];;
+           (n,closLang_Op t (closLang_IntOp closLang_Add) xs))
+    // this case cannot occur`];;
 
 (* HOL4 clos_numberScript.sml:66: ML code, not ported *)
 

@@ -2,7 +2,7 @@
 (*  semantics: ported from HOL4's
     semantics/semanticsScript.sml
     A definition theory, with 6 definitions, 2 datatypes and no
-    theorems.  Needed by 16 files of the port.  *)
+    theorems.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -30,7 +30,8 @@ let parse_def = cake_define
 hol4_overload "parse" "semantics_parse";;
 
 let semantics_state_FIELDS = define_record "semantics_state"
-  ["tenv","type_env";
+  [(* Type system state *)
+   "tenv","type_env";
    "type_ids","num->bool";
    (* Semantics state *)
    "sem_st","'ffi semanticPrimitives_state";

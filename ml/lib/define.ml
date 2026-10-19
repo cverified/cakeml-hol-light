@@ -2481,11 +2481,15 @@ let cake_cheat_why () = rev (!the_cheat_why);;
 let cheat_why = ref "";;
 
 (* a constant whose value HOL4 computes with ML code that the port
-   cannot run: the constant is declared and nothing is known about
-   it (which adds no axiom), and it is recorded as a cheat *)
+   cannot run: the constant gets an implicit definition, which says
+   nothing about its value and adds no axiom, and it is recorded as
+   a cheat.  PENDING.md names every one of them and says what the
+   value is that the port cannot say yet. *)
 
 let cake_declare name ty =
-  new_constant(name,ty);
+  let v = mk_var("x",ty) in
+  ignore(new_specification [name]
+           (prove(mk_exists(v,`T`),REWRITE_TAC[])));
   the_cheats := name :: !the_cheats;
   the_cheat_why := (name,"declared (no value)") :: !the_cheat_why;
   print_string ("\ncake_declare " ^ name ^ " (no value)\n");

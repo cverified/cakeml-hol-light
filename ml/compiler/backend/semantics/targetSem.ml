@@ -438,7 +438,12 @@ let ffi_interfer_ok_def = cake_define
                 target_state_rel (machine_config_target mc_conf)
                   (asm_state_pc_fupd (K (SND (SND (SND info)))) t1)
                   (machine_config_ffi_interfer mc_conf k
-                    (index,new_bytes,ms2))))))`;;
+                    (index,new_bytes,ms2))))))
+   // it is possible that there is a side effect that
+   // * affects other register e.g. temp in arm8, but we don't have to
+   // * worry about it as target_state_rel ignore members of
+   // * avoid_regs
+   // assume the byte array to be in little endian`;;
 
 (* ccache_interfer_ok: a cache-clear transition must satisfy the same
    per-call promises, additionally preserving ptr_reg and leaving all

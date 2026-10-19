@@ -726,8 +726,13 @@ let lookup_vars_SOME = cake_theorem "lookup_vars_SOME"
         (LENGTH vs = LENGTH xs)`)
   CHEAT_TAC;;
 
-(* HOL4 closPropsScript.sml:892-900: a theorem that HOL4 states as
-   the value of an ML expression: lookup_vars_MEM *)
+let lookup_vars_MEM = cake_theorem "lookup_vars_MEM"
+  (fun () ->
+    `!ys n x (env2:closSem_v list).
+           (lookup_vars ys env2 = SOME x) /\ n < LENGTH ys ==>
+           (EL n ys) < LENGTH env2 /\
+           (EL n x = EL (EL n ys) env2)`)
+  CHEAT_TAC;;
 
 let closProps_clock_lemmas = cake_theorem "clock_lemmas"
   (fun () ->

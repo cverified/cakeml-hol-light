@@ -20,13 +20,13 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+(* for arity-2 Const *)
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 cake_hide ["inst"];;
-(* HOL4 ancestors outside the port: (* for arity-2 Const *) *)
 
 (* HOL4 word_allocScript.sml:19: the overload Move0, which the port
    expands *)

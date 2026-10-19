@@ -37,7 +37,8 @@ hol4_overload "failed" "pegexec_failed";;
 let poplist_aux_def = cake_define_list
   [`poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t`;
    `poplist_aux acc (NONE :: t) = (acc,t)`;
-   `poplist_aux acc [] = (acc,[])`];;
+   `poplist_aux acc [] = (acc,[])
+    // should never happen`];;
 
 let poplistval_def = cake_define
   `poplistval f l = (let (values,rest) = poplist_aux [] l in

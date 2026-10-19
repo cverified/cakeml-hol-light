@@ -152,6 +152,8 @@ let substring_too_long = cake_theorem "substring_too_long"
 
 let strcat_def = cake_define
   `strcat s1 s2 = mlstring_concat [s1; s2]`;;
+(* HOL4 mlstringScript.sml:183: the overload ^, which the port writes
+   as an application of strcat *)
 
 let concat_cons = cake_theorem "concat_cons"
   (fun () ->

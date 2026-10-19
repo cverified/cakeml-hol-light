@@ -2,7 +2,7 @@
 (*  backend_common: ported from HOL4's
     compiler/backend/backend_commonScript.sml
     A definition theory, with 28 definitions, 2 datatypes and 3
-    theorems.  Needed by 66 files of the port.  *)
+    theorems.  Needed by 67 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -10,10 +10,8 @@
 *)
 
 needs "lib/sptree.ml";;
+(* for delete *)
 (* HOL4 ancestors outside the port: arithmetic integer words *)
-
-needs "lib/sptree.ml";;
-(* HOL4 ancestors outside the port: (* for delete *) *)
 
 let opw_INDUCT,opw_RECURSION = define_datatype
   "opw = backend_common_Andw | backend_common_Orw | \
@@ -82,6 +80,8 @@ hol4_overload "None" "backend_common_None";;
 
 (* The code below replaces "Cons" in hol output with the chosen symbol *)
 (* HOL4 backend_commonScript.sml:83: ML code, not ported *)
+(* HOL4 backend_commonScript.sml:84: the overload ▷, which the port
+   writes as an application of backend_common_Cons *)
 
 (* An "orphan" expression is one that originates directly from a declaration.
 * This happens in source_to_mod, and in con_to_dec. It is an orphan because
@@ -101,6 +101,8 @@ let mk_cons_def = cake_define
        _1 -> backend_common_Cons tr n)`;;
 
 (* HOL4 backend_commonScript.sml:106: ML code, not ported *)
+(* HOL4 backend_commonScript.sml:107: the overload §, which the port
+   writes as an application of mk_cons *)
 
 (* Create new Cons trace, unless any of the original traces are `None`,
 * indicating traces are turned off. *)
@@ -119,7 +121,8 @@ let stack_num_stubs_def = cake_define
 let word_num_stubs_def = cake_define
   `word_num_stubs = stack_num_stubs + 1 +
              // raise
-             1`;;
+             1
+   // store consts`;;
 
 let data_num_stubs_def = cake_define
   `data_num_stubs = word_num_stubs +

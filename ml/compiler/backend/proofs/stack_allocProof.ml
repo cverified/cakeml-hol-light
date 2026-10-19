@@ -14,6 +14,7 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
+(* for memcpy *)
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
@@ -38,7 +39,6 @@ cake_hide ["not"; "shift"; "stack_alloc"];;
 cake_hide_consts
   ["data_buffer","data_buffer";
    "memory","memory"];;
-(* HOL4 ancestors outside the port: (* for memcpy *) *)
 
 (* HOL4 stack_allocProofScript.sml:16: ML code, not ported *)
 

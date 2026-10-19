@@ -13,7 +13,7 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
-(* HOL4 ancestors outside the port: (* for op *) *)
+(* for op *)
 
 (* BVI = bytecode-value intermediate language *)
 

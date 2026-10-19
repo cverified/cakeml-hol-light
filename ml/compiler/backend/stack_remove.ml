@@ -18,10 +18,10 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
+(* for bytes_in_word *)
 needs "semantics/ast.ml";;
 
 cake_hide ["dummy"; "gc"; "gen_gc"];;
-(* HOL4 ancestors outside the port: (* for bytes_in_word *) *)
 
 
 (* -- compiler -- *)

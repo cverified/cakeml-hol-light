@@ -69,7 +69,8 @@ let rm_perm = cake_theorem "rm_perm[local]"
 
 (* HOL4 word_to_wordProofScript.sml:165: ML code, not ported *)
 
-let find_code_thm = cake_theorem "find_code_thm[local]"
+let word_to_wordProof_find_code_thm =
+  cake_theorem "find_code_thm[local]"
   (fun () ->
     `(!n v. lookup n (wordSem_state_code st) = SOME v ==>
             (?t k a c col.
@@ -147,7 +148,8 @@ let compile_single_correct =
                word_to_word_compile_single tt kk aa co (p,NONE))) o
                wordSem_state_compile_oracle rst))
                (wordSem_state_code_fupd (K (wordSem_state_code rst1))
-               rst)))`)
+               rst)))
+     // todo: rst1.perm?`)
   CHEAT_TAC;;
 
 (* HOL4 word_to_wordProofScript.sml:294-296: a proof *)

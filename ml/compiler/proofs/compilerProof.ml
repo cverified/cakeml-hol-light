@@ -212,7 +212,8 @@ let compile_correct_safe_for_space =
                  (compiler_config_backend_config cc)))) mc
                  (lab_to_target_config_shmem_extra
                  (backend_config_lab_conf c)) ms ==>
-             machine_sem mc ffi ms = behaviours))`)
+             machine_sem mc ffi ms = behaviours))
+     // <-- equality`)
   CHEAT_TAC;;
 
 let compilerProof_compile_correct = cake_theorem "compile_correct"

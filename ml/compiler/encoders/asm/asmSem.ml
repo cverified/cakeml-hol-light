@@ -14,8 +14,8 @@ needs "lib/binary_ieee.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/machine_ieee.ml";;
 needs "misc/misc.ml";;
+(* for bytes_in_memory *)
 needs "semantics/ast.ml";;
-(* HOL4 ancestors outside the port: (* for bytes_in_memory *) *)
 
 (* -- semantics of ASM program -- *)
 

@@ -14,11 +14,11 @@
 
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlsexp.ml";;
+(* for str_tree *)
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/jsonLang.ml";;
 needs "lib/integer_word.ml";;
-(* HOL4 ancestors outside the port: (* for str_tree *) *)
 
 let sExp_INDUCT,sExp_RECURSION = define_datatype
   "sExp = displayLang_Item (tra option) (mlstring) (sExp list) | \

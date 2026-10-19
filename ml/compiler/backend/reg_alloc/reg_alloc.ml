@@ -62,7 +62,8 @@ let reg_alloc_tag_INDUCT,reg_alloc_tag_RECURSION = define_datatype
   - Invariant: all the arrays have dimension = dim
 *)
 let ra_state_FIELDS = define_record "ra_state"
-  ["adj_ls","(num list) list";
+  [(* Info about the graph *)
+   "adj_ls","(num list) list";
    (* adjacency list -- arr of lists *)
    "node_tag","reg_alloc_tag list";
    (* tags for each node -- arr *)
@@ -1096,7 +1097,8 @@ let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
    | reg_alloc_Set (1 spt) \
    // Fixed set\n\
    | reg_alloc_Branch ((1 spt) option) (clash_tree) (clash_tree) | \
-   reg_alloc_Seq (clash_tree) (clash_tree)";;
+   reg_alloc_Seq (clash_tree) (clash_tree) \
+   // Binary branch, with an optional liveset at the head";;
 hol4_overload "Delta" "reg_alloc_Delta";;
 hol4_overload "Set" "reg_alloc_Set";;
 hol4_overload "Branch" "reg_alloc_Branch";;
@@ -1478,7 +1480,8 @@ let do_reg_alloc_def = cake_define
      (assign_Stemps k (neg_biased_pref k mvs)) (st_ex_bind
        (extract_color ta) (\
      spcol.
-     st_ex_return spcol))))))))`;;
+     st_ex_return spcol))))))))
+   // return the composed from wordLang into the graph + the allocation`;;
 
 (* As we are using fixed-size array, we need to define a different record type for the initialization *)
 (* HOL4 makes the record of an initial state of ra_state and the

@@ -78,7 +78,8 @@ let alloc_glob_count_def = cake_define
         | [Op op xs] ->
         (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
           alloc_glob_count xs else alloc_glob_count xs)
-        | [_6] -> 0`;;
+        | [_6] -> 0
+        // Impossible`;;
 
 let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with

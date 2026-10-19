@@ -11,14 +11,18 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "compiler/backend/backend_common.ml";;
+(* for word_add_carry_def *)
 needs "compiler/backend/reg_alloc/parmove.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
+(* for extract_labels *)
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
+(* for list_Seq *)
 needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_to_stack.ml";;
@@ -34,40 +38,7 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
-needs "semantics/semantics.ml";;
-
-cake_hide ["every"; "fv"];;
-
-cake_hide_consts
-  ["memory","memory"];;
-(* HOL4 ancestors outside the port: (* for extend_with_resource_limit
-   *) (* for list_Seq *) (* for extract_labels *) (* for
-   word_add_carry_def *) *)
-
-needs "basis/pure/mllist.ml";;
-needs "compiler/backend/reg_alloc/parmove.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "compiler/backend/semantics/stackProps.ml";;
-needs "compiler/backend/semantics/stackSem.ml";;
-needs "compiler/backend/semantics/wordConvs.ml";;
-needs "compiler/backend/semantics/wordProps.ml";;
-needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
-needs "compiler/backend/stack_names.ml";;
-needs "compiler/backend/wordLang.ml";;
-needs "compiler/backend/word_to_stack.ml";;
-needs "compiler/encoders/asm/asm.ml";;
-needs "lib/bitstring.ml";;
-needs "lib/byte.ml";;
-needs "lib/pegexec.ml";;
-needs "lib/sorting.ml";;
-needs "lib/sptree.ml";;
-needs "lib/toto.ml";;
-needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
-needs "semantics/evaluate.ml";;
-needs "semantics/ffi/ffi.ml";;
-needs "semantics/proofs/semanticsProps.ml";;
+(* for extend_with_resource_limit *)
 needs "semantics/semantics.ml";;
 
 cake_hide ["every"; "fv"];;
@@ -3329,9 +3300,10 @@ let make_init_def = cake_define
        OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
          bm,cfg)))
          (stackSem_state_compile t cfg progs)) coracle
-           (stackSem_state_code_buffer t) (stackSem_state_data_buffer
-           t) (stackSem_state_gc_fun t) 0 (stackSem_state_clock t) 0
-           code (stackSem_state_be t) (stackSem_state_ffi t)`;;
+           (stackSem_state_code_buffer t) (stackSem_state_data_buffer t)
+           (stackSem_state_gc_fun t) 0 (stackSem_state_clock t) 0 code
+           (stackSem_state_be t) (stackSem_state_ffi t)
+   // Not sure about Nil,0`;;
 hol4_overload "make_init" "word_to_stackProof_make_init";;
 
 let init_state_ok_IMP_state_rel =

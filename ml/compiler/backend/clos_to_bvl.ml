@@ -284,7 +284,8 @@ let num_stubs_def = cake_define
               // partial apps
               max_app * (max_app - 1)) DIV 2 + 1 +
        // code to install a jump table in global 0
-       1`;;
+       1
+   // location for force_thunk stub`;;
 
 let generic_app_fn_location_def = cake_define
   `generic_app_fn_location n = n`;;

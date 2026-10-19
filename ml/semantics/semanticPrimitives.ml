@@ -1401,3 +1401,5 @@ let extend_dec_env_def = cake_define
        (nsAppend (sem_env_c new_env) (sem_env_c env))`;;
 
 (* HOL4 semanticPrimitivesScript.sml:1376: ML code, not ported *)
+(* HOL4 semanticPrimitivesScript.sml:1377: the overload +++, which
+   the port writes as an application of extend_dec_env *)

@@ -24,6 +24,7 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
+(* for opw_lookup_def and others *)
 needs "semantics/semanticPrimitives.ml";;
 
 cake_hide_consts
@@ -55,8 +56,6 @@ cake_hide_consts
    "compile","word_bignum_compile";
    "compile","word_to_stack_compile";
    "compile","word_to_word_compile"];;
-(* HOL4 ancestors outside the port: (* for opw_lookup_def and others
-   *) *)
 
 (* differs from store_v by removing the single value Refv,
    also, adds flag to ByteArray for equality semantics *)

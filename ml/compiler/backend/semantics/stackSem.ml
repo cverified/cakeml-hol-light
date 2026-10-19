@@ -11,6 +11,7 @@
 
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
+(* for word_loc and word_cmp *)
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
@@ -26,7 +27,6 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
-(* HOL4 ancestors outside the port: (* for word_loc and word_cmp *) *)
 
 
 let stackSem_result_INDUCT,stackSem_result_RECURSION = define_datatype
@@ -1016,7 +1016,9 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                     s)))))) in
                   (NONE,s') else (SOME Error,s)) | _117 -> (SOME
                     Error,s))) | _118 -> (SOME Error,s))) | _119 ->
-                    (SOME Error,s))`;
+                    (SOME Error,s))
+    // This order is convenient because it means all of s.code's entries are preserved
+    // TODO: this might need to be a new field, cc_save_regs`;
    `stackSem_evaluate (stackLang_ShMemOp op r (Addr a w),s) =
         (match word_exp s (wordLang_Op asm_Add [wordLang_Var a;
           wordLang_Const w]) with SOME a ->

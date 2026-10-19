@@ -17,11 +17,11 @@ needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
+(* TODO: immoral, semantics shouldn't depend on compiler *)
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
-needs "compiler/compiler.ml";;
 needs "lib/comparison.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
@@ -34,9 +34,6 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
-needs "semantics/semantics.ml";;
-(* HOL4 ancestors outside the port: (* TODO: immoral, shouldn't
-   depend on *) *)
 
 let dataSem_v_INDUCT,dataSem_v_RECURSION = define_datatype
   "dataSem_v = dataSem_Number (int) \

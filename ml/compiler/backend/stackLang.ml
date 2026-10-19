@@ -16,7 +16,7 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
-(* HOL4 ancestors outside the port: (* for bytes_in_word *) *)
+(* for bytes_in_word *)
 
 
 let store_name_INDUCT,store_name_RECURSION = define_datatype

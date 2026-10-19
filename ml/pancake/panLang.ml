@@ -15,9 +15,9 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
+(* for overloading the shift operation *)
 needs "compiler/encoders/asm/asm.ml";;
-(* HOL4 ancestors outside the port: (* for binop and cmp *) (* for
-   overloading the shift operation *) *)
+(* for binop and cmp *)
 
 
 (* for overloading the shift operation *)
@@ -191,13 +191,15 @@ let size_of_sh_with_ctxt_def = cake_define_list
   (size_of_sh_with_ctxt ctxt) shapes)`;
    `size_of_sh_with_ctxt ctxt (Named name) =
       (match ALOOKUP ctxt name with SOME info ->
-        struct_info_size info | NONE -> 1)`];;
+        struct_info_size info | NONE -> 1)
+    // should not happen`];;
 
 (* For passes after Nameds are compiled away eg pan_to_crep *)
 let size_of_shape_def = cake_define_list
   [`size_of_shape One = 1`;
    `size_of_shape (Comb shapes) = SUM (MAP size_of_shape shapes)`;
-   `size_of_shape (Named name) = 1`];;
+   `size_of_shape (Named name) = 1
+    // should not happen`];;
 
 let shape_to_str_def = cake_define_list
   [`shape_to_str One = implode "1"`;

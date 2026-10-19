@@ -65,6 +65,12 @@ override_interface("word_smax",`word_imax:(N)word->(N)word->(N)word`);;
 override_interface("word_sdiv",`word_jdiv:(N)word->(N)word->(N)word`);;
 override_interface("word_srem",`word_jrem:(N)word->(N)word->(N)word`);;
 
+(* the bounds of a word type (the configurations of the targets) *)
+
+override_interface("INT_MINw",`word_INT_MIN:(N)word`);;
+override_interface("INT_MAXw",`word_INT_MAX:(N)word`);;
+override_interface("UINT_MAXw",`word_UINT_MAX:(N)word`);;
+
 (* ------------------------------------------------------------------ *)
 (* HOL4 overloads the arithmetic operations for words, HOL Light does *)
 (* not, so the port makes them overloaded.                            *)

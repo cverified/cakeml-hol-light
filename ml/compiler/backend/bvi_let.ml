@@ -118,6 +118,9 @@ let compile_def = cake_define_list_try_tac (fun () ->
          [Call t dest (bvi_let_compile env d xs)
              (match h with NONE -> NONE | SOME e -> SOME (HD
                (bvi_let_compile (0 :: env) d [e])))]`;
+   (* Return/LetCall are pass-through (only nested Lets are optimised). TODO(multiret):
+      no optimisation specific to them yet -- e.g. the Let tail-position move could
+      extend to `Let xs (Return (GENLIST Var n))`. *)
    `bvi_let_compile env d [(bvi_Return xs:bvi_exp)] = [bvi_Return
   (bvi_let_compile env d xs)]`;
    `bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
@@ -201,7 +204,8 @@ let compile_HD_SING = cake_theorem "compile_HD_SING"
 let compile_exp_def = cake_define
   `bvi_let_compile_exp x =
      (match bvi_let_compile [] 0 [x] with (y :: _14) -> y | _15 ->
-       Var 0)`;;
+       Var 0)
+   // impossible`;;
 hol4_overload "compile_exp" "bvi_let_compile_exp";;
 
 (* HOL4 bvi_letScript.sml:202: a theorem that HOL4 states as the

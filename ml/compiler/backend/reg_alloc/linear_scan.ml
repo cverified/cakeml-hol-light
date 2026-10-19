@@ -1107,7 +1107,8 @@ let linear_scan_reg_alloc_def = cake_define
          bijstate))) in
        run_linear_reg_alloc_intervals ct' k forced' moves'
          reglist_unsorted (bijection_state_invbij bijstate)
-         (bijection_state_nmax bijstate))`;;
+         (bijection_state_nmax bijstate))
+   // (0i-((size_of_clash_tree ct') + 1))`;;
 
 (* HOL4 linear_scanScript.sml:1148-1328: code that the source has in
    a comment *)

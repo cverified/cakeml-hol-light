@@ -74,6 +74,11 @@ def code_free(text):
     if not depth and text.startswith('//', i):
       j = text.find('\n', i)
       if j < 0: j = len(text)
+      # a comment of the port holds no backquote, so the first one
+      # on the line is the quotation closing around the comment,
+      # which is code and stays
+      k = text.find('`', i)
+      if 0 <= k < j: j = k
       out.append(' ' * (j - i)); i = j; continue
     out.append('\n' if text[i] == '\n' else
                (' ' if depth else text[i]))

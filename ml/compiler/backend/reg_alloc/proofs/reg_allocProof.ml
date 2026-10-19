@@ -1106,8 +1106,15 @@ let st_ex_FILTER_considered_var =
      EVERY (\x. x < LENGTH (ra_state_node_tag s)) ts)`)
   CHEAT_TAC;;
 
-(* HOL4 reg_allocProofScript.sml:2364-2382: a theorem that HOL4
-   states as the value of an ML expression: st_ex_MAP_deg_or_inf *)
+let st_ex_MAP_deg_or_inf = cake_theorem "st_ex_MAP_deg_or_inf"
+  (fun () ->
+    `!ls s.
+       good_ra_state s /\
+       EVERY (\x. x < ra_state_dim s) ls ==>
+       (?degs.
+       st_ex_MAP (deg_or_inf k) ls s =
+       (M_success degs,s))`)
+  CHEAT_TAC;;
 
 let bg_ok_success = cake_theorem "bg_ok_success[local]"
   (fun () ->

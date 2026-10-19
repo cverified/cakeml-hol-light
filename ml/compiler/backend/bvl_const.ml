@@ -375,7 +375,8 @@ let bvl_const_compile_HD_SING = cake_theorem "compile_HD_SING"
 let compile_exp_def = cake_define
   `bvl_const_compile_exp x =
      (match bvl_const_compile [] [x] with (y :: _31) -> y | _32 ->
-       Var 0)`;;
+       Var 0)
+   // impossible`;;
 hol4_overload "compile_exp" "bvl_const_compile_exp";;
 
 (* HOL4 bvl_constScript.sml:397: a theorem that HOL4 states as the

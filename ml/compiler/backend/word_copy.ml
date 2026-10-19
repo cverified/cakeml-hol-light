@@ -41,7 +41,8 @@ needs "semantics/ast.ml";;
 *)
 
 let copy_state_FIELDS = define_record "copy_state"
-  ["to_eq","num spt";
+  [(* maps var to its equivalence class *)
+   "to_eq","num spt";
    (* maps equivalence class to its representative *)
    "from_eq","num spt";
    (* maps store names to an equivalence class *)
@@ -368,7 +369,8 @@ let copy_prop_prog_def = cake_define
           (Loop names c' exit_names,empty_eq))
         | (Break k) -> (Break k,cs)
         | (Continue k) -> (Continue k,cs)
-        | prog -> (prog,empty_eq)`;;
+        | prog -> (prog,empty_eq)
+        // impossible?`;;
 
 let copy_prop_def = cake_define
   `copy_prop (e:'a wordLang_prog) =

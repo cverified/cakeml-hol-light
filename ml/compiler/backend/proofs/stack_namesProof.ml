@@ -290,7 +290,9 @@ let make_init_def = cake_define
   (stack_names_compile f))) (stackSem_state_regs_fupd (K (MAP_KEYS (LINV
   (tlookup f) UNIV) (stackSem_state_regs s))) (stackSem_state_code_fupd
   (K code)
-     s))))`;;
+     s))))
+   // code_buffer := <| position := 0w; buffer := []; space_left := 0 |>;
+   // data_buffer := <| position := 0w; buffer := []; space_left := 0 |>;`;;
 hol4_overload "make_init" "stack_namesProof_make_init";;
 
 let stack_namesProof_make_init_semantics =

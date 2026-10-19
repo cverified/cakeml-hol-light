@@ -674,6 +674,9 @@ let OPTREL_trans = cake_theorem "OPTREL_trans"
 let UPDATE_LIST_def = cake_define
   `UPDATE_LIST = FOLDL (hol4_C (UNCURRY UPDATE))`;;
 
+(* HOL4 miscScript.sml:1038: the overload =++, which the port writes
+   as an application of UPDATE_LIST *)
+
 let UPDATE_LIST_THM = cake_theorem "UPDATE_LIST_THM"
   (fun () ->
     `!f. (UPDATE_LIST f [] = f) /\ (!h t. (UPDATE_LIST f (h :: t) =

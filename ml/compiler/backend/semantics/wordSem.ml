@@ -11,6 +11,7 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
+(* for word_add_carry *)
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
@@ -21,15 +22,17 @@ needs "lib/comparison.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
+(* for build_lprefix_lub *)
 needs "lib/machine_ieee.ml";;
+(* for FP *)
 needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
+(* for call_FFI *)
 needs "semantics/fpSem.ml";;
-(* HOL4 ancestors outside the port: finite_map (* for call_FFI *) (*
-   for build_lprefix_lub *) (* for FP *) (* for word_add_carry *) *)
+(* HOL4 ancestors outside the port: finite_map *)
 
 let buffer_FIELDS = define_record "buffer"
   ["position","'a word";
@@ -1277,7 +1280,9 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                    NONE,s') else (SOME wordSem_Error,s)) | _125
                      -> (SOME wordSem_Error,s))) | _126 -> (SOME
                      wordSem_Error,s))) | _127 -> (SOME
-                     wordSem_Error,s)))`;
+                     wordSem_Error,s)))
+    // This order is convenient because it means all of s.code's entries are preserved
+    // Install is not safe for space`;
    `wordSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var r2 s) with
           (SOME (wordLang_Word w1),SOME (wordLang_Word w2)) ->

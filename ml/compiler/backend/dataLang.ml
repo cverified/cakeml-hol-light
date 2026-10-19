@@ -32,10 +32,11 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
+(* for op *)
 needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
+(* for num_set *)
 needs "semantics/ast.ml";;
-(* HOL4 ancestors outside the port: (* for op *) (* for num_set *) *)
 
 
 (* --- Syntax of dataLang --- *)

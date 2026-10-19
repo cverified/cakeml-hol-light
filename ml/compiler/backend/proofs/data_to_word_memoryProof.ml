@@ -2287,9 +2287,12 @@ let heap_store_heap_lookup = cake_theorem "heap_store_heap_lookup"
         heap_lookup n heap = heap_lookup n heap2`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:4680-4689: a theorem that
-   HOL4 states as the value of an ML expression:
-   update_ref_gen_state_ok *)
+let update_ref_gen_state_ok = cake_theorem "update_ref_gen_state_ok"
+  (fun () ->
+    `heap_store b [RefBlock t1] heap = (heap2,T) /\ a <= b /\
+         gen_state_ok a (a + (sp + sp1)) heap gens ==>
+         gen_state_ok a (a + (sp + sp1)) heap2 gens`)
+  CHEAT_TAC;;
 
 let data_up_to_alt = cake_theorem "data_up_to_alt[local]"
   (fun () ->
@@ -2300,9 +2303,12 @@ let data_up_to_alt = cake_theorem "data_up_to_alt[local]"
           data_up_to (n - el_length x) xs))`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:4704-4713: a theorem that
-   HOL4 states as the value of an ML expression:
-   update_thunk_gen_state_ok *)
+let update_thunk_gen_state_ok = cake_theorem "update_thunk_gen_state_ok"
+  (fun () ->
+    `heap_store b [ThunkBlock ev t1] heap = (heap2,T) /\ a <= b /\
+         gen_state_ok a (a + (sp + sp1)) heap gens ==>
+         gen_state_ok a (a + (sp + sp1)) heap2 gens`)
+  CHEAT_TAC;;
 
 let data_up_to_heap_store = cake_theorem "data_up_to_heap_store"
   (fun () ->

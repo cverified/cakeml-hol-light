@@ -770,7 +770,8 @@ let flatten_call_correct = cake_theorem "flatten_call_correct"
        // (evaluate (t1 with clock := t1.clock - 1 + ck) =
        // (,t2)) ∧
        t2 = state_ffi s2 /\ ~(r2 = Error) /\ (res = SOME TimeOut
-         ==> r2 = TimeOut))`)
+         ==> r2 = TimeOut))
+     // (FST (evaluate (t1 with clock := t1.clock - 1 + ck)) ≠ Error)`)
   CHEAT_TAC;;
 
 let halt_assum_def = cake_define

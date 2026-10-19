@@ -2,7 +2,7 @@
 (*  bvlSem: ported from HOL4's
     compiler/backend/semantics/bvlSemScript.sml
     A definition theory, with 23 definitions, 4 datatypes and 10
-    theorems.  Needed by 14 files of the port.  *)
+    theorems.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -15,6 +15,7 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
+(* for closure_tag and num_added_globals *)
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/comparison.ml";;
@@ -27,8 +28,6 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
-(* HOL4 ancestors outside the port: (* for closure_tag and
-   num_added_globals *) *)
 
 cake_hide_more ["str"];;
 

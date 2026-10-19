@@ -28,6 +28,7 @@ let validMultSym_def = cake_define
 let validAddSym_def = cake_define
   `validAddSym s <=> ~(s = "") /\ HD s IN {(CHR 43),(CHR 45),(CHR 94)}
   \/
+                   // caret
                    2 <= LENGTH s /\ HD s = (CHR 124)`;;
 
 let validRelSym_def = cake_define

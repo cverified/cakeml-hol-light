@@ -12,8 +12,7 @@
 needs "lib/binary_ieee.ml";;
 needs "lib/machine_ieee.ml";;
 needs "semantics/ast.ml";;
-(* HOL4 ancestors outside the port: (* order important because of
-   FP_Add in & *) *)
+(* order important because of FP_Add in ast & binary_ieee *)
 
 let fp_cmp_INDUCT,fp_cmp_RECURSION = define_datatype
   "fp_cmp = FP_Less | FP_LessEqual | FP_Greater | FP_GreaterEqual | \

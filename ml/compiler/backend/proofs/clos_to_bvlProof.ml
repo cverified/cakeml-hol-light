@@ -28,44 +28,10 @@ needs "compiler/backend/proofs/clos_mtiProof.ml";;
 needs "compiler/backend/proofs/clos_numberProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
+needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
-needs "lib/sorting.ml";;
-needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
-needs "semantics/ffi/ffi.ml";;
-needs "semantics/proofs/semanticPrimitivesProps.ml";;
-needs "semantics/semanticPrimitives.ml";;
-
-cake_hide ["C"; "all"; "build_const'"; "globals_approx_every_Fn_SOME";
-           "globals_approx_every_Fn_vs_NONE"; "known_co"; "parts";
-           "syntax_ok"; "update_tag"];;
-
-cake_hide_consts
-  ["next_loc","next_loc"];;
-
-needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvl_const.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/clos_call.ml";;
-needs "compiler/backend/clos_known.ml";;
-needs "compiler/backend/clos_mti.ml";;
-needs "compiler/backend/clos_number.ml";;
-needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/proofs/bvl_jumpProof.ml";;
-needs "compiler/backend/proofs/clos_annotateProof.ml";;
-needs "compiler/backend/proofs/clos_callProof.ml";;
-needs "compiler/backend/proofs/clos_constantProof.ml";;
-needs "compiler/backend/proofs/clos_fvsProof.ml";;
-needs "compiler/backend/proofs/clos_knownProof.ml";;
-needs "compiler/backend/proofs/clos_mtiProof.ml";;
-needs "compiler/backend/proofs/clos_numberProof.ml";;
-needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/bvlProps.ml";;
-needs "compiler/backend/semantics/closProps.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
+needs "lib/lprefix_lub.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
@@ -923,8 +889,14 @@ let cl_rel_SUBMAP = cake_theorem "cl_rel_SUBMAP[local]"
 (* HOL4 clos_to_bvlProofScript.sml:1175-1193: a theorem that HOL4
    states as the value of an ML expression: v_rel_SUBMAP *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1195-1201: a theorem that HOL4
-   states as the value of an ML expression: env_rel_SUBMAP *)
+let clos_to_bvlProof_env_rel_SUBMAP = cake_theorem "env_rel_SUBMAP"
+  (fun () ->
+    `!env1 env2.
+           env_rel max_app f1 refs1 code env1 env2 /\
+           f1 SUBMAP f2 /\ FDIFF refs1 (FRANGE f1) SUBMAP FDIFF
+             refs2 (FRANGE f2) ==>
+           env_rel max_app f2 refs2 code env1 env2`)
+  CHEAT_TAC;;
 
 let cl_rel_NEW_REF = cake_theorem "cl_rel_NEW_REF[local]"
   (fun () ->
@@ -2288,7 +2260,9 @@ let chain_installed_thm = cake_theorem "chain_installed_thm"
      closSem_evaluate ([e],[],state_clock_fupd (K (state_clock st +
        k)) st) = (res1,st1) /\
      semanticPrimitivesProps_result_rel (\x y. T) (\x y. T) res1
-       res /\ state_ffi st' = state_ffi st1)`)
+       res /\ state_ffi st' = state_ffi st1)
+     // ∧
+     // (every_Fn_vs_NONE es ⇒ every_Fn_vs_NONE [e])`)
   CHEAT_TAC;;
 
 let chain_installed_chain_exps =

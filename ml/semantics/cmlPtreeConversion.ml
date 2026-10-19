@@ -1209,7 +1209,13 @@ let ptree_SpecLine_def = cake_define_list
                 vname_pt) (\
               vname. OPTION_BIND (ptree_Type nType type_pt) (\
               ty.
-              SOME one))) | _131 -> NONE)`];;
+              SOME one))) | _131 -> NONE)
+    // (Stype td)
+    // (Sexn nm tys)
+    // (case opteqn of
+    // NONE => Stype_opq vs nm
+    // | SOME ty => Stabbrev vs nm ty)
+    // (SDefinition vname ty)`];;
 
 let ptree_SpeclineList_def = cake_define_list
   [`ptree_SpeclineList (Lf _133) = NONE`;
@@ -1225,7 +1231,8 @@ let ptree_SpeclineList_def = cake_define_list
               OPTION_BIND (ptree_SpecLine sl_pt) (\
                 sl. OPTION_BIND (ptree_SpeclineList sll_pt) (\
                 sll.
-                SOME one))) | _134 -> NONE)`];;
+                SOME one))) | _134 -> NONE)
+    // (sl::sll)`];;
 
 let ptree_SignatureValue_def = cake_define_list
   [`ptree_SignatureValue (Lf _136) = NONE`;

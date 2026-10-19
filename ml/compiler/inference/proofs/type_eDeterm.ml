@@ -113,8 +113,11 @@ let t_walkstar_diff = cake_theorem "t_walkstar_diff"
      n IN t_vars x ==> ~(t_walkstar s1 x = t_walkstar s2 x))`)
   CHEAT_TAC;;
 
-(* HOL4 type_eDetermScript.sml:233-239: a theorem that HOL4 states as
-   the value of an ML expression: env_rel_sound_weaken *)
+let env_rel_sound_weaken = cake_theorem "env_rel_sound_weaken"
+  (fun () ->
+    `env_rel_sound FEMPTY ienv tenv tenvE /\ t_wfs s ==>
+        env_rel_sound s ienv tenv tenvE`)
+  CHEAT_TAC;;
 
 let type_pe_determ_infer_e = cake_theorem "type_pe_determ_infer_e"
   (fun () ->

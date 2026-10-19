@@ -209,10 +209,12 @@ let float_round_with_flags_def = cake_define
                (float_Exponent (float_round mode to_neg
                  r:('t,'w+1)float) <=+
                 n2w (INT_MIN (:'w)))))
-                  (flags_Underflow_BeforeRounding_fupd (K (inexact /\
-                  a < (&2) / (&2) pow (INT_MAX (:'w))))
-                  (flags_Overflow_fupd (K (float_is_infinite x \/
-                  (&2) pow (INT_MIN (:'w)) <= a)) clear_flags)))),x))`;;
+                  (flags_Underflow_BeforeRounding_fupd (K (inexact /\ a
+                  < (&2) / (&2) pow (INT_MAX (:'w))))
+                  (flags_Overflow_fupd (K (float_is_infinite x \/ (&2)
+                  pow (INT_MIN (:'w)) <= a)) clear_flags)))),x))
+   // IEEE-754 permits a number of ways to detect underflow. Below
+   // are two possible methods.`;;
 
 let check_for_signalling_def = cake_define
   `check_for_signalling l = flags_InvalidOp_fupd (K (EXISTS

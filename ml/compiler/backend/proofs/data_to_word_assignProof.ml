@@ -10,6 +10,7 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
+(* for word_add_carry *)
 needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
@@ -56,8 +57,7 @@ cake_hide_consts
   ["code_buffer","code_buffer";
    "data_buffer","data_buffer";
    "memory","memory"];;
-(* HOL4 ancestors outside the port: (* for word_add_carry *)
-   int_bitwise While *)
+(* HOL4 ancestors outside the port: int_bitwise While *)
 
 (* HOL4 data_to_word_assignProofScript.sml:28-29: ML code, not ported *)
 
@@ -4472,8 +4472,44 @@ let IMP_memcopy_lemma = cake_theorem "IMP_memcopy_lemma"
         wordSem_state_mdomain s1`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_assignProofScript.sml:15487-15545: a theorem
-   that HOL4 states as the value of an ML expression: IMP_memcopy *)
+let IMP_memcopy = cake_theorem "IMP_memcopy"
+  (fun () ->
+    `!len startptr m1 m2 ws1 ys7 k ts.
+           memory_rel c (be s1) ts (state_refs x) sp
+             (wordSem_state_store s1) m1 (wordSem_state_mdomain s1)
+             ((Block ts' n' l',wordLang_Word w_ptr) :: (ZIP ys7 ws1
+               ++ vars)) /\
+           (misc_word_list nfree (wordLang_Word full_header :: ws1)
+             *
+            word_list_exists
+              (nfree + bytes_in_word * n2w (SUC (LENGTH ws1))) k *
+                other)
+                (fun2set (m1,wordSem_state_mdomain s1)) /\ len <= k
+                  /\ good_dimindex (:'a) /\
+           sptree_lookup (adjust_var a1) (state_locals s1) = SOME
+             (wordLang_Word (w_ptr:'a word)) /\
+           wordSem_word_exp s1 (real_addr c (adjust_var a1)) = SOME
+             (wordLang_Word wx) /\
+           FLOOKUP (wordSem_state_store s1) NextFree = SOME
+             (wordLang_Word nfree) /\
+           startptr + len <= LENGTH l' /\
+           LENGTH ws1 + len < sp /\
+           LENGTH ys7 = LENGTH ws1 ==>
+           (?m2 ws2.
+             memcopy len (wx + bytes_in_word + bytes_in_word * n2w
+               startptr)
+               (nfree + bytes_in_word * n2w (LENGTH ws1 + 1)) m1
+                 (wordSem_state_mdomain s1) =
+               SOME m2 /\
+             (misc_word_list nfree (wordLang_Word full_header ::
+               (ws1 ++ ws2)) * SEP_T)
+               (fun2set (m2,wordSem_state_mdomain s1)) /\
+             LENGTH ws2 = len /\
+             memory_rel c (be s1) ts (state_refs x) sp
+               (wordSem_state_store s1) m2 (wordSem_state_mdomain s1)
+               (ZIP (ys7 ++ TAKE len (DROP startptr l')) (ws1 ++
+                 ws2) ++ vars))`)
+  CHEAT_TAC;;
 
 let data_to_word_assignProof_cut_envs_adjust_sets_insert_ODD =
   cake_theorem "cut_envs_adjust_sets_insert_ODD"

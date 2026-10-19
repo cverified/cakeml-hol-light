@@ -1259,7 +1259,8 @@ let generalise_complete = cake_theorem "generalise_complete"
         t_wfs last_sub /\
         sub_completion (tvs + n) next_uvar s ec1 last_sub /\
         (TC_unit IN tids /\ inf_set_tids_subst tids s ==>
-          inf_set_tids_subst tids last_sub))`)
+          inf_set_tids_subst tids last_sub))
+      // ∧ EVERY (check_t tvs (count ???)) (MAP FST ec1 ++ MAP SND ec1)`)
   CHEAT_TAC;;
 
 let init_infer_state_wfs = cake_theorem "init_infer_state_wfs[local]"

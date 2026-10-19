@@ -56,11 +56,15 @@ def items(text):
                        % (STMT.pattern, AT.pattern, COMMENT.pattern),
                        text):
     if m.group(1) is not None:
-      out.append(('name', m.group(1), m.start()))
+      out.append(('name', m.group(1), m.start(), None))
     elif m.group(2) is not None:
-      out.append(('line', int(m.group(3)), m.start()))
+      # the file that the pointer points at: one at another source
+      # than this file's own says nothing about the order of this
+      # one (compiler's configurations of the targets point at the
+      # six x64_targetScript.sml and the like)
+      out.append(('line', int(m.group(3)), m.start(), m.group(2)))
     else:
-      out.append(('comment', body(m.group(4)), m.start()))
+      out.append(('comment', body(m.group(4)), m.start(), None))
   return out
 
 
@@ -93,7 +97,10 @@ def main():
     last = 0
     first = None
     back = 0
-    for kind2, v, pos in items(text):
+    src = re.sub(r'^.*/', '', path)
+    for item in items(text):
+      kind2, v = item[0], item[1]
+      if kind2 == 'line' and item[3] != src: continue
       if kind2 in ('name', 'comment'):
         tab = at if kind2 == 'name' else cat
         k = used.get((kind2, v), 0)

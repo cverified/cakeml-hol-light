@@ -406,12 +406,37 @@ let word_ml_inv_get_var_IMP = cake_theorem "word_ml_inv_get_var_IMP"
               (state_locals s)))) ++ envs)`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_gcProofScript.sml:467-490: a theorem that HOL4
-   states as the value of an ML expression:
-   word_ml_inv_get_vars_IMP_lemma *)
+let word_ml_inv_get_vars_IMP_lemma =
+  cake_theorem "word_ml_inv_get_vars_IMP_lemma[allow_rebind]"
+  (fun () ->
+    `!n x w envs'.
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (join_env ll
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set ll))) ++ envs') /\
+           get_vars n ll = SOME x /\
+           get_vars (MAP adjust_var n) t = SOME w ==>
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (ZIP x w ++ join_env ll
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set ll))) ++ envs')`)
+  CHEAT_TAC;;
 
-(* HOL4 data_to_word_gcProofScript.sml:492-502: a theorem that HOL4
-   states as the value of an ML expression: word_ml_inv_get_vars_IMP *)
+let word_ml_inv_get_vars_IMP =
+  cake_theorem "word_ml_inv_get_vars_IMP[allow_rebind]"
+  (fun () ->
+    `!n x w envs'.
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (join_env (state_locals s)
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set (state_locals s)))) ++ envs') /\
+           get_vars n (state_locals s) = SOME x /\
+           get_vars (MAP adjust_var n) t = SOME w ==>
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (ZIP x w ++ join_env (state_locals s)
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set (state_locals s)))) ++ envs')`)
+  CHEAT_TAC;;
 
 let IMP_adjust_var = cake_theorem "IMP_adjust_var"
   (fun () ->
@@ -2581,15 +2606,27 @@ let state_rel_call_env = cake_theorem "state_rel_call_env"
        (call_env (Loc l1 l2 :: ws) ss (dec_clock t)) NONE locs`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_gcProofScript.sml:5188-5195: a theorem that HOL4
-   states as the value of an ML expression: data_get_vars_SNOC_IMP *)
-(* HOL4 data_to_word_gcProofScript.sml:5196-5197: a theorem that HOL4
-   states as the value of an ML expression: data_get_vars_SNOC_IMP *)
+let data_get_vars_SNOC_IMP = cake_theorem "data_get_vars_SNOC_IMP"
+  (fun () ->
+    `!x2 x. dataSem_get_vars (SNOC x1 x2) s = SOME x ==>
+                (?y1 y2. x = SNOC y1 y2 /\
+                        dataSem_get_var x1 s = SOME y1 /\
+                        dataSem_get_vars x2 s = SOME y2)`)
+  CHEAT_TAC;;
+let data_to_word_gcProof_data_get_vars_SNOC_IMP =
+  cake_alias "data_get_vars_SNOC_IMP[allow_rebind]"
+    data_get_vars_SNOC_IMP;;
 
-(* HOL4 data_to_word_gcProofScript.sml:5199-5206: a theorem that HOL4
-   states as the value of an ML expression: word_get_vars_SNOC_IMP *)
-(* HOL4 data_to_word_gcProofScript.sml:5207-5208: a theorem that HOL4
-   states as the value of an ML expression: word_get_vars_SNOC_IMP *)
+let word_get_vars_SNOC_IMP = cake_theorem "word_get_vars_SNOC_IMP"
+  (fun () ->
+    `!x2 x. wordSem_get_vars (SNOC x1 x2) s = SOME x ==>
+                (?y1 y2. x = SNOC y1 y2 /\
+                   wordSem_get_var x1 s = SOME y1 /\
+                   wordSem_get_vars x2 s = SOME y2)`)
+  CHEAT_TAC;;
+let data_to_word_gcProof_word_get_vars_SNOC_IMP =
+  cake_alias "word_get_vars_SNOC_IMP[allow_rebind]"
+    word_get_vars_SNOC_IMP;;
 
 let word_ml_inv_CodePtr = cake_theorem "word_ml_inv_CodePtr"
   (fun () ->
@@ -2607,10 +2644,26 @@ let state_rel_CodePtr = cake_theorem "state_rel_CodePtr"
         Loc n 0`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_gcProofScript.sml:5242-5276: a theorem that HOL4
-   states as the value of an ML expression: find_code_thm *)
-(* HOL4 data_to_word_gcProofScript.sml:5277-5278: a theorem that HOL4
-   states as the value of an ML expression: find_code_thm *)
+let find_code_thm = cake_theorem "find_code_thm"
+  (fun () ->
+    `!s (t:('a,'c,'ffi)wordSem_state).
+           state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE
+             locs /\
+           get_vars args (dataSem_state_locals s) = SOME x /\
+           get_vars (0 :: MAP adjust_var args) t = SOME (Loc l1 l2
+             :: ws) /\
+           find_code dest x (dataSem_state_code s) fs = SOME
+             (q,r,ss) ==>
+           (?args1 n1 n2.
+             find_code dest (Loc l1 l2 :: ws) (wordSem_state_code
+               t) fs = SOME (args1,FST (data_to_word_comp c n1 n2 r),ss)
+               /\
+             state_rel c l1 l2 (call_env q ss (dec_clock s))
+               (call_env args1 ss (dec_clock t)) NONE locs)`)
+  CHEAT_TAC;;
+let data_to_word_gcProof_find_code_thm =
+  cake_alias "find_code_thm[allow_rebind]"
+    find_code_thm;;
 
 let cut_env_adjust_set_lookup_0 =
   cake_theorem "cut_env_adjust_set_lookup_0"
@@ -3257,8 +3310,14 @@ let word_gc_fun_APPEND_IMP = cake_theorem "word_gc_fun_APPEND_IMP"
         LENGTH ys = LENGTH zs2)`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_gcProofScript.sml:6452-6458: a theorem that HOL4
-   states as the value of an ML expression: IMP_loc_merge_APPEND *)
+let IMP_loc_merge_APPEND =
+  cake_theorem "IMP_loc_merge_APPEND[allow_rebind]"
+  (fun () ->
+    `!ts qs xs ys.
+           LENGTH (FILTER isWord ts) = LENGTH qs ==>
+           loc_merge (ts ++ xs) (qs ++ ys) = loc_merge ts qs ++
+             loc_merge xs ys`)
+  CHEAT_TAC;;
 
 let TAKE_DROP_loc_merge_APPEND =
   cake_theorem "TAKE_DROP_loc_merge_APPEND"
@@ -3381,8 +3440,21 @@ let data_to_word_gcProof_lemma1 = cake_theorem "lemma1"
     `(y1 = y2) /\ (x1 = x2) ==> (f x1 y1 = f x2 y2)`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_gcProofScript.sml:6645-6670: a theorem that HOL4
-   states as the value of an ML expression: word_gc_fun_EL_lemma *)
+let word_gc_fun_EL_lemma =
+  cake_theorem "word_gc_fun_EL_lemma[allow_rebind]"
+  (fun () ->
+    `!xs ys stack1 m dm st m1 s1 stack'.
+           LIST_REL data_to_word_gcProof_stack_rel xs stack' /\
+           EVERY2 (\x y. isWord x = isWord y /\ (~(isWord x) ==> x
+             = y))
+              (MAP SND (flat xs ys)) stack1 /\
+           wordSem_dec_stack (loc_merge (wordSem_enc_stack ys)
+             (FILTER isWord stack1)) ys =
+             SOME stack' /\ LIST_REL data_to_word_gcProof_stack_rel
+               xs ys ==>
+           (flat xs stack' =
+            ZIP (MAP FST (flat xs ys)) stack1)`)
+  CHEAT_TAC;;
 
 let word_ml_inv_cons_snoc = cake_theorem "word_ml_inv_cons_snoc"
   (fun () ->

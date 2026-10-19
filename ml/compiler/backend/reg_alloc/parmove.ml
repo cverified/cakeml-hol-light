@@ -223,6 +223,8 @@ let sem_final = cake_theorem "sem_final"
 let eqenv_def = cake_define
   `eqenv rho1 rho2 <=> (!r. IS_SOME r ==> (rho1 r = rho2 r))`;;
 (* HOL4 parmoveScript.sml:361: ML code, not ported *)
+(* HOL4 parmoveScript.sml:362: the overload ≡, which the port writes
+   as an application of eqenv *)
 
 let eqenv_sym = cake_theorem "eqenv_sym[local]"
   (fun () ->

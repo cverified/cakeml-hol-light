@@ -4516,15 +4516,15 @@ let make_init_def = cake_define
      comp' cbpos cbspace coracle =
      mk_labSem_state (\k. wordLang_Word ((regs t k):'a word))
        (fp_regs t) m dm sdm 0 (asm_config_big_endian (target_config
-       (machine_config_target mc_conf))) ffi (target_io_regs mc_conf
-       ffi ms) (target_cc_regs mc_conf ffi ms) (target_io_fp_regs
-       mc_conf ffi ms) (target_cc_fp_regs mc_conf ffi ms) code comp'
-       coracle (mk_buffer cbpos [] cbspace) 0 F
-       (machine_config_ptr_reg mc_conf) (machine_config_len_reg
-       mc_conf) (machine_config_ptr2_reg mc_conf)
-       (machine_config_len2_reg mc_conf) (match link_reg
-       (target_config (machine_config_target mc_conf)) with SOME n ->
-       n | _82 -> 0)`;;
+       (machine_config_target mc_conf))) ffi (target_io_regs mc_conf ffi
+       ms) (target_cc_regs mc_conf ffi ms) (target_io_fp_regs mc_conf
+       ffi ms) (target_cc_fp_regs mc_conf ffi ms) code comp' coracle
+       (mk_buffer cbpos [] cbspace) 0 F (machine_config_ptr_reg mc_conf)
+       (machine_config_len_reg mc_conf) (machine_config_ptr2_reg
+       mc_conf) (machine_config_len2_reg mc_conf) (match link_reg
+       (target_config (machine_config_target mc_conf)) with SOME n -> n
+       | _82 -> 0)
+   // Initialize with code buffer empty`;;
 hol4_overload "make_init" "lab_to_targetProof_make_init";;
 
 let oracle_tie_make_init = cake_theorem "oracle_tie_make_init"

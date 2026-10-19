@@ -53,7 +53,8 @@ let gc_state_FIELDS = define_record "gc_state"
 
 let empty_state_def = cake_define
   `empty_state =
-     mk_gc_state [] [] [] [] [] [] [] 0 0 T [] []`;;
+     mk_gc_state [] [] [] [] [] [] [] 0 0 T [] []
+   // ; r := 0`;;
 
 (* The heap is accessed using the following lookup function. *)
 

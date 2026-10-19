@@ -1322,10 +1322,17 @@ let mc_iop_def,mc_iop_pre_def =
         let (l,r11,xs,ys,zs) = mc_idiv (l,r3,r10,r11,xs,ys,zs) in
         let r10 = r11 in
           (INR (l,r10,xs,ys,zs),cond'))):num#'a word#'a word#'a
-            word#('a word) list#('a word) list#('a word)
-            list->(num#'a word#'a word#'a word#('a word) list#('a
-            word) list#('a word) list+num#'a word#('a word) list#('a
-            word) list#('a word) list)#bool`;;
+            word#('a word) list#('a word) list#('a word) list->(num#'a
+            word#'a word#'a word#('a word) list#('a word) list#('a word)
+            list+num#'a word#('a word) list#('a word) list#('a word)
+            list)#bool
+   // else
+   // (let r10 = r0 in
+   // let cond = mc_int_to_dec_pre (r10,xs,zs,ss) in
+   // let (xs,zs,ss) = mc_int_to_dec (r10,xs,zs,ss) in
+   // let r10 = 0x0w
+   // in
+   // (INR (r10,xs,ys,zs,ss),cond))`;;
 
 let mc_fac_init_def,mc_fac_init_pre_def =
   tailrec_define "mc_fac_init"

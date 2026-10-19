@@ -39,6 +39,7 @@ hol4_overload "Shift" "wordLang_Shift";;
    cannot state yet: MEM_IMP_exp_size *)
 
 new_type_abbrev("cutsets",`: 1 spt#1 spt`);;
+(* non-GCed cutset, GCed cutset *)
 
 let wordLang_prog_INDUCT,wordLang_prog_RECURSION = define_datatype
   "wordLang_prog = wordLang_Skip | wordLang_Move (num) ((num#num) \
