@@ -805,6 +805,22 @@ _Three things came out of the file that every other file needs:_
   (`ml/lib/define.ml`)._
 - _the eight that are left all turn on a `case evaluate (...) of`
   of the source, which the port writes as a HOL Light `match`.
+  **This is the gate of phase three**, and not a detail of one
+  file: the 228 CakeML sources use `every_case_tac`, `CaseEq`,
+  `AllCaseEqs` or a `*CASE_TAC` **7,559 times, in 145 of them**,
+  and they have 2,809 `case` expressions in the definitions and
+  the statements that those tactics take apart.  An hour of
+  trying to write the tactic for the port (four versions) says
+  that HOL Light's encoding of a `match` resists it: `REPEATC`
+  never fails, so a `MATCH_REDUCE_CONV` under a traversal does
+  nothing; `MATCH_CONV` can return a no-change theorem, so a
+  `REPEAT` of it spins; a scrutinee the patterns cannot decide
+  becomes an epsilon term; and once one epsilon is in the goal
+  the next reduction grows it without bound.  The way out is
+  probably not a tactic but the definition layer: derive the
+  clause equations of a `match` definition once (HOL4's
+  `Definition` gives exactly those), so that a proof never meets
+  a `match`._
   Reducing one means taking the pair that `evaluate` returns
   apart **and keeping the equation** (the lemmas about `evaluate`
   are applied to it afterwards), then taking the result component
