@@ -816,11 +816,16 @@ _Three things came out of the file that every other file needs:_
   nothing; `MATCH_CONV` can return a no-change theorem, so a
   `REPEAT` of it spins; a scrutinee the patterns cannot decide
   becomes an epsilon term; and once one epsilon is in the goal
-  the next reduction grows it without bound.  The way out is
-  probably not a tactic but the definition layer: derive the
-  clause equations of a `match` definition once (HOL4's
-  `Definition` gives exactly those), so that a proof never meets
-  a `match`._
+  the next reduction grows it without bound.  A fifth version
+  works, and `EVERY_CASE_TAC` is in `ml/lib/define.ml` now: on the
+  goal of `evaluate_SNOC_Rval` it does in 8 seconds what HOL4
+  does.  What the four tries were missing, beside those traps: the
+  **innermost** scrutinee first, the **equation kept** for a
+  compound one, the impossible branches **closed at once** with
+  the distinctness of that type (without which the goals multiply
+  with every split), HOL Light's own `UNWIND_CONV` for the guard
+  that `MATCH_CONV` leaves, and `VAR_EQ_TAC` (HOL4's `rveq`).
+  `CASE-IDIOM.md` has it all._
   Reducing one means taking the pair that `evaluate` returns
   apart **and keeping the equation** (the lemmas about `evaluate`
   are applied to it afterwards), then taking the result component

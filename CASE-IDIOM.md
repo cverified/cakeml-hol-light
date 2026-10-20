@@ -219,7 +219,42 @@ the port changes, so no re-run and no drift.
 
 **Route B is the one to build first**, because it is local, and
 because if it works the 7,559 case splits of the sources are all
-reachable.  Route A stays available if B turns out to be unreliable
+reachable.
+
+### Route B works
+
+`EVERY_CASE_TAC` is in `ml/lib/define.ml` now and does on the goal
+of `evaluate_SNOC_Rval` in 8 seconds what HOL4 does:
+
+```
+  0 [`evaluate (y,env,s) = Rval a',y'`]
+  1 [`evaluate ([x],env,y') = Rval a'',y''`]
+`Rval (a' ++ a''),y'' = Rval a,r
+ ==> LENGTH y = LENGTH a`
+```
+
+one subgoal, the match gone, both equations kept, the impossible
+branches closed.  It took five pieces, and four of them are the
+ones the earlier tries were missing:
+
+1. the **innermost** scrutinee first (HOL4's `case_find_subterm`);
+2. **keep the equation** of a compound scrutinee (`TERM_INTRO_TAC`);
+3. **close the impossible branches** right after the split, with the
+   distinctness and injectivity of that type (HOL4's
+   `use_new_assum` and `CASE_SIMP_CONV`) -- without this the goals
+   multiply with every split and the tactic disappears into a tree
+   of thousands;
+4. HOL Light's own **`UNWIND_CONV`**, which is what clears the
+   guard that `MATCH_CONV` leaves for a pattern that binds
+   variables (`if ?vs. vs = a' then ...`).  `MATCH_CONV` and
+   `UNWIND_CONV` are defined together in `ind_types.ml`; they are
+   meant to be used together.
+5. and `VAR_EQ_TAC`, HOL4's `rveq`: use up the equations between
+   *variables* that a split leaves and keep the others.  Using up
+   everything throws away the `evaluate` equations, and the
+   remaining goal is then unprovable.
+
+Route A stays available if B turns out to be unreliable
 on the bigger goals -- and A is also what one would do if the port
 ever wanted HOL4's `CaseEq`/`AllCaseEqs` idiom, which rewrites with
 equations like `(case x of … ) = y <=> ?v. x = Rval v /\ …` and is
@@ -234,3 +269,41 @@ one was blocked, which is why the file stands at 9 of 17 and not at
 band says nothing about the 2,318 proofs of the port that are longer
 than 10 lines -- they are nearly all semantics proofs, and nearly all
 of them use this idiom.
+
+## 6. What is left in the file, case by case
+
+Six of the eight are ordinary once the idiom works
+(`evaluate_SNOC_Rval`, `evaluate_delete_var_Rerr`,
+`evaluate_delete_var_Rval`, `env_rel_MAP`, `compile_code_labels`,
+`compile_exp_code_labels`).  The seventh, `evaluate_env_rel`, is the
+correctness of the pass itself and is a different size: HOL4 writes
+it as a `completeInduct_on (list_size exp_size xs)` and then
+**eleven** `Resume` blocks, 150 lines in all
+(`bvi_letProofScript.sml:220-389`).  A `cake_theorem` is all or
+nothing, so the eleven have to be done before the theorem counts.
+
+The eleven, with what each needs beyond the idiom:
+
+- `[]`: the first clause of `compile` and of `evaluate`.
+- cons-cons, 15 lines: `compile_CONS`, `evaluate_CONS`,
+  `compile_HD_SING`, two uses of the induction hypothesis,
+  `evaluate_SING_IMP`.
+- `Var`, 10: `env_rel_length`, `env_rel_LLOOKUP_NONE`,
+  `env_rel_LOOKUP_SOME`, `EL_DROP`.
+- `Raise`/`Tick`, 5: one use of the hypothesis, size arithmetic.
+- `If`, 11: three uses, `evaluate_SING_IMP`, `fix_clock`.
+- `Op` and `Return`, 7 each: one use, at the second argument.
+- `Force`, 10: as `Var`.
+- `Call`, 20: the handler cases, `env_rel (0::ax)`, a size
+  inequality.
+- `LetCall`, 12: `env_rel_REPLICATE_0`, the handler cases.
+- `Let`, 25: the tail-position optimisation -- `SNOC`,
+  `FRONT`/`LAST`, `evaluate_SNOC`, `exp_size_APPEND`,
+  `env_rel_MAP`.
+
+The eighth, `evaluate_compile_exp`, is five lines once
+`evaluate_env_rel` is a theorem (it is that theorem at `ax = []`,
+`d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env`).
+
+So the file is: the idiom, then six proofs of the size of the nine
+already written, then a day on the eleven cases of one theorem.

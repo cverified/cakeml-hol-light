@@ -142,7 +142,16 @@ let evaluate_SNOC_Rval = cake_theorem "evaluate_SNOC_Rval"
         a = SNOC a1 a2 /\ LENGTH y = LENGTH a2 /\
         evaluate (y,env,s) = (Rval a2,r1) /\
         evaluate ([x],env,r1) = (Rval [a1],r))`)
-  CHEAT_TAC;;
+  (ONCE_REWRITE_TAC[bviProps_evaluate_SNOC] THEN EVERY_CASE_TAC THEN
+   REWRITE_TAC[PAIR_EQ; distinctness "semanticPrimitives_result";
+               injectivity "semanticPrimitives_result"] THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(CHOOSE_THEN SUBST_ALL_TAC o
+               MATCH_MP evaluate_SING_IMP) THEN
+   ASM_MESON_TAC[bviProps_evaluate_IMP_LENGTH;
+                 prove(`!l x. SNOC x l = l ++ [x]`,
+                       LIST_INDUCT_TAC THEN
+                       ASM_REWRITE_TAC[SNOC; APPEND])]);;
 
 let compile_CONS = cake_theorem "compile_CONS"
   (fun () ->
