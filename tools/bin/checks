@@ -27,6 +27,8 @@
 #             characters (a comment of a source is unaltered)
 #   stale     every entry of an override table still names a
 #             block that the source it is about has
+#   proofs    every proof of proofs/ names a theorem that the port
+#             states, and no line of one is over 72 characters
 C=/home/freek/claude/hol-light/cakeml
 cd $C
 echo "=== coverage"
@@ -61,3 +63,5 @@ echo "=== lines over 72 characters"
 python3 -I tools/lines.py 2>&1 | tail -6
 echo "=== the entries of the override tables"
 python3 -I tools/stale.py 2>&1 | tail -3
+echo "=== the proofs of phase three"
+python3 -I tools/proofs.py 2>&1 | tail -2

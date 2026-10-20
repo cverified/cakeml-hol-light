@@ -7,6 +7,7 @@ writes ml/<path>/<theory>.ml and reports what it could not do.
 import sys, os, re, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides, grammardef
+import proofstore
 
 # the definitions whose termination the first pass assumes: the
 # port writes CHEAT_TAC in the place of the Termination tactic of
@@ -243,6 +244,11 @@ class Porter:
       dbmod.hl_types() | set(overrides.TYPE_MAP))
     self.out = []
     self.warn = []
+    # the proofs of phase three: a theorem of proofs/<path>.prf
+    # gets the tactic that stands there, one that is not in it
+    # keeps its CHEAT_TAC (tools/proofstore.py)
+    self.proofs = proofstore.load(db.mlpath_of(thy))
+    self.proved = set()
     self.head = None
     self.deps = []
     self.anc_comments = {}  # a comment of the Ancestors block
@@ -453,8 +459,11 @@ class Porter:
       if max(len(l) for l in head.split('\n')) > 72:
         head = ('let %s =\n  cake_theorem\n    "%s%s"'
                 % (name, nm, attrs))
-    self.out.append('%s\n  (fun () ->\n    `%s`)\n  CHEAT_TAC;;'
-                    % (head, stmt))
+    # phase three: the proof of this theorem, where there is one
+    tac = self.proofs.get(nm)
+    if tac is not None: self.proved.add(nm)
+    self.out.append('%s\n  (fun () ->\n    `%s`)\n%s;;'
+                    % (head, stmt, tac or '  CHEAT_TAC'))
     # the binding is there, so a source that states a theorem as
     # the value of this one (Theorem foo = bar) can use it
     self.db.thmbind[nm] = name
