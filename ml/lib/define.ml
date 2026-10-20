@@ -3524,3 +3524,92 @@ let cake_define_list_try_tac f tac cls =
   | None -> cake_cheat_list cls;;
 
 (* ------------------------------------------------------------------ *)
+
+(* The definition theorems of the port, by the constant that each   *)
+(* defines.                                                         *)
+(*                                                                  *)
+(* A definition keeps the name that its block has in the source, so *)
+(* 28 files of the port bind a compile_def and 25 a state_rel_def:  *)
+(* the one that OCaml sees is the one of the file that was loaded    *)
+(* last, and a proof of phase three that writes compile_def in       *)
+(* bvi_letProof gets clos_to_bvl's.  The constants themselves are    *)
+(* unique (bvi_let_compile), so a proof names the definition it      *)
+(* needs by the constant:                                           *)
+(*                                                                  *)
+(*   cake_def "bvi_let_compile"                                     *)
+(*                                                                  *)
+(* A definition made of several clauses is registered under every   *)
+(* constant that it defines, and the first definition of a constant *)
+(* is the one that is kept (a later one of the same name is another  *)
+(* constant, which has its own name).                               *)
+
+let the_defs = ref ([]:(string * thm) list);;
+
+let cake_note_def th =
+  let head cl =
+    try let h = fst(strip_comb(lhs(snd(strip_forall cl)))) in
+        if is_const h then [h] else []
+    with Failure _ -> [] in
+  let heads =
+    setify (itlist (fun cl l -> head cl @ l)
+                   (conjuncts(snd(strip_forall(concl th)))) []) in
+  do_list
+    (fun h ->
+       let n = fst(dest_const h) in
+       if not (can (assoc n) (!the_defs)) then
+         the_defs := (n,th) :: !the_defs)
+    heads;;
+
+let cake_defs () = rev (!the_defs);;
+
+let cake_def name =
+  try assoc name (!the_defs)
+  with Failure _ ->
+    failwith ("cake_def: the port has no definition of " ^ name);;
+
+(* every way the port has of making a definition registers it: the
+   wrappers call the function of that name as it stands above *)
+
+let cake_define tm =
+  let th = cake_define tm in cake_note_def th; th;;
+
+let cake_define_gen wf tm =
+  let th = cake_define_gen wf tm in cake_note_def th; th;;
+
+let cake_define_list cls =
+  let th = cake_define_list cls in cake_note_def th; th;;
+
+let cake_define_wf rel tm =
+  let th = cake_define_wf rel tm in cake_note_def th; th;;
+
+let cake_define_list_wf rel cls =
+  let th = cake_define_list_wf rel cls in cake_note_def th; th;;
+
+let cake_define_list_try f cls =
+  let th = cake_define_list_try f cls in cake_note_def th; th;;
+
+let cake_define_tac rt tm =
+  let th = cake_define_tac rt tm in cake_note_def th; th;;
+
+let cake_define_cheat tac tm =
+  let th = cake_define_cheat tac tm in cake_note_def th; th;;
+
+let cake_define_try_tac f tac tm =
+  let th = cake_define_try_tac f tac tm in cake_note_def th; th;;
+
+let cake_define_list_cheat tac cls =
+  let th = cake_define_list_cheat tac cls in cake_note_def th; th;;
+
+let cake_define_list_try_tac f tac cls =
+  let th = cake_define_list_try_tac f tac cls in cake_note_def th; th;;
+
+(* an inductive definition gives three theorems (the rules, the
+   induction and the cases), and the rules are what names the
+   constants it defines *)
+
+let cake_inductive tm =
+  let (r,i,c) = cake_inductive tm in
+  cake_note_def c; cake_note_def r; (r,i,c);;
+
+let cake_cheat tm =
+  let th = cake_cheat tm in cake_note_def th; th;;
