@@ -22,6 +22,10 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+
+hol4_overload "do_app" "closSem_do_app";;
+hol4_overload "compile" "clos_annotate_compile";;
+
 (* HOL4 clos_annotateProofScript.sml:14-15: ML code, not ported *)
 
 (* alternative definition of free_vars (fv) function *)

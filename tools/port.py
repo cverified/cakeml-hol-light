@@ -468,6 +468,34 @@ class Porter:
     # the value of this one (Theorem foo = bar) can use it
     self.db.thmbind[nm] = name
 
+  def front_overloads(self, b):
+    """a source that brings an overload to the front (HOL4's
+       bring_to_front_overload) says which constant a name means
+       from there on: the port says the same with the
+       hol4_overload of the name that it gives that constant.
+       Without it the name means whatever theory overloaded it
+       last, which is a statement about another constant and no
+       check can see it (the name that it prints is the same)."""
+    out = []
+    for m in re.finditer(r'bring_to_front_overload\s*"([^"]+)"\s*'
+                         r'(\{[^{}]*\})?', b.text, re.S):
+      nm, blk = m.group(1), m.group(2) or ''
+      n2 = re.search(r'Name\s*=\s*"([^"]+)"', blk)
+      thy = re.search(r'Thy\s*=\s*"([^"]+)"', blk)
+      new = None
+      if n2 and thy:
+        new = self.ctx.names.get((thy.group(1), n2.group(1)))
+        if new is None and thy.group(1) == self.thy:
+          new = n2.group(1)
+      if new is None:
+        self.warn.append('bring_to_front_overload %s: the port does'
+                         ' not know which constant' % nm)
+        out.append(self.at(b, 'an overload that the source brings to'
+                              ' the front: %s' % nm))
+      else:
+        out.append('hol4_overload "%s" "%s";;' % (nm, new))
+    return out
+
   def thmname(self, name):
     """the OCaml binding that a theorem of this theory gets: its
        own name, or the name with the theory in front of it where
@@ -1150,6 +1178,10 @@ class Porter:
       # numLib.SUC_RULE of its definition)
       if any(re.search(pat, b.text) for pat in IGNORE_ML) and \
          not hol4.ml_theorems(b.text):
+        # an overload that the source brings to the front is not
+        # configuration that the port can do without: it says
+        # which constant a name means from there on
+        for l in self.front_overloads(b): self.out.append(l)
         return
       if self.numeral_form(b):
         return

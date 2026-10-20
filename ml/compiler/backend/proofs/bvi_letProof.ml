@@ -17,6 +17,8 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+hol4_overload "compile" "bvi_let_compile";;
+
 let v_rel_def = cake_define
   `bvi_letProof_v_rel a x y xs ys <=> (\l n. oEL n l) ys a = SOME x`;;
 hol4_overload "v_rel" "bvi_letProof_v_rel";;
@@ -109,7 +111,7 @@ let compile_APPEND = cake_theorem "compile_APPEND"
 let IMP_COMM = cake_theorem "IMP_COMM"
   (fun () ->
     `(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`)
-  CHEAT_TAC;;
+  (MESON_TAC[]);;
 
 (* HOL4 bvi_letProofScript.sml:146-150: a theorem whose statement the
    port cannot state yet: exp_size_APPEND *)

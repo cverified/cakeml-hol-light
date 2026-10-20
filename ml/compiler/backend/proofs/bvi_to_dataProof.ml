@@ -107,6 +107,8 @@ hol4_overload "state_rel" "bvi_to_dataProof_state_rel";;
 
 (* semantics lemmas *)
 
+hol4_overload "find_code" "bvlSem_find_code";;
+
 let find_code_lemma = cake_theorem "find_code_lemma[local]"
   (fun () ->
     `state_rel r t2 /\

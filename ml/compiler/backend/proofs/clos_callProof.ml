@@ -25,6 +25,17 @@ needs "semantics/semanticPrimitives.ml";;
 cake_hide ["C"; "vars"];;
 
 (* TODO These are the same. Put in closLang? *)
+hol4_overload "free" "clos_call_free";;
+hol4_overload "closed" "clos_call_closed";;
+hol4_overload "compile" "clos_call_compile";;
+
+hol4_overload "lookup" "sptree_lookup";;
+hol4_overload "insert" "sptree_insert";;
+hol4_overload "delete" "sptree_delete";;
+hol4_overload "map" "sptree_map";;
+hol4_overload "wf" "sptree_wf";;
+(* HOL4 clos_callProofScript.sml:23-28: an overload that the source
+   brings to the front: domain *)
 
 (* TODO: move *)
 

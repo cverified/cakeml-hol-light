@@ -17,6 +17,9 @@ needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+hol4_overload "get_vars" "dataSem_get_vars";;
+hol4_overload "cut_env" "dataSem_cut_env";;
+
 let SPLIT_PAIR = cake_theorem "SPLIT_PAIR[local]"
   (fun () ->
     `!x y z. (x = (y,z)) <=> (y = FST x) /\ (z = SND x)`)

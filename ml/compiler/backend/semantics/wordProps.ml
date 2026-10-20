@@ -60,6 +60,8 @@ cake_hide_consts
    "data_buffer","data_buffer";
    "memory","memory"];;
 
+hol4_overload "Set" "wordLang_Set";;
+
 (*
 Main lemmas:
 0) Clock lemmas (add_clock, dec_clock, IO monotonicity)

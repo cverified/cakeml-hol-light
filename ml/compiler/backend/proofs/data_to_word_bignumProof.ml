@@ -53,6 +53,8 @@ cake_hide_consts
    "memory","memory"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
+hol4_overload "cut_env" "wordSem_cut_env";;
+
 (* HOL4 data_to_word_bignumProofScript.sml:26-27: a proof *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:29-30: ML code, not ported *)

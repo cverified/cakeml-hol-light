@@ -32,6 +32,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ffi/ffi.ml";;
 
+hol4_overload "Call" "wordLang_Call";;
+
 (* HOL4 word_to_wordProofScript.sml:19-23: a proof *)
 
 let FST_compile_single = cake_theorem "FST_compile_single[simp]"

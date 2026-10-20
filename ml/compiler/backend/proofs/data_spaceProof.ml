@@ -19,6 +19,13 @@ needs "semantics/semanticPrimitives.ml";;
 
 cake_hide ["vars"];;
 
+hol4_overload "get_vars" "dataSem_get_vars";;
+hol4_overload "cut_env" "dataSem_cut_env";;
+hol4_overload "evaluate" "dataSem_evaluate";;
+hol4_overload "lookup" "sptree_lookup";;
+hol4_overload "insert" "sptree_insert";;
+hol4_overload "wf" "sptree_wf";;
+
 let IMP_sptree_eq = cake_theorem "IMP_sptree_eq[local]"
   (fun () ->
     `sptree_wf x /\ sptree_wf y /\ (!a. lookup a x = lookup a y) ==>

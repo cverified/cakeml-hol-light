@@ -47,6 +47,11 @@ cake_hide ["C"; "all"; "build_const'"; "globals_approx_every_Fn_SOME";
 cake_hide_consts
   ["next_loc","next_loc"];;
 
+hol4_overload "evaluate" "bvlSem_evaluate";;
+(* HOL4 clos_to_bvlProofScript.sml:22-24: an overload that the source
+   brings to the front: num_stubs *)
+hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
+
 (* TODO: move? *)
 
 (* HOL4 clos_to_bvlProofScript.sml:28: ML code, not ported *)

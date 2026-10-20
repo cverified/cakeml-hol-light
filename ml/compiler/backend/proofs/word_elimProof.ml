@@ -28,6 +28,8 @@ cake_hide_consts
 
 
 cake_hide_more ["mem"];;
+(* HOL4 word_elimProofScript.sml:11-13: an overload that the source
+   brings to the front: domain *)
 
 (**************************** ANALYSIS LEMMAS *****************************)
 

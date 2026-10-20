@@ -66,6 +66,7 @@ cake_hide_consts
 (* HOL4 word_allocProofScript.sml:13-15: ML code, not ported *)
 
 cake_hide_more ["mem"];;
+hol4_overload "numset_list_insert" "word_alloc_numset_list_insert";;
 
 (*TODO: Move?*)
 let SUBSET_OF_INSERT = cake_theorem "SUBSET_OF_INSERT"

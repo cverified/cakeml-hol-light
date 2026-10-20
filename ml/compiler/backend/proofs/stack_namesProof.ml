@@ -22,6 +22,9 @@ cake_hide_consts
   ["code_buffer","code_buffer";
    "memory","memory"];;
 
+hol4_overload "prog_comp" "stack_names_prog_comp";;
+hol4_overload "comp" "stack_names_comp";;
+
 let rename_state_def = cake_define
   `rename_state compile_rest f s = stackSem_state_ffi_save_regs_fupd (K
   (IMAGE (tlookup f) (stackSem_state_ffi_save_regs s)))

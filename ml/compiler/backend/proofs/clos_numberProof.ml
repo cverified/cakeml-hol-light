@@ -21,6 +21,12 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+hol4_overload "lookup" "sptree_lookup";;
+hol4_overload "insert" "sptree_insert";;
+hol4_overload "delete" "sptree_delete";;
+hol4_overload "map" "sptree_map";;
+hol4_overload "wf" "sptree_wf";;
+
 (* properties of renumber_code_locs *)
 
 (* HOL4 clos_numberProofScript.sml:20-36: a proof *)

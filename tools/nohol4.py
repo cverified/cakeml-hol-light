@@ -102,6 +102,8 @@ EXPECT = [
   ('the tactic that proves the termination',
    r'(Termination|WF_REL_TAC|tDefine|measure)'),
   ('the Termination', r'Termination'),
+  ('an overload that the source brings to the front',
+   r'bring_to_front_overload|bring_fwd_ctors'),
   ('the overload', r'^\s*Overload\b'),
   ('the type abbreviation', r'^\s*Type\b'),
   ('the definition', r'^\s*Definition\b'),

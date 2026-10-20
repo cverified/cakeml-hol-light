@@ -29,6 +29,9 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* HOL4 clos_knownProofScript.sml:19: an overload that the source
+   brings to the front: domain *)
+
 (* HOL4 clos_knownProofScript.sml:21-22: ML code, not ported *)
 
 (* fixeqs flips any equations in the assumption that have evaluate on the rhs *)

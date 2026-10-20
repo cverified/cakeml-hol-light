@@ -19,6 +19,8 @@ needs "semantics/ast.ml";;
 
 cake_hide ["pmatch"];;
 
+hol4_overload "Shift" "wordLang_Shift";;
+
 (*Scheme:
 1) Pull all nested ops and consts as far up as possible and convert
   Sub [ x ; Const w ] to Add [x ; Const -w]
