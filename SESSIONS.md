@@ -129,7 +129,62 @@ it.
 `FORCE=1 holclean` kills as well).  It killed a run of 65 files
 before it spared `hol-seq`.
 
-## Phase three: a session per file
+## Phase three: one frontier, cloned per attempt
+
+What the loading costs, measured:
+
+| | |
+|---|---|
+| the whole port, in load order | 5,656 s (94 min), 21 s a file |
+| the `needs` closure of a file | 485 s on average, 802 s for a proof |
+| one closure per file, over the 270 | **36 hours** |
+| a clone of a session that is loaded | **1 s** |
+| `tools/bin/reload` of the tactics and lemmas | **under a second** |
+| `tools/bin/retemplate` | 9 s |
+
+So there is **one frontier session**, `hol-front`, which holds the
+files of the load order up to the one being worked on:
+
+```
+. tools/holenv.sh
+frontier compiler/backend/proofs/bvi_letProof.ml   # extend it
+frontier                                           # where is it
+frontier -i compiler/backend/proofs/bvi_letProof.ml  # and this one
+```
+
+It is **never typed in**: clone it for every attempt (a second), and
+throw the clone away when a tactic hangs.  `tmp/frontier.txt` says
+what it holds.
+
+**A clone is a fork of the session it comes from, so killing one
+kills its clones.**  That is why `hol-front` is a clone of
+`hol-base` and loads the preamble itself: a clone of
+`hol-template-cakeml` dies every time the template is rebuilt, and
+the frontier is the one session that must not (94 minutes).
+
+**When a utility function is added**, which file it goes in decides
+what it costs:
+
+- a **tactic** goes in `ml/lib/tactics.ml`, a **lemma** that more
+  than one proof needs in `ml/lib/lemmas.ml`.  Neither file defines
+  anything, so `reload front` (or any session) loads them again in
+  under a second and the work goes on.  Load them **whole**, never
+  the one function that changed: OCaml binds a name where it
+  stands, so a caller keeps the old one.
+- a lemma that one proof needs stays **in that proof**, as HOL4's
+  sources do it.
+- anything that **defines** something -- a constant in
+  `ml/lib/hol4.ml`, machinery in `ml/lib/define.ml` -- costs the
+  session: 8 minutes for a closure, 94 for the frontier.  So batch
+  those, and do them when a file is finished rather than in the
+  middle of one.
+
+## The closure of a single file
+
+For a file in the middle of the order, its `needs` closure is ten
+times cheaper than the prefix of the load order (529 s against
+4,131 s for `bvi_letProof`), so a one-off visit to a file is a
+closure and not a frontier:
 
 Working on the proofs of one file means a session that holds the
 **needs closure of that file** and not the whole load order:

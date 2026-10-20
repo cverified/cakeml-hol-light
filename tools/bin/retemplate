@@ -1,8 +1,14 @@
 #!/bin/sh
 # rebuild the hol-template-cakeml session from hol-base (and hol-base
 # itself if it is gone), and report any error in the preamble
+# A clone is a fork of the session it comes from, so killing one
+# kills its clones: rebuilding the template takes the whole tree
+# with it, and the frontier (8 to 94 minutes of loading) with it.
+# KEEP=1 leaves the other sessions alone -- what to do when only a
+# tactic or a lemma changed, which tools/bin/reload puts into a
+# running session in a second.
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
-holclean > /dev/null 2>&1
+[ -z "$KEEP" ] && holclean > /dev/null 2>&1
 tmux has -t hol-base 2> /dev/null || {
   rm -f /home/freek/claude/hol-light/bin/fifo/hol-base
   repl-new-template base > /dev/null 2>&1; }

@@ -23,6 +23,15 @@ needs "lib/relation.ml";;
 needs "lib/bag.ml";;
 needs "lib/string4.ml";;
 
+(* the lemmas and the tactics of phase three go last, and define
+   nothing: tools/bin/reload loads them again into a session that is
+   already running, where a change in the files above costs the
+   session (8 minutes for the needs closure of a file, 94 for the
+   whole port) *)
+
+needs "lib/lemmas.ml";;
+needs "lib/tactics.ml";;
+
 (* the port has polymorphic definitions all over the place, as the
    CakeML sources do, so the warning about that is turned off *)
 type_invention_warning := false;;

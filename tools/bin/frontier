@@ -1,0 +1,56 @@
+#!/bin/sh
+# frontier           : say which file the frontier session stands at
+# frontier <file>     : extend hol-front with the files of
+#                       tools/load.txt before <file>, so that the
+#                       proofs of <file> can be worked on in a clone
+# frontier -i <file>  : and load <file> itself as well (what to do
+#                       when its proofs are done)
+#
+# One session that grows in the order of tools/load.txt costs 94
+# minutes for the whole port, 21 seconds a file; the needs closure
+# of a single file costs 8 minutes, and one closure per file would
+# be 36 hours over the 270.  So there is one frontier, it is never
+# typed in (clone it: that costs a second), and what it holds is in
+# tmp/frontier.txt.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+pos=$C/tmp/frontier.txt
+incl=
+[ "$1" = "-i" ] && { incl=yes; shift; }
+[ $# -eq 0 ] && {
+  if tmux has -t hol-front 2> /dev/null
+  then echo "hol-front holds $(wc -l < $pos 2>/dev/null || echo 0) files,"\
+            "up to and including $(tail -1 $pos 2>/dev/null)"
+  else echo "no hol-front"; fi
+  exit 0; }
+want=$1
+grep -qx "$want" $C/tools/load.txt || {
+  echo "frontier: $want is not in tools/load.txt"; exit 1; }
+# the frontier hangs off hol-base and loads the preamble itself:
+# a clone is a fork, so a clone of hol-template-cakeml would die
+# with it every time the template is rebuilt, and the frontier is
+# the one session that must not
+tmux has -t hol-front 2> /dev/null || {
+  tmux has -t hol-base 2> /dev/null || {
+    rm -f /home/freek/claude/hol-light/bin/fifo/hol-base
+    repl-new-template base > /dev/null 2>&1; }
+  repl-clone hol-base front > /dev/null 2>&1 || {
+    echo "frontier: cannot clone hol-base"; exit 1; }
+  TIMEOUT=900 repl-step front \
+    "loadt \"$C/ml/lib/preamble.ml\";;" > /dev/null 2>&1
+  : > $pos; }
+t0=$(date +%s)
+n=0
+while read -r f; do
+  [ "$f" = "$want" ] && [ -z "$incl" ] && break
+  grep -qxF "$f" $pos 2> /dev/null || {
+    TIMEOUT=1800 repl-step front "needs \"$f\";;" > /dev/null 2>&1
+    err=$(tmux capture-pane -p -J -S - -t hol-front |
+          sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' |
+          grep -E '^(Error|Exception)' | tail -1)
+    [ -n "$err" ] && { echo "frontier: $f: $err"; exit 1; }
+    echo "$f" >> $pos; n=$((n+1)); }
+  [ "$f" = "$want" ] && break
+done < $C/tools/load.txt
+echo "frontier at $want: $n files loaded in $(( $(date +%s) - t0 ))s,"\
+     "$(wc -l < $pos) in all"

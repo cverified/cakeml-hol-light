@@ -845,3 +845,33 @@ _Three things came out of the file that every other file needs:_
   (`REPEATC` never fails, so `ONCE_DEPTH_CONV` stops at the top)
   and `LIST_SPLIT_TAC` takes every list variable of the match
   apart, which loses the one the induction hypothesis is about._
+
+## The sessions of phase three
+
+_What loading costs, measured: the whole port in load order 5,656 s
+(94 min, 21 s a file); the `needs` closure of one file 485 s on
+average (802 s for a proof theory); a clone of a loaded session 1 s;
+`tools/bin/reload` of the tactics and the lemmas under a second.
+One closure per file would be **36 hours** over the 270, so the work
+goes in load order in **one frontier session** (`tools/bin/frontier`,
+`hol-front`), which is cloned for every attempt and never typed in._
+
+_A clone is a fork of the session it comes from, so killing one kills
+its clones: `hol-front` hangs off `hol-base` and loads the preamble
+itself, because a clone of `hol-template-cakeml` dies whenever the
+template is rebuilt._
+
+_Where a utility function goes decides what it costs: a tactic in
+`ml/lib/tactics.ml` and a shared lemma in `ml/lib/lemmas.ml` cost a
+second (`reload`), because those two files define nothing; a lemma
+that one proof needs stays in that proof; and anything that defines
+something (`ml/lib/hol4.ml`, `ml/lib/define.ml`) costs the session,
+so it is batched and done between files.  `SESSIONS.md` has the
+table and the commands._
+
+_What is still missing is a checkpoint on disk.  HOL4 has it
+(`HOLHEAP`, Poly/ML's `SaveState`, which is how CakeML's bootstrap
+starts from `cv_translator/cake_compile_heap`); HOL Light has no
+equivalent, but `DMTCP` or `criu` can snapshot the process, and a
+snapshot restores in seconds and survives a crash or a reboot, which
+the fork tree does not.  Worth a spike before the long haul._

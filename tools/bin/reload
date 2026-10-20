@@ -1,0 +1,22 @@
+#!/bin/sh
+# reload <session>... : load ml/lib/lemmas.ml and ml/lib/tactics.ml
+# again into a session that is already running, which takes a second
+# -- where a change in a file of ml/lib that defines something costs
+# the session itself (8 minutes for the needs closure of a file, 94
+# for the whole port).  The two files define nothing, so loading
+# them again is safe; and they are loaded whole, because OCaml binds
+# a name where it stands and a caller would keep the old one.
+PATH=/home/freek/claude/hol-light/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+[ $# -eq 0 ] && { echo "usage: reload <session>..."; exit 1; }
+for s in "$@"; do
+  tmux has -t "hol-$s" 2> /dev/null || { echo "no hol-$s"; continue; }
+  TIMEOUT=300 repl-step "$s" \
+    "#use \"$C/ml/lib/lemmas.ml\";; #use \"$C/ml/lib/tactics.ml\";;" \
+    > /dev/null 2>&1
+  err=$(tmux capture-pane -p -J -S - -t "hol-$s" |
+        sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' |
+        grep -E '^(Error|Exception)' | tail -1)
+  if [ -n "$err" ]; then echo "hol-$s: $err"
+  else echo "hol-$s: lemmas and tactics reloaded"; fi
+done
