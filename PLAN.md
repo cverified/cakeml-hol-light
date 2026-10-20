@@ -803,6 +803,20 @@ _Three things came out of the file that every other file needs:_
   that loaded last.  A proof names the definition it needs by the
   constant, which is unique: `cake_def "bvi_let_compile"`
   (`ml/lib/define.ml`)._
+- _the eight that are left all turn on a `case evaluate (...) of`
+  of the source, which the port writes as a HOL Light `match`.
+  Reducing one means taking the pair that `evaluate` returns
+  apart **and keeping the equation** (the lemmas about `evaluate`
+  are applied to it afterwards), then taking the result component
+  apart by its constructors, and only then reducing the match: a
+  `MATCH_CONV` on a scrutinee that is not a constructor
+  application turns it into `if ... then @GEN%PVAR. ... else @x.
+  false` and the goal is lost.  HOL4's `every_case_tac` does this
+  in one word, and the port has no tactic for it yet.  Two tries
+  (`evaluate_delete_var_Rerr`, 219 s; `evaluate_SNOC_Rval`, 358 s)
+  went that way, so **this is the first thing to build** before
+  the rest of the file, and it is what the medium band of every
+  semantics file of the port will cost._
 - _`MATCH_REDUCE_TAC` and `LIST_CASES_TAC` (`ml/lib/define.ml`):
   the definitions of the port are `match`es, and a proof that
   unfolds one has to reduce it and to take the right variables
