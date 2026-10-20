@@ -3654,8 +3654,16 @@ let constructors_of ty =
   map (fun d -> fst(strip_comb(rhs(snd(strip_exists d)))))
       (disjuncts(snd(strip_forall(concl(cases_of ty)))));;
 
+(* the name, not the constant: the cases theorem of a polymorphic
+   type gives its constructors at the type of the theorem, and a
+   CONS of a num list is not that CONS *)
+
 let is_con_app t =
-  try mem (fst(strip_comb t)) (constructors_of (type_of t))
+  try let h = fst(strip_comb t) in
+      is_const h &&
+      mem (fst(dest_const h))
+          (map (fun c -> fst(dest_const c))
+               (constructors_of (type_of t)))
   with Failure _ -> false;;
 
 (* reduce the matches whose reduction says something: MATCH_CONV on
@@ -3744,7 +3752,9 @@ let CASE_SPLIT_TAC gl =
 
 let MATCH_TIDY_TAC =
   TRY(CONV_TAC(REDEPTH_CONV UNWIND_CONV)) THEN
-  TRY(REWRITE_TAC[UNWIND_THM1; UNWIND_THM2; EXISTS_REFL]);;
+  TRY(REWRITE_TAC[UNWIND_THM1; UNWIND_THM2; EXISTS_REFL;
+                  NOT_CONS_NIL; CONS_11; NOT_SUC; SUC_INJ; PAIR_EQ;
+                  distinctness "option"; injectivity "option"]);;
 
 let EVERY_CASE_TAC =
   let step = ((CASE_SPLIT_TAC THEN TRY SAFE_MATCH_REDUCE_TAC) ORELSE

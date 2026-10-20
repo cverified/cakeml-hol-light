@@ -103,3 +103,35 @@
                  prove(`!l x. SNOC x l = l ++ [x]`,
                        LIST_INDUCT_TAC THEN
                        ASM_REWRITE_TAC[SNOC; APPEND])])
+
+### env_rel_MAP
+  (* HOL4 moves the head of the new environment into ax with the
+     append gymnastics of bvi_letProofScript.sml:157-176; the same
+     induction, one element at a time *)
+  (let STEP = prove
+     (`!ax d e1 e2 v.
+         bvi_letProof_env_rel ax d e1 e2 ==>
+         bvi_letProof_env_rel (MAP SUC ax) (SUC d) e1 (CONS v e2)`,
+      LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+      ONCE_REWRITE_TAC[env_rel_def] THEN REWRITE_TAC[MAP] THEN
+      LIST_CASES_TAC ["e1"; "e2"] THEN EVERY_CASE_TAC THEN
+      REWRITE_TAC[DROP; oEL; ARITH_EQ; NOT_SUC; SUC_SUB1;
+                  v_rel_def] THEN
+      CONV_TAC(DEPTH_CONV BETA_CONV) THEN STRIP_TAC THEN
+      CONJ_TAC THENL
+      [ASM_REWRITE_TAC[];
+       FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]) in
+   let MAP_SUC = prove
+     (`!n ax. MAP SUC (MAP ((+) n) ax) = MAP ((+) (SUC n)) ax`,
+      GEN_TAC THEN LIST_INDUCT_TAC THEN
+      ASM_REWRITE_TAC[MAP; ADD_CLAUSES]) in
+   let MAP_ZERO = prove
+     (`!ax. MAP ((+) 0) ax = ax`,
+      LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; ADD_CLAUSES]) in
+   GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN
+   LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[LENGTH; APPEND; ADD_CLAUSES; MAP_ZERO];
+    REWRITE_TAC[LENGTH; APPEND; ADD_CLAUSES] THEN
+    ONCE_REWRITE_TAC[GSYM MAP_SUC] THEN DISCH_TAC THEN
+    MATCH_MP_TAC STEP THEN FIRST_ASSUM MATCH_MP_TAC THEN
+    ASM_REWRITE_TAC[]])
