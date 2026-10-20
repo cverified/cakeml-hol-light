@@ -162,6 +162,16 @@ kills its clones.**  That is why `hol-front` is a clone of
 `hol-template-cakeml` dies every time the template is rebuilt, and
 the frontier is the one session that must not (94 minutes).
 
+**A re-port invalidates every session that holds the files it
+rewrites.**  `needs` remembers a file by its digest, so after
+`portall.py` a loaded session will try to load a changed file
+again, and loading a file of the port twice fails (its constants
+are already defined) and leaves the session with half a theory --
+26 axioms where there should be 6, in the one I ruined that way.
+So: re-port **before** building or extending a session, and never
+while one is loading.  It is the rule that `CLAUDE.md` already
+states for runs, and it holds for the frontier too.
+
 **When a utility function is added**, which file it goes in decides
 what it costs:
 
