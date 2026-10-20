@@ -128,3 +128,26 @@ it.
 `hol-template-cakeml` and `hol-seq`, the session of a run (which
 `FORCE=1 holclean` kills as well).  It killed a run of 65 files
 before it spared `hol-seq`.
+
+## Phase three: a session per file
+
+Working on the proofs of one file means a session that holds the
+**needs closure of that file** and not the whole load order:
+
+```
+. tools/holenv.sh
+repl-clone hol-template-cakeml pfbase
+# the needs lines of the file, in a scratch file of their own
+repl-step pfbase '#use "tmp/pfprefix.ml";;'
+repl-clone hol-pfbase pf1        # the session to work in
+```
+
+For `compiler/backend/proofs/bvi_letProof.ml` that is 529 s
+against 4,131 s for the files before it in `tools/load.txt`.
+`hol-pfbase` is the template of the file and stays untouched;
+`hol-pf1` is cloned from it and is where `g`/`e`/`p` go, and it
+is cheap to throw away and clone again when a tactic hangs.
+
+**A change in `ml/lib` costs the closure again**: `retemplate`
+rebuilds `hol-template-cakeml` and kills every clone of it, so
+batch the library additions that the proofs need.

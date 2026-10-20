@@ -3613,3 +3613,31 @@ let cake_inductive tm =
 
 let cake_cheat tm =
   let th = cake_cheat tm in cake_note_def th; th;;
+
+(* ------------------------------------------------------------------ *)
+(* Two tactics that the proofs of phase three need.                   *)
+
+(* Reduce every match of the goal against the constructors that its
+   scrutinee has.  The definitions of the port are matches, so a
+   proof that unfolds one has to reduce it.  MATCH_REDUCE_CONV
+   cannot be used under a traversal for this: REPEATC never fails,
+   so ONCE_DEPTH_CONV stops at the top of the term and changes
+   nothing. *)
+
+let MATCH_REDUCE_TAC =
+  REPEAT(CHANGED_TAC(CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV)));;
+
+(* Take the named variables of a list type apart.  By name, because
+   the type of a variable of a statement is often a type variable
+   and an ISPEC of list_CASES cannot then be written down; and only
+   the named ones, because LIST_SPLIT_TAC takes every list variable
+   of a match apart, which loses the one that the induction
+   hypothesis is about (a STRUCT_CASES_TAC rewrites the goal and
+   not the assumptions). *)
+
+let LIST_CASES_TAC names (asl,w as gl) =
+  MAP_EVERY
+    (fun n ->
+       let v = find_term (fun t -> is_var t && fst(dest_var t) = n) w in
+       STRUCT_CASES_TAC (ISPEC v list_CASES))
+    names gl;;

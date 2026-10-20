@@ -14,6 +14,7 @@ needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "lib/binary_ieee.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
@@ -37,7 +38,14 @@ let env_rel_length = cake_theorem "env_rel_length"
   (fun () ->
     `!ax env env2. bvi_letProof_env_rel ax d env env2 ==> LENGTH env
   <= LENGTH env2`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THENL
+   [REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
+    MATCH_REDUCE_TAC THEN
+    DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LENGTH_DROP_LE];
+    REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
+    LIST_CASES_TAC ["env"; "env2"] THEN MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[LENGTH; LE_SUC; LE_0] THEN STRIP_TAC THEN
+    FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
 
 let env_rel_LLOOKUP_NONE = cake_theorem "env_rel_LLOOKUP_NONE[local]"
   (fun () ->
@@ -47,7 +55,24 @@ let env_rel_LLOOKUP_NONE = cake_theorem "env_rel_LLOOKUP_NONE[local]"
          n < LENGTH env ==>
          n + d < LENGTH env2 /\
          EL (n + d) env2 = EL n env`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THENL
+   [REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
+    MATCH_REDUCE_TAC THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+    REWRITE_TAC[oEL] THEN STRIP_TAC THEN
+    FIRST_X_ASSUM SUBST_ALL_TAC THEN
+    POP_ASSUM MP_TAC THEN REWRITE_TAC[LENGTH_DROP] THEN
+    DISCH_TAC THEN CONJ_TAC THENL
+    [ASM_ARITH_TAC;
+     CONV_TAC SYM_CONV THEN MATCH_MP_TAC EL_DROP THEN ASM_ARITH_TAC];
+    REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
+    LIST_CASES_TAC ["env"; "env2"] THEN MATCH_REDUCE_TAC THEN
+    CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+    STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+    REWRITE_TAC[oEL; LENGTH; EL; TL; ADD_CLAUSES; LT_SUC; LT;
+                NOT_SUC; ARITH_EQ; SUC_SUB1;
+                distinctness "option"] THEN
+    STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+    ASM_REWRITE_TAC[]]);;
 
 let env_rel_LOOKUP_SOME = cake_theorem "env_rel_LOOKUP_SOME[local]"
   (fun () ->
@@ -56,7 +81,18 @@ let env_rel_LOOKUP_SOME = cake_theorem "env_rel_LOOKUP_SOME[local]"
          (\l n. oEL n l) ax n = SOME x ==>
          bvi_letProof_v_rel x (EL n env) (EL n env2) (DROP n env)
            (DROP n env2)`)
-  CHEAT_TAC;;
+  (let UNFOLD = CONV_TAC(DEPTH_CONV BETA_CONV) in
+   REWRITE_TAC[v_rel_def] THEN UNFOLD THEN
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ONCE_REWRITE_TAC[env_rel_def] THEN
+   LIST_CASES_TAC ["ax"; "env2"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[v_rel_def] THEN UNFOLD THEN
+   REWRITE_TAC[oEL; distinctness "option"] THEN
+   STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+   REWRITE_TAC[EL; TL; HD; DROP; ARITH_EQ; NOT_SUC; SUC_SUB1;
+               distinctness "option"; injectivity "option"] THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[oEL] THEN
+   ASM_MESON_TAC[]);;
 
 let evaluate_delete_var_Rerr_SING =
   cake_theorem "evaluate_delete_var_Rerr_SING"
@@ -65,7 +101,18 @@ let evaluate_delete_var_Rerr_SING =
         evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort
           Rtype_error) ==>
         evaluate ([delete_var x],env2,s) = (Rerr e,r)`)
-  CHEAT_TAC;;
+  (let dv = cake_def "bvi_let_delete_var" in
+   let ev = cake_def "bviSem_evaluate" in
+   REPEAT GEN_TAC THEN
+   STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
+   REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
+   TRY(DISCH_THEN(ACCEPT_TAC o CONJUNCT1)) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[PAIR_EQ; distinctness "semanticPrimitives_result";
+               injectivity "semanticPrimitives_result"] THEN
+   ASM_MESON_TAC[]);;
 
 let evaluate_delete_var_Rerr =
   cake_theorem "evaluate_delete_var_Rerr[local]"
@@ -100,13 +147,18 @@ let evaluate_SNOC_Rval = cake_theorem "evaluate_SNOC_Rval"
 let compile_CONS = cake_theorem "compile_CONS"
   (fun () ->
     `compile ax d (x :: xs) = compile ax d [x] ++ compile ax d xs`)
-  CHEAT_TAC;;
+  (let compile_def = cake_def "bvi_let_compile" in
+   STRUCT_CASES_TAC(ISPEC `xs:bvi_exp list` list_CASES) THEN
+   REWRITE_TAC[compile_def; APPEND_NIL]);;
 
 let compile_APPEND = cake_theorem "compile_APPEND"
   (fun () ->
     `!xs ys ax d. compile ax d (xs ++ ys) = compile ax d xs ++ compile
   ax d ys`)
-  CHEAT_TAC;;
+  (let compile_def = cake_def "bvi_let_compile" in
+   LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; compile_def] THEN
+   ONCE_REWRITE_TAC[compile_CONS] THEN
+   ASM_REWRITE_TAC[GSYM APPEND_ASSOC]);;
 
 let IMP_COMM = cake_theorem "IMP_COMM"
   (fun () ->
@@ -130,7 +182,13 @@ let env_rel_REPLICATE_0 = cake_theorem "env_rel_REPLICATE_0[local]"
        bvi_letProof_env_rel ax d env1 env2 ==>
        bvi_letProof_env_rel (REPLICATE (LENGTH vs) 0 ++ ax) d (vs
          ++ env1) (vs ++ env2)`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+   ASM_REWRITE_TAC[REPLICATE; LENGTH; APPEND] THEN
+   ONCE_REWRITE_TAC[env_rel_def] THEN MATCH_REDUCE_TAC THEN
+   CONJ_TAC THENL
+   [REWRITE_TAC[v_rel_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+    REWRITE_TAC[oEL];
+    ASM_SIMP_TAC[]]);;
 
 let evaluate_env_rel = cake_theorem "evaluate_env_rel"
   (fun () ->
@@ -180,7 +238,17 @@ let evaluate_compile_exp = cake_theorem "evaluate_compile_exp"
 let dest_var_code_labels = cake_theorem "dest_var_code_labels[simp]"
   (fun () ->
     `!x. get_code_labels (delete_var x) = get_code_labels x`)
-  CHEAT_TAC;;
+  (let dv = cake_def "bvi_let_delete_var" in
+   let gcl = cake_def "bviProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   GEN_TAC THEN
+   STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
+   REWRITE_TAC[dv] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[gcl; agcl] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+               UNION_EMPTY; EMPTY_UNION]);;
 
 let compile_code_labels = cake_theorem "compile_code_labels"
   (fun () ->

@@ -745,3 +745,68 @@ _What the port counts the whole time: `length (axioms ())`, which
 `tools/bin/postrun` reports per run, and `ml/CHEATS.md`, which
 says of every cheat what kind it is.  Phase three is done when
 both say 3 and nothing._
+
+## How a proof gets into the port
+
+_`ml/` is generated, so a proof does not live there: it is a
+section of `proofs/<path>.prf` that names the theorem of the HOL4
+source, and `tools/port.py` splices it in where the `CHEAT_TAC` of
+phase two stands (`tools/proofstore.py`; `tools/proofs.py` checks
+that every section still names a theorem that the port states, the
+one thing a re-port cannot show).  A theorem with no section keeps
+its cheat, so the proofs come one at a time and a re-port never
+loses one.  The termination of a definition is not a theorem of the
+source: that tactic goes in `overrides.TERMINATION`, keyed by
+(theory, the name of the block), where it already went._
+
+_Working on a file means a session with the **needs closure of
+that file** loaded (a clone of `hol-template-cakeml` and the
+`needs` lines of the file: 529 s for `bvi_letProof`, against 4,131
+s for the whole load order up to it).  The closure is the template
+for the file, cloned per attempt; a change in `ml/lib` costs it
+again, because `retemplate` rebuilds the clone tree._
+
+## What the first file measured
+
+_`compiler/backend/proofs/bvi_letProof.ml`, the first file of
+phase three: 17 theorems, 118 lines of HOL4 tactic script (the
+median file of the port has 183).  Nine of the 17 proved, every
+proof timed from reading HOL4's to a verified HOL Light one:_
+
+| | seconds |
+|---|---|
+| IMP_COMM, compile_CONS, compile_APPEND (1-3 lines of HOL4) | 25, 19, 9 |
+| evaluate_delete_var_Rerr_SING, env_rel_LLOOKUP_NONE | 18, 46 |
+| env_rel_REPLICATE_0, env_rel_LOOKUP_SOME | 95, 166 |
+| dest_var_code_labels | 206 |
+| env_rel_length (the first proof over a `match` definition; the
+  two tactics below came out of it) | 700 |
+| EL_DROP, a list lemma of HOL4 that HOL Light has not | 71 |
+
+_Nine proofs and one library lemma: 1,355 s in all, median 71 s,
+mean 73 s without the one that found the idioms.  One more
+(`evaluate_delete_var_Rerr`, 10 lines of HOL4) was given 219 s and
+is **not** done: it needs the case analysis of the BVI semantics,
+which is the shape of the eight that are left in the file._
+
+_Three things came out of the file that every other file needs:_
+
+- _an overload that a source **brings to the front**
+  (`bring_to_front_overload`) is part of what its statements say.
+  Without it `compile` in `bvi_letProof` is `clos_mti_compile`:
+  the statement reads, every check passes, and the theorem is
+  about another constant.  `tools/port.py` writes the
+  `hol4_overload` now, in 16 files; five calls of five more go
+  through an ML helper of the source and get a pointer instead._
+- _a definition keeps the name of its block, so 28 files of the
+  port bind a `compile_def` and OCaml sees the one of the file
+  that loaded last.  A proof names the definition it needs by the
+  constant, which is unique: `cake_def "bvi_let_compile"`
+  (`ml/lib/define.ml`)._
+- _`MATCH_REDUCE_TAC` and `LIST_CASES_TAC` (`ml/lib/define.ml`):
+  the definitions of the port are `match`es, and a proof that
+  unfolds one has to reduce it and to take the right variables
+  apart.  `MATCH_REDUCE_CONV` cannot be used under a traversal
+  (`REPEATC` never fails, so `ONCE_DEPTH_CONV` stops at the top)
+  and `LIST_SPLIT_TAC` takes every list variable of the match
+  apart, which loses the one the induction hypothesis is about._
