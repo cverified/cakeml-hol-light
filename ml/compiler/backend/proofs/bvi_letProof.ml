@@ -479,7 +479,35 @@ let evaluate_compile_exp = cake_theorem "evaluate_compile_exp"
     `evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error))
   ==>
       evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`)
-  CHEAT_TAC;;
+  (let ce = cake_def "bvi_let_compile_exp" in
+   let er = cake_def "bvi_letProof_env_rel" in
+   (* compile_exp x is the one expression that compile makes of the
+      list [x], which compile_HD_SING says is a singleton *)
+   let exp_SING = prove
+    (`!x. [bvi_let_compile_exp x] = bvi_let_compile [] 0 [x]`,
+     GEN_TAC THEN REWRITE_TAC[ce] THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+       [GSYM compile_HD_SING] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[compile_HD_SING]) in
+   (* and at ax = [] and d = 0 the environment relation is
+      reflexive: it says env = DROP 0 env *)
+   let env_rel_refl = prove
+    (`!env. bvi_letProof_env_rel [] 0 env env`,
+     GEN_TAC THEN ONCE_REWRITE_TAC[er] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[DROP_0]) in
+   (* the terms come from the goal, because the statement of the
+      source annotates no type and the state of this one is an
+      invented type variable that nothing written by hand matches;
+      and the ys of evaluate_env_rel, which its statement does not
+      use, comes back as a universal quantifier that SPEC_ALL takes
+      off *)
+   REWRITE_TAC[exp_SING] THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun ev ->
+     let tup = rand(lhs(concl ev)) in
+     let env_tm = fst(dest_pair(snd(dest_pair tup))) in
+     FIRST_ASSUM(fun ne ->
+       ACCEPT_TAC(SPEC_ALL(MATCH_MP evaluate_env_rel
+         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne)))))));;
 
 let dest_var_code_labels = cake_theorem "dest_var_code_labels[simp]"
   (fun () ->

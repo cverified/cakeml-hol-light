@@ -75,3 +75,10 @@ let oEL_SOME = prove
   REWRITE_TAC[oEL; ARITH_EQ; NOT_SUC; SUC_SUB1; LENGTH; EL; TL;
               HD; LT_0; LT_SUC; injectivity "option"] THEN
   FIRST_ASSUM MATCH_ACCEPT_TAC);;
+
+(* HOL4's DROP_0: the clauses of DROP decide on the number, so
+   DROP 0 of a list that is a variable does not reduce *)
+
+let DROP_0 = prove
+ (`!l:A list. DROP 0 l = l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[DROP]);;
