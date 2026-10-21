@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  clos_ticks: ported from HOL4's
-    compiler/backend/clos_ticksScript.sml
-    A definition theory, with 3 definitions and 2 theorems.  Needed
-    by clos_known.ml and clos_ticksProof.ml.  *)
+    compiler/backend/clos_ticksScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -104,7 +102,7 @@ hol4_overload "remove_ticks_sing" "clos_ticks_remove_ticks_sing";;
 
 (* HOL4 clos_ticksScript.sml:77: ML code, not ported *)
 
-let clos_ticks_LENGTH_remove_ticks = cake_theorem "LENGTH_remove_ticks"
+let LENGTH_remove_ticks = cake_theorem "LENGTH_remove_ticks"
   (fun () ->
     `!(es:closLang_exp list). LENGTH (clos_ticks_remove_ticks es) =
   LENGTH es`)

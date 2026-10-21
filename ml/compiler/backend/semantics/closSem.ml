@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  closSem: ported from HOL4's
-    compiler/backend/semantics/closSemScript.sml
-    A definition theory, with 30 definitions, 5 datatypes and 14
-    theorems.  Needed by 37 files of the port.  *)
+    compiler/backend/semantics/closSemScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -774,7 +772,7 @@ let fix_clock_def = cake_define
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "closSem_fix_clock";;
 
-let closSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
+let fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
   (fun () ->
     `closSem_fix_clock s x = (res,s1) ==> state_clock s1 <=
   state_clock s`)
@@ -1107,7 +1105,7 @@ let evaluate_clock_help = cake_theorem "evaluate_clock_help[local]"
            closSem_state_clock s2 <= closSem_state_clock s1)`)
   CHEAT_TAC;;
 
-let closSem_evaluate_clock = cake_theorem "evaluate_clock"
+let evaluate_clock = cake_theorem "evaluate_clock"
   (fun () ->
     `(!xs env s1 vs s2.
           (closSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock
@@ -1117,7 +1115,7 @@ let closSem_evaluate_clock = cake_theorem "evaluate_clock"
             state_clock s2 <= state_clock s1)`)
   CHEAT_TAC;;
 
-let closSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
+let fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
   (fun () ->
     `closSem_fix_clock s (closSem_evaluate (xs,env,s)) =
   closSem_evaluate (xs,env,s)`)

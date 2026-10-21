@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  bviProps: ported from HOL4's
-    compiler/backend/semantics/bviPropsScript.sml
-    A proof theory about bvi.ml, with 6 definitions and 82 theorems.
-    Needed by 6 files of the port.  *)
+    compiler/backend/semantics/bviPropsScript.sml  *)
 (* ======================================================== *)
 
 (*

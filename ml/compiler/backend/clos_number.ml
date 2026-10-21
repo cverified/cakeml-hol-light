@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  clos_number: ported from HOL4's
-    compiler/backend/clos_numberScript.sml
-    A definition theory, with 3 definitions and 1 theorem.  Needed
-    by backendProof.ml, backend_passes.ml, clos_numberProof.ml,
-    clos_to_bvl.ml and clos_to_bvlProof.ml.  *)
+    compiler/backend/clos_numberScript.sml  *)
 (* ======================================================== *)
 
 (*

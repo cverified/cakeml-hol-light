@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  clos_call: ported from HOL4's
-    compiler/backend/clos_callScript.sml
-    A definition theory, with 12 definitions and 16 theorems.
-    Needed by backendProof.ml, clos_callProof.ml, clos_to_bvl.ml and
-    clos_to_bvlProof.ml.  *)
+    compiler/backend/clos_callScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -439,7 +436,7 @@ let calls_sing = cake_theorem "calls_sing"
     `!x g0 ys g. calls [x] g0 = (ys,g) ==> (?y. ys = [y])`)
   CHEAT_TAC;;
 
-let clos_call_compile_LENGTH = cake_theorem "compile_LENGTH"
+let compile_LENGTH = cake_theorem "compile_LENGTH"
   (fun () ->
     `clos_call_compile x y = (a,b) ==> LENGTH y = LENGTH a`)
   CHEAT_TAC;;

@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  bvlSem: ported from HOL4's
-    compiler/backend/semantics/bvlSemScript.sml
-    A definition theory, with 23 definitions, 4 datatypes and 10
-    theorems.  Needed by 15 files of the port.  *)
+    compiler/backend/semantics/bvlSemScript.sml  *)
 (* ======================================================== *)
 
 (*

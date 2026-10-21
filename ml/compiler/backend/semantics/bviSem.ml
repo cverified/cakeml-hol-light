@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  bviSem: ported from HOL4's
-    compiler/backend/semantics/bviSemScript.sml
-    A definition theory, with 12 definitions, 3 datatypes and 7
-    theorems.  Needed by 7 files of the port.  *)
+    compiler/backend/semantics/bviSemScript.sml  *)
 (* ======================================================== *)
 
 (*

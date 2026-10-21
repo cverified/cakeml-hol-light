@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  location: ported from HOL4's
-    examples/formal-languages/context-free/locationScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 14 files of the port.  *)
+    examples/formal-languages/context-free/locationScript.sml  *)
 (* ======================================================== *)
 
 let locn_INDUCT,locn_RECURSION = define_datatype

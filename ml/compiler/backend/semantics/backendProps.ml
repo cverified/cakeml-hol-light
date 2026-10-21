@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  backendProps: ported from HOL4's
-    compiler/backend/semantics/backendPropsScript.sml
-    A proof theory about backend.ml, with 14 definitions and 49
-    theorems.  Needed by 34 files of the port.  *)
+    compiler/backend/semantics/backendPropsScript.sml  *)
 (* ======================================================== *)
 
 (*

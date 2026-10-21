@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  clos_to_bvl: ported from HOL4's
-    compiler/backend/clos_to_bvlScript.sml
-    A definition theory, with 45 definitions, 1 datatype and 24
-    theorems.  Needed by 9 files of the port.  *)
+    compiler/backend/clos_to_bvlScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -719,13 +717,13 @@ let compile_exps_acc = cake_theorem "compile_exps_acc"
           (LENGTH c = LENGTH xs) /\ (?ys. aux1 = ys ++ aux)`)
   CHEAT_TAC;;
 
-let clos_to_bvl_compile_exps_LENGTH = cake_theorem "compile_exps_LENGTH"
+let compile_exps_LENGTH = cake_theorem "compile_exps_LENGTH"
   (fun () ->
     `(clos_to_bvl_compile_exps max_app xs aux = (c,aux1)) ==> (LENGTH
   c = LENGTH xs)`)
   CHEAT_TAC;;
 
-let clos_to_bvl_compile_exps_SING = cake_theorem "compile_exps_SING"
+let compile_exps_SING = cake_theorem "compile_exps_SING"
   (fun () ->
     `(clos_to_bvl_compile_exps max_app [x] aux = (c,aux1)) ==> (?d. c
   = [d])`)

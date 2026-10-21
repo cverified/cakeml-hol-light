@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  backend_common: ported from HOL4's
-    compiler/backend/backend_commonScript.sml
-    A definition theory, with 28 definitions, 2 datatypes and 3
-    theorems.  Needed by 67 files of the port.  *)
+    compiler/backend/backend_commonScript.sml  *)
 (* ======================================================== *)
 
 (*
