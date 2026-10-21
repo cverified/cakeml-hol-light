@@ -44,3 +44,23 @@ let oEL_APPEND = prove
   REWRITE_TAC[LENGTH; APPEND; ADD_CLAUSES; oEL; NOT_SUC;
               SUC_SUB1] THEN
   ASM_REWRITE_TAC[]);;
+
+(* the two size facts that a measure induction over a definition
+   which recurses on BUTLAST and LAST needs (HOL4 gets them from
+   its own size simp set) *)
+
+let list_size_BUTLAST = prove
+ (`!(f:A->num) l. list_size f (BUTLAST l) <= list_size f l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[BUTLAST; list_size; LE_REFL] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[list_size; LE_0] THEN
+  ASM_ARITH_TAC);;
+
+let list_size_LAST = prove
+ (`!(f:A->num) l. ~(l = []) ==> f (LAST l) <= list_size f l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[NOT_CONS_NIL; LAST; list_size] THEN
+  COND_CASES_TAC THENL
+  [ARITH_TAC;
+   FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun c ->
+     MP_TAC(MATCH_MP ih c))) THEN ARITH_TAC]);;

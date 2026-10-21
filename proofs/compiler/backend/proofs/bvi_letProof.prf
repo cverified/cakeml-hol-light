@@ -205,39 +205,6 @@
                             (&0):int <= &268435457`;
                  distinctness "closLang_op"] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   (* so the head leaves the same state either way ... *)
-   let stateq = prove
-    (`!(x:bvi_exp) env2 (s:('c,'ffi)bviSem_state) v t u w.
-        evaluate ([x],env2,s) = (v,t) /\
-        evaluate ([delete_var x],env2,s) = (u,w) ==> w = t`,
-     REPEAT GEN_TAC THEN
-     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
-     REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
-     FIRST
-      [(* the ten that delete_var leaves alone: one evaluation *)
-       SOLVED(DISCH_THEN(fun th ->
-                MP_TAC(TRANS (SYM(CONJUNCT2 th)) (CONJUNCT1 th))) THEN
-              REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
-              ASM_REWRITE_TAC[]);
-       (* and the Var, where both leave the state it came in with *)
-       (REWRITE_TAC[opev; ev] THEN COND_CASES_TAC THEN
-        REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN VAR_EQ_TAC THEN
-        REFL_TAC)]) in
-   (* ... and a head that succeeds still succeeds *)
-   let valev = prove
-    (`!(x:bvi_exp) env2 (s:('c,'ffi)bviSem_state) v t.
-        evaluate ([x],env2,s) = (Rval v,t) ==>
-        ?w. evaluate ([delete_var x],env2,s) = (Rval w,t)`,
-     REPEAT GEN_TAC THEN
-     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
-     REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
-     FIRST
-      [SOLVED(DISCH_TAC THEN EXISTS_TAC `v:bvlSem_v list` THEN
-              ASM_REWRITE_TAC[]);
-       (REWRITE_TAC[opev; ev] THEN COND_CASES_TAC THEN
-        REWRITE_TAC res_rws THEN STRIP_TAC THEN
-        EXISTS_TAC `[(Number (&0)):bvlSem_v]` THEN
-        ASM_REWRITE_TAC[])]) in
    (* and the Var is the only head whose extract is not 0 *)
    let notvar = prove
     (`!(x:bvi_exp). ~(?i. x = Var i)
@@ -379,3 +346,174 @@
     ONCE_REWRITE_TAC[GSYM MAP_SUC] THEN DISCH_TAC THEN
     MATCH_MP_TAC STEP THEN FIRST_ASSUM MATCH_MP_TAC THEN
     ASM_REWRITE_TAC[]])
+
+### compile_code_labels
+  (let cp = cake_def "bvi_let_compile" in
+   let gcl = cake_def "bviProps_get_code_labels" in
+   let sz = size_thms "bvi_exp" in
+   let labs_rws = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+                   UNION_EMPTY; EMPTY_UNION] in
+   let labs_APPEND = prove
+    (`!a b. BIGUNION (set_of_list (MAP get_code_labels
+              (APPEND a b))) =
+            BIGUNION (set_of_list (MAP get_code_labels a)) UNION
+            BIGUNION (set_of_list (MAP get_code_labels b))`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[APPEND; MAP; set_of_list; UNIONS_0;
+                     UNIONS_INSERT; UNION_EMPTY; UNION_ASSOC]) in
+   (* a compiled singleton is a singleton (compile_HD_SING), so the
+      labels of its head are the labels of the list *)
+   let labs_SING = prove
+    (`!n d x. get_code_labels (HD (bvi_let_compile n d [x])) =
+              BIGUNION (set_of_list (MAP get_code_labels
+                (bvi_let_compile n d [x])))`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
+       [GSYM compile_HD_SING] THEN
+     REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
+                 UNION_EMPTY]) in
+   let labs_delete_var = prove
+    (`!l. BIGUNION (set_of_list (MAP get_code_labels
+            (MAP delete_var l))) =
+          BIGUNION (set_of_list (MAP get_code_labels l))`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+                     dest_var_code_labels]) in
+   (* HOL4 does this induction with recInduct compile_ind, the
+      induction theorem that its termination proof left behind
+      (bvi_letProofScript.sml:420).  HOL Light's define keeps no
+      such theorem, and compile recurses on BUTLAST, which is not
+      a structural sub-term, so bvi_exp_INDUCT will not do either:
+      what is left is induction on the measure that the definition
+      itself was made with, and a side condition for every use of
+      the hypothesis. *)
+   let cond t =
+     mk_binop `(<=):num->num->bool`
+       (list_mk_icomb "list_size" [`bvi_exp_size`; t]) `n:num` in
+   let size_tac =
+     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
+     REWRITE_TAC(list_size :: sz) THEN ASM_ARITH_TAC in
+   let use_ih_by tac t =
+     SUBGOAL_THEN (cond t)
+       (fun c -> FIRST_ASSUM(fun ih -> REWRITE_TAC[MATCH_MP ih c]))
+     THEN TRY tac in
+   let use_ih = use_ih_by size_tac in
+   let finish =
+     REWRITE_TAC labs_rws THEN TRY(REWRITE_TAC[UNION_ACI]) in
+   let unfold = REWRITE_TAC(cp :: gcl :: labs_SING :: labs_rws) in
+   (* the Let is the one clause that compiles something other than
+      a sub-term: the list without its last expression, and that
+      last expression as the new body *)
+   let let_case =
+     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     ASM_CASES_TAC `LENGTH (es:bvi_exp list) = 0` THEN
+     ASM_REWRITE_TAC[] THENL
+     [FIRST_ASSUM(SUBST_ALL_TAC o REWRITE_RULE[LENGTH_EQ_NIL]) THEN
+      REWRITE_TAC(gcl :: labs_rws) THEN use_ih `[e:bvi_exp]` THEN
+      finish;
+      ALL_TAC] THEN
+     ASM_CASES_TAC
+       `(e:bvi_exp) = Var (LENGTH (es:bvi_exp list) - 1)` THEN
+     ASM_REWRITE_TAC[] THENL
+     [REWRITE_TAC(gcl :: labs_SING :: labs_rws) THEN
+      use_ih_by (MP_TAC(ISPECL [`bvi_exp_size`; `es:bvi_exp list`]
+                          list_size_BUTLAST) THEN size_tac)
+        `BUTLAST (es:bvi_exp list)` THEN
+      use_ih_by
+        (MP_TAC(MATCH_MP (ISPEC `bvi_exp_size` list_size_LAST)
+                  (REWRITE_RULE[LENGTH_EQ_NIL]
+                     (ASSUME `~(LENGTH (es:bvi_exp list) = 0)`))) THEN
+         size_tac)
+        `[LAST (es:bvi_exp list)]` THEN
+      FIRST_ASSUM(fun th ->
+        GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
+          [GSYM (MATCH_MP APPEND_BUTLAST_LAST
+                   (REWRITE_RULE[LENGTH_EQ_NIL] th))]) THEN
+      REWRITE_TAC[labs_APPEND] THEN finish;
+      REWRITE_TAC(gcl :: labs_SING :: labs_rws) THEN
+      REWRITE_TAC[labs_delete_var] THEN
+      use_ih `es:bvi_exp list` THEN use_ih `[e:bvi_exp]` THEN
+      finish] in
+   let sub_cases =
+     [(* Var *)
+      REWRITE_TAC[cp] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+      EVERY_CASE_TAC THEN REWRITE_TAC(gcl :: labs_rws);
+      (* If *)
+      unfold THEN use_ih `[e1:bvi_exp]` THEN
+      use_ih `[e2:bvi_exp]` THEN use_ih `[e3:bvi_exp]` THEN finish;
+      (* Let *)
+      let_case;
+      (* Raise *)
+      unfold THEN use_ih `[e:bvi_exp]` THEN finish;
+      (* Tick *)
+      unfold THEN use_ih `[e:bvi_exp]` THEN finish;
+      (* Call *)
+      REWRITE_TAC[cp] THEN
+      NAMED_CASES_TAC `hh:bvi_exp option` [[]; ["ce"]] THEN
+      unfold THEN use_ih `es:bvi_exp list` THEN
+      TRY(use_ih `[ce:bvi_exp]`) THEN finish;
+      (* Force *)
+      REWRITE_TAC[cp] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+      EVERY_CASE_TAC THEN REWRITE_TAC(gcl :: labs_rws);
+      (* Op *)
+      unfold THEN use_ih `es:bvi_exp list` THEN finish;
+      (* LetCall *)
+      unfold THEN use_ih `es:bvi_exp list` THEN
+      use_ih `[e:bvi_exp]` THEN finish;
+      (* Return *)
+      unfold THEN use_ih `es:bvi_exp list` THEN finish] in
+   let single_case =
+     NAMED_CASES_TAC `z1:bvi_exp`
+       [["v"]; ["e1"; "e2"; "e3"]; ["es"; "e"]; ["e"]; ["e"];
+        ["tt"; "dd"; "es"; "hh"]; ["loc"; "v"]; ["op"; "es"];
+        ["rets"; "tt"; "dd"; "es"; "e"]; ["es"]] THENL sub_cases in
+   let cons_cons_case =
+     REWRITE_TAC[cp; labs_APPEND] THEN
+     use_ih `[z1:bvi_exp]` THEN use_ih `(z2:bvi_exp) :: zs2` THEN
+     finish in
+   let base_case =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `z:bvi_exp list` [[]; ["z1"; "zs"]] THENL
+     [REWRITE_TAC[cp];
+      FIRST_ASSUM MP_TAC THEN
+      REWRITE_TAC[list_size; ARITH_RULE `~(1 + a + b <= 0)`]] in
+   let step_case =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `z:bvi_exp list` [[]; ["z1"; "zs"]] THENL
+     [REWRITE_TAC[cp];
+      NAMED_CASES_TAC `zs:bvi_exp list` [[]; ["z2"; "zs2"]] THENL
+      [single_case; cons_cons_case]] in
+   SUBGOAL_THEN
+     `!n x y z. list_size bvi_exp_size z <= n ==>
+        BIGUNION (set_of_list (MAP get_code_labels
+          (bvi_let_compile x y z))) =
+        BIGUNION (set_of_list (MAP get_code_labels z))`
+     (fun th -> REPEAT GEN_TAC THEN
+        MATCH_MP_TAC(SPEC `list_size bvi_exp_size (z:bvi_exp list)`
+                       th) THEN
+        REWRITE_TAC[LE_REFL]) THEN
+   INDUCT_TAC THENL [base_case; step_case])
+
+### compile_exp_code_labels
+  (let ce = cake_def "bvi_let_compile_exp" in
+   (* compile_exp is the head of the compiled singleton, so its
+      labels are the labels of the list that compile_code_labels
+      speaks about *)
+   let labs_SING = prove
+    (`!n d x. get_code_labels (HD (bvi_let_compile n d [x])) =
+              BIGUNION (set_of_list (MAP get_code_labels
+                (bvi_let_compile n d [x])))`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
+       [GSYM compile_HD_SING] THEN
+     REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
+                 UNION_EMPTY]) in
+   GEN_TAC THEN REWRITE_TAC[ce] THEN
+   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+     [GSYM compile_HD_SING] THEN
+   MATCH_REDUCE_TAC THEN
+   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [labs_SING] THEN
+   REWRITE_TAC[compile_code_labels] THEN
+   REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
+               UNION_EMPTY])

@@ -24,7 +24,8 @@ for s in "$@"; do
   done
   err=$(tmux capture-pane -p -J -S - -t "hol-$s" |
         sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' |
-        awk '/^RELOAD-MARK$/ { seen = 1; next } seen' |
+        awk '/^RELOAD-MARK$/ { n = 0; next } { a[n++] = $0 }
+             END { for (i = 0; i < n; i++) print a[i] }' |
         grep -E '^(Error|Exception)' | tail -1)
   if [ -n "$err" ]; then echo "hol-$s: $err"
   else echo "hol-$s: lemmas and tactics reloaded"; fi
