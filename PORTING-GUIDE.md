@@ -51,7 +51,7 @@ add it to the index.
 | 14 | the order of a `case` split | the condition before the hypothesis |
 | 15 | a non-empty list written as a `SNOC` | `SNOC_CASES` and four laws |
 | 16 | a session loaded out of the port's order | the file's own `needs` |
-| 17 | a `Definition` whose recursion is nested | not yet: `PENDING.md` |
+| 17 | a `Definition` not made | `DEFINE_REL`, two size facts |
 
 ## 1. `case x of` in a term, and `every_case_tac`
 
@@ -1198,7 +1198,7 @@ mis-ordered session the constant really does come out polymorphic,
 because the clause that would have pinned the argument down was
 read at another language's type and dropped.  It is a symptom.
 
-## 17. A `Definition` whose recursion is nested
+## 17. A `Definition` that the machinery will not make
 
 ### The idiom
 
@@ -1216,66 +1216,100 @@ End
 ```
 
 (`bvi_letScript.sml:68-168`.)  The second recursive call is made in
-an environment that the **result** of the first one builds.
+an environment that the **result** of the first one builds, and the
+clause also recurses on `BUTLAST xs` and `LAST xs`.
 
 ### What it means
 
 HOL4's `TotalDefn` asks only that the measure go down at every
-recursive call.  The measure here is on the third argument, the
-nested call's third argument is `[x2]`, and `exp2_size [x2]` is
-smaller than `exp2_size [Let xs x2]`, so the condition holds and
-the definition is made.  That the first argument happens to mention
-`compile` does not enter the argument at all.
+recursive call.  The measure is on the third argument; the inner
+call sits in the first, where it changes nothing; and the third
+argument of every call (`[x2]`, `xs`, `BUTLAST xs`, `[LAST xs]`) is
+smaller.  So it is not a nested recursion as far as the *relation*
+is concerned, and HOL Light's `pure_prove_recursive_function_exists`
+takes the clauses as they stand and leaves one hypothesis: the
+existence of a well-founded relation with those conditions.
 
 ### What resisted
 
-HOL Light's machinery never gets as far as the condition.  Both
-front ends -- `pure_prove_recursive_function_exists`, which the
-port uses when it has a relation, and
-`prove_general_recursive_function_exists`, which it uses when it
-has none -- fail in the clause-to-match analysis with a kernel
-`Failure "ABS"`, which says that some rule tried to abstract a
-variable that a hypothesis has free and says nothing about where.
-It is not the eight second budget (six hundred seconds do not
-help), not the `let`s (expanding them changes nothing), and not the
-recursion on `BUTLAST xs` and `LAST xs`, which goes through on its
-own.  Eleven of the twelve clauses go through; the twelfth with the
-nested call taken out goes through; with it in, nothing does.
+Three things at once, and none of them a proof.
+
+1. **The conditions need two size facts** that `cake_term_lemmas`
+   has no reason to carry: `list_size f (BUTLAST l) <= list_size f
+   l` and `~(l = []) ==> f (LAST l) <= list_size f l`.  Without
+   them `discharge_conditions` cannot prove the two `Let` branches.
+2. **Eight seconds.**  `cake_cheat_budget` is what a definition gets
+   before it is assumed instead, and these two take about twenty
+   each.
+3. **The relation never gets its turn.**  `cake_define_gen` tries
+   eight strategies before the one that uses the relation
+   (`prim_rec`, `nested`, `maplist`, `cond_bool`, `sing`, `cases`,
+   `match`, `lift_if`), each guarded by `with Failure _ when not
+   (declared ())`.  One of them declares the constant and then
+   fails, and from there nothing more is tried: `define_single`
+   with HOL4's own relation, which makes the definition in a minute
+   with no axiom, is never reached.
 
 ### What the port does
 
-Nothing yet: `compile` and `compile_sing` are the two definitions
-that `cake_cheat` assumes whole, and they are the two axioms that
-`compiler/backend/bvi_let.ml` still costs after all its theorems
-are proved.  `PENDING.md` has the minimal case to reproduce it.
+Three overrides, all keyed on the one definition, so nothing else
+of the port can notice:
 
-What paying it asks for is a **strategy of its own** in
-`ml/lib/define.ml`: the clauses compiled into one equation with
-the port's own `compile_cases`, and the existence proved with
-`WF_REC` on the measure rather than through the pattern front end.
-Admissibility -- the second antecedent of `WF_REC` -- holds for a
-nested call exactly because its measure argument is smaller too, so
-`ADMISS_TERM_TAC` and `AGREE_TAC`, which the port already has, are
-what would discharge it.  The strategy goes last in the chain of
-`cake_define_gen`, where it can turn a cheat into a definition and
-cannot change one that already works; what it needs for itself is a
-run, because every definition of the port goes through that
-function.
+```python
+EXTRA_BEFORE[('bvi_let','compile_def')]   # the two size facts,
+                                          # and the budget
+EXTRA_AFTER[('bvi_let','compile_sing_def')]   # both taken back
+DEFINE_REL = set([('bvi_let','compile_def')])  # the relation
+                                               # to define_single
+TERMINATION[('bvi_let','compile_sing_def')] = 'TERM_TAC'
+```
+
+and `tools/port.py` writes, for a definition in `DEFINE_REL`,
+
+```ocaml
+let compile_def =
+  let th = end_itlist CONJ (fst (define_single
+    [(`MEASURE (list_size bvi_exp_size o SND o SND)`,
+      TERM_TAC)]
+    (cake_conj_list
+  [ ... the clauses ... ]))) in
+  (note_dest_fact th; cake_note_def th; th);;
+```
+
+`compile_sing` needs no such thing once the facts and the budget
+are there -- the chain reaches the relation for it -- so what
+stands in its `CHEAT_TAC` slot is `TERM_TAC`: the tactic a leftover
+condition would be proved with, which is a no-op when there is
+none and an honest failure when there is.
 
 ### Where it lives
 
-`PENDING.md`, under the definitions the port does not make.
+`tools/overrides.py` (`DEFINE_REL`, `TERMINATION`, `EXTRA_BEFORE`,
+`EXTRA_AFTER`) and the `DEFINE_REL` branch of `tools/port.py`.
+`compiler/backend/bvi_let.ml` adds **no axiom** with them.
 
 ### Dead ends
 
-- Expanding the `let`s first (`LET_DEF`, `LET_END_DEF` and a beta
-  reduction): the same failure.
-- The route without a relation.  `define_single []` uses the
-  general front end, and it fails in the same place; and the
-  strategy chain of `cake_define_gen` would not reach it anyway,
-  because `with Failure _ when not (declared ())` stops at the
-  first strategy that has declared the constant.
-- Raising `cake_cheat_budget`.  Nothing is timing out.
+The one that cost the time, and the lesson of this entry: **a probe
+of the definition machinery in a session where the auxiliary
+constants are only variables tells you nothing.**  Trying the
+clauses by hand in a session that has `bvi.ml` but not `bvi_let.ml`
+leaves `delete_var` and `extract_list` as free *variables*, and
+`close_clause` then universally quantifies them -- so the clause
+says that `compile env d [Let xs x2]` equals something that depends
+on a quantified variable its left side does not mention.  HOL Light
+fails on that with a kernel `Failure "ABS"`, which names nothing
+and points nowhere, and every bisection of the clause set
+faithfully reproduces it.  An hour went into the conclusion that
+HOL Light cannot do nested recursion, and into permuting the
+arguments to get rid of a nesting that was never the problem.  The
+session with `bvi_let.ml` loaded answers `ok, hyps 1` to the very
+first try.  Entry 16 is the same lesson about the overloads; this
+is it about the constants.
+
+Also dead: raising `cake_cheat_budget` alone (the conditions still
+fail), adding the size facts alone (the chain still does not reach
+the relation), and expanding the `let`s.
 
 ---
 

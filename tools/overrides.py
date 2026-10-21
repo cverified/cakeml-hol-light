@@ -1022,7 +1022,30 @@ MATCH_FORM = set([
 # real, and the next run says so, because the cheat list comes out
 # of ml/CHEATS.md, which a run writes.
 TERMINATION = {
+  # the mutual definition of compile_sing and compile_list: the
+  # relation that HOL4 gives discharges its conditions once the two
+  # size facts of EXTRA_BEFORE are in cake_term_facts, so nothing
+  # is left over -- and what the port writes here is the tactic it
+  # would prove a leftover with, not a cheat
+  ('bvi_let', 'compile_sing_def'): 'TERM_TAC',
 }
+
+# the definitions whose termination the port proves with the
+# relation that HOL4 gives, handed straight to define_single.  The
+# strategy chain of cake_define_gen tries eight strategies before
+# the relation, and one of them declares the constant and then
+# fails, after which `with Failure _ when not (declared ())` tries
+# nothing more and the definition is assumed: with the relation
+# first there is no cheat and no axiom.
+DEFINE_REL = set([
+  # the Let clause compiles the body in an environment that the
+  # result of the first recursive call builds, and the measure of
+  # HOL4's relation is on the third argument alone, so the nested
+  # call's condition does not mention the environment at all.  What
+  # the conditions need besides the size theorems is the two facts
+  # that EXTRA_BEFORE adds to cake_term_facts below.
+  ('bvi_let', 'compile_def'),
+])
 
 MEASURE = {
   # the elements of the vector that are left, which HOL4 gives in
@@ -1636,6 +1659,26 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # the two facts about the size of a list that the termination of
+  # bvi_let's compile needs: its Let clause recurses on the list
+  # without its last expression and on that last expression, and
+  # ml/lib/define.ml invites a ported file to add the lemmas that
+  # its own definitions ask for.  They are taken back after
+  # compile_sing, which is the other definition that needs them
+  # (overrides.EXTRA_AFTER).
+  ('bvi_let', 'compile_def'): r"""
+(* the size facts that the termination of the two definitions of
+   this file needs, which ml/lib/define.ml takes from here, and the
+   budget that their recursion asks for: eight seconds is what a
+   definition of the port is given before it is assumed instead,
+   and these two take about twenty each *)
+
+let bvi_let_term_facts = !cake_term_facts;;
+let bvi_let_budget = !cake_cheat_budget;;
+cake_term_facts := list_size_BUTLAST :: list_size_LAST ::
+                   (!cake_term_facts);;
+cake_cheat_budget := 300;;
+""",
   # the step functions of the tail recursions of the unification
   # algorithm: HOL4 builds the body of each with the ML code of the
   # source (tcallify_th, which turns the equation of a function
@@ -2030,6 +2073,12 @@ cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
 # a definition of the port that goes after the one of the source
 # that it belongs behind
 EXTRA_AFTER = {
+  # the size facts and the budget of bvi_let's two definitions are
+  # taken back, so that the files after it see what they had
+  ('bvi_let', 'compile_sing_def'): r"""
+cake_term_facts := bvi_let_term_facts;;
+cake_cheat_budget := bvi_let_budget;;
+""",
   # HOL4's Datatype defines the case constant of every type it
   # makes (foo_CASE v f1 ... fn), which the statements of the
   # sources use; the port's define_datatype does not, so the four

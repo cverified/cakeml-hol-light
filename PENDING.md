@@ -351,45 +351,23 @@ cannot find the termination argument that HOL4 gives:
 |---|---|
 | `misc$Lnext` | HOL4 proves the termination with the induction principle of `llistTheory`'s `eventually`; the port proves the existence of the function with `new_specification`, from the number of steps to the first tail that satisfies the predicate (`MINIMAL_SUC`, `eventually_LTL` and `LDROP_SUC` of `ml/lib/llist.ml`) |
 
-Two definitions are assumed because the recursion of a clause of
-each is **nested** -- a recursive call in an argument of a
-recursive call -- which HOL Light's machinery does not take.  They
-are the two that `compiler/backend/bvi_let.ml` still costs after
-all its theorems are proved, and they are the one thing between
-that file and no axiom at all:
+Two definitions cost the port a run to work out, and cost it
+nothing now: `bvi_let$compile` and `bvi_let$compile_sing`.  Their
+`Let` clause compiles the body in an environment that the result
+of the first recursive call builds, which reads like a nested
+recursion -- and is not one as far as HOL Light is concerned,
+because the measure of HOL4's relation is on the third argument
+alone and that inner call sits in the first.  What they needed was
+three things, and none of them a proof:
 
-| definition | the clause |
+| what | why |
 |---|---|
-| `bvi_let$compile`, `bvi_let$compile_sing` | the `Let` clause compiles the bindings and then compiles the body in an environment that the *result* of that first call builds: `compile (extract_list (compile env d xs) ++ env) d [x2]`.  HOL4 takes it because its termination relation is a measure on the third argument alone and the nested call's third argument (`[x2]`) is smaller, which is all its `TotalDefn` asks |
+| `list_size f (BUTLAST l) <= list_size f l` and `~(l = []) ==> f (LAST l) <= list_size f l` in `cake_term_facts` | the `Let` clause recurses on the list without its last expression and on that last expression, and `ml/lib/define.ml` invites a ported file to add the facts that its own definitions ask for (`overrides.EXTRA_BEFORE` adds them, `EXTRA_AFTER` takes them back) |
+| a budget of more than eight seconds | eight is what a definition of the port gets before it is assumed instead, and these two take about twenty each |
+| the relation handed to `define_single` rather than to `cake_define_gen` (`overrides.DEFINE_REL`) | the chain of `cake_define_gen` tries eight strategies before the relation, one of them declares the constant and then fails, and `with Failure _ when not (declared ())` tries nothing after that -- so the relation never got its turn |
 
-It is not the termination argument that is missing, and not the
-eight second budget (six hundred seconds do not help): both of
-HOL Light's front ends fail inside the clause-to-match analysis,
-before any condition is generated.  The minimal case is
-
-```ocaml
-pure_prove_recursive_function_exists
- `?f. (!env d. f env d [] = []) /\
-      (!x y xs env d. f env d (CONS x (CONS y xs)) =
-         APPEND (f env d [x]) (f env d (CONS y xs))) /\
-      (!xs x2 env d. f env d [Let xs x2] =
-         [Let (MAP delete_var (f env d xs))
-              (HD (f (extract_list (f env d xs) ++ env) d [x2]))])`
-```
-
-which is `Failure "ABS"`, and stays so with the `let`s expanded,
-with `prove_general_recursive_function_exists` in its place, and
-with every other clause of the definition left out.  Take the
-nested call out (`f env d [x2]`) and it goes through with one
-termination condition, as the other eleven clauses do.
-
-So paying these two needs a **nested recursion strategy** in
-`ml/lib/define.ml`: the clauses compiled into one equation by the
-port's own `compile_cases` and the existence proved with `WF_REC`
-on the measure, where admissibility holds for a nested call
-exactly because its measure argument is smaller too
-(`ADMISS_TERM_TAC` and `AGREE_TAC` are already there for the
-condition).  That is a change to the machinery every definition
-of the port goes through, so it wants a run of its own to
-validate, and it is a decision rather than a proof -- which is
-what `CLAUDE.md` says this kind of cheat needs.
+With the three in place `compiler/backend/bvi_let.ml` adds **no
+axiom**: both constants come from `new_specification` and their
+clauses are theorems.  It took a wrong diagnosis first, and that
+one is in `PORTING-GUIDE.md` entry 17, because the way it went
+wrong is the part worth keeping.

@@ -1811,7 +1811,32 @@ class Porter:
     cheatnote = ('(* the first pass assumes the termination:\n'
                  '   replacing the CHEAT_TAC is all that is left *)\n'
                  if cheat and not tac else '')
-    if cheat and term is None and rel is not None:
+    # the definitions whose termination the port proves with the
+    # relation that HOL4 gives, by handing it to define_single
+    # instead of to cake_define_gen: the strategies that the chain
+    # of cake_define_gen tries before the relation declare the
+    # constant and then fail, and after that no strategy is tried
+    # (overrides.DEFINE_REL)
+    if ((self.thy, name) in overrides.DEFINE_REL
+        and term is None and rel is not None):
+      text = (sizes + relnote + termnote +
+              '(* the port proves the termination with that '
+              'relation, which\n'
+              '   define_single takes as it stands: the strategies '
+              'that\n'
+              '   cake_define_gen tries before it declare the '
+              'constant and\n'
+              '   leave it no chance (a minute, which is what this '
+              'costs) *)\n'
+              'let %s =\n'
+              '  let th = end_itlist CONJ (fst (define_single\n'
+              '    [(`%s`,\n'
+              '      TERM_TAC)]\n'
+              '    (cake_conj_list\n'
+              '  %s))) in\n'
+              '  (note_dest_fact th; cake_note_def th; th);;'
+              % (name, fmt(rel, last=2), clauses))
+    elif cheat and term is None and rel is not None:
       text = (sizes + relnote + termnote + cheatnote +
               'let %s = cake_define_list_try_tac (fun () ->\n  `%s`)\n'
               '  %s\n  %s;;'

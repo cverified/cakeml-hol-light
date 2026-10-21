@@ -81,14 +81,30 @@ let exp2_size_APPEND = cake_theorem "exp2_size_APPEND"
    REWRITE_TAC sz THEN
    MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND));;
 
+(* the size facts that the termination of the two definitions of
+   this file needs, which ml/lib/define.ml takes from here, and the
+   budget that their recursion asks for: eight seconds is what a
+   definition of the port is given before it is assumed instead,
+   and these two take about twenty each *)
+
+let bvi_let_term_facts = !cake_term_facts;;
+let bvi_let_budget = !cake_cheat_budget;;
+cake_term_facts := list_size_BUTLAST :: list_size_LAST ::
+                   (!cake_term_facts);;
+cake_cheat_budget := 300;;
+
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let compile_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size bvi_exp_size o SND o SND)`)
-  CHEAT_TAC
+(* the port proves the termination with that relation, which
+   define_single takes as it stands: the strategies that
+   cake_define_gen tries before it declare the constant and
+   leave it no chance (a minute, which is what this costs) *)
+let compile_def =
+  let th = end_itlist CONJ (fst (define_single
+    [(`MEASURE (list_size bvi_exp_size o SND o SND)`,
+      TERM_TAC)]
+    (cake_conj_list
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;
@@ -133,7 +149,8 @@ let compile_def = cake_define_list_try_tac (fun () ->
    `bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
          [bvi_LetCall rets t dest (bvi_let_compile env d xs)
             (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d
-              [y]))]`];;
+              [y]))]`]))) in
+  (note_dest_fact th; cake_note_def th; th);;
 hol4_overload "compile" "bvi_let_compile";;
 
 let _ = size_thms "bvi_exp";;
@@ -141,12 +158,10 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:158-168: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 let compile_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
      (_12,_13,es) -> list_size bvi_exp_size es)`)
-  CHEAT_TAC
+  TERM_TAC
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Var (v + n)
            | _6 -> Var (v + d))`;
@@ -191,6 +206,9 @@ let compile_sing_def = cake_define_list_try_tac (fun () ->
           env d xs`];;
 hol4_overload "compile_list" "bvi_let_compile_list";;
 hol4_overload "compile_sing" "bvi_let_compile_sing";;
+
+cake_term_facts := bvi_let_term_facts;;
+cake_cheat_budget := bvi_let_budget;;
 
 let compile_sing = cake_theorem "compile_sing"
   (fun () ->

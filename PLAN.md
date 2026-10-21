@@ -865,31 +865,33 @@ of the port that is done.  What the proofs of this pass needed is in
   `d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env`._
 
 _`compiler/backend/bvi_let.ml`, the definition file that it is
-about, has **all four of its theorems proved** as well
-(`exp2_size_APPEND`, which phase two could only point at until the
-identification of HOL4's `exp2_size` was checked, `compile_sing` by
-a mutual measure induction, `compile_length` and
-`compile_HD_SING`), so the only cheats left in the pass are the
-**two definitions** of `compile` and `compile_sing` themselves.
-Their `Let` clause is a **nested recursion** -- it compiles the
-body in an environment that the result of the first recursive call
-builds -- and HOL Light's machinery does not take one: both of its
-front ends fail inside the clause-to-match analysis with
-`Failure "ABS"`, before any termination condition exists, and the
-eight second budget has nothing to do with it (six hundred seconds
-do not help).  `PENDING.md` has the minimal case and what paying
-it needs: a nested recursion strategy in `ml/lib/define.ml`, which
-is the third kind of cheat of `CLAUDE.md`, the one that "needs a
-decision or a missing piece ported, not a proof"._
+about, is done too: **all five of its theorems are proved** and
+**both of its definitions are made**, so the pass as a whole adds
+no axiom.  The theorems are `exp2_size_APPEND` (which phase two
+could only point at until the identification of HOL4's `exp2_size`
+was checked), `compile_sing` by a mutual measure induction,
+`compile_length`, `compile_HD_SING` and `compile_exp_eq` (one of
+the two that HOL4 states as the value of an ML expression).  The
+two definitions wanted three things and not one proof: the two
+size facts of a recursion on `BUTLAST` and `LAST` in
+`cake_term_facts`, a budget over the eight seconds a definition
+gets before it is assumed, and HOL4's relation handed to
+`define_single` instead of to the strategy chain of
+`cake_define_gen`, which declares the constant in an earlier
+strategy and then never reaches the relation.  `PENDING.md` has
+the three and guide entry 17 has the hour that went into a wrong
+diagnosis first._
 
-_The four idioms that this pass had to settle, all in the guide:
+_The five idioms that this pass had to settle, all in the guide:
 `evaluate_def` with `fix_clock` removed (13), the order of a `case`
-split (14), a non-empty list written as a `SNOC` (15), and a
-session loaded out of the port's order (16).  The first took every
-record update out of the file's proofs; the second is the rule that
-a condition of a branch is decided before the induction hypothesis
-is used inside it; the fourth cost an hour of chasing a type
-variable that was a symptom._
+split (14), a non-empty list written as a `SNOC` (15), a session
+loaded out of the port's order (16), and a definition the
+machinery will not make (17).  The first took every record update
+out of the file's proofs; the second is the rule that a condition
+of a branch is decided before the induction hypothesis is used
+inside it; the last two are both the same lesson, that a test bed
+built by hand lies about what is wrong -- once about the overloads
+and once about which names are constants._
 
 _What the pass added to the machinery, all of it reloadable in a
 second: `NAMED_CASES_TAC` (a case split under names of the proof's
