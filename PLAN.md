@@ -748,6 +748,13 @@ both say 3 and nothing._
 
 ## How a proof gets into the port
 
+_Before writing one, read `PORTING-GUIDE.md`: the HOL4 idioms the
+sources use over and over, what each one actually does, and the
+tactic of the port that stands in for it -- with the versions that
+did not work.  Every idiom that costs more than ten minutes gets an
+entry there when it is solved, which is what keeps the next file
+from paying for it again._
+
 _`ml/` is generated, so a proof does not live there: it is a
 section of `proofs/<path>.prf` that names the theorem of the HOL4
 source, and `tools/port.py` splices it in where the `CHEAT_TAC` of
@@ -817,7 +824,7 @@ _Three things came out of the file that every other file needs:_
   `REPEAT` of it spins; a scrutinee the patterns cannot decide
   becomes an epsilon term; and once one epsilon is in the goal
   the next reduction grows it without bound.  A fifth version
-  works, and `EVERY_CASE_TAC` is in `ml/lib/define.ml` now: on the
+  works, and `EVERY_CASE_TAC` is in `ml/lib/tactics.ml` now: on the
   goal of `evaluate_SNOC_Rval` it does in 8 seconds what HOL4
   does.  What the four tries were missing, beside those traps: the
   **innermost** scrutinee first, the **equation kept** for a
@@ -825,20 +832,9 @@ _Three things came out of the file that every other file needs:_
   the distinctness of that type (without which the goals multiply
   with every split), HOL Light's own `UNWIND_CONV` for the guard
   that `MATCH_CONV` leaves, and `VAR_EQ_TAC` (HOL4's `rveq`).
-  `CASE-IDIOM.md` has it all._
-  Reducing one means taking the pair that `evaluate` returns
-  apart **and keeping the equation** (the lemmas about `evaluate`
-  are applied to it afterwards), then taking the result component
-  apart by its constructors, and only then reducing the match: a
-  `MATCH_CONV` on a scrutinee that is not a constructor
-  application turns it into `if ... then @GEN%PVAR. ... else @x.
-  false` and the goal is lost.  HOL4's `every_case_tac` does this
-  in one word, and the port has no tactic for it yet.  Two tries
-  (`evaluate_delete_var_Rerr`, 219 s; `evaluate_SNOC_Rval`, 358 s)
-  went that way, so **this is the first thing to build** before
-  the rest of the file, and it is what the medium band of every
-  semantics file of the port will cost._
-- _`MATCH_REDUCE_TAC` and `LIST_CASES_TAC` (`ml/lib/define.ml`):
+  `PORTING-GUIDE.md` entry 1 has it all, with the four tactics
+  that did not work and why._
+- _`MATCH_REDUCE_TAC` and `LIST_CASES_TAC` (`ml/lib/tactics.ml`):
   the definitions of the port are `match`es, and a proof that
   unfolds one has to reduce it and to take the right variables
   apart.  `MATCH_REDUCE_CONV` cannot be used under a traversal

@@ -164,6 +164,11 @@ cheat, and a cheat that another cheat depends on is fine.
 
 - `CLAUDE.md`     this file
 - `PLAN.md`       the plan of the current pass
+- `PORTING-GUIDE.md`
+                  the HOL4 idioms that cost work to port and what
+                  the port does about each; **read it before writing
+                  a proof, and add to it whenever an idiom takes
+                  more than ten minutes to get right**
 - `cakeml-src/`   the HOL4 CakeML release (reference, untracked)
 - `tools/`        scripts for analysing the HOL4 sources and
                   for the translation

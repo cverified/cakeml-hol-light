@@ -13,7 +13,8 @@
 (*  the file as a whole, not the one tactic that changed: OCaml binds *)
 (*  a name where it stands, so a caller keeps the old one.            *)
 (*                                                                    *)
-(*  What the tactics are for is written out in CASE-IDIOM.md.         *)
+(*  What the tactics are for, and what the HOL4 idioms they           *)
+(*  stand in for are, is written out in PORTING-GUIDE.md.             *)
 (* ================================================================== *)
 
 (* ------------------------------------------------------------------ *)
@@ -46,8 +47,7 @@ let LIST_CASES_TAC names (asl,w as gl) =
 
 (* ================================================================== *)
 
-(*  HOL4's every_case_tac for the port: see CASE-IDIOM.md.            *)
-(* ---- HOL4's every_case_tac for the port (CASE-IDIOM.md) --------- *)
+(* ---- HOL4's every_case_tac: PORTING-GUIDE.md entry 1 ------------- *)
 
 let prod_type ty =
   try fst(dest_type ty) = "prod" with Failure _ -> false;;
