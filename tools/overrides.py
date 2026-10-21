@@ -795,6 +795,10 @@ THM_VALUE = {
   # `s2`,`ys`,`0`] |> GEN_ALL |> SIMP_RULE (srw_ss()) [env_rel_def]:
   # env_rel [] 0 env env is env = DROP 0 env, which is T, so the
   # antecedent that is left is the evaluation and the type error
+  # compile_exp_def |> SRULE [compile_eq]: the same for bvl_const,
+  # whose compile_exp has no depth to carry
+  ('bvl_const', 'compile_exp_eq'):
+    '!x. compile_exp x = compile_sing [] x',
   ('bvi_letProof', 'compile_thm'):
     '!xs env (s1:(\'c,\'ffi) bviSem$state) res s2 ys.'
     ' (evaluate (xs,env,s1) = (res,s2)) /\\'
@@ -1045,6 +1049,11 @@ DEFINE_REL = set([
   # the conditions need besides the size theorems is the two facts
   # that EXTRA_BEFORE adds to cake_term_facts below.
   ('bvi_let', 'compile_def'),
+  # and the same definition one language down: the Let clause of
+  # bvl_const's compile builds the environment of its nested call
+  # out of the result of the first one, and the measure of the
+  # relation is on the list it compiles, which that does not touch
+  ('bvl_const', 'compile_def'),
 ])
 
 MEASURE = {
@@ -1062,6 +1071,8 @@ MEASURE = {
   # closLang, exp6_size of flatLang) and the port with list_size
   ('bvi_let', 'compile_def'):
     'MEASURE (list_size bvi_exp_size o SND o SND)',
+  ('bvl_const', 'compile_def'):
+    'MEASURE (list_size bvl_exp_size o SND)',
   ('bvl_to_bvi', 'global_count_sing_def'):
     'MEASURE (\\x. match x with INL e -> bvl_exp_size e'
     ' | INR es -> list_size bvl_exp_size es)',
