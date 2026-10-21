@@ -143,6 +143,41 @@ let scruts_of_goal (asl,w) =
     match l with [] -> [] | s :: rest -> cands s @ collect rest in
   collect deep;;
 
+(* The same split, but with the existentials of the cases theorem
+   named by the proof instead of by HOL Light.  EVERY_CASE_TAC
+   leaves goals whose variables it invented (a', y''), which a proof
+   cannot then speak about: the witness of an existential goal, or
+   the instance of an induction hypothesis, has to be written down.
+   So where the proof has something to say after the split, it makes
+   the split itself:
+
+     NAMED_CASES_TAC `evaluate ([h],env2,s)` [["hres"; "hs"]]
+     NAMED_CASES_TAC `hres:...` [["hv"]; ["he"]]
+
+   one list of names per disjunct of the cases theorem, in its
+   order; a product has one disjunct and two names. *)
+
+let NAMED_CASES_TAC t nss =
+  let th = if prod_type (type_of t) then ISPEC t PAIR_SURJECTIVE
+           else ISPEC t (cases_of (type_of t)) in
+  let use eq = if is_var t then SUBST_ALL_TAC eq
+               else TRY(SUBST_ALL_TAC eq) THEN ASSUME_TAC eq in
+  let rec choose ns th =
+    match ns with
+      [] -> use th
+    | n :: rest ->
+        let v,_ = dest_exists (concl th) in
+        X_CHOOSE_THEN (mk_var(n,type_of v)) (choose rest) th in
+  let rec go nss th =
+    if is_disj (concl th) then
+      match nss with
+        ns :: more -> DISJ_CASES_THEN2 (choose ns) (go more) th
+      | [] -> failwith "NAMED_CASES_TAC"
+    else match nss with
+           [ns] -> choose ns th
+         | _ -> failwith "NAMED_CASES_TAC" in
+  go nss th;;
+
 (* and the branches that the split makes impossible are closed at
    once, as HOL4 closes them (use_new_assum and the distinctness
    and injectivity theorems of CASE_SIMP_CONV): without that the
@@ -220,12 +255,16 @@ let RECORD_CASES_TAC t =
 
 (* HOL4's rveq (var_eq_tac): use up the equations between variables
    that a case split leaves, and keep the others -- the equations
-   that say what a function returned are the ones the proof needs *)
+   that say what a function returned are the ones the proof needs.
+   The variable is the side that goes: an equation the other way
+   round ([] = a) is used by its SYM, or the goal keeps the variable
+   and loses the value. *)
 
 let VAR_EQ_TAC =
   REPEAT(FIRST_X_ASSUM(fun th ->
     let l,r = dest_eq(concl th) in
-    if is_var l || is_var r then SUBST_ALL_TAC th
+    if is_var l then SUBST_ALL_TAC th
+    else if is_var r then SUBST_ALL_TAC(SYM th)
     else failwith "VAR_EQ_TAC"));;
 
 (* resolve a lemma whose hypothesis is a conjunction against the

@@ -7,6 +7,7 @@
   Correctness proof for bvi_let
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/bvi_let.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
@@ -14,6 +15,7 @@ needs "compiler/backend/semantics/bviSem.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/binary_ieee.ml";;
+needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
@@ -208,7 +210,169 @@ let evaluate_delete_var_Rval =
          (?b. evaluate (MAP delete_var xs,env2,s) = (Rval b,r) /\
              bvi_letProof_env_rel (extract_list xs ++ ax) d (a ++
                env) (b ++ env2))`)
-  CHEAT_TAC;;
+  (let rty = `:(bvlSem_v list,exn_or_ret)
+                semanticPrimitives_result` in
+   let dv = cake_def "bvi_let_delete_var" in
+   let ev = cake_def "bviSem_evaluate" in
+   let da = cake_def "bviSem_do_app" in
+   let daa = cake_def "bviSem_do_app_aux" in
+   let fc = cake_def "bviSem_fix_clock" in
+   let sei = cake_def "small_enough_int" in
+   let el = cake_def "bvi_let_extract_list" in
+   let ex = cake_def "bvi_let_extract" in
+   let er = cake_def "bvi_letProof_env_rel" in
+   let vr = cake_def "bvi_letProof_v_rel" in
+   let res_rws = [PAIR_EQ;
+                  distinctness "semanticPrimitives_result";
+                  injectivity "semanticPrimitives_result"] in
+   (* HOL4 takes the head apart inside this proof and again inside
+      the next one (bvi_letProofScript.sml:79-83 and :98-101).  What
+      its case analysis says is that delete_var changes a Var and
+      nothing else, and that the Op it leaves there evaluates to a
+      number without touching the state. *)
+   let opev = prove
+    (`!env2 (s:('c,'ffi)bviSem_state).
+        evaluate
+          ([(Op (closLang_IntOp (closLang_Const (&0))) []):bvi_exp],
+           env2,s) = (Rval [(Number (&0)):bvlSem_v],s)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
+     RECORD_CASES_TAC `s:('c,'ffi)bviSem_state` THEN
+     REWRITE_TAC[da; daa; REVERSE; NULL; sei;
+                 INT_ARITH `--(&268435457):int <= &0 /\
+                            (&0):int <= &268435457`;
+                 distinctness "closLang_op"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   (* so the head leaves the same state either way ... *)
+   let stateq = prove
+    (`!(x:bvi_exp) env2 (s:('c,'ffi)bviSem_state) v t u w.
+        evaluate ([x],env2,s) = (v,t) /\
+        evaluate ([delete_var x],env2,s) = (u,w) ==> w = t`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
+     REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
+     FIRST
+      [(* the ten that delete_var leaves alone: one evaluation *)
+       SOLVED(DISCH_THEN(fun th ->
+                MP_TAC(TRANS (SYM(CONJUNCT2 th)) (CONJUNCT1 th))) THEN
+              REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
+              ASM_REWRITE_TAC[]);
+       (* and the Var, where both leave the state it came in with *)
+       (REWRITE_TAC[opev; ev] THEN COND_CASES_TAC THEN
+        REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN VAR_EQ_TAC THEN
+        REFL_TAC)]) in
+   (* ... and a head that succeeds still succeeds *)
+   let valev = prove
+    (`!(x:bvi_exp) env2 (s:('c,'ffi)bviSem_state) v t.
+        evaluate ([x],env2,s) = (Rval v,t) ==>
+        ?w. evaluate ([delete_var x],env2,s) = (Rval w,t)`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
+     REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
+     FIRST
+      [SOLVED(DISCH_TAC THEN EXISTS_TAC `v:bvlSem_v list` THEN
+              ASM_REWRITE_TAC[]);
+       (REWRITE_TAC[opev; ev] THEN COND_CASES_TAC THEN
+        REWRITE_TAC res_rws THEN STRIP_TAC THEN
+        EXISTS_TAC `[(Number (&0)):bvlSem_v]` THEN
+        ASM_REWRITE_TAC[])]) in
+   (* and the Var is the only head whose extract is not 0 *)
+   let notvar = prove
+    (`!(x:bvi_exp). ~(?i. x = Var i)
+        ==> delete_var x = x /\ (!ys. extract x ys = 0)`,
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
+     REWRITE_TAC[dv; ex] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[distinctness "bvi_exp";
+                 injectivity "bvi_exp"] THEN
+     MESON_TAC[]) in
+   (* The splits of this proof are made by hand, with names of its
+      own: the goals that EVERY_CASE_TAC leaves carry names it
+      invented, and this proof has to write down the witness of an
+      existential goal and the instance of the induction
+      hypothesis afterwards. *)
+   let tidy =
+     TRY SAFE_MATCH_REDUCE_TAC THEN
+     TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+     PRUNE_TAC res_rws THEN MATCH_TIDY_TAC THEN
+     SPLIT_ASM_TAC THEN VAR_EQ_TAC in
+   let split_tail st =
+     NAMED_CASES_TAC
+       (list_mk_icomb "bviSem_evaluate"
+          [mk_pair(`t:bvi_exp list`,
+                   mk_pair(`env2:bvlSem_v list`,st))])
+       [["tres"; "ts"]] THEN
+     NAMED_CASES_TAC (mk_var("tres",rty)) [["tv"]; ["te"]] THEN
+     tidy in
+   let use_ih st =
+     FIRST_X_ASSUM(fun ih ->
+       MP_TAC(SPECL [`env2:bvlSem_v list`; st;
+                     `tv:bvlSem_v list`;
+                     `r:('c,'ffi)bviSem_state`;
+                     `ax:num list`; `env:bvlSem_v list`;
+                     `d:num`] ih)) THEN
+     ASM_REWRITE_TAC[] THEN
+     DISCH_THEN(X_CHOOSE_THEN `bb:bvlSem_v list`
+                  STRIP_ASSUME_TAC) in
+   let env_rel_cons =
+     REWRITE_TAC[APPEND] THEN ONCE_REWRITE_TAC[er] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[vr] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) in
+   (* the empty list: nothing evaluated and nothing extracted *)
+   let base_branch =
+     REPEAT GEN_TAC THEN REWRITE_TAC[ev] THEN
+     REWRITE_TAC[PAIR_EQ;
+                 injectivity "semanticPrimitives_result"] THEN
+     STRIP_TAC THEN VAR_EQ_TAC THEN
+     EXISTS_TAC `[]:bvlSem_v list` THEN
+     ASM_REWRITE_TAC[APPEND; ev] in
+   (* a head that delete_var leaves alone: the same value in both
+      environments, so its entry of the relation is at offset 0 *)
+   let nonvar_branch =
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP notvar th]) THEN
+     STRIP_TAC THEN
+     NAMED_CASES_TAC
+       `evaluate ([h],env2,(s:('c,'ffi)bviSem_state))`
+       [["hres"; "hs"]] THEN
+     NAMED_CASES_TAC (mk_var("hres",rty)) [["hv"]; ["he"]] THEN
+     tidy THEN split_tail `hs:('c,'ffi)bviSem_state` THEN
+     use_ih `hs:('c,'ffi)bviSem_state` THEN
+     EXISTS_TAC `HD (hv:bvlSem_v list) :: bb` THEN
+     ASM_REWRITE_TAC[] THEN tidy THEN
+     env_rel_cons THEN REWRITE_TAC[oEL] THEN
+     ASM_REWRITE_TAC[] in
+   (* and a Var, where delete_var put the Op: the value the Var
+      read is still in the second environment, at the offset that
+      the extract records -- past the number the Op left and past
+      the values of the rest of the list *)
+   let var_branch =
+     FIRST_X_ASSUM(X_CHOOSE_THEN `i:num` SUBST1_TAC) THEN
+     REWRITE_TAC[dv; ex] THEN SAFE_MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[opev] THEN
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
+     ASM_CASES_TAC `i < LENGTH (env2:bvlSem_v list)` THEN
+     ASM_REWRITE_TAC[HD] THEN tidy THEN STRIP_TAC THEN tidy THEN
+     split_tail `s:('c,'ffi)bviSem_state` THEN
+     use_ih `s:('c,'ffi)bviSem_state` THEN
+     EXISTS_TAC `((Number (&0)):bvlSem_v) :: bb` THEN
+     ASM_REWRITE_TAC[] THEN tidy THEN env_rel_cons THEN
+     SUBGOAL_THEN
+       `LENGTH (t:bvi_exp list) = LENGTH (bb:bvlSem_v list)`
+       SUBST1_TAC THENL
+     [FIRST_ASSUM(fun th -> ACCEPT_TAC(REWRITE_RULE[LENGTH_MAP]
+        (MATCH_MP bviProps_evaluate_IMP_LENGTH th)));
+      ALL_TAC] THEN
+     REWRITE_TAC[oEL; ARITH_RULE `~(i + n + 1 = 0)`;
+                 ARITH_RULE `(i + n + 1) - 1 = i + n`] THEN
+     REWRITE_TAC[oEL_APPEND] THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP oEL_EL th]) THEN
+     ASM_REWRITE_TAC[] in
+   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; el; APPEND] THENL
+    [base_branch; ALL_TAC] THEN
+   REPEAT GEN_TAC THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [bviProps_evaluate_CONS] THEN
+   ASM_CASES_TAC `?i. (h:bvi_exp) = Var i` THENL
+   [var_branch; nonvar_branch]);;
 
 let evaluate_SNOC_Rval = cake_theorem "evaluate_SNOC_Rval"
   (fun () ->
