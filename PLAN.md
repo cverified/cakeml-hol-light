@@ -844,8 +844,8 @@ _Three things came out of the file that every other file needs:_
 
 ## Where the first file stands
 
-_`compiler/backend/proofs/bvi_letProof.ml`: **15 of its 17 theorems
-are proved**, and the file adds 2 axioms instead of 17.  What the
+_`compiler/backend/proofs/bvi_letProof.ml`: **16 of its 17 theorems
+are proved**, and the file adds 1 axiom instead of 17.  What the
 four proofs of this pass needed is in `PORTING-GUIDE.md`; the two
 that are left are the correctness of the pass and its corollary._
 
@@ -865,9 +865,12 @@ that are left are the correctness of the pass and its corollary._
   `delete_var` theorems that this pass proved).  The attempt stands
   in `tmp/env_rel_wip.ml`, which loads into a clone of the file's
   closure and prints how many goals are left._
-- _`evaluate_compile_exp` is five lines once `evaluate_env_rel` is
-  a theorem: it is that theorem at `ax = []` and `d = 0`, where
-  `env_rel [] 0 env env` is `env = DROP 0 env`._
+- _`evaluate_compile_exp` is **proved**, out of `evaluate_env_rel`
+  at `ax = []` and `d = 0`, where `env_rel [] 0 env env` is
+  `env = DROP 0 env`.  It uses a cheat and is a proof all the same:
+  it adds no axiom of its own and it will stand unchanged when
+  `evaluate_env_rel` becomes a theorem.  So the one axiom the file
+  adds is `evaluate_env_rel` itself._
 
 _What the pass added to the machinery, all of it reloadable in a
 second: `NAMED_CASES_TAC` (a case split under names of the proof's

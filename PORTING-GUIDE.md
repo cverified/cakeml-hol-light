@@ -46,6 +46,7 @@ add it to the index.
 | 9 | two files that bind the same `foo_def` | `cake_def "<const>"` |
 | 10 | a library theorem HOL Light has not | `ml/lib/lemmas.ml` |
 | 11 | `Parse.hide`, a field name | `cake_hide`, and a clean session |
+| 12 | a statement that annotates no type | terms taken from the goal |
 
 ## 1. `case x of` in a term, and `every_case_tac`
 
@@ -319,7 +320,7 @@ And two bugs inside the working version:
 
 ### The idiom
 
-`Cases_on \`evaluate (xs,env,s)\`` -- case analysis on something that
+`Cases_on `evaluate (xs,env,s)`` -- case analysis on something that
 is not a variable, used in nearly every semantics proof, and the
 inner step of entry 1.
 
@@ -366,7 +367,7 @@ induction is always.
   which loses the list the induction hypothesis is about; naming the
   variables (`LIST_CASES_TAC ["env";"env2"]`) fixed that but not the
   assumptions.
-- `SPEC_TAC(\`a:bvlSem_v list\`,\`a:bvlSem_v list\`)` quantified
+- `SPEC_TAC(`a:bvlSem_v list`,`a:bvlSem_v list`)` quantified
   **vacuously**, because the variable's type in the statement is a
   type variable and the written type is a different type: the
   resulting `!a. ...` is about a fresh `a`.  Use `GEN_TAC` per
@@ -452,8 +453,8 @@ MESON lemma list short when it is used at all (`CLAUDE.md`).
 
 ### The idiom
 
-`bvi_letProofScript.sml:220`: `completeInduct_on \`list_size
-exp_size xs\`` and then eleven `Resume` blocks; elsewhere
+`bvi_letProofScript.sml:220`: `completeInduct_on `list_size
+exp_size xs`` and then eleven `Resume` blocks; elsewhere
 `recInduct compile_ind`.
 
 ### What it means
@@ -789,6 +790,71 @@ Reading the port's text.  The statement reads exactly like the
 source -- that is the point of the port -- and the difference is in
 the parser's state, not in the file.  Before doubting a proof,
 check `cake_fieldvars ()` and `length (axioms ())`.
+
+
+## 12. A statement whose types are invented
+
+### The idiom
+
+A HOL4 statement annotates nothing and lets the elaborator work:
+
+```
+Theorem evaluate_compile_exp:
+   evaluate ([d],env,s) = (r,t) /\ r <> Rerr (Rabort Rtype_error) ==>
+    evaluate ([bvi_let$compile_exp d],env,s) = (r,t)
+```
+
+### What it means
+
+HOL4 fixes the type variables of a theory (`:'ffi`, `:'c`) and its
+statements inherit them.  The port parses each statement on its own
+with `type_invention_warning := false`, so a variable that nothing
+constrains gets a **freshly invented** type variable -- the state of
+the theorem above is not `('c,'ffi) bviSem_state` but an invented
+pair.
+
+### What resisted
+
+Every term a proof writes by hand is then a different term.
+An `ISPECL` of `evaluate_env_rel` at a state written as
+`s:('c,'ffi)bviSem_state` produces an instance whose antecedent is
+not the assumption, and
+`MP`, `MATCH_MP`, `UNDISCH_TAC` and `SUBST_ALL_TAC` all fail with no
+hint of why: the two terms print identically.  `term_match` on the
+printed forms succeeds, which is what makes it so confusing -- the
+mismatch is in a type variable's name, and names are not printed.
+
+The same for a list whose element type nothing fixes: `env_rel` is
+polymorphic in the port, so the `env2` of its statement is an
+`:?A list`, and an `ARITH_RULE` about
+`m < LENGTH (e:bvlSem_v list) - v` will not instantiate against
+`m < LENGTH env2 - v`.
+
+### What the port does
+
+Take the terms **out of the goal** instead of writing them:
+
+```ocaml
+FIRST_ASSUM(fun ev ->
+  let tup = rand(lhs(concl ev)) in
+  let env_tm = fst(dest_pair(snd(dest_pair tup))) in
+  ...)
+```
+
+and state an arithmetic side lemma over `:num` alone, with no list
+in it, so that `LENGTH env2` matches as a term of type `:num`
+whatever the list's element type is.
+
+A second trap in the same place: a statement of a source may
+quantify a variable it does not use (`evaluate_env_rel` has a `ys`),
+and `MATCH_MP` then hands back `!ys. <conclusion>`, which
+`ACCEPT_TAC` does not take.  `SPEC_ALL` it.
+
+### Dead ends
+
+Annotating harder.  A state written as `s:('c,'ffi)bviSem_state`
+has a *different* type from the statement's, however right it
+looks; the way out is not to write the type at all.
 
 ---
 
