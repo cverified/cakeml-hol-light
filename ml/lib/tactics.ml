@@ -68,6 +68,14 @@ let is_con_app t =
                (constructors_of (type_of t)))
   with Failure _ -> false;;
 
+(* RULE_ASSUM_TAC applies its rule to every assumption and fails if
+   it fails on one of them, so a pass that is meant to simplify what
+   it can is a no-op as soon as one assumption has nothing to
+   simplify.  This is the per-assumption version. *)
+
+let RULE_ASSUM_TRY rule =
+  RULE_ASSUM_TAC(fun th -> try rule th with Failure _ -> th);;
+
 (* reduce the matches whose reduction says something: MATCH_CONV on
    a scrutinee that the patterns cannot decide does not fail but
    gives an epsilon term, and the goal is lost *)
@@ -89,9 +97,8 @@ let SAFE_MATCH_REDUCE_TAC =
    (BasicProvers.sml:820). *)
 
 let SAFE_MATCH_REDUCE_ASM_TAC =
-  CHANGED_TAC(RULE_ASSUM_TAC
-    (fun th -> try CONV_RULE(REDEPTH_CONV safe_match_conv) th
-               with Failure _ -> th));;
+  CHANGED_TAC(RULE_ASSUM_TRY(CONV_RULE(REDEPTH_CONV
+                               safe_match_conv)));;
 
 (* case analysis on a scrutinee, as HOL4's Cases_on: a compound term
    keeps its equation, because the lemmas about evaluate are applied
@@ -190,7 +197,7 @@ let case_rws ty =
   (try [injectivity nm] with Failure _ -> []);;
 
 let PRUNE_TAC rws =
-  TRY(RULE_ASSUM_TAC(REWRITE_RULE rws)) THEN
+  RULE_ASSUM_TRY(REWRITE_RULE rws) THEN
   TRY(FIRST_ASSUM CONTR_TAC) THEN
   TRY(ASM_REWRITE_TAC rws);;
 
@@ -216,6 +223,7 @@ let SPLIT_ASM_TAC =
     else failwith "SPLIT_ASM_TAC"));;
 
 let tidy_rws = [UNWIND_THM1; UNWIND_THM2; EXISTS_REFL;
+                FORALL_UNWIND_THM1; FORALL_UNWIND_THM2;
                 NOT_CONS_NIL; CONS_11; NOT_SUC; SUC_INJ; PAIR_EQ;
                 distinctness "option"; injectivity "option"];;
 
@@ -223,7 +231,7 @@ let MATCH_TIDY_TAC =
   let unwind th = try CONV_RULE(REDEPTH_CONV UNWIND_CONV) th
                   with Failure _ -> th in
   TRY(CONV_TAC(REDEPTH_CONV UNWIND_CONV)) THEN
-  TRY(RULE_ASSUM_TAC (REWRITE_RULE tidy_rws o unwind)) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE tidy_rws o unwind) THEN
   TRY(FIRST_ASSUM CONTR_TAC) THEN
   SPLIT_ASM_TAC THEN
   TRY(REWRITE_TAC tidy_rws);;
@@ -252,6 +260,23 @@ let RECORD_CASES_TAC t =
   let nm = fst(dest_type (type_of t)) in
   STRUCT_CASES_TAC (ISPEC t (cases_of (type_of t))) THEN
   REWRITE_TAC (K_DEF :: record_thms nm);;
+
+(* HOL4's fs [] also rewrites the assumptions with one another,
+   which HOL Light has no tactic for: ASM_REWRITE_TAC rewrites the
+   goal with the assumptions and RULE_ASSUM_TAC rewrites the
+   assumptions with theorems.  A split on a condition of a
+   definition leaves the condition as one assumption and the
+   equation that mentions it as another, and the proof needs the
+   second simplified by the first.  One pass, because two
+   assumptions that rewrite each other would not terminate. *)
+
+let ASM_FS_TAC (asl,w as gl) =
+  let ths = map snd asl in
+  RULE_ASSUM_TAC
+    (fun th ->
+       let others =
+         filter (fun t -> not (aconv (concl t) (concl th))) ths in
+       try REWRITE_RULE others th with Failure _ -> th) gl;;
 
 (* HOL4's rveq (var_eq_tac): use up the equations between variables
    that a case split leaves, and keep the others -- the equations

@@ -64,3 +64,14 @@ let list_size_LAST = prove
   [ARITH_TAC;
    FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun c ->
      MP_TAC(MATCH_MP ih c))) THEN ARITH_TAC]);;
+
+(* and the other direction of HOL4's LLOOKUP_EQ_EL *)
+
+let oEL_SOME = prove
+ (`!l n x. oEL n l = SOME x ==> n < LENGTH l /\ EL n l = x`,
+  LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+  REWRITE_TAC[oEL; distinctness "option"] THEN
+  STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+  REWRITE_TAC[oEL; ARITH_EQ; NOT_SUC; SUC_SUB1; LENGTH; EL; TL;
+              HD; LT_0; LT_SUC; injectivity "option"] THEN
+  FIRST_ASSUM MATCH_ACCEPT_TAC);;
