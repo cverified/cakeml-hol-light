@@ -2,12 +2,12 @@
 
 Phase two states every theorem of the sources with its name, its
 attributes and its statement (`CLAUDE.md`).  Of the 10,688
-theorems of the 270 sources the port states 10,146 and points at
-542 with a comment that names them:
+theorems of the 270 sources the port states 10,148 and points at
+540 with a comment that names them:
 
 | | stated | a pointer |
 |---|---|---|
-| `Theorem` (and `Triviality`) | 10,086 | 48 |
+| `Theorem` (and `Triviality`) | 10,088 | 46 |
 | `ThmValue` (the value of an ML expression) | 25 | 454 |
 | a theorem that ML code states (`Q.prove`) | 35 | 40 |
 
@@ -44,9 +44,9 @@ says the same.
 
 Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
-what it reports missing is the two blocks below and these 498.
+what it reports missing is the two blocks below and these 496.
 
-**Forty-four statements use an auxiliary size function of a
+**Forty-two statements use an auxiliary size function of a
 datatype family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's
 `Datatype` makes one of these for every type that the family
 needs besides the type itself (`exp1_size` of closLang is the
@@ -56,6 +56,18 @@ which function of the port it is.  The port writes a pointer that
 names the theorem: a statement with a free variable where the
 source has a constant would say something else than the source
 does, which is worse than saying nothing.
+
+A statement of this kind is stated as soon as a proof of phase
+three needs it, because then the identification is **checked**
+rather than guessed: `bvi_let$exp2_size_APPEND` and
+`bvi_letProof$exp_size_APPEND` (the same statement, which the two
+sources both state) say it of `exp2_size`, the size of a
+`bvi$exp list`, and the size prelude of the port calls that one
+`bvi_exp_size1` -- which `size_thms "bvi_exp"` states as
+`bvi_exp_size1 l = list_size bvi_exp_size l`, a list of
+`bvi_exp`, so the identification is the theorem itself.
+`overrides.THM_NAMES` is where the port says that a statement
+means it.  Two of the forty-four were these.
 
 No statement uses a constant of a HOL4 library that the port does
 not have any more; `tools/libnames.py` is the check.  There were
@@ -326,3 +338,46 @@ cannot find the termination argument that HOL4 gives:
 | definition | how |
 |---|---|
 | `misc$Lnext` | HOL4 proves the termination with the induction principle of `llistTheory`'s `eventually`; the port proves the existence of the function with `new_specification`, from the number of steps to the first tail that satisfies the predicate (`MINIMAL_SUC`, `eventually_LTL` and `LDROP_SUC` of `ml/lib/llist.ml`) |
+
+Two definitions are assumed because the recursion of a clause of
+each is **nested** -- a recursive call in an argument of a
+recursive call -- which HOL Light's machinery does not take.  They
+are the two that `compiler/backend/bvi_let.ml` still costs after
+all its theorems are proved, and they are the one thing between
+that file and no axiom at all:
+
+| definition | the clause |
+|---|---|
+| `bvi_let$compile`, `bvi_let$compile_sing` | the `Let` clause compiles the bindings and then compiles the body in an environment that the *result* of that first call builds: `compile (extract_list (compile env d xs) ++ env) d [x2]`.  HOL4 takes it because its termination relation is a measure on the third argument alone and the nested call's third argument (`[x2]`) is smaller, which is all its `TotalDefn` asks |
+
+It is not the termination argument that is missing, and not the
+eight second budget (six hundred seconds do not help): both of
+HOL Light's front ends fail inside the clause-to-match analysis,
+before any condition is generated.  The minimal case is
+
+```ocaml
+pure_prove_recursive_function_exists
+ `?f. (!env d. f env d [] = []) /\
+      (!x y xs env d. f env d (CONS x (CONS y xs)) =
+         APPEND (f env d [x]) (f env d (CONS y xs))) /\
+      (!xs x2 env d. f env d [Let xs x2] =
+         [Let (MAP delete_var (f env d xs))
+              (HD (f (extract_list (f env d xs) ++ env) d [x2]))])`
+```
+
+which is `Failure "ABS"`, and stays so with the `let`s expanded,
+with `prove_general_recursive_function_exists` in its place, and
+with every other clause of the definition left out.  Take the
+nested call out (`f env d [x2]`) and it goes through with one
+termination condition, as the other eleven clauses do.
+
+So paying these two needs a **nested recursion strategy** in
+`ml/lib/define.ml`: the clauses compiled into one equation by the
+port's own `compile_cases` and the existence proved with `WF_REC`
+on the measure, where admissibility holds for a nested call
+exactly because its measure argument is smaller too
+(`ADMISS_TERM_TAC` and `AGREE_TAC` are already there for the
+condition).  That is a change to the machinery every definition
+of the port goes through, so it wants a run of its own to
+validate, and it is a decision rather than a proof -- which is
+what `CLAUDE.md` says this kind of cheat needs.

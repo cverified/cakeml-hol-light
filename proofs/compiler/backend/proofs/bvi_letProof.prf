@@ -1,3 +1,10 @@
+### exp_size_APPEND
+  (* the same theorem as bvi_let's exp2_size_APPEND, which the
+     source states again here *)
+  (let sz = size_thms "bvi_exp" in
+   REWRITE_TAC sz THEN
+   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND))
+
 ### IMP_COMM
   (MESON_TAC[])
 

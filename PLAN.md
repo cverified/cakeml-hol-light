@@ -865,19 +865,22 @@ of the port that is done.  What the proofs of this pass needed is in
   `d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env`._
 
 _`compiler/backend/bvi_let.ml`, the definition file that it is
-about, has its **three theorems proved** as well (`compile_sing` by
-a mutual measure induction, `compile_length`, `compile_HD_SING`),
-so the only cheats left in the pass are the **two definitions** of
-`compile` and `compile_sing` themselves: HOL Light's recursion
-machinery does not make either one (it is not the eight second
-budget -- six hundred seconds do not help, and the condition that
-a termination tactic would prove is never reached), so the port
-assumes each as a whole with `cake_cheat`.  That is the third kind
-of cheat of `CLAUDE.md`, the one that "needs a decision or a
-missing piece ported, not a proof": paying it is work on
-`ml/lib/define.ml`, not a proof of phase three, and
-`overrides.TERMINATION` is where the tactic would go once the
-machinery reaches it._
+about, has **all four of its theorems proved** as well
+(`exp2_size_APPEND`, which phase two could only point at until the
+identification of HOL4's `exp2_size` was checked, `compile_sing` by
+a mutual measure induction, `compile_length` and
+`compile_HD_SING`), so the only cheats left in the pass are the
+**two definitions** of `compile` and `compile_sing` themselves.
+Their `Let` clause is a **nested recursion** -- it compiles the
+body in an environment that the result of the first recursive call
+builds -- and HOL Light's machinery does not take one: both of its
+front ends fail inside the clause-to-match analysis with
+`Failure "ABS"`, before any termination condition exists, and the
+eight second budget has nothing to do with it (six hundred seconds
+do not help).  `PENDING.md` has the minimal case and what paying
+it needs: a nested recursion strategy in `ml/lib/define.ml`, which
+is the third kind of cheat of `CLAUDE.md`, the one that "needs a
+decision or a missing piece ported, not a proof"._
 
 _The four idioms that this pass had to settle, all in the guide:
 `evaluate_def` with `fix_clock` removed (13), the order of a `case`

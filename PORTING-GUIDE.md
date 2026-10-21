@@ -51,6 +51,7 @@ add it to the index.
 | 14 | the order of a `case` split | the condition before the hypothesis |
 | 15 | a non-empty list written as a `SNOC` | `SNOC_CASES` and four laws |
 | 16 | a session loaded out of the port's order | the file's own `needs` |
+| 17 | a `Definition` whose recursion is nested | not yet: `PENDING.md` |
 
 ## 1. `case x of` in a term, and `every_case_tac`
 
@@ -1196,6 +1197,85 @@ invents a type variable.  The type variable is real -- in a
 mis-ordered session the constant really does come out polymorphic,
 because the clause that would have pinned the argument down was
 read at another language's type and dropped.  It is a symptom.
+
+## 17. A `Definition` whose recursion is nested
+
+### The idiom
+
+```
+Definition compile_def:
+  ...
+  (compile env d [Let xs x2] =
+     ...
+     let ys = compile env d xs in
+       [Let (MAP delete_var ys)
+            (HD (compile (extract_list ys ++ env) d [x2]))])
+Termination
+  WF_REL_TAC `measure (exp2_size o SND o SND)` \\ ...
+End
+```
+
+(`bvi_letScript.sml:68-168`.)  The second recursive call is made in
+an environment that the **result** of the first one builds.
+
+### What it means
+
+HOL4's `TotalDefn` asks only that the measure go down at every
+recursive call.  The measure here is on the third argument, the
+nested call's third argument is `[x2]`, and `exp2_size [x2]` is
+smaller than `exp2_size [Let xs x2]`, so the condition holds and
+the definition is made.  That the first argument happens to mention
+`compile` does not enter the argument at all.
+
+### What resisted
+
+HOL Light's machinery never gets as far as the condition.  Both
+front ends -- `pure_prove_recursive_function_exists`, which the
+port uses when it has a relation, and
+`prove_general_recursive_function_exists`, which it uses when it
+has none -- fail in the clause-to-match analysis with a kernel
+`Failure "ABS"`, which says that some rule tried to abstract a
+variable that a hypothesis has free and says nothing about where.
+It is not the eight second budget (six hundred seconds do not
+help), not the `let`s (expanding them changes nothing), and not the
+recursion on `BUTLAST xs` and `LAST xs`, which goes through on its
+own.  Eleven of the twelve clauses go through; the twelfth with the
+nested call taken out goes through; with it in, nothing does.
+
+### What the port does
+
+Nothing yet: `compile` and `compile_sing` are the two definitions
+that `cake_cheat` assumes whole, and they are the two axioms that
+`compiler/backend/bvi_let.ml` still costs after all its theorems
+are proved.  `PENDING.md` has the minimal case to reproduce it.
+
+What paying it asks for is a **strategy of its own** in
+`ml/lib/define.ml`: the clauses compiled into one equation with
+the port's own `compile_cases`, and the existence proved with
+`WF_REC` on the measure rather than through the pattern front end.
+Admissibility -- the second antecedent of `WF_REC` -- holds for a
+nested call exactly because its measure argument is smaller too, so
+`ADMISS_TERM_TAC` and `AGREE_TAC`, which the port already has, are
+what would discharge it.  The strategy goes last in the chain of
+`cake_define_gen`, where it can turn a cheat into a definition and
+cannot change one that already works; what it needs for itself is a
+run, because every definition of the port goes through that
+function.
+
+### Where it lives
+
+`PENDING.md`, under the definitions the port does not make.
+
+### Dead ends
+
+- Expanding the `let`s first (`LET_DEF`, `LET_END_DEF` and a beta
+  reduction): the same failure.
+- The route without a relation.  `define_single []` uses the
+  general front end, and it fails in the same place; and the
+  strategy chain of `cake_define_gen` would not reach it anyway,
+  because `with Failure _ when not (declared ())` stops at the
+  first strategy that has declared the constant.
+- Raising `cake_cheat_budget`.  Nothing is timing out.
 
 ---
 

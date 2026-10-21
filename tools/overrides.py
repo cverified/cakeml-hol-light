@@ -765,6 +765,11 @@ THM_NAMES = {
   # the S of HOL4's combinTheory, which the port has under a name
   # of its own because a source uses the name for a variable
   ('word_allocProof', "LET_FORALL_ELIM'"): {'S': 'hol4_S'},
+  # exp2_size is the size function that HOL4 generates for a list
+  # of the expressions of bvi, which the port calls bvi_exp_size1
+  # (tools/port.py writes a size prelude with that name)
+  ('bvi_let', 'exp2_size_APPEND'): {'exp2_size': 'bvi_exp_size1'},
+  ('bvi_letProof', 'exp_size_APPEND'): {'exp2_size': 'bvi_exp_size1'},
 }
 
 # the statements whose annotations say the same type with other

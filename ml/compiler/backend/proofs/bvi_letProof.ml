@@ -391,8 +391,15 @@ let IMP_COMM = cake_theorem "IMP_COMM"
     `(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`)
   (MESON_TAC[]);;
 
-(* HOL4 bvi_letProofScript.sml:146-150: a theorem whose statement the
-   port cannot state yet: exp_size_APPEND *)
+let exp_size_APPEND = cake_theorem "exp_size_APPEND"
+  (fun () ->
+    `!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs +
+  bvi_exp_size1 ys`)
+  (* the same theorem as bvi_let's exp2_size_APPEND, which the
+     source states again here *)
+  (let sz = size_thms "bvi_exp" in
+   REWRITE_TAC sz THEN
+   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND));;
 
 let env_rel_MAP = cake_theorem "env_rel_MAP"
   (fun () ->

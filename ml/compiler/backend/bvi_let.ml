@@ -70,8 +70,16 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
-(* HOL4 bvi_letScript.sml:62-66: a theorem whose statement the port
-   cannot state yet: exp2_size_APPEND *)
+let exp2_size_APPEND = cake_theorem "exp2_size_APPEND"
+  (fun () ->
+    `!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs +
+  bvi_exp_size1 ys`)
+  (* bvi_exp_size1 is HOL4's exp2_size, which the size prelude
+     states as a list_size (size_thms "bvi_exp"), so this is
+     list_size_APPEND under another name *)
+  (let sz = size_thms "bvi_exp" in
+   REWRITE_TAC sz THEN
+   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND));;
 
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with

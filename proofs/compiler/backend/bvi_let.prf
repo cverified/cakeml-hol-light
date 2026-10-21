@@ -1,3 +1,11 @@
+### exp2_size_APPEND
+  (* bvi_exp_size1 is HOL4's exp2_size, which the size prelude
+     states as a list_size (size_thms "bvi_exp"), so this is
+     list_size_APPEND under another name *)
+  (let sz = size_thms "bvi_exp" in
+   REWRITE_TAC sz THEN
+   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND))
+
 ### compile_sing
   (let cp = cake_def "bvi_let_compile" in
    let cs = cake_def "bvi_let_compile_sing" in
