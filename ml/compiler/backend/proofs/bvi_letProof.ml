@@ -973,8 +973,27 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
 
 (* HOL4 bvi_letProofScript.sml:389: a proof *)
 
-(* HOL4 bvi_letProofScript.sml:391-394: a theorem that HOL4 states as
-   the value of an ML expression: compile_thm *)
+let compile_thm = cake_theorem "compile_thm"
+  (fun () ->
+    `!xs env (s1:('c,'ffi)bviSem_state) res s2 ys. (evaluate
+  (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
+  (evaluate (compile [] 0 xs,env,s1) = (res,s2))`)
+  (* evaluate_env_rel at ax = [] and d = 0, where env_rel [] 0 env
+     env is env = DROP 0 env.  The terms are taken out of the goal:
+     the state of the statement has type variables of its own
+     (PORTING-GUIDE.md entry 12) *)
+  (let er = cake_def "bvi_letProof_env_rel" in
+   let env_rel_refl = prove
+    (`!env. bvi_letProof_env_rel [] 0 env env`,
+     GEN_TAC THEN ONCE_REWRITE_TAC[er] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[DROP_0]) in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun ev ->
+     let tup = rand(lhs(concl ev)) in
+     let env_tm = fst(dest_pair(snd(dest_pair tup))) in
+     FIRST_ASSUM(fun ne ->
+       ACCEPT_TAC(SPEC_ALL(MATCH_MP evaluate_env_rel
+         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne)))))));;
 
 let evaluate_compile_exp = cake_theorem "evaluate_compile_exp"
   (fun () ->

@@ -2,18 +2,18 @@
 
 Phase two states every theorem of the sources with its name, its
 attributes and its statement (`CLAUDE.md`).  Of the 10,688
-theorems of the 270 sources the port states 10,148 and points at
-540 with a comment that names them:
+theorems of the 270 sources the port states 10,150 and points at
+538 with a comment that names them:
 
 | | stated | a pointer |
 |---|---|---|
 | `Theorem` (and `Triviality`) | 10,088 | 46 |
-| `ThmValue` (the value of an ML expression) | 25 | 454 |
+| `ThmValue` (the value of an ML expression) | 27 | 452 |
 | a theorem that ML code states (`Q.prove`) | 35 | 40 |
 
 What the 542 are, and why the port cannot state them:
 
-- **454 theorems that HOL4 states as the value of an ML
+- **452 theorems that HOL4 states as the value of an ML
   expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
   foo_def`, `Theorem bar = SIMP_RULE bool_ss [] baz`, `Theorem
   baz = theorem"baz_ind"`).  The statement is not in the source:
@@ -22,6 +22,18 @@ What the 542 are, and why the port cannot state them:
   three, where it has the theorem that the expression starts from
   and HOL Light's own rules to apply, but none of it is a
   statement that phase two can read off the source.
+
+  Phase three does one as soon as the theorem it starts from is
+  proved, and then the computation is **done** rather than
+  guessed: `overrides.THM_VALUE` holds the statement in HOL4's
+  notation, `tools/port.py` translates it like any other statement
+  of the source, and the proof is a section of the file's proof
+  store.  Two of the 454 are in that way:
+
+  | theorem | the ML expression, and what it computes |
+  |---|---|
+  | `bvi_let$compile_exp_eq` | `compile_exp_def \|> SRULE [compile_sing]`: the compiled list of one is a singleton, so the `match` of `compile_exp` reduces to its head, and the theorem is `compile_exp x = compile_sing [] 0 x` |
+  | `bvi_letProof$compile_thm` | `evaluate_env_rel \|> Q.SPECL [...] \|> GEN_ALL \|> SIMP_RULE (srw_ss()) [env_rel_def]` at `ax = []` and `d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env` and so `T`: what is left of the antecedent is the evaluation and the type error |
 - **40 theorems that ML code states as the value of a rule
   applied to another one** (`val foo = Q.prove(...) |> SIMP_RULE
   ...`, `save_thm("foo", th)`): the same case, with the statement
@@ -44,7 +56,7 @@ says the same.
 
 Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
-what it reports missing is the two blocks below and these 496.
+what it reports missing is the two blocks below and these 494.
 
 **Forty-two statements use an auxiliary size function of a
 datatype family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's

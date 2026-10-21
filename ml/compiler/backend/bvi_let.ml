@@ -402,5 +402,11 @@ let compile_exp_def = cake_define
    // impossible`;;
 hol4_overload "compile_exp" "bvi_let_compile_exp";;
 
-(* HOL4 bvi_letScript.sml:202: a theorem that HOL4 states as the
-   value of an ML expression: compile_exp_eq *)
+let compile_exp_eq = cake_theorem "compile_exp_eq"
+  (fun () ->
+    `!x. bvi_let_compile_exp x = bvi_let_compile_sing [] 0 x`)
+  (* HOL4 applies compile_sing to compile_exp_def: the compiled
+     list of one is a singleton, so the match reduces to its head *)
+  (let ce = cake_def "bvi_let_compile_exp" in
+   GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_sing] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;

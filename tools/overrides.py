@@ -779,6 +779,29 @@ THM_NAMES = {
 # every other annotation of it, which is the type that HOL4 gives
 # the theorem.  THM_NO_TYVARS leaves such an annotation out
 # instead, which loses the record type with it.
+# the statements of the theorems that HOL4 binds to the value of an
+# ML expression, where phase three has done the computation that
+# the expression is: the statement is written in HOL4's notation
+# and tools/port.py translates it like any other statement of the
+# source.  PENDING.md says which of the 454 these are and why the
+# rest are still pointers; the proof is a section of the file's
+# proof store, under the name of the theorem.
+THM_VALUE = {
+  # compile_exp_def |> SRULE [compile_sing]: the compiled singleton
+  # is a singleton, so the match of compile_exp reduces to its head
+  ('bvi_let', 'compile_exp_eq'):
+    '!x. compile_exp x = compile_sing [] 0 x',
+  # evaluate_env_rel |> Q.SPECL [`xs`,`env`,`s1`,`[]`,`env`,`res`,
+  # `s2`,`ys`,`0`] |> GEN_ALL |> SIMP_RULE (srw_ss()) [env_rel_def]:
+  # env_rel [] 0 env env is env = DROP 0 env, which is T, so the
+  # antecedent that is left is the evaluation and the type error
+  ('bvi_letProof', 'compile_thm'):
+    '!xs env (s1:(\'c,\'ffi) bviSem$state) res s2 ys.'
+    ' (evaluate (xs,env,s1) = (res,s2)) /\\'
+    ' res <> Rerr (Rabort Rtype_error) ==>'
+    ' (evaluate (compile [] 0 xs,env,s1) = (res,s2))',
+}
+
 THM_TYVARS = set([
   # the two states of these are one state in HOL4: the result of
   # the do_app of the one is compared with a value of the other

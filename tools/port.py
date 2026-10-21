@@ -1156,6 +1156,16 @@ class Porter:
         self.db.thmbind[b.name] = nm
         return
       # a theorem that HOL4 binds to the value of an ML
+      # expression, where phase three has worked out what that
+      # expression computes and overrides.THM_VALUE says it (in
+      # HOL4's own notation, which this file translates as it
+      # does every other statement): the statement is the
+      # source's, and the proof is the one of the proof store
+      stmt = overrides.THM_VALUE.get((self.thy, b.name))
+      if stmt and b.name:
+        self.state(b, b.name, b.attrs, stmt)
+        return
+      # a theorem that HOL4 binds to the value of an ML
       # expression: the statement is what that expression
       # computes, which the port cannot
       self.out.append(self.at(b, 'a theorem that HOL4 states as'
