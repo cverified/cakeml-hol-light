@@ -11,11 +11,20 @@ C=/home/freek/claude/hol-light/cakeml
 [ $# -eq 0 ] && { echo "usage: reload <session>..."; exit 1; }
 for s in "$@"; do
   tmux has -t "hol-$s" 2> /dev/null || { echo "no hol-$s"; continue; }
-  TIMEOUT=300 repl-step "$s" \
-    "#use \"$C/ml/lib/lemmas.ml\";; #use \"$C/ml/lib/tactics.ml\";;" \
+  # a mark first, and only what the session says after it is this
+  # reload's: an Error further up the pane is earlier work's
+  TIMEOUT=60 repl-step "$s" 'print_string "RELOAD-MARK\n";;' \
     > /dev/null 2>&1
+  # one repl-step per file: the OCaml toplevel takes a # directive
+  # only as the first thing on a line, so two of them in one string
+  # load the first and drop the second without saying so
+  for f in lemmas tactics; do
+    TIMEOUT=300 repl-step "$s" "#use \"$C/ml/lib/$f.ml\";;" \
+      > /dev/null 2>&1
+  done
   err=$(tmux capture-pane -p -J -S - -t "hol-$s" |
         sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' |
+        awk '/^RELOAD-MARK$/ { seen = 1; next } seen' |
         grep -E '^(Error|Exception)' | tail -1)
   if [ -n "$err" ]; then echo "hol-$s: $err"
   else echo "hol-$s: lemmas and tactics reloaded"; fi

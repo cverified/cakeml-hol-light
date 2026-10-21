@@ -72,16 +72,26 @@ let is_con_app t =
    a scrutinee that the patterns cannot decide does not fail but
    gives an epsilon term, and the goal is lost *)
 
+let safe_match_conv tm =
+  match tm with
+    Comb(Comb(Const("_MATCH",_),_),_) ->
+      let th = CHANGED_CONV MATCH_CONV tm in
+      if can (find_term is_select) (rand(concl th))
+      then failwith "safe_match_conv" else th
+  | _ -> failwith "safe_match_conv";;
+
 let SAFE_MATCH_REDUCE_TAC =
-  let bad t = can (find_term is_select) t in
-  let conv tm =
-    match tm with
-      Comb(Comb(Const("_MATCH",_),_),_) ->
-        let th = CHANGED_CONV MATCH_CONV tm in
-        if bad (rand(concl th)) then failwith "SAFE_MATCH_REDUCE"
-        else th
-    | _ -> failwith "SAFE_MATCH_REDUCE" in
-  CHANGED_TAC(CONV_TAC(REDEPTH_CONV conv));;
+  CHANGED_TAC(CONV_TAC(REDEPTH_CONV safe_match_conv));;
+
+(* and the matches of the assumptions, which is where a rewrite with
+   evaluate_CONS puts the other half of the equation.  HOL4 reduces
+   them too: the RULE_ASSUM_TAC asm_rule of EVERY_CASE_TAC
+   (BasicProvers.sml:820). *)
+
+let SAFE_MATCH_REDUCE_ASM_TAC =
+  CHANGED_TAC(RULE_ASSUM_TAC
+    (fun th -> try CONV_RULE(REDEPTH_CONV safe_match_conv) th
+               with Failure _ -> th));;
 
 (* case analysis on a scrutinee, as HOL4's Cases_on: a compound term
    keeps its equation, because the lemmas about evaluate are applied
@@ -96,19 +106,24 @@ let CASES_ON_TAC t =
     else TRY(SUBST_ALL_TAC eq) THEN ASSUME_TAC eq in
   (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN use)) th;;
 
-(* the scrutinees of the matches of the goal that are not in
-   constructor shape yet, the deepest first -- as HOL4 searches them
-   (case_find_subterm, BasicProvers.sml:652).  The outermost one
-   would be split while an inner scrutinee is still a compound term,
-   and the reduction of that inner match then meets the undecidable
-   case above. *)
+(* the scrutinees of the matches of the goal and of the assumptions
+   that are not in constructor shape yet, the deepest first.  Both,
+   because HOL4 searches list_mk_conj (w :: asl) (PURE_FULL_CASE_TAC,
+   BasicProvers.sml:694) and a proof of the semantics leaves the
+   match a rewrite made in a hypothesis as often as in the goal.
+   Deepest first, because that is HOL4's search (case_find_subterm,
+   :652): the outermost scrutinee would be split while an inner one
+   is still a compound term, and the reduction of that inner match
+   then meets the undecidable case above. *)
 
 let scruts_of_goal (asl,w) =
+  let tms = w :: map (fun (_,th) -> concl th) asl in
+  let fvs = itlist (fun t a -> union (frees t) a) tms [] in
   let many t =
     try length (constructors_of (type_of t)) > 1
     with Failure _ -> false in
   let ok t =
-    not (is_con_app t) && subtract (frees t) (frees w) = [] &&
+    not (is_con_app t) && subtract (frees t) fvs = [] &&
     (if is_var t then many t
      else is_const (fst(strip_comb t)) &&
           (fst(dest_const(fst(strip_comb t)))).[0] <> '_' &&
@@ -122,7 +137,8 @@ let scruts_of_goal (asl,w) =
     | Abs(_,b) -> 1 + depth b
     | _ -> 0 in
   let deep = sort (fun a b -> depth a > depth b)
-                  (setify (match_scruts w)) in
+                  (setify (itlist (fun t a -> match_scruts t @ a)
+                                  tms [])) in
   let rec collect l =
     match l with [] -> [] | s :: rest -> cands s @ collect rest in
   collect deep;;
@@ -138,34 +154,69 @@ let case_rws ty =
   (try [distinctness nm] with Failure _ -> []) @
   (try [injectivity nm] with Failure _ -> []);;
 
+let PRUNE_TAC rws =
+  TRY(RULE_ASSUM_TAC(REWRITE_RULE rws)) THEN
+  TRY(FIRST_ASSUM CONTR_TAC) THEN
+  TRY(ASM_REWRITE_TAC rws);;
+
 let CASE_SPLIT_TAC gl =
   match scruts_of_goal gl with
     [] -> failwith "CASE_SPLIT_TAC"
   | t :: _ ->
-      (CASES_ON_TAC t THEN
-       TRY(ASM_REWRITE_TAC (case_rws (type_of t)))) gl;;
+      (CASES_ON_TAC t THEN PRUNE_TAC (case_rws (type_of t))) gl;;
 
 (* HOL4's every_case_tac: split the innermost scrutinee, reduce what
    can be reduced, and again.  Bounded, because a step that only
    adds an assumption is progress that a goal cannot measure. *)
 
 (* MATCH_CONV leaves the guard of a pattern that binds variables
-   (`if ?vs. vs = a then ... `), which is trivially true *)
+   (`if ?vs. vs = a then ... `), which is trivially true.  In the
+   assumptions as well as in the goal, and there the conjunctions
+   that PAIR_EQ makes are taken apart, which is the part of HOL4's
+   fs [] that the proof after the split relies on. *)
+
+let SPLIT_ASM_TAC =
+  REPEAT(FIRST_X_ASSUM(fun th ->
+    if is_conj (concl th) then CONJUNCTS_THEN ASSUME_TAC th
+    else failwith "SPLIT_ASM_TAC"));;
+
+let tidy_rws = [UNWIND_THM1; UNWIND_THM2; EXISTS_REFL;
+                NOT_CONS_NIL; CONS_11; NOT_SUC; SUC_INJ; PAIR_EQ;
+                distinctness "option"; injectivity "option"];;
 
 let MATCH_TIDY_TAC =
+  let unwind th = try CONV_RULE(REDEPTH_CONV UNWIND_CONV) th
+                  with Failure _ -> th in
   TRY(CONV_TAC(REDEPTH_CONV UNWIND_CONV)) THEN
-  TRY(REWRITE_TAC[UNWIND_THM1; UNWIND_THM2; EXISTS_REFL;
-                  NOT_CONS_NIL; CONS_11; NOT_SUC; SUC_INJ; PAIR_EQ;
-                  distinctness "option"; injectivity "option"]);;
+  TRY(RULE_ASSUM_TAC (REWRITE_RULE tidy_rws o unwind)) THEN
+  TRY(FIRST_ASSUM CONTR_TAC) THEN
+  SPLIT_ASM_TAC THEN
+  TRY(REWRITE_TAC tidy_rws);;
 
 let EVERY_CASE_TAC =
-  let step = ((CASE_SPLIT_TAC THEN TRY SAFE_MATCH_REDUCE_TAC) ORELSE
-              SAFE_MATCH_REDUCE_TAC) THEN MATCH_TIDY_TAC in
+  let reduce =
+    (SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC) ORELSE
+    SAFE_MATCH_REDUCE_ASM_TAC in
+  let step = ((CASE_SPLIT_TAC THEN TRY reduce) ORELSE reduce) THEN
+             MATCH_TIDY_TAC in
   let rec go k gl =
     if k <= 0 then ALL_TAC gl
     else (try (step THEN go (k - 1)) gl
           with Failure _ -> ALL_TAC gl) in
   go 10;;
+
+(* A record of the port is a datatype with one constructor
+   (ml/lib/records.ml), and its accessor and update theorems are
+   stated at that constructor.  So a field update whose new value is
+   the field's own value -- which is what fix_clock s (res,s) leaves
+   behind, state_clock_fupd (K (state_clock s)) s -- only reduces
+   once the record is taken apart.  HOL4 never meets this: its
+   record_fupd simpset has the identity law. *)
+
+let RECORD_CASES_TAC t =
+  let nm = fst(dest_type (type_of t)) in
+  STRUCT_CASES_TAC (ISPEC t (cases_of (type_of t))) THEN
+  REWRITE_TAC (K_DEF :: record_thms nm);;
 
 (* HOL4's rveq (var_eq_tac): use up the equations between variables
    that a case split leaves, and keep the others -- the equations
@@ -183,3 +234,26 @@ let VAR_EQ_TAC =
 let RES2_TAC lemma =
   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
     MP_TAC(MATCH_MP lemma (CONJ th1 th2))));;
+
+(* and the same with the rest of the proof inside the search, so
+   that the search backtracks when the rest does not go through.
+   A lemma about [x] matches more assumptions than the one meant --
+   evaluate ([delete_var h],env2,s) as well as evaluate ([h],env2,s)
+   -- and FIRST_ASSUM commits as soon as MATCH_MP succeeds, which is
+   before the proof that needed the other one fails. *)
+
+let RES1_THEN lemma tac =
+  FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP lemma th) THEN tac);;
+
+let RES2_THEN lemma tac =
+  FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
+    MP_TAC(MATCH_MP lemma (CONJ th1 th2)) THEN tac));;
+
+(* a tactic that has to close its goal: the branches of a finish
+   that is applied to the goals of a case split are tried with
+   FIRST, which commits to the first one that succeeds, and a step
+   that only rewrites succeeds without finishing *)
+
+let SOLVED tac =
+  fun gl -> let (_,gls,_) as gst = tac gl in
+            if gls = [] then gst else failwith "SOLVED";;
