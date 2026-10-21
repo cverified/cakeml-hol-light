@@ -347,6 +347,31 @@ let EVERY_CASE_TAC =
           with Failure _ -> ALL_TAC gl) in
   go 10;;
 
+(* and the same with the condition of a branch decided before the
+   case under it, which is what a proof that uses an induction
+   hypothesis inside a branch needs: a case taken apart while a
+   condition above it is still open leaves the hypothesis a side
+   condition the branch cannot settle, because in the branch where
+   the condition holds the result is already decided and nothing is
+   known about what was split (PORTING-GUIDE.md entry 14).  It is a
+   tactic of its own and not the behaviour of EVERY_CASE_TAC,
+   because deciding a condition that no hypothesis is used under
+   only adds a vacuous split, and the proofs that take a statement
+   apart with EVERY_CASE_TAC are written for the shape it leaves. *)
+
+let EVERY_CASE_COND_TAC =
+  let reduce =
+    (SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC) ORELSE
+    SAFE_MATCH_REDUCE_ASM_TAC in
+  let step = (((COND_SPLIT_TAC ORELSE CASE_SPLIT_TAC) THEN
+               TRY reduce) ORELSE reduce) THEN
+             MATCH_TIDY_TAC in
+  let rec go k gl =
+    if k <= 0 then ALL_TAC gl
+    else (try (step THEN go (k - 1)) gl
+          with Failure _ -> ALL_TAC gl) in
+  go 10;;
+
 (* A record of the port is a datatype with one constructor
    (ml/lib/records.ml), and its accessor and update theorems are
    stated at that constructor.  So a field update whose new value is
@@ -403,3 +428,108 @@ let RES2_THEN lemma tac =
 let SOLVED tac =
   fun gl -> let (_,gls,_) as gst = tac gl in
             if gls = [] then gst else failwith "SOLVED";;
+
+(* ------------------------------------------------------------------ *)
+(* The three steps of a proof about a transformation of the           *)
+(* compiler: the induction, the reduction between two steps, and the  *)
+(* use of the induction hypothesis.  Fifty-three of the sixty-one     *)
+(* proof theories of the port have an evaluate and an induction, so   *)
+(* these are written once here and instantiated per file              *)
+(* (PORTING-GUIDE.md, "the shape of a transformation proof").         *)
+(* ------------------------------------------------------------------ *)
+
+(* HOL4's recInduct f_ind and completeInduct_on: an induction on a
+   measure, with the measure bounded rather than equal, so that
+   INDUCT_TAC is enough and the hypothesis is about the measure of
+   the sub-term and not about the bound (PORTING-GUIDE.md entry 5).
+   The argument is the measure as a function; the variable it is
+   taken of is the quantified one of its domain type.  Where the
+   goal is an implication the bound joins its antecedent, so that
+   the hypothesis has one antecedent and not two.  It leaves the
+   base case and the step case, as INDUCT_TAC does. *)
+
+let MEASURE_INDUCT_TAC meas (asl,w) =
+  let avs0,bod = strip_forall w in
+  let dty = fst(dest_fun_ty(type_of meas)) in
+  let v = try find (fun x -> type_of x = dty) avs0
+          with Failure _ -> failwith "MEASURE_INDUCT_TAC" in
+  (* a variable that the statement quantifies and does not use (the
+     ys of bvi_letProof's evaluate_env_rel) is left out, so that the
+     hypothesis has one quantifier for every argument it is given *)
+  let avs = filter (fun x -> x = v || vfree_in x bod) avs0 in
+  let kv = variant (avs @ frees bod) (mk_var("k",`:num`)) in
+  let m = mk_comb(meas,v) in
+  let cnd = mk_binop `(<=):num->num->bool` m kv in
+  let sub =
+    list_mk_forall(kv :: avs,
+      if is_imp bod && not (is_neg bod)
+      then mk_imp(mk_conj(cnd,lhand bod),rand bod)
+      else mk_imp(cnd,bod)) in
+  (SUBGOAL_THEN sub
+     (fun th -> REPEAT GEN_TAC THEN TRY STRIP_TAC THEN
+        MP_TAC(SPECL (m :: avs) th) THEN
+        ASM_REWRITE_TAC[LE_REFL]) THEN
+   INDUCT_TAC) (asl,w);;
+
+(* HOL4's fs and gvs: the bundle of reductions that goes between two
+   steps of such a proof.  The first argument is the file's own
+   rewrites in stages, because one of them has to fire before
+   another (bvi_letProof rewrites with fix_clock_evaluate before the
+   definition of fix_clock, or it is left with a record update); the
+   second is the lemmas that decide an equation between two results,
+   which PRUNE_TAC throws the impossible assumptions out with.  The
+   goal and the assumptions are reduced alike: one of them with its
+   match turned into a guard and the other not is two shapes of the
+   same thing. *)
+
+let FS_TAC stages prunes =
+  itlist (fun rws t -> TRY(REWRITE_TAC rws) THEN
+                       RULE_ASSUM_TRY(REWRITE_RULE rws) THEN t)
+         stages
+         (TRY SAFE_MATCH_REDUCE_TAC THEN
+          TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+          PRUNE_TAC prunes THEN MATCH_TIDY_TAC THEN
+          SPLIT_ASM_TAC THEN VAR_EQ_TAC);;
+
+(* HOL4's drule for such a proof, which is the step that made the
+   deep cases possible: find an evaluation of the source in the
+   assumptions whose compiled twin is somewhere in the goal, and
+   hand the two to the instantiation of the hypothesis.  The search
+   is the part that is the same in every file; the instantiation is
+   not, because it is the statement of that file's theorem, so it is
+   the caller's.
+     ev is the name of the semantics constant, cp the name of the
+   constant that compiles, and use is given the source's list, its
+   environment and its state, the pair that it evaluates to, the
+   arguments of the compiled call and its environment.  An
+   evaluation whose result the assumptions already have is no
+   progress, and the search goes on to the next one. *)
+
+let EV_PAIR_TAC ev cp use (asl,w as gl) =
+  let named n t =
+    try fst(dest_const(fst(strip_comb t))) = n
+    with Failure _ -> false in
+  let is_ev = named ev and is_cp = named cp in
+  let dest_ev t =
+    let a,bc = dest_pair (rand t) in
+    let b,c = dest_pair bc in a,b,c in
+  let where = w :: map (fun (_,th) -> concl th) asl in
+  let evs = filter (fun t -> is_ev t && can dest_ev t)
+                   (itlist (fun t a -> find_terms is_ev t @ a)
+                           where []) in
+  let attempt (_,th) =
+    let l,rt = dest_eq(concl th) in
+    if not (is_ev l) then fail() else
+    let xs,env1,s = dest_ev l in
+    (* the hypothesis is driven by the source's evaluation, never
+       by the compiled one *)
+    if is_cp xs then fail() else
+    let gt = find (fun g ->
+        try let cl,env2,s2 = dest_ev g in
+            s2 = s && is_cp cl && mem xs (snd(strip_comb cl))
+        with Failure _ -> false) evs in
+    let cl,env2,_ = dest_ev gt in
+    if exists (fun (_,t) -> aconv (concl t) (mk_eq(gt,rt))) asl
+    then fail() else
+    use (xs,env1,s) rt (snd(strip_comb cl)) env2 in
+  tryfind (fun a -> attempt a gl) asl;;

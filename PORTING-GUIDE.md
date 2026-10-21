@@ -53,6 +53,126 @@ add it to the index.
 | 16 | a session loaded out of the port's order | the file's own `needs` |
 | 17 | a `Definition` not made | `DEFINE_REL`, two size facts |
 
+## The shape of a transformation proof
+
+_**Fifty-three of the port's sixty-one proof theories have an
+`evaluate` and an induction**, and they are all the same proof:
+a relation between a source state and a compiled one, a main
+theorem that says the compiled code evaluates to what the source
+does, an induction, and one case per constructor of the language.
+`bvi_letProof` is the smallest of them (23 case splits);
+`data_to_word_assignProof` has 350.  So the shape is written out
+once here, with the library pieces it is made of, and a new file of
+this kind starts by filling it in rather than by inventing it._
+
+### The skeleton
+
+```ocaml
+(* the pieces: the definitions this file unfolds, by constant *)
+let cp = cake_def "<the compiler's constant>" in
+let ev = cake_def "<the semantics' constant>" in
+let er = cake_def "<the relation's constant>" in
+let fce = <that semantics>_fix_clock_evaluate in      (* entry 13 *)
+let sz = size_thms "<the language's type>" in
+let res_rws = [PAIR_EQ; distinctness "semanticPrimitives_result";
+               injectivity "semanticPrimitives_result"] in
+
+(* HOL4's fs, with this file's rewrites in stages (entry 13) *)
+let tidy = FS_TAC [[fce]; [fc]] res_rws in
+let tidy2 = tidy THEN ASM_FS_TAC THEN tidy in
+
+(* the size side condition of every use of the hypothesis *)
+let size_tac_rws rws =
+  RULE_ASSUM_TAC(REWRITE_RULE(rws @ (list_size :: sz))) THEN
+  REWRITE_TAC(rws @ (list_size :: sz)) THEN ASM_ARITH_TAC in
+let size_tac = size_tac_rws [] in
+
+(* HOL4's drule: EV_PAIR_TAC searches, the file instantiates *)
+let use_ih_auto =
+  EV_PAIR_TAC "<the semantics' constant>" "<the compiler's>"
+    (fun (xs,env1,s) rt cargs env2 -> ... ih_ants ...) in
+
+(* the conditions of the semantics are if-then-else as well as
+   case, and the condition goes first (entry 14) *)
+let deep_case =
+  REPEAT(CHANGED_TAC
+    (TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
+     (COND_SPLIT_TAC ORELSE CASE_SPLIT_TAC ORELSE
+      COND_CASES_TAC) THEN TRY tidy2 THEN
+     TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
+     TRY(ASM_REWRITE_TAC[]))) THEN ... in
+
+(* one tactic per constructor, in the order of the datatype *)
+let sub_cases = [...] in
+let single_case =
+  NAMED_CASES_TAC `x1:<the type>` [<the names>] THENL sub_cases in
+
+MEASURE_INDUCT_TAC `list_size <the size function>` THEN
+REPEAT GEN_TAC THEN STRIP_TAC THEN
+NAMED_CASES_TAC `xs:<the type> list` [[]; ["x1"; "xr"]] THENL
+[nil_case; impossible; nil_case; ALL_TAC] THEN
+NAMED_CASES_TAC `xr:<the type> list` [[]; ["x2"; "xr2"]] THENL
+[single_case; TRY cons_cons_case]
+```
+
+### The library pieces, and which entry each one is
+
+| piece | what it stands for | entry |
+|---|---|---|
+| `MEASURE_INDUCT_TAC` | `recInduct f_ind`, `completeInduct_on` | 5 |
+| `EVERY_CASE_TAC` | `every_case_tac` on a statement | 1 |
+| `EVERY_CASE_COND_TAC`, `COND_SPLIT_TAC`, `CASE_SPLIT_TAC` | the same with the condition decided first, which is what a branch that uses the hypothesis needs | 14 |
+| `NAMED_CASES_TAC`, `CASES_ON_TAC` | `Cases_on`, with names of the proof's own | 2 |
+| `FS_TAC`, `ASM_FS_TAC`, `PRUNE_TAC`, `MATCH_TIDY_TAC` | `fs`, `gvs`, `rw` | 7 |
+| `VAR_EQ_TAC` | `rveq` | 3 |
+| `EV_PAIR_TAC` | `drule`, `imp_res_tac`, for an evaluation | -- |
+| `RES1_THEN`, `RES2_THEN`, `RES2_TAC` | `imp_res_tac` of a lemma with two parts | 4 |
+| `MATCH_REDUCE_TAC`, `SAFE_MATCH_REDUCE_TAC` | a definition unfolded into a `match` | 6 |
+| `RECORD_CASES_TAC` | a field update whose value is its own field | 13 |
+| `SNOC_CASES` and its laws, `EL_LEN_APPEND`, `list_size_SNOC`, `list_size_BUTLAST`, `list_size_LAST`, `oEL_*`, `EL_DROP`, `DROP_0` | the library lemmas HOL4 has and HOL Light does not | 10, 15 |
+
+### The order inside a case, which is the part that bites
+
+1. **Unfold** the clause of the semantics on both sides, and rewrite
+   with `fix_clock_evaluate` **before** anything expands `fix_clock`
+   (entry 13).
+2. **Decide the conditions** of the branch -- `COND_SPLIT_TAC`, which
+   looks in the assumptions as well as the goal.
+3. **Then** take the cases apart, deepest pattern first.
+4. **Then** use the induction hypothesis.
+
+Steps 2 and 4 in the wrong order is the one mistake that produces
+goals which are not provable rather than merely hard: in the branch
+where a condition holds, the result is already decided, so nothing
+is known about what was split under it, and the hypothesis's own
+side condition cannot be discharged (entry 14).
+
+### Before believing a `NOT PROVED`
+
+A test bed built by hand lies about what is wrong, twice over:
+
+- build the session from **the file's own `needs` lines, in the
+  file's order**, or an overloaded constructor resolves to another
+  language's (entry 16);
+- load the file whose constants the proof mentions, or those names
+  are free **variables** and the failure is a kernel error that
+  names nothing (entry 17).
+
+`grep -E 'CHEATED|cake_conj_list|NOT PROVED'` over the pane after
+building a session takes a second and answers both.  What a file
+costs is then its own axioms, which is
+
+```ocaml
+let pre p t = is_const t &&
+  (let n = fst(dest_const t) in
+   String.length n > String.length p &&
+   String.sub n 0 (String.length p) = p);;
+length (filter (fun th -> can (find_term (pre "<the file's prefix>"))
+                            (concl th)) (axioms()));;
+```
+
+and has to be 0 when the file is done.
+
 ## 1. `case x of` in a term, and `every_case_tac`
 
 _The gate of phase three: the 228 CakeML sources use
@@ -1053,6 +1173,18 @@ antecedent's own proof (`ih_ants`).  It splits them, and one branch
 of the split is the one that cannot be closed -- the split has to
 happen earlier, not harder.  Splitting the negated variable of the
 side condition instead (`SPLIT_NEG_VAR`) turned 3 goals into 7.
+
+And **making `EVERY_CASE_TAC` itself decide the condition first**,
+which looks like the way to put this lesson in the library once and
+for all.  It is not: where no hypothesis is used under the
+condition, deciding it only adds a vacuous split (an assumption
+`true` and a branch that was already decided), and the two proofs
+of this file that take a statement apart with `EVERY_CASE_TAC`
+(`evaluate_SNOC_Rval`, `evaluate_delete_var_Rerr`) are written for
+the shape the plain one leaves and stop going through.  The
+ordering belongs where the hypothesis is used, so it is
+`EVERY_CASE_COND_TAC` and the explicit `COND_SPLIT_TAC ORELSE
+CASE_SPLIT_TAC` of the induction loop.
 
 ## 15. A non-empty list written as a `SNOC`
 

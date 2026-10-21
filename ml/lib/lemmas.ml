@@ -82,3 +82,60 @@ let oEL_SOME = prove
 let DROP_0 = prove
  (`!l:A list. DROP 0 l = l`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[DROP]);;
+
+(* HOL4's SNOC and its laws.  ml/lib/hol4.ml defines SNOC, because
+   a few sources define a function by recursion on one, and HOL4
+   carries some seventy lemmas about it that HOL Light has none of.
+   These are the ones a proof needs to read the front and the last
+   expression off a list that a pass recurses on
+   (PORTING-GUIDE.md entry 15); BUTLAST is HOL Light's name for
+   what the sources call FRONT. *)
+
+let SNOC_APPEND = prove
+ (`!(l:A list) x. SNOC x l = APPEND l [x]`,
+  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[SNOC; APPEND]);;
+
+let NOT_SNOC_NIL = prove
+ (`!(l:A list) x. ~(SNOC x l = [])`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[SNOC; NOT_CONS_NIL]);;
+
+let SNOC_CASES = prove
+ (`!l:A list. ~(l = []) ==> ?x y. l = SNOC x y`,
+  GEN_TAC THEN DISCH_TAC THEN
+  EXISTS_TAC `LAST (l:A list)` THEN
+  EXISTS_TAC `BUTLAST (l:A list)` THEN
+  REWRITE_TAC[SNOC_APPEND] THEN
+  FIRST_ASSUM(fun th ->
+    REWRITE_TAC[MATCH_MP APPEND_BUTLAST_LAST th]));;
+
+let FRONT_SNOC = prove
+ (`!(l:A list) x. BUTLAST (SNOC x l) = l`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[SNOC; BUTLAST; NOT_SNOC_NIL]);;
+
+let LAST_SNOC = prove
+ (`!(l:A list) x. LAST (SNOC x l) = x`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[SNOC; LAST; NOT_SNOC_NIL]);;
+
+let LENGTH_SNOC = prove
+ (`!(l:A list) x. LENGTH (SNOC x l) = LENGTH l + 1`,
+  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[SNOC; LENGTH] THEN
+  ARITH_TAC);;
+
+(* and the size of one, which the measure of such an induction
+   asks for and HOL4 gets from its own size simp set *)
+
+let list_size_SNOC = prove
+ (`!(f:A->num) x l.
+     list_size f (SNOC x l) = list_size f l + (f x + 1)`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[SNOC; list_size] THEN ARITH_TAC);;
+
+(* the value that a Var reads when a pass has moved an expression
+   into tail-position: the first one past the front of the list *)
+
+let EL_LEN_APPEND = prove
+ (`!(a:A list) v l. EL (LENGTH a) (APPEND a (CONS v l)) = v`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[LENGTH; APPEND; EL; HD; TL]);;

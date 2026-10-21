@@ -392,14 +392,8 @@ let compile_length = cake_theorem "compile_length[simp]"
      [REWRITE_TAC[cp];
       NAMED_CASES_TAC `xr:bvi_exp list` [[]; ["x2"; "xr2"]] THENL
       [single_case; cons_cons_case]] in
-   SUBGOAL_THEN
-     `!k n d xs. list_size bvi_exp_size xs <= k ==>
-        LENGTH (bvi_let_compile n d xs) = LENGTH xs`
-     (fun th -> REPEAT GEN_TAC THEN
-        MATCH_MP_TAC(SPEC `list_size bvi_exp_size (xs:bvi_exp list)`
-                       th) THEN
-        REWRITE_TAC[LE_REFL]) THEN
-   INDUCT_TAC THENL [base_case; step_case]);;
+   MEASURE_INDUCT_TAC `list_size bvi_exp_size` THENL
+   [base_case; step_case]);;
 
 let compile_HD_SING = cake_theorem "compile_HD_SING"
   (fun () ->

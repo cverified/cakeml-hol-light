@@ -7,9 +7,7 @@
   Correctness proof for bvi_let
 *)
 
-needs "basis/pure/mllist.ml";;
 needs "basis/pure/mlstring.ml";;
-needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/bvi_let.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
@@ -17,18 +15,14 @@ needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
-needs "lib/balanced_map.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
-needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 hol4_overload "compile" "bvi_let_compile";;
 
@@ -508,16 +502,12 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
    let impossible =
      SUBGOAL_THEN `F` CONTR_TAC THEN
      RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN ASM_ARITH_TAC in
-   (* the clock that fix_clock puts back is the clock that the
-      evaluation left (bviSem's fix_clock_evaluate), so no proof of
-      this file ever has to look inside a record update *)
-   let tidy =
-     TRY(REWRITE_TAC[fce]) THEN RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
-     TRY(REWRITE_TAC[fc]) THEN
-     TRY(RULE_ASSUM_TAC(REWRITE_RULE[fc])) THEN
-     TRY SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
-     PRUNE_TAC res_rws THEN MATCH_TIDY_TAC THEN
-     SPLIT_ASM_TAC THEN VAR_EQ_TAC in
+   (* HOL4's fs, with the rewrites of this file: the clock that
+      fix_clock puts back is the clock that the evaluation left
+      (bviSem's fix_clock_evaluate), and it has to fire before the
+      definition of fix_clock or the proof is left with a record
+      update -- which is what the stages of FS_TAC are for *)
+   let tidy = FS_TAC [[fce]; [fc]] res_rws in
    let tidy2 = tidy THEN ASM_FS_TAC THEN tidy in
    let ev_term xs' env' s' =
      list_mk_icomb "bviSem_evaluate"
@@ -653,43 +643,24 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
       TRY(REPEAT(CHANGED_TAC(COND_SPLIT_TAC THEN TRY tidy2)) THEN
           TRY(PRUNE_TAC res_rws) THEN
           TRY(ASM_REWRITE_TAC res_rws))] in
-   let use_ih_auto (asl,w as gl) =
-     let where = w :: map (fun (_,th) -> concl th) asl in
-     let evs = filter (fun t -> is_ev t && can dest_ev t)
-                      (itlist (fun t a -> find_terms is_ev t @ a)
-                              where []) in
-     let attempt (_,th) =
-       let l,rt = dest_eq(concl th) in
-       if not (is_ev l) then failwith "use_ih_auto" else
-       let xs',env1',s' = dest_ev l in
-       (* the hypothesis is driven by the original evaluation, never by
-          the compiled one *)
-       if (try fst(dest_const(fst(strip_comb xs'))) = "bvi_let_compile"
-           with Failure _ -> false)
-       then failwith "use_ih_auto" else
-       let gt = find (fun g ->
-           try let cl,env2',s2' = dest_ev g in
-               s2' = s' &&
-               (let f,cargs = strip_comb cl in
-                fst(dest_const f) = "bvi_let_compile" &&
-                List.nth cargs 2 = xs')
-           with Failure _ -> false) evs in
-       let cl,env2',_ = dest_ev gt in
-       let _,cargs = strip_comb cl in
-       (* a fact the assumptions already have is no progress, and the
-          search has to go on to the next evaluation *)
-       if exists (fun (_,th) -> aconv (concl th) (mk_eq(gt,rt))) asl
-       then failwith "use_ih_auto" else
-       FIRST_ASSUM(fun ih ->
-         MP_TAC(SPECL [xs'; env1'; s'; List.nth cargs 0; env2';
-                       fst(dest_pair rt); snd(dest_pair rt);
-                       List.nth cargs 1] ih)) THEN
-       ANTS_TAC THENL
-       [ih_ants;
-        DISCH_THEN(fun t ->
-          TRY(REWRITE_TAC[t]) THEN RULE_ASSUM_TRY(REWRITE_RULE[t]) THEN
-          ASSUME_TAC t)] in
-     tryfind (fun a -> attempt a gl) asl in
+   (* HOL4's drule: the hypothesis at the evaluation of the source
+      whose compiled twin is in the goal.  EV_PAIR_TAC does the
+      search, which is the same in every file of this kind; what is
+      this file's own is the instantiation, because that is the
+      statement of its theorem *)
+   let use_ih_auto =
+     EV_PAIR_TAC "bviSem_evaluate" "bvi_let_compile"
+       (fun (xs',env1',s') rt cargs env2' ->
+          FIRST_ASSUM(fun ih ->
+            MP_TAC(SPECL [xs'; env1'; s'; el 0 cargs; env2';
+                          fst(dest_pair rt); snd(dest_pair rt);
+                          el 1 cargs] ih)) THEN
+          ANTS_TAC THENL
+          [ih_ants;
+           DISCH_THEN(fun t ->
+             TRY(REWRITE_TAC[t]) THEN
+             RULE_ASSUM_TRY(REWRITE_RULE[t]) THEN
+             ASSUME_TAC t)]) in
    let nil_case =
      REWRITE_TAC[cp; ev] THEN RULE_ASSUM_TAC(REWRITE_RULE[ev]) THEN
      ASM_REWRITE_TAC[] in
@@ -743,45 +714,9 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
      RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
      TRY tidy THEN do_sub "a" `es:bvi_exp list` s1t THEN deep_case in
    (* ---- Let: the three shapes the compiler gives it -------------- *)
-   (* HOL4 writes the list of a Let that moves into tail-position as a
-      SNOC and reads the front and the last off it; HOL Light's list
-      library has SNOC but none of its laws *)
-   let SNOC_APPEND = prove
-    (`!(l:A list) x. SNOC x l = APPEND l [x]`,
-     LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[SNOC; APPEND]) in
-   let NOT_SNOC_NIL = prove
-    (`!(l:A list) x. ~(SNOC x l = [])`,
-     LIST_INDUCT_TAC THEN REWRITE_TAC[SNOC; NOT_CONS_NIL]) in
-   let SNOC_CASES = prove
-    (`!l:A list. ~(l = []) ==> ?x y. l = SNOC x y`,
-     GEN_TAC THEN DISCH_TAC THEN
-     EXISTS_TAC `LAST (l:A list)` THEN
-     EXISTS_TAC `BUTLAST (l:A list)` THEN
-     REWRITE_TAC[SNOC_APPEND] THEN
-     FIRST_ASSUM(fun th ->
-       REWRITE_TAC[MATCH_MP APPEND_BUTLAST_LAST th])) in
-   let FRONT_SNOC = prove
-    (`!(l:A list) x. BUTLAST (SNOC x l) = l`,
-     LIST_INDUCT_TAC THEN
-     ASM_REWRITE_TAC[SNOC; BUTLAST; NOT_SNOC_NIL]) in
-   let LAST_SNOC = prove
-    (`!(l:A list) x. LAST (SNOC x l) = x`,
-     LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[SNOC; LAST; NOT_SNOC_NIL]) in
-   let LENGTH_SNOC = prove
-    (`!(l:A list) x. LENGTH (SNOC x l) = LENGTH l + 1`,
-     LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[SNOC; LENGTH] THEN
-     ARITH_TAC) in
-   let list_size_SNOC = prove
-    (`!(f:A->num) x l.
-        list_size f (SNOC x l) = list_size f l + (f x + 1)`,
-     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-     ASM_REWRITE_TAC[SNOC; list_size] THEN ARITH_TAC) in
-   (* and the one fact about EL that the moved body needs: the value
-      the Var read is the first one past the front of the list *)
-   let EL_LEN_APPEND = prove
-    (`!(a:A list) v l. EL (LENGTH a) (APPEND a (CONS v l)) = v`,
-     LIST_INDUCT_TAC THEN
-     ASM_REWRITE_TAC[LENGTH; APPEND; EL; HD; TL]) in
+   (* SNOC and its laws, and the EL of a value past the front of a
+      list, are in ml/lib/lemmas.ml: HOL Light has SNOC and none of
+      HOL4's lemmas about it (PORTING-GUIDE.md entry 15) *)
    let snoc_rws = [FRONT_SNOC; LAST_SNOC; LENGTH_SNOC;
                    ARITH_RULE `(a + 1) - 1 = a`] in
    let snoc_size = size_tac_rws [list_size_SNOC] in
@@ -928,19 +863,8 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
         ["tt"; "dd"; "es"; "hh"]; ["loc"; "v"]; ["op"; "es"];
         ["rets"; "tt"; "dd"; "es"; "e"]; ["es"]] THENL sub_cases in
    let env_rel_tac =
-     SUBGOAL_THEN
-       `!n xs env1 (s1:('c,'ffi)bviSem_state) ax env2 res s2 d.
-          list_size bvi_exp_size xs <= n /\
-          evaluate (xs,env1,s1) = (res,s2) /\
-          bvi_letProof_env_rel ax d env1 env2 /\
-          ~(res = Rerr (Rabort Rtype_error)) ==>
-          evaluate (bvi_let_compile ax d xs,env2,s1) = (res,s2)`
-       (fun th -> REPEAT GEN_TAC THEN STRIP_TAC THEN
-          MATCH_MP_TAC(SPEC `list_size bvi_exp_size (xs:bvi_exp list)`
-                         th) THEN
-          EXISTS_TAC `env1:bvlSem_v list` THEN
-          ASM_REWRITE_TAC[LE_REFL]) THEN
-     INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+     MEASURE_INDUCT_TAC `list_size bvi_exp_size` THEN
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
      NAMED_CASES_TAC `xs:bvi_exp list` [[]; ["x1"; "xr"]] THENL
      [nil_case; impossible; nil_case; ALL_TAC] THEN
      NAMED_CASES_TAC `xr:bvi_exp list` [[]; ["x2"; "xr2"]] THENL
