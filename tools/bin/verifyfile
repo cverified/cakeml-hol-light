@@ -1,0 +1,24 @@
+#!/bin/sh
+# verify3.sh : load the file in a closure built fresh from the
+# template (no retemplate: ml/lib has not changed)
+C=/home/freek/claude/hol-light/cakeml
+. $C/tools/holenv.sh
+date +%s > $C/tmp/vstart.txt
+repl-kill pfv > /dev/null 2>&1
+repl-clone hol-template-cakeml pfv > /dev/null 2>&1
+TIMEOUT=5400 repl-step pfv "#use \"$C/tmp/pfprefix.ml\";;" > /dev/null 2>&1
+echo "CLOSURE $(( $(date +%s) - $(cat $C/tmp/vstart.txt) ))s"
+cat > $C/tmp/vfile.ml <<'ML'
+let a0 = length(axioms());;
+loadt "/home/freek/claude/hol-light/cakeml/ml/compiler/backend/proofs/bvi_letProof.ml";;
+print_string ("AXIOMS-ADDED " ^ string_of_int (length(axioms()) - a0) ^ "\n");;
+print_string ("FIELDVARS " ^ string_of_int (length(cake_fieldvars ())) ^ "\n");;
+ML
+TIMEOUT=1800 repl-step pfv "#use \"$C/tmp/vfile.ml\";;" > /dev/null 2>&1
+while ! tmux capture-pane -p -J -S - -t hol-pfv |
+      grep -qE 'FIELDVARS|Error'
+do sleep 20; done
+tmux capture-pane -p -J -S - -t hol-pfv |
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' |
+  grep -E 'AXIOMS-ADDED|FIELDVARS|NOT PROVED|NOT STATED|Error' | tail -12
+echo "verify: $(( $(date +%s) - $(cat $C/tmp/vstart.txt) ))s"

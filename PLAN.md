@@ -864,12 +864,29 @@ of the port that is done.  What the proofs of this pass needed is in
 - _`evaluate_compile_exp` is proved out of it at `ax = []` and
   `d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env`._
 
-_The three idioms that this pass had to settle, all in the guide:
+_`compiler/backend/bvi_let.ml`, the definition file that it is
+about, has its **three theorems proved** as well (`compile_sing` by
+a mutual measure induction, `compile_length`, `compile_HD_SING`),
+so the only cheats left in the pass are the **two definitions** of
+`compile` and `compile_sing` themselves: HOL Light's recursion
+machinery does not make either one (it is not the eight second
+budget -- six hundred seconds do not help, and the condition that
+a termination tactic would prove is never reached), so the port
+assumes each as a whole with `cake_cheat`.  That is the third kind
+of cheat of `CLAUDE.md`, the one that "needs a decision or a
+missing piece ported, not a proof": paying it is work on
+`ml/lib/define.ml`, not a proof of phase three, and
+`overrides.TERMINATION` is where the tactic would go once the
+machinery reaches it._
+
+_The four idioms that this pass had to settle, all in the guide:
 `evaluate_def` with `fix_clock` removed (13), the order of a `case`
-split (14), and a non-empty list written as a `SNOC` (15).  The
-first of them took every record update out of the file's proofs; the
-second is the rule that a condition of a branch is decided before
-the induction hypothesis is used inside it._
+split (14), a non-empty list written as a `SNOC` (15), and a
+session loaded out of the port's order (16).  The first took every
+record update out of the file's proofs; the second is the rule that
+a condition of a branch is decided before the induction hypothesis
+is used inside it; the fourth cost an hour of chasing a type
+variable that was a symptom._
 
 _What the pass added to the machinery, all of it reloadable in a
 second: `NAMED_CASES_TAC` (a case split under names of the proof's

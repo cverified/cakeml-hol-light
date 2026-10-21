@@ -231,3 +231,23 @@ is cheap to throw away and clone again when a tactic hangs.
 **A change in `ml/lib` costs the closure again**: `retemplate`
 rebuilds `hol-template-cakeml` and kills every clone of it, so
 batch the library additions that the proofs need.
+
+**Build a test bed out of the file's own `needs` lines**, in the
+order the file writes them, and let `needs` pull the rest in.  Every
+intermediate language has a `Var`, an `If`, a `Let` and a `Call`,
+and the port overloads those names, so the order in which files
+load decides what a clause of a later file means: a session that
+loads `compiler/backend/bvi.ml` early and `bvi_let.ml` late reads
+the `Var` of `bvi_let`'s clauses as **bvl**'s, makes the definitions
+clause by clause and reports three proofs `NOT PROVED` that are
+right (PORTING-GUIDE.md entry 16).  The check after building a
+session is `grep -E 'CHEATED|cake_conj_list'` over its pane.
+
+For a definition file a clone of `hol-template-cakeml` plus
+`needs "<the file>"` is enough and takes a minute; for a proof file,
+
+```
+grep '^needs' ml/<path>.ml > tmp/pfprefix.ml
+```
+
+is the prefix to load (`tmp/verify3.sh` does the rest).

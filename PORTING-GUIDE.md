@@ -50,6 +50,7 @@ add it to the index.
 | 13 | `evaluate_def` with `fix_clock` removed | `fix_clock_evaluate` |
 | 14 | the order of a `case` split | the condition before the hypothesis |
 | 15 | a non-empty list written as a `SNOC` | `SNOC_CASES` and four laws |
+| 16 | a session loaded out of the port's order | the file's own `needs` |
 
 ## 1. `case x of` in a term, and `every_case_tac`
 
@@ -1116,6 +1117,85 @@ pieces.  It avoids the five lemmas and it costs more: `evaluate_SNOC`
 is stated at a `SNOC`, so the one rewrite that takes the evaluation
 of the list apart does not fire, and `~(es = [])` has to be carried
 into every arithmetic side condition by hand.
+
+## 16. A session loaded out of the port's order
+
+### The idiom
+
+Not an idiom of HOL4 at all, but the trap that costs the most time
+per occurrence: a test bed built by hand.  To try a proof of
+`compiler/backend/bvi_let.ml` one wants a session with its
+ancestors in it, and the quick way looks like
+
+```
+needs "basis/pure/mllist.ml";;
+...
+needs "compiler/backend/bvi.ml";;      (* instead of bvi_let.ml *)
+needs "compiler/backend/semantics/bviProps.ml";;
+...
+```
+
+and then `loadt "ml/compiler/backend/bvi_let.ml"` on top.
+
+### What it means
+
+Every intermediate language of the compiler has a `Var`, an `If`, a
+`Let` and a `Call`, and the port overloads those names: `Var` means
+the constructor of whichever language was overloaded last.  The
+order in which the files load therefore decides what a clause of a
+later file *means*.  In the port's own order `bvi_let.ml` comes
+right after `bvi.ml`, so its `Var` is `bvi_exp`'s.  Loaded after
+`bvlProps` and `closSem`, the same clause reads `Var` as **bvl**'s.
+
+### What resisted
+
+Nothing says so.  The file loads, the definitions are made, and
+every statement of it typechecks -- at the wrong type.  What one
+sees is three proofs reporting `NOT PROVED` with messages that
+point nowhere (`MATCH_MP_TAC: No match`, `find_term`,
+`TAC_PROOF: Unsolved goals`), because the definition theorem that
+the proof rewrites with is about another language's constructors
+and matches nothing.  Reading the types of the goal makes it look
+like entry 12 (an invented type variable), and chasing that is an
+hour spent on a statement that was right all along.
+
+### What the port does
+
+Build the test bed out of **the file's own `needs` lines**, in the
+order the file writes them, and let `needs` pull the rest:
+
+```
+grep '^needs' ml/compiler/backend/proofs/bvi_letProof.ml > prefix.ml
+```
+
+For a definition file, a clone of `hol-template-cakeml` with
+`needs "compiler/backend/bvi_let.ml"` is enough and takes a minute:
+the file's own needs are its ancestors, in its own order.
+
+### Where it lives
+
+`tmp/pfprefix.ml` is the prefix for `bvi_letProof.ml`, made this
+way.  The check that a session is sound is the load log itself:
+
+```
+cake_conj_list failed: bvi_let_compile has the types
+  ?391533->?391532->(?391534)list->(?391535)list and
+  (num)list->num->(bvi_exp)list->(bvl_exp)list
+cake_define bvi_let_compile CHEATED (clause by clause)
+```
+
+`(bvl_exp)list` in the type of a `bvi_let` constant says it, and so
+does an axiom count that is far above what a run reports for the
+file (26 against 2).  `grep -E 'CHEATED|cake_conj_list'` over the
+pane after building a session is worth the second it takes.
+
+### Dead ends
+
+Reading the types of the goal and concluding that the statement
+invents a type variable.  The type variable is real -- in a
+mis-ordered session the constant really does come out polymorphic,
+because the clause that would have pinned the argument down was
+read at another language's type and dropped.  It is a symptom.
 
 ---
 
