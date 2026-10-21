@@ -121,34 +121,80 @@ let CASES_ON_TAC t =
    Deepest first, because that is HOL4's search (case_find_subterm,
    :652): the outermost scrutinee would be split while an inner one
    is still a compound term, and the reduction of that inner match
-   then meets the undecidable case above. *)
+   then meets the undecidable case above.
+
+   A variable is a scrutinee worth splitting when its type has more
+   than one constructor -- or when it is a pair, which has one and
+   still has to come apart: a pattern of the source that reads the
+   two halves of what find_code returned leaves the pair as a
+   variable under a SOME. *)
+
+(* The patterns of a match, which is what says where to split: a
+   HOL4 case is nested applications of case constants, one per level
+   of the pattern, so its innermost-first search finds each level by
+   itself; HOL Light's _MATCH has the whole pattern in one arm, so
+   the port has to read the arms. *)
+
+let match_arms tm =
+  let rec arms t =
+    match t with
+      Comb(Comb(Const("_SEQPATTERN",_),a),b) -> a :: arms b
+    | _ -> [t] in
+  let pat_of arm =
+    match snd(strip_exists(snd(strip_abs arm))) with
+      Comb(Comb(Const("_UNGUARDED_PATTERN",_),
+                Comb(Comb(Const("GEQ",_),p),_)),_) -> p
+    | _ -> failwith "match_arms" in
+  match tm with
+    Comb(Comb(Const("_MATCH",_),sc),a) -> sc,mapfilter pat_of (arms a)
+  | _ -> failwith "match_arms";;
+
+let match_pairs tm =
+  let rec go t acc =
+    let acc = try let sc,pats = match_arms t in
+                  itlist (fun p l -> (p,sc) :: l) pats acc
+              with Failure _ -> acc in
+    match t with
+      Comb(a,b) -> go a (go b acc)
+    | Abs(_,b) -> go b acc
+    | _ -> acc in
+  go tm [];;
+
+(* and a split is wanted exactly where a pattern is deeper than the
+   term it is matched against: the scrutinee of the match itself
+   (the pattern is a constructor, the scrutinee an application), and
+   the argument of a constructor that the pattern takes apart (the
+   pair under the SOME of SOME (args,exp)).  Where the pattern has a
+   variable, as the vs of Rval vs, nothing is wanted. *)
 
 let scruts_of_goal (asl,w) =
   let tms = w :: map (fun (_,th) -> concl th) asl in
   let fvs = itlist (fun t a -> union (frees t) a) tms [] in
-  let many t =
-    try length (constructors_of (type_of t)) > 1
-    with Failure _ -> false in
   let ok t =
-    not (is_con_app t) && subtract (frees t) fvs = [] &&
-    (if is_var t then many t
-     else is_const (fst(strip_comb t)) &&
-          (fst(dest_const(fst(strip_comb t)))).[0] <> '_' &&
-          (prod_type (type_of t) || many t)) in
-  let rec cands t =
-    if is_pair t then (let a,b = dest_pair t in cands a @ cands b)
-    else if ok t then [t] else [] in
+    not (is_con_app t) && not (is_const t) &&
+    subtract (frees t) fvs = [] &&
+    (is_var t ||
+     (is_const (fst(strip_comb t)) &&
+      (fst(dest_const(fst(strip_comb t)))).[0] <> '_')) in
+  let rec wanted p s =
+    if is_var p then []
+    else if ok s then [s]
+    else
+      let hp,ap = strip_comb p and hs,asc = strip_comb s in
+      if hp = hs && length ap = length asc then
+        itlist2 (fun x y l -> wanted x y @ l) ap asc []
+      else [] in
   let rec depth t =
     match t with
       Comb(a,b) -> 1 + max (depth a) (depth b)
     | Abs(_,b) -> 1 + depth b
     | _ -> 0 in
-  let deep = sort (fun a b -> depth a > depth b)
-                  (setify (itlist (fun t a -> match_scruts t @ a)
-                                  tms [])) in
-  let rec collect l =
-    match l with [] -> [] | s :: rest -> cands s @ collect rest in
-  collect deep;;
+  let cands =
+    setify (itlist (fun t a ->
+              itlist (fun (p,s) l -> wanted p s @ l)
+                     (match_pairs t) a)
+            tms []) in
+  sort (fun a b -> depth a > depth b) cands;;
 
 (* The same split, but with the existentials of the cases theorem
    named by the proof instead of by HOL Light.  EVERY_CASE_TAC
@@ -201,11 +247,64 @@ let PRUNE_TAC rws =
   TRY(FIRST_ASSUM CONTR_TAC) THEN
   TRY(ASM_REWRITE_TAC rws);;
 
+(* HOL4's fs [] also rewrites the assumptions with one another,
+   which HOL Light has no tactic for: ASM_REWRITE_TAC rewrites the
+   goal with the assumptions and RULE_ASSUM_TAC rewrites the
+   assumptions with theorems.  A split on a condition of a
+   definition leaves the condition as one assumption and the
+   equation that mentions it as another, and the proof needs the
+   second simplified by the first.  One pass, because two
+   assumptions that rewrite each other would not terminate. *)
+
+let ASM_FS_TAC (asl,w as gl) =
+  let ths = map snd asl in
+  RULE_ASSUM_TAC
+    (fun th ->
+       let others =
+         filter (fun t -> not (aconv (concl t) (concl th))) ths in
+       try REWRITE_RULE others th with Failure _ -> th) gl;;
+
+(* A conditional is a case expression on a boolean, which is how
+   HOL4 sees it: its every_case_tac splits an if of the goal or of
+   an assumption like any other case.  So the conditions count as
+   candidates too, the outermost first -- an inner conditional is
+   under the outer one and cannot be decided before it. *)
+
+let conds_of_goal (asl,w) =
+  let tms = w :: map (fun (_,th) -> concl th) asl in
+  let fvs = itlist (fun t a -> union (frees t) a) tms [] in
+  let cond_of u = rand(rator(rator u)) in
+  let ok u = try let c = cond_of u in
+                 subtract (frees c) fvs = [] && not (is_const c)
+             with Failure _ -> false in
+  let cs = filter ok (itlist (fun t a -> find_terms is_cond t @ a)
+                             tms []) in
+  let rec size t =
+    match t with
+      Comb(a,b) -> size a + size b
+    | Abs(_,b) -> 1 + size b
+    | _ -> 1 in
+  let rec dedup l =
+    match l with
+      [] -> []
+    | x :: r -> x :: dedup (filter (fun y -> not (y = x)) r) in
+  dedup (map cond_of (sort (fun a b -> size a > size b) cs));;
+
 let CASE_SPLIT_TAC gl =
   match scruts_of_goal gl with
     [] -> failwith "CASE_SPLIT_TAC"
   | t :: _ ->
       (CASES_ON_TAC t THEN PRUNE_TAC (case_rws (type_of t))) gl;;
+
+(* the same for a conditional, kept apart from CASE_SPLIT_TAC: a
+   proof that wants HOL4's reading of an if as a case says so *)
+
+let COND_SPLIT_TAC gl =
+  match conds_of_goal gl with
+    [] -> failwith "COND_SPLIT_TAC"
+  | c :: _ ->
+      (ASM_CASES_TAC c THEN ASM_FS_TAC THEN
+       TRY(ASM_REWRITE_TAC[])) gl;;
 
 (* HOL4's every_case_tac: split the innermost scrutinee, reduce what
    can be reduced, and again.  Bounded, because a step that only
@@ -260,23 +359,6 @@ let RECORD_CASES_TAC t =
   let nm = fst(dest_type (type_of t)) in
   STRUCT_CASES_TAC (ISPEC t (cases_of (type_of t))) THEN
   REWRITE_TAC (K_DEF :: record_thms nm);;
-
-(* HOL4's fs [] also rewrites the assumptions with one another,
-   which HOL Light has no tactic for: ASM_REWRITE_TAC rewrites the
-   goal with the assumptions and RULE_ASSUM_TAC rewrites the
-   assumptions with theorems.  A split on a condition of a
-   definition leaves the condition as one assumption and the
-   equation that mentions it as another, and the proof needs the
-   second simplified by the first.  One pass, because two
-   assumptions that rewrite each other would not terminate. *)
-
-let ASM_FS_TAC (asl,w as gl) =
-  let ths = map snd asl in
-  RULE_ASSUM_TAC
-    (fun th ->
-       let others =
-         filter (fun t -> not (aconv (concl t) (concl th))) ths in
-       try REWRITE_RULE others th with Failure _ -> th) gl;;
 
 (* HOL4's rveq (var_eq_tac): use up the equations between variables
    that a case split leaves, and keep the others -- the equations
