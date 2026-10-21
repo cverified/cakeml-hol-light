@@ -189,6 +189,21 @@ what it costs:
   those, and do them when a file is finished rather than in the
   middle of one.
 
+## The template has to be rebuilt when the library changes
+
+`tools/bin/reload` puts a changed `ml/lib/lemmas.ml` or
+`ml/lib/tactics.ml` into a **running** session in a second, and that
+is what the work uses; but it does not change
+`hol-template-cakeml`, and a clone of the template is then a session
+whose library is older than the proofs.  A verification in such a
+clone fails with `Unbound value <the new tactic>` part way through
+the file, which looks like a broken proof and is not one.
+
+So: after a lemma or a tactic is added, `KEEP=1 retemplate` before
+cloning for a verification -- and remember that `retemplate` kills
+the old template, which takes **its clones with it** (a clone is a
+fork).  `KEEP=1` spares only what hangs off `hol-base`.
+
 ## The closure of a single file
 
 For a file in the middle of the order, its `needs` closure is ten
