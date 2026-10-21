@@ -46,6 +46,7 @@
 
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "lib/set_sep.ml";;
 needs "semantics/ast.ml";;
 
 let extract_def = cake_define
@@ -187,17 +188,204 @@ let compile_sing = cake_theorem "compile_sing"
   (fun () ->
     `(!n d e. bvi_let_compile n d [e] = [bvi_let_compile_sing n d e]) /\
      (!n d e. bvi_let_compile_list n d e = bvi_let_compile n d e)`)
-  CHEAT_TAC;;
+  (let cp = cake_def "bvi_let_compile" in
+   let cs = cake_def "bvi_let_compile_sing" in
+   let sz = size_thms "bvi_exp" in
+   (* HOL4 does this induction with ho_match_mp_tac compile_sing_ind,
+      the induction theorem that its termination proof left behind.
+      HOL Light's define keeps no such theorem, so the induction is
+      on the measure the definition was made with -- here a mutual
+      one, over the size of an expression and over the size of a
+      list of them -- and every use of the hypothesis leaves a side
+      condition. *)
+   let compile_CONS = prove
+    (`!n d x xs. bvi_let_compile n d (CONS x xs) =
+                 APPEND (bvi_let_compile n d [x])
+                        (bvi_let_compile n d xs)`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `xs:bvi_exp list` list_CASES) THEN
+     REWRITE_TAC[cp; APPEND_NIL]) in
+   (* no expression has size 0, which is what the base case says *)
+   let size_pos = prove
+    (`!e:bvi_exp. 1 <= bvi_exp_size e`,
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `e:bvi_exp` (cases_of `:bvi_exp`)) THEN
+     REWRITE_TAC sz THEN ARITH_TAC) in
+   let size_tac =
+     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
+     REWRITE_TAC(list_size :: sz) THEN ASM_ARITH_TAC in
+   let cond1 t =
+     mk_binop `(<=):num->num->bool`
+       (list_mk_icomb "bvi_exp_size" [t]) `k:num` in
+   let cond2 t =
+     mk_binop `(<=):num->num->bool`
+       (list_mk_icomb "list_size" [`bvi_exp_size`; t]) `k:num` in
+   let use1_by tac t =
+     SUBGOAL_THEN (cond1 t)
+       (fun c -> FIRST_ASSUM(fun ih ->
+          REWRITE_TAC[MATCH_MP (CONJUNCT1 ih) c])) THEN TRY tac in
+   let use2_by tac t =
+     SUBGOAL_THEN (cond2 t)
+       (fun c -> FIRST_ASSUM(fun ih ->
+          REWRITE_TAC[MATCH_MP (CONJUNCT2 ih) c])) THEN TRY tac in
+   let use1 = use1_by size_tac in
+   let use2 = use2_by size_tac in
+   let both = REWRITE_TAC[cp; cs] in
+   (* Var and Force read the environment, so both sides have the
+      same match on it *)
+   let match_case =
+     REWRITE_TAC[cp; cs] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     EVERY_CASE_TAC THEN REWRITE_TAC[] in
+   (* the Let is the one clause that compiles something other than
+      a sub-term: the list without its last expression, and that
+      last expression as the new body *)
+   let sing_let_case =
+     REWRITE_TAC[cp; cs; LET_DEF; LET_END_DEF] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     COND_CASES_TAC THENL
+     [use1 `b2:bvi_exp` THEN REWRITE_TAC[];
+      COND_CASES_TAC THENL
+      [use2_by (MP_TAC(ISPECL [`bvi_exp_size`; `bs:bvi_exp list`]
+                         list_size_BUTLAST) THEN size_tac)
+         `BUTLAST (bs:bvi_exp list)` THEN
+       use1_by
+         (MP_TAC(MATCH_MP (ISPEC `bvi_exp_size` list_size_LAST)
+                   (REWRITE_RULE[LENGTH_EQ_NIL]
+                      (ASSUME `~(LENGTH (bs:bvi_exp list) = 0)`)))
+          THEN size_tac)
+         `LAST (bs:bvi_exp list)` THEN
+       REWRITE_TAC[HD];
+       use2 `bs:bvi_exp list` THEN use1 `b2:bvi_exp` THEN
+       REWRITE_TAC[HD]]] in
+   let sing_call_case =
+     REWRITE_TAC[cp; cs] THEN
+     NAMED_CASES_TAC `hh:bvi_exp option` [[]; ["ce"]] THEN
+     TRY MATCH_REDUCE_TAC THEN use2 `gs:bvi_exp list` THEN
+     TRY(use1 `ce:bvi_exp`) THEN REWRITE_TAC[HD] in
+   let part1 =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `e:bvi_exp`
+       [["v"]; ["a1"; "a2"; "a3"]; ["bs"; "b2"]; ["r1"]; ["t1"];
+        ["tt"; "dd"; "gs"; "hh"]; ["loc"; "fv"]; ["op"; "os"];
+        ["rets"; "lt"; "ld"; "ls"; "ly"]; ["rs"]] THENL
+     [match_case;
+      both THEN use1 `a1:bvi_exp` THEN use1 `a2:bvi_exp` THEN
+      use1 `a3:bvi_exp` THEN REWRITE_TAC[HD];
+      sing_let_case;
+      both THEN use1 `r1:bvi_exp` THEN REWRITE_TAC[HD];
+      both THEN use1 `t1:bvi_exp` THEN REWRITE_TAC[HD];
+      sing_call_case;
+      match_case;
+      both THEN use2 `os:bvi_exp list` THEN REWRITE_TAC[];
+      both THEN use2 `ls:bvi_exp list` THEN use1 `ly:bvi_exp` THEN
+      REWRITE_TAC[HD];
+      both THEN use2 `rs:bvi_exp list` THEN REWRITE_TAC[]] in
+   (* and the list, where compile takes the head apart with the
+      clause for two or more and compile_list with its own *)
+   let part2 =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `es:bvi_exp list` [[]; ["y"; "ys"]] THENL
+     [REWRITE_TAC[cp; cs];
+      REWRITE_TAC[cs] THEN ONCE_REWRITE_TAC[compile_CONS] THEN
+      use1 `y:bvi_exp` THEN use2 `ys:bvi_exp list` THEN
+      REWRITE_TAC[APPEND]] in
+   let sing_base =
+     CONJ_TAC THENL
+     [REPEAT GEN_TAC THEN DISCH_TAC THEN
+      SUBGOAL_THEN `F` CONTR_TAC THEN
+      MP_TAC(ISPEC `e:bvi_exp` size_pos) THEN ASM_ARITH_TAC;
+      REPEAT GEN_TAC THEN DISCH_TAC THEN
+      NAMED_CASES_TAC `es:bvi_exp list` [[]; ["y"; "ys"]] THENL
+      [REWRITE_TAC[cp; cs];
+       FIRST_ASSUM MP_TAC THEN
+       REWRITE_TAC[list_size; ARITH_RULE `~(1 + a + b <= 0)`]]] in
+   SUBGOAL_THEN
+     `!k. (!n d e. bvi_exp_size e <= k ==>
+             bvi_let_compile n d [e] =
+             [bvi_let_compile_sing n d e]) /\
+          (!n d es. list_size bvi_exp_size es <= k ==>
+             bvi_let_compile_list n d es = bvi_let_compile n d es)`
+     (fun th -> CONJ_TAC THEN REPEAT GEN_TAC THENL
+        [MP_TAC(CONJUNCT1(SPEC `bvi_exp_size (e:bvi_exp)` th));
+         MP_TAC(CONJUNCT2
+                  (SPEC `list_size bvi_exp_size (e:bvi_exp list)`
+                     th))]
+        THEN DISCH_THEN MATCH_MP_TAC THEN REWRITE_TAC[LE_REFL]) THEN
+   INDUCT_TAC THENL
+   [sing_base; CONJ_TAC THENL [part1; part2]]);;
 
 let compile_length = cake_theorem "compile_length[simp]"
   (fun () ->
     `!n d xs. LENGTH (bvi_let_compile n d xs) = LENGTH xs`)
-  CHEAT_TAC;;
+  (let cp = cake_def "bvi_let_compile" in
+   let sz = size_thms "bvi_exp" in
+   (* HOL4 takes the induction theorem that its termination proof
+      left behind (HO_MATCH_MP_TAC compile_ind); the port induces on
+      the measure the definition was made with *)
+   let cond t =
+     mk_binop `(<=):num->num->bool`
+       (list_mk_icomb "list_size" [`bvi_exp_size`; t]) `k:num` in
+   let size_tac =
+     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
+     REWRITE_TAC(list_size :: sz) THEN ASM_ARITH_TAC in
+   let use_ih t =
+     SUBGOAL_THEN (cond t)
+       (fun c -> FIRST_ASSUM(fun ih -> REWRITE_TAC[MATCH_MP ih c]))
+     THEN TRY size_tac in
+   (* every clause but the empty list, the list of two or more and
+      the Let of nothing makes a list of one *)
+   let one = REWRITE_TAC[cp; LENGTH] in
+   let sing_case =
+     REWRITE_TAC[cp] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     EVERY_CASE_TAC THEN REWRITE_TAC[LENGTH] in
+   let let_case =
+     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     REPEAT COND_CASES_TAC THEN TRY(use_ih `[e:bvi_exp]`) THEN
+     REWRITE_TAC[LENGTH] in
+   let single_case =
+     NAMED_CASES_TAC `x1:bvi_exp`
+       [["v"]; ["e1"; "e2"; "e3"]; ["es"; "e"]; ["e"]; ["e"];
+        ["tt"; "dd"; "es"; "hh"]; ["loc"; "v"]; ["op"; "es"];
+        ["rets"; "tt"; "dd"; "es"; "e"]; ["es"]] THENL
+     [sing_case; one; let_case; one; one; one; sing_case; one; one;
+      one] in
+   let cons_cons_case =
+     REWRITE_TAC[cp; LENGTH_APPEND] THEN
+     use_ih `[x1:bvi_exp]` THEN use_ih `(x2:bvi_exp) :: xr2` THEN
+     REWRITE_TAC[LENGTH] THEN ARITH_TAC in
+   let base_case =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `xs:bvi_exp list` [[]; ["x1"; "xr"]] THENL
+     [REWRITE_TAC[cp];
+      FIRST_ASSUM MP_TAC THEN
+      REWRITE_TAC[list_size; ARITH_RULE `~(1 + a + b <= 0)`]] in
+   let step_case =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `xs:bvi_exp list` [[]; ["x1"; "xr"]] THENL
+     [REWRITE_TAC[cp];
+      NAMED_CASES_TAC `xr:bvi_exp list` [[]; ["x2"; "xr2"]] THENL
+      [single_case; cons_cons_case]] in
+   SUBGOAL_THEN
+     `!k n d xs. list_size bvi_exp_size xs <= k ==>
+        LENGTH (bvi_let_compile n d xs) = LENGTH xs`
+     (fun th -> REPEAT GEN_TAC THEN
+        MATCH_MP_TAC(SPEC `list_size bvi_exp_size (xs:bvi_exp list)`
+                       th) THEN
+        REWRITE_TAC[LE_REFL]) THEN
+   INDUCT_TAC THENL [base_case; step_case]);;
 
 let compile_HD_SING = cake_theorem "compile_HD_SING"
   (fun () ->
     `[HD (bvi_let_compile n d [x])] = bvi_let_compile n d [x]`)
-  CHEAT_TAC;;
+  (* the compiled list of one has length one, so it is its own head
+     put back into a list *)
+  (MP_TAC(SPECL [`n:num list`; `d:num`; `[x:bvi_exp]`]
+            compile_length) THEN
+   STRUCT_CASES_TAC(ISPEC `bvi_let_compile n d [x]` list_CASES) THEN
+   REWRITE_TAC[LENGTH; SUC_INJ; LENGTH_EQ_NIL; NOT_SUC] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]);;
 
 let compile_exp_def = cake_define
   `bvi_let_compile_exp x =

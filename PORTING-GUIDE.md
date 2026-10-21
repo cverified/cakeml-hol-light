@@ -47,6 +47,9 @@ add it to the index.
 | 10 | a library theorem HOL Light has not | `ml/lib/lemmas.ml` |
 | 11 | `Parse.hide`, a field name | `cake_hide`, and a clean session |
 | 12 | a statement that annotates no type | terms taken from the goal |
+| 13 | `evaluate_def` with `fix_clock` removed | `fix_clock_evaluate` |
+| 14 | the order of a `case` split | the condition before the hypothesis |
+| 15 | a non-empty list written as a `SNOC` | `SNOC_CASES` and four laws |
 
 ## 1. `case x of` in a term, and `every_case_tac`
 
@@ -475,23 +478,49 @@ compile_ind`, and the eleven clauses have to be reached another way.
 
 ### What the port does
 
-Measure induction by hand, in three steps:
+Measure induction by hand, with the measure **bounded** rather than
+equal, so that `INDUCT_TAC` is enough and `num_WF` is not needed:
 
-1. generalise the measure into a variable, because `num_WF` is about
-   a `!n`:
+```ocaml
+SUBGOAL_THEN
+  `!k n d xs. list_size bvi_exp_size xs <= k ==> <the statement>`
+  (fun th -> REPEAT GEN_TAC THEN
+     MATCH_MP_TAC(SPEC `list_size bvi_exp_size (xs:bvi_exp list)`
+                    th) THEN
+     REWRITE_TAC[LE_REFL]) THEN
+INDUCT_TAC THENL [base_case; step_case]
+```
 
-   ```ocaml
-   SUBGOAL_THEN
-     `!n xs .... list_size bvi_exp_size xs = n /\ ... ==> ...`
-     (fun th -> MESON_TAC[th]) THEN
-   ```
+The induction hypothesis is then at `k` and the goal at `SUC k`, so
+a clause's recursive call needs its sub-measure `<= k`, which is
+what the size clauses and `ASM_ARITH_TAC` give:
 
-2. `MATCH_MP_TAC num_WF THEN REPEAT STRIP_TAC`;
-3. **use the measure equation right to left before any split**:
-   `FIRST_X_ASSUM(SUBST_ALL_TAC o SYM)`, so the induction hypothesis
-   is about the size of the list and not about `n`.  Then
-   `CASES_ON_TAC` on the list (entry 2), and each constructor case
-   discharges its hypothesis with a size inequality.
+```ocaml
+let use_ih t =
+  SUBGOAL_THEN (cond t)
+    (fun c -> FIRST_ASSUM(fun ih -> REWRITE_TAC[MATCH_MP ih c]))
+  THEN TRY size_tac
+```
+
+The base case `k = 0` is the one that has to be seen to be
+impossible: a list of one or more has size `1 + _ + _`, so
+`FIRST_ASSUM MP_TAC THEN REWRITE_TAC[list_size; ARITH_RULE `~(1 + a
++ b <= 0)`]` closes it.
+
+A **mutual** induction theorem (`compile_sing_ind`, over an
+expression and over a list of them) is the same with a conjunction
+under the `!k`, and the two hypotheses are `CONJUNCT1 ih` and
+`CONJUNCT2 ih`:
+
+```ocaml
+SUBGOAL_THEN
+  `!k. (!n d e. bvi_exp_size e <= k ==> ...) /\
+       (!n d es. list_size bvi_exp_size es <= k ==> ...)`
+  (fun th -> CONJ_TAC THEN REPEAT GEN_TAC THENL
+     [MP_TAC(CONJUNCT1(SPEC `bvi_exp_size (e:bvi_exp)` th)); ...]
+     THEN DISCH_THEN MATCH_MP_TAC THEN REWRITE_TAC[LE_REFL]) THEN
+INDUCT_TAC THENL [sing_base; CONJ_TAC THENL [part1; part2]]
+```
 
 The cost is real: HOL4 gets the eleven cases from one word, and the
 port writes the scaffolding.  It is about ten lines a theorem, and
@@ -501,13 +530,20 @@ they are the same ten lines every time.
 
 No tactic yet -- the scaffolding is written out in each proof (see
 `proofs/compiler/backend/proofs/bvi_letProof.prf`,
-`evaluate_env_rel` and `compile_code_labels`).  A `MEASURE_INDUCT_TAC`
-that takes the measure term and does the three steps is the obvious
-next utility; it goes in `ml/lib/tactics.ml` when a second file wants
-it.
+`evaluate_env_rel` and `compile_code_labels`, and
+`proofs/compiler/backend/bvi_let.prf`, `compile_sing` and
+`compile_length`).  A `MEASURE_INDUCT_TAC` that takes the measure
+term and writes the scaffolding is the obvious next utility; it goes
+in `ml/lib/tactics.ml` when a second file wants it.
 
 ### Dead ends
 
+- The measure as an **equation** (`list_size f xs = n`) with
+  `MATCH_MP_TAC num_WF`.  It works, and it needs the equation used
+  right to left before any split
+  (`FIRST_X_ASSUM(SUBST_ALL_TAC o SYM)`), or the induction
+  hypothesis is about `n` and not about the list.  The bounded form
+  above has no such step.
 - `POP_ASSUM_LIST` and friends to reorder the assumptions before the
   induction: the order is not the problem, the direction of the
   measure equation is.
@@ -856,11 +892,237 @@ Annotating harder.  A state written as `s:('c,'ffi)bviSem_state`
 has a *different* type from the statement's, however right it
 looks; the way out is not to write the type at all.
 
+## 13. `evaluate_def` with `fix_clock` removed
+
+### The idiom
+
+A semantics of CakeML is defined with `fix_clock` around every
+recursive call, because that is what makes the definition
+terminate, and the file then says
+
+```
+(* Finally, we remove fix_clock from the induction and definition
+   theorems. *)
+Theorem evaluate_def[compute,allow_rebind] =
+  REWRITE_RULE [fix_clock_evaluate] evaluate_def;
+```
+
+(`bviSemScript.sml:386-393`).  From there on `evaluate_def` is the
+name of the *restated* clauses, and every proof of every file above
+it rewrites with those.
+
+### What it means
+
+`fix_clock s (res,s1) = (res, s1 with clock := MIN s.clock
+s1.clock)`, and `fix_clock_evaluate` says
+`fix_clock s (evaluate (xs,env,s)) = evaluate (xs,env,s)` -- true
+because `evaluate_clock` says the clock never grows.  So HOL4's
+`fs [evaluate_def]` unfolds a clause in which `fix_clock` is simply
+not there.
+
+### What resisted
+
+The port binds `evaluate_def` to the clauses **as the definition was
+made**, with `fix_clock` in them, because that is the theorem that
+`cake_define_list_try_tac` returns.  A proof that unfolds it and
+then expands `fix_clock` by its definition is left with
+
+```
+state_clock_fupd (K (MIN (state_clock s1) (state_clock as))) as
+```
+
+in the middle of every assumption.  Nothing is wrong with it, and it
+is unusable: `MIN a a = a` needs a rewrite of its own, the record
+update then needs `RECORD_CASES_TAC` and `K_DEF` to collapse (a port
+record is a one-constructor datatype, so its laws are stated at the
+constructor), the state is no longer the variable the next step
+wants to see, and the two sides of the goal get the treatment at
+different moments and stop looking alike.
+
+### What the port does
+
+Rewrite with `fix_clock_evaluate` **before** the definition of
+`fix_clock` is ever touched, exactly where HOL4 restates the
+clauses:
+
+```ocaml
+let fce = bviSem_fix_clock_evaluate in
+...
+let tidy =
+  TRY(REWRITE_TAC[fce]) THEN RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
+  TRY(REWRITE_TAC[fc]) THEN ...
+```
+
+The rewrite matches wherever a clause put it, including the
+`fix_clock (dec_clock (ticks + 1) s) (evaluate (...,dec_clock
+(ticks + 1) s))` of `Call`, because the two state arguments are
+syntactically the same term there too.  After it, no proof of the
+file contains a record update at all.
+
+`fix_clock_evaluate` is a `CHEAT_TAC` of `bviSem.ml` until that
+file's turn comes; depending on it is the same arrangement HOL4 has,
+where the restated `evaluate_def` depends on `evaluate_clock`.
+
+### Where it lives
+
+`ml/compiler/backend/semantics/bviSem.ml`, `fix_clock_evaluate`
+(and `evaluate_clock` under it).  Used in
+`proofs/compiler/backend/proofs/bvi_letProof.prf`, section
+`evaluate_env_rel`, as `fce`.
+
+### Dead ends
+
+Expanding `fix_clock` and cleaning up afterwards.  It works for one
+clause (`opev` in `evaluate_delete_var_Rval` does it, with
+`MIN a a = a` and `RECORD_CASES_TAC`) and it does not scale: the
+`Call` clause has two `fix_clock`s at different states and the
+assumptions of one branch then disagree with the goal's by a record
+update.
+
+## 14. The order of a `case` split
+
+### The idiom
+
+```
+\\ gvs [CaseEq"result",CaseEq"option",CaseEq"prod",CaseEq"bool"]
+\\ gvs [CaseEq"error_result",CaseEq"exn_or_ret"]
+...
+\\ res_tac \\ gvs []
+```
+
+(`bvi_letProofScript.sml:277-287`.)  HOL4 names the types to split
+on, **in an order**, and only then uses the induction hypothesis.
+
+### What it means
+
+`CaseEq"bool"` is the rewrite that splits an `if`; it is in that
+list because in HOL4 an `if` is a case on a boolean (entry 1).  The
+list is read left to right by the simplifier, so the outer cases of
+the clause go first and the hypothesis `res = <the rest>` keeps
+relating `res` to what has not been decided yet.
+
+### What resisted
+
+A search that splits the deepest pattern first (which is what entry
+1 settled on, and what HOL4's own `every_case_tac` does) reaches the
+innermost evaluation of a clause before the conditions above it are
+decided.  In the `Call` clause of `bviSem` the conditions above the
+handler are `find_code`, and `s.clock < ticks + 1`.  Splitting the
+handler first and using the induction hypothesis on it leaves its
+antecedent `~(x = Rerr (Rabort Rtype_error))` as a subgoal -- and
+when the clock condition is decided *afterwards*, the branch in
+which it holds has `res = Rerr (Rabort Rtimeout_error)`, so the
+assumptions say nothing about the handler at all and the antecedent
+is **not provable**.  Two goals of that shape survived every attempt
+to close them, because there was nothing wrong with them except
+their existence.
+
+### What the port does
+
+Decide the conditions first, in the loop that drives a deep case:
+
+```ocaml
+let deep_case =
+  REPEAT(CHANGED_TAC
+    (TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
+     (COND_SPLIT_TAC ORELSE CASE_SPLIT_TAC ORELSE
+      COND_CASES_TAC) THEN TRY tidy2 THEN ...
+```
+
+`COND_SPLIT_TAC` (the `if` of entry 1, which looks in the
+assumptions as well as the goal) comes before `CASE_SPLIT_TAC`, so
+no `case` under an undecided condition is ever taken apart.  That is
+the whole difference between a `Call` case with two unprovable side
+conditions and a `Call` case that closes.
+
+The rule in one line: **a condition of a branch is decided before
+the induction hypothesis is used inside that branch.**
+
+### Where it lives
+
+`deep_case` in the `evaluate_env_rel` section of
+`proofs/compiler/backend/proofs/bvi_letProof.prf`;
+`COND_SPLIT_TAC`, `CASE_SPLIT_TAC` in `ml/lib/tactics.ml`.
+
+### Dead ends
+
+Leaving the two side conditions to a last-resort split inside the
+antecedent's own proof (`ih_ants`).  It splits them, and one branch
+of the split is the one that cannot be closed -- the split has to
+happen earlier, not harder.  Splitting the negated variable of the
+side condition instead (`SPLIT_NEG_VAR`) turned 3 goals into 7.
+
+## 15. A non-empty list written as a `SNOC`
+
+### The idiom
+
+```
+imp_res_tac (METIS_PROVE [SNOC_CASES]
+               ``m <> [] ==> ?x y. m = SNOC x y``)
+\\ rveq \\ full_simp_tac std_ss
+     [FRONT_SNOC,LAST_SNOC,LENGTH_SNOC,ADD1]
+```
+
+(`bvi_letProofScript.sml:356-358`.)  A definition that recurses on
+`BUTLAST xs` and `LAST xs` is reasoned about by writing the list as
+`SNOC x y` and letting `FRONT_SNOC` and `LAST_SNOC` do the rest.
+
+### What it means
+
+`rich_listTheory`/`listTheory` of HOL4 carry `SNOC` with some
+seventy lemmas, among them the four that this idiom uses and the
+`SNOC_CASES` that justifies the rewriting.
+
+### What resisted
+
+HOL Light has `SNOC` (`ml/lib/hol4.ml` defines it, because a few
+sources define functions by recursion on one) and **not one law
+about it**.  `BUTLAST` is HOL Light's name for what the sources call
+`FRONT`, so `APPEND_BUTLAST_LAST` is there, but nothing connects it
+to `SNOC`.
+
+### What the port does
+
+Five one-line inductions, stated where they are used:
+
+```ocaml
+let SNOC_APPEND = prove (`!(l:A list) x. SNOC x l = APPEND l [x]`, ...
+let NOT_SNOC_NIL = prove (`!(l:A list) x. ~(SNOC x l = [])`, ...
+let SNOC_CASES = prove (`!l:A list. ~(l = []) ==> ?x y. l = SNOC x y`, ...
+let FRONT_SNOC = prove (`!(l:A list) x. BUTLAST (SNOC x l) = l`, ...
+let LAST_SNOC = prove (`!(l:A list) x. LAST (SNOC x l) = x`, ...
+let LENGTH_SNOC = prove (`!(l:A list) x. LENGTH (SNOC x l) = LENGTH l + 1`, ...
+```
+
+`SNOC_CASES` is proved by `EXISTS_TAC`s of `LAST l` and `BUTLAST l`
+and `APPEND_BUTLAST_LAST`; the other four are `LIST_INDUCT_TAC` and
+`ASM_REWRITE_TAC`, with `NOT_SNOC_NIL` needed because the clauses of
+`BUTLAST` and `LAST` test their tail for `[]`.
+
+A sixth is needed that HOL4 gets from its size simpset, because the
+measure of the induction is a `list_size`:
+`list_size f (SNOC x l) = list_size f l + (f x + 1)`.
+
+### Where it lives
+
+The `evaluate_env_rel` section of
+`proofs/compiler/backend/proofs/bvi_letProof.prf`.  They move to
+`ml/lib/lemmas.ml` (entry 10) as soon as a second file wants them.
+
+### Dead ends
+
+Working with `BUTLAST es` and `LAST es` and never naming the two
+pieces.  It avoids the five lemmas and it costs more: `evaluate_SNOC`
+is stated at a `SNOC`, so the one rewrite that takes the evaluation
+of the list apart does not fire, and `~(es = [])` has to be carried
+into every arithmetic side condition by hand.
+
 ---
 
 _Entries are added as the idioms are met.  The ones expected next,
 from reading the sources: `CaseEq`/`AllCaseEqs` (the rewriting form
-of entry 1, 7,559 uses together with `every_case_tac`), `fix_clock`
-and the clock arithmetic of `evaluate`, `qexists_tac`/`qpat_x_assum`
-with term quotations whose variables are not the goal's, `Induct_on`
-on a mutually recursive datatype, and `metis_tac` with a long list._
+of entry 1, 7,559 uses together with `every_case_tac`),
+`qexists_tac`/`qpat_x_assum` with term quotations whose variables are
+not the goal's, `Induct_on` on a mutually recursive datatype,
+`drule`/`drule_then`/`irule_at` and where they put the antecedents,
+and `metis_tac` with a long list._

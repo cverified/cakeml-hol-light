@@ -844,41 +844,41 @@ _Three things came out of the file that every other file needs:_
 
 ## Where the first file stands
 
-_`compiler/backend/proofs/bvi_letProof.ml`: **16 of its 17 theorems
-are proved**, and the file adds 1 axiom instead of 17.  What the
-four proofs of this pass needed is in `PORTING-GUIDE.md`; the two
-that are left are the correctness of the pass and its corollary._
+_`compiler/backend/proofs/bvi_letProof.ml`: **all 17 of its theorems
+are proved**, and the file adds **no axiom**.  It is the first file
+of the port that is done.  What the proofs of this pass needed is in
+`PORTING-GUIDE.md`._
 
 - _`evaluate_env_rel` -- the correctness of bvi_let, which HOL4
   writes as `completeInduct_on` and **eleven `Resume` blocks**, 150
   of the file's 118 lines of tactic script (the Resume blocks are
-  counted apart).  The port has the induction (on the measure the
-  definition was made with, since HOL Light keeps no induction
-  theorem for a definition and `bvi_exp_INDUCT` does not reach a
-  recursion on `BUTLAST`), the empty list, the list of two or more,
-  and six of the ten constructors: Var, If, Raise, Tick, Op, Return
-  and Force.  Three are not finished: **Call** (the handler is
-  compiled in an environment with one entry more, which
-  `env_rel_CONS` gives), **LetCall** (the body's environment, which
-  `env_rel_REPLICATE_0` gives) and **Let** (the tail-position move:
-  `SNOC`, `BUTLAST`/`LAST`, `evaluate_SNOC`, and the two
-  `delete_var` theorems that this pass proved).  The attempt stands
-  in `tmp/env_rel_wip.ml`, which loads into a clone of the file's
-  closure and prints how many goals are left._
-- _`evaluate_compile_exp` is **proved**, out of `evaluate_env_rel`
-  at `ax = []` and `d = 0`, where `env_rel [] 0 env env` is
-  `env = DROP 0 env`.  It uses a cheat and is a proof all the same:
-  it adds no axiom of its own and it will stand unchanged when
-  `evaluate_env_rel` becomes a theorem.  So the one axiom the file
-  adds is `evaluate_env_rel` itself._
+  counted apart).  The port has the induction on the measure the
+  definition was made with (HOL Light keeps no induction theorem for
+  a definition, and `bvi_exp_INDUCT` does not reach a recursion on
+  `BUTLAST`), and the eleven cases next to it.  The three that cost
+  the work: **Let** (the tail-position move -- `SNOC` and its laws,
+  `evaluate_SNOC`, `env_rel_MAP`, and the two `delete_var` theorems
+  of the pass before), **Call** and **LetCall** (where the order of
+  the case split decides whether the side conditions of the
+  hypothesis are provable at all -- guide entry 14)._
+- _`evaluate_compile_exp` is proved out of it at `ax = []` and
+  `d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env`._
+
+_The three idioms that this pass had to settle, all in the guide:
+`evaluate_def` with `fix_clock` removed (13), the order of a `case`
+split (14), and a non-empty list written as a `SNOC` (15).  The
+first of them took every record update out of the file's proofs; the
+second is the rule that a condition of a branch is decided before
+the induction hypothesis is used inside it._
 
 _What the pass added to the machinery, all of it reloadable in a
 second: `NAMED_CASES_TAC` (a case split under names of the proof's
 own, which the goals of `EVERY_CASE_TAC` cannot give),
-`RECORD_CASES_TAC`, `ASM_FS_TAC`, `RULE_ASSUM_TRY`, `PRUNE_TAC`,
-`SPLIT_ASM_TAC`, `RES1_THEN`, `RES2_THEN`, `SOLVED`, and in
-`ml/lib/lemmas.ml` the `oEL` and `list_size` lemmas that HOL4 takes
-from its own libraries._
+`COND_SPLIT_TAC`, `CASE_SPLIT_TAC`, `RECORD_CASES_TAC`,
+`ASM_FS_TAC`, `RULE_ASSUM_TRY`, `PRUNE_TAC`, `SPLIT_ASM_TAC`,
+`RES1_THEN`, `RES2_THEN`, `SOLVED`, and in `ml/lib/lemmas.ml` the
+`oEL` and `list_size` lemmas that HOL4 takes from its own
+libraries._
 
 ## The sessions of phase three
 
