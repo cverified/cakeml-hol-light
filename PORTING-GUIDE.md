@@ -45,6 +45,7 @@ add it to the index.
 | 8 | an `Overload` brought to the front | `front_overloads` |
 | 9 | two files that bind the same `foo_def` | `cake_def "<const>"` |
 | 10 | a library theorem HOL Light has not | `ml/lib/lemmas.ml` |
+| 11 | `Parse.hide`, a field name | `cake_hide`, and a clean session |
 
 ## 1. `case x of` in a term, and `every_case_tac`
 
@@ -724,6 +725,70 @@ it costs (`SESSIONS.md`):
 ### Where it lives
 
 `ml/lib/lemmas.ml`.
+
+
+## 11. A statement that reads as a variable
+
+### The idiom
+
+Not an idiom of HOL4 at all, but the way HOL4's `Parse.hide` and
+its record-field accessors come out in the port, and the one bug
+class that no mechanical check of the port can see.
+
+### What it means
+
+HOL4 hides a name from its parser (`Parse.hide "error"`) and names a
+record field and another constant alike, so the port reads the
+statements of a file with those names taken out of the interface:
+`cake_hide` and `cake_hide_consts` (`ml/lib/theorem.ml`), set at the
+head of a file and set back to `[]` at its end, and
+`cake_hidden_read` and `cake_as_vars` around every statement.
+
+### What resisted
+
+Those two are **global state that a file sets and resets**.  A file
+that is loaded again (a re-port, or a library file that failed the
+first time and that `needs` therefore retries) and that errors in
+the middle never reaches the line that sets the state back, so the
+hiding stays on -- and the statements of the files after it are read
+with a name of their own taken away.  A name that is not in the
+interface is read as a **variable**, which typechecks: the statement
+is accepted, it reads exactly as the source does, and it says
+nothing.
+
+What it looks like: `compile_CONS` in `bvi_letProof` is
+`compile ax d (x :: xs) = compile ax d [x] ++ compile ax d xs` with
+`compile` a free variable of invented type, which no tactic can
+prove and which the port reports as NOT PROVED.  The statement is
+right in a clean session and wrong in a dirty one, so a proof that
+works interactively fails in the file -- and a *cheat* of the same
+statement passes every check the port has.
+
+### What the port does
+
+`cake_fieldvars ()` lists the theorems whose statement fell back to
+the variable reading, and it is the first thing to look at when a
+proof that works in a session fails in the file:
+
+```ocaml
+cake_fieldvars ();;
+(* ["semantics_CURRY_I"; "compile_CONS"; "compile_APPEND";
+    "evaluate_env_rel"] *)
+```
+
+A theorem of the file under work in that list means the session is
+dirty, not that the proof is wrong.  The cure is a session in which
+nothing is loaded twice: `retemplate` and a closure built from the
+template in one go (`SESSIONS.md`).  `tools/bin/checkseq` and
+`runall` load every file once, in order, which is why a run does not
+see this.
+
+### Dead ends
+
+Reading the port's text.  The statement reads exactly like the
+source -- that is the point of the port -- and the difference is in
+the parser's state, not in the file.  Before doubting a proof,
+check `cake_fieldvars ()` and `length (axioms ())`.
 
 ---
 
