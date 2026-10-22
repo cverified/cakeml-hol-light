@@ -901,3 +901,549 @@
             bvl_constProof_compile_code_labels) THEN
    REWRITE_TAC[FILTER; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY])
+
+### SmartOp_flip_thm
+  (* SmartOp_flip moves a constant from the left of an operation to
+     the right, which costs nothing because a constant cannot fail
+     and leaves the state alone, and the operations it does it for
+     are the ones where the two sides can be swapped *)
+  (let ev = cake_def "bvlSem_evaluate" in
+   let da = cake_def "bvlSem_do_app" in
+   let dia = cake_def "bvlSem_do_int_app" in
+   let fc = cake_def "bvlSem_fix_clock" in
+   let sof = cake_def "SmartOp_flip" in
+   let fce = bvlSem_fix_clock_evaluate in
+   let rty = `:(bvlSem_v list,bvlSem_v)
+                semanticPrimitives_result` in
+   let res_rws = [PAIR_EQ;
+                  distinctness "semanticPrimitives_result";
+                  injectivity "semanticPrimitives_result"] in
+   let tidy =
+     TRY SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+     PRUNE_TAC res_rws THEN MATCH_TIDY_TAC THEN SPLIT_ASM_TAC THEN
+     VAR_EQ_TAC in
+   let sing_tac =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       CHOOSE_THEN SUBST_ALL_TAC (MATCH_MP evaluate_SING th))) in
+   (* the value of a constant expression *)
+   let opevi = prove
+    (`!i env2 (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate
+          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+           env2,s) = (Rval [(Number i):bvlSem_v],s)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
+     RECORD_CASES_TAC `s:('c,'ffi)bvlSem_state` THEN
+     REWRITE_TAC[da; dia; REVERSE] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   (* an operation of two expressions evaluates them left to right
+      and applies do_app to the two values the other way round
+      (do_app takes the REVERSE of them) *)
+   let ev_pair = prove
+    (`!y1 y2 op env (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate ([bvl_Op op [y1; y2]],env,s) =
+        (match bvlSem_evaluate ([y1],env,s) with
+           (Rval v1,s1) ->
+             (match bvlSem_evaluate ([y2],env,s1) with
+                (Rval v2,s2) ->
+                  (match bvlSem_do_app op [HD v2; HD v1] s2 with
+                     Rerr err -> (Rerr err,s2)
+                   | Rval (v,s3) -> (Rval [v],s3))
+              | res -> res)
+         | res -> res)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
+     REWRITE_TAC[fce] THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+       [evaluate_CONS] THEN
+     NAMED_CASES_TAC
+       `bvlSem_evaluate ([y1],env,(s:('c,'ffi)bvlSem_state))`
+       [["r1"; "t1"]] THEN
+     NAMED_CASES_TAC (mk_var("r1",rty)) [["v1"]; ["e1"]] THEN
+     tidy THEN
+     TRY(NAMED_CASES_TAC
+           `bvlSem_evaluate ([y2],env,(t1:('c,'ffi)bvlSem_state))`
+           [["r2"; "t2"]] THEN
+         NAMED_CASES_TAC (mk_var("r2",rty)) [["v2"]; ["e2"]] THEN
+         tidy) THEN
+     sing_tac THEN REWRITE_TAC[REVERSE; APPEND; HD] THEN
+     REWRITE_TAC[injectivity "semanticPrimitives_result";
+                 EXISTS_REFL] THEN
+     MATCH_TIDY_TAC THEN REWRITE_TAC[]) in
+   (* an operation of the integers takes the value that
+      do_int_app gives it, which is the one clause of do_app that
+      this proof needs *)
+   let da_int = prove
+    (`!iop vs (s:('c,'ffi)bvlSem_state).
+        bvlSem_do_app (closLang_IntOp iop) vs s =
+        (match bvlSem_do_int_app iop vs with
+           SOME res -> Rval (res,s)
+         | NONE -> Rerr (Rabort Rtype_error))`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[da] THEN EVERY_CASE_TAC) in
+   (* and the two sides of an addition and of a multiplication can
+      be swapped, where a subtraction becomes an addition of the
+      negated constant *)
+   let dia_comm = prove
+    (`!w i. (bvlSem_do_int_app closLang_Add [w; Number i] =
+             bvlSem_do_int_app closLang_Add [Number i; w]) /\
+            (bvlSem_do_int_app closLang_Mult [w; Number i] =
+             bvlSem_do_int_app closLang_Mult [Number i; w]) /\
+            (bvlSem_do_int_app closLang_Sub [w; Number i] =
+             bvlSem_do_int_app closLang_Add [Number (--i); w])`,
+     REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `w:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
+     REWRITE_TAC[dia] THEN TRY MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[injectivity "option"] THEN
+     REWRITE_TAC[injectivity "bvlSem_v"] THEN INT_ARITH_TAC) in
+   let use_changed rws =
+     FIRST_X_ASSUM(fun th ->
+       let th' = REWRITE_RULE rws th in
+       if concl th' = concl th then failwith "use_changed"
+       else MP_TAC th') in
+   let swap_tac =
+     TRY(FIRST_X_ASSUM(DISJ_CASES_THEN SUBST_ALL_TAC)) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[dest_simple_eq]) THEN
+     VAR_EQ_TAC THEN
+     use_changed [ev_pair; opevi] THEN
+     REWRITE_TAC[ev_pair; opevi] THEN
+     NAMED_CASES_TAC
+       `bvlSem_evaluate ([x2],env,(s:('c,'ffi)bvlSem_state))`
+       [["r2"; "t2"]] THEN
+     NAMED_CASES_TAC (mk_var("r2",rty)) [["v2"]; ["e2"]] THEN
+     tidy THEN sing_tac THEN
+     REWRITE_TAC[HD; da_int; dia_comm] THEN
+     TRY(DISCH_THEN ACCEPT_TAC) in
+   REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC STRIP_ASSUME_TAC) THEN
+   REWRITE_TAC[sof] THEN EVERY_CASE_TAC THEN
+   REWRITE_TAC[MEM] THEN REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN VAR_EQ_TAC THEN
+   TRY(SOLVED(FIRST_ASSUM ACCEPT_TAC)) THEN swap_tac)
+
+### SmartOp2_thm
+  (* The constant folding, which is where the work of this file is:
+     SmartOp2 looks at eleven operations and at the shape of the two
+     expressions, and every expression it builds has to evaluate to
+     what the original did.  HOL4 does it with gvs and AllCaseEqs
+     and intLib.COOPER_TAC; here the operation is decided first, the
+     matches of dest_simple and case_op_const after it, and what is
+     left of each branch is an evaluation of the same atoms in the
+     same order with an integer identity between the results.
+     Twenty-two of the thirty-one branches close with the general
+     tactic below; the nine that restructure two operations at once
+     are the folding lemmas, whose atoms the proof has to name.
+     (Two minutes, of which the lemmas are three quarters.) *)
+  (let ev = cake_def "bvlSem_evaluate" in
+   let da = cake_def "bvlSem_do_app" in
+   let de = cake_def "bvlSem_do_eq" in
+   let dia = cake_def "bvlSem_do_int_app" in
+   let fc = cake_def "bvlSem_fix_clock" in
+   let bl = cake_def "bvl_Bool" in
+   let bv = cake_def "bvlSem_Boolv" in
+   let so2 = cake_def "SmartOp2" in
+   let fce = bvlSem_fix_clock_evaluate in
+   let rty = `:(bvlSem_v list,bvlSem_v)
+                semanticPrimitives_result` in
+   let res_rws = [PAIR_EQ;
+                  distinctness "semanticPrimitives_result";
+                  injectivity "semanticPrimitives_result"] in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "closLang_op"; injectivity "closLang_op";
+      distinctness "closLang_int_op";
+      injectivity "closLang_int_op";
+      distinctness "block_op"; injectivity "block_op";
+      distinctness "const_part"; injectivity "const_part";
+      distinctness "option"; injectivity "option"] in
+   let eqr = [distinctness "eq_result"; injectivity "eq_result"] in
+   let tidy =
+     TRY SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+     PRUNE_TAC res_rws THEN MATCH_TIDY_TAC THEN SPLIT_ASM_TAC THEN
+     VAR_EQ_TAC in
+   let sing_tac =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       CHOOSE_THEN SUBST_ALL_TAC (MATCH_MP evaluate_SING th))) in
+   let opevi = prove
+    (`!i env2 (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate
+          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+           env2,s) = (Rval [(Number i):bvlSem_v],s)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
+     RECORD_CASES_TAC `s:('c,'ffi)bvlSem_state` THEN
+     REWRITE_TAC[da; dia; REVERSE] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let bool_ev = prove
+    (`!b env2 (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate ([bvl_Bool b],env2,s) =
+        (Rval [bvlSem_Boolv b],s)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[bl; bv; ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
+     RECORD_CASES_TAC `s:('c,'ffi)bvlSem_state` THEN
+     REWRITE_TAC[da; REVERSE] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let ev_pair = prove
+    (`!y1 y2 op env (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate ([bvl_Op op [y1; y2]],env,s) =
+        (match bvlSem_evaluate ([y1],env,s) with
+           (Rval v1,s1) ->
+             (match bvlSem_evaluate ([y2],env,s1) with
+                (Rval v2,s2) ->
+                  (match bvlSem_do_app op [HD v2; HD v1] s2 with
+                     Rerr err -> (Rerr err,s2)
+                   | Rval (v,s3) -> (Rval [v],s3))
+              | res -> res)
+         | res -> res)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
+     REWRITE_TAC[fce] THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+       [evaluate_CONS] THEN
+     NAMED_CASES_TAC
+       `bvlSem_evaluate ([y1],env,(s:('c,'ffi)bvlSem_state))`
+       [["r1"; "t1"]] THEN
+     NAMED_CASES_TAC (mk_var("r1",rty)) [["v1"]; ["e1"]] THEN
+     tidy THEN
+     TRY(NAMED_CASES_TAC
+           `bvlSem_evaluate ([y2],env,(t1:('c,'ffi)bvlSem_state))`
+           [["r2"; "t2"]] THEN
+         NAMED_CASES_TAC (mk_var("r2",rty)) [["v2"]; ["e2"]] THEN
+         tidy) THEN
+     sing_tac THEN REWRITE_TAC[REVERSE; APPEND; HD] THEN
+     REWRITE_TAC[injectivity "semanticPrimitives_result";
+                 EXISTS_REFL] THEN
+     MATCH_TIDY_TAC THEN REWRITE_TAC[]) in
+   let ev_one = prove
+    (`!y op env (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate ([bvl_Op op [y]],env,s) =
+        (match bvlSem_evaluate ([y],env,s) with
+           (Rval v,t) ->
+             (match bvlSem_do_app op [HD v] t with
+                Rerr err -> (Rerr err,t)
+              | Rval (w,t') -> (Rval [w],t'))
+         | res -> res)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
+     REWRITE_TAC[fce] THEN
+     NAMED_CASES_TAC
+       `bvlSem_evaluate ([y],env,(s:('c,'ffi)bvlSem_state))`
+       [["r1"; "t1"]] THEN
+     NAMED_CASES_TAC (mk_var("r1",rty)) [["v1"]; ["e1"]] THEN
+     tidy THEN sing_tac THEN REWRITE_TAC[REVERSE; APPEND; HD] THEN
+     REWRITE_TAC[injectivity "semanticPrimitives_result";
+                 EXISTS_REFL] THEN
+     MATCH_TIDY_TAC THEN REWRITE_TAC[]) in
+   let da_int = prove
+    (`!iop vs (s:('c,'ffi)bvlSem_state).
+        bvlSem_do_app (closLang_IntOp iop) vs s =
+        (match bvlSem_do_int_app iop vs with
+           SOME res -> Rval (res,s)
+         | NONE -> Rerr (Rabort Rtype_error))`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[da] THEN EVERY_CASE_TAC) in
+   (* the value of an operation of two numbers, which is the one
+      shape of do_int_app that the folding needs; unfolding the
+      definition itself costs minutes over the branches *)
+   let dia_num = end_itlist CONJ (map (fun t ->
+     prove(t, REWRITE_TAC[dia] THEN TRY MATCH_REDUCE_TAC THEN
+              REWRITE_TAC[]))
+    [`bvlSem_do_int_app closLang_Add [Number a; Number b] =
+      SOME (Number (a + b))`;
+     `bvlSem_do_int_app closLang_Sub [Number a; Number b] =
+      SOME (Number (a - b))`;
+     `bvlSem_do_int_app closLang_Mult [Number a; Number b] =
+      SOME (Number (a * b))`;
+     `bvlSem_do_int_app closLang_Div [Number a; Number b] =
+      (if b = &0 then NONE else SOME (Number (a / b)))`;
+     `bvlSem_do_int_app closLang_Mod [Number a; Number b] =
+      (if b = &0 then NONE else SOME (Number (a % b)))`;
+     `bvlSem_do_int_app closLang_Less [Number a; Number b] =
+      SOME (bvlSem_Boolv (a < b))`;
+     `bvlSem_do_int_app closLang_LessEq [Number a; Number b] =
+      SOME (bvlSem_Boolv (a <= b))`;
+     `bvlSem_do_int_app closLang_Greater [Number a; Number b] =
+      SOME (bvlSem_Boolv (a > b))`;
+     `bvlSem_do_int_app closLang_GreaterEq [Number a; Number b] =
+      SOME (bvlSem_Boolv (a >= b))`;
+     `bvlSem_do_int_app (closLang_Const n) [] =
+      SOME (Number n)`]) in
+   (* HOL4's do_int_app_eq_some, which says what the arguments were
+      when the operation gave a value: this is how the proof learns
+      that they are numbers *)
+   let dia_eqs = CONJUNCTS do_int_app_eq_some in
+   let use_dia (asl,w as gl) =
+     let ths = mapfilter (fun (_,th) ->
+       tryfind (fun l -> MATCH_MP l th) dia_eqs) asl in
+     MAP_EVERY STRIP_ASSUME_TAC ths gl in
+   let norm =
+     RULE_ASSUM_TRY(REWRITE_RULE([HD; da_int; dia_num; CONS_11;
+                                  injectivity "bvlSem_v"]
+                                 @ res_rws)) THEN
+     TRY(REWRITE_TAC[HD; da_int; dia_num]) THEN
+     SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+     RULE_ASSUM_TRY(REWRITE_RULE (con_rws @ res_rws)) THEN
+     TRY(FIRST_ASSUM CONTR_TAC) in
+   let int_ring_fin (asl,w as gl) =
+     let eqs = filter (fun (_,th) ->
+         try type_of(lhs(concl th)) = `:int`
+         with Failure _ -> false) asl in
+     (MAP_EVERY (fun (_,th) -> MP_TAC th) eqs THEN
+      CONV_TAC INT_RING) gl in
+   let fin =
+     TRY ASM_FS_TAC THEN norm THEN
+     TRY(DISCH_THEN STRIP_ASSUME_TAC) THEN VAR_EQ_TAC THEN norm THEN
+     TRY(ASM_REWRITE_TAC[]) THEN
+     REWRITE_TAC[injectivity "semanticPrimitives_result"; CONS_11;
+                 injectivity "bvlSem_v"; PAIR_EQ] THEN
+     REPEAT CONJ_TAC THEN
+     TRY(ASM_INT_ARITH_TAC ORELSE int_ring_fin) in
+   (* El of a constant index is the ElemAt of that index ... *)
+   let int_lt_num = prove
+    (`!i n. (&0) <= i ==> (i < &n <=> num_of_int i < n)`,
+     REPEAT STRIP_TAC THEN
+     FIRST_ASSUM(fun th ->
+       GEN_REWRITE_TAC (LAND_CONV o LAND_CONV)
+         [SYM(MATCH_MP INT_OF_NUM_OF_INT th)]) THEN
+     REWRITE_TAC[INT_OF_NUM_LT]) in
+   let el_elemat = prove
+    (`!i v (s:('c,'ffi)bvlSem_state). (&0) <= i ==>
+        bvlSem_do_app (closLang_MemOp closLang_El) [v; Number i] s =
+        bvlSem_do_app (closLang_BlockOp
+                         (closLang_ElemAt (num_of_int i))) [v] s`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `v:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
+     REWRITE_TAC[da] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
+     ASM_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP int_lt_num th])) in
+   let el_le = INT_ARITH `!i:int. ~(i < &0) ==> &0 <= i` in
+   let el_tac =
+     TRY(FIRST_ASSUM(fun th ->
+       let eq = MATCH_MP el_elemat (MATCH_MP el_le th) in
+       RULE_ASSUM_TRY(REWRITE_RULE[eq]) THEN
+       TRY(REWRITE_TAC[eq]))) in
+   (* ... and an equality with a constant is the EqualConst of it,
+      whichever side the constant is on *)
+   let da_eqconst = prove
+    (`!i j (s:('c,'ffi)bvlSem_state).
+        bvlSem_do_app (closLang_BlockOp
+          (closLang_EqualConst (closLang_Int i))) [Number j] s =
+        Rval (bvlSem_Boolv (i = j),s)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[da; bv] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let eq_eqconst = prove
+    (`!i v (s:('c,'ffi)bvlSem_state).
+        bvlSem_do_app (closLang_BlockOp closLang_Equal)
+          [v; Number i] s =
+        bvlSem_do_app (closLang_BlockOp
+          (closLang_EqualConst (closLang_Int i))) [v] s`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `v:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
+     REWRITE_TAC[da] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[de] THEN TRY MATCH_REDUCE_TAC THEN
+     REWRITE_TAC(EXISTS_REFL :: eqr) THEN
+     REWRITE_TAC[injectivity "semanticPrimitives_result";
+                 PAIR_EQ] THEN
+     AP_TERM_TAC THEN MATCH_ACCEPT_TAC EQ_SYM_EQ) in
+   let eq_eqconst2 = prove
+    (`!i v (s:('c,'ffi)bvlSem_state).
+        bvlSem_do_app (closLang_BlockOp closLang_Equal)
+          [Number i; v] s =
+        bvlSem_do_app (closLang_BlockOp
+          (closLang_EqualConst (closLang_Int i))) [v] s`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `v:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
+     REWRITE_TAC[da] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[de] THEN TRY MATCH_REDUCE_TAC THEN
+     REWRITE_TAC(EXISTS_REFL :: eqr) THEN
+     REWRITE_TAC[injectivity "semanticPrimitives_result";
+                 PAIR_EQ] THEN
+     TRY(AP_TERM_TAC THEN MATCH_ACCEPT_TAC EQ_SYM_EQ)) in
+   let eqc_tac =
+     TRY(RULE_ASSUM_TRY(REWRITE_RULE[eq_eqconst; eq_eqconst2;
+                                     da_eqconst]) THEN
+         TRY(REWRITE_TAC[eq_eqconst; eq_eqconst2; da_eqconst])) in
+   let step1 = CASE_SPLIT_TAC THEN TRY tidy THEN norm in
+   let step2 = sing_tac THEN TRY use_dia THEN VAR_EQ_TAC THEN norm in
+   let fold =
+     REWRITE_TAC[ev_pair; ev_one; opevi; bool_ev] THEN
+     REPEAT(CHANGED_TAC(step1 ORELSE step2)) THEN
+     TRY(REWRITE_TAC[bool_ev]) THEN el_tac THEN eqc_tac THEN fin in
+   (* the nine foldings that restructure two operations at once:
+      the atoms are the proof's own, so that the splits can be
+      written down *)
+   let fold_lemma_tac =
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+     REWRITE_TAC[ev_pair; opevi] THEN
+     NAMED_CASES_TAC
+       `bvlSem_evaluate ([aa],env,(s:('c,'ffi)bvlSem_state))`
+       [["ar"; "ast"]] THEN
+     NAMED_CASES_TAC (mk_var("ar",rty)) [["av"]; ["ae"]] THEN
+     tidy THEN
+     TRY(NAMED_CASES_TAC
+           `bvlSem_evaluate ([bb],env,(ast:('c,'ffi)bvlSem_state))`
+           [["br"; "bst"]] THEN
+         NAMED_CASES_TAC (mk_var("br",rty)) [["bv"]; ["be"]] THEN
+         tidy) THEN
+     REPEAT(CHANGED_TAC
+       (((CASE_SPLIT_TAC THEN TRY tidy) ORELSE
+         (sing_tac THEN TRY use_dia THEN VAR_EQ_TAC)) THEN norm)) THEN
+     fin in
+   let cc x = "bvl_Op (closLang_IntOp (closLang_Const (" ^ x ^
+              "))) []" in
+   let o2 op u v = "bvl_Op (closLang_IntOp closLang_" ^ op ^ ") [" ^
+                   u ^ "; " ^ v ^ "]" in
+   let aA = o2 "Add" and sS = o2 "Sub" and mM = o2 "Mult" in
+   let lem lhs rhs extra = prove
+    (parse_term (Printf.sprintf
+       "!(aa:bvl_exp) bb pp qq env (s:('c,'ffi)bvlSem_state) res s2.\
+        \ bvlSem_evaluate ([%s],env,s) = (res,s2) /\\\
+        \ ~(res = Rerr (Rabort Rtype_error))%s\
+        \ ==> bvlSem_evaluate ([%s],env,s) = (res,s2)"
+       lhs extra rhs),
+     fold_lemma_tac) in
+   let folds = [
+     lem (aA (aA "aa" (cc "pp")) (aA "bb" (cc "qq")))
+         (aA (aA "aa" "bb") (cc "qq + pp")) "";
+     lem (aA (aA "aa" (cc "pp")) (sS "bb" (cc "qq")))
+         (sS (sS "aa" "bb") (cc "qq + pp")) "";
+     lem (aA (sS "aa" (cc "pp")) (aA "bb" (cc "qq")))
+         (aA (sS "aa" "bb") (cc "qq + pp")) "";
+     lem (aA (sS "aa" (cc "pp")) (aA "bb" (cc "qq")))
+         (sS "aa" "bb") " /\\ qq + pp = &0";
+     lem (sS (aA "aa" (cc "pp")) (aA "bb" (cc "qq")))
+         (aA (sS "aa" "bb") (cc "qq - pp")) "";
+     lem (sS (aA "aa" (cc "pp")) (sS "bb" (cc "qq")))
+         (sS (aA "aa" "bb") (cc "qq - pp")) "";
+     lem (sS (sS "aa" (cc "pp")) (aA "bb" (cc "qq")))
+         (aA (aA "aa" "bb") (cc "qq - pp")) "";
+     lem (sS (sS "aa" (cc "pp")) (aA "bb" (cc "qq")))
+         (aA "aa" "bb") " /\\ qq - pp = &0";
+     lem (mM (mM "aa" (cc "pp")) (mM "bb" (cc "qq")))
+         (mM (cc "qq * pp") (mM "aa" "bb")) ""] in
+   let use_lemma l =
+     SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN STRIP_TAC THEN
+     FIRST_ASSUM(fun h1 -> FIRST_ASSUM(fun h2 ->
+       FIRST [(fun gl -> ACCEPT_TAC(MATCH_MP l (CONJ h1 h2)) gl);
+              FIRST_ASSUM(fun h3 gl ->
+                ACCEPT_TAC(MATCH_MP l (CONJ h1 (CONJ h2 h3)))
+                  gl)])) in
+   let use_folds = FIRST (map use_lemma folds) in
+   (* the eleven operations that SmartOp2 dispatches on, split only
+      where the goal still asks: a blind split on all of them is
+      2048 goals *)
+   let opconds =
+     [`op = closLang_IntOp closLang_Add`;
+      `op = closLang_IntOp closLang_Sub`;
+      `op = closLang_IntOp closLang_Mult`;
+      `op = closLang_IntOp closLang_Div`;
+      `op = closLang_IntOp closLang_Mod`;
+      `op = closLang_IntOp closLang_Less`;
+      `op = closLang_IntOp closLang_LessEq`;
+      `op = closLang_IntOp closLang_Greater`;
+      `op = closLang_IntOp closLang_GreaterEq`;
+      `op = closLang_BlockOp closLang_Equal`;
+      `op = closLang_MemOp closLang_El`] in
+   let split_when t (asl,w as gl) =
+     if can (find_term (fun u -> u = t)) w
+     then (ASM_CASES_TAC t THEN ASM_REWRITE_TAC (MEM :: con_rws)) gl
+     else ALL_TAC gl in
+   let dispatch = MAP_EVERY split_when opconds in
+   let shapes =
+     EVERY_CASE_TAC THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[dest_simple_eq; case_op_const_eq;
+                                 PAIR_EQ]) THEN
+     MATCH_TIDY_TAC THEN VAR_EQ_TAC THEN
+     REPEAT COND_CASES_TAC in
+   REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+   REWRITE_TAC[so2; LET_DEF; LET_END_DEF] THEN
+   CONV_TAC(DEPTH_CONV BETA_CONV) THEN dispatch THEN
+   shapes THEN ((SOLVED fold) ORELSE use_folds))
+
+### SmartOp1_thm
+  (* SmartOp1 folds an equality with a constant into a boolean *)
+  (let ev = cake_def "bvlSem_evaluate" in
+   let da = cake_def "bvlSem_do_app" in
+   let dia = cake_def "bvlSem_do_int_app" in
+   let fc = cake_def "bvlSem_fix_clock" in
+   let bl = cake_def "bvl_Bool" in
+   let bv = cake_def "bvlSem_Boolv" in
+   let so1 = cake_def "SmartOp1" in
+   let dei = cake_def "dest_EqualInt" in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "closLang_op"; injectivity "closLang_op";
+      distinctness "closLang_int_op";
+      injectivity "closLang_int_op";
+      distinctness "block_op"; injectivity "block_op";
+      distinctness "const_part"; injectivity "const_part";
+      distinctness "option"; injectivity "option"] in
+   let opevi = prove
+    (`!i env2 (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate
+          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+           env2,s) = (Rval [(Number i):bvlSem_v],s)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
+     RECORD_CASES_TAC `s:('c,'ffi)bvlSem_state` THEN
+     REWRITE_TAC[da; dia; REVERSE] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let bool_ev = prove
+    (`!b env2 (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate ([bvl_Bool b],env2,s) =
+        (Rval [bvlSem_Boolv b],s)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[bl; bv; ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
+     RECORD_CASES_TAC `s:('c,'ffi)bvlSem_state` THEN
+     REWRITE_TAC[da; REVERSE] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let da_eqconst = prove
+    (`!i j (s:('c,'ffi)bvlSem_state).
+        bvlSem_do_app (closLang_BlockOp
+          (closLang_EqualConst (closLang_Int i))) [Number j] s =
+        Rval (bvlSem_Boolv (i = j),s)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[da; bv] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   (* what dest_EqualInt says about the operation, as
+      dest_simple_eq says it about the expression *)
+   let dei_eq = prove
+    (`!op i. dest_EqualInt op = SOME i <=>
+             op = closLang_BlockOp
+                    (closLang_EqualConst (closLang_Int i))`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[dei] THEN EVERY_CASE_TAC THEN
+     REWRITE_TAC con_rws THEN TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ)) in
+   REWRITE_TAC[so1] THEN EVERY_CASE_TAC THEN
+   TRY(SOLVED(DISCH_THEN(ACCEPT_TAC o CONJUNCT1))) THEN
+   RULE_ASSUM_TRY(REWRITE_RULE[dei_eq; dest_simple_eq]) THEN
+   VAR_EQ_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
+   REWRITE_TAC[bvlSem_fix_clock_evaluate; opevi; REVERSE; APPEND;
+               da_eqconst] THEN
+   MATCH_REDUCE_TAC THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[bool_ev] THEN
+   REWRITE_TAC[PAIR_EQ; injectivity "semanticPrimitives_result";
+               CONS_11] THEN
+   AP_TERM_TAC THEN MATCH_ACCEPT_TAC EQ_SYM_EQ)
+
+### SmartOp_thm
+  (* and SmartOp itself is the three of them: two expressions go
+     through the flip and then SmartOp2, one through SmartOp1, and
+     anything else is left alone *)
+  (let so = cake_def "bvl_const_SmartOp" in
+   REWRITE_TAC[so] THEN EVERY_CASE_TAC THENL
+   [DISCH_THEN(ACCEPT_TAC o CONJUNCT1);
+    MATCH_ACCEPT_TAC SmartOp1_thm;
+    STRIP_TAC THEN
+    NAMED_CASES_TAC `SmartOp_flip op a0 a0'` [["fop"; "fr"]] THEN
+    NAMED_CASES_TAC `fr:bvl_exp#bvl_exp` [["fx1"; "fx2"]] THEN
+    (* the statement of this theorem does not say which state it is
+       about, so its types are the ones the port invented for it,
+       and what the proof hands the two lemmas has to come out of
+       its own assumptions (PORTING-GUIDE.md entry 12) *)
+    FIRST_ASSUM(fun fl -> FIRST_ASSUM(fun ev ->
+      FIRST_ASSUM(fun nt gl ->
+        let th1 = MATCH_MP SmartOp_flip_thm
+                    (CONJ (SYM fl) (CONJ ev nt)) in
+        ACCEPT_TAC(MATCH_MP SmartOp2_thm (CONJ th1 nt)) gl)));
+    DISCH_THEN(ACCEPT_TAC o CONJUNCT1)])
