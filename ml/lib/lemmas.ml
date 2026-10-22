@@ -139,3 +139,48 @@ let EL_LEN_APPEND = prove
  (`!(a:A list) v l. EL (LENGTH a) (APPEND a (CONS v l)) = v`,
   LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[LENGTH; APPEND; EL; HD; TL]);;
+
+(* ------------------------------------------------------------------ *)
+(* NULL as an equation, which HOL4 has as NULL_EQ of listTheory, and  *)
+(* the list cases with names that an induction has not taken.         *)
+(* ------------------------------------------------------------------ *)
+
+let NULL_EQ = prove
+ (`!l:A list. NULL l <=> l = []`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[NULL; NOT_CONS_NIL]);;
+
+let list_CASES_v = prove
+ (`!l:A list. l = [] \/ (?v vs. l = CONS v vs)`,
+  MESON_TAC[list_CASES]);;
+
+(* ------------------------------------------------------------------ *)
+(* The finite maps of HOL4's finite_mapTheory: the port has the       *)
+(* definitions (ml/lib/finite_map.ml), and a proof needs the facts    *)
+(* about the representing function that they are phrased with.        *)
+(* ------------------------------------------------------------------ *)
+
+let FMAP_FN_FINITE = prove
+ (`!fm:(A,B)fmap. FINITE {x | ~(fmap_fn fm x = NONE)}`,
+  GEN_TAC THEN ONCE_REWRITE_TAC[CONJUNCT2 fmap_tybij] THEN
+  REWRITE_TAC[ETA_AX; CONJUNCT1 fmap_tybij]);;
+
+let FMAP_FN_FUPDATE = prove
+ (`!(fm:(A,B)fmap) kv.
+     fmap_fn (fm |+ kv) =
+     (\x. if x = FST kv then SOME (SND kv) else fmap_fn fm x)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[FUPDATE] THEN
+  REWRITE_TAC[GSYM(CONJUNCT2 fmap_tybij)] THEN
+  MATCH_MP_TAC FINITE_SUBSET THEN
+  EXISTS_TAC
+    `(FST (kv:A#B)) INSERT
+     {x | ~(fmap_fn (fm:(A,B)fmap) x = NONE)}` THEN
+  REWRITE_TAC[FINITE_INSERT; FMAP_FN_FINITE] THEN
+  REWRITE_TAC[SUBSET; IN_INSERT; IN_ELIM_THM] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
+
+let FAPPLY_FUPDATE_THM = prove
+ (`!(fm:(A,B)fmap) k v x.
+     FAPPLY (fm |+ (k,v)) x = (if x = k then v else FAPPLY fm x)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[fmap_apply; FMAP_FN_FUPDATE; FST; SND] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[THE]);;

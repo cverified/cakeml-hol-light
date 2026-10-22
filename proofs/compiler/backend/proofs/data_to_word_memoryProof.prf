@@ -1,0 +1,241 @@
+### ZIP_REPLICATE
+  (INDUCT_TAC THEN ASM_REWRITE_TAC[REPLICATE; ZIP])
+
+### MOD_EQ_0_0
+  (REPEAT STRIP_TAC THEN ASM_MESON_TAC[MOD_LT])
+
+### MAX_LIST_sum_bound
+  (* HOL4's SUM is ITLIST (+) l 0 in the port (ml/lib/hol4.ml), so
+     its clauses come first *)
+  (let sum_cl = prove
+    (`SUM [] = 0 /\ (!h t. SUM (CONS h t) = h + SUM t)`,
+     REWRITE_TAC[SUM_DEF; ITLIST]) in
+   SPEC_TAC(`ls:num list`,`ls:num list`) THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[sum_cl; MAX_LIST; LENGTH; MULT_CLAUSES; LE_REFL] THEN
+   MATCH_MP_TAC LE_ADD2 THEN CONJ_TAC THENL
+   [REWRITE_TAC[ARITH_RULE `a <= MAX a b`];
+    MATCH_MP_TAC LE_TRANS THEN
+    EXISTS_TAC `MAX_LIST (t:num list) * LENGTH t` THEN
+    ASM_REWRITE_TAC[LE_MULT_RCANCEL] THEN DISJ1_TAC THEN
+    REWRITE_TAC[ARITH_RULE `b <= MAX a b`]])
+
+### MAX_LIST_bounded_elements
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_BY_NAME "l2" THEN
+   REWRITE_TAC[ALL2; MAX_LIST; LE_REFL] THEN STRIP_TAC THEN
+   MATCH_MP_TAC(ARITH_RULE
+     `a <= c /\ b <= d ==> MAX a b <= MAX c d`) THEN
+   ASM_SIMP_TAC[])
+
+### EVERY2_SWAP
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_BY_NAME "ys" THEN
+   ASM_REWRITE_TAC[ALL2] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+   ASM_SIMP_TAC[])
+
+### EVERY2_IMP_EVERY
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_BY_NAME "ys" THEN
+   REWRITE_TAC[ALL2; ALL; ZIP] THEN
+   CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN ASM_SIMP_TAC[])
+
+### MEM_EVERY2_IMP
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN CASES_BY_NAME "zs" THEN
+   REWRITE_TAC[ALL2; MEM] THEN STRIP_TAC THEN ASM_MESON_TAC[])
+
+### LENGTH_ADDR_MAP
+  (REPEAT GEN_TAC THEN
+   MATCH_ACCEPT_TAC(GSYM (SPEC_ALL ADDR_MAP_LENGTH)))
+
+### EL_ADDR_MAP
+  (let addrmap = cake_def "ADDR_MAP" in
+   let addrapply = cake_def "ADDR_APPLY" in
+   LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[LENGTH; LT];
+    REPEAT GEN_TAC THEN CASES_BY_NAME "h" THEN
+    STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+    ASM_REWRITE_TAC[addrmap; addrapply; EL; HD; TL; LENGTH;
+                    LT_SUC; LT_0]])
+
+### heap_lookup_APPEND2
+  (* heap_length is the SUM of the el_lengths, so its clauses come
+     first here too *)
+  (let hl = cake_def "heap_lookup" in
+   let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) =
+              el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   LIST_INDUCT_TAC THEN
+   REWRITE_TAC[hlen_cl; LT; APPEND; hl] THEN
+   REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[] THEN
+   DISCH_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC)
+### word_eq
+  (MATCH_ACCEPT_TAC WORD_EQ_BITS)
+### MEM_EL_APPEND_MID
+  (* the element is one of the list, and MEM of the three parts is
+     what the split of the append and of the singleton says *)
+  (let lem = MESON[MEM_APPEND; MEM]
+     `!e l c r. MEM e (APPEND l (APPEND [c] r))
+                ==> MEM e l \/ e = c \/ MEM e r` in
+   REPEAT STRIP_TAC THEN MATCH_MP_TAC lem THEN MATCH_MP_TAC MEM_EL THEN
+   ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ASM_ARITH_TAC)
+### MAX_LIST_MAP
+  (* a strictly monotonic f is monotonic, so it commutes with MAX,
+     and the induction is then a rewrite; the last goal is the one
+     of the empty tail, where MAX_LIST [] = 0 and f 0 <= f h *)
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN
+   SUBGOAL_THEN `!a b:num. (f:num->num) a <= f b <=> a <= b`
+     ASSUME_TAC THENL
+    [REPEAT GEN_TAC THEN
+     ASM_CASES_TAC `a:num <= b` THEN ASM_REWRITE_TAC[] THENL
+      [ASM_CASES_TAC `a:num = b` THENL
+        [ASM_REWRITE_TAC[LE_REFL];
+         MATCH_MP_TAC LT_IMP_LE THEN FIRST_ASSUM MATCH_MP_TAC THEN
+         ASM_ARITH_TAC];
+       REWRITE_TAC[NOT_LE] THEN FIRST_ASSUM MATCH_MP_TAC THEN
+       ASM_ARITH_TAC];
+     ALL_TAC] THEN
+   SUBGOAL_THEN `!a b:num. (f:num->num) (MAX a b) = MAX (f a) (f b)`
+     ASSUME_TAC THENL
+    [REPEAT GEN_TAC THEN ASM_REWRITE_TAC[MAX] THEN
+     COND_CASES_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
+   SPEC_TAC(`l:num list`,`l:num list`) THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; MAX_LIST; NULL; NULL_EQ] THEN
+   ASM_CASES_TAC `t:num list = []` THEN
+   ASM_REWRITE_TAC[MAP; MAX_LIST; NULL; NULL_EQ] THEN
+   REWRITE_TAC[ARITH_RULE `MAX x 0 = x`] THEN
+   ASM_REWRITE_TAC[MAX] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
+   AP_TERM_TAC THEN ASM_ARITH_TAC)
+### word_i2w_sub
+  (REWRITE_TAC[IWORD_INT_SUB])
+### Word64Rep_DataElement
+  (* the first argument is the type itself, which the clause of the
+     definition fixes, so the lambda form of it is what rewrites
+     here; the witness is the list that the branch has *)
+  (let take_ws (asl,w as gl) =
+     let bod = snd(dest_exists w) in
+     let ws = snd(dest_pair(last(snd(strip_comb(lhs bod))))) in
+     (EXISTS_TAC ws THEN REWRITE_TAC[LENGTH; ARITH]) gl in
+   REPEAT GEN_TAC THEN REWRITE_TAC[cake_raw "Word64Rep"] THEN
+   COND_CASES_TAC THEN take_ws)
+### ThunkBlock_11
+  (REWRITE_TAC[cake_def "ThunkBlock"; injectivity "heap_element";
+               injectivity "data_to_word_memoryProof_tag"; CONS_11;
+               PAIR_EQ] THEN
+   CONV_TAC TAUT)
+### MEM_IMP_v_size
+  (REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC(ARITH_RULE `a <= b ==> a < 1 + b`) THEN
+   MATCH_MP_TAC MEM_list_size THEN ASM_REWRITE_TAC[])
+### EVERY2_IMP_EVERY2
+  (* the relations are fixed before the induction, so that the
+     induction hypothesis applies to the tails by MATCH_MP_TAC *)
+  (let aux = prove
+    (`!(P1:A->B->bool) P2 xs ys.
+        (!x y. MEM x xs /\ MEM y ys /\ P1 x y ==> P2 x y) /\
+        ALL2 P1 xs ys ==> ALL2 P2 xs ys`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     X_GEN_TAC `ys:B list` THEN
+     STRUCT_CASES_TAC(ISPEC `ys:B list` list_CASES_v) THEN
+     REWRITE_TAC[ALL2; MEM] THEN REPEAT STRIP_TAC THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
+     REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[TAUT `(p ==> q ==> r) <=> (p /\ q ==> r)`] THEN
+   MATCH_ACCEPT_TAC aux)
+### EVERY2_APPEND_CONS
+  (let aux = prove
+    (`!(P:A->B->bool) xs y ys zs.
+        ALL2 P (APPEND xs (CONS y ys)) zs
+        ==> ?u1 u u2. zs = APPEND u1 (CONS u u2) /\
+                      LENGTH u1 = LENGTH xs /\
+                      ALL2 P xs u1 /\ P y u /\ ALL2 P ys u2`,
+     GEN_TAC THEN LIST_INDUCT_TAC THENL
+      [REPEAT GEN_TAC THEN
+       STRUCT_CASES_TAC(ISPEC `zs:B list` list_CASES_v) THEN
+       REWRITE_TAC[APPEND; ALL2; LENGTH] THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`[]:B list`; `v:B`; `vs:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; LENGTH; ALL2];
+       REPEAT GEN_TAC THEN
+       STRUCT_CASES_TAC(ISPEC `zs:B list` list_CASES_v) THEN
+       REWRITE_TAC[APPEND; ALL2; LENGTH] THEN STRIP_TAC THEN
+       USE_IH THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`CONS (v:B) u1`; `u:B`; `u2:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; LENGTH; ALL2]]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### EVERY2_APPEND_IMP_APPEND
+  (let aux = prove
+    (`!(P:A->B->bool) xs1 xs2 ys.
+        ALL2 P (APPEND xs1 xs2) ys
+        ==> ?u1 u2. ys = APPEND u1 u2 /\ ALL2 P xs1 u1 /\
+                    ALL2 P xs2 u2`,
+     GEN_TAC THEN LIST_INDUCT_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`[]:B list`; `ys:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; ALL2];
+       REPEAT GEN_TAC THEN
+       STRUCT_CASES_TAC(ISPEC `ys:B list` list_CASES_v) THEN
+       REWRITE_TAC[APPEND; ALL2] THEN STRIP_TAC THEN
+       USE_IH THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`CONS (v:B) u1`; `u2:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; ALL2]]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### EVERY2_MAP_FST_SND
+  (let aux = prove
+    (`!(P:A->B->bool) xs.
+        ALL2 P (MAP FST xs) (MAP SND xs) <=> ALL (\(x,y). P x y) xs`,
+     GEN_TAC THEN LIST_INDUCT_TAC THEN
+     REWRITE_TAC[MAP; ALL2; ALL] THEN
+     STRUCT_CASES_TAC(ISPEC `h:A#B` PAIR_SURJECTIVE) THEN
+     ASM_REWRITE_TAC[FST; SND] THEN
+     CONV_TAC(ONCE_DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### fapply_fupdate_update
+  (let aux = prove
+    (`!(f:(A,B)fmap) p. FAPPLY (f |+ p) = (FST p =+ SND p) (FAPPLY f)`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `p:A#B` PAIR_SURJECTIVE) THEN
+     REWRITE_TAC[FUN_EQ_THM; UPDATE; FST; SND; FAPPLY_FUPDATE_THM] THEN
+     GEN_TAC THEN REWRITE_TAC[EQ_SYM_EQ]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### heap_lookup_APPEND1
+  (* past the first heap the lookup is the one of the second, and
+     the two conditions of the clause are false by arithmetic *)
+  (let hl = cake_def "heap_lookup" in
+   let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) =
+              el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   LIST_INDUCT_TAC THEN
+   REWRITE_TAC[hlen_cl; APPEND; hl; SUB_0; LE_0] THEN
+   REPEAT GEN_TAC THEN DISCH_TAC THEN
+   MP_ISPEC_NAME "h" el_length_GT_0 THEN DISCH_TAC THEN
+   COND_CASES_TAC THENL
+    [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+   COND_CASES_TAC THENL
+    [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+   REWRITE_TAC[ARITH_RULE `a - (b + c) = a - b - c`] THEN
+   FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC)
+### heap_lookup_APPEND
+  (COND_CASES_TAC THENL
+    [MATCH_MP_TAC heap_lookup_APPEND2 THEN ASM_REWRITE_TAC[];
+     MATCH_MP_TAC heap_lookup_APPEND1 THEN ASM_ARITH_TAC])
+### EVERY2_ADDR_MAP
+  (let aux = prove
+    (`!P g zs l.
+        ALL2 P (ADDR_MAP g zs) l <=>
+        ALL2 (\x y. P (ADDR_APPLY g x) y) zs l`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     REWRITE_TAC[cake_def "ADDR_MAP"; ALL2_DEF] THEN
+     CASES_BY_NAME "h" THEN
+     REWRITE_TAC[cake_def "ADDR_MAP"; cake_def "ADDR_APPLY";
+                 ALL2_DEF] THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### data_up_to_APPEND
+  (REWRITE_TAC[cake_def "data_up_to"; heap_split_APPEND_if; LT_REFL;
+               SUB_REFL; heap_split_0] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[APPEND_NIL; injectivity "option"; PAIR_EQ] THEN
+   MESON_TAC[])

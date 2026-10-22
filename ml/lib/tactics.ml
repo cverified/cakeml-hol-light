@@ -533,3 +533,60 @@ let EV_PAIR_TAC ev cp use (asl,w as gl) =
     then fail() else
     use (xs,env1,s) rt (snd(strip_comb cl)) env2 in
   tryfind (fun a -> attempt a gl) asl;;
+
+(* ------------------------------------------------------------------ *)
+(* A split by the name of the variable.                               *)
+(*                                                                    *)
+(* The sources annotate no type where HOL4 can infer one, so a        *)
+(* statement of the port often has type variables that the port       *)
+(* invented (PORTING-GUIDE.md entry 12), and a term that a proof      *)
+(* writes down is then not the term of the goal: the split says       *)
+(* nothing and the goal does not move.  These take the variable out   *)
+(* of the goal (or of the assumptions) by its name, so that its type  *)
+(* is whatever the statement gave it.                                 *)
+(* ------------------------------------------------------------------ *)
+
+let var_by_name n (asl,w) =
+  let ok t = is_var t && fst(dest_var t) = n in
+  tryfind (fun t -> find_term ok t)
+          (w :: map (fun (_,th) -> concl th) asl);;
+
+let CASES_BY_NAME n (asl,w as gl) =
+  let v = var_by_name n gl in
+  (if prod_type (type_of v)
+   then STRUCT_CASES_TAC(ISPEC v PAIR_SURJECTIVE)
+   else STRUCT_CASES_TAC(ISPEC v (cases_of (type_of v)))) gl;;
+
+(* and the instance of a lemma at such a variable *)
+
+let ISPEC_NAME n th (asl,w as gl) = ISPEC (var_by_name n gl) th;;
+
+let MP_ISPEC_NAME n th (asl,w as gl) =
+  MP_TAC(ISPEC_NAME n th gl) gl;;
+
+(* ------------------------------------------------------------------ *)
+(* The definition of a constant in its lambda form.                   *)
+(*                                                                    *)
+(* A HOL4 definition that takes the type itself as an argument has a  *)
+(* clause of that one instance ((:'a)), so a statement about the      *)
+(* constant at a variable cannot be rewritten with it.  HOL Light's   *)
+(* own definition of the constant is generic in that argument, and    *)
+(* this is it.                                                        *)
+(* ------------------------------------------------------------------ *)
+
+let cake_raw name =
+  try find (fun th -> try fst(dest_const(lhs(concl th))) = name
+                      with Failure _ -> false)
+           (definitions())
+  with Failure _ ->
+    failwith ("cake_raw: no definition of " ^ name);;
+
+(* ------------------------------------------------------------------ *)
+(* The induction hypothesis applied to an assumption: both are found  *)
+(* in the assumption list, which is what an induction over a list of  *)
+(* a statement with an existential needs.                             *)
+(* ------------------------------------------------------------------ *)
+
+let USE_IH =
+  FIRST_X_ASSUM(fun ih ->
+    FIRST_X_ASSUM(fun a -> MP_TAC(MATCH_MP ih a)));;
