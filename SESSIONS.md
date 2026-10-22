@@ -232,26 +232,40 @@ is cheap to throw away and clone again when a tactic hangs.
 rebuilds `hol-template-cakeml` and kills every clone of it, so
 batch the library additions that the proofs need.
 
-**Build a test bed out of the file's own `needs` lines**, in the
-order the file writes them, and let `needs` pull the rest in.  Every
-intermediate language has a `Var`, an `If`, a `Let` and a `Call`,
-and the port overloads those names, so the order in which files
-load decides what a clause of a later file means: a session that
-loads `compiler/backend/bvi.ml` early and `bvi_let.ml` late reads
-the `Var` of `bvi_let`'s clauses as **bvl**'s, makes the definitions
-clause by clause and reports three proofs `NOT PROVED` that are
-right (PORTING-GUIDE.md entry 16).  The check after building a
-session is `grep -E 'CHEATED|cake_conj_list'` over its pane.
+**Build a test bed out of the closure of the file in the order of
+the load order**, which `tools/needsorder.py` writes:
+
+```
+python3 -I tools/needsorder.py <path>.ml > tmp/pfprefix.ml
+```
+
+Every intermediate language has a `Var`, an `If`, a `Let` and a
+`Call`, and the port overloads those names, so the order in which
+files load decides what a clause of a later file means: a session
+that loads `compiler/backend/bvi.ml` early and `bvi_let.ml` late
+reads the `Var` of `bvi_let`'s clauses as **bvl**'s, makes the
+definitions clause by clause and reports three proofs `NOT PROVED`
+that are right (PORTING-GUIDE.md entry 16).  The check after
+building a session is `grep -E 'CHEATED|cake_conj_list'` over its
+pane.
+
+A closure that `needs` builds by recursion is **not** in the order
+of the load order, and that is not a detail: the recursion takes
+the needs of a file in the order they stand in it, so a file of the
+order can land after one that stands behind it.  The closure of
+`data_to_word_memoryProof` built that way loads
+`compiler/backend/semantics/closSem.ml` before
+`semantics/evaluate.ml`, five theories have overloaded `evaluate`
+by the time `evaluate.ml` defines it, and the file does not load at
+all -- `semantics/evaluate.ml` and `dataProps.ml` are then missing
+from the session, with no sign of it but one line of its pane.
+`tools/needsorder.py` sorts the closure by `tools/load.txt`
+instead, which is the order a run has (PORTING-GUIDE.md entry 16).
 
 For a definition file a clone of `hol-template-cakeml` plus
-`needs "<the file>"` is enough and takes a minute; for a proof file,
-
-```
-grep '^needs' ml/<path>.ml > tmp/pfprefix.ml
-```
-
-is the prefix to load (`tools/bin/verifyfile <the file>` does the
-rest, and says what the file costs in axioms of its own).
+`needs "<the file>"` is enough and takes a minute; for a proof file
+`tools/bin/verifyfile <the file>` does all of it, and says what the
+file costs in axioms of its own.
 
 **The file to prove about has to be loaded itself**, with its
 cheats, and not only its `needs`: the proofs of a proof theory

@@ -1330,12 +1330,27 @@ hour spent on a statement that was right all along.
 
 ### What the port does
 
-Build the test bed out of **the file's own `needs` lines**, in the
-order the file writes them, and let `needs` pull the rest:
+Build the test bed out of **the closure of the file in the order of
+the load order**, which `tools/needsorder.py` writes:
 
 ```
-grep '^needs' ml/compiler/backend/proofs/bvi_letProof.ml > prefix.ml
+python3 -I tools/needsorder.py \
+  compiler/backend/proofs/bvi_letProof.ml > prefix.ml
 ```
+
+Letting `needs` build the closure by recursion is **not** the same
+thing, and the difference bites: the recursion takes the needs of a
+file in the order they stand in it, so a file of the load order can
+land after one that stands behind it.  In the closure of
+`data_to_word_memoryProof` built that way
+`compiler/backend/semantics/closSem.ml` comes before
+`semantics/evaluate.ml`; five theories have then overloaded
+`evaluate`, the clauses of `evaluate.ml` resolve `evaluate` to
+`labSem_evaluate` and the file does not load at all.  Its own
+`needs` are gone from the session with it (`dataProps.ml`), and the
+only sign of it is one line of the pane -- while a run, which loads
+the files in the order of `tools/load.txt`, has no trouble with any
+of it.
 
 For a definition file, a clone of `hol-template-cakeml` with
 `needs "compiler/backend/bvi_let.ml"` is enough and takes a minute:

@@ -687,9 +687,21 @@ and `asm`), and the other theories that define a constant of that
 name overload it.  The definition is read before those overloads
 exist, which the load order gives; read after them, the name of
 the constant that it defines would be one of the overloads and the
-definition would not typecheck.  So a file of the port is loaded
-in the order of the port, which is what a run does and what every
-`needs` chain gives.
+definition would not typecheck.  So a file of the port has to be
+loaded in the order of the port.
+
+A run does that, and a `needs` chain does **not**: the recursion
+takes the needs of a file in the order they stand in it, so a file
+of the load order can land after one that stands behind it.  In
+the closure of `data_to_word_memoryProof` built by `needs`,
+`compiler/backend/semantics/closSem.ml` comes before
+`semantics/evaluate.ml`, five theories have overloaded `evaluate`
+by then, and `evaluate.ml` does not load at all -- it and
+`dataProps.ml`, which needs it, are missing from the session, with
+one line of its pane to say so.  A session that is to read the
+port as a run reads it therefore loads the closure in the order of
+`tools/load.txt`, which `tools/needsorder.py` writes and
+`tools/bin/verifyfile` uses.
 
 ## The scope of the dependency closure
 
@@ -920,14 +932,19 @@ formulae and the proof producing translator.  That is the part of
 CakeML that the scope of the port leaves out, and
 `compilerProof$compile_correct` does not mention these two.
 
-## data_to_word stops loading at its Unit
+## data_to_word stopped loading at its Unit (fixed)
 
-`ml/compiler/backend/data_to_word.ml` does not load past line
+_Fixed on 2026-10-22 by the three `CON_OF` entries that
+`tools/overrides.py` now has for `unit_def` of `data_to_word` and
+for `op_consts_def` and `pull_exp_def` of `word_inst`; the file
+loads to its last definition.  What it was:_
+
+`ml/compiler/backend/data_to_word.ml` did not load past line
 1327 (`assign_SetGlobalsPtr_def`), and the ninety definitions of
 the file below that line (`write_bytes`, `small_int`,
-`make_cons_ptr`, `byte_len`, the `assign_*` family, ...) are
-therefore not there.  The error is `typechecking error (overload
-resolution)`, and the reason is the definition above it:
+`make_cons_ptr`, `byte_len`, the `assign_*` family, ...) were
+therefore not there.  The error was `typechecking error (overload
+resolution)`, and the reason was the definition above it:
 
 ```
 let Unit_def = cake_define
@@ -936,8 +953,8 @@ let Unit_def = cake_define
 
 HOL4's `Unit = Const 2w` is a `wordLang$exp`, because its
 Ancestors open `wordLang` and `word_bignum`, and HOL4's overload
-resolution prefers `wordLang$Const` of the two.  The port reads
-it as `word_bignum$Const`, so `data_to_word$Unit` has the type
+resolution prefers `wordLang$Const` of the two.  The port read
+it as `word_bignum$Const`, so `data_to_word$Unit` had the type
 `('a word) term` instead of `'a wordLang_exp`, and the first
 definition that uses it as an expression
 (`Assign (adjust_var dest) Unit` of `assign_SetGlobalsPtr`) has
@@ -945,19 +962,23 @@ no resolution at all: in the port `Assign` is
 `word_bignum$Assign` as well (`num -> 'a wordLang_exp -> 'a
 mini`), and the argument it is given is not an expression.
 
-What this costs the proofs: of the 611 theorems of
-`data_to_word_memoryProof` 60 state something about a definition
-that is missing, and those statements have a free variable where
+What it cost the proofs: of the 611 theorems of
+`data_to_word_memoryProof` 60 stated something about a definition
+that was missing, and those statements had a free variable where
 HOL4 has the constant (21 of them `small_int`, 10
-`write_bytes`).  They cannot be proved while the definition is
-not there.  The definition of `v_inv_ck` of that file is in the
-same position -- its first rule says `small_int (:'a) i`, which
-the port reads as a free variable and the inductive definition
-then quantifies -- so a proof that unfolds `v_inv_ck` is about a
-relation that says less than HOL4's.
+`write_bytes`).  The definition of `v_inv_ck` of that file was in
+the same position -- its first rule says `small_int (:'a) i`,
+which the port read as a free variable and the inductive
+definition then quantified -- so a proof that unfolds `v_inv_ck`
+was about a relation that said less than HOL4's.
 
-The fix is in the generation of the port (an annotation on
-`Unit_def`, or an overload preference for the theory that HOL4's
-Ancestors name first), not in a proof, so phase three leaves it
-alone and `proofs/compiler/backend/proofs/BLOCKED.md` lists the
-theorems that wait for it.
+What it taught: a session built out of a `needs` closure can be
+missing a whole file, and nothing but one line of its pane says
+so.  A _run_ had no trouble with `data_to_word.ml` at all (its
+report of 2026-10-19 gives the file 72 s and no error, and
+`tools/stmtfree.py` found no statement with a free variable where
+HOL4 has a constant), because the load order gives `Const` the
+resolution that HOL4 gives it.  So the overrides are what makes
+the file read the same way in both, and a test bed is built in
+the order of the load order (`tools/needsorder.py`, "The order in
+which the port is loaded").

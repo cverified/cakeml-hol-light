@@ -343,3 +343,26 @@ let WORD_ADD_SPLIT_MUL = prove
  (`!(a:(N)word) b m n.
      a + n2w (m + n) * b = (a + n2w m * b) + n2w n * b`,
   REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+(* ------------------------------------------------------------------ *)
+(* TAKE and DROP of the same number split a list, and DROP at a       *)
+(* position is the element there followed by the DROP after it:       *)
+(* HOL4's TAKE_DROP and rich_list's DROP_EL_CONS, which the proofs    *)
+(* that take a list apart at an index go through.                     *)
+(* ------------------------------------------------------------------ *)
+
+let TAKE_DROP = prove
+ (`!(l:A list) n. TAKE n l ++ DROP n l = l`,
+  LIST_INDUCT_TAC THEN GEN_TAC THEN
+  REWRITE_TAC[TAKE; DROP; APPEND] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[APPEND]);;
+
+let DROP_EL_CONS = prove
+ (`!(l:A list) n. n < LENGTH l
+                  ==> DROP n l = EL n l :: DROP (SUC n) l`,
+  LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[LENGTH; LT];
+    GEN_TAC THEN STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+    REWRITE_TAC[DROP; EL; HD; TL; NOT_SUC; SUC_SUB1; DROP_0;
+                LENGTH; LT_SUC; LT_0] THEN
+    ASM_REWRITE_TAC[]]);;
