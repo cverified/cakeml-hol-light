@@ -239,3 +239,78 @@
    MATCH_REDUCE_TAC THEN
    REWRITE_TAC[APPEND_NIL; injectivity "option"; PAIR_EQ] THEN
    MESON_TAC[])
+### heap_lookup_expand_eq_SOME
+  (* past the heap the lookup is in the expansion, which is one
+     Unused element, and that is not a DataElement *)
+  (let hexp = cake_def "heap_expand" in
+   let hlk = cake_def "heap_lookup" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   REWRITE_TAC[heap_lookup_APPEND] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[] THEN
+   MATCH_MP_TAC(TAUT `~a /\ ~b ==> (a <=> b)`) THEN CONJ_TAC THENL
+    [REWRITE_TAC[hexp] THEN COND_CASES_TAC THEN REWRITE_TAC[hlk] THEN
+     REPEAT COND_CASES_TAC THEN REWRITE_TAC opt;
+     DISCH_TAC THEN
+     FIRST_ASSUM(MP_TAC o MATCH_MP heap_lookup_LESS) THEN
+     ASM_ARITH_TAC])
+### isSomeDataElement_heap_lookup
+  (let hexp = cake_def "heap_expand" in
+   let hlk = cake_def "heap_lookup" in
+   let isde = cake_def "isSomeDataElement" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   REWRITE_TAC[heap_lookup_APPEND] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[] THEN
+   MATCH_MP_TAC(TAUT `~a /\ ~b ==> (a <=> b)`) THEN CONJ_TAC THENL
+    [REWRITE_TAC[hexp] THEN COND_CASES_TAC THEN
+     REWRITE_TAC[hlk; isde] THEN REPEAT COND_CASES_TAC THEN
+     REWRITE_TAC(isde :: opt);
+     REWRITE_TAC[isde] THEN STRIP_TAC THEN
+     FIRST_ASSUM(MP_TAC o MATCH_MP heap_lookup_LESS) THEN
+     ASM_ARITH_TAC])
+### gc_related_APPEND_heap_expand
+  (REWRITE_TAC[cake_def "gc_related"; isSomeDataElement_heap_lookup;
+               heap_lookup_expand_eq_SOME])
+### heap_expand_not_isRef
+  (REWRITE_TAC[cake_def "heap_expand"] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[ALL; cake_def "data_to_word_memoryProof_isRef"] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[])
+### isRef_heap_expand
+  (GEN_TAC THEN REWRITE_TAC[cake_def "heap_expand"] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[ALL; cake_def "data_to_word_memoryProof_isRef"] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[])
+### heap_split_LESS_EQ
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "heap_split"; heap_length_NIL;
+               heap_length_CONS] THEN
+   EVERY_CASE_TAC THEN REPEAT COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[distinctness "option"; LE_0] THEN
+   DISCH_TAC THEN USE_IH THEN ASM_ARITH_TAC)
+### data_pointers_heap_expand
+  (* the expansion is one element that is not a DataElement, so it
+     contributes no pointer and shifts none *)
+  (let dp = cake_def "data_pointers" in
+   let aux = prove
+    (`!heap n. data_pointers (APPEND heap (heap_expand n)) =
+               data_pointers heap`,
+     LIST_INDUCT_TAC THENL
+      [GEN_TAC THEN REWRITE_TAC[APPEND; cake_def "heap_expand"] THEN
+       COND_CASES_TAC THEN
+       GEN_REWRITE_TAC LAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[dp] THEN MATCH_REDUCE_TAC THEN REWRITE_TAC[MAP];
+       GEN_TAC THEN REWRITE_TAC[APPEND] THEN CASES_BY_NAME "h" THEN
+       GEN_REWRITE_TAC LAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+       GEN_REWRITE_TAC RAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+       ASM_REWRITE_TAC[]]) in
+   MATCH_ACCEPT_TAC aux)
+### ThunkBlock_not_EQ
+  (REWRITE_TAC[cake_def "ThunkBlock"; cake_def "Bignum";
+               cake_def "Word64Rep"; cake_def "BlockRep";
+               cake_def "RefBlock"; cake_def "Bytes"] THEN
+   PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
+               distinctness "data_to_word_memoryProof_tag";
+               NOT_CONS_NIL])

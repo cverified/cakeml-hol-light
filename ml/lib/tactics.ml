@@ -590,3 +590,18 @@ let cake_raw name =
 let USE_IH =
   FIRST_X_ASSUM(fun ih ->
     FIRST_X_ASSUM(fun a -> MP_TAC(MATCH_MP ih a)));;
+
+(* ------------------------------------------------------------------ *)
+(* HOL4's pairarg_tac: a let that takes a pair apart does not reduce  *)
+(* while the value it binds is not a pair, so the value is split      *)
+(* first.                                                             *)
+(* ------------------------------------------------------------------ *)
+
+let PAIRARG_TAC (asl,w as gl) =
+  let ok t =
+    match t with
+      Comb(Comb(Const("LET",_),_),a) ->
+        prod_type (type_of a) && not (can dest_pair a)
+    | _ -> false in
+  let t = find_term ok (list_mk_conj (w :: map (concl o snd) asl)) in
+  CASES_ON_TAC (rand t) gl;;
