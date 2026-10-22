@@ -919,3 +919,45 @@ and of `TextIOProof`, whose ancestors are the characteristic
 formulae and the proof producing translator.  That is the part of
 CakeML that the scope of the port leaves out, and
 `compilerProof$compile_correct` does not mention these two.
+
+## data_to_word stops loading at its Unit
+
+`ml/compiler/backend/data_to_word.ml` does not load past line
+1327 (`assign_SetGlobalsPtr_def`), and the ninety definitions of
+the file below that line (`write_bytes`, `small_int`,
+`make_cons_ptr`, `byte_len`, the `assign_*` family, ...) are
+therefore not there.  The error is `typechecking error (overload
+resolution)`, and the reason is the definition above it:
+
+```
+let Unit_def = cake_define
+  `data_to_word_Unit = Const (n2w 2)`;;
+```
+
+HOL4's `Unit = Const 2w` is a `wordLang$exp`, because its
+Ancestors open `wordLang` and `word_bignum`, and HOL4's overload
+resolution prefers `wordLang$Const` of the two.  The port reads
+it as `word_bignum$Const`, so `data_to_word$Unit` has the type
+`('a word) term` instead of `'a wordLang_exp`, and the first
+definition that uses it as an expression
+(`Assign (adjust_var dest) Unit` of `assign_SetGlobalsPtr`) has
+no resolution at all: in the port `Assign` is
+`word_bignum$Assign` as well (`num -> 'a wordLang_exp -> 'a
+mini`), and the argument it is given is not an expression.
+
+What this costs the proofs: of the 611 theorems of
+`data_to_word_memoryProof` 60 state something about a definition
+that is missing, and those statements have a free variable where
+HOL4 has the constant (21 of them `small_int`, 10
+`write_bytes`).  They cannot be proved while the definition is
+not there.  The definition of `v_inv_ck` of that file is in the
+same position -- its first rule says `small_int (:'a) i`, which
+the port reads as a free variable and the inductive definition
+then quantifies -- so a proof that unfolds `v_inv_ck` is about a
+relation that says less than HOL4's.
+
+The fix is in the generation of the port (an annotation on
+`Unit_def`, or an overload preference for the theory that HOL4's
+Ancestors name first), not in a proof, so phase three leaves it
+alone and `proofs/compiler/backend/proofs/BLOCKED.md` lists the
+theorems that wait for it.

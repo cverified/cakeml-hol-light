@@ -250,3 +250,52 @@ let FDOM_FUPDATE = prove
               IN_INSERT; IN_ELIM_THM] THEN
   GEN_TAC THEN COND_CASES_TAC THEN
   ASM_REWRITE_TAC[distinctness "option"]);;
+
+(* ------------------------------------------------------------------ *)
+(* The length and the splits of LIST_REL, which HOL4's listTheory     *)
+(* has as LIST_REL_LENGTH and LIST_REL_SPLIT1; the two halves of the  *)
+(* split are a lemma each, because the proofs are an induction over   *)
+(* the first list and an induction over the second.                   *)
+(* ------------------------------------------------------------------ *)
+
+let LIST_REL_LENGTH = prove
+ (`!(R:A->B->bool) l1 l2. ALL2 R l1 l2 ==> LENGTH l1 = LENGTH l2`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN X_GEN_TAC `l2:B list` THEN
+  STRUCT_CASES_TAC(ISPEC `l2:B list` list_CASES_v) THEN
+  REWRITE_TAC[ALL2; LENGTH; SUC_INJ] THEN ASM_MESON_TAC[]);;
+
+let LIST_REL_APPEND_I = prove
+ (`!(P:A->B->bool) xs1 ys1 xs2 ys2.
+     ALL2 P xs1 ys1 /\ ALL2 P xs2 ys2
+     ==> ALL2 P (APPEND xs1 xs2) (APPEND ys1 ys2)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN X_GEN_TAC `ys1:B list` THEN
+  STRUCT_CASES_TAC(ISPEC `ys1:B list` list_CASES_v) THEN
+  REWRITE_TAC[APPEND; ALL2] THEN REPEAT STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN FIRST_ASSUM MATCH_MP_TAC THEN
+  ASM_REWRITE_TAC[]);;
+
+let LIST_REL_APPEND_E = prove
+ (`!(P:A->B->bool) xs1 xs2 zs.
+     ALL2 P (APPEND xs1 xs2) zs
+     ==> ?u1 u2. zs = APPEND u1 u2 /\ ALL2 P xs1 u1 /\
+                 ALL2 P xs2 u2`,
+  GEN_TAC THEN LIST_INDUCT_TAC THENL
+   [REPEAT GEN_TAC THEN REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+    MAP_EVERY EXISTS_TAC [`[]:B list`; `zs:B list`] THEN
+    ASM_REWRITE_TAC[APPEND; ALL2];
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `zs:B list` list_CASES_v) THEN
+    REWRITE_TAC[APPEND; ALL2] THEN STRIP_TAC THEN
+    USE_IH THEN STRIP_TAC THEN
+    MAP_EVERY EXISTS_TAC [`CONS (v:B) u1`; `u2:B list`] THEN
+    ASM_REWRITE_TAC[APPEND; ALL2]]);;
+
+let LIST_REL_SPLIT1 = prove
+ (`!(P:A->B->bool) xs2 xs1 zs.
+     ALL2 P (APPEND xs1 xs2) zs <=>
+     ?ys1 ys2. zs = APPEND ys1 ys2 /\ ALL2 P xs1 ys1 /\
+               ALL2 P xs2 ys2`,
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [MATCH_ACCEPT_TAC LIST_REL_APPEND_E;
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    MATCH_MP_TAC LIST_REL_APPEND_I THEN ASM_REWRITE_TAC[]]);;
