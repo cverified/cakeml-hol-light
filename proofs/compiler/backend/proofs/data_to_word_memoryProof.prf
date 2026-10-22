@@ -982,3 +982,65 @@
    ASM_REWRITE_TAC[word_list_exists_thm; ADD; emp_STAR; STAR_ASSOC;
                    SEP_EXISTS_STAR; WORD_ADD_MUL_SUC;
                    WORD_ADD_MUL_0])
+### store_list_append_imp
+  (let aux = prove
+    (`!w1 (a:(N)word) m dm m' w2.
+        data_to_word_memoryProof_store_list a (APPEND w1 w2) m dm =
+          SOME m'
+        ==> ?m''.
+              data_to_word_memoryProof_store_list a w1 m dm =
+                SOME m'' /\
+              data_to_word_memoryProof_store_list
+                (a + n2w (LENGTH w1) * bytes_in_word) w2 m'' dm =
+                SOME m'`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[APPEND;
+                 cake_def "data_to_word_memoryProof_store_list";
+                 LENGTH; WORD_ADD_0_MUL; WORD_ADD_SUC_MUL] THEN
+     TRY COND_CASES_TAC THEN
+     REWRITE_TAC[distinctness "option"] THEN DISCH_TAC THEN
+     TRY USE_IH THEN ASM_MESON_TAC[]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### word_payload_IMP
+  (* every clause of word_payload gives the payload as a list of
+     the same length as the one it is made of; the equation that
+     says what ts is has to be used the other way round, and MESON
+     does not get past the header of the clause *)
+  (let use_ts (asl,w as gl) =
+     let v = var_by_name "ts" gl in
+     let ok t = (try rhs(concl t) = v with Failure _ -> false) in
+     let th = tryfind (fun (_,t) -> if ok t then t else fail()) asl in
+     (SUBST1_TAC(SYM th) THEN ASM_REWRITE_TAC[LENGTH_MAP]) gl in
+   CASES_ON_NAME "tags" THEN
+   REWRITE_TAC[cake_def "word_payload"; PAIR_EQ] THEN
+   EVERY_CASE_TAC THEN REPEAT STRIP_TAC THEN use_ts)
+### EVERY2_f_EQ
+  (let aux = prove
+    (`!(f:A->B) rs ws. ALL2 (\v w. f v = w) rs ws <=> MAP f rs = ws`,
+     GEN_TAC THEN LIST_INDUCT_TAC THEN X_GEN_TAC `ws:B list` THEN
+     STRUCT_CASES_TAC(ISPEC `ws:B list` list_CASES_v) THEN
+     ASM_REWRITE_TAC[ALL2; MAP; CONS_11; NOT_CONS_NIL;
+                     EQ_SYM_EQ]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### word_heap_heap_expand
+  (STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+   ASM_REWRITE_TAC[cake_def "heap_expand"; NOT_SUC;
+                   cake_def "word_heap"; cake_def "word_el";
+                   STAR_emp; CONJUNCT1 word_list_exists_thm;
+                   ARITH_RULE `SUC n - 1 = n`; ADD1])
+### INJ_FUPDATE
+  (* the new key is not in the domain and the new value not in the
+     range, so the update stays injective.  The negated existential
+     of the range is turned into an implication, which is what
+     ASM_SIMP_TAC can use of it *)
+  (REWRITE_TAC[INJ; FDOM_FUPDATE; IN_INSERT; FMAP_IN_FRANGE;
+               NOT_EXISTS_THM; DE_MORGAN_THM;
+               TAUT `(~a \/ ~b) <=> (a ==> ~b)`;
+               FAPPLY_FUPDATE_THM] THEN
+   REPEAT STRIP_TAC THEN REPEAT COND_CASES_TAC THEN
+   ASM_SIMP_TAC[] THEN ASM_MESON_TAC[])
+### blocks_unique_SUBSET
+  (REWRITE_TAC[cake_def "blocks_unique"; SUBSET] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   ASM_SIMP_TAC[])
