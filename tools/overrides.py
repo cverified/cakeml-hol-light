@@ -854,6 +854,10 @@ THM_INT_VARS = {
   ('data_to_word_assignProof', 'evaluate_LoadBignum'): ['i'],
   ('data_to_word_assignProof', 'small_int_INT_MIN_MAX'): ['i'],
   ('data_to_word_assignProof', 'state_rel_Number_IMP'): ['i1'],
+  # the i of this one is an integer in the source (`0i`), and
+  # nothing else of the statement says a type, so the port read
+  # the comparison as one of reals and the statement was false
+  ('data_to_word_memoryProof', 'exists_num'): ['i'],
   ('data_to_word_memoryProof', 'memory_rel_Number_bignum_IMP'): ['i'],
   ('data_to_word_memoryProof', 'small_int_IMP_MIN_MAX'): ['i'],
   ('data_to_word_memoryProof', 'w2i_i2w_IMP'): ['i'],
