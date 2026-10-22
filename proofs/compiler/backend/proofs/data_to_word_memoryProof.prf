@@ -415,3 +415,52 @@
      GEN_REWRITE_TAC LAND_CONV [data_length_CONS] THEN
      GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [data_length_CONS] THEN
      ASM_REWRITE_TAC[] THEN ARITH_TAC])
+### heap_store_lemma
+  (LIST_INDUCT_TAC THENL
+    [REPEAT GEN_TAC THEN
+     REWRITE_TAC[heap_length_NIL; APPEND; cake_def "heap_store"] THEN
+     REWRITE_TAC[PAIR_EQ; EQ_SYM_EQ];
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[heap_length_CONS; APPEND] THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "heap_store"] THEN
+     MP_ISPEC_NAME "h" el_length_GT_0 THEN DISCH_TAC THEN
+     ASM_SIMP_TAC[ARITH_RULE `1 <= a ==> ~(a + b = 0)`;
+                  ARITH_RULE `1 <= a ==> ~(a + b < a)`;
+                  ARITH_RULE `(a + b) - a = b`] THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[PAIR_EQ]])
+### isSomeDataElement_heap_lookup_lemma1
+  (let isde = cake_def "isSomeDataElement" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   REWRITE_TAC[cake_def "heap_lookup"; cake_def "el_length"] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC(isde :: opt) THENL
+    [MATCH_MP_TAC(TAUT `~a ==> ~(a /\ b)`) THEN ASM_ARITH_TAC;
+     COND_CASES_TAC THEN ASM_REWRITE_TAC(isde :: opt) THENL
+      [MATCH_MP_TAC(TAUT `~a ==> ~(a /\ b)`) THEN ASM_ARITH_TAC;
+       SUBGOAL_THEN `(k:num) < n` (fun th -> REWRITE_TAC[th]) THEN
+       ASM_ARITH_TAC]])
+### isSomeDataElement_heap_lookup_lemma2
+  (REWRITE_TAC[cake_def "heap_expand"] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[APPEND; SUB_0; LE_0] THEN
+   REWRITE_TAC[isSomeDataElement_heap_lookup_lemma1] THEN
+   ASM_SIMP_TAC[ARITH_RULE `~(k = 0) ==> (n - (k - 1 + 1) = n - k)`;
+                ARITH_RULE `~(k = 0) ==> (k - 1 < n <=> k <= n)`])
+### isSomeDataElement_heap_lookup_lemma3
+  (let isde = cake_def "isSomeDataElement" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   DISCH_TAC THEN REWRITE_TAC[cake_def "heap_lookup"] THEN
+   ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC(isde :: opt) THENL
+    [MATCH_MP_TAC(TAUT `~a ==> ~(a /\ b)`) THEN ASM_ARITH_TAC;
+     ASM_SIMP_TAC[ARITH_RULE `~(a:num < b) ==> (b <= a <=> T)`]])
+### heap_store_rel_lemma
+  (REWRITE_TAC[cake_def "heap_store_rel";
+               cake_def "isSomeDataElement"] THEN
+   MESON_TAC[])
+### v_inv_SUBMAP
+  (REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_inv_eq; v_inv_SUBMAP_lemma])
+### heap_store_rel_v_inv
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC v_inv_SUBMAP THEN
+   ASM_REWRITE_TAC[SUBMAP_REFL])

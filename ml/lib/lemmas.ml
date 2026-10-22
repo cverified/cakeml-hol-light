@@ -203,3 +203,9 @@ let FMAP_IN_FRANGE = prove
                            (cases_of `:(B)option`)) THEN
     REWRITE_TAC[THE; injectivity "option"; distinctness "option"] THEN
     MESON_TAC[]]);;
+
+(* and the reflexivity of SUBMAP, which HOL4 has as SUBMAP_REFL *)
+
+let SUBMAP_REFL = prove
+ (`!f:(A,B)fmap. f SUBMAP f`,
+  REWRITE_TAC[SUBMAP]);;
