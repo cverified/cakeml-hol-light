@@ -22,7 +22,7 @@ import re
 import sys
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
-ML = T + '../ml/'
+ML = os.path.realpath(T + '../ml') + '/'
 
 
 def needs_of(rel):
@@ -65,8 +65,8 @@ def positions(cl):
 
 
 def main():
-  rel = sys.argv[1]
-  if rel.startswith(ML): rel = rel[len(ML):]
+  rel = os.path.realpath(sys.argv[1])
+  rel = rel[len(ML):] if rel.startswith(ML) else sys.argv[1]
   cl = closure(rel)
   pos = positions(cl)
   for f in sorted(cl, key=lambda f: pos[f]):
