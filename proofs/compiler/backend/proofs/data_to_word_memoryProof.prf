@@ -1107,3 +1107,60 @@
    STRIP_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[ALL2; v_inv_RefPtr_T; INJ]) THEN
    ASM_MESON_TAC[injectivity "heap_address"])
+### IMP_EXP_LESS
+  (REWRITE_TAC[LE_EXP; ARITH_EQ] THEN ARITH_TAC)
+### memory_rel_tail
+  (DISCH_TAC THEN
+   FIRST_ASSUM(fun th ->
+     MATCH_MP_TAC(MATCH_MP
+       (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
+          memory_rel_rearrange) th)) THEN
+   REWRITE_TAC[MEM] THEN MESON_TAC[])
+### memory_rel_drop
+  (DISCH_TAC THEN
+   FIRST_ASSUM(fun th ->
+     MATCH_MP_TAC(MATCH_MP
+       (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
+          memory_rel_rearrange) th)) THEN
+   REWRITE_TAC[MEM_APPEND] THEN MESON_TAC[])
+### LESS_DIV_16_IMP
+  (ARITH_TAC)
+### memory_rel_less_space
+  (REWRITE_TAC[cake_def "memory_rel"] THEN REPEAT STRIP_TAC THEN
+   ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC)
+### IN_all_vs_HD
+  (REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT DISJ2_TAC THEN MATCH_MP_TAC MEM_v_all_vs THEN
+   REWRITE_TAC[MEM])
+### MIN_ADD
+  (ARITH_TAC)
+### MIN_SUB
+  (ARITH_TAC)
+### MAX_ADD
+  (ARITH_TAC)
+### MAX_SUB
+  (ARITH_TAC)
+### MIN_SUC_SUC
+  (ARITH_TAC)
+### BlockRep_heap_length
+  (REWRITE_TAC[cake_def "BlockRep"; heap_length_CONS; heap_length_NIL;
+               cake_def "el_length"; LENGTH] THEN ARITH_TAC)
+### ZIP_MAP_MAP
+  (let aux = prove
+    (`!(f:A->B) (g:A->C) xs.
+        ZIP (MAP f xs) (MAP g xs) = MAP (\k. (f k,g k)) xs`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[MAP; ZIP]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### MULT_BIT0
+  (* HOL4's BIT0_ODD, which the port does not have of bitTheory *)
+  (let bit0 = prove
+    (`!n. BIT 0 n <=> ODD n`,
+     REWRITE_TAC[BIT; BITS; MOD_2EXP; DIV_2EXP; SUB_0; EXP; DIV_1;
+                 ARITH_RULE `SUC 0 = 1`; EXP_1] THEN
+     GEN_TAC THEN
+     MP_TAC(SPECL [`n:num`; `2`] DIVISION) THEN
+     REWRITE_TAC[ARITH_EQ] THEN
+     MP_TAC(SPEC `n:num` EVEN_OR_ODD) THEN
+     REWRITE_TAC[EVEN_MOD; ODD_MOD] THEN ARITH_TAC) in
+   REWRITE_TAC[bit0; ODD_MULT])

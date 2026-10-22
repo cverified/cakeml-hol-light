@@ -70,3 +70,21 @@ there, these are the ones to take up first.
 | `xor_bytes_xor_words` | `write_bytes` |
 | `xor_bytes_word_list` | `write_bytes` |
 | `xor_bytes_word_list_alias` | `write_bytes` |
+
+## And three whose statement is about the reals
+
+`exists_num`, `small_int_w2n` and `memory_rel_bounds_check` are
+the three theorems of the file whose statement has a `real` in
+it, where HOL4 has an integer: the port read `~(i < 0i)` as a
+comparison of reals (the overload of `<` that it takes when
+nothing says otherwise).  `exists_num` is then
+`~(i < &0) <=> ?n. i = &n` over the reals, which is false
+(i = 1/2), so there is nothing to prove; the fix is the int
+annotation of the generation (`THM_INT_VARS` of
+`tools/overrides.py`).
+
+| theorem | what is wrong |
+| --- | --- |
+| `exists_num` | the statement is about the reals, and false |
+| `small_int_w2n` | the statement is about the reals |
+| `memory_rel_bounds_check` | the statement is about the reals |
