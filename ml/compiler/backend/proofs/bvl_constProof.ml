@@ -1153,7 +1153,6 @@ let bvl_constProof_evaluate_env_rel = cake_theorem "evaluate_env_rel"
    let bl = cake_def "bvl_Bool" in
    let bv = cake_def "bvlSem_Boolv" in
    let da = cake_def "bvlSem_do_app" in
-   let ce = cake_def "bvl_const_compile_exp" in
    let fce = bvlSem_fix_clock_evaluate in
    let sz = size_thms "bvl_exp" in
    let hd_sing = bvl_const_compile_HD_SING in
@@ -1652,7 +1651,7 @@ let bvl_constProof_compile_thm = cake_theorem "compile_thm"
   (let er = cake_def "bvl_constProof_env_rel" in
    let env_rel_refl = prove
     (`!env. bvl_constProof_env_rel (:'c) (:'ffi) [] env env`,
-     GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [er] THEN
+     GEN_TAC THEN ONCE_REWRITE_TAC[er] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
    REPEAT GEN_TAC THEN STRIP_TAC THEN
    FIRST_ASSUM(fun ev ->
