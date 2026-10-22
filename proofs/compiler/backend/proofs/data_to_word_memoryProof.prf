@@ -1319,6 +1319,19 @@
      MP_TAC(SPEC `n:num` EVEN_OR_ODD) THEN
      REWRITE_TAC[EVEN_MOD; ODD_MOD] THEN ARITH_TAC) in
    REWRITE_TAC[bit0; ODD_MULT])
+### not_bit_lt_2exp
+  (* the number is below 2 EXP (p + 1), so every bit of it from
+     there up is zero *)
+  (REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[BIT; BITS; MOD_2EXP;
+                                       DIV_2EXP]) THEN
+   SUBGOAL_THEN `n DIV (2 EXP (p + (x + 1))) = 0` SUBST1_TAC THENL
+    [MATCH_MP_TAC DIV_LT THEN
+     MATCH_MP_TAC LTE_TRANS THEN
+     EXISTS_TAC `2 EXP (p + 1)` THEN ASM_REWRITE_TAC[LE_EXP] THEN
+     CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC;
+     REWRITE_TAC[ARITH_RULE `SUC a - a = 1`] THEN
+     CONV_TAC NUM_REDUCE_CONV])
 ### get_byte_set_byte_alt
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[get_byte_set_byte_diff])
 ### small_int_w2n
@@ -1426,6 +1439,9 @@
    COND_CASES_TAC THEN
    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_SHL;
                BIT_WORD_0])
+### LUPDATE_REPLICATE
+  (INDUCT_TAC THEN GEN_TAC THEN REWRITE_TAC[REPLICATE; LUPDATE] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[])
 ### get_lowerbits_ptrbits
   (* the bits of ptr_bits are below small_shift_length (that is what
      maxout_bits_IMP says of each of the two), so the word_bits of
@@ -1473,6 +1489,19 @@
      ASM_CASES_TAC `(P:A->bool) h` THEN ASM_REWRITE_TAC[LENGTH] THEN
      ASM_ARITH_TAC) in
    DISCH_TAC THEN MATCH_ACCEPT_TAC lem)
+### do_part_SOME_IMP_SOME
+  (* every clause of do_part gives the timestamp back as a SOME,
+     and the one of a Str gives it under a let *)
+  (CASES_ON_NAME "h" THEN
+   REWRITE_TAC[cake_def "dataSem_do_part"] THEN
+   REPEAT(CHANGED_TAC
+     (REWRITE_TAC[PAIR_EQ] THEN
+      CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
+      REPEAT COND_CASES_TAC THEN REPEAT STRIP_TAC)) THEN
+   RULE_ASSUM_TAC(CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN
+   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
+   ASM_MESON_TAC[])
 ### memory_rel_IMP_MAP_UPDATE
   (MATCH_MP_TAC memory_rel_rearrange THEN
    GEN_TAC THEN REWRITE_TAC[MEM_APPEND; MEM_MAP; MEM] THEN
@@ -1488,6 +1517,12 @@
      GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
      ASM_REWRITE_TAC[MAP; ZIP]) in
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### word_and_lsr_0
+  (REWRITE_TAC[word_index] THEN DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_0; BIT_WORD_AND;
+               BIT_WORD_SHL] THEN
+   REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN ASM_REWRITE_TAC[])
 ### el_length_Bytes
   (REWRITE_TAC[cake_def "Bytes"] THEN
    CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
