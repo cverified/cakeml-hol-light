@@ -1,5 +1,5 @@
 #!/bin/sh
-# reload <session>... : load ml/lib/lemmas.ml and ml/lib/tactics.ml
+# reload <session>... : load ml/lib/tactics.ml and ml/lib/lemmas.ml
 # again into a session that is already running, which takes a second
 # -- where a change in a file of ml/lib that defines something costs
 # the session itself (8 minutes for the needs closure of a file, 94
@@ -18,7 +18,9 @@ for s in "$@"; do
   # one repl-step per file: the OCaml toplevel takes a # directive
   # only as the first thing on a line, so two of them in one string
   # load the first and drop the second without saying so
-  for f in lemmas tactics; do
+  # the tactics first, as ml/lib/preamble.ml has them: a lemma may
+  # be proved with a tactic of the port
+  for f in tactics lemmas; do
     TIMEOUT=300 repl-step "$s" "#use \"$C/ml/lib/$f.ml\";;" \
       > /dev/null 2>&1
   done
