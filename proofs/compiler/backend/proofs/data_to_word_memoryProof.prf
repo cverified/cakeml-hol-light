@@ -587,6 +587,30 @@
    MESON_TAC[])
 ### all_ts_head
   (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM all_ts_append; APPEND])
+### v_all_vs_MEM2
+  (* the values of v_all_vs (x::xs) are x itself, the values of its
+     payload where it is a Block, and the values of v_all_vs xs: the
+     first two are the values of v_all_vs [x] and the third is what
+     the induction hypothesis is about *)
+  (let vav = cake_def "v_all_vs" in
+   let vnil = prove
+    (`v_all_vs ([]:dataSem_v list) = []`,
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   let vsing = prove
+    (`!t tag xs y. MEM y (v_all_vs [Block t tag xs]) <=>
+        y = Block t tag xs \/ MEM y (v_all_vs xs)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [vav] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[vnil; APPEND_NIL; MEM; MEM_APPEND]) in
+   LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[vnil; MEM];
+     REPEAT GEN_TAC THEN CASES_ON_NAME "h" THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [vav] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[MEM; MEM_APPEND; distinctness "dataSem_v"] THEN
+     ASM_MESON_TAC[vsing]])
 ### MEM_v_all_vs
   (let vav = cake_def "v_all_vs" in
    LIST_INDUCT_TAC THEN REWRITE_TAC[MEM] THEN GEN_TAC THEN
@@ -651,6 +675,21 @@
    REPEAT GEN_TAC THEN
    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [cons_app] THEN
    REWRITE_TAC[v_all_vs_append; MEM_APPEND])
+### MEM_v_all_vs_split2
+  (* v_all_vs of a cons splits into the values of the head and the
+     values of the tail (v_all_vs_append, as the source has it), and
+     the three parts of v :: y :: xs go where they belong *)
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   let vcons = prove
+    (`!(v:dataSem_v) xs y. MEM y (v_all_vs (CONS v xs)) <=>
+        MEM y (v_all_vs [v]) \/ MEM y (v_all_vs xs)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [cons_app] THEN
+     REWRITE_TAC[v_all_vs_append; MEM_APPEND]) in
+   MESON_TAC[vcons])
 ### MEM_v_all_vs_extend_tl
   (let cons_app = prove
     (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
@@ -667,6 +706,12 @@
    REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT)
 ### MEM_v_all_vs_extend_append
   (REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT)
+### MEM_v_all_vs_EL
+  (LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[LENGTH; LT];
+     GEN_TAC THEN STRUCT_CASES_TAC (SPEC `i:num` num_CASES) THEN
+     REWRITE_TAC[EL; HD; TL; LENGTH; LT_SUC; LT_0] THEN
+     ASM_MESON_TAC[MEM_v_all_vs_extend_hd; MEM_v_all_vs_extend_tl]])
 ### all_vs_Block
   (let vav_block = prove
     (`!t tag xs ys.
@@ -705,6 +750,43 @@
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
      inst a1 x1 a1 x1 THEN STRIP_TAC THEN
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC])
+### blocks_unique_Word64
+  (* a Block of all_vs refs (Word64 w :: stack) is one of
+     all_vs refs (ws ++ stack): the Word64 is no Block, and the rest
+     of v_all_vs (Word64 w :: stack) is v_all_vs stack *)
+  (let vw64 = prove
+    (`!(w:word64) ys. v_all_vs (CONS (Word64 w) ys) =
+        CONS (Word64 w) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let inc = prove
+    (`!refs ws stack' (w:word64) t a xs.
+        Block t a xs IN all_vs refs (CONS (Word64 w) stack') ==>
+        Block t a xs IN all_vs refs (APPEND ws stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; vw64;
+                 v_all_vs_append; MEM; MEM_APPEND;
+                 distinctness "dataSem_v"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### blocks_unique_Number
+  (let vnum = prove
+    (`!(i:int) ys. v_all_vs (CONS (Number i) ys) =
+        CONS (Number i) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let inc = prove
+    (`!refs ws stack' (i:int) t a xs.
+        Block t a xs IN all_vs refs (CONS (Number i) stack') ==>
+        Block t a xs IN all_vs refs (APPEND ws stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; vnum;
+                 v_all_vs_append; MEM; MEM_APPEND;
+                 distinctness "dataSem_v"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
 ### ref_edge_ValueArray
   (REWRITE_TAC[cake_def "ref_edge"; lookup_insert] THEN
    COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
@@ -716,6 +798,17 @@
 ### v_inv_ByteArray_insert
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_ByteArray_insert_lemma])
+### heap_store_RefBlock_thm
+  (* heap_store_lemma stores at the length of the prefix, and the
+     condition it leaves is that the two RefBlocks are of a length *)
+  (let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) = el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[heap_store_lemma; APPEND; PAIR_EQ; hlen_cl;
+               cake_def "RefBlock"; cake_def "el_length"] THEN
+   ASM_ARITH_TAC)
 ### NOT_isRefBlock
   (* the tag of a RefBlock is RefTag, and the three shapes have
      another one; the conditional of Word64Rep is split after the
