@@ -799,6 +799,14 @@ THM_VALUE = {
   # whose compile_exp has no depth to carry
   ('bvl_const', 'compile_exp_eq'):
     '!x. compile_exp x = compile_sing [] x',
+  # the same for bvl_const, whose env_rel takes no depth: env_rel
+  # [] env env is env = env, so the antecedent that is left is the
+  # evaluation and the type error
+  ('bvl_constProof', 'compile_thm'):
+    '!xs env (s1:(\'c,\'ffi) bvlSem$state) res s2 ys.'
+    ' (evaluate (xs,env,s1) = (res,s2)) /\\'
+    ' res <> Rerr (Rabort Rtype_error) ==>'
+    ' (evaluate (compile [] xs,env,s1) = (res,s2))',
   ('bvi_letProof', 'compile_thm'):
     '!xs env (s1:(\'c,\'ffi) bviSem$state) res s2 ys.'
     ' (evaluate (xs,env,s1) = (res,s2)) /\\'

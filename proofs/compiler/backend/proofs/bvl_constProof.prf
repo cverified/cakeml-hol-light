@@ -1447,3 +1447,530 @@
                     (CONJ (SYM fl) (CONJ ev nt)) in
         ACCEPT_TAC(MATCH_MP SmartOp2_thm (CONJ th1 nt)) gl)));
     DISCH_THEN(ACCEPT_TAC o CONJUNCT1)])
+
+### evaluate_env_rel
+  ((* ---- the pieces ---------------------------------------------- *)
+   let cp = cake_def "bvl_const_compile" in
+   let ev = cake_def "bvlSem_evaluate" in
+   let er = cake_def "bvl_constProof_env_rel" in
+   let vr = cake_def "bvl_constProof_v_rel" in
+   let fc = cake_def "bvlSem_fix_clock" in
+   let bl = cake_def "bvl_Bool" in
+   let bv = cake_def "bvlSem_Boolv" in
+   let da = cake_def "bvlSem_do_app" in
+   let ce = cake_def "bvl_const_compile_exp" in
+   let fce = bvlSem_fix_clock_evaluate in
+   let sz = size_thms "bvl_exp" in
+   let hd_sing = bvl_const_compile_HD_SING in
+   let len_eq = bvl_constProof_env_rel_length in
+   let lkn = CONV_RULE(DEPTH_CONV BETA_CONV)
+               bvl_constProof_env_rel_LLOOKUP_NONE in
+   let lks = CONV_RULE(DEPTH_CONV BETA_CONV)
+               bvl_constProof_env_rel_LOOKUP_SOME in
+   let res_rws = [PAIR_EQ;
+                  distinctness "semanticPrimitives_result";
+                  injectivity "semanticPrimitives_result"] in
+   let rty = `:(bvlSem_v list,bvlSem_v)
+                semanticPrimitives_result` in
+   let s1t = `s1:('c,'ffi)bvlSem_state` in
+   let add_lt = ARITH_RULE `!m v e. m < e - v ==> m + v < e` in
+   let add_sym_lt = ARITH_RULE `!m v e. m + v < e ==> v + m < e` in
+   (* the clauses of the relation, as HOL4 states it: the port has
+      it as one match on the tuple of its arguments *)
+   let erc = map (fun t ->
+     prove(t, GEN_REWRITE_TAC LAND_CONV [er] THEN
+              MATCH_REDUCE_TAC THEN REWRITE_TAC[]))
+    [`bvl_constProof_env_rel (:'c) (:'ffi) [] e1 e2 <=> (e1 = e2)`;
+     `bvl_constProof_env_rel (:'c) (:'ffi) (CONS NONE rest)
+        (CONS x e1) (CONS y e2) <=>
+      (x = y) /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2`;
+     `bvl_constProof_env_rel (:'c) (:'ffi) (CONS (SOME a) rest)
+        (CONS x e1) (CONS y e2) <=>
+      bvl_constProof_v_rel (:'c) (:'ffi) a x y (CONS x e1)
+        (CONS y e2) /\
+      bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2`] in
+   let vrc = map (fun t ->
+     prove(t, GEN_REWRITE_TAC LAND_CONV [vr] THEN
+              MATCH_REDUCE_TAC THEN REWRITE_TAC[]))
+    [`bvl_constProof_v_rel (:'c) (:'ffi) (bvl_Var n) x y xs ys <=>
+      oEL n ys = SOME x`;
+     `bvl_constProof_v_rel (:'c) (:'ffi) (bvl_Op op es) x y xs ys
+      <=> (x = y) /\
+          (!(s:('c,'ffi)bvlSem_state) env.
+             bvlSem_evaluate ([bvl_Op op es],env,s) =
+             (Rval [x],s))`] in
+   let env_rel_CONS = prove
+    (`!ax env1 env2 v.
+        bvl_constProof_env_rel (:'c) (:'ffi) ax env1 env2 ==>
+        bvl_constProof_env_rel (:'c) (:'ffi) (CONS NONE ax)
+          (CONS v env1) (CONS v env2)`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC erc) in
+   let bool_ev = prove
+    (`!b env2 (s:('c,'ffi)bvlSem_state).
+        bvlSem_evaluate ([bvl_Bool b],env2,s) =
+        (Rval [bvlSem_Boolv b],s)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[bl; bv; ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
+     RECORD_CASES_TAC `s:('c,'ffi)bvlSem_state` THEN
+     REWRITE_TAC[da; REVERSE] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let boolv_11 = prove
+    (`!b c. (bvlSem_Boolv b = bvlSem_Boolv c) <=> (b = c)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[bv; injectivity "bvlSem_v";
+                 cake_def "bool_to_tag"; cake_def "true_tag";
+                 cake_def "false_tag"] THEN
+     BOOL_CASES_TAC `b:bool` THEN BOOL_CASES_TAC `c:bool` THEN
+     REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV) in
+   (* ---- the shared steps ---------------------------------------- *)
+   let size_tac_rws rws =
+     RULE_ASSUM_TAC(REWRITE_RULE(rws @ (list_size :: sz))) THEN
+     REWRITE_TAC(rws @ (list_size :: sz)) THEN ASM_ARITH_TAC in
+   let size_tac = size_tac_rws [] in
+   let impossible =
+     SUBGOAL_THEN `F` CONTR_TAC THEN
+     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
+     ASM_ARITH_TAC in
+   (* HOL4's fs, with the rewrites of this file: the clock that
+      fix_clock puts back is the clock that the evaluation left
+      (bvlSem's fix_clock_evaluate), and it has to fire before the
+      definition of fix_clock or the proof is left with a record
+      update -- which is what the stages of FS_TAC are for *)
+   let tidy = FS_TAC [[fce]; [fc]] res_rws in
+   let tidy2 = tidy THEN ASM_FS_TAC THEN tidy in
+   let close_contr =
+     TRY(RULE_ASSUM_TRY(REWRITE_RULE[]) THEN
+         TRY(FIRST_ASSUM CONTR_TAC)) in
+   let ev_term xs' env' s' =
+     list_mk_icomb "bvlSem_evaluate"
+       [mk_pair(xs', mk_pair(env', s'))] in
+   let is_ev t =
+     try fst(dest_const(fst(strip_comb t))) = "bvlSem_evaluate"
+     with Failure _ -> false in
+   let dest_ev t =
+     let a,bc = dest_pair (rand t) in
+     let b,c = dest_pair bc in a,b,c in
+   (* the instance of the induction hypothesis that an evaluation of
+      the source asks for: the list is the key, the environment that
+      the compiler is given comes with it *)
+   let USE_IH ax' env2' xs' (asl,w) =
+     let ih = tryfind (fun (_,th) ->
+       if is_forall (concl th) then th else fail()) asl in
+     let a,b,c,rt = tryfind (fun (_,th) ->
+       let l,r = dest_eq(concl th) in
+       if not (is_ev l) then fail() else
+       let a,b,c = dest_ev l in
+       if a = xs' then (a,b,c,r) else fail()) asl in
+     MP_TAC(SPECL [a; b; c; ax'; env2'; fst(dest_pair rt);
+                   snd(dest_pair rt)] ih) (asl,w) in
+   let ih_plain =
+     USE_IH `ax:(bvl_exp option) list` `env2:bvlSem_v list` in
+   let ih_ants_simple sz_tac =
+     ANTS_TAC THENL
+     [CONJ_TAC THENL [sz_tac; ASM_REWRITE_TAC res_rws];
+      DISCH_THEN(fun th -> TRY(REWRITE_TAC[th]) THEN
+        RULE_ASSUM_TRY(REWRITE_RULE[th]) THEN ASSUME_TAC th)] in
+   let use_ih_gen keep xs' =
+     FIRST_ASSUM(fun eq ->
+       let l,rt = dest_eq(concl eq) in
+       let a,bc = dest_pair(rand l) in
+       let b,c = dest_pair bc in
+       if not (a = xs' && b = `env1:bvlSem_v list`) then
+         failwith "use_ih_gen" else
+       FIRST_ASSUM(fun ih ->
+         MP_TAC(SPECL [a; b; c; `ax:(bvl_exp option) list`;
+                       `env2:bvlSem_v list`;
+                       fst(dest_pair rt); snd(dest_pair rt)] ih)) THEN
+       ANTS_TAC THENL
+       [CONJ_TAC THENL [size_tac; ASM_REWRITE_TAC res_rws];
+        DISCH_THEN(fun th -> TRY(REWRITE_TAC[th]) THEN
+                             (if keep then ASSUME_TAC th
+                              else ALL_TAC))]) in
+   let use_ih_for = use_ih_gen false in
+   let use_ih_keep = use_ih_gen true in
+   let do_sub nm xs' s' =
+     NAMED_CASES_TAC (ev_term xs' `env1:bvlSem_v list` s')
+       [[nm ^ "r"; nm ^ "s"]] THEN
+     NAMED_CASES_TAC (mk_var(nm ^ "r",rty))
+       [[nm ^ "v"]; [nm ^ "e"]] THEN
+     tidy THEN use_ih_for xs' THEN tidy in
+   let unfold_case =
+     REWRITE_TAC[cp] THEN
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
+     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[ev]) THEN
+     REWRITE_TAC[fce; hd_sing] THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[fce]) in
+   let one_sub xs' = unfold_case THEN do_sub "h" xs' s1t in
+   let nil_case =
+     REWRITE_TAC[cp; ev] THEN RULE_ASSUM_TAC(REWRITE_RULE[ev]) THEN
+     ASM_REWRITE_TAC[] in
+   (* ---- what the environment of the compiled code holds --------- *)
+   (* the entry of the relation at an index says where the value of
+      that variable is in the second environment: at the same index
+      when it says nothing, at the index it records when it says a
+      Var, and at the same index again when it says an expression
+      that evaluates to it *)
+   let index_lemma = prove
+    (`!ax env1 env2 v.
+        bvl_constProof_env_rel (:'c) (:'ffi) ax env1 env2 /\
+        v < LENGTH env1 ==>
+        v < LENGTH env2 /\
+        (oEL v ax = NONE ==> EL v env2 = EL v env1) /\
+        (oEL v ax = SOME NONE ==> EL v env2 = EL v env1) /\
+        (!i. oEL v ax = SOME (SOME (bvl_Var i)) ==>
+             v + i < LENGTH env2 /\ EL (v + i) env2 = EL v env1)`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT CONJ_TAC THENL
+     [FIRST_ASSUM(fun er_th ->
+        FIRST_ASSUM(fun lt ->
+          ACCEPT_TAC(REWRITE_RULE[SYM(MATCH_MP len_eq er_th)] lt)));
+      DISCH_TAC THEN
+      FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lk ->
+        ACCEPT_TAC(MATCH_MP lkn (CONJ er_th (DISJ1 lk
+          `oEL v (ax:(bvl_exp option) list) = SOME NONE`)))));
+      DISCH_TAC THEN
+      FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lk ->
+        ACCEPT_TAC(MATCH_MP lkn (CONJ er_th (DISJ2
+          `oEL v (ax:(bvl_exp option) list) = NONE` lk)))));
+      GEN_TAC THEN DISCH_TAC THEN
+      FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lk ->
+        MP_TAC(MATCH_MP lks (CONJ er_th lk)))) THEN
+      REWRITE_TAC vrc THEN
+      DISCH_THEN(MP_TAC o MATCH_MP oEL_SOME) THEN
+      REWRITE_TAC[LENGTH_DROP] THEN STRIP_TAC THEN
+      FIRST_ASSUM(fun lt ->
+        let bound = MATCH_MP add_lt lt in
+        let eld = MATCH_MP EL_DROP bound in
+        CONJ_TAC THENL
+        [ACCEPT_TAC(MATCH_MP add_sym_lt bound);
+         FIRST_ASSUM(fun eq -> ACCEPT_TAC
+           (ONCE_REWRITE_RULE[ADD_SYM] (REWRITE_RULE[eld] eq)))])]) in
+   let not_refl_tac =
+     FIRST_ASSUM(fun th ->
+       let bod = snd(strip_forall(concl th)) in
+       let l,_ = dest_eq(dest_neg bod) in
+       MP_TAC(SPEC l th) THEN REWRITE_TAC[]) in
+   (* and an entry that is not a Var is an expression that
+      evaluates to the value of that variable, whatever the
+      environment and the state -- which is what v_rel says of an
+      Op, and nothing else can be an entry at all *)
+   let vrel_ev = prove
+    (`!ax env1 env2 v e.
+        bvl_constProof_env_rel (:'c) (:'ffi) ax env1 env2 /\
+        v < LENGTH env1 /\ oEL v ax = SOME (SOME e) /\
+        (!i. ~(e = bvl_Var i)) ==>
+        EL v env2 = EL v env1 /\
+        (!(s:('c,'ffi)bvlSem_state) env.
+           bvlSem_evaluate ([e],env,s) = (Rval [EL v env1],s))`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lk ->
+       MP_TAC(MATCH_MP lks (CONJ er_th lk)))) THEN
+     FIRST_X_ASSUM(fun th ->
+       if is_forall(concl th) then MP_TAC th else failwith "nv") THEN
+     STRUCT_CASES_TAC(ISPEC `e:bvl_exp` (cases_of `:bvl_exp`)) THEN
+     DISCH_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [vr] THEN
+     TRY MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+     TRY(DISCH_THEN(fun th -> CONJ_TAC THENL
+           [ACCEPT_TAC(SYM(CONJUNCT1 th));
+            ACCEPT_TAC(CONJUNCT2 th)])) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[injectivity "bvl_exp"]) THEN
+     not_refl_tac) in
+   let index_tac =
+     TRY(FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lt ->
+           STRIP_ASSUME_TAC(MATCH_MP index_lemma
+             (CONJ er_th lt))))) in
+   let use_index =
+     TRY(FIRST_ASSUM(fun imp -> FIRST_ASSUM(fun eq ->
+           STRIP_ASSUME_TAC(MATCH_MP imp eq)))) in
+   let apply_vrel (asl,w as gl) =
+     let lk = tryfind (fun (_,th) ->
+       let l,r = dest_eq(concl th) in
+       if fst(dest_const(fst(strip_comb l))) = "oEL" &&
+          can (fun t -> rand(rand t)) r then th else fail()) asl in
+     let e = rand(rand(rhs(concl lk))) in
+     if is_var e ||
+        (try fst(dest_const(fst(strip_comb e))) = "bvl_Var"
+         with Failure _ -> true)
+     then failwith "apply_vrel" else
+     let nv = prove(mk_forall(`i:num`,
+                              mk_neg(mk_eq(e,`bvl_Var i`))),
+                    REWRITE_TAC[distinctness "bvl_exp"]) in
+     (FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lt ->
+        let th = MATCH_MP vrel_ev
+                   (CONJ er_th (CONJ lt (CONJ lk nv))) in
+        REWRITE_TAC[CONJUNCT1 th] THEN
+        RULE_ASSUM_TRY(REWRITE_RULE[CONJUNCT1 th]) THEN
+        ASSUME_TAC(CONJUNCT2 th)))) gl in
+   (* ---- Var and Force: the two clauses that read the environment *)
+   let index_pre =
+     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[ev]) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN REWRITE_TAC[cp] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     ASM_CASES_TAC `v < LENGTH (env1:bvlSem_v list)` THEN tidy2 THEN
+     index_tac THEN EVERY_CASE_TAC THEN use_index in
+   let var_case =
+     index_pre THEN TRY apply_vrel THEN TRY(ASM_REWRITE_TAC[]) THEN
+     TRY(GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev]) THEN
+     TRY(ASM_REWRITE_TAC[]) THEN TRY tidy2 THEN
+     TRY(ASM_REWRITE_TAC[]) THEN close_contr in
+   let force_case =
+     index_pre THEN
+     TRY(GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev]) THEN
+     TRY apply_vrel THEN TRY(ASM_REWRITE_TAC[]) THEN TRY tidy2 THEN
+     TRY(ASM_REWRITE_TAC[]) THEN close_contr in
+   (* ---- If: the compiler folds a constant condition away -------- *)
+   (* and then the compiled code does not evaluate the condition at
+      all, which is sound because the hypothesis says the condition
+      evaluates to what the constant is *)
+   let consop = `CONS:bvl_exp->(bvl_exp)list->(bvl_exp)list` in
+   let hd_sing_e1 =
+     INST [`ax:(bvl_exp option) list`,`n:(bvl_exp option) list`;
+           `e1:bvl_exp`,`x:bvl_exp`] hd_sing in
+   let bool_head bb (asl,w as gl) =
+     let want = mk_eq(`HD (bvl_const_compile ax [e1])`,
+                      list_mk_icomb "bvl_Bool" [bb]) in
+     let cond = tryfind (fun (_,th) ->
+       if concl th = want then th else fail()) asl in
+     let ceq = TRANS (SYM hd_sing_e1)
+                 (AP_THM (AP_TERM consop cond) `[]:bvl_exp list`) in
+     (RULE_ASSUM_TRY(REWRITE_RULE[ceq; bool_ev]) THEN
+      RULE_ASSUM_TRY(REWRITE_RULE res_rws) THEN
+      TRY(FIRST_ASSUM CONTR_TAC) THEN tidy2 THEN
+      RULE_ASSUM_TRY(REWRITE_RULE[HD; boolv_11]) THEN
+      RULE_ASSUM_TRY(REWRITE_RULE[]) THEN
+      TRY(FIRST_ASSUM CONTR_TAC) THEN tidy2) gl in
+   let if_pre =
+     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[ev]) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
+     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     REWRITE_TAC[hd_sing] THEN
+     NAMED_CASES_TAC (ev_term `[e1:bvl_exp]` `env1:bvlSem_v list` s1t)
+       [["hr"; "hs"]] THEN
+     NAMED_CASES_TAC (mk_var("hr",rty)) [["hv"]; ["he"]] THEN
+     tidy THEN use_ih_keep `[e1:bvl_exp]` THEN tidy in
+   let if_third =
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
+     REWRITE_TAC[fce; hd_sing] THEN ASM_REWRITE_TAC[] THEN tidy2 THEN
+     REPEAT(COND_CASES_TAC THEN TRY tidy2) THEN
+     TRY(use_ih_for `[e2:bvl_exp]`) THEN
+     TRY(use_ih_for `[e3:bvl_exp]`) THEN
+     TRY(ASM_REWRITE_TAC res_rws) in
+   let if_case =
+     if_pre THEN
+     COND_CASES_TAC THEN
+     TRY(bool_head `T` THEN TRY(use_ih_for `[e2:bvl_exp]`) THEN
+         TRY(ASM_REWRITE_TAC res_rws)) THEN
+     TRY(COND_CASES_TAC THEN
+         TRY(bool_head `F` THEN TRY(use_ih_for `[e3:bvl_exp]`) THEN
+             TRY(ASM_REWRITE_TAC res_rws))) THEN
+     TRY(CHANGED_TAC if_third) THEN
+     TRY(use_ih_for `[e2:bvl_exp]`) THEN
+     TRY(use_ih_for `[e3:bvl_exp]`) THEN
+     TRY(ASM_REWRITE_TAC res_rws) THEN close_contr in
+   (* ---- the deep cases: Handle, Tick, Call ---------------------- *)
+   let is_shape t =
+     try mem (fst(dest_const(fst(strip_comb t)))) ["COND"; "_MATCH"]
+     with Failure _ -> false in
+   let use_hyp tac =
+     FIRST_X_ASSUM(fun th ->
+       if is_eq (concl th) && is_shape (lhs (concl th))
+       then MP_TAC th THEN tac else failwith "use_hyp") in
+   let collapse_hyp =
+     use_hyp (ASM_REWRITE_TAC[] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
+              TRY MATCH_TIDY_TAC THEN TRY(REWRITE_TAC res_rws) THEN
+              STRIP_TAC THEN TRY(PRUNE_TAC res_rws)) in
+   let ih_ants =
+     CONJ_TAC THENL
+     [size_tac;
+      REPEAT CONJ_TAC THEN
+      TRY(FIRST_ASSUM ACCEPT_TAC) THEN
+      TRY(MATCH_MP_TAC env_rel_CONS THEN ASM_REWRITE_TAC[]) THEN
+      TRY tidy2 THEN TRY collapse_hyp THEN
+      TRY(PRUNE_TAC res_rws) THEN
+      TRY(ASM_REWRITE_TAC res_rws) THEN
+      (* the sub-result is no type error because the whole result is
+         none, which the assumptions say once the hypothesis of the
+         branch has collapsed against the conditions of the branch *)
+      TRY(REPEAT(CHANGED_TAC(COND_SPLIT_TAC THEN TRY tidy2)) THEN
+          TRY(PRUNE_TAC res_rws) THEN
+          TRY(ASM_REWRITE_TAC res_rws))] in
+   let use_ih_auto =
+     EV_PAIR_TAC "bvlSem_evaluate" "bvl_const_compile"
+       (fun (xs',env1',s') rt cargs env2' ->
+          FIRST_ASSUM(fun ih ->
+            MP_TAC(SPECL [xs'; env1'; s'; List.nth cargs 0; env2';
+                          fst(dest_pair rt);
+                          snd(dest_pair rt)] ih)) THEN
+          ANTS_TAC THENL
+          [ih_ants;
+           DISCH_THEN(fun t ->
+             TRY(REWRITE_TAC[t]) THEN
+             RULE_ASSUM_TRY(REWRITE_RULE[t]) THEN
+             ASSUME_TAC t)]) in
+   (* the conditions of the semantics are if-then-else as well as
+      case, and both sides test the same one; the condition goes
+      first, because a condition that is still open when the
+      hypothesis is used leaves a side condition that the branch
+      cannot settle (PORTING-GUIDE.md entry 14) *)
+   let deep_case =
+     REPEAT(CHANGED_TAC
+       (TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
+        (COND_SPLIT_TAC ORELSE CASE_SPLIT_TAC ORELSE
+         COND_CASES_TAC) THEN TRY tidy2 THEN
+        TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
+        TRY(ASM_REWRITE_TAC[]))) THEN
+     TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
+     TRY(ASM_REWRITE_TAC[]) in
+   let handle_case =
+     unfold_case THEN do_sub "h" `[e1:bvl_exp]` s1t THEN
+     deep_case THEN close_contr in
+   let tick_case =
+     unfold_case THEN
+     ASM_CASES_TAC `state_clock (s1:('c,'ffi)bvlSem_state) = 0` THEN
+     ASM_FS_TAC THEN ASM_REWRITE_TAC[] THEN
+     TRY(use_ih_for `[e:bvl_exp]`) in
+   let call_case =
+     unfold_case THEN do_sub "a" `es:bvl_exp list` s1t THEN
+     deep_case THEN close_contr in
+   (* ---- Op: the compiled operation goes through SmartOp --------- *)
+   let terr = `Rerr (Rabort Rtype_error) :
+                 (bvlSem_v list,bvlSem_v)semanticPrimitives_result` in
+   let smartop_tac (asl,w as gl) =
+     let l,r = dest_eq w in
+     let xs,env',st = dest_ev l in
+     let sm = rand(rator xs) in
+     let _,args = strip_comb sm in
+     let opp = List.nth args 0 and cs = List.nth args 1 in
+     let newl = ev_term
+       (mk_list([list_mk_icomb "bvl_Op" [opp; cs]],`:bvl_exp`))
+       env' st in
+     let nt_want = mk_neg(mk_eq(fst(dest_pair r),terr)) in
+     (SUBGOAL_THEN (mk_eq(newl,r))
+        (fun th -> SUBGOAL_THEN nt_want
+           (fun nt -> ACCEPT_TAC(MATCH_MP SmartOp_thm
+                                   (CONJ th nt))) THEN
+           ASM_REWRITE_TAC res_rws) THEN
+      GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
+      REWRITE_TAC[fce] THEN ASM_REWRITE_TAC[] THEN tidy2) gl in
+   let op_case =
+     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[ev]) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
+     REWRITE_TAC[cp] THEN
+     NAMED_CASES_TAC
+       (ev_term `es:bvl_exp list` `env1:bvlSem_v list` s1t)
+       [["ar"; "as"]] THEN
+     NAMED_CASES_TAC (mk_var("ar",rty)) [["av"]; ["ae"]] THEN
+     tidy THEN use_ih_keep `es:bvl_exp list` THEN tidy THEN
+     smartop_tac in
+   (* ---- Let: the bindings lose their Vars and the body reads the
+      environment through what extract_list recorded -------------- *)
+   let is_compile t =
+     try fst(dest_const(fst(strip_comb t))) = "bvl_const_compile"
+     with Failure _ -> false in
+   let COMPILE_EV f =
+     FIRST_ASSUM(fun th ->
+       let l,r = dest_eq(concl th) in
+       if not (is_ev l) then failwith "COMPILE_EV" else
+       let a,_,_ = dest_ev l in
+       if not (is_compile a) then failwith "COMPILE_EV" else f th) in
+   let del_rerr =
+     COMPILE_EV (fun th ->
+       FIRST_ASSUM(fun ne0 ->
+         let ne = REWRITE_RULE
+                    [injectivity "semanticPrimitives_result"] ne0 in
+         REWRITE_TAC[MATCH_MP
+           bvl_constProof_evaluate_delete_var_Rerr
+             (CONJ th ne)])) in
+   let del_rval =
+     COMPILE_EV (fun th ->
+       FIRST_ASSUM(fun er0 ->
+         MP_TAC(MATCH_MP bvl_constProof_evaluate_delete_var_Rval
+                  (CONJ th er0)))) THEN
+     DISCH_THEN(X_CHOOSE_THEN `b:bvlSem_v list`
+                  STRIP_ASSUME_TAC) in
+   let ih_es = ih_plain `es:bvl_exp list` THEN
+               ih_ants_simple size_tac THEN tidy in
+   let ih_body =
+     USE_IH `APPEND (bvl_const_extract_list
+                       (bvl_const_compile ax es)) ax`
+            `APPEND (b:bvlSem_v list) env2` `[e:bvl_exp]` in
+   let let_case =
+     RULE_ASSUM_TRY(ONCE_REWRITE_RULE[ev]) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
+     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
+     REWRITE_TAC[fce; hd_sing] THEN
+     NAMED_CASES_TAC
+       (ev_term `es:bvl_exp list` `env1:bvlSem_v list` s1t)
+       [["cr"; "cs"]] THEN
+     NAMED_CASES_TAC (mk_var("cr",rty)) [["cv"]; ["cerr"]] THEN
+     tidy THENL
+     [ih_es THEN del_rval THEN ASM_REWRITE_TAC[] THEN tidy THEN
+      ih_body THEN ih_ants_simple size_tac THEN tidy THEN
+      TRY(ASM_REWRITE_TAC res_rws);
+      ih_es THEN del_rerr THEN TRY(ASM_REWRITE_TAC res_rws) THEN
+      TRY tidy] in
+   (* ---- a list of two or more: the compiler takes the head apart *)
+   let cons_cons_case =
+     REWRITE_TAC[cp] THEN
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [GSYM hd_sing] THEN
+     REWRITE_TAC[APPEND] THEN
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [evaluate_CONS] THEN
+     REWRITE_TAC[hd_sing] THEN
+     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[evaluate_CONS]) THEN
+     NAMED_CASES_TAC (ev_term `[x1:bvl_exp]` `env1:bvlSem_v list` s1t)
+       [["hres"; "hs"]] THEN
+     NAMED_CASES_TAC (mk_var("hres",rty)) [["hv"]; ["he"]] THEN
+     tidy THEN use_ih_for `[x1:bvl_exp]` THEN tidy THEN
+     TRY(NAMED_CASES_TAC
+           (ev_term `(x2:bvl_exp) :: xr2` `env1:bvlSem_v list`
+              `hs:('c,'ffi)bvlSem_state`)
+           [["tres"; "ts"]] THEN
+         NAMED_CASES_TAC (mk_var("tres",rty)) [["tv"]; ["te"]] THEN
+         tidy THEN use_ih_for `(x2:bvl_exp) :: xr2` THEN tidy) in
+   (* ---- the nine cases, in the order of the datatype ------------ *)
+   let sub_cases =
+     [var_case; if_case; let_case; one_sub `[e:bvl_exp]`;
+      handle_case; tick_case; call_case; force_case; op_case] in
+   MEASURE_INDUCT_TAC `list_size bvl_exp_size` THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   NAMED_CASES_TAC `xs:bvl_exp list` [[]; ["x1"; "xr"]] THENL
+   [nil_case; impossible; nil_case; ALL_TAC] THEN
+   NAMED_CASES_TAC `xr:bvl_exp list` [[]; ["x2"; "xr2"]] THENL
+   [NAMED_CASES_TAC `x1:bvl_exp`
+      [["v"]; ["e1"; "e2"; "e3"]; ["es"; "e"]; ["e"]; ["e1"; "e2"];
+       ["e"]; ["tt"; "dd"; "es"]; ["loc"; "v"]; ["op"; "es"]] THENL
+    sub_cases;
+    TRY cons_cons_case])
+
+### compile_thm
+  (* evaluate_env_rel at ax = [], where env_rel [] env env is
+     env = env.  The environment is taken out of the goal: the
+     state of the statement has type variables of its own
+     (PORTING-GUIDE.md entry 12) *)
+  (let er = cake_def "bvl_constProof_env_rel" in
+   let env_rel_refl = prove
+    (`!env. bvl_constProof_env_rel (:'c) (:'ffi) [] env env`,
+     GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [er] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun ev ->
+     let tup = rand(lhs(concl ev)) in
+     let env_tm = fst(dest_pair(snd(dest_pair tup))) in
+     FIRST_ASSUM(fun ne ->
+       ACCEPT_TAC(SPEC_ALL(MATCH_MP bvl_constProof_evaluate_env_rel
+         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne)))))))
+
+### evaluate_compile_exp
+  (* the compiled list of one is a singleton, so compile_exp is its
+     head, and compile_thm is the theorem about the whole list *)
+  (let ce = cake_def "bvl_const_compile_exp" in
+   STRIP_TAC THEN REWRITE_TAC[ce] THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [GSYM bvl_const_compile_HD_SING]
+   THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[bvl_const_compile_HD_SING] THEN
+   FIRST_ASSUM(fun ev_th -> FIRST_ASSUM(fun ne ->
+     ACCEPT_TAC(SPEC_ALL(MATCH_MP bvl_constProof_compile_thm
+       (CONJ ev_th ne))))))
