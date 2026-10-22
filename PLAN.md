@@ -902,6 +902,48 @@ own, which the goals of `EVERY_CASE_TAC` cannot give),
 `oEL` and `list_size` lemmas that HOL4 takes from its own
 libraries._
 
+## Where the second file stands
+
+_`compiler/backend/proofs/bvl_constProof.ml`: **all 23 of its
+theorems are proved**, the one that HOL4 states as the value of an
+ML expression (`compile_thm`) with them, and the file adds **no
+axiom**.  `compiler/backend/bvl_const.ml`, the definition file it
+is about, is done too: **all eleven of its theorems are proved**
+(the seven `pmatch` restatements, `compile_eq`, `compile_length`,
+`compile_HD_SING` and `compile_exp_eq`) and **its `compile` is
+made** with the relation of `DEFINE_REL`, so the pass as a whole
+adds no axiom.  The two files verify in a closure built from their
+own `needs`: `AXIOMS-ADDED 0`, no error and no warning._
+
+_It was picked because bvl_const is the same transformation one
+language up -- its own comment says "bvi_let is a simpler version
+of this optimisation" -- so it is the test of whether the recipe
+of `PORTING-GUIDE.md` carries.  It does, for the shape: the three
+`delete_var` theorems transferred with the names changed, and so
+did the definition file's four theorems and the skeleton of
+`evaluate_env_rel` (the measure induction, the cases, the
+`deep_case` loop).  What it does not carry is what the pass does
+that bvi_let does not: **the constant folding**.  `SmartOp2_thm`
+alone was two thirds of the work of the file, and it brought six
+idioms to the guide (18 to 23): a relation that HOL4 states as
+clauses and the port as one match, an argument a definition uses
+only for its length, `do_app` as one match over every operation,
+the arguments of a binary operation (the semantics gives `do_app`
+the `REVERSE` of them), `MAP_FIRST` evaluating its list eagerly,
+and the arithmetic of a folding that is a ring identity and not a
+linear one._
+
+_What the file's proofs are made of, beyond the recipe: the clause
+form of `env_rel` and of `v_rel` (which every proof of the file
+starts with), an index lemma that says where the compiled
+environment holds the value of a variable, a lemma that says an
+entry which is not a `Var` evaluates to that value whatever the
+state, the evaluation of an operation of one and of two
+expressions, the clause of `do_app` for the integer operations and
+the two it compares (`El` against `ElemAt`, `Equal` against
+`EqualConst`), and nine folding lemmas whose atoms the proof names
+because `EVERY_CASE_TAC`'s are its own._
+
 ## The sessions of phase three
 
 _What loading costs, measured: the whole port in load order 5,656 s

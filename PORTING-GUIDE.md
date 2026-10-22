@@ -52,6 +52,12 @@ add it to the index.
 | 15 | a non-empty list written as a `SNOC` | `SNOC_CASES` and four laws |
 | 16 | a session loaded out of the port's order | the file's own `needs` |
 | 17 | a `Definition` not made | `DEFINE_REL`, two size facts |
+| 18 | a relation stated as one `match` | its clauses, by `LAND_CONV` |
+| 19 | an argument used only for its length | the type written down |
+| 20 | `do_app` as one match over every operation | the clause as a lemma |
+| 21 | the arguments of a binary operation | `REVERSE`, so the other way |
+| 22 | `MAP_FIRST` over a list of lemmas | the attempts delayed |
+| 23 | `INT_ARITH` of a goal with a product | `INT_RING` |
 
 ## The shape of a transformation proof
 
@@ -146,6 +152,36 @@ goals which are not provable rather than merely hard: in the branch
 where a condition holds, the result is already decided, so nothing
 is known about what was split under it, and the hypothesis's own
 side condition cannot be discharged (entry 14).
+
+### What the recipe cost the second time
+
+_`bvl_constProof` is the same transformation one language up
+(bvl_const's own comment says bvi_let is the simpler version of
+it), and it is the first file the recipe was used on.  What
+transferred and what did not is worth knowing before the third:_
+
+- _the three proofs about `delete_var` transferred **as they
+  stand**, with the names changed: the statements are the same
+  theorem about another language, and bvi_letProof's tactics
+  proved them at the first attempt;_
+- _so did `compile_eq`, `compile_length`, `compile_HD_SING` and
+  `compile_exp_eq` of the definition file, and the skeleton of
+  `evaluate_env_rel` (the measure induction, the nine cases, the
+  `deep_case` loop, `EV_PAIR_TAC`, `FS_TAC`) -- the main theorem
+  took two hours against the day that bvi_letProof's took;_
+- _what cost the time was the part bvi_let has not got: the
+  constant folding (`SmartOp`), where the port's `do_app` is one
+  match over every operation (entry 20), the arguments of an
+  operation are reversed (entry 21) and the arithmetic of one
+  branch is a ring identity (entry 23).  Two thirds of the work of
+  the file was in one theorem, `SmartOp2_thm`._
+
+_The reading of that: the recipe carries the **shape** of a
+transformation proof, and what is left per file is what that
+transformation does that others do not.  A file whose pass only
+rearranges expressions is a day's work with it; a file whose pass
+computes (folds constants, allocates registers, lays out memory)
+has one theorem in it that the recipe does not touch._
 
 ### Before believing a `NOT PROVED`
 
@@ -1452,3 +1488,272 @@ of entry 1, 7,559 uses together with `every_case_tac`),
 not the goal's, `Induct_on` on a mutually recursive datatype,
 `drule`/`drule_then`/`irule_at` and where they put the antecedents,
 and `metis_tac` with a long list._
+## 18. A relation that HOL4 states as clauses
+
+### The idiom
+
+```
+Definition env_rel_def:
+  (env_rel (:'c) (:'ffi) [] e1 e2 = (e1 = e2)) /\
+  (env_rel (:'c) (:'ffi) (NONE::rest) (x::e1) (y::e2) <=>
+     (x = y) /\ env_rel (:'c) (:'ffi) rest e1 e2) /\
+  (env_rel (:'c) (:'ffi) (SOME a::rest) (x::e1) (y::e2) <=> ...) /\
+  (env_rel _ _ _ _ _ = F)
+End
+```
+
+(`bvl_constProofScript.sml:22-29`.)  Every proof of the file then
+says `fs [env_rel_def]`, which rewrites with the four clauses.
+
+### What it means
+
+The port states such a definition as **one** equation whose right
+side is a `match` on the tuple of the arguments, because that is
+what HOL Light's `define` makes of a pattern definition.  A proof
+that wants HOL4's clauses takes them off it first:
+
+```ocaml
+let erc = map (fun t ->
+  prove(t, GEN_REWRITE_TAC LAND_CONV [er] THEN
+           MATCH_REDUCE_TAC THEN REWRITE_TAC[]))
+ [`env_rel (:'c) (:'ffi) [] e1 e2 <=> (e1 = e2)`;
+  `env_rel (:'c) (:'ffi) (CONS NONE rest) (CONS x e1) (CONS y e2)
+   <=> (x = y) /\ env_rel (:'c) (:'ffi) rest e1 e2`;
+  ...
+  `env_rel (:'c) (:'ffi) (CONS h rest) [] e2 <=> F`;
+  `env_rel (:'c) (:'ffi) (CONS h rest) (CONS x e1) [] <=> F`];;
+```
+
+and `REWRITE_TAC erc` is `fs [env_rel_def]` from then on.  Three
+things about that rewrite:
+
+- the clause of a recursive relation has the relation on **both**
+  sides, so `REWRITE_TAC [er]` does not terminate and
+  `ONCE_REWRITE_TAC [er]` unfolds the occurrence on the right as
+  well: the rewrite is `GEN_REWRITE_TAC LAND_CONV [er]`, which is
+  the left side of the equation that is being proved;
+- where the goal is not an equation (`env_rel (:'c) (:'ffi) []
+  env env`, which the main theorem's corollary needs)
+  `LAND_CONV` has nothing to take, and `ONCE_REWRITE_TAC [er]` is
+  right because there is no other occurrence;
+- the clauses that say `F` are worth having: they are what closes
+  the branches where one environment is shorter than the other.
+
+The same holds for a relation between values (`v_rel`), and there
+the clauses are what a case split on the entry of the environment
+needs: the shape that is neither of the two the relation speaks
+about makes the relation `F`, which is how the branch closes.
+
+## 19. An argument that a definition uses only for its length
+
+### The idiom
+
+```
+Definition extract_def:
+  (extract ((Var n):bvl$exp) ys = SOME ((Var (n + LENGTH ys + 1)))) /\
+  ...
+End
+```
+
+(`bvl_constScript.sml:254-260`.)  `ys` is there for `LENGTH ys` and
+for nothing else.
+
+### What it means
+
+HOL Light gives the constant the most general type it can, so the
+port's `extract` is
+
+```
+bvl_exp -> (A)list -> (bvl_exp)option
+```
+
+polymorphic in the element type of the second argument.  A term
+that a proof writes down without saying what that list is gets a
+**fresh type variable**, and the term is then not the one in the
+goal, where the type comes from `extract_list` and is `bvl_exp`.
+`NAMED_CASES_TAC` on it splits a term that occurs nowhere, the
+split says nothing, and the goal does not move.  So a proof of the
+port writes the type:
+
+```ocaml
+NAMED_CASES_TAC `bvl_const_extract (h:bvl_exp) (t:bvl_exp list)`
+  [[]; ["ee"]]
+```
+
+`frees` of the term and `type_of` of each of them is what to look
+at when a split or a rewrite that should fire does not (entry 12 is
+the same mistake made by the port rather than by the proof).
+
+## 20. `do_app`, which is one match over every operation
+
+### The idiom
+
+```
+  \ fs [evaluate_def, do_app_def, oneline do_int_app_def, AllCaseEqs()]
+```
+
+(`bvl_constProofScript.sml:162`.)  HOL4 unfolds `do_app` and lets
+the case splitting sort out which of its hundred clauses applies.
+
+### What it means
+
+The port states `do_app` as one `match` on the pair of the
+operation and the values, with some hundred and twenty patterns.
+Unfolding it where the operation is a **variable** leaves a match
+that cannot be decided, and `MATCH_CONV` then expands it into the
+choice term it stands for (`@GEN%PVAR%3850. ...`), which no later
+rewrite cleans up again: the proof is stuck with a goal that no
+longer looks like a semantics.  So the clause for the operation
+that the proof is about is taken off `do_app` as a lemma first:
+
+```ocaml
+let da_int = prove
+ (`!iop vs (s:('c,'ffi)bvlSem_state).
+     do_app (IntOp iop) vs s =
+     (match do_int_app iop vs with
+        SOME res -> Rval (res,s) | NONE -> Rerr (Rabort Rtype_error))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[da] THEN EVERY_CASE_TAC);;
+```
+
+and the proof rewrites with `da_int` and never with `do_app`.  The
+same for the two clauses that the constant folding compares
+(`El` against `ElemAt`, `Equal` against `EqualConst`): each is a
+lemma that says the two agree, proved by a case split on the value
+and `EVERY_CASE_TAC` for the lookups inside.
+
+`assign_get_code_label` is the small version of the same trap: the
+port's definition is a match with one interesting pattern, and
+unfolding it at a variable operation leaves the same choice term.
+Four instances of it as rewrites (`IntOp`, `BlockOp`, `MemOp`,
+`Label`) are what a proof about code labels wants.
+
+## 21. The arguments of a binary operation, the other way round
+
+### The idiom
+
+```
+  (compile env [Op op xs] = [SmartOp op (compile env xs)])
+```
+
+with
+
+```
+  mk_sub = \x1 x2. ... Op (IntOp Sub) [x11; Op (IntOp (Const (n2 - n12))) []]
+```
+
+(`bvl_constScript.sml:106`, `:122`.)  The folding of a subtraction
+looks as if it had the two sides swapped.
+
+### What it means
+
+It has.  The semantics of an operation is
+
+```
+  evaluate ([Op op xs],env,s) =
+    (match fix_clock s (evaluate (xs,env,s)) with
+       (Rval vs,s) -> (match do_app op (REVERSE vs) s with ...))
+```
+
+-- the list is evaluated **left to right** and `do_app` is given
+the `REVERSE` of the values, so `Op Sub [a; b]` is the value of `b`
+minus the value of `a`.  A proof that computes with the folding has
+to keep that straight; the lemma that does it once is
+
+```ocaml
+let ev_pair = prove
+ (`!y1 y2 op env (s:('c,'ffi)bvlSem_state).
+     evaluate ([Op op [y1; y2]],env,s) =
+     (match evaluate ([y1],env,s) with
+        (Rval v1,s1) ->
+          (match evaluate ([y2],env,s1) with
+             (Rval v2,s2) ->
+               (match do_app op [HD v2; HD v1] s2 with ...)
+           | res -> res)
+      | res -> res)`, ...)
+```
+
+whose proof is `evaluate_CONS`, a split of the two evaluations, and
+`evaluate_SING` to see that each gives one value.  With `ev_pair`
+(and `ev_one` for one argument) a branch of the folding is an
+equation between two `do_app`s of the same values in some order,
+which is where the arithmetic starts.
+
+## 22. `MAP_FIRST` and `FIRST` over a list of lemmas
+
+### The idiom
+
+```
+  \ rpt (first_x_assum (fn h => MAP_FIRST (fn th => fn g =>
+       mp_tac (MATCH_MP th h) g) (CONJUNCTS do_int_app_eq_some)))
+```
+
+(`bvl_constProofScript.sml:186-187`.)  HOL4 tries each conjunct of
+a theorem against each assumption and keeps what matches.  Note the
+`fn g =>` in it.
+
+### What it means
+
+That `fn g =>` is the whole point, and the port needs it too.
+`MAP_FIRST f l` and `FIRST (map f l)` evaluate `f` at **every**
+element of the list before any tactic is applied, so a `MATCH_MP`
+that fails -- which is exactly what "this conjunct does not apply"
+means -- raises there and then and takes the whole search with it.
+Written
+
+```ocaml
+FIRST (map (fun l gl -> STRIP_ASSUME_TAC(MATCH_MP l th) gl) ths)
+```
+
+the `MATCH_MP` happens when the goal arrives, and `FIRST` catches
+it.  A search that is silently doing nothing (a `REPEAT` of it
+never fires, and nothing fails) is what this looks like from the
+outside.
+
+## 23. The arithmetic of a folding is not always linear
+
+### The idiom
+
+```
+    intLib.COOPER_TAC ORELSE metis_tac [...]
+```
+
+(`bvl_constProofScript.sml:189`.)  HOL4 ends each branch of the
+constant folding with a decision procedure for the integers.
+
+### What it means
+
+`ASM_INT_ARITH_TAC` is the port's reading of `COOPER_TAC`, and it
+does the branches of `mk_add` and `mk_sub`.  The branch of `mk_mul`
+that folds two multiplications,
+
+```
+  (q * vb) * (p * va) = (vb * va) * (q * p)
+```
+
+is **not** linear, and no amount of assumptions makes
+`ASM_INT_ARITH_TAC` do it; `INT_RING` does it at once.  `INT_RING`
+ignores the assumptions, so the equations the case split left have
+to be put back into the goal first:
+
+```ocaml
+let int_ring_fin (asl,w as gl) =
+  let eqs = filter (fun (_,th) ->
+      try type_of(lhs(concl th)) = `:int` with Failure _ -> false)
+      asl in
+  (MAP_EVERY (fun (_,th) -> MP_TAC th) eqs THEN
+   CONV_TAC INT_RING) gl;;
+```
+
+and the finisher of the branch is
+`TRY(ASM_INT_ARITH_TAC ORELSE int_ring_fin)`.
+
+A third thing about the arithmetic: `INT_ARITH` reads `&0` as a
+**real** unless the type is written down, so
+
+```ocaml
+let el_le = INT_ARITH `!i. ~(i < &0) ==> &0 <= i`
+```
+
+is a theorem about the reals, and a `MATCH_MP` of it against an
+integer assumption says `No match`.  The `i:int` goes in.
+

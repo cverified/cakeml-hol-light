@@ -250,4 +250,24 @@ For a definition file a clone of `hol-template-cakeml` plus
 grep '^needs' ml/<path>.ml > tmp/pfprefix.ml
 ```
 
-is the prefix to load (`tmp/verify3.sh` does the rest).
+is the prefix to load (`tools/bin/verifyfile <the file>` does the
+rest, and says what the file costs in axioms of its own).
+
+**The file to prove about has to be loaded itself**, with its
+cheats, and not only its `needs`: the proofs of a proof theory
+speak about the relations that the theory defines, and in a session
+without it those names are free **variables** (PORTING-GUIDE.md
+entry 17).  So the test bed of `bvl_constProof` was
+
+```
+repl-clone hol-template-cakeml bp
+repl-step bp 'loadt "<...>/ml/compiler/backend/proofs/bvl_constProof.ml";;'
+```
+
+-- nine minutes, after which every statement of the file is there
+as a cheat and a proof is tried against `concl <the cheat>`.  A
+*definition* file wants the overloads of its own point in the load
+order, which a session that has loaded its `needs` no longer has
+(the files after it overload `Var` again): the clone for
+`bvl_const`'s own definitions re-ran `hol4_overload "Var"
+"bvl_Var"` and the eight others first.

@@ -2,18 +2,18 @@
 
 Phase two states every theorem of the sources with its name, its
 attributes and its statement (`CLAUDE.md`).  Of the 10,688
-theorems of the 270 sources the port states 10,150 and points at
-538 with a comment that names them:
+theorems of the 270 sources the port states 10,152 and points at
+536 with a comment that names them:
 
 | | stated | a pointer |
 |---|---|---|
 | `Theorem` (and `Triviality`) | 10,088 | 46 |
-| `ThmValue` (the value of an ML expression) | 27 | 452 |
+| `ThmValue` (the value of an ML expression) | 29 | 450 |
 | a theorem that ML code states (`Q.prove`) | 35 | 40 |
 
-What the 542 are, and why the port cannot state them:
+What the 540 are, and why the port cannot state them:
 
-- **452 theorems that HOL4 states as the value of an ML
+- **450 theorems that HOL4 states as the value of an ML
   expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
   foo_def`, `Theorem bar = SIMP_RULE bool_ss [] baz`, `Theorem
   baz = theorem"baz_ind"`).  The statement is not in the source:
@@ -28,12 +28,14 @@ What the 542 are, and why the port cannot state them:
   guessed: `overrides.THM_VALUE` holds the statement in HOL4's
   notation, `tools/port.py` translates it like any other statement
   of the source, and the proof is a section of the file's proof
-  store.  Two of the 454 are in that way:
+  store.  Four of the 454 are in that way:
 
   | theorem | the ML expression, and what it computes |
   |---|---|
   | `bvi_let$compile_exp_eq` | `compile_exp_def \|> SRULE [compile_sing]`: the compiled list of one is a singleton, so the `match` of `compile_exp` reduces to its head, and the theorem is `compile_exp x = compile_sing [] 0 x` |
   | `bvi_letProof$compile_thm` | `evaluate_env_rel \|> Q.SPECL [...] \|> GEN_ALL \|> SIMP_RULE (srw_ss()) [env_rel_def]` at `ax = []` and `d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env` and so `T`: what is left of the antecedent is the evaluation and the type error |
+  | `bvl_const$compile_exp_eq` | the same expression one language up, where `compile_exp` carries no depth: `compile_exp x = compile_sing [] x` |
+  | `bvl_constProof$compile_thm` | `evaluate_env_rel` at `ax = []`, where `env_rel [] env env` is `env = env`: what is left is the evaluation and the type error |
 - **40 theorems that ML code states as the value of a rule
   applied to another one** (`val foo = Q.prove(...) |> SIMP_RULE
   ...`, `save_thm("foo", th)`): the same case, with the statement
