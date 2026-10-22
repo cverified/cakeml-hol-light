@@ -875,17 +875,10 @@
 ### word_heap_APPEND
   (* the address of the second half is the first address shifted by
      the length of the first half, which is a word ring identity *)
-  (let addr = prove
-    (`!(a:(N)word) b m n.
-        a + b * n2w (m + n) = (a + b * n2w m) + b * n2w n`,
-     REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE) in
-   let addr0 = prove
-    (`!(a:(N)word) b. a + b * n2w 0 = a`,
-     CONV_TAC WORD_RULE) in
-   LIST_INDUCT_TAC THEN
+  (LIST_INDUCT_TAC THEN
    ASM_REWRITE_TAC[APPEND; cake_def "word_heap"; heap_length_NIL;
-                   heap_length_CONS; emp_STAR; STAR_ASSOC; addr;
-                   addr0])
+                   heap_length_CONS; emp_STAR; STAR_ASSOC;
+                   WORD_ADD_MUL_SPLIT; WORD_ADD_MUL_0])
 ### memory_rel_rearrange
   (* the witnesses of the goal's existential are the ones the
      assumption has: HOL4's asm_exists_tac, ml/lib/tactics.ml *)
@@ -941,15 +934,10 @@
                    PAIR_EQ] THEN
    MESON_TAC[])
 ### word_list_APPEND
-  (let addr = prove
-    (`!(a:(N)word) b m. a + n2w (m + 1) * b = (a + b) + n2w m * b`,
-     REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE) in
-   let addr0 = prove
-    (`!(a:(N)word) b. a + n2w 0 * b = a`,
-     CONV_TAC WORD_RULE) in
-   LIST_INDUCT_TAC THEN
+  (LIST_INDUCT_TAC THEN
    ASM_REWRITE_TAC[APPEND; cake_def "misc_word_list"; LENGTH;
-                   emp_STAR; STAR_ASSOC; ADD1; addr; addr0])
+                   emp_STAR; STAR_ASSOC; WORD_ADD_SUC_MUL;
+                   WORD_ADD_0_MUL])
 ### minus_lemma
   (CONV_TAC WORD_RULE)
 ### LESS_EXO_SUB
@@ -970,12 +958,7 @@
 ### store_list_domain
   (* the n-th address of the store is the first one shifted n
      times, which the induction over the list takes apart *)
-  (let addr = prove
-    (`!(a:(N)word) b m. a + n2w (m + 1) * b = (a + b) + n2w m * b`,
-     REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE) in
-   let addr0 = prove
-    (`!(a:(N)word) b. a + n2w 0 * b = a`, CONV_TAC WORD_RULE) in
-   let aux = prove
+  (let aux = prove
     (`!xs (a:(N)word) m dm m1.
         data_to_word_memoryProof_store_list a xs m dm = SOME m1
         ==> !n. n < LENGTH xs
@@ -986,7 +969,8 @@
      COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
      DISCH_TAC THEN X_GEN_TAC `k:num` THEN
      STRUCT_CASES_TAC(SPEC `k:num` num_CASES) THEN
-     ASM_REWRITE_TAC[addr0; LT_SUC; ADD1; addr; LT_0] THEN
+     ASM_REWRITE_TAC[WORD_ADD_0_MUL; LT_SUC; WORD_ADD_SUC_MUL;
+                     LT_0] THEN
      DISCH_TAC THEN USE_IH THEN DISCH_THEN MATCH_MP_TAC THEN
      FIRST_ASSUM ACCEPT_TAC) in
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
@@ -994,17 +978,7 @@
   (* the SEP_EXISTS of the head comes out of the separating
      conjunction (the first clause of HOL4's SEP_CLAUSES), and the
      address of the tail is the head's address shifted once *)
-  (let sep_ex_star = prove
-    (`!(p:B->(A->bool)->bool) q.
-        SEP_EXISTS p * q = SEP_EXISTS (\v. p v * q)`,
-     REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[FUN_EQ_THM] THEN
-     X_GEN_TAC `s:A->bool` THEN
-     REWRITE_TAC[STAR_def; SEP_EXISTS] THEN MESON_TAC[]) in
-   let addrs = prove
-    (`!(a:(N)word) b m. a + b * n2w (SUC m) = (a + b) + b * n2w m`,
-     REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE) in
-   let addrs0 = prove
-    (`!(a:(N)word) b. a + b * n2w 0 = a`, CONV_TAC WORD_RULE) in
-   INDUCT_TAC THEN
-   ASM_REWRITE_TAC[word_list_exists_thm; ADD; emp_STAR;
-                   STAR_ASSOC; sep_ex_star; addrs; addrs0])
+  (INDUCT_TAC THEN
+   ASM_REWRITE_TAC[word_list_exists_thm; ADD; emp_STAR; STAR_ASSOC;
+                   SEP_EXISTS_STAR; WORD_ADD_MUL_SUC;
+                   WORD_ADD_MUL_0])

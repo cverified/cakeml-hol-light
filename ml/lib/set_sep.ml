@@ -81,3 +81,20 @@ let STAR_ASSOC = prove
  (`!(p:(A->bool)->bool) q r. p * (q * r) = (p * q) * r`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[FUN_EQ_THM] THEN
   MESON_TAC[STAR_ASSOC_LEMMA; STAR_COMM]);;
+
+(* the first clause of HOL4's SEP_CLAUSES: an existential of a
+   separation predicate comes out of the separating conjunction *)
+
+let SEP_EXISTS_STAR = prove
+ (`!(p:B->(A->bool)->bool) q.
+     SEP_EXISTS p * q = SEP_EXISTS (\v. p v * q)`,
+  REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[FUN_EQ_THM] THEN
+  X_GEN_TAC `s:A->bool` THEN
+  REWRITE_TAC[STAR_def; SEP_EXISTS] THEN MESON_TAC[]);;
+
+let STAR_SEP_EXISTS = prove
+ (`!(p:B->(A->bool)->bool) q.
+     q * SEP_EXISTS p = SEP_EXISTS (\v. q * p v)`,
+  REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[STAR_COMM] THEN
+  REWRITE_TAC[SEP_EXISTS_STAR] THEN
+  ONCE_REWRITE_TAC[STAR_COMM] THEN REWRITE_TAC[]);;

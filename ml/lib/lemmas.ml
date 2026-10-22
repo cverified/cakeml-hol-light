@@ -299,3 +299,47 @@ let LIST_REL_SPLIT1 = prove
    [MATCH_ACCEPT_TAC LIST_REL_APPEND_E;
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC LIST_REL_APPEND_I THEN ASM_REWRITE_TAC[]]);;
+
+(* ------------------------------------------------------------------ *)
+(* The addresses of a list in memory: the n-th one is the first       *)
+(* shifted n times by the width of an element, which every proof      *)
+(* about a heap, a word list or a store takes apart.  WORD_RULE       *)
+(* proves each of them; they stand here because a proof that unfolds  *)
+(* a definition by SUC may not have ADD1 in its rewrite set (the      *)
+(* clause of the definition would no longer fire), and one that       *)
+(* splits a list by APPEND needs the sum.                             *)
+(* ------------------------------------------------------------------ *)
+
+let WORD_ADD_MUL_0 = prove
+ (`!(a:(N)word) b. a + b * n2w 0 = a`,
+  CONV_TAC WORD_RULE);;
+
+let WORD_ADD_0_MUL = prove
+ (`!(a:(N)word) b. a + n2w 0 * b = a`,
+  CONV_TAC WORD_RULE);;
+
+let WORD_ADD_MUL_SUC = prove
+ (`!(a:(N)word) b m. a + b * n2w (SUC m) = (a + b) + b * n2w m`,
+  REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let WORD_ADD_SUC_MUL = prove
+ (`!(a:(N)word) b m. a + n2w (SUC m) * b = (a + b) + n2w m * b`,
+  REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let WORD_ADD_MUL_ADD1 = prove
+ (`!(a:(N)word) b m. a + b * n2w (m + 1) = (a + b) + b * n2w m`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let WORD_ADD_ADD1_MUL = prove
+ (`!(a:(N)word) b m. a + n2w (m + 1) * b = (a + b) + n2w m * b`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let WORD_ADD_MUL_SPLIT = prove
+ (`!(a:(N)word) b m n.
+     a + b * n2w (m + n) = (a + b * n2w m) + b * n2w n`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let WORD_ADD_SPLIT_MUL = prove
+ (`!(a:(N)word) b m n.
+     a + n2w (m + n) * b = (a + n2w m * b) + n2w n * b`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
