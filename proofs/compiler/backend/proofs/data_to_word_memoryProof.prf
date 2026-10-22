@@ -1164,3 +1164,69 @@
      MP_TAC(SPEC `n:num` EVEN_OR_ODD) THEN
      REWRITE_TAC[EVEN_MOD; ODD_MOD] THEN ARITH_TAC) in
    REWRITE_TAC[bit0; ODD_MULT])
+### ref_edge_insert_MutBlock
+  (DISCH_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[ref_edge_MutBlock] THEN COND_CASES_TAC THENL
+    [SUBGOAL_THEN
+       `sptree_lookup x (refs:(dataSem_v bvlSem_ref) spt) =
+        SOME (bvlSem_MutBlock tg fin1 l c r)`
+       ASSUME_TAC THENL
+      [ASM_MESON_TAC[]; ALL_TAC] THEN
+     ONCE_REWRITE_TAC[cake_def "ref_edge"] THEN ASM_REWRITE_TAC[] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[];
+     REWRITE_TAC[]])
+### get_byte_set_byte_alt
+  (REPEAT STRIP_TAC THEN ASM_MESON_TAC[get_byte_set_byte_diff])
+### maxout_bits_IMP
+  (REPEAT STRIP_TAC THEN
+   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
+     MP_TAC(MATCH_MP maxout_bits_bit (CONJ th1 th2)))) THEN
+   ARITH_TAC)
+### Num_ABS_lemmas
+  (REWRITE_TAC[INT_ABS_NUM; INT_ABS_NEG; NUM_OF_INT_OF_NUM])
+### get_lowerbits_shift_length
+  (* the bits of the shifted or are the shifted bits of each, and
+     the second word has none left; BIT_GUARD is what says that a
+     bit that is set is one of the word's own *)
+  (DISCH_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o
+     REWRITE_RULE[WORD_EQ_BITS_ALT; BIT_WORD_0;
+                  BIT_WORD_USHR]) THEN
+   DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_USHR] THEN
+   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[] THEN
+   GEN_REWRITE_TAC RAND_CONV [BIT_GUARD] THEN REWRITE_TAC[])
+### word_1_and_eq_0
+  (REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               BIT_WORD_1] THEN
+   MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`])
+### word_of_byte_0
+  (REWRITE_TAC[cake_def "word_of_byte"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_SHL;
+               BIT_WORD_0])
+### append_writes_LENGTH
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "append_writes"] THEN
+   CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_SIMP_TAC[LENGTH; NOT_CONS_NIL] THEN ARITH_TAC)
+### bind_each_eq_tf_FDOM
+  (REWRITE_TAC[bind_each_FDOM; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC)
+### do_eq_IMP_vb_eq_size
+  (REWRITE_TAC[CONJUNCT1 do_eq_IFF_vb_eq_size])
+### vb_eq_size_IMP_do_eq
+  (REWRITE_TAC[CONJUNCT1 do_eq_IFF_vb_eq_size] THEN MESON_TAC[])
+### fix_clock_IMP
+  (REPEAT GEN_TAC THEN CASES_ON_NAME "x" THEN
+   REWRITE_TAC[cake_def "data_to_word_memoryProof_fix_clock";
+               distinctness "option"] THEN
+   TRY(CASES_ON_NAME "a" THEN CASES_ON_NAME "y" THEN
+       REWRITE_TAC[cake_def
+                     "data_to_word_memoryProof_fix_clock"]) THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+   REPEAT COND_CASES_TAC THEN REPEAT STRIP_TAC THEN
+   ASM_ARITH_TAC)
