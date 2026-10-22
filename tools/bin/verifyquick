@@ -1,0 +1,46 @@
+#!/bin/sh
+# verifyquick <file of the port> [prefix] : load the file in a clone
+# of hol-pfbase, which holds its closure (tools/bin/pfbase), and say
+# what it costs.  A clone is a fork and costs a second, where
+# building the closure again costs half an hour -- so this is the
+# check to run after every batch of proofs, and tools/bin/verifyfile
+# is the one to run when the closure itself has to be made again.
+C=/home/freek/claude/hol-light/cakeml
+. $C/tools/holenv.sh
+f="$1"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+p="${2:-$(basename "$f" .ml)_}"
+date +%s > $C/tmp/vqstart.txt
+tmux has -t hol-pfbase 2> /dev/null || {
+  echo "verifyquick: no hol-pfbase (tools/bin/pfbase <file>)"; exit 1; }
+repl-kill vq > /dev/null 2>&1
+repl-clone hol-pfbase vq > /dev/null 2>&1
+# the base may be older than ml/lib/lemmas.ml and ml/lib/tactics.ml
+reload vq > /dev/null 2>&1
+cat > $C/tmp/vqfile.ml <<ML
+let a0 = length(axioms());;
+loadt "$f";;
+print_string ("AXIOMS-ADDED " ^ string_of_int (length(axioms()) - a0)
+              ^ "\n");;
+print_string ("FIELDVARS " ^ string_of_int (length(cake_fieldvars ()))
+              ^ "\n");;
+print_string ("UNSTATED " ^ string_of_int (length (!the_unstated))
+              ^ "\n");;
+let pre p t = is_const t &&
+  (let n = fst(dest_const t) in
+   String.length n > String.length p &&
+   String.sub n 0 (String.length p) = p);;
+print_string ("OWN-AXIOMS " ^ string_of_int (length
+  (filter (fun th -> can (find_term (pre "$p")) (concl th))
+          (axioms()))) ^ "\n");;
+ML
+TIMEOUT=3600 repl-step vq "#use \"$C/tmp/vqfile.ml\";;" \
+  > /dev/null 2>&1
+while ! tmux capture-pane -p -J -S - -t hol-vq |
+      grep -qE '^OWN-AXIOMS|^Error'
+do sleep 10; done
+tmux capture-pane -p -J -S - -t hol-vq |
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+  grep -E 'AXIOMS-ADDED|FIELDVARS|UNSTATED|OWN-AXIOMS|NOT PROVED'\
+'|NOT STATED|CHEATED|^Error|Warning' | tail -20
+echo "verifyquick: $(( $(date +%s) - $(cat $C/tmp/vqstart.txt) ))s"
