@@ -1,0 +1,27 @@
+#!/bin/sh
+# portfile <theory> ... : port those theories the way a whole run
+# does.  tools/port.py gives a theorem the name of its theory in
+# front of it when another theory of the port has taken the plain
+# one, so which name a file gets depends on what was ported before
+# it: porting one file on its own can name a theorem differently
+# from the run that wrote the rest of ml/ (bvl_const's
+# compile_length, which bvi_let has taken).  So the whole load
+# order is ported into tmp/dry (50 seconds, which also writes the
+# prefaces) and the files that were asked for are taken from
+# there.
+C=/home/freek/claude/hol-light/cakeml
+cd $C || exit 1
+[ $# -eq 0 ] && { echo "portfile: no theory given"; exit 1; }
+tools/bin/dryport > tmp/portfile.log 2>&1 || {
+  tail -5 tmp/portfile.log; exit 1; }
+for thy in "$@"; do
+  p=$(python3 -I -c "
+import sys; sys.path.insert(0,'tools')
+import db as dbmod
+print(dbmod.Db().mlpath_of('$thy'))")
+  [ -z "$p" ] && { echo "portfile: no such theory: $thy"; exit 1; }
+  if cmp -s tmp/dry/$p ml/$p
+  then echo "unchanged ml/$p"
+  else cp tmp/dry/$p ml/$p; echo "wrote ml/$p"; fi
+  grep -n 'PORT FAILED\|CHEAT_TAC' ml/$p | head -3
+done

@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvl_const: ported from HOL4's
-    compiler/backend/bvl_constScript.sml  *)
+    compiler/backend/bvl_constScript.sml
+    A definition theory, with 13 definitions and 12 theorems.
+    Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -496,7 +498,7 @@ let compile_eq = cake_theorem "compile_eq"
    INDUCT_TAC THENL
    [sing_base; CONJ_TAC THENL [part1; part2]]);;
 
-let compile_length = cake_theorem "compile_length[simp]"
+let bvl_const_compile_length = cake_theorem "compile_length[simp]"
   (fun () ->
     `!n xs. LENGTH (bvl_const_compile n xs) = LENGTH xs`)
   (let cp = cake_def "bvl_const_compile" in
@@ -552,7 +554,7 @@ let compile_length = cake_theorem "compile_length[simp]"
    MEASURE_INDUCT_TAC `list_size bvl_exp_size` THENL
    [base_case; step_case]);;
 
-let compile_HD_SING = cake_theorem "compile_HD_SING"
+let bvl_const_compile_HD_SING = cake_theorem "compile_HD_SING"
   (fun () ->
     `[HD (bvl_const_compile n [x])] = bvl_const_compile n [x]`)
   (* the compiled list of one has length one, so it is its own head
@@ -571,7 +573,7 @@ let compile_exp_def = cake_define
    // impossible`;;
 hol4_overload "compile_exp" "bvl_const_compile_exp";;
 
-let compile_exp_eq = cake_theorem "compile_exp_eq"
+let bvl_const_compile_exp_eq = cake_theorem "compile_exp_eq"
   (fun () ->
     `!x. bvl_const_compile_exp x = bvl_const_compile_sing [] x`)
   (* HOL4 applies compile_eq to compile_exp_def: the compiled list
