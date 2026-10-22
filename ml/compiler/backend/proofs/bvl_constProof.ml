@@ -14,10 +14,16 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "compiler/inference/unify.ml";;
+needs "lib/errorMonad.ml";;
+needs "lib/peg.ml";;
+needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let v_rel_def = cake_define
   `bvl_constProof_v_rel (:'c) (:'ffi) a x y xs ys =
@@ -505,20 +511,63 @@ let bvl_constProof_evaluate_delete_var_Rval =
 let evaluate_EQ_NIL = cake_theorem "evaluate_EQ_NIL"
   (fun () ->
     `bvlSem_evaluate (xs,env,s) = (Rval [],t) <=> xs = [] /\ s = t`)
-  CHEAT_TAC;;
+  (* the lengths of the expressions and of the values they
+     evaluate to are the same, so a result of no values comes from
+     no expressions, and no expression touches the state *)
+  (let ev = cake_def "bvlSem_evaluate" in
+   EQ_TAC THENL
+   [DISCH_TAC THEN
+    FIRST_ASSUM(fun th ->
+      MP_TAC(MATCH_MP evaluate_IMP_LENGTH th)) THEN
+    REWRITE_TAC[LENGTH; LENGTH_EQ_NIL] THEN
+    DISCH_THEN SUBST_ALL_TAC THEN
+    POP_ASSUM MP_TAC THEN REWRITE_TAC[ev; PAIR_EQ] THEN
+    DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[];
+    STRIP_TAC THEN ASM_REWRITE_TAC[ev]]);;
 
 let dest_simple_eq = cake_theorem "dest_simple_eq[local]"
   (fun () ->
     `dest_simple h = SOME y <=> (h = Op (closLang_IntOp
   (closLang_Const y)) [])`)
-  CHEAT_TAC;;
+  (* the case split of HOL4 is the split along the patterns of the
+     match, which EVERY_CASE_TAC makes (PORTING-GUIDE.md entry 1) *)
+  (let ds = cake_def "dest_simple" in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "closLang_op"; injectivity "closLang_op";
+      distinctness "closLang_int_op";
+      injectivity "closLang_int_op";
+      distinctness "block_op"; injectivity "block_op";
+      distinctness "const_part"; injectivity "const_part";
+      distinctness "option"; injectivity "option"] in
+   let null_nil = prove
+    (`!l:(A)list. NULL l <=> l = []`,
+     LIST_INDUCT_TAC THEN REWRITE_TAC[NULL; NOT_CONS_NIL]) in
+   REWRITE_TAC[ds] THEN EVERY_CASE_TAC THEN
+   REWRITE_TAC(NULL :: null_nil :: con_rws) THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC con_rws);;
 
 let case_op_const_eq = cake_theorem "case_op_const_eq[local]"
   (fun () ->
     `case_op_const exp = SOME x <=>
      (?op x1 n2. x = (op,x1,n2) /\ (exp = Op op [x1; Op
        (closLang_IntOp (closLang_Const n2)) []]))`)
-  CHEAT_TAC;;
+  (let coc = cake_def "case_op_const" in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "closLang_op"; injectivity "closLang_op";
+      distinctness "closLang_int_op";
+      injectivity "closLang_int_op";
+      distinctness "block_op"; injectivity "block_op";
+      distinctness "const_part"; injectivity "const_part";
+      distinctness "option"; injectivity "option"] in
+   let null_nil = prove
+    (`!l:(A)list. NULL l <=> l = []`,
+     LIST_INDUCT_TAC THEN REWRITE_TAC[NULL; NOT_CONS_NIL]) in
+   REWRITE_TAC[coc] THEN EVERY_CASE_TAC THEN
+   REWRITE_TAC(NULL :: null_nil :: PAIR_EQ :: con_rws) THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC con_rws THEN
+   TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ));;
 
 let SmartOp_flip_thm = cake_theorem "SmartOp_flip_thm[local]"
   (fun () ->
@@ -573,40 +622,211 @@ let delete_var_code_labels = cake_theorem "delete_var_code_labels[simp]"
   (fun () ->
     `!x. bvlProps_get_code_labels (bvl_const_delete_var x) =
   bvlProps_get_code_labels x`)
-  CHEAT_TAC;;
+  (let dv = cake_def "bvl_const_delete_var" in
+   let gcl = cake_def "bvlProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   GEN_TAC THEN
+   STRUCT_CASES_TAC(ISPEC `x:bvl_exp` (cases_of `:bvl_exp`)) THEN
+   REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[gcl; agcl] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+               UNION_EMPTY; EMPTY_UNION]);;
 
 let dest_simple_SOME_code_labels =
   cake_theorem "dest_simple_SOME_code_labels"
   (fun () ->
     `!x y. dest_simple x = SOME y ==> bvlProps_get_code_labels x = {}`)
-  CHEAT_TAC;;
+  (let gcl = cake_def "bvlProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   REPEAT GEN_TAC THEN REWRITE_TAC[dest_simple_eq] THEN
+   DISCH_THEN SUBST1_TAC THEN
+   REWRITE_TAC[gcl; agcl] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+               UNION_EMPTY; EMPTY_UNION]);;
 
 let SmartOp2_code_labels = cake_theorem "SmartOp2_code_labels[simp]"
   (fun () ->
     `bvlProps_get_code_labels (SmartOp2 (op,x1,x2)) =
       assign_get_code_label op UNION bvlProps_get_code_labels x1
         UNION bvlProps_get_code_labels x2`)
-  CHEAT_TAC;;
+  (* SmartOp2 is the constant folding, and every expression it
+     builds is made of the two it is given and of constants, so the
+     labels are the same whichever branch it takes.  HOL4 decides
+     the branches with rpt PURE_CASE_TAC and closes the rest with
+     simp [EXTENSION] and metis_tac; here the operation is decided
+     first (the eleven it looks at), then the matches, and what is
+     left is a union of the same sets in another order *)
+  (let so2 = cake_def "SmartOp2" in
+   let bl = cake_def "bvl_Bool" in
+   let gcl = cake_def "bvlProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   let lset = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+               UNION_EMPTY] in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "closLang_op"; injectivity "closLang_op";
+      distinctness "closLang_int_op";
+      injectivity "closLang_int_op";
+      distinctness "block_op"; injectivity "block_op";
+      distinctness "const_part"; injectivity "const_part";
+      distinctness "option"; injectivity "option"] in
+   (* the labels of an operation, only where the operation is
+      known: unfolding the definition where it is a variable leaves
+      a match that says nothing and that MATCH_CONV expands into
+      the choice it stands for *)
+   let agcl_rws = map (fun t ->
+     prove(t, REWRITE_TAC[agcl] THEN MATCH_REDUCE_TAC THEN
+              REWRITE_TAC[]))
+    [`assign_get_code_label (closLang_IntOp i) = ({}:num->bool)`;
+     `assign_get_code_label (closLang_BlockOp b) = ({}:num->bool)`;
+     `assign_get_code_label (closLang_MemOp m) = ({}:num->bool)`;
+     `assign_get_code_label (closLang_Label n) = {n}`] in
+   let labels_tac =
+     TRY(REWRITE_TAC[bl]) THEN TRY(REWRITE_TAC[gcl]) THEN
+     TRY(REWRITE_TAC agcl_rws) THEN TRY(REWRITE_TAC lset) in
+   (* the operation that SmartOp2 looks at, split only where the
+      goal still asks: a blind split on all eleven is 2048 goals *)
+   let opconds =
+     [`op = closLang_IntOp closLang_Add`;
+      `op = closLang_IntOp closLang_Sub`;
+      `op = closLang_IntOp closLang_Mult`;
+      `op = closLang_IntOp closLang_Div`;
+      `op = closLang_IntOp closLang_Mod`;
+      `op = closLang_IntOp closLang_Less`;
+      `op = closLang_IntOp closLang_LessEq`;
+      `op = closLang_IntOp closLang_Greater`;
+      `op = closLang_IntOp closLang_GreaterEq`;
+      `op = closLang_BlockOp closLang_Equal`;
+      `op = closLang_MemOp closLang_El`] in
+   let split_when t (asl,w as gl) =
+     if can (find_term (fun u -> u = t)) w
+     then (ASM_CASES_TAC t THEN ASM_REWRITE_TAC (MEM :: con_rws)) gl
+     else ALL_TAC gl in
+   let dispatch = MAP_EVERY split_when opconds in
+   let prune2 =
+     RULE_ASSUM_TRY(REWRITE_RULE con_rws) THEN
+     TRY(FIRST_ASSUM CONTR_TAC) THEN SPLIT_ASM_TAC THEN
+     VAR_EQ_TAC in
+   let closer =
+     EVERY_CASE_TAC THEN REPEAT COND_CASES_TAC THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[dest_simple_eq; case_op_const_eq;
+                                 PAIR_EQ]) THEN
+     MATCH_TIDY_TAC THEN VAR_EQ_TAC THEN prune2 THEN labels_tac THEN
+     TRY(ASM_REWRITE_TAC[]) THEN TRY(REWRITE_TAC[UNION_ACI]) in
+   REWRITE_TAC[so2; LET_DEF; LET_END_DEF] THEN
+   CONV_TAC(DEPTH_CONV BETA_CONV) THEN dispatch THEN
+   closer THEN closer THEN closer);;
 
 let SmartOp1_code_labels = cake_theorem "SmartOp1_code_labels"
   (fun () ->
     `bvlProps_get_code_labels (SmartOp1 op x) =
   bvlProps_get_code_labels (Op op [x])`)
-  CHEAT_TAC;;
+  (* SmartOp1 folds an equality with a constant, and then both
+     sides have no labels at all *)
+  (let so1 = cake_def "SmartOp1" in
+   let dei = cake_def "dest_EqualInt" in
+   let bl = cake_def "bvl_Bool" in
+   let gcl = cake_def "bvlProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "closLang_op"; injectivity "closLang_op";
+      distinctness "closLang_int_op";
+      injectivity "closLang_int_op";
+      distinctness "block_op"; injectivity "block_op";
+      distinctness "const_part"; injectivity "const_part";
+      distinctness "option"; injectivity "option"] in
+   let set_rws = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+                  UNION_EMPTY; EMPTY_UNION] in
+   let dei_eq = prove
+    (`!op i. dest_EqualInt op = SOME i <=>
+             op = closLang_BlockOp
+                    (closLang_EqualConst (closLang_Int i))`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[dei] THEN EVERY_CASE_TAC THEN
+     REWRITE_TAC con_rws THEN TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ)) in
+   REWRITE_TAC[so1] THEN EVERY_CASE_TAC THEN
+   FIRST_ASSUM(fun th -> SUBST_ALL_TAC(REWRITE_RULE[dei_eq] th)) THEN
+   REWRITE_TAC[bl; gcl; agcl] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC set_rws THEN
+   FIRST_ASSUM(fun th ->
+     REWRITE_TAC[MATCH_MP dest_simple_SOME_code_labels th]) THEN
+   REWRITE_TAC set_rws);;
 
 let SmartOp_code_labels = cake_theorem "SmartOp_code_labels[simp]"
   (fun () ->
     `bvlProps_get_code_labels (SmartOp op xs) =
      assign_get_code_label op UNION BIGUNION (set_of_list (MAP
        bvlProps_get_code_labels xs))`)
-  CHEAT_TAC;;
+  (let so = cake_def "bvl_const_SmartOp" in
+   let sof = cake_def "SmartOp_flip" in
+   let bl = cake_def "bvl_Bool" in
+   let gcl = cake_def "bvlProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   let lset = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+               UNION_EMPTY] in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "closLang_op"; injectivity "closLang_op";
+      distinctness "closLang_int_op";
+      injectivity "closLang_int_op";
+      distinctness "block_op"; injectivity "block_op";
+      distinctness "const_part"; injectivity "const_part";
+      distinctness "option"; injectivity "option"] in
+   let agcl_rws = map (fun t ->
+     prove(t, REWRITE_TAC[agcl] THEN MATCH_REDUCE_TAC THEN
+              REWRITE_TAC[]))
+    [`assign_get_code_label (closLang_IntOp i) = ({}:num->bool)`;
+     `assign_get_code_label (closLang_BlockOp b) = ({}:num->bool)`;
+     `assign_get_code_label (closLang_MemOp m) = ({}:num->bool)`;
+     `assign_get_code_label (closLang_Label n) = {n}`] in
+   let labels_tac =
+     TRY(REWRITE_TAC[bl]) THEN TRY(REWRITE_TAC[gcl]) THEN
+     TRY(REWRITE_TAC agcl_rws) THEN TRY(REWRITE_TAC lset) in
+   let prune2 =
+     RULE_ASSUM_TRY(REWRITE_RULE con_rws) THEN
+     TRY(FIRST_ASSUM CONTR_TAC) THEN SPLIT_ASM_TAC THEN
+     VAR_EQ_TAC in
+   (* SmartOp_flip turns a constant on the left into one on the
+      right, which costs no labels because a constant has none *)
+   let flip_tac =
+     TRY(REWRITE_TAC[SmartOp1_code_labels]) THEN
+     TRY(REWRITE_TAC[sof]) THEN TRY(REWRITE_TAC[MEM]) THEN
+     EVERY_CASE_TAC THEN REPEAT COND_CASES_TAC THEN
+     TRY(REWRITE_TAC[SmartOp2_code_labels]) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[dest_simple_eq]) THEN
+     VAR_EQ_TAC THEN prune2 THEN labels_tac THEN
+     TRY(ASM_REWRITE_TAC[]) THEN TRY(REWRITE_TAC[UNION_ACI]) in
+   REWRITE_TAC[so] THEN EVERY_CASE_TAC THEN
+   flip_tac THEN flip_tac THEN flip_tac);;
 
 let MEM_extract_list_code_labels =
   cake_theorem "MEM_extract_list_code_labels"
   (fun () ->
     `!xs x. MEM (SOME x) (bvl_const_extract_list xs) ==>
   bvlProps_get_code_labels x = {}`)
-  CHEAT_TAC;;
+  (let ex = cake_def "bvl_const_extract" in
+   let exl = cake_def "bvl_const_extract_list" in
+   let gcl = cake_def "bvlProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "option"; injectivity "option"] in
+   let set_rws = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+                  UNION_EMPTY; EMPTY_UNION] in
+   (* whatever extract reads out of an expression is a constant,
+      and a constant has no labels *)
+   let extract_cl = prove
+    (`!(h:bvl_exp) ys x. bvl_const_extract h ys = SOME x
+        ==> bvlProps_get_code_labels x = {}`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[ex] THEN EVERY_CASE_TAC THEN
+     TRY COND_CASES_TAC THEN REWRITE_TAC con_rws THEN
+     DISCH_THEN(SUBST1_TAC o SYM) THEN
+     REWRITE_TAC[gcl; agcl] THEN TRY MATCH_REDUCE_TAC THEN
+     REWRITE_TAC set_rws) in
+   LIST_INDUCT_TAC THEN REWRITE_TAC[exl; MEM] THEN GEN_TAC THEN
+   DISCH_THEN(DISJ_CASES_THEN2
+     (fun eq -> ACCEPT_TAC(MATCH_MP extract_cl (SYM eq)))
+     (fun m -> FIRST_ASSUM(fun ih -> ACCEPT_TAC(MATCH_MP ih m)))));;
 
 let bvl_constProof_compile_code_labels =
   cake_theorem "compile_code_labels"
@@ -617,11 +837,247 @@ let bvl_constProof_compile_code_labels =
              UNION
            BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o
              THE) (FILTER IS_SOME x)))`)
-  CHEAT_TAC;;
+  (* HOL4 takes the induction theorem that its termination proof
+     left behind (recInduct compile_ind); the port induces on the
+     measure the definition was made with.  What the proof says is
+     that compile adds no label of its own: every label of the
+     result is one of the expressions it compiled or one of the
+     expressions the environment holds *)
+  (let cp = cake_def "bvl_const_compile" in
+   let ex = cake_def "bvl_const_extract" in
+   let exl = cake_def "bvl_const_extract_list" in
+   let gcl = cake_def "bvlProps_get_code_labels" in
+   let agcl = cake_def "assign_get_code_label" in
+   let sz = size_thms "bvl_exp" in
+   let lset = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+               UNION_EMPTY] in
+   let con_rws =
+     [distinctness "bvl_exp"; injectivity "bvl_exp";
+      distinctness "option"; injectivity "option"] in
+   let xx = `x:(bvl_exp option) list` in
+   (* the labels of a list of expressions, which is the shape that
+      the statement is in: of an APPEND, and of the one-expression
+      list that every clause but two compiles *)
+   let labs_app = prove
+    (`!a b. BIGUNION (set_of_list
+               (MAP bvlProps_get_code_labels (APPEND a b))) =
+            BIGUNION (set_of_list
+               (MAP bvlProps_get_code_labels a)) UNION
+            BIGUNION (set_of_list
+               (MAP bvlProps_get_code_labels b))`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[APPEND; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+                 UNION_EMPTY] THEN
+     ASM_REWRITE_TAC[UNION_ASSOC]) in
+   let labs_sing = prove
+    (`!x e. BIGUNION (set_of_list
+              (MAP bvlProps_get_code_labels
+                 (bvl_const_compile x [e]))) =
+            bvlProps_get_code_labels
+              (HD (bvl_const_compile x [e]))`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+       [GSYM bvl_const_compile_HD_SING] THEN
+     REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
+                 UNION_EMPTY]) in
+   let labs_delete = prove
+    (`!l. BIGUNION (set_of_list (MAP bvlProps_get_code_labels
+            (MAP bvl_const_delete_var l))) =
+          BIGUNION (set_of_list (MAP bvlProps_get_code_labels l))`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC(delete_var_code_labels :: lset)) in
+   (* an expression the environment holds has its labels in the
+      set that the statement allows ... *)
+   let envlabs_oEL = prove
+    (`!x v e. oEL v x = SOME (SOME e) ==>
+        bvlProps_get_code_labels e SUBSET
+        BIGUNION (set_of_list
+          (MAP (bvlProps_get_code_labels o THE) (FILTER IS_SOME x)))`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[oEL; distinctness "option"] THEN
+     STRUCT_CASES_TAC(SPEC `v:num` num_CASES) THEN
+     REWRITE_TAC[oEL; ARITH_EQ; NOT_SUC; SUC_SUB1;
+                 injectivity "option"] THENL
+     [DISCH_THEN SUBST1_TAC THEN
+      REWRITE_TAC[FILTER; IS_SOME; MAP; set_of_list; UNIONS_INSERT;
+                  o_THM; THE] THEN
+      REWRITE_TAC[SUBSET_UNION];
+      DISCH_TAC THEN
+      MATCH_MP_TAC SUBSET_TRANS THEN
+      EXISTS_TAC `BIGUNION (set_of_list
+        (MAP (bvlProps_get_code_labels o THE)
+           (FILTER IS_SOME t)))` THEN
+      CONJ_TAC THENL
+      [FIRST_ASSUM MATCH_MP_TAC THEN EXISTS_TAC `n:num` THEN
+       ASM_REWRITE_TAC[];
+       NAMED_CASES_TAC `h:bvl_exp option` [[]; ["a"]] THEN
+       REWRITE_TAC[FILTER; IS_SOME; MAP; set_of_list; UNIONS_INSERT;
+                   SUBSET_REFL; SUBSET_UNION]]]) in
+   (* ... and what the Let clause adds to the environment holds
+      constants only, so it allows nothing new *)
+   let envlabs_extract = prove
+    (`!ys x. BIGUNION (set_of_list
+               (MAP (bvlProps_get_code_labels o THE)
+                  (FILTER IS_SOME
+                     (APPEND (bvl_const_extract_list ys) x)))) =
+             BIGUNION (set_of_list
+               (MAP (bvlProps_get_code_labels o THE)
+                  (FILTER IS_SOME x)))`,
+     let extract_cl = prove
+      (`!(h:bvl_exp) ys x. bvl_const_extract h ys = SOME x
+          ==> bvlProps_get_code_labels x = {}`,
+       REPEAT GEN_TAC THEN REWRITE_TAC[ex] THEN EVERY_CASE_TAC THEN
+       TRY COND_CASES_TAC THEN REWRITE_TAC con_rws THEN
+       DISCH_THEN(SUBST1_TAC o SYM) THEN
+       REWRITE_TAC[gcl; agcl] THEN TRY MATCH_REDUCE_TAC THEN
+       REWRITE_TAC(EMPTY_UNION :: lset)) in
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[exl; APPEND] THEN GEN_TAC THEN
+     NAMED_CASES_TAC `bvl_const_extract (h:bvl_exp) (t:bvl_exp list)`
+       [[]; ["ee"]] THEN
+     ASM_REWRITE_TAC[FILTER; IS_SOME; MAP; set_of_list;
+                     UNIONS_INSERT; o_THM; THE] THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP extract_cl th]) THEN
+     ASM_REWRITE_TAC[UNION_EMPTY]) in
+   (* the subset goals of the proof are unions of the same sets in
+      another order, which is decided by taking the left side
+      apart and finding each piece on the right *)
+   let sub_mono = prove
+    (`!(a:num->bool) b c. a SUBSET b UNION c
+        ==> !d. b SUBSET d ==> a SUBSET d UNION c`,
+     SET_TAC[]) in
+   let sub_un = prove
+    (`!(a:num->bool) b c. a SUBSET c /\ b SUBSET c
+        ==> a UNION b SUBSET c`,
+     SET_TAC[]) in
+   let rec sub_prove a b =
+     if a = b then ISPEC a SUBSET_REFL else
+     let b1,b2 = dest_binary "UNION" b in
+     (try MATCH_MP SUBSET_TRANS
+            (CONJ (sub_prove a b1)
+                  (ISPECL [b1; b2] (CONJUNCT1 SUBSET_UNION)))
+      with Failure _ ->
+           MATCH_MP SUBSET_TRANS
+             (CONJ (sub_prove a b2)
+                   (ISPECL [b2; b1] (CONJUNCT2 SUBSET_UNION)))) in
+   let sub_leaf (asl,w as gl) =
+     let a,b = dest_binary "SUBSET" w in
+     ACCEPT_TAC (sub_prove a b) gl in
+   let sub_tac =
+     REPEAT STRIP_TAC THEN
+     REPEAT(MATCH_MP_TAC sub_un THEN CONJ_TAC) THEN
+     FIRST [sub_leaf;
+            FIRST_ASSUM(fun ih ->
+              MATCH_MP_TAC(MATCH_MP sub_mono ih)) THEN sub_leaf] in
+   let cond t =
+     mk_binop `(<=):num->num->bool`
+       (list_mk_icomb "list_size" [`bvl_exp_size`; t]) `k:num` in
+   let size_tac =
+     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
+     REWRITE_TAC(list_size :: sz) THEN ASM_ARITH_TAC in
+   let use_ih env t =
+     SUBGOAL_THEN (cond t)
+       (fun c -> FIRST_ASSUM(fun ih ->
+          MP_TAC(SPEC env (MATCH_MP ih c)))) THEN TRY size_tac in
+   let rec_case subs =
+     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     REPEAT COND_CASES_TAC THEN
+     REWRITE_TAC (gcl :: lset) THEN REWRITE_TAC[GSYM labs_sing] THEN
+     MAP_EVERY (use_ih xx) subs THEN REWRITE_TAC lset THEN
+     sub_tac in
+   (* the Var that the environment gives a value for is the one
+      clause whose result is not built out of what it compiled *)
+   let var_case =
+     REWRITE_TAC[cp] THEN EVERY_CASE_TAC THEN REWRITE_TAC lset THEN
+     TRY(FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP envlabs_oEL th))) THEN
+     REWRITE_TAC[gcl] THEN REWRITE_TAC lset THEN
+     TRY(REWRITE_TAC[EMPTY_SUBSET]) THEN
+     TRY(DISCH_THEN ACCEPT_TAC) in
+   let let_case =
+     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     REWRITE_TAC (labs_delete :: gcl :: lset) THEN
+     REWRITE_TAC[GSYM labs_sing] THEN
+     use_ih xx `es:bvl_exp list` THEN
+     use_ih `APPEND (bvl_const_extract_list
+                       (bvl_const_compile x es)) x`
+       `[e:bvl_exp]` THEN
+     REWRITE_TAC[envlabs_extract] THEN REWRITE_TAC lset THEN
+     sub_tac in
+   let handle_case =
+     REWRITE_TAC[cp] THEN REWRITE_TAC (gcl :: lset) THEN
+     REWRITE_TAC[GSYM labs_sing] THEN
+     use_ih xx `[e1:bvl_exp]` THEN
+     use_ih `CONS NONE (x:(bvl_exp option) list)` `[e2:bvl_exp]` THEN
+     REWRITE_TAC[FILTER; IS_SOME] THEN REWRITE_TAC lset THEN
+     sub_tac in
+   let force_case =
+     REWRITE_TAC[cp] THEN EVERY_CASE_TAC THEN
+     REWRITE_TAC (gcl :: lset) THEN sub_tac in
+   let op_case =
+     REWRITE_TAC[cp] THEN
+     REWRITE_TAC (SmartOp_code_labels :: gcl :: lset) THEN
+     use_ih xx `es:bvl_exp list` THEN REWRITE_TAC lset THEN
+     sub_tac in
+   let single_case =
+     NAMED_CASES_TAC `y1:bvl_exp`
+       [["v"]; ["e1"; "e2"; "e3"]; ["es"; "e"]; ["e"]; ["e1"; "e2"];
+        ["e"]; ["tt"; "dd"; "es"]; ["loc"; "v"]; ["op"; "es"]] THENL
+     [var_case;
+      rec_case [`[e1:bvl_exp]`; `[e2:bvl_exp]`; `[e3:bvl_exp]`];
+      let_case;
+      rec_case [`[e:bvl_exp]`];
+      handle_case;
+      rec_case [`[e:bvl_exp]`];
+      rec_case [`es:bvl_exp list`];
+      force_case;
+      op_case] in
+   let cons_cons_case =
+     REWRITE_TAC[cp] THEN REWRITE_TAC[labs_app] THEN
+     REWRITE_TAC lset THEN
+     use_ih xx `[y1:bvl_exp]` THEN
+     use_ih xx `(y2:bvl_exp) :: yr2` THEN
+     REWRITE_TAC lset THEN sub_tac in
+   let base_case =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `y:bvl_exp list` [[]; ["y1"; "yr"]] THENL
+     [REWRITE_TAC(cp :: lset) THEN REWRITE_TAC[EMPTY_SUBSET];
+      FIRST_ASSUM MP_TAC THEN
+      REWRITE_TAC[list_size; ARITH_RULE `~(1 + a + b <= 0)`]] in
+   let step_case =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     NAMED_CASES_TAC `y:bvl_exp list` [[]; ["y1"; "yr"]] THENL
+     [REWRITE_TAC(cp :: lset) THEN REWRITE_TAC[EMPTY_SUBSET];
+      NAMED_CASES_TAC `yr:bvl_exp list` [[]; ["y2"; "yr2"]] THENL
+      [single_case; cons_cons_case]] in
+   MEASURE_INDUCT_TAC `list_size bvl_exp_size` THENL
+   [base_case; step_case]);;
 
 let bvl_constProof_compile_exp_code_labels =
   cake_theorem "compile_exp_code_labels"
   (fun () ->
     `!e. bvlProps_get_code_labels (bvl_const_compile_exp e) SUBSET
   bvlProps_get_code_labels e`)
-  CHEAT_TAC;;
+  (* the compiled list of one is a singleton, so compile_exp is the
+     head of it, and the empty environment allows nothing *)
+  (let ce = cake_def "bvl_const_compile_exp" in
+   let labs_sing = prove
+    (`!x e. BIGUNION (set_of_list
+              (MAP bvlProps_get_code_labels
+                 (bvl_const_compile x [e]))) =
+            bvlProps_get_code_labels
+              (HD (bvl_const_compile x [e]))`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+       [GSYM bvl_const_compile_HD_SING] THEN
+     REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
+                 UNION_EMPTY]) in
+   GEN_TAC THEN REWRITE_TAC[ce] THEN
+   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+     [GSYM bvl_const_compile_HD_SING] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[GSYM labs_sing] THEN
+   MP_TAC(SPECL [`[]:(bvl_exp option) list`; `[e:bvl_exp]`]
+            bvl_constProof_compile_code_labels) THEN
+   REWRITE_TAC[FILTER; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
+               UNION_EMPTY]);;
