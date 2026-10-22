@@ -546,3 +546,49 @@
      STRIP_TAC THEN ASM_MESON_TAC[]])
 ### v_inv_lemma#2
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_inv_eq; v_inv_lemma])
+### all_ts_cons_no_block
+  (* a value that is not a Block has no timestamp in it, so the head
+     of the stack adds nothing to the set *)
+  (let keep = EXISTS_TAC `x:dataSem_v` THEN ASM_MESON_TAC[] in
+   REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `v_all_ts (v:dataSem_v) = []` ASSUME_TAC THENL
+    [CASES_ON_NAME "v" THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_ts"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN ASM_MESON_TAC[];
+     ALL_TAC] THEN
+   REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[EXTENSION; IN_ELIM_THM; MEM] THEN
+   X_GEN_TAC `t:num` THEN EQ_TAC THEN STRIP_TAC THENL
+    [keep; ASM_MESON_TAC[MEM]; keep; keep; keep])
+### all_ts_in_no_block
+  (REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     ASSUME_TAC(MATCH_MP all_ts_cons_no_block th)) THEN
+   ASM_MESON_TAC[])
+### all_ts_append
+  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[EXTENSION; IN_UNION; IN_ELIM_THM; MEM_APPEND] THEN
+   MESON_TAC[])
+### all_ts_head
+  (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM all_ts_append; APPEND])
+### MEM_stack_all_vs
+  (REPEAT STRIP_TAC THEN
+   REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT DISJ2_TAC THEN MATCH_MP_TAC MEM_v_all_vs THEN
+   ASM_REWRITE_TAC[])
+### bind_each_MONO
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THENL
+    [ASM_MESON_TAC[LT_REFL];
+     REWRITE_TAC[FDOM_FUPDATE; IN_INSERT; DE_MORGAN_THM] THEN
+     CONJ_TAC THENL
+      [ASM_ARITH_TAC;
+       FIRST_X_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+        [ASM_ARITH_TAC; ASM_REWRITE_TAC[]]]])
+### v_inv_LIST_REL
+  (REWRITE_TAC[LIST_REL_EL_EQN] THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   MATCH_MP_TAC data_to_word_memoryProof_v_inv_lemma THEN
+   ASM_SIMP_TAC[])

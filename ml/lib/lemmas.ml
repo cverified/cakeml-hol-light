@@ -209,3 +209,44 @@ let FMAP_IN_FRANGE = prove
 let SUBMAP_REFL = prove
  (`!f:(A,B)fmap. f SUBMAP f`,
   REWRITE_TAC[SUBMAP]);;
+
+(* ------------------------------------------------------------------ *)
+(* The list lemmas of HOL4 that a proof of phase three asks for and   *)
+(* HOL Light does not have: the pointwise reading of LIST_REL, and    *)
+(* the split of a bounded quantifier that it needs.                   *)
+(* ------------------------------------------------------------------ *)
+
+let FORALL_LT_SUC = prove
+ (`!P m. (!n. n < SUC m ==> P n) <=>
+         P 0 /\ (!n. n < m ==> P (SUC n))`,
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [DISCH_TAC THEN CONJ_TAC THENL
+     [FIRST_ASSUM MATCH_MP_TAC THEN ARITH_TAC;
+      REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+      ASM_ARITH_TAC];
+    STRIP_TAC THEN X_GEN_TAC `n:num` THEN
+    STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+    ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
+    FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC]);;
+
+let LIST_REL_EL_EQN = prove
+ (`!(R:A->B->bool) l1 l2.
+     ALL2 R l1 l2 <=>
+     LENGTH l1 = LENGTH l2 /\
+     (!n. n < LENGTH l1 ==> R (EL n l1) (EL n l2))`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN X_GEN_TAC `l2:B list` THEN
+  STRUCT_CASES_TAC(ISPEC `l2:B list` list_CASES_v) THEN
+  ASM_REWRITE_TAC[ALL2; LENGTH; CONJUNCT1 LT; SUC_INJ; FORALL_LT_SUC;
+                  EL; HD; TL; ARITH_RULE `~(0 = SUC n)`;
+                  ARITH_RULE `~(SUC n = 0)`] THEN
+  CONV_TAC TAUT);;
+
+(* and the domain of an update, HOL4's FDOM_FUPDATE *)
+
+let FDOM_FUPDATE = prove
+ (`!(f:(A,B)fmap) k v. FDOM (f |+ (k,v)) = k INSERT FDOM f`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[FDOM; FMAP_FN_FUPDATE; FST; SND; EXTENSION;
+              IN_INSERT; IN_ELIM_THM] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[distinctness "option"]);;
