@@ -1297,6 +1297,26 @@ CON_OF = {
   # (word_bignum's mini and stackLang have a Skip as well)
   ('word_alloc', 'mk_prio_def'): {'Skip': 'wordLang'},
   ('data_to_word', 'StoreEach_def'): {'*': 'wordLang'},
+  # the Const of Unit (and of the assign_* family below it) is
+  # wordLang's: HOL4's Ancestors of data_to_word open wordLang and
+  # word_bignum, and word_bignum has a Const of its own (of the
+  # term of its deep embedding), which the port read.  Unit was
+  # then a term and not an expression, and the first definition
+  # that gives it to an Assign had no resolution at all -- the
+  # ninety definitions of the file below that line were lost with
+  # it (ISSUES.md)
+  ('data_to_word', 'unit_def'): {'Const': 'wordLang'},
+  # and the Load and the Shift of word_inst's pull_exp: the Op of
+  # the clauses above them says wordLang, but these two clauses
+  # have nothing else in them, and word_bignum's term has a Load
+  # and a Shift of its own
+  ('word_inst', 'pull_exp_def'): {'Load': 'wordLang',
+                                  'Shift': 'wordLang'},
+  # and the Const of op_consts, which is the only constructor of
+  # that definition: op_consts was a term of word_bignum and not an
+  # expression of wordLang, which the pull_exp below it then could
+  # not typecheck at all
+  ('word_inst', 'op_consts_def'): {'Const': 'wordLang'},
   ('word_simp', 'drop_consts_def'): {'*': 'wordLang'},
   ('word_cse', 'seqs_def'): {'*': 'wordLang'},
   # the Shift and the Div that this canonicalises are asm's

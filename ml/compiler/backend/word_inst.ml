@@ -71,8 +71,8 @@ let convert_sub_pmatch = cake_theorem "convert_sub_pmatch"
 let op_consts_def = cake_define
   `op_consts x1 =
         match x1 with
-          (And:binop) -> Const (word_not (n2w 0))
-        | _5 -> Const (n2w 0)`;;
+          (And:binop) -> wordLang_Const (word_not (n2w 0))
+        | _5 -> wordLang_Const (n2w 0)`;;
 
 let op_consts_pmatch = cake_theorem "op_consts_pmatch"
   (fun () ->
@@ -121,9 +121,9 @@ let pull_exp_def = cake_define_wf
        // Then pull at the topmost
        let pull_ls = pull_ops op new_ls [] in
          optimize_consts op pull_ls)
-        | (Load exp) -> Load (pull_exp exp)
-        | (Shift shift' exp nexp) -> Shift shift' (pull_exp exp)
-          (pull_exp nexp)
+        | (wordLang_Load exp) -> wordLang_Load (pull_exp exp)
+        | (wordLang_Shift shift' exp nexp) -> wordLang_Shift shift'
+          (pull_exp exp) (pull_exp nexp)
         | exp -> exp`;;
 
 let pull_exp_pmatch = cake_theorem "pull_exp_pmatch"

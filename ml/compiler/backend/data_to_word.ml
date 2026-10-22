@@ -84,7 +84,7 @@ let adjust_sets_def = cake_define
      ((LS one,adjust_set names):1 spt#1 spt)`;;
 
 let unit_def = cake_define
-  `data_to_word_Unit = Const (n2w 2)`;;
+  `data_to_word_Unit = wordLang_Const (n2w 2)`;;
 hol4_overload "Unit" "data_to_word_Unit";;
 
 let GiveUp_def = cake_define
