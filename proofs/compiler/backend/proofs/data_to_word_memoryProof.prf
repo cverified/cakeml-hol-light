@@ -752,3 +752,85 @@
   (REWRITE_TAC[cake_def "ref_edge"; lookup_insert] THEN
    COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
    REWRITE_TAC[])
+### v_inv_IMP
+  (* the lemma is applied to the assumption and not to the goal:
+     where a type variable of the statement stands only in the
+     antecedent, MATCH_MP_TAC leaves the lemma's own one there *)
+  (REWRITE_TAC[v_inv_eq] THEN REPEAT GEN_TAC THEN
+   DISCH_THEN(fun th ->
+     GEN_TAC THEN
+     MATCH_ACCEPT_TAC(MATCH_MP v_inv_IMP_lemma
+       (REWRITE_RULE[GSYM v_inv_eq] th))))
+### LIST_REL_IMP_LIST_REL
+  (let aux = prove
+    (`!(P:A->B->bool) Q xs ys.
+        (!x y. MEM x xs /\ P x y ==> Q x y) /\ ALL2 P xs ys
+        ==> ALL2 Q xs ys`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     X_GEN_TAC `ys:B list` THEN
+     STRUCT_CASES_TAC(ISPEC `ys:B list` list_CASES_v) THEN
+     REWRITE_TAC[ALL2; MEM] THEN REPEAT STRIP_TAC THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
+     REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[TAUT `(p ==> q ==> r) <=> (p /\ q ==> r)`] THEN
+   MATCH_ACCEPT_TAC aux)
+### v_size_LESS_EQ
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC MEM_list_size THEN
+   ASM_REWRITE_TAC[])
+### data_up_to_alt
+  (let opt = [injectivity "option"; distinctness "option";
+              PAIR_EQ] in
+   REWRITE_TAC[cake_def "data_up_to"; cake_def "heap_split"] THEN
+   CONJ_TAC THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC(ALL :: opt) THENL
+    [CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[ALL];
+     CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[ALL];
+     COND_CASES_TAC THEN ASM_REWRITE_TAC(ALL :: opt) THEN
+     EVERY_CASE_TAC THEN ASM_REWRITE_TAC(ALL :: opt) THEN
+     CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+     ASM_REWRITE_TAC(ALL :: opt) THEN
+     COND_CASES_TAC THEN ASM_REWRITE_TAC[]])
+### ref_edge_MutBlock_UPDATE
+  (* the edge of the updated reference is an edge of the old one:
+     the payload of the MutBlock differs in the hole only, and the
+     element of the hole is not z *)
+  (let flat_app = prove
+    (`!(l1:((A)list)list) l2.
+        FLAT (APPEND l1 l2) = APPEND (FLAT l1) (FLAT l2)`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[FLAT; APPEND; APPEND_ASSOC]) in
+   let mem_refs = prove
+    (`!z ll a rr.
+        MEM z (get_refs (Block 0 ARB (APPEND ll (APPEND [a] rr)))) <=>
+        MEM z (get_refs (Block 0 ARB ll)) \/ MEM z (get_refs a) \/
+        MEM z (get_refs (Block 0 ARB rr))`,
+     REWRITE_TAC[cake_def "get_refs"; MAP_APPEND; MAP; flat_app;
+                 FLAT; MEM_APPEND; APPEND_NIL]) in
+   let swap_refs = prove
+    (`!z ll a b rr.
+        MEM z (get_refs (Block 0 ARB (APPEND ll (APPEND [a] rr)))) /\
+        ~MEM z (get_refs a)
+        ==> MEM z (get_refs (Block 0 ARB (APPEND ll
+                                           (APPEND [b] rr))))`,
+     REWRITE_TAC[mem_refs] THEN MESON_TAC[]) in
+   REWRITE_TAC[ref_edge_MutBlock] THEN COND_CASES_TAC THEN
+   REPEAT STRIP_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
+   SUBGOAL_THEN
+     `sptree_lookup r1 (refs:(dataSem_v bvlSem_ref) spt) =
+      SOME (bvlSem_MutBlock tg fin ll cc rr)`
+     (fun th -> ONCE_REWRITE_TAC[cake_def "ref_edge"] THEN
+                REWRITE_TAC[th]) THENL
+    [ASM_MESON_TAC[]; ALL_TAC] THEN
+   MATCH_REDUCE_TAC THEN
+   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
+     MATCH_ACCEPT_TAC(MATCH_MP swap_refs (CONJ th1 th2)))))
+### split1_thm
+  (REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv";
+               LIST_REL_SPLIT1] THEN
+   STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH])
+### split2_thm
+  (REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv";
+               GSYM APPEND_ASSOC; LIST_REL_SPLIT1] THEN
+   STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH])
