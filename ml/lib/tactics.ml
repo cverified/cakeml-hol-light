@@ -625,3 +625,23 @@ let ASM_EXISTS_TAC (asl,w as gl) =
   let c = hd (conjuncts bod) in
   let i = tryfind (fun (_,th) -> term_match [] c (concl th)) asl in
   MAP_EVERY EXISTS_TAC (map (instantiate i) vs) gl;;
+
+(* The assumption that a rewrite changes, as the antecedent of the
+   goal: a long list of assumptions has one of the shape that a
+   definition unfolds, and this picks it out without naming it. *)
+
+let USE_CHANGED ths =
+  FIRST_X_ASSUM(fun th ->
+    let th' = REWRITE_RULE ths th in
+    if concl th' = concl th then fail() else MP_TAC th');;
+
+(* The assumption that gives a variable its value, substituted
+   away.  HOL Light's SUBST_VAR_TAC takes the variable on either
+   side of the equation, which in a goal of the port is as often
+   the variable that the statement is about (the w of
+   `word_addr c h = w`) as the one that a case split introduced. *)
+
+let SUBST_LHS_TAC =
+  FIRST_X_ASSUM(fun th ->
+    if is_eq(concl th) && is_var(lhs(concl th))
+    then SUBST_ALL_TAC th else fail());;
