@@ -70,8 +70,8 @@ let num_to_chars_thm = cake_theorem "num_to_chars_thm"
 
 let int_to_string_def = cake_define
   `int_to_string neg_char i =
-     (if (&0) <= i then implode (num_to_chars (num_of_int i) 0 0
-       []) else implode (neg_char :: num_to_chars (num_of_int (abs
+     (if (&0:int) <= i then implode (num_to_chars (num_of_int i) 0
+       0 []) else implode (neg_char :: num_to_chars (num_of_int (abs
        i)) 0 0 []))`;;
 
 let toString_def1 = cake_define
@@ -84,13 +84,13 @@ hol4_overload "toString" "mlint_toString";;
 let int_to_string_thm = cake_theorem "int_to_string_thm"
   (fun () ->
     `int_to_string neg_char i =
-     implode ((if i < (&0) then [neg_char] else []) ++
+     implode ((if i < (&0:int) then [neg_char] else []) ++
        num_to_dec_string (num_of_int (abs i)))`)
   CHEAT_TAC;;
 
 let toString_thm = cake_theorem "toString_thm"
   (fun () ->
-    `toString i = implode ((if i < (&0) then "~" else "") ++
+    `toString i = implode ((if i < (&0:int) then "~" else "") ++
   num_to_dec_string (num_of_int (abs i)))`)
   CHEAT_TAC;;
 
@@ -183,8 +183,8 @@ let fromChars_eq_unsafe = cake_theorem "fromChars_eq_unsafe"
 
 let fromString_unsafe_def = cake_define
   `fromString_unsafe str =
-     (if strlen str = 0 then (&0) else if strsub str 0 = (CHR 126)
-       then --(&(fromChars_unsafe (strlen str - 1)
+     (if strlen str = 0 then (&0:int) else if strsub str 0 = (CHR
+       126) then --(&(fromChars_unsafe (strlen str - 1)
                               (substring str 1 (strlen str - 1))))
                                 else &(fromChars_unsafe (strlen str)
                                 str))`;;

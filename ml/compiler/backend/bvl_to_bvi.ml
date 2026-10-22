@@ -225,7 +225,7 @@ let ToListByte_code_def = cake_define
   `ToListByte_code = (3,
      // list, current index, byte array
      If (Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
-       (&0)))) [Var 1]) (Var 0)
+       (&0:int)))) [Var 1]) (Var 0)
        (Let [Op (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
          (closLang_Const (&1))) []; Var 1]]
        (Let [Op (closLang_MemOp closLang_DerefByte) [Var 0; Var 3]]

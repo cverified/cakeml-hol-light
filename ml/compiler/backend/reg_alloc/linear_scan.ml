@@ -2,8 +2,8 @@
 (*  linear_scan: ported from HOL4's
     compiler/backend/reg_alloc/linear_scanScript.sml
     A definition theory, with 67 definitions, 4 datatypes and 5
-    theorems.  Needed by linear_scanProof.ml, word_alloc.ml and
-    word_allocProof.ml.  *)
+    theorems.  Needed by bvi_letProof.ml, bvl_constProof.ml,
+    linear_scanProof.ml, word_alloc.ml and word_allocProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -1055,9 +1055,9 @@ let linear_reg_alloc_and_extract_coloration_def = cake_define
 
 let size_of_clash_tree_def = cake_define_list
   [`size_of_clash_tree (reg_alloc_Delta wr rd) =
-      ((&2):int)`;
+      ((&2:int):int)`;
    `size_of_clash_tree (reg_alloc_Set cutset:clash_tree) =
-      ((&1):int)`;
+      ((&1:int):int)`;
    `size_of_clash_tree (Branch optcutset ct1 ct2:clash_tree) = ((
       (if IS_SOME optcutset then (&1) else (&0)) +
         size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`;

@@ -328,8 +328,8 @@ let AnyHeader_thm = cake_theorem "AnyHeader_thm"
                    (wordSem_set_store (Temp t2) (wordLang_Word a2)
                    (wordSem_set_store (Temp t3) (wordLang_Word a3)
                      (set_var 7 temp t))))) /\
-          (i = (&0) ==>
-             small_int (:'a) (&0) /\ i2mw i = (F,[]) /\
+          (i = (&0:int) ==>
+             small_int (:'a) (&0:int) /\ i2mw i = (F,[]) /\
              a2 = (n2w 0) /\ a3 = (n2w 0)) /\
           (small_int (:'a) i /\ ~(i = (&0)) ==>
              i2mw i = ((i < (&0)),[a3]) /\

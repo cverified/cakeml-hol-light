@@ -6260,7 +6260,7 @@ let memory_rel_Sub = cake_theorem "memory_rel_Sub"
 
 let exists_num = cake_theorem "exists_num[local]"
   (fun () ->
-    `~(i < (&0)) <=> (?n. i = &n)`)
+    `~(i < (&0:int)) <=> (?n. i = &n)`)
   CHEAT_TAC;;
 
 let small_int_w2n = cake_theorem "small_int_w2n[simp]"

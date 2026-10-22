@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  binary_ieee: ported from HOL4's
-    src/floating-point/binary_ieeeScript.sml  *)
+    src/floating-point/binary_ieeeScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/integer_word.ml";;
@@ -29,15 +31,15 @@ let float_value_INDUCT,float_value_RECURSION = define_datatype
 
 let float_to_real_def = cake_define
   `float_to_real (x:('t,'w)float) =
-      (if float_Exponent x = (n2w 0) then --(&1) pow (w2n (float_Sign
-        x)) *
-              ((&2) / (&2) pow (INT_MAX (:'w))) *
-              (&(w2n (float_Significand x)) / (&2) pow (dimindex
-                (:'t))) else --(&1) pow (w2n (float_Sign x)) *
-           ((&2) pow (w2n (float_Exponent x)) / (&2) pow (INT_MAX
-             (:'w))) *
-           ((&1) + &(w2n (float_Significand x)) / (&2) pow
-             (dimindex (:'t))))`;;
+      (if float_Exponent x = (n2w 0) then --(&1:real) pow (w2n
+        (float_Sign x)) *
+              ((&2:real) / (&2:real) pow (INT_MAX (:'w))) *
+              (&(w2n (float_Significand x)) / (&2:real) pow (dimindex
+                (:'t))) else --(&1:real) pow (w2n (float_Sign x)) *
+           ((&2:real) pow (w2n (float_Exponent x)) / (&2:real) pow
+             (INT_MAX (:'w))) *
+           ((&1:real) + &(w2n (float_Significand x)) / (&2:real)
+             pow (dimindex (:'t))))`;;
 
 let float_value_def = cake_define
   `float_value (x:('t,'w)float) =
@@ -136,13 +138,15 @@ let closest_def = cake_define
 
 let largest_def = cake_define
   `largest (:'t#'w) =
-      ((&2) pow (UINT_MAX (:'w) - 1) / (&2) pow (INT_MAX (:'w))) *
-      ((&2) - inv ((&2) pow dimindex (:'t)))`;;
+      ((&2:real) pow (UINT_MAX (:'w) - 1) / (&2:real) pow (INT_MAX
+        (:'w))) *
+      ((&2:real) - inv ((&2:real) pow dimindex (:'t)))`;;
 
 let threshold_def = cake_define
   `threshold (:'t#'w) =
-      ((&2) pow (UINT_MAX (:'w) - 1) / (&2) pow (INT_MAX (:'w))) *
-      ((&2) - inv ((&2) pow SUC (dimindex (:'t))))`;;
+      ((&2:real) pow (UINT_MAX (:'w) - 1) / (&2:real) pow (INT_MAX
+        (:'w))) *
+      ((&2:real) - inv ((&2:real) pow SUC (dimindex (:'t))))`;;
 
 let round_def = cake_define
   `round mode (x:real) =
@@ -230,8 +234,8 @@ let float_to_int_def = cake_define
                 roundTiesToEven ->
                   (let f = INT_FLOOR r in
                   let df = abs (r - real_of_int f) in
-                  if (df < (&1) / (&2)) \/ (df = (&1) / (&2)) /\ EVEN
-                    (num_of_int (abs f)) then
+                  if (df < (&1:real) / (&2)) \/ (df = (&1:real) /
+                    (&2)) /\ EVEN (num_of_int (abs f)) then
                     f else
                     INT_CEILING r) | roundTowardPositive ->
                       INT_CEILING r | roundTowardNegative -> INT_FLOOR r

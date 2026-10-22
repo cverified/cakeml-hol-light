@@ -1857,8 +1857,16 @@ class Printer:
       t = e.text
       if t.endswith('w'):
         return '(n2w ' + t[:-1] + ')'
-      if t.endswith('i') or t.endswith('r'):
-        return '(&' + t[:-1] + ')'
+      # HOL4's 0i is an integer and its 0r a real, and & is the
+      # injection of both in HOL Light: a literal that says which
+      # one it is keeps that, or the overload of & would make it a
+      # real wherever nothing else says (exists_num of
+      # data_to_word_memoryProof, whose statement is false of the
+      # reals)
+      if t.endswith('i'):
+        return '(&' + t[:-1] + ':int)'
+      if t.endswith('r'):
+        return '(&' + t[:-1] + ':real)'
       if t.endswith('n') or t.endswith('c'):
         return t[:-1]
       if t.startswith('0x'):
