@@ -611,3 +611,17 @@ let PAIRARG_TAC (asl,w as gl) =
    an induction hypothesis about that variable needs *)
 
 let CASES_ON_NAME n (asl,w as gl) = CASES_ON_TAC (var_by_name n gl) gl;;
+
+(* ------------------------------------------------------------------ *)
+(* HOL4's asm_exists_tac: the goal is an existential whose body is    *)
+(* what an assumption says of other witnesses, and the assumption     *)
+(* gives them.  The first conjunct of the body is what is matched,    *)
+(* as HOL4 does it.                                                   *)
+(* ------------------------------------------------------------------ *)
+
+let ASM_EXISTS_TAC (asl,w as gl) =
+  let vs,bod = strip_exists w in
+  if vs = [] then failwith "ASM_EXISTS_TAC: no existential" else
+  let c = hd (conjuncts bod) in
+  let i = tryfind (fun (_,th) -> term_match [] c (concl th)) asl in
+  MAP_EVERY EXISTS_TAC (map (instantiate i) vs) gl;;

@@ -886,3 +886,69 @@
    ASM_REWRITE_TAC[APPEND; cake_def "word_heap"; heap_length_NIL;
                    heap_length_CONS; emp_STAR; STAR_ASSOC; addr;
                    addr0])
+### memory_rel_rearrange
+  (* the witnesses of the goal's existential are the ones the
+     assumption has: HOL4's asm_exists_tac, ml/lib/tactics.ml *)
+  (REWRITE_TAC[cake_def "memory_rel"] THEN REPEAT STRIP_TAC THEN
+   ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN
+   FIRST_X_ASSUM(fun th -> MP_TAC th THEN
+     MATCH_MP_TAC word_ml_inv_rearrange) THEN
+   ASM_REWRITE_TAC[])
+### memory_rel_Unit
+  (REWRITE_TAC[cake_def "memory_rel"] THEN REPEAT STRIP_TAC THEN
+   ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN
+   MATCH_MP_TAC word_ml_inv_Unit THEN ASM_REWRITE_TAC[])
+### memory_rel_swap
+  (DISCH_TAC THEN
+   FIRST_ASSUM(fun th ->
+     MATCH_MP_TAC(MATCH_MP
+       (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
+          memory_rel_rearrange) th)) THEN
+   REWRITE_TAC[MEM] THEN MESON_TAC[])
+### LENGTH_EQ_1
+  (let lrw = [LENGTH; CONS_11; NOT_CONS_NIL; LENGTH_EQ_NIL;
+              EQ_SYM_EQ; ARITH_RULE `~(0 = 1)`;
+              ARITH_RULE `(SUC n = 1) <=> (n = 0)`] in
+   let aux = prove
+    (`!xs:A list. (LENGTH xs = 1 <=> ?a1. xs = [a1]) /\
+                  (1 = LENGTH xs <=> ?a1. xs = [a1])`,
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `xs:A list` list_CASES_v) THEN
+     REWRITE_TAC lrw THEN
+     CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### LENGTH_EQ_2
+  (let lrw = [LENGTH; CONS_11; NOT_CONS_NIL; LENGTH_EQ_NIL;
+              EQ_SYM_EQ; ARITH_RULE `~(0 = 1)`;
+              ARITH_RULE `~(0 = 2)`;
+              ARITH_RULE `(SUC n = 1) <=> (n = 0)`;
+              ARITH_RULE `(SUC n = 2) <=> (n = 1)`] in
+   let aux = prove
+    (`!xs:A list. (LENGTH xs = 2 <=> ?a1 a2. xs = [a1; a2]) /\
+                  (2 = LENGTH xs <=> ?a1 a2. xs = [a1; a2])`,
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `xs:A list` list_CASES_v) THEN
+     REWRITE_TAC lrw THEN
+     TRY(CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) THEN
+     STRUCT_CASES_TAC(ISPEC `vs:A list` list_CASES_v) THEN
+     REWRITE_TAC lrw THEN
+     CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### heap_split_SOME_APPEND
+  (REWRITE_TAC[heap_split_APPEND_if] THEN REPEAT GEN_TAC THEN
+   COND_CASES_TAC THEN EVERY_CASE_TAC THEN
+   ASM_REWRITE_TAC[injectivity "option"; distinctness "option";
+                   PAIR_EQ] THEN
+   MESON_TAC[])
+### word_list_APPEND
+  (let addr = prove
+    (`!(a:(N)word) b m. a + n2w (m + 1) * b = (a + b) + n2w m * b`,
+     REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE) in
+   let addr0 = prove
+    (`!(a:(N)word) b. a + n2w 0 * b = a`,
+     CONV_TAC WORD_RULE) in
+   LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[APPEND; cake_def "misc_word_list"; LENGTH;
+                   emp_STAR; STAR_ASSOC; ADD1; addr; addr0])
+### minus_lemma
+  (CONV_TAC WORD_RULE)
