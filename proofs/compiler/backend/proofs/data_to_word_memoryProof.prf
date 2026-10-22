@@ -1044,3 +1044,66 @@
    REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
    DISCH_THEN STRIP_ASSUME_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    ASM_SIMP_TAC[])
+### blocks_unique_INSERT
+  (let inst a b c d =
+     FIRST_ASSUM(fun h -> MP_TAC(SPECL [`t:num`; a; b; c; d] h)) THEN
+     ANTS_TAC THENL
+      [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] in
+   let a1 = `a1:num` and x1 = `xs1:dataSem_v list`
+   and a2 = `a2:num` and x2 = `xs2:dataSem_v list` in
+   REWRITE_TAC[cake_def "blocks_unique"; IN_INSERT;
+               injectivity "dataSem_v"] THEN
+   DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST
+    [ASM_REWRITE_TAC[] THEN ARITH_TAC;
+     inst a1 x1 a2 x2 THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     ASM_ARITH_TAC;
+     inst a2 x2 a2 x2 THEN STRIP_TAC THEN
+     SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
+     inst a1 x1 a1 x1 THEN STRIP_TAC THEN
+     SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC])
+### all_ts_CONS_SUBSET
+  (MATCH_MP_TAC all_ts_SUBSET_gen THEN REWRITE_TAC[MEM] THEN
+   MESON_TAC[])
+### in_all_vs_stack
+  (DISCH_TAC THEN
+   REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT DISJ2_TAC THEN ASM_REWRITE_TAC[])
+### in_all_vs_MutBlock
+  (REPEAT STRIP_TAC THEN
+   REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   DISJ2_TAC THEN DISJ2_TAC THEN DISJ1_TAC THEN ASM_MESON_TAC[])
+### split3_thm
+  (REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv";
+               GSYM APPEND_ASSOC; LIST_REL_SPLIT1] THEN
+   STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH])
+### heap_store_unused_IMP_length
+  (* the lookup splits the heap at the unused element, the store
+     lemma says what the store gives back, and the lengths add up *)
+  (REWRITE_TAC[cake_def "heap_store_unused"] THEN
+   COND_CASES_TAC THENL
+    [FIRST_X_ASSUM STRIP_ASSUME_TAC THEN
+     FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP heap_lookup_SPLIT th)) THEN
+     DISCH_THEN STRIP_ASSUME_TAC THEN VAR_EQ_TAC THEN
+     ASM_REWRITE_TAC[heap_store_lemma; PAIR_EQ] THEN
+     STRIP_TAC THEN VAR_EQ_TAC THEN
+     ASM_REWRITE_TAC[heap_length_APPEND; heap_length_CONS] THEN
+     ASM_ARITH_TAC;
+     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]])
+### heap_store_unused_alt_IMP_length
+  (REWRITE_TAC[cake_def "heap_store_unused_alt"] THEN
+   COND_CASES_TAC THENL
+    [FIRST_X_ASSUM STRIP_ASSUME_TAC THEN
+     FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP heap_lookup_SPLIT th)) THEN
+     DISCH_THEN STRIP_ASSUME_TAC THEN VAR_EQ_TAC THEN
+     ASM_REWRITE_TAC[heap_store_lemma; PAIR_EQ] THEN
+     STRIP_TAC THEN VAR_EQ_TAC THEN
+     ASM_REWRITE_TAC[heap_length_APPEND; heap_length_CONS] THEN
+     ASM_ARITH_TAC;
+     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]])
+### ref_eq_thm
+  (REWRITE_TAC[cake_def "abs_ml_inv";
+               cake_def "bc_stack_ref_inv"] THEN
+   STRIP_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[ALL2; v_inv_RefPtr_T; INJ]) THEN
+   ASM_MESON_TAC[injectivity "heap_address"])
