@@ -645,3 +645,106 @@ let SUBST_LHS_TAC =
   FIRST_X_ASSUM(fun th ->
     if is_eq(concl th) && is_var(lhs(concl th))
     then SUBST_ALL_TAC th else fail());;
+
+(* Two assumptions that contradict each other close the goal.  A
+   case analysis of the relations of the port brings a `~b` against
+   a `b` all the time, and MESON over the twenty assumptions that a
+   memory_rel goal has is too slow to be the way to use them. *)
+
+let CONTRA_TAC (asl,w as gl) =
+  let ths = map snd asl in
+  CONTR_TAC
+    (tryfind (fun t2 ->
+       if is_neg(concl t2)
+       then tryfind (fun t1 ->
+              if concl t1 = rand(concl t2)
+              then MP (NOT_ELIM t2) t1 else fail()) ths
+       else fail()) ths) gl;;
+
+(* An assumption that is a conditional, a disjunction or an
+   existential, opened into the goal: the body of a relation of the
+   port is a disjunction of its rules, and this takes them apart one
+   after the other. *)
+
+let OPEN_ASSUM =
+  FIRST_X_ASSUM(fun th ->
+    let t = concl th in
+    if is_cond t || is_disj t || is_exists t
+    then MP_TAC th THEN TRY COND_CASES_TAC THEN STRIP_TAC
+    else fail());;
+
+(* A theorem of a file of the port by the name that HOL4 gives it:
+   cake_theorem registers every one, so a tactic of the library can
+   use a theorem of the file it is applied in (v_inv_def of
+   data_to_word_memoryProof) without the file naming it. *)
+
+let cake_thm name =
+  try let _,_,th = find (fun (n,_,_) -> n = name) (!the_theorems) in
+      th
+  with Failure _ -> failwith ("cake_thm: no theorem " ^ name);;
+
+(* The list of roots of an abs_ml_inv, split against the list of
+   values: the assumption that relates the two is an ALL2 whose
+   first list is a cons and whose second is the variable that the
+   existential of word_ml_inv introduced, and the proofs of the
+   memory invariant all start by taking that one apart. *)
+
+let SPLIT_ROOTS_TAC (asl,w as gl) =
+  let roots = tryfind (fun (_,th) ->
+    let c = concl th in
+    let f,args = strip_comb c in
+    if is_const f && fst(dest_const f) = "ALL2" &&
+       length args = 3 && is_var (el 2 args) &&
+       not (is_var (el 1 args))
+    then el 2 args else fail()) asl in
+  (CASES_ON_TAC roots THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[MAP; ALL2; FST; SND]) THEN
+   TRY(FIRST_X_ASSUM CONTR_TAC) THEN
+   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC))) gl;;
+
+(* The chain of definitions that a goal about the memory invariant
+   of data_to_word_memoryProof goes through, with the roots split
+   off: memory_rel is word_ml_inv of a heap, which is abs_ml_inv of
+   the values of the stack, whose bc_stack_ref_inv relates the
+   values to the roots.  The sources unfold the four of them in one
+   `fs` and so does this. *)
+
+let MEMORY_REL_TAC gl =
+  (REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv";
+               cake_def "abs_ml_inv";
+               cake_def "bc_stack_ref_inv"] THEN
+   STRIP_TAC THEN SPLIT_ROOTS_TAC) gl;;
+
+(* The clauses of word_addr: the address of a Data of a word is the
+   word with its tag bit taken off, the one of a Data of a Loc is
+   the Loc and the one of a Pointer is its address. *)
+
+let word_addr_clauses () =
+  let cl t =
+    prove(t, REPEAT GEN_TAC THEN
+             GEN_REWRITE_TAC LAND_CONV [cake_def "word_addr"] THEN
+             MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+  [cl `!conf w. word_addr conf (gc_shared_Data (wordLang_Word w)) =
+        wordLang_Word (w && word_not (n2w 1))`;
+   cl `!conf n w. word_addr conf (gc_shared_Pointer n w) =
+        wordLang_Word (get_addr conf n w)`;
+   cl `!conf l1 l2.
+         word_addr conf (gc_shared_Data (wordLang_Loc l1 l2)) =
+         wordLang_Loc l1 0`];;
+
+(* The assumption that says what the root of a value is, taken
+   apart: v_inv is a disjunction of the rules of the relation, and
+   what each of them leaves is the address of a Data or of a
+   Pointer, which word_addr reduces. *)
+
+let V_INV_TAC gl =
+  (RULE_ASSUM_TAC(REWRITE_RULE[cake_thm "v_inv_def";
+                               injectivity "dataSem_v"]) THEN
+   TRY(FIRST_X_ASSUM CONTR_TAC) THEN
+   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
+   REPEAT OPEN_ASSUM THEN
+   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
+   TRY CONTRA_TAC THEN REPEAT SUBST_LHS_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE(word_addr_clauses () @
+     [distinctness "word_loc"; injectivity "word_loc"])) THEN
+   TRY(FIRST_X_ASSUM CONTR_TAC) THEN TRY CONTRA_TAC) gl;;

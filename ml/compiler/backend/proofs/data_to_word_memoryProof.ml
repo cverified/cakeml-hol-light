@@ -401,7 +401,23 @@ let v_inv_RefPtr_T = cake_theorem "v_inv_RefPtr_T"
        (!tg fin l c r. ~(lookup n refs = SOME (bvlSem_MutBlock tg
          fin l c r))) /\
        x = gc_shared_Pointer (FAPPLY f n) (wordLang_Word (n2w 0))`)
-  CHEAT_TAC;;
+  (* a RefPtr T is no thunk and no MutBlock, so the two rules of
+     v_inv that ask for a RefPtr F do not apply and the annotation
+     of the pointer is zero *)
+  (let rpa = prove
+    (`!conf o1.
+        (!tg fin l c r.
+           ~(o1 = SOME (bvlSem_MutBlock tg fin l c r))) ==>
+        ref_ptr_annot conf o1 = wordLang_Word (n2w 0)`,
+     REPEAT GEN_TAC THEN CASES_ON_NAME "o1" THEN
+     REWRITE_TAC[cake_def "ref_ptr_annot"] THEN
+     TRY(CASES_ON_NAME "a") THEN
+     TRY MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+     REWRITE_TAC[injectivity "option"; injectivity "bvlSem_ref"] THEN
+     MESON_TAC[]) in
+   REWRITE_TAC[v_inv_def] THEN EQ_TAC THEN STRIP_TAC THEN
+   ASM_REWRITE_TAC[] THEN ASM_SIMP_TAC[rpa] THEN
+   TRY(DISJ1_TAC THEN ASM_SIMP_TAC[rpa]));;
 
 
 let MEM_IMP_v_size = cake_theorem "MEM_IMP_v_size[local]"
@@ -3614,7 +3630,15 @@ let small_int_IMP_MIN_MAX = cake_theorem "small_int_IMP_MIN_MAX"
   (fun () ->
     `good_dimindex (:'a) /\ small_int (:'a) i ==>
       INT_MIN (:'a) <= (&4) * i /\ (&4) * i <= INT_MAX (:'a)`)
-  CHEAT_TAC;;
+  (* the bound of a small integer is a quarter of the dimword and
+     INT_MIN and INT_MAX are a half of it, so four times a small
+     integer is between them *)
+  (REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+               dimword; integer_word_INT_MIN; integer_word_INT_MAX;
+               INT_MIN] THEN
+   STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+   RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+   CONV_TAC NUM_REDUCE_CONV THEN ASM_INT_ARITH_TAC);;
 
 let num_less_thm = cake_theorem "num_less_thm"
   (fun () ->
@@ -5886,7 +5910,9 @@ let memory_rel_MutBlock_IMP_F =
     `memory_rel c be ts refs sp st m dm ((RefPtr T p,(v:'a word_loc)) ::
   vars) /\
      lookup p refs = SOME (bvlSem_MutBlock tg fin ls cv rs) ==> F`)
-  CHEAT_TAC;;
+  (* a RefPtr T is no MutBlock: every rule of v_inv that gives one
+     a root says so *)
+  (MEMORY_REL_TAC THEN V_INV_TAC THEN ASM_MESON_TAC[]);;
 
 let memory_rel_RefPtr_T_IMP = cake_theorem "memory_rel_RefPtr_T_IMP"
   (fun () ->
@@ -6293,29 +6319,7 @@ let memory_rel_Number_IMP_Word =
   (?w. v = wordLang_Word w)`)
   (* a Number stands for a Data of its Smallnum or for a Pointer at
      its Bignum, and the word_addr of either is a Word *)
-  (let wa_data = prove
-    (`!conf w. word_addr conf (gc_shared_Data (wordLang_Word w)) =
-       wordLang_Word (w && word_not (n2w 1))`,
-     REPEAT GEN_TAC THEN
-     GEN_REWRITE_TAC LAND_CONV [cake_def "word_addr"] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   let wa_ptr = prove
-    (`!conf n w. word_addr conf (gc_shared_Pointer n w) =
-       wordLang_Word (get_addr conf n w)`,
-     REPEAT GEN_TAC THEN
-     GEN_REWRITE_TAC LAND_CONV [cake_def "word_addr"] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv";
-               cake_def "abs_ml_inv";
-               cake_def "bc_stack_ref_inv"] THEN
-   STRIP_TAC THEN CASES_ON_NAME "hs" THEN
-   RULE_ASSUM_TAC(REWRITE_RULE[MAP; ALL2; FST; SND]) THEN
-   TRY(FIRST_X_ASSUM CONTR_TAC) THEN
-   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
-   USE_CHANGED [v_inv_def] THEN
-   COND_CASES_TAC THEN STRIP_TAC THEN SUBST_LHS_TAC THEN
-   RULE_ASSUM_TAC(REWRITE_RULE[wa_data; wa_ptr]) THEN
-   ASM_MESON_TAC[]);;
+  (MEMORY_REL_TAC THEN V_INV_TAC THEN ASM_MESON_TAC[]);;
 
 let memory_rel_Number_IMP_Word_2 =
   cake_theorem "memory_rel_Number_IMP_Word_2"
@@ -6324,31 +6328,7 @@ let memory_rel_Number_IMP_Word_2 =
   vars) ==>
       (?w1 w2. v = wordLang_Word w1 /\ w = wordLang_Word w2)`)
   (* the same of the two Numbers at the head of the list *)
-  (let wa_data = prove
-    (`!conf w. word_addr conf (gc_shared_Data (wordLang_Word w)) =
-       wordLang_Word (w && word_not (n2w 1))`,
-     REPEAT GEN_TAC THEN
-     GEN_REWRITE_TAC LAND_CONV [cake_def "word_addr"] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   let wa_ptr = prove
-    (`!conf n w. word_addr conf (gc_shared_Pointer n w) =
-       wordLang_Word (get_addr conf n w)`,
-     REPEAT GEN_TAC THEN
-     GEN_REWRITE_TAC LAND_CONV [cake_def "word_addr"] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   let split n =
-     CASES_ON_NAME n THEN
-     RULE_ASSUM_TAC(REWRITE_RULE[MAP; ALL2; FST; SND]) THEN
-     TRY(FIRST_X_ASSUM CONTR_TAC) THEN
-     REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) in
-   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv";
-               cake_def "abs_ml_inv";
-               cake_def "bc_stack_ref_inv"] THEN
-   STRIP_TAC THEN split "hs" THEN split "a1" THEN
-   REPLICATE_TAC 2
-     (USE_CHANGED [v_inv_def] THEN COND_CASES_TAC THEN STRIP_TAC THEN
-      SUBST_LHS_TAC) THEN
-   RULE_ASSUM_TAC(REWRITE_RULE[wa_data; wa_ptr]) THEN
+  (MEMORY_REL_TAC THEN SPLIT_ROOTS_TAC THEN V_INV_TAC THEN
    ASM_MESON_TAC[]);;
 
 let memory_rel_zero_space = cake_theorem "memory_rel_zero_space"
@@ -7043,7 +7023,14 @@ let memory_rel_Loc = cake_theorem "memory_rel_Loc"
     `memory_rel c be ts refs sp st m dm ((v1,Loc n k) :: vars) /\
      (!ptr. ~(v1 = RefPtr F ptr)) ==>
      v1 = CodePtr n`)
-  CHEAT_TAC;;
+  (* the word_addr of a root is a Loc only for a Data of a Loc,
+     which only a CodePtr stands for: the RefPtr that could is a
+     RefPtr F, which the hypothesis excludes *)
+  (let noforall = MESON[] `(!p. ~(q /\ (x:num) = p)) <=> ~q` in
+   MEMORY_REL_TAC THEN CASES_ON_NAME "v1" THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "dataSem_v";
+                               noforall]) THEN
+   V_INV_TAC THEN ASM_REWRITE_TAC[]);;
 
 let memory_rel_ByteArray_words_IMP =
   cake_theorem "memory_rel_ByteArray_words_IMP"
