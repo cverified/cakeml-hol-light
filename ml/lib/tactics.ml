@@ -605,3 +605,9 @@ let PAIRARG_TAC (asl,w as gl) =
     | _ -> false in
   let t = find_term ok (list_mk_conj (w :: map (concl o snd) asl)) in
   CASES_ON_TAC (rand t) gl;;
+
+(* and the case split of a named variable that goes into the
+   assumptions as well (CASES_ON_TAC's SUBST_ALL_TAC), which is what
+   an induction hypothesis about that variable needs *)
+
+let CASES_ON_NAME n (asl,w as gl) = CASES_ON_TAC (var_by_name n gl) gl;;

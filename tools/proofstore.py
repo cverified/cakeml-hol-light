@@ -12,6 +12,11 @@ names a theorem of the HOL4 source and the lines under it are the
 tactic, as the port is to write it (indented by two spaces, with
 no `;;` at the end).  A name that the file does not have keeps
 its CHEAT_TAC, so a proof can be added one at a time.
+
+Where a source states two theorems of the same name (HOL4's
+allow_rebind), the name of the section can be <name>#<k>, which
+is the k-th one of that name; a plain <name> is every one of them
+that has no numbered section of its own.
 """
 
 import os

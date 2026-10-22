@@ -254,7 +254,7 @@
      DISCH_TAC THEN
      FIRST_ASSUM(MP_TAC o MATCH_MP heap_lookup_LESS) THEN
      ASM_ARITH_TAC])
-### isSomeDataElement_heap_lookup
+### isSomeDataElement_heap_lookup#1
   (let hexp = cake_def "heap_expand" in
    let hlk = cake_def "heap_lookup" in
    let isde = cake_def "isSomeDataElement" in
@@ -464,3 +464,85 @@
 ### heap_store_rel_v_inv
   (REPEAT STRIP_TAC THEN MATCH_MP_TAC v_inv_SUBMAP THEN
    ASM_REWRITE_TAC[SUBMAP_REFL])
+### isDataElement_lemmas
+  (REWRITE_TAC[cake_def "isDataElement"; cake_def "BlockRep";
+               cake_def "Word64Rep"; cake_def "RefBlock";
+               cake_def "Bytes"; cake_def "ThunkBlock";
+               cake_def "Bignum"] THEN
+   PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REPEAT CONJ_TAC THEN TRY COND_CASES_TAC THEN MESON_TAC[])
+### list_to_BlockReps_heap_length
+  (* the induction hypothesis has a hypothesis (the tail is not
+     empty), so the step is a SIMP and not a REWRITE *)
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
+   ASM_SIMP_TAC[heap_length_NIL; heap_length_CONS;
+                cake_def "BlockRep"; cake_def "el_length";
+                LENGTH; NOT_CONS_NIL] THEN
+   ARITH_TAC)
+### heap_lookup_heap_length
+  (REWRITE_TAC[heap_lookup_APPEND; LT_REFL; SUB_REFL])
+### list_to_BlockReps_heap_lookup_0
+  (LIST_CASES_TAC ["xs"] THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   LIST_CASES_TAC ["t"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[cake_def "heap_lookup"; cake_def "isSomeDataElement";
+               cake_def "BlockRep"] THEN
+   MESON_TAC[])
+### list_to_BlockReps_isDataElement
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   REPEAT GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
+   ASM_SIMP_TAC[ALL; isDataElement_lemmas; NOT_CONS_NIL])
+### list_to_BlockReps_data_up_to_lem
+  (REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[data_up_to_APPEND] THEN
+   MATCH_MP_TAC list_to_BlockReps_isDataElement THEN
+   ASM_REWRITE_TAC[])
+### list_to_BlockReps_ForwardPointer
+  (* every element is a DataElement, and a DataElement is not a
+     ForwardPointer *)
+  (let fl = prove
+    (`!l:((A,B)heap_element)list.
+        ALL isDataElement l ==> FILTER isForwardPointer l = []`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[ALL; FILTER; cake_def "isDataElement"] THEN
+     REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[cake_def "isForwardPointer"] THEN
+     MATCH_REDUCE_TAC THEN ASM_SIMP_TAC[]) in
+   DISCH_TAC THEN MATCH_MP_TAC fl THEN
+   MATCH_MP_TAC list_to_BlockReps_isDataElement THEN
+   ASM_REWRITE_TAC[])
+### list_to_BlockReps_Ref
+  (let not_ref = prove
+    (`!tag ys. ~(isRef (BlockRep tag ys))`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "BlockRep";
+                 cake_def "data_to_word_memoryProof_isRef"] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[cake_def "isMutTag";
+                 distinctness "data_to_word_memoryProof_tag"]) in
+   LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   REPEAT GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
+   ASM_SIMP_TAC[ALL; not_ref; NOT_CONS_NIL])
+### list_to_BlockReps_NULL
+  (LIST_CASES_TAC ["xs"] THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   LIST_CASES_TAC ["t"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[NOT_CONS_NIL])
+### list_to_BlockReps_MEM
+  (ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   LIST_CASES_TAC ["t"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[MEM] THEN MESON_TAC[])
+### list_to_v_get_refs
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+    [REWRITE_TAC[cake_def "dataSem_list_to_v"] THEN DISCH_TAC THEN
+     EXISTS_TAC `t:dataSem_v` THEN ASM_REWRITE_TAC[];
+     REWRITE_TAC[cake_def "dataSem_list_to_v"; cake_def "get_refs";
+                 MAP; FLAT; APPEND_NIL; MEM_APPEND; MEM] THEN
+     STRIP_TAC THEN ASM_MESON_TAC[]])
+### v_inv_lemma#2
+  (REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_inv_eq; v_inv_lemma])

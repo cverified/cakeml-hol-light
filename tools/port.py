@@ -249,6 +249,10 @@ class Porter:
     # keeps its CHEAT_TAC (tools/proofstore.py)
     self.proofs = proofstore.load(db.mlpath_of(thy))
     self.proved = set()
+    # how often a theorem name has been stated, for a source that
+    # states two theorems of the same name (HOL4's allow_rebind):
+    # the second one's proof is the section <name>#2
+    self.thmseen = {}
     self.head = None
     self.deps = []
     self.anc_comments = {}  # a comment of the Ancestors block
@@ -460,8 +464,11 @@ class Porter:
         head = ('let %s =\n  cake_theorem\n    "%s%s"'
                 % (name, nm, attrs))
     # phase three: the proof of this theorem, where there is one
-    tac = self.proofs.get(nm)
-    if tac is not None: self.proved.add(nm)
+    self.thmseen[nm] = self.thmseen.get(nm, 0) + 1
+    key = '%s#%d' % (nm, self.thmseen[nm])
+    tac = self.proofs.get(key)
+    if tac is None: key, tac = nm, self.proofs.get(nm)
+    if tac is not None: self.proved.add(key)
     self.out.append('%s\n  (fun () ->\n    `%s`)\n%s;;'
                     % (head, stmt, tac or '  CHEAT_TAC'))
     # the binding is there, so a source that states a theorem as
