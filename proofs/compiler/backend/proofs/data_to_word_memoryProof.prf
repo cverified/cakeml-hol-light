@@ -592,3 +592,116 @@
    ASM_REWRITE_TAC[] THEN
    MATCH_MP_TAC data_to_word_memoryProof_v_inv_lemma THEN
    ASM_SIMP_TAC[])
+### MEM_v_all_vs
+  (let vav = cake_def "v_all_vs" in
+   LIST_INDUCT_TAC THEN REWRITE_TAC[MEM] THEN GEN_TAC THEN
+   CASES_ON_NAME "h" THEN
+   GEN_REWRITE_TAC (RAND_CONV o RAND_CONV) [vav] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[MEM_APPEND; MEM] THEN ASM_MESON_TAC[])
+### v_all_vs_trans
+  (* a value of v_all_vs [y] is y itself or, where y is a Block, one
+     of the values of its payload, and v_all_vs_MEM says that the
+     payload's values stand in v_all_vs x where the Block does *)
+  (let vav = cake_def "v_all_vs" in
+   let vnil = prove
+    (`v_all_vs ([]:dataSem_v list) = []`,
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN CASES_ON_NAME "y" THEN
+   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [vav] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[vnil; APPEND; APPEND_NIL; MEM] THEN
+   STRIP_TAC THEN
+   TRY(FIRST_X_ASSUM(fun th -> MP_TAC(MATCH_MP v_all_vs_MEM th)) THEN
+       STRIP_TAC) THEN
+   ASM_MESON_TAC[MEM_APPEND; MEM])
+### MEM_in_all_vs
+  (REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_all_vs_trans])
+### v_inv_tf_update_thm
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_lemma])
+### v_inv_tf_update_thm_alt
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_alt_lemma])
+### v_inv_tf_update
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_lemma])
+### v_inv_tf_restrict
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_restrict_lemma])
+### v_all_vs_append
+  (let vav = cake_def "v_all_vs" in
+   let vnil = prove
+    (`v_all_vs ([]:dataSem_v list) = []`,
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[APPEND; vnil];
+     GEN_TAC THEN REWRITE_TAC[APPEND] THEN CASES_ON_NAME "h" THEN
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [vav] THEN
+     MATCH_REDUCE_TAC THEN
+     ASM_REWRITE_TAC[APPEND; GSYM APPEND_ASSOC]])
+### MEM_v_all_vs_split
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   REPEAT GEN_TAC THEN
+   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [cons_app] THEN
+   REWRITE_TAC[v_all_vs_append; MEM_APPEND])
+### MEM_v_all_vs_extend_tl
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   REPEAT GEN_TAC THEN
+   GEN_REWRITE_TAC (RAND_CONV o RAND_CONV o RAND_CONV) [cons_app] THEN
+   REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT)
+### MEM_v_all_vs_extend_hd
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   REPEAT GEN_TAC THEN
+   GEN_REWRITE_TAC (RAND_CONV o RAND_CONV o RAND_CONV) [cons_app] THEN
+   REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT)
+### MEM_v_all_vs_extend_append
+  (REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT)
+### all_vs_Block
+  (let vav_block = prove
+    (`!t tag xs ys.
+        v_all_vs (CONS (Block t tag xs) ys) =
+        APPEND (CONS (Block t tag xs) (v_all_vs xs)) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   REWRITE_TAC[cake_def "all_vs"; v_all_vs_append; vav_block] THEN
+   REWRITE_TAC[EXTENSION; IN_INSERT; IN_UNION; IN_ELIM_THM;
+               MEM_APPEND; MEM] THEN
+   MESON_TAC[])
+### blocks_unique_cons_thm
+  (* the four cases of the two Blocks: both the new one (the goal is
+     then an equation of the arguments), one of them the new one (the
+     other has a timestamp below ts, so the two cannot be equal), or
+     both in the set (which is what the hypothesis is about).  The
+     instance of the hypothesis is written down, because its
+     antecedent has to be discharged by the assumptions as they
+     stand: rewriting with t = ts first would put the antecedent out
+     of reach of them. *)
+  (let inst a b c d =
+     FIRST_ASSUM(fun h -> MP_TAC(SPECL [`t:num`; a; b; c; d] h)) THEN
+     ANTS_TAC THENL
+      [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] in
+   let a1 = `a1:num` and x1 = `xs1:dataSem_v list`
+   and a2 = `a2:num` and x2 = `xs2:dataSem_v list` in
+   REWRITE_TAC[cake_def "blocks_unique"; IN_INSERT;
+               injectivity "dataSem_v"] THEN
+   DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST
+    [ASM_REWRITE_TAC[] THEN ARITH_TAC;
+     inst a1 x1 a2 x2 THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     ASM_ARITH_TAC;
+     inst a2 x2 a2 x2 THEN STRIP_TAC THEN
+     SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
+     inst a1 x1 a1 x1 THEN STRIP_TAC THEN
+     SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC])
