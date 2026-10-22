@@ -705,3 +705,50 @@
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
      inst a1 x1 a1 x1 THEN STRIP_TAC THEN
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC])
+### v_inv_ByteArray_insert
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_ByteArray_insert_lemma])
+### v_inv_ValueArray_insert
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_ValueArray_insert_lemma;
+                 v_inv_Ref])
+### v_inv_MutBlock_insert
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_MutBlock_insert_lemma])
+### v_inv_MutBlock_fin
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_MutBlock_fin_lemma])
+### all_ts_SUBSET_gen
+  (REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN MESON_TAC[])
+### all_ts_SUBSET_ts
+  (REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN MESON_TAC[])
+### NOT_isRefBlock
+  (* the tag of a RefBlock is RefTag, and the three shapes have
+     another one; the conditional of Word64Rep is split after the
+     first rewrite, so the injectivity is used again under it *)
+  (let rws = [injectivity "heap_element"; PAIR_EQ;
+              distinctness "data_to_word_memoryProof_tag"] in
+   REWRITE_TAC[cake_def "isRefBlock"; cake_def "RefBlock";
+               cake_def "Bignum"; cake_raw "Word64Rep"] THEN
+   PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC rws THEN
+   REPEAT CONJ_TAC THEN TRY COND_CASES_TAC THEN
+   REWRITE_TAC rws)
+### INJ_NEQ
+  (REWRITE_TAC[INJ] THEN REPEAT STRIP_TAC THEN ASM_MESON_TAC[])
+### ref_edge_ValueArray
+  (REWRITE_TAC[cake_def "ref_edge"; lookup_insert] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[])
+### ref_edge_Thunk
+  (REWRITE_TAC[cake_def "ref_edge"; lookup_insert] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[])
+### ref_edge_MutBlock
+  (REWRITE_TAC[cake_def "ref_edge"; lookup_insert] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[])

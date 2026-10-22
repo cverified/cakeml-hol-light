@@ -14,6 +14,7 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_combined.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
@@ -32,6 +33,7 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/balanced_map.ml";;
+needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
@@ -64,12 +66,12 @@ cake_hide_more ["el"; "sign"];;
 let word_eq = cake_theorem "word_eq"
   (fun () ->
     `!w v. w = v <=> (!n. word_bit n w = word_bit n v)`)
-  CHEAT_TAC;;
+  (MATCH_ACCEPT_TAC WORD_EQ_BITS);;
 
 let ZIP_REPLICATE = cake_theorem "ZIP_REPLICATE"
   (fun () ->
     `!n. ZIP (REPLICATE n x) (REPLICATE n y) = REPLICATE n (x,y)`)
-  CHEAT_TAC;;
+  (INDUCT_TAC THEN ASM_REWRITE_TAC[REPLICATE; ZIP]);;
 
 (* MutBlock payloads have the shape l ++ [c] ++ r, which simplifiers split
    into three membership tests; this puts EL_MEM into the same split form *)
@@ -79,23 +81,70 @@ let MEM_EL_APPEND_MID = cake_theorem "MEM_EL_APPEND_MID"
        n < LENGTH l + (LENGTH r + 1) ==>
        MEM (EL n (l ++ [c] ++ r)) l \/ EL n (l ++ [c] ++ r) = c \/
        MEM (EL n (l ++ [c] ++ r)) r`)
-  CHEAT_TAC;;
+  (* the element is one of the list, and MEM of the three parts is
+     what the split of the append and of the singleton says *)
+  (let lem = MESON[MEM_APPEND; MEM]
+     `!e l c r. MEM e (APPEND l (APPEND [c] r))
+                ==> MEM e l \/ e = c \/ MEM e r` in
+   REPEAT STRIP_TAC THEN MATCH_MP_TAC lem THEN MATCH_MP_TAC MEM_EL THEN
+   ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ASM_ARITH_TAC);;
 
 let MAX_LIST_sum_bound = cake_theorem "MAX_LIST_sum_bound"
   (fun () ->
     `SUM ls <= MAX_LIST ls * LENGTH ls`)
-  CHEAT_TAC;;
+  (* HOL4's SUM is ITLIST (+) l 0 in the port (ml/lib/hol4.ml), so
+     its clauses come first *)
+  (let sum_cl = prove
+    (`SUM [] = 0 /\ (!h t. SUM (CONS h t) = h + SUM t)`,
+     REWRITE_TAC[SUM_DEF; ITLIST]) in
+   SPEC_TAC(`ls:num list`,`ls:num list`) THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[sum_cl; MAX_LIST; LENGTH; MULT_CLAUSES; LE_REFL] THEN
+   MATCH_MP_TAC LE_ADD2 THEN CONJ_TAC THENL
+   [REWRITE_TAC[ARITH_RULE `a <= MAX a b`];
+    MATCH_MP_TAC LE_TRANS THEN
+    EXISTS_TAC `MAX_LIST (t:num list) * LENGTH t` THEN
+    ASM_REWRITE_TAC[LE_MULT_RCANCEL] THEN DISJ1_TAC THEN
+    REWRITE_TAC[ARITH_RULE `b <= MAX a b`]]);;
 
 let MAX_LIST_bounded_elements = cake_theorem "MAX_LIST_bounded_elements"
   (fun () ->
     `!l1 l2. LIST_REL (<=) l1 l2 ==> MAX_LIST l1 <= MAX_LIST l2`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_BY_NAME "l2" THEN
+   REWRITE_TAC[ALL2; MAX_LIST; LE_REFL] THEN STRIP_TAC THEN
+   MATCH_MP_TAC(ARITH_RULE
+     `a <= c /\ b <= d ==> MAX a b <= MAX c d`) THEN
+   ASM_SIMP_TAC[]);;
 
 let MAX_LIST_MAP = cake_theorem "MAX_LIST_MAP"
   (fun () ->
     `!f l. (!x y. x < y ==> f x < f y) ==> MAX_LIST (MAP f l) = (if
   NULL l then 0 else f (MAX_LIST l))`)
-  CHEAT_TAC;;
+  (* a strictly monotonic f is monotonic, so it commutes with MAX,
+     and the induction is then a rewrite; the last goal is the one
+     of the empty tail, where MAX_LIST [] = 0 and f 0 <= f h *)
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN
+   SUBGOAL_THEN `!a b:num. (f:num->num) a <= f b <=> a <= b`
+     ASSUME_TAC THENL
+    [REPEAT GEN_TAC THEN
+     ASM_CASES_TAC `a:num <= b` THEN ASM_REWRITE_TAC[] THENL
+      [ASM_CASES_TAC `a:num = b` THENL
+        [ASM_REWRITE_TAC[LE_REFL];
+         MATCH_MP_TAC LT_IMP_LE THEN FIRST_ASSUM MATCH_MP_TAC THEN
+         ASM_ARITH_TAC];
+       REWRITE_TAC[NOT_LE] THEN FIRST_ASSUM MATCH_MP_TAC THEN
+       ASM_ARITH_TAC];
+     ALL_TAC] THEN
+   SUBGOAL_THEN `!a b:num. (f:num->num) (MAX a b) = MAX (f a) (f b)`
+     ASSUME_TAC THENL
+    [REPEAT GEN_TAC THEN ASM_REWRITE_TAC[MAX] THEN
+     COND_CASES_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
+   SPEC_TAC(`l:num list`,`l:num list`) THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; MAX_LIST; NULL; NULL_EQ] THEN
+   ASM_CASES_TAC `t:num list = []` THEN
+   ASM_REWRITE_TAC[MAP; MAX_LIST; NULL; NULL_EQ] THEN
+   REWRITE_TAC[ARITH_RULE `MAX x 0 = x`] THEN
+   ASM_REWRITE_TAC[MAX] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
+   AP_TERM_TAC THEN ASM_ARITH_TAC);;
 
 let w2i_i2w_IMP = cake_theorem "w2i_i2w_IMP"
   (fun () ->
@@ -106,7 +155,7 @@ let w2i_i2w_IMP = cake_theorem "w2i_i2w_IMP"
 let word_i2w_sub = cake_theorem "word_i2w_sub"
   (fun () ->
     `!a b. i2w a - i2w b = i2w (a - b)`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[IWORD_INT_SUB]);;
 
 (* -- *)
 
@@ -164,7 +213,15 @@ let Word64Rep_DataElement = cake_theorem "Word64Rep_DataElement"
     `!a w. ?ws. (Word64Rep a w:('a
   word_loc,data_to_word_memoryProof_tag#('a word_loc)
   list)heap_element) = DataElement [] (LENGTH ws) (Word64Tag,ws)`)
-  CHEAT_TAC;;
+  (* the first argument is the type itself, which the clause of the
+     definition fixes, so the lambda form of it is what rewrites
+     here; the witness is the list that the branch has *)
+  (let take_ws (asl,w as gl) =
+     let bod = snd(dest_exists w) in
+     let ws = snd(dest_pair(last(snd(strip_comb(lhs bod))))) in
+     (EXISTS_TAC ws THEN REWRITE_TAC[LENGTH; ARITH]) gl in
+   REPEAT GEN_TAC THEN REWRITE_TAC[cake_raw "Word64Rep"] THEN
+   COND_CASES_TAC THEN take_ws);;
 
 let ThunkBlock_def = cake_define
   `ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])`;;
@@ -267,7 +324,10 @@ let ThunkBlock_11 = cake_theorem "ThunkBlock_11[simp]"
   (fun () ->
     `ThunkBlock ev1 x1 = ThunkBlock ev2 x2 <=>
        ev1 = ev2 /\ x1 = x2`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "ThunkBlock"; injectivity "heap_element";
+               injectivity "data_to_word_memoryProof_tag"; CONS_11;
+               PAIR_EQ] THEN
+   CONV_TAC TAUT);;
 
 let v_inv_ck_mono = cake_theorem "v_inv_ck_mono"
   (fun () ->
@@ -347,7 +407,9 @@ let MEM_IMP_v_size = cake_theorem "MEM_IMP_v_size[local]"
   (fun () ->
     `!l a. MEM a l ==> dataSem_v_size a < 1 + list_size dataSem_v_size
   l`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC(ARITH_RULE `a <= b ==> a < 1 + b`) THEN
+   MATCH_MP_TAC MEM_list_size THEN ASM_REWRITE_TAC[]);;
 
 let _ = size_thms "dataSem_v";;
 (* the termination relation that HOL4 gives, with
@@ -551,24 +613,42 @@ let word_list_limit = cake_theorem "word_list_limit"
 let MOD_EQ_0_0 = cake_theorem "MOD_EQ_0_0"
   (fun () ->
     `!n b. 0 < b ==> (n MOD b = 0) ==> n < b ==> (n = 0)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN ASM_MESON_TAC[MOD_LT]);;
 
 let EVERY2_IMP_EVERY = cake_theorem "EVERY2_IMP_EVERY"
   (fun () ->
     `!xs ys. EVERY2 P xs ys ==> EVERY (\(x,y). P y x) (ZIP ys xs)`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_BY_NAME "ys" THEN
+   REWRITE_TAC[ALL2; ALL; ZIP] THEN
+   CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN ASM_SIMP_TAC[]);;
 
 let EVERY2_IMP_EVERY2 = cake_theorem "EVERY2_IMP_EVERY2"
   (fun () ->
     `!xs ys P1 P2.
         (!x y. MEM x xs /\ MEM y ys /\ P1 x y ==> P2 x y) ==>
         EVERY2 P1 xs ys ==> EVERY2 P2 xs ys`)
-  CHEAT_TAC;;
+  (* the relations are fixed before the induction, so that the
+     induction hypothesis applies to the tails by MATCH_MP_TAC *)
+  (let aux = prove
+    (`!(P1:A->B->bool) P2 xs ys.
+        (!x y. MEM x xs /\ MEM y ys /\ P1 x y ==> P2 x y) /\
+        ALL2 P1 xs ys ==> ALL2 P2 xs ys`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     X_GEN_TAC `ys:B list` THEN
+     STRUCT_CASES_TAC(ISPEC `ys:B list` list_CASES_v) THEN
+     REWRITE_TAC[ALL2; MEM] THEN REPEAT STRIP_TAC THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
+     REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[TAUT `(p ==> q ==> r) <=> (p /\ q ==> r)`] THEN
+   MATCH_ACCEPT_TAC aux);;
 
 let MEM_EVERY2_IMP = cake_theorem "MEM_EVERY2_IMP"
   (fun () ->
     `!l x zs P. MEM x l /\ EVERY2 P zs l ==> (?z. MEM z zs /\ P z x)`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN CASES_BY_NAME "zs" THEN
+   REWRITE_TAC[ALL2; MEM] THEN STRIP_TAC THEN ASM_MESON_TAC[]);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:621-622: ML code, not
    ported *)
@@ -580,12 +660,32 @@ let EVERY2_APPEND_CONS = cake_theorem "EVERY2_APPEND_CONS"
                        t1 = LENGTH xs) /\
                               EVERY2 P xs t1 /\ P y t /\ EVERY2 P
                                 ys t2)`)
-  CHEAT_TAC;;
+  (let aux = prove
+    (`!(P:A->B->bool) xs y ys zs.
+        ALL2 P (APPEND xs (CONS y ys)) zs
+        ==> ?u1 u u2. zs = APPEND u1 (CONS u u2) /\
+                      LENGTH u1 = LENGTH xs /\
+                      ALL2 P xs u1 /\ P y u /\ ALL2 P ys u2`,
+     GEN_TAC THEN LIST_INDUCT_TAC THENL
+      [REPEAT GEN_TAC THEN
+       STRUCT_CASES_TAC(ISPEC `zs:B list` list_CASES_v) THEN
+       REWRITE_TAC[APPEND; ALL2; LENGTH] THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`[]:B list`; `v:B`; `vs:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; LENGTH; ALL2];
+       REPEAT GEN_TAC THEN
+       STRUCT_CASES_TAC(ISPEC `zs:B list` list_CASES_v) THEN
+       REWRITE_TAC[APPEND; ALL2; LENGTH] THEN STRIP_TAC THEN
+       USE_IH THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`CONS (v:B) u1`; `u:B`; `u2:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; LENGTH; ALL2]]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 let EVERY2_SWAP = cake_theorem "EVERY2_SWAP"
   (fun () ->
     `!xs ys. EVERY2 P xs ys ==> EVERY2 (\y x. P x y) ys xs`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_BY_NAME "ys" THEN
+   ASM_REWRITE_TAC[ALL2] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+   ASM_SIMP_TAC[]);;
 
 let EVERY2_APPEND_IMP_APPEND = cake_theorem "EVERY2_APPEND_IMP_APPEND"
   (fun () ->
@@ -593,7 +693,22 @@ let EVERY2_APPEND_IMP_APPEND = cake_theorem "EVERY2_APPEND_IMP_APPEND"
         EVERY2 P (xs1 ++ xs2) ys ==>
         (?ys1 ys2. (ys = ys1 ++ ys2) /\ EVERY2 P xs1 ys1 /\
           EVERY2 P xs2 ys2)`)
-  CHEAT_TAC;;
+  (let aux = prove
+    (`!(P:A->B->bool) xs1 xs2 ys.
+        ALL2 P (APPEND xs1 xs2) ys
+        ==> ?u1 u2. ys = APPEND u1 u2 /\ ALL2 P xs1 u1 /\
+                    ALL2 P xs2 u2`,
+     GEN_TAC THEN LIST_INDUCT_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`[]:B list`; `ys:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; ALL2];
+       REPEAT GEN_TAC THEN
+       STRUCT_CASES_TAC(ISPEC `ys:B list` list_CASES_v) THEN
+       REWRITE_TAC[APPEND; ALL2] THEN STRIP_TAC THEN
+       USE_IH THEN STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`CONS (v:B) u1`; `u2:B list`] THEN
+       ASM_REWRITE_TAC[APPEND; ALL2]]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:654-655: ML code, not
    ported *)
@@ -607,12 +722,26 @@ let EVERY2_MAP_FST_SND = cake_theorem "EVERY2_MAP_FST_SND[local]"
   (fun () ->
     `!xs. EVERY2 P (MAP FST xs) (MAP SND xs) = EVERY (\(x,y). P x y)
   xs`)
-  CHEAT_TAC;;
+  (let aux = prove
+    (`!(P:A->B->bool) xs.
+        ALL2 P (MAP FST xs) (MAP SND xs) <=> ALL (\(x,y). P x y) xs`,
+     GEN_TAC THEN LIST_INDUCT_TAC THEN
+     REWRITE_TAC[MAP; ALL2; ALL] THEN
+     STRUCT_CASES_TAC(ISPEC `h:A#B` PAIR_SURJECTIVE) THEN
+     ASM_REWRITE_TAC[FST; SND] THEN
+     CONV_TAC(ONCE_DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 let fapply_fupdate_update = cake_theorem "fapply_fupdate_update"
   (fun () ->
     `(FAPPLY) (f |+ p) = (FST p =+ SND p) ((FAPPLY) f)`)
-  CHEAT_TAC;;
+  (let aux = prove
+    (`!(f:(A,B)fmap) p. FAPPLY (f |+ p) = (FST p =+ SND p) (FAPPLY f)`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `p:A#B` PAIR_SURJECTIVE) THEN
+     REWRITE_TAC[FUN_EQ_THM; UPDATE; FST; SND; FAPPLY_FUPDATE_THM] THEN
+     GEN_TAC THEN REWRITE_TAC[EQ_SYM_EQ]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 let heap_lookup_APPEND1 = cake_theorem "heap_lookup_APPEND1[local]"
   (fun () ->
@@ -620,14 +749,43 @@ let heap_lookup_APPEND1 = cake_theorem "heap_lookup_APPEND1[local]"
        heap_length h1 <= z ==>
        (heap_lookup z (h1 ++ h2) = heap_lookup (z - heap_length
          h1) h2)`)
-  CHEAT_TAC;;
+  (* past the first heap the lookup is the one of the second, and
+     the two conditions of the clause are false by arithmetic *)
+  (let hl = cake_def "heap_lookup" in
+   let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) =
+              el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   LIST_INDUCT_TAC THEN
+   REWRITE_TAC[hlen_cl; APPEND; hl; SUB_0; LE_0] THEN
+   REPEAT GEN_TAC THEN DISCH_TAC THEN
+   MP_ISPEC_NAME "h" el_length_GT_0 THEN DISCH_TAC THEN
+   COND_CASES_TAC THENL
+    [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+   COND_CASES_TAC THENL
+    [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+   REWRITE_TAC[ARITH_RULE `a - (b + c) = a - b - c`] THEN
+   FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC);;
 
 let heap_lookup_APPEND2 = cake_theorem "heap_lookup_APPEND2[local]"
   (fun () ->
     `!h1 z h2.
        z < heap_length h1 ==>
        (heap_lookup z (h1 ++ h2) = heap_lookup z h1)`)
-  CHEAT_TAC;;
+  (* heap_length is the SUM of the el_lengths, so its clauses come
+     first here too *)
+  (let hl = cake_def "heap_lookup" in
+   let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) =
+              el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   LIST_INDUCT_TAC THEN
+   REWRITE_TAC[hlen_cl; LT; APPEND; hl] THEN
+   REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[] THEN
+   DISCH_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC);;
 
 let data_to_word_memoryProof_heap_lookup_APPEND =
   cake_theorem "heap_lookup_APPEND"
@@ -636,7 +794,9 @@ let data_to_word_memoryProof_heap_lookup_APPEND =
       (if a < heap_length h1 then
       heap_lookup a h1 else
       heap_lookup (a - heap_length h1) h2)`)
-  CHEAT_TAC;;
+  (COND_CASES_TAC THENL
+    [MATCH_MP_TAC heap_lookup_APPEND2 THEN ASM_REWRITE_TAC[];
+     MATCH_MP_TAC heap_lookup_APPEND1 THEN ASM_ARITH_TAC]);;
 
 (* Prove refinement is maintained past GC calls *)
 
@@ -644,14 +804,22 @@ let data_to_word_memoryProof_LENGTH_ADDR_MAP =
   cake_theorem "LENGTH_ADDR_MAP[local]"
   (fun () ->
     `!xs f. LENGTH (ADDR_MAP f xs) = LENGTH xs`)
-  CHEAT_TAC;;
+  (REPEAT GEN_TAC THEN
+   MATCH_ACCEPT_TAC(GSYM (SPEC_ALL ADDR_MAP_LENGTH)));;
 
 let EL_ADDR_MAP = cake_theorem "EL_ADDR_MAP[local]"
   (fun () ->
     `!xs n f.
          n < LENGTH xs ==> (EL n (ADDR_MAP f xs) = ADDR_APPLY f
            (EL n xs))`)
-  CHEAT_TAC;;
+  (let addrmap = cake_def "ADDR_MAP" in
+   let addrapply = cake_def "ADDR_APPLY" in
+   LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[LENGTH; LT];
+    REPEAT GEN_TAC THEN CASES_BY_NAME "h" THEN
+    STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+    ASM_REWRITE_TAC[addrmap; addrapply; EL; HD; TL; LENGTH;
+                    LT_SUC; LT_0]]);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:719: ML code, not ported *)
 
@@ -690,13 +858,24 @@ let v_inv_related = cake_theorem "v_inv_related[local]"
        EVERY (\n. ~(n IN evaluated_thunk_ptr refs) ==> FAPPLY f n
          IN FDOM g)
              (get_refs w)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_related_lemma]);;
 
 let EVERY2_ADDR_MAP = cake_theorem "EVERY2_ADDR_MAP[local]"
   (fun () ->
     `!zs l. EVERY2 P (ADDR_MAP g zs) l <=>
               EVERY2 (\x y. P (ADDR_APPLY g x) y) zs l`)
-  CHEAT_TAC;;
+  (let aux = prove
+    (`!P g zs l.
+        ALL2 P (ADDR_MAP g zs) l <=>
+        ALL2 (\x y. P (ADDR_APPLY g x) y) zs l`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     REWRITE_TAC[cake_def "ADDR_MAP"; ALL2_DEF] THEN
+     CASES_BY_NAME "h" THEN
+     REWRITE_TAC[cake_def "ADDR_MAP"; cake_def "ADDR_APPLY";
+                 ALL2_DEF] THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 let bc_ref_inv_related = cake_theorem "bc_ref_inv_related[local]"
   (fun () ->
@@ -749,7 +928,14 @@ let ThunkBlock_not_EQ = cake_theorem "ThunkBlock_not_EQ[local]"
     `~(ThunkBlock ev x = Bignum i) /\ ~(ThunkBlock ev x = Word64Rep
   (:'a) w) /\ ~(ThunkBlock ev x = BlockRep n xs) /\ ~(ThunkBlock ev x
   = RefBlock zs) /\ ~(ThunkBlock ev x = Bytes be flag bs ys)`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "ThunkBlock"; cake_def "Bignum";
+               cake_def "Word64Rep"; cake_def "BlockRep";
+               cake_def "RefBlock"; cake_def "Bytes"] THEN
+   PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
+               distinctness "data_to_word_memoryProof_tag";
+               NOT_CONS_NIL]);;
 
 let LIST_REL_gc_heap_inline_DataElement =
   cake_theorem "LIST_REL_gc_heap_inline_DataElement[local]"
@@ -792,7 +978,8 @@ let gc_heap_inline_rel_v_inv =
      v_inv conf v refs (x1,f,tf,heap1) /\
      gc_inline_rel dest_evaluated_thunk_rel heap1 x1 x2 ==>
        v_inv conf v refs (x2,f,tf,heap2)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; gc_heap_inline_rel_v_inv_lemma]);;
 
 let bc_stack_ref_inv_gc_inline =
   cake_theorem "bc_stack_ref_inv_gc_inline[local]"
@@ -817,12 +1004,18 @@ let bc_stack_ref_inv_related =
   (roots2,heap2) /\
      bc_stack_ref_inv conf ts stack refs (roots1,heap1,be) ==>
        bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "gc_inline_related"] THEN REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[bc_stack_ref_inv_gc_inline;
+                 bc_stack_ref_inv_gc_related_roots_heap]);;
 
 let data_up_to_APPEND = cake_theorem "data_up_to_APPEND[simp]"
   (fun () ->
     `data_up_to (heap_length xs) (xs ++ ys) <=> EVERY isDataElement xs`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "data_up_to"; heap_split_APPEND_if; LT_REFL;
+               SUB_REFL; heap_split_0] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[APPEND_NIL; injectivity "option"; PAIR_EQ] THEN
+   MESON_TAC[]);;
 
 let all_reachable_from_roots_def = cake_define
   `all_reachable_from_roots roots heap <=>
@@ -850,7 +1043,20 @@ let IMP_all_reachable_from_roots =
      FRANGE f = {a | isSomeDataElement (heap_lookup a heap2)} /\
      gc_related f heap heap2 ==>
      all_reachable_from_roots (ADDR_MAP ((FAPPLY) f) roots) heap2`)
-  CHEAT_TAC;;
+  (* an address of the second heap is in the range of f, so it is the
+     image of an address of the first, which is reachable *)
+  (REWRITE_TAC[cake_def "all_reachable_from_roots"] THEN
+   REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `(p:num) IN FRANGE (f:(num,num)fmap)` MP_TAC THENL
+    [ASM_REWRITE_TAC[IN_ELIM_THM; cake_def "isSomeDataElement"] THEN
+     ASM_MESON_TAC[];
+     REWRITE_TAC[FMAP_IN_FRANGE] THEN STRIP_TAC THEN
+     FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
+     MATCH_MP_TAC reachable_addresses_related THEN
+     CONJ_TAC THENL
+      [ASM_MESON_TAC[];
+       CONJ_TAC THENL
+        [ASM_REWRITE_TAC[]; ASM_REWRITE_TAC[SUBSET_REFL]]]]);;
 
 let heap_lookup_expand_eq_SOME =
   cake_theorem "heap_lookup_expand_eq_SOME"
@@ -858,21 +1064,48 @@ let heap_lookup_expand_eq_SOME =
     `heap_lookup a (heap ++ heap_expand n) = SOME (DataElement ys l d)
   <=>
      heap_lookup a heap = SOME (DataElement ys l d)`)
-  CHEAT_TAC;;
+  (* past the heap the lookup is in the expansion, which is one
+     Unused element, and that is not a DataElement *)
+  (let hexp = cake_def "heap_expand" in
+   let hlk = cake_def "heap_lookup" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   REWRITE_TAC[heap_lookup_APPEND] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[] THEN
+   MATCH_MP_TAC(TAUT `~a /\ ~b ==> (a <=> b)`) THEN CONJ_TAC THENL
+    [REWRITE_TAC[hexp] THEN COND_CASES_TAC THEN REWRITE_TAC[hlk] THEN
+     REPEAT COND_CASES_TAC THEN REWRITE_TAC opt;
+     DISCH_TAC THEN
+     FIRST_ASSUM(MP_TAC o MATCH_MP heap_lookup_LESS) THEN
+     ASM_ARITH_TAC]);;
 
 let isSomeDataElement_heap_lookup =
   cake_theorem "isSomeDataElement_heap_lookup"
   (fun () ->
     `isSomeDataElement (heap_lookup a (heap ++ heap_expand n)) =
      isSomeDataElement (heap_lookup a heap)`)
-  CHEAT_TAC;;
+  (let hexp = cake_def "heap_expand" in
+   let hlk = cake_def "heap_lookup" in
+   let isde = cake_def "isSomeDataElement" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   REWRITE_TAC[heap_lookup_APPEND] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[] THEN
+   MATCH_MP_TAC(TAUT `~a /\ ~b ==> (a <=> b)`) THEN CONJ_TAC THENL
+    [REWRITE_TAC[hexp] THEN COND_CASES_TAC THEN
+     REWRITE_TAC[hlk; isde] THEN REPEAT COND_CASES_TAC THEN
+     REWRITE_TAC(isde :: opt);
+     REWRITE_TAC[isde] THEN STRIP_TAC THEN
+     FIRST_ASSUM(MP_TAC o MATCH_MP heap_lookup_LESS) THEN
+     ASM_ARITH_TAC]);;
 
 let gc_related_APPEND_heap_expand =
   cake_theorem "gc_related_APPEND_heap_expand"
   (fun () ->
     `gc_related f heap (heap2 ++ heap_expand n) = gc_related f heap
   heap2`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "gc_related"; isSomeDataElement_heap_lookup;
+               heap_lookup_expand_eq_SOME]);;
 
 let data_to_word_memoryProof_full_gc_thm = cake_theorem "full_gc_thm"
   (fun () ->
@@ -996,7 +1229,9 @@ let gen_gc_data_refs_split =
 let heap_expand_not_isRef = cake_theorem "heap_expand_not_isRef"
   (fun () ->
     `EVERY (\x. ~(data_to_word_memoryProof_isRef x)) (heap_expand n)`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "heap_expand"] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[ALL; cake_def "data_to_word_memoryProof_isRef"] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
 
 let reset_gens_def = cake_define
   `reset_gens conf a =
@@ -1050,13 +1285,21 @@ let heap_split_heap_split = cake_theorem "heap_split_heap_split"
 let heap_split_LESS_EQ = cake_theorem "heap_split_LESS_EQ"
   (fun () ->
     `!heap n x. heap_split n heap = SOME x ==> n <= heap_length heap`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "heap_split"; heap_length_NIL;
+               heap_length_CONS] THEN
+   EVERY_CASE_TAC THEN REPEAT COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[distinctness "option"; LE_0] THEN
+   DISCH_TAC THEN USE_IH THEN ASM_ARITH_TAC);;
 
 let isRef_heap_expand = cake_theorem "isRef_heap_expand[local]"
   (fun () ->
     `!x. EVERY (\x. ~(data_to_word_memoryProof_isRef x)) (heap_expand
   x)`)
-  CHEAT_TAC;;
+  (GEN_TAC THEN REWRITE_TAC[cake_def "heap_expand"] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[ALL; cake_def "data_to_word_memoryProof_isRef"] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
 
 let gen_gc_partial_thm = cake_theorem "gen_gc_partial_thm"
   (fun () ->
@@ -1099,7 +1342,22 @@ let data_length_def = cake_define
 let data_pointers_heap_expand = cake_theorem "data_pointers_heap_expand"
   (fun () ->
     `data_pointers (heap ++ heap_expand n) = data_pointers heap`)
-  CHEAT_TAC;;
+  (* the expansion is one element that is not a DataElement, so it
+     contributes no pointer and shifts none *)
+  (let dp = cake_def "data_pointers" in
+   let aux = prove
+    (`!heap n. data_pointers (APPEND heap (heap_expand n)) =
+               data_pointers heap`,
+     LIST_INDUCT_TAC THENL
+      [GEN_TAC THEN REWRITE_TAC[APPEND; cake_def "heap_expand"] THEN
+       COND_CASES_TAC THEN
+       GEN_REWRITE_TAC LAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[dp] THEN MATCH_REDUCE_TAC THEN REWRITE_TAC[MAP];
+       GEN_TAC THEN REWRITE_TAC[APPEND] THEN CASES_BY_NAME "h" THEN
+       GEN_REWRITE_TAC LAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+       GEN_REWRITE_TAC RAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+       ASM_REWRITE_TAC[]]) in
+   MATCH_ACCEPT_TAC aux);;
 
 let data_length_APPEND_heap_expand =
   cake_theorem "data_length_APPEND_heap_expand"
@@ -1116,17 +1374,87 @@ let data_length_heap_length = cake_theorem "data_length_heap_length"
 let data_length_CONS = cake_theorem "data_length_CONS"
   (fun () ->
     `!x xs. data_length (x :: xs) = data_length [x] + data_length xs`)
-  CHEAT_TAC;;
+  (* what HOL4's simp set does with data_pointers and lookup_len: the
+     pointers of the tail are shifted by the length of the head, and
+     a lookup at a shifted pointer is the lookup in the tail *)
+  (let dp = cake_def "data_pointers" in
+   let dl = cake_def "data_length" in
+   let ll = cake_def "lookup_len" in
+   let dp_cl = prove
+    (`data_pointers ([]:((A,B)heap_element)list) = [] /\
+      (!xs l d (t:((A,B)heap_element)list).
+         data_pointers (CONS (DataElement xs l d) t) =
+         CONS 0 (MAP (\n. n + el_length
+                             (DataElement xs l d:(A,B)heap_element))
+                     (data_pointers t))) /\
+      (!k (t:((A,B)heap_element)list).
+         data_pointers (CONS (Unused k) t) =
+         MAP (\n. n + el_length (Unused k:(A,B)heap_element))
+             (data_pointers t)) /\
+      (!a b c (t:((A,B)heap_element)list).
+         data_pointers (CONS (ForwardPointer a b c) t) =
+         MAP (\n. n + el_length
+                        (ForwardPointer a b c:(A,B)heap_element))
+             (data_pointers t))`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   let hl_sh = prove
+    (`!n (x:(A,B)heap_element) xs.
+        heap_lookup (n + el_length x) (CONS x xs) = heap_lookup n xs`,
+     REPEAT GEN_TAC THEN
+     MP_TAC(ISPEC `x:(A,B)heap_element` el_length_GT_0) THEN
+     REWRITE_TAC[cake_def "heap_lookup"] THEN DISCH_TAC THEN
+     COND_CASES_TAC THENL
+      [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     COND_CASES_TAC THENL
+      [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     REWRITE_TAC[ARITH_RULE `(n + m) - m = n`]) in
+   let map_sh = prove
+    (`!l (x:(A,B)heap_element) xs.
+        MAP (lookup_len (CONS x xs)) (MAP (\n. n + el_length x) l) =
+        MAP (lookup_len xs) l`,
+     LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; ll; hl_sh]) in
+   let ll_0 = prove
+    (`!(x:(A,B)heap_element) xs.
+        lookup_len (CONS x xs) 0 = el_length x`,
+     REWRITE_TAC[ll; cake_def "heap_lookup"] THEN
+     CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV) THEN REWRITE_TAC[]) in
+   let aux = prove
+    (`!(x:(A,B)heap_element) xs.
+        data_length (CONS x xs) = data_length [x] + data_length xs`,
+     GEN_TAC THEN GEN_TAC THEN REWRITE_TAC[dl] THEN
+     STRUCT_CASES_TAC
+       (ISPEC `x:(A,B)heap_element`
+              (cases_of `:(A,B)heap_element`)) THEN
+     REWRITE_TAC[dp_cl; MAP; map_sh; ll_0; SUM_DEF; ITLIST] THEN
+     ARITH_TAC) in
+   MATCH_ACCEPT_TAC aux);;
 
 let data_length_APPEND = cake_theorem "data_length_APPEND"
   (fun () ->
     `!xs ys. data_length (xs ++ ys) = data_length xs + data_length ys`)
-  CHEAT_TAC;;
+  (let dl_nil = prove
+    (`data_length ([]:((A,B)heap_element)list) = 0`,
+     REWRITE_TAC[cake_def "data_length"] THEN
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [cake_def "data_pointers"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[MAP; SUM_DEF; ITLIST]) in
+   LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[APPEND; dl_nil] THEN ARITH_TAC;
+     GEN_TAC THEN REWRITE_TAC[APPEND] THEN
+     GEN_REWRITE_TAC LAND_CONV [data_length_CONS] THEN
+     GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [data_length_CONS] THEN
+     ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
 
 let data_length_heap_expand = cake_theorem "data_length_heap_expand"
   (fun () ->
     `data_length (heap_expand n) = 0`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "heap_expand"] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[cake_def "data_length"] THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [cake_def "data_pointers"] THEN
+   MATCH_REDUCE_TAC THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [cake_def "data_pointers"] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[MAP; SUM_DEF; ITLIST]);;
 
 let gc_combined_thm = cake_theorem "gc_combined_thm"
   (fun () ->
@@ -1182,7 +1510,19 @@ let heap_store_lemma = cake_theorem "heap_store_lemma"
     `!xs y x ys.
         heap_store (heap_length xs) y (xs ++ (x :: ys)) =
         (xs ++ y ++ ys,(heap_length y = el_length x))`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THENL
+    [REPEAT GEN_TAC THEN
+     REWRITE_TAC[heap_length_NIL; APPEND; cake_def "heap_store"] THEN
+     REWRITE_TAC[PAIR_EQ; EQ_SYM_EQ];
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[heap_length_CONS; APPEND] THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "heap_store"] THEN
+     MP_ISPEC_NAME "h" el_length_GT_0 THEN DISCH_TAC THEN
+     ASM_SIMP_TAC[ARITH_RULE `1 <= a ==> ~(a + b = 0)`;
+                  ARITH_RULE `1 <= a ==> ~(a + b < a)`;
+                  ARITH_RULE `(a + b) - a = b`] THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[PAIR_EQ]]);;
 
 let heap_store_rel_def = cake_define
   `heap_store_rel heap heap2 <=>
@@ -1194,14 +1534,27 @@ let isSomeDataElement_heap_lookup_lemma1 =
   (fun () ->
     `isSomeDataElement (heap_lookup n (Unused k :: xs)) <=>
        k < n /\ isSomeDataElement (heap_lookup (n - (k + 1)) xs)`)
-  CHEAT_TAC;;
+  (let isde = cake_def "isSomeDataElement" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   REWRITE_TAC[cake_def "heap_lookup"; cake_def "el_length"] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC(isde :: opt) THENL
+    [MATCH_MP_TAC(TAUT `~a ==> ~(a /\ b)`) THEN ASM_ARITH_TAC;
+     COND_CASES_TAC THEN ASM_REWRITE_TAC(isde :: opt) THENL
+      [MATCH_MP_TAC(TAUT `~a ==> ~(a /\ b)`) THEN ASM_ARITH_TAC;
+       SUBGOAL_THEN `(k:num) < n` (fun th -> REWRITE_TAC[th]) THEN
+       ASM_ARITH_TAC]]);;
 
 let isSomeDataElement_heap_lookup_lemma2 =
   cake_theorem "isSomeDataElement_heap_lookup_lemma2[local]"
   (fun () ->
     `isSomeDataElement (heap_lookup n (heap_expand k ++ xs)) <=>
        k <= n /\ isSomeDataElement (heap_lookup (n - k) xs)`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "heap_expand"] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[APPEND; SUB_0; LE_0] THEN
+   REWRITE_TAC[isSomeDataElement_heap_lookup_lemma1] THEN
+   ASM_SIMP_TAC[ARITH_RULE `~(k = 0) ==> (n - (k - 1 + 1) = n - k)`;
+                ARITH_RULE `~(k = 0) ==> (k - 1 < n <=> k <= n)`]);;
 
 let isSomeDataElement_heap_lookup_lemma3 =
   cake_theorem "isSomeDataElement_heap_lookup_lemma3[local]"
@@ -1210,7 +1563,14 @@ let isSomeDataElement_heap_lookup_lemma3 =
          (isSomeDataElement (heap_lookup n (x :: xs)) <=>
           el_length x <= n /\ isSomeDataElement (heap_lookup (n -
             el_length x) xs))`)
-  CHEAT_TAC;;
+  (let isde = cake_def "isSomeDataElement" in
+   let opt = [distinctness "option"; injectivity "option";
+              distinctness "heap_element"] in
+   DISCH_TAC THEN REWRITE_TAC[cake_def "heap_lookup"] THEN
+   ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC(isde :: opt) THENL
+    [MATCH_MP_TAC(TAUT `~a ==> ~(a /\ b)`) THEN ASM_ARITH_TAC;
+     ASM_SIMP_TAC[ARITH_RULE `~(a:num < b) ==> (b <= a <=> T)`]]);;
 
 let IMP_heap_store_unused = cake_theorem "IMP_heap_store_unused[local]"
   (fun () ->
@@ -1269,7 +1629,9 @@ let heap_store_rel_lemma = cake_theorem "heap_store_rel_lemma[local]"
     `heap_store_rel h1 h2 /\ (heap_lookup n h1 = SOME (DataElement ys l
   d)) ==>
        (heap_lookup n h2 = SOME (DataElement ys l d))`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "heap_store_rel";
+               cake_def "isSomeDataElement"] THEN
+   MESON_TAC[]);;
 
 (* cons *)
 
@@ -1290,7 +1652,7 @@ let v_inv_SUBMAP = cake_theorem "v_inv_SUBMAP[local]"
          heap_store_rel heap heap1 /\
          v_inv conf w refs (x,f,tf,heap) ==>
          v_inv conf w refs (x,f1,tf1,heap1)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_inv_eq; v_inv_SUBMAP_lemma]);;
 
 let heap_store_rel_v_inv = cake_theorem "heap_store_rel_v_inv"
   (fun () ->
@@ -1298,7 +1660,8 @@ let heap_store_rel_v_inv = cake_theorem "heap_store_rel_v_inv"
          heap_store_rel heap heap1 /\
          v_inv conf w refs (x,f,tf,heap) ==>
          v_inv conf w refs (x,f,tf,heap1)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC v_inv_SUBMAP THEN
+   ASM_REWRITE_TAC[SUBMAP_REFL]);;
 
 let heap_store_unused_alt_thm =
   cake_theorem "heap_store_unused_alt_thm[local]"
@@ -1347,7 +1710,12 @@ let isDataElement_lemmas = cake_theorem "isDataElement_lemmas[simp]"
       isDataElement (Bytes y1 y2 y3 y4) /\
       isDataElement (ThunkBlock ev v) /\
       isDataElement (Bignum i)`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "isDataElement"; cake_def "BlockRep";
+               cake_def "Word64Rep"; cake_def "RefBlock";
+               cake_def "Bytes"; cake_def "ThunkBlock";
+               cake_def "Bignum"] THEN
+   PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REPEAT CONJ_TAC THEN TRY COND_CASES_TAC THEN MESON_TAC[]);;
 
 (* --- Allocating multiple cons-elements in one go --- *)
 
@@ -1368,12 +1736,20 @@ let list_to_BlockReps_heap_length =
        ~(xs = []) ==>
        heap_length (list_to_BlockReps conf x len xs) =
         3 * LENGTH xs`)
-  CHEAT_TAC;;
+  (* the induction hypothesis has a hypothesis (the tail is not
+     empty), so the step is a SIMP and not a REWRITE *)
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
+   ASM_SIMP_TAC[heap_length_NIL; heap_length_CONS;
+                cake_def "BlockRep"; cake_def "el_length";
+                LENGTH; NOT_CONS_NIL] THEN
+   ARITH_TAC);;
 
 let heap_lookup_heap_length = cake_theorem "heap_lookup_heap_length"
   (fun () ->
     `heap_lookup (heap_length h1) (h1 ++ h2) = heap_lookup 0 h2`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[heap_lookup_APPEND; LT_REFL; SUB_REFL]);;
 
 let list_to_BlockReps_heap_lookup_0 =
   cake_theorem "list_to_BlockReps_heap_lookup_0"
@@ -1381,7 +1757,12 @@ let list_to_BlockReps_heap_lookup_0 =
     `~(xs = []) ==>
      isSomeDataElement (heap_lookup 0 (list_to_BlockReps conf x
        len xs))`)
-  CHEAT_TAC;;
+  (LIST_CASES_TAC ["xs"] THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   LIST_CASES_TAC ["t"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[cake_def "heap_lookup"; cake_def "isSomeDataElement";
+               cake_def "BlockRep"] THEN
+   MESON_TAC[]);;
 
 let list_to_BlockReps_isDataElement =
   cake_theorem "list_to_BlockReps_isDataElement"
@@ -1389,7 +1770,11 @@ let list_to_BlockReps_isDataElement =
     `!xs x len.
        ~(xs = []) ==>
        EVERY isDataElement (list_to_BlockReps conf x len xs)`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   REPEAT GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
+   ASM_SIMP_TAC[ALL; isDataElement_lemmas; NOT_CONS_NIL]);;
 
 let list_to_BlockReps_data_up_to_lem =
   cake_theorem "list_to_BlockReps_data_up_to_lem[local]"
@@ -1397,7 +1782,9 @@ let list_to_BlockReps_data_up_to_lem =
     `~(xs = []) /\
         h1 = list_to_BlockReps conf x len xs ==>
         data_up_to (heap_length h1) (h1 ++ h2)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[data_up_to_APPEND] THEN
+   MATCH_MP_TAC list_to_BlockReps_isDataElement THEN
+   ASM_REWRITE_TAC[]);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2360-2363: a theorem that
    HOL4 states as the value of an ML expression:
@@ -1408,19 +1795,46 @@ let list_to_BlockReps_ForwardPointer =
   (fun () ->
     `~(xs = []) ==> FILTER isForwardPointer (list_to_BlockReps conf x
   len xs) = []`)
-  CHEAT_TAC;;
+  (* every element is a DataElement, and a DataElement is not a
+     ForwardPointer *)
+  (let fl = prove
+    (`!l:((A,B)heap_element)list.
+        ALL isDataElement l ==> FILTER isForwardPointer l = []`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[ALL; FILTER; cake_def "isDataElement"] THEN
+     REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[cake_def "isForwardPointer"] THEN
+     MATCH_REDUCE_TAC THEN ASM_SIMP_TAC[]) in
+   DISCH_TAC THEN MATCH_MP_TAC fl THEN
+   MATCH_MP_TAC list_to_BlockReps_isDataElement THEN
+   ASM_REWRITE_TAC[]);;
 
 let list_to_BlockReps_Ref = cake_theorem "list_to_BlockReps_Ref"
   (fun () ->
     `!xs len x conf. ~(xs = []) ==> EVERY (\v.
   ~(data_to_word_memoryProof_isRef v)) (list_to_BlockReps conf x len
   xs)`)
-  CHEAT_TAC;;
+  (let not_ref = prove
+    (`!tag ys. ~(isRef (BlockRep tag ys))`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "BlockRep";
+                 cake_def "data_to_word_memoryProof_isRef"] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[cake_def "isMutTag";
+                 distinctness "data_to_word_memoryProof_tag"]) in
+   LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   REPEAT GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
+   ASM_SIMP_TAC[ALL; not_ref; NOT_CONS_NIL]);;
 
 let list_to_BlockReps_NULL = cake_theorem "list_to_BlockReps_NULL"
   (fun () ->
     `~(xs = []) ==> ~(list_to_BlockReps conf x len xs = [])`)
-  CHEAT_TAC;;
+  (LIST_CASES_TAC ["xs"] THEN REWRITE_TAC[NOT_CONS_NIL] THEN
+   ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   LIST_CASES_TAC ["t"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[NOT_CONS_NIL]);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2388-2390: a proof *)
 
@@ -1432,7 +1846,9 @@ let list_to_BlockReps_MEM = cake_theorem "list_to_BlockReps_MEM"
              [h; gc_shared_Pointer (len + 3) (wordLang_Word
                (ptr_bits conf cons_tag 2))] \/
        v = BlockRep cons_tag [h; x]`)
-  CHEAT_TAC;;
+  (ONCE_REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   LIST_CASES_TAC ["t"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[MEM] THEN MESON_TAC[]);;
 
 let list_to_BlockReps_Pointer_lem =
   cake_theorem "list_to_BlockReps_Pointer_lem[local]"
@@ -1459,7 +1875,12 @@ let list_to_v_get_refs = cake_theorem "list_to_v_get_refs"
     `!xs t r ts.
        MEM r (get_refs (list_to_v ts t xs)) ==>
          (?x. (MEM x xs \/ x = t) /\ MEM r (get_refs x))`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+    [REWRITE_TAC[cake_def "dataSem_list_to_v"] THEN DISCH_TAC THEN
+     EXISTS_TAC `t:dataSem_v` THEN ASM_REWRITE_TAC[];
+     REWRITE_TAC[cake_def "dataSem_list_to_v"; cake_def "get_refs";
+                 MAP; FLAT; APPEND_NIL; MEM_APPEND; MEM] THEN
+     STRIP_TAC THEN ASM_MESON_TAC[]]);;
 
 let v_inv_lemma = cake_theorem "v_inv_lemma"
   (fun () ->
@@ -1481,7 +1902,7 @@ let data_to_word_memoryProof_v_inv_lemma =
       v_inv conf v refs (x,f,tf,ha ++ heap_expand sp ++ hb) ==>
       v_inv conf v refs (x,f,tf,ha ++ hs ++ heap_expand (sp -
         heap_length hs) ++ hb)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_inv_eq; v_inv_lemma]);;
 
 let v_inv_LIST_REL = cake_theorem "v_inv_LIST_REL"
   (fun () ->
@@ -1493,7 +1914,10 @@ let v_inv_LIST_REL = cake_theorem "v_inv_LIST_REL"
        LIST_REL (\z y. v_inv conf y refs
          (z,f,tf,ha ++ hs ++ heap_expand (sp - heap_length hs) ++
            hb)) l1 l2`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[LIST_REL_EL_EQN] THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   MATCH_MP_TAC data_to_word_memoryProof_v_inv_lemma THEN
+   ASM_SIMP_TAC[]);;
 
 let bind_each_def = cake_define_list
   [`bind_each tf ts (k:num) i 0 = tf`;
@@ -1505,7 +1929,14 @@ let bind_each_MONO = cake_theorem "bind_each_MONO"
     `!n t1 t2 tf k i.
       t1 < t2 /\ (!t. t IN FDOM tf ==> t < t1) ==> ~(t1 IN FDOM
         (bind_each tf t2 k i n))`)
-  CHEAT_TAC;;
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THENL
+    [ASM_MESON_TAC[LT_REFL];
+     REWRITE_TAC[FDOM_FUPDATE; IN_INSERT; DE_MORGAN_THM] THEN
+     CONJ_TAC THENL
+      [ASM_ARITH_TAC;
+       FIRST_X_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+        [ASM_ARITH_TAC; ASM_REWRITE_TAC[]]]]);;
 
 let bind_each_SUBMAP = cake_theorem "bind_each_SUBMAP"
   (fun () ->
@@ -1547,7 +1978,20 @@ let all_ts_cons_no_block = cake_theorem "all_ts_cons_no_block"
     `!refs stack' v.
        (!ts tag xs. ~(v = Block ts tag xs)) ==> all_ts refs (v ::
          stack') = all_ts refs stack'`)
-  CHEAT_TAC;;
+  (* a value that is not a Block has no timestamp in it, so the head
+     of the stack adds nothing to the set *)
+  (let keep = EXISTS_TAC `x:dataSem_v` THEN ASM_MESON_TAC[] in
+   REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `v_all_ts (v:dataSem_v) = []` ASSUME_TAC THENL
+    [CASES_ON_NAME "v" THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_ts"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN ASM_MESON_TAC[];
+     ALL_TAC] THEN
+   REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[EXTENSION; IN_ELIM_THM; MEM] THEN
+   X_GEN_TAC `t:num` THEN EQ_TAC THEN STRIP_TAC THENL
+    [keep; ASM_MESON_TAC[MEM]; keep; keep; keep]);;
 
 (* NOT USED *)
 let all_ts_in_no_block = cake_theorem "all_ts_in_no_block"
@@ -1555,19 +1999,25 @@ let all_ts_in_no_block = cake_theorem "all_ts_in_no_block"
     `!refs stack' v t.
        (!ts tag xs. ~(v = Block ts tag xs)) /\
        t IN all_ts refs (v :: stack') ==> t IN all_ts refs stack'`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     ASSUME_TAC(MATCH_MP all_ts_cons_no_block th)) THEN
+   ASM_MESON_TAC[]);;
 
 let all_ts_append = cake_theorem "all_ts_append"
   (fun () ->
     `!refs x y. all_ts refs (x ++ y) = all_ts refs x UNION all_ts refs
   y`)
-  CHEAT_TAC;;
+  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[EXTENSION; IN_UNION; IN_ELIM_THM; MEM_APPEND] THEN
+   MESON_TAC[]);;
 
 let all_ts_head = cake_theorem "all_ts_head"
   (fun () ->
     `!refs x xs. all_ts refs (x :: xs) = all_ts refs [x] UNION all_ts
   refs xs`)
-  CHEAT_TAC;;
+  (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM all_ts_append; APPEND]);;
 
 let v_all_vs_MEM = cake_theorem "v_all_vs_MEM"
   (fun () ->
@@ -1599,12 +2049,20 @@ let v_all_vs_ts = cake_theorem "v_all_vs_ts"
 let MEM_v_all_vs = cake_theorem "MEM_v_all_vs"
   (fun () ->
     `!l v. MEM v l ==> MEM v (v_all_vs l)`)
-  CHEAT_TAC;;
+  (let vav = cake_def "v_all_vs" in
+   LIST_INDUCT_TAC THEN REWRITE_TAC[MEM] THEN GEN_TAC THEN
+   CASES_ON_NAME "h" THEN
+   GEN_REWRITE_TAC (RAND_CONV o RAND_CONV) [vav] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[MEM_APPEND; MEM] THEN ASM_MESON_TAC[]);;
 
 let MEM_stack_all_vs = cake_theorem "MEM_stack_all_vs"
   (fun () ->
     `!v stack' refs. MEM v stack' ==> v IN all_vs refs stack'`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT DISJ2_TAC THEN MATCH_MP_TAC MEM_v_all_vs THEN
+   ASM_REWRITE_TAC[]);;
 
 let v_all_vs_ts_MEM = cake_theorem "v_all_vs_ts_MEM"
   (fun () ->
@@ -1616,7 +2074,22 @@ let v_all_vs_trans = cake_theorem "v_all_vs_trans"
   (fun () ->
     `!x y z. MEM y (v_all_vs x) /\ MEM z (v_all_vs [y]) ==> MEM z
   (v_all_vs x)`)
-  CHEAT_TAC;;
+  (* a value of v_all_vs [y] is y itself or, where y is a Block, one
+     of the values of its payload, and v_all_vs_MEM says that the
+     payload's values stand in v_all_vs x where the Block does *)
+  (let vav = cake_def "v_all_vs" in
+   let vnil = prove
+    (`v_all_vs ([]:dataSem_v list) = []`,
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN CASES_ON_NAME "y" THEN
+   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [vav] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[vnil; APPEND; APPEND_NIL; MEM] THEN
+   STRIP_TAC THEN
+   TRY(FIRST_X_ASSUM(fun th -> MP_TAC(MATCH_MP v_all_vs_MEM th)) THEN
+       STRIP_TAC) THEN
+   ASM_MESON_TAC[MEM_APPEND; MEM]);;
 
 let MEM_in_all_ts = cake_theorem "MEM_in_all_ts"
   (fun () ->
@@ -1629,7 +2102,8 @@ let MEM_in_all_vs = cake_theorem "MEM_in_all_vs"
   (fun () ->
     `!x y refs stack'. x IN all_vs refs stack' /\ MEM y (v_all_vs [x])
   ==> y IN all_vs refs stack'`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_all_vs_trans]);;
 
 (* NOT USED *)
 let v_all_vs_ts_list = cake_theorem "v_all_vs_ts_list"
@@ -1650,7 +2124,8 @@ let v_inv_tf_update_thm = cake_theorem "v_inv_tf_update_thm"
     `!conf v refs y f tf heap ts' a.
        v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN FDOM tf) ==>
        v_inv conf v refs (y,f,tf |+ (ts',a),heap)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_lemma]);;
 
 let v_inv_tf_update_thm_alt_lemma =
   cake_theorem "v_inv_tf_update_thm_alt_lemma"
@@ -1667,7 +2142,8 @@ let v_inv_tf_update_thm_alt = cake_theorem "v_inv_tf_update_thm_alt"
        v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN (all_ts refs
          stack')) /\ ~(ts' IN set_of_list (v_all_ts v)) ==>
        v_inv conf v refs (y,f,tf |+ (ts',a),heap)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_alt_lemma]);;
 
 let v_inv_tf_update_lemma = cake_theorem "v_inv_tf_update_lemma"
   (fun () ->
@@ -1688,7 +2164,8 @@ let v_inv_tf_update = cake_theorem "v_inv_tf_update"
           all_ts refs stack') /\
         v_inv conf (Block ts tag xs) refs (y,f,tf,heap) ==> v_inv
           conf ((Block ts tag xs)) refs (y,f,tf |+ (ts',a),heap)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_lemma]);;
 
 let v_inv_tf_restrict_lemma = cake_theorem "v_inv_tf_restrict_lemma"
   (fun () ->
@@ -1706,18 +2183,35 @@ let v_inv_tf_restrict = cake_theorem "v_inv_tf_restrict"
         (!x. MEM x (v_all_ts v) ==> x IN P) /\
         (!x. x IN (all_ts refs stack') ==> x IN P) ==>
           v_inv conf v refs (y,f,DRESTRICT tf P,heap)`)
-  CHEAT_TAC;;
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_tf_restrict_lemma]);;
 
 let v_all_vs_append = cake_theorem "v_all_vs_append"
   (fun () ->
     `!x y. v_all_vs (x ++ y) = v_all_vs x ++ v_all_vs y`)
-  CHEAT_TAC;;
+  (let vav = cake_def "v_all_vs" in
+   let vnil = prove
+    (`v_all_vs ([]:dataSem_v list) = []`,
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[APPEND; vnil];
+     GEN_TAC THEN REWRITE_TAC[APPEND] THEN CASES_ON_NAME "h" THEN
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [vav] THEN
+     MATCH_REDUCE_TAC THEN
+     ASM_REWRITE_TAC[APPEND; GSYM APPEND_ASSOC]]);;
 
 let MEM_v_all_vs_split = cake_theorem "MEM_v_all_vs_split"
   (fun () ->
     `!x v xs. MEM x (v_all_vs (v :: xs)) ==> MEM x (v_all_vs [v]) \/
   MEM x (v_all_vs xs)`)
-  CHEAT_TAC;;
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   REPEAT GEN_TAC THEN
+   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [cons_app] THEN
+   REWRITE_TAC[v_all_vs_append; MEM_APPEND]);;
 
 let MEM_v_all_vs_split2 = cake_theorem "MEM_v_all_vs_split2"
   (fun () ->
@@ -1728,18 +2222,28 @@ let MEM_v_all_vs_split2 = cake_theorem "MEM_v_all_vs_split2"
 let MEM_v_all_vs_extend_tl = cake_theorem "MEM_v_all_vs_extend_tl"
   (fun () ->
     `!x v xs. MEM x (v_all_vs [v]) ==> MEM x (v_all_vs (v :: xs))`)
-  CHEAT_TAC;;
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   REPEAT GEN_TAC THEN
+   GEN_REWRITE_TAC (RAND_CONV o RAND_CONV o RAND_CONV) [cons_app] THEN
+   REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT);;
 
 let MEM_v_all_vs_extend_hd = cake_theorem "MEM_v_all_vs_extend_hd"
   (fun () ->
     `!x v xs. MEM x (v_all_vs xs) ==> MEM x (v_all_vs (v :: xs))`)
-  CHEAT_TAC;;
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   REPEAT GEN_TAC THEN
+   GEN_REWRITE_TAC (RAND_CONV o RAND_CONV o RAND_CONV) [cons_app] THEN
+   REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT);;
 
 let MEM_v_all_vs_extend_append =
   cake_theorem "MEM_v_all_vs_extend_append"
   (fun () ->
     `MEM x (v_all_vs xs) ==> MEM x (v_all_vs (xs ++ ys))`)
-  CHEAT_TAC;;
+  (REWRITE_TAC[v_all_vs_append; MEM_APPEND] THEN CONV_TAC TAUT);;
 
 let MEM_v_all_vs_EL = cake_theorem "MEM_v_all_vs_EL"
   (fun () ->
@@ -1760,13 +2264,47 @@ let all_vs_Block = cake_theorem "all_vs_Block"
   (fun () ->
     `all_vs refs ((Block t tag xs:dataSem_v) :: ys) =
      Block t tag xs INSERT all_vs refs (xs ++ ys)`)
-  CHEAT_TAC;;
+  (let vav_block = prove
+    (`!t tag xs ys.
+        v_all_vs (CONS (Block t tag xs) ys) =
+        APPEND (CONS (Block t tag xs) (v_all_vs xs)) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   REWRITE_TAC[cake_def "all_vs"; v_all_vs_append; vav_block] THEN
+   REWRITE_TAC[EXTENSION; IN_INSERT; IN_UNION; IN_ELIM_THM;
+               MEM_APPEND; MEM] THEN
+   MESON_TAC[]);;
 
 let blocks_unique_cons_thm = cake_theorem "blocks_unique_cons_thm"
   (fun () ->
     `blocks_unique ts s ==>
      blocks_unique (ts + 1) (Block ts tag xs INSERT s)`)
-  CHEAT_TAC;;
+  (* the four cases of the two Blocks: both the new one (the goal is
+     then an equation of the arguments), one of them the new one (the
+     other has a timestamp below ts, so the two cannot be equal), or
+     both in the set (which is what the hypothesis is about).  The
+     instance of the hypothesis is written down, because its
+     antecedent has to be discharged by the assumptions as they
+     stand: rewriting with t = ts first would put the antecedent out
+     of reach of them. *)
+  (let inst a b c d =
+     FIRST_ASSUM(fun h -> MP_TAC(SPECL [`t:num`; a; b; c; d] h)) THEN
+     ANTS_TAC THENL
+      [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] in
+   let a1 = `a1:num` and x1 = `xs1:dataSem_v list`
+   and a2 = `a2:num` and x2 = `xs2:dataSem_v list` in
+   REWRITE_TAC[cake_def "blocks_unique"; IN_INSERT;
+               injectivity "dataSem_v"] THEN
+   DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST
+    [ASM_REWRITE_TAC[] THEN ARITH_TAC;
+     inst a1 x1 a2 x2 THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     ASM_ARITH_TAC;
+     inst a2 x2 a2 x2 THEN STRIP_TAC THEN
+     SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
+     inst a1 x1 a1 x1 THEN STRIP_TAC THEN
+     SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC]);;
 
 let cons_thm_alt = cake_theorem "cons_thm_alt"
   (fun () ->

@@ -17,6 +17,11 @@ repl-kill pfv > /dev/null 2>&1
 repl-clone hol-template-cakeml pfv > /dev/null 2>&1
 TIMEOUT=5400 repl-step pfv "#use \"$C/tmp/pfprefix.ml\";;" \
   > /dev/null 2>&1
+# the template may be older than ml/lib/lemmas.ml and
+# ml/lib/tactics.ml, which a needs of an already loaded file does
+# not reload: the two define nothing, so loading them again here
+# is what tools/bin/reload does for a working session
+reload pfv > /dev/null 2>&1
 echo "CLOSURE $(( $(date +%s) - $(cat $C/tmp/vstart.txt) ))s"
 cat > $C/tmp/vfile.ml <<ML
 let a0 = length(axioms());;

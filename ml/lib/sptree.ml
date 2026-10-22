@@ -336,3 +336,171 @@ let spts_to_alist_def = cake_define_wf
 
 let toSortedAList_def = cake_define
   `toSortedAList spt = spts_to_alist 0 [(1,spt)] []`;;
+
+(* ================================================================== *)
+(*  The theorems of sptreeTheory that a proof of phase three asks     *)
+(*  for.  A key is read as a path by its lowest bit (EVEN k) and      *)
+(*  (k - 1) DIV 2, so the arithmetic of that encoding comes first:    *)
+(*  a key that is not 0 is 2 * ((k - 1) DIV 2) + 2 when it is even    *)
+(*  and + 1 when it is odd, which makes the step of a path            *)
+(*  injective.                                                        *)
+(* ================================================================== *)
+
+let SPT_BIT_DECOMP = prove
+ (`!k. ~(k = 0)
+       ==> 2 * ((k - 1) DIV 2) + (if EVEN k then 2 else 1) = k`,
+  GEN_TAC THEN ASM_CASES_TAC `EVEN k` THEN ASM_REWRITE_TAC[] THENL
+   [FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[EVEN_EXISTS]) THEN
+    DISCH_THEN(X_CHOOSE_THEN `m:num` SUBST_ALL_TAC) THEN
+    DISCH_TAC THEN
+    SUBGOAL_THEN `2 * m - 1 = 2 * (m - 1) + 1` SUBST1_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    REWRITE_TAC[ARITH_RULE `(2 * m + 1) DIV 2 = m`] THEN
+    ASM_ARITH_TAC;
+    FIRST_X_ASSUM(MP_TAC o
+                  REWRITE_RULE[NOT_EVEN; ODD_EXISTS]) THEN
+    DISCH_THEN(X_CHOOSE_THEN `m:num` SUBST_ALL_TAC) THEN
+    DISCH_TAC THEN
+    REWRITE_TAC[ARITH_RULE `SUC (2 * m) - 1 = 2 * m`;
+                ARITH_RULE `(2 * m) DIV 2 = m`] THEN
+    ARITH_TAC]);;
+
+let SPT_BIT_EQ = prove
+ (`!k1 k2. ~(k1 = 0) /\ ~(k2 = 0) /\
+           (k1 - 1) DIV 2 = (k2 - 1) DIV 2 /\ (EVEN k1 <=> EVEN k2)
+           ==> k1 = k2`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MP_TAC(SPEC `k1:num` SPT_BIT_DECOMP) THEN
+  MP_TAC(SPEC `k2:num` SPT_BIT_DECOMP) THEN
+  ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_ARITH_TAC);;
+
+let SPT_BIT_EQ_EQ = prove
+ (`!k1 k2. ~(k1 = 0) /\ ~(k2 = 0)
+           ==> ((k1 = k2) <=>
+                (EVEN k1 <=> EVEN k2) /\
+                (k1 - 1) DIV 2 = (k2 - 1) DIV 2)`,
+  REPEAT STRIP_TAC THEN EQ_TAC THENL
+   [DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[];
+    STRIP_TAC THEN MATCH_MP_TAC SPT_BIT_EQ THEN ASM_REWRITE_TAC[]]);;
+
+let SPT_DIV2_LT = prove
+ (`!k. ~(k = 0) ==> (k - 1) DIV 2 < k`,
+  GEN_TAC THEN DISCH_TAC THEN
+  MP_TAC(SPECL [`k - 1`; `2`] DIV_LE) THEN ASM_ARITH_TAC);;
+
+let SPT_BIT_EVEN = prove
+ (`!n m. (n = 2 * m + 2) <=>
+         ~(n = 0) /\ EVEN n /\ (n - 1) DIV 2 = m`,
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [DISCH_THEN SUBST1_TAC THEN
+    REWRITE_TAC[ARITH_RULE `~(2 * m + 2 = 0)`;
+                ARITH_RULE `(2 * m + 2) - 1 = 2 * m + 1`;
+                ARITH_RULE `(2 * m + 1) DIV 2 = m`] THEN
+    REWRITE_TAC[EVEN_EXISTS] THEN EXISTS_TAC `m + 1` THEN ARITH_TAC;
+    STRIP_TAC THEN MP_TAC(SPEC `n:num` SPT_BIT_DECOMP) THEN
+    ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
+
+let SPT_BIT_ODD = prove
+ (`!n m. (n = 2 * m + 1) <=>
+         ~(n = 0) /\ ~EVEN n /\ (n - 1) DIV 2 = m`,
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [DISCH_THEN SUBST1_TAC THEN
+    REWRITE_TAC[ARITH_RULE `~(2 * m + 1 = 0)`;
+                ARITH_RULE `(2 * m + 1) - 1 = 2 * m`;
+                ARITH_RULE `(2 * m) DIV 2 = m`] THEN
+    REWRITE_TAC[NOT_EVEN; ODD_EXISTS] THEN EXISTS_TAC `m:num` THEN
+    ARITH_TAC;
+    STRIP_TAC THEN MP_TAC(SPEC `n:num` SPT_BIT_DECOMP) THEN
+    ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
+
+(* the lookup of an insert, by induction on the key: the insert goes
+   down the path of k2 and the lookup down the path of k1, and the
+   two paths meet exactly where the keys are equal *)
+
+let lookup_insert = prove
+ (`!k2 k1 v (t:(A)spt).
+     sptree_lookup k1 (sptree_insert k2 v t) =
+     (if k1 = k2 then SOME v else sptree_lookup k1 t)`,
+  MATCH_MP_TAC num_WF THEN X_GEN_TAC `k2:num` THEN DISCH_TAC THEN
+  ASM_CASES_TAC `k2 = 0` THENL
+   [ASM_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `t:(A)spt` (cases_of `:(A)spt`)) THEN
+    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV)
+      [cake_def "sptree_insert"] THEN
+    REWRITE_TAC[] THEN
+    GEN_REWRITE_TAC LAND_CONV [cake_def "sptree_lookup"] THEN
+    GEN_REWRITE_TAC (RAND_CONV o RAND_CONV)
+      [cake_def "sptree_lookup"] THEN
+    COND_CASES_TAC THEN REWRITE_TAC[];
+    ALL_TAC] THEN
+  SUBGOAL_THEN
+    `!k1 v (t:(A)spt).
+       sptree_lookup k1 (sptree_insert ((k2 - 1) DIV 2) v t) =
+       (if k1 = (k2 - 1) DIV 2 then SOME v else sptree_lookup k1 t)`
+    ASSUME_TAC THENL
+   [FIRST_ASSUM MATCH_MP_TAC THEN ASM_SIMP_TAC[SPT_DIV2_LT];
+    ALL_TAC] THEN
+  REPEAT GEN_TAC THEN
+  SUBGOAL_THEN `(k1 = k2) <=>
+                ~(k1 = 0) /\ (EVEN k1 <=> EVEN k2) /\
+                (k1 - 1) DIV 2 = (k2 - 1) DIV 2`
+    SUBST1_TAC THENL
+   [EQ_TAC THENL
+     [DISCH_TAC THEN ASM_REWRITE_TAC[];
+      STRIP_TAC THEN MATCH_MP_TAC SPT_BIT_EQ THEN ASM_REWRITE_TAC[]];
+    ALL_TAC] THEN
+  STRUCT_CASES_TAC(ISPEC `t:(A)spt` (cases_of `:(A)spt`)) THEN
+  GEN_REWRITE_TAC (LAND_CONV o RAND_CONV)
+    [cake_def "sptree_insert"] THEN
+  ASM_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [cake_def "sptree_lookup"] THEN
+  GEN_REWRITE_TAC (RAND_CONV o RAND_CONV)
+    [cake_def "sptree_lookup"] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[CONJUNCT1(cake_def "sptree_lookup")]);;
+
+(* and the domain as the keys that the lookup gives a value *)
+
+let domain_lookup = prove
+ (`!(t:(A)spt) n. n IN domain t <=> ?v. sptree_lookup n t = SOME v`,
+  MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THENL
+   [REWRITE_TAC[cake_def "domain"; cake_def "sptree_lookup";
+                NOT_IN_EMPTY; distinctness "option"];
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[cake_def "domain"; cake_def "sptree_lookup";
+                IN_SING] THEN
+    COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+    MESON_TAC[];
+    REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
+    REWRITE_TAC[cake_def "domain"; IN_UNION; IN_IMAGE] THEN
+    GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
+      [cake_def "sptree_lookup"] THEN
+    ASM_CASES_TAC `n = 0` THEN
+    ASM_REWRITE_TAC[distinctness "option";
+                    ARITH_RULE `~(0 = 2 * m + 2)`;
+                    ARITH_RULE `~(0 = 2 * m + 1)`] THEN
+    TRY COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+    ASM_MESON_TAC[SPT_BIT_EVEN; SPT_BIT_ODD];
+    REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
+    REWRITE_TAC[cake_def "domain"; IN_UNION; IN_IMAGE; IN_SING] THEN
+    GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
+      [cake_def "sptree_lookup"] THEN
+    ASM_CASES_TAC `n = 0` THEN
+    ASM_REWRITE_TAC[distinctness "option"; injectivity "option";
+                    ARITH_RULE `~(0 = 2 * m + 2)`;
+                    ARITH_RULE `~(0 = 2 * m + 1)`] THEN
+    TRY COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+    ASM_MESON_TAC[SPT_BIT_EVEN; SPT_BIT_ODD]]);;
+
+(* and HOL4's lookup_NONE_domain *)
+
+let lookup_NONE_domain = prove
+ (`!n (t:(A)spt). (sptree_lookup n t = NONE) <=> ~(n IN domain t)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[domain_lookup] THEN
+  STRUCT_CASES_TAC(ISPEC `sptree_lookup n (t:(A)spt)`
+                         (cases_of `:(A)option`)) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  MESON_TAC[]);;
