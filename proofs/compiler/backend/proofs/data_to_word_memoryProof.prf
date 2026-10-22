@@ -314,3 +314,104 @@
    REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
                distinctness "data_to_word_memoryProof_tag";
                NOT_CONS_NIL])
+### v_inv_related
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_related_lemma])
+### gc_heap_inline_rel_v_inv
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; gc_heap_inline_rel_v_inv_lemma])
+### bc_stack_ref_inv_related
+  (REWRITE_TAC[cake_def "gc_inline_related"] THEN REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[bc_stack_ref_inv_gc_inline;
+                 bc_stack_ref_inv_gc_related_roots_heap])
+### IMP_all_reachable_from_roots
+  (* an address of the second heap is in the range of f, so it is the
+     image of an address of the first, which is reachable *)
+  (REWRITE_TAC[cake_def "all_reachable_from_roots"] THEN
+   REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `(p:num) IN FRANGE (f:(num,num)fmap)` MP_TAC THENL
+    [ASM_REWRITE_TAC[IN_ELIM_THM; cake_def "isSomeDataElement"] THEN
+     ASM_MESON_TAC[];
+     REWRITE_TAC[FMAP_IN_FRANGE] THEN STRIP_TAC THEN
+     FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
+     MATCH_MP_TAC reachable_addresses_related THEN
+     CONJ_TAC THENL
+      [ASM_MESON_TAC[];
+       CONJ_TAC THENL
+        [ASM_REWRITE_TAC[]; ASM_REWRITE_TAC[SUBSET_REFL]]]])
+### data_length_heap_expand
+  (REWRITE_TAC[cake_def "heap_expand"] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[cake_def "data_length"] THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [cake_def "data_pointers"] THEN
+   MATCH_REDUCE_TAC THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [cake_def "data_pointers"] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[MAP; SUM_DEF; ITLIST])
+### data_length_CONS
+  (* what HOL4's simp set does with data_pointers and lookup_len: the
+     pointers of the tail are shifted by the length of the head, and
+     a lookup at a shifted pointer is the lookup in the tail *)
+  (let dp = cake_def "data_pointers" in
+   let dl = cake_def "data_length" in
+   let ll = cake_def "lookup_len" in
+   let dp_cl = prove
+    (`data_pointers ([]:((A,B)heap_element)list) = [] /\
+      (!xs l d (t:((A,B)heap_element)list).
+         data_pointers (CONS (DataElement xs l d) t) =
+         CONS 0 (MAP (\n. n + el_length
+                             (DataElement xs l d:(A,B)heap_element))
+                     (data_pointers t))) /\
+      (!k (t:((A,B)heap_element)list).
+         data_pointers (CONS (Unused k) t) =
+         MAP (\n. n + el_length (Unused k:(A,B)heap_element))
+             (data_pointers t)) /\
+      (!a b c (t:((A,B)heap_element)list).
+         data_pointers (CONS (ForwardPointer a b c) t) =
+         MAP (\n. n + el_length
+                        (ForwardPointer a b c:(A,B)heap_element))
+             (data_pointers t))`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [dp] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   let hl_sh = prove
+    (`!n (x:(A,B)heap_element) xs.
+        heap_lookup (n + el_length x) (CONS x xs) = heap_lookup n xs`,
+     REPEAT GEN_TAC THEN
+     MP_TAC(ISPEC `x:(A,B)heap_element` el_length_GT_0) THEN
+     REWRITE_TAC[cake_def "heap_lookup"] THEN DISCH_TAC THEN
+     COND_CASES_TAC THENL
+      [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     COND_CASES_TAC THENL
+      [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     REWRITE_TAC[ARITH_RULE `(n + m) - m = n`]) in
+   let map_sh = prove
+    (`!l (x:(A,B)heap_element) xs.
+        MAP (lookup_len (CONS x xs)) (MAP (\n. n + el_length x) l) =
+        MAP (lookup_len xs) l`,
+     LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; ll; hl_sh]) in
+   let ll_0 = prove
+    (`!(x:(A,B)heap_element) xs.
+        lookup_len (CONS x xs) 0 = el_length x`,
+     REWRITE_TAC[ll; cake_def "heap_lookup"] THEN
+     CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV) THEN REWRITE_TAC[]) in
+   let aux = prove
+    (`!(x:(A,B)heap_element) xs.
+        data_length (CONS x xs) = data_length [x] + data_length xs`,
+     GEN_TAC THEN GEN_TAC THEN REWRITE_TAC[dl] THEN
+     STRUCT_CASES_TAC
+       (ISPEC `x:(A,B)heap_element`
+              (cases_of `:(A,B)heap_element`)) THEN
+     REWRITE_TAC[dp_cl; MAP; map_sh; ll_0; SUM_DEF; ITLIST] THEN
+     ARITH_TAC) in
+   MATCH_ACCEPT_TAC aux)
+### data_length_APPEND
+  (let dl_nil = prove
+    (`data_length ([]:((A,B)heap_element)list) = 0`,
+     REWRITE_TAC[cake_def "data_length"] THEN
+     GEN_REWRITE_TAC ONCE_DEPTH_CONV [cake_def "data_pointers"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[MAP; SUM_DEF; ITLIST]) in
+   LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[APPEND; dl_nil] THEN ARITH_TAC;
+     GEN_TAC THEN REWRITE_TAC[APPEND] THEN
+     GEN_REWRITE_TAC LAND_CONV [data_length_CONS] THEN
+     GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [data_length_CONS] THEN
+     ASM_REWRITE_TAC[] THEN ARITH_TAC])

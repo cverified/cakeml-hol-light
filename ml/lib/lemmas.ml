@@ -184,3 +184,22 @@ let FAPPLY_FUPDATE_THM = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[fmap_apply; FMAP_FN_FUPDATE; FST; SND] THEN
   COND_CASES_TAC THEN REWRITE_TAC[THE]);;
+
+(* the range of a finite map, which HOL4 has as IN_FRANGE of
+   finite_mapTheory; the port cannot have that name, because CakeML
+   has a theorem of its own called IN_FRANGE (copying_gc.ml) *)
+
+let FMAP_IN_FRANGE = prove
+ (`!(f:(A,B)fmap) v.
+     v IN FRANGE f <=> ?k. k IN FDOM f /\ FAPPLY f k = v`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[FRANGE; FDOM; fmap_apply; IN_ELIM_THM] THEN
+  EQ_TAC THEN STRIP_TAC THENL
+   [EXISTS_TAC `k:A` THEN
+    ASM_REWRITE_TAC[THE; distinctness "option"];
+    EXISTS_TAC `k:A` THEN
+    REPEAT(FIRST_X_ASSUM MP_TAC) THEN
+    STRUCT_CASES_TAC(ISPEC `fmap_fn (f:(A,B)fmap) k`
+                           (cases_of `:(B)option`)) THEN
+    REWRITE_TAC[THE; injectivity "option"; distinctness "option"] THEN
+    MESON_TAC[]]);;
