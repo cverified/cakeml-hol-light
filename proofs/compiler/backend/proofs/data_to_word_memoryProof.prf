@@ -834,3 +834,41 @@
   (REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv";
                GSYM APPEND_ASSOC; LIST_REL_SPLIT1] THEN
    STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH])
+### v_inv_MutBlock_hole
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_MutBlock_hole_lemma])
+### b2w_def
+  (REWRITE_TAC[cake_def "b2w"; cake_def "b2n"])
+### IMP_THE_EQ
+  (DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[THE])
+### EVERY2_MAP_MAP
+  (let aux = prove
+    (`!(P:B->C->bool) f g (xs:A list).
+        ALL2 P (MAP f xs) (MAP g xs) <=> ALL (\x. P (f x) (g x)) xs`,
+     GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[MAP; ALL2; ALL]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### gen_starts_in_store_IMP
+  (CASES_ON_NAME "x" THEN CASES_ON_NAME "gens" THEN
+   REWRITE_TAC[cake_def "gen_starts_in_store"] THEN
+   SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+   TRY(CASES_ON_NAME "a" THEN
+       REWRITE_TAC[cake_def "gen_starts_in_store"] THEN
+       SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[]) THEN
+   MESON_TAC[])
+### memory_rel_tl
+  (* the source's match_mp_tac takes the lemma's second antecedent
+     for the goal's; HOL Light's takes the conclusion, so the two
+     antecedents are swapped first and the assumption discharges
+     the one that says what the memory holds *)
+  (DISCH_TAC THEN
+   FIRST_ASSUM(fun th ->
+     MATCH_MP_TAC(MATCH_MP
+       (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
+          memory_rel_rearrange) th)) THEN
+   REWRITE_TAC[MEM] THEN MESON_TAC[])
+### FORALL_WORD
+  (EQ_TAC THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+   ONCE_REWRITE_TAC[GSYM WORD_VAL] THEN
+   FIRST_X_ASSUM MATCH_MP_TAC THEN
+   REWRITE_TAC[dimword; VAL_BOUND])
