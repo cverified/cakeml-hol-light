@@ -1,0 +1,27 @@
+#!/bin/sh
+# pfbase <file of the port> [session] : a session that holds the
+# closure of a file and nothing else, to clone for every try of the
+# file itself (a clone is a fork and costs a second, where the
+# closure costs half an hour).  The closure is loaded in the order
+# of the load order (tools/needsorder.py), which is the order a run
+# has.
+C=/home/freek/claude/hol-light/cakeml
+. $C/tools/holenv.sh
+f="$1"
+s="${2:-pfbase}"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+date +%s > $C/tmp/pfbase-start.txt
+python3 -I $C/tools/needsorder.py "$f" > $C/tmp/pfbase.ml
+echo 'print_string "CLOSUREDONE\n";;' >> $C/tmp/pfbase.ml
+repl-kill "$s" > /dev/null 2>&1
+repl-clone hol-template-cakeml "$s" > /dev/null 2>&1
+TIMEOUT=5400 repl-step "$s" "#use \"$C/tmp/pfbase.ml\";;" \
+  > /dev/null 2>&1
+while ! tmux capture-pane -p -J -S - -t "hol-$s" |
+      sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' |
+      grep -qE '^CLOSUREDONE|^Error'
+do sleep 20; done
+tmux capture-pane -p -J -S - -t "hol-$s" |
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+  grep -E '^Error|^Exception' | tail -3
+echo "hol-$s: $(( $(date +%s) - $(cat $C/tmp/pfbase-start.txt) ))s"
