@@ -1135,7 +1135,7 @@
      does not get past the header of the clause *)
   (let use_ts (asl,w as gl) =
      let v = var_by_name "ts" gl in
-     let ok t = (try rhs(concl t) = v with Failure _ -> false) in
+     let ok t = can rhs (concl t) && rhs(concl t) = v in
      let th = tryfind (fun (_,t) -> if ok t then t else fail()) asl in
      (SUBST1_TAC(SYM th) THEN ASM_REWRITE_TAC[LENGTH_MAP]) gl in
    CASES_ON_NAME "tags" THEN

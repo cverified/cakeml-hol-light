@@ -366,3 +366,15 @@ let DROP_EL_CONS = prove
     REWRITE_TAC[DROP; EL; HD; TL; NOT_SUC; SUC_SUB1; DROP_0;
                 LENGTH; LT_SUC; LT_0] THEN
     ASM_REWRITE_TAC[]]);;
+
+(* HOL4's DROP_DROP_T: two DROPs of a list are one of the sum *)
+
+let DROP_DROP = prove
+ (`!(l:A list) m n. DROP n (DROP m l) = DROP (n + m) l`,
+  LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[DROP];
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(SPEC `m:num` num_CASES) THEN
+    REWRITE_TAC[DROP; NOT_SUC; SUC_SUB1; ADD_CLAUSES; DROP_0;
+                ADD_SUC] THEN
+    ASM_REWRITE_TAC[]]);;
