@@ -749,6 +749,108 @@
   (REWRITE_TAC[cake_def "heap_store_rel";
                cake_def "isSomeDataElement"] THEN
    MESON_TAC[])
+### v_inv_SUBMAP_lemma
+  (* complete induction on the ck of the relation: the value of the
+     invariant is taken apart with v_inv_def and the rule of the
+     relation for that shape is applied, where the greater maps
+     give the same values and the greater heap the same data
+     elements.  What the rule asks of a value inside the value is
+     the induction hypothesis at ck - 1 *)
+  (let (vr,_,_) = v_inv_ck in
+   let rl = CONJUNCTS vr in
+   let vdef = cake_thm "v_inv_def" in
+   (* a data element of the heap is still there after the store *)
+   let keep = prove
+    (`!h1 h2 n e.
+        heap_store_rel h1 h2 ==> heap_lookup n h1 = SOME e ==>
+        isDataElement e ==> heap_lookup n h2 = SOME e`,
+     REWRITE_TAC[cake_def "heap_store_rel"] THEN
+     REPEAT STRIP_TAC THEN
+     FIRST_X_ASSUM(fun th -> MP_TAC(SPEC `n:num` th)) THEN
+     ASM_REWRITE_TAC[cake_def "isSomeDataElement";
+                     injectivity "option"] THEN
+     FIRST_X_ASSUM(MP_TAC o
+                   REWRITE_RULE[cake_def "isDataElement"]) THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN MESON_TAC[]) in
+   let keep_of hsr hl =
+     REWRITE_RULE[isDataElement_lemmas]
+       (MATCH_MP (MATCH_MP keep hsr) hl) in
+   let KEEP_TAC =
+     FIRST_ASSUM(fun hsr -> FIRST_ASSUM(fun hl ->
+       MATCH_ACCEPT_TAC(keep_of hsr hl))) in
+   let lt1 = ARITH_RULE `~(ck = 0) ==> ck - 1 < ck` in
+   (* the b of a RefPtr that the two thunk rules ask to be false *)
+   let NOT_VAR_TAC =
+     FIRST_ASSUM(fun nb ->
+       if is_neg(concl nb) && is_var(rand(concl nb))
+       then SUBST_ALL_TAC(EQF_INTRO nb) else fail()) in
+   let IH_TAC =
+     FIRST_ASSUM(fun nz ->
+       let lt = MATCH_MP lt1 nz in
+       FIRST_ASSUM(fun ih ->
+         let ih' = MP (SPEC `ck - 1` ih) lt in
+         FIRST_ASSUM(fun vi -> MP_TAC(MATCH_MP ih' vi)))) THEN
+     ASM_REWRITE_TAC[] in
+   let setup =
+     MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
+     DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN STRIP_TAC THEN
+     CASES_ON_NAME "w" THEN USE_CHANGED [vdef] in
+   (* a Number is a small one or a Bignum of the heap *)
+   let c1 =
+     COND_CASES_TAC THEN STRIP_TAC THEN SUBST_LHS_TAC THENL
+      [MATCH_MP_TAC(el 0 rl) THEN ASM_REWRITE_TAC[];
+       MATCH_MP_TAC(el 1 rl) THEN ASM_REWRITE_TAC[] THEN KEEP_TAC] in
+   let c2 = STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+            MATCH_MP_TAC(el 2 rl) THEN KEEP_TAC in
+   (* a Block is a BlockNil or a BlockRep whose elements the
+      induction hypothesis carries over one by one *)
+   let c3 =
+     COND_CASES_TAC THEN STRIP_TAC THEN REPEAT SUBST_LHS_TAC THENL
+      [MATCH_MP_TAC(el 7 rl) THEN ASM_REWRITE_TAC[];
+       MATCH_MP_TAC(el 8 rl) THEN REPEAT CONJ_TAC THENL
+        [FIRST_ASSUM MATCH_ACCEPT_TAC;
+         DISCH_TAC THEN
+         FIRST_ASSUM(fun a2th ->
+           if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
+                  (concl a2th)
+           then MP_TAC a2th else fail()) THEN
+         MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
+         REPEAT STRIP_TAC THEN IH_TAC;
+         FIRST_ASSUM(fun sm -> FIRST_ASSUM(fun fl ->
+           MATCH_ACCEPT_TAC(MATCH_MP FLOOKUP_SUBMAP (CONJ sm fl))));
+         KEEP_TAC]] in
+   let c4 = STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+            MATCH_ACCEPT_TAC(el 3 rl) in
+   (* and a RefPtr is a plain reference or one of the two thunks,
+      whose value and heap element the rule names and not its
+      conclusion, so MESON applies the rule *)
+   let d5 =
+     FIRST_ASSUM(fun sm -> FIRST_ASSUM(fun fd ->
+       let s = MATCH_MP (MATCH_MP SUBMAP_FAPPLY sm) fd in
+       REPEAT SUBST_LHS_TAC THEN REWRITE_TAC[CONJUNCT2 s] THEN
+       MATCH_MP_TAC(el 4 rl) THEN
+       REWRITE_TAC[CONJUNCT1 s] THEN REPEAT CONJ_TAC THEN
+       TRY(FIRST_ASSUM MATCH_ACCEPT_TAC))) in
+   let d6 =
+     NOT_VAR_TAC THEN
+     FIRST_ASSUM(fun sm -> FIRST_ASSUM(fun fd ->
+       let s = MATCH_MP (MATCH_MP SUBMAP_FAPPLY sm) fd in
+       RULE_ASSUM_TRY(REWRITE_RULE[CONJUNCT2 s]) THEN
+       REPEAT SUBST_LHS_TAC THEN
+       REWRITE_TAC[CONJUNCT2 s] THEN
+       FIRST_ASSUM(fun hsr -> FIRST_ASSUM(fun hl ->
+         FIRST_ASSUM(fun ih ->
+           ASM_MESON_TAC[el 5 rl; CONJUNCT1 s; keep_of hsr hl;
+                         SPEC `ck - 1` ih; lt1]))))) in
+   let d7 =
+     NOT_VAR_TAC THEN
+     FIRST_ASSUM(fun ih ->
+       ASM_MESON_TAC[el 6 rl; SPEC `ck - 1` ih; lt1]) in
+   let c5 =
+     DISCH_THEN(DISJ_CASES_THEN2 STRIP_ASSUME_TAC
+       (DISJ_CASES_THEN2 STRIP_ASSUME_TAC STRIP_ASSUME_TAC)) THENL
+      [d5; d6; d7] in
+   setup THENL [c1; c2; c3; c4; c5])
 ### v_inv_SUBMAP
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_inv_eq; v_inv_SUBMAP_lemma])
 ### heap_store_rel_v_inv

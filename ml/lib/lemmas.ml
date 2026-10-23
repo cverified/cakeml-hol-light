@@ -425,3 +425,12 @@ let FLOOKUP_SUBMAP = prove
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
   ASM_MESON_TAC[]);;
+
+(* what a SUBMAP says of a point of the domain of the smaller map,
+   which is HOL4's SUBMAP_DEF read forwards *)
+
+let SUBMAP_FAPPLY = prove
+ (`!(f:(A,B)fmap) g n.
+     f SUBMAP g ==> n IN FDOM f
+     ==> n IN FDOM g /\ FAPPLY f n = FAPPLY g n`,
+  REWRITE_TAC[SUBMAP] THEN MESON_TAC[]);;
