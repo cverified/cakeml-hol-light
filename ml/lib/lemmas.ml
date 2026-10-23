@@ -378,3 +378,11 @@ let DROP_DROP = prove
     REWRITE_TAC[DROP; NOT_SUC; SUC_SUB1; ADD_CLAUSES; DROP_0;
                 ADD_SUC] THEN
     ASM_REWRITE_TAC[]]);;
+
+(* HOL4's MEM_FLAT: an element of the flattening is an element of
+   one of the lists *)
+
+let MEM_FLAT = prove
+ (`!ls (x:A). MEM x (FLAT ls) <=> ?l. MEM l ls /\ MEM x l`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[FLAT; MEM; MEM_APPEND] THEN MESON_TAC[]);;
