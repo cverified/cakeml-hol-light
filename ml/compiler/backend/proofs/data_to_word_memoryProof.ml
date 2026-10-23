@@ -7448,7 +7448,25 @@ let w2w_word_of_byte_w2w = cake_theorem "w2w_word_of_byte_w2w"
   (fun () ->
     `good_dimindex (:'a) ==>
      (w2w (word_of_byte (w2w w:'a word)):word8) = w`)
-  CHEAT_TAC;;
+  (* the word of a byte repeats the byte, and the low eight bits of
+     it are the byte itself: the shifts of the definition are by
+     eight, sixteen and thirty-two, which no bit below eight is
+     above *)
+  (DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; DIMINDEX_8] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   REWRITE_TAC[cake_def "word_of_byte"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   FIRST_ASSUM(DISJ_CASES_THEN (fun th -> ASSUME_TAC th) o
+     REWRITE_RULE[cake_def "good_dimindex"]) THEN
+   ASM_REWRITE_TAC[ARITH_EQ] THEN
+   ASM_REWRITE_TAC[BIT_WORD_ZX; BIT_WORD_OR; BIT_WORD_SHL;
+                   DIMINDEX_8] THEN
+   ASM_SIMP_TAC[ARITH_RULE `i < 8 ==> ~(8 <= i)`;
+                ARITH_RULE `i < 8 ==> ~(16 <= i)`;
+                ARITH_RULE `i < 8 ==> ~(32 <= i)`;
+                ARITH_RULE `i < 8 ==> i < 32`;
+                ARITH_RULE `i < 8 ==> i < 64`]);;
 
 let write_bytes_REPLICATE = cake_theorem "write_bytes_REPLICATE[local]"
   (fun () ->
@@ -10463,7 +10481,32 @@ let word_eq_thm = cake_theorem "word_eq_thm"
            (MIN (vs_depth v1) (vs_depth v2)) w1 w2 = SOME
              (res,l1,ck1) /\
          (b <=> (res = (n2w 1))))`)
-  CHEAT_TAC;;
+  (* do_eq gives the size of the comparison, memory_rel_limit bounds
+     it by the clock of MustTerminate (and the dimword is at least
+     one, so the bound by the limit less one holds as well), and
+     word_eq_thm0 is the comparison itself *)
+  (STRIP_TAC THEN
+   FIRST_ASSUM(fun de ->
+     MP_TAC(MATCH_MP (cake_thm "do_eq_IMP_vb_eq_size") de)) THEN
+   DISCH_THEN(X_CHOOSE_THEN `nn:num` ASSUME_TAC) THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun vb -> FIRST_ASSUM(fun gd ->
+     ASSUME_TAC(MATCH_MP (SPEC_ALL (cake_thm "memory_rel_limit"))
+       (CONJ mr (CONJ vb gd)))))) THEN
+   SUBGOAL_THEN `1 <= dimword (:'a)` ASSUME_TAC THENL
+    [REWRITE_TAC[dimword; ARITH_RULE `1 <= n <=> ~(n = 0)`;
+                 EXP_EQ_0; ARITH_EQ];
+     ALL_TAC] THEN
+   SUBGOAL_THEN
+     `nn * dimword (:'a) < MustTerminate_limit (:'a) - 1`
+     ASSUME_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC] THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun vb -> FIRST_ASSUM(fun lt ->
+     FIRST_ASSUM(fun gd ->
+       let ck = REFL `MIN (vs_depth v1) (vs_depth v2)` in
+       let th = MATCH_MP (CONJUNCT1 (cake_thm "word_eq_thm0"))
+                  (CONJ mr (CONJ vb (CONJ ck (CONJ lt gd)))) in
+       MP_TAC th)))) THEN
+   STRIP_TAC THEN ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[]);;
 
 let word_mem_eq_def = cake_define_list
   [`word_mem_eq a [] dm m = SOME T`;
@@ -12884,7 +12927,19 @@ let xor_bytes_word_list = cake_theorem "xor_bytes_word_list"
           frame) (fun2set (m1,(dm:'a word->bool))) /\
          word_xor_bytes a1 a2 (n2w (LENGTH (make_zeros vals1:('a
            word) list))) dm m = SOME m1)`)
-  CHEAT_TAC;;
+  (* the words of the two byte lists are as many as the zeroes, so
+     xor_words_word_list is about them, and the xor of the two is
+     the one of the result by xor_bytes_xor_words *)
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[GSYM (ISPECL
+     [`make_zeros vals1:('a word)list`; `vals1:(word8)list`;
+      `be':bool`] LENGTH_write_bytes)] THEN
+   MATCH_MP_TAC (cake_thm "xor_words_word_list") THEN
+   EXISTS_TAC `write_bytes vals2 (make_zeros vals2:('a word)list)
+                 be'` THEN
+   ASM_REWRITE_TAC[LENGTH_write_bytes] THEN
+   MATCH_MP_TAC (cake_thm "xor_bytes_xor_words") THEN
+   ASM_REWRITE_TAC[]);;
 
 let xor_bytes_word_list_alias = cake_theorem "xor_bytes_word_list_alias"
   (fun () ->
@@ -12901,7 +12956,15 @@ let xor_bytes_word_list_alias = cake_theorem "xor_bytes_word_list_alias"
           frame) (fun2set (m1,(dm:'a word->bool))) /\
          word_xor_bytes a1 a1 (n2w (LENGTH (make_zeros vals1:('a
            word) list))) dm m = SOME m1)`)
-  CHEAT_TAC;;
+  (* and the same where the two lists are one *)
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[GSYM (ISPECL
+     [`make_zeros vals1:('a word)list`; `vals1:(word8)list`;
+      `be':bool`] LENGTH_write_bytes)] THEN
+   MATCH_MP_TAC (cake_thm "xor_words_word_list_alias") THEN
+   ASM_REWRITE_TAC[LENGTH_write_bytes] THEN
+   MATCH_MP_TAC (cake_thm "xor_bytes_xor_words") THEN
+   ASM_REWRITE_TAC[]);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:18637-18644: code that the
    source has in a comment *)
