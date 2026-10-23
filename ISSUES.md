@@ -1069,3 +1069,49 @@ one has to be read next to its source:
   that it did: `wordPropsScript.sml:4004` (`!n stack stack' x`)
   and `word_to_stackProofScript.sml:2108` (`!stack stack'`),
   both of them `stack`/`stack'`.
+
+## The precedence of a word's bitwise operators
+
+HOL4 declares the bitwise operators of a word with
+`add_infixes 490 RIGHT [("&&", word_and)]`, `485` for `??` and
+`482` for `||` (`hol4-src/src/n-bit/wordsScript.sml:168-180`),
+and HOL4's `+` is `500`.  A **higher** number binds **tighter**
+there, so a bitwise operator binds looser than an addition and
+
+```
+-2w && 16w * tag + 2w     is     -2w && (16w * tag + 2w)
+```
+
+The port declares them in `ml/lib/words4.ml:106-112` as `&&` at
+`20`, `||` at `16` and `??` at `16`, and HOL Light's `+` is `16`,
+where a higher number binds tighter.  So in the port `&&` binds
+**tighter** than `+`:
+
+```
+-2w && 16w * tag + 2w     is     (-2w && 16w * tag) + 2w
+```
+
+and `||` and `??`, which sit at `+`'s own level and are right
+associative, group HOL4's way only when the bitwise operator comes
+first (`a || b + c` is `a || (b + c)` in both, but `a + b || c` is
+`a + (b || c)` in the port and `(a + b) || c` in HOL4).
+
+Where it bites: `tools/wordprec.py` reads the quoted terms of
+`ml/` and reports the operand chains where a bitwise operator
+meets a `+` or a `-` with no parenthesis between them.  It finds
+**one**: `BlockNil_and_lemma` of
+`data_to_word_memoryProof`, where HOL4 says
+`-2w && (16w * tag + 2w) = 16w * tag + 2w` and the port says
+`(-2w && 16w * tag) + 2w = 16w * tag + 2w`.  Both are true (the
+two lowest bits of `16w * tag` are clear either way), and the
+proof of phase three proves what the port states, with a comment
+that says so.
+
+What to do about it: the fixities of `ml/lib/words4.ml` have to be
+the ones that give HOL4's grouping (`&&` below `+`, and `||` and
+`??` below that), which is a change of the library layer and of
+what every statement with those operators means -- a pass of its
+own, with a run and a re-verification, and not a thing for phase
+three.  Until then `tools/wordprec.py` is what says which
+statements it would change: today one, and it is to be run again
+whenever a file with word arithmetic is ported.

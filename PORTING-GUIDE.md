@@ -60,7 +60,7 @@ add it to the index.
 | 23 | `INT_ARITH` of a goal with a product | `INT_RING` |
 | 24 | `memory_rel` unfolded in every proof | `MEMORY_REL_TAC` |
 | 25 | a term of a tactic, typed by the parser | `:num`, or the goal's term |
-| 26 | a `case` on the value of a function | `EVERY_CASE_TAC`, before a reduce |
+| 26 | a `case` on the value of a function | `EVERY_CASE_TAC`, before reducing |
 | 27 | `+`, `-` and `*` of HOL4 | the associativity written out |
 | 28 | a type that nests a list of itself | the store's mutual induction |
 
