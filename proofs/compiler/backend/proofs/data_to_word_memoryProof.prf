@@ -597,6 +597,27 @@
 ### gc_related_APPEND_heap_expand
   (REWRITE_TAC[cake_def "gc_related"; isSomeDataElement_heap_lookup;
                heap_lookup_expand_eq_SOME])
+### gc_move_list_data_refs_split
+  (* the move of a list is the move of its head and then of its
+     tail, and each of them keeps the three invariants, which is
+     what the theorem about one move says *)
+  (let gmd = GEN_ALL (cake_thm "gc_move_data_refs_split") in
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+    [REWRITE_TAC[cake_def "gen_gc_gc_move_list"; PAIR_EQ] THEN
+     DISCH_THEN(CONJUNCTS_THEN2
+       (CONJUNCTS_THEN2 (K ALL_TAC) (SUBST1_TAC o SYM))
+       STRIP_ASSUME_TAC) THEN
+     ASM_REWRITE_TAC[];
+     REWRITE_TAC[cake_def "gen_gc_gc_move_list"] THEN
+     PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[PAIR_EQ] THEN
+     DISCH_THEN(CONJUNCTS_THEN2
+       (CONJUNCTS_THEN2 (K ALL_TAC) (SUBST1_TAC o SYM))
+       STRIP_ASSUME_TAC) THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_EXISTS_TAC THEN
+     ASM_REWRITE_TAC[] THEN
+     MATCH_MP_TAC gmd THEN ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[]])
 ### heap_expand_not_isRef
   (REWRITE_TAC[cake_def "heap_expand"] THEN COND_CASES_TAC THEN
    REWRITE_TAC[ALL; cake_def "data_to_word_memoryProof_isRef"] THEN

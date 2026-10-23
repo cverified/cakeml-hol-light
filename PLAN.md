@@ -944,6 +944,48 @@ the two it compares (`El` against `ElemAt`, `Equal` against
 `EqualConst`), and nine folding lemmas whose atoms the proof names
 because `EVERY_CASE_TAC`'s are its own._
 
+## Where the third file stands
+
+_`compiler/backend/proofs/data_to_word_memoryProof.ml`, the memory
+invariant of data_to_word: **334 of its 611 theorems are proved**
+and 277 are still a cheat, so the file adds 284 axioms where it
+added 340 when phase three began.  It is the largest proof theory
+of the port (11,000 lines, 625 blocks that need a proof), and it
+was taken because every later file of data_to_word rests on its
+`memory_rel`._
+
+_What the proofs of this file are made of, beyond the recipe of
+the guide: `MEMORY_REL_TAC` and `V_INV_TAC` (the invariant
+unfolded and the rule of `v_inv` taken apart, guide entry 24), the
+`v_inv_ck` machinery and `v_inv_def` that the whole `v_inv` family
+goes through, the mutual induction of `dataSem_v` for the values
+of a value (entry 28), `WORD_NUM_BIT_TAC` for a bitwise identity
+of numerals at a dimindex that is not known, `ARITH_ASM_TAC` for a
+goal whose context is half arithmetic, and the word-bit toolkit of
+HOL Light (`WORD_EQ_BITS_ALT`, `BIT_WORD_*`, `WORD_ADD_OR`,
+`BIT_WORD_POW2`)._
+
+- _What it cost to find: a term that a tactic writes gets the
+  parser's types, and an arithmetic one gets an invented type
+  variable that no later step matches (entry 25); a match whose
+  scrutinee is a call needs `EVERY_CASE_TAC` before any reduce
+  (entry 26); `MATCH_ACCEPT_TAC` fails where `ACCEPT_TAC` works;
+  `SPEC` of a lemma with a type variable has to be `ISPEC`; a
+  theorem of the file with free variables has to be `GEN_ALL`ed
+  before `MATCH_MP`._
+- _What is blocked, and why: `do_eq_list_F_IMP_MEM`,
+  `memory_rel_ptr_eq` and the `memory_rel_test_*` family, on the
+  inconsistent `do_eq` of ISSUES.md; the `word_list_exists` family
+  (`store_list_thm`, `memory_rel_IMP_word_list_exists`), on the
+  separation logic tactics (`SEP_R_TAC`) that the port has not;
+  the `gc_move_refs`/`gc_move_data` family, on the recursion
+  induction of a `cake_define_wf` definition (HOL4's `recInduct`);
+  `bind_each_FUPDATE`, on `FUPDATE_COMMUTES`; and the byte
+  family (`set_byte_all_32`, `word_of_byte_set_byte_32`), where a
+  bit-level proof at a dimindex of 32 or 64 that enumerates the
+  index does not come back in five minutes -- it wants a proof by
+  the four byte ranges, not by the 32 bits._
+
 ## The sessions of phase three
 
 _What loading costs, measured: the whole port in load order 5,656 s
