@@ -2373,7 +2373,58 @@ let heap_store_unused_alt_gen_state_ok =
     `heap_store_unused_alt a k x heap = (heap2,T) /\
      gen_state_ok a (a + k) heap gens ==>
      gen_state_ok (a + el_length x) (a + k) heap2 gens`)
-  CHEAT_TAC;;
+  (* and the same of the store at the low end: the references start
+     where they started, and a is higher by the element, which no
+     start of a generation is above *)
+  (
+   let transfer = prove
+    (`!(hp:((A,B)heap_element)list) hp2 aa kk xx ss.
+        heap_store aa ([xx] ++ heap_expand (kk - el_length xx)) hp =
+          (hp2,T) /\
+        ss <= aa /\ gen_start_ok hp (aa + kk) ss
+        ==> gen_start_ok hp2 (aa + kk) ss`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "gen_start_ok"] THEN
+     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
+       (REPEAT_TCL CHOOSE_THEN
+         (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC)))) THEN
+     FIRST_ASSUM(fun hs -> FIRST_ASSUM(fun sp -> FIRST_ASSUM(fun le ->
+       MP_TAC(MATCH_MP (cake_thm "heap_split_heap_store")
+         (CONJ sp (CONJ hs le)))))) THEN
+     DISCH_THEN(X_CHOOSE_THEN `h3:((A,B)heap_element)list`
+       ASSUME_TAC) THEN
+     ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[]) in
+   STRIP_TAC THEN CASES_ON_NAME "gens" THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[cake_def "gen_state_ok"]) THEN
+   REWRITE_TAC[cake_def "gen_state_ok"] THEN
+   USE_CHANGED [cake_def "heap_store_unused_alt"] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+   FIRST [DISCH_THEN(fun th ->
+            CONTR_TAC(REWRITE_RULE[] (CONJUNCT2 th)));
+          DISCH_TAC] THEN
+   FIRST_ASSUM(fun gs ->
+     let c1 = CONJUNCT1 gs and c2 = CONJUNCT2 gs in
+     CONJ_TAC THENL
+      [MATCH_MP_TAC ALL_IMP THEN EXISTS_TAC (lhand (concl c1)) THEN
+       CONJ_TAC THENL
+        [GEN_TAC THEN REWRITE_TAC[] THEN STRIP_TAC THEN ASM_ARITH_TAC;
+         ACCEPT_TAC c1];
+       MATCH_MP_TAC ALL_IMP THEN
+       EXISTS_TAC (lhand (concl c2)) THEN
+       CONJ_TAC THENL
+        [GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC transfer THEN
+         W(fun (asl,w) ->
+           let hs = find (fun (_,th) ->
+             (try fst(dest_const(fst(strip_comb(lhand(concl th))))) =
+                  "heap_store"
+              with Failure _ -> false)) asl in
+           EXISTS_TAC (el 2 (snd(strip_comb
+             (lhand (concl (snd hs))))))) THEN
+         W(fun gl -> EXISTS_TAC (var_by_name "x" gl)) THEN
+         ASM_REWRITE_TAC[] THEN
+         FIRST_ASSUM(fun m ->
+           ACCEPT_TAC(MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] c1) m));
+         ACCEPT_TAC c2]]));;
 
 let isDataElement_lemmas = cake_theorem "isDataElement_lemmas[simp]"
   (fun () ->
@@ -4750,7 +4801,61 @@ let heap_store_unused_gen_state_ok =
     `heap_store_unused a k x heap = (heap2,T) /\
      gen_state_ok a (a + k) heap gens ==>
      gen_state_ok a ((a + k) - el_length x) heap2 gens`)
-  CHEAT_TAC;;
+  (* a start of a generation is below a, so the split of the heap
+     there is the split of the stored heap (heap_split_heap_store),
+     with the same first half; and the references start lower than
+     before, which is a weaker bound on the pointers.  The transfer
+     is a lemma with type variables of its own, so that it can be
+     used on the heaps of the goal (PORTING-GUIDE.md entry 25) *)
+  (
+   let transfer = prove
+    (`!(hp:((A,B)heap_element)list) hp2 aa kk xx ss.
+        heap_store aa (heap_expand (kk - el_length xx) ++ [xx]) hp =
+          (hp2,T) /\
+        ss <= aa /\ gen_start_ok hp (aa + kk) ss
+        ==> gen_start_ok hp2 ((aa + kk) - el_length xx) ss`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "gen_start_ok"] THEN
+     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
+       (REPEAT_TCL CHOOSE_THEN
+         (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC)))) THEN
+     FIRST_ASSUM(fun hs -> FIRST_ASSUM(fun sp -> FIRST_ASSUM(fun le ->
+       MP_TAC(MATCH_MP (cake_thm "heap_split_heap_store")
+         (CONJ sp (CONJ hs le)))))) THEN
+     DISCH_THEN(X_CHOOSE_THEN `h3:((A,B)heap_element)list`
+       ASSUME_TAC) THEN
+     ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     FIRST_ASSUM(fun pc -> FIRST_ASSUM(fun m1 -> FIRST_ASSUM(fun m2 ->
+       MP_TAC(MATCH_MP pc (CONJ m1 m2))))) THEN
+     ARITH_TAC) in
+   STRIP_TAC THEN CASES_ON_NAME "gens" THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[cake_def "gen_state_ok"]) THEN
+   REWRITE_TAC[cake_def "gen_state_ok"] THEN
+   USE_CHANGED [cake_def "heap_store_unused"] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+   FIRST [DISCH_THEN(fun th ->
+            CONTR_TAC(REWRITE_RULE[] (CONJUNCT2 th)));
+          DISCH_TAC] THEN
+   FIRST_ASSUM(fun gs ->
+     let c1 = CONJUNCT1 gs and c2 = CONJUNCT2 gs in
+     CONJ_TAC THENL
+      [ACCEPT_TAC c1;
+       MATCH_MP_TAC ALL_IMP THEN
+       EXISTS_TAC (lhand (concl c2)) THEN
+       CONJ_TAC THENL
+        [GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC transfer THEN
+         W(fun (asl,w) ->
+           let hs = find (fun (_,th) ->
+             (try fst(dest_const(fst(strip_comb(lhand(concl th))))) =
+                  "heap_store"
+              with Failure _ -> false)) asl in
+           EXISTS_TAC (el 2 (snd(strip_comb
+             (lhand (concl (snd hs))))))) THEN
+         ASM_REWRITE_TAC[] THEN
+         FIRST_ASSUM(fun m ->
+           ACCEPT_TAC(MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] c1) m));
+         ACCEPT_TAC c2]]));;
 
 (* new ref *)
 
