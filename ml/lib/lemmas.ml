@@ -386,3 +386,20 @@ let MEM_FLAT = prove
  (`!ls (x:A). MEM x (FLAT ls) <=> ?l. MEM l ls /\ MEM x l`,
   LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[FLAT; MEM; MEM_APPEND] THEN MESON_TAC[]);;
+
+(* a universal quantifier that every element of two lists satisfies
+   can be pulled out of an ALL2.  The lists are of a length by the
+   instance at 0, and an element by the instance at the quantified
+   value; it is a lemma of its own because the type of a list of a
+   statement is often a type variable that no term can be written
+   down for *)
+
+let ALL2_SWAP = prove
+ (`!(P:num->A->B->bool) l m.
+     (!k. ALL2 (\x y. P k x y) l m) ==> ALL2 (\x y. !k. P k x y) l m`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[LIST_REL_EL_EQN] THEN
+  DISCH_TAC THEN CONJ_TAC THENL
+   [FIRST_ASSUM(fun th -> MATCH_ACCEPT_TAC(CONJUNCT1(SPEC `0` th)));
+    REPEAT STRIP_TAC THEN
+    FIRST_ASSUM(fun th -> MP_TAC(SPEC `k:num` th)) THEN
+    ASM_SIMP_TAC[]]);;

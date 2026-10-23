@@ -77,6 +77,43 @@
                injectivity "data_to_word_memoryProof_tag"; CONS_11;
                PAIR_EQ] THEN
    CONV_TAC TAUT)
+### v_inv_ck_mono
+  (* rule induction: every rule asks for the relation at ck - 1 and
+     only when ck is not 0, so a smaller ck asks for less.  The two
+     thunk rules name their value and their heap element in the
+     premises and not in the conclusion, which a MATCH_MP_TAC would
+     leave undetermined, so MESON applies them *)
+  (let (vr,vi,_) = v_inv_ck in
+   let rl = CONJUNCTS vr in
+   let ar = ARITH_RULE
+     `!a b. a <= b /\ ~(a = 0) ==> ~(b = 0) /\ a - 1 <= b - 1` in
+   let PRE_TAC = REPEAT GEN_TAC THEN REPEAT STRIP_TAC in
+   let mono = prove
+    (`!ck conf (v:dataSem_v) refs y.
+        v_inv_ck ck conf v refs y
+        ==> !ck'. ck' <= ck ==> v_inv_ck ck' conf v refs y`,
+     MATCH_MP_TAC vi THEN REPEAT CONJ_TAC THENL
+      [PRE_TAC THEN MATCH_MP_TAC(el 0 rl) THEN ASM_REWRITE_TAC[];
+       PRE_TAC THEN MATCH_MP_TAC(el 1 rl) THEN ASM_REWRITE_TAC[];
+       PRE_TAC THEN MATCH_MP_TAC(el 2 rl) THEN ASM_REWRITE_TAC[];
+       PRE_TAC THEN MATCH_ACCEPT_TAC(el 3 rl);
+       PRE_TAC THEN MATCH_MP_TAC(el 4 rl) THEN ASM_REWRITE_TAC[];
+       PRE_TAC THEN ASM_MESON_TAC[el 5 rl; ar];
+       PRE_TAC THEN ASM_MESON_TAC[el 6 rl; ar];
+       PRE_TAC THEN MATCH_MP_TAC(el 7 rl) THEN ASM_REWRITE_TAC[];
+       (* and the elements of a Block one by one, with the ck of the
+          induction hypothesis brought down to the new one *)
+       PRE_TAC THEN MATCH_MP_TAC(el 8 rl) THEN
+       ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THEN
+       TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THEN DISCH_TAC THEN
+       FIRST_ASSUM(fun le -> FIRST_ASSUM(fun nz ->
+         let a = MATCH_MP ar (CONJ le nz) in
+         FIRST_X_ASSUM(fun ih ->
+           MP_TAC(MATCH_MP ih (CONJUNCT1 a))) THEN
+         MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
+         REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+         MATCH_ACCEPT_TAC(CONJUNCT2 a)))]) in
+   REPEAT STRIP_TAC THEN ASM_MESON_TAC[mono])
 ### v_inv_RefPtr_T
   (* a RefPtr T is no thunk and no MutBlock, so the two rules of
      v_inv that ask for a RefPtr F do not apply and the annotation
@@ -1825,6 +1862,133 @@
                FAPPLY_FUPDATE_THM] THEN
    REPEAT STRIP_TAC THEN REPEAT COND_CASES_TAC THEN
    ASM_SIMP_TAC[] THEN ASM_MESON_TAC[])
+### v_inv_swap_refs
+  (* rule induction on v_inv_ck.  Every premise of a rule reads the
+     refs through a lookup only, dest_thunk included, so lookups
+     that agree at every pointer let the derivation be replayed
+     with the other refs; the ck of the relation is untouched, and
+     v_inv is the relation for every ck *)
+  (let (vr,vi,_) = v_inv_ck in
+   let rl = CONJUNCTS vr in
+   let dt = prove
+    (`!(v:dataSem_v) refs refs1.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> dataSem_dest_thunk v refs = dataSem_dest_thunk v refs1`,
+     REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[cake_def "dataSem_dest_thunk"]) in
+   (* the assumption that the two lookups agree, which the cases of
+      the induction each need in both directions *)
+   let is_cnd th =
+     let t = concl th in
+     is_forall t &&
+     (let b = snd(dest_forall t) in
+      is_eq b &&
+      (try fst(dest_const(fst(strip_comb(lhs b)))) = "sptree_lookup"
+       with Failure _ -> false)) in
+   let CND ttac =
+     FIRST_ASSUM(fun th -> if is_cnd th then ttac th else fail()) in
+   let PRE_TAC = REPEAT GEN_TAC THEN REPEAT STRIP_TAC in
+   let swap = prove
+    (`!ck conf (v:dataSem_v) refs1 y.
+        v_inv_ck ck conf v refs1 y
+        ==> !refs. (!n. sptree_lookup n refs = sptree_lookup n refs1)
+                   ==> v_inv_ck ck conf v refs y`,
+     MATCH_MP_TAC vi THEN REPEAT CONJ_TAC THENL
+      [PRE_TAC THEN MATCH_MP_TAC(el 0 rl) THEN ASM_REWRITE_TAC[];
+       PRE_TAC THEN MATCH_MP_TAC(el 1 rl) THEN ASM_REWRITE_TAC[];
+       PRE_TAC THEN MATCH_MP_TAC(el 2 rl) THEN ASM_REWRITE_TAC[];
+       PRE_TAC THEN MATCH_ACCEPT_TAC(el 3 rl);
+       (* the annotation of the pointer is a lookup of the refs *)
+       PRE_TAC THEN CND(fun cnd ->
+         REWRITE_TAC[GSYM cnd] THEN MATCH_MP_TAC(el 4 rl) THEN
+         REWRITE_TAC[cnd] THEN ASM_REWRITE_TAC[] THEN
+         REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC));
+       (* the thunk of the rule is named by its lookup, which is
+          what MESON takes from the assumptions *)
+       PRE_TAC THEN CND(fun cnd ->
+         ASM_MESON_TAC[el 5 rl; MATCH_MP dt cnd]);
+       PRE_TAC THEN CND(fun cnd ->
+         ASM_MESON_TAC[el 6 rl; MATCH_MP dt cnd]);
+       PRE_TAC THEN MATCH_MP_TAC(el 7 rl) THEN ASM_REWRITE_TAC[];
+       (* and the elements of a Block are carried over one by one *)
+       PRE_TAC THEN CND(fun cnd ->
+         MATCH_MP_TAC(el 8 rl) THEN ASM_REWRITE_TAC[] THEN
+         REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THEN
+         DISCH_TAC THEN
+         FIRST_X_ASSUM(fun ih ->
+           FIRST_ASSUM(fun nz -> MP_TAC(MATCH_MP ih nz))) THEN
+         MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
+         REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+         ASM_REWRITE_TAC[])]) in
+   REWRITE_TAC[v_inv_eq] THEN REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[swap])
+### bc_stack_ref_inv_swap_refs
+  (* each part of the invariant reads the refs through a lookup
+     only: the domain by domain_lookup, all_ts, all_vs and ref_edge
+     by their definitions, and v_inv by v_inv_swap_refs.  So the
+     whole of it is rewritten from the one refs to the other and
+     the assumption is the goal *)
+  (let domq = prove
+    (`!refs refs1:(A)spt.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> domain refs = domain refs1`,
+     REPEAT STRIP_TAC THEN
+     REWRITE_TAC[EXTENSION; domain_lookup] THEN ASM_REWRITE_TAC[]) in
+   let atq = prove
+    (`!refs refs1 stack.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> all_ts refs stack = all_ts refs1 stack`,
+     REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[cake_def "all_ts"]) in
+   let avq = prove
+    (`!refs refs1 stack.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> all_vs refs stack = all_vs refs1 stack`,
+     REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[cake_def "all_vs"]) in
+   let reqq = prove
+    (`!refs refs1.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> ref_edge refs = ref_edge refs1`,
+     REPEAT STRIP_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN
+     REPEAT GEN_TAC THEN ASM_REWRITE_TAC[cake_def "ref_edge"]) in
+   let rchq = prove
+    (`!refs refs1.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> !roots t. reachable_refs roots refs t <=>
+                      reachable_refs roots refs1 t`,
+     REPEAT STRIP_TAC THEN
+     REWRITE_TAC[cake_def "reachable_refs"] THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP reqq th])) in
+   let viq = prove
+    (`!refs refs1.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> !c (v:dataSem_v) y. v_inv c v refs y <=>
+                                v_inv c v refs1 y`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
+     EQ_TAC THEN ASM_MESON_TAC[cake_thm "v_inv_swap_refs"]) in
+   let dtq = prove
+    (`!refs refs1.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> !v. dataSem_dest_thunk v refs =
+                dataSem_dest_thunk v refs1`,
+     REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[cake_def "dataSem_dest_thunk"]) in
+   let brq = prove
+    (`!refs refs1.
+        (!n. sptree_lookup n refs = sptree_lookup n refs1)
+        ==> !c n x. bc_ref_inv c n refs x <=> bc_ref_inv c n refs1 x`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
+     FIRST_ASSUM(fun th ->
+       ASM_REWRITE_TAC[cake_def "bc_ref_inv"; MATCH_MP viq th;
+                       MATCH_MP dtq th])) in
+   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+   FIRST_ASSUM(fun cnd ->
+     DISCH_THEN(MP_TAC o REWRITE_RULE
+       [cake_def "bc_stack_ref_inv"; MATCH_MP domq cnd;
+        MATCH_MP atq cnd; MATCH_MP avq cnd; MATCH_MP rchq cnd;
+        MATCH_MP viq cnd; MATCH_MP brq cnd]) THEN
+     REWRITE_TAC[cake_def "bc_stack_ref_inv"]))
 ### blocks_unique_SUBSET
   (REWRITE_TAC[cake_def "blocks_unique"; SUBSET] THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
@@ -1875,6 +2039,27 @@
      ONCE_REWRITE_TAC[cake_def "ref_edge"] THEN ASM_REWRITE_TAC[] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[];
      REWRITE_TAC[]])
+### bc_stack_ref_inv_union_del_ins_lemma
+  (* the two refs have the same lookup everywhere: at ptr the delete
+     takes the value out of the left half and the insert puts the
+     same value in the right one, and away from ptr neither changes
+     anything *)
+  (STRIP_TAC THEN
+   SUBGOAL_THEN
+     `!n. sptree_lookup n
+            (sptree_union (refs:(dataSem_v bvlSem_ref) spt) frame) =
+          sptree_lookup n (sptree_union (sptree_delete ptr refs)
+                             (sptree_insert ptr x frame))`
+     ASSUME_TAC THENL
+    [GEN_TAC THEN
+     REWRITE_TAC[lookup_union; OPT_MATCH_COND; lookup_delete;
+                 lookup_insert] THEN
+     ASM_CASES_TAC `n:num = ptr` THEN
+     ASM_REWRITE_TAC[distinctness "option"];
+     ALL_TAC] THEN
+   FIRST_ASSUM(fun c -> FIRST_ASSUM(fun h ->
+     MATCH_ACCEPT_TAC(MATCH_MP
+       (cake_thm "bc_stack_ref_inv_swap_refs") (CONJ h c)))))
 ### memory_rel_REPLICATE
   (MATCH_MP_TAC memory_rel_rearrange THEN
    GEN_TAC THEN REWRITE_TAC[MEM_APPEND; MEM_REPLICATE; MEM] THEN
