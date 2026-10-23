@@ -4108,6 +4108,66 @@
    GEN_TAC THEN DISCH_TAC THEN
    ASM_CASES_TAC `i = 1` THEN ASM_REWRITE_TAC[bw3_1] THEN
    CONV_TAC TAUT)
+### encode_header_tag_mask
+  (* the header of encode_header is make_header of four times the
+     tag, whose and with the tag mask make_header_tag_mask says is
+     sixteen times the tag and whose and with the two
+     make_header_and_2 says is the two; the or of those two is their
+     sum, because sixteen times a number has no bit as low as the
+     second *)
+  (
+   let bw2 = prove
+    (`!i. bit i (word 2:(N)word) <=> i = 1 /\ 1 < dimindex(:N)`,
+     GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [ARITH_RULE `2 = 2 EXP 1`] THEN
+     REWRITE_TAC[BIT_WORD_POW2]) in
+   let n16 = prove
+    (`!k. (n2w (16 * k):(N)word) = word_shl (n2w k) 4`,
+     let shl16 = prove
+      (`!(v:(N)word). word 16 * v = word_shl v 4`,
+       REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+       CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+       REWRITE_TAC[MULT_AC]) in
+     GEN_TAC THEN REWRITE_TAC[GSYM shl16; WORD_MUL]) in
+   let and2_0 = prove
+    (`!k. (n2w (16 * k):(N)word) && n2w 2 = n2w 0`,
+     GEN_TAC THEN REWRITE_TAC[n16] THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+                 BIT_WORD_SHL; bw2] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `(i:num) = 1` THEN ASM_REWRITE_TAC[] THEN
+     CONV_TAC NUM_REDUCE_CONV) in
+   let orsum = prove
+    (`!k. (n2w (16 * k):(N)word) || n2w 2 = n2w (16 * k + 2)`,
+     GEN_TAC THEN
+     MP_TAC(SPEC_ALL (ISPECL [`n2w (16 * k):(N)word`; `n2w 2:(N)word`]
+       WORD_ADD_OR)) THEN
+     REWRITE_TAC[and2_0] THEN
+     DISCH_THEN(fun th -> REWRITE_TAC[GSYM th]) THEN
+     REWRITE_TAC[WORD_ADD]) in
+   let distr = WORD_BITWISE_RULE
+     `!(x:(N)word) a b. x && (a || b) = (x && a) || (x && b)` in
+   STRIP_TAC THEN
+   USE_CHANGED [cake_def "encode_header"] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   REWRITE_TAC[injectivity "option"] THEN
+   DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+   FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN
+   CONJ_TAC THENL
+    [ASM_ARITH_TAC;
+     REWRITE_TAC[distr] THEN
+     ONCE_REWRITE_TAC[WORD_AND_SYM] THEN
+     REWRITE_TAC[cake_thm "make_header_and_2"] THEN
+     SUBGOAL_THEN
+       `tag_mask c && make_header c ((n2w (4 * tag)):'a word) n =
+        n2w (4 * (4 * tag))`
+       SUBST1_TAC THENL
+      [MATCH_MP_TAC (cake_thm "make_header_tag_mask") THEN
+       REWRITE_TAC[ARITH_RULE `d - (k + 2) = d - k - 2`] THEN
+       ASM_REWRITE_TAC[];
+       ONCE_REWRITE_TAC[WORD_AND_SYM] THEN
+       REWRITE_TAC[ARITH_RULE `4 * (4 * tag) = 16 * tag`; orsum]]])
 ### memory_rel_tag_limit
   (* the tag of an empty Block is below the bound by what
      memory_rel_Block_IMP says, and the tag of a Block with a
