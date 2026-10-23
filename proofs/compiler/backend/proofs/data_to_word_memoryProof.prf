@@ -1845,6 +1845,23 @@
     [MATCH_MP_TAC memory_rel_Boolv_T;
      MATCH_MP_TAC memory_rel_Boolv_F] THEN
    ASM_REWRITE_TAC[])
+### small_int_w2i_i2w
+  (* four times a small integer is between INT_MIN and INT_MAX, so
+     the i2w of it has it for its w2i *)
+  (let bnds = prove
+    (`good_dimindex (:'a) /\ small_int (:'a) i ==>
+       --(&2 pow (dimindex (:'a) - 1)) <= (&4) * i /\
+       (&4) * i < &2 pow (dimindex (:'a) - 1)`,
+     REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+                 dimword] THEN
+     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     CONV_TAC(ONCE_DEPTH_CONV INT_POW_CONV) THEN
+     ASM_INT_ARITH_TAC) in
+   STRIP_TAC THEN MATCH_MP_TAC IVAL_IWORD THEN
+   FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
+     ACCEPT_TAC(MATCH_MP bnds (CONJ t1 t2)))))
 ### small_int_w2n
   (* a byte is below 256 and the bound of a small integer is a
      quarter of the dimword, which good_dimindex makes 2 EXP 29 at
