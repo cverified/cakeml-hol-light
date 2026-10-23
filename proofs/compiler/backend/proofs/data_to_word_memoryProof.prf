@@ -2066,6 +2066,46 @@
   (REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv";
                GSYM APPEND_ASSOC; LIST_REL_SPLIT1] THEN
    STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH])
+### abs_ml_inv_Num
+  (* the new root is a Data, so the roots stay ok; the value has no
+     refs and no timestamps of its own, so what the stack reaches
+     and what the timestamps are stay as they are, and v_inv of a
+     small Number is its Smallnum *)
+  (let gr0 = CONJUNCT1 (cake_def "get_refs") in
+  let reach = prove
+   (`!(sk:(dataSem_v)list) rfs n i.
+       reachable_refs (Number i :: sk) rfs n
+       ==> reachable_refs sk rfs n`,
+    REWRITE_TAC[cake_def "reachable_refs"; MEM] THEN
+    MESON_TAC[gr0; MEM]) in
+  REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv"] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC ASSUME_TAC) THEN
+  REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THENL
+   [RULE_ASSUM_TAC(REWRITE_RULE[cake_def "roots_ok"]) THEN
+    REWRITE_TAC[cake_def "roots_ok"; MEM;
+                distinctness "heap_address"] THEN
+    FIRST_ASSUM MATCH_ACCEPT_TAC;
+    MAP_EVERY EXISTS_TAC [`f:(num,num)fmap`; `tf:(num,num)fmap`] THEN
+    REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THENL
+     [(fun (asl,w) ->
+        let ats = rand w in
+        let wit = mk_comb(rator ats, rand(rand ats)) in
+        (MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC wit) (asl,w)) THEN
+      ASM_REWRITE_TAC[] THEN
+      MATCH_MP_TAC (cake_thm "all_ts_SUBSET_gen") THEN
+      REWRITE_TAC[MEM] THEN GEN_TAC THEN
+      DISCH_THEN(DISJ_CASES_THEN2
+        (fun p -> DISJ1_TAC THEN ACCEPT_TAC p)
+        (fun m -> DISJ2_TAC THEN DISJ2_TAC THEN ACCEPT_TAC m));
+      MATCH_MP_TAC (INST [`[]:(dataSem_v)list`,`ws:(dataSem_v)list`]
+        (cake_thm "blocks_unique_Number")) THEN
+      ASM_REWRITE_TAC[APPEND];
+      REWRITE_TAC[ALL2] THEN ASM_REWRITE_TAC[] THEN
+      REWRITE_TAC[cake_thm "v_inv_def"] THEN ASM_REWRITE_TAC[];
+      X_GEN_TAC `nn:num` THEN STRIP_TAC THEN
+      FIRST_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+       [FIRST_ASSUM(fun rr -> MATCH_ACCEPT_TAC(MATCH_MP reach rr));
+        FIRST_ASSUM MATCH_ACCEPT_TAC]]])
 ### heap_store_unused_IMP_length
   (* the lookup splits the heap at the unused element, the store
      lemma says what the store gives back, and the lengths add up *)
