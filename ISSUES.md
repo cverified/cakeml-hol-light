@@ -1107,6 +1107,15 @@ two lowest bits of `16w * tag` are clear either way), and the
 proof of phase three proves what the port states, with a comment
 that says so.
 
+What that costs further on: `memory_rel_Cons_empty` is the theorem
+HOL4 proves *with* `BlockNil_and_lemma`, and what it needs is
+HOL4's reading of it -- the and of the complement with the **sum**,
+which is what the root of an empty Block is.  The port's statement
+of the lemma does not give that, so the proof of
+`memory_rel_Cons_empty` proves the fact again, in four lines of its
+own.  Every later use of a statement that this entry lists pays the
+same way.
+
 What to do about it: the fixities of `ml/lib/words4.ml` have to be
 the ones that give HOL4's grouping (`&&` below `+`, and `||` and
 `??` below that), which is a change of the library layer and of
