@@ -4419,6 +4419,144 @@
       MATCH_REDUCE_TAC THEN
       AP_THM_TAC THEN AP_TERM_TAC THEN
       FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC])
+### decode_length_make_byte_header
+  (* decode_length shifts down by two (or three) more than
+     make_byte_header shifted up, so it reads the length plus the
+     word size divided by it, which is between the length divided by
+     the word size and one more than that *)
+  (let hi = prove
+    (`!n r (i:num). n < 2 EXP r /\ r <= i
+        ==> ~(bit i ((n2w n):'a word))`,
+     MATCH_ACCEPT_TAC BIT_WORD_HI) in
+   let tag5 = prove
+    (`!fl j. bit j ((if fl then (n2w 7) else (n2w 23)):'a word)
+             ==> j < 5`,
+     REPEAT GEN_TAC THEN
+     ASM_CASES_TAC `(j:num) < 5` THEN ASM_REWRITE_TAC[] THEN
+     COND_CASES_TAC THENL
+      [MP_TAC(ISPECL [`7`; `5`; `j:num`] hi);
+       MP_TAC(ISPECL [`23`; `5`; `j:num`] hi)] THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     ASM_SIMP_TAC[ARITH_RULE `~((j:num) < 5) ==> 5 <= j`]) in
+   let ushr_shl = prove
+    (`!(x:'a word) s k. (!j. bit j x ==> j + s < dimindex (:'a))
+        ==> word_ushr (word_shl x s) (s + k) = word_ushr x k`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_USHR; BIT_WORD_SHL] THEN
+     X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+     REWRITE_TAC[ARITH_RULE
+       `s <= (j + s + k) /\ ((j + s + k) - s = j + k)`] THEN
+     ASM_CASES_TAC `bit (j + k) (x:'a word)` THEN
+     ASM_REWRITE_TAC[] THEN
+     FIRST_X_ASSUM(fun th -> MP_TAC(SPEC `j + k` th)) THEN
+     ASM_REWRITE_TAC[] THEN ARITH_TAC) in
+   let usedim =
+     FIRST_X_ASSUM(fun dd ->
+       let c = concl dd in
+       if is_eq c &&
+          (try fst(dest_const(fst(strip_comb(lhs c)))) = "dimindex"
+           with Failure _ -> false)
+       then RULE_ASSUM_TAC(REWRITE_RULE[dd;
+              cake_def "backend_common_word_shift"]) THEN
+            ASSUME_TAC dd
+       else fail()) in
+   STRIP_TAC THEN
+   FIRST_ASSUM(DISJ_CASES_THEN ASSUME_TAC o
+     REWRITE_RULE[cake_def "good_dimindex"]) THEN
+   usedim THEN
+   RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+   REWRITE_TAC[cake_def "decode_length";
+               cake_def "make_byte_header"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THENL
+    [SUBGOAL_THEN
+       `32 - data_to_word_config_len_size c =
+        (30 - data_to_word_config_len_size c) + 2`
+       SUBST1_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     SUBGOAL_THEN
+       `!j. bit j ((if fl then (n2w 7) else (n2w 23)):'a word)
+            ==> j < (30 - data_to_word_config_len_size c) + 2`
+       (fun th -> REWRITE_TAC[MATCH_MP USHR_OR_LOW th]) THENL
+      [GEN_TAC THEN DISCH_THEN(fun th -> MP_TAC(MATCH_MP tag5 th)) THEN
+       ASM_ARITH_TAC; ALL_TAC] THEN
+     SUBGOAL_THEN
+       `!j. bit j ((n2w (len + 4)):'a word)
+            ==> j + (30 - data_to_word_config_len_size c) <
+                dimindex (:'a)`
+       (fun th -> REWRITE_TAC[MATCH_MP ushr_shl th]) THENL
+      [X_GEN_TAC `j:num` THEN
+       ASM_CASES_TAC
+         `j + (30 - data_to_word_config_len_size c) <
+          dimindex (:'a)` THEN
+       ASM_REWRITE_TAC[] THEN
+       MP_TAC(ISPECL [`len + 4`;
+                      `data_to_word_config_len_size c + 2`;
+                      `j:num`] hi) THEN
+       SUBGOAL_THEN `data_to_word_config_len_size c + 2 <= j`
+         (fun th -> REWRITE_TAC[th]) THENL
+        [ASM_ARITH_TAC; ASM_REWRITE_TAC[]];
+       ALL_TAC] THEN
+     REWRITE_TAC[VAL_WORD_USHR; VAL_WORD] THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+     SUBGOAL_THEN `(len + 4) MOD 4294967296 = len + 4` SUBST1_TAC THENL
+      [MATCH_MP_TAC MOD_LT THEN
+       TRANS_TAC LTE_TRANS
+         `2 EXP (data_to_word_config_len_size c + 2)` THEN
+       ASM_REWRITE_TAC[] THEN
+       TRANS_TAC LE_TRANS `2 EXP 32` THEN
+       SIMP_TAC[LE_EXP; ARITH] THEN
+       CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC;
+       ALL_TAC] THEN
+     MP_TAC(SPEC `len:num` (MATCH_MP DIVISION (ARITH_RULE `~(4 = 0)`)))
+     THEN
+     MP_TAC(SPEC `len + 4` (MATCH_MP DIVISION
+       (ARITH_RULE `~(4 = 0)`))) THEN
+     ARITH_TAC;
+     SUBGOAL_THEN
+       `64 - data_to_word_config_len_size c =
+        (61 - data_to_word_config_len_size c) + 3`
+       SUBST1_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     SUBGOAL_THEN
+       `!j. bit j ((if fl then (n2w 7) else (n2w 23)):'a word)
+            ==> j < (61 - data_to_word_config_len_size c) + 3`
+       (fun th -> REWRITE_TAC[MATCH_MP USHR_OR_LOW th]) THENL
+      [GEN_TAC THEN DISCH_THEN(fun th -> MP_TAC(MATCH_MP tag5 th)) THEN
+       ASM_ARITH_TAC; ALL_TAC] THEN
+     SUBGOAL_THEN
+       `!j. bit j ((n2w (len + 8)):'a word)
+            ==> j + (61 - data_to_word_config_len_size c) <
+                dimindex (:'a)`
+       (fun th -> REWRITE_TAC[MATCH_MP ushr_shl th]) THENL
+      [X_GEN_TAC `j:num` THEN
+       ASM_CASES_TAC
+         `j + (61 - data_to_word_config_len_size c) <
+          dimindex (:'a)` THEN
+       ASM_REWRITE_TAC[] THEN
+       MP_TAC(ISPECL [`len + 8`;
+                      `data_to_word_config_len_size c + 3`;
+                      `j:num`] hi) THEN
+       SUBGOAL_THEN `data_to_word_config_len_size c + 3 <= j`
+         (fun th -> REWRITE_TAC[th]) THENL
+        [ASM_ARITH_TAC; ASM_REWRITE_TAC[]];
+       ALL_TAC] THEN
+     REWRITE_TAC[VAL_WORD_USHR; VAL_WORD] THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+     SUBGOAL_THEN
+       `(len + 8) MOD 18446744073709551616 = len + 8`
+       SUBST1_TAC THENL
+      [MATCH_MP_TAC MOD_LT THEN
+       TRANS_TAC LTE_TRANS
+         `2 EXP (data_to_word_config_len_size c + 3)` THEN
+       ASM_REWRITE_TAC[] THEN
+       TRANS_TAC LE_TRANS `2 EXP 64` THEN
+       SIMP_TAC[LE_EXP; ARITH] THEN
+       CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC;
+       ALL_TAC] THEN
+     MP_TAC(SPEC `len:num` (MATCH_MP DIVISION (ARITH_RULE `~(8 = 0)`)))
+     THEN
+     MP_TAC(SPEC `len + 8` (MATCH_MP DIVISION
+       (ARITH_RULE `~(8 = 0)`))) THEN
+     ARITH_TAC])
 ### memory_rel_tail
   (DISCH_TAC THEN
    FIRST_ASSUM(fun th ->
@@ -6093,6 +6231,125 @@
    ASM_CASES_TAC `3 <= i` THENL
     [ASM_SIMP_TAC[bit7];
      ASM_SIMP_TAC[ARITH_RULE `~(3 <= i) /\ 2 < k ==> ~(k <= i)`]])
+### make_byte_header_eq
+  (* the header of a byte array keeps the length in the field above
+     the shift, so two of them agree only when their lengths do: the
+     tag is below the shift and the length plus the word size is
+     below two to the width of the field, because the byte length is
+     below two to the length size *)
+  (let hi = prove
+    (`!n r (i:num). n < 2 EXP r /\ r <= i
+        ==> ~(bit i ((n2w n):'a word))`,
+     MATCH_ACCEPT_TAC BIT_WORD_HI) in
+   let b7 = prove
+    (`!j. j < dimindex (:'a)
+          ==> (bit j ((n2w 7):'a word) <=> j < 3)`,
+     GEN_TAC THEN DISCH_TAC THEN
+     ASM_CASES_TAC `(j:num) < 3` THEN ASM_REWRITE_TAC[] THENL
+      [FIRST_ASSUM(REPEAT_TCL DISJ_CASES_THEN SUBST_ALL_TAC o MATCH_MP
+         (ARITH_RULE `(j:num) < 3 ==> j = 0 \/ j = 1 \/ j = 2`)) THEN
+       ASM_REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+       ASM_ARITH_TAC;
+       MP_TAC(ISPECL [`7`; `3`; `j:num`] hi) THEN
+       ASM_SIMP_TAC[ARITH_RULE `~((j:num) < 3) ==> 3 <= j`] THEN
+       CONV_TAC NUM_REDUCE_CONV]) in
+   let n2w_inj = prove
+    (`!a b m. a < 2 EXP m /\ b < 2 EXP m /\ m <= dimindex (:'a) /\
+              ((n2w a):'a word = n2w b)
+        ==> a = b`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     FIRST_X_ASSUM(MP_TAC o AP_TERM `val:'a word->num`) THEN
+     REWRITE_TAC[VAL_WORD] THEN
+     SUBGOAL_THEN
+       `a < 2 EXP dimindex (:'a) /\ b < 2 EXP dimindex (:'a)`
+       STRIP_ASSUME_TAC THENL
+      [CONJ_TAC THEN TRANS_TAC LTE_TRANS `2 EXP m` THEN
+       ASM_SIMP_TAC[LE_EXP; ARITH];
+       ASM_SIMP_TAC[MOD_LT]]) in
+   let gen = prove
+    (`!(s:num) a m n.
+        3 <= s /\ s < dimindex (:'a) /\
+        m + a < 2 EXP (dimindex (:'a) - s) /\
+        n + a < 2 EXP (dimindex (:'a) - s) /\
+        ((((n2w (m + a)):'a word) << s || n2w 7) =
+         (((n2w (n + a)):'a word) << s || n2w 7))
+        ==> m = n`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     SUBGOAL_THEN `!j. bit j ((n2w 7):'a word) ==> j < s`
+       ASSUME_TAC THENL
+      [X_GEN_TAC `j:num` THEN
+       ASM_CASES_TAC `j < dimindex (:'a)` THENL
+        [ASM_SIMP_TAC[b7] THEN ASM_ARITH_TAC;
+         ASM_SIMP_TAC[BIT_TRIVIAL;
+                      ARITH_RULE `~((a:num) < b) ==> b <= a`]];
+       ALL_TAC] THEN
+     SUBGOAL_THEN
+       `(!j. bit j ((n2w (m + a)):'a word) ==> j + s < dimindex (:'a))
+        /\
+        (!j. bit j ((n2w (n + a)):'a word) ==> j + s < dimindex (:'a))`
+       STRIP_ASSUME_TAC THENL
+      [CONJ_TAC THEN X_GEN_TAC `j:num` THEN
+       ASM_CASES_TAC `j + s < dimindex (:'a)` THEN
+       ASM_REWRITE_TAC[] THENL
+        [MP_TAC(ISPECL [`m + a:num`; `dimindex (:'a) - s`; `j:num`] hi);
+         MP_TAC(ISPECL [`n + a:num`; `dimindex (:'a) - s`;
+                        `j:num`] hi)] THEN
+       ASM_SIMP_TAC[ARITH_RULE
+         `~(j + s < d) /\ s < d ==> d - s <= j`] THEN
+       REWRITE_TAC[];
+       ALL_TAC] THEN
+     SUBGOAL_THEN `m + a = n + a` MP_TAC THENL
+      [MATCH_MP_TAC n2w_inj THEN
+       EXISTS_TAC `dimindex (:'a) - s` THEN
+       ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
+        [ARITH_TAC; ALL_TAC] THEN
+       FIRST_X_ASSUM(fun th -> MP_TAC(AP_TERM
+         `\w:'a word. word_ushr w s` th)) THEN
+       CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+       ASM_SIMP_TAC[USHR_OR_LOW; USHR_SHL_CANCEL];
+       ARITH_TAC]) in
+   let usedim =
+     FIRST_X_ASSUM(fun dd ->
+       let c = concl dd in
+       if is_eq c &&
+          (try fst(dest_const(fst(strip_comb(lhs c)))) = "dimindex"
+           with Failure _ -> false)
+       then RULE_ASSUM_TAC(REWRITE_RULE[dd; cake_def "byte_len"]) THEN
+            ASSUME_TAC dd
+       else fail()) in
+   STRIP_TAC THEN EQ_TAC THENL
+    [ALL_TAC; DISCH_THEN SUBST1_TAC THEN REFL_TAC] THEN
+   FIRST_ASSUM(DISJ_CASES_THEN ASSUME_TAC o
+     REWRITE_RULE[cake_def "good_dimindex"]) THEN
+   usedim THEN
+   REWRITE_TAC[cake_def "make_byte_header"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+   DISCH_TAC THEN MATCH_MP_TAC gen THENL
+    [MAP_EVERY EXISTS_TAC
+       [`30 - data_to_word_config_len_size c`; `4`] THEN
+     SUBGOAL_THEN
+       `dimindex (:'a) - (30 - data_to_word_config_len_size c) =
+        data_to_word_config_len_size c + 2`
+       SUBST1_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     ASM_REWRITE_TAC[EXP_ADD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REPEAT CONJ_TAC THEN TRY ASM_ARITH_TAC THEN
+     MP_TAC(SPEC `m:num` (MATCH_MP DIVISION (ARITH_RULE `~(4 = 0)`)))
+     THEN
+     MP_TAC(SPEC `n:num` (MATCH_MP DIVISION (ARITH_RULE `~(4 = 0)`)))
+     THEN ASM_ARITH_TAC;
+     MAP_EVERY EXISTS_TAC
+       [`61 - data_to_word_config_len_size c`; `8`] THEN
+     SUBGOAL_THEN
+       `dimindex (:'a) - (61 - data_to_word_config_len_size c) =
+        data_to_word_config_len_size c + 3`
+       SUBST1_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     ASM_REWRITE_TAC[EXP_ADD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REPEAT CONJ_TAC THEN TRY ASM_ARITH_TAC THEN
+     MP_TAC(SPEC `m:num` (MATCH_MP DIVISION (ARITH_RULE `~(8 = 0)`)))
+     THEN
+     MP_TAC(SPEC `n:num` (MATCH_MP DIVISION (ARITH_RULE `~(8 = 0)`)))
+     THEN ASM_ARITH_TAC])
 ### word_1_and_eq_0
   (REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
                BIT_WORD_1] THEN
