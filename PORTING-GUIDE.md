@@ -64,6 +64,7 @@ add it to the index.
 | 26 | a `case` on the value of a function | `EVERY_CASE_TAC`, before reducing |
 | 27 | `+`, `-` and `*` of HOL4 | the associativity written out |
 | 28 | a type that nests a list of itself | the store's mutual induction |
+| 29 | `drule` with a rewrite in it | `USE_CHANGED`, or a test of the shape |
 
 ## The shape of a transformation proof
 
@@ -1920,11 +1921,17 @@ error).  Three ways out, in this order:
    variables are instantiated when it is used, so this always
    works.
 
-A name of the port can also be a **constant**: `stack`, `refs` and
-`cen` are constants of some theory, so ``stack:(dataSem_v)list``
-is an annotation of a constant and fails with "typechecking error
-(overload resolution)".  `print_types_of_subterms := 0` makes a
-goal with invented type variables readable.
+A name of the port can also be a **constant**: `stack`, `refs`,
+`cen` and `be` are constants of some theory (`be` is a field of
+`labSem_state`), so ``stack:(dataSem_v)list`` is an annotation of a
+constant and fails with "typechecking error (overload
+resolution)".  A lemma of a proof therefore calls the endianness
+flag something else -- `b2` in `write_bytes_REPLICATE` -- and takes
+the goal's own variable with `var_by_name`, which
+`ml/lib/tactics.ml` has for exactly this (`CASES_BY_NAME` is the
+case split that goes with it, and it splits a pair with
+`PAIR_SURJECTIVE`).  `print_types_of_subterms := 0` makes a goal
+with invented type variables readable.
 
 **Arithmetic is where this bites hardest**, because the port
 overloads `=`, `+`, `<` and the numerals for words: ``ASM_CASES_TAC
@@ -2042,3 +2049,48 @@ of the values of a value (`v_all_vs_trans_thm`) that the proofs of
 the file need before the file itself states them; the induction
 theorem is looked up in `the_inductive_types` and not by its name,
 because `ml/lib/tactics.ml` is loaded before the type is made.
+
+## 29. A rule inside `FIRST_ASSUM` that never fails
+
+### The idiom
+
+HOL4's `drule`/`imp_res_tac` look for the assumption that a theorem
+applies to.  The port writes that as `FIRST_ASSUM(fun th -> ...
+th ...)`, and the body is often a rule: `MP_TAC(MATCH_MP lemma th)`
+or `MP_TAC(REWRITE_RULE[cases] th)`.
+
+### What it means
+
+`FIRST_ASSUM` is `tryfind` over the assumptions, so it takes the
+**first** assumption for which the body does not fail -- and
+`REWRITE_RULE` never fails: it gives the theorem back unchanged
+when nothing matches.  So
+`FIRST_ASSUM(fun r -> MP_TAC(ONCE_REWRITE_RULE[cases] r))` puts the
+*first* assumption (the induction hypothesis, as a rule) into the
+goal, the rewrite having done nothing, and the proof goes on with a
+goal that looks almost right; the failure comes several steps
+later, where the disjunction the cases theorem would have given is
+missing.  (`MATCH_MP` does fail when it does not apply, so the same
+line with `MATCH_MP` is safe.)
+
+Three ways out:
+
+1. `USE_CHANGED ths` of `ml/lib/tactics.ml` -- the assumption that
+   the rewrite **changes**, as the antecedent of the goal;
+2. the same test by hand when the assumption is to be kept:
+   `FIRST_ASSUM(fun r -> let th = REWRITE_RULE ths r in
+   if concl th = concl r then fail() else MP_TAC th)`;
+3. a check on the shape of the assumption, when several assumptions
+   are changed and the one that is wanted is the one *about* a
+   constant: `if fst(dest_const(fst(strip_comb(rand(concl th))))) =
+   "all_ts" then ... else fail()` (`duplicate_thm` picks the
+   `FDOM tf SUBSET all_ts ...` of five SUBSETs that way).
+
+The same trap with the whole continuation inside the `FIRST_ASSUM`
+is the cheap fix when the continuation *does* fail on a wrong
+choice: `FIRST_ASSUM(fun th -> MATCH_MP_TAC(MATCH_MP lemma th) THEN
+REWRITE_TAC[MEM_APPEND; MEM] THEN MESON_TAC[])` lets `tryfind`
+backtrack over the assumptions until the MESON closes the goal
+(`memory_rel_Block_explode`), at the price of running the MESON
+once per wrong assumption.
+
