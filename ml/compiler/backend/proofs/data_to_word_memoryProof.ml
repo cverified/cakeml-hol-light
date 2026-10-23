@@ -1447,7 +1447,26 @@ let gc_move_list_data_refs_split =
       EVERY isDataElement (gc_state_h2 s1) /\ (EVERY (\x.
         ~(data_to_word_memoryProof_isRef x))) (gc_state_h2 s1) /\
         EVERY data_to_word_memoryProof_isRef (gc_state_r4 s1)`)
-  CHEAT_TAC;;
+  (* the move of a list is the move of its head and then of its
+     tail, and each of them keeps the three invariants, which is
+     what the theorem about one move says *)
+  (let gmd = GEN_ALL (cake_thm "gc_move_data_refs_split") in
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+    [REWRITE_TAC[cake_def "gen_gc_gc_move_list"; PAIR_EQ] THEN
+     DISCH_THEN(CONJUNCTS_THEN2
+       (CONJUNCTS_THEN2 (K ALL_TAC) (SUBST1_TAC o SYM))
+       STRIP_ASSUME_TAC) THEN
+     ASM_REWRITE_TAC[];
+     REWRITE_TAC[cake_def "gen_gc_gc_move_list"] THEN
+     PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[PAIR_EQ] THEN
+     DISCH_THEN(CONJUNCTS_THEN2
+       (CONJUNCTS_THEN2 (K ALL_TAC) (SUBST1_TAC o SYM))
+       STRIP_ASSUME_TAC) THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_EXISTS_TAC THEN
+     ASM_REWRITE_TAC[] THEN
+     MATCH_MP_TAC gmd THEN ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[]]);;
 
 let gc_move_refs_data_refs_split =
   cake_theorem "gc_move_refs_data_refs_split[local]"
@@ -7801,7 +7820,14 @@ let get_byte_byte_align = cake_theorem "get_byte_byte_align"
     `good_dimindex (:'a) ==>
       get_byte (a' + byte_align a) w be = get_byte a' (w:'a word)
         be`)
-  CHEAT_TAC;;
+  (* which byte an address picks out is its remainder by the bytes
+     in a word, which adding a byte aligned word does not change *)
+  (DISCH_TAC THEN
+   REWRITE_TAC[cake_def "get_byte"] THEN
+   AP_TERM_TAC THEN AP_TERM_TAC THEN
+   REWRITE_TAC[cake_def "byte_index"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_SIMP_TAC[cake_thm "w2n_add_byte_align_lemma"]);;
 
 let get_byte_eq = cake_theorem "get_byte_eq"
   (fun () ->
@@ -9570,7 +9596,30 @@ let mw2n_inj = cake_theorem "mw2n_inj"
   (fun () ->
     `!x y. LENGTH x = LENGTH y ==> (mw2n (x:('a word) list) = mw2n y
   <=> x = y)`)
-  CHEAT_TAC;;
+  (* the value of a multiword is its first word plus the dimword
+     times the value of the rest, and a word is below the dimword,
+     so poly_inj_lemma takes the sum apart *)
+  (let pil = GEN_ALL (cake_thm "poly_inj_lemma") in
+   let wlt = prove
+    (`!(x:(N)word). w2n x < dimword (:N)`,
+     REWRITE_TAC[dimword; VAL_BOUND]) in
+   LIST_INDUCT_TAC THEN GEN_TAC THEN
+   STRUCT_CASES_TAC(ISPEC `y:('a word)list` list_CASES_v) THEN
+   REWRITE_TAC[LENGTH; cake_def "mw2n"; CONS_11; NOT_CONS_NIL;
+               ARITH_RULE `(0 = SUC n) <=> F`;
+               ARITH_RULE `(SUC n = 0) <=> F`; SUC_INJ] THEN
+   DISCH_TAC THEN EQ_TAC THENL
+    [DISCH_TAC THEN
+     FIRST_ASSUM(fun eq ->
+       MP_TAC(MATCH_MP pil (CONJ (ISPEC `h:'a word` wlt)
+         (CONJ (ISPEC `v:'a word` wlt) eq)))) THEN
+     DISCH_THEN(CONJUNCTS_THEN ASSUME_TAC) THEN
+     CONJ_TAC THENL
+      [ASM_MESON_TAC[VAL_EQ];
+       FIRST_X_ASSUM(fun ih ->
+         MP_TAC(SPEC `vs:('a word)list` ih)) THEN
+       ASM_REWRITE_TAC[]];
+     DISCH_THEN(CONJUNCTS_THEN SUBST1_TAC) THEN REWRITE_TAC[]]);;
 
 let write_bytes_inj = cake_theorem "write_bytes_inj"
   (fun () ->
@@ -10335,7 +10384,24 @@ let write_bytearray_isWord = cake_theorem "write_bytearray_isWord"
     `!ls a m x.
      isWord (m x) ==>
      isWord (write_bytearray a ls m dm be x)`)
-  CHEAT_TAC;;
+  (* writing bytes leaves a word a word: the write either updates
+     the address with a word or leaves the memory alone *)
+  (let isw = prove
+    (`!w. isWord (wordLang_Word w)`,
+     GEN_TAC THEN REWRITE_TAC[cake_def "isWord"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+    [REWRITE_TAC[cake_def "write_bytearray"] THEN
+     FIRST_ASSUM ACCEPT_TAC;
+     REWRITE_TAC[cake_def "write_bytearray";
+                 cake_def "mem_store_byte_aux"] THEN
+     EVERY_CASE_TAC THEN
+     POP_ASSUM MP_TAC THEN COND_CASES_TAC THEN
+     REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+     DISCH_THEN(SUBST1_TAC o SYM) THEN
+     REWRITE_TAC[UPDATE] THEN
+     COND_CASES_TAC THEN REWRITE_TAC[isw] THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
 
 let write_bytearray_append = cake_theorem "write_bytearray_append"
   (fun () ->
