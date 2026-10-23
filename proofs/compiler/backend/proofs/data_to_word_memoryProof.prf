@@ -1186,6 +1186,70 @@
    REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### blocks_unique_new_thunk
+  (* the value that the thunk holds is on the stack already,
+     and the RefPtr that is put there is no Block *)
+  (let li = prove
+    (`!k1 k2 v (t:(A)spt) y.
+        (sptree_lookup k1 (sptree_insert k2 v t) = SOME y) <=>
+        (k1 = k2 /\ v = y) \/
+        (~(k1 = k2) /\ sptree_lookup k1 t = SOME y)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"] THEN CONV_TAC TAUT) in
+   let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   let vrefptr = prove
+    (`!b p ys. v_all_vs (CONS (RefPtr b p) ys) =
+        CONS (RefPtr b p) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let f1 = prove
+    (`!(v:dataSem_v) p xs y.
+        MEM y (v_all_vs (CONS v (CONS (RefPtr F p) xs))) <=>
+        MEM y (v_all_vs [v]) \/ y = RefPtr F p \/
+        MEM y (v_all_vs xs)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [cons_app] THEN
+     REWRITE_TAC[v_all_vs_append; MEM_APPEND; vrefptr; MEM]) in
+   let inc = prove
+    (`!refs ptr ev v stack' t a q.
+        Block t a q IN
+          all_vs (insert ptr (Thunk ev v) refs)
+                 (CONS v (CONS (RefPtr F ptr) stack')) ==>
+        Block t a q IN all_vs refs (CONS v stack')`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; li; f1;
+                 distinctness "bvlSem_ref"; injectivity "bvlSem_ref";
+                 distinctness "dataSem_v"] THEN
+     MESON_TAC[MEM_v_all_vs_extend_tl; MEM_v_all_vs_extend_hd]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### blocks_unique_deref1
+  (* the value of the thunk is a value of the refs already *)
+  (let vcons = prove
+    (`!(v:dataSem_v) xs y. MEM y (v_all_vs (CONS v xs)) <=>
+        MEM y (v_all_vs [v]) \/ MEM y (v_all_vs xs)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [prove(`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+              REWRITE_TAC[APPEND])] THEN
+     REWRITE_TAC[v_all_vs_append; MEM_APPEND]) in
+   let inc = prove
+    (`!refs ptr a' stack' t a q.
+        sptree_lookup ptr refs = SOME (Thunk NotEvaluated a') /\
+        Block t a q IN all_vs refs (CONS a' (CONS (RefPtr F ptr)
+          stack')) ==>
+        Block t a q IN all_vs refs (CONS (RefPtr F ptr) stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+     MESON_TAC[vcons]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
 ### blocks_unique_new_byte_alt
   (* and the RefPtr that the stack is given is no Block *)
   (let li = prove
