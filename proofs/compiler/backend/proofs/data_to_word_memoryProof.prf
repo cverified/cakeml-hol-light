@@ -1559,6 +1559,44 @@
    ONCE_REWRITE_TAC[GSYM WORD_VAL] THEN
    FIRST_X_ASSUM MATCH_MP_TAC THEN
    REWRITE_TAC[dimword; VAL_BOUND])
+### word_ml_inv_num_lemma
+  (* four times a word has its two lowest bits clear, and -2 is the
+     complement of 1, which has only the lowest *)
+  (let shl4 = prove
+    (`!(v:(N)word). word 4 * v = word_shl v 2`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let neg2 = prove
+    (`word_neg (word 2):(N)word = word_not (word 1)`,
+     CONV_TAC WORD_RULE) in
+   DISCH_TAC THEN
+   REWRITE_TAC[neg2; shl4] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+               BIT_WORD_1; BIT_WORD_SHL] THEN
+   REPEAT STRIP_TAC THEN ASM_CASES_TAC `2 <= i` THEN
+   ASM_REWRITE_TAC[] THEN
+   ASM_SIMP_TAC[ARITH_RULE `2 <= i ==> ~(i = 0)`])
+### word_ml_inv_neg_num_lemma
+  (* and so does minus four times a word *)
+  (let shl4 = prove
+    (`!(v:(N)word). word 4 * v = word_shl v 2`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let neg2 = prove
+    (`word_neg (word 2):(N)word = word_not (word 1)`,
+     CONV_TAC WORD_RULE) in
+   let nshl4 = prove
+    (`!(v:(N)word). word_neg (word 4) * v = word_shl (word_neg v) 2`,
+     REWRITE_TAC[GSYM shl4] THEN CONV_TAC WORD_RULE) in
+   DISCH_TAC THEN
+   REWRITE_TAC[neg2; nshl4] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+               BIT_WORD_1; BIT_WORD_SHL] THEN
+   REPEAT STRIP_TAC THEN ASM_CASES_TAC `2 <= i` THEN
+   ASM_REWRITE_TAC[] THEN
+   ASM_SIMP_TAC[ARITH_RULE `2 <= i ==> ~(i = 0)`])
 ### word_list_APPEND
   (LIST_INDUCT_TAC THEN
    ASM_REWRITE_TAC[APPEND; cake_def "misc_word_list"; LENGTH;
