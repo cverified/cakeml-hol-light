@@ -1878,6 +1878,25 @@ is an annotation of a constant and fails with "typechecking error
 (overload resolution)".  `print_types_of_subterms := 0` makes a
 goal with invented type variables readable.
 
+**Arithmetic is where this bites hardest**, because the port
+overloads `=`, `+`, `<` and the numerals for words: ``ASM_CASES_TAC
+`u = ts``` parses as an equation of two *new* variables of an
+invented type, not as the `u` and `ts` of the goal, and
+``SPECL [`ts + 1`; ...]`` instantiates with a term of another type
+than the goal's.  Nothing complains where the tactic is written:
+the case split or the specialisation goes through and the step
+after it fails with `tryfind` (`FIRST_ASSUM ACCEPT_TAC` finds no
+assumption, `FIRST_X_ASSUM MATCH_MP_TAC` no hypothesis), several
+lines away from the cause.  So **every numeral term that a tactic
+writes gets `:num`** -- ``ASM_CASES_TAC `(u:num) = ts``` and
+``SPECL [`(ts:num) + 1`; ...]`` -- and a quick way to see which
+one is wrong is `print_types_of_subterms := 2` on the parsed term,
+where the invented one prints as `(ts:?982593)`.  (`aconv` of the
+goal's term and the written one is the test; `ACCEPT_TAC` needs
+them equal, and `MATCH_ACCEPT_TAC` can fail where `ACCEPT_TAC`
+works, so a failing `MATCH_ACCEPT_TAC` is worth retrying as
+`ACCEPT_TAC` before looking for a deeper cause.)
+
 ## 26. The arithmetic of HOL Light is not HOL4's arithmetic
 
 ### The idiom

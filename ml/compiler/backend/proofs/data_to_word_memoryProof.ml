@@ -2552,7 +2552,58 @@ let all_ts_cons = cake_theorem "all_ts_cons"
     `!refs stack' ts tag xs.
        all_ts refs ((Block ts tag xs:dataSem_v) :: stack') = ts
          INSERT all_ts refs (xs ++ stack')`)
-  CHEAT_TAC;;
+  (* the timestamps of a Block on the stack are its own timestamp
+     and the ones of its payload, which the payload in front of the
+     stack has; the set that the refs contribute is the same on
+     both sides, so the proof is about the stack alone *)
+  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let mems = [vats; MEM; MEM_FLAT; MEM_MAP] in
+   let gen = prove
+    (`!(s:dataSem_v->bool) ts tag xs stack.
+        {t | ?x. (x IN s \/ MEM x (Block ts tag xs :: stack)) /\
+                 MEM t (v_all_ts x)} =
+        ts INSERT {t | ?x. (x IN s \/ MEM x (xs ++ stack)) /\
+                           MEM t (v_all_ts x)}`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[EXTENSION; IN_INSERT; IN_ELIM_THM; MEM;
+                 MEM_APPEND] THEN
+     X_GEN_TAC `t:num` THEN EQ_TAC THENL
+      [DISCH_THEN(X_CHOOSE_THEN `y:dataSem_v`
+         (CONJUNCTS_THEN2 (REPEAT_TCL DISJ_CASES_THEN ASSUME_TAC)
+                          ASSUME_TAC)) THENL
+        [DISJ2_TAC THEN EXISTS_TAC `y:dataSem_v` THEN
+         ASM_REWRITE_TAC[];
+         FIRST_X_ASSUM SUBST_ALL_TAC THEN
+         FIRST_X_ASSUM(MP_TAC o REWRITE_RULE mems) THEN
+         DISCH_THEN(DISJ_CASES_THEN2
+           (fun th -> DISJ1_TAC THEN ACCEPT_TAC th)
+           (X_CHOOSE_THEN `u:num list`
+             (CONJUNCTS_THEN2
+                (X_CHOOSE_THEN `z:dataSem_v`
+                   (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC))
+                MP_TAC))) THEN
+         ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
+         DISJ2_TAC THEN EXISTS_TAC `z:dataSem_v` THEN
+         ASM_REWRITE_TAC[];
+         DISJ2_TAC THEN EXISTS_TAC `y:dataSem_v` THEN
+         ASM_REWRITE_TAC[]];
+       DISCH_THEN(DISJ_CASES_THEN2 ASSUME_TAC
+         (X_CHOOSE_THEN `y:dataSem_v`
+           (CONJUNCTS_THEN2 (REPEAT_TCL DISJ_CASES_THEN ASSUME_TAC)
+                            ASSUME_TAC))) THENL
+        [EXISTS_TAC `Block ts tag xs` THEN
+         ASM_REWRITE_TAC[vats; MEM];
+         EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[];
+         EXISTS_TAC `Block ts tag xs` THEN
+         REWRITE_TAC mems THEN DISJ2_TAC THEN
+         EXISTS_TAC `v_all_ts (y:dataSem_v)` THEN
+         CONJ_TAC THENL
+          [EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[];
+           ASM_REWRITE_TAC[]];
+         EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[]]]) in
+   REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   MATCH_ACCEPT_TAC gen);;
 
 let all_ts_cons_no_block = cake_theorem "all_ts_cons_no_block"
   (fun () ->
@@ -2605,7 +2656,74 @@ let v_all_vs_MEM = cake_theorem "v_all_vs_MEM"
     `!l ts tag xs.
        MEM (Block ts tag xs) (v_all_vs l) ==> (?x y. v_all_vs l =
          x ++ (Block ts tag xs :: v_all_vs xs) ++ y)`)
-  CHEAT_TAC;;
+  (* the values of a list are the values of its head followed by
+     the ones of its tail, and a Block among them is followed by
+     the values of its payload: the induction of the type gives
+     both halves at once, and what each case does to the two
+     pieces of the append is what the three lemmas say *)
+  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let ext0 = prove
+    (`!b:dataSem_v list. ?p q. b = p ++ b ++ q`,
+     GEN_TAC THEN EXISTS_TAC `[]:dataSem_v list` THEN
+     EXISTS_TAC `[]:dataSem_v list` THEN
+     REWRITE_TAC[APPEND; APPEND_NIL]) in
+   let extc = prove
+    (`!(h:dataSem_v) t b. (?p q. t = p ++ b ++ q)
+                          ==> (?p q. CONS h t = p ++ b ++ q)`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(X_CHOOSE_THEN `p:dataSem_v list`
+       (X_CHOOSE_THEN `q:dataSem_v list` SUBST1_TAC)) THEN
+     EXISTS_TAC `CONS (h:dataSem_v) p` THEN
+     EXISTS_TAC `q:dataSem_v list` THEN REWRITE_TAC[APPEND]) in
+   let extl = prove
+    (`!(s:dataSem_v list) t b. (?p q. t = p ++ b ++ q)
+                               ==> (?p q. s ++ t = p ++ b ++ q)`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(X_CHOOSE_THEN `p:dataSem_v list`
+       (X_CHOOSE_THEN `q:dataSem_v list` SUBST1_TAC)) THEN
+     EXISTS_TAC `s ++ p:dataSem_v list` THEN
+     EXISTS_TAC `q:dataSem_v list` THEN
+     REWRITE_TAC[GSYM APPEND_ASSOC]) in
+   let extr = prove
+    (`!(s:dataSem_v list) t b. (?p q. t = p ++ b ++ q)
+                               ==> (?p q. t ++ s = p ++ b ++ q)`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(X_CHOOSE_THEN `p:dataSem_v list`
+       (X_CHOOSE_THEN `q:dataSem_v list` SUBST1_TAC)) THEN
+     EXISTS_TAC `p:dataSem_v list` THEN
+     EXISTS_TAC `q ++ s:dataSem_v list` THEN
+     REWRITE_TAC[APPEND_ASSOC]) in
+   let triv = REPEAT GEN_TAC THEN
+     REWRITE_TAC[vsing; MEM; distinctness "dataSem_v"] in
+   SUBGOAL_THEN
+     `(!x ts tag xs.
+         MEM (Block ts tag xs) (v_all_vs [x])
+         ==> (?p q. v_all_vs [x] =
+                    p ++ (Block ts tag xs :: v_all_vs xs) ++ q)) /\
+      (!l ts tag xs.
+         MEM (Block ts tag xs) (v_all_vs l)
+         ==> (?p q. v_all_vs l =
+                    p ++ (Block ts tag xs :: v_all_vs xs) ++ q))`
+     (fun th -> MATCH_ACCEPT_TAC(CONJUNCT2 th)) THEN
+   MATCH_MP_TAC (dataSem_v_induct ()) THEN REPEAT CONJ_TAC THENL
+    [triv; triv;
+     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[vsing; MEM; injectivity "dataSem_v"] THEN
+     DISCH_THEN(DISJ_CASES_THEN2
+       (fun eq -> STRIP_ASSUME_TAC eq THEN ASM_REWRITE_TAC[] THEN
+                  MATCH_ACCEPT_TAC ext0)
+       (fun m -> FIRST_ASSUM(fun ih ->
+                   MATCH_ACCEPT_TAC(MATCH_MP extc (MATCH_MP ih m)))));
+     triv; triv;
+     REWRITE_TAC[vnil; MEM];
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+     ONCE_REWRITE_TAC[vcons] THEN REWRITE_TAC[MEM_APPEND] THEN
+     DISCH_THEN(DISJ_CASES_THEN2
+       (fun m -> FIRST_ASSUM(fun ih ->
+                   MATCH_ACCEPT_TAC(MATCH_MP extr (MATCH_MP ih m))))
+       (fun m -> FIRST_ASSUM(fun ih ->
+                   MATCH_ACCEPT_TAC(MATCH_MP extl
+                     (MATCH_MP ih m)))))]);;
 
 let v_in_all_vs = cake_theorem "v_in_all_vs"
   (fun () ->
@@ -2705,42 +2823,12 @@ let v_all_vs_ts_MEM = cake_theorem "v_all_vs_ts_MEM"
   (fun () ->
     `!x y ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs [y]) ==> MEM ts
   (v_all_ts y)`)
-  (* and the timestamps of a value among the values of a value are
-     timestamps of that one *)
-  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
-   let triv2 = REPEAT GEN_TAC THEN REWRITE_TAC[vsing; MEM] THEN
-     STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
-     RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
-     FIRST_ASSUM CONTR_TAC in
-   let use2 =
-     FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun mt -> FIRST_ASSUM(fun m ->
-       MATCH_ACCEPT_TAC(MATCH_MP ih (CONJ mt m))))) in
-   SUBGOAL_THEN
-     `(!y x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs [y])
-                ==> MEM ts (v_all_ts y)) /\
-      (!l x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs l)
-                ==> MEM ts (FLAT (MAP v_all_ts l)))`
-     (fun th -> REPEAT GEN_TAC THEN STRIP_TAC THEN
-        FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a1 ->
-          MATCH_ACCEPT_TAC(MATCH_MP (CONJUNCT1 th) (CONJ a1 a2))))) THEN
-   MATCH_MP_TAC dataSem_v_INDUCT THEN REPEAT CONJ_TAC THENL
-    [triv2; triv2;
-     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
-     REWRITE_TAC[vsing; vats; MEM] THEN
-     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
-       (DISJ_CASES_THEN2
-          (fun eq -> SUBST_ALL_TAC eq THEN
-             RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
-             FIRST_ASSUM MATCH_ACCEPT_TAC)
-          (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)));
-     triv2; triv2;
-     REWRITE_TAC[vnil; MEM];
-     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
-     ONCE_REWRITE_TAC[vcons] THEN
-     REWRITE_TAC[MEM_APPEND; MAP; FLAT] THEN
-     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (DISJ_CASES_THEN2
-       (fun m -> ASSUME_TAC m THEN DISJ1_TAC THEN use2)
-       (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)))]);;
+  (* the induction that ml/lib/tactics.ml does for the proofs that
+     need this before the file states it *)
+  (let (c1,_) = v_all_vs_ts_thm () in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a1 ->
+     MATCH_ACCEPT_TAC(MATCH_MP c1 (CONJ a1 a2)))));;
 
 let v_all_vs_trans = cake_theorem "v_all_vs_trans"
   (fun () ->
@@ -2755,7 +2843,34 @@ let MEM_in_all_ts = cake_theorem "MEM_in_all_ts"
     `!x ts stack' refs.
        x IN all_vs refs stack' /\ MEM ts (v_all_ts x) ==> ts IN
          all_ts refs stack'`)
-  CHEAT_TAC;;
+  (* only a Block has a timestamp, and a Block among the values of
+     what the refs and the stack hold is among the values of one of
+     the values that a ref holds or of one on the stack, whose
+     timestamps are therefore timestamps of the stack *)
+  (let (c1,_) = v_all_vs_ts_thm () in
+   let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let fr = prove
+    (`(!l x. find_ref (bvlSem_ValueArray l) x <=> MEM x l) /\
+      (!m v x. find_ref (Thunk m v) x <=> (v = x)) /\
+      (!tg fin l c r x. find_ref (bvlSem_MutBlock tg fin l c r) x <=>
+         MEM x (l ++ [c] ++ r))`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "find_ref"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   SUBGOAL_THEN `?t tag l. (x:dataSem_v) = Block t tag l`
+     STRIP_ASSUME_TAC THENL
+    [CASES_ON_NAME "x" THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
+     TRY(FIRST_ASSUM CONTR_TAC) THEN MESON_TAC[];
+     ALL_TAC] THEN
+   FIRST_X_ASSUM SUBST_ALL_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[cake_def "all_vs"; IN_UNION;
+                               IN_ELIM_THM]) THEN
+   REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[IN_ELIM_THM] THEN
+   ASM_MESON_TAC[v_all_vs_MEM2; c1; fr; MEM_APPEND]);;
 
 let MEM_in_all_vs = cake_theorem "MEM_in_all_vs"
   (fun () ->
@@ -2769,7 +2884,12 @@ let v_all_vs_ts_list = cake_theorem "v_all_vs_ts_list"
   (fun () ->
     `!x y ts. MEM x (v_all_vs y) /\ MEM ts (v_all_ts x) ==> MEM ts
   (FLAT (MAP v_all_ts y))`)
-  CHEAT_TAC;;
+  (* the other half of that induction: the timestamps of a value
+     among the values of a list are timestamps of the list *)
+  (let (_,c2) = v_all_vs_ts_thm () in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a1 ->
+     MATCH_ACCEPT_TAC(MATCH_MP c2 (CONJ a1 a2)))));;
 
 let v_inv_tf_update_thm_lemma = cake_theorem "v_inv_tf_update_thm_lemma"
   (fun () ->
@@ -4702,7 +4822,13 @@ let all_ts_permute = cake_theorem "all_ts_permute"
     `!(refs:(dataSem_v bvlSem_ref) spt) stack' stack'.
        PERM stack' stack' ==> all_ts refs stack' = all_ts refs
          stack'`)
-  CHEAT_TAC;;
+  (* the two variables of HOL4's statement, `stack` and `stack'`,
+     became one name in the port, so what it states here is that
+     the timestamps of a list are the timestamps of that same list
+     (see ISSUES.md, "A statement whose two variables became one
+     name"): nothing uses it, in the port or in HOL4, and the
+     statement is what has to be put right, not the proof *)
+  (REWRITE_TAC[]);;
 
 let reachable_refs_stack_subset =
   cake_theorem "reachable_refs_stack_subset"
@@ -5289,7 +5415,31 @@ let word_ml_inv_Unit = cake_theorem "word_ml_inv_Unit"
       good_dimindex (:'a) ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
         ((Unit,wordLang_Word ((n2w 2):'a word)) :: ws)`)
-  CHEAT_TAC;;
+  (* Unit is the empty Block of the tuple tag, which cons_thm_EMPTY
+     puts on the stack with the root Data (Word (BlockNil 0)), and
+     that word is two, whose lowest bit word_addr takes off *)
+  (let blocknil0 = prove
+    (`BlockNil 0 = (n2w 2:'a word)`,
+     REWRITE_TAC[cake_def "BlockNil"] THEN CONV_TAC WORD_RULE) in
+   let and2 = prove
+    (`(n2w 2:(N)word) && word_not (n2w 1) = n2w 2`,
+     WORD_NUM_BIT_TAC 2) in
+   let dimword16 = prove
+    (`good_dimindex (:'a) ==> 0 < dimword (:'a) DIV 16`,
+     REWRITE_TAC[cake_def "good_dimindex"; dimword] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+     CONV_TAC NUM_REDUCE_CONV) in
+   let waddr = hd (word_addr_clauses ()) in
+   let cons0 = REWRITE_RULE[blocknil0]
+     (INST [`0`,`tag:num`] (cake_thm "cons_thm_EMPTY")) in
+   REWRITE_TAC[cake_def "word_ml_inv"] THEN REPEAT STRIP_TAC THEN
+   EXISTS_TAC
+     `CONS (gc_shared_Data (wordLang_Word (n2w 2:'a word))) hs` THEN
+   REWRITE_TAC[MAP; ALL2; waddr; and2] THEN
+   ASM_REWRITE_TAC[cake_def "dataSem_Unit";
+                   cake_def "tuple_tag"] THEN
+   MATCH_MP_TAC cons0 THEN
+   ASM_SIMP_TAC[dimword16]);;
 
 let memory_rel_Unit = cake_theorem "memory_rel_Unit"
   (fun () ->
@@ -5340,7 +5490,16 @@ let get_real_simple_addr_def = cake_define
 let or_1 = cake_theorem "or_1[local]"
   (fun () ->
     `!w. (word_bits 0 0) w || (n2w 1) = ((n2w 1):'a word)`)
-  CHEAT_TAC;;
+  (* the lowest bit of a word, or one, is one *)
+  (GEN_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; word_bits;
+               BIT_WORD_SUBWORD; BIT_WORD_1] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   ASM_CASES_TAC `i = 0` THEN ASM_REWRITE_TAC[] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   TRY(REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1]) THEN
+   POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC);;
 
 let get_real_addr_get_addr = cake_theorem "get_real_addr_get_addr"
   (fun () ->
@@ -5360,7 +5519,20 @@ let get_real_offset_thm = cake_theorem "get_real_offset_thm"
       get_real_offset (n2w (4 * index)) =
         SOME (bytes_in_word + n2w index * (bytes_in_word:'a
           word))`)
-  CHEAT_TAC;;
+  (* the offset of an index is four times it, which a dimindex of
+     32 adds to the bytes in a word as it stands and one of 64
+     doubles first *)
+  (let shl1 = prove
+    (`!(v:(N)word). word_shl v 1 = word 2 * v`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   REWRITE_TAC[cake_def "good_dimindex"; cake_def "get_real_offset";
+               cake_def "bytes_in_word"] THEN
+   DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   REWRITE_TAC[injectivity "option"; shl1; WORD_MUL] THEN
+   CONV_TAC WORD_RULE);;
 
 let word_heap_APPEND = cake_theorem "word_heap_APPEND"
   (fun () ->
@@ -5478,7 +5650,28 @@ let all_ts_head_eq = cake_theorem "all_ts_head_eq"
     `!v refs stack' ts.
       v IN all_vs refs stack' ==> all_ts refs stack' = all_ts
         refs (v :: stack')`)
-  CHEAT_TAC;;
+  (* a value that the refs or the stack already hold adds no
+     timestamp to the stack, which is what MEM_in_all_ts says of
+     the value itself and all_ts_head of the head of a stack *)
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN
+   ONCE_REWRITE_TAC[all_ts_head] THEN
+   MATCH_MP_TAC(SET_RULE `s SUBSET t ==> t = s UNION t`) THEN
+   REWRITE_TAC[SUBSET] THEN X_GEN_TAC `u:num` THEN
+   REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[IN_ELIM_THM; MEM] THEN
+   DISCH_THEN(X_CHOOSE_THEN `y:dataSem_v`
+     (CONJUNCTS_THEN2
+        (DISJ_CASES_THEN2 ASSUME_TAC (SUBST_ALL_TAC o SYM))
+        ASSUME_TAC)) THENL
+    [EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[];
+     MP_TAC(SPECL [`y:dataSem_v`; `u:num`; `stack':(dataSem_v)list`;
+                   `refs:(dataSem_v bvlSem_ref) spt`]
+       MEM_in_all_ts) THEN
+     ASM_REWRITE_TAC[] THEN
+     REWRITE_TAC[cake_def "all_ts"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[IN_ELIM_THM]]);;
 
 let memory_rel_El' = cake_theorem "memory_rel_El'"
   (fun () ->
@@ -5764,7 +5957,19 @@ let less_pow_dimindex_sub_imp =
 let encode_header_NEQ_0 = cake_theorem "encode_header_NEQ_0"
   (fun () ->
     `encode_header c n k = SOME w ==> ~(w = (n2w 0))`)
-  CHEAT_TAC;;
+  (* the header has the lowest bit of its three set, and a word
+     with a bit is not zero *)
+  (REWRITE_TAC[cake_def "encode_header"] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+   REWRITE_TAC[cake_def "make_header"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   DISCH_THEN(MP_TAC o SPEC `0`) THEN
+   REWRITE_TAC[BIT_WORD_OR; BIT_WORD_0; BIT_WORD] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1]);;
 
 let encode_header_IMP = cake_theorem "encode_header_IMP[local]"
   (fun () ->
@@ -5796,7 +6001,10 @@ let thunk_tag_bits_lemma = cake_theorem "thunk_tag_bits_lemma[local]"
   (fun () ->
     `(thunk_tag_to_bits Evaluated << 3 || (n2w 6)) = ((n2w 14):'a
   word)`)
-  CHEAT_TAC;;
+  (* three is the tag of an evaluated thunk, so the word is 8 or 6 *)
+  (REWRITE_TAC[cake_def "thunk_tag_to_bits"] THEN
+   MATCH_REDUCE_TAC THEN
+   WORD_NUM_BIT_TAC 4);;
 
 let memory_rel_UpdateThunk_Evaluated =
   cake_theorem "memory_rel_UpdateThunk_Evaluated"
@@ -6299,7 +6507,22 @@ let all_vs_CONS_SUBSET = cake_theorem "all_vs_CONS_SUBSET[local]"
   (fun () ->
     `x IN all_vs refs stack ==> all_vs refs (x :: stack) SUBSET all_vs
   refs stack`)
-  CHEAT_TAC;;
+  (* the three parts of all_vs that read the refs are the same, and
+     a value of the head is a value of the refs or of the stack
+     already, because the head itself is *)
+  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   DISCH_TAC THEN REWRITE_TAC[SUBSET] THEN GEN_TAC THEN
+   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [cake_def "all_vs"] THEN
+   REWRITE_TAC[IN_UNION; IN_ELIM_THM] THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [vcons] THEN
+   REWRITE_TAC[MEM_APPEND] THEN STRIP_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[vnil; MEM]) THEN
+   TRY(FIRST_ASSUM CONTR_TAC) THEN
+   TRY(FIRST_ASSUM(fun m -> FIRST_ASSUM(fun xm ->
+     MATCH_ACCEPT_TAC(MATCH_MP (cake_thm "v_in_all_vs")
+       (CONJ xm m))))) THEN
+   REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   ASM_MESON_TAC[]);;
 
 let all_vs_MutBlock_centre =
   cake_theorem "all_vs_MutBlock_centre[local]"
@@ -6985,7 +7208,56 @@ let IMP_memory_rel_Number = cake_theorem "IMP_memory_rel_Number"
       memory_rel c be ts refs sp st m dm
        ((Number i,(wordLang_Word (Smallnum i):'a word_loc)) ::
          vars)`)
-  CHEAT_TAC;;
+  (* the root of a small Number is the Data of its Smallnum, which
+     abs_ml_inv_Num adds to the roots, and Smallnum is four times
+     the integer up to the sign, so word_addr leaves it alone *)
+  (let nmul = prove
+    (`!(i:int). &0 <= i
+        ==> n2w (num_of_int (&4 * i)) =
+            (n2w 4 * n2w (num_of_int i):(N)word)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `num_of_int (&4 * (i:int)) = 4 * num_of_int i`
+       SUBST1_TAC THENL
+      [FIRST_ASSUM(fun th ->
+         GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+           [GSYM(MATCH_MP INT_OF_NUM_OF_INT th)]) THEN
+       REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM];
+       REWRITE_TAC[WORD_MUL]]) in
+   let and_sym = WORD_BITWISE_RULE `(x:(N)word) && y = y && x` in
+   let andnot1 = prove
+    (`good_dimindex (:'a)
+      ==> ((n2w 4 * v:'a word) && word_not (n2w 1) = n2w 4 * v) /\
+          ((--(n2w 4) * v:'a word) && word_not (n2w 1) =
+           --(n2w 4) * v)`,
+     DISCH_TAC THEN
+     SUBGOAL_THEN `word_not (n2w 1:'a word) = --(n2w 2)`
+       SUBST1_TAC THENL
+      [CONV_TAC WORD_RULE; ALL_TAC] THEN
+     ONCE_REWRITE_TAC[and_sym] THEN
+     ASM_SIMP_TAC[cake_thm "word_ml_inv_num_lemma";
+                  cake_thm "word_ml_inv_neg_num_lemma"]) in
+   let neg_mul = WORD_RULE
+     `word_neg (word 4 * (v:(N)word)) = word_neg (word 4) * v` in
+   let waddr = hd (word_addr_clauses ()) in
+   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv"] THEN
+   REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   EXISTS_TAC
+     `CONS (gc_shared_Data (wordLang_Word (Smallnum i:'a word))) hs`
+   THEN
+   REWRITE_TAC[MAP; ALL2; waddr] THEN
+   ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
+    [MATCH_MP_TAC (cake_thm "abs_ml_inv_Num") THEN ASM_REWRITE_TAC[];
+     REWRITE_TAC[cake_def "Smallnum"] THEN COND_CASES_TAC THENL
+      [SUBGOAL_THEN `&0 <= ((&0) - (i:int))` ASSUME_TAC THENL
+        [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+       FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+       REWRITE_TAC[WORD_SUB_LZERO; neg_mul] THEN
+       ASM_SIMP_TAC[andnot1];
+       SUBGOAL_THEN `&0 <= (i:int)` ASSUME_TAC THENL
+        [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+       FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+       ASM_SIMP_TAC[andnot1]]]);;
 
 let memory_rel_El_any = cake_theorem "memory_rel_El_any"
   (fun () ->
@@ -7717,7 +7989,31 @@ let IMP_memory_rel_Number_num3 =
       memory_rel c be ts refs sp st m dm
        ((Number (&n),wordLang_Word ((n2w n << 2):'a word)) ::
          vars)`)
-  CHEAT_TAC;;
+  (* the Smallnum of a natural number is it shifted up by two, and
+     a number below two to the dimindex less three is small *)
+  (let shl2 = prove
+    (`!(v:(N)word). word_shl v 2 = word 4 * v`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let smallnum_shl = prove
+    (`Smallnum (&n) = ((n2w n << 2):'a word)`,
+     REWRITE_TAC[cake_def "Smallnum"; INT_OF_NUM_LT;
+                 ARITH_RULE `~(n < 0)`; INT_OF_NUM_MUL;
+                 NUM_OF_INT_OF_NUM; shl2; WORD_MUL]) in
+   STRIP_TAC THEN
+   MP_TAC(INST [`&n:int`,`i:int`]
+     (cake_thm "IMP_memory_rel_Number")) THEN
+   REWRITE_TAC[smallnum_shl] THEN
+   DISCH_THEN MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[cake_def "small_int"; INT_OF_NUM_LT; dimword] THEN
+   CONJ_TAC THENL
+    [INT_ARITH_TAC;
+     UNDISCH_TAC `good_dimindex (:'a)` THEN
+     REWRITE_TAC[cake_def "good_dimindex"] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN ARITH_ASM_TAC]);;
 
 let IMP_memory_rel_Number_num = cake_theorem "IMP_memory_rel_Number_num"
   (fun () ->
@@ -7726,7 +8022,30 @@ let IMP_memory_rel_Number_num = cake_theorem "IMP_memory_rel_Number_num"
       memory_rel c be ts refs sp st m dm
        ((Number (&n),wordLang_Word ((n2w n << 2):'a word)) ::
          vars)`)
-  CHEAT_TAC;;
+  (* and so is one below two to the dimindex less four *)
+  (let shl2 = prove
+    (`!(v:(N)word). word_shl v 2 = word 4 * v`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let smallnum_shl = prove
+    (`Smallnum (&n) = ((n2w n << 2):'a word)`,
+     REWRITE_TAC[cake_def "Smallnum"; INT_OF_NUM_LT;
+                 ARITH_RULE `~(n < 0)`; INT_OF_NUM_MUL;
+                 NUM_OF_INT_OF_NUM; shl2; WORD_MUL]) in
+   STRIP_TAC THEN
+   MP_TAC(INST [`&n:int`,`i:int`]
+     (cake_thm "IMP_memory_rel_Number")) THEN
+   REWRITE_TAC[smallnum_shl] THEN
+   DISCH_THEN MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[cake_def "small_int"; INT_OF_NUM_LT; dimword] THEN
+   CONJ_TAC THENL
+    [INT_ARITH_TAC;
+     UNDISCH_TAC `good_dimindex (:'a)` THEN
+     REWRITE_TAC[cake_def "good_dimindex"] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN ARITH_ASM_TAC]);;
 
 let memory_rel_Number_EQ = cake_theorem "memory_rel_Number_EQ"
   (fun () ->
@@ -7867,14 +8186,69 @@ let memory_rel_Boolv_T = cake_theorem "memory_rel_Boolv_T"
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a)
   ==> memory_rel c be ts refs sp st m dm ((Boolv T,wordLang_Word ((n2w
   18):'a word)) :: vars)`)
-  CHEAT_TAC;;
+  (* the true Boolv is the empty Block of the true tag, which is
+     one, so its root is the Data of BlockNil 1, the word eighteen *)
+  (let shl16 = prove
+    (`word_shl (word 1:(N)word) 4 = word 16`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV) in
+   let blocknil1 = prove
+    (`BlockNil 1 = (n2w 18:'a word)`,
+     REWRITE_TAC[cake_def "BlockNil"; shl16] THEN
+     CONV_TAC WORD_RULE) in
+   let and18 = prove
+    (`(n2w 18:(N)word) && word_not (n2w 1) = n2w 18`,
+     WORD_NUM_BIT_TAC 5) in
+   let dimword16 = prove
+    (`good_dimindex (:'a) ==> 1 < dimword (:'a) DIV 16`,
+     REWRITE_TAC[cake_def "good_dimindex"; dimword] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+     CONV_TAC NUM_REDUCE_CONV) in
+   let waddr = hd (word_addr_clauses ()) in
+   let cons1 = REWRITE_RULE[blocknil1]
+     (INST [`1`,`tag:num`] (cake_thm "cons_thm_EMPTY")) in
+   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv"] THEN
+   REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   EXISTS_TAC
+     `CONS (gc_shared_Data (wordLang_Word (n2w 18:'a word))) hs` THEN
+   REWRITE_TAC[MAP; ALL2; waddr; and18] THEN
+   ASM_REWRITE_TAC[cake_def "dataSem_Boolv";
+                   cake_def "bool_to_tag"; cake_def "true_tag"] THEN
+   MATCH_MP_TAC cons1 THEN
+   ASM_SIMP_TAC[dimword16]);;
 
 let memory_rel_Boolv_F = cake_theorem "memory_rel_Boolv_F"
   (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a)
   ==> memory_rel c be ts refs sp st m dm ((Boolv F,wordLang_Word ((n2w
   2):'a word)) :: vars)`)
-  CHEAT_TAC;;
+  (* the false Boolv is the empty Block of the false tag, which is
+     zero, so it is the same root as the one of Unit *)
+  (let blocknil0 = prove
+    (`BlockNil 0 = (n2w 2:'a word)`,
+     REWRITE_TAC[cake_def "BlockNil"] THEN CONV_TAC WORD_RULE) in
+   let and2 = prove
+    (`(n2w 2:(N)word) && word_not (n2w 1) = n2w 2`,
+     WORD_NUM_BIT_TAC 2) in
+   let dimword16 = prove
+    (`good_dimindex (:'a) ==> 0 < dimword (:'a) DIV 16`,
+     REWRITE_TAC[cake_def "good_dimindex"; dimword] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+     CONV_TAC NUM_REDUCE_CONV) in
+   let waddr = hd (word_addr_clauses ()) in
+   let cons0 = REWRITE_RULE[blocknil0]
+     (INST [`0`,`tag:num`] (cake_thm "cons_thm_EMPTY")) in
+   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv"] THEN
+   REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   EXISTS_TAC
+     `CONS (gc_shared_Data (wordLang_Word (n2w 2:'a word))) hs` THEN
+   REWRITE_TAC[MAP; ALL2; waddr; and2] THEN
+   ASM_REWRITE_TAC[cake_def "dataSem_Boolv";
+                   cake_def "bool_to_tag"; cake_def "false_tag"] THEN
+   MATCH_MP_TAC cons0 THEN
+   ASM_SIMP_TAC[dimword16]);;
 
 let memory_rel_Boolv = cake_theorem "memory_rel_Boolv"
   (fun () ->
@@ -8046,14 +8420,47 @@ let all_ones_bit = cake_theorem "all_ones_bit"
   (fun () ->
     `i < dimindex (:'a) ==>
      (FAPPLY (all_ones e b:'a word) i <=> b <= i /\ i < e)`)
-  CHEAT_TAC;;
+  (* all_ones is the slice of the word of all ones, so its bit is
+     the one of the subword that the slice shifts up *)
+  (DISCH_TAC THEN
+   REWRITE_TAC[word_index; cake_def "all_ones"] THEN
+   COND_CASES_TAC THENL
+    [REWRITE_TAC[BIT_WORD_0] THEN
+     FIRST_ASSUM(fun th -> MP_TAC th) THEN ARITH_TAC;
+     ALL_TAC] THEN
+   ASM_SIMP_TAC[word_slice; word_bits; BIT_WORD_SHL;
+                BIT_WORD_SUBWORD; BIT_WORD_NOT; BIT_WORD_0] THEN
+   REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC);;
 
 let maxout_bits_bit = cake_theorem "maxout_bits_bit"
   (fun () ->
     `FAPPLY
        (maxout_bits n l b:'a word) i /\ i < dimindex (:'a) ==>
        b <= i /\ i < b + l`)
-  CHEAT_TAC;;
+  (* maxout_bits is the number shifted up by the base, and a number
+     below two to the width of the field has no bit at the width or
+     above, or it is all the ones of the field *)
+  (let odd_div = prove
+    (`!k m i. k < 2 EXP m /\ m <= i
+              ==> (ODD (k DIV 2 EXP i) <=> F)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `k DIV 2 EXP i = 0` SUBST1_TAC THENL
+      [MATCH_MP_TAC DIV_LT THEN
+       TRANS_TAC LTE_TRANS `2 EXP m` THEN
+       ASM_REWRITE_TAC[LE_EXP] THEN ARITH_TAC;
+       REWRITE_TAC[ODD]]) in
+   REWRITE_TAC[word_index; cake_def "maxout_bits"] THEN
+   COND_CASES_TAC THENL
+    [REWRITE_TAC[BIT_WORD_SHL; BIT_WORD] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     MP_TAC(SPECL [`n:num`; `l:num`; `i - b`] odd_div) THEN
+     ASM_REWRITE_TAC[] THEN
+     ASM_SIMP_TAC[ARITH_RULE `n < m - 1 ==> n < m`] THEN
+     ARITH_ASM_TAC;
+     STRIP_TAC THEN
+     ASM_MESON_TAC[REWRITE_RULE[word_index] all_ones_bit]]);;
 
 let maxout_bits_IMP = cake_theorem "maxout_bits_IMP"
   (fun () ->
@@ -8225,12 +8632,43 @@ let memory_rel_Block_MEM = cake_theorem "memory_rel_Block_MEM"
 let smallnum_0 = cake_theorem "Smallnum_0"
   (fun () ->
     `~(FAPPLY (Smallnum i:'a word) 0)`)
-  CHEAT_TAC;;
+  (* Smallnum_bits says that the one of its two lowest bits is
+     clear; a bit is clear exactly when the and with the word of
+     that bit is zero *)
+  (let bit0_and = prove
+    (`!x:(N)word. bit 0 x <=> ~((n2w 1 && x) = n2w 0)`,
+     GEN_TAC THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+                 BIT_WORD_1] THEN
+     MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= d ==> 0 < d:num`]) in
+   REWRITE_TAC[word_index; bit0_and;
+               CONJUNCT1 (cake_thm "Smallnum_bits")]);;
 
 let smallnum_1 = cake_theorem "Smallnum_1"
   (fun () ->
     `good_dimindex (:'a) ==> ~(FAPPLY (Smallnum i:'a word) 1)`)
-  CHEAT_TAC;;
+  (* and the other one, where the word of the bit is two and the
+     dimindex has to be above one, which good_dimindex gives *)
+  (let bw2 = prove
+    (`!i. bit i (n2w 2:(N)word) <=> i = 1 /\ 1 < dimindex(:N)`,
+     GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [ARITH_RULE `2 = 2 EXP 1`] THEN
+     REWRITE_TAC[BIT_WORD_POW2]) in
+   let bit1_and = prove
+    (`!x:(N)word. 1 < dimindex(:N)
+                  ==> (bit 1 x <=> ~((n2w 2 && x) = n2w 0))`,
+     GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+                 bw2] THEN
+     ASM_MESON_TAC[]) in
+   DISCH_TAC THEN REWRITE_TAC[word_index] THEN
+   FIRST_ASSUM(fun gd ->
+     MP_TAC(REWRITE_RULE[cake_def "good_dimindex"] gd)) THEN
+   STRIP_TAC THEN
+   ASM_SIMP_TAC[bit1_and; CONJUNCT2 (cake_thm "Smallnum_bits");
+                ARITH_RULE `d = 32 ==> 1 < d:num`;
+                ARITH_RULE `d = 64 ==> 1 < d:num`]);;
 
 let do_eq_list_F_IMP_MEM = cake_theorem "do_eq_list_F_IMP_MEM[local]"
   (fun () ->
@@ -8354,7 +8792,27 @@ let shift_shift = cake_theorem "shift_shift[local]"
   (fun () ->
     `n1 * (2 EXP l) < dimword (:'a) ==>
        n2w n1 << l >>> l = (n2w n1:'a word)`)
-  CHEAT_TAC;;
+  (* the shift up multiplies by two to the shift, which stays below
+     the dimword, so the shift down divides it out again *)
+  (let e2 = prove
+    (`!l. 1 <= 2 EXP l`,
+     REWRITE_TAC[ARITH_RULE `1 <= n <=> ~(n = 0)`; EXP_EQ_0;
+                 ARITH_EQ]) in
+   DISCH_TAC THEN
+   SUBGOAL_THEN `n1 < dimword (:'a) /\ 2 EXP l * n1 < dimword (:'a)`
+     STRIP_ASSUME_TAC THENL
+    [CONJ_TAC THENL
+      [TRANS_TAC LET_TRANS `n1 * 2 EXP l` THEN ASM_REWRITE_TAC[] THEN
+       SUBGOAL_THEN `n1 * 1 <= n1 * 2 EXP l` MP_TAC THENL
+        [REWRITE_TAC[LE_MULT_LCANCEL] THEN
+         DISJ2_TAC THEN MATCH_ACCEPT_TAC e2;
+         ARITH_TAC];
+       ONCE_REWRITE_TAC[MULT_SYM] THEN ASM_REWRITE_TAC[]];
+     ALL_TAC] THEN
+   REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_USHR; VAL_WORD_SHL; VAL_WORD;
+               GSYM dimword] THEN
+   CONV_TAC MOD_DOWN_CONV THEN
+   ASM_SIMP_TAC[MOD_LT; DIV_MULT; EXP_EQ_0; ARITH_EQ]);;
 
 let word_addr_Data_NE_get_addr =
   cake_theorem "word_addr_Data_NE_get_addr[local]"
@@ -8818,7 +9276,20 @@ let poly_inj_lemma = cake_theorem "poly_inj_lemma"
   (fun () ->
     `(a:num) < b /\ a' < b /\ a + b * c = a' + b * c' ==> a = a' /\ c
   = c'`)
-  CHEAT_TAC;;
+  (* the remainder of the division by b gives a and a', and what is
+     left of the equation then cancels b *)
+  (STRIP_TAC THEN
+   SUBGOAL_THEN `(a:num) = a'` ASSUME_TAC THENL
+    [SUBGOAL_THEN
+       `((a:num) + b * c) MOD b = (a' + b * c') MOD b` MP_TAC THENL
+      [ASM_REWRITE_TAC[]; ALL_TAC] THEN
+     ONCE_REWRITE_TAC[ADD_SYM] THEN ONCE_REWRITE_TAC[MULT_SYM] THEN
+     REWRITE_TAC[MOD_MULT_ADD] THEN ASM_SIMP_TAC[MOD_LT];
+     ALL_TAC] THEN
+   ASM_REWRITE_TAC[] THEN
+   UNDISCH_TAC `(a:num) + b * c = a' + b * c'` THEN
+   ASM_REWRITE_TAC[EQ_ADD_LCANCEL; EQ_MULT_LCANCEL] THEN
+   ARITH_ASM_TAC);;
 
 let mw2n_inj = cake_theorem "mw2n_inj"
   (fun () ->
@@ -8993,7 +9464,33 @@ let or_seven_eq = cake_theorem "or_seven_eq[local]"
   (fun () ->
     `~((w << k) = (v << k)) /\ 2 < k ==> ~(((w << k) || (n2w 7)) = ((v
   << k) || (n2w 7)))`)
-  CHEAT_TAC;;
+  (* seven has no bit above the second, and the shift by more than
+     two has none below the third, so the bit where the shifts
+     differ is a bit where the ors differ *)
+  (let odd_div = prove
+    (`!k m i. k < 2 EXP m /\ m <= i
+              ==> (ODD (k DIV 2 EXP i) <=> F)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `k DIV 2 EXP i = 0` SUBST1_TAC THENL
+      [MATCH_MP_TAC DIV_LT THEN
+       TRANS_TAC LTE_TRANS `2 EXP m` THEN
+       ASM_REWRITE_TAC[LE_EXP] THEN ARITH_TAC;
+       REWRITE_TAC[ODD]]) in
+   let bit7 = prove
+    (`!i. 3 <= i ==> (word_bit i (n2w 7:(N)word) <=> F)`,
+     REPEAT STRIP_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+     MP_TAC(SPECL [`7`; `3`; `i:num`] odd_div) THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+     DISCH_THEN(fun th -> REWRITE_TAC[th])) in
+   MATCH_MP_TAC(TAUT `(q ==> b ==> a) ==> (~a /\ q ==> ~b)`) THEN
+   DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_SHL] THEN
+   REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN
+   ASM_REWRITE_TAC[] THEN
+   ASM_CASES_TAC `3 <= i` THENL
+    [ASM_SIMP_TAC[bit7];
+     ASM_SIMP_TAC[ARITH_RULE `~(3 <= i) /\ 2 < k ==> ~(k <= i)`]]);;
 
 let make_byte_header_eq = cake_theorem "make_byte_header_eq"
   (fun () ->
@@ -9647,12 +10144,41 @@ let append_writes_LENGTH = cake_theorem "append_writes_LENGTH"
 let ptr_bits_or_1_add_1 = cake_theorem "ptr_bits_or_1_add_1"
   (fun () ->
     `ptr_bits c tag len || (n2w 1) = ptr_bits c tag len + (n2w 1)`)
-  CHEAT_TAC;;
+  (* the lowest bit of ptr_bits is clear, because both of the
+     maxouts it ors are shifted up by at least one, so the or with
+     one is the sum with one *)
+  (CONV_TAC SYM_CONV THEN MATCH_MP_TAC WORD_ADD_OR THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               BIT_WORD_1] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   ASM_CASES_TAC `i = 0` THEN ASM_REWRITE_TAC[] THEN
+   REWRITE_TAC[cake_def "ptr_bits"; BIT_WORD_OR;
+               cake_def "maxout_bits"] THEN
+   REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[BIT_WORD_SHL; GSYM word_index] THEN
+   ASM_SIMP_TAC[cake_thm "all_ones_bit";
+                ARITH_RULE `0 < d <=> 1 <= d:num`; DIMINDEX_GE_1] THEN
+   REWRITE_TAC[ARITH_RULE `~(1 + n <= 0)`;
+               ARITH_RULE `~(1 <= 0)`] THEN
+   CONV_TAC TAUT);;
 
 let all_ones_n2w = cake_theorem "all_ones_n2w"
   (fun () ->
     `all_ones (l + b) b = n2w (2 EXP l - 1) << b`)
-  CHEAT_TAC;;
+  (* and the same word is the mask of l ones shifted up by b, whose
+     bits HOL Light's BIT_MASK_WORD gives *)
+  (REWRITE_TAC[cake_def "all_ones"] THEN COND_CASES_TAC THENL
+    [SUBGOAL_THEN `l = 0` SUBST1_TAC THENL
+      [POP_ASSUM MP_TAC THEN ARITH_TAC; ALL_TAC] THEN
+     CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC WORD_RULE;
+     ALL_TAC] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; word_slice; word_bits;
+               BIT_WORD_SHL; BIT_WORD_SUBWORD; BIT_WORD_NOT;
+               BIT_WORD_0; BIT_MASK_WORD] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC);;
 
 let ptr_bits_lemma = cake_theorem "ptr_bits_lemma"
   (fun () ->
@@ -10509,7 +11035,48 @@ let byte_aligned_bytes_in_word =
   (fun () ->
     `good_dimindex (:'a) ==>
      byte_aligned (bytes_in_word:'a word)`)
-  CHEAT_TAC;;
+  (* the alignment of a word is the slice that drops its lowest
+     bits, and the bytes in a word of a good dimindex are four or
+     eight, which have no bit as low as that *)
+  (let LOG2_RED =
+     REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                          NUM_REDUCE_CONV THENC REWRITE_CONV[])) in
+   let slice_lemma = prove
+    (`!h p (w:(N)word).
+        dimindex (:N) <= h + 1 /\ (!i. i < p ==> ~word_bit i w)
+        ==> word_slice h p w = w`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+                 BIT_WORD_SHL; BIT_WORD_SUBWORD] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `p:num <= i` THENL
+      [SUBGOAL_THEN `(p + (i - p) = i) /\
+                     i - p < MIN ((h + 1) - p) (dimindex (:N))`
+         STRIP_ASSUME_TAC THENL
+        [CONJ_TAC THENL
+          [ASM_ARITH_TAC;
+           REWRITE_TAC[ARITH_RULE
+             `MIN a b = if a <= b then a else b`] THEN
+           COND_CASES_TAC THEN ASM_ARITH_TAC];
+         ASM_REWRITE_TAC[]];
+       ASM_REWRITE_TAC[] THEN
+       FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN
+       ASM_SIMP_TAC[ARITH_RULE `~(p <= i) ==> (i:num) < p`]]) in
+   REWRITE_TAC[cake_def "good_dimindex"; cake_def "byte_aligned";
+               cake_def "alignment_aligned"; cake_def "align";
+               cake_def "bytes_in_word"] THEN
+   DISCH_THEN(DISJ_CASES_THEN
+     (fun th -> SUBST1_TAC th THEN ASSUME_TAC th)) THEN
+   CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
+   MATCH_MP_TAC slice_lemma THEN
+   (CONJ_TAC THENL
+     [ASM_REWRITE_TAC[] THEN ARITH_TAC;
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      SUBGOAL_THEN `i = 0 \/ i = 1 \/ i = 2` MP_TAC THENL
+       [ASM_ARITH_TAC;
+        DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+        REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+        TRY(REWRITE_TAC[]) THEN TRY(ASM_ARITH_TAC)]]));;
 
 let byte_align_mult_bytes_in_word =
   cake_theorem "byte_align_mult_bytes_in_word"
