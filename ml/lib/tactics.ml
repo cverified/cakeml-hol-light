@@ -831,3 +831,21 @@ let CK_IH_TAC =
             MATCH_ACCEPT_TAC(MATCH_MP ih' (CONJ vi c2))) g) ORELSE
          (fun g -> (MP_TAC(MATCH_MP ih' vi) THEN
                     ASM_REWRITE_TAC[]) g)) gl)));;
+
+(* ------------------------------------------------------------------ *)
+(* ASM_ARITH_TAC hands ARITH_TAC every assumption, and ARITH_TAC      *)
+(* fails as soon as one of them is not arithmetic -- which the        *)
+(* assumptions of an unfolded invariant of CakeML always are.  This   *)
+(* hands it the arithmetic ones only.                                 *)
+(* ------------------------------------------------------------------ *)
+
+let ARITH_ASM_TAC =
+  let num_fact th =
+    let c = concl th in
+    (try let l,_ = dest_eq c in type_of l = `:num`
+     with Failure _ ->
+       exists (fun pat -> can (term_match [] pat) c)
+         [`(a:num) <= b`; `(a:num) < b`; `(a:num) >= b`;
+          `(a:num) > b`; `~((a:num) = b)`]) in
+  ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC (filter num_fact ths)) THEN
+  ARITH_TAC;;
