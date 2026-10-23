@@ -2743,6 +2743,23 @@
   (REPEAT STRIP_TAC THEN
    REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
    DISJ2_TAC THEN DISJ2_TAC THEN DISJ1_TAC THEN ASM_MESON_TAC[])
+### all_vs_CONS_SUBSET
+  (* the three parts of all_vs that read the refs are the same, and
+     a value of the head is a value of the refs or of the stack
+     already, because the head itself is *)
+  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   DISCH_TAC THEN REWRITE_TAC[SUBSET] THEN GEN_TAC THEN
+   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [cake_def "all_vs"] THEN
+   REWRITE_TAC[IN_UNION; IN_ELIM_THM] THEN
+   GEN_REWRITE_TAC ONCE_DEPTH_CONV [vcons] THEN
+   REWRITE_TAC[MEM_APPEND] THEN STRIP_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[vnil; MEM]) THEN
+   TRY(FIRST_ASSUM CONTR_TAC) THEN
+   TRY(FIRST_ASSUM(fun m -> FIRST_ASSUM(fun xm ->
+     MATCH_ACCEPT_TAC(MATCH_MP (cake_thm "v_in_all_vs")
+       (CONJ xm m))))) THEN
+   REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   ASM_MESON_TAC[])
 ### all_vs_MutBlock_centre
   (* the centre of the MutBlock is a value of the refs already, so
      putting it on the stack adds nothing *)
