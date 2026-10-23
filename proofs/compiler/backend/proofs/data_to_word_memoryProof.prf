@@ -1668,6 +1668,16 @@
    ASM_REWRITE_TAC[injectivity "option"; distinctness "option";
                    PAIR_EQ] THEN
    MESON_TAC[])
+### store_list_append
+  (* the store of the append stores xs and then ys, at the address
+     that the length of xs moves on to *)
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[APPEND;
+                   cake_def "data_to_word_memoryProof_store_list";
+                   LENGTH; WORD_ADD_MUL_0; WORD_ADD_MUL_SUC] THEN
+   TRY(COND_CASES_TAC) THEN
+   ASM_REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   MESON_TAC[])
 ### minus_lemma
   (CONV_TAC WORD_RULE)
 ### n2w_lsr_eq_0
@@ -2162,6 +2172,14 @@
    REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
    REPEAT COND_CASES_TAC THEN REPEAT STRIP_TAC THEN
    ASM_ARITH_TAC)
+### eq_explode_APPEND
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[APPEND; cake_def "eq_explode"; LENGTH;
+                   WORD_ADD_0_MUL; WORD_ADD_SUC_MUL])
+### eq_assum_APPEND
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[APPEND; cake_def "eq_assum"; LENGTH;
+                   WORD_ADD_0_MUL; WORD_ADD_SUC_MUL; CONJ_ASSOC])
 ### memory_rel_Loc
   (* the word_addr of a root is a Loc only for a Data of a Loc,
      which only a CodePtr stands for: the RefPtr that could is a
