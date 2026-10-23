@@ -3616,6 +3616,59 @@
    REWRITE_TAC[BIT_WORD_OR; BIT_WORD_0; BIT_WORD] THEN
    CONV_TAC NUM_REDUCE_CONV THEN
    REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1])
+### encode_header_IMP
+  (* what encode_header gives back is make_header of the tag and the
+     length, so the length is the one of its condition and the shift
+     down of decode_length undoes the shift up that make_header did:
+     the tag and the three are below the shift, so the shift down
+     loses them *)
+  (let hi = prove
+    (`!n r (i:num). n < 2 EXP r /\ r <= i
+        ==> ~(bit i ((n2w n):'a word))`,
+     MATCH_ACCEPT_TAC BIT_WORD_HI) in
+   let b3 = prove
+    (`!j. j < dimindex (:'a)
+          ==> (bit j ((n2w 3):'a word) <=> j < 2)`,
+     GEN_TAC THEN DISCH_TAC THEN
+     ASM_CASES_TAC `(j:num) < 2` THEN ASM_REWRITE_TAC[] THENL
+      [FIRST_ASSUM(DISJ_CASES_THEN SUBST_ALL_TAC o MATCH_MP
+         (ARITH_RULE `(j:num) < 2 ==> j = 0 \/ j = 1`)) THEN
+       ASM_REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+       ASM_ARITH_TAC;
+       MP_TAC(ISPECL [`3`; `2`; `j:num`] hi) THEN
+       ASM_SIMP_TAC[ARITH_RULE `~((j:num) < 2) ==> 2 <= j`] THEN
+       CONV_TAC NUM_REDUCE_CONV]) in
+   REWRITE_TAC[cake_def "encode_header"] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM) STRIP_ASSUME_TAC) THEN
+   CONJ_TAC THENL
+    [FIRST_ASSUM ACCEPT_TAC;
+     REWRITE_TAC[cake_def "decode_length"; cake_def "make_header"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     SUBGOAL_THEN
+       `!j. bit j (((n2w tag) << 2 || (n2w 3)):'a word)
+            ==> j < dimindex (:'a) -
+                    data_to_word_config_len_size c`
+       (fun th -> REWRITE_TAC[MATCH_MP USHR_OR_LOW th]) THENL
+      [X_GEN_TAC `j:num` THEN
+       REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL] THEN STRIP_TAC THENL
+        [MP_TAC(ISPECL
+           [`tag:num`;
+            `dimindex (:'a) - data_to_word_config_len_size c - 2`;
+            `j - 2`] hi) THEN
+         ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC;
+         MP_TAC(MATCH_MP b3 (ASSUME `j < dimindex (:'a)`)) THEN
+         ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC];
+       MATCH_MP_TAC USHR_SHL_CANCEL THEN
+       X_GEN_TAC `j:num` THEN
+       ASM_CASES_TAC `bit j ((n2w len):'a word)` THEN
+       ASM_REWRITE_TAC[] THEN
+       MP_TAC(ISPECL
+         [`len:num`; `data_to_word_config_len_size c`; `j:num`] hi) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC]])
 ### thunk_tag_bits_lemma
   (* three is the tag of an evaluated thunk, so the word is 8 or 6 *)
   (REWRITE_TAC[cake_def "thunk_tag_to_bits"] THEN
@@ -4518,6 +4571,71 @@
         [ASM_INT_ARITH_TAC; ALL_TAC] THEN
        FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
        ASM_SIMP_TAC[andnot1]]])
+### make_header_tag_mask
+  (* the tag mask keeps the bits of a header between the second and
+     the one the length size leaves, and those are the bits of four
+     times the tag; above them the tag has none, because it is below
+     two to the width of its field *)
+  (let hi = prove
+    (`!n r (i:num). n < 2 EXP r /\ r <= i
+        ==> ~(bit i ((n2w n):'a word))`,
+     MATCH_ACCEPT_TAC BIT_WORD_HI) in
+   let b3 = prove
+    (`!j. j < dimindex (:'a)
+          ==> (bit j ((n2w 3):'a word) <=> j < 2)`,
+     GEN_TAC THEN DISCH_TAC THEN
+     ASM_CASES_TAC `(j:num) < 2` THEN ASM_REWRITE_TAC[] THENL
+      [FIRST_ASSUM(DISJ_CASES_THEN SUBST_ALL_TAC o MATCH_MP
+         (ARITH_RULE `(j:num) < 2 ==> j = 0 \/ j = 1`)) THEN
+       ASM_REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+       ASM_ARITH_TAC;
+       MP_TAC(ISPECL [`3`; `2`; `j:num`] hi) THEN
+       ASM_SIMP_TAC[ARITH_RULE `~((j:num) < 2) ==> 2 <= j`] THEN
+       CONV_TAC NUM_REDUCE_CONV]) in
+   let btm = prove
+    (`!c j. j < dimindex (:'a)
+        ==> (bit j ((tag_mask c):'a word) <=>
+             2 <= j /\
+             j < dimindex (:'a) - data_to_word_config_len_size c)`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "tag_mask"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_SLICE; BIT_WORD_NOT; BIT_WORD_0] THEN
+     ASM_ARITH_TAC) in
+   let bmh = prove
+    (`!c (t:'a word) n j. j < dimindex (:'a)
+        ==> (bit j (make_header c t n:'a word) <=>
+             j < 2 \/ (2 <= j /\ bit (j - 2) t) \/
+             (dimindex (:'a) - data_to_word_config_len_size c <= j /\
+              bit (j - (dimindex (:'a) -
+                        data_to_word_config_len_size c))
+                  ((n2w n):'a word)))`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "make_header"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SHL; b3] THEN
+     CONV_TAC TAUT) in
+   let n4 = prove
+    (`!k. (n2w (4 * k):(N)word) = word_shl (n2w k) 2`,
+     let shl4 = prove
+      (`!(v:(N)word). word 4 * v = word_shl v 2`,
+       REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+       CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+       REWRITE_TAC[MULT_AC]) in
+     GEN_TAC THEN REWRITE_TAC[GSYM shl4; WORD_MUL]) in
+   DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+   ASM_SIMP_TAC[BIT_WORD_AND; btm; bmh; n4; BIT_WORD_SHL] THEN
+   MP_TAC(ISPECL
+     [`k:num`;
+      `dimindex (:'a) - (data_to_word_config_len_size c + 2)`;
+      `j - 2`] hi) THEN
+   ASM_CASES_TAC `2 <= (j:num)` THEN
+   ASM_CASES_TAC
+     `j < dimindex (:'a) - data_to_word_config_len_size c` THEN
+   ASM_CASES_TAC `bit (j - 2) ((n2w k):'a word)` THEN
+   ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC)
 ### make_header_and_2
   (* make_header ors a 3 in, whose second bit is the one that the 2
      masks out *)
@@ -4694,6 +4812,142 @@
      CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC;
      REWRITE_TAC[ARITH_RULE `SUC a - a = 1`] THEN
      CONV_TAC NUM_REDUCE_CONV])
+### encode_header_EQ
+  (* two headers with the same bits have the same fields: the bit of
+     the tag at j is the bit of the header at j plus two, the bit of
+     the length at j is the one at j plus the shift, and above their
+     fields both tags and both lengths have no bit at all *)
+  (let hi = prove
+    (`!n r (i:num). n < 2 EXP r /\ r <= i
+        ==> ~(bit i ((n2w n):'a word))`,
+     MATCH_ACCEPT_TAC BIT_WORD_HI) in
+   let b3 = prove
+    (`!j. j < dimindex (:'a)
+          ==> (bit j ((n2w 3):'a word) <=> j < 2)`,
+     GEN_TAC THEN DISCH_TAC THEN
+     ASM_CASES_TAC `(j:num) < 2` THEN ASM_REWRITE_TAC[] THENL
+      [FIRST_ASSUM(DISJ_CASES_THEN SUBST_ALL_TAC o MATCH_MP
+         (ARITH_RULE `(j:num) < 2 ==> j = 0 \/ j = 1`)) THEN
+       ASM_REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+       ASM_ARITH_TAC;
+       MP_TAC(ISPECL [`3`; `2`; `j:num`] hi) THEN
+       ASM_SIMP_TAC[ARITH_RULE `~((j:num) < 2) ==> 2 <= j`] THEN
+       CONV_TAC NUM_REDUCE_CONV]) in
+   let bmh = prove
+    (`!c (t:'a word) n j. j < dimindex (:'a)
+        ==> (bit j (make_header c t n:'a word) <=>
+             j < 2 \/ (2 <= j /\ bit (j - 2) t) \/
+             (dimindex (:'a) - data_to_word_config_len_size c <= j /\
+              bit (j - (dimindex (:'a) -
+                        data_to_word_config_len_size c))
+                  ((n2w n):'a word)))`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "make_header"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SHL; b3] THEN
+     CONV_TAC TAUT) in
+   let n2w_inj = prove
+    (`!a b m. a < 2 EXP m /\ b < 2 EXP m /\ m <= dimindex (:'a) /\
+              ((n2w a):'a word = n2w b)
+        ==> a = b`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     FIRST_X_ASSUM(MP_TAC o AP_TERM `val:'a word->num`) THEN
+     REWRITE_TAC[VAL_WORD] THEN
+     SUBGOAL_THEN
+       `a < 2 EXP dimindex (:'a) /\ b < 2 EXP dimindex (:'a)`
+       STRIP_ASSUME_TAC THENL
+      [CONJ_TAC THEN TRANS_TAC LTE_TRANS `2 EXP m` THEN
+       ASM_SIMP_TAC[LE_EXP; ARITH];
+       ASM_SIMP_TAC[MOD_LT]]) in
+   REWRITE_TAC[cake_def "encode_header"] THEN
+   COND_CASES_TAC THEN COND_CASES_TAC THEN
+   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM)
+     (CONJUNCTS_THEN2 (SUBST1_TAC o SYM) ASSUME_TAC)) THEN
+   EQ_TAC THENL
+    [DISCH_THEN(fun hdeq ->
+       ASSUME_TAC(REWRITE_RULE[WORD_EQ_BITS_ALT] hdeq)) THEN
+     SUBGOAL_THEN
+       `((n2w t1):'a word = n2w t2) /\ ((n2w l1):'a word = n2w l2)`
+       MP_TAC THENL
+      [CONJ_TAC THEN REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+       X_GEN_TAC `j:num` THEN DISCH_TAC THENL
+        [ASM_CASES_TAC `j < dimindex (:'a) -
+                        data_to_word_config_len_size c - 2` THENL
+          [SUBGOAL_THEN
+             `~(j + 2 < 2) /\ 2 <= j + 2 /\
+              ~(dimindex (:'a) - data_to_word_config_len_size c <=
+                j + 2) /\
+              (j + 2) - 2 = j /\ j + 2 < dimindex (:'a)`
+             STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+           FIRST_X_ASSUM(fun bits -> MP_TAC(SPEC `j + 2` bits)) THEN
+           ASM_SIMP_TAC[bmh] THEN TRY(DISCH_THEN ACCEPT_TAC);
+           MP_TAC(ISPECL
+             [`t1:num`; `dimindex (:'a) -
+               data_to_word_config_len_size c - 2`; `j:num`] hi) THEN
+           MP_TAC(ISPECL
+             [`t2:num`; `dimindex (:'a) -
+               data_to_word_config_len_size c - 2`; `j:num`] hi) THEN
+           ASM_SIMP_TAC[ARITH_RULE `~((j:num) < m) ==> m <= j`] THEN
+           DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
+           DISCH_THEN(fun th -> REWRITE_TAC[th])];
+         ASM_CASES_TAC `j < data_to_word_config_len_size c` THENL
+          [SUBGOAL_THEN
+             `~(j + (dimindex (:'a) -
+                     data_to_word_config_len_size c) < 2) /\
+              2 <= j + (dimindex (:'a) -
+                        data_to_word_config_len_size c) /\
+              dimindex (:'a) - data_to_word_config_len_size c <=
+              j + (dimindex (:'a) -
+                   data_to_word_config_len_size c) /\
+              (j + (dimindex (:'a) -
+                    data_to_word_config_len_size c)) -
+              (dimindex (:'a) - data_to_word_config_len_size c) = j /\
+              j + (dimindex (:'a) -
+                   data_to_word_config_len_size c) <
+              dimindex (:'a) /\
+              dimindex (:'a) - data_to_word_config_len_size c - 2 <=
+              (j + (dimindex (:'a) -
+                    data_to_word_config_len_size c)) - 2`
+             STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+           FIRST_X_ASSUM(fun bits -> MP_TAC(SPEC
+             `j + (dimindex (:'a) -
+                   data_to_word_config_len_size c)` bits)) THEN
+           ASM_SIMP_TAC[bmh] THEN
+           MP_TAC(ISPECL
+             [`t1:num`; `dimindex (:'a) -
+               data_to_word_config_len_size c - 2`;
+              `(j + (dimindex (:'a) -
+                     data_to_word_config_len_size c)) - 2`] hi) THEN
+           MP_TAC(ISPECL
+             [`t2:num`; `dimindex (:'a) -
+               data_to_word_config_len_size c - 2`;
+              `(j + (dimindex (:'a) -
+                     data_to_word_config_len_size c)) - 2`] hi) THEN
+           ASM_REWRITE_TAC[] THEN
+           DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
+           DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
+           TRY(DISCH_THEN ACCEPT_TAC);
+           MP_TAC(ISPECL
+             [`l1:num`; `data_to_word_config_len_size c`;
+              `j:num`] hi) THEN
+           MP_TAC(ISPECL
+             [`l2:num`; `data_to_word_config_len_size c`;
+              `j:num`] hi) THEN
+           ASM_SIMP_TAC[ARITH_RULE `~((j:num) < m) ==> m <= j`] THEN
+           DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
+           DISCH_THEN(fun th -> REWRITE_TAC[th])]];
+       STRIP_TAC THEN CONJ_TAC THENL
+        [MATCH_MP_TAC n2w_inj THEN
+         EXISTS_TAC `dimindex (:'a) -
+                     data_to_word_config_len_size c - 2` THEN
+         ASM_REWRITE_TAC[] THEN ARITH_TAC;
+         MATCH_MP_TAC n2w_inj THEN
+         EXISTS_TAC `data_to_word_config_len_size c` THEN
+         ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]];
+     DISCH_THEN(CONJUNCTS_THEN SUBST1_TAC) THEN REFL_TAC])
 ### blocks_unique_Thunk
   (* the value of the thunk is a value of the refs already *)
   (let vcons = prove

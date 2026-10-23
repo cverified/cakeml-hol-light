@@ -520,3 +520,80 @@ let COND_SAME_IFF = prove
                 <=> (c \/ (v1 <=> v2)))`,
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC TAUT);;
+
+(* ------------------------------------------------------------------ *)
+(* The bits a number has above its size: a number below two to the r  *)
+(* has no bit at r or above, which is how a field of a header is seen *)
+(* to stay inside the range the encoding gives it.                    *)
+(* ------------------------------------------------------------------ *)
+
+let BIT_WORD_HI = prove
+ (`!n r (i:num). n < 2 EXP r /\ r <= i
+     ==> ~(bit i ((n2w n):(N)word))`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+  SUBGOAL_THEN `n DIV 2 EXP i = 0` SUBST1_TAC THENL
+   [MATCH_MP_TAC DIV_LT THEN
+    TRANS_TAC LTE_TRANS `2 EXP r` THEN
+    ASM_SIMP_TAC[LE_EXP; ARITH];
+    REWRITE_TAC[ODD]]);;
+
+(* the bits of HOL4's word_slice, which keeps the bits of the range
+   where they are (its word_slice_alt leaves the top one out) *)
+
+let BIT_WORD_SLICE = prove
+ (`!h l (w:(N)word) j. j < dimindex (:N)
+     ==> (bit j (word_slice h l w) <=> l <= j /\ j <= h /\ bit j w)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[word_slice; word_bits; BIT_WORD_SHL;
+              BIT_WORD_SUBWORD] THEN
+  REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+  ASM_CASES_TAC `l:num <= j` THEN ASM_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[ARITH_RULE `l <= j ==> l + j - l = j`] THEN
+  COND_CASES_TAC THEN
+  ASM_CASES_TAC `bit j (w:(N)word)` THEN ASM_REWRITE_TAC[] THEN
+  ARITH_NO_BIT_TAC);;
+
+(* the same for word_slice_alt, which needs no l <= h when the bit
+   asked after is one of the word *)
+
+let BIT_WORD_SLICE_ALT_LT = prove
+ (`!h l (w:(N)word) j. j < dimindex (:N)
+     ==> (bit j (word_slice_alt h l w) <=>
+          l <= j /\ j < h /\ bit j w)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[word_slice_alt; BIT_WORD_SHL; BIT_WORD_SUBWORD] THEN
+  REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+  ASM_CASES_TAC `l:num <= j` THEN ASM_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[ARITH_RULE `l <= j ==> l + j - l = j`] THEN
+  COND_CASES_TAC THEN
+  ASM_CASES_TAC `bit j (w:(N)word)` THEN ASM_REWRITE_TAC[] THEN
+  ARITH_NO_BIT_TAC);;
+
+(* a shift up that the same shift down undoes, when every bit of the
+   word stays inside it, and the or of something below the shift
+   that the shift down loses *)
+
+let USHR_SHL_CANCEL = prove
+ (`!(x:(N)word) s. (!j. bit j x ==> j + s < dimindex (:N))
+     ==> word_ushr (word_shl x s) s = x`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_USHR; BIT_WORD_SHL] THEN
+  X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+  REWRITE_TAC[ARITH_RULE `s <= j + s /\ (j + s) - s = j`] THEN
+  ASM_CASES_TAC `bit j (x:(N)word)` THEN ASM_SIMP_TAC[]);;
+
+let USHR_OR_LOW = prove
+ (`!(x:(N)word) b s. (!j. bit j b ==> j < s)
+     ==> word_ushr (word_or x b) s = word_ushr x s`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_USHR; BIT_WORD_OR] THEN
+  X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+  ASM_CASES_TAC `j + s < dimindex (:N)` THENL
+   [ASM_REWRITE_TAC[] THEN
+    ASM_CASES_TAC `bit (j + s) (b:(N)word)` THEN
+    ASM_REWRITE_TAC[] THEN
+    FIRST_X_ASSUM(fun th -> MP_TAC(SPEC `j + s` th)) THEN
+    ASM_REWRITE_TAC[] THEN
+    DISCH_THEN(MP_TAC o MATCH_MP (ARITH_RULE `j + s < s ==> F`)) THEN
+    REWRITE_TAC[];
+    ASM_SIMP_TAC[BIT_TRIVIAL; ARITH_RULE `~((a:num) < b) ==> b <= a`]]);;
