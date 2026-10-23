@@ -8107,7 +8107,48 @@ let w2n_add_byte_align_lemma = cake_theorem "w2n_add_byte_align_lemma"
       w2n (a' + byte_align (a:'a word)) MOD (dimindex (:'a) DIV 8)
         =
       w2n a' MOD (dimindex (:'a) DIV 8)`)
-  CHEAT_TAC;;
+  (* the alignment of a word is the word shifted down and up again,
+     so its lowest bits are clear and adding it does not change the
+     value by the bytes in a word -- which is two to the shift, as
+     the two good dimindexes give *)
+  (let LOG2_RED =
+     REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                          NUM_REDUCE_CONV THENC REWRITE_CONV[])) in
+   let slice_shl = prove
+    (`!p (w:(N)word).
+        word_slice (dimindex (:N) - 1) p w =
+        word_shl (word_ushr w p) p`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+                 BIT_WORD_SHL; BIT_WORD_SUBWORD; BIT_WORD_USHR] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `p:num <= i` THEN ASM_REWRITE_TAC[] THEN
+     SUBGOAL_THEN
+       `i - p < MIN ((dimindex (:N) - 1 + 1) - p) (dimindex (:N))`
+       (fun th -> REWRITE_TAC[th]) THENL
+      [REWRITE_TAC[ARITH_RULE
+         `MIN a b = if a <= b then a else b`] THEN
+       COND_CASES_TAC THEN ASM_ARITH_TAC;
+       REWRITE_TAC[ARITH_RULE `p + (i - p) = (i - p) + p`]]) in
+   let main = prove
+    (`!p d (x:(N)word) y. d = 2 EXP p /\ p <= dimindex (:N)
+        ==> w2n (x + word_shl y p) MOD d = w2n x MOD d`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC ASSUME_TAC) THEN
+     REWRITE_TAC[VAL_WORD_ADD; VAL_WORD_SHL; MOD_MOD_EXP_MIN] THEN
+     ASM_SIMP_TAC[ARITH_RULE `p <= d ==> MIN d p = p`] THEN
+     ONCE_REWRITE_TAC[GSYM MOD_ADD_MOD] THEN
+     REWRITE_TAC[MOD_MOD_EXP_MIN] THEN
+     ASM_SIMP_TAC[ARITH_RULE `p <= d ==> MIN d p = p`] THEN
+     REWRITE_TAC[MOD_MULT; ADD_CLAUSES; MOD_MOD_REFL]) in
+   DISCH_TAC THEN
+   REWRITE_TAC[cake_def "byte_align"; cake_def "align";
+               slice_shl] THEN
+   MATCH_MP_TAC main THEN
+   FIRST_ASSUM(DISJ_CASES_THEN SUBST1_TAC o
+     REWRITE_RULE[cake_def "good_dimindex"]) THEN
+   CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
+   CONV_TAC NUM_REDUCE_CONV);;
 
 let get_byte_byte_align = cake_theorem "get_byte_byte_align"
   (fun () ->
@@ -9847,7 +9888,21 @@ let word_eq_min_max_clock = cake_theorem "word_eq_min_max_clock"
        (res,l',ck1) ==>
      (?ck1'. word_eq_list c st dm m l (MIN (MAX a x) (MAX b y)) w
        a1 a2 = SOME (res,l',ck1')))`)
-  CHEAT_TAC;;
+  (* the clock of the goal is above the clock of the assumption,
+     because each MAX is above its first argument, so the difference
+     is what word_eq_add_clock adds *)
+  (let step cj =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     SUBGOAL_THEN `?n. MIN (MAX a x) (MAX b y) = MIN a b + n`
+       (CHOOSE_THEN SUBST1_TAC) THENL
+      [EXISTS_TAC `MIN (MAX a x) (MAX b y) - MIN a b` THEN
+       ARITH_TAC;
+       ALL_TAC] THEN
+     EXISTS_TAC `ck1 + n` THEN
+     FIRST_ASSUM(fun th -> MATCH_ACCEPT_TAC(MATCH_MP cj th)) in
+   CONJ_TAC THENL
+    [step (CONJUNCT1 (cake_thm "word_eq_add_clock"));
+     step (CONJUNCT2 (cake_thm "word_eq_add_clock"))]);;
 
 let memory_rel_isClos = cake_theorem "memory_rel_isClos[local]"
   (fun () ->
@@ -10627,7 +10682,33 @@ let copy_array_NONE_IMP = cake_theorem "copy_array_NONE_IMP"
     `!xs ys xp n.
         copy_array (xs,&xp) (&n) NONE = SOME ys ==>
         list_copy_fwd n xp xs 0 (REPLICATE n (n2w 0)) = SOME ys`)
-  CHEAT_TAC;;
+  (* the offsets are of naturals, so copy_array is NONE exactly when
+     the source is too short and otherwise takes the n elements from
+     the offset on, and list_copy_fwd_eq copies them into a list of
+     n zeroes: the whole of it, so nothing of the zeroes is left *)
+  (let take0 = prove
+    (`!l:A list. TAKE 0 l = []`,
+     LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE]) in
+   let dropall = prove
+    (`!n (x:A). DROP n (REPLICATE n x) = []`,
+     INDUCT_TAC THEN
+     ASM_REWRITE_TAC[DROP; REPLICATE; NOT_SUC; SUC_SUB1]) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "copy_array"; I_THM; INT_OF_NUM_ADD;
+               INT_ABS_NUM; NUM_OF_INT_OF_NUM; INT_OF_NUM_LT;
+               LT] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[distinctness "option"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[injectivity "option"] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+   W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+       (cake_thm "list_copy_fwd_eq") (lhand w))) THEN
+   REWRITE_TAC[LENGTH_REPLICATE; ADD_CLAUSES; LE_REFL] THEN
+   ANTS_TAC THENL
+    [ASM_ARITH_TAC;
+     REWRITE_TAC[take0; dropall; APPEND; APPEND_NIL] THEN
+     DISCH_THEN ACCEPT_TAC]);;
 
 (*
 
@@ -10944,7 +11025,40 @@ let encode_header_lemma = cake_theorem "encode_header_lemma"
        /\
      encode_header c 0 2 = SOME (make_header c ((n2w 0):'a word)
        2)`)
-  CHEAT_TAC;;
+  (* the four conditions of encode_header hold of the tag 0 and the
+     length 2 (the length size is above one, so two is below two to
+     that power), so the header is SOME of what make_header gives,
+     and encode_header_IMP reads the length back off it *)
+  (let gdcases =
+     FIRST_ASSUM(DISJ_CASES_THEN SUBST1_TAC o
+       REWRITE_RULE[cake_def "good_dimindex"]) in
+   STRIP_TAC THEN
+   SUBGOAL_THEN
+     `0 < 2 EXP (dimindex (:'a) -
+                 data_to_word_config_len_size c - 2) /\
+      0 < dimword (:'a) DIV 16 /\
+      2 < 2 EXP (dimindex (:'a) - 4) /\
+      2 < 2 EXP (data_to_word_config_len_size c)`
+     STRIP_ASSUME_TAC THENL
+    [REPEAT CONJ_TAC THENL
+      [REWRITE_TAC[LT_NZ; EXP_EQ_0; ARITH_EQ];
+       REWRITE_TAC[dimword] THEN gdcases THEN
+       CONV_TAC NUM_REDUCE_CONV;
+       gdcases THEN CONV_TAC NUM_REDUCE_CONV;
+       MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP 2` THEN
+       CONJ_TAC THENL
+        [CONV_TAC NUM_REDUCE_CONV;
+         REWRITE_TAC[LE_EXP] THEN CONV_TAC NUM_REDUCE_CONV THEN
+         ASM_ARITH_TAC]];
+     ALL_TAC] THEN
+   SUBGOAL_THEN
+     `encode_header c 0 2 = SOME (make_header c ((n2w 0):'a word) 2)`
+     ASSUME_TAC THENL
+    [ASM_REWRITE_TAC[cake_def "encode_header"]; ALL_TAC] THEN
+   ASM_REWRITE_TAC[] THEN
+   FIRST_ASSUM(fun eh -> FIRST_ASSUM(fun ls -> FIRST_ASSUM(fun gd ->
+     ACCEPT_TAC(CONJUNCT2(MATCH_MP (cake_thm "encode_header_IMP")
+       (CONJ eh (CONJ ls gd))))))));;
 
 let append_writes_list_to_BlockReps =
   cake_theorem "append_writes_list_to_BlockReps"
@@ -12130,7 +12244,63 @@ let byte_align_mult_bytes_in_word =
     `good_dimindex (:'a) ==>
      byte_aligned (w * (bytes_in_word:'a word)) /\
      byte_aligned (bytes_in_word * (w:'a word))`)
-  CHEAT_TAC;;
+  (* the bytes in a word are two to the shift, so a multiple of them
+     is the word shifted up, and the alignment of a word shifted up
+     is the word shifted down and up again, which is the word
+     itself *)
+  (
+   let LOG2_RED =
+     REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                          NUM_REDUCE_CONV THENC REWRITE_CONV[])) in
+   let slice_shl = prove
+    (`!p (w:(N)word).
+        word_slice (dimindex (:N) - 1) p w = word_shl (word_ushr w p) p`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+                 BIT_WORD_SHL; BIT_WORD_SUBWORD; BIT_WORD_USHR] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `p:num <= i` THEN ASM_REWRITE_TAC[] THEN
+     SUBGOAL_THEN
+       `i - p < MIN ((dimindex (:N) - 1 + 1) - p) (dimindex (:N))`
+       (fun th -> REWRITE_TAC[th]) THENL
+      [REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+       COND_CASES_TAC THEN ASM_ARITH_TAC;
+       REWRITE_TAC[ARITH_RULE `p + (i - p) = (i - p) + p`]]) in
+   let shl_slice = prove
+    (`!p (w:(N)word).
+        word_slice (dimindex (:N) - 1) p (word_shl w p) =
+        word_shl w p`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[slice_shl] THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_SHL; BIT_WORD_USHR] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `p:num <= i` THEN
+     ASM_SIMP_TAC[ARITH_RULE `p <= i ==> (i - p) + p = i`] THEN
+     ASM_REWRITE_TAC[BIT_WORD_SHL]) in
+   let mul_shl = prove
+    (`!p d (w:(N)word). d = 2 EXP p ==> w * n2w d = word_shl w p`,
+     REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN
+     REWRITE_TAC[word_shl] THEN
+     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [GSYM WORD_VAL] THEN
+     REWRITE_TAC[GSYM WORD_MUL]) in
+   DISCH_TAC THEN
+   SUBGOAL_THEN
+     `dimindex (:'a) DIV 8 = 2 EXP (LOG2 (dimindex (:'a) DIV 8))`
+     ASSUME_TAC THENL
+    [FIRST_ASSUM(DISJ_CASES_THEN SUBST1_TAC o
+       REWRITE_RULE[cake_def "good_dimindex"]) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
+     CONV_TAC NUM_REDUCE_CONV;
+     ALL_TAC] THEN
+   REWRITE_TAC[cake_def "byte_aligned";
+               cake_def "alignment_aligned"; cake_def "align";
+               cake_def "bytes_in_word"] THEN
+   CONJ_TAC THENL
+    [ALL_TAC;
+     SUBST1_TAC(WORD_RULE
+       `n2w (dimindex (:'a) DIV 8) * (w:'a word) =
+        w * n2w (dimindex (:'a) DIV 8)`)] THEN
+   FIRST_ASSUM(fun f1 -> REWRITE_TAC[MATCH_MP mul_shl f1]) THEN
+   MATCH_ACCEPT_TAC shl_slice);;
 
 let parts_to_words_add = cake_theorem "parts_to_words_add"
   (fun () ->
