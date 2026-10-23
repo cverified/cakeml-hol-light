@@ -973,6 +973,41 @@
 ### heap_store_rel_v_inv
   (REPEAT STRIP_TAC THEN MATCH_MP_TAC v_inv_SUBMAP THEN
    ASM_REWRITE_TAC[SUBMAP_REFL])
+### heap_store_unused_alt_heap_lookup
+  (* the store into the unused space is a store at the address it
+     keeps, so the lookup below that address gives the same; the
+     induction is the one of the theorem about a store and a lookup
+     that the file states further down, and HOL4 repeats it here as
+     well *)
+  (let hsl = prove
+    (`!heap heap2 a (x:((A,B)heap_element)list) n.
+        heap_store a x heap = (heap2,T) /\ n < a
+        ==> heap_lookup n heap = heap_lookup n heap2`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+      [REWRITE_TAC[cake_def "heap_store"; PAIR_EQ];
+       GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o LAND_CONV)
+         [cake_def "heap_store"] THEN
+       COND_CASES_TAC THENL
+        [ASM_REWRITE_TAC[ARITH_RULE `((n:num) < 0) <=> F`];
+         ALL_TAC] THEN
+       COND_CASES_TAC THENL
+        [REWRITE_TAC[PAIR_EQ]; ALL_TAC] THEN
+       PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+       REWRITE_TAC[PAIR_EQ] THEN
+       DISCH_THEN(CONJUNCTS_THEN2
+         (CONJUNCTS_THEN2 (SUBST1_TAC o SYM)
+            (fun th -> SUBST_ALL_TAC(EQT_INTRO th)))
+         ASSUME_TAC) THEN
+       ONCE_REWRITE_TAC[cake_def "heap_lookup"] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+       FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_EXISTS_TAC THEN
+       ASM_REWRITE_TAC[] THEN ARITH_ASM_TAC]) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "heap_store_unused_alt"] THEN
+   COND_CASES_TAC THENL
+    [MATCH_ACCEPT_TAC hsl;
+     REWRITE_TAC[PAIR_EQ]])
 ### isDataElement_lemmas
   (REWRITE_TAC[cake_def "isDataElement"; cake_def "BlockRep";
                cake_def "Word64Rep"; cake_def "RefBlock";
@@ -1869,6 +1904,56 @@
      CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
      ASM_REWRITE_TAC(ALL :: opt) THEN
      COND_CASES_TAC THEN ASM_REWRITE_TAC[]])
+### data_up_to_heap_store
+  (* the store of a data element keeps the elements below the
+     address it writes at, and writes a data element where it
+     writes, so the heap stays data up to the address it was *)
+  (let hl1 = prove
+    (`!y:(A,B)heap_element. heap_length [y] = el_length y`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST] THEN
+     ARITH_TAC) in
+   let dac1 = prove
+    (`!a (h:(A,B)heap_element) t.
+        data_up_to a (CONS h t) /\ ~(a = 0)
+        ==> ~(a < el_length h) /\ isDataElement h /\
+            data_up_to (a - el_length h) t`,
+     REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[data_up_to_alt] THEN
+     COND_CASES_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+     COND_CASES_TAC THENL [REWRITE_TAC[]; ALL_TAC] THEN
+     POP_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[DE_MORGAN_THM]) THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[]) in
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+    [REWRITE_TAC[cake_def "heap_store"; PAIR_EQ];
+     GEN_REWRITE_TAC
+       (LAND_CONV o RAND_CONV o LAND_CONV o LAND_CONV)
+       [cake_def "heap_store"] THEN
+     COND_CASES_TAC THENL
+      [REWRITE_TAC[PAIR_EQ; APPEND; hl1] THEN
+       DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+         (CONJUNCTS_THEN2
+            (CONJUNCTS_THEN2 (SUBST1_TAC o SYM) ASSUME_TAC)
+            ASSUME_TAC)) THEN
+       ONCE_REWRITE_TAC[data_up_to_alt] THEN
+       COND_CASES_TAC THEN REWRITE_TAC[] THEN
+       FIRST_ASSUM(fun du -> FIRST_ASSUM(fun ne ->
+         MP_TAC(MATCH_MP dac1 (CONJ du ne)))) THEN
+       ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[];
+       ALL_TAC] THEN
+     COND_CASES_TAC THENL
+      [REWRITE_TAC[PAIR_EQ]; ALL_TAC] THEN
+     PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[PAIR_EQ] THEN
+     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+       (CONJUNCTS_THEN2
+          (CONJUNCTS_THEN2 (SUBST1_TAC o SYM)
+             (fun th -> SUBST_ALL_TAC(EQT_INTRO th)))
+          ASSUME_TAC)) THEN
+     ONCE_REWRITE_TAC[data_up_to_alt] THEN
+     COND_CASES_TAC THEN REWRITE_TAC[] THEN
+     FIRST_ASSUM(fun du -> FIRST_ASSUM(fun ne ->
+       MP_TAC(MATCH_MP dac1 (CONJ du ne)))) THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]])
 ### blocks_unique_update_ref
   (* the ValueArray that the pointer is given holds the values that
      the stack has in front of it *)
@@ -2026,6 +2111,14 @@
    REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### heap_store_unused_heap_lookup
+  (* and the same for the store that keeps the unused space at the
+     end *)
+  (REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "heap_store_unused"] THEN
+   COND_CASES_TAC THENL
+    [MATCH_ACCEPT_TAC heap_store_heap_lookup;
+     REWRITE_TAC[PAIR_EQ]])
 ### blocks_unique_new_ref
   (* the ValueArray of the new reference holds the values that the
      stack has in front of it already *)
@@ -3131,6 +3224,59 @@
    REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### memory_rel_CodePtr
+  (* the root of a CodePtr is the Data of its Loc, which word_addr
+     gives the Loc of; a CodePtr is no Block, so the timestamps and
+     the unique blocks of the stack stay as they are, and it has no
+     refs, so what the stack reaches stays as it is *)
+  (let grc = prove
+    (`!l. get_refs (CodePtr l) = []`,
+     GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "get_refs"] THEN
+     REWRITE_TAC[]) in
+   let reach = prove
+    (`!(sk:(dataSem_v)list) rfs n l.
+        reachable_refs (CodePtr l :: sk) rfs n
+        ==> reachable_refs sk rfs n`,
+     REWRITE_TAC[cake_def "reachable_refs"; MEM] THEN
+     MESON_TAC[grc; MEM]) in
+   let waddr = el 2 (word_addr_clauses ()) in
+   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv"] THEN
+   REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   (* the root that goes in front has the type that the statement
+      left to the parser, so it is built with that type *)
+   (fun (asl,w as gl) ->
+      let v = fst(dest_exists w) in
+      let tm = `CONS (gc_shared_Data (wordLang_Loc lab 0)) hs` in
+      EXISTS_TAC (inst (type_match (type_of tm) (type_of v) []) tm)
+        gl) THEN
+   REWRITE_TAC[MAP; ALL2; waddr] THEN
+   ASM_REWRITE_TAC[] THEN
+   USE_CHANGED [cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv"]
+   THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv"] THEN
+   REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THENL
+    [RULE_ASSUM_TAC(REWRITE_RULE[cake_def "roots_ok"]) THEN
+     REWRITE_TAC[cake_def "roots_ok"; MEM;
+                 distinctness "heap_address"] THEN
+     FIRST_ASSUM MATCH_ACCEPT_TAC;
+     MAP_EVERY EXISTS_TAC [`f:(num,num)fmap`; `tf:(num,num)fmap`] THEN
+     REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THENL
+      [(fun (asl,w as gl) ->
+         let th = PART_MATCH (lhs o rand)
+                    (cake_thm "all_ts_cons_no_block") (rand w) in
+         (MP_TAC th THEN REWRITE_TAC[distinctness "dataSem_v"] THEN
+          DISCH_THEN(fun e -> ASM_REWRITE_TAC[e])) gl);
+       MATCH_MP_TAC (cake_thm "blocks_unique_CodePtr") THEN
+       ASM_REWRITE_TAC[];
+       REWRITE_TAC[ALL2] THEN ASM_REWRITE_TAC[] THEN
+       REWRITE_TAC[cake_thm "v_inv_def"];
+       X_GEN_TAC `nn:num` THEN STRIP_TAC THEN
+       FIRST_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+        [FIRST_ASSUM(fun rr -> MATCH_ACCEPT_TAC(MATCH_MP reach rr));
+         FIRST_ASSUM MATCH_ACCEPT_TAC]]])
 ### IMP_memory_rel_Number
   (* the root of a small Number is the Data of its Smallnum, which
      abs_ml_inv_Num adds to the roots, and Smallnum is four times
@@ -3985,6 +4131,21 @@
    COND_CASES_TAC THEN
    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_SHL;
                BIT_WORD_0])
+### last_bytes_0
+  (* the bytes of zero written into zero leave zero: a byte set to
+     zero in a word of zeroes is an or of words with no bit *)
+  (let sb0 = prove
+    (`!a be. set_byte a (n2w 0) (n2w 0:(N)word) be = n2w 0`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[word_slice_alt; WORD_EQ_BITS_ALT; BIT_WORD_OR;
+                 BIT_WORD_SHL; BIT_WORD_0; BIT_WORD_SUBWORD;
+                 BIT_WORD_ZX] THEN
+     REWRITE_TAC[BIT_WORD_0]) in
+   INDUCT_TAC THEN GEN_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "last_bytes"] THEN
+   REWRITE_TAC[ARITH_RULE `~(SUC n = 0)`] THEN
+   ASM_REWRITE_TAC[ARITH_RULE `SUC n - 1 = n`; sb0])
 ### LUPDATE_REPLICATE
   (INDUCT_TAC THEN GEN_TAC THEN REWRITE_TAC[REPLICATE; LUPDATE] THEN
    COND_CASES_TAC THEN ASM_REWRITE_TAC[])
