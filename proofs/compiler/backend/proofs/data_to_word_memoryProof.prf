@@ -988,6 +988,17 @@
    REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### heap_store_BlockRep_thm
+  (* as the store into a RefBlock above: heap_store_lemma stores at
+     the length of the prefix and leaves the lengths to agree *)
+  (let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) = el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[heap_store_lemma; APPEND; PAIR_EQ; hlen_cl;
+               cake_def "BlockRep"; cake_def "el_length"] THEN
+   ASM_ARITH_TAC)
 ### v_inv_MutBlock_hole
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_MutBlock_hole_lemma])

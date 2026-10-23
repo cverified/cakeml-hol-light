@@ -1772,3 +1772,71 @@ let el_le = INT_ARITH `!i. ~(i < &0) ==> &0 <= i`
 is a theorem about the reals, and a `MATCH_MP` of it against an
 integer assumption says `No match`.  The `i:int` goes in.
 
+
+## 24. The invariant of the memory, unfolded again and again
+
+### The idiom
+
+A hundred theorems of `data_to_word_memoryProof` are about
+`memory_rel`, and almost every one of them starts the same way in
+HOL4:
+
+```
+fs [memory_rel_def,word_ml_inv_def,abs_ml_inv_def,
+    bc_stack_ref_inv_def,v_inv_def] \\ rw []
+\\ fs [word_addr_def]
+```
+
+### What it means
+
+`memory_rel` is `word_ml_inv` of a heap, which is `abs_ml_inv` of
+the values of the stack, whose `bc_stack_ref_inv` relates the
+values to a list of **roots** that an existential introduces; the
+rules of `v_inv` say what the root of a value is (a `Data` of a
+word, a `Data` of a `Loc` or a `Pointer`), and `word_addr` turns a
+root into the word that the machine holds.
+
+### What resisted
+
+In HOL Light each of the four steps is a rewrite and each leaves
+work that `fs` does silently: the roots have to be split against
+the values (a list variable against a cons), the rules of `v_inv`
+are a disjunction and a conditional that have to be opened one at a
+time, the equation that says what the root is has to be substituted
+(and HOL Light's `SUBST_VAR_TAC` as happily substitutes the
+variable the statement is about), and the contradictory branches
+have to be closed -- of which there are many, because `v_inv` of a
+`RefPtr` has three rules and two of them are about a thunk.
+`ASM_MESON_TAC[]` closes them, but with twenty assumptions in the
+list it takes minutes or goes "Too deep".
+
+### What the port does
+
+`ml/lib/tactics.ml` has the steps:
+
+- `MEMORY_REL_TAC` -- the four definitions and `SPLIT_ROOTS_TAC`
+- `SPLIT_ROOTS_TAC` -- the list of roots against the list of values
+  (it finds the `ALL2` assumption itself, so no name is written)
+- `V_INV_TAC` -- the rules of `v_inv` opened, the roots
+  substituted, `word_addr` reduced and the contradictions closed
+- `CONTRA_TAC` -- two assumptions that contradict each other
+- `OPEN_ASSUM` -- an assumption that is a conditional, a
+  disjunction or an existential, opened into the goal
+- `USE_CHANGED`, `SUBST_LHS_TAC`, `cake_thm`
+
+With them `memory_rel_Number_IMP_Word` is
+
+```ocaml
+MEMORY_REL_TAC THEN V_INV_TAC THEN ASM_MESON_TAC[]
+```
+
+and the `ASM_MESON_TAC` at the end has a goal that is one step.
+
+### Dead ends
+
+Writing the type of a variable of the goal in a `ASM_CASES_TAC` or
+an `ISPEC`: the statements of this file are polymorphic in the word
+and a written type variable is rigid, so the term is about another
+variable and the tactic does nothing (entry 12).  `CASES_ON_NAME`,
+`SPLIT_ROOTS_TAC` and `SUBST_LHS_TAC` take the term out of the goal
+instead.
