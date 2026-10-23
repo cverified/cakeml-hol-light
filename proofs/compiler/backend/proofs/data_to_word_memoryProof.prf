@@ -1353,6 +1353,19 @@
    STRIP_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[ALL2; v_inv_RefPtr_T; INJ]) THEN
    ASM_MESON_TAC[injectivity "heap_address"])
+### Smallnum_i2w
+  (* Smallnum writes the two cases of i2w out: a negative integer
+     is the negation of the word of its absolute value, and & of
+     the number of a non-negative integer is the integer itself *)
+  (REWRITE_TAC[cake_def "Smallnum"] THEN COND_CASES_TAC THENL
+    [REWRITE_TAC[WORD_SUB_LZERO] THEN
+     ONCE_REWRITE_TAC[WORD_IWORD] THEN
+     REWRITE_TAC[GSYM IWORD_INT_NEG] THEN AP_TERM_TAC THEN
+     SUBGOAL_THEN `&0 <= &4 * ((&0) - (i:int))` (fun th ->
+       REWRITE_TAC[MATCH_MP INT_OF_NUM_OF_INT th]) THENL
+      [ASM_INT_ARITH_TAC; INT_ARITH_TAC];
+     ONCE_REWRITE_TAC[WORD_IWORD] THEN AP_TERM_TAC THEN
+     MATCH_MP_TAC INT_OF_NUM_OF_INT THEN ASM_INT_ARITH_TAC])
 ### small_int_IMP_MIN_MAX
   (* the bound of a small integer is a quarter of the dimword and
      INT_MIN and INT_MAX are a half of it, so four times a small
