@@ -1964,6 +1964,21 @@ them equal, and `MATCH_ACCEPT_TAC` can fail where `ACCEPT_TAC`
 works, so a failing `MATCH_ACCEPT_TAC` is worth retrying as
 `ACCEPT_TAC` before looking for a deeper cause.)
 
+### The `&` of a quotation is a real unless it is told otherwise
+
+`&` is overloaded for `real` and for `int`, and the parser's
+default is `real`.  So `INT_ARITH \`&0 - --(&n) = &n\`` proves a
+theorem **about the reals**, which no rewrite of an integer goal
+ever fires on, and nothing complains: the tactic runs and leaves
+the goal as it stands.  Every quotation of a proof that is about
+the integers therefore says so -- ``INT_ARITH `&0 - --(&n) =
+&n:int``` -- and the same holds for the `-`, the `<` and the
+numerals around it (`word_ml_inv_neg_num` paid twenty minutes for
+this).  The other half of the trap is the direction of
+`INT_OF_NUM_MUL` (`&(m * n) = &m * &n` is **not** what HOL Light
+has: it is `&m * &n = &(m * n)`, so the fold needs it plain and the
+split needs the `GSYM`).
+
 ## 26. A match whose scrutinee is a call, not a variable
 
 ### The idiom
