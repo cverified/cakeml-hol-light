@@ -4592,6 +4592,27 @@
          FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
          ASM_REWRITE_TAC[] THEN ARITH_TAC;
          ASM_ARITH_TAC]]])
+### bind_each_MINUS
+  (* the binding of each timestamp of a block gives the one at ts
+     the clock k and the ones above it k + i, k + 2i, ...: taking k2
+     off every one of them is the binding that starts k2 lower *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+    REWRITE_TAC[cake_def "bind_each"; IN_ELIM_THM] THEN
+    STRIP_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    ASM_CASES_TAC `(x:num) = ts` THENL
+     [ASM_REWRITE_TAC[FAPPLY_FUPDATE_THM];
+      ALL_TAC] THEN
+    ASM_REWRITE_TAC[FAPPLY_FUPDATE_THM] THEN
+    SUBGOAL_THEN `(k1 - k2) + i = (k1 + i) - k2` SUBST1_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    FIRST_X_ASSUM MATCH_MP_TAC THEN
+    ASM_REWRITE_TAC[IN_ELIM_THM] THEN
+    REPEAT CONJ_TAC THEN TRY ASM_ARITH_TAC THEN
+    GEN_TAC THEN DISCH_TAC THEN
+    FIRST_ASSUM(fun fd -> FIRST_ASSUM(fun h ->
+      MP_TAC(MATCH_MP fd h))) THEN
+    ARITH_TAC)
 ### isSomeDataElement_heap_lookup#2
   (* the lookup falls in the first heap, or past the Unused in the
      second: the Unused itself holds no data element *)
