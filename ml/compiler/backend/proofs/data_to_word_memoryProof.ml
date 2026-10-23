@@ -22,6 +22,7 @@ needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
+needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
@@ -11610,7 +11611,37 @@ let make_cons_ptr_add = cake_theorem "make_cons_ptr_add"
        backend_common_word_shift (:'a)) +
            (get_lowerbits c (wordLang_Word (ptr_bits c tag
              len)):'a word))`)
-  CHEAT_TAC;;
+  (* and the same for the pointer of a cons, where the one that
+     the lower bits already hold is absorbed first *)
+  (let lb1 = prove
+     (`!c (x:(N)word).
+         word 1 || get_lowerbits c (wordLang_Word x) =
+         get_lowerbits c (wordLang_Word x)`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "get_lowerbits"] THEN
+      MATCH_REDUCE_TAC THEN CONV_TAC WORD_BITWISE_RULE) in
+    STRIP_TAC THEN
+    REWRITE_TAC[cake_def "make_cons_ptr"] THEN
+    AP_TERM_TAC THEN
+    REWRITE_TAC[lb1] THEN
+    CONV_TAC SYM_CONV THEN MATCH_MP_TAC WORD_ADD_OR THEN
+    FIRST_ASSUM(fun ba -> FIRST_ASSUM(fun gd ->
+      MP_TAC(MATCH_MP (cake_thm "byte_aligned_IMP_shift")
+        (CONJ ba gd)))) THEN
+    DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC) THEN
+    REWRITE_TAC[cake_def "get_lowerbits"] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_OR;
+                BIT_WORD_1; BIT_WORD_0; BIT_WORD_SHL; word_bits;
+                BIT_WORD_SUBWORD;
+                ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    REWRITE_TAC[cake_def "shift_length";
+                cake_def "small_shift_length"] THEN
+    REPEAT COND_CASES_TAC THEN REWRITE_TAC[] THEN
+    POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN
+    REWRITE_TAC[cake_def "shift_length";
+                cake_def "small_shift_length"] THEN
+    ARITH_TAC);;
 
 let make_ptr_add = cake_theorem "make_ptr_add"
   (fun () ->
@@ -11619,7 +11650,32 @@ let make_ptr_add = cake_theorem "make_ptr_add"
      make_ptr c n tag len =
      wordLang_Word (n << (shift_length c -
        backend_common_word_shift (:'a)) + ((n2w 1):'a word))`)
-  CHEAT_TAC;;
+  (* a byte aligned word is a word shifted up by the shift, so the
+     pointer it makes has its lowest bit clear and the or with one
+     is an add *)
+  (STRIP_TAC THEN
+    REWRITE_TAC[cake_def "make_ptr"] THEN
+    AP_TERM_TAC THEN
+    CONV_TAC SYM_CONV THEN MATCH_MP_TAC WORD_ADD_OR THEN
+    FIRST_ASSUM(fun ba -> FIRST_ASSUM(fun gd ->
+      MP_TAC(MATCH_MP (cake_thm "byte_aligned_IMP_shift")
+        (CONJ ba gd)))) THEN
+    DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC) THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_1;
+                BIT_WORD_0; BIT_WORD_SHL] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    ASM_CASES_TAC `(i:num) = 0` THEN ASM_REWRITE_TAC[] THEN
+    FIRST_ASSUM(fun gd ->
+      if can (find_term (fun t ->
+        try fst(dest_const t) = "good_dimindex"
+        with Failure _ -> false))
+        (concl gd)
+      then MP_TAC gd else failwith "no") THEN
+    REWRITE_TAC[cake_def "good_dimindex";
+                cake_def "backend_common_word_shift"] THEN
+    DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC);;
 
 let word_cond_add_def = cake_define
   `word_cond_add c a x3 =

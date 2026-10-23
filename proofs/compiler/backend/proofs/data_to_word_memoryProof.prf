@@ -4986,6 +4986,65 @@
      EXISTS_TAC
        `word_ushr (w:'a word) (backend_common_word_shift (:'a))` THEN
      MATCH_MP_TAC key THEN FIRST_ASSUM ACCEPT_TAC])
+### make_cons_ptr_add
+  (* and the same for the pointer of a cons, where the one that
+     the lower bits already hold is absorbed first *)
+  (let lb1 = prove
+     (`!c (x:(N)word).
+         word 1 || get_lowerbits c (wordLang_Word x) =
+         get_lowerbits c (wordLang_Word x)`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "get_lowerbits"] THEN
+      MATCH_REDUCE_TAC THEN CONV_TAC WORD_BITWISE_RULE) in
+    STRIP_TAC THEN
+    REWRITE_TAC[cake_def "make_cons_ptr"] THEN
+    AP_TERM_TAC THEN
+    REWRITE_TAC[lb1] THEN
+    CONV_TAC SYM_CONV THEN MATCH_MP_TAC WORD_ADD_OR THEN
+    FIRST_ASSUM(fun ba -> FIRST_ASSUM(fun gd ->
+      MP_TAC(MATCH_MP (cake_thm "byte_aligned_IMP_shift")
+        (CONJ ba gd)))) THEN
+    DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC) THEN
+    REWRITE_TAC[cake_def "get_lowerbits"] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_OR;
+                BIT_WORD_1; BIT_WORD_0; BIT_WORD_SHL; word_bits;
+                BIT_WORD_SUBWORD;
+                ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    REWRITE_TAC[cake_def "shift_length";
+                cake_def "small_shift_length"] THEN
+    REPEAT COND_CASES_TAC THEN REWRITE_TAC[] THEN
+    POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN
+    REWRITE_TAC[cake_def "shift_length";
+                cake_def "small_shift_length"] THEN
+    ARITH_TAC)
+### make_ptr_add
+  (* a byte aligned word is a word shifted up by the shift, so the
+     pointer it makes has its lowest bit clear and the or with one
+     is an add *)
+  (STRIP_TAC THEN
+    REWRITE_TAC[cake_def "make_ptr"] THEN
+    AP_TERM_TAC THEN
+    CONV_TAC SYM_CONV THEN MATCH_MP_TAC WORD_ADD_OR THEN
+    FIRST_ASSUM(fun ba -> FIRST_ASSUM(fun gd ->
+      MP_TAC(MATCH_MP (cake_thm "byte_aligned_IMP_shift")
+        (CONJ ba gd)))) THEN
+    DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC) THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_1;
+                BIT_WORD_0; BIT_WORD_SHL] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    ASM_CASES_TAC `(i:num) = 0` THEN ASM_REWRITE_TAC[] THEN
+    FIRST_ASSUM(fun gd ->
+      if can (find_term (fun t ->
+        try fst(dest_const t) = "good_dimindex"
+        with Failure _ -> false))
+        (concl gd)
+      then MP_TAC gd else failwith "no") THEN
+    REWRITE_TAC[cake_def "good_dimindex";
+                cake_def "backend_common_word_shift"] THEN
+    DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC)
 ### byte_aligned_bytes_in_word
   (* the alignment of a word is the slice that drops its lowest
      bits, and the bytes in a word of a good dimindex are four or
