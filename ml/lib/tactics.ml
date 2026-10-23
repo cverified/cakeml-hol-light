@@ -854,3 +854,58 @@ let ARITH_ASM_TAC =
   let num_fact th = arith_form (concl th) in
   ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC (filter num_fact ths)) THEN
   ARITH_TAC;;
+
+(* ------------------------------------------------------------------ *)
+(* The clauses of v_all_vs and v_all_ts of data_to_word_memoryProof,  *)
+(* which the proofs of that file ask for again and again: the values  *)
+(* of the empty list, of a one-element list and of a cons, and the    *)
+(* timestamps of a value.  The theorem of the file that says what     *)
+(* the values of an append are stands later in it than the first      *)
+(* proofs that need these, so they are proved here.  The four are     *)
+(* kept once they are proved.                                         *)
+(* ------------------------------------------------------------------ *)
+
+let v_all_vs_clauses =
+  let cache = ref None in
+  fun () ->
+    match !cache with
+      Some c -> c
+    | None ->
+       let vav = cake_def "v_all_vs" in
+       let vat = cake_def "v_all_ts" in
+       let vnil = prove
+        (`v_all_vs ([]:dataSem_v list) = []`,
+         GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+         REWRITE_TAC[]) in
+       let vsing = prove
+        (`(!i:int. v_all_vs [Number i] = [Number i]) /\
+          (!w. v_all_vs [Word64 w] = [Word64 w]) /\
+          (!n. v_all_vs [CodePtr n] = [CodePtr n]) /\
+          (!b n. v_all_vs [RefPtr b n] = [RefPtr b n]) /\
+          (!ts tag l. v_all_vs [Block ts tag l] =
+                      Block ts tag l :: v_all_vs l)`,
+         REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+         GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+         REWRITE_TAC[vnil; APPEND_NIL]) in
+       let vats = prove
+        (`(!i:int. v_all_ts (Number i) = []) /\
+          (!w. v_all_ts (Word64 w) = []) /\
+          (!n. v_all_ts (CodePtr n) = []) /\
+          (!b n. v_all_ts (RefPtr b n) = []) /\
+          (!ts tag l. v_all_ts (Block ts tag l) =
+                      ts :: FLAT (MAP v_all_ts l))`,
+         REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+         GEN_REWRITE_TAC LAND_CONV [vat] THEN MATCH_REDUCE_TAC THEN
+         REWRITE_TAC[]) in
+       let vcons = prove
+        (`!(a:dataSem_v) l.
+            v_all_vs (CONS a l) = v_all_vs [a] ++ v_all_vs l`,
+         REPEAT GEN_TAC THEN
+         STRUCT_CASES_TAC(ISPEC `a:dataSem_v`
+                                (cases_of `:dataSem_v`)) THEN
+         GEN_REWRITE_TAC LAND_CONV [vav] THEN
+         GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [vav] THEN
+         MATCH_REDUCE_TAC THEN
+         REWRITE_TAC[vnil; APPEND_NIL; APPEND; GSYM APPEND_ASSOC]) in
+       let c = (vnil,vsing,vats,vcons) in
+       cache := Some c; c;;
