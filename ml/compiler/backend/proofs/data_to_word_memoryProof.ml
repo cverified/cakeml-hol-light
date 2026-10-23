@@ -8150,7 +8150,20 @@ let memory_rel_any_Number_IMP = cake_theorem "memory_rel_any_Number_IMP"
         word_loc)) :: vars) ==>
       (?w. v = wordLang_Word w /\ (FAPPLY w 0 <=> ~(small_int
         (:'a) i)))`)
-  CHEAT_TAC;;
+  (* the root of a Number is the Data of its Smallnum, whose lowest
+     bit the and with the complement of one clears, or a Pointer,
+     whose address has that bit set (get_addr_0) *)
+  (MEMORY_REL_TAC THEN V_INV_TAC THEN
+    FIRST_ASSUM(fun e ->
+      let c = concl e in
+      if is_eq c && is_var (rand c) then SUBST1_TAC (SYM e)
+      else fail()) THEN
+    REWRITE_TAC[injectivity "word_loc"] THEN
+    CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+    REWRITE_TAC[word_index; cake_thm "get_addr_0"; BIT_WORD_AND;
+                BIT_WORD_NOT; BIT_WORD_1] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1]);;
 
 let memory_rel_Number_IMP = cake_theorem "memory_rel_Number_IMP"
   (fun () ->
