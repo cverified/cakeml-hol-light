@@ -44,6 +44,7 @@ add it to the index.
 | 7 | `fs`, `rw`, `simp`, the stateful simpset | written out, always |
 | 8 | an `Overload` brought to the front | `front_overloads` |
 | 9 | two files that bind the same `foo_def` | `cake_def "<const>"` |
+| 9a | two files that state a theorem of one name | the store, by the constant |
 | 10 | a library theorem HOL Light has not | `ml/lib/lemmas.ml` |
 | 11 | `Parse.hide`, a field name | `cake_hide`, and a clean session |
 | 12 | a statement that annotates no type | terms taken from the goal |
