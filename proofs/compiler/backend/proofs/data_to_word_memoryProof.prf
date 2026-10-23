@@ -2504,6 +2504,20 @@
      ASM_REWRITE_TAC[LT_MULT_RCANCEL; EXP_EQ_0; ARITH_EQ]])
 ### less_pow_dimindex_sub_imp
   (REWRITE_TAC[dimword] THEN MATCH_ACCEPT_TAC LESS_EXO_SUB)
+### encode_header_NEQ_0
+  (* the header has the lowest bit of its three set, and a word
+     with a bit is not zero *)
+  (REWRITE_TAC[cake_def "encode_header"] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+   REWRITE_TAC[cake_def "make_header"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   DISCH_THEN(MP_TAC o SPEC `0`) THEN
+   REWRITE_TAC[BIT_WORD_OR; BIT_WORD_0; BIT_WORD] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1])
 ### thunk_tag_bits_lemma
   (* three is the tag of an evaluated thunk, so the word is 8 or 6 *)
   (REWRITE_TAC[cake_def "thunk_tag_to_bits"] THEN
@@ -3274,6 +3288,29 @@
    REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
    POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC)
+### maxout_bits_bit
+  (* maxout_bits is the number shifted up by the base, and a number
+     below two to the width of the field has no bit at the width or
+     above, or it is all the ones of the field *)
+  (let odd_div = prove
+    (`!k m i. k < 2 EXP m /\ m <= i
+              ==> (ODD (k DIV 2 EXP i) <=> F)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `k DIV 2 EXP i = 0` SUBST1_TAC THENL
+      [MATCH_MP_TAC DIV_LT THEN
+       TRANS_TAC LTE_TRANS `2 EXP m` THEN
+       ASM_REWRITE_TAC[LE_EXP] THEN ARITH_TAC;
+       REWRITE_TAC[ODD]]) in
+   REWRITE_TAC[word_index; cake_def "maxout_bits"] THEN
+   COND_CASES_TAC THENL
+    [REWRITE_TAC[BIT_WORD_SHL; BIT_WORD] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     MP_TAC(SPECL [`n:num`; `l:num`; `i - b`] odd_div) THEN
+     ASM_REWRITE_TAC[] THEN
+     ASM_SIMP_TAC[ARITH_RULE `n < m - 1 ==> n < m`] THEN
+     ARITH_ASM_TAC;
+     STRIP_TAC THEN
+     ASM_MESON_TAC[REWRITE_RULE[word_index] all_ones_bit]])
 ### maxout_bits_IMP
   (REPEAT STRIP_TAC THEN
    FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
@@ -3378,6 +3415,28 @@
    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_USHR] THEN
    REPEAT STRIP_TAC THEN ASM_SIMP_TAC[] THEN
    GEN_REWRITE_TAC RAND_CONV [BIT_GUARD] THEN REWRITE_TAC[])
+### shift_shift
+  (* the shift up multiplies by two to the shift, which stays below
+     the dimword, so the shift down divides it out again *)
+  (let e2 = prove
+    (`!l. 1 <= 2 EXP l`,
+     REWRITE_TAC[ARITH_RULE `1 <= n <=> ~(n = 0)`; EXP_EQ_0;
+                 ARITH_EQ]) in
+   DISCH_TAC THEN
+   SUBGOAL_THEN `n1 < dimword (:'a) /\ 2 EXP l * n1 < dimword (:'a)`
+     STRIP_ASSUME_TAC THENL
+    [CONJ_TAC THENL
+      [TRANS_TAC LET_TRANS `n1 * 2 EXP l` THEN ASM_REWRITE_TAC[] THEN
+       SUBGOAL_THEN `n1 * 1 <= n1 * 2 EXP l` MP_TAC THENL
+        [REWRITE_TAC[LE_MULT_LCANCEL] THEN
+         DISJ2_TAC THEN MATCH_ACCEPT_TAC e2;
+         ARITH_TAC];
+       ONCE_REWRITE_TAC[MULT_SYM] THEN ASM_REWRITE_TAC[]];
+     ALL_TAC] THEN
+   REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_USHR; VAL_WORD_SHL; VAL_WORD;
+               GSYM dimword] THEN
+   CONV_TAC MOD_DOWN_CONV THEN
+   ASM_SIMP_TAC[MOD_LT; DIV_MULT; EXP_EQ_0; ARITH_EQ])
 ### fix_clock_IMP
   (REPEAT GEN_TAC THEN CASES_ON_NAME "x" THEN
    REWRITE_TAC[cake_def "data_to_word_memoryProof_fix_clock";
@@ -3482,6 +3541,34 @@
    DISCH_TAC THEN
    MATCH_MP_TAC (cake_thm "memory_rel_ptr_eq") THEN
    ASM_MESON_TAC[])
+### or_seven_eq
+  (* seven has no bit above the second, and the shift by more than
+     two has none below the third, so the bit where the shifts
+     differ is a bit where the ors differ *)
+  (let odd_div = prove
+    (`!k m i. k < 2 EXP m /\ m <= i
+              ==> (ODD (k DIV 2 EXP i) <=> F)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `k DIV 2 EXP i = 0` SUBST1_TAC THENL
+      [MATCH_MP_TAC DIV_LT THEN
+       TRANS_TAC LTE_TRANS `2 EXP m` THEN
+       ASM_REWRITE_TAC[LE_EXP] THEN ARITH_TAC;
+       REWRITE_TAC[ODD]]) in
+   let bit7 = prove
+    (`!i. 3 <= i ==> (word_bit i (n2w 7:(N)word) <=> F)`,
+     REPEAT STRIP_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+     MP_TAC(SPECL [`7`; `3`; `i:num`] odd_div) THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+     DISCH_THEN(fun th -> REWRITE_TAC[th])) in
+   MATCH_MP_TAC(TAUT `(q ==> b ==> a) ==> (~a /\ q ==> ~b)`) THEN
+   DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_SHL] THEN
+   REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN
+   ASM_REWRITE_TAC[] THEN
+   ASM_CASES_TAC `3 <= i` THENL
+    [ASM_SIMP_TAC[bit7];
+     ASM_SIMP_TAC[ARITH_RULE `~(3 <= i) /\ 2 < k ==> ~(k <= i)`]])
 ### word_1_and_eq_0
   (REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
                BIT_WORD_1] THEN
@@ -3865,6 +3952,49 @@
                BIT_WORD_SHL] THEN
    REPEAT STRIP_TAC THEN
    FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN ASM_REWRITE_TAC[])
+### byte_aligned_bytes_in_word
+  (* the alignment of a word is the slice that drops its lowest
+     bits, and the bytes in a word of a good dimindex are four or
+     eight, which have no bit as low as that *)
+  (let LOG2_RED =
+     REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                          NUM_REDUCE_CONV THENC REWRITE_CONV[])) in
+   let slice_lemma = prove
+    (`!h p (w:(N)word).
+        dimindex (:N) <= h + 1 /\ (!i. i < p ==> ~word_bit i w)
+        ==> word_slice h p w = w`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+                 BIT_WORD_SHL; BIT_WORD_SUBWORD] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `p:num <= i` THENL
+      [SUBGOAL_THEN `(p + (i - p) = i) /\
+                     i - p < MIN ((h + 1) - p) (dimindex (:N))`
+         STRIP_ASSUME_TAC THENL
+        [CONJ_TAC THENL
+          [ASM_ARITH_TAC;
+           REWRITE_TAC[ARITH_RULE
+             `MIN a b = if a <= b then a else b`] THEN
+           COND_CASES_TAC THEN ASM_ARITH_TAC];
+         ASM_REWRITE_TAC[]];
+       ASM_REWRITE_TAC[] THEN
+       FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN
+       ASM_SIMP_TAC[ARITH_RULE `~(p <= i) ==> (i:num) < p`]]) in
+   REWRITE_TAC[cake_def "good_dimindex"; cake_def "byte_aligned";
+               cake_def "alignment_aligned"; cake_def "align";
+               cake_def "bytes_in_word"] THEN
+   DISCH_THEN(DISJ_CASES_THEN
+     (fun th -> SUBST1_TAC th THEN ASSUME_TAC th)) THEN
+   CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
+   MATCH_MP_TAC slice_lemma THEN
+   (CONJ_TAC THENL
+     [ASM_REWRITE_TAC[] THEN ARITH_TAC;
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      SUBGOAL_THEN `i = 0 \/ i = 1 \/ i = 2` MP_TAC THENL
+       [ASM_ARITH_TAC;
+        DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+        REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+        TRY(REWRITE_TAC[]) THEN TRY(ASM_ARITH_TAC)]]))
 ### el_length_Bytes
   (REWRITE_TAC[cake_def "Bytes"] THEN
    CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
