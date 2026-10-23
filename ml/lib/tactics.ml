@@ -840,12 +840,17 @@ let CK_IH_TAC =
 (* ------------------------------------------------------------------ *)
 
 let ARITH_ASM_TAC =
-  let num_fact th =
-    let c = concl th in
-    (try let l,_ = dest_eq c in type_of l = `:num`
+  let pats = [`(a:num) <= b`; `(a:num) < b`; `(a:num) >= b`;
+              `(a:num) > b`] in
+  let atom t =
+    (try let l,_ = dest_eq t in type_of l = `:num`
      with Failure _ ->
-       exists (fun pat -> can (term_match [] pat) c)
-         [`(a:num) <= b`; `(a:num) < b`; `(a:num) >= b`;
-          `(a:num) > b`; `~((a:num) = b)`]) in
+       exists (fun pat -> can (term_match [] pat) t) pats) in
+  let rec arith_form t =
+    if is_neg t then arith_form (rand t)
+    else if is_conj t || is_disj t || is_imp t
+    then arith_form (lhand t) && arith_form (rand t)
+    else atom t in
+  let num_fact th = arith_form (concl th) in
   ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC (filter num_fact ths)) THEN
   ARITH_TAC;;
