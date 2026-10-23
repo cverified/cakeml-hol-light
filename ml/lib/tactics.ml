@@ -766,3 +766,16 @@ let OPEN_COND =
   FIRST_X_ASSUM(fun th ->
     if is_cond (concl th) then MP_TAC th else fail()) THEN
   COND_CASES_TAC THEN STRIP_TAC;;
+
+(* Every instance of a theorem whose hypothesis is a conjunction of
+   three of the assumptions, assumed: the lemmas about memory_rel
+   ask for the relation, a small_int and a good_dimindex, and a
+   proof that needs the instance of two of the values wants both
+   instances without naming either. *)
+
+let ALL_INST3 th =
+  ASSUM_LIST(fun ths ->
+    MAP_EVERY ASSUME_TAC
+      (mapfilter (fun (a,bc) -> MATCH_MP th (CONJ a bc))
+         (allpairs (fun a bc -> (a,bc)) ths
+            (allpairs (fun b c -> CONJ b c) ths ths))));;
