@@ -2008,6 +2008,26 @@
    REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### pop_thm
+  (* the stack permutation that keeps none of the values that are
+     popped: the pairs of the two lists are the ZIP of them *)
+  (let pop = prove
+    (`!conf (xs:(dataSem_v)list) (rs:(('a word_loc)heap_address)list)
+         stack roots heap be a sp sp1 gens limit ts refs.
+        abs_ml_inv conf (xs ++ stack) refs
+          (rs ++ roots,heap,be,a,sp,sp1,gens) limit ts /\
+        LENGTH xs = LENGTH rs
+        ==> abs_ml_inv conf stack refs
+              (roots,heap,be,a,sp,sp1,gens) limit ts`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     MP_TAC(ISPECL
+       [`ZIP (xs:(dataSem_v)list)
+             (rs:(('a word_loc)heap_address)list)`;
+        `[]:(dataSem_v#('a word_loc)heap_address)list`]
+       (cake_thm "abs_ml_inv_stack_permute")) THEN
+     ASM_SIMP_TAC[MAP_FST_ZIP; MAP_SND_ZIP; MAP; APPEND;
+                  set_of_list; EMPTY_SUBSET]) in
+   MATCH_ACCEPT_TAC pop)
 ### blocks_unique_duplicate
   (* the values of xs ++ xs ++ stack are the values of xs ++ stack *)
   (let inc = prove
@@ -3299,11 +3319,55 @@
          FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
          ASM_REWRITE_TAC[] THEN ARITH_TAC;
          ASM_ARITH_TAC]]])
+### FDOM_bind_each_lemma
+  (* induction on the number of bindings: each one is a timestamp
+     one higher than the last, and the domain grows by that one *)
+  (let aux = prove
+    (`!k tf ts h i. FDOM tf SUBSET {m | m < ts}
+        ==> FDOM (bind_each tf ts h i k) SUBSET {m | m < ts + k}`,
+     INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+      [ASM_REWRITE_TAC[cake_def "bind_each"; ADD_CLAUSES];
+       REWRITE_TAC[cake_def "bind_each"; FDOM_FUPDATE;
+                   INSERT_SUBSET; IN_ELIM_THM] THEN
+       CONJ_TAC THENL
+        [ARITH_TAC;
+         FIRST_ASSUM(fun ih ->
+           MP_TAC(SPECL [`tf:(num,num)fmap`; `ts + 1`; `h + i:num`;
+                         `i:num`] ih)) THEN
+         REWRITE_TAC[ARITH_RULE `(ts + 1) + k = ts + SUC k`] THEN
+         DISCH_THEN MATCH_MP_TAC THEN
+         FIRST_ASSUM(fun sub -> MP_TAC sub) THEN
+         REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN
+         MESON_TAC[ARITH_RULE `!a b:num. a < b ==> a < b + 1`]]]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC(SPEC_ALL aux))
 ### blocks_unique_GT_ts
   (* blocks_unique gives the timestamp of a Block of the set as one
      below ts, and this one is not *)
   (REWRITE_TAC[cake_def "blocks_unique"] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[ARITH_RULE `!a b:num. a >= b /\ a < b ==> F`])
+### v_inv_v_to_list_lemma
+  (* a list of at least one element is a Block of the cons tag with
+     two elements, and the invariant of a Block that is not empty
+     is a pointer at a BlockRep of as many elements *)
+  (STRIP_TAC THEN
+   CASES_ON_NAME "vs" THENL
+    [RULE_ASSUM_TAC(REWRITE_RULE[]) THEN FIRST_ASSUM CONTR_TAC;
+     ALL_TAC] THEN
+   FIRST_ASSUM(fun th ->
+     MP_TAC(SPEC_ALL(MATCH_MP v_to_list_SOME_CONS_IMP th))) THEN
+   DISCH_THEN(X_CHOOSE_THEN `ts2:num`
+     (X_CHOOSE_THEN `ys2:dataSem_v` STRIP_ASSUME_TAC)) THEN
+   REPEAT SUBST_LHS_TAC THEN
+   USE_CHANGED [cake_thm "v_inv_def"] THEN
+   REWRITE_TAC[NOT_CONS_NIL] THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun a2 ->
+     let len = CONV_RULE NUM_REDUCE_CONV
+       (REWRITE_RULE[LENGTH] (MATCH_MP LIST_REL_LENGTH a2)) in
+     RULE_ASSUM_TAC(REWRITE_RULE[SYM len])) THEN
+   FIRST_ASSUM(fun eq -> FIRST_ASSUM(fun hl ->
+     MAP_EVERY EXISTS_TAC
+       [rand(rator(rhs(concl eq))); rand(rand(rhs(concl hl)))] THEN
+     ASM_REWRITE_TAC[])))
 ### BlockRep_heap_length
   (REWRITE_TAC[cake_def "BlockRep"; heap_length_CONS; heap_length_NIL;
                cake_def "el_length"; LENGTH] THEN ARITH_TAC)
