@@ -8362,7 +8362,39 @@ let blocks_unique_Thunk2 = cake_theorem "blocks_unique_Thunk2"
        ==>
        blocks_unique ts (all_vs refs (v' :: RefPtr F p :: MAP FST
          vars))`)
-  CHEAT_TAC;;
+  (* the value of the Thunk at p is already among the values of the
+     references, so the stack with it in front has the same values
+     as the stack without it, and the uniqueness carries over.  The
+     element of the goal picks the assumption about it (there are
+     two), and the two sides of the transfer are split the same way
+     so that the disjuncts match one by one *)
+  (
+   let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[] THEN CONJ_TAC THEN
+   W(fun (asl,w) ->
+     let gel = el 0 (snd(strip_comb w)) in
+     FIRST_ASSUM(fun inm ->
+       let c = concl inm in
+       if not (hd_is "IN" c) || not (el 0 (snd(strip_comb c)) = gel)
+       then fail() else
+       FIRST_ASSUM(fun lk ->
+         if not (hd_is "=" (concl lk)) then fail() else
+         MP_TAC(REWRITE_RULE[cake_def "all_vs"; IN_UNION;
+                             IN_ELIM_THM; v_all_vs_append;
+                             MEM_APPEND]
+                  (ONCE_REWRITE_RULE[cons_app] inm)) THEN
+         MP_TAC lk THEN
+         REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM;
+                     v_all_vs_append; MEM_APPEND] THEN
+         MESON_TAC[]))));;
 
 let memory_rel_Thunk_IMP = cake_theorem "memory_rel_Thunk_IMP"
   (fun () ->
@@ -13185,7 +13217,33 @@ let compare_same = cake_theorem "compare_same"
   (fun () ->
     `compare (implode (x :: xs)) (implode (x :: ys)) =
      compare (implode xs) (implode ys)`)
-  CHEAT_TAC;;
+  (* the first characters are the same, so the comparison steps over
+     them: the index goes up by one, which the shift of
+     compoare_aux_append_xs takes off again, and the lengths are one
+     less on both sides *)
+  (let shift_lemma = prove
+    (`!len start r (zz:char) l1 l2.
+        compare_aux (implode (CONS zz l1)) (implode (CONS zz l2)) r
+          (start + 1) len =
+        compare_aux (implode l1) (implode l2) r start len`,
+     let el_suc = prove
+      (`!n h (t:A list). EL (n + 1) (CONS h t) = EL n t`,
+       REWRITE_TAC[GSYM ADD1; EL; TL]) in
+     INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     ONCE_REWRITE_TAC[cake_def "compare_aux"] THEN
+     REWRITE_TAC[NOT_SUC; SUC_SUB1; cake_def "strsub"; el_suc] THEN
+     ASM_REWRITE_TAC[]) in
+   let first_eq = prove
+    (`!r (zz:char) l1 l2 n.
+        compare_aux (implode (CONS zz l1)) (implode (CONS zz l2)) r 0
+          (SUC n) =
+        compare_aux (implode l1) (implode l2) r 0 n`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "compare_aux"] THEN
+     REWRITE_TAC[NOT_SUC; SUC_SUB1; cake_def "strsub"; EL; HD;
+                 char_lt; LT_REFL; shift_lemma]) in
+   REWRITE_TAC[cake_def "mlstring_compare"; cake_def "strlen";
+               LENGTH; LT_SUC; first_eq]);;
 
 let str_cmp_cons = cake_theorem "str_cmp_cons"
   (fun () ->
