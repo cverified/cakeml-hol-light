@@ -578,6 +578,30 @@
       [ASM_ARITH_TAC;
        FIRST_X_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
         [ASM_ARITH_TAC; ASM_REWRITE_TAC[]]]])
+### bind_each_SUBMAP
+  (* every binding of tf is below ts and bind_each adds none below
+     it, so what it adds is on top of tf *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THENL
+    [MATCH_ACCEPT_TAC SUBMAP_REFL;
+     REWRITE_TAC[SUBMAP; FDOM_FUPDATE; IN_INSERT;
+                 FAPPLY_FUPDATE_THM] THEN
+     GEN_TAC THEN DISCH_TAC THEN
+     SUBGOAL_THEN `~((x:num) = ts)` ASSUME_TAC THENL
+      [FIRST_X_ASSUM(fun th -> MP_TAC(SPEC `x:num` th)) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_TAC;
+       ALL_TAC] THEN
+     ASM_REWRITE_TAC[] THEN
+     FIRST_X_ASSUM(fun ih ->
+       MP_TAC(SPECL [`tf:(num,num)fmap`; `ts + 1`; `k + i`; `i:num`]
+                    ih)) THEN
+     ANTS_TAC THENL
+      [GEN_TAC THEN DISCH_TAC THEN
+       FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_TAC;
+       REWRITE_TAC[SUBMAP] THEN
+       DISCH_THEN(fun th -> MP_TAC(SPEC `x:num` th)) THEN
+       ASM_REWRITE_TAC[]]])
 ### all_ts_cons_no_block
   (* a value that is not a Block has no timestamp in it, so the head
      of the stack adds nothing to the set *)
@@ -1603,6 +1627,29 @@
    CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
    ASM_SIMP_TAC[LENGTH; NOT_CONS_NIL] THEN ARITH_TAC)
+### bind_each_eq_tf
+  (* the bindings that bind_each adds are above ts, so a timestamp
+     below it keeps the value that tf gives it *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THEN
+   REWRITE_TAC[FAPPLY_FUPDATE_THM] THEN
+   COND_CASES_TAC THENL
+    [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
+     FIRST_X_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+      [GEN_TAC THEN DISCH_TAC THEN
+       FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_TAC;
+       ASM_ARITH_TAC]])
+### bind_each_FDOM
+  (* bind_each ts ... n binds the n timestamps from ts up *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[cake_def "bind_each"; FDOM_FUPDATE] THEN
+   REWRITE_TAC[EXTENSION; IN_UNION; IN_INSERT; IN_ELIM_THM] THEN
+   GEN_TAC THEN EQ_TAC THEN STRIP_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   TRY(DISJ2_TAC THEN ASM_ARITH_TAC) THEN
+   TRY(DISJ1_TAC THEN ASM_ARITH_TAC) THEN
+   ASM_ARITH_TAC)
 ### bind_each_eq_tf_FDOM
   (REWRITE_TAC[bind_each_FDOM; IN_UNION; IN_ELIM_THM] THEN
    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC)
