@@ -158,7 +158,15 @@ let w2i_i2w_IMP = cake_theorem "w2i_i2w_IMP"
   (fun () ->
     `(w2i ((i2w i):'a word)) = i ==> INT_MIN (:'a) <= i /\ i <=
   INT_MAX (:'a)`)
-  CHEAT_TAC;;
+  (* the bound that the round trip of an integer through a word
+     gives: HOL Light's ival of a word is between the two powers,
+     and the integer that the word has as its ival is the one *)
+  DISCH_TAC THEN
+  MP_TAC(ISPEC `(i2w i):'a word` IVAL_BOUND) THEN
+  ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[integer_word_INT_MIN; integer_word_INT_MAX; INT_MIN;
+              GSYM INT_OF_NUM_POW] THEN
+  INT_ARITH_TAC;;
 
 let word_i2w_sub = cake_theorem "word_i2w_sub"
   (fun () ->
@@ -901,7 +909,47 @@ let word_list_limit = cake_theorem "word_list_limit"
   (fun () ->
     `EVERY isWord ws /\ ALL_DISTINCT ws ==>
       LENGTH (ws:('a word_loc) list) <= dimword (:'a)`)
-  CHEAT_TAC;;
+  (* a list of words without a repeat is no longer than the
+     number of words there are: the values of its elements are
+     a list of distinct numbers below dimword, and such a list
+     is a subset of the numbers below dimword *)
+  (let dist_lt = prove
+    (`!(l:num list) n. ALL_DISTINCT l /\ (!x. MEM x l ==> x < n)
+        ==> LENGTH l <= n`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     MP_TAC(REWRITE_RULE[GSYM ALL_DISTINCT]
+       (ISPEC `l:num list` HAS_SIZE_SET_OF_LIST)) THEN
+     ASM_REWRITE_TAC[HAS_SIZE] THEN
+     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (SUBST1_TAC o SYM)) THEN
+     TRANS_TAC LE_TRANS `CARD {i | i < (n:num)}` THEN CONJ_TAC THENL
+      [MATCH_MP_TAC CARD_SUBSET THEN CONJ_TAC THENL
+        [REWRITE_TAC[SUBSET; IN_SET_OF_LIST; IN_ELIM_THM] THEN
+         ASM_MESON_TAC[];
+         MESON_TAC[HAS_SIZE_NUMSEG_LT; HAS_SIZE]];
+       REWRITE_TAC[CARD_NUMSEG_LT; LE_REFL]]) in
+   STRIP_TAC THEN
+   MP_TAC(ISPECL [`MAP (\x. w2n (theWord x)) (ws:('a word_loc) list)`;
+                  `dimword (:'a)`] dist_lt) THEN
+   REWRITE_TAC[LENGTH_MAP] THEN
+   DISCH_THEN MATCH_MP_TAC THEN CONJ_TAC THENL
+    [FIRST_X_ASSUM MP_TAC THEN FIRST_X_ASSUM MP_TAC THEN
+     REWRITE_TAC[TAUT `(p ==> q ==> r) <=> (p /\ q ==> r)`] THEN
+     SPEC_TAC(`ws:('a word_loc) list`,`ws:('a word_loc) list`) THEN
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[MAP; ALL_DISTINCT_CLAUSES; ALL] THEN
+     STRIP_TAC THEN CONJ_TAC THENL
+      [REWRITE_TAC[MEM_MAP; NOT_EXISTS_THM] THEN
+       X_GEN_TAC `y:('a)word_loc` THEN STRIP_TAC THEN
+       SUBGOAL_THEN `isWord (y:('a)word_loc)` MP_TAC THENL
+        [ASM_MESON_TAC[ALL_MEM]; ALL_TAC] THEN
+       UNDISCH_TAC `isWord (h:('a)word_loc)` THEN
+       REWRITE_TAC[cake_thm "isWord_exists"] THEN
+       DISCH_THEN(X_CHOOSE_THEN `wh:('a)word` SUBST_ALL_TAC) THEN
+       DISCH_THEN(X_CHOOSE_THEN `wy:('a)word` SUBST_ALL_TAC) THEN
+       ASM_MESON_TAC[cake_def "theWord"; VAL_EQ];
+       FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]];
+     REWRITE_TAC[MEM_MAP] THEN REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[dimword; VAL_BOUND]]);;
 
 let MOD_EQ_0_0 = cake_theorem "MOD_EQ_0_0"
   (fun () ->
@@ -7806,7 +7854,52 @@ let shift_shift_lemma = cake_theorem "shift_shift_lemma[local]"
        i = 2 EXP backend_common_word_shift (:'a) /\ n < dimword
          (:'a) ==>
        n2w n << (k - t) >>> (l - t) = ((n2w (n DIV i)):'a word)`)
-  CHEAT_TAC;;
+  (* the shift up and down of a word that keeps t of its bits:
+     the bit that the two shifts leave at j is the one of n at
+     j plus the word shift, and above t there is none, because
+     n divided by the word shift is below two to the t *)
+  (let ARITH_NO_DIV_TAC =
+     POP_ASSUM_LIST(fun l ->
+       MAP_EVERY MP_TAC
+         (filter (fun th ->
+            not (can (find_term (fun t ->
+              (try fst(dest_const(fst(strip_comb t))) = "DIV"
+               with Failure _ -> false))) (concl th))) l)) THEN
+     ARITH_TAC in
+   STRIP_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+   REWRITE_TAC[BIT_WORD_USHR; BIT_WORD_SHL; BIT_WORD] THEN
+   SUBGOAL_THEN
+     `(j + (l - t)) - (k - t) =
+      j + backend_common_word_shift (:'a)`
+     SUBST1_TAC THENL [ARITH_NO_DIV_TAC; ALL_TAC] THEN
+   SUBGOAL_THEN `(n DIV i) DIV 2 EXP j =
+                 n DIV 2 EXP (j + backend_common_word_shift (:'a))`
+     SUBST1_TAC THENL
+    [ASM_REWRITE_TAC[DIV_DIV; GSYM EXP_ADD] THEN
+     AP_TERM_TAC THEN AP_TERM_TAC THEN ARITH_TAC;
+     ALL_TAC] THEN
+   ASM_CASES_TAC `(j:num) < t` THENL
+    [SUBGOAL_THEN
+       `(k - t <= j + (l - t)) /\ (j + (l - t) < dimindex (:'a)) /\
+        (j + backend_common_word_shift (:'a) < dimindex (:'a)) /\
+        j < dimindex (:'a)`
+       (fun th -> REWRITE_TAC[th]) THENL
+      [ARITH_NO_DIV_TAC];
+     SUBGOAL_THEN
+       `n DIV 2 EXP (j + backend_common_word_shift (:'a)) = 0`
+       SUBST1_TAC THENL
+      [SUBGOAL_THEN
+         `n DIV 2 EXP (j + backend_common_word_shift (:'a)) =
+          (n DIV i) DIV 2 EXP j` SUBST1_TAC THENL
+        [ASM_REWRITE_TAC[DIV_DIV; GSYM EXP_ADD] THEN
+         AP_TERM_TAC THEN AP_TERM_TAC THEN ARITH_TAC;
+         MATCH_MP_TAC DIV_LT THEN
+         TRANS_TAC LTE_TRANS `2 EXP t` THEN
+         ASM_REWRITE_TAC[LE_EXP] THEN
+         CONV_TAC NUM_REDUCE_CONV THEN ARITH_NO_DIV_TAC];
+       REWRITE_TAC[ODD]]]);;
 
 let write_bytes_APPEND = cake_theorem "write_bytes_APPEND"
   (fun () ->
@@ -11938,7 +12031,76 @@ let ptr_bits_lemma = cake_theorem "ptr_bits_lemma"
   (fun () ->
     `(w << shift_length conf || ptr_bits conf 0 2 || (n2w 1)) =
      w << shift_length conf + ptr_bits conf 0 2 + (n2w 1)`)
-  CHEAT_TAC;;
+  (* the three parts of a pointer do not share a bit, so the or
+     of them is their sum: the bits of a maxout_bits lie between
+     its shift and its shift plus its width, so the ones of
+     ptr_bits lie below the shift_length and above the zeroth *)
+  (let bit_hi = prove
+    (`!n r (i:num). n < 2 EXP r /\ r <= i
+        ==> ~(bit i ((n2w n):(N)word))`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+     SUBGOAL_THEN `n DIV 2 EXP i = 0` SUBST1_TAC THENL
+      [MATCH_MP_TAC DIV_LT THEN
+       TRANS_TAC LTE_TRANS `2 EXP r` THEN
+       ASM_SIMP_TAC[LE_EXP; ARITH];
+       REWRITE_TAC[ODD]]) in
+   let bit_maxout = prove
+    (`!n rep k j. bit j ((maxout_bits n rep k):(N)word)
+        ==> k <= j /\ j < k + rep`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "maxout_bits"] THEN
+     COND_CASES_TAC THEN REWRITE_TAC[cake_def "all_ones"] THENL
+      [REWRITE_TAC[BIT_WORD_SHL] THEN STRIP_TAC THEN
+       CONJ_TAC THEN ASM_REWRITE_TAC[] THEN
+       MATCH_MP_TAC(ARITH_RULE
+         `k <= j /\ ~(rep <= j - k) ==> j < k + rep`) THEN
+       ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
+       MP_TAC(ISPECL [`n:num`; `rep:num`; `j - k`] bit_hi) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC;
+       COND_CASES_TAC THEN
+       REWRITE_TAC[BIT_WORD_0; word_slice; word_bits; BIT_WORD_SHL;
+                   BIT_WORD_SUBWORD] THEN
+       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC]) in
+   let bit_pb = prove
+    (`!conf j. bit j ((ptr_bits conf 0 2):(N)word)
+        ==> 1 <= j /\ j < small_shift_length conf`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "ptr_bits"; cake_def "small_shift_length";
+                 BIT_WORD_OR] THEN
+     DISCH_THEN(CONJUNCTS_THEN2 (K ALL_TAC) (DISJ_CASES_THEN
+       (fun th -> MP_TAC(MATCH_MP bit_maxout th)))) THEN
+     ARITH_TAC) in
+   let sl = prove
+    (`!conf. small_shift_length conf <= shift_length conf /\
+             2 <= shift_length conf`,
+     REWRITE_TAC[cake_def "small_shift_length";
+                 cake_def "shift_length"] THEN ARITH_TAC) in
+   let pb1 = prove
+    (`!conf. ((ptr_bits conf 0 2) && (n2w 1):(N)word) = n2w 0`,
+     GEN_TAC THEN REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+     X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+     REWRITE_TAC[BIT_WORD_AND; BIT_WORD_0; BIT_WORD_1] THEN
+     REWRITE_TAC[TAUT `(p <=> F) <=> ~p`] THEN STRIP_TAC THEN
+     FIRST_ASSUM(MP_TAC o MATCH_MP bit_pb) THEN
+     ASM_REWRITE_TAC[] THEN ARITH_TAC) in
+   let aw = prove
+    (`!(w:(N)word) conf.
+        (w << shift_length conf) &&
+        (ptr_bits conf 0 2 || n2w 1) = n2w 0`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+     X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+     REWRITE_TAC[BIT_WORD_AND; BIT_WORD_OR; BIT_WORD_0; BIT_WORD_1;
+                 BIT_WORD_SHL] THEN
+     REWRITE_TAC[TAUT `(p <=> F) <=> ~p`] THEN STRIP_TAC THEN
+     TRY(FIRST_ASSUM(MP_TAC o MATCH_MP bit_pb)) THEN
+     MP_TAC(SPEC_ALL sl) THEN ARITH_NO_BIT_TAC) in
+   let gen = prove
+    (`!(w:(N)word) conf.
+        (w << shift_length conf || ptr_bits conf 0 2 || n2w 1) =
+        w << shift_length conf + ptr_bits conf 0 2 + n2w 1`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[GEN_ALL(MATCH_MP WORD_ADD_OR (SPEC_ALL pb1));
+                 GEN_ALL(MATCH_MP WORD_ADD_OR (SPEC_ALL aw))]) in
+   MATCH_ACCEPT_TAC gen);;
 
 let encode_header_lemma = cake_theorem "encode_header_lemma"
   (fun () ->

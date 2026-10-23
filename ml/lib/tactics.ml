@@ -1099,3 +1099,19 @@ let ARITH_NO_BIT_TAC =
                 nm = "bit" || nm = "word_bit"
             with Failure _ -> false))) (concl th))) l)) THEN
   ARITH_TAC;;
+
+(* ------------------------------------------------------------------ *)
+(* The same for a goal whose context has a division: ARITH_TAC turns  *)
+(* a `n DIV i` into the quotient and the remainder of a product, and  *)
+(* a context of several of them is no longer linear, so an assumption *)
+(* with a DIV in it is dropped as well.                               *)
+(* ------------------------------------------------------------------ *)
+
+let ARITH_NO_DIV_TAC =
+  POP_ASSUM_LIST(fun l ->
+    MAP_EVERY MP_TAC
+      (filter (fun th ->
+         not (can (find_term (fun t ->
+           (try fst(dest_const(fst(strip_comb t))) = "DIV"
+            with Failure _ -> false))) (concl th))) l)) THEN
+  ARITH_TAC;;
