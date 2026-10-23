@@ -321,6 +321,23 @@ sources, and why.
   overlapping clauses itself (`overlapping` in `tools/port.py`);
   `MATCH_FORM` in `tools/overrides.py` names the ones where it
   cannot see the overlap.
+- The overlap of the clauses of a definition is **not** always
+  seen.  `dataSem$do_eq` (and the `do_eq` of `bvlSem`, `closSem`,
+  `flatSem` and `semanticPrimitives`, which are the same
+  definition) is a mutual recursion of `do_eq` and `do_eq_list`
+  whose clauses are written out one by one, and the last clause
+  of each of the two (`do_eq _ _ _ = Eq_type_error`,
+  `do_eq_list _ _ _ = Eq_val F`) catches what the earlier ones
+  match as well.  HOL4 reads them in order; the port states them
+  as equations of a `cake_define_list_cheat`, so the axiom it
+  assumes says both `do_eq_list refs [] [] = Eq_val T` and
+  `= Eq_val F`, and `Eq_val T = Eq_val F` follows.  An axiom that
+  is false makes every proof that uses it worthless, so a proof
+  of phase three must not unfold `do_eq` (the theorems about it,
+  `do_eq_list_F_IMP_MEM` among them, wait for the definition to
+  be made again as one `match`, which is what `MATCH_FORM` in
+  `tools/overrides.py` is for).
+
 - A recursive call under a `MAP` (or an `EVERY`) over a list of
   _pairs_ is not primitive recursive in HOL Light's sense: the
   recursion theorem of a datatype family that nests such a list
