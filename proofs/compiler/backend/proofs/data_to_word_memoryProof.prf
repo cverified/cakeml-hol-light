@@ -1745,6 +1745,15 @@
        (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
           memory_rel_rearrange) th)) THEN
    REWRITE_TAC[MEM_APPEND] THEN MESON_TAC[])
+### memory_rel_tag_limit
+  (* the tag of an empty Block is below the bound by what
+     memory_rel_Block_IMP says, and the tag of a Block with a
+     payload by the header that encode_header gives it *)
+  (STRIP_TAC THEN USE2 memory_rel_Block_IMP THEN STRIP_TAC THEN
+   OPEN_COND THEN
+   TRY(FIRST_ASSUM ACCEPT_TAC) THEN
+   USE2 encode_header_tag_mask THEN STRIP_TAC THEN
+   FIRST_ASSUM ACCEPT_TAC)
 ### LESS_DIV_16_IMP
   (ARITH_TAC)
 ### MULT_BIT0
@@ -1774,6 +1783,12 @@
      CONV_TAC NUM_REDUCE_CONV])
 ### get_byte_set_byte_alt
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[get_byte_set_byte_diff])
+### memory_rel_RefPtr_IMP_lemma
+  (* every rule of v_inv for a RefPtr says that the pointer is in
+     the refs: the first through the domain of f, the other two
+     with the lookup itself *)
+  (MEMORY_REL_TAC THEN V_INV_TAC THEN
+   ASM_MESON_TAC[domain_lookup; SUBSET])
 ### memory_rel_MutBlock_IMP_F
   (* a RefPtr T is no MutBlock: every rule of v_inv that gives one
      a root says so *)

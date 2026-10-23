@@ -748,3 +748,21 @@ let V_INV_TAC gl =
    RULE_ASSUM_TAC(REWRITE_RULE(word_addr_clauses () @
      [distinctness "word_loc"; injectivity "word_loc"])) THEN
    TRY(FIRST_X_ASSUM CONTR_TAC) THEN TRY CONTRA_TAC) gl;;
+
+(* A theorem whose hypothesis is a conjunction of two of the
+   assumptions, as the antecedent of the goal: the lemmas of the
+   port ask for a memory_rel and a good_dimindex all the time, and
+   HOL4's `drule` finds the two the same way. *)
+
+let USE2 th =
+  FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
+    MP_TAC(MATCH_MP th (CONJ t1 t2))));;
+
+(* The assumption that is a conditional, opened into the goal and
+   its condition decided: what a lemma of the form "if the list is
+   empty then ... else ..." leaves. *)
+
+let OPEN_COND =
+  FIRST_X_ASSUM(fun th ->
+    if is_cond (concl th) then MP_TAC th else fail()) THEN
+  COND_CASES_TAC THEN STRIP_TAC;;
