@@ -1282,7 +1282,7 @@
      MESON_TAC[MEM_v_all_vs_EL; MEM_v_all_vs_extend_hd]) in
    REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
-   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]))
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
 ### blocks_unique_el
   (* and the element of a Block is one of its payload *)
   (let cons_app = prove
@@ -1317,7 +1317,7 @@
      MESON_TAC[MEM_v_all_vs_EL]) in
    REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
-   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]))
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
 ### blocks_unique_new_byte_alt
   (* and the RefPtr that the stack is given is no Block *)
   (let li = prove
