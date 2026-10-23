@@ -1960,7 +1960,29 @@ let bind_each_SUBMAP = cake_theorem "bind_each_SUBMAP"
     `!n tf ts k i.
       (!t. t IN FDOM tf ==> t < ts) ==> tf SUBMAP bind_each tf ts
         k i n`)
-  CHEAT_TAC;;
+  (* every binding of tf is below ts and bind_each adds none below
+     it, so what it adds is on top of tf *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THENL
+    [MATCH_ACCEPT_TAC SUBMAP_REFL;
+     REWRITE_TAC[SUBMAP; FDOM_FUPDATE; IN_INSERT;
+                 FAPPLY_FUPDATE_THM] THEN
+     GEN_TAC THEN DISCH_TAC THEN
+     SUBGOAL_THEN `~((x:num) = ts)` ASSUME_TAC THENL
+      [FIRST_X_ASSUM(fun th -> MP_TAC(SPEC `x:num` th)) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_TAC;
+       ALL_TAC] THEN
+     ASM_REWRITE_TAC[] THEN
+     FIRST_X_ASSUM(fun ih ->
+       MP_TAC(SPECL [`tf:(num,num)fmap`; `ts + 1`; `k + i`; `i:num`]
+                    ih)) THEN
+     ANTS_TAC THENL
+      [GEN_TAC THEN DISCH_TAC THEN
+       FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_TAC;
+       REWRITE_TAC[SUBMAP] THEN
+       DISCH_THEN(fun th -> MP_TAC(SPEC `x:num` th)) THEN
+       ASM_REWRITE_TAC[]]]);;
 
 let v_inv_list_to_v_lem = cake_theorem "v_inv_list_to_v_lem"
   (fun () ->
@@ -2797,7 +2819,37 @@ let blocks_unique_mutcons = cake_theorem "blocks_unique_mutcons[local]"
      blocks_unique ts
        (all_vs (insert ptr (bvlSem_MutBlock tag F l c r) refs)
          (RefPtr F ptr :: stack))`)
-  CHEAT_TAC;;
+  (* a Block of the new refs and stack is one of the old ones: the
+     MutBlock at the fresh pointer holds the values that the old
+     stack has in front of it, and the RefPtr is no Block *)
+  (let vrefptr = prove
+    (`!b p ys. v_all_vs (CONS (RefPtr b p) ys) =
+        CONS (RefPtr b p) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let li = prove
+    (`!k1 k2 v (t:(A)spt) y.
+        (sptree_lookup k1 (sptree_insert k2 v t) = SOME y) <=>
+        (k1 = k2 /\ v = y) \/
+        (~(k1 = k2) /\ sptree_lookup k1 t = SOME y)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"] THEN CONV_TAC TAUT) in
+   let inc = prove
+    (`!refs ptr tag l c r stack' t a xs.
+        Block t a xs IN
+          all_vs (insert ptr (bvlSem_MutBlock tag F l c r) refs)
+                 (CONS (RefPtr F ptr) stack') ==>
+        Block t a xs IN
+          all_vs refs (APPEND (APPEND l (APPEND [c] r)) stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; vrefptr;
+                 v_all_vs_append; MEM; MEM_APPEND; li;
+                 distinctness "dataSem_v"; distinctness "bvlSem_ref";
+                 injectivity "bvlSem_ref"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let ref_edge_MutBlock = cake_theorem "ref_edge_MutBlock[local]"
   (fun () ->
@@ -3044,7 +3096,30 @@ let blocks_unique_update_ref = cake_theorem "blocks_unique_update_ref"
        blocks_unique ts
          (all_vs (insert ptr (ValueArray xs) refs)
             (xs ++ (RefPtr b ptr :: stack)))`)
-  CHEAT_TAC;;
+  (* the ValueArray that the pointer is given holds the values that
+     the stack has in front of it *)
+  (let li = prove
+    (`!k1 k2 v (t:(A)spt) y.
+        (sptree_lookup k1 (sptree_insert k2 v t) = SOME y) <=>
+        (k1 = k2 /\ v = y) \/
+        (~(k1 = k2) /\ sptree_lookup k1 t = SOME y)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"] THEN CONV_TAC TAUT) in
+   let inc = prove
+    (`!refs ptr xs b stack' t a q.
+        Block t a q IN
+          all_vs (insert ptr (ValueArray xs) refs)
+                 (APPEND xs (CONS (RefPtr b ptr) stack')) ==>
+        Block t a q IN
+          all_vs refs (APPEND xs (CONS (RefPtr b ptr) stack'))`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM;
+                 v_all_vs_append; MEM_APPEND; li;
+                 distinctness "bvlSem_ref";
+                 injectivity "bvlSem_ref"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let update_ref_thm = cake_theorem "update_ref_thm"
   (fun () ->
@@ -3137,7 +3212,16 @@ let heap_store_BlockRep_thm =
           (heap_store (heap_length ha) [BlockRep tag x] (ha ++
             (BlockRep tag y :: hb)) =
             (ha ++ (BlockRep tag x :: hb),T))`)
-  CHEAT_TAC;;
+  (* as the store into a RefBlock above: heap_store_lemma stores at
+     the length of the prefix and leaves the lengths to agree *)
+  (let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) = el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[heap_store_lemma; APPEND; PAIR_EQ; hlen_cl;
+               cake_def "BlockRep"; cake_def "el_length"] THEN
+   ASM_ARITH_TAC);;
 
 let heap_lookup_BlockRep_lemma =
   cake_theorem "heap_lookup_BlockRep_lemma[local]"
@@ -3384,7 +3468,25 @@ let blocks_unique_insert_ByteArray =
        blocks_unique ts
          (all_vs (insert ptr (ByteArray fl ys) refs) (RefPtr b
            ptr :: stack))`)
-  CHEAT_TAC;;
+  (* a ByteArray holds no value of the language *)
+  (let li = prove
+    (`!k1 k2 v (t:(A)spt) y.
+        (sptree_lookup k1 (sptree_insert k2 v t) = SOME y) <=>
+        (k1 = k2 /\ v = y) \/
+        (~(k1 = k2) /\ sptree_lookup k1 t = SOME y)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"] THEN CONV_TAC TAUT) in
+   let inc = prove
+    (`!refs p fl ys s t a q.
+        Block t a q IN all_vs (insert p (ByteArray fl ys) refs) s ==>
+        Block t a q IN all_vs refs s`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; li;
+                 distinctness "bvlSem_ref";
+                 injectivity "bvlSem_ref"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let update_byte_ref_thm = cake_theorem "update_byte_ref_thm"
   (fun () ->
@@ -3439,7 +3541,36 @@ let blocks_unique_new_ref = cake_theorem "blocks_unique_new_ref"
        blocks_unique ts
          (all_vs (insert ptr (ValueArray xs) refs)
             (xs ++ (RefPtr T ptr :: stack)))`)
-  CHEAT_TAC;;
+  (* the ValueArray of the new reference holds the values that the
+     stack has in front of it already *)
+  (let li = prove
+    (`!k1 k2 v (t:(A)spt) y.
+        (sptree_lookup k1 (sptree_insert k2 v t) = SOME y) <=>
+        (k1 = k2 /\ v = y) \/
+        (~(k1 = k2) /\ sptree_lookup k1 t = SOME y)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"] THEN CONV_TAC TAUT) in
+   let vrefptr = prove
+    (`!b p ys. v_all_vs (CONS (RefPtr b p) ys) =
+        CONS (RefPtr b p) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let inc = prove
+    (`!refs p xs stack' t a q.
+        Block t a q IN
+          all_vs (insert p (ValueArray xs) refs)
+                 (APPEND xs (CONS (RefPtr T p) stack')) ==>
+        Block t a q IN all_vs refs (APPEND xs stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; li;
+                 vrefptr; v_all_vs_append; MEM; MEM_APPEND;
+                 distinctness "dataSem_v";
+                 distinctness "bvlSem_ref";
+                 injectivity "bvlSem_ref"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let new_ref_thm = cake_theorem "new_ref_thm"
   (fun () ->
@@ -3576,7 +3707,34 @@ let blocks_unique_new_byte_alt =
        blocks_unique ts
          (all_vs (insert ptr (ByteArray fl bs) refs) (RefPtr b
            ptr :: stack))`)
-  CHEAT_TAC;;
+  (* and the RefPtr that the stack is given is no Block *)
+  (let li = prove
+    (`!k1 k2 v (t:(A)spt) y.
+        (sptree_lookup k1 (sptree_insert k2 v t) = SOME y) <=>
+        (k1 = k2 /\ v = y) \/
+        (~(k1 = k2) /\ sptree_lookup k1 t = SOME y)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"] THEN CONV_TAC TAUT) in
+   let vrefptr = prove
+    (`!b p ys. v_all_vs (CONS (RefPtr b p) ys) =
+        CONS (RefPtr b p) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let inc = prove
+    (`!refs p fl bs b stack' t a q.
+        Block t a q IN
+          all_vs (insert p (ByteArray fl bs) refs)
+                 (CONS (RefPtr b p) stack') ==>
+        Block t a q IN all_vs refs stack'`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; li;
+                 vrefptr; MEM; distinctness "dataSem_v";
+                 distinctness "bvlSem_ref";
+                 injectivity "bvlSem_ref"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let new_byte_alt_thm = cake_theorem "new_byte_alt_thm"
   (fun () ->
@@ -4947,7 +5105,10 @@ let all_vs_MutBlock_centre =
   (fun () ->
     `lookup ptr refs = SOME (bvlSem_MutBlock tag fin left cen right) ==>
      all_vs refs (cen :: stack) SUBSET all_vs refs stack`)
-  CHEAT_TAC;;
+  (* the centre of the MutBlock is a value of the refs already, so
+     putting it on the stack adds nothing *)
+  (DISCH_TAC THEN MATCH_MP_TAC all_vs_CONS_SUBSET THEN
+   ASM_MESON_TAC[in_all_vs_MutBlock; MEM_v_all_vs; MEM_APPEND; MEM]);;
 
 (* every value reachable after finalisation was reachable before, except the
    new Block itself *)
@@ -7922,14 +8083,33 @@ let bind_each_eq_tf = cake_theorem "bind_each_eq_tf"
     `!k tf ts n i x.
        (!t. t IN FDOM tf ==> t < ts) /\ x < ts ==> FAPPLY
          (bind_each tf ts n i k) x = FAPPLY tf x`)
-  CHEAT_TAC;;
+  (* the bindings that bind_each adds are above ts, so a timestamp
+     below it keeps the value that tf gives it *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THEN
+   REWRITE_TAC[FAPPLY_FUPDATE_THM] THEN
+   COND_CASES_TAC THENL
+    [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
+     FIRST_X_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+      [GEN_TAC THEN DISCH_TAC THEN
+       FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
+       ASM_REWRITE_TAC[] THEN ARITH_TAC;
+       ASM_ARITH_TAC]]);;
 
 let bind_each_FDOM = cake_theorem "bind_each_FDOM"
   (fun () ->
     `!n tf ts k i.
       FDOM (bind_each tf ts k i n) = FDOM tf UNION {x | ts <= x
         /\ x < ts + n}`)
-  CHEAT_TAC;;
+  (* bind_each ts ... n binds the n timestamps from ts up *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[cake_def "bind_each"; FDOM_FUPDATE] THEN
+   REWRITE_TAC[EXTENSION; IN_UNION; IN_INSERT; IN_ELIM_THM] THEN
+   GEN_TAC THEN EQ_TAC THEN STRIP_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   TRY(DISJ2_TAC THEN ASM_ARITH_TAC) THEN
+   TRY(DISJ1_TAC THEN ASM_ARITH_TAC) THEN
+   ASM_ARITH_TAC);;
 
 let bind_each_eq_tf_FDOM = cake_theorem "bind_each_eq_tf_FDOM"
   (fun () ->
@@ -7945,28 +8125,63 @@ let bind_each_eq_lt_FAPPLY = cake_theorem "bind_each_eq_lt_FAPPLY"
       FAPPLY
       (bind_each tf ts k i n) x < k ==> FAPPLY (bind_each tf ts k
         i n) x = FAPPLY tf x`)
-  CHEAT_TAC;;
+  (* a value below the first key that bind_each gives out is one of
+     tf: the keys it gives are k, k + i, k + 2 * i, ... *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"; FAPPLY_FUPDATE_THM] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[LT_REFL] THEN
+   DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC);;
 
 let bind_each_eq_lt_FDOM = cake_theorem "bind_each_eq_lt_FDOM"
   (fun () ->
     `!n tf ts k i x.
       x IN FDOM (bind_each tf ts k i n) /\ FAPPLY (bind_each tf
         ts k i n) x < k ==> x IN FDOM tf`)
-  CHEAT_TAC;;
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"; FAPPLY_FUPDATE_THM;
+               FDOM_FUPDATE; IN_INSERT] THENL
+    [CONV_TAC TAUT;
+     COND_CASES_TAC THEN REWRITE_TAC[LT_REFL] THEN
+     STRIP_TAC THEN
+     FIRST_X_ASSUM(fun ih -> MP_TAC(SPECL
+       [`tf:(num,num)fmap`; `ts + 1`; `k + i`; `i:num`; `x:num`]
+       ih)) THEN
+     ANTS_TAC THENL
+      [CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN ASM_ARITH_TAC;
+       DISCH_THEN ACCEPT_TAC]]);;
 
 let bind_each_eq_gt_FAPPLY = cake_theorem "bind_each_eq_gt_FAPPLY"
   (fun () ->
     `!n tf ts k i x.
       i * n + k < FAPPLY (bind_each tf ts k i n) x ==> FAPPLY
         (bind_each tf ts k i n) x = FAPPLY tf x`)
-  CHEAT_TAC;;
+  (* and a value above the last one is one of tf as well *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"; FAPPLY_FUPDATE_THM;
+               MULT_SUC] THEN
+   COND_CASES_TAC THEN
+   TRY(DISCH_THEN(fun th -> MP_TAC th THEN ARITH_TAC)) THEN
+   DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC);;
 
 let bind_each_eq_gt_FDOM = cake_theorem "bind_each_eq_gt_FDOM"
   (fun () ->
     `!n tf ts k i x.
       x IN FDOM (bind_each tf ts k i n) /\ i * n + k < FAPPLY
         (bind_each tf ts k i n) x ==> x IN FDOM tf`)
-  CHEAT_TAC;;
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"; FAPPLY_FUPDATE_THM;
+               FDOM_FUPDATE; IN_INSERT; MULT_SUC] THENL
+    [CONV_TAC TAUT;
+     COND_CASES_TAC THENL
+      [STRIP_TAC THEN ASM_ARITH_TAC;
+       STRIP_TAC THEN
+       FIRST_X_ASSUM(fun ih -> MP_TAC(SPECL
+         [`tf:(num,num)fmap`; `ts + 1`; `k + i`; `i:num`; `x:num`]
+         ih)) THEN
+       ANTS_TAC THENL
+        [CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
+         ASM_ARITH_TAC;
+         DISCH_THEN ACCEPT_TAC]]]);;
 
 let bind_each_eq_ge_FDOM = cake_theorem "bind_each_eq_ge_FDOM"
   (fun () ->
@@ -7974,7 +8189,20 @@ let bind_each_eq_ge_FDOM = cake_theorem "bind_each_eq_ge_FDOM"
       x IN FDOM (bind_each tf ts k i n) /\
       i * n + k <= FAPPLY (bind_each tf ts k i n) x /\ ~(i = 0)
         ==> x IN FDOM tf`)
-  CHEAT_TAC;;
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"; FAPPLY_FUPDATE_THM;
+               FDOM_FUPDATE; IN_INSERT; MULT_SUC] THENL
+    [CONV_TAC TAUT;
+     COND_CASES_TAC THENL
+      [STRIP_TAC THEN ASM_ARITH_TAC;
+       STRIP_TAC THEN
+       FIRST_X_ASSUM(fun ih -> MP_TAC(SPECL
+         [`tf:(num,num)fmap`; `ts + 1`; `k + i`; `i:num`; `x:num`]
+         ih)) THEN
+       ANTS_TAC THENL
+        [REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
+         ASM_ARITH_TAC;
+         DISCH_THEN ACCEPT_TAC]]]);;
 
 let bind_each_fdom_limit = cake_theorem "bind_each_fdom_limit"
   (fun () ->
@@ -8805,7 +9033,27 @@ let blocks_unique_insert_ByteArray2 =
        blocks_unique ts
          (all_vs (insert p2 (ByteArray fl2 res_vals) refs)
             (RefPtr bl1 p1 :: RefPtr bl2 p2 :: MAP FST vars))`)
-  CHEAT_TAC;;
+  (* a ByteArray holds no value of the language, so the insert adds
+     no Block *)
+  (let li = prove
+    (`!k1 k2 v (t:(A)spt) y.
+        (sptree_lookup k1 (sptree_insert k2 v t) = SOME y) <=>
+        (k1 = k2 /\ v = y) \/
+        (~(k1 = k2) /\ sptree_lookup k1 t = SOME y)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"] THEN CONV_TAC TAUT) in
+   let inc = prove
+    (`!refs p2 fl2 res_vals s t a q.
+        Block t a q IN
+          all_vs (insert p2 (ByteArray fl2 res_vals) refs) s ==>
+        Block t a q IN all_vs refs s`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; li;
+                 distinctness "bvlSem_ref";
+                 injectivity "bvlSem_ref"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let memory_rel_xor_bytes = cake_theorem "memory_rel_xor_bytes"
   (fun () ->
