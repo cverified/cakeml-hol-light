@@ -873,6 +873,19 @@
    REWRITE_TAC[heap_store_lemma; APPEND; PAIR_EQ; hlen_cl;
                cake_def "RefBlock"; cake_def "el_length"] THEN
    ASM_ARITH_TAC)
+### heap_lookup_RefBlock_lemma
+  (* the lookup in the append is the one in ha or the one in the
+     RefBlock and what follows it, and a RefBlock is LENGTH y + 1
+     long *)
+  (REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+               cake_def "heap_lookup"; cake_def "RefBlock";
+               cake_def "el_length"] THEN
+   REPEAT COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+   TRY(POP_ASSUM_LIST(fun ths ->
+     MP_TAC(end_itlist CONJ (rev ths))) THEN ARITH_TAC) THEN
+   TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ) THEN
+   REWRITE_TAC[])
 ### NOT_isRefBlock
   (* the tag of a RefBlock is RefTag, and the three shapes have
      another one; the conditional of Word64Rep is split after the
@@ -983,6 +996,17 @@
    REWRITE_TAC[heap_store_lemma; APPEND; PAIR_EQ; hlen_cl;
                cake_def "ThunkBlock"; cake_def "el_length"] THEN
    ARITH_TAC)
+### heap_lookup_ThunkBlock_lemma
+  (* and a ThunkBlock is two long *)
+  (REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+               cake_def "heap_lookup"; cake_def "ThunkBlock";
+               cake_def "el_length"] THEN
+   REPEAT COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+   TRY(POP_ASSUM_LIST(fun ths ->
+     MP_TAC(end_itlist CONJ (rev ths))) THEN ARITH_TAC) THEN
+   TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ) THEN
+   REWRITE_TAC[])
 ### INJ_NEQ
   (REWRITE_TAC[INJ] THEN REPEAT STRIP_TAC THEN ASM_MESON_TAC[])
 ### data_up_to_alt
