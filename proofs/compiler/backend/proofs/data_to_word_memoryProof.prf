@@ -2355,6 +2355,17 @@
                cake_def "small_shift_length";
                cake_def "shift_length"] THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
+### or_1
+  (* the lowest bit of a word, or one, is one *)
+  (GEN_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; word_bits;
+               BIT_WORD_SUBWORD; BIT_WORD_1] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   ASM_CASES_TAC `i = 0` THEN ASM_REWRITE_TAC[] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   TRY(REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1]) THEN
+   POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC)
 ### word_heap_APPEND
   (* the address of the second half is the first address shifted by
      the length of the first half, which is a word ring identity *)
@@ -2493,6 +2504,11 @@
      ASM_REWRITE_TAC[LT_MULT_RCANCEL; EXP_EQ_0; ARITH_EQ]])
 ### less_pow_dimindex_sub_imp
   (REWRITE_TAC[dimword] THEN MATCH_ACCEPT_TAC LESS_EXO_SUB)
+### thunk_tag_bits_lemma
+  (* three is the tag of an evaluated thunk, so the word is 8 or 6 *)
+  (REWRITE_TAC[cake_def "thunk_tag_to_bits"] THEN
+   MATCH_REDUCE_TAC THEN
+   WORD_NUM_BIT_TAC 4)
 ### word_list_exists_ADD
   (* the SEP_EXISTS of the head comes out of the separating
      conjunction (the first clause of HOL4's SEP_CLAUSES), and the
@@ -3244,6 +3260,20 @@
 ### memory_rel_less_space
   (REWRITE_TAC[cake_def "memory_rel"] THEN REPEAT STRIP_TAC THEN
    ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC)
+### all_ones_bit
+  (* all_ones is the slice of the word of all ones, so its bit is
+     the one of the subword that the slice shifts up *)
+  (DISCH_TAC THEN
+   REWRITE_TAC[word_index; cake_def "all_ones"] THEN
+   COND_CASES_TAC THENL
+    [REWRITE_TAC[BIT_WORD_0] THEN
+     FIRST_ASSUM(fun th -> MP_TAC th) THEN ARITH_TAC;
+     ALL_TAC] THEN
+   ASM_SIMP_TAC[word_slice; word_bits; BIT_WORD_SHL;
+                BIT_WORD_SUBWORD; BIT_WORD_NOT; BIT_WORD_0] THEN
+   REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC)
 ### maxout_bits_IMP
   (REPEAT STRIP_TAC THEN
    FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
@@ -3468,6 +3498,21 @@
    CASES_ON_NAME "t" THEN MATCH_REDUCE_TAC THEN
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
    ASM_SIMP_TAC[LENGTH; NOT_CONS_NIL] THEN ARITH_TAC)
+### all_ones_n2w
+  (* and the same word is the mask of l ones shifted up by b, whose
+     bits HOL Light's BIT_MASK_WORD gives *)
+  (REWRITE_TAC[cake_def "all_ones"] THEN COND_CASES_TAC THENL
+    [SUBGOAL_THEN `l = 0` SUBST1_TAC THENL
+      [POP_ASSUM MP_TAC THEN ARITH_TAC; ALL_TAC] THEN
+     CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC WORD_RULE;
+     ALL_TAC] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; word_slice; word_bits;
+               BIT_WORD_SHL; BIT_WORD_SUBWORD; BIT_WORD_NOT;
+               BIT_WORD_0; BIT_MASK_WORD] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC)
 ### bind_each_eq_tf
   (* the bindings that bind_each adds are above ts, so a timestamp
      below it keeps the value that tf gives it *)
