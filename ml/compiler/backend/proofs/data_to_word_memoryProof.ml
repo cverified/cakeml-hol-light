@@ -4572,7 +4572,46 @@ let blocks_unique_update_mutblock =
        blocks_unique ts
          (all_vs (insert ptr (bvlSem_MutBlock tag fin l h r) refs)
                  (h :: RefPtr F ptr :: stack))`)
-  CHEAT_TAC;;
+  (* the elements of the updated reference are among the ones of
+     the old store, so what was unique there stays unique: the
+     block that the update puts in has its head and its tail in
+     the elements of the store it replaces *)
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   let lk_ins = prove
+    (`!n p (y:(dataSem_v)bvlSem_ref) rfs z.
+        lookup n (insert p y rfs) = SOME z <=>
+        (n = p /\ y = z) \/ (~(n = p) /\ lookup n rfs = SOME z)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+     CONV_TAC TAUT) in
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[] THEN CONJ_TAC THEN
+   W(fun (asl,w) ->
+     let gel = el 0 (snd(strip_comb w)) in
+     FIRST_ASSUM(fun inm ->
+       let c = concl inm in
+       if not (hd_is "IN" c) || not (el 0 (snd(strip_comb c)) = gel)
+       then fail() else
+       FIRST_ASSUM(fun lk ->
+         if not (hd_is "=" (concl lk)) then fail() else
+         MP_TAC(REWRITE_RULE[cake_def "all_vs"; IN_UNION; IN_ELIM_THM;
+                             lk_ins; v_all_vs_append; MEM_APPEND;
+                             injectivity "bvlSem_ref";
+                             distinctness "bvlSem_ref"]
+                  (ONCE_REWRITE_RULE[cons_app] inm)) THEN
+         MP_TAC lk THEN
+         REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM;
+                     v_all_vs_append; MEM_APPEND] THEN
+         MESON_TAC[cake_thm "MEM_v_all_vs_extend_tl";
+                   cake_thm "MEM_v_all_vs_extend_hd"]))));;
 
 let ref_edge_MutBlock_UPDATE =
   cake_theorem "ref_edge_MutBlock_UPDATE[local]"
@@ -6885,7 +6924,39 @@ let store_list_update_m_outside =
      (!i. i < LENGTH ws ==> ~(a + n2w i * bytes_in_word = a')) ==>
      data_to_word_memoryProof_store_list a ws ((a' =+ v) m) dm =
        SOME ((a' =+ v) m')`)
-  CHEAT_TAC;;
+  (* the store of a list of words does not disturb an address that
+     none of its stores touches, and the update of the memory at
+     such an address commutes with every store of the list; the
+     address of the i-th store of the tail is the one of the
+     (i+1)-th store of the list *)
+  (let upd_comm = prove
+    (`!a b x y (f:A->B). ~(a = b)
+        ==> (a =+ x) ((b =+ y) f) = (b =+ y) ((a =+ x) f)`,
+     REPEAT STRIP_TAC THEN REWRITE_TAC[FUN_EQ_THM; UPDATE] THEN
+     GEN_TAC THEN REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+     ASM_MESON_TAC[]) in
+   let wzero = prove
+    (`!(a:(N)word). a + n2w 0 * bytes_in_word = a`,
+     CONV_TAC WORD_RULE) in
+   let wsuc = prove
+    (`!(a:(N)word) i.
+        (a + bytes_in_word) + n2w i * bytes_in_word =
+        a + n2w (SUC i) * bytes_in_word`,
+     REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE) in
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "data_to_word_memoryProof_store_list"] THENL
+    [REWRITE_TAC[injectivity "option"] THEN
+     DISCH_THEN(fun th -> REWRITE_TAC[SYM(CONJUNCT1 th)]);
+     COND_CASES_TAC THEN
+     REWRITE_TAC[distinctness "option"] THEN STRIP_TAC THEN
+     FIRST_ASSUM(fun th ->
+       let th' = REWRITE_RULE[wzero; LENGTH; LT_0] (SPEC `0` th) in
+       if is_neg (concl th') then ASSUME_TAC th' else fail()) THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP upd_comm th]) THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     ASM_REWRITE_TAC[wsuc] THEN
+     GEN_TAC THEN DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+     ASM_REWRITE_TAC[LENGTH; LT_SUC]]);;
 
 let word_payload_IMP = cake_theorem "word_payload_IMP"
   (fun () ->
@@ -13322,7 +13393,50 @@ let word_xor_set_byte = cake_theorem "word_xor_set_byte"
   (fun () ->
     `word_xor (set_byte a h1 w1 be) (set_byte a h2 w2 be) =
      set_byte a (word_xor h1 h2) (word_xor w1 w2) be`)
-  CHEAT_TAC;;
+  (let bsa = prove
+    (`!h l (w:(N)word) j. j < dimindex (:N)
+        ==> (bit j (word_slice_alt h l w) <=>
+             l <= j /\ j < h /\ bit j w)`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[word_slice_alt; BIT_WORD_SHL; BIT_WORD_SUBWORD] THEN
+     REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+     ASM_CASES_TAC `l:num <= j` THEN ASM_REWRITE_TAC[] THEN
+     ASM_SIMP_TAC[ARITH_RULE `l <= j ==> l + j - l = j`] THEN
+     COND_CASES_TAC THEN
+     ASM_CASES_TAC `bit j (w:(N)word)` THEN ASM_REWRITE_TAC[] THEN
+     ARITH_NO_BIT_TAC) in
+   let bsb0 = prove
+    (`!(a:(N)word) b (h:(N)word) bb j. j < dimindex (:N)
+        ==> (bit j (set_byte a b h bb) <=>
+             (if byte_index a bb <= j /\ j < byte_index a bb + 8
+              then bit (j - byte_index a bb) b else bit j h))`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; bsa; BIT_WORD_SHL; BIT_WORD_ZX;
+                  DIMINDEX_8] THEN
+     MP_TAC(REWRITE_RULE[DIMINDEX_8]
+       (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+          BIT_TRIVIAL)) THEN
+     ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+     ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+     ASM_CASES_TAC `bit j (h:(N)word)` THEN
+     ASM_CASES_TAC
+       `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+     ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+   let gen = prove
+    (`!(a:(N)word) h1 h2 w1 w2 bb.
+        word_xor (set_byte a h1 w1 bb) (set_byte a h2 w2 bb) =
+        set_byte a (word_xor h1 h2) (word_xor w1 w2) bb`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_SIMP_TAC[BIT_WORD_XOR; bsb0] THEN
+     COND_CASES_TAC THEN
+     TRY(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
+     ASM_SIMP_TAC[BIT_WORD_XOR; DIMINDEX_8;
+                  ARITH_RULE `b <= i /\ i < b + 8 ==> i - b < 8`]) in
+   MATCH_ACCEPT_TAC gen);;
 
 let xor_bytes_bytes_to_word =
   cake_theorem "xor_bytes_bytes_to_word[local]"
