@@ -779,3 +779,11 @@ let ALL_INST3 th =
       (mapfilter (fun (a,bc) -> MATCH_MP th (CONJ a bc))
          (allpairs (fun a bc -> (a,bc)) ths
             (allpairs (fun b c -> CONJ b c) ths ths))));;
+
+(* and the same for a hypothesis of two assumptions *)
+
+let ALL_INST2 th =
+  ASSUM_LIST(fun ths ->
+    MAP_EVERY ASSUME_TAC
+      (mapfilter (fun (a,b) -> MATCH_MP th (CONJ a b))
+         (allpairs (fun a b -> (a,b)) ths ths)));;
