@@ -153,12 +153,12 @@ let word_lsb = new_definition
   `word_lsb (w:(N)word) <=> bit 0 w`;;
 
 let word_bits = new_definition
-  `word_bits h l (w:(N)word) = (word_subword w (l,h + 1 - l):(N)word)`;;
+  `word_bits h l (w:(N)word) = (word_subword w (l,(h + 1) - l):(N)word)`;;
 
 parse_as_infix("><",(23,"left"));;
 
 let word_extract = new_definition
-  `((><) h l (w:(M)word)):(N)word = word_subword w (l,h + 1 - l)`;;
+  `((><) h l (w:(M)word)):(N)word = word_subword w (l,(h + 1) - l)`;;
 
 let word_slice = new_definition
   `word_slice h l (w:(N)word) = word_shl (word_bits h l w) l`;;
@@ -171,7 +171,7 @@ let word_concat = new_definition
 
 let bit_field_insert = new_definition
   `bit_field_insert h l (v:(M)word) (w:(N)word) =
-   (word_insert w (l,h + 1 - l) v:(N)word)`;;
+   (word_insert w (l,(h + 1) - l) v:(N)word)`;;
 
 let word_reverse = new_definition
   `word_reverse (w:(N)word) =

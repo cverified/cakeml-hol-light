@@ -310,6 +310,25 @@ sources, and why.
   `clos_to_bvl_compile_inc`); the renamed one then gets a prime.
   A type and a constant of the same name do not clash.
 
+## Arithmetic that HOL4 and HOL Light read differently
+
+- HOL4 gives `+` and `-` the same precedence and makes them
+  associate to the left, so `h + 1 - l` is `(h + 1) - l`.  HOL
+  Light binds `-` tighter than `+` and both to the right, so the
+  same text is `h + (1 - l)` there -- a different term, and with
+  truncated subtraction a different value (`l = 2` makes it
+  `h`, not `h - 1`).  The port's generated files do not have the
+  pattern (the translator builds the term), but
+  `ml/lib/words4.ml`, which is written by hand, did: `word_bits`,
+  the `><` extract and `bit_field_insert` all took the width of
+  the field to be `h + 1 - l`.  So `word_bits h l` was the field
+  of width `h + (1 - l)` instead of `(h + 1) - l`, which is the
+  right one only for `l = 0` and `l = 1`, and a theorem about a
+  slice that starts higher up (`all_ones_bit` of
+  data_to_word_memoryProof) was **false** as the port stated it.
+  The three places now have the parentheses.  A hand-written term
+  of the port that mixes `+` and `-` has to be read twice.
+
 ## Definitions
 
 - A definition whose clauses overlap relies on HOL4's
