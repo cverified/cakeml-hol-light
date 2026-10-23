@@ -65,6 +65,7 @@ add it to the index.
 | 27 | `+`, `-` and `*` of HOL4 | the associativity written out |
 | 28 | a type that nests a list of itself | the store's mutual induction |
 | 29 | `drule` with a rewrite in it | `USE_CHANGED`, or a test of the shape |
+| 30 | a tactic of several steps | brackets round it, or it is an argument |
 
 ## The shape of a transformation proof
 
@@ -1979,6 +1980,19 @@ this).  The other half of the trap is the direction of
 has: it is `&m * &n = &(m * n)`, so the fold needs it plain and the
 split needs the `GSYM`).
 
+The same holds for `<`, `<=`, `+` and `-`: the port overloads them
+for words as well, and a quotation whose variables are free of any
+other constraint takes the **word** reading.  `ASM_CASES_TAC `j <
+t`` of `shift_shift_lemma` split on an equation between two words
+called `j` and `t` that have nothing to do with the goal's numbers,
+and the proof then failed in the arithmetic several steps later,
+where the printed `ARITH_RULE` showed `j < t` sitting among the
+`real_of_int`s, untranslated.  So a comparison of a quotation that
+the context does not type says `(j:num) < t`.  The sign that this
+is what happened is an `ISPECL` or an `ARITH_RULE` that fails on a
+statement that is plainly true, or an assumption of a case split
+that nothing ever uses.
+
 ## 26. A match whose scrutinee is a call, not a variable
 
 ### The idiom
@@ -2121,3 +2135,51 @@ backtrack over the assumptions until the MESON closes the goal
 (`memory_rel_Block_explode`), at the price of running the MESON
 once per wrong assumption.
 
+## 30. A tactic of several steps, where an argument stands
+
+### The idiom
+
+A proof of the store is the third argument of `cake_theorem`, so
+the file of the port reads
+
+```
+let foo = cake_theorem "foo"
+  (fun () -> `...`)
+  (DISCH_TAC THEN REWRITE_TAC[...] THEN ARITH_TAC);;
+```
+
+### What it means
+
+`THEN` is an infix of OCaml, so without the brackets the line reads
+as `(cake_theorem "foo" (fun () -> ...) DISCH_TAC) THEN
+REWRITE_TAC[...]`: the theorem gets `DISCH_TAC` as its proof and
+the rest of the chain is applied to the **theorem**.  OCaml then
+says
+
+```
+Error: This expression has type thm = Hol.thm
+```
+
+and the file does not load from that line on.  `tmp/sectest.py`
+does not catch it, because it binds the body to a name
+(`let t = <body>;;`), where a bare chain is fine; the section of
+`w2i_i2w_IMP` went through three commits that way.
+
+### What the port does
+
+`tools/prfcheck.py` says `the tactic needs brackets round it` for
+a section whose body has a `THEN` or a `THENL` in it and does not
+start with `(` and end with `)`; `tmp/mksec.py` puts the brackets
+round every body it writes.  A single tactic (`CHEAT_TAC`,
+`ARITH_TAC`, `MATCH_ACCEPT_TAC th`) needs none, but brackets round
+it do no harm.
+
+### Where it lives
+
+`tools/prfcheck.py` (the check), `tmp/mksec.py` (the writer).
+
+### Dead ends
+
+Running `tools/bin/verifyquick` catches it, but only after the five
+minutes it takes to load the file, and only for the file that is
+being verified; the check is a second.
