@@ -1188,6 +1188,37 @@
    STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
    RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
    CONV_TAC NUM_REDUCE_CONV THEN ASM_INT_ARITH_TAC)
+### reachable_refs_stack_subset
+  (* the roots of the one stack are roots of the other, and
+     reachable_refs asks for nothing else of them *)
+  (REWRITE_TAC[cake_def "reachable_refs"] THEN
+   REPEAT GEN_TAC THEN REWRITE_TAC[SUBSET; IN_SET_OF_LIST] THEN
+   STRIP_TAC THEN ASM_MESON_TAC[])
+### MEM_v_all_vs_FST
+  (* the head of the list is the pair that holds the value, or the
+     value is one of the tail *)
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; MEM] THEN
+   REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC ASSUME_TAC) THENL
+    [FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN
+     REWRITE_TAC[FST] THEN
+     MATCH_MP_TAC MEM_v_all_vs_extend_tl THEN
+     FIRST_ASSUM ACCEPT_TAC;
+     MATCH_MP_TAC MEM_v_all_vs_extend_hd THEN
+     FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun a1 ->
+       FIRST_ASSUM(fun a2 ->
+         ACCEPT_TAC(MATCH_MP ih (CONJ a1 a2)))))])
+### blocks_unique_duplicate
+  (* the values of xs ++ xs ++ stack are the values of xs ++ stack *)
+  (let inc = prove
+    (`!refs xs stack' t a q.
+        Block t a q IN all_vs refs (APPEND xs (APPEND xs stack')) ==>
+        Block t a q IN all_vs refs (APPEND xs stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM;
+                 v_all_vs_append; MEM_APPEND] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
 ### split1_thm
   (REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv";
                LIST_REL_SPLIT1] THEN
