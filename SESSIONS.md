@@ -101,6 +101,23 @@ everything that a session with the port in it is needed for
 **before** the library layer is made again -- between the reports
 of a run and the retemplate of the next cycle.
 
+## How many sessions fit
+
+The machine has **7 GB** of memory and a session of the port holds
+about **1.1 GB** live, so **four of them at once is the limit** --
+`hol-base`, `hol-template-cakeml` and two working sessions.  Going
+over it does not slow anything down: the kernel kills the lot, and
+every session of the tmux server goes at once (it took `hol-base`,
+the template, the closure of a file and two working sessions with
+it once, three quarters of an hour of loading).  So:
+
+- `tools/bin/verifyquick` leaves `hol-vq` behind, and the next one
+  kills it again: do not keep it while a closure is being built.
+- `tools/bin/pfbase` and `tools/bin/verifyfile` each hold a closure
+  of their own; running the two together is two closures.
+- `tmux ls | grep hol` before starting anything that loads, and
+  `repl-kill` what is not needed.
+
 ## Interrupting and killing
 
 A clone is forked from another HOL Light process, so it is not a
