@@ -10869,7 +10869,15 @@ let all_ts_SUBSET_list_to_v = cake_theorem "all_ts_SUBSET_list_to_v"
        all_ts refs (list_to_v ts t xs :: stack')`)
   (* and so are the timestamps of the elements and of the tail of
      the list, which are the same values in another order *)
-  (SUBGOAL_THEN
+  (let all_ts_perm = prove
+    (`!refs (xs:dataSem_v list) ys.
+        (!x. MEM x xs <=> MEM x ys)
+        ==> all_ts refs xs = all_ts refs ys`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "all_ts"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_REWRITE_TAC[]) in
+   SUBGOAL_THEN
      `!xs refs (tv:dataSem_v) stk ts.
         all_ts refs (CONS tv (xs ++ stk)) SUBSET
         all_ts refs (CONS (list_to_v ts tv xs) stk)`
