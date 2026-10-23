@@ -7600,7 +7600,29 @@ let write_bytes_inj_lemma = cake_theorem "write_bytes_inj_lemma"
      // LENGTH bs ≤ LENGTH (w1:α word list) * (dimindex (:α) DIV 8)
      // ∧ LENGTH (w1:α word list) ≤ LENGTH bs DIV (dimindex(:α) DIV 8) +1
      write_bytes bs' w1 be = write_bytes bs' w2 be)`)
-  CHEAT_TAC;;
+  (* the words are written one by one: the first word of the one
+     list and of the other are the same word written over the same
+     bytes, which bytes_to_word_eq_lemma takes to the other bytes,
+     and the rest follows by the induction with the bytes dropped *)
+  (let len_drop = prove
+    (`!k (l:A list). LENGTH (DROP k l) = LENGTH l - k`,
+     INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[DROP; LENGTH; SUB_0; NOT_SUC; SUC_SUB1;
+                     ARITH_RULE `0 - SUC k = 0`; SUB_SUC]) in
+   DISCH_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
+   CASES_ON_NAME "w2" THEN
+   REWRITE_TAC[cake_def "write_bytes"; LENGTH; NOT_SUC;
+               ARITH_RULE `~(0 = SUC n)`] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[CONS_11; SUC_INJ] THEN REPEAT GEN_TAC THEN
+   STRIP_TAC THEN CONJ_TAC THENL
+    [FIRST_ASSUM(fun gd -> FIRST_ASSUM(fun lb -> FIRST_ASSUM(fun bw ->
+       ACCEPT_TAC(MATCH_MP (cake_thm "bytes_to_word_eq_lemma")
+         (CONJ gd (CONJ lb bw))))));
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     FIRST_ASSUM(fun th ->
+       EXISTS_TAC(rand(rator(rator(lhand(concl th))))) THEN
+       ASM_REWRITE_TAC[len_drop])]);;
 
 (* slow *)
 let set_byte_all_64 = cake_theorem "set_byte_all_64"
@@ -12804,7 +12826,14 @@ let data_to_word_memoryProof_xor_bytes_xor_words =
                (write_bytes vals2 (make_zeros vals2) be) =
      SOME (write_bytes res_vals (make_zeros vals2) be:('a word)
        list)`)
-  CHEAT_TAC;;
+  (* the zeroes of make_zeros are as many as the lemma above asks
+     for, and they are all zero *)
+  (let all_zero = prove
+    (`!n. ALL (\w. w = ((n2w 0):(N)word)) (REPLICATE n (n2w 0))`,
+     INDUCT_TAC THEN ASM_REWRITE_TAC[REPLICATE; ALL]) in
+   STRIP_TAC THEN MATCH_MP_TAC xor_bytes_xor_words THEN
+   ASM_REWRITE_TAC[cake_def "make_zeros"; all_zero;
+                   LENGTH_REPLICATE]);;
 
 let xor_words_word_list = cake_theorem "xor_words_word_list"
   (fun () ->
