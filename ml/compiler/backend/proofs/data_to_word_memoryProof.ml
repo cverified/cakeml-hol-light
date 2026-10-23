@@ -6326,7 +6326,13 @@ let get_byte_eq = cake_theorem "get_byte_eq"
   (fun () ->
     `good_dimindex (:'a) /\ a = byte_align a + a' ==>
       get_byte a w be = get_byte a' (w:'a word) be`)
-  CHEAT_TAC;;
+  (* the byte that an address selects does not change when the
+     address is taken modulo the word it is in *)
+  (STRIP_TAC THEN
+   FIRST_X_ASSUM(fun th -> ONCE_REWRITE_TAC[th]) THEN
+   ONCE_REWRITE_TAC[WORD_ADD_SYM] THEN
+   FIRST_ASSUM(fun gd ->
+     MATCH_ACCEPT_TAC(MATCH_MP get_byte_byte_align gd)));;
 
 let write_bytes_same = cake_theorem "write_bytes_same"
   (fun () ->
@@ -8411,7 +8417,12 @@ let word_copy_bwd_0 = cake_theorem "word_copy_bwd_0[local]"
   (fun () ->
     `good_dimindex (:'a) ==>
      word_copy_bwd be ((n2w 0):'a word) a1 a2 m dm = SOME m`)
-  CHEAT_TAC;;
+  (* a copy of no bytes is the memory itself, and good_dimindex puts
+     the dimword above the four that the clause asks for *)
+  (REWRITE_TAC[cake_def "good_dimindex"] THEN STRIP_TAC THEN
+   GEN_REWRITE_TAC LAND_CONV [cake_def "word_copy_bwd"] THEN
+   ASM_REWRITE_TAC[dimword; WORD_ULT; VAL_WORD; VAL_WORD_0] THEN
+   CONV_TAC NUM_REDUCE_CONV);;
 
 let word_copy_array_thm = cake_theorem "word_copy_array_thm"
   (fun () ->
