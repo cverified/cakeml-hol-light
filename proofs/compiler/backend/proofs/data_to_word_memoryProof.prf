@@ -1250,6 +1250,74 @@
    REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### blocks_unique_deref2
+  (* the value that the dereference puts on the stack is one
+     of the ValueArray that the pointer holds *)
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   let vrefptr = prove
+    (`!b p ys. v_all_vs (CONS (RefPtr b p) ys) =
+        CONS (RefPtr b p) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let fref = prove
+    (`!(v:dataSem_v) p b xs y.
+        MEM y (v_all_vs (CONS v (CONS (RefPtr b p) xs))) <=>
+        MEM y (v_all_vs [v]) \/ y = RefPtr b p \/ MEM y (v_all_vs xs)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [cons_app] THEN
+     REWRITE_TAC[v_all_vs_append; MEM_APPEND; vrefptr; MEM]) in
+   let inc = prove
+    (`!refs ptr b l n stack' t a q.
+        n < LENGTH l /\
+        sptree_lookup ptr refs = SOME (ValueArray l) /\
+        Block t a q IN
+          all_vs refs (CONS (EL n l) (CONS (RefPtr b ptr) stack')) ==>
+        Block t a q IN all_vs refs (CONS (RefPtr b ptr) stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; fref;
+                 distinctness "dataSem_v"] THEN
+     MESON_TAC[MEM_v_all_vs_EL; MEM_v_all_vs_extend_hd]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]))
+### blocks_unique_el
+  (* and the element of a Block is one of its payload *)
+  (let cons_app = prove
+    (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+     REWRITE_TAC[APPEND]) in
+   let vblk = prove
+    (`!t tag xs ys. v_all_vs (CONS (Block t tag xs) ys) =
+        APPEND (CONS (Block t tag xs) (v_all_vs xs)) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let fblk = prove
+    (`!(v:dataSem_v) t tag xs ys y.
+        MEM y (v_all_vs (CONS v (CONS (Block t tag xs) ys))) <=>
+        MEM y (v_all_vs [v]) \/ y = Block t tag xs \/
+        MEM y (v_all_vs xs) \/ MEM y (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [cons_app] THEN
+     REWRITE_TAC[v_all_vs_append; MEM_APPEND; vblk; MEM;
+                 DISJ_ASSOC]) in
+
+   let inc = prove
+    (`!refs t0 n xs i stack' t a q.
+        i < LENGTH xs /\
+        Block t a q IN
+          all_vs refs (CONS (EL i xs) (CONS (Block t0 n xs)
+            stack')) ==>
+        Block t a q IN all_vs refs (CONS (Block t0 n xs) stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; fblk;
+                 vblk; MEM; MEM_APPEND] THEN
+     MESON_TAC[MEM_v_all_vs_EL]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]))
 ### blocks_unique_new_byte_alt
   (* and the RefPtr that the stack is given is no Block *)
   (let li = prove
