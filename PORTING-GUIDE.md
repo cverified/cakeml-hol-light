@@ -888,6 +888,48 @@ let cp = cake_def "bvi_let_compile" in ...
 `ml/lib/define.ml`: `the_defs`, `cake_note_def`, `cake_def`,
 `cake_defs`.
 
+## 9a. Two files that state a theorem of one name
+
+### The idiom
+
+`gen_gcScript.sml` and `gen_gc_partialScript.sml` both state a
+`gc_move_list_IMP`, about their own `gc_move_list`; so do a dozen
+other pairs of the gc and the semantics files.
+
+### What it means
+
+`cake_thm "gc_move_list_IMP"` finds the **first** entry of
+`the_theorems` with that name, and that is the one registered
+last -- the one of `gen_gc_partial`.  Nothing says so: the
+theorem comes back, `MATCH_MP` of it fails with "No match", and
+the statement it fails on prints the same way as the one that
+would have matched (`gc_move_list conf state xs = xs',state1`),
+because the two constants print under the same overload.  The
+difference shows only in the type of the head constant
+(`gen_gc_partial_gc_move_list` against `gen_gc_gc_move_list`),
+which `print_types_of_subterms := 2` or
+`fst(dest_const(fst(strip_comb t)))` prints.
+
+### What the port does
+
+The theorem is picked out of the store by what its statement is
+about, the way `cake_def "<const>"` picks a definition out
+(entry 9):
+
+```ocaml
+let gmli =
+  let about t th = can (find_term (fun s ->
+    try fst(dest_const s) = t with Failure _ -> false)) (concl th) in
+  GEN_ALL(find (about "gen_gc_gc_move_list")
+    (map (fun (_,_,th) -> th)
+      (filter (fun (n,_,_) -> n = "gc_move_list_IMP")
+        (!the_theorems))))
+```
+
+`gc_move_loop_data_refs_split` of `data_to_word_memoryProof` is
+where this stands.  A `cake_thm` that took the constant the way
+`cake_def` does would be the better answer, and is not written.
+
 ## 10. A HOL4 library theorem HOL Light has not
 
 ### The idiom
