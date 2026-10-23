@@ -4620,7 +4620,23 @@ let word_ml_inv_num_lemma = cake_theorem "word_ml_inv_num_lemma"
   (fun () ->
     `good_dimindex (:'a) ==> (--(n2w 2) && (n2w 4) * v) = (n2w 4) *
   (v:'a word)`)
-  CHEAT_TAC;;
+  (* four times a word has its two lowest bits clear, and -2 is the
+     complement of 1, which has only the lowest *)
+  (let shl4 = prove
+    (`!(v:(N)word). word 4 * v = word_shl v 2`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let neg2 = prove
+    (`word_neg (word 2):(N)word = word_not (word 1)`,
+     CONV_TAC WORD_RULE) in
+   DISCH_TAC THEN
+   REWRITE_TAC[neg2; shl4] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+               BIT_WORD_1; BIT_WORD_SHL] THEN
+   REPEAT STRIP_TAC THEN ASM_CASES_TAC `2 <= i` THEN
+   ASM_REWRITE_TAC[] THEN
+   ASM_SIMP_TAC[ARITH_RULE `2 <= i ==> ~(i = 0)`]);;
 
 let word_ml_inv_num = cake_theorem "word_ml_inv_num"
   (fun () ->
@@ -4640,7 +4656,25 @@ let word_ml_inv_neg_num_lemma = cake_theorem "word_ml_inv_neg_num_lemma"
   (fun () ->
     `good_dimindex (:'a) ==> (--(n2w 2) && --(n2w 4) * v) = --(n2w 4)
   * (v:'a word)`)
-  CHEAT_TAC;;
+  (* and so does minus four times a word *)
+  (let shl4 = prove
+    (`!(v:(N)word). word 4 * v = word_shl v 2`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let neg2 = prove
+    (`word_neg (word 2):(N)word = word_not (word 1)`,
+     CONV_TAC WORD_RULE) in
+   let nshl4 = prove
+    (`!(v:(N)word). word_neg (word 4) * v = word_shl (word_neg v) 2`,
+     REWRITE_TAC[GSYM shl4] THEN CONV_TAC WORD_RULE) in
+   DISCH_TAC THEN
+   REWRITE_TAC[neg2; nshl4] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+               BIT_WORD_1; BIT_WORD_SHL] THEN
+   REPEAT STRIP_TAC THEN ASM_CASES_TAC `2 <= i` THEN
+   ASM_REWRITE_TAC[] THEN
+   ASM_SIMP_TAC[ARITH_RULE `2 <= i ==> ~(i = 0)`]);;
 
 let word_ml_inv_neg_num = cake_theorem "word_ml_inv_neg_num"
   (fun () ->
@@ -6411,7 +6445,51 @@ let memory_rel_Number_IMP = cake_theorem "memory_rel_Number_IMP"
       memory_rel c be ts refs sp st m dm ((Number i,(v:'a
         word_loc)) :: vars) ==>
       v = wordLang_Word (Smallnum i)`)
-  CHEAT_TAC;;
+  (* the root of a small Number is the Data of its Smallnum,
+     whose word_addr takes the tag bit off -- and Smallnum is
+     four times the integer, which has that bit clear *)
+  (let nmul = prove
+    (`!(i:int). &0 <= i
+        ==> n2w (num_of_int (&4 * i)) =
+            (n2w 4 * n2w (num_of_int i):(N)word)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `num_of_int (&4 * (i:int)) = 4 * num_of_int i`
+       SUBST1_TAC THENL
+      [FIRST_ASSUM(fun th ->
+         GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+           [GSYM(MATCH_MP INT_OF_NUM_OF_INT th)]) THEN
+       REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM];
+       REWRITE_TAC[WORD_MUL]]) in
+   let neg2 = prove
+    (`word_not (word 1):(N)word = word_neg (word 2)`,
+     CONV_TAC WORD_RULE) in
+   let sm_and = prove
+    (`good_dimindex (:'a) ==>
+        ((Smallnum i && word_not (n2w 1)) = (Smallnum i:'a word))`,
+     DISCH_TAC THEN REWRITE_TAC[cake_def "Smallnum"] THEN
+     REWRITE_TAC[neg2] THEN ONCE_REWRITE_TAC[WORD_AND_SYM] THEN
+     COND_CASES_TAC THENL
+      [SUBGOAL_THEN `&0 <= ((&0) - (i:int))` ASSUME_TAC THENL
+        [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+       FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+       REWRITE_TAC[WORD_SUB_LZERO] THEN
+       SUBGOAL_THEN
+         `word_neg (n2w 4 * n2w (num_of_int ((&0) - (i:int)))) =
+          word_neg (n2w 4) * (n2w (num_of_int ((&0) - i)):'a word)`
+         SUBST1_TAC THENL
+        [CONV_TAC WORD_RULE; ALL_TAC] THEN
+       MATCH_MP_TAC word_ml_inv_neg_num_lemma THEN
+       FIRST_ASSUM ACCEPT_TAC;
+       SUBGOAL_THEN `&0 <= (i:int)` ASSUME_TAC THENL
+        [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+       FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+       MATCH_MP_TAC word_ml_inv_num_lemma THEN
+       FIRST_ASSUM ACCEPT_TAC]) in
+   MEMORY_REL_TAC THEN V_INV_TAC THEN
+   TRY CONTRA_TAC THEN
+   FIRST_ASSUM(fun gd ->
+     RULE_ASSUM_TAC(REWRITE_RULE[MATCH_MP sm_and gd])) THEN
+   ASM_MESON_TAC[]);;
 
 let memory_rel_Number_bignum_IMP_ALT =
   cake_theorem "memory_rel_Number_bignum_IMP_ALT"
@@ -6661,7 +6739,22 @@ let small_int_w2i_i2w = cake_theorem "small_int_w2i_i2w[local]"
   (fun () ->
     `small_int (:'a) i /\ good_dimindex (:'a) ==>
      w2i ((i2w ((&4) * i)):'a word) = (&4) * i`)
-  CHEAT_TAC;;
+  (* four times a small integer is between INT_MIN and INT_MAX, so
+     the i2w of it has it for its w2i *)
+  (let bnds = prove
+    (`good_dimindex (:'a) /\ small_int (:'a) i ==>
+       --(&2 pow (dimindex (:'a) - 1)) <= (&4) * i /\
+       (&4) * i < &2 pow (dimindex (:'a) - 1)`,
+     REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+                 dimword] THEN
+     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     CONV_TAC(ONCE_DEPTH_CONV INT_POW_CONV) THEN
+     ASM_INT_ARITH_TAC) in
+   STRIP_TAC THEN MATCH_MP_TAC IVAL_IWORD THEN
+   FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
+     ACCEPT_TAC(MATCH_MP bnds (CONJ t1 t2)))));;
 
 let memory_rel_Add = cake_theorem "memory_rel_Add"
   (fun () ->
