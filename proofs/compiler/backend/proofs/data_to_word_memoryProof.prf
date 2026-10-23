@@ -2248,6 +2248,34 @@
    REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
    FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP wle th)) THEN
    ARITH_TAC)
+### bit_pattern_1100
+  (* 12 is the two bits 2 and 3, which good_dimindex puts inside
+     the word *)
+  (let bw12 = prove
+    (`!i. bit i (word 12:(N)word) <=>
+          (i = 2 \/ i = 3) /\ i < dimindex(:N)`,
+     GEN_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+     ASM_CASES_TAC `i < 4` THENL
+      [FIRST_X_ASSUM(MP_TAC o REWRITE_RULE
+         [ARITH_RULE
+            `i < 4 <=> i = 0 \/ i = 1 \/ i = 2 \/ i = 3`]) THEN
+       DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST1_TAC) THEN
+       CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC TAUT;
+       SUBGOAL_THEN `12 DIV 2 EXP i = 0` SUBST1_TAC THENL
+        [MATCH_MP_TAC DIV_LT THEN
+         MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP 4` THEN
+         ASM_REWRITE_TAC[LE_EXP] THEN CONV_TAC NUM_REDUCE_CONV THEN
+         ASM_ARITH_TAC;
+         CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC]]) in
+   DISCH_TAC THEN
+   SUBGOAL_THEN `2 < dimindex (:'a) /\ 3 < dimindex (:'a)`
+     STRIP_ASSUME_TAC THENL
+    [FIRST_X_ASSUM(MP_TAC o
+       REWRITE_RULE[cake_def "good_dimindex"]) THEN
+     ARITH_TAC; ALL_TAC] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               bw12] THEN
+   ASM_MESON_TAC[])
 ### eq_explode_APPEND
   (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
    ASM_REWRITE_TAC[APPEND; cake_def "eq_explode"; LENGTH;

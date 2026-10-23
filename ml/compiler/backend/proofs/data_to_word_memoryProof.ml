@@ -6104,7 +6104,23 @@ let make_header_tag_mask = cake_theorem "make_header_tag_mask[local]"
 let make_header_and_2 = cake_theorem "make_header_and_2[local]"
   (fun () ->
     `((n2w 2) && make_header c w n) = (n2w 2)`)
-  CHEAT_TAC;;
+  (* make_header ors a 3 in, whose second bit is the one that the 2
+     masks out *)
+  (let bw2 = prove
+    (`!i. bit i (word 2:(N)word) <=> i = 1 /\ 1 < dimindex(:N)`,
+     GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [ARITH_RULE `2 = 2 EXP 1`] THEN
+     REWRITE_TAC[BIT_WORD_POW2]) in
+   let bw3_1 = prove
+    (`bit 1 (word 3:(N)word) <=> 1 < dimindex(:N)`,
+     REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV) in
+   REWRITE_TAC[cake_def "make_header"] THEN
+   CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_OR; bw2] THEN
+   GEN_TAC THEN DISCH_TAC THEN
+   ASM_CASES_TAC `i = 1` THEN ASM_REWRITE_TAC[bw3_1] THEN
+   CONV_TAC TAUT);;
 
 let encode_header_tag_mask = cake_theorem "encode_header_tag_mask"
   (fun () ->
@@ -6492,7 +6508,50 @@ let smallnum_bits = cake_theorem "Smallnum_bits"
   (fun () ->
     `((n2w 1) && Smallnum i) = (n2w 0) /\ ((n2w 2) && Smallnum i) =
   (n2w 0)`)
-  CHEAT_TAC;;
+  (* Smallnum is four times the integer, up to the sign, so
+     its two lowest bits are clear *)
+  (let bw2 = prove
+    (`!i. bit i (word 2:(N)word) <=> i = 1 /\ 1 < dimindex(:N)`,
+     GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [ARITH_RULE `2 = 2 EXP 1`] THEN
+     REWRITE_TAC[BIT_WORD_POW2]) in
+   let shl4 = prove
+    (`!(v:(N)word). word 4 * v = word_shl v 2`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let bits01 = prove
+    (`!(v:(N)word). (word 1 && word_shl v 2 = word 0) /\
+                    (word 2 && word_shl v 2 = word 0)`,
+     GEN_TAC THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+                 BIT_WORD_1; bw2; BIT_WORD_SHL] THEN
+     CONJ_TAC THEN GEN_TAC THEN DISCH_TAC THEN ARITH_TAC) in
+   let nmul = prove
+    (`!(i:int). &0 <= i
+        ==> n2w (num_of_int (&4 * i)) =
+            (n2w 4 * n2w (num_of_int i):(N)word)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `num_of_int (&4 * (i:int)) = 4 * num_of_int i`
+       SUBST1_TAC THENL
+      [FIRST_ASSUM(fun th ->
+         GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+           [GSYM(MATCH_MP INT_OF_NUM_OF_INT th)]) THEN
+       REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM];
+       REWRITE_TAC[WORD_MUL]]) in
+   REWRITE_TAC[cake_def "Smallnum"] THEN COND_CASES_TAC THENL
+    [SUBGOAL_THEN `&0 <= ((&0) - (i:int))` ASSUME_TAC THENL
+      [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+     REWRITE_TAC[WORD_SUB_LZERO; shl4] THEN
+     GEN_REWRITE_TAC (ONCE_DEPTH_CONV)
+       [WORD_RULE `word_neg (word_shl v 2) = word_shl (word_neg v) 2`]
+     THEN REWRITE_TAC[bits01];
+     SUBGOAL_THEN `&0 <= (i:int)` ASSUME_TAC THENL
+      [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+     REWRITE_TAC[shl4; bits01]]);;
 
 let memory_rel_any_Number_IMP = cake_theorem "memory_rel_any_Number_IMP"
   (fun () ->
@@ -7564,7 +7623,33 @@ let bit_pattern_1100 = cake_theorem "bit_pattern_1100[simp]"
     `good_dimindex (:'a) ==>
       (((n2w 0b1100) && x1) = (n2w 0) <=> ~(word_bit 2 x1) /\
         ~(word_bit 3 (x1:'a word)))`)
-  CHEAT_TAC;;
+  (* 12 is the two bits 2 and 3, which good_dimindex puts inside
+     the word *)
+  (let bw12 = prove
+    (`!i. bit i (word 12:(N)word) <=>
+          (i = 2 \/ i = 3) /\ i < dimindex(:N)`,
+     GEN_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+     ASM_CASES_TAC `i < 4` THENL
+      [FIRST_X_ASSUM(MP_TAC o REWRITE_RULE
+         [ARITH_RULE
+            `i < 4 <=> i = 0 \/ i = 1 \/ i = 2 \/ i = 3`]) THEN
+       DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST1_TAC) THEN
+       CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC TAUT;
+       SUBGOAL_THEN `12 DIV 2 EXP i = 0` SUBST1_TAC THENL
+        [MATCH_MP_TAC DIV_LT THEN
+         MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP 4` THEN
+         ASM_REWRITE_TAC[LE_EXP] THEN CONV_TAC NUM_REDUCE_CONV THEN
+         ASM_ARITH_TAC;
+         CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC]]) in
+   DISCH_TAC THEN
+   SUBGOAL_THEN `2 < dimindex (:'a) /\ 3 < dimindex (:'a)`
+     STRIP_ASSUME_TAC THENL
+    [FIRST_X_ASSUM(MP_TAC o
+       REWRITE_RULE[cake_def "good_dimindex"]) THEN
+     ARITH_TAC; ALL_TAC] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               bw12] THEN
+   ASM_MESON_TAC[]);;
 
 let word_eq_add_clock = cake_theorem "word_eq_add_clock"
   (fun () ->
