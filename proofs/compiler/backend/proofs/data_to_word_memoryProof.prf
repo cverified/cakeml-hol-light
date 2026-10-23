@@ -527,6 +527,36 @@
                  ALL2_DEF] THEN
      ASM_REWRITE_TAC[]) in
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### gc_heap_inline_rel_heap_lookup
+  (* two heaps of which the elements are related have the same
+     lengths of elements and the same elements that are data, which
+     is what the cases of the relation say, so a lookup in the one is
+     data exactly when the lookup in the other is *)
+  (let (_,_,cases) = gc_heap_inline_rel in
+   let isd = prove
+    (`!xs n d. isSomeDataElement (SOME (DataElement xs n d))`,
+     REWRITE_TAC[cake_def "isSomeDataElement"] THEN MESON_TAC[]) in
+   let lem = prove
+    (`!x y. gc_heap_inline_rel dest_evaluated_thunk_rel heap x y
+        ==> el_length x = el_length y /\
+            (isSomeDataElement (SOME x) <=>
+             isSomeDataElement (SOME y))`,
+     REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [cases] THEN
+     STRIP_TAC THEN
+     ASM_REWRITE_TAC[cake_def "el_length"; isd]) in
+   let lcases =
+     W(fun (_,w) ->
+       STRUCT_CASES_TAC(ISPEC (rand(lhand w)) list_CASES_v)) in
+   LIST_INDUCT_TAC THEN GEN_TAC THEN lcases THEN
+   REWRITE_TAC[ALL2; cake_def "heap_lookup"] THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun r -> MP_TAC(MATCH_MP lem r)) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (fun e -> REWRITE_TAC[e])
+     ASSUME_TAC) THEN
+   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun r ->
+     MATCH_ACCEPT_TAC(MATCH_MP ih r))))
 ### ThunkBlock_not_EQ
   (REWRITE_TAC[cake_def "ThunkBlock"; cake_def "Bignum";
                cake_def "Word64Rep"; cake_def "BlockRep";
@@ -536,6 +566,47 @@
    REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
                distinctness "data_to_word_memoryProof_tag";
                NOT_CONS_NIL])
+### LIST_REL_gc_heap_inline_DataElement
+  (* the lookup of the one heap is data, so the element of the other
+     at that address is the one the relation relates it to: either
+     the same element, or the data of the same length and the same
+     tag whose addresses the relation relates one by one *)
+  (let (_,_,cases) = gc_heap_inline_rel in
+   let (irules,_,_) = gc_inline_rel in
+   let ellen = prove
+    (`!inline h1 x y. gc_heap_inline_rel inline h1 x y
+        ==> el_length x = el_length y`,
+     REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [cases] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[cake_def "el_length"]) in
+   let refl2 = prove
+    (`!inline h1 l. ALL2 (gc_inline_rel inline h1) l l`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[ALL2; CONJUNCT1 irules]) in
+   let lcases =
+     W(fun (_,w) ->
+       STRUCT_CASES_TAC(ISPEC (rand(lhand w)) list_CASES_v)) in
+   (* the witness of the existential is what the first conjunct of
+      its body equates the bound variable with *)
+   let eq_exists =
+     W(fun (_,w) ->
+       let v,bod = dest_exists w in
+       let eq = hd (conjuncts bod) in
+       EXISTS_TAC (if rand eq = v then lhand eq else rand eq)) in
+   LIST_INDUCT_TAC THEN GEN_TAC THEN lcases THEN
+   REWRITE_TAC[ALL2; cake_def "heap_lookup";
+               distinctness "option"] THEN
+   STRIP_TAC THEN GEN_TAC THEN
+   FIRST_ASSUM(fun r -> REWRITE_TAC[MATCH_MP ellen r]) THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
+    [REWRITE_TAC[injectivity "option"] THEN
+     DISCH_THEN SUBST_ALL_TAC THEN USE_CHANGED [cases] THEN
+     REWRITE_TAC[injectivity "heap_element"] THEN STRIP_TAC THEN
+     ASM_REWRITE_TAC[injectivity "heap_element"] THEN
+     eq_exists THEN ASM_REWRITE_TAC[refl2];
+     COND_CASES_TAC THEN
+     REWRITE_TAC[distinctness "option"] THEN
+     FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun r ->
+       MATCH_ACCEPT_TAC(MATCH_MP ih r)))])
 ### gc_heap_inline_rel_v_inv
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; gc_heap_inline_rel_v_inv_lemma])
@@ -3597,6 +3668,68 @@
      MP_TAC(SPEC `n:num` EVEN_OR_ODD) THEN
      REWRITE_TAC[EVEN_MOD; ODD_MOD] THEN ARITH_TAC) in
    REWRITE_TAC[bit0; ODD_MULT])
+### memory_rel_test_nil_eq
+  (* memory_rel_Block_IMP says what the word of the Block is: of an
+     empty Block it is sixteen times the tag plus two, whose lowest
+     bit is clear, and of a Block with values it is a pointer, whose
+     lowest bit is set.  So of an empty Block the two words are
+     equal exactly when the two numbers are, both of which are below
+     dimword by LESS_DIV_16_IMP, and of a Block with values the test
+     fails on the lowest bit *)
+  (let ldi = cake_thm "LESS_DIV_16_IMP" in
+   let n2w_11 = prove
+    (`!a b. a < dimword (:N) /\ b < dimword (:N)
+        ==> ((n2w a:(N)word) = n2w b <=> a = b)`,
+     REPEAT STRIP_TAC THEN
+     REWRITE_TAC[GSYM VAL_EQ; VAL_WORD; GSYM dimword] THEN
+     ASM_SIMP_TAC[MOD_LT]) in
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun gd ->
+     MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+       (CONJ mr gd)))) THEN
+   DISCH_THEN(X_CHOOSE_THEN `u:'a word`
+     (CONJUNCTS_THEN2 SUBST_ALL_TAC MP_TAC)) THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
+    [DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC STRIP_ASSUME_TAC) THEN
+     EXISTS_TAC `n2w tag * n2w 16 + (n2w 2):'a word` THEN
+     REWRITE_TAC[GSYM WORD_MUL; GSYM WORD_ADD] THEN
+     MP_TAC(SPECL [`tag * 16 + 2`; `16 * n + 2`]
+       (INST_TYPE [`:'a`,`:N`] n2w_11)) THEN
+     ANTS_TAC THENL
+      [CONJ_TAC THENL
+        [MP_TAC(INST [`tag:num`,`n:num`;
+                      `dimword (:'a)`,`k:num`] ldi);
+         MP_TAC(INST [`dimword (:'a)`,`k:num`] ldi)] THEN
+       ASM_ARITH_TAC;
+       DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN ARITH_TAC];
+     STRIP_TAC THEN EXISTS_TAC `u:'a word` THEN REWRITE_TAC[] THEN
+     DISCH_THEN SUBST_ALL_TAC THEN
+     FIRST_ASSUM(fun b0 ->
+       CONTR_TAC(REWRITE_RULE[word_index; BIT_WORD; EXP; DIV_1;
+         ODD_ADD; ODD_MULT; ARITH] b0))])
+### memory_rel_test_none_eq
+  (* the Block has values, because its length is not zero, so
+     memory_rel_Block_IMP gives its header, and encode_header of the
+     tag and that length is SOME of it, not NONE *)
+  (REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `~(l:(dataSem_v)list = [])` ASSUME_TAC THENL
+    [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ASM_REWRITE_TAC[];
+     ALL_TAC] THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun gd ->
+     MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+       (CONJ mr gd)))) THEN
+   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
+   (* the equations of the chosen witnesses are used up, the tag and
+      the length first *)
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_eq(concl th) && is_var(lhand(concl th))
+     then SUBST_ALL_TAC th else fail())) THEN
+   FIRST_X_ASSUM(fun th ->
+     let c = concl th in
+     if is_eq c && is_var(rand c) && not(is_var(lhand c))
+     then SUBST_ALL_TAC(SYM th) else fail()) THEN
+   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
+     CONTR_TAC(REWRITE_RULE[th1; option_DISTINCT] th2))))
 ### not_bit_lt_2exp
   (* the number is below 2 EXP (p + 1), so every bit of it from
      there up is zero *)

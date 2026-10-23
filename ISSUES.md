@@ -1124,3 +1124,47 @@ own, with a run and a re-verification, and not a thing for phase
 three.  Until then `tools/wordprec.py` is what says which
 statements it would change: today one, and it is to be run again
 whenever a file with word arithmetic is ported.
+
+## The empty list that HOL4's TL has a value for
+
+HOL4's `TL` is **total**: `listTheory.TL_DEF` is
+
+```
+TL [] = [] /\ TL (h::t) = t
+```
+
+HOL Light's `TL` (`lists.ml:31`) has the second clause only, so
+`TL []` is whatever the recursion theorem's witness makes it and
+nothing can be proved of it.  `ml/lib/hol4.ml:13` lists `TL` among
+the constants HOL Light has "with the same meaning as in HOL4",
+which is right for every non empty list and wrong for the empty
+one.
+
+Where it bites: a statement that takes the tail of a list the
+statement does not say is non empty.  `grep -w TL ml/` finds one,
+`memory_rel_elements_list_distinct` of
+`data_to_word_memoryProof` (HOL4
+`data_to_word_memoryProofScript.sml:13673`):
+
+```
+memory_rel c be ts refs sp st m dm vars' /\ elements_list vs /\
+vs = MAP FST vars' /\ good_dimindex (:'a)
+==> ALL_DISTINCT (MAP SND (TL vars'))
+```
+
+With `vars' = []` every antecedent holds (`elements_list [] = T`,
+and the memory relation of the empty list is the one of an empty
+stack), and the conclusion is `ALL_DISTINCT (MAP SND (TL []))`,
+which in HOL Light is a statement about an unspecified list.  So
+the theorem is **not provable as it stands**, and its proof stays a
+cheat.  Its neighbour `memory_rel_elements_list_words` says
+`~(vars' = [])` and is not affected.
+
+What to do about it: `TL` has to become the port's own total
+constant in `ml/lib/hol4.ml` (defined with both clauses and bound
+to the name `TL`, as `FOLDR` is), which changes what `TL` means in
+every file that mentions it -- 91 lines today, most of them inside
+a rewrite set of a proof, where the new clause is harmless.  That
+is a library pass with a run and a re-verification of its own, not
+a thing to do inside one proof; until then this theorem is the one
+cheat it costs.
