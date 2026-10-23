@@ -1476,6 +1476,25 @@
    FIRST_ASSUM(fun th ->
      MP_TAC(REWRITE_RULE[ADD1] (MATCH_MP DROP_EL_CONS th))) THEN
    DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[TAKE_DROP])
+### dest_thunk_insert_fresh
+  (* only a RefPtr reads the refs, and at a pointer that the refs
+     have no value for the old dest_thunk is BadRef, which the
+     assumption says it is not; away from the pointer the lookup is
+     the one it was *)
+  (let dt_def = cake_def "dataSem_dest_thunk" in
+   let dtr = [distinctness "dataSem_dest_thunk_ret";
+              injectivity "dataSem_dest_thunk_ret"] in
+   let opt_rws = [distinctness "option"; injectivity "option"] in
+   STRIP_TAC THEN CASES_ON_NAME "v" THEN
+   ONCE_REWRITE_TAC[dt_def] THEN
+   RULE_ASSUM_TAC(ONCE_REWRITE_RULE[dt_def]) THEN
+   SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[GSYM lookup_NONE_domain]) THEN
+   REWRITE_TAC[lookup_insert] THEN
+   ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+   EVERY_CASE_TAC THEN ASM_REWRITE_TAC dtr THEN
+   REPEAT COND_CASES_TAC THEN
+   ASM_MESON_TAC (dtr @ opt_rws))
 ### heap_store_ThunkBlock_thm
   (* a ThunkBlock is one element long whatever it holds, so the
      store leaves the lengths to agree *)
@@ -2493,6 +2512,21 @@
      ONCE_REWRITE_TAC[cake_def "ref_edge"] THEN ASM_REWRITE_TAC[] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[];
      REWRITE_TAC[]])
+### dest_thunk_insert_MutBlock
+  (* and a MutBlock is no Thunk, so the dest_thunk of the pointer
+     is NotThunk before the insert and after it *)
+  (let dt_def = cake_def "dataSem_dest_thunk" in
+   let opt_rws = [distinctness "option"; injectivity "option"] in
+   let ref_rws = [distinctness "bvlSem_ref"; injectivity "bvlSem_ref";
+                  distinctness "thunk_mode"] in
+   DISCH_TAC THEN CASES_ON_NAME "v" THEN
+   ONCE_REWRITE_TAC[dt_def] THEN
+   SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+   REWRITE_TAC[lookup_insert] THEN
+   ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+   TRY MATCH_REDUCE_TAC THEN
+   REWRITE_TAC(opt_rws @ ref_rws) THEN
+   REPEAT COND_CASES_TAC THEN REWRITE_TAC[])
 ### bc_stack_ref_inv_union_del_ins_lemma
   (* the two refs have the same lookup everywhere: at ptr the delete
      takes the value out of the left half and the insert puts the
@@ -2520,6 +2554,18 @@
    CONV_TAC TAUT)
 ### IMP_EXP_LESS
   (REWRITE_TAC[LE_EXP; ARITH_EQ] THEN ARITH_TAC)
+### write_bytes_APPEND
+  (* induction on the first list of words: each word takes the
+     bytes of its own length off the front, so the words of the
+     second list see the bytes that the first list leaves *)
+  (LIST_INDUCT_TAC THEN
+   REWRITE_TAC[APPEND; cake_def "write_bytes"; LENGTH; MULT_CLAUSES;
+               DROP_0] THEN
+   REPEAT GEN_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[APPEND; DROP_DROP] THEN
+   REWRITE_TAC[ARITH_RULE `(d * SUC n) = d + d * n`] THEN
+   REWRITE_TAC[DROP_DROP; ADD_AC])
 ### memory_rel_tail
   (DISCH_TAC THEN
    FIRST_ASSUM(fun th ->
@@ -2883,6 +2929,10 @@
    STRIP_TAC THEN MATCH_MP_TAC IVAL_IWORD THEN
    FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
      ACCEPT_TAC(MATCH_MP bnds (CONJ t1 t2)))))
+### exists_num
+  (* an integer that is not below zero is the injection of a
+     number, which is HOL Light's INT_OF_NUM_EXISTS *)
+  (REWRITE_TAC[INT_OF_NUM_EXISTS; INT_NOT_LT])
 ### small_int_w2n
   (* a byte is below 256 and the bound of a small integer is a
      quarter of the dimword, which good_dimindex makes 2 EXP 29 at
