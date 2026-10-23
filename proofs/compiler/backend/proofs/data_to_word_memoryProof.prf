@@ -1843,6 +1843,23 @@
        (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
           memory_rel_rearrange) th)) THEN
    REWRITE_TAC[MEM_APPEND] THEN MESON_TAC[])
+### get_addr_0
+  (* the lowest bit of get_addr is the one that get_lowerbits ors
+     in, whichever of its two clauses applies *)
+  (REWRITE_TAC[word_index; cake_def "get_addr"] THEN
+   CASES_ON_NAME "u" THEN
+   REWRITE_TAC[cake_def "get_lowerbits"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[BIT_WORD_OR; BIT_WORD_1] THEN
+   MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`])
+### word_addr_eq_Loc
+  (* only the Data of a Loc has a Loc for its word_addr, and the
+     second component of it is zero *)
+  (CASES_ON_NAME "v" THEN TRY(CASES_ON_NAME "a") THEN
+   REWRITE_TAC[cake_def "word_addr"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[distinctness "word_loc"; injectivity "word_loc";
+               distinctness "heap_address";
+               injectivity "heap_address"] THEN
+   MESON_TAC[])
 ### memory_rel_tag_limit
   (* the tag of an empty Block is below the bound by what
      memory_rel_Block_IMP says, and the tag of a Block with a
