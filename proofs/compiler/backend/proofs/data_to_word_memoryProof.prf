@@ -929,6 +929,65 @@
      REWRITE_TAC[cake_def "dataSem_list_to_v"; cake_def "get_refs";
                  MAP; FLAT; APPEND_NIL; MEM_APPEND; MEM] THEN
      STRIP_TAC THEN ASM_MESON_TAC[]])
+### v_inv_lemma
+  (* the heap grows by the hs that is taken out of its unused
+     space, and that is a heap_store_rel: a data element of the old
+     heap is in ha or in hb, the unused space holds none, and the
+     two middle parts are of a length.  So v_inv_SUBMAP_lemma
+     carries the invariant over, with the two maps unchanged *)
+  (let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) =
+              el_length x + heap_length xs)`,
+     REWRITE_TAC[cake_def "heap_length"; MAP; SUM_DEF; ITLIST]) in
+   let hlen_exp = prove
+    (`!n. heap_length (heap_expand n) = n`,
+     GEN_TAC THEN REWRITE_TAC[cake_def "heap_expand"] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[hlen_cl; cake_def "el_length"] THEN
+     ASM_ARITH_TAC) in
+   (* the unused space holds no data element at all: its one
+      element is an Unused, and past it the lookup is of [] *)
+   let isde_rws = [cake_def "isSomeDataElement";
+                   distinctness "option"; injectivity "option";
+                   distinctness "heap_element"] in
+   let exp_none = prove
+    (`!n m. ~(isSomeDataElement
+                (heap_lookup m
+                   (heap_expand n:((A,B)heap_element)list)))`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "heap_expand"] THEN
+     COND_CASES_TAC THEN
+     REWRITE_TAC(cake_def "heap_lookup" :: cake_def "el_length" ::
+                 isde_rws) THEN
+     REPEAT COND_CASES_TAC THEN
+     REWRITE_TAC(cake_def "heap_lookup" :: isde_rws)) in
+   let expand_rel = prove
+    (`!ha hs hb sp.
+        0 < heap_length hs /\ heap_length hs <= sp
+        ==> heap_store_rel (ha ++ heap_expand sp ++ hb)
+              (ha ++ hs ++ heap_expand (sp - heap_length hs) ++ hb)`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     REWRITE_TAC[cake_def "heap_store_rel"] THEN
+     X_GEN_TAC `n:num` THEN
+     REWRITE_TAC[GSYM APPEND_ASSOC] THEN
+     REWRITE_TAC[cake_thm "heap_lookup_APPEND"; hlen_exp;
+                 heap_length_APPEND] THEN
+     (* the three parts of the old heap, and of the new one: the
+        splits are the same, because the lookup of a data element
+        falls in ha or in hb either way *)
+     COND_CASES_TAC THEN REWRITE_TAC[exp_none] THEN
+     COND_CASES_TAC THEN REWRITE_TAC[exp_none] THEN
+     COND_CASES_TAC THENL
+      [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     COND_CASES_TAC THENL
+      [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     DISCH_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+     ASM_ARITH_TAC) in
+   REPEAT GEN_TAC THEN DISCH_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun vi ->
+     MATCH_MP_TAC(MATCH_MP (cake_thm "v_inv_SUBMAP_lemma") vi)) THEN
+   REWRITE_TAC[SUBMAP_REFL] THEN
+   MATCH_MP_TAC expand_rel THEN ASM_REWRITE_TAC[])
 ### v_inv_lemma#2
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_inv_eq; v_inv_lemma])
 ### v_inv_LIST_REL
