@@ -11957,7 +11957,33 @@ let v_all_vs_list_to_v1 = cake_theorem "v_all_vs_list_to_v1"
        MEM (Block t1 a1 xs1) (v_all_vs (list_to_v ts t xs ::
          stack')) ==>
          MEM (Block t1 a1 xs1) (v_all_vs (t :: (xs ++ stack')))`)
-  CHEAT_TAC;;
+  (* the list that list_to_v builds is a chain of conses, and the
+     Blocks of the chain itself have the timestamps from ts on,
+     which the Block of the goal is below; so a Block among the
+     values of the chain is one of the values of the list or of the
+     stack, which the induction follows cons by cons *)
+  (
+   let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let split = cake_thm "MEM_v_all_vs_split"
+   and ext_hd = cake_thm "MEM_v_all_vs_extend_hd"
+   and ext_tl = cake_thm "MEM_v_all_vs_extend_tl" in
+   let mem_app = prove
+    (`!(x:dataSem_v) l1 l2.
+        MEM x (v_all_vs (l1 ++ l2)) <=>
+        MEM x (v_all_vs l1) \/ MEM x (v_all_vs l2)`,
+     REWRITE_TAC[v_all_vs_append; MEM_APPEND]) in
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "dataSem_list_to_v"; APPEND] THENL
+    [DISCH_THEN(fun th -> ACCEPT_TAC(CONJUNCT2 th));
+     STRIP_TAC THEN
+     SUBGOAL_THEN `t1 < ts + 1` ASSUME_TAC THENL
+      [ASM_ARITH_TAC; ALL_TAC] THEN
+     FIRST_ASSUM(fun m ->
+       let th = MATCH_MP split m in
+       MP_TAC(REWRITE_RULE[vsing; MEM] th)) THEN
+     STRIP_TAC THEN
+     ASM_MESON_TAC[split; ext_hd; ext_tl; mem_app;
+                   injectivity "dataSem_v"; LT_REFL]]);;
 
 let blocks_unique_GT_ts = cake_theorem "blocks_unique_GT_ts"
   (fun () ->
