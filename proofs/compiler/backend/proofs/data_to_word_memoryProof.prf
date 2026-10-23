@@ -4465,6 +4465,35 @@
    DISCH_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[cake_def "el_length"]) THEN
    REWRITE_TAC[cake_def "el_length"] THEN ARITH_ASM_TAC)
+### isSomeDataElement_heap_lookup_eq
+  (* the heap that the list builds has the same elements whatever
+     the address it starts at: the first block is a data element
+     either way, and the lookup past it is the induction *)
+  (let isde = prove
+    (`!ys l d. isSomeDataElement (SOME (DataElement ys l d))`,
+     REWRITE_TAC[cake_def "isSomeDataElement"] THEN MESON_TAC[]) in
+   let isdeN = prove
+    (`~isSomeDataElement NONE`,
+     REWRITE_TAC[cake_def "isSomeDataElement";
+                 distinctness "option"]) in
+   LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[cake_def "list_to_BlockReps"]; ALL_TAC] THEN
+   REPEAT GEN_TAC THEN POP_ASSUM MP_TAC THEN
+   REWRITE_TAC[cake_def "list_to_BlockReps"] THEN
+   (fun (asl,w as gl) ->
+      let scr = hd (filter is_var (match_scruts w)) in
+      STRUCT_CASES_TAC(ISPEC scr list_CASES_v) gl) THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[] THEN
+   DISCH_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "heap_lookup"] THEN
+   REWRITE_TAC[cake_def "BlockRep"; cake_def "el_length"; LENGTH] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[isde] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[isdeN] THEN
+   DISCH_TAC THEN
+   FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_EXISTS_TAC THEN
+   ASM_REWRITE_TAC[])
 ### all_ts_list_to_v_SUBSET
   (* the list that list_to_v builds is a Block of each timestamp
      from ts up, one for each element, and the timestamps of a
