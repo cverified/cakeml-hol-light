@@ -1212,7 +1212,35 @@ let gc_heap_inline_rel_heap_lookup =
          heap1 heap2 ==>
          (!a. isSomeDataElement (heap_lookup a heap1) <=>
              isSomeDataElement (heap_lookup a heap2))`)
-  CHEAT_TAC;;
+  (* two heaps of which the elements are related have the same
+     lengths of elements and the same elements that are data, which
+     is what the cases of the relation say, so a lookup in the one is
+     data exactly when the lookup in the other is *)
+  (let (_,_,cases) = gc_heap_inline_rel in
+   let isd = prove
+    (`!xs n d. isSomeDataElement (SOME (DataElement xs n d))`,
+     REWRITE_TAC[cake_def "isSomeDataElement"] THEN MESON_TAC[]) in
+   let lem = prove
+    (`!x y. gc_heap_inline_rel dest_evaluated_thunk_rel heap x y
+        ==> el_length x = el_length y /\
+            (isSomeDataElement (SOME x) <=>
+             isSomeDataElement (SOME y))`,
+     REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [cases] THEN
+     STRIP_TAC THEN
+     ASM_REWRITE_TAC[cake_def "el_length"; isd]) in
+   let lcases =
+     W(fun (_,w) ->
+       STRUCT_CASES_TAC(ISPEC (rand(lhand w)) list_CASES_v)) in
+   LIST_INDUCT_TAC THEN GEN_TAC THEN lcases THEN
+   REWRITE_TAC[ALL2; cake_def "heap_lookup"] THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun r -> MP_TAC(MATCH_MP lem r)) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (fun e -> REWRITE_TAC[e])
+     ASSUME_TAC) THEN
+   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun r ->
+     MATCH_ACCEPT_TAC(MATCH_MP ih r))));;
 
 let ThunkBlock_not_EQ = cake_theorem "ThunkBlock_not_EQ[local]"
   (fun () ->
@@ -1240,7 +1268,46 @@ let LIST_REL_gc_heap_inline_DataElement =
              heap_lookup ptr heap2 = SOME (DataElement ys n d) /\
              LIST_REL (gc_inline_rel dest_evaluated_thunk_rel
                base) xs ys))`)
-  CHEAT_TAC;;
+  (* the lookup of the one heap is data, so the element of the other
+     at that address is the one the relation relates it to: either
+     the same element, or the data of the same length and the same
+     tag whose addresses the relation relates one by one *)
+  (let (_,_,cases) = gc_heap_inline_rel in
+   let (irules,_,_) = gc_inline_rel in
+   let ellen = prove
+    (`!inline h1 x y. gc_heap_inline_rel inline h1 x y
+        ==> el_length x = el_length y`,
+     REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [cases] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[cake_def "el_length"]) in
+   let refl2 = prove
+    (`!inline h1 l. ALL2 (gc_inline_rel inline h1) l l`,
+     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[ALL2; CONJUNCT1 irules]) in
+   let lcases =
+     W(fun (_,w) ->
+       STRUCT_CASES_TAC(ISPEC (rand(lhand w)) list_CASES_v)) in
+   (* the witness of the existential is what the first conjunct of
+      its body equates the bound variable with *)
+   let eq_exists =
+     W(fun (_,w) ->
+       let v,bod = dest_exists w in
+       let eq = hd (conjuncts bod) in
+       EXISTS_TAC (if rand eq = v then lhand eq else rand eq)) in
+   LIST_INDUCT_TAC THEN GEN_TAC THEN lcases THEN
+   REWRITE_TAC[ALL2; cake_def "heap_lookup";
+               distinctness "option"] THEN
+   STRIP_TAC THEN GEN_TAC THEN
+   FIRST_ASSUM(fun r -> REWRITE_TAC[MATCH_MP ellen r]) THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
+    [REWRITE_TAC[injectivity "option"] THEN
+     DISCH_THEN SUBST_ALL_TAC THEN USE_CHANGED [cases] THEN
+     REWRITE_TAC[injectivity "heap_element"] THEN STRIP_TAC THEN
+     ASM_REWRITE_TAC[injectivity "heap_element"] THEN
+     eq_exists THEN ASM_REWRITE_TAC[refl2];
+     COND_CASES_TAC THEN
+     REWRITE_TAC[distinctness "option"] THEN
+     FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun r ->
+       MATCH_ACCEPT_TAC(MATCH_MP ih r)))]);;
 
 let gc_heap_inline_rel_v_inv_lemma =
   cake_theorem "gc_heap_inline_rel_v_inv_lemma[local]"
@@ -3559,7 +3626,35 @@ let v_inv_Ref = cake_theorem "v_inv_Ref[local]"
     `RefBlock_inv heap heap2 ==>
        (!x h f tf. (v_inv conf x refs (h,f,tf,heap2) =
                    v_inv conf x refs (h,f,tf,heap)))`)
-  CHEAT_TAC;;
+  (* v_inv_Ref_lemma says that the clocked relation does not see the
+     difference between the two heaps, of a value that the relation
+     holds of; the unclocked one is the clocked one at every clock,
+     so each side gives the other.  The lemma's heap2 is a free
+     variable, so the other direction is the lemma with the two
+     heaps exchanged, and RefBlock_inv is symmetric *)
+  (let lem = cake_thm "v_inv_Ref_lemma" in
+   let hp = find_term (fun t -> is_var t && fst(dest_var t) = "heap")
+              (concl lem) in
+   let hp2 = find_term
+               (fun t -> is_var t && fst(dest_var t) = "heap2")
+               (concl lem) in
+   let swapped = INST [hp2,hp; hp,hp2] lem in
+   let sym_rb = prove
+    (`!h1 h2. RefBlock_inv h1 h2 ==> RefBlock_inv h2 h1`,
+     REWRITE_TAC[cake_def "RefBlock_inv"] THEN MESON_TAC[]) in
+   let step lemm rbt =
+     ONCE_REWRITE_TAC[v_inv_eq] THEN
+     FIRST_ASSUM(fun rb -> FIRST_ASSUM(fun vi ->
+       let th = MATCH_MP lemm (CONJ vi (rbt rb)) in
+       let ckv = find_term
+                   (fun t -> is_var t && fst(dest_var t) = "ck")
+                   (concl th) in
+       MP_TAC(GEN ckv th))) THEN
+     DISCH_THEN(fun th -> REWRITE_TAC[GSYM th]) THEN
+     FIRST_ASSUM(fun vi -> ACCEPT_TAC(REWRITE_RULE[v_inv_eq] vi)) in
+   DISCH_TAC THEN REPEAT GEN_TAC THEN EQ_TAC THEN DISCH_TAC THENL
+    [step swapped (MATCH_MP sym_rb);
+     step lem (fun th -> th)]);;
 
 let v_inv_ValueArray_insert_lemma =
   cake_theorem "v_inv_ValueArray_insert_lemma"
@@ -6807,7 +6902,28 @@ let reachable_refs_MutBlock_centre =
     `lookup ptr refs = SOME (bvlSem_MutBlock tag fin left cen right) /\
      reachable_refs (cen :: RefPtr b ptr :: vars) refs n ==>
      reachable_refs (RefPtr b ptr :: vars) refs n`)
-  CHEAT_TAC;;
+  (* the centre of the MutBlock is reachable from the pointer to it
+     in one step of ref_edge, because it is inside the payload, so
+     what the centre reaches the pointer reaches as well; a root
+     other than the centre is a root of the shorter list *)
+  (REWRITE_TAC[cake_def "reachable_refs"; MEM] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+     (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC)) THENL
+    [FIRST_X_ASSUM(fun th ->
+       if is_eq(concl th) && is_var(lhand(concl th))
+       then SUBST_ALL_TAC th else fail()) THEN
+     MAP_EVERY EXISTS_TAC [`RefPtr b ptr:dataSem_v`; `ptr:num`] THEN
+     REWRITE_TAC[cake_def "get_refs"; MEM] THEN
+     MATCH_MP_TAC(CONJUNCT2 (SPEC_ALL RTC_RULES)) THEN
+     EXISTS_TAC `r:num` THEN ASM_REWRITE_TAC[] THEN
+     ASM_REWRITE_TAC[cake_def "ref_edge"] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[cake_def "get_refs"; MEM_FLAT; MEM_MAP; MEM_APPEND;
+                 MEM] THEN
+     ASM_MESON_TAC[];
+     MAP_EVERY EXISTS_TAC [`x:dataSem_v`; `r:num`] THEN
+     ASM_REWRITE_TAC[];
+     MAP_EVERY EXISTS_TAC [`x:dataSem_v`; `r:num`] THEN
+     ASM_REWRITE_TAC[]]);;
 
 let ref_edge_insert_MutBlock =
   cake_theorem "ref_edge_insert_MutBlock[local]"
@@ -7766,7 +7882,44 @@ let memory_rel_test_nil_eq = cake_theorem "memory_rel_test_nil_eq"
       n < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
       (?v. w = wordLang_Word v /\ (v = n2w (16 * n + 2) <=> tag =
         n /\ l = []))`)
-  CHEAT_TAC;;
+  (* memory_rel_Block_IMP says what the word of the Block is: of an
+     empty Block it is sixteen times the tag plus two, whose lowest
+     bit is clear, and of a Block with values it is a pointer, whose
+     lowest bit is set.  So of an empty Block the two words are
+     equal exactly when the two numbers are, both of which are below
+     dimword by LESS_DIV_16_IMP, and of a Block with values the test
+     fails on the lowest bit *)
+  (let ldi = cake_thm "LESS_DIV_16_IMP" in
+   let n2w_11 = prove
+    (`!a b. a < dimword (:N) /\ b < dimword (:N)
+        ==> ((n2w a:(N)word) = n2w b <=> a = b)`,
+     REPEAT STRIP_TAC THEN
+     REWRITE_TAC[GSYM VAL_EQ; VAL_WORD; GSYM dimword] THEN
+     ASM_SIMP_TAC[MOD_LT]) in
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun gd ->
+     MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+       (CONJ mr gd)))) THEN
+   DISCH_THEN(X_CHOOSE_THEN `u:'a word`
+     (CONJUNCTS_THEN2 SUBST_ALL_TAC MP_TAC)) THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
+    [DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC STRIP_ASSUME_TAC) THEN
+     EXISTS_TAC `n2w tag * n2w 16 + (n2w 2):'a word` THEN
+     REWRITE_TAC[GSYM WORD_MUL; GSYM WORD_ADD] THEN
+     MP_TAC(SPECL [`tag * 16 + 2`; `16 * n + 2`]
+       (INST_TYPE [`:'a`,`:N`] n2w_11)) THEN
+     ANTS_TAC THENL
+      [CONJ_TAC THENL
+        [MP_TAC(INST [`tag:num`,`n:num`;
+                      `dimword (:'a)`,`k:num`] ldi);
+         MP_TAC(INST [`dimword (:'a)`,`k:num`] ldi)] THEN
+       ASM_ARITH_TAC;
+       DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN ARITH_TAC];
+     STRIP_TAC THEN EXISTS_TAC `u:'a word` THEN REWRITE_TAC[] THEN
+     DISCH_THEN SUBST_ALL_TAC THEN
+     FIRST_ASSUM(fun b0 ->
+       CONTR_TAC(REWRITE_RULE[word_index; BIT_WORD; EXP; DIV_1;
+         ODD_ADD; ODD_MULT; ARITH] b0))]);;
 
 let memory_rel_test_none_eq = cake_theorem "memory_rel_test_none_eq"
   (fun () ->
@@ -7774,7 +7927,28 @@ let memory_rel_test_none_eq = cake_theorem "memory_rel_test_none_eq"
       memory_rel c be ts refs sp st m dm ((Block ts' tag l,(w:'a
         word_loc)) :: rest) /\ ~(len = 0) /\ good_dimindex (:'a) ==>
       ~(tag = n /\ LENGTH l = len)`)
-  CHEAT_TAC;;
+  (* the Block has values, because its length is not zero, so
+     memory_rel_Block_IMP gives its header, and encode_header of the
+     tag and that length is SOME of it, not NONE *)
+  (REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `~(l:(dataSem_v)list = [])` ASSUME_TAC THENL
+    [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ASM_REWRITE_TAC[];
+     ALL_TAC] THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun gd ->
+     MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+       (CONJ mr gd)))) THEN
+   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
+   (* the equations of the chosen witnesses are used up, the tag and
+      the length first *)
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_eq(concl th) && is_var(lhand(concl th))
+     then SUBST_ALL_TAC th else fail())) THEN
+   FIRST_X_ASSUM(fun th ->
+     let c = concl th in
+     if is_eq c && is_var(rand c) && not(is_var(lhand c))
+     then SUBST_ALL_TAC(SYM th) else fail()) THEN
+   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
+     CONTR_TAC(REWRITE_RULE[th1; option_DISTINCT] th2))));;
 
 let not_bit_lt_2exp = cake_theorem "not_bit_lt_2exp[local]"
   (fun () ->
@@ -9139,7 +9313,45 @@ let not_all_distinct_map_snd =
     `~(ALL_DISTINCT (MAP SND xs)) ==>
      (?xs1 xs2 xs3 x y1 y2. xs = xs1 ++ [(y1,x)] ++ xs2 ++
        [(y2,x)] ++ xs3)`)
-  CHEAT_TAC;;
+  (* a list whose seconds repeat: the induction finds the first
+     repetition, either the head's second in the tail -- and then
+     the head is the first of the two -- or inside the tail, which
+     the hypothesis splits.  The lemma states the split with the
+     types of the pairs named, so the two pairs can be taken apart
+     and the witnesses written down *)
+  (let lem = prove
+    (`!l:(A#B)list. ~(ALL_DISTINCT (MAP SND l))
+        ==> ?l1 l2 l3 x y1 y2.
+              l = l1 ++ [(y1,x)] ++ l2 ++ [(y2,x)] ++ l3`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[MAP; ALL_DISTINCT_CLAUSES; DE_MORGAN_THM] THEN
+     MP_TAC(ISPEC `h:A#B` PAIR_SURJECTIVE) THEN
+     DISCH_THEN(X_CHOOSE_THEN `a:A`
+       (X_CHOOSE_THEN `b:B` SUBST_ALL_TAC)) THEN
+     REWRITE_TAC[SND; MEM_MAP; MEM_APPEND_DECOMPOSE] THEN
+     DISCH_THEN(DISJ_CASES_THEN2
+       (X_CHOOSE_THEN `p:A#B` (CONJUNCTS_THEN2
+          (X_CHOOSE_THEN `m1:(A#B)list`
+            (X_CHOOSE_THEN `m2:(A#B)list` SUBST_ALL_TAC))
+          ASSUME_TAC))
+       ASSUME_TAC) THENL
+      [MP_TAC(ISPEC `p:A#B` PAIR_SURJECTIVE) THEN
+       DISCH_THEN(X_CHOOSE_THEN `c:A`
+         (X_CHOOSE_THEN `d:B` SUBST_ALL_TAC)) THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[SND]) THEN
+       FIRST_X_ASSUM SUBST_ALL_TAC THEN
+       MAP_EVERY EXISTS_TAC
+         [`[]:(A#B)list`; `m1:(A#B)list`; `m2:(A#B)list`;
+          `d:B`; `a:A`; `c:A`] THEN
+       REWRITE_TAC[APPEND];
+       FIRST_X_ASSUM(fun ih -> FIRST_X_ASSUM(fun nd ->
+         MP_TAC(MATCH_MP ih nd))) THEN
+       DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC) THEN
+       MAP_EVERY EXISTS_TAC
+         [`CONS (a:A,b:B) (l1:(A#B)list)`; `l2:(A#B)list`;
+          `l3:(A#B)list`; `x:B`; `y1:A`; `y2:A`] THEN
+       REWRITE_TAC[APPEND]]) in
+   MATCH_ACCEPT_TAC lem);;
 
 let IN_all_vs_HD = cake_theorem "IN_all_vs_HD"
   (fun () ->
@@ -9378,7 +9590,38 @@ let memory_rel_Block_Block_small_eq =
          t2 v2,wordLang_Word w2) :: vars) /\
      good_dimindex (:'a) /\ ~(w1 = w2) /\ ~(word_bit 0 w1) ==>
        ~(LENGTH v1 = LENGTH v2) \/ ~(t1 = t2)`)
-  CHEAT_TAC;;
+  (* the first Block has its lowest bit clear, so it is the empty
+     one, whose word is sixteen times its tag plus two.  If the two
+     had the same length and the same tag the second would be the
+     empty one of the same tag, whose word is the same word, which
+     the assumption says it is not *)
+  (let subst_vars =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_eq(concl th) && is_var(lhand(concl th))
+       then SUBST_ALL_TAC th else fail())) in
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun gd ->
+     MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+       (CONJ mr gd)))) THEN
+   REWRITE_TAC[injectivity "word_loc"; word_index] THEN
+   DISCH_THEN(X_CHOOSE_THEN `u:'a word`
+     (CONJUNCTS_THEN2 SUBST_ALL_TAC MP_TAC)) THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   ONCE_REWRITE_TAC[GSYM DE_MORGAN_THM] THEN
+   UNDISCH_TAC `(v1:(dataSem_v)list) = []` THEN
+   DISCH_THEN SUBST_ALL_TAC THEN STRIP_TAC THEN STRIP_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[LENGTH]) THEN
+   SUBGOAL_THEN `(v2:(dataSem_v)list) = []` SUBST_ALL_TAC THENL
+    [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ASM_REWRITE_TAC[];
+     ALL_TAC] THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun gd ->
+     MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+       (CONJ (MATCH_MP (cake_thm "memory_rel_tail") mr) gd)))) THEN
+   REWRITE_TAC[injectivity "word_loc"; word_index] THEN
+   DISCH_THEN(X_CHOOSE_THEN `u2:'a word`
+     (CONJUNCTS_THEN2 SUBST_ALL_TAC MP_TAC)) THEN
+   REWRITE_TAC[] THEN STRIP_TAC THEN subst_vars THEN
+   FIRST_ASSUM(fun th -> CONTR_TAC(REWRITE_RULE[] th)));;
 
 let memory_rel_simple_eq = cake_theorem "memory_rel_simple_eq"
   (fun () ->
@@ -9670,7 +9913,26 @@ let memory_rel_Block_explode = cake_theorem "memory_rel_Block_explode"
         (eq_explode (a + (bytes_in_word:'a word)) m dm v1 ++ vars)
           /\
       eq_assum (a + bytes_in_word) m dm v1`)
-  CHEAT_TAC;;
+  (* memory_rel_Block_explode_lemma says it of the first n values of
+     the Block, so at the length of the Block it says it of all of
+     them; what it gives has the Block itself still in front of the
+     rest, which memory_rel_rearrange drops *)
+  (let take_all = prove
+    (`!l:A list. TAKE (LENGTH l) l = l`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[TAKE; LENGTH; NOT_SUC; SUC_SUB1] THEN
+     ASM_REWRITE_TAC[]) in
+   let rearrange =
+     ONCE_REWRITE_RULE [TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
+       (cake_thm "memory_rel_rearrange") in
+   STRIP_TAC THEN
+   MP_TAC(SPEC `LENGTH (v1:(dataSem_v)list)`
+     (cake_thm "memory_rel_Block_explode_lemma")) THEN
+   ASM_REWRITE_TAC[take_all] THEN STRIP_TAC THEN CONJ_TAC THENL
+    [FIRST_ASSUM(fun th ->
+       MATCH_MP_TAC(MATCH_MP rearrange th) THEN
+       REWRITE_TAC[MEM_APPEND; MEM] THEN MESON_TAC[]);
+     FIRST_ASSUM ACCEPT_TAC]);;
 
 let memory_rel_Loc = cake_theorem "memory_rel_Loc"
   (fun () ->

@@ -470,3 +470,21 @@ let FLOOKUP_IN_FDOM = prove
  (`!(fm:(A,B)fmap) x v. FLOOKUP fm x = SOME v ==> x IN FDOM fm`,
   REPEAT GEN_TAC THEN REWRITE_TAC[FLOOKUP_DEF] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[distinctness "option"]);;
+
+(* ------------------------------------------------------------------ *)
+(* HOL4's ALL_DISTINCT is the two clauses; ml/lib/hol4.ml defines it  *)
+(* with PAIRWISE, so the clauses are a lemma (the list of a cons has  *)
+(* no repetition when the head is not in the tail and the tail has    *)
+(* none).                                                             *)
+(* ------------------------------------------------------------------ *)
+
+let ALL_DISTINCT_CLAUSES =
+  let allnotmem = prove
+   (`!h t. ALL (\y. ~((h:A) = y)) t <=> ~(MEM h t)`,
+    GEN_TAC THEN LIST_INDUCT_TAC THEN
+    ASM_REWRITE_TAC[ALL; MEM; DE_MORGAN_THM]) in
+  prove
+   (`(ALL_DISTINCT ([]:A list) <=> T) /\
+     (!h t. ALL_DISTINCT (CONS (h:A) t) <=>
+            ~(MEM h t) /\ ALL_DISTINCT t)`,
+    REWRITE_TAC[ALL_DISTINCT; PAIRWISE; allnotmem]);;
