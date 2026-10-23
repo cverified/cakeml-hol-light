@@ -1203,6 +1203,70 @@
      MATCH_REDUCE_TAC THEN
      REWRITE_TAC[MEM; MEM_APPEND; distinctness "dataSem_v"] THEN
      ASM_MESON_TAC[vsing]])
+### v_all_vs_ts
+  (* induction on the value and on a list of values at once, which
+     is what define_datatype gives for a type that nests a list of
+     itself: the timestamp of a Block among the values of a value is
+     one of the timestamps of that value *)
+  (let vav = cake_def "v_all_vs" in
+   let vat = cake_def "v_all_ts" in
+   let vnil = prove
+    (`v_all_vs ([]:dataSem_v list) = []`,
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   (* the values of a one-element list, and its timestamps *)
+   let vsing = prove
+    (`(!i:int. v_all_vs [Number i] = [Number i]) /\
+      (!w. v_all_vs [Word64 w] = [Word64 w]) /\
+      (!n. v_all_vs [CodePtr n] = [CodePtr n]) /\
+      (!b n. v_all_vs [RefPtr b n] = [RefPtr b n]) /\
+      (!ts tag l. v_all_vs [Block ts tag l] =
+                  Block ts tag l :: v_all_vs l)`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[vnil; APPEND_NIL]) in
+   let vats = prove
+    (`(!i:int. v_all_ts (Number i) = []) /\
+      (!w. v_all_ts (Word64 w) = []) /\
+      (!n. v_all_ts (CodePtr n) = []) /\
+      (!b n. v_all_ts (RefPtr b n) = []) /\
+      (!ts tag l. v_all_ts (Block ts tag l) =
+                  ts :: FLAT (MAP v_all_ts l))`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [vat] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   (* the values of a cons.  The theorem of the file that says this
+      and more stands later in the file than these theorems do *)
+   let vcons = prove
+    (`!(a:dataSem_v) l.
+        v_all_vs (CONS a l) = v_all_vs [a] ++ v_all_vs l`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `a:dataSem_v` (cases_of `:dataSem_v`)) THEN
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN
+     GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [vav] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[vnil; APPEND_NIL; APPEND; GSYM APPEND_ASSOC]) in
+   let triv = REPEAT GEN_TAC THEN
+     REWRITE_TAC[vsing; MEM; distinctness "dataSem_v"] in
+   SUBGOAL_THEN
+     `(!x ts tag xs.
+         MEM (Block ts tag xs) (v_all_vs [x]) ==> MEM ts (v_all_ts x))
+      /\
+      (!l ts tag xs.
+         MEM (Block ts tag xs) (v_all_vs l)
+         ==> MEM ts (FLAT (MAP v_all_ts l)))`
+     (fun th -> MATCH_ACCEPT_TAC(CONJUNCT1 th)) THEN
+   MATCH_MP_TAC dataSem_v_INDUCT THEN REPEAT CONJ_TAC THENL
+    [triv; triv;
+     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[vsing; vats; MEM; injectivity "dataSem_v"] THEN
+     ASM_MESON_TAC[];
+     triv; triv;
+     REWRITE_TAC[vnil; MEM];
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+     ONCE_REWRITE_TAC[vcons] THEN
+     REWRITE_TAC[MEM_APPEND; MAP; FLAT] THEN
+     ASM_MESON_TAC[]])
 ### MEM_v_all_vs
   (let vav = cake_def "v_all_vs" in
    LIST_INDUCT_TAC THEN REWRITE_TAC[MEM] THEN GEN_TAC THEN
@@ -1215,6 +1279,80 @@
    REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
    REPEAT DISJ2_TAC THEN MATCH_MP_TAC MEM_v_all_vs THEN
    ASM_REWRITE_TAC[])
+### v_all_vs_ts_MEM
+  (* and the timestamps of a value among the values of a value are
+     timestamps of that one *)
+  (let vav = cake_def "v_all_vs" in
+   let vat = cake_def "v_all_ts" in
+   let vnil = prove
+    (`v_all_vs ([]:dataSem_v list) = []`,
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   (* the values of a one-element list, and its timestamps *)
+   let vsing = prove
+    (`(!i:int. v_all_vs [Number i] = [Number i]) /\
+      (!w. v_all_vs [Word64 w] = [Word64 w]) /\
+      (!n. v_all_vs [CodePtr n] = [CodePtr n]) /\
+      (!b n. v_all_vs [RefPtr b n] = [RefPtr b n]) /\
+      (!ts tag l. v_all_vs [Block ts tag l] =
+                  Block ts tag l :: v_all_vs l)`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[vnil; APPEND_NIL]) in
+   let vats = prove
+    (`(!i:int. v_all_ts (Number i) = []) /\
+      (!w. v_all_ts (Word64 w) = []) /\
+      (!n. v_all_ts (CodePtr n) = []) /\
+      (!b n. v_all_ts (RefPtr b n) = []) /\
+      (!ts tag l. v_all_ts (Block ts tag l) =
+                  ts :: FLAT (MAP v_all_ts l))`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [vat] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[]) in
+   (* the values of a cons.  The theorem of the file that says this
+      and more stands later in the file than these theorems do *)
+   let vcons = prove
+    (`!(a:dataSem_v) l.
+        v_all_vs (CONS a l) = v_all_vs [a] ++ v_all_vs l`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `a:dataSem_v` (cases_of `:dataSem_v`)) THEN
+     GEN_REWRITE_TAC LAND_CONV [vav] THEN
+     GEN_REWRITE_TAC (RAND_CONV o LAND_CONV) [vav] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[vnil; APPEND_NIL; APPEND; GSYM APPEND_ASSOC]) in
+   let triv2 = REPEAT GEN_TAC THEN REWRITE_TAC[vsing; MEM] THEN
+     STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
+     FIRST_ASSUM CONTR_TAC in
+   let use2 =
+     FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun mt -> FIRST_ASSUM(fun m ->
+       MATCH_ACCEPT_TAC(MATCH_MP ih (CONJ mt m))))) in
+   SUBGOAL_THEN
+     `(!y x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs [y])
+                ==> MEM ts (v_all_ts y)) /\
+      (!l x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs l)
+                ==> MEM ts (FLAT (MAP v_all_ts l)))`
+     (fun th -> REPEAT GEN_TAC THEN STRIP_TAC THEN
+        FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a1 ->
+          MATCH_ACCEPT_TAC(MATCH_MP (CONJUNCT1 th) (CONJ a1 a2))))) THEN
+   MATCH_MP_TAC dataSem_v_INDUCT THEN REPEAT CONJ_TAC THENL
+    [triv2; triv2;
+     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[vsing; vats; MEM] THEN
+     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+       (DISJ_CASES_THEN2
+          (fun eq -> SUBST_ALL_TAC eq THEN
+             RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
+             FIRST_ASSUM MATCH_ACCEPT_TAC)
+          (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)));
+     triv2; triv2;
+     REWRITE_TAC[vnil; MEM];
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+     ONCE_REWRITE_TAC[vcons] THEN
+     REWRITE_TAC[MEM_APPEND; MAP; FLAT] THEN
+     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (DISJ_CASES_THEN2
+       (fun m -> ASSUME_TAC m THEN DISJ1_TAC THEN use2)
+       (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)))])
 ### v_all_vs_trans
   (* a value of v_all_vs [y] is y itself or, where y is a Block, one
      of the values of its payload, and v_all_vs_MEM says that the
