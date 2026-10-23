@@ -1945,6 +1945,51 @@
    ALL_INST3 memory_rel_ValueArray_IMP THEN
    ALL_INST3 memory_rel_ByteArray_IMP THEN
    ASM_MESON_TAC[])
+### Smallnum_bits
+  (* Smallnum is four times the integer, up to the sign, so
+     its two lowest bits are clear *)
+  (let bw2 = prove
+    (`!i. bit i (word 2:(N)word) <=> i = 1 /\ 1 < dimindex(:N)`,
+     GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [ARITH_RULE `2 = 2 EXP 1`] THEN
+     REWRITE_TAC[BIT_WORD_POW2]) in
+   let shl4 = prove
+    (`!(v:(N)word). word 4 * v = word_shl v 2`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let bits01 = prove
+    (`!(v:(N)word). (word 1 && word_shl v 2 = word 0) /\
+                    (word 2 && word_shl v 2 = word 0)`,
+     GEN_TAC THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+                 BIT_WORD_1; bw2; BIT_WORD_SHL] THEN
+     CONJ_TAC THEN GEN_TAC THEN DISCH_TAC THEN ARITH_TAC) in
+   let nmul = prove
+    (`!(i:int). &0 <= i
+        ==> n2w (num_of_int (&4 * i)) =
+            (n2w 4 * n2w (num_of_int i):(N)word)`,
+     REPEAT STRIP_TAC THEN
+     SUBGOAL_THEN `num_of_int (&4 * (i:int)) = 4 * num_of_int i`
+       SUBST1_TAC THENL
+      [FIRST_ASSUM(fun th ->
+         GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+           [GSYM(MATCH_MP INT_OF_NUM_OF_INT th)]) THEN
+       REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM];
+       REWRITE_TAC[WORD_MUL]]) in
+   REWRITE_TAC[cake_def "Smallnum"] THEN COND_CASES_TAC THENL
+    [SUBGOAL_THEN `&0 <= ((&0) - (i:int))` ASSUME_TAC THENL
+      [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+     REWRITE_TAC[WORD_SUB_LZERO; shl4] THEN
+     GEN_REWRITE_TAC (ONCE_DEPTH_CONV)
+       [WORD_RULE `word_neg (word_shl v 2) = word_shl (word_neg v) 2`]
+     THEN REWRITE_TAC[bits01];
+     SUBGOAL_THEN `&0 <= (i:int)` ASSUME_TAC THENL
+      [ASM_INT_ARITH_TAC; ALL_TAC] THEN
+     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
+     REWRITE_TAC[shl4; bits01]])
 ### memory_rel_Number_IMP
   (* the root of a small Number is the Data of its Smallnum,
      whose word_addr takes the tag bit off -- and Smallnum is
