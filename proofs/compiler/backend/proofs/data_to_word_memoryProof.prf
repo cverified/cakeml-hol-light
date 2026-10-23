@@ -1793,6 +1793,17 @@
   (* a RefPtr T is no MutBlock: every rule of v_inv that gives one
      a root says so *)
   (MEMORY_REL_TAC THEN V_INV_TAC THEN ASM_MESON_TAC[])
+### memory_rel_Number_bignum_IMP
+  (* the ALT of it says more; this is what the source keeps *)
+  (STRIP_TAC THEN
+   FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 -> FIRST_ASSUM(fun t3 ->
+     MP_TAC(MATCH_MP memory_rel_Number_bignum_IMP_ALT
+       (CONJ t1 (CONJ t2 t3)))))) THEN
+   STRIP_TAC THEN
+   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_exists(concl th) then CHOOSE_TAC th else fail())) THEN
+   ASM_MESON_TAC[])
 ### memory_rel_Boolv
   (STRIP_TAC THEN ASM_CASES_TAC `b:bool` THEN ASM_SIMP_TAC[] THENL
     [MATCH_MP_TAC memory_rel_Boolv_T;
@@ -2041,6 +2052,23 @@
         [REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
          ASM_ARITH_TAC;
          DISCH_THEN ACCEPT_TAC]]])
+### bind_each_fdom_limit
+  (* bind_each binds the k timestamps from ts up, so a timestamp
+     above ts + k is in neither it nor tf *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"; FDOM_FUPDATE; IN_INSERT;
+               DE_MORGAN_THM] THEN
+   STRIP_TAC THENL
+    [DISCH_TAC THEN
+     FIRST_X_ASSUM(MP_TAC o SPEC `x:num`) THEN
+     ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+     CONJ_TAC THENL
+      [ASM_ARITH_TAC;
+       FIRST_X_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+        [GEN_TAC THEN DISCH_TAC THEN
+         FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
+         ASM_REWRITE_TAC[] THEN ARITH_TAC;
+         ASM_ARITH_TAC]]])
 ### BlockRep_heap_length
   (REWRITE_TAC[cake_def "BlockRep"; heap_length_CONS; heap_length_NIL;
                cake_def "el_length"; LENGTH] THEN ARITH_TAC)
