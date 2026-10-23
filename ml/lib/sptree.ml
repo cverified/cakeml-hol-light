@@ -532,3 +532,83 @@ let lookup_mk_BS = prove
   REWRITE_TAC[cake_def "sptree_lookup"; COND_ID] THEN
   COND_CASES_TAC THEN
   REWRITE_TAC[cake_def "sptree_lookup"; COND_ID]);;
+
+(* the lookup of a delete: HOL4 sptreeScript.sml:717 *)
+
+let lookup_delete = prove
+ (`!(t:(A)spt) k1 k2.
+     sptree_lookup k1 (sptree_delete k2 t) =
+     (if k1 = k2 then NONE else sptree_lookup k1 t)`,
+  MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THENL
+   [REWRITE_TAC[cake_def "sptree_delete"; cake_def "sptree_lookup";
+                COND_ID];
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[cake_def "sptree_delete"] THEN
+    ASM_CASES_TAC `k2 = 0` THEN ASM_CASES_TAC `k1 = 0` THEN
+    ASM_REWRITE_TAC[cake_def "sptree_lookup"; COND_ID] THEN
+    ASM_MESON_TAC[];
+    REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+    ASM_CASES_TAC `k2 = 0` THEN ASM_CASES_TAC `k1 = 0` THEN
+    ASM_CASES_TAC `EVEN k2` THEN ASM_CASES_TAC `EVEN k1` THEN
+    ASM_REWRITE_TAC[cake_def "sptree_delete"; lookup_mk_BN] THEN
+    ASM_REWRITE_TAC[cake_def "sptree_lookup"] THEN
+    ASM_MESON_TAC[SPT_BIT_EQ_EQ];
+    REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+    ASM_CASES_TAC `k2 = 0` THEN ASM_CASES_TAC `k1 = 0` THEN
+    ASM_CASES_TAC `EVEN k2` THEN ASM_CASES_TAC `EVEN k1` THEN
+    ASM_REWRITE_TAC[cake_def "sptree_delete"; lookup_mk_BS;
+                    lookup_mk_BN] THEN
+    ASM_REWRITE_TAC[cake_def "sptree_lookup"] THEN
+    ASM_MESON_TAC[SPT_BIT_EQ_EQ]]);;
+
+(* and the lookup of a union, which takes the left value where there
+   is one.  HOL4's optcase_lemma, and the same as a conditional,
+   which is the form that a rewrite of the port can use: a match on
+   a scrutinee that is a variable is not reduced by MATCH_REDUCE_TAC
+   but mangled *)
+
+let optcase_lemma = prove
+ (`!opt:(A)option.
+     (match opt with NONE -> NONE | SOME v -> SOME v) = opt`,
+  GEN_TAC THEN
+  STRUCT_CASES_TAC(ISPEC `opt:(A)option` (cases_of `:(A)option`)) THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+let OPT_MATCH_COND = prove
+ (`!(opt:(A)option) y.
+     (match opt with NONE -> y | SOME v -> SOME v) =
+     (if opt = NONE then y else opt)`,
+  REPEAT GEN_TAC THEN
+  STRUCT_CASES_TAC(ISPEC `opt:(A)option` (cases_of `:(A)option`)) THEN
+  MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[distinctness "option"]);;
+
+let optcase_cond = REWRITE_RULE[OPT_MATCH_COND] optcase_lemma;;
+
+let lookup_union = prove
+ (`!(m1:(A)spt) m2 k.
+     sptree_lookup k (sptree_union m1 m2) =
+     (match sptree_lookup k m1 with
+        NONE -> sptree_lookup k m2
+      | SOME v -> SOME v)`,
+  REWRITE_TAC[OPT_MATCH_COND] THEN
+  MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THENL
+   [REWRITE_TAC[cake_def "sptree_union"; cake_def "sptree_lookup"];
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `m2:(A)spt` (cases_of `:(A)spt`)) THEN
+    REWRITE_TAC[cake_def "sptree_union"] THEN MATCH_REDUCE_TAC THEN
+    ASM_CASES_TAC `k = 0` THEN
+    ASM_REWRITE_TAC[cake_def "sptree_lookup"; optcase_cond;
+                    distinctness "option"];
+    REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `m2:(A)spt` (cases_of `:(A)spt`)) THEN
+    REWRITE_TAC[cake_def "sptree_union"] THEN MATCH_REDUCE_TAC THEN
+    ASM_CASES_TAC `k = 0` THEN ASM_CASES_TAC `EVEN k` THEN
+    ASM_REWRITE_TAC[cake_def "sptree_lookup"; optcase_cond;
+                    distinctness "option"];
+    REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `m2:(A)spt` (cases_of `:(A)spt`)) THEN
+    REWRITE_TAC[cake_def "sptree_union"] THEN MATCH_REDUCE_TAC THEN
+    ASM_CASES_TAC `k = 0` THEN ASM_CASES_TAC `EVEN k` THEN
+    ASM_REWRITE_TAC[cake_def "sptree_lookup"; optcase_cond;
+                    distinctness "option"]]);;
