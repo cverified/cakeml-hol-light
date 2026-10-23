@@ -504,3 +504,31 @@ let lookup_NONE_domain = prove
                          (cases_of `:(A)option`)) THEN
   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
   MESON_TAC[]);;
+
+(* the lookup in the smart constructors, which delete uses: they
+   give the LN or the LS where the children are empty, and the
+   lookup is the same as in the plain constructor *)
+
+let lookup_mk_BN = prove
+ (`!k t1 (t2:(A)spt).
+     sptree_lookup k (mk_BN t1 t2) = sptree_lookup k (BN t1 t2)`,
+  REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [cake_def "mk_BN"] THEN
+  STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
+  STRUCT_CASES_TAC(ISPEC `t2:(A)spt` (cases_of `:(A)spt`)) THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+  REWRITE_TAC[cake_def "sptree_lookup"; COND_ID] THEN
+  REPEAT COND_CASES_TAC THEN
+  REWRITE_TAC[cake_def "sptree_lookup"; COND_ID]);;
+
+let lookup_mk_BS = prove
+ (`!k t1 x (t2:(A)spt).
+     sptree_lookup k (mk_BS t1 x t2) = sptree_lookup k (BS t1 x t2)`,
+  REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [cake_def "mk_BS"] THEN
+  STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
+  STRUCT_CASES_TAC(ISPEC `t2:(A)spt` (cases_of `:(A)spt`)) THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+  REWRITE_TAC[cake_def "sptree_lookup"; COND_ID] THEN
+  COND_CASES_TAC THEN
+  REWRITE_TAC[cake_def "sptree_lookup"; COND_ID]);;
