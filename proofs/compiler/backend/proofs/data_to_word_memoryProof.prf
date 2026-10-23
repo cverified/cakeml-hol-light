@@ -1690,6 +1690,20 @@
      REWRITE_TAC lrw THEN
      CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) in
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### LENGTH_EQ_3
+  (* one element off the front and LENGTH_EQ_2 says the rest *)
+  (let lrw = [LENGTH; CONS_11; NOT_CONS_NIL; LENGTH_EQ_NIL;
+              EQ_SYM_EQ; ARITH_RULE `~(0 = 3)`;
+              ARITH_RULE `(SUC n = 3) <=> (n = 2)`] in
+   let aux = prove
+    (`!xs:A list. (LENGTH xs = 3 <=> ?a1 a2 a3. xs = [a1; a2; a3]) /\
+                  (3 = LENGTH xs <=> ?a1 a2 a3. xs = [a1; a2; a3])`,
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `xs:A list` list_CASES_v) THEN
+     REWRITE_TAC lrw THEN
+     TRY(CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) THEN
+     MATCH_ACCEPT_TAC(CONJUNCT1 LENGTH_EQ_2)) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
 ### heap_split_SOME_APPEND
   (REWRITE_TAC[heap_split_APPEND_if] THEN REPEAT GEN_TAC THEN
    COND_CASES_TAC THEN EVERY_CASE_TAC THEN
