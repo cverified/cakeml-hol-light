@@ -4950,7 +4950,15 @@ let store_list_append = cake_theorem "store_list_append"
          m0 /\
             data_to_word_memoryProof_store_list (a +
               bytes_in_word * n2w (LENGTH xs)) ys m0 dm = SOME m1)`)
-  CHEAT_TAC;;
+  (* the store of the append stores xs and then ys, at the address
+     that the length of xs moves on to *)
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[APPEND;
+                   cake_def "data_to_word_memoryProof_store_list";
+                   LENGTH; WORD_ADD_MUL_0; WORD_ADD_MUL_SUC] THEN
+   TRY(COND_CASES_TAC) THEN
+   ASM_REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   MESON_TAC[]);;
 
 let minus_lemma = cake_theorem "minus_lemma[local]"
   (fun () ->
@@ -5967,13 +5975,26 @@ let get_addr_0 = cake_theorem "get_addr_0"
   (fun () ->
     `FAPPLY
         (get_addr c n u) 0`)
-  CHEAT_TAC;;
+  (* the lowest bit of get_addr is the one that get_lowerbits ors
+     in, whichever of its two clauses applies *)
+  (REWRITE_TAC[word_index; cake_def "get_addr"] THEN
+   CASES_ON_NAME "u" THEN
+   REWRITE_TAC[cake_def "get_lowerbits"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[BIT_WORD_OR; BIT_WORD_1] THEN
+   MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`]);;
 
 let word_addr_eq_Loc = cake_theorem "word_addr_eq_Loc"
   (fun () ->
     `word_addr c v = Loc l1 l2 <=> l2 = 0 /\ (?l2. v = gc_shared_Data
   (Loc l1 l2))`)
-  CHEAT_TAC;;
+  (* only the Data of a Loc has a Loc for its word_addr, and the
+     second component of it is zero *)
+  (CASES_ON_NAME "v" THEN TRY(CASES_ON_NAME "a") THEN
+   REWRITE_TAC[cake_def "word_addr"] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[distinctness "word_loc"; injectivity "word_loc";
+               distinctness "heap_address";
+               injectivity "heap_address"] THEN
+   MESON_TAC[]);;
 
 let blocks_unique_CodePtr = cake_theorem "blocks_unique_CodePtr"
   (fun () ->
@@ -7519,7 +7540,18 @@ let fix_clock_word_eq = cake_theorem "fix_clock_word_eq[local]"
   (fun () ->
     `fix_clock ck l (word_eq c st dm m l ck w1 w2) = word_eq c st dm m
   l ck w1 w2`)
-  CHEAT_TAC;;
+  (* word_eq gives a clock and a budget that are no larger than the
+     ones it was given, so fix_clock leaves its result alone *)
+  (let wle = CONJUNCT1 word_eq_LESS_EQ in
+   (fun (asl,w as gl) -> CASES_ON_TAC (rand w) gl) THEN
+   REWRITE_TAC[cake_def "data_to_word_memoryProof_fix_clock"] THEN
+   TRY(CASES_ON_NAME "a" THEN CASES_ON_NAME "y" THEN
+       REWRITE_TAC[cake_def
+                     "data_to_word_memoryProof_fix_clock"]) THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+   FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP wle th)) THEN
+   ARITH_TAC);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:14055-14056: a theorem
    that HOL4 states as the value of an ML expression: word_eq_def *)
@@ -7595,7 +7627,9 @@ let eq_explode_APPEND = cake_theorem "eq_explode_APPEND[local]"
        eq_explode a m dm (xs ++ ys) =
        eq_explode a m dm xs ++
        eq_explode (a + n2w (LENGTH xs) * bytes_in_word) m dm ys`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[APPEND; cake_def "eq_explode"; LENGTH;
+                   WORD_ADD_0_MUL; WORD_ADD_SUC_MUL]);;
 
 let eq_assum_APPEND = cake_theorem "eq_assum_APPEND[local]"
   (fun () ->
@@ -7603,7 +7637,9 @@ let eq_assum_APPEND = cake_theorem "eq_assum_APPEND[local]"
        eq_assum a m dm (xs ++ ys) <=>
        eq_assum a m dm xs /\
        eq_assum (a + n2w (LENGTH xs) * bytes_in_word) m dm ys`)
-  CHEAT_TAC;;
+  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   ASM_REWRITE_TAC[APPEND; cake_def "eq_assum"; LENGTH;
+                   WORD_ADD_0_MUL; WORD_ADD_SUC_MUL; CONJ_ASSOC]);;
 
 let memory_rel_Block_explode_lemma =
   cake_theorem "memory_rel_Block_explode_lemma[local]"
