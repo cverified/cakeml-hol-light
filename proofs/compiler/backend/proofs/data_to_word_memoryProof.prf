@@ -1376,6 +1376,29 @@
    STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
    RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
    CONV_TAC NUM_REDUCE_CONV THEN ASM_INT_ARITH_TAC)
+### num_less_thm
+  (* the words are the i2w of four times the integers, whose
+     ival is the integer itself because a small integer times
+     four is between INT_MIN and INT_MAX *)
+  (let bnds = prove
+    (`good_dimindex (:'a) /\ small_int (:'a) i ==>
+       --(&2 pow (dimindex (:'a) - 1)) <= (&4) * i /\
+       (&4) * i < &2 pow (dimindex (:'a) - 1)`,
+     REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+                 dimword] THEN
+     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     CONV_TAC(ONCE_DEPTH_CONV INT_POW_CONV) THEN
+     ASM_INT_ARITH_TAC) in
+   STRIP_TAC THEN
+   REWRITE_TAC[smallnum_i2w; word_ilt; irelational2] THEN
+   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+   ASSUM_LIST(fun ths ->
+     REWRITE_TAC(mapfilter (fun (a,b) ->
+       MATCH_MP IVAL_IWORD (MATCH_MP bnds (CONJ a b)))
+       (allpairs (fun a b -> (a,b)) ths ths))) THEN
+   INT_ARITH_TAC)
 ### reachable_refs_stack_subset
   (* the roots of the one stack are roots of the other, and
      reachable_refs asks for nothing else of them *)

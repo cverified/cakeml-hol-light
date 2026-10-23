@@ -3946,7 +3946,18 @@ let num_eq_thm = cake_theorem "num_eq_thm"
 let smallnum_i2w = cake_theorem "Smallnum_i2w"
   (fun () ->
     `Smallnum i = i2w ((&4) * i)`)
-  CHEAT_TAC;;
+  (* Smallnum writes the two cases of i2w out: a negative integer
+     is the negation of the word of its absolute value, and & of
+     the number of a non-negative integer is the integer itself *)
+  (REWRITE_TAC[cake_def "Smallnum"] THEN COND_CASES_TAC THENL
+    [REWRITE_TAC[WORD_SUB_LZERO] THEN
+     ONCE_REWRITE_TAC[WORD_IWORD] THEN
+     REWRITE_TAC[GSYM IWORD_INT_NEG] THEN AP_TERM_TAC THEN
+     SUBGOAL_THEN `&0 <= &4 * ((&0) - (i:int))` (fun th ->
+       REWRITE_TAC[MATCH_MP INT_OF_NUM_OF_INT th]) THENL
+      [ASM_INT_ARITH_TAC; INT_ARITH_TAC];
+     ONCE_REWRITE_TAC[WORD_IWORD] THEN AP_TERM_TAC THEN
+     MATCH_MP_TAC INT_OF_NUM_OF_INT THEN ASM_INT_ARITH_TAC]);;
 
 let small_int_IMP_MIN_MAX = cake_theorem "small_int_IMP_MIN_MAX"
   (fun () ->
@@ -3966,7 +3977,28 @@ let num_less_thm = cake_theorem "num_less_thm"
   (fun () ->
     `good_dimindex (:'a) /\ small_int (:'a) i1 /\ small_int (:'a) i2 ==>
       ((i1 < i2) <=> (Smallnum i1 < (Smallnum i2:'a word)))`)
-  CHEAT_TAC;;
+  (* the words are the i2w of four times the integers, whose
+     ival is the integer itself because a small integer times
+     four is between INT_MIN and INT_MAX *)
+  (let bnds = prove
+    (`good_dimindex (:'a) /\ small_int (:'a) i ==>
+       --(&2 pow (dimindex (:'a) - 1)) <= (&4) * i /\
+       (&4) * i < &2 pow (dimindex (:'a) - 1)`,
+     REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+                 dimword] THEN
+     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     CONV_TAC(ONCE_DEPTH_CONV INT_POW_CONV) THEN
+     ASM_INT_ARITH_TAC) in
+   STRIP_TAC THEN
+   REWRITE_TAC[smallnum_i2w; word_ilt; irelational2] THEN
+   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+   ASSUM_LIST(fun ths ->
+     REWRITE_TAC(mapfilter (fun (a,b) ->
+       MATCH_MP IVAL_IWORD (MATCH_MP bnds (CONJ a b)))
+       (allpairs (fun a b -> (a,b)) ths ths))) THEN
+   INT_ARITH_TAC);;
 
 (* permute stack *)
 
@@ -6013,7 +6045,14 @@ let memory_rel_tag_limit = cake_theorem "memory_rel_tag_limit"
   word_loc)) :: rest) /\
       good_dimindex (:'a) ==>
       tag < dimword (:'a) DIV 16`)
-  CHEAT_TAC;;
+  (* the tag of an empty Block is below the bound by what
+     memory_rel_Block_IMP says, and the tag of a Block with a
+     payload by the header that encode_header gives it *)
+  (STRIP_TAC THEN USE2 memory_rel_Block_IMP THEN STRIP_TAC THEN
+   OPEN_COND THEN
+   TRY(FIRST_ASSUM ACCEPT_TAC) THEN
+   USE2 encode_header_tag_mask THEN STRIP_TAC THEN
+   FIRST_ASSUM ACCEPT_TAC);;
 
 let LESS_DIV_16_IMP = cake_theorem "LESS_DIV_16_IMP[local]"
   (fun () ->
@@ -6277,7 +6316,11 @@ let memory_rel_RefPtr_IMP_lemma =
     `memory_rel c be ts refs sp st m dm ((RefPtr bl p,(v:'a word_loc))
   :: vars) ==>
       (?res. lookup p refs = SOME res)`)
-  CHEAT_TAC;;
+  (* every rule of v_inv for a RefPtr says that the pointer is in
+     the refs: the first through the domain of f, the other two
+     with the lookup itself *)
+  (MEMORY_REL_TAC THEN V_INV_TAC THEN
+   ASM_MESON_TAC[domain_lookup; SUBSET]);;
 
 (* a compare-by-pointer RefPtr can never point at a MutBlock: v_inv's RefPtr
    case demands ~b when the ref is a MutBlock *)
@@ -6450,7 +6493,16 @@ let memory_rel_Number_bignum_IMP =
         m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs
           i))) /\
         ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i))`)
-  CHEAT_TAC;;
+  (* the ALT of it says more; this is what the source keeps *)
+  (STRIP_TAC THEN
+   FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 -> FIRST_ASSUM(fun t3 ->
+     MP_TAC(MATCH_MP memory_rel_Number_bignum_IMP_ALT
+       (CONJ t1 (CONJ t2 t3)))))) THEN
+   STRIP_TAC THEN
+   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_exists(concl th) then CHOOSE_TAC th else fail())) THEN
+   ASM_MESON_TAC[]);;
 
 let memory_rel_Word64_IMP = cake_theorem "memory_rel_Word64_IMP"
   (fun () ->
@@ -8425,7 +8477,22 @@ let bind_each_fdom_limit = cake_theorem "bind_each_fdom_limit"
     `!k tf ts n i x.
        (!t. t IN FDOM tf ==> t < ts) /\ ts + k < x ==> ~(x IN
          FDOM (bind_each tf ts n i k))`)
-  CHEAT_TAC;;
+  (* bind_each binds the k timestamps from ts up, so a timestamp
+     above ts + k is in neither it nor tf *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"; FDOM_FUPDATE; IN_INSERT;
+               DE_MORGAN_THM] THEN
+   STRIP_TAC THENL
+    [DISCH_TAC THEN
+     FIRST_X_ASSUM(MP_TAC o SPEC `x:num`) THEN
+     ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+     CONJ_TAC THENL
+      [ASM_ARITH_TAC;
+       FIRST_X_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+        [GEN_TAC THEN DISCH_TAC THEN
+         FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
+         ASM_REWRITE_TAC[] THEN ARITH_TAC;
+         ASM_ARITH_TAC]]]);;
 
 let bind_each_FUPDATE = cake_theorem "bind_each_FUPDATE"
   (fun () ->
