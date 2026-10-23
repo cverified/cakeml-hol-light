@@ -3869,7 +3869,52 @@ let reachable_refs_MutCons =
        (insert ptr (bvlSem_MutBlock tag F l c r) refs) n /\ ~(n =
          ptr) /\ ~(ptr IN domain refs) ==>
      reachable_refs ((l ++ [c] ++ r) ++ stack) refs n`)
-  CHEAT_TAC;;
+  (* reachable_refs_MutCons_lemma says of a path through the new
+     references that it is one of the old ones or that it starts
+     inside the payload of the MutBlock.  A root of the stack keeps
+     its path; the only other root is the pointer to the MutBlock,
+     whose path cannot start at all, because ptr is fresh and so has
+     no edge; and a path from the payload has its root among the
+     payload's values *)
+  (
+   let mem_block_refs = prove
+    (`!(ys:(dataSem_v)list) ss tt aa.
+        MEM ss (get_refs (Block tt aa ys))
+        ==> ?yy. MEM yy ys /\ MEM ss (get_refs yy)`,
+     REWRITE_TAC[cake_def "get_refs"; MEM_FLAT; MEM_MAP] THEN
+     MESON_TAC[]) in
+   let subst_vars =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_eq(concl th) && is_var(lhand(concl th))
+       then SUBST_ALL_TAC th else fail())) in
+   let payload b =
+     X_CHOOSE_THEN `ss:num` (CONJUNCTS_THEN2
+       (fun m -> MP_TAC(MATCH_MP mem_block_refs m)) ASSUME_TAC) b THEN
+     DISCH_THEN(X_CHOOSE_THEN `yy:dataSem_v` STRIP_ASSUME_TAC) THEN
+     MAP_EVERY EXISTS_TAC [`yy:dataSem_v`; `ss:num`] THEN
+     ASM_REWRITE_TAC[MEM_APPEND] in
+   let noedge a =
+     MP_TAC(ONCE_REWRITE_RULE[RTC_CASES] a) THEN
+     FIRST_ASSUM(fun nd ->
+       let th = REWRITE_RULE[GSYM lookup_NONE_domain] nd in
+       if concl th = concl nd then fail()
+       else REWRITE_TAC[cake_def "ref_edge"; th]) THEN
+     MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[] in
+   let stackcase a =
+     ASSUME_TAC a THEN
+     W(fun gl -> MAP_EVERY (fun n -> EXISTS_TAC (var_by_name n gl))
+                   ["x"; "r'"]) THEN
+     ASM_REWRITE_TAC[MEM_APPEND] in
+   let uselemma =
+     FIRST_ASSUM(fun rtc -> FIRST_ASSUM(fun ne ->
+       MP_TAC(MATCH_MP (MATCH_MP
+         (cake_thm "reachable_refs_MutCons_lemma") rtc) ne))) in
+   REWRITE_TAC[cake_def "reachable_refs"; MEM] THEN STRIP_TAC THENL
+    [subst_vars THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[cake_def "get_refs"; MEM]) THEN
+     subst_vars THEN uselemma THEN
+     DISCH_THEN(DISJ_CASES_THEN2 noedge payload);
+     uselemma THEN DISCH_THEN(DISJ_CASES_THEN2 stackcase payload)]);;
 
 (* lifting a v_inv across the MutCons allocation: refs gains a fresh ref and f
    gains its binding, and the heap only grew *)
@@ -3879,7 +3924,27 @@ let v_inv_MutCons_step = cake_theorem "v_inv_MutCons_step[local]"
      FDOM f SUBSET domain refs /\ heap_store_rel heap heap2 ==>
        v_inv conf v (insert ptr (bvlSem_MutBlock tag F l c r) refs)
          (y,f |+ (ptr,a),tf,heap2)`)
-  CHEAT_TAC;;
+  (* the point is fresh in the references, so it is not in the
+     domain of the map and the map is a SUBMAP of its update there;
+     v_inv_MutBlock_insert adds the MutBlock to the references and
+     v_inv_SUBMAP takes the relation to the bigger map and the
+     bigger heap *)
+  (
+   let submap_fupd = prove
+    (`!(g:(A,B)fmap) k v. ~(k IN FDOM g) ==> g SUBMAP (g |+ (k,v))`,
+     REWRITE_TAC[SUBMAP; FDOM_FUPDATE; IN_INSERT;
+                 FAPPLY_FUPDATE_THM] THEN MESON_TAC[]) in
+   STRIP_TAC THEN
+   SUBGOAL_THEN `~(ptr IN FDOM (f:(num,num)fmap))` ASSUME_TAC THENL
+    [ASM_MESON_TAC[SUBSET]; ALL_TAC] THEN
+   FIRST_ASSUM(fun nf -> ASSUME_TAC(MATCH_MP submap_fupd nf)) THEN
+   FIRST_ASSUM(fun vi -> FIRST_ASSUM(fun nd -> FIRST_ASSUM(fun sub ->
+     ASSUME_TAC(MATCH_MP (cake_thm "v_inv_MutBlock_insert")
+       (CONJ vi (CONJ nd sub)))))) THEN
+   MATCH_MP_TAC (GEN_ALL (cake_thm "v_inv_SUBMAP")) THEN
+   W(fun gl -> MAP_EVERY (fun n -> EXISTS_TAC (var_by_name n gl))
+                 ["f"; "tf"; "heap"]) THEN
+   ASM_REWRITE_TAC[SUBMAP_REFL]);;
 
 let take_el_drop = cake_theorem "take_el_drop[local]"
   (fun () ->
@@ -9627,7 +9692,18 @@ let word_addr_Data_NE_get_addr =
   (fun () ->
     `good_dimindex (:'a) ==> ~(word_addr c (gc_shared_Data a1) =
   wordLang_Word (get_addr c n a2:'a word))`)
-  CHEAT_TAC;;
+  (* the address of a Data of a Loc is a Loc, and the one of a Data
+     of a word has its lowest bit taken off, where get_addr_0 says
+     that the lowest bit of an address is set *)
+  (DISCH_TAC THEN CASES_ON_NAME "a1" THEN
+   REWRITE_TAC(word_addr_clauses () @
+               [distinctness "word_loc"; injectivity "word_loc"]) THEN
+   DISCH_TAC THEN
+   FIRST_ASSUM(fun eq ->
+     let ga = PART_MATCH (rand o rator)
+                (GEN_ALL (cake_thm "get_addr_0")) (rand (concl eq)) in
+     CONTR_TAC(REWRITE_RULE[GSYM eq; word_index; BIT_WORD_AND;
+                            BIT_WORD_NOT; BIT_WORD_1] ga)));;
 
 let memory_rel_Block_ptr_eq = cake_theorem "memory_rel_Block_ptr_eq"
   (fun () ->
