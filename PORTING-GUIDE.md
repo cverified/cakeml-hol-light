@@ -1897,7 +1897,50 @@ them equal, and `MATCH_ACCEPT_TAC` can fail where `ACCEPT_TAC`
 works, so a failing `MATCH_ACCEPT_TAC` is worth retrying as
 `ACCEPT_TAC` before looking for a deeper cause.)
 
-## 26. The arithmetic of HOL Light is not HOL4's arithmetic
+## 26. A match whose scrutinee is a call, not a variable
+
+### The idiom
+
+HOL4 writes a definition whose body looks at the value of another
+one:
+
+```
+xor_bytes (b1::bs1) (b2::bs2) =
+  case xor_bytes bs1 bs2 of NONE => NONE
+  | SOME rest => SOME (b1 ?? b2 :: rest)
+```
+
+### What it means
+
+`MATCH_REDUCE_TAC` reduces a match whose scrutinee is a
+constructor.  Where the scrutinee is a call (`xor_bytes bs1 bs2`)
+there is nothing to reduce, and what it leaves is the match
+expanded into its definition -- an `existsunique` and two `@`
+terms, which no later tactic gets anywhere with.  A
+`STRUCT_CASES_TAC` on the scrutinee does not help either: the
+substitution does not reach the occurrences inside the expanded
+match, and the case that the goal keeps is not the case that the
+match reduces to.
+
+So the scrutinee is taken apart **before** the match is reduced,
+and `EVERY_CASE_TAC` (HOL4's `every_case_tac`, which is
+`CASE_SPLIT_TAC` and a reduce, up to ten times) is what does it:
+it splits the innermost scrutinee with `CASES_ON_TAC`, which
+keeps the equation of the case as an assumption, and reduces the
+match in each case.  The idiom is
+
+```
+GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [cake_def "xor_bytes"] THEN
+EVERY_CASE_TAC THEN ...
+```
+
+with **no** `MATCH_REDUCE_TAC` in between: one of those mangles the
+goal before the split, and then `EVERY_CASE_TAC` has nothing to
+split any more.  Where the scrutinee is a constructor already (the
+other clauses of the same definition), `MATCH_REDUCE_TAC` is the
+one to use.
+
+## 27. The arithmetic of HOL Light is not HOL4's arithmetic
 
 ### The idiom
 
@@ -1920,7 +1963,7 @@ made `all_ones_bit` of data_to_word_memoryProof false as stated
 d` is `3 * ((a + 1) * d)` and a rewrite with `MULT_ASSOC` is what
 puts it the other way round.
 
-## 27. The induction of a type that nests a list of itself
+## 28. The induction of a type that nests a list of itself
 
 ### The idiom
 

@@ -2574,6 +2574,37 @@
      GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
      ASM_REWRITE_TAC[MAP; ALL2; ALL]) in
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux)
+### ALOOKUP_ZIP_EL
+  (* the lookup of the nth key walks past the n keys before it,
+     which the hypothesis says are not that key, and the pair that
+     the zip has there is the nth key with the nth value *)
+  (let split = prove
+    (`!(h:A) t k. (!m. m < SUC k ==> ~(EL m (CONS h t) = EL k t))
+        ==> ~(h = EL k t) /\ (!m. m < k ==> ~(EL m t = EL k t))`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN CONJ_TAC THENL
+      [FIRST_X_ASSUM(MP_TAC o SPEC `0`) THEN
+       REWRITE_TAC[LT_0; EL; HD];
+       GEN_TAC THEN DISCH_TAC THEN
+       FIRST_X_ASSUM(MP_TAC o SPEC `SUC m`) THEN
+       REWRITE_TAC[EL; TL; LT_SUC] THEN ASM_REWRITE_TAC[]]) in
+   LIST_INDUCT_TAC THENL
+    [REWRITE_TAC[LENGTH; ARITH_RULE `((n:num) < 0) <=> F`];
+     (fun (asl,w as gl) ->
+        let hsv = fst(dest_forall w) in
+        (X_GEN_TAC hsv THEN
+         STRUCT_CASES_TAC(ISPEC hsv list_CASES_v)) gl) THEN
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `n:num` num_CASES) THEN
+     REWRITE_TAC[LENGTH; ZIP; ALOOKUP; EL; HD; TL; FST; SND;
+                 ARITH_RULE `(0 = SUC n) <=> F`;
+                 ARITH_RULE `(SUC n = 0) <=> F`] THEN
+     TRY(CONV_TAC TAUT) THEN
+     STRIP_TAC THEN
+     FIRST_ASSUM(fun th -> STRIP_ASSUME_TAC (MATCH_MP split th)) THEN
+     ASM_REWRITE_TAC[] THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     REPEAT CONJ_TAC THEN TRY ASM_ARITH_TAC THEN
+     ASM_REWRITE_TAC[]])
 ### memory_rel_rearrange
   (* the witnesses of the goal's existential are the ones the
      assumption has: HOL4's asm_exists_tac, ml/lib/tactics.ml *)
@@ -4693,6 +4724,29 @@
         DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST_ALL_TAC) THEN
         REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
         TRY(REWRITE_TAC[]) THEN TRY(ASM_ARITH_TAC)]]))
+### xor_bytes_length
+  (* the xor of two lists of bytes is as long as the second and at
+     least as long as the first, by the induction of the
+     definition; the case of the xor of the tails is what
+     EVERY_CASE_TAC splits *)
+  (let xb = cake_def "xor_bytes" in
+   LIST_INDUCT_TAC THENL
+    [REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [xb] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[injectivity "option"] THEN
+     DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[LENGTH; LE_0];
+     (fun (asl,w as gl) ->
+        let ysv = fst(dest_forall w) in
+        (X_GEN_TAC ysv THEN
+         STRUCT_CASES_TAC(ISPEC ysv list_CASES_v)) gl) THEN
+     GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [xb] THEN
+     EVERY_CASE_TAC THEN
+     REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+     TRY(DISCH_THEN(SUBST1_TAC o SYM)) THEN
+     REWRITE_TAC[LENGTH; LE_SUC; SUC_INJ] THEN
+     FIRST_ASSUM(fun st -> FIRST_ASSUM(fun ih ->
+       ACCEPT_TAC(MATCH_MP ih st)))])
 ### el_length_Bytes
   (REWRITE_TAC[cake_def "Bytes"] THEN
    CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
