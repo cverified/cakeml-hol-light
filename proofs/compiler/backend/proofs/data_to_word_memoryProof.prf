@@ -114,6 +114,241 @@
          REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
          MATCH_ACCEPT_TAC(CONJUNCT2 a)))]) in
    REPEAT STRIP_TAC THEN ASM_MESON_TAC[mono])
+### v_inv_def
+  (* v_inv is v_inv_ck for every ck, so each clause is the cases
+     theorem of the relation with the constructor of the value put
+     in: the disjuncts of the other constructors go by
+     distinctness, and the existentials of the rule are unwound
+     against the arguments of the clause.
+     Where a rule is recursive the two directions differ.  From a
+     clause to the relation the value of the clause holds for every
+     ck, so it holds for ck - 1.  The other way round the witness
+     of the rule has to be the same for every ck: of a Block it is,
+     because the pointer of x fixes the heap element and the
+     element fixes the list (ALL2_SWAP then pulls the ck out of the
+     list).  Of a RefPtr there are two rules for a thunk -- the
+     value lives in a ThunkBlock of the heap, or it is x itself --
+     and a derivation may use either at any ck.  So the one that
+     every ck admits is found by taking the ck at which the other
+     one fails and using v_inv_ck_mono to bring a derivation of a
+     greater ck down to it *)
+  (let (vr,vi,vc) = v_inv_ck in
+   let rl = CONJUNCTS vr in
+   let mono_thm = cake_thm "v_inv_ck_mono" in
+   let unw = CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+             REWRITE_TAC tidy_rws in
+   let cas th = ONCE_REWRITE_RULE[vc] th in
+   let dis = [distinctness "dataSem_v"; injectivity "dataSem_v";
+              PAIR_EQ] in
+   let base = REWRITE_TAC[v_inv_eq] THEN ONCE_REWRITE_TAC[vc] THEN
+              REWRITE_TAC dis THEN unw in
+   let ls_tm = `ys:(('a word_loc)heap_address)list` in
+   let y_tm = `y:(('a word_loc)heap_address)` in
+   (* a Block of a value that is no list of its own *)
+   let blk_tac =
+     REWRITE_TAC[v_inv_eq] THEN
+     ASM_CASES_TAC `vs:(dataSem_v) list = []` THEN
+     ASM_REWRITE_TAC[] THENL
+      [base;
+       EQ_TAC THENL
+        [DISCH_TAC THEN
+         FIRST_ASSUM(fun th -> MP_TAC(cas (SPEC `0` th))) THEN
+         REWRITE_TAC dis THEN unw THEN ASM_REWRITE_TAC[] THEN
+         DISCH_THEN(X_CHOOSE_THEN `p:num`
+           (X_CHOOSE_THEN ls_tm STRIP_ASSUME_TAC)) THEN
+         SUBST_LHS_TAC THEN
+         MAP_EVERY EXISTS_TAC [`p:num`; ls_tm] THEN
+         ASM_REWRITE_TAC[] THEN
+         MATCH_MP_TAC ALL2_SWAP THEN X_GEN_TAC `ck:num` THEN
+         FIRST_ASSUM(fun th -> MP_TAC(cas (SPEC `ck + 1` th))) THEN
+         REWRITE_TAC(dis @ [injectivity "heap_address";
+                            distinctness "heap_address"]) THEN
+         unw THEN ASM_REWRITE_TAC[] THEN
+         REWRITE_TAC[injectivity "option"; cake_def "BlockRep";
+                     injectivity "heap_element"; PAIR_EQ] THEN
+         unw THEN
+         REWRITE_TAC[ARITH_RULE `~(ck + 1 = 0)`;
+                     ARITH_RULE `(ck + 1) - 1 = ck`] THEN
+         DISCH_TAC THEN FIRST_ASSUM MATCH_ACCEPT_TAC;
+         DISCH_THEN(X_CHOOSE_THEN `p:num`
+           (X_CHOOSE_THEN ls_tm STRIP_ASSUME_TAC)) THEN
+         X_GEN_TAC `ck:num` THEN SUBST_LHS_TAC THEN
+         MATCH_MP_TAC(el 8 rl) THEN
+         REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THEN
+         DISCH_TAC THEN
+         FIRST_ASSUM(fun th ->
+           if can (term_match []
+                     `EVERY2 (p:A->B->bool) l m`) (concl th)
+           then MP_TAC th else fail()) THEN
+         MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
+         REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_ACCEPT_TAC]] in
+   (* a RefPtr: the thunk of the two recursive rules is named by the
+      lookup of the refs and its heap element by the pointer, so a
+      derivation of one ck tells what the other ones must say *)
+   let step = prove
+    (`!ck conf n (refs:(dataSem_v bvlSem_ref) spt) b ev vv y x f tf
+         (heap:(('a word_loc,data_to_word_memoryProof_tag#('a
+           word_loc) list)heap_element) list).
+        v_inv_ck (ck + 1) conf (RefPtr b n) refs (x,f,tf,heap) /\
+        lookup n refs = SOME (Thunk ev vv) /\
+        heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev y)
+        ==> (n IN FDOM f /\ ~b /\
+             x = gc_shared_Pointer (FAPPLY f n)
+                   (wordLang_Word (n2w 0)) /\
+             (ev = Evaluated ==> dest_thunk vv refs = NotThunk) /\
+             v_inv_ck ck conf vv refs (y,f,tf,heap)) \/
+            (ev = Evaluated /\ dest_thunk vv refs = NotThunk /\ ~b /\
+             v_inv_ck ck conf vv refs (x,f,tf,heap))`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(fun th ->
+       MP_TAC(cas (CONJUNCT1 th)) THEN
+       MAP_EVERY ASSUME_TAC (CONJUNCTS(CONJUNCT2 th))) THEN
+     REWRITE_TAC dis THEN unw THEN
+     ASM_REWRITE_TAC[injectivity "option"; injectivity "bvlSem_ref";
+                     distinctness "bvlSem_ref"; ThunkBlock_11;
+                     GSYM NOT_EXISTS_THM] THEN
+     unw THEN
+     REWRITE_TAC[ARITH_RULE `~(ck + 1 = 0)`;
+                 ARITH_RULE `(ck + 1) - 1 = ck`] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[]) in
+   (* and the same where the heap element is not known yet *)
+   let step2 = prove
+    (`!ck conf n (refs:(dataSem_v bvlSem_ref) spt) b ev vv x f tf
+         (heap:(('a word_loc,data_to_word_memoryProof_tag#('a
+           word_loc) list)heap_element) list).
+        v_inv_ck (ck + 1) conf (RefPtr b n) refs (x,f,tf,heap) /\
+        lookup n refs = SOME (Thunk ev vv)
+        ==> (?y. heap_lookup (FAPPLY f n) heap =
+                   SOME (ThunkBlock ev y) /\
+                 n IN FDOM f /\ ~b /\
+                 x = gc_shared_Pointer (FAPPLY f n)
+                       (wordLang_Word (n2w 0)) /\
+                 (ev = Evaluated ==> dest_thunk vv refs = NotThunk)
+                 /\ v_inv_ck ck conf vv refs (y,f,tf,heap)) \/
+            (ev = Evaluated /\ dest_thunk vv refs = NotThunk /\ ~b /\
+             v_inv_ck ck conf vv refs (x,f,tf,heap))`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(fun th ->
+       MP_TAC(cas (CONJUNCT1 th)) THEN
+       MAP_EVERY ASSUME_TAC (CONJUNCTS(CONJUNCT2 th))) THEN
+     REWRITE_TAC dis THEN unw THEN
+     ASM_REWRITE_TAC[injectivity "option"; injectivity "bvlSem_ref";
+                     distinctness "bvlSem_ref"; ThunkBlock_11;
+                     GSYM NOT_EXISTS_THM] THEN
+     unw THEN
+     REWRITE_TAC[ARITH_RULE `~(ck + 1 = 0)`;
+                 ARITH_RULE `(ck + 1) - 1 = ck`] THEN
+     STRIP_TAC THEN ASM_MESON_TAC[]) in
+   (* the three shapes that the relation at ck = 0 can have *)
+   let fwd_pre =
+     DISCH_TAC THEN
+     FIRST_ASSUM(fun th -> MP_TAC(cas (SPEC `0` th))) THEN
+     REWRITE_TAC dis THEN unw THEN ASM_REWRITE_TAC[] THEN
+     DISCH_THEN(DISJ_CASES_THEN2 STRIP_ASSUME_TAC
+       (DISJ_CASES_THEN2
+          (X_CHOOSE_THEN `ev:thunk_mode`
+             (X_CHOOSE_THEN `vv:dataSem_v`
+                (X_CHOOSE_THEN y_tm STRIP_ASSUME_TAC)))
+          (X_CHOOSE_THEN `vv:dataSem_v` STRIP_ASSUME_TAC))) in
+   (* the terms are written with the type of a heap address in
+      them, because a variable of the goal that the parser is left
+      to type gets a type of its own and is another variable *)
+   let vy = `!ck. v_inv_ck ck conf vv refs
+                    (y:(('a word_loc)heap_address),f,tf,heap)` in
+   let vx = `!ck. v_inv_ck ck conf vv refs
+                    (x:(('a word_loc)heap_address),f,tf,heap)` in
+   let sg_tm =
+     `!ck2. ev = Evaluated /\ dest_thunk vv refs = NotThunk /\
+            v_inv_ck ck2 conf vv refs
+              (x:(('a word_loc)heap_address),f,tf,heap)` in
+   let case2 =
+     DISJ2_TAC THEN
+     ASM_CASES_TAC vy THENL
+      [DISJ1_TAC THEN
+       MAP_EVERY EXISTS_TAC
+         [`ev:thunk_mode`; `vv:dataSem_v`; y_tm] THEN
+       ASM_REWRITE_TAC[];
+       FIRST_ASSUM(fun nf ->
+         MP_TAC(REWRITE_RULE[NOT_FORALL_THM] nf)) THEN
+       DISCH_THEN(X_CHOOSE_THEN `ck1:num` ASSUME_TAC) THEN
+       DISJ2_TAC THEN EXISTS_TAC `vv:dataSem_v` THEN
+       SUBGOAL_THEN sg_tm ASSUME_TAC THENL
+        [X_GEN_TAC `ck2:num` THEN
+         FIRST_ASSUM(fun v -> FIRST_ASSUM(fun l ->
+           FIRST_ASSUM(fun h ->
+             MP_TAC(MATCH_MP step
+               (CONJ (SPEC `(ck1 + ck2) + 1` v)
+                     (CONJ l h)))))) THEN
+         DISCH_THEN(DISJ_CASES_THEN2
+           (fun l2 ->
+              MP_TAC(MP (SPEC `ck1:num`
+                (MATCH_MP mono_thm (last(CONJUNCTS l2))))
+                (ARITH_RULE `ck1 <= ck1 + ck2`)) THEN
+              ASM_REWRITE_TAC[])
+           (fun r2 ->
+              REWRITE_TAC[CONJUNCT1 r2;
+                          CONJUNCT1(CONJUNCT2 r2)] THEN
+              MATCH_ACCEPT_TAC(MP (SPEC `ck2:num`
+                (MATCH_MP mono_thm (last(CONJUNCTS r2))))
+                (ARITH_RULE `ck2 <= ck1 + ck2`))));
+         FIRST_ASSUM(fun sg ->
+           let s0 = SPEC `0` sg in
+           ASM_REWRITE_TAC[CONJUNCT1 s0;
+                           CONJUNCT1(CONJUNCT2 s0)] THEN
+           X_GEN_TAC `ck:num` THEN
+           MATCH_ACCEPT_TAC(last(CONJUNCTS(SPEC `ck:num` sg))))]] in
+   let case3 =
+     DISJ2_TAC THEN
+     ASM_CASES_TAC vx THENL
+      [DISJ2_TAC THEN EXISTS_TAC `vv:dataSem_v` THEN
+       ASM_REWRITE_TAC[];
+       FIRST_ASSUM(fun nf ->
+         MP_TAC(REWRITE_RULE[NOT_FORALL_THM] nf)) THEN
+       DISCH_THEN(X_CHOOSE_THEN `ck2:num` ASSUME_TAC) THEN
+       DISJ1_TAC THEN
+       FIRST_ASSUM(fun v -> FIRST_ASSUM(fun l ->
+         MP_TAC(MATCH_MP step2 (CONJ (SPEC `ck2 + 1` v) l)))) THEN
+       DISCH_THEN(DISJ_CASES_THEN2
+         (X_CHOOSE_THEN y_tm (fun l ->
+            MAP_EVERY EXISTS_TAC
+              [`Evaluated`; `vv:dataSem_v`; y_tm] THEN
+            ASM_REWRITE_TAC(CONJUNCTS l) THEN
+            X_GEN_TAC `ck:num` THEN
+            FIRST_ASSUM(fun v -> FIRST_ASSUM(fun l7 ->
+              MP_TAC(MATCH_MP step
+                (CONJ (SPEC `(ck + ck2) + 1` v)
+                      (CONJ l7 (CONJUNCT1 l)))))) THEN
+            DISCH_THEN(DISJ_CASES_THEN2
+              (fun l2 -> MATCH_ACCEPT_TAC(MP (SPEC `ck:num`
+                 (MATCH_MP mono_thm (last(CONJUNCTS l2))))
+                 (ARITH_RULE `ck <= ck + ck2`)))
+              (fun r2 ->
+                 MP_TAC(MP (SPEC `ck2:num`
+                   (MATCH_MP mono_thm (last(CONJUNCTS r2))))
+                   (ARITH_RULE `ck2 <= ck + ck2`)) THEN
+                 ASM_REWRITE_TAC[]))))
+         (fun r ->
+            MP_TAC(last(CONJUNCTS r)) THEN ASM_REWRITE_TAC[]))] in
+   let rev_tac =
+     DISCH_THEN(DISJ_CASES_THEN2 STRIP_ASSUME_TAC
+       (DISJ_CASES_THEN2
+          (X_CHOOSE_THEN `ev:thunk_mode`
+             (X_CHOOSE_THEN `vv:dataSem_v`
+                (X_CHOOSE_THEN y_tm STRIP_ASSUME_TAC)))
+          (X_CHOOSE_THEN `vv:dataSem_v` STRIP_ASSUME_TAC))) THENL
+      [X_GEN_TAC `ck:num` THEN SUBST_LHS_TAC THEN
+       MATCH_MP_TAC(el 4 rl) THEN ASM_REWRITE_TAC[];
+       X_GEN_TAC `ck:num` THEN ASM_MESON_TAC[el 5 rl];
+       X_GEN_TAC `ck:num` THEN ASM_MESON_TAC[el 6 rl]] in
+   let rp_tac =
+     REWRITE_TAC[v_inv_eq] THEN EQ_TAC THENL
+      [fwd_pre THENL
+        [DISJ1_TAC THEN ASM_REWRITE_TAC[]; case2; case3];
+       rev_tac] in
+   REPEAT CONJ_TAC THENL
+    [base THEN ASM_CASES_TAC `small_int (:'a) i` THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC TAUT;
+     base; base; rp_tac; blk_tac])
 ### v_inv_RefPtr_T
   (* a RefPtr T is no thunk and no MutBlock, so the two rules of
      v_inv that ask for a RefPtr F do not apply and the annotation
