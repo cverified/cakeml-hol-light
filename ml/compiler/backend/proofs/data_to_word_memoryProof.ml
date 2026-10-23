@@ -10937,7 +10937,33 @@ let bind_each_eq_INJ = cake_theorem "bind_each_eq_INJ"
      ~(i = 0) /\ x IN {x | ts <= x /\ x < ts + n} /\
      ~(x IN FDOM tf) /\ y IN {x | ts <= x /\ x < ts + n} /\ ~(y
        IN FDOM tf) ==> x = y`)
-  CHEAT_TAC;;
+  (* the binding gives each timestamp its own clock: the one at ts
+     gets k and the ones above it more than k, which
+     bind_each_eq_lt_FDOM says, so two of them with one clock are
+     one timestamp *)
+  (let eqlt = cake_thm "bind_each_eq_lt_FDOM" in
+    let bfd = cake_thm "bind_each_FDOM" in
+    let use_eqlt v =
+      MP_TAC(SPECL [`n:num`; `tf:(num,num)fmap`; `ts + 1`; `k + i`;
+                    `i:num`; v] eqlt) THEN
+      ANTS_TAC THENL
+       [CONJ_TAC THENL
+         [REWRITE_TAC[bfd; IN_UNION; IN_ELIM_THM] THEN ASM_ARITH_TAC;
+          FIRST_ASSUM(fun e -> REWRITE_TAC[GSYM e]) THEN ASM_ARITH_TAC];
+        ASM_REWRITE_TAC[]] in
+    INDUCT_TAC THEN REPEAT GEN_TAC THEN
+    REWRITE_TAC[cake_def "bind_each"; IN_ELIM_THM] THENL
+     [STRIP_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    REWRITE_TAC[FAPPLY_FUPDATE_THM] THEN
+    ASM_CASES_TAC `(x:num) = ts` THEN ASM_CASES_TAC `(y:num) = ts` THEN
+    ASM_REWRITE_TAC[] THEN STRIP_TAC THENL
+     [use_eqlt `y:num`;
+      use_eqlt `x:num`;
+      FIRST_X_ASSUM MATCH_MP_TAC THEN
+      MAP_EVERY EXISTS_TAC
+        [`tf:(num,num)fmap`; `ts + 1`; `k + i`; `i:num`] THEN
+      ASM_REWRITE_TAC[IN_ELIM_THM] THEN
+      REPEAT CONJ_TAC THEN ASM_ARITH_TAC]);;
 
 let all_ts_list_to_v_SUBSET = cake_theorem "all_ts_list_to_v_SUBSET"
   (fun () ->
