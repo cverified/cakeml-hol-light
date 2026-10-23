@@ -2623,7 +2623,18 @@ let heap_lookup_RefBlock_lemma =
              <= n then
            (heap_lookup (n - heap_length ha - (LENGTH y + 1)) hb
              = SOME x) else F)`)
-  CHEAT_TAC;;
+  (* the lookup in the append is the one in ha or the one in the
+     RefBlock and what follows it, and a RefBlock is LENGTH y + 1
+     long *)
+  (REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+               cake_def "heap_lookup"; cake_def "RefBlock";
+               cake_def "el_length"] THEN
+   REPEAT COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+   TRY(POP_ASSUM_LIST(fun ths ->
+     MP_TAC(end_itlist CONJ (rev ths))) THEN ARITH_TAC) THEN
+   TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ) THEN
+   REWRITE_TAC[]);;
 
 let heap_store_RefBlock = cake_theorem "heap_store_RefBlock[local]"
   (fun () ->
@@ -2986,7 +2997,16 @@ let heap_lookup_ThunkBlock_lemma =
              then
            (heap_lookup (n - heap_length ha - 2) hb = SOME x)
              else F)`)
-  CHEAT_TAC;;
+  (* and a ThunkBlock is two long *)
+  (REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+               cake_def "heap_lookup"; cake_def "ThunkBlock";
+               cake_def "el_length"] THEN
+   REPEAT COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+   TRY(POP_ASSUM_LIST(fun ths ->
+     MP_TAC(end_itlist CONJ (rev ths))) THEN ARITH_TAC) THEN
+   TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ) THEN
+   REWRITE_TAC[]);;
 
 let heap_store_ThunkBlock = cake_theorem "heap_store_ThunkBlock[local]"
   (fun () ->
@@ -6380,7 +6400,20 @@ let memory_rel_RefPtr_T_IMP = cake_theorem "memory_rel_RefPtr_T_IMP"
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)`)
-  CHEAT_TAC;;
+  (* a RefPtr T is no thunk (the rule of v_inv for one asks for a
+     RefPtr F) and no MutBlock, so the four cases of the value in
+     the refs are the two arrays and two contradictions *)
+  (STRIP_TAC THEN
+   FIRST_ASSUM(fun mr ->
+     MP_TAC(MATCH_MP memory_rel_RefPtr_IMP_lemma mr)) THEN
+   STRIP_TAC THEN CASES_ON_NAME "res" THEN
+   ALL_INST3 memory_rel_ValueArray_IMP THEN
+   ALL_INST3 memory_rel_ByteArray_IMP THEN
+   ALL_INST3 memory_rel_Thunk_IMP THEN
+   ALL_INST2 memory_rel_MutBlock_IMP_F THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
+   TRY(FIRST_X_ASSUM CONTR_TAC) THEN
+   ASM_MESON_TAC[]);;
 
 (* the MutBlock exclusion is needed: a MutBlock is laid out with a BlockTag
    header, whose bits 2 and 3 are both clear, so the conclusion below fails *)
@@ -6399,7 +6432,17 @@ let memory_rel_RefPtr_IMP = cake_theorem "memory_rel_RefPtr_IMP"
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)`)
-  CHEAT_TAC;;
+  (* the pointer has a value in the refs, which is a ValueArray or
+     a ByteArray because the hypotheses exclude the other two *)
+  (STRIP_TAC THEN
+   FIRST_ASSUM(fun mr ->
+     MP_TAC(MATCH_MP memory_rel_RefPtr_IMP_lemma mr)) THEN
+   STRIP_TAC THEN CASES_ON_NAME "res" THEN
+   TRY(FIRST_X_ASSUM(fun th -> FIRST_ASSUM(fun a ->
+     CONTR_TAC(MP (NOT_ELIM(SPEC_ALL th)) a)))) THEN
+   ALL_INST3 memory_rel_ValueArray_IMP THEN
+   ALL_INST3 memory_rel_ByteArray_IMP THEN
+   ASM_MESON_TAC[]);;
 
 let memory_rel_RefPtr_gen_IMP = cake_theorem "memory_rel_RefPtr_gen_IMP"
   (fun () ->
@@ -6644,7 +6687,12 @@ let memory_rel_Number_LESS = cake_theorem "memory_rel_Number_LESS"
       good_dimindex (:'a) ==>
         (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2
           /\ (v1 < (v2:'a word) <=> i1 < i2))`)
-  CHEAT_TAC;;
+  (* both words are the Smallnum of their integer, and num_less_thm
+     says that the order of the two is the order of the integers *)
+  (STRIP_TAC THEN
+   FIRST_ASSUM(fun mr -> ASSUME_TAC(MATCH_MP memory_rel_swap mr)) THEN
+   ALL_INST3 memory_rel_Number_IMP THEN
+   ASM_MESON_TAC[num_less_thm]);;
 
 let memory_rel_Number_LESS_EQ = cake_theorem "memory_rel_Number_LESS_EQ"
   (fun () ->
@@ -6655,7 +6703,26 @@ let memory_rel_Number_LESS_EQ = cake_theorem "memory_rel_Number_LESS_EQ"
       good_dimindex (:'a) ==>
         (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2
           /\ (v1 <= (v2:'a word) <=> i1 <= i2))`)
-  CHEAT_TAC;;
+  (* the order or the equality, which the two theorems above give *)
+  (let wle = prove
+    (`!(x:(N)word) y. x <= y <=> x < y \/ x = y`,
+     REWRITE_TAC[word_ile; word_ilt; irelational2] THEN
+     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     REWRITE_TAC[GSYM IVAL_EQ] THEN INT_ARITH_TAC) in
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun s1 -> FIRST_ASSUM(fun s2 ->
+     FIRST_ASSUM(fun gd ->
+       MP_TAC(MATCH_MP memory_rel_Number_EQ
+         (CONJ mr (CONJ (DISJ1 s1 (concl s2)) gd))) THEN
+       MP_TAC(MATCH_MP memory_rel_Number_LESS
+         (CONJ mr (CONJ s1 (CONJ s2 gd)))))))) THEN
+   REPEAT STRIP_TAC THEN
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_eq(concl th) && is_var(lhs(concl th))
+     then SUBST_ALL_TAC th else fail())) THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "word_loc"]) THEN
+   ASM_REWRITE_TAC[] THEN
+   ASM_MESON_TAC[wle; INT_LE_LT]);;
 
 let memory_rel_Number_word_msb =
   cake_theorem "memory_rel_Number_word_msb"
