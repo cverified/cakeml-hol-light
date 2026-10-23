@@ -915,6 +915,14 @@ let v_all_vs_clauses =
    (v_all_vs_trans).  Both halves of the induction are given back,
    the one about a value and the one about a list of them. *)
 
+(* the induction of the type, which stands in HOL Light's store of
+   the inductive types: the name of the theorem that define_datatype
+   gives cannot be used here, because ml/lib/tactics.ml is loaded
+   before the type is made *)
+
+let dataSem_v_induct () =
+  let _,ith,_ = assoc "dataSem_v" (!inductive_type_store) in ith;;
+
 let v_all_vs_trans_thm =
   let cache = ref None in
   fun () ->
@@ -952,7 +960,76 @@ let v_all_vs_trans_thm =
                    ==> MEM z (v_all_vs [x])) /\
           (!l y z. MEM y (v_all_vs l) /\ MEM z (v_all_vs [y])
                    ==> MEM z (v_all_vs l))`,
-         MATCH_MP_TAC dataSem_v_INDUCT THEN REPEAT CONJ_TAC THENL
+         MATCH_MP_TAC (dataSem_v_induct ()) THEN
+         REPEAT CONJ_TAC THENL
           [trv; trv; blk; trv; trv; REWRITE_TAC[vnil; MEM]; cns]) in
        let c = (CONJUNCT1 th,CONJUNCT2 th) in
        cache := Some c; c;;
+
+(* ------------------------------------------------------------------ *)
+(* A bitwise identity of words that are numerals, at a dimindex that  *)
+(* is not known: HOL Light's WORD_BLAST asks for a word of a size,    *)
+(* and WORD_BITWISE_RULE leaves the bits of the numerals.  This takes *)
+(* the index apart into the ones below a bound (where the bit of a    *)
+(* numeral is decided by arithmetic) and the ones above it (where     *)
+(* every numeral of the goal has no bit left).  The bound is given:   *)
+(* it has to be at least the width of the numerals of the goal.       *)
+(* ------------------------------------------------------------------ *)
+
+let WORD_NUM_BIT_TAC =
+  let odd_div = prove
+   (`!k m i. k < 2 EXP m /\ m <= i ==> (ODD (k DIV 2 EXP i) <=> F)`,
+    REPEAT STRIP_TAC THEN
+    SUBGOAL_THEN `k DIV 2 EXP i = 0` SUBST1_TAC THENL
+     [MATCH_MP_TAC DIV_LT THEN
+      TRANS_TAC LTE_TRANS `2 EXP m` THEN
+      ASM_REWRITE_TAC[LE_EXP] THEN ARITH_TAC;
+      REWRITE_TAC[ODD]])
+  and sub_mono = ARITH_RULE `!n i c. n <= i ==> n - c <= i - c` in
+  fun n ->
+    let ii = `i:num` in
+    let nn = mk_small_numeral n in
+    let ltn = mk_binop `(<):num->num->bool` ii nn in
+    let len = mk_binop `(<=):num->num->bool` nn ii in
+    let cases = ARITH_RULE(mk_imp(ltn,
+      list_mk_disj(map (fun k -> mk_eq(ii,mk_small_numeral k))
+                       (0--(n-1))))) in
+    (* the bits of the numerals that are left where the index is
+       above the bound: each of them is of a smaller numeral than
+       two to the index, so the DIV is 0 *)
+    let hi_facts (asl,w) =
+      let le = find (fun th -> concl th = len) (map snd asl) in
+      let odds = find_terms (fun t ->
+        try fst(dest_const(rator t)) = "ODD" &&
+            fst(dest_const(rator(rator(rand t)))) = "DIV" &&
+            is_numeral (lhand (rand t))
+        with Failure _ -> false) w in
+      mapfilter (fun t ->
+        let k = lhand (rand t) in
+        let e = rand (rand (rand t)) in
+        let b,leb =
+          if e = ii then nn,le
+          else
+            let c = rand e in
+            let th = MP (SPECL [nn; ii; c] sub_mono) le in
+            let th' = CONV_RULE (ONCE_DEPTH_CONV NUM_REDUCE_CONV) th in
+            lhand (concl th'),th' in
+        MP (SPECL [k; b; e] odd_div)
+           (CONJ (EQT_ELIM(NUM_REDUCE_CONV
+                    (mk_binop `(<):num->num->bool` k
+                       (mk_binop `(EXP):num->num->num` `2` b)))) leb))
+        odds in
+    let fin = REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`;
+                          DIMINDEX_GE_1] THEN CONV_TAC TAUT in
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_AND;
+                BIT_WORD_NOT; BIT_WORD_XOR; BIT_WORD_SHL;
+                BIT_WORD_USHR] THEN
+    X_GEN_TAC ii THEN DISCH_TAC THEN
+    ASM_CASES_TAC ltn THENL
+     [FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP cases th)) THEN
+      DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+      REWRITE_TAC[BIT_WORD] THEN ASM_REWRITE_TAC[] THEN
+      CONV_TAC NUM_REDUCE_CONV THEN fin;
+      SUBGOAL_THEN len ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+      REWRITE_TAC[BIT_WORD] THEN
+      (fun gl -> REWRITE_TAC (hi_facts gl) gl) THEN fin];;
