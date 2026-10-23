@@ -6952,7 +6952,50 @@ let memory_rel_Cons_empty = cake_theorem "memory_rel_Cons_empty"
       tag < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
       memory_rel c be ts refs sp st m dm
         ((Block 0 tag [],wordLang_Word (BlockNil tag)) :: vars)`)
-  CHEAT_TAC;;
+  (* the empty Block of a tag has the root Data (Word (BlockNil
+     tag)), which cons_thm_EMPTY adds, and the BlockNil is sixteen
+     times the tag plus two, whose lowest bit is clear.  HOL4 has
+     that last fact as BlockNil_and_lemma; the port's statement of
+     that lemma is the and of the complement with the multiple of
+     sixteen, not with the sum (see ISSUES.md, "The precedence of a
+     word's bitwise operators"), so the fact is proved again here *)
+  (let bw2 = prove
+     (`!i. bit i (word 2:(N)word) <=> i = 1 /\ 1 < dimindex(:N)`,
+      GEN_TAC THEN
+      GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+        [ARITH_RULE `2 = 2 EXP 1`] THEN
+      REWRITE_TAC[BIT_WORD_POW2]) in
+    let addor = prove
+     (`!(v:(N)word). word_shl v 4 + word 2 = word_shl v 4 || word 2`,
+      GEN_TAC THEN MATCH_MP_TAC WORD_ADD_OR THEN
+      REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+                  BIT_WORD_SHL; bw2] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_CASES_TAC `(i:num) = 1` THEN ASM_REWRITE_TAC[] THEN
+      CONV_TAC NUM_REDUCE_CONV THEN TRY(CONV_TAC TAUT)) in
+    let andsum = prove
+     (`!(tag:(N)word).
+         (word_shl tag 4 + word 2) && word_not (word 1) =
+         word_shl tag 4 + word 2`,
+      GEN_TAC THEN REWRITE_TAC[addor] THEN
+      REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+                  BIT_WORD_1; BIT_WORD_OR; BIT_WORD_SHL; bw2] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_CASES_TAC `(i:num) = 0` THEN ASM_REWRITE_TAC[] THEN
+      CONV_TAC NUM_REDUCE_CONV THEN TRY(CONV_TAC TAUT)) in
+    let waddr = hd (word_addr_clauses ()) in
+    REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv"] THEN
+    REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
+    ASM_REWRITE_TAC[] THEN
+    EXISTS_TAC
+      `CONS (gc_shared_Data (wordLang_Word (BlockNil tag:'a word))) hs`
+    THEN
+    REWRITE_TAC[MAP; ALL2; waddr] THEN
+    ASM_REWRITE_TAC[] THEN
+    CONJ_TAC THENL
+     [MATCH_MP_TAC (cake_thm "cons_thm_EMPTY") THEN ASM_REWRITE_TAC[];
+      REWRITE_TAC[cake_def "BlockNil"] THEN AP_TERM_TAC THEN
+      MATCH_ACCEPT_TAC andsum]);;
 
 let memory_rel_Ref = cake_theorem "memory_rel_Ref"
   (fun () ->
