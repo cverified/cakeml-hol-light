@@ -13093,7 +13093,23 @@ let compoare_aux_append_xs =
                      (STRLEN xs) =
        compare_aux (implode (zs ++ xs)) (implode (zs ++ ys)) r
          (LENGTH zs) (STRLEN xs)`)
-  CHEAT_TAC;;
+  (* the same character in front of both strings and the index one
+     further on compare the same characters: the induction is on the
+     length that is left to compare, and the premise about the two
+     lengths is not needed *)
+  (let shift_lemma = prove
+    (`!len start r (zz:char) l1 l2.
+        compare_aux (implode (CONS zz l1)) (implode (CONS zz l2)) r
+          (start + 1) len =
+        compare_aux (implode l1) (implode l2) r start len`,
+     let el_suc = prove
+      (`!n h (t:A list). EL (n + 1) (CONS h t) = EL n t`,
+       REWRITE_TAC[GSYM ADD1; EL; TL]) in
+     INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     ONCE_REWRITE_TAC[cake_def "compare_aux"] THEN
+     REWRITE_TAC[NOT_SUC; SUC_SUB1; cake_def "strsub"; el_suc] THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN DISCH_TAC THEN MATCH_ACCEPT_TAC shift_lemma);;
 
 let compoare_aux_append_ys =
   cake_theorem "compoare_aux_append_ys[local]"
@@ -13105,7 +13121,20 @@ let compoare_aux_append_ys =
                      (STRLEN ys) =
        compare_aux (implode (zs ++ xs)) (implode (zs ++ ys)) r
          (LENGTH zs) (STRLEN ys)`)
-  CHEAT_TAC;;
+  (* and the same of the shorter second string *)
+  (let shift_lemma = prove
+    (`!len start r (zz:char) l1 l2.
+        compare_aux (implode (CONS zz l1)) (implode (CONS zz l2)) r
+          (start + 1) len =
+        compare_aux (implode l1) (implode l2) r start len`,
+     let el_suc = prove
+      (`!n h (t:A list). EL (n + 1) (CONS h t) = EL n t`,
+       REWRITE_TAC[GSYM ADD1; EL; TL]) in
+     INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     ONCE_REWRITE_TAC[cake_def "compare_aux"] THEN
+     REWRITE_TAC[NOT_SUC; SUC_SUB1; cake_def "strsub"; el_suc] THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN DISCH_TAC THEN MATCH_ACCEPT_TAC shift_lemma);;
 
 let compare_same = cake_theorem "compare_same"
   (fun () ->
@@ -13117,7 +13146,20 @@ let str_cmp_cons = cake_theorem "str_cmp_cons"
   (fun () ->
     `str_cmp b cmp (implode (x :: xs)) (implode (x :: ys)) =
      str_cmp b cmp (implode xs) (implode ys)`)
-  CHEAT_TAC;;
+  (* each of the eight comparisons is the one of mlstring_compare,
+     which compare_same takes off the first character, or a
+     comparison of the lengths, which are one less *)
+  (REWRITE_TAC[cake_def "str_cmp"] THEN
+   CASES_ON_NAME "b" THEN CASES_ON_NAME "cmp" THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[cake_def "mlstring_lt"; cake_def "mlstring_le";
+               cake_def "mlstring_gt"; cake_def "mlstring_ge";
+               cake_def "fast_lt"; cake_def "fast_le";
+               cake_def "fast_gt"; cake_def "fast_ge";
+               cake_thm "compare_same"; cake_def "strlen";
+               LENGTH; SUC_INJ; LT_SUC; LE_SUC;
+               GT; GE; ARITH_RULE `SUC m >= SUC n <=> m >= n`;
+               ARITH_RULE `SUC m > SUC n <=> m > n`]);;
 
 let find_diff_str_cmp_thm1 = cake_theorem "find_diff_str_cmp_thm1"
   (fun () ->
