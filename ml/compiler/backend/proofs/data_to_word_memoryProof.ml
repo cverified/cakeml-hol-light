@@ -5728,7 +5728,52 @@ let word_payload_T_IMP = cake_theorem "word_payload_T_IMP"
       n5 = LENGTH ts /\
       (if word_bit 2 h then l5 = [] else ts = MAP (word_addr
         conf) l5)`)
-  CHEAT_TAC;;
+  (* the six tags each give a header of make_header or of
+     make_byte_header, and the third component of the payload says
+     what the length is.  The bit two of a header is the bit zero of
+     its tag, because the length sits above the bit two (the length
+     size and two are below the dimindex) and the three at the
+     bottom has the bit two clear; of make_byte_header it is set,
+     whichever of the two tags it takes *)
+  (let hdr_bit2 = prove
+    (`!conf tg len.
+        data_to_word_config_len_size conf + 2 < dimindex (:'a)
+        ==> (word_bit 2 (make_header conf (tg:'a word) len) <=>
+             word_bit 0 tg)`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     FIRST_ASSUM(fun th ->
+       ASSUME_TAC(MATCH_MP
+         (ARITH_RULE `k + 2 < d ==> 2 < d`) th)) THEN
+     REWRITE_TAC[cake_def "make_header"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD] THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     ASM_SIMP_TAC[ARITH_RULE `k + 2 < d ==> ~(d - k <= 2)`] THEN
+     ASM_REWRITE_TAC[]) in
+   let byte_hdr_bit2 = prove
+    (`!conf fl n. 2 < dimindex (:'a)
+        ==> word_bit 2 (make_byte_header conf fl n:'a word)`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "make_byte_header"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REPEAT COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[BIT_WORD_OR; BIT_WORD] THEN
+     CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[]) in
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun th ->
+     ASSUME_TAC(MATCH_MP (ARITH_RULE `k + 2 < d ==> 2 < d`) th) THEN
+     ASSUME_TAC(MATCH_MP (ARITH_RULE `k + 2 < d ==> 0 < d`) th)) THEN
+   CASES_ON_NAME "tag" THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[cake_def "word_payload"; PAIR_EQ;
+                               EQ_CLAUSES]) THEN
+   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     let c = concl th in
+     if is_eq c && is_var(rand c) && not(is_var(lhand c))
+     then SUBST_ALL_TAC(SYM th) else fail())) THEN
+   ASM_SIMP_TAC[hdr_bit2; byte_hdr_bit2; LENGTH_MAP; BIT_WORD_SHL;
+                BIT_WORD; BIT_WORD_OR] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[]);;
 
 let word_el_def = cake_define_list
   [`word_el (a:'a word) (Unused l) conf = word_list_exists (a:'a
