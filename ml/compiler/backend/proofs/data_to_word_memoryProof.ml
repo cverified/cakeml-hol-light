@@ -4101,7 +4101,18 @@ let blocks_unique_stack_permute =
     `set_of_list ys SUBSET set_of_list xs /\
      blocks_unique ts (all_vs refs (MAP FST xs ++ stack)) ==>
        blocks_unique ts (all_vs refs (MAP FST ys ++ stack))`)
-  CHEAT_TAC;;
+  (* and a sublist of the pairs has a sublist of the values *)
+  (let inc = prove
+    (`!refs (ys:(dataSem_v#A)list) xs stack' t a q.
+        set_of_list ys SUBSET set_of_list xs /\
+        Block t a q IN all_vs refs (APPEND (MAP FST ys) stack') ==>
+        Block t a q IN all_vs refs (APPEND (MAP FST xs) stack')`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM;
+                 v_all_vs_append; MEM_APPEND] THEN
+     MESON_TAC[MEM_v_all_vs_SUBSET]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let abs_ml_inv_stack_permute = cake_theorem "abs_ml_inv_stack_permute"
   (fun () ->
@@ -4160,7 +4171,20 @@ let blocks_unique_move = cake_theorem "blocks_unique_move"
     `blocks_unique ts (all_vs refs (xs1 ++ xs2 ++ xs3 ++ stack)) ==>
        blocks_unique ts (all_vs refs (xs1 ++ xs3 ++ xs2 ++
          stack))`)
-  CHEAT_TAC;;
+  (* the values of a stack do not depend on the order of its
+     three parts *)
+  (let inc = prove
+    (`!refs xs1 xs2 xs3 stack' t a q.
+        Block t a q IN
+          all_vs refs (APPEND xs1 (APPEND xs3 (APPEND xs2 stack')))
+        ==>
+        Block t a q IN
+          all_vs refs (APPEND xs1 (APPEND xs2 (APPEND xs3 stack')))`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM;
+                 v_all_vs_append; MEM_APPEND] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let move_thm = cake_theorem "move_thm"
   (fun () ->
@@ -6001,7 +6025,22 @@ let blocks_unique_CodePtr = cake_theorem "blocks_unique_CodePtr"
     `blocks_unique ts (all_vs refs (MAP FST vars)) ==>
        blocks_unique ts (all_vs refs (CodePtr lab :: MAP FST
          vars))`)
-  CHEAT_TAC;;
+  (* a CodePtr is no Block *)
+  (let vcodeptr = prove
+    (`!l ys. v_all_vs (CONS (CodePtr l) ys) =
+        CONS (CodePtr l) (v_all_vs ys)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "v_all_vs"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   let inc = prove
+    (`!refs l vs t a q.
+        Block t a q IN all_vs refs (CONS (CodePtr l) vs) ==>
+        Block t a q IN all_vs refs vs`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; vcodeptr;
+                 MEM; distinctness "dataSem_v"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let memory_rel_CodePtr = cake_theorem "memory_rel_CodePtr"
   (fun () ->
@@ -6231,7 +6270,25 @@ let blocks_unique_Thunk = cake_theorem "blocks_unique_Thunk"
      blocks_unique ts (all_vs refs (RefPtr bl p :: MAP FST vars))
        ==>
        blocks_unique ts (all_vs refs (x :: MAP FST vars))`)
-  CHEAT_TAC;;
+  (* the value of the thunk is a value of the refs already *)
+  (let vcons = prove
+    (`!(v:dataSem_v) xs y. MEM y (v_all_vs (CONS v xs)) <=>
+        MEM y (v_all_vs [v]) \/ MEM y (v_all_vs xs)`,
+     REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [prove(`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
+              REWRITE_TAC[APPEND])] THEN
+     REWRITE_TAC[v_all_vs_append; MEM_APPEND]) in
+   let inc = prove
+    (`!refs p ev x bl vs t a q.
+        sptree_lookup p refs = SOME (Thunk ev x) /\
+        Block t a q IN all_vs refs (CONS x vs) ==>
+        Block t a q IN all_vs refs (CONS (RefPtr bl p) vs)`,
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+     MESON_TAC[vcons]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN STRIP_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]);;
 
 let blocks_unique_Thunk2 = cake_theorem "blocks_unique_Thunk2"
   (fun () ->
