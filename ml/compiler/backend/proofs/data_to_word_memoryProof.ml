@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/data_space.ml";;
@@ -5251,7 +5252,67 @@ let duplicate_thm = cake_theorem "duplicate_thm"
      (LENGTH xs = LENGTH rs) ==>
      abs_ml_inv conf (xs ++ xs ++ stack) refs (rs ++ rs ++
        roots,heap,be,a,sp,sp1,gens) limit ts`)
-  CHEAT_TAC;;
+  (* the invariant of the doubled stack: the roots and the
+     reachable references are the ones of the stack it doubles,
+     blocks_unique_duplicate gives the uniqueness, the timestamps of
+     the doubled stack are more and the relation of the values is
+     the one of the two parts, which the split of a LIST_REL over an
+     append gives *)
+  (let gv n =
+     W(fun (asl,_) ->
+       let tms = itlist (fun (_,th) acc -> union (frees(concl th)) acc)
+                   asl [] in
+       EXISTS_TAC (find (fun t -> fst(dest_var t) = n) tms)) in
+   let rel_app_eq = prove
+    (`!(P:A->B->bool) xs1 ys1 xs2 ys2. LENGTH xs1 = LENGTH ys1
+        ==> (ALL2 P (xs1 ++ xs2) (ys1 ++ ys2) <=>
+             ALL2 P xs1 ys1 /\ ALL2 P xs2 ys2)`,
+     GEN_TAC THEN LIST_INDUCT_TAC THEN X_GEN_TAC `ys1:B list` THEN
+     STRUCT_CASES_TAC(ISPEC `ys1:B list` list_CASES_v) THEN
+     REWRITE_TAC[LENGTH; APPEND; ALL2; NOT_SUC; SUC_INJ;
+                 ARITH_RULE `~(SUC n = 0)`;
+                 ARITH_RULE `~(0 = SUC n)`] THEN
+     REPEAT GEN_TAC THEN DISCH_TAC THEN ASM_SIMP_TAC[] THEN
+     CONV_TAC TAUT) in
+   let rr_mono = prove
+    (`!(as:(dataSem_v)list) bs rfs n.
+        (!x. MEM x as ==> MEM x bs) /\ reachable_refs as rfs n
+        ==> reachable_refs bs rfs n`,
+     REWRITE_TAC[cake_def "reachable_refs"] THEN MESON_TAC[]) in
+   REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv"] THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
+    [USE_CHANGED [cake_def "roots_ok"] THEN
+     REWRITE_TAC[cake_def "roots_ok"; MEM_APPEND] THEN MESON_TAC[];
+     ALL_TAC] THEN
+   gv "f" THEN gv "tf" THEN ASM_REWRITE_TAC[] THEN
+   REPEAT CONJ_TAC THENL
+    [FIRST_ASSUM(fun sub ->
+       let t = rand(concl sub) in
+       if (try fst(dest_const(fst(strip_comb t))) = "all_ts"
+           with Failure _ -> false)
+       then MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC t THEN
+            CONJ_TAC THENL [ACCEPT_TAC sub; ALL_TAC]
+       else fail()) THEN
+     REWRITE_TAC[cake_def "all_ts"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM_APPEND] THEN
+     GEN_TAC THEN MATCH_MP_TAC MONO_EXISTS THEN GEN_TAC THEN
+     CONV_TAC TAUT;
+     MATCH_MP_TAC (cake_thm "blocks_unique_duplicate") THEN
+     ASM_REWRITE_TAC[];
+     W(fun (asl,_) ->
+       let eqs = mapfilter (fun (_,th) -> MATCH_MP rel_app_eq th) asl in
+       RULE_ASSUM_TAC(REWRITE_RULE eqs) THEN REWRITE_TAC eqs) THEN
+     ASM_REWRITE_TAC[];
+     GEN_TAC THEN STRIP_TAC THEN
+     FIRST_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+      [FIRST_ASSUM(fun rr ->
+         MATCH_MP_TAC rr_mono THEN
+         EXISTS_TAC (rand(rator(rator(concl rr)))) THEN
+         CONJ_TAC THENL
+          [REWRITE_TAC[MEM_APPEND] THEN GEN_TAC THEN CONV_TAC TAUT;
+           ACCEPT_TAC rr]);
+       FIRST_ASSUM ACCEPT_TAC]]);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:7427-7429: a theorem that
    HOL4 states as the value of an ML expression: duplicate1_thm *)
@@ -5290,7 +5351,67 @@ let move_thm = cake_theorem "move_thm"
         abs_ml_inv conf (xs1 ++ xs3 ++ xs2 ++ stack) refs
                         (rs1 ++ rs3 ++ rs2 ++
                           roots,heap,be,a,sp,sp1,gens) limit ts`)
-  CHEAT_TAC;;
+  (* the invariant of the stack with its second and third part
+     exchanged: nothing of it depends on the order of the parts, so
+     each conjunct is the one of the assumption -- the relation of
+     the values after splitting it into the four parts, and
+     blocks_unique_move for the uniqueness *)
+  (let gv n =
+     W(fun (asl,_) ->
+       let tms = itlist (fun (_,th) acc -> union (frees(concl th)) acc)
+                   asl [] in
+       EXISTS_TAC (find (fun t -> fst(dest_var t) = n) tms)) in
+   let rel_app_eq = prove
+    (`!(P:A->B->bool) xs1 ys1 xs2 ys2. LENGTH xs1 = LENGTH ys1
+        ==> (ALL2 P (xs1 ++ xs2) (ys1 ++ ys2) <=>
+             ALL2 P xs1 ys1 /\ ALL2 P xs2 ys2)`,
+     GEN_TAC THEN LIST_INDUCT_TAC THEN X_GEN_TAC `ys1:B list` THEN
+     STRUCT_CASES_TAC(ISPEC `ys1:B list` list_CASES_v) THEN
+     REWRITE_TAC[LENGTH; APPEND; ALL2; NOT_SUC; SUC_INJ;
+                 ARITH_RULE `~(SUC n = 0)`;
+                 ARITH_RULE `~(0 = SUC n)`] THEN
+     REPEAT GEN_TAC THEN DISCH_TAC THEN ASM_SIMP_TAC[] THEN
+     CONV_TAC TAUT) in
+   let rr_mono = prove
+    (`!(as:(dataSem_v)list) bs rfs n.
+        (!x. MEM x as ==> MEM x bs) /\ reachable_refs as rfs n
+        ==> reachable_refs bs rfs n`,
+     REWRITE_TAC[cake_def "reachable_refs"] THEN MESON_TAC[]) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "abs_ml_inv"; cake_def "bc_stack_ref_inv"] THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
+    [USE_CHANGED [cake_def "roots_ok"] THEN
+     REWRITE_TAC[cake_def "roots_ok"; MEM_APPEND] THEN MESON_TAC[];
+     ALL_TAC] THEN
+   gv "f" THEN gv "tf" THEN ASM_REWRITE_TAC[] THEN
+   REPEAT CONJ_TAC THENL
+    [FIRST_ASSUM(fun sub ->
+       let t = rand(concl sub) in
+       if (try fst(dest_const(fst(strip_comb t))) = "all_ts"
+           with Failure _ -> false)
+       then MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC t THEN
+            CONJ_TAC THENL [ACCEPT_TAC sub; ALL_TAC]
+       else fail()) THEN
+     REWRITE_TAC[cake_def "all_ts"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM_APPEND] THEN
+     GEN_TAC THEN MATCH_MP_TAC MONO_EXISTS THEN GEN_TAC THEN
+     CONV_TAC TAUT;
+     MATCH_MP_TAC (cake_thm "blocks_unique_move") THEN
+     ASM_REWRITE_TAC[];
+     W(fun (asl,_) ->
+       let eqs = mapfilter (fun (_,th) -> MATCH_MP rel_app_eq th) asl in
+       RULE_ASSUM_TAC(REWRITE_RULE eqs) THEN REWRITE_TAC eqs) THEN
+     ASM_REWRITE_TAC[];
+     GEN_TAC THEN STRIP_TAC THEN
+     FIRST_ASSUM MATCH_MP_TAC THEN CONJ_TAC THENL
+      [FIRST_ASSUM(fun rr ->
+         MATCH_MP_TAC rr_mono THEN
+         EXISTS_TAC (rand(rator(rator(concl rr)))) THEN
+         CONJ_TAC THENL
+          [REWRITE_TAC[MEM_APPEND] THEN GEN_TAC THEN CONV_TAC TAUT;
+           ACCEPT_TAC rr]);
+       FIRST_ASSUM ACCEPT_TAC]]);;
 
 (* splits *)
 
@@ -7246,7 +7367,47 @@ let write_bytes_REPLICATE = cake_theorem "write_bytes_REPLICATE[local]"
          write_bytes (REPLICATE m w) (REPLICATE n (word_of_byte
            (w2w w))) be =
          REPLICATE n (word_of_byte ((w2w w):'a word))`)
-  CHEAT_TAC;;
+  (* the words are written one by one, and writing the bytes of a
+     word of one byte over and over leaves it as it is, which
+     set_byte_word_of_byte says of each byte.  The flag of the
+     endianness is called b2 in the two lemmas, because be is the
+     field of the configuration and not a variable *)
+  (let drop0 = prove
+    (`!l:A list. DROP 0 l = l`,
+     LIST_INDUCT_TAC THEN REWRITE_TAC[DROP]) in
+   let drop_rep = prove
+    (`!k m (x:A). DROP k (REPLICATE m x) = REPLICATE (m - k) x`,
+     INDUCT_TAC THENL
+      [REWRITE_TAC[drop0; SUB_0];
+       REPEAT GEN_TAC THEN
+       STRUCT_CASES_TAC(ISPEC `m:num` num_CASES) THEN
+       ASM_REWRITE_TAC[REPLICATE; DROP; NOT_SUC; SUC_SUB1; SUB_0;
+                       SUB_SUC; ARITH_RULE `0 - SUC k = 0`]]) in
+   let head = prove
+    (`good_dimindex (:'a) ==>
+      !k a m b2.
+        bytes_to_word k (a:'a word) (REPLICATE m (w:(8)word))
+          (word_of_byte ((w2w w):'a word)) b2 =
+        word_of_byte ((w2w w):'a word)`,
+     DISCH_TAC THEN INDUCT_TAC THENL
+      [ONCE_REWRITE_TAC[cake_def "bytes_to_word"] THEN
+       REWRITE_TAC[];
+       REPEAT GEN_TAC THEN
+       ONCE_REWRITE_TAC[cake_def "bytes_to_word"] THEN
+       REWRITE_TAC[NOT_SUC; SUC_SUB1] THEN
+       STRUCT_CASES_TAC(ISPEC `m:num` num_CASES) THEN
+       REWRITE_TAC[REPLICATE] THEN MATCH_REDUCE_TAC THEN
+       ASM_REWRITE_TAC[] THEN
+       ASM_SIMP_TAC[cake_thm "set_byte_word_of_byte"]]) in
+   INDUCT_TAC THENL
+    [REWRITE_TAC[REPLICATE; cake_def "write_bytes"];
+     GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[REPLICATE] THEN
+     ONCE_REWRITE_TAC[cake_def "write_bytes"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[head; drop_rep] THEN
+     FIRST_ASSUM(fun th ->
+       ASM_SIMP_TAC[SPEC `m - dimindex (:'a) DIV 8` th])]);;
 
 let IMP_EXP_LESS = cake_theorem "IMP_EXP_LESS"
   (fun () ->
