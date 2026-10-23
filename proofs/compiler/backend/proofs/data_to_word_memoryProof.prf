@@ -3139,6 +3139,14 @@
   (REWRITE_TAC[CONJUNCT1 do_eq_IFF_vb_eq_size])
 ### vb_eq_size_IMP_do_eq
   (REWRITE_TAC[CONJUNCT1 do_eq_IFF_vb_eq_size] THEN MESON_TAC[])
+### memory_rel_ptr_vb_eq
+  (* a vb_eq_size that gives b is a do_eq that gives Eq_val b *)
+  (STRIP_TAC THEN
+   FIRST_ASSUM(fun th ->
+     MP_TAC(MATCH_MP vb_eq_size_IMP_do_eq th)) THEN
+   DISCH_TAC THEN
+   MATCH_MP_TAC (cake_thm "memory_rel_ptr_eq") THEN
+   ASM_MESON_TAC[])
 ### word_1_and_eq_0
   (REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
                BIT_WORD_1] THEN
@@ -3330,6 +3338,31 @@
      REWRITE_TAC[DROP; NOT_SUC; suc1] THEN
      FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
      RULE_ASSUM_TAC(REWRITE_RULE[LENGTH]) THEN ARITH_ASM_TAC])
+### v_to_list_heap_length
+  (* the walk of the heap from the pointer of the value gives one
+     pointer per element of the list, they are distinct, and each
+     holds a BlockRep of two: three words of the heap each.  The
+     list of pointers is the walk itself, which the first premise
+     of walk_LENGTH names, so the theorem is matched against the
+     invariant and the walk is read off that instance *)
+  (let wl = cake_thm "walk_LENGTH"
+   and wad = cake_thm "walk_ALL_DISTINCT"
+   and whl = cake_thm "walk_heap_lookup"
+   and hlb = cake_thm "heap_length_Blocks" in
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun vi -> FIRST_ASSUM(fun vl -> FIRST_ASSUM(fun ne ->
+     MP_TAC(MATCH_MP (cake_thm "v_inv_v_to_list_lemma")
+              (CONJ vi (CONJ vl ne)))))) THEN
+   STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+   FIRST_ASSUM(fun vi -> FIRST_ASSUM(fun vl -> FIRST_ASSUM(fun ne ->
+     let w1 = PART_MATCH (hd o conjuncts o lhand) wl (concl vi) in
+     let wt = lhs (last (conjuncts (lhand (concl w1)))) in
+     let prem = CONJ vi (CONJ vl (CONJ ne (REFL wt))) in
+     let len = SPEC_ALL(MATCH_MP wl prem)
+     and ad = SPEC_ALL(MATCH_MP wad prem)
+     and ev = SPEC_ALL(MATCH_MP whl prem) in
+     MP_TAC(REWRITE_RULE[len] (MATCH_MP hlb (CONJ ad ev)))))) THEN
+   REWRITE_TAC[])
 ### do_part_SOME_IMP_SOME
   (* every clause of do_part gives the timestamp back as a SOME,
      and the one of a Str gives it under a let *)
