@@ -122,6 +122,14 @@ it once, three quarters of an hour of loading).  So:
   the one to kill first (a clone of `hol-pfbase` costs a second,
   the file itself three minutes).  It cost one working session,
   with every binding of a day's work in it, once.
+- What the working session costs grows with the proofs: the clone
+  of `hol-pfbase` plus `loadt` of
+  `data_to_word_memoryProof.ml` took three minutes when the file
+  was 285 proofs and 340 cheats, and **six** at 334 proofs and 291
+  cheats -- a cheat is free and a proof is not.  So a session is
+  worth keeping, and `tools/bin/reload` (a second) is what a change
+  of `ml/lib/tactics.ml` or `ml/lib/lemmas.ml` needs instead of a
+  rebuild.
 
 ## Interrupting and killing
 
