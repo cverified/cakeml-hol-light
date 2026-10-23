@@ -434,3 +434,18 @@ let SUBMAP_FAPPLY = prove
      f SUBMAP g ==> n IN FDOM f
      ==> n IN FDOM g /\ FAPPLY f n = FAPPLY g n`,
   REWRITE_TAC[SUBMAP] THEN MESON_TAC[]);;
+
+(* the lookup of an update, HOL4's FLOOKUP_UPDATE, and the point of
+   a lookup that gives a value, which is in the domain *)
+
+let FLOOKUP_UPDATE = prove
+ (`!(fm:(A,B)fmap) k v x.
+     FLOOKUP (fm |+ (k,v)) x =
+     (if x = k then SOME v else FLOOKUP fm x)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[FLOOKUP; FMAP_FN_FUPDATE; FST; SND]);;
+
+let FLOOKUP_IN_FDOM = prove
+ (`!(fm:(A,B)fmap) x v. FLOOKUP fm x = SOME v ==> x IN FDOM fm`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[FLOOKUP_DEF] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[distinctness "option"]);;

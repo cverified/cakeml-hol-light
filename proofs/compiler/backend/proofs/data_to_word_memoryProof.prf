@@ -784,13 +784,6 @@
      FIRST_ASSUM(fun nb ->
        if is_neg(concl nb) && is_var(rand(concl nb))
        then SUBST_ALL_TAC(EQF_INTRO nb) else fail()) in
-   let IH_TAC =
-     FIRST_ASSUM(fun nz ->
-       let lt = MATCH_MP lt1 nz in
-       FIRST_ASSUM(fun ih ->
-         let ih' = MP (SPEC `ck - 1` ih) lt in
-         FIRST_ASSUM(fun vi -> MP_TAC(MATCH_MP ih' vi)))) THEN
-     ASM_REWRITE_TAC[] in
    let setup =
      MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
      DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN STRIP_TAC THEN
@@ -815,7 +808,7 @@
                   (concl a2th)
            then MP_TAC a2th else fail()) THEN
          MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
-         REPEAT STRIP_TAC THEN IH_TAC;
+         REPEAT STRIP_TAC THEN CK_IH_TAC;
          FIRST_ASSUM(fun sm -> FIRST_ASSUM(fun fl ->
            MATCH_ACCEPT_TAC(MATCH_MP FLOOKUP_SUBMAP (CONJ sm fl))));
          KEEP_TAC]] in
@@ -1059,6 +1052,60 @@
 ### MEM_in_all_vs
   (REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
    REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_all_vs_trans])
+### v_inv_tf_update_thm_lemma
+  (* the same complete induction as v_inv_SUBMAP_lemma, but only the
+     map of the timestamps changes and by an update at a timestamp
+     that is not in its domain: a Block of the invariant has its
+     timestamp in that domain, so its lookup is the one it was *)
+  (let (vr,_,_) = v_inv_ck in
+   let rl = CONJUNCTS vr in
+   let vdef = cake_thm "v_inv_def" in
+   let NOT_VAR_TAC =
+     FIRST_ASSUM(fun nb ->
+       if is_neg(concl nb) && is_var(rand(concl nb))
+       then SUBST_ALL_TAC(EQF_INTRO nb) else fail()) in
+   let FLU_TAC =
+     ASM_REWRITE_TAC[FLOOKUP_UPDATE] THEN COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[] THEN
+     FIRST_ASSUM(fun fl -> MP_TAC(MATCH_MP FLOOKUP_IN_FDOM fl)) THEN
+     ASM_REWRITE_TAC[] in
+   let lt1 = ARITH_RULE `~(ck = 0) ==> ck - 1 < ck` in
+   let setup =
+     MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN DISCH_TAC THEN
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     CASES_ON_NAME "v" THEN USE_CHANGED [vdef] in
+   setup THENL
+    [COND_CASES_TAC THEN STRIP_TAC THEN SUBST_LHS_TAC THENL
+      [MATCH_MP_TAC(el 0 rl) THEN ASM_REWRITE_TAC[];
+       MATCH_MP_TAC(el 1 rl) THEN ASM_REWRITE_TAC[]];
+     STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+     MATCH_MP_TAC(el 2 rl) THEN ASM_REWRITE_TAC[];
+     COND_CASES_TAC THEN STRIP_TAC THEN REPEAT SUBST_LHS_TAC THENL
+      [MATCH_MP_TAC(el 7 rl) THEN ASM_REWRITE_TAC[];
+       MATCH_MP_TAC(el 8 rl) THEN REPEAT CONJ_TAC THENL
+        [FIRST_ASSUM MATCH_ACCEPT_TAC;
+         DISCH_TAC THEN
+         FIRST_ASSUM(fun a2th ->
+           if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
+                  (concl a2th)
+           then MP_TAC a2th else fail()) THEN
+         MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
+         REPEAT STRIP_TAC THEN CK_IH_TAC;
+         FLU_TAC;
+         FIRST_ASSUM MATCH_ACCEPT_TAC]];
+     STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+     MATCH_ACCEPT_TAC(el 3 rl);
+     DISCH_THEN(DISJ_CASES_THEN2 STRIP_ASSUME_TAC
+       (DISJ_CASES_THEN2 STRIP_ASSUME_TAC STRIP_ASSUME_TAC)) THENL
+      [REPEAT SUBST_LHS_TAC THEN MATCH_MP_TAC(el 4 rl) THEN
+       REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THEN
+       ASM_REWRITE_TAC[];
+       NOT_VAR_TAC THEN
+       FIRST_ASSUM(fun ih ->
+         ASM_MESON_TAC[el 5 rl; SPEC `ck - 1` ih; lt1]);
+       NOT_VAR_TAC THEN
+       FIRST_ASSUM(fun ih ->
+         ASM_MESON_TAC[el 6 rl; SPEC `ck - 1` ih; lt1])]])
 ### v_inv_tf_update_thm
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_lemma])

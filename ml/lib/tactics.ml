@@ -797,3 +797,37 @@ let ALL_INST4 th =
          (allpairs (fun a bcd -> (a,bcd)) ths
             (allpairs (fun b cd -> (b,cd)) ths
                (allpairs (fun c d -> CONJ c d) ths ths)))));;
+
+(* ------------------------------------------------------------------ *)
+(* The induction hypothesis of a complete induction on the counter    *)
+(* of a size-indexed relation (the ck of CakeML's v_inv_ck).  HOL4's  *)
+(* completeInduct_on leaves !m. m < ck ==> ..., and a recursive rule  *)
+(* asks for the relation at ck - 1 where ck is not 0.  The counter is *)
+(* found by the assumption ~(ck = 0) that the rule gives, and the     *)
+(* hypothesis is applied to the assumptions, whether it asks for one  *)
+(* of them, for two of them, or for one and then the rest.            *)
+(* ------------------------------------------------------------------ *)
+
+let CK_IH_TAC =
+  let nlt = ARITH_RULE `!n. ~(n = 0) ==> n - 1 < n` in
+  FIRST_ASSUM(fun nz ->
+    let c = concl nz in
+    if not(is_neg c) then fail() else
+    let e = rand c in
+    if not(is_eq e) || not(type_of(lhs e) = `:num`) ||
+       not(rhs e = `0`)
+    then fail() else
+    let ck = lhs e in
+    let lt = MP (SPEC ck nlt) nz in
+    let ck1 = mk_binop `(-):num->num->num` ck `1` in
+    FIRST_ASSUM(fun ih ->
+      let ih' = MP (SPEC ck1 ih) lt in
+      (* the three are tried in turn, so each of them is a function
+         of the goal: an application of ih' that does not typecheck
+         fails where it stands and not where the ORELSE is *)
+      FIRST_ASSUM(fun vi gl ->
+        ((fun g -> MATCH_ACCEPT_TAC(MATCH_MP ih' vi) g) ORELSE
+         (fun g -> FIRST_ASSUM(fun c2 ->
+            MATCH_ACCEPT_TAC(MATCH_MP ih' (CONJ vi c2))) g) ORELSE
+         (fun g -> (MP_TAC(MATCH_MP ih' vi) THEN
+                    ASM_REWRITE_TAC[]) g)) gl)));;
