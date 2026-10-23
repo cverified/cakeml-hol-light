@@ -1919,7 +1919,19 @@ error).  Three ways out, in this order:
 3. state what is needed as a lemma of its own, with `'a` in it, and
    `MATCH_ACCEPT_TAC` it against the goal -- a theorem's type
    variables are instantiated when it is used, so this always
-   works.
+   works;
+4. when the term is a **theorem of the port** that is to be used on
+   the goal, instantiate it *at* the goal:
+   `INSTANTIATE (term_match [] (rand (concl th)) w) th` makes its
+   type variables the goal's.  Two statements of the port never
+   share an invented variable, so `ASM_REWRITE_TAC[]` does not see
+   that the conclusion of the one is the goal of the other, and the
+   step after it fails on an `X ==> X` that `ACCEPT_TAC` refuses.
+   `mutcons_thm` is the example: its `mutcons_thm_alt` has a
+   variable of its own for the word *and* one for the data of a
+   heap element in each of two `el_length` subterms, so the
+   instantiation is taken from the whole conclusion at once and not
+   from a subterm.
 
 A name of the port can also be a **constant**: `stack`, `refs`,
 `cen` and `be` are constants of some theory (`be` is a field of

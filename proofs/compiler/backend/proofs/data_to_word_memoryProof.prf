@@ -2087,6 +2087,32 @@
    EVERY_CASE_TAC THEN ASM_REWRITE_TAC dtr THEN
    REPEAT COND_CASES_TAC THEN
    ASM_MESON_TAC (dtr @ opt_rws))
+### mutcons_thm
+  (* take_el_drop writes the values as the three parts of the
+     MutBlock, which is what mutcons_thm_alt is about, and its
+     statement with those three parts in is the goal *)
+  (
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun ix ->
+     let eq = REWRITE_RULE[APPEND_ASSOC]
+                (MATCH_MP (cake_thm "take_el_drop") ix) in
+     W(fun (asl,w) ->
+       let hd_is n t = (try fst(dest_const(fst(strip_comb t))) = n
+                        with Failure _ -> false) in
+       let alt = cake_thm "mutcons_thm_alt" in
+       let fv n = find_term
+         (fun t -> is_var t && fst(dest_var t) = n) (concl alt) in
+       let args = snd(strip_comb
+         (find_term (hd_is "bvlSem_MutBlock") w)) in
+       let alt = REWRITE_RULE[APPEND_ASSOC; eq]
+         (INST [el 2 args, fv "l"; el 3 args, fv "c";
+                el 4 args, fv "r"] alt) in
+       (* the statement of the theorem and the statement of the goal
+          invented type variables of their own, so the one is
+          instantiated at the other: with the three parts in, the two
+          conclusions are the same term but for those variables *)
+       MP_TAC(INSTANTIATE (term_match [] (rand (concl alt)) w) alt))) THEN
+   ASM_REWRITE_TAC[] THEN TRY(DISCH_THEN ACCEPT_TAC))
 ### heap_store_ThunkBlock_thm
   (* a ThunkBlock is one element long whatever it holds, so the
      store leaves the lengths to agree *)

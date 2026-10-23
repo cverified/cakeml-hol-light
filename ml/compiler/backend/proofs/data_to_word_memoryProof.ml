@@ -25,6 +25,7 @@ needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
+needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
@@ -4026,7 +4027,31 @@ let mutcons_thm = cake_theorem "mutcons_thm[local]"
            (LENGTH xs))) :: roots2,
           heap2,be,a + el_length (BlockRep tag rs),
           sp - el_length (BlockRep tag rs),sp1,gens) limit ts)`)
-  CHEAT_TAC;;
+  (* take_el_drop writes the values as the three parts of the
+     MutBlock, which is what mutcons_thm_alt is about, and its
+     statement with those three parts in is the goal *)
+  (
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun ix ->
+     let eq = REWRITE_RULE[APPEND_ASSOC]
+                (MATCH_MP (cake_thm "take_el_drop") ix) in
+     W(fun (asl,w) ->
+       let hd_is n t = (try fst(dest_const(fst(strip_comb t))) = n
+                        with Failure _ -> false) in
+       let alt = cake_thm "mutcons_thm_alt" in
+       let fv n = find_term
+         (fun t -> is_var t && fst(dest_var t) = n) (concl alt) in
+       let args = snd(strip_comb
+         (find_term (hd_is "bvlSem_MutBlock") w)) in
+       let alt = REWRITE_RULE[APPEND_ASSOC; eq]
+         (INST [el 2 args, fv "l"; el 3 args, fv "c";
+                el 4 args, fv "r"] alt) in
+       (* the statement of the theorem and the statement of the goal
+          invented type variables of their own, so the one is
+          instantiated at the other: with the three parts in, the two
+          conclusions are the same term but for those variables *)
+       MP_TAC(INSTANTIATE (term_match [] (rand (concl alt)) w) alt))) THEN
+   ASM_REWRITE_TAC[] THEN TRY(DISCH_THEN ACCEPT_TAC));;
 
 let heap_store_ThunkBlock_thm = cake_theorem "heap_store_ThunkBlock_thm"
   (fun () ->
