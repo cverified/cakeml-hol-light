@@ -153,7 +153,8 @@ let word_lsb = new_definition
   `word_lsb (w:(N)word) <=> bit 0 w`;;
 
 let word_bits = new_definition
-  `word_bits h l (w:(N)word) = (word_subword w (l,(h + 1) - l):(N)word)`;;
+  `word_bits h l (w:(N)word) =
+     (word_subword w (l,(h + 1) - l):(N)word)`;;
 
 parse_as_infix("><",(23,"left"));;
 

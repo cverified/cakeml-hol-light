@@ -1018,3 +1018,54 @@ resolution that HOL4 gives it.  So the overrides are what makes
 the file read the same way in both, and a test bed is built in
 the order of the load order (`tools/needsorder.py`, "The order in
 which the port is loaded").
+
+## A statement whose two variables became one name
+
+`all_ts_permute` of `data_to_word_memoryProof` says in HOL4
+
+```
+∀(refs : v ref num_map) stack stack'.
+  PERM stack stack' ⇒ all_ts refs stack = all_ts refs stack'
+```
+
+and in the port
+
+```
+`!(refs:(dataSem_v bvlSem_ref) spt) stack' stack'.
+   PERM stack' stack' ==> all_ts refs stack' = all_ts refs
+     stack'`
+```
+
+because `stack` is a constant of the port (see "The constants
+that HOL4 hides from its parser") and the renaming that the port
+does for it, `stack` to `stack'`, gave HOL4's `stack` the name
+that HOL4's `stack'` already had.  The second binder shadows the
+first, so what the port states is `!refs s1 s2. PERM s2 s2 ==>
+all_ts refs s2 = all_ts refs s2`: a tautology, and weaker than
+the source.
+
+Where it bites: nothing of the port uses `all_ts_permute` (HOL4
+does not either -- it is stated and never used), so no proof
+rests on the weaker statement.  Its proof of phase three is
+`REWRITE_TAC[]`, with a comment that says why.
+
+What to do about it: the statement has to be restated, with the
+two variables apart (`stack'` and `stack''`), and then proved
+with `PERM_IND` and `all_ts_head` the way HOL4 does.  That is a
+change of a statement, which phase three does not do, so it is
+recorded here and waits for a pass that may restate.
+
+How many more there are: `tools/dupbind.py` reads the quoted
+terms of `ml/` and reports every `!` or `?` chain that binds one
+name twice.  It finds **25**, and they are of two kinds, so each
+one has to be read next to its source:
+
+- the source binds one name twice as well, and the port is
+  faithful.  `memory_rel_do_build` of this very file is one
+  (`data_to_word_memoryProofScript.sml:17837` binds `v` twice),
+  and HOL4 reads the second binder the same way, so the port
+  says what the source says.
+- the renaming collapsed two names into one, as here.  Two more
+  that it did: `wordPropsScript.sml:4004` (`!n stack stack' x`)
+  and `word_to_stackProofScript.sml:2108` (`!stack stack'`),
+  both of them `stack`/`stack'`.

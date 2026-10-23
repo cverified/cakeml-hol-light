@@ -966,6 +966,54 @@ let v_all_vs_trans_thm =
        let c = (CONJUNCT1 th,CONJUNCT2 th) in
        cache := Some c; c;;
 
+(* and that a timestamp of a value among the values of a list is a
+   timestamp of the list, which three theorems of the file ask for
+   (v_all_vs_ts_MEM, v_all_vs_ts_list, all_ts_head_eq).  Both
+   halves of the induction are given back. *)
+
+let v_all_vs_ts_thm =
+  let cache = ref None in
+  fun () ->
+    match !cache with
+      Some c -> c
+    | None ->
+       let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+       let use2 =
+         FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun mt ->
+           FIRST_ASSUM(fun m ->
+             MATCH_ACCEPT_TAC(MATCH_MP ih (CONJ mt m))))) in
+       let triv2 =
+         REPEAT GEN_TAC THEN REWRITE_TAC[vsing; MEM] THEN
+         STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+         RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
+         FIRST_ASSUM CONTR_TAC in
+       let th = prove
+        (`(!y x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs [y])
+                    ==> MEM ts (v_all_ts y)) /\
+          (!l x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs l)
+                    ==> MEM ts (FLAT (MAP v_all_ts l)))`,
+         MATCH_MP_TAC (dataSem_v_induct ()) THEN
+         REPEAT CONJ_TAC THENL
+          [triv2; triv2;
+           REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+           REWRITE_TAC[vsing; vats; MEM] THEN
+           DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+             (DISJ_CASES_THEN2
+                (fun eq -> SUBST_ALL_TAC eq THEN
+                   RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
+                   FIRST_ASSUM MATCH_ACCEPT_TAC)
+                (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)));
+           triv2; triv2;
+           REWRITE_TAC[vnil; MEM];
+           REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+           ONCE_REWRITE_TAC[vcons] THEN
+           REWRITE_TAC[MEM_APPEND; MAP; FLAT] THEN
+           DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (DISJ_CASES_THEN2
+             (fun m -> ASSUME_TAC m THEN DISJ1_TAC THEN use2)
+             (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)))]) in
+       let c = (CONJUNCT1 th,CONJUNCT2 th) in
+       cache := Some c; c;;
+
 (* ------------------------------------------------------------------ *)
 (* A bitwise identity of words that are numerals, at a dimindex that  *)
 (* is not known: HOL Light's WORD_BLAST asks for a word of a size,    *)

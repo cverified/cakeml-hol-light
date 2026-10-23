@@ -1152,6 +1152,59 @@
        REWRITE_TAC[SUBMAP] THEN
        DISCH_THEN(fun th -> MP_TAC(SPEC `x:num` th)) THEN
        ASM_REWRITE_TAC[]]])
+### all_ts_cons
+  (* the timestamps of a Block on the stack are its own timestamp
+     and the ones of its payload, which the payload in front of the
+     stack has; the set that the refs contribute is the same on
+     both sides, so the proof is about the stack alone *)
+  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let mems = [vats; MEM; MEM_FLAT; MEM_MAP] in
+   let gen = prove
+    (`!(s:dataSem_v->bool) ts tag xs stack.
+        {t | ?x. (x IN s \/ MEM x (Block ts tag xs :: stack)) /\
+                 MEM t (v_all_ts x)} =
+        ts INSERT {t | ?x. (x IN s \/ MEM x (xs ++ stack)) /\
+                           MEM t (v_all_ts x)}`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[EXTENSION; IN_INSERT; IN_ELIM_THM; MEM;
+                 MEM_APPEND] THEN
+     X_GEN_TAC `t:num` THEN EQ_TAC THENL
+      [DISCH_THEN(X_CHOOSE_THEN `y:dataSem_v`
+         (CONJUNCTS_THEN2 (REPEAT_TCL DISJ_CASES_THEN ASSUME_TAC)
+                          ASSUME_TAC)) THENL
+        [DISJ2_TAC THEN EXISTS_TAC `y:dataSem_v` THEN
+         ASM_REWRITE_TAC[];
+         FIRST_X_ASSUM SUBST_ALL_TAC THEN
+         FIRST_X_ASSUM(MP_TAC o REWRITE_RULE mems) THEN
+         DISCH_THEN(DISJ_CASES_THEN2
+           (fun th -> DISJ1_TAC THEN ACCEPT_TAC th)
+           (X_CHOOSE_THEN `u:num list`
+             (CONJUNCTS_THEN2
+                (X_CHOOSE_THEN `z:dataSem_v`
+                   (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC))
+                MP_TAC))) THEN
+         ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
+         DISJ2_TAC THEN EXISTS_TAC `z:dataSem_v` THEN
+         ASM_REWRITE_TAC[];
+         DISJ2_TAC THEN EXISTS_TAC `y:dataSem_v` THEN
+         ASM_REWRITE_TAC[]];
+       DISCH_THEN(DISJ_CASES_THEN2 ASSUME_TAC
+         (X_CHOOSE_THEN `y:dataSem_v`
+           (CONJUNCTS_THEN2 (REPEAT_TCL DISJ_CASES_THEN ASSUME_TAC)
+                            ASSUME_TAC))) THENL
+        [EXISTS_TAC `Block ts tag xs` THEN
+         ASM_REWRITE_TAC[vats; MEM];
+         EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[];
+         EXISTS_TAC `Block ts tag xs` THEN
+         REWRITE_TAC mems THEN DISJ2_TAC THEN
+         EXISTS_TAC `v_all_ts (y:dataSem_v)` THEN
+         CONJ_TAC THENL
+          [EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[];
+           ASM_REWRITE_TAC[]];
+         EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[]]]) in
+   REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   MATCH_ACCEPT_TAC gen)
 ### all_ts_cons_no_block
   (* a value that is not a Block has no timestamp in it, so the head
      of the stack adds nothing to the set *)
@@ -1179,6 +1232,75 @@
    MESON_TAC[])
 ### all_ts_head
   (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM all_ts_append; APPEND])
+### v_all_vs_MEM
+  (* the values of a list are the values of its head followed by
+     the ones of its tail, and a Block among them is followed by
+     the values of its payload: the induction of the type gives
+     both halves at once, and what each case does to the two
+     pieces of the append is what the three lemmas say *)
+  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let ext0 = prove
+    (`!b:dataSem_v list. ?p q. b = p ++ b ++ q`,
+     GEN_TAC THEN EXISTS_TAC `[]:dataSem_v list` THEN
+     EXISTS_TAC `[]:dataSem_v list` THEN
+     REWRITE_TAC[APPEND; APPEND_NIL]) in
+   let extc = prove
+    (`!(h:dataSem_v) t b. (?p q. t = p ++ b ++ q)
+                          ==> (?p q. CONS h t = p ++ b ++ q)`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(X_CHOOSE_THEN `p:dataSem_v list`
+       (X_CHOOSE_THEN `q:dataSem_v list` SUBST1_TAC)) THEN
+     EXISTS_TAC `CONS (h:dataSem_v) p` THEN
+     EXISTS_TAC `q:dataSem_v list` THEN REWRITE_TAC[APPEND]) in
+   let extl = prove
+    (`!(s:dataSem_v list) t b. (?p q. t = p ++ b ++ q)
+                               ==> (?p q. s ++ t = p ++ b ++ q)`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(X_CHOOSE_THEN `p:dataSem_v list`
+       (X_CHOOSE_THEN `q:dataSem_v list` SUBST1_TAC)) THEN
+     EXISTS_TAC `s ++ p:dataSem_v list` THEN
+     EXISTS_TAC `q:dataSem_v list` THEN
+     REWRITE_TAC[GSYM APPEND_ASSOC]) in
+   let extr = prove
+    (`!(s:dataSem_v list) t b. (?p q. t = p ++ b ++ q)
+                               ==> (?p q. t ++ s = p ++ b ++ q)`,
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(X_CHOOSE_THEN `p:dataSem_v list`
+       (X_CHOOSE_THEN `q:dataSem_v list` SUBST1_TAC)) THEN
+     EXISTS_TAC `p:dataSem_v list` THEN
+     EXISTS_TAC `q ++ s:dataSem_v list` THEN
+     REWRITE_TAC[APPEND_ASSOC]) in
+   let triv = REPEAT GEN_TAC THEN
+     REWRITE_TAC[vsing; MEM; distinctness "dataSem_v"] in
+   SUBGOAL_THEN
+     `(!x ts tag xs.
+         MEM (Block ts tag xs) (v_all_vs [x])
+         ==> (?p q. v_all_vs [x] =
+                    p ++ (Block ts tag xs :: v_all_vs xs) ++ q)) /\
+      (!l ts tag xs.
+         MEM (Block ts tag xs) (v_all_vs l)
+         ==> (?p q. v_all_vs l =
+                    p ++ (Block ts tag xs :: v_all_vs xs) ++ q))`
+     (fun th -> MATCH_ACCEPT_TAC(CONJUNCT2 th)) THEN
+   MATCH_MP_TAC (dataSem_v_induct ()) THEN REPEAT CONJ_TAC THENL
+    [triv; triv;
+     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[vsing; MEM; injectivity "dataSem_v"] THEN
+     DISCH_THEN(DISJ_CASES_THEN2
+       (fun eq -> STRIP_ASSUME_TAC eq THEN ASM_REWRITE_TAC[] THEN
+                  MATCH_ACCEPT_TAC ext0)
+       (fun m -> FIRST_ASSUM(fun ih ->
+                   MATCH_ACCEPT_TAC(MATCH_MP extc (MATCH_MP ih m)))));
+     triv; triv;
+     REWRITE_TAC[vnil; MEM];
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+     ONCE_REWRITE_TAC[vcons] THEN REWRITE_TAC[MEM_APPEND] THEN
+     DISCH_THEN(DISJ_CASES_THEN2
+       (fun m -> FIRST_ASSUM(fun ih ->
+                   MATCH_ACCEPT_TAC(MATCH_MP extr (MATCH_MP ih m))))
+       (fun m -> FIRST_ASSUM(fun ih ->
+                   MATCH_ACCEPT_TAC(MATCH_MP extl
+                     (MATCH_MP ih m)))))])
 ### v_in_all_vs
   (* a value of a value of what the refs and the stack hold is one
      of them as well: each of the four parts of all_vs is a list
@@ -1254,49 +1376,55 @@
    REPEAT DISJ2_TAC THEN MATCH_MP_TAC MEM_v_all_vs THEN
    ASM_REWRITE_TAC[])
 ### v_all_vs_ts_MEM
-  (* and the timestamps of a value among the values of a value are
-     timestamps of that one *)
-  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
-   let triv2 = REPEAT GEN_TAC THEN REWRITE_TAC[vsing; MEM] THEN
-     STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
-     RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
-     FIRST_ASSUM CONTR_TAC in
-   let use2 =
-     FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun mt -> FIRST_ASSUM(fun m ->
-       MATCH_ACCEPT_TAC(MATCH_MP ih (CONJ mt m))))) in
-   SUBGOAL_THEN
-     `(!y x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs [y])
-                ==> MEM ts (v_all_ts y)) /\
-      (!l x ts. MEM ts (v_all_ts x) /\ MEM x (v_all_vs l)
-                ==> MEM ts (FLAT (MAP v_all_ts l)))`
-     (fun th -> REPEAT GEN_TAC THEN STRIP_TAC THEN
-        FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a1 ->
-          MATCH_ACCEPT_TAC(MATCH_MP (CONJUNCT1 th) (CONJ a1 a2))))) THEN
-   MATCH_MP_TAC dataSem_v_INDUCT THEN REPEAT CONJ_TAC THENL
-    [triv2; triv2;
-     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
-     REWRITE_TAC[vsing; vats; MEM] THEN
-     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
-       (DISJ_CASES_THEN2
-          (fun eq -> SUBST_ALL_TAC eq THEN
-             RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
-             FIRST_ASSUM MATCH_ACCEPT_TAC)
-          (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)));
-     triv2; triv2;
-     REWRITE_TAC[vnil; MEM];
-     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
-     ONCE_REWRITE_TAC[vcons] THEN
-     REWRITE_TAC[MEM_APPEND; MAP; FLAT] THEN
-     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (DISJ_CASES_THEN2
-       (fun m -> ASSUME_TAC m THEN DISJ1_TAC THEN use2)
-       (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)))])
+  (* the induction that ml/lib/tactics.ml does for the proofs that
+     need this before the file states it *)
+  (let (c1,_) = v_all_vs_ts_thm () in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a1 ->
+     MATCH_ACCEPT_TAC(MATCH_MP c1 (CONJ a1 a2)))))
 ### v_all_vs_trans
   (* the induction that ml/lib/tactics.ml does for the proofs that
      need this before the file states it *)
   (MATCH_ACCEPT_TAC (snd (v_all_vs_trans_thm ())))
+### MEM_in_all_ts
+  (* only a Block has a timestamp, and a Block among the values of
+     what the refs and the stack hold is among the values of one of
+     the values that a ref holds or of one on the stack, whose
+     timestamps are therefore timestamps of the stack *)
+  (let (c1,_) = v_all_vs_ts_thm () in
+   let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let fr = prove
+    (`(!l x. find_ref (bvlSem_ValueArray l) x <=> MEM x l) /\
+      (!m v x. find_ref (Thunk m v) x <=> (v = x)) /\
+      (!tg fin l c r x. find_ref (bvlSem_MutBlock tg fin l c r) x <=>
+         MEM x (l ++ [c] ++ r))`,
+     REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+     GEN_REWRITE_TAC LAND_CONV [cake_def "find_ref"] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   SUBGOAL_THEN `?t tag l. (x:dataSem_v) = Block t tag l`
+     STRIP_ASSUME_TAC THENL
+    [CASES_ON_NAME "x" THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[vats; MEM]) THEN
+     TRY(FIRST_ASSUM CONTR_TAC) THEN MESON_TAC[];
+     ALL_TAC] THEN
+   FIRST_X_ASSUM SUBST_ALL_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[cake_def "all_vs"; IN_UNION;
+                               IN_ELIM_THM]) THEN
+   REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[IN_ELIM_THM] THEN
+   ASM_MESON_TAC[v_all_vs_MEM2; c1; fr; MEM_APPEND])
 ### MEM_in_all_vs
   (REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
    REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_all_vs_trans])
+### v_all_vs_ts_list
+  (* the other half of that induction: the timestamps of a value
+     among the values of a list are timestamps of the list *)
+  (let (_,c2) = v_all_vs_ts_thm () in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a1 ->
+     MATCH_ACCEPT_TAC(MATCH_MP c2 (CONJ a1 a2)))))
 ### v_inv_tf_update_thm_lemma
   (* the same complete induction as v_inv_SUBMAP_lemma, but only the
      map of the timestamps changes and by an update at a timestamp
@@ -2119,6 +2247,14 @@
        MATCH_MP IVAL_IWORD (MATCH_MP bnds (CONJ a b)))
        (allpairs (fun a b -> (a,b)) ths ths))) THEN
    INT_ARITH_TAC)
+### all_ts_permute
+  (* the two variables of HOL4's statement, `stack` and `stack'`,
+     became one name in the port, so what it states here is that
+     the timestamps of a list are the timestamps of that same list
+     (see ISSUES.md, "A statement whose two variables became one
+     name"): nothing uses it, in the port or in HOL4, and the
+     statement is what has to be put right, not the proof *)
+  (REWRITE_TAC[])
 ### reachable_refs_stack_subset
   (* the roots of the one stack are roots of the other, and
      reachable_refs asks for nothing else of them *)
@@ -2462,6 +2598,29 @@
    ASM_REWRITE_TAC[APPEND; cake_def "misc_word_list"; LENGTH;
                    emp_STAR; STAR_ASSOC; WORD_ADD_SUC_MUL;
                    WORD_ADD_0_MUL])
+### all_ts_head_eq
+  (* a value that the refs or the stack already hold adds no
+     timestamp to the stack, which is what MEM_in_all_ts says of
+     the value itself and all_ts_head of the head of a stack *)
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN
+   ONCE_REWRITE_TAC[all_ts_head] THEN
+   MATCH_MP_TAC(SET_RULE `s SUBSET t ==> t = s UNION t`) THEN
+   REWRITE_TAC[SUBSET] THEN X_GEN_TAC `u:num` THEN
+   REWRITE_TAC[cake_def "all_ts"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[IN_ELIM_THM; MEM] THEN
+   DISCH_THEN(X_CHOOSE_THEN `y:dataSem_v`
+     (CONJUNCTS_THEN2
+        (DISJ_CASES_THEN2 ASSUME_TAC (SUBST_ALL_TAC o SYM))
+        ASSUME_TAC)) THENL
+    [EXISTS_TAC `y:dataSem_v` THEN ASM_REWRITE_TAC[];
+     MP_TAC(SPECL [`y:dataSem_v`; `u:num`; `stack':(dataSem_v)list`;
+                   `refs:(dataSem_v bvlSem_ref) spt`]
+       MEM_in_all_ts) THEN
+     ASM_REWRITE_TAC[] THEN
+     REWRITE_TAC[cake_def "all_ts"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[IN_ELIM_THM]])
 ### memory_rel_swap
   (DISCH_TAC THEN
    FIRST_ASSUM(fun th ->
