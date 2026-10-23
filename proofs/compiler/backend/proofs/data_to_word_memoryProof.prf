@@ -1179,6 +1179,17 @@
    MESON_TAC[])
 ### all_ts_head
   (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM all_ts_append; APPEND])
+### v_in_all_vs
+  (* a value of a value of what the refs and the stack hold is one
+     of them as well: each of the four parts of all_vs is a list
+     and the values of a list are transitively closed *)
+  (REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
+   REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC ASSUME_TAC) THEN
+   FIRST_ASSUM(fun mx -> FIRST_ASSUM(fun my ->
+     ASSUME_TAC(MATCH_MP (snd (v_all_vs_trans_thm ()))
+                         (CONJ mx my)))) THEN
+   ASM_MESON_TAC[])
 ### v_all_vs_MEM2
   (* the values of v_all_vs (x::xs) are x itself, the values of its
      payload where it is a Block, and the values of v_all_vs xs: the
@@ -1280,22 +1291,9 @@
        (fun m -> ASSUME_TAC m THEN DISJ1_TAC THEN use2)
        (fun m -> ASSUME_TAC m THEN DISJ2_TAC THEN use2)))])
 ### v_all_vs_trans
-  (* a value of v_all_vs [y] is y itself or, where y is a Block, one
-     of the values of its payload, and v_all_vs_MEM says that the
-     payload's values stand in v_all_vs x where the Block does *)
-  (let vav = cake_def "v_all_vs" in
-   let vnil = prove
-    (`v_all_vs ([]:dataSem_v list) = []`,
-     GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
-     REWRITE_TAC[]) in
-   REPEAT GEN_TAC THEN CASES_ON_NAME "y" THEN
-   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [vav] THEN
-   MATCH_REDUCE_TAC THEN
-   REWRITE_TAC[vnil; APPEND; APPEND_NIL; MEM] THEN
-   STRIP_TAC THEN
-   TRY(FIRST_X_ASSUM(fun th -> MP_TAC(MATCH_MP v_all_vs_MEM th)) THEN
-       STRIP_TAC) THEN
-   ASM_MESON_TAC[MEM_APPEND; MEM])
+  (* the induction that ml/lib/tactics.ml does for the proofs that
+     need this before the file states it *)
+  (MATCH_ACCEPT_TAC (snd (v_all_vs_trans_thm ())))
 ### MEM_in_all_vs
   (REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM] THEN
    REPEAT STRIP_TAC THEN ASM_MESON_TAC[v_all_vs_trans])

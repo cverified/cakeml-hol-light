@@ -909,3 +909,50 @@ let v_all_vs_clauses =
          REWRITE_TAC[vnil; APPEND_NIL; APPEND; GSYM APPEND_ASSOC]) in
        let c = (vnil,vsing,vats,vcons) in
        cache := Some c; c;;
+
+(* and that the values of a value are transitively closed, which the
+   proofs about all_vs ask for before the file itself proves it
+   (v_all_vs_trans).  Both halves of the induction are given back,
+   the one about a value and the one about a list of them. *)
+
+let v_all_vs_trans_thm =
+  let cache = ref None in
+  fun () ->
+    match !cache with
+      Some c -> c
+    | None ->
+       let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+       let use2 =
+         FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun a ->
+           FIRST_ASSUM(fun b ->
+             MATCH_ACCEPT_TAC(MATCH_MP ih (CONJ a b))))) in
+       let trv =
+         REPEAT GEN_TAC THEN REWRITE_TAC[vsing; MEM] THEN
+         STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+         RULE_ASSUM_TAC(REWRITE_RULE[vsing; MEM]) THEN
+         FIRST_ASSUM MATCH_ACCEPT_TAC in
+       let blk =
+         REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+         REWRITE_TAC[vsing; MEM] THEN STRIP_TAC THEN
+         REPEAT SUBST_LHS_TAC THEN
+         RULE_ASSUM_TAC(REWRITE_RULE[vsing; MEM]) THEN
+         (FIRST_ASSUM MATCH_ACCEPT_TAC ORELSE
+          (DISJ2_TAC THEN use2)) in
+       let cns =
+         REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+         DISCH_THEN(CONJUNCTS_THEN2
+           (fun m -> MP_TAC(ONCE_REWRITE_RULE[vcons] m))
+           ASSUME_TAC) THEN
+         GEN_REWRITE_TAC (RAND_CONV o RAND_CONV) [vcons] THEN
+         REWRITE_TAC[MEM_APPEND] THEN
+         STRIP_TAC THEN
+         ((DISJ1_TAC THEN use2) ORELSE (DISJ2_TAC THEN use2)) in
+       let th = prove
+        (`(!x y z. MEM y (v_all_vs [x]) /\ MEM z (v_all_vs [y])
+                   ==> MEM z (v_all_vs [x])) /\
+          (!l y z. MEM y (v_all_vs l) /\ MEM z (v_all_vs [y])
+                   ==> MEM z (v_all_vs l))`,
+         MATCH_MP_TAC dataSem_v_INDUCT THEN REPEAT CONJ_TAC THENL
+          [trv; trv; blk; trv; trv; REWRITE_TAC[vnil; MEM]; cns]) in
+       let c = (CONJUNCT1 th,CONJUNCT2 th) in
+       cache := Some c; c;;
