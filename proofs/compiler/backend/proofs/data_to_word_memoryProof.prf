@@ -2309,6 +2309,13 @@
   (REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
                BIT_WORD_1] THEN
    MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`])
+### word_copy_bwd_0
+  (* a copy of no bytes is the memory itself, and good_dimindex puts
+     the dimword above the four that the clause asks for *)
+  (REWRITE_TAC[cake_def "good_dimindex"] THEN STRIP_TAC THEN
+   GEN_REWRITE_TAC LAND_CONV [cake_def "word_copy_bwd"] THEN
+   ASM_REWRITE_TAC[dimword; WORD_ULT; VAL_WORD; VAL_WORD_0] THEN
+   CONV_TAC NUM_REDUCE_CONV)
 ### word_of_byte_0
   (REWRITE_TAC[cake_def "word_of_byte"] THEN
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
