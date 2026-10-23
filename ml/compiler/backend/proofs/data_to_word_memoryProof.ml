@@ -6731,7 +6731,31 @@ let memory_rel_Number_word_msb =
   word)) :: vars) /\
       good_dimindex (:'a) /\ small_int (:'a) i1 ==>
       (word_msb w <=> i1 < (&0))`)
-  CHEAT_TAC;;
+  (* zero is a small integer, so the relation holds of it as
+     well, and the order of the two Smallnums is the order of
+     the integers: the sign bit of the word says which side of
+     zero it is on *)
+  (let si0 = prove
+    (`good_dimindex (:'a) ==> small_int (:'a) (&0)`,
+     REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+                 dimword] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     CONV_TAC NUM_REDUCE_CONV THEN INT_ARITH_TAC) in
+   let sm0 = prove
+    (`Smallnum (&0) = (word 0:(N)word)`,
+     REWRITE_TAC[cake_def "Smallnum"] THEN
+     REWRITE_TAC[INT_ARITH `~((&0:int) < &0)`] THEN
+     REWRITE_TAC[INT_ARITH `(&4:int) * &0 = &0`;
+                 NUM_OF_INT_OF_NUM]) in
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun gd -> ASSUME_TAC(MATCH_MP si0 gd)) THEN
+   ALL_INST3 IMP_memory_rel_Number THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[sm0]) THEN
+   ALL_INST4 memory_rel_Number_LESS_EQ THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "word_loc"]) THEN
+   REWRITE_TAC[word_msb; MSB_IVAL] THEN
+   ASM_MESON_TAC[word_ile; irelational2; IVAL_WORD_0;
+                 INT_ARITH `(i:int) < &0 <=> ~(&0 <= i)`]);;
 
 let memory_rel_RefPtr_EQ_lemma =
   cake_theorem "memory_rel_RefPtr_EQ_lemma[local]"
