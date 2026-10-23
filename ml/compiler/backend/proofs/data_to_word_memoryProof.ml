@@ -7280,7 +7280,33 @@ let last_bytes_bytes_to_word_REPLICATE =
      n <= k /\ b1 = b2 /\ n1 = n ==>
      bytes_to_word k a (REPLICATE n b2) w be =
      last_bytes n1 b1 a w be`)
-  CHEAT_TAC;;
+  (* the bytes of a replicated byte written one after the other are
+     what last_bytes writes, by the induction on the number *)
+  (SUBGOAL_THEN
+      `!n k a (w:'a word) bb bend. n <= k
+         ==> bytes_to_word k a (REPLICATE n bb) w bend =
+             last_bytes n bb a w bend`
+      (fun th -> REPEAT GEN_TAC THEN
+         DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+           (CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST1_TAC)) THEN
+         FIRST_ASSUM(fun le ->
+           MATCH_ACCEPT_TAC(MATCH_MP (SPEC_ALL th) le)))
+    THEN
+    INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+     [ONCE_REWRITE_TAC[cake_def "bytes_to_word"] THEN
+      ONCE_REWRITE_TAC[cake_def "last_bytes"] THEN
+      REWRITE_TAC[REPLICATE] THEN
+      COND_CASES_TAC THEN REWRITE_TAC[] THEN
+      MATCH_REDUCE_TAC THEN REWRITE_TAC[];
+      ONCE_REWRITE_TAC[cake_def "bytes_to_word"] THEN
+      ONCE_REWRITE_TAC[cake_def "last_bytes"] THEN
+      REWRITE_TAC[REPLICATE; NOT_SUC; ARITH_RULE `SUC n - 1 = n`] THEN
+      COND_CASES_TAC THENL
+       [FIRST_ASSUM(fun th -> MP_TAC th) THEN ASM_ARITH_TAC;
+        ALL_TAC] THEN
+      MATCH_REDUCE_TAC THEN
+      AP_THM_TAC THEN AP_TERM_TAC THEN
+      FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC]);;
 
 let decode_length_make_byte_header =
   cake_theorem "decode_length_make_byte_header"
