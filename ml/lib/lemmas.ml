@@ -403,3 +403,25 @@ let ALL2_SWAP = prove
     REPEAT STRIP_TAC THEN
     FIRST_ASSUM(fun th -> MP_TAC(SPEC `k:num` th)) THEN
     ASM_SIMP_TAC[]]);;
+
+(* the lookup of a finite map read by its domain and its
+   application, HOL4's FLOOKUP_DEF, and what a SUBMAP does to one,
+   HOL4's FLOOKUP_SUBMAP *)
+
+let FLOOKUP_DEF = prove
+ (`!(fm:(A,B)fmap) x.
+     FLOOKUP fm x =
+     (if x IN FDOM fm then SOME (FAPPLY fm x) else NONE)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[FLOOKUP; FDOM; fmap_apply;
+                                  IN_ELIM_THM] THEN
+  STRUCT_CASES_TAC(ISPEC `fmap_fn (fm:(A,B)fmap) x`
+                         (cases_of `:(B)option`)) THEN
+  REWRITE_TAC[THE; distinctness "option"]);;
+
+let FLOOKUP_SUBMAP = prove
+ (`!(f:(A,B)fmap) g k v.
+     f SUBMAP g /\ FLOOKUP f k = SOME v ==> FLOOKUP g k = SOME v`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[SUBMAP; FLOOKUP_DEF] THEN
+  REPEAT COND_CASES_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  ASM_MESON_TAC[]);;
