@@ -83,8 +83,9 @@
      thunk rules name their value and their heap element in the
      premises and not in the conclusion, which a MATCH_MP_TAC would
      leave undetermined, so MESON applies them *)
-  (let (vr,vi,_) = v_inv_ck in
+  (let (vr,vi,vc) = v_inv_ck in
    let rl = CONJUNCTS vr in
+   let _ = vc in
    let ar = ARITH_RULE
      `!a b. a <= b /\ ~(a = 0) ==> ~(b = 0) /\ a - 1 <= b - 1` in
    let PRE_TAC = REPEAT GEN_TAC THEN REPEAT STRIP_TAC in
@@ -772,9 +773,21 @@
      FIRST_X_ASSUM(MP_TAC o
                    REWRITE_RULE[cake_def "isDataElement"]) THEN
      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN MESON_TAC[]) in
+   (* the four shapes of a data element that the invariant uses.
+      The theorem of the file that says this and more stands
+      later in the file than this one does *)
+   let isde4 = prove
+    (`isDataElement (BlockRep tag ys1) /\
+      isDataElement (Word64Rep (:'a) w) /\
+      isDataElement (ThunkBlock ev v) /\
+      isDataElement (Bignum i)`,
+     REWRITE_TAC[cake_def "isDataElement"; cake_def "BlockRep";
+                 cake_def "Word64Rep"; cake_def "ThunkBlock";
+                 cake_def "Bignum"] THEN
+     PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REPEAT CONJ_TAC THEN TRY COND_CASES_TAC THEN MESON_TAC[]) in
    let keep_of hsr hl =
-     REWRITE_RULE[isDataElement_lemmas]
-       (MATCH_MP (MATCH_MP keep hsr) hl) in
+     REWRITE_RULE[isde4] (MATCH_MP (MATCH_MP keep hsr) hl) in
    let KEEP_TAC =
      FIRST_ASSUM(fun hsr -> FIRST_ASSUM(fun hl ->
        MATCH_ACCEPT_TAC(keep_of hsr hl))) in
@@ -2341,8 +2354,9 @@
      that agree at every pointer let the derivation be replayed
      with the other refs; the ck of the relation is untouched, and
      v_inv is the relation for every ck *)
-  (let (vr,vi,_) = v_inv_ck in
+  (let (vr,vi,vcases) = v_inv_ck in
    let rl = CONJUNCTS vr in
+   let _ = vcases in
    let dt = prove
     (`!(v:dataSem_v) refs refs1.
         (!n. sptree_lookup n refs = sptree_lookup n refs1)

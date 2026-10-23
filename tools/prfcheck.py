@@ -27,7 +27,8 @@ def check(mlrel):
                        r'([A-Za-z_][A-Za-z_0-9\']*))?\s*=',
                        ml, re.M):
     for g in m.groups():
-      if g and g not in at: at[g] = m.start()
+      # a wildcard is no binding (the file has let _ = size_thms ...)
+      if g and g != '_' and g not in at: at[g] = m.start()
   # and where each theorem of a name is stated
   thm = {}
   for m in re.finditer(r'cake_theorem[\s\n]*"([^"\[]*)(\[[^"]*\])?"',
