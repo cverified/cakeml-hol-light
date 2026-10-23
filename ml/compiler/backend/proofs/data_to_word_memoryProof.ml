@@ -10800,7 +10800,20 @@ let bind_each_FUPDATE = cake_theorem "bind_each_FUPDATE"
     `!n i tf ts1 ts2 k1 k2.
       ts1 < ts2 /\ k1 < k2 ==> bind_each (tf |+ (ts1,k1)) ts2 k2
         i n = bind_each tf ts2 k2 i n |+ (ts1,k1)`)
-  CHEAT_TAC;;
+  (* the binding of the timestamps of a block does not touch a
+     timestamp below the ones it binds, so an update of that one
+     commutes with it (ml/lib/lemmas.ml has FUPDATE_COMMUTES) *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THEN
+   DISCH_TAC THEN
+   FIRST_X_ASSUM(fun ih ->
+     MP_TAC(SPECL [`i:num`; `tf:(num,num)fmap`; `ts1:num`;
+                   `ts2 + 1`; `k1:num`; `k2 + i`] ih)) THEN
+   ASM_REWRITE_TAC[ARITH_RULE `(ts1 < ts2 + 1) <=> ts1 <= ts2`] THEN
+   ANTS_TAC THENL
+    [ASM_ARITH_TAC;
+     DISCH_THEN SUBST1_TAC THEN
+     MATCH_MP_TAC FUPDATE_COMMUTES THEN ASM_ARITH_TAC]);;
 
 let bind_each_MINUS = cake_theorem "bind_each_MINUS"
   (fun () ->
@@ -10809,7 +10822,26 @@ let bind_each_MINUS = cake_theorem "bind_each_MINUS"
       x IN {x | ts <= x /\ x < ts + n} /\ k2 <= k1 ==> FAPPLY
         (bind_each tf ts k1 i n) x - k2 = FAPPLY (bind_each tf ts (k1
         - k2) i n) x`)
-  CHEAT_TAC;;
+  (* the binding of each timestamp of a block gives the one at ts
+     the clock k and the ones above it k + i, k + 2i, ...: taking k2
+     off every one of them is the binding that starts k2 lower *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+    REWRITE_TAC[cake_def "bind_each"; IN_ELIM_THM] THEN
+    STRIP_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    ASM_CASES_TAC `(x:num) = ts` THENL
+     [ASM_REWRITE_TAC[FAPPLY_FUPDATE_THM];
+      ALL_TAC] THEN
+    ASM_REWRITE_TAC[FAPPLY_FUPDATE_THM] THEN
+    SUBGOAL_THEN `(k1 - k2) + i = (k1 + i) - k2` SUBST1_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    FIRST_X_ASSUM MATCH_MP_TAC THEN
+    ASM_REWRITE_TAC[IN_ELIM_THM] THEN
+    REPEAT CONJ_TAC THEN TRY ASM_ARITH_TAC THEN
+    GEN_TAC THEN DISCH_TAC THEN
+    FIRST_ASSUM(fun fd -> FIRST_ASSUM(fun h ->
+      MP_TAC(MATCH_MP fd h))) THEN
+    ARITH_TAC);;
 
 let data_to_word_memoryProof_isSomeDataElement_heap_lookup =
   cake_theorem "isSomeDataElement_heap_lookup[allow_rebind]"

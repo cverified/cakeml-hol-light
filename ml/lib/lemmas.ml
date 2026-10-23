@@ -185,6 +185,27 @@ let FAPPLY_FUPDATE_THM = prove
   REWRITE_TAC[fmap_apply; FMAP_FN_FUPDATE; FST; SND] THEN
   COND_CASES_TAC THEN REWRITE_TAC[THE]);;
 
+(* two finite maps with the same representing function are the same
+   map, which is what every equation between finite maps is proved
+   with *)
+
+let FMAP_FN_INJ = prove
+ (`!(a:(A,B)fmap) b. fmap_fn a = fmap_fn b ==> a = b`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  ONCE_REWRITE_TAC[GSYM (CONJUNCT1 fmap_tybij)] THEN
+  ASM_REWRITE_TAC[]);;
+
+(* and HOL4's FUPDATE_COMMUTES: two updates of different keys can be
+   made in either order *)
+
+let FUPDATE_COMMUTES = prove
+ (`!(f:(A,B)fmap) k1 v1 k2 v2. ~(k1 = k2)
+     ==> f |+ (k1,v1) |+ (k2,v2) = f |+ (k2,v2) |+ (k1,v1)`,
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC FMAP_FN_INJ THEN
+  REWRITE_TAC[FMAP_FN_FUPDATE; FST; SND; FUN_EQ_THM] THEN
+  GEN_TAC THEN REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN MESON_TAC[]);;
+
 (* the range of a finite map, which HOL4 has as IN_FRANGE of
    finite_mapTheory; the port cannot have that name, because CakeML
    has a theorem of its own called IN_FRANGE (copying_gc.ml) *)

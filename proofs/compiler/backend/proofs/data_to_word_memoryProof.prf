@@ -4592,6 +4592,21 @@
          FIRST_X_ASSUM(MP_TAC o SPEC `t:num`) THEN
          ASM_REWRITE_TAC[] THEN ARITH_TAC;
          ASM_ARITH_TAC]]])
+### bind_each_FUPDATE
+  (* the binding of the timestamps of a block does not touch a
+     timestamp below the ones it binds, so an update of that one
+     commutes with it (ml/lib/lemmas.ml has FUPDATE_COMMUTES) *)
+  (INDUCT_TAC THEN REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "bind_each"] THEN
+   DISCH_TAC THEN
+   FIRST_X_ASSUM(fun ih ->
+     MP_TAC(SPECL [`i:num`; `tf:(num,num)fmap`; `ts1:num`;
+                   `ts2 + 1`; `k1:num`; `k2 + i`] ih)) THEN
+   ASM_REWRITE_TAC[ARITH_RULE `(ts1 < ts2 + 1) <=> ts1 <= ts2`] THEN
+   ANTS_TAC THENL
+    [ASM_ARITH_TAC;
+     DISCH_THEN SUBST1_TAC THEN
+     MATCH_MP_TAC FUPDATE_COMMUTES THEN ASM_ARITH_TAC])
 ### bind_each_MINUS
   (* the binding of each timestamp of a block gives the one at ts
      the clock k and the ones above it k + i, k + 2i, ...: taking k2
