@@ -1926,6 +1926,14 @@
      CONV_TAC NUM_REDUCE_CONV])
 ### get_byte_set_byte_alt
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[get_byte_set_byte_diff])
+### get_byte_eq
+  (* the byte that an address selects does not change when the
+     address is taken modulo the word it is in *)
+  (STRIP_TAC THEN
+   FIRST_X_ASSUM(fun th -> ONCE_REWRITE_TAC[th]) THEN
+   ONCE_REWRITE_TAC[WORD_ADD_SYM] THEN
+   FIRST_ASSUM(fun gd ->
+     MATCH_ACCEPT_TAC(MATCH_MP get_byte_byte_align gd)))
 ### memory_rel_RefPtr_IMP_lemma
   (* every rule of v_inv for a RefPtr says that the pointer is in
      the refs: the first through the domain of f, the other two
