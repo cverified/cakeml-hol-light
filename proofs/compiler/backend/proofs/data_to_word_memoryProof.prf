@@ -2392,6 +2392,21 @@
    CONV_TAC NUM_REDUCE_CONV THEN
    TRY(REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1]) THEN
    POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC)
+### get_real_offset_thm
+  (* the offset of an index is four times it, which a dimindex of
+     32 adds to the bytes in a word as it stands and one of 64
+     doubles first *)
+  (let shl1 = prove
+    (`!(v:(N)word). word_shl v 1 = word 2 * v`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   REWRITE_TAC[cake_def "good_dimindex"; cake_def "get_real_offset";
+               cake_def "bytes_in_word"] THEN
+   DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   REWRITE_TAC[injectivity "option"; shl1; WORD_MUL] THEN
+   CONV_TAC WORD_RULE)
 ### word_heap_APPEND
   (* the address of the second half is the first address shifted by
      the length of the first half, which is a word ring identity *)
@@ -3218,6 +3233,57 @@
    REPEAT(FIRST_X_ASSUM(fun th ->
      if is_exists(concl th) then CHOOSE_TAC th else fail())) THEN
    ASM_MESON_TAC[])
+### IMP_memory_rel_Number_num3
+  (* the Smallnum of a natural number is it shifted up by two, and
+     a number below two to the dimindex less three is small *)
+  (let shl2 = prove
+    (`!(v:(N)word). word_shl v 2 = word 4 * v`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let smallnum_shl = prove
+    (`Smallnum (&n) = ((n2w n << 2):'a word)`,
+     REWRITE_TAC[cake_def "Smallnum"; INT_OF_NUM_LT;
+                 ARITH_RULE `~(n < 0)`; INT_OF_NUM_MUL;
+                 NUM_OF_INT_OF_NUM; shl2; WORD_MUL]) in
+   STRIP_TAC THEN
+   MP_TAC(INST [`&n:int`,`i:int`]
+     (cake_thm "IMP_memory_rel_Number")) THEN
+   REWRITE_TAC[smallnum_shl] THEN
+   DISCH_THEN MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[cake_def "small_int"; INT_OF_NUM_LT; dimword] THEN
+   CONJ_TAC THENL
+    [INT_ARITH_TAC;
+     UNDISCH_TAC `good_dimindex (:'a)` THEN
+     REWRITE_TAC[cake_def "good_dimindex"] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN ARITH_ASM_TAC])
+### IMP_memory_rel_Number_num
+  (* and so is one below two to the dimindex less four *)
+  (let shl2 = prove
+    (`!(v:(N)word). word_shl v 2 = word 4 * v`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[MULT_AC]) in
+   let smallnum_shl = prove
+    (`Smallnum (&n) = ((n2w n << 2):'a word)`,
+     REWRITE_TAC[cake_def "Smallnum"; INT_OF_NUM_LT;
+                 ARITH_RULE `~(n < 0)`; INT_OF_NUM_MUL;
+                 NUM_OF_INT_OF_NUM; shl2; WORD_MUL]) in
+   STRIP_TAC THEN
+   MP_TAC(INST [`&n:int`,`i:int`]
+     (cake_thm "IMP_memory_rel_Number")) THEN
+   REWRITE_TAC[smallnum_shl] THEN
+   DISCH_THEN MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[cake_def "small_int"; INT_OF_NUM_LT; dimword] THEN
+   CONJ_TAC THENL
+    [INT_ARITH_TAC;
+     UNDISCH_TAC `good_dimindex (:'a)` THEN
+     REWRITE_TAC[cake_def "good_dimindex"] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN ARITH_ASM_TAC])
 ### memory_rel_Number_LESS
   (* both words are the Smallnum of their integer, and num_less_thm
      says that the order of the two is the order of the integers *)
@@ -3292,6 +3358,38 @@
    TRY(FIRST_ASSUM CONTR_TAC) THEN
    FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
      MATCH_ACCEPT_TAC(TRANS (SYM t1) t2))))
+### memory_rel_Boolv_T
+  (* the true Boolv is the empty Block of the true tag, which is
+     one, so its root is the Data of BlockNil 1, the word eighteen *)
+  (let shl16 = prove
+    (`word_shl (word 1:(N)word) 4 = word 16`,
+     REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD] THEN
+     CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV) in
+   let blocknil1 = prove
+    (`BlockNil 1 = (n2w 18:'a word)`,
+     REWRITE_TAC[cake_def "BlockNil"; shl16] THEN
+     CONV_TAC WORD_RULE) in
+   let and18 = prove
+    (`(n2w 18:(N)word) && word_not (n2w 1) = n2w 18`,
+     WORD_NUM_BIT_TAC 5) in
+   let dimword16 = prove
+    (`good_dimindex (:'a) ==> 1 < dimword (:'a) DIV 16`,
+     REWRITE_TAC[cake_def "good_dimindex"; dimword] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+     CONV_TAC NUM_REDUCE_CONV) in
+   let waddr = hd (word_addr_clauses ()) in
+   let cons1 = REWRITE_RULE[blocknil1]
+     (INST [`1`,`tag:num`] (cake_thm "cons_thm_EMPTY")) in
+   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv"] THEN
+   REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
+   ASM_REWRITE_TAC[] THEN
+   EXISTS_TAC
+     `CONS (gc_shared_Data (wordLang_Word (n2w 18:'a word))) hs` THEN
+   REWRITE_TAC[MAP; ALL2; waddr; and18] THEN
+   ASM_REWRITE_TAC[cake_def "dataSem_Boolv";
+                   cake_def "bool_to_tag"; cake_def "true_tag"] THEN
+   MATCH_MP_TAC cons1 THEN
+   ASM_SIMP_TAC[dimword16])
 ### memory_rel_Boolv_F
   (* the false Boolv is the empty Block of the false tag, which is
      zero, so it is the same root as the one of Unit *)
