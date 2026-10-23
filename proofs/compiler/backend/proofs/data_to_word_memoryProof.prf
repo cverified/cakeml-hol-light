@@ -1870,6 +1870,24 @@
                distinctness "heap_address";
                injectivity "heap_address"] THEN
    MESON_TAC[])
+### make_header_and_2
+  (* make_header ors a 3 in, whose second bit is the one that the 2
+     masks out *)
+  (let bw2 = prove
+    (`!i. bit i (word 2:(N)word) <=> i = 1 /\ 1 < dimindex(:N)`,
+     GEN_TAC THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [ARITH_RULE `2 = 2 EXP 1`] THEN
+     REWRITE_TAC[BIT_WORD_POW2]) in
+   let bw3_1 = prove
+    (`bit 1 (word 3:(N)word) <=> 1 < dimindex(:N)`,
+     REWRITE_TAC[BIT_WORD] THEN CONV_TAC NUM_REDUCE_CONV) in
+   REWRITE_TAC[cake_def "make_header"] THEN
+   CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_OR; bw2] THEN
+   GEN_TAC THEN DISCH_TAC THEN
+   ASM_CASES_TAC `i = 1` THEN ASM_REWRITE_TAC[bw3_1] THEN
+   CONV_TAC TAUT)
 ### memory_rel_tag_limit
   (* the tag of an empty Block is below the bound by what
      memory_rel_Block_IMP says, and the tag of a Block with a
