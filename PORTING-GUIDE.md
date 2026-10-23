@@ -1840,3 +1840,95 @@ and a written type variable is rigid, so the term is about another
 variable and the tactic does nothing (entry 12).  `CASES_ON_NAME`,
 `SPLIT_ROOTS_TAC` and `SUBST_LHS_TAC` take the term out of the goal
 instead.
+
+## 25. The type variables of a statement that the parser invented
+
+### The idiom
+
+A statement of the port is a quotation, and where it does not write
+a type itself the parser invents a type variable for it.  HOL Light
+names those `?1234`, and a theorem of the file (and so every goal
+made from it) carries them:
+
+```
+v_inv c v refs (x,f,tf,heap)     x : ((?970900)word_loc)heap_address
+```
+
+### What it means
+
+A term that a proof writes down gets type variables of its own, so
+`EXISTS_TAC `all_ts refs stack`` or ``ASM_CASES_TAC `!ck. v_inv_ck
+ck conf vv refs (y,f,tf,heap)``` is about *other* variables of the
+same names and the tactic does nothing (or fails with a type
+error).  Three ways out, in this order:
+
+1. write the type the way the statement writes it (`y:(('a
+   word_loc)heap_address)`) -- this works when the statement does
+   annotate, as the clauses of `v_inv_def` do;
+2. take the term out of the goal (`(fun (asl,w) -> ... rand w ...)`
+   as a tactic), which is what the proofs of `all_ts` do;
+3. state what is needed as a lemma of its own, with `'a` in it, and
+   `MATCH_ACCEPT_TAC` it against the goal -- a theorem's type
+   variables are instantiated when it is used, so this always
+   works.
+
+A name of the port can also be a **constant**: `stack`, `refs` and
+`cen` are constants of some theory, so ``stack:(dataSem_v)list``
+is an annotation of a constant and fails with "typechecking error
+(overload resolution)".  `print_types_of_subterms := 0` makes a
+goal with invented type variables readable.
+
+## 26. The arithmetic of HOL Light is not HOL4's arithmetic
+
+### The idiom
+
+```
+word_bits h l w = word_subword w (l,h + 1 - l)
+```
+
+### What it means
+
+HOL4 gives `+` and `-` the same precedence and makes them
+associate to the left; HOL Light binds `-` tighter than `+` and
+both of them to the right.  So the text above is `(h + 1) - l` in
+HOL4 and `h + (1 - l)` in HOL Light -- a different term, and with
+truncated subtraction a different value.  The generated files of
+the port are safe (the translator builds the term), but a file
+that is written by hand is not: `ml/lib/words4.ml` had this in
+`word_bits`, in the `><` extract and in `bit_field_insert`, which
+made `all_ones_bit` of data_to_word_memoryProof false as stated
+(ISSUES.md).  `*` is right-associative as well, so `3 * (a + 1) *
+d` is `3 * ((a + 1) * d)` and a rewrite with `MULT_ASSOC` is what
+puts it the other way round.
+
+## 27. The induction of a type that nests a list of itself
+
+### The idiom
+
+```
+ho_match_mp_tac (theorem "v_all_ts_ind")
+```
+
+### What it means
+
+HOL4 keeps an induction theorem for every definition it makes by
+well-founded recursion, and a proof about `v_all_vs` or `v_all_ts`
+(which recurse into the payload of a `Block`) uses it.  HOL Light
+has no such theorem, but `define_datatype` of a type that nests a
+list of itself gives a **mutual** induction:
+
+```
+|- !P0 P1. (!a. P0 (Number a)) /\ ... /\
+           (!a0 a1 a2. P1 a2 ==> P0 (Block a0 a1 a2)) /\ ...
+           /\ P1 [] /\ (!a0 a1. P0 a0 /\ P1 a1 ==> P1 (a0 :: a1))
+           ==> (!x0. P0 x0) /\ (!x1. P1 x1)
+```
+
+so the statement to prove is doubled -- one half about a value, one
+about a list of them -- and `MATCH_MP_TAC` of that theorem gives
+the seven cases.  `ml/lib/tactics.ml` keeps the clauses of
+`v_all_vs` and `v_all_ts` (`v_all_vs_clauses`) and the transitivity
+of the values of a value (`v_all_vs_trans_thm`) that the proofs of
+the file need before the file itself states them; the induction
+theorem is looked up in `the_inductive_types` and not by its name,
+because `ml/lib/tactics.ml` is loaded before the type is made.

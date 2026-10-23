@@ -117,6 +117,11 @@ it once, three quarters of an hour of loading).  So:
   of their own; running the two together is two closures.
 - `tmux ls | grep hol` before starting anything that loads, and
   `repl-kill` what is not needed.
+- A working session **and** a `verifyquick` is five sessions with
+  `hol-base`, the template and `hol-pfbase`: the working one is
+  the one to kill first (a clone of `hol-pfbase` costs a second,
+  the file itself three minutes).  It cost one working session,
+  with every binding of a day's work in it, once.
 
 ## Interrupting and killing
 
