@@ -161,12 +161,12 @@ let w2i_i2w_IMP = cake_theorem "w2i_i2w_IMP"
   (* the bound that the round trip of an integer through a word
      gives: HOL Light's ival of a word is between the two powers,
      and the integer that the word has as its ival is the one *)
-  DISCH_TAC THEN
-  MP_TAC(ISPEC `(i2w i):'a word` IVAL_BOUND) THEN
-  ASM_REWRITE_TAC[] THEN
-  REWRITE_TAC[integer_word_INT_MIN; integer_word_INT_MAX; INT_MIN;
-              GSYM INT_OF_NUM_POW] THEN
-  INT_ARITH_TAC;;
+  (DISCH_TAC THEN
+   MP_TAC(ISPEC `(i2w i):'a word` IVAL_BOUND) THEN
+   ASM_REWRITE_TAC[] THEN
+   REWRITE_TAC[integer_word_INT_MIN; integer_word_INT_MAX; INT_MIN;
+               GSYM INT_OF_NUM_POW] THEN
+   INT_ARITH_TAC);;
 
 let word_i2w_sub = cake_theorem "word_i2w_sub"
   (fun () ->

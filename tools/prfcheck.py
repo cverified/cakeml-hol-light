@@ -49,6 +49,15 @@ def check(mlrel):
       print('%s: the file states it %d time(s)'
             % (name, len(thm[nm]))); return 1
     pos = thm[nm][k - 1]
+    # the body stands where an argument stands, so a tactic of
+    # several steps has to be parenthesised: without the brackets
+    # `a THEN b` would read as `cake_theorem ... a THEN b`
+    text = re.sub(r'\(\*.*?\*\)', '', '\n'.join(body), flags=re.S)
+    text = text.strip()
+    if re.search(r'\bTHEN[L]?\b', text) and not (
+        text.startswith('(') and text.endswith(')')):
+      print('%s: the tactic needs brackets round it' % name)
+      out += 1
     for w in sorted(set(re.findall(r'[A-Za-z_][A-Za-z_0-9\']*',
                                    '\n'.join(body)))):
       if w in at and at[w] > pos:
