@@ -58,6 +58,11 @@ add it to the index.
 | 21 | the arguments of a binary operation | `REVERSE`, so the other way |
 | 22 | `MAP_FIRST` over a list of lemmas | the attempts delayed |
 | 23 | `INT_ARITH` of a goal with a product | `INT_RING` |
+| 24 | `memory_rel` unfolded in every proof | `MEMORY_REL_TAC` |
+| 25 | a term of a tactic, and the parser's type | `:num`, or the goal's own term |
+| 26 | a `case` on the value of another function | `EVERY_CASE_TAC`, before any reduce |
+| 27 | `+`, `-` and `*` of HOL4 | the associativity written out |
+| 28 | a type that nests a list of itself | the mutual induction of the store |
 
 ## The shape of a transformation proof
 
