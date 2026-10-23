@@ -7800,7 +7800,48 @@ let set_byte_eq_ARB = cake_theorem "set_byte_eq_ARB"
         (set_byte (n2w 7) x h be = set_byte (n2w 7) x (h':'a word)
           be <=>
          set_byte (n2w 7) ARB h be = set_byte (n2w 7) ARB h' be))`)
-  CHEAT_TAC;;
+  (* the bit of a set_byte is the byte's bit inside the byte and the
+     word's outside it, so two set_bytes of the same byte agree
+     exactly when the two words agree outside it -- which does not
+     depend on what the byte is *)
+  (let bsb = prove
+    (`!a b (h:(N)word) bb j.
+        byte_index a bb + 8 <= dimindex (:N) /\ j < dimindex (:N)
+        ==> (bit j (set_byte a b h bb) <=>
+             (if byte_index a bb <= j /\ j < byte_index a bb + 8
+              then bit (j - byte_index a bb) b else bit j h))`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SLICE_ALT;
+                  ARITH_RULE `0 <= (i:num)`;
+                  BIT_WORD_SHL; BIT_WORD_ZX; DIMINDEX_8] THEN
+     MP_TAC(REWRITE_RULE[DIMINDEX_8]
+       (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+          BIT_TRIVIAL)) THEN
+     ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+     ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+     ASM_CASES_TAC `bit j (h:(N)word)` THEN
+     ASM_CASES_TAC
+       `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+     ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+   let bib = prove
+    (`!(k:num) bb. good_dimindex (:'a)
+        ==> byte_index ((n2w k):'a word) bb + 8 <= dimindex (:'a)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "byte_index"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[cake_def "good_dimindex"] THEN
+     DISCH_THEN(DISJ_CASES_THEN (fun th -> SUBST1_TAC th)) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     (MP_TAC(SPEC `w2n ((n2w k):'a word)`
+        (MATCH_MP DIVISION (ARITH_RULE `~(4 = 0)`))) ORELSE
+      MP_TAC(SPEC `w2n ((n2w k):'a word)`
+        (MATCH_MP DIVISION (ARITH_RULE `~(8 = 0)`)))) THEN
+     COND_CASES_TAC THEN ARITH_TAC) in
+   DISCH_TAC THEN REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   ASM_SIMP_TAC[bsb; bib; COND_SAME_IFF]);;
 
 let bytes_to_word_eq_lemma = cake_theorem "bytes_to_word_eq_lemma"
   (fun () ->
@@ -7870,7 +7911,55 @@ let set_byte_all_64 = cake_theorem "set_byte_all_64"
                  (set_byte (n2w 6) b7
                    (set_byte (n2w 7) b8 y be) be) be) be) be) be)
                      be) be`)
-  CHEAT_TAC;;
+  (* and the eight bytes of a word of sixty-four bits cover it the
+     same way *)
+  (let bsb = prove
+    (`!a b (h:(N)word) bb j.
+        byte_index a bb + 8 <= dimindex (:N) /\ j < dimindex (:N)
+        ==> (bit j (set_byte a b h bb) <=>
+             (if byte_index a bb <= j /\ j < byte_index a bb + 8
+              then bit (j - byte_index a bb) b else bit j h))`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SLICE_ALT;
+                  ARITH_RULE `0 <= (i:num)`;
+                  BIT_WORD_SHL; BIT_WORD_ZX; DIMINDEX_8] THEN
+     MP_TAC(REWRITE_RULE[DIMINDEX_8]
+       (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+          BIT_TRIVIAL)) THEN
+     ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+     ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+     ASM_CASES_TAC `bit j (h:(N)word)` THEN
+     ASM_CASES_TAC
+       `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+     ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+   let bib = prove
+    (`!(k:num) bb. good_dimindex (:'a)
+        ==> byte_index ((n2w k):'a word) bb + 8 <= dimindex (:'a)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "byte_index"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[cake_def "good_dimindex"] THEN
+     DISCH_THEN(DISJ_CASES_THEN (fun th -> SUBST1_TAC th)) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     (MP_TAC(SPEC `w2n ((n2w k):'a word)`
+        (MATCH_MP DIVISION (ARITH_RULE `~(4 = 0)`))) ORELSE
+      MP_TAC(SPEC `w2n ((n2w k):'a word)`
+        (MATCH_MP DIVISION (ARITH_RULE `~(8 = 0)`)))) THEN
+     COND_CASES_TAC THEN ARITH_TAC) in
+   DISCH_TAC THEN
+   SUBGOAL_THEN `good_dimindex (:'a)` ASSUME_TAC THENL
+    [ASM_REWRITE_TAC[cake_def "good_dimindex"]; ALL_TAC] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   ASM_SIMP_TAC[bsb; bib; COND_SAME_IFF] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   REWRITE_TAC[cake_def "byte_index"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[VAL_WORD] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN ARITH_NO_BIT_TAC);;
 
 let set_byte_all_32 = cake_theorem "set_byte_all_32"
   (fun () ->
@@ -7883,7 +7972,57 @@ let set_byte_all_32 = cake_theorem "set_byte_all_32"
        (set_byte (n2w 1) b2
          (set_byte (n2w 2) b3
                    (set_byte (n2w 3) b8 y be) be) be) be`)
-  CHEAT_TAC;;
+  (* the four bytes of a word of thirty-two bits cover it, so what
+     the fourth set_byte writes over is never read: every index is in
+     one of the four byte ranges, whichever way round the endianness
+     puts them *)
+  (let bsb = prove
+    (`!a b (h:(N)word) bb j.
+        byte_index a bb + 8 <= dimindex (:N) /\ j < dimindex (:N)
+        ==> (bit j (set_byte a b h bb) <=>
+             (if byte_index a bb <= j /\ j < byte_index a bb + 8
+              then bit (j - byte_index a bb) b else bit j h))`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SLICE_ALT;
+                  ARITH_RULE `0 <= (i:num)`;
+                  BIT_WORD_SHL; BIT_WORD_ZX; DIMINDEX_8] THEN
+     MP_TAC(REWRITE_RULE[DIMINDEX_8]
+       (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+          BIT_TRIVIAL)) THEN
+     ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+     ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+     ASM_CASES_TAC `bit j (h:(N)word)` THEN
+     ASM_CASES_TAC
+       `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+     ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+   let bib = prove
+    (`!(k:num) bb. good_dimindex (:'a)
+        ==> byte_index ((n2w k):'a word) bb + 8 <= dimindex (:'a)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "byte_index"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[cake_def "good_dimindex"] THEN
+     DISCH_THEN(DISJ_CASES_THEN (fun th -> SUBST1_TAC th)) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN
+     (MP_TAC(SPEC `w2n ((n2w k):'a word)`
+        (MATCH_MP DIVISION (ARITH_RULE `~(4 = 0)`))) ORELSE
+      MP_TAC(SPEC `w2n ((n2w k):'a word)`
+        (MATCH_MP DIVISION (ARITH_RULE `~(8 = 0)`)))) THEN
+     COND_CASES_TAC THEN ARITH_TAC) in
+   DISCH_TAC THEN
+   SUBGOAL_THEN `good_dimindex (:'a)` ASSUME_TAC THENL
+    [ASM_REWRITE_TAC[cake_def "good_dimindex"]; ALL_TAC] THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   ASM_SIMP_TAC[bsb; bib; COND_SAME_IFF] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   REWRITE_TAC[cake_def "byte_index"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[VAL_WORD] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN ARITH_NO_BIT_TAC);;
 
 (* slow *)
 let word_of_byte_set_byte_64 = cake_theorem "word_of_byte_set_byte_64"

@@ -1081,3 +1081,21 @@ let WORD_NUM_BIT_TAC =
       SUBGOAL_THEN len ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
       REWRITE_TAC[BIT_WORD] THEN
       (fun gl -> REWRITE_TAC (hi_facts gl) gl) THEN fin];;
+
+(* ------------------------------------------------------------------ *)
+(* The arithmetic of a goal whose context is half bits: ARITH_TAC     *)
+(* cannot see a `bit i w` (it is no term of arithmetic), so the       *)
+(* assumptions that have one are dropped and the rest become the      *)
+(* antecedents of the goal.  A proof about the bytes of a word uses   *)
+(* it after the bits have been decided by a case split.               *)
+(* ------------------------------------------------------------------ *)
+
+let ARITH_NO_BIT_TAC =
+  POP_ASSUM_LIST(fun l ->
+    MAP_EVERY MP_TAC
+      (filter (fun th ->
+         not (can (find_term (fun t ->
+           (try let nm = fst(dest_const(fst(strip_comb t))) in
+                nm = "bit" || nm = "word_bit"
+            with Failure _ -> false))) (concl th))) l)) THEN
+  ARITH_TAC;;

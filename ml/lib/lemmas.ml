@@ -488,3 +488,35 @@ let ALL_DISTINCT_CLAUSES =
      (!h t. ALL_DISTINCT (CONS (h:A) t) <=>
             ~(MEM h t) /\ ALL_DISTINCT t)`,
     REWRITE_TAC[ALL_DISTINCT; PAIRWISE; allnotmem]);;
+
+(* ------------------------------------------------------------------ *)
+(* The bits of a slice of a word (HOL4 reads one off with its         *)
+(* fcpTheory.FCP_BETA): the slice keeps the bits of the range and the *)
+(* shift of word_slice_alt puts them back where they were, so a bit   *)
+(* of the slice is a bit of the word in the range.  A proof about the *)
+(* bytes of a word goes through this.                                 *)
+(* ------------------------------------------------------------------ *)
+
+let BIT_WORD_SLICE_ALT = prove
+ (`!h l (w:(N)word) j. l <= h
+     ==> (bit j (word_slice_alt h l w) <=>
+          l <= j /\ j < h /\ j < dimindex (:N) /\ bit j w)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[word_slice_alt; BIT_WORD_SHL; BIT_WORD_SUBWORD] THEN
+  REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+  ASM_CASES_TAC `l:num <= j` THEN ASM_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[ARITH_RULE `l <= j ==> l + (j - l) = j`;
+               ARITH_RULE `l <= j ==> (l + j) - l = j`] THEN
+  COND_CASES_TAC THEN
+  ASM_CASES_TAC `bit j (w:(N)word)` THEN ASM_REWRITE_TAC[] THEN
+  ARITH_NO_BIT_TAC);;
+
+(* and that two conditionals with the same condition and the same
+   then-branch agree exactly when the condition holds or the two
+   else-branches agree *)
+
+let COND_SAME_IFF = prove
+ (`!c u v1 v2. (((if c then u else v1) <=> (if c then u else v2))
+                <=> (c \/ (v1 <=> v2)))`,
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC TAUT);;
