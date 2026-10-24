@@ -98,3 +98,34 @@ let STAR_SEP_EXISTS = prove
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[STAR_COMM] THEN
   REWRITE_TAC[SEP_EXISTS_STAR] THEN
   ONCE_REWRITE_TAC[STAR_COMM] THEN REWRITE_TAC[]);;
+
+(* the two clauses of HOL4's SEP_CLAUSES that take a separation
+   predicate apart at a point: what an existential of one says of a
+   set, and what a condition beside one says of it *)
+
+let SEP_EXISTS_THM = prove
+ (`!(p:B->(A->bool)->bool) s. (SEP_EXISTS p) s <=> ?y. p y s`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[SEP_EXISTS] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[]);;
+
+let cond_STAR = prove
+ (`!c (p:(A->bool)->bool) s. (cond c * p) s <=> c /\ p s`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[STAR_def; cond_def; SPLIT_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+  EQ_TAC THENL
+   [DISCH_THEN(X_CHOOSE_THEN `u:A->bool`
+      (X_CHOOSE_THEN `v:A->bool` STRIP_ASSUME_TAC)) THEN
+    CONJ_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
+    SUBGOAL_THEN `s:A->bool = v` SUBST1_TAC THENL
+     [REPEAT(FIRST_X_ASSUM MP_TAC) THEN SET_TAC[];
+      FIRST_ASSUM ACCEPT_TAC];
+    STRIP_TAC THEN
+    MAP_EVERY EXISTS_TAC [`{}:A->bool`; `s:A->bool`] THEN
+    ASM_REWRITE_TAC[UNION_EMPTY; DISJOINT_EMPTY]]);;
+
+let STAR_cond = prove
+ (`!c (p:(A->bool)->bool) s. (p * cond c) s <=> c /\ p s`,
+  REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC (LAND_CONV o RATOR_CONV) [STAR_COMM] THEN
+  MATCH_ACCEPT_TAC cond_STAR);;

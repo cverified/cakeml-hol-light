@@ -7205,7 +7205,19 @@ let word_list_exists_thm = cake_theorem "word_list_exists_thm"
       (word_list_exists a (SUC n) =
        SEP_EXISTS (\w. set_sep_one (a,w) * word_list_exists (a +
          bytes_in_word) n))`)
-  CHEAT_TAC;;
+  (* the two clauses of word_list_exists: at zero it is emp, and at
+     a successor it is the cell at the address beside the list of
+     the rest -- the existential of the definition is over the list
+     of the words, and the condition on its length picks the empty
+     list or a cons *)
+  (CONJ_TAC THEN ONCE_REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN
+   REWRITE_TAC[cake_def "word_list_exists"] THEN
+   REWRITE_TAC[STAR_SEP_EXISTS; SEP_EXISTS_THM] THEN
+   REWRITE_TAC[STAR_ASSOC; STAR_cond] THEN
+   REWRITE_TAC[GSYM(CONJUNCT2(cake_def "misc_word_list"))] THEN
+   REWRITE_TAC[LENGTH_EQ_NIL; emp_def] THENL
+    [REWRITE_TAC[UNWIND_THM2; cake_def "misc_word_list"; emp_def];
+     MESON_TAC[LENGTH_EQ_CONS; LENGTH]]);;
 
 let word_list_exists_ADD = cake_theorem "word_list_exists_ADD"
   (fun () ->
