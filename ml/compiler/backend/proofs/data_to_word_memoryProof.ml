@@ -695,7 +695,7 @@ let MEM_IMP_v_size = prove
  (`!l a. MEM a l ==> dataSem_v_size a < 1 + list_size dataSem_v_size l`,
   (REPEAT STRIP_TAC THEN
    MATCH_MP_TAC(ARITH_RULE `a <= b ==> a < 1 + b`) THEN
-   MATCH_MP_TAC MEM_list_size THEN ASM_REWRITE_TAC[]));;
+   MATCH_MP_TAC misc_MEM_list_size THEN ASM_REWRITE_TAC[]));;
 
 let _ = size_thms "dataSem_v";;
 (* the termination relation that HOL4 gives, with
@@ -5223,7 +5223,7 @@ let LIST_REL_IMP_LIST_REL = prove
 (* [local] *)
 let v_size_LESS_EQ = prove
  (`!l x. MEM x l ==> dataSem_v_size x <= list_size dataSem_v_size l`,
-  (REPEAT STRIP_TAC THEN MATCH_MP_TAC MEM_list_size THEN
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC misc_MEM_list_size THEN
    ASM_REWRITE_TAC[]));;
 
 (* [local] *)
@@ -6732,7 +6732,10 @@ let word_heap_APPEND = prove
 (* FORALL_WORD *)
 let data_to_word_memoryProof_FORALL_WORD = prove
  (`(!(v:'a word). P v) <=> (!n. n < dimword (:'a) ==> P (n2w n))`,
-  CHEAT_TAC);;
+  (EQ_TAC THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+   ONCE_REWRITE_TAC[GSYM WORD_VAL] THEN
+   FIRST_X_ASSUM MATCH_MP_TAC THEN
+   REWRITE_TAC[dimword; VAL_BOUND]));;
 
 let BlockNil_and_lemma = prove
  (`good_dimindex (:'a) ==>

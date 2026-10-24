@@ -381,7 +381,7 @@
 ### MEM_IMP_v_size
   (REPEAT STRIP_TAC THEN
    MATCH_MP_TAC(ARITH_RULE `a <= b ==> a < 1 + b`) THEN
-   MATCH_MP_TAC MEM_list_size THEN ASM_REWRITE_TAC[])
+   MATCH_MP_TAC misc_MEM_list_size THEN ASM_REWRITE_TAC[])
 ### word_list_limit
   (* a list of words without a repeat is no longer than the
      number of words there are: the values of its elements are
@@ -3168,7 +3168,7 @@
    REWRITE_TAC[TAUT `(p ==> q ==> r) <=> (p /\ q ==> r)`] THEN
    MATCH_ACCEPT_TAC aux)
 ### v_size_LESS_EQ
-  (REPEAT STRIP_TAC THEN MATCH_MP_TAC MEM_list_size THEN
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC misc_MEM_list_size THEN
    ASM_REWRITE_TAC[])
 ### v_inv_IMP
   (* the lemma is applied to the assumption and not to the goal:
