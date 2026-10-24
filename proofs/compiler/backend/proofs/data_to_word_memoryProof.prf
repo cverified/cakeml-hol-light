@@ -2740,6 +2740,29 @@
    REWRITE_TAC[heap_store_lemma; APPEND; PAIR_EQ; hlen_cl;
                cake_def "BlockRep"; cake_def "el_length"] THEN
    ASM_ARITH_TAC)
+### heap_lookup_BlockRep_lemma
+  (* where an address falls in a heap that a BlockRep splits: below
+     the first part, at the element itself, or past the element,
+     whose el_length is one more than the length of its list *)
+  (let pick = W(fun (asl,w) ->
+     ASM_CASES_TAC (el 0 (snd(strip_comb (rhs w))))) in
+   let contra = SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC in
+   pick THENL
+    [ASM_SIMP_TAC[cake_thm "LESS_IMP_heap_lookup"];
+     ASM_SIMP_TAC[cake_thm "NOT_LESS_IMP_heap_lookup"] THEN
+     REWRITE_TAC[cake_def "heap_lookup"; cake_def "BlockRep";
+                 cake_def "el_length"] THEN
+     pick THENL
+      [ASM_REWRITE_TAC[SUB_REFL] THEN
+       REWRITE_TAC[injectivity "option"] THEN
+       MATCH_ACCEPT_TAC EQ_SYM_EQ;
+       ASM_REWRITE_TAC[] THEN pick THEN ASM_REWRITE_TAC[] THENL
+        [COND_CASES_TAC THENL [contra; ALL_TAC] THEN
+         COND_CASES_TAC THENL [contra; ALL_TAC] THEN
+         REWRITE_TAC[];
+         COND_CASES_TAC THENL [contra; ALL_TAC] THEN
+         COND_CASES_TAC THENL
+          [REWRITE_TAC[distinctness "option"]; contra]]]])
 ### v_inv_MutBlock_hole
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_MutBlock_hole_lemma])
@@ -6949,6 +6972,60 @@
 ### memory_rel_rotate3
   (MATCH_MP_TAC memory_rel_rearrange THEN
    GEN_TAC THEN REWRITE_TAC[MEM] THEN CONV_TAC TAUT)
+### v_inv_Block_tag_limit
+  (* the header of the BlockRep that the Block points at is an
+     encode_header of four times the tag, and encode_header is only
+     a SOME when that is below a sixteenth of the word size *)
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let rec facs t =
+     if hd_is "STAR" t then
+       let args = snd(strip_comb t) in
+       facs (el 0 args) @ facs (el 1 args)
+     else [t] in
+   let sepfront names =
+     W(fun (asl,w) ->
+       let pred = rator (lhand w) in
+       let fs = facs pred in
+       let picked = map (fun n -> find (hd_is n) fs) names in
+       let rest = filter (fun t -> not (mem t picked)) fs in
+       let st = fst(strip_comb pred) in
+       let mk a b = mk_comb(mk_comb(st,a),b) in
+       let target = itlist mk picked (end_itlist mk rest) in
+       SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
+        [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+   REWRITE_TAC[cake_thm "v_inv_def"] THEN
+   COND_CASES_TAC THENL
+    [STRIP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     if hd_is "heap_in_memory_store" (concl th)
+     then MP_TAC(REWRITE_RULE[cake_def "heap_in_memory_store"] th)
+     else fail()) THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun th ->
+     if hd_is "heap_lookup" (lhs (concl th))
+     then MP_TAC(MATCH_MP (cake_thm "heap_lookup_SPLIT") th)
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   VAR_EQ_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+     then MP_TAC th else fail()) THEN
+   REWRITE_TAC[cake_thm "word_heap_APPEND"; cake_def "word_heap";
+               cake_def "word_el"; cake_def "BlockRep"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[cake_def "word_payload"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   sepfront ["cond"] THEN
+   REWRITE_TAC[cond_STAR] THEN
+   DISCH_THEN(MP_TAC o CONJUNCT1) THEN
+   REWRITE_TAC[cake_def "encode_header"] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[distinctness "option"] THEN
+   POP_ASSUM MP_TAC THEN ARITH_TAC)
 ### not_all_distinct_map_snd
   (* a list whose seconds repeat: the induction finds the first
      repetition, either the head's second in the tail -- and then
