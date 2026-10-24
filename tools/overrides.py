@@ -1028,6 +1028,17 @@ MATCH_FORM = set([
   ('mergesort', 'mergesortN_tail_def'),
   ('mergesort', 'merge_def'),
   ('mergesort', 'merge_tail_def'),
+  # the mutual do_eq/do_eq_list of the five semantics: the last
+  # clause of each catches the pairs that the earlier ones have
+  # already given a value, and the port did not see it (the
+  # clauses are written out one by one and the overlap is between
+  # two of them, not between a clause and a catch-all of the same
+  # shape), so a list of clauses would be inconsistent
+  ('dataSem', 'do_eq_def'),
+  ('bvlSem', 'do_eq_def'),
+  ('closSem', 'do_eq_def'),
+  ('flatSem', 'do_eq_def'),
+  ('semanticPrimitives', 'do_eq_def'),
 ])
 
 # an explicit termination relation, where HOL Light cannot guess one

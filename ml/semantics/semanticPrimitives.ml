@@ -416,6 +416,12 @@ let _ = size_thms "semanticPrimitives_v";;
    the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
+(* the clauses of do_eq_list overlap -- the last one says Eq_val F
+   of the two lists that the first two have already given a value
+   -- and HOL4 takes the first that matches, so the port writes
+   them as a match, which takes the first arm (see ml/lib/define.ml,
+   "A definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
 let do_eq_def = cake_define_list_try_tac (fun () ->
   `inv_image (<) (\x. match x with INL (v1,v2) ->
      semanticPrimitives_v_size v1 | INR (vs1,vs2) -> list_size
@@ -459,13 +465,15 @@ let do_eq_def = cake_define_list_try_tac (fun () ->
   (gen2,id2):semanticPrimitives_v) =
       Eq_val (gen1 = gen2 /\ id1 = id2)`;
    `semanticPrimitives_do_eq _39 _40 = Eq_type_error`;
-   `semanticPrimitives_do_eq_list [] [] = Eq_val T`;
-   `semanticPrimitives_do_eq_list (v1 :: vs1) (v2 :: vs2) =
-      (match semanticPrimitives_do_eq v1 v2 with
-         Eq_val r -> (if ~r then Eq_val F else
-           semanticPrimitives_do_eq_list vs1 vs2) | Eq_type_error ->
-           Eq_type_error)`;
-   `semanticPrimitives_do_eq_list _41 _42 = Eq_val F`];;
+   `semanticPrimitives_do_eq_list l1 l2 =
+      (match (l1,l2) with
+         ([],[]) -> Eq_val T
+       | ((v1 :: vs1),(v2 :: vs2)) ->
+           (match semanticPrimitives_do_eq v1 v2 with
+              Eq_val r -> (if ~r then Eq_val F else
+                semanticPrimitives_do_eq_list vs1 vs2)
+            | Eq_type_error -> Eq_type_error)
+       | _42 -> Eq_val F)`];;
 hol4_overload "do_eq" "semanticPrimitives_do_eq";;
 hol4_overload "do_eq_list" "semanticPrimitives_do_eq_list";;
 

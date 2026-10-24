@@ -123,40 +123,49 @@ let isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "bvlSem_isClos";;
 
-(* the first pass assumes the termination:
+(* the clauses of the source overlap -- a later one says
+   Eq_type_error of a pair that an earlier one has already given a
+   value -- and HOL4 takes the first that matches, so the port
+   writes them as a match, which takes the first arm (see
+   ml/lib/define.ml, "A definition whose clauses overlap").  As a
+   list of clauses they would be inconsistent.
+   The first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let do_eq_def = cake_define_list_cheat CHEAT_TAC
-  [`bvlSem_do_eq _4 (bvlSem_CodePtr _5:bvlSem_v) _6 = Eq_type_error`;
-   `bvlSem_do_eq _8 _9 (bvlSem_CodePtr _10:bvlSem_v) = Eq_type_error`;
-   `bvlSem_do_eq _11 (Number n1:bvlSem_v) (Number n2:bvlSem_v) =
-  (Eq_val (n1 = n2))`;
-   `bvlSem_do_eq _13 (Number _14:bvlSem_v) _15 = Eq_type_error`;
-   `bvlSem_do_eq _17 _18 (Number _19:bvlSem_v) = Eq_type_error`;
-   `bvlSem_do_eq _20 (Word64 w1:bvlSem_v) (Word64 w2:bvlSem_v) =
-  (Eq_val (w1 = w2))`;
-   `bvlSem_do_eq _22 (Word64 _23:bvlSem_v) _24 = Eq_type_error`;
-   `bvlSem_do_eq _26 _27 (Word64 _28:bvlSem_v) = Eq_type_error`;
-   `bvlSem_do_eq refs (RefPtr b1 n1:bvlSem_v) (RefPtr b2 n2:bvlSem_v) =
-        (if b1 /\ b2 then
-         (match (FLOOKUP refs n1,FLOOKUP refs n2) with
-            (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
-              Eq_val (bs1 = bs2) | (SOME (ByteArray T bs1),_35) ->
-              Eq_type_error | (_36,SOME (ByteArray T bs2)) ->
-              Eq_type_error | _37 -> Eq_val (n1 = n2)) else
-              Eq_type_error)`;
-   `bvlSem_do_eq _40 (RefPtr _41 _42:bvlSem_v) _43 = Eq_type_error`;
-   `bvlSem_do_eq _46 _47 (RefPtr _48 _49:bvlSem_v) = Eq_type_error`;
-   `bvlSem_do_eq refs (Block t1 l1:bvlSem_v) (Block t2 l2:bvlSem_v) =
-       (if bvlSem_isClos t1 l1 \/ bvlSem_isClos t2 l2 then if
-         bvlSem_isClos t1 l1 /\ bvlSem_isClos t2 l2 then Eq_val T
-         else Eq_type_error else if (t1 = t2) /\ (LENGTH l1 = LENGTH
-         l2) then bvlSem_do_eq_list refs l1 l2 else Eq_val F)`;
-   `bvlSem_do_eq_list _50 [] [] = Eq_val T`;
-   `bvlSem_do_eq_list refs (v1 :: vs1) (v2 :: vs2) =
-       (match bvlSem_do_eq refs v1 v2 with Eq_val T ->
-         bvlSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad
-         -> bad)`;
-   `bvlSem_do_eq_list _51 _52 _53 = Eq_val F`];;
+  [`bvlSem_do_eq refs (v1:bvlSem_v) (v2:bvlSem_v) =
+      (match (v1,v2) with
+         (bvlSem_CodePtr _5,_6) -> Eq_type_error
+       | (_9,bvlSem_CodePtr _10) -> Eq_type_error
+       | ((Number n1),(Number n2)) -> Eq_val (n1 = n2)
+       | ((Number _14),_15) -> Eq_type_error
+       | (_18,(Number _19)) -> Eq_type_error
+       | ((Word64 w1),(Word64 w2)) -> Eq_val (w1 = w2)
+       | ((Word64 _23),_24) -> Eq_type_error
+       | (_27,(Word64 _28)) -> Eq_type_error
+       | ((RefPtr b1 n1),(RefPtr b2 n2)) ->
+           (if b1 /\ b2 then
+            (match (FLOOKUP refs n1,FLOOKUP refs n2) with
+               (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
+                 Eq_val (bs1 = bs2) | (SOME (ByteArray T bs1),_35) ->
+                 Eq_type_error | (_36,SOME (ByteArray T bs2)) ->
+                 Eq_type_error | _37 -> Eq_val (n1 = n2)) else
+                 Eq_type_error)
+       | ((RefPtr _41 _42),_43) -> Eq_type_error
+       | (_47,(RefPtr _48 _49)) -> Eq_type_error
+       | ((Block t1 l1),(Block t2 l2)) ->
+           (if bvlSem_isClos t1 l1 \/ bvlSem_isClos t2 l2 then if
+             bvlSem_isClos t1 l1 /\ bvlSem_isClos t2 l2 then Eq_val T
+             else Eq_type_error else if (t1 = t2) /\ (LENGTH l1 =
+             LENGTH l2) then bvlSem_do_eq_list refs l1 l2 else
+             Eq_val F))`;
+   `bvlSem_do_eq_list refs l1 l2 =
+      (match (l1,l2) with
+         ([],[]) -> Eq_val T
+       | ((v1 :: vs1),(v2 :: vs2)) ->
+           (match bvlSem_do_eq refs v1 v2 with Eq_val T ->
+             bvlSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F |
+             bad -> bad)
+       | _53 -> Eq_val F)`];;
 hol4_overload "do_eq" "bvlSem_do_eq";;
 hol4_overload "do_eq_list" "bvlSem_do_eq_list";;
 

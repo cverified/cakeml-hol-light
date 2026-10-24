@@ -580,43 +580,49 @@ let isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "dataSem_isClos";;
 
-(* the first pass assumes the termination:
+(* the clauses of the source overlap -- a later one says
+   Eq_type_error of a pair that an earlier one has already given a
+   value -- and HOL4 takes the first that matches, so the port
+   writes them as a match, which takes the first arm (see
+   ml/lib/define.ml, "A definition whose clauses overlap").  As a
+   list of clauses they would be inconsistent.
+   The first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let do_eq_def = cake_define_list_cheat CHEAT_TAC
-  [`dataSem_do_eq _50 (CodePtr _51:dataSem_v) _52 = Eq_type_error`;
-   `dataSem_do_eq _54 _55 (CodePtr _56:dataSem_v) = Eq_type_error`;
-   `dataSem_do_eq _57 (Number n1:dataSem_v) (Number n2:dataSem_v) =
-  (Eq_val (n1 = n2))`;
-   `dataSem_do_eq _59 (Number _60:dataSem_v) _61 = Eq_type_error`;
-   `dataSem_do_eq _63 _64 (Number _65:dataSem_v) = Eq_type_error`;
-   `dataSem_do_eq _66 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) =
-  (Eq_val (w1 = w2))`;
-   `dataSem_do_eq _68 (Word64 _69:dataSem_v) _70 = Eq_type_error`;
-   `dataSem_do_eq _72 _73 (Word64 _74:dataSem_v) = Eq_type_error`;
-   `dataSem_do_eq refs (RefPtr b1 n1:dataSem_v) (RefPtr b2 n2:dataSem_v)
-  =
-        (if b1 /\ b2 then
-         (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
-            (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
-              Eq_val (bs1 = bs2) | (SOME (ByteArray T bs1),_81) ->
-              Eq_type_error | (_82,SOME (ByteArray T bs2)) ->
-              Eq_type_error | _83 -> Eq_val (n1 = n2)) else
-              Eq_type_error)`;
-   `dataSem_do_eq _86 (RefPtr _87 _88:dataSem_v) _89 = Eq_type_error`;
-   `dataSem_do_eq _92 _93 (RefPtr _94 _95:dataSem_v) = Eq_type_error`;
-   `// TODO: How time-stamps impact equality between blocks?
-    dataSem_do_eq refs (Block _98 t1 l1:dataSem_v) (Block _99 t2
-      l2:dataSem_v) =
-    (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
-      isClos t2 l2 then Eq_val T else Eq_type_error else if (t1 = t2)
-      /\ (LENGTH l1 = LENGTH l2) then dataSem_do_eq_list refs l1 l2
-      else Eq_val F)`;
-   `dataSem_do_eq_list _100 [] [] = Eq_val T`;
-   `dataSem_do_eq_list refs (v1 :: vs1) (v2 :: vs2) =
-       (match dataSem_do_eq refs v1 v2 with Eq_val T ->
-         dataSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad
-         -> bad)`;
-   `dataSem_do_eq_list _101 _102 _103 = Eq_val F`];;
+  [`dataSem_do_eq refs (v1:dataSem_v) (v2:dataSem_v) =
+      (match (v1,v2) with
+         (CodePtr _51,_52) -> Eq_type_error
+       | (_55,CodePtr _56) -> Eq_type_error
+       | ((Number n1),(Number n2)) -> Eq_val (n1 = n2)
+       | ((Number _60),_61) -> Eq_type_error
+       | (_64,(Number _65)) -> Eq_type_error
+       | ((Word64 w1),(Word64 w2)) -> Eq_val (w1 = w2)
+       | ((Word64 _69),_70) -> Eq_type_error
+       | (_73,(Word64 _74)) -> Eq_type_error
+       | ((RefPtr b1 n1),(RefPtr b2 n2)) ->
+           (if b1 /\ b2 then
+            (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
+               (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
+                 Eq_val (bs1 = bs2) | (SOME (ByteArray T bs1),_81) ->
+                 Eq_type_error | (_82,SOME (ByteArray T bs2)) ->
+                 Eq_type_error | _83 -> Eq_val (n1 = n2)) else
+                 Eq_type_error)
+       | ((RefPtr _87 _88),_89) -> Eq_type_error
+       | (_93,(RefPtr _94 _95)) -> Eq_type_error
+       | // TODO: How time-stamps impact equality between blocks?
+         ((Block _98 t1 l1),(Block _99 t2 l2)) ->
+           (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
+             isClos t2 l2 then Eq_val T else Eq_type_error else if
+             (t1 = t2) /\ (LENGTH l1 = LENGTH l2) then
+             dataSem_do_eq_list refs l1 l2 else Eq_val F))`;
+   `dataSem_do_eq_list refs l1 l2 =
+      (match (l1,l2) with
+         ([],[]) -> Eq_val T
+       | ((v1 :: vs1),(v2 :: vs2)) ->
+           (match dataSem_do_eq refs v1 v2 with Eq_val T ->
+             dataSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F |
+             bad -> bad)
+       | _103 -> Eq_val F)`];;
 hol4_overload "do_eq" "dataSem_do_eq";;
 hol4_overload "do_eq_list" "dataSem_do_eq_list";;
 

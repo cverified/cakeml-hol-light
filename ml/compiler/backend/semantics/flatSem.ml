@@ -131,6 +131,12 @@ hol4_overload "ctor_same_type" "flatSem_ctor_same_type";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
+(* the clauses of do_eq_list overlap -- the last one says Eq_val F
+   of the two lists that the first two have already given a value
+   -- and HOL4 takes the first that matches, so the port writes
+   them as a match, which takes the first arm (see ml/lib/define.ml,
+   "A definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
 let do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`flatSem_do_eq (Litv l1:flatSem_v) (Litv l2:flatSem_v) =
        (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
@@ -156,14 +162,16 @@ let do_eq_def = cake_define_list_cheat CHEAT_TAC
    `flatSem_do_eq (Recclosure _47 _48 _49:flatSem_v) (Recclosure _50
   _51 _52:flatSem_v) = Eq_val T`;
    `flatSem_do_eq _53 _54 = Eq_type_error`;
-   `flatSem_do_eq_list [] [] = Eq_val T`;
-   `flatSem_do_eq_list (v1 :: vs1) (v2 :: vs2) =
-       (match flatSem_do_eq v1 v2 with Eq_type_error ->
-         Eq_type_error | Eq_val r ->
-          (if r then
-            flatSem_do_eq_list vs1 vs2 else
-            Eq_val F))`;
-   `flatSem_do_eq_list _55 _56 = Eq_val F`];;
+   `flatSem_do_eq_list l1 l2 =
+      (match (l1,l2) with
+         ([],[]) -> Eq_val T
+       | ((v1 :: vs1),(v2 :: vs2)) ->
+           (match flatSem_do_eq v1 v2 with Eq_type_error ->
+             Eq_type_error | Eq_val r ->
+              (if r then
+                flatSem_do_eq_list vs1 vs2 else
+                Eq_val F))
+       | _56 -> Eq_val F)`];;
 hol4_overload "do_eq" "flatSem_do_eq";;
 hol4_overload "do_eq_list" "flatSem_do_eq_list";;
 

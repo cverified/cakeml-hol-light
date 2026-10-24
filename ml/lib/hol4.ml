@@ -237,8 +237,28 @@ let OPT_MMAP = new_recursive_definition list_RECURSION
 (* listTheory and rich_listTheory                                     *)
 (* ------------------------------------------------------------------ *)
 
+(* HOL4's tail of a list is total: listTheory's TL_DEF has a clause
+   for the empty list (src/list/src/listScript.sml:136), where HOL
+   Light's TL (lists.ml:31) is defined on a cons only, so that
+   `TL []` is a list nobody knows.  A statement of a source that
+   mentions TL means HOL4's, and one of them
+   (`memory_rel_elements_list_distinct` of
+   compiler/backend/proofs/data_to_word_memoryProof.ml) is not even
+   true of the partial one.  HOL Light's TL keeps its place in the
+   definition of EL, which the proofs of the port unfold. *)
 
+let hol4_TL = new_recursive_definition list_RECURSION
+  `(hol4_TL ([]:(A)list) = []) /\
+   (hol4_TL (CONS (h:A) t) = t)`;;
+(* the name goes to it at the end of the preamble: the files of the
+   library below are HOL Light's own and their proofs take HOL
+   Light's TL apart *)
 
+(* the two agree on a list that is not empty *)
+
+let hol4_TL_CONS = prove
+ (`!(h:A) t. hol4_TL (CONS h t) = t`,
+  REWRITE_TAC[hol4_TL]);;
 
 
 let FOLDL = new_recursive_definition list_RECURSION

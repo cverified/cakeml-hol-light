@@ -34,6 +34,13 @@ needs "lib/string4.ml";;
 needs "lib/tactics.ml";;
 needs "lib/lemmas.ml";;
 
+(* and then the name TL goes to HOL4's total tail of a list
+   (ml/lib/hol4.ml, `hol4_TL`), so that every statement of a source
+   below means that one.  The library above keeps HOL Light's,
+   whose proofs take it apart with the clause of a cons. *)
+
+override_interface("TL",`hol4_TL:(A)list->(A)list`);;
+
 (* the port has polymorphic definitions all over the place, as the
    CakeML sources do, so the warning about that is turned off *)
 type_invention_warning := false;;

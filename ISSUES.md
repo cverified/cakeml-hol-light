@@ -344,19 +344,12 @@ sources, and why.
   seen.  `dataSem$do_eq` (and the `do_eq` of `bvlSem`, `closSem`,
   `flatSem` and `semanticPrimitives`, which are the same
   definition) is a mutual recursion of `do_eq` and `do_eq_list`
-  whose clauses are written out one by one, and the last clause
-  of each of the two (`do_eq _ _ _ = Eq_type_error`,
-  `do_eq_list _ _ _ = Eq_val F`) catches what the earlier ones
-  match as well.  HOL4 reads them in order; the port states them
-  as equations of a `cake_define_list_cheat`, so the axiom it
-  assumes says both `do_eq_list refs [] [] = Eq_val T` and
-  `= Eq_val F`, and `Eq_val T = Eq_val F` follows.  An axiom that
-  is false makes every proof that uses it worthless, so a proof
-  of phase three must not unfold `do_eq` (the theorems about it,
-  `do_eq_list_F_IMP_MEM` among them, wait for the definition to
-  be made again as one `match`, which is what `MATCH_FORM` in
-  `tools/overrides.py` is for).
-
+  whose clauses are written out one by one, and the last clause of
+  each of the two catches what the earlier ones have already given
+  a value; as a list of clauses that is inconsistent.  The five are
+  now in `MATCH_FORM` of `tools/overrides.py` and the port writes
+  them as a match, as it does for every overlapping definition it
+  does see.
 - A recursive call under a `MAP` (or an `EVERY`) over a list of
   _pairs_ is not primitive recursive in HOL Light's sense: the
   recursion theorem of a datatype family that nests such a list
@@ -1155,107 +1148,20 @@ vs = MAP FST vars' /\ good_dimindex (:'a)
 With `vars' = []` every antecedent holds (`elements_list [] = T`,
 and the memory relation of the empty list is the one of an empty
 stack), and the conclusion is `ALL_DISTINCT (MAP SND (TL []))`,
-which in HOL Light is a statement about an unspecified list.  So
-the theorem is **not provable as it stands**, and its proof stays a
-cheat.  Its neighbour `memory_rel_elements_list_words` says
-`~(vars' = [])` and is not affected.
+which in HOL Light was a statement about an unspecified list, so
+the theorem was **not provable as it stood**.  Its neighbour
+`memory_rel_elements_list_words` says `~(vars' = [])` and was not
+affected.
 
-What to do about it: `TL` has to become the port's own total
-constant in `ml/lib/hol4.ml` (defined with both clauses and bound
-to the name `TL`, as `FOLDR` is), which changes what `TL` means in
-every file that mentions it -- 91 lines today, most of them inside
-a rewrite set of a proof, where the new clause is harmless.  That
-is a library pass with a run and a re-verification of its own, not
-a thing to do inside one proof; until then this theorem is the one
-cheat it costs.
-
-## The `num_size` that resolved to HOL4's size function
-
-`data_spaceScript.sml:15` defines
-
-```
-Definition num_size_def:
-  num_size (n:num) =
-    if n < 2**32 then 2:num else 1 + num_size (n DIV 2 ** 32)
-```
-
-and `data_to_word_memoryProofScript.sml` uses that `num_size` in
-two statements (`LENGTH_n2mw_LE_num_size`, `LESS_EQ_num_size`) and
-`data_to_word_assignProof`/`data_to_word_bignumProof` in a few
-more.  The port names the definition `data_space_num_size` (a
-definition of one theory that another uses needs the theory's
-prefix) but `ml/compiler/backend/data_space.ml` has **no**
-`hol4_overload "num_size" "data_space_num_size"` for it.  And
-`num_size` is not a free name: `ml/lib/hol4.ml:421` has HOL4's
-size function of the num type,
-
-```
-let num_size = new_definition
-  `num_size (n:num) = n`;;
-```
-
-which is what the two statements of the memory proof resolved to.
-So `LESS_EQ_num_size` of the port says
-
-```
-good_dimindex (:'a)
-==> !m n. n <= m ==> SUC (LENGTH (n2mw n)) <= m
-```
-
-and that is **false** (take `m = n = 0`: `1 <= 0`), where the
-source says `... <= num_size m`, which is at least two.
-
-What to do about it: `ml/compiler/backend/data_space.ml` gets the
-missing overload, and then every statement that mentions
-`num_size` is parsed again -- the two of the memory proof, the
-ones of `data_to_word_assignProof` and `data_to_word_bignumProof`,
-and `part_to_words_LENGTH`/`const_parts_to_words_LENGTH`, whose
-`part_space_req` goes through it.  That is a pass over the
-definition file with a run of its own, so until then the two
-theorems stay a cheat; a proof of the statement as it stands is
-impossible, and one of the statement as it should be would be
-thrown away by the re-parse.  `tools/overloads.py` does not catch
-this: the source declares no `Overload` for `num_size`, it is a
-`Definition` of one theory that another theory uses by its short
-name, and the only sign of the clash is that the port has a
-constant of that name already.
-
-## HOL4's `TL` is total and HOL Light's is not
-
-HOL4's `listTheory` defines the tail of a list by two clauses
-(`src/list/src/listScript.sml:136`):
-
-```
-Definition TL_DEF[simp]:
-  TL [] = [] /\
-  TL (h::t) = t
-End
-```
-
-HOL Light's `lists.ml:31` defines it by one:
-
-```
-let TL = new_recursive_definition list_RECURSION
-  `TL(CONS (h:A) t) = t`;;
-```
-
-so `TL []` is a fixed but unspecified list, and `TL [] = []` is
-neither provable nor refutable.  The port uses HOL Light's `TL`.
-
-Two statements of `data_to_word_memoryProof` mention `TL`, and
-`memory_rel_elements_list_distinct` is **unprovable** as it
-stands: its hypotheses (`elements_list vs /\ vs = MAP FST vars'`)
-hold of `vars' = []`, and what is then asked is
-`ALL_DISTINCT (MAP SND (TL []))` of a list nobody knows.  In HOL4
-the same statement is fine, because `TL [] = []` and
-`ALL_DISTINCT []`.
-
-What to do about it: `ml/lib/hol4.ml` gets HOL4's tail as a
-constant of its own (`hol4_TL`, with the two clauses) and
-overloads `TL` with it, as it does for the other list functions
-whose HOL4 clauses differ.  That re-parses every statement of the
-port that mentions `TL`, so it is a pass over the library with a
-run of its own; until then the theorem stays a cheat.
+**Fixed.**  `ml/lib/hol4.ml` has HOL4's tail as `hol4_TL` (both
+clauses), and the last line of `ml/lib/preamble.ml` gives the name
+`TL` to it, so every statement of a source means HOL4's.  The
+override is in the preamble and not in `hol4.ml` because the files
+of the library below it are HOL Light's own and their proofs take
+HOL Light's `TL` apart (one of `ml/lib/string4.ml` does, and broke
+when the override stood higher up); `EL` keeps HOL Light's `TL` in
+its definition, which is what the rewrite sets of the proofs
+reduce.
 
 ## `memory_rel_El'` and `memory_rel_El_any` say the same thing
 

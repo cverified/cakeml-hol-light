@@ -124,6 +124,12 @@ hol4_overload "Boolv" "closSem_Boolv";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
+(* the clauses of do_eq_list overlap -- the last one says Eq_val F
+   of the two lists that the first two have already given a value
+   -- and HOL4 takes the first that matches, so the port writes
+   them as a match, which takes the first arm (see ml/lib/define.ml,
+   "A definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
 let do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`closSem_do_eq x y =
          (match x with closSem_Number i ->
@@ -146,11 +152,13 @@ let do_eq_def = cake_define_list_cheat CHEAT_TAC
                Eq_type_error | closSem_ByteVector _11 ->
                Eq_type_error | closSem_RefPtr _12 _13 ->
                Eq_type_error | _14 -> Eq_val T))`;
-   `closSem_do_eq_list [] [] = Eq_val T`;
-   `closSem_do_eq_list (x :: xs) (y :: ys) =
-         (match closSem_do_eq x y with Eq_val T ->
-           closSem_do_eq_list xs ys | res -> res)`;
-   `closSem_do_eq_list _15 _16 = Eq_val F`];;
+   `closSem_do_eq_list l1 l2 =
+      (match (l1,l2) with
+         ([],[]) -> Eq_val T
+       | ((x :: xs),(y :: ys)) ->
+           (match closSem_do_eq x y with Eq_val T ->
+             closSem_do_eq_list xs ys | res -> res)
+       | _16 -> Eq_val F)`];;
 hol4_overload "do_eq" "closSem_do_eq";;
 hol4_overload "do_eq_list" "closSem_do_eq_list";;
 

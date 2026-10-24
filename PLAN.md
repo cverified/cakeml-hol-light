@@ -1135,16 +1135,23 @@ memory_rel_Deref'.
   so the unprimed ones are the primed proof again with the
   Number's root taken apart as well, and that is the next thing to
   write.
-- _What is blocked, and why:_ `do_eq_list_F_IMP_MEM`,
-  `memory_rel_ptr_eq` and `do_eq_IFF_vb_eq_size` on the
-  inconsistent `do_eq` of ISSUES.md;
-  `memory_rel_elements_list_distinct` on the partial `TL` of
-  ISSUES.md; `LESS_EQ_num_size`, `LENGTH_n2mw_LE_num_size` and
-  `part_to_words_LENGTH` on the `num_size` overload;
-  `memory_rel_FromList` on `copy_list_thm`, which HOL4 binds to
-  the value of an ML expression; `vb_eq_size_IMP_vb_size` and
+- _What was blocked, and what was done about it:_ the four things
+  that stood in the way are **fixed in the port** and the
+  theorems that waited for them are ordinary work again.
+  `do_eq` and `do_eq_list` of the five semantics are written as a
+  match, so their clauses are consistent (they were not, and the
+  cheat of the definition made them axioms);
+  `data_space.ml` overloads `num_size`, so the statements that
+  mention it mean the source's function and not HOL4's size
+  function; `ml/lib/hol4.ml` has HOL4's total `TL` and the
+  preamble gives the name to it; and `copy_list_thm` is not
+  missing from the port -- HOL4 states a general lemma and
+  specializes it with ML, so the general one belongs inside the
+  proof of `memory_rel_FromList`, which is work and not a block.
+  What is still blocked: `vb_eq_size_IMP_vb_size` and
   `finalise_cons_none` on the induction theorem of a HOL4
-  `Definition`, which the port's `cake_define_list` does not make.
+  `Definition`, which the port's `cake_define_list` does not
+  make.
 - _What the gc's `data_refs_split` family needs:_ the proofs are
   short in the source (`EVERY_CASE_TAC` and a `metis_tac`), and
   the port gets as far as the cases of `gc_move`; what is left is
