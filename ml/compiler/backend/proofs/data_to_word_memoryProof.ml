@@ -6826,7 +6826,61 @@ let word_ml_inv_num = cake_theorem "word_ml_inv_num"
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c
         (dataSem_state_refs s)
         ((Number (&n),wordLang_Word (n2w (4 * n):'a word)) :: ws)`)
-  CHEAT_TAC;;
+  (* a small enough integer as a root of word_ml_inv: its root is
+     the Data of its Smallnum, which abs_ml_inv_Num adds to the
+     roots of the abs_ml_inv, and word_addr of that Data is four
+     times the integer, because Smallnum of a natural number is
+     four times it and the and with the complement of one leaves
+     such a word alone *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    let smn = prove
+     (`!n. Smallnum (&n) = (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN REWRITE_TAC[cake_def "Smallnum"] THEN
+      REWRITE_TAC[INT_ARITH `~((&n:int) < &0)`] THEN
+      REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]) in
+    let and4 = prove
+     (`!n. word_and (n2w (4 * n)) (word_not (word 1)) =
+           (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN
+      REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+                  BIT_WORD_1] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_CASES_TAC `(i:num) = 0` THEN ASM_REWRITE_TAC[] THEN
+      TRY(REWRITE_TAC[BIT_WORD; EXP; DIV_1; ODD_MULT] THEN
+        CONV_TAC NUM_REDUCE_CONV THEN NO_TAC) THEN
+      TRY(CONV_TAC TAUT)) in
+    REWRITE_TAC[cake_def "word_ml_inv"] THEN
+    DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+    FIRST_X_ASSUM(fun th ->
+      if is_exists (concl th) then STRIP_ASSUME_TAC th else fail()) THEN
+    SUBGOAL_THEN `small_int (:'a) (&n)` ASSUME_TAC THENL
+     [FIRST_X_ASSUM(fun se ->
+        if hd_is "small_enough_int" (concl se) then MP_TAC se
+        else fail()) THEN
+      FIRST_ASSUM(fun gd ->
+        if hd_is "good_dimindex" (concl gd)
+        then MP_TAC(REWRITE_RULE[cake_def "good_dimindex"] gd)
+        else fail()) THEN
+      REWRITE_TAC[cake_def "small_enough_int";
+                  cake_def "small_int"; dimword] THEN
+      DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN INT_ARITH_TAC;
+      ALL_TAC] THEN
+    W(fun (asl,w) ->
+      let am = grab asl (fun th -> hd_is "abs_ml_inv" (concl th)) in
+      let si = grab asl (fun th -> hd_is "small_int" (concl th)) in
+      let nw = MATCH_MP (cake_thm "abs_ml_inv_Num") (CONJ am si) in
+      ASSUME_TAC nw THEN
+      EXISTS_TAC
+        (fst(dest_pair (el 3 (snd(strip_comb (concl nw))))))) THEN
+    ASM_REWRITE_TAC[MAP; FST; SND; ALL2] THEN
+    REWRITE_TAC(word_addr_clauses () @ [smn; and4]));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:8032-8033: a theorem that
    HOL4 states as the value of an ML expression: word_ml_inv_zero *)
@@ -13385,7 +13439,113 @@ let memory_rel_Block_MEM = cake_theorem "memory_rel_Block_MEM"
        y) IN dm /\
      memory_rel c be ts refs sp st m dm ((EL i ls,m (a + y)) ::
        (Block ts' n ls,v) :: vars))`)
-  CHEAT_TAC;;
+  (* an element of a block at an index, with the root of the index
+     put in and taken out again: the length of the block that
+     memory_rel_Block_IMP gives is below two to the dimindex less
+     four, so the index below it is a small integer, which
+     IMP_memory_rel_Number puts in front of the roots and
+     memory_rel_swap moves past the block; then memory_rel_El reads
+     the element out and memory_rel_rearrange drops the root of the
+     index again *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    (* an index below a length that a header encodes is small *)
+    let smallidx = prove
+     (`!(i:num) n.
+         good_dimindex (:'a) /\ i < n /\
+         n < 2 EXP (dimindex (:'a) - 4)
+         ==> small_int (:'a) (&i)`,
+      REPEAT GEN_TAC THEN
+      REWRITE_TAC[cake_def "small_int"; dimword;
+                  cake_def "good_dimindex"] THEN
+      DISCH_THEN(CONJUNCTS_THEN2 MP_TAC STRIP_ASSUME_TAC) THEN
+      DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+      RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN
+      CONJ_TAC THEN
+      TRY(MATCH_MP_TAC INT_LE_TRANS THEN EXISTS_TAC `&0:int` THEN
+          REWRITE_TAC[INT_POS; INT_NEG_LE0; INT_POS] THEN NO_TAC) THEN
+      REWRITE_TAC[INT_OF_NUM_LT] THEN ASM_ARITH_TAC) in
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+    SUBGOAL_THEN `~(ls:(dataSem_v)list = [])` ASSUME_TAC THENL
+     [DISCH_TAC THEN VAR_EQ_TAC THEN
+      FIRST_X_ASSUM(fun th ->
+        if (try hd_is "<" (concl th) with Failure _ -> false)
+        then MP_TAC(REWRITE_RULE[LENGTH; LT] th) else fail()) THEN
+      REWRITE_TAC[];
+      ALL_TAC] THEN
+    W(fun (asl,w) ->
+      let mr = grab asl (fun th -> hd_is "memory_rel" (concl th)) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+               (CONJ mr gd))) THEN
+    ASM_REWRITE_TAC[] THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    W(fun (asl,w) ->
+      let bd = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (lhand (concl th)) &&
+        hd_is "EXP" (rand (concl th))) in
+      let lt = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (rand (concl th))) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      ASSUME_TAC(MATCH_MP smallidx (CONJ gd (CONJ lt bd)))) THEN
+    W(fun (asl,w) ->
+      let mr = grab asl (fun th -> hd_is "memory_rel" (concl th)) in
+      let si = grab asl (fun th -> hd_is "small_int" (concl th)) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      ASSUME_TAC(MATCH_MP (cake_thm "IMP_memory_rel_Number")
+                   (CONJ gd (CONJ si mr)))) THEN
+    W(fun (asl,w) ->
+      let num = grab asl (fun th ->
+        hd_is "memory_rel" (concl th) &&
+        hd_is "dataSem_Number"
+          (fst(dest_pair(lhand(last(snd(strip_comb (concl th)))))))) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let lt = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (rand (concl th))) in
+      MP_TAC(MATCH_MP (cake_thm "memory_rel_El")
+               (CONJ (MATCH_MP (cake_thm "memory_rel_swap") num)
+                     (CONJ gd lt)))) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun e ->
+      if is_eq (concl e) && hd_is "wordLang_Word" (lhs (concl e)) &&
+         hd_is "wordLang_Word" (rhs (concl e))
+      then SUBST_ALL_TAC(SYM(REWRITE_RULE[injectivity "word_loc"] e))
+      else fail()) THEN
+    W(fun (asl,w) ->
+      let ind = grab asl (fun th ->
+        hd_is "IN" (concl th) &&
+        hd_is "word_add" (lhand (concl th))) in
+      let x = lhand (lhand (concl ind)) in
+      let y = rand (lhand (concl ind)) in
+      let ga = grab asl (fun th ->
+        hd_is "get_real_addr" (lhs (concl th)) &&
+        rand (rhs (concl th)) = x) in
+      EXISTS_TAC (rand (lhs (concl ga))) THEN
+      EXISTS_TAC x THEN EXISTS_TAC y) THEN
+    ASM_REWRITE_TAC[] THEN
+    CONJ_TAC THENL
+     [ASM_MESON_TAC[injectivity "word_loc"];
+      ALL_TAC] THEN
+    W(fun (asl,w) ->
+      let mr = grab asl (fun th ->
+        hd_is "memory_rel" (concl th) &&
+        hd_is "EL"
+          (fst(dest_pair(lhand(last(snd(strip_comb (concl th)))))))) in
+      MATCH_MP_TAC(MATCH_MP
+        (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
+           (cake_thm "memory_rel_rearrange")) mr)) THEN
+    ASM_REWRITE_TAC[MEM] THEN
+    MESON_TAC[]);;
 
 let smallnum_0 = cake_theorem "Smallnum_0"
   (fun () ->
@@ -13838,7 +13998,103 @@ let memory_rel_elements_list_words =
        elements_list vs /\ vs = MAP FST vars' /\
        good_dimindex (:'a) ==> ~(vars' = []) ==> EVERY isWord (TL
          (MAP SND vars'))`)
-  CHEAT_TAC;;
+  (* every root of the tail of an elements_list is a Word: the
+     second element of the list is a Block by the third clause of
+     elements_list, so the root of the tail that memory_rel_tl
+     keeps is the Word that memory_rel_Block_IMP gives it, and the
+     induction says it of the rest.  The hypothesis of the
+     induction is moved into the goal, so that the split of the
+     tail reaches it *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+  SUBGOAL_THEN
+      `!vars0 (c:data_to_word_config) be ts refs sp st m dm.
+         memory_rel c be ts refs sp st m (dm:'a word->bool) vars0 /\
+         elements_list (MAP FST vars0) /\ good_dimindex (:'a)
+         ==> ALL isWord (TL (MAP SND vars0))`
+      (fun th ->
+        REPEAT GEN_TAC THEN
+        DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+        VAR_EQ_TAC THEN DISCH_THEN(K ALL_TAC) THEN
+        W(fun (asl,w) ->
+          let mr = grab asl (fun t -> hd_is "memory_rel" (concl t)) in
+          let args = snd(strip_comb (concl mr)) in
+          let el = grab asl (fun t ->
+            hd_is "elements_list" (concl t)) in
+          let gd = grab asl (fun t ->
+            hd_is "good_dimindex" (concl t)) in
+          ACCEPT_TAC(MP (SPECL (last args :: butlast args) th)
+                        (CONJ mr (CONJ el gd))))) THEN
+    LIST_INDUCT_TAC THENL
+     [REWRITE_TAC[MAP; hol4_TL; ALL];
+      ALL_TAC] THEN
+    POP_ASSUM MP_TAC THEN
+    W(fun (asl,w) ->
+      STRUCT_CASES_TAC(ISPEC (var_by_name "t" (asl,w)) list_CASES))
+    THENL
+     [REWRITE_TAC[MAP; hol4_TL; ALL];
+      ALL_TAC] THEN
+    W(fun (asl,w) ->
+      let l = last (snd(strip_comb (find_term (hd_is "memory_rel") w)))
+        in
+      let ty = hd (snd (dest_type (type_of l))) in
+      STRUCT_CASES_TAC(ISPEC
+        (find_term (fun u -> is_var u && type_of u = ty) w)
+        PAIR_SURJECTIVE)) THEN
+    REWRITE_TAC[MAP; FST; SND; hol4_TL; ALL] THEN
+    DISCH_TAC THEN
+    REPEAT GEN_TAC THEN
+    DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+    FIRST_X_ASSUM(fun el ->
+      if hd_is "elements_list" (concl el)
+      then MP_TAC(REWRITE_RULE[cake_def "elements_list"] el)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_ASSUM(fun mr ->
+      if hd_is "memory_rel" (concl mr)
+      then ASSUME_TAC(MATCH_MP (cake_thm "memory_rel_tl") mr)
+      else fail()) THEN
+    CONJ_TAC THENL
+     [W(fun (asl,w) ->
+        let be = grab asl (fun th ->
+          is_eq (concl th) && is_var (lhs (concl th)) &&
+          hd_is "dataSem_Block" (rhs (concl th))) in
+        let mr = grab asl (fun th ->
+          hd_is "memory_rel" (concl th) &&
+          fst(dest_pair(lhand(last(snd(strip_comb (concl th)))))) =
+            lhs (concl be)) in
+        let gd = grab asl (fun th ->
+          hd_is "good_dimindex" (concl th)) in
+        MP_TAC(MATCH_MP (cake_thm "memory_rel_Block_IMP")
+                 (CONJ (REWRITE_RULE[be] mr) gd))) THEN
+      DISCH_THEN STRIP_ASSUME_TAC THEN
+      FIRST_X_ASSUM(fun e ->
+        if is_eq (concl e) && is_var (lhs (concl e)) &&
+           hd_is "wordLang_Word" (rhs (concl e))
+        then SUBST1_TAC e else fail()) THEN
+      REWRITE_TAC[cake_def "isWord"] THEN MATCH_REDUCE_TAC THEN
+      REWRITE_TAC[];
+      W(fun (asl,w) ->
+        let ih = grab asl (fun t ->
+          is_forall (concl t) &&
+          can (find_term (hd_is "memory_rel")) (concl t)) in
+        let mr = grab asl (fun t ->
+          hd_is "memory_rel" (concl t) &&
+          not (hd_is "CONS"
+                 (rand (last (snd(strip_comb (concl t))))))) in
+        let args = butlast (snd(strip_comb (concl mr))) in
+        let el = grab asl (fun t ->
+          hd_is "elements_list" (concl t) &&
+          hd_is "CONS" (rand (concl t))) in
+        let gd = grab asl (fun t ->
+          hd_is "good_dimindex" (concl t)) in
+        ACCEPT_TAC(REWRITE_RULE[MAP; SND; hol4_TL]
+          (MP (SPECL args ih) (CONJ mr (CONJ el gd)))))]);;
 
 let memory_rel_depth_size_limit =
   cake_theorem "memory_rel_depth_size_limit"

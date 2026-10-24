@@ -66,7 +66,11 @@ let bchain nm th tacs =
                   (fst(chop_list k tacs)) in
   let rec go k =
     if k > n then
-      say (nm ^ ": the chain of all " ^ string_of_int n ^ " ok\n")
+      (say (nm ^ ": the chain of all " ^ string_of_int n ^ " ok\n");
+       let gls = (try length (b_goals ()) with Failure _ -> -1) in
+       if gls = 0 then say "  and the goal is proved\n"
+       else (say ("  but " ^ string_of_int gls ^
+                  " goal(s) are left\n"); b_show ()))
     else
       try let _ = g (concl th) in
           let _ = with_timeout (fun () -> e (chain k)) () in
