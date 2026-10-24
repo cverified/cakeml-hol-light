@@ -194,3 +194,13 @@ let STAR_AC = prove
     REWRITE_TAC[STAR_ASSOC] THEN
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STAR_COMM] THEN
     REWRITE_TAC[]]);;
+
+(* what a separation predicate beside SEP_T says: that it holds of
+   some part of the set.  HOL4 does the same reasoning through its
+   SEP_IMP and SEP_T_def by hand in every proof that needs it *)
+
+let STAR_SEP_T = prove
+ (`!(p:(A->bool)->bool) s. (p * SEP_T) s <=> ?u. u SUBSET s /\ p u`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[STAR_def; SEP_T_def; SPLIT_LEMMA] THEN
+  MESON_TAC[]);;
