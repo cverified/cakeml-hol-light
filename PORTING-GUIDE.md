@@ -66,6 +66,7 @@ add it to the index.
 | 28 | a type that nests a list of itself | the store's mutual induction |
 | 29 | `drule` with a rewrite in it | `USE_CHANGED`, or a test of the shape |
 | 30 | a tactic of several steps | brackets round it, or it is an argument |
+| 31 | `SEP_R_TAC`, `SEP_W_TAC`, `AC STAR_ASSOC STAR_COMM` | `read_fun2set`, `write_fun2set`, `STAR_AC` |
 
 ## The shape of a transformation proof
 
@@ -1990,6 +1991,20 @@ this).  The other half of the trap is the direction of
 has: it is `&m * &n = &(m * n)`, so the fold needs it plain and the
 split needs the `GSYM`).
 
+### A statement may have two invented type variables, not one
+
+`word_list_AND_word_list_exists_IMP` reads as a statement about a
+memory of `'a word` cells holding `'a word_loc` values, and an
+`aux` lemma that stands in for it (way 3) was written with one
+type variable for both.  `MATCH_ACCEPT_TAC` then failed with
+`ACCEPT_TAC`, and `term_match` with `type_match`: the port's
+`misc_word_list` is polymorphic in the address **and** in the
+contents, nothing in the statement ties them together, and so the
+parser invented two.  `print_types_of_subterms := 2` on
+`concl (cake_thm "...")` is what shows it; the `aux` then needs
+two type variables as well, and the contents one is a bare `M`,
+not `(M)word_loc`.
+
 The same holds for `<`, `<=`, `+` and `-`: the port overloads them
 for words as well, and a quotation whose variables are free of any
 other constraint takes the **word** reading.  `ASM_CASES_TAC `j <
@@ -2193,3 +2208,88 @@ it do no harm.
 Running `tools/bin/verifyquick` catches it, but only after the five
 minutes it takes to load the file, and only for the file that is
 being verified; the check is a second.
+
+## 31. The separation logic of a memory
+
+### The idiom
+
+Every proof of `data_to_word_memoryProof` that touches the memory
+goes through HOL4's separation logic:
+
+```
+  \\ rpt_drule memory_rel_IMP_word_list_exists
+  \\ SEP_R_TAC \\ fs []
+  \\ full_simp_tac (std_ss++sep_cond_ss) [cond_STAR]
+  \\ fs [AC STAR_ASSOC STAR_COMM]
+```
+
+### What it means
+
+`fun2set (m,dm)` is the memory `m` restricted to the domain `dm`,
+as a set of address-value pairs, and a separation predicate says
+what part of that set a piece of the heap takes up.  HOL4's
+tactics are a decision procedure over them: `SEP_R_TAC` finds the
+cell of an address in an assumption and reads `m a = v` off it,
+`SEP_W_TAC` rewrites the assumption for a store at that cell,
+`SEP_F_TAC` applies a frame rule and `sep_cond_ss` pulls the
+`cond` of a predicate out as an ordinary conjunct.  `AC
+STAR_ASSOC STAR_COMM` reorders a product of predicates, which the
+sources do on nearly every line.
+
+### What resisted
+
+`ml/lib/set_sep.ml` is a port of HOL4's `set_sepTheory`, but it
+had only the unit and associativity laws (a hundred lines), and
+none of the tactics exist.  Seventeen cheats of the third file
+mention `fun2set`, `word_list_exists` or `STAR`, and none of them
+can be touched without the lemmas those tactics are made of.
+
+### What the port does
+
+Ten theorems of `set_sepTheory`, each a transliteration of HOL4's
+own proof, now stand in `ml/lib/set_sep.ml`:
+
+- `SEP_EXISTS_THM`, `cond_STAR`, `STAR_cond` -- a predicate taken
+  apart at a point;
+- `SPLIT_LEMMA`, `one_STAR`, `IN_fun2set` -- the cell of an
+  address inside a `fun2set`;
+- `read_fun2set` (`(one (a,x) * p) (fun2set (f,d)) ==> f a = x /\
+  a IN d`) -- HOL4's `SEP_R_TAC`, applied by hand with
+  `FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP read_fun2set th))` after
+  the product has been reassociated so that the cell is the left
+  factor (`REWRITE_RULE[GSYM STAR_ASSOC]`);
+- `write_fun2set` (`... ==> (p * one (a,y)) (fun2set ((a =+ y)
+  f,d))`) -- HOL4's `SEP_W_TAC`, the same way, with
+  `ISPEC` of the value written (not `SPEC`: the type variable);
+- `STAR_AC` -- the commutativity, the associativity and the
+  left-commutativity as one permutative rewrite, so that
+  `REWRITE_TAC[STAR_AC]` normalises both sides of a goal the way
+  HOL4's `AC` does.  Where a specific rearrangement is wanted
+  rather than a normal form, a one-line lemma says it
+  (`(p * q) * r = (p * r) * q`, proved by `REWRITE_TAC[STAR_AC]`)
+  and `ONCE_REWRITE_RULE` applies it to the assumption;
+- `STAR_SEP_T` (`(p * SEP_T) s <=> ?u. u SUBSET s /\ p u`) -- what
+  a predicate beside `SEP_T` says, which is how a fact about a
+  part of the memory is carried to the whole of it.
+
+`APPLY_UPDATE_THM` stands in the same file rather than in
+`ml/lib/lemmas.ml`: the load order of a run puts `set_sep.ml`
+before the preamble's lemmas, so a lemma it uses has to be there
+(`tools/bin/pfbase` reloads the preamble's lemmas into the
+template first, for the same reason).
+
+### Where it lives
+
+`ml/lib/set_sep.ml`.  The proofs that use it: `word_list_exists_thm`,
+`store_list_thm`, `word_el_IMP_word_list_exists`,
+`word_heap_IMP_word_list_exists`,
+`word_list_AND_word_list_exists_IMP`.
+
+### Dead ends
+
+A `MESON_TAC` over the unfolded `STAR_def` and `SPLIT_def` solves
+the small laws but not a goal with a `word_list_exists` in it: the
+existential over the list of words and the `cond` on its length
+put it out of reach (`word_list_exists_thm` needs
+`STAR_SEP_EXISTS`, `SEP_EXISTS_THM` and `STAR_cond` in that order,
+and then a two-line MESON over `LENGTH_EQ_CONS`).
