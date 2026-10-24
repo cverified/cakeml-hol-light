@@ -6094,6 +6094,78 @@
    FIRST_ASSUM(fun c -> FIRST_ASSUM(fun h ->
      MATCH_ACCEPT_TAC(MATCH_MP
        (cake_thm "bc_stack_ref_inv_swap_refs") (CONJ h c)))))
+### memory_rel_FinaliseCons
+  (* the finalisation of a cons: what it does to the refs and to
+     the timestamp is what bc_stack_ref_inv_FinaliseCons_lemma
+     says of the invariant of the stack, with no frame beside the
+     refs (the union with the empty tree is the tree).  The heap,
+     the roots and the words of the roots are the same, so the
+     memory_rel goes back together as it came apart *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    (* an ALL2 whose second list is a cons *)
+    let all2cons = prove
+     (`!P h t (l:(A)list).
+         ALL2 P l (CONS (h:B) t) <=>
+         ?a b. l = CONS a b /\ P a h /\ ALL2 P b t`,
+      REPEAT GEN_TAC THEN
+      STRUCT_CASES_TAC(ISPEC `l:(A)list` list_CASES) THEN
+      REWRITE_TAC[ALL2; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[]) in
+    (* the union with the empty tree on the right *)
+    let union_LN = prove
+     (`!t. sptree_union t (LN:(A)spt) = t`,
+      MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THEN
+      REPEAT GEN_TAC THEN TRY(DISCH_THEN(K ALL_TAC)) THEN
+      REWRITE_TAC[cake_def "sptree_union"] THEN
+      TRY MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+  DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+    REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv";
+                cake_def "abs_ml_inv"; MAP; FST] THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun a2 ->
+      if hd_is "ALL2" (concl a2)
+      then MP_TAC(REWRITE_RULE[MAP; SND; all2cons] a2) else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         hd_is "CONS" (rhs (concl e))
+      then SUBST_ALL_TAC e else fail()) THEN
+    W(fun (asl,w) ->
+      let th0 = cake_thm "bc_stack_ref_inv_FinaliseCons_lemma" in
+      let vs = fst(strip_forall (concl th0)) in
+      let th1 = REWRITE_RULE[union_LN]
+        (SPECL (map (fun v ->
+           if fst(dest_var v) = "frame"
+           then `LN:((dataSem_v)bvlSem_ref)spt` else v) vs) th0) in
+      let bs = grab asl (fun th ->
+        hd_is "bc_stack_ref_inv" (concl th)) in
+      let fc = grab asl (fun th ->
+        hd_is "dataSem_finalise_cons" (lhs (concl th))) in
+      MP_TAC(MATCH_MP th1
+        (CONJ fc (CONJ (REFL (rand (lhs (concl fc)))) bs)))) THEN
+    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    CONJ_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
+    REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv";
+                cake_def "abs_ml_inv"; MAP; FST] THEN
+    W(fun (asl,w) ->
+      let hm = grab asl (fun th ->
+        hd_is "heap_in_memory_store" (concl th)) in
+      let args = snd(strip_comb (concl hm)) in
+      EXISTS_TAC (el 0 args) THEN EXISTS_TAC (el 9 args) THEN
+      EXISTS_TAC (el 1 args) THEN EXISTS_TAC (el 2 args) THEN
+      EXISTS_TAC (el 3 args) THEN EXISTS_TAC (el 4 args)) THEN
+    ASM_REWRITE_TAC[] THEN
+    W(fun (asl,w) ->
+      let bs = grab asl (fun th ->
+        hd_is "bc_stack_ref_inv" (concl th)) in
+      EXISTS_TAC (fst(dest_pair
+        (el 4 (snd(strip_comb (concl bs))))))) THEN
+    ASM_REWRITE_TAC[ALL2])
 ### memory_rel_Cons_empty
   (* the empty Block of a tag has the root Data (Word (BlockNil
      tag)), which cons_thm_EMPTY adds, and the BlockNil is sixteen
@@ -8784,6 +8856,181 @@
    STRIP_TAC THEN MATCH_MP_TAC IVAL_IWORD THEN
    FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
      ACCEPT_TAC(MATCH_MP bnds (CONJ t1 t2)))))
+### memory_rel_Add
+  (* the sum of two small integers: the bit zero of each root is
+     clear, so memory_rel_any_Number_IMP says that both integers
+     are small and memory_rel_Number_IMP that the roots are their
+     Smallnums, whose sum is the Smallnum of the sum, because
+     Smallnum is i2w of four times the integer.  The sum is small
+     in its turn, because w2i of it is four times it by the
+     premise, and w2i_i2w_IMP puts that between INT_MIN and
+     INT_MAX *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    (* the sum of two Smallnums *)
+    (* the sum and the difference of two Smallnums *)
+    let addsm = prove
+     (`!i j. word_add (Smallnum i) (Smallnum j) =
+             (Smallnum (i + j):(N)word)`,
+      REWRITE_TAC[cake_thm "Smallnum_i2w"; GSYM IWORD_INT_ADD;
+                  GSYM INT_ADD_LDISTRIB]) in
+    (* and an integer whose four times is between INT_MIN and INT_MAX
+       is a small one: the converse of small_int_IMP_MIN_MAX *)
+    (* and an integer whose four times is between INT_MIN and INT_MAX
+       is a small one: the converse of small_int_IMP_MIN_MAX *)
+    let minmax_small = prove
+     (`!i. good_dimindex (:'a) /\
+           INT_MIN (:'a) <= (&4) * i /\ (&4) * i <= INT_MAX (:'a)
+           ==> small_int (:'a) i`,
+      REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+                  dimword; integer_word_INT_MIN; integer_word_INT_MAX;
+                  INT_MIN] THEN
+      GEN_TAC THEN STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+      RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN ASM_INT_ARITH_TAC) in
+    let mr0 asl = grab asl (fun th -> hd_is "memory_rel" (concl th)) in
+    let mr1 asl = MATCH_MP (cake_thm "memory_rel_tail") (mr0 asl) in
+    let mr2 asl = MATCH_MP (cake_thm "memory_rel_tail") (mr1 asl) in
+    let smalls =
+      W(fun (asl,w) ->
+        let gd = grab asl (fun th ->
+          hd_is "good_dimindex" (concl th)) in
+        let nbs = map snd (filter (fun (_,th) ->
+          is_neg (concl th) &&
+          (try hd_is "bit" (rand (concl th)) with Failure _ -> false))
+          asl) in
+        let any = cake_thm "memory_rel_any_Number_IMP" in
+        let step m =
+          MP_TAC(MATCH_MP any (CONJ gd m)) THEN
+          REWRITE_TAC[injectivity "word_loc"; word_index] THEN
+          DISCH_THEN(CHOOSE_THEN(fun th ->
+            ASSUME_TAC(REWRITE_RULE (GSYM(CONJUNCT1 th) :: nbs)
+                         (CONJUNCT2 th)))) in
+        step (mr0 asl) THEN step (mr1 asl)) in
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+    smalls THEN
+    W(fun (asl,w) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let num = cake_thm "memory_rel_Number_IMP" in
+      let inj = REWRITE_RULE[injectivity "word_loc"] in
+      let sis = filter (fun (_,th) -> hd_is "small_int" (concl th))
+                  asl in
+      let e1 = inj (MATCH_MP num
+        (CONJ gd (CONJ (snd (el 1 sis)) (mr0 asl)))) in
+      let e2 = inj (MATCH_MP num
+        (CONJ gd (CONJ (snd (el 0 sis)) (mr1 asl)))) in
+      RULE_ASSUM_TAC(REWRITE_RULE[e1; e2]) THEN
+      REWRITE_TAC[e1; e2]) THEN
+    REWRITE_TAC[addsm] THEN
+    MATCH_MP_TAC (cake_thm "IMP_memory_rel_Number") THEN
+    W(fun (asl,w) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let sis = filter (fun (_,th) -> hd_is "small_int" (concl th))
+                  asl in
+      let sw = cake_thm "small_int_w2i_i2w" in
+      let e1 = MATCH_MP sw (CONJ (snd (el 1 sis)) gd) in
+      let e2 = MATCH_MP sw (CONJ (snd (el 0 sis)) gd) in
+      let hy = grab asl (fun th -> hd_is "ival" (lhs (concl th))) in
+      let th = REWRITE_RULE[cake_thm "Smallnum_i2w"; e1; e2;
+                            GSYM IWORD_INT_ADD;
+                            GSYM INT_ADD_LDISTRIB] hy in
+      ASSUME_TAC(MATCH_MP minmax_small
+        (CONJ gd (MATCH_MP (cake_thm "w2i_i2w_IMP") th))) THEN
+      ASM_REWRITE_TAC[mr2 asl]))
+### memory_rel_Sub
+  (* the difference of two small integers: the bit zero of each
+     root is clear, so memory_rel_any_Number_IMP says that both
+     integers are small and memory_rel_Number_IMP that the roots
+     are their Smallnums, whose difference is the Smallnum of the
+     difference, because Smallnum is i2w of four times the
+     integer.  The difference is small in its turn, because w2i of
+     it is four times it by the premise, and w2i_i2w_IMP puts that
+     between INT_MIN and INT_MAX *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    (* the difference of two Smallnums *)
+    let subsm = prove
+     (`!i j. word_sub (Smallnum i) (Smallnum j) =
+             (Smallnum (i - j):(N)word)`,
+      REWRITE_TAC[cake_thm "Smallnum_i2w"; GSYM IWORD_INT_SUB;
+                  GSYM INT_SUB_LDISTRIB]) in
+    (* and an integer whose four times is between INT_MIN and INT_MAX
+       is a small one: the converse of small_int_IMP_MIN_MAX *)
+    (* and an integer whose four times is between INT_MIN and INT_MAX
+       is a small one: the converse of small_int_IMP_MIN_MAX *)
+    let minmax_small = prove
+     (`!i. good_dimindex (:'a) /\
+           INT_MIN (:'a) <= (&4) * i /\ (&4) * i <= INT_MAX (:'a)
+           ==> small_int (:'a) i`,
+      REWRITE_TAC[cake_def "good_dimindex"; cake_def "small_int";
+                  dimword; integer_word_INT_MIN; integer_word_INT_MAX;
+                  INT_MIN] THEN
+      GEN_TAC THEN STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+      RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN ASM_INT_ARITH_TAC) in
+    let mr0 asl = grab asl (fun th -> hd_is "memory_rel" (concl th)) in
+    let mr1 asl = MATCH_MP (cake_thm "memory_rel_tail") (mr0 asl) in
+    let mr2 asl = MATCH_MP (cake_thm "memory_rel_tail") (mr1 asl) in
+    let smalls =
+      W(fun (asl,w) ->
+        let gd = grab asl (fun th ->
+          hd_is "good_dimindex" (concl th)) in
+        let nbs = map snd (filter (fun (_,th) ->
+          is_neg (concl th) &&
+          (try hd_is "bit" (rand (concl th)) with Failure _ -> false))
+          asl) in
+        let any = cake_thm "memory_rel_any_Number_IMP" in
+        let step m =
+          MP_TAC(MATCH_MP any (CONJ gd m)) THEN
+          REWRITE_TAC[injectivity "word_loc"; word_index] THEN
+          DISCH_THEN(CHOOSE_THEN(fun th ->
+            ASSUME_TAC(REWRITE_RULE (GSYM(CONJUNCT1 th) :: nbs)
+                         (CONJUNCT2 th)))) in
+        step (mr0 asl) THEN step (mr1 asl)) in
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+    smalls THEN
+    W(fun (asl,w) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let num = cake_thm "memory_rel_Number_IMP" in
+      let inj = REWRITE_RULE[injectivity "word_loc"] in
+      let sis = filter (fun (_,th) -> hd_is "small_int" (concl th))
+                  asl in
+      let e1 = inj (MATCH_MP num
+        (CONJ gd (CONJ (snd (el 1 sis)) (mr0 asl)))) in
+      let e2 = inj (MATCH_MP num
+        (CONJ gd (CONJ (snd (el 0 sis)) (mr1 asl)))) in
+      RULE_ASSUM_TAC(REWRITE_RULE[e1; e2]) THEN
+      REWRITE_TAC[e1; e2]) THEN
+    REWRITE_TAC[subsm] THEN
+    MATCH_MP_TAC (cake_thm "IMP_memory_rel_Number") THEN
+    W(fun (asl,w) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let sis = filter (fun (_,th) -> hd_is "small_int" (concl th))
+                  asl in
+      let sw = cake_thm "small_int_w2i_i2w" in
+      let e1 = MATCH_MP sw (CONJ (snd (el 1 sis)) gd) in
+      let e2 = MATCH_MP sw (CONJ (snd (el 0 sis)) gd) in
+      let hy = grab asl (fun th -> hd_is "ival" (lhs (concl th))) in
+      let th = REWRITE_RULE[cake_thm "Smallnum_i2w"; e1; e2;
+                            GSYM IWORD_INT_SUB;
+                            GSYM INT_SUB_LDISTRIB] hy in
+      ASSUME_TAC(MATCH_MP minmax_small
+        (CONJ gd (MATCH_MP (cake_thm "w2i_i2w_IMP") th))) THEN
+      ASM_REWRITE_TAC[mr2 asl]))
 ### exists_num
   (* an integer that is not below zero is the injection of a
      number, which is HOL Light's INT_OF_NUM_EXISTS *)
