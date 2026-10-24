@@ -16160,7 +16160,70 @@ let LENGTH_n2mw_LE_num_size =
   (fun () ->
     `!n m. good_dimindex (:'a) /\ n <= m ==> SUC (LENGTH (n2mw n:('a
   word) list)) <= num_size m`)
-  CHEAT_TAC;;
+  (* the words of a number are at most its num_size: both
+     recursions divide, n2mw by the size of a word and num_size by
+     two to the thirty-two, and a word of a good size is at least
+     that wide -- so a complete induction on the number does it,
+     with the clause of num_size at a number below two to the
+     thirty-two (which is two, and a number that small is one word)
+     for the base.  The source has the induction theorem of the
+     definition, which the port's cake_define does not make *)
+  ((* the quotient of a number by two or more is smaller *)
+   let divlt = prove
+    (`!n d. ~(n = 0) /\ 2 <= d ==> n DIV d < n`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     MP_TAC(SPECL [`n:num`; `d:num`] DIVISION) THEN
+     ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     ABBREV_TAC `q = n DIV d` THEN ABBREV_TAC `r = n MOD d` THEN
+     STRIP_TAC THEN
+     SUBGOAL_THEN `2 * q <= d * q` MP_TAC THENL
+      [ASM_SIMP_TAC[LE_MULT_RCANCEL]; ALL_TAC] THEN
+     ASM_ARITH_TAC) in
+   (* a word of a good size holds a number of thirty-two bits *)
+   let dw32 = prove
+    (`good_dimindex (:'a) ==> 2 EXP 32 <= dimword (:'a)`,
+     REWRITE_TAC[cake_def "good_dimindex"; dimword] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     CONV_TAC NUM_REDUCE_CONV) in
+   let usedw32 =
+     FIRST_ASSUM(fun gd -> MATCH_ACCEPT_TAC(MATCH_MP dw32 gd)) in
+   MATCH_MP_TAC num_WF THEN
+   X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   X_GEN_TAC `m:num` THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[cake_def "n2mw"] THEN
+   ONCE_REWRITE_TAC[cake_def "data_space_num_size"] THEN
+   ASM_CASES_TAC `n = 0` THEN
+   ASM_REWRITE_TAC[LENGTH] THEN
+   TRY(COND_CASES_TAC THEN ARITH_TAC THEN NO_TAC) THEN
+   REWRITE_TAC[LENGTH] THEN
+   COND_CASES_TAC THEN
+   (* m is below two to the thirty-two, and then so is n *)
+   TRY(SUBGOAL_THEN `n DIV dimword (:'a) = 0` SUBST1_TAC THENL
+        [MATCH_MP_TAC DIV_LT THEN
+         TRANS_TAC LTE_TRANS `2 EXP 32` THEN
+         CONJ_TAC THENL [ASM_ARITH_TAC; usedw32];
+         ALL_TAC] THEN
+       REWRITE_TAC[cake_def "n2mw"; LENGTH] THEN ARITH_TAC THEN
+       NO_TAC) THEN
+   (* and otherwise the induction hypothesis, at the quotients *)
+   MATCH_MP_TAC(ARITH_RULE `k <= l ==> SUC k <= 1 + l`) THEN
+   FIRST_X_ASSUM(fun ih ->
+     MP_TAC(SPEC `n DIV dimword (:'a)` ih)) THEN
+   ANTS_TAC THENL
+    [MATCH_MP_TAC divlt THEN ASM_REWRITE_TAC[] THEN
+     TRANS_TAC LE_TRANS `2 EXP 32` THEN
+     CONJ_TAC THENL [CONV_TAC NUM_REDUCE_CONV; usedw32];
+     ALL_TAC] THEN
+   DISCH_THEN(fun th -> MP_TAC(SPEC `m DIV 2 EXP 32` th)) THEN
+   ASM_REWRITE_TAC[] THEN
+   ANTS_TAC THENL
+    [TRANS_TAC LE_TRANS `m DIV dimword (:'a)` THEN CONJ_TAC THENL
+      [MATCH_MP_TAC DIV_MONO THEN ASM_REWRITE_TAC[] THEN
+       REWRITE_TAC[dimword; EXP_EQ_0; ARITH];
+       MATCH_MP_TAC DIV_MONO2 THEN CONJ_TAC THEN
+       TRY(REWRITE_TAC[EXP_EQ_0; ARITH] THEN NO_TAC) THEN
+       usedw32];
+     DISCH_THEN ACCEPT_TAC]);;
 
 let least_notin_domain = cake_theorem "least_notin_domain"
   (fun () ->

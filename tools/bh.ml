@@ -55,6 +55,31 @@ let bsteps nm th tacs =
      say (nm ^ ": step " ^ string_of_int !k ^ " failed " ^
           Printexc.to_string ex ^ "\n"));
   (try b_show () with _ -> say "  (no goal state)\n");;
+(* the same, but each step is tried as the chain of the steps so
+   far (t1 THEN ... THEN tk) against the whole goal, as the finished
+   proof will have it: `bsteps` applies a step to the first goal
+   only, as the interactive `e` does, so a step list that passes it
+   can still break when the steps are chained. *)
+let bchain nm th tacs =
+  let n = length tacs in
+  let chain k = end_itlist (fun a b -> a THEN b)
+                  (fst(chop_list k tacs)) in
+  let rec go k =
+    if k > n then
+      say (nm ^ ": the chain of all " ^ string_of_int n ^ " ok\n")
+    else
+      try let _ = g (concl th) in
+          let _ = with_timeout (fun () -> e (chain k)) () in
+          go (k + 1)
+      with ex ->
+        (say (nm ^ ": the chain breaks at step " ^
+              string_of_int k ^ " " ^ Printexc.to_string ex ^ "\n");
+         if k <= 1 then () else
+         try let _ = g (concl th) in
+             let _ = with_timeout (fun () -> e (chain (k-1))) () in
+             b_show ()
+         with _ -> say "  (no goal state)\n") in
+  go 1;;
 let b_end () =
   say ("BATCH ok=" ^ string_of_int !b_ok ^ " bad=" ^
        string_of_int (length !b_bad) ^ ":" ^
