@@ -8374,7 +8374,91 @@ let set_byte_sort = cake_theorem "set_byte_sort"
            good_dimindex (:'a) /\ ~(n2 = n1) then
           set_byte (n2w n2) b2 (set_byte (n2w n1) b1 w be) be else
           set_byte (n2w n1) b1 (set_byte (n2w n2) b2 w be) be)`)
-  CHEAT_TAC;;
+  (* two set_bytes of a word commute when they write different
+     bytes of it: the byte index of a number below the number of
+     bytes is eight times it (or eight times its mirror), so two
+     such indices are different, and no bit is in both ranges; when
+     the two are the same byte the outer write covers the inner *)
+  (let bsb0 = prove
+  (`!(a:(N)word) b (h:(N)word) bb j. j < dimindex (:N)
+      ==> (bit j (set_byte a b h bb) <=>
+           (if byte_index a bb <= j /\ j < byte_index a bb + 8
+            then bit (j - byte_index a bb) b else bit j h))`,
+   REPEAT GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[cake_def "set_byte"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SLICE_ALT_LT; BIT_WORD_SHL;
+                BIT_WORD_ZX; DIMINDEX_8] THEN
+   MP_TAC(REWRITE_RULE[DIMINDEX_8]
+     (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+        BIT_TRIVIAL)) THEN
+   ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+   ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+   ASM_CASES_TAC `bit j (h:(N)word)` THEN
+   ASM_CASES_TAC `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+   ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+ let bixval = prove
+  (`!n bb. good_dimindex (:'a) /\ n < dimindex (:'a) DIV 8
+      ==> byte_index ((n2w n):'a word) bb =
+          8 * (if bb then (dimindex (:'a) DIV 8 - 1) - n else n)`,
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "good_dimindex"; cake_def "byte_index"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[VAL_WORD; dimword] THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun dd ->
+     if (try fst(dest_const(fst(strip_comb(lhs(concl dd))))) =
+              "dimindex" with Failure _ -> false)
+     then REWRITE_TAC[dd] THEN RULE_ASSUM_TAC(REWRITE_RULE[dd]) THEN
+          ASSUME_TAC dd
+     else fail()) THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   RULE_ASSUM_TAC(fun th ->
+     try CONV_RULE NUM_REDUCE_CONV th with Failure _ -> th) THEN
+   (FIRST
+     [(SUBGOAL_THEN `n MOD 4294967296 MOD 4 = n` SUBST1_TAC THENL
+        [MP_TAC(SPECL [`n:num`; `4`; `1073741824`] MOD_MOD) THEN
+         CONV_TAC NUM_REDUCE_CONV THEN
+         DISCH_THEN SUBST1_TAC THEN
+         MATCH_MP_TAC MOD_LT THEN ASM_ARITH_TAC;
+         ALL_TAC]);
+      (SUBGOAL_THEN `n MOD 18446744073709551616 MOD 8 = n`
+         SUBST1_TAC THENL
+        [MP_TAC(SPECL [`n:num`; `8`; `2305843009213693952`]
+           MOD_MOD) THEN
+         CONV_TAC NUM_REDUCE_CONV THEN
+         DISCH_THEN SUBST1_TAC THEN
+         MATCH_MP_TAC MOD_LT THEN ASM_ARITH_TAC;
+         ALL_TAC])]) THEN
+   COND_CASES_TAC THEN REWRITE_TAC[]) in
+   let usebe =
+     TRY(FIRST_ASSUM(fun th ->
+       let c = concl th in
+       if is_var c || (is_neg c && is_var (rand c))
+       then RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN ASSUME_TAC th
+       else fail())) in
+   let numred =
+     RULE_ASSUM_TAC(fun th ->
+       try CONV_RULE NUM_REDUCE_CONV th with Failure _ -> th) in
+   let stripconj =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) in
+   REPEAT GEN_TAC THEN
+   COND_CASES_TAC THENL
+    [ASM_REWRITE_TAC[] THEN
+     REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+     X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+     ASM_SIMP_TAC[bsb0] THEN
+     COND_CASES_TAC THEN REWRITE_TAC[];
+     COND_CASES_TAC THENL
+      [stripconj THEN
+       REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+       X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+       ASM_SIMP_TAC[bsb0; bixval] THEN
+       REPEAT COND_CASES_TAC THEN usebe THEN numred THEN
+       ASM_REWRITE_TAC[] THEN
+       TRY(SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC);
+       REWRITE_TAC[]]]);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10203-10213: ML code, not
    ported *)
