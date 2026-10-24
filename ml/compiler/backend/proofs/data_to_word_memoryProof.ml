@@ -12753,7 +12753,37 @@ let do_eq_list_F_IMP_MEM = cake_theorem "do_eq_list_F_IMP_MEM[local]"
        do_eq_list refs l l' = Eq_val F /\ LENGTH l' = LENGTH l ==>
        (?i. i < LENGTH l /\ do_eq refs (EL i l) (EL i l') =
          Eq_val F)`)
-  CHEAT_TAC;;
+  (* a do_eq_list that says F has an element that does: the clause
+     of a cons compares the heads and goes on with the tails, so
+     either the head is the element (and the index is zero) or the
+     induction hypothesis names one of the tail (and the index is
+     its successor).  Only the clause of do_eq_list is unfolded:
+     the two are one definition, and the other clause would unfold
+     the do_eq of the conclusion as well *)
+  (let hd_is n t =
+   (try fst(dest_const(fst(strip_comb t))) = n
+    with Failure _ -> false) in
+   LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_ON_NAME "l'" THEN
+   ONCE_REWRITE_TAC[CONJUNCT2 (cake_def "dataSem_do_eq_list")] THEN
+   SAFE_MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ;
+               injectivity "eq_result"] THEN
+   EVERY_CASE_TAC THEN
+   STRIP_TAC THEN
+   (* the head is the element that fails, or the tail has one *)
+   TRY(EXISTS_TAC `0` THEN
+       ASM_REWRITE_TAC[EL; HD; LT_0] THEN NO_TAC) THEN
+   FIRST_X_ASSUM(fun ih ->
+     if is_forall (concl ih) then
+       FIRST_ASSUM(fun dl ->
+         if (try hd_is "dataSem_do_eq_list" (lhs (concl dl))
+             with Failure _ -> false)
+         then MP_TAC(SPEC (rand (lhs (concl dl))) ih) else fail())
+     else fail()) THEN
+   ASM_REWRITE_TAC[] THEN
+   DISCH_THEN(X_CHOOSE_THEN `i:num` STRIP_ASSUME_TAC) THEN
+   EXISTS_TAC `SUC i` THEN
+   ASM_REWRITE_TAC[LT_SUC; EL; TL]);;
 
 let memory_rel_rotate3 = cake_theorem "memory_rel_rotate3[local]"
   (fun () ->
