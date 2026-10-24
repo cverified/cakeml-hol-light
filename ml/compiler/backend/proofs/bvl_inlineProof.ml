@@ -77,30 +77,37 @@ let bvl_inlineProof_remove_ticks_co_def = cake_define
 hol4_overload "remove_ticks_co" "bvl_inlineProof_remove_ticks_co";;
 
 (* evaluate_compile_prog *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_inlineProof_evaluate_compile_prog = prove
- (`evaluate ([Call 0 (SOME (start:num)) []],[],
-             initial_state ffi0 (sptree_map
-                (I ## (\x. HD (remove_ticks [x]))) prog)
-                (bvl_inlineProof_remove_ticks_co o co) cc k) = (r,s)
-                  ==>
-   (?ck (s2:('c,'ffi)bvlSem_state).
-     evaluate
-      ([Call 0 (SOME start) []],[],
-        initial_state ffi0 prog co (bvl_inlineProof_remove_ticks_cc
-          cc) (k + ck)) = (r,s2) /\ bvlSem_state_ffi
-     s2 = state_ffi s)`,
+ (cake_as_vars (fun () ->
+    `evaluate ([Call 0 (SOME start) []],[],
+               initial_state ffi0 (sptree_map
+                  (I ## (\x. HD (remove_ticks [x]))) prog)
+                  (bvl_inlineProof_remove_ticks_co o co) cc k) =
+                    (r,s) ==>
+     (?ck (s2:('c,'ffi)bvlSem_state).
+       evaluate
+        ([Call 0 (SOME start) []],[],
+          initial_state ffi0 prog co
+            (bvl_inlineProof_remove_ticks_cc cc) (k + ck)) = (r,s2) /\
+            bvlSem_state_ffi
+       s2 = state_ffi s)`),
   CHEAT_TAC);;
 
 let FST_EQ_LEMMA = prove
  (`FST x = y <=> (?y1. x = (y,y1))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_remove_ticks = prove
- (`semantics ffi (sptree_map (I ## (\x. HD (remove_ticks [x]))) prog)
+ (cake_as_vars (fun () ->
+    `semantics ffi (sptree_map (I ## (\x. HD (remove_ticks [x]))) prog)
   (bvl_inlineProof_remove_ticks_co o co)
-                 cc start =
-   semantics (ffi:'b ffi_state) prog co
-     (bvl_inlineProof_remove_ticks_cc cc) start`,
+                   cc start =
+     semantics (ffi:'b ffi_state) prog co
+       (bvl_inlineProof_remove_ticks_cc cc) start`),
   CHEAT_TAC);;
 
 let remove_ticks_CONS = prove
@@ -195,9 +202,12 @@ let tick_inline_all_names = prove
      MAP FST (REVERSE aux) ++ MAP FST t = MAP FST xs`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let tick_compile_prog_IMP = prove
- (`tick_compile_prog (limit:num) q0 ((k,prog) :: t) = (cs1,prog1) ==>
-       (?p1 vs. prog1 = (k,p1) :: vs /\ MAP FST vs = MAP FST t)`,
+ (cake_as_vars (fun () ->
+    `tick_compile_prog limit q0 ((k,prog) :: t) = (cs1,prog1) ==>
+         (?p1 vs. prog1 = (k,p1) :: vs /\ MAP FST vs = MAP FST t)`),
   CHEAT_TAC);;
 
 let subspt_union_lemma = prove
@@ -272,12 +282,15 @@ let tick_compile_prog_IMP_exp_rel = prove
   CHEAT_TAC);;
 
 (* in_do_app_lemma[local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_inlineProof_in_do_app_lemma = prove
- (`bvl_inlineProof_in_state_rel (limit:num) s1 t1 ==>
-     (match do_app op a s1 with Rerr err -> (~(err = Rabort
-       Rtype_error) ==> do_app op a t1 = Rerr err) | Rval (v,s2) ->
-       (?t2. bvl_inlineProof_in_state_rel limit s2 t2 /\
-                           do_app op a t1 = Rval (v,t2)))`,
+ (cake_as_vars (fun () ->
+    `bvl_inlineProof_in_state_rel limit s1 t1 ==>
+       (match do_app op a s1 with Rerr err -> (~(err = Rabort
+         Rtype_error) ==> do_app op a t1 = Rerr err) | Rval (v,s2) ->
+         (?t2. bvl_inlineProof_in_state_rel limit s2 t2 /\
+                             do_app op a t1 = Rval (v,t2)))`),
   CHEAT_TAC);;
 
 (* exp_rel_refl *)
@@ -286,14 +299,17 @@ let bvl_inlineProof_exp_rel_refl = prove
   CHEAT_TAC);;
 
 (* evaluate_inline *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_inlineProof_evaluate_inline = prove
- (`!es env s1 res t1 s2 es2.
-      bvl_inlineProof_in_state_rel (limit:num) s1 t1 /\
-        bvl_inlineProof_exp_rel (bvlSem_state_code s1) es es2 /\
-      evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
-        Rtype_error)) ==>
-      (?t2. evaluate (es2,env,t1) = (res,t2) /\
-           bvl_inlineProof_in_state_rel limit s2 t2)`,
+ (cake_as_vars (fun () ->
+    `!es env s1 res t1 s2 es2.
+        bvl_inlineProof_in_state_rel limit s1 t1 /\
+          bvl_inlineProof_exp_rel (bvlSem_state_code s1) es es2 /\
+        evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+          Rtype_error)) ==>
+        (?t2. evaluate (es2,env,t1) = (res,t2) /\
+             bvl_inlineProof_in_state_rel limit s2 t2)`),
   CHEAT_TAC);;
 
 let bvl_inlineProof_in_co_def = cake_define
@@ -319,67 +335,82 @@ let bvl_inlineProof_exp_rel_rw = prove
          (sptree_insert x y acc)) [exp] [exp2]`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let lookup_tick_inline_all = prove
- (`!cs0 prog acc.
-         (!k arity v.
-             sptree_lookup k cs0 = SOME (arity,v) ==>
-             (?exp.
-               sptree_lookup k (sptree_union (fromAList prog) acc) =
-                 SOME (arity,exp) /\
-               bvl_inlineProof_exp_rel (sptree_union (fromAList prog)
-                 acc) [exp] [v])) /\
-         DISJOINT (set_of_list (MAP FST prog)) (domain cs0) /\
-         DISJOINT (set_of_list (MAP FST prog)) (domain acc) /\
-         ALL_DISTINCT (MAP FST prog) ==>
-         (!k arity exp.
-           sptree_lookup k (fromAList prog) = SOME (arity,exp) ==>
-           (?exp2.
-             sptree_lookup k (fromAList (SND (tick_inline_all
-               (limit:num) cs0 prog []))) =
-             SOME (arity,exp2) /\ bvl_inlineProof_exp_rel
-               (sptree_union (fromAList prog) acc) [exp] [exp2]))`,
+ (cake_as_vars (fun () ->
+    `!cs0 prog acc.
+           (!k arity v.
+               sptree_lookup k cs0 = SOME (arity,v) ==>
+               (?exp.
+                 sptree_lookup k (sptree_union (fromAList prog)
+                   acc) = SOME (arity,exp) /\
+                 bvl_inlineProof_exp_rel (sptree_union (fromAList
+                   prog) acc) [exp] [v])) /\
+           DISJOINT (set_of_list (MAP FST prog)) (domain cs0) /\
+           DISJOINT (set_of_list (MAP FST prog)) (domain acc) /\
+           ALL_DISTINCT (MAP FST prog) ==>
+           (!k arity exp.
+             sptree_lookup k (fromAList prog) = SOME (arity,exp)
+               ==>
+             (?exp2.
+               sptree_lookup k (fromAList (SND (tick_inline_all
+                 limit cs0 prog []))) =
+               SOME (arity,exp2) /\ bvl_inlineProof_exp_rel
+                 (sptree_union (fromAList prog) acc) [exp] [exp2]))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let subspt_tick_inline = prove
- (`!prog cs aux.
-         subspt cs (fromAList (REVERSE aux)) /\
-         EVERY (\x. ~(FST x IN domain cs)) prog /\
-         ALL_DISTINCT (MAP FST prog ++ MAP FST aux) ==>
-         subspt (FST (tick_inline_all (limit:num) cs prog aux))
-                (fromAList (SND (tick_inline_all limit cs prog
-                  aux)))`,
+ (cake_as_vars (fun () ->
+    `!prog cs aux.
+           subspt cs (fromAList (REVERSE aux)) /\
+           EVERY (\x. ~(FST x IN domain cs)) prog /\
+           ALL_DISTINCT (MAP FST prog ++ MAP FST aux) ==>
+           subspt (FST (tick_inline_all limit cs prog aux))
+                  (fromAList (SND (tick_inline_all limit cs prog
+                    aux)))`),
   CHEAT_TAC);;
 
 (* HOL4 bvl_inlineProofScript.sml:1160-1186: a theorem that HOL4
    states as the value of an ML expression: evaluate_initial_state *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let in_evaluate_Call = prove
- (`evaluate
-        ([Call 0 (SOME (start:num)) []],env,
-         initial_state ffi0 (fromAList prog) co
-           (bvl_inlineProof_in_cc (limit:num) cc1) k) = (res,s2) /\
-       FST (FST (co 0)) = FST (tick_compile_prog limit LN prog) /\
-       ALL_DISTINCT (MAP FST prog) /\ ~(res = Rerr (Rabort
-         Rtype_error)) ==>
-       (?t2.
-         evaluate
-           ([Call 0 (SOME start) []],env,
-            initial_state ffi0
-             (fromAList (SND (tick_compile_prog limit LN prog)))
-               (bvl_inlineProof_in_co limit co) cc1 k) =
-           (res,t2) /\ bvlSem_state_ffi s2 = bvlSem_state_ffi t2)`,
+ (cake_as_vars (fun () ->
+    `evaluate
+          ([Call 0 (SOME start) []],env,
+           initial_state ffi0 (fromAList prog) co
+             (bvl_inlineProof_in_cc limit cc1) k) = (res,s2) /\
+         FST (FST (co 0)) = FST (tick_compile_prog limit LN prog)
+           /\
+         ALL_DISTINCT (MAP FST prog) /\ ~(res = Rerr (Rabort
+           Rtype_error)) ==>
+         (?t2.
+           evaluate
+             ([Call 0 (SOME start) []],env,
+              initial_state ffi0
+               (fromAList (SND (tick_compile_prog limit LN prog)))
+                 (bvl_inlineProof_in_co limit co) cc1 k) =
+             (res,t2) /\ bvlSem_state_ffi s2 = bvlSem_state_ffi
+               t2)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_tick_inline = prove
- (`FST (FST (co 0)) = FST (tick_compile_prog (limit:num) LN prog) /\
-       ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
-         prog) co (bvl_inlineProof_in_cc limit cc) (start:num) =
-         ffi_Fail) ==>
-       semantics ffi (fromAList (SND (tick_compile_prog limit LN
-         prog)))
-                     (bvl_inlineProof_in_co limit co) cc start =
-       semantics (ffi:'b ffi_state) (fromAList prog) co
-         (bvl_inlineProof_in_cc limit cc) start`,
+ (cake_as_vars (fun () ->
+    `FST (FST (co 0)) = FST (tick_compile_prog limit LN prog) /\
+         ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+           prog) co (bvl_inlineProof_in_cc limit cc) start = ffi_Fail)
+           ==>
+         semantics ffi (fromAList (SND (tick_compile_prog limit LN
+           prog)))
+                       (bvl_inlineProof_in_co limit co) cc start =
+         semantics (ffi:'b ffi_state) (fromAList prog) co
+           (bvl_inlineProof_in_cc limit cc) start`),
   CHEAT_TAC);;
 
 (* let_op *)
@@ -453,26 +484,33 @@ let let_op_cc_def = cake_define
       (\cfg prog. cc cfg (MAP (I ## let_opt q4 l4) prog))`;;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let let_evaluate_Call = prove
- (`evaluate ([Call 0 (SOME (start:num)) []],[],
-              initial_state ffi0 prog co (let_op_cc q4 l4 cc) k) =
-                (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
-    (?(s2:('c,'ffi)bvlSem_state).
-      evaluate
-       ([Call 0 (SOME start) []],[],
-         initial_state ffi0 (sptree_map (let_opt q4 l4) prog)
-           ((I ## MAP (I ## let_opt q4 l4)) o co)
-           cc k) = (r,s2) /\ bvlSem_state_ffi
-      s2 = state_ffi s /\ state_clock s = bvlSem_state_clock s2)`,
+ (cake_as_vars (fun () ->
+    `evaluate ([Call 0 (SOME start) []],[],
+                initial_state ffi0 prog co (let_op_cc q4 l4 cc) k)
+                  = (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
+      (?(s2:('c,'ffi)bvlSem_state).
+        evaluate
+         ([Call 0 (SOME start) []],[],
+           initial_state ffi0 (sptree_map (let_opt q4 l4) prog)
+             ((I ## MAP (I ## let_opt q4 l4)) o co)
+             cc k) = (r,s2) /\ bvlSem_state_ffi
+        s2 = state_ffi s /\ state_clock s = bvlSem_state_clock
+          s2)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_let_op = prove
- (`~(semantics ffi prog co (let_op_cc q4 l4 cc) start = ffi_Fail) ==>
-       semantics ffi (sptree_map (let_opt q4 l4) prog)
-                     ((I ## MAP (I ## let_opt q4 l4)) o co) cc start
-                       =
-       semantics (ffi:'b ffi_state) prog co (let_op_cc q4 l4 cc)
-         start`,
+ (cake_as_vars (fun () ->
+    `~(semantics ffi prog co (let_op_cc q4 l4 cc) start = ffi_Fail) ==>
+         semantics ffi (sptree_map (let_opt q4 l4) prog)
+                       ((I ## MAP (I ## let_opt q4 l4)) o co) cc
+                         start =
+         semantics (ffi:'b ffi_state) prog co (let_op_cc q4 l4
+           cc) start`),
   CHEAT_TAC);;
 
 (* combined theorems *)
@@ -507,10 +545,12 @@ let is_rec_remove_ticks = prove
   bvl_inline_is_rec p_1 xs`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let must_inline_remove_ticks = prove
- (`must_inline p_1 (limit:num) (HD (remove_ticks (tick_inline cs
-  [p_2]))) =
-       must_inline p_1 limit (HD ((tick_inline cs [p_2])))`,
+ (cake_as_vars (fun () ->
+    `must_inline p_1 limit (HD (remove_ticks (tick_inline cs [p_2]))) =
+         must_inline p_1 limit (HD ((tick_inline cs [p_2])))`),
   CHEAT_TAC);;
 
 let let_opt_remove_def = cake_define
@@ -529,21 +569,23 @@ let map_fromAList = prove
 
 (* HOL4 bvl_inlineProofScript.sml:1944-1947: ML code, not ported *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let inline_ticks = prove
- (`FST (FST (co 0)) = (FST (tick_compile_prog (limit:num) LN prog)) /\
-       ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
-         prog) co
-         (bvl_inlineProof_in_cc limit
-           (bvl_inlineProof_remove_ticks_cc cc)) (start:num) = ffi_Fail)
-           ==>
-       semantics ffi (fromAList (MAP (I ## I ## (\x. HD (remove_ticks
-         [x])))
+ (cake_as_vars (fun () ->
+    `FST (FST (co 0)) = (FST (tick_compile_prog limit LN prog)) /\
+         ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+           prog) co
+           (bvl_inlineProof_in_cc limit
+             (bvl_inlineProof_remove_ticks_cc cc)) start = ffi_Fail) ==>
+         semantics ffi (fromAList (MAP (I ## I ## (\x. HD
+           (remove_ticks [x])))
                               (SND (tick_compile_prog limit LN
                                 prog))))
-         (bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co
-           limit co) cc start =
-       semantics ffi (fromAList prog) co (bvl_inlineProof_in_cc
-         limit (bvl_inlineProof_remove_ticks_cc cc)) start`,
+           (bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co
+             limit co) cc start =
+         semantics ffi (fromAList prog) co (bvl_inlineProof_in_cc
+           limit (bvl_inlineProof_remove_ticks_cc cc)) start`),
   CHEAT_TAC);;
 
 let comp_lemma = prove
@@ -570,33 +612,42 @@ let MAP_optimise = prove
   CHEAT_TAC);;
 
 (* state_cc_compile_inc_eq *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_inlineProof_state_cc_compile_inc_eq = prove
- (`(state_cc (compile_inc (limit:num) o1 o2) cc) =
-      (bvl_inlineProof_in_cc limit (bvl_inlineProof_remove_ticks_cc
-        (let_op_cc o1 o2 cc)))`,
+ (cake_as_vars (fun () ->
+    `(state_cc (compile_inc limit o1 o2) cc) =
+        (bvl_inlineProof_in_cc limit
+          (bvl_inlineProof_remove_ticks_cc (let_op_cc o1 o2 cc)))`),
   CHEAT_TAC);;
 
 (* state_co_compile_inc_eq *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_inlineProof_state_co_compile_inc_eq = prove
- (`(state_co (compile_inc (limit:num) o1 o2) co) =
-      ((I ## MAP (I ## let_opt o1 o2)) o
-        bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co limit
-        co)`,
+ (cake_as_vars (fun () ->
+    `(state_co (compile_inc limit o1 o2) co) =
+        ((I ## MAP (I ## let_opt o1 o2)) o
+          bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co
+          limit co)`),
   CHEAT_TAC);;
 
 (* compile_prog_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_inlineProof_compile_prog_semantics = prove
- (`compile_prog limit o1 o2 prog = (s1,prog1) /\
-    FST (FST (co 0)) = s1 /\
-    ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList prog)
-      co (state_cc (compile_inc limit o1 o2) cc)
-      start = ffi_Fail) ==>
-    semantics ffi (fromAList prog1) (state_co (compile_inc limit o1
-      o2) co) cc
-      start =
-    semantics ffi (fromAList prog) co (state_cc (compile_inc limit o1
-      o2) cc)
-      start`,
+ (cake_as_vars (fun () ->
+    `compile_prog limit o1 o2 prog = (s1,prog1) /\
+      FST (FST (co 0)) = s1 /\
+      ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+        prog) co (state_cc (compile_inc limit o1 o2) cc)
+        start = ffi_Fail) ==>
+      semantics ffi (fromAList prog1) (state_co (compile_inc limit
+        o1 o2) co) cc
+        start =
+      semantics ffi (fromAList prog) co (state_cc (compile_inc
+        limit o1 o2) cc)
+        start`),
   CHEAT_TAC);;
 
 let handle_ok_optimise = prove

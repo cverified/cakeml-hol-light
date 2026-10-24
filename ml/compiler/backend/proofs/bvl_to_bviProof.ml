@@ -908,17 +908,20 @@ let compile_exps_correct = prove
 
 (* composed compiler correctness *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_single_evaluate = prove
- (`evaluate ([Call 0 (SOME (start:num)) []],[],s1) = (res,s2) /\
-   state_rel b1 s1 t1 /\ IS_SOME (bviSem_state_global t1) /\
-     bvl_to_bviProof_state_ok s1 /\ ~(res = Rerr (Rabort Rtype_error))
-     ==>
-   (?ck b2 t2.
-     evaluate ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-       start)) [] NONE],[],inc_clock ck t1) =
-       (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
-         res,t2) /\
-     state_rel b2 s2 (t2:('c,'ffi)bviSem_state))`,
+ (cake_as_vars (fun () ->
+    `evaluate ([Call 0 (SOME start) []],[],s1) = (res,s2) /\
+     state_rel b1 s1 t1 /\ IS_SOME (bviSem_state_global t1) /\
+       bvl_to_bviProof_state_ok s1 /\ ~(res = Rerr (Rabort Rtype_error))
+       ==>
+     (?ck b2 t2.
+       evaluate ([Call 0 (SOME (bvl_num_stubs +
+         bvl_to_bvi_namespaces * start)) [] NONE],[],inc_clock ck t1) =
+         (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2
+           v)) res,t2) /\
+       state_rel b2 s2 (t2:('c,'ffi)bviSem_state))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -966,50 +969,62 @@ let compile_list_distinct_locs = prove
   CHEAT_TAC);;
 
 (* compile_prog_evaluate *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_to_bviProof_compile_prog_evaluate = prove
- (`compile_prog (start:num) n prog = (start',prog',n') /\
-   evaluate ([Call 0 (SOME start) []],[],
-             initial_state ffi0 (fromAList prog) co (state_cc
-               compile_inc cc) k) = (r,s) /\
-   0 < k /\
-   ALL_DISTINCT (MAP FST prog) /\
-   handle_ok (MAP (SND o SND) prog) /\
-   (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
-   n' <= (FST (FST (co 0))) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
-   (?ck b2 s2.
-   evaluate ([Call 0 (SOME start') [] NONE],[],
-             initial_state ffi0 (fromAList prog') (state_co
-               compile_inc co) cc (k + ck)) =
-     (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
-       (match r with Rerr (Rraise v) -> Rval [v] | _6 -> r),s2) /\
-   state_rel b2 s (s2:('c,'ffi)bviSem_state))`,
+ (cake_as_vars (fun () ->
+    `compile_prog start n prog = (start',prog',n') /\
+     evaluate ([Call 0 (SOME start) []],[],
+               initial_state ffi0 (fromAList prog) co (state_cc
+                 compile_inc cc) k) = (r,s) /\
+     0 < k /\
+     ALL_DISTINCT (MAP FST prog) /\
+     handle_ok (MAP (SND o SND) prog) /\
+     (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
+     n' <= (FST (FST (co 0))) /\ ~(r = Rerr (Rabort Rtype_error))
+       ==>
+     (?ck b2 s2.
+     evaluate ([Call 0 (SOME start') [] NONE],[],
+               initial_state ffi0 (fromAList prog') (state_co
+                 compile_inc co) cc (k + ck)) =
+       (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
+         (match r with Rerr (Rraise v) -> Rval [v] | _7 -> r),s2)
+           /\
+     state_rel b2 s (s2:('c,'ffi)bviSem_state))`),
   CHEAT_TAC);;
 
 (* compile_prog_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_to_bviProof_compile_prog_semantics = prove
- (`compile_prog start n prog = (start',prog',n') /\
-   ALL_DISTINCT (MAP FST prog) /\
-   handle_ok (MAP (SND o SND) prog) /\
-   (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
-   n' <= FST (FST ((co:num->(num#'c)#(num#num#bvl_exp) list) 0)) /\
-     ~(semantics (ffi0:'ffi ffi_state) (fromAList prog) co (state_cc
-     compile_inc cc) start = ffi_Fail) ==>
-   semantics ffi0 (fromAList prog') (state_co compile_inc co) cc
-     start' =
-   semantics ffi0 (fromAList prog) co (state_cc compile_inc cc)
-     start`,
+ (cake_as_vars (fun () ->
+    `compile_prog start n prog = (start',prog',n') /\
+     ALL_DISTINCT (MAP FST prog) /\
+     handle_ok (MAP (SND o SND) prog) /\
+     (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
+     n' <= FST (FST ((co:num->(num#'c)#(num#num#bvl_exp) list) 0))
+       /\ ~(semantics (ffi0:'ffi ffi_state) (fromAList prog) co
+       (state_cc compile_inc cc) start = ffi_Fail) ==>
+     semantics ffi0 (fromAList prog') (state_co compile_inc co) cc
+       start' =
+     semantics ffi0 (fromAList prog) co (state_cc compile_inc cc)
+       start`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_prog_distinct_locs = prove
- (`compile_prog (start:num) n prog = (k,prog1,n1) /\ ALL_DISTINCT (MAP
-  FST prog) ==>
-    ALL_DISTINCT (MAP FST prog1) /\
-    EVERY (between (bvl_to_bvi_namespaces * n + bvl_num_stubs)
-      (bvl_to_bvi_namespaces * n1 + bvl_num_stubs))
-      (FILTER (\n. in_ns 1 (n - bvl_num_stubs)) (MAP FST prog1)) /\
-    EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
-      bvl_num_stubs)))
-      (MAP FST prog1)`,
+ (cake_as_vars (fun () ->
+    `compile_prog start n prog = (k,prog1,n1) /\ ALL_DISTINCT (MAP FST
+  prog) ==>
+      ALL_DISTINCT (MAP FST prog1) /\
+      EVERY (between (bvl_to_bvi_namespaces * n + bvl_num_stubs)
+        (bvl_to_bvi_namespaces * n1 + bvl_num_stubs))
+        (FILTER (\n. in_ns 1 (n - bvl_num_stubs)) (MAP FST prog1))
+          /\
+      EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
+        bvl_num_stubs)))
+        (MAP FST prog1)`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1042,18 +1057,24 @@ let full_co_def = cake_define
              (state_co compile_inc
                (state_co (compile_inc limit' split cut) co)))))`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_prog_avoids_nss_2 = prove
- (`compile_prog (start:num) f prog = (loc,code,new_state) /\
-    ALL_DISTINCT (MAP FST prog) /\
-    k MOD bvl_to_bvi_namespaces = 2 /\ MEM k (MAP FST code) ==>
-    k <= bvl_num_stubs`,
+ (cake_as_vars (fun () ->
+    `compile_prog start f prog = (loc,code,new_state) /\
+      ALL_DISTINCT (MAP FST prog) /\
+      k MOD bvl_to_bvi_namespaces = 2 /\ MEM k (MAP FST code) ==>
+      k <= bvl_num_stubs`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_prog_avoids_nss_3 = prove
- (`compile_prog (start:num) f prog = (loc,code,new_state) /\
-    ALL_DISTINCT (MAP FST prog) /\
-    k MOD bvl_to_bvi_namespaces = 3 /\ MEM k (MAP FST code) ==>
-    k <= bvl_num_stubs`,
+ (cake_as_vars (fun () ->
+    `compile_prog start f prog = (loc,code,new_state) /\
+      ALL_DISTINCT (MAP FST prog) /\
+      k MOD bvl_to_bvi_namespaces = 3 /\ MEM k (MAP FST code) ==>
+      k <= bvl_num_stubs`),
   CHEAT_TAC);;
 
 (* --- no_mutcons: syntactic absence of MutCons operations ---
@@ -1117,8 +1138,11 @@ let compile_exps_no_mutcons = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let stubs_no_mutcons = prove
- (`EVERY (no_mutcons o SND o SND) (bvl_to_bvi_stubs (start:num) n)`,
+ (cake_as_vars (fun () ->
+    `EVERY (no_mutcons o SND o SND) (bvl_to_bvi_stubs start n)`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1139,9 +1163,12 @@ let compile_inc_no_mutcons = prove
    EVERY (no_mutcons o SND o SND) prog1`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_prog_no_mutcons = prove
- (`compile_prog (start:num) n prog = (loc,code,n1) ==>
-   EVERY (no_mutcons o SND o SND) code`,
+ (cake_as_vars (fun () ->
+    `compile_prog start n prog = (loc,code,n1) ==>
+     EVERY (no_mutcons o SND o SND) code`),
   CHEAT_TAC);;
 
 (* no_mutcons preservation: bvi_tailrec *)
@@ -1224,10 +1251,13 @@ let rewrite_no_mutcons = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let tailrec_compile_exp_no_mutcons = prove
- (`bvi_tailrec_compile_exp loc (next:num) arity exp = SOME (aux,opt) /\
-   no_mutcons exp ==>
-   no_mutcons aux /\ no_mutcons opt`,
+ (cake_as_vars (fun () ->
+    `bvi_tailrec_compile_exp loc next arity exp = SOME (aux,opt) /\
+     no_mutcons exp ==>
+     no_mutcons aux /\ no_mutcons opt`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1255,24 +1285,27 @@ let EVERY_free_names_not_in_ns_2 = prove
    EVERY (bvi_tailrecProof_free_names (bvl_num_stubs + 2) o FST) xs`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_semantics = prove
- (`compile (start:num) c names prog =
+ (cake_as_vars (fun () ->
+    `compile start c names prog =
   (start',prog',inlines,bvi_inlines,n1,n2,n3,names') /\
-   FST (FST (co 0)) = inlines /\
-   FST (SND (FST (co 0))) = n1 /\
-   FST (SND (SND (FST (co 0)))) = n2 /\
-   FST (SND (SND (SND (FST (co 0))))) = n3 /\
-   FST (SND (SND (SND (SND (FST (co 0)))))) = bvi_inlines /\
-   (!n. ALL_DISTINCT (MAP FST (SND (co n))) /\
-        bvl_num_stubs <= FST (SND (SND (FST (co n)))) /\ in_ns 2 (FST
-          (SND (SND (FST (co n))))) /\
-        bvl_num_stubs <= FST (SND (SND (SND (FST (co n))))) /\
-        in_ns 3 (FST (SND (SND (SND (FST (co n))))))) /\
-   ALL_DISTINCT (MAP FST prog) ==>
-   ~(semantics (ffi0:'ffi ffi_state) (fromAList prog) co (full_cc c
-     cc) start = ffi_Fail) ==>
-   semantics ffi0 (fromAList prog') (full_co c co) cc start' =
-   semantics ffi0 (fromAList prog) co (full_cc c cc) start`,
+     FST (FST (co 0)) = inlines /\
+     FST (SND (FST (co 0))) = n1 /\
+     FST (SND (SND (FST (co 0)))) = n2 /\
+     FST (SND (SND (SND (FST (co 0))))) = n3 /\
+     FST (SND (SND (SND (SND (FST (co 0)))))) = bvi_inlines /\
+     (!n. ALL_DISTINCT (MAP FST (SND (co n))) /\
+          bvl_num_stubs <= FST (SND (SND (FST (co n)))) /\ in_ns 2
+            (FST (SND (SND (FST (co n))))) /\
+          bvl_num_stubs <= FST (SND (SND (SND (FST (co n))))) /\
+          in_ns 3 (FST (SND (SND (SND (FST (co n))))))) /\
+     ALL_DISTINCT (MAP FST prog) ==>
+     ~(semantics (ffi0:'ffi ffi_state) (fromAList prog) co (full_cc
+       c cc) start = ffi_Fail) ==>
+     semantics ffi0 (fromAList prog') (full_co c co) cc start' =
+     semantics ffi0 (fromAList prog) co (full_cc c cc) start`),
   CHEAT_TAC);;
 
 

@@ -145,13 +145,16 @@ let state_ok_collect_info = prove
   CHEAT_TAC);;
 
 (* compile_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let stack_rawcallProof_compile_semantics = prove
- (`ALL_DISTINCT (MAP FST code) /\ stackSem_state_use_stack s /\
+ (cake_as_vars (fun () ->
+    `ALL_DISTINCT (MAP FST code) /\ stackSem_state_use_stack s /\
   state_code
-   s = fromAList code /\ ~(semantics (start:num) s = Fail) ==>
-   semantics start (state_code_fupd (K (fromAList
-     (stack_rawcall_compile code))) s) =
-   semantics start s`,
+     s = fromAList code /\ ~(semantics start s = Fail) ==>
+     semantics start (state_code_fupd (K (fromAList
+       (stack_rawcall_compile code))) s) =
+     semantics start s`),
   CHEAT_TAC);;
 
 let extract_labels_comp = prove

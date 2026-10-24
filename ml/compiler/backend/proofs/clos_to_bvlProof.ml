@@ -2088,13 +2088,16 @@ let initial_state_with_clock_bvl = prove
   CHEAT_TAC);;
 
 (* IMP_semantics_eq *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let clos_to_bvlProof_IMP_semantics_eq = prove
- (`eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 start rel /\
+ (cake_as_vars (fun () ->
+    `eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 start rel /\
   ~(closSem_semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1 es1 =
   ffi_Fail) ==>
-   rel code1 co1 cc1 es1 code2 co2 cc2 start ==>
-   bvlSem_semantics ffi code2 co2 cc2 start =
-   closSem_semantics ffi max_app code1 co1 cc1 es1`,
+     rel code1 co1 cc1 es1 code2 co2 cc2 start ==>
+     bvlSem_semantics ffi code2 co2 cc2 start =
+     closSem_semantics ffi max_app code1 co1 cc1 es1`),
   CHEAT_TAC);;
 
 let clos_to_bvlProof_init_code_def = cake_define
@@ -2126,12 +2129,15 @@ let chain_installed_def = cake_define
             backend_common_None [EL i es] (Call backend_common_None 0
             (start' + i + 1) []) else EL i es)))`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let chain_installed_cons = prove
- (`chain_installed (start:num) (e :: es) code <=>
-   find_code start ([]:closSem_v list) code = SOME ([],(if es = []
-     then e else Let backend_common_None [e] (Call backend_common_None 0
-     (start + 1) []))) /\
-   chain_installed (start + 1) es code`,
+ (cake_as_vars (fun () ->
+    `chain_installed start (e :: es) code <=>
+     find_code start ([]:closSem_v list) code = SOME ([],(if es =
+       [] then e else Let backend_common_None [e] (Call
+       backend_common_None 0 (start + 1) []))) /\
+     chain_installed (start + 1) es code`),
   CHEAT_TAC);;
 
 let chain_installed_SUBMAP = prove
@@ -2161,31 +2167,37 @@ let chain_installed_chain_exps = prove
   start' es))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let chain_exps_semantics = prove
- (`~(semantics ffi max_app code co cc es = ffi_Fail) /\
-    // es ≠ [] ∧
-    DISJOINT (IMAGE ((+) (start:num)) (count (LENGTH es))) (FDOM
-      code) /\
-    oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
-         (IMAGE ((+) start) (count (LENGTH es)) UNION FDOM code) co
-           ==>
-    (?e.
-    semantics ffi max_app (FUNION (alist_to_fmap (chain_exps start
-      es)) code) co cc [e] =
-    semantics ffi max_app code co cc es /\
-    ALOOKUP (chain_exps start es) start = SOME (0,e))`,
+ (cake_as_vars (fun () ->
+    `~(semantics ffi max_app code co cc es = ffi_Fail) /\
+      // es ≠ [] ∧
+      DISJOINT (IMAGE ((+) start) (count (LENGTH es))) (FDOM code)
+        /\
+      oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
+           (IMAGE ((+) start) (count (LENGTH es)) UNION FDOM code)
+             co ==>
+      (?e.
+      semantics ffi max_app (FUNION (alist_to_fmap (chain_exps
+        start es)) code) co cc [e] =
+      semantics ffi max_app code co cc es /\
+      ALOOKUP (chain_exps start es) start = SOME (0,e))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let chain_exps_semantics_call = prove
- (`~(semantics ffi max_app code co cc es = ffi_Fail) /\
-    DISJOINT (IMAGE ((+) (start:num)) (count (LENGTH es))) (FDOM
-      code) /\
-    oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
-         (IMAGE ((+) start) (count (LENGTH es)) UNION FDOM code) co
-           ==>
-    semantics ffi max_app (FUNION (alist_to_fmap (chain_exps start
-      es)) code) co cc ([Call backend_common_None 0 start []]) =
-    semantics ffi max_app code co cc es`,
+ (cake_as_vars (fun () ->
+    `~(semantics ffi max_app code co cc es = ffi_Fail) /\
+      DISJOINT (IMAGE ((+) start) (count (LENGTH es))) (FDOM code)
+        /\
+      oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
+           (IMAGE ((+) start) (count (LENGTH es)) UNION FDOM code)
+             co ==>
+      semantics ffi max_app (FUNION (alist_to_fmap (chain_exps
+        start es)) code) co cc ([Call backend_common_None 0 start []]) =
+      semantics ffi max_app code co cc es`),
   CHEAT_TAC);;
 
 (* HOL4 clos_to_bvlProofScript.sml:6572-6630: code that the source
@@ -2729,31 +2741,34 @@ let REPLICATE_1 = prove
   CHEAT_TAC);;
 
 (* compile_prog_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let clos_to_bvlProof_compile_prog_semantics = prove
- (`~(semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1 [Call
+ (cake_as_vars (fun () ->
+    `~(semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1 [Call
   backend_common_None 0 start []] = ffi_Fail) /\
-   (!name arity c.
-     FLOOKUP code1 name = SOME (arity,c) ==>
-     (?aux1 c2 aux2.
-       clos_to_bvl_compile_exps max_app [c] aux1 = ([c2],aux2) /\
-       sptree_lookup (name + num_stubs max_app) code2 = SOME
-         (arity,c2) /\
-       clos_to_bvlProof_code_installed aux2 code2)) /\
-   clos_to_bvl_compile_prog max_app prog1 = prog2 /\
-   init_code code1 code2 max_app /\
-   FEVERY (\p. every_Fn_SOME [SND (SND p)]) code1 /\
-   FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) code1 /\
-   sptree_lookup nsm1 code2 = SOME (0,init_globals max_app (num_stubs
-     max_app + start)) /\
-   sptree_lookup (num_stubs max_app - 2) code2 = SOME
-     (2,force_thunk_code) /\
-   compile_oracle_inv max_app code1 cc1 co1 code2 cc2 co2 /\
-   clos_to_bvlProof_code_installed prog2 code2 ==>
-   bvlSem_semantics ffi code2 (co2:num->'c#(num#num#bvl_exp) list)
-     cc2 nsm1 =
-   closSem_semantics ffi max_app code1 (co1:num->'c#closLang_exp
-     list#(num#num#closLang_exp) list) cc1 [Call backend_common_None 0
-     start []]`,
+     (!name arity c.
+       FLOOKUP code1 name = SOME (arity,c) ==>
+       (?aux1 c2 aux2.
+         clos_to_bvl_compile_exps max_app [c] aux1 = ([c2],aux2) /\
+         sptree_lookup (name + num_stubs max_app) code2 = SOME
+           (arity,c2) /\
+         clos_to_bvlProof_code_installed aux2 code2)) /\
+     clos_to_bvl_compile_prog max_app prog1 = prog2 /\
+     init_code code1 code2 max_app /\
+     FEVERY (\p. every_Fn_SOME [SND (SND p)]) code1 /\
+     FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) code1 /\
+     sptree_lookup nsm1 code2 = SOME (0,init_globals max_app
+       (num_stubs max_app + start)) /\
+     sptree_lookup (num_stubs max_app - 2) code2 = SOME
+       (2,force_thunk_code) /\
+     compile_oracle_inv max_app code1 cc1 co1 code2 cc2 co2 /\
+     clos_to_bvlProof_code_installed prog2 code2 ==>
+     bvlSem_semantics ffi code2 (co2:num->'c#(num#num#bvl_exp)
+       list) cc2 nsm1 =
+     closSem_semantics ffi max_app code1
+       (co1:num->'c#closLang_exp list#(num#num#closLang_exp) list) cc1
+       [Call backend_common_None 0 start []]`),
   CHEAT_TAC);;
 
 let clos_to_bvlProof_syntax_oracle_ok_def = cake_define

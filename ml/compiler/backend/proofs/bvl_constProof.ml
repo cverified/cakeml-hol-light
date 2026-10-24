@@ -2096,9 +2096,12 @@ let bvl_constProof_compile_code_labels = prove
    [base_case; step_case]));;
 
 (* compile_exp_code_labels *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_constProof_compile_exp_code_labels = prove
- (`!e. bvlProps_get_code_labels (bvl_const_compile_exp e) SUBSET
-  bvlProps_get_code_labels e`,
+ (cake_as_vars (fun () ->
+    `!e. bvlProps_get_code_labels (bvl_const_compile_exp e) SUBSET
+  bvlProps_get_code_labels e`),
   (* the compiled list of one is a singleton, so compile_exp is the
      head of it, and the empty environment allows nothing *)
   (let ce = bvl_const_compile_exp_def in

@@ -1781,13 +1781,16 @@ let initial_state_with_clock = prove
    closSem_initial_state ffi ma code co cc (k + ck)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_semantics_eq = prove
- (`closProps_eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 es2
+ (cake_as_vars (fun () ->
+    `closProps_eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 es2
   rel F /\ ~(closSem_semantics (ffi:'ffi ffi_state) max_app code1 co1
   cc1 es1 = ffi_Fail) ==>
-   rel code1 co1 cc1 es1 code2 co2 cc2 es2 ==>
-   closSem_semantics ffi max_app code2 co2 cc2 es2 =
-   closSem_semantics ffi max_app code1 co1 cc1 es1`,
+     rel code1 co1 cc1 es1 code2 co2 cc2 es2 ==>
+     closSem_semantics ffi max_app code2 co2 cc2 es2 =
+     closSem_semantics ffi max_app code1 co1 cc1 es1`),
   CHEAT_TAC);;
 
 let IMP_semantics_eq_no_fail = prove
@@ -1880,13 +1883,16 @@ let semantics_CURRY_I_gen = prove
   CHEAT_TAC);;
 
 (* semantics_CURRY_I *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let closProps_semantics_CURRY_I = prove
- (`~(closSem_semantics ffi max_app code co (state_cc (CURRY I) cc) es =
-  ffi_Fail) ==>
-      closSem_semantics ffi max_app code (state_co (CURRY I) co) cc
-        es =
-      closSem_semantics ffi max_app code co (state_cc (CURRY I) cc)
-        es`,
+ (cake_as_vars (fun () ->
+    `~(closSem_semantics ffi max_app code co (state_cc (CURRY I) cc) es
+  = ffi_Fail) ==>
+        closSem_semantics ffi max_app code (state_co (CURRY I) co)
+          cc es =
+        closSem_semantics ffi max_app code co (state_cc (CURRY I)
+          cc) es`),
   CHEAT_TAC);;
 
 (* [simp] *)

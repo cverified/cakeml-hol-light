@@ -983,21 +983,24 @@ let alloc_code_gc_fun_const = prove
   CHEAT_TAC);;
 
 (* [simp] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let alloc_with_const = prove
- (`wordSem_alloc c names (wordSem_state_clock_fupd (K k) s) = (I ## (\s.
-  wordSem_state_clock_fupd (K k) s)) (wordSem_alloc c names s) /\
-   wordSem_alloc c names (wordSem_state_termdep_fupd (K t) s) = (I ##
-     (\s. wordSem_state_termdep_fupd (K t) s)) (wordSem_alloc c names s)
-     /\
-   wordSem_alloc c names (wordSem_state_code_fupd (K code) s) = (I ##
-     (\s. wordSem_state_code_fupd (K code) s)) (wordSem_alloc c names s)
-     /\
-   wordSem_alloc c names (wordSem_state_compile_oracle_fupd (K
-     compile_oracle) s) = (I ## (\s. wordSem_state_compile_oracle_fupd
-     (K compile_oracle) s)) (wordSem_alloc c names s) /\
-   wordSem_alloc c names (wordSem_state_compile_fupd (K comp) s) =
-     (I ## (\s. wordSem_state_compile_fupd (K comp) s)) (wordSem_alloc
-     c names s)`,
+ (cake_as_vars (fun () ->
+    `wordSem_alloc c names (wordSem_state_clock_fupd (K k) s) = (I ##
+  (\s. wordSem_state_clock_fupd (K k) s)) (wordSem_alloc c names s) /\
+     wordSem_alloc c names (wordSem_state_termdep_fupd (K t) s) =
+       (I ## (\s. wordSem_state_termdep_fupd (K t) s)) (wordSem_alloc c
+       names s) /\
+     wordSem_alloc c names (wordSem_state_code_fupd (K code) s) =
+       (I ## (\s. wordSem_state_code_fupd (K code) s)) (wordSem_alloc c
+       names s) /\
+     wordSem_alloc c names (wordSem_state_compile_oracle_fupd (K
+       compile_oracle) s) = (I ## (\s. wordSem_state_compile_oracle_fupd
+       (K compile_oracle) s)) (wordSem_alloc c names s) /\
+     wordSem_alloc c names (wordSem_state_compile_fupd (K comp)
+       s) = (I ## (\s. wordSem_state_compile_fupd (K comp) s))
+       (wordSem_alloc c names s)`),
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -1353,21 +1356,24 @@ let wordProps_jump_exc_with_const = prove
   CHEAT_TAC);;
 
 (* [simp] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let get_var_imm_with_const = prove
- (`wordSem_get_var_imm x (state_clock_fupd (K k) y) =
+ (cake_as_vars (fun () ->
+    `wordSem_get_var_imm x (state_clock_fupd (K k) y) =
   wordSem_get_var_imm x y /\
-   wordSem_get_var_imm x (wordSem_state_code_fupd (K code) y) =
-     wordSem_get_var_imm x y /\
-   wordSem_get_var_imm x (wordSem_state_compile_fupd (K compile) y) =
-     wordSem_get_var_imm x y /\
-   wordSem_get_var_imm x (wordSem_state_compile_oracle_fupd (K
-     compile_oracle) y) = wordSem_get_var_imm x y /\
-   wordSem_get_var_imm x (wordSem_state_termdep_fupd (K td) y) =
-     wordSem_get_var_imm x y /\
-   wordSem_get_var_imm x (wordSem_state_stack_fupd (K xs) y) =
-     wordSem_get_var_imm x y /\
-   wordSem_get_var_imm x (wordSem_state_permute_fupd (K perm) y) =
-     wordSem_get_var_imm x y`,
+     wordSem_get_var_imm x (wordSem_state_code_fupd (K code) y) =
+       wordSem_get_var_imm x y /\
+     wordSem_get_var_imm x (wordSem_state_compile_fupd (K compile)
+       y) = wordSem_get_var_imm x y /\
+     wordSem_get_var_imm x (wordSem_state_compile_oracle_fupd (K
+       compile_oracle) y) = wordSem_get_var_imm x y /\
+     wordSem_get_var_imm x (wordSem_state_termdep_fupd (K td) y) =
+       wordSem_get_var_imm x y /\
+     wordSem_get_var_imm x (wordSem_state_stack_fupd (K xs) y) =
+       wordSem_get_var_imm x y /\
+     wordSem_get_var_imm x (wordSem_state_permute_fupd (K perm)
+       y) = wordSem_get_var_imm x y`),
   CHEAT_TAC);;
 
 (* dec_clock_const[simp] *)

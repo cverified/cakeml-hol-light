@@ -325,29 +325,38 @@ let read_bytearray_IMP_read_bytearray = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytearray_IGNORE_non_aligned = prove
- (`!new_bytes a.
-       (!x. ~(b = byte_align x)) ==>
-       write_bytearray a new_bytes m d (be:bool) b = m b`,
+ (cake_as_vars (fun () ->
+    `!new_bytes a.
+         (!x. ~(b = byte_align x)) ==>
+         write_bytearray a new_bytes m d be b = m b`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytearray_IGNORE = prove
- (`!new_bytes a x xx.
-       d1 SUBSET d /\
-       read_bytearray a (LENGTH new_bytes) (mem_load_byte_aux m1 d1
-         (be:bool)) = SOME x /\ ~(xx IN d1) ==>
-       write_bytearray a new_bytes m d be xx = m xx`,
+ (cake_as_vars (fun () ->
+    `!new_bytes a x xx.
+         d1 SUBSET d /\
+         read_bytearray a (LENGTH new_bytes) (mem_load_byte_aux m1
+           d1 be) = SOME x /\ ~(xx IN d1) ==>
+         write_bytearray a new_bytes m d be xx = m xx`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytearray_EQ = prove
- (`!new_bytes a m1 m y x.
-       d1 SUBSET d /\ (!a. a IN d1 ==> m1 a = m a /\ a IN d) /\
-       read_bytearray a (LENGTH new_bytes) (mem_load_byte_aux m1 d1
-         (be:bool)) = SOME y /\ m1 x = m x ==>
-       write_bytearray a new_bytes m1 d1 be x =
-       write_bytearray a new_bytes m d be x`,
+ (cake_as_vars (fun () ->
+    `!new_bytes a m1 m y x.
+         d1 SUBSET d /\ (!a. a IN d1 ==> m1 a = m a /\ a IN d) /\
+         read_bytearray a (LENGTH new_bytes) (mem_load_byte_aux m1
+           d1 be) = SOME y /\ m1 x = m x ==>
+         write_bytearray a new_bytes m1 d1 be x =
+         write_bytearray a new_bytes m d be x`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -756,10 +765,13 @@ let stack_removeProof_comp_correct = prove
   CHEAT_TAC);;
 
 (* compile_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let stack_removeProof_compile_semantics = prove
- (`stack_removeProof_state_rel jump off k s1 s2 /\ ~(semantics
-  (start:num) s1 = ffi_Fail) ==>
-   semantics start s2 = semantics start s1`,
+ (cake_as_vars (fun () ->
+    `stack_removeProof_state_rel jump off k s1 s2 /\ ~(semantics start
+  s1 = ffi_Fail) ==>
+     semantics start s2 = semantics start s1`),
   CHEAT_TAC);;
 
 (* init code *)
@@ -1236,20 +1248,23 @@ let init_pre_def = cake_define
      init_code_pre k bitmaps data_sp s /\ max_stack_alloc <=
        max_heap`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let evaluate_init_code = prove
- (`init_pre gen_gc max_heap bitmaps data_sp k (start:num) s /\
+ (cake_as_vars (fun () ->
+    `init_pre gen_gc max_heap bitmaps data_sp k start s /\
   stackSem_state_compile_oracle
-    s = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
-    (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k /\
-      stack_num_stubs <= i + 1) /\
-    sptree_lookup stack_err_lab (state_code s) = SOME (halt_inst (n2w
-      2)) /\
-    stack_removeProof_code_rel jump off k code (state_code s) ==>
-    (match evaluate (stack_remove_init_code gen_gc max_heap k,s) with
-      (NONE,t) -> (?r. make_init_opt gen_gc max_heap bitmaps data_sp
-      coracle jump off k code s = SOME r /\
-                      stack_removeProof_state_rel jump off k r t /\
-                        state_ffi t = state_ffi s) | _7 -> F)`,
+      s = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
+      (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
+        /\ stack_num_stubs <= i + 1) /\
+      sptree_lookup stack_err_lab (state_code s) = SOME (halt_inst
+        (n2w 2)) /\
+      stack_removeProof_code_rel jump off k code (state_code s) ==>
+      (match evaluate (stack_remove_init_code gen_gc max_heap k,s)
+        with (NONE,t) -> (?r. make_init_opt gen_gc max_heap bitmaps
+        data_sp coracle jump off k code s = SOME r /\
+                        stack_removeProof_state_rel jump off k r
+                          t /\ state_ffi t = state_ffi s) | _8 -> F)`),
   CHEAT_TAC);;
 
 let clock_neutral_store_list_code = prove
@@ -1272,45 +1287,56 @@ let evaluate_init_code_ffi = prove
       (res,((state_ffi_fupd (K c) t):('a,'c,'ffi)stackSem_state))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let init_semantics = prove
- (`sptree_lookup stack_err_lab (state_code s) = SOME (halt_inst (n2w 2))
-  /\
-    stack_removeProof_code_rel jump off k code (state_code s) /\
-    init_pre gen_gc max_heap bitmaps data_sp k (start:num) s /\
-      stackSem_state_compile_oracle
-    s = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
-    (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k /\
-      stack_num_stubs <= i + 1) ==>
-    (match evaluate (stack_remove_init_code gen_gc max_heap k,s) with
-      (NONE,t) ->
-        (semantics 0 s = semantics start t) /\
-        (?r. make_init_opt gen_gc max_heap bitmaps data_sp coracle
-          jump off k code s = SOME r /\
-            stack_removeProof_state_rel jump off k r t) | _8 -> F)`,
+ (cake_as_vars (fun () ->
+    `sptree_lookup stack_err_lab (state_code s) = SOME (halt_inst (n2w
+  2)) /\
+      stack_removeProof_code_rel jump off k code (state_code s) /\
+      init_pre gen_gc max_heap bitmaps data_sp k start s /\
+        stackSem_state_compile_oracle
+      s = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
+      (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
+        /\ stack_num_stubs <= i + 1) ==>
+      (match evaluate (stack_remove_init_code gen_gc max_heap k,s)
+        with (NONE,t) ->
+          (semantics 0 s = semantics start t) /\
+          (?r. make_init_opt gen_gc max_heap bitmaps data_sp
+            coracle jump off k code s = SOME r /\
+              stack_removeProof_state_rel jump off k r t) | _10
+                -> F)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let make_init_opt_SOME_semantics = prove
- (`init_pre gen_gc max_heap bitmaps data_sp k (start:num) s2 /\
+ (cake_as_vars (fun () ->
+    `init_pre gen_gc max_heap bitmaps data_sp k start s2 /\
   stackSem_state_compile_oracle
-    s2 = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
-    (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k /\
-      stack_num_stubs <= i + 1) /\
-    stack_removeProof_code_rel jump off k code (state_code s2) /\
-    sptree_lookup stack_err_lab (state_code s2) = SOME (halt_inst
-      (n2w 2)) ==>
-    (?s1.
-      make_init_opt gen_gc max_heap bitmaps data_sp coracle jump off
-        k code s2 = SOME s1 /\
-      (~(semantics start s1 = ffi_Fail) ==>
-       semantics 0 s2 = semantics start s1))`,
+      s2 = ((I ## MAP (prog_comp jump off k) ## I) o coracle) /\
+      (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
+        /\ stack_num_stubs <= i + 1) /\
+      stack_removeProof_code_rel jump off k code (state_code s2) /\
+      sptree_lookup stack_err_lab (state_code s2) = SOME (halt_inst
+        (n2w 2)) ==>
+      (?s1.
+        make_init_opt gen_gc max_heap bitmaps data_sp coracle jump
+          off k code s2 = SOME s1 /\
+        (~(semantics start s1 = ffi_Fail) ==>
+         semantics 0 s2 = semantics start s1))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_code_rel = prove
- (`EVERY (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code1 /\
-    code2 = fromAList (compile jump off gen_gc max_heap k (start:num)
-      code1) ==>
-    stack_removeProof_code_rel jump off k (fromAList code1) code2`,
+ (cake_as_vars (fun () ->
+    `EVERY (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code1 /\
+      code2 = fromAList (compile jump off gen_gc max_heap k start
+        code1) ==>
+      stack_removeProof_code_rel jump off k (fromAList code1)
+        code2`),
   CHEAT_TAC);;
 
 let make_init_any_def = cake_define
@@ -1499,29 +1525,32 @@ let stack_remove_comp_stack_asm_name = prove
      stack_asm_name c (comp jump off k p)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let stack_remove_stack_asm_name = prove
- (`EVERY (\(n,p). stack_asm_name c p) prog /\
-   EVERY (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
-   asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
-   good_dimindex (:'a) /\
-   (!n. n <= max_stack_alloc ==> asm_config_valid_imm
-   c (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
-     asm_config_valid_imm
-   c (INL Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
-     asm_config_valid_imm
-   c (INL Add) (n2w 4) /\ asm_config_valid_imm
-   c (INL Add) (n2w 8) /\
-   (
-    // Needed to implement the global store
-    !s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset s))
-      /\
-   reg_name 7 c /\
-   reg_name (k + 2) c /\
-   reg_name (k + 1) c /\
-   reg_name k c /\ ~(k = 0) ==>
-   EVERY (\(n,p). stack_asm_name c p)
-   (compile jump (asm_config_addr_offset c) gen_gc max_heap k
-     (start:num) prog)`,
+ (cake_as_vars (fun () ->
+    `EVERY (\(n,p). stack_asm_name c p) prog /\
+     EVERY (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
+     asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
+     good_dimindex (:'a) /\
+     (!n. n <= max_stack_alloc ==> asm_config_valid_imm
+     c (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
+       asm_config_valid_imm
+     c (INL Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
+       asm_config_valid_imm
+     c (INL Add) (n2w 4) /\ asm_config_valid_imm
+     c (INL Add) (n2w 8) /\
+     (
+      // Needed to implement the global store
+      !s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset
+        s)) /\
+     reg_name 7 c /\
+     reg_name (k + 2) c /\
+     reg_name (k + 1) c /\
+     reg_name k c /\ ~(k = 0) ==>
+     EVERY (\(n,p). stack_asm_name c p)
+     (compile jump (asm_config_addr_offset c) gen_gc max_heap k
+       start prog)`),
   CHEAT_TAC);;
 
 let upshift_downshift_call_args = prove

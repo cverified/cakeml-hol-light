@@ -484,24 +484,27 @@ let panLang_compile_word_to_word_thm = prove
                rst1 = wordSem_state_stack_max rst)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_to_word_compile_semantics = prove
- (`word_to_word_compile wconf acomf wprog0 = (col,wprog) /\
-   gc_fun_const_ok (wordSem_state_gc_fun s) /\
-   no_install_code (fromAList wprog0) /\
-   no_alloc_code (fromAList wprog0) /\
-   no_install_code (wordSem_state_code s) /\ no_alloc_code
-     (wordSem_state_code s) /\
-   no_mt_code (fromAList wprog0) /\
-   ALL_DISTINCT (MAP FST wprog0) /\ wordSem_state_stack s = [] /\
-     wordSem_state_code
-   // start = lc + first_name ∧
-   // EL lc wprog0 = (start, v) ∧
-   t = fromAList wprog /\ lookup 0 (wordSem_state_locals t) = SOME
-     (Loc 1 0) /\
-   t = wordSem_state_code_fupd (K (wordSem_state_code t)) s /\
-     wordSem_state_code
-   s = fromAList wprog0 /\ ~(wordSem_semantics
-     (s:('a,'b,'ffi)wordSem_state) (start:num) = Fail) ==>
-   wordSem_semantics s start =
-   wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`,
+ (cake_as_vars (fun () ->
+    `word_to_word_compile wconf acomf wprog0 = (col,wprog) /\
+     gc_fun_const_ok (wordSem_state_gc_fun s) /\
+     no_install_code (fromAList wprog0) /\
+     no_alloc_code (fromAList wprog0) /\
+     no_install_code (wordSem_state_code s) /\ no_alloc_code
+       (wordSem_state_code s) /\
+     no_mt_code (fromAList wprog0) /\
+     ALL_DISTINCT (MAP FST wprog0) /\ wordSem_state_stack s = [] /\
+       wordSem_state_code
+     // start = lc + first_name ∧
+     // EL lc wprog0 = (start, v) ∧
+     t = fromAList wprog /\ lookup 0 (wordSem_state_locals t) =
+       SOME (Loc 1 0) /\
+     t = wordSem_state_code_fupd (K (wordSem_state_code t)) s /\
+       wordSem_state_code
+     s = fromAList wprog0 /\ ~(wordSem_semantics
+       (s:('a,'b,'ffi)wordSem_state) start = Fail) ==>
+     wordSem_semantics s start =
+     wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`),
   CHEAT_TAC);;

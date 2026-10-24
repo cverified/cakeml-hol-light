@@ -2,7 +2,7 @@
 (*  semantics: ported from HOL4's
     semantics/semanticsScript.sml
     A definition theory, with 6 definitions, 2 datatypes and no
-    theorems.  Needed by 15 files of the port.  *)
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*

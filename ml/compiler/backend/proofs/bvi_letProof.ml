@@ -1107,8 +1107,11 @@ let compile_code_labels = prove
    INDUCT_TAC THENL [base_case; step_case]));;
 
 (* [simp] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_exp_code_labels = prove
- (`!x. get_code_labels (bvi_let_compile_exp x) = get_code_labels x`,
+ (cake_as_vars (fun () ->
+    `!x. get_code_labels (bvi_let_compile_exp x) = get_code_labels x`),
   (let ce = bvi_let_compile_exp_def in
    (* compile_exp is the head of the compiled singleton, so its
       labels are the labels of the list that compile_code_labels

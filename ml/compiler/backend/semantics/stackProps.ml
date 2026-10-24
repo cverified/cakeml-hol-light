@@ -153,8 +153,11 @@ let stackProps_get_vars_with_const = prove
   CHEAT_TAC);;
 
 (* get_var_imm_with_const[simp] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let stackProps_get_var_imm_with_const = prove
- (`get_var_imm x (state_clock_fupd (K k) y) = get_var_imm x y`,
+ (cake_as_vars (fun () ->
+    `get_var_imm x (state_clock_fupd (K k) y) = get_var_imm x y`),
   CHEAT_TAC);;
 
 (* set_fp_var_const[simp] *)
@@ -243,9 +246,12 @@ let stackProps_gc_with_const = prove
   CHEAT_TAC);;
 
 (* alloc_with_const[simp] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let stackProps_alloc_with_const = prove
- (`alloc x (state_clock_fupd (K z) y) = (I ## (\s. state_clock_fupd (K
-  z) s)) (alloc x y)`,
+ (cake_as_vars (fun () ->
+    `alloc x (state_clock_fupd (K z) y) = (I ## (\s. state_clock_fupd
+  (K z) s)) (alloc x y)`),
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -509,14 +515,20 @@ let evaluate_ffi_neutral = prove
         (K c) t)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_Terminate_IMP_PREFIX = prove
- (`semantics (start:num) s1 = ffi_Terminate x l ==> isPREFIX
-  (ffi_state_io_events (state_ffi s1)) l`,
+ (cake_as_vars (fun () ->
+    `semantics start s1 = ffi_Terminate x l ==> isPREFIX
+  (ffi_state_io_events (state_ffi s1)) l`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_Diverge_IMP_LPREFIX = prove
- (`semantics (start:num) s1 = ffi_Diverge l ==> LPREFIX (fromList
-  (ffi_state_io_events (state_ffi s1))) l`,
+ (cake_as_vars (fun () ->
+    `semantics start s1 = ffi_Diverge l ==> LPREFIX (fromList
+  (ffi_state_io_events (state_ffi s1))) l`),
   CHEAT_TAC);;
 
 let map_bitmap_length = prove

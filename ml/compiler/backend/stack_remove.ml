@@ -447,10 +447,13 @@ let stack_remove_stub_names_def = cake_define
      (2,implode "_Halt2")]`;;
 hol4_overload "stub_names" "stack_remove_stub_names";;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let check_init_stubs_length = prove
- (`LENGTH (init_stubs gen_gc max_heap k (start:num)) + 2 =
-   // gc + dummy
-   stack_num_stubs`,
+ (cake_as_vars (fun () ->
+    `LENGTH (init_stubs gen_gc max_heap k start) + 2 =
+     // gc + dummy
+     stack_num_stubs`),
   CHEAT_TAC);;
 
 (* -- full compiler -- *)

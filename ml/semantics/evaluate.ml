@@ -2,7 +2,7 @@
 (*  evaluate: ported from HOL4's
     semantics/evaluateScript.sml
     A definition theory, with 6 definitions and 13 theorems.  Needed
-    by 33 files of the port.  *)
+    by 31 files of the port.  *)
 (* ======================================================== *)
 
 (*

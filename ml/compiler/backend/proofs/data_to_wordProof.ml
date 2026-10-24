@@ -29,10 +29,8 @@ needs "compiler/backend/proofs/data_to_word_gcProof.ml";;
 needs "compiler/backend/proofs/data_to_word_memoryProof.ml";;
 needs "compiler/backend/proofs/wordConvsProof.ml";;
 needs "compiler/backend/proofs/word_bignumProof.ml";;
-needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/proofs/word_to_wordProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
@@ -50,7 +48,6 @@ needs "lib/term.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
@@ -99,18 +96,22 @@ let word_test_lemma2 = prove
       x))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Thunk_bits = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,wordLang_Word
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,wordLang_Word
   (w:'a word)) :: vars) /\
-   lookup p refs = SOME (Thunk ev z) /\
-   good_dimindex (:'a) /\
-   get_real_addr c st w = SOME a /\
-   m a = wordLang_Word x /\ FAPPLY
-   w 0 ==>
-   (~bl /\ ev = Evaluated /\ ~(((n2w 0b111100) && x) = n2w ((0 + 6) *
-     4)) /\ ~(((n2w 0b111100) && x) = n2w ((8 + 6) * 4))) \/
-   (match ev with NotEvaluated -> (n2w 0b111100) && x = n2w ((0 +
-     6) * 4) | Evaluated -> (n2w 0b111100) && x = n2w ((8 + 6) * 4))`,
+     lookup p refs = SOME (Thunk ev z) /\
+     good_dimindex (:'a) /\
+     get_real_addr c st w = SOME a /\
+     m a = wordLang_Word x /\ FAPPLY
+     w 0 ==>
+     (~bl /\ ev = Evaluated /\ ~(((n2w 0b111100) && x) = n2w ((0 +
+       6) * 4)) /\ ~(((n2w 0b111100) && x) = n2w ((8 + 6) * 4))) \/
+     (match ev with NotEvaluated -> (n2w 0b111100) && x = n2w ((0
+       + 6) * 4) | Evaluated -> (n2w 0b111100) && x = n2w ((8 + 6) *
+       4))`),
   CHEAT_TAC);;
 
 let MEM_join_env_cut_env = prove
@@ -330,41 +331,17 @@ let state_rel_ext_with_clock = prove
 
 (* observational semantics preservation *)
 
-let compile_semantics_lemma = prove
- (`state_rel_ext conf 1 0 (initial_state (ffi:'ffi ffi_state) (fromAList
-  prog) co cc T lims (wordSem_state_stack_size t) (wordSem_state_clock
-  t)) (t:('a,'c,'ffi)wordSem_state) /\ fs = wordSem_state_stack_size t
-  /\ ~(semantics ffi (fromAList prog) co cc lims fs (start:num) = Fail)
-  ==>
-   semantics t start IN
-     extend_with_resource_limit {semantics ffi (fromAList prog) co
-       cc lims fs start}`,
-  CHEAT_TAC);;
+(* HOL4 data_to_wordProofScript.sml:1305-1527: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   compile_semantics_lemma *)
 
-let compile_semantics_precise_lemma = prove
- (`state_rel_ext conf 1 0 (initial_state (ffi:'ffi ffi_state) (fromAList
-  prog) co cc T lims (wordSem_state_stack_size t) (wordSem_state_clock
-  t)) (t:('a,'c,'ffi)wordSem_state) /\ fs = wordSem_state_stack_size t
-  /\
-   data_lang_safe_for_space ffi (fromAList prog) lims fs (start:num)
-     /\ ~(data_to_word_config_gc_kind conf = None) /\ ~(semantics ffi
-     (fromAList prog) co cc lims fs start = Fail) ==>
-   semantics t start IN
-     extend_with_resource_limit' T {semantics ffi (fromAList prog)
-       co cc lims fs start}`,
-  CHEAT_TAC);;
+(* HOL4 data_to_wordProofScript.sml:1529-1755: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   compile_semantics_precise_lemma *)
 
-let compile_semantics_precise = prove
- (`state_rel_ext conf 1 0 (initial_state (ffi:'ffi ffi_state) (fromAList
-  prog) co cc T lims (wordSem_state_stack_size t) (wordSem_state_clock
-  t)) (t:('a,'c,'ffi)wordSem_state) /\
-   fs = wordSem_state_stack_size t /\ ~(data_to_word_config_gc_kind
-     conf = None) /\ ~(semantics ffi (fromAList prog) co cc lims fs
-     (start:num) = Fail) /\
-   data_lang_safe_for_space ffi (fromAList prog) lims fs start ==>
-   semantics t start = semantics ffi (fromAList prog) co cc lims fs
-     start`,
-  CHEAT_TAC);;
+(* HOL4 data_to_wordProofScript.sml:1757-1766: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   compile_semantics_precise *)
 
 let get_limits_def = cake_define
   `get_limits c (t:('a,'c,'ffi)wordSem_state) =
@@ -378,53 +355,9 @@ let option_le_SOME = prove
  (`option_le x (SOME n) <=> (?m. x = SOME m /\ m <= n)`,
   CHEAT_TAC);;
 
-(* compile_semantics *)
-let data_to_wordProof_compile_semantics = prove
- (`wordSem_state_handler
-     (t:('a,'c,'ffi)wordSem_state) = 0 /\ wordSem_state_gc_fun t =
-       word_gc_fun c /\
-     init_store_ok c (wordSem_state_store t) (wordSem_state_memory t)
-       (wordSem_state_mdomain t) (wordSem_state_code_buffer t)
-       (wordSem_state_data_buffer t) /\
-     good_dimindex (:'a) /\ lookup 0 (wordSem_state_locals t) = SOME
-       (Loc 1 0) /\ wordSem_state_stack t = [] /\
-     conf_ok (:'a) c /\ wordSem_state_termdep t = 0 /\ code_rel c
-       (fromAList prog) x1 /\
-     cc =
-     (\cfg.
-          OPTION_MAP (I ## MAP upper_w2w ## I) o tcc cfg o
-          MAP (compile_part c)) /\
-     Abbrev (tco = (I ## MAP (compile_part c)) o co) /\
-     (!n. EVERY (\(n,_1). data_num_stubs <= n) (SND (co n))) /\
-     code_rel_ext x1 (wordSem_state_code t) /\ domain x1 = domain
-       (wordSem_state_code t) /\ wordSem_state_be t =
-       data_to_word_config_be c /\ wordSem_state_stack_max
-     t = SOME 1 /\ wordSem_state_locals_size t = SOME 0 /\
-       ~(wordSem_state_stack_limit t = 0) /\
-       wordSem_state_compile_oracle
-     t =
-     (I ## MAP (\p. full_compile_single tt kk aa coo (p,NONE))) o tco
-       /\
-     Abbrev
-       (tcc =
-        (\conf progs. wordSem_state_compile
-             t conf
-               (MAP (\p. full_compile_single tt kk aa coo (p,NONE))
-                 progs))) /\
-     fs = wordSem_state_stack_size t /\ ~(Fail = semantics
-       (wordSem_state_ffi t) (fromAList prog) co cc zero_limits fs
-       (start:num)) ==>
-     (data_lang_safe_for_space (wordSem_state_ffi t) (fromAList prog)
-       (get_limits c t) fs start /\ ~(data_to_word_config_gc_kind
-      c = None) ==> word_lang_safe_for_space t start) /\
-     semantics t start IN
-     extend_with_resource_limit'
-       (data_lang_safe_for_space (wordSem_state_ffi t) (fromAList
-         prog) (get_limits c t) fs
-          start /\ ~(data_to_word_config_gc_kind c = None))
-       {semantics (wordSem_state_ffi t) (fromAList prog) co cc
-         zero_limits fs start}`,
-  CHEAT_TAC);;
+(* HOL4 data_to_wordProofScript.sml:1785-1915: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   compile_semantics *)
 
 (* HOL4 data_to_wordProofScript.sml:1917: ML code, not ported *)
 

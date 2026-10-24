@@ -34,7 +34,6 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
-needs "semantics/semantics.ml";;
 
 let _ = do_list hide_constant ["contain"; "invariant"; "not"];;
 
@@ -1040,21 +1039,24 @@ let state_rel_shift_interfer = prove
 
 (* bytes_in_memory lemmas *)
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let prog_to_bytes_lemma = prove
- (`!code2 code1 pc' i pos.
-       code_similar code1 code2 /\
-       all_enc_ok (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config)))
-         labs (ffi_names:(ffiname)list) pos code2 /\
-       (asm_fetch_aux pc' code1 = SOME i) ==>
-       (?bs j bs2.
-         (prog_to_bytes code2 = bs ++ line_bytes j ++ bs2) /\
-         (LENGTH bs + pos = pos_val pc' pos code2) /\
-         (LENGTH bs + pos + LENGTH (line_bytes j) = pos_val (pc' + 1)
-           pos code2) /\
-         line_similar i j /\
-         line_ok (target_config (machine_config_target mc_conf))
-           labs ffi_names (pos_val pc' pos code2) j)`,
+ (cake_as_vars (fun () ->
+    `!code2 code1 pc' i pos.
+         code_similar code1 code2 /\
+         all_enc_ok (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config)))
+           labs ffi_names pos code2 /\
+         (asm_fetch_aux pc' code1 = SOME i) ==>
+         (?bs j bs2.
+           (prog_to_bytes code2 = bs ++ line_bytes j ++ bs2) /\
+           (LENGTH bs + pos = pos_val pc' pos code2) /\
+           (LENGTH bs + pos + LENGTH (line_bytes j) = pos_val (pc'
+             + 1) pos code2) /\
+           line_similar i j /\
+           line_ok (target_config (machine_config_target
+             mc_conf)) labs ffi_names (pos_val pc' pos code2) j)`),
   CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:1210-1212: ML code, not ported *)
@@ -1078,269 +1080,310 @@ let bytes_in_mem_UPDATE = prove
    definitions below antiquote *)
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory = prove
- (`code_similar code1 code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     (asm_fetch_aux (pc:num) code1 = SOME i) /\
-     bytes_in_mem p (prog_to_bytes code2) m (dm:'a word->bool) dm1
-       ==>
-     (?j.
-       bytes_in_mem (p + n2w (pos_val pc 0 code2)) (line_bytes j) m
-         dm dm1 /\
-       line_ok (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config)))
-         labs ffi_names (pos_val pc 0 code2) j /\
-       (pos_val (pc + 1) 0 code2 = pos_val pc 0 code2 + LENGTH
-         (line_bytes j)) /\
-       line_similar i j)`,
+ (cake_as_vars (fun () ->
+    `code_similar code1 code2 /\
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       (asm_fetch_aux pc code1 = SOME i) /\
+       bytes_in_mem p (prog_to_bytes code2) m (dm:'a word->bool)
+         dm1 ==>
+       (?j.
+         bytes_in_mem (p + n2w (pos_val pc 0 code2)) (line_bytes j)
+           m dm dm1 /\
+         line_ok (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config)))
+           labs ffi_names (pos_val pc 0 code2) j /\
+         (pos_val (pc + 1) 0 code2 = pos_val pc 0 code2 + LENGTH
+           (line_bytes j)) /\
+         line_similar i j)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_JumpReg = prove
- (`code_similar (labSem_state_code s1) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_JumpReg r1)) l n))
-       ==>
-     bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc s1)
-       0 code2))
-       (asm_config_encode (target_config (machine_config_target
-         mc_conf)) (asm_JumpReg r1)) (asm_state_mem t1)
-         (asm_state_mem_domain t1) /\
-     asm_ok (asm_JumpReg r1) (target_config (machine_config_target
-       (mc_conf:('a,'state,'b)machine_config)))`,
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code s1) code2 /\
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_JumpReg r1)) l
+         n)) ==>
+       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
+         s1) 0 code2))
+         (asm_config_encode (target_config (machine_config_target
+           mc_conf)) (asm_JumpReg r1)) (asm_state_mem t1)
+           (asm_state_mem_domain t1) /\
+       asm_ok (asm_JumpReg r1) (target_config
+         (machine_config_target
+         (mc_conf:('a,'state,'b)machine_config)))`),
   CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:1281-1284: ML code, not ported *)
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_Jump = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm (Jump jtarget) l bytes n))
-       ==>
-     (?tt enc.
-       (tt = n2w (find_pos jtarget labs) -
-             n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
-       (enc = asm_config_encode (target_config (machine_config_target
-         mc_conf)) (Jump tt)) /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       asm_ok (Jump tt) (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm (Jump jtarget) l bytes
+         n)) ==>
+       (?tt enc.
+         (tt = n2w (find_pos jtarget labs) -
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
+         (enc = asm_config_encode (target_config
+           (machine_config_target mc_conf)) (Jump tt)) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         asm_ok (Jump tt) (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_JumpCmp = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri jtarget)
-       l bytes n)) ==>
-     (?tt enc.
-       (tt = n2w (find_pos jtarget labs) -
-             n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
-       (enc = asm_config_encode (target_config (machine_config_target
-         mc_conf)) (JumpCmp cmp rr ri tt)) /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       asm_ok (JumpCmp cmp rr ri tt) (target_config
-         (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri
+         jtarget) l bytes n)) ==>
+       (?tt enc.
+         (tt = n2w (find_pos jtarget labs) -
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
+         (enc = asm_config_encode (target_config
+           (machine_config_target mc_conf)) (JumpCmp cmp rr ri tt)) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         asm_ok (JumpCmp cmp rr ri tt) (target_config
+           (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_JumpCmp_1 = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri jtarget)
-       l bytes n)) ==>
-     (?tt bytes.
-       (tt = n2w (find_pos jtarget labs) -
-             n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
-       enc_with_nop (asm_config_encode (target_config
-         (machine_config_target mc_conf))) (JumpCmp cmp rr ri tt) bytes
-         /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
-         (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-       asm_ok (JumpCmp cmp rr ri tt) (target_config
-         (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri
+         jtarget) l bytes n)) ==>
+       (?tt bytes.
+         (tt = n2w (find_pos jtarget labs) -
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
+         enc_with_nop (asm_config_encode (target_config
+           (machine_config_target mc_conf))) (JumpCmp cmp rr ri tt)
+           bytes /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
+         asm_ok (JumpCmp cmp rr ri tt) (target_config
+           (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_Call = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target
-       (mc_conf:('a,'state,'b)machine_config))) labs
-         (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain
-       (t1:'a asm_state)) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm (Call ww) l bytes n)) ==>
-     F`,
+       all_enc_ok (target_config (machine_config_target
+         (mc_conf:('a,'state,'b)machine_config))) labs ffi_names 0
+           code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain
+         (t1:'a asm_state)) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm (Call ww) l bytes n))
+         ==>
+       F`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_LocValue = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm (LocValue reg (labLang_Lab
-       l1 l2)) l bytes n)) ==>
-     (?tt bytes.
-       (tt = n2w (find_pos (labLang_Lab l1 l2) labs) -
-             n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
-       enc_with_nop (asm_config_encode (target_config
-         (machine_config_target mc_conf))) (Loc reg tt) bytes /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
-         (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-       asm_ok (Loc reg tt) (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm (LocValue reg
+         (labLang_Lab l1 l2)) l bytes n)) ==>
+       (?tt bytes.
+         (tt = n2w (find_pos (labLang_Lab l1 l2) labs) -
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
+         enc_with_nop (asm_config_encode (target_config
+           (machine_config_target mc_conf))) (Loc reg tt) bytes /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
+         asm_ok (Loc reg tt) (target_config
+           (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_Inst = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_Inst i)) bytes
-       len)) ==>
-     (?bytes.
-       enc_with_nop (asm_config_encode (target_config
-         (machine_config_target mc_conf))) (Inst i) bytes /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc s1)
-         0 code2))
-         bytes (asm_state_mem t1) (asm_state_mem_domain t1)
-           (labSem_state_mem_domain s1) /\
-       (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
-         (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-       asm_ok (Inst i) (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_Inst i)) bytes
+         len)) ==>
+       (?bytes.
+         enc_with_nop (asm_config_encode (target_config
+           (machine_config_target mc_conf))) (Inst i) bytes /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc
+           s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1)
+             (labSem_state_mem_domain s1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
+         asm_ok (Inst i) (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_Cbw = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_Asm (Cbw r1 r2) bytes len)) ==>
-     (?bytes.
-       enc_with_nop (asm_config_encode (target_config
-         (machine_config_target mc_conf))) (Inst (asm_Mem asm_Store8 r2
-         (Addr r1 (n2w 0)))) bytes /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc s1)
-         0 code2))
-         bytes (asm_state_mem t1) (asm_state_mem_domain t1)
-           (labSem_state_mem_domain s1) /\
-       (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
-         (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-       asm_ok (Inst (asm_Mem asm_Store8 r2 (Addr r1 (n2w 0))))
-         (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_Asm (Cbw r1 r2) bytes len))
+         ==>
+       (?bytes.
+         enc_with_nop (asm_config_encode (target_config
+           (machine_config_target mc_conf))) (Inst (asm_Mem asm_Store8
+           r2 (Addr r1 (n2w 0)))) bytes /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc
+           s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1)
+             (labSem_state_mem_domain s1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
+         asm_ok (Inst (asm_Mem asm_Store8 r2 (Addr r1 (n2w 0))))
+           (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_CallFFI = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm (labLang_CallFFI name) l
-       bytes n)) ==>
-     (?tt enc.
-       (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2 + (3
-         + get_ffi_index ffi_names (ffi_ExtCall name)) * ffi_offset)) /\
-       (enc = asm_config_encode (target_config (machine_config_target
-         mc_conf)) (Jump tt)) /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       asm_ok (Jump tt) (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm (labLang_CallFFI name)
+         l bytes n)) ==>
+       (?tt enc.
+         (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
+           + (3 + get_ffi_index ffi_names (ffi_ExtCall name)) *
+           ffi_offset)) /\
+         (enc = asm_config_encode (target_config
+           (machine_config_target mc_conf)) (Jump tt)) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         asm_ok (Jump tt) (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_Halt = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm labLang_Halt l bytes n))
-       ==>
-     (?tt enc.
-       (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2 +
-         ffi_offset)) /\
-       (enc = asm_config_encode (target_config (machine_config_target
-         mc_conf)) (Jump tt)) /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       asm_ok (Jump tt) (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm labLang_Halt l bytes
+         n)) ==>
+       (?tt enc.
+         (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
+           + ffi_offset)) /\
+         (enc = asm_config_encode (target_config
+           (machine_config_target mc_conf)) (Jump tt)) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         asm_ok (Jump tt) (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_Install = prove
- (`code_similar (labSem_state_code
+ (cake_as_vars (fun () ->
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-     (asm_fetch s1 = SOME (labLang_LabAsm Install c l n)) ==>
-     (?tt enc.
-       (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2 + 2
-         * ffi_offset)) /\
-       (enc = asm_config_encode (target_config (machine_config_target
-         mc_conf)) (Jump tt)) /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
-         s1) 0 code2))
-         enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-       asm_ok (Jump tt) (target_config (machine_config_target
-         (mc_conf:('a,'state,'b)machine_config))))`,
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+       (asm_fetch s1 = SOME (labLang_LabAsm Install c l n)) ==>
+       (?tt enc.
+         (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
+           + 2 * ffi_offset)) /\
+         (enc = asm_config_encode (target_config
+           (machine_config_target mc_conf)) (Jump tt)) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         asm_ok (Jump tt) (target_config (machine_config_target
+           (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 let all_enc_ok_asm_fetch_aux_IMP_line_ok = prove
@@ -1357,43 +1400,49 @@ let code_similar_IMP_asm_fetch_aux_line_similar = prove
        pc' code2)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let asm_fetch_aux_pos_val_LENGTH_EQ = prove
- (`!pc' n code2 line.
-     asm_fetch_aux pc' code2 = SOME line /\
-     all_enc_ok conf labs (ffi_names:(ffiname)list) n code2 /\
-     pos_val (pc' + 1) n code2 = LENGTH bytes' + pos_val pc' n code2
-       ==>
-     LENGTH (line_bytes line) = LENGTH (bytes':word8 list)`,
+ (cake_as_vars (fun () ->
+    `!pc' n code2 line.
+       asm_fetch_aux pc' code2 = SOME line /\
+       all_enc_ok conf labs ffi_names n code2 /\
+       pos_val (pc' + 1) n code2 = LENGTH bytes' + pos_val pc' n
+         code2 ==>
+       LENGTH (line_bytes line) = LENGTH (bytes':word8 list)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_bytes_in_memory_ShareMem = prove
- (`(asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
+ (cake_as_vars (fun () ->
+    `(asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
   (labLang_Asm (ShareMem mop r ad) l n)) /\
-   code_similar (labSem_state_code
-     (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
-   all_enc_ok (target_config (machine_config_target mc_conf)) labs
-     (ffi_names:(ffiname)list) 0 code2 /\
-   bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
-     (asm_state_mem_domain t1) (labSem_state_mem_domain s1) ==>
-   (?bytes.
-     asm_fetch_aux (labSem_state_pc s1) code2 = SOME (labLang_Asm
-       (ShareMem mop r ad)
-       bytes (LENGTH bytes)) /\
-     enc_with_nop (asm_config_encode (target_config
-       (machine_config_target mc_conf))) (Inst (asm_Mem mop r ad)) bytes
-       /\
-     bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc s1)
-       0 code2))
-       bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
-     bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc s1) 0
-       code2))
-       bytes (asm_state_mem t1) (asm_state_mem_domain t1)
-         (labSem_state_mem_domain s1) /\
-     (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
-       (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-     asm_ok (Inst (asm_Mem mop r ad)) (target_config
-       (machine_config_target
-       (mc_conf:('a,'state,'b)machine_config))))`,
+     code_similar (labSem_state_code
+       (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
+     all_enc_ok (target_config (machine_config_target mc_conf))
+       labs ffi_names 0 code2 /\
+     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) ==>
+     (?bytes.
+       asm_fetch_aux (labSem_state_pc s1) code2 = SOME (labLang_Asm
+         (ShareMem mop r ad)
+         bytes (LENGTH bytes)) /\
+       enc_with_nop (asm_config_encode (target_config
+         (machine_config_target mc_conf))) (Inst (asm_Mem mop r ad))
+         bytes /\
+       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
+         s1) 0 code2))
+         bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+       bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc
+         s1) 0 code2))
+         bytes (asm_state_mem t1) (asm_state_mem_domain t1)
+           (labSem_state_mem_domain s1) /\
+       (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+         (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
+       asm_ok (Inst (asm_Mem mop r ad)) (target_config
+         (machine_config_target
+         (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1615,13 +1664,9 @@ let byte_align_64_IMP = prove
    (byte_align a = a ==> w2n a MOD 8 = 0)`,
   CHEAT_TAC);;
 
-(* [local] *)
-let arith_upd_lemma = prove
- (`(!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME
-  (asm_state_regs t1 r)) /\ ~(failed (arith_upd a s1)) ==>
-    (!r. word_loc_val p labs (regs (arith_upd a s1) r) =
-        SOME (regs (arith_upd a t1) r))`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:2005-2055: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   arith_upd_lemma *)
 
 (* The lab and asm versions should be in their individual props *)
 (* [simp] *)
@@ -1630,17 +1675,9 @@ let arith_upd_fp_regs = prove
    (arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
 
-(* [local] *)
-let fp_upd_lemma = prove
- (`(!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME
-  (asm_state_regs t1 r)) /\
-   (!r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
-    ~(failed (fp_upd f s1)) ==>
-   (!r. fp_regs (fp_upd f s1) r = fp_regs (fp_upd f t1) r) /\
-   (!r.
-     word_loc_val p labs (regs (fp_upd f s1) r) =
-     SOME (regs (fp_upd f t1) r))`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:2068-2096: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   fp_upd_lemma *)
 
 (* Inst_share_mem_pc_update_helper *)
 let inst_share_mem_pc_update_helper = prove
@@ -1667,15 +1704,13 @@ let inst_share_mem_reg_update_helper = prove
        (asm_state_regs t1))) t1)) ms2`,
   CHEAT_TAC);;
 
-let arith_upd_share_mem_domain_unchange = prove
- (`labSem_state_shared_mem_domain
-     (arith_upd a s1) = labSem_state_shared_mem_domain s1`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:2120-2128: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   arith_upd_share_mem_domain_unchange *)
 
-let fp_upd_share_mem_domain_unchange = prove
- (`labSem_state_shared_mem_domain
-     (fp_upd f s1) = labSem_state_shared_mem_domain s1`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:2130-2136: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   fp_upd_share_mem_domain_unchange *)
 
 (* HOL4 lab_to_targetProofScript.sml:2138-2144: a proof *)
 
@@ -1688,36 +1723,23 @@ let align2_not_align3_4w = prove
    x + (n2w 3) = byte_align x + (n2w 7)`,
   CHEAT_TAC);;
 
-(* Inst_lemma *)
-let inst_lemma = prove
- (`~(failed (asm_inst i s1)) /\
-    state_rel ((mc_conf:('a,'state,'b)machine_config),code2,labs,p)
-      s1 t1 ms1 /\
-    (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
-      (labSem_state_pc s1) 0 code2 + LENGTH bytes') ==>
-    ~(failed (inst i t1)) /\
-     (!a. ~(a IN labSem_state_mem_domain s1) ==> mem (inst i t1) a =
-       asm_state_mem t1 a) /\
-    (target_state_rel (machine_config_target mc_conf)
-       (upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (inst i t1))
-         ms2 ==>
-     state_rel (mc_conf,code2,labs,p)
-       (inc_pc (dec_clock (asm_inst i s1)))
-       (upd_pc (asm_state_pc t1 + n2w (LENGTH (bytes':word8 list)))
-         (inst i t1)) ms2)`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:2170-2930: a theorem whose
+   statement HOL Light does not read (tools/unstated.py): Inst_lemma *)
 
 (* compile correct *)
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let line_length_MOD_0 = prove
- (`encoder_correct (machine_config_target mc_conf) /\
-     (~(EVEN p) ==> (asm_config_code_alignment (target_config
-       (machine_config_target mc_conf)) = 0)) /\
-     line_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) p h ==>
-     (line_length h MOD 2 EXP asm_config_code_alignment
-       (target_config (machine_config_target mc_conf)) = 0)`,
+ (cake_as_vars (fun () ->
+    `encoder_correct (machine_config_target mc_conf) /\
+       (~(EVEN p) ==> (asm_config_code_alignment (target_config
+         (machine_config_target mc_conf)) = 0)) /\
+       line_ok (target_config (machine_config_target mc_conf)) labs
+         ffi_names p h ==>
+       (line_length h MOD 2 EXP asm_config_code_alignment
+         (target_config (machine_config_target mc_conf)) = 0)`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -3428,30 +3450,33 @@ let all_enc_ok_pre_enc_sec_list = prove
    (\c ls. EVERY (sec_ok_pre c) ls) c (enc_sec_list enc code)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let remove_labels_thm = prove
- (`remove_labels clock conf init_pos init_labs (ffi_names:(ffiname)list)
-  code = SOME (code2,labs) /\
-   enc_ok conf /\
-   EVERY sec_ends_with_label code /\
-   EVERY sec_labels_ok code /\
-   ALL_DISTINCT (MAP Section_num code) /\
-   EVERY (ALL_DISTINCT o extract_labels o Section_lines) code /\
-   DISJOINT (domain init_labs) (set_of_list (MAP Section_num code))
-     /\
-   restrict_nonzero (get_labels code) SUBSET get_code_labels code
-     UNION labs_domain init_labs /\
-   (\c ls. EVERY (sec_ok_pre c) ls) conf code /\
-   EVEN init_pos /\
-   (!l1 l2. OPTION_ALL EVEN (lab_lookup l1 l2 init_labs)) ==>
-   all_enc_ok conf labs ffi_names init_pos code2 /\
-   code_similar code code2 /\
-   (has_odd_inst code2 ==> asm_config_code_alignment conf = 0) /\
-   (!l1 l2 x. lab_lookup l1 l2 labs = SOME x ==> EVEN x) /\
-   (!l1 l2 x. lab_lookup l1 l2 init_labs = SOME x ==>
-              lab_lookup l1 l2 labs = SOME x) /\
-   (!l1 l2 x2.
-     loc_to_pc l1 l2 code = SOME x2 ==>
-     lab_lookup l1 l2 labs = SOME (pos_val x2 init_pos code2))`,
+ (cake_as_vars (fun () ->
+    `remove_labels clock conf init_pos init_labs ffi_names code = SOME
+  (code2,labs) /\
+     enc_ok conf /\
+     EVERY sec_ends_with_label code /\
+     EVERY sec_labels_ok code /\
+     ALL_DISTINCT (MAP Section_num code) /\
+     EVERY (ALL_DISTINCT o extract_labels o Section_lines) code /\
+     DISJOINT (domain init_labs) (set_of_list (MAP Section_num
+       code)) /\
+     restrict_nonzero (get_labels code) SUBSET get_code_labels code
+       UNION labs_domain init_labs /\
+     (\c ls. EVERY (sec_ok_pre c) ls) conf code /\
+     EVEN init_pos /\
+     (!l1 l2. OPTION_ALL EVEN (lab_lookup l1 l2 init_labs)) ==>
+     all_enc_ok conf labs ffi_names init_pos code2 /\
+     code_similar code code2 /\
+     (has_odd_inst code2 ==> asm_config_code_alignment conf = 0) /\
+     (!l1 l2 x. lab_lookup l1 l2 labs = SOME x ==> EVEN x) /\
+     (!l1 l2 x. lab_lookup l1 l2 init_labs = SOME x ==>
+                lab_lookup l1 l2 labs = SOME x) /\
+     (!l1 l2 x2.
+       loc_to_pc l1 l2 code = SOME x2 ==>
+       lab_lookup l1 l2 labs = SOME (pos_val x2 init_pos code2))`),
   CHEAT_TAC);;
 
 let compute_labels_alt_domain_labs = prove
@@ -3627,45 +3652,51 @@ let read_ffi_bytearrays_ffi_interfer = prove
   read_ffi_bytearrays mc`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_ffi_entry_pcs_disjoint_Asm = prove
- (`!(s1:('a,lab_to_target_config,'ffi)labSem_state)
+ (cake_as_vars (fun () ->
+    `!(s1:('a,lab_to_target_config,'ffi)labSem_state)
   (mc_conf:('a,'state,'b)machine_config).
-     code_similar (labSem_state_code s1) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
-       (labLang_Asm instr _bytes _len) /\
-     (!op re a. ~(instr = ShareMem op re a)) /\
-     share_mem_domain_code_rel mc_conf p code2
-       (labSem_state_shared_mem_domain s1) /\
-     bytes_in_mem (p + n2w (pos_val (labSem_state_pc s1) 0 code2))
-       bytes' (asm_state_mem t1) (asm_state_mem_domain
-       t1) (labSem_state_mem_domain s1) /\
-     pos_val (labSem_state_pc s1 + 1) 0 code2 = LENGTH bytes' +
-       pos_val (labSem_state_pc s1) 0 code2 /\ asm_state_pc
-     t1 = p + n2w (pos_val (labSem_state_pc s1) 0 code2) ==>
-     ffi_entry_pcs_disjoint (mc_conf:('a,'state,'b)machine_config)
-       t1 (LENGTH bytes')`,
+       code_similar (labSem_state_code s1) code2 /\
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) =
+         SOME (labLang_Asm instr _bytes _len) /\
+       (!op re a. ~(instr = ShareMem op re a)) /\
+       share_mem_domain_code_rel mc_conf p code2
+         (labSem_state_shared_mem_domain s1) /\
+       bytes_in_mem (p + n2w (pos_val (labSem_state_pc s1) 0
+         code2)) bytes' (asm_state_mem t1) (asm_state_mem_domain
+         t1) (labSem_state_mem_domain s1) /\
+       pos_val (labSem_state_pc s1 + 1) 0 code2 = LENGTH bytes' +
+         pos_val (labSem_state_pc s1) 0 code2 /\ asm_state_pc
+       t1 = p + n2w (pos_val (labSem_state_pc s1) 0 code2) ==>
+       ffi_entry_pcs_disjoint
+         (mc_conf:('a,'state,'b)machine_config) t1 (LENGTH bytes')`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_ffi_entry_pcs_disjoint_LabAsm = prove
- (`!(s1:('a,lab_to_target_config,'ffi)labSem_state)
+ (cake_as_vars (fun () ->
+    `!(s1:('a,lab_to_target_config,'ffi)labSem_state)
   (mc_conf:('a,'state,'b)machine_config).
-     code_similar (labSem_state_code s1) code2 /\
-     all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (ffi_names:(ffiname)list) 0 code2 /\
-     asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
-       (labLang_LabAsm instr _pos _bytes _len) /\
-     share_mem_domain_code_rel mc_conf p code2
-       (labSem_state_shared_mem_domain s1) /\
-     bytes_in_mem (p + n2w (pos_val (labSem_state_pc s1) 0 code2))
-       bytes' (asm_state_mem t1) (asm_state_mem_domain
-       t1) (labSem_state_mem_domain s1) /\
-     pos_val (labSem_state_pc s1 + 1) 0 code2 = LENGTH bytes' +
-       pos_val (labSem_state_pc s1) 0 code2 /\ asm_state_pc
-     t1 = p + n2w (pos_val (labSem_state_pc s1) 0 code2) ==>
-     ffi_entry_pcs_disjoint (mc_conf:('a,'state,'b)machine_config)
-       t1 (LENGTH bytes')`,
+       code_similar (labSem_state_code s1) code2 /\
+       all_enc_ok (target_config (machine_config_target mc_conf))
+         labs ffi_names 0 code2 /\
+       asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) =
+         SOME (labLang_LabAsm instr _pos _bytes _len) /\
+       share_mem_domain_code_rel mc_conf p code2
+         (labSem_state_shared_mem_domain s1) /\
+       bytes_in_mem (p + n2w (pos_val (labSem_state_pc s1) 0
+         code2)) bytes' (asm_state_mem t1) (asm_state_mem_domain
+         t1) (labSem_state_mem_domain s1) /\
+       pos_val (labSem_state_pc s1 + 1) 0 code2 = LENGTH bytes' +
+         pos_val (labSem_state_pc s1) 0 code2 /\ asm_state_pc
+       t1 = p + n2w (pos_val (labSem_state_pc s1) 0 code2) ==>
+       ffi_entry_pcs_disjoint
+         (mc_conf:('a,'state,'b)machine_config) t1 (LENGTH bytes')`),
   CHEAT_TAC);;
 
 let asm_fetch_SOME_IMP_LESS_num_pcs = prove
@@ -3766,13 +3797,16 @@ let asm_fetch_aux_pos_val_SUC = prove
        + 1) p code2`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let pos_val_asm_fetch_aux_distinct = prove
- (`all_enc_ok c labs ffis p' (code2:('a sec) list) /\
-   enc_ok c /\
-   asm_fetch_aux (pc:num) code2 = SOME line /\
-   a < LENGTH (line_bytes line) /\
-   LENGTH (prog_to_bytes code2) < dimword (:'a) /\ ~(pc' = pc) ==>
-     ~(a + pos_val pc p code2 = pos_val pc' p code2)`,
+ (cake_as_vars (fun () ->
+    `all_enc_ok c labs ffis p' (code2:('a sec) list) /\
+     enc_ok c /\
+     asm_fetch_aux pc code2 = SOME line /\
+     a < LENGTH (line_bytes line) /\
+     LENGTH (prog_to_bytes code2) < dimword (:'a) /\ ~(pc' = pc)
+       ==> ~(a + pos_val pc p code2 = pos_val pc' p code2)`),
   CHEAT_TAC);;
 
 let bytes_in_memory_eq_mem = prove
@@ -3808,11 +3842,14 @@ let ffi_entry_pcs_NOT_ccache_OR_halt_pc = prove
 
 (* HOL4 lab_to_targetProofScript.sml:7171-7200: a proof *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let ffi_name_NOT_Mapped = prove
- (`mmio_pcs_min_index (ffi_names:(ffiname)list) = SOME i /\ (?str. s =
-  ffi_ExtCall str) /\
-   MEM s ffi_names ==>
-   get_ffi_index ffi_names s < i`,
+ (cake_as_vars (fun () ->
+    `mmio_pcs_min_index ffi_names = SOME i /\ (?str. s = ffi_ExtCall
+  str) /\
+     MEM s ffi_names ==>
+     get_ffi_index ffi_names s < i`),
   CHEAT_TAC);;
 
 let mmio_pcs_min_index_is_SOME = prove
@@ -3825,12 +3862,14 @@ let mmio_pcs_min_index_is_SOME = prove
         (?op. EL j ffi_names' = ffi_SharedMem op))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let no_share_mem_lemma = prove
- (`mmio_pcs_min_index (ffi_names:(ffiname)list) = SOME i /\
-   asm_fetch_aux (pc:num) code = SOME (labLang_LabAsm Install c l n)
-     /\
-   no_install_or_no_share_mem code ffi_names ==>
-   i = LENGTH ffi_names`,
+ (cake_as_vars (fun () ->
+    `mmio_pcs_min_index ffi_names = SOME i /\
+     asm_fetch_aux pc code = SOME (labLang_LabAsm Install c l n) /\
+     no_install_or_no_share_mem code ffi_names ==>
+     i = LENGTH ffi_names`),
   CHEAT_TAC);;
 
 let asm_fetch_aux_APPEND1 = prove
@@ -3845,17 +3884,23 @@ let pos_val_APPEND1 = prove
      pos_val pc' 0 (code ++ sec_list) = pos_val pc' 0 code`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let asm_fetch_aux_APPEND2 = prove
- (`!code.
-     asm_fetch_aux ((pc:num) + num_pcs code) (code ++ sec_list) =
-       asm_fetch_aux pc sec_list`,
+ (cake_as_vars (fun () ->
+    `!code.
+       asm_fetch_aux (pc + num_pcs code) (code ++ sec_list) =
+         asm_fetch_aux pc sec_list`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let pos_val_APPEND2 = prove
- (`!c labs ffis p code.
-     all_enc_ok c labs ffis p code ==>
-     pos_val ((pc:num) + num_pcs code) 0 (code ++ sec_list) =
-       LENGTH (prog_to_bytes code) + pos_val pc 0 sec_list`,
+ (cake_as_vars (fun () ->
+    `!c labs ffis p code.
+       all_enc_ok c labs ffis p code ==>
+       pos_val (pc + num_pcs code) 0 (code ++ sec_list) =
+         LENGTH (prog_to_bytes code) + pos_val pc 0 sec_list`),
   CHEAT_TAC);;
 
 let get_shmem_info_MappedRead_or_MappedWrite = prove
@@ -3883,10 +3928,13 @@ let code_similar_IMP_both_no_share_mem = prove
    no_share_mem_inst sec_list`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let code_similar_IMP_both_no_install_or_no_share_mem = prove
- (`code_similar code sec_list /\
-   no_install_or_no_share_mem code (ffi_names:(ffiname)list) ==>
-   no_install_or_no_share_mem sec_list ffi_names`,
+ (cake_as_vars (fun () ->
+    `code_similar code sec_list /\
+     no_install_or_no_share_mem code ffi_names ==>
+     no_install_or_no_share_mem sec_list ffi_names`),
   CHEAT_TAC);;
 
 let no_share_mem_IMP_get_shmem_info = prove
@@ -3965,20 +4013,9 @@ let oracle_tie_ccache_residues = prove
 
 (* HOL4 lab_to_targetProofScript.sml:7526: ML code, not ported *)
 
-(* compile_correct *)
-let lab_to_targetProof_compile_correct = prove
- (`!(s1:('a,lab_to_target_config,'ffi)labSem_state) res
-  (mc_conf:('a,'state,'b)machine_config) s2 code2 labs t1 ms1.
-      oracle_tie mc_conf ms1 s1 /\
-      (evaluate s1 = (res,s2)) /\ (~(res = Error)) /\
-      encoder_correct (machine_config_target mc_conf) /\
-      state_rel (mc_conf,code2,labs,p) s1 t1 ms1 ==>
-      (?k t2 ms2.
-        (evaluate mc_conf (labSem_state_ffi s1) (labSem_state_clock
-          s1 + k) ms1 =
-           (res,
-            ms2,state_ffi s2)))`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:7528-7558: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   compile_correct *)
 
 (* HOL4 lab_to_targetProofScript.sml:7560-7717: a proof *)
 
@@ -4056,13 +4093,9 @@ let init_ok_def = cake_define
        state_rel (mc_conf,code2,labs,p) s t1 ms /\
        oracle_tie mc_conf ms s)`;;
 
-let machine_sem_EQ_sem = prove
- (`!mc_conf p (ms:'state)
-  (s1:('a,lab_to_target_config,'ffi)labSem_state).
-     encoder_correct (machine_config_target mc_conf) /\
-     init_ok (mc_conf,p) s1 ms /\ ~(semantics s1 = ffi_Fail) ==>
-     machine_sem mc_conf (labSem_state_ffi s1) ms = {semantics s1}`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:9364-9526: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   machine_sem_EQ_sem *)
 
 (* HOL4 lab_to_targetProofScript.sml:9528-9531: code that the source
    has in a comment *)
@@ -4158,14 +4191,17 @@ let get_shmem_info_APPEND = prove
        info2))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let get_shmem_info_PREPEND = prove
- (`get_shmem_info secs pos (ffi_names:(ffiname)list)
-  (shmem_info:shmem_info_num list) =
-     (new_ffi_names,new_shmem_info) ==>
-   new_ffi_names = ffi_names ++ (FST (get_shmem_info secs pos [] []))
-     /\
-   new_shmem_info = shmem_info ++ (SND (get_shmem_info secs pos []
-     []))`,
+ (cake_as_vars (fun () ->
+    `get_shmem_info secs pos ffi_names (shmem_info:shmem_info_num list)
+  =
+       (new_ffi_names,new_shmem_info) ==>
+     new_ffi_names = ffi_names ++ (FST (get_shmem_info secs pos []
+       [])) /\
+     new_shmem_info = shmem_info ++ (SND (get_shmem_info secs pos
+       [] []))`),
   CHEAT_TAC);;
 
 let line_to_info_def = cake_define
@@ -4222,17 +4258,20 @@ let mmio_pcs_min_index_APPEND_thm = prove
    mmio_pcs_min_index (ffis ++ l) = SOME (LENGTH ffis)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let MEM_get_shmem_info = prove
- (`all_enc_ok c labs ffis p' (code2:('a sec) list) /\
-   asm_fetch_aux (pc:num) code2 = SOME (labLang_Asm (ShareMem op re
-     a) inst' len) /\
-   get_memop_info op = (q,(r:word8)) ==>
-   MEM
-     (ffi_SharedMem q,
-     mk_shmem_info_num (pos_val pc p code2) r (match a with Addr r
-       off -> r) (match a with Addr r off -> w2n off) re (pos_val pc (p
-       + LENGTH inst') code2))
-     (UNCURRY ZIP (get_shmem_info code2 p [] []))`,
+ (cake_as_vars (fun () ->
+    `all_enc_ok c labs ffis p' (code2:('a sec) list) /\
+     asm_fetch_aux pc code2 = SOME (labLang_Asm (ShareMem op re a)
+       inst' len) /\
+     get_memop_info op = (q,(r:word8)) ==>
+     MEM
+       (ffi_SharedMem q,
+       mk_shmem_info_num (pos_val pc p code2) r (match a with Addr
+         r off -> r) (match a with Addr r off -> w2n off) re (pos_val pc
+         (p + LENGTH inst') code2))
+       (UNCURRY ZIP (get_shmem_info code2 p [] []))`),
   CHEAT_TAC);;
 
 let get_shmem_info_ALL_DISTINCT = prove
@@ -4313,40 +4352,46 @@ let get_shmem_info_ok_lemma = prove
            a < LENGTH (line_bytes line)})`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let asm_fetch_NOT_ffi_entry_pcs = prove
- (`LENGTH (prog_to_bytes code2) < dimword (:'a) /\
-   mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
-   LENGTH (machine_config_ffi_names mc_conf) = LENGTH
-     (machine_config_ffi_entry_pcs mc_conf) /\
-   all_enc_ok (target_config (machine_config_target mc_conf)) labs
-     (ffi_names:(ffiname)list) 0 (code2:('a sec) list) /\
-   enc_ok (target_config (machine_config_target mc_conf)) /\
-   (!index.
-     index < i ==> ~(--(n2w (ffi_offset * (index + 3))) +
-       target_get_pc (machine_config_target mc_conf) (ms:'state) IN
-       machine_config_prog_addresses
-     mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) + target_get_pc
-       (machine_config_target mc_conf) ms IN
-       machine_config_shared_addresses
-     mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) + target_get_pc
-       (machine_config_target mc_conf) ms = machine_config_halt_pc
-     mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) + target_get_pc
-       (machine_config_target mc_conf) ms = machine_config_ccache_pc
-     mc_conf) /\
-     find_index
-       (--(n2w (ffi_offset * (index + 3))) + target_get_pc
-         (machine_config_target mc_conf) ms)
-         (machine_config_ffi_entry_pcs
-       mc_conf) 0 = SOME index) /\
-   bytes_in_mem (target_get_pc (machine_config_target mc_conf) ms)
-     (prog_to_bytes code2) (asm_state_mem t)
-     (machine_config_prog_addresses
-      (mc_conf:('a,'state,'b)machine_config)) dm /\
-   asm_fetch_aux pos code2 = SOME line /\
-   a < LENGTH (line_bytes line) ==>
-   ~(MEM (target_get_pc (machine_config_target mc_conf) ms + n2w a +
-     (n2w (pos_val pos 0 code2)))
-     (TAKE i (machine_config_ffi_entry_pcs mc_conf)))`,
+ (cake_as_vars (fun () ->
+    `LENGTH (prog_to_bytes code2) < dimword (:'a) /\
+     mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i
+       /\
+     LENGTH (machine_config_ffi_names mc_conf) = LENGTH
+       (machine_config_ffi_entry_pcs mc_conf) /\
+     all_enc_ok (target_config (machine_config_target mc_conf))
+       labs ffi_names 0 (code2:('a sec) list) /\
+     enc_ok (target_config (machine_config_target mc_conf)) /\
+     (!index.
+       index < i ==> ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) (ms:'state) IN
+         machine_config_prog_addresses
+       mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) ms IN
+         machine_config_shared_addresses
+       mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) ms =
+         machine_config_halt_pc
+       mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) ms =
+         machine_config_ccache_pc
+       mc_conf) /\
+       find_index
+         (--(n2w (ffi_offset * (index + 3))) + target_get_pc
+           (machine_config_target mc_conf) ms)
+           (machine_config_ffi_entry_pcs
+         mc_conf) 0 = SOME index) /\
+     bytes_in_mem (target_get_pc (machine_config_target mc_conf)
+       ms) (prog_to_bytes code2) (asm_state_mem t)
+       (machine_config_prog_addresses
+        (mc_conf:('a,'state,'b)machine_config)) dm /\
+     asm_fetch_aux pos code2 = SOME line /\
+     a < LENGTH (line_bytes line) ==>
+     ~(MEM (target_get_pc (machine_config_target mc_conf) ms + n2w
+       a + (n2w (pos_val pos 0 code2)))
+       (TAKE i (machine_config_ffi_entry_pcs mc_conf)))`),
   CHEAT_TAC);;
 
 let list_subset_refl = prove
@@ -4497,16 +4542,9 @@ let make_init_simp = prove
 (* HOL4 lab_to_targetProofScript.sml:10524-10538: a theorem that HOL4
    states as the value of an ML expression: semantics_make_init *)
 
-let make_init_filter_skip = prove
- (`semantics (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms
-  (filter_skip code)
-       (compile_lab (target_config (machine_config_target mc_conf)))
-         cbpos cbspace ((\(a,b). (a,filter_skip b)) o coracle)) =
-   semantics
-    (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms code
-      (\c p. (compile_lab (target_config (machine_config_target
-        mc_conf))) c (filter_skip p)) cbpos cbspace coracle)`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:10540-10552: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   make_init_filter_skip *)
 
 (* TODO: move *)
 let find_ffi_names_filter_skip = prove
@@ -4579,9 +4617,12 @@ let all_pc_adjust_pc = prove
      (?k. adjust_pc k code = p)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let no_install_or_no_share_mem_filter_skip = prove
- (`no_install_or_no_share_mem code (ffi_names:(ffiname)list) ==>
-   no_install_or_no_share_mem (filter_skip code) ffi_names`,
+ (cake_as_vars (fun () ->
+    `no_install_or_no_share_mem code ffi_names ==>
+     no_install_or_no_share_mem (filter_skip code) ffi_names`),
   CHEAT_TAC);;
 (* HOL4 lab_to_targetProofScript.sml:10827-10848: code that the
    source has in a comment *)
@@ -4599,63 +4640,9 @@ let find_ffi_names_EVERY = prove
 (* HOL4 lab_to_targetProofScript.sml:10953-11010: code that the
    source has in a comment *)
 
-(* [local] *)
-let semantics_compile_lemma' = prove
- (`mc_conf_ok mc_conf /\
-   (no_share_mem_inst code ==>
-     compiler_oracle_ok coracle (lab_to_target_config_labels c')
-       (LENGTH bytes) (asm_conf:'a asm_config) (machine_config_ffi_names
-       mc_conf)) /\
-   // Assumptions on input code
-   lab_to_targetProof_good_code (target_config (machine_config_target
-     mc_conf)) LN code /\
-   // Config state
-   asm_conf = target_config (machine_config_target mc_conf) /\
-     lab_to_target_config_labels
-   c = LN /\ lab_to_target_config_pos c = 0 /\
-   lab_to_target_compile asm_conf (c:lab_to_target_config) code =
-     SOME (bytes,c') /\ ffi_names
-   // FFI is either given or computed
-   c' = SOME (machine_config_ffi_names mc_conf) /\
-   good_init_state mc_conf ms bytes cbspace t m dm sdm /\
-   // set up mmio_info and ffi_entry_pcs for mmio
-   MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf) ms)
-     + shmem_info_num_entry_pc rec) (lab_to_target_config_shmem_extra
-     c') =
-     DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
-       machine_config_mmio_info
-   mc_conf = ZIP (GENLIST (\index. index + i) (LENGTH
-     (lab_to_target_config_shmem_extra c')))
-                             (MAP (\rec. (shmem_info_num_nbytes
-                               rec,Addr (shmem_info_num_addr_reg rec)
-                               (n2w (shmem_info_num_addr_off
-                               rec)),shmem_info_num_reg
-                              rec,n2w (shmem_info_num_exit_pc rec) +
-                                target_get_pc (machine_config_target
-                                mc_conf) ms))
-                                (lab_to_target_config_shmem_extra
-                              c')) /\
-   no_install_or_no_share_mem code (machine_config_ffi_names mc_conf)
-     /\
-   (mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i)
-     /\
-   // to avoid the ffi_entry_pc wraps around and overlaps with the program or code buffer
-   cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a) /\
-   (
-    // the original ffi names provided does not contain MappedRead or MappedWrite
-    !ffis. lab_to_target_config_ffi_names c = SOME ffis ==> EVERY
-      (\x. ?s. x = ffi_ExtCall s) ffis) /\ ~(semantics
-      (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms code
-     (lab_to_target_compile asm_conf) (target_get_pc
-       (machine_config_target mc_conf) ms + n2w (LENGTH bytes)) cbspace
-     coracle) = ffi_Fail) ==>
-   machine_sem mc_conf ffi ms =
-   {semantics (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms
-     code
-     (lab_to_target_compile asm_conf) (target_get_pc
-       (machine_config_target mc_conf) ms + n2w (LENGTH bytes)) cbspace
-     coracle)}`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:11012-11165: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   semantics_compile_lemma' *)
 
 (* HOL4 lab_to_targetProofScript.sml:11167-11171: a theorem that HOL4
    states as the value of an ML expression: semantics_compile_lemma *)
@@ -4666,54 +4653,9 @@ let semantics_compile_lemma' = prove
 (* HOL4 lab_to_targetProofScript.sml:11200-11245: code that the
    source has in a comment *)
 
-(* semantics_compile *)
-let lab_to_targetProof_semantics_compile = prove
- (`mc_conf_ok mc_conf /\
-   (no_share_mem_inst code ==>
-     compiler_oracle_ok coracle (lab_to_target_config_labels c')
-       (LENGTH bytes) asm_conf (machine_config_ffi_names mc_conf)) /\
-   lab_to_targetProof_good_code asm_conf (lab_to_target_config_labels
-     c) code /\
-   asm_conf = target_config (machine_config_target mc_conf) /\
-     lab_to_target_config_labels
-   c = LN /\ lab_to_target_config_pos c = 0 /\
-   compile asm_conf c (code:('a sec) list) = SOME (bytes,c') /\
-     ffi_names
-   c' = SOME (machine_config_ffi_names mc_conf) /\
-   good_init_state mc_conf ms bytes cbspace t m dm sdm /\
-   mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
-   MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf) ms)
-     + shmem_info_num_entry_pc rec) (lab_to_target_config_shmem_extra
-     c') =
-    DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
-      machine_config_mmio_info
-   mc_conf = ZIP (GENLIST (\index. index + i) (LENGTH
-     (lab_to_target_config_shmem_extra c')))
-                              (MAP (\rec. (shmem_info_num_nbytes
-                                rec,Addr (shmem_info_num_addr_reg rec)
-                                (n2w (shmem_info_num_addr_off
-                                rec)),shmem_info_num_reg
-                              rec,n2w (shmem_info_num_exit_pc rec) +
-                                target_get_pc (machine_config_target
-                                mc_conf) ms))
-                                (lab_to_target_config_shmem_extra
-                              c')) /\
-   no_install_or_no_share_mem code (machine_config_ffi_names mc_conf)
-     /\
-   // to avoid the ffi_entry_pc wraps around and overlaps with the program or code buffer
-   cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a) /\
-   (
-    // the original ffi names provided does not contain MappedRead or MappedWrite
-    !ffis. ffi_names c = SOME ffis ==> EVERY (\x. ?s. x = ffi_ExtCall
-      s) ffis) ==>
-    implements' T (machine_sem mc_conf ffi ms)
-      {semantics
-         (lab_to_targetProof_make_init mc_conf ffi t m (dm INTER
-           byte_aligned) (sdm INTER byte_aligned) ms code
-            (compile asm_conf) (target_get_pc (machine_config_target
-              mc_conf) ms + n2w (LENGTH bytes))
-            cbspace coracle)}`,
-  CHEAT_TAC);;
+(* HOL4 lab_to_targetProofScript.sml:11247-11303: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   semantics_compile *)
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

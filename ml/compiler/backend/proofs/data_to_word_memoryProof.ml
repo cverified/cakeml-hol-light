@@ -1191,11 +1191,14 @@ let EVERY2_ADDR_MAP = prove
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_ref_inv_related = prove
- (`gc_related g heap1 heap2 /\
-     bc_ref_inv conf n refs (f,tf,heap1,(be:bool)) /\ (FAPPLY f n) IN
-       FDOM g ==>
-     bc_ref_inv conf n refs (g f_o_f f,g f_o_f tf,heap2,be)`,
+ (cake_as_vars (fun () ->
+    `gc_related g heap1 heap2 /\
+       bc_ref_inv conf n refs (f,tf,heap1,be) /\ (FAPPLY f n) IN
+         FDOM g ==>
+       bc_ref_inv conf n refs (g f_o_f f,g f_o_f tf,heap2,be)`),
   CHEAT_TAC);;
 
 let gc_inline_rel = cake_inductive
@@ -1264,10 +1267,13 @@ let gc_heap_inline_rel_heap_lookup = prove
      MATCH_ACCEPT_TAC(MATCH_MP ih r)))));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let ThunkBlock_not_EQ = prove
- (`~(ThunkBlock ev x = Bignum i) /\ ~(ThunkBlock ev x = Word64Rep
+ (cake_as_vars (fun () ->
+    `~(ThunkBlock ev x = Bignum i) /\ ~(ThunkBlock ev x = Word64Rep
   (:'a) w) /\ ~(ThunkBlock ev x = BlockRep n xs) /\ ~(ThunkBlock ev x
-  = RefBlock zs) /\ ~(ThunkBlock ev x = Bytes (be:bool) flag bs ys)`,
+  = RefBlock zs) /\ ~(ThunkBlock ev x = Bytes be flag bs ys)`),
   (REWRITE_TAC[ThunkBlock_def; bignum_def;
                Word64Rep_def; BlockRep_def;
                RefBlock_def; bytes_def] THEN
@@ -1330,56 +1336,68 @@ let LIST_REL_gc_heap_inline_DataElement = prove
        MATCH_ACCEPT_TAC(MATCH_MP ih r)))]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let gc_heap_inline_rel_v_inv_lemma = prove
- (`!ck v refs x1 x2 f tf heap1 heap2.
-     v_inv conf v refs (x1,f,tf,heap1) ==>
-       LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
-         heap1 heap2 /\
-       (!n.
-         n IN FDOM f /\
-         reachable_refs [v] refs n ==>
-           bc_ref_inv conf n refs (f,tf,heap1,(be:bool))) /\
-       gc_inline_rel dest_evaluated_thunk_rel heap1 x1 x2 ==>
-         v_inv_ck ck conf v refs (x2,f,tf,heap2)`,
+ (cake_as_vars (fun () ->
+    `!ck v refs x1 x2 f tf heap1 heap2.
+       v_inv conf v refs (x1,f,tf,heap1) ==>
+         LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel
+           heap1) heap1 heap2 /\
+         (!n.
+           n IN FDOM f /\
+           reachable_refs [v] refs n ==>
+             bc_ref_inv conf n refs (f,tf,heap1,be)) /\
+         gc_inline_rel dest_evaluated_thunk_rel heap1 x1 x2 ==>
+           v_inv_ck ck conf v refs (x2,f,tf,heap2)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let gc_heap_inline_rel_v_inv = prove
- (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1) heap1
+ (cake_as_vars (fun () ->
+    `LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1) heap1
   heap2 /\
-   (!n.
-     n IN FDOM f /\
-     reachable_refs [v] refs n ==>
-       bc_ref_inv conf n refs (f,tf,heap1,(be:bool))) /\
-   v_inv conf v refs (x1,f,tf,heap1) /\
-   gc_inline_rel dest_evaluated_thunk_rel heap1 x1 x2 ==>
-     v_inv conf v refs (x2,f,tf,heap2)`,
+     (!n.
+       n IN FDOM f /\
+       reachable_refs [v] refs n ==>
+         bc_ref_inv conf n refs (f,tf,heap1,be)) /\
+     v_inv conf v refs (x1,f,tf,heap1) /\
+     gc_inline_rel dest_evaluated_thunk_rel heap1 x1 x2 ==>
+       v_inv conf v refs (x2,f,tf,heap2)`),
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; gc_heap_inline_rel_v_inv_lemma]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_gc_inline = prove
- (`gc_inline dest_evaluated_thunk_rel (roots1,heap1) (roots2,heap2) /\
-   bc_stack_ref_inv conf ts (stack:(dataSem_v)list) refs
-     (roots1,heap1,(be:bool)) ==>
-     bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`,
+ (cake_as_vars (fun () ->
+    `gc_inline dest_evaluated_thunk_rel (roots1,heap1) (roots2,heap2) /\
+     bc_stack_ref_inv conf ts stack refs (roots1,heap1,be) ==>
+       bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_gc_related_roots_heap = prove
- (`gc_related_roots_heap g (roots1,heap1) (roots2,heap2) /\
-   bc_stack_ref_inv conf ts (stack:(dataSem_v)list) refs
-     (roots1,heap1,(be:bool)) ==>
-     bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`,
+ (cake_as_vars (fun () ->
+    `gc_related_roots_heap g (roots1,heap1) (roots2,heap2) /\
+     bc_stack_ref_inv conf ts stack refs (roots1,heap1,be) ==>
+       bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_related = prove
- (`gc_inline_related dest_evaluated_thunk_rel g (roots1,heap1)
+ (cake_as_vars (fun () ->
+    `gc_inline_related dest_evaluated_thunk_rel g (roots1,heap1)
   (roots2,heap2) /\
-   bc_stack_ref_inv conf ts (stack:(dataSem_v)list) refs
-     (roots1,heap1,(be:bool)) ==>
-     bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`,
+     bc_stack_ref_inv conf ts stack refs (roots1,heap1,be) ==>
+       bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`),
   (REWRITE_TAC[gc_inline_related_def] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[bc_stack_ref_inv_gc_inline;
                  bc_stack_ref_inv_gc_related_roots_heap]));;
@@ -1472,23 +1490,25 @@ let gc_related_APPEND_heap_expand = prove
                heap_lookup_expand_eq_SOME]));;
 
 (* full_gc_thm *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let data_to_word_memoryProof_full_gc_thm = prove
- (`abs_ml_inv conf (stack:(dataSem_v)list) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-  data_to_word_config_gc_kind
-   conf = Simple ==>
-    (?roots2 heap2 a2.
-      (full_gc (roots,heap,limit) = (roots2,heap2,a2,T)) /\
-       abs_ml_inv conf stack refs
-        (roots2,heap2 ++ heap_expand (limit - a2),be,
-         a2,limit - a2,0,gens) limit ts /\
-      (heap_length heap2 = a2) /\
-      (heap_length (heap_filter (reachable_addresses roots heap)
-        heap) =
-       heap_length heap2) /\
-      all_reachable_from_roots roots2 (heap2 ++ heap_expand (limit -
-        a2)) /\
-      EVERY isDataElement heap2)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
+  /\ data_to_word_config_gc_kind
+     conf = Simple ==>
+      (?roots2 heap2 a2.
+        (full_gc (roots,heap,limit) = (roots2,heap2,a2,T)) /\
+         abs_ml_inv conf stack refs
+          (roots2,heap2 ++ heap_expand (limit - a2),be,
+           a2,limit - a2,0,gens) limit ts /\
+        (heap_length heap2 = a2) /\
+        (heap_length (heap_filter (reachable_addresses roots heap)
+          heap) =
+         heap_length heap2) /\
+        all_reachable_from_roots roots2 (heap2 ++ heap_expand
+          (limit - a2)) /\
+        EVERY isDataElement heap2)`),
   CHEAT_TAC);;
 
 let make_gc_conf_def = cake_define
@@ -1833,24 +1853,28 @@ let gen_state_ok_reset = prove
    ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC));;
 
 (* gen_gc_thm *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let data_to_word_memoryProof_gen_gc_thm = prove
- (`abs_ml_inv conf (stack:(dataSem_v)list) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts ==>
-    (?roots2 state2.
-      (gen_gc (make_gc_conf limit) (roots,heap) = (roots2,state2)) /\
-      abs_ml_inv conf stack refs
-        (roots2,gc_state_h1 state2 ++ heap_expand (gc_state_n state2)
-          ++ gc_state_r1 state2,be,gc_state_a
-         state2,gc_state_n state2,0,reset_gens conf (gc_state_a
-           state2)) limit ts /\ gc_state_ok state2 /\
-      (heap_length (gc_state_h1 state2 ++ gc_state_r1 state2) =
-       heap_length (heap_filter (reachable_addresses roots heap)
-         heap)) /\
-      EVERY isDataElement (gc_state_h1 state2) /\
-      EVERY isDataElement (gc_state_r1 state2) /\
-      all_reachable_from_roots roots2
-        (gc_state_h1 state2 ++ heap_expand (gc_state_n state2) ++
-          gc_state_r1 state2))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
+  ==>
+      (?roots2 state2.
+        (gen_gc (make_gc_conf limit) (roots,heap) =
+          (roots2,state2)) /\
+        abs_ml_inv conf stack refs
+          (roots2,gc_state_h1 state2 ++ heap_expand (gc_state_n
+            state2) ++ gc_state_r1 state2,be,gc_state_a
+           state2,gc_state_n state2,0,reset_gens conf (gc_state_a
+             state2)) limit ts /\ gc_state_ok state2 /\
+        (heap_length (gc_state_h1 state2 ++ gc_state_r1 state2) =
+         heap_length (heap_filter (reachable_addresses roots heap)
+           heap)) /\
+        EVERY isDataElement (gc_state_h1 state2) /\
+        EVERY isDataElement (gc_state_r1 state2) /\
+        all_reachable_from_roots roots2
+          (gc_state_h1 state2 ++ heap_expand (gc_state_n state2)
+            ++ gc_state_r1 state2))`),
   CHEAT_TAC);;
 
 let has_gen_def = cake_define
@@ -1964,22 +1988,25 @@ let isRef_heap_expand = prove
    REWRITE_TAC[ALL; isRef_def] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let gen_gc_partial_thm = prove
- (`abs_ml_inv conf (stack:(dataSem_v)list) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   has_gen gens /\ data_to_word_config_gc_kind conf =
-     data_to_word_Generational xs ==>
-    (?roots2 state2.
-      partial_gc
-        (make_partial_conf (make_gc_conf limit) gens (a + (sp +
-          sp1)))
-        (roots,heap) = (roots2,state2) /\
-      abs_ml_inv conf stack refs
-        (roots2,gc_state_old state2 ++ gc_state_h1 state2 ++
-          heap_expand (gc_state_n state2) ++ gc_state_r1
-          state2,be,gc_state_a
-         state2,gc_state_n state2,0,reset_gens conf (gc_state_a
-           state2)) limit ts /\ gc_state_ok state2)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
+  /\
+     has_gen gens /\ data_to_word_config_gc_kind conf =
+       data_to_word_Generational xs ==>
+      (?roots2 state2.
+        partial_gc
+          (make_partial_conf (make_gc_conf limit) gens (a + (sp +
+            sp1)))
+          (roots,heap) = (roots2,state2) /\
+        abs_ml_inv conf stack refs
+          (roots2,gc_state_old state2 ++ gc_state_h1 state2 ++
+            heap_expand (gc_state_n state2) ++ gc_state_r1
+            state2,be,gc_state_a
+           state2,gc_state_n state2,0,reset_gens conf (gc_state_a
+             state2)) limit ts /\ gc_state_ok state2)`),
   CHEAT_TAC);;
 
 let data_pointers_def = cake_define
@@ -2218,22 +2245,25 @@ let data_length_heap_expand = prove
    GEN_REWRITE_TAC ONCE_DEPTH_CONV [data_pointers_def] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[MAP; SUM_DEF; ITLIST]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let gc_combined_thm = prove
- (`abs_ml_inv conf (stack:(dataSem_v)list) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   (do_partial ==> has_gen gens) ==>
-    (?roots2 heap2 gens2 n2 a2.
-      (gc_combined (make_gc_conf limit) (data_to_word_config_gc_kind
-        conf)
-            (roots,heap,gens,a + sp + sp1,do_partial) =
-         (roots2,heap2,a2,n2,gens2,T)) /\
-      abs_ml_inv conf stack refs (roots2,heap2,be,a2,n2,0,gens2)
-        limit ts /\
-      (~(data_to_word_config_gc_kind conf = None) /\
-        (~(data_to_word_config_gc_kind conf = Simple) ==> ~do_partial)
-        ==>
-       all_reachable_from_roots roots2 heap2 /\
-       heap_length heap2 = data_length heap2 + n2))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
+  /\
+     (do_partial ==> has_gen gens) ==>
+      (?roots2 heap2 gens2 n2 a2.
+        (gc_combined (make_gc_conf limit)
+          (data_to_word_config_gc_kind conf)
+              (roots,heap,gens,a + sp + sp1,do_partial) =
+           (roots2,heap2,a2,n2,gens2,T)) /\
+        abs_ml_inv conf stack refs (roots2,heap2,be,a2,n2,0,gens2)
+          limit ts /\
+        (~(data_to_word_config_gc_kind conf = None) /\
+          (~(data_to_word_config_gc_kind conf = Simple) ==> ~do_partial)
+          ==>
+         all_reachable_from_roots roots2 heap2 /\
+         heap_length heap2 = data_length heap2 + n2))`),
   CHEAT_TAC);;
 
 (* Write to unused heap space is fine, e.g. cons *)
@@ -3415,12 +3445,14 @@ let v_inv_tf_update_thm = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_lemma]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let v_inv_tf_update_thm_alt_lemma = prove
- (`!ck v refs y f tf heap ts' a.
-     v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN (all_ts refs
-       (stack:(dataSem_v)list))) /\ ~(ts' IN set_of_list (v_all_ts v))
-       ==>
-         v_inv_ck ck conf v refs (y,f,tf |+ (ts',a),heap)`,
+ (cake_as_vars (fun () ->
+    `!ck v refs y f tf heap ts' a.
+       v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN (all_ts refs
+         stack)) /\ ~(ts' IN set_of_list (v_all_ts v)) ==>
+           v_inv_ck ck conf v refs (y,f,tf |+ (ts',a),heap)`),
   CHEAT_TAC);;
 
 let v_inv_tf_update_thm_alt = prove
@@ -3431,15 +3463,18 @@ let v_inv_tf_update_thm_alt = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_alt_lemma]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let v_inv_tf_update_lemma = prove
- (`!ck v1 refs v2.
-     v_inv conf v1 refs v2 ==>
-       (!ts tag xs y f tf heap.
-         v1 = (Block ts tag xs) /\
-         v2 = (y,f,tf,heap) /\
-         v1 IN (all_vs refs (stack:(dataSem_v)list)) /\ ~(ts' IN
-           all_ts refs stack) ==>
-           v_inv_ck ck conf v1 refs (y,f,tf |+ (ts',a),heap))`,
+ (cake_as_vars (fun () ->
+    `!ck v1 refs v2.
+       v_inv conf v1 refs v2 ==>
+         (!ts tag xs y f tf heap.
+           v1 = (Block ts tag xs) /\
+           v2 = (y,f,tf,heap) /\
+           v1 IN (all_vs refs stack) /\ ~(ts' IN all_ts refs stack)
+             ==>
+             v_inv_ck ck conf v1 refs (y,f,tf |+ (ts',a),heap))`),
   CHEAT_TAC);;
 
 let v_inv_tf_update = prove
@@ -3451,13 +3486,15 @@ let v_inv_tf_update = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_lemma]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let v_inv_tf_restrict_lemma = prove
- (`!ck v1 refs y f tf heap.
-     v_inv conf v1 refs (y,f,tf,heap) ==>
-         (!x. MEM x (v_all_ts v1) ==> x IN P) /\
-         (!x. x IN (all_ts refs (stack:(dataSem_v)list)) ==> x IN P)
-           ==>
-           v_inv_ck ck conf v1 refs (y,f,DRESTRICT tf P,heap)`,
+ (cake_as_vars (fun () ->
+    `!ck v1 refs y f tf heap.
+       v_inv conf v1 refs (y,f,tf,heap) ==>
+           (!x. MEM x (v_all_ts v1) ==> x IN P) /\
+           (!x. x IN (all_ts refs stack) ==> x IN P) ==>
+             v_inv_ck ck conf v1 refs (y,f,DRESTRICT tf P,heap)`),
   CHEAT_TAC);;
 
 let v_inv_tf_restrict = prove
@@ -3615,37 +3652,47 @@ let blocks_unique_cons_thm = prove
      inst a1 x1 a1 x1 THEN STRIP_TAC THEN
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let cons_thm_alt = prove
- (`abs_ml_inv conf (xs ++ (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    LENGTH xs < sp /\ ~(xs = []) ==>
-    (?rs roots2 heap2.
-      (roots = rs ++ roots2) /\ (LENGTH rs = LENGTH xs) /\
-      (heap_store_unused_alt a (sp + sp1) (BlockRep tag rs) heap =
-        (heap2,T)) /\
-      abs_ml_inv conf
-        ((Block ts tag xs) :: stack) refs
-        (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag
-          (LENGTH xs))) :: roots2,
-         heap2,be,a + el_length (BlockRep tag rs),
-         sp - el_length (BlockRep tag rs),sp1,gens) limit (ts + 1))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs ++ stack) refs (roots,heap,be,a,sp,sp1,gens)
+  limit ts /\
+      LENGTH xs < sp /\ ~(xs = []) ==>
+      (?rs roots2 heap2.
+        (roots = rs ++ roots2) /\ (LENGTH rs = LENGTH xs) /\
+        (heap_store_unused_alt a (sp + sp1) (BlockRep tag rs) heap
+          = (heap2,T)) /\
+        abs_ml_inv conf
+          ((Block ts tag xs) :: stack) refs
+          (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag
+            (LENGTH xs))) :: roots2,
+           heap2,be,a + el_length (BlockRep tag rs),
+           sp - el_length (BlockRep tag rs),sp1,gens) limit (ts +
+             1))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let cons_thm_EMPTY = prove
- (`abs_ml_inv conf (stack:(dataSem_v)list) refs (roots,(heap:(('a
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf stack refs (roots,(heap:(('a
   word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)
-  list),(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    tag < dimword (:'a) DIV 16 ==>
-    abs_ml_inv conf ((Block 0 tag []) :: stack) refs
-      (gc_shared_Data (wordLang_Word (BlockNil tag)) ::
-        roots,heap,be,a,sp,sp1,gens) limit ts`,
+  list),be,a,sp,sp1,gens) limit ts /\
+      tag < dimword (:'a) DIV 16 ==>
+      abs_ml_inv conf ((Block 0 tag []) :: stack) refs
+        (gc_shared_Data (wordLang_Word (BlockNil tag)) ::
+          roots,heap,be,a,sp,sp1,gens) limit ts`),
   CHEAT_TAC);;
 
 (* word64 *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_Word64 = prove
- (`blocks_unique ts (all_vs refs (ws ++ (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (Word64 w64 :: stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (ws ++ stack)) ==>
+       blocks_unique ts (all_vs refs (Word64 w64 :: stack))`),
   (* a Block of all_vs refs (Word64 w :: stack) is one of
      all_vs refs (ws ++ stack): the Word64 is no Block, and the rest
      of v_all_vs (Word64 w :: stack) is v_all_vs stack *)
@@ -3666,26 +3713,34 @@ let blocks_unique_Word64 = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word64_alt_thm = prove
- (`abs_ml_inv conf (ws ++ (stack:(dataSem_v)list)) refs (rs ++
-  roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   LENGTH ws = LENGTH rs /\
-   (Word64Rep (:'a) w64:('a word_loc,data_to_word_memoryProof_tag#('a
-     word_loc) list)heap_element) = DataElement [] len (Word64Tag,xs) /\
-    LENGTH xs < sp ==>
-   (?heap2.
-     heap_store_unused_alt a (sp + sp1) (Word64Rep (:'a) w64) heap =
-       (heap2,T) /\
-     abs_ml_inv conf (Word64 w64 :: stack) refs
-       (gc_shared_Pointer a (wordLang_Word (n2w 0)) :: roots,heap2,
-        be,a + len + 1,sp - len - 1,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (ws ++ stack) refs (rs ++
+  roots,heap,be,a,sp,sp1,gens) limit ts /\
+     LENGTH ws = LENGTH rs /\
+     (Word64Rep (:'a) w64:('a
+       word_loc,data_to_word_memoryProof_tag#('a word_loc)
+       list)heap_element) = DataElement [] len (Word64Tag,xs) /\
+      LENGTH xs < sp ==>
+     (?heap2.
+       heap_store_unused_alt a (sp + sp1) (Word64Rep (:'a) w64)
+         heap = (heap2,T) /\
+       abs_ml_inv conf (Word64 w64 :: stack) refs
+         (gc_shared_Pointer a (wordLang_Word (n2w 0)) ::
+           roots,heap2,
+          be,a + len + 1,sp - len - 1,sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* bignum *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_Number = prove
- (`blocks_unique ts (all_vs refs (ws ++ (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (Number i :: stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (ws ++ stack)) ==>
+       blocks_unique ts (all_vs refs (Number i :: stack))`),
   (let vnum = prove
     (`!(i:int) ys. v_all_vs (CONS (Number i) ys) =
         CONS (Number i) (v_all_vs ys)`,
@@ -3703,19 +3758,23 @@ let blocks_unique_Number = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bignum_alt_thm = prove
- (`abs_ml_inv conf (ws ++ (stack:(dataSem_v)list)) refs (rs ++
-  roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   LENGTH ws = LENGTH rs /\ ~(small_int (:'a) i) /\
-   (Bignum i:('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
-     list)heap_element) = DataElement [] len (tag,xs) /\
-   LENGTH xs < sp ==>
-   (?heap2.
-     heap_store_unused_alt a (sp + sp1) (Bignum i) heap = (heap2,T)
-       /\
-     abs_ml_inv conf (Number i :: stack) refs
-       (gc_shared_Pointer a (wordLang_Word ((n2w 0):'a word)) ::
-         roots,heap2,be,a + len + 1,sp - len - 1,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (ws ++ stack) refs (rs ++
+  roots,heap,be,a,sp,sp1,gens) limit ts /\
+     LENGTH ws = LENGTH rs /\ ~(small_int (:'a) i) /\
+     (Bignum i:('a word_loc,data_to_word_memoryProof_tag#('a
+       word_loc) list)heap_element) = DataElement [] len (tag,xs) /\
+     LENGTH xs < sp ==>
+     (?heap2.
+       heap_store_unused_alt a (sp + sp1) (Bignum i) heap =
+         (heap2,T) /\
+       abs_ml_inv conf (Number i :: stack) refs
+         (gc_shared_Pointer a (wordLang_Word ((n2w 0):'a word))
+           :: roots,heap2,be,a + len + 1,sp - len - 1,sp1,gens) limit
+           ts)`),
   CHEAT_TAC);;
 
 (* update ref *)

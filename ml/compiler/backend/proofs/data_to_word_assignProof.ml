@@ -44,10 +44,10 @@ needs "lib/integer_word.ml";;
 needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
+needs "lib/term.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
-needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
@@ -134,19 +134,22 @@ let cut_env_get_vars_get_vars = prove
      ws = ws'`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_lookup_var_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     (join_env ll
-        (toAList (inter (wordSem_state_locals t) (adjust_set ll))) ++
-          (envs:(dataSem_v#('a)word_loc)list)) /\
-    get_vars n ll = SOME x /\
-    get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) = SOME
-      w ==>
-    memory_rel c be ts refs sp st m dm
-      (ZIP x w ++
-       join_env ll
-         (toAList (inter (wordSem_state_locals t) (adjust_set ll)))
-           ++ envs)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       (join_env ll
+          (toAList (inter (wordSem_state_locals t) (adjust_set
+            ll))) ++ envs) /\
+      get_vars n ll = SOME x /\
+      get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) =
+        SOME w ==>
+      memory_rel c be ts refs sp st m dm
+        (ZIP x w ++
+         join_env ll
+           (toAList (inter (wordSem_state_locals t) (adjust_set
+             ll))) ++ envs)`),
   CHEAT_TAC);;
 
 let get_real_offset_lemma = prove
@@ -163,18 +166,9 @@ let state_rel_push_env_loc = prove
    sptree_lookup 0 y1 = SOME (Loc l1 l2)`,
   CHEAT_TAC);;
 
-let evaluate_IMP_domain_union = prove
- (`evaluate (p,wordSem_state_termdep_fupd (K tp) (state_clock_fupd (K
-  ck) (call_env args b (push_env (y1,y2) NONE
-  (t:('a,'c,'ffi)wordSem_state))))) = (SOME (wordSem_Result ret1
-  ret2),t1) /\
-   pop_env t1 = SOME t2 /\
-   sptree_lookup 0 y1 = SOME (Loc l1 l2) /\
-   cut_envs (adjust_sets kept_names) (wordSem_state_locals t) = SOME
-     (y1,y2) ==>
-   domain (state_locals t2) = domain y1 UNION domain y2 /\
-   sptree_lookup 0 (state_locals t2) = SOME (Loc l1 l2)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:190-239: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_IMP_domain_union *)
 
 let get_real_byte_offset_lemma = prove
  (`get_var v t = SOME (wordLang_Word (w:'a word)) /\ good_dimindex (:'a)
@@ -183,22 +177,28 @@ let get_real_byte_offset_lemma = prove
      (bytes_in_word + (w >>> 2)))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let reorder_lemma = prove
- (`memory_rel c (be:bool) ts (state_refs x) (dataSem_state_space x)
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts (state_refs x) (dataSem_state_space x)
   (wordSem_state_store t) (wordSem_state_memory t)
   (wordSem_state_mdomain t) (x1 :: x2 :: x3 :: xs) ==>
-   memory_rel c be ts (state_refs x) (dataSem_state_space x)
-     (wordSem_state_store t) (wordSem_state_memory t)
-     (wordSem_state_mdomain t) (x3 :: x1 :: x2 :: xs)`,
+     memory_rel c be ts (state_refs x) (dataSem_state_space x)
+       (wordSem_state_store t) (wordSem_state_memory t)
+       (wordSem_state_mdomain t) (x3 :: x1 :: x2 :: xs)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let reorder_2_lemma = prove
- (`memory_rel c (be:bool) ts (state_refs x) (dataSem_state_space x)
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts (state_refs x) (dataSem_state_space x)
   (wordSem_state_store t) (wordSem_state_memory t)
   (wordSem_state_mdomain t) (x1 :: x2 :: xs) ==>
-   memory_rel c be ts (state_refs x) (dataSem_state_space x)
-     (wordSem_state_store t) (wordSem_state_memory t)
-     (wordSem_state_mdomain t) (x2 :: x1 :: xs)`,
+     memory_rel c be ts (state_refs x) (dataSem_state_space x)
+       (wordSem_state_store t) (wordSem_state_memory t)
+       (wordSem_state_mdomain t) (x2 :: x1 :: xs)`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:263-289: a theorem that
@@ -316,34 +316,18 @@ let FOUR_MUL_LSL = prove
  (`n2w (4 * i) << k = n2w i << (k + 2)`,
   CHEAT_TAC);;
 
-let evaluate_BignumHalt = prove
- (`state_rel c l1 l2 s t NONE locs /\
-    get_var reg t = SOME (wordLang_Word w) ==>
-    (?r. (evaluate (BignumHalt reg,t) =
-          (if FAPPLY w 0 then (SOME wordSem_NotEnoughSpace,r) else
-            (NONE,t))) /\ state_ffi r = state_ffi s /\ state_ffi t =
-            state_ffi s)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:481-494: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_BignumHalt *)
 
 (* TODO: should probably replace evaluate_GiveUp directly *)
-let evaluate_GiveUp2 = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs ==>
-   (?r. evaluate (GiveUp,t) = (SOME wordSem_NotEnoughSpace,r) /\
-     state_ffi
-     r = state_ffi s /\ wordSem_state_ffi t = state_ffi s /\
-     option_le (state_stack_max r) (wordSem_state_stack_max t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:497-520: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_GiveUp2 *)
 
-let evaluate_BignumHalt2 = prove
- (`state_rel c l1 l2 s t NONE locs /\
-    get_var reg t = SOME (wordLang_Word w) ==>
-    (?r. (evaluate (BignumHalt reg,t) =
-          (if FAPPLY w 0 then (SOME wordSem_NotEnoughSpace,r) else
-            (NONE,t))) /\ state_ffi r = state_ffi s /\ state_ffi t =
-            state_ffi s /\
-                           option_le (state_stack_max r)
-                             (state_stack_max t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:522-535: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_BignumHalt2 *)
 
 let state_rel_get_var_Number_IMP_alt = prove
  (`!k i. state_rel c l1 l2 s t NONE locs /\
@@ -383,13 +367,9 @@ let word_exp_SmallLsr = prove
          then res else NONE))`,
   CHEAT_TAC);;
 
-let evaluate_MakeBytes = prove
- (`good_dimindex (:'a) ==>
-    evaluate (MakeBytes n,s) =
-      (match get_var n s with SOME (wordLang_Word w) ->
-        (NONE,set_var n (wordLang_Word (word_of_byte ((w:'a word) >>>
-        2))) s) | _1 -> (SOME Error,s))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:604-619: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_MakeBytes *)
 
 let w2w_shift_shift = prove
  (`good_dimindex (:'a) ==> ((w2w (w:word8) << 2 >>> 2):'a word) = w2w
@@ -398,17 +378,9 @@ let w2w_shift_shift = prove
 
 (* HOL4 data_to_word_assignProofScript.sml:629-631: a proof *)
 
-let evaluate_WriteLastBytes = prove
- (`good_dimindex (:'a) /\ w2n n < dimindex (:'a) DIV 8 /\
-   get_vars [av; bv; nv] (s:('a,'c,'ffi)wordSem_state) = SOME
-     [wordLang_Word (a:'a word); wordLang_Word b; wordLang_Word n] /\
-   byte_aligned a /\ a IN wordSem_state_mdomain s /\
-     wordSem_state_memory s a = wordLang_Word w ==>
-   evaluate (WriteLastBytes av bv nv,s) =
-     (NONE,wordSem_state_memory_fupd (K ((a =+ wordLang_Word
-       (last_bytes (w2n n) (w2w b) (n2w 0) w (wordSem_state_be s)))
-       (wordSem_state_memory s))) s)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:633-679: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_WriteLastBytes *)
 
 (* byte_aligned_bytes_in_word *)
 let data_to_word_assignProof_byte_aligned_bytes_in_word = prove
@@ -434,43 +406,8 @@ let size_of_Number_head = prove
 (* HOL4 data_to_word_assignProofScript.sml:712-715: a theorem that
    HOL4 states as the value of an ML expression: ADD8DIV8 *)
 
-let RefByte_thm = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    get_vars [0; 1; 2] (state_locals s) = SOME (vals ++ [Number (&(if
-      fl then 0 else 4))]) /\ wordSem_state_clock
-    t = MustTerminate_limit (:'a) - 1 /\
-    pop_env s = SOME s1 /\ is_env (HD (stack s)) /\ state_locals_size
-    s = sptree_lookup RefByte_location
-      (dataSem_state_stack_frame_sizes s) /\
-    do_app (closLang_MemOp (closLang_RefByte fl)) vals s1 = Rval
-      (v,s2) ==>
-    (?q r new_c.
-      evaluate (RefByte_code c,t) = (q,r) /\
-      (if q = SOME wordSem_NotEnoughSpace then state_ffi
-        r = wordSem_state_ffi t /\
-        option_le (state_stack_max r) (state_stack_max s2) /\
-        (~(data_to_word_config_gc_kind c = None) /\ no_thunks_in_refs
-          (state_refs s) ==>
-         (match vals with
-              (Number i :: _2) ->
-              (i < (&0) \/
-              ~(small_num (limits_arch_64_bit (dataSem_state_limits
-                s)) i) \/
-              ~(num_of_int i DIV (arch_size (dataSem_state_limits s)
-                DIV 8) < dimword (:'a) DIV arch_size
-                (dataSem_state_limits s)) \/
-              ~(num_of_int i DIV (arch_size (dataSem_state_limits s)
-                DIV 8) + 1 < (2 EXP data_to_word_config_len_size c)) \/
-                limits_heap_limit (dataSem_state_limits
-              s1) <
-              size_of_heap s1 + num_of_int i DIV (arch_size
-                (dataSem_state_limits s) DIV 8) + 2))) else
-        ?rv. q = SOME (wordSem_Result (wordLang_Loc l1 l2) [rv]) /\
-             state_rel c r1 r2 (stack_fupd (K (stack s))
-               (state_clock_fupd (K new_c) (state_locals_size_fupd (K
-               (SOME 0)) (state_locals_fupd (K LN) s2))))
-                r (SOME [(v,rv)]) locs))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:717-1233: a theorem whose
+   statement HOL Light does not read (tools/unstated.py): RefByte_thm *)
 
 (* TODO: copypaste from costProps *)
 let size_of_seen_SUBSET = prove
@@ -512,217 +449,49 @@ let EXP_LEMMA1 = prove
  (`4 * n * (2 EXP k) = n * 2 EXP (k + 2)`,
   CHEAT_TAC);;
 
-let evaluate_Maxout_bits_code = prove
- (`~(n_reg = dest) /\ n < dimword (:'a) /\ rep_len < dimindex (:'a) /\
-       k < dimindex (:'a) /\
-       sptree_lookup n_reg (wordSem_state_locals
-         (t:('a,'c,'ffi)wordSem_state)) = SOME (wordLang_Word (n2w n:'a
-         word)) ==>
-       evaluate (Maxout_bits_code rep_len k dest n_reg,set_var dest
-         (wordLang_Word w) t) =
-         (NONE,set_var dest (wordLang_Word (w || maxout_bits n
-           rep_len k)) t)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1341-1356: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_Maxout_bits_code *)
 
-(* Make_ptr_bits_thm *)
-let make_ptr_bits_thm = prove
- (`~(tag_reg = dest) /\ tag1 < dimword (:'a) /\
-  data_to_word_config_tag_bits c < dimindex (:'a) /\ ~((len_reg:num) =
-  dest) /\ len1 < dimword (:'a) /\ data_to_word_config_len_bits c <
-  dimindex (:'a) /\ data_to_word_config_len_bits
-       c + 1 < dimindex (:'a) /\
-       FLOOKUP (wordSem_state_store (t:('a,'c,'ffi)wordSem_state))
-         NextFree = SOME (wordLang_Word f) /\
-       FLOOKUP (wordSem_state_store t) CurrHeap = SOME (wordLang_Word
-         d) /\
-       sptree_lookup tag_reg (wordSem_state_locals t) = SOME
-         (wordLang_Word (n2w tag1)) /\
-       sptree_lookup len_reg (wordSem_state_locals t) = SOME
-         (wordLang_Word (n2w len1)) /\
-       shift_length c < dimindex (:'a) + backend_common_word_shift
-         (:'a) ==>
-       (?t1.
-         evaluate (Make_ptr_bits_code c tag_reg len_reg dest,t) =
-           (NONE,set_var dest (make_cons_ptr c (f - d) tag1 len1:'a
-             word_loc) t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1358-1385: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   Make_ptr_bits_thm *)
 
 (* HOL4 data_to_word_assignProofScript.sml:1387-1391: ML code, not
    ported *)
 
-let evaluate_LoadWord64 = prove
- (`memory_rel c (be:bool) ts refs sp (wordSem_state_store t)
-  (wordSem_state_memory t) (wordSem_state_mdomain t) ((Word64 w,v) ::
-  vars) /\
-   shift_length c < dimindex (:'a) /\ dimindex (:'a) = 64 /\
-   get_var src (t:('a,'c,'ffi)wordSem_state) = SOME v ==>
-   evaluate (LoadWord64 c dest src,t) = (NONE,set_var dest
-     (wordLang_Word (w2w w)) t)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1393-1411: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_LoadWord64 *)
 
-let evaluate_WriteWord64 = prove
- (`memory_rel c (be:bool) ts refs sp (wordSem_state_store t)
-  (wordSem_state_memory t) (wordSem_state_mdomain t)
-     (join_env_locals sl (wordSem_state_locals t) ++ vars) /\
-   get_var src (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word w)
-     /\
-   shift_length c < dimindex (:'a) /\ ~(src = 1) /\ 1 < sp /\
-   dimindex (:'a) = 64 /\
-   encode_header c 3 1 = SOME header /\
-   (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-     (adjust_var n) (wordSem_state_locals t))) ==>
-   (?nf m' locals' v.
-     evaluate (WriteWord64 c header dest src,t) =
-       (NONE,wordSem_state_locals_fupd (K locals')
-         (wordSem_state_memory_fupd (K m') (wordSem_state_store_fupd (K
-         (wordSem_state_store t |+ (NextFree,nf))) t))) /\
-     memory_rel c be ts refs (sp - 2) (wordSem_state_store t |+
-       (NextFree,nf)) m' (wordSem_state_mdomain t)
-       (join_env_locals (insert dest (Word64 (w2w w)) sl) locals' ++
-         vars) /\
-     (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-       (adjust_var n) locals')) /\
-     IS_SOME (sptree_lookup (adjust_var dest) locals') /\
-     sptree_lookup 0 locals' = sptree_lookup 0
-       (wordSem_state_locals t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1413-1467: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_WriteWord64 *)
 
-let evaluate_WriteWord64_on_32 = prove
- (`memory_rel c (be:bool) ts refs sp (wordSem_state_store t)
-  (wordSem_state_memory t) (wordSem_state_mdomain t)
-     (join_env_locals sl (wordSem_state_locals t) ++ vars) /\
-   get_var src1 (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word
-     ((31 >< 0) w)) /\
-   get_var src2 (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word
-     ((63 >< 32) w)) /\
-   shift_length c < dimindex (:'a) /\ ~(src1 = 1) /\ ~(src2 = 1) /\ 2
-     < sp /\
-   dimindex (:'a) = 32 /\
-   encode_header c 3 2 = SOME header /\
-   (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-     (adjust_var n) (wordSem_state_locals t))) ==>
-   (?nf m' locals' v.
-     evaluate (WriteWord64_on_32 c header dest src1 src2,t) =
-       (NONE,wordSem_state_locals_fupd (K locals')
-         (wordSem_state_memory_fupd (K m') (wordSem_state_store_fupd (K
-         (wordSem_state_store t |+ (NextFree,nf))) t))) /\
-     memory_rel c be ts refs (sp - 3) (wordSem_state_store t |+
-       (NextFree,nf)) m' (wordSem_state_mdomain t)
-       (join_env_locals (insert dest (Word64 w) sl) locals' ++ vars)
-         /\
-     (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-       (adjust_var n) locals')) /\
-     IS_SOME (sptree_lookup (adjust_var dest) locals') /\
-     sptree_lookup 0 locals' = sptree_lookup 0
-       (wordSem_state_locals t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1469-1530: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_WriteWord64_on_32 *)
 
 (* [local] *)
 let Num_ABS_AND = prove
  (`num_of_int (abs (&n)) = n /\ num_of_int (abs (--(&n))) = n`,
   CHEAT_TAC);;
 
-let evaluate_WriteWord64_on_32_num = prove
- (`memory_rel c (be:bool) ts refs sp (wordSem_state_store t)
-  (wordSem_state_memory t) (wordSem_state_mdomain t)
-     (join_env_locals sl (wordSem_state_locals t) ++ vars) /\
-   get_var src1 (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word
-     w1) /\
-   get_var src2 (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word
-     w2) /\
-   shift_length c < dimindex (:'a) /\ ~(w2 = (n2w 0)) /\ ~(src1 = 1)
-     /\ ~(src2 = 1) /\ 2 < sp /\
-   dimindex (:'a) = 32 /\
-   encode_header c 3 2 = SOME header /\
-   (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-     (adjust_var n) (wordSem_state_locals t))) ==>
-   (?nf m' locals' v.
-     evaluate (WriteWord64_on_32 c header dest src2 src1,t) =
-       (NONE,wordSem_state_locals_fupd (K locals')
-         (wordSem_state_memory_fupd (K m') (wordSem_state_store_fupd (K
-         (wordSem_state_store t |+ (NextFree,nf))) t))) /\
-     memory_rel c be ts refs (sp - 3) (wordSem_state_store t |+
-       (NextFree,nf)) m' (wordSem_state_mdomain t)
-       (join_env_locals (insert dest (Number (&(w2n w2 * dimword
-         (:'a) + w2n w1))) sl) locals' ++ vars) /\
-     (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-       (adjust_var n) locals')) /\
-     IS_SOME (sptree_lookup (adjust_var dest) locals') /\
-     sptree_lookup 0 locals' = sptree_lookup 0
-       (wordSem_state_locals t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1538-1612: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_WriteWord64_on_32_num *)
 
-let evaluate_WriteWord32_bignum = prove
- (`memory_rel c (be:bool) ts refs sp (wordSem_state_store t)
-  (wordSem_state_memory t) (wordSem_state_mdomain t)
-     (join_env_locals sl (wordSem_state_locals t) ++ vars) /\
-   get_var src (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word w)
-     /\
-   shift_length c < dimindex (:'a) /\ ~(src = 1) /\ 1 < sp /\
-   dimindex (:'a) = 32 /\
-   encode_header c 3 1 = SOME header /\
-   ~(small_int (:'a) (&(w2n w))) /\
-   (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-     (adjust_var n) (wordSem_state_locals t))) ==>
-   (?nf m' locals' v.
-     evaluate (WriteWord32_on_32 c header dest src,t) =
-       (NONE,wordSem_state_locals_fupd (K locals')
-       (wordSem_state_memory_fupd (K m') (wordSem_state_store_fupd (K
-       (wordSem_state_store t |+ (NextFree,nf))) t))) /\
-     memory_rel c be ts refs (sp - 2) (wordSem_state_store t |+
-       (NextFree,nf)) m' (wordSem_state_mdomain t)
-       (join_env_locals (insert dest (Number (&(w2n w))) sl) locals'
-         ++ vars) /\
-     (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-       (adjust_var n) locals')) /\
-     IS_SOME (sptree_lookup (adjust_var dest) locals') /\
-     sptree_lookup 0 locals' = sptree_lookup 0
-       (wordSem_state_locals t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1614-1677: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_WriteWord32_bignum *)
 
-let evaluate_WriteWord64_bignum = prove
- (`memory_rel c (be:bool) ts refs sp (wordSem_state_store t)
-  (wordSem_state_memory t) (wordSem_state_mdomain t)
-     (join_env_locals sl (wordSem_state_locals t) ++ vars) /\
-   get_var src (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word w)
-     /\
-   shift_length c < dimindex (:'a) /\ ~(src = 1) /\ 1 < sp /\
-   dimindex (:'a) = 64 /\
-   encode_header c 3 1 = SOME header /\
-   ~(small_int (:'a) (&(w2n w))) /\
-   (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-     (adjust_var n) (wordSem_state_locals t))) ==>
-   (?nf m' locals' v.
-     evaluate (WriteWord64 c header dest src,t) =
-       (NONE,wordSem_state_locals_fupd (K locals')
-       (wordSem_state_memory_fupd (K m') (wordSem_state_store_fupd (K
-       (wordSem_state_store t |+ (NextFree,nf))) t))) /\
-     memory_rel c be ts refs (sp - 2) (wordSem_state_store t |+
-       (NextFree,nf)) m' (wordSem_state_mdomain t)
-       (join_env_locals (insert dest (Number (&(w2n w))) sl) locals'
-         ++ vars) /\
-     (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
-       (adjust_var n) locals')) /\
-     IS_SOME (sptree_lookup (adjust_var dest) locals') /\
-     sptree_lookup 0 locals' = sptree_lookup 0
-       (wordSem_state_locals t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1679-1742: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_WriteWord64_bignum *)
 
-let evaluate_LoadBignum = prove
- (`memory_rel c (be:bool) ts refs sp (wordSem_state_store t)
-  (wordSem_state_memory t) (wordSem_state_mdomain t) ((Number i,v) ::
-  vars) /\
-   ~(small_int (:'a) i) /\ good_dimindex (:'a) /\ shift_length c <
-     dimindex (:'a) /\
-   get_var src (t:('a,'c,'ffi)wordSem_state) = SOME v /\ ~(header =
-     w1) ==>
-   (?h junk.
-   evaluate (LoadBignum c header w1 src,t) =
-     (NONE,set_vars [w1; header; w1]
-                     [wordLang_Word (n2w (num_of_int (abs i)));
-                       (wordLang_Word h); junk] t) /\
-   (((n2w 16) && h) = (n2w 0) <=> (&0) <= i))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1744-1763: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_LoadBignum *)
 
 (* HOL4 data_to_word_assignProofScript.sml:1765-1778: the ML values
    that the definitions below antiquote *)
@@ -769,98 +538,18 @@ let v_to_list_EQ_SOME_NIL = prove
  (`v_to_list hv1 = SOME [] <=> (?ts. hv1 = Block ts 0 [])`,
   CHEAT_TAC);;
 
-let InstallCode_code_thm = prove
- (`!(t:('a,'c,'ffi)wordSem_state) c hv1 v1 q1 a1 a2 ret_val bptr s1
-  vars' sp refs ts.
-      memory_rel c (wordSem_state_be t) ts refs sp
-        (wordSem_state_store t) (wordSem_state_memory t)
-        (wordSem_state_mdomain t)
-         ((hv1,a1) :: vars') /\
-      sptree_lookup InstallCode_location (wordSem_state_code t) =
-        SOME (4,InstallCode_code c) /\
-      sptree_lookup InstallData_location (wordSem_state_code t) =
-        SOME (4,InstallData_code c) /\
-      FLOOKUP (wordSem_state_store t) BitmapBuffer = SOME bptr /\
-      v_to_bytes hv1 = SOME q1 /\
-      LENGTH q1 <= buffer_space_left (wordSem_state_code_buffer t) /\
-      LENGTH q1 < wordSem_state_clock t /\
-      get_var 0 t = SOME ret_val /\
-      get_var 2 t = SOME a1 /\
-      get_var 4 t = SOME a2 /\
-      get_var 6 t = SOME (wordLang_Word (buffer_position
-        (wordSem_state_code_buffer t) +
-                              n2w (LENGTH (buffer_buffer
-                                (wordSem_state_code_buffer t))))) /\
-      good_dimindex (:'a) ==>
-      (?lsz smx.
-      evaluate (InstallCode_code c,t) =
-      (match
-        evaluate (InstallData_code c,wordSem_state_stack_max_fupd (K
-          smx) (wordSem_state_code_buffer_fupd (K
-          (buffer_space_left_fupd (K (buffer_space_left
-          (wordSem_state_code_buffer t) - LENGTH q1))
-          (buffer_buffer_fupd (K (buffer_buffer
-          (wordSem_state_code_buffer t) ++ q1))
-          (wordSem_state_code_buffer t)))) (wordSem_state_clock_fupd (K
-          (wordSem_state_clock t - LENGTH q1 - 1))
-          (wordSem_state_locals_size_fupd (K lsz)
-          (wordSem_state_locals_fupd (K (fromList2 [ret_val; bptr; a2;
-           wordLang_Word (buffer_position (wordSem_state_code_buffer
-             t) +
-                 n2w (LENGTH (buffer_buffer
-                   (wordSem_state_code_buffer t)) + LENGTH q1))]))
-                   t))))) with (res,s) -> (if wordSem_bad_fun_return
-                   res then (SOME Error,s) else (res,s))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1845-1962: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   InstallCode_code_thm *)
 
 let w2w_upper_def = cake_define
   `w2w_upper (w:word64) =
      (if dimindex (:'a) = 32 then ((63 >< 32) w):'a word else w2w
        w)`;;
 
-let InstallData_code_thm = prove
- (`!(t:('a,'c,'ffi)wordSem_state) c hv2 v1 q2 a1 a2 ret_val s1 vars' sp
-  refs ts.
-      memory_rel c (wordSem_state_be t) ts refs sp
-        (wordSem_state_store t) (wordSem_state_memory t)
-        (wordSem_state_mdomain t)
-         ((hv2,a2) :: vars') /\
-      sptree_lookup InstallData_location (wordSem_state_code t) =
-        SOME (4,InstallData_code c) /\
-      sptree_lookup Install_location (wordSem_state_code t) = SOME
-        (3,Install_code c) /\
-      v_to_words hv2 = SOME q2 /\
-      LENGTH q2 <= buffer_space_left (wordSem_state_data_buffer t) /\
-      LENGTH q2 < wordSem_state_clock t /\
-      get_var 0 t = SOME ret_val /\
-      get_var 2 t = SOME (wordLang_Word (buffer_position
-        (wordSem_state_data_buffer t) +
-                              bytes_in_word *
-                              n2w (LENGTH (buffer_buffer
-                                (wordSem_state_data_buffer t))))) /\
-      get_var 4 t = SOME a2 /\
-      get_var 6 t = SOME a1 /\
-      good_dimindex (:'a) ==>
-      (?smx lsz.
-      evaluate (InstallData_code c,t) =
-      (match
-        evaluate (Install_code c,wordSem_state_stack_max_fupd (K smx)
-          (wordSem_state_locals_size_fupd (K lsz)
-          (wordSem_state_data_buffer_fupd (K (buffer_space_left_fupd (K
-          (buffer_space_left (wordSem_state_data_buffer t) - LENGTH q2))
-          (buffer_buffer_fupd (K (buffer_buffer
-          (wordSem_state_data_buffer t) ++ MAP w2w_upper q2))
-          (wordSem_state_data_buffer t)))) (wordSem_state_clock_fupd (K
-          (wordSem_state_clock t - LENGTH q2 - 1))
-          (wordSem_state_locals_fupd (K (fromList2 [ret_val;
-               wordLang_Word (buffer_position
-                 (wordSem_state_data_buffer t) +
-                     bytes_in_word * n2w (LENGTH (buffer_buffer
-                       (wordSem_state_data_buffer t))) +
-                     bytes_in_word * n2w (LENGTH q2)); a1]))
-           t))))) with (res,s) -> (if wordSem_bad_fun_return res
-             then (SOME Error,s) else (res,s))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:1969-2096: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   InstallData_code_thm *)
 
 let LENGTH_EQ_4 = prove
  (`(LENGTH xs = 4 <=> (?a1 a2 a3 a4. xs = [a1; a2; a3; a4])) /\
@@ -879,12 +568,14 @@ let MAP_FST_MAP_compile_part = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_ignore_buffers = prove
- (`memory_rel c (be:bool) ts refs sp (st |+ (BitmapBuffer,x)) m dm vars
-  =
-   memory_rel c be ts refs sp st m dm vars /\
-   memory_rel c be ts refs sp (st |+ (CodeBuffer,x)) m dm vars =
-   memory_rel c be ts refs sp st m dm vars`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp (st |+ (BitmapBuffer,x)) m dm vars =
+     memory_rel c be ts refs sp st m dm vars /\
+     memory_rel c be ts refs sp (st |+ (CodeBuffer,x)) m dm vars =
+     memory_rel c be ts refs sp st m dm vars`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1045,93 +736,21 @@ let size_of_heap_FOLDR_delete_Number_LE = prove
 (* end size_of_heap monotonicity helpers *)
 
 
-let assign_Install = prove
- (`(op = Install) ==> (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state)
-  NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:2451-2745: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_Install *)
 
-let assign_MutCons = prove
- (`(?t k. op = closLang_MemOp (closLang_MutCons t k)) ==> (state_rel c
-  l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:2747-2815: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_MutCons *)
 
-let assign_UpdateCons = prove
- (`op = closLang_MemOp closLang_UpdateCons ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:2817-2858: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_UpdateCons *)
 
-let assign_FinaliseCons = prove
- (`op = closLang_MemOp closLang_FinaliseCons ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:2860-2888: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_FinaliseCons *)
 
 let LENGTH_EQ_5 = prove
  (`(LENGTH xs = 5 <=> (?a1 a2 a3 a4 a5. xs = [a1; a2; a3; a4; a5])) /\
@@ -1139,11 +758,14 @@ let LENGTH_EQ_5 = prove
       a5]))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_get_num = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\
-    n < dimword (:'a) DIV 8 /\ good_dimindex (:'a) /\
-    MEM (Number (&n),(a:'a word_loc)) vars ==>
-    (?w. a = wordLang_Word w /\ w >>> 2 = n2w n)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\
+      n < dimword (:'a) DIV 8 /\ good_dimindex (:'a) /\
+      MEM (Number (&n),(a:'a word_loc)) vars ==>
+      (?w. a = wordLang_Word w /\ w >>> 2 = n2w n)`),
   CHEAT_TAC);;
 
 let IN_domain_adjust_set_inter = prove
@@ -1168,11 +790,11 @@ let get_var_to_word_exp = prove
 let word_exp_set = prove
  (`(wordSem_word_exp s (wordLang_Op Add [Var n; Const c]) =
    (match get_var n s with
-     SOME (wordLang_Word w) -> SOME (wordLang_Word (w + c)) | _5 ->
+     SOME (wordLang_Word w) -> SOME (wordLang_Word (w + c)) | _3 ->
        NONE)) /\
    (wordSem_word_exp s (Op Sub [Var n; Const c]) =
    (match get_var n s with
-     SOME (wordLang_Word w) -> SOME (wordLang_Word (w - c)) | _6 ->
+     SOME (wordLang_Word w) -> SOME (wordLang_Word (w - c)) | _4 ->
        NONE))`,
   CHEAT_TAC);;
 
@@ -1197,71 +819,13 @@ let get_var_consts = prove
  (`get_var r (wordSem_state_memory_fupd (K m) s) = get_var r s`,
   CHEAT_TAC);;
 
-let CopyByteAdd_thm = prove
- (`!be' n a1 a2 m dm ret_val l1 l2 (s:('a,'c,'ffi)wordSem_state) m1.
-      word_copy_fwd be' n a1 a2 m dm = SOME m1 /\
-        wordSem_state_memory
-      s = m /\ wordSem_state_mdomain s = dm /\ wordSem_state_be
-      s = be' /\
-      good_dimindex (:'a) /\
-      sptree_lookup ByteCopyAdd_location (wordSem_state_code s) =
-        SOME (5,ByteCopyAdd_code) /\
-      w2n n DIV 4 <= wordSem_state_clock s /\
-      get_var 0 s = SOME (Loc l1 l2) /\
-      get_var 2 s = SOME (wordLang_Word n) /\
-      get_var 4 s = SOME (wordLang_Word (a1:'a word)) /\
-      get_var 6 s = SOME (wordLang_Word a2) /\
-      get_var 8 s = SOME ret_val ==>
-      evaluate (ByteCopyAdd_code,s) =
-        (SOME (wordSem_Result (wordLang_Loc l1 l2)
-          [ret_val]),wordSem_state_stack_max_fupd (K
-                   (if n <+ (n2w 4) then wordSem_state_stack_max
-                     s else
-                     OPTION_MAP2 MAX (wordSem_state_stack_max s)
-                       (OPTION_MAP2 (+) (stack_size
-                         (wordSem_state_stack s))
-                       (sptree_lookup ByteCopyAdd_location
-                         (wordSem_state_stack_size s)))))
-                         (wordSem_state_locals_size_fupd (K (SOME 0))
-                         (wordSem_state_locals_fupd (K LN)
-                         (wordSem_state_memory_fupd (K m1)
-                         (wordSem_state_clock_fupd (K
-                         (wordSem_state_clock s - w2n n DIV 4))
-         s)))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:2977-3088: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   CopyByteAdd_thm *)
 
-let CopyByteSub_thm = prove
- (`!be' n a1 a2 m dm ret_val l1 l2 (s:('a,'c,'ffi)wordSem_state) m1.
-      word_copy_bwd be' n a1 a2 m dm = SOME m1 /\
-        wordSem_state_memory
-      s = m /\ wordSem_state_mdomain s = dm /\ wordSem_state_be
-      s = be' /\
-      good_dimindex (:'a) /\
-      sptree_lookup ByteCopySub_location (wordSem_state_code s) =
-        SOME (5,ByteCopySub_code) /\
-      w2n n DIV 4 <= wordSem_state_clock s /\
-      get_var 0 s = SOME (Loc l1 l2) /\
-      get_var 2 s = SOME (wordLang_Word n) /\
-      get_var 4 s = SOME (wordLang_Word (a1:'a word)) /\
-      get_var 6 s = SOME (wordLang_Word a2) /\
-      get_var 8 s = SOME ret_val ==>
-      evaluate (ByteCopySub_code,s) =
-        (SOME (wordSem_Result (wordLang_Loc l1 l2)
-          [ret_val]),wordSem_state_stack_max_fupd (K
-                   (if n <+ (n2w 4) then wordSem_state_stack_max
-                     s else
-                     OPTION_MAP2 MAX (wordSem_state_stack_max s)
-                       (OPTION_MAP2 (+) (stack_size
-                         (wordSem_state_stack s))
-                       (sptree_lookup ByteCopySub_location
-                         (wordSem_state_stack_size s)))))
-                         (wordSem_state_locals_size_fupd (K (SOME 0))
-                         (wordSem_state_locals_fupd (K LN)
-                         (wordSem_state_memory_fupd (K m1)
-                         (wordSem_state_clock_fupd (K
-                         (wordSem_state_clock s - w2n n DIV 4))
-         s)))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:3090-3201: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   CopyByteSub_thm *)
 
 let push_env_store = prove
  (`wordSem_state_store
@@ -1279,27 +843,9 @@ let not_less_zero_int_eq = prove
  (`~(i < ((&0):int)) <=> (?n. i = &n)`,
   CHEAT_TAC);;
 
-let assign_WordFromWord = prove
- (`(?b. op = closLang_WordOp (WordFromWord b)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:3223-3369: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_WordFromWord *)
 
 let IS_SOME_lookup = prove
  (`IS_SOME (sptree_lookup n l) <=> n IN domain l`,
@@ -1350,330 +896,51 @@ let cut_envs_inter = prove
    inter (fromAList (toAList y1)) (adjust_set x) = LN`,
   CHEAT_TAC);;
 
-let assign_CopyByte = prove
- (`(?new_flag. op = closLang_MemOp (closLang_CopyByte new_flag) /\
-  ~new_flag) ==> (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
-  locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:3469-4092: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_CopyByte *)
 
-let evaluate_StringCmpLoop = prove
- (`!a1 a2 r1 r2 len be' ck dm m l1 l2 (t1:('a,'c,'ffi)wordSem_state) x1
-  x2.
-     word_str_cmp_loop a1 a2 r1 r2 len dm m be' ck = SOME (x1,x2) /\
-       wordSem_state_memory
-     t1 = m /\ wordSem_state_mdomain t1 = dm /\ be' =
-       wordSem_state_be t1 /\
-     ck < wordSem_state_clock t1 /\ good_dimindex (:'a) /\
-     sptree_lookup StringCmpLoop_location (wordSem_state_code t1) =
-       SOME (6,StringCmpLoop_code) /\
-     get_var 0 t1 = SOME (Loc l1 l2) /\
-     get_var 2 t1 = SOME (wordLang_Word a1) /\
-     get_var 4 t1 = SOME (wordLang_Word a2) /\
-     get_var 6 t1 = SOME (wordLang_Word len) /\
-     get_var 8 t1 = SOME (wordLang_Word r1) /\
-     get_var 10 t1 = SOME (wordLang_Word r2) ==>
-     (?ck max_stack.
-       evaluate (StringCmpLoop_code,t1) =
-       (SOME (wordSem_Result (wordLang_Loc l1 l2) [wordLang_Word x1;
-         wordLang_Word x2]),wordSem_state_locals_size_fupd (K (SOME 0))
-         (wordSem_state_locals_fupd (K LN) (wordSem_state_stack_max_fupd
-         (K max_stack) (wordSem_state_clock_fupd (K ck)
-        t1)))) /\
-       (~(max_stack = wordSem_state_stack_max t1) ==>
-        max_stack = OPTION_MAP2 MAX (wordSem_state_stack_max t1)
-                      (OPTION_MAP2 (+) (stack_size
-                        (wordSem_state_stack t1))
-                         (sptree_lookup StringCmpLoop_location
-                           (wordSem_state_stack_size t1)))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:4094-4151: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_StringCmpLoop *)
 
-let evaluate_AssignCmp = prove
- (`evaluate (AssignCmp dest cmp v1 v2,s) =
-     (match (get_var v1 s,get_var v2 s) with (SOME (wordLang_Word
-       x1),SOME (wordLang_Word x2)) ->
-         (NONE,set_var dest (if num_cmp cmp (w2n x1) (w2n x2) then
-           wordLang_Word (n2w 18) else wordLang_Word (n2w 2)) s) | _7
-           -> evaluate (AssignCmp dest cmp v1 v2,s))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:4153-4164: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_AssignCmp *)
 
-(* [local] *)
-let evaluate_StringCmpMin = prove
- (`evaluate (wordLang_Seq (Assign 9 (Var 5))
-                 (Seq (If asm_Lower 7 (Reg 5) (Assign 9 (Var 7))
-                   Skip) p),state_locals_fupd (K l)
-             t1) =
-   (match (sptree_lookup 5 l,sptree_lookup 7 l) with (SOME
-     (wordLang_Word w1),SOME (wordLang_Word w2)) ->
-       evaluate (p,state_locals_fupd (K (insert 9 (wordLang_Word (n2w
-         (MIN (w2n w1) (w2n w2)))) l)) t1) | _10 ->
-       evaluate (Seq (Assign 9 (Var 5))
-                     (Seq (If asm_Lower 7 (Reg 5) (Assign 9 (Var 7))
-                       Skip) p),state_locals_fupd (K l)
-                 t1))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:4166-4185: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_StringCmpMin *)
 
-let assign_StringCmp = prove
- (`(?b cmp. op = closLang_MemOp (closLang_StringCmp b cmp)) ==>
-  (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:4187-4563: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_StringCmp *)
 
-let evaluate_XorLoop = prove
- (`!a1 a2 l dm m l1 l2 (t1:('a,'c,'ffi)wordSem_state) m1.
-     word_xor_bytes a1 a2 l dm m = SOME m1 /\ wordSem_state_memory t1
-       = m /\ wordSem_state_mdomain t1 = dm /\
-     w2n l < wordSem_state_clock t1 /\ good_dimindex (:'a) /\
-     sptree_lookup XorLoop_location (wordSem_state_code t1) = SOME
-       (4,XorLoop_code) /\
-     get_var 0 t1 = SOME (Loc l1 l2) /\
-     get_var 2 t1 = SOME (wordLang_Word a2) /\
-     get_var 4 t1 = SOME (wordLang_Word a1) /\
-     get_var 6 t1 = SOME (wordLang_Word l) ==>
-     (?ck max_stack.
-       evaluate (XorLoop_code,t1) =
-       (SOME (wordSem_Result (wordLang_Loc l1 l2) [wordLang_Word (n2w
-         2)]),wordSem_state_locals_size_fupd (K (SOME 0))
-         (wordSem_state_locals_fupd (K LN) (wordSem_state_stack_max_fupd
-         (K max_stack) (wordSem_state_clock_fupd (K ck)
-         (wordSem_state_memory_fupd (K m1)
-        t1))))) /\
-       (~(max_stack = wordSem_state_stack_max t1) ==>
-        max_stack = OPTION_MAP2 MAX (wordSem_state_stack_max t1)
-                      (OPTION_MAP2 (+) (stack_size
-                        (wordSem_state_stack t1))
-                         (sptree_lookup XorLoop_location
-                           (wordSem_state_stack_size t1)))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:4565-4630: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_XorLoop *)
 
-let assign_XorByte = prove
- (`op = closLang_MemOp closLang_XorByte ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:4632-4825: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_XorByte *)
 
-(* [local] *)
-let evaluate_AppendMainLoop_code = prove
- (`!xs ww (t:('a,'c,'ffi)wordSem_state) vars' ptr hdr l k frame r1 r2
-  next_free ts v.
-     memory_rel c (wordSem_state_be t) ts (dataSem_state_refs
-       (s:('c,'ffi)dataSem_state)) sp (wordSem_state_store t)
-       (wordSem_state_memory t) (wordSem_state_mdomain t)
-        ((v,wordLang_Word ww) :: vars') /\ ~(xs = []) /\
-     v_to_list v = SOME xs /\
-     sptree_lookup 10 (wordSem_state_locals t) = SOME (wordLang_Word
-       ptr) /\
-     sptree_lookup 8 (wordSem_state_locals t) = SOME (wordLang_Word
-       (bytes_in_word * n2w (sp - k))) /\
-     sptree_lookup 6 (wordSem_state_locals t) = SOME (wordLang_Word
-       hdr) /\
-     sptree_lookup 4 (wordSem_state_locals t) = SOME (wordLang_Word
-       ww) /\
-     sptree_lookup 2 (wordSem_state_locals t) = SOME (wordLang_Word
-       next_free) /\
-     sptree_lookup 0 (wordSem_state_locals t) = SOME (Loc r1 r2) /\
-     k + 3 * LENGTH xs <= sp /\ good_dimindex (:'a) /\
-     sp * (dimindex (:'a) DIV 8) < dimword (:'a) /\
-     FLOOKUP (wordSem_state_store t) (Temp (n2w 0)) = SOME tmp0 /\
-     FLOOKUP (wordSem_state_store t) (Temp (n2w 2)) = SOME tmp2 /\
-     FLOOKUP (wordSem_state_store t) NextFree = SOME (wordLang_Word
-       f) /\
-     Abbrev (next_free = f + bytes_in_word * n2w k) /\
-     sptree_lookup AppendMainLoop_location (wordSem_state_code t) =
-       SOME (6,AppendMainLoop_code c) /\
-     sptree_lookup AppendMainLoop_location (wordSem_state_stack_size
-       t) = wordSem_state_locals_size t /\
-     (word_list_exists next_free (3 * LENGTH xs) * frame)
-        (fun2set (wordSem_state_memory t,wordSem_state_mdomain t)) /\
-          LENGTH xs <= wordSem_state_clock t ==>
-     (?m1 ws smx.
-       evaluate (AppendMainLoop_code c,t) =
-         (SOME (wordSem_Result (wordLang_Loc r1 r2)
-           [tmp2]),wordSem_state_clock_fupd (K (wordSem_state_clock t -
-           (LENGTH xs - 1))) (wordSem_state_stack_max_fupd (K smx)
-           (wordSem_state_memory_fupd (K m1) (wordSem_state_store_fupd
-           (K (wordSem_state_store t |+ (NextFree,wordLang_Word
-           (next_free +
-                       bytes_in_word * n2w (3 * LENGTH xs)))))
-                         (wordSem_state_locals_size_fupd (K (SOME 0))
-                         (wordSem_state_locals_fupd (K LN)
-          t)))))) /\
-       LENGTH ws = LENGTH xs /\
-       option_le smx (OPTION_MAP2 MAX (wordSem_state_stack_max
-                        t)
-                        (OPTION_MAP2 (+)
-                          (OPTION_MAP2 MAX
-                            (sptree_lookup AppendMainLoop_location
-                              (wordSem_state_stack_size t))
-                            (sptree_lookup AppendLenLoop_location
-                              (wordSem_state_stack_size t)))
-                          (stack_size (wordSem_state_stack t)))) /\
-       (misc_word_list next_free (append_writes c ptr hdr ws tmp0) *
-         frame)
-         (fun2set (m1,wordSem_state_mdomain t)) /\
-       memory_rel c (wordSem_state_be t) ts (dataSem_state_refs s) sp
-         (wordSem_state_store t) m1 (wordSem_state_mdomain t)
-         (ZIP xs ws ++ vars'))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:4827-5039: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_AppendMainLoop_code *)
 
 let data_to_word_assignProof_STOP_def = cake_define
   `data_to_word_assignProof_STOP x = x`;;
 hol4_overload "STOP" "data_to_word_assignProof_STOP";;
 
-(* [local] *)
-let evaluate_AppendMainLoop_code_alt = prove
- (`!xs ww (t:('a,'c,'ffi)wordSem_state) vars' ptr hdr l k frame r1 r2
-  next_free ts v.
-     memory_rel c (wordSem_state_be t) ts (dataSem_state_refs
-       (s:('c,'ffi)dataSem_state)) sp (wordSem_state_store t)
-       (wordSem_state_memory t) (wordSem_state_mdomain t)
-        ((v,wordLang_Word ww) :: vars') /\ ~(xs = []) /\
-     v_to_list v = SOME xs /\
-     sptree_lookup 10 (wordSem_state_locals t) = SOME (wordLang_Word
-       ptr) /\
-     sptree_lookup 8 (wordSem_state_locals t) = SOME (wordLang_Word
-       (bytes_in_word * n2w (sp - k))) /\
-     sptree_lookup 6 (wordSem_state_locals t) = SOME (wordLang_Word
-       hdr) /\
-     sptree_lookup 4 (wordSem_state_locals t) = SOME (wordLang_Word
-       ww) /\
-     sptree_lookup 2 (wordSem_state_locals t) = SOME (wordLang_Word
-       next_free) /\
-     sptree_lookup 0 (wordSem_state_locals t) = SOME (Loc r1 r2) /\
-     sp < k + 3 * LENGTH xs /\ good_dimindex (:'a) /\ k <= sp /\
-     sp * (dimindex (:'a) DIV 8) < dimword (:'a) /\
-     FLOOKUP (wordSem_state_store t) (Temp (n2w 0)) = SOME tmp0 /\
-     FLOOKUP (wordSem_state_store t) (Temp (n2w 2)) = SOME tmp2 /\
-     FLOOKUP (wordSem_state_store t) NextFree = SOME (wordLang_Word
-       f) /\
-     Abbrev (next_free = f + bytes_in_word * n2w k) /\
-     sptree_lookup AppendMainLoop_location (wordSem_state_code t) =
-       SOME (6,AppendMainLoop_code c) /\
-     sptree_lookup AppendLenLoop_location (wordSem_state_code t) =
-       SOME (3,AppendLenLoop_code c) /\
-     (word_list_exists next_free (sp - k) * frame)
-        (fun2set (wordSem_state_memory t,wordSem_state_mdomain t)) /\
-          LENGTH xs <= wordSem_state_clock t ==>
-     (?m1 ww2 smx.
-       evaluate (AppendMainLoop_code c,t) =
-         (match STOP evaluate (AppendLenLoop_code
-           c,wordSem_state_clock_fupd (K (wordSem_state_clock t - ((sp -
-           k) DIV 3 + 1))) (wordSem_state_stack_max_fupd (K smx)
-           (wordSem_state_memory_fupd (K m1)
-           (wordSem_state_locals_size_fupd (K (sptree_lookup
-           AppendLenLoop_location (wordSem_state_stack_size t)))
-           (wordSem_state_locals_fupd (K (fromList2 [Loc r1 r2;
-           wordLang_Word ww2; wordLang_Word (n2w 0)]))
-             t))))) with (res,s) -> (if wordSem_bad_fun_return res
-               then (SOME Error,s) else (res,s))) /\
-       option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
-         t)) (sptree_lookup AppendLenLoop_location
-         (wordSem_state_stack_size t))) smx /\
-       option_le smx
-         (OPTION_MAP2 MAX (wordSem_state_stack_max t)
-            (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
-            (OPTION_MAP2 MAX
-               (sptree_lookup AppendLenLoop_location
-                 (wordSem_state_stack_size t))
-               (sptree_lookup AppendMainLoop_location
-                 (wordSem_state_stack_size t))))) /\
-       memory_rel c (wordSem_state_be t) ts (dataSem_state_refs s) sp
-         (wordSem_state_store t) m1 (wordSem_state_mdomain t)
-        ((THE (block_drop ((sp - k) DIV 3) v),wordLang_Word ww2) ::
-          vars'))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:5045-5277: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_AppendMainLoop_code_alt *)
 (* HOL4 data_to_word_assignProofScript.sml:5278-5281: ML code, not
    ported *)
 
-(* [local] *)
-let evaluate_AppendLenLoop_code = prove
- (`!k (t:('a,'c,'ffi)wordSem_state) c xs l1 l2 (w:'a word) vars' ts v.
-     memory_rel c (wordSem_state_be t) ts refs sp
-       (wordSem_state_store t) (wordSem_state_memory t)
-       (wordSem_state_mdomain t)
-       ((v,wordLang_Word w) :: vars') /\
-     v_to_list v = SOME xs /\
-     sptree_lookup 0 (wordSem_state_locals t) = SOME (Loc l1 l2) /\
-     sptree_lookup 2 (wordSem_state_locals t) = SOME (wordLang_Word
-       w) /\
-     sptree_lookup 4 (wordSem_state_locals t) = SOME (wordLang_Word
-       (n2w (12 * k))) /\
-     sptree_lookup AppendLenLoop_location (wordSem_state_code t) =
-       SOME (3,AppendLenLoop_code c) /\ wordSem_state_locals_size
-     t = sptree_lookup AppendLenLoop_location
-       (wordSem_state_stack_size t) /\
-     good_dimindex (:'a) /\
-     LENGTH xs <= wordSem_state_clock t ==>
-     (?locals smx.
-       (match evaluate (AppendLenLoop_code c,t) with
-         (res,s) -> (if wordSem_bad_fun_return res then (SOME
-           Error,s) else (res,s))) =
-       (match evaluate (AppendLenLoop_code
-         c,wordSem_state_stack_max_fupd (K smx)
-         (wordSem_state_clock_fupd (K (wordSem_state_clock t - LENGTH
-         xs)) (wordSem_state_locals_fupd (K locals)
-               t))) with
-         (res,s) -> (if wordSem_bad_fun_return res then (SOME
-           Error,s) else (res,s))) /\
-       sptree_lookup 0 locals = SOME (Loc l1 l2) /\
-       sptree_lookup 2 locals = SOME (wordLang_Word (n2w 2)) /\
-       sptree_lookup 4 locals = SOME (wordLang_Word (n2w (12 * (k +
-         LENGTH xs)))) /\
-       option_le (wordSem_state_stack_max t) smx /\
-       option_le smx (OPTION_MAP2 MAX (wordSem_state_stack_max t)
-                       (OPTION_MAP2 (+) (stack_size
-                         (wordSem_state_stack t))
-                       (sptree_lookup AppendLenLoop_location
-                         (wordSem_state_stack_size t)))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:5283-5369: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_AppendLenLoop_code *)
 (* HOL4 data_to_word_assignProofScript.sml:5370-5371: ML code, not
    ported *)
 
@@ -1704,27 +971,9 @@ let cut_state_refs_same = prove
   state_refs x`,
   CHEAT_TAC);;
 
-let assign_ListAppend = prove
- (`op = closLang_BlockOp ListAppend ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:5411-6295: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_ListAppend *)
 
 let do_app_AllocThunk = prove
  (`do_app (ThunkOp (AllocThunk m):closLang_op) [v] x =
@@ -1748,49 +997,13 @@ let do_app_AllocThunk = prove
          s1)))))`,
   CHEAT_TAC);;
 
-let assign_AllocThunk = prove
- (`(?ev. op = ThunkOp (AllocThunk ev)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:6319-6400: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_AllocThunk *)
 
-let assign_UpdateThunk = prove
- (`(?ev. op = ThunkOp (UpdateThunk ev)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:6402-6469: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_UpdateThunk *)
 
 (* ConfigGC: assign-specific helper + body *)
 let configGC_size_of_heap_LE = prove
@@ -1822,49 +1035,13 @@ let cut_state_opt_IMP_cut_locals = prove
  (`cut_state_opt (SOME ns) s = SOME x ==> cut_locals ns s = x`,
   CHEAT_TAC);;
 
-let assign_ConfigGC = prove
- (`op = closLang_MemOp ConfigGC ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:6520-6701: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_ConfigGC *)
 
-let assign_WordToInt = prove
- (`op = closLang_WordOp WordToInt ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:6703-6950: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_WordToInt *)
 
 let push_env_tstamps = prove
  (`!x t s. dataSem_state_tstamps (push_env x t s) =
@@ -1875,79 +1052,13 @@ let dec_clock_tstamps = prove
  (`!s. dataSem_state_tstamps (dec_clock s) = dataSem_state_tstamps s`,
   CHEAT_TAC);;
 
-let FromList1_code_thm = prove
- (`!k a b r x m1 a1 a2 a3 a4 a5 a6.
-      sptree_lookup FromList1_location (wordSem_state_code r) = SOME
-        (6,FromList1_code c) /\
-      copy_list c (wordSem_state_store r) k
-        (a,x,b,wordSem_state_memory
-        (r:('a,'c,'ffi)wordSem_state),wordSem_state_mdomain
-        r) = SOME (b1,m1) /\
-      shift_length c < dimindex (:'a) /\ good_dimindex (:'a) /\
-      get_var a1 r = SOME (Loc l1 l2) /\
-      get_var a2 r = SOME (wordLang_Word (b:'a word)) /\
-      get_var a3 r = SOME a /\
-      get_var a4 r = SOME (wordLang_Word (n2w (4 * k))) /\
-      get_var a5 r = SOME ret_val /\
-      get_var a6 r = SOME x /\
-      4 * k < dimword (:'a) /\
-      k < wordSem_state_clock r ==>
-      evaluate (Call NONE (SOME FromList1_location) [a1; a2; a3; a4;
-        a5; a6] NONE,r) =
-        (SOME (wordSem_Result (wordLang_Loc l1 l2)
-          [ret_val]),wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX
-          (wordSem_state_stack_max r) (OPTION_MAP2 (+) (stack_size
-          (wordSem_state_stack r))
-                              (sptree_lookup FromList1_location
-                                (wordSem_state_stack_size r)))))
-                                (wordSem_state_store_fupd (K
-                                (wordSem_state_store r |+
-                                (NextFree,wordLang_Word b1)))
-                                (wordSem_state_locals_size_fupd (K (SOME
-                                0)) (wordSem_state_locals_fupd (K LN)
-                                (wordSem_state_clock_fupd (K
-                                (wordSem_state_clock r - k - 1))
-                                (wordSem_state_memory_fupd (K m1)
-         r))))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:6964-7041: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   FromList1_code_thm *)
 
-let FromList_thm = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-  ~(encode_header c (4 * tag) 0 = (NONE:('a word) option)) /\
-    get_vars [0; 1; 2] (state_locals s) = SOME [v1; v2; Number (&(4 *
-      tag))] /\ wordSem_state_clock
-    t = MustTerminate_limit (:'a) - 1 /\
-    pop_env s = SOME s1 /\ is_env (HD (stack s)) /\ state_locals_size
-    s = sptree_lookup FromList_location
-      (dataSem_state_stack_frame_sizes s) /\
-    do_app (closLang_BlockOp (closLang_FromList tag)) [v1; v2] s1 =
-      Rval (v,s2) /\
-    option_le (state_stack_max s) (state_stack_max s2) /\
-    size_of_heap (cut_locals (fromList [one; one; one]) s) <=
-      size_of_heap_args [v1; v2] s1 ==>
-    (?q r new_c.
-      evaluate (FromList_code c,t) = (q,r) /\
-      (if q = SOME wordSem_NotEnoughSpace then state_ffi
-        r = wordSem_state_ffi t /\
-        option_le (state_stack_max r) (state_stack_max s2) /\
-        (~(data_to_word_config_gc_kind c = None) /\ no_thunks_in_refs
-          (state_refs s) ==>
-         (match (v1,v2) with
-           (Number n,_11) -> ~(small_num (limits_arch_64_bit
-             (dataSem_state_limits s)) n) \/
-                           ~(num_of_int n < dimword (:'a) DIV 16) \/
-                           ~(num_of_int n < 2 EXP
-                             data_to_word_config_len_size c) \/
-                           (limits_heap_limit (dataSem_state_limits
-                             s1) <
-                             size_of_heap_args [v1; v2] s1 +
-                               num_of_int n + 1))) else
-        ?rv. q = SOME (wordSem_Result (wordLang_Loc l1 l2) [rv]) /\
-             state_rel c r1 r2 (stack_fupd (K (stack s))
-               (state_clock_fupd (K new_c) (state_locals_size_fupd (K
-               (SOME 0)) (state_locals_fupd (K LN) s2))))
-                r (SOME [(v,rv)]) locs))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:7043-7364: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   FromList_thm *)
 
 (* ---- helpers used by assign_FromList's NES/Success arms (also reused by
    assign_RefByte etc. below); hoisted above assign_FromList so they are in
@@ -2079,27 +1190,9 @@ let option_le_stackmax_bridge = prove
              (OPTION_MAP2 (((+)):num->num->num) s_size l_size)))`,
   CHEAT_TAC);;
 
-let assign_FromList = prove
- (`(?tag. op = closLang_BlockOp (closLang_FromList tag)) ==> (state_rel
-  c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:7491-7810: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_FromList *)
 
 (* TODO: move to backendProps? *)
 let not_the_F_option_le = prove
@@ -2188,27 +1281,9 @@ let call_env_push_env_dec_clock_lift = prove
    (call_env args b (push_env (y1,y2) NONE t)))`,
   CHEAT_TAC);;
 
-let assign_RefByte = prove
- (`(?fl. op = closLang_MemOp (closLang_RefByte fl)) ==> (state_rel c l1
-  l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:7889-8149: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_RefByte *)
 
 let lookup_set_var = prove
  (`sptree_lookup x (state_locals (set_var x y z)) = SOME y`,
@@ -2224,63 +1299,13 @@ let lookup_2_call_env = prove
   CHEAT_TAC);;
 
 (* Binary (two-argument) instance of AllocVar_thm_nary, used by assign_RefArray. *)
-(* [local] *)
-let AllocVar_thm_binary = prove
- (`!c l1 l2 s (t:('a,'c,'ffi)wordSem_state) locs a1 a2 x' xa i vv limit'
-  q r.
-     state_rel c l1 l2 s t NONE locs /\
-     dataSem_cut_env (list_insert [a1; a2] x') (state_locals s) =
-       SOME xa /\
-     get_vars [a1; a2] (state_locals s) = SOME [Number (&i); vv] /\
-     get_var 1 t = SOME (wordLang_Word (n2w (4 * i))) /\
-     4 * i < dimword (:'a) /\
-     evaluate (AllocVar c limit' (list_insert [a1; a2] x'),t) = (q,r)
-       /\
-     limit' < dimword (:'a) DIV 8 ==>
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-        r = state_ffi s /\ option_le (state_stack_max r)
-          (state_stack_max s) /\
-        (~(data_to_word_config_gc_kind c = None) /\ i < limit' /\
-          no_thunks_in_refs (state_refs s) ==> limits_heap_limit
-          (dataSem_state_limits
-           s) <
-             size_of_heap_args [Number (&i); vv] (cut_locals x' s) +
-               (i + 1))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-        i < limit' /\
-        state_rel c l1 l2
-          (dataSem_state_space_fupd (K (i + 1)) (state_locals_fupd (K
-            xa) s)) r NONE locs /\
-        FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
-          (wordSem_state_store t) (Temp (n2w 29)) /\ state_code
-        r = wordSem_state_code t /\ state_code_buffer r =
-          wordSem_state_code_buffer t /\ wordSem_state_data_buffer
-        r = wordSem_state_data_buffer t /\ compile_oracle r =
-          wordSem_state_compile_oracle t /\
-        q = NONE)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:8166-8192: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   AllocVar_thm_binary *)
 
-let assign_RefArray = prove
- (`op = closLang_MemOp closLang_RefArray ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:8194-8681: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_RefArray *)
 
 (* [local] *)
 let LENGTH_n2mw_1 = prove
@@ -2329,49 +1354,13 @@ let BIT_Lemma2 = prove
   else BIT m (2 EXP k - n))`,
   CHEAT_TAC);;
 
-let assign_WordFromInt = prove
- (`op = closLang_WordOp WordFromInt ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:8766-9236: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_WordFromInt *)
 
-let assign_TagEq = prove
- (`(?tag. op = closLang_BlockOp (closLang_TagEq tag)) ==> (state_rel c
-  l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:9238-9304: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_TagEq *)
 
 let all_ones_get_addr = prove
  (`all_ones (data_to_word_config_len_bits c +
@@ -2420,27 +1409,9 @@ let ptr_bits_eq_ptr_bits_len_only = prove
     (len2 = len))`,
   CHEAT_TAC);;
 
-let assign_TagLenEq = prove
- (`(?tag len. op = closLang_BlockOp (closLang_TagLenEq tag len)) ==>
-  (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:9429-9538: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_TagLenEq *)
 
 let all_ones_and_1 = prove
  (`~(k = 0) ==> all_ones k 0 && (n2w 1) = (n2w 1)`,
@@ -2451,27 +1422,9 @@ let all_ones_and_ptr_bits_tag_0 = prove
   len = ptr_bits c 0 len`,
   CHEAT_TAC);;
 
-let assign_LenEq = prove
- (`(?len. op = closLang_BlockOp (closLang_LenEq len)) ==> (state_rel c
-  l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:9555-9677: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   assign_LenEq *)
 
 let state_rel_upd_safe_pkheap = prove
  (`!c l1 l2 s lcl hpk r locs. state_rel c l1 l2 (state_stack_max_fupd (K
@@ -2529,11 +1482,14 @@ let small_num_small_int = prove
    small_num (dimindex (:'a) = 64) = small_int (:'a)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_small_int = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i,wordLang_Word
-  (w:'a word)) :: vars) /\
-   word_bit 0 w /\ good_dimindex (:'a) ==>
-   ~(small_int (:'a) i)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,wordLang_Word (w:'a
+  word)) :: vars) /\
+     word_bit 0 w /\ good_dimindex (:'a) ==>
+     ~(small_int (:'a) i)`),
   CHEAT_TAC);;
 
 let small_int_Smallnum_add = prove
@@ -2579,27 +1535,8 @@ let cut_state_opt_extra_const = prove
    s = state_locals_size x`,
   CHEAT_TAC);;
 
-let assign_Add = prove
- (`op = closLang_IntOp closLang_Add ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:9812-9964: a theorem whose
+   statement HOL Light does not read (tools/unstated.py): assign_Add *)
 
 let small_int_Smallnum_sub = prove
  (`good_dimindex (:'a) /\ small_int (:'a) (i1 - i2) ==>
@@ -2619,27 +1556,9 @@ let word_bit_0_sub_lemma = prove
   ~(word_bit 0 (w1 + --(n2w 1) * w2))`,
   CHEAT_TAC);;
 
-let assign_Sub = prove
- (`op = closLang_IntOp closLang_Sub ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:10003-10158: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Sub *)
 
 let cut_state_opt_IMP_ffi = prove
  (`dataSem_cut_state_opt names_opt s = SOME x ==> state_ffi x =
@@ -2655,27 +1574,9 @@ let w2n_mul_less = prove
      (w2n (w:'a word) * w2n (w':'a word)) < dimword (:'a) EXP 2`,
   CHEAT_TAC);;
 
-let assign_Mult = prove
- (`op = closLang_IntOp closLang_Mult ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:10186-10358: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Mult *)
 
 let word_bit_lsr_dimindex_1 = prove
  (`word_bit 0 ((w1 >>> (dimindex (:'a) - 1)):'a word) <=> word_msb w1`,
@@ -2701,256 +1602,49 @@ let IN_adjust_set_IN = prove
  (`y IN domain (adjust_set x) ==> (y - 2) DIV 2 IN domain x`,
   CHEAT_TAC);;
 
-let assign_Div = prove
- (`op = closLang_IntOp closLang_Div ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:10403-10709: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Div *)
 
-let assign_Mod = prove
- (`op = (closLang_IntOp closLang_Mod) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:10711-11022: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Mod *)
 
-let assign_LengthByte = prove
- (`op = closLang_MemOp closLang_LengthByte ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11024-11081: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_LengthByte *)
 
-let assign_Length = prove
- (`op = closLang_MemOp closLang_Length ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11083-11132: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Length *)
 
-let assign_LengthBlock = prove
- (`op = closLang_BlockOp closLang_LengthBlock ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11134-11193: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_LengthBlock *)
 
-let assign_BoundsCheckBlock = prove
- (`assign c secn l dest (closLang_BlockOp closLang_BoundsCheckBlock)
-  args names =
-      (match args with [v1; v2] -> (list_Seq [If Test (adjust_var v1)
-        (Imm (n2w 1))
-                              (Assign 1 (wordLang_Const (n2w 0)))
-                              (Assign 1
-                              (let addr' = real_addr c (adjust_var
-                                v1) in
-                              let header = Load addr' in
-                              let k = dimindex (:'a) -
-                                data_to_word_config_len_size c in
-                              (\sh e n. Shift sh e (wordLang_Const
-                                (n2w n))) Lsr header k));
-                              Assign 3 (ShiftVar Ror (adjust_var v2)
-                                2);
-                              If asm_Lower 3 (Reg 1)
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word)))],l) | _12 -> ((Skip:'a
-                                wordLang_prog),l))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11195-11212: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoundsCheckBlock *)
 
-(* assign_BoundsCheckBlock[allow_rebind] *)
-let data_to_word_assignProof_assign_BoundsCheckBlock = prove
- (`op = closLang_BlockOp closLang_BoundsCheckBlock ==> (state_rel c l1
-  l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11214-11287: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoundsCheckBlock *)
 
-let assign_BoundsCheckArray = prove
- (`assign c secn l dest (closLang_MemOp closLang_BoundsCheckArray) args
-  names =
-      (match args with [v1; v2] -> (list_Seq [Assign 1
-                              (let addr' = real_addr c (adjust_var
-                                v1) in
-                              let header = Load addr' in
-                              let k = dimindex (:'a) -
-                                data_to_word_config_len_size c in
-                              (\sh e n. Shift sh e (wordLang_Const
-                                (n2w n))) Lsr header k);
-                              Assign 3 (ShiftVar Ror (adjust_var v2)
-                                2);
-                              If asm_Lower 3 (Reg 1)
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word)))],l) | _13 -> ((Skip:'a
-                                wordLang_prog),l))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11289-11304: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoundsCheckArray *)
 
-(* assign_BoundsCheckArray[allow_rebind] *)
-let data_to_word_assignProof_assign_BoundsCheckArray = prove
- (`op = closLang_MemOp closLang_BoundsCheckArray ==> (state_rel c l1 l2
-  s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11306-11367: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoundsCheckArray *)
 
-let assign_BoundsCheckByte = prove
- (`assign c secn l dest (closLang_MemOp (closLang_BoundsCheckByte leq))
-  args names =
-      (match args with [v1; v2] -> (list_Seq [Assign 1
-                              (let addr' = real_addr c (adjust_var
-                                v1) in
-                              let header = Load addr' in
-                              let extra = (if dimindex (:'a) = 32
-                                then 2 else 3) in
-                              let k = dimindex (:'a) -
-                                data_to_word_config_len_size c - extra
-                                in
-                              Op Sub [(\sh e n. Shift sh e
-                                (wordLang_Const (n2w n))) Lsr header k;
-                                Const bytes_in_word]);
-                              Assign 3 (ShiftVar Ror (adjust_var v2)
-                                2);
-                              (if leq then If asm_NotLower 1 (Reg 3)
-                                else
-                              If asm_Lower 3 (Reg 1))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word)))],l) | _14 -> ((Skip:'a
-                                wordLang_prog),l))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11369-11386: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoundsCheckByte *)
 
-(* assign_BoundsCheckByte[allow_rebind] *)
-let data_to_word_assignProof_assign_BoundsCheckByte = prove
- (`(?leq. op = closLang_MemOp (closLang_BoundsCheckByte leq)) ==>
-  (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11388-11451: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoundsCheckByte *)
 
 let assign_LessConstSmall = prove
  (`assign c secn l dest (closLang_IntOp (closLang_LessConstSmall i))
@@ -2959,131 +1653,28 @@ let assign_LessConstSmall = prove
         * i)))
                   (Assign (adjust_var dest) (Const (n2w 18:'a word)))
                   (Assign (adjust_var dest) (Const (n2w 2:'a
-                    word))),l) | _15 -> ((Skip:'a wordLang_prog),l))`,
+                    word))),l) | _5 -> ((Skip:'a wordLang_prog),l))`,
   CHEAT_TAC);;
 
-(* [allow_rebind] *)
-let assign_LessSmallConst = prove
- (`(?i. op = closLang_IntOp (closLang_LessConstSmall i)) ==> (state_rel
-  c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11464-11503: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_LessSmallConst *)
 
-(* [allow_rebind] *)
-let assign_BoolNot = prove
- (`op = closLang_BlockOp closLang_BoolNot ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11505-11544: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoolNot *)
 
-(* [allow_rebind] *)
-let assign_BoolTest = prove
- (`(?test. op = closLang_BlockOp (closLang_BoolTest test)) ==>
-  (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11546-11590: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_BoolTest *)
 
-(* [allow_rebind] *)
-let assign_WordTest = prove
- (`(?ws test. op = closLang_WordOp (WordTest ws test)) ==> (state_rel c
-  l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11592-11640: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_WordTest *)
 
-(* Compare1_code_thm *)
-let compare1_code_thm = prove
- (`!l a1 a2 dm m res (t:('a,'c,'ffi)wordSem_state).
-      word_cmp_loop l a1 a2 dm m = SOME res /\
-      dm = wordSem_state_mdomain t /\
-      m = wordSem_state_memory t /\
-      sptree_lookup Compare1_location (wordSem_state_code t) = SOME
-        (4,Compare1_code) /\
-      sptree_lookup Compare1_location (wordSem_state_stack_size t) =
-        wordSem_state_locals_size t /\
-      get_var 0 t = SOME (Loc l1 l2) /\
-      get_var 2 t = SOME (wordLang_Word l) /\
-      get_var 4 t = SOME (wordLang_Word a1) /\
-      get_var 6 t = SOME (wordLang_Word a2) /\
-      w2n l <= wordSem_state_clock t ==>
-      (?ck smx.
-        evaluate (Compare1_code,t) =
-          (SOME (wordSem_Result (wordLang_Loc l1 l2) [wordLang_Word
-            res]),wordSem_state_stack_max_fupd (K smx)
-            (wordSem_state_locals_size_fupd (K (SOME 0))
-            (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd
-            (K ck)
-           t)))) /\
-        option_le smx (OPTION_MAP2 MAX (wordSem_state_stack_max t)
-                              (OPTION_MAP2 (+) (stack_size
-                                (wordSem_state_stack t))
-                                (wordSem_state_locals_size t))) /\
-                                wordSem_state_clock
-        t <= w2n l + ck)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11642-11702: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   Compare1_code_thm *)
 
 let word_exp_insert = prove
  (`(~(m = n) ==>
@@ -3096,41 +1687,9 @@ let word_exp_insert = prove
       wordSem_word_exp t (real_addr c m)))`,
   CHEAT_TAC);;
 
-(* Compare_code_thm *)
-let compare_code_thm = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number i1,wordLang_Word v1) :: (Number i2,wordLang_Word v2)
-        :: vars) /\
-    dm = wordSem_state_mdomain (t:('a,'c,'ffi)wordSem_state) /\
-    m = wordSem_state_memory t /\
-    st = wordSem_state_store t /\
-    (~(word_bit 0 v1) ==> word_bit 0 v2) /\
-    shift_length c < dimindex (:'a) /\
-    sptree_lookup Compare1_location (wordSem_state_code t) = SOME
-      (4,Compare1_code) /\
-    get_var 0 t = SOME (Loc l1 l2) /\
-    get_var 2 t = SOME (wordLang_Word (v1:'a word)) /\
-    get_var 4 t = SOME (wordLang_Word (v2:'a word)) /\
-    dimword (:'a) < wordSem_state_clock t /\
-      ~(data_to_word_config_len_size
-    c = 0) /\ data_to_word_config_len_size
-    c < dimindex (:'a) /\
-    good_dimindex (:'a) ==>
-    (?ck smx.
-      evaluate (Compare_code c,t) =
-        (SOME (wordSem_Result (wordLang_Loc l1 l2) [wordLang_Word
-          (word_cmp_res i1 i2)]),wordSem_state_stack_max_fupd (K smx)
-          (wordSem_state_locals_size_fupd (K (SOME 0))
-          (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd (K
-          ck)
-         t)))) /\
-        option_le smx (OPTION_MAP2 MAX (wordSem_state_stack_max
-                         t)
-                           (OPTION_MAP2 (+) (stack_size
-                             (wordSem_state_stack t))
-                              (sptree_lookup Compare1_location
-                                (wordSem_state_stack_size t)))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11719-11829: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   Compare_code_thm *)
 
 let word_cmp_Less_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
@@ -3172,49 +1731,13 @@ let dimword_LESS_MustTerminate_limit = prove
   1`,
   CHEAT_TAC);;
 
-let assign_Less = prove
- (`op = closLang_IntOp closLang_Less ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:11897-12030: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Less *)
 
-let assign_LessEq = prove
- (`op = closLang_IntOp closLang_LessEq ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:12032-12166: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_LessEq *)
 
 let word_exp_set_var_ShiftVar = prove
  (`wordSem_word_exp (set_var v (wordLang_Word w) t) (ShiftVar sow v n) =
@@ -3223,42 +1746,15 @@ let word_exp_set_var_ShiftVar = prove
       (word_ror w n))`,
   CHEAT_TAC);;
 
-(* [local] *)
-let MemEqList_thm = prove
- (`!offset t xs dm m b a.
-       word_mem_eq (a + offset) xs dm m = SOME b /\
-       get_var 3 t = SOME (wordLang_Word a) /\ dm =
-         wordSem_state_mdomain t /\ m = wordSem_state_memory t ==>
-       (?x. evaluate (MemEqList offset xs,t) =
-             (NONE,state_locals_fupd (K (((if b then insert 1
-               (wordLang_Word (n2w 18)) else I) o
-                              (if ~(xs = []) then insert 5 x else
-                                I)) (state_locals t))) t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:12179-12205: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   MemEqList_thm *)
 (* HOL4 data_to_word_assignProofScript.sml:12206-12207: a theorem
    that HOL4 states as the value of an ML expression: MemEqList_thm *)
 
-let assign_EqualConst = prove
- (`(?p. op = closLang_BlockOp (closLang_EqualConst p)) ==> (state_rel c
-  l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:12209-12385: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_EqualConst *)
 
 (* TODO: move to backendProps *)
 let option_map_mult_suc = prove
@@ -3289,169 +1785,26 @@ let sane_locals_size_def = cake_define
                          t = sptree_lookup Equal1_location
                            (wordSem_state_stack_size t))`;;
 
-(* Equal_code_lemma *)
-let equal_code_lemma = prove
- (`(!c st dm m l wck v1 v2 t l1 l2 res l' wck'.
-      word_eq c st dm m l wck v1 v2 = SOME (res,l',wck') /\
-      dm = wordSem_state_mdomain (t:('a,'c,'ffi)wordSem_state) /\
-      m = wordSem_state_memory t /\
-      st = wordSem_state_store t /\
-      l <= wordSem_state_clock t /\
-      shift_length c < dimindex (:'a) /\
-      sptree_lookup Equal_location (wordSem_state_code t) = SOME
-        (3,Equal_code c) /\
-      sptree_lookup Equal1_location (wordSem_state_code t) = SOME
-        (4,Equal1_code) /\
-      sptree_lookup Compare1_location (wordSem_state_code t) = SOME
-        (4,Compare1_code) /\
-      get_var 0 t = SOME (Loc l1 l2) /\
-      get_var 2 t = SOME (wordLang_Word (v1:'a word)) /\
-      get_var 4 t = SOME (wordLang_Word (v2:'a word)) /\
-        ~(data_to_word_config_len_size
-      c = 0) /\ data_to_word_config_len_size
-      c < dimindex (:'a) /\
-      sane_locals_size t /\
-      good_dimindex (:'a) ==>
-      (?ck new_p smx.
-        evaluate (Equal_code c,t) =
-         (SOME (wordSem_Result (wordLang_Loc l1 l2) [wordLang_Word
-           res]),wordSem_state_stack_max_fupd (K smx)
-           (wordSem_state_permute_fupd (K new_p)
-           (wordSem_state_locals_size_fupd (K (SOME 0))
-           (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd
-           (K ck)
-          t))))) /\
-        option_le smx (OPTION_MAP2 MAX (wordSem_state_stack_max t)
-                              (OPTION_MAP2 (+)
-                              (stack_size (wordSem_state_stack t))
-                              (eq_code_stack_max (wck + 1)
-                                (wordSem_state_stack_size t)))) /\
-        l' <= ck)) /\
-    (!c st dm m l wck w a1 a2 t l1 l2 res l' wck'.
-      word_eq_list c st dm m l wck w a1 a2 = SOME (res,l',wck') /\
-      dm = wordSem_state_mdomain (t:('a,'c,'ffi)wordSem_state) /\
-      m = wordSem_state_memory t /\
-      st = wordSem_state_store t /\
-      l <= wordSem_state_clock t /\
-      shift_length c < dimindex (:'a) /\
-      sptree_lookup Equal_location (wordSem_state_code t) = SOME
-        (3,Equal_code c) /\
-      sptree_lookup Equal1_location (wordSem_state_code t) = SOME
-        (4,Equal1_code) /\
-      sptree_lookup Compare1_location (wordSem_state_code t) = SOME
-        (4,Compare1_code) /\
-      get_var 0 t = SOME (Loc l1 l2) /\
-      get_var 2 t = SOME (wordLang_Word (w:'a word)) /\
-      get_var 4 t = SOME (wordLang_Word (a1:'a word)) /\
-      get_var 6 t = SOME (wordLang_Word (a2:'a word)) /\
-      sane_locals_size t /\ ~(data_to_word_config_len_size
-      c = 0) /\ data_to_word_config_len_size
-      c < dimindex (:'a) /\
-      good_dimindex (:'a) ==>
-      (?ck new_p smx.
-        evaluate (Equal1_code,t) =
-          (SOME (wordSem_Result (wordLang_Loc l1 l2) [wordLang_Word
-            res]),wordSem_state_stack_max_fupd (K smx)
-            (wordSem_state_permute_fupd (K new_p)
-            (wordSem_state_locals_size_fupd (K (SOME 0))
-            (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd
-            (K ck)
-           t))))) /\
-        option_le smx (OPTION_MAP2 MAX (wordSem_state_stack_max t)
-                              (OPTION_MAP2 (+)
-                              (stack_size (wordSem_state_stack t))
-                              (eq_code_stack_max (wck + 1)
-                                (wordSem_state_stack_size t)))) /\
-        l' <= ck))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:12421-12764: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   Equal_code_lemma *)
 
-(* Equal_code_thm *)
-let equal_code_thm = prove
- (`word_eq c st dm m l wck v1 v2 = SOME (res,l',wck') /\
-   dm = wordSem_state_mdomain (t:('a,'c,'ffi)wordSem_state) /\
-   m = wordSem_state_memory t /\
-   st = wordSem_state_store t /\
-   l <= wordSem_state_clock t /\
-   shift_length c < dimindex (:'a) /\ wordSem_state_locals_size
-   t = sptree_lookup Equal_location (wordSem_state_stack_size t) /\
-   sptree_lookup Equal_location (wordSem_state_code t) = SOME
-     (3,Equal_code c) /\
-   sptree_lookup Equal1_location (wordSem_state_code t) = SOME
-     (4,Equal1_code) /\
-   sptree_lookup Compare1_location (wordSem_state_code t) = SOME
-     (4,Compare1_code) /\
-   get_var 0 t = SOME (Loc l1 l2) /\
-   get_var 2 t = SOME (wordLang_Word (v1:'a word)) /\
-   get_var 4 t = SOME (wordLang_Word (v2:'a word)) /\
-     ~(data_to_word_config_len_size
-   c = 0) /\ data_to_word_config_len_size
-   c < dimindex (:'a) /\
-   good_dimindex (:'a) ==>
-   (?ck new_p smx.
-     evaluate (Equal_code c,t) =
-       (SOME (wordSem_Result (wordLang_Loc l1 l2) [wordLang_Word
-         res]),wordSem_state_stack_max_fupd (K smx)
-         (wordSem_state_permute_fupd (K new_p)
-         (wordSem_state_locals_size_fupd (K (SOME 0))
-         (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd (K
-         ck)
-        t))))) /\
-     option_le smx (OPTION_MAP2 MAX (wordSem_state_stack_max t)
-                              (OPTION_MAP2 (+)
-                              (stack_size (wordSem_state_stack t))
-                              (eq_code_stack_max (wck + 1)
-                                (wordSem_state_stack_size t)))) /\
-     l' <= ck)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:12766-12797: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   Equal_code_thm *)
 
 (* MIN_SUB[local] *)
 let data_to_word_assignProof_MIN_SUB = prove
  (`MIN a b - c = MIN (a - c) (b - c)`,
   CHEAT_TAC);;
 
-let assign_Equal = prove
- (`op = closLang_BlockOp closLang_Equal ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:12805-12957: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Equal *)
 
-let assign_WordOpW8 = prove
- (`(?opw. op = closLang_WordOp (WordOpw ast_W8 opw)) ==> (state_rel c l1
-  l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:12959-13150: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_WordOpW8 *)
 
 (* HOL4 data_to_word_assignProofScript.sml:13152-13154: the ML values
    that the definitions below antiquote *)
@@ -3469,30 +1822,9 @@ let IMP_mw2n_2 = prove
     mw2n [x1; x2:'a word] = n`,
   CHEAT_TAC);;
 
-let evaluate_WordOp64_on_32 = prove
- (`!l.
-    dimindex (:'a) = 32 ==>
-    (?w27 w29.
-      evaluate
-       (WordOp64_on_32 opw,wordSem_state_locals_fupd (K
-          (insert 23 (wordLang_Word ((31 >< 0) c''))
-            (insert 21 (wordLang_Word ((63 >< 32) c''))
-               (insert 13 (wordLang_Word ((31 >< 0) c'))
-                  (insert 11 (wordLang_Word ((63 >< 32) c')) l)))))
-        (t:('a,'c,'ffi)wordSem_state)) =
-     (NONE,wordSem_state_locals_fupd (K
-       (insert 31 (wordLang_Word ((63 >< 32) (opw_lookup opw c'
-         c'')))
-        (insert 33 (wordLang_Word ((31 >< 0) (opw_lookup opw
-          (c':word64) (c'':word64))))
-          (insert 27 w27
-            (insert 29 w29
-              (insert 23 (wordLang_Word ((31 >< 0) c''))
-                (insert 21 (wordLang_Word ((63 >< 32) c''))
-                  (insert 13 (wordLang_Word ((31 >< 0) c'))
-                    (insert 11 (wordLang_Word ((63 >< 32) c'))
-                      l))))))))) t))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:13182-13315: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   evaluate_WordOp64_on_32 *)
 
 let IMP_encode_header_NOT_NONE = prove
  (`dimindex (:'a) = 32 /\ 1 < data_to_word_config_len_size c /\ 1 < 30
@@ -3500,90 +1832,24 @@ let IMP_encode_header_NOT_NONE = prove
   (NONE:('a word) option))`,
   CHEAT_TAC);;
 
-let assign_WordOpW64 = prove
- (`(?opw. op = closLang_WordOp (WordOpw ast_W64 opw)) ==> (state_rel c
-  l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:13324-13463: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_WordOpW64 *)
 
-let assign_WordShiftW8 = prove
- (`(?sh n. op = closLang_WordOp (WordShift ast_W8 sh n)) ==> (state_rel
-  c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:13465-13732: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_WordShiftW8 *)
 
 (* HOL4 data_to_word_assignProofScript.sml:13734-13736: the ML values
    that the definitions below antiquote *)
 
-let evaluate_WordShift64_on_32 = prove
- (`!l.
-    dimindex (:'a) = 32 ==>
-      evaluate
-       (WordShift64_on_32 sh n,wordSem_state_locals_fupd (K
-          (insert 13 (wordLang_Word ((31 >< 0) c'))
-          (insert 11 (wordLang_Word ((63 >< 32) c')) l)))
-        (t:('a,'c,'ffi)wordSem_state)) =
-     (NONE,wordSem_state_locals_fupd (K
-       (insert 31 (wordLang_Word ((63 >< 32) (shift_lookup sh c' n)))
-        (insert 33 (wordLang_Word ((31 >< 0) (shift_lookup sh
-          (c':word64) n)))
-          (insert 13 (wordLang_Word ((31 >< 0) c'))
-            (insert 11 (wordLang_Word ((63 >< 32) c')) l))))) t)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:13738-13830: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   evaluate_WordShift64_on_32 *)
 
-let assign_WordShiftW64 = prove
- (`(?sh n. op = closLang_WordOp (WordShift ast_W64 sh n)) ==> (state_rel
-  c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:13832-13988: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_WordShiftW64 *)
 
 (* HOL4 data_to_word_assignProofScript.sml:13990-13992: ML code, not
    ported *)
@@ -3622,115 +1888,25 @@ let fp_greater = prove
    fp64_greaterEqual a b = fp64_lessEqual b a`,
   CHEAT_TAC);;
 
-let assign_FP_cmp = prove
- (`(?fpc. op = closLang_WordOp (FP_cmp fpc)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14057-14157: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_FP_cmp *)
 
-let assign_FP_top = prove
- (`(?fpt. op = closLang_WordOp (FP_top fpt)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14159-14319: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_FP_top *)
 
-let assign_FP_bop = prove
- (`(?fpb. op = closLang_WordOp (FP_bop fpb)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14321-14465: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_FP_bop *)
 
-let assign_FP_uop = prove
- (`(?fpu. op = closLang_WordOp (FP_uop fpu)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14467-14590: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_FP_uop *)
 
-let assign_Label = prove
- (`(?lab. op = Label lab) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14592-14615: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Label *)
 
 (* do_app_Ref *)
 let data_to_word_assignProof_do_app_Ref = prove
@@ -3751,247 +1927,49 @@ let data_to_word_assignProof_do_app_Ref = prove
          s1))))`,
   CHEAT_TAC);;
 
-let assign_Ref = prove
- (`op = closLang_MemOp closLang_Ref ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14634-14694: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Ref *)
 
-let assign_Update = prove
- (`op = closLang_MemOp closLang_Update ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14696-14738: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Update *)
 
-let assign_El = prove
- (`op = closLang_MemOp closLang_El ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14740-14807: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_El *)
 
-let assign_ElemAt = prove
- (`(?n. op = closLang_BlockOp (closLang_ElemAt n)) ==> (state_rel c l1
-  l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14809-14872: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_ElemAt *)
 
-let assign_UpdateByte = prove
- (`op = closLang_MemOp closLang_UpdateByte ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14874-14982: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_UpdateByte *)
 
-let assign_DerefByte = prove
- (`op = closLang_MemOp closLang_DerefByte ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:14984-15073: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_DerefByte *)
 
-let assign_Const = prove
- (`(?i. op = closLang_IntOp (closLang_Const i)) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:15075-15095: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Const *)
 
-let assign_GlobalsPtr = prove
- (`op = closLang_GlobOp closLang_GlobalsPtr ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:15097-15117: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_GlobalsPtr *)
 
-let assign_Global = prove
- (`(?n. op = closLang_GlobOp (closLang_Global n)) ==> (state_rel c l1 l2
-  s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:15119-15152: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Global *)
 
-let assign_SetGlobal = prove
- (`(?n. op = closLang_GlobOp (closLang_SetGlobal n)) ==> (state_rel c l1
-  l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:15154-15202: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_SetGlobal *)
 
-let assign_SetGlobalsPtr = prove
- (`op = closLang_GlobOp closLang_SetGlobalsPtr ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:15204-15263: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_SetGlobalsPtr *)
 
 let IMP = prove
  (`b1 \/ b2 <=> ~b1 ==> b2`,
@@ -4004,33 +1982,9 @@ let memcopy_def = cake_define
          memcopy (k - 1) (a1 + bytes_in_word) (a2 + bytes_in_word)
            ((a2 =+ m a1) m) dm else NONE)`;;
 
-let MemCopy_thm = prove
- (`!ret_val l1 l2 k a1 a2 (s:('a,'c,'ffi)wordSem_state) m dm m1.
-      memcopy k a1 a2 m dm = SOME m1 /\ wordSem_state_memory
-      s = m /\ wordSem_state_mdomain s = dm /\
-      sptree_lookup MemCopy_location (wordSem_state_code s) = SOME
-        (5,MemCopy_code) /\
-      k <= wordSem_state_clock s /\ 4 * k < dimword (:'a) /\
-      get_var 0 s = SOME (Loc l1 l2) /\
-      get_var 2 s = SOME (wordLang_Word (n2w (4 * k))) /\
-      get_var 4 s = SOME (wordLang_Word (a1:'a word)) /\
-      get_var 6 s = SOME (wordLang_Word a2) /\
-      get_var 8 s = SOME ret_val ==>
-      (?smx.
-      evaluate (MemCopy_code,s) =
-        (SOME (wordSem_Result (wordLang_Loc l1 l2)
-          [ret_val]),wordSem_state_stack_max_fupd (K smx)
-          (wordSem_state_locals_size_fupd (K (SOME 0))
-          (wordSem_state_locals_fupd (K LN) (wordSem_state_memory_fupd
-          (K m1) (wordSem_state_clock_fupd (K (wordSem_state_clock s -
-          k))
-         s))))) /\
-      option_le smx
-        (OPTION_MAP2 MAX (wordSem_state_stack_max s)
-          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
-                          (sptree_lookup MemCopy_location
-                            (wordSem_state_stack_size s)))))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:15279-15315: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   MemCopy_thm *)
 
 (* HOL4 data_to_word_assignProofScript.sml:15317-15319: a theorem
    that HOL4 states as the value of an ML expression:
@@ -4043,12 +1997,15 @@ let data_to_word_assignProof_get_vars_IMP_domain = prove
       EVERY (\x. x IN domain s) xs`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_IMP_free_space = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars ==>
-    (?nfree curr other.
-      FLOOKUP st NextFree = SOME (wordLang_Word nfree) /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      (word_list_exists nfree sp * other) (fun2set (m,dm)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars ==>
+      (?nfree curr other.
+        FLOOKUP st NextFree = SOME (wordLang_Word nfree) /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (word_list_exists nfree sp * other) (fun2set (m,dm)))`),
   CHEAT_TAC);;
 
 let IMP_store_list_SOME = prove
@@ -4088,13 +2045,17 @@ let store_list_APPEND = prove
         (a + bytes_in_word * n2w (LENGTH xs)) ys m1 dm)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_store_list_to_unused = prove
- (`!ws2 m dm m1.
-      memory_rel c (be:bool) ts refs n st m dm vars /\
-      data_to_word_memoryProof_store_list nfree ws2 m dm = SOME m1 /\
-      FLOOKUP st NextFree = SOME (wordLang_Word nfree) /\ LENGTH ws2
-        <= n ==>
-      memory_rel c be ts refs n st m1 dm vars`,
+ (cake_as_vars (fun () ->
+    `!ws2 m dm m1.
+        memory_rel c be ts refs n st m dm vars /\
+        data_to_word_memoryProof_store_list nfree ws2 m dm = SOME
+          m1 /\
+        FLOOKUP st NextFree = SOME (wordLang_Word nfree) /\ LENGTH
+          ws2 <= n ==>
+        memory_rel c be ts refs n st m1 dm vars`),
   CHEAT_TAC);;
 
 let get_vars_delete_lemma = prove
@@ -4184,87 +2145,21 @@ let IN_domain_adjust_set_IMP = prove
    (?xa. x = adjust_var xa /\ xa IN domain the_names)`,
   CHEAT_TAC);;
 
-let assign_ConsExtend = prove
- (`(?tag. op = closLang_BlockOp (closLang_ConsExtend tag)) ==>
-  (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:15573-16148: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_ConsExtend *)
 
-let assign_Cons = prove
- (`(?tag. op = closLang_BlockOp (closLang_Cons tag)) ==> (state_rel c l1
-  l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:16150-16244: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Cons *)
 
-let assign_FFI = prove
- (`(?n. op = FFI n) ==> (state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:16246-16480: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_FFI *)
 
-let assign_FFI_final = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names (FFI i) = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app (FFI i) vals x = Rerr (Rabort (Rffi_error f)) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest (FFI i) args names_opt),t) =
-       (q,r) /\
-     option_le (state_stack_max r) (state_stack_max s) /\ ~(q =
-       SOME wordSem_NotEnoughSpace) /\ state_ffi r = wordSem_state_ffi
-       t /\ q = SOME (wordSem_FinalFFI f))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:16482-16618: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_FFI_final *)
 
 let getWords_acc = prove
  (`!ws acc.
@@ -4288,29 +2183,9 @@ let store_list_word_cond_add_IMP = prove
        backend_common_word_shift (:'a))) y2 m = m1`,
   CHEAT_TAC);;
 
-let evaluate_StoreAnyConsts = prove
- (`!r1 r2 r3 vs w (s:('a,'c,'ffi)wordSem_state) free' m dm m1.
-     data_to_word_memoryProof_store_list free' (MAP (word_cond_add c
-       (a:'a word)) vs) m dm = SOME m1 /\
-     m = wordSem_state_memory s /\ dm = wordSem_state_mdomain s /\
-       ALL_DISTINCT [r1; r2; r3] /\
-     EVERY (good_loc (domain (wordSem_state_code s)) o SND) (w :: vs)
-       /\
-     sptree_lookup r2 (wordSem_state_locals s) = SOME (wordLang_Word
-       free') /\
-     sptree_lookup r3 (wordSem_state_locals s) = SOME (wordLang_Word
-       (a << (shift_length c - backend_common_word_shift (:'a)))) ==>
-     (?ll.
-       evaluate (StoreAnyConsts r1 r2 r3 vs w,s) =
-         (NONE,wordSem_state_store_fupd (K (wordSem_state_store s |+
-           (NextFree,wordLang_Word
-                            (free' + bytes_in_word * n2w (LENGTH
-                              vs))))) (wordSem_state_locals_fupd (K ll)
-                              (wordSem_state_memory_fupd (K m1) s))) /\
-       sptree_lookup r1 ll = SOME (word_cond_add c a w) /\
-       (!n. ~(MEM n [r1; r2; r3]) ==> sptree_lookup n ll =
-         sptree_lookup n (wordSem_state_locals s)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:16662-16736: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   evaluate_StoreAnyConsts *)
 
 let do_build_const_IMP_SOME = prove
  (`do_build_const parts x (SOME ts) = (v,vs,ts1) ==>
@@ -4333,43 +2208,29 @@ let bignum_size = prove
 let _ = do_list hide_constant ["free"];;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let parts_to_words_NONE = prove
- (`!parts' (off:'a word) m aa (t:('a,'c,'ffi)wordSem_state)
+ (cake_as_vars (fun () ->
+    `!parts' (off:'a word) m aa (t:('a,'c,'ffi)wordSem_state)
   (s:('c,'ffi)dataSem_state).
-     parts_to_words c m aa parts' off = NONE /\ good_dimindex (:'a)
-       /\
-     heap_in_memory_store heap a sp sp1 gens c (wordSem_state_store
-       t) (wordSem_state_memory t) (wordSem_state_mdomain t) (limit:num)
-       ==>
-     limits_inv (dataSem_state_limits s) (FLOOKUP
-       (wordSem_state_store t) HeapLength) (wordSem_state_stack_limit t)
-       (data_to_word_config_len_size
-                c) (data_to_word_config_has_fp_ops c)
-                  (data_to_word_config_has_fp_tern c) ==>
-     EXISTS ((~) o lim_safe_part (dataSem_state_limits s)) parts'`,
+       parts_to_words c m aa parts' off = NONE /\ good_dimindex
+         (:'a) /\
+       heap_in_memory_store heap a sp sp1 gens c
+         (wordSem_state_store t) (wordSem_state_memory t)
+         (wordSem_state_mdomain t) limit ==>
+       limits_inv (dataSem_state_limits s) (FLOOKUP
+         (wordSem_state_store t) HeapLength) (wordSem_state_stack_limit
+         t) (data_to_word_config_len_size
+                  c) (data_to_word_config_has_fp_ops c)
+                    (data_to_word_config_has_fp_tern c) ==>
+       EXISTS ((~) o lim_safe_part (dataSem_state_limits s))
+         parts'`),
   CHEAT_TAC);;
 
-let assign_Build = prove
- (`(?parts'. op = closLang_BlockOp (closLang_Build parts')) ==>
-  (state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-   (~(op_requires_names op = (names_opt = NONE))) /\
-   cut_state_opt names_opt s = SOME x /\
-   get_vars args (state_locals s) = SOME vals /\
-     wordSem_state_termdep
-   t > 1 /\
-   do_app op vals x = Rval (v,s2) ==>
-   (?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-       /\
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-      r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-        (state_stack_max s2) /\
-      (~(data_to_word_config_gc_kind c = None) ==>
-        ~(dataSem_state_safe_for_space s2))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-        NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:16826-16923: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_Build *)
 
 
 (* HOL4 data_to_word_assignProofScript.sml:16926: ML code, not ported *)
@@ -4382,26 +2243,9 @@ let join_lemma = prove
 (* HOL4 data_to_word_assignProofScript.sml:16931-16933: a theorem
    that HOL4 states as the value of an ML expression: imp_assign *)
 
-let assign_thm = prove
- (`(state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    (~(op_requires_names op = (names_opt = NONE))) /\
-    cut_state_opt names_opt s = SOME x /\
-    get_vars args (state_locals s) = SOME vals /\
-      wordSem_state_termdep
-    t > 1 /\
-    do_app op vals x = Rval (v,s2) ==>
-    (?q r.
-      evaluate (FST (assign c n l dest op args names_opt),t) = (q,r)
-        /\
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-       r = wordSem_state_ffi t /\ option_le (state_stack_max r)
-         (state_stack_max s2) /\
-       (~(data_to_word_config_gc_kind c = None) ==>
-         ~(dataSem_state_safe_for_space s2))) /\
-      (~(q = SOME wordSem_NotEnoughSpace) ==>
-       state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
-         NONE)))`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_assignProofScript.sml:16935-16966: a theorem
+   whose statement HOL Light does not read (tools/unstated.py):
+   assign_thm *)
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

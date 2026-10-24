@@ -113,6 +113,9 @@ EXPECT = [
    r'^\s*(Theorem|Triviality|val|fun|local)\b|save_thm'),
   ('a theorem whose statement the port cannot state yet',
    r'^\s*(Theorem|Triviality)\b'),
+  # a statement that HOL Light's parser rejects (tools/unstated.py)
+  ('a theorem whose statement HOL Light does not read',
+   r'^\s*(Theorem|Triviality|val|fun|local)\b|save_thm'),
   ('the theorem', r'^\s*(Theorem|Triviality)\b'),
   ('the triviality', r'^\s*(Theorem|Triviality)\b'),
 ]

@@ -15,9 +15,7 @@ needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "lib/pegexec.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
-needs "semantics/semantics.ml";;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -101,16 +99,8 @@ let state_rw = prove
   CHEAT_TAC);;
 
 (* 2) all_skips allow swapping pc for clock*)
-(* [local] *)
-let all_skips_evaluate = prove
- (`!k s.
-   all_skips (pc s) (state_code s) k /\
-   ~(failed s) ==>
-   (!k'.
-   evaluate (state_clock_fupd (K (state_clock s + k' + k)) s) =
-   evaluate (state_clock_fupd (K (state_clock s + k')) (pc_fupd (K
-     (pc s + k)) s)))`,
-  CHEAT_TAC);;
+(* HOL4 lab_filterProofScript.sml:170-197: a theorem whose statement
+   HOL Light does not read (tools/unstated.py): all_skips_evaluate *)
 
 let lab_filterProof_state_rel_def = cake_define
   `lab_filterProof_state_rel (s1:('a,'c,'ffi)labSem_state) t1 <=>
@@ -131,22 +121,20 @@ let adjust_pc_all_skips = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let asm_fetch_aux_eq2 = prove
- (`asm_fetch_aux (adjust_pc (pc:num) code) (filter_skip code) = x ==>
-   (?k.
-   asm_fetch_aux (pc + k) code = x /\
-   all_skips pc code k)`,
+ (cake_as_vars (fun () ->
+    `asm_fetch_aux (adjust_pc pc code) (filter_skip code) = x ==>
+     (?k.
+     asm_fetch_aux (pc + k) code = x /\
+     all_skips pc code k)`),
   CHEAT_TAC);;
 
 (* HOL4 lab_filterProofScript.sml:261: ML code, not ported *)
 
-(* [local] *)
-let all_skips_evaluate_rw = prove
- (`all_skips (pc s) (state_code s) k /\ ~(failed s) /\ state_clock
-   s = clk + k /\
-   t = state_clock_fupd (K clk) (pc_fupd (K (pc s + k)) s) ==>
-   evaluate s = evaluate t`,
-  CHEAT_TAC);;
+(* HOL4 lab_filterProofScript.sml:263-278: a theorem whose statement
+   HOL Light does not read (tools/unstated.py): all_skips_evaluate_rw *)
 
 (*For all initial code there is some all_skips*)
 (* [local] *)
@@ -253,31 +241,16 @@ let share_mem_op_FFI_final_filter_correct = prove
    s = state_ffi s2)`,
   CHEAT_TAC);;
 
-let filter_correct = prove
- (`!(s1:('a,'c,'ffi)labSem_state) t1 res s2.
-      (evaluate s1 = (res,s2)) /\ lab_filterProof_state_rel s1 t1 /\
-        ~(failed t1) ==>
-      (?k t2.
-        (evaluate (state_clock_fupd (K (labSem_state_clock s1 + k))
-          t1) = (res,t2)) /\
-        (state_ffi s2 = state_ffi t2))`,
-  CHEAT_TAC);;
+(* HOL4 lab_filterProofScript.sml:669-1037: a theorem whose statement
+   HOL Light does not read (tools/unstated.py): filter_correct *)
 
-(* [local] *)
-let state_rel_IMP_sem_EQ_sem = prove
- (`!s t. lab_filterProof_state_rel s t ==> semantics s = semantics t`,
-  CHEAT_TAC);;
+(* HOL4 lab_filterProofScript.sml:1039-1152: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   state_rel_IMP_sem_EQ_sem *)
 
-let filter_skip_semantics = prove
- (`!s t. (pc t = 0) /\ ~(failed t) /\
-   (?scompile.
-     s = compile_fupd (K scompile) (compile_oracle_fupd (K ((\(a,b).
-       (a,filter_skip b)) o compile_oracle t)) (state_code_fupd (K
-       (filter_skip (state_code t))) t)) /\ compile
-    t = (\c p. scompile c (filter_skip p))) /\
-    ~(failed t) ==>
-   semantics s = semantics t`,
-  CHEAT_TAC);;
+(* HOL4 lab_filterProofScript.sml:1154-1167: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   filter_skip_semantics *)
 
 let sec_ends_with_label_filter_skip = prove
  (`!code.

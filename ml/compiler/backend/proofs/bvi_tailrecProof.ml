@@ -379,10 +379,13 @@ let is_free_name = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_exp_next_addr = prove
- (`compile_exp loc (next:num) args exp = NONE ==>
-      compile_exp loc (next + bvl_to_bvi_namespaces) args exp =
-        NONE`,
+ (cake_as_vars (fun () ->
+    `compile_exp loc next args exp = NONE ==>
+        compile_exp loc (next + bvl_to_bvi_namespaces) args exp =
+          NONE`),
   CHEAT_TAC);;
 
 let compile_each_untouched = prove
@@ -421,29 +424,42 @@ let compile_each_touched = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let check_exp_NONE_compile_exp = prove
- (`check_exp loc arity exp = NONE ==> compile_exp loc (next:num) arity
-  exp = NONE`,
+ (cake_as_vars (fun () ->
+    `check_exp loc arity exp = NONE ==> compile_exp loc next arity exp
+  = NONE`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let check_exp_SOME_compile_exp = prove
- (`check_exp loc arity exp = SOME p ==>
-      (?q. compile_exp loc (next:num) arity exp = SOME q)`,
+ (cake_as_vars (fun () ->
+    `check_exp loc arity exp = SOME p ==>
+        (?q. compile_exp loc next arity exp = SOME q)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let EVERY_free_names_thm = prove
- (`EVERY (bvi_tailrecProof_free_names (next:num) o FST) prog /\
-    sptree_lookup loc (fromAList prog) = SOME x ==>
-      bvi_tailrecProof_free_names next loc`,
+ (cake_as_vars (fun () ->
+    `EVERY (bvi_tailrecProof_free_names next o FST) prog /\
+      sptree_lookup loc (fromAList prog) = SOME x ==>
+        bvi_tailrecProof_free_names next loc`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_each_code_rel = prove
- (`bvi_tailrec_compile_each (next:num) prog = (next1,prog2) /\
-   ALL_DISTINCT (MAP FST prog) /\
-   EVERY (bvi_tailrecProof_free_names next o FST) prog ==>
-     bvi_tailrecProof_code_rel (fromAList prog) (fromAList prog2)`,
+ (cake_as_vars (fun () ->
+    `bvi_tailrec_compile_each next prog = (next1,prog2) /\
+     ALL_DISTINCT (MAP FST prog) /\
+     EVERY (bvi_tailrecProof_free_names next o FST) prog ==>
+       bvi_tailrecProof_code_rel (fromAList prog) (fromAList
+         prog2)`),
   CHEAT_TAC);;
 
 let compile_each_next_mono = prove
@@ -570,13 +586,16 @@ let namespace_rel_union = prove
      y s)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_each_namespace_rel = prove
- (`bvi_tailrec_compile_each (next:num) prog = (next1,prog2) /\ (\n. n
-  MOD bvl_to_bvi_namespaces = 2) next /\ bvl_num_stubs <= next /\
-   EVERY ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST) (FILTER
-     ((<=) bvl_num_stubs o FST) prog) ==>
-   bvi_tailrecProof_namespace_rel (fromAList prog) (fromAList
-     prog2)`,
+ (cake_as_vars (fun () ->
+    `bvi_tailrec_compile_each next prog = (next1,prog2) /\ (\n. n MOD
+  bvl_to_bvi_namespaces = 2) next /\ bvl_num_stubs <= next /\
+     EVERY ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST)
+       (FILTER ((<=) bvl_num_stubs o FST) prog) ==>
+     bvi_tailrecProof_namespace_rel (fromAList prog) (fromAList
+       prog2)`),
   CHEAT_TAC);;
 
 let state_rel_do_app_aux = prove
@@ -737,56 +756,66 @@ let evaluate_rewrite_tail = prove
 
 (* HOL4 bvi_tailrecProofScript.sml:2441: a proof *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let evaluate_compile_each = prove
- (`bvi_tailrecProof_input_condition next' prog /\
-   (!n next' cfg prog. co n = ((next',cfg),prog) ==>
-     bvi_tailrecProof_input_condition next' prog) /\
-   (!n. MEM n (MAP FST (SND (bvi_tailrec_compile_each next' prog)))
-     /\ (\n. n MOD bvl_to_bvi_namespaces = 2) n ==> n < FST (FST (co
-     0))) /\
-   evaluate ([Call 0 (SOME (start:num)) [] NONE],[],
-             initial_state ffi0 (fromAList prog) co
-                 (state_cc bvi_tailrec_compile_each cc) k) = (r,s) /\
-                   ~(r = Rerr (Rabort Rtype_error)) ==>
-   (?s2.
-     evaluate
-      ([Call 0 (SOME start) [] NONE],[],
-        initial_state ffi0 (fromAList (SND (bvi_tailrec_compile_each
-          next' prog)))
-            (state_co bvi_tailrec_compile_each co) cc k) = (r,s2) /\
-     bvi_tailrecProof_state_rel s s2)`,
+ (cake_as_vars (fun () ->
+    `bvi_tailrecProof_input_condition next' prog /\
+     (!n next' cfg prog. co n = ((next',cfg),prog) ==>
+       bvi_tailrecProof_input_condition next' prog) /\
+     (!n. MEM n (MAP FST (SND (bvi_tailrec_compile_each next'
+       prog))) /\ (\n. n MOD bvl_to_bvi_namespaces = 2) n ==> n < FST
+       (FST (co 0))) /\
+     evaluate ([Call 0 (SOME start) [] NONE],[],
+               initial_state ffi0 (fromAList prog) co
+                   (state_cc bvi_tailrec_compile_each cc) k) =
+                     (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
+     (?s2.
+       evaluate
+        ([Call 0 (SOME start) [] NONE],[],
+          initial_state ffi0 (fromAList (SND
+            (bvi_tailrec_compile_each next' prog)))
+              (state_co bvi_tailrec_compile_each co) cc k) = (r,s2)
+                /\
+       bvi_tailrecProof_state_rel s s2)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_each_semantics = prove
- (`bvi_tailrecProof_input_condition n prog /\
-   (!k n cfg prog. co k = ((n,cfg),prog) ==>
-     bvi_tailrecProof_input_condition n prog) /\
-   (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces =
-     2) k ==> k < FST (FST (co 0))) /\
-   SND (bvi_tailrec_compile_each n prog) = prog2 /\ ~(semantics ffi
-     (fromAList prog) co (state_cc bvi_tailrec_compile_each cc)
-     (start:num) =
-      ffi_Fail) ==>
-   semantics ffi (fromAList prog) co (state_cc
-     bvi_tailrec_compile_each cc) start =
-   semantics ffi (fromAList prog2) (state_co
-     bvi_tailrec_compile_each co) cc start`,
+ (cake_as_vars (fun () ->
+    `bvi_tailrecProof_input_condition n prog /\
+     (!k n cfg prog. co k = ((n,cfg),prog) ==>
+       bvi_tailrecProof_input_condition n prog) /\
+     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
+       = 2) k ==> k < FST (FST (co 0))) /\
+     SND (bvi_tailrec_compile_each n prog) = prog2 /\ ~(semantics
+       ffi (fromAList prog) co (state_cc bvi_tailrec_compile_each cc)
+       start =
+        ffi_Fail) ==>
+     semantics ffi (fromAList prog) co (state_cc
+       bvi_tailrec_compile_each cc) start =
+     semantics ffi (fromAList prog2) (state_co
+       bvi_tailrec_compile_each co) cc start`),
   CHEAT_TAC);;
 
 (* compile_prog_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvi_tailrecProof_compile_prog_semantics = prove
- (`bvi_tailrecProof_input_condition n prog /\
-   (!k n cfg prog. co k = ((n,cfg),prog) ==>
-     bvi_tailrecProof_input_condition n prog) /\
-   (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces =
-     2) k ==> k < FST (FST (co 0))) /\
-   SND (compile_prog b n prog) = prog2 /\ ~(semantics ffi (fromAList
-     prog) co (state_cc (compile_prog b) cc) start =
-      ffi_Fail) ==>
-   semantics ffi (fromAList prog) co (state_cc (compile_prog b) cc)
-     start =
-   semantics ffi (fromAList prog2) (state_co (compile_prog b) co)
-     cc start`,
+ (cake_as_vars (fun () ->
+    `bvi_tailrecProof_input_condition n prog /\
+     (!k n cfg prog. co k = ((n,cfg),prog) ==>
+       bvi_tailrecProof_input_condition n prog) /\
+     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
+       = 2) k ==> k < FST (FST (co 0))) /\
+     SND (compile_prog b n prog) = prog2 /\ ~(semantics ffi
+       (fromAList prog) co (state_cc (compile_prog b) cc) start =
+        ffi_Fail) ==>
+     semantics ffi (fromAList prog) co (state_cc (compile_prog b)
+       cc) start =
+     semantics ffi (fromAList prog2) (state_co (compile_prog b)
+       co) cc start`),
   CHEAT_TAC);;
 
 let compile_each_labels = prove

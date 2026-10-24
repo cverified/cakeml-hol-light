@@ -172,24 +172,32 @@ let opt_lemma = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let OptionalLetLet_IMP = prove
- (`(ys,l,s',nr') = OptionalLetLet y (LENGTH env) lx s1 (limit:num) nr /\
-     (!env2 extra.
-       env_rel l env env2 ==> evaluate ([y],env2 ++ extra,s) = res)
-         /\
-     env_rel l env env1 /\ b ==>
-     evaluate (ys,env1 ++ extra,s) = res /\ b`,
+ (cake_as_vars (fun () ->
+    `(ys,l,s',nr') = OptionalLetLet y (LENGTH env) lx s1 limit nr /\
+       (!env2 extra.
+         env_rel l env env2 ==> evaluate ([y],env2 ++ extra,s) =
+           res) /\
+       env_rel l env env1 /\ b ==>
+       evaluate (ys,env1 ++ extra,s) = res /\ b`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let OptionalLetLet_limit = prove
- (`(ys,l,s',nr') = OptionalLetLet e (LENGTH env) lx s1 (limit:num) nr /\
-    env_rel l env env1 ==> env_rel lx env env1`,
+ (cake_as_vars (fun () ->
+    `(ys,l,s',nr') = OptionalLetLet e (LENGTH env) lx s1 limit nr /\
+      env_rel l env env1 ==> env_rel lx env env1`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let OptionalLetLet_nr = prove
- (`(ys,l,s',nr') = OptionalLetLet e (LENGTH env) lx s1 (limit:num) nr
-  ==>
-    nr' = nr`,
+ (cake_as_vars (fun () ->
+    `(ys,l,s',nr') = OptionalLetLet e (LENGTH env) lx s1 limit nr ==>
+      nr' = nr`),
   CHEAT_TAC);;
 
 (* HOL4 bvl_handleProofScript.sml:352-473: a theorem that HOL4 states
@@ -264,9 +272,12 @@ let bVarBound_LetLet = prove
  (`bVarBound m [y] /\ n <= m ==> bVarBound m [LetLet n (l1:1 spt) y]`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bVarBound_OptionalLetLet = prove
- (`bVarBound m [e] /\ n <= m ==>
-    bVarBound m (FST (OptionalLetLet e n l s (limit:num) nr))`,
+ (cake_as_vars (fun () ->
+    `bVarBound m [e] /\ n <= m ==>
+      bVarBound m (FST (OptionalLetLet e n l s limit nr))`),
   CHEAT_TAC);;
 
 let bVarBound_compile = prove
@@ -370,9 +381,12 @@ let get_code_labels_handle_simp = prove
   CHEAT_TAC);;
 
 (* compile_exp_code_labels *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_handleProof_compile_exp_code_labels = prove
- (`!a b c. bvlProps_get_code_labels (compile_exp a b c) SUBSET
-  bvlProps_get_code_labels c`,
+ (cake_as_vars (fun () ->
+    `!a b c. bvlProps_get_code_labels (compile_exp a b c) SUBSET
+  bvlProps_get_code_labels c`),
   CHEAT_TAC);;
 
 let compile_seqs_code_labels = prove

@@ -654,14 +654,16 @@ let do_app_err_lim_swap = prove
        Rerr e`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let size_of_stack_eq = prove
- (`(size_of_stack ((Env n l:dataSem_stack) ::
-  (stack:(dataSem_stack)list)) = OPTION_MAP2 (+) n (size_of_stack
-  stack)) /\
-   (size_of_stack (dataSem_Exc n v1 v2 :: stack) =
-      OPTION_MAP2 (+) (OPTION_MAP ((+) 3) n) (size_of_stack stack))
-        /\
-   (size_of_stack [] = SOME 1)`,
+ (cake_as_vars (fun () ->
+    `(size_of_stack ((Env n l:dataSem_stack) :: stack) = OPTION_MAP2 (+)
+  n (size_of_stack stack)) /\
+     (size_of_stack (dataSem_Exc n v1 v2 :: stack) =
+        OPTION_MAP2 (+) (OPTION_MAP ((+) 3) n) (size_of_stack
+          stack)) /\
+     (size_of_stack [] = SOME 1)`),
   CHEAT_TAC);;
 
 (* HOL4 dataPropsScript.sml:663-676: a proof *)
@@ -1267,21 +1269,30 @@ let dataProps_evaluate_add_clock_io_events_mono = prove
       extra)) s))))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_Div_IMP_LPREFIX = prove
- (`semantics ffi prog co cc lim ss (start:num) = ffi_Diverge l ==>
-  LPREFIX (fromList (ffi_state_io_events ffi)) l`,
+ (cake_as_vars (fun () ->
+    `semantics ffi prog co cc lim ss start = ffi_Diverge l ==> LPREFIX
+  (fromList (ffi_state_io_events ffi)) l`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_Term_IMP_PREFIX = prove
- (`semantics ffi prog co cc lim ss (start:num) = ffi_Terminate tt l
-  ==> ffi_state_io_events ffi <<= l`,
+ (cake_as_vars (fun () ->
+    `semantics ffi prog co cc lim ss start = ffi_Terminate tt l ==>
+  ffi_state_io_events ffi <<= l`),
   CHEAT_TAC);;
 
 (* Resource_limit_hit_implements_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let resource_limit_hit_implements_semantics = prove
- (`implements {ffi_Terminate ffi_Resource_limit_hit (ffi_state_io_events
-  ffi)}
-        {semantics ffi (fromAList prog) co cc lim ss (start:num)}`,
+ (cake_as_vars (fun () ->
+    `implements {ffi_Terminate ffi_Resource_limit_hit
+  (ffi_state_io_events ffi)}
+          {semantics ffi (fromAList prog) co cc lim ss start}`),
   CHEAT_TAC);;
 
 let dataProps_get_code_labels_def = cake_define
@@ -1483,9 +1494,12 @@ let evaluate_stack_frame_sizes_ffi = prove
       s)))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_zero_limits = prove
- (`dataSem_semantics ffi code co cc lim ss (start:num) =
-   dataSem_semantics ffi code co cc zero_limits LN start`,
+ (cake_as_vars (fun () ->
+    `dataSem_semantics ffi code co cc lim ss start =
+     dataSem_semantics ffi code co cc zero_limits LN start`),
   CHEAT_TAC);;
 
 let do_app_stack_max = prove

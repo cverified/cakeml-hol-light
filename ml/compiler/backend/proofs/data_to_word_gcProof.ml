@@ -320,15 +320,18 @@ let lookup_adjust_var_adjust_set_SOME_UNIT = prove
   (sptree_lookup n s)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_lookup = prove
- (`word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c refs
-      (ys ++ join_env l1 (toAList (inter l2 (adjust_set l1))) ++ xs)
-        /\
-    sptree_lookup n l1 = SOME x /\
-    sptree_lookup (adjust_var n) l2 = SOME w ==>
-    word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-      (ys ++ [(x,w)] ++ join_env l1 (toAList (inter l2 (adjust_set
-        l1))) ++ xs)`,
+ (cake_as_vars (fun () ->
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+        (ys ++ join_env l1 (toAList (inter l2 (adjust_set l1))) ++
+          xs) /\
+      sptree_lookup n l1 = SOME x /\
+      sptree_lookup (adjust_var n) l2 = SOME w ==>
+      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+        (ys ++ [(x,w)] ++ join_env l1 (toAList (inter l2
+          (adjust_set l1))) ++ xs)`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -363,35 +366,39 @@ let word_ml_inv_get_var_IMP = prove
   CHEAT_TAC);;
 
 (* [allow_rebind] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_get_vars_IMP_lemma = prove
- (`!n x w envs'.
-         word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c
-           refs
-           (join_env ll
-              (toAList (inter (wordSem_state_locals t) (adjust_set
-                ll))) ++ envs') /\
-         get_vars n ll = SOME x /\
-         get_vars (MAP adjust_var n) t = SOME w ==>
-         word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-           (ZIP x w ++ join_env ll
-              (toAList (inter (wordSem_state_locals t) (adjust_set
-                ll))) ++ envs')`,
+ (cake_as_vars (fun () ->
+    `!n x w envs'.
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (join_env ll
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set ll))) ++ envs') /\
+           get_vars n ll = SOME x /\
+           get_vars (MAP adjust_var n) t = SOME w ==>
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (ZIP x w ++ join_env ll
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set ll))) ++ envs')`),
   CHEAT_TAC);;
 
 (* [allow_rebind] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_get_vars_IMP = prove
- (`!n x w envs'.
-         word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c
-           refs
-           (join_env (state_locals s)
-              (toAList (inter (wordSem_state_locals t) (adjust_set
-                (state_locals s)))) ++ envs') /\
-         get_vars n (state_locals s) = SOME x /\
-         get_vars (MAP adjust_var n) t = SOME w ==>
-         word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-           (ZIP x w ++ join_env (state_locals s)
-              (toAList (inter (wordSem_state_locals t) (adjust_set
-                (state_locals s)))) ++ envs')`,
+ (cake_as_vars (fun () ->
+    `!n x w envs'.
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (join_env (state_locals s)
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set (state_locals s)))) ++ envs') /\
+           get_vars n (state_locals s) = SOME x /\
+           get_vars (MAP adjust_var n) t = SOME w ==>
+           word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+             (ZIP x w ++ join_env (state_locals s)
+                (toAList (inter (wordSem_state_locals t)
+                  (adjust_set (state_locals s)))) ++ envs')`),
   CHEAT_TAC);;
 
 let IMP_adjust_var = prove
@@ -407,14 +414,18 @@ let IS_SOME_lookup_domain = prove
   CHEAT_TAC);;
 
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_insert = prove
- (`word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c refs
-      ([(x,w)] ++ join_env d (toAList (inter l (adjust_set d))) ++
-        xs) ==>
-    word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-      (join_env (insert dest x d)
-        (toAList (inter (insert (adjust_var dest) w l)
-                           (adjust_set (insert dest x d)))) ++ xs)`,
+ (cake_as_vars (fun () ->
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+        ([(x,w)] ++ join_env d (toAList (inter l (adjust_set d)))
+          ++ xs) ==>
+      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+        (join_env (insert dest x d)
+          (toAList (inter (insert (adjust_var dest) w l)
+                             (adjust_set (insert dest x d)))) ++
+                               xs)`),
   CHEAT_TAC);;
 
 let one_and_or_1 = prove
@@ -548,23 +559,27 @@ let NOT_is_fwd_ptr = prove
   (wordLang_Word h))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_gc_move_thm = prove
- (`(copying_gc_gc_move (x,[],a,n,heap,T,(limit:num)) =
+ (cake_as_vars (fun () ->
+    `(copying_gc_gc_move (x,[],a,n,heap,T,limit) =
   (x1,h1,a1,n1,heap1,T)) /\
-    heap_length heap <= dimword (:'a) DIV 2 EXP shift_length conf /\
-    (word_heap curr heap conf * misc_word_list pa xs * frame)
-      (fun2set (m,dm)) /\
-    (word_gc_move conf (word_addr conf x,n2w a,pa,curr,m,dm) =
-      ((w:'a word_loc),i1,pa1,m1,c1)) /\
-    LENGTH xs = n ==>
-    (?xs1.
-      (word_heap curr heap1 conf *
-       word_heap pa h1 conf *
-       misc_word_list pa1 xs1 * frame) (fun2set (m1,dm)) /\
-      (w = word_addr conf x1) /\
-      heap_length heap1 = heap_length heap /\
-      c1 /\ (i1 = n2w a1) /\ n1 = LENGTH xs1 /\
-      pa1 = pa + bytes_in_word * n2w (heap_length h1))`,
+      heap_length heap <= dimword (:'a) DIV 2 EXP shift_length conf
+        /\
+      (word_heap curr heap conf * misc_word_list pa xs * frame)
+        (fun2set (m,dm)) /\
+      (word_gc_move conf (word_addr conf x,n2w a,pa,curr,m,dm) =
+        ((w:'a word_loc),i1,pa1,m1,c1)) /\
+      LENGTH xs = n ==>
+      (?xs1.
+        (word_heap curr heap1 conf *
+         word_heap pa h1 conf *
+         misc_word_list pa1 xs1 * frame) (fun2set (m1,dm)) /\
+        (w = word_addr conf x1) /\
+        heap_length heap1 = heap_length heap /\
+        c1 /\ (i1 = n2w a1) /\ n1 = LENGTH xs1 /\
+        pa1 = pa + bytes_in_word * n2w (heap_length h1))`),
   CHEAT_TAC);;
 
 let word_gc_move_roots_thm = prove
@@ -651,33 +666,41 @@ let word_gc_move_loop_thm = prove
         pa1 = new + bytes_in_word * n2w (heap_length h11))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_full_gc_thm = prove
- (`(full_gc (roots,heap,(limit:num)) = (roots1,heap1,a1,T)) /\
-    heap_length heap <= dimword (:'a) DIV 2 EXP shift_length conf /\
-    heap_length heap * (dimindex (:'a) DIV 8) < dimword (:'a) /\
-      data_to_word_config_len_size
-    conf + 2 < dimindex (:'a) /\
-    (word_heap (curr:'a word) heap conf *
-     word_heap new (heap_expand limit) conf * frame) (fun2set (m,dm))
-       /\
-    limit = heap_length heap /\ good_dimindex (:'a) /\
-    (word_full_gc conf (MAP (word_addr conf) roots,new,curr,m,dm) =
-       (rs1,i1,pa1,m1,c1)) ==>
-    (word_heap new (heap1 ++ heap_expand (limit - a1)) conf *
-     word_heap curr (heap_expand limit) conf * frame) (fun2set
-       (m1,dm)) /\
-    c1 /\ i1 = n2w a1 /\
-    rs1 = MAP (word_addr conf) roots1 /\
-    pa1 = new + bytes_in_word * n2w a1`,
+ (cake_as_vars (fun () ->
+    `(full_gc (roots,heap,limit) = (roots1,heap1,a1,T)) /\
+      heap_length heap <= dimword (:'a) DIV 2 EXP shift_length conf
+        /\
+      heap_length heap * (dimindex (:'a) DIV 8) < dimword (:'a) /\
+        data_to_word_config_len_size
+      conf + 2 < dimindex (:'a) /\
+      (word_heap (curr:'a word) heap conf *
+       word_heap new (heap_expand limit) conf * frame) (fun2set
+         (m,dm)) /\
+      limit = heap_length heap /\ good_dimindex (:'a) /\
+      (word_full_gc conf (MAP (word_addr conf) roots,new,curr,m,dm)
+        =
+         (rs1,i1,pa1,m1,c1)) ==>
+      (word_heap new (heap1 ++ heap_expand (limit - a1)) conf *
+       word_heap curr (heap_expand limit) conf * frame) (fun2set
+         (m1,dm)) /\
+      c1 /\ i1 = n2w a1 /\
+      rs1 = MAP (word_addr conf) roots1 /\
+      pa1 = new + bytes_in_word * n2w a1`),
   CHEAT_TAC);;
 
 let LIST_REL_EQ_MAP = prove
  (`!vs ws f. LIST_REL (\v w. f v = w) vs ws <=> ws = MAP f vs`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let full_gc_IMP = prove
- (`full_gc (xs,heap,(limit:num)) = (t,heap2,n,T) ==>
-    n <= limit /\ limit = heap_length heap`,
+ (cake_as_vars (fun () ->
+    `full_gc (xs,heap,limit) = (t,heap2,n,T) ==>
+      n <= limit /\ limit = heap_length heap`),
   CHEAT_TAC);;
 
 let is_ref_header_alt = prove
@@ -1821,14 +1844,18 @@ let heap_length_nil = prove
  (`heap_length m = 0 <=> m = []`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let abs_ml_inv_GenState_IMP_heap_length_FILTER = prove
- (`abs_ml_inv c (stack:(dataSem_v)list) refs
-        (xs,heap,(be:bool),a,sp,sp1,GenState n (t :: ts))
-        (heap_length heap) tss /\ data_to_word_config_gc_kind
-    c = data_to_word_Generational (y :: ys) /\
-    heap_split (a + sp + sp1) heap = SOME (h1,h2) ==>
-    EVERY isDataElement h2 /\
-    heap_length (FILTER isDataElement heap) = a + heap_length h2`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv c stack refs
+          (xs,heap,be,a,sp,sp1,GenState n (t :: ts))
+          (heap_length heap) tss /\ data_to_word_config_gc_kind
+      c = data_to_word_Generational (y :: ys) /\
+      heap_split (a + sp + sp1) heap = SOME (h1,h2) ==>
+      EVERY isDataElement h2 /\
+      heap_length (FILTER isDataElement heap) = a + heap_length
+        h2`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1865,11 +1892,14 @@ let alloc_size_def = cake_define
    states as the value of an ML expression: word_gc_fun_lemma *)
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let abs_ml_inv_ADD = prove
- (`abs_ml_inv c xs refs (ys,heap2,(be:bool),a2,k2 + k3,0,gens2)
-  (limit:num) ts /\ data_to_word_config_gc_kind
-   c = data_to_word_Generational l ==>
-   abs_ml_inv c xs refs (ys,heap2,be,a2,k2,k3,gens2) limit ts`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv c xs refs (ys,heap2,be,a2,k2 + k3,0,gens2) limit ts /\
+  data_to_word_config_gc_kind
+     c = data_to_word_Generational l ==>
+     abs_ml_inv c xs refs (ys,heap2,be,a2,k2,k3,gens2) limit ts`),
   CHEAT_TAC);;
 
 let alloc_size_check = prove
@@ -1886,29 +1916,36 @@ let alloc_size_LEQ_IMP = prove
    good_dimindex (:'a) ==> k <= sp1`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_gc_fun_correct = prove
- (`good_dimindex (:'a) /\
-    heap_in_memory_store heap a sp sp1 gens c s m dm (limit:num) /\
-    word_ml_inv ((heap:(('a word_loc,data_to_word_memoryProof_tag#('a
-      word_loc) list)heap_element) list),(be:bool),a,sp,sp1,gens) limit
-      ts c refs ((v,FAPPLY s Globals) ::
-      (stack:(dataSem_v#('a)word_loc)list)) ==>
-    (?stack1 m1 s1 heap1 a1 sp1 sp2 gens2 v1 xs.
-      word_gc_fun c (MAP SND stack,m,dm,s) = SOME (stack1,m1,s1) /\
-      heap_in_memory_store heap1 a1 sp1 sp2 gens2 c s1 m1 dm limit /\
-      abs_ml_inv c (v :: MAP FST (ZIP (MAP FST stack) stack1)) refs
-        (v1 :: xs,heap1,be,a1,sp1,sp2,gens2) limit ts /\
-      word_addr c v1 = FAPPLY s1 Globals /\
-      LIST_REL (\v w. word_addr c v = w) xs
-        (MAP SND (ZIP (MAP FST stack) stack1)) /\
-      (FLOOKUP s AllocSize = SOME (wordLang_Word (alloc_size k)) /\
-       wordSem_has_space (wordLang_Word ((alloc_size k):'a word))
-         (wordSem_state_store_fupd (K s1) t) = SOME F /\
-         ~(data_to_word_config_gc_kind
-       c = None) ==>
-         sp1 + sp2 < k /\
-         all_reachable_from_roots (v1 :: xs) heap1 /\
-         heap_length heap1 = data_length heap1 + sp1 + sp2))`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\
+      heap_in_memory_store heap a sp sp1 gens c s m dm limit /\
+      word_ml_inv ((heap:(('a
+        word_loc,data_to_word_memoryProof_tag#('a word_loc)
+        list)heap_element) list),be,a,sp,sp1,gens) limit ts c refs
+        ((v,FAPPLY s Globals) :: stack) ==>
+      (?stack1 m1 s1 heap1 a1 sp1 sp2 gens2 v1 xs.
+        word_gc_fun c (MAP SND stack,m,dm,s) = SOME (stack1,m1,s1)
+          /\
+        heap_in_memory_store heap1 a1 sp1 sp2 gens2 c s1 m1 dm
+          limit /\
+        abs_ml_inv c (v :: MAP FST (ZIP (MAP FST stack) stack1))
+          refs
+          (v1 :: xs,heap1,be,a1,sp1,sp2,gens2) limit ts /\
+        word_addr c v1 = FAPPLY s1 Globals /\
+        LIST_REL (\v w. word_addr c v = w) xs
+          (MAP SND (ZIP (MAP FST stack) stack1)) /\
+        (FLOOKUP s AllocSize = SOME (wordLang_Word (alloc_size k))
+          /\
+         wordSem_has_space (wordLang_Word ((alloc_size k):'a word))
+           (wordSem_state_store_fupd (K s1) t) = SOME F /\
+           ~(data_to_word_config_gc_kind
+         c = None) ==>
+           sp1 + sp2 < k /\
+           all_reachable_from_roots (v1 :: xs) heap1 /\
+           heap_length heap1 = data_length heap1 + sp1 + sp2))`),
   CHEAT_TAC);;
 
 (* -------------------------------------------------------
@@ -2371,10 +2408,13 @@ let word_get_vars_SNOC_IMP = prove
 let data_to_word_gcProof_word_get_vars_SNOC_IMP =
   word_get_vars_SNOC_IMP;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_CodePtr = prove
- (`word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c
-  (state_refs s) ((CodePtr n,v) :: xs) ==>
-    (v = Loc n 0)`,
+ (cake_as_vars (fun () ->
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (state_refs s)
+  ((CodePtr n,v) :: xs) ==>
+      (v = Loc n 0)`),
   CHEAT_TAC);;
 
 let state_rel_CodePtr = prove
@@ -2539,35 +2579,21 @@ let data_to_word_gcProof_s_key_eq_LASTN = prove
  (`!xs ys n. s_key_eq xs ys ==> s_key_eq (LASTN n xs) (LASTN n ys)`,
   CHEAT_TAC);;
 
-let evaluate_mk_loc_EQ = prove
- (`evaluate (q,t) = (NONE,(t1:('a,'b,'c)wordSem_state)) ==>
-    mk_loc (jump_exc t1) = ((mk_loc (jump_exc t)):'a word_loc)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:5613-5623: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_mk_loc_EQ *)
 
-let mk_loc_eq_push_env_exc_Exception = prove
- (`evaluate
-      ((c:'a wordLang_prog),call_env args1 ss
-            (push_env y (SOME (x0,(prog1:'a wordLang_prog),x1,l))
-               (dec_clock t))) = (SOME (wordSem_Exception xx
-                 w),(t1:('a,'b,'c)wordSem_state)) ==>
-    mk_loc (jump_exc t1) = (mk_loc (jump_exc t):'a word_loc)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:5625-5644: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   mk_loc_eq_push_env_exc_Exception *)
 
-let evaluate_IMP_domain_EQ = prove
- (`evaluate (c,call_env (args1:('a word_loc) list) ss
-     (push_env y (opt:(num#'a wordLang_prog#num#num) option)
-       (dec_clock t))) =
-      (SOME (wordSem_Result ll w),t1) /\ pop_env t1 = SOME t2 ==>
-    domain (state_locals t2) = domain (FST y) UNION domain (SND y)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:5646-5664: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_IMP_domain_EQ *)
 
-let evaluate_IMP_domain_EQ_Exc = prove
- (`evaluate (c,call_env args1 ss (push_env y
-      (SOME (x0,(prog1:'a wordLang_prog),x1,l))
-      (dec_clock (t:('a,'b,'c)wordSem_state)))) = (SOME
-        (wordSem_Exception ll w),t1) ==>
-    domain (state_locals t1) = domain (FST y) UNION domain (SND y)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:5666-5686: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_IMP_domain_EQ_Exc *)
 
 let mk_loc_jump_exc = prove
  (`mk_loc (jump_exc
@@ -2663,13 +2689,9 @@ let eval_push_env_T_Raise_IMP_stack_length = prove
     LENGTH (stack r') = LENGTH (dataSem_state_stack s)`,
   CHEAT_TAC);;
 
-let eval_push_env_SOME_exc_IMP_s_key_eq = prove
- (`evaluate (p,call_env args1 ss (push_env y (SOME (x1,x2,x3,x4))
-  (dec_clock t))) =
-      (SOME (wordSem_Exception l w),t1) ==>
-    s_key_eq (stack t1) (wordSem_state_stack t) /\
-      wordSem_state_handler t = state_handler t1`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:5900-5913: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   eval_push_env_SOME_exc_IMP_s_key_eq *)
 
 let eval_exc_stack_shorter = prove
  (`evaluate (c,call_env ys ss (push_env x F (dec_clock
@@ -3063,10 +3085,13 @@ let word_gc_fun_EL_lemma = prove
           ZIP (MAP FST (flat xs ys)) stack1)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_cons_snoc = prove
- (`word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c refs (x
-  :: xs) ==>
-   word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs (xs ++ [x])`,
+ (cake_as_vars (fun () ->
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs (x :: xs) ==>
+     word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs (xs ++
+       [x])`),
   CHEAT_TAC);;
 
 let size_of_cons = prove
@@ -3157,26 +3182,31 @@ let LENGTH_n2mw_LE_bignum_digits = prove
        (:'a) = 64) m`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let soundness_size_of = prove
- (`!lims roots r1 s1 root_vars
-     (vars':(('a word_loc) heap_address) list) n2 r2 s2 p1 refs.
-     (!n. reachable_refs root_vars refs n /\ n IN FDOM f ==>
-          bc_ref_inv c n refs (f,tf,heap,(be:bool))) /\
-     no_thunks_in_refs refs /\
-     LIST_REL (\v x. v_inv c v refs (x,f,tf,heap)) root_vars vars' /\
-     PERM roots root_vars /\ good_dimindex (:'a) /\
-     IMAGE ((FAPPLY) tf) (domain s1) SUBSET set_of_list p1 /\
-     IMAGE ((FAPPLY) f) (domain refs DIFF domain r1) SUBSET
-       set_of_list p1 /\
-     FDOM f SUBSET domain refs /\ subspt r1 refs /\
-     (limits_arch_64_bit lims <=> dimindex (:'a) = 64) /\
-     size_of lims roots r1 s1 = (n2,r2,s2) ==>
-     (?p2. SUM (MAP (lookup_len heap) p2) <= n2 + SUM (MAP
-       (lookup_len heap) p1) /\
-          traverse_heap heap p1 vars' p2 /\ subspt r2 refs /\
-          IMAGE ((FAPPLY) tf) (domain s2) SUBSET set_of_list p2 /\
-          IMAGE ((FAPPLY) f) (domain refs DIFF domain r2) SUBSET
-            set_of_list p2)`,
+ (cake_as_vars (fun () ->
+    `!lims roots r1 s1 root_vars
+       (vars':(('a word_loc) heap_address) list) n2 r2 s2 p1 refs.
+       (!n. reachable_refs root_vars refs n /\ n IN FDOM f ==>
+            bc_ref_inv c n refs (f,tf,heap,be)) /\
+       no_thunks_in_refs refs /\
+       LIST_REL (\v x. v_inv c v refs (x,f,tf,heap)) root_vars
+         vars' /\
+       PERM roots root_vars /\ good_dimindex (:'a) /\
+       IMAGE ((FAPPLY) tf) (domain s1) SUBSET set_of_list p1 /\
+       IMAGE ((FAPPLY) f) (domain refs DIFF domain r1) SUBSET
+         set_of_list p1 /\
+       FDOM f SUBSET domain refs /\ subspt r1 refs /\
+       (limits_arch_64_bit lims <=> dimindex (:'a) = 64) /\
+       size_of lims roots r1 s1 = (n2,r2,s2) ==>
+       (?p2. SUM (MAP (lookup_len heap) p2) <= n2 + SUM (MAP
+         (lookup_len heap) p1) /\
+            traverse_heap heap p1 vars' p2 /\ subspt r2 refs /\
+            IMAGE ((FAPPLY) tf) (domain s2) SUBSET set_of_list p2
+              /\
+            IMAGE ((FAPPLY) f) (domain refs DIFF domain r2)
+              SUBSET set_of_list p2)`),
   CHEAT_TAC);;
 
 let traverse_heap_reachable_set_mono = prove
@@ -3371,16 +3401,13 @@ let has_space_state_rel = prove
    state_rel c l1 l2 (dataSem_state_space_fupd (K k) s) r NONE locs`,
   CHEAT_TAC);;
 
-let evaluate_IMP_inc_clock = prove
- (`evaluate (q,t) = (NONE,t1) ==>
-    evaluate (q,inc_clock ck t) = (NONE,inc_clock ck t1)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:7686-7692: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_IMP_inc_clock *)
 
-let evaluate_IMP_inc_clock_Ex = prove
- (`evaluate (q,t) = (SOME (wordSem_Exception x y),t1) ==>
-    evaluate (q,inc_clock ck t) = (SOME (wordSem_Exception x
-      y),inc_clock ck t1)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:7694-7700: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_IMP_inc_clock_Ex *)
 
 let get_var_inc_clock = prove
  (`get_var n (inc_clock k s) = get_var n s`,
@@ -3492,12 +3519,9 @@ let alloc_locals_insert_1 = prove
    wordSem_alloc k (adjust_sets names) t`,
   CHEAT_TAC);;
 
-let evaluate_GiveUp = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs ==>
-    (?r. evaluate (GiveUp,t) = (SOME wordSem_NotEnoughSpace,r) /\
-      state_ffi
-        r = state_ffi s /\ wordSem_state_ffi t = state_ffi s)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:7990-8015: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   evaluate_GiveUp *)
 
 let insert_insert_3_1 = prove
  (`insert 3 x (insert 1 y t) = insert 1 y (insert 3 x t)`,
@@ -3609,114 +3633,33 @@ let cut_env_insert_1 = prove
      -> SOME (insert 1 w v))`,
   CHEAT_TAC);;
 
-let AllocVar_thm_gen = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    dataSem_cut_env names (dataSem_state_locals s) = SOME x /\
-    get_var 1 t = SOME (wordLang_Word w) /\
-    evaluate (AllocVar c (limit:num) names,t) = (q,r) /\
-    limit < dimword (:'a) DIV 8 ==>
-    (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi r =
-      dataSem_state_ffi s /\ option_le (wordSem_state_stack_max r)
-      (dataSem_state_stack_max s) /\
-          (~(data_to_word_config_gc_kind c = None) /\ w2n w DIV 4 <
-            limit /\ no_thunks_in_refs (dataSem_state_refs s) ==>
-             (!roots2 dups n2 r2 s2.
-               PERM roots2 (dups ++ toList x ++ FLAT (MAP
-                 extract_stack (dataSem_state_stack s)) ++
-                            [the_global (dataSem_state_global s)]) /\
-               set_of_list dups SUBSET set_of_list (toList x ++ FLAT
-                 (MAP extract_stack (dataSem_state_stack s)) ++
-                              [the_global (dataSem_state_global s)])
-                                /\
-               size_of (dataSem_state_limits s) roots2
-                 (dataSem_state_refs s) LN = (n2,r2,s2) ==>
-                 limits_heap_limit (dataSem_state_limits
-               s) < n2 + (w2n w DIV 4 + 1)))) /\
-    (~(q = SOME wordSem_NotEnoughSpace) ==>
-      w2n w DIV 4 < limit /\
-      state_rel c l1 l2 (dataSem_state_space_fupd (K (w2n w DIV 4 +
-        1)) (dataSem_state_locals_fupd (K x) s)) r NONE locs /\
-      FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
-        (wordSem_state_store t) (Temp (n2w 29)) /\ wordSem_state_code
-      r = wordSem_state_code t /\ wordSem_state_code_buffer
-      r = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
-      r = wordSem_state_data_buffer t /\ wordSem_state_compile_oracle
-      r = wordSem_state_compile_oracle t /\
-      q = NONE)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:8272-8459: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   AllocVar_thm_gen *)
 
-let AllocVar_thm = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    dataSem_cut_env names (dataSem_state_locals s) = SOME x /\
-    get_var 1 t = SOME (wordLang_Word w) /\
-    evaluate (AllocVar c (limit:num) names,t) = (q,r) /\
-    limit < dimword (:'a) DIV 8 ==>
-    (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi r =
-      dataSem_state_ffi s /\ option_le (wordSem_state_stack_max r)
-      (dataSem_state_stack_max s) /\
-          (~(data_to_word_config_gc_kind c = None) /\ w2n w DIV 4 <
-            limit /\ no_thunks_in_refs (dataSem_state_refs s) ==>
-            limits_heap_limit (dataSem_state_limits
-           s) < size_of_heap (cut_locals names s) + w2n w DIV 4 + 1))
-             /\
-    (~(q = SOME wordSem_NotEnoughSpace) ==>
-      w2n w DIV 4 < limit /\
-      state_rel c l1 l2 (dataSem_state_space_fupd (K (w2n w DIV 4 +
-        1)) (dataSem_state_locals_fupd (K x) s)) r NONE locs /\
-      FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
-        (wordSem_state_store t) (Temp (n2w 29)) /\ wordSem_state_code
-      r = wordSem_state_code t /\ wordSem_state_code_buffer
-      r = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
-      r = wordSem_state_data_buffer t /\ wordSem_state_compile_oracle
-      r = wordSem_state_compile_oracle t /\
-      q = NONE)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:8461-8498: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   AllocVar_thm *)
 
 
-let AllocVar_thm_nary = prove
- (`!c l1 l2 s (t:('a,'c,'ffi)wordSem_state) locs args x' xa vals i
-  limit' q r.
-     state_rel c l1 l2 s t NONE locs /\
-     dataSem_cut_env (list_insert args x') (state_locals s) = SOME xa
-       /\
-     get_vars args (state_locals s) = SOME vals /\
-     get_var 1 t = SOME (wordLang_Word (n2w (4 * i))) /\
-     4 * i < dimword (:'a) /\
-     evaluate (AllocVar c limit' (list_insert args x'),t) = (q,r) /\
-     limit' < dimword (:'a) DIV 8 ==>
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-        r = state_ffi s /\ option_le (state_stack_max r)
-          (state_stack_max s) /\
-        (~(data_to_word_config_gc_kind c = None) /\ i < limit' /\
-          no_thunks_in_refs (state_refs s) ==> limits_heap_limit
-          (dataSem_state_limits
-           s) <
-             size_of_heap_args vals (cut_locals x' s) + (i + 1))) /\
-     (~(q = SOME wordSem_NotEnoughSpace) ==>
-        i < limit' /\
-        state_rel c l1 l2
-          (dataSem_state_space_fupd (K (i + 1)) (state_locals_fupd (K
-            xa) s)) r NONE locs /\
-        FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
-          (wordSem_state_store t) (Temp (n2w 29)) /\ state_code
-        r = wordSem_state_code t /\ state_code_buffer r =
-          wordSem_state_code_buffer t /\ wordSem_state_data_buffer
-        r = wordSem_state_data_buffer t /\ compile_oracle r =
-          wordSem_state_compile_oracle t /\
-        q = NONE)`,
-  CHEAT_TAC);;
+(* HOL4 data_to_word_gcProofScript.sml:8501-8562: a theorem whose
+   statement HOL Light does not read (tools/unstated.py):
+   AllocVar_thm_nary *)
 
 let state_rel_with_clock_0 = prove
  (`state_rel c r1 r2 s t x locs ==>
     state_rel c r1 r2 (dataSem_state_space_fupd (K 0) s) t x locs`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_heap_non_empty_limit = prove
- (`~((limit:num) = 0) ==>
-         word_heap other (heap_expand limit) c =
-         SEP_EXISTS (\w1. set_sep_one (other,w1) *
-           word_heap (other + bytes_in_word) (heap_expand (limit -
-             1)) c)`,
+ (cake_as_vars (fun () ->
+    `~(limit = 0) ==>
+           word_heap other (heap_expand limit) c =
+           SEP_EXISTS (\w1. set_sep_one (other,w1) *
+             word_heap (other + bytes_in_word) (heap_expand
+               (limit - 1)) c)`),
   CHEAT_TAC);;
 
 let small_int_0 = prove
@@ -3756,36 +3699,41 @@ let get_vars_SOME_IFF_eq = prove
            get_vars xs t = SOME ys))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_get_vars_IMP_lemma = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     (join_env ll
-        (toAList (inter (wordSem_state_locals t) (adjust_set ll))) ++
-          (envs:(dataSem_v#('a)word_loc)list)) /\
-    get_vars n ll = SOME x /\
-    get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) = SOME
-      w ==>
-    memory_rel c be ts refs sp st m dm
-      (ZIP x w ++
-       join_env ll
-         (toAList (inter (wordSem_state_locals t) (adjust_set ll)))
-           ++ envs)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       (join_env ll
+          (toAList (inter (wordSem_state_locals t) (adjust_set
+            ll))) ++ envs) /\
+      get_vars n ll = SOME x /\
+      get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) =
+        SOME w ==>
+      memory_rel c be ts refs sp st m dm
+        (ZIP x w ++
+         join_env ll
+           (toAList (inter (wordSem_state_locals t) (adjust_set
+             ll))) ++ envs)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_get_vars_IMP = prove
- (`memory_rel c (be:bool) ts (dataSem_state_refs s) sp st m dm
-     (join_env (dataSem_state_locals s)
-        (toAList (inter (wordSem_state_locals t) (adjust_set
-          (dataSem_state_locals s)))) ++
-          (envs:(dataSem_v#('a)word_loc)list)) /\
-    get_vars n (dataSem_state_locals ((s:('c,'ffi)dataSem_state))) =
-      SOME x /\
-    get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) = SOME
-      w ==>
-    memory_rel c be ts (dataSem_state_refs s) sp st m dm
-      (ZIP x w ++
-       join_env (dataSem_state_locals s)
-         (toAList (inter (wordSem_state_locals t) (adjust_set
-           (dataSem_state_locals s)))) ++ envs)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts (dataSem_state_refs s) sp st m dm
+       (join_env (dataSem_state_locals s)
+          (toAList (inter (wordSem_state_locals t) (adjust_set
+            (dataSem_state_locals s)))) ++ envs) /\
+      get_vars n (dataSem_state_locals
+        ((s:('c,'ffi)dataSem_state))) = SOME x /\
+      get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) =
+        SOME w ==>
+      memory_rel c be ts (dataSem_state_refs s) sp st m dm
+        (ZIP x w ++
+         join_env (dataSem_state_locals s)
+           (toAList (inter (wordSem_state_locals t) (adjust_set
+             (dataSem_state_locals s)))) ++ envs)`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_gcProofScript.sml:8671-8674: a theorem that HOL4
@@ -3815,15 +3763,18 @@ let lookup_RefByte_location = prove
       (3,Mod_code)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_insert = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ([(x,w)] ++ join_env d (toAList (inter l (adjust_set d))) ++ xs)
-       ==>
-    memory_rel c be ts refs sp st m dm
-     (join_env (insert dest x d)
-        (toAList
-           (inter (insert (adjust_var dest) w l)
-              (adjust_set (insert dest x d)))) ++ xs)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ([(x,w)] ++ join_env d (toAList (inter l (adjust_set d))) ++
+         xs) ==>
+      memory_rel c be ts refs sp st m dm
+       (join_env (insert dest x d)
+          (toAList
+             (inter (insert (adjust_var dest) w l)
+                (adjust_set (insert dest x d)))) ++ xs)`),
   CHEAT_TAC);;
 
 let state_rel_IMP_Number_arg = prove
@@ -3906,9 +3857,12 @@ let MustTerminate_limit_NOT_0 = prove
   CHEAT_TAC);;
 
 (* [simp] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Temp = prove
- (`memory_rel c (be:bool) ts refs sp (st |+ (Temp i,w)) m dm vars <=>
-    memory_rel c be ts refs sp st m dm vars`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp (st |+ (Temp i,w)) m dm vars <=>
+      memory_rel c be ts refs sp st m dm vars`),
   CHEAT_TAC);;
 
 (* [simp] *)

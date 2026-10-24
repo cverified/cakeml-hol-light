@@ -421,15 +421,18 @@ let remove_ticks_correct = prove
 (* preservation of observable semantics *)
 
 (* semantics_remove_ticks *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let clos_ticksProof_semantics_remove_ticks = prove
- (`~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        co (pure_cc clos_ticks_compile_inc cc) xs = ffi_Fail) ==>
-      (!n. SND (SND (co n)) = []) /\ 1 <= max_app ==>
-      closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        co (pure_cc clos_ticks_compile_inc cc) xs =
-      closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        (pure_co clos_ticks_compile_inc o co) cc
-        (clos_ticks_remove_ticks xs)`,
+ (cake_as_vars (fun () ->
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+          co (pure_cc clos_ticks_compile_inc cc) xs = ffi_Fail) ==>
+        (!n. SND (SND (co n)) = []) /\ 1 <= max_app ==>
+        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+          co (pure_cc clos_ticks_compile_inc cc) xs =
+        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+          (pure_co clos_ticks_compile_inc o co) cc
+          (clos_ticks_remove_ticks xs)`),
   CHEAT_TAC);;
 
 (* syntactic properties *)

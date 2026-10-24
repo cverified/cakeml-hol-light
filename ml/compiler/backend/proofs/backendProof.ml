@@ -626,35 +626,38 @@ let cake_orac_invariant = prove
 
 (* HOL4 backendProofScript.sml:755-758: ML code, not ported *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvl_to_bvi_compile_semantics2 = prove
- (`bvl_to_bvi_compile (start:num) c names prog =
-     (start',prog',inlines,bvi_inlines,n1,n2,n3,names1) /\
-   (?v. FST (co 0) = (inlines,n1,n2,n3,bvi_inlines,v)) /\
-   (!n. ALL_DISTINCT (MAP FST (SND (co n)))) /\
-   ALL_DISTINCT (MAP FST prog) /\
-   is_state_oracle (bvi_tailrec_compile_prog
-     (bvl_to_bvi_config_do_tailrec c))
-     (state_co bvl_to_bvi_compile_inc
-       (state_co (bvl_inline_compile_inc
-         (bvl_to_bvi_config_inline_size_limit c)
-         (bvl_to_bvi_config_split_main_at_seq
-           c) (bvl_to_bvi_config_exp_cut c)) co)) /\
-   is_state_oracle (bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc
-     c))
-     (state_co (bvi_tailrec_compile_prog
+ (cake_as_vars (fun () ->
+    `bvl_to_bvi_compile start c names prog =
+       (start',prog',inlines,bvi_inlines,n1,n2,n3,names1) /\
+     (?v. FST (co 0) = (inlines,n1,n2,n3,bvi_inlines,v)) /\
+     (!n. ALL_DISTINCT (MAP FST (SND (co n)))) /\
+     ALL_DISTINCT (MAP FST prog) /\
+     is_state_oracle (bvi_tailrec_compile_prog
        (bvl_to_bvi_config_do_tailrec c))
        (state_co bvl_to_bvi_compile_inc
          (state_co (bvl_inline_compile_inc
            (bvl_to_bvi_config_inline_size_limit c)
            (bvl_to_bvi_config_split_main_at_seq
-             c) (bvl_to_bvi_config_exp_cut c)) co))) ==>
-               ~(bvlSem_semantics ffi0 (fromAList prog) co (full_cc c
-               cc)
-     start = Fail) ==>
-   bviSem_semantics ffi0 (fromAList prog') (full_co c co)
-     cc start' =
-   bvlSem_semantics (ffi0:'ffi ffi_state) (fromAList prog)
-     co (full_cc c cc) start`,
+             c) (bvl_to_bvi_config_exp_cut c)) co)) /\
+     is_state_oracle (bvi_tmc_compile_prog
+       (bvl_to_bvi_config_do_tmc c))
+       (state_co (bvi_tailrec_compile_prog
+         (bvl_to_bvi_config_do_tailrec c))
+         (state_co bvl_to_bvi_compile_inc
+           (state_co (bvl_inline_compile_inc
+             (bvl_to_bvi_config_inline_size_limit c)
+             (bvl_to_bvi_config_split_main_at_seq
+               c) (bvl_to_bvi_config_exp_cut c)) co))) ==>
+                 ~(bvlSem_semantics ffi0 (fromAList prog) co (full_cc c
+                 cc)
+       start = Fail) ==>
+     bviSem_semantics ffi0 (fromAList prog') (full_co c co)
+       cc start' =
+     bvlSem_semantics (ffi0:'ffi ffi_state) (fromAList prog)
+       co (full_cc c cc) start`),
   CHEAT_TAC);;
 
 let compile_no_stubs_wrap_pure_co = prove
@@ -1051,10 +1054,13 @@ let oracle_monotonic_bounded_state = prove
   CHEAT_TAC);;
 
 (* compile_prog_avoids_nss_2 *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let backendProof_compile_prog_avoids_nss_2 = prove
- (`compile_prog (start:num) f prog = (loc,code,new_state) /\
-   MEM k (MAP FST code) /\ k MOD bvl_to_bvi_namespaces = 2 ==>
-   k < bvl_num_stubs`,
+ (cake_as_vars (fun () ->
+    `compile_prog start f prog = (loc,code,new_state) /\
+     MEM k (MAP FST code) /\ k MOD bvl_to_bvi_namespaces = 2 ==>
+     k < bvl_num_stubs`),
   CHEAT_TAC);;
 
 let tailrec_compile_prog_MEM_not_nss_2 = prove
@@ -1705,12 +1711,15 @@ let enc_sec_list_no_share_mem_inst = prove
    no_share_mem_inst (enc_sec_list enc code)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let enc_secs_again_no_share_mem_inst = prove
- (`!done'.
-   enc_secs_again pos labs (ffi_names:(ffiname)list) enc sec_list =
-     (code,done') /\
-   no_share_mem_inst sec_list ==>
-   no_share_mem_inst code`,
+ (cake_as_vars (fun () ->
+    `!done'.
+     enc_secs_again pos labs ffi_names enc sec_list = (code,done')
+       /\
+     no_share_mem_inst sec_list ==>
+     no_share_mem_inst code`),
   CHEAT_TAC);;
 
 let upd_lab_len_no_share_mem_inst = prove
@@ -1789,25 +1798,28 @@ let semantics_prog_sing = prove
  (`?x. semantics_prog s env prog = {x}`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_correct_is_safe_for_space = prove
- (`compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
+ (cake_as_vars (fun () ->
+    `compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
   (bytes,bitmaps,c') ==>
-   backendProof_is_safe_for_space ffi asm_conf c prog
-     ((stack_limit:num),heap_limit) ==>
-   (backendProof_read_limits asm_conf c mc ms) =
-     (stack_limit,heap_limit) ==>
-   (let (s,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
-   ~(semantics_prog s env prog Fail) /\
-   backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
-     asm_conf c mc /\
-   installed bytes cbspace bitmaps data_sp
-     (lab_to_target_config_ffi_names (backend_config_lab_conf c'))
-        (heap_regs (stack_to_lab_config_reg_names
-          (backend_config_stack_conf c))) mc
-          (lab_to_target_config_shmem_extra (backend_config_lab_conf
-        c')) ms ==>
-   machine_sem (mc:('a,'b,'c)machine_config) ffi ms =
-   semantics_prog s env prog)`,
+     backendProof_is_safe_for_space ffi asm_conf c prog
+       (stack_limit,heap_limit) ==>
+     (backendProof_read_limits asm_conf c mc ms) =
+       (stack_limit,heap_limit) ==>
+     (let (s,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
+     ~(semantics_prog s env prog Fail) /\
+     backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
+       asm_conf c mc /\
+     installed bytes cbspace bitmaps data_sp
+       (lab_to_target_config_ffi_names (backend_config_lab_conf c'))
+          (heap_regs (stack_to_lab_config_reg_names
+            (backend_config_stack_conf c))) mc
+            (lab_to_target_config_shmem_extra (backend_config_lab_conf
+          c')) ms ==>
+     machine_sem (mc:('a,'b,'c)machine_config) ffi ms =
+     semantics_prog s env prog)`),
   CHEAT_TAC);;
 
 let the_EvalDecs_def = cake_define

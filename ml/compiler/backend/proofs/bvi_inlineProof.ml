@@ -844,35 +844,42 @@ let semantics_no_type_error = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let evaluate_compile_prog = prove
- (`!prog cs1 prog1 co ffi cc k (start':num) r s.
-   compile_prog prog = (cs1,prog1) /\
-   FST (FST (co 0)) = cs1 /\
-   ALL_DISTINCT (MAP FST prog) /\
-   (!j. ~(FST (evaluate ([Call 0 (SOME start') [] NONE],[],
-          initial_state ffi (fromAList prog) co
-            (state_cc compile_inc cc) j)) = Rerr (Rabort
-              Rtype_error))) /\
-   evaluate ([Call 0 (SOME start') [] NONE],[],
-     initial_state ffi (fromAList prog1) (state_co compile_inc co) cc
-       k) =
-       (r,s) ==>
-   (?ck s2.
+ (cake_as_vars (fun () ->
+    `!prog cs1 prog1 co ffi cc k start' r s.
+     compile_prog prog = (cs1,prog1) /\
+     FST (FST (co 0)) = cs1 /\
+     ALL_DISTINCT (MAP FST prog) /\
+     (!j. ~(FST (evaluate ([Call 0 (SOME start') [] NONE],[],
+            initial_state ffi (fromAList prog) co
+              (state_cc compile_inc cc) j)) = Rerr (Rabort
+                Rtype_error))) /\
      evaluate ([Call 0 (SOME start') [] NONE],[],
-       initial_state ffi (fromAList prog) co
-         (state_cc compile_inc cc) (k + ck)) = (r,s2) /\ state_ffi
-     s2 = state_ffi s)`,
+       initial_state ffi (fromAList prog1) (state_co compile_inc
+         co) cc k) =
+         (r,s) ==>
+     (?ck s2.
+       evaluate ([Call 0 (SOME start') [] NONE],[],
+         initial_state ffi (fromAList prog) co
+           (state_cc compile_inc cc) (k + ck)) = (r,s2) /\
+             state_ffi
+       s2 = state_ffi s)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_prog_semantics = prove
- (`compile_prog prog = (cs1,prog1) /\
-   FST (FST (co 0)) = cs1 /\
-   ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList prog)
-     co (state_cc compile_inc cc) start = ffi_Fail) ==>
-   semantics ffi (fromAList prog1) (state_co compile_inc co) cc start
-     =
-   semantics ffi (fromAList prog) co (state_cc compile_inc cc)
-     start`,
+ (cake_as_vars (fun () ->
+    `compile_prog prog = (cs1,prog1) /\
+     FST (FST (co 0)) = cs1 /\
+     ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+       prog) co (state_cc compile_inc cc) start = ffi_Fail) ==>
+     semantics ffi (fromAList prog1) (state_co compile_inc co) cc
+       start =
+     semantics ffi (fromAList prog) co (state_cc compile_inc cc)
+       start`),
   CHEAT_TAC);;
 
 (* and the names that this file reads as variables are constants again *)

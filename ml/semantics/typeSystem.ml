@@ -2,7 +2,7 @@
 (*  typeSystem: ported from HOL4's
     semantics/typeSystemScript.sml
     A definition theory, with 63 definitions, 3 datatypes and no
-    theorems.  Needed by 33 files of the port.  *)
+    theorems.  Needed by 34 files of the port.  *)
 (* ======================================================== *)
 
 (*

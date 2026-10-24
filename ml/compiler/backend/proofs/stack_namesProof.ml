@@ -245,24 +245,31 @@ let stack_namesProof_comp_correct = prove
   CHEAT_TAC);;
 
 (* compile_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let stack_namesProof_compile_semantics = prove
- (`BIJ (tlookup f) UNIV UNIV /\
-    ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store s) /\
-      ~(stackSem_state_use_stack s) /\ stackSem_state_compile
-    s = (\cfg. c cfg o (stack_names_compile f)) ==>
-    semantics (start:num) (rename_state c f s) = semantics start s`,
+ (cake_as_vars (fun () ->
+    `BIJ (tlookup f) UNIV UNIV /\
+      ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store
+        s) /\ ~(stackSem_state_use_stack s) /\ stackSem_state_compile
+      s = (\cfg. c cfg o (stack_names_compile f)) ==>
+      semantics start (rename_state c f s) = semantics start s`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_semantics_alt = prove
- (`!s t.
-       BIJ (tlookup f) UNIV UNIV /\ (rename_state
-         (stackSem_state_compile t) f s = t) /\ stackSem_state_compile
-       s = (\c. stackSem_state_compile t c o (stack_names_compile f))
-         /\
-       ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store s)
-         /\ ~(stackSem_state_use_stack s) ==>
-       semantics (start:num) t = semantics start s`,
+ (cake_as_vars (fun () ->
+    `!s t.
+         BIJ (tlookup f) UNIV UNIV /\ (rename_state
+           (stackSem_state_compile t) f s = t) /\ stackSem_state_compile
+         s = (\c. stackSem_state_compile t c o (stack_names_compile
+           f)) /\
+         ~(stackSem_state_use_alloc s) /\
+           ~(stackSem_state_use_store s) /\ ~(stackSem_state_use_stack
+           s) ==>
+         semantics start t = semantics start s`),
   CHEAT_TAC);;
 
 let stack_namesProof_make_init_def = cake_define

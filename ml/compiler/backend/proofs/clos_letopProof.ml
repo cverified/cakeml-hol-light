@@ -348,15 +348,18 @@ let let_op_correct = prove
 (* preservation of observational semantics *)
 
 (* semantics_let_op *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let clos_letopProof_semantics_let_op = prove
- (`~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        co (pure_cc clos_letop_compile_inc cc) xs = ffi_Fail) ==>
-      (!n. SND (SND (co n)) = []) /\ 1 <= max_app ==>
-      closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        (pure_co clos_letop_compile_inc o co) cc (clos_letop_let_op
-          xs) =
-      closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        co (pure_cc clos_letop_compile_inc cc) xs`,
+ (cake_as_vars (fun () ->
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+          co (pure_cc clos_letop_compile_inc cc) xs = ffi_Fail) ==>
+        (!n. SND (SND (co n)) = []) /\ 1 <= max_app ==>
+        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+          (pure_co clos_letop_compile_inc o co) cc
+            (clos_letop_let_op xs) =
+        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+          co (pure_cc clos_letop_compile_inc cc) xs`),
   CHEAT_TAC);;
 
 (* syntactic properties *)

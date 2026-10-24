@@ -675,10 +675,14 @@ let evaluate_CURRY_I = prove
        (r,s2) /\ state_ffi s2 = state_ffi s)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let semantics_CURRY_I = prove
- (`~(semantics ffi code co (state_cc (CURRY I) cc) start = ffi_Fail) ==>
-     semantics ffi code co (state_cc (CURRY I) cc) start =
-     semantics ffi code (state_co (CURRY I) co) cc start`,
+ (cake_as_vars (fun () ->
+    `~(semantics ffi code co (state_cc (CURRY I) cc) start = ffi_Fail)
+  ==>
+       semantics ffi code co (state_cc (CURRY I) cc) start =
+       semantics ffi code (state_co (CURRY I) co) cc start`),
   CHEAT_TAC);;
 
 (* and the names that this file reads as variables are constants again *)

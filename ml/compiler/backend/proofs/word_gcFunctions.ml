@@ -2,7 +2,7 @@
 (*  word_gcFunctions: ported from HOL4's
     compiler/backend/proofs/word_gcFunctionsScript.sml
     A proof theory, with 30 definitions and 32 theorems.  Needed by
-    6 files of the port.  *)
+    5 files of the port.  *)
 (* ======================================================== *)
 
 (*

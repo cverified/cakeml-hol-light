@@ -566,13 +566,17 @@ let state_rel_dec_clock = prove
  (`state_rel s1 t1 ==> state_rel (dec_clock 1 s1) (dec_clock t1)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_part_evaluate = prove
- (`evaluate ([Call 0 (SOME (start:num)) [] NONE],[],s1) = (res,s2) /\
-  ~(res = Rerr (Rabort Rtype_error)) /\ state_rel s1 t1 /\
-   (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr (Rraise
-     x) ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
-      evaluate ((Call NONE (SOME start) [] NONE),t1) = (SOME r,t2) /\
-      state_rel s2 t2 /\ data_to_bvi_result r = res)`,
+ (cake_as_vars (fun () ->
+    `evaluate ([Call 0 (SOME start) [] NONE],[],s1) = (res,s2) /\ ~(res
+  = Rerr (Rabort Rtype_error)) /\ state_rel s1 t1 /\
+     (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr
+       (Rraise x) ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
+        evaluate ((Call NONE (SOME start) [] NONE),t1) = (SOME
+          r,t2) /\
+        state_rel s2 t2 /\ data_to_bvi_result r = res)`),
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -580,15 +584,18 @@ let MAP_FST_compile_prog = prove
  (`!prog. MAP FST (compile_prog prog) = MAP FST prog`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_prog_evaluate = prove
- (`evaluate ([Call 0 (SOME (start:num)) [] NONE],[],
-     initial_state ffi0 (fromAList prog) co (\cfg prog. cc cfg
-       (compile_prog prog)) k) = (r,s) /\ ~(r = Rerr (Rabort
-       Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==> (?r2 s2.
-       evaluate (Call NONE (SOME start) [] NONE,
-         initial_state ffi0 (fromAList (compile_prog prog)) ((I ##
-           compile_prog) o co) cc T lims ss k) = (SOME r2,s2) /\
-         state_rel s s2 /\ data_to_bvi_result r2 = r)`,
+ (cake_as_vars (fun () ->
+    `evaluate ([Call 0 (SOME start) [] NONE],[],
+       initial_state ffi0 (fromAList prog) co (\cfg prog. cc cfg
+         (compile_prog prog)) k) = (r,s) /\ ~(r = Rerr (Rabort
+         Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==> (?r2 s2.
+         evaluate (Call NONE (SOME start) [] NONE,
+           initial_state ffi0 (fromAList (compile_prog prog)) ((I
+             ## compile_prog) o co) cc T lims ss k) = (SOME r2,s2) /\
+           state_rel s s2 /\ data_to_bvi_result r2 = r)`),
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -599,16 +606,19 @@ let FST_compile_part = prove
 (* observational semantics *)
 
 (* compile_prog_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bvi_to_dataProof_compile_prog_semantics = prove
- (`~(semantics (ffi0:'ffi ffi_state)
-             (fromAList prog) co
-             (\cfg prog. cc cfg (compile_prog prog)) start = Fail)
-               ==> semantics ffi0
-               (fromAList (compile_prog prog))
-               ((I ## compile_prog) o co) cc lim ss start =
-     semantics ffi0
+ (cake_as_vars (fun () ->
+    `~(semantics (ffi0:'ffi ffi_state)
                (fromAList prog) co
-               (\cfg prog. cc cfg (compile_prog prog)) start`,
+               (\cfg prog. cc cfg (compile_prog prog)) start =
+                 Fail) ==> semantics ffi0
+                 (fromAList (compile_prog prog))
+                 ((I ## compile_prog) o co) cc lim ss start =
+       semantics ffi0
+                 (fromAList prog) co
+                 (\cfg prog. cc cfg (compile_prog prog)) start`),
   CHEAT_TAC);;
 
 (* [simp] *)

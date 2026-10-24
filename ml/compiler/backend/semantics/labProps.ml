@@ -23,7 +23,6 @@ needs "misc/misc.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
-needs "semantics/semantics.ml";;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -300,22 +299,14 @@ let LENGTH_line_bytes = prove
 (* HOL4 labPropsScript.sml:271-277: a theorem that HOL4 states as the
    value of an ML expression: case_eq_thms *)
 
-(* evaluate_io_events_mono *)
-let labProps_evaluate_io_events_mono = prove
- (`!s1 r s2. evaluate s1 = (r,s2) ==> ffi_state_io_events (state_ffi
-  s1) <<= ffi_state_io_events (state_ffi s2)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:279-310: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): evaluate_io_events_mono *)
 
-let evaluate_ADD_clock = prove
- (`!s res r k.
-      evaluate s = (res,r) /\ ~(res = TimeOut) ==>
-      evaluate (state_clock_fupd (K (state_clock s + k)) s) =
-        (res,state_clock_fupd (K (state_clock r + k)) r)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:312-334: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): evaluate_ADD_clock *)
 
-let addr_add_clock_eq = prove
- (`addr a (state_clock_fupd (K (extra + state_clock s)) s) = addr a s`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:336-340: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): addr_add_clock_eq *)
 
 let share_mem_op_add_clock_same = prove
  (`(~(state_clock s = 0) /\ share_mem_op m n a s = NONE ==>
@@ -335,13 +326,9 @@ let share_mem_op_add_clock_same = prove
         r2)) r2)))`,
   CHEAT_TAC);;
 
-(* evaluate_add_clock_io_events_mono *)
-let labProps_evaluate_add_clock_io_events_mono = prove
- (`!s. ffi_state_io_events (state_ffi
-   (SND (evaluate s))) <<= ffi_state_io_events (state_ffi
-   (SND (evaluate (state_clock_fupd (K (state_clock s + extra))
-     s))))`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:358-439: a theorem whose statement HOL
+   Light does not read (tools/unstated.py):
+   evaluate_add_clock_io_events_mono *)
 
 let align_dm_def = cake_define
   `align_dm (s:('a,'c,'ffi)labSem_state) =
@@ -413,32 +400,26 @@ let assert_align_dm = prove
  (`assert b (align_dm s) = align_dm (assert b s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
-let arith_upd_align_dm = prove
- (`arith_upd x (align_dm s) = align_dm (arith_upd x s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:517-522: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): arith_upd_align_dm *)
 
-(* [simp] *)
-let fp_upd_align_dm = prove
- (`fp_upd f (align_dm s) = align_dm (fp_upd f s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:524-529: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): fp_upd_align_dm *)
 
-(* [simp] *)
-let addr_align_dm = prove
- (`addr a (align_dm s) = addr a s`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:531-535: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): addr_align_dm *)
 
-let mem_load_align_dm = prove
- (`good_dimindex (:'a) ==>
-   mem_load n (a:'a asm_addr) (align_dm s) = align_dm (mem_load n a
-     s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:537-570: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): mem_load_align_dm *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let mem_load_32_align_dm = prove
- (`mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain s)
-  (be:bool) x = SOME y ==>
-   mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain
-     (align_dm s)) be x = SOME y`,
+ (cake_as_vars (fun () ->
+    `mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain s) be x =
+  SOME y ==>
+     mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain
+       (align_dm s)) be x = SOME y`),
   CHEAT_TAC);;
 
 let mem_load32_align_dm = prove
@@ -447,11 +428,14 @@ let mem_load32_align_dm = prove
      n a s)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let mem_load_byte_aux_align_dm = prove
- (`mem_load_byte_aux (labSem_state_mem s) (labSem_state_mem_domain s)
-  (be:bool) x = SOME y ==>
-   mem_load_byte_aux (labSem_state_mem s) (labSem_state_mem_domain
-     (align_dm s)) be x = SOME y`,
+ (cake_as_vars (fun () ->
+    `mem_load_byte_aux (labSem_state_mem s) (labSem_state_mem_domain s)
+  be x = SOME y ==>
+     mem_load_byte_aux (labSem_state_mem s)
+       (labSem_state_mem_domain (align_dm s)) be x = SOME y`),
   CHEAT_TAC);;
 
 let mem_load_byte_align_dm = prove
@@ -460,11 +444,8 @@ let mem_load_byte_align_dm = prove
      (mem_load_byte n a s)`,
   CHEAT_TAC);;
 
-let mem_store_align_dm = prove
- (`good_dimindex (:'a) ==>
-   mem_store n (a:'a asm_addr) (align_dm s) = align_dm (mem_store n
-     a s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:624-657: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): mem_store_align_dm *)
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -497,21 +478,16 @@ let mem_store_byte_align_dm = prove
      (mem_store_byte n a s)`,
   CHEAT_TAC);;
 
-let mem_op_align_dm = prove
- (`good_dimindex (:'a) ==>
-   mem_op m n (a:'a asm_addr) (align_dm s) = align_dm (mem_op m n a
-     s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:711-719: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): mem_op_align_dm *)
 
 let asm_inst_align_dm = prove
  (`good_dimindex (:'a) ==>
    asm_inst (i:'a asm_inst) (align_dm s) = align_dm (asm_inst i s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
-let dec_clock_align_dm = prove
- (`dec_clock (align_dm s) = align_dm (dec_clock s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:728-732: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): dec_clock_align_dm *)
 
 (* [simp] *)
 let inc_pc_align_dm = prove
@@ -562,18 +538,11 @@ let share_mem_op_align_dm_simp = prove
      s'))`,
   CHEAT_TAC);;
 
-let evaluate_align_dm = prove
- (`good_dimindex (:'a) ==>
-   (!(s:('a,'c,'ffi)labSem_state).
-      evaluate (align_dm s) =
-      (let (r,s') = evaluate s in (r,align_dm s')))`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:803-849: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): evaluate_align_dm *)
 
-let implements_align_dm = prove
- (`good_dimindex (:'a) ==>
-   implements' T {semantics (s:('a,'c,'ffi)labSem_state)}
-     {semantics (align_dm s)}`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:851-866: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): implements_align_dm *)
 
 (** align_sdm **)
 
@@ -646,25 +615,17 @@ let assert_align_sdm = prove
  (`assert b (align_sdm s) = align_sdm (assert b s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
-let arith_upd_align_sdm = prove
- (`arith_upd x (align_sdm s) = align_sdm (arith_upd x s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:946-951: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): arith_upd_align_sdm *)
 
-(* [simp] *)
-let fp_upd_align_sdm = prove
- (`fp_upd f (align_sdm s) = align_sdm (fp_upd f s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:953-958: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): fp_upd_align_sdm *)
 
-(* [simp] *)
-let addr_align_sdm = prove
- (`addr a (align_sdm s) = addr a s`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:960-964: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): addr_align_sdm *)
 
-let mem_load_align_sdm = prove
- (`mem_load n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_load n a
-  s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:966-971: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): mem_load_align_sdm *)
 
 let mem_load32_align_sdm = prove
  (`mem_load32 n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_load32
@@ -676,10 +637,8 @@ let mem_load_byte_align_sdm = prove
   (mem_load_byte n a s)`,
   CHEAT_TAC);;
 
-let mem_store_align_sdm = prove
- (`mem_store n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_store n
-  a s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:987-992: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): mem_store_align_sdm *)
 
 let mem_store32_align_sdm = prove
  (`mem_store32 n (a:'a asm_addr) (align_sdm s) = align_sdm
@@ -691,19 +650,15 @@ let mem_store_byte_align_sdm = prove
   (mem_store_byte n a s)`,
   CHEAT_TAC);;
 
-let mem_op_align_sdm = prove
- (`mem_op m n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_op m n a
-  s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:1008-1015: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): mem_op_align_sdm *)
 
 let asm_inst_align_sdm = prove
  (`asm_inst (i:'a asm_inst) (align_sdm s) = align_sdm (asm_inst i s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
-let dec_clock_align_sdm = prove
- (`dec_clock (align_sdm s) = align_sdm (dec_clock s)`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:1023-1027: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): dec_clock_align_sdm *)
 
 (* [simp] *)
 let inc_pc_align_sdm = prove
@@ -774,18 +729,11 @@ let share_mem_op_align_sdm_simp = prove
    share_mem_op m r a (align_sdm s) = SOME (res,align_sdm s'))`,
   CHEAT_TAC);;
 
-let evaluate_align_sdm = prove
- (`good_dimindex (:'a) ==>
-   (!(s:('a,'c,'ffi)labSem_state).
-      evaluate (align_sdm s) =
-      (let (r,s') = evaluate s in (r,align_sdm s')))`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:1174-1226: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): evaluate_align_sdm *)
 
-let implements_align_sdm = prove
- (`good_dimindex (:'a) ==>
-   implements' T {semantics (s:('a,'c,'ffi)labSem_state)}
-     {semantics (align_sdm s)}`,
-  CHEAT_TAC);;
+(* HOL4 labPropsScript.sml:1228-1243: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): implements_align_sdm *)
 
 
 (* asm_ok checks coming into lab_to_target *)

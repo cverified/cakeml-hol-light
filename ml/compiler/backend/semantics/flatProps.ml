@@ -426,12 +426,15 @@ let flatProps_eval_sim_def = cake_define
 hol4_overload "eval_sim" "flatProps_eval_sim";;
 
 (* IMP_semantics_eq *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let flatProps_IMP_semantics_eq = prove
- (`flatProps_eval_sim ffi ds1 ds2 ec ec2 rel F /\ ~(flatSem_semantics ec
-  (ffi:'ffi ffi_state) ds1 = ffi_Fail) ==>
-   rel ds1 ds2 ==>
-   flatSem_semantics ec ffi ds1 =
-   flatSem_semantics ec2 ffi ds2`,
+ (cake_as_vars (fun () ->
+    `flatProps_eval_sim ffi ds1 ds2 ec ec2 rel F /\ ~(flatSem_semantics
+  ec (ffi:'ffi ffi_state) ds1 = ffi_Fail) ==>
+     rel ds1 ds2 ==>
+     flatSem_semantics ec ffi ds1 =
+     flatSem_semantics ec2 ffi ds2`),
   CHEAT_TAC);;
 
 let flatProps_op_gbag_def = cake_define

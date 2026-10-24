@@ -1597,8 +1597,11 @@ let v_to_word64_list_rel = prove
    flatSem_v_to_words v' = SOME words`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let keep_glob_alloc = prove
- (`keep calc (glob_alloc (next:next_indices) st)`,
+ (cake_as_vars (fun () ->
+    `keep calc (glob_alloc next st)`),
   CHEAT_TAC);;
 
 let inc_compile_prog_nonempty = prove
@@ -2023,19 +2026,24 @@ let invariant_env_gen_inv = prove
    env_gen_inv gen`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let compile_decs_future_rel = prove
- (`source_to_flat_compile_decs t n (next:next_indices) env
-  (envs:environment_generation_store) ds = (n2,next2,env2,envs2,ds2) /\
-   env_gen_future_rel interp envs2 eval_state /\
-   env_gen_inv envs ==>
-   env_gen_future_rel interp envs eval_state`,
+ (cake_as_vars (fun () ->
+    `source_to_flat_compile_decs t n next env envs ds =
+  (n2,next2,env2,envs2,ds2) /\
+     env_gen_future_rel interp envs2 eval_state /\
+     env_gen_inv envs ==>
+     env_gen_future_rel interp envs eval_state`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let env_gen_future_rel_forward = prove
- (`env_gen_future_rel interp (envs:environment_generation_store)
-  eval_state /\
-   orac_forward_rel interp eval_state eval_state2 ==>
-   env_gen_future_rel interp envs eval_state2`,
+ (cake_as_vars (fun () ->
+    `env_gen_future_rel interp envs eval_state /\
+     orac_forward_rel interp eval_state eval_state2 ==>
+     env_gen_future_rel interp envs eval_state2`),
   CHEAT_TAC);;
 
 (* HOL4 source_to_flatProofScript.sml:4751: a proof *)
@@ -2210,12 +2218,15 @@ let SND_eq = prove
   CHEAT_TAC);;
 
 (* compile_prog_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let source_to_flatProof_compile_prog_semantics = prove
- (`precondition1 interp g s1 env1 conf eval_conf prog ==>
-    ~(semantics_prog s1 env1 prog Fail) ==>
-    semantics_prog s1 env1 prog
-       (semantics eval_conf (state_ffi s1)
-           (SND (source_to_flat_compile_prog conf prog)))`,
+ (cake_as_vars (fun () ->
+    `precondition1 interp g s1 env1 conf eval_conf prog ==>
+      ~(semantics_prog s1 env1 prog Fail) ==>
+      semantics_prog s1 env1 prog
+         (semantics eval_conf (state_ffi s1)
+             (SND (source_to_flat_compile_prog conf prog)))`),
   CHEAT_TAC);;
 
 (* - connect semantics theorems of flat-to-flat passes --------------------- *)

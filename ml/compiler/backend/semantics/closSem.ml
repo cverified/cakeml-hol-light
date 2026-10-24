@@ -2,7 +2,7 @@
 (*  closSem: ported from HOL4's
     compiler/backend/semantics/closSemScript.sml
     A definition theory, with 30 definitions, 5 datatypes and 14
-    theorems.  Needed by 37 files of the port.  *)
+    theorems.  Needed by 36 files of the port.  *)
 (* ======================================================== *)
 
 (*
