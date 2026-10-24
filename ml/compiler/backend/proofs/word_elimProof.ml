@@ -23,12 +23,6 @@ needs "misc/misc.ml";;
 
 let _ = do_list hide_constant ["addr"];;
 
-(* this file reads the name of a record field as a variable and
-   needs the accessors of that field as well, so only these
-   pairs come out of the interface *)
-let _ = hide_overloads
-  ["memory","memory"];;
-
 
 let _ = do_list hide_constant ["mem"];;
 (* HOL4 word_elimProofScript.sml:11-13: an overload that the source
@@ -619,6 +613,3 @@ let word_removal_thm = prove
 let _ = do_list unhide_constant
   ["addr";
    "mem"];;
-
-(* and the accessors of those fields are overloaded again *)
-let _ = unhide_overloads ();;

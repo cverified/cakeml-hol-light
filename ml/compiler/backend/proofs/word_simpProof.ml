@@ -23,12 +23,6 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
 let _ = do_list hide_constant ["addr"; "dummy"];;
-
-(* this file reads the name of a record field as a variable and
-   needs the accessors of that field as well, so only these
-   pairs come out of the interface *)
-let _ = hide_overloads
-  ["memory","memory"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 word_simpProofScript.sml:10: the ML values that the
@@ -597,6 +591,3 @@ let compile_exp_thm = prove
 let _ = do_list unhide_constant
   ["addr";
    "dummy"];;
-
-(* and the accessors of those fields are overloaded again *)
-let _ = unhide_overloads ();;

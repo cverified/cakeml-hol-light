@@ -35,6 +35,15 @@ for f in "$@"; do
     nph=$(python3 -I $C/tools/locate.py "$g" $C/tmp/locate.ml)
     : > $C/tmp/mark.txt
     h=$C/tmp/locate.ml; }
+  # with TOLERANT=1 every theorem of the file is loaded in a try,
+  # so that a statement HOL Light cannot read is logged (to
+  # tmp/unstated.txt) and the file loads on: a harvest sees every
+  # one of them, where a plain load stops at the first
+  [ "$TOLERANT" = 1 ] && {
+    nph=$(python3 -I $C/tools/tolerant.py "$g" $C/tmp/locate.ml \
+            ${MARK:+mark})
+    : > $C/tmp/mark.txt
+    h=$C/tmp/locate.ml; }
   # a file that takes too long is interrupted, so that the session
   # is free for the files after it
   slow=
@@ -48,7 +57,7 @@ for f in "$@"; do
   # the file was loaded under the name of the instrumented copy, so
   # it is registered under its own name, or the files that need it
   # would load it a second time
-  [ "$MARK" = 1 ] && repl-step $s \
+  { [ "$MARK" = 1 ] || [ "$TOLERANT" = 1 ]; } && repl-step $s \
     "loaded_files :=
        (Filename.basename \"$g\",Digest.file \"$g\") ::
          !loaded_files;;" > /dev/null 2>&1
@@ -69,7 +78,7 @@ for f in "$@"; do
   # file was checked, so only the errors of this file are kept
   e=$(printf '%s' "$out" |
       python3 -I $C/tools/cserr.py "$h")
-  [ "$MARK" = 1 ] && [ -n "$e" ] && \
+  { [ "$MARK" = 1 ] || [ "$TOLERANT" = 1 ]; } && [ -n "$e" ] && \
     e="$e [at $(tail -1 $C/tmp/mark.txt) of $nph]"
   # the clauses that did not fit together are a bug of the port,
   # so they are logged (the report only has room for the first

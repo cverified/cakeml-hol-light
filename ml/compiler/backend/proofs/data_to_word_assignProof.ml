@@ -58,8 +58,7 @@ let _ = do_list hide_constant ["parts"; "vars"];;
    pairs come out of the interface *)
 let _ = hide_overloads
   ["code_buffer","code_buffer";
-   "data_buffer","data_buffer";
-   "memory","memory"];;
+   "data_buffer","data_buffer"];;
 (* HOL4 ancestors outside the port: int_bitwise While *)
 
 (* HOL4 data_to_word_assignProofScript.sml:28-29: ML code, not ported *)

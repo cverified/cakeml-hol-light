@@ -52,8 +52,7 @@ needs "semantics/proofs/semanticsProps.ml";;
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["failed","pegexec_failed";
-   "memory","memory"];;
+  ["failed","pegexec_failed"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
 hol4_overload "cut_env" "wordSem_cut_env";;

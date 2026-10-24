@@ -43,7 +43,6 @@ let _ = hide_overloads
    "compile","clos_known_compile";
    "compile","clos_mti_compile";
    "compile","clos_to_bvl_compile";
-   "compile","compiler_compile";
    "compile","data_live_compile";
    "compile","data_space_compile";
    "compile","data_to_word_compile";

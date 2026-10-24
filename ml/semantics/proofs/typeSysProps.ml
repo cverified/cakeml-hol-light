@@ -941,7 +941,8 @@ let remove_lambda_prod = prove
 
 (* HOL4 typeSysPropsScript.sml:2254-2259: ML code, not ported *)
 
-let type_subst = prove
+(* type_subst *)
+let typeSysProps_type_subst = prove
  (`!tvs ctMap tenvS v t.
      type_v tvs ctMap tenvS v t ==>
      tvs = LENGTH targs /\

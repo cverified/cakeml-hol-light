@@ -27,12 +27,6 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 let _ = do_list hide_constant ["Greater"];;
-
-(* this file reads the name of a record field as a variable and
-   needs the accessors of that field as well, so only these
-   pairs come out of the interface *)
-let _ = hide_overloads
-  ["memory","memory"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* The reads of a stored arith fact, tracked as self-mappings in
@@ -1602,6 +1596,3 @@ let full_inst_ok_less_word_common_subexp_elim = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Greater"];;
-
-(* and the accessors of those fields are overloaded again *)
-let _ = unhide_overloads ();;

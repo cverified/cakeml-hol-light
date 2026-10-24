@@ -12,12 +12,6 @@
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "lib/integer_word.ml";;
-
-(* this file reads the name of a record field as a variable and
-   needs the accessors of that field as well, so only these
-   pairs come out of the interface *)
-let _ = hide_overloads
-  ["isRef","data_to_word_memoryProof_isRef"];;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 gen_gc_partialScript.sml:14: ML code, not ported *)
@@ -1416,6 +1410,3 @@ let gen_gc_partial_partial_gc_IMP = prove
                           (?xs l d. MEM (DataElement xs l d) curr
                             /\ isRef c d)))`,
   CHEAT_TAC);;
-
-(* and the accessors of those fields are overloaded again *)
-let _ = unhide_overloads ();;

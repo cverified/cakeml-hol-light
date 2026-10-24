@@ -26,8 +26,7 @@ needs "semantics/typeSystem.ml";;
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["state_ok","bvl_to_bviProof_state_ok";
-   "state_ok","stack_rawcallProof_state_ok"];;
+  ["state_ok","bvl_to_bviProof_state_ok"];;
 
 let shift_interfer_def = cake_define
   `shift_interfer k s = machine_config_next_interfer_fupd (K

@@ -48,8 +48,7 @@ let _ = hide_overloads
    "compile","word_bignum_compile";
    "compile","word_to_stack_compile";
    "compile","word_to_word_compile";
-   "data_buffer","data_buffer";
-   "memory","memory"];;
+   "data_buffer","data_buffer"];;
 
 let compile_state_def = cake_define
   `compile_state clk c s = wordSem_state_compile_fupd (K c)

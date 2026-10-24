@@ -55,8 +55,7 @@ let _ = hide_overloads
    "compile","word_bignum_compile";
    "compile","word_to_stack_compile";
    "compile","word_to_word_compile";
-   "data_buffer","data_buffer";
-   "memory","memory"];;
+   "data_buffer","data_buffer"];;
 
 (* HOL4 word_copyProofScript.sml:10: the ML values that the
    definitions below antiquote *)

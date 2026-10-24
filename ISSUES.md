@@ -129,6 +129,18 @@ sources, and why.
 - A theorem that HOL4 states as the value of an ML expression is
   a comment that points at the source and names the theorem: the
   statement is not in the source, HOL4 computes it (`PENDING.md`).
+- A statement that **HOL Light's parser does not read** is a
+  comment that points at the source as well.  HOL4 gives a
+  variable the type that the clause it stands in asks for and
+  resolves an overload by what is around it; HOL Light's parser
+  has less to go on, so a statement of a source may typecheck
+  there and not here.  While a theorem of the port was a
+  statement that a wrapper registered, such a statement printed
+  `NOT STATED` and the file loaded on; a plain `prove` has no such
+  slack, so the names are harvested (`tools/bin/harvestall`,
+  `tools/unstated.py`) and the port writes the pointer in their
+  place.  Every one of them is a statement to win back
+  (PORTING-GUIDE.md, entry 33).
 - A statement whose variables hold integers says so nowhere, so
   the port reads it with the types of the constants it applies:
   `tools/intargs.txt` says which argument of a constant is an

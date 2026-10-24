@@ -7,7 +7,7 @@ writes ml/<path>/<theory>.ml and reports what it could not do.
 import sys, os, re, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides, grammardef
-import fieldvars, strategies
+import fieldvars, strategies, unstated
 import proofstore
 
 # every theorem that the port states, as (theory, HOL4 name,
@@ -390,6 +390,18 @@ class Porter:
     """the statement of a theorem of a source, with its name and
        its attributes; b is the block it comes from, which a
        pointer at the source needs"""
+    # a statement that HOL Light's parser rejects would stop the
+    # file at that phrase, so the port writes the comment that
+    # points at the source in its place, as it does for a
+    # statement its own parser cannot read (tools/unstated.py,
+    # which a harvest writes; every entry is one to win back)
+    if (self.thy, nm) in unstated.NAMES:
+      self.warn.append('%s %s: HOL Light does not read the statement'
+                       % (b.kind, nm))
+      self.out.append(self.at(
+        b, 'a theorem whose statement HOL Light does not read'
+           ' (tools/unstated.py): %s' % nm))
+      return
     name = self.bindname(nm)
     attrs = ('[' + ','.join(at) + ']') if at else ''
     self.ctx.defining = set()

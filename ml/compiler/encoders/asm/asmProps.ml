@@ -17,9 +17,7 @@ needs "misc/misc.ml";;
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["failed","pegexec_failed";
-   "state_ok","bvl_to_bviProof_state_ok";
-   "state_ok","stack_rawcallProof_state_ok"];;
+  ["failed","pegexec_failed"];;
 
 (* -- semantics is deterministic -- *)
 

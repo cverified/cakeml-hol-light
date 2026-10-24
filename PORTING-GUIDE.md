@@ -68,6 +68,7 @@ add it to the index.
 | 30 | a tactic of several steps | brackets round it, or it is an argument |
 | 31 | `SEP_R_TAC`, `SEP_W_TAC`, `AC STAR_ASSOC STAR_COMM` | `read_fun2set`, `write_fun2set`, `STAR_AC` |
 | 32 | a family of functions whose clauses overlap | `MATCH_CLAUSES`, a match per function |
+| 33 | a statement HOL Light does not read | `unstated.py`, a pointer in its place |
 
 ## The shape of a transformation proof
 
@@ -2366,3 +2367,71 @@ functions, the other three in `do_eq_list` alone).
 
 `tools/overrides.py`: `MATCH_CLAUSES`.  `tools/port.py`:
 `clause_form(body, matchcons)` and `match_form(body, only=...)`.
+
+## 33. A statement that HOL Light does not read
+
+### The idiom
+
+Nothing of HOL4: a `Theorem` of a source whose statement HOL4's
+parser reads and HOL Light's does not.
+
+```
+Theorem SORTED_GENLIST_TIMES:
+  0 < n ⇒ SORTED $< (GENLIST (λi. n * i) m)
+```
+
+### What it means
+
+HOL4 resolves an overloaded name by the types around it and gives
+a variable the type that the clause it stands in asks for.  HOL
+Light's parser has less to go on: `SORTED` of the port takes a
+relation and a list, and the statement applies it to three
+arguments, so the parser says
+
+```
+typechecking error (initial type assignment): SORTED has type
+(A->A->bool)->(A)list->bool, it cannot be used with type
+(B->B->bool)->(B)list->_->bool
+```
+
+### What resisted
+
+While a theorem of the port was a statement that `cake_theorem`
+registered, a statement like this printed `NOT STATED` and the
+file loaded on, so the extent of it was invisible: 688 statements
+of one harvest.  A plain `let foo = prove (`...`, tac);;` has no
+such slack -- the phrase raises, and `loadt` stops the file, so one
+statement that does not read costs every theorem after it.
+
+### What the port does
+
+Where HOL Light does not read the statement the port writes the
+comment that points at the source, which is what it does for a
+statement its own parser cannot read:
+
+```ocaml
+(* HOL4 miscScript.sml:3421-3424: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): SORTED_GENLIST_TIMES *)
+```
+
+Which statements those are is not something the port can see by
+reading the source -- only HOL Light's parser says -- so the names
+are harvested:
+
+```
+tools/bin/harvestall                      every theorem in a try,
+                                          tmp/unstated.txt
+python3 -I tools/mkunstated.py > tools/unstated.py
+```
+
+`tools/tolerant.py` is what wraps the theorems for that run, and
+nothing of it goes into `ml/`.  Every entry of the table is a
+statement to win back: a type annotation, an `ARG_TYPES` of the
+overrides or a hidden name, and the theorem is stated again.
+
+### Where it lives
+
+`tools/unstated.py` (the table), `tools/mkunstated.py` (writes it),
+`tools/tolerant.py` and `tools/bin/harvestall` (the harvest),
+`tools/port.py`'s `state` (the pointer in the place of the
+theorem).

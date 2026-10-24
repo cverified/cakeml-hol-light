@@ -24,8 +24,7 @@ needs "semantics/ast.ml";;
    pairs come out of the interface *)
 let _ = hide_overloads
   ["code_buffer","code_buffer";
-   "data_buffer","data_buffer";
-   "memory","memory"];;
+   "data_buffer","data_buffer"];;
 
 
 (* HOL4 stackPropsScript.sml:11-18: a theorem that HOL4 states as the

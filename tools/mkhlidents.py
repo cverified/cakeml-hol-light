@@ -24,8 +24,30 @@ HL = os.environ.get('HOLLIGHT',
 HAND = ['bag', 'define', 'fastdef', 'finite_map', 'hol4', 'lemmas',
         'llist', 'mc_tailrec', 'path', 'preamble', 'records',
         'relation', 'string4', 'tactics', 'theorem', 'words4']
-BIND = re.compile(r"^(?:let rec|let|and) ([A-Za-z_][A-Za-z_0-9']*)",
+# a top level binding of OCaml, in the shapes HOL Light writes
+# one: `let foo =', `let rec foo =', `and foo =', a binding with
+# its type in brackets (`let (ASM_REWRITE_TAC:thm list->tactic)')
+# and a tuple of bindings (`let lhs,rhs = ...')
+BIND = re.compile(r"^(?:let|and)[ \t]+(?:rec[ \t]+)?"
+                  r"\(?([A-Za-z_][A-Za-z_0-9']*"
+                  r"(?:[ \t]*,[ \t]*[A-Za-z_][A-Za-z_0-9']*)*)",
                   re.M)
+
+
+# the kernel is a module, so its exported bindings (ASSUME,
+# TRANS, REFL, ...) are indented by two spaces; every other file
+# of HOL Light binds at the margin, and an indented let there is a
+# local one
+MODBIND = re.compile(r"^  (?:let|and)[ \t]+(?:rec[ \t]+)?"
+                     r"\(?([A-Za-z_][A-Za-z_0-9']*)", re.M)
+
+
+def names_of(text, module=False):
+  out = set()
+  for m in BIND.finditer(text):
+    out |= set(n.strip() for n in m.group(1).split(','))
+  if module: out |= set(MODBIND.findall(text))
+  return out
 
 
 def main():
@@ -34,10 +56,11 @@ def main():
                       open(HL + '/hol_lib.ml').read(), re.M)
   names = set()
   for f in files:
-    try: names |= set(BIND.findall(open(HL + '/' + f).read()))
+    try: names |= names_of(open(HL + '/' + f).read(),
+                           f == 'fusion.ml')
     except OSError: print('no %s/%s' % (HL, f), file=sys.stderr)
   for h in HAND:
-    names |= set(BIND.findall(open(T + '../ml/lib/%s.ml' % h).read()))
+    names |= names_of(open(T + '../ml/lib/%s.ml' % h).read())
   for n in sorted(names): print(n)
   print('%d identifiers of %d files of HOL Light and %d of ml/lib'
         % (len(names), len(files), len(HAND)), file=sys.stderr)

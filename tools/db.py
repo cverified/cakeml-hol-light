@@ -717,10 +717,19 @@ class Db:
     # interface (ml/lib/theorem.ml's cake_hide_consts)
     flds = self.field_tokens()
     consts = []
+    # only a constant that is there when the file loads can come
+    # out of the interface, so a theory that comes after this one
+    # in the load order is not in the list (closSem reads compile
+    # for a variable of its own, and backend's compile is not
+    # defined until forty files later)
+    before = set()
+    for t, _, _ in self.order:
+      before.add(t)
+      if t == thy: break
     for n in sorted(out & flds):
       ts = {t for t, k in self.defs.get(n, [])
             if k in ('def', 'con', 'rel')}
-      for t in sorted(ts - anc):
+      for t in sorted((ts - anc) & before):
         consts.append((n, self.rename.get((t, n), n)))
     return sorted(out - flds), consts
 

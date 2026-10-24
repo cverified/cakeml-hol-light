@@ -61,8 +61,7 @@ let _ = do_list hide_constant ["all"; "vars"];;
    pairs come out of the interface *)
 let _ = hide_overloads
   ["code_buffer","code_buffer";
-   "data_buffer","data_buffer";
-   "memory","memory"];;
+   "data_buffer","data_buffer"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
 (* HOL4 data_to_wordProofScript.sml:23-24: a proof *)

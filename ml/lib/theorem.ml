@@ -24,7 +24,15 @@
 let the_removed_overloads = ref ([]:(string * string) list);;
 
 let hide_overloads l =
-  the_removed_overloads := l;
+  (* a pair whose constant is not in the interface is not taken
+     out of it, so it is not put back either: the port names the
+     pairs of a field by the theories that have one, and a theory
+     that comes later in the load order has no constant yet *)
+  the_removed_overloads :=
+    filter (fun (n,c) ->
+              exists (fun (n2,(c2,_)) -> n2 = n && c2 = c)
+                     (!the_interface))
+           l;
   the_interface :=
     filter (fun (n,(c,_)) -> not (mem (n,c) l)) (!the_interface);;
 
