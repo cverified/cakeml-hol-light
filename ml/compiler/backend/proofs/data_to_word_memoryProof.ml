@@ -1553,7 +1553,85 @@ let gc_move_data_refs_split =
       (EVERY (\x. ~(data_to_word_memoryProof_isRef x)))
         (gc_state_h2 s1) /\ EVERY data_to_word_memoryProof_isRef
         (gc_state_r4 s1)`)
-  CHEAT_TAC;;
+  (* a move of the gc keeps the data in h2 and the references in
+     r4: of a Data it changes nothing, of a Pointer at a
+     DataElement it puts the element in r4 when its tag is a
+     mutable one and at the end of h2 when it is not, and the
+     statement's hypothesis says that isRef of the configuration
+     is exactly that.  The section's `record_simps` is what HOL4's
+     record simp set does: the accessors of gc_state over its
+     updates, which HOL Light's define_record does not give *)
+  (let hd_is n t =
+   (try fst(dest_const(fst(strip_comb t))) = n
+    with Failure _ -> false) in
+   (* the accessors of a record over its updates: what HOL4's record
+      simp set does and HOL Light's define_record does not *)
+   let record_simps name flds =
+     let tbl = assoc name (!the_records) in
+     let accof (_,(accth,_)) =
+       fst(strip_comb(lhs(snd(strip_forall(concl accth))))) in
+     let updof (_,(_,updth)) =
+       fst(strip_comb(lhs(snd(strip_forall(concl updth))))) in
+     let rty = hd(tl(fst(splitlist dest_fun_ty
+                           (type_of (updof (hd tbl)))))) in
+     let sv = mk_var("s",rty) in
+     let cas = cases_of rty in
+     itlist (fun a l ->
+       if not (mem (fst a) flds) then l else
+       itlist (fun u l ->
+         let acc = accof a and upd = updof u in
+         let fty = hd(fst(splitlist dest_fun_ty (type_of upd))) in
+         let f = mk_var("f",fty) in
+         let lhs' = mk_comb(acc,mk_comb(mk_comb(upd,f),sv)) in
+         let rhs' = if fst a = fst u then mk_comb(f,mk_comb(acc,sv))
+                    else mk_comb(acc,sv) in
+         prove(mk_eq(lhs',rhs'),
+               STRUCT_CASES_TAC(ISPEC sv cas) THEN
+               REWRITE_TAC(record_thms name)) :: l) tbl l) tbl [] in
+   let gcsimps = record_simps "gc_state" ["h2"; "r4"] in
+   (* a DataElement is a reference when its tag is a mutable one *)
+   let isref = prove
+    (`!ys l tag qs.
+        data_to_word_memoryProof_isRef (DataElement ys l (tag,qs)) <=>
+        isMutTag tag`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "data_to_word_memoryProof_isRef"] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[injectivity "heap_element"; PAIR_EQ] THEN
+     CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+     REWRITE_TAC[EXISTS_UNIQUE_REFL; SELECT_REFL]) in
+   let isdata = prove
+    (`!ys l d. isDataElement (DataElement ys l d)`,
+     REWRITE_TAC[cake_def "isDataElement"] THEN MESON_TAC[]) in
+   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+   FIRST_X_ASSUM(fun th ->
+     if (try hd_is "gen_gc_gc_move" (lhs (concl th))
+         with Failure _ -> false)
+     then MP_TAC th else fail()) THEN
+   CASES_BY_NAME "x" THEN
+   REWRITE_TAC[cake_def "gen_gc_gc_move"] THEN
+   EVERY_CASE_TAC THEN
+   TRY(CASES_BY_NAME "a2") THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   TRY COND_CASES_TAC THEN
+   TRY(W(fun (asl,w) ->
+     let t = find_term (fun u ->
+       hd_is "gc_forward_ptr" u &&
+       length (snd(strip_comb u)) = 5) w in
+     MP_TAC(ISPEC t PAIR_SURJECTIVE)) THEN
+     DISCH_THEN(CHOOSE_THEN(CHOOSE_THEN SUBST1_TAC))) THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   STRIP_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN
+   REPEAT(FIRST_X_ASSUM(fun th ->
+     if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) THEN
+   VAR_EQ_TAC THEN
+   ASM_REWRITE_TAC(gcsimps @
+                   [K_DEF; ALL_APPEND; ALL; isdata; isref]) THEN
+   TRY(FIRST_X_ASSUM(fun h ->
+     if is_forall (concl h) then RULE_ASSUM_TAC(REWRITE_RULE[h])
+     else fail())) THEN
+   ASM_REWRITE_TAC[]);;
 
 let gc_move_list_data_refs_split =
   cake_theorem "gc_move_list_data_refs_split[local]"
