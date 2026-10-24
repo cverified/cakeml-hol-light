@@ -1722,7 +1722,89 @@ let gen_state_ok_reset = cake_theorem "gen_state_ok_reset"
       gen_state_ok (heap_length h) (n + heap_length h)
         (h ++ heap_expand n ++ r) (reset_gens conf (heap_length
           h))`)
-  CHEAT_TAC;;
+  (* the generations that reset_gens makes all start where the first
+     heap ends, and nothing of that heap points into the space that
+     the expansion leaves: a pointer of a DataElement points at a
+     DataElement, and what is in the expansion is an Unused *)
+  (let notin = prove
+    (`!(hh:((A,B)heap_element) list) rr n p.
+        heap_length hh <= p /\ p < n + heap_length hh
+        ==> ~(isSomeDataElement
+                (heap_lookup p (hh ++ heap_expand n ++ rr)))`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     REWRITE_TAC[cake_thm "heap_lookup_APPEND"] THEN
+     ASM_SIMP_TAC[ARITH_RULE `(h:num) <= p ==> ~(p < h)`;
+                  cake_thm "heap_length_heap_expand"] THEN
+     SUBGOAL_THEN `p - heap_length (hh:((A,B)heap_element) list) < n`
+       ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     ASM_REWRITE_TAC[] THEN
+     SUBGOAL_THEN `~(n = 0)` ASSUME_TAC THENL
+      [ASM_ARITH_TAC; ALL_TAC] THEN
+     ASM_REWRITE_TAC[cake_def "heap_expand"] THEN
+     REWRITE_TAC[cake_def "heap_lookup"; cake_def "el_length"] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[cake_def "isSomeDataElement";
+                     injectivity "option"; distinctness "option";
+                     distinctness "heap_element"] THEN
+     ASM_SIMP_TAC[ARITH_RULE
+       `p - h < n /\ ~(n = 0) ==> p - h < (n - 1) + 1`] THEN
+     REWRITE_TAC[cake_def "isSomeDataElement"; distinctness "option"]) in
+   STRIP_TAC THEN
+   REWRITE_TAC[cake_def "reset_gens"] THEN
+   STRUCT_CASES_TAC (ISPEC `data_to_word_config_gc_kind conf`
+     (cases "gc_kind")) THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[cake_def "gen_state_ok"; ALL] THEN
+   REWRITE_TAC[GSYM ALL_MEM; MEM_MAP; K_DEF] THEN
+   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL] THEN
+   REWRITE_TAC[cake_def "gen_start_ok"] THEN
+   ONCE_REWRITE_TAC[cake_thm "heap_split_APPEND_if"] THEN
+   REWRITE_TAC[LT_REFL; SUB_REFL; cake_thm "heap_split_0"] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[APPEND_NIL] THEN
+   W(fun (asl,w) ->
+     let bod = snd(strip_exists w) in
+     let pr = rand(lhs(lhand bod)) in
+     let a,b = dest_pair pr in
+     MAP_EVERY EXISTS_TAC [a; b]) THEN
+   REWRITE_TAC[] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   MATCH_MP_TAC(TAUT `(~a /\ ~b ==> F) ==> a \/ b`) THEN
+   STRIP_TAC THEN
+   W(fun (asl,w) ->
+     let ths = map snd asl in
+     let hd_is n th =
+       (try fst(dest_const(fst(strip_comb(concl th)))) = n
+        with Failure _ -> false) in
+     let arg_is n th =
+       (try fst(dest_const(fst(strip_comb(
+              el 0 (snd(strip_comb(concl th))))))) = n
+        with Failure _ -> false) in
+     let okth = find (hd_is "heap_ok") ths in
+     let memd = find (fun th -> hd_is "MEM" th && arg_is "DataElement" th)
+                  ths in
+     let memp = find (fun th -> hd_is "MEM" th &&
+                                arg_is "gc_shared_Pointer" th) ths in
+     let dargs = snd(strip_comb(el 0 (snd(strip_comb(concl memd))))) in
+     let pargs = snd(strip_comb(el 0 (snd(strip_comb(concl memp))))) in
+     let cl = CONJUNCT2(CONJUNCT2
+       (REWRITE_RULE[cake_def "heap_ok"] okth)) in
+     MP_TAC(SPECL (dargs @ pargs) cl)) THEN
+   ASM_REWRITE_TAC[MEM_APPEND] THEN
+   DISCH_TAC THEN
+   W(fun (asl,w) ->
+     let ths = map snd asl in
+     let hd_is n th =
+       (try fst(dest_const(fst(strip_comb(concl th)))) = n
+        with Failure _ -> false) in
+     let sde = find (hd_is "isSomeDataElement") ths in
+     let heap = rand(el 0 (snd(strip_comb(concl sde)))) in
+     let hh = lhand heap in
+     let rr = rand(rand heap) in
+     MP_TAC(ISPECL [hh; rr] notin)) THEN
+   ASM_SIMP_TAC[] THEN
+   DISCH_THEN(fun th -> MP_TAC(SPEC_ALL th)) THEN
+   ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
 let data_to_word_memoryProof_gen_gc_thm = cake_theorem "gen_gc_thm"
   (fun () ->
@@ -1757,7 +1839,89 @@ let heap_split_heap_split = cake_theorem "heap_split_heap_split"
         (?m.
           h2 = m ++ h4 /\ h3 = h1 ++ m /\ heap = h1 ++ m ++ h4 /\
           heap_split (n2 - heap_length h1) h2 = SOME (m,h4))`)
-  CHEAT_TAC;;
+  (* the split at the later point goes through the earlier one: the
+     middle piece is what the split of the second half gives, and
+     the induction follows the two splits down the heap, one element
+     at a time *)
+  (let exwit = W(fun (asl,w) ->
+     EXISTS_TAC (lhs (el 1 (conjuncts (snd(strip_exists w)))))) in
+   let stripconj =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) in
+   let aux = prove
+    (`!(heap:((A,B)heap_element) list) n1 n2 h1 h2 h3 h4.
+        heap_split n2 heap = SOME (h3,h4) /\
+        heap_split n1 heap = SOME (h1,h2) /\ n1 <= n2
+        ==> ?m. h2 = m ++ h4 /\ h3 = h1 ++ m /\
+                heap = h1 ++ m ++ h4 /\
+                heap_split (n2 - heap_length h1) h2 = SOME (m,h4)`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "heap_split"] THENL
+      [ASM_CASES_TAC `n2 = 0` THEN
+       ASM_REWRITE_TAC[distinctness "option"] THEN
+       ASM_CASES_TAC `n1 = 0` THEN
+       ASM_REWRITE_TAC[distinctness "option"] THEN
+       REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+       STRIP_TAC THEN VAR_EQ_TAC THEN
+       EXISTS_TAC `[]:((A,B)heap_element) list` THEN
+       REWRITE_TAC[APPEND; cake_thm "heap_length_NIL"; SUB_0] THEN
+       ASM_REWRITE_TAC[cake_def "heap_split"];
+       ALL_TAC] THEN
+     ASM_CASES_TAC `n2 = 0` THEN
+     ASM_REWRITE_TAC[distinctness "option"] THENL
+      [STRIP_TAC THEN
+       SUBGOAL_THEN `n1 = 0` SUBST_ALL_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC] THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option"; PAIR_EQ]) THEN
+       stripconj THEN VAR_EQ_TAC THEN
+       EXISTS_TAC `[]:((A,B)heap_element) list` THEN
+       REWRITE_TAC[APPEND; cake_thm "heap_length_NIL"; SUB_0;
+                   cake_def "heap_split"];
+       ALL_TAC] THEN
+     ASM_CASES_TAC `n2 < el_length (h:(A,B)heap_element)` THEN
+     ASM_REWRITE_TAC[distinctness "option"] THEN
+     ASM_CASES_TAC `n1 = 0` THEN ASM_REWRITE_TAC[] THENL
+      [EVERY_CASE_TAC THEN
+       REWRITE_TAC[distinctness "option"; injectivity "option";
+                   PAIR_EQ] THEN
+       STRIP_TAC THEN stripconj THEN VAR_EQ_TAC THEN
+       REWRITE_TAC[APPEND; cake_thm "heap_length_NIL"; SUB_0] THEN
+       exwit THEN
+       FIRST_X_ASSUM(fun ih ->
+         FIRST_ASSUM(fun a1 ->
+           MP_TAC(MATCH_MP ih (CONJ a1 (CONJ
+             (ISPEC `t:((A,B)heap_element) list`
+                (GEN_ALL (cake_thm "heap_split_0")))
+             (SPEC `n2 - el_length (h:(A,B)heap_element)`
+                LE_0)))))) THEN
+       REWRITE_TAC[APPEND] THEN
+       DISCH_THEN(X_CHOOSE_THEN `mm:((A,B)heap_element) list`
+         STRIP_ASSUME_TAC) THEN
+       VAR_EQ_TAC THEN
+       ASM_REWRITE_TAC[APPEND; CONS_11; cake_def "heap_split"] THEN
+       MATCH_REDUCE_TAC THEN REWRITE_TAC[];
+       ALL_TAC] THEN
+     ASM_CASES_TAC `n1 < el_length (h:(A,B)heap_element)` THEN
+     ASM_REWRITE_TAC[distinctness "option"] THEN
+     EVERY_CASE_TAC THEN
+     REWRITE_TAC[distinctness "option"; injectivity "option";
+                 PAIR_EQ] THEN
+     STRIP_TAC THEN stripconj THEN VAR_EQ_TAC THEN
+     SUBGOAL_THEN `n1 - el_length (h:(A,B)heap_element) <=
+                   n2 - el_length (h:(A,B)heap_element)`
+       ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     FIRST_X_ASSUM(fun ih ->
+       FIRST_ASSUM(fun a1 -> FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a3 ->
+         MP_TAC(MATCH_MP ih (CONJ a1 (CONJ a2 a3))) THEN
+         DISCH_THEN(X_CHOOSE_THEN `mm:((A,B)heap_element) list`
+           STRIP_ASSUME_TAC) THEN
+         VAR_EQ_TAC THEN
+         EXISTS_TAC `mm:((A,B)heap_element) list` THEN
+         ASM_REWRITE_TAC[APPEND; CONS_11;
+                         cake_thm "heap_length_CONS"] THEN
+         REWRITE_TAC[ARITH_RULE `a - (b + c) = (a - b) - c`] THEN
+         ASM_REWRITE_TAC[]))))) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 let heap_split_LESS_EQ = cake_theorem "heap_split_LESS_EQ"
   (fun () ->
