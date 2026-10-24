@@ -576,6 +576,16 @@ let VAR_EQ_TAC =
 
 `ml/lib/tactics.ml`, `VAR_EQ_TAC`.
 
+### Dead ends
+
+`REPEAT VAR_EQ_TAC` **hangs**: the `REPEAT` is already inside, so
+the tactic never fails, and the outer `REPEAT` turns that into a
+loop -- the session answers `Stack overflow during evaluation
+(looping recursion?)` and nothing says which line it was
+(`heap_split_heap_split` paid a quarter of an hour for this).  The
+same holds for `REPEAT(VAR_EQ_TAC)` written round any of the
+tactics of `ml/lib/tactics.ml` that have a `REPEAT` of their own.
+
 ## 4. `imp_res_tac` of a lemma with a two-part hypothesis
 
 ### The idiom
