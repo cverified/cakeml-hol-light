@@ -1168,3 +1168,54 @@ a rewrite set of a proof, where the new clause is harmless.  That
 is a library pass with a run and a re-verification of its own, not
 a thing to do inside one proof; until then this theorem is the one
 cheat it costs.
+
+## The `num_size` that resolved to HOL4's size function
+
+`data_spaceScript.sml:15` defines
+
+```
+Definition num_size_def:
+  num_size (n:num) =
+    if n < 2**32 then 2:num else 1 + num_size (n DIV 2 ** 32)
+```
+
+and `data_to_word_memoryProofScript.sml` uses that `num_size` in
+two statements (`LENGTH_n2mw_LE_num_size`, `LESS_EQ_num_size`) and
+`data_to_word_assignProof`/`data_to_word_bignumProof` in a few
+more.  The port names the definition `data_space_num_size` (a
+definition of one theory that another uses needs the theory's
+prefix) but `ml/compiler/backend/data_space.ml` has **no**
+`hol4_overload "num_size" "data_space_num_size"` for it.  And
+`num_size` is not a free name: `ml/lib/hol4.ml:421` has HOL4's
+size function of the num type,
+
+```
+let num_size = new_definition
+  `num_size (n:num) = n`;;
+```
+
+which is what the two statements of the memory proof resolved to.
+So `LESS_EQ_num_size` of the port says
+
+```
+good_dimindex (:'a)
+==> !m n. n <= m ==> SUC (LENGTH (n2mw n)) <= m
+```
+
+and that is **false** (take `m = n = 0`: `1 <= 0`), where the
+source says `... <= num_size m`, which is at least two.
+
+What to do about it: `ml/compiler/backend/data_space.ml` gets the
+missing overload, and then every statement that mentions
+`num_size` is parsed again -- the two of the memory proof, the
+ones of `data_to_word_assignProof` and `data_to_word_bignumProof`,
+and `part_to_words_LENGTH`/`const_parts_to_words_LENGTH`, whose
+`part_space_req` goes through it.  That is a pass over the
+definition file with a run of its own, so until then the two
+theorems stay a cheat; a proof of the statement as it stands is
+impossible, and one of the statement as it should be would be
+thrown away by the re-parse.  `tools/overloads.py` does not catch
+this: the source declares no `Overload` for `num_size`, it is a
+`Definition` of one theory that another theory uses by its short
+name, and the only sign of the clash is that the port has a
+constant of that name already.
