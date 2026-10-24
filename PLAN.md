@@ -947,9 +947,9 @@ because `EVERY_CASE_TAC`'s are its own._
 ## Where the third file stands
 
 _`compiler/backend/proofs/data_to_word_memoryProof.ml`, the memory
-invariant of data_to_word: **381 of its 611 theorems are proved**
-and 230 are still a cheat (244 `CHEAT_TAC` lines, the rest of them
-the definitions and terminations), so the file adds 244 cheats
+invariant of data_to_word: **410 of its 611 theorems are proved**
+and 201 are still a cheat (213 `CHEAT_TAC` lines, the rest of them
+the definitions and terminations), so the file adds 213 cheats
 where it added 340 when phase three began.  It is the largest proof
 theory of the port (11,000 lines, 625 blocks that need a proof),
 and it was taken because every later file of data_to_word rests on
@@ -961,13 +961,47 @@ unfolded and the rule of `v_inv` taken apart, guide entry 24), the
 `v_inv_ck` machinery and `v_inv_def` that the whole `v_inv` family
 goes through, the mutual induction of `dataSem_v` for the values
 of a value (entry 28), `WORD_NUM_BIT_TAC` for a bitwise identity
-of numerals at a dimindex that is not known, `ARITH_ASM_TAC` for a
-goal whose context is half arithmetic, and the word-bit toolkit of
-HOL Light (`WORD_EQ_BITS_ALT`, `BIT_WORD_*`, `WORD_ADD_OR`,
+of numerals at a dimindex that is not known, `ARITH_NO_BIT_TAC`
+and `ARITH_NO_DIV_TAC` for a goal whose context is half
+arithmetic, and the word-bit toolkit of HOL Light
+(`WORD_EQ_BITS_ALT`, `BIT_WORD_*`, `WORD_ADD_OR`,
 `BIT_WORD_POW2`).  `ALL_IMP` carries a property along an `EVERY`,
 `MEASURE_INDUCT_TAC` stands for HOL4's `recInduct`, and
 `var_by_name`/`CASES_BY_NAME` of `ml/lib/tactics.ml` take a
 variable out of the goal where a quotation would invent one._
+
+_Two toolkits were built for whole families of the file, and each
+one unlocked its family in an afternoon:_
+
+- _**the bytes of a word.**  `bsb0` reads a bit of a `set_byte`
+  off (`bit j (set_byte a b h bb)` is the bit of `b` inside the
+  byte's range and the bit of `h` outside it), `bixval` says the
+  byte index of a number below the bytes of a word is eight times
+  it (or eight times its mirror), `wobbit` says the bit of
+  `word_of_byte (w2w w)` at j is the bit of `w` at `j MOD 8`, and
+  `MOD_8_SUB`-style facts turn the index inside a range into the
+  one modulo eight.  The bit-level proofs then go by the **byte
+  ranges** (four or eight of them), never by the 32 or 64 bits:
+  `set_byte_eq_ARB`, `set_byte_all_32`, `set_byte_all_64`,
+  `word_xor_set_byte`, `word_of_byte_set_byte_32`,
+  `word_of_byte_set_byte_64`, `set_byte_word_of_byte` and
+  `set_byte_sort` are all done that way, and the toolkit is in
+  `tmp/toolkit.ml` for the sections that still need it
+  (`byte_index` lives in `ml/lib/byte.ml`, outside the preamble,
+  so these lemmas cannot go to `ml/lib/lemmas.ml`)._
+- _**the separation logic of the memory.**  `ml/lib/set_sep.ml`
+  now has the ten theorems of HOL4's `set_sepTheory` that a proof
+  needs: `SEP_EXISTS_THM`, `cond_STAR`, `STAR_cond`,
+  `SPLIT_LEMMA`, `one_STAR`, `IN_fun2set`, `read_fun2set`,
+  `write_fun2set`, `STAR_AC` (the permutative rewrite that stands
+  for HOL4's `fs [AC STAR_ASSOC STAR_COMM]`) and `STAR_SEP_T`.
+  `read_fun2set` and `write_fun2set` are HOL4's `SEP_R_TAC` and
+  `SEP_W_TAC` as a rule each, applied by hand to the assumption.
+  With them `word_list_exists_thm`, `store_list_thm`,
+  `word_el_IMP_word_list_exists`,
+  `word_heap_IMP_word_list_exists` and
+  `word_list_AND_word_list_exists_IMP` are proved, and the rest of
+  the `word_list_exists` family is open rather than blocked._
 
 - _What it cost to find: a term that a tactic writes gets the
   parser's types, and an arithmetic one gets an invented type
@@ -975,14 +1009,23 @@ variable out of the goal where a quotation would invent one._
   port is instantiated **at the goal** with
   `INSTANTIATE (term_match [] (rand (concl th)) w) th` (entry 25,
   way 4), because two statements never share an invented variable;
+  a statement of the port may have **two** invented type variables
+  where a reader sees one (the address word and the contents of
+  `word_list`), so an `aux` lemma that stands in for it needs both;
   a `REWRITE_RULE` inside a `FIRST_ASSUM` never fails, so the
   wrong assumption is taken and the failure comes five lines later
   (entry 29: `USE_CHANGED`); a match whose scrutinee is a call
   needs `EVERY_CASE_TAC` before any reduce (entry 26);
-  `MATCH_ACCEPT_TAC` fails where `ACCEPT_TAC` works; `SPEC` of a
-  lemma with a type variable has to be `ISPEC`; the `&` of a
-  quotation is a **real** unless the quotation says `:int`; and
-  `lhand` of `ALL P l` is `P`, not what `rand (lhand ...)` gives._
+  `MATCH_ACCEPT_TAC` fails where `ACCEPT_TAC` works, and it needs
+  the goal's quantifiers stripped first; `SPEC` of a lemma with a
+  type variable has to be `ISPEC`; the `&` of a quotation is a
+  **real** and its `<` is a **word's** unless the quotation says
+  `:int` or `:num` (entry 25); `lhand` of `ALL P l` is `P`, not
+  what `rand (lhand ...)` gives; `REPEAT VAR_EQ_TAC` loops
+  (entry 3); a `THENL` after a tactic that branches needs
+  brackets round it; and a `STRIP_ASSUME_TAC` of a disjunction
+  multiplies the goals, where `MP_TAC` and a `STRIP_TAC` after it
+  do not._
 - _What is blocked, and why: `do_eq_list_F_IMP_MEM`,
   `memory_rel_ptr_eq` and `do_eq_IFF_vb_eq_size`, on the
   inconsistent `do_eq` of ISSUES.md (its clauses as the port
@@ -990,27 +1033,20 @@ variable out of the goal where a quotation would invent one._
   them would be worthless);
   `memory_rel_elements_list_distinct`, on the `TL` of HOL Light
   that has no value for the empty list (ISSUES.md, "The empty list
-  that HOL4's TL has a value for"); the `word_list_exists` family
-  (`store_list_thm`, `word_mem_eq_thm`, `word_heap_IMP_word_list_exists`,
-  `v_inv_Block_tag_limit`, eleven cheats in all), on the separation
-  logic tactics (`SEP_R_TAC`, `SEP_W_TAC`, `SEP_F_TAC`) and the
-  lemmas of HOL4's `set_sepTheory` that `ml/lib/set_sep.ml` (a
-  hundred lines) has not; the `vb_eq_size`/`list_copy_fwd`/
-  `finalise_cons`/`word_eq` family, on HOL4's `recInduct` of a
-  `cake_define_wf` definition, which `MEASURE_INDUCT_TAC` can
-  stand for once the measure's decrease is a lemma (for
-  `finalise_cons` that is `sptree_size (delete ptr refs) <
-  sptree_size refs`); `gc_move_data_refs_split`, where the `let`
-  of a pair pattern inside the definition of `gen_gc$gc_move` is
-  not reduced by `let_CONV` and `PAIRARG_TAC` together, so the
-  pair equation of the state stays unsplit; and the byte family
-  (`set_byte_all_32`, `word_of_byte_set_byte_32`,
-  `set_byte_eq_ARB`, `word_xor_set_byte`), where a bit-level proof
-  at a dimindex of 32 or 64 that enumerates the index does not come
-  back in five minutes -- it wants a proof by the four byte ranges,
-  not by the 32 bits.  `w2w_word_of_byte_w2w` **is** done that way
-  (its index runs to eight, not to the dimindex), which is the
-  pattern the rest of the family needs._
+  that HOL4's TL has a value for"); the
+  `vb_eq_size`/`list_copy_fwd`/`finalise_cons`/`word_eq` family,
+  on HOL4's `recInduct` of a `cake_define_wf` definition, which
+  `MEASURE_INDUCT_TAC` can stand for once the measure's decrease
+  is a lemma (for `finalise_cons` that is `sptree_size (delete ptr
+  refs) < sptree_size refs`); `memory_rel_FromList` and the rest
+  of the `copy_list` family, on `copy_list_thm`, which HOL4 states
+  as the value of an ML expression and the port therefore has only
+  as a pointer (`PENDING.md`) -- a proof of one of them has to
+  state and prove it as a local lemma first; and
+  `gc_move_data_refs_split`, where the `let` of a pair pattern
+  inside the definition of `gen_gc$gc_move` is not reduced by
+  `let_CONV` and `PAIRARG_TAC` together, so the pair equation of
+  the state stays unsplit._
 
 ## The sessions of phase three
 
