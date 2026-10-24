@@ -2577,7 +2577,70 @@ let heap_split_heap_store = cake_theorem "heap_split_heap_store[local]"
        heap_split e heap = SOME (h1,h2) /\
        heap_store a y heap = (heap2,T) /\ e <= a ==>
        (?h3. heap_split e heap2 = SOME (h1,h3))`)
-  CHEAT_TAC;;
+  (* a store above the split leaves the first half of the split as
+     it was: the store goes down the heap one element at a time and
+     the induction carries the split along *)
+  (let stripconj =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) in
+   let aux = prove
+    (`!(heap:((A,B)heap_element) list) e h1 h2 a y heap2.
+        heap_split e heap = SOME (h1,h2) /\
+        heap_store a y heap = (heap2,T) /\ e <= a
+        ==> ?h3. heap_split e heap2 = SOME (h1,h3)`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "heap_split"; cake_def "heap_store"] THENL
+      [REWRITE_TAC[PAIR_EQ];
+       ALL_TAC] THEN
+     ASM_CASES_TAC `e = 0` THEN ASM_REWRITE_TAC[] THENL
+      [REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+       STRIP_TAC THEN stripconj THEN VAR_EQ_TAC THEN
+       W(fun (asl,w) ->
+         EXISTS_TAC (rand(lhs(snd(strip_exists w))))) THEN
+       REWRITE_TAC[cake_thm "heap_split_0"];
+       ALL_TAC] THEN
+     ASM_CASES_TAC `e < el_length (h:(A,B)heap_element)` THEN
+     ASM_REWRITE_TAC[distinctness "option"] THEN
+     STRIP_TAC THEN
+     SUBGOAL_THEN
+       `~(a = 0) /\ ~(a < el_length (h:(A,B)heap_element))`
+       STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     RULE_ASSUM_TAC(REWRITE_RULE
+       [ASSUME `~(a = 0)`;
+        ASSUME `~(a < el_length (h:(A,B)heap_element))`]) THEN
+     FIRST_X_ASSUM(fun st ->
+       if (try fst(dest_const(fst(strip_comb(rhs(concl st))))) =
+                "," with Failure _ -> false)
+       then MP_TAC st else fail()) THEN
+     MP_TAC(ISPEC
+       `heap_store (a - el_length (h:(A,B)heap_element))
+          (y:((A,B)heap_element) list) t`
+       PAIR_SURJECTIVE) THEN
+     DISCH_THEN(X_CHOOSE_THEN `xs1:((A,B)heap_element) list`
+       (X_CHOOSE_THEN `c1:bool` ASSUME_TAC)) THEN
+     ASM_REWRITE_TAC[] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN VAR_EQ_TAC THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[ASSUME `c1:bool`]) THEN
+     FIRST_X_ASSUM(fun sp ->
+       if (try fst(dest_const(rator(rhs(concl sp)))) = "SOME"
+           with Failure _ -> false)
+       then MP_TAC sp else fail()) THEN
+     EVERY_CASE_TAC THEN
+     REWRITE_TAC[distinctness "option"; injectivity "option";
+                 PAIR_EQ] THEN
+     STRIP_TAC THEN stripconj THEN VAR_EQ_TAC THEN
+     SUBGOAL_THEN `e - el_length (h:(A,B)heap_element) <=
+                   a - el_length (h:(A,B)heap_element)`
+       ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+     FIRST_X_ASSUM(fun ih ->
+       FIRST_ASSUM(fun a1 -> FIRST_ASSUM(fun a2 -> FIRST_ASSUM(fun a3 ->
+         MP_TAC(MATCH_MP ih (CONJ a1 (CONJ a2 a3))) THEN
+         DISCH_THEN(X_CHOOSE_TAC `h3:((A,B)heap_element) list`) THEN
+         EXISTS_TAC `h3:((A,B)heap_element) list` THEN
+         ASM_REWRITE_TAC[cake_def "heap_split"] THEN
+         MATCH_REDUCE_TAC THEN REWRITE_TAC[]))))) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 let heap_store_unused_alt_gen_state_ok =
   cake_theorem "heap_store_unused_alt_gen_state_ok[local]"
@@ -4417,7 +4480,48 @@ let heap_lookup_heap_split =
        heap_split a heap = SOME (h1,h2) /\
        heap_lookup b heap = SOME x ==>
        (if b < a then MEM x h1 else MEM x h2)`)
-  CHEAT_TAC;;
+  (* the element that a lookup finds is in the half of the split
+     that its address falls in: heap_lookup_SPLIT cuts the heap at
+     the element, and the split of that append is the one of the
+     first part or the one that keeps the element *)
+  (let stripconj =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) in
+   let aux = prove
+    (`!(heap:((A,B)heap_element) list) a b h1 h2 x.
+        heap_split a heap = SOME (h1,h2) /\
+        heap_lookup b heap = SOME x
+        ==> (if b < a then MEM x h1 else MEM x h2)`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     FIRST_X_ASSUM(fun th ->
+       if (try fst(dest_const(fst(strip_comb(lhs(concl th))))) =
+                "heap_lookup"
+           with Failure _ -> false)
+       then MP_TAC(MATCH_MP (cake_thm "heap_lookup_SPLIT") th)
+       else fail()) THEN
+     DISCH_THEN(X_CHOOSE_THEN `ha:((A,B)heap_element) list`
+       (X_CHOOSE_THEN `hb:((A,B)heap_element) list`
+         STRIP_ASSUME_TAC)) THEN
+     VAR_EQ_TAC THEN
+     FIRST_X_ASSUM(fun th ->
+       MP_TAC(ONCE_REWRITE_RULE
+         [cake_thm "heap_split_APPEND_if"] th)) THEN
+     COND_CASES_TAC THEN
+     REWRITE_TAC[cake_def "heap_split"] THEN
+     ASM_CASES_TAC
+       `a - heap_length (ha:((A,B)heap_element) list) = 0` THEN
+     ASM_REWRITE_TAC[] THEN
+     ASM_CASES_TAC
+       `a - heap_length (ha:((A,B)heap_element) list) <
+        el_length (x:(A,B)heap_element)` THEN
+     ASM_REWRITE_TAC[distinctness "option"] THEN
+     EVERY_CASE_TAC THEN
+     REWRITE_TAC[distinctness "option"; injectivity "option";
+                 PAIR_EQ] THEN
+     STRIP_TAC THEN stripconj THEN VAR_EQ_TAC THEN
+     ASM_REWRITE_TAC[MEM_APPEND; MEM] THEN
+     TRY(CONV_TAC TAUT) THEN TRY ASM_ARITH_TAC) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux);;
 
 let heap_store_heap_lookup = cake_theorem "heap_store_heap_lookup"
   (fun () ->
