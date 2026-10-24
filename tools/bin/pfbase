@@ -15,6 +15,9 @@ python3 -I $C/tools/needsorder.py "$f" > $C/tmp/pfbase.ml
 echo 'print_string "CLOSUREDONE\n";;' >> $C/tmp/pfbase.ml
 repl-kill "$s" > /dev/null 2>&1
 repl-clone hol-template-cakeml "$s" > /dev/null 2>&1
+# the template may be older than ml/lib/lemmas.ml and tactics.ml,
+# and `needs` would not load them again
+reload "$s" > /dev/null 2>&1
 TIMEOUT=5400 repl-step "$s" "#use \"$C/tmp/pfbase.ml\";;" \
   > /dev/null 2>&1
 while ! tmux capture-pane -p -J -S - -t "hol-$s" |

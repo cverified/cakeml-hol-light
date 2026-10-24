@@ -164,6 +164,16 @@ let read_fun2set = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[one_STAR; IN_fun2set] THEN
   SIMP_TAC[]);;
 
+(* HOL4's APPLY_UPDATE_THM of combinTheory, which the write of a
+   cell goes through.  It stands here rather than in
+   ml/lib/lemmas.ml because the load order of a run puts this file
+   before the preamble's lemmas *)
+
+let APPLY_UPDATE_THM = prove
+ (`!(f:A->B) a b c. ((a =+ b) f) c = (if a = c then b else f c)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[UPDATE] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[]);;
+
 let write_fun2set = prove
  (`!y a x p (f:B->A) d. (set_sep_one (a,x) * p) (fun2set (f,d))
      ==> (p * set_sep_one (a,y)) (fun2set ((a =+ y) f,d))`,
