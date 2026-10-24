@@ -8087,7 +8087,130 @@ let set_byte_word_of_byte = cake_theorem "set_byte_word_of_byte[local]"
     `good_dimindex (:'a) ==>
        set_byte a w (word_of_byte ((w2w w):'a word)) be =
          word_of_byte (w2w w)`)
-  CHEAT_TAC;;
+  (* every set_byte of the word that repeats a byte writes the byte
+     it already has there: the byte index is a multiple of eight, so
+     the position inside the byte is the position modulo eight, and
+     that is the bit of the byte that word_of_byte put there *)
+  (let bsb0 = prove
+    (`!(a:(N)word) b (h:(N)word) bb j. j < dimindex (:N)
+        ==> (bit j (set_byte a b h bb) <=>
+             (if byte_index a bb <= j /\ j < byte_index a bb + 8
+              then bit (j - byte_index a bb) b else bit j h))`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SLICE_ALT_LT; BIT_WORD_SHL;
+                  BIT_WORD_ZX; DIMINDEX_8] THEN
+     MP_TAC(REWRITE_RULE[DIMINDEX_8]
+       (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+          BIT_TRIVIAL)) THEN
+     ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+     ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+     ASM_CASES_TAC `bit j (h:(N)word)` THEN
+     ASM_CASES_TAC `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+     ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+   let modgen = prove
+    (`!i k. 8 * k <= i /\ i < 8 * k + 8 ==> i MOD 8 = i - 8 * k`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     SUBGOAL_THEN `(8 * k + (i - 8 * k)) MOD 8 = i - 8 * k` MP_TAC THENL
+      [ONCE_REWRITE_TAC[ARITH_RULE `8 * k + r = k * 8 + r`] THEN
+       REWRITE_TAC[MOD_MULT_ADD] THEN
+       MATCH_MP_TAC MOD_LT THEN ASM_ARITH_TAC;
+       ASM_SIMP_TAC[ARITH_RULE
+         `8 * k <= i ==> 8 * k + (i - 8 * k) = i`]]) in
+   let modfacts =
+     map (fun k -> REWRITE_RULE[LE_0; SUB_0]
+       (CONV_RULE NUM_REDUCE_CONV
+         (SPECL [`i:num`; mk_small_numeral k] modgen)))
+       [0; 1; 2; 3; 4; 5; 6; 7] in
+   let bix8 = prove
+    (`!(a:'a word) bb. ?k. byte_index a bb = 8 * k /\
+                           (0 < dimindex (:'a) DIV 8
+                            ==> k < dimindex (:'a) DIV 8)`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "byte_index"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     COND_CASES_TAC THENL
+      [EXISTS_TAC `(dimindex (:'a) DIV 8 - 1) -
+                   w2n (a:'a word) MOD (dimindex (:'a) DIV 8)`;
+       EXISTS_TAC `w2n (a:'a word) MOD (dimindex (:'a) DIV 8)`] THEN
+     REWRITE_TAC[] THEN DISCH_TAC THEN
+     ASM_SIMP_TAC[DIVISION] THEN ASM_ARITH_TAC) in
+   let rules =
+     let num k = mk_small_numeral k in
+     let le a b = mk_binop `(<=):num->num->bool` a b in
+     let lt a b = mk_binop `(<):num->num->bool` a b in
+     let iv = `i:num` in
+     let ks = [8; 16; 24; 32; 40; 48; 56; 64] in
+     itlist (fun k acc -> itlist (fun k2 acc ->
+       (if k <= k2
+        then [ARITH_RULE(mk_imp(le (num k2) iv, le (num k) iv));
+              ARITH_RULE(mk_imp(lt iv (num k), lt iv (num k2)))]
+        else []) @
+       (if k2 <= k
+        then [ARITH_RULE(mk_imp(lt iv (num k2), mk_neg(le (num k) iv)));
+              ARITH_RULE(mk_imp(le (num k) iv, mk_neg(lt iv (num k2))))]
+        else []) @ acc) ks acc) ks
+       [ARITH_RULE `i < 64 ==> (i - m < 64 <=> T)`;
+        ARITH_RULE `i < 32 ==> (i - m < 32 <=> T)`;
+        ARITH_RULE `(8 <= i - 8 <=> 16 <= i) /\
+                    (8 <= i - 16 <=> 24 <= i) /\
+                    (8 <= i - 24 <=> 32 <= i) /\
+                    (8 <= i - 32 <=> 40 <= i) /\
+                    (8 <= i - 40 <=> 48 <= i) /\
+                    (8 <= i - 48 <=> 56 <= i) /\
+                    (16 <= i - 32 <=> 48 <= i)`] in
+   let killbit tm =
+     TRY(MP_TAC(REWRITE_RULE[DIMINDEX_8]
+           (ISPECL [`w:(8)word`; tm] BIT_TRIVIAL)) THEN
+         (ANTS_TAC THENL
+           [ASM_ARITH_TAC;
+            DISCH_THEN(fun th -> REWRITE_TAC[th])])) in
+   let wobbit = prove
+    (`!i. good_dimindex (:'a) /\ i < dimindex (:'a)
+          ==> (bit i (word_of_byte ((w2w (w:(8)word)):'a word)) <=>
+               bit (i MOD 8) w)`,
+     GEN_TAC THEN STRIP_TAC THEN
+     FIRST_ASSUM(DISJ_CASES_THEN ASSUME_TAC o
+       REWRITE_RULE[cake_def "good_dimindex"]) THEN
+     REWRITE_TAC[cake_def "word_of_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+     REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD_ZX; DIMINDEX_8] THEN
+     REWRITE_TAC[ARITH_RULE
+       `(((i - 32) - 16) - 8 = i - 56) /\ ((i - 32) - 16 = i - 48) /\
+        ((i - 32) - 8 = i - 40) /\ ((i - 16) - 8 = i - 24)`] THEN
+     (SUBGOAL_THEN
+        `(i:num) < 8 \/ (8 <= i /\ i < 16) \/ (16 <= i /\ i < 24) \/
+         (24 <= i /\ i < 32) \/ (32 <= i /\ i < 40) \/
+         (40 <= i /\ i < 48) \/ (48 <= i /\ i < 56) \/
+         (56 <= i /\ i < 64)`
+        MP_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+     STRIP_TAC THEN
+     killbit `i:num` THEN killbit `i - 8` THEN killbit `i - 16` THEN
+     killbit `i - 24` THEN killbit `i - 32` THEN killbit `i - 40` THEN
+     killbit `i - 48` THEN
+     ASM_SIMP_TAC (modfacts @ rules) THEN
+     TRY(SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC)) in
+   let stripconj =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) in
+   DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   ASM_SIMP_TAC[bsb0; wobbit] THEN
+   W(fun (asl,w) ->
+     let bidx = find_term (fun t ->
+       (try fst(dest_const(fst(strip_comb t))) = "byte_index"
+        with Failure _ -> false)) w in
+     MP_TAC(ISPECL (snd(strip_comb bidx)) bix8)) THEN
+   DISCH_THEN(X_CHOOSE_THEN `k:num` STRIP_ASSUME_TAC) THEN
+   ASM_REWRITE_TAC[] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   stripconj THEN
+   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
+     MP_TAC(MATCH_MP modgen (CONJ th1 th2)) THEN
+     DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[])));;
 
 let w2w_word_of_byte_w2w = cake_theorem "w2w_word_of_byte_w2w"
   (fun () ->
