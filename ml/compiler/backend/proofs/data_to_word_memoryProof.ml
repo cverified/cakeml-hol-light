@@ -4696,7 +4696,73 @@ let blocks_unique_update_ref1 = cake_theorem "blocks_unique_update_ref1"
          (all_vs (insert ptr (ValueArray (LUPDATE (HD xs) i xs1))
            refs)
             (xs ++ (RefPtr b ptr :: stack)))`)
-  CHEAT_TAC;;
+  (* the values of the updated array are the old ones and the head
+     of the list, which the stack already holds, so every value of
+     the new store is one of the old store, and what was unique
+     there stays unique *)
+  (let lk_ins = prove
+    (`!n p (y:(dataSem_v)bvlSem_ref) rfs z.
+        lookup n (insert p y rfs) = SOME z <=>
+        (n = p /\ y = z) \/ (~(n = p) /\ lookup n rfs = SOME z)`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+     CONV_TAC TAUT) in
+   let hd_cons = prove
+    (`!(xs:dataSem_v list). 0 < LENGTH xs
+        ==> ?t. xs = CONS (HD xs) t`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[LENGTH; LT_REFL; HD; LT_0] THEN
+     EXISTS_TAC `t:dataSem_v list` THEN REWRITE_TAC[]) in
+   REWRITE_TAC[cake_def "blocks_unique"] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+     (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC)) THEN
+   FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP hd_cons th)) THEN
+   DISCH_THEN(X_CHOOSE_TAC `tt:dataSem_v list`) THEN
+   SUBGOAL_THEN
+     `!v. MEM v (v_all_vs (LUPDATE (HD (xs:dataSem_v list)) i xs1))
+          ==> MEM v (v_all_vs xs1) \/ MEM v (v_all_vs xs)`
+     ASSUME_TAC THENL
+    [GEN_TAC THEN DISCH_TAC THEN
+     FIRST_ASSUM(fun th ->
+       MP_TAC(MATCH_MP (cake_thm "MEM_v_all_vs_LUPDATE") th)) THEN
+     DISCH_THEN(DISJ_CASES_THEN2
+       (fun hd1 -> DISJ2_TAC THEN
+         FIRST_ASSUM(fun xe ->
+           if (try fst(dest_var(lhs(concl xe))) = "xs"
+               with Failure _ -> false)
+           then GEN_REWRITE_TAC (RAND_CONV o RAND_CONV) [xe]
+           else fail()) THEN
+         MATCH_MP_TAC (cake_thm "MEM_v_all_vs_extend_tl") THEN
+         ACCEPT_TAC hd1)
+       (fun t2 -> DISJ1_TAC THEN ACCEPT_TAC t2));
+     ALL_TAC] THEN
+   W(fun (asl,w) ->
+     let hd_is n t =
+       (try fst(dest_const(fst(strip_comb t))) = n
+        with Failure _ -> false) in
+     let allvs t = hd_is "all_vs" t &&
+                   length (snd(strip_comb t)) = 2 in
+     let newset = find_term allvs w in
+     let oldset = find_term allvs
+       (concl (find (fun th -> can (find_term allvs) (concl th))
+                 (map snd asl))) in
+     let vv = mk_var("v",hd(snd(dest_type(type_of newset)))) in
+     let inn a s =
+       mk_comb(mk_comb(inst [type_of a,`:A`]
+         `(IN):A->(A->bool)->bool`, a), s) in
+     SUBGOAL_THEN
+       (mk_forall(vv, mk_imp(inn vv newset, inn vv oldset)))
+       ASSUME_TAC) THENL
+    [GEN_TAC THEN
+     REWRITE_TAC[cake_def "all_vs"; IN_UNION; IN_ELIM_THM; lk_ins;
+                 injectivity "bvlSem_ref"; distinctness "bvlSem_ref";
+                 v_all_vs_append; MEM_APPEND] THEN
+     STRIP_TAC THEN ASM_MESON_TAC[];
+     ALL_TAC] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[] THEN CONJ_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+   FIRST_ASSUM ACCEPT_TAC);;
 
 let heap_deref_def = cake_define
   `(heap_deref a heap =
