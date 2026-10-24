@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  flatLang: ported from HOL4's
-    compiler/backend/flatLangScript.sml  *)
+    compiler/backend/flatLangScript.sml
+    A definition theory, with 4 definitions, 3 datatypes and 8
+    theorems.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -24,7 +26,7 @@
 needs "compiler/backend/backend_common.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["id"; "pmatch"];;
+let _ = do_list hide_constant ["id"; "pmatch"];;
 
 (* Most ops are inherited from ast$op via the Src wrapper.
  * GlobalVar ops, TagLenEq, LenEq, El, and Id are flatLang-specific. *)
@@ -67,7 +69,7 @@ hol4_overload "Pcon" "flatLang_Pcon";;
 hol4_overload "Pas" "flatLang_Pas";;
 hol4_overload "Pref" "flatLang_Pref";;
 
-let pat_bindings_def = cake_define_list
+let flatLang_pat_bindings_def = cake_define_list
   [`flatLang_pat_bindings (Pany:flatLang_pat) = []`;
    `flatLang_pat_bindings (Pvar n:flatLang_pat) = [n]`;
    `flatLang_pat_bindings (Plit l:flatLang_pat) = []`;
@@ -133,7 +135,7 @@ hol4_overload "Letrec" "flatLang_Letrec";;
 let bool_id_def = cake_define
   `bool_id = 0`;;
 
-let bool_def = cake_define
+let flatLang_Bool_def = cake_define
   `flatLang_Bool t b = Con t (SOME (bool_to_tag b,SOME bool_id)) []`;;
 hol4_overload "Bool" "flatLang_Bool";;
 
@@ -145,16 +147,17 @@ let SmartIf_def = cake_define
            if tag = true_tag then p else if tag = false_tag then q
              else If t e p q else If t e p q) | _4 -> If t e p q)`;;
 
-let SmartIf_PMATCH = cake_theorem "SmartIf_PMATCH"
-  (fun () ->
-    `!t e p q.
-       SmartIf t e p q =
-         (match e with
-           Con _5 (SOME (tag,SOME id')) [] ->
-             (if id' = bool_id then
-               if tag = true_tag then p else if tag = false_tag
-                 then q else If t e p q else If t e p q) | _6 -> If t
-                 e p q)`)
-  CHEAT_TAC;;
+let SmartIf_PMATCH = prove
+ (`!t e p q.
+     SmartIf t e p q =
+       (match e with
+         Con _5 (SOME (tag,SOME id')) [] ->
+           (if id' = bool_id then
+             if tag = true_tag then p else if tag = false_tag then
+               q else If t e p q else If t e p q) | _6 -> If t e p q)`,
+  CHEAT_TAC);;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["id";
+   "pmatch"];;

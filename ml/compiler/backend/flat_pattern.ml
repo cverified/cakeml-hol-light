@@ -57,10 +57,9 @@ let enc_num_to_name_def = cake_define
 (* HOL4 flat_patternScript.sml:48-52: a theorem whose statement the
    port cannot state yet: pat1_size *)
 
-let MAPi_eq_MAP = cake_theorem "MAPi_eq_MAP"
-  (fun () ->
-    `MAPi (\n x. f x) xs = MAP f xs`)
-  CHEAT_TAC;;
+let MAPi_eq_MAP = prove
+ (`MAPi (\n x. f x) xs = MAP f xs`,
+  CHEAT_TAC);;
 
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
@@ -258,14 +257,13 @@ let op_sets_globals_def = cake_define
         flatLang_GlobalVarInit n -> T
       | _47 -> F`;;
 
-let op_sets_globals_EX = cake_theorem "op_sets_globals_EX"
-  (fun () ->
-    `op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`)
-  CHEAT_TAC;;
+let op_sets_globals_EX = prove
+ (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
+  CHEAT_TAC);;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_exp_def = cake_define_list_cheat CHEAT_TAC
+let flat_pattern_compile_exp_def = cake_define_list_cheat CHEAT_TAC
   [`flat_pattern_compile_exp cfg (flatLang_Var_local t vid) =
         (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =
@@ -334,22 +332,18 @@ let compile_exp_def = cake_define_list_cheat CHEAT_TAC
 hol4_overload "compile_exp" "flat_pattern_compile_exp";;
 hol4_overload "compile_exps" "flat_pattern_compile_exps";;
 
-let LENGTH_compile_exps_IMP = cake_theorem "LENGTH_compile_exps_IMP"
-  (fun () ->
-    `(!cfg x. let v = flat_pattern_compile_exp cfg x in T) /\
-     (!cfg xs i sg ys. flat_pattern_compile_exps cfg xs = (i,sg,ys)
-       ==>
-       LENGTH ys = LENGTH xs) /\
-     (!cfg ps i sg ps2. compile_match cfg ps = (i,sg,ps2) ==>
-       LENGTH ps2 = LENGTH ps)`)
-  CHEAT_TAC;;
+let LENGTH_compile_exps_IMP = prove
+ (`(!cfg x. let v = flat_pattern_compile_exp cfg x in T) /\
+   (!cfg xs i sg ys. flat_pattern_compile_exps cfg xs = (i,sg,ys) ==>
+     LENGTH ys = LENGTH xs) /\
+   (!cfg ps i sg ps2. compile_match cfg ps = (i,sg,ps2) ==>
+     LENGTH ps2 = LENGTH ps)`,
+  CHEAT_TAC);;
 
-let LENGTH_SND_compile_exps = cake_theorem "LENGTH_SND_compile_exps"
-  (fun () ->
-    `LENGTH (SND (SND (flat_pattern_compile_exps cfg xs))) = LENGTH xs
-  /\
-     LENGTH (SND (SND (compile_match cfg ps))) = LENGTH ps`)
-  CHEAT_TAC;;
+let LENGTH_SND_compile_exps = prove
+ (`LENGTH (SND (SND (flat_pattern_compile_exps cfg xs))) = LENGTH xs /\
+   LENGTH (SND (SND (compile_match cfg ps))) = LENGTH ps`,
+  CHEAT_TAC);;
 
 let compile_dec_def = cake_define
   `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;

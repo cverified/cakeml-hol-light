@@ -26,7 +26,7 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["inst"];;
+let _ = do_list hide_constant ["inst"];;
 
 (* HOL4 word_allocScript.sml:19: the overload Move0, which the port
    expands *)
@@ -846,7 +846,7 @@ let get_live_exp_def = cake_define
           (get_live_exp nexp)
         | expr -> LN`;;
 
-let numset_list_insert_def = cake_define_list
+let word_alloc_numset_list_insert_def = cake_define_list
   [`word_alloc_numset_list_insert [] t = t`;
    `word_alloc_numset_list_insert (x :: xs) t = sptree_insert x one
   (word_alloc_numset_list_insert xs t)`];;
@@ -1125,25 +1125,23 @@ let get_writes_def = cake_define
           one LN
         | prog -> LN`;;
 
-let get_writes_pmatch = cake_theorem "get_writes_pmatch"
-  (fun () ->
-    `!inst'.
-     get_writes inst' =
-       (match inst' with wordLang_Move pri ls ->
-         numset_list_insert (MAP FST ls) LN | Inst i ->
-         get_writes_inst i | wordLang_Assign num' exp -> sptree_insert
-         num' one LN | Get num' store -> sptree_insert num' one LN |
-         LocValue r l1 -> sptree_insert r one LN | Install r1 _27 _28
-         _29 _30 -> sptree_insert r1 one LN | OpCurrHeap b r1 _31 ->
-         sptree_insert r1 one LN | StoreConsts a b c d _32 ->
-         sptree_insert a one (sptree_insert b one (sptree_insert c one
-         (sptree_insert d one LN))) | wordLang_ShareInst asm_Load v
-         _33 -> sptree_insert v one LN | wordLang_ShareInst asm_Load8
-         v _34 -> sptree_insert v one LN | wordLang_ShareInst
-         asm_Load16 v _35 -> sptree_insert v one LN |
-         wordLang_ShareInst asm_Load32 v _36 -> sptree_insert v one LN
-         | prog -> LN)`)
-  CHEAT_TAC;;
+let get_writes_pmatch = prove
+ (`!inst'.
+   get_writes inst' =
+     (match inst' with wordLang_Move pri ls -> numset_list_insert
+       (MAP FST ls) LN | Inst i -> get_writes_inst i | wordLang_Assign
+       num' exp -> sptree_insert num' one LN | Get num' store ->
+       sptree_insert num' one LN | LocValue r l1 -> sptree_insert r
+       one LN | Install r1 _27 _28 _29 _30 -> sptree_insert r1 one LN
+       | OpCurrHeap b r1 _31 -> sptree_insert r1 one LN | StoreConsts
+       a b c d _32 -> sptree_insert a one (sptree_insert b one
+       (sptree_insert c one (sptree_insert d one LN))) |
+       wordLang_ShareInst asm_Load v _33 -> sptree_insert v one LN |
+       wordLang_ShareInst asm_Load8 v _34 -> sptree_insert v one LN |
+       wordLang_ShareInst asm_Load16 v _35 -> sptree_insert v one LN |
+       wordLang_ShareInst asm_Load32 v _36 -> sptree_insert v one LN |
+       prog -> LN)`,
+  CHEAT_TAC);;
 
 (* Old representation *)
 (* HOL4 word_allocScript.sml:1049-1083: code that the source has in a
@@ -1319,24 +1317,22 @@ let get_prefs_def = cake_define
         | (Loop names body exit_names) -> get_prefs body acc
         | prog -> acc`;;
 
-let get_prefs_pmatch = cake_theorem "get_prefs_pmatch"
-  (fun () ->
-    `!s acc.
-     get_prefs s acc =
-       (match s with (wordLang_Move pri ls) -> (MAP (\(x,y).
-         (pri,x,y)) ls) ++ acc | (wordLang_MustTerminate s1) ->
-       get_prefs s1 acc | (Seq s1 s2) ->
-       get_prefs s1 (get_prefs s2 acc) | (If cmp num' rimm e2 e3)
-         ->
-       get_prefs e2 (get_prefs e3 acc) | (Call (SOME
-         (v,cutset,ret_handler,l1,l2)) dest args NONE) ->
-       get_prefs ret_handler acc | (Call (SOME
-         (v,cutset,ret_handler,l1,l2)) dest args (SOME
-         (_62,prog,_63,_64))) ->
-       get_prefs prog (get_prefs ret_handler acc) | (Loop names
-         body exit_names) ->
-       get_prefs body acc | prog -> acc)`)
-  CHEAT_TAC;;
+let get_prefs_pmatch = prove
+ (`!s acc.
+   get_prefs s acc =
+     (match s with (wordLang_Move pri ls) -> (MAP (\(x,y). (pri,x,y))
+       ls) ++ acc | (wordLang_MustTerminate s1) ->
+     get_prefs s1 acc | (Seq s1 s2) ->
+     get_prefs s1 (get_prefs s2 acc) | (If cmp num' rimm e2 e3) ->
+     get_prefs e2 (get_prefs e3 acc) | (Call (SOME
+       (v,cutset,ret_handler,l1,l2)) dest args NONE) ->
+     get_prefs ret_handler acc | (Call (SOME
+       (v,cutset,ret_handler,l1,l2)) dest args (SOME
+       (_62,prog,_63,_64))) ->
+     get_prefs prog (get_prefs ret_handler acc) | (Loop names body
+       exit_names) ->
+     get_prefs body acc | prog -> acc)`,
+  CHEAT_TAC);;
 
 (*
   For each var, we collect 5 tuples indicating the number of
@@ -1352,7 +1348,7 @@ let get_prefs_pmatch = cake_theorem "get_prefs_pmatch"
 
 new_type_abbrev("heu_data",`: num#num#num#num#num`);;
 
-cake_hide_more ["mem"];;
+let _ = do_list hide_constant ["mem"];;
 
 let add1_lhs_const_def = cake_define
   `add1_lhs_const x (t:(num#num#num#num#num) spt) =
@@ -1603,51 +1599,49 @@ let get_forced_def = cake_define
         | (c,(Loop names body exit_names)) -> get_forced c body acc
         | (c,prog) -> acc`;;
 
-let get_forced_pmatch = cake_theorem "get_forced_pmatch"
-  (fun () ->
-    `!c prog acc.
-     (get_forced (c:'a asm_config) prog acc =
-       (match prog with
-         Inst (Arith (asm_AddCarry r1 r2 r3 r4)) ->
-          (if (asm_config_ISA c = MIPS \/ asm_config_ISA c =
-            RISC_V) then
-             (if r1 = r3 then [] else [(r1,r3)]) ++
-             (if r1 = r4 then [] else [(r1,r4)]) ++
-             acc else acc) | Inst (Arith (asm_AddOverflow r1 r2 r3
-               r4)) ->
-          (if (asm_config_ISA c = MIPS \/ asm_config_ISA c =
-            RISC_V) then
-             (if r1 = r3 then [] else [(r1,r3)]) ++
-             acc else acc) | Inst (Arith (asm_SubOverflow r1 r2 r3
-               r4)) ->
-          (if (asm_config_ISA c = MIPS \/ asm_config_ISA c =
-            RISC_V) then
-             (if r1 = r3 then [] else [(r1,r3)]) ++
-             acc else acc) | Inst (Arith (asm_LongMul r1 r2 r3 r4))
-               ->
-          (if (asm_config_ISA c = ARMv7) then
-            (if (r1 = r2) then [] else [(r1,r2)]) ++ acc else if
-              (asm_config_ISA c = ARMv8) \/ (asm_config_ISA c = RISC_V)
-              \/ (asm_config_ISA c = Ag32) then
-            (if r1 = r3 then [] else [(r1,r3)]) ++
-            (if r1 = r4 then [] else [(r1,r4)]) ++
-            acc else
-            acc) | Inst (asm_FP (FPMovToReg r1 r2 d)) ->
-           (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)]
-             else []) ++ acc | Inst (asm_FP (FPMovFromReg d r1 r2)) ->
-           (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)]
-             else []) ++ acc | wordLang_MustTerminate s1 -> get_forced c
-             s1 acc | Seq s1 s2 -> get_forced c s1 (get_forced c s2 acc)
-             | If cmp num' rimm e2 e3 ->
-         get_forced c e2 (get_forced c e3 acc) | Call (SOME
-           (v,cutset,ret_handler,l1,l2)) dest args NONE ->
-         get_forced c ret_handler acc | Call (SOME
-           (v,cutset,ret_handler,l1,l2)) dest args (SOME
-           (_86,prog,_87,_88)) ->
-         get_forced c prog (get_forced c ret_handler acc) | Loop
-           names body exit_names ->
-         get_forced c body acc | _89 -> acc))`)
-  CHEAT_TAC;;
+let get_forced_pmatch = prove
+ (`!c prog acc.
+   (get_forced (c:'a asm_config) prog acc =
+     (match prog with
+       Inst (Arith (asm_AddCarry r1 r2 r3 r4)) ->
+        (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
+          then
+           (if r1 = r3 then [] else [(r1,r3)]) ++
+           (if r1 = r4 then [] else [(r1,r4)]) ++
+           acc else acc) | Inst (Arith (asm_AddOverflow r1 r2 r3 r4))
+             ->
+        (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
+          then
+           (if r1 = r3 then [] else [(r1,r3)]) ++
+           acc else acc) | Inst (Arith (asm_SubOverflow r1 r2 r3 r4))
+             ->
+        (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
+          then
+           (if r1 = r3 then [] else [(r1,r3)]) ++
+           acc else acc) | Inst (Arith (asm_LongMul r1 r2 r3 r4)) ->
+        (if (asm_config_ISA c = ARMv7) then
+          (if (r1 = r2) then [] else [(r1,r2)]) ++ acc else if
+            (asm_config_ISA c = ARMv8) \/ (asm_config_ISA c = RISC_V) \/
+            (asm_config_ISA c = Ag32) then
+          (if r1 = r3 then [] else [(r1,r3)]) ++
+          (if r1 = r4 then [] else [(r1,r4)]) ++
+          acc else
+          acc) | Inst (asm_FP (FPMovToReg r1 r2 d)) ->
+         (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
+           []) ++ acc | Inst (asm_FP (FPMovFromReg d r1 r2)) ->
+         (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
+           []) ++ acc | wordLang_MustTerminate s1 -> get_forced c s1 acc
+           | Seq s1 s2 -> get_forced c s1 (get_forced c s2 acc) | If cmp
+           num' rimm e2 e3 ->
+       get_forced c e2 (get_forced c e3 acc) | Call (SOME
+         (v,cutset,ret_handler,l1,l2)) dest args NONE ->
+       get_forced c ret_handler acc | Call (SOME
+         (v,cutset,ret_handler,l1,l2)) dest args (SOME
+         (_86,prog,_87,_88)) ->
+       get_forced c prog (get_forced c ret_handler acc) | Loop names
+         body exit_names ->
+       get_forced c body acc | _89 -> acc))`,
+  CHEAT_TAC);;
 
 (*col is injective over every cut set*)
 let check_colouring_ok_alt_def = cake_define_list
@@ -1667,10 +1661,9 @@ let total_colour_def = cake_define
      (match sptree_lookup x col with NONE -> (if is_phy_var x then
        x else 0) | SOME x -> 2 * x)`;;
 
-let total_colour_alt = cake_theorem "total_colour_alt"
-  (fun () ->
-    `total_colour col = (\x. 2 * x) o (sp_default col)`)
-  CHEAT_TAC;;
+let total_colour_alt = prove
+ (`total_colour col = (\x. 2 * x) o (sp_default col)`,
+  CHEAT_TAC);;
 
 (*Check that the oracle provided colour (if it exists) is okay*)
 let oracle_colour_ok_def = cake_define
@@ -1878,4 +1871,7 @@ let full_ssa_cc_trans_def = cake_define
      let (prog',ssa',na') = ssa_cc_trans prog ssa na [] in
        Seq mov prog')`;;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["inst";
+   "mem"];;

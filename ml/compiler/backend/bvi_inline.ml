@@ -23,11 +23,10 @@ let bvi_mk_tick_def = cake_define
   `bvi_mk_tick n e = FUNPOW bvi_Tick n e`;;
 
 (* First-order form for cv_compute, which has no [FUNPOW]. *)
-let bvi_mk_tick_eq = cake_theorem "bvi_mk_tick_eq"
-  (fun () ->
-    `bvi_mk_tick n e = (if n = 0 then e else bvi_Tick (bvi_mk_tick (n
-  - 1) e))`)
-  CHEAT_TAC;;
+let bvi_mk_tick_eq = prove
+ (`bvi_mk_tick n e = (if n = 0 then e else bvi_Tick (bvi_mk_tick (n -
+  1) e))`,
+  CHEAT_TAC);;
 
 (* [Op] reverses its argument list, so a wrapper that boxes the worker's
    [rets] results in order lists them reversed under the [Cons]. *)
@@ -131,71 +130,64 @@ let compile_inc_def = cake_define
                    (name,arity,remove_ticks_exp body)) prog1))`;;
 hol4_overload "compile_inc" "bvi_inline_compile_inc";;
 
-let compile_prog_def = cake_define
+let bvi_inline_compile_prog_def = cake_define
   `bvi_inline_compile_prog prog = bvi_inline_compile_inc LN prog`;;
 hol4_overload "compile_prog" "bvi_inline_compile_prog";;
 
-let canonical_four_result_wrapper =
-  cake_theorem "canonical_four_result_wrapper"
-  (fun () ->
-    `wrapper_ok 10 3
+let canonical_four_result_wrapper = prove
+ (`wrapper_ok 10 3
+     (bvi_LetCall 4 0 11 (GENLIST Var 3)
+       (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE
+         (GENLIST Var 4))))`,
+  CHEAT_TAC);;
+
+let malformed_wrappers_rejected = prove
+ (`~(wrapper_ok 10 3
+       (bvi_LetCall 4 0 10 (GENLIST Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
+           4)))) /\
+   ~(wrapper_ok 10 3
+       (bvi_LetCall 4 0 11 [Var 0; Var 2; Var 1]
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
+           4)))) /\
+   ~(wrapper_ok 10 3
        (bvi_LetCall 4 0 11 (GENLIST Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE
-           (GENLIST Var 4))))`)
-  CHEAT_TAC;;
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [Var 0; Var 1;
+           Var 2]))) /\
+   ~(wrapper_ok 10 3 (bvi_Return (GENLIST Var 3)))`,
+  CHEAT_TAC);;
 
-let malformed_wrappers_rejected =
-  cake_theorem "malformed_wrappers_rejected"
-  (fun () ->
-    `~(wrapper_ok 10 3
-         (bvi_LetCall 4 0 10 (GENLIST Var 3)
-           (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-             Var 4)))) /\
-     ~(wrapper_ok 10 3
-         (bvi_LetCall 4 0 11 [Var 0; Var 2; Var 1]
-           (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-             Var 4)))) /\
-     ~(wrapper_ok 10 3
-         (bvi_LetCall 4 0 11 (GENLIST Var 3)
-           (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [Var 0; Var
-             1; Var 2]))) /\
-     ~(wrapper_ok 10 3 (bvi_Return (GENLIST Var 3)))`)
-  CHEAT_TAC;;
+let inline_boundary_examples = prove
+ (`inline_exp (sptree_insert 10 (3,
+       bvi_LetCall 4 0 11 (GENLIST Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
+           4))) LN) (Call 2 (SOME 10) [Var 4; Var 5; Var 6]
+           NONE:bvi_exp) =
+       Let [Var 4; Var 5; Var 6]
+         (bvi_mk_tick 3
+           (bvi_LetCall 4 0 11 (GENLIST Var 3)
+             (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
+               Var 4)))) /\
+   inline_exp (sptree_insert 10 (3,
+       bvi_LetCall 4 0 11 (GENLIST Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
+           4))) LN)
+     (Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0))) =
+       Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0)) /\
+   inline_exp (sptree_insert 10 (3,
+       bvi_LetCall 4 0 11 (GENLIST Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
+           4))) LN)
+     (bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return [Var 0]))
+       =
+       bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return [Var
+         0])`,
+  CHEAT_TAC);;
 
-let inline_boundary_examples = cake_theorem "inline_boundary_examples"
-  (fun () ->
-    `inline_exp (sptree_insert 10 (3,
-         bvi_LetCall 4 0 11 (GENLIST Var 3)
-           (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-             Var 4))) LN) (Call 2 (SOME 10) [Var 4; Var 5; Var 6]
-             NONE:bvi_exp) =
-         Let [Var 4; Var 5; Var 6]
-           (bvi_mk_tick 3
-             (bvi_LetCall 4 0 11 (GENLIST Var 3)
-               (bvi_Op (closLang_BlockOp (closLang_Cons 7))
-                 (GENLIST Var 4)))) /\
-     inline_exp (sptree_insert 10 (3,
-         bvi_LetCall 4 0 11 (GENLIST Var 3)
-           (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-             Var 4))) LN)
-       (Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0))) =
-         Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0)) /\
-     inline_exp (sptree_insert 10 (3,
-         bvi_LetCall 4 0 11 (GENLIST Var 3)
-           (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-             Var 4))) LN)
-       (bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return [Var
-         0])) =
-         bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return
-           [Var 0])`)
-  CHEAT_TAC;;
-
-let final_tick_cleanup_example =
-  cake_theorem "final_tick_cleanup_example"
-  (fun () ->
-    `remove_ticks_exp (Tick (bvi_Call 2 (SOME 10) [Tick (bvi_Var 0)]
-         (SOME (bvi_LetCall 1 3 11 [Tick (bvi_Var 1)] (bvi_Return
-           [Var 0])))):bvi_exp) =
-       Call 0 (SOME 10) [Var 0]
-         (SOME (bvi_LetCall 1 0 11 [Var 1] (bvi_Return [Var 0])))`)
-  CHEAT_TAC;;
+let final_tick_cleanup_example = prove
+ (`remove_ticks_exp (Tick (bvi_Call 2 (SOME 10) [Tick (bvi_Var 0)]
+       (SOME (bvi_LetCall 1 3 11 [Tick (bvi_Var 1)] (bvi_Return [Var
+         0])))):bvi_exp) =
+     Call 0 (SOME 10) [Var 0]
+       (SOME (bvi_LetCall 1 0 11 [Var 1] (bvi_Return [Var 0])))`,
+  CHEAT_TAC);;

@@ -21,7 +21,7 @@ needs "misc/misc.ml";;
 (* for bytes_in_word *)
 needs "semantics/ast.ml";;
 
-cake_hide ["dummy"; "gc"; "gen_gc"];;
+let _ = do_list hide_constant ["dummy"; "gc"; "gen_gc"];;
 
 
 (* -- compiler -- *)
@@ -188,7 +188,7 @@ let copy_loop_def = cake_define
                               r1 (Imm (bytes_in_word))))) t2]);
                copy_each t1 t2]`;;
 
-let comp_def = cake_define
+let stack_remove_comp_def = cake_define
   `stack_remove_comp jump off k (p:'a stackLang_prog) =
      (match p with
        // remove store accesses
@@ -281,7 +281,7 @@ let comp_def = cake_define
              SOME (stack_remove_comp jump off k p2,l1,l2)) | p -> p)`;;
 hol4_overload "comp" "stack_remove_comp";;
 
-let prog_comp_def = cake_define
+let stack_remove_prog_comp_def = cake_define
   `stack_remove_prog_comp jump off k (n,p) = (n,stack_remove_comp
   jump off k p)`;;
 hol4_overload "prog_comp" "stack_remove_prog_comp";;
@@ -335,7 +335,7 @@ let store_init_def = cake_define
     reg 3: first address in stack (and one past last address of heap)
     reg 4: one past last address of stack *)
 
-let init_code_def = cake_define
+let stack_remove_init_code_def = cake_define
   `stack_remove_init_code gen_gc' max_heap k =
      (let max_heap = (if max_heap * w2n (bytes_in_word:'a word) <
        dimword (:'a) then n2w max_heap * bytes_in_word else (n2w 0) -
@@ -440,26 +440,29 @@ let init_stubs_def = cake_define
       (1,halt_inst (n2w 0));
       (2,halt_inst (n2w 2))]`;;
 
-let stub_names_def = cake_define
+let stack_remove_stub_names_def = cake_define
   `stack_remove_stub_names one = [
      (0,implode "_Init");
      (1,implode "_Halt0");
      (2,implode "_Halt2")]`;;
 hol4_overload "stub_names" "stack_remove_stub_names";;
 
-let check_init_stubs_length = cake_theorem "check_init_stubs_length"
-  (fun () ->
-    `LENGTH (init_stubs gen_gc max_heap k start) + 2 =
-     // gc + dummy
-     stack_num_stubs`)
-  CHEAT_TAC;;
+let check_init_stubs_length = prove
+ (`LENGTH (init_stubs gen_gc max_heap k (start:num)) + 2 =
+   // gc + dummy
+   stack_num_stubs`,
+  CHEAT_TAC);;
 
 (* -- full compiler -- *)
 
-let compile_def = cake_define
+let stack_remove_compile_def = cake_define
   `stack_remove_compile jump off gen_gc' max_heap k start' prog =
      init_stubs gen_gc' max_heap k start' ++
      MAP (stack_remove_prog_comp jump off k) prog`;;
 hol4_overload "compile" "stack_remove_compile";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["dummy";
+   "gc";
+   "gen_gc"];;

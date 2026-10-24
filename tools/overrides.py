@@ -1028,18 +1028,63 @@ MATCH_FORM = set([
   ('mergesort', 'mergesortN_tail_def'),
   ('mergesort', 'merge_def'),
   ('mergesort', 'merge_tail_def'),
+])
+
+# definitions of a family whose clauses overlap in one of the
+# functions only: a match is one clause, so it cannot define a
+# family (the two functions would share the variables that HOL
+# Light's pattern matching makes, and their types clash), and what
+# the port writes is the list of clauses of the definition with the
+# clauses of the named constants written as one clause with a match
+# each.  The text is the comment that goes over the definition.
+MATCH_CLAUSES = {
   # the mutual do_eq/do_eq_list of the five semantics: the last
   # clause of each catches the pairs that the earlier ones have
   # already given a value, and the port did not see it (the
   # clauses are written out one by one and the overlap is between
   # two of them, not between a clause and a catch-all of the same
   # shape), so a list of clauses would be inconsistent
-  ('dataSem', 'do_eq_def'),
-  ('bvlSem', 'do_eq_def'),
-  ('closSem', 'do_eq_def'),
-  ('flatSem', 'do_eq_def'),
-  ('semanticPrimitives', 'do_eq_def'),
-])
+  ('dataSem', 'do_eq_def'): (['do_eq', 'do_eq_list'], """
+(* the clauses of the source overlap -- a later one says
+   Eq_type_error of a pair that an earlier one has already given a
+   value -- and HOL4 takes the first that matches, so the port
+   writes them as a match, which takes the first arm (see
+   ml/lib/define.ml, "A definition whose clauses overlap").  As a
+   list of clauses they would be inconsistent. *)
+"""),
+  ('bvlSem', 'do_eq_def'): (['do_eq', 'do_eq_list'], """
+(* the clauses of the source overlap -- a later one says
+   Eq_type_error of a pair that an earlier one has already given a
+   value -- and HOL4 takes the first that matches, so the port
+   writes them as a match, which takes the first arm (see
+   ml/lib/define.ml, "A definition whose clauses overlap").  As a
+   list of clauses they would be inconsistent. *)
+"""),
+  ('closSem', 'do_eq_def'): (['do_eq_list'], """
+(* the clauses of do_eq_list overlap -- the last one says Eq_val F
+   of the two lists that the first two have already given a value
+   -- and HOL4 takes the first that matches, so the port writes
+   them as a match, which takes the first arm (see ml/lib/define.ml,
+   "A definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
+"""),
+  ('flatSem', 'do_eq_def'): (['do_eq_list'], """
+(* the clauses of do_eq_list overlap -- the last one says Eq_val F
+   of the two lists that the first two have already given a value
+   -- and HOL4 takes the first that matches, so the port writes
+   them as a match, which takes the first arm (see ml/lib/define.ml,
+   "A definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
+"""),
+  ('semanticPrimitives', 'do_eq_def'): (['do_eq_list'], """
+(* the clauses of do_eq_list overlap -- the last one says Eq_val F
+   of the two lists that the first two have already given a value
+   -- and HOL4 takes the first that matches, so the port writes
+   them as a match, which takes the first arm (see ml/lib/define.ml,
+   "A definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
+"""),
+}
 
 # an explicit termination relation, where HOL Light cannot guess one
 # and the HOL4 source does not give one either
@@ -1967,134 +2012,134 @@ let ag32_config_def = cake_define
 ''',
   # the termination of every evaluate: HOL4 proves it with
   ('wordSem', 'evaluate_def'): r'''
-let fix_clock_IMP =
+let wordSem_fix_clock_IMP =
   try prove
    (`!s x res s1. wordSem_fix_clock s x = (res,s1)
                   ==> wordSem_state_clock s1 <=
                       wordSem_state_clock s /\
                       wordSem_state_termdep s1 =
                       wordSem_state_termdep s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; wordSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "wordSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "wordSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nwordSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl wordSem_fix_clock_IMP <> `T` then
+  cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('flatSem', 'evaluate_def'): r'''
-let fix_clock_IMP =
+let flatSem_fix_clock_IMP =
   try prove
    (`!s x s1 res. flatSem_fix_clock s x = (s1,res)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; flatSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "flatSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "flatSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nflatSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl flatSem_fix_clock_IMP <> `T` then
+  cake_term_facts := flatSem_fix_clock_IMP :: (!cake_term_facts);;
 ''',
   # imp_res_tac fix_clock_IMP
   ('bvlSem', 'evaluate_def'): r'''
-let fix_clock_IMP =
+let bvlSem_fix_clock_IMP =
   try prove
    (`!s x res s1. bvlSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; bvlSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bvlSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "bvlSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nbvlSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl bvlSem_fix_clock_IMP <> `T` then
+  cake_term_facts := bvlSem_fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('bviSem', 'evaluate_def'): r'''
-let fix_clock_IMP =
+let bviSem_fix_clock_IMP =
   try prove
    (`!s x res s1. bviSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; bviSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bviSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "bviSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nbviSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl bviSem_fix_clock_IMP <> `T` then
+  cake_term_facts := bviSem_fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('dataSem', 'evaluate_def'): r'''
-let fix_clock_IMP =
+let dataSem_fix_clock_IMP =
   try prove
    (`!s x res s1. dataSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; dataSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "dataSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "dataSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\ndataSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl dataSem_fix_clock_IMP <> `T` then
+  cake_term_facts := dataSem_fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('closSem', 'evaluate_def'): r'''
-let fix_clock_IMP =
+let closSem_fix_clock_IMP =
   try prove
    (`!s x res s1. closSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; closSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "closSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "closSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nclosSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl closSem_fix_clock_IMP <> `T` then
+  cake_term_facts := closSem_fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('stackSem', 'evaluate_def'): r'''
-let fix_clock_IMP =
+let stackSem_fix_clock_IMP =
   try prove
    (`!s x res s1. stackSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; stackSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "stackSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "stackSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nstackSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl stackSem_fix_clock_IMP <> `T` then
+  cake_term_facts := stackSem_fix_clock_IMP :: (!cake_term_facts);;
 ''',
   # the fact that HOL4's Termination of term_ok_int and
   # term_ok_any uses with imp_res_tac: the two arguments that

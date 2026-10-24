@@ -16,25 +16,22 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-let evaluate_JumpList = cake_theorem "evaluate_JumpList[local]"
-  (fun () ->
-    `!n xs k.
-         k < LENGTH xs ==>
-         (evaluate ([JumpList n xs],Number (&(n + k)) :: env,s) =
-          evaluate ([EL k xs],Number (&(n + k)) :: env,s))`)
-  CHEAT_TAC;;
+(* [local] *)
+let evaluate_JumpList = prove
+ (`!n xs k.
+       k < LENGTH xs ==>
+       (evaluate ([JumpList n xs],Number (&(n + k)) :: env,s) =
+        evaluate ([EL k xs],Number (&(n + k)) :: env,s))`,
+  CHEAT_TAC);;
 
-let evaluate_Jump = cake_theorem "evaluate_Jump"
-  (fun () ->
-    `(evaluate ([x],env,s) = (Rval [Number (&n)],t)) /\
-      n < LENGTH xs ==>
-      (evaluate ([bvl_jump_Jump x xs],env,s) =
-       evaluate ([EL n xs],Number (&n) :: env,t))`)
-  CHEAT_TAC;;
+let evaluate_Jump = prove
+ (`(evaluate ([x],env,s) = (Rval [Number (&n)],t)) /\
+    n < LENGTH xs ==>
+    (evaluate ([bvl_jump_Jump x xs],env,s) =
+     evaluate ([EL n xs],Number (&n) :: env,t))`,
+  CHEAT_TAC);;
 
-let bvl_get_code_labels_JumpList =
-  cake_theorem "bvl_get_code_labels_JumpList"
-  (fun () ->
-    `!n xs. bvlProps_get_code_labels (JumpList n xs) = BIGUNION
-  (set_of_list (MAP bvlProps_get_code_labels xs))`)
-  CHEAT_TAC;;
+let bvl_get_code_labels_JumpList = prove
+ (`!n xs. bvlProps_get_code_labels (JumpList n xs) = BIGUNION
+  (set_of_list (MAP bvlProps_get_code_labels xs))`,
+  CHEAT_TAC);;

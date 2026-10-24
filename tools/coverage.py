@@ -15,7 +15,9 @@ KINDS = ('Datatype', 'Definition', 'Inductive', 'CoInductive')
 
 # phase two: the theorems of a CakeML source are in the port as
 # well, with CHEAT_TAC where HOL4 has its proof.  A theorem is in
-# when the port states it (cake_theorem with its name).
+# when the port binds it (let <the name of the source> = prove),
+# or binds it under the name of its theory and says the name of
+# the source in the comment over it.
 THMKINDS = ('Theorem', 'Triviality', 'ThmValue')
 
 
@@ -29,6 +31,20 @@ def names_of(b, p):
   if b.kind == 'Type':
     return [(b.name, True)] if b.name else []
   return [(nm, False) for nm in dbmod.definition_names(b.body)]
+
+
+def bound(text, thy, name):
+  """does the port bind a theorem of this name?  The binding is
+     the name of the source, or that name with the theory in front
+     of it where another file of the port has the name already
+     (tools/port.py's bindname)"""
+  for nm in (portmod.ocaml_name(name),
+             portmod.ocaml_name(thy + '_' + name)):
+    if re.search(r'^let %s = prove$' % re.escape(nm), text, re.M) or \
+       re.search(r'^let %s = [A-Za-z_]' % re.escape(nm), text, re.M) or \
+       re.search(r'^let %s =$' % re.escape(nm), text, re.M):
+      return True
+  return False
 
 
 def pointed(flat, name):
@@ -74,8 +90,9 @@ def main():
       elif b.kind in THMKINDS:
         if not p.wanted(b): continue
         twant += 1
-        if b.name and re.search(r'cake_(?:theorem|alias)\s*"%s[]["]'
-                                % re.escape(b.name), text):
+        if b.name and (
+            bound(text, thy, b.name) or
+            re.search(r'\(\* %s[][\s*]' % re.escape(b.name), raw)):
           thave += 1
         else:
           tmissing.append('%s %s' % (b.kind, b.name or '(a value)'))
@@ -88,8 +105,8 @@ def main():
         if p.kind == 'lib': continue
         for nm, _, _ in hol4.ml_theorems(b.text or ''):
           twant += 1
-          if re.search(r'cake_(?:theorem|alias)\s*"%s[]["]'
-                       % re.escape(nm), text):
+          if (bound(text, thy, nm) or
+              re.search(r'\(\* %s[][\s*]' % re.escape(nm), raw)):
             thave += 1
           else:
             tmissing.append('ML %s' % nm)

@@ -15,36 +15,34 @@ needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "semantics/evaluate.ml";;
 
-let evaluate_Seq_Skip = cake_theorem "evaluate_Seq_Skip[local]"
-  (fun () ->
-    `!c s. evaluate ((Seq c Skip:dataLang_prog),s) = evaluate (c,s)`)
-  CHEAT_TAC;;
+(* [local] *)
+let evaluate_Seq_Skip = prove
+ (`!c s. evaluate ((Seq c Skip:dataLang_prog),s) = evaluate (c,s)`,
+  CHEAT_TAC);;
 
-let evaluate_pSeq = cake_theorem "evaluate_pSeq[local]"
-  (fun () ->
-    `evaluate (pSeq c1 c2,s) = evaluate (Seq c1 c2,s)`)
-  CHEAT_TAC;;
+(* [local] *)
+let evaluate_pSeq = prove
+ (`evaluate (pSeq c1 c2,s) = evaluate (Seq c1 c2,s)`,
+  CHEAT_TAC);;
 
 (* The Seq-with-Skip continuation is the identity on a result pair: the
    inner lambda from unfolding `evaluate (Seq _ Skip)` collapses. *)
-let lam_skip_id = cake_theorem "lam_skip_id[local]"
-  (fun () ->
-    `(\(res,s1). if res = NONE then evaluate (Skip,s1) else (res,s1))
-  x = x`)
-  CHEAT_TAC;;
+(* [local] *)
+let lam_skip_id = prove
+ (`(\(res,s1). if res = NONE then evaluate (Skip,s1) else (res,s1)) x
+  = x`,
+  CHEAT_TAC);;
 
-let evaluate_simp = cake_theorem "evaluate_simp[local]"
-  (fun () ->
-    `!c1 s c2. evaluate (simp c1 c2,s) = evaluate (Seq c1 c2,s)`)
-  CHEAT_TAC;;
+(* [local] *)
+let evaluate_simp = prove
+ (`!c1 s c2. evaluate (simp c1 c2,s) = evaluate (Seq c1 c2,s)`,
+  CHEAT_TAC);;
 
-let simp_correct = cake_theorem "simp_correct"
-  (fun () ->
-    `!c s. evaluate (simp c Skip,s) = evaluate (c,s)`)
-  CHEAT_TAC;;
+let simp_correct = prove
+ (`!c s. evaluate (simp c Skip,s) = evaluate (c,s)`,
+  CHEAT_TAC);;
 
-let get_code_labels_simp = cake_theorem "get_code_labels_simp"
-  (fun () ->
-    `!x y. dataProps_get_code_labels (simp x y) SUBSET
-  dataProps_get_code_labels x UNION dataProps_get_code_labels y`)
-  CHEAT_TAC;;
+let get_code_labels_simp = prove
+ (`!x y. dataProps_get_code_labels (simp x y) SUBSET
+  dataProps_get_code_labels x UNION dataProps_get_code_labels y`,
+  CHEAT_TAC);;

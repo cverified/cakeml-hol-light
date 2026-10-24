@@ -20,7 +20,7 @@ needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-let parse_def = cake_define
+let semantics_parse_def = cake_define
   `semantics_parse toks =
      (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt =
        grammar_NT ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
@@ -85,7 +85,7 @@ let semantics_prog_def = cake_define_list
 let semantics_INDUCT,semantics_RECURSION = define_datatype
   "semantics = CannotParse | IllTyped | Execute (behaviour->bool)";;
 
-let semantics_def = cake_define
+let semantics_semantics_def = cake_define
   `semantics_semantics state prelude input =
      (match semantics_parse (lexer_fun input) with NONE ->
        CannotParse | SOME prog ->

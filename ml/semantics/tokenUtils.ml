@@ -81,11 +81,11 @@ let destLongidT_def = cake_define
           tokens_LongidT str s -> SOME (str,s)
         | _22 -> NONE`;;
 
-let destLongidT_EQ_SOME = cake_theorem "destLongidT_EQ_SOME[simp]"
-  (fun () ->
-    `destLongidT t = SOME strs <=> (?str s. t = tokens_LongidT str s
-  /\ strs = (str,s))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let destLongidT_EQ_SOME = prove
+ (`destLongidT t = SOME strs <=> (?str s. t = tokens_LongidT str s /\
+  strs = (str,s))`,
+  CHEAT_TAC);;
 
 let destTyvarPT_def = cake_define
   `destTyvarPT x1 =
@@ -99,7 +99,7 @@ let destLf_def = cake_define
           Lf (x,_25) -> SOME x
         | _26 -> NONE`;;
 
-let destTOK_def = cake_define
+let tokenUtils_destTOK_def = cake_define
   `tokenUtils_destTOK x1 =
         match x1 with
           grammar_TOK t -> SOME t
@@ -112,10 +112,10 @@ let destAlphaT_def = cake_define
           tokens_AlphaT s -> SOME s
         | _28 -> NONE`;;
 
-let destAlphaT_EQ_SOME = cake_theorem "destAlphaT_EQ_SOME[simp]"
-  (fun () ->
-    `destAlphaT t = SOME s <=> t = tokens_AlphaT s`)
-  CHEAT_TAC;;
+(* [simp] *)
+let destAlphaT_EQ_SOME = prove
+ (`destAlphaT t = SOME s <=> t = tokens_AlphaT s`,
+  CHEAT_TAC);;
 
 let destSymbolT_def = cake_define
   `destSymbolT x1 =
@@ -123,10 +123,10 @@ let destSymbolT_def = cake_define
           tokens_SymbolT s -> SOME s
         | _29 -> NONE`;;
 
-let destSymbolT_EQ_SOME = cake_theorem "destSymbolT_EQ_SOME[simp]"
-  (fun () ->
-    `destSymbolT t = SOME s <=> t = tokens_SymbolT s`)
-  CHEAT_TAC;;
+(* [simp] *)
+let destSymbolT_EQ_SOME = prove
+ (`destSymbolT t = SOME s <=> t = tokens_SymbolT s`,
+  CHEAT_TAC);;
 
 let destIntT_def = cake_define
   `destIntT x1 =

@@ -235,12 +235,11 @@ let pad_code_def = cake_define_list
    `pad_code nop (Section n xs :: ys) =
       Section n (pad_section nop xs []) :: pad_code nop ys`];;
 
-let pad_code_MAP = cake_theorem "pad_code_MAP"
-  (fun () ->
-    `pad_code nop =
-      MAP (\x. Section (Section_num x) (pad_section nop
-        (Section_lines x) []))`)
-  CHEAT_TAC;;
+let pad_code_MAP = prove
+ (`pad_code nop =
+    MAP (\x. Section (Section_num x) (pad_section nop
+      (Section_lines x) []))`,
+  CHEAT_TAC);;
 
 let sec_length_def = cake_define_list
   [`sec_length [] k = k`;
@@ -349,11 +348,10 @@ let prog_to_bytes_def = cake_define_list_cheat CHEAT_TAC
 
 (* HOL4 lab_to_targetScript.sml:339: ML code, not ported *)
 
-let prog_to_bytes_MAP = cake_theorem "prog_to_bytes_MAP"
-  (fun () ->
-    `!ls. prog_to_bytes ls = FLAT
-            (MAP (FLAT o MAP line_bytes o Section_lines) ls)`)
-  CHEAT_TAC;;
+let prog_to_bytes_MAP = prove
+ (`!ls. prog_to_bytes ls = FLAT
+          (MAP (FLAT o MAP line_bytes o Section_lines) ls)`,
+  CHEAT_TAC);;
 
 (* compile labels *)
 let shmem_info_num_FIELDS = define_record "shmem_info_num"
@@ -466,7 +464,7 @@ let compile_lab_def = cake_define
 
 (* compile labLang *)
 
-let compile_def = cake_define
+let lab_to_target_compile_def = cake_define
   `lab_to_target_compile asm_conf c sec_list = compile_lab asm_conf c
   (filter_skip sec_list)`;;
 hol4_overload "compile" "lab_to_target_compile";;

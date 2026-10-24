@@ -26,7 +26,7 @@ needs "semantics/semanticPrimitives.ml";;
    correctness of interpreter
  * ------------------------------------------------------------------------- *)
 
-let state_rel_def = cake_define
+let clos_interpProof_state_rel_def = cake_define
   `clos_interpProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
@@ -64,22 +64,21 @@ let state_rel_1_def = cake_define
      t = pure_co (insert_interp ## I) o
        closSem_state_compile_oracle s`;;
 
-let LIST_REL_eq' = cake_theorem "LIST_REL_eq'[local]"
-  (fun () ->
-    `!xs ys. LIST_REL (\v1 v2. v1 = v2) = (\xs ys. xs = ys)`)
-  CHEAT_TAC;;
+(* [local] *)
+let LIST_REL_eq' = prove
+ (`!xs ys. LIST_REL (\v1 v2. v1 = v2) = (\xs ys. xs = ys)`,
+  CHEAT_TAC);;
 
-let OPTREL_eq' = cake_theorem "OPTREL_eq'[local]"
-  (fun () ->
-    `(OPTREL (\v1 v2. v1 = v2)) = (\x y. x = y)`)
-  CHEAT_TAC;;
+(* [local] *)
+let OPTREL_eq' = prove
+ (`(OPTREL (\v1 v2. v1 = v2)) = (\x y. x = y)`,
+  CHEAT_TAC);;
 
-let do_app_oHD_globals = cake_theorem "do_app_oHD_globals"
-  (fun () ->
-    `do_app p vs s1 = Rval (v,s2) ==>
-     oHD (closSem_state_globals s1) = SOME (SOME x) ==>
-     oHD (closSem_state_globals s2) = SOME (SOME x)`)
-  CHEAT_TAC;;
+let do_app_oHD_globals = prove
+ (`do_app p vs s1 = Rval (v,s2) ==>
+   oHD (closSem_state_globals s1) = SOME (SOME x) ==>
+   oHD (closSem_state_globals s2) = SOME (SOME x)`,
+  CHEAT_TAC);;
 
 let interp_assum_def = cake_define
   `interp_assum (:'c) (:'ffi) c <=>
@@ -102,68 +101,61 @@ let interp_assum_def = cake_define
            closSem_state_clock t1)) t1) =
          (res,t2) /\ clos_interpProof_state_rel s2 t2))`;;
 
-let interp_assum_leq = cake_theorem "interp_assum_leq"
-  (fun () ->
-    `interp_assum (:'c) (:'ffi) c /\ d <= c ==> interp_assum (:'c)
-  (:'ffi) d`)
-  CHEAT_TAC;;
+let interp_assum_leq = prove
+ (`interp_assum (:'c) (:'ffi) c /\ d <= c ==> interp_assum (:'c)
+  (:'ffi) d`,
+  CHEAT_TAC);;
 
-let evaluate_Constant = cake_theorem "evaluate_Constant[simp,local]"
-  (fun () ->
-    `closSem_evaluate ([(closLang_Op t (closLang_BlockOp
+(* [simp,local] *)
+let evaluate_Constant = prove
+ (`closSem_evaluate ([(closLang_Op t (closLang_BlockOp
   (closLang_Constant c)) []:closLang_exp)],env,s) = (Rval [make_const
-  c],s)`)
-  CHEAT_TAC;;
+  c],s)`,
+  CHEAT_TAC);;
 
-let evaluate_Cons_nil = cake_theorem "evaluate_Cons_nil"
-  (fun () ->
-    `closSem_evaluate ([(closLang_Op t (closLang_BlockOp
-  (closLang_Cons n)) []:closLang_exp)],env,s) = (Rval [closSem_Block n
-  []],s)`)
-  CHEAT_TAC;;
+let evaluate_Cons_nil = prove
+ (`closSem_evaluate ([(closLang_Op t (closLang_BlockOp (closLang_Cons
+  n)) []:closLang_exp)],env,s) = (Rval [closSem_Block n []],s)`,
+  CHEAT_TAC);;
 
-let evaluate_Global_0 = cake_theorem "evaluate_Global_0"
-  (fun () ->
-    `clos_interpProof_state_rel s t ==>
-     closSem_evaluate ([closLang_Op tr (closLang_GlobOp
-       (closLang_Global 0)) []],env,state_clock_fupd (K k) t) =
-       (Rval [Closure NONE [] [] 1
-         clos_interpreter],state_clock_fupd (K k) t)`)
-  CHEAT_TAC;;
+let evaluate_Global_0 = prove
+ (`clos_interpProof_state_rel s t ==>
+   closSem_evaluate ([closLang_Op tr (closLang_GlobOp
+     (closLang_Global 0)) []],env,state_clock_fupd (K k) t) =
+     (Rval [Closure NONE [] [] 1 clos_interpreter],state_clock_fupd
+       (K k) t)`,
+  CHEAT_TAC);;
 
-let v_to_list_list_to_v = cake_theorem "v_to_list_list_to_v"
-  (fun () ->
-    `!a. v_to_list (list_to_v a) = SOME a`)
-  CHEAT_TAC;;
+let v_to_list_list_to_v = prove
+ (`!a. v_to_list (list_to_v a) = SOME a`,
+  CHEAT_TAC);;
 
-let clos_interp_el_thm = cake_theorem "clos_interp_el_thm"
-  (fun () ->
-    `!n env rest cl_env.
-       n < LENGTH env /\ 1 <= closSem_state_max_app t4 ==>
-       (?c. closSem_evaluate
-             ([clos_interp_el],
-              list_to_v env :: closSem_Number (&n) ::
-              Recclosure NONE [] cl_env
-                [(1,closLang_Fn (implode "") NONE NONE 1
-                  clos_interp_el)] 0 :: rest,state_clock_fupd (K (c +
-                  state_clock t4))
-              t4) = (Rval [EL n env],t4))`)
-  CHEAT_TAC;;
+let clos_interp_el_thm = prove
+ (`!n env rest cl_env.
+     n < LENGTH env /\ 1 <= closSem_state_max_app t4 ==>
+     (?c. closSem_evaluate
+           ([clos_interp_el],
+            list_to_v env :: closSem_Number (&n) ::
+            Recclosure NONE [] cl_env
+              [(1,closLang_Fn (implode "") NONE NONE 1
+                clos_interp_el)] 0 :: rest,state_clock_fupd (K (c +
+                state_clock t4))
+            t4) = (Rval [EL n env],t4))`,
+  CHEAT_TAC);;
 
-let clos_interp_rev_thm = cake_theorem "clos_interp_rev_thm"
-  (fun () ->
-    `!a env rest cl_env.
-       1 <= closSem_state_max_app t4 ==>
-       closSem_evaluate
-         ([clos_interp_rev],
-           list_to_v env :: list_to_v a ::
-              Recclosure NONE [] cl_env
-                [(1,closLang_Fn (implode "") NONE NONE 1
-                  clos_interp_rev)] 0 :: rest,state_clock_fupd (K (2 *
-                  LENGTH a + state_clock t4))
-              t4) =
-        (Rval [list_to_v (REVERSE a ++ env)],t4)`)
-  CHEAT_TAC;;
+let clos_interp_rev_thm = prove
+ (`!a env rest cl_env.
+     1 <= closSem_state_max_app t4 ==>
+     closSem_evaluate
+       ([clos_interp_rev],
+         list_to_v env :: list_to_v a ::
+            Recclosure NONE [] cl_env
+              [(1,closLang_Fn (implode "") NONE NONE 1
+                clos_interp_rev)] 0 :: rest,state_clock_fupd (K (2 *
+                LENGTH a + state_clock t4))
+            t4) =
+      (Rval [list_to_v (REVERSE a ++ env)],t4)`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_interpProofScript.sml:171-172: the ML values that the
    definitions below antiquote *)
@@ -177,161 +169,148 @@ let clos_interp_rev_thm = cake_theorem "clos_interp_rev_thm"
 
 (* HOL4 clos_interpProofScript.sml:187-190: a proof *)
 
-let evaluate_SING_intro = cake_theorem "evaluate_SING_intro[local]"
-  (fun () ->
-    `x = (Rval [v],s) /\ vs = [v] ==> x = (Rval vs,s)`)
-  CHEAT_TAC;;
+(* [local] *)
+let evaluate_SING_intro = prove
+ (`x = (Rval [v],s) /\ vs = [v] ==> x = (Rval vs,s)`,
+  CHEAT_TAC);;
 
-let clos_interpreter_correct = cake_theorem "clos_interpreter_correct"
-  (fun () ->
-    `(!e env (s4:('c,'ffi)closSem_state) (t4:('c,'ffi)closSem_state) r
-  s5.
-        closSem_evaluate ([e],env,s4) = (r,s5) /\
-        can_interpret e /\
-        interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
-        clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
-          Rtype_error)) ==>
-        (?c t5.
-          closSem_evaluate ([clos_interpreter_body],
-                    [make_const (to_constant e); closSem_Block 0
-                      []; list_to_v env],closSem_state_clock_fupd (K (c
-                      + closSem_state_clock t4))
-                    t4) = (r,t5) /\
-          clos_interpProof_state_rel s5 t5)) /\
-     (!es env (s4:('c,'ffi)closSem_state)
-       (t4:('c,'ffi)closSem_state) r s5.
-        closSem_evaluate (es,env,s4) = (r,s5) /\
-        can_interpret_list es /\
-        interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
-        clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
-          Rtype_error)) ==>
-        (?c t5 r5.
-          closSem_evaluate ([clos_interpreter_body],
-                    [make_const (to_constant_list es);
-                      closSem_Block 1 []; list_to_v
-                      env],closSem_state_clock_fupd (K (c +
-                      closSem_state_clock t4))
-                    t4) = (r5,t5) /\
-          clos_interpProof_state_rel s5 t5 /\
-          (match r with Rval vs -> r5 = Rval [list_to_v vs] | _1
-            -> r = r5)))`)
-  CHEAT_TAC;;
+let clos_interpreter_correct = prove
+ (`(!e env (s4:('c,'ffi)closSem_state) (t4:('c,'ffi)closSem_state) r s5.
+      closSem_evaluate ([e],env,s4) = (r,s5) /\
+      can_interpret e /\
+      interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
+      clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+        Rtype_error)) ==>
+      (?c t5.
+        closSem_evaluate ([clos_interpreter_body],
+                  [make_const (to_constant e); closSem_Block 0 [];
+                    list_to_v env],closSem_state_clock_fupd (K (c +
+                    closSem_state_clock t4))
+                  t4) = (r,t5) /\
+        clos_interpProof_state_rel s5 t5)) /\
+   (!es env (s4:('c,'ffi)closSem_state) (t4:('c,'ffi)closSem_state) r
+     s5.
+      closSem_evaluate (es,env,s4) = (r,s5) /\
+      can_interpret_list es /\
+      interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
+      clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+        Rtype_error)) ==>
+      (?c t5 r5.
+        closSem_evaluate ([clos_interpreter_body],
+                  [make_const (to_constant_list es); closSem_Block 1
+                    []; list_to_v env],closSem_state_clock_fupd (K (c +
+                    closSem_state_clock t4))
+                  t4) = (r5,t5) /\
+        clos_interpProof_state_rel s5 t5 /\
+        (match r with Rval vs -> r5 = Rval [list_to_v vs] | _1 -> r
+          = r5)))`,
+  CHEAT_TAC);;
 
-let opt_interp_thm = cake_theorem "opt_interp_thm"
-  (fun () ->
-    `opt_interp e = SOME x /\
-     interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
-     closSem_evaluate ([e],[],(s4:('c,'ffi)closSem_state)) = (r,s5)
-       /\
+let opt_interp_thm = prove
+ (`opt_interp e = SOME x /\
+   interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
+   closSem_evaluate ([e],[],(s4:('c,'ffi)closSem_state)) = (r,s5) /\
+   clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+     Rtype_error)) ==>
+   (?ck t5.
+     closSem_evaluate ([x],[],state_clock_fupd (K (ck + state_clock
+       t4)) t4) = (r,t5) /\
+     clos_interpProof_state_rel s5 (t5:('c,'ffi)closSem_state))`,
+  CHEAT_TAC);;
+
+let opt_interp1_thm' = prove
+ (`!l s4 t4 s5 r.
+     interp_assum (:'c) (:'ffi) (state_clock s4) /\
+     closSem_evaluate ([l],[],s4) = (r,s5) /\
      clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
        Rtype_error)) ==>
-     (?ck t5.
-       closSem_evaluate ([x],[],state_clock_fupd (K (ck +
-         state_clock t4)) t4) = (r,t5) /\
-       clos_interpProof_state_rel s5 (t5:('c,'ffi)closSem_state))`)
-  CHEAT_TAC;;
+     (?ck (t5:('c,'ffi)closSem_state).
+       closSem_evaluate ([opt_interp1 l],[],state_clock_fupd (K
+         (state_clock t4 + ck)) t4) = (r,t5) /\
+       clos_interpProof_state_rel s5 t5)`,
+  CHEAT_TAC);;
 
-let opt_interp1_thm' = cake_theorem "opt_interp1_thm'"
-  (fun () ->
-    `!l s4 t4 s5 r.
-       interp_assum (:'c) (:'ffi) (state_clock s4) /\
-       closSem_evaluate ([l],[],s4) = (r,s5) /\
-       clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
-         Rtype_error)) ==>
-       (?ck (t5:('c,'ffi)closSem_state).
-         closSem_evaluate ([opt_interp1 l],[],state_clock_fupd (K
-           (state_clock t4 + ck)) t4) = (r,t5) /\
-         clos_interpProof_state_rel s5 t5)`)
-  CHEAT_TAC;;
+let opt_interp1_thm = prove
+ (`!l s4 t4 s5 r.
+     interp_assum (:'c) (:'ffi) (state_clock s4) /\
+     closSem_evaluate (l,[],s4) = (r,s5) /\
+     clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+       Rtype_error)) ==>
+     (?ck (t5:('c,'ffi)closSem_state).
+       closSem_evaluate (MAP opt_interp1 l,[],state_clock_fupd (K
+         (state_clock t4 + ck)) t4) = (r,t5) /\
+       clos_interpProof_state_rel s5 t5)`,
+  CHEAT_TAC);;
 
-let opt_interp1_thm = cake_theorem "opt_interp1_thm"
-  (fun () ->
-    `!l s4 t4 s5 r.
-       interp_assum (:'c) (:'ffi) (state_clock s4) /\
-       closSem_evaluate (l,[],s4) = (r,s5) /\
-       clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
-         Rtype_error)) ==>
-       (?ck (t5:('c,'ffi)closSem_state).
-         closSem_evaluate (MAP opt_interp1 l,[],state_clock_fupd (K
-           (state_clock t4 + ck)) t4) = (r,t5) /\
-         clos_interpProof_state_rel s5 t5)`)
-  CHEAT_TAC;;
+let evaluate_insert_interp1 = prove
+ (`interp_assum (:'c) (:'ffi) (state_clock s4) /\
+   closSem_evaluate ([e],[],s4) = (r,s5) /\
+     clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+     Rtype_error)) ==>
+   (?ck (t5:('c,'ffi)closSem_state).
+     closSem_evaluate ([insert_interp1 e],[],state_clock_fupd (K
+       (state_clock t4 + ck)) t4) = (r,t5) /\
+     clos_interpProof_state_rel s5 t5)`,
+  CHEAT_TAC);;
 
-let evaluate_insert_interp1 = cake_theorem "evaluate_insert_interp1"
-  (fun () ->
-    `interp_assum (:'c) (:'ffi) (state_clock s4) /\
-     closSem_evaluate ([e],[],s4) = (r,s5) /\
+let evaluate_insert_interp = prove
+ (`!exps s4 s5 r t4.
+     interp_assum (:'c) (:'ffi) (state_clock s4) /\
+     closSem_evaluate (exps,[],s4) = (r,s5) /\
        clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
        Rtype_error)) ==>
      (?ck (t5:('c,'ffi)closSem_state).
-       closSem_evaluate ([insert_interp1 e],[],state_clock_fupd (K
+       closSem_evaluate (insert_interp exps,[],state_clock_fupd (K
          (state_clock t4 + ck)) t4) = (r,t5) /\
-       clos_interpProof_state_rel s5 t5)`)
-  CHEAT_TAC;;
+       clos_interpProof_state_rel s5 t5)`,
+  CHEAT_TAC);;
 
-let evaluate_insert_interp = cake_theorem "evaluate_insert_interp"
-  (fun () ->
-    `!exps s4 s5 r t4.
-       interp_assum (:'c) (:'ffi) (state_clock s4) /\
-       closSem_evaluate (exps,[],s4) = (r,s5) /\
-         clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
-         Rtype_error)) ==>
-       (?ck (t5:('c,'ffi)closSem_state).
-         closSem_evaluate (insert_interp exps,[],state_clock_fupd
-           (K (state_clock t4 + ck)) t4) = (r,t5) /\
-         clos_interpProof_state_rel s5 t5)`)
-  CHEAT_TAC;;
+(* [local] *)
+let state_rel_refs_clocks_eqs = prove
+ (`clos_interpProof_state_rel s1 s2 ==> state_refs s1 = state_refs s2
+  /\ state_clock s1 = state_clock s2`,
+  CHEAT_TAC);;
 
-let state_rel_refs_clocks_eqs =
-  cake_theorem "state_rel_refs_clocks_eqs[local]"
-  (fun () ->
-    `clos_interpProof_state_rel s1 s2 ==> state_refs s1 = state_refs
-  s2 /\ state_clock s1 = state_clock s2`)
-  CHEAT_TAC;;
+(* state_rel_update_thunk[local] *)
+let clos_interpProof_state_rel_update_thunk = prove
+ (`clos_interpProof_state_rel s1 s2 ==>
+     update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = SOME
+       refs1 ==>
+       (?refs2. update_thunk [closSem_RefPtr v ptr] (state_refs s2)
+         vs = SOME refs2 /\
+               clos_interpProof_state_rel (state_refs_fupd (K
+                 refs1) s1) (state_refs_fupd (K refs2) s2))`,
+  CHEAT_TAC);;
 
-let clos_interpProof_state_rel_update_thunk =
-  cake_theorem "state_rel_update_thunk[local]"
-  (fun () ->
-    `clos_interpProof_state_rel s1 s2 ==>
-       update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs =
-         SOME refs1 ==>
-         (?refs2. update_thunk [closSem_RefPtr v ptr] (state_refs
-           s2) vs = SOME refs2 /\
-                 clos_interpProof_state_rel (state_refs_fupd (K
-                   refs1) s1) (state_refs_fupd (K refs2) s2))`)
-  CHEAT_TAC;;
+let evaluate_interp_lemma = prove
+ (`(!xs (s1:('c,'ffi)closSem_state) env t1 res s2.
+      (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr
+        (Rabort Rtype_error)) ==>
+      clos_interpProof_state_rel s1 t1 ==>
+      (?ck t2.
+        (closSem_evaluate (xs,env,(state_clock_fupd (K (state_clock
+          t1 + ck)) t1)) = (res,t2)) /\
+        clos_interpProof_state_rel s2 t2)) /\
+   (!args (s1:('c,'ffi)closSem_state) loc f t1 res s2.
+      evaluate_app loc f args s1 = (res,s2) /\ ~(res = Rerr (Rabort
+        Rtype_error)) ==>
+      clos_interpProof_state_rel s1 t1 ==>
+      (?ck t2.
+        (evaluate_app loc f args (state_clock_fupd (K (state_clock t1
+          + ck)) t1) = (res,t2)) /\
+        clos_interpProof_state_rel s2 t2))`,
+  CHEAT_TAC);;
 
-let evaluate_interp_lemma = cake_theorem "evaluate_interp_lemma"
-  (fun () ->
-    `(!xs (s1:('c,'ffi)closSem_state) env t1 res s2.
-        (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr
-          (Rabort Rtype_error)) ==>
-        clos_interpProof_state_rel s1 t1 ==>
-        (?ck t2.
-          (closSem_evaluate (xs,env,(state_clock_fupd (K
-            (state_clock t1 + ck)) t1)) = (res,t2)) /\
-          clos_interpProof_state_rel s2 t2)) /\
-     (!args (s1:('c,'ffi)closSem_state) loc f t1 res s2.
-        evaluate_app loc f args s1 = (res,s2) /\ ~(res = Rerr
-          (Rabort Rtype_error)) ==>
-        clos_interpProof_state_rel s1 t1 ==>
-        (?ck t2.
-          (evaluate_app loc f args (state_clock_fupd (K
-            (state_clock t1 + ck)) t1) = (res,t2)) /\
-          clos_interpProof_state_rel s2 t2))`)
-  CHEAT_TAC;;
-
-let evaluate_interp_thm = cake_theorem "evaluate_interp_thm"
-  (fun () ->
-    `!xs env (s1:('c,'ffi)closSem_state) t1 res s2.
-       closSem_evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr
-         (Rabort Rtype_error)) /\
-       clos_interpProof_state_rel s1 t1 ==>
-       (?ck t2.
-          closSem_evaluate (xs,env,(state_clock_fupd (K
-            (state_clock t1 + ck)) t1)) = (res,t2) /\
-          clos_interpProof_state_rel s2 t2)`)
-  CHEAT_TAC;;
+let evaluate_interp_thm = prove
+ (`!xs env (s1:('c,'ffi)closSem_state) t1 res s2.
+     closSem_evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+       Rtype_error)) /\
+     clos_interpProof_state_rel s1 t1 ==>
+     (?ck t2.
+        closSem_evaluate (xs,env,(state_clock_fupd (K (state_clock t1
+          + ck)) t1)) = (res,t2) /\
+        clos_interpProof_state_rel s2 t2)`,
+  CHEAT_TAC);;
 
 (* ------------------------------------------------------------------------- *
    not has_install ignores compiler oracle
@@ -384,121 +363,108 @@ let state_rel'_def = cake_define
      t = pure_co (insert_interp ## I) o
        closSem_state_compile_oracle s`;;
 
-let lookup_vars_ok = cake_theorem "lookup_vars_ok"
-  (fun () ->
-    `!vs env env'. lookup_vars vs env = SOME env' /\ EVERY v_ok env
-  ==> EVERY v_ok env'`)
-  CHEAT_TAC;;
+let lookup_vars_ok = prove
+ (`!vs env env'. lookup_vars vs env = SOME env' /\ EVERY v_ok env ==>
+  EVERY v_ok env'`,
+  CHEAT_TAC);;
 
-let state_rel'_clock = cake_theorem "state_rel'_clock[local]"
-  (fun () ->
-    `state_rel' s t ==> state_clock t = state_clock s`)
-  CHEAT_TAC;;
+(* [local] *)
+let state_rel'_clock = prove
+ (`state_rel' s t ==> state_clock t = state_clock s`,
+  CHEAT_TAC);;
 
-let state_rel'_refs = cake_theorem "state_rel'_refs[local]"
-  (fun () ->
-    `state_rel' s t ==> state_refs t = state_refs s`)
-  CHEAT_TAC;;
+(* [local] *)
+let state_rel'_refs = prove
+ (`state_rel' s t ==> state_refs t = state_refs s`,
+  CHEAT_TAC);;
 
-let state_rel'_dec_clock = cake_theorem "state_rel'_dec_clock[local]"
-  (fun () ->
-    `state_rel' s t ==> state_rel' (closSem_dec_clock 1 s)
-  (closSem_dec_clock 1 t)`)
-  CHEAT_TAC;;
+(* [local] *)
+let state_rel'_dec_clock = prove
+ (`state_rel' s t ==> state_rel' (closSem_dec_clock 1 s)
+  (closSem_dec_clock 1 t)`,
+  CHEAT_TAC);;
 
-let has_install_list_eq = cake_theorem "has_install_list_eq[local]"
-  (fun () ->
-    `!xs. has_install_list xs <=> EXISTS has_install xs`)
-  CHEAT_TAC;;
+(* [local] *)
+let has_install_list_eq = prove
+ (`!xs. has_install_list xs <=> EXISTS has_install xs`,
+  CHEAT_TAC);;
 
-let evaluate_change_oracle = cake_theorem "evaluate_change_oracle"
-  (fun () ->
-    `(!tmp xs env (s1:('c,'ffi)closSem_state) t1 res s2 n.
-       tmp = (xs,env,s1) /\
-       (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr
-         (Rabort Rtype_error)) ==>
-       state_rel' s1 t1 /\ ~(has_install_list xs) /\ EVERY v_ok env
-         ==>
+let evaluate_change_oracle = prove
+ (`(!tmp xs env (s1:('c,'ffi)closSem_state) t1 res s2 n.
+     tmp = (xs,env,s1) /\
+     (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr
+       (Rabort Rtype_error)) ==>
+     state_rel' s1 t1 /\ ~(has_install_list xs) /\ EVERY v_ok env ==>
+     (?t2.
+        (closSem_evaluate (xs,env,t1) = (res,t2)) /\
+        state_rel' s2 t2 /\ res_ok res)) /\
+   (!loc f args (s:('c,'ffi)closSem_state) res s2 t1.
+       evaluate_app loc f args s = (res,s2) /\ ~(res = Rerr (Rabort
+         Rtype_error)) ==>
+       state_rel' s t1 /\ EVERY v_ok args /\ v_ok f ==>
        (?t2.
-          (closSem_evaluate (xs,env,t1) = (res,t2)) /\
-          state_rel' s2 t2 /\ res_ok res)) /\
-     (!loc f args (s:('c,'ffi)closSem_state) res s2 t1.
-         evaluate_app loc f args s = (res,s2) /\ ~(res = Rerr
-           (Rabort Rtype_error)) ==>
-         state_rel' s t1 /\ EVERY v_ok args /\ v_ok f ==>
-         (?t2.
-            (evaluate_app loc f args t1 = (res,t2)) /\
-            state_rel' s2 t2 /\ res_ok res))`)
-  CHEAT_TAC;;
+          (evaluate_app loc f args t1 = (res,t2)) /\
+          state_rel' s2 t2 /\ res_ok res))`,
+  CHEAT_TAC);;
 
 (* ------------------------------------------------------------------------- *
    preservation of observable semantics
  * ------------------------------------------------------------------------- *)
 
-let init_globals = cake_theorem "init_globals[local]"
-  (fun () ->
-    `closSem_state_globals
-       (closSem_initial_state ffi max_app f co cc ck) = []`)
-  CHEAT_TAC;;
+(* [local] *)
+let init_globals = prove
+ (`closSem_state_globals
+     (closSem_initial_state ffi max_app f co cc ck) = []`,
+  CHEAT_TAC);;
 
-let semantics_attach_interpreter =
-  cake_theorem "semantics_attach_interpreter"
-  (fun () ->
-    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-          co (pure_cc (insert_interp ## I) cc) (attach_interpreter
-            xs) = ffi_Fail) ==>
-        (!n. SND (SND (co n)) = []) /\ 0 < max_app ==>
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-          (pure_co (insert_interp ## I) o co) cc
-            (attach_interpreter xs) =
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-          co (pure_cc (insert_interp ## I) cc)
-            (attach_interpreter xs)`)
-  CHEAT_TAC;;
+let semantics_attach_interpreter = prove
+ (`~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+        co (pure_cc (insert_interp ## I) cc) (attach_interpreter xs)
+          = ffi_Fail) ==>
+      (!n. SND (SND (co n)) = []) /\ 0 < max_app ==>
+      closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+        (pure_co (insert_interp ## I) o co) cc (attach_interpreter
+          xs) =
+      closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+        co (pure_cc (insert_interp ## I) cc) (attach_interpreter
+          xs)`,
+  CHEAT_TAC);;
 
 (* ------------------------------------------------------------------------- *
    syntactic lemmas
  * ------------------------------------------------------------------------- *)
 
-let opt_interp_lemma = cake_theorem "opt_interp_lemma[local]"
-  (fun () ->
-    `opt_interp x = SOME x' ==>
-     closProps_set_globals x' = EMPTY_BAG /\
-     closProps_set_globals x = EMPTY_BAG /\
-     (1 <= max_app ==> ~(contains_App_SOME max_app [x'])) /\
-     every_Fn_vs_NONE [x'] /\
-     no_mti x' /\
-     closProps_esgc_free x /\
-     closProps_esgc_free x'`)
-  CHEAT_TAC;;
+(* [local] *)
+let opt_interp_lemma = prove
+ (`opt_interp x = SOME x' ==>
+   closProps_set_globals x' = EMPTY_BAG /\
+   closProps_set_globals x = EMPTY_BAG /\
+   (1 <= max_app ==> ~(contains_App_SOME max_app [x'])) /\
+   every_Fn_vs_NONE [x'] /\
+   no_mti x' /\
+   closProps_esgc_free x /\
+   closProps_esgc_free x'`,
+  CHEAT_TAC);;
 
-let elist_globals_insert_interp =
-  cake_theorem "elist_globals_insert_interp"
-  (fun () ->
-    `closProps_elist_globals (insert_interp xs) =
-     closProps_elist_globals xs`)
-  CHEAT_TAC;;
+let elist_globals_insert_interp = prove
+ (`closProps_elist_globals (insert_interp xs) =
+   closProps_elist_globals xs`,
+  CHEAT_TAC);;
 
-let contains_App_SOME_insert_interp =
-  cake_theorem "contains_App_SOME_insert_interp"
-  (fun () ->
-    `~(contains_App_SOME max_app xs) /\ 1 <= max_app ==>
-     ~(contains_App_SOME max_app (insert_interp xs))`)
-  CHEAT_TAC;;
+let contains_App_SOME_insert_interp = prove
+ (`~(contains_App_SOME max_app xs) /\ 1 <= max_app ==>
+   ~(contains_App_SOME max_app (insert_interp xs))`,
+  CHEAT_TAC);;
 
-let every_Fn_vs_NONE_insert_interp =
-  cake_theorem "every_Fn_vs_NONE_insert_interp"
-  (fun () ->
-    `every_Fn_vs_NONE xs ==> every_Fn_vs_NONE (insert_interp xs)`)
-  CHEAT_TAC;;
+let every_Fn_vs_NONE_insert_interp = prove
+ (`every_Fn_vs_NONE xs ==> every_Fn_vs_NONE (insert_interp xs)`,
+  CHEAT_TAC);;
 
-let insert_interp_no_mti = cake_theorem "insert_interp_no_mti"
-  (fun () ->
-    `MEM e (insert_interp xs) ==> EVERY no_mti xs ==> no_mti e`)
-  CHEAT_TAC;;
+let insert_interp_no_mti = prove
+ (`MEM e (insert_interp xs) ==> EVERY no_mti xs ==> no_mti e`,
+  CHEAT_TAC);;
 
-let insert_interp_esgc_free = cake_theorem "insert_interp_esgc_free"
-  (fun () ->
-    `EVERY closProps_esgc_free (insert_interp xs) = EVERY
-  closProps_esgc_free xs`)
-  CHEAT_TAC;;
+let insert_interp_esgc_free = prove
+ (`EVERY closProps_esgc_free (insert_interp xs) = EVERY
+  closProps_esgc_free xs`,
+  CHEAT_TAC);;

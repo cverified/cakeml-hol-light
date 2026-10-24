@@ -24,14 +24,12 @@ needs "semantics/typeSystem.ml";;
 (* HOL4 primSemEnvScript.sml:12-13: a theorem that HOL4 states as the
    value of an ML expression: prim_sem_env_eq *)
 
-let prim_type_sound_invariants =
-  cake_theorem "prim_type_sound_invariants"
-  (fun () ->
-    `!type_ids sem_st prim_env.
-       (sem_st,prim_env) = THE (prim_sem_env ffi) /\
-       DISJOINT type_ids {Tlist_num,Tbool_num,Texn_num} ==>
-       (?ctMap.
-         type_sound_invariant sem_st prim_env ctMap FEMPTY type_ids
-           prim_tenv /\
-         FRANGE ((SND o SND) o_f ctMap) SUBSET prim_type_ids)`)
-  CHEAT_TAC;;
+let prim_type_sound_invariants = prove
+ (`!type_ids sem_st prim_env.
+     (sem_st,prim_env) = THE (prim_sem_env ffi) /\
+     DISJOINT type_ids {Tlist_num,Tbool_num,Texn_num} ==>
+     (?ctMap.
+       type_sound_invariant sem_st prim_env ctMap FEMPTY type_ids
+         prim_tenv /\
+       FRANGE ((SND o SND) o_f ctMap) SUBSET prim_type_ids)`,
+  CHEAT_TAC);;

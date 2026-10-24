@@ -2,7 +2,7 @@
 (*  balanced_map: ported from HOL4's
     examples/data-structures/balanced_bst/balanced_mapScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 6 files of the port.  *)
+    that CakeML needs.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/comparison.ml";;
@@ -24,7 +24,7 @@ let ratio_def = cake_define
 let delta_def = cake_define
   `delta = (3:num)`;;
 
-let size_def = cake_define_list
+let balanced_map_size_def = cake_define_list
   [`balanced_map_size Tip = 0`;
    `balanced_map_size (Bin s k v l r) = s`];;
 hol4_overload "size" "balanced_map_size";;
@@ -33,7 +33,7 @@ let bin_def = cake_define
   `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
   k x l r`;;
 
-let lookup_def = cake_define_list
+let balanced_map_lookup_def = cake_define_list
   [`balanced_map_lookup cmp k Tip = NONE`;
    `balanced_map_lookup cmp k (Bin s k' v l r) =
       (match cmp k k' with LESS -> balanced_map_lookup cmp k l
@@ -123,7 +123,7 @@ let balanceR_def = cake_define
        Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl
          rr))`;;
 
-let insert_def = cake_define_list
+let balanced_map_insert_def = cake_define_list
   [`balanced_map_insert cmp k v Tip = singleton k v`;
    `balanced_map_insert cmp k v (Bin s k' v' l r) =
       (match cmp k k' with LESS -> balanceL k' v'
@@ -181,7 +181,7 @@ let glue_def = cake_define
        let ((km,m),r') = deleteFindMin r in
          balanceL km m l r')`;;
 
-let delete_def = cake_define_list
+let balanced_map_delete_def = cake_define_list
   [`balanced_map_delete cmp k Tip = Tip`;
    `balanced_map_delete cmp k (Bin s k' v l r) =
       (match cmp k k' with LESS -> balanceR k' v
@@ -266,7 +266,7 @@ let hedgeUnion_def = cake_define
                (hedgeUnion cmp (SOME kx) bhi r (trim cmp (SOME kx)
                  bhi t2))`;;
 
-let union_def = cake_define
+let balanced_map_union_def = cake_define
   `balanced_map_union cmp t1 t2 =
         match (t1,t2) with
           (Tip,t2) -> t2
@@ -292,7 +292,7 @@ let mapWithKey_def = cake_define_list
    `mapWithKey f (Bin sx kx x l r) =
          Bin sx kx (f kx x) (mapWithKey f l) (mapWithKey f r)`];;
 
-let map_def = cake_define
+let balanced_map_map_def = cake_define
   `balanced_map_map f t = mapWithKey (\k x. f x) t`;;
 hol4_overload "map" "balanced_map_map";;
 

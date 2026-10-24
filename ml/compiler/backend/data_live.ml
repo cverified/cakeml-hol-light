@@ -17,7 +17,7 @@ needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 let is_pure_def = cake_define
   `data_live_is_pure x1 =
@@ -66,39 +66,36 @@ let is_pure_def = cake_define
         | _19 -> T`;;
 hol4_overload "is_pure" "data_live_is_pure";;
 
-let is_pure_pmatch = cake_theorem "is_pure_pmatch"
-  (fun () ->
-    `!op.
-     data_live_is_pure op =
-       (match op with FFI _20 -> F | closLang_GlobOp
-         (closLang_SetGlobal _21) -> F | closLang_GlobOp
-         closLang_SetGlobalsPtr -> F | closLang_WordOp (WordOpw
-         ast_W64 _22) -> F | closLang_WordOp (WordShift ast_W64 _23
-         _24) -> F | closLang_WordOp WordFromInt -> F |
-         closLang_WordOp WordToInt -> F | closLang_WordOp
-         (WordFromWord b) -> F | closLang_WordOp (FP_uop _25) -> F |
-         closLang_WordOp (FP_bop _26) -> F | closLang_WordOp (FP_top
-         _27) -> F | closLang_BlockOp (closLang_Build _28) -> F |
-         closLang_BlockOp (closLang_Cons _29) -> F | closLang_BlockOp
-         (closLang_ConsExtend _30) -> F | closLang_BlockOp
-         (closLang_FromList _31) -> F | closLang_BlockOp ListAppend ->
-         F | closLang_BlockOp closLang_Equal -> F | closLang_MemOp
-         closLang_Ref -> F | closLang_MemOp (closLang_RefByte _32) ->
-         F | closLang_MemOp closLang_RefArray -> F | closLang_MemOp
-         closLang_Update -> F | closLang_MemOp (closLang_MutCons _33
-         _34) -> F | closLang_MemOp closLang_UpdateCons -> F |
-         closLang_MemOp closLang_FinaliseCons -> F | closLang_MemOp
-         closLang_UpdateByte -> F | closLang_MemOp
-         closLang_FromListByte -> F | closLang_MemOp
-         (closLang_CopyByte _35) -> F | closLang_MemOp
-         closLang_XorByte -> F | closLang_IntOp closLang_Add -> F |
-         closLang_IntOp closLang_Sub -> F | closLang_IntOp
-         closLang_Mult -> F | closLang_IntOp closLang_Div -> F |
-         closLang_IntOp closLang_Mod -> F | closLang_IntOp
-         closLang_Less -> F | closLang_IntOp closLang_LessEq -> F |
-         closLang_Install -> F | closLang_MemOp ConfigGC -> F |
-         ThunkOp _36 -> F | _37 -> T)`)
-  CHEAT_TAC;;
+let is_pure_pmatch = prove
+ (`!op.
+   data_live_is_pure op =
+     (match op with FFI _20 -> F | closLang_GlobOp
+       (closLang_SetGlobal _21) -> F | closLang_GlobOp
+       closLang_SetGlobalsPtr -> F | closLang_WordOp (WordOpw ast_W64
+       _22) -> F | closLang_WordOp (WordShift ast_W64 _23 _24) -> F |
+       closLang_WordOp WordFromInt -> F | closLang_WordOp WordToInt ->
+       F | closLang_WordOp (WordFromWord b) -> F | closLang_WordOp
+       (FP_uop _25) -> F | closLang_WordOp (FP_bop _26) -> F |
+       closLang_WordOp (FP_top _27) -> F | closLang_BlockOp
+       (closLang_Build _28) -> F | closLang_BlockOp (closLang_Cons
+       _29) -> F | closLang_BlockOp (closLang_ConsExtend _30) -> F |
+       closLang_BlockOp (closLang_FromList _31) -> F |
+       closLang_BlockOp ListAppend -> F | closLang_BlockOp
+       closLang_Equal -> F | closLang_MemOp closLang_Ref -> F |
+       closLang_MemOp (closLang_RefByte _32) -> F | closLang_MemOp
+       closLang_RefArray -> F | closLang_MemOp closLang_Update -> F |
+       closLang_MemOp (closLang_MutCons _33 _34) -> F | closLang_MemOp
+       closLang_UpdateCons -> F | closLang_MemOp closLang_FinaliseCons
+       -> F | closLang_MemOp closLang_UpdateByte -> F | closLang_MemOp
+       closLang_FromListByte -> F | closLang_MemOp (closLang_CopyByte
+       _35) -> F | closLang_MemOp closLang_XorByte -> F |
+       closLang_IntOp closLang_Add -> F | closLang_IntOp closLang_Sub
+       -> F | closLang_IntOp closLang_Mult -> F | closLang_IntOp
+       closLang_Div -> F | closLang_IntOp closLang_Mod -> F |
+       closLang_IntOp closLang_Less -> F | closLang_IntOp
+       closLang_LessEq -> F | closLang_Install -> F | closLang_MemOp
+       ConfigGC -> F | ThunkOp _36 -> F | _37 -> T)`,
+  CHEAT_TAC);;
 
 let compile_def = cake_define_list
   [`data_live_compile (dataLang_Skip:dataLang_prog) live =
@@ -159,4 +156,6 @@ let compile_def = cake_define_list
            (Call (SOME (ns,l1)) dest vs (SOME (v,d)),l2))`];;
 hol4_overload "compile" "data_live_compile";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

@@ -25,79 +25,75 @@ needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
-cake_hide ["assert"];;
+let _ = do_list hide_constant ["assert"];;
 
-cake_hide_consts
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
   ["return","errorMonad_return"];;
 (* HOL4 ancestors outside the port: quantHeuristics *)
 
 hol4_overload "++" "OPTION_CHOICE";;
 
 (* TODO: this is duplicated in parserProgTheory *)
-let monad_unitbind_assert = cake_theorem "monad_unitbind_assert[local]"
-  (fun () ->
-    `!b x. OPTION_IGNORE_BIND (OPTION_GUARD b) x = (if b then x else
-  NONE)`)
-  CHEAT_TAC;;
+(* [local] *)
+let monad_unitbind_assert = prove
+ (`!b x. OPTION_IGNORE_BIND (OPTION_GUARD b) x = (if b then x else
+  NONE)`,
+  CHEAT_TAC);;
 
 (* HOL4 fromSexpScript.sml:26: the overload lift, which the port
    expands *)
 
 (* TODO: move*)
 
-let OPTION_APPLY_MAP3 = cake_theorem "OPTION_APPLY_MAP3"
-  (fun () ->
-    `OPTION_APPLY (OPTION_APPLY (OPTION_MAP f x) y) z = SOME r <=>
-     (?a b c. x = SOME a /\ y = SOME b /\ z = SOME c /\ f a b c =
-       r)`)
-  CHEAT_TAC;;
+let OPTION_APPLY_MAP3 = prove
+ (`OPTION_APPLY (OPTION_APPLY (OPTION_MAP f x) y) z = SOME r <=>
+   (?a b c. x = SOME a /\ y = SOME b /\ z = SOME c /\ f a b c = r)`,
+  CHEAT_TAC);;
 
-let OPTION_APPLY_MAP4 = cake_theorem "OPTION_APPLY_MAP4"
-  (fun () ->
-    `OPTION_APPLY (OPTION_APPLY (OPTION_APPLY (OPTION_MAP f x) y) z) t =
+let OPTION_APPLY_MAP4 = prove
+ (`OPTION_APPLY (OPTION_APPLY (OPTION_APPLY (OPTION_MAP f x) y) z) t =
   SOME r <=>
-     (?a b c d. x = SOME a /\ y = SOME b /\ z = SOME c /\ t =
-       SOME d /\ f a b c d = r)`)
-  CHEAT_TAC;;
+   (?a b c d. x = SOME a /\ y = SOME b /\ z = SOME c /\ t = SOME d
+     /\ f a b c d = r)`,
+  CHEAT_TAC);;
 
-let FOLDR_SX_CONS_INJ = cake_theorem "FOLDR_SX_CONS_INJ"
-  (fun () ->
-    `!l1 l2. ITLIST SX_CONS l1 (SX_SYM "nil") = ITLIST SX_CONS l2
-  (SX_SYM "nil") <=> l1 = l2`)
-  CHEAT_TAC;;
+let FOLDR_SX_CONS_INJ = prove
+ (`!l1 l2. ITLIST SX_CONS l1 (SX_SYM "nil") = ITLIST SX_CONS l2
+  (SX_SYM "nil") <=> l1 = l2`,
+  CHEAT_TAC);;
 
-let strip_sxcons_11 = cake_theorem "strip_sxcons_11"
-  (fun () ->
-    `!s1 s2 x. strip_sxcons s1 = SOME x /\ strip_sxcons s2 = SOME x
-  ==> s1 = s2`)
-  CHEAT_TAC;;
+let strip_sxcons_11 = prove
+ (`!s1 s2 x. strip_sxcons s1 = SOME x /\ strip_sxcons s2 = SOME x ==>
+  s1 = s2`,
+  CHEAT_TAC);;
 
-let dstrip_sexp_size = cake_theorem "dstrip_sexp_size"
-  (fun () ->
-    `!s sym args. dstrip_sexp s = SOME (sym,args) ==>
-                   (!e. MEM e args ==> simpleSexp_sexp_size e <
-                     simpleSexp_sexp_size s)`)
-  CHEAT_TAC;;
+let dstrip_sexp_size = prove
+ (`!s sym args. dstrip_sexp s = SOME (sym,args) ==>
+                 (!e. MEM e args ==> simpleSexp_sexp_size e <
+                   simpleSexp_sexp_size s)`,
+  CHEAT_TAC);;
 
-let dstrip_sexp_SOME = cake_theorem "dstrip_sexp_SOME"
-  (fun () ->
-    `dstrip_sexp s = SOME x <=>
-     (?sym sa args. s =
-       SX_CONS (SX_SYM sym) sa /\
-       strip_sxcons sa = SOME args /\
-       (x = (sym,args)))`)
-  CHEAT_TAC;;
+let dstrip_sexp_SOME = prove
+ (`dstrip_sexp s = SOME x <=>
+   (?sym sa args. s =
+     SX_CONS (SX_SYM sym) sa /\
+     strip_sxcons sa = SOME args /\
+     (x = (sym,args)))`,
+  CHEAT_TAC);;
 
-let strip_sxcons_SOME_NIL = cake_theorem "strip_sxcons_SOME_NIL[simp]"
-  (fun () ->
-    `strip_sxcons s = SOME [] <=> s = (SX_SYM "nil")`)
-  CHEAT_TAC;;
+(* [simp] *)
+let strip_sxcons_SOME_NIL = prove
+ (`strip_sxcons s = SOME [] <=> s = (SX_SYM "nil")`,
+  CHEAT_TAC);;
 
-let strip_sxcons_EQ_CONS = cake_theorem "strip_sxcons_EQ_CONS[simp]"
-  (fun () ->
-    `strip_sxcons s = SOME (h :: t) <=>
-       (?s0. s = SX_CONS h s0 /\ strip_sxcons s0 = SOME t)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let strip_sxcons_EQ_CONS = prove
+ (`strip_sxcons s = SOME (h :: t) <=>
+     (?s0. s = SX_CONS h s0 /\ strip_sxcons s0 = SOME t)`,
+  CHEAT_TAC);;
 
 (* HOL4 fromSexpScript.sml:103-108: ML code, not ported *)
 
@@ -134,57 +130,52 @@ let decode_control_def = cake_define_list
              OPTION_IGNORE_BIND (OPTION_GUARD (isPrint c))
              (OPTION_MAP (CONS c) (decode_control cs)))`];;
 
-let EVERY_isPrint_encode_control =
-  cake_theorem "EVERY_isPrint_encode_control"
-  (fun () ->
-    `!ls. EVERY isPrint (encode_control ls)`)
-  CHEAT_TAC;;
+let EVERY_isPrint_encode_control = prove
+ (`!ls. EVERY isPrint (encode_control ls)`,
+  CHEAT_TAC);;
 
-let decode_encode_control = cake_theorem "decode_encode_control[simp]"
-  (fun () ->
-    `!ls. decode_control (encode_control ls) = SOME ls`)
-  CHEAT_TAC;;
+(* [simp] *)
+let decode_encode_control = prove
+ (`!ls. decode_control (encode_control ls) = SOME ls`,
+  CHEAT_TAC);;
 
-let isHexDigit_alt = cake_theorem "isHexDigit_alt[local]"
-  (fun () ->
-    `isHexDigit c <=> c IN set_of_list "0123456789abcdefABCDEF"`)
-  CHEAT_TAC;;
+(* [local] *)
+let isHexDigit_alt = prove
+ (`isHexDigit c <=> c IN set_of_list "0123456789abcdefABCDEF"`,
+  CHEAT_TAC);;
 
-let UNHEX_lt16 = cake_theorem "UNHEX_lt16[local]"
-  (fun () ->
-    `isHexDigit c ==> UNHEX c < 16`)
-  CHEAT_TAC;;
+(* [local] *)
+let UNHEX_lt16 = prove
+ (`isHexDigit c ==> UNHEX c < 16`,
+  CHEAT_TAC);;
 
-let isAlpha_isUpper_isLower = cake_theorem "isAlpha_isUpper_isLower"
-  (fun () ->
-    `isAlpha c ==> (~(isUpper c = isLower c))`)
-  CHEAT_TAC;;
+let isAlpha_isUpper_isLower = prove
+ (`isAlpha c ==> (~(isUpper c = isLower c))`,
+  CHEAT_TAC);;
 
-let isLower_isAlpha = cake_theorem "isLower_isAlpha"
-  (fun () ->
-    `isLower c ==> isAlpha c`)
-  CHEAT_TAC;;
+let isLower_isAlpha = prove
+ (`isLower c ==> isAlpha c`,
+  CHEAT_TAC);;
 
-let encode_decode_control = cake_theorem "encode_decode_control"
-  (fun () ->
-    `!ls r. decode_control ls = SOME r ==> ls = encode_control r`)
-  CHEAT_TAC;;
+let encode_decode_control = prove
+ (`!ls r. decode_control ls = SOME r ==> ls = encode_control r`,
+  CHEAT_TAC);;
 
 let SEXSTR_def = cake_define
   `SEXSTR s = SX_STR (encode_control s)`;;
 
-let SEXSTR_11 = cake_theorem "SEXSTR_11[simp]"
-  (fun () ->
-    `SEXSTR s1 = SEXSTR s2 <=> s1 = s2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let SEXSTR_11 = prove
+ (`SEXSTR s1 = SEXSTR s2 <=> s1 = s2`,
+  CHEAT_TAC);;
 
-let SEXSTR_distinct = cake_theorem "SEXSTR_distinct[simp]"
-  (fun () ->
-    `(~(SEXSTR s = SX_SYM sym)) /\
-     (~(SEXSTR s = SX_NUM num)) /\
-     (~(SEXSTR s = SX_CONS a d)) /\
-     ((SEXSTR s = SX_STR s') <=> s' = encode_control s)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let SEXSTR_distinct = prove
+ (`(~(SEXSTR s = SX_SYM sym)) /\
+   (~(SEXSTR s = SX_NUM num)) /\
+   (~(SEXSTR s = SX_CONS a d)) /\
+   ((SEXSTR s = SX_STR s') <=> s' = encode_control s)`,
+  CHEAT_TAC);;
 
 let odestSEXSTR_def = cake_define
   `odestSEXSTR x1 =
@@ -192,17 +183,15 @@ let odestSEXSTR_def = cake_define
           SX_STR s -> OPTION_MAP implode (decode_control s)
         | _3 -> NONE`;;
 
-let encode_control_remove = cake_theorem "encode_control_remove"
-  (fun () ->
-    `!s. EVERY isPrint s /\ ~((CHR 92) IN set_of_list s) ==>
-  encode_control s = s`)
-  CHEAT_TAC;;
+let encode_control_remove = prove
+ (`!s. EVERY isPrint s /\ ~((CHR 92) IN set_of_list s) ==>
+  encode_control s = s`,
+  CHEAT_TAC);;
 
-let SEXSTR_remove = cake_theorem "SEXSTR_remove"
-  (fun () ->
-    `EVERY isPrint s /\ ~((CHR 92) IN set_of_list s) ==> SEXSTR s =
-  SX_STR s`)
-  CHEAT_TAC;;
+let SEXSTR_remove = prove
+ (`EVERY isPrint s /\ ~((CHR 92) IN set_of_list s) ==> SEXSTR s =
+  SX_STR s`,
+  CHEAT_TAC);;
 
 let odestSXSTR_def = cake_define
   `odestSXSTR x1 =
@@ -222,10 +211,10 @@ let odestSXNUM_def = cake_define
           SX_NUM n -> SOME n
         | _6 -> NONE`;;
 
-let odestSXNUM_SEXSTR = cake_theorem "odestSXNUM_SEXSTR[simp]"
-  (fun () ->
-    `odestSXNUM (SEXSTR str) = NONE`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXNUM_SEXSTR = prove
+ (`odestSXNUM (SEXSTR str) = NONE`,
+  CHEAT_TAC);;
 
 let sexpopt_def = cake_define
   `sexpopt p s =
@@ -248,16 +237,15 @@ let sexplist_def = cake_define
            SOME (ph :: pt))) | SX_SYM s -> (if s = "nil" then SOME
              [] else NONE) | _7 -> NONE)`;;
 
-let sexplist_thm = cake_theorem "sexplist_thm[simp]"
-  (fun () ->
-    `sexplist p (SX_CONS h t) =
-       OPTION_BIND (p h) (\ph. OPTION_BIND (sexplist p t) (\pt.
-         SOME (ph :: pt))) /\
-     (sexplist p (SX_SYM s) = (if s = "nil" then SOME [] else
-       NONE)) /\
-     sexplist p (&n) = NONE /\
-     sexplist p (SX_STR str) = NONE`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexplist_thm = prove
+ (`sexplist p (SX_CONS h t) =
+     OPTION_BIND (p h) (\ph. OPTION_BIND (sexplist p t) (\pt. SOME
+       (ph :: pt))) /\
+   (sexplist p (SX_SYM s) = (if s = "nil" then SOME [] else NONE)) /\
+   sexplist p (&n) = NONE /\
+   sexplist p (SX_STR str) = NONE`,
+  CHEAT_TAC);;
 
 let sexppair_def = cake_define
   `sexppair p1 p2 s =
@@ -265,50 +253,46 @@ let sexppair_def = cake_define
        SX_CONS s1 s2 -> OPTION_MAP2 (,) (p1 s1) (p2 s2) | _8 ->
          NONE)`;;
 
-let sexppair_CONG = cake_theorem "sexppair_CONG[defncong]"
-  (fun () ->
-    `!s1 s2 p1 p1' p2 p2'.
-         s1 = s2 /\
-         (!s. (?s'. s2 = SX_CONS s s') ==> p1 s = p1' s) /\
-         (!s. (?s'. s2 = SX_CONS s' s) ==> p2 s = p2' s) ==>
-         sexppair p1 p2 s1 = sexppair p1' p2' s2`)
-  CHEAT_TAC;;
+(* [defncong] *)
+let sexppair_CONG = prove
+ (`!s1 s2 p1 p1' p2 p2'.
+       s1 = s2 /\
+       (!s. (?s'. s2 = SX_CONS s s') ==> p1 s = p1' s) /\
+       (!s. (?s'. s2 = SX_CONS s' s) ==> p2 s = p2' s) ==>
+       sexppair p1 p2 s1 = sexppair p1' p2' s2`,
+  CHEAT_TAC);;
 
 
-let strip_sxcons_FAIL_sexplist_FAIL =
-  cake_theorem "strip_sxcons_FAIL_sexplist_FAIL"
-  (fun () ->
-    `!s. (strip_sxcons s = NONE) ==> (sexplist p s = NONE)`)
-  CHEAT_TAC;;
+let strip_sxcons_FAIL_sexplist_FAIL = prove
+ (`!s. (strip_sxcons s = NONE) ==> (sexplist p s = NONE)`,
+  CHEAT_TAC);;
 
-let monad_bind_FAIL = cake_theorem "monad_bind_FAIL"
-  (fun () ->
-    `monad_bind m1 (\x. NONE) = NONE`)
-  CHEAT_TAC;;
+let monad_bind_FAIL = prove
+ (`monad_bind m1 (\x. NONE) = NONE`,
+  CHEAT_TAC);;
 
-let monad_unitbind_CONG = cake_theorem "monad_unitbind_CONG[defncong]"
-  (fun () ->
-    `!m11 m21 m12 m22.
-        m11 = m12 /\ (m12 = SOME one ==> m21 = m22) ==>
-        OPTION_IGNORE_BIND m11 m21 = OPTION_IGNORE_BIND m12 m22`)
-  CHEAT_TAC;;
+(* [defncong] *)
+let monad_unitbind_CONG = prove
+ (`!m11 m21 m12 m22.
+      m11 = m12 /\ (m12 = SOME one ==> m21 = m22) ==>
+      OPTION_IGNORE_BIND m11 m21 = OPTION_IGNORE_BIND m12 m22`,
+  CHEAT_TAC);;
 
-let strip_sxcons_thm = cake_theorem "strip_sxcons_thm[simp]"
-  (fun () ->
-    `strip_sxcons (SX_CONS (h) (t)) = OPTION_MAP (CONS h) (strip_sxcons
-  t) /\
-     strip_sxcons (&n) = NONE /\
-     strip_sxcons (SX_STR str) = NONE /\
-     strip_sxcons (SX_SYM s) = (if s = "nil" then SOME [] else
-       NONE)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let strip_sxcons_thm = prove
+ (`strip_sxcons (SX_CONS (h) (t)) = OPTION_MAP (CONS h) (strip_sxcons t)
+  /\
+   strip_sxcons (&n) = NONE /\
+   strip_sxcons (SX_STR str) = NONE /\
+   strip_sxcons (SX_SYM s) = (if s = "nil" then SOME [] else NONE)`,
+  CHEAT_TAC);;
 
-let sexplist_CONG = cake_theorem "sexplist_CONG[defncong]"
-  (fun () ->
-    `!s1 s2 p1 p2.
-       s1 = s2 /\ (!e. sxMEM e s2 ==> p1 e = p2 e) ==>
-       sexplist p1 s1 = sexplist p2 s2`)
-  CHEAT_TAC;;
+(* [defncong] *)
+let sexplist_CONG = prove
+ (`!s1 s2 p1 p2.
+     s1 = s2 /\ (!e. sxMEM e s2 ==> p1 e = p2 e) ==>
+     sexplist p1 s1 = sexplist p2 s2`,
+  CHEAT_TAC);;
 
 (* HOL4 fromSexpScript.sml:431: the overload guard, which the port
    expands *)
@@ -389,16 +373,14 @@ let sexptype_alt_def = cake_define_list_try_tac (fun () ->
            (match sexptype_list d with NONE -> NONE | SOME t ->
              SOME (h :: t))) | _9 -> NONE)`];;
 
-let sexptype_alt_intro = cake_theorem "sexptype_alt_intro"
-  (fun () ->
-    `(!s. sexptype s = sexptype_alt s) /\
-     (!s. sexptype_list s = sexplist sexptype s)`)
-  CHEAT_TAC;;
+let sexptype_alt_intro = prove
+ (`(!s. sexptype s = sexptype_alt s) /\
+   (!s. sexptype_list s = sexplist sexptype s)`,
+  CHEAT_TAC);;
 
-let sexptype_alt_intro1 = cake_theorem "sexptype_alt_intro1"
-  (fun () ->
-    `sexptype = sexptype_alt /\ sexplist sexptype = sexptype_list`)
-  CHEAT_TAC;;
+let sexptype_alt_intro1 = prove
+ (`sexptype = sexptype_alt /\ sexplist sexptype = sexptype_list`,
+  CHEAT_TAC);;
 
 let sexplit_def = cake_define
   `sexplit s =
@@ -508,16 +490,14 @@ let sexppat_alt_def = cake_define_list_try_tac (fun () ->
 
 (* HOL4 fromSexpScript.sml:635: ML code, not ported *)
 
-let sexppat_alt_intro = cake_theorem "sexppat_alt_intro"
-  (fun () ->
-    `(!s. sexppat s = sexppat_alt s) /\ (!s. sexppat_list s = sexplist
-  sexppat s)`)
-  CHEAT_TAC;;
+let sexppat_alt_intro = prove
+ (`(!s. sexppat s = sexppat_alt s) /\ (!s. sexppat_list s = sexplist
+  sexppat s)`,
+  CHEAT_TAC);;
 
-let sexppat_alt_intro1 = cake_theorem "sexppat_alt_intro1"
-  (fun () ->
-    `sexppat = sexppat_alt /\ sexplist sexppat = sexppat_list`)
-  CHEAT_TAC;;
+let sexppat_alt_intro1 = prove
+ (`sexppat = sexppat_alt /\ sexplist sexppat = sexppat_list`,
+  CHEAT_TAC);;
 
 let decode_thunk_mode_def = cake_define
   `decode_thunk_mode s =
@@ -528,7 +508,7 @@ let encode_thunk_mode_def = cake_define_list
   [`encode_thunk_mode Evaluated = "Evaluated"`;
    `encode_thunk_mode NotEvaluated = "NotEvaluated"`];;
 
-let decode_test_def = cake_define
+let fromSexp_decode_test_def = cake_define
   `fromSexp_decode_test x1 =
       match x1 with
         SX_SYM s ->
@@ -854,24 +834,22 @@ let sexpexp_alt_def = cake_define_list_try_tac (fun () ->
              with (SOME x,SOME y,SOME z) -> SOME (x,y,z) | _24 ->
              NONE) | _25 -> NONE) | _26 -> NONE)`];;
 
-let sexpexp_alt_intro = cake_theorem "sexpexp_alt_intro"
-  (fun () ->
-    `(!s. sexpexp s = sexpexp_alt s) /\
-     (!s. sexplist sexpexp s = sexpexp_list s) /\
-     (!s. sexplist (sexppair sexppat sexpexp) s = sexppes s) /\
-     (!s. sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR
-       sexpexp)) s = sexpfuns s) /\
-     (!s. sexppair sexppat sexpexp s = sexppatexp s) /\
-     (!s. sexppair odestSEXSTR (sexppair odestSEXSTR sexpexp) s =
-       sexpfun s)`)
-  CHEAT_TAC;;
+let sexpexp_alt_intro = prove
+ (`(!s. sexpexp s = sexpexp_alt s) /\
+   (!s. sexplist sexpexp s = sexpexp_list s) /\
+   (!s. sexplist (sexppair sexppat sexpexp) s = sexppes s) /\
+   (!s. sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR
+     sexpexp)) s = sexpfuns s) /\
+   (!s. sexppair sexppat sexpexp s = sexppatexp s) /\
+   (!s. sexppair odestSEXSTR (sexppair odestSEXSTR sexpexp) s =
+     sexpfun s)`,
+  CHEAT_TAC);;
 
-let sexpexp_alt_intro1 = cake_theorem "sexpexp_alt_intro1"
-  (fun () ->
-    `sexpexp = sexpexp_alt /\
-     sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR
-       sexpexp)) = sexpfuns`)
-  CHEAT_TAC;;
+let sexpexp_alt_intro1 = prove
+ (`sexpexp = sexpexp_alt /\
+   sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR sexpexp)) =
+     sexpfuns`,
+  CHEAT_TAC);;
 
 let sexptype_def_def = cake_define
   `sexptype_def =
@@ -985,52 +963,50 @@ let sexpdec_alt_def = cake_define_list_try_tac (fun () ->
 
 (* HOL4 fromSexpScript.sml:1162: ML code, not ported *)
 
-let sexpdec_alt_intro = cake_theorem "sexpdec_alt_intro"
-  (fun () ->
-    `(!s. sexpdec s = sexpdec_alt s) /\
-     (!s. sexplist sexpdec s = sexpdec_list s)`)
-  CHEAT_TAC;;
+let sexpdec_alt_intro = prove
+ (`(!s. sexpdec s = sexpdec_alt s) /\
+   (!s. sexplist sexpdec s = sexpdec_list s)`,
+  CHEAT_TAC);;
 
-let sexpdec_alt_intro1 = cake_theorem "sexpdec_alt_intro1"
-  (fun () ->
-    `sexpdec = sexpdec_alt /\
-     sexplist sexpdec = sexpdec_list`)
-  CHEAT_TAC;;
+let sexpdec_alt_intro1 = prove
+ (`sexpdec = sexpdec_alt /\
+   sexplist sexpdec = sexpdec_list`,
+  CHEAT_TAC);;
 
 (* now the reverse: toSexp *)
 
 let listsexp_def = cake_define
   `listsexp = FOLDR SX_CONS (SX_SYM "nil")`;;
 
-let listsexp_thm = cake_theorem "listsexp_thm[simp]"
-  (fun () ->
-    `listsexp [] = (SX_SYM "nil") /\ listsexp (h :: t) = SX_CONS h
-  (listsexp t)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let listsexp_thm = prove
+ (`listsexp [] = (SX_SYM "nil") /\ listsexp (h :: t) = SX_CONS h
+  (listsexp t)`,
+  CHEAT_TAC);;
 
-let listsexp_11 = cake_theorem "listsexp_11[simp]"
-  (fun () ->
-    `!l1 l2. listsexp l1 = listsexp l2 <=> l1 = l2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let listsexp_11 = prove
+ (`!l1 l2. listsexp l1 = listsexp l2 <=> l1 = l2`,
+  CHEAT_TAC);;
 
 let optsexp_def = cake_define_list
   [`optsexp NONE = SX_SYM "NONE"`;
    `optsexp (SOME x) = listsexp [SX_SYM "SOME"; x]`];;
 
-let optsexp_11 = cake_theorem "optsexp_11[simp]"
-  (fun () ->
-    `optsexp o1 = optsexp o2 <=> o1 = o2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let optsexp_11 = prove
+ (`optsexp o1 = optsexp o2 <=> o1 = o2`,
+  CHEAT_TAC);;
 
 let idsexp_def = cake_define_list
   [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
    `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode
   ns); idsexp n]`];;
 
-let idsexp_11 = cake_theorem "idsexp_11[simp]"
-  (fun () ->
-    `!i1 i2. idsexp i1 = idsexp i2 <=> i1 = i2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let idsexp_11 = prove
+ (`!i1 i2. idsexp i1 = idsexp i2 <=> i1 = i2`,
+  CHEAT_TAC);;
 
 let _ = size_thms "ast_t";;
 (* the termination relation that HOL4 gives, with
@@ -1048,10 +1024,10 @@ let typesexp_def = cake_define_list_try (fun () ->
    `typesexp (Atapp ts tc) = listsexp [SX_SYM "Atapp"; listsexp
   (MAP typesexp ts); idsexp tc]`];;
 
-let typesexp_11 = cake_theorem "typesexp_11[simp]"
-  (fun () ->
-    `!t1 t2. typesexp t1 = typesexp t2 <=> t1 = t2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let typesexp_11 = prove
+ (`!t1 t2. typesexp t1 = typesexp t2 <=> t1 = t2`,
+  CHEAT_TAC);;
 
 let litsexp_def = cake_define_list
   [`litsexp (ast_IntLit i) =
@@ -1065,10 +1041,10 @@ let litsexp_def = cake_define_list
    `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM
   (w2n w)]`];;
 
-let litsexp_11 = cake_theorem "litsexp_11[simp]"
-  (fun () ->
-    `!l1 l2. litsexp l1 = litsexp l2 <=> l1 = l2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let litsexp_11 = prove
+ (`!l1 l2. litsexp l1 = litsexp l2 <=> l1 = l2`,
+  CHEAT_TAC);;
 
 let _ = size_thms "ast_pat";;
 (* the termination relation that HOL4 gives, with
@@ -1090,10 +1066,10 @@ let patsexp_def = cake_define_list_try (fun () ->
    `patsexp (ast_Ptannot p t) = listsexp [SX_SYM "Ptannot"; patsexp
   p; typesexp t]`];;
 
-let patsexp_11 = cake_theorem "patsexp_11[simp]"
-  (fun () ->
-    `!p1 p2. patsexp p1 = patsexp p2 <=> p1 = p2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let patsexp_11 = prove
+ (`!p1 p2. patsexp p1 = patsexp p2 <=> p1 = p2`,
+  CHEAT_TAC);;
 
 let testsexp_def = cake_define
   `testsexp x1 =
@@ -1108,15 +1084,15 @@ let testsexp_def = cake_define
       | (ast_AltCompare ast_Gt) -> SX_SYM "AltGreater"
       | (ast_AltCompare ast_Geq) -> SX_SYM "AltGreaterEq"`;;
 
-let testsexp_11 = cake_theorem "testsexp_11[simp]"
-  (fun () ->
-    `!l1 l2. testsexp l1 = testsexp l2 <=> l1 = l2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let testsexp_11 = prove
+ (`!l1 l2. testsexp l1 = testsexp l2 <=> l1 = l2`,
+  CHEAT_TAC);;
 
-let sexptest_testsexp = cake_theorem "sexptest_testsexp[simp]"
-  (fun () ->
-    `!x. fromSexp_decode_test (testsexp x) = SOME x`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexptest_testsexp = prove
+ (`!x. fromSexp_decode_test (testsexp x) = SOME x`,
+  CHEAT_TAC);;
 
 let arithsexp_def = cake_define_list
   [`arithsexp (ast_Add:ast_arith) = SX_SYM "Add"`;
@@ -1133,15 +1109,15 @@ let arithsexp_def = cake_define_list
    `arithsexp ast_Sqrt = SX_SYM "Sqrt"`;
    `arithsexp ast_FMA = SX_SYM "FMA"`];;
 
-let arithsexp_11 = cake_theorem "arithsexp_11[simp]"
-  (fun () ->
-    `!l1 l2. arithsexp l1 = arithsexp l2 <=> l1 = l2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let arithsexp_11 = prove
+ (`!l1 l2. arithsexp l1 = arithsexp l2 <=> l1 = l2`,
+  CHEAT_TAC);;
 
-let arithsexp_sexparith = cake_theorem "arithsexp_sexparith[simp]"
-  (fun () ->
-    `!x. sexparith (arithsexp x) = SOME x`)
-  CHEAT_TAC;;
+(* [simp] *)
+let arithsexp_sexparith = prove
+ (`!x. sexparith (arithsexp x) = SOME x`,
+  CHEAT_TAC);;
 
 let prim_typesexp_def = cake_define
   `prim_typesexp x1 =
@@ -1154,138 +1130,133 @@ let prim_typesexp_def = cake_define
       | (ast_WordT ast_W64) -> SX_SYM "Word64T"
       | ast_Float64T -> SX_SYM "Float64T"`;;
 
-let sexplist_listsexp_matchable =
-  cake_theorem "sexplist_listsexp_matchable"
-  (fun () ->
-    `!g gl. (!x. MEM x l ==> f (g x) = SOME x) /\ (gl = MAP g l) ==>
-     sexplist f (listsexp gl) = SOME l`)
-  CHEAT_TAC;;
+let sexplist_listsexp_matchable = prove
+ (`!g gl. (!x. MEM x l ==> f (g x) = SOME x) /\ (gl = MAP g l) ==>
+   sexplist f (listsexp gl) = SOME l`,
+  CHEAT_TAC);;
 
-let dstrip_sexp_SX_STR = cake_theorem "dstrip_sexp_SX_STR[simp]"
-  (fun () ->
-    `dstrip_sexp (SX_STR s) = NONE`)
-  CHEAT_TAC;;
+(* [simp] *)
+let dstrip_sexp_SX_STR = prove
+ (`dstrip_sexp (SX_STR s) = NONE`,
+  CHEAT_TAC);;
 
-let dstrip_sexp_SEXSTR = cake_theorem "dstrip_sexp_SEXSTR[simp]"
-  (fun () ->
-    `dstrip_sexp (SEXSTR s) = NONE`)
-  CHEAT_TAC;;
+(* [simp] *)
+let dstrip_sexp_SEXSTR = prove
+ (`dstrip_sexp (SEXSTR s) = NONE`,
+  CHEAT_TAC);;
 
-let odestSXSTR_SOME = cake_theorem "odestSXSTR_SOME[simp]"
-  (fun () ->
-    `(odestSXSTR s = SOME y <=> s = SX_STR (explode y)) /\
-     (SOME y = odestSXSTR s <=> s = SX_STR (explode y))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXSTR_SOME = prove
+ (`(odestSXSTR s = SOME y <=> s = SX_STR (explode y)) /\
+   (SOME y = odestSXSTR s <=> s = SX_STR (explode y))`,
+  CHEAT_TAC);;
 
-let odestSEXSTR_SOME = cake_theorem "odestSEXSTR_SOME[simp]"
-  (fun () ->
-    `(odestSEXSTR s = SOME y <=> s = SEXSTR (explode y)) /\
-     (SOME y = odestSEXSTR s <=> s = SEXSTR (explode y))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSEXSTR_SOME = prove
+ (`(odestSEXSTR s = SOME y <=> s = SEXSTR (explode y)) /\
+   (SOME y = odestSEXSTR s <=> s = SEXSTR (explode y))`,
+  CHEAT_TAC);;
 
-let odestSXNUM_SOME = cake_theorem "odestSXNUM_SOME[simp]"
-  (fun () ->
-    `(odestSXNUM s = SOME n <=> s = &n) /\
-     (SOME n = odestSXNUM s <=> s = &n)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXNUM_SOME = prove
+ (`(odestSXNUM s = SOME n <=> s = &n) /\
+   (SOME n = odestSXNUM s <=> s = &n)`,
+  CHEAT_TAC);;
 
-let odestSXSTR_SX_STR = cake_theorem "odestSXSTR_SX_STR[simp]"
-  (fun () ->
-    `(odestSXSTR (SX_STR s) = SOME (implode s))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXSTR_SX_STR = prove
+ (`(odestSXSTR (SX_STR s) = SOME (implode s))`,
+  CHEAT_TAC);;
 
-let odestSEXSTR_SEXSTR = cake_theorem "odestSEXSTR_SEXSTR[simp]"
-  (fun () ->
-    `odestSEXSTR (SEXSTR s) = SOME (implode s)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSEXSTR_SEXSTR = prove
+ (`odestSEXSTR (SEXSTR s) = SOME (implode s)`,
+  CHEAT_TAC);;
 
-let odestSXNUM_SX_NUM = cake_theorem "odestSXNUM_SX_NUM[simp]"
-  (fun () ->
-    `odestSXNUM (SX_NUM n) = SOME n`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXNUM_SX_NUM = prove
+ (`odestSXNUM (SX_NUM n) = SOME n`,
+  CHEAT_TAC);;
 
-let odestSXSYM_SX_SYM = cake_theorem "odestSXSYM_SX_SYM[simp]"
-  (fun () ->
-    `odestSXSYM (SX_SYM s) = SOME (implode s)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXSYM_SX_SYM = prove
+ (`odestSXSYM (SX_SYM s) = SOME (implode s)`,
+  CHEAT_TAC);;
 
-let odestSXSTR_listsexp = cake_theorem "odestSXSTR_listsexp[simp]"
-  (fun () ->
-    `odestSXSTR (listsexp l) = NONE`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXSTR_listsexp = prove
+ (`odestSXSTR (listsexp l) = NONE`,
+  CHEAT_TAC);;
 
-let odestSEXSTR_listsexp = cake_theorem "odestSEXSTR_listsexp[simp]"
-  (fun () ->
-    `odestSEXSTR (listsexp l) = NONE`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSEXSTR_listsexp = prove
+ (`odestSEXSTR (listsexp l) = NONE`,
+  CHEAT_TAC);;
 
-let odestSXNUM_listsexp = cake_theorem "odestSXNUM_listsexp[simp]"
-  (fun () ->
-    `odestSXNUM (listsexp l) = NONE`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXNUM_listsexp = prove
+ (`odestSXNUM (listsexp l) = NONE`,
+  CHEAT_TAC);;
 
-let strip_sxcons_listsexp = cake_theorem "strip_sxcons_listsexp[simp]"
-  (fun () ->
-    `strip_sxcons (listsexp ls) = SOME ls`)
-  CHEAT_TAC;;
+(* [simp] *)
+let strip_sxcons_listsexp = prove
+ (`strip_sxcons (listsexp ls) = SOME ls`,
+  CHEAT_TAC);;
 
-let dstrip_sexp_listsexp = cake_theorem "dstrip_sexp_listsexp[simp]"
-  (fun () ->
-    `(dstrip_sexp (listsexp ls) =
-      (match ls with (SX_SYM x :: xs) -> SOME (x,xs) | _28 ->
-        NONE))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let dstrip_sexp_listsexp = prove
+ (`(dstrip_sexp (listsexp ls) =
+    (match ls with (SX_SYM x :: xs) -> SOME (x,xs) | _28 -> NONE))`,
+  CHEAT_TAC);;
 
-let sexplist_listsexp_rwt = cake_theorem "sexplist_listsexp_rwt[simp]"
-  (fun () ->
-    `(!x. MEM x l ==> f (g x) = SOME x) ==>
-     (sexplist f (listsexp (MAP g l)) = SOME l)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexplist_listsexp_rwt = prove
+ (`(!x. MEM x l ==> f (g x) = SOME x) ==>
+   (sexplist f (listsexp (MAP g l)) = SOME l)`,
+  CHEAT_TAC);;
 
-let sexplist_listsexp_imp = cake_theorem "sexplist_listsexp_imp"
-  (fun () ->
-    `sexplist f (listsexp l1) = SOME l2 ==>
-     (!n. n < LENGTH l1 ==> f (EL n l1) = SOME (EL n l2))`)
-  CHEAT_TAC;;
+let sexplist_listsexp_imp = prove
+ (`sexplist f (listsexp l1) = SOME l2 ==>
+   (!n. n < LENGTH l1 ==> f (EL n l1) = SOME (EL n l2))`,
+  CHEAT_TAC);;
 
-let sexpopt_optsexp = cake_theorem "sexpopt_optsexp[simp]"
-  (fun () ->
-    `(!y. (x = SOME y) ==> (f (g y) = x)) ==>
-     (sexpopt f (optsexp (OPTION_MAP g x)) = SOME x)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexpopt_optsexp = prove
+ (`(!y. (x = SOME y) ==> (f (g y) = x)) ==>
+   (sexpopt f (optsexp (OPTION_MAP g x)) = SOME x)`,
+  CHEAT_TAC);;
 
-let sexpid_odestSEXSTR_idsexp =
-  cake_theorem "sexpid_odestSEXSTR_idsexp[simp]"
-  (fun () ->
-    `sexpid odestSEXSTR (idsexp i) = SOME i`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexpid_odestSEXSTR_idsexp = prove
+ (`sexpid odestSEXSTR (idsexp i) = SOME i`,
+  CHEAT_TAC);;
 
-let dstrip_sexp_thm = cake_theorem "dstrip_sexp_thm[simp]"
-  (fun () ->
-    `dstrip_sexp (SX_CONS (SX_SYM s) (args)) = OPTION_MAP (\t. (s,t))
+(* [simp] *)
+let dstrip_sexp_thm = prove
+ (`dstrip_sexp (SX_CONS (SX_SYM s) (args)) = OPTION_MAP (\t. (s,t))
   (strip_sxcons args) /\
-     dstrip_sexp (SX_CONS (&n) (args)) = NONE /\
-     dstrip_sexp (SX_CONS (SX_STR str) (args)) = NONE /\
-     dstrip_sexp (SX_CONS ((SX_CONS (s1) (s2))) (args)) = NONE /\
-     dstrip_sexp (&n) = NONE /\
-     dstrip_sexp (SX_SYM s) = NONE /\
-     dstrip_sexp (SX_STR str) = NONE`)
-  CHEAT_TAC;;
+   dstrip_sexp (SX_CONS (&n) (args)) = NONE /\
+   dstrip_sexp (SX_CONS (SX_STR str) (args)) = NONE /\
+   dstrip_sexp (SX_CONS ((SX_CONS (s1) (s2))) (args)) = NONE /\
+   dstrip_sexp (&n) = NONE /\
+   dstrip_sexp (SX_SYM s) = NONE /\
+   dstrip_sexp (SX_STR str) = NONE`,
+  CHEAT_TAC);;
 
-let sexptype_typesexp = cake_theorem "sexptype_typesexp[simp]"
-  (fun () ->
-    `sexptype (typesexp t) = SOME t`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexptype_typesexp = prove
+ (`sexptype (typesexp t) = SOME t`,
+  CHEAT_TAC);;
 
-let sexpprim_type_testsexp = cake_theorem "sexpprim_type_testsexp[simp]"
-  (fun () ->
-    `!x. decode_prim_type (prim_typesexp x) = SOME x`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexpprim_type_testsexp = prove
+ (`!x. decode_prim_type (prim_typesexp x) = SOME x`,
+  CHEAT_TAC);;
 
-let prim_typesexp_11 = cake_theorem "prim_typesexp_11[simp]"
-  (fun () ->
-    `!l1 l2. prim_typesexp l1 = prim_typesexp l2 <=> l1 = l2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let prim_typesexp_11 = prove
+ (`!l1 l2. prim_typesexp l1 = prim_typesexp l2 <=> l1 = l2`,
+  CHEAT_TAC);;
 
 let opsexp_def = cake_define
   `opsexp x1 =
@@ -1362,42 +1333,42 @@ let opsexp_def = cake_define
        (SX_CONS (testsexp test)
                (prim_typesexp prim_type))`;;
 
-let sexpop_opsexp = cake_theorem "sexpop_opsexp[simp]"
-  (fun () ->
-    `sexpop (opsexp op) = SOME op`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexpop_opsexp = prove
+ (`sexpop (opsexp op) = SOME op`,
+  CHEAT_TAC);;
 
-let opsexp_11 = cake_theorem "opsexp_11[simp]"
-  (fun () ->
-    `!o1 o2. opsexp o1 = opsexp o2 <=> o1 = o2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let opsexp_11 = prove
+ (`!o1 o2. opsexp o1 = opsexp o2 <=> o1 = o2`,
+  CHEAT_TAC);;
 
 let logsexp_def = cake_define_list
   [`logsexp Andalso = SX_SYM "Andalso"`;
    `logsexp Orelse = SX_SYM "Orelse"`];;
 
-let logsexp_11 = cake_theorem "logsexp_11[simp]"
-  (fun () ->
-    `!l1 l2. logsexp l1 = logsexp l2 <=> l1 = l2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let logsexp_11 = prove
+ (`!l1 l2. logsexp l1 = logsexp l2 <=> l1 = l2`,
+  CHEAT_TAC);;
 
 let locnsexp_def = cake_define_list
   [`locnsexp (POSN n1 n2) = listsexp (MAP SX_NUM [n1; n2])`;
    `locnsexp UNKNOWNpt = SX_SYM "unk"`;
    `locnsexp EOFpt = SX_SYM "eof"`];;
 
-let locnsexp_11 = cake_theorem "locnsexp_11[simp]"
-  (fun () ->
-    `locnsexp p1 = locnsexp p2 <=> p1 = p2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let locnsexp_11 = prove
+ (`locnsexp p1 = locnsexp p2 <=> p1 = p2`,
+  CHEAT_TAC);;
 
 let locssexp_def = cake_define
   `locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`;;
 
-let locssexp_11 = cake_theorem "locssexp_11[simp]"
-  (fun () ->
-    `!l1 l2. locssexp l1 = locssexp l2 <=> l1 = l2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let locssexp_11 = prove
+ (`!l1 l2. locssexp l1 = locssexp l2 <=> l1 = l2`,
+  CHEAT_TAC);;
 
 let expsexp_def = cake_define_list
   [`expsexp (ast_Raise e:ast_exp) = (SX_CONS (SX_SYM "Raise")
@@ -1442,15 +1413,15 @@ let expsexp_def = cake_define_list
    `expsexp (ast_Lannot e loc) = (SX_CONS (SX_SYM "Lannot")
   (SX_CONS (expsexp e) (SX_CONS (locssexp loc) (SX_SYM "nil"))))`];;
 
-let SEXSTR_explode_11 = cake_theorem "SEXSTR_explode_11[local]"
-  (fun () ->
-    `(SEXSTR o explode) s1 = (SEXSTR o explode) s2 ==> s1 = s2`)
-  CHEAT_TAC;;
+(* [local] *)
+let SEXSTR_explode_11 = prove
+ (`(SEXSTR o explode) s1 = (SEXSTR o explode) s2 ==> s1 = s2`,
+  CHEAT_TAC);;
 
-let expsexp_11 = cake_theorem "expsexp_11[simp]"
-  (fun () ->
-    `!e1 e2. expsexp e1 = expsexp e2 ==> e1 = e2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let expsexp_11 = prove
+ (`!e1 e2. expsexp e1 = expsexp e2 ==> e1 = e2`,
+  CHEAT_TAC);;
 
 let type_defsexp_def = cake_define
   `type_defsexp = listsexp o
@@ -1460,18 +1431,17 @@ let type_defsexp_def = cake_define
            (listsexp (MAP (\(y,ts). SX_CONS (SEXSTR (explode y))
              (listsexp (MAP typesexp ts))) ls))))`;;
 
-let type_defsexp_11 = cake_theorem "type_defsexp_11[simp]"
-  (fun () ->
-    `!t1 t2. type_defsexp t1 = type_defsexp t2 <=> t1 = t2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let type_defsexp_11 = prove
+ (`!t1 t2. type_defsexp t1 = type_defsexp t2 <=> t1 = t2`,
+  CHEAT_TAC);;
 
 (* HOL4 fromSexpScript.sml:1737-1741: a theorem whose statement the
    port cannot state yet: dec1_size_eq *)
 
-let mem_size_lemma = cake_theorem "mem_size_lemma"
-  (fun () ->
-    `list_size sz xs < N ==> (MEM x xs ==> sz x < N)`)
-  CHEAT_TAC;;
+let mem_size_lemma = prove
+ (`list_size sz xs < N ==> (MEM x xs ==> sz x < N)`,
+  CHEAT_TAC);;
 
 let decsexp_def = cake_define_list
   [`decsexp (Dlet locs p e) =
@@ -1504,283 +1474,258 @@ let decsexp_def = cake_define_list
       listsexp [SX_SYM "Dlocal"; listsexp (MAP decsexp ldecs);
                 listsexp (MAP decsexp decs)]`];;
 
-let decsexp_11 = cake_theorem "decsexp_11[simp]"
-  (fun () ->
-    `!d1 d2. decsexp d1 = decsexp d2 <=> d1 = d2`)
-  CHEAT_TAC;;
+(* [simp] *)
+let decsexp_11 = prove
+ (`!d1 d2. decsexp d1 = decsexp d2 <=> d1 = d2`,
+  CHEAT_TAC);;
 
 (* round trip *)
 
 (* HOL4 fromSexpScript.sml:1784-1789: ML code, not ported *)
 
-let sexptype_def_type_defsexp =
-  cake_theorem "sexptype_def_type_defsexp[simp]"
-  (fun () ->
-    `sexptype_def (type_defsexp l) = SOME l`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexptype_def_type_defsexp = prove
+ (`sexptype_def (type_defsexp l) = SOME l`,
+  CHEAT_TAC);;
 
-let sexplit_litsexp = cake_theorem "sexplit_litsexp[simp]"
-  (fun () ->
-    `sexplit (litsexp l) = SOME l`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexplit_litsexp = prove
+ (`sexplit (litsexp l) = SOME l`,
+  CHEAT_TAC);;
 
-let sexppat_patsexp = cake_theorem "sexppat_patsexp[simp]"
-  (fun () ->
-    `sexppat (patsexp p) = SOME p`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexppat_patsexp = prove
+ (`sexppat (patsexp p) = SOME p`,
+  CHEAT_TAC);;
 
-let sexplocpt_locnsexp = cake_theorem "sexplocpt_locnsexp[simp]"
-  (fun () ->
-    `sexplocpt (locnsexp p) = SOME p`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexplocpt_locnsexp = prove
+ (`sexplocpt (locnsexp p) = SOME p`,
+  CHEAT_TAC);;
 
-let sexplocn_locnsexp = cake_theorem "sexplocn_locnsexp[simp]"
-  (fun () ->
-    `sexplocn (locssexp l) = SOME l`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexplocn_locnsexp = prove
+ (`sexplocn (locssexp l) = SOME l`,
+  CHEAT_TAC);;
 
-let sexplog_logsexp = cake_theorem "sexplog_logsexp[simp]"
-  (fun () ->
-    `sexplog (logsexp l) = SOME l`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexplog_logsexp = prove
+ (`sexplog (logsexp l) = SOME l`,
+  CHEAT_TAC);;
 
-let sexpexp_expsexp = cake_theorem "sexpexp_expsexp[simp]"
-  (fun () ->
-    `sexpexp (expsexp e) = SOME e`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexpexp_expsexp = prove
+ (`sexpexp (expsexp e) = SOME e`,
+  CHEAT_TAC);;
 
-let sexpdec_decsexp = cake_theorem "sexpdec_decsexp[simp]"
-  (fun () ->
-    `!d. sexpdec (decsexp d) = SOME d`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sexpdec_decsexp = prove
+ (`!d. sexpdec (decsexp d) = SOME d`,
+  CHEAT_TAC);;
 
-let odestSXSYM_EQ_SOME = cake_theorem "odestSXSYM_EQ_SOME[simp]"
-  (fun () ->
-    `(odestSXSYM s = SOME str <=> s = SX_SYM (explode str)) /\
-     (SOME str = odestSXSYM s <=> s = SX_SYM (explode str))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXSYM_EQ_SOME = prove
+ (`(odestSXSYM s = SOME str <=> s = SX_SYM (explode str)) /\
+   (SOME str = odestSXSYM s <=> s = SX_SYM (explode str))`,
+  CHEAT_TAC);;
 
-let sexpopt_SOME = cake_theorem "sexpopt_SOME"
-  (fun () ->
-    `sexpopt f s = SOME opt <=>
-       opt = NONE /\ s = SX_SYM "NONE" \/
-       (?x s0. opt = SOME x /\ f s0 = SOME x /\ s = listsexp
-         [SX_SYM "SOME"; s0])`)
-  CHEAT_TAC;;
+let sexpopt_SOME = prove
+ (`sexpopt f s = SOME opt <=>
+     opt = NONE /\ s = SX_SYM "NONE" \/
+     (?x s0. opt = SOME x /\ f s0 = SOME x /\ s = listsexp [SX_SYM
+       "SOME"; s0])`,
+  CHEAT_TAC);;
 
-let listsexp_MAP_EQ_f = cake_theorem "listsexp_MAP_EQ_f"
-  (fun () ->
-    `(!x. MEM x ls ==> f1 x = f2 x) ==>
-      listsexp (MAP f1 ls) = listsexp (MAP f2 ls)`)
-  CHEAT_TAC;;
+let listsexp_MAP_EQ_f = prove
+ (`(!x. MEM x ls ==> f1 x = f2 x) ==>
+    listsexp (MAP f1 ls) = listsexp (MAP f2 ls)`,
+  CHEAT_TAC);;
 
-let sexplist_SOME = cake_theorem "sexplist_SOME"
-  (fun () ->
-    `sexplist f s = SOME ls <=> (?l. s = listsexp l /\ MAP f l = MAP
-  SOME ls)`)
-  CHEAT_TAC;;
+let sexplist_SOME = prove
+ (`sexplist f s = SOME ls <=> (?l. s = listsexp l /\ MAP f l = MAP
+  SOME ls)`,
+  CHEAT_TAC);;
 
-let sexppair_SOME = cake_theorem "sexppair_SOME"
-  (fun () ->
-    `sexppair f1 f2 s = SOME p <=>
-       (?x y a b. f1 x = SOME a /\ f2 y = SOME b /\ s = SX_CONS x
-         y /\ p = (a,b))`)
-  CHEAT_TAC;;
+let sexppair_SOME = prove
+ (`sexppair f1 f2 s = SOME p <=>
+     (?x y a b. f1 x = SOME a /\ f2 y = SOME b /\ s = SX_CONS x y
+       /\ p = (a,b))`,
+  CHEAT_TAC);;
 
-let OPTION_CHOICE_EQ_SOME =
-  cake_alias "OPTION_CHOICE_EQ_SOME"
-    OPTION_CHOICE_EQUALS_OPTION;;
+let OPTION_CHOICE_EQ_SOME = OPTION_CHOICE_EQUALS_OPTION;;
 
-let odestSXNUM_EQ_SOME = cake_theorem "odestSXNUM_EQ_SOME[simp]"
-  (fun () ->
-    `(odestSXNUM s = SOME n <=> s = &n) /\
-     (SOME n = odestSXNUM s <=> s = &n)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let odestSXNUM_EQ_SOME = prove
+ (`(odestSXNUM s = SOME n <=> s = &n) /\
+   (SOME n = odestSXNUM s <=> s = &n)`,
+  CHEAT_TAC);;
 
-let litsexp_sexplit = cake_theorem "litsexp_sexplit"
-  (fun () ->
-    `(sexplit s = SOME l <=> litsexp l = s) /\
-     (SOME l = sexplit s <=> litsexp l = s)`)
-  CHEAT_TAC;;
+let litsexp_sexplit = prove
+ (`(sexplit s = SOME l <=> litsexp l = s) /\
+   (SOME l = sexplit s <=> litsexp l = s)`,
+  CHEAT_TAC);;
 
-let idsexp_sexpid_odestSEXSTR = cake_theorem "idsexp_sexpid_odestSEXSTR"
-  (fun () ->
-    `!y x. sexpid odestSEXSTR x = SOME y <=> x = idsexp y`)
-  CHEAT_TAC;;
+let idsexp_sexpid_odestSEXSTR = prove
+ (`!y x. sexpid odestSEXSTR x = SOME y <=> x = idsexp y`,
+  CHEAT_TAC);;
 
-let idsexp_sexpid_odestSEXSTR' =
-  cake_theorem "idsexp_sexpid_odestSEXSTR'[simp]"
-  (fun () ->
-    `(sexpid odestSEXSTR x = SOME y <=> x = idsexp y) /\
-     (SOME y = sexpid odestSEXSTR x <=> x = idsexp y)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let idsexp_sexpid_odestSEXSTR' = prove
+ (`(sexpid odestSEXSTR x = SOME y <=> x = idsexp y) /\
+   (SOME y = sexpid odestSEXSTR x <=> x = idsexp y)`,
+  CHEAT_TAC);;
 
-let typesexp_sexptype = cake_theorem "typesexp_sexptype"
-  (fun () ->
-    `!s t. (sexptype s = SOME t <=> typesexp t = s) /\
-           (SOME t = sexptype s <=> typesexp t = s)`)
-  CHEAT_TAC;;
+let typesexp_sexptype = prove
+ (`!s t. (sexptype s = SOME t <=> typesexp t = s) /\
+         (SOME t = sexptype s <=> typesexp t = s)`,
+  CHEAT_TAC);;
 
-let patsexp_sexppat0 = cake_theorem "patsexp_sexppat0"
-  (fun () ->
-    `!s p. sexppat s = SOME p ==> patsexp p = s`)
-  CHEAT_TAC;;
+let patsexp_sexppat0 = prove
+ (`!s p. sexppat s = SOME p ==> patsexp p = s`,
+  CHEAT_TAC);;
 
-let patsexp_sexppat = cake_theorem "patsexp_sexppat"
-  (fun () ->
-    `(sexppat s = SOME p <=> patsexp p = s) /\
-     (SOME p = sexppat s <=> patsexp p = s)`)
-  CHEAT_TAC;;
+let patsexp_sexppat = prove
+ (`(sexppat s = SOME p <=> patsexp p = s) /\
+   (SOME p = sexppat s <=> patsexp p = s)`,
+  CHEAT_TAC);;
 
-let decode_test_testsexp = cake_theorem "decode_test_testsexp"
-  (fun () ->
-    `fromSexp_decode_test s = SOME test ==> testsexp test = s`)
-  CHEAT_TAC;;
+let decode_test_testsexp = prove
+ (`fromSexp_decode_test s = SOME test ==> testsexp test = s`,
+  CHEAT_TAC);;
 
-let sexparith_arithsexp = cake_theorem "sexparith_arithsexp"
-  (fun () ->
-    `sexparith s = SOME arith ==> arithsexp arith = s`)
-  CHEAT_TAC;;
+let sexparith_arithsexp = prove
+ (`sexparith s = SOME arith ==> arithsexp arith = s`,
+  CHEAT_TAC);;
 
-let decode_prim_type_prim_typesexp =
-  cake_theorem "decode_prim_type_prim_typesexp"
-  (fun () ->
-    `decode_prim_type s0 = SOME prim_type ==>
-     prim_typesexp prim_type = s0`)
-  CHEAT_TAC;;
+let decode_prim_type_prim_typesexp = prove
+ (`decode_prim_type s0 = SOME prim_type ==>
+   prim_typesexp prim_type = s0`,
+  CHEAT_TAC);;
 
-let opsexp_sexpop = cake_theorem "opsexp_sexpop"
-  (fun () ->
-    `sexpop s = SOME p ==> opsexp p = s`)
-  CHEAT_TAC;;
+let opsexp_sexpop = prove
+ (`sexpop s = SOME p ==> opsexp p = s`,
+  CHEAT_TAC);;
 
-let locnsexp_sexplocpt0 = cake_theorem "locnsexp_sexplocpt0"
-  (fun () ->
-    `sexplocpt s = SOME z ==> locnsexp z = s`)
-  CHEAT_TAC;;
+let locnsexp_sexplocpt0 = prove
+ (`sexplocpt s = SOME z ==> locnsexp z = s`,
+  CHEAT_TAC);;
 
-let locnsexp_sexplocpt = cake_theorem "locnsexp_sexplocpt[simp]"
-  (fun () ->
-    `(sexplocpt s = SOME z <=> locnsexp z = s) /\
-     (SOME z = sexplocpt s <=> locnsexp z = s)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let locnsexp_sexplocpt = prove
+ (`(sexplocpt s = SOME z <=> locnsexp z = s) /\
+   (SOME z = sexplocpt s <=> locnsexp z = s)`,
+  CHEAT_TAC);;
 
-let locnsexp_sexplocn = cake_theorem "locnsexp_sexplocn"
-  (fun () ->
-    `(sexplocn s = SOME z <=> locssexp z = s) /\
-     (SOME z = sexplocn s <=> locssexp z = s)`)
-  CHEAT_TAC;;
+let locnsexp_sexplocn = prove
+ (`(sexplocn s = SOME z <=> locssexp z = s) /\
+   (SOME z = sexplocn s <=> locssexp z = s)`,
+  CHEAT_TAC);;
 
-let logsexp_sexplog = cake_theorem "logsexp_sexplog"
-  (fun () ->
-    `(sexplog s = SOME z <=> logsexp z = s) /\
-     (SOME z = sexplog s <=> logsexp z = s)`)
-  CHEAT_TAC;;
+let logsexp_sexplog = prove
+ (`(sexplog s = SOME z <=> logsexp z = s) /\
+   (SOME z = sexplog s <=> logsexp z = s)`,
+  CHEAT_TAC);;
 
-let expsexp_sexpexp = cake_theorem "expsexp_sexpexp"
-  (fun () ->
-    `(sexpexp s = SOME e <=> expsexp e = s) /\
-     (SOME e = sexpexp s <=> expsexp e = s)`)
-  CHEAT_TAC;;
+let expsexp_sexpexp = prove
+ (`(sexpexp s = SOME e <=> expsexp e = s) /\
+   (SOME e = sexpexp s <=> expsexp e = s)`,
+  CHEAT_TAC);;
 
-let type_defsexp_sexptype_def = cake_theorem "type_defsexp_sexptype_def"
-  (fun () ->
-    `(sexptype_def s = SOME x <=> type_defsexp x = s) /\
-     (SOME x = sexptype_def s <=> type_defsexp x = s)`)
-  CHEAT_TAC;;
+let type_defsexp_sexptype_def = prove
+ (`(sexptype_def s = SOME x <=> type_defsexp x = s) /\
+   (SOME x = sexptype_def s <=> type_defsexp x = s)`,
+  CHEAT_TAC);;
 
-let decsexp_sexpdec = cake_theorem "decsexp_sexpdec"
-  (fun () ->
-    `(sexpdec s = SOME d <=> decsexp d = s) /\
-     (SOME d = sexpdec s <=> decsexp d = s)`)
-  CHEAT_TAC;;
+let decsexp_sexpdec = prove
+ (`(sexpdec s = SOME d <=> decsexp d = s) /\
+   (SOME d = sexpdec s <=> decsexp d = s)`,
+  CHEAT_TAC);;
 
 (* valid sexps *)
 
-let SEXSTR_valid = cake_theorem "SEXSTR_valid[simp]"
-  (fun () ->
-    `valid_sexp (SEXSTR s)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let SEXSTR_valid = prove
+ (`valid_sexp (SEXSTR s)`,
+  CHEAT_TAC);;
 
-let listsexp_valid = cake_theorem "listsexp_valid"
-  (fun () ->
-    `!ls. EVERY valid_sexp ls ==> valid_sexp (listsexp ls)`)
-  CHEAT_TAC;;
+let listsexp_valid = prove
+ (`!ls. EVERY valid_sexp ls ==> valid_sexp (listsexp ls)`,
+  CHEAT_TAC);;
 
-let idsexp_valid = cake_theorem "idsexp_valid[simp]"
-  (fun () ->
-    `!i. valid_sexp (idsexp i)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let idsexp_valid = prove
+ (`!i. valid_sexp (idsexp i)`,
+  CHEAT_TAC);;
 
-let typesexp_valid = cake_theorem "typesexp_valid[simp]"
-  (fun () ->
-    `!t. valid_sexp (typesexp t)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let typesexp_valid = prove
+ (`!t. valid_sexp (typesexp t)`,
+  CHEAT_TAC);;
 
-let litsexp_valid = cake_theorem "litsexp_valid[simp]"
-  (fun () ->
-    `!l. valid_sexp (litsexp l)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let litsexp_valid = prove
+ (`!l. valid_sexp (litsexp l)`,
+  CHEAT_TAC);;
 
-let optsexp_valid = cake_theorem "optsexp_valid"
-  (fun () ->
-    `!x. (!y. x = SOME y ==> valid_sexp y) ==> valid_sexp (optsexp x)`)
-  CHEAT_TAC;;
+let optsexp_valid = prove
+ (`!x. (!y. x = SOME y ==> valid_sexp y) ==> valid_sexp (optsexp x)`,
+  CHEAT_TAC);;
 
-let patsexp_valid = cake_theorem "patsexp_valid[simp]"
-  (fun () ->
-    `!p. valid_sexp (patsexp p)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let patsexp_valid = prove
+ (`!p. valid_sexp (patsexp p)`,
+  CHEAT_TAC);;
 
-let type_defsexp_valid = cake_theorem "type_defsexp_valid[simp]"
-  (fun () ->
-    `!t. valid_sexp (type_defsexp t)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let type_defsexp_valid = prove
+ (`!t. valid_sexp (type_defsexp t)`,
+  CHEAT_TAC);;
 
-let valid_sexp_prim_typesexp =
-  cake_theorem "valid_sexp_prim_typesexp[simp]"
-  (fun () ->
-    `!t. valid_sexp (prim_typesexp t)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let valid_sexp_prim_typesexp = prove
+ (`!t. valid_sexp (prim_typesexp t)`,
+  CHEAT_TAC);;
 
-let valid_sexp_arithsexp =
-  cake_theorem "valid_sexp_arithsexp[local,simp]"
-  (fun () ->
-    `valid_sexp (arithsexp a)`)
-  CHEAT_TAC;;
+(* [local,simp] *)
+let valid_sexp_arithsexp = prove
+ (`valid_sexp (arithsexp a)`,
+  CHEAT_TAC);;
 
-let valid_sexp_logsexp = cake_theorem "valid_sexp_logsexp[local,simp]"
-  (fun () ->
-    `valid_sexp (logsexp a)`)
-  CHEAT_TAC;;
+(* [local,simp] *)
+let valid_sexp_logsexp = prove
+ (`valid_sexp (logsexp a)`,
+  CHEAT_TAC);;
 
-let opsexp_valid = cake_theorem "opsexp_valid[simp]"
-  (fun () ->
-    `!op. valid_sexp (opsexp op)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let opsexp_valid = prove
+ (`!op. valid_sexp (opsexp op)`,
+  CHEAT_TAC);;
 
-let locnsexp_valid = cake_theorem "locnsexp_valid[simp]"
-  (fun () ->
-    `!p. valid_sexp (locnsexp p)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let locnsexp_valid = prove
+ (`!p. valid_sexp (locnsexp p)`,
+  CHEAT_TAC);;
 
-let locssexp_valid = cake_theorem "locssexp_valid[simp]"
-  (fun () ->
-    `!l. valid_sexp (locssexp l)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let locssexp_valid = prove
+ (`!l. valid_sexp (locssexp l)`,
+  CHEAT_TAC);;
 
-let expsexp_valid = cake_theorem "expsexp_valid[simp]"
-  (fun () ->
-    `!e. valid_sexp (expsexp e)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let expsexp_valid = prove
+ (`!e. valid_sexp (expsexp e)`,
+  CHEAT_TAC);;
 
-let decsexp_valid = cake_theorem "decsexp_valid[simp]"
-  (fun () ->
-    `!d. valid_sexp (decsexp d)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let decsexp_valid = prove
+ (`!d. valid_sexp (decsexp d)`,
+  CHEAT_TAC);;
 
 hol4_only "++" "APPEND";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["assert"];;
 
-cake_hide_consts [];;
+(* and the accessors of those fields are overloaded again *)
+let _ = unhide_overloads ();;

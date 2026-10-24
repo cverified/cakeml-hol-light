@@ -21,7 +21,7 @@ let filter_def = cake_define
   `mloption_filter f a = (if f a then SOME (a) else NONE)`;;
 hol4_overload "filter" "mloption_filter";;
 
-let mapPartial_def = cake_define
+let mloption_mapPartial_def = cake_define
   `mloption_mapPartial f opt = OPTION_BIND opt f`;;
 hol4_overload "mapPartial" "mloption_mapPartial";;
 
@@ -33,7 +33,7 @@ let composePartial_def = cake_define
   `composePartial f g a = (match g a with
      (SOME v) -> f v | NONE -> NONE)`;;
 
-let compare_def = cake_define
+let mloption_compare_def = cake_define
   `mloption_compare f x y =
      (match x with NONE -> (match y with NONE -> EQUAL | _1 ->
        LESS) | SOME vx -> (match y with NONE -> GREATER | SOME vy ->

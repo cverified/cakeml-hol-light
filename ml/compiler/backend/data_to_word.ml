@@ -114,7 +114,7 @@ let encode_header_def = cake_define
         len < 2 EXP data_to_word_config_len_size conf then SOME
           ((make_header conf (n2w tag) len):'a word) else NONE)`;;
 
-let list_Seq_def = cake_define
+let data_to_word_list_Seq_def = cake_define
   `(data_to_word_list_Seq [] = wordLang_Skip) /\
    (data_to_word_list_Seq [x] = x) /\
    (data_to_word_list_Seq (x :: y :: xs) = Seq x
@@ -221,7 +221,7 @@ let sub_location_def = cake_define
   `Sub_location = Add_location + 1`;;
 let mul_location_def = cake_define
   `Mul_location = Sub_location + 1`;;
-let div_location_def = cake_define
+let data_to_word_Div_location_def = cake_define
   `Div_location = Mul_location + 1`;;
 let mod_location_def = cake_define
   `Mod_location = Div_location + 1`;;
@@ -1100,7 +1100,7 @@ let StringCmpLoop_code_def = cake_define
            Call NONE (SOME StringCmpLoop_location) [0; 2; 4; 6; 8;
              10] NONE]):'a wordLang_prog)`;;
 
-let get_names_def = cake_define_list
+let data_to_word_get_names_def = cake_define_list
   [`data_to_word_get_names NONE = LN`;
    `data_to_word_get_names (SOME x) = x`];;
 hol4_overload "get_names" "data_to_word_get_names";;
@@ -1296,23 +1296,19 @@ let arg4_def = cake_define
   `arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 |
   _4 -> x)`;;
 
-let arg2_pmatch = cake_theorem "arg2_pmatch"
-  (fun () ->
-    `data_to_word_arg2 vs f x = (match vs with [v1; v2] -> f v1 v2 |
-  _5 -> x)`)
-  CHEAT_TAC;;
+let arg2_pmatch = prove
+ (`data_to_word_arg2 vs f x = (match vs with [v1; v2] -> f v1 v2 | _5
+  -> x)`,
+  CHEAT_TAC);;
 
-let arg3_pmatch = cake_theorem "arg3_pmatch"
-  (fun () ->
-    `arg3 vs f x = (match vs with [v1; v2; v3] -> f v1 v2 v3 | _6 ->
-  x)`)
-  CHEAT_TAC;;
+let arg3_pmatch = prove
+ (`arg3 vs f x = (match vs with [v1; v2; v3] -> f v1 v2 v3 | _6 -> x)`,
+  CHEAT_TAC);;
 
-let arg4_pmatch = cake_theorem "arg4_pmatch"
-  (fun () ->
-    `arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 |
-  _7 -> x)`)
-  CHEAT_TAC;;
+let arg4_pmatch = prove
+ (`arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 | _7
+  -> x)`,
+  CHEAT_TAC);;
 
 (* HOL4 data_to_wordScript.sml:1176-1180: ML code, not ported *)
 
@@ -3032,7 +3028,7 @@ let comp_def = cake_define
                        handler,l1)))))`;;
 hol4_overload "comp" "data_to_word_comp";;
 
-let compile_part_def = cake_define
+let data_to_word_compile_part_def = cake_define
   `data_to_word_compile_part c (n,arg_count,p) = (n,arg_count + 1,FST
   (data_to_word_comp c n 2 p))`;;
 hol4_overload "compile_part" "data_to_word_compile_part";;
@@ -3160,7 +3156,7 @@ let ByteCopySub_code_def = cake_define
 let ByteCopyNew_code_def = cake_define
   `ByteCopyNew_code c = (Skip:'a wordLang_prog)`;;
 
-let stubs_def = cake_define
+let data_to_word_stubs_def = cake_define
   `data_to_word_stubs (:'a) data_conf = [
      (FromList_location,4,((FromList_code data_conf):'a
        wordLang_prog));
@@ -3238,18 +3234,16 @@ let stub_names_def = cake_define
      (data_num_stubs - Bignum_location)`;;
 hol4_overload "stub_names" "data_to_word_stub_names";;
 
-let check_stubs_length = cake_theorem "check_stubs_length"
-  (fun () ->
-    `word_num_stubs + LENGTH (data_to_word_stubs (:'a) c) =
-  data_num_stubs`)
-  CHEAT_TAC;;
+let check_stubs_length = prove
+ (`word_num_stubs + LENGTH (data_to_word_stubs (:'a) c) =
+  data_num_stubs`,
+  CHEAT_TAC);;
 
-let check_LongDiv_location = cake_theorem "check_LongDiv_location"
-  (fun () ->
-    `LongDiv_location = div_location`)
-  CHEAT_TAC;;
+let check_LongDiv_location = prove
+ (`LongDiv_location = div_location`,
+  CHEAT_TAC);;
 
-let compile_def = cake_define
+let data_to_word_compile_def = cake_define
   `data_to_word_compile data_conf word_conf asm_conf prog =
      (let data_conf =
        (data_to_word_config_has_fp_tern_fupd (K (asm_config_ISA
@@ -3297,10 +3291,9 @@ let structure_le_def = cake_define
      (structure_le t1 u1 /\ structure_le t2 u2)
       | (_37,_38) -> F`;;
 
-let AnyArith_call_tree_thm = cake_theorem "AnyArith_call_tree_thm"
-  (fun () ->
-    `structure_le
-       (full_call_graph AnyArith_location (fromAList
-         (data_to_word_stubs (:'a) (data_conf))))
-       AnyArith_call_tree`)
-  CHEAT_TAC;;
+let AnyArith_call_tree_thm = prove
+ (`structure_le
+     (full_call_graph AnyArith_location (fromAList
+       (data_to_word_stubs (:'a) (data_conf))))
+     AnyArith_call_tree`,
+  CHEAT_TAC);;

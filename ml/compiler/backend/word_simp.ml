@@ -19,7 +19,7 @@ needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 (* function that makes all Seq associate to the left *)
 
@@ -47,25 +47,25 @@ let seq_assoc_def = cake_define
         SmartSeq p1 (Loop names (Seq_assoc Skip body) exit_names)
         | other -> SmartSeq p1 other`;;
 
-let seq_assoc_pmatch = cake_theorem "Seq_assoc_pmatch"
-  (fun () ->
-    `!p1 prog.
-     Seq_assoc p1 prog =
-     (match prog with Skip -> p1 | (Seq q1 q2) -> Seq_assoc
-       (Seq_assoc p1 q1) q2 | (If v n r q1 q2) ->
-        SmartSeq p1 (If v n r (Seq_assoc Skip q1) (Seq_assoc Skip
-          q2)) | (wordLang_MustTerminate q) ->
-        SmartSeq p1 (wordLang_MustTerminate (Seq_assoc Skip q)) |
-          (Call ret_prog dest args handler) ->
-        SmartSeq p1 (Call (match ret_prog with NONE -> NONE | SOME
-          (x1,x2,q1,x3,x4) -> SOME (x1,x2,Seq_assoc Skip q1,x3,x4))
-          dest args
-             (match handler with NONE -> NONE | SOME (y1,q2,y2,y3)
-               -> SOME (y1,Seq_assoc Skip q2,y2,y3))) | (Loop names body
-               exit_names) ->
-        SmartSeq p1 (Loop names (Seq_assoc Skip body) exit_names)
-          | other -> SmartSeq p1 other)`)
-  CHEAT_TAC;;
+(* Seq_assoc_pmatch *)
+let seq_assoc_pmatch = prove
+ (`!p1 prog.
+   Seq_assoc p1 prog =
+   (match prog with Skip -> p1 | (Seq q1 q2) -> Seq_assoc (Seq_assoc
+     p1 q1) q2 | (If v n r q1 q2) ->
+      SmartSeq p1 (If v n r (Seq_assoc Skip q1) (Seq_assoc Skip q2))
+        | (wordLang_MustTerminate q) ->
+      SmartSeq p1 (wordLang_MustTerminate (Seq_assoc Skip q)) | (Call
+        ret_prog dest args handler) ->
+      SmartSeq p1 (Call (match ret_prog with NONE -> NONE | SOME
+        (x1,x2,q1,x3,x4) -> SOME (x1,x2,Seq_assoc Skip q1,x3,x4))
+        dest args
+           (match handler with NONE -> NONE | SOME (y1,q2,y2,y3) ->
+             SOME (y1,Seq_assoc Skip q2,y2,y3))) | (Loop names body
+             exit_names) ->
+      SmartSeq p1 (Loop names (Seq_assoc Skip body) exit_names) |
+        other -> SmartSeq p1 other)`,
+  CHEAT_TAC);;
 
 (* optimise certain consequtive If statements that arise from data-to-word
 
@@ -80,20 +80,20 @@ let seq_assoc_pmatch = cake_theorem "Seq_assoc_pmatch"
 
 *)
 
-let dest_Seq_def = cake_define
+let word_simp_dest_Seq_def = cake_define
   `word_simp_dest_Seq p =
         match p with
           wordLang_Seq p1 p2 -> (p1,(p2:'a wordLang_prog))
         | p -> (Skip,p)`;;
 hol4_overload "dest_Seq" "word_simp_dest_Seq";;
 
-let word_simp_dest_Seq_pmatch = cake_theorem "dest_Seq_pmatch"
-  (fun () ->
-    `!p.
-     word_simp_dest_Seq p =
-     (match p with
-       Seq p1 p2 -> (p1,(p2:'a wordLang_prog)) | p -> (Skip,p))`)
-  CHEAT_TAC;;
+(* dest_Seq_pmatch *)
+let word_simp_dest_Seq_pmatch = prove
+ (`!p.
+   word_simp_dest_Seq p =
+   (match p with
+     Seq p1 p2 -> (p1,(p2:'a wordLang_prog)) | p -> (Skip,p))`,
+  CHEAT_TAC);;
 
 let dest_If_def = cake_define
   `dest_If x1 =
@@ -102,27 +102,25 @@ let dest_If_def = cake_define
             wordLang_prog))
         | _1 -> NONE`;;
 
-let dest_If_pmatch = cake_theorem "dest_If_pmatch"
-  (fun () ->
-    `!p.
-     dest_If p =
-     (match p with
-       If x1 x2 x3 p1 p2 -> SOME (x1,x2,x3,p1,(p2:'a
-         wordLang_prog)) | _2 -> NONE)`)
-  CHEAT_TAC;;
+let dest_If_pmatch = prove
+ (`!p.
+   dest_If p =
+   (match p with
+     If x1 x2 x3 p1 p2 -> SOME (x1,x2,x3,p1,(p2:'a wordLang_prog))
+       | _2 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_If_Eq_Imm_def = cake_define
   `dest_If_Eq_Imm p =
      (match dest_If p with SOME (Equal,n,Imm w,p1,p2) -> SOME
        (n,w,p1,p2) | _3 -> NONE)`;;
 
-let dest_If_Eq_Imm_pmatch = cake_theorem "dest_If_Eq_Imm_pmatch"
-  (fun () ->
-    `!p.
-     dest_If_Eq_Imm p =
-       (match dest_If p with SOME (Equal,n,Imm w,p1,p2) -> SOME
-         (n,w,p1,p2) | _4 -> NONE)`)
-  CHEAT_TAC;;
+let dest_If_Eq_Imm_pmatch = prove
+ (`!p.
+   dest_If_Eq_Imm p =
+     (match dest_If p with SOME (Equal,n,Imm w,p1,p2) -> SOME
+       (n,w,p1,p2) | _4 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_Seq_Assign_Const_def = cake_define
   `dest_Seq_Assign_Const n p =
@@ -130,15 +128,13 @@ let dest_Seq_Assign_Const_def = cake_define
        match p2 with wordLang_Assign m (wordLang_Const w) -> (if m
          = n then SOME (p1,w) else NONE) | _5 -> NONE)`;;
 
-let dest_Seq_Assign_Const_pmatch =
-  cake_theorem "dest_Seq_Assign_Const_pmatch"
-  (fun () ->
-    `!n p.
-     dest_Seq_Assign_Const n p =
-       (let (p1,p2) = word_simp_dest_Seq p in
-         match p2 with wordLang_Assign m (wordLang_Const w) ->
-           (if m = n then SOME (p1,w) else NONE) | _6 -> NONE)`)
-  CHEAT_TAC;;
+let dest_Seq_Assign_Const_pmatch = prove
+ (`!n p.
+   dest_Seq_Assign_Const n p =
+     (let (p1,p2) = word_simp_dest_Seq p in
+       match p2 with wordLang_Assign m (wordLang_Const w) -> (if m
+         = n then SOME (p1,w) else NONE) | _6 -> NONE)`,
+  CHEAT_TAC);;
 
 (* Constant folding and propagation optimization, e.g.
 
@@ -454,7 +450,7 @@ let push_out_if_def = cake_define
   `push_out_if p = FST (push_out_if_aux p)`;;
 
 
-let compile_exp_def = cake_define
+let word_simp_compile_exp_def = cake_define
   `word_simp_compile_exp (e:'a wordLang_prog) =
      (let e = Seq_assoc Skip e in
      let e = const_fp e in
@@ -463,4 +459,6 @@ let compile_exp_def = cake_define
        e)`;;
 hol4_overload "compile_exp" "word_simp_compile_exp";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

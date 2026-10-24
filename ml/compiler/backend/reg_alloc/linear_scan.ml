@@ -2,8 +2,7 @@
 (*  linear_scan: ported from HOL4's
     compiler/backend/reg_alloc/linear_scanScript.sml
     A definition theory, with 67 definitions, 4 datatypes and 5
-    theorems.  Needed by bvi_letProof.ml, bvl_constProof.ml,
-    linear_scanProof.ml, word_alloc.ml and word_allocProof.ml.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -869,7 +868,7 @@ let partition_moves_def = cake_define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sort_moves_def = cake_define_try_tac (fun () ->
+let linear_scan_sort_moves_def = cake_define_try_tac (fun () ->
   `MEASURE (\(l,r). r - l)`)
   CHEAT_TAC
   `linear_scan_sort_moves l r =

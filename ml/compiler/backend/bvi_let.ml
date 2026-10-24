@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_let: ported from HOL4's
-    compiler/backend/bvi_letScript.sml  *)
+    compiler/backend/bvi_letScript.sml
+    A definition theory, with 6 definitions and 5 theorems.  Needed
+    by bvi_letProof.ml, bvl_to_bvi.ml and bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -49,7 +51,7 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/set_sep.ml";;
 needs "semantics/ast.ml";;
 
-let extract_def = cake_define
+let bvi_let_extract_def = cake_define
   `bvi_let_extract x1 ys =
         match x1 with
           ((Var n):bvi_exp) -> n + LENGTH ys + 1
@@ -70,16 +72,15 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
-let exp2_size_APPEND = cake_theorem "exp2_size_APPEND"
-  (fun () ->
-    `!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs +
-  bvi_exp_size1 ys`)
+let exp2_size_APPEND = prove
+ (`!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs + bvi_exp_size1
+  ys`,
   (* bvi_exp_size1 is HOL4's exp2_size, which the size prelude
      states as a list_size (size_thms "bvi_exp"), so this is
      list_size_APPEND under another name *)
   (let sz = size_thms "bvi_exp" in
    REWRITE_TAC sz THEN
-   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND));;
+   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND)));;
 
 (* the size facts that the termination of the two definitions of
    this file needs, which ml/lib/define.ml takes from here, and the
@@ -100,7 +101,7 @@ let _ = size_thms "bvi_exp";;
    define_single takes as it stands: the strategies that
    cake_define_gen tries before it declare the constant and
    leave it no chance (a minute, which is what this costs) *)
-let compile_def =
+let bvi_let_compile_def =
   let th = end_itlist CONJ (fst (define_single
     [(`MEASURE (list_size bvi_exp_size o SND o SND)`,
       TERM_TAC)]
@@ -158,7 +159,7 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:158-168: the tactic that proves the
    termination *)
-let compile_sing_def = cake_define_list_try_tac (fun () ->
+let bvi_let_compile_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
      (_12,_13,es) -> list_size bvi_exp_size es)`)
   TERM_TAC
@@ -210,12 +211,11 @@ hol4_overload "compile_sing" "bvi_let_compile_sing";;
 cake_term_facts := bvi_let_term_facts;;
 cake_cheat_budget := bvi_let_budget;;
 
-let compile_sing = cake_theorem "compile_sing"
-  (fun () ->
-    `(!n d e. bvi_let_compile n d [e] = [bvi_let_compile_sing n d e]) /\
-     (!n d e. bvi_let_compile_list n d e = bvi_let_compile n d e)`)
-  (let cp = cake_def "bvi_let_compile" in
-   let cs = cake_def "bvi_let_compile_sing" in
+let compile_sing = prove
+ (`(!n d e. bvi_let_compile n d [e] = [bvi_let_compile_sing n d e]) /\
+   (!n d e. bvi_let_compile_list n d e = bvi_let_compile n d e)`,
+  (let cp = bvi_let_compile_def in
+   let cs = bvi_let_compile_sing_def in
    let sz = size_thms "bvi_exp" in
    (* HOL4 does this induction with ho_match_mp_tac compile_sing_ind,
       the induction theorem that its termination proof left behind.
@@ -338,12 +338,12 @@ let compile_sing = cake_theorem "compile_sing"
                      th))]
         THEN DISCH_THEN MATCH_MP_TAC THEN REWRITE_TAC[LE_REFL]) THEN
    INDUCT_TAC THENL
-   [sing_base; CONJ_TAC THENL [part1; part2]]);;
+   [sing_base; CONJ_TAC THENL [part1; part2]]));;
 
-let compile_length = cake_theorem "compile_length[simp]"
-  (fun () ->
-    `!n d xs. LENGTH (bvi_let_compile n d xs) = LENGTH xs`)
-  (let cp = cake_def "bvi_let_compile" in
+(* [simp] *)
+let compile_length = prove
+ (`!n d xs. LENGTH (bvi_let_compile n d xs) = LENGTH xs`,
+  (let cp = bvi_let_compile_def in
    let sz = size_thms "bvi_exp" in
    (* HOL4 takes the induction theorem that its termination proof
       left behind (HO_MATCH_MP_TAC compile_ind); the port induces on
@@ -393,11 +393,10 @@ let compile_length = cake_theorem "compile_length[simp]"
       NAMED_CASES_TAC `xr:bvi_exp list` [[]; ["x2"; "xr2"]] THENL
       [single_case; cons_cons_case]] in
    MEASURE_INDUCT_TAC `list_size bvi_exp_size` THENL
-   [base_case; step_case]);;
+   [base_case; step_case]));;
 
-let compile_HD_SING = cake_theorem "compile_HD_SING"
-  (fun () ->
-    `[HD (bvi_let_compile n d [x])] = bvi_let_compile n d [x]`)
+let compile_HD_SING = prove
+ (`[HD (bvi_let_compile n d [x])] = bvi_let_compile n d [x]`,
   (* the compiled list of one has length one, so it is its own head
      put back into a list *)
   (MP_TAC(SPECL [`n:num list`; `d:num`; `[x:bvi_exp]`]
@@ -405,20 +404,20 @@ let compile_HD_SING = cake_theorem "compile_HD_SING"
    STRUCT_CASES_TAC(ISPEC `bvi_let_compile n d [x]` list_CASES) THEN
    REWRITE_TAC[LENGTH; SUC_INJ; LENGTH_EQ_NIL; NOT_SUC] THEN
    CONV_TAC NUM_REDUCE_CONV THEN
-   TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]);;
+   TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]));;
 
-let compile_exp_def = cake_define
+let bvi_let_compile_exp_def = cake_define
   `bvi_let_compile_exp x =
      (match bvi_let_compile [] 0 [x] with (y :: _14) -> y | _15 ->
        Var 0)
    // impossible`;;
 hol4_overload "compile_exp" "bvi_let_compile_exp";;
 
-let compile_exp_eq = cake_theorem "compile_exp_eq"
-  (fun () ->
-    `!x. bvi_let_compile_exp x = bvi_let_compile_sing [] 0 x`)
+(* compile_exp_eq *)
+let bvi_let_compile_exp_eq = prove
+ (`!x. bvi_let_compile_exp x = bvi_let_compile_sing [] 0 x`,
   (* HOL4 applies compile_sing to compile_exp_def: the compiled
      list of one is a singleton, so the match reduces to its head *)
-  (let ce = cake_def "bvi_let_compile_exp" in
+  (let ce = bvi_let_compile_exp_def in
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_sing] THEN
-   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;

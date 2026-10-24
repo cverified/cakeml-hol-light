@@ -17,7 +17,7 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 let dummy_def = cake_define
   `dummy = bvi_Var 1234567890`;;
@@ -32,12 +32,11 @@ let is_rec_def = cake_define
         | _3 -> F`;;
 hol4_overload "is_rec" "bvi_tailrec_is_rec";;
 
-let is_rec_PMATCH = cake_theorem "is_rec_PMATCH"
-  (fun () ->
-    `!expr. bvi_tailrec_is_rec name expr =
-      (match expr with
-        Call _4 d _5 NONE -> d = SOME name | _6 -> F)`)
-  CHEAT_TAC;;
+let is_rec_PMATCH = prove
+ (`!expr. bvi_tailrec_is_rec name expr =
+    (match expr with
+      Call _4 d _5 NONE -> d = SOME name | _6 -> F)`,
+  CHEAT_TAC);;
 
 let is_const_def = cake_define
   `bvi_tailrec_is_const x1 =
@@ -46,13 +45,12 @@ let is_const_def = cake_define
         | _7 -> F`;;
 hol4_overload "is_const" "bvi_tailrec_is_const";;
 
-let is_const_PMATCH = cake_theorem "is_const_PMATCH"
-  (fun () ->
-    `!op. bvi_tailrec_is_const op =
-      (match op with
-        closLang_IntOp (closLang_Const i) -> small_enough_int i |
-          _8 -> F)`)
-  CHEAT_TAC;;
+let is_const_PMATCH = prove
+ (`!op. bvi_tailrec_is_const op =
+    (match op with
+      closLang_IntOp (closLang_Const i) -> small_enough_int i | _8
+        -> F)`,
+  CHEAT_TAC);;
 
 let assoc_op_INDUCT,assoc_op_RECURSION = define_datatype
   "assoc_op = bvi_tailrec_Plus | bvi_tailrec_Times | \
@@ -88,16 +86,15 @@ let from_op_def = cake_define
        bvi_tailrec_Times else if op = closLang_BlockOp ListAppend
        then Append else bvi_tailrec_Noop)`;;
 
-let from_op_PMATCH = cake_theorem "from_op_PMATCH"
-  (fun () ->
-    `!op.
-      from_op op =
-        (match op with
-          closLang_IntOp closLang_Add -> bvi_tailrec_Plus |
-            closLang_IntOp closLang_Mult -> bvi_tailrec_Times |
-            closLang_BlockOp ListAppend -> Append | _10 ->
-            bvi_tailrec_Noop)`)
-  CHEAT_TAC;;
+let from_op_PMATCH = prove
+ (`!op.
+    from_op op =
+      (match op with
+        closLang_IntOp closLang_Add -> bvi_tailrec_Plus |
+          closLang_IntOp closLang_Mult -> bvi_tailrec_Times |
+          closLang_BlockOp ListAppend -> Append | _10 ->
+          bvi_tailrec_Noop)`,
+  CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:103-107: a theorem that HOL4 states as
    the value of an ML expression: from_op_thm *)
@@ -112,25 +109,24 @@ let op_eq_def = cake_define
         | (Append,(Op op xs)) -> op = closLang_BlockOp ListAppend
         | (_11,_12) -> F`;;
 
-let op_eq_PMATCH = cake_theorem "op_eq_PMATCH"
-  (fun () ->
-    `!a expr.
-       op_eq a expr =
-         (match expr with
-           Op op xs ->
-             (match a with
-               bvi_tailrec_Plus -> op = closLang_IntOp
-                 closLang_Add | bvi_tailrec_Times -> op =
-                 closLang_IntOp closLang_Mult | Append -> op =
-                 closLang_BlockOp ListAppend | _13 -> F) | _14 -> F)`)
-  CHEAT_TAC;;
+let op_eq_PMATCH = prove
+ (`!a expr.
+     op_eq a expr =
+       (match expr with
+         Op op xs ->
+           (match a with
+             bvi_tailrec_Plus -> op = closLang_IntOp closLang_Add |
+               bvi_tailrec_Times -> op = closLang_IntOp closLang_Mult
+               | Append -> op = closLang_BlockOp ListAppend | _13 ->
+               F) | _14 -> F)`,
+  CHEAT_TAC);;
 
-let op_eq_to_op = cake_theorem "op_eq_to_op[simp]"
-  (fun () ->
-    `!iop op xs.
-        op_eq iop (Op op xs:bvi_exp) <=>
-        op = to_op iop /\ ~(iop = bvi_tailrec_Noop)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let op_eq_to_op = prove
+ (`!iop op xs.
+      op_eq iop (Op op xs:bvi_exp) <=>
+      op = to_op iop /\ ~(iop = bvi_tailrec_Noop)`,
+  CHEAT_TAC);;
 
 let apply_op_def = cake_define
   `apply_op op e1 e2 = Op (to_op op) [e1; e2]`;;
@@ -150,13 +146,12 @@ let index_of_def = cake_define
           bvi_Var i -> SOME i
         | _15 -> NONE`;;
 
-let index_of_PMATCH = cake_theorem "index_of_PMATCH"
-  (fun () ->
-    `!expr.
-       index_of expr =
-         (match expr with
-           Var i -> SOME i | _16 -> NONE)`)
-  CHEAT_TAC;;
+let index_of_PMATCH = prove
+ (`!expr.
+     index_of expr =
+       (match expr with
+         Var i -> SOME i | _16 -> NONE)`,
+  CHEAT_TAC);;
 
 let args_from_def = cake_define
   `args_from x1 =
@@ -164,34 +159,30 @@ let args_from_def = cake_define
           bvi_Call t (SOME d) as hdl -> SOME (t,d,as,hdl)
         | _17 -> NONE`;;
 
-let args_from_PMATCH = cake_theorem "args_from_PMATCH"
-  (fun () ->
-    `!expr.
-       args_from expr =
-         (match expr with
-           Call t (SOME d) as hdl -> SOME (t,d,as,hdl) | _18 ->
-             NONE)`)
-  CHEAT_TAC;;
+let args_from_PMATCH = prove
+ (`!expr.
+     args_from expr =
+       (match expr with
+         Call t (SOME d) as hdl -> SOME (t,d,as,hdl) | _18 -> NONE)`,
+  CHEAT_TAC);;
 
 let get_bin_args_def = cake_define
   `get_bin_args op =
      (match op with bvi_Op _19 [e1; e2] -> SOME (e1,e2) | _20 ->
        NONE)`;;
 
-let get_bin_args_PMATCH = cake_theorem "get_bin_args_PMATCH"
-  (fun () ->
-    `!op.
-       get_bin_args op =
-         (match op with
-           Op _21 [e1; e2] -> SOME (e1,e2) | _22 -> NONE)`)
-  CHEAT_TAC;;
+let get_bin_args_PMATCH = prove
+ (`!op.
+     get_bin_args op =
+       (match op with
+         Op _21 [e1; e2] -> SOME (e1,e2) | _22 -> NONE)`,
+  CHEAT_TAC);;
 
-let exp_size_get_bin_args = cake_theorem "exp_size_get_bin_args"
-  (fun () ->
-    `!x x1 x2.
-       get_bin_args x = SOME (x1,x2) ==>
-         bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`)
-  CHEAT_TAC;;
+let exp_size_get_bin_args = prove
+ (`!x x1 x2.
+     get_bin_args x = SOME (x1,x2) ==>
+       bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
+  CHEAT_TAC);;
 
 let opbinargs_def = cake_define
   `opbinargs opr exp = (if ~(op_eq opr exp) then NONE else
@@ -214,15 +205,14 @@ let is_arith_def = cake_define
          closLang_Sub -> T | closLang_IntOp closLang_Mult -> T | _23
          -> F)`;;
 
-let is_arith_PMATCH = cake_theorem "is_arith_PMATCH"
-  (fun () ->
-    `!op.
-       is_arith op =
-         (match op with
-           closLang_IntOp closLang_Add -> T | closLang_IntOp
-             closLang_Sub -> T | closLang_IntOp closLang_Mult -> T |
-             _24 -> F)`)
-  CHEAT_TAC;;
+let is_arith_PMATCH = prove
+ (`!op.
+     is_arith op =
+       (match op with
+         closLang_IntOp closLang_Add -> T | closLang_IntOp
+           closLang_Sub -> T | closLang_IntOp closLang_Mult -> T | _24
+           -> F)`,
+  CHEAT_TAC);;
 
 let is_rel_def = cake_define
   `is_rel op =
@@ -231,15 +221,14 @@ let is_rel_def = cake_define
          closLang_LessEq -> T | closLang_IntOp Greater -> T |
          closLang_IntOp closLang_GreaterEq -> T | _25 -> F)`;;
 
-let is_rel_PMATCH = cake_theorem "is_rel_PMATCH"
-  (fun () ->
-    `!op.
-       is_rel op =
-         (match op with
-           closLang_IntOp closLang_Less -> T | closLang_IntOp
-             closLang_LessEq -> T | closLang_IntOp Greater -> T |
-             closLang_IntOp closLang_GreaterEq -> T | _26 -> F)`)
-  CHEAT_TAC;;
+let is_rel_PMATCH = prove
+ (`!op.
+     is_rel op =
+       (match op with
+         closLang_IntOp closLang_Less -> T | closLang_IntOp
+           closLang_LessEq -> T | closLang_IntOp Greater -> T |
+           closLang_IntOp closLang_GreaterEq -> T | _26 -> F)`,
+  CHEAT_TAC);;
 
 let _ = size_thms "bvi_exp";;
 
@@ -302,22 +291,21 @@ let term_ok_any_def = cake_define_wf
              T x /\ term_ok_any ts F y else F))
         | expr -> F`;;
 
-let is_op_thms = cake_theorem "is_op_thms"
-  (fun () ->
-    `~(is_arith (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_arith
+let is_op_thms = prove
+ (`~(is_arith (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_arith
   (closLang_BlockOp ListAppend)) /\
-     ~(is_rel (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_rel
-       (closLang_BlockOp ListAppend)) /\
-     (!op. ~(op = closLang_BlockOp ListAppend) /\ is_arith op <=>
-       is_arith op) /\
-     (!op. ~(op = closLang_BlockOp ListAppend) /\ ~(is_arith op) /\
-       is_rel op <=> is_rel op) /\
-     (!op. ~(is_arith op) /\ ~(is_rel op) /\ op = closLang_BlockOp
-       (closLang_Cons 0) <=> op = closLang_BlockOp (closLang_Cons 0)) /\
-     (!op. ~(op = closLang_BlockOp ListAppend) /\ op =
-       closLang_BlockOp (closLang_Cons 0) <=> op = closLang_BlockOp
-       (closLang_Cons 0))`)
-  CHEAT_TAC;;
+   ~(is_rel (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_rel
+     (closLang_BlockOp ListAppend)) /\
+   (!op. ~(op = closLang_BlockOp ListAppend) /\ is_arith op <=>
+     is_arith op) /\
+   (!op. ~(op = closLang_BlockOp ListAppend) /\ ~(is_arith op) /\
+     is_rel op <=> is_rel op) /\
+   (!op. ~(is_arith op) /\ ~(is_rel op) /\ op = closLang_BlockOp
+     (closLang_Cons 0) <=> op = closLang_BlockOp (closLang_Cons 0)) /\
+   (!op. ~(op = closLang_BlockOp ListAppend) /\ op =
+     closLang_BlockOp (closLang_Cons 0) <=> op = closLang_BlockOp
+     (closLang_Cons 0))`,
+  CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:322: a theorem that HOL4 states as the
    value of an ML expression: term_ok_any_ind *)
@@ -363,14 +351,13 @@ let decide_ty_def = cake_define
         | (List,List) -> List
         | (_28,_29) -> bvi_tailrec_Any`;;
 
-let decide_ty_PMATCH = cake_theorem "decide_ty_PMATCH"
-  (fun () ->
-    `!ty1 ty2.
-       decide_ty ty1 ty2 =
-         (match (ty1,ty2) with
-           (Int,Int) -> Int | (List,List) -> List | _30 ->
-             bvi_tailrec_Any)`)
-  CHEAT_TAC;;
+let decide_ty_PMATCH = prove
+ (`!ty1 ty2.
+     decide_ty ty1 ty2 =
+       (match (ty1,ty2) with
+         (Int,Int) -> Int | (List,List) -> List | _30 ->
+           bvi_tailrec_Any)`,
+  CHEAT_TAC);;
 
 let LAST1_def = cake_define
   `LAST1 x1 =
@@ -400,22 +387,20 @@ let arg_ty_def = cake_define
       | (closLang_BlockOp ListAppend) -> List
       | _31 -> bvi_tailrec_Any`;;
 
-let arg_ty_PMATCH = cake_theorem "arg_ty_PMATCH"
-  (fun () ->
-    `!op.
-       arg_ty op =
-         (match op with
-           closLang_IntOp closLang_Add -> Int | closLang_IntOp
-             closLang_Sub -> Int | closLang_IntOp closLang_Mult -> Int
-             | closLang_IntOp closLang_Div -> Int | closLang_IntOp
-             closLang_Mod -> Int | closLang_IntOp closLang_LessEq ->
-             Int | closLang_IntOp closLang_Less -> Int |
-             closLang_IntOp Greater -> Int | closLang_IntOp
-             closLang_GreaterEq -> Int | closLang_IntOp
-             (closLang_Const i) -> (if small_enough_int i then Int
-             else bvi_tailrec_Any) | closLang_BlockOp ListAppend ->
-             List | _32 -> bvi_tailrec_Any)`)
-  CHEAT_TAC;;
+let arg_ty_PMATCH = prove
+ (`!op.
+     arg_ty op =
+       (match op with
+         closLang_IntOp closLang_Add -> Int | closLang_IntOp
+           closLang_Sub -> Int | closLang_IntOp closLang_Mult -> Int |
+           closLang_IntOp closLang_Div -> Int | closLang_IntOp
+           closLang_Mod -> Int | closLang_IntOp closLang_LessEq -> Int
+           | closLang_IntOp closLang_Less -> Int | closLang_IntOp
+           Greater -> Int | closLang_IntOp closLang_GreaterEq -> Int |
+           closLang_IntOp (closLang_Const i) -> (if small_enough_int i
+           then Int else bvi_tailrec_Any) | closLang_BlockOp
+           ListAppend -> List | _32 -> bvi_tailrec_Any)`,
+  CHEAT_TAC);;
 
 let op_ty_def = cake_define
   `op_ty x1 =
@@ -432,21 +417,19 @@ let op_ty_def = cake_define
           i then Int else bvi_tailrec_Any)
         | _33 -> bvi_tailrec_Any`;;
 
-let op_ty_PMATCH = cake_theorem "op_ty_PMATCH"
-  (fun () ->
-    `!op.
-       op_ty op =
-         (match op with
-           closLang_IntOp closLang_Add -> Int | closLang_IntOp
-             closLang_Sub -> Int | closLang_IntOp closLang_Mult -> Int
-             | closLang_IntOp closLang_Div -> Int | closLang_IntOp
-             closLang_Mod -> Int | closLang_BlockOp ListAppend -> List
-             | closLang_BlockOp (closLang_Cons tag) -> (if tag =
-             cons_tag \/ tag = nil_tag then List else bvi_tailrec_Any)
-             | closLang_IntOp (closLang_Const i) -> (if
-             small_enough_int i then Int else bvi_tailrec_Any) | _34
-             -> bvi_tailrec_Any)`)
-  CHEAT_TAC;;
+let op_ty_PMATCH = prove
+ (`!op.
+     op_ty op =
+       (match op with
+         closLang_IntOp closLang_Add -> Int | closLang_IntOp
+           closLang_Sub -> Int | closLang_IntOp closLang_Mult -> Int |
+           closLang_IntOp closLang_Div -> Int | closLang_IntOp
+           closLang_Mod -> Int | closLang_BlockOp ListAppend -> List |
+           closLang_BlockOp (closLang_Cons tag) -> (if tag = cons_tag
+           \/ tag = nil_tag then List else bvi_tailrec_Any) |
+           closLang_IntOp (closLang_Const i) -> (if small_enough_int i
+           then Int else bvi_tailrec_Any) | _34 -> bvi_tailrec_Any)`,
+  CHEAT_TAC);;
 
 (* Gather information about expressions:
 
@@ -604,11 +587,10 @@ let scan_expr_sing_def = cake_define_list
         (let (tx,ty,r,op) = scan_expr_sing ts loc x in
           (tx,ty,r,op) :: scan_expr_list tx loc xs)`];;
 
-let scan_expr_eq = cake_theorem "scan_expr_eq"
-  (fun () ->
-    `(!e ts loc. scan_expr ts loc [e] = [scan_expr_sing ts loc e]) /\
-     (!es ts loc. scan_expr ts loc es = scan_expr_list ts loc es)`)
-  CHEAT_TAC;;
+let scan_expr_eq = prove
+ (`(!e ts loc. scan_expr ts loc [e] = [scan_expr_sing ts loc e]) /\
+   (!es ts loc. scan_expr ts loc es = scan_expr_list ts loc es)`,
+  CHEAT_TAC);;
 
 let push_call_def = cake_define
   `push_call n op acc exp x5 =
@@ -647,37 +629,33 @@ let rewrite_def = cake_define
              NONE -> (F,apply_op opr (Var acc) exp) | SOME (xs,f)
                -> (T,push_call next' opr acc xs (args_from f))))`;;
 
-let rewrite_PMATCH = cake_theorem "rewrite_PMATCH"
-  (fun () ->
-    `!loc next' opr acc ts expr.
-       rewrite loc next' opr acc ts expr =
-         (match expr with
-           Var n -> (F,Var n) | If x1 x2 x3 ->
-             (let t1 = FST (HD (scan_expr ts loc [x1])) in
-             let (r2,y2) = rewrite loc next' opr acc t1 x2 in
-             let (r3,y3) = rewrite loc next' opr acc t1 x3 in
-             let z2 = (if r2 then y2 else apply_op opr (Var acc)
-               x2) in
-             let z3 = (if r3 then y3 else apply_op opr (Var acc)
-               x3) in
-               ((r2 \/ r3),If x1 z2 z3)) | Let xs x ->
-             (let ys = scan_expr ts loc xs in
-             let tt = MAP (FST o SND) ys in
-             let tr = (match LAST1 ys with NONE -> ts | SOME c ->
-               FST c) in
-             let (r,y) = rewrite loc next' opr (acc + LENGTH xs)
-               (tt ++ tr) x in
-               (r,Let xs y)) | Tick x ->
-             (let (r,y) = rewrite loc next' opr acc ts x in (r,Tick
-               y)) | Force l v -> (F,Force l v) | _76 ->
-             (match check_op ts opr loc expr with
-               NONE -> (F,apply_op opr (Var acc) expr) | SOME expr2
-                 ->
-               (match opbinargs opr expr2 with
-                 NONE -> (F,apply_op opr (Var acc) expr2) | SOME
-                   (xs,f) -> (T,push_call next' opr acc xs (args_from
-                   f)))))`)
-  CHEAT_TAC;;
+let rewrite_PMATCH = prove
+ (`!loc next' opr acc ts expr.
+     rewrite loc next' opr acc ts expr =
+       (match expr with
+         Var n -> (F,Var n) | If x1 x2 x3 ->
+           (let t1 = FST (HD (scan_expr ts loc [x1])) in
+           let (r2,y2) = rewrite loc next' opr acc t1 x2 in
+           let (r3,y3) = rewrite loc next' opr acc t1 x3 in
+           let z2 = (if r2 then y2 else apply_op opr (Var acc) x2) in
+           let z3 = (if r3 then y3 else apply_op opr (Var acc) x3) in
+             ((r2 \/ r3),If x1 z2 z3)) | Let xs x ->
+           (let ys = scan_expr ts loc xs in
+           let tt = MAP (FST o SND) ys in
+           let tr = (match LAST1 ys with NONE -> ts | SOME c -> FST
+             c) in
+           let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (tt ++
+             tr) x in
+             (r,Let xs y)) | Tick x ->
+           (let (r,y) = rewrite loc next' opr acc ts x in (r,Tick y))
+             | Force l v -> (F,Force l v) | _76 ->
+           (match check_op ts opr loc expr with
+             NONE -> (F,apply_op opr (Var acc) expr) | SOME expr2 ->
+             (match opbinargs opr expr2 with
+               NONE -> (F,apply_op opr (Var acc) expr2) | SOME
+                 (xs,f) -> (T,push_call next' opr acc xs (args_from
+                 f)))))`,
+  CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:694: a theorem that HOL4 states as the
    value of an ML expression: rewrite_eq *)
@@ -720,26 +698,23 @@ let has_rec_sing_def = cake_define_list_cheat CHEAT_TAC
    `has_rec_list loc (x :: xs) =
         (if has_rec_sing loc x then T else has_rec_list loc xs)`];;
 
-let has_rec_eq = cake_theorem "has_rec_eq"
-  (fun () ->
-    `(!e loc. has_rec loc [e] = has_rec_sing loc e) /\
-     (!es loc. has_rec loc es = has_rec_list loc es)`)
-  CHEAT_TAC;;
+let has_rec_eq = prove
+ (`(!e loc. has_rec loc [e] = has_rec_sing loc e) /\
+   (!es loc. has_rec loc es = has_rec_list loc es)`,
+  CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:744: the ML values that the definitions
    below antiquote *)
-let has_rec_test1 = cake_theorem "has_rec_test1"
-  (fun () ->
-    `has_rec1 0 (Let [] (bvi_Call 0 (SOME 0) [] NONE):bvi_exp) <=> F`)
-  CHEAT_TAC;;
+let has_rec_test1 = prove
+ (`has_rec1 0 (Let [] (bvi_Call 0 (SOME 0) [] NONE):bvi_exp) <=> F`,
+  CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:751: the ML values that the definitions
    below antiquote *)
-let has_rec_test2 = cake_theorem "has_rec_test2"
-  (fun () ->
-    `has_rec1 0 (Op (closLang_IntOp closLang_Add) [Call 0 (SOME 0) []
-  NONE; Var 0]:bvi_exp) <=> T`)
-  CHEAT_TAC;;
+let has_rec_test2 = prove
+ (`has_rec1 0 (Op (closLang_IntOp closLang_Add) [Call 0 (SOME 0) []
+  NONE; Var 0]:bvi_exp) <=> T`,
+  CHEAT_TAC);;
 
 let check_exp_def = cake_define
   `check_exp loc arity exp =
@@ -762,7 +737,7 @@ let mk_aux_call_def = cake_define
   `mk_aux_call loc arity id' =
      Call 0 (SOME loc) (id' :: GENLIST (\i. Var i) arity) NONE`;;
 
-let compile_exp_def = cake_define
+let bvi_tailrec_compile_exp_def = cake_define
   `bvi_tailrec_compile_exp loc next' arity exp =
      (match check_exp loc arity exp with
        NONE -> NONE | SOME op ->
@@ -785,41 +760,41 @@ let compile_each_def = cake_define_list
               :: ys)))`];;
 hol4_overload "compile_each" "bvi_tailrec_compile_each";;
 
-let compile_prog_def = cake_define
+let bvi_tailrec_compile_prog_def = cake_define
   `bvi_tailrec_compile_prog do_it next' xs =
      (if do_it then bvi_tailrec_compile_each next' xs else
        (next',xs))`;;
 hol4_overload "compile_prog" "bvi_tailrec_compile_prog";;
 
-let scan_expr_not_nil = cake_theorem "scan_expr_not_nil[simp]"
-  (fun () ->
-    `!x. ~(scan_expr ts loc [x] = [])`)
-  CHEAT_TAC;;
+(* [simp] *)
+let scan_expr_not_nil = prove
+ (`!x. ~(scan_expr ts loc [x] = [])`,
+  CHEAT_TAC);;
 
-let LENGTH_scan_expr = cake_theorem "LENGTH_scan_expr[simp]"
-  (fun () ->
-    `!ts loc xs. LENGTH (scan_expr ts loc xs) = LENGTH xs`)
-  CHEAT_TAC;;
+(* [simp] *)
+let LENGTH_scan_expr = prove
+ (`!ts loc xs. LENGTH (scan_expr ts loc xs) = LENGTH xs`,
+  CHEAT_TAC);;
 
-let scan_expr_SING = cake_theorem "scan_expr_SING[simp]"
-  (fun () ->
-    `[HD (scan_expr ts loc [x])] = scan_expr ts loc [x]`)
-  CHEAT_TAC;;
+(* [simp] *)
+let scan_expr_SING = prove
+ (`[HD (scan_expr ts loc [x])] = scan_expr ts loc [x]`,
+  CHEAT_TAC);;
 
-let scan_expr_HD_SING = cake_theorem "scan_expr_HD_SING[simp]"
-  (fun () ->
-    `HD (scan_expr ts loc [x]) = y <=> scan_expr ts loc [x] = [y]`)
-  CHEAT_TAC;;
+(* [simp] *)
+let scan_expr_HD_SING = prove
+ (`HD (scan_expr ts loc [x]) = y <=> scan_expr ts loc [x] = [y]`,
+  CHEAT_TAC);;
 
-let check_exp_SOME_simp = cake_theorem "check_exp_SOME_simp[simp]"
-  (fun () ->
-    `check_exp loc arity expr = SOME op <=>
-       (?ts ty r.
-         has_rec1 loc expr /\
-         scan_expr (REPLICATE arity bvi_tailrec_Any) loc
-           [expr] = [(ts,ty,r,SOME op)] /\
-         ty = op_type op)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let check_exp_SOME_simp = prove
+ (`check_exp loc arity expr = SOME op <=>
+     (?ts ty r.
+       has_rec1 loc expr /\
+       scan_expr (REPLICATE arity bvi_tailrec_Any) loc
+         [expr] = [(ts,ty,r,SOME op)] /\
+       ty = op_type op)`,
+  CHEAT_TAC);;
 
 (* --- Test rewriting --- *)
 
@@ -829,49 +804,47 @@ let check_exp_SOME_simp = cake_theorem "check_exp_SOME_simp[simp]"
 (* HOL4 bvi_tailrecScript.sml:867-873: the ML values that the
    definitions below antiquote *)
 
-let fac_check_exp = cake_theorem "fac_check_exp[local]"
-  (fun () ->
-    `check_exp 0 1 (Let [Op (closLang_IntOp closLang_LessEq) [Var 0; Op
+(* [local] *)
+let fac_check_exp = prove
+ (`check_exp 0 1 (Let [Op (closLang_IntOp closLang_LessEq) [Var 0; Op
   (closLang_IntOp (closLang_Const (&1))) []]]
-      (bvi_If (bvi_Var 0)
-         (bvi_Op (closLang_IntOp (closLang_Const (&1))) [])
-         (bvi_Let [Op (closLang_IntOp closLang_Sub) [Op
-           (closLang_IntOp (closLang_Const (&1))) []; Var 1]]
-           (bvi_Op (closLang_IntOp closLang_Mult) [Var 2; Call 0
-             (SOME 0) [Var 0] NONE]))):bvi_exp) = SOME
-             bvi_tailrec_Times`)
-  CHEAT_TAC;;
+    (bvi_If (bvi_Var 0)
+       (bvi_Op (closLang_IntOp (closLang_Const (&1))) [])
+       (bvi_Let [Op (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
+         (closLang_Const (&1))) []; Var 1]]
+         (bvi_Op (closLang_IntOp closLang_Mult) [Var 2; Call 0
+           (SOME 0) [Var 0] NONE]))):bvi_exp) = SOME bvi_tailrec_Times`,
+  CHEAT_TAC);;
 
-let fac_compile_exp = cake_theorem "fac_compile_exp"
-  (fun () ->
-    `bvi_tailrec_compile_exp 0 1 1 (Let [Op (closLang_IntOp
+let fac_compile_exp = prove
+ (`bvi_tailrec_compile_exp 0 1 1 (Let [Op (closLang_IntOp
   closLang_LessEq) [Var 0; Op (closLang_IntOp (closLang_Const (&1)))
   []]]
-      (bvi_If (bvi_Var 0)
-         (bvi_Op (closLang_IntOp (closLang_Const (&1))) [])
-         (bvi_Let [Op (closLang_IntOp closLang_Sub) [Op
-           (closLang_IntOp (closLang_Const (&1))) []; Var 1]]
-           (bvi_Op (closLang_IntOp closLang_Mult) [Var 2; Call 0
-             (SOME 0) [Var 0] NONE]))):bvi_exp) = SOME ((Let [Var 0; Op
-             (closLang_IntOp (closLang_Const (&1))) []] (bvi_Let [Op
-             (closLang_IntOp closLang_LessEq) [Var 0; Op (closLang_IntOp
-             (closLang_Const (&1))) []]] (bvi_If (bvi_Var 0) (bvi_Op
-             (closLang_IntOp closLang_Mult) [Var 2; Op (closLang_IntOp
-             (closLang_Const (&1))) []])
-          (bvi_Let [Op (closLang_IntOp closLang_Sub) [Op
-            (closLang_IntOp (closLang_Const (&1))) []; Var 1]] (bvi_Call
-            0 (SOME 1) [Var 0; Op (closLang_IntOp closLang_Mult) [Var 3;
-            Var 2]]
-                NONE))))),(Let [Op (closLang_IntOp
-                  closLang_LessEq) [Var 0; Op (closLang_IntOp
-                  (closLang_Const (&1))) []]] (bvi_If (bvi_Var 0)
-                  (bvi_Op (closLang_IntOp closLang_Mult) [Var 2; Op
-                  (closLang_IntOp (closLang_Const (&1))) []]) (bvi_Let
-                  [Op (closLang_IntOp closLang_Sub) [Op
-                  (closLang_IntOp (closLang_Const (&1))) []; Var 1]]
-                  (bvi_Call 0 (SOME 1) [Var 0; Op (closLang_IntOp
-                  closLang_Mult) [Var 3; Var 2]] NONE)))))`)
-  CHEAT_TAC;;
+    (bvi_If (bvi_Var 0)
+       (bvi_Op (closLang_IntOp (closLang_Const (&1))) [])
+       (bvi_Let [Op (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
+         (closLang_Const (&1))) []; Var 1]]
+         (bvi_Op (closLang_IntOp closLang_Mult) [Var 2; Call 0 (SOME
+           0) [Var 0] NONE]))):bvi_exp) = SOME ((Let [Var 0; Op
+           (closLang_IntOp (closLang_Const (&1))) []] (bvi_Let [Op
+           (closLang_IntOp closLang_LessEq) [Var 0; Op (closLang_IntOp
+           (closLang_Const (&1))) []]] (bvi_If (bvi_Var 0) (bvi_Op
+           (closLang_IntOp closLang_Mult) [Var 2; Op (closLang_IntOp
+           (closLang_Const (&1))) []])
+        (bvi_Let [Op (closLang_IntOp closLang_Sub) [Op
+          (closLang_IntOp (closLang_Const (&1))) []; Var 1]] (bvi_Call 0
+          (SOME 1) [Var 0; Op (closLang_IntOp closLang_Mult) [Var 3; Var
+          2]]
+              NONE))))),(Let [Op (closLang_IntOp closLang_LessEq)
+                [Var 0; Op (closLang_IntOp (closLang_Const (&1))) []]]
+                (bvi_If (bvi_Var 0) (bvi_Op (closLang_IntOp
+                closLang_Mult) [Var 2; Op (closLang_IntOp
+                (closLang_Const (&1))) []]) (bvi_Let [Op
+                (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
+                (closLang_Const (&1))) []; Var 1]] (bvi_Call 0 (SOME
+                1) [Var 0; Op (closLang_IntOp closLang_Mult) [Var 3;
+                Var 2]] NONE)))))`,
+  CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:887-895: the ML values that the
    definitions below antiquote *)
@@ -882,65 +855,66 @@ let fac_compile_exp = cake_theorem "fac_compile_exp"
 (* HOL4 bvi_tailrecScript.sml:908: the ML values that the definitions
    below antiquote *)
 
-let rev_check_exp = cake_theorem "rev_check_exp[local]"
-  (fun () ->
-    `check_exp 444 1 (Let [Op (closLang_IntOp (closLang_Const (&0))) []]
-       (bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq 0 0))
-         [Var 1])
-           (bvi_Op (closLang_BlockOp (closLang_Cons 0)) [])
+(* [local] *)
+let rev_check_exp = prove
+ (`check_exp 444 1 (Let [Op (closLang_IntOp (closLang_Const (&0))) []]
+     (bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq 0 0)) [Var
+       1])
+         (bvi_Op (closLang_BlockOp (closLang_Cons 0)) [])
+         (bvi_Let [Op (closLang_MemOp closLang_El) [Op
+           (closLang_IntOp (closLang_Const (&0))) []; Var 1]]
            (bvi_Let [Op (closLang_MemOp closLang_El) [Op
-             (closLang_IntOp (closLang_Const (&0))) []; Var 1]]
-             (bvi_Let [Op (closLang_MemOp closLang_El) [Op
-               (closLang_IntOp (closLang_Const (&1))) []; Var 2]]
-               (bvi_Op (closLang_BlockOp ListAppend)
-                 [Op (closLang_BlockOp (closLang_Cons 0)) [Op
-                   (closLang_BlockOp (closLang_Cons 0)) []; Var 1];
-                  Call 0 (SOME 444) [Var 0] NONE])))):bvi_exp) =
-                    SOME Append`)
-  CHEAT_TAC;;
+             (closLang_IntOp (closLang_Const (&1))) []; Var 2]]
+             (bvi_Op (closLang_BlockOp ListAppend)
+               [Op (closLang_BlockOp (closLang_Cons 0)) [Op
+                 (closLang_BlockOp (closLang_Cons 0)) []; Var 1];
+                Call 0 (SOME 444) [Var 0] NONE])))):bvi_exp) = SOME
+                  Append`,
+  CHEAT_TAC);;
 
-let rev_compile_exp = cake_theorem "rev_compile_exp[local]"
-  (fun () ->
-    `bvi_tailrec_compile_exp 444 445 1 (Let [Op (closLang_IntOp
+(* [local] *)
+let rev_compile_exp = prove
+ (`bvi_tailrec_compile_exp 444 445 1 (Let [Op (closLang_IntOp
   (closLang_Const (&0))) []]
-       (bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq 0 0))
-         [Var 1])
-           (bvi_Op (closLang_BlockOp (closLang_Cons 0)) [])
+     (bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq 0 0)) [Var
+       1])
+         (bvi_Op (closLang_BlockOp (closLang_Cons 0)) [])
+         (bvi_Let [Op (closLang_MemOp closLang_El) [Op
+           (closLang_IntOp (closLang_Const (&0))) []; Var 1]]
            (bvi_Let [Op (closLang_MemOp closLang_El) [Op
-             (closLang_IntOp (closLang_Const (&0))) []; Var 1]]
-             (bvi_Let [Op (closLang_MemOp closLang_El) [Op
-               (closLang_IntOp (closLang_Const (&1))) []; Var 2]]
-               (bvi_Op (closLang_BlockOp ListAppend)
-                 [Op (closLang_BlockOp (closLang_Cons 0)) [Op
-                   (closLang_BlockOp (closLang_Cons 0)) []; Var 1];
-                  Call 0 (SOME 444) [Var 0] NONE])))):bvi_exp) =
-                    SOME ((Let [Var 0; Op (closLang_BlockOp
-                    (closLang_Cons 0)) []] (bvi_Let [Op (closLang_IntOp
-                    (closLang_Const (&0))) []] (bvi_If (bvi_Op
-                    (closLang_BlockOp (closLang_TagLenEq 0 0)) [Var 1])
-                    (bvi_Op (closLang_BlockOp ListAppend) [Var 2; Op
-                    (closLang_BlockOp (closLang_Cons 0)) []])
+             (closLang_IntOp (closLang_Const (&1))) []; Var 2]]
+             (bvi_Op (closLang_BlockOp ListAppend)
+               [Op (closLang_BlockOp (closLang_Cons 0)) [Op
+                 (closLang_BlockOp (closLang_Cons 0)) []; Var 1];
+                Call 0 (SOME 444) [Var 0] NONE])))):bvi_exp) = SOME
+                  ((Let [Var 0; Op (closLang_BlockOp (closLang_Cons 0))
+                  []] (bvi_Let [Op (closLang_IntOp (closLang_Const
+                  (&0))) []] (bvi_If (bvi_Op (closLang_BlockOp
+                  (closLang_TagLenEq 0 0)) [Var 1]) (bvi_Op
+                  (closLang_BlockOp ListAppend) [Var 2; Op
+                  (closLang_BlockOp (closLang_Cons 0)) []])
+         (bvi_Let [Op (closLang_MemOp closLang_El) [Op
+           (closLang_IntOp (closLang_Const (&0))) []; Var 1]]
            (bvi_Let [Op (closLang_MemOp closLang_El) [Op
-             (closLang_IntOp (closLang_Const (&0))) []; Var 1]]
-             (bvi_Let [Op (closLang_MemOp closLang_El) [Op
-               (closLang_IntOp (closLang_Const (&1))) []; Var 2]]
-               (bvi_Call 0 (SOME 445) [Var 0; Op (closLang_BlockOp
-                 ListAppend) [Var 4; Op (closLang_BlockOp (closLang_Cons
-                 0)) [Op (closLang_BlockOp (closLang_Cons 0)) []; Var
-                 1]]]
-                 NONE)))))),(Let [Op (closLang_IntOp
-                   (closLang_Const (&0))) []] (bvi_If (bvi_Op
-                   (closLang_BlockOp (closLang_TagLenEq 0 0)) [Var 1])
-                   (bvi_Op (closLang_BlockOp ListAppend) [Var 2; Op
-                   (closLang_BlockOp (closLang_Cons 0)) []]) (bvi_Let
-                   [Op (closLang_MemOp closLang_El) [Op
-                   (closLang_IntOp (closLang_Const (&0))) []; Var 1]]
-                   (bvi_Let [Op (closLang_MemOp closLang_El) [Op
-                   (closLang_IntOp (closLang_Const (&1))) []; Var 2]]
-                   (bvi_Call 0 (SOME 445) [Var 0; Op (closLang_BlockOp
-                   ListAppend) [Var 4; Op (closLang_BlockOp
-                   (closLang_Cons 0)) [Op (closLang_BlockOp
-                   (closLang_Cons 0)) []; Var 1]]] NONE))))))`)
-  CHEAT_TAC;;
+             (closLang_IntOp (closLang_Const (&1))) []; Var 2]]
+             (bvi_Call 0 (SOME 445) [Var 0; Op (closLang_BlockOp
+               ListAppend) [Var 4; Op (closLang_BlockOp (closLang_Cons
+               0)) [Op (closLang_BlockOp (closLang_Cons 0)) []; Var 1]]]
+               NONE)))))),(Let [Op (closLang_IntOp (closLang_Const
+                 (&0))) []] (bvi_If (bvi_Op (closLang_BlockOp
+                 (closLang_TagLenEq 0 0)) [Var 1]) (bvi_Op
+                 (closLang_BlockOp ListAppend) [Var 2; Op
+                 (closLang_BlockOp (closLang_Cons 0)) []]) (bvi_Let
+                 [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+                 (closLang_Const (&0))) []; Var 1]] (bvi_Let [Op
+                 (closLang_MemOp closLang_El) [Op (closLang_IntOp
+                 (closLang_Const (&1))) []; Var 2]] (bvi_Call 0 (SOME
+                 445) [Var 0; Op (closLang_BlockOp ListAppend) [Var 4;
+                 Op (closLang_BlockOp (closLang_Cons 0)) [Op
+                 (closLang_BlockOp (closLang_Cons 0)) []; Var 1]]]
+                 NONE))))))`,
+  CHEAT_TAC);;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

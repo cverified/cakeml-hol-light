@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_known: ported from HOL4's
-    compiler/backend/clos_knownScript.sml  *)
+    compiler/backend/clos_knownScript.sml
+    A definition theory, with 29 definitions, 4 datatypes and 12
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -26,7 +28,7 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 
-cake_hide ["all"; "pmatch"];;
+let _ = do_list hide_constant ["all"; "pmatch"];;
 
 (* HOL4 clos_knownScript.sml:16: code that the source has in a
    comment *)
@@ -130,21 +132,18 @@ let get_size_def = cake_define
   `clos_known_get_size e = get_size_aux [e]`;;
 hol4_overload "get_size" "clos_known_get_size";;
 
-let get_size_sc_aux_correct = cake_theorem "get_size_sc_aux_correct"
-  (fun () ->
-    `!xs limit' n. get_size_sc_aux limit' xs = limit' - get_size_aux
-  xs`)
-  CHEAT_TAC;;
+let get_size_sc_aux_correct = prove
+ (`!xs limit' n. get_size_sc_aux limit' xs = limit' - get_size_aux xs`,
+  CHEAT_TAC);;
 
-let get_size_sc_SOME = cake_theorem "get_size_sc_SOME"
-  (fun () ->
-    `!exp limit' n. get_size_sc limit' exp = SOME n ==>
-  clos_known_get_size exp = n`)
-  CHEAT_TAC;;
+let get_size_sc_SOME = prove
+ (`!exp limit' n. get_size_sc limit' exp = SOME n ==>
+  clos_known_get_size exp = n`,
+  CHEAT_TAC);;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let free_def = cake_define_list_cheat CHEAT_TAC
+let clos_known_free_def = cake_define_list_cheat CHEAT_TAC
   [`clos_known_free [] = ([],db_vars_Empty)`;
    `clos_known_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_known_free [x] in
@@ -202,7 +201,7 @@ hol4_overload "free" "clos_known_free";;
 (* HOL4 clos_knownScript.sml:175-220: code that the source has in a
    comment *)
 
-let closed_def = cake_define
+let clos_known_closed_def = cake_define
   `clos_known_closed x = (\t. t = LN) (db_to_set (SND
   (clos_known_free [x])))`;;
 hol4_overload "closed" "clos_known_closed";;
@@ -273,7 +272,7 @@ hol4_overload "Other" "clos_known_Other";;
 hol4_overload "Impossible" "clos_known_Impossible";;
 (* HOL4 clos_knownScript.sml:276: ML code, not ported *)
 
-let merge_def = cake_define
+let clos_known_merge_def = cake_define
   `clos_known_merge x y =
         match (x,y) with
           (clos_known_Impossible,y) -> y
@@ -326,10 +325,9 @@ let merge_tup_def = cake_define_wf
 (* HOL4 clos_knownScript.sml:323-342: code that the source has in a
    comment *)
 
-let merge_alt = cake_theorem "merge_alt"
-  (fun () ->
-    `!x y. merge x y = merge_tup (x,y)`)
-  CHEAT_TAC;;
+let merge_alt = prove
+ (`!x y. merge x y = merge_tup (x,y)`,
+  CHEAT_TAC);;
 
 let known_op_def = cake_define
   `known_op op as g =
@@ -355,36 +353,35 @@ let known_op_def = cake_define
               _10 -> (clos_known_Other,g))
         | op -> (clos_known_Other,g)`;;
 
-let known_op_pmatch = cake_theorem "known_op_pmatch"
-  (fun () ->
-    `!op as g.
-     known_op op as g =
-     (match op with
-       closLang_GlobOp (closLang_Global n) ->
-        (if NULL as then
-          match sptree_lookup n g with NONE -> (clos_known_Other,g)
-            | SOME x -> (x,g) else (clos_known_Other,g)) |
-            closLang_GlobOp (closLang_SetGlobal n) ->
-       (match as with [] -> (clos_known_Other,g) | (a :: xs) ->
-          (match sptree_lookup n g with NONE ->
-            (clos_known_Other,sptree_insert n a g) | SOME other ->
-            (clos_known_Other,sptree_insert n (merge other a) g))) |
-            closLang_BlockOp (closLang_Cons tg) -> (clos_known_Tuple tg
-            as,g) | closLang_IntOp (closLang_Const i) -> (Int i,g) |
-            closLang_MemOp closLang_El ->
-       (match as with [clos_known_Tuple _11 xs; Int i] ->
-            (if (&0) <= i /\ i < &(LENGTH xs) then (EL
-              (num_of_int i) xs,g) else (clos_known_Other,g)) |
-              clos_known_Impossible :: xs -> (clos_known_Impossible,g)
-              | _12 :: clos_known_Impossible :: xs ->
-              (clos_known_Impossible,g) | _13 -> (clos_known_Other,g))
-              | _14 -> (clos_known_Other,g))`)
-  CHEAT_TAC;;
+let known_op_pmatch = prove
+ (`!op as g.
+   known_op op as g =
+   (match op with
+     closLang_GlobOp (closLang_Global n) ->
+      (if NULL as then
+        match sptree_lookup n g with NONE -> (clos_known_Other,g) |
+          SOME x -> (x,g) else (clos_known_Other,g)) | closLang_GlobOp
+          (closLang_SetGlobal n) ->
+     (match as with [] -> (clos_known_Other,g) | (a :: xs) ->
+        (match sptree_lookup n g with NONE ->
+          (clos_known_Other,sptree_insert n a g) | SOME other ->
+          (clos_known_Other,sptree_insert n (merge other a) g))) |
+          closLang_BlockOp (closLang_Cons tg) -> (clos_known_Tuple tg
+          as,g) | closLang_IntOp (closLang_Const i) -> (Int i,g) |
+          closLang_MemOp closLang_El ->
+     (match as with [clos_known_Tuple _11 xs; Int i] ->
+          (if (&0) <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
+            xs,g) else (clos_known_Other,g)) | clos_known_Impossible
+            :: xs -> (clos_known_Impossible,g) | _12 ::
+            clos_known_Impossible :: xs -> (clos_known_Impossible,g) |
+            _13 -> (clos_known_Other,g)) | _14 ->
+            (clos_known_Other,g))`,
+  CHEAT_TAC);;
 
-let clos_known_EL_MEM_LEMMA = cake_theorem "EL_MEM_LEMMA[local]"
-  (fun () ->
-    `!xs i x. i < LENGTH xs /\ (x = EL i xs) ==> MEM x xs`)
-  CHEAT_TAC;;
+(* EL_MEM_LEMMA[local] *)
+let clos_known_EL_MEM_LEMMA = prove
+ (`!xs i x. i < LENGTH xs /\ (x = EL i xs) ==> MEM x xs`,
+  CHEAT_TAC);;
 
 let clos_approx_def = cake_define
   `clos_approx max_size loc num_args body =
@@ -407,13 +404,12 @@ let isGlobal_def = cake_define
           closLang_GlobOp (closLang_Global _15) -> T
         | _16 -> F`;;
 
-let isGlobal_pmatch = cake_theorem "isGlobal_pmatch"
-  (fun () ->
-    `!op.
-       isGlobal op =
-       (match op with
-         closLang_GlobOp (closLang_Global _17) -> T | _18 -> F)`)
-  CHEAT_TAC;;
+let isGlobal_pmatch = prove
+ (`!op.
+     isGlobal op =
+     (match op with
+       closLang_GlobOp (closLang_Global _17) -> T | _18 -> F)`,
+  CHEAT_TAC);;
 
 let gO_destApx_def = cake_define
   `gO_destApx x1 =
@@ -453,7 +449,7 @@ let mk_config_def = cake_define
   `mk_config max_body_size inline_factor = mk_clos_known_config
   max_body_size inline_factor inline_factor LN`;;
 
-let default_config_def = cake_define
+let clos_known_default_config_def = cake_define
   `clos_known_default_config max_app = mk_config
   (default_max_body_size max_app default_inline_factor)
   default_inline_factor`;;
@@ -484,12 +480,11 @@ let decide_inline_def = cake_define
                  inlD_LetInline body else inlD_Annotate loc) else
                    inlD_Nothing) | _20 -> inlD_Nothing)`;;
 
-let decide_inline_LetInline = cake_theorem "decide_inline_LetInline"
-  (fun () ->
-    `!c fapx lopt arity body.
-       decide_inline c fapx lopt arity = inlD_LetInline body ==>
-         0 < clos_known_config_inline_factor c`)
-  CHEAT_TAC;;
+let decide_inline_LetInline = prove
+ (`!c fapx lopt arity body.
+     decide_inline c fapx lopt arity = inlD_LetInline body ==> 0 <
+       clos_known_config_inline_factor c`,
+  CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
@@ -605,28 +600,24 @@ let known_def = cake_define_list_try_tac (fun () ->
          let (e1,a1) = HD ea1 in
            ([(Letrec t loc_opt NONE new_fns e1,a1)],g))`];;
 
-let known_LENGTH = cake_theorem "known_LENGTH"
-  (fun () ->
-    `!limit' es vs g. LENGTH (FST (known limit' es vs g)) = LENGTH es`)
-  CHEAT_TAC;;
+let known_LENGTH = prove
+ (`!limit' es vs g. LENGTH (FST (known limit' es vs g)) = LENGTH es`,
+  CHEAT_TAC);;
 
-let known_LENGTH_EQ_E = cake_theorem "known_LENGTH_EQ_E"
-  (fun () ->
-    `known limit es vs g0 = (alist,g) ==> LENGTH alist = LENGTH es`)
-  CHEAT_TAC;;
+let known_LENGTH_EQ_E = prove
+ (`known limit es vs g0 = (alist,g) ==> LENGTH alist = LENGTH es`,
+  CHEAT_TAC);;
 
-let known_sing = cake_theorem "known_sing"
-  (fun () ->
-    `!limit' e vs g. ?e' a g'. known limit' [e] vs g = ([(e',a)],g')`)
-  CHEAT_TAC;;
+let known_sing = prove
+ (`!limit' e vs g. ?e' a g'. known limit' [e] vs g = ([(e',a)],g')`,
+  CHEAT_TAC);;
 
-let known_sing_EQ_E = cake_theorem "known_sing_EQ_E"
-  (fun () ->
-    `!limit' e vs g0 all' g. known limit' [e] vs g0 = (all',g) ==>
-  (?e' apx. all' = [(e',apx)])`)
-  CHEAT_TAC;;
+let known_sing_EQ_E = prove
+ (`!limit' e vs g0 all' g. known limit' [e] vs g0 = (all',g) ==> (?e'
+  apx. all' = [(e',apx)])`,
+  CHEAT_TAC);;
 
-let compile_def = cake_define_list
+let clos_known_compile_def = cake_define_list
   [`clos_known_compile NONE exps = (NONE,exps)`;
    `clos_known_compile (SOME c) exps =
       (let exps = clos_fvs_compile exps in
@@ -637,7 +628,7 @@ let compile_def = cake_define_list
           c),es2))`];;
 hol4_overload "compile" "clos_known_compile";;
 
-let compile_inc_def = cake_define
+let clos_known_compile_inc_def = cake_define
   `clos_known_compile_inc c g (es,xs) =
      (let (eas,g') = known (reset_inline_factor c) es [] g in
        (g',MAP FST eas,xs))`;;
@@ -759,4 +750,7 @@ EVAL ``
 (* HOL4 clos_knownScript.sml:797-921: code that the source has in a
    comment *)
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["all";
+   "pmatch"];;

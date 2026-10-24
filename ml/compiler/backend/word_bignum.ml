@@ -505,7 +505,7 @@ let code_acc_next_def = cake_define
 let install_def = cake_define
   `install c (n,code_list') = (n,c :: code_list')`;;
 
-let compile_exp_def = cake_define
+let word_bignum_compile_exp_def = cake_define
   `word_bignum_compile_exp x1 =
       match x1 with
         wordLang_Op b [x1; x2] -> wordLang_Op b
@@ -571,7 +571,7 @@ let SaveRegs_def = cake_define_list
    `SaveRegs (n :: ns) = ((Seq (Set (Temp (n2w n)) (Var (n + 2)))
   (SaveRegs ns)):'a wordLang_prog)`];;
 
-let compile_def = cake_define
+let word_bignum_compile_def = cake_define
   `word_bignum_compile n l i cs x5 =
         match x5 with
           word_bignum_Skip -> (wordLang_Skip,l,i,cs)

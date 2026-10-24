@@ -163,10 +163,9 @@ let all_bytes_def = cake_define
 (* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the
    value of an ML expression: all_bytes_eq *)
 
-let byte_to_string_eq = cake_theorem "byte_to_string_eq"
-  (fun () ->
-    `!b. byte_to_string b = sub all_bytes (w2n b)`)
-  CHEAT_TAC;;
+let byte_to_string_eq = prove
+ (`!b. byte_to_string b = sub all_bytes (w2n b)`,
+  CHEAT_TAC);;
 
 (* gas allows 0-9a-zA-Z_$. in labels as long as the first is _A-Za-z *)
 (* we prefix labels and reserve $; . is special *)

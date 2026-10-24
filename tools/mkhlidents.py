@@ -1,0 +1,47 @@
+"""the OCaml identifiers that are taken before the port loads
+
+  python3 -I tools/mkhlidents.py > tools/hl-idents.txt
+
+A theorem or a definition of the port is a binding, and OCaml has
+one namespace, so a binding of the port that HOL Light or the hand
+written part of the library layer has already must get the name of
+its theory in front of it (tools/port.py's bindname) -- otherwise
+it shadows the one that was there, and a proof that names it gets
+the port's statement instead of HOL Light's lemma with no error at
+all.
+
+This writes the list of those names: the top level bindings of the
+files that HOL Light's hol_lib.ml loads, of help.ml, database.ml
+and Library/words.ml (what ml/lib/preamble.ml adds), and of the
+hand written files of ml/lib.  Run it again when the switch is
+upgraded or a hand written library file gains a binding.
+"""
+import os, re, sys, glob
+
+T = os.path.dirname(os.path.abspath(__file__)) + '/'
+HL = os.environ.get('HOLLIGHT',
+                    os.path.expanduser('~/.opam/hol-light/lib/hol_light'))
+HAND = ['bag', 'define', 'fastdef', 'finite_map', 'hol4', 'lemmas',
+        'llist', 'mc_tailrec', 'path', 'preamble', 'records',
+        'relation', 'string4', 'tactics', 'theorem', 'words4']
+BIND = re.compile(r"^(?:let rec|let|and) ([A-Za-z_][A-Za-z_0-9']*)",
+                  re.M)
+
+
+def main():
+  files = ['help.ml', 'database.ml', 'Library/words.ml']
+  files += re.findall(r'^loads "([a-z_0-9]+\.ml)"',
+                      open(HL + '/hol_lib.ml').read(), re.M)
+  names = set()
+  for f in files:
+    try: names |= set(BIND.findall(open(HL + '/' + f).read()))
+    except OSError: print('no %s/%s' % (HL, f), file=sys.stderr)
+  for h in HAND:
+    names |= set(BIND.findall(open(T + '../ml/lib/%s.ml' % h).read()))
+  for n in sorted(names): print(n)
+  print('%d identifiers of %d files of HOL Light and %d of ml/lib'
+        % (len(names), len(files), len(HAND)), file=sys.stderr)
+
+
+if __name__ == '__main__':
+  main()

@@ -1,11 +1,11 @@
-### env_rel_length
+### bvl_constProof_env_rel_length
   (* HOL4 states env_rel as four clauses, which its Induct and its
      fs [env_rel_def] use one at a time; the port states it as one
      match on the tuple of the arguments, so the clauses are taken
      off it first.  Every proof of this file that unfolds the
      relation starts that way (the rewrite is a LAND_CONV, because
      the relation stands on both sides of the clause it proves). *)
-  (let er = cake_def "bvl_constProof_env_rel" in
+  (let er = bvl_constProof_env_rel_def in
    let erc = map (fun t ->
      prove(t, GEN_REWRITE_TAC LAND_CONV [er] THEN
               MATCH_REDUCE_TAC THEN REWRITE_TAC[]))
@@ -31,10 +31,10 @@
     REWRITE_TAC[LENGTH; SUC_INJ] THEN STRIP_TAC THEN
     FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]])
 
-### env_rel_LLOOKUP_NONE
+### bvl_constProof_env_rel_LLOOKUP_NONE
   (* the environments are the same list up to the entries that the
      relation gives a value for, and oEL is HOL4's LLOOKUP *)
-  (let er = cake_def "bvl_constProof_env_rel" in
+  (let er = bvl_constProof_env_rel_def in
    let erc = map (fun t ->
      prove(t, GEN_REWRITE_TAC LAND_CONV [er] THEN
               MATCH_REDUCE_TAC THEN REWRITE_TAC[]))
@@ -65,11 +65,11 @@
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     TRY(FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[])])
 
-### env_rel_LOOKUP_SOME
+### bvl_constProof_env_rel_LOOKUP_SOME
   (* and where the relation does give a value for an entry, that
      value and the two environments from that point on are what
      v_rel relates *)
-  (let er = cake_def "bvl_constProof_env_rel" in
+  (let er = bvl_constProof_env_rel_def in
    let erc = map (fun t ->
      prove(t, GEN_REWRITE_TAC LAND_CONV [er] THEN
               MATCH_REDUCE_TAC THEN REWRITE_TAC[]))
@@ -99,12 +99,12 @@
        EXISTS_TAC `at:(bvl_exp option) list` THEN
        ASM_REWRITE_TAC[]))
 
-### evaluate_delete_var_Rerr_SING
+### bvl_constProof_evaluate_delete_var_Rerr_SING
   (* delete_var changes a Var and nothing else, and a Var that
      evaluates to an error is out of range, which is the one error
      that this theorem leaves out *)
-  (let dv = cake_def "bvl_const_delete_var" in
-   let ev = cake_def "bvlSem_evaluate" in
+  (let dv = bvl_const_delete_var_def in
+   let ev = bvlSem_evaluate_def in
    let res_rws = [PAIR_EQ;
                   distinctness "semanticPrimitives_result";
                   injectivity "semanticPrimitives_result"] in
@@ -116,12 +116,12 @@
    GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
    COND_CASES_TAC THEN REWRITE_TAC res_rws THEN ASM_MESON_TAC[])
 
-### evaluate_delete_var_Rerr
-  (let dv = cake_def "bvl_const_delete_var" in
-   let ev = cake_def "bvlSem_evaluate" in
-   let da = cake_def "bvlSem_do_app" in
-   let dia = cake_def "bvlSem_do_int_app" in
-   let fc = cake_def "bvlSem_fix_clock" in
+### bvl_constProof_evaluate_delete_var_Rerr
+  (let dv = bvl_const_delete_var_def in
+   let ev = bvlSem_evaluate_def in
+   let da = bvlSem_do_app_def in
+   let dia = bvlSem_do_int_app_def in
+   let fc = bvlSem_fix_clock_def in
    let res_rws = [PAIR_EQ;
                   distinctness "semanticPrimitives_result";
                   injectivity "semanticPrimitives_result"] in
@@ -193,18 +193,18 @@
        FIRST_ASSUM(fun ih ->
          RES2_THEN ih (SOLVED(ASM_REWRITE_TAC res_rws))))])
 
-### evaluate_delete_var_Rval
+### bvl_constProof_evaluate_delete_var_Rval
   (let rty = `:(bvlSem_v list,bvlSem_v)
                 semanticPrimitives_result` in
-   let dv = cake_def "bvl_const_delete_var" in
-   let ev = cake_def "bvlSem_evaluate" in
-   let da = cake_def "bvlSem_do_app" in
-   let dia = cake_def "bvlSem_do_int_app" in
-   let fc = cake_def "bvlSem_fix_clock" in
-   let ex = cake_def "bvl_const_extract" in
-   let exl = cake_def "bvl_const_extract_list" in
-   let er = cake_def "bvl_constProof_env_rel" in
-   let vr = cake_def "bvl_constProof_v_rel" in
+   let dv = bvl_const_delete_var_def in
+   let ev = bvlSem_evaluate_def in
+   let da = bvlSem_do_app_def in
+   let dia = bvlSem_do_int_app_def in
+   let fc = bvlSem_fix_clock_def in
+   let ex = bvl_const_extract_def in
+   let exl = bvl_const_extract_list_def in
+   let er = bvl_constProof_env_rel_def in
+   let vr = bvl_constProof_v_rel_def in
    let res_rws = [PAIR_EQ;
                   distinctness "semanticPrimitives_result";
                   injectivity "semanticPrimitives_result"] in
@@ -423,7 +423,7 @@
   (* the lengths of the expressions and of the values they
      evaluate to are the same, so a result of no values comes from
      no expressions, and no expression touches the state *)
-  (let ev = cake_def "bvlSem_evaluate" in
+  (let ev = bvlSem_evaluate_def in
    EQ_TAC THENL
    [DISCH_TAC THEN
     FIRST_ASSUM(fun th ->
@@ -437,7 +437,7 @@
 ### dest_simple_eq
   (* the case split of HOL4 is the split along the patterns of the
      match, which EVERY_CASE_TAC makes (PORTING-GUIDE.md entry 1) *)
-  (let ds = cake_def "dest_simple" in
+  (let ds = dest_simple_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
       distinctness "closLang_op"; injectivity "closLang_op";
@@ -454,7 +454,7 @@
    COND_CASES_TAC THEN ASM_REWRITE_TAC con_rws)
 
 ### case_op_const_eq
-  (let coc = cake_def "case_op_const" in
+  (let coc = case_op_const_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
       distinctness "closLang_op"; injectivity "closLang_op";
@@ -472,9 +472,9 @@
    TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ))
 
 ### delete_var_code_labels
-  (let dv = cake_def "bvl_const_delete_var" in
-   let gcl = cake_def "bvlProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+  (let dv = bvl_const_delete_var_def in
+   let gcl = bvlProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    GEN_TAC THEN
    STRUCT_CASES_TAC(ISPEC `x:bvl_exp` (cases_of `:bvl_exp`)) THEN
    REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
@@ -483,8 +483,8 @@
                UNION_EMPTY; EMPTY_UNION])
 
 ### dest_simple_SOME_code_labels
-  (let gcl = cake_def "bvlProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+  (let gcl = bvlProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    REPEAT GEN_TAC THEN REWRITE_TAC[dest_simple_eq] THEN
    DISCH_THEN SUBST1_TAC THEN
    REWRITE_TAC[gcl; agcl] THEN MATCH_REDUCE_TAC THEN
@@ -499,10 +499,10 @@
      simp [EXTENSION] and metis_tac; here the operation is decided
      first (the eleven it looks at), then the matches, and what is
      left is a union of the same sets in another order *)
-  (let so2 = cake_def "SmartOp2" in
-   let bl = cake_def "bvl_Bool" in
-   let gcl = cake_def "bvlProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+  (let so2 = SmartOp2_def in
+   let bl = bool_def in
+   let gcl = bvlProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    let lset = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY] in
    let con_rws =
@@ -563,11 +563,11 @@
 ### SmartOp1_code_labels
   (* SmartOp1 folds an equality with a constant, and then both
      sides have no labels at all *)
-  (let so1 = cake_def "SmartOp1" in
-   let dei = cake_def "dest_EqualInt" in
-   let bl = cake_def "bvl_Bool" in
-   let gcl = cake_def "bvlProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+  (let so1 = SmartOp1_def in
+   let dei = dest_EqualInt_def in
+   let bl = bool_def in
+   let gcl = bvlProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
       distinctness "closLang_op"; injectivity "closLang_op";
@@ -593,11 +593,11 @@
    REWRITE_TAC set_rws)
 
 ### SmartOp_code_labels
-  (let so = cake_def "bvl_const_SmartOp" in
-   let sof = cake_def "SmartOp_flip" in
-   let bl = cake_def "bvl_Bool" in
-   let gcl = cake_def "bvlProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+  (let so = SmartOp_def in
+   let sof = SmartOp_flip_def in
+   let bl = bool_def in
+   let gcl = bvlProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    let lset = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY] in
    let con_rws =
@@ -636,10 +636,10 @@
    flip_tac THEN flip_tac THEN flip_tac)
 
 ### MEM_extract_list_code_labels
-  (let ex = cake_def "bvl_const_extract" in
-   let exl = cake_def "bvl_const_extract_list" in
-   let gcl = cake_def "bvlProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+  (let ex = bvl_const_extract_def in
+   let exl = bvl_const_extract_list_def in
+   let gcl = bvlProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
       distinctness "option"; injectivity "option"] in
@@ -660,18 +660,18 @@
      (fun eq -> ACCEPT_TAC(MATCH_MP extract_cl (SYM eq)))
      (fun m -> FIRST_ASSUM(fun ih -> ACCEPT_TAC(MATCH_MP ih m)))))
 
-### compile_code_labels
+### bvl_constProof_compile_code_labels
   (* HOL4 takes the induction theorem that its termination proof
      left behind (recInduct compile_ind); the port induces on the
      measure the definition was made with.  What the proof says is
      that compile adds no label of its own: every label of the
      result is one of the expressions it compiled or one of the
      expressions the environment holds *)
-  (let cp = cake_def "bvl_const_compile" in
-   let ex = cake_def "bvl_const_extract" in
-   let exl = cake_def "bvl_const_extract_list" in
-   let gcl = cake_def "bvlProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+  (let cp = bvl_const_compile_def in
+   let ex = bvl_const_extract_def in
+   let exl = bvl_const_extract_list_def in
+   let gcl = bvlProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    let sz = size_thms "bvl_exp" in
    let lset = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY] in
@@ -878,10 +878,10 @@
    MEASURE_INDUCT_TAC `list_size bvl_exp_size` THENL
    [base_case; step_case])
 
-### compile_exp_code_labels
+### bvl_constProof_compile_exp_code_labels
   (* the compiled list of one is a singleton, so compile_exp is the
      head of it, and the empty environment allows nothing *)
-  (let ce = cake_def "bvl_const_compile_exp" in
+  (let ce = bvl_const_compile_exp_def in
    let labs_sing = prove
     (`!x e. BIGUNION (set_of_list
               (MAP bvlProps_get_code_labels
@@ -907,11 +907,11 @@
      the right, which costs nothing because a constant cannot fail
      and leaves the state alone, and the operations it does it for
      are the ones where the two sides can be swapped *)
-  (let ev = cake_def "bvlSem_evaluate" in
-   let da = cake_def "bvlSem_do_app" in
-   let dia = cake_def "bvlSem_do_int_app" in
-   let fc = cake_def "bvlSem_fix_clock" in
-   let sof = cake_def "SmartOp_flip" in
+  (let ev = bvlSem_evaluate_def in
+   let da = bvlSem_do_app_def in
+   let dia = bvlSem_do_int_app_def in
+   let fc = bvlSem_fix_clock_def in
+   let sof = SmartOp_flip_def in
    let fce = bvlSem_fix_clock_evaluate in
    let rty = `:(bvlSem_v list,bvlSem_v)
                 semanticPrimitives_result` in
@@ -1033,14 +1033,14 @@
      tactic below; the nine that restructure two operations at once
      are the folding lemmas, whose atoms the proof has to name.
      (Two minutes, of which the lemmas are three quarters.) *)
-  (let ev = cake_def "bvlSem_evaluate" in
-   let da = cake_def "bvlSem_do_app" in
-   let de = cake_def "bvlSem_do_eq" in
-   let dia = cake_def "bvlSem_do_int_app" in
-   let fc = cake_def "bvlSem_fix_clock" in
-   let bl = cake_def "bvl_Bool" in
-   let bv = cake_def "bvlSem_Boolv" in
-   let so2 = cake_def "SmartOp2" in
+  (let ev = bvlSem_evaluate_def in
+   let da = bvlSem_do_app_def in
+   let de = bvlSem_do_eq_def in
+   let dia = bvlSem_do_int_app_def in
+   let fc = bvlSem_fix_clock_def in
+   let bl = bool_def in
+   let bv = bvlSem_Boolv_def in
+   let so2 = SmartOp2_def in
    let fce = bvlSem_fix_clock_evaluate in
    let rty = `:(bvlSem_v list,bvlSem_v)
                 semanticPrimitives_result` in
@@ -1362,14 +1362,14 @@
 
 ### SmartOp1_thm
   (* SmartOp1 folds an equality with a constant into a boolean *)
-  (let ev = cake_def "bvlSem_evaluate" in
-   let da = cake_def "bvlSem_do_app" in
-   let dia = cake_def "bvlSem_do_int_app" in
-   let fc = cake_def "bvlSem_fix_clock" in
-   let bl = cake_def "bvl_Bool" in
-   let bv = cake_def "bvlSem_Boolv" in
-   let so1 = cake_def "SmartOp1" in
-   let dei = cake_def "dest_EqualInt" in
+  (let ev = bvlSem_evaluate_def in
+   let da = bvlSem_do_app_def in
+   let dia = bvlSem_do_int_app_def in
+   let fc = bvlSem_fix_clock_def in
+   let bl = bool_def in
+   let bv = bvlSem_Boolv_def in
+   let so1 = SmartOp1_def in
+   let dei = dest_EqualInt_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
       distinctness "closLang_op"; injectivity "closLang_op";
@@ -1430,7 +1430,7 @@
   (* and SmartOp itself is the three of them: two expressions go
      through the flip and then SmartOp2, one through SmartOp1, and
      anything else is left alone *)
-  (let so = cake_def "bvl_const_SmartOp" in
+  (let so = SmartOp_def in
    REWRITE_TAC[so] THEN EVERY_CASE_TAC THENL
    [DISCH_THEN(ACCEPT_TAC o CONJUNCT1);
     MATCH_ACCEPT_TAC SmartOp1_thm;
@@ -1448,16 +1448,16 @@
         ACCEPT_TAC(MATCH_MP SmartOp2_thm (CONJ th1 nt)) gl)));
     DISCH_THEN(ACCEPT_TAC o CONJUNCT1)])
 
-### evaluate_env_rel
+### bvl_constProof_evaluate_env_rel
   ((* ---- the pieces ---------------------------------------------- *)
-   let cp = cake_def "bvl_const_compile" in
-   let ev = cake_def "bvlSem_evaluate" in
-   let er = cake_def "bvl_constProof_env_rel" in
-   let vr = cake_def "bvl_constProof_v_rel" in
-   let fc = cake_def "bvlSem_fix_clock" in
-   let bl = cake_def "bvl_Bool" in
-   let bv = cake_def "bvlSem_Boolv" in
-   let da = cake_def "bvlSem_do_app" in
+   let cp = bvl_const_compile_def in
+   let ev = bvlSem_evaluate_def in
+   let er = bvl_constProof_env_rel_def in
+   let vr = bvl_constProof_v_rel_def in
+   let fc = bvlSem_fix_clock_def in
+   let bl = bool_def in
+   let bv = bvlSem_Boolv_def in
+   let da = bvlSem_do_app_def in
    let fce = bvlSem_fix_clock_evaluate in
    let sz = size_thms "bvl_exp" in
    let hd_sing = bvl_const_compile_HD_SING in
@@ -1517,8 +1517,8 @@
     (`!b c. (bvlSem_Boolv b = bvlSem_Boolv c) <=> (b = c)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[bv; injectivity "bvlSem_v";
-                 cake_def "bool_to_tag"; cake_def "true_tag";
-                 cake_def "false_tag"] THEN
+                 bool_to_tag_def; true_tag_def;
+                 false_tag_def] THEN
      BOOL_CASES_TAC `b:bool` THEN BOOL_CASES_TAC `c:bool` THEN
      REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV) in
    (* ---- the shared steps ---------------------------------------- *)
@@ -1944,12 +1944,12 @@
     sub_cases;
     TRY cons_cons_case])
 
-### compile_thm
+### bvl_constProof_compile_thm
   (* evaluate_env_rel at ax = [], where env_rel [] env env is
      env = env.  The environment is taken out of the goal: the
      state of the statement has type variables of its own
      (PORTING-GUIDE.md entry 12) *)
-  (let er = cake_def "bvl_constProof_env_rel" in
+  (let er = bvl_constProof_env_rel_def in
    let env_rel_refl = prove
     (`!env. bvl_constProof_env_rel (:'c) (:'ffi) [] env env`,
      GEN_TAC THEN ONCE_REWRITE_TAC[er] THEN
@@ -1962,10 +1962,10 @@
        ACCEPT_TAC(SPEC_ALL(MATCH_MP bvl_constProof_evaluate_env_rel
          (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne)))))))
 
-### evaluate_compile_exp
+### bvl_constProof_evaluate_compile_exp
   (* the compiled list of one is a singleton, so compile_exp is its
      head, and compile_thm is the theorem about the whole list *)
-  (let ce = cake_def "bvl_const_compile_exp" in
+  (let ce = bvl_const_compile_exp_def in
    STRIP_TAC THEN REWRITE_TAC[ce] THEN
    GEN_REWRITE_TAC ONCE_DEPTH_CONV [GSYM bvl_const_compile_HD_SING]
    THEN MATCH_REDUCE_TAC THEN

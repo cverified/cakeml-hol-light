@@ -27,7 +27,9 @@ def main():
   portmod.check_no_run = lambda: None
   db = dbmod.Db()
   n = bad = 0
+  binds = []
   for thy, path, kind in dbmod.load_order():
+    was = dict(db.thmbind)
     try:
       p, warn, amb = portmod.port(thy, db)
     except Exception as e:
@@ -35,6 +37,8 @@ def main():
       bad += 1
       continue
     n += 1
+    binds.append((thy, {k: v for k, v in db.thmbind.items()
+                        if was.get(k) != v}))
     if open(p).read().count('PORT FAILED'):
       print('%-24s PORT FAILED' % thy)
       bad += 1
@@ -42,6 +46,20 @@ def main():
   # known when every file has its needs
   import preface
   preface.main()
+  # the identifier that each theorem of the port is bound to, which
+  # the proof store needs to name a theorem of an earlier file
+  with open(out + 'thmbind.txt', 'w') as f:
+    for thy, names in binds:
+      for nm, b in sorted(names.items()):
+        f.write('%s %s %s\n' % (thy, nm, b))
+  # and the statements in the order the files state them, so that a
+  # name that a file states twice is told apart by its binding
+  with open(out + 'emitted.txt', 'w') as f:
+    for thy, nm, b in portmod.EMITTED:
+      f.write('%s %s %s\n' % (thy, nm, b))
+  with open(out + 'defbind.txt', 'w') as f:
+    for thy, c, b in portmod.EMITTED_DEFS:
+      f.write('%s %s %s\n' % (thy, c, b))
   diff = []
   for thy, path, kind in dbmod.load_order():
     try:

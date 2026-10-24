@@ -28,12 +28,11 @@ let seq_stack_alloc_def = cake_define
      (match p with Seq (stackLang_StackAlloc k) _1 -> SOME k | _2
        -> NONE)`;;
 
-let seq_stack_alloc_pmatch = cake_theorem "seq_stack_alloc_pmatch"
-  (fun () ->
-    `seq_stack_alloc (p:'a stackLang_prog) =
-       (match p with Seq (stackLang_StackAlloc k) _3 -> SOME k |
-         _4 -> NONE)`)
-  CHEAT_TAC;;
+let seq_stack_alloc_pmatch = prove
+ (`seq_stack_alloc (p:'a stackLang_prog) =
+     (match p with Seq (stackLang_StackAlloc k) _3 -> SOME k | _4
+       -> NONE)`,
+  CHEAT_TAC);;
 
 let collect_info_def = cake_define_list
   [`collect_info [] f = f`;
@@ -48,13 +47,11 @@ let dest_case_def = cake_define
      (match p1 with stackLang_StackFree k -> (match p2 with Call
        NONE (INL d) NONE -> SOME (k,d) | _5 -> NONE) | _6 -> NONE)`;;
 
-let dest_case_pmatch = cake_theorem "dest_case_pmatch"
-  (fun () ->
-    `dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
-       (match p1 with stackLang_StackFree k -> (match p2 with
-         Call NONE (INL d) NONE -> SOME (k,d) | _7 -> NONE) | _8 ->
-         NONE)`)
-  CHEAT_TAC;;
+let dest_case_pmatch = prove
+ (`dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
+     (match p1 with stackLang_StackFree k -> (match p2 with Call
+       NONE (INL d) NONE -> SOME (k,d) | _7 -> NONE) | _8 -> NONE)`,
+  CHEAT_TAC);;
 
 let comp_seq_def = cake_define
   `comp_seq (p1:'a stackLang_prog) (p2:'a stackLang_prog) i (default:'a
@@ -67,7 +64,7 @@ let comp_seq_def = cake_define
                 Seq Tick (Seq (stackLang_StackAlloc (l - k))
                   (stackLang_RawCall dest)))) | _9 -> default)`;;
 
-let comp_def = cake_define
+let stack_rawcall_comp_def = cake_define
   `stack_rawcall_comp i (p:'a stackLang_prog) =
      (match p with Seq p1 p2 -> comp_seq p1 p2 i (Seq
        (stack_rawcall_comp i p1) (stack_rawcall_comp i p2)) | If c r ri
@@ -87,14 +84,13 @@ let comp_top_def = cake_define
      (match p with Seq p1 p2 -> Seq (comp i p1) (comp i p2) | _11
        -> comp i p)`;;
 
-let comp_top_pmatch = cake_theorem "comp_top_pmatch"
-  (fun () ->
-    `comp_top i (p:'a stackLang_prog) =
-       (match p with Seq p1 p2 -> Seq (comp i p1) (comp i p2) |
-         _12 -> comp i p)`)
-  CHEAT_TAC;;
+let comp_top_pmatch = prove
+ (`comp_top i (p:'a stackLang_prog) =
+     (match p with Seq p1 p2 -> Seq (comp i p1) (comp i p2) | _12
+       -> comp i p)`,
+  CHEAT_TAC);;
 
-let compile_def = cake_define
+let stack_rawcall_compile_def = cake_define
   `stack_rawcall_compile prog =
      (let i = collect_info prog LN in
        MAP (\(n,(b:'a stackLang_prog)). (n,comp_top i b)) prog)`;;

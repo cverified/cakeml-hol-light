@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bviSem: ported from HOL4's
-    compiler/backend/semantics/bviSemScript.sml  *)
+    compiler/backend/semantics/bviSemScript.sml
+    A definition theory, with 12 definitions, 3 datatypes and 7
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -56,16 +58,16 @@ hol4_overload "state_code_fupd" "bviSem_state_code_fupd";;
 hol4_overload "state_ffi" "bviSem_state_ffi";;
 hol4_overload "state_ffi_fupd" "bviSem_state_ffi_fupd";;
 
-let dec_clock_def = cake_define
+let bviSem_dec_clock_def = cake_define
   `bviSem_dec_clock x s = state_clock_fupd (K (state_clock s - x)) s`;;
 hol4_overload "dec_clock" "bviSem_dec_clock";;
 
-let bviSem_LESS_EQ_dec_clock = cake_theorem "LESS_EQ_dec_clock[local]"
-  (fun () ->
-    `state_clock
-       r <= state_clock (dec_clock x s) ==> state_clock r <=
-         state_clock s`)
-  CHEAT_TAC;;
+(* LESS_EQ_dec_clock[local] *)
+let bviSem_LESS_EQ_dec_clock = prove
+ (`state_clock
+     r <= state_clock (dec_clock x s) ==> state_clock r <=
+       state_clock s`,
+  CHEAT_TAC);;
 
 let bvi_to_bvl_def = cake_define
   `(bvi_to_bvl:('c,'ffi)bviSem_state->('c,'ffi)bvlSem_state) s =
@@ -83,7 +85,7 @@ let bvl_to_bvi_def = cake_define
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let finalise_cons_def = cake_define_try_tac (fun () ->
+let bviSem_finalise_cons_def = cake_define_try_tac (fun () ->
   `MEASURE (CARD o FDOM o SND)`)
   CHEAT_TAC
   `bviSem_finalise_cons v refs =
@@ -180,7 +182,7 @@ let do_app_aux_def = cake_define
            (closLang_CopyByte T),_17) -> NONE | _18 -> SOME NONE)`;;
 hol4_overload "do_app_aux" "bviSem_do_app_aux";;
 
-let do_install_def = cake_define
+let bviSem_do_install_def = cake_define
   `bviSem_do_install vs (s:('c,'ffi)bviSem_state) =
        (match vs with [v1; v2; vl1; vl2] ->
             (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -211,7 +213,7 @@ let do_install_def = cake_define
                              Rtype_error))`;;
 hol4_overload "do_install" "bviSem_do_install";;
 
-let do_app_def = cake_define
+let bviSem_do_app_def = cake_define
   `bviSem_do_app op vs (s:('c,'ffi)bviSem_state) =
      (if op = closLang_Install then do_install vs s else
      match bviSem_do_app_aux op vs s with NONE -> Rerr (Rabort
@@ -229,7 +231,7 @@ hol4_overload "BadRef" "bviSem_BadRef";;
 hol4_overload "NotThunk" "bviSem_NotThunk";;
 hol4_overload "IsThunk" "bviSem_IsThunk";;
 
-let dest_thunk_def = cake_define
+let bviSem_dest_thunk_def = cake_define
   `bviSem_dest_thunk vs refs =
       match vs with
         (RefPtr b ptr:bvlSem_v) ->
@@ -246,36 +248,36 @@ hol4_overload "dest_thunk" "bviSem_dest_thunk";;
 (* The evaluation is defined as a clocked functional version of
    a conventional big-step operational semantics. *)
 
-let fix_clock_def = cake_define
+let bviSem_fix_clock_def = cake_define
   `bviSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "bviSem_fix_clock";;
 
-let bviSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
-  (fun () ->
-    `fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`)
-  CHEAT_TAC;;
+(* fix_clock_IMP[local] *)
+let bviSem_fix_clock_IMP = prove
+ (`fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`,
+  CHEAT_TAC);;
 
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of bvi_exp expressions. *)
 
-let fix_clock_IMP =
+let bviSem_fix_clock_IMP =
   try prove
    (`!s x res s1. bviSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; bviSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bviSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "bviSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nbviSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl bviSem_fix_clock_IMP <> `T` then
+  cake_term_facts := bviSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
@@ -284,7 +286,7 @@ let _ = size_thms "flatLang_exp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_try_tac (fun () ->
+let bviSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
                               (\(xs,env,s). (state_clock s,xs)))`)
   CHEAT_TAC
@@ -388,23 +390,23 @@ hol4_overload "evaluate" "bviSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
-let bviSem_do_app_const = cake_theorem "do_app_const"
-  (fun () ->
-    `(bviSem_do_app op args s1 = Rval (res,s2)) ==>
-      (state_clock s2 = state_clock s1)`)
-  CHEAT_TAC;;
+(* do_app_const *)
+let bviSem_do_app_const = prove
+ (`(bviSem_do_app op args s1 = Rval (res,s2)) ==>
+    (state_clock s2 = state_clock s1)`,
+  CHEAT_TAC);;
 
-let bviSem_evaluate_clock = cake_theorem "evaluate_clock"
-  (fun () ->
-    `!xs env s1 vs s2.
-       (bviSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock s2
-         <= state_clock s1`)
-  CHEAT_TAC;;
+(* evaluate_clock *)
+let bviSem_evaluate_clock = prove
+ (`!xs env s1 vs s2.
+     (bviSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock s2 <=
+       state_clock s1`,
+  CHEAT_TAC);;
 
-let bviSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
-  (fun () ->
-    `fix_clock s (evaluate (xs,env,s)) = evaluate (xs,env,s)`)
-  CHEAT_TAC;;
+(* fix_clock_evaluate *)
+let bviSem_fix_clock_evaluate = prove
+ (`fix_clock s (evaluate (xs,env,s)) = evaluate (xs,env,s)`,
+  CHEAT_TAC);;
 
 
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
@@ -417,12 +419,12 @@ let bviSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
 
 (* observational semantics *)
 
-let initial_state_def = cake_define
+let bviSem_initial_state_def = cake_define
   `bviSem_initial_state ffi code co cc k = mk_bviSem_state FEMPTY k
   NONE cc co code ffi`;;
 hol4_overload "initial_state" "bviSem_initial_state";;
 
-let semantics_def = cake_define
+let bviSem_semantics_def = cake_define
   `bviSem_semantics init_ffi code co cc start' =
    (let es = [bvi_Call 0 (SOME start') [] NONE] in
    let init = initial_state init_ffi code co cc in

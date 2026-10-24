@@ -31,7 +31,7 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["num_stubs"; "pmatch"];;
+let _ = do_list hide_constant ["num_stubs"; "pmatch"];;
 
 let destLet_def = cake_define
   `destLet x1 =
@@ -39,13 +39,12 @@ let destLet_def = cake_define
           ((Let xs b):bvl_exp) -> (xs,b)
         | _1 -> ([],Var 0)`;;
 
-let destLet_pmatch = cake_theorem "destLet_pmatch"
-  (fun () ->
-    `!exp.
-     destLet exp =
-       (match exp with
-         Let xs b -> (xs,b) | _2 -> ([],Var 0))`)
-  CHEAT_TAC;;
+let destLet_pmatch = prove
+ (`!exp.
+   destLet exp =
+     (match exp with
+       Let xs b -> (xs,b) | _2 -> ([],Var 0))`,
+  CHEAT_TAC);;
 
 (* HOL4 bvl_to_bviScript.sml:37: the ML values that the definitions
    below antiquote *)
@@ -109,12 +108,10 @@ let global_count_sing_def = cake_define_list_wf
    `global_count_list (x :: xs) = ((
          global_count_sing x + global_count_list xs):num)`];;
 
-let alloc_glob_count_eq_global_count_list =
-  cake_theorem "alloc_glob_count_eq_global_count_list"
-  (fun () ->
-    `(!e. global_count_sing e = alloc_glob_count [e]) /\
-     (!es. global_count_list es = alloc_glob_count es)`)
-  CHEAT_TAC;;
+let alloc_glob_count_eq_global_count_list = prove
+ (`(!e. global_count_sing e = alloc_glob_count [e]) /\
+   (!es. global_count_list es = alloc_glob_count es)`,
+  CHEAT_TAC);;
 
 let AllocGlobal_location_def = cake_define
   `AllocGlobal_location = data_num_stubs`;;
@@ -502,30 +499,25 @@ let compile_exps_sing_def = cake_define_try_tac (fun () ->
       let (c2,aux2,n2) = compile_exps_list n1 xs in
         (c1 :: c2,aux1 ++ aux2,n2)))`;;
 
-let compile_exps_sing = cake_theorem "compile_exps_sing"
-  (fun () ->
-    `(!n e. bvl_to_bvi_compile_exps n [e] =
-            (let (x,y,z) = compile_exps_sing n e in ([x],y,z))) /\
-     (!n es. compile_exps_list n es = bvl_to_bvi_compile_exps n
-       es)`)
-  CHEAT_TAC;;
+let compile_exps_sing = prove
+ (`(!n e. bvl_to_bvi_compile_exps n [e] =
+          (let (x,y,z) = compile_exps_sing n e in ([x],y,z))) /\
+   (!n es. compile_exps_list n es = bvl_to_bvi_compile_exps n es)`,
+  CHEAT_TAC);;
 
-let compile_exps_LENGTH_lemma =
-  cake_theorem "compile_exps_LENGTH_lemma[local]"
-  (fun () ->
-    `!n xs. (LENGTH (FST (bvl_to_bvi_compile_exps n xs)) = LENGTH xs)`)
-  CHEAT_TAC;;
+(* [local] *)
+let compile_exps_LENGTH_lemma = prove
+ (`!n xs. (LENGTH (FST (bvl_to_bvi_compile_exps n xs)) = LENGTH xs)`,
+  CHEAT_TAC);;
 
-let compile_exps_LENGTH = cake_theorem "compile_exps_LENGTH"
-  (fun () ->
-    `(bvl_to_bvi_compile_exps n xs = (ys,aux,n1)) ==> (LENGTH ys =
-  LENGTH xs)`)
-  CHEAT_TAC;;
+let compile_exps_LENGTH = prove
+ (`(bvl_to_bvi_compile_exps n xs = (ys,aux,n1)) ==> (LENGTH ys =
+  LENGTH xs)`,
+  CHEAT_TAC);;
 
-let compile_exps_SING = cake_theorem "compile_exps_SING"
-  (fun () ->
-    `(bvl_to_bvi_compile_exps n [x] = (c,aux,n1)) ==> (?y. c = [y])`)
-  CHEAT_TAC;;
+let compile_exps_SING = prove
+ (`(bvl_to_bvi_compile_exps n [x] = (c,aux,n1)) ==> (?y. c = [y])`,
+  CHEAT_TAC);;
 
 let compile_single_def = cake_define
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
@@ -535,14 +527,13 @@ let compile_single_def = cake_define
            name,arg_count,bvi_let_compile_exp (HD c))] ++ aux,n1))`;;
 hol4_overload "compile_single" "bvl_to_bvi_compile_single";;
 
-let compile_single_eq = cake_theorem "compile_single_eq"
-  (fun () ->
-    `bvl_to_bvi_compile_single n (name,arg_count,exp) =
-       (let (c,aux,n1) = compile_exps_sing n exp in
-         (
-           List [(bvl_num_stubs + bvl_to_bvi_namespaces *
-             name,arg_count,bvi_let_compile_exp c)] ++ aux,n1))`)
-  CHEAT_TAC;;
+let compile_single_eq = prove
+ (`bvl_to_bvi_compile_single n (name,arg_count,exp) =
+     (let (c,aux,n1) = compile_exps_sing n exp in
+       (
+         List [(bvl_num_stubs + bvl_to_bvi_namespaces *
+           name,arg_count,bvi_let_compile_exp c)] ++ aux,n1))`,
+  CHEAT_TAC);;
 
 let compile_list_def = cake_define_list
   [`bvl_to_bvi_compile_list n [] = (List [],n)`;
@@ -552,14 +543,14 @@ let compile_list_def = cake_define_list
            (code1 ++ code2,n2))`];;
 hol4_overload "compile_list" "bvl_to_bvi_compile_list";;
 
-let compile_inc_def = cake_define
+let bvl_to_bvi_compile_inc_def = cake_define
   `// incremental version used by Install
    bvl_to_bvi_compile_inc n prog =
      (let (p1,n1) = bvl_to_bvi_compile_list n prog in
        (n1,append p1))`;;
 hol4_overload "compile_inc" "bvl_to_bvi_compile_inc";;
 
-let compile_prog_def = cake_define
+let bvl_to_bvi_compile_prog_def = cake_define
   `bvl_to_bvi_compile_prog start' n prog =
      (let k = alloc_glob_count (MAP (\(_14,_15,p). p) prog) in
      let (code,n1) = compile_list n prog in
@@ -615,7 +606,7 @@ let get_names_def = cake_define
            "_bvi_aux") in (\x y. strcat x y) n aux))) final_nums)`;;
 hol4_overload "get_names" "bvl_to_bvi_get_names";;
 
-let compile_def = cake_define
+let bvl_to_bvi_compile_def = cake_define
   `bvl_to_bvi_compile start' c names prog =
      (let (inlines,prog) = bvl_inline_compile_prog
        (bvl_to_bvi_config_inline_size_limit c)
@@ -656,4 +647,7 @@ let bvl_to_bvi_compile_inc_all_def = cake_define
 
 hol4_only "++" "APPEND";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["num_stubs";
+   "pmatch"];;

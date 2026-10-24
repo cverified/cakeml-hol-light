@@ -56,6 +56,15 @@ def hl_names():
                         if l.strip())
 
 
+def hl_idents():
+  """the OCaml identifiers that are taken before the port loads:
+     the bindings of HOL Light and of the hand written part of the
+     library layer, which a binding of the port may not shadow
+     (tools/mkhlidents.py writes the list)"""
+  return set(l.strip() for l in open(T + 'hl-idents.txt')
+             if l.strip())
+
+
 # the hand written files of the library layer
 HANDWRITTEN = ['hol4.ml', 'words4.ml', 'finite_map.ml', 'llist.ml',
                'path.ml']
@@ -112,6 +121,7 @@ class Db:
   def __init__(self):
     self.order = load_order()
     self.hl = hl_names()
+    self.hlids = hl_idents()
     self.provided = provided_names()
     self.provided_thy = provided_thys()
     self.read_fixities()

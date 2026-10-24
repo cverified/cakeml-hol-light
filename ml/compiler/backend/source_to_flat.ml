@@ -109,10 +109,9 @@ let type_group_id_type_def = cake_define
       | (SOME (cn,NONE)) -> SOME (cn,NONE)
       | (SOME (cn,(SOME (ty_id,ctors)))) -> SOME (cn,SOME ty_id)`;;
 
-let type_group_id_type_MAP = cake_theorem "type_group_id_type_MAP"
-  (fun () ->
-    `type_group_id_type = OPTION_MAP (I ## OPTION_MAP FST)`)
-  CHEAT_TAC;;
+let type_group_id_type_MAP = prove
+ (`type_group_id_type = OPTION_MAP (I ## OPTION_MAP FST)`,
+  CHEAT_TAC);;
 
 let str_sep_def = cake_define
   `str_sep = (implode "_")`;;
@@ -135,7 +134,7 @@ let _ = size_thms "mlstring";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_exp_def = cake_define_list_try_tac (fun () ->
+let source_to_flat_compile_exp_def = cake_define_list_try_tac (fun () ->
   `inv_image (<) (\x. match x with INL (t,x,e) -> ast_exp_size e | INR
      (INL (t,x,es)) -> list_size ast_exp_size es | INR (INR (INL
      (t,x,pes))) -> list_size (pair_size ast_pat_size ast_exp_size)
@@ -292,36 +291,32 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
 hol4_overload "compile_exp" "source_to_flat_compile_exp";;
 hol4_overload "compile_exps" "source_to_flat_compile_exps";;
 
-let compile_exps_append = cake_theorem "compile_exps_append"
-  (fun () ->
-    `!env es es'.
-      compile_exps t env (es ++ es') =
-      compile_exps t env es ++ compile_exps t env es'`)
-  CHEAT_TAC;;
+let compile_exps_append = prove
+ (`!env es es'.
+    compile_exps t env (es ++ es') =
+    compile_exps t env es ++ compile_exps t env es'`,
+  CHEAT_TAC);;
 
-let compile_exps_reverse = cake_theorem "compile_exps_reverse"
-  (fun () ->
-    `!env es.
-      compile_exps t env (REVERSE es) = REVERSE (compile_exps t
-        env es)`)
-  CHEAT_TAC;;
+let compile_exps_reverse = prove
+ (`!env es.
+    compile_exps t env (REVERSE es) = REVERSE (compile_exps t env
+      es)`,
+  CHEAT_TAC);;
 
-let compile_funs_map = cake_theorem "compile_funs_map"
-  (fun () ->
-    `!env funs.
-      compile_funs t env funs =
-        MAP (\(f,x,e). (f,x,compile_exp
-          (f :: t) (source_to_flat_environment_v_fupd (K (nsBind
-            x (source_to_flat_Local backend_common_None x)
-            (source_to_flat_environment_v env))) env) e)) funs`)
-  CHEAT_TAC;;
+let compile_funs_map = prove
+ (`!env funs.
+    compile_funs t env funs =
+      MAP (\(f,x,e). (f,x,compile_exp
+        (f :: t) (source_to_flat_environment_v_fupd (K (nsBind x
+          (source_to_flat_Local backend_common_None x)
+          (source_to_flat_environment_v env))) env) e)) funs`,
+  CHEAT_TAC);;
 
-let compile_funs_dom = cake_theorem "compile_funs_dom"
-  (fun () ->
-    `!funs.
-      (MAP (\(x,y,z). x) funs) =
-      (MAP (\(x,y,z). x) (compile_funs t env funs))`)
-  CHEAT_TAC;;
+let compile_funs_dom = prove
+ (`!funs.
+    (MAP (\(x,y,z). x) funs) =
+    (MAP (\(x,y,z). x) (compile_funs t env funs))`,
+  CHEAT_TAC);;
 
 let om_tra_def = cake_define
   `om_tra = Cons orphan_trace 1`;;
@@ -332,18 +327,16 @@ let alloc_defs_def = cake_define_list
         (x,source_to_flat_Glob om_tra next') :: alloc_defs (n +
           1) (next' + 1) xs`];;
 
-let fst_alloc_defs = cake_theorem "fst_alloc_defs"
-  (fun () ->
-    `!n next' l. MAP FST (alloc_defs n next' l) = l`)
-  CHEAT_TAC;;
+let fst_alloc_defs = prove
+ (`!n next' l. MAP FST (alloc_defs n next' l) = l`,
+  CHEAT_TAC);;
 
-let alloc_defs_append = cake_theorem "alloc_defs_append"
-  (fun () ->
-    `!m n l1 l2.
-       alloc_defs m n (l1 ++ l2) =
-       alloc_defs m n l1 ++ alloc_defs (m + LENGTH l1) (n +
-         LENGTH l1) l2`)
-  CHEAT_TAC;;
+let alloc_defs_append = prove
+ (`!m n l1 l2.
+     alloc_defs m n (l1 ++ l2) =
+     alloc_defs m n l1 ++ alloc_defs (m + LENGTH l1) (n + LENGTH
+       l1) l2`,
+  CHEAT_TAC);;
 
 let make_varls_def = cake_define
   `make_varls n t idx x4 =
@@ -413,7 +406,7 @@ let simple_dlet_def = cake_define
 let _ = size_thms "dec";;
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_decs_def = cake_define_try_tac (fun () ->
+let source_to_flat_compile_decs_def = cake_define_try_tac (fun () ->
   `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`)
   CHEAT_TAC
   `source_to_flat_compile_decs t n next' env envs' x6 =
@@ -543,7 +536,7 @@ let alloc_env_ref_def = cake_define
      [App backend_common_None (flatLang_Src ast_Opref) [Con
        backend_common_None NONE []]])`;;
 
-let compile_prog_def = cake_define
+let source_to_flat_compile_prog_def = cake_define
   `source_to_flat_compile_prog c p =
      (let next' = next_indices_vidx_fupd (K (next_indices_vidx (next
        c) + 1)) (next c) in
@@ -590,7 +583,7 @@ let inc_compile_prog_def = cake_define
          glob_alloc next' c :: p') ++ [store_env_id (generation
            gen) (next gen)]))`;;
 
-let compile_def = cake_define
+let source_to_flat_compile_def = cake_define
   `source_to_flat_compile c p =
      (let (c',p') = source_to_flat_compile_prog c p in
      let p' = compile_flat (source_to_flat_config_pattern_cfg c') p'

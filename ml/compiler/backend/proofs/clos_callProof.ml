@@ -22,7 +22,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["C"; "vars"];;
+let _ = do_list hide_constant ["C"; "vars"];;
 
 (* TODO These are the same. Put in closLang? *)
 hol4_overload "free" "clos_call_free";;
@@ -44,23 +44,21 @@ hol4_overload "wf" "sptree_wf";;
 (* HOL4 clos_callProofScript.sml:34-39: a theorem whose statement the
    port cannot state yet: v_size_lemma *)
 
-let code_locs_GENLIST_Var = cake_theorem "code_locs_GENLIST_Var[simp]"
-  (fun () ->
-    `!n t i. code_locs (GENLIST_Var t i n) = []`)
-  CHEAT_TAC;;
+(* [simp] *)
+let code_locs_GENLIST_Var = prove
+ (`!n t i. code_locs (GENLIST_Var t i n) = []`,
+  CHEAT_TAC);;
 
-let fv_GENLIST_Var_tra = cake_theorem "fv_GENLIST_Var_tra"
-  (fun () ->
-    `!n tra i. fv v (GENLIST_Var tra i n) <=> v < n`)
-  CHEAT_TAC;;
+let fv_GENLIST_Var_tra = prove
+ (`!n tra i. fv v (GENLIST_Var tra i n) <=> v < n`,
+  CHEAT_TAC);;
 
-let evaluate_GENLIST_Var_tra = cake_theorem "evaluate_GENLIST_Var_tra"
-  (fun () ->
-    `!n tr i.
-     closSem_evaluate (GENLIST_Var tr i n,env,s) =
-     (if n <= LENGTH env then (Rval (TAKE n env),s) else (Rerr
-       (Rabort Rtype_error),s))`)
-  CHEAT_TAC;;
+let evaluate_GENLIST_Var_tra = prove
+ (`!n tr i.
+   closSem_evaluate (GENLIST_Var tr i n,env,s) =
+   (if n <= LENGTH env then (Rval (TAKE n env),s) else (Rerr
+     (Rabort Rtype_error),s))`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_callProofScript.sml:63-67: ML code, not ported *)
 
@@ -77,23 +75,22 @@ let every_refv_def = cake_define
         | (Thunk m v) -> P v
         | _12 -> T`;;
 
-let IMP_EXISTS_IFF = cake_theorem "IMP_EXISTS_IFF[local]"
-  (fun () ->
-    `!xs. (!x. MEM x xs ==> (P x <=> Q x)) ==>
-            (EXISTS P xs <=> EXISTS Q xs)`)
-  CHEAT_TAC;;
+(* [local] *)
+let IMP_EXISTS_IFF = prove
+ (`!xs. (!x. MEM x xs ==> (P x <=> Q x)) ==>
+          (EXISTS P xs <=> EXISTS Q xs)`,
+  CHEAT_TAC);;
 
 (* -- *)
 
 (* correctness of free *)
 
-let free_thm = cake_theorem "free_thm"
-  (fun () ->
-    `!xs.
-       let (ys,l) = clos_call_free xs in
-         !n. (fv n ys = has_var n l) /\
-             (fv n xs = has_var n l)`)
-  CHEAT_TAC;;
+let free_thm = prove
+ (`!xs.
+     let (ys,l) = clos_call_free xs in
+       !n. (fv n ys = has_var n l) /\
+           (fv n xs = has_var n l)`,
+  CHEAT_TAC);;
 
 (* value relation *)
 
@@ -104,15 +101,13 @@ let subg_def = cake_define
        v) /\
      ALL_DISTINCT (MAP FST (SND g1))`;;
 
-let subg_refl = cake_theorem "subg_refl"
-  (fun () ->
-    `!g. ALL_DISTINCT (MAP FST (SND g)) ==> subg g g`)
-  CHEAT_TAC;;
+let subg_refl = prove
+ (`!g. ALL_DISTINCT (MAP FST (SND g)) ==> subg g g`,
+  CHEAT_TAC);;
 
-let subg_trans = cake_theorem "subg_trans"
-  (fun () ->
-    `!g1 g2 g3. subg g1 g2 /\ subg g2 g3 ==> subg g1 g3`)
-  CHEAT_TAC;;
+let subg_trans = prove
+ (`!g1 g2 g3. subg g1 g2 /\ subg g2 g3 ==> subg g1 g3`,
+  CHEAT_TAC);;
 
 let wfg'_def = cake_define
   `wfg' g <=>
@@ -130,41 +125,35 @@ let make_g_def = cake_define
        SOME (d,MAP (\k. (FST k + 1,THE (FLOOKUP code (FST k +
          1)))) (toAList d)) else NONE)`;;
 
-let ALL_DISTINCT_MAP_FST_ADD1 =
-  cake_theorem "ALL_DISTINCT_MAP_FST_ADD1[local]"
-  (fun () ->
-    `!xs. ALL_DISTINCT (MAP (\k. FST k + 1) xs) =
-          ALL_DISTINCT (MAP FST xs)`)
-  CHEAT_TAC;;
+(* [local] *)
+let ALL_DISTINCT_MAP_FST_ADD1 = prove
+ (`!xs. ALL_DISTINCT (MAP (\k. FST k + 1) xs) =
+        ALL_DISTINCT (MAP FST xs)`,
+  CHEAT_TAC);;
 
-let make_g_wfg = cake_theorem "make_g_wfg"
-  (fun () ->
-    `make_g d code = SOME g ==> wfg g`)
-  CHEAT_TAC;;
+let make_g_wfg = prove
+ (`make_g d code = SOME g ==> wfg g`,
+  CHEAT_TAC);;
 
-let make_g_subg = cake_theorem "make_g_subg"
-  (fun () ->
-    `make_g cfg (FEMPTY |++ aux) = SOME new /\ wfg (cfg,aux) ==>
-      subg (cfg,aux) new`)
-  CHEAT_TAC;;
+let make_g_subg = prove
+ (`make_g cfg (FEMPTY |++ aux) = SOME new /\ wfg (cfg,aux) ==>
+    subg (cfg,aux) new`,
+  CHEAT_TAC);;
 
-let make_g_make_g_eq = cake_theorem "make_g_make_g_eq"
-  (fun () ->
-    `!x1 x2 y1 y2 g0 g1.
-        FST g0 = FST g1 /\ subg g0 g1 /\
-        make_g x1 x2 = SOME g0 /\ make_g y1 y2 = SOME g1 ==> g0 =
-          g1`)
-  CHEAT_TAC;;
+let make_g_make_g_eq = prove
+ (`!x1 x2 y1 y2 g0 g1.
+      FST g0 = FST g1 /\ subg g0 g1 /\
+      make_g x1 x2 = SOME g0 /\ make_g y1 y2 = SOME g1 ==> g0 = g1`,
+  CHEAT_TAC);;
 
-let make_g_IMP_subg = cake_theorem "make_g_IMP_subg"
-  (fun () ->
-    `make_g (r0:1 spt) code = SOME g0 /\
-      DISJOINT (FDOM code) (set_of_list (MAP FST progs1)) /\
-      ALL_DISTINCT (MAP FST progs1) /\
-      make_g r1 (code |++ progs1) = SOME g1 /\ subspt r0 r1 /\
-      set_of_list (MAP FST progs1) SUBSET IMAGE SUC (domain r1) ==>
-      subg (r1,progs1 ++ SND g0) g1`)
-  CHEAT_TAC;;
+let make_g_IMP_subg = prove
+ (`make_g (r0:1 spt) code = SOME g0 /\
+    DISJOINT (FDOM code) (set_of_list (MAP FST progs1)) /\
+    ALL_DISTINCT (MAP FST progs1) /\
+    make_g r1 (code |++ progs1) = SOME g1 /\ subspt r0 r1 /\
+    set_of_list (MAP FST progs1) SUBSET IMAGE SUC (domain r1) ==>
+    subg (r1,progs1 ++ SND g0) g1`,
+  CHEAT_TAC);;
 
 let recclosure_wf_def = cake_define
   `recclosure_wf loc fns <=>
@@ -205,7 +194,7 @@ let recclosure_rel_def = cake_define
           l /\
         code_includes (SND new_g) code))`;;
 
-let env_rel_def = cake_define
+let clos_callProof_env_rel_def = cake_define
   `clos_callProof_env_rel R env1 env2 a es <=>
      (if LENGTH env1 = LENGTH env2 then LIST_REL R env1 env2 else
      !x. EXISTS (\(n,p). fv1 (n + a + x) p) es ==>
@@ -213,19 +202,19 @@ let env_rel_def = cake_define
          R (EL x env1) (EL x env2))`;;
 hol4_overload "env_rel" "clos_callProof_env_rel";;
 
-let env_rel_mono = cake_theorem "env_rel_mono[mono]"
-  (fun () ->
-    `(!x y. MEM x env1 /\ MEM y env2 /\ R x y ==> R' x y) ==>
-     clos_callProof_env_rel R env1 env2 a es ==>
-     clos_callProof_env_rel R' env1 env2 a es`)
-  CHEAT_TAC;;
+(* [mono] *)
+let env_rel_mono = prove
+ (`(!x y. MEM x env1 /\ MEM y env2 /\ R x y ==> R' x y) ==>
+   clos_callProof_env_rel R env1 env2 a es ==>
+   clos_callProof_env_rel R' env1 env2 a es`,
+  CHEAT_TAC);;
 
-let env_rel_cong = cake_theorem "env_rel_cong[defncong]"
-  (fun () ->
-    `(!x y. MEM x env1 /\ MEM y env2 ==> (R x y <=> R' x y)) ==>
+(* [defncong] *)
+let env_rel_cong = prove
+ (`(!x y. MEM x env1 /\ MEM y env2 ==> (R x y <=> R' x y)) ==>
   clos_callProof_env_rel R env1 env2 a es = clos_callProof_env_rel R'
-  env1 env2 a es`)
-  CHEAT_TAC;;
+  env1 env2 a es`,
+  CHEAT_TAC);;
 
 let _ = size_thms "closSem_v";;
 (* the termination relation that HOL4 gives, with
@@ -234,7 +223,7 @@ let _ = size_thms "closSem_v";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let v_rel_def = cake_define_list_try_tac (fun () ->
+let clos_callProof_v_rel_def = cake_define_list_try_tac (fun () ->
   `MEASURE (closSem_v_size o FST o SND o SND o SND)`)
   CHEAT_TAC
   [`clos_callProof_v_rel g l code (closSem_Number i:closSem_v) v <=>
@@ -302,7 +291,7 @@ let wfv_state_def = cake_define
 new_type_abbrev("calls_state",`: 1 spt#(num#num#closLang_exp) list`);;
 new_type_abbrev("abs_calls_state",`: 1 spt`);;
 
-let state_rel_def = cake_define
+let clos_callProof_state_rel_def = cake_define
   `clos_callProof_state_rel g l (s:(1 spt#'c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (closSem_state_ffi s = closSem_state_ffi t) /\
@@ -316,251 +305,217 @@ let state_rel_def = cake_define
      s = FEMPTY`;;
 hol4_overload "state_rel" "clos_callProof_state_rel";;
 
-let clos_callProof_state_rel_max_app = cake_theorem "state_rel_max_app"
-  (fun () ->
-    `clos_callProof_state_rel g l s t ==> closSem_state_max_app s =
-  closSem_state_max_app t`)
-  CHEAT_TAC;;
+(* state_rel_max_app *)
+let clos_callProof_state_rel_max_app = prove
+ (`clos_callProof_state_rel g l s t ==> closSem_state_max_app s =
+  closSem_state_max_app t`,
+  CHEAT_TAC);;
 
-let state_rel_clock = cake_theorem "state_rel_clock"
-  (fun () ->
-    `clos_callProof_state_rel g l s t ==> state_clock s = state_clock
-  t`)
-  CHEAT_TAC;;
+let state_rel_clock = prove
+ (`clos_callProof_state_rel g l s t ==> state_clock s = state_clock t`,
+  CHEAT_TAC);;
 
-let clos_callProof_state_rel_with_clock =
-  cake_theorem "state_rel_with_clock"
-  (fun () ->
-    `clos_callProof_state_rel g l s t ==> clos_callProof_state_rel g l
-  (state_clock_fupd (K k) s) (state_clock_fupd (K k) t)`)
-  CHEAT_TAC;;
+(* state_rel_with_clock *)
+let clos_callProof_state_rel_with_clock = prove
+ (`clos_callProof_state_rel g l s t ==> clos_callProof_state_rel g l
+  (state_clock_fupd (K k) s) (state_clock_fupd (K k) t)`,
+  CHEAT_TAC);;
 
-let state_rel_flookup_refs = cake_theorem "state_rel_flookup_refs"
-  (fun () ->
-    `clos_callProof_state_rel g l s t /\ FLOOKUP (state_refs s) k = SOME
-  v ==>
-     (?v'. FLOOKUP (state_refs t) k = SOME v' /\
-       closProps_ref_rel (clos_callProof_v_rel g l (closSem_state_code
-       t)) v v')`)
-  CHEAT_TAC;;
+let state_rel_flookup_refs = prove
+ (`clos_callProof_state_rel g l s t /\ FLOOKUP (state_refs s) k = SOME v
+  ==>
+   (?v'. FLOOKUP (state_refs t) k = SOME v' /\ closProps_ref_rel
+     (clos_callProof_v_rel g l (closSem_state_code t)) v v')`,
+  CHEAT_TAC);;
 
 (* syntactic properties of compiler *)
 
-let FST_code_list = cake_theorem "FST_code_list[simp]"
-  (fun () ->
-    `!loc fns g. FST (code_list loc fns g) = FST g`)
-  CHEAT_TAC;;
+(* [simp] *)
+let FST_code_list = prove
+ (`!loc fns g. FST (code_list loc fns g) = FST g`,
+  CHEAT_TAC);;
 
-let SND_insert_each = cake_theorem "SND_insert_each[simp]"
-  (fun () ->
-    `!p n g. SND (insert_each p n g) = SND g`)
-  CHEAT_TAC;;
+(* [simp] *)
+let SND_insert_each = prove
+ (`!p n g. SND (insert_each p n g) = SND g`,
+  CHEAT_TAC);;
 
-let calls_list_MAPi = cake_theorem "calls_list_MAPi"
-  (fun () ->
-    `!loc tra n. calls_list t n loc = MAPi (\i p. (FST p,closLang_Call
-  t 0 (loc + 2 * i + 1) (GENLIST_Var t 1 (FST p))))`)
-  CHEAT_TAC;;
+let calls_list_MAPi = prove
+ (`!loc tra n. calls_list t n loc = MAPi (\i p. (FST p,closLang_Call t
+  0 (loc + 2 * i + 1) (GENLIST_Var t 1 (FST p))))`,
+  CHEAT_TAC);;
 
-let calls_list_length = cake_theorem "calls_list_length[simp]"
-  (fun () ->
-    `LENGTH (calls_list t n p fns) = LENGTH fns`)
-  CHEAT_TAC;;
+(* [simp] *)
+let calls_list_length = prove
+ (`LENGTH (calls_list t n p fns) = LENGTH fns`,
+  CHEAT_TAC);;
 
-let domain_FST_insert_each = cake_theorem "domain_FST_insert_each"
-  (fun () ->
-    `!p n g. domain (FST (insert_each p n g)) = set_of_list (GENLIST
-  (\i. 2 * i + p) n) UNION domain (FST g)`)
-  CHEAT_TAC;;
+let domain_FST_insert_each = prove
+ (`!p n g. domain (FST (insert_each p n g)) = set_of_list (GENLIST
+  (\i. 2 * i + p) n) UNION domain (FST g)`,
+  CHEAT_TAC);;
 
-let SND_code_list_change = cake_theorem "SND_code_list_change"
-  (fun () ->
-    `!loc fns g g'. SND g = SND g' ==>
-      SND (code_list loc fns g) = SND (code_list loc fns g')`)
-  CHEAT_TAC;;
+let SND_code_list_change = prove
+ (`!loc fns g g'. SND g = SND g' ==>
+    SND (code_list loc fns g) = SND (code_list loc fns g')`,
+  CHEAT_TAC);;
 
-let MAP_FST_code_list = cake_theorem "MAP_FST_code_list"
-  (fun () ->
-    `!loc fns g.
-      MAP FST (SND (code_list loc fns g)) =
-      REVERSE (GENLIST (\i. loc + i * 2 + 1) (LENGTH fns)) ++ MAP
-        FST (SND g)`)
-  CHEAT_TAC;;
+let MAP_FST_code_list = prove
+ (`!loc fns g.
+    MAP FST (SND (code_list loc fns g)) =
+    REVERSE (GENLIST (\i. loc + i * 2 + 1) (LENGTH fns)) ++ MAP FST
+      (SND g)`,
+  CHEAT_TAC);;
 
-let SND_code_list_ZIP = cake_theorem "SND_code_list_ZIP"
-  (fun () ->
-    `!loc fns g. SND (code_list loc fns g) =
-     REVERSE (ZIP (GENLIST ((+) (loc + 1) o (*) 2) (LENGTH fns))
-       fns) ++ (SND g)`)
-  CHEAT_TAC;;
+let SND_code_list_ZIP = prove
+ (`!loc fns g. SND (code_list loc fns g) =
+   REVERSE (ZIP (GENLIST ((+) (loc + 1) o (*) 2) (LENGTH fns)) fns)
+     ++ (SND g)`,
+  CHEAT_TAC);;
 
-let ALOOKUP_code_list = cake_theorem "ALOOKUP_code_list"
-  (fun () ->
-    `!loc fns g k.
-      ALOOKUP (SND (code_list loc fns g)) k =
-      (match some (\i. i < LENGTH fns /\ k = loc + 2 * i + 1)
-        with SOME i -> SOME (EL i fns) | NONE -> ALOOKUP (SND g) k)`)
-  CHEAT_TAC;;
+let ALOOKUP_code_list = prove
+ (`!loc fns g k.
+    ALOOKUP (SND (code_list loc fns g)) k =
+    (match some (\i. i < LENGTH fns /\ k = loc + 2 * i + 1) with
+      SOME i -> SOME (EL i fns) | NONE -> ALOOKUP (SND g) k)`,
+  CHEAT_TAC);;
 
-let insert_each_subspt = cake_theorem "insert_each_subspt"
-  (fun () ->
-    `!p n g. subspt (FST g) (FST (insert_each p n g))`)
-  CHEAT_TAC;;
+let insert_each_subspt = prove
+ (`!p n g. subspt (FST g) (FST (insert_each p n g))`,
+  CHEAT_TAC);;
 
-let code_list_IS_SUFFIX = cake_theorem "code_list_IS_SUFFIX"
-  (fun () ->
-    `!loc fns g. IS_SUFFIX (SND (code_list loc fns g)) (SND g)`)
-  CHEAT_TAC;;
+let code_list_IS_SUFFIX = prove
+ (`!loc fns g. IS_SUFFIX (SND (code_list loc fns g)) (SND g)`,
+  CHEAT_TAC);;
 
-let calls_subspt = cake_theorem "calls_subspt"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==> subspt (FST g0) (FST g)`)
-  CHEAT_TAC;;
+let calls_subspt = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==> subspt (FST g0) (FST g)`,
+  CHEAT_TAC);;
 
-let calls_code_subset = cake_theorem "calls_code_subset"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-        IMAGE SUC (domain (FST g0)) SUBSET IMAGE SUC (domain (FST
-          g)) /\
-        set_of_list (MAP FST (SND g0)) SUBSET set_of_list (MAP FST
-          (SND g)) /\
-        set_of_list (MAP FST (SND g)) SUBSET
-          IMAGE SUC (domain (FST g)) UNION set_of_list (MAP FST
-            (SND g0))`)
-  CHEAT_TAC;;
-
-let calls_IS_SUFFIX = cake_theorem "calls_IS_SUFFIX"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==> IS_SUFFIX (SND g) (SND g0)`)
-  CHEAT_TAC;;
-
-let calls_add_SUC_code_locs = cake_theorem "calls_add_SUC_code_locs"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
+let calls_code_subset = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+      IMAGE SUC (domain (FST g0)) SUBSET IMAGE SUC (domain (FST g))
+        /\
+      set_of_list (MAP FST (SND g0)) SUBSET set_of_list (MAP FST (SND
+        g)) /\
       set_of_list (MAP FST (SND g)) SUBSET
-      set_of_list (MAP FST (SND g0)) UNION IMAGE SUC (set_of_list
-        (code_locs xs))`)
-  CHEAT_TAC;;
+        IMAGE SUC (domain (FST g)) UNION set_of_list (MAP FST (SND
+          g0))`,
+  CHEAT_TAC);;
 
-let calls_ALL_DISTINCT = cake_theorem "calls_ALL_DISTINCT"
-  (fun () ->
-    `!xs g0 ys g.
-      calls xs g0 = (ys,g) /\ ALL_DISTINCT (MAP FST (SND g0)) /\
-      ALL_DISTINCT (code_locs xs) /\
-      DISJOINT (IMAGE SUC (set_of_list (code_locs xs)))
-        (set_of_list (MAP FST (SND g0))) ==> ALL_DISTINCT (MAP FST
-        (SND g))`)
-  CHEAT_TAC;;
+let calls_IS_SUFFIX = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==> IS_SUFFIX (SND g) (SND g0)`,
+  CHEAT_TAC);;
 
-let compile_ALL_DISTINCT = cake_theorem "compile_ALL_DISTINCT"
-  (fun () ->
-    `clos_call_compile do_call x = (y,g,aux) /\
-     ALL_DISTINCT (code_locs x) ==>
-     ALL_DISTINCT (MAP FST aux)`)
-  CHEAT_TAC;;
+let calls_add_SUC_code_locs = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+    set_of_list (MAP FST (SND g)) SUBSET
+    set_of_list (MAP FST (SND g0)) UNION IMAGE SUC (set_of_list
+      (code_locs xs))`,
+  CHEAT_TAC);;
 
-let calls_subg = cake_theorem "calls_subg"
-  (fun () ->
-    `!xs g0 ys g.
-      calls xs g0 = (ys,g) /\
-      ALL_DISTINCT (MAP FST (SND g0)) /\
-      ALL_DISTINCT (code_locs xs) /\
-      DISJOINT (IMAGE SUC (set_of_list (code_locs xs)))
-        (set_of_list (MAP FST (SND g0))) ==> subg g0 g`)
-  CHEAT_TAC;;
+let calls_ALL_DISTINCT = prove
+ (`!xs g0 ys g.
+    calls xs g0 = (ys,g) /\ ALL_DISTINCT (MAP FST (SND g0)) /\
+    ALL_DISTINCT (code_locs xs) /\
+    DISJOINT (IMAGE SUC (set_of_list (code_locs xs))) (set_of_list
+      (MAP FST (SND g0))) ==> ALL_DISTINCT (MAP FST (SND g))`,
+  CHEAT_TAC);;
 
-let calls_domain = cake_theorem "calls_domain"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-      domain (FST g) SUBSET domain (FST g0) UNION IMAGE PRE
-        (set_of_list (MAP FST (SND g)))`)
-  CHEAT_TAC;;
+let compile_ALL_DISTINCT = prove
+ (`clos_call_compile do_call x = (y,g,aux) /\
+   ALL_DISTINCT (code_locs x) ==>
+   ALL_DISTINCT (MAP FST aux)`,
+  CHEAT_TAC);;
 
-let calls_domain_locs = cake_theorem "calls_domain_locs"
-  (fun () ->
-    `!xs g ys g2. calls xs g = (ys,g2) ==>
-     domain (FST g2) SUBSET domain (FST g) UNION set_of_list
-       (code_locs xs)`)
-  CHEAT_TAC;;
+let calls_subg = prove
+ (`!xs g0 ys g.
+    calls xs g0 = (ys,g) /\
+    ALL_DISTINCT (MAP FST (SND g0)) /\
+    ALL_DISTINCT (code_locs xs) /\
+    DISJOINT (IMAGE SUC (set_of_list (code_locs xs))) (set_of_list
+      (MAP FST (SND g0))) ==> subg g0 g`,
+  CHEAT_TAC);;
 
-let wfg'_insert_each = cake_theorem "wfg'_insert_each"
-  (fun () ->
-    `!n g loc. wfg' g ==> wfg' (insert_each loc n g)`)
-  CHEAT_TAC;;
+let calls_domain = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+    domain (FST g) SUBSET domain (FST g0) UNION IMAGE PRE
+      (set_of_list (MAP FST (SND g)))`,
+  CHEAT_TAC);;
 
-let wfg'_code_list = cake_theorem "wfg'_code_list"
-  (fun () ->
-    `!ls g loc.
-        wfg' g /\ set_of_list (GENLIST (\i. loc + 2 * i) (LENGTH
-          ls)) SUBSET domain (FST g) ==> wfg' (code_list loc ls g)`)
-  CHEAT_TAC;;
+let calls_domain_locs = prove
+ (`!xs g ys g2. calls xs g = (ys,g2) ==>
+   domain (FST g2) SUBSET domain (FST g) UNION set_of_list
+     (code_locs xs)`,
+  CHEAT_TAC);;
 
-let closed_Fn = cake_theorem "closed_Fn"
-  (fun () ->
-    `clos_call_closed (closLang_Fn t loco vs args e) <=>
-     (!v. has_var v (SND (clos_call_free [e])) ==> v < args)`)
-  CHEAT_TAC;;
+let wfg'_insert_each = prove
+ (`!n g loc. wfg' g ==> wfg' (insert_each loc n g)`,
+  CHEAT_TAC);;
 
-let closed_Fn_fv = cake_theorem "closed_Fn_fv"
-  (fun () ->
-    `clos_call_closed (closLang_Fn t loco vs args e) <=>
-     (!v. fv v [e] ==> v < args)`)
-  CHEAT_TAC;;
+let wfg'_code_list = prove
+ (`!ls g loc.
+      wfg' g /\ set_of_list (GENLIST (\i. loc + 2 * i) (LENGTH ls))
+        SUBSET domain (FST g) ==> wfg' (code_list loc ls g)`,
+  CHEAT_TAC);;
 
-let calls_wfg' = cake_theorem "calls_wfg'"
-  (fun () ->
-    `!xs g0 ys g.
-      calls xs g0 = (ys,g) /\
-      every_Fn_SOME xs /\ wfg' g0 ==>
-      wfg' g`)
-  CHEAT_TAC;;
+let closed_Fn = prove
+ (`clos_call_closed (closLang_Fn t loco vs args e) <=>
+   (!v. has_var v (SND (clos_call_free [e])) ==> v < args)`,
+  CHEAT_TAC);;
 
-let calls_wfg = cake_theorem "calls_wfg"
-  (fun () ->
-    `!xs g0 ys g.
-      calls xs g0 = (ys,g) /\
-      ALL_DISTINCT (code_locs xs) /\
-      DISJOINT (IMAGE SUC (set_of_list (code_locs xs)))
-        (set_of_list (MAP FST (SND g0))) /\
-      every_Fn_SOME xs /\ wfg g0 ==>
-      wfg g`)
-  CHEAT_TAC;;
+let closed_Fn_fv = prove
+ (`clos_call_closed (closLang_Fn t loco vs args e) <=>
+   (!v. fv v [e] ==> v < args)`,
+  CHEAT_TAC);;
 
-let calls_fv1_subset = cake_theorem "calls_fv1_subset"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-      LIST_REL (\x y. (hol4_C fv1) y SUBSET (hol4_C fv1) x) xs ys`)
-  CHEAT_TAC;;
+let calls_wfg' = prove
+ (`!xs g0 ys g.
+    calls xs g0 = (ys,g) /\
+    every_Fn_SOME xs /\ wfg' g0 ==>
+    wfg' g`,
+  CHEAT_TAC);;
 
-let calls_fv_imp = cake_theorem "calls_fv_imp"
-  (fun () ->
-    `calls xs g0 = (ys,g) /\ fv v ys ==> fv v xs`)
-  CHEAT_TAC;;
+let calls_wfg = prove
+ (`!xs g0 ys g.
+    calls xs g0 = (ys,g) /\
+    ALL_DISTINCT (code_locs xs) /\
+    DISJOINT (IMAGE SUC (set_of_list (code_locs xs))) (set_of_list
+      (MAP FST (SND g0))) /\
+    every_Fn_SOME xs /\ wfg g0 ==>
+    wfg g`,
+  CHEAT_TAC);;
 
-let FST_insert_each_same = cake_theorem "FST_insert_each_same"
-  (fun () ->
-    `!p n g0 g0'.
-      FST g0 = FST g0' ==> FST (insert_each p n g0) = FST
-        (insert_each p n g0')`)
-  CHEAT_TAC;;
+let calls_fv1_subset = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+    LIST_REL (\x y. (hol4_C fv1) y SUBSET (hol4_C fv1) x) xs ys`,
+  CHEAT_TAC);;
 
-let code_list_replace_SND = cake_theorem "code_list_replace_SND"
-  (fun () ->
-    `!loc fns g0 g g0' ls.
-     code_list loc fns g0 = g /\
-     FST g0 = FST g0' /\
-     SND g = ls ++ SND g0 ==>
-     code_list loc fns g0' = (FST g,ls ++ SND g0')`)
-  CHEAT_TAC;;
+let calls_fv_imp = prove
+ (`calls xs g0 = (ys,g) /\ fv v ys ==> fv v xs`,
+  CHEAT_TAC);;
 
-let calls_replace_SND = cake_theorem "calls_replace_SND"
-  (fun () ->
-    `!xs g0 ys g g0' ls.
-      calls xs g0 = (ys,g) /\
-      FST g0 = FST g0' /\
-      SND g = ls ++ SND g0 ==>
-      calls xs g0' = (ys,(FST g,ls ++ SND g0'))`)
-  CHEAT_TAC;;
+let FST_insert_each_same = prove
+ (`!p n g0 g0'.
+    FST g0 = FST g0' ==> FST (insert_each p n g0) = FST
+      (insert_each p n g0')`,
+  CHEAT_TAC);;
+
+let code_list_replace_SND = prove
+ (`!loc fns g0 g g0' ls.
+   code_list loc fns g0 = g /\
+   FST g0 = FST g0' /\
+   SND g = ls ++ SND g0 ==>
+   code_list loc fns g0' = (FST g,ls ++ SND g0')`,
+  CHEAT_TAC);;
+
+let calls_replace_SND = prove
+ (`!xs g0 ys g g0' ls.
+    calls xs g0 = (ys,g) /\
+    FST g0 = FST g0' /\
+    SND g = ls ++ SND g0 ==>
+    calls xs g0' = (ys,(FST g,ls ++ SND g0'))`,
+  CHEAT_TAC);;
 
 let insert_each'_def = cake_define_list
   [`insert_each' gt p 0 g = g`;
@@ -570,444 +525,391 @@ let insert_each'_def = cake_define_list
 
 (* HOL4 clos_callProofScript.sml:965: ML code, not ported *)
 
-let wfg_insert_each' = cake_theorem "wfg_insert_each'"
-  (fun () ->
-    `!gt p n g.
-      wfg g /\
-      DISJOINT (set_of_list (GENLIST (\i. p + 2 * i) n)) (domain
-        (FST g)) ==> wfg (insert_each' gt p n g)`)
-  CHEAT_TAC;;
+let wfg_insert_each' = prove
+ (`!gt p n g.
+    wfg g /\
+    DISJOINT (set_of_list (GENLIST (\i. p + 2 * i) n)) (domain (FST
+      g)) ==> wfg (insert_each' gt p n g)`,
+  CHEAT_TAC);;
 
-let FST_insert_each' = cake_theorem "FST_insert_each'"
-  (fun () ->
-    `!gt p n g. FST (insert_each' gt p n g) = FST (insert_each p n g)`)
-  CHEAT_TAC;;
+let FST_insert_each' = prove
+ (`!gt p n g. FST (insert_each' gt p n g) = FST (insert_each p n g)`,
+  CHEAT_TAC);;
 
-let MAP_FST_insert_each' = cake_theorem "MAP_FST_insert_each'"
-  (fun () ->
-    `!gt p n g.
-     MAP FST (SND (insert_each' gt p n g)) =
-     REVERSE (GENLIST (\i. p + i * 2 + 1) n) ++
-     MAP FST (SND g)`)
-  CHEAT_TAC;;
+let MAP_FST_insert_each' = prove
+ (`!gt p n g.
+   MAP FST (SND (insert_each' gt p n g)) =
+   REVERSE (GENLIST (\i. p + i * 2 + 1) n) ++
+   MAP FST (SND g)`,
+  CHEAT_TAC);;
 
-let SND_insert_each' = cake_theorem "SND_insert_each'"
-  (fun () ->
-    `!gt p n g. SND (insert_each' gt p n g) =
-      REVERSE (GENLIST (\i. (2 * i + p + 1,THE (ALOOKUP gt (2 * i
-        + p + 1)))) n) ++ SND g`)
-  CHEAT_TAC;;
+let SND_insert_each' = prove
+ (`!gt p n g. SND (insert_each' gt p n g) =
+    REVERSE (GENLIST (\i. (2 * i + p + 1,THE (ALOOKUP gt (2 * i + p
+      + 1)))) n) ++ SND g`,
+  CHEAT_TAC);;
 
-let calls_el_sing = cake_theorem "calls_el_sing"
-  (fun () ->
-    `!xs g0 ys g i.
-      calls xs g0 = (ys,g) /\
-      i < LENGTH xs /\
-      ALL_DISTINCT (MAP FST (SND g0)) /\
-      ALL_DISTINCT (code_locs xs) /\
-      DISJOINT (IMAGE SUC (set_of_list (code_locs xs)))
-        (set_of_list (MAP FST (SND g0))) /\
-      wfg g0 /\ every_Fn_SOME xs ==>
-       (?ga gb.
-         calls [EL i xs] ga = ([EL i ys],gb) /\
-         subg g0 ga /\ subg ga gb /\ subg gb g /\ wfg ga /\ wfg gb
-           /\
-         DISJOINT (IMAGE SUC (set_of_list (code_locs [EL i xs])))
-           (set_of_list (MAP FST (SND ga))) /\
-         set_of_list (MAP FST (SND ga)) SUBSET set_of_list (MAP FST
-           (SND g0)) UNION IMAGE SUC (set_of_list (code_locs (TAKE i
-           xs))) /\
-         (set_of_list (code_locs [EL i xs]) DIFF (domain (FST
-           gb))) SUBSET (set_of_list (code_locs xs) DIFF (domain (FST
-           g))))`)
-  CHEAT_TAC;;
+let calls_el_sing = prove
+ (`!xs g0 ys g i.
+    calls xs g0 = (ys,g) /\
+    i < LENGTH xs /\
+    ALL_DISTINCT (MAP FST (SND g0)) /\
+    ALL_DISTINCT (code_locs xs) /\
+    DISJOINT (IMAGE SUC (set_of_list (code_locs xs))) (set_of_list
+      (MAP FST (SND g0))) /\
+    wfg g0 /\ every_Fn_SOME xs ==>
+     (?ga gb.
+       calls [EL i xs] ga = ([EL i ys],gb) /\
+       subg g0 ga /\ subg ga gb /\ subg gb g /\ wfg ga /\ wfg gb /\
+       DISJOINT (IMAGE SUC (set_of_list (code_locs [EL i xs])))
+         (set_of_list (MAP FST (SND ga))) /\
+       set_of_list (MAP FST (SND ga)) SUBSET set_of_list (MAP FST
+         (SND g0)) UNION IMAGE SUC (set_of_list (code_locs (TAKE i xs)))
+         /\
+       (set_of_list (code_locs [EL i xs]) DIFF (domain (FST gb)))
+         SUBSET (set_of_list (code_locs xs) DIFF (domain (FST g))))`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_callProofScript.sml:1102-1114: a proof *)
 
-let insert_each_pair_arg = cake_theorem "insert_each_pair_arg"
-  (fun () ->
-    `insert_each x y (p,q) = (FST (insert_each x y (p,q')),q)`)
-  CHEAT_TAC;;
+let insert_each_pair_arg = prove
+ (`insert_each x y (p,q) = (FST (insert_each x y (p,q')),q)`,
+  CHEAT_TAC);;
 
-let calls_acc_0 = cake_theorem "calls_acc_0[local]"
-  (fun () ->
-    `!xs tmp x r.
-        x ++ r = SND tmp ==>
-        calls xs tmp = (I ## I ## (hol4_C (++) r)) (calls xs (FST
-          tmp,x))`)
-  CHEAT_TAC;;
+(* [local] *)
+let calls_acc_0 = prove
+ (`!xs tmp x r.
+      x ++ r = SND tmp ==>
+      calls xs tmp = (I ## I ## (hol4_C (++) r)) (calls xs (FST
+        tmp,x))`,
+  CHEAT_TAC);;
 
-let calls_acc = cake_theorem "calls_acc"
-  (fun () ->
-    `!xs d old res d1 aux.
-        calls xs (d,[]) = (res,d1,aux) ==>
-        calls xs (d,old) = (res,d1,aux ++ old)`)
-  CHEAT_TAC;;
+let calls_acc = prove
+ (`!xs d old res d1 aux.
+      calls xs (d,[]) = (res,d1,aux) ==>
+      calls xs (d,old) = (res,d1,aux ++ old)`,
+  CHEAT_TAC);;
 
 (* properties of value relation *)
 
-let v_rel_exists = cake_theorem "v_rel_exists"
-  (fun () ->
-    `!v1. wfv g l code v1 ==> (?v2. clos_callProof_v_rel g l code v1
-  v2)`)
-  CHEAT_TAC;;
+let v_rel_exists = prove
+ (`!v1. wfv g l code v1 ==> (?v2. clos_callProof_v_rel g l code v1 v2)`,
+  CHEAT_TAC);;
 
-let v_rel_subg = cake_theorem "v_rel_subg"
-  (fun () ->
-    `!g l code v1 v2 g' l'.
-      clos_callProof_v_rel g l code v1 v2 /\ subg g g' /\ l SUBSET
-        l' ==>
-      clos_callProof_v_rel g' l' code v1 v2`)
-  CHEAT_TAC;;
+let v_rel_subg = prove
+ (`!g l code v1 v2 g' l'.
+    clos_callProof_v_rel g l code v1 v2 /\ subg g g' /\ l SUBSET l'
+      ==>
+    clos_callProof_v_rel g' l' code v1 v2`,
+  CHEAT_TAC);;
 
-let code_includes_subg = cake_theorem "code_includes_subg"
-  (fun () ->
-    `subg g1 g2 ==> code_includes (SND g2) code ==> code_includes (SND
-  g1) code`)
-  CHEAT_TAC;;
+let code_includes_subg = prove
+ (`subg g1 g2 ==> code_includes (SND g2) code ==> code_includes (SND
+  g1) code`,
+  CHEAT_TAC);;
 
-let code_includes_ALOOKUP = cake_theorem "code_includes_ALOOKUP"
-  (fun () ->
-    `code_includes al code /\ ALOOKUP al loc = SOME r ==> FLOOKUP code
-  loc = SOME r`)
-  CHEAT_TAC;;
+let code_includes_ALOOKUP = prove
+ (`code_includes al code /\ ALOOKUP al loc = SOME r ==> FLOOKUP code
+  loc = SOME r`,
+  CHEAT_TAC);;
 
-let dest_closure_v_rel_lookup = cake_theorem "dest_closure_v_rel_lookup"
-  (fun () ->
-    `dest_closure max_app (SOME loc) v1 env1 = SOME x /\
-     clos_callProof_v_rel g l code v1 v2 /\
-     LIST_REL (clos_callProof_v_rel g l code) env1 env2 /\
-     wfg g /\ loc IN domain (FST g) /\ ~(loc IN l) ==>
-     (?e l1 xs n ls g01 g1 l1' tra i.
-       x = Full_app e (env1 ++ l1) [] /\ EL n xs = (LENGTH env1,e)
-         /\
-       calls (MAP SND xs) g01 = (ls,g1) /\ n < LENGTH ls /\
-       subg (code_list (loc - 2 * n) (ZIP (MAP FST xs) ls) g1) g /\
-       ALOOKUP (SND g) (loc + 1) = SOME (LENGTH env1,EL n ls) /\
-       dest_closure max_app (SOME loc) v2 env2 =
-         SOME (Full_app (closLang_Call tra 0 (loc + 1)
-           (GENLIST_Var tra 1 (LENGTH env1))) (env2 ++ l1') []) /\
-       code_includes (SND (code_list (loc - 2 * n) (ZIP (MAP FST
-         xs) ls) g1)) code)`)
-  CHEAT_TAC;;
+let dest_closure_v_rel_lookup = prove
+ (`dest_closure max_app (SOME loc) v1 env1 = SOME x /\
+   clos_callProof_v_rel g l code v1 v2 /\
+   LIST_REL (clos_callProof_v_rel g l code) env1 env2 /\
+   wfg g /\ loc IN domain (FST g) /\ ~(loc IN l) ==>
+   (?e l1 xs n ls g01 g1 l1' tra i.
+     x = Full_app e (env1 ++ l1) [] /\ EL n xs = (LENGTH env1,e) /\
+     calls (MAP SND xs) g01 = (ls,g1) /\ n < LENGTH ls /\
+     subg (code_list (loc - 2 * n) (ZIP (MAP FST xs) ls) g1) g /\
+     ALOOKUP (SND g) (loc + 1) = SOME (LENGTH env1,EL n ls) /\
+     dest_closure max_app (SOME loc) v2 env2 =
+       SOME (Full_app (closLang_Call tra 0 (loc + 1)
+         (GENLIST_Var tra 1 (LENGTH env1))) (env2 ++ l1') []) /\
+     code_includes (SND (code_list (loc - 2 * n) (ZIP (MAP FST xs)
+       ls) g1)) code)`,
+  CHEAT_TAC);;
 
-let dest_closure_v_rel = cake_theorem "dest_closure_v_rel"
-  (fun () ->
-    `dest_closure max_app loco v1 env1 = SOME x1 /\
-     clos_callProof_v_rel g l code v1 v2 /\
-     LIST_REL (clos_callProof_v_rel g l code) env1 env2 ==>
-     (?x2.
-     dest_closure max_app loco v2 env2 = SOME x2 /\
-     (match x1 with Partial_app c1 ->
-       (?c2. x2 = Partial_app c2 /\ clos_callProof_v_rel g l code
-         c1 c2) | Full_app e1 args1 rest1 ->
-        (?fns1 loc i fns2 args2 rest2 n.
-          x2 = Full_app (SND (EL i fns2)) args2 rest2 /\
-          (let m = (if is_Recclosure v2 then LENGTH fns2 else 0) in
-           n + m <= LENGTH args1 /\ n + m <= LENGTH args2 /\
-           LIST_REL (clos_callProof_v_rel g l code) (TAKE (n + m)
-             args1) (TAKE (n + m) args2) /\
-           clos_callProof_env_rel (clos_callProof_v_rel g l code)
-             (DROP (n + m) args1)
-                              (DROP (n + m) args2) m [EL i fns2])
-                                /\
-          LIST_REL (clos_callProof_v_rel g l code) rest1 rest2 /\
-          recclosure_rel g l code loc fns1 fns2 /\
-          i < LENGTH fns1 /\
-          EL i fns1 = (n,e1))))`)
-  CHEAT_TAC;;
+let dest_closure_v_rel = prove
+ (`dest_closure max_app loco v1 env1 = SOME x1 /\
+   clos_callProof_v_rel g l code v1 v2 /\
+   LIST_REL (clos_callProof_v_rel g l code) env1 env2 ==>
+   (?x2.
+   dest_closure max_app loco v2 env2 = SOME x2 /\
+   (match x1 with Partial_app c1 ->
+     (?c2. x2 = Partial_app c2 /\ clos_callProof_v_rel g l code c1
+       c2) | Full_app e1 args1 rest1 ->
+      (?fns1 loc i fns2 args2 rest2 n.
+        x2 = Full_app (SND (EL i fns2)) args2 rest2 /\
+        (let m = (if is_Recclosure v2 then LENGTH fns2 else 0) in
+         n + m <= LENGTH args1 /\ n + m <= LENGTH args2 /\
+         LIST_REL (clos_callProof_v_rel g l code) (TAKE (n + m)
+           args1) (TAKE (n + m) args2) /\
+         clos_callProof_env_rel (clos_callProof_v_rel g l code) (DROP
+           (n + m) args1)
+                              (DROP (n + m) args2) m [EL i fns2]) /\
+        LIST_REL (clos_callProof_v_rel g l code) rest1 rest2 /\
+        recclosure_rel g l code loc fns1 fns2 /\
+        i < LENGTH fns1 /\
+        EL i fns1 = (n,e1))))`,
+  CHEAT_TAC);;
 
-let dest_closure_partial_wfv = cake_theorem "dest_closure_partial_wfv"
-  (fun () ->
-    `dest_closure max_app loco v env = SOME (Partial_app x) /\
-     EVERY (wfv g l code) env /\ wfv g l code v ==> wfv g l code
-       x`)
-  CHEAT_TAC;;
+let dest_closure_partial_wfv = prove
+ (`dest_closure max_app loco v env = SOME (Partial_app x) /\
+   EVERY (wfv g l code) env /\ wfv g l code v ==> wfv g l code x`,
+  CHEAT_TAC);;
 
-let dest_closure_full_wfv = cake_theorem "dest_closure_full_wfv"
-  (fun () ->
-    `dest_closure max_app loco v env = SOME (Full_app e args rest) /\
-     wfv g l code v /\ EVERY (wfv g l code) env ==>
-     (?ys g01 loc fns1 fns2 i.
-       EVERY (wfv g l code) args /\ EVERY (wfv g l code) rest /\
-       recclosure_rel g l code loc fns1 fns2 /\
-       SND (EL i fns1) = e /\ i < LENGTH fns1)`)
-  CHEAT_TAC;;
+let dest_closure_full_wfv = prove
+ (`dest_closure max_app loco v env = SOME (Full_app e args rest) /\
+   wfv g l code v /\ EVERY (wfv g l code) env ==>
+   (?ys g01 loc fns1 fns2 i.
+     EVERY (wfv g l code) args /\ EVERY (wfv g l code) rest /\
+     recclosure_rel g l code loc fns1 fns2 /\
+     SND (EL i fns1) = e /\ i < LENGTH fns1)`,
+  CHEAT_TAC);;
 
-let env_rel_DROP = cake_theorem "env_rel_DROP"
-  (fun () ->
-    `clos_callProof_env_rel R (DROP x l1) (DROP x l2) x es /\
-     LIST_REL R (TAKE x l1) (TAKE x l2) /\
-     x <= LENGTH l1 /\ x <= LENGTH l2 ==>
-     clos_callProof_env_rel R l1 l2 0 es`)
-  CHEAT_TAC;;
+let env_rel_DROP = prove
+ (`clos_callProof_env_rel R (DROP x l1) (DROP x l2) x es /\
+   LIST_REL R (TAKE x l1) (TAKE x l2) /\
+   x <= LENGTH l1 /\ x <= LENGTH l2 ==>
+   clos_callProof_env_rel R l1 l2 0 es`,
+  CHEAT_TAC);;
 
-let env_rel_DROP_args = cake_theorem "env_rel_DROP_args"
-  (fun () ->
-    `clos_callProof_env_rel R (DROP n l1) (DROP n l2) a [(n,e)] /\
-     LIST_REL R (TAKE n l1) (TAKE n l2) /\
-     n <= LENGTH l1 /\ n <= LENGTH l2 ==>
-     clos_callProof_env_rel R l1 l2 a [(0,e)]`)
-  CHEAT_TAC;;
+let env_rel_DROP_args = prove
+ (`clos_callProof_env_rel R (DROP n l1) (DROP n l2) a [(n,e)] /\
+   LIST_REL R (TAKE n l1) (TAKE n l2) /\
+   n <= LENGTH l1 /\ n <= LENGTH l2 ==>
+   clos_callProof_env_rel R l1 l2 a [(0,e)]`,
+  CHEAT_TAC);;
 
-let subg_insert_each' = cake_theorem "subg_insert_each'"
-  (fun () ->
-    `!gb fns1 es g1.
-        subg gb (FST new_g,l ++ SND (insert_each' g1 loc (LENGTH
-          fns1) g)) /\
-        SND new_g = l ++ SND g /\
-        LENGTH fns1 = LENGTH es /\ wfg g /\
-        DISJOINT (set_of_list (GENLIST (\i. 2 * i + loc + 1)
-          (LENGTH fns1))) (IMAGE SUC (domain (FST g))) /\
-        DISJOINT (set_of_list (MAP FST l)) (IMAGE SUC (domain (FST
-          g))) /\
-        (!i. i < LENGTH fns1 ==> ALOOKUP g1 (2 * i + loc + 1) =
-          SOME (FST (EL i fns1),EL i es)) ==>
-        subg (FST new_g,l ++ SND (insert_each' g1 loc (LENGTH fns1)
-          g))
-          (code_list loc (ZIP (MAP FST fns1) es) new_g)`)
-  CHEAT_TAC;;
+let subg_insert_each' = prove
+ (`!gb fns1 es g1.
+      subg gb (FST new_g,l ++ SND (insert_each' g1 loc (LENGTH fns1)
+        g)) /\
+      SND new_g = l ++ SND g /\
+      LENGTH fns1 = LENGTH es /\ wfg g /\
+      DISJOINT (set_of_list (GENLIST (\i. 2 * i + loc + 1) (LENGTH
+        fns1))) (IMAGE SUC (domain (FST g))) /\
+      DISJOINT (set_of_list (MAP FST l)) (IMAGE SUC (domain (FST g)))
+        /\
+      (!i. i < LENGTH fns1 ==> ALOOKUP g1 (2 * i + loc + 1) = SOME
+        (FST (EL i fns1),EL i es)) ==>
+      subg (FST new_g,l ++ SND (insert_each' g1 loc (LENGTH fns1) g))
+        (code_list loc (ZIP (MAP FST fns1) es) new_g)`,
+  CHEAT_TAC);;
 
-let code_includes_SUBMAP = cake_theorem "code_includes_SUBMAP[local]"
-  (fun () ->
-    `code_includes x y1 /\ y1 SUBMAP y2 ==> code_includes x y2`)
-  CHEAT_TAC;;
+(* [local] *)
+let code_includes_SUBMAP = prove
+ (`code_includes x y1 /\ y1 SUBMAP y2 ==> code_includes x y2`,
+  CHEAT_TAC);;
 
-let wfv_subg = cake_theorem "wfv_subg"
-  (fun () ->
-    `!g l code v g' l' code'.
-       wfv g l code v /\ code SUBMAP code' /\ subg g g' /\ l
-         SUBSET l' ==> wfv g' l' code' v`)
-  CHEAT_TAC;;
+let wfv_subg = prove
+ (`!g l code v g' l' code'.
+     wfv g l code v /\ code SUBMAP code' /\ subg g g' /\ l SUBSET
+       l' ==> wfv g' l' code' v`,
+  CHEAT_TAC);;
 
-let wfv_SUBMAP = cake_theorem "wfv_SUBMAP"
-  (fun () ->
-    `!g1 l1 code v code1.
-        wfv g1 l1 code v /\ code SUBMAP code1 ==> wfv g1 l1 code1
-          v`)
-  CHEAT_TAC;;
+let wfv_SUBMAP = prove
+ (`!g1 l1 code v code1.
+      wfv g1 l1 code v /\ code SUBMAP code1 ==> wfv g1 l1 code1 v`,
+  CHEAT_TAC);;
 
-let EVERY_wfv_SUBMAP = cake_theorem "EVERY_wfv_SUBMAP"
-  (fun () ->
-    `EVERY (wfv g1 l1 code) env /\ code SUBMAP code1 ==>
-      EVERY (wfv g1 l1 code1) env`)
-  CHEAT_TAC;;
+let EVERY_wfv_SUBMAP = prove
+ (`EVERY (wfv g1 l1 code) env /\ code SUBMAP code1 ==>
+    EVERY (wfv g1 l1 code1) env`,
+  CHEAT_TAC);;
 
-let EVERY_wfv_subg = cake_theorem "EVERY_wfv_subg"
-  (fun () ->
-    `EVERY (wfv g l code) env /\ code SUBMAP code2 /\ subg g g2 /\ l
+let EVERY_wfv_subg = prove
+ (`EVERY (wfv g l code) env /\ code SUBMAP code2 /\ subg g g2 /\ l
   SUBSET l2 ==>
-       EVERY (wfv g2 l2 code2) env`)
-  CHEAT_TAC;;
+     EVERY (wfv g2 l2 code2) env`,
+  CHEAT_TAC);;
 
-let every_refv_mono = cake_theorem "every_refv_mono"
-  (fun () ->
-    `(!x. P x ==> P' x) ==> every_refv P v ==> every_refv P' v`)
-  CHEAT_TAC;;
+let every_refv_mono = prove
+ (`(!x. P x ==> P' x) ==> every_refv P v ==> every_refv P' v`,
+  CHEAT_TAC);;
 
-let wfv_state_subg = cake_theorem "wfv_state_subg"
-  (fun () ->
-    `wfv_state g l code s /\ code SUBMAP code2 /\ subg g g2 /\ l SUBSET
-  l2 ==>
-         wfv_state g2 l2 code2 s`)
-  CHEAT_TAC;;
+let wfv_state_subg = prove
+ (`wfv_state g l code s /\ code SUBMAP code2 /\ subg g g2 /\ l SUBSET l2
+  ==>
+       wfv_state g2 l2 code2 s`,
+  CHEAT_TAC);;
 
-let wfv_state_SUBMAP = cake_theorem "wfv_state_SUBMAP"
-  (fun () ->
-    `!g1 l1 code s code1.
-          wfv_state g1 l1 code s /\ code SUBMAP code1 ==>
-         wfv_state g1 l1 code1 s`)
-  CHEAT_TAC;;
+let wfv_state_SUBMAP = prove
+ (`!g1 l1 code s code1.
+        wfv_state g1 l1 code s /\ code SUBMAP code1 ==>
+       wfv_state g1 l1 code1 s`,
+  CHEAT_TAC);;
 
-let v_rel_SUBMAP = cake_theorem "v_rel_SUBMAP"
-  (fun () ->
-    `!g1 l1 code v1 v2 code1.
-        clos_callProof_v_rel g1 l1 code v1 v2 /\ code SUBMAP
-          code1 ==> clos_callProof_v_rel g1 l1 code1 v1 v2`)
-  CHEAT_TAC;;
+let v_rel_SUBMAP = prove
+ (`!g1 l1 code v1 v2 code1.
+      clos_callProof_v_rel g1 l1 code v1 v2 /\ code SUBMAP code1
+        ==> clos_callProof_v_rel g1 l1 code1 v1 v2`,
+  CHEAT_TAC);;
 
-let v_rel_SUBMAP_subg = cake_theorem "v_rel_SUBMAP_subg"
-  (fun () ->
-    `clos_callProof_v_rel g l code v1 v2 /\ code SUBMAP code' /\ l
-  SUBSET l' /\ subg g g' ==>
-       clos_callProof_v_rel g' l' code' v1 v2`)
-  CHEAT_TAC;;
+let v_rel_SUBMAP_subg = prove
+ (`clos_callProof_v_rel g l code v1 v2 /\ code SUBMAP code' /\ l SUBSET
+  l' /\ subg g g' ==>
+     clos_callProof_v_rel g' l' code' v1 v2`,
+  CHEAT_TAC);;
 
-let LIST_REL_v_rel_SUBMAP = cake_theorem "LIST_REL_v_rel_SUBMAP"
-  (fun () ->
-    `!g1 l1 code v1 v2 code1.
-         LIST_REL (clos_callProof_v_rel g1 l1 code) v1 v2 /\ code
-           SUBMAP code1 ==>
-         LIST_REL (clos_callProof_v_rel g1 l1 code1) v1 v2`)
-  CHEAT_TAC;;
+let LIST_REL_v_rel_SUBMAP = prove
+ (`!g1 l1 code v1 v2 code1.
+       LIST_REL (clos_callProof_v_rel g1 l1 code) v1 v2 /\ code
+         SUBMAP code1 ==>
+       LIST_REL (clos_callProof_v_rel g1 l1 code1) v1 v2`,
+  CHEAT_TAC);;
 
-let LIST_REL_v_rel_subg = cake_theorem "LIST_REL_v_rel_subg"
-  (fun () ->
-    `LIST_REL (clos_callProof_v_rel g l code) xs ys /\ subg g g2 /\ l
+let LIST_REL_v_rel_subg = prove
+ (`LIST_REL (clos_callProof_v_rel g l code) xs ys /\ subg g g2 /\ l
   SUBSET l2 /\ code SUBMAP code2 ==> LIST_REL (clos_callProof_v_rel g2
-  l2 code2) xs ys`)
-  CHEAT_TAC;;
+  l2 code2) xs ys`,
+  CHEAT_TAC);;
 
-let env_rel_SUBMAP = cake_theorem "env_rel_SUBMAP"
-  (fun () ->
-    `!code code' g1 l1 env1 env2 n vars'.
-         clos_callProof_env_rel (clos_callProof_v_rel g1 l1 code)
-           env1 env2 n vars' /\ code SUBMAP code' ==>
-         clos_callProof_env_rel (clos_callProof_v_rel g1 l1
-           code') env1 env2 n vars'`)
-  CHEAT_TAC;;
+let env_rel_SUBMAP = prove
+ (`!code code' g1 l1 env1 env2 n vars'.
+       clos_callProof_env_rel (clos_callProof_v_rel g1 l1 code) env1
+         env2 n vars' /\ code SUBMAP code' ==>
+       clos_callProof_env_rel (clos_callProof_v_rel g1 l1 code')
+         env1 env2 n vars'`,
+  CHEAT_TAC);;
 
-let env_rel_subg = cake_theorem "env_rel_subg"
-  (fun () ->
-    `clos_callProof_env_rel (clos_callProof_v_rel g l code) env1 env2 n
+let env_rel_subg = prove
+ (`clos_callProof_env_rel (clos_callProof_v_rel g l code) env1 env2 n
   vars /\ subg g g2 /\ l SUBSET l2 /\
-       code SUBMAP code2 ==>
-     clos_callProof_env_rel (clos_callProof_v_rel g2 l2 code2)
-       env1 env2 n vars`)
-  CHEAT_TAC;;
+     code SUBMAP code2 ==>
+   clos_callProof_env_rel (clos_callProof_v_rel g2 l2 code2) env1
+     env2 n vars`,
+  CHEAT_TAC);;
 
 (* semantic functions respect relation *)
 
-let clos_callProof_v_rel_Unit = cake_theorem "v_rel_Unit[simp]"
-  (fun () ->
-    `clos_callProof_v_rel g1 l1 code closSem_Unit closSem_Unit`)
-  CHEAT_TAC;;
+(* v_rel_Unit[simp] *)
+let clos_callProof_v_rel_Unit = prove
+ (`clos_callProof_v_rel g1 l1 code closSem_Unit closSem_Unit`,
+  CHEAT_TAC);;
 
-let v_to_list_thm = cake_theorem "v_to_list_thm"
-  (fun () ->
-    `!h h' x.
-        v_to_list h = SOME x /\ clos_callProof_v_rel g1 l1 code h
-          h' ==>
-        (?x'. v_to_list h' = SOME x' /\ LIST_REL
-          (clos_callProof_v_rel g1 l1 code) x x')`)
-  CHEAT_TAC;;
+let v_to_list_thm = prove
+ (`!h h' x.
+      v_to_list h = SOME x /\ clos_callProof_v_rel g1 l1 code h h'
+        ==>
+      (?x'. v_to_list h' = SOME x' /\ LIST_REL
+        (clos_callProof_v_rel g1 l1 code) x x')`,
+  CHEAT_TAC);;
 
-let v_rel_IMP_v_to_bytes_lemma =
-  cake_theorem "v_rel_IMP_v_to_bytes_lemma[local]"
-  (fun () ->
-    `!x y c g code.
-       clos_callProof_v_rel c g code x y ==>
-       (!ns. (v_to_list x = SOME (MAP (closSem_Number o (&) o
-         (w2n:word8->num)) ns)) <=>
-            (v_to_list y = SOME (MAP (closSem_Number o (&) o
-              (w2n:word8->num)) ns)))`)
-  CHEAT_TAC;;
+(* [local] *)
+let v_rel_IMP_v_to_bytes_lemma = prove
+ (`!x y c g code.
+     clos_callProof_v_rel c g code x y ==>
+     (!ns. (v_to_list x = SOME (MAP (closSem_Number o (&) o
+       (w2n:word8->num)) ns)) <=>
+          (v_to_list y = SOME (MAP (closSem_Number o (&) o
+            (w2n:word8->num)) ns)))`,
+  CHEAT_TAC);;
 
-let v_rel_IMP_v_to_words_lemma =
-  cake_theorem "v_rel_IMP_v_to_words_lemma[local]"
-  (fun () ->
-    `!x y c g.
-       clos_callProof_v_rel c g code x y ==>
-       (!ns. (v_to_list x = SOME (MAP Word64 ns)) <=>
-            (v_to_list y = SOME (MAP Word64 ns)))`)
-  CHEAT_TAC;;
+(* [local] *)
+let v_rel_IMP_v_to_words_lemma = prove
+ (`!x y c g.
+     clos_callProof_v_rel c g code x y ==>
+     (!ns. (v_to_list x = SOME (MAP Word64 ns)) <=>
+          (v_to_list y = SOME (MAP Word64 ns)))`,
+  CHEAT_TAC);;
 
-let v_to_bytes_thm = cake_theorem "v_to_bytes_thm"
-  (fun () ->
-    `!h h' x.
-        closSem_v_to_bytes h = SOME x /\ clos_callProof_v_rel g1 l1
-          code h h' ==>
-        closSem_v_to_bytes h' = SOME x`)
-  CHEAT_TAC;;
+let v_to_bytes_thm = prove
+ (`!h h' x.
+      closSem_v_to_bytes h = SOME x /\ clos_callProof_v_rel g1 l1
+        code h h' ==>
+      closSem_v_to_bytes h' = SOME x`,
+  CHEAT_TAC);;
 
-let v_to_words_thm = cake_theorem "v_to_words_thm"
-  (fun () ->
-    `!h h' x.
-        closSem_v_to_words h = SOME x /\ clos_callProof_v_rel g1 l1
-          code h h' ==>
-        closSem_v_to_words h' = SOME x`)
-  CHEAT_TAC;;
+let v_to_words_thm = prove
+ (`!h h' x.
+      closSem_v_to_words h = SOME x /\ clos_callProof_v_rel g1 l1
+        code h h' ==>
+      closSem_v_to_words h' = SOME x`,
+  CHEAT_TAC);;
 
-let v_to_list_wfv = cake_theorem "v_to_list_wfv"
-  (fun () ->
-    `!h x. v_to_list h = SOME x /\ wfv g1 l1 code h ==> EVERY (wfv g1
-  l1 code) x`)
-  CHEAT_TAC;;
+let v_to_list_wfv = prove
+ (`!h x. v_to_list h = SOME x /\ wfv g1 l1 code h ==> EVERY (wfv g1 l1
+  code) x`,
+  CHEAT_TAC);;
 
-let wfv_Boolv = cake_theorem "wfv_Boolv"
-  (fun () ->
-    `wfv g1 l1 code (Boolv b) /\ wfv g1 l1 code closSem_Unit`)
-  CHEAT_TAC;;
+let wfv_Boolv = prove
+ (`wfv g1 l1 code (Boolv b) /\ wfv g1 l1 code closSem_Unit`,
+  CHEAT_TAC);;
 
-let vrel_list_to_v = cake_theorem "vrel_list_to_v"
-  (fun () ->
-    `!xs1 xs2 ys1 ys2.
-       LIST_REL (clos_callProof_v_rel g l code) xs1 xs2 /\
-       LIST_REL (clos_callProof_v_rel g l code) ys1 ys2 /\
-       clos_callProof_v_rel g l code (list_to_v xs1) (list_to_v
-         xs2) /\
-       clos_callProof_v_rel g l code (list_to_v ys1) (list_to_v
-         ys2) ==>
-         clos_callProof_v_rel g l code (list_to_v (xs1 ++ ys1))
-           (list_to_v (xs2 ++ ys2))`)
-  CHEAT_TAC;;
+let vrel_list_to_v = prove
+ (`!xs1 xs2 ys1 ys2.
+     LIST_REL (clos_callProof_v_rel g l code) xs1 xs2 /\
+     LIST_REL (clos_callProof_v_rel g l code) ys1 ys2 /\
+     clos_callProof_v_rel g l code (list_to_v xs1) (list_to_v xs2) /\
+     clos_callProof_v_rel g l code (list_to_v ys1) (list_to_v ys2)
+       ==>
+       clos_callProof_v_rel g l code (list_to_v (xs1 ++ ys1))
+         (list_to_v (xs2 ++ ys2))`,
+  CHEAT_TAC);;
 
-let vrel_v2l_l2v = cake_theorem "vrel_v2l_l2v"
-  (fun () ->
-    `!x y xs ys.
-       clos_callProof_v_rel g l code x y /\
-       v_to_list x = SOME xs /\
-       v_to_list y = SOME ys ==>
-         clos_callProof_v_rel g l code (list_to_v xs) (list_to_v
-           ys)`)
-  CHEAT_TAC;;
+let vrel_v2l_l2v = prove
+ (`!x y xs ys.
+     clos_callProof_v_rel g l code x y /\
+     v_to_list x = SOME xs /\
+     v_to_list y = SOME ys ==>
+       clos_callProof_v_rel g l code (list_to_v xs) (list_to_v ys)`,
+  CHEAT_TAC);;
 
-let wfv_v2l_l2v = cake_theorem "wfv_v2l_l2v"
-  (fun () ->
-    `!x y xs ys. wfv g l code x /\ v_to_list x = SOME xs ==>
-                 wfv g l code (list_to_v xs)`)
-  CHEAT_TAC;;
+let wfv_v2l_l2v = prove
+ (`!x y xs ys. wfv g l code x /\ v_to_list x = SOME xs ==>
+               wfv g l code (list_to_v xs)`,
+  CHEAT_TAC);;
 
-let wfv_v2l = cake_theorem "wfv_v2l"
-  (fun () ->
-    `!x y xs ys.
-     wfv g l code x /\ wfv g l code y /\
-     v_to_list x = SOME xs /\ v_to_list y = SOME ys ==>
-       (?z. wfv g l code z /\ v_to_list z = SOME (xs ++ ys))`)
-  CHEAT_TAC;;
+let wfv_v2l = prove
+ (`!x y xs ys.
+   wfv g l code x /\ wfv g l code y /\
+   v_to_list x = SOME xs /\ v_to_list y = SOME ys ==>
+     (?z. wfv g l code z /\ v_to_list z = SOME (xs ++ ys))`,
+  CHEAT_TAC);;
 
-let clos_callProof_do_app_thm = cake_theorem "do_app_thm"
-  (fun () ->
-    `match do_app op (REVERSE a) (r:(1 spt#'c,'ffi)closSem_state) with
-        Rerr (Rraise _28) -> F | Rerr (Rabort e) ->
-        (e = Rtype_error \/
-         (?f.
-              e = Rffi_error f /\ (
-              LIST_REL (clos_callProof_v_rel g2 l2
-                (closSem_state_code t)) a v /\ clos_callProof_state_rel
-                g2 l2 r t ==> do_app op (REVERSE v) t = Rerr (Rabort
-                (Rffi_error f))))) | Rval (w,s) ->
-         (wfv_state g2 l2 (closSem_state_code t) r /\ EVERY (wfv g2
-           l2 (closSem_state_code t)) a ==>
-          wfv_state g2 l2 (closSem_state_code t) s /\ wfv g2 l2
-            (closSem_state_code t) w) /\
-         (LIST_REL (clos_callProof_v_rel g2 l2 (closSem_state_code
-           t)) a v /\ clos_callProof_state_rel g2 l2 r t ==>
-          (?w' s'. (do_app op (REVERSE v) t = Rval (w',s')) /\
-                  clos_callProof_v_rel g2 l2 (closSem_state_code
-                    t) w w' /\ clos_callProof_state_rel g2 l2 s s'))`)
-  CHEAT_TAC;;
+(* do_app_thm *)
+let clos_callProof_do_app_thm = prove
+ (`match do_app op (REVERSE a) (r:(1 spt#'c,'ffi)closSem_state) with
+      Rerr (Rraise _28) -> F | Rerr (Rabort e) ->
+      (e = Rtype_error \/
+       (?f.
+            e = Rffi_error f /\ (
+            LIST_REL (clos_callProof_v_rel g2 l2 (closSem_state_code
+              t)) a v /\ clos_callProof_state_rel g2 l2 r t ==> do_app
+              op (REVERSE v) t = Rerr (Rabort (Rffi_error f))))) | Rval
+              (w,s) ->
+       (wfv_state g2 l2 (closSem_state_code t) r /\ EVERY (wfv g2 l2
+         (closSem_state_code t)) a ==>
+        wfv_state g2 l2 (closSem_state_code t) s /\ wfv g2 l2
+          (closSem_state_code t) w) /\
+       (LIST_REL (clos_callProof_v_rel g2 l2 (closSem_state_code t))
+         a v /\ clos_callProof_state_rel g2 l2 r t ==>
+        (?w' s'. (do_app op (REVERSE v) t = Rval (w',s')) /\
+                clos_callProof_v_rel g2 l2 (closSem_state_code t) w
+                  w' /\ clos_callProof_state_rel g2 l2 s s'))`,
+  CHEAT_TAC);;
 
-let NOT_IN_domain_FST_g = cake_theorem "NOT_IN_domain_FST_g"
-  (fun () ->
-    `ALL_DISTINCT (code_locs xs ++ code_locs ys) ==>
-      calls ys g' = (e2,g) ==>
-      wfg g' ==>
-      MEM x (code_locs xs) ==> ~(x IN domain (FST g')) ==> ~(x IN
-        domain (FST g))`)
-  CHEAT_TAC;;
+let NOT_IN_domain_FST_g = prove
+ (`ALL_DISTINCT (code_locs xs ++ code_locs ys) ==>
+    calls ys g' = (e2,g) ==>
+    wfg g' ==>
+    MEM x (code_locs xs) ==> ~(x IN domain (FST g')) ==> ~(x IN
+      domain (FST g))`,
+  CHEAT_TAC);;
 
-let clos_callProof_v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
-  (fun () ->
-    `clos_callProof_v_rel g1 l1 code (Boolv b) v <=> (v = Boolv b)`)
-  CHEAT_TAC;;
+(* v_rel_Boolv[simp] *)
+let clos_callProof_v_rel_Boolv = prove
+ (`clos_callProof_v_rel g1 l1 code (Boolv b) v <=> (v = Boolv b)`,
+  CHEAT_TAC);;
 
-let env_rel_Op_Install = cake_theorem "env_rel_Op_Install[local]"
-  (fun () ->
-    `clos_callProof_env_rel r env env2 0 [0,(closLang_Op v6
+(* [local] *)
+let env_rel_Op_Install = prove
+ (`clos_callProof_env_rel r env env2 0 [0,(closLang_Op v6
   closLang_Install e1:closLang_exp)] <=>
-     clos_callProof_env_rel r env env2 0 (MAP (\x. (0,x)) e1)`)
-  CHEAT_TAC;;
+   clos_callProof_env_rel r env env2 0 (MAP (\x. (0,x)) e1)`,
+  CHEAT_TAC);;
 
 let syntax_ok_def = cake_define
   `clos_callProof_syntax_ok x <=> every_Fn_SOME x /\ every_Fn_vs_NONE
@@ -1031,26 +933,22 @@ let co_ok_def = cake_define
          co_ok (code |++ aux1) (misc_shift_seq 1 co)
            (misc_shift_seq 1 full_gs) (k - 1))`;;
 
-let co_ok_IMP_full_gs_eq_shift_seq =
-  cake_theorem "co_ok_IMP_full_gs_eq_shift_seq"
-  (fun () ->
-    `!k code co g full_gs.
-        co_ok code co full_gs (k + 1) ==>
-        FST (FST (misc_shift_seq k co 0)) = FST (full_gs k)`)
-  CHEAT_TAC;;
+let co_ok_IMP_full_gs_eq_shift_seq = prove
+ (`!k code co g full_gs.
+      co_ok code co full_gs (k + 1) ==>
+      FST (FST (misc_shift_seq k co 0)) = FST (full_gs k)`,
+  CHEAT_TAC);;
 
-let co_ok_IMP_wfg_full_gs = cake_theorem "co_ok_IMP_wfg_full_gs"
-  (fun () ->
-    `!k code co g full_gs. co_ok code co full_gs (k + 1) ==> wfg
-  (full_gs k)`)
-  CHEAT_TAC;;
+let co_ok_IMP_wfg_full_gs = prove
+ (`!k code co g full_gs. co_ok code co full_gs (k + 1) ==> wfg
+  (full_gs k)`,
+  CHEAT_TAC);;
 
-let co_ok_IMP_make_g = cake_theorem "co_ok_IMP_make_g"
-  (fun () ->
-    `!k code co g full_gs.
-        co_ok code co full_gs (k + 1) ==>
-        (?x1 x2. make_g x1 x2 = SOME (full_gs k))`)
-  CHEAT_TAC;;
+let co_ok_IMP_make_g = prove
+ (`!k code co g full_gs.
+      co_ok code co full_gs (k + 1) ==>
+      (?x1 x2. make_g x1 x2 = SOME (full_gs k))`,
+  CHEAT_TAC);;
 
 let code_inv_def = cake_define
   `code_inv g1_opt l1 (s_code:(num,num#closLang_exp)fmap)
@@ -1067,142 +965,124 @@ let code_inv_def = cake_define
      (!k. let (cfg,exp,aux) = s_co (k:num) in
          clos_callProof_syntax_ok exp /\ aux = [])`;;
 
-let code_inv_k = cake_theorem "code_inv_k"
-  (fun () ->
-    `!k. code_inv g l s_code s_cc s_co t_code t_cc t_co ==>
-     (match s_co k with (cfg,exp,aux) -> clos_callProof_syntax_ok
-       exp /\ aux = [])`)
-  CHEAT_TAC;;
+let code_inv_k = prove
+ (`!k. code_inv g l s_code s_cc s_co t_code t_cc t_co ==>
+   (match s_co k with (cfg,exp,aux) -> clos_callProof_syntax_ok exp
+     /\ aux = [])`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_callProofScript.sml:2113-2120: code that the source has
    in a comment *)
 
-let SUBMAP_FUPDATE_LIST = cake_theorem "SUBMAP_FUPDATE_LIST"
-  (fun () ->
-    `!f xs. ALL_DISTINCT (MAP FST xs) /\ DISJOINT (FDOM f)
-  (set_of_list (MAP FST xs)) ==> f SUBMAP (f |++ xs)`)
-  CHEAT_TAC;;
+let SUBMAP_FUPDATE_LIST = prove
+ (`!f xs. ALL_DISTINCT (MAP FST xs) /\ DISJOINT (FDOM f) (set_of_list
+  (MAP FST xs)) ==> f SUBMAP (f |++ xs)`,
+  CHEAT_TAC);;
 
 let includes_state_def = cake_define
   `includes_state g1 s_compile_oracle <=>
      (?(k:num). FST (FST (s_compile_oracle k)) = FST g1)`;;
 
-let includes_state_EX = cake_theorem "includes_state_EX"
-  (fun () ->
-    `includes_state g1 s_co ==>
-       (?k cfg2 exps aux. s_co k = ((FST g1,cfg2),exps,aux))`)
-  CHEAT_TAC;;
+let includes_state_EX = prove
+ (`includes_state g1 s_co ==>
+     (?k cfg2 exps aux. s_co k = ((FST g1,cfg2),exps,aux))`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_callProofScript.sml:2145-2151: code that the source has
    in a comment *)
 
-let code_rel_state_rel_install =
-  cake_theorem "code_rel_state_rel_install"
-  (fun () ->
-    `code_inv (SOME g1) l1 (closSem_state_code
-         r) (closSem_state_compile r) (closSem_state_compile_oracle
-           r) (closSem_state_code t) (closSem_state_compile t)
-           (closSem_state_compile_oracle t) /\
-       clos_callProof_state_rel g1 l1 r t /\ closSem_state_compile
-       r cfg (exps,aux) =
-           SOME (bytes,data,next_cfg) /\
-             closSem_state_compile_oracle
-       r 0 = (cfg,exps,aux) /\ closSem_state_compile_oracle
-       t 0 = (cfg',progs) /\
-       next_cfg = FST (misc_shift_seq 1
-         (closSem_state_compile_oracle r) 0) /\
-       DISJOINT l1 (domain (FST g1)) ==>
-       DISJOINT (FDOM (closSem_state_code t)) (set_of_list (MAP FST
-         (SND progs))) /\
-       ALL_DISTINCT (MAP FST (SND progs)) /\
-       (?exp1 aux1 g2 l2 next_cfg'. closSem_state_compile
-       t cfg' progs = SOME (bytes,data,next_cfg') /\
-         progs = (exp1,aux1) /\
-         next_cfg' = FST (misc_shift_seq 1
-           (closSem_state_compile_oracle t) 0) /\
-         subg g1 g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (domain (FST
-           g2)) /\
-         set_of_list (code_locs exps) DIFF domain (FST g2) SUBSET
-           l2 /\
-         calls exps g1 = (exp1,g2) /\
-         clos_callProof_state_rel g2 l2
-          (closSem_state_code_fupd (K (closSem_state_code r |++
-            aux)) (closSem_state_compile_oracle_fupd (K (misc_shift_seq
-            1 (closSem_state_compile_oracle r))) r))
-          (closSem_state_code_fupd (K (closSem_state_code t |++
-            aux1)) (closSem_state_compile_oracle_fupd (K (misc_shift_seq
-            1 (closSem_state_compile_oracle t))) t)) /\
-         code_inv (SOME g2) l2 (closSem_state_code r |++ aux)
-           (closSem_state_compile r) (misc_shift_seq 1
-           (closSem_state_compile_oracle r))
-                  (closSem_state_code t |++ aux1)
-                    (closSem_state_compile t) (misc_shift_seq 1
-                    (closSem_state_compile_oracle t)) /\
-                    closSem_state_code
-         t SUBMAP (closSem_state_code t |++ aux1) /\
-         DISJOINT (IMAGE SUC (set_of_list (code_locs exps)))
-           (FDOM (closSem_state_code t)))`)
-  CHEAT_TAC;;
+let code_rel_state_rel_install = prove
+ (`code_inv (SOME g1) l1 (closSem_state_code
+       r) (closSem_state_compile r) (closSem_state_compile_oracle r)
+         (closSem_state_code t) (closSem_state_compile t)
+         (closSem_state_compile_oracle t) /\
+     clos_callProof_state_rel g1 l1 r t /\ closSem_state_compile
+     r cfg (exps,aux) =
+         SOME (bytes,data,next_cfg) /\ closSem_state_compile_oracle
+     r 0 = (cfg,exps,aux) /\ closSem_state_compile_oracle
+     t 0 = (cfg',progs) /\
+     next_cfg = FST (misc_shift_seq 1 (closSem_state_compile_oracle
+       r) 0) /\
+     DISJOINT l1 (domain (FST g1)) ==>
+     DISJOINT (FDOM (closSem_state_code t)) (set_of_list (MAP FST
+       (SND progs))) /\
+     ALL_DISTINCT (MAP FST (SND progs)) /\
+     (?exp1 aux1 g2 l2 next_cfg'. closSem_state_compile
+     t cfg' progs = SOME (bytes,data,next_cfg') /\
+       progs = (exp1,aux1) /\
+       next_cfg' = FST (misc_shift_seq 1
+         (closSem_state_compile_oracle t) 0) /\
+       subg g1 g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (domain (FST g2)) /\
+       set_of_list (code_locs exps) DIFF domain (FST g2) SUBSET l2 /\
+       calls exps g1 = (exp1,g2) /\
+       clos_callProof_state_rel g2 l2
+        (closSem_state_code_fupd (K (closSem_state_code r |++ aux))
+          (closSem_state_compile_oracle_fupd (K (misc_shift_seq 1
+          (closSem_state_compile_oracle r))) r))
+        (closSem_state_code_fupd (K (closSem_state_code t |++ aux1))
+          (closSem_state_compile_oracle_fupd (K (misc_shift_seq 1
+          (closSem_state_compile_oracle t))) t)) /\
+       code_inv (SOME g2) l2 (closSem_state_code r |++ aux)
+         (closSem_state_compile r) (misc_shift_seq 1
+         (closSem_state_compile_oracle r))
+                (closSem_state_code t |++ aux1)
+                  (closSem_state_compile t) (misc_shift_seq 1
+                  (closSem_state_compile_oracle t)) /\
+                  closSem_state_code
+       t SUBMAP (closSem_state_code t |++ aux1) /\
+       DISJOINT (IMAGE SUC (set_of_list (code_locs exps))) (FDOM
+         (closSem_state_code t)))`,
+  CHEAT_TAC);;
 
-let fv_GENLIST_Var_alt = cake_theorem "fv_GENLIST_Var_alt"
-  (fun () ->
-    `!n i tra. fv v (GENLIST_Var tra i n) <=> v < n`)
-  CHEAT_TAC;;
+let fv_GENLIST_Var_alt = prove
+ (`!n i tra. fv v (GENLIST_Var tra i n) <=> v < n`,
+  CHEAT_TAC);;
 
-let env_rel_env_exists = cake_theorem "env_rel_env_exists"
-  (fun () ->
-    `!vars'. EVERY (wfv g1 l1 code) env ==>
-             (?env5. clos_callProof_env_rel (clos_callProof_v_rel
-               g1 l1 code) env env5 0 vars' /\
-                    LENGTH env5 = LENGTH env)`)
-  CHEAT_TAC;;
+let env_rel_env_exists = prove
+ (`!vars'. EVERY (wfv g1 l1 code) env ==>
+           (?env5. clos_callProof_env_rel (clos_callProof_v_rel g1 l1
+             code) env env5 0 vars' /\
+                  LENGTH env5 = LENGTH env)`,
+  CHEAT_TAC);;
 
-let evaluate_includes_state = cake_theorem "evaluate_includes_state"
-  (fun () ->
-    `!xs env s res s1 g1.
-        includes_state g1 (closSem_state_compile_oracle s1) /\
-        closSem_evaluate (xs,env,s) = (res,s1) ==>
-        includes_state g1 (closSem_state_compile_oracle s)`)
-  CHEAT_TAC;;
+let evaluate_includes_state = prove
+ (`!xs env s res s1 g1.
+      includes_state g1 (closSem_state_compile_oracle s1) /\
+      closSem_evaluate (xs,env,s) = (res,s1) ==>
+      includes_state g1 (closSem_state_compile_oracle s)`,
+  CHEAT_TAC);;
 
-let evaluate_app_includes_state =
-  cake_theorem "evaluate_app_includes_state"
-  (fun () ->
-    `!xs env s res s1 g1.
-        includes_state g1 (closSem_state_compile_oracle s1) /\
-        evaluate_app loco x vs s = (res,s1) ==>
-        includes_state g1 (closSem_state_compile_oracle s)`)
-  CHEAT_TAC;;
+let evaluate_app_includes_state = prove
+ (`!xs env s res s1 g1.
+      includes_state g1 (closSem_state_compile_oracle s1) /\
+      evaluate_app loco x vs s = (res,s1) ==>
+      includes_state g1 (closSem_state_compile_oracle s)`,
+  CHEAT_TAC);;
 
-let evaluate_app_mono = cake_theorem "evaluate_app_mono"
-  (fun () ->
-    `evaluate_app x y z s1 = (vs,s2) ==> closSem_state_code s1 SUBMAP
-  closSem_state_code s2`)
-  CHEAT_TAC;;
+let evaluate_app_mono = prove
+ (`evaluate_app x y z s1 = (vs,s2) ==> closSem_state_code s1 SUBMAP
+  closSem_state_code s2`,
+  CHEAT_TAC);;
 
-let calls_pure = cake_theorem "calls_pure"
-  (fun () ->
-    `!xs g es g1.
-      EVERY pure xs /\ calls xs g = (es,g1) ==> EVERY pure es`)
-  CHEAT_TAC;;
+let calls_pure = prove
+ (`!xs g es g1.
+    EVERY pure xs /\ calls xs g = (es,g1) ==> EVERY pure es`,
+  CHEAT_TAC);;
 
-let calls_pure_sing = cake_theorem "calls_pure_sing"
-  (fun () ->
-    `pure x1 /\ calls [x1] g = ([e1],g1) ==> pure e1`)
-  CHEAT_TAC;;
+let calls_pure_sing = prove
+ (`pure x1 /\ calls [x1] g = ([e1],g1) ==> pure e1`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_callProofScript.sml:2331-2381: code that the source has
    in a comment *)
 
-let wfg_subg_refl = cake_theorem "wfg_subg_refl"
-  (fun () ->
-    `wfg g ==> subg g g`)
-  CHEAT_TAC;;
+let wfg_subg_refl = prove
+ (`wfg g ==> subg g g`,
+  CHEAT_TAC);;
 
-let wfg_subg_EX_helper = cake_theorem "wfg_subg_EX_helper"
-  (fun () ->
-    `wfg g /\ P g ==> (?g2. subg g g2 /\ P g2)`)
-  CHEAT_TAC;;
+let wfg_subg_EX_helper = prove
+ (`wfg g /\ P g ==> (?g2. subg g g2 /\ P g2)`,
+  CHEAT_TAC);;
 
 let mk_code_g_def = cake_define
   `mk_code_g code = (list_to_num_set (MAP PRE (SET_TO_LIST (FDOM
@@ -1213,27 +1093,25 @@ let mk_code_g_def = cake_define
 
 (* HOL4 clos_callProofScript.sml:2404-2405: ML code, not ported *)
 
-let pure_correct_eq = cake_theorem "pure_correct_eq"
-  (fun () ->
-    `pure e /\ closSem_evaluate ([e],env,s) = (res,s') ==>
-       (match res with Rval vs -> s' = s /\ LENGTH vs = 1 | Rerr
-         (Rraise _29) -> F | Rerr (Rabort a) -> a = Rtype_error)`)
-  CHEAT_TAC;;
+let pure_correct_eq = prove
+ (`pure e /\ closSem_evaluate ([e],env,s) = (res,s') ==>
+     (match res with Rval vs -> s' = s /\ LENGTH vs = 1 | Rerr
+       (Rraise _29) -> F | Rerr (Rabort a) -> a = Rtype_error)`,
+  CHEAT_TAC);;
 
-let clos_callProof_state_rel_opt_rel_refs =
-  cake_theorem "state_rel_opt_rel_refs[local]"
-  (fun () ->
-    `(clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (state_refs s1) n =
-  r1 ==>
-        (?r2. FLOOKUP (state_refs s2) n = r2 /\
-             OPTREL (closProps_ref_rel (clos_callProof_v_rel g l
-               (closSem_state_code s2))) r1 r2)) /\
-     (clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (state_refs s2)
-       n = r2 ==>
-        (?r1. FLOOKUP (state_refs s1) n = r1 /\
-             OPTREL (closProps_ref_rel (clos_callProof_v_rel g l
-               (closSem_state_code s2))) r1 r2))`)
-  CHEAT_TAC;;
+(* state_rel_opt_rel_refs[local] *)
+let clos_callProof_state_rel_opt_rel_refs = prove
+ (`(clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (state_refs s1) n = r1
+  ==>
+      (?r2. FLOOKUP (state_refs s2) n = r2 /\
+           OPTREL (closProps_ref_rel (clos_callProof_v_rel g l
+             (closSem_state_code s2))) r1 r2)) /\
+   (clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (state_refs s2) n =
+     r2 ==>
+      (?r1. FLOOKUP (state_refs s1) n = r1 /\
+           OPTREL (closProps_ref_rel (clos_callProof_v_rel g l
+             (closSem_state_code s2))) r1 r2))`,
+  CHEAT_TAC);;
 
 (* compiler correctness *)
 
@@ -1248,170 +1126,159 @@ max_print_depth := 800
 
 (* HOL4 clos_callProofScript.sml:2437-2438: ML code, not ported *)
 
-let calls_correct = cake_theorem "calls_correct"
-  (fun () ->
-    `(!tmp xs env1 s0 g0 g env2 (t0:('c,'ffi)closSem_state) ys res s l
-  l1 g1.
-       tmp = (xs,env1,s0) /\
-       closSem_evaluate (xs,env1,s0) = (res,s) /\ ~(res = Rerr
-         (Rabort Rtype_error)) /\
-       calls xs g0 = (ys,g) /\
-       code_inv (SOME g1) l1 (closSem_state_code s0)
-         (closSem_state_compile s0) (closSem_state_compile_oracle s0)
-         (closSem_state_code
-                             t0) (closSem_state_compile t0)
-                               (closSem_state_compile_oracle t0) /\
-       every_Fn_SOME xs /\ every_Fn_vs_NONE xs /\
-       EVERY (wfv g1 l1 (closSem_state_code t0)) env1 /\ wfv_state
-         g1 l1 (closSem_state_code t0) s0 /\ wfg g0 /\
-       ALL_DISTINCT (code_locs xs) /\
-       DISJOINT (IMAGE SUC (set_of_list (code_locs xs)))
-         (set_of_list (MAP FST (SND g0))) /\
-       l = set_of_list (code_locs xs) DIFF domain (FST g) /\
-       subg g g1 /\ l SUBSET l1 /\ DISJOINT l1 (domain (FST g1)) /\
-         wfg g1 /\
-       clos_callProof_env_rel (clos_callProof_v_rel g1 l1
-         (closSem_state_code t0)) env1 env2 0 (MAP (\x. (0,x)) ys) /\
-       clos_callProof_state_rel g1 l1 s0 t0 /\ code_includes (SND
-         g) (closSem_state_code t0) ==>
-       (?ck res' t g2 l2.
-         code_inv (SOME g2) l2 (closSem_state_code s)
-           (closSem_state_compile s) (closSem_state_compile_oracle s)
-           (closSem_state_code
-                              t) (closSem_state_compile t)
-                                (closSem_state_compile_oracle t) /\
-         wfv_state g2 l2 (closSem_state_code t) s /\
-         subg g1 g2 /\ wfg g2 /\ l1 SUBSET l2 /\ DISJOINT l2
-           (domain (FST g2)) /\
-         every_result (EVERY (wfv g2 l2 (closSem_state_code t)))
-           (wfv g2 l2 (closSem_state_code t)) res /\
-         closSem_evaluate (ys,env2,closSem_state_clock_fupd (K
-           (closSem_state_clock t0 + ck)) t0) = (res',t) /\
-         clos_callProof_state_rel g2 l2 s t /\
-         semanticPrimitivesProps_result_rel (LIST_REL
-           (clos_callProof_v_rel g2 l2 (closSem_state_code t)))
-           (clos_callProof_v_rel g2 l2 (closSem_state_code t)) res
-           res')) /\
-     (!loco f args s0 loc g l (t0:('c,'ffi)closSem_state) res s f'
-       args'.
-       evaluate_app loco f args s0 = (res,s) /\ ~(res = Rerr
-         (Rabort Rtype_error)) /\
-       code_inv (SOME g) l (closSem_state_code s0)
-         (closSem_state_compile s0) (closSem_state_compile_oracle s0)
-         (closSem_state_code
+let calls_correct = prove
+ (`(!tmp xs env1 s0 g0 g env2 (t0:('c,'ffi)closSem_state) ys res s l l1
+  g1.
+     tmp = (xs,env1,s0) /\
+     closSem_evaluate (xs,env1,s0) = (res,s) /\ ~(res = Rerr (Rabort
+       Rtype_error)) /\
+     calls xs g0 = (ys,g) /\
+     code_inv (SOME g1) l1 (closSem_state_code s0)
+       (closSem_state_compile s0) (closSem_state_compile_oracle s0)
+       (closSem_state_code
                            t0) (closSem_state_compile t0)
                              (closSem_state_compile_oracle t0) /\
-       wfv g l (closSem_state_code t0) f /\ EVERY (wfv g l
-         (closSem_state_code t0)) args /\
-       wfv_state g l (closSem_state_code t0) s0 /\
-       wfg g /\ DISJOINT l (domain (FST g)) /\
-       clos_callProof_v_rel g l (closSem_state_code t0) f f' /\
-         LIST_REL (clos_callProof_v_rel g l (closSem_state_code t0))
-         args args' /\
-       clos_callProof_state_rel g l s0 t0 ==>
-       (?ck res' t g2 l2.
-         code_inv (SOME g2) l2 (closSem_state_code s)
-           (closSem_state_compile s) (closSem_state_compile_oracle s)
-           (closSem_state_code
-                              t) (closSem_state_compile t)
-                                (closSem_state_compile_oracle t) /\
-         wfv_state g2 l2 (closSem_state_code t) s /\
-         every_result (EVERY (wfv g2 l2 (closSem_state_code t)))
-           (wfv g2 l2 (closSem_state_code t)) res /\
-         evaluate_app loco f' args' (closSem_state_clock_fupd (K
-           (closSem_state_clock t0 + ck)) t0) = (res',t) /\
-         clos_callProof_state_rel g2 l2 s t /\
-         subg g g2 /\ wfg g2 /\ l SUBSET l2 /\ DISJOINT l2 (domain
-           (FST g2)) /\
-         semanticPrimitivesProps_result_rel (LIST_REL
-           (clos_callProof_v_rel g2 l2 (closSem_state_code t)))
-           (clos_callProof_v_rel g2 l2 (closSem_state_code t)) res
-           res'))`)
-  CHEAT_TAC;;
+     every_Fn_SOME xs /\ every_Fn_vs_NONE xs /\
+     EVERY (wfv g1 l1 (closSem_state_code t0)) env1 /\ wfv_state g1
+       l1 (closSem_state_code t0) s0 /\ wfg g0 /\
+     ALL_DISTINCT (code_locs xs) /\
+     DISJOINT (IMAGE SUC (set_of_list (code_locs xs))) (set_of_list
+       (MAP FST (SND g0))) /\
+     l = set_of_list (code_locs xs) DIFF domain (FST g) /\
+     subg g g1 /\ l SUBSET l1 /\ DISJOINT l1 (domain (FST g1)) /\ wfg
+       g1 /\
+     clos_callProof_env_rel (clos_callProof_v_rel g1 l1
+       (closSem_state_code t0)) env1 env2 0 (MAP (\x. (0,x)) ys) /\
+     clos_callProof_state_rel g1 l1 s0 t0 /\ code_includes (SND g)
+       (closSem_state_code t0) ==>
+     (?ck res' t g2 l2.
+       code_inv (SOME g2) l2 (closSem_state_code s)
+         (closSem_state_compile s) (closSem_state_compile_oracle s)
+         (closSem_state_code
+                             t) (closSem_state_compile t)
+                               (closSem_state_compile_oracle t) /\
+       wfv_state g2 l2 (closSem_state_code t) s /\
+       subg g1 g2 /\ wfg g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (domain
+         (FST g2)) /\
+       every_result (EVERY (wfv g2 l2 (closSem_state_code t))) (wfv
+         g2 l2 (closSem_state_code t)) res /\
+       closSem_evaluate (ys,env2,closSem_state_clock_fupd (K
+         (closSem_state_clock t0 + ck)) t0) = (res',t) /\
+       clos_callProof_state_rel g2 l2 s t /\
+       semanticPrimitivesProps_result_rel (LIST_REL
+         (clos_callProof_v_rel g2 l2 (closSem_state_code t)))
+         (clos_callProof_v_rel g2 l2 (closSem_state_code t)) res res'))
+         /\
+   (!loco f args s0 loc g l (t0:('c,'ffi)closSem_state) res s f'
+     args'.
+     evaluate_app loco f args s0 = (res,s) /\ ~(res = Rerr (Rabort
+       Rtype_error)) /\
+     code_inv (SOME g) l (closSem_state_code s0)
+       (closSem_state_compile s0) (closSem_state_compile_oracle s0)
+       (closSem_state_code
+                         t0) (closSem_state_compile t0)
+                           (closSem_state_compile_oracle t0) /\
+     wfv g l (closSem_state_code t0) f /\ EVERY (wfv g l
+       (closSem_state_code t0)) args /\
+     wfv_state g l (closSem_state_code t0) s0 /\
+     wfg g /\ DISJOINT l (domain (FST g)) /\
+     clos_callProof_v_rel g l (closSem_state_code t0) f f' /\
+       LIST_REL (clos_callProof_v_rel g l (closSem_state_code t0)) args
+       args' /\
+     clos_callProof_state_rel g l s0 t0 ==>
+     (?ck res' t g2 l2.
+       code_inv (SOME g2) l2 (closSem_state_code s)
+         (closSem_state_compile s) (closSem_state_compile_oracle s)
+         (closSem_state_code
+                             t) (closSem_state_compile t)
+                               (closSem_state_compile_oracle t) /\
+       wfv_state g2 l2 (closSem_state_code t) s /\
+       every_result (EVERY (wfv g2 l2 (closSem_state_code t))) (wfv
+         g2 l2 (closSem_state_code t)) res /\
+       evaluate_app loco f' args' (closSem_state_clock_fupd (K
+         (closSem_state_clock t0 + ck)) t0) = (res',t) /\
+       clos_callProof_state_rel g2 l2 s t /\
+       subg g g2 /\ wfg g2 /\ l SUBSET l2 /\ DISJOINT l2 (domain (FST
+         g2)) /\
+       semanticPrimitivesProps_result_rel (LIST_REL
+         (clos_callProof_v_rel g2 l2 (closSem_state_code t)))
+         (clos_callProof_v_rel g2 l2 (closSem_state_code t)) res
+         res'))`,
+  CHEAT_TAC);;
 
-let code_locs_calls_list = cake_theorem "code_locs_calls_list[local]"
-  (fun () ->
-    `!ls n tr i. code_locs (MAP SND (calls_list tr i n ls)) = []`)
-  CHEAT_TAC;;
+(* [local] *)
+let code_locs_calls_list = prove
+ (`!ls n tr i. code_locs (MAP SND (calls_list tr i n ls)) = []`,
+  CHEAT_TAC);;
 
-let code_locs_code_list_MEM =
-  cake_theorem "code_locs_code_list_MEM[local]"
-  (fun () ->
-    `!ls n rest x.
-     MEM x (code_locs (MAP (SND o SND) (SND (code_list n ls
-       rest)))) <=>
-     MEM x (code_locs (MAP (SND o SND) (SND rest) ++ MAP SND ls))`)
-  CHEAT_TAC;;
+(* [local] *)
+let code_locs_code_list_MEM = prove
+ (`!ls n rest x.
+   MEM x (code_locs (MAP (SND o SND) (SND (code_list n ls rest))))
+     <=>
+   MEM x (code_locs (MAP (SND o SND) (SND rest) ++ MAP SND ls))`,
+  CHEAT_TAC);;
 
-let code_locs_code_list_ALL_DISTINCT =
-  cake_theorem "code_locs_code_list_ALL_DISTINCT[local]"
-  (fun () ->
-    `!ls n rest.
-     ALL_DISTINCT (code_locs (MAP (SND o SND) (SND (code_list n ls
-       rest)))) <=>
-     ALL_DISTINCT (code_locs (MAP (SND o SND) (SND rest) ++ MAP
-       SND ls))`)
-  CHEAT_TAC;;
+(* [local] *)
+let code_locs_code_list_ALL_DISTINCT = prove
+ (`!ls n rest.
+   ALL_DISTINCT (code_locs (MAP (SND o SND) (SND (code_list n ls
+     rest)))) <=>
+   ALL_DISTINCT (code_locs (MAP (SND o SND) (SND rest) ++ MAP SND
+     ls))`,
+  CHEAT_TAC);;
 
 (* All code_locs come from the original code,
    and therefore, are all even
 *)
-let calls_code_locs_MEM = cake_theorem "calls_code_locs_MEM"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-     (!x.
-      (MEM x (code_locs ys) \/
-      MEM x (code_locs (MAP (SND o SND) (SND g)))) ==>
-      (MEM x (code_locs xs) \/
-      MEM x (code_locs (MAP (SND o SND) (SND g0)))))`)
-  CHEAT_TAC;;
+let calls_code_locs_MEM = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+   (!x.
+    (MEM x (code_locs ys) \/
+    MEM x (code_locs (MAP (SND o SND) (SND g)))) ==>
+    (MEM x (code_locs xs) \/
+    MEM x (code_locs (MAP (SND o SND) (SND g0)))))`,
+  CHEAT_TAC);;
 
 (* the all distinctness of code_locs is preserved *)
-let calls_code_locs_ALL_DISTINCT =
-  cake_theorem "calls_code_locs_ALL_DISTINCT"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-      ALL_DISTINCT (code_locs xs ++ code_locs (MAP (SND o SND) (SND
-        g0))) ==>
-      ALL_DISTINCT (code_locs ys ++ code_locs (MAP (SND o SND)
-        (SND g)))`)
-  CHEAT_TAC;;
+let calls_code_locs_ALL_DISTINCT = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+    ALL_DISTINCT (code_locs xs ++ code_locs (MAP (SND o SND) (SND
+      g0))) ==>
+    ALL_DISTINCT (code_locs ys ++ code_locs (MAP (SND o SND) (SND
+      g)))`,
+  CHEAT_TAC);;
 
-let oracle_monotonic_init_UNION =
-  cake_theorem "oracle_monotonic_init_UNION"
-  (fun () ->
-    `oracle_monotonic f R (A UNION B) co <=>
-       oracle_monotonic f R A co /\ oracle_monotonic f R B co`)
-  CHEAT_TAC;;
+let oracle_monotonic_init_UNION = prove
+ (`oracle_monotonic f R (A UNION B) co <=>
+     oracle_monotonic f R A co /\ oracle_monotonic f R B co`,
+  CHEAT_TAC);;
 
-let semantics_calls = cake_theorem "semantics_calls"
-  (fun () ->
-    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co cc x =
+let semantics_calls = prove
+ (`~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co cc x =
   ffi_Fail) ==>
-        clos_call_compile T x = (y,g0,aux) /\ every_Fn_SOME x /\
-          every_Fn_vs_NONE x /\
-        ALL_DISTINCT (code_locs x) /\
-        FST (FST (co 0)) = g0 /\
-        code_inv NONE (set_of_list (code_locs x)) FEMPTY cc co
-          (FEMPTY |++ aux) cc1 co1 ==>
-        closSem_semantics (ffi:'ffi ffi_state) max_app (FEMPTY |++
-          aux) co1 cc1 y =
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co
-          cc x`)
-  CHEAT_TAC;;
+      clos_call_compile T x = (y,g0,aux) /\ every_Fn_SOME x /\
+        every_Fn_vs_NONE x /\
+      ALL_DISTINCT (code_locs x) /\
+      FST (FST (co 0)) = g0 /\
+      code_inv NONE (set_of_list (code_locs x)) FEMPTY cc co (FEMPTY
+        |++ aux) cc1 co1 ==>
+      closSem_semantics (ffi:'ffi ffi_state) max_app (FEMPTY |++ aux)
+        co1 cc1 y =
+      closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co cc x`,
+  CHEAT_TAC);;
 
-let semantics_compile = cake_theorem "semantics_compile"
-  (fun () ->
-    `~(closSem_semantics ffi max_app FEMPTY co cc x = ffi_Fail) /\
-        clos_call_compile do_call x = (y,g1,aux) /\
-        (if do_call then
-         clos_callProof_syntax_ok x /\ g1 = FST (FST (co 0)) /\
-         code_inv NONE (set_of_list (code_locs x)) FEMPTY cc co
-           (FEMPTY |++ aux) cc1 co1 else cc = state_cc (CURRY I) cc1 /\
-              co1 = state_co (CURRY I) co) ==>
-        closSem_semantics ffi max_app (FEMPTY |++ aux) co1 cc1 y =
-        closSem_semantics ffi max_app FEMPTY co cc x`)
-  CHEAT_TAC;;
+let semantics_compile = prove
+ (`~(closSem_semantics ffi max_app FEMPTY co cc x = ffi_Fail) /\
+      clos_call_compile do_call x = (y,g1,aux) /\
+      (if do_call then
+       clos_callProof_syntax_ok x /\ g1 = FST (FST (co 0)) /\
+       code_inv NONE (set_of_list (code_locs x)) FEMPTY cc co (FEMPTY
+         |++ aux) cc1 co1 else cc = state_cc (CURRY I) cc1 /\
+            co1 = state_co (CURRY I) co) ==>
+      closSem_semantics ffi max_app (FEMPTY |++ aux) co1 cc1 y =
+      closSem_semantics ffi max_app FEMPTY co cc x`,
+  CHEAT_TAC);;
 
 let nth_code_def = cake_define_list
   [`clos_callProof_nth_code code co 0 = code`;
@@ -1424,59 +1291,48 @@ let nth_code_def = cake_define_list
 hol4_overload "nth_code" "clos_callProof_nth_code";;
 
 (* TODO: move *)
-let FUNION_FEMPTY_FUPDATE_LIST =
-  cake_theorem "FUNION_FEMPTY_FUPDATE_LIST"
-  (fun () ->
-    `DISJOINT (FDOM code) (set_of_list (MAP FST aux)) ==>
-      FUNION code (FEMPTY |++ aux) = code |++ aux`)
-  CHEAT_TAC;;
+let FUNION_FEMPTY_FUPDATE_LIST = prove
+ (`DISJOINT (FDOM code) (set_of_list (MAP FST aux)) ==>
+    FUNION code (FEMPTY |++ aux) = code |++ aux`,
+  CHEAT_TAC);;
 
 (* Preservation of some label properties
   every_Fn_SOME xs ∧ every_Fn_vs_NONE xs
 *)
-let every_Fn_GENLIST_Var = cake_theorem "every_Fn_GENLIST_Var"
-  (fun () ->
-    `!n i t. every_Fn_SOME (GENLIST_Var t i n) /\
-         every_Fn_vs_NONE (GENLIST_Var t i n)`)
-  CHEAT_TAC;;
+let every_Fn_GENLIST_Var = prove
+ (`!n i t. every_Fn_SOME (GENLIST_Var t i n) /\
+       every_Fn_vs_NONE (GENLIST_Var t i n)`,
+  CHEAT_TAC);;
 
-let every_Fn_calls_list = cake_theorem "every_Fn_calls_list"
-  (fun () ->
-    `!ls n i t. every_Fn_SOME (MAP SND (calls_list t i n ls)) /\
-           every_Fn_vs_NONE (MAP SND (calls_list t i n ls))`)
-  CHEAT_TAC;;
+let every_Fn_calls_list = prove
+ (`!ls n i t. every_Fn_SOME (MAP SND (calls_list t i n ls)) /\
+         every_Fn_vs_NONE (MAP SND (calls_list t i n ls))`,
+  CHEAT_TAC);;
 
-let every_Fn_code_list = cake_theorem "every_Fn_code_list"
-  (fun () ->
-    `!ls n rest.
-     (every_Fn_SOME (MAP (SND o SND) (SND (code_list n ls rest)))
-       <=>
-     every_Fn_SOME (MAP SND ls) /\
-     every_Fn_SOME (MAP (SND o SND) (SND rest))) /\
-     (every_Fn_vs_NONE (MAP (SND o SND) (SND (code_list n ls
-       rest))) <=>
-     every_Fn_vs_NONE (MAP SND ls) /\
-     every_Fn_vs_NONE (MAP (SND o SND) (SND rest)))`)
-  CHEAT_TAC;;
+let every_Fn_code_list = prove
+ (`!ls n rest.
+   (every_Fn_SOME (MAP (SND o SND) (SND (code_list n ls rest))) <=>
+   every_Fn_SOME (MAP SND ls) /\
+   every_Fn_SOME (MAP (SND o SND) (SND rest))) /\
+   (every_Fn_vs_NONE (MAP (SND o SND) (SND (code_list n ls rest)))
+     <=>
+   every_Fn_vs_NONE (MAP SND ls) /\
+   every_Fn_vs_NONE (MAP (SND o SND) (SND rest)))`,
+  CHEAT_TAC);;
 
-let calls_preserves_every_Fn_SOME =
-  cake_theorem "calls_preserves_every_Fn_SOME"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-      every_Fn_SOME xs /\ every_Fn_SOME (MAP (SND o SND) (SND g0))
-        ==>
-      every_Fn_SOME ys /\ every_Fn_SOME (MAP (SND o SND) (SND g))`)
-  CHEAT_TAC;;
+let calls_preserves_every_Fn_SOME = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+    every_Fn_SOME xs /\ every_Fn_SOME (MAP (SND o SND) (SND g0)) ==>
+    every_Fn_SOME ys /\ every_Fn_SOME (MAP (SND o SND) (SND g))`,
+  CHEAT_TAC);;
 
-let calls_preserves_every_Fn_vs_NONE =
-  cake_theorem "calls_preserves_every_Fn_vs_NONE"
-  (fun () ->
-    `!xs g0 ys g. calls xs g0 = (ys,g) ==>
-      every_Fn_vs_NONE xs /\ every_Fn_vs_NONE (MAP (SND o SND) (SND
-        g0)) ==>
-      every_Fn_vs_NONE ys /\ every_Fn_vs_NONE (MAP (SND o SND)
-        (SND g))`)
-  CHEAT_TAC;;
+let calls_preserves_every_Fn_vs_NONE = prove
+ (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
+    every_Fn_vs_NONE xs /\ every_Fn_vs_NONE (MAP (SND o SND) (SND
+      g0)) ==>
+    every_Fn_vs_NONE ys /\ every_Fn_vs_NONE (MAP (SND o SND) (SND
+      g))`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_callProofScript.sml:4672-4684: code that the source has
    in a comment *)
@@ -1487,61 +1343,55 @@ let state_syntax_def = cake_define
   `state_syntax f ((g,xs):1 spt#(num#num#closLang_exp) list) = EVERY
   (\(x1,x2,x3). f x3) xs`;;
 
-let state_syntax_insert_each = cake_theorem "state_syntax_insert_each"
-  (fun () ->
-    `!k1 loc g.
-        state_syntax f (insert_each loc k1 g) = state_syntax f g`)
-  CHEAT_TAC;;
+let state_syntax_insert_each = prove
+ (`!k1 loc g.
+      state_syntax f (insert_each loc k1 g) = state_syntax f g`,
+  CHEAT_TAC);;
 
-let state_syntax_code_list = cake_theorem "state_syntax_code_list"
-  (fun () ->
-    `!n xs g.
-        state_syntax f (code_list n xs g) <=>
-        state_syntax f g /\ EVERY f (MAP SND xs)`)
-  CHEAT_TAC;;
+let state_syntax_code_list = prove
+ (`!n xs g.
+      state_syntax f (code_list n xs g) <=>
+      state_syntax f g /\ EVERY f (MAP SND xs)`,
+  CHEAT_TAC);;
 
-let obeys_max_app_GENLIST_Var = cake_theorem "obeys_max_app_GENLIST_Var"
-  (fun () ->
-    `!n l w. EVERY (obeys_max_app k) (GENLIST_Var n l w)`)
-  CHEAT_TAC;;
+let obeys_max_app_GENLIST_Var = prove
+ (`!n l w. EVERY (obeys_max_app k) (GENLIST_Var n l w)`,
+  CHEAT_TAC);;
 
-let obeys_max_app_calls_list = cake_theorem "obeys_max_app_calls_list"
-  (fun () ->
-    `!t k1 loc fns. EVERY (obeys_max_app k) (MAP SND (calls_list t k1
-  loc fns))`)
-  CHEAT_TAC;;
+let obeys_max_app_calls_list = prove
+ (`!t k1 loc fns. EVERY (obeys_max_app k) (MAP SND (calls_list t k1
+  loc fns))`,
+  CHEAT_TAC);;
 
-let calls_obeys_max_app = cake_theorem "calls_obeys_max_app"
-  (fun () ->
-    `!xs g ys g1.
-        calls xs g = (ys,g1) /\ state_syntax (obeys_max_app k) g /\
-        EVERY (obeys_max_app k) xs ==>
-        EVERY (obeys_max_app k) ys /\ state_syntax (obeys_max_app
-          k) g1`)
-  CHEAT_TAC;;
+let calls_obeys_max_app = prove
+ (`!xs g ys g1.
+      calls xs g = (ys,g1) /\ state_syntax (obeys_max_app k) g /\
+      EVERY (obeys_max_app k) xs ==>
+      EVERY (obeys_max_app k) ys /\ state_syntax (obeys_max_app k)
+        g1`,
+  CHEAT_TAC);;
 
-let no_Labels_GENLIST_Var = cake_theorem "no_Labels_GENLIST_Var"
-  (fun () ->
-    `!n l w. EVERY no_Labels (GENLIST_Var n l w)`)
-  CHEAT_TAC;;
+let no_Labels_GENLIST_Var = prove
+ (`!n l w. EVERY no_Labels (GENLIST_Var n l w)`,
+  CHEAT_TAC);;
 
-let no_Labels_calls_list = cake_theorem "no_Labels_calls_list"
-  (fun () ->
-    `!t k1 loc fns. EVERY no_Labels (MAP SND (calls_list t k1 loc
-  fns))`)
-  CHEAT_TAC;;
+let no_Labels_calls_list = prove
+ (`!t k1 loc fns. EVERY no_Labels (MAP SND (calls_list t k1 loc fns))`,
+  CHEAT_TAC);;
 
-let calls_no_Labels = cake_theorem "calls_no_Labels"
-  (fun () ->
-    `!xs g ys g1.
-        calls xs g = (ys,g1) /\ state_syntax no_Labels g /\
-        EVERY no_Labels xs ==>
-        EVERY no_Labels ys /\ state_syntax no_Labels g1`)
-  CHEAT_TAC;;
+let calls_no_Labels = prove
+ (`!xs g ys g1.
+      calls xs g = (ys,g1) /\ state_syntax no_Labels g /\
+      EVERY no_Labels xs ==>
+      EVERY no_Labels ys /\ state_syntax no_Labels g1`,
+  CHEAT_TAC);;
 
 (* names *)
 
 (* HOL4 clos_callProofScript.sml:4766-4909: code that the source has
    in a comment *)
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["C";
+   "vars"];;

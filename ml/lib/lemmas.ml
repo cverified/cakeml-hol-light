@@ -596,5 +596,6 @@ let USHR_OR_LOW = prove
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(MP_TAC o MATCH_MP (ARITH_RULE `j + s < s ==> F`)) THEN
     REWRITE_TAC[];
-    ASM_SIMP_TAC[BIT_TRIVIAL; ARITH_RULE `~((a:num) < b) ==> b <= a`]]);;
+    ASM_SIMP_TAC[BIT_TRIVIAL;
+                 ARITH_RULE `~((a:num) < b) ==> b <= a`]]);;
 

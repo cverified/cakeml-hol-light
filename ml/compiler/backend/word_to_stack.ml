@@ -259,7 +259,7 @@ let bits_to_word_def = cake_define_list
 
 (* HOL4 word_to_stackScript.sml:235-238: the tactic that proves the
    termination *)
-let word_list_def = cake_define_wf
+let word_to_stack_word_list_def = cake_define_wf
   `MEASURE (LENGTH o FST)`
   `word_to_stack_word_list (xs:bool list) d =
      (if LENGTH xs <= d \/ (d = 0) then [bits_to_word xs] else
@@ -306,7 +306,7 @@ let stack_arg_count_def = cake_define
      (match dest with INL _2 -> (arg_count - (k:num)) | INR _3 ->
        ((arg_count - 1) - (k:num)))`;;
 
-let stack_free_def = cake_define
+let word_to_stack_stack_free_def = cake_define
   `word_to_stack_stack_free dest arg_count (k,f,(f':num)) =
      f - stack_arg_count dest arg_count k`;;
 hol4_overload "stack_free" "word_to_stack_stack_free";;
@@ -464,7 +464,7 @@ let copy_ret_def = cake_define
 (* Return should be 2,4,6,...,2k,2k+1,... *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let comp_def = cake_define_cheat CHEAT_TAC
+let word_to_stack_comp_def = cake_define_cheat CHEAT_TAC
   `word_to_stack_comp conf perf x3 bs kf =
         match x3 with
           (Skip:'a wordLang_prog) -> ((Skip:'a stackLang_prog),bs)
@@ -610,7 +610,7 @@ let store_consts_stub_def = cake_define
 (*stack args are in wordLang vars 0,2,4,...,2*(k-1), 2*k , ...*)
 (*2*k and above are "stack" variables*)
 (*We always allocate enough space for the maximum stack var*)
-let compile_prog_def = cake_define
+let word_to_stack_compile_prog_def = cake_define
   `word_to_stack_compile_prog asm_conf perf (prog:'a wordLang_prog)
   arg_count reg_count bitmaps =
      (let stack_arg_count' = arg_count - reg_count in
@@ -634,7 +634,7 @@ let compile_word_to_stack_def = cake_define_list
            perf k progs bitmaps in
            ((i,prog) :: progs,f :: fs,bitmaps))`];;
 
-let compile_def = cake_define
+let word_to_stack_compile_def = cake_define
   `word_to_stack_compile asm_conf perf progs =
      (let k = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
@@ -653,7 +653,7 @@ let compile_def = cake_define
           progs))`;;
 hol4_overload "compile" "word_to_stack_compile";;
 
-let stub_names_def = cake_define
+let word_to_stack_stub_names_def = cake_define
   `word_to_stack_stub_names one = [
      (raise_stub_location,implode "_Raise");
      (store_consts_stub_location,implode "_StoreConsts")]`;;

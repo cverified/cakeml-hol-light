@@ -19,21 +19,12 @@ needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 let num_size_def = cake_define
   `data_space_num_size (n:num) =
      (if n < 2 EXP 32 then 2:num else 1 + data_space_num_size (n
        DIV 2 EXP 32))`;;
-(* HOL4's basicSizeTheory has a num_size of its own (the size
-   function of a numeral, which ml/lib/hol4.ml has), and this
-   definition shadows it in every theory that has data_spaceTheory
-   as an ancestor -- so the num_size of a later statement is this
-   one.  Without the overload the port would read those statements
-   as the size function, and two of
-   compiler/backend/proofs/data_to_word_memoryProof.ml would say
-   something false (see ISSUES.md). *)
-hol4_overload "num_size" "data_space_num_size";;
 
 let part_space_req_def = cake_define_list
   [`part_space_req (W64 s:const_part) = 3`;
@@ -99,37 +90,37 @@ let space_def = cake_define
         INL (If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
         | c -> INL c`;;
 
-let space_pmatch = cake_theorem "space_pmatch"
-  (fun () ->
-    `!c.
-     space c =
-       (match c with dataLang_MakeSpace k names -> INR
-         (k,names,dataLang_Skip) | dataLang_Seq c1 c2 -> (
-        let d1 = pMakeSpace (space c1) in
-        let x2 = space c2 in
-          match x2 with INL c4 ->
-             (match c1 with dataLang_MakeSpace k names -> INR
-               (k,names,c4) | dataLang_Skip -> INL c4 | _12 -> INL
-               (dataLang_Seq d1 c4)) | INR (k2,names2,c4) ->
-             (match c1 with dataLang_Skip -> INR (k2,names2,c4) |
-               dataLang_MakeSpace k1 names1 -> INR (k2,inter names1
-               names2,c4) | dataLang_Move dest src ->
-                  INR (k2,sptree_insert src one (sptree_delete dest
-                    names2),
-                       dataLang_Seq (dataLang_Move dest src) c4) |
-                         dataLang_Assign dest op args NONE ->
-                  INR (op_space_req op (LENGTH args) + k2,
-                       list_insert args (sptree_delete dest
-                         names2),
-                       dataLang_Seq (dataLang_Assign dest op args
-                         NONE) c4) | _13 -> INL (dataLang_Seq d1
-                         (pMakeSpace x2)))) | If n c2 c3 ->
-         INL (If n (pMakeSpace (space c2)) (pMakeSpace (space
-           c3))) | c -> INL c)`)
-  CHEAT_TAC;;
+let space_pmatch = prove
+ (`!c.
+   space c =
+     (match c with dataLang_MakeSpace k names -> INR
+       (k,names,dataLang_Skip) | dataLang_Seq c1 c2 -> (
+      let d1 = pMakeSpace (space c1) in
+      let x2 = space c2 in
+        match x2 with INL c4 ->
+           (match c1 with dataLang_MakeSpace k names -> INR
+             (k,names,c4) | dataLang_Skip -> INL c4 | _12 -> INL
+             (dataLang_Seq d1 c4)) | INR (k2,names2,c4) ->
+           (match c1 with dataLang_Skip -> INR (k2,names2,c4) |
+             dataLang_MakeSpace k1 names1 -> INR (k2,inter names1
+             names2,c4) | dataLang_Move dest src ->
+                INR (k2,sptree_insert src one (sptree_delete dest
+                  names2),
+                     dataLang_Seq (dataLang_Move dest src) c4) |
+                       dataLang_Assign dest op args NONE ->
+                INR (op_space_req op (LENGTH args) + k2,
+                     list_insert args (sptree_delete dest names2),
+                     dataLang_Seq (dataLang_Assign dest op args NONE)
+                       c4) | _13 -> INL (dataLang_Seq d1 (pMakeSpace
+                       x2)))) | If n c2 c3 ->
+       INL (If n (pMakeSpace (space c2)) (pMakeSpace (space c3))) |
+         c -> INL c)`,
+  CHEAT_TAC);;
 
-let compile_def = cake_define
+let data_space_compile_def = cake_define
   `data_space_compile c = pMakeSpace (space c)`;;
 hol4_overload "compile" "data_space_compile";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

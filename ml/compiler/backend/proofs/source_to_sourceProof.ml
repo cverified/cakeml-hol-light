@@ -22,24 +22,24 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
 
-let source_to_sourceProof_compile_semantics =
-  cake_theorem "compile_semantics"
-  (fun () ->
+(* compile_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
+let source_to_sourceProof_compile_semantics = prove
+ (cake_as_vars (fun () ->
     `~(semantics_prog s env prog ffi_Fail) /\
      semantics_prog s env prog outcome ==>
        semantics_prog s env (source_to_source_compile prog)
-         outcome`)
-  CHEAT_TAC;;
+         outcome`),
+  CHEAT_TAC);;
 
-let source_to_sourceProof_compile_semantics_oracle =
-  cake_theorem "compile_semantics_oracle"
-  (fun () ->
-    `!f.
-     is_insert_oracle ci f (semanticPrimitives_state_eval_state s)
-       /\
-     ~(semantics_prog s env prog ffi_Fail) /\
-     semantics_prog s env prog outcome ==>
-     semantics_prog (semanticPrimitives_state_eval_state_fupd
-               (adjust_oracle ci (source_to_source_compile o f)) s)
-           env prog outcome`)
-  CHEAT_TAC;;
+(* compile_semantics_oracle *)
+let source_to_sourceProof_compile_semantics_oracle = prove
+ (`!f.
+   is_insert_oracle ci f (semanticPrimitives_state_eval_state s) /\
+   ~(semantics_prog s env prog ffi_Fail) /\
+   semantics_prog s env prog outcome ==>
+   semantics_prog (semanticPrimitives_state_eval_state_fupd
+             (adjust_oracle ci (source_to_source_compile o f)) s)
+         env prog outcome`,
+  CHEAT_TAC);;

@@ -63,33 +63,29 @@ let el_length_def = cake_define_list
    `el_length (ForwardPointer n d l) = l + 1`;
    `el_length (DataElement xs l data) = l + 1`];;
 
-let el_length_NOT_0 = cake_theorem "el_length_NOT_0"
-  (fun () ->
-    `!el. ~(el_length el = 0)`)
-  CHEAT_TAC;;
+let el_length_NOT_0 = prove
+ (`!el. ~(el_length el = 0)`,
+  CHEAT_TAC);;
 
-let el_length_GT_0 = cake_theorem "el_length_GT_0"
-  (fun () ->
-    `!el. 1 <= el_length el`)
-  CHEAT_TAC;;
+let el_length_GT_0 = prove
+ (`!el. 1 <= el_length el`,
+  CHEAT_TAC);;
 
 let heap_length_def = cake_define
   `heap_length heap = SUM (MAP el_length heap)`;;
 
-let heap_length_NIL = cake_theorem "heap_length_NIL[simp]"
-  (fun () ->
-    `heap_length [] = 0`)
-  CHEAT_TAC;;
+(* [simp] *)
+let heap_length_NIL = prove
+ (`heap_length [] = 0`,
+  CHEAT_TAC);;
 
-let heap_length_GTE = cake_theorem "heap_length_GTE"
-  (fun () ->
-    `!heap. 0 <= heap_length heap`)
-  CHEAT_TAC;;
+let heap_length_GTE = prove
+ (`!heap. 0 <= heap_length heap`,
+  CHEAT_TAC);;
 
-let heap_length_APPEND = cake_theorem "heap_length_APPEND"
-  (fun () ->
-    `heap_length (xs ++ ys) = heap_length xs + heap_length ys`)
-  CHEAT_TAC;;
+let heap_length_APPEND = prove
+ (`heap_length (xs ++ ys) = heap_length xs + heap_length ys`,
+  CHEAT_TAC);;
 
 let heap_lookup_def = cake_define_list
   [`heap_lookup a [] = NONE`;
@@ -98,20 +94,17 @@ let heap_lookup_def = cake_define_list
          if a < el_length x then NONE else heap_lookup (a -
            el_length x) xs)`];;
 
-let heap_lookup_MEM = cake_theorem "heap_lookup_MEM"
-  (fun () ->
-    `!heap n x. (heap_lookup n heap = SOME x) ==> MEM x heap`)
-  CHEAT_TAC;;
+let heap_lookup_MEM = prove
+ (`!heap n x. (heap_lookup n heap = SOME x) ==> MEM x heap`,
+  CHEAT_TAC);;
 
-let MEM_IMP_heap_lookup = cake_theorem "MEM_IMP_heap_lookup"
-  (fun () ->
-    `!xs x. MEM x xs ==> (?j. (heap_lookup j xs = SOME x))`)
-  CHEAT_TAC;;
+let MEM_IMP_heap_lookup = prove
+ (`!xs x. MEM x xs ==> (?j. (heap_lookup j xs = SOME x))`,
+  CHEAT_TAC);;
 
-let heap_lookup_LESS = cake_theorem "heap_lookup_LESS"
-  (fun () ->
-    `!xs n. (heap_lookup n xs = SOME x) ==> n < heap_length xs`)
-  CHEAT_TAC;;
+let heap_lookup_LESS = prove
+ (`!xs n. (heap_lookup n xs = SOME x) ==> n < heap_length xs`,
+  CHEAT_TAC);;
 
 let heap_split_def = cake_define_list
   [`heap_split a [] = (if a = 0 then SOME ([],[]) else NONE)`;
@@ -122,12 +115,11 @@ let heap_split_def = cake_define_list
           SOME (h1,h2) ->
           SOME (el :: h1,h2))`];;
 
-let heap_lookup_SPLIT = cake_theorem "heap_lookup_SPLIT"
-  (fun () ->
-    `!heap n x. (heap_lookup n heap = SOME x) ==>
-                 (?ha hb. (heap = ha ++ (x :: hb)) /\ (n =
-                   heap_length ha))`)
-  CHEAT_TAC;;
+let heap_lookup_SPLIT = prove
+ (`!heap n x. (heap_lookup n heap = SOME x) ==>
+               (?ha hb. (heap = ha ++ (x :: hb)) /\ (n =
+                 heap_length ha))`,
+  CHEAT_TAC);;
 
 let heap_drop_def = cake_define
   `heap_drop n (heap:(('a,'b)heap_element) list) =
@@ -139,14 +131,13 @@ let heap_take_def = cake_define
      (match heap_split n heap with NONE -> ARB | SOME (h1,h2) ->
        h1)`;;
 
-let heap_split_heap_length = cake_theorem "heap_split_heap_length"
-  (fun () ->
-    `!heap h1 h2 a.
-      (heap_split a heap = SOME (h1,h2)) ==>
-      (heap_length h1 = a) /\
-      (heap_length (h1 ++ h2) = heap_length heap) /\
-      (h1 ++ h2 = heap)`)
-  CHEAT_TAC;;
+let heap_split_heap_length = prove
+ (`!heap h1 h2 a.
+    (heap_split a heap = SOME (h1,h2)) ==>
+    (heap_length h1 = a) /\
+    (heap_length (h1 ++ h2) = heap_length heap) /\
+    (h1 ++ h2 = heap)`,
+  CHEAT_TAC);;
 
 let heap_segment_def = cake_define
   `heap_segment (a,b) heap =
@@ -155,15 +146,14 @@ let heap_segment_def = cake_define
        match heap_split (b - heap_length h1) heap' with NONE ->
          NONE | SOME (h2,h3) -> SOME (h1,h2,h3)))`;;
 
-let heap_segment_IMP = cake_theorem "heap_segment_IMP"
-  (fun () ->
-    `!heap a b h1 h2 h3.
-      (heap_segment (a,b) heap = SOME (h1,h2,h3)) ==>
-      (h1 ++ h2 ++ h3 = heap) /\
-      (heap_length h1 = a) /\
-      (heap_length (h1 ++ h2) = b) /\
-      (heap_length h3 = (heap_length heap - b))`)
-  CHEAT_TAC;;
+let heap_segment_IMP = prove
+ (`!heap a b h1 h2 h3.
+    (heap_segment (a,b) heap = SOME (h1,h2,h3)) ==>
+    (h1 ++ h2 ++ h3 = heap) /\
+    (heap_length h1 = a) /\
+    (heap_length (h1 ++ h2) = b) /\
+    (heap_length h3 = (heap_length heap - b))`,
+  CHEAT_TAC);;
 
 let heap_restrict_def = cake_define
   `heap_restrict start' end (heap:(('a,'b)heap_element) list) =
@@ -221,17 +211,15 @@ let gc_forward_ptr_def = cake_define_list
              ok in
              (x :: xs,ok))`];;
 
-let gc_forward_ptr_ok = cake_theorem "gc_forward_ptr_ok"
-  (fun () ->
-    `!heap n a c x. (gc_forward_ptr n heap a d c = (x,T)) ==> c`)
-  CHEAT_TAC;;
+let gc_forward_ptr_ok = prove
+ (`!heap n a c x. (gc_forward_ptr n heap a d c = (x,T)) ==> c`,
+  CHEAT_TAC);;
 
-let gc_forward_ptr_thm = cake_theorem "gc_forward_ptr_thm"
-  (fun () ->
-    `!ha. gc_forward_ptr (heap_length ha) (ha ++ (DataElement ys l d ::
+let gc_forward_ptr_thm = prove
+ (`!ha. gc_forward_ptr (heap_length ha) (ha ++ (DataElement ys l d ::
   hb)) a u c =
-           (ha ++ (ForwardPointer a u l :: hb),c)`)
-  CHEAT_TAC;;
+         (ha ++ (ForwardPointer a u l :: hb),c)`,
+  CHEAT_TAC);;
 
 (* HOL4 gc_sharedScript.sml:309-327: code that the source has in a
    comment *)
@@ -262,22 +250,19 @@ let ADDR_MAP_def = cake_define_list
    `ADDR_MAP f (gc_shared_Pointer a d :: xs) = gc_shared_Pointer (f
   a) d :: ADDR_MAP f xs`];;
 
-let ADDR_MAP_EQ = cake_theorem "ADDR_MAP_EQ"
-  (fun () ->
-    `!xs. (!p d. MEM (gc_shared_Pointer p d) xs ==> (f p = g p)) ==>
-           (ADDR_MAP f xs = ADDR_MAP g xs)`)
-  CHEAT_TAC;;
+let ADDR_MAP_EQ = prove
+ (`!xs. (!p d. MEM (gc_shared_Pointer p d) xs ==> (f p = g p)) ==>
+         (ADDR_MAP f xs = ADDR_MAP g xs)`,
+  CHEAT_TAC);;
 
-let ADDR_MAP_LENGTH = cake_theorem "ADDR_MAP_LENGTH"
-  (fun () ->
-    `!xs f. LENGTH xs = LENGTH (ADDR_MAP f xs)`)
-  CHEAT_TAC;;
+let ADDR_MAP_LENGTH = prove
+ (`!xs f. LENGTH xs = LENGTH (ADDR_MAP f xs)`,
+  CHEAT_TAC);;
 
-let ADDR_MAP_APPEND = cake_theorem "ADDR_MAP_APPEND"
-  (fun () ->
-    `!h1 h2 f.
-      ADDR_MAP f (h1 ++ h2) = ADDR_MAP f h1 ++ ADDR_MAP f h2`)
-  CHEAT_TAC;;
+let ADDR_MAP_APPEND = prove
+ (`!h1 h2 f.
+    ADDR_MAP f (h1 ++ h2) = ADDR_MAP f h1 ++ ADDR_MAP f h2`,
+  CHEAT_TAC);;
 
 let ADDR_APPLY_def = cake_define_list
   [`ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d`;
@@ -295,152 +280,127 @@ let heaps_similar_def = cake_define
                       (el_length h = el_length h0) /\
                         isDataElement h0 else (h = h0)) heap0 heap`;;
 
-let IN_heap_map_IMP = cake_theorem "IN_heap_map_IMP"
-  (fun () ->
-    `!heap n k. n IN FDOM (heap_map k heap) ==> k <= n`)
-  CHEAT_TAC;;
+let IN_heap_map_IMP = prove
+ (`!heap n k. n IN FDOM (heap_map k heap) ==> k <= n`,
+  CHEAT_TAC);;
 
 (* HOL4 gc_sharedScript.sml:414-423: a theorem that HOL4 states as
    the value of an ML expression: NOT_IN_heap_map *)
 
-let isSomeDataOrForward_lemma = cake_theorem "isSomeDataOrForward_lemma"
-  (fun () ->
-    `!ha ptr.
-        isSomeDataOrForward (heap_lookup ptr (ha ++ (DataElement ys
-          l d :: hb))) <=>
-        isSomeDataOrForward (heap_lookup ptr (ha ++
-          [ForwardPointer a u l] ++ hb))`)
-  CHEAT_TAC;;
+let isSomeDataOrForward_lemma = prove
+ (`!ha ptr.
+      isSomeDataOrForward (heap_lookup ptr (ha ++ (DataElement ys l d
+        :: hb))) <=>
+      isSomeDataOrForward (heap_lookup ptr (ha ++ [ForwardPointer a
+        u l] ++ hb))`,
+  CHEAT_TAC);;
 
-let heaps_similar_IMP_heap_length =
-  cake_theorem "heaps_similar_IMP_heap_length"
-  (fun () ->
-    `!xs ys. heaps_similar xs ys ==> (heap_length xs = heap_length ys)`)
-  CHEAT_TAC;;
+let heaps_similar_IMP_heap_length = prove
+ (`!xs ys. heaps_similar xs ys ==> (heap_length xs = heap_length ys)`,
+  CHEAT_TAC);;
 
-let heap_similar_Data_IMP = cake_theorem "heap_similar_Data_IMP"
-  (fun () ->
-    `heaps_similar heap0 (ha ++ (DataElement ys l d :: hb)) ==>
-      (?ha0 hb0. (heap0 = ha0 ++ (DataElement ys l d :: hb0)) /\
-                (heap_length ha = heap_length ha0))`)
-  CHEAT_TAC;;
+let heap_similar_Data_IMP = prove
+ (`heaps_similar heap0 (ha ++ (DataElement ys l d :: hb)) ==>
+    (?ha0 hb0. (heap0 = ha0 ++ (DataElement ys l d :: hb0)) /\
+              (heap_length ha = heap_length ha0))`,
+  CHEAT_TAC);;
 
-let heaps_similar_lemma = cake_theorem "heaps_similar_lemma"
-  (fun () ->
-    `!ha heap0.
-        heaps_similar heap0 (ha ++ (DataElement ys l d :: hb)) ==>
-        heaps_similar heap0 (ha ++ [ForwardPointer (heap_length
-          (h1 ++ h2)) u l] ++ hb)`)
-  CHEAT_TAC;;
+let heaps_similar_lemma = prove
+ (`!ha heap0.
+      heaps_similar heap0 (ha ++ (DataElement ys l d :: hb)) ==>
+      heaps_similar heap0 (ha ++ [ForwardPointer (heap_length (h1
+        ++ h2)) u l] ++ hb)`,
+  CHEAT_TAC);;
 
-let heap_lookup_PREFIX = cake_theorem "heap_lookup_PREFIX"
-  (fun () ->
-    `!xs. (heap_lookup (heap_length xs) (xs ++ (x :: ys)) = SOME x)`)
-  CHEAT_TAC;;
+let heap_lookup_PREFIX = prove
+ (`!xs. (heap_lookup (heap_length xs) (xs ++ (x :: ys)) = SOME x)`,
+  CHEAT_TAC);;
 
-let heap_lookup_EXTEND = cake_theorem "heap_lookup_EXTEND"
-  (fun () ->
-    `!xs n ys x. (heap_lookup n xs = SOME x) ==>
-                  (heap_lookup n (xs ++ ys) = SOME x)`)
-  CHEAT_TAC;;
+let heap_lookup_EXTEND = prove
+ (`!xs n ys x. (heap_lookup n xs = SOME x) ==>
+                (heap_lookup n (xs ++ ys) = SOME x)`,
+  CHEAT_TAC);;
 
-let heap_map_APPEND = cake_theorem "heap_map_APPEND"
-  (fun () ->
-    `!xs n ys. (heap_map n (xs ++ ys)) =
-                FUNION (heap_map n xs) (heap_map (n + heap_length
-                  xs) ys)`)
-  CHEAT_TAC;;
+let heap_map_APPEND = prove
+ (`!xs n ys. (heap_map n (xs ++ ys)) =
+              FUNION (heap_map n xs) (heap_map (n + heap_length xs)
+                ys)`,
+  CHEAT_TAC);;
 
 (* HOL4 gc_sharedScript.sml:493-500: a theorem that HOL4 states as
    the value of an ML expression: FDOM_heap_map *)
 
-let heap_addresses_APPEND = cake_theorem "heap_addresses_APPEND"
-  (fun () ->
-    `!xs ys n. heap_addresses n (xs ++ ys) =
-                heap_addresses n xs UNION heap_addresses (n +
-                  heap_length xs) ys`)
-  CHEAT_TAC;;
+let heap_addresses_APPEND = prove
+ (`!xs ys n. heap_addresses n (xs ++ ys) =
+              heap_addresses n xs UNION heap_addresses (n +
+                heap_length xs) ys`,
+  CHEAT_TAC);;
 
-let LESS_IMP_heap_lookup = cake_theorem "LESS_IMP_heap_lookup"
-  (fun () ->
-    `!xs j ys. j < heap_length xs ==> (heap_lookup j (xs ++ ys) =
-  heap_lookup j xs)`)
-  CHEAT_TAC;;
+let LESS_IMP_heap_lookup = prove
+ (`!xs j ys. j < heap_length xs ==> (heap_lookup j (xs ++ ys) =
+  heap_lookup j xs)`,
+  CHEAT_TAC);;
 
-let NOT_LESS_IMP_heap_lookup = cake_theorem "NOT_LESS_IMP_heap_lookup"
-  (fun () ->
-    `!xs j ys. ~(j < heap_length xs) ==>
-                (heap_lookup j (xs ++ ys) = heap_lookup (j -
-                  heap_length xs) ys)`)
-  CHEAT_TAC;;
+let NOT_LESS_IMP_heap_lookup = prove
+ (`!xs j ys. ~(j < heap_length xs) ==>
+              (heap_lookup j (xs ++ ys) = heap_lookup (j -
+                heap_length xs) ys)`,
+  CHEAT_TAC);;
 
-let heap_similar_Data_IMP_DataOrForward =
-  cake_theorem "heap_similar_Data_IMP_DataOrForward"
-  (fun () ->
-    `!heap0 heap1 ptr.
-        heaps_similar heap0 heap1 /\ isSomeDataElement (heap_lookup
-          ptr heap0) ==>
-        isSomeDataOrForward (heap_lookup ptr heap1)`)
-  CHEAT_TAC;;
+let heap_similar_Data_IMP_DataOrForward = prove
+ (`!heap0 heap1 ptr.
+      heaps_similar heap0 heap1 /\ isSomeDataElement (heap_lookup ptr
+        heap0) ==>
+      isSomeDataOrForward (heap_lookup ptr heap1)`,
+  CHEAT_TAC);;
 
-let FILTER_LEMMA = cake_theorem "FILTER_LEMMA"
-  (fun () ->
-    `!heap. (FILTER isForwardPointer heap = []) ==>
-             (FILTER (\h. ~(isForwardPointer h)) heap = heap)`)
-  CHEAT_TAC;;
+let FILTER_LEMMA = prove
+ (`!heap. (FILTER isForwardPointer heap = []) ==>
+           (FILTER (\h. ~(isForwardPointer h)) heap = heap)`,
+  CHEAT_TAC);;
 
-let heaps_similar_REFL = cake_theorem "heaps_similar_REFL"
-  (fun () ->
-    `!xs. (FILTER isForwardPointer xs = []) ==> heaps_similar xs xs`)
-  CHEAT_TAC;;
+let heaps_similar_REFL = prove
+ (`!xs. (FILTER isForwardPointer xs = []) ==> heaps_similar xs xs`,
+  CHEAT_TAC);;
 
-let heap_map_EMPTY = cake_theorem "heap_map_EMPTY"
-  (fun () ->
-    `!xs n. (FILTER isForwardPointer xs = []) ==> (FDOM (heap_map n
-  xs) = {})`)
-  CHEAT_TAC;;
+let heap_map_EMPTY = prove
+ (`!xs n. (FILTER isForwardPointer xs = []) ==> (FDOM (heap_map n xs)
+  = {})`,
+  CHEAT_TAC);;
 
-let MEM_ADDR_MAP = cake_theorem "MEM_ADDR_MAP"
-  (fun () ->
-    `!xs f ptr u. MEM (gc_shared_Pointer ptr u) (ADDR_MAP f xs) ==>
-                   (?y. MEM (gc_shared_Pointer y u) xs /\ (f y =
-                     ptr))`)
-  CHEAT_TAC;;
+let MEM_ADDR_MAP = prove
+ (`!xs f ptr u. MEM (gc_shared_Pointer ptr u) (ADDR_MAP f xs) ==>
+                 (?y. MEM (gc_shared_Pointer y u) xs /\ (f y =
+                   ptr))`,
+  CHEAT_TAC);;
 
-let heap_length_heap_expand = cake_theorem "heap_length_heap_expand"
-  (fun () ->
-    `!n. heap_length (heap_expand n) = n`)
-  CHEAT_TAC;;
+let heap_length_heap_expand = prove
+ (`!n. heap_length (heap_expand n) = n`,
+  CHEAT_TAC);;
 
-let EVERY_isDataElement_IMP_LEMMA =
-  cake_theorem "EVERY_isDataElement_IMP_LEMMA"
-  (fun () ->
-    `!heap2. EVERY isDataElement heap2 ==> (FILTER isForwardPointer
-  heap2 = [])`)
-  CHEAT_TAC;;
+let EVERY_isDataElement_IMP_LEMMA = prove
+ (`!heap2. EVERY isDataElement heap2 ==> (FILTER isForwardPointer
+  heap2 = [])`,
+  CHEAT_TAC);;
 
-let isSome_heap_looukp_IMP_APPEND =
-  cake_theorem "isSome_heap_looukp_IMP_APPEND"
-  (fun () ->
-    `!xs ptr. isSomeDataElement (heap_lookup ptr xs) ==>
-               isSomeDataElement (heap_lookup ptr (xs ++ ys))`)
-  CHEAT_TAC;;
+let isSome_heap_looukp_IMP_APPEND = prove
+ (`!xs ptr. isSomeDataElement (heap_lookup ptr xs) ==>
+             isSomeDataElement (heap_lookup ptr (xs ++ ys))`,
+  CHEAT_TAC);;
 
-let heap_split_APPEND_if = cake_theorem "heap_split_APPEND_if"
-  (fun () ->
-    `!h1 n h2. heap_split n (h1 ++ h2) =
-     (if n < heap_length h1 then
-      match heap_split n h1 with
-          NONE -> NONE | SOME (h1',h2') -> SOME (h1',h2' ++ h2)
-            else
-      match heap_split (n - heap_length h1) h2 with
-          NONE -> NONE | SOME (h1',h2') -> SOME (h1 ++ h1',h2'))`)
-  CHEAT_TAC;;
+let heap_split_APPEND_if = prove
+ (`!h1 n h2. heap_split n (h1 ++ h2) =
+   (if n < heap_length h1 then
+    match heap_split n h1 with
+        NONE -> NONE | SOME (h1',h2') -> SOME (h1',h2' ++ h2) else
+    match heap_split (n - heap_length h1) h2 with
+        NONE -> NONE | SOME (h1',h2') -> SOME (h1 ++ h1',h2'))`,
+  CHEAT_TAC);;
 
-let heap_split_0 = cake_theorem "heap_split_0[simp]"
-  (fun () ->
-    `heap_split 0 h = SOME ([],h)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let heap_split_0 = prove
+ (`heap_split 0 h = SOME ([],h)`,
+  CHEAT_TAC);;
 
 (* --- *)
 
@@ -469,27 +429,21 @@ let reachable_addresses_def = cake_define
      (?t x. MEM (gc_shared_Pointer x t) roots /\ RTC (gc_edge
        heap) x y)`;;
 
-let heap_addresses_LESS_heap_length =
-  cake_theorem "heap_addresses_LESS_heap_length"
-  (fun () ->
-    `!heap n k. k IN heap_addresses n heap ==> k < n + heap_length
-  heap`)
-  CHEAT_TAC;;
+let heap_addresses_LESS_heap_length = prove
+ (`!heap n k. k IN heap_addresses n heap ==> k < n + heap_length heap`,
+  CHEAT_TAC);;
 
-let heap_addresses_LESS = cake_theorem "heap_addresses_LESS"
-  (fun () ->
-    `!heap n k. k IN heap_addresses n heap ==> n <= k`)
-  CHEAT_TAC;;
+let heap_addresses_LESS = prove
+ (`!heap n k. k IN heap_addresses n heap ==> n <= k`,
+  CHEAT_TAC);;
 
-let FINITE_heap_addresses = cake_theorem "FINITE_heap_addresses"
-  (fun () ->
-    `!xs n. FINITE (heap_addresses n xs)`)
-  CHEAT_TAC;;
+let FINITE_heap_addresses = prove
+ (`!xs n. FINITE (heap_addresses n xs)`,
+  CHEAT_TAC);;
 
-let CARD_heap_addresses = cake_theorem "CARD_heap_addresses"
-  (fun () ->
-    `!xs n. CARD (heap_addresses n xs) = LENGTH xs`)
-  CHEAT_TAC;;
+let CARD_heap_addresses = prove
+ (`!xs n. CARD (heap_addresses n xs) = LENGTH xs`,
+  CHEAT_TAC);;
 
 let heap_filter_aux_def = cake_define_list
   [`heap_filter_aux n P [] = []`;
@@ -500,77 +454,66 @@ let heap_filter_aux_def = cake_define_list
 let heap_filter_def = cake_define
   `heap_filter = heap_filter_aux 0`;;
 
-let heap_filter_EMPTY = cake_theorem "heap_filter_EMPTY"
-  (fun () ->
-    `!heap. heap_filter {} heap = []`)
-  CHEAT_TAC;;
+let heap_filter_EMPTY = prove
+ (`!heap. heap_filter {} heap = []`,
+  CHEAT_TAC);;
 
-let heap_length_heap_filter_INSERT =
-  cake_theorem "heap_length_heap_filter_INSERT[local]"
-  (fun () ->
-    `!heap.
-       ~(e IN s) ==>
-       (heap_length (heap_filter (e INSERT s) heap) =
-        heap_length (heap_filter {e} heap) + heap_length
-          (heap_filter s heap))`)
-  CHEAT_TAC;;
+(* [local] *)
+let heap_length_heap_filter_INSERT = prove
+ (`!heap.
+     ~(e IN s) ==>
+     (heap_length (heap_filter (e INSERT s) heap) =
+      heap_length (heap_filter {e} heap) + heap_length (heap_filter
+        s heap))`,
+  CHEAT_TAC);;
 
 (* HOL4 gc_sharedScript.sml:706-712: a theorem that HOL4 states as
    the value of an ML expression: heap_filter_aux_ADD_SING *)
 
-let heap_filter_aux_SING_ZERO =
-  cake_theorem "heap_filter_aux_SING_ZERO[local]"
-  (fun () ->
-    `!heap n. 0 < n ==> (heap_filter_aux n {0} heap = [])`)
-  CHEAT_TAC;;
+(* [local] *)
+let heap_filter_aux_SING_ZERO = prove
+ (`!heap n. 0 < n ==> (heap_filter_aux n {0} heap = [])`,
+  CHEAT_TAC);;
 
-let heap_lookup_IMP_heap_filter =
-  cake_theorem "heap_lookup_IMP_heap_filter[local]"
-  (fun () ->
-    `!heap e x. (heap_lookup e heap = SOME x) ==> (heap_filter {e}
-  heap = [x])`)
-  CHEAT_TAC;;
+(* [local] *)
+let heap_lookup_IMP_heap_filter = prove
+ (`!heap e x. (heap_lookup e heap = SOME x) ==> (heap_filter {e} heap
+  = [x])`,
+  CHEAT_TAC);;
 
-let heap_length_heap_filter_eq =
-  cake_theorem "heap_length_heap_filter_eq"
-  (fun () ->
-    `!s t f heap heap2.
-        BIJ f s t /\ FINITE s /\ FINITE t /\
-        (!i. i IN s ==>
-             (?xs xs2 l d d.
-               (heap_lookup i heap = SOME (DataElement xs l d)) /\
-               (heap_lookup (f i) heap2 = SOME (DataElement xs2 l
-                 d)))) ==>
-        (heap_length (heap_filter t heap2) = heap_length
-          (heap_filter s heap))`)
-  CHEAT_TAC;;
+let heap_length_heap_filter_eq = prove
+ (`!s t f heap heap2.
+      BIJ f s t /\ FINITE s /\ FINITE t /\
+      (!i. i IN s ==>
+           (?xs xs2 l d d.
+             (heap_lookup i heap = SOME (DataElement xs l d)) /\
+             (heap_lookup (f i) heap2 = SOME (DataElement xs2 l d))))
+               ==>
+      (heap_length (heap_filter t heap2) = heap_length (heap_filter
+        s heap))`,
+  CHEAT_TAC);;
 
-let heap_length_heap_filter_aux =
-  cake_theorem "heap_length_heap_filter_aux[local]"
-  (fun () ->
-    `!n heap x.
-        heap_length (heap_filter_aux n (x UNION heap_addresses n
-          heap) heap) =
-        heap_length heap`)
-  CHEAT_TAC;;
+(* [local] *)
+let heap_length_heap_filter_aux = prove
+ (`!n heap x.
+      heap_length (heap_filter_aux n (x UNION heap_addresses n heap)
+        heap) =
+      heap_length heap`,
+  CHEAT_TAC);;
 
-let heap_length_heap_filter = cake_theorem "heap_length_heap_filter"
-  (fun () ->
-    `!heap.
-        heap_length (heap_filter (heap_addresses 0 heap) heap) =
-        heap_length heap`)
-  CHEAT_TAC;;
+let heap_length_heap_filter = prove
+ (`!heap.
+      heap_length (heap_filter (heap_addresses 0 heap) heap) =
+      heap_length heap`,
+  CHEAT_TAC);;
 
-let heap_filter_aux_APPEND = cake_theorem "heap_filter_aux_APPEND"
-  (fun () ->
-    `!xs ys n s.
-        heap_filter_aux n s (xs ++ ys) =
-        heap_filter_aux n s xs ++ heap_filter_aux (n +
-          heap_length xs) s ys`)
-  CHEAT_TAC;;
+let heap_filter_aux_APPEND = prove
+ (`!xs ys n s.
+      heap_filter_aux n s (xs ++ ys) =
+      heap_filter_aux n s xs ++ heap_filter_aux (n + heap_length
+        xs) s ys`,
+  CHEAT_TAC);;
 
-let heap_filter_aux_heap_addresses_UNION =
-  cake_theorem "heap_filter_aux_heap_addresses_UNION"
-  (fun () ->
-    `!xs n s. heap_filter_aux n (heap_addresses n xs UNION s) xs = xs`)
-  CHEAT_TAC;;
+let heap_filter_aux_heap_addresses_UNION = prove
+ (`!xs n s. heap_filter_aux n (heap_addresses n xs UNION s) xs = xs`,
+  CHEAT_TAC);;

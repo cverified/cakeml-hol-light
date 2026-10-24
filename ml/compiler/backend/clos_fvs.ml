@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_fvs: ported from HOL4's
-    compiler/backend/clos_fvsScript.sml  *)
+    compiler/backend/clos_fvsScript.sml
+    A definition theory, with 4 definitions and 3 theorems.  Needed
+    by clos_fvsProof.ml, clos_known.ml and clos_knownProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -109,30 +111,28 @@ let remove_fvs_sing_def = cake_define_list_try (fun () ->
          (num_args,remove_fvs_sing (num_args + m + new_fvs) x)
            :: remove_fvs_let m new_fvs xs`];;
 
-let remove_fvs_sing_eq = cake_theorem "remove_fvs_sing_eq"
-  (fun () ->
-    `(!fvs e. remove_fvs fvs [e] = [remove_fvs_sing fvs e]) /\
-     (!fvs es. remove_fvs fvs es = remove_fvs_list fvs es) /\
-     (!m new_fvs fns.
-       remove_fvs_let m new_fvs fns =
-       MAP (\(num_args,x). (num_args,HD (remove_fvs (num_args + m
-         + new_fvs) [x]))) fns)`)
-  CHEAT_TAC;;
+let remove_fvs_sing_eq = prove
+ (`(!fvs e. remove_fvs fvs [e] = [remove_fvs_sing fvs e]) /\
+   (!fvs es. remove_fvs fvs es = remove_fvs_list fvs es) /\
+   (!m new_fvs fns.
+     remove_fvs_let m new_fvs fns =
+     MAP (\(num_args,x). (num_args,HD (remove_fvs (num_args + m +
+       new_fvs) [x]))) fns)`,
+  CHEAT_TAC);;
 
-let compile_def = cake_define
+let clos_fvs_compile_def = cake_define
   `clos_fvs_compile exps = remove_fvs 0 exps`;;
 hol4_overload "compile" "clos_fvs_compile";;
 
-let clos_fvs_compile_eq = cake_theorem "compile_eq"
-  (fun () ->
-    `clos_fvs_compile exps = remove_fvs_list 0 exps`)
-  CHEAT_TAC;;
+(* compile_eq *)
+let clos_fvs_compile_eq = prove
+ (`clos_fvs_compile exps = remove_fvs_list 0 exps`,
+  CHEAT_TAC);;
 
-let compile_inc_def = cake_define
+let clos_fvs_compile_inc_def = cake_define
   `clos_fvs_compile_inc (e,xs) = (clos_fvs_compile e,[])`;;
 hol4_overload "compile_inc" "clos_fvs_compile_inc";;
 
-let LENGTH_remove_fvs = cake_theorem "LENGTH_remove_fvs"
-  (fun () ->
-    `!fvs xs. LENGTH (remove_fvs fvs xs) = LENGTH xs`)
-  CHEAT_TAC;;
+let LENGTH_remove_fvs = prove
+ (`!fvs xs. LENGTH (remove_fvs fvs xs) = LENGTH xs`,
+  CHEAT_TAC);;

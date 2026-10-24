@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_op: ported from HOL4's
-    compiler/backend/clos_opScript.sml  *)
+    compiler/backend/clos_opScript.sml
+    A definition theory, with 29 definitions and 11 theorems.
+    Needed by clos_known.ml and clos_opProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -16,7 +18,7 @@ needs "lib/indexedLists.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 (* matchers *)
 
@@ -26,11 +28,10 @@ let dest_Const_def = cake_define
         closLang_IntOp (closLang_Const i) -> SOME i
       | _1 -> NONE`;;
 
-let dest_Const_pmatch = cake_theorem "dest_Const_pmatch"
-  (fun () ->
-    `dest_Const x = (match x with closLang_IntOp (closLang_Const i) ->
-  SOME i | _2 -> NONE)`)
-  CHEAT_TAC;;
+let dest_Const_pmatch = prove
+ (`dest_Const x = (match x with closLang_IntOp (closLang_Const i) ->
+  SOME i | _2 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_Constant_def = cake_define
   `clos_op_dest_Constant x1 =
@@ -44,27 +45,25 @@ let dest_Constant_def = cake_define
       | _3 -> NONE`;;
 hol4_overload "dest_Constant" "clos_op_dest_Constant";;
 
-let dest_Constant_pmatch = cake_theorem "dest_Constant_pmatch"
-  (fun () ->
-    `clos_op_dest_Constant x = (match x with closLang_BlockOp
+let dest_Constant_pmatch = prove
+ (`clos_op_dest_Constant x = (match x with closLang_BlockOp
   (closLang_Constant (ConstStr c)) -> SOME (closLang_Str c) |
   closLang_BlockOp (closLang_Constant (ConstInt c)) -> SOME
   (closLang_Int c) | closLang_BlockOp (closLang_Constant (ConstWord64
-  c)) -> SOME (W64 c) | _4 -> NONE)`)
-  CHEAT_TAC;;
+  c)) -> SOME (W64 c) | _4 -> NONE)`,
+  CHEAT_TAC);;
 
-let dest_Cons_def = cake_define
+let clos_op_dest_Cons_def = cake_define
   `clos_op_dest_Cons x1 =
       match x1 with
         closLang_BlockOp (closLang_Cons i) -> SOME i
       | _5 -> NONE`;;
 hol4_overload "dest_Cons" "clos_op_dest_Cons";;
 
-let dest_Cons_pmatch = cake_theorem "dest_Cons_pmatch"
-  (fun () ->
-    `clos_op_dest_Cons x = (match x with closLang_BlockOp
-  (closLang_Cons i) -> SOME i | _6 -> NONE)`)
-  CHEAT_TAC;;
+let dest_Cons_pmatch = prove
+ (`clos_op_dest_Cons x = (match x with closLang_BlockOp (closLang_Cons
+  i) -> SOME i | _6 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_ElemAt_def = cake_define
   `dest_ElemAt x1 =
@@ -72,11 +71,10 @@ let dest_ElemAt_def = cake_define
         closLang_BlockOp (closLang_ElemAt i) -> SOME i
       | _7 -> NONE`;;
 
-let dest_ElemAt_pmatch = cake_theorem "dest_ElemAt_pmatch"
-  (fun () ->
-    `dest_ElemAt x = (match x with closLang_BlockOp (closLang_ElemAt
-  i) -> SOME i | _8 -> NONE)`)
-  CHEAT_TAC;;
+let dest_ElemAt_pmatch = prove
+ (`dest_ElemAt x = (match x with closLang_BlockOp (closLang_ElemAt i)
+  -> SOME i | _8 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_TagEq_def = cake_define
   `dest_TagEq x1 =
@@ -84,11 +82,10 @@ let dest_TagEq_def = cake_define
         closLang_BlockOp (closLang_TagEq i) -> SOME i
       | _9 -> NONE`;;
 
-let dest_TagEq_pmatch = cake_theorem "dest_TagEq_pmatch"
-  (fun () ->
-    `dest_TagEq x = (match x with closLang_BlockOp (closLang_TagEq i)
-  -> SOME i | _10 -> NONE)`)
-  CHEAT_TAC;;
+let dest_TagEq_pmatch = prove
+ (`dest_TagEq x = (match x with closLang_BlockOp (closLang_TagEq i) ->
+  SOME i | _10 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_LenEq_def = cake_define
   `dest_LenEq x1 =
@@ -96,11 +93,10 @@ let dest_LenEq_def = cake_define
         closLang_BlockOp (closLang_LenEq i) -> SOME i
       | _11 -> NONE`;;
 
-let dest_LenEq_pmatch = cake_theorem "dest_LenEq_pmatch"
-  (fun () ->
-    `dest_LenEq x = (match x with closLang_BlockOp (closLang_LenEq i)
-  -> SOME i | _12 -> NONE)`)
-  CHEAT_TAC;;
+let dest_LenEq_pmatch = prove
+ (`dest_LenEq x = (match x with closLang_BlockOp (closLang_LenEq i) ->
+  SOME i | _12 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_TagLenEq_def = cake_define
   `dest_TagLenEq x1 =
@@ -108,11 +104,10 @@ let dest_TagLenEq_def = cake_define
         closLang_BlockOp (closLang_TagLenEq i j) -> SOME (i,j)
       | _13 -> NONE`;;
 
-let dest_TagLenEq_pmatch = cake_theorem "dest_TagLenEq_pmatch"
-  (fun () ->
-    `dest_TagLenEq x = (match x with closLang_BlockOp
-  (closLang_TagLenEq i j) -> SOME (i,j) | _14 -> NONE)`)
-  CHEAT_TAC;;
+let dest_TagLenEq_pmatch = prove
+ (`dest_TagLenEq x = (match x with closLang_BlockOp (closLang_TagLenEq
+  i j) -> SOME (i,j) | _14 -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_Op_def = cake_define
   `dest_Op f x2 =
@@ -121,13 +116,12 @@ let dest_Op_def = cake_define
      (match f op with NONE -> NONE | SOME i -> SOME (i,xs))
       | _15 -> NONE`;;
 
-let dest_Op_pmatch = cake_theorem "dest_Op_pmatch"
-  (fun () ->
-    `dest_Op f x =
-       (match x with closLang_Op t op xs ->
-         (match f op with NONE -> NONE | SOME i -> SOME (i,xs)) |
-           _16 -> NONE)`)
-  CHEAT_TAC;;
+let dest_Op_pmatch = prove
+ (`dest_Op f x =
+     (match x with closLang_Op t op xs ->
+       (match f op with NONE -> NONE | SOME i -> SOME (i,xs)) | _16
+         -> NONE)`,
+  CHEAT_TAC);;
 
 let dest_Op_Nil_def = cake_define
   `dest_Op_Nil f x =
@@ -157,7 +151,7 @@ let MakeInt_def = cake_define
   `MakeInt i = closLang_Op backend_common_None (closLang_IntOp
   (closLang_Const i)) []`;;
 
-let int_op_def = cake_define
+let clos_op_int_op_def = cake_define
   `clos_op_int_op op i j =
      (if op = closLang_IntOp closLang_Add then SOME (MakeInt (j + i))
        else
@@ -201,10 +195,9 @@ let is_Var_def = cake_define
         (Var _19 _20:closLang_exp) -> T
       | _21 -> F`;;
 
-let is_Var_pmatch = cake_theorem "is_Var_pmatch"
-  (fun () ->
-    `is_Var x = (match x with Var _22 _23 -> T | _24 -> F)`)
-  CHEAT_TAC;;
+let is_Var_pmatch = prove
+ (`is_Var x = (match x with Var _22 _23 -> T | _24 -> F)`,
+  CHEAT_TAC);;
 
 let eq_direct_nil_def = cake_define
   `eq_direct_nil x y =
@@ -255,15 +248,13 @@ let cons_measure_def = cake_define_wf
      (match (dest_Op clos_op_dest_Cons) x with NONE -> 0 | SOME
        (_25,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1)`;;
 
-let cons_measure_lemma = cake_theorem "cons_measure_lemma"
-  (fun () ->
-    `((dest_Op clos_op_dest_Cons) x = SOME (t,xs) ==> cons_measure x =
-  SUM (MAP cons_measure xs) + LENGTH xs + 1) /\
-     ((dest_Op clos_op_dest_Cons) x = NONE ==> cons_measure x = 0)
-       /\
-     (cons_measure (closLang_Op backend_common_None
-       (closLang_BlockOp (closLang_ElemAt i)) [y]:closLang_exp) = 0)`)
-  CHEAT_TAC;;
+let cons_measure_lemma = prove
+ (`((dest_Op clos_op_dest_Cons) x = SOME (t,xs) ==> cons_measure x = SUM
+  (MAP cons_measure xs) + LENGTH xs + 1) /\
+   ((dest_Op clos_op_dest_Cons) x = NONE ==> cons_measure x = 0) /\
+   (cons_measure (closLang_Op backend_common_None (closLang_BlockOp
+     (closLang_ElemAt i)) [y]:closLang_exp) = 0)`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_opScript.sml:294-317: the tactic that proves the
    termination *)
@@ -307,26 +298,26 @@ let ConjList_def = cake_define
 let eq_pure_def = cake_define
   `eq_pure x y = ConjList (append (eq_pure_list [(x,y)]))`;;
 
-let eq_pure_list_test = cake_theorem "eq_pure_list_test[local]"
-  (fun () ->
-    `append (eq_pure_list
-            [(Var backend_common_None 5,
-              closLang_Op backend_common_None (closLang_BlockOp
-                (closLang_Cons 70)) [closLang_Op backend_common_None
-                (closLang_IntOp (closLang_Const (&2))) []; closLang_Op
-                backend_common_None (closLang_BlockOp (closLang_Cons 4))
-                []])]) =
-       [closLang_Op backend_common_None (closLang_BlockOp
-         (closLang_TagLenEq 70 2)) [Var backend_common_None 5];
-        closLang_Op backend_common_None (closLang_BlockOp
-          (closLang_TagLenEq 4 0)) [closLang_Op backend_common_None
-          (closLang_BlockOp (closLang_ElemAt 0)) [Var
-          backend_common_None 5]];
-        closLang_Op backend_common_None (closLang_BlockOp
-          (closLang_EqualConst (closLang_Int (&2)))) [closLang_Op
-          backend_common_None (closLang_BlockOp (closLang_ElemAt 1))
-          [Var backend_common_None 5]]]`)
-  CHEAT_TAC;;
+(* [local] *)
+let eq_pure_list_test = prove
+ (`append (eq_pure_list
+          [(Var backend_common_None 5,
+            closLang_Op backend_common_None (closLang_BlockOp
+              (closLang_Cons 70)) [closLang_Op backend_common_None
+              (closLang_IntOp (closLang_Const (&2))) []; closLang_Op
+              backend_common_None (closLang_BlockOp (closLang_Cons 4))
+              []])]) =
+     [closLang_Op backend_common_None (closLang_BlockOp
+       (closLang_TagLenEq 70 2)) [Var backend_common_None 5];
+      closLang_Op backend_common_None (closLang_BlockOp
+        (closLang_TagLenEq 4 0)) [closLang_Op backend_common_None
+        (closLang_BlockOp (closLang_ElemAt 0)) [Var backend_common_None
+        5]];
+      closLang_Op backend_common_None (closLang_BlockOp
+        (closLang_EqualConst (closLang_Int (&2)))) [closLang_Op
+        backend_common_None (closLang_BlockOp (closLang_ElemAt 1))
+        [Var backend_common_None 5]]]`,
+  CHEAT_TAC);;
 
 let dont_lift_def = cake_define
   `dont_lift x =
@@ -378,10 +369,12 @@ let SmartOp'_def = cake_define
          op i j | NONE -> (if op = closLang_BlockOp closLang_Equal
          then eq_op x y else NONE)) | _29 -> NONE)`;;
 
-let SmartOp_def = cake_define
+let clos_op_SmartOp_def = cake_define
   `clos_op_SmartOp tra op xs =
      (match SmartOp' tra op xs with NONE -> closLang_Op tra op xs
        | SOME x -> x)`;;
 hol4_overload "SmartOp" "clos_op_SmartOp";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

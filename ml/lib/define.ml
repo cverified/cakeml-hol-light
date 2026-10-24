@@ -2923,15 +2923,20 @@ let cake_define_gen wf tm =
     if not recursive then
       (if length fs = 1 then
          (if length cls = 1
-          then (try [new_definition tm],TRUTH
-                with Failure _ -> define_single [] tm)
+          then (try let th = [new_definition tm] in
+                    (the_strategy := "new_definition"; th),TRUTH
+                with Failure _ ->
+                  (the_strategy := "define_single";
+                   define_single [] tm))
           else
             (* a definition by cases on one argument is an instance
                of the recursion theorem of the type, which is much
                faster than HOL Light's machinery for patterns *)
-            (try define_prim_rec tm
+            (try let r = define_prim_rec tm in
+                 (the_strategy := "new_recursive_definition"; r)
              with Failure _ when not (declared ()) ->
-             define_single [] tm))
+               (the_strategy := "define_single";
+                define_single [] tm)))
        else
          itlist
            (fun f (l,th) ->
@@ -3562,6 +3567,23 @@ let cake_note_def th =
 
 let cake_defs () = rev (!the_defs);;
 
+(* which way each definition of the port was made, which a run
+   harvests so that the files can say the primitive itself where
+   HOL Light has one (tools/bin/strategies) *)
+
+let the_strategies = ref ([]:(string * string) list);;
+
+let cake_strategies () = rev (!the_strategies);;
+
+let cake_note_strategy th =
+  (try let h = fst(strip_comb(lhs(snd(strip_forall
+                 (hd (conjuncts(snd(strip_forall(concl th)))))))) ) in
+       if is_const h then
+         let n = fst(dest_const h) in
+         if not (can (assoc n) (!the_strategies)) then
+           the_strategies := (n, !the_strategy) :: !the_strategies
+   with Failure _ -> ());;
+
 let cake_def name =
   try assoc name (!the_defs)
   with Failure _ ->
@@ -3571,13 +3593,16 @@ let cake_def name =
    wrappers call the function of that name as it stands above *)
 
 let cake_define tm =
-  let th = cake_define tm in cake_note_def th; th;;
+  let th = cake_define tm in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_gen wf tm =
-  let th = cake_define_gen wf tm in cake_note_def th; th;;
+  let th = cake_define_gen wf tm in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_list cls =
-  let th = cake_define_list cls in cake_note_def th; th;;
+  let th = cake_define_list cls in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_wf rel tm =
   let th = cake_define_wf rel tm in cake_note_def th; th;;

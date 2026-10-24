@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  semanticPrimitives: ported from HOL4's
-    semantics/semanticPrimitivesScript.sml  *)
+    semantics/semanticPrimitivesScript.sml
+    A definition theory, with 101 definitions, 15 datatypes and no
+    theorems.  Needed by 74 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -464,16 +466,16 @@ let do_eq_def = cake_define_list_try_tac (fun () ->
   (gen1,id1):semanticPrimitives_v) (semanticPrimitives_Env v27
   (gen2,id2):semanticPrimitives_v) =
       Eq_val (gen1 = gen2 /\ id1 = id2)`;
-   `semanticPrimitives_do_eq _39 _40 = Eq_type_error`;
-   `semanticPrimitives_do_eq_list l1 l2 =
-      (match (l1,l2) with
+   `semanticPrimitives_do_eq _41 _42 = Eq_type_error`;
+   `semanticPrimitives_do_eq_list x1 x2 =
+       match (x1,x2) with
          ([],[]) -> Eq_val T
        | ((v1 :: vs1),(v2 :: vs2)) ->
-           (match semanticPrimitives_do_eq v1 v2 with
-              Eq_val r -> (if ~r then Eq_val F else
-                semanticPrimitives_do_eq_list vs1 vs2)
-            | Eq_type_error -> Eq_type_error)
-       | _42 -> Eq_val F)`];;
+      (match semanticPrimitives_do_eq v1 v2 with
+         Eq_val r -> (if ~r then Eq_val F else
+           semanticPrimitives_do_eq_list vs1 vs2) | Eq_type_error ->
+           Eq_type_error)
+       | (_39,_40) -> Eq_val F`];;
 hol4_overload "do_eq" "semanticPrimitives_do_eq";;
 hol4_overload "do_eq_list" "semanticPrimitives_do_eq_list";;
 

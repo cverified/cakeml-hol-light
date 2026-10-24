@@ -93,7 +93,7 @@ hol4_overload "binop_upd" "asmSem_binop_upd";;
 let is_test_def = cake_define
   `is_test c <=> (c = Test) \/ (c = asm_NotTest)`;;
 
-let word_shift_def = cake_define_list
+let asmSem_word_shift_def = cake_define_list
   [`asmSem_word_shift Lsl w n = w << n`;
    `asmSem_word_shift Lsr w n = w >>> n`;
    `asmSem_word_shift Asr w n = w >> n`;

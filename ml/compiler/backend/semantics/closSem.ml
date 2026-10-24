@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  closSem: ported from HOL4's
-    compiler/backend/semantics/closSemScript.sml  *)
+    compiler/backend/semantics/closSemScript.sml
+    A definition theory, with 30 definitions, 5 datatypes and 14
+    theorems.  Needed by 37 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -25,7 +27,10 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 (* for opw_lookup_def and others *)
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide_consts
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
   ["compile","backend_compile";
    "compile","bvi_let_compile";
    "compile","bvi_to_data_compile";
@@ -117,7 +122,7 @@ let get_global_def = cake_define
   `get_global n globals =
      (if n < LENGTH globals then SOME (EL n globals) else NONE)`;;
 
-let boolv_def = cake_define
+let closSem_Boolv_def = cake_define
   `(closSem_Boolv b = closSem_Block (if b then true_tag else
   false_tag) [])`;;
 hol4_overload "Boolv" "closSem_Boolv";;
@@ -130,39 +135,39 @@ hol4_overload "Boolv" "closSem_Boolv";;
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let do_eq_def = cake_define_list_cheat CHEAT_TAC
+let closSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`closSem_do_eq x y =
          (match x with closSem_Number i ->
-             (match y with closSem_Number j -> Eq_val (i = j) | _1
+             (match y with closSem_Number j -> Eq_val (i = j) | _3
                -> Eq_type_error) | Word64 v ->
-             (match y with Word64 w -> Eq_val (v = w) | _2 ->
+             (match y with Word64 w -> Eq_val (v = w) | _4 ->
                Eq_type_error) | closSem_Block t1 xs ->
              (match y with closSem_Block t2 ys -> (if (t1 = t2) /\
                (LENGTH xs = LENGTH ys) then
                               closSem_do_eq_list xs ys else Eq_val
-                                F) | _3 -> Eq_type_error) |
+                                F) | _5 -> Eq_type_error) |
                                 closSem_ByteVector cs ->
              (match y with closSem_ByteVector ds -> Eq_val (cs = ds)
-               | _4 -> Eq_type_error) | closSem_RefPtr bi i ->
+               | _6 -> Eq_type_error) | closSem_RefPtr bi i ->
              (match y with closSem_RefPtr bj j -> (if bi /\ bj then
-               Eq_val (i = j) else Eq_type_error) | _5 -> Eq_type_error)
-               | _6 ->
-             (match y with closSem_Number _7 -> Eq_type_error |
-               Word64 _8 -> Eq_type_error | closSem_Block _9 _10 ->
-               Eq_type_error | closSem_ByteVector _11 ->
-               Eq_type_error | closSem_RefPtr _12 _13 ->
-               Eq_type_error | _14 -> Eq_val T))`;
-   `closSem_do_eq_list l1 l2 =
-      (match (l1,l2) with
-         ([],[]) -> Eq_val T
-       | ((x :: xs),(y :: ys)) ->
-           (match closSem_do_eq x y with Eq_val T ->
-             closSem_do_eq_list xs ys | res -> res)
-       | _16 -> Eq_val F)`];;
+               Eq_val (i = j) else Eq_type_error) | _7 -> Eq_type_error)
+               | _8 ->
+             (match y with closSem_Number _9 -> Eq_type_error |
+               Word64 _10 -> Eq_type_error | closSem_Block _11 _12 ->
+               Eq_type_error | closSem_ByteVector _13 ->
+               Eq_type_error | closSem_RefPtr _14 _15 ->
+               Eq_type_error | _16 -> Eq_val T))`;
+   `closSem_do_eq_list x1 x2 =
+         match (x1,x2) with
+           ([],[]) -> Eq_val T
+         | ((x :: xs),(y :: ys)) ->
+         (match closSem_do_eq x y with Eq_val T ->
+           closSem_do_eq_list xs ys | res -> res)
+         | (_1,_2) -> Eq_val F`];;
 hol4_overload "do_eq" "closSem_do_eq";;
 hol4_overload "do_eq_list" "closSem_do_eq_list";;
 
-let v_to_list_def = cake_define
+let closSem_v_to_list_def = cake_define
   `closSem_v_to_list x1 =
         match x1 with
           (closSem_Block tag []:closSem_v) ->
@@ -174,13 +179,13 @@ let v_to_list_def = cake_define
         | _18 -> NONE`;;
 hol4_overload "v_to_list" "closSem_v_to_list";;
 
-let list_to_v_def = cake_define_list
+let closSem_list_to_v_def = cake_define_list
   [`closSem_list_to_v [] = closSem_Block nil_tag []`;
    `closSem_list_to_v (x :: xs) = closSem_Block cons_tag [x;
   closSem_list_to_v xs]`];;
 hol4_overload "list_to_v" "closSem_list_to_v";;
 
-let unit_def = cake_define
+let closSem_Unit_def = cake_define
   `closSem_Unit = closSem_Block tuple_tag []`;;
 hol4_overload "Unit" "closSem_Unit";;
 
@@ -344,7 +349,7 @@ hol4_overload "BadRef" "closSem_BadRef";;
 hol4_overload "NotThunk" "closSem_NotThunk";;
 hol4_overload "IsThunk" "closSem_IsThunk";;
 
-let dest_thunk_def = cake_define
+let closSem_dest_thunk_def = cake_define
   `closSem_dest_thunk vs refs =
       match vs with
         [(closSem_RefPtr b ptr:closSem_v)] ->
@@ -362,7 +367,7 @@ let store_thunk_def = cake_define
      (match FLOOKUP refs ptr with SOME (Thunk NotEvaluated _28) ->
        SOME (refs |+ (ptr,v)) | _29 -> NONE)`;;
 
-let update_thunk_def = cake_define
+let closSem_update_thunk_def = cake_define
   `closSem_update_thunk x1 refs x3 =
       match (x1,x3) with
         ([(closSem_RefPtr F ptr:closSem_v)],[v]) ->
@@ -371,12 +376,12 @@ let update_thunk_def = cake_define
       | (_31,_32) -> NONE`;;
 hol4_overload "update_thunk" "closSem_update_thunk";;
 
-let bad_thunk_update_def = cake_define
+let closSem_bad_thunk_update_def = cake_define
   `closSem_bad_thunk_update m v refs <=>
      m = Evaluated /\ ~(dest_thunk [v] refs = NotThunk)`;;
 hol4_overload "bad_thunk_update" "closSem_bad_thunk_update";;
 
-let do_app_def = cake_define
+let closSem_do_app_def = cake_define
   `closSem_do_app (op:closLang_op) (vs:closSem_v list)
   (s:('c,'ffi)closSem_state) =
      (match (op,vs) with (closLang_GlobOp (closLang_Global
@@ -748,18 +753,17 @@ let do_app_def = cake_define
                     ,closSem_v)semanticPrimitives_result))`;;
 hol4_overload "do_app" "closSem_do_app";;
 
-let dec_clock_def = cake_define
+let closSem_dec_clock_def = cake_define
   `closSem_dec_clock n (s:('c,'ffi)closSem_state) =
   closSem_state_clock_fupd (K (closSem_state_clock s - n)) s`;;
 hol4_overload "dec_clock" "closSem_dec_clock";;
 
-let LESS_EQ_dec_clock = cake_theorem "LESS_EQ_dec_clock[local]"
-  (fun () ->
-    `closSem_state_clock
-       (r:('c,'ffi)closSem_state) <= state_clock
-         (closSem_dec_clock n s) ==> closSem_state_clock r <=
-         state_clock s`)
-  CHEAT_TAC;;
+(* [local] *)
+let LESS_EQ_dec_clock = prove
+ (`closSem_state_clock
+     (r:('c,'ffi)closSem_state) <= state_clock (closSem_dec_clock n
+       s) ==> closSem_state_clock r <= state_clock s`,
+  CHEAT_TAC);;
 
 let find_code_def = cake_define
   `closSem_find_code p args code =
@@ -775,16 +779,16 @@ hol4_overload "find_code" "closSem_find_code";;
    fix_clock. At the bottom of this file, we remove all occurrences
    of fix_clock. *)
 
-let fix_clock_def = cake_define
+let closSem_fix_clock_def = cake_define
   `closSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "closSem_fix_clock";;
 
-let fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
-  (fun () ->
-    `closSem_fix_clock s x = (res,s1) ==> state_clock s1 <=
-  state_clock s`)
-  CHEAT_TAC;;
+(* fix_clock_IMP[local] *)
+let closSem_fix_clock_IMP = prove
+ (`closSem_fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock
+  s`,
+  CHEAT_TAC);;
 
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
@@ -836,13 +840,12 @@ let dest_closure_def = cake_define
                  SOME (Partial_app (closSem_Recclosure loc (args
                    ++ arg_env) clo_env fns i))) | _85 -> NONE)`;;
 
-let dest_closure_length = cake_theorem "dest_closure_length"
-  (fun () ->
-    `!max_app loc_opt f args exp args1 args2 so_far.
-       dest_closure max_app loc_opt f args = SOME (Full_app exp
-         args1 args2) ==>
-       LENGTH args2 < LENGTH args`)
-  CHEAT_TAC;;
+let dest_closure_length = prove
+ (`!max_app loc_opt f args exp args1 args2 so_far.
+     dest_closure max_app loc_opt f args = SOME (Full_app exp args1
+       args2) ==>
+     LENGTH args2 < LENGTH args`,
+  CHEAT_TAC);;
 
 let clos_env_def = cake_define
   `clos_env restrict names env =
@@ -857,17 +860,15 @@ let build_recc_def = cake_define
 (* HOL4 closSemScript.sml:639-649: a theorem that HOL4 states as the
    value of an ML expression: case_eq_thms *)
 
-let do_install_clock = cake_theorem "do_install_clock"
-  (fun () ->
-    `closSem_do_install vs s = (Rval e,s') ==> 0 < state_clock s /\
-  state_clock s' = state_clock s - 1`)
-  CHEAT_TAC;;
+let do_install_clock = prove
+ (`closSem_do_install vs s = (Rval e,s') ==> 0 < state_clock s /\
+  state_clock s' = state_clock s - 1`,
+  CHEAT_TAC);;
 
-let do_install_clock_less_eq = cake_theorem "do_install_clock_less_eq"
-  (fun () ->
-    `closSem_do_install vs s = (res,s') ==> state_clock s' <=
-  state_clock s`)
-  CHEAT_TAC;;
+let do_install_clock_less_eq = prove
+ (`closSem_do_install vs s = (res,s') ==> state_clock s' <=
+  state_clock s`,
+  CHEAT_TAC);;
 
 let AppUnit_def = cake_define
   `closSem_AppUnit x = closLang_App backend_common_None NONE x
@@ -929,27 +930,27 @@ hol4_overload "exp2_alt_size" "closSem_exp2_alt_size";;
 hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;
 hol4_overload "exp_alt_size" "closSem_exp_alt_size";;
 
-let exp3_alt_size = cake_theorem "exp3_alt_size[local,simp]"
-  (fun () ->
-    `closSem_exp3_alt_size xs = list_size closSem_exp_alt_size xs`)
-  CHEAT_TAC;;
+(* [local,simp] *)
+let exp3_alt_size = prove
+ (`closSem_exp3_alt_size xs = list_size closSem_exp_alt_size xs`,
+  CHEAT_TAC);;
 
-let fix_clock_IMP =
+let closSem_fix_clock_IMP =
   try prove
    (`!s x res s1. closSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; closSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "closSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "closSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nclosSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl closSem_fix_clock_IMP <> `T` then
+  cake_term_facts := closSem_fix_clock_IMP :: (!cake_term_facts);;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -957,7 +958,7 @@ if concl fix_clock_IMP <> `T` then
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_try_tac (fun () ->
+let closSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
                       (\x. match x with INL (xs,env,s) ->
                         (state_clock
@@ -1092,42 +1093,41 @@ hol4_overload "evaluate" "closSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
-let do_app_const = cake_theorem "do_app_const"
-  (fun () ->
-    `(do_app op args s1 = Rval (res,s2)) ==>
-      (state_clock s2 = state_clock s1) /\
-      (closSem_state_max_app s2 = closSem_state_max_app s1) /\
-      (closSem_state_code s2 = closSem_state_code s1) /\
-      (closSem_state_compile_oracle s2 =
-        closSem_state_compile_oracle s1) /\
-      (closSem_state_compile s2 = closSem_state_compile s1)`)
-  CHEAT_TAC;;
+let do_app_const = prove
+ (`(do_app op args s1 = Rval (res,s2)) ==>
+    (state_clock s2 = state_clock s1) /\
+    (closSem_state_max_app s2 = closSem_state_max_app s1) /\
+    (closSem_state_code s2 = closSem_state_code s1) /\
+    (closSem_state_compile_oracle s2 = closSem_state_compile_oracle
+      s1) /\
+    (closSem_state_compile s2 = closSem_state_compile s1)`,
+  CHEAT_TAC);;
 
-let evaluate_clock_help = cake_theorem "evaluate_clock_help[local]"
-  (fun () ->
-    `(!tup vs (s2:('c,'ffi)closSem_state).
-         (closSem_evaluate tup = (vs,s2)) ==> closSem_state_clock
-           s2 <= state_clock (SND (SND tup))) /\
-       (!loc_opt f args (s1:('c,'ffi)closSem_state) vs s2.
-         (evaluate_app loc_opt f args s1 = (vs,s2)) ==>
-           closSem_state_clock s2 <= closSem_state_clock s1)`)
-  CHEAT_TAC;;
+(* [local] *)
+let evaluate_clock_help = prove
+ (`(!tup vs (s2:('c,'ffi)closSem_state).
+       (closSem_evaluate tup = (vs,s2)) ==> closSem_state_clock s2 <=
+         state_clock (SND (SND tup))) /\
+     (!loc_opt f args (s1:('c,'ffi)closSem_state) vs s2.
+       (evaluate_app loc_opt f args s1 = (vs,s2)) ==>
+         closSem_state_clock s2 <= closSem_state_clock s1)`,
+  CHEAT_TAC);;
 
-let evaluate_clock = cake_theorem "evaluate_clock"
-  (fun () ->
-    `(!xs env s1 vs s2.
-          (closSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock
-            s2 <= state_clock s1) /\
-        (!loc_opt f args s1 vs s2.
-          (evaluate_app loc_opt f args s1 = (vs,s2)) ==>
-            state_clock s2 <= state_clock s1)`)
-  CHEAT_TAC;;
+(* evaluate_clock *)
+let closSem_evaluate_clock = prove
+ (`(!xs env s1 vs s2.
+        (closSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock s2
+          <= state_clock s1) /\
+      (!loc_opt f args s1 vs s2.
+        (evaluate_app loc_opt f args s1 = (vs,s2)) ==> state_clock
+          s2 <= state_clock s1)`,
+  CHEAT_TAC);;
 
-let fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
-  (fun () ->
-    `closSem_fix_clock s (closSem_evaluate (xs,env,s)) =
-  closSem_evaluate (xs,env,s)`)
-  CHEAT_TAC;;
+(* fix_clock_evaluate *)
+let closSem_fix_clock_evaluate = prove
+ (`closSem_fix_clock s (closSem_evaluate (xs,env,s)) =
+  closSem_evaluate (xs,env,s)`,
+  CHEAT_TAC);;
 
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
@@ -1163,4 +1163,5 @@ let semantics_def = cake_define
                  (SND (closSem_evaluate (es,[],st k)))))) UNIV)))`;;
 hol4_overload "semantics" "closSem_semantics";;
 
-cake_hide_consts [];;
+(* and the accessors of those fields are overloaded again *)
+let _ = unhide_overloads ();;

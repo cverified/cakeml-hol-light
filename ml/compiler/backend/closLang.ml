@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  closLang: ported from HOL4's
-    compiler/backend/closLangScript.sml  *)
+    compiler/backend/closLangScript.sml
+    A definition theory, with 4 definitions, 9 datatypes and 1
+    theorem.  Needed by 73 files of the port.  *)
 (* ======================================================== *)
 
 (*

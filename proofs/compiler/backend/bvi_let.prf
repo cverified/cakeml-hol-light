@@ -7,8 +7,8 @@
    MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND))
 
 ### compile_sing
-  (let cp = cake_def "bvi_let_compile" in
-   let cs = cake_def "bvi_let_compile_sing" in
+  (let cp = bvi_let_compile_def in
+   let cs = bvi_let_compile_sing_def in
    let sz = size_thms "bvi_exp" in
    (* HOL4 does this induction with ho_match_mp_tac compile_sing_ind,
       the induction theorem that its termination proof left behind.
@@ -134,7 +134,7 @@
    [sing_base; CONJ_TAC THENL [part1; part2]])
 
 ### compile_length
-  (let cp = cake_def "bvi_let_compile" in
+  (let cp = bvi_let_compile_def in
    let sz = size_thms "bvi_exp" in
    (* HOL4 takes the induction theorem that its termination proof
       left behind (HO_MATCH_MP_TAC compile_ind); the port induces on
@@ -196,9 +196,9 @@
    CONV_TAC NUM_REDUCE_CONV THEN
    TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD])
 
-### compile_exp_eq
+### bvi_let_compile_exp_eq
   (* HOL4 applies compile_sing to compile_exp_def: the compiled
      list of one is a singleton, so the match reduces to its head *)
-  (let ce = cake_def "bvi_let_compile_exp" in
+  (let ce = bvi_let_compile_exp_def in
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_sing] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[])

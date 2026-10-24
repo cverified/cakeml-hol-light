@@ -19,7 +19,10 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide_consts
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
   ["code_buffer","code_buffer";
    "data_buffer","data_buffer";
    "memory","memory"];;
@@ -28,486 +31,445 @@ cake_hide_consts
 (* HOL4 stackPropsScript.sml:11-18: a theorem that HOL4 states as the
    value of an ML expression: case_eq_thms *)
 
-let stackProps_set_store_const = cake_theorem "set_store_const[simp]"
-  (fun () ->
-    `state_ffi
-        (set_store x y z) = state_ffi z /\ state_clock
-        (set_store x y z) = state_clock z /\
-          stackSem_state_use_alloc
-        (set_store x y z) = stackSem_state_use_alloc z /\
-          stackSem_state_use_store
-        (set_store x y z) = stackSem_state_use_store z /\
-          stackSem_state_use_stack
-        (set_store x y z) = stackSem_state_use_stack z /\
-          state_code
-        (set_store x y z) = state_code z /\ be
-        (set_store x y z) = be z /\ state_gc_fun
-        (set_store x y z) = state_gc_fun z /\ state_memory
-        (set_store x y z) = state_memory z /\ state_mdomain
-        (set_store x y z) = state_mdomain z /\ state_sh_mdomain
-        (set_store x y z) = state_sh_mdomain z /\
-          stackSem_state_bitmaps
-        (set_store x y z) = stackSem_state_bitmaps z /\
-          state_data_buffer
-        (set_store x y z) = state_data_buffer z /\
-          state_code_buffer
-        (set_store x y z) = state_code_buffer z /\ compile
-        (set_store x y z) = compile z /\ compile_oracle
-        (set_store x y z) = compile_oracle z /\
-          stackSem_state_stack_space
-        (set_store x y z) = stackSem_state_stack_space z /\ stack
-        (set_store x y z) = stack z`)
-  CHEAT_TAC;;
+(* set_store_const[simp] *)
+let stackProps_set_store_const = prove
+ (`state_ffi
+      (set_store x y z) = state_ffi z /\ state_clock
+      (set_store x y z) = state_clock z /\ stackSem_state_use_alloc
+      (set_store x y z) = stackSem_state_use_alloc z /\
+        stackSem_state_use_store
+      (set_store x y z) = stackSem_state_use_store z /\
+        stackSem_state_use_stack
+      (set_store x y z) = stackSem_state_use_stack z /\ state_code
+      (set_store x y z) = state_code z /\ be
+      (set_store x y z) = be z /\ state_gc_fun
+      (set_store x y z) = state_gc_fun z /\ state_memory
+      (set_store x y z) = state_memory z /\ state_mdomain
+      (set_store x y z) = state_mdomain z /\ state_sh_mdomain
+      (set_store x y z) = state_sh_mdomain z /\
+        stackSem_state_bitmaps
+      (set_store x y z) = stackSem_state_bitmaps z /\
+        state_data_buffer
+      (set_store x y z) = state_data_buffer z /\ state_code_buffer
+      (set_store x y z) = state_code_buffer z /\ compile
+      (set_store x y z) = compile z /\ compile_oracle
+      (set_store x y z) = compile_oracle z /\
+        stackSem_state_stack_space
+      (set_store x y z) = stackSem_state_stack_space z /\ stack
+      (set_store x y z) = stack z`,
+  CHEAT_TAC);;
 
-let stackProps_set_store_with_const =
-  cake_theorem "set_store_with_const[simp]"
-  (fun () ->
-    `set_store x y (state_clock_fupd (K a) z) = state_clock_fupd (K a)
-  (set_store x y z)`)
-  CHEAT_TAC;;
+(* set_store_with_const[simp] *)
+let stackProps_set_store_with_const = prove
+ (`set_store x y (state_clock_fupd (K a) z) = state_clock_fupd (K a)
+  (set_store x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_set_var_const = cake_theorem "set_var_const[simp]"
-  (fun () ->
-    `state_ffi
-        (set_var x y z) = state_ffi z /\ state_clock
-        (set_var x y z) = state_clock z /\ stackSem_state_use_alloc
-        (set_var x y z) = stackSem_state_use_alloc z /\
-          stackSem_state_use_store
-        (set_var x y z) = stackSem_state_use_store z /\
-          stackSem_state_use_stack
-        (set_var x y z) = stackSem_state_use_stack z /\ state_code
-        (set_var x y z) = state_code z /\ be
-        (set_var x y z) = be z /\ fp_regs
-        (set_var x y z) = fp_regs z /\ state_data_buffer
-        (set_var x y z) = state_data_buffer z /\ state_code_buffer
-        (set_var x y z) = state_code_buffer z /\ state_gc_fun
-        (set_var x y z) = state_gc_fun z /\ state_memory
-        (set_var x y z) = state_memory z /\ state_mdomain
-        (set_var x y z) = state_mdomain z /\ state_sh_mdomain
-        (set_var x y z) = state_sh_mdomain z /\
-          stackSem_state_bitmaps
-        (set_var x y z) = stackSem_state_bitmaps z /\ compile
-        (set_var x y z) = compile z /\ compile_oracle
-        (set_var x y z) = compile_oracle z /\ state_store
-        (set_var x y z) = state_store z /\ stack
-        (set_var x y z) = stack z /\ stackSem_state_stack_space
-        (set_var x y z) = stackSem_state_stack_space z`)
-  CHEAT_TAC;;
+(* set_var_const[simp] *)
+let stackProps_set_var_const = prove
+ (`state_ffi
+      (set_var x y z) = state_ffi z /\ state_clock
+      (set_var x y z) = state_clock z /\ stackSem_state_use_alloc
+      (set_var x y z) = stackSem_state_use_alloc z /\
+        stackSem_state_use_store
+      (set_var x y z) = stackSem_state_use_store z /\
+        stackSem_state_use_stack
+      (set_var x y z) = stackSem_state_use_stack z /\ state_code
+      (set_var x y z) = state_code z /\ be
+      (set_var x y z) = be z /\ fp_regs
+      (set_var x y z) = fp_regs z /\ state_data_buffer
+      (set_var x y z) = state_data_buffer z /\ state_code_buffer
+      (set_var x y z) = state_code_buffer z /\ state_gc_fun
+      (set_var x y z) = state_gc_fun z /\ state_memory
+      (set_var x y z) = state_memory z /\ state_mdomain
+      (set_var x y z) = state_mdomain z /\ state_sh_mdomain
+      (set_var x y z) = state_sh_mdomain z /\ stackSem_state_bitmaps
+      (set_var x y z) = stackSem_state_bitmaps z /\ compile
+      (set_var x y z) = compile z /\ compile_oracle
+      (set_var x y z) = compile_oracle z /\ state_store
+      (set_var x y z) = state_store z /\ stack
+      (set_var x y z) = stack z /\ stackSem_state_stack_space
+      (set_var x y z) = stackSem_state_stack_space z`,
+  CHEAT_TAC);;
 
-let stackProps_set_var_with_const =
-  cake_theorem "set_var_with_const[simp]"
-  (fun () ->
-    `set_var x y (state_clock_fupd (K clk) z) = state_clock_fupd (K clk)
+(* set_var_with_const[simp] *)
+let stackProps_set_var_with_const = prove
+ (`set_var x y (state_clock_fupd (K clk) z) = state_clock_fupd (K clk)
   (set_var x y z) /\
-     set_var x y (state_memory_fupd (K m) z) = state_memory_fupd (K
-       m) (set_var x y z) /\
-     set_var x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd (K
-       ffi) (set_var x y z) /\
-     set_var x y (stack_fupd (K stk) z) = stack_fupd (K stk)
-       (set_var x y z) /\
-     set_var x y (stackSem_state_stack_space_fupd (K stk_space)
-       z) = stackSem_state_stack_space_fupd (K stk_space) (set_var x y
-       z)`)
-  CHEAT_TAC;;
+   set_var x y (state_memory_fupd (K m) z) = state_memory_fupd (K m)
+     (set_var x y z) /\
+   set_var x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd (K ffi)
+     (set_var x y z) /\
+   set_var x y (stack_fupd (K stk) z) = stack_fupd (K stk) (set_var x
+     y z) /\
+   set_var x y (stackSem_state_stack_space_fupd (K stk_space) z) =
+     stackSem_state_stack_space_fupd (K stk_space) (set_var x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_set_fp_var_with_const =
-  cake_theorem "set_fp_var_with_const[local,simp]"
-  (fun () ->
-    `set_fp_var x y (state_clock_fupd (K k) z) = state_clock_fupd (K
-  k) (set_fp_var x y z)`)
-  CHEAT_TAC;;
+(* set_fp_var_with_const[local,simp] *)
+let stackProps_set_fp_var_with_const = prove
+ (`set_fp_var x y (state_clock_fupd (K k) z) = state_clock_fupd (K k)
+  (set_fp_var x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_set_fp_var_const =
-  cake_theorem "set_fp_var_const[local,simp]"
-  (fun () ->
-    `state_ffi
-        (set_fp_var x y z) = state_ffi z /\ state_clock
-        (set_fp_var x y z) = state_clock z /\
-          stackSem_state_use_alloc
-        (set_fp_var x y z) = stackSem_state_use_alloc z /\
-          stackSem_state_use_store
-        (set_fp_var x y z) = stackSem_state_use_store z /\
-          stackSem_state_use_stack
-        (set_fp_var x y z) = stackSem_state_use_stack z /\
-          state_code
-        (set_fp_var x y z) = state_code z /\ be
-        (set_fp_var x y z) = be z /\ state_gc_fun
-        (set_fp_var x y z) = state_gc_fun z /\ state_mdomain
-        (set_fp_var x y z) = state_mdomain z /\ state_sh_mdomain
-        (set_fp_var x y z) = state_sh_mdomain z /\
-          stackSem_state_bitmaps
-        (set_fp_var x y z) = stackSem_state_bitmaps z /\ compile
-        (set_fp_var x y z) = compile z /\ compile_oracle
-        (set_fp_var x y z) = compile_oracle z /\ stack
-        (set_fp_var x y z) = stack z /\ stackSem_state_stack_space
-        (set_fp_var x y z) = stackSem_state_stack_space z`)
-  CHEAT_TAC;;
+(* set_fp_var_const[local,simp] *)
+let stackProps_set_fp_var_const = prove
+ (`state_ffi
+      (set_fp_var x y z) = state_ffi z /\ state_clock
+      (set_fp_var x y z) = state_clock z /\ stackSem_state_use_alloc
+      (set_fp_var x y z) = stackSem_state_use_alloc z /\
+        stackSem_state_use_store
+      (set_fp_var x y z) = stackSem_state_use_store z /\
+        stackSem_state_use_stack
+      (set_fp_var x y z) = stackSem_state_use_stack z /\ state_code
+      (set_fp_var x y z) = state_code z /\ be
+      (set_fp_var x y z) = be z /\ state_gc_fun
+      (set_fp_var x y z) = state_gc_fun z /\ state_mdomain
+      (set_fp_var x y z) = state_mdomain z /\ state_sh_mdomain
+      (set_fp_var x y z) = state_sh_mdomain z /\
+        stackSem_state_bitmaps
+      (set_fp_var x y z) = stackSem_state_bitmaps z /\ compile
+      (set_fp_var x y z) = compile z /\ compile_oracle
+      (set_fp_var x y z) = compile_oracle z /\ stack
+      (set_fp_var x y z) = stack z /\ stackSem_state_stack_space
+      (set_fp_var x y z) = stackSem_state_stack_space z`,
+  CHEAT_TAC);;
 
-let stackProps_get_fp_var_with_const =
-  cake_theorem "get_fp_var_with_const[local,simp]"
-  (fun () ->
-    `get_fp_var x (state_clock_fupd (K k) y) = get_fp_var x y`)
-  CHEAT_TAC;;
+(* get_fp_var_with_const[local,simp] *)
+let stackProps_get_fp_var_with_const = prove
+ (`get_fp_var x (state_clock_fupd (K k) y) = get_fp_var x y`,
+  CHEAT_TAC);;
 
-let stackProps_get_var_with_const =
-  cake_theorem "get_var_with_const[simp]"
-  (fun () ->
-    `get_var r (state_clock_fupd (K clk) t) =
-     (get_var r t) /\
-     get_var r (stackSem_state_stack_space_fupd (K stk_space) t) =
-     (get_var r t)`)
-  CHEAT_TAC;;
+(* get_var_with_const[simp] *)
+let stackProps_get_var_with_const = prove
+ (`get_var r (state_clock_fupd (K clk) t) =
+   (get_var r t) /\
+   get_var r (stackSem_state_stack_space_fupd (K stk_space) t) =
+   (get_var r t)`,
+  CHEAT_TAC);;
 
-let stackProps_get_vars_with_const =
-  cake_theorem "get_vars_with_const[local,simp]"
-  (fun () ->
-    `get_vars xs (state_clock_fupd (K k) y) = get_vars xs y`)
-  CHEAT_TAC;;
+(* get_vars_with_const[local,simp] *)
+let stackProps_get_vars_with_const = prove
+ (`get_vars xs (state_clock_fupd (K k) y) = get_vars xs y`,
+  CHEAT_TAC);;
 
-let stackProps_get_var_imm_with_const =
-  cake_theorem "get_var_imm_with_const[simp]"
-  (fun () ->
-    `get_var_imm x (state_clock_fupd (K k) y) = get_var_imm x y`)
-  CHEAT_TAC;;
+(* get_var_imm_with_const[simp] *)
+let stackProps_get_var_imm_with_const = prove
+ (`get_var_imm x (state_clock_fupd (K k) y) = get_var_imm x y`,
+  CHEAT_TAC);;
 
-let stackProps_set_fp_var_const = cake_theorem "set_fp_var_const[simp]"
-  (fun () ->
-    `stackSem_state_stack_space
-       (set_fp_var x y z) = stackSem_state_stack_space z /\ stack
-       (set_fp_var x y z) = stack z`)
-  CHEAT_TAC;;
+(* set_fp_var_const[simp] *)
+let stackProps_set_fp_var_const = prove
+ (`stackSem_state_stack_space
+     (set_fp_var x y z) = stackSem_state_stack_space z /\ stack
+     (set_fp_var x y z) = stack z`,
+  CHEAT_TAC);;
 
-let empty_env_const = cake_theorem "empty_env_const[simp]"
-  (fun () ->
-    `state_ffi
-        (stackSem_empty_env x) = state_ffi x /\ state_clock
-        (stackSem_empty_env x) = state_clock x /\
-          stackSem_state_use_alloc
-        (stackSem_empty_env z) = stackSem_state_use_alloc z /\
-          stackSem_state_use_store
-        (stackSem_empty_env z) = stackSem_state_use_store z /\
-          stackSem_state_use_stack
-        (stackSem_empty_env z) = stackSem_state_use_stack z /\
-          state_code
-        (stackSem_empty_env z) = state_code z /\ be
-        (stackSem_empty_env z) = be z /\ state_gc_fun
-        (stackSem_empty_env z) = state_gc_fun z /\ state_mdomain
-        (stackSem_empty_env z) = state_mdomain z /\
-          state_sh_mdomain
-        (stackSem_empty_env z) = state_sh_mdomain z /\
-          stackSem_state_bitmaps
-        (stackSem_empty_env z) = stackSem_state_bitmaps z /\
-          state_data_buffer
-        (stackSem_empty_env z) = state_data_buffer z /\
-          state_code_buffer
-        (stackSem_empty_env z) = state_code_buffer z /\ compile
-        (stackSem_empty_env z) = compile z /\ compile_oracle
-        (stackSem_empty_env z) = compile_oracle z`)
-  CHEAT_TAC;;
+(* [simp] *)
+let empty_env_const = prove
+ (`state_ffi
+      (stackSem_empty_env x) = state_ffi x /\ state_clock
+      (stackSem_empty_env x) = state_clock x /\
+        stackSem_state_use_alloc
+      (stackSem_empty_env z) = stackSem_state_use_alloc z /\
+        stackSem_state_use_store
+      (stackSem_empty_env z) = stackSem_state_use_store z /\
+        stackSem_state_use_stack
+      (stackSem_empty_env z) = stackSem_state_use_stack z /\
+        state_code
+      (stackSem_empty_env z) = state_code z /\ be
+      (stackSem_empty_env z) = be z /\ state_gc_fun
+      (stackSem_empty_env z) = state_gc_fun z /\ state_mdomain
+      (stackSem_empty_env z) = state_mdomain z /\ state_sh_mdomain
+      (stackSem_empty_env z) = state_sh_mdomain z /\
+        stackSem_state_bitmaps
+      (stackSem_empty_env z) = stackSem_state_bitmaps z /\
+        state_data_buffer
+      (stackSem_empty_env z) = state_data_buffer z /\
+        state_code_buffer
+      (stackSem_empty_env z) = state_code_buffer z /\ compile
+      (stackSem_empty_env z) = compile z /\ compile_oracle
+      (stackSem_empty_env z) = compile_oracle z`,
+  CHEAT_TAC);;
 
-let empty_env_with_const = cake_theorem "empty_env_with_const[simp]"
-  (fun () ->
-    `stackSem_empty_env (state_clock_fupd (K y) x) = state_clock_fupd
-  (K y) (stackSem_empty_env x)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let empty_env_with_const = prove
+ (`stackSem_empty_env (state_clock_fupd (K y) x) = state_clock_fupd (K
+  y) (stackSem_empty_env x)`,
+  CHEAT_TAC);;
 
-let stackProps_alloc_const = cake_theorem "alloc_const"
-  (fun () ->
-    `alloc w s = (r,t) ==> state_ffi t = state_ffi s /\ state_clock
-      t = state_clock s /\ stackSem_state_use_alloc
-      t = stackSem_state_use_alloc s /\ stackSem_state_use_store
-      t = stackSem_state_use_store s /\ stackSem_state_use_stack
-      t = stackSem_state_use_stack s /\ state_code
-      t = state_code s /\ be
-      t = be s /\ state_gc_fun
-      t = state_gc_fun s /\ state_mdomain
-      t = state_mdomain s /\ state_sh_mdomain
-      t = state_sh_mdomain s /\ stackSem_state_bitmaps
-      t = stackSem_state_bitmaps s /\ compile
-      t = compile s /\ state_data_buffer
-      t = state_data_buffer s /\ state_code_buffer
-      t = state_code_buffer s /\ compile_oracle
-      t = compile_oracle s`)
-  CHEAT_TAC;;
+(* alloc_const *)
+let stackProps_alloc_const = prove
+ (`alloc w s = (r,t) ==> state_ffi t = state_ffi s /\ state_clock
+    t = state_clock s /\ stackSem_state_use_alloc
+    t = stackSem_state_use_alloc s /\ stackSem_state_use_store
+    t = stackSem_state_use_store s /\ stackSem_state_use_stack
+    t = stackSem_state_use_stack s /\ state_code
+    t = state_code s /\ be
+    t = be s /\ state_gc_fun
+    t = state_gc_fun s /\ state_mdomain
+    t = state_mdomain s /\ state_sh_mdomain
+    t = state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ compile
+    t = compile s /\ state_data_buffer
+    t = state_data_buffer s /\ state_code_buffer
+    t = state_code_buffer s /\ compile_oracle
+    t = compile_oracle s`,
+  CHEAT_TAC);;
 
-let store_const_sem_const = cake_theorem "store_const_sem_const"
-  (fun () ->
-    `store_const_sem t1 t2 s = (r,t) ==> state_ffi t = state_ffi s /\
+let store_const_sem_const = prove
+ (`store_const_sem t1 t2 s = (r,t) ==> state_ffi t = state_ffi s /\
   state_clock
-      t = state_clock s /\ stackSem_state_use_alloc
-      t = stackSem_state_use_alloc s /\ stackSem_state_use_store
-      t = stackSem_state_use_store s /\ stackSem_state_use_stack
-      t = stackSem_state_use_stack s /\ state_code
-      t = state_code s /\ be
-      t = be s /\ state_gc_fun
-      t = state_gc_fun s /\ state_mdomain
-      t = state_mdomain s /\ state_sh_mdomain
-      t = state_sh_mdomain s /\ stackSem_state_bitmaps
-      t = stackSem_state_bitmaps s /\ compile
-      t = compile s /\ state_store
-      t = state_store s /\ state_data_buffer
-      t = state_data_buffer s /\ state_code_buffer
-      t = state_code_buffer s /\ compile_oracle
-      t = compile_oracle s`)
-  CHEAT_TAC;;
+    t = state_clock s /\ stackSem_state_use_alloc
+    t = stackSem_state_use_alloc s /\ stackSem_state_use_store
+    t = stackSem_state_use_store s /\ stackSem_state_use_stack
+    t = stackSem_state_use_stack s /\ state_code
+    t = state_code s /\ be
+    t = be s /\ state_gc_fun
+    t = state_gc_fun s /\ state_mdomain
+    t = state_mdomain s /\ state_sh_mdomain
+    t = state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ compile
+    t = compile s /\ state_store
+    t = state_store s /\ state_data_buffer
+    t = state_data_buffer s /\ state_code_buffer
+    t = state_code_buffer s /\ compile_oracle
+    t = compile_oracle s`,
+  CHEAT_TAC);;
 
-let stackProps_gc_with_const = cake_theorem "gc_with_const[simp]"
-  (fun () ->
-    `gc (state_clock_fupd (K k) x) = OPTION_MAP (\s. state_clock_fupd
-  (K k) s) (gc x)`)
-  CHEAT_TAC;;
+(* gc_with_const[simp] *)
+let stackProps_gc_with_const = prove
+ (`gc (state_clock_fupd (K k) x) = OPTION_MAP (\s. state_clock_fupd (K
+  k) s) (gc x)`,
+  CHEAT_TAC);;
 
-let stackProps_alloc_with_const = cake_theorem "alloc_with_const[simp]"
-  (fun () ->
-    `alloc x (state_clock_fupd (K z) y) = (I ## (\s. state_clock_fupd
-  (K z) s)) (alloc x y)`)
-  CHEAT_TAC;;
+(* alloc_with_const[simp] *)
+let stackProps_alloc_with_const = prove
+ (`alloc x (state_clock_fupd (K z) y) = (I ## (\s. state_clock_fupd (K
+  z) s)) (alloc x y)`,
+  CHEAT_TAC);;
 
-let store_const_sem_with_const =
-  cake_theorem "store_const_sem_with_const[simp]"
-  (fun () ->
-    `store_const_sem t1 t2 (state_clock_fupd (K z) y) =
-     (I ## (\s. state_clock_fupd (K z) s)) (store_const_sem t1 t2
-       y)`)
-  CHEAT_TAC;;
+(* [simp] *)
+let store_const_sem_with_const = prove
+ (`store_const_sem t1 t2 (state_clock_fupd (K z) y) =
+   (I ## (\s. state_clock_fupd (K z) s)) (store_const_sem t1 t2 y)`,
+  CHEAT_TAC);;
 
-let stackProps_mem_load_with_const =
-  cake_theorem "mem_load_with_const[simp]"
-  (fun () ->
-    `mem_store x y (state_clock_fupd (K k) z) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (mem_store x y z)`)
-  CHEAT_TAC;;
+(* mem_load_with_const[simp] *)
+let stackProps_mem_load_with_const = prove
+ (`mem_store x y (state_clock_fupd (K k) z) = OPTION_MAP (\s.
+  state_clock_fupd (K k) s) (mem_store x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_load_with_const =
-  cake_theorem "sh_mem_load_with_const[simp]"
-  (fun () ->
-    `(sh_mem_load r x (state_clock_fupd (K k) y)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_load r x y)`)
-  CHEAT_TAC;;
+(* sh_mem_load_with_const[simp] *)
+let stackProps_sh_mem_load_with_const = prove
+ (`(sh_mem_load r x (state_clock_fupd (K k) y)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_load r x y)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_store_with_const =
-  cake_theorem "sh_mem_store_with_const[simp]"
-  (fun () ->
-    `(sh_mem_store x y (state_clock_fupd (K k) z)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_store x y z)`)
-  CHEAT_TAC;;
+(* sh_mem_store_with_const[simp] *)
+let stackProps_sh_mem_store_with_const = prove
+ (`(sh_mem_store x y (state_clock_fupd (K k) z)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_store x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_load32_with_const =
-  cake_theorem "sh_mem_load32_with_const[simp]"
-  (fun () ->
-    `(sh_mem_load32 r x (state_clock_fupd (K k) y)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_load32 r x y)`)
-  CHEAT_TAC;;
+(* sh_mem_load32_with_const[simp] *)
+let stackProps_sh_mem_load32_with_const = prove
+ (`(sh_mem_load32 r x (state_clock_fupd (K k) y)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_load32 r x y)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_store32_with_const =
-  cake_theorem "sh_mem_store32_with_const[simp]"
-  (fun () ->
-    `(sh_mem_store32 x y (state_clock_fupd (K k) z)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_store32 x y z)`)
-  CHEAT_TAC;;
+(* sh_mem_store32_with_const[simp] *)
+let stackProps_sh_mem_store32_with_const = prove
+ (`(sh_mem_store32 x y (state_clock_fupd (K k) z)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_store32 x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_load16_with_const =
-  cake_theorem "sh_mem_load16_with_const[simp]"
-  (fun () ->
-    `(sh_mem_load16 r x (state_clock_fupd (K k) y)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_load16 r x y)`)
-  CHEAT_TAC;;
+(* sh_mem_load16_with_const[simp] *)
+let stackProps_sh_mem_load16_with_const = prove
+ (`(sh_mem_load16 r x (state_clock_fupd (K k) y)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_load16 r x y)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_store16_with_const =
-  cake_theorem "sh_mem_store16_with_const[simp]"
-  (fun () ->
-    `(sh_mem_store16 x y (state_clock_fupd (K k) z)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_store16 x y z)`)
-  CHEAT_TAC;;
+(* sh_mem_store16_with_const[simp] *)
+let stackProps_sh_mem_store16_with_const = prove
+ (`(sh_mem_store16 x y (state_clock_fupd (K k) z)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_store16 x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_load_byte_with_const =
-  cake_theorem "sh_mem_load_byte_with_const[simp]"
-  (fun () ->
-    `(sh_mem_load_byte r x (state_clock_fupd (K k) y)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_load_byte r x y)`)
-  CHEAT_TAC;;
+(* sh_mem_load_byte_with_const[simp] *)
+let stackProps_sh_mem_load_byte_with_const = prove
+ (`(sh_mem_load_byte r x (state_clock_fupd (K k) y)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_load_byte r x y)`,
+  CHEAT_TAC);;
 
-let stackProps_sh_mem_store_byte_with_const =
-  cake_theorem "sh_mem_store_byte_with_const[simp]"
-  (fun () ->
-    `(sh_mem_store_byte x y (state_clock_fupd (K k) z)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_store_byte x y z)`)
-  CHEAT_TAC;;
+(* sh_mem_store_byte_with_const[simp] *)
+let stackProps_sh_mem_store_byte_with_const = prove
+ (`(sh_mem_store_byte x y (state_clock_fupd (K k) z)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_store_byte x y z)`,
+  CHEAT_TAC);;
 
-let sh_mem_op_with_const =
-  cake_theorem "sh_mem_op_with_const[local,simp]"
-  (fun () ->
-    `(sh_mem_op op x y (state_clock_fupd (K k) z)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_op op x y z)`)
-  CHEAT_TAC;;
+(* [local,simp] *)
+let sh_mem_op_with_const = prove
+ (`(sh_mem_op op x y (state_clock_fupd (K k) z)) = (I ## (\s.
+  state_clock_fupd (K k) s)) (sh_mem_op op x y z)`,
+  CHEAT_TAC);;
 
-let stackProps_word_exp_with_const =
-  cake_theorem "word_exp_with_const[simp]"
-  (fun () ->
-    `!s y k. word_exp (state_clock_fupd (K k) s) y = word_exp s y`)
-  CHEAT_TAC;;
+(* word_exp_with_const[simp] *)
+let stackProps_word_exp_with_const = prove
+ (`!s y k. word_exp (state_clock_fupd (K k) s) y = word_exp s y`,
+  CHEAT_TAC);;
 
-let stackProps_assign_with_const =
-  cake_theorem "assign_with_const[simp]"
-  (fun () ->
-    `assign x y (state_clock_fupd (K k) s) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (assign x y s)`)
-  CHEAT_TAC;;
+(* assign_with_const[simp] *)
+let stackProps_assign_with_const = prove
+ (`assign x y (state_clock_fupd (K k) s) = OPTION_MAP (\s.
+  state_clock_fupd (K k) s) (assign x y s)`,
+  CHEAT_TAC);;
 
 
-let stackProps_inst_const = cake_theorem "inst_const"
-  (fun () ->
-    `inst i s = SOME t ==> state_ffi
-      t = state_ffi s /\ state_clock
-      t = state_clock s /\ stackSem_state_use_alloc
-      t = stackSem_state_use_alloc s /\ stackSem_state_use_store
-      t = stackSem_state_use_store s /\ stackSem_state_use_stack
-      t = stackSem_state_use_stack s /\ state_code
-      t = state_code s /\ be
-      t = be s /\ state_gc_fun
-      t = state_gc_fun s /\ state_mdomain
-      t = state_mdomain s /\ state_sh_mdomain
-      t = state_sh_mdomain s /\ stackSem_state_bitmaps
-      t = stackSem_state_bitmaps s /\ compile
-      t = compile s /\ compile_oracle
-      t = compile_oracle s`)
-  CHEAT_TAC;;
+(* inst_const *)
+let stackProps_inst_const = prove
+ (`inst i s = SOME t ==> state_ffi
+    t = state_ffi s /\ state_clock
+    t = state_clock s /\ stackSem_state_use_alloc
+    t = stackSem_state_use_alloc s /\ stackSem_state_use_store
+    t = stackSem_state_use_store s /\ stackSem_state_use_stack
+    t = stackSem_state_use_stack s /\ state_code
+    t = state_code s /\ be
+    t = be s /\ state_gc_fun
+    t = state_gc_fun s /\ state_mdomain
+    t = state_mdomain s /\ state_sh_mdomain
+    t = state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ compile
+    t = compile s /\ compile_oracle
+    t = compile_oracle s`,
+  CHEAT_TAC);;
 
-let stackProps_inst_with_const = cake_theorem "inst_with_const[simp]"
-  (fun () ->
-    `inst i (state_clock_fupd (K k) s) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (inst i s)`)
-  CHEAT_TAC;;
+(* inst_with_const[simp] *)
+let stackProps_inst_with_const = prove
+ (`inst i (state_clock_fupd (K k) s) = OPTION_MAP (\s.
+  state_clock_fupd (K k) s) (inst i s)`,
+  CHEAT_TAC);;
 
-let stackProps_dec_clock_const = cake_theorem "dec_clock_const[simp]"
-  (fun () ->
-    `state_ffi
-        (dec_clock s) = state_ffi s /\ stackSem_state_use_alloc
-        (dec_clock z) = stackSem_state_use_alloc z /\
-          stackSem_state_use_store
-        (dec_clock z) = stackSem_state_use_store z /\
-          stackSem_state_use_stack
-        (dec_clock z) = stackSem_state_use_stack z /\ stack
-        (dec_clock z) = stack z /\ state_store
-        (dec_clock z) = state_store z /\ state_code
-        (dec_clock z) = state_code z /\ state_data_buffer
-        (dec_clock z) = state_data_buffer z /\ state_code_buffer
-        (dec_clock z) = state_code_buffer z /\ fp_regs
-        (dec_clock z) = fp_regs z /\ be
-        (dec_clock z) = be z /\ state_gc_fun
-        (dec_clock z) = state_gc_fun z /\ state_memory
-        (dec_clock z) = state_memory z /\ state_mdomain
-        (dec_clock z) = state_mdomain z /\ state_sh_mdomain
-        (dec_clock z) = state_sh_mdomain z /\
-          stackSem_state_bitmaps
-        (dec_clock z) = stackSem_state_bitmaps z /\
-          stackSem_state_stack_space
-        (dec_clock z) = stackSem_state_stack_space z /\ compile
-        (dec_clock z) = compile z /\ compile_oracle
-        (dec_clock z) = compile_oracle z`)
-  CHEAT_TAC;;
+(* dec_clock_const[simp] *)
+let stackProps_dec_clock_const = prove
+ (`state_ffi
+      (dec_clock s) = state_ffi s /\ stackSem_state_use_alloc
+      (dec_clock z) = stackSem_state_use_alloc z /\
+        stackSem_state_use_store
+      (dec_clock z) = stackSem_state_use_store z /\
+        stackSem_state_use_stack
+      (dec_clock z) = stackSem_state_use_stack z /\ stack
+      (dec_clock z) = stack z /\ state_store
+      (dec_clock z) = state_store z /\ state_code
+      (dec_clock z) = state_code z /\ state_data_buffer
+      (dec_clock z) = state_data_buffer z /\ state_code_buffer
+      (dec_clock z) = state_code_buffer z /\ fp_regs
+      (dec_clock z) = fp_regs z /\ be
+      (dec_clock z) = be z /\ state_gc_fun
+      (dec_clock z) = state_gc_fun z /\ state_memory
+      (dec_clock z) = state_memory z /\ state_mdomain
+      (dec_clock z) = state_mdomain z /\ state_sh_mdomain
+      (dec_clock z) = state_sh_mdomain z /\ stackSem_state_bitmaps
+      (dec_clock z) = stackSem_state_bitmaps z /\
+        stackSem_state_stack_space
+      (dec_clock z) = stackSem_state_stack_space z /\ compile
+      (dec_clock z) = compile z /\ compile_oracle
+      (dec_clock z) = compile_oracle z`,
+  CHEAT_TAC);;
 
 
-let sh_mem_op_const = cake_theorem "sh_mem_op_const[simp]"
-  (fun () ->
-    `sh_mem_op op a r s = (res,t) ==> state_clock
-      t = state_clock s /\ stackSem_state_use_alloc
-      t = stackSem_state_use_alloc s /\ stackSem_state_use_store
-      t = stackSem_state_use_store s /\ stackSem_state_use_stack
-      t = stackSem_state_use_stack s /\ state_code
-      t = state_code s /\ be
-      t = be s /\ state_gc_fun
-      t = state_gc_fun s /\ state_mdomain
-      t = state_mdomain s /\ state_sh_mdomain
-      t = state_sh_mdomain s /\ stackSem_state_bitmaps
-      t = stackSem_state_bitmaps s /\ compile
-      t = compile s /\ compile_oracle
-      t = compile_oracle s`)
-  CHEAT_TAC;;
+(* [simp] *)
+let sh_mem_op_const = prove
+ (`sh_mem_op op a r s = (res,t) ==> state_clock
+    t = state_clock s /\ stackSem_state_use_alloc
+    t = stackSem_state_use_alloc s /\ stackSem_state_use_store
+    t = stackSem_state_use_store s /\ stackSem_state_use_stack
+    t = stackSem_state_use_stack s /\ state_code
+    t = state_code s /\ be
+    t = be s /\ state_gc_fun
+    t = state_gc_fun s /\ state_mdomain
+    t = state_mdomain s /\ state_sh_mdomain
+    t = state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ compile
+    t = compile s /\ compile_oracle
+    t = compile_oracle s`,
+  CHEAT_TAC);;
 
-let stackProps_evaluate_consts = cake_theorem "evaluate_consts"
-  (fun () ->
-    `!c s r s1.
-        evaluate (c,s) = (r,s1) ==> stackSem_state_use_alloc
-        s1 = stackSem_state_use_alloc s /\ stackSem_state_use_store
-        s1 = stackSem_state_use_store s /\ stackSem_state_use_stack
-        s1 = stackSem_state_use_stack s /\ be
-        s1 = be s /\ state_gc_fun
-        s1 = state_gc_fun s /\ state_mdomain
-        s1 = state_mdomain s /\ state_sh_mdomain
-        s1 = state_sh_mdomain s /\ compile
-        s1 = compile s`)
-  CHEAT_TAC;;
+(* evaluate_consts *)
+let stackProps_evaluate_consts = prove
+ (`!c s r s1.
+      evaluate (c,s) = (r,s1) ==> stackSem_state_use_alloc
+      s1 = stackSem_state_use_alloc s /\ stackSem_state_use_store
+      s1 = stackSem_state_use_store s /\ stackSem_state_use_stack
+      s1 = stackSem_state_use_stack s /\ be
+      s1 = be s /\ state_gc_fun
+      s1 = state_gc_fun s /\ state_mdomain
+      s1 = state_mdomain s /\ state_sh_mdomain
+      s1 = state_sh_mdomain s /\ compile
+      s1 = compile s`,
+  CHEAT_TAC);;
 
-let evaluate_code_bitmaps = cake_theorem "evaluate_code_bitmaps"
-  (fun () ->
-    `!c s r s1.
-     evaluate (c,s) = (r,s1) ==>
-     (?n. compile_oracle
-      s1 = misc_shift_seq n (compile_oracle s) /\ state_code
-      s1 = FOLDL sptree_union (state_code s) (MAP (fromAList o FST
-        o SND) (GENLIST (compile_oracle s) n)) /\ stackSem_state_bitmaps
-      s1 = stackSem_state_bitmaps s ++ FLAT (MAP (SND o SND)
-        (GENLIST (compile_oracle s) n)))`)
-  CHEAT_TAC;;
+let evaluate_code_bitmaps = prove
+ (`!c s r s1.
+   evaluate (c,s) = (r,s1) ==>
+   (?n. compile_oracle
+    s1 = misc_shift_seq n (compile_oracle s) /\ state_code
+    s1 = FOLDL sptree_union (state_code s) (MAP (fromAList o FST o
+      SND) (GENLIST (compile_oracle s) n)) /\ stackSem_state_bitmaps
+    s1 = stackSem_state_bitmaps s ++ FLAT (MAP (SND o SND) (GENLIST
+      (compile_oracle s) n)))`,
+  CHEAT_TAC);;
 
-let stackProps_evaluate_mono = cake_theorem "evaluate_mono"
-  (fun () ->
-    `!c s r s1.
-     evaluate (c,s) = (r,s1) ==>
-     isPREFIX (stackSem_state_bitmaps s) (stackSem_state_bitmaps
-       s1) /\
-     subspt (state_code s) (state_code s1)`)
-  CHEAT_TAC;;
+(* evaluate_mono *)
+let stackProps_evaluate_mono = prove
+ (`!c s r s1.
+   evaluate (c,s) = (r,s1) ==>
+   isPREFIX (stackSem_state_bitmaps s) (stackSem_state_bitmaps s1) /\
+   subspt (state_code s) (state_code s1)`,
+  CHEAT_TAC);;
 
-let stackProps_evaluate_io_events_mono =
-  cake_theorem "evaluate_io_events_mono"
-  (fun () ->
-    `!exps s1 res s2.
-      evaluate (exps,s1) = (res,s2) ==> ffi_state_io_events
-        (state_ffi
-      s1) <<= ffi_state_io_events (state_ffi s2)`)
-  CHEAT_TAC;;
+(* evaluate_io_events_mono *)
+let stackProps_evaluate_io_events_mono = prove
+ (`!exps s1 res s2.
+    evaluate (exps,s1) = (res,s2) ==> ffi_state_io_events (state_ffi
+    s1) <<= ffi_state_io_events (state_ffi s2)`,
+  CHEAT_TAC);;
 
-let pair_map_eq = cake_theorem "pair_map_eq"
-  (fun () ->
-    `(f ## g) p = (x,y) <=> (?q r. p = (q,r) /\ x = (f q) /\ y = (g
-  r))`)
-  CHEAT_TAC;;
+let pair_map_eq = prove
+ (`(f ## g) p = (x,y) <=> (?q r. p = (q,r) /\ x = (f q) /\ y = (g r))`,
+  CHEAT_TAC);;
 
-let bad_fun_return_IMP = cake_theorem "bad_fun_return_IMP"
-  (fun () ->
-    `bad_fun_return res ==> res = NONE \/ (?n. res = SOME (Break n) \/
-  res = SOME (Continue n))`)
-  CHEAT_TAC;;
+let bad_fun_return_IMP = prove
+ (`bad_fun_return res ==> res = NONE \/ (?n. res = SOME (Break n) \/
+  res = SOME (Continue n))`,
+  CHEAT_TAC);;
 
-let cont_loop_IMP = cake_theorem "cont_loop_IMP"
-  (fun () ->
-    `cont_loop res ==> res = NONE \/ res = SOME (Continue 0)`)
-  CHEAT_TAC;;
+let cont_loop_IMP = prove
+ (`cont_loop res ==> res = NONE \/ res = SOME (Continue 0)`,
+  CHEAT_TAC);;
 
-let stackProps_evaluate_add_clock = cake_theorem "evaluate_add_clock"
-  (fun () ->
-    `!p s r s'.
-      evaluate (p,s) = (r,s') /\ ~(r = SOME TimeOut) ==>
-      evaluate (p,state_clock_fupd (K (state_clock s + extra)) s)
-        = (r,state_clock_fupd (K (state_clock s' + extra)) s')`)
-  CHEAT_TAC;;
+(* evaluate_add_clock *)
+let stackProps_evaluate_add_clock = prove
+ (`!p s r s'.
+    evaluate (p,s) = (r,s') /\ ~(r = SOME TimeOut) ==>
+    evaluate (p,state_clock_fupd (K (state_clock s + extra)) s) =
+      (r,state_clock_fupd (K (state_clock s' + extra)) s')`,
+  CHEAT_TAC);;
 
-let stackProps_with_clock_ffi = cake_theorem "with_clock_ffi"
-  (fun () ->
-    `state_ffi
-        (state_clock_fupd (K k) s) = state_ffi s`)
-  CHEAT_TAC;;
+(* with_clock_ffi *)
+let stackProps_with_clock_ffi = prove
+ (`state_ffi
+      (state_clock_fupd (K k) s) = state_ffi s`,
+  CHEAT_TAC);;
 
-let stackProps_evaluate_add_clock_io_events_mono =
-  cake_theorem "evaluate_add_clock_io_events_mono"
-  (fun () ->
-    `!e s. ffi_state_io_events (state_ffi
-       (SND (evaluate (e,s)))) <<= ffi_state_io_events (state_ffi
-       (SND (evaluate (e,state_clock_fupd (K (state_clock s +
-         extra)) s))))`)
-  CHEAT_TAC;;
+(* evaluate_add_clock_io_events_mono *)
+let stackProps_evaluate_add_clock_io_events_mono = prove
+ (`!e s. ffi_state_io_events (state_ffi
+     (SND (evaluate (e,s)))) <<= ffi_state_io_events (state_ffi
+     (SND (evaluate (e,state_clock_fupd (K (state_clock s + extra))
+       s))))`,
+  CHEAT_TAC);;
 
 let clock_neutral_def = cake_define
   `clock_neutral r =
@@ -520,69 +482,58 @@ let clock_neutral_def = cake_define
         | (If _6 _7 _8 p1 p2) -> clock_neutral p1 /\ clock_neutral p2
         | r -> F`;;
 
-let inst_clock_neutral = cake_theorem "inst_clock_neutral[local]"
-  (fun () ->
-    `(inst i s = SOME t ==> inst i (state_clock_fupd (K k) s) = SOME
+(* [local] *)
+let inst_clock_neutral = prove
+ (`(inst i s = SOME t ==> inst i (state_clock_fupd (K k) s) = SOME
   (state_clock_fupd (K k) t)) /\
-       (inst i s = NONE ==> inst i (state_clock_fupd (K k) s) =
-         NONE)`)
-  CHEAT_TAC;;
+     (inst i s = NONE ==> inst i (state_clock_fupd (K k) s) = NONE)`,
+  CHEAT_TAC);;
 
-let inst_clock_neutral_ffi =
-  cake_theorem "inst_clock_neutral_ffi[local]"
-  (fun () ->
-    `(inst i s = SOME t ==> inst i (state_ffi_fupd (K k) s) = SOME
+(* [local] *)
+let inst_clock_neutral_ffi = prove
+ (`(inst i s = SOME t ==> inst i (state_ffi_fupd (K k) s) = SOME
   (state_ffi_fupd (K k) t)) /\
-       (inst i s = NONE ==> inst i (state_ffi_fupd (K k) s) =
-         NONE)`)
-  CHEAT_TAC;;
+     (inst i s = NONE ==> inst i (state_ffi_fupd (K k) s) = NONE)`,
+  CHEAT_TAC);;
 
-let evaluate_clock_neutral = cake_theorem "evaluate_clock_neutral"
-  (fun () ->
-    `!prog s res t.
-        evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
-        evaluate (prog,state_clock_fupd (K c) s) =
-          (res,state_clock_fupd (K c) t)`)
-  CHEAT_TAC;;
+let evaluate_clock_neutral = prove
+ (`!prog s res t.
+      evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
+      evaluate (prog,state_clock_fupd (K c) s) =
+        (res,state_clock_fupd (K c) t)`,
+  CHEAT_TAC);;
 
-let evaluate_ffi_neutral = cake_theorem "evaluate_ffi_neutral"
-  (fun () ->
-    `!prog s res t.
-        evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
-        evaluate (prog,state_ffi_fupd (K c) s) =
-          (res,state_ffi_fupd (K c) t)`)
-  CHEAT_TAC;;
+let evaluate_ffi_neutral = prove
+ (`!prog s res t.
+      evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
+      evaluate (prog,state_ffi_fupd (K c) s) = (res,state_ffi_fupd
+        (K c) t)`,
+  CHEAT_TAC);;
 
-let semantics_Terminate_IMP_PREFIX =
-  cake_theorem "semantics_Terminate_IMP_PREFIX"
-  (fun () ->
-    `semantics start s1 = ffi_Terminate x l ==> isPREFIX
-  (ffi_state_io_events (state_ffi s1)) l`)
-  CHEAT_TAC;;
+let semantics_Terminate_IMP_PREFIX = prove
+ (`semantics (start:num) s1 = ffi_Terminate x l ==> isPREFIX
+  (ffi_state_io_events (state_ffi s1)) l`,
+  CHEAT_TAC);;
 
-let semantics_Diverge_IMP_LPREFIX =
-  cake_theorem "semantics_Diverge_IMP_LPREFIX"
-  (fun () ->
-    `semantics start s1 = ffi_Diverge l ==> LPREFIX (fromList
-  (ffi_state_io_events (state_ffi s1))) l`)
-  CHEAT_TAC;;
+let semantics_Diverge_IMP_LPREFIX = prove
+ (`semantics (start:num) s1 = ffi_Diverge l ==> LPREFIX (fromList
+  (ffi_state_io_events (state_ffi s1))) l`,
+  CHEAT_TAC);;
 
-let map_bitmap_length = cake_theorem "map_bitmap_length"
-  (fun () ->
-    `!a b c x y z.
-     map_bitmap a b c = SOME (x,y,z) ==>
-     LENGTH c = LENGTH x + LENGTH z /\
-     LENGTH x = LENGTH a`)
-  CHEAT_TAC;;
+let map_bitmap_length = prove
+ (`!a b c x y z.
+   map_bitmap a b c = SOME (x,y,z) ==>
+   LENGTH c = LENGTH x + LENGTH z /\
+   LENGTH x = LENGTH a`,
+  CHEAT_TAC);;
 
-let dec_stack_length = cake_theorem "dec_stack_length"
-  (fun () ->
-    `!bs enc orig_stack new_stack.
-     dec_stack bs enc orig_stack = SOME new_stack ==>
-     LENGTH orig_stack = LENGTH new_stack`)
-  CHEAT_TAC;;
+let dec_stack_length = prove
+ (`!bs enc orig_stack new_stack.
+   dec_stack bs enc orig_stack = SOME new_stack ==>
+   LENGTH orig_stack = LENGTH new_stack`,
+  CHEAT_TAC);;
 
-let extract_labels_def = cake_define
+let stackProps_extract_labels_def = cake_define
   `stackProps_extract_labels x1 =
         match x1 with
           stackLang_Call ret dest h ->
@@ -601,11 +552,10 @@ let extract_labels_def = cake_define
         | _10 -> []`;;
 hol4_overload "extract_labels" "stackProps_extract_labels";;
 
-let find_code_IMP_get_labels = cake_theorem "find_code_IMP_get_labels"
-  (fun () ->
-    `find_code d r code = SOME e ==>
-      stackSem_get_labels e SUBSET loc_check code`)
-  CHEAT_TAC;;
+let find_code_IMP_get_labels = prove
+ (`find_code d r code = SOME e ==>
+    stackSem_get_labels e SUBSET loc_check code`,
+  CHEAT_TAC);;
 
 let addr_ok_def = cake_define
   `addr_ok op (Addr a w) c <=>
@@ -997,7 +947,7 @@ let stack_get_handler_labels_def = cake_define
         | (Loop p) -> stack_get_handler_labels n p
         | _82 -> {}`;;
 
-let get_code_labels_def = cake_define
+let stackProps_get_code_labels_def = cake_define
   `stackProps_get_code_labels x1 =
         match x1 with
           stackLang_Call r d h ->
@@ -1038,7 +988,7 @@ let stack_good_handler_labels_def = cake_define
      pp) p)) UNION
    IMAGE (\n. n,1) (set_of_list (MAP FST p))`;;
 
-let no_install_def = cake_define
+let stackProps_no_install_def = cake_define
   `stackProps_no_install x1 =
         match x1 with
           stackLang_Call r d h ->
@@ -1070,4 +1020,5 @@ let no_shmemop_def = cake_define
         | (stackLang_ShMemOp _123 _124 _125) -> F
         | _126 -> T`;;
 
-cake_hide_consts [];;
+(* and the accessors of those fields are overloaded again *)
+let _ = unhide_overloads ();;

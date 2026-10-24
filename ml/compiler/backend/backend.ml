@@ -41,7 +41,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/primTypes.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["bvl_to_bvi"];;
+let _ = do_list hide_constant ["bvl_to_bvi"];;
 
 let backend_config_FIELDS = define_record "backend_config"
   ["source_conf","source_to_flat_config";
@@ -69,7 +69,7 @@ let attach_bitmaps_def = cake_define_list
               c))`;
    `attach_bitmaps names c bm NONE = NONE`];;
 
-let compile_def = cake_define
+let backend_compile_def = cake_define
   `backend_compile asm_conf c p =
      (let p = source_to_source_compile p in
      let _1 = empty_ffi (implode "finished: source_to_source") in
@@ -188,16 +188,15 @@ let to_word_def = cake_define
      word_to_word_config_col_oracle_fupd (K col) c) c in
    (c,p,names))`;;
 
-let to_word_thm = cake_theorem "to_word_thm"
-  (fun () ->
-    `to_word asm_conf c p =
-     (let (c,p,names) = to_word_0 asm_conf c p in
-     let (col,p) = compile (backend_config_word_to_word_conf c)
-       asm_conf p in
-     let c = backend_config_word_to_word_conf_fupd (\c.
-       word_to_word_config_col_oracle_fupd (K col) c) c in
-     (c,p,names))`)
-  CHEAT_TAC;;
+let to_word_thm = prove
+ (`to_word asm_conf c p =
+   (let (c,p,names) = to_word_0 asm_conf c p in
+   let (col,p) = compile (backend_config_word_to_word_conf c)
+     asm_conf p in
+   let c = backend_config_word_to_word_conf_fupd (\c.
+     word_to_word_config_col_oracle_fupd (K col) c) c in
+   (c,p,names))`,
+  CHEAT_TAC);;
 
 let to_stack_def = cake_define
   `to_stack asm_conf c p =
@@ -225,10 +224,9 @@ let to_target_def = cake_define
        lab_to_target_compile
          asm_conf (backend_config_lab_conf c) p))`;;
 
-let compile_eq_to_target = cake_theorem "compile_eq_to_target"
-  (fun () ->
-    `compile = to_target`)
-  CHEAT_TAC;;
+let compile_eq_to_target = prove
+ (`compile = to_target`,
+  CHEAT_TAC);;
 
 let prim_src_config_def = cake_define
   `prim_src_config =
@@ -288,12 +286,11 @@ let from_data_def = cake_define
      word_to_word_config_col_oracle_fupd (K col) c) c in
    from_word asm_conf c names p)`;;
 
-let from_data_thm = cake_theorem "from_data_thm"
-  (fun () ->
-    `from_data asm_conf c names p =
-     (let p = compile_0 (backend_config_data_conf c) asm_conf p in
-     from_word_0 asm_conf c names p)`)
-  CHEAT_TAC;;
+let from_data_thm = prove
+ (`from_data asm_conf c names p =
+   (let p = compile_0 (backend_config_data_conf c) asm_conf p in
+   from_word_0 asm_conf c names p)`,
+  CHEAT_TAC);;
 
 let from_bvi_def = cake_define
   `from_bvi asm_conf c names p =
@@ -339,10 +336,9 @@ let from_source_def = cake_define
    let c = backend_config_source_conf_fupd (K c') c in
    from_flat asm_conf c p)`;;
 
-let compile_eq_from_source = cake_theorem "compile_eq_from_source"
-  (fun () ->
-    `compile = from_source`)
-  CHEAT_TAC;;
+let compile_eq_from_source = prove
+ (`compile = from_source`,
+  CHEAT_TAC);;
 
 let to_livesets_0_def = cake_define
   `to_livesets_0 asm_conf ((c:backend_config),p,(names:mlstring spt)) =
@@ -374,17 +370,16 @@ let to_livesets_def = cake_define
   `to_livesets asm_conf c p =
      to_livesets_0 asm_conf (to_word_0 asm_conf c p)`;;
 
-let to_data_conf_inv = cake_theorem "to_data_conf_inv"
-  (fun () ->
-    `to_data c p = (c',p',names) ==> backend_config_data_conf
-     c' = backend_config_data_conf c /\ backend_config_word_conf
-     c' = backend_config_word_conf c /\
-       backend_config_word_to_word_conf
-     c' = backend_config_word_to_word_conf c /\
-       backend_config_stack_conf
-     c' = backend_config_stack_conf c /\ backend_config_lab_conf
-     c' = backend_config_lab_conf c`)
-  CHEAT_TAC;;
+let to_data_conf_inv = prove
+ (`to_data c p = (c',p',names) ==> backend_config_data_conf
+   c' = backend_config_data_conf c /\ backend_config_word_conf
+   c' = backend_config_word_conf c /\
+     backend_config_word_to_word_conf
+   c' = backend_config_word_to_word_conf c /\
+     backend_config_stack_conf
+   c' = backend_config_stack_conf c /\ backend_config_lab_conf
+   c' = backend_config_lab_conf c`,
+  CHEAT_TAC);;
 
 let from_livesets_def = cake_define
   `from_livesets asm_conf ((k,data),c,names,p) =
@@ -414,56 +409,50 @@ let from_livesets_def = cake_define
      word_to_word_config_col_oracle_fupd (K col) c) c in
    from_word asm_conf c names p)`;;
 
-let ZIP_MAP_MAP = cake_theorem "ZIP_MAP_MAP[local]"
-  (fun () ->
-    `!xs. ZIP (MAP f xs) (MAP g xs) = MAP (\x. (f x,g x)) xs`)
-  CHEAT_TAC;;
+(* [local] *)
+let ZIP_MAP_MAP = prove
+ (`!xs. ZIP (MAP f xs) (MAP g xs) = MAP (\x. (f x,g x)) xs`,
+  CHEAT_TAC);;
 
-let EL_ZIP_MAP = cake_theorem "EL_ZIP_MAP[local]"
-  (fun () ->
-    `!p q x.
-       x < LENGTH q /\ x < LENGTH p ==>
-       (EL x (ZIP q (MAP f p))) = (\(y,x). (x,f y)) (EL x (ZIP p
-         q))`)
-  CHEAT_TAC;;
+(* [local] *)
+let EL_ZIP_MAP = prove
+ (`!p q x.
+     x < LENGTH q /\ x < LENGTH p ==>
+     (EL x (ZIP q (MAP f p))) = (\(y,x). (x,f y)) (EL x (ZIP p q))`,
+  CHEAT_TAC);;
 
-let from_word_0_to_livesets_0 = cake_theorem "from_word_0_to_livesets_0"
-  (fun () ->
-    `from_word_0 asm_conf c names p =
-     from_livesets asm_conf (to_livesets_0 asm_conf (c,p,names))`)
-  CHEAT_TAC;;
+let from_word_0_to_livesets_0 = prove
+ (`from_word_0 asm_conf c names p =
+   from_livesets asm_conf (to_livesets_0 asm_conf (c,p,names))`,
+  CHEAT_TAC);;
 
-let compile_oracle = cake_theorem "compile_oracle"
-  (fun () ->
-    `from_livesets asm_conf (to_livesets asm_conf c p) = compile
-  asm_conf c p`)
-  CHEAT_TAC;;
+let compile_oracle = prove
+ (`from_livesets asm_conf (to_livesets asm_conf c p) = compile
+  asm_conf c p`,
+  CHEAT_TAC);;
 
-let compile_oracle_word_0 = cake_theorem "compile_oracle_word_0"
-  (fun () ->
-    `compile asm_conf c p =
-     (let (c,p,names) = to_word_0 asm_conf c p in
-     from_word_0 asm_conf c names p)`)
-  CHEAT_TAC;;
+let compile_oracle_word_0 = prove
+ (`compile asm_conf c p =
+   (let (c,p,names) = to_word_0 asm_conf c p in
+   from_word_0 asm_conf c names p)`,
+  CHEAT_TAC);;
 
 (* HOL4 backendScript.sml:469-494: code that the source has in a
    comment *)
 
-let to_data_change_config = cake_theorem "to_data_change_config"
-  (fun () ->
-    `to_data c1 prog = (c1',prog') ==>
-     backend_config_source_conf
-     c2 = backend_config_source_conf c1 /\ backend_config_clos_conf
-     c2 = backend_config_clos_conf c1 /\ backend_config_bvl_conf
-     c2 = backend_config_bvl_conf c1 ==>
-     to_data c2 prog =
-       (backend_config_bvl_conf_fupd (K (backend_config_bvl_conf
-         c1')) (backend_config_clos_conf_fupd (K
-         (backend_config_clos_conf c1'))
-         (backend_config_source_conf_fupd (K (backend_config_source_conf
-         c1')) c2)),
-        prog')`)
-  CHEAT_TAC;;
+let to_data_change_config = prove
+ (`to_data c1 prog = (c1',prog') ==>
+   backend_config_source_conf
+   c2 = backend_config_source_conf c1 /\ backend_config_clos_conf
+   c2 = backend_config_clos_conf c1 /\ backend_config_bvl_conf
+   c2 = backend_config_bvl_conf c1 ==>
+   to_data c2 prog =
+     (backend_config_bvl_conf_fupd (K (backend_config_bvl_conf c1'))
+       (backend_config_clos_conf_fupd (K (backend_config_clos_conf c1'))
+       (backend_config_source_conf_fupd (K (backend_config_source_conf
+       c1')) c2)),
+      prog')`,
+  CHEAT_TAC);;
 
 let ensure_fp_conf_ok_def = cake_define
   `ensure_fp_conf_ok asm_c c = data_to_word_config_has_fp_tern_fupd (K
@@ -593,72 +582,69 @@ let compile_inc_progs_for_eval_def = cake_define
        (backend_progs_target_prog
          ps))`;;
 
-let to_word_0_invariant = cake_theorem "to_word_0_invariant"
-  (fun () ->
-    `(word_to_word_config_reg_alg wc = word_to_word_config_reg_alg
+let to_word_0_invariant = prove
+ (`(word_to_word_config_reg_alg wc = word_to_word_config_reg_alg
   (backend_config_word_to_word_conf c)) ==>
-     ((to_word_0 asm_conf (backend_config_word_to_word_conf_fupd (K
-       wc) c) p) =
-     (let (c,p,names) = to_word_0 asm_conf c p in
-       (backend_config_word_to_word_conf_fupd (K wc) c,p,names)))`)
-  CHEAT_TAC;;
+   ((to_word_0 asm_conf (backend_config_word_to_word_conf_fupd (K wc)
+     c) p) =
+   (let (c,p,names) = to_word_0 asm_conf c p in
+     (backend_config_word_to_word_conf_fupd (K wc) c,p,names)))`,
+  CHEAT_TAC);;
 
-let compile_inc_progs_for_eval_eq =
-  cake_theorem "compile_inc_progs_for_eval_eq"
-  (fun () ->
-    `compile_inc_progs_for_eval asm_conf (env_id,c,p) =
-       (let p = source_to_source_compile p in
-       let (c',p) = inc_compile env_id (backend_config_source_conf
-         c) p in
-       let _18 = empty_ffi (implode "finished: source_to_flat") in
-       let c = backend_config_source_conf_fupd (K c') c in
-       let p = inc_compile_decs p in
-       let _19 = empty_ffi (implode "finished: flat_to_clos") in
-       let (c',p) = clos_to_bvl_compile_inc
-         (backend_config_clos_conf c) p in
-       let _20 = empty_ffi (implode "finished: clos_to_bvl") in
-       let c = backend_config_clos_conf_fupd (K c') c in
-       let (c',p) = bvl_to_bvi_compile_inc_all
-         (backend_config_bvl_conf c) p in
-       let _21 = empty_ffi (implode "finished: bvl_to_bvi") in
-       let c = backend_config_bvl_conf_fupd (K c') c in
-       let p = bvi_to_data_compile_prog p in
-       let _22 = empty_ffi (implode "finished: bvi_to_data") in
-       let dc = ensure_fp_conf_ok asm_conf
-         (backend_config_data_conf c) in
-       let p = MAP (compile_part dc) p in
-       let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
-         (asm_config_avoid_regs asm_conf)) in
-       let p = MAP (\p. full_compile_single_for_eval
-         (asm_config_two_reg_arith asm_conf) reg_count1
-         (word_to_word_config_reg_alg (backend_config_word_to_word_conf
-           c)) asm_conf (p,NONE)) p in
-       let _23 = empty_ffi (implode "finished: data_to_word") in
-       let bm0 = word_to_stack_config_bitmaps_length
-         (backend_config_word_conf c) in
-       let (p,fs,bm) = compile_word_to_stack asm_conf
-         (stack_to_lab_config_perf_calls (backend_config_stack_conf c))
-         reg_count1 p (misc_Nil,bm0) in
-       let _24 = empty_ffi (implode "finished: word_to_stack") in
-       let cur_bm = append (FST bm) in
-       let c = backend_config_word_conf_fupd (K
-         (word_to_stack_config_bitmaps_length_fupd (K (SND bm))
-         (backend_config_word_conf c))) c in
-       let reg_count2 = asm_config_reg_count asm_conf - (3 + LENGTH
-         (asm_config_avoid_regs asm_conf)) in
-       let p = compile_no_stubs (stack_to_lab_config_reg_names
-         (backend_config_stack_conf
-           c)) (stack_to_lab_config_jump (backend_config_stack_conf
-             c)) (asm_config_addr_offset asm_conf)
-           reg_count2 p in
-       let _25 = empty_ffi (implode "finished: stack_to_lab") in
-       let target = lab_to_target_compile asm_conf
-         (backend_config_lab_conf c) (p:('a sec) list) in
-       let _26 = empty_ffi (implode "finished: lab_to_target") in
-       let c = backend_config_lab_conf_fupd (match target with NONE
-         -> I | SOME (_27,c') -> K c') c in
-         OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target)`)
-  CHEAT_TAC;;
+let compile_inc_progs_for_eval_eq = prove
+ (`compile_inc_progs_for_eval asm_conf (env_id,c,p) =
+     (let p = source_to_source_compile p in
+     let (c',p) = inc_compile env_id (backend_config_source_conf c) p
+       in
+     let _18 = empty_ffi (implode "finished: source_to_flat") in
+     let c = backend_config_source_conf_fupd (K c') c in
+     let p = inc_compile_decs p in
+     let _19 = empty_ffi (implode "finished: flat_to_clos") in
+     let (c',p) = clos_to_bvl_compile_inc (backend_config_clos_conf
+       c) p in
+     let _20 = empty_ffi (implode "finished: clos_to_bvl") in
+     let c = backend_config_clos_conf_fupd (K c') c in
+     let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf
+       c) p in
+     let _21 = empty_ffi (implode "finished: bvl_to_bvi") in
+     let c = backend_config_bvl_conf_fupd (K c') c in
+     let p = bvi_to_data_compile_prog p in
+     let _22 = empty_ffi (implode "finished: bvi_to_data") in
+     let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c)
+       in
+     let p = MAP (compile_part dc) p in
+     let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
+       (asm_config_avoid_regs asm_conf)) in
+     let p = MAP (\p. full_compile_single_for_eval
+       (asm_config_two_reg_arith asm_conf) reg_count1
+       (word_to_word_config_reg_alg (backend_config_word_to_word_conf
+         c)) asm_conf (p,NONE)) p in
+     let _23 = empty_ffi (implode "finished: data_to_word") in
+     let bm0 = word_to_stack_config_bitmaps_length
+       (backend_config_word_conf c) in
+     let (p,fs,bm) = compile_word_to_stack asm_conf
+       (stack_to_lab_config_perf_calls (backend_config_stack_conf c))
+       reg_count1 p (misc_Nil,bm0) in
+     let _24 = empty_ffi (implode "finished: word_to_stack") in
+     let cur_bm = append (FST bm) in
+     let c = backend_config_word_conf_fupd (K
+       (word_to_stack_config_bitmaps_length_fupd (K (SND bm))
+       (backend_config_word_conf c))) c in
+     let reg_count2 = asm_config_reg_count asm_conf - (3 + LENGTH
+       (asm_config_avoid_regs asm_conf)) in
+     let p = compile_no_stubs (stack_to_lab_config_reg_names
+       (backend_config_stack_conf
+         c)) (stack_to_lab_config_jump (backend_config_stack_conf c))
+           (asm_config_addr_offset asm_conf)
+         reg_count2 p in
+     let _25 = empty_ffi (implode "finished: stack_to_lab") in
+     let target = lab_to_target_compile asm_conf
+       (backend_config_lab_conf c) (p:('a sec) list) in
+     let _26 = empty_ffi (implode "finished: lab_to_target") in
+     let c = backend_config_lab_conf_fupd (match target with NONE ->
+       I | SOME (_27,c') -> K c') c in
+       OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target)`,
+  CHEAT_TAC);;
 
 let ffinames_to_string_list_def = cake_define_list
   [`ffinames_to_string_list [] = []`;
@@ -673,4 +659,6 @@ let set_oracle_def = cake_define
   (backend_config_word_to_word_conf c)))
      c`;;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["bvl_to_bvi"];;

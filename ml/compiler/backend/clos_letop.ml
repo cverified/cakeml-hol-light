@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_letop: ported from HOL4's
-    compiler/backend/clos_letopScript.sml  *)
+    compiler/backend/clos_letopScript.sml
+    A definition theory, with 5 definitions and 2 theorems.  Needed
+    by clos_known.ml and clos_letopProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -15,7 +17,7 @@ needs "semantics/ast.ml";;
 
 (* let_op -- a function that optimises Let [...] (Op op [Var ...]) *)
 
-let var_list_def = cake_define
+let clos_letop_var_list_def = cake_define
   `clos_letop_var_list n x2 x3 =
         match (x2,x3) with
           ([],[]) -> T
@@ -24,7 +26,7 @@ let var_list_def = cake_define
         | (_1,_2) -> F`;;
 hol4_overload "var_list" "clos_letop_var_list";;
 
-let dest_op_def = cake_define
+let clos_letop_dest_op_def = cake_define
   `clos_letop_dest_op x1 args =
         match x1 with
           (closLang_Op t op xs:closLang_exp) -> (if
@@ -34,7 +36,7 @@ hol4_overload "dest_op" "clos_letop_dest_op";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let let_op_def = cake_define_list_cheat CHEAT_TAC
+let clos_letop_let_op_def = cake_define_list_cheat CHEAT_TAC
   [`clos_letop_let_op [] = []`;
    `clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
          HD (clos_letop_let_op [x]) :: clos_letop_let_op (y ::
@@ -75,15 +77,14 @@ hol4_overload "let_op" "clos_letop_let_op";;
 
 (* HOL4 clos_letopScript.sml:57: ML code, not ported *)
 
-let LENGTH_let_op = cake_theorem "LENGTH_let_op"
-  (fun () ->
-    `!xs. LENGTH (clos_letop_let_op xs) = LENGTH xs`)
-  CHEAT_TAC;;
+let LENGTH_let_op = prove
+ (`!xs. LENGTH (clos_letop_let_op xs) = LENGTH xs`,
+  CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let let_op_sing_def = cake_define_list_try (fun () ->
+let clos_letop_let_op_sing_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL x -> closLang_exp_size x | INR (INL x)
      -> list_size closLang_exp_size x | INR (INR x) -> list_size
      (pair_size (\x. x) closLang_exp_size) x)`)
@@ -129,16 +130,15 @@ let let_op_sing_def = cake_define_list_try (fun () ->
 hol4_overload "let_op_list" "clos_letop_let_op_list";;
 hol4_overload "let_op_sing" "clos_letop_let_op_sing";;
 
-let let_op_sing_eq = cake_theorem "let_op_sing_eq"
-  (fun () ->
-    `(!e. clos_letop_let_op [e] = [clos_letop_let_op_sing e]) /\
-     (!es. clos_letop_let_op es = clos_letop_let_op_list es) /\
-     (!fns.
-       let_op_let fns =
-       MAP (\(num_args,x). (num_args,HD (clos_letop_let_op [x])))
-         fns)`)
-  CHEAT_TAC;;
+let let_op_sing_eq = prove
+ (`(!e. clos_letop_let_op [e] = [clos_letop_let_op_sing e]) /\
+   (!es. clos_letop_let_op es = clos_letop_let_op_list es) /\
+   (!fns.
+     let_op_let fns =
+     MAP (\(num_args,x). (num_args,HD (clos_letop_let_op [x])))
+       fns)`,
+  CHEAT_TAC);;
 
-let compile_inc_def = cake_define
+let clos_letop_compile_inc_def = cake_define
   `clos_letop_compile_inc (e,xs) = (clos_letop_let_op e,[])`;;
 hol4_overload "compile_inc" "clos_letop_compile_inc";;

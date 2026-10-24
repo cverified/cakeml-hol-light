@@ -17,7 +17,7 @@ needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["vars"];;
+let _ = do_list hide_constant ["vars"];;
 
 hol4_overload "get_vars" "dataSem_get_vars";;
 hol4_overload "cut_env" "dataSem_cut_env";;
@@ -26,52 +26,47 @@ hol4_overload "lookup" "sptree_lookup";;
 hol4_overload "insert" "sptree_insert";;
 hol4_overload "wf" "sptree_wf";;
 
-let IMP_sptree_eq = cake_theorem "IMP_sptree_eq[local]"
-  (fun () ->
-    `sptree_wf x /\ sptree_wf y /\ (!a. lookup a x = lookup a y) ==>
-  (x = y)`)
-  CHEAT_TAC;;
+(* [local] *)
+let IMP_sptree_eq = prove
+ (`sptree_wf x /\ sptree_wf y /\ (!a. lookup a x = lookup a y) ==> (x
+  = y)`,
+  CHEAT_TAC);;
 
-let mk_wf_inter = cake_theorem "mk_wf_inter[local]"
-  (fun () ->
-    `!t1 t2. inter t1 t2 = mk_wf (inter t1 t2)`)
-  CHEAT_TAC;;
+(* [local] *)
+let mk_wf_inter = prove
+ (`!t1 t2. inter t1 t2 = mk_wf (inter t1 t2)`,
+  CHEAT_TAC);;
 
-let get_vars_IMP_LENGTH = cake_theorem "get_vars_IMP_LENGTH"
-  (fun () ->
-    `!xs s l. dataSem_get_vars xs s = SOME l ==> (LENGTH l = LENGTH
-  xs)`)
-  CHEAT_TAC;;
+let get_vars_IMP_LENGTH = prove
+ (`!xs s l. dataSem_get_vars xs s = SOME l ==> (LENGTH l = LENGTH xs)`,
+  CHEAT_TAC);;
 
-let do_stack_with_space = cake_theorem "do_stack_with_space"
-  (fun () ->
-    `!op vs s z. do_stack op vs (dataSem_state_space_fupd (K z) s) =
-  dataSem_state_space_fupd (K z) (do_stack op vs s)`)
-  CHEAT_TAC;;
+let do_stack_with_space = prove
+ (`!op vs s z. do_stack op vs (dataSem_state_space_fupd (K z) s) =
+  dataSem_state_space_fupd (K z) (do_stack op vs s)`,
+  CHEAT_TAC);;
 
-let do_stack_with_locals = cake_theorem "do_stack_with_locals"
-  (fun () ->
-    `!op vs s l. do_stack op vs (dataSem_state_locals_fupd (K l) s) =
-  dataSem_state_locals_fupd (K l) (do_stack op vs s)`)
-  CHEAT_TAC;;
+let do_stack_with_locals = prove
+ (`!op vs s l. do_stack op vs (dataSem_state_locals_fupd (K l) s) =
+  dataSem_state_locals_fupd (K l) (do_stack op vs s)`,
+  CHEAT_TAC);;
 
-let data_spaceProof_evaluate_compile =
-  cake_theorem "evaluate_compile[local]"
-  (fun () ->
-    `!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error))) /\
+(* evaluate_compile[local] *)
+let data_spaceProof_evaluate_compile = prove
+ (`!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error))) /\
   (evaluate (c,s) = (res,s2)) /\
-        locals_ok (dataSem_state_locals s) l ==>
-        (?w safe peak smx.
-         (evaluate (compile c,dataSem_state_locals_fupd (K l) s) =
-            (res,(if res = NONE then dataSem_state_stack_max_fupd
-              (K smx) (dataSem_state_peak_heap_length_fupd (K peak)
-              (dataSem_state_safe_for_space_fupd (K safe)
-              (dataSem_state_locals_fupd (K w) s2))) else
-              dataSem_state_stack_max_fupd (K smx)
-              (dataSem_state_peak_heap_length_fupd (K peak)
-              (dataSem_state_safe_for_space_fupd (K safe) s2))))) /\
-            locals_ok (dataSem_state_locals s2) w)`)
-  CHEAT_TAC;;
+      locals_ok (dataSem_state_locals s) l ==>
+      (?w safe peak smx.
+       (evaluate (compile c,dataSem_state_locals_fupd (K l) s) =
+          (res,(if res = NONE then dataSem_state_stack_max_fupd (K
+            smx) (dataSem_state_peak_heap_length_fupd (K peak)
+            (dataSem_state_safe_for_space_fupd (K safe)
+            (dataSem_state_locals_fupd (K w) s2))) else
+            dataSem_state_stack_max_fupd (K smx)
+            (dataSem_state_peak_heap_length_fupd (K peak)
+            (dataSem_state_safe_for_space_fupd (K safe) s2))))) /\
+          locals_ok (dataSem_state_locals s2) w)`,
+  CHEAT_TAC);;
 
 (* HOL4 data_spaceProofScript.sml:81-85: a proof *)
 
@@ -98,32 +93,32 @@ let data_spaceProof_evaluate_compile =
 (* HOL4 data_spaceProofScript.sml:548: a proof *)
 
 
-let data_spaceProof_compile_correct = cake_theorem "compile_correct"
-  (fun () ->
-    `!c s. ~(FST (evaluate (c,s)) = NONE) /\ ~(FST (evaluate (c,s)) =
-  SOME (Rerr (Rabort Rtype_error))) ==>
-        (?safe peak smx. evaluate (compile c,s) =
-                        (I ## (\s. dataSem_state_stack_max_fupd (K
-                          smx) (dataSem_state_peak_heap_length_fupd (K
-                          peak) (dataSem_state_safe_for_space_fupd (K
-                          safe) s))))
-                        (evaluate (c,s)))`)
-  CHEAT_TAC;;
+(* compile_correct *)
+let data_spaceProof_compile_correct = prove
+ (`!c s. ~(FST (evaluate (c,s)) = NONE) /\ ~(FST (evaluate (c,s)) = SOME
+  (Rerr (Rabort Rtype_error))) ==>
+      (?safe peak smx. evaluate (compile c,s) =
+                      (I ## (\s. dataSem_state_stack_max_fupd (K smx)
+                        (dataSem_state_peak_heap_length_fupd (K peak)
+                        (dataSem_state_safe_for_space_fupd (K safe)
+                        s))))
+                      (evaluate (c,s)))`,
+  CHEAT_TAC);;
 
-let get_code_labels_space = cake_theorem "get_code_labels_space"
-  (fun () ->
-    `!x y y0 y1 y2.
-     (space x = INL y ==> dataProps_get_code_labels y =
-       dataProps_get_code_labels x) /\
-     (space x = INR (y0,y1,y2) ==> dataProps_get_code_labels y2 =
-       dataProps_get_code_labels x)`)
-  CHEAT_TAC;;
+let get_code_labels_space = prove
+ (`!x y y0 y1 y2.
+   (space x = INL y ==> dataProps_get_code_labels y =
+     dataProps_get_code_labels x) /\
+   (space x = INR (y0,y1,y2) ==> dataProps_get_code_labels y2 =
+     dataProps_get_code_labels x)`,
+  CHEAT_TAC);;
 
-let data_spaceProof_get_code_labels_compile =
-  cake_theorem "get_code_labels_compile[simp]"
-  (fun () ->
-    `!x. dataProps_get_code_labels (data_space_compile x) =
-  dataProps_get_code_labels x`)
-  CHEAT_TAC;;
+(* get_code_labels_compile[simp] *)
+let data_spaceProof_get_code_labels_compile = prove
+ (`!x. dataProps_get_code_labels (data_space_compile x) =
+  dataProps_get_code_labels x`,
+  CHEAT_TAC);;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["vars"];;

@@ -15,7 +15,7 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 (* fits in subset *)
 
@@ -485,34 +485,32 @@ let insert_interp_def = cake_define
 
 (* pmatch versions of the op-functions *)
 
-let can_interpret_op_pmatch = cake_theorem "can_interpret_op_pmatch"
-  (fun () ->
-    `can_interpret_op p l =
-       (match p with closLang_BlockOp (closLang_Cons tag) -> (l =
-         0 \/ tag < 3) | closLang_IntOp (closLang_Const i) -> (l = 0)
-         | closLang_GlobOp (closLang_Global n) -> (l = 0) |
-         closLang_BlockOp (closLang_Constant c) -> (l = 0) | _68 -> F)`)
-  CHEAT_TAC;;
+let can_interpret_op_pmatch = prove
+ (`can_interpret_op p l =
+     (match p with closLang_BlockOp (closLang_Cons tag) -> (l = 0
+       \/ tag < 3) | closLang_IntOp (closLang_Const i) -> (l = 0) |
+       closLang_GlobOp (closLang_Global n) -> (l = 0) |
+       closLang_BlockOp (closLang_Constant c) -> (l = 0) | _68 -> F)`,
+  CHEAT_TAC);;
 
-let check_size_op_pmatch = cake_theorem "check_size_op_pmatch"
-  (fun () ->
-    `check_size_op k p l =
-       (match p with closLang_BlockOp (closLang_Cons tag) -> (if
-         l = (0:num) then k else k - (1:num)) | closLang_IntOp
-         (closLang_Const i) -> k | closLang_GlobOp (closLang_Global n)
-         -> k | _69 -> k - 1)`)
-  CHEAT_TAC;;
+let check_size_op_pmatch = prove
+ (`check_size_op k p l =
+     (match p with closLang_BlockOp (closLang_Cons tag) -> (if l =
+       (0:num) then k else k - (1:num)) | closLang_IntOp
+       (closLang_Const i) -> k | closLang_GlobOp (closLang_Global n)
+       -> k | _69 -> k - 1)`,
+  CHEAT_TAC);;
 
-let to_constant_op_pmatch = cake_theorem "to_constant_op_pmatch"
-  (fun () ->
-    `to_constant_op p l cs =
-       (match p with closLang_IntOp (closLang_Const i) ->
-         ConstCons 1 [ConstInt i] | closLang_BlockOp
-         (closLang_Constant c) -> ConstCons 1 [c] | closLang_GlobOp
-         (closLang_Global n) -> ConstCons 2 [ConstInt (&n)] |
-         closLang_BlockOp (closLang_Cons tag) -> (if l = 0 then
-         ConstCons 1 [ConstCons tag []] else ConstCons (tag + 5) [cs])
-         | _70 -> ConstInt (&0))`)
-  CHEAT_TAC;;
+let to_constant_op_pmatch = prove
+ (`to_constant_op p l cs =
+     (match p with closLang_IntOp (closLang_Const i) -> ConstCons 1
+       [ConstInt i] | closLang_BlockOp (closLang_Constant c) ->
+       ConstCons 1 [c] | closLang_GlobOp (closLang_Global n) ->
+       ConstCons 2 [ConstInt (&n)] | closLang_BlockOp (closLang_Cons
+       tag) -> (if l = 0 then ConstCons 1 [ConstCons tag []] else
+       ConstCons (tag + 5) [cs]) | _70 -> ConstInt (&0))`,
+  CHEAT_TAC);;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

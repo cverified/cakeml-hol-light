@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_ticks: ported from HOL4's
-    compiler/backend/clos_ticksScript.sml  *)
+    compiler/backend/clos_ticksScript.sml
+    A definition theory, with 3 definitions and 2 theorems.  Needed
+    by clos_known.ml and clos_ticksProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -14,7 +16,7 @@
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
-let remove_ticks_def = cake_define_list
+let clos_ticks_remove_ticks_def = cake_define_list
   [`clos_ticks_remove_ticks [] = []`;
    `clos_ticks_remove_ticks ((x:closLang_exp) :: y :: xs) =
          HD (clos_ticks_remove_ticks [x]) ::
@@ -54,7 +56,7 @@ let remove_ticks_def = cake_define_list
            (clos_ticks_remove_ticks [x1]))]`];;
 hol4_overload "remove_ticks" "clos_ticks_remove_ticks";;
 
-let remove_ticks_sing_def = cake_define_list
+let clos_ticks_remove_ticks_sing_def = cake_define_list
   [`clos_ticks_remove_ticks_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp))`;
    `clos_ticks_remove_ticks_sing (If t x1 x2 x3:closLang_exp) =
@@ -102,24 +104,23 @@ hol4_overload "remove_ticks_sing" "clos_ticks_remove_ticks_sing";;
 
 (* HOL4 clos_ticksScript.sml:77: ML code, not ported *)
 
-let LENGTH_remove_ticks = cake_theorem "LENGTH_remove_ticks"
-  (fun () ->
-    `!(es:closLang_exp list). LENGTH (clos_ticks_remove_ticks es) =
-  LENGTH es`)
-  CHEAT_TAC;;
+(* LENGTH_remove_ticks *)
+let clos_ticks_LENGTH_remove_ticks = prove
+ (`!(es:closLang_exp list). LENGTH (clos_ticks_remove_ticks es) =
+  LENGTH es`,
+  CHEAT_TAC);;
 
-let remove_ticks_sing_eq = cake_theorem "remove_ticks_sing_eq"
-  (fun () ->
-    `(!e. clos_ticks_remove_ticks [e] = [clos_ticks_remove_ticks_sing
-  e]) /\
-     (!es. clos_ticks_remove_ticks es =
-       clos_ticks_remove_ticks_list es) /\
-     (!fns.
-       remove_ticks_let fns =
-       MAP (\(num_args,x). (num_args,HD (clos_ticks_remove_ticks
-         [x]))) fns)`)
-  CHEAT_TAC;;
+let remove_ticks_sing_eq = prove
+ (`(!e. clos_ticks_remove_ticks [e] = [clos_ticks_remove_ticks_sing e])
+  /\
+   (!es. clos_ticks_remove_ticks es = clos_ticks_remove_ticks_list
+     es) /\
+   (!fns.
+     remove_ticks_let fns =
+     MAP (\(num_args,x). (num_args,HD (clos_ticks_remove_ticks
+       [x]))) fns)`,
+  CHEAT_TAC);;
 
-let compile_inc_def = cake_define
+let clos_ticks_compile_inc_def = cake_define
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;
 hol4_overload "compile_inc" "clos_ticks_compile_inc";;

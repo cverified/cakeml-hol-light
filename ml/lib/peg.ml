@@ -2,7 +2,7 @@
 (*  peg: ported from HOL4's
     examples/formal-languages/context-free/pegScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 22 files of the port.  *)
+    that CakeML needs.  Needed by 25 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/grammar.ml";;

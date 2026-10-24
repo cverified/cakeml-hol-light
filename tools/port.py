@@ -7,7 +7,16 @@ writes ml/<path>/<theory>.ml and reports what it could not do.
 import sys, os, re, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides, grammardef
+import fieldvars, strategies
 import proofstore
+
+# every theorem that the port states, as (theory, HOL4 name,
+# binding), in the order of the files, and every definition as
+# (theory, constant, binding): tools/dryport.py dumps both, so
+# that the proof store can name a theorem or a definition by the
+# binding it has in the file that makes it
+EMITTED = []
+EMITTED_DEFS = []
 
 # the definitions whose termination the first pass assumes: the
 # port writes CHEAT_TAC in the place of the Termination tactic of
@@ -336,11 +345,52 @@ class Porter:
       at.append('local')
     self.state(b, b.name, at, b.body)
 
+  def prove_head(self, name):
+    """the head of a theorem: `let foo = prove`, or the name and
+       the prove on two lines where that does not fit"""
+    head = 'let %s = prove' % name
+    return head if len(head) <= 72 else 'let %s =\n  prove' % name
+
+  def annot_vars(self, e, vs):
+    """a statement that uses the name of a record accessor for a
+       variable of its own says the type of that variable, so that
+       HOL Light reads it as a variable and not as the accessor
+       (tools/fieldvars.py)"""
+    vs = dict(vs)
+    if not vs or not isinstance(e, hterm.Node): return False
+    done = set()
+
+    def wrap(v):
+      done.add(v.name)
+      return hterm.Node('rawtyped', tok=v.tok, e=v,
+                        tytext=vs[v.name])
+
+    def go(n):
+      for k, v in list(n.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node):
+          if v.kind == 'id' and v.name in vs and v.name not in done:
+            setattr(n, k, wrap(v))
+          else:
+            go(v)
+        elif isinstance(v, list):
+          for i, w in enumerate(v):
+            if not isinstance(w, hterm.Node): continue
+            if w.kind == 'id' and w.name in vs \
+               and w.name not in done:
+              v[i] = wrap(w)
+            else:
+              go(w)
+
+    go(e)
+    self.varannot |= done
+    return bool(done)
+
   def state(self, b, nm, at, body):
     """the statement of a theorem of a source, with its name and
        its attributes; b is the block it comes from, which a
        pointer at the source needs"""
-    name = self.thmname(nm)
+    name = self.bindname(nm)
     attrs = ('[' + ','.join(at) + ']') if at else ''
     self.ctx.defining = set()
     self.ctx.intnums = False
@@ -428,8 +478,18 @@ class Porter:
                                     in overrides.THM_TYVARS)
       hterm.TYVAR_SEEN.clear()
       try:
-        stmt = fmt(self.term(body, defn=False), indent=5, width=72,
-                   last=2)
+        want = fieldvars.VARS.get(nm, [])
+        self.varannot = set()
+        stmt = fmt(self.term(body, defn=False, varty=want),
+                   indent=3, width=72, last=2)
+        vars_read = nm in fieldvars.READ or \
+                    (bool(want) and
+                     set(v for v, _ in want) - self.varannot)
+        if vars_read:
+          # the statement has to be read with the overloads taken
+          # away, so it is rendered one indent deeper
+          stmt = fmt(self.term(body, defn=False), indent=5,
+                     width=72, last=2)
       finally:
         hterm.ANTIQ_STRICT[0] = False
         hterm.DROP_TYVAR_ANNOT[0] = False
@@ -456,21 +516,43 @@ class Porter:
            ('a theorem whose statement the port cannot state yet:'
             ' %s' % nm)))
       return
-    head = 'let %s = cake_theorem "%s%s"' % (name, nm, attrs)
-    if len(head) > 72:
-      head = ('let %s =\n  cake_theorem "%s%s"'
-              % (name, nm, attrs))
-      if max(len(l) for l in head.split('\n')) > 72:
-        head = ('let %s =\n  cake_theorem\n    "%s%s"'
-                % (name, nm, attrs))
-    # phase three: the proof of this theorem, where there is one
-    self.thmseen[nm] = self.thmseen.get(nm, 0) + 1
-    key = '%s#%d' % (nm, self.thmseen[nm])
+    # phase three: the proof of this theorem, where there is one.
+    # The proof store names a theorem by the binding it gets, which
+    # is what a proof of the file names it by as well
+    EMITTED.append((self.thy, nm, name))
+    self.thmseen[name] = self.thmseen.get(name, 0) + 1
+    key = '%s#%d' % (name, self.thmseen[name])
     tac = self.proofs.get(key)
-    if tac is None: key, tac = nm, self.proofs.get(nm)
+    if tac is None: key, tac = name, self.proofs.get(name)
     if tac is not None: self.proved.add(key)
-    self.out.append('%s\n  (fun () ->\n    `%s`)\n%s;;'
-                    % (head, stmt, tac or '  CHEAT_TAC'))
+    # the attributes that HOL4 gives the theorem are part of what
+    # the source says and nothing of the port acts on them, so
+    # they stand in a comment over the theorem -- with the name of
+    # the source where the binding is not that name itself (two
+    # files that state a theorem of one name: the later one has
+    # the name of its theory in front of it)
+    head = ''
+    if attrs or name != nm:
+      head = ('(* %s%s *)\n'
+              % (nm if name != nm else '', attrs)).replace('(*  *)',
+                                                           '')
+    if vars_read:
+      # the statement uses the name of a record accessor for a
+      # variable of its own and the port cannot say its type in
+      # the statement (the type has a variable of its own, or the
+      # statement is one that HOL4 computes): it is read with the
+      # overloads of the field names taken away
+      head += ('(* the names of record fields that this statement'
+               ' uses for\n   variables of its own are read as'
+               ' variables *)\n')
+      self.out.append('%s%s\n (cake_as_vars (fun () ->\n'
+                      '    `%s`),\n%s);;'
+                      % (head, self.prove_head(name), stmt,
+                         tac or '  CHEAT_TAC'))
+    else:
+      self.out.append('%s%s\n (`%s`,\n%s);;'
+                      % (head, self.prove_head(name), stmt,
+                         tac or '  CHEAT_TAC'))
     # the binding is there, so a source that states a theorem as
     # the value of this one (Theorem foo = bar) can use it
     self.db.thmbind[nm] = name
@@ -503,13 +585,19 @@ class Porter:
         out.append('hol4_overload "%s" "%s";;' % (nm, new))
     return out
 
-  def thmname(self, name):
-    """the OCaml binding that a theorem of this theory gets: its
-       own name, or the name with the theory in front of it where
-       that name is one of HOL Light\'s or one that another theory
-       of the port has already taken"""
+  def bindname(self, name):
+    """the OCaml binding that a block of this theory gets: its own
+       name, or the name with the theory in front of it where that
+       name is one of HOL Light\'s or one that another theory of the
+       port has already taken.  OCaml has one namespace, so two
+       files that bind one name are whichever loaded last, and a
+       proof that names it gets the wrong theorem or the wrong
+       definition with no error -- which is what this prevents, for
+       a theorem and for a definition alike (PORTING-GUIDE.md,
+       entries 9 and 9a)"""
     nm = ocaml_name(name)
-    if nm in self.db.hl or nm in self.db.thmnames:
+    if nm in self.db.hl or nm in self.db.hlids or \
+       nm in self.db.thmnames:
       nm = ocaml_name(self.thy + '_' + name)
     self.db.thmnames.add(nm)
     return nm
@@ -580,7 +668,8 @@ class Porter:
         out += [(t.pos, l) for l in ls] if pos else ls
     return out
 
-  def term(self, text, annotate=False, defn=True):
+  def term(self, text, annotate=False, defn=True,
+           varty=None):
     text = self.expand_syms(text)
     toks = hterm.tokenize(text)
     p = hterm.Parser(toks, self.ctx)
@@ -605,6 +694,9 @@ class Porter:
     if fv:
       self.ctx.fieldvar = dict(self.ctx.fieldvar)
       self.ctx.fieldvar.update(fv)
+    # a variable whose name the port overloads with a record
+    # accessor says its type, so that HOL Light reads a variable
+    if varty: self.annot_vars(e, varty)
     self.ctx.vars = self.shadowing(e, defn)
     # the patterns of the first clause of every function carry the
     # type of their constructor where its name is one that several
@@ -874,6 +966,8 @@ class Porter:
     self.ctx.hidden = set(hide)
     self.hideconsts = hideconsts
     self.hidmore = False
+    self.hidnames = set()
+    self.varannot = set()
     self.db.base_grammar(self.thy)
     # an infix that an ancestor overloads with a constant is written
     # as an application of that constant
@@ -963,9 +1057,15 @@ class Porter:
     # added to (bvlSem hides str and labProps mem, and neither has
     # a list of its own)
     if hide or self.hidmore:
-      text += '\ncake_hide [];;\n'
+      text += ('\n(* and the names that this file reads as'
+               ' variables are constants again *)\n'
+               'let _ = do_list unhide_constant\n  [' +
+               ';\n   '.join('"%s"' % n for n in
+                              sorted(set(hide) | self.hidnames)) +
+               '];;\n')
     if self.hideconsts:
-      text += '\ncake_hide_consts [];;\n'
+      text += ('\n(* and the accessors of those fields are'
+               ' overloaded again *)\nlet _ = unhide_overloads ();;\n')
     # the files that the translation needs
     deps = sorted(set(self.deps) |
                   self.db.providers(self.thy, strip_ml(text),
@@ -987,10 +1087,13 @@ class Porter:
     head = '\n'.join(needs) if needs else \
            '(* this file needs nothing of the port *)'
     if hide:
-      lines = ['cake_hide ["' + hide[0] + '"']
+      # a Parse.hide of the source: the name is a variable in this
+      # file and a constant again at the end of it, which is what
+      # HOL Light's hide_constant says
+      lines = ['let _ = do_list hide_constant ["' + hide[0] + '"']
       for n in hide[1:]:
         if len(lines[-1]) + len(n) + 4 > 70:
-          lines.append('           "' + n + '"')
+          lines.append('       "' + n + '"')
         else:
           lines[-1] += '; "' + n + '"'
       head += '\n\n' + ';\n'.join(lines) + '];;'
@@ -998,7 +1101,10 @@ class Porter:
     # have as well, which only the file that cannot see them takes
     # out of the interface
     if self.hideconsts:
-      head += ('\n\ncake_hide_consts\n  [' +
+      head += ('\n\n(* this file reads the name of a record field as'
+               ' a variable and\n   needs the accessors of that field'
+               ' as well, so only these\n   pairs come out of the'
+               ' interface *)\nlet _ = hide_overloads\n  [' +
                ';\n   '.join('"%s","%s"' % (n, c)
                               for n, c in self.hideconsts) + '];;')
     return text.replace(NEEDS, head)
@@ -1152,13 +1258,13 @@ class Porter:
       # port (HOL4's Theorem foo = bar)
       alias = hol4.thmvalue_alias(b.text)
       if alias and b.name and alias in self.db.thmbind:
-        nm = self.thmname(b.name)
+        nm = self.bindname(b.name)
         at = ('[' + ','.join(b.attrs) + ']') if b.attrs else ''
-        text = ('let %s = cake_alias "%s%s" %s;;'
-                % (nm, b.name, at, self.db.thmbind[alias]))
-        if len(text) > 72:
-          text = ('let %s =\n  cake_alias "%s%s"\n    %s;;'
-                  % (nm, b.name, at, self.db.thmbind[alias]))
+        text = (('(* %s *)\n' % at) if at else '') + \
+               ('let %s = %s;;' % (nm, self.db.thmbind[alias]))
+        if max(len(l) for l in text.split('\n')) > 72:
+          text = (('(* %s *)\n' % at) if at else '') + \
+                 ('let %s =\n  %s;;' % (nm, self.db.thmbind[alias]))
         self.out.append(text)
         self.db.thmbind[b.name] = nm
         return
@@ -1186,7 +1292,8 @@ class Porter:
       if hid:
         self.ctx.hidden |= set(hid)
         self.hidmore = True
-        self.out.append('cake_hide_more [%s];;'
+        self.hidnames |= set(hid)
+        self.out.append('let _ = do_list hide_constant [%s];;'
                         % '; '.join('"%s"' % h for h in hid))
       # the bookkeeping of HOL4 (a parse option, a temp_, an
       # export_theory) says nothing that the port can have -- but a
@@ -1651,6 +1758,10 @@ class Porter:
       self.out.append(overrides.REPLACE[key].strip())
       return
     body = b.body
+    # the binding of the definition in the file: the name of the
+    # source, or that name with the theory in front of it where
+    # another file of the port has the name already
+    bind = self.bindname(b.name)
     self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
@@ -1731,7 +1842,13 @@ class Porter:
       for nm, txt in self.raw_overloads.items():
         try: self.ctx.overloads[nm] = self.term(txt)
         except Exception: pass
-    if key in overrides.CLAUSE_FORM:
+    if key in overrides.MATCH_CLAUSES:
+      # a family in which one function has the overlapping clauses:
+      # the clauses of that function are one quotation with a match
+      term = None
+      clauses = self.clause_form(
+                  body, overrides.MATCH_CLAUSES[key][0])
+    elif key in overrides.CLAUSE_FORM:
       term = None
       clauses = self.clause_form(body)
     elif (key in overrides.MATCH_FORM or self.overlapping(body) or
@@ -1818,6 +1935,9 @@ class Porter:
     cheatnote = ('(* the first pass assumes the termination:\n'
                  '   replacing the CHEAT_TAC is all that is left *)\n'
                  if cheat and not tac else '')
+    # why the clauses of one function of a family are a match
+    matchnote = (overrides.MATCH_CLAUSES[key][1].strip() + '\n'
+                 if key in overrides.MATCH_CLAUSES else '')
     # the definitions whose termination the port proves with the
     # relation that HOL4 gives, by handing it to define_single
     # instead of to cake_define_gen: the strategies that the chain
@@ -1842,20 +1962,20 @@ class Porter:
               '    (cake_conj_list\n'
               '  %s))) in\n'
               '  (note_dest_fact th; cake_note_def th; th);;'
-              % (name, fmt(rel, last=2), clauses))
+              % (bind, fmt(rel, last=2), clauses))
     elif cheat and term is None and rel is not None:
-      text = (sizes + relnote + termnote + cheatnote +
+      text = (sizes + relnote + termnote + cheatnote + matchnote +
               'let %s = cake_define_list_try_tac (fun () ->\n  `%s`)\n'
               '  %s\n  %s;;'
-              % (name, fmt(rel, last=2), tactext, clauses))
+              % (bind, fmt(rel, last=2), tactext, clauses))
     elif cheat and term is None:
-      text = (sizes + cheatnote +
+      text = (sizes + cheatnote + matchnote +
               'let %s = cake_define_list_cheat %s\n'
-              '  %s;;' % (name, tactext, clauses))
+              '  %s;;' % (bind, tactext, clauses))
     elif cheat and rel is not None:
       text = (sizes + relnote + cheatnote +
               'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
-              '  %s\n  `%s`;;' % (name, rel, tactext, term))
+              '  %s\n  `%s`;;' % (bind, rel, tactext, term))
     elif cheat and b.extra is not None and wf_relation(b.extra)[0]:
       wf, rest = wf_relation(b.extra)
       wftext = fmt(self.term(wf), last=1)
@@ -1864,11 +1984,11 @@ class Porter:
                      'Termination') + '\n'
       text = (size_prelude(wftext + ' ' + term) + note + cheatnote +
               'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
-              '  %s\n  `%s`;;' % (name, wftext, tactext, term))
+              '  %s\n  `%s`;;' % (bind, wftext, tactext, term))
     elif cheat:
       text = (sizes + cheatnote +
               'let %s = cake_define_cheat %s\n'
-              '  `%s`;;' % (name, tactext, term))
+              '  `%s`;;' % (bind, tactext, term))
     elif term is None and rel is not None:
       # the relation of a Termination is parsed in a function, so
       # that one that does not typecheck is no error of the file
@@ -1878,17 +1998,24 @@ class Porter:
              % fmt(rel, last=2)
              if termnote or key not in overrides.MEASURE
              else 'cake_define_list_wf\n  `%s`' % rel)
-      text = (sizes + relnote + termnote +
-              'let %s = %s\n  %s;;' % (name, how, clauses))
+      text = (sizes + relnote + termnote + matchnote +
+              'let %s = %s\n  %s;;' % (bind, how, clauses))
     elif term is None:
-      text = (sizes +
-              'let %s = cake_define_list\n  %s;;' % (name, clauses))
+      text = (sizes + matchnote +
+              'let %s = cake_define_list\n  %s;;' % (bind, clauses))
     elif rel is not None:
       text = (sizes + relnote +
               'let %s = cake_define_wf\n  `%s`\n'
-              '  `%s`;;' % (name, rel, term))
+              '  `%s`;;' % (bind, rel, term))
     elif b.extra is None:
-      text = sizes + 'let %s = cake_define\n  `%s`;;' % (name, term)
+      # where HOL Light's own new_definition is what the definition
+      # is, the file says it (tools/strategies.py, which a run
+      # harvests); the chain of strategies is for the rest
+      how = ('new_definition'
+             if any((self.thy, c) in strategies.PRIMITIVE
+                    for c in dbmod.definition_names(b.body, b.name))
+             else 'cake_define')
+      text = sizes + 'let %s = %s\n  `%s`;;' % (bind, how, term)
     else:
       wf, rest = wf_relation(b.extra)
       if wf is None:
@@ -1896,7 +2023,7 @@ class Porter:
         text = (sizes +
                 self.at(b, 'the Termination, which has no'
                            ' WF_REL_TAC in it', 'Termination') +
-                '\nlet %s = cake_define\n  `%s`;;' % (name, term))
+                '\nlet %s = cake_define\n  `%s`;;' % (bind, term))
       else:
         wftext = fmt(self.term(wf), last=1)
         # the tactic that proves the goals of the relation is of no
@@ -1907,10 +2034,18 @@ class Porter:
                        'Termination') + '\n'
         text = (size_prelude(wftext + ' ' + term) + note +
                 'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
-                % (name, wftext, term))
+                % (bind, wftext, term))
     # the definition is followed by the overloads of HOL4, where the
     # name it gives a constant is one that other theories use too
     overloads = self.overloads_of(sorted(self.ctx.defining))
+    # the constants this block defines, under the binding of the
+    # block, for tools/bindrefs.py; the names are the ones the
+    # block has already computed, so that recording them cannot
+    # change what the block ports
+    for c in sorted(self.ctx.defining):
+      EMITTED_DEFS.append((self.thy,
+                           self.ctx.names.get((self.thy, c), c),
+                           bind))
     self.out.append(text if not overloads else
                     text + '\n' + '\n'.join(overloads))
     # a definition that the port writes by hand and that goes
@@ -2752,11 +2887,14 @@ class Porter:
       if c.kind == 'infix' and c.op == '<=>': c.op = '='
     return e
 
-  def clause_form(self, body):
+  def clause_form(self, body, matchcons=()):
     """the clauses of a definition as separate quotations: HOL4
        typechecks every clause of a definition on its own, so the
        same variable name can have different types in two clauses,
-       which one HOL Light quotation cannot"""
+       which one HOL Light quotation cannot.  The clauses of a
+       constant of `matchcons' are one quotation with a match in it,
+       where they overlap and HOL4 takes the first that matches
+       (overrides.MATCH_CLAUSES)"""
     # the comments of the body are kept: the tokenizer gives
     # every one of them to the token after it, and the printer
     # writes it there again
@@ -2774,12 +2912,35 @@ class Porter:
       atys = self.pat_types(all)
       self.result_types(all)
       self.arg_types(all)
+      # the clauses of a constant that overlap are one quotation
+      # with a match: the run of clauses of that constant becomes
+      # one entry of the list, whose text match_form writes
+      groups = []
+      i = 0
+      while i < len(all):
+        h = self.clause_head(all[i])
+        if h in matchcons:
+          j = i
+          while j + 1 < len(all) and self.clause_head(all[j + 1]) == h:
+            j += 1
+          was = self.ctx.vars
+          try: mt = self.match_form(body, only=h)
+          finally: self.ctx.vars = was
+          groups.append((all[i], mt))
+          i = j + 1
+        else:
+          groups.append((all[i], None))
+          i += 1
       cls = []
       # a comment with a quote in it cannot stand in the
       # quotation, so it stands before it, as a comment of OCaml
       # (bvi_let's compile)
       qcs = {}
-      for i, cl in enumerate(all):
+      for i, (cl, mt) in enumerate(groups):
+        last = 5 if i == len(groups) - 1 else 3
+        if mt is not None:
+          cls.append(fmt(mt, indent=4, last=last))
+          continue
         q = hterm.pop_quoted_comments(cl)
         if q: qcs[i] = q
         # every clause has its own variables, so also its own ones
@@ -2787,13 +2948,12 @@ class Porter:
         self.ctx.intvars = self.int_vars_node(cl) | self.intargs
         cls.append(fmt(self.pr_clause(p,
                          self.annotate(cl, True, atys)),
-                       indent=4,
-                       last=5 if i == len(all) - 1 else 3))
+                       indent=4, last=last))
       # a comment that has no token of the clause to stand before
       # (one at the end of it) goes at the end of that clause
       starts = [(hterm.first_tok(cl).pos
                  if hterm.first_tok(cl) is not None else 0)
-                for cl in all]
+                for cl, _ in groups]
       for q, l in self.left_comments(toks, '`'.join(cls), True):
         k = max([i for i, x in enumerate(starts) if x <= q] or [0])
         cls[k] += '\n    // ' + l
@@ -2806,6 +2966,16 @@ class Porter:
         text += ('(* ' + '\n      '.join(cm) + ' *)\n   ')
       text += '`' + c + '`'
     return text + ']'
+
+  def clause_head(self, cl):
+    """the name of the constant that a clause of a definition
+       defines, or None where the clause is not an equation of an
+       application of a name"""
+    try:
+      (h, _, _), = hterm.clauses_of(cl)
+    except Exception:
+      return None
+    return h.name if h.kind == 'id' else None
 
   # -- a definition as one clause with a match -------------------
 
@@ -2971,9 +3141,12 @@ class Porter:
           return True
     return False
 
-  def match_form(self, body):
+  def match_form(self, body, only=None):
     """the clauses of a definition as one clause with a match, which
-       is what HOL4's first match semantics means"""
+       is what HOL4's first match semantics means; with `only' the
+       clauses of that constant alone, for a definition of a family
+       in which one function has the overlapping clauses
+       (overrides.MATCH_CLAUSES)"""
     global CONS
     CONS = self.ctx.cons
     toks = hterm.tokenize(body)
@@ -2984,6 +3157,10 @@ class Porter:
     # n, and shift is the overload of backend_common's word_shift)
     self.ctx.vars = self.shadowing(e)
     cls = hterm.clauses_of(e)
+    if only is not None:
+      cls = [c for c in cls
+             if c[0].kind == 'id' and c[0].name == only]
+      if not cls: raise SyntaxError('match_form: no clause of ' + only)
     hop = cls[0][0]
     n = max(len(args) for _, args, _ in cls)
     if any(len(args) != n for _, args, _ in cls):
@@ -3089,8 +3266,13 @@ class Porter:
       body += '\n     ' + pre(cs) + '| %s -> %s' % (p, b)
     self.ctx.vars = {}
     text = '%s =\n     match %s with\n       %s' % (head, scrut, body)
-    for l in self.left_comments(toks, text):
-      text += '\n     // ' + l
+    # a comment that no clause of this definition has taken goes at
+    # the end of the match -- but with `only' the other clauses of
+    # the definition are still to come, and the caller puts the
+    # comments of those where they belong
+    if only is None:
+      for l in self.left_comments(toks, text):
+        text += '\n     // ' + l
     self.ctx.vars = {}
     return text
 
@@ -3251,8 +3433,10 @@ class Porter:
     nm = self.nm(name)
     if nm != name and text.startswith(name):
       text = nm + text[len(name):]
-    self.out.append('let %s_def = cake_define\n  `%s`;;\n'
-                    % (ocaml_name(name), fmt(text)))
+    bind = self.bindname(name + '_def')
+    self.out.append('let %s = cake_define\n  `%s`;;\n'
+                    % (bind, fmt(text)))
+    EMITTED_DEFS.append((self.thy, nm, bind))
 
   def monad_access(self, ty):
     """get_f and set_f for every field of the state record"""
@@ -3427,8 +3611,15 @@ class Porter:
       self.ctx.intvars = set()
       self.ctx.reclit = None
       self.ctx.defining = set()
-    text = ('let %s = cake_inductive\n  `%s`;;'
-            % (ocaml_name(b.name), term))
+    # the binding of the relation in the file, as a definition's
+    # (word_bignumProof and five other files state a v_rel of
+    # their own, and a proof names the one of its file)
+    bind = self.bindname(b.name)
+    text = 'let %s = cake_inductive\n  `%s`;;' % (bind, term)
+    for c in defined:
+      EMITTED_DEFS.append((self.thy,
+                           self.ctx.names.get((self.thy, c), c),
+                           bind))
     # the relations that the block defines are overloads of HOL4
     # as the constants of a Definition are
     overloads = self.overloads_of(defined)

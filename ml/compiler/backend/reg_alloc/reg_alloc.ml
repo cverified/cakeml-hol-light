@@ -1207,14 +1207,11 @@ let is_phy_var_def = cake_define
 let is_alloc_var_def = cake_define
   `is_alloc_var (n:num) = (n MOD 4 = 1)`;;
 
-let convention_partitions = cake_theorem "convention_partitions"
-  (fun () ->
-    `!n. (is_stack_var n <=> (~(is_phy_var n)) /\ ~(is_alloc_var n)) /\
-       (is_phy_var n <=> (~(is_stack_var n)) /\ ~(is_alloc_var n))
-         /\
-       (is_alloc_var n <=> (~(is_phy_var n)) /\ ~(is_stack_var
-         n))`)
-  CHEAT_TAC;;
+let convention_partitions = prove
+ (`!n. (is_stack_var n <=> (~(is_phy_var n)) /\ ~(is_alloc_var n)) /\
+     (is_phy_var n <=> (~(is_stack_var n)) /\ ~(is_alloc_var n)) /\
+     (is_alloc_var n <=> (~(is_phy_var n)) /\ ~(is_stack_var n))`,
+  CHEAT_TAC);;
 
 (* Set the tags according to wordLang conventions *)
 let mk_tags_def = cake_define

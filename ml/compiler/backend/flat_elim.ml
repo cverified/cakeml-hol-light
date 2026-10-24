@@ -2,8 +2,7 @@
 (*  flat_elim: ported from HOL4's
     compiler/backend/flat_elimScript.sml
     A definition theory, with 15 definitions and 3 theorems.  Needed
-    by backend_passes.ml, flat_elimProof.ml, source_to_flat.ml and
-    source_to_flatProof.ml.  *)
+    by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -71,7 +70,7 @@ let total_pat_def = cake_define_list_cheat CHEAT_TAC
 let _ = size_thms "flatLang_exp";;
 (* HOL4 flat_elimScript.sml:75-80: the tactic that proves the
    termination *)
-let is_pure_def = cake_define_wf
+let flat_elim_is_pure_def = cake_define_wf
   `MEASURE (\e. flatLang_exp_size e)`
   `flat_elim_is_pure x1 =
         match x1 with

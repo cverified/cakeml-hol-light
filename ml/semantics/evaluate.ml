@@ -47,17 +47,17 @@ let list_result_def = cake_define_list
   [`list_result (Rval v) = Rval [v]`;
    `list_result (Rerr e) = Rerr e`];;
 
-let fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
-  (fun () ->
-    `evaluate_fix_clock s x = (s1,res) ==>
+(* [local] *)
+let fix_clock_IMP = prove
+ (`evaluate_fix_clock s x = (s1,res) ==>
   semanticPrimitives_state_clock s1 <= semanticPrimitives_state_clock
-  s`)
-  CHEAT_TAC;;
+  s`,
+  CHEAT_TAC);;
 
-let list_size_REVERSE = cake_theorem "list_size_REVERSE[local]"
-  (fun () ->
-    `!xs. list_size f (REVERSE xs) = list_size f xs`)
-  CHEAT_TAC;;
+(* list_size_REVERSE[local] *)
+let evaluate_list_size_REVERSE = prove
+ (`!xs. list_size f (REVERSE xs) = list_size f xs`,
+  CHEAT_TAC);;
 
 let sing_env_def = cake_define
   `sing_env n v =
@@ -332,33 +332,29 @@ hol4_overload "evaluate_match" "evaluate_evaluate_match";;
 
 (* tidy up evalute_def and evaluate_ind *)
 
-let evaluate_clock = cake_theorem "evaluate_clock"
-  (fun () ->
-    `(!(s1:'ffi semanticPrimitives_state) env e r s2.
-        evaluate s1 env e = (s2,r) ==>
-          semanticPrimitives_state_clock s2 <=
-          semanticPrimitives_state_clock s1) /\
-     (!(s1:'ffi semanticPrimitives_state) env v p v' r s2.
-        evaluate_evaluate_match s1 env v p v' = (s2,r) ==>
-          semanticPrimitives_state_clock s2 <=
-          semanticPrimitives_state_clock s1) /\
-     (!(s1:'ffi semanticPrimitives_state) env ds r s2.
-        evaluate_evaluate_decs s1 env ds = (s2,r) ==>
-          semanticPrimitives_state_clock s2 <=
-          semanticPrimitives_state_clock s1)`)
-  CHEAT_TAC;;
+let evaluate_clock = prove
+ (`(!(s1:'ffi semanticPrimitives_state) env e r s2.
+      evaluate s1 env e = (s2,r) ==> semanticPrimitives_state_clock
+        s2 <= semanticPrimitives_state_clock s1) /\
+   (!(s1:'ffi semanticPrimitives_state) env v p v' r s2.
+      evaluate_evaluate_match s1 env v p v' = (s2,r) ==>
+        semanticPrimitives_state_clock s2 <=
+        semanticPrimitives_state_clock s1) /\
+   (!(s1:'ffi semanticPrimitives_state) env ds r s2.
+      evaluate_evaluate_decs s1 env ds = (s2,r) ==>
+        semanticPrimitives_state_clock s2 <=
+        semanticPrimitives_state_clock s1)`,
+  CHEAT_TAC);;
 
-let fix_clock_do_eval_res = cake_theorem "fix_clock_do_eval_res"
-  (fun () ->
-    `evaluate_fix_clock s (do_eval_res vs s) = do_eval_res vs s`)
-  CHEAT_TAC;;
+let fix_clock_do_eval_res = prove
+ (`evaluate_fix_clock s (do_eval_res vs s) = do_eval_res vs s`,
+  CHEAT_TAC);;
 
-let fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
-  (fun () ->
-    `evaluate_fix_clock s1 (evaluate s1 env e) = evaluate s1 env e /\
-     evaluate_fix_clock s1 (evaluate_evaluate_decs s1 env ds) =
-       evaluate_evaluate_decs s1 env ds`)
-  CHEAT_TAC;;
+let fix_clock_evaluate = prove
+ (`evaluate_fix_clock s1 (evaluate s1 env e) = evaluate s1 env e /\
+   evaluate_fix_clock s1 (evaluate_evaluate_decs s1 env ds) =
+     evaluate_evaluate_decs s1 env ds`,
+  CHEAT_TAC);;
 
 (* HOL4 evaluateScript.sml:314-315: a theorem that HOL4 states as the
    value of an ML expression: full_evaluate_def *)

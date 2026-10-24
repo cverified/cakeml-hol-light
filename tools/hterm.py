@@ -1039,7 +1039,7 @@ HLCONS = set(['SOME', 'NONE', 'INL', 'INR', 'CONS', 'NIL', 'T', 'F'])
 def pattern_vars(e, cons, lam=False):
   """the variables that a pattern binds; lam is true where the head
      of an application is bound as well (a lambda or a let)"""
-  while e.kind in ('paren', 'typed'): e = e.e
+  while e.kind in ('paren', 'typed', 'rawtyped'): e = e.e
   if e.kind == 'id':
     # a source may write a constructor with the name of its theory
     nm = e.name.split('$')[-1]
@@ -1432,7 +1432,7 @@ def wordlit(e):
   """is this term a word literal of HOL4 (0w, 1w, 0xFFw)?  The ~ of
      a word is its complement and not the negation of a number, so
      ~0w is the word of all ones and not 0w"""
-  while e.kind in ('paren', 'typed'): e = e.e
+  while e.kind in ('paren', 'typed', 'rawtyped'): e = e.e
   return e.kind == 'num' and e.text.endswith('w')
 
 
@@ -1777,7 +1777,7 @@ class Printer:
     if rec and e.fld not in self.ctx.recs.get(rec, []): rec = None
     if not rec:
       v = e.e
-      while v.kind in ('paren', 'typed'): v = v.e
+      while v.kind in ('paren', 'typed', 'rawtyped'): v = v.e
       rec = (self.ctx.fieldvar.get(v.name)
              if v.kind == 'id' else None)
       if rec and e.fld not in self.ctx.recs.get(rec, []): rec = None
@@ -1885,6 +1885,12 @@ class Printer:
               hl_string(e.text) + ')')
     if k == 'paren':
       return '(' + self.pr(e.e, 0) + ')'
+    if k == 'rawtyped':
+      # a variable whose type the port says itself, in HOL Light's
+      # own notation: the name is one that the port overloads with
+      # a record accessor, and the statement means a variable
+      # (tools/fieldvars.py)
+      return '(' + self.pr(e.e, 0) + ':' + e.tytext + ')'
     if k == 'typed':
       ty = self.pr_type(e.ty)
       # HOL4 unifies the type variables that a statement writes
@@ -2159,7 +2165,7 @@ class Printer:
       if rec and e.fld not in self.ctx.recs.get(rec, []): rec = None
       if not rec:
         v = e.e
-        while v.kind in ('paren', 'typed'): v = v.e
+        while v.kind in ('paren', 'typed', 'rawtyped'): v = v.e
         rec = (self.ctx.fieldvar.get(v.name)
                if v.kind == 'id' else None)
         # the record of a variable holds for the fields that it
@@ -2337,7 +2343,7 @@ def head_of(e):
   """the head of an application, through parentheses, annotations
      and the operator form of HOL4 ($f)"""
   while True:
-    if e.kind in ('paren', 'typed'): e = e.e
+    if e.kind in ('paren', 'typed', 'rawtyped'): e = e.e
     elif e.kind == 'app': e = strip_app(e)[0]
     elif e.kind == 'dollar': return Node('id', tok=e.tok, name=e.name)
     else: return e
@@ -2369,7 +2375,7 @@ def clauses_of(e):
     if cl.kind != 'infix' or cl.op not in ('=', '<=>'):
       raise SyntaxError('clauses_of: not an equation')
     l = cl.l
-    while l.kind in ('paren', 'typed'): l = l.e
+    while l.kind in ('paren', 'typed', 'rawtyped'): l = l.e
     hop, args = strip_app(l)
     hop = head_of(hop)
     out.append((hop, args, cl.r))

@@ -55,7 +55,7 @@ hol4_overload "++" "misc_Append";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let flatten_def = cake_define_cheat CHEAT_TAC
+let stack_to_lab_flatten_def = cake_define_cheat CHEAT_TAC
   `stack_to_lab_flatten t p n m conts breaks =
      (match p with Tick -> (List [(\a. labLang_Asm (Asmi a)) (Inst
        (asm_Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi
@@ -173,7 +173,7 @@ let stack_to_lab_config_FIELDS = define_record "stack_to_lab_config"
    (* unverified: emit C-stack shadowing for perf call graphs (x64 only) *)
   ];;
 
-let compile_def = cake_define
+let stack_to_lab_compile_def = cake_define
   `stack_to_lab_compile stack_conf data_conf max_heap sp offset prog =
      (let prog = stack_rawcall_compile prog in
      let prog = stack_alloc_compile data_conf prog in

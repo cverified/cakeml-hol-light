@@ -69,18 +69,16 @@ let read_string_def = cake_define
      read_string_aux input []`;;
 hol4_overload "read_string" "mlsexp_read_string";;
 
-let read_string_aux_length = cake_theorem "read_string_aux_length"
-  (fun () ->
-    `!input acc.
-       read_string_aux input acc = INR (s,rest) ==> LENGTH rest
-         <= LENGTH input`)
-  CHEAT_TAC;;
+let read_string_aux_length = prove
+ (`!input acc.
+     read_string_aux input acc = INR (s,rest) ==> LENGTH rest <=
+       LENGTH input`,
+  CHEAT_TAC);;
 
-let read_string_length = cake_theorem "read_string_length"
-  (fun () ->
-    `mlsexp_read_string input = INR (s,rest) ==> LENGTH rest <= LENGTH
-  input`)
-  CHEAT_TAC;;
+let read_string_length = prove
+ (`mlsexp_read_string input = INR (s,rest) ==> LENGTH rest <= LENGTH
+  input`,
+  CHEAT_TAC);;
 
 (* Returns the string until a closing parenthesis or whitespace, and the
    rest of the input.
@@ -94,12 +92,11 @@ let read_symbol_def = cake_define_list
       (if c = (CHR 41) \/ isSpace c then (implode (REVERSE
         acc),(c :: cs)) else read_symbol cs (c :: acc))`];;
 
-let read_symbol_length = cake_theorem "read_symbol_length"
-  (fun () ->
-    `!input acc.
-       read_symbol input acc = (s,rest) ==> LENGTH rest <= LENGTH
-         input`)
-  CHEAT_TAC;;
+let read_symbol_length = prove
+ (`!input acc.
+     read_symbol input acc = (s,rest) ==> LENGTH rest <= LENGTH
+       input`,
+  CHEAT_TAC);;
 
 (* By tracking the depth, we can ensure we only lex one S-expression at a
    time. *)
@@ -142,12 +139,11 @@ let lex_aux_def = cake_define_list_try_tac (fun () ->
               mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)))`];;
 hol4_overload "lex_aux" "mlsexp_lex_aux";;
 
-let lex_aux_length = cake_theorem "lex_aux_length"
-  (fun () ->
-    `!depth input acc e rest.
-       mlsexp_lex_aux depth input acc = INR (e,rest) ==> LENGTH
-         rest <= LENGTH input`)
-  CHEAT_TAC;;
+let lex_aux_length = prove
+ (`!depth input acc e rest.
+     mlsexp_lex_aux depth input acc = INR (e,rest) ==> LENGTH rest
+       <= LENGTH input`,
+  CHEAT_TAC);;
 
 (* Tokenizes (at most) one S-expression, and returns the rest of the input.
    Fails with an error message if parentheses are unbalanced or
@@ -156,25 +152,24 @@ let lex_def = cake_define
   `(lex (input:string):mlstring#string+mlsexp_token list#string) =
      mlsexp_lex_aux 0 input []`;;
 
-let lex_IMP_LENGTH_LESS = cake_theorem "lex_IMP_LENGTH_LESS"
-  (fun () ->
-    `!input x rest. lex input = INR (x,rest) ==> LENGTH rest < LENGTH
-  input \/ x = []`)
-  CHEAT_TAC;;
+let lex_IMP_LENGTH_LESS = prove
+ (`!input x rest. lex input = INR (x,rest) ==> LENGTH rest < LENGTH
+  input \/ x = []`,
+  CHEAT_TAC);;
 
-let test_lex = cake_theorem "test_lex[local]"
-  (fun () ->
-    `lex " 1 2   3 " = INR ([SYMBOL (implode "1")]," 2   3 ") /\
-     lex "\"\n \" 2" = INR ([SYMBOL (implode "\n ")]," 2") /\
-     lex " (1 2) 3 " = INR ([CLOSE; SYMBOL (implode "2"); SYMBOL
-       (implode "1"); OPEN]," 3 ") /\
-     lex " (1 2) ) " = INR ([CLOSE; SYMBOL (implode "2"); SYMBOL
-       (implode "1"); OPEN]," ) ") /\
-     lex " (1 2    " = INL ((implode
-       "lex_aux: missing closing parenthesis"),"") /\
-     lex " ) (1 2) " = INL ((implode
-       "lex_aux: too many closing parenthesis")," (1 2) ")`)
-  CHEAT_TAC;;
+(* [local] *)
+let test_lex = prove
+ (`lex " 1 2   3 " = INR ([SYMBOL (implode "1")]," 2   3 ") /\
+   lex "\"\n \" 2" = INR ([SYMBOL (implode "\n ")]," 2") /\
+   lex " (1 2) 3 " = INR ([CLOSE; SYMBOL (implode "2"); SYMBOL
+     (implode "1"); OPEN]," 3 ") /\
+   lex " (1 2) ) " = INR ([CLOSE; SYMBOL (implode "2"); SYMBOL
+     (implode "1"); OPEN]," ) ") /\
+   lex " (1 2    " = INL ((implode
+     "lex_aux: missing closing parenthesis"),"") /\
+   lex " ) (1 2) " = INL ((implode
+     "lex_aux: too many closing parenthesis")," (1 2) ")`,
+  CHEAT_TAC);;
 
 let parse_aux_def = cake_define_list
   [`parse_aux [] xs s = xs`;
@@ -195,27 +190,25 @@ let parse_def = cake_define
            "parse: empty input"),rest) | (v :: _3) -> INR (v,rest)))`;;
 hol4_overload "parse" "mlsexp_parse";;
 
-let parse_IMP_LENGTH_LESS = cake_theorem "parse_IMP_LENGTH_LESS"
-  (fun () ->
-    `!input x rest. mlsexp_parse input = INR (x,rest) ==> LENGTH rest
-  < LENGTH input`)
-  CHEAT_TAC;;
+let parse_IMP_LENGTH_LESS = prove
+ (`!input x rest. mlsexp_parse input = INR (x,rest) ==> LENGTH rest <
+  LENGTH input`,
+  CHEAT_TAC);;
 
-let parse_space = cake_theorem "parse_space"
-  (fun () ->
-    `mlsexp_parse ((CHR 10) :: xs) = mlsexp_parse xs`)
-  CHEAT_TAC;;
+let parse_space = prove
+ (`mlsexp_parse ((CHR 10) :: xs) = mlsexp_parse xs`,
+  CHEAT_TAC);;
 
-let test_parse = cake_theorem "test_parse[local]"
-  (fun () ->
-    `mlsexp_parse " 1 2 3 " = INR (Atom (implode "1")," 2 3 ") /\
-     mlsexp_parse "(1 2 3)" = INR (Expr [Atom (implode "1"); Atom
-       (implode "2"); Atom (implode "3")],"") /\
-     mlsexp_parse "(()) ()" = INR (Expr [Expr []]," ()")`)
-  CHEAT_TAC;;
+(* [local] *)
+let test_parse = prove
+ (`mlsexp_parse " 1 2 3 " = INR (Atom (implode "1")," 2 3 ") /\
+   mlsexp_parse "(1 2 3)" = INR (Expr [Atom (implode "1"); Atom
+     (implode "2"); Atom (implode "3")],"") /\
+   mlsexp_parse "(()) ()" = INR (Expr [Expr []]," ()")`,
+  CHEAT_TAC);;
 
 (* Function for parsing in the style of the Standard ML basis library. *)
-let fromString_def = cake_define
+let mlsexp_fromString_def = cake_define
   `(mlsexp_fromString (input:mlstring):mlsexp_sexp option) =
      (match mlsexp_parse (explode input) with INL _4 -> NONE | INR
        (se,_5) -> SOME se)`;;
@@ -258,7 +251,7 @@ let v2pretty_def = cake_define_list
          (match vs with [] -> [] | (v :: vs) -> v2pretty v ::
            vs2pretty vs)`];;
 
-let get_size_def = cake_define
+let mlsexp_get_size_def = cake_define
   `mlsexp_get_size x1 =
       match x1 with
         mlsexp_Size n x -> n
@@ -275,7 +268,7 @@ let get_next_size_def = cake_define
       | (mlsexp_Parenthesis x) -> get_next_size x + 2
       | _9 -> 0`;;
 
-let annotate_def = cake_define_list
+let mlsexp_annotate_def = cake_define_list
   [`mlsexp_annotate (mlsexp_String s:pretty) = mlsexp_Size (strlen s)
   (mlsexp_String s)`;
    `mlsexp_annotate (mlsexp_Parenthesis b) =
@@ -331,28 +324,26 @@ let str_tree_to_strs_def = cake_define
   `str_tree_to_strs end v = mlsexp_flatten (implode "\n")
   (smart_remove 0 0 (mlsexp_annotate (v2pretty v))) [end]`;;
 
-let test1_str_tree_to_strs =
-  cake_theorem "test1_str_tree_to_strs[local]"
-  (fun () ->
-    `mlstring_concat (str_tree_to_strs (implode "")
-                              (mlsexp_Trees [mlsexp_Str (implode
-                                "hello");
+(* [local] *)
+let test1_str_tree_to_strs = prove
+ (`mlstring_concat (str_tree_to_strs (implode "")
+                            (mlsexp_Trees [mlsexp_Str (implode
+                              "hello");
                               mlsexp_Str (implode "there")])) =
-     (implode "(hello there)")`)
-  CHEAT_TAC;;
+   (implode "(hello there)")`,
+  CHEAT_TAC);;
 
-let test2_str_tree_to_strs =
-  cake_theorem "test2_str_tree_to_strs[local]"
-  (fun () ->
-    `mlstring_concat (str_tree_to_strs (implode "")
-                              (mlsexp_Trees [mlsexp_Str (implode
-                                "test");
+(* [local] *)
+let test2_str_tree_to_strs = prove
+ (`mlstring_concat (str_tree_to_strs (implode "")
+                            (mlsexp_Trees [mlsexp_Str (implode
+                              "test");
                               mlsexp_GrabLine (mlsexp_Str (implode
                                 "hi"));
                               mlsexp_GrabLine (mlsexp_Str (implode
                                 "there"))])) =
-     (implode "(test\n   hi\n   there)")`)
-  CHEAT_TAC;;
+   (implode "(test\n   hi\n   there)")`,
+  CHEAT_TAC);;
 
 (*--------------------------------------------------------------*
    Pretty printing of sexp
@@ -407,159 +398,143 @@ let to_tokens_def = cake_define_list
    `to_tokens (Expr xs) = [OPEN] ++ FLAT (MAP (\x. to_tokens x) xs)
   ++ [CLOSE]`];;
 
-let parse_aux_to_tokens_lemma =
-  cake_theorem "parse_aux_to_tokens_lemma[local]"
-  (fun () ->
-    `!x xs s rest.
-       parse_aux (REVERSE (to_tokens x) ++ rest) xs s =
-       parse_aux rest (x :: xs) s`)
-  CHEAT_TAC;;
+(* [local] *)
+let parse_aux_to_tokens_lemma = prove
+ (`!x xs s rest.
+     parse_aux (REVERSE (to_tokens x) ++ rest) xs s =
+     parse_aux rest (x :: xs) s`,
+  CHEAT_TAC);;
 
-let parse_aux_to_tokens_thm = cake_theorem "parse_aux_to_tokens_thm"
-  (fun () ->
-    `parse_aux (REVERSE (to_tokens x)) [] [] = [x]`)
-  CHEAT_TAC;;
+let parse_aux_to_tokens_thm = prove
+ (`parse_aux (REVERSE (to_tokens x)) [] [] = [x]`,
+  CHEAT_TAC);;
 
-let str_every_thm = cake_theorem "str_every_thm"
-  (fun () ->
-    `!P i m. str_every P i m /\ i <= strlen m ==> (!k. k < i ==> P (EL
-  k (explode m)))`)
-  CHEAT_TAC;;
+let str_every_thm = prove
+ (`!P i m. str_every P i m /\ i <= strlen m ==> (!k. k < i ==> P (EL k
+  (explode m)))`,
+  CHEAT_TAC);;
 
-let read_symbol_thm = cake_theorem "read_symbol_thm"
-  (fun () ->
-    `!t s acc.
-       EVERY is_safe_char t /\ (~(s = "") ==> isSpace (HD s) \/ HD
-         s = (CHR 41)) ==>
-       read_symbol (t ++ s) acc = (implode (REVERSE acc ++ t),s)`)
-  CHEAT_TAC;;
+let read_symbol_thm = prove
+ (`!t s acc.
+     EVERY is_safe_char t /\ (~(s = "") ==> isSpace (HD s) \/ HD s =
+       (CHR 41)) ==>
+     read_symbol (t ++ s) acc = (implode (REVERSE acc ++ t),s)`,
+  CHEAT_TAC);;
 
-let read_string_aux_thm = cake_theorem "read_string_aux_thm"
-  (fun () ->
-    `!xs s acc.
-       read_string_aux (STRCAT (STRCAT (CONCAT (MAP char_escaped
-         xs)) "\"") s) acc =
-       INR (implode (REVERSE acc ++ xs),s)`)
-  CHEAT_TAC;;
+let read_string_aux_thm = prove
+ (`!xs s acc.
+     read_string_aux (STRCAT (STRCAT (CONCAT (MAP char_escaped xs))
+       "\"") s) acc =
+     INR (implode (REVERSE acc ++ xs),s)`,
+  CHEAT_TAC);;
 
-let lex_aux_make_str_safe = cake_theorem "lex_aux_make_str_safe"
-  (fun () ->
-    `!m s ts depth.
-       (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-       (depth = 0 ==> ts = []) ==>
-       mlsexp_lex_aux depth (STRCAT (match make_str_safe m with
-         implode x -> x) s) ts =
-       (if depth = 0 then INR (SYMBOL m :: ts,s) else
-         mlsexp_lex_aux depth s (SYMBOL m :: ts))`)
-  CHEAT_TAC;;
+let lex_aux_make_str_safe = prove
+ (`!m s ts depth.
+     (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
+     (depth = 0 ==> ts = []) ==>
+     mlsexp_lex_aux depth (STRCAT (match make_str_safe m with implode
+       x -> x) s) ts =
+     (if depth = 0 then INR (SYMBOL m :: ts,s) else mlsexp_lex_aux
+       depth s (SYMBOL m :: ts))`,
+  CHEAT_TAC);;
 
-let flatten_acc = cake_theorem "flatten_acc"
-  (fun () ->
-    `!x indent s. mlsexp_flatten indent x s = mlsexp_flatten indent x
-  [] ++ s`)
-  CHEAT_TAC;;
+let flatten_acc = prove
+ (`!x indent s. mlsexp_flatten indent x s = mlsexp_flatten indent x []
+  ++ s`,
+  CHEAT_TAC);;
 
-let lex_aux_spaces = cake_theorem "lex_aux_spaces"
-  (fun () ->
-    `!t rest ts depth.
-       EVERY isSpace t ==>
-       mlsexp_lex_aux depth (t ++ rest) ts = mlsexp_lex_aux depth
-         rest ts`)
-  CHEAT_TAC;;
+let lex_aux_spaces = prove
+ (`!t rest ts depth.
+     EVERY isSpace t ==>
+     mlsexp_lex_aux depth (t ++ rest) ts = mlsexp_lex_aux depth
+       rest ts`,
+  CHEAT_TAC);;
 
-let lex_aux_sexp2tree = cake_theorem "lex_aux_sexp2tree"
-  (fun () ->
-    `(!x s ts depth m n indent.
-        (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-        (depth = 0 ==> ts = []) /\ ~(indent = (implode "")) /\
-          EVERY isSpace (explode indent) ==>
-        mlsexp_lex_aux depth
-                (STRCAT
-                 (explode
-                  (mlstring_concat
-                   (mlsexp_flatten indent
-                            (smart_remove m n (mlsexp_annotate
-                              (v2pretty (sexp2tree x))))
-                            []))) s) ts =
-        (if depth = 0 then INR (REVERSE (to_tokens x) ++ ts,s) else
-          mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts)) /\
-        mlsexp_lex_aux depth
-                (STRCAT
-                 (explode
-                  (mlstring_concat
-                   (mlsexp_flatten indent
-                            (remove_all (mlsexp_annotate (v2pretty
-                              (sexp2tree x))))
-                            []))) s) ts =
-        (if depth = 0 then INR (REVERSE (to_tokens x) ++ ts,s) else
-          mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts))) /\
-     (!xs s ts depth indent m n.
-        (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-          ~(depth = 0) /\ ~(indent = (implode "")) /\ EVERY isSpace
-          (explode indent) ==>
-        mlsexp_lex_aux depth
-                (STRCAT
-                 (explode
-                  (mlstring_concat
-                   (mlsexp_flatten indent
-                     (smart_remove m n (mlsexp_annotate (newlines
-                       (vs2pretty (sexp2trees xs)))))
-                     []))) s) ts =
-        (mlsexp_lex_aux depth s (REVERSE (FLAT (MAP to_tokens xs))
-          ++ ts)) /\
-        mlsexp_lex_aux depth
-                (STRCAT
-                 (explode
-                  (mlstring_concat
-                   (mlsexp_flatten indent
-                     (remove_all (mlsexp_annotate (newlines
-                       (vs2pretty (sexp2trees xs)))))
-                     []))) s) ts =
-        (mlsexp_lex_aux depth s (REVERSE (FLAT (MAP to_tokens
-          xs)) ++ ts)))`)
-  CHEAT_TAC;;
+let lex_aux_sexp2tree = prove
+ (`(!x s ts depth m n indent.
+      (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
+      (depth = 0 ==> ts = []) /\ ~(indent = (implode "")) /\ EVERY
+        isSpace (explode indent) ==>
+      mlsexp_lex_aux depth
+              (STRCAT
+               (explode
+                (mlstring_concat
+                 (mlsexp_flatten indent
+                          (smart_remove m n (mlsexp_annotate
+                            (v2pretty (sexp2tree x))))
+                          []))) s) ts =
+      (if depth = 0 then INR (REVERSE (to_tokens x) ++ ts,s) else
+        mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts)) /\
+      mlsexp_lex_aux depth
+              (STRCAT
+               (explode
+                (mlstring_concat
+                 (mlsexp_flatten indent
+                          (remove_all (mlsexp_annotate (v2pretty
+                            (sexp2tree x))))
+                          []))) s) ts =
+      (if depth = 0 then INR (REVERSE (to_tokens x) ++ ts,s) else
+        mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts))) /\
+   (!xs s ts depth indent m n.
+      (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\ ~(depth =
+        0) /\ ~(indent = (implode "")) /\ EVERY isSpace (explode indent)
+        ==>
+      mlsexp_lex_aux depth
+              (STRCAT
+               (explode
+                (mlstring_concat
+                 (mlsexp_flatten indent
+                   (smart_remove m n (mlsexp_annotate (newlines
+                     (vs2pretty (sexp2trees xs)))))
+                   []))) s) ts =
+      (mlsexp_lex_aux depth s (REVERSE (FLAT (MAP to_tokens xs)) ++
+        ts)) /\
+      mlsexp_lex_aux depth
+              (STRCAT
+               (explode
+                (mlstring_concat
+                 (mlsexp_flatten indent
+                   (remove_all (mlsexp_annotate (newlines (vs2pretty
+                     (sexp2trees xs)))))
+                   []))) s) ts =
+      (mlsexp_lex_aux depth s (REVERSE (FLAT (MAP to_tokens xs)) ++
+        ts)))`,
+  CHEAT_TAC);;
 
-let lex_aux_sexp_to_list = cake_theorem "lex_aux_sexp_to_list"
-  (fun () ->
-    `(!x s ts depth.
-        (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-        (depth = 0 ==> ts = []) ==>
-        mlsexp_lex_aux depth (explode (mlstring_concat (append
-          (sexp_to_app_list x))) ++ s) ts =
-        (if depth = 0 then
-          INR (REVERSE (to_tokens x) ++ ts,s) else
-          mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts))) /\
-     (!xs s ts depth.
-        (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-          ~(depth = 0) ==>
-        mlsexp_lex_aux depth (explode (mlstring_concat (append
-          (sexps_to_app_list xs))) ++ s) ts =
-        mlsexp_lex_aux depth s (REVERSE (FLAT (MAP (\x. to_tokens
-          x) xs)) ++ ts))`)
-  CHEAT_TAC;;
+let lex_aux_sexp_to_list = prove
+ (`(!x s ts depth.
+      (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
+      (depth = 0 ==> ts = []) ==>
+      mlsexp_lex_aux depth (explode (mlstring_concat (append
+        (sexp_to_app_list x))) ++ s) ts =
+      (if depth = 0 then
+        INR (REVERSE (to_tokens x) ++ ts,s) else
+        mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts))) /\
+   (!xs s ts depth.
+      (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\ ~(depth =
+        0) ==>
+      mlsexp_lex_aux depth (explode (mlstring_concat (append
+        (sexps_to_app_list xs))) ++ s) ts =
+      mlsexp_lex_aux depth s (REVERSE (FLAT (MAP (\x. to_tokens x)
+        xs)) ++ ts))`,
+  CHEAT_TAC);;
 
-let parse_sexp_to_string = cake_theorem "parse_sexp_to_string"
-  (fun () ->
-    `!s x.
-       (~(s = "") ==> isSpace (HD s)) ==>
-       mlsexp_parse (explode (sexp_to_string x) ++ s) = INR (x,s)`)
-  CHEAT_TAC;;
+let parse_sexp_to_string = prove
+ (`!s x.
+     (~(s = "") ==> isSpace (HD s)) ==>
+     mlsexp_parse (explode (sexp_to_string x) ++ s) = INR (x,s)`,
+  CHEAT_TAC);;
 
-let parse_sexp_to_pretty_string =
-  cake_theorem "parse_sexp_to_pretty_string"
-  (fun () ->
-    `!s x.
-       mlsexp_parse (explode (sexp_to_pretty_string x) ++ s) =
-         INR (x,"\n" ++ s)`)
-  CHEAT_TAC;;
+let parse_sexp_to_pretty_string = prove
+ (`!s x.
+     mlsexp_parse (explode (sexp_to_pretty_string x) ++ s) = INR
+       (x,"\n" ++ s)`,
+  CHEAT_TAC);;
 
-let fromString_sexp_to_string = cake_theorem "fromString_sexp_to_string"
-  (fun () ->
-    `fromString (sexp_to_string x) = SOME x`)
-  CHEAT_TAC;;
+let fromString_sexp_to_string = prove
+ (`fromString (sexp_to_string x) = SOME x`,
+  CHEAT_TAC);;
 
-let fromString_sexp_to_pretty_string =
-  cake_theorem "fromString_sexp_to_pretty_string"
-  (fun () ->
-    `fromString (sexp_to_pretty_string x) = SOME x`)
-  CHEAT_TAC;;
+let fromString_sexp_to_pretty_string = prove
+ (`fromString (sexp_to_pretty_string x) = SOME x`,
+  CHEAT_TAC);;

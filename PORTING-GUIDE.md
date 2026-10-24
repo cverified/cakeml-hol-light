@@ -43,10 +43,10 @@ add it to the index.
 | 6 | a definition unfolded into a `match` | `MATCH_REDUCE_TAC` |
 | 7 | `fs`, `rw`, `simp`, the stateful simpset | written out, always |
 | 8 | an `Overload` brought to the front | `front_overloads` |
-| 9 | two files that bind the same `foo_def` | `cake_def "<const>"` |
-| 9a | two files that state a theorem of one name | the store, by the constant |
+| 9 | two files that bind the same `foo_def` | a binding each, `bindname` |
+| 9a | two files that state a theorem of one name | a binding each, the theory in front |
 | 10 | a library theorem HOL Light has not | `ml/lib/lemmas.ml` |
-| 11 | `Parse.hide`, a field name | `cake_hide`, and a clean session |
+| 11 | `Parse.hide`, a field name | `hide_constant`, the type said |
 | 12 | a statement that annotates no type | terms taken from the goal |
 | 13 | `evaluate_def` with `fix_clock` removed | `fix_clock_evaluate` |
 | 14 | the order of a `case` split | the condition before the hypothesis |
@@ -67,6 +67,7 @@ add it to the index.
 | 29 | `drule` with a rewrite in it | `USE_CHANGED`, or a test of the shape |
 | 30 | a tactic of several steps | brackets round it, or it is an argument |
 | 31 | `SEP_R_TAC`, `SEP_W_TAC`, `AC STAR_ASSOC STAR_COMM` | `read_fun2set`, `write_fun2set`, `STAR_AC` |
+| 32 | a family of functions whose clauses overlap | `MATCH_CLAUSES`, a match per function |
 
 ## The shape of a transformation proof
 
@@ -880,27 +881,46 @@ In HOL4 the name is qualified by the theory
 
 ### What resisted
 
-OCaml has one namespace: the port's `compile_def` is whichever file
-loaded last, so a proof that writes `compile_def` gets a definition
-from another theory, with no error.  Rekeying 355 overrides to
-unique names was the obvious fix and the wrong one: it would make
-the port's text differ from the source's.
+OCaml has one namespace.  A port that binds every definition under
+the name of its source has 249 names that two or more files bind,
+and `compile_def` is then whichever file loaded last: a proof that
+writes `compile_def` gets the definition of another theory, with no
+error at all.  Of the 976 definition references of the proof store,
+32 denoted another constant that way, and the proofs around them
+only failed because the rewrite did not fire.
+
+A registry keyed by the constant with a lookup by string
+(`cake_def "bvi_let_compile"`) was the port's first answer, and the
+wrong one: HOL Light names a definition by its binding, and the
+lookup hid which definition a proof meant.
 
 ### What the port does
 
-A registry keyed by the **constant**, which is unique:
+Every definition is a binding of its own, and the binding is
+unique: the first file to take a name keeps it and a later one gets
+the name of its theory in front (`bvi_let_compile_def`).  That is
+`tools/port.py`'s `bindname`, the same function that names a
+theorem (entry 9a), because one namespace holds both; the inductive
+relations (`cake_inductive`) and the definitions of the monadic
+machinery go through it as well, so no two files of the port bind
+one name.
+
+`ml/lib/tactics.ml` is the one place that still looks a definition
+up by its constant, and it has to: it is part of the library layer
+and loads before the files whose definitions its tactics unfold, so
+there is no binding to name yet.
 
 ```ocaml
-let cp = cake_def "bvi_let_compile" in ...
+let cp = bvi_let_compile_def in ...        (* a proof of the port *)
+REWRITE_TAC[cake_def "memory_rel"]         (* ml/lib/tactics.ml *)
 ```
-
-`cake_note_def` records every definition that `cake_define*`,
-`cake_cheat` or `cake_inductive` makes; `cake_def` looks it up.
 
 ### Where it lives
 
-`ml/lib/define.ml`: `the_defs`, `cake_note_def`, `cake_def`,
-`cake_defs`.
+`tools/port.py`: `bindname`.  `ml/lib/define.ml`: `the_defs`,
+`cake_note_def`, `cake_def`, `cake_defs`.  `tools/bindrefs.py`
+rewrites the references of the proof store when a binding changes,
+and `tools/bin/dryport` dumps the bindings it needs.
 
 ## 9a. Two files that state a theorem of one name
 
@@ -910,39 +930,23 @@ let cp = cake_def "bvi_let_compile" in ...
 `gc_move_list_IMP`, about their own `gc_move_list`; so do a dozen
 other pairs of the gc and the semantics files.
 
-### What it means
+### What the port does
 
-`cake_thm "gc_move_list_IMP"` finds the **first** entry of
-`the_theorems` with that name, and that is the one registered
-last -- the one of `gen_gc_partial`.  Nothing says so: the
-theorem comes back, `MATCH_MP` of it fails with "No match", and
-the statement it fails on prints the same way as the one that
-would have matched (`gc_move_list conf state xs = xs',state1`),
-because the two constants print under the same overload.  The
-difference shows only in the type of the head constant
+Each of them is a binding of its own, the way HOL Light names a
+theorem: the first file to state the name takes it
+(`gc_move_list_IMP`) and a later one gets the name of its theory
+in front (`gen_gc_partial_gc_move_list_IMP`), which is what
+`tools/port.py`'s `thmname` does.  A proof names the one it means
+and nothing can pick up the other -- which an earlier shape of
+the port, where a lookup by the HOL4 name found the one
+registered last, could not promise.
+
+The statements of the two print the same way (`gc_move_list conf
+state xs = xs',state1`), because the two constants print under the
+same overload; the difference is in the type of the head constant
 (`gen_gc_partial_gc_move_list` against `gen_gc_gc_move_list`),
 which `print_types_of_subterms := 2` or
 `fst(dest_const(fst(strip_comb t)))` prints.
-
-### What the port does
-
-The theorem is picked out of the store by what its statement is
-about, the way `cake_def "<const>"` picks a definition out
-(entry 9):
-
-```ocaml
-let gmli =
-  let about t th = can (find_term (fun s ->
-    try fst(dest_const s) = t with Failure _ -> false)) (concl th) in
-  GEN_ALL(find (about "gen_gc_gc_move_list")
-    (map (fun (_,_,th) -> th)
-      (filter (fun (n,_,_) -> n = "gc_move_list_IMP")
-        (!the_theorems))))
-```
-
-`gc_move_loop_data_refs_split` of `data_to_word_memoryProof` is
-where this stands.  A `cake_thm` that took the constant the way
-`cake_def` does would be the better answer, and is not written.
 
 ## 10. A HOL4 library theorem HOL Light has not
 
@@ -994,11 +998,16 @@ class that no mechanical check of the port can see.
 ### What it means
 
 HOL4 hides a name from its parser (`Parse.hide "error"`) and names a
-record field and another constant alike, so the port reads the
-statements of a file with those names taken out of the interface:
-`cake_hide` and `cake_hide_consts` (`ml/lib/theorem.ml`), set at the
-head of a file and set back to `[]` at its end, and
-`cake_hidden_read` and `cake_as_vars` around every statement.
+record field and another constant alike, so a statement of a file
+reads a name of the port as a variable of its own.  The port says
+the three cases the way HOL Light does: a `Parse.hide` becomes
+`do_list hide_constant [...]` at the head of the file and
+`do_list unhide_constant [...]` at its end; a variable whose name
+is a record accessor says its type in the statement itself
+(`tools/fieldvars.py` holds the types); and
+a file that needs the accessors of a field and reads the name of
+that field as a variable as well takes only those pairs out of the
+interface, with `hide_overloads` (`ml/lib/theorem.ml`).
 
 ### What resisted
 
@@ -1878,17 +1887,17 @@ list it takes minutes or goes "Too deep".
 - `MEMORY_REL_TAC` -- the four definitions and `SPLIT_ROOTS_TAC`
 - `SPLIT_ROOTS_TAC` -- the list of roots against the list of values
   (it finds the `ALL2` assumption itself, so no name is written)
-- `V_INV_TAC` -- the rules of `v_inv` opened, the roots
+- `V_INV_TAC <v_inv_def>` -- the rules of `v_inv` opened, the roots
   substituted, `word_addr` reduced and the contradictions closed
 - `CONTRA_TAC` -- two assumptions that contradict each other
 - `OPEN_ASSUM` -- an assumption that is a conditional, a
   disjunction or an existential, opened into the goal
-- `USE_CHANGED`, `SUBST_LHS_TAC`, `cake_thm`
+- `USE_CHANGED`, `SUBST_LHS_TAC`
 
 With them `memory_rel_Number_IMP_Word` is
 
 ```ocaml
-MEMORY_REL_TAC THEN V_INV_TAC THEN ASM_MESON_TAC[]
+MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN ASM_MESON_TAC[]
 ```
 
 and the `ASM_MESON_TAC` at the end has a goal that is one step.
@@ -2001,7 +2010,7 @@ type variable for both.  `MATCH_ACCEPT_TAC` then failed with
 `misc_word_list` is polymorphic in the address **and** in the
 contents, nothing in the statement ties them together, and so the
 parser invented two.  `print_types_of_subterms := 2` on
-`concl (cake_thm "...")` is what shows it; the `aux` then needs
+`concl <the theorem>` is what shows it; the `aux` then needs
 two type variables as well, and the contents one is a bare `M`,
 not `(M)word_loc`.
 
@@ -2293,3 +2302,67 @@ existential over the list of words and the `cond` on its length
 put it out of reach (`word_list_exists_thm` needs
 `STAR_SEP_EXISTS`, `SEP_EXISTS_THM` and `STAR_cond` in that order,
 and then a two-line MESON over `LENGTH_EQ_CONS`).
+
+## 32. A family of functions whose clauses overlap
+
+### The idiom
+
+```
+Definition do_eq_def:
+  do_eq (Litv l1) (Litv l2) = ... ∧
+  ...
+  do_eq _ _ = Eq_type_error ∧
+  do_eq_list [] [] = Eq_val T ∧
+  do_eq_list (v1::vs1) (v2::vs2) = ... ∧
+  do_eq_list _ _ = Eq_val F
+End
+```
+
+### What it means
+
+One `Definition` defines two functions, and the clauses of one of
+them overlap: the last clause of `do_eq_list` catches the two lists
+that the first two have already given a value, and HOL4 takes the
+first clause that matches.
+
+### What resisted
+
+The port writes a definition whose clauses overlap as **one** clause
+with a `match`, which has HOL4's first match semantics (entry 6).  A
+`match` is one clause, so it cannot define a family: the port wrote
+both functions as arms of one match, HOL Light's pattern machinery
+gave the arms of `do_eq` and of `do_eq_list` the same generated
+variable, and the file would not even typecheck:
+
+```
+GEN%PVAR%3258 cannot have type semanticPrimitives_v#semanticPrimitives_v
+and (_)list#(_)list simultaneously
+```
+
+Leaving the clauses as a list of clauses is no answer either: they
+contradict each other, and the cheat of the definition's termination
+makes them axioms, so the port could prove anything from them.
+
+### What the port does
+
+`overrides.MATCH_CLAUSES` names the constants of the family whose
+clauses are to be one clause with a match.  The definition stays a
+list of clauses, and the clauses of each named constant are one
+entry of that list:
+
+```ocaml
+let do_eq_def = cake_define_list_cheat CHEAT_TAC
+  [`dataSem_do_eq refs v1 v2 = match (v1,v2) with ...`;
+   `dataSem_do_eq_list refs l1 l2 = match (l1,l2) with ...`];;
+```
+
+The entry carries the comment that goes over the definition, so a
+re-port writes the same file.  The five that need it are the
+`do_eq`/`do_eq_list` of `dataSem`, `bvlSem`, `closSem`, `flatSem`
+and `semanticPrimitives` (the first two have the overlap in both
+functions, the other three in `do_eq_list` alone).
+
+### Where it lives
+
+`tools/overrides.py`: `MATCH_CLAUSES`.  `tools/port.py`:
+`clause_form(body, matchcons)` and `match_form(body, only=...)`.

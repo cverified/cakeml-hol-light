@@ -328,7 +328,7 @@ let parse_cml_input_def = cake_define
        (locs_to_string (implode input) (SOME l))) | Success _6 x _7
        -> INR x)`;;
 
-let compile_def = cake_define
+let compiler_compile_def = cake_define
   `compiler_compile c prelude input =
      (let _8 = empty_ffi (implode "finished: start up") in
      match

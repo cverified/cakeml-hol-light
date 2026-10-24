@@ -25,7 +25,7 @@ needs "lib/comparison.ml";;
 needs "lib/set_sep.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 let dest_simple_def = cake_define
   `dest_simple x1 =
@@ -34,18 +34,17 @@ let dest_simple_def = cake_define
             xs then SOME i else NONE)
         | _1 -> NONE`;;
 
-let dest_simple_pmatch = cake_theorem "dest_simple_pmatch"
-  (fun () ->
-    `!op. dest_simple op =
-     (match op with
-       bvl_Op (closLang_IntOp (closLang_Const i)) [] -> SOME i |
-         _2 -> NONE)`)
+let dest_simple_pmatch = prove
+ (`!op. dest_simple op =
+   (match op with
+     bvl_Op (closLang_IntOp (closLang_Const i)) [] -> SOME i | _2
+       -> NONE)`,
   (* HOL4's pmatch is the match of HOL Light as well, so the two
      sides differ in one thing only: the pattern of the source
      matches any list and asks NULL of it, and this one matches the
      empty list.  The case split on the expression decides both *)
-  (GEN_TAC THEN REWRITE_TAC[cake_def "dest_simple"] THEN
-   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]);;
+  (GEN_TAC THEN REWRITE_TAC[dest_simple_def] THEN
+   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
 let case_op_const_def = cake_define
   `case_op_const exp =
@@ -53,13 +52,12 @@ let case_op_const_def = cake_define
          (closLang_Const n2)) l]) -> (if NULL l then SOME (op,x1,n2)
          else NONE) | _3 -> NONE)`;;
 
-let case_op_const_pmatch = cake_theorem "case_op_const_pmatch"
-  (fun () ->
-    `!exp. case_op_const exp =
-     (match exp with (Op op [x1; Op (closLang_IntOp
-       (closLang_Const n2)) []]) -> SOME (op,x1,n2) | _4 -> NONE)`)
-  (GEN_TAC THEN REWRITE_TAC[cake_def "case_op_const"] THEN
-   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]);;
+let case_op_const_pmatch = prove
+ (`!exp. case_op_const exp =
+   (match exp with (Op op [x1; Op (closLang_IntOp (closLang_Const
+     n2)) []]) -> SOME (op,x1,n2) | _4 -> NONE)`,
+  (GEN_TAC THEN REWRITE_TAC[case_op_const_def] THEN
+   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
 let SmartOp_flip_def = cake_define
   `SmartOp_flip op x1 x2 =
@@ -70,18 +68,17 @@ let SmartOp_flip_def = cake_define
            (closLang_IntOp (closLang_Const (--i))) []) else
            (op,x1,x2)) | _5 -> (op,x1,x2))`;;
 
-let SmartOp_flip_pmatch = cake_theorem "SmartOp_flip_pmatch"
-  (fun () ->
-    `!op x1 x2. SmartOp_flip op x1 x2 =
-       (match (dest_simple x1) with (SOME i) ->
-           (if MEM op [closLang_IntOp closLang_Add;
-             closLang_IntOp closLang_Mult] then (op,x2,x1) else if op
-             = closLang_IntOp closLang_Sub then (closLang_IntOp
-             closLang_Add,x2,Op (closLang_IntOp (closLang_Const
-             (--i))) []) else (op,x1,x2)) | _6 -> (op,x1,x2))`)
+let SmartOp_flip_pmatch = prove
+ (`!op x1 x2. SmartOp_flip op x1 x2 =
+     (match (dest_simple x1) with (SOME i) ->
+         (if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
+           closLang_Mult] then (op,x2,x1) else if op = closLang_IntOp
+           closLang_Sub then (closLang_IntOp closLang_Add,x2,Op
+           (closLang_IntOp (closLang_Const (--i))) []) else
+           (op,x1,x2)) | _6 -> (op,x1,x2))`,
   (* this one has no NULL in it, so the two sides are the same
      term and the definition is the whole proof *)
-  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "SmartOp_flip"]);;
+  (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_flip_def]));;
 
 let SmartOp2_def = cake_define
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
@@ -213,11 +210,10 @@ let dest_EqualInt_def = cake_define
           SOME i
       | _25 -> NONE`;;
 
-let dest_EqualInt_pmatch = cake_theorem "dest_EqualInt_pmatch"
-  (fun () ->
-    `dest_EqualInt x = (match x with closLang_BlockOp
-  (closLang_EqualConst (closLang_Int i)) -> SOME i | _26 -> NONE)`)
-  (REWRITE_TAC[cake_def "dest_EqualInt"]);;
+let dest_EqualInt_pmatch = prove
+ (`dest_EqualInt x = (match x with closLang_BlockOp
+  (closLang_EqualConst (closLang_Int i)) -> SOME i | _26 -> NONE)`,
+  (REWRITE_TAC[dest_EqualInt_def]));;
 
 let SmartOp1_def = cake_define
   `SmartOp1 op x =
@@ -232,14 +228,13 @@ let SmartOp_def = cake_define
        [x] -> SmartOp1 op x | _27 -> Op op xs)`;;
 hol4_overload "SmartOp" "bvl_const_SmartOp";;
 
-let SmartOp_pmatch = cake_theorem "SmartOp_pmatch"
-  (fun () ->
-    `!op xs. bvl_const_SmartOp op xs =
-     (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2)
-       | [x] -> SmartOp1 op x | _28 -> Op op xs)`)
-  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "bvl_const_SmartOp"]);;
+let SmartOp_pmatch = prove
+ (`!op xs. bvl_const_SmartOp op xs =
+   (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2) |
+     [x] -> SmartOp1 op x | _28 -> Op op xs)`,
+  (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_def]));;
 
-let extract_def = cake_define
+let bvl_const_extract_def = cake_define
   `bvl_const_extract x1 ys =
         match x1 with
           ((Var n):bvl_exp) -> SOME ((Var (n + LENGTH ys +
@@ -252,25 +247,24 @@ let extract_def = cake_define
         | _29 -> NONE`;;
 hol4_overload "extract" "bvl_const_extract";;
 
-let extract_pmatch = cake_theorem "extract_pmatch"
-  (fun () ->
-    `!op ys. extract op ys =
-     (match op with
-       ((Var n):bvl_exp) -> SOME ((Var (n + LENGTH ys +
-         1)):bvl_exp) | Op (closLang_IntOp (closLang_Const i)) xs ->
-         SOME (Op (closLang_IntOp (closLang_Const i)) []) | Op
-         (closLang_BlockOp (closLang_Cons t)) [] -> SOME (Op
-         (closLang_BlockOp (closLang_Cons t)) []) | _30 -> NONE)`)
-  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "bvl_const_extract"] THEN
-   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]);;
+let extract_pmatch = prove
+ (`!op ys. extract op ys =
+   (match op with
+     ((Var n):bvl_exp) -> SOME ((Var (n + LENGTH ys + 1)):bvl_exp)
+       | Op (closLang_IntOp (closLang_Const i)) xs -> SOME (Op
+       (closLang_IntOp (closLang_Const i)) []) | Op (closLang_BlockOp
+       (closLang_Cons t)) [] -> SOME (Op (closLang_BlockOp
+       (closLang_Cons t)) []) | _30 -> NONE)`,
+  (REPEAT GEN_TAC THEN REWRITE_TAC[bvl_const_extract_def] THEN
+   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
-let extract_list_def = cake_define_list
+let bvl_const_extract_list_def = cake_define_list
   [`bvl_const_extract_list [] = []`;
    `bvl_const_extract_list (x :: xs) = extract x xs ::
   bvl_const_extract_list xs`];;
 hol4_overload "extract_list" "bvl_const_extract_list";;
 
-let delete_var_def = cake_define
+let bvl_const_delete_var_def = cake_define
   `bvl_const_delete_var x =
         match x with
           ((Var n):bvl_exp) -> Op (closLang_IntOp (closLang_Const
@@ -278,14 +272,13 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvl_const_delete_var";;
 
-let delete_var_pmatch = cake_theorem "delete_var_pmatch"
-  (fun () ->
-    `!op.
-     bvl_const_delete_var op =
-       (match op with
-         Var n -> Op (closLang_IntOp (closLang_Const (&0))) [] |
-           x -> x)`)
-  (GEN_TAC THEN REWRITE_TAC[cake_def "bvl_const_delete_var"]);;
+let delete_var_pmatch = prove
+ (`!op.
+   bvl_const_delete_var op =
+     (match op with
+       Var n -> Op (closLang_IntOp (closLang_Const (&0))) [] | x ->
+         x)`,
+  (GEN_TAC THEN REWRITE_TAC[bvl_const_delete_var_def]));;
 
 let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source *)
@@ -293,7 +286,7 @@ let _ = size_thms "bvl_exp";;
    define_single takes as it stands: the strategies that
    cake_define_gen tries before it declare the constant and
    leave it no chance (a minute, which is what this costs) *)
-let compile_def =
+let bvl_const_compile_def =
   let th = end_itlist CONJ (fst (define_single
     [(`MEASURE (list_size bvl_exp_size o SND)`,
       TERM_TAC)]
@@ -335,7 +328,7 @@ let compile_def =
   (note_dest_fact th; cake_note_def th; th);;
 hol4_overload "compile" "bvl_const_compile";;
 
-let compile_sing_def = cake_define_list
+let bvl_const_compile_sing_def = cake_define_list
   [`bvl_const_compile_sing env (Var v:bvl_exp) =
          (match (\l n. oEL n l) env v with NONE -> Var v | SOME
            NONE -> Var v | SOME (SOME (Var i)) -> Var (v + i) | SOME
@@ -373,14 +366,13 @@ let compile_sing_def = cake_define_list
 hol4_overload "compile_list" "bvl_const_compile_list";;
 hol4_overload "compile_sing" "bvl_const_compile_sing";;
 
-let compile_eq = cake_theorem "compile_eq"
-  (fun () ->
-    `(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env
-  e]) /\
-     (!es env. bvl_const_compile env es = bvl_const_compile_list
-       env es)`)
-  (let cp = cake_def "bvl_const_compile" in
-   let cs = cake_def "bvl_const_compile_sing" in
+let compile_eq = prove
+ (`(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env e])
+  /\
+   (!es env. bvl_const_compile env es = bvl_const_compile_list env
+     es)`,
+  (let cp = bvl_const_compile_def in
+   let cs = bvl_const_compile_sing_def in
    let sz = size_thms "bvl_exp" in
    (* HOL4 does this induction on the structure of an expression
       (Induct), which is an induction over the two types of the
@@ -496,12 +488,12 @@ let compile_eq = cake_theorem "compile_eq"
                      th))]
         THEN DISCH_THEN MATCH_MP_TAC THEN REWRITE_TAC[LE_REFL]) THEN
    INDUCT_TAC THENL
-   [sing_base; CONJ_TAC THENL [part1; part2]]);;
+   [sing_base; CONJ_TAC THENL [part1; part2]]));;
 
-let bvl_const_compile_length = cake_theorem "compile_length[simp]"
-  (fun () ->
-    `!n xs. LENGTH (bvl_const_compile n xs) = LENGTH xs`)
-  (let cp = cake_def "bvl_const_compile" in
+(* compile_length[simp] *)
+let bvl_const_compile_length = prove
+ (`!n xs. LENGTH (bvl_const_compile n xs) = LENGTH xs`,
+  (let cp = bvl_const_compile_def in
    let sz = size_thms "bvl_exp" in
    (* HOL4 takes the induction theorem that its termination proof
       left behind (HO_MATCH_MP_TAC compile_ind); the port induces on
@@ -552,11 +544,11 @@ let bvl_const_compile_length = cake_theorem "compile_length[simp]"
       NAMED_CASES_TAC `xr:bvl_exp list` [[]; ["x2"; "xr2"]] THENL
       [single_case; cons_cons_case]] in
    MEASURE_INDUCT_TAC `list_size bvl_exp_size` THENL
-   [base_case; step_case]);;
+   [base_case; step_case]));;
 
-let bvl_const_compile_HD_SING = cake_theorem "compile_HD_SING"
-  (fun () ->
-    `[HD (bvl_const_compile n [x])] = bvl_const_compile n [x]`)
+(* compile_HD_SING *)
+let bvl_const_compile_HD_SING = prove
+ (`[HD (bvl_const_compile n [x])] = bvl_const_compile n [x]`,
   (* the compiled list of one has length one, so it is its own head
      put back into a list *)
   (MP_TAC(SPECL [`n:(bvl_exp option) list`; `[x:bvl_exp]`]
@@ -564,23 +556,25 @@ let bvl_const_compile_HD_SING = cake_theorem "compile_HD_SING"
    STRUCT_CASES_TAC(ISPEC `bvl_const_compile n [x]` list_CASES) THEN
    REWRITE_TAC[LENGTH; SUC_INJ; LENGTH_EQ_NIL; NOT_SUC] THEN
    CONV_TAC NUM_REDUCE_CONV THEN
-   TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]);;
+   TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]));;
 
-let compile_exp_def = cake_define
+let bvl_const_compile_exp_def = cake_define
   `bvl_const_compile_exp x =
      (match bvl_const_compile [] [x] with (y :: _31) -> y | _32 ->
        Var 0)
    // impossible`;;
 hol4_overload "compile_exp" "bvl_const_compile_exp";;
 
-let bvl_const_compile_exp_eq = cake_theorem "compile_exp_eq"
-  (fun () ->
-    `!x. bvl_const_compile_exp x = bvl_const_compile_sing [] x`)
+(* compile_exp_eq *)
+let bvl_const_compile_exp_eq = prove
+ (`!x. bvl_const_compile_exp x = bvl_const_compile_sing [] x`,
   (* HOL4 applies compile_eq to compile_exp_def: the compiled list
      of one is a singleton, so the match of compile_exp reduces to
      its head *)
-  (let ce = cake_def "bvl_const_compile_exp" in
+  (let ce = bvl_const_compile_exp_def in
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_eq] THEN
-   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

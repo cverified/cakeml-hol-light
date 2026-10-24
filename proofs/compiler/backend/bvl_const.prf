@@ -3,34 +3,34 @@
      sides differ in one thing only: the pattern of the source
      matches any list and asks NULL of it, and this one matches the
      empty list.  The case split on the expression decides both *)
-  (GEN_TAC THEN REWRITE_TAC[cake_def "dest_simple"] THEN
+  (GEN_TAC THEN REWRITE_TAC[dest_simple_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL])
 
 ### case_op_const_pmatch
-  (GEN_TAC THEN REWRITE_TAC[cake_def "case_op_const"] THEN
+  (GEN_TAC THEN REWRITE_TAC[case_op_const_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL])
 
 ### SmartOp_flip_pmatch
   (* this one has no NULL in it, so the two sides are the same
      term and the definition is the whole proof *)
-  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "SmartOp_flip"])
+  (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_flip_def])
 
 ### dest_EqualInt_pmatch
-  (REWRITE_TAC[cake_def "dest_EqualInt"])
+  (REWRITE_TAC[dest_EqualInt_def])
 
 ### SmartOp_pmatch
-  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "bvl_const_SmartOp"])
+  (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_def])
 
 ### extract_pmatch
-  (REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "bvl_const_extract"] THEN
+  (REPEAT GEN_TAC THEN REWRITE_TAC[bvl_const_extract_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL])
 
 ### delete_var_pmatch
-  (GEN_TAC THEN REWRITE_TAC[cake_def "bvl_const_delete_var"])
+  (GEN_TAC THEN REWRITE_TAC[bvl_const_delete_var_def])
 
 ### compile_eq
-  (let cp = cake_def "bvl_const_compile" in
-   let cs = cake_def "bvl_const_compile_sing" in
+  (let cp = bvl_const_compile_def in
+   let cs = bvl_const_compile_sing_def in
    let sz = size_thms "bvl_exp" in
    (* HOL4 does this induction on the structure of an expression
       (Induct), which is an induction over the two types of the
@@ -148,8 +148,8 @@
    INDUCT_TAC THENL
    [sing_base; CONJ_TAC THENL [part1; part2]])
 
-### compile_length
-  (let cp = cake_def "bvl_const_compile" in
+### bvl_const_compile_length
+  (let cp = bvl_const_compile_def in
    let sz = size_thms "bvl_exp" in
    (* HOL4 takes the induction theorem that its termination proof
       left behind (HO_MATCH_MP_TAC compile_ind); the port induces on
@@ -202,7 +202,7 @@
    MEASURE_INDUCT_TAC `list_size bvl_exp_size` THENL
    [base_case; step_case])
 
-### compile_HD_SING
+### bvl_const_compile_HD_SING
   (* the compiled list of one has length one, so it is its own head
      put back into a list *)
   (MP_TAC(SPECL [`n:(bvl_exp option) list`; `[x:bvl_exp]`]
@@ -212,10 +212,10 @@
    CONV_TAC NUM_REDUCE_CONV THEN
    TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD])
 
-### compile_exp_eq
+### bvl_const_compile_exp_eq
   (* HOL4 applies compile_eq to compile_exp_def: the compiled list
      of one is a singleton, so the match of compile_exp reduces to
      its head *)
-  (let ce = cake_def "bvl_const_compile_exp" in
+  (let ce = bvl_const_compile_exp_def in
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_eq] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[])

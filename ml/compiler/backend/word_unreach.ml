@@ -25,7 +25,7 @@ let dest_Seq_Move_def = cake_define
       | (Seq (wordLang_Move n l) rest) -> SOME (n,l,rest)
       | _1 -> NONE`;;
 
-let merge_moves_def = cake_define
+let word_unreach_merge_moves_def = cake_define
   `word_unreach_merge_moves l1 l2 =
      (let l2' = MAP (\(x,y). match ALOOKUP l1 y with NONE -> (x,y) |
        SOME v -> (x,v)) l2 in
@@ -76,10 +76,10 @@ let remove_unreach_def = cake_define
   `remove_unreach (e:'a wordLang_prog) =
      Seq_assoc_right e Skip`;;
 
-let remove_unreach_test = cake_theorem "remove_unreach_test[local]"
-  (fun () ->
-    `remove_unreach (wordLang_Seq (wordLang_Move 1 [(1,11); (2,22);
+(* [local] *)
+let remove_unreach_test = prove
+ (`remove_unreach (wordLang_Seq (wordLang_Move 1 [(1,11); (2,22);
   (3,33)])
-                         (wordLang_Move 1 [(3,1); (2,99)])) =
-     wordLang_Move 1 [(3,11); (2,99); (1,11)]`)
-  CHEAT_TAC;;
+                       (wordLang_Move 1 [(3,1); (2,99)])) =
+   wordLang_Move 1 [(3,11); (2,99); (1,11)]`,
+  CHEAT_TAC);;

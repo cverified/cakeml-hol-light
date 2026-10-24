@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_letProof: ported from HOL4's
-    compiler/backend/proofs/bvi_letProofScript.sml  *)
+    compiler/backend/proofs/bvi_letProofScript.sml
+    A proof theory about bvi_let.ml, with 2 definitions and 19
+    theorems.  Needed by bvl_to_bviProof.ml and compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -40,10 +42,9 @@ let env_rel_def = cake_define
         | (_1,_2,_3) -> F`;;
 hol4_overload "env_rel" "bvi_letProof_env_rel";;
 
-let env_rel_length = cake_theorem "env_rel_length"
-  (fun () ->
-    `!ax env env2. bvi_letProof_env_rel ax d env env2 ==> LENGTH env
-  <= LENGTH env2`)
+let env_rel_length = prove
+ (`!ax env env2. bvi_letProof_env_rel ax d env env2 ==> LENGTH env <=
+  LENGTH env2`,
   (LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
     MATCH_REDUCE_TAC THEN
@@ -51,16 +52,16 @@ let env_rel_length = cake_theorem "env_rel_length"
     REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
     LIST_CASES_TAC ["env"; "env2"] THEN MATCH_REDUCE_TAC THEN
     REWRITE_TAC[LENGTH; LE_SUC; LE_0] THEN STRIP_TAC THEN
-    FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
+    FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]));;
 
-let env_rel_LLOOKUP_NONE = cake_theorem "env_rel_LLOOKUP_NONE[local]"
-  (fun () ->
-    `!ax env env2 n d.
-         bvi_letProof_env_rel ax d env env2 /\
-         (\l n. oEL n l) ax n = NONE /\
-         n < LENGTH env ==>
-         n + d < LENGTH env2 /\
-         EL (n + d) env2 = EL n env`)
+(* [local] *)
+let env_rel_LLOOKUP_NONE = prove
+ (`!ax env env2 n d.
+       bvi_letProof_env_rel ax d env env2 /\
+       (\l n. oEL n l) ax n = NONE /\
+       n < LENGTH env ==>
+       n + d < LENGTH env2 /\
+       EL (n + d) env2 = EL n env`,
   (LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
     MATCH_REDUCE_TAC THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
@@ -78,15 +79,15 @@ let env_rel_LLOOKUP_NONE = cake_theorem "env_rel_LLOOKUP_NONE[local]"
                 NOT_SUC; ARITH_EQ; SUC_SUB1;
                 distinctness "option"] THEN
     STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
-    ASM_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[]]));;
 
-let env_rel_LOOKUP_SOME = cake_theorem "env_rel_LOOKUP_SOME[local]"
-  (fun () ->
-    `!env env2 ax x n d.
-         bvi_letProof_env_rel ax d env env2 /\
-         (\l n. oEL n l) ax n = SOME x ==>
-         bvi_letProof_v_rel x (EL n env) (EL n env2) (DROP n env)
-           (DROP n env2)`)
+(* [local] *)
+let env_rel_LOOKUP_SOME = prove
+ (`!env env2 ax x n d.
+       bvi_letProof_env_rel ax d env env2 /\
+       (\l n. oEL n l) ax n = SOME x ==>
+       bvi_letProof_v_rel x (EL n env) (EL n env2) (DROP n env)
+         (DROP n env2)`,
   (let UNFOLD = CONV_TAC(DEPTH_CONV BETA_CONV) in
    REWRITE_TAC[v_rel_def] THEN UNFOLD THEN
    LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
@@ -98,17 +99,15 @@ let env_rel_LOOKUP_SOME = cake_theorem "env_rel_LOOKUP_SOME[local]"
    REWRITE_TAC[EL; TL; HD; DROP; ARITH_EQ; NOT_SUC; SUC_SUB1;
                distinctness "option"; injectivity "option"] THEN
    STRIP_TAC THEN ASM_REWRITE_TAC[oEL] THEN
-   ASM_MESON_TAC[]);;
+   ASM_MESON_TAC[]));;
 
-let evaluate_delete_var_Rerr_SING =
-  cake_theorem "evaluate_delete_var_Rerr_SING"
-  (fun () ->
-    `!x s r e env2.
-        evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort
-          Rtype_error) ==>
-        evaluate ([delete_var x],env2,s) = (Rerr e,r)`)
-  (let dv = cake_def "bvi_let_delete_var" in
-   let ev = cake_def "bviSem_evaluate" in
+let evaluate_delete_var_Rerr_SING = prove
+ (`!x s r e env2.
+      evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
+        ==>
+      evaluate ([delete_var x],env2,s) = (Rerr e,r)`,
+  (let dv = delete_var_def in
+   let ev = bviSem_evaluate_def in
    REPEAT GEN_TAC THEN
    STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
    REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
@@ -118,21 +117,20 @@ let evaluate_delete_var_Rerr_SING =
    COND_CASES_TAC THEN
    REWRITE_TAC[PAIR_EQ; distinctness "semanticPrimitives_result";
                injectivity "semanticPrimitives_result"] THEN
-   ASM_MESON_TAC[]);;
+   ASM_MESON_TAC[]));;
 
-let evaluate_delete_var_Rerr =
-  cake_theorem "evaluate_delete_var_Rerr[local]"
-  (fun () ->
-    `!xs s r e env2.
-         evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort
-           Rtype_error) ==>
-         evaluate (MAP delete_var xs,env2,s) = (Rerr e,r)`)
-  (let dv = cake_def "bvi_let_delete_var" in
-   let ev = cake_def "bviSem_evaluate" in
-   let da = cake_def "bviSem_do_app" in
-   let daa = cake_def "bviSem_do_app_aux" in
-   let fc = cake_def "bviSem_fix_clock" in
-   let sei = cake_def "small_enough_int" in
+(* [local] *)
+let evaluate_delete_var_Rerr = prove
+ (`!xs s r e env2.
+       evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
+         ==>
+       evaluate (MAP delete_var xs,env2,s) = (Rerr e,r)`,
+  (let dv = delete_var_def in
+   let ev = bviSem_evaluate_def in
+   let da = bviSem_do_app_def in
+   let daa = do_app_aux_def in
+   let fc = bviSem_fix_clock_def in
+   let sei = small_enough_int_def in
    let res_rws = [PAIR_EQ;
                   distinctness "semanticPrimitives_result";
                   injectivity "semanticPrimitives_result"] in
@@ -203,30 +201,28 @@ let evaluate_delete_var_Rerr =
      RES2_THEN stateq
       (DISCH_THEN SUBST_ALL_TAC THEN
        FIRST_ASSUM(fun ih ->
-         RES2_THEN ih (SOLVED(ASM_REWRITE_TAC res_rws))))]);;
+         RES2_THEN ih (SOLVED(ASM_REWRITE_TAC res_rws))))]));;
 
-let evaluate_delete_var_Rval =
-  cake_theorem "evaluate_delete_var_Rval[local]"
-  (fun () ->
-    `!xs env2 s a r ax env d.
-         evaluate (xs,env2,(s:('c,'ffi)bviSem_state)) = (Rval a,r)
-           /\
-         bvi_letProof_env_rel ax d env env2 ==>
-         (?b. evaluate (MAP delete_var xs,env2,s) = (Rval b,r) /\
-             bvi_letProof_env_rel (extract_list xs ++ ax) d (a ++
-               env) (b ++ env2))`)
+(* [local] *)
+let evaluate_delete_var_Rval = prove
+ (`!xs env2 s a r ax env d.
+       evaluate (xs,env2,(s:('c,'ffi)bviSem_state)) = (Rval a,r) /\
+       bvi_letProof_env_rel ax d env env2 ==>
+       (?b. evaluate (MAP delete_var xs,env2,s) = (Rval b,r) /\
+           bvi_letProof_env_rel (extract_list xs ++ ax) d (a ++
+             env) (b ++ env2))`,
   (let rty = `:(bvlSem_v list,exn_or_ret)
                 semanticPrimitives_result` in
-   let dv = cake_def "bvi_let_delete_var" in
-   let ev = cake_def "bviSem_evaluate" in
-   let da = cake_def "bviSem_do_app" in
-   let daa = cake_def "bviSem_do_app_aux" in
-   let fc = cake_def "bviSem_fix_clock" in
-   let sei = cake_def "small_enough_int" in
-   let el = cake_def "bvi_let_extract_list" in
-   let ex = cake_def "bvi_let_extract" in
-   let er = cake_def "bvi_letProof_env_rel" in
-   let vr = cake_def "bvi_letProof_v_rel" in
+   let dv = delete_var_def in
+   let ev = bviSem_evaluate_def in
+   let da = bviSem_do_app_def in
+   let daa = do_app_aux_def in
+   let fc = bviSem_fix_clock_def in
+   let sei = small_enough_int_def in
+   let el = extract_list_def in
+   let ex = bvi_let_extract_def in
+   let er = env_rel_def in
+   let vr = v_rel_def in
    let res_rws = [PAIR_EQ;
                   distinctness "semanticPrimitives_result";
                   injectivity "semanticPrimitives_result"] in
@@ -344,15 +340,14 @@ let evaluate_delete_var_Rval =
    REPEAT GEN_TAC THEN
    GEN_REWRITE_TAC ONCE_DEPTH_CONV [bviProps_evaluate_CONS] THEN
    ASM_CASES_TAC `?i. (h:bvi_exp) = Var i` THENL
-   [var_branch; nonvar_branch]);;
+   [var_branch; nonvar_branch]));;
 
-let evaluate_SNOC_Rval = cake_theorem "evaluate_SNOC_Rval"
-  (fun () ->
-    `evaluate (SNOC x y,env,s) = (Rval a,r) ==>
-      (?a1 a2 r1.
-        a = SNOC a1 a2 /\ LENGTH y = LENGTH a2 /\
-        evaluate (y,env,s) = (Rval a2,r1) /\
-        evaluate ([x],env,r1) = (Rval [a1],r))`)
+let evaluate_SNOC_Rval = prove
+ (`evaluate (SNOC x y,env,s) = (Rval a,r) ==>
+    (?a1 a2 r1.
+      a = SNOC a1 a2 /\ LENGTH y = LENGTH a2 /\
+      evaluate (y,env,s) = (Rval a2,r1) /\
+      evaluate ([x],env,r1) = (Rval [a1],r))`,
   (ONCE_REWRITE_TAC[bviProps_evaluate_SNOC] THEN EVERY_CASE_TAC THEN
    REWRITE_TAC[PAIR_EQ; distinctness "semanticPrimitives_result";
                injectivity "semanticPrimitives_result"] THEN
@@ -362,45 +357,40 @@ let evaluate_SNOC_Rval = cake_theorem "evaluate_SNOC_Rval"
    ASM_MESON_TAC[bviProps_evaluate_IMP_LENGTH;
                  prove(`!l x. SNOC x l = l ++ [x]`,
                        LIST_INDUCT_TAC THEN
-                       ASM_REWRITE_TAC[SNOC; APPEND])]);;
+                       ASM_REWRITE_TAC[SNOC; APPEND])]));;
 
-let compile_CONS = cake_theorem "compile_CONS"
-  (fun () ->
-    `compile ax d (x :: xs) = compile ax d [x] ++ compile ax d xs`)
-  (let compile_def = cake_def "bvi_let_compile" in
+let compile_CONS = prove
+ (`compile ax d (x :: xs) = compile ax d [x] ++ compile ax d xs`,
+  (let compile_def = bvi_let_compile_def in
    STRUCT_CASES_TAC(ISPEC `xs:bvi_exp list` list_CASES) THEN
-   REWRITE_TAC[compile_def; APPEND_NIL]);;
+   REWRITE_TAC[compile_def; APPEND_NIL]));;
 
-let compile_APPEND = cake_theorem "compile_APPEND"
-  (fun () ->
-    `!xs ys ax d. compile ax d (xs ++ ys) = compile ax d xs ++ compile
-  ax d ys`)
-  (let compile_def = cake_def "bvi_let_compile" in
+let compile_APPEND = prove
+ (`!xs ys ax d. compile ax d (xs ++ ys) = compile ax d xs ++ compile
+  ax d ys`,
+  (let compile_def = bvi_let_compile_def in
    LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; compile_def] THEN
    ONCE_REWRITE_TAC[compile_CONS] THEN
-   ASM_REWRITE_TAC[GSYM APPEND_ASSOC]);;
+   ASM_REWRITE_TAC[GSYM APPEND_ASSOC]));;
 
-let IMP_COMM = cake_theorem "IMP_COMM"
-  (fun () ->
-    `(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`)
-  (MESON_TAC[]);;
+let IMP_COMM = prove
+ (`(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`,
+  (MESON_TAC[]));;
 
-let exp_size_APPEND = cake_theorem "exp_size_APPEND"
-  (fun () ->
-    `!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs +
-  bvi_exp_size1 ys`)
+let exp_size_APPEND = prove
+ (`!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs + bvi_exp_size1
+  ys`,
   (* the same theorem as bvi_let's exp2_size_APPEND, which the
      source states again here *)
   (let sz = size_thms "bvi_exp" in
    REWRITE_TAC sz THEN
-   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND));;
+   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND)));;
 
-let env_rel_MAP = cake_theorem "env_rel_MAP"
-  (fun () ->
-    `!ax env1 env2 d a.
-        bvi_letProof_env_rel ax d env1 env2 ==>
-        bvi_letProof_env_rel (MAP ((+) (LENGTH a)) ax) (d +
-          LENGTH a) env1 (a ++ env2)`)
+let env_rel_MAP = prove
+ (`!ax env1 env2 d a.
+      bvi_letProof_env_rel ax d env1 env2 ==>
+      bvi_letProof_env_rel (MAP ((+) (LENGTH a)) ax) (d + LENGTH a)
+        env1 (a ++ env2)`,
   (* HOL4 moves the head of the new environment into ax with the
      append gymnastics of bvi_letProofScript.sml:157-176; the same
      induction, one element at a time *)
@@ -430,35 +420,34 @@ let env_rel_MAP = cake_theorem "env_rel_MAP"
     REWRITE_TAC[LENGTH; APPEND; ADD_CLAUSES] THEN
     ONCE_REWRITE_TAC[GSYM MAP_SUC] THEN DISCH_TAC THEN
     MATCH_MP_TAC STEP THEN FIRST_ASSUM MATCH_MP_TAC THEN
-    ASM_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[]]));;
 
-let env_rel_REPLICATE_0 = cake_theorem "env_rel_REPLICATE_0[local]"
-  (fun () ->
-    `!vs ax d env1 env2.
-       bvi_letProof_env_rel ax d env1 env2 ==>
-       bvi_letProof_env_rel (REPLICATE (LENGTH vs) 0 ++ ax) d (vs
-         ++ env1) (vs ++ env2)`)
+(* [local] *)
+let env_rel_REPLICATE_0 = prove
+ (`!vs ax d env1 env2.
+     bvi_letProof_env_rel ax d env1 env2 ==>
+     bvi_letProof_env_rel (REPLICATE (LENGTH vs) 0 ++ ax) d (vs ++
+       env1) (vs ++ env2)`,
   (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
    ASM_REWRITE_TAC[REPLICATE; LENGTH; APPEND] THEN
    ONCE_REWRITE_TAC[env_rel_def] THEN MATCH_REDUCE_TAC THEN
    CONJ_TAC THENL
    [REWRITE_TAC[v_rel_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
     REWRITE_TAC[oEL];
-    ASM_SIMP_TAC[]]);;
+    ASM_SIMP_TAC[]]));;
 
-let evaluate_env_rel = cake_theorem "evaluate_env_rel"
-  (fun () ->
-    `!xs env1 (s1:('c,'ffi)bviSem_state) ax env2 res s2 ys d.
-        (evaluate (xs,env1,s1) = (res,s2)) /\
-        bvi_letProof_env_rel ax d env1 env2 /\ ~(res = Rerr (Rabort
-          Rtype_error)) ==>
-        (evaluate (compile ax d xs,env2,s1) = (res,s2))`)
+let evaluate_env_rel = prove
+ (`!xs env1 (s1:('c,'ffi)bviSem_state) ax env2 res s2 ys d.
+      (evaluate (xs,env1,s1) = (res,s2)) /\
+      bvi_letProof_env_rel ax d env1 env2 /\ ~(res = Rerr (Rabort
+        Rtype_error)) ==>
+      (evaluate (compile ax d xs,env2,s1) = (res,s2))`,
   ((* ---- the pieces ---------------------------------------------- *)
-   let cp = cake_def "bvi_let_compile" in
-   let ev = cake_def "bviSem_evaluate" in
-   let er = cake_def "bvi_letProof_env_rel" in
-   let vr = cake_def "bvi_letProof_v_rel" in
-   let fc = cake_def "bviSem_fix_clock" in
+   let cp = bvi_let_compile_def in
+   let ev = bviSem_evaluate_def in
+   let er = env_rel_def in
+   let vr = v_rel_def in
+   let fc = bviSem_fix_clock_def in
    let fce = bviSem_fix_clock_evaluate in
    let sz = size_thms "bvi_exp" in
    let res_rws = [PAIR_EQ; distinctness "semanticPrimitives_result";
@@ -869,7 +858,7 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
      [nil_case; impossible; nil_case; ALL_TAC] THEN
      NAMED_CASES_TAC `xr:bvi_exp list` [[]; ["x2"; "xr2"]] THENL
      [single_case; TRY cons_cons_case] in
-   env_rel_tac);;
+   env_rel_tac));;
 
 (* HOL4 bvi_letProofScript.sml:220-237: a proof *)
 
@@ -897,16 +886,15 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
 
 (* HOL4 bvi_letProofScript.sml:389: a proof *)
 
-let compile_thm = cake_theorem "compile_thm"
-  (fun () ->
-    `!xs env (s1:('c,'ffi)bviSem_state) res s2 ys. (evaluate
-  (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
-  (evaluate (compile [] 0 xs,env,s1) = (res,s2))`)
+let compile_thm = prove
+ (`!xs env (s1:('c,'ffi)bviSem_state) res s2 ys. (evaluate (xs,env,s1)
+  = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==> (evaluate
+  (compile [] 0 xs,env,s1) = (res,s2))`,
   (* evaluate_env_rel at ax = [] and d = 0, where env_rel [] 0 env
      env is env = DROP 0 env.  The terms are taken out of the goal:
      the state of the statement has type variables of its own
      (PORTING-GUIDE.md entry 12) *)
-  (let er = cake_def "bvi_letProof_env_rel" in
+  (let er = env_rel_def in
    let env_rel_refl = prove
     (`!env. bvi_letProof_env_rel [] 0 env env`,
      GEN_TAC THEN ONCE_REWRITE_TAC[er] THEN MATCH_REDUCE_TAC THEN
@@ -917,15 +905,13 @@ let compile_thm = cake_theorem "compile_thm"
      let env_tm = fst(dest_pair(snd(dest_pair tup))) in
      FIRST_ASSUM(fun ne ->
        ACCEPT_TAC(SPEC_ALL(MATCH_MP evaluate_env_rel
-         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne)))))));;
+         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne))))))));;
 
-let evaluate_compile_exp = cake_theorem "evaluate_compile_exp"
-  (fun () ->
-    `evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error))
-  ==>
-      evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`)
-  (let ce = cake_def "bvi_let_compile_exp" in
-   let er = cake_def "bvi_letProof_env_rel" in
+let evaluate_compile_exp = prove
+ (`evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
+    evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`,
+  (let ce = bvi_let_compile_exp_def in
+   let er = env_rel_def in
    (* compile_exp x is the one expression that compile makes of the
       list [x], which compile_HD_SING says is a singleton *)
    let exp_SING = prove
@@ -952,14 +938,14 @@ let evaluate_compile_exp = cake_theorem "evaluate_compile_exp"
      let env_tm = fst(dest_pair(snd(dest_pair tup))) in
      FIRST_ASSUM(fun ne ->
        ACCEPT_TAC(SPEC_ALL(MATCH_MP evaluate_env_rel
-         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne)))))));;
+         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne))))))));;
 
-let dest_var_code_labels = cake_theorem "dest_var_code_labels[simp]"
-  (fun () ->
-    `!x. get_code_labels (delete_var x) = get_code_labels x`)
-  (let dv = cake_def "bvi_let_delete_var" in
-   let gcl = cake_def "bviProps_get_code_labels" in
-   let agcl = cake_def "assign_get_code_label" in
+(* [simp] *)
+let dest_var_code_labels = prove
+ (`!x. get_code_labels (delete_var x) = get_code_labels x`,
+  (let dv = delete_var_def in
+   let gcl = bviProps_get_code_labels_def in
+   let agcl = assign_get_code_label_def in
    GEN_TAC THEN
    STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
    REWRITE_TAC[dv] THEN
@@ -967,15 +953,14 @@ let dest_var_code_labels = cake_theorem "dest_var_code_labels[simp]"
    REWRITE_TAC[gcl; agcl] THEN
    MATCH_REDUCE_TAC THEN
    REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
-               UNION_EMPTY; EMPTY_UNION]);;
+               UNION_EMPTY; EMPTY_UNION]));;
 
-let compile_code_labels = cake_theorem "compile_code_labels"
-  (fun () ->
-    `!x y z. BIGUNION (set_of_list (MAP get_code_labels (bvi_let_compile
-  x y z))) =
-             BIGUNION (set_of_list (MAP get_code_labels z))`)
-  (let cp = cake_def "bvi_let_compile" in
-   let gcl = cake_def "bviProps_get_code_labels" in
+let compile_code_labels = prove
+ (`!x y z. BIGUNION (set_of_list (MAP get_code_labels (bvi_let_compile x
+  y z))) =
+           BIGUNION (set_of_list (MAP get_code_labels z))`,
+  (let cp = bvi_let_compile_def in
+   let gcl = bviProps_get_code_labels_def in
    let sz = size_thms "bvi_exp" in
    let labs_rws = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                    UNION_EMPTY; EMPTY_UNION] in
@@ -1119,13 +1104,12 @@ let compile_code_labels = cake_theorem "compile_code_labels"
         MATCH_MP_TAC(SPEC `list_size bvi_exp_size (z:bvi_exp list)`
                        th) THEN
         REWRITE_TAC[LE_REFL]) THEN
-   INDUCT_TAC THENL [base_case; step_case]);;
+   INDUCT_TAC THENL [base_case; step_case]));;
 
-let compile_exp_code_labels =
-  cake_theorem "compile_exp_code_labels[simp]"
-  (fun () ->
-    `!x. get_code_labels (bvi_let_compile_exp x) = get_code_labels x`)
-  (let ce = cake_def "bvi_let_compile_exp" in
+(* [simp] *)
+let compile_exp_code_labels = prove
+ (`!x. get_code_labels (bvi_let_compile_exp x) = get_code_labels x`,
+  (let ce = bvi_let_compile_exp_def in
    (* compile_exp is the head of the compiled singleton, so its
       labels are the labels of the list that compile_code_labels
       speaks about *)
@@ -1145,4 +1129,4 @@ let compile_exp_code_labels =
    GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [labs_SING] THEN
    REWRITE_TAC[compile_code_labels] THEN
    REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
-               UNION_EMPTY]);;
+               UNION_EMPTY]));;

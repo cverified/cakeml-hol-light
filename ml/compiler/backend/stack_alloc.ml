@@ -911,12 +911,12 @@ let word_gc_code_def = cake_define
                   w)) 1 (n2w 1)) (stackLang_Halt 1)) Skip]):'a
                   stackLang_prog))`;;
 
-let stubs_def = cake_define
+let stack_alloc_stubs_def = cake_define
   `stack_alloc_stubs conf = [(gc_stub_location,Seq (word_gc_code
   conf) (Return 0))]`;;
 hol4_overload "stubs" "stack_alloc_stubs";;
 
-let stub_names_def = cake_define
+let stack_alloc_stub_names_def = cake_define
   `stack_alloc_stub_names one = [(gc_stub_location,(implode "_GC"))]`;;
 hol4_overload "stub_names" "stack_alloc_stub_names";;
 
@@ -938,7 +938,7 @@ let next_lab_def = cake_define
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let comp_def = cake_define_cheat CHEAT_TAC
+let stack_alloc_comp_def = cake_define_cheat CHEAT_TAC
   `stack_alloc_comp n m p =
      (match p with Seq p1 p2 ->
          (let (q1,m) = stack_alloc_comp n m p1 in
@@ -969,7 +969,7 @@ let prog_comp_def = cake_define
   `stack_alloc_prog_comp (n,p) = (n,FST (comp n (next_lab p 2) p))`;;
 hol4_overload "prog_comp" "stack_alloc_prog_comp";;
 
-let compile_def = cake_define
+let stack_alloc_compile_def = cake_define
   `stack_alloc_compile c prog = stubs c ++ MAP stack_alloc_prog_comp
   prog`;;
 hol4_overload "compile" "stack_alloc_compile";;

@@ -72,18 +72,16 @@ let map_bitmap_def = cake_define
           (xs,ys,zs) -> SOME (t :: xs,ys,zs))
         | (_3,_4,_5) -> NONE`;;
 
-let filter_bitmap_LENGTH = cake_theorem "filter_bitmap_LENGTH"
-  (fun () ->
-    `!bs xs x y. (filter_bitmap bs xs = SOME (x,y)) ==> LENGTH y <=
-  LENGTH xs`)
-  CHEAT_TAC;;
+let filter_bitmap_LENGTH = prove
+ (`!bs xs x y. (filter_bitmap bs xs = SOME (x,y)) ==> LENGTH y <=
+  LENGTH xs`,
+  CHEAT_TAC);;
 
-let map_bitmap_LENGTH = cake_theorem "map_bitmap_LENGTH"
-  (fun () ->
-    `!t1 t2 t3 x y z. (map_bitmap t1 t2 t3 = SOME (x,y,z)) ==>
-                     LENGTH y <= LENGTH t2 /\
-                     LENGTH z <= LENGTH t3`)
-  CHEAT_TAC;;
+let map_bitmap_LENGTH = prove
+ (`!t1 t2 t3 x y z. (map_bitmap t1 t2 t3 = SOME (x,y,z)) ==>
+                   LENGTH y <= LENGTH t2 /\
+                   LENGTH z <= LENGTH t3`,
+  CHEAT_TAC);;
 
 let read_bitmap_def = cake_define_list
   [`read_bitmap [] = NONE`;
@@ -159,7 +157,7 @@ hol4_overload "state_ffi_fupd" "stackSem_state_ffi_fupd";;
 hol4_field_overload "be" "stackSem_state_be";;
 hol4_field_overload "be_fupd" "stackSem_state_be_fupd";;
 
-let mem_store_def = cake_define
+let stackSem_mem_store_def = cake_define
   `stackSem_mem_store (addr':'a word) (w:'a word_loc)
   (s:('a,'c,'ffi)stackSem_state) =
      (if addr' IN stackSem_state_mdomain s then
@@ -167,13 +165,13 @@ let mem_store_def = cake_define
          (stackSem_state_memory s))) s) else NONE)`;;
 hol4_overload "mem_store" "stackSem_mem_store";;
 
-let mem_load_def = cake_define
+let stackSem_mem_load_def = cake_define
   `stackSem_mem_load (addr':'a word) (s:('a,'c,'ffi)stackSem_state) =
      (if addr' IN stackSem_state_mdomain s then
        SOME (stackSem_state_memory s addr') else NONE)`;;
 hol4_overload "mem_load" "stackSem_mem_load";;
 
-let dec_clock_def = cake_define
+let stackSem_dec_clock_def = cake_define
   `stackSem_dec_clock (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_clock_fupd (K (stackSem_state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "stackSem_dec_clock";;
@@ -183,7 +181,7 @@ let _ = size_thms "wordLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:151-156: the tactic that proves the
    termination *)
-let word_exp_def = cake_define_list_try (fun () ->
+let stackSem_word_exp_def = cake_define_list_try (fun () ->
   `MEASURE (wordLang_exp_size ARB o SND)`)
   [`stackSem_word_exp s (wordLang_Const w) = SOME w`;
    `stackSem_word_exp s (wordLang_Var v) =
@@ -206,12 +204,12 @@ let word_exp_def = cake_define_list_try (fun () ->
            _22 -> NONE)`];;
 hol4_overload "word_exp" "stackSem_word_exp";;
 
-let get_var_def = cake_define
+let stackSem_get_var_def = cake_define
   `stackSem_get_var v (s:('a,'c,'ffi)stackSem_state) = FLOOKUP
   (stackSem_state_regs s) v`;;
 hol4_overload "get_var" "stackSem_get_var";;
 
-let get_vars_def = cake_define_list
+let stackSem_get_vars_def = cake_define_list
   [`stackSem_get_vars [] s = SOME []`;
    `stackSem_get_vars (v :: vs) s =
          (match get_var v s with NONE -> NONE | SOME x ->
@@ -219,35 +217,35 @@ let get_vars_def = cake_define_list
            xs -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "stackSem_get_vars";;
 
-let get_fp_var_def = cake_define
+let stackSem_get_fp_var_def = cake_define
   `stackSem_get_fp_var v (s:('a,'c,'ffi)stackSem_state) = FLOOKUP
   (stackSem_state_fp_regs s) v`;;
 hol4_overload "get_fp_var" "stackSem_get_fp_var";;
 
-let set_var_def = cake_define
+let stackSem_set_var_def = cake_define
   `stackSem_set_var v x (s:('a,'c,'ffi)stackSem_state) =
      (stackSem_state_regs_fupd (K (stackSem_state_regs s |+
        (v,x))) s)`;;
 hol4_overload "set_var" "stackSem_set_var";;
 
-let set_fp_var_def = cake_define
+let stackSem_set_fp_var_def = cake_define
   `stackSem_set_fp_var v x (s:('a,'c,'ffi)stackSem_state) =
      (stackSem_state_fp_regs_fupd (K (stackSem_state_fp_regs s |+
        (v,x))) s)`;;
 hol4_overload "set_fp_var" "stackSem_set_fp_var";;
 
-let set_store_def = cake_define
+let stackSem_set_store_def = cake_define
   `stackSem_set_store v x (s:('a,'c,'ffi)stackSem_state) =
   (stackSem_state_store_fupd (K (stackSem_state_store s |+ (v,x))) s)`;;
 hol4_overload "set_store" "stackSem_set_store";;
 
-let empty_env_def = cake_define
+let stackSem_empty_env_def = cake_define
   `stackSem_empty_env (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_stack_fupd (K []) (stackSem_state_regs_fupd (K
   FEMPTY) s)`;;
 hol4_overload "empty_env" "stackSem_empty_env";;
 
-let sh_mem_store_def = cake_define
+let stackSem_sh_mem_store_def = cake_define
   `(stackSem_sh_mem_store r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -264,7 +262,7 @@ let sh_mem_store_def = cake_define
                (SOME Error,s)) | _23 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store" "stackSem_sh_mem_store";;
 
-let sh_mem_load_def = cake_define
+let stackSem_sh_mem_load_def = cake_define
   `(stackSem_sh_mem_load r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -280,7 +278,7 @@ let sh_mem_load_def = cake_define
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load" "stackSem_sh_mem_load";;
 
-let sh_mem_store_byte_def = cake_define
+let stackSem_sh_mem_store_byte_def = cake_define
   `(stackSem_sh_mem_store_byte r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -297,7 +295,7 @@ let sh_mem_store_byte_def = cake_define
                (SOME Error,s)) | _24 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store_byte" "stackSem_sh_mem_store_byte";;
 
-let sh_mem_store16_def = cake_define
+let stackSem_sh_mem_store16_def = cake_define
   `(stackSem_sh_mem_store16 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -314,7 +312,7 @@ let sh_mem_store16_def = cake_define
                (SOME Error,s)) | _25 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store16" "stackSem_sh_mem_store16";;
 
-let sh_mem_store32_def = cake_define
+let stackSem_sh_mem_store32_def = cake_define
   `(stackSem_sh_mem_store32 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -331,7 +329,7 @@ let sh_mem_store32_def = cake_define
                (SOME Error,s)) | _26 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store32" "stackSem_sh_mem_store32";;
 
-let sh_mem_load_byte_def = cake_define
+let stackSem_sh_mem_load_byte_def = cake_define
   `(stackSem_sh_mem_load_byte r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -346,7 +344,7 @@ let sh_mem_load_byte_def = cake_define
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load_byte" "stackSem_sh_mem_load_byte";;
 
-let sh_mem_load16_def = cake_define
+let stackSem_sh_mem_load16_def = cake_define
   `(stackSem_sh_mem_load16 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -361,7 +359,7 @@ let sh_mem_load16_def = cake_define
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load16" "stackSem_sh_mem_load16";;
 
-let sh_mem_load32_def = cake_define
+let stackSem_sh_mem_load32_def = cake_define
   `(stackSem_sh_mem_load32 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -408,7 +406,7 @@ let full_read_bitmap_def = cake_define
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let enc_stack_def = cake_define_list_try_tac (fun () ->
+let stackSem_enc_stack_def = cake_define_list_try_tac (fun () ->
   `MEASURE (LENGTH o SND)`)
   CHEAT_TAC
   [`stackSem_enc_stack bitmaps [] = NONE`;
@@ -429,7 +427,7 @@ hol4_overload "enc_stack" "stackSem_enc_stack";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let dec_stack_def = cake_define_list_try_tac (fun () ->
+let stackSem_dec_stack_def = cake_define_list_try_tac (fun () ->
   `MEASURE (LENGTH o SND o SND)`)
   CHEAT_TAC
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
@@ -445,7 +443,7 @@ let dec_stack_def = cake_define_list_try_tac (fun () ->
                  rest))))`];;
 hol4_overload "dec_stack" "stackSem_dec_stack";;
 
-let gc_def = cake_define
+let stackSem_gc_def = cake_define
   `stackSem_gc s =
      (if LENGTH (stack s) < stackSem_state_stack_space s then NONE
        else
@@ -465,7 +463,7 @@ let gc_def = cake_define
                    stack')) s)))))))`;;
 hol4_overload "gc" "stackSem_gc";;
 
-let has_space_def = cake_define
+let stackSem_has_space_def = cake_define
   `stackSem_has_space wl store =
      (match (wl,FLOOKUP store NextFree,FLOOKUP store TriggerGC)
        with (wordLang_Word w,SOME (wordLang_Word n),SOME
@@ -473,7 +471,7 @@ let has_space_def = cake_define
        NONE)`;;
 hol4_overload "has_space" "stackSem_has_space";;
 
-let alloc_def = cake_define
+let stackSem_alloc_def = cake_define
   `stackSem_alloc (w:'a word) (s:('a,'c,'ffi)stackSem_state) =
        // perform garbage collection
        (match gc (set_store AllocSize (wordLang_Word w) s) with NONE
@@ -495,13 +493,13 @@ let alloc_def = cake_define
                             word))),stackSem_empty_env s))))`;;
 hol4_overload "alloc" "stackSem_alloc";;
 
-let assign_def = cake_define
+let stackSem_assign_def = cake_define
   `stackSem_assign reg exp s =
      (match word_exp s exp with NONE -> NONE | SOME w -> SOME
        (set_var reg (wordLang_Word w) s))`;;
 hol4_overload "assign" "stackSem_assign";;
 
-let inst_def = cake_define
+let stackSem_inst_def = cake_define
   `stackSem_inst i (s:('a,'c,'ffi)stackSem_state) =
      (match i with Skip -> SOME s | Const reg w -> assign reg (Const
        w) s | Arith (asm_Binop bop r1 r2 ri) ->
@@ -687,12 +685,12 @@ let inst_def = cake_define
                s)) | NONE -> NONE | _60 -> NONE))`;;
 hol4_overload "inst" "stackSem_inst";;
 
-let get_var_imm_def = cake_define_list
+let stackSem_get_var_imm_def = cake_define_list
   [`stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s = get_var n s`;
    `stackSem_get_var_imm (Imm w) s = SOME (wordLang_Word w)`];;
 hol4_overload "get_var_imm" "stackSem_get_var_imm";;
 
-let find_code_def = cake_define_list
+let stackSem_find_code_def = cake_define_list
   [`stackSem_find_code (INL p) regs' code = sptree_lookup p code`;
    `stackSem_find_code (INR r) regs' code =
          (match FLOOKUP regs' r with
@@ -700,17 +698,17 @@ let find_code_def = cake_define_list
              -> NONE)`];;
 hol4_overload "find_code" "stackSem_find_code";;
 
-let fix_clock_def = cake_define
+let stackSem_fix_clock_def = cake_define
   `stackSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "stackSem_fix_clock";;
 
-let stackSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
-  (fun () ->
-    `fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`)
-  CHEAT_TAC;;
+(* fix_clock_IMP[local] *)
+let stackSem_fix_clock_IMP = prove
+ (`fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`,
+  CHEAT_TAC);;
 
-let STOP_def = cake_define
+let stackSem_STOP_def = cake_define
   `stackSem_STOP x = x`;;
 hol4_overload "STOP" "stackSem_STOP";;
 
@@ -750,13 +748,11 @@ let copy_words_for_pattern_def = cake_define
              (pattern >>> 1) (i + 1) (a + bytes_in_word) off bs dm
                m else NONE)`;;
 
-let copy_words_for_pattern_LESS_EQ =
-  cake_theorem "copy_words_for_pattern_LESS_EQ"
-  (fun () ->
-    `!p i a f bs dm m j a1.
-       copy_words_for_pattern p i a f bs dm m = SOME (j,a1) ==> i
-         <= j`)
-  CHEAT_TAC;;
+let copy_words_for_pattern_LESS_EQ = prove
+ (`!p i a f bs dm m j a1.
+     copy_words_for_pattern p i a f bs dm m = SOME (j,a1) ==> i <=
+       j`,
+  CHEAT_TAC);;
 
 (* HOL4 stackSemScript.sml:720-723: the tactic that proves the
    termination *)
@@ -774,7 +770,7 @@ let copy_words_def = cake_define_try_tac (fun () ->
                else
                SOME (a1,m1)))`;;
 
-let unset_var_def = cake_define
+let stackSem_unset_var_def = cake_define
   `stackSem_unset_var v (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_regs_fupd (K (stackSem_state_regs s \\ v)) s`;;
 hol4_overload "unset_var" "stackSem_unset_var";;
@@ -803,14 +799,14 @@ let check_store_consts_opt_def = cake_define_list
       (sptree_lookup n c = SOME (Seq (StoreConsts t1 t2 NONE)
         (Return 0)))`];;
 
-let dest_Seq_def = cake_define
+let stackSem_dest_Seq_def = cake_define
   `stackSem_dest_Seq x1 =
       match x1 with
         stackLang_Seq p1 p2 -> SOME (p1,(p2:'a stackLang_prog))
       | _70 -> NONE`;;
 hol4_overload "dest_Seq" "stackSem_dest_Seq";;
 
-let bad_fun_return_def = cake_define
+let stackSem_bad_fun_return_def = cake_define
   `stackSem_bad_fun_return x1 =
       match x1 with
         NONE -> T
@@ -819,7 +815,7 @@ let bad_fun_return_def = cake_define
       | _73 -> F`;;
 hol4_overload "bad_fun_return" "stackSem_bad_fun_return";;
 
-let cont_loop_def = cake_define
+let stackSem_cont_loop_def = cake_define
   `stackSem_cont_loop x1 =
       match x1 with
         NONE -> T
@@ -827,7 +823,7 @@ let cont_loop_def = cake_define
       | _74 -> F`;;
 hol4_overload "cont_loop" "stackSem_cont_loop";;
 
-let exit_loop_def = cake_define
+let stackSem_exit_loop_def = cake_define
   `stackSem_exit_loop res =
       match res with
         SOME (Break n) -> (if n = 0 then NONE else SOME (Break (n -
@@ -836,22 +832,22 @@ let exit_loop_def = cake_define
       | res -> res`;;
 hol4_overload "exit_loop" "stackSem_exit_loop";;
 
-let fix_clock_IMP =
+let stackSem_fix_clock_IMP =
   try prove
    (`!s x res s1. stackSem_fix_clock s x = (res,s1)
                   ==> state_clock s1 <= state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; stackSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "stackSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "stackSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nstackSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl stackSem_fix_clock_IMP <> `T` then
+  cake_term_facts := stackSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "stackLang_prog";;
 (* the termination relation that HOL4 gives, with
@@ -860,7 +856,7 @@ let _ = size_thms "stackLang_prog";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_try_tac (fun () ->
+let stackSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
                               (\(xs,(s:('a,'c,'ffi)stackSem_state)).
                               (stackSem_state_clock s,xs)))`)
@@ -1140,43 +1136,42 @@ hol4_overload "evaluate" "stackSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
-let stackSem_gc_clock = cake_theorem "gc_clock"
-  (fun () ->
-    `!s1 s2. (gc s1 = SOME s2) ==> state_clock s2 <= state_clock s1`)
-  CHEAT_TAC;;
+(* gc_clock *)
+let stackSem_gc_clock = prove
+ (`!s1 s2. (gc s1 = SOME s2) ==> state_clock s2 <= state_clock s1`,
+  CHEAT_TAC);;
 
-let stackSem_alloc_clock = cake_theorem "alloc_clock"
-  (fun () ->
-    `!xs s1 vs s2. (alloc x s1 = (vs,s2)) ==> state_clock s2 <=
-  state_clock s1`)
-  CHEAT_TAC;;
+(* alloc_clock *)
+let stackSem_alloc_clock = prove
+ (`!xs s1 vs s2. (alloc x s1 = (vs,s2)) ==> state_clock s2 <=
+  state_clock s1`,
+  CHEAT_TAC);;
 
-let store_const_sem_clock = cake_theorem "store_const_sem_clock"
-  (fun () ->
-    `!s1 v s2. (store_const_sem t1 t2 s1 = (v,s2)) ==> state_clock s2
-  <= state_clock s1`)
-  CHEAT_TAC;;
+let store_const_sem_clock = prove
+ (`!s1 v s2. (store_const_sem t1 t2 s1 = (v,s2)) ==> state_clock s2 <=
+  state_clock s1`,
+  CHEAT_TAC);;
 
-let stackSem_inst_clock = cake_theorem "inst_clock[local]"
-  (fun () ->
-    `inst i s = SOME s2 ==> state_clock s2 <= state_clock s`)
-  CHEAT_TAC;;
+(* inst_clock[local] *)
+let stackSem_inst_clock = prove
+ (`inst i s = SOME s2 ==> state_clock s2 <= state_clock s`,
+  CHEAT_TAC);;
 
-let sh_mem_op_clock = cake_theorem "sh_mem_op_clock[local]"
-  (fun () ->
-    `sh_mem_op op r a s = (res,s') ==> state_clock s' <= state_clock s`)
-  CHEAT_TAC;;
+(* [local] *)
+let sh_mem_op_clock = prove
+ (`sh_mem_op op r a s = (res,s') ==> state_clock s' <= state_clock s`,
+  CHEAT_TAC);;
 
-let stackSem_evaluate_clock = cake_theorem "evaluate_clock"
-  (fun () ->
-    `!xs s1 vs s2. (evaluate (xs,s1) = (vs,s2)) ==> state_clock s2 <=
-  state_clock s1`)
-  CHEAT_TAC;;
+(* evaluate_clock *)
+let stackSem_evaluate_clock = prove
+ (`!xs s1 vs s2. (evaluate (xs,s1) = (vs,s2)) ==> state_clock s2 <=
+  state_clock s1`,
+  CHEAT_TAC);;
 
-let stackSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
-  (fun () ->
-    `fix_clock s (evaluate (xs,s)) = evaluate (xs,s)`)
-  CHEAT_TAC;;
+(* fix_clock_evaluate *)
+let stackSem_fix_clock_evaluate = prove
+ (`fix_clock s (evaluate (xs,s)) = evaluate (xs,s)`,
+  CHEAT_TAC);;
 
 (* HOL4 stackSemScript.sml:1108-1109: a theorem that HOL4 states as
    the value of an ML expression: evaluate_def *)
@@ -1186,7 +1181,7 @@ let stackSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
 
 (* observational semantics *)
 
-let semantics_def = cake_define
+let stackSem_semantics_def = cake_define
   `stackSem_semantics start' s =
    (let prog = Call NONE (INL start') NONE in
    if ?k. let res = FST (evaluate (prog,state_clock_fupd (K k) s)) in

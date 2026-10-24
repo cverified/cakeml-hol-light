@@ -20,7 +20,7 @@ needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 let can_raise_def = cake_define_list
   [`can_raise (Var v:bvl_exp) = F`;
@@ -104,10 +104,10 @@ let handle_size_def = cake_define_list
    `handle_size1 (x :: xs) = ((1 + handle_size x + handle_size1
   xs):num)`];;
 
-let handle_size_non_zero = cake_theorem "handle_size_non_zero[local]"
-  (fun () ->
-    `0 < handle_size x`)
-  CHEAT_TAC;;
+(* [local] *)
+let handle_size_non_zero = prove
+ (`0 < handle_size x`,
+  CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -179,14 +179,13 @@ let OptionalLetLet_sing_def = cake_define
        let flat_live = vars_from_list (MAP FST (toAList fvs)) in
          ((Let [] (LetLet env_size fvs e)),flat_live,0,nr))`;;
 
-let OptionalLetLet_sing_eq = cake_theorem "OptionalLetLet_sing_eq"
-  (fun () ->
-    `OptionalLetLet e sz lv s lim nr =
-       (\(d,l,s,nr). ([d],l,s,nr)) (OptionalLetLet_sing e sz lv s
-         lim nr)`)
-  CHEAT_TAC;;
+let OptionalLetLet_sing_eq = prove
+ (`OptionalLetLet e sz lv s lim nr =
+     (\(d,l,s,nr). ([d],l,s,nr)) (OptionalLetLet_sing e sz lv s lim
+       nr)`,
+  CHEAT_TAC);;
 
-let compile_def = cake_define_list
+let bvl_handle_compile_def = cake_define_list
   [`bvl_handle_compile l n [] = (([]:bvl_exp list),db_vars_Empty,0,T)`;
    `bvl_handle_compile l n (x :: y :: xs) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile l n [x] in
@@ -243,7 +242,7 @@ hol4_overload "compile" "bvl_handle_compile";;
 
 (* HOL4 bvl_handleScript.sml:214: ML code, not ported *)
 
-let compile_sing_def = cake_define_list
+let bvl_handle_compile_sing_def = cake_define_list
   [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then (Var
   v,Var v,1,T) else (Op (closLang_IntOp (closLang_Const (&0)))
   [],db_vars_Empty,1,T))`;
@@ -302,25 +301,25 @@ let compile_sing_def = cake_define_list
 hol4_overload "compile_list" "bvl_handle_compile_list";;
 hol4_overload "compile_sing" "bvl_handle_compile_sing";;
 
-let bvl_handle_compile_sing_eq = cake_theorem "compile_sing_eq"
-  (fun () ->
-    `(!e l n. compile l n [e] = (\(d,l,s,nr). ([d],l,s,nr))
-  (compile_sing l n e)) /\
-     (!es l n. compile l n es = compile_list l n es)`)
-  CHEAT_TAC;;
+(* compile_sing_eq *)
+let bvl_handle_compile_sing_eq = prove
+ (`(!e l n. compile l n [e] = (\(d,l,s,nr). ([d],l,s,nr)) (compile_sing
+  l n e)) /\
+   (!es l n. compile l n es = compile_list l n es)`,
+  CHEAT_TAC);;
 
-let compile_exp_def = cake_define
+let bvl_handle_compile_exp_def = cake_define
   `bvl_handle_compile_exp cut_size arity e =
      HD (FST (compile cut_size arity [handle_simp
        (bvl_const_compile_exp e)]))`;;
 hol4_overload "compile_exp" "bvl_handle_compile_exp";;
 
-let bvl_handle_compile_exp_eq = cake_theorem "compile_exp_eq"
-  (fun () ->
-    `compile_exp cut_size arity e =
-       FST (compile_sing cut_size arity (handle_simp
-         (bvl_const_compile_exp e)))`)
-  CHEAT_TAC;;
+(* compile_exp_eq *)
+let bvl_handle_compile_exp_eq = prove
+ (`compile_exp cut_size arity e =
+     FST (compile_sing cut_size arity (handle_simp
+       (bvl_const_compile_exp e)))`,
+  CHEAT_TAC);;
 
 let dest_Seq_def = cake_define
   `bvl_handle_dest_Seq x1 =
@@ -329,13 +328,12 @@ let dest_Seq_def = cake_define
         | _5 -> NONE`;;
 hol4_overload "dest_Seq" "bvl_handle_dest_Seq";;
 
-let dest_Seq_pmatch = cake_theorem "dest_Seq_pmatch"
-  (fun () ->
-    `!exp.
-     bvl_handle_dest_Seq exp =
-       (match exp with
-         Let [e1; e2] (bvl_Var 1) -> SOME (e1,e2) | _6 -> NONE)`)
-  CHEAT_TAC;;
+let dest_Seq_pmatch = prove
+ (`!exp.
+   bvl_handle_dest_Seq exp =
+     (match exp with
+       Let [e1; e2] (bvl_Var 1) -> SOME (e1,e2) | _6 -> NONE)`,
+  CHEAT_TAC);;
 
 let _ = size_thms "bvl_exp";;
 (* HOL4 bvl_handleScript.sml:316-320: the tactic that proves the
@@ -357,17 +355,19 @@ let compile_any_def = cake_define
        compile_seqs cut_size e NONE else
        compile_exp cut_size arity e)`;;
 
-let bvl_handle_compile_length = cake_theorem "compile_length[simp]"
-  (fun () ->
-    `!l n xs. LENGTH (FST (compile l n xs)) = LENGTH xs`)
-  CHEAT_TAC;;
+(* compile_length[simp] *)
+let bvl_handle_compile_length = prove
+ (`!l n xs. LENGTH (FST (compile l n xs)) = LENGTH xs`,
+  CHEAT_TAC);;
 
-let bvl_handle_compile_sing = cake_theorem "compile_sing"
-  (fun () ->
-    `compile l n [x] = (dx,lx,s) ==> (?y. dx = [y])`)
-  CHEAT_TAC;;
+(* compile_sing *)
+let bvl_handle_compile_sing = prove
+ (`compile l n [x] = (dx,lx,s) ==> (?y. dx = [y])`,
+  CHEAT_TAC);;
 
 (* HOL4 bvl_handleScript.sml:346-353: a theorem that HOL4 states as
    the value of an ML expression: compile_seqs_compute *)
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

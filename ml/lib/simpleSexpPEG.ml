@@ -30,13 +30,13 @@ let sumID_def = cake_define_list
   [`simpleSexpPEG_sumID (INL x) = x`;
    `simpleSexpPEG_sumID (INR y) = y`];;
 hol4_overload "sumID" "simpleSexpPEG_sumID";;
-let choicel_def = cake_define_list
+let simpleSexpPEG_choicel_def = cake_define_list
   [`simpleSexpPEG_choicel [] = peg_not (peg_empty arb_sexp) arb_sexp`;
    `simpleSexpPEG_choicel (h :: t) = peg_choice h
   (simpleSexpPEG_choicel t) simpleSexpPEG_sumID`];;
 hol4_overload "choicel" "simpleSexpPEG_choicel";;
 
-let pegf_def = cake_define
+let simpleSexpPEG_pegf_def = cake_define
   `simpleSexpPEG_pegf sym f = peg_seq sym (peg_empty arb_sexp) (\l1
   l2. f l1)`;;
 hol4_overload "pegf" "simpleSexpPEG_pegf";;

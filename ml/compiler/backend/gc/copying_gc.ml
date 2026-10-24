@@ -117,120 +117,118 @@ hol4_overload "gc_inv" "copying_gc_gc_inv";;
 
 (* Invariant maintained *)
 
-let DRESTRICT_heap_map = cake_theorem "DRESTRICT_heap_map[local]"
-  (fun () ->
-    `!heap k. n < k ==> (DRESTRICT (heap_map k heap) (COMPL {n}) =
-  heap_map k heap)`)
-  CHEAT_TAC;;
+(* [local] *)
+let DRESTRICT_heap_map = prove
+ (`!heap k. n < k ==> (DRESTRICT (heap_map k heap) (COMPL {n}) =
+  heap_map k heap)`,
+  CHEAT_TAC);;
 
-let IN_FRANGE = cake_theorem "IN_FRANGE[local]"
-  (fun () ->
-    `!heap n. MEM (ForwardPointer ptr d l) heap ==> ptr IN FRANGE
-  (heap_map n heap)`)
-  CHEAT_TAC;;
+(* [local] *)
+let IN_FRANGE = prove
+ (`!heap n. MEM (ForwardPointer ptr d l) heap ==> ptr IN FRANGE
+  (heap_map n heap)`,
+  CHEAT_TAC);;
 
-let heap_addresses_SNOC = cake_theorem "heap_addresses_SNOC[local]"
-  (fun () ->
-    `!xs n x.
-         heap_addresses n (xs ++ [x]) =
-         heap_addresses n xs UNION {heap_length xs + n}`)
-  CHEAT_TAC;;
+(* [local] *)
+let heap_addresses_SNOC = prove
+ (`!xs n x.
+       heap_addresses n (xs ++ [x]) =
+       heap_addresses n xs UNION {heap_length xs + n}`,
+  CHEAT_TAC);;
 
 (* HOL4 copying_gcScript.sml:126-132: a theorem that HOL4 states as
    the value of an ML expression: NOT_IN_heap_addresses *)
 
-let gc_move_thm = cake_theorem "gc_move_thm[local]"
-  (fun () ->
-    `copying_gc_gc_inv (h1,h2,a,n,(heap:(('a,'b)heap_element)
+(* [local] *)
+let gc_move_thm = prove
+ (`copying_gc_gc_inv (h1,h2,a,n,(heap:(('a,'b)heap_element)
   list),c,limit) heap0 roots0 /\
-       (!ptr u. (x = gc_shared_Pointer ptr u) ==>
-         isSomeDataOrForward (heap_lookup ptr heap) /\
+     (!ptr u. (x = gc_shared_Pointer ptr u) ==> isSomeDataOrForward
+       (heap_lookup ptr heap) /\
                               reachable_addresses roots0 heap0 ptr)
                                 ==>
-       (?x3 h23 a3 n3 heap3 c3.
-         (copying_gc_gc_move ((x:'a
-           heap_address),h2,a,n,heap,c,limit) = (ADDR_APPLY (heap_map1
-           heap3) x,h23,a3,n3,heap3,c3)) /\
-         (!ptr u. (x = gc_shared_Pointer ptr u) ==> ptr IN FDOM
-           (heap_map 0 heap3)) /\
-         (!ptr. isSomeDataOrForward (heap_lookup ptr heap) =
-                isSomeDataOrForward (heap_lookup ptr heap3)) /\
-         ((heap_map 0 heap) SUBMAP (heap_map 0 heap3)) /\
-         copying_gc_gc_inv (h1,h23,a3,n3,heap3,c3,limit) heap0
-           roots0)`)
-  CHEAT_TAC;;
+     (?x3 h23 a3 n3 heap3 c3.
+       (copying_gc_gc_move ((x:'a heap_address),h2,a,n,heap,c,limit)
+         = (ADDR_APPLY (heap_map1 heap3) x,h23,a3,n3,heap3,c3)) /\
+       (!ptr u. (x = gc_shared_Pointer ptr u) ==> ptr IN FDOM
+         (heap_map 0 heap3)) /\
+       (!ptr. isSomeDataOrForward (heap_lookup ptr heap) =
+              isSomeDataOrForward (heap_lookup ptr heap3)) /\
+       ((heap_map 0 heap) SUBMAP (heap_map 0 heap3)) /\
+       copying_gc_gc_inv (h1,h23,a3,n3,heap3,c3,limit) heap0
+         roots0)`,
+  CHEAT_TAC);;
 
-let gc_move_list_thm = cake_theorem "gc_move_list_thm[local]"
-  (fun () ->
-    `!xs h2 a n heap c.
-       copying_gc_gc_inv (h1,h2,a,n,(heap:(('a,'b)heap_element)
-         list),c,limit) heap0 roots0 /\
-       (!ptr u. MEM (gc_shared_Pointer ptr u) (xs:('a heap_address)
-         list) ==>
-                isSomeDataOrForward (heap_lookup ptr heap) /\
-                reachable_addresses roots0 heap0 ptr) ==>
-       (?h23 a3 n3 heap3 c3.
-         (copying_gc_gc_move_list (xs,h2,a,n,heap,c,limit) =
-           (ADDR_MAP (heap_map1 heap3) xs,h23,a3,n3,heap3,c3)) /\
-         (!ptr u. MEM (gc_shared_Pointer ptr u) xs ==> ptr IN FDOM
-           (heap_map 0 heap3)) /\
-         (!ptr. isSomeDataOrForward (heap_lookup ptr heap) =
-                isSomeDataOrForward (heap_lookup ptr heap3)) /\
-         ((heap_map 0 heap) SUBMAP (heap_map 0 heap3)) /\
-         copying_gc_gc_inv (h1,h23,a3,n3,heap3,c3,limit) heap0
-           roots0)`)
-  CHEAT_TAC;;
+(* [local] *)
+let gc_move_list_thm = prove
+ (`!xs h2 a n heap c.
+     copying_gc_gc_inv (h1,h2,a,n,(heap:(('a,'b)heap_element)
+       list),c,limit) heap0 roots0 /\
+     (!ptr u. MEM (gc_shared_Pointer ptr u) (xs:('a heap_address)
+       list) ==>
+              isSomeDataOrForward (heap_lookup ptr heap) /\
+              reachable_addresses roots0 heap0 ptr) ==>
+     (?h23 a3 n3 heap3 c3.
+       (copying_gc_gc_move_list (xs,h2,a,n,heap,c,limit) = (ADDR_MAP
+         (heap_map1 heap3) xs,h23,a3,n3,heap3,c3)) /\
+       (!ptr u. MEM (gc_shared_Pointer ptr u) xs ==> ptr IN FDOM
+         (heap_map 0 heap3)) /\
+       (!ptr. isSomeDataOrForward (heap_lookup ptr heap) =
+              isSomeDataOrForward (heap_lookup ptr heap3)) /\
+       ((heap_map 0 heap) SUBMAP (heap_map 0 heap3)) /\
+       copying_gc_gc_inv (h1,h23,a3,n3,heap3,c3,limit) heap0
+         roots0)`,
+  CHEAT_TAC);;
 
 (* HOL4 copying_gcScript.sml:247: the ML values that the definitions
    below antiquote *)
 
-let gc_move_ALT = cake_theorem "gc_move_ALT"
-  (fun () ->
-    `copying_gc_gc_move (ys,xs,a,n,heap,c,limit) =
-        (let (ys,xs1,x) = copying_gc_gc_move
-          (ys,[],a,n,heap,c,limit) in
-          (ys,xs ++ xs1,x))`)
-  CHEAT_TAC;;
+let gc_move_ALT = prove
+ (`copying_gc_gc_move (ys,xs,a,n,heap,c,limit) =
+      (let (ys,xs1,x) = copying_gc_gc_move (ys,[],a,n,heap,c,limit)
+        in
+        (ys,xs ++ xs1,x))`,
+  CHEAT_TAC);;
 
-let gc_move_list_ALT = cake_theorem "gc_move_list_ALT"
-  (fun () ->
-    `!ys xs a n heap c limit' ys3 xs3 a3 n3 heap3 c3.
-        copying_gc_gc_move_list (ys,xs,a,n,heap,c,limit') =
-          (let (ys,xs1,x) = copying_gc_gc_move_list
-            (ys,[],a,n,heap,c,limit') in
-            (ys,xs ++ xs1,x))`)
-  CHEAT_TAC;;
+let gc_move_list_ALT = prove
+ (`!ys xs a n heap c limit' ys3 xs3 a3 n3 heap3 c3.
+      copying_gc_gc_move_list (ys,xs,a,n,heap,c,limit') =
+        (let (ys,xs1,x) = copying_gc_gc_move_list
+          (ys,[],a,n,heap,c,limit') in
+          (ys,xs ++ xs1,x))`,
+  CHEAT_TAC);;
 
-let gc_move_list_APPEND_lemma =
-  cake_theorem "gc_move_list_APPEND_lemma[local]"
-  (fun () ->
-    `!ys xs a n heap c limit' ys3 xs3 a3 n3 heap3 c3.
-         (copying_gc_gc_move_list (ys,xs,a,n,heap,c,limit') =
-           (ys3,xs3,a3,n3,heap3,c3)) ==>
-         (?xs1. xs3 = xs ++ xs1)`)
-  CHEAT_TAC;;
+(* [local] *)
+let gc_move_list_APPEND_lemma = prove
+ (`!ys xs a n heap c limit' ys3 xs3 a3 n3 heap3 c3.
+       (copying_gc_gc_move_list (ys,xs,a,n,heap,c,limit') =
+         (ys3,xs3,a3,n3,heap3,c3)) ==>
+       (?xs1. xs3 = xs ++ xs1)`,
+  CHEAT_TAC);;
 
-let gc_move_loop_thm = cake_theorem "gc_move_loop_thm[local]"
-  (fun () ->
-    `!h1 h2 a n heap c.
-         copying_gc_gc_inv (h1,h2,a,n,(heap:(('a,'b)heap_element)
-           list),c,limit) heap0 roots0 ==>
-         (?h13 a3 n3 heap3 c3.
-           (copying_gc_gc_move_loop (h1,h2,a,n,heap,c,limit) =
-             (h13,a3,n3,heap3,c3)) /\
-         ((heap_map 0 heap) SUBMAP (heap_map 0 heap3)) /\
-         copying_gc_gc_inv (h13,[],a3,n3,heap3,c3,limit) heap0
-           roots0)`)
-  CHEAT_TAC;;
+(* [local] *)
+let gc_move_loop_thm = prove
+ (`!h1 h2 a n heap c.
+       copying_gc_gc_inv (h1,h2,a,n,(heap:(('a,'b)heap_element)
+         list),c,limit) heap0 roots0 ==>
+       (?h13 a3 n3 heap3 c3.
+         (copying_gc_gc_move_loop (h1,h2,a,n,heap,c,limit) =
+           (h13,a3,n3,heap3,c3)) /\
+       ((heap_map 0 heap) SUBMAP (heap_map 0 heap3)) /\
+       copying_gc_gc_inv (h13,[],a3,n3,heap3,c3,limit) heap0
+         roots0)`,
+  CHEAT_TAC);;
 
-let gc_inv_init = cake_theorem "gc_inv_init[local]"
-  (fun () ->
-    `copying_gc_gc_inv ([],[],0,limit,heap,T,limit) heap roots =
-  heap_ok heap limit`)
-  CHEAT_TAC;;
+(* [local] *)
+let gc_inv_init = prove
+ (`copying_gc_gc_inv ([],[],0,limit,heap,T,limit) heap roots = heap_ok
+  heap limit`,
+  CHEAT_TAC);;
 
-let full_gc_thm = cake_theorem "full_gc_thm"
-  (fun () ->
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
+let full_gc_thm = prove
+ (cake_as_vars (fun () ->
     `roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
   limit ==>
       (?heap2 a2 heap3.
@@ -239,67 +237,61 @@ let full_gc_thm = cake_theorem "full_gc_thm"
         (!ptr u. MEM (gc_shared_Pointer ptr u) roots ==> ptr IN
           FDOM (heap_map 0 heap3)) /\
         copying_gc_gc_inv (heap2,[],a2,limit - a2,heap3,T,limit)
-          heap roots)`)
-  CHEAT_TAC;;
+          heap roots)`),
+  CHEAT_TAC);;
 
 (* HOL4 copying_gcScript.sml:411-417: a theorem that HOL4 states as
    the value of an ML expression: heap_lookup_IMP_heap_addresses *)
 
-let full_gc_LENGTH = cake_theorem "full_gc_LENGTH"
-  (fun () ->
-    `roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
+let full_gc_LENGTH = prove
+ (`roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
   limit ==>
-      (?roots2 heap2 a2.
-        (full_gc ((roots:('a heap_address) list),heap,limit) =
-        (roots2,heap2,heap_length heap2,T)))`)
-  CHEAT_TAC;;
+    (?roots2 heap2 a2.
+      (full_gc ((roots:('a heap_address) list),heap,limit) =
+      (roots2,heap2,heap_length heap2,T)))`,
+  CHEAT_TAC);;
 
-let full_gc_ok = cake_theorem "full_gc_ok"
-  (fun () ->
-    `roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
+let full_gc_ok = prove
+ (`roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
   limit ==>
-      (?roots2 heap2 a2.
-        (full_gc ((roots:('a heap_address) list),heap,limit) =
-          (roots2,heap2,a2,T)) /\
-        a2 <= limit /\ roots_ok roots2 (heap2 ++ heap_expand (limit
-          - a2)) /\
-        heap_ok (heap2 ++ heap_expand (limit - a2)) limit)`)
-  CHEAT_TAC;;
+    (?roots2 heap2 a2.
+      (full_gc ((roots:('a heap_address) list),heap,limit) =
+        (roots2,heap2,a2,T)) /\
+      a2 <= limit /\ roots_ok roots2 (heap2 ++ heap_expand (limit -
+        a2)) /\
+      heap_ok (heap2 ++ heap_expand (limit - a2)) limit)`,
+  CHEAT_TAC);;
 
-let full_gc_related = cake_theorem "full_gc_related"
-  (fun () ->
-    `roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
+let full_gc_related = prove
+ (`roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
   limit ==>
-      (?heap2 a2 f.
-        (full_gc ((roots:('a heap_address) list),heap,limit) =
-           (ADDR_MAP (FAPPLY f) roots,heap2,a2,T)) /\
-        (FDOM f = reachable_addresses roots heap) /\
-        (FRANGE f = {a | isSomeDataElement (heap_lookup a heap2)})
-          /\
-        (heap_length heap2 = heap_length (heap_filter (FDOM f)
-          heap)) /\
-        gc_related f heap (heap2 ++ heap_expand (limit - a2)) /\
-        EVERY isDataElement heap2)`)
-  CHEAT_TAC;;
+    (?heap2 a2 f.
+      (full_gc ((roots:('a heap_address) list),heap,limit) =
+         (ADDR_MAP (FAPPLY f) roots,heap2,a2,T)) /\
+      (FDOM f = reachable_addresses roots heap) /\
+      (FRANGE f = {a | isSomeDataElement (heap_lookup a heap2)}) /\
+      (heap_length heap2 = heap_length (heap_filter (FDOM f) heap))
+        /\
+      gc_related f heap (heap2 ++ heap_expand (limit - a2)) /\
+      EVERY isDataElement heap2)`,
+  CHEAT_TAC);;
 
 (* Lemmas about ok and a *)
 
-let gc_move_ok = cake_theorem "gc_move_ok"
-  (fun () ->
-    `(copying_gc_gc_move (x,h2,a,n,heap,c,limit) =
-  (x',h2',a',n',heap',T)) ==>
-      c /\
-      ((a = b + heap_length h2) ==> (a' = b + heap_length h2'))`)
-  CHEAT_TAC;;
+let gc_move_ok = prove
+ (`(copying_gc_gc_move (x,h2,a,n,heap,c,limit) = (x',h2',a',n',heap',T))
+  ==>
+    c /\
+    ((a = b + heap_length h2) ==> (a' = b + heap_length h2'))`,
+  CHEAT_TAC);;
 
-let gc_move_list_ok = cake_theorem "gc_move_list_ok"
-  (fun () ->
-    `!xs h2 a n heap c limit' xs' h2' a' n' heap' c'.
-        (copying_gc_gc_move_list (xs,h2,a,n,heap,c,limit') =
-          (xs',h2',a',n',heap',T)) ==>
-        c /\
-        ((a = b + heap_length h2) ==> (a' = b + heap_length h2'))`)
-  CHEAT_TAC;;
+let gc_move_list_ok = prove
+ (`!xs h2 a n heap c limit' xs' h2' a' n' heap' c'.
+      (copying_gc_gc_move_list (xs,h2,a,n,heap,c,limit') =
+        (xs',h2',a',n',heap',T)) ==>
+      c /\
+      ((a = b + heap_length h2) ==> (a' = b + heap_length h2'))`,
+  CHEAT_TAC);;
 
 (* HOL4 copying_gcScript.sml:598-602: ML code, not ported *)
 
@@ -310,51 +302,43 @@ let gc_move_list_ok = cake_theorem "gc_move_list_ok"
 (* HOL4 copying_gcScript.sml:622-623: a theorem that HOL4 states as
    the value of an ML expression: gc_move_loop_ok *)
 
-let gc_move_list_IMP_LENGTH = cake_theorem "gc_move_list_IMP_LENGTH"
-  (fun () ->
-    `!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
-        (copying_gc_gc_move_list (l5,h,a,n,heap,c,k) =
-          (xs,ys,a1,xs1,heap1,c1)) ==> (LENGTH xs = LENGTH l5)`)
-  CHEAT_TAC;;
+let gc_move_list_IMP_LENGTH = prove
+ (`!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
+      (copying_gc_gc_move_list (l5,h,a,n,heap,c,k) =
+        (xs,ys,a1,xs1,heap1,c1)) ==> (LENGTH xs = LENGTH l5)`,
+  CHEAT_TAC);;
 
-let full_gc_IMP_LENGTH = cake_theorem "full_gc_IMP_LENGTH"
-  (fun () ->
-    `(full_gc (xs,heap,limit) = (roots2,heap2,h,T)) ==>
-      (LENGTH roots2 = LENGTH xs)`)
-  CHEAT_TAC;;
+let full_gc_IMP_LENGTH = prove
+ (`(full_gc (xs,heap,limit) = (roots2,heap2,h,T)) ==>
+    (LENGTH roots2 = LENGTH xs)`,
+  CHEAT_TAC);;
 
-let gc_move_IMP_isDataElement = cake_theorem "gc_move_IMP_isDataElement"
-  (fun () ->
-    `!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
-        EVERY isDataElement h /\
-        (copying_gc_gc_move (l5,h,a,n,heap,c,k) =
-          (xs,ys,a1,xs1,heap1,c1)) ==>
-        EVERY isDataElement ys`)
-  CHEAT_TAC;;
+let gc_move_IMP_isDataElement = prove
+ (`!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
+      EVERY isDataElement h /\
+      (copying_gc_gc_move (l5,h,a,n,heap,c,k) =
+        (xs,ys,a1,xs1,heap1,c1)) ==>
+      EVERY isDataElement ys`,
+  CHEAT_TAC);;
 
-let gc_move_list_IMP_isDataElement =
-  cake_theorem "gc_move_list_IMP_isDataElement"
-  (fun () ->
-    `!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
-        EVERY isDataElement h /\
-        (copying_gc_gc_move_list (l5,h,a,n,heap,c,k) =
-          (xs,ys,a1,xs1,heap1,c1)) ==>
-        EVERY isDataElement ys`)
-  CHEAT_TAC;;
+let gc_move_list_IMP_isDataElement = prove
+ (`!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
+      EVERY isDataElement h /\
+      (copying_gc_gc_move_list (l5,h,a,n,heap,c,k) =
+        (xs,ys,a1,xs1,heap1,c1)) ==>
+      EVERY isDataElement ys`,
+  CHEAT_TAC);;
 
-let gc_move_loop_IMP_isDataElement =
-  cake_theorem "gc_move_loop_IMP_isDataElement"
-  (fun () ->
-    `!h1 h2 a n heap c limit' h1' a' n' heap' c'.
-        EVERY isDataElement h1 /\
-        EVERY isDataElement h2 /\
-        (copying_gc_gc_move_loop (h1,h2,a,n,heap,c,limit') =
-          (h1',a',n',heap',T)) ==>
-        EVERY isDataElement h1'`)
-  CHEAT_TAC;;
+let gc_move_loop_IMP_isDataElement = prove
+ (`!h1 h2 a n heap c limit' h1' a' n' heap' c'.
+      EVERY isDataElement h1 /\
+      EVERY isDataElement h2 /\
+      (copying_gc_gc_move_loop (h1,h2,a,n,heap,c,limit') =
+        (h1',a',n',heap',T)) ==>
+      EVERY isDataElement h1'`,
+  CHEAT_TAC);;
 
-let full_gc_IMP_isDataElement = cake_theorem "full_gc_IMP_isDataElement"
-  (fun () ->
-    `(full_gc (roots,heap,limit) = (roots1,heap1,a,T)) ==>
-      EVERY isDataElement heap1`)
-  CHEAT_TAC;;
+let full_gc_IMP_isDataElement = prove
+ (`(full_gc (roots,heap,limit) = (roots1,heap1,a,T)) ==>
+    EVERY isDataElement heap1`,
+  CHEAT_TAC);;

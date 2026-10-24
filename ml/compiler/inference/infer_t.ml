@@ -73,7 +73,7 @@ let ty_var_name_def = cake_define
                     mlstring_concat [implode "'"; mlint_toString
                       (&n)])`;;
 
-let commas_def = cake_define
+let infer_t_commas_def = cake_define
   `infer_t_commas c x2 =
       match x2 with
         [] -> []

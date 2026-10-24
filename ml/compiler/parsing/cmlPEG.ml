@@ -26,7 +26,7 @@ hol4_overload "assert" "OPTION_GUARD";;
 
 (* HOL4 cmlPEGScript.sml:17-29: ML code, not ported *)
 
-let sumID_def = cake_define_list
+let cmlPEG_sumID_def = cake_define_list
   [`cmlPEG_sumID (INL x) = x`;
    `cmlPEG_sumID (INR y) = y`];;
 hol4_overload "sumID" "cmlPEG_sumID";;
@@ -70,13 +70,13 @@ let peg_linfix_def = cake_define
    Logically, the ARBs are harmless, but they completely mess with the
    translator
 *)
-let choicel_def = cake_define_list
+let cmlPEG_choicel_def = cake_define_list
   [`cmlPEG_choicel [] = peg_not (peg_empty []) []`;
    `cmlPEG_choicel (h :: t) = peg_choice h (cmlPEG_choicel t)
   cmlPEG_sumID`];;
 hol4_overload "choicel" "cmlPEG_choicel";;
 
-let pegf_def = cake_define
+let cmlPEG_pegf_def = cake_define
   `cmlPEG_pegf sym f = peg_seq sym (peg_empty []) (\l1 l2. f l1)`;;
 hol4_overload "pegf" "cmlPEG_pegf";;
 
@@ -90,7 +90,7 @@ let try_def = cake_define
   `cmlPEG_try sym = choicel [sym; peg_empty []]`;;
 hol4_overload "try" "cmlPEG_try";;
 
-let tokeq_def = cake_define
+let cmlPEG_tokeq_def = cake_define
   `cmlPEG_tokeq t = peg_tok ((=) t) mktokLf`;;
 hol4_overload "tokeq" "cmlPEG_tokeq";;
 
@@ -99,7 +99,7 @@ let tokSymP_def = cake_define
      peg_tok (\t. ((OPTION_BIND) (destSymbolT t) (\s. OPTION_GUARD
        (P s))) = SOME one) mktokLf`;;
 
-let pnt_def = cake_define
+let cmlPEG_pnt_def = cake_define
   `cmlPEG_pnt ntsym = peg_nt ((INL:MMLnonT->MMLnonT+num) ntsym) I`;;
 hol4_overload "pnt" "cmlPEG_pnt";;
 
@@ -656,10 +656,10 @@ let cmlPEG_def = cake_define
 
 (* HOL4 cmlPEGScript.sml:582-586: ML code, not ported *)
 
-let frange_image = cake_theorem "frange_image[local]"
-  (fun () ->
-    `FRANGE fm = IMAGE (FAPPLY fm) (FDOM fm)`)
-  CHEAT_TAC;;
+(* [local] *)
+let frange_image = prove
+ (`FRANGE fm = IMAGE (FAPPLY fm) (FDOM fm)`,
+  CHEAT_TAC);;
 
 (* HOL4 cmlPEGScript.sml:594-597: ML code, not ported *)
 
@@ -677,33 +677,33 @@ let frange_image = cake_theorem "frange_image[local]"
 
 (* HOL4 cmlPEGScript.sml:644-647: ML code, not ported *)
 
-let peg0_pegf = cake_theorem "peg0_pegf[simp]"
-  (fun () ->
-    `peg0 G (pegf s f) = peg0 G s`)
-  CHEAT_TAC;;
+(* [simp] *)
+let peg0_pegf = prove
+ (`peg0 G (pegf s f) = peg0 G s`,
+  CHEAT_TAC);;
 
-let peg0_seql = cake_theorem "peg0_seql[simp]"
-  (fun () ->
-    `(peg0 G (seql [] f) <=> T) /\
-     (peg0 G (seql (h :: t) f) <=> peg0 G h /\ peg0 G (seql t I))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let peg0_seql = prove
+ (`(peg0 G (seql [] f) <=> T) /\
+   (peg0 G (seql (h :: t) f) <=> peg0 G h /\ peg0 G (seql t I))`,
+  CHEAT_TAC);;
 
-let peg0_tokeq = cake_theorem "peg0_tokeq[simp]"
-  (fun () ->
-    `peg0 G (cmlPEG_tokeq t) = F`)
-  CHEAT_TAC;;
+(* [simp] *)
+let peg0_tokeq = prove
+ (`peg0 G (cmlPEG_tokeq t) = F`,
+  CHEAT_TAC);;
 
-let peg0_tokSymP = cake_theorem "peg0_tokSymP[simp]"
-  (fun () ->
-    `peg0 G (tokSymP P) <=> F`)
-  CHEAT_TAC;;
+(* [simp] *)
+let peg0_tokSymP = prove
+ (`peg0 G (tokSymP P) <=> F`,
+  CHEAT_TAC);;
 
-let peg0_choicel = cake_theorem "peg0_choicel[simp]"
-  (fun () ->
-    `(peg0 G (choicel []) = F) /\
-     (peg0 G (choicel (h :: t)) <=> peg0 G h \/ pegfail G h /\
-       peg0 G (choicel t))`)
-  CHEAT_TAC;;
+(* [simp] *)
+let peg0_choicel = prove
+ (`(peg0 G (choicel []) = F) /\
+   (peg0 G (choicel (h :: t)) <=> peg0 G h \/ pegfail G h /\ peg0 G
+     (choicel t))`,
+  CHEAT_TAC);;
 
 (* HOL4 cmlPEGScript.sml:681-695: a theorem that HOL4 states as the
    value of an ML expression: th *)
@@ -725,18 +725,18 @@ set_diff (TypeBase.constructors_of ``:MMLnonT``)
                       ``nDtypeCons``])
 *)
 
-let subexprs_pnt = cake_theorem "subexprs_pnt[local]"
-  (fun () ->
-    `subexprs (cmlPEG_pnt n) = {cmlPEG_pnt n}`)
-  CHEAT_TAC;;
+(* [local] *)
+let subexprs_pnt = prove
+ (`subexprs (cmlPEG_pnt n) = {cmlPEG_pnt n}`,
+  CHEAT_TAC);;
 
 (* HOL4 cmlPEGScript.sml:774-783: a theorem that HOL4 states as the
    value of an ML expression: PEG_exprs *)
 
-let PEG_wellformed = cake_theorem "PEG_wellformed[simp]"
-  (fun () ->
-    `wfG cmlPEG`)
-  CHEAT_TAC;;
+(* [simp] *)
+let PEG_wellformed = prove
+ (`wfG cmlPEG`,
+  CHEAT_TAC);;
 
 (* HOL4 cmlPEGScript.sml:797-799: a theorem that HOL4 states as the
    value of an ML expression: parse_TopLevelDecs_total *)

@@ -71,24 +71,47 @@ sources, and why.
 
 ## The statements of the theorems (phase two)
 
-- A theorem of a source is `cake_theorem "name[attrs]" (fun () ->
-  `...`) CHEAT_TAC`.  The statement is a quotation inside a
-  function so that one the port cannot read is a cheat of its own
-  (`cake_unstated ()`) and does not lose the rest of the file.
+- A **definition** of a source is a binding as well, and the
+  binding is unique: 249 names are the name of a definition in
+  two files or more (`compile_def` in 28 of them), and OCaml has
+  one namespace, so the first file to take a name keeps it and a
+  later one gets the name of its theory in front
+  (`bvi_let_compile_def`).  That is the same rule as for a
+  theorem, because one namespace holds both; the inductive
+  relations and the definitions of the monadic machinery go
+  through it too, so no two files of the port bind one name.  A
+  proof names the definition it means, and `cake_def "<const>"`
+  is left only in `ml/lib/tactics.ml`, which loads before the
+  files whose definitions its tactics unfold.
+- A theorem of a source is written the way HOL Light writes one:
+  `let name = prove (`...`, CHEAT_TAC);;`, with the attributes
+  that HOL4 gives it in a comment over it, and with the name of
+  the source in that comment as well where the binding is not
+  that name (two files that state a theorem of one name: the
+  second gets the name of its theory in front, and so does a
+  theorem whose name a definition of an earlier file has).  A statement the
+  port cannot read at all is a comment that points at the source
+  and names it.
 - **The name of a record field is a variable.**  HOL4 has no
   constant of the name of a field: `r.stack` is syntax there, and
   a bare `stack` is a variable of the statement.  The port
   overloads the accessors of a field that several record types
   have with the name of the field, so a statement that uses that
-  name for a variable is read with those overloads taken away
-  (`cake_as_vars`).  The port says which statements those are
-  (`cake_fieldvars ()`).
+  name for a variable **says the type of that variable**
+  (`tools/fieldvars.py`).  Ten statements
+  cannot say it -- the type has a variable of its own, or HOL4
+  computes the statement -- and those are read with the overloads
+  taken away (`cake_as_vars`, 41 statements); the 31 files that
+  need the accessors of a field and read the name of that field
+  as a variable as well take those pairs out of the interface
+  (`hide_overloads`).
 - **A name that no theory in scope defines is a variable.**  Each
-  file says which names these are (`cake_hide [...]`, right after
-  its `needs`), and its statements are read with those constants
-  hidden.  HOL4 reads such a name as a variable because the
-  theory that defines it is not an ancestor; the port has every
-  constant in one namespace, so it has to hide it.
+  file hides those names with HOL Light's own `hide_constant`,
+  right after its `needs`, and unhides them at its end (HOL4's
+  `Parse.hide` is file-scoped as well).  HOL4 reads such a name
+  as a variable because the theory that defines it is not an
+  ancestor; the port has every constant in one namespace, so it
+  has to hide it.
 - A **schematic definition** of HOL4 (`Definition
   foo[schematic]`) has a free variable in its body, which HOL4
   takes into the constant as its **first argument**:
@@ -702,6 +725,19 @@ value that it finds, one (`misc$Lnext`) is proved to exist by
 hand, and two constants are declared without a value because HOL4
 computes them with ML code; `PENDING.md` lists them all, with the
 reason.
+
+A definition whose clauses overlap is one clause with a `match`,
+which has HOL4's first match semantics (the clauses of a list
+would contradict each other).  Where the definition defines a
+**family** and only one of its functions has the overlap, a
+single match cannot stand for both -- HOL Light's pattern
+matching gives the arms of the two functions the same generated
+variable, and the two types clash -- so the definition stays a
+list of clauses and the clauses of each overlapping function are
+one entry of that list, with a match of their own
+(`overrides.MATCH_CLAUSES`).  The five are the
+`do_eq`/`do_eq_list` of `dataSem`, `bvlSem`, `closSem`,
+`flatSem` and `semanticPrimitives`.
 
 ## The order in which the port is loaded
 

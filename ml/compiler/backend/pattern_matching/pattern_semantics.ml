@@ -84,7 +84,7 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let pmatch_def = cake_define_list_try_tac (fun () ->
+let pattern_semantics_pmatch_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (r,p,_7) -> pattern_semantics_pat_size
      p | INR (r,ps,_8) -> list_size pattern_semantics_pat_size ps)`)
   CHEAT_TAC

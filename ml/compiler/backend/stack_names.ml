@@ -60,7 +60,7 @@ let dest_find_name_def = cake_define
         INR r -> INR (tlookup f r)
       | x -> x`;;
 
-let comp_def = cake_define
+let stack_names_comp_def = cake_define
   `stack_names_comp f p =
      (match p with stackLang_Halt r -> stackLang_Halt (tlookup f r) |
        Raise r -> Raise (tlookup f r) | stackLang_Break n ->
@@ -95,11 +95,11 @@ hol4_overload "comp" "stack_names_comp";;
 (* HOL4 stack_namesScript.sml:89-99: a theorem that HOL4 states as
    the value of an ML expression: comp_pmatch *)
 
-let prog_comp_def = cake_define
+let stack_names_prog_comp_def = cake_define
   `stack_names_prog_comp f (n,p) = (n,stack_names_comp f p)`;;
 hol4_overload "prog_comp" "stack_names_prog_comp";;
 
-let compile_def = cake_define
+let stack_names_compile_def = cake_define
   `stack_names_compile f prog = MAP (stack_names_prog_comp f) prog`;;
 hol4_overload "compile" "stack_names_compile";;
 

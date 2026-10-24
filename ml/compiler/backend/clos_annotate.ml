@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_annotate: ported from HOL4's
-    compiler/backend/clos_annotateScript.sml  *)
+    compiler/backend/clos_annotateScript.sml
+    A definition theory, with 13 definitions and 15 theorems.
+    Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -160,47 +162,41 @@ let alt_free_sing_def = cake_define_list_try_tac (fun () ->
          (let (c,l) = alt_free_sing x in
            ((n,c),Shift (n + m) l) :: alt_free_letrec m rest)`];;
 
-let alt_free_sing_eq = cake_theorem "alt_free_sing_eq"
-  (fun () ->
-    `(!e. alt_free [e] = (\(e,dbs). [e],dbs) (alt_free_sing e)) /\
-     (!es. alt_free es = alt_free_list es) /\
-     (!m fns. EVERY (\(n,e). alt_free [e] = (\(e,dbs). [e],dbs)
-       (alt_free_sing e)) fns /\
-              alt_free_letrec m fns =
-              MAP (\(n,x). let (c,l) = alt_free_sing x in
-                             ((n,c),Shift (n + m) l)) fns)`)
-  CHEAT_TAC;;
+let alt_free_sing_eq = prove
+ (`(!e. alt_free [e] = (\(e,dbs). [e],dbs) (alt_free_sing e)) /\
+   (!es. alt_free es = alt_free_list es) /\
+   (!m fns. EVERY (\(n,e). alt_free [e] = (\(e,dbs). [e],dbs)
+     (alt_free_sing e)) fns /\
+            alt_free_letrec m fns =
+            MAP (\(n,x). let (c,l) = alt_free_sing x in
+                           ((n,c),Shift (n + m) l)) fns)`,
+  CHEAT_TAC);;
 
-let alt_free_LENGTH_LEMMA = cake_theorem "alt_free_LENGTH_LEMMA[local]"
-  (fun () ->
-    `!xs. (match alt_free xs with (ys,s1) -> (LENGTH xs = LENGTH ys))`)
-  CHEAT_TAC;;
+(* [local] *)
+let alt_free_LENGTH_LEMMA = prove
+ (`!xs. (match alt_free xs with (ys,s1) -> (LENGTH xs = LENGTH ys))`,
+  CHEAT_TAC);;
 
-let alt_free_LENGTH = cake_theorem "alt_free_LENGTH"
-  (fun () ->
-    `!xs ys l. (alt_free xs = (ys,l)) ==> (LENGTH ys = LENGTH xs)`)
-  CHEAT_TAC;;
+let alt_free_LENGTH = prove
+ (`!xs ys l. (alt_free xs = (ys,l)) ==> (LENGTH ys = LENGTH xs)`,
+  CHEAT_TAC);;
 
-let alt_free_SING = cake_theorem "alt_free_SING"
-  (fun () ->
-    `(alt_free [x] = (ys,l)) ==> (?y. ys = [y])`)
-  CHEAT_TAC;;
+let alt_free_SING = prove
+ (`(alt_free [x] = (ys,l)) ==> (?y. ys = [y])`,
+  CHEAT_TAC);;
 
-let LENGTH_FST_alt_free = cake_theorem "LENGTH_FST_alt_free"
-  (fun () ->
-    `LENGTH (FST (alt_free fns)) = LENGTH fns`)
-  CHEAT_TAC;;
+let LENGTH_FST_alt_free = prove
+ (`LENGTH (FST (alt_free fns)) = LENGTH fns`,
+  CHEAT_TAC);;
 
-let HD_FST_alt_free = cake_theorem "HD_FST_alt_free"
-  (fun () ->
-    `[HD (FST (alt_free [x1]))] = FST (alt_free [x1])`)
-  CHEAT_TAC;;
+let HD_FST_alt_free = prove
+ (`[HD (FST (alt_free [x1]))] = FST (alt_free [x1])`,
+  CHEAT_TAC);;
 
-let alt_free_CONS = cake_theorem "alt_free_CONS"
-  (fun () ->
-    `FST (alt_free (x :: xs)) = HD (FST (alt_free [x])) :: FST
-  (alt_free xs)`)
-  CHEAT_TAC;;
+let alt_free_CONS = prove
+ (`FST (alt_free (x :: xs)) = HD (FST (alt_free [x])) :: FST (alt_free
+  xs)`,
+  CHEAT_TAC);;
 
 (* shift renames variables to use only those in the annotations *)
 
@@ -365,43 +361,37 @@ let shift_sing_def = cake_define_list_try_tac (fun () ->
          (let c = shift_sing x k (n + fns_len) new_i in
            (n,c) :: shift_letrec fns_len k new_i rest)`];;
 
-let shift_sing_eq = cake_theorem "shift_sing_eq"
-  (fun () ->
-    `(!e m l i. clos_annotate_shift [e] m l i = [shift_sing e m l i]) /\
-     (!es m l i. clos_annotate_shift es m l i = shift_list es m l
-       i) /\
-     (!fns_len k new_i fns.
-        EVERY (\(n,e). clos_annotate_shift [e] k (n + fns_len)
-          new_i =
-                       [shift_sing e k (n + fns_len) new_i]) fns /\
-        shift_letrec fns_len k new_i fns =
-          MAP (\(n,x). let c = shift_sing x k (n + fns_len) new_i
-            in
-                         (n,c)) fns)`)
-  CHEAT_TAC;;
+let shift_sing_eq = prove
+ (`(!e m l i. clos_annotate_shift [e] m l i = [shift_sing e m l i]) /\
+   (!es m l i. clos_annotate_shift es m l i = shift_list es m l i) /\
+   (!fns_len k new_i fns.
+      EVERY (\(n,e). clos_annotate_shift [e] k (n + fns_len) new_i =
+                     [shift_sing e k (n + fns_len) new_i]) fns /\
+      shift_letrec fns_len k new_i fns =
+        MAP (\(n,x). let c = shift_sing x k (n + fns_len) new_i in
+                       (n,c)) fns)`,
+  CHEAT_TAC);;
 
-let shift_LENGTH_LEMMA = cake_theorem "shift_LENGTH_LEMMA"
-  (fun () ->
-    `!xs m l i. LENGTH (clos_annotate_shift xs m l i) = LENGTH xs`)
-  CHEAT_TAC;;
+let shift_LENGTH_LEMMA = prove
+ (`!xs m l i. LENGTH (clos_annotate_shift xs m l i) = LENGTH xs`,
+  CHEAT_TAC);;
 
 (* HOL4 clos_annotateScript.sml:383-387: a theorem that HOL4 states
    as the value of an ML expression: shift_SING *)
 
-let shift_CONS = cake_theorem "shift_CONS"
-  (fun () ->
-    `clos_annotate_shift ((x:closLang_exp) :: xs) m l i =
-        (let c1 = clos_annotate_shift [x] m l i in
-        let c2 = clos_annotate_shift xs m l i in
-          (HD c1 :: (c2:closLang_exp list)))`)
-  CHEAT_TAC;;
+let shift_CONS = prove
+ (`clos_annotate_shift ((x:closLang_exp) :: xs) m l i =
+      (let c1 = clos_annotate_shift [x] m l i in
+      let c2 = clos_annotate_shift xs m l i in
+        (HD c1 :: (c2:closLang_exp list)))`,
+  CHEAT_TAC);;
 
-let HD_shift = cake_theorem "HD_shift[simp]"
-  (fun () ->
-    `LENGTH (clos_annotate_shift [x] m l i) = 1 /\
-     [HD (clos_annotate_shift [x] m l i)] = clos_annotate_shift
-       [x] m l i`)
-  CHEAT_TAC;;
+(* [simp] *)
+let HD_shift = prove
+ (`LENGTH (clos_annotate_shift [x] m l i) = 1 /\
+   [HD (clos_annotate_shift [x] m l i)] = clos_annotate_shift [x] m
+     l i`,
+  CHEAT_TAC);;
 
 (* main functions *)
 
@@ -410,13 +400,13 @@ let annotate_def = cake_define
   (alt_free xs)) 0 arity LN`;;
 hol4_overload "annotate" "clos_annotate_annotate";;
 
-let compile_def = cake_define
+let clos_annotate_compile_def = cake_define
   `clos_annotate_compile prog =
      MAP (\(n,args,exp). (n,args,HD (clos_annotate_annotate args
        [exp]))) prog`;;
 hol4_overload "compile" "clos_annotate_compile";;
 
-let compile_inc_def = cake_define
+let clos_annotate_compile_inc_def = cake_define
   `clos_annotate_compile_inc (e,aux) = (clos_annotate_annotate 0
   e,clos_annotate_compile aux)`;;
 hol4_overload "compile_inc" "clos_annotate_compile_inc";;
@@ -431,20 +421,18 @@ let annotate_list_def = cake_define
   `annotate_list arity xs = shift_list (FST (alt_free_list xs)) 0
   arity LN`;;
 
-let annotate_sing_eq = cake_theorem "annotate_sing_eq"
-  (fun () ->
-    `clos_annotate_annotate arity [e] = [annotate_sing arity e] /\
-     clos_annotate_annotate arity es = annotate_list arity es`)
-  CHEAT_TAC;;
+let annotate_sing_eq = prove
+ (`clos_annotate_annotate arity [e] = [annotate_sing arity e] /\
+   clos_annotate_annotate arity es = annotate_list arity es`,
+  CHEAT_TAC);;
 
-let clos_annotate_compile_eq = cake_theorem "compile_eq"
-  (fun () ->
-    `clos_annotate_compile prog =
-       MAP (\(n,args,exp). (n,args,annotate_sing args exp)) prog`)
-  CHEAT_TAC;;
+(* compile_eq *)
+let clos_annotate_compile_eq = prove
+ (`clos_annotate_compile prog =
+     MAP (\(n,args,exp). (n,args,annotate_sing args exp)) prog`,
+  CHEAT_TAC);;
 
-let compile_inc_eq = cake_theorem "compile_inc_eq"
-  (fun () ->
-    `clos_annotate_compile_inc (e,aux) = (annotate_list 0
-  e,clos_annotate_compile aux)`)
-  CHEAT_TAC;;
+let compile_inc_eq = prove
+ (`clos_annotate_compile_inc (e,aux) = (annotate_list 0
+  e,clos_annotate_compile aux)`,
+  CHEAT_TAC);;

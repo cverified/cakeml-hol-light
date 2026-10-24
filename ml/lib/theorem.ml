@@ -1,180 +1,35 @@
 (* ================================================================== *)
-(*  HOL4's Theorem for HOL Light: the theorems of phase two.          *)
+(*  The one thing a statement of a source needs that HOL Light has    *)
+(*  no primitive for.                                                 *)
 (*                                                                    *)
-(*  A theorem of a CakeML source is in the port with its name, its    *)
-(*  attributes and its statement, and CHEAT_TAC where HOL4 has its    *)
-(*  proof (see CLAUDE.md):                                            *)
+(*  A theorem of a CakeML source is in the port the way HOL Light     *)
+(*  writes one, with the attributes HOL4 gives it in a comment        *)
+(*  over it and CHEAT_TAC where phase three has yet to put a proof:   *)
 (*                                                                    *)
-(*    let foo = cake_theorem "foo[simp]"                              *)
-(*      (fun () ->                                                    *)
-(*        `!x. P x ==> Q x`)                                          *)
-(*      CHEAT_TAC;;                                                   *)
+(*    (* [simp] *)                                                    *)
+(*    let foo = prove                                                 *)
+(*     (`!x. P x ==> Q x`,                                            *)
+(*      CHEAT_TAC);;                                                  *)
 (*                                                                    *)
-(*  Phase three replaces that CHEAT_TAC by a proof, and nothing else  *)
-(*  of the file changes.  The statement is a quotation in a function  *)
-(*  so that one that does not typecheck is a cheat of its own and     *)
-(*  not an error that loses the rest of the file.                     *)
+(*  A name that HOL4 reads as a variable because no theory in scope   *)
+(*  defines it is hidden with HOL Light's own hide_constant, and a    *)
+(*  variable whose name the port overloads with a record accessor     *)
+(*  says its type (tools/fieldvars.py).  What is left is the case     *)
+(*  where a file needs the accessors of a field and reads the name    *)
+(*  of that field as a variable as well: hiding the name would take   *)
+(*  the accessors with it, so only those pairs come out of the        *)
+(*  interface, which is what these two say.                           *)
 (* ================================================================== *)
 
-(* the theorems of the port, by the name that HOL4 gives them, with
-   the attributes that HOL4 gives them ([simp], [compute], [local],
-   ...).  The attributes are part of what the source says, but
-   nothing of the port acts on them: phase three does not replay
-   HOL4's automation. *)
+let the_removed_overloads = ref ([]:(string * string) list);;
 
-let the_theorems = ref ([]:(string * string list * thm) list);;
+let hide_overloads l =
+  the_removed_overloads := l;
+  the_interface :=
+    filter (fun (n,(c,_)) -> not (mem (n,c) l)) (!the_interface);;
 
-let cake_theorems () = rev (!the_theorems);;
-
-(* the theorems whose statement the port cannot state yet: the
-   quotation did not parse or did not typecheck.  Nothing is known
-   about those at all, and the reports of a run list them. *)
-
-let the_unstated = ref ([]:(string * string) list);;
-
-let cake_unstated () = rev (!the_unstated);;
-
-let cake_split_commas s =
-  let rec go i acc cur =
-    if i >= String.length s then rev (cur :: acc)
-    else if s.[i] = ',' then go (i + 1) (cur :: acc) ""
-    else go (i + 1) acc (cur ^ String.make 1 s.[i]) in
-  filter (fun x -> x <> "") (map String.trim (go 0 [] ""));;
-
-(* "foo[simp,compute]" is the name foo with the attributes simp and
-   compute, which is how HOL4 writes them *)
-
-let cake_split_attrs name =
-  try let i = String.index name '[' in
-      String.sub name 0 i,
-      cake_split_commas
-        (String.sub name (i + 1) (String.length name - i - 2))
-  with Not_found -> name,[];;
-
-(* The names that HOL4 reads as a variable in the file that is
-   being loaded: no theory in the scope of that file defines them,
-   while the port has every constant in one namespace (the
-   unification library's vars is not in scope in HOL4's
-   data_to_word_memoryProof, which uses vars for a variable of its
-   own).  A file of the port says which names these are, right
-   after its needs, and the statements of its theorems are read
-   with those constants hidden. *)
-
-let the_hidden = ref ([]:string list);;
-
-let cake_hide names = the_hidden := names;;
-
-(* a source hides a name from its parser with Parse.hide, from
-   there on: the port adds it to the list of the file where the
-   source does (the free of data_to_word_memoryProof, which the
-   statements before it do not use and the ones after it use for a
-   variable of their own) *)
-
-let cake_hide_more names = the_hidden := union names (!the_hidden);;
-
-(* a name that no theory in the ancestry of a file defines and
-   that the port overloads with a constant that the file does see
-   as well: the accessors of a record field have the name of the
-   field (the failed of a labSem state and of an asm_state), and
-   the constructor failed of pegexec's kont has it too.  Hiding
-   the name would take the accessors with it, so only the pairs
-   below are taken out of the interface *)
-
-let the_hidden_consts = ref ([]:(string * string) list);;
-
-let cake_hide_consts l = the_hidden_consts := l;;
-
-let cake_hidden_read f =
-  let hid = !the_hidden in
-  let hc = !the_hidden_consts in
-  let saved = !the_interface in
-  do_list hide_constant hid;
-  if hc <> [] then
-    the_interface :=
-      filter (fun (n,(c,_)) -> not (mem (n,c) hc)) saved;
-  let fin () =
-    do_list unhide_constant hid;
-    if hc <> [] then the_interface := saved in
-  try let x = f () in fin (); x
-  with e -> (fin (); raise e);;
-
-(* the theorems whose statement uses the name of a record field
-   for a variable of its own, which HOL4 does and the port reads
-   with the overloads of the field names taken away *)
-
-let the_fieldvars = ref ([]:string list);;
-
-let cake_fieldvars () = rev (!the_fieldvars);;
-
-(* the message of HOL Light may have a line break in it (a type
-   that it prints does not fit in a line), and a line of the
-   output that starts with a # is the prompt of the toplevel as
-   far as the scripts that talk to a session are concerned: the
-   message goes out as one line *)
-
-let cake_oneline s =
-  String.concat " "
-    (filter (fun x -> x <> "")
-       (map String.trim (String.split_on_char '\n' s)));;
-
-let note_unstated nm what s =
-  let s = cake_oneline s in
-  the_unstated := (nm,s) :: !the_unstated;
-  print_string ("\ncake_theorem " ^ nm ^ " " ^ what ^ ": " ^ s ^ "\n");
-  flush stdout;;
-
-(* a theorem of a source, with the tactic that the port has for it.
-   In phase two that tactic is CHEAT_TAC and the theorem is an
-   axiom, which length(axioms()) counts; in phase three it is a
-   proof of its own and no axiom is added. *)
-
-(* a theorem that a source states as the value of another one
-   (HOL4's Theorem foo = bar): the name is the one of the source
-   and the theorem the one that the port has for the other name *)
-
-let cake_alias name th =
-  let nm,attrs = cake_split_attrs name in
-  the_theorems := (nm,attrs,th) :: !the_theorems;
-  th;;
-
-let cake_theorem name mkterm tac =
-  let nm,attrs = cake_split_attrs name in
-  (* a statement that uses the name of a record field for a
-     variable is read again with those overloads taken away *)
-  let read () =
-    let hidden () = cake_hidden_read mkterm in
-    try hidden () with
-      Failure _ | Invalid_argument _ as e ->
-        (try let tm = cake_as_vars hidden in
-             the_fieldvars := nm :: !the_fieldvars; tm
-         with Failure _ | Invalid_argument _ -> raise e) in
-  let tm =
-    try let tm = read () in
-        if type_of tm = bool_ty then Some tm else
-        (note_unstated nm "NOT STATED"
-           ("not a formula but a term of type " ^
-            string_of_type (type_of tm)); None)
-    with Failure s -> (note_unstated nm "NOT STATED" s; None)
-       | Invalid_argument s ->
-           (note_unstated nm "NOT STATED" s; None)
-       | Not_found -> (note_unstated nm "NOT STATED" "Not_found";
-                       None)
-       | Stack_overflow ->
-           (note_unstated nm "NOT STATED" "Stack_overflow"; None) in
-  match tm with
-    None -> TRUTH
-  | Some tm ->
-      let th =
-        try prove (tm,tac) with
-          Failure s ->
-            (note_unstated nm "NOT PROVED" s; mk_thm ([],tm))
-        | Invalid_argument s ->
-            (note_unstated nm "NOT PROVED" s; mk_thm ([],tm))
-        | Not_found ->
-            (note_unstated nm "NOT PROVED" "Not_found";
-             mk_thm ([],tm))
-        | Stack_overflow ->
-            (note_unstated nm "NOT PROVED" "Stack_overflow";
-             mk_thm ([],tm)) in
-      the_theorems := (nm,attrs,th) :: !the_theorems;
-      th;;
+let unhide_overloads () =
+  the_interface :=
+    map (fun (n,c) -> (n,(c,get_const_type c)))
+        (!the_removed_overloads) @ (!the_interface);
+  the_removed_overloads := [];;

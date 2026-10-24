@@ -1,18 +1,7 @@
 #!/bin/sh
-# thms [session] : the theorems of phase two that the session
-# (hol-seq by default) has, the ones whose statement the port
-# cannot state yet, and the ones whose statement uses the name of
-# a record field for a variable of its own
-PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+# thms [file of the port] : how many theorems the port states and
+# how many of them still have a cheat for a proof.  The shape of a
+# theorem is HOL Light's (let foo = prove (`...`, tac);;), so this
+# is a count of the files and needs no session.
 C=/home/freek/claude/hol-light/cakeml
-s=${1:-seq}
-TIMEOUT=180 repl-step $s \
-  "let cake_out = open_out \"$C/tmp/unstated.txt\" in
-   do_list (fun (n,w) ->
-     output_string cake_out (n ^ \"\\t\" ^ w ^ \"\\n\"))
-     (cake_unstated ());
-   close_out cake_out;
-   (length (cake_theorems ()), length (cake_unstated ()),
-    length (cake_fieldvars ()));;" \
-  2>&1 | tail -2
-python3 -I $C/tools/thms.py
+python3 -I $C/tools/thms.py "$@"

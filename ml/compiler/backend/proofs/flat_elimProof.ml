@@ -28,35 +28,30 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 flat_elimProofScript.sml:15-56: code that the source has in a
    comment *)
 
-let is_pure_EVERY_aconv = cake_theorem "is_pure_EVERY_aconv"
-  (fun () ->
-    `!es. EVERY (\a. flat_elim_is_pure a) es = EVERY flat_elim_is_pure
-  es`)
-  CHEAT_TAC;;
+let is_pure_EVERY_aconv = prove
+ (`!es. EVERY (\a. flat_elim_is_pure a) es = EVERY flat_elim_is_pure
+  es`,
+  CHEAT_TAC);;
 
-let find_lookupsL_MEM = cake_theorem "find_lookupsL_MEM"
-  (fun () ->
-    `!e es. MEM e es ==> domain (find_lookups e) SUBSET domain
-  (find_lookupsL es)`)
-  CHEAT_TAC;;
+let find_lookupsL_MEM = prove
+ (`!e es. MEM e es ==> domain (find_lookups e) SUBSET domain
+  (find_lookupsL es)`,
+  CHEAT_TAC);;
 
-let find_lookupsL_APPEND = cake_theorem "find_lookupsL_APPEND"
-  (fun () ->
-    `!l1 l2. find_lookupsL (l1 ++ l2) =
-        sptree_union (find_lookupsL l1) (find_lookupsL l2)`)
-  CHEAT_TAC;;
+let find_lookupsL_APPEND = prove
+ (`!l1 l2. find_lookupsL (l1 ++ l2) =
+      sptree_union (find_lookupsL l1) (find_lookupsL l2)`,
+  CHEAT_TAC);;
 
-let find_lookupsL_REVERSE = cake_theorem "find_lookupsL_REVERSE"
-  (fun () ->
-    `!l. find_lookupsL l = find_lookupsL (REVERSE l)`)
-  CHEAT_TAC;;
+let find_lookupsL_REVERSE = prove
+ (`!l. find_lookupsL l = find_lookupsL (REVERSE l)`,
+  CHEAT_TAC);;
 
-let find_loc_EVERY_isEmpty = cake_theorem "find_loc_EVERY_isEmpty"
-  (fun () ->
-    `!l (reachable:1 spt).
-        EVERY (\e. (\t. t = LN) (inter (find_loc e) reachable)) l
-          <=> (\t. t = LN) (inter (find_locL l) reachable)`)
-  CHEAT_TAC;;
+let find_loc_EVERY_isEmpty = prove
+ (`!l (reachable:1 spt).
+      EVERY (\e. (\t. t = LN) (inter (find_loc e) reachable)) l <=>
+        (\t. t = LN) (inter (find_locL l) reachable)`,
+  CHEAT_TAC);;
 
 
 (************************** DEFINITIONS ***************************)
@@ -93,79 +88,67 @@ let find_v_globals_def = cake_define_list_try_tac (fun () ->
 
 (* HOL4 flat_elimProofScript.sml:128: ML code, not ported *)
 
-let find_v_globalsL_APPEND = cake_theorem "find_v_globalsL_APPEND"
-  (fun () ->
-    `!l1 l2. find_v_globalsL (l1 ++ l2) =
-        sptree_union (find_v_globalsL l1) (find_v_globalsL l2)`)
-  CHEAT_TAC;;
+let find_v_globalsL_APPEND = prove
+ (`!l1 l2. find_v_globalsL (l1 ++ l2) =
+      sptree_union (find_v_globalsL l1) (find_v_globalsL l2)`,
+  CHEAT_TAC);;
 
-let find_v_globalsL_REVERSE = cake_theorem "find_v_globalsL_REVERSE"
-  (fun () ->
-    `!l. find_v_globalsL l = find_v_globalsL (REVERSE l)`)
-  CHEAT_TAC;;
+let find_v_globalsL_REVERSE = prove
+ (`!l. find_v_globalsL l = find_v_globalsL (REVERSE l)`,
+  CHEAT_TAC);;
 
-let find_v_globalsL_MEM = cake_theorem "find_v_globalsL_MEM"
-  (fun () ->
-    `!k v vs.
-     MEM (k,v) vs ==> domain (find_v_globals v) SUBSET domain
-       (find_v_globalsL (MAP SND vs))`)
-  CHEAT_TAC;;
+let find_v_globalsL_MEM = prove
+ (`!k v vs.
+   MEM (k,v) vs ==> domain (find_v_globals v) SUBSET domain
+     (find_v_globalsL (MAP SND vs))`,
+  CHEAT_TAC);;
 
-let find_v_globalsL_EL = cake_theorem "find_v_globalsL_EL"
-  (fun () ->
-    `!n vs. n < LENGTH vs ==>
-     domain (find_v_globals (EL n vs)) SUBSET domain
-       (find_v_globalsL vs)`)
-  CHEAT_TAC;;
+let find_v_globalsL_EL = prove
+ (`!n vs. n < LENGTH vs ==>
+   domain (find_v_globals (EL n vs)) SUBSET domain (find_v_globalsL
+     vs)`,
+  CHEAT_TAC);;
 
-let find_v_globalsL_EL_trans =
-  cake_theorem "find_v_globalsL_EL_trans[local]"
-  (fun () ->
-    `n < LENGTH vs /\ domain (find_v_globalsL vs) SUBSET R ==>
-     domain (find_v_globals (EL n vs)) SUBSET R`)
-  CHEAT_TAC;;
+(* [local] *)
+let find_v_globalsL_EL_trans = prove
+ (`n < LENGTH vs /\ domain (find_v_globalsL vs) SUBSET R ==>
+   domain (find_v_globals (EL n vs)) SUBSET R`,
+  CHEAT_TAC);;
 
-let find_v_globals_MAP_Recclosure =
-  cake_theorem "find_v_globals_MAP_Recclosure"
-  (fun () ->
-    `!funs v l.
-     domain (find_v_globalsL (MAP (\x. Recclosure env l (f x))
-       funs)) =
-     (if NULL funs then {} else domain (find_v_globalsL (MAP SND
-       (flatSem_environment_v env))) UNION
-             domain (find_lookupsL (MAP (SND o SND) l)))`)
-  CHEAT_TAC;;
+let find_v_globals_MAP_Recclosure = prove
+ (`!funs v l.
+   domain (find_v_globalsL (MAP (\x. Recclosure env l (f x)) funs)) =
+   (if NULL funs then {} else domain (find_v_globalsL (MAP SND
+     (flatSem_environment_v env))) UNION
+           domain (find_lookupsL (MAP (SND o SND) l)))`,
+  CHEAT_TAC);;
 
-let find_v_globalsL_REPLICATE = cake_theorem "find_v_globalsL_REPLICATE"
-  (fun () ->
-    `!n v vs. domain (find_v_globalsL (REPLICATE n v)) SUBSET
-        domain (find_v_globals v)`)
-  CHEAT_TAC;;
+let find_v_globalsL_REPLICATE = prove
+ (`!n v vs. domain (find_v_globalsL (REPLICATE n v)) SUBSET
+      domain (find_v_globals v)`,
+  CHEAT_TAC);;
 
-let find_v_globalsL_LUPDATE = cake_theorem "find_v_globalsL_LUPDATE"
-  (fun () ->
-    `!n vs (reachable:1 spt) v.
-     n < LENGTH vs /\
-     domain (find_v_globalsL vs) SUBSET domain reachable /\
-     domain (find_v_globals v) SUBSET domain reachable ==> domain
-       (find_v_globalsL (LUPDATE v n vs)) SUBSET domain reachable`)
-  CHEAT_TAC;;
+let find_v_globalsL_LUPDATE = prove
+ (`!n vs (reachable:1 spt) v.
+   n < LENGTH vs /\
+   domain (find_v_globalsL vs) SUBSET domain reachable /\
+   domain (find_v_globals v) SUBSET domain reachable ==> domain
+     (find_v_globalsL (LUPDATE v n vs)) SUBSET domain reachable`,
+  CHEAT_TAC);;
 
-let find_v_globals_v_to_list = cake_theorem "find_v_globals_v_to_list"
-  (fun () ->
-    `!x (reachable:1 spt) xs.
-        domain (find_v_globals x) SUBSET domain reachable /\
-          v_to_list x = SOME xs ==> domain (find_v_globalsL xs) SUBSET
-          domain reachable`)
-  CHEAT_TAC;;
+let find_v_globals_v_to_list = prove
+ (`!x (reachable:1 spt) xs.
+      domain (find_v_globals x) SUBSET domain reachable /\
+        v_to_list x = SOME xs ==> domain (find_v_globalsL xs) SUBSET
+        domain reachable`,
+  CHEAT_TAC);;
 
-let find_v_globals_list_to_v = cake_theorem "find_v_globals_list_to_v"
-  (fun () ->
-    `!xs (reachable:1 spt) x.
-        domain (find_v_globalsL xs) SUBSET domain reachable /\
-          list_to_v xs = x ==> domain (find_v_globals x) SUBSET domain
-          reachable`)
-  CHEAT_TAC;;
+let find_v_globals_list_to_v = prove
+ (`!xs (reachable:1 spt) x.
+      domain (find_v_globalsL xs) SUBSET domain reachable /\
+        list_to_v xs = x ==> domain (find_v_globals x) SUBSET domain
+        reachable`,
+  CHEAT_TAC);;
 
 let find_refs_globals_def = cake_define
   `find_refs_globals x1 =
@@ -181,66 +164,60 @@ let find_refs_globals_def = cake_define
 
 (* HOL4 flat_elimProofScript.sml:225: ML code, not ported *)
 
-let find_refs_globals_MEM = cake_theorem "find_refs_globals_MEM"
-  (fun () ->
-    `!refs (reachable:1 spt).
-        domain (find_refs_globals refs) SUBSET R ==> (!a.
-            MEM (semanticPrimitives_Refv a) refs ==> domain
-              (find_v_globals a) SUBSET R) /\
-        (!vs.
-            MEM (semanticPrimitives_Varray vs) refs ==> domain
-              (find_v_globalsL vs) SUBSET R) /\
-        (!m a.
-            MEM (semanticPrimitives_Thunk m a) refs ==> domain
-              (find_v_globals a) SUBSET R)`)
-  CHEAT_TAC;;
+let find_refs_globals_MEM = prove
+ (`!refs (reachable:1 spt).
+      domain (find_refs_globals refs) SUBSET R ==> (!a.
+          MEM (semanticPrimitives_Refv a) refs ==> domain
+            (find_v_globals a) SUBSET R) /\
+      (!vs.
+          MEM (semanticPrimitives_Varray vs) refs ==> domain
+            (find_v_globalsL vs) SUBSET R) /\
+      (!m a.
+          MEM (semanticPrimitives_Thunk m a) refs ==> domain
+            (find_v_globals a) SUBSET R)`,
+  CHEAT_TAC);;
 
-let find_refs_globals_EL = cake_theorem "find_refs_globals_EL"
-  (fun () ->
-    `n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET R ==>
-       (!a.
-               EL n refs = semanticPrimitives_Refv a ==> domain
-                 (find_v_globals a) SUBSET R) /\
-       (!vs.
-               EL n refs = semanticPrimitives_Varray vs ==> domain
-                 (find_v_globalsL vs) SUBSET R) /\
-       (!m a.
-               EL n refs = semanticPrimitives_Thunk m a ==>
-                 domain (find_v_globals a) SUBSET R)`)
-  CHEAT_TAC;;
-
-let find_refs_globals_LUPDATE = cake_theorem "find_refs_globals_LUPDATE"
-  (fun () ->
-    `!(reachable:1 spt) refs n.
-        n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET
-          domain reachable ==>
-        (!a.
-            domain (find_v_globals a) SUBSET domain reachable ==>
-                domain (find_refs_globals (LUPDATE
-                  (semanticPrimitives_Refv a) n refs)) SUBSET domain
-                  reachable) /\
+let find_refs_globals_EL = prove
+ (`n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET R ==>
+     (!a.
+             EL n refs = semanticPrimitives_Refv a ==> domain
+               (find_v_globals a) SUBSET R) /\
      (!vs.
-        domain (find_v_globalsL vs) SUBSET domain reachable ==>
-            domain (find_refs_globals (LUPDATE
-              (semanticPrimitives_Varray vs) n refs)) SUBSET domain
-              reachable) /\
-     (!ws.
-        domain (find_refs_globals (LUPDATE
-          (semanticPrimitives_W8array ws) n refs)) SUBSET domain
-          reachable) /\
+             EL n refs = semanticPrimitives_Varray vs ==> domain
+               (find_v_globalsL vs) SUBSET R) /\
      (!m a.
-        domain (find_v_globals a) SUBSET domain reachable ==>
-            domain (find_refs_globals (LUPDATE
-              (semanticPrimitives_Thunk m a) n refs)) SUBSET domain
-              reachable)`)
-  CHEAT_TAC;;
+             EL n refs = semanticPrimitives_Thunk m a ==> domain
+               (find_v_globals a) SUBSET R)`,
+  CHEAT_TAC);;
 
-let find_refs_globals_APPEND = cake_theorem "find_refs_globals_APPEND"
-  (fun () ->
-    `!refs new. find_refs_globals (refs ++ new) =
-        sptree_union (find_refs_globals refs) (find_refs_globals
-          new)`)
-  CHEAT_TAC;;
+let find_refs_globals_LUPDATE = prove
+ (`!(reachable:1 spt) refs n.
+      n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET
+        domain reachable ==>
+      (!a.
+          domain (find_v_globals a) SUBSET domain reachable ==>
+              domain (find_refs_globals (LUPDATE
+                (semanticPrimitives_Refv a) n refs)) SUBSET domain
+                reachable) /\
+   (!vs.
+      domain (find_v_globalsL vs) SUBSET domain reachable ==>
+          domain (find_refs_globals (LUPDATE
+            (semanticPrimitives_Varray vs) n refs)) SUBSET domain
+            reachable) /\
+   (!ws.
+      domain (find_refs_globals (LUPDATE (semanticPrimitives_W8array
+        ws) n refs)) SUBSET domain reachable) /\
+   (!m a.
+      domain (find_v_globals a) SUBSET domain reachable ==>
+          domain (find_refs_globals (LUPDATE
+            (semanticPrimitives_Thunk m a) n refs)) SUBSET domain
+            reachable)`,
+  CHEAT_TAC);;
+
+let find_refs_globals_APPEND = prove
+ (`!refs new. find_refs_globals (refs ++ new) =
+      sptree_union (find_refs_globals refs) (find_refs_globals new)`,
+  CHEAT_TAC);;
 
 let find_env_globals_def = cake_define
   `find_env_globals env = find_v_globalsL (MAP SND
@@ -302,12 +279,11 @@ let globals_rel_def = cake_define
          EL n t_g = SOME x ==> ~(v_has_Eval x) /\ domain
            (find_v_globals x) SUBSET domain reachable)`;;
 
-let globals_rel_trans = cake_theorem "globals_rel_trans"
-  (fun () ->
-    `!reachable s1 s2 s3.
-        globals_rel reachable s1 s2 /\ globals_rel reachable s2
-          s3 ==> globals_rel reachable s1 s3`)
-  CHEAT_TAC;;
+let globals_rel_trans = prove
+ (`!reachable s1 s2 s3.
+      globals_rel reachable s1 s2 /\ globals_rel reachable s2 s3
+        ==> globals_rel reachable s1 s3`,
+  CHEAT_TAC);;
 
 let decs_closed_def = cake_define
   `decs_closed (reachable:1 spt) decs <=> (!r t.
@@ -316,18 +292,15 @@ let decs_closed_def = cake_define
      n IN domain reachable /\ is_reachable t n m ==> m IN domain
        reachable))`;;
 
-let decs_closed_reduce = cake_theorem "decs_closed_reduce"
-  (fun () ->
-    `!reachable e t. decs_closed reachable (e :: t) ==> decs_closed
-  reachable t`)
-  CHEAT_TAC;;
+let decs_closed_reduce = prove
+ (`!reachable e t. decs_closed reachable (e :: t) ==> decs_closed
+  reachable t`,
+  CHEAT_TAC);;
 
-let decs_closed_reduce_HD = cake_theorem "decs_closed_reduce_HD"
-  (fun () ->
-    `!reachable e t.
-        decs_closed reachable (e :: t) ==> decs_closed reachable
-          [e]`)
-  CHEAT_TAC;;
+let decs_closed_reduce_HD = prove
+ (`!reachable e t.
+      decs_closed reachable (e :: t) ==> decs_closed reachable [e]`,
+  CHEAT_TAC);;
 
 (* s = state, t = removed state *)
 let flat_state_rel_def = cake_define
@@ -342,109 +315,98 @@ let flat_state_rel_def = cake_define
      EVERY (EVERY ((~) o v_has_Eval) o store_v_vs)
        (flatSem_state_refs s)`;;
 
-let flat_state_rel_trans = cake_theorem "flat_state_rel_trans"
-  (fun () ->
-    `!reachable s1 s2 s3.
-       flat_state_rel reachable s1 s2 /\
-       flat_state_rel reachable s2 s3 ==> flat_state_rel
-         reachable s1 s3`)
-  CHEAT_TAC;;
+let flat_state_rel_trans = prove
+ (`!reachable s1 s2 s3.
+     flat_state_rel reachable s1 s2 /\
+     flat_state_rel reachable s2 s3 ==> flat_state_rel reachable s1
+       s3`,
+  CHEAT_TAC);;
 
 (**************************** FLATLANG LEMMAS *****************************)
 
-let pmatch_Match_reachable = cake_theorem "pmatch_Match_reachable"
-  (fun () ->
-    `(!(s:('c,'ffi)flatSem_state) p v l a (reachable:1 spt).
-     pmatch s p v l = Match a /\
-        domain (find_v_globals v) SUBSET domain reachable /\
-        domain (find_v_globalsL (MAP SND l)) SUBSET domain
-          reachable /\
-        domain (find_refs_globals (flatSem_state_refs s)) SUBSET
-          domain reachable ==> domain (find_v_globalsL (MAP SND a))
-          SUBSET domain reachable) /\
-     (!(s:('c,'ffi)flatSem_state) p vs l a (reachable:1 spt).
-        pmatch_list s p vs l = Match a /\
-        domain (find_v_globalsL vs) SUBSET domain reachable /\
-        domain (find_v_globalsL (MAP SND l)) SUBSET domain
-          reachable /\
-        domain (find_refs_globals (flatSem_state_refs s)) SUBSET
-          domain reachable ==> domain (find_v_globalsL (MAP SND a))
-          SUBSET domain reachable)`)
-  CHEAT_TAC;;
+let pmatch_Match_reachable = prove
+ (`(!(s:('c,'ffi)flatSem_state) p v l a (reachable:1 spt).
+   pmatch s p v l = Match a /\
+      domain (find_v_globals v) SUBSET domain reachable /\
+      domain (find_v_globalsL (MAP SND l)) SUBSET domain reachable /\
+      domain (find_refs_globals (flatSem_state_refs s)) SUBSET domain
+        reachable ==> domain (find_v_globalsL (MAP SND a)) SUBSET domain
+        reachable) /\
+   (!(s:('c,'ffi)flatSem_state) p vs l a (reachable:1 spt).
+      pmatch_list s p vs l = Match a /\
+      domain (find_v_globalsL vs) SUBSET domain reachable /\
+      domain (find_v_globalsL (MAP SND l)) SUBSET domain reachable /\
+      domain (find_refs_globals (flatSem_state_refs s)) SUBSET
+        domain reachable ==> domain (find_v_globalsL (MAP SND a))
+        SUBSET domain reachable)`,
+  CHEAT_TAC);;
 
-let find_v_globals_list_to_v_APPEND =
-  cake_theorem "find_v_globals_list_to_v_APPEND"
-  (fun () ->
-    `!xs (reachable:1 spt) ys.
-        domain (find_v_globalsL xs) SUBSET domain reachable /\
-        domain (find_v_globalsL ys) SUBSET domain reachable ==>
-          domain (find_v_globals (list_to_v (xs ++ ys))) SUBSET domain
-          reachable`)
-  CHEAT_TAC;;
+let find_v_globals_list_to_v_APPEND = prove
+ (`!xs (reachable:1 spt) ys.
+      domain (find_v_globalsL xs) SUBSET domain reachable /\
+      domain (find_v_globalsL ys) SUBSET domain reachable ==>
+        domain (find_v_globals (list_to_v (xs ++ ys))) SUBSET domain
+        reachable`,
+  CHEAT_TAC);;
 
-let find_v_globals_Unitv = cake_theorem "find_v_globals_Unitv[simp]"
-  (fun () ->
-    `find_v_globals Unitv = LN`)
-  CHEAT_TAC;;
+(* [simp] *)
+let find_v_globals_Unitv = prove
+ (`find_v_globals Unitv = LN`,
+  CHEAT_TAC);;
 
-let EVERY_EL_IMP = cake_theorem "EVERY_EL_IMP"
-  (fun () ->
-    `EVERY P xs /\ n < LENGTH xs ==> P (EL n xs)`)
-  CHEAT_TAC;;
+let EVERY_EL_IMP = prove
+ (`EVERY P xs /\ n < LENGTH xs ==> P (EL n xs)`,
+  CHEAT_TAC);;
 
-let not_v_has_Eval_EVERY_EL =
-  cake_theorem "not_v_has_Eval_EVERY_EL[local]"
-  (fun () ->
-    `EVERY ((~) o v_has_Eval) xs /\ i < LENGTH xs ==> ~(v_has_Eval (EL
-  i xs))`)
-  CHEAT_TAC;;
+(* [local] *)
+let not_v_has_Eval_EVERY_EL = prove
+ (`EVERY ((~) o v_has_Eval) xs /\ i < LENGTH xs ==> ~(v_has_Eval (EL i
+  xs))`,
+  CHEAT_TAC);;
 
 (* HOL4 flat_elimProofScript.sml:462: the ML values that the
    definitions below antiquote *)
 
-let v_has_Eval_list_to_v = cake_theorem "v_has_Eval_list_to_v"
-  (fun () ->
-    `v_has_Eval (list_to_v xs) = EXISTS v_has_Eval xs`)
-  CHEAT_TAC;;
+let v_has_Eval_list_to_v = prove
+ (`v_has_Eval (list_to_v xs) = EXISTS v_has_Eval xs`,
+  CHEAT_TAC);;
 
-let v_has_Eval_v_to_list = cake_theorem "v_has_Eval_v_to_list"
-  (fun () ->
-    `!v xs. v_to_list v = SOME xs ==> v_has_Eval v = EXISTS v_has_Eval
-  xs`)
-  CHEAT_TAC;;
+let v_has_Eval_v_to_list = prove
+ (`!v xs. v_to_list v = SOME xs ==> v_has_Eval v = EXISTS v_has_Eval
+  xs`,
+  CHEAT_TAC);;
 
 (* HOL4 flat_elimProofScript.sml:479-481: ML code, not ported *)
 
 (* HOL4 flat_elimProofScript.sml:483: ML code, not ported *)
 
-let fvg_map_char_empty = cake_theorem "fvg_map_char_empty[local]"
-  (fun () ->
-    `find_v_globals (list_to_v (MAP (\c. Litv (ast_Char c)) ss)) = LN`)
-  CHEAT_TAC;;
+(* [local] *)
+let fvg_map_char_empty = prove
+ (`find_v_globals (list_to_v (MAP (\c. Litv (ast_Char c)) ss)) = LN`,
+  CHEAT_TAC);;
 
-let not_LE_LESS_IMP = cake_theorem "not_LE_LESS_IMP[local]"
-  (fun () ->
-    `(~(x >= y)) ==> ((x:num) < y)`)
-  CHEAT_TAC;;
+(* [local] *)
+let not_LE_LESS_IMP = prove
+ (`(~(x >= y)) ==> ((x:num) < y)`,
+  CHEAT_TAC);;
 
-let EL_REP_NONE_SOME_trivia =
-  cake_theorem "EL_REP_NONE_SOME_trivia[local]"
-  (fun () ->
-    `n < LENGTH xs + i ==>
-     (EL n (xs ++ REPLICATE i NONE) = SOME y <=>
-       n < LENGTH xs /\ EL n xs = SOME y)`)
-  CHEAT_TAC;;
+(* [local] *)
+let EL_REP_NONE_SOME_trivia = prove
+ (`n < LENGTH xs + i ==>
+   (EL n (xs ++ REPLICATE i NONE) = SOME y <=>
+     n < LENGTH xs /\ EL n xs = SOME y)`,
+  CHEAT_TAC);;
 
-let flat_elimProof_pair_case_eq = cake_theorem "pair_case_eq[local]"
-  (fun () ->
-    `pair_CASE x f = v <=> (?x1 x2. x = (x1,x2) /\ f x1 x2 = v)`)
-  CHEAT_TAC;;
+(* pair_case_eq[local] *)
+let flat_elimProof_pair_case_eq = prove
+ (`pair_CASE x f = v <=> (?x1 x2. x = (x1,x2) /\ f x1 x2 = v)`,
+  CHEAT_TAC);;
 
-let flat_elimProof_pair_lam_lem = cake_theorem "pair_lam_lem[local]"
-  (fun () ->
-    `!f v z. (let (x,y) = z in f x y) = v <=> (?x1 x2. z = (x1,x2) /\
-  (f x1 x2 = v))`)
-  CHEAT_TAC;;
+(* pair_lam_lem[local] *)
+let flat_elimProof_pair_lam_lem = prove
+ (`!f v z. (let (x,y) = z in f x y) = v <=> (?x1 x2. z = (x1,x2) /\ (f
+  x1 x2 = v))`,
+  CHEAT_TAC);;
 
 (* HOL4 flat_elimProofScript.sml:519: ML code, not ported *)
 
@@ -452,319 +414,282 @@ let flat_elimProof_pair_lam_lem = cake_theorem "pair_lam_lem[local]"
    as the value of an ML expression: do_app_cases *)
 
 
-let fvg_v_to_flat = cake_theorem "fvg_v_to_flat[local,simp]"
-  (fun () ->
-    `domain (find_v_globals (v_to_flat v)) SUBSET domain reachable /\
-     ~(v_has_Eval (v_to_flat v))`)
-  CHEAT_TAC;;
+(* [local,simp] *)
+let fvg_v_to_flat = prove
+ (`domain (find_v_globals (v_to_flat v)) SUBSET domain reachable /\
+   ~(v_has_Eval (v_to_flat v))`,
+  CHEAT_TAC);;
 
-let do_app_SOME_flat_state_rel =
-  cake_theorem "do_app_SOME_flat_state_rel"
-  (fun () ->
-    `!reachable state removed_state op l new_state result
+let do_app_SOME_flat_state_rel = prove
+ (`!reachable state removed_state op l new_state result
   new_removed_state.
-        flat_state_rel reachable state removed_state /\ ~(op =
-          flatLang_Src ast_Opapp) /\
-        domain (find_v_globalsL l) SUBSET domain reachable /\
-        domain (find_lookups (App tra op [])) SUBSET domain
-          reachable /\
-        EVERY ((~) o v_has_Eval) l ==>
-            do_app state op l = SOME (new_state,result) /\ ~(result
-              = Rerr (Rabort Rtype_error)) ==> (?new_removed_state.
-                flat_state_rel reachable new_state
-                  new_removed_state /\
-                do_app removed_state op l =
-                    SOME (new_removed_state,result) /\
-                domain (find_sem_prim_res_globals (list_result
-                  result)) SUBSET
-                    domain reachable /\
-                EVERY ((~) o v_has_Eval) (result_vs (list_result
-                  result)))`)
-  CHEAT_TAC;;
+      flat_state_rel reachable state removed_state /\ ~(op =
+        flatLang_Src ast_Opapp) /\
+      domain (find_v_globalsL l) SUBSET domain reachable /\
+      domain (find_lookups (App tra op [])) SUBSET domain reachable
+        /\
+      EVERY ((~) o v_has_Eval) l ==>
+          do_app state op l = SOME (new_state,result) /\ ~(result =
+            Rerr (Rabort Rtype_error)) ==> (?new_removed_state.
+              flat_state_rel reachable new_state new_removed_state /\
+              do_app removed_state op l =
+                  SOME (new_removed_state,result) /\
+              domain (find_sem_prim_res_globals (list_result result))
+                SUBSET
+                  domain reachable /\
+              EVERY ((~) o v_has_Eval) (result_vs (list_result
+                result)))`,
+  CHEAT_TAC);;
 
 
 (**************************** MAIN LEMMAS *****************************)
 
-let flat_state_rel_pmatch = cake_theorem "flat_state_rel_pmatch"
-  (fun () ->
-    `(!((new_state:('c,'ffi)flatSem_state)) p a env.
-       flat_state_rel reachable new_state new_removed_state ==>
-       pmatch new_removed_state p a env =
-       pmatch new_state p a env) /\
-     (!((new_state:('c,'ffi)flatSem_state)) p a env.
-       flat_state_rel reachable new_state new_removed_state ==>
-       pmatch_list new_removed_state p a env =
-       pmatch_list new_state p a env)`)
-  CHEAT_TAC;;
+let flat_state_rel_pmatch = prove
+ (`(!((new_state:('c,'ffi)flatSem_state)) p a env.
+     flat_state_rel reachable new_state new_removed_state ==>
+     pmatch new_removed_state p a env =
+     pmatch new_state p a env) /\
+   (!((new_state:('c,'ffi)flatSem_state)) p a env.
+     flat_state_rel reachable new_state new_removed_state ==>
+     pmatch_list new_removed_state p a env =
+     pmatch_list new_state p a env)`,
+  CHEAT_TAC);;
 
-let flat_state_rel_pmatch_rows =
-  cake_theorem "flat_state_rel_pmatch_rows"
-  (fun () ->
-    `flat_state_rel reachable new_state new_removed_state ==>
-     pmatch_rows (pes:(flatLang_pat#flatLang_exp) list)
-       new_removed_state a =
-     pmatch_rows pes new_state a`)
-  CHEAT_TAC;;
+let flat_state_rel_pmatch_rows = prove
+ (`flat_state_rel reachable new_state new_removed_state ==>
+   pmatch_rows (pes:(flatLang_pat#flatLang_exp) list)
+     new_removed_state a =
+   pmatch_rows pes new_state a`,
+  CHEAT_TAC);;
 
-let pmatch_rows_find_lookups = cake_theorem "pmatch_rows_find_lookups"
-  (fun () ->
-    `pmatch_rows pes q a = Match (env',p',e') /\
-     domain (find_lookupsL (MAP SND pes)) SUBSET domain reachable
-       ==>
-     domain (find_lookups e') SUBSET domain reachable`)
-  CHEAT_TAC;;
+let pmatch_rows_find_lookups = prove
+ (`pmatch_rows pes q a = Match (env',p',e') /\
+   domain (find_lookupsL (MAP SND pes)) SUBSET domain reachable ==>
+   domain (find_lookups e') SUBSET domain reachable`,
+  CHEAT_TAC);;
 
-let pmatch_not_has_Eval = cake_theorem "pmatch_not_has_Eval"
-  (fun () ->
-    `(
-     !(s:('c,'ffi)flatSem_state) p v bindings env.
-     pmatch s p v bindings = Match env /\ ~(v_has_Eval v) /\
-     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs)
-       (flatSem_state_refs s) /\
-     EVERY ((~) o v_has_Eval o SND) bindings ==>
-     EVERY ((~) o v_has_Eval o SND) env) /\ (
-     !(s:('c,'ffi)flatSem_state) ps vs bindings env.
-     pmatch_list s ps vs bindings = Match env /\
-     EVERY ((~) o v_has_Eval) vs /\
-     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs)
-       (flatSem_state_refs s) /\
-     EVERY ((~) o v_has_Eval o SND) bindings ==>
-     EVERY ((~) o v_has_Eval o SND) env)`)
-  CHEAT_TAC;;
+let pmatch_not_has_Eval = prove
+ (`(
+   !(s:('c,'ffi)flatSem_state) p v bindings env.
+   pmatch s p v bindings = Match env /\ ~(v_has_Eval v) /\
+   EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (flatSem_state_refs
+     s) /\
+   EVERY ((~) o v_has_Eval o SND) bindings ==>
+   EVERY ((~) o v_has_Eval o SND) env) /\ (
+   !(s:('c,'ffi)flatSem_state) ps vs bindings env.
+   pmatch_list s ps vs bindings = Match env /\
+   EVERY ((~) o v_has_Eval) vs /\
+   EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (flatSem_state_refs
+     s) /\
+   EVERY ((~) o v_has_Eval o SND) bindings ==>
+   EVERY ((~) o v_has_Eval o SND) env)`,
+  CHEAT_TAC);;
 
-let has_Eval_def = cake_theorem "has_Eval_def[local]"
-  (fun () ->
-    `(has_Eval (Handle _17 e pes:flatLang_exp) = (has_Eval e \/ EXISTS
+(* has_Eval_def[local] *)
+let flat_elimProof_has_Eval_def = prove
+ (`(has_Eval (Handle _17 e pes:flatLang_exp) = (has_Eval e \/ EXISTS
   has_Eval (MAP SND pes))) /\
-     (has_Eval (Con _18 _19 es) = EXISTS has_Eval es) /\
-     (has_Eval (Fun _20 _21 e) = has_Eval e) /\
-     (has_Eval (App t op es) = (op = flatLang_Src ast_Eval \/
-       EXISTS has_Eval es)) /\
-     (has_Eval (If t e1 e2 e3) = (has_Eval e1 \/ has_Eval e2 \/
-       has_Eval e3)) /\
-     (has_Eval (Mat t e pes) = (has_Eval e \/ EXISTS has_Eval (MAP
-       SND pes))) /\
-     (has_Eval (Let _22 opt e1 e2) = (has_Eval e1 \/ has_Eval e2))
-       /\
-     (has_Eval (Letrec _23 funs e) = (has_Eval e \/ EXISTS has_Eval
-       (MAP (SND o SND) funs))) /\
-     (has_Eval (Raise _24 e) = has_Eval e) /\
-     (has_Eval (flatLang_Var_local _25 _26) = F) /\
-     (has_Eval (Lit _27 v) = F)`)
-  CHEAT_TAC;;
+   (has_Eval (Con _18 _19 es) = EXISTS has_Eval es) /\
+   (has_Eval (Fun _20 _21 e) = has_Eval e) /\
+   (has_Eval (App t op es) = (op = flatLang_Src ast_Eval \/ EXISTS
+     has_Eval es)) /\
+   (has_Eval (If t e1 e2 e3) = (has_Eval e1 \/ has_Eval e2 \/
+     has_Eval e3)) /\
+   (has_Eval (Mat t e pes) = (has_Eval e \/ EXISTS has_Eval (MAP SND
+     pes))) /\
+   (has_Eval (Let _22 opt e1 e2) = (has_Eval e1 \/ has_Eval e2)) /\
+   (has_Eval (Letrec _23 funs e) = (has_Eval e \/ EXISTS has_Eval
+     (MAP (SND o SND) funs))) /\
+   (has_Eval (Raise _24 e) = has_Eval e) /\
+   (has_Eval (flatLang_Var_local _25 _26) = F) /\
+   (has_Eval (Lit _27 v) = F)`,
+  CHEAT_TAC);;
 
 (******** EVALUATE INDUCTION ********)
 
 (* HOL4 flat_elimProofScript.sml:773-776: ML code, not ported *)
 
-let evaluate_keep_flat_state_rel_eq_lemma =
-  cake_theorem "evaluate_keep_flat_state_rel_eq_lemma"
-  (fun () ->
-    `(!env ((state:('c,'ffi)flatSem_state)) exprL new_state
-         result (reachable:1 spt) removed_state.
-         flatSem_evaluate env state exprL = (new_state,result) /\
-         domain (find_lookupsL exprL) SUBSET domain reachable /\
-         flat_state_rel reachable state removed_state /\
-         domain (find_env_globals env) SUBSET domain reachable /\
-         EVERY (((~)) o v_has_Eval o SND) (flatSem_environment_v
-           env) /\
-         EVERY (((~)) o has_Eval) exprL /\ ~(result = Rerr (Rabort
-           Rtype_error)) ==> (?new_removed_state.
-         evaluate env removed_state exprL =
-           (new_removed_state,result) /\
-         flat_state_rel reachable new_state new_removed_state /\
-         domain (find_sem_prim_res_globals result) SUBSET domain
-           reachable /\
-         EVERY (((~)) o v_has_Eval) (result_vs result)))`)
-  CHEAT_TAC;;
+let evaluate_keep_flat_state_rel_eq_lemma = prove
+ (`(!env ((state:('c,'ffi)flatSem_state)) exprL new_state
+       result (reachable:1 spt) removed_state.
+       flatSem_evaluate env state exprL = (new_state,result) /\
+       domain (find_lookupsL exprL) SUBSET domain reachable /\
+       flat_state_rel reachable state removed_state /\
+       domain (find_env_globals env) SUBSET domain reachable /\
+       EVERY (((~)) o v_has_Eval o SND) (flatSem_environment_v env)
+         /\
+       EVERY (((~)) o has_Eval) exprL /\ ~(result = Rerr (Rabort
+         Rtype_error)) ==> (?new_removed_state.
+       evaluate env removed_state exprL = (new_removed_state,result)
+         /\
+       flat_state_rel reachable new_state new_removed_state /\
+       domain (find_sem_prim_res_globals result) SUBSET domain
+         reachable /\
+       EVERY (((~)) o v_has_Eval) (result_vs result)))`,
+  CHEAT_TAC);;
 
 (******** EVALUATE SPECIALISATION ********)
 
-let evaluate_sing_keep_flat_state_rel_eq =
-  cake_theorem "evaluate_sing_keep_flat_state_rel_eq"
-  (fun () ->
-    `!env ((state:('c,'ffi)flatSem_state)) exprL new_state result expr
-       reachable removed_state.
-       flatSem_evaluate (flatSem_environment_v_fupd (K []) env)
-         state exprL = (new_state,result) /\
-       flat_state_rel reachable state removed_state /\
-       exprL = [expr] /\
-       keep reachable expr /\
-       domain (find_lookups expr) SUBSET domain reachable /\
-       ~(has_Eval expr) /\ ~(result = Rerr (Rabort Rtype_error))
-         ==> (?new_removed_state.
-         evaluate (flatSem_environment_v_fupd (K []) env)
-           removed_state exprL = (new_removed_state,result) /\
-         flat_state_rel reachable new_state new_removed_state)`)
-  CHEAT_TAC;;
+let evaluate_sing_keep_flat_state_rel_eq = prove
+ (`!env ((state:('c,'ffi)flatSem_state)) exprL new_state result expr
+     reachable removed_state.
+     flatSem_evaluate (flatSem_environment_v_fupd (K []) env) state
+       exprL = (new_state,result) /\
+     flat_state_rel reachable state removed_state /\
+     exprL = [expr] /\
+     keep reachable expr /\
+     domain (find_lookups expr) SUBSET domain reachable /\
+     ~(has_Eval expr) /\ ~(result = Rerr (Rabort Rtype_error)) ==>
+       (?new_removed_state.
+       evaluate (flatSem_environment_v_fupd (K []) env) removed_state
+         exprL = (new_removed_state,result) /\
+       flat_state_rel reachable new_state new_removed_state)`,
+  CHEAT_TAC);;
 
 (******** EVALUATE_DEC ********)
 
-let evaluate_dec_flat_state_rel =
-  cake_theorem "evaluate_dec_flat_state_rel"
-  (fun () ->
-    `!((state:('c,'ffi)flatSem_state)) dec new_state result
-       reachable removed_state.
-       evaluate_dec state dec = (new_state,result) /\
-       decs_closed reachable [dec] /\
-       flat_state_rel reachable state removed_state /\ keep
-         reachable dec /\
-       ~(has_Eval_dec dec) /\ ~(result = SOME (Rabort Rtype_error))
-         ==> (?new_removed_state.
-         evaluate_dec removed_state dec =
-             (new_removed_state,result) /\
-         flat_state_rel reachable new_state new_removed_state)`)
-  CHEAT_TAC;;
+let evaluate_dec_flat_state_rel = prove
+ (`!((state:('c,'ffi)flatSem_state)) dec new_state result
+     reachable removed_state.
+     evaluate_dec state dec = (new_state,result) /\
+     decs_closed reachable [dec] /\
+     flat_state_rel reachable state removed_state /\ keep reachable
+       dec /\
+     ~(has_Eval_dec dec) /\ ~(result = SOME (Rabort Rtype_error)) ==>
+       (?new_removed_state.
+       evaluate_dec removed_state dec =
+           (new_removed_state,result) /\
+       flat_state_rel reachable new_state new_removed_state)`,
+  CHEAT_TAC);;
 
-let total_pat_IMP = cake_theorem "total_pat_IMP"
-  (fun () ->
-    `(!(s:('c,'ffi)flatSem_state) p v env res.
-        pmatch s p v env = res /\ total_pat p ==> ~(res =
-          No_match)) /\
-     (!(s:('c,'ffi)flatSem_state) ps vs env res.
-        LENGTH ps = LENGTH vs /\
-        pmatch_list s ps vs env = res /\
-        total_pat_list ps ==> ~(res = No_match))`)
-  CHEAT_TAC;;
+let total_pat_IMP = prove
+ (`(!(s:('c,'ffi)flatSem_state) p v env res.
+      pmatch s p v env = res /\ total_pat p ==> ~(res = No_match)) /\
+   (!(s:('c,'ffi)flatSem_state) ps vs env res.
+      LENGTH ps = LENGTH vs /\
+      pmatch_list s ps vs env = res /\
+      total_pat_list ps ==> ~(res = No_match))`,
+  CHEAT_TAC);;
 
-let EXISTS_total_pat = cake_theorem "EXISTS_total_pat"
-  (fun () ->
-    `EXISTS total_pat (MAP FST pes) ==> ~(pmatch_rows pes new_state v
-  = No_match)`)
-  CHEAT_TAC;;
+let EXISTS_total_pat = prove
+ (`EXISTS total_pat (MAP FST pes) ==> ~(pmatch_rows pes new_state v =
+  No_match)`,
+  CHEAT_TAC);;
 
 
 (********************** CASE: *NOT* keep reachable h ***********************)
 
 (******** EVALUATE MUTUAL INDUCTION ********)
 
-let evaluate_flat_state_rel_lemma =
-  cake_theorem "evaluate_flat_state_rel_lemma"
-  (fun () ->
-    `(!env ((state:('c,'ffi)flatSem_state)) exprL new_state result
-         reachable removed_state.
-         flatSem_evaluate env state exprL = (new_state,result) /\
-         EVERY flat_elim_is_pure exprL /\
-         EVERY (((~)) o v_has_Eval o SND) (flatSem_environment_v
-           env) /\
-         EVERY (((~)) o has_Eval) exprL /\
-         EVERY (\e. (\t. t = LN) (inter (find_loc e) reachable))
-           exprL /\
-         flat_state_rel reachable state removed_state /\ ~(result =
-           Rerr (Rabort Rtype_error)) ==> (?values. flat_state_rel
-           reachable new_state removed_state /\
-         result = Rval values /\
-         EVERY (((~)) o v_has_Eval) values))`)
-  CHEAT_TAC;;
+let evaluate_flat_state_rel_lemma = prove
+ (`(!env ((state:('c,'ffi)flatSem_state)) exprL new_state result
+       reachable removed_state.
+       flatSem_evaluate env state exprL = (new_state,result) /\
+       EVERY flat_elim_is_pure exprL /\
+       EVERY (((~)) o v_has_Eval o SND) (flatSem_environment_v env)
+         /\
+       EVERY (((~)) o has_Eval) exprL /\
+       EVERY (\e. (\t. t = LN) (inter (find_loc e) reachable)) exprL
+         /\
+       flat_state_rel reachable state removed_state /\ ~(result =
+         Rerr (Rabort Rtype_error)) ==> (?values. flat_state_rel
+         reachable new_state removed_state /\
+       result = Rval values /\
+       EVERY (((~)) o v_has_Eval) values))`,
+  CHEAT_TAC);;
 
 (******** EVALUATE SPECIALISATION ********)
 
-let evaluate_sing_notKeep_flat_state_rel =
-  cake_theorem "evaluate_sing_notKeep_flat_state_rel"
-  (fun () ->
-    `!env state exprL new_state result expr
-         reachable removed_state.
-         flatSem_evaluate (flatSem_environment_v_fupd (K []) env)
-           state exprL = (new_state,result) /\
-         exprL = [expr] /\
-         ~(has_Eval expr) /\
-         ~(keep reachable expr) /\
-         flat_state_rel reachable state removed_state /\ ~(result =
-           Rerr (Rabort Rtype_error)) ==> flat_state_rel reachable
-           new_state removed_state /\
-         (?(value:flatSem_v). result = Rval [value])`)
-  CHEAT_TAC;;
+let evaluate_sing_notKeep_flat_state_rel = prove
+ (`!env state exprL new_state result expr
+       reachable removed_state.
+       flatSem_evaluate (flatSem_environment_v_fupd (K []) env) state
+         exprL = (new_state,result) /\
+       exprL = [expr] /\
+       ~(has_Eval expr) /\
+       ~(keep reachable expr) /\
+       flat_state_rel reachable state removed_state /\ ~(result =
+         Rerr (Rabort Rtype_error)) ==> flat_state_rel reachable
+         new_state removed_state /\
+       (?(value:flatSem_v). result = Rval [value])`,
+  CHEAT_TAC);;
 
 
 (******************************* MAIN PROOFS ******************************)
 
-let flat_decs_removal_lemma = cake_theorem "flat_decs_removal_lemma"
-  (fun () ->
-    `!((state:('c,'ffi)flatSem_state)) decs new_state result
-        reachable removed_decs removed_state.
-        evaluate_decs state decs = (new_state,result) /\ ~(result =
-          SOME (Rabort Rtype_error)) /\
-        remove_unreachable reachable decs = removed_decs /\
-        flat_state_rel reachable state removed_state /\
-        EVERY ((~) o has_Eval_dec) decs /\
-        decs_closed reachable decs ==> (?new_removed_state.
-          state_ffi
-        new_removed_state = state_ffi new_state /\
-        evaluate_decs removed_state removed_decs =
-            (new_removed_state,result))`)
-  CHEAT_TAC;;
+let flat_decs_removal_lemma = prove
+ (`!((state:('c,'ffi)flatSem_state)) decs new_state result
+      reachable removed_decs removed_state.
+      evaluate_decs state decs = (new_state,result) /\ ~(result =
+        SOME (Rabort Rtype_error)) /\
+      remove_unreachable reachable decs = removed_decs /\
+      flat_state_rel reachable state removed_state /\
+      EVERY ((~) o has_Eval_dec) decs /\
+      decs_closed reachable decs ==> (?new_removed_state. state_ffi
+      new_removed_state = state_ffi new_state /\
+      evaluate_decs removed_state removed_decs =
+          (new_removed_state,result))`,
+  CHEAT_TAC);;
 
-let flat_removal_thm = cake_theorem "flat_removal_thm"
-  (fun () ->
-    `!ffi k decs new_state result roots tree
-         reachable removed_decs.
-         evaluate_decs (flatSem_initial_state ffi k ec) decs =
-           (new_state,result) /\ ~(result = SOME (Rabort Rtype_error))
-           /\
-         (roots,tree) = analyse_code decs /\
-         reachable = closure_spt roots tree /\
-         ~(EXISTS has_Eval_dec decs) /\
-         remove_unreachable reachable decs = removed_decs ==> (?s.
-           state_ffi
-         s = state_ffi new_state /\
-         evaluate_decs (flatSem_initial_state ffi k ec)
-           removed_decs = (s,result))`)
-  CHEAT_TAC;;
+let flat_removal_thm = prove
+ (`!ffi k decs new_state result roots tree
+       reachable removed_decs.
+       evaluate_decs (flatSem_initial_state ffi k ec) decs =
+         (new_state,result) /\ ~(result = SOME (Rabort Rtype_error)) /\
+       (roots,tree) = analyse_code decs /\
+       reachable = closure_spt roots tree /\
+       ~(EXISTS has_Eval_dec decs) /\
+       remove_unreachable reachable decs = removed_decs ==> (?s.
+         state_ffi
+       s = state_ffi new_state /\
+       evaluate_decs (flatSem_initial_state ffi k ec) removed_decs
+         = (s,result))`,
+  CHEAT_TAC);;
 
-let flat_remove_eval_sim = cake_theorem "flat_remove_eval_sim"
-  (fun () ->
-    `flatProps_eval_sim ffi ds1 (remove_flat_prog ds1) ec ec
-                      (\d1 d2. d2 = remove_flat_prog d1) F`)
-  CHEAT_TAC;;
+let flat_remove_eval_sim = prove
+ (`flatProps_eval_sim ffi ds1 (remove_flat_prog ds1) ec ec
+                    (\d1 d2. d2 = remove_flat_prog d1) F`,
+  CHEAT_TAC);;
 
 (* HOL4 flat_elimProofScript.sml:1676-1678: a theorem that HOL4
    states as the value of an ML expression: flat_remove_semantics *)
 
 (* syntactic results *)
 
-let elist_globals_filter = cake_theorem "elist_globals_filter[local]"
-  (fun () ->
-    `flatProps_elist_globals ds = EMPTY_BAG ==>
-      flatProps_elist_globals (FILTER P ds) = EMPTY_BAG`)
-  CHEAT_TAC;;
+(* [local] *)
+let elist_globals_filter = prove
+ (`flatProps_elist_globals ds = EMPTY_BAG ==>
+    flatProps_elist_globals (FILTER P ds) = EMPTY_BAG`,
+  CHEAT_TAC);;
 
-let esgc_free_filter = cake_theorem "esgc_free_filter[local]"
-  (fun () ->
-    `EVERY flatProps_esgc_free ds ==>
-      EVERY flatProps_esgc_free (FILTER P ds)`)
-  CHEAT_TAC;;
+(* [local] *)
+let esgc_free_filter = prove
+ (`EVERY flatProps_esgc_free ds ==>
+    EVERY flatProps_esgc_free (FILTER P ds)`,
+  CHEAT_TAC);;
 
-let elist_globals_filter_SUB_BAG =
-  cake_theorem "elist_globals_filter_SUB_BAG[local]"
-  (fun () ->
-    `flatProps_elist_globals (FILTER P ds) <=
-      flatProps_elist_globals ds`)
-  CHEAT_TAC;;
+(* [local] *)
+let elist_globals_filter_SUB_BAG = prove
+ (`flatProps_elist_globals (FILTER P ds) <=
+    flatProps_elist_globals ds`,
+  CHEAT_TAC);;
 
-let remove_flat_prog_elist_globals_eq_empty =
-  cake_theorem "remove_flat_prog_elist_globals_eq_empty"
-  (fun () ->
-    `flatProps_elist_globals ds = EMPTY_BAG ==>
-     flatProps_elist_globals (remove_flat_prog ds) = EMPTY_BAG`)
-  CHEAT_TAC;;
+let remove_flat_prog_elist_globals_eq_empty = prove
+ (`flatProps_elist_globals ds = EMPTY_BAG ==>
+   flatProps_elist_globals (remove_flat_prog ds) = EMPTY_BAG`,
+  CHEAT_TAC);;
 
-let remove_flat_prog_esgc_free =
-  cake_theorem "remove_flat_prog_esgc_free"
-  (fun () ->
-    `EVERY flatProps_esgc_free ds ==>
-     EVERY flatProps_esgc_free (remove_flat_prog ds)`)
-  CHEAT_TAC;;
+let remove_flat_prog_esgc_free = prove
+ (`EVERY flatProps_esgc_free ds ==>
+   EVERY flatProps_esgc_free (remove_flat_prog ds)`,
+  CHEAT_TAC);;
 
-let remove_flat_prog_sub_bag = cake_theorem "remove_flat_prog_sub_bag"
-  (fun () ->
-    `flatProps_elist_globals (remove_flat_prog ds) <=
-     flatProps_elist_globals ds`)
-  CHEAT_TAC;;
+let remove_flat_prog_sub_bag = prove
+ (`flatProps_elist_globals (remove_flat_prog ds) <=
+   flatProps_elist_globals ds`,
+  CHEAT_TAC);;
 
-let remove_flat_prog_distinct_globals =
-  cake_theorem "remove_flat_prog_distinct_globals"
-  (fun () ->
-    `BAG_ALL_DISTINCT (flatProps_elist_globals ds) ==>
-     BAG_ALL_DISTINCT (flatProps_elist_globals (remove_flat_prog
-       ds))`)
-  CHEAT_TAC;;
+let remove_flat_prog_distinct_globals = prove
+ (`BAG_ALL_DISTINCT (flatProps_elist_globals ds) ==>
+   BAG_ALL_DISTINCT (flatProps_elist_globals (remove_flat_prog ds))`,
+  CHEAT_TAC);;

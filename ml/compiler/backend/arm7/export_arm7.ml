@@ -31,7 +31,7 @@ In addition, the first address on the heap should store the address of cake_bitm
 
 Note: this set up does NOT account for restoring clobbered registers
 *)
-let startup_def = cake_define
+let export_arm7_startup_def = cake_define
   `export_arm7_startup ret pk =
      SmartAppend (misc_List
        [(implode "\n");
@@ -76,7 +76,7 @@ let startup_def = cake_define
         (implode "\n")]))))`;;
 hol4_overload "startup" "export_arm7_startup";;
 
-let ffi_asm_def = cake_define_list
+let export_arm7_ffi_asm_def = cake_define_list
   [`export_arm7_ffi_asm [] = misc_Nil`;
    `export_arm7_ffi_asm (ffi :: ffis) =
           SmartAppend (misc_List [
@@ -98,7 +98,7 @@ hol4_overload "ffi_asm" "export_arm7_ffi_asm";;
 (* HOL4 export_arm7Script.sml:102-149: the ML values that the
    definitions below antiquote *)
 
-let export_func_def = cake_define
+let export_arm7_export_func_def = cake_define
   `export_arm7_export_func appl (name,label,start',len) =
      SmartAppend appl (misc_List
      [(implode "\n     .globl  cdecl("); name; (implode ")\n");
@@ -111,7 +111,7 @@ let export_func_def = cake_define
       (implode "     b       "); label; (implode "\n")])`;;
 hol4_overload "export_func" "export_arm7_export_func";;
 
-let export_funcs_def = cake_define
+let export_arm7_export_funcs_def = cake_define
   `export_arm7_export_funcs lsyms exp =
      FOLDL export_arm7_export_func misc_Nil (FILTER ((C MEM exp) o
        FST) lsyms)`;;

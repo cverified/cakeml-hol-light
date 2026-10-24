@@ -17,7 +17,7 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 (*Removes MustTerminate*)
 
@@ -42,25 +42,25 @@ let remove_must_terminate_def = cake_define
        Loop names (remove_must_terminate body) exit_names
         | prog -> prog`;;
 
-let remove_must_terminate_pmatch =
-  cake_theorem "remove_must_terminate_pmatch"
-  (fun () ->
-    `!prog.
-     remove_must_terminate prog =
-     (match prog with (Seq p0 p1) -> Seq (remove_must_terminate p0)
-       (remove_must_terminate p1) | (If cmp r1 ri e2 e3) ->
-       If cmp r1 ri (remove_must_terminate e2)
-         (remove_must_terminate e3) | (wordLang_MustTerminate p) ->
-         remove_must_terminate p | (Call ret dest args h) ->
-       (let ret = (match ret with NONE -> NONE | SOME
-         (v,cutset,ret_handler,l1,l2) ->
-                             SOME (v,cutset,remove_must_terminate
-                               ret_handler,l1,l2)) in
-       let h = (match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
-         SOME (v,remove_must_terminate prog,l1,l2)) in
-         Call ret dest args h) | (Loop names body exit_names) ->
-       Loop names (remove_must_terminate body) exit_names | prog
-         -> prog)`)
-  CHEAT_TAC;;
+let remove_must_terminate_pmatch = prove
+ (`!prog.
+   remove_must_terminate prog =
+   (match prog with (Seq p0 p1) -> Seq (remove_must_terminate p0)
+     (remove_must_terminate p1) | (If cmp r1 ri e2 e3) ->
+     If cmp r1 ri (remove_must_terminate e2) (remove_must_terminate
+       e3) | (wordLang_MustTerminate p) -> remove_must_terminate p |
+       (Call ret dest args h) ->
+     (let ret = (match ret with NONE -> NONE | SOME
+       (v,cutset,ret_handler,l1,l2) ->
+                           SOME (v,cutset,remove_must_terminate
+                             ret_handler,l1,l2)) in
+     let h = (match h with NONE -> NONE | SOME (v,prog,l1,l2) -> SOME
+       (v,remove_must_terminate prog,l1,l2)) in
+       Call ret dest args h) | (Loop names body exit_names) ->
+     Loop names (remove_must_terminate body) exit_names | prog ->
+       prog)`,
+  CHEAT_TAC);;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pmatch"];;

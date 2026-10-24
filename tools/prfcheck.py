@@ -31,8 +31,8 @@ def check(mlrel):
       if g and g != '_' and g not in at: at[g] = m.start()
   # and where each theorem of a name is stated
   thm = {}
-  for m in re.finditer(r'cake_theorem[\s\n]*"([^"\[]*)(\[[^"]*\])?"',
-                       ml):
+  for m in re.finditer(r"^let ([A-Za-z_][A-Za-z_0-9']*) = prove$",
+                       ml, re.M):
     thm.setdefault(m.group(1), []).append(m.start())
   bad = 0
   name = None

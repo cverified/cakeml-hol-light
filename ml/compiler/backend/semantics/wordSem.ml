@@ -71,12 +71,11 @@ let isWord_def = cake_define
           wordLang_Word w -> T
         | _2 -> F`;;
 
-let isWord_exists = cake_theorem "isWord_exists"
-  (fun () ->
-    `isWord x <=> (?w. x = wordLang_Word w)`)
-  CHEAT_TAC;;
+let isWord_exists = prove
+ (`isWord x <=> (?w. x = wordLang_Word w)`,
+  CHEAT_TAC);;
 
-let word_cmp_def = cake_define
+let wordSem_word_cmp_def = cake_define
   `wordSem_word_cmp x1 x2 x3 =
         match (x1,x2,x3) with
           ((Equal:cmp),wordLang_Word w1,wordLang_Word w2) -> SOME (w1
@@ -128,50 +127,47 @@ let mem_store_32_def = cake_define
                 SOME ((byte_align w =+ wordLang_Word v3) m) else
                   NONE) | _10 -> NONE else NONE)`;;
 
-let mem_load_32_alt = cake_theorem "mem_load_32_alt"
-  (fun () ->
-    `mem_load_32 m dm be (w:'a word) =
-     (if alignment_aligned 2 w then match m (byte_align w) with Loc
-       _11 _12 -> NONE | wordLang_Word v ->
-              (if byte_align w IN dm then
-                let b0 = get_byte w v be in
-                let b1 = get_byte (w + (n2w 1)) v be in
-                let b2 = get_byte (w + (n2w 2)) v be in
-                let b3 = get_byte (w + (n2w 3)) v be in
-                  let v' =
-                      (if be then
-                         (w2w b0) << 24 || (w2w b1) << 16 || (w2w
-                           b2) << 8 || (w2w b3) else
-                         (w2w b0) || (w2w b1) << 8 || (w2w b2) <<
-                           16 || (w2w b3) << 24) in SOME (v':word32)
-                           else NONE) else NONE)`)
-  CHEAT_TAC;;
+let mem_load_32_alt = prove
+ (`mem_load_32 m dm (be:bool) (w:'a word) =
+   (if alignment_aligned 2 w then match m (byte_align w) with Loc _11
+     _12 -> NONE | wordLang_Word v ->
+            (if byte_align w IN dm then
+              let b0 = get_byte w v be in
+              let b1 = get_byte (w + (n2w 1)) v be in
+              let b2 = get_byte (w + (n2w 2)) v be in
+              let b3 = get_byte (w + (n2w 3)) v be in
+                let v' =
+                    (if be then
+                       (w2w b0) << 24 || (w2w b1) << 16 || (w2w b2)
+                         << 8 || (w2w b3) else
+                       (w2w b0) || (w2w b1) << 8 || (w2w b2) << 16
+                         || (w2w b3) << 24) in SOME (v':word32) else
+                         NONE) else NONE)`,
+  CHEAT_TAC);;
 
-let mem_store_32_alt = cake_theorem "mem_store_32_alt"
-  (fun () ->
-    `mem_store_32 m dm be (w:'a word) (hw:word32) =
-     (if alignment_aligned 2 w then match m (byte_align w) with
-       wordLang_Word v ->
-              (if byte_align w IN dm then
-                if be then
-                  let v0 = set_byte w (w2w (hw >>> 24)) v be in
-                  let v1 = set_byte (w + (n2w 1)) (w2w (hw >>> 16))
-                    v0 be in
-                  let v2 = set_byte (w + (n2w 2)) (w2w (hw >>> 8))
-                    v1 be in
-                  let v3 = set_byte (w + (n2w 3)) (w2w hw) v2 be in
-                    SOME ((byte_align w =+ wordLang_Word v3) m)
-                      else
-                  let v0 = set_byte w (w2w hw) v be in
-                  let v1 = set_byte (w + (n2w 1)) (w2w (hw >>> 8))
-                    v0 be in
-                  let v2 = set_byte (w + (n2w 2)) (w2w (hw >>> 16))
-                    v1 be in
-                  let v3 = set_byte (w + (n2w 3)) (w2w (hw >>> 24))
-                    v2 be in
-                    SOME ((byte_align w =+ wordLang_Word v3) m)
-                      else NONE) | _13 -> NONE else NONE)`)
-  CHEAT_TAC;;
+let mem_store_32_alt = prove
+ (`mem_store_32 m dm (be:bool) (w:'a word) (hw:word32) =
+   (if alignment_aligned 2 w then match m (byte_align w) with
+     wordLang_Word v ->
+            (if byte_align w IN dm then
+              if be then
+                let v0 = set_byte w (w2w (hw >>> 24)) v be in
+                let v1 = set_byte (w + (n2w 1)) (w2w (hw >>> 16)) v0
+                  be in
+                let v2 = set_byte (w + (n2w 2)) (w2w (hw >>> 8)) v1
+                  be in
+                let v3 = set_byte (w + (n2w 3)) (w2w hw) v2 be in
+                  SOME ((byte_align w =+ wordLang_Word v3) m) else
+                let v0 = set_byte w (w2w hw) v be in
+                let v1 = set_byte (w + (n2w 1)) (w2w (hw >>> 8)) v0
+                  be in
+                let v2 = set_byte (w + (n2w 2)) (w2w (hw >>> 16)) v1
+                  be in
+                let v3 = set_byte (w + (n2w 3)) (w2w (hw >>> 24)) v2
+                  be in
+                  SOME ((byte_align w =+ wordLang_Word v3) m) else
+                    NONE) | _13 -> NONE else NONE)`,
+  CHEAT_TAC);;
 
 let mem_load_byte_aux_def = cake_define
   `mem_load_byte_aux m dm be' w =
@@ -331,12 +327,12 @@ hol4_overload "isException" "wordSem_isException";;
 (* HOL4 wordSemScript.sml:260: the ML values that the definitions
    below antiquote *)
 
-let dec_clock_def = cake_define
+let wordSem_dec_clock_def = cake_define
   `wordSem_dec_clock (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "wordSem_dec_clock";;
 
-let fix_clock_def = cake_define
+let wordSem_fix_clock_def = cake_define
   `wordSem_fix_clock old_s (res,new_s) =
      (res,wordSem_state_termdep_fupd (K (wordSem_state_termdep
        old_s)) (wordSem_state_clock_fupd (K (if wordSem_state_clock
@@ -354,7 +350,7 @@ let get_word_def = cake_define
   `get_word (wordLang_Word w) = w`;;
 
 
-let mem_store_def = cake_define
+let wordSem_mem_store_def = cake_define
   `wordSem_mem_store (addr':'a word) (w:'a word_loc)
   (s:('a,'c,'ffi)wordSem_state) =
      (if addr' IN wordSem_state_mdomain s then
@@ -362,7 +358,7 @@ let mem_store_def = cake_define
          (wordSem_state_memory s))) s) else NONE)`;;
 hol4_overload "mem_store" "wordSem_mem_store";;
 
-let mem_load_def = cake_define
+let wordSem_mem_load_def = cake_define
   `wordSem_mem_load (addr':'a word) (s:('a,'c,'ffi)wordSem_state) =
      (if addr' IN wordSem_state_mdomain s then
        SOME (wordSem_state_memory s addr') else NONE)`;;
@@ -374,12 +370,12 @@ let the_words_def = cake_define_list
          (match (w,the_words ws) with (SOME (wordLang_Word
            x),SOME xs) -> SOME (x :: xs) | _26 -> NONE)`];;
 
-let get_var_def = cake_define
+let wordSem_get_var_def = cake_define
   `wordSem_get_var v (s:('a,'c,'ffi)wordSem_state) = sptree_lookup v
   (wordSem_state_locals s)`;;
 hol4_overload "get_var" "wordSem_get_var";;
 
-let get_vars_def = cake_define_list
+let wordSem_get_vars_def = cake_define_list
   [`wordSem_get_vars [] (s:('a,'c,'ffi)wordSem_state) = SOME []`;
    `wordSem_get_vars (v :: vs) (s:('a,'c,'ffi)wordSem_state) =
          (match wordSem_get_var v s with NONE -> NONE | SOME x
@@ -387,7 +383,7 @@ let get_vars_def = cake_define_list
            xs -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "wordSem_get_vars";;
 
-let set_var_def = cake_define
+let wordSem_set_var_def = cake_define
   `wordSem_set_var v x (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_locals_fupd (K (sptree_insert v x
        (wordSem_state_locals s))) s)`;;
@@ -399,7 +395,7 @@ let unset_var_def = cake_define
   (wordSem_state_locals s))) s)`;;
 hol4_overload "unset_var" "wordSem_unset_var";;
 
-let set_vars_def = cake_define
+let wordSem_set_vars_def = cake_define
   `wordSem_set_vars vs xs (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_locals_fupd (K (alist_insert vs xs
        (wordSem_state_locals s))) s)`;;
@@ -446,7 +442,7 @@ let word_exp_def = cake_define_list_try (fun () ->
 hol4_overload "word_exp" "wordSem_word_exp";;
 
 (* Flushes the locals and (optionally) the store *)
-let flush_state_def = cake_define_list
+let wordSem_flush_state_def = cake_define_list
   [`wordSem_flush_state T (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_locals_size_fupd (K (SOME 0))
   (wordSem_state_store_fupd (K FEMPTY) (wordSem_state_stack_fupd (K
@@ -577,7 +573,7 @@ let share_inst_def = cake_define_list
   v s with SOME (wordLang_Word v) -> wordSem_sh_mem_store32 ad v s
   | _49 -> (SOME wordSem_Error,s))`];;
 
-let call_env_def = cake_define
+let wordSem_call_env_def = cake_define
   `wordSem_call_env args size' (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX
   (wordSem_state_stack_max s) (OPTION_MAP2 (+) (stack_size
@@ -622,7 +618,7 @@ let env_to_list_def = cake_define
      let l = list_rearrange mover l in
        (l,permute))`;;
 
-let push_env_def = cake_define_list
+let wordSem_push_env_def = cake_define_list
   [`wordSem_push_env envs' NONE (s:('a,'c,'ffi)wordSem_state) =
         (let l0 = toAList (FST envs') in let
             (l,permute) = env_to_list (SND envs')
@@ -650,7 +646,7 @@ let push_env_def = cake_define_list
           s))))`];;
 hol4_overload "push_env" "wordSem_push_env";;
 
-let pop_env_def = cake_define
+let wordSem_pop_env_def = cake_define
   `wordSem_pop_env (s:('a,'c,'ffi)wordSem_state) =
      (match wordSem_state_stack s with (StackFrame m e0 e NONE :: xs)
        ->
@@ -665,20 +661,20 @@ let pop_env_def = cake_define
             (fromAList e0))) s)))) | _54 -> NONE)`;;
 hol4_overload "pop_env" "wordSem_pop_env";;
 
-let wordSem_push_env_clock = cake_theorem "push_env_clock[local]"
-  (fun () ->
-    `wordSem_state_clock
-       (wordSem_push_env env b ((s:('a,'c,'ffi)wordSem_state))) =
-         wordSem_state_clock s`)
-  CHEAT_TAC;;
+(* push_env_clock[local] *)
+let wordSem_push_env_clock = prove
+ (`wordSem_state_clock
+     (wordSem_push_env env b ((s:('a,'c,'ffi)wordSem_state))) =
+       wordSem_state_clock s`,
+  CHEAT_TAC);;
 
-let wordSem_pop_env_clock = cake_theorem "pop_env_clock[local]"
-  (fun () ->
-    `(wordSem_pop_env ((s:('a,'c,'ffi)wordSem_state)) = SOME s1) ==>
-  (wordSem_state_clock s1 = wordSem_state_clock s)`)
-  CHEAT_TAC;;
+(* pop_env_clock[local] *)
+let wordSem_pop_env_clock = prove
+ (`(wordSem_pop_env ((s:('a,'c,'ffi)wordSem_state)) = SOME s1) ==>
+  (wordSem_state_clock s1 = wordSem_state_clock s)`,
+  CHEAT_TAC);;
 
-let jump_exc_def = cake_define
+let wordSem_jump_exc_def = cake_define
   `wordSem_jump_exc (s:('a,'c,'ffi)wordSem_state) =
      (if wordSem_state_handler s < LENGTH (wordSem_state_stack s)
        then
@@ -702,27 +698,27 @@ let cut_envs_def = cake_define
        name_sets) env) with (SOME e1,SOME e2) -> SOME (e1,e2) | _56
        -> NONE)`;;
 
-let cut_env_def = cake_define
+let wordSem_cut_env_def = cake_define
   `wordSem_cut_env (name_sets:1 spt#1 spt) env =
      (match cut_envs name_sets env with SOME (e1,e2) -> SOME
        (sptree_union e2 e1) | _57 -> NONE)`;;
 hol4_overload "cut_env" "wordSem_cut_env";;
 (* -- *)
 
-let cut_state_def = cake_define
+let wordSem_cut_state_def = cake_define
   `wordSem_cut_state names (s:('a,'c,'ffi)wordSem_state) =
      (match wordSem_cut_env names (wordSem_state_locals s) with
        NONE -> NONE | SOME env -> SOME (wordSem_state_locals_fupd (K
        env) s))`;;
 hol4_overload "cut_state" "wordSem_cut_state";;
 
-let cut_state_opt_def = cake_define
+let wordSem_cut_state_opt_def = cake_define
   `wordSem_cut_state_opt names (s:('a,'c,'ffi)wordSem_state) =
      (match names with NONE -> SOME s | SOME names ->
        wordSem_cut_state names s)`;;
 hol4_overload "cut_state_opt" "wordSem_cut_state_opt";;
 
-let find_code_def = cake_define_list
+let wordSem_find_code_def = cake_define_list
   [`wordSem_find_code (SOME p) args code ssize =
          (match sptree_lookup p code with NONE -> NONE | SOME
            (arity,exp) -> (if LENGTH args = arity then SOME
@@ -814,7 +810,7 @@ let alloc_def = cake_define
                             ,wordSem_flush_state T s))))))`;;
 hol4_overload "alloc" "wordSem_alloc";;
 
-let assign_def = cake_define
+let wordSem_assign_def = cake_define
   `wordSem_assign reg exp (s:('a,'c,'ffi)wordSem_state) =
      (match wordSem_word_exp s exp with NONE -> NONE | SOME w ->
        SOME (wordSem_set_var reg w s))`;;
@@ -831,7 +827,7 @@ let set_fp_var_def = cake_define
        (v,x))) s)`;;
 hol4_overload "set_fp_var" "wordSem_set_fp_var";;
 
-let inst_def = cake_define
+let wordSem_inst_def = cake_define
   `wordSem_inst i (s:('a,'c,'ffi)wordSem_state) =
      (match i with Skip -> SOME s | Const reg w -> wordSem_assign reg
        (Const w) s | Arith (asm_Binop bop r1 r2 ri) ->
@@ -1035,22 +1031,22 @@ let add_ret_loc_def = cake_define_list
 let bad_dest_args_def = cake_define
   `bad_dest_args dest args <=> dest = NONE /\ args = []`;;
 
-let termdep_rw = cake_theorem "termdep_rw[local]"
-  (fun () ->
-    `(wordSem_state_termdep (wordSem_call_env p_1 ss
+(* [local] *)
+let termdep_rw = prove
+ (`(wordSem_state_termdep (wordSem_call_env p_1 ss
   ((s:('a,'c,'ffi)wordSem_state))) = wordSem_state_termdep s) /\
-       (wordSem_state_termdep (wordSem_dec_clock s) =
-         wordSem_state_termdep s) /\
-       (wordSem_state_termdep (wordSem_set_var n v s) =
-         wordSem_state_termdep s)`)
-  CHEAT_TAC;;
+     (wordSem_state_termdep (wordSem_dec_clock s) =
+       wordSem_state_termdep s) /\
+     (wordSem_state_termdep (wordSem_set_var n v s) =
+       wordSem_state_termdep s)`,
+  CHEAT_TAC);;
 
-let fix_clock_IMP_LESS_EQ = cake_theorem "fix_clock_IMP_LESS_EQ[local]"
-  (fun () ->
-    `!x. wordSem_fix_clock ((s:('a,'c,'ffi)wordSem_state)) x =
-  (res,s1) ==> wordSem_state_clock s1 <= wordSem_state_clock s /\
-  wordSem_state_termdep s1 = wordSem_state_termdep s`)
-  CHEAT_TAC;;
+(* [local] *)
+let fix_clock_IMP_LESS_EQ = prove
+ (`!x. wordSem_fix_clock ((s:('a,'c,'ffi)wordSem_state)) x = (res,s1)
+  ==> wordSem_state_clock s1 <= wordSem_state_clock s /\
+  wordSem_state_termdep s1 = wordSem_state_termdep s`,
+  CHEAT_TAC);;
 
 let MustTerminate_limit_def = cake_define
   `MustTerminate_limit (:'a) =
@@ -1101,25 +1097,25 @@ let exit_loop_def = cake_define
       | res -> res`;;
 hol4_overload "exit_loop" "wordSem_exit_loop";;
 
-let fix_clock_IMP =
+let wordSem_fix_clock_IMP =
   try prove
    (`!s x res s1. wordSem_fix_clock s x = (res,s1)
                   ==> wordSem_state_clock s1 <=
                       wordSem_state_clock s /\
                       wordSem_state_termdep s1 =
                       wordSem_state_termdep s`,
-    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; wordSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "wordSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
     REWRITE_TAC(record_thms "wordSem_state") THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
-    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+    (print_string ("\nwordSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
 (* a fallback TRUTH says nothing, and a fact that says nothing
    is of no use *)
-if concl fix_clock_IMP <> `T` then
-  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+if concl wordSem_fix_clock_IMP <> `T` then
+  cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "wordLang_prog";;
 (* the termination relation that HOL4 gives, with
@@ -1128,7 +1124,7 @@ let _ = size_thms "wordLang_prog";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_try_tac (fun () ->
+let wordSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE (wordLang_prog_size
      (K 0)))
                      (\(xs,((s:('a,'c,'ffi)wordSem_state))).
@@ -1406,59 +1402,54 @@ hol4_overload "evaluate" "wordSem_evaluate";;
 
 (* We prove that the clock never increases and that termdep is constant. *)
 
-let gc_clock = cake_theorem "gc_clock"
-  (fun () ->
-    `!s1 s2. (wordSem_gc s1 = SOME s2) ==> wordSem_state_clock s2 <=
+let gc_clock = prove
+ (`!s1 s2. (wordSem_gc s1 = SOME s2) ==> wordSem_state_clock s2 <=
   wordSem_state_clock s1 /\ wordSem_state_termdep s2 =
-  wordSem_state_termdep s1`)
-  CHEAT_TAC;;
+  wordSem_state_termdep s1`,
+  CHEAT_TAC);;
 
-let alloc_clock = cake_theorem "alloc_clock"
-  (fun () ->
-    `!xs s1 vs s2. (wordSem_alloc x names s1 = (vs,s2)) ==>
+let alloc_clock = prove
+ (`!xs s1 vs s2. (wordSem_alloc x names s1 = (vs,s2)) ==>
   wordSem_state_clock
-                    s2 <= wordSem_state_clock s1 /\
-                      wordSem_state_termdep s2 = wordSem_state_termdep
-                      s1`)
-  CHEAT_TAC;;
+                  s2 <= wordSem_state_clock s1 /\
+                    wordSem_state_termdep s2 = wordSem_state_termdep
+                    s1`,
+  CHEAT_TAC);;
 
-let sh_mem_set_var_clock = cake_theorem "sh_mem_set_var_clock"
-  (fun () ->
-    `!v s1 v2 s2 res.
-       (sh_mem_set_var res v s1 = (v2,s2)) ==> wordSem_state_clock
-       s2 <= wordSem_state_clock s1 /\ wordSem_state_termdep s2 =
-         wordSem_state_termdep s1`)
-  CHEAT_TAC;;
-
-let share_inst_clock = cake_theorem "share_inst_clock"
-  (fun () ->
-    `!op v ad s1 v1 s2.
-       (share_inst op v ad s1 = (v2,s2)) ==> wordSem_state_clock
-       s2 <= wordSem_state_clock s1 /\ wordSem_state_termdep s2 =
-         wordSem_state_termdep s1`)
-  CHEAT_TAC;;
-
-let inst_clock = cake_theorem "inst_clock[local]"
-  (fun () ->
-    `wordSem_inst i s = SOME s2 ==> wordSem_state_clock s2 <=
-  wordSem_state_clock s /\ wordSem_state_termdep s2 =
-  wordSem_state_termdep s`)
-  CHEAT_TAC;;
-
-let wordSem_evaluate_clock = cake_theorem "evaluate_clock"
-  (fun () ->
-    `!xs s1 vs s2. (wordSem_evaluate (xs,s1) = (vs,s2)) ==>
-  wordSem_state_clock
+let sh_mem_set_var_clock = prove
+ (`!v s1 v2 s2 res.
+     (sh_mem_set_var res v s1 = (v2,s2)) ==> wordSem_state_clock
      s2 <= wordSem_state_clock s1 /\ wordSem_state_termdep s2 =
-       wordSem_state_termdep s1`)
-  CHEAT_TAC;;
+       wordSem_state_termdep s1`,
+  CHEAT_TAC);;
 
-let wordSem_fix_clock_evaluate =
-  cake_theorem "fix_clock_evaluate[local]"
-  (fun () ->
-    `wordSem_fix_clock s (wordSem_evaluate (c1,s)) = wordSem_evaluate
-  (c1,s)`)
-  CHEAT_TAC;;
+let share_inst_clock = prove
+ (`!op v ad s1 v1 s2.
+     (share_inst op v ad s1 = (v2,s2)) ==> wordSem_state_clock
+     s2 <= wordSem_state_clock s1 /\ wordSem_state_termdep s2 =
+       wordSem_state_termdep s1`,
+  CHEAT_TAC);;
+
+(* [local] *)
+let inst_clock = prove
+ (`wordSem_inst i s = SOME s2 ==> wordSem_state_clock s2 <=
+  wordSem_state_clock s /\ wordSem_state_termdep s2 =
+  wordSem_state_termdep s`,
+  CHEAT_TAC);;
+
+(* evaluate_clock *)
+let wordSem_evaluate_clock = prove
+ (`!xs s1 vs s2. (wordSem_evaluate (xs,s1) = (vs,s2)) ==>
+  wordSem_state_clock
+   s2 <= wordSem_state_clock s1 /\ wordSem_state_termdep s2 =
+     wordSem_state_termdep s1`,
+  CHEAT_TAC);;
+
+(* fix_clock_evaluate[local] *)
+let wordSem_fix_clock_evaluate = prove
+ (`wordSem_fix_clock s (wordSem_evaluate (c1,s)) = wordSem_evaluate
+  (c1,s)`,
+  CHEAT_TAC);;
 
 (* We store the theorems without fix_clock *)
 
@@ -1469,7 +1460,7 @@ let wordSem_fix_clock_evaluate =
 
 (* observational semantics *)
 
-let semantics_def = cake_define
+let wordSem_semantics_def = cake_define
   `wordSem_semantics (s:('a,'c,'ffi)wordSem_state) start' =
    (let prog = Call NONE (SOME start') [0] NONE in
    if ?k. match FST (wordSem_evaluate (prog,wordSem_state_clock_fupd

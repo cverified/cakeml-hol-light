@@ -23,7 +23,7 @@ needs "semantics/typeSystem.ml";;
 (* HOL4 cmlParseScript.sml:13: the overload cmlpegexec, which the
    port expands *)
 
-let destResult_def = cake_define
+let cmlParse_destResult_def = cake_define
   `cmlParse_destResult x1 =
       match x1 with
         pegexec_Result (peg_Success [] x eo) -> peg_Success [] x eo

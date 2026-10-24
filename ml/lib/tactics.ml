@@ -673,16 +673,6 @@ let OPEN_ASSUM =
     then MP_TAC th THEN TRY COND_CASES_TAC THEN STRIP_TAC
     else fail());;
 
-(* A theorem of a file of the port by the name that HOL4 gives it:
-   cake_theorem registers every one, so a tactic of the library can
-   use a theorem of the file it is applied in (v_inv_def of
-   data_to_word_memoryProof) without the file naming it. *)
-
-let cake_thm name =
-  try let _,_,th = find (fun (n,_,_) -> n = name) (!the_theorems) in
-      th
-  with Failure _ -> failwith ("cake_thm: no theorem " ^ name);;
-
 (* The list of roots of an abs_ml_inv, split against the list of
    values: the assumption that relates the two is an ALL2 whose
    first list is a cons and whose second is the variable that the
@@ -735,10 +725,12 @@ let word_addr_clauses () =
 (* The assumption that says what the root of a value is, taken
    apart: v_inv is a disjunction of the rules of the relation, and
    what each of them leaves is the address of a Data or of a
-   Pointer, which word_addr reduces. *)
+   Pointer, which word_addr reduces.  The theorem that says what
+   v_inv is belongs to the file that uses the tactic, which passes
+   it in. *)
 
-let V_INV_TAC gl =
-  (RULE_ASSUM_TAC(REWRITE_RULE[cake_thm "v_inv_def";
+let V_INV_TAC v_inv_def gl =
+  (RULE_ASSUM_TAC(REWRITE_RULE[v_inv_def;
                                injectivity "dataSem_v"]) THEN
    TRY(FIRST_X_ASSUM CONTR_TAC) THEN
    REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN

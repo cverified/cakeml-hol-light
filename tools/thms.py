@@ -1,71 +1,54 @@
-"""the report of the theorems of phase two
+"""the report of the theorems of the port
 
-  python3 -I tools/thms.py
+  python3 -I tools/thms.py [file of the port, relative to ml/]
 
-reads tmp/unstated.txt (which tools/bin/thms writes from a session
-of a run) and says how many theorems of the sources the port
-states, and of the ones it does not, what the reason is.
+A theorem of the port is a HOL Light `let foo = prove (`...`, tac)`,
+so counting them is a count of the files: how many there are, how
+many still have a cheat where HOL4 has a proof, and how many
+statements the port cannot state at all (a comment points at the
+source instead).
 """
-import sys, os, re, collections
+import sys, os, re
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
+ML = T + '../ml/'
 
 
-def kind(msg):
-  """the kind of a statement that the port cannot state"""
-  if 'overload resolution' in msg:
-    return 'a name that resolves to more than one constant'
-  if msg.startswith('Unparsed'):
-    return 'the port does not parse the statement'
-  if 'not a formula' in msg:
-    return 'the statement is not a formula (a name is missing)'
-  m = re.match(r'typechecking error[^:]*:\s*(.*)', msg)
-  if m:
-    s = m.group(1)
-    s = re.sub(r'\s+', ' ', s)
-    return 'types: ' + s[:60]
-  return msg[:60]
-
-
-def files_of_names():
-  """the files of the port that state a theorem of each name (the
-     sources bind the same name in more than one theory, so a name
-     that does not parse can be in several files: the report says
-     all of them)"""
-  out = {}
-  ml = T + '../ml/'
-  for dp, _, fs in os.walk(ml):
-    for f in sorted(fs):
-      if not f.endswith('.ml'): continue
-      p = os.path.join(dp, f)
-      for m in re.finditer(r'cake_(?:theorem|alias)\s*\n?\s*'
-                           r'"([^"\[]+)', open(p).read()):
-        out.setdefault(m.group(1), []).append(os.path.relpath(p, ml))
-  return out
+def count(path):
+  s = open(path, encoding='utf-8').read()
+  thms = cheats = 0
+  # a binding too long for its line puts the prove on the next one
+  for m in re.finditer(r"^let ([A-Za-z_][A-Za-z_0-9']*) =\n?"
+                       r"\s*prove$", s, re.M):
+    thms += 1
+    j = s.find('\nlet ', m.end())
+    body = s[m.end():j if j > 0 else len(s)]
+    if 'CHEAT_TAC' in body: cheats += 1
+  unstated = len(re.findall(r'cannot state yet', s))
+  return thms, cheats, unstated
 
 
 def main():
+  files = sys.argv[1:]
+  if not files:
+    files = []
+    for d, _, fs in os.walk(ML):
+      for f in fs:
+        if f.endswith('.ml'):
+          files.append(os.path.join(d, f)[len(ML):])
+  tot = [0, 0, 0]
   rows = []
-  try:
-    for l in open(T + '../tmp/unstated.txt'):
-      if '\t' in l:
-        nm, msg = l.rstrip('\n').split('\t', 1)
-        rows.append((nm, msg))
-  except IOError:
-    print('no tmp/unstated.txt: run tools/bin/thms first')
-    return
-  cnt = collections.Counter(kind(m) for _, m in rows)
-  print('%d statements that the port cannot state yet' % len(rows))
-  for k, n in cnt.most_common(20):
-    print('%6d  %s' % (n, k))
-  # which files they are in, which is where the work is
-  where = files_of_names()
-  byfile = collections.Counter(
-    f for nm, _ in rows for f in where.get(nm, ['?']))
-  print('the files (a name that more than one states is in each):')
-  for f, n in byfile.most_common(10):
-    print('%6d  %s' % (n, f))
+  for f in sorted(files):
+    try: t, c, u = count(ML + f)
+    except OSError: continue
+    rows.append((t, c, u, f))
+    tot = [tot[0] + t, tot[1] + c, tot[2] + u]
+  for t, c, u, f in sorted(rows, key=lambda r: -r[1])[:20]:
+    if c: print('%6d %6d %6d  %s' % (t, c, u, f))
+  print('%6d %6d %6d  all of the port (theorems, cheats,'
+        ' not stated)' % tuple(tot))
+  return 0
 
 
 if __name__ == '__main__':
-  main()
+  sys.exit(main())

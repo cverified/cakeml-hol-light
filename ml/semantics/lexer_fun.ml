@@ -46,12 +46,10 @@ let read_while_def = cake_define
         (if P c then read_while P cs (c :: s) else (IMPLODE
           (REVERSE s),STRING c cs))`;;
 
-let read_while_thm = cake_theorem "read_while_thm"
-  (fun () ->
-    `!cs s cs' s'.
-         (read_while P cs s = (s',cs')) ==> STRLEN cs' <= STRLEN
-           cs`)
-  CHEAT_TAC;;
+let read_while_thm = prove
+ (`!cs s cs' s'.
+       (read_while P cs s = (s',cs')) ==> STRLEN cs' <= STRLEN cs`,
+  CHEAT_TAC);;
 
 let is_single_char_symbol_def = cake_define
   `is_single_char_symbol c = MEM c "()[]{},;"`;;
@@ -87,19 +85,17 @@ let read_char_as_3digits_def = cake_define
          NONE -> NONE | SOME ci ->
            (if ci < 256 then SOME (CHR ci,rest) else NONE))`;;
 
-let read_char_as_3digits_reduces =
-  cake_theorem "read_char_as_3digits_reduces"
-  (fun () ->
-    `!str0 c str.
-       read_char_as_3digits str0 = SOME (c,str) ==>
-       LENGTH str0 = LENGTH str + 3`)
-  CHEAT_TAC;;
+let read_char_as_3digits_reduces = prove
+ (`!str0 c str.
+     read_char_as_3digits str0 = SOME (c,str) ==>
+     LENGTH str0 = LENGTH str + 3`,
+  CHEAT_TAC);;
 
 (* HOL4 lexer_funScript.sml:122-126: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let read_string_def = cake_define_try_tac (fun () ->
+let lexer_fun_read_string_def = cake_define_try_tac (fun () ->
   `MEASURE (LENGTH o FST)`)
   CHEAT_TAC
   `lexer_fun_read_string str s (loc:locn) =
@@ -129,11 +125,10 @@ let read_string_def = cake_define_try_tac (fun () ->
                                 str)) | _2 -> (ErrorS,loc,TL str))`;;
 hol4_overload "read_string" "lexer_fun_read_string";;
 
-let read_string_thm = cake_theorem "read_string_thm"
-  (fun () ->
-    `!s t l l' x1 x2. (lexer_fun_read_string s t l = (x1,l',x2)) ==>
-                      (LENGTH x2 <= LENGTH s + LENGTH t)`)
-  CHEAT_TAC;;
+let read_string_thm = prove
+ (`!s t l l' x1 x2. (lexer_fun_read_string s t l = (x1,l',x2)) ==>
+                    (LENGTH x2 <= LENGTH s + LENGTH t)`,
+  CHEAT_TAC);;
 
 let skip_comment_def = cake_define_list
   [`skip_comment "" d _3 = NONE`;
@@ -147,11 +142,10 @@ let skip_comment_def = cake_define_list
           skip_comment (y :: xs) d (next_line loc) else
             skip_comment (y :: xs) d (next_loc 1 loc))`];;
 
-let skip_comment_thm = cake_theorem "skip_comment_thm"
-  (fun () ->
-    `!xs d l l' str. (skip_comment xs d l = SOME (str,l')) ==> LENGTH
-  str <= LENGTH xs`)
-  CHEAT_TAC;;
+let skip_comment_thm = prove
+ (`!xs d l l' str. (skip_comment xs d l = SOME (str,l')) ==> LENGTH
+  str <= LENGTH xs`,
+  CHEAT_TAC);;
 
 let read_FFIcall_def = cake_define_list
   [`read_FFIcall "" acc loc = (ErrorS,loc,"")`;
@@ -162,13 +156,10 @@ let read_FFIcall_def = cake_define_list
             read_FFIcall s0 acc (next_loc 1 loc) else
             read_FFIcall s0 (c :: acc) (next_loc 1 loc))`];;
 
-let read_FFIcall_reduces_input =
-  cake_theorem "read_FFIcall_reduces_input"
-  (fun () ->
-    `!s0 a l0 t l s.
-       read_FFIcall s0 a l0 = (t,l,s) ==> LENGTH s < LENGTH s0 +
-         1`)
-  CHEAT_TAC;;
+let read_FFIcall_reduces_input = prove
+ (`!s0 a l0 t l s.
+     read_FFIcall s0 a l0 = (t,l,s) ==> LENGTH s < LENGTH s0 + 1`,
+  CHEAT_TAC);;
 
 let read_REPLcommand_def = cake_define_list
   [`read_REPLcommand "" acc loc = (ErrorS,loc,"")`;
@@ -182,13 +173,11 @@ let read_REPLcommand_def = cake_define_list
             read_REPLcommand s0 (c :: acc) (locn_colupdate ((+)
               1) loc))`];;
 
-let read_REPLcommand_reduces_input =
-  cake_theorem "read_REPLcommand_reduces_input"
-  (fun () ->
-    `!s0 a l0 t l s.
-       read_REPLcommand s0 a l0 = (t,l,s) ==> LENGTH s < LENGTH
-         s0 + 1`)
-  CHEAT_TAC;;
+let read_REPLcommand_reduces_input = prove
+ (`!s0 a l0 t l s.
+     read_REPLcommand s0 a l0 = (t,l,s) ==> LENGTH s < LENGTH s0 +
+       1`,
+  CHEAT_TAC);;
 
 let isAlphaNumPrime_def = cake_define
   `isAlphaNumPrime c <=> isAlphaNum c \/ (c = (CHR 39)) \/ (c = (CHR
@@ -301,42 +290,40 @@ let next_sym_def = cake_define_list_try (fun () ->
 
 (* EVAL “next_sym "  Foo.Bar.<  " (POSN 0 0)” *)
 
-let lem1 = cake_theorem "lem1[local]"
-  (fun () ->
-    `((let (x,y) = z a in f x y) = P a) = (let (x,y) = z a in (f x y =
-  P a))`)
-  CHEAT_TAC;;
+(* [local] *)
+let lem1 = prove
+ (`((let (x,y) = z a in f x y) = P a) = (let (x,y) = z a in (f x y = P
+  a))`,
+  CHEAT_TAC);;
 
-let lem2 = cake_theorem "lem2[local]"
-  (fun () ->
-    `((let (x,y) = z a in f x y) ==> P a) = (let (x,y) = z a in (f x y
-  ==> P a))`)
-  CHEAT_TAC;;
+(* [local] *)
+let lem2 = prove
+ (`((let (x,y) = z a in f x y) ==> P a) = (let (x,y) = z a in (f x y
+  ==> P a))`,
+  CHEAT_TAC);;
 
 (* HOL4 lexer_funScript.sml:342: a theorem that HOL4 states as the
    value of an ML expression: read_while_EMPTY *)
 
-let NOT_NIL_EXISTS_CONS = cake_theorem "NOT_NIL_EXISTS_CONS[local]"
-  (fun () ->
-    `(~(n = []) <=> (?h t. n = h :: t)) /\
-     (list_CASE n F P <=> (?h t. n = h :: t /\ P h t))`)
-  CHEAT_TAC;;
+(* [local] *)
+let NOT_NIL_EXISTS_CONS = prove
+ (`(~(n = []) <=> (?h t. n = h :: t)) /\
+   (list_CASE n F P <=> (?h t. n = h :: t /\ P h t))`,
+  CHEAT_TAC);;
 
 (* HOL4 lexer_funScript.sml:350-351: ML code, not ported *)
 
-let read_Ident_LESS = cake_theorem "read_Ident_LESS"
-  (fun () ->
-    `!xs l acc s loc rest.
-       read_Ident xs l acc = (s,loc,rest) ==>
-       (if xs = [] then rest = [] else LENGTH rest < LENGTH xs)`)
-  CHEAT_TAC;;
+let read_Ident_LESS = prove
+ (`!xs l acc s loc rest.
+     read_Ident xs l acc = (s,loc,rest) ==>
+     (if xs = [] then rest = [] else LENGTH rest < LENGTH xs)`,
+  CHEAT_TAC);;
 
-let next_sym_LESS = cake_theorem "next_sym_LESS"
-  (fun () ->
-    `!input l s l' rest.
-       next_sym input l = SOME (s,l',rest) ==>
-       LENGTH rest < LENGTH input`)
-  CHEAT_TAC;;
+let next_sym_LESS = prove
+ (`!input l s l' rest.
+     next_sym input l = SOME (s,l',rest) ==>
+     LENGTH rest < LENGTH input`,
+  CHEAT_TAC);;
 
 let init_loc_def = cake_define
   `init_loc = POSN 0 0`;;
@@ -434,11 +421,10 @@ let next_token_def = cake_define
        (sym,locs,rest_of_input) ->
          SOME (token_of_sym sym,locs,rest_of_input))`;;
 
-let next_token_LESS = cake_theorem "next_token_LESS"
-  (fun () ->
-    `!s l l' rest input. (next_token input l = SOME (s,l',rest)) ==>
-                     LENGTH rest < LENGTH input`)
-  CHEAT_TAC;;
+let next_token_LESS = prove
+ (`!s l l' rest input. (next_token input l = SOME (s,l',rest)) ==>
+                   LENGTH rest < LENGTH input`,
+  CHEAT_TAC);;
 
 (* top-level lexer specification *)
 
@@ -487,11 +473,10 @@ let toplevel_semi_dex_def = cake_define_list
           - 1) t else if h = tokens_RparT then toplevel_semi_dex (i
           + 1) (d - 1) t else toplevel_semi_dex (i + 1) d t)`];;
 
-let toplevel_semi_dex_non0 =
-  cake_theorem "toplevel_semi_dex_non0[local]"
-  (fun () ->
-    `!i d toks j. (toplevel_semi_dex i d toks = SOME j) ==> 0 < j`)
-  CHEAT_TAC;;
+(* [local] *)
+let toplevel_semi_dex_non0 = prove
+ (`!i d toks j. (toplevel_semi_dex i d toks = SOME j) ==> 0 < j`,
+  CHEAT_TAC);;
 
 (* HOL4 lexer_funScript.sml:570-578: the tactic that proves the
    termination *)

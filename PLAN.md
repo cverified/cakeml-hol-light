@@ -1,3 +1,100 @@
+# Plan for the pass that is going on: the HOL Light idiom
+
+_A theorem of the port is written the way HOL Light writes one:_
+
+```ocaml
+(* [simp] *)
+let small_int_w2n = prove
+ (`good_dimindex (:'a) ==> small_int (:'a) (&(w2n (w:word8)))`,
+  (* a byte is below 256 ... *)
+  REWRITE_TAC[...]);;
+```
+
+_and a proof names another theorem by its binding
+(`memory_rel_El`), not by a lookup under its HOL4 name
+(`cake_thm "memory_rel_El"`).  What the registry did is gone with
+it:_
+
+- _the attributes that HOL4 gives a theorem stand in a comment
+  over it, which is where a reader of the source expects them;_
+- _a name that HOL4 reads as a variable because no theory in
+  scope defines it is hidden with HOL Light's own
+  `hide_constant`, at the head of the file and unhidden at its
+  end (HOL4's `Parse.hide` is file-scoped as well);_
+- _a variable whose name the port overloads with a record
+  accessor says its type in the statement
+  (`tools/fieldvars.py`); ten statements
+  of the port cannot say it -- the type has a variable of its
+  own, or HOL4 computes the statement -- and those are read with
+  `cake_as_vars`;_
+- _a file that needs the accessors of a field and reads the name
+  of that field as a variable as well takes those pairs out of
+  the interface with `hide_overloads` (32 files);_
+- _two files that state a theorem of one name each get a binding
+  of their own, the later one with the theory in front of it, so
+  nothing can pick up the other one by mistake._
+
+_What to look at, when the pass is reviewed:_
+
+- _`tools/port.py`: `annot_vars` (the type a statement says of a
+  variable), `state` (the shape of a theorem block and where its
+  proof comes from) and the two hide/unhide emissions;_
+- _`tools/hterm.py`: the `rawtyped` node, which prints a variable
+  with the type the table gives it;_
+- _`ml/lib/theorem.ml`: what is left of it (two functions), and
+  `ml/lib/tactics.ml`, where `V_INV_TAC` takes the theorem that
+  says what `v_inv` is instead of looking it up;_
+- _`tools/fieldvars.py`: 389 statements say the type of a
+  variable and 25 are read with `cake_as_vars`.  The
+  table was harvested once, from a session of the old shape;
+  `tools/fieldvars.py` says how a new entry is found;_
+- _the statements that keep `cake_as_vars` (41 of them) and the 31 files
+  that keep `hide_overloads` -- the only places where the port
+  still says something HOL Light has no primitive for;_
+- _`tools/bindrefs.py`, which rewrote the 255 theorem and 976
+  definition references of the proof store and renamed the 28
+  sections whose theorem has a binding of its own; it is
+  idempotent, so running it again says nothing;_
+- _and the one behaviour that changed: a proof that fails is an
+  error of the file now, where `cake_theorem` turned it into an
+  axiom and let the file load on;_
+- _`tools/overrides.py`: `MATCH_CLAUSES`, which the pass needed
+  because the five `do_eq`/`do_eq_list` of the semantics are a
+  family whose clauses overlap in one function -- `MATCH_FORM`
+  wrote both functions as one match and `ml/semantics/`
+  `semanticPrimitives.ml` would not typecheck (PORTING-GUIDE.md,
+  entry 32).  The five files had the right shape by hand before,
+  which a re-port threw away; now the generator writes it;_
+- _`tools/coverage.py` (`bound`) and `tools/thms.py`, which both
+  had to learn the two shapes a binding can have: the theory in
+  front of the name, and a `prove` on the line below where the
+  binding is too long for one line._
+
+_The proofs name a definition by its binding as well
+(`memory_rel_def`, not `cake_def "memory_rel"`): 976 references.
+A binding of a definition is unique, as a binding of a theorem
+is: 249 names were the name of a definition in two files or more
+(`compile_def` in 28 of them), so the plain name would be
+whichever file loaded last, and 32 of the 976 references did
+denote another theory's definition until `tools/port.py`'s
+`bindname` gave every definition, inductive relation and monadic
+definition a binding of its own (PORTING-GUIDE.md, entry 9).  No
+two files of the port bind one name now._
+
+_`cake_def` is left for the three tactics of `ml/lib/tactics.ml`
+that reach into the definitions of the file they are applied in
+(`MEMORY_REL_TAC` unfolds four of them): that file is part of the
+library layer and loads before the files whose definitions it
+unfolds, so there is no binding there to name._
+
+_What is left of the pass: how the definitions are made.
+`cake_define` is a chain of strategies, because no single HOL
+Light primitive takes what HOL4 writes; a run harvests which
+strategy each definition needed (`cake_strategies`), and the files
+then say `new_definition` or `new_recursive_definition` themselves
+where that is what the definition is, and keep the chain where it
+is not._
+
 # Plan for phase two (the statements)
 
 _Phase two states every theorem of the CakeML sources: its name,

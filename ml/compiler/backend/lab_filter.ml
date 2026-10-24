@@ -22,8 +22,7 @@ let filter_skip_def = cake_define_list
    `filter_skip (Section n xs :: rest) =
          Section n (FILTER not_skip xs) :: filter_skip rest`];;
 
-let filter_skip_MAP = cake_theorem "filter_skip_MAP"
-  (fun () ->
-    `!ls. filter_skip ls = MAP (\x. match x with Section n xs ->
-  Section n (FILTER not_skip xs)) ls`)
-  CHEAT_TAC;;
+let filter_skip_MAP = prove
+ (`!ls. filter_skip ls = MAP (\x. match x with Section n xs -> Section
+  n (FILTER not_skip xs)) ls`,
+  CHEAT_TAC);;

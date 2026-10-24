@@ -22,10 +22,6 @@ let a0 = length(axioms());;
 loadt "$f";;
 print_string ("AXIOMS-ADDED " ^ string_of_int (length(axioms()) - a0)
               ^ "\n");;
-print_string ("FIELDVARS " ^ string_of_int (length(cake_fieldvars ()))
-              ^ "\n");;
-print_string ("UNSTATED " ^ string_of_int (length (!the_unstated))
-              ^ "\n");;
 let pre p t = is_const t &&
   (let n = fst(dest_const t) in
    String.length n > String.length p &&
@@ -41,6 +37,6 @@ while ! tmux capture-pane -p -J -S - -t hol-vq |
 do sleep 10; done
 tmux capture-pane -p -J -S - -t hol-vq |
   sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
-  grep -E 'AXIOMS-ADDED|FIELDVARS|UNSTATED|OWN-AXIOMS|NOT PROVED'\
+  grep -E 'AXIOMS-ADDED|OWN-AXIOMS|NOT PROVED'\
 '|NOT STATED|CHEATED|^Error|Warning' | tail -20
 echo "verifyquick: $(( $(date +%s) - $(cat $C/tmp/vqstart.txt) ))s"

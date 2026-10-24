@@ -2,7 +2,8 @@
 (*  cmlPtreeConversion: ported from HOL4's
     semantics/cmlPtreeConversionScript.sml
     A definition theory, with 61 definitions, 1 datatype and 8
-    theorems.  Needed by cmlParse.ml and semantics.ml.  *)
+    theorems.  Needed by bvi_letProof.ml, bvl_constProof.ml,
+    cmlParse.ml, data_to_word_memoryProof.ml and semantics.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -18,7 +19,7 @@ needs "semantics/gram.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/tokenUtils.ml";;
 
-cake_hide ["assert"; "pmatch"];;
+let _ = do_list hide_constant ["assert"; "pmatch"];;
 
 (* handling constructor arities gets very complicated when "open" is
    implemented *)
@@ -320,13 +321,12 @@ let detuplify_def = cake_define
         Attup args -> args
       | ty -> [ty]`;;
 
-let detuplify_pmatch = cake_theorem "detuplify_pmatch"
-  (fun () ->
-    `!ty.
-       detuplify ty =
-       (match ty with
-         Attup args -> args | ty -> [ty])`)
-  CHEAT_TAC;;
+let detuplify_pmatch = prove
+ (`!ty.
+     detuplify ty =
+     (match ty with
+       Attup args -> args | ty -> [ty])`,
+  CHEAT_TAC);;
 
 let ptree_PTbase_def = cake_define
   `ptree_PTbase ast =
@@ -1142,14 +1142,14 @@ let ptree_Expr_def = cake_define_list_cheat CHEAT_TAC
                 seq'.
                 SOME (e :: seq')))) | _122 -> NONE)`];;
 
-let dumb1 = cake_theorem "dumb1[local]"
-  (fun () ->
-    `COND (p = q) t e = COND (q = p) t e`)
-  CHEAT_TAC;;
-let dumb2 = cake_theorem "dumb2[local]"
-  (fun () ->
-    `COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`)
-  CHEAT_TAC;;
+(* [local] *)
+let dumb1 = prove
+ (`COND (p = q) t e = COND (q = p) t e`,
+  CHEAT_TAC);;
+(* [local] *)
+let dumb2 = prove
+ (`COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`,
+  CHEAT_TAC);;
 (* HOL4 cmlPtreeConversionScript.sml:1259-1262: a theorem that HOL4
    states as the value of an ML expression: ptree_Expr_def' *)
 
@@ -1370,4 +1370,7 @@ let ptree_TopLevelDecs_def = cake_define_list
 
 hol4_only "++" "APPEND";;
 
-cake_hide [];;
+(* and the names that this file reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["assert";
+   "pmatch"];;

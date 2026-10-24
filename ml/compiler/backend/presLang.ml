@@ -84,15 +84,13 @@ let separate_lines_def = cake_define
 (* num_to_hex "implements" words$word_to_hex_string in a
    simple way that the translator can handle. these lemmas
    check that is true. *)
-let num_to_hex_digit_eq = cake_theorem "num_to_hex_digit_eq"
-  (fun () ->
-    `!i. i < 16 ==> num_to_hex_digit i = [HEX i]`)
-  CHEAT_TAC;;
+let num_to_hex_digit_eq = prove
+ (`!i. i < 16 ==> num_to_hex_digit i = [HEX i]`,
+  CHEAT_TAC);;
 
-let num_to_hex_eq = cake_theorem "num_to_hex_eq"
-  (fun () ->
-    `num_to_hex (w2n w) = word_to_hex_string w`)
-  CHEAT_TAC;;
+let num_to_hex_eq = prove
+ (`num_to_hex (w2n w) = word_to_hex_string w`,
+  CHEAT_TAC);;
 
 let num_to_hex_mlstring_def = cake_define
   `num_to_hex_mlstring n = implode ("0x" ++ num_to_hex n)`;;
@@ -1035,19 +1033,18 @@ let data_seqs_def = cake_define
      (match z with dataLang_Seq x y -> Append (data_seqs x)
        (data_seqs y) | _19 -> List [z])`;;
 
-let MEM_append_data_seqs = cake_theorem "MEM_append_data_seqs[local]"
-  (fun () ->
-    `!x. MEM a (append (data_seqs x)) ==> labLang_prog_size a <=
-  labLang_prog_size x`)
-  CHEAT_TAC;;
+(* [local] *)
+let MEM_append_data_seqs = prove
+ (`!x. MEM a (append (data_seqs x)) ==> labLang_prog_size a <=
+  labLang_prog_size x`,
+  CHEAT_TAC);;
 
-let list_size_append_data_seqs =
-  cake_theorem "list_size_append_data_seqs[local]"
-  (fun () ->
-    `!x.
-     list_size labLang_prog_size (append (data_seqs x)) =
-     labLang_prog_size x + 1`)
-  CHEAT_TAC;;
+(* [local] *)
+let list_size_append_data_seqs = prove
+ (`!x.
+   list_size labLang_prog_size (append (data_seqs x)) =
+   labLang_prog_size x + 1`,
+  CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -1256,19 +1253,18 @@ let stack_seqs_def = cake_define
      (match z with stackLang_Seq x y -> Append (stack_seqs x)
        (stack_seqs y) | _24 -> List [z])`;;
 
-let MEM_append_stack_seqs = cake_theorem "MEM_append_stack_seqs[local]"
-  (fun () ->
-    `!x. MEM a (append (stack_seqs x)) ==> labLang_prog_size ARB a <=
-  labLang_prog_size ARB x`)
-  CHEAT_TAC;;
+(* [local] *)
+let MEM_append_stack_seqs = prove
+ (`!x. MEM a (append (stack_seqs x)) ==> labLang_prog_size ARB a <=
+  labLang_prog_size ARB x`,
+  CHEAT_TAC);;
 
-let list_size_append_stack_seqs =
-  cake_theorem "list_size_append_stack_seqs[local]"
-  (fun () ->
-    `!x.
-     list_size (labLang_prog_size ARB) (append (stack_seqs x)) =
-     labLang_prog_size ARB x + 1`)
-  CHEAT_TAC;;
+(* [local] *)
+let list_size_append_stack_seqs = prove
+ (`!x.
+   list_size (labLang_prog_size ARB) (append (stack_seqs x)) =
+   labLang_prog_size ARB x + 1`,
+  CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -1460,11 +1456,11 @@ let word_seqs_def = cake_define
      (match z with wordLang_Seq x y -> Append (word_seqs x)
        (word_seqs y) | _31 -> List [z])`;;
 
-let MEM_append_word_seqs = cake_theorem "MEM_append_word_seqs[local]"
-  (fun () ->
-    `!x. MEM a (append (word_seqs x)) ==> labLang_prog_size ARB a <=
-  labLang_prog_size ARB x`)
-  CHEAT_TAC;;
+(* [local] *)
+let MEM_append_word_seqs = prove
+ (`!x. MEM a (append (word_seqs x)) ==> labLang_prog_size ARB a <=
+  labLang_prog_size ARB x`,
+  CHEAT_TAC);;
 
 (* HOL4 presLangScript.sml:1311-1312: a theorem that HOL4 states as
    the value of an ML expression: MEM_word_exps_size_ARB *)
