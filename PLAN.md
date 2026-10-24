@@ -1077,3 +1077,31 @@ starts from `cv_translator/cake_compile_heap`); HOL Light has no
 equivalent, but `DMTCP` or `criu` can snapshot the process, and a
 snapshot restores in seconds and survives a crash or a reboot, which
 the fork tree does not.  Worth a spike before the long haul._
+
+## Trying a batch of proofs in one load of the session
+
+`tools/bh.ml` (loaded into the working session) is what a round of
+phase three looks like now.  A round is one file with several
+attempts in it:
+
+- `bt <name> <thm> (fun () -> <tactic>)` tries an attempt under a
+  processor-time budget.  When it fails it prints the exception
+  and, if the tactic merely left goals, the goals themselves, and
+  then the next attempt goes on; nothing an attempt does reaches
+  the next one, so a failure costs only its own line of the log.
+- `bsteps <name> <thm> [<tactic>; ...]` applies the steps of a
+  proof one at a time and says which one failed and what the goal
+  state was, which is what the interactive `e` used to be for.
+  Each step goes to the first goal, as `e` does.
+- `b_open <file>` sends everything to a log file as well, which
+  has no scrollback limit (the tmux pane has one), and `b_asm`
+  turns the assumptions of the printed goals on.
+
+So one round of the REPL -- a minute or two -- gives the feedback
+of a whole batch instead of one step of one proof.  The attempts
+of a round are written as `tmp/*.ml` files with `pt` (the same
+thing as `bt`) so that `tmp/mksec2.py` can turn a successful one
+into a section of the `.prf`, inlining the pieces of
+`tmp/toolkit.ml` that it uses.  A section that binds what it does
+not use is a warning, so the toolkit is one piece per binding and
+a section asks for exactly the ones it needs.

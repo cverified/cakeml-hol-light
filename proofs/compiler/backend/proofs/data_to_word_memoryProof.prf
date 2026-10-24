@@ -8246,6 +8246,64 @@
   (REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
                BIT_WORD_1] THEN
    MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`])
+### memory_rel_ByteArray_IMP_store
+  (* a byte of a byte array can be stored: memory_rel_ByteArray_IMP
+     says that the load of that byte works, which tells that the
+     cell the store writes holds a word and is in the domain, and
+     it says that the memory relation survives the write.  Those
+     two are about the address of the lemma's own existential, and
+     the statement's is the same because get_real_addr is a
+     function *)
+  (let hd_is n t =
+   (try fst(dest_const(fst(strip_comb t))) = n
+    with Failure _ -> false) in
+   (* what a load of a byte says about the cell it reads: it holds a
+      word and its address is in the domain *)
+   let loadword = prove
+    (`!(m:('a)word->('a)word_loc) dm be' w x.
+        mem_load_byte_aux m dm be' w = SOME x
+        ==> (?v. m (byte_align w) = wordLang_Word v) /\
+            byte_align w IN dm`,
+     REPEAT GEN_TAC THEN
+     REWRITE_TAC[cake_def "mem_load_byte_aux"] THEN
+     STRUCT_CASES_TAC(ISPEC `(m:('a)word->('a)word_loc) (byte_align w)`
+                        (cases_of `:('a)word_loc`)) THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[distinctness "option"] THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[distinctness "option"] THEN
+     MESON_TAC[]) in
+   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+   FIRST_ASSUM(fun mr -> FIRST_ASSUM(fun lk -> FIRST_ASSUM(fun gd ->
+     MP_TAC(MATCH_MP (cake_thm "memory_rel_ByteArray_IMP")
+              (CONJ mr (CONJ lk gd)))))) THEN
+   DISCH_THEN(STRIP_ASSUME_TAC o
+              REWRITE_RULE[injectivity "word_loc"]) THEN
+   VAR_EQ_TAC THEN
+   FIRST_ASSUM(fun e1 -> FIRST_ASSUM(fun e2 ->
+     let e = REWRITE_RULE[injectivity "option"] (TRANS (SYM e1) e2) in
+     if is_var (lhs (concl e)) && lhs (concl e) <> rhs (concl e)
+     then SUBST_ALL_TAC e else fail())) THEN
+   FIRST_X_ASSUM(fun ld ->
+     if is_forall (concl ld) &&
+        (try hd_is "mem_load_byte_aux"
+               (lhs (rand (snd(strip_forall (concl ld)))))
+         with Failure _ -> false)
+     then MP_TAC(SPEC `i:num` ld) else fail()) THEN
+   ASM_REWRITE_TAC[] THEN
+   DISCH_THEN(fun le -> STRIP_ASSUME_TAC(MATCH_MP loadword le)) THEN
+   FIRST_X_ASSUM(fun st ->
+     if is_forall (concl st) &&
+        (try hd_is "memory_rel"
+               (snd(dest_let(rand(snd(strip_forall (concl st))))))
+         with Failure _ -> false)
+     then MP_TAC(SPECL [`i:num`; `b:(word8)`] st) else fail()) THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[cake_def "theWord"] THEN
+   DISCH_TAC THEN
+   ASM_REWRITE_TAC[cake_def "mem_store_byte_aux"] THEN
+   MATCH_REDUCE_TAC THEN
+   ASM_REWRITE_TAC[injectivity "option"; UNWIND_THM1; UNWIND_THM2])
 ### copy_array_NONE_IMP
   (* the offsets are of naturals, so copy_array is NONE exactly when
      the source is too short and otherwise takes the n elements from
