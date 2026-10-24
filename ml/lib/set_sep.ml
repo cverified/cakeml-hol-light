@@ -129,3 +129,68 @@ let STAR_cond = prove
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o RATOR_CONV) [STAR_COMM] THEN
   MATCH_ACCEPT_TAC cond_STAR);;
+
+(* ================================================================== *)
+(*  The theorems of set_sepTheory that take the cell at an address    *)
+(*  out of a separation predicate over a memory: HOL4's SEP_R_TAC     *)
+(*  and SEP_W_TAC are these two (read_fun2set and write_fun2set)      *)
+(*  applied to the assumption, and the port does that by hand.        *)
+(* ================================================================== *)
+
+let SPLIT_LEMMA = prove
+ (`!(s:A->bool) t v. SPLIT s (t,v) <=> v = s DIFF t /\ t SUBSET s`,
+  REWRITE_TAC[SPLIT_def] THEN SET_TAC[]);;
+
+let one_STAR = prove
+ (`!(x:A) s p. (set_sep_one x * p) s <=> x IN s /\ p (s DELETE x)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[STAR_def; one_def; SPLIT_LEMMA] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+  MP_TAC(SET_RULE `({x:A} SUBSET s <=> x IN s) /\
+                   (s DIFF {x} = s DELETE x)`) THEN
+  MESON_TAC[]);;
+
+(* and the membership of a fun2set, which is what the cell of the
+   one says *)
+
+let IN_fun2set = prove
+ (`!(f:B->A) d a x. (a,x) IN fun2set (f,d) <=> f a = x /\ a IN d`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[fun2set_def; IN_ELIM_THM; PAIR_EQ] THEN MESON_TAC[]);;
+
+let read_fun2set = prove
+ (`!a x p (f:B->A) d. (set_sep_one (a,x) * p) (fun2set (f,d))
+     ==> f a = x /\ a IN d`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[one_STAR; IN_fun2set] THEN
+  SIMP_TAC[]);;
+
+let write_fun2set = prove
+ (`!y a x p (f:B->A) d. (set_sep_one (a,x) * p) (fun2set (f,d))
+     ==> (p * set_sep_one (a,y)) (fun2set ((a =+ y) f,d))`,
+  REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC (RAND_CONV o RATOR_CONV) [STAR_COMM] THEN
+  REWRITE_TAC[one_STAR; IN_fun2set; APPLY_UPDATE_THM] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  SUBGOAL_THEN `fun2set ((a =+ y) (f:B->A),d) DELETE (a,y) =
+                fun2set (f,d) DELETE (a,x)` SUBST1_TAC THENL
+   [REWRITE_TAC[EXTENSION; FORALL_PAIR_THM; IN_DELETE; IN_fun2set;
+                UPDATE; PAIR_EQ] THEN
+    CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+    X_GEN_TAC `b:B` THEN X_GEN_TAC `z:A` THEN
+    ASM_CASES_TAC `b:B = a` THEN ASM_REWRITE_TAC[] THEN
+    ASM_MESON_TAC[];
+    FIRST_ASSUM ACCEPT_TAC]);;
+
+(* the associativity and the commutativity as one permutative
+   rewrite, the way HOL Light's ADD_AC is written *)
+
+let STAR_AC = prove
+ (`((p:(A->bool)->bool) * q = q * p) /\
+   ((p * q) * r = p * (q * r)) /\
+   (p * (q * r) = q * (p * r))`,
+  REPEAT CONJ_TAC THENL
+   [MATCH_ACCEPT_TAC STAR_COMM;
+    REWRITE_TAC[GSYM STAR_ASSOC];
+    REWRITE_TAC[STAR_ASSOC] THEN
+    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STAR_COMM] THEN
+    REWRITE_TAC[]]);;

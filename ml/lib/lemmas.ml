@@ -597,3 +597,11 @@ let USHR_OR_LOW = prove
     DISCH_THEN(MP_TAC o MATCH_MP (ARITH_RULE `j + s < s ==> F`)) THEN
     REWRITE_TAC[];
     ASM_SIMP_TAC[BIT_TRIVIAL; ARITH_RULE `~((a:num) < b) ==> b <= a`]]);;
+
+(* HOL4's APPLY_UPDATE_THM of combinTheory: what the update of a
+   function gives at a point *)
+
+let APPLY_UPDATE_THM = prove
+ (`!(f:A->B) a b c. ((a =+ b) f) c = (if a = c then b else f c)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[UPDATE] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[]);;
