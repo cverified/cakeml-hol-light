@@ -5525,6 +5525,90 @@
        (ONCE_REWRITE_RULE[TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
           memory_rel_rearrange) th)) THEN
    REWRITE_TAC[MEM_APPEND] THEN MESON_TAC[])
+### memory_rel_IMP_word_list_exists
+  (* the free space of the heap is the Unused element at the
+     address that NextFree points at, and word_el makes it a
+     word_list_exists of its length; the part of it that the
+     statement asks for is the first n cells, which
+     word_list_exists_ADD splits off, and the rest of the memory
+     goes into the SEP_T *)
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let rec facs t =
+     if hd_is "STAR" t then
+       let args = snd(strip_comb t) in
+       facs (el 0 args) @ facs (el 1 args)
+     else [t] in
+   let star_T = prove
+    (`!(p:(A->bool)->bool) q s. (p * q) s ==> (p * SEP_T) s`,
+     REWRITE_TAC[STAR_SEP_T; STAR_def; SPLIT_LEMMA] THEN
+     MESON_TAC[]) in
+   let sep_T_tac = W(fun (asl,w) ->
+     let tgt = lhand (rator w) in
+     let ante = tryfind (fun (_,th) ->
+       let c = concl th in
+       if hd_is "STAR" (rator c) && mem tgt (facs (rator c))
+       then rator c else fail()) asl in
+     let rec remove1 t = function
+         [] -> []
+       | h :: rest -> if h = t then rest else h :: remove1 t rest in
+     let rest = remove1 tgt (facs ante) in
+     let st = fst(strip_comb ante) in
+     let mk a b = mk_comb(mk_comb(st,a),b) in
+     MATCH_MP_TAC star_T THEN
+     EXISTS_TAC (end_itlist mk rest) THEN
+     FIRST_ASSUM(fun th ->
+       if (try hd_is "STAR" (rator (concl th))
+           with Failure _ -> false)
+       then MP_TAC th else fail()) THEN
+     REWRITE_TAC[STAR_AC]) in
+   REWRITE_TAC[cake_def "memory_rel"; cake_def "word_ml_inv";
+               cake_def "abs_ml_inv";
+               cake_def "bc_stack_ref_inv"] THEN
+   STRIP_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     if hd_is "heap_in_memory_store" (concl th)
+     then MP_TAC(REWRITE_RULE[cake_def "heap_in_memory_store"] th)
+     else fail()) THEN
+   STRIP_TAC THEN
+   ASM_CASES_TAC `n = 0` THENL
+    [ASM_REWRITE_TAC[CONJUNCT1 (cake_thm "word_list_exists_thm");
+                     emp_STAR; SEP_T_def];
+     ALL_TAC] THEN
+   FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
+     let e = REWRITE_RULE[injectivity "option";
+                          injectivity "word_loc"]
+               (TRANS (SYM t1) t2) in
+     if is_eq (concl e) && is_var (lhs (concl e))
+     then SUBST1_TAC e else fail())) THEN
+   FIRST_X_ASSUM(fun th ->
+     if hd_is "unused_space_inv" (concl th)
+     then MP_TAC(REWRITE_RULE[cake_def "unused_space_inv"] th)
+     else fail()) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC STRIP_ASSUME_TAC) THEN
+   SUBGOAL_THEN `~(sp' + sp1 = 0)` ASSUME_TAC THENL
+    [UNDISCH_TAC `(n:num) <= sp` THEN
+     UNDISCH_TAC `(sp:num) <= sp'` THEN
+     UNDISCH_TAC `~(n = 0)` THEN ARITH_TAC;
+     ALL_TAC] THEN
+   FIRST_X_ASSUM(fun imp -> FIRST_ASSUM(fun ne ->
+     MP_TAC(MATCH_MP (cake_thm "heap_lookup_SPLIT") (MP imp ne)))) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   VAR_EQ_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+     then MP_TAC th else fail()) THEN
+   REWRITE_TAC[cake_thm "word_heap_APPEND"; cake_def "word_heap";
+               cake_def "word_el"] THEN
+   SUBGOAL_THEN `(sp' + sp1) - 1 + 1 = n + ((sp' + sp1) - n)`
+     SUBST1_TAC THENL
+    [UNDISCH_TAC `(n:num) <= sp` THEN
+     UNDISCH_TAC `(sp:num) <= sp'` THEN
+     UNDISCH_TAC `~(sp' + sp1 = 0)` THEN ARITH_TAC;
+     ALL_TAC] THEN
+   REWRITE_TAC[cake_thm "word_list_exists_ADD"] THEN
+   DISCH_TAC THEN sep_T_tac)
 ### get_addr_0
   (* the lowest bit of get_addr is the one that get_lowerbits ors
      in, whichever of its two clauses applies *)
@@ -6166,6 +6250,68 @@
    ONCE_REWRITE_TAC[WORD_ADD_SYM] THEN
    FIRST_ASSUM(fun gd ->
      MATCH_ACCEPT_TAC(MATCH_MP get_byte_byte_align gd)))
+### write_bytes_same
+  (* the words come out the same because every byte that one of
+     them reads is the same in the two lists: the head word reads
+     the first bytes (the bytes_to_word of a list of bytes that
+     agree up to the count), and the tail reads the rest, which the
+     DROP shifts by the count *)
+  (let btw = prove
+    (`!k a b1 b2 (w:(N)word) be.
+        (!n. n < k ==> n < LENGTH b1 /\ n < LENGTH b2 /\
+             EL n b1 = EL n b2)
+        ==> bytes_to_word k a b1 w be = bytes_to_word k a b2 w be`,
+     INDUCT_TAC THEN REPEAT GEN_TAC THENL
+      [REWRITE_TAC[cake_def "bytes_to_word"]; ALL_TAC] THEN
+     DISCH_TAC THEN
+     GEN_REWRITE_TAC BINOP_CONV [cake_def "bytes_to_word"] THEN
+     REWRITE_TAC[NOT_SUC] THEN
+     FIRST_ASSUM(MP_TAC o SPEC `0`) THEN
+     REWRITE_TAC[LT_0] THEN STRIP_TAC THEN
+     MP_TAC(ISPEC `b1:(word8)list` list_CASES) THEN
+     DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
+       (X_CHOOSE_THEN `h1:word8`
+         (X_CHOOSE_THEN `t1:(word8)list` SUBST_ALL_TAC))) THENL
+      [ASM_MESON_TAC[LENGTH; LT_REFL]; ALL_TAC] THEN
+     MP_TAC(ISPEC `b2:(word8)list` list_CASES) THEN
+     DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
+       (X_CHOOSE_THEN `h2:word8`
+         (X_CHOOSE_THEN `t2:(word8)list` SUBST_ALL_TAC))) THENL
+      [ASM_MESON_TAC[LENGTH; LT_REFL]; ALL_TAC] THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[EL; HD]) THEN
+     ASM_REWRITE_TAC[] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+     REWRITE_TAC[SUC_SUB1] THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+     FIRST_X_ASSUM(MP_TAC o SPEC `SUC n`) THEN
+     ASM_REWRITE_TAC[LT_SUC; LENGTH; EL; TL] THEN
+     ASM_ARITH_TAC) in
+   let lt1 = ARITH_RULE `!n m b:num. n < b ==> n < m * b + b` in
+   let lt2 = ARITH_RULE
+     `!n m b:num. n < m * b ==> n + b < m * b + b` in
+   let lt3 = ARITH_RULE `!n b l:num. n + b < l ==> n < l - b` in
+   LIST_INDUCT_TAC THEN
+   REWRITE_TAC[cake_def "write_bytes"] THEN
+   REPEAT GEN_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[CONS_11] THEN
+   DISCH_TAC THEN CONJ_TAC THENL
+    [MATCH_MP_TAC btw THEN
+     X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     REWRITE_TAC[LENGTH; MULT] THEN
+     MATCH_MP_TAC lt1 THEN ASM_REWRITE_TAC[];
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+     REWRITE_TAC[LENGTH_DROP] THEN
+     FIRST_X_ASSUM(MP_TAC o SPEC `n + dimindex (:'a) DIV 8`) THEN
+     ANTS_TAC THENL
+      [REWRITE_TAC[LENGTH; MULT] THEN
+       MATCH_MP_TAC lt2 THEN ASM_REWRITE_TAC[];
+       ALL_TAC] THEN
+     STRIP_TAC THEN ASM_SIMP_TAC[EL_DROP] THEN
+     REPEAT CONJ_TAC THEN TRY(MATCH_MP_TAC lt3) THEN
+     ASM_REWRITE_TAC[]])
 ### memory_rel_RefPtr_IMP_lemma
   (* every rule of v_inv for a RefPtr says that the pointer is in
      the refs: the first through the domain of f, the other two
@@ -7245,6 +7391,49 @@
                   (CONJ mr (CONJ vb (CONJ ck (CONJ lt gd)))) in
        MP_TAC th)))) THEN
    STRIP_TAC THEN ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[])
+### word_mem_eq_thm
+  (* the memory holds the words of the list, so the loop reads them
+     one at a time: the cell at the address is the head, which
+     read_fun2set takes out of the separating product, and the
+     induction hypothesis takes the cell into the frame *)
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let rec facs t =
+     if hd_is "STAR" t then
+       let args = snd(strip_comb t) in
+       facs (el 0 args) @ facs (el 1 args)
+     else [t] in
+   let sepasm (asl,w) =
+     tryfind (fun (_,th) ->
+       let c = concl th in
+       if hd_is "STAR" (rator c) then rator c else fail()) asl in
+   let witness = W(fun gl ->
+     let ante = sepasm gl in
+     let fs = facs ante in
+     let one = find (hd_is "set_sep_one") fs in
+     let rest = filter (fun t -> not (hd_is "set_sep_one" t) &&
+                                 not (hd_is "misc_word_list" t)) fs in
+     let st = fst(strip_comb ante) in
+     let mk a b = mk_comb(mk_comb(st,a),b) in
+     EXISTS_TAC (mk one (end_itlist mk rest))) in
+   let usesep =
+     FIRST_ASSUM(fun th ->
+       if hd_is "STAR" (rator (concl th)) then MP_TAC th else fail()) in
+   LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_BY_NAME "ys" THEN
+   REWRITE_TAC[cake_def "word_mem_eq"; LENGTH; MAP; NOT_CONS_NIL;
+               NOT_SUC; GSYM NOT_SUC; SUC_INJ; CONS_11] THEN
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[cake_def "misc_word_list"; GSYM STAR_ASSOC] THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP read_fun2set th)) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+   ASM_REWRITE_TAC[cake_def "isWord"; injectivity "word_loc"] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN VAR_EQ_TAC THEN
+   REWRITE_TAC[] THEN
+   FIRST_X_ASSUM MATCH_MP_TAC THEN witness THEN
+   ASM_REWRITE_TAC[] THEN usesep THEN REWRITE_TAC[STAR_AC])
 ### or_seven_eq
   (* seven has no bit above the second, and the shift by more than
      two has none below the third, so the bit where the shifts
