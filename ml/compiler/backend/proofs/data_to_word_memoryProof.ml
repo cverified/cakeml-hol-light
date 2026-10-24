@@ -49,6 +49,7 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
@@ -8521,7 +8522,90 @@ let word_of_byte_set_byte_64 = cake_theorem "word_of_byte_set_byte_64"
                  (set_byte (n2w 6) w
                    (set_byte (n2w 7) w (x:'a word) be) be) be)
                      be) be) be) be) be`)
-  CHEAT_TAC;;
+  (* and the same of a word of sixty-four bits, with eight
+     set_bytes and one shift more *)
+  (let bsb0 = prove
+    (`!(a:(N)word) b (h:(N)word) bb j. j < dimindex (:N)
+        ==> (bit j (set_byte a b h bb) <=>
+             (if byte_index a bb <= j /\ j < byte_index a bb + 8
+              then bit (j - byte_index a bb) b else bit j h))`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SLICE_ALT_LT; BIT_WORD_SHL;
+                  BIT_WORD_ZX; DIMINDEX_8] THEN
+     MP_TAC(REWRITE_RULE[DIMINDEX_8]
+       (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+          BIT_TRIVIAL)) THEN
+     ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+     ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+     ASM_CASES_TAC `bit j (h:(N)word)` THEN
+     ASM_CASES_TAC
+       `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+     ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+   let killbit tm =
+     TRY(MP_TAC(REWRITE_RULE[DIMINDEX_8]
+           (ISPECL [`w:(8)word`; tm] BIT_TRIVIAL)) THEN
+         ANTS_TAC THENL
+          [ASM_ARITH_TAC;
+           DISCH_THEN(fun th -> REWRITE_TAC[th])]) in
+   let rules =
+     let num k = mk_small_numeral k in
+     let le a b = mk_binop `(<=):num->num->bool` a b in
+     let lt a b = mk_binop `(<):num->num->bool` a b in
+     let iv = `i:num` in
+     let ks = [8; 16; 24; 32; 40; 48; 56; 64] in
+     itlist (fun k acc -> itlist (fun k2 acc ->
+       (if k <= k2
+        then [ARITH_RULE(mk_imp(le (num k2) iv, le (num k) iv));
+              ARITH_RULE(mk_imp(lt iv (num k), lt iv (num k2)))]
+        else []) @
+       (if k2 <= k
+        then [ARITH_RULE(mk_imp(lt iv (num k2), mk_neg(le (num k) iv)));
+              ARITH_RULE(mk_imp(le (num k) iv, mk_neg(lt iv (num k2))))]
+        else []) @ acc) ks acc) ks
+       [ARITH_RULE `i < 64 ==> (i - m < 64 <=> T)`;
+        ARITH_RULE `(8 <= i - 8 <=> 16 <= i) /\
+                    (8 <= i - 16 <=> 24 <= i) /\
+                    (8 <= i - 24 <=> 32 <= i) /\
+                    (8 <= i - 32 <=> 40 <= i) /\
+                    (8 <= i - 40 <=> 48 <= i) /\
+                    (8 <= i - 48 <=> 56 <= i) /\
+                    (16 <= i - 32 <=> 48 <= i)`] in
+   let usebe =
+     TRY(FIRST_ASSUM(fun th ->
+       let c = concl th in
+       if is_var c || (is_neg c && is_var (rand c))
+       then RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN ASSUME_TAC th
+       else fail())) in
+   let numred =
+     RULE_ASSUM_TAC(fun th ->
+       try CONV_RULE NUM_REDUCE_CONV th with Failure _ -> th) in
+   let stripconj =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) in
+   DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   ASM_SIMP_TAC[bsb0] THEN
+   REWRITE_TAC[cake_def "byte_index"; cake_def "word_of_byte"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[VAL_WORD; dimword] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD_ZX; DIMINDEX_8] THEN
+   SUBGOAL_THEN `(i:num) < 64` ASSUME_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC] THEN
+   REPEAT COND_CASES_TAC THEN usebe THEN numred THEN stripconj THEN
+   TRY(SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC) THEN
+   REWRITE_TAC[ARITH_RULE
+     `(((i - 32) - 16) - 8 = i - 56) /\ ((i - 32) - 16 = i - 48) /\
+      ((i - 32) - 8 = i - 40) /\ ((i - 16) - 8 = i - 24) /\
+      (i - 0 = i)`] THEN
+   killbit `i:num` THEN killbit `i - 8` THEN killbit `i - 16` THEN
+   killbit `i - 24` THEN killbit `i - 32` THEN killbit `i - 40` THEN
+   killbit `i - 48` THEN
+   ASM_SIMP_TAC rules THEN
+   TRY(SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC));;
 
 let word_of_byte_set_byte_32 = cake_theorem "word_of_byte_set_byte_32"
   (fun () ->
@@ -8531,7 +8615,75 @@ let word_of_byte_set_byte_32 = cake_theorem "word_of_byte_set_byte_32"
        (set_byte (n2w 1) w
          (set_byte (n2w 2) w
                    (set_byte (n2w 3) w (x:'a word) be) be) be) be`)
-  CHEAT_TAC;;
+  (* the word that repeats a byte is what the four set_bytes of a
+     word of thirty-two bits write the byte into: at every bit the
+     shifts of word_of_byte give the bit of the byte at the position
+     modulo eight, and so does the set_byte whose range the position
+     falls in *)
+  (let bsb0 = prove
+    (`!(a:(N)word) b (h:(N)word) bb j. j < dimindex (:N)
+        ==> (bit j (set_byte a b h bb) <=>
+             (if byte_index a bb <= j /\ j < byte_index a bb + 8
+              then bit (j - byte_index a bb) b else bit j h))`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     REWRITE_TAC[cake_def "set_byte"] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     ASM_SIMP_TAC[BIT_WORD_OR; BIT_WORD_SLICE_ALT_LT; BIT_WORD_SHL;
+                  BIT_WORD_ZX; DIMINDEX_8] THEN
+     MP_TAC(REWRITE_RULE[DIMINDEX_8]
+       (ISPECL [`b:(8)word`; `j - byte_index (a:(N)word) bb`]
+          BIT_TRIVIAL)) THEN
+     ASM_CASES_TAC `byte_index (a:(N)word) bb <= j` THEN
+     ASM_CASES_TAC `j < byte_index (a:(N)word) bb + 8` THEN
+     ASM_CASES_TAC `bit j (h:(N)word)` THEN
+     ASM_CASES_TAC
+       `bit (j - byte_index (a:(N)word) bb) (b:(8)word)` THEN
+     ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC) in
+   let afacts =
+     [ARITH_RULE `(i:num) < 8 ==> ~(8 <= i)`;
+      ARITH_RULE `(i:num) < 8 ==> ~(16 <= i)`;
+      ARITH_RULE `(i:num) < 8 ==> ~(24 <= i)`;
+      ARITH_RULE `~((i:num) < 8) ==> 8 <= i`;
+      ARITH_RULE `~((i:num) < 16) ==> 16 <= i`;
+      ARITH_RULE `~((i:num) < 24) ==> 24 <= i`;
+      ARITH_RULE `(i:num) < 16 ==> ~(16 <= i)`;
+      ARITH_RULE `(i:num) < 24 ==> ~(24 <= i)`;
+      ARITH_RULE `(i:num) < 16 ==> i - 8 < 8`;
+      ARITH_RULE `(i:num) < 24 ==> i - 16 < 8`;
+      ARITH_RULE `(i:num) < 32 ==> i - 24 < 8`;
+      SUB_0;
+      REWRITE_RULE[DIMINDEX_8] (ISPEC `w:(8)word` BIT_TRIVIAL);
+      ARITH_RULE `~((i:num) < 16) ==> 8 <= i - 8`;
+      ARITH_RULE `~((i:num) < 24) ==> 8 <= i - 16`;
+      ARITH_RULE `(i:num) < 32 ==> i - 8 < 32`;
+      ARITH_RULE `(i:num) < 32 ==> i - 16 < 32`;
+      ARITH_RULE `(i:num) < 32 ==> i - 24 < 32`] in
+   let killbit tm =
+     TRY(MP_TAC(REWRITE_RULE[DIMINDEX_8]
+           (ISPECL [`w:(8)word`; tm] BIT_TRIVIAL)) THEN
+         ANTS_TAC THENL
+          [ASM_ARITH_TAC;
+           DISCH_THEN(fun th -> REWRITE_TAC[th])]) in
+   DISCH_TAC THEN
+   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+   X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+   ASM_SIMP_TAC[bsb0] THEN
+   REWRITE_TAC[cake_def "byte_index"; cake_def "word_of_byte"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[VAL_WORD; dimword] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD_ZX; DIMINDEX_8] THEN
+   REWRITE_TAC[ARITH_RULE `(i - 16) - 8 = i - 24`] THEN
+   SUBGOAL_THEN `(i:num) < 32` ASSUME_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC] THEN
+   ASM_CASES_TAC `(i:num) < 8` THEN
+   ASM_CASES_TAC `(i:num) < 16` THEN
+   ASM_CASES_TAC `(i:num) < 24` THEN
+   REPEAT COND_CASES_TAC THEN
+   TRY(SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC) THEN
+   killbit `i:num` THEN killbit `i - 8` THEN killbit `i - 16` THEN
+   ASM_SIMP_TAC afacts THEN
+   TRY(SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC));;
 
 let write_bytes_change_extra = cake_theorem "write_bytes_change_extra"
   (fun () ->
