@@ -13073,7 +13073,51 @@ let memory_rel_elements_list_distinct =
        elements_list vs /\ vs = MAP FST vars' /\
        good_dimindex (:'a) ==>
        ALL_DISTINCT (MAP SND (TL vars'))`)
-  CHEAT_TAC;;
+  (* the roots of the tail of an elements_list are distinct: the
+     tail is what the lemma says it of, whose Block the second
+     clause of elements_list names (the head of the list is an
+     element of it).  The tail of the empty list is empty, which is
+     HOL4's clause for it (ml/lib/hol4.ml) *)
+  (let hd_is n t =
+   (try fst(dest_const(fst(strip_comb t))) = n
+    with Failure _ -> false) in
+ let grab asl p =
+   tryfind (fun (_,th) ->
+     if (try p th with Failure _ -> false) then th else fail())
+     asl in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   VAR_EQ_TAC THEN
+   CASES_ON_NAME "vars'" THEN
+   REWRITE_TAC[hol4_TL] THEN
+   TRY(REWRITE_TAC[MAP; ALL_DISTINCT; PAIRWISE] THEN NO_TAC) THEN
+   FIRST_ASSUM(fun mr ->
+     if hd_is "memory_rel" (concl mr)
+     then ASSUME_TAC(MATCH_MP (cake_thm "memory_rel_tl") mr)
+     else fail()) THEN
+   CASES_ON_NAME "a1" THEN
+   REWRITE_TAC[hol4_TL] THEN
+   TRY(REWRITE_TAC[MAP; ALL_DISTINCT; PAIRWISE] THEN NO_TAC) THEN
+   FIRST_X_ASSUM(fun el ->
+     if hd_is "elements_list" (concl el)
+     then MP_TAC(REWRITE_RULE[MAP; cake_def "elements_list"] el)
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   MATCH_MP_TAC
+     (cake_thm "memory_rel_elements_list_distinct_lemma") THEN
+   W(fun (asl,w) ->
+     let be = grab asl (fun th ->
+       is_eq (concl th) && hd_is "dataSem_Block" (rhs (concl th))) in
+     let args = snd(strip_comb (rhs (concl be))) in
+     let cs = conjuncts (snd(strip_exists w)) in
+     EXISTS_TAC (rhs (el 2 cs)) THEN
+     EXISTS_TAC (el 0 args) THEN EXISTS_TAC (el 1 args) THEN
+     EXISTS_TAC (el 2 args)) THEN
+   FIRST_ASSUM(fun e ->
+     if is_eq (concl e) && hd_is "dataSem_Block" (rhs (concl e))
+     then RULE_ASSUM_TAC(REWRITE_RULE[e]) THEN
+          ASM_REWRITE_TAC[e; MAP; HD; NOT_CONS_NIL; PAIRWISE;
+                          hol4_TL]
+     else fail()));;
 
 let memory_rel_elements_list_words =
   cake_theorem "memory_rel_elements_list_words"
@@ -16472,7 +16516,12 @@ let LESS_EQ_num_size = cake_theorem "LESS_EQ_num_size"
     `good_dimindex (:'a) ==>
      (!m n. n <= m ==> SUC (LENGTH (n2mw n:('a word) list)) <=
        num_size m)`)
-  CHEAT_TAC;;
+  (* the same as LENGTH_n2mw_LE_num_size, with the good_dimindex
+     pulled out in front, as the source states it twice *)
+  (DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+   FIRST_ASSUM(fun le -> FIRST_ASSUM(fun gd ->
+     MATCH_ACCEPT_TAC(MATCH_MP (cake_thm "LENGTH_n2mw_LE_num_size")
+                        (CONJ gd le)))));;
 
 let part_to_words_LENGTH = cake_theorem "part_to_words_LENGTH"
   (fun () ->
