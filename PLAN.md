@@ -1105,3 +1105,49 @@ into a section of the `.prf`, inlining the pieces of
 `tmp/toolkit.ml` that it uses.  A section that binds what it does
 not use is a warning, so the toolkit is one piece per binding and
 a section asks for exactly the ones it needs.
+
+## Where the third file stands after the batch rounds
+
+424 of the 611 theorems are proved and 184 cheats are left.  What
+the rounds of this pass added, in the order they went in:
+memory_rel_Number_bignum_header, word_mem_eq_thm, write_bytes_same,
+memory_rel_IMP_word_list_exists, v_inv_Block_tag_limit,
+heap_lookup_BlockRep_lemma, memory_rel_ByteArray_words_IMP,
+memory_rel_ValueArray_IMP, memory_rel_Block_IMP,
+memory_rel_space_max, memory_rel_El_any, memory_rel_Number_EQ,
+memory_rel_ByteArray_IMP_store, memory_rel_El' and
+memory_rel_Deref'.
+
+- _What the family of El/Deref/Update costs:_ the primed ones
+  (`memory_rel_El'`, `memory_rel_Deref'`) are the ones with the
+  separation logic in them, and they are done.  The unprimed ones
+  carry the index as a `Number` of the stack, and a proof of them
+  out of the primed one needs the index to be small, which comes
+  from the Block's (or the array's) length -- and the theorems
+  that say that (`memory_rel_Block_IMP`,
+  `memory_rel_ValueArray_IMP`, `memory_rel_Number_IMP`,
+  `memory_rel_swap`) all stand **later** in the file, so a section
+  may not use them (`tools/prfcheck.py` says so).  Both proofs
+  exist and were thrown away for that reason.  What the source
+  does instead is read the bound off the `cond` of the `word_el`,
+  which the separation part of the proof has in its hands
+  anyway:
+  so the unprimed ones are the primed proof again with the
+  Number's root taken apart as well, and that is the next thing to
+  write.
+- _What is blocked, and why:_ `do_eq_list_F_IMP_MEM`,
+  `memory_rel_ptr_eq` and `do_eq_IFF_vb_eq_size` on the
+  inconsistent `do_eq` of ISSUES.md;
+  `memory_rel_elements_list_distinct` on the partial `TL` of
+  ISSUES.md; `LESS_EQ_num_size`, `LENGTH_n2mw_LE_num_size` and
+  `part_to_words_LENGTH` on the `num_size` overload;
+  `memory_rel_FromList` on `copy_list_thm`, which HOL4 binds to
+  the value of an ML expression; `vb_eq_size_IMP_vb_size` and
+  `finalise_cons_none` on the induction theorem of a HOL4
+  `Definition`, which the port's `cake_define_list` does not make.
+- _What the gc's `data_refs_split` family needs:_ the proofs are
+  short in the source (`EVERY_CASE_TAC` and a `metis_tac`), and
+  the port gets as far as the cases of `gc_move`; what is left is
+  the accessors of a record over its updates
+  (`gc_state_h2 (gc_state_ok_fupd (K F) s)`), which the port has
+  no simp set for.
