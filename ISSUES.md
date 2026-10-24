@@ -1219,3 +1219,54 @@ this: the source declares no `Overload` for `num_size`, it is a
 `Definition` of one theory that another theory uses by its short
 name, and the only sign of the clash is that the port has a
 constant of that name already.
+
+## HOL4's `TL` is total and HOL Light's is not
+
+HOL4's `listTheory` defines the tail of a list by two clauses
+(`src/list/src/listScript.sml:136`):
+
+```
+Definition TL_DEF[simp]:
+  TL [] = [] /\
+  TL (h::t) = t
+End
+```
+
+HOL Light's `lists.ml:31` defines it by one:
+
+```
+let TL = new_recursive_definition list_RECURSION
+  `TL(CONS (h:A) t) = t`;;
+```
+
+so `TL []` is a fixed but unspecified list, and `TL [] = []` is
+neither provable nor refutable.  The port uses HOL Light's `TL`.
+
+Two statements of `data_to_word_memoryProof` mention `TL`, and
+`memory_rel_elements_list_distinct` is **unprovable** as it
+stands: its hypotheses (`elements_list vs /\ vs = MAP FST vars'`)
+hold of `vars' = []`, and what is then asked is
+`ALL_DISTINCT (MAP SND (TL []))` of a list nobody knows.  In HOL4
+the same statement is fine, because `TL [] = []` and
+`ALL_DISTINCT []`.
+
+What to do about it: `ml/lib/hol4.ml` gets HOL4's tail as a
+constant of its own (`hol4_TL`, with the two clauses) and
+overloads `TL` with it, as it does for the other list functions
+whose HOL4 clauses differ.  That re-parses every statement of the
+port that mentions `TL`, so it is a pass over the library with a
+run of its own; until then the theorem stays a cheat.
+
+## `memory_rel_El'` and `memory_rel_El_any` say the same thing
+
+The two statements of `data_to_word_memoryProof` differ only in an
+existential that neither of them uses (`i_w` in the first, `y` in
+the second): both say that the root of a Block is a `Word`, that
+`get_real_addr` of it is an address, and that the memory relation
+survives putting the `index`th element of the Block beside it.
+The source proves the second one again, through `memory_rel_El`
+with a `Number` put into the list so that `get_real_offset`
+applies; the port's proof of it is the first one, which stands
+earlier in the file.  That is a deviation from the source's proof
+(not from its statement), and it is recorded in the section's
+comment as well.
