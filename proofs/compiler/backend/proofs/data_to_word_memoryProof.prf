@@ -4186,6 +4186,339 @@
        (fst(dest_pair (el 3 (snd(strip_comb (concl am))))))) THEN
    ASM_REWRITE_TAC[MAP; ALL2; HD; TL; NOT_CONS_NIL] THEN
    REWRITE_TAC(word_addr_clauses ()))
+### memory_rel_El
+  (* an element of a block at an index that a Number root holds:
+     memory_rel_El' with the index read off that root.  Its v_inv
+     is the small-integer case, because the condition of the
+     payload says that the header encodes the length of the block,
+     which is above the index, and such a length is below two to
+     the dimindex less four; and then the word of the root is four
+     times the index, which get_real_offset_thm turns into the
+     offset of the element *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let rec facs t =
+      if hd_is "STAR" t then
+        let args = snd(strip_comb t) in
+        facs (el 0 args) @ facs (el 1 args)
+      else [t] in
+    let rec remove1 t = function
+        [] -> []
+      | h :: rest -> if h = t then rest else h :: remove1 t rest in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    let is_hl th = hd_is "heap_lookup" (lhs (concl th)) in
+    let swapmul a =
+      let args = snd(strip_comb (rand a)) in
+      let mul = fst(strip_comb (rand a)) in
+      mk_comb(rator a, mk_comb(mk_comb(mul,el 1 args),el 0 args)) in
+    let sepfront names =
+      W(fun (asl,w) ->
+        let pred = rator (lhand w) in
+        let fs = facs pred in
+        let picked = map (fun n -> find (hd_is n) fs) names in
+        let rest = filter (fun t -> not (mem t picked)) fs in
+        let st = fst(strip_comb pred) in
+        let mk a b = mk_comb(mk_comb(st,a),b) in
+        let target = itlist mk picked (end_itlist mk rest) in
+        SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
+         [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+    let all2cons = prove
+     (`!P h t (l:(A)list).
+         ALL2 P l (CONS (h:B) t) <=>
+         ?a b. l = CONS a b /\ P a h /\ ALL2 P b t`,
+      REPEAT GEN_TAC THEN
+      STRUCT_CASES_TAC(ISPEC `l:(A)list` list_CASES) THEN
+      REWRITE_TAC[ALL2; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[]) in
+    let addreq = WORD_RULE
+      `!(a:(N)word) i.
+         (a + bytes_in_word) + n2w i * bytes_in_word =
+         a + bytes_in_word + bytes_in_word * n2w i` in
+    (* the element of a heap that an address and an index name *)
+    let heapel = prove
+     (`!a u n (heap:(('a,'b)heap_element)list) xs l d y.
+         heap_lookup a heap = SOME (DataElement xs l d) /\
+         n < LENGTH xs /\
+         heap_el (gc_shared_Pointer a u) n heap = (y,T)
+         ==> y = EL n xs`,
+      REPEAT GEN_TAC THEN
+      DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+        (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC)) THEN
+      REWRITE_TAC[cake_def "heap_el"] THEN
+      MATCH_REDUCE_TAC THEN
+      ASM_REWRITE_TAC[] THEN
+      MATCH_REDUCE_TAC THEN
+      ASM_REWRITE_TAC[PAIR_EQ] THEN
+      REWRITE_TAC[injectivity "option"; injectivity "heap_element";
+                  PAIR_EQ] THEN
+      CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+      REWRITE_TAC[EXISTS_UNIQUE_REFL; SELECT_REFL] THEN
+      ASM_REWRITE_TAC[PAIR_EQ] THEN
+      DISCH_THEN(ACCEPT_TAC o SYM)) in
+    (* the Smallnum of a natural number is four times it, and the and
+       with the complement of one leaves such a word alone *)
+    let smn = prove
+     (`!n. Smallnum (&n) = (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN REWRITE_TAC[cake_def "Smallnum"] THEN
+      REWRITE_TAC[INT_ARITH `~((&n:int) < &0)`] THEN
+      REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]) in
+    let and4 = prove
+     (`!n. word_and (n2w (4 * n)) (word_not (word 1)) =
+           (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN
+      REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+                  BIT_WORD_1] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_CASES_TAC `(i:num) = 0` THEN ASM_REWRITE_TAC[] THEN
+      TRY(REWRITE_TAC[BIT_WORD; EXP; DIV_1; ODD_MULT] THEN
+        CONV_TAC NUM_REDUCE_CONV THEN NO_TAC) THEN
+      TRY(CONV_TAC TAUT)) in
+    (* the address of the heap element, without the existential of
+       the goal: this proof fills the existentials at the end *)
+    let realaddr_noex =
+      W(fun (asl,w) ->
+        let hl = grab asl is_hl in
+        let hlen = grab asl (fun th ->
+          hd_is "heap_length" (lhand (concl th))) in
+        let cu = grab asl (fun th ->
+          hd_is "FLOOKUP" (lhs (concl th)) &&
+          fst(dest_const(rand(lhs(concl th)))) = "CurrHeap") in
+        let gd = grab asl (fun th ->
+          hd_is "good_dimindex" (concl th)) in
+        let gat = tryfind (fun t ->
+          find_term (fun u ->
+            hd_is "get_addr" u && length (snd(strip_comb u)) = 3) t)
+          (w :: map (fun (_,th) -> concl th) asl) in
+        let mm = MATCH_MP (cake_thm "get_real_addr_get_addr")
+                   (CONJ hlen (CONJ hl (CONJ cu gd))) in
+        let wv = find (fun v -> fst(dest_var v) = "w")
+                   (frees (concl mm)) in
+        let th = SPEC (last (snd(strip_comb gat))) (GEN wv mm) in
+        let a = rand (rhs (concl (CONJUNCT1 th))) in
+        STRIP_ASSUME_TAC(REWRITE_RULE[WORD_RULE (mk_eq(a,swapmul a))]
+                           th)) in
+    let offeq = WORD_RULE
+      `!(x:(N)word) i.
+         x + (bytes_in_word + n2w i * bytes_in_word) =
+         x + bytes_in_word + bytes_in_word * n2w i` in
+    (* the length a header encodes is below two to the dimindex less
+       four, and an index into such a list is a small integer *)
+    let enchdr = prove
+     (`!c tag len (h:'a word).
+         encode_header c tag len = SOME h
+         ==> len < 2 EXP (dimindex (:'a) - 4)`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[cake_def "encode_header"] THEN
+      COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+      DISCH_THEN(K ALL_TAC) THEN ASM_REWRITE_TAC[]) in
+    let smallidx = prove
+     (`!(i:num) n.
+         good_dimindex (:'a) /\ i < n /\
+         n < 2 EXP (dimindex (:'a) - 4)
+         ==> small_int (:'a) (&i)`,
+      REPEAT GEN_TAC THEN
+      REWRITE_TAC[cake_def "small_int"; dimword;
+                  cake_def "good_dimindex"] THEN
+      DISCH_THEN(CONJUNCTS_THEN2 MP_TAC STRIP_ASSUME_TAC) THEN
+      DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+      RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN
+      CONJ_TAC THEN
+      TRY(MATCH_MP_TAC INT_LE_TRANS THEN EXISTS_TAC `&0:int` THEN
+          REWRITE_TAC[INT_POS; INT_NEG_LE0; INT_POS] THEN NO_TAC) THEN
+      REWRITE_TAC[INT_OF_NUM_LT] THEN ASM_ARITH_TAC) in
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+    SUBGOAL_THEN `~(vals:(dataSem_v)list = [])` ASSUME_TAC THENL
+     [DISCH_TAC THEN VAR_EQ_TAC THEN
+      FIRST_X_ASSUM(fun th ->
+        if (try hd_is "<" (concl th) with Failure _ -> false)
+        then MP_TAC(REWRITE_RULE[LENGTH; LT] th) else fail()) THEN
+      REWRITE_TAC[];
+      ALL_TAC] THEN
+    FIRST_ASSUM(fun mr ->
+      if hd_is "memory_rel" (concl mr)
+      then MP_TAC(REWRITE_RULE[cake_def "memory_rel";
+                               cake_def "word_ml_inv"; MAP; FST] mr)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun a2 ->
+      if hd_is "ALL2" (concl a2)
+      then MP_TAC(REWRITE_RULE[MAP; all2cons] a2) else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    VAR_EQ_TAC THEN
+    FIRST_ASSUM(fun am ->
+      if hd_is "abs_ml_inv" (concl am)
+      then MP_TAC(REWRITE_RULE[cake_def "abs_ml_inv";
+                               cake_def "bc_stack_ref_inv"] am)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun a2 ->
+      if hd_is "ALL2" (concl a2) &&
+         can (find_term (hd_is "v_inv")) (concl a2)
+      then MP_TAC(REWRITE_RULE[ALL2; NOT_CONS_NIL; HD; TL] a2)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun vi ->
+      if hd_is "v_inv" (concl vi) &&
+         hd_is "dataSem_Block" (el 1 (snd(strip_comb (concl vi))))
+      then MP_TAC(REWRITE_RULE[cake_thm "v_inv_def"] vi)
+      else fail()) THEN
+    ASM_REWRITE_TAC[] THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         hd_is "gc_shared_Pointer" (rhs (concl e))
+      then SUBST_ALL_TAC e else fail()) THEN
+    RULE_ASSUM_TAC(REWRITE_RULE(word_addr_clauses ())) THEN
+    REWRITE_TAC(word_addr_clauses ()) THEN
+    FIRST_ASSUM(fun th ->
+      if hd_is "heap_in_memory_store" (concl th)
+      then MP_TAC(REWRITE_RULE[cake_def "heap_in_memory_store"] th)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    realaddr_noex THEN
+    FIRST_ASSUM(fun lr ->
+      if hd_is "ALL2" (concl lr) &&
+         can (find_term (hd_is "v_inv")) (concl lr)
+      then ASSUME_TAC(MATCH_MP LIST_REL_LENGTH lr) else fail()) THEN
+    W(fun (asl,w) ->
+      let lt = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (rand (concl th))) in
+      let le = grab asl (fun th ->
+        hd_is "=" (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+        hd_is "LENGTH" (rhs (concl th))) in
+      MP_TAC(MATCH_MP (cake_thm "LESS_LENGTH")
+               (REWRITE_RULE[le] lt))) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    VAR_EQ_TAC THEN
+    W(fun (asl,w) ->
+      MP_TAC(MATCH_MP (cake_thm "heap_lookup_SPLIT")
+               (grab asl is_hl))) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    VAR_EQ_TAC THEN
+    FIRST_X_ASSUM(fun th ->
+      if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+      then MP_TAC th else fail()) THEN
+    REWRITE_TAC[cake_thm "word_heap_APPEND"; cake_def "word_heap";
+                cake_def "BlockRep"] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[cake_def "word_el"] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[cake_def "word_payload"] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[MAP_APPEND; MAP; cake_thm "word_list_APPEND";
+                cake_def "misc_word_list"; LENGTH_MAP] THEN
+    ASM_REWRITE_TAC[addreq] THEN
+    (* the condition of the payload says what the header encodes *)
+    REPEAT(sepfront ["cond"] THEN REWRITE_TAC[cond_STAR] THEN
+           DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC)) THEN
+    W(fun (asl,w) ->
+      let ga = grab asl (fun th ->
+        hd_is "get_real_addr" (lhs (concl th))) in
+      let base = rand (rhs (concl ga)) in
+      let pred = rator (lhand w) in
+      let fs = facs pred in
+      let one = find (fun t ->
+        hd_is "set_sep_one" t &&
+        not (fst(dest_pair (rand t)) = base)) fs in
+      let rest = remove1 one fs in
+      let st = fst(strip_comb pred) in
+      let mk a b = mk_comb(mk_comb(st,a),b) in
+      SUBGOAL_THEN (mk_eq(pred, mk one (end_itlist mk rest)))
+        SUBST1_TAC THENL [REWRITE_TAC[STAR_AC]; ALL_TAC]) THEN
+    DISCH_THEN(fun sep ->
+      STRIP_ASSUME_TAC(MATCH_MP read_fun2set sep)) THEN
+    ASM_REWRITE_TAC[] THEN
+    (* the index is a small integer, because it is below the length
+       that the header of the block encodes *)
+    W(fun (asl,w) ->
+      let eh = grab asl (fun th ->
+        hd_is "encode_header" (lhs (concl th))) in
+      let lt = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (lhand (concl th)) &&
+        hd_is "LENGTH" (rand (concl th))) in
+      let le = grab asl (fun th ->
+        hd_is "=" (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+        hd_is "LENGTH" (rhs (concl th))) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      ASSUME_TAC(MATCH_MP smallidx
+        (CONJ gd (CONJ (REWRITE_RULE[le] lt)
+                       (MATCH_MP enchdr eh))))) THEN
+    FIRST_X_ASSUM(fun vi ->
+      if hd_is "v_inv" (concl vi) &&
+         hd_is "dataSem_Number" (el 1 (snd(strip_comb (concl vi))))
+      then MP_TAC(REWRITE_RULE[cake_thm "v_inv_def"] vi)
+      else fail()) THEN
+    FIRST_ASSUM(fun si ->
+      if hd_is "small_int" (concl si) then REWRITE_TAC[si]
+      else fail()) THEN
+    DISCH_THEN(fun eq ->
+      RULE_ASSUM_TAC(REWRITE_RULE[eq]) THEN REWRITE_TAC[eq]) THEN
+    RULE_ASSUM_TAC(REWRITE_RULE
+      (word_addr_clauses () @ [smn; and4])) THEN
+    REWRITE_TAC(word_addr_clauses () @ [smn; and4]) THEN
+    W(fun (asl,w) ->
+      let am = grab asl (fun th -> hd_is "abs_ml_inv" (concl th)) in
+      let lt = grab asl (fun th ->
+        hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th)) &&
+        fst(dest_var(rand(rand(concl th)))) = "vals") in
+      MP_TAC(MATCH_MP (cake_thm "el_thm") (CONJ am lt))) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    RULE_ASSUM_TAC(REWRITE_RULE[CONS_11]) THEN
+    REPEAT(FIRST_X_ASSUM(fun th ->
+      if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) THEN
+    VAR_EQ_TAC THEN
+    W(fun (asl,w) ->
+      let hl = REWRITE_RULE[cake_def "BlockRep"] (grab asl is_hl) in
+      let he = REWRITE_RULE[cake_def "BlockRep"]
+                 (grab asl (fun th ->
+                    hd_is "heap_el" (lhs (concl th)))) in
+      let le = grab asl (fun th ->
+        hd_is "=" (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+        hd_is "LENGTH" (rhs (concl th))) in
+      let n = el 1 (snd(strip_comb (lhs (concl he)))) in
+      let lt = prove(mk_binop `(<):num->num->bool` n
+                       (rhs (concl le)),
+                     REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN
+                     ARITH_TAC) in
+      SUBST_ALL_TAC(REWRITE_RULE[EL_APPEND; LT_REFL; SUB_REFL; EL; HD]
+        (MATCH_MP heapel (CONJ hl (CONJ lt he))))) THEN
+    W(fun (asl,w) ->
+      let cs = conjuncts (snd(strip_exists w)) in
+      let ga = grab asl (fun th ->
+        hd_is "get_real_addr" (lhs (concl th))) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let ro0 = MATCH_MP (cake_thm "get_real_offset_thm") gd in
+      let iv = find (fun v -> type_of v = `:num`) (frees (concl ro0)) in
+      let ro = INST [rand (rand (rand (lhs (el 1 cs)))),iv] ro0 in
+      EXISTS_TAC (rand (lhs (el 0 cs))) THEN
+      EXISTS_TAC (rand (lhs (el 1 cs))) THEN
+      EXISTS_TAC (rand (rhs (concl ga))) THEN
+      EXISTS_TAC (rand (rhs (concl ro))) THEN
+      ASM_REWRITE_TAC[ro; offeq]) THEN
+    REWRITE_TAC[cake_def "memory_rel"] THEN
+    W(fun (asl,w) ->
+      let hm = grab asl (fun th ->
+        hd_is "heap_in_memory_store" (concl th)) in
+      let args = snd(strip_comb (concl hm)) in
+      EXISTS_TAC (el 0 args) THEN EXISTS_TAC (el 9 args) THEN
+      EXISTS_TAC (el 1 args) THEN EXISTS_TAC (el 2 args) THEN
+      EXISTS_TAC (el 3 args) THEN EXISTS_TAC (el 4 args)) THEN
+    ASM_REWRITE_TAC[cake_def "word_ml_inv"] THEN
+    REWRITE_TAC[MAP; FST; SND] THEN
+    W(fun (asl,w) ->
+      let am = grab asl (fun th ->
+        hd_is "abs_ml_inv" (concl th) &&
+        hd_is "EL" (lhand (el 1 (snd(strip_comb (concl th)))))) in
+      EXISTS_TAC
+        (fst(dest_pair (el 3 (snd(strip_comb (concl am))))))) THEN
+    ASM_REWRITE_TAC[MAP; ALL2; HD; TL; NOT_CONS_NIL] THEN
+    REWRITE_TAC(word_addr_clauses () @ [and4]))
 ### memory_rel_swap
   (DISCH_TAC THEN
    FIRST_ASSUM(fun th ->
@@ -4452,6 +4785,358 @@
        (fst(dest_pair (el 3 (snd(strip_comb (concl am))))))) THEN
    ASM_REWRITE_TAC[MAP; ALL2; HD; TL; NOT_CONS_NIL] THEN
    REWRITE_TAC(word_addr_clauses ()))
+### memory_rel_Deref
+  (* an element of a reference's array at an index that a Number
+     root holds: memory_rel_Deref' with the index read off that
+     root, the same way as memory_rel_El reads it off its own *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let rec facs t =
+      if hd_is "STAR" t then
+        let args = snd(strip_comb t) in
+        facs (el 0 args) @ facs (el 1 args)
+      else [t] in
+    let rec remove1 t = function
+        [] -> []
+      | h :: rest -> if h = t then rest else h :: remove1 t rest in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    let is_hl th = hd_is "heap_lookup" (lhs (concl th)) in
+    let swapmul a =
+      let args = snd(strip_comb (rand a)) in
+      let mul = fst(strip_comb (rand a)) in
+      mk_comb(rator a, mk_comb(mk_comb(mul,el 1 args),el 0 args)) in
+    let sepfront names =
+      W(fun (asl,w) ->
+        let pred = rator (lhand w) in
+        let fs = facs pred in
+        let picked = map (fun n -> find (hd_is n) fs) names in
+        let rest = filter (fun t -> not (mem t picked)) fs in
+        let st = fst(strip_comb pred) in
+        let mk a b = mk_comb(mk_comb(st,a),b) in
+        let target = itlist mk picked (end_itlist mk rest) in
+        SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
+         [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+    let killthunk =
+      TRY(FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
+        CONTR_TAC(REWRITE_RULE[injectivity "option";
+                               distinctness "bvlSem_ref"]
+                    (TRANS (SYM t1) t2))))) in
+    let refinv ptr root =
+      FIRST_X_ASSUM(fun th ->
+        if is_forall (concl th) &&
+           hd_is "bc_ref_inv" (rand (snd(strip_forall(concl th))))
+        then MP_TAC(SPEC ptr th) else fail()) THEN
+      ANTS_TAC THENL
+       [CONJ_TAC THENL
+         [REWRITE_TAC[cake_def "reachable_refs"; MEM] THEN
+          EXISTS_TAC root THEN EXISTS_TAC ptr THEN
+          REWRITE_TAC[cake_def "get_refs"; MEM;
+                      CONJUNCT1(SPEC_ALL RTC_RULES)];
+          ASM_REWRITE_TAC[]];
+        ALL_TAC] THEN
+      REWRITE_TAC[cake_def "bc_ref_inv"] THEN
+      ASM_SIMP_TAC[FLOOKUP_DEF] THEN
+      MATCH_REDUCE_TAC in
+    let all2cons = prove
+     (`!P h t (l:(A)list).
+         ALL2 P l (CONS (h:B) t) <=>
+         ?a b. l = CONS a b /\ P a h /\ ALL2 P b t`,
+      REPEAT GEN_TAC THEN
+      STRUCT_CASES_TAC(ISPEC `l:(A)list` list_CASES) THEN
+      REWRITE_TAC[ALL2; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[]) in
+    let addreq = WORD_RULE
+      `!(a:(N)word) i.
+         (a + bytes_in_word) + n2w i * bytes_in_word =
+         a + bytes_in_word + bytes_in_word * n2w i` in
+    (* the element of a heap that an address and an index name *)
+    let heapel = prove
+     (`!a u n (heap:(('a,'b)heap_element)list) xs l d y.
+         heap_lookup a heap = SOME (DataElement xs l d) /\
+         n < LENGTH xs /\
+         heap_el (gc_shared_Pointer a u) n heap = (y,T)
+         ==> y = EL n xs`,
+      REPEAT GEN_TAC THEN
+      DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+        (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC)) THEN
+      REWRITE_TAC[cake_def "heap_el"] THEN
+      MATCH_REDUCE_TAC THEN
+      ASM_REWRITE_TAC[] THEN
+      MATCH_REDUCE_TAC THEN
+      ASM_REWRITE_TAC[PAIR_EQ] THEN
+      REWRITE_TAC[injectivity "option"; injectivity "heap_element";
+                  PAIR_EQ] THEN
+      CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+      REWRITE_TAC[EXISTS_UNIQUE_REFL; SELECT_REFL] THEN
+      ASM_REWRITE_TAC[PAIR_EQ] THEN
+      DISCH_THEN(ACCEPT_TAC o SYM)) in
+    (* the Smallnum of a natural number is four times it, and the and
+       with the complement of one leaves such a word alone *)
+    let smn = prove
+     (`!n. Smallnum (&n) = (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN REWRITE_TAC[cake_def "Smallnum"] THEN
+      REWRITE_TAC[INT_ARITH `~((&n:int) < &0)`] THEN
+      REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]) in
+    let and4 = prove
+     (`!n. word_and (n2w (4 * n)) (word_not (word 1)) =
+           (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN
+      REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+                  BIT_WORD_1] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_CASES_TAC `(i:num) = 0` THEN ASM_REWRITE_TAC[] THEN
+      TRY(REWRITE_TAC[BIT_WORD; EXP; DIV_1; ODD_MULT] THEN
+        CONV_TAC NUM_REDUCE_CONV THEN NO_TAC) THEN
+      TRY(CONV_TAC TAUT)) in
+    (* the address of the heap element, without the existential of
+       the goal: this proof fills the existentials at the end *)
+    let realaddr_noex =
+      W(fun (asl,w) ->
+        let hl = grab asl is_hl in
+        let hlen = grab asl (fun th ->
+          hd_is "heap_length" (lhand (concl th))) in
+        let cu = grab asl (fun th ->
+          hd_is "FLOOKUP" (lhs (concl th)) &&
+          fst(dest_const(rand(lhs(concl th)))) = "CurrHeap") in
+        let gd = grab asl (fun th ->
+          hd_is "good_dimindex" (concl th)) in
+        let gat = tryfind (fun t ->
+          find_term (fun u ->
+            hd_is "get_addr" u && length (snd(strip_comb u)) = 3) t)
+          (w :: map (fun (_,th) -> concl th) asl) in
+        let mm = MATCH_MP (cake_thm "get_real_addr_get_addr")
+                   (CONJ hlen (CONJ hl (CONJ cu gd))) in
+        let wv = find (fun v -> fst(dest_var v) = "w")
+                   (frees (concl mm)) in
+        let th = SPEC (last (snd(strip_comb gat))) (GEN wv mm) in
+        let a = rand (rhs (concl (CONJUNCT1 th))) in
+        STRIP_ASSUME_TAC(REWRITE_RULE[WORD_RULE (mk_eq(a,swapmul a))]
+                           th)) in
+    let offeq = WORD_RULE
+      `!(x:(N)word) i.
+         x + (bytes_in_word + n2w i * bytes_in_word) =
+         x + bytes_in_word + bytes_in_word * n2w i` in
+    let smallidx = prove
+     (`!(i:num) n.
+         good_dimindex (:'a) /\ i < n /\
+         n < 2 EXP (dimindex (:'a) - 4)
+         ==> small_int (:'a) (&i)`,
+      REPEAT GEN_TAC THEN
+      REWRITE_TAC[cake_def "small_int"; dimword;
+                  cake_def "good_dimindex"] THEN
+      DISCH_THEN(CONJUNCTS_THEN2 MP_TAC STRIP_ASSUME_TAC) THEN
+      DISCH_THEN(DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+      RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN
+      CONJ_TAC THEN
+      TRY(MATCH_MP_TAC INT_LE_TRANS THEN EXISTS_TAC `&0:int` THEN
+          REWRITE_TAC[INT_POS; INT_NEG_LE0; INT_POS] THEN NO_TAC) THEN
+      REWRITE_TAC[INT_OF_NUM_LT] THEN ASM_ARITH_TAC) in
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+    SUBGOAL_THEN `~(vals:(dataSem_v)list = [])` ASSUME_TAC THENL
+     [DISCH_TAC THEN VAR_EQ_TAC THEN
+      FIRST_X_ASSUM(fun th ->
+        if (try hd_is "<" (concl th) with Failure _ -> false)
+        then MP_TAC(REWRITE_RULE[LENGTH; LT] th) else fail()) THEN
+      REWRITE_TAC[];
+      ALL_TAC] THEN
+    FIRST_ASSUM(fun mr ->
+      if hd_is "memory_rel" (concl mr)
+      then MP_TAC(REWRITE_RULE[cake_def "memory_rel";
+                               cake_def "word_ml_inv"; MAP; FST] mr)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun a2 ->
+      if hd_is "ALL2" (concl a2)
+      then MP_TAC(REWRITE_RULE[MAP; all2cons] a2) else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    VAR_EQ_TAC THEN
+    FIRST_ASSUM(fun am ->
+      if hd_is "abs_ml_inv" (concl am)
+      then MP_TAC(REWRITE_RULE[cake_def "abs_ml_inv";
+                               cake_def "bc_stack_ref_inv"] am)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun a2 ->
+      if hd_is "ALL2" (concl a2) &&
+         can (find_term (hd_is "v_inv")) (concl a2)
+      then MP_TAC(REWRITE_RULE[ALL2; NOT_CONS_NIL; HD; TL] a2)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_X_ASSUM(fun vi ->
+      if hd_is "v_inv" (concl vi) &&
+         hd_is "dataSem_RefPtr" (el 1 (snd(strip_comb (concl vi))))
+      then MP_TAC(REWRITE_RULE[cake_thm "v_inv_def"] vi)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    killthunk THEN
+    FIRST_X_ASSUM(fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         hd_is "gc_shared_Pointer" (rhs (concl e))
+      then SUBST_ALL_TAC e else fail()) THEN
+    RULE_ASSUM_TAC(REWRITE_RULE(word_addr_clauses ())) THEN
+    REWRITE_TAC(word_addr_clauses ()) THEN
+    refinv `nn:num` `RefPtr bl nn:dataSem_v` THEN
+    ASM_REWRITE_TAC[] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_ASSUM(fun th ->
+      if hd_is "heap_in_memory_store" (concl th)
+      then MP_TAC(REWRITE_RULE[cake_def "heap_in_memory_store"] th)
+      else fail()) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    realaddr_noex THEN
+    FIRST_ASSUM(fun lr ->
+      if hd_is "ALL2" (concl lr) &&
+         can (find_term (hd_is "v_inv")) (concl lr)
+      then ASSUME_TAC(MATCH_MP LIST_REL_LENGTH lr) else fail()) THEN
+    W(fun (asl,w) ->
+      let lt = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (rand (concl th))) in
+      let le = grab asl (fun th ->
+        hd_is "=" (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+        hd_is "LENGTH" (rhs (concl th))) in
+      MP_TAC(MATCH_MP (cake_thm "LESS_LENGTH")
+               (REWRITE_RULE[GSYM le] lt))) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    VAR_EQ_TAC THEN
+    W(fun (asl,w) ->
+      MP_TAC(MATCH_MP (cake_thm "heap_lookup_SPLIT")
+               (grab asl is_hl))) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    VAR_EQ_TAC THEN
+    TRY(FIRST_X_ASSUM(fun th ->
+      if (try hd_is "fmap_apply" (lhs (concl th))
+          with Failure _ -> false)
+      then SUBST_ALL_TAC th else fail())) THEN
+    FIRST_X_ASSUM(fun th ->
+      if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+      then MP_TAC th else fail()) THEN
+    REWRITE_TAC[cake_thm "word_heap_APPEND"; cake_def "word_heap";
+                cake_def "RefBlock"] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[cake_def "word_el"] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[cake_def "word_payload"] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[MAP_APPEND; MAP; cake_thm "word_list_APPEND";
+                cake_def "misc_word_list"; LENGTH_MAP] THEN
+    ASM_REWRITE_TAC[addreq] THEN
+    (* the condition of the payload bounds the length of the block *)
+    REPEAT(sepfront ["cond"] THEN REWRITE_TAC[cond_STAR] THEN
+           DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC)) THEN
+    W(fun (asl,w) ->
+      let ga = grab asl (fun th ->
+        hd_is "get_real_addr" (lhs (concl th))) in
+      let base = rand (rhs (concl ga)) in
+      let pred = rator (lhand w) in
+      let fs = facs pred in
+      let one = find (fun t ->
+        hd_is "set_sep_one" t &&
+        not (fst(dest_pair (rand t)) = base)) fs in
+      let rest = remove1 one fs in
+      let st = fst(strip_comb pred) in
+      let mk a b = mk_comb(mk_comb(st,a),b) in
+      SUBGOAL_THEN (mk_eq(pred, mk one (end_itlist mk rest)))
+        SUBST1_TAC THENL [REWRITE_TAC[STAR_AC]; ALL_TAC]) THEN
+    DISCH_THEN(fun sep ->
+      STRIP_ASSUME_TAC(MATCH_MP read_fun2set sep)) THEN
+    ASM_REWRITE_TAC[] THEN
+    (* the index is a small integer, because it is below the length
+       that the header of the block encodes *)
+    W(fun (asl,w) ->
+      let bd = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (lhand (concl th)) &&
+        hd_is "EXP" (rand (concl th))) in
+      let lt0 = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (lhand (concl th)) &&
+        hd_is "LENGTH" (rand (concl th))) in
+      let lt = try REWRITE_RULE[grab asl (fun th ->
+                     hd_is "=" (concl th) &&
+                     hd_is "LENGTH" (lhs (concl th)) &&
+                     hd_is "LENGTH" (rhs (concl th)))] lt0
+               with Failure _ -> lt0 in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      ASSUME_TAC(MATCH_MP smallidx (CONJ gd (CONJ lt bd)))) THEN
+    FIRST_X_ASSUM(fun vi ->
+      if hd_is "v_inv" (concl vi) &&
+         hd_is "dataSem_Number" (el 1 (snd(strip_comb (concl vi))))
+      then MP_TAC(REWRITE_RULE[cake_thm "v_inv_def"] vi)
+      else fail()) THEN
+    FIRST_ASSUM(fun si ->
+      if hd_is "small_int" (concl si) then REWRITE_TAC[si]
+      else fail()) THEN
+    DISCH_THEN(fun eq ->
+      RULE_ASSUM_TAC(REWRITE_RULE[eq]) THEN REWRITE_TAC[eq]) THEN
+    RULE_ASSUM_TAC(REWRITE_RULE
+      (word_addr_clauses () @ [smn; and4])) THEN
+    REWRITE_TAC(word_addr_clauses () @ [smn; and4]) THEN
+    W(fun (asl,w) ->
+      let am = grab asl (fun th -> hd_is "abs_ml_inv" (concl th)) in
+      MP_TAC(MATCH_MP (cake_thm "deref_thm") am)) THEN
+    ASM_REWRITE_TAC[THE] THEN
+    MATCH_REDUCE_TAC THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    W(fun (asl,w) ->
+      let fa = grab asl (fun th ->
+        is_forall (concl th) &&
+        can (find_term (hd_is "heap_el")) (concl th)) in
+      let lt = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "LENGTH" (rand (concl th))) in
+      MP_TAC(MP (SPEC (lhand (concl lt)) fa) lt)) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    RULE_ASSUM_TAC(REWRITE_RULE[CONS_11]) THEN
+    REPEAT(FIRST_X_ASSUM(fun th ->
+      if is_conj (concl th) then STRIP_ASSUME_TAC th else fail())) THEN
+    VAR_EQ_TAC THEN
+    W(fun (asl,w) ->
+      let hl = REWRITE_RULE[cake_def "RefBlock"] (grab asl is_hl) in
+      let he = REWRITE_RULE[cake_def "RefBlock"]
+                 (grab asl (fun th ->
+                    hd_is "heap_el" (lhs (concl th)))) in
+      let n = el 1 (snd(strip_comb (lhs (concl he)))) in
+      let len = el 1 (snd(strip_comb (rand (rhs (concl hl))))) in
+      let lt = prove(mk_binop `(<):num->num->bool` n len,
+                     REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN
+                     ARITH_TAC) in
+      SUBST_ALL_TAC(REWRITE_RULE[EL_APPEND; LT_REFL; SUB_REFL; EL; HD]
+        (MATCH_MP heapel (CONJ hl (CONJ lt he))))) THEN
+    W(fun (asl,w) ->
+      let cs = conjuncts (snd(strip_exists w)) in
+      let ga = grab asl (fun th ->
+        hd_is "get_real_addr" (lhs (concl th))) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let ro0 = MATCH_MP (cake_thm "get_real_offset_thm") gd in
+      let iv = find (fun v -> type_of v = `:num`) (frees (concl ro0)) in
+      let ro = INST [rand (rand (rand (lhs (el 1 cs)))),iv] ro0 in
+      EXISTS_TAC (rand (lhs (el 0 cs))) THEN
+      EXISTS_TAC (rand (lhs (el 1 cs))) THEN
+      EXISTS_TAC (rand (rhs (concl ga))) THEN
+      EXISTS_TAC (rand (rhs (concl ro))) THEN
+      ASM_REWRITE_TAC[ro; offeq]) THEN
+    REWRITE_TAC[cake_def "memory_rel"] THEN
+    W(fun (asl,w) ->
+      let hm = grab asl (fun th ->
+        hd_is "heap_in_memory_store" (concl th)) in
+      let args = snd(strip_comb (concl hm)) in
+      EXISTS_TAC (el 0 args) THEN EXISTS_TAC (el 9 args) THEN
+      EXISTS_TAC (el 1 args) THEN EXISTS_TAC (el 2 args) THEN
+      EXISTS_TAC (el 3 args) THEN EXISTS_TAC (el 4 args)) THEN
+    ASM_REWRITE_TAC[cake_def "word_ml_inv"] THEN
+    REWRITE_TAC[MAP; FST; SND] THEN
+    W(fun (asl,w) ->
+      let am = grab asl (fun th ->
+        hd_is "abs_ml_inv" (concl th) &&
+        hd_is "EL" (lhand (el 1 (snd(strip_comb (concl th)))))) in
+      EXISTS_TAC
+        (fst(dest_pair (el 3 (snd(strip_comb (concl am))))))) THEN
+    ASM_REWRITE_TAC[MAP; ALL2; HD; TL; NOT_CONS_NIL] THEN
+    REWRITE_TAC(word_addr_clauses () @ [and4]))
 ### LENGTH_EQ_1
   (let lrw = [LENGTH; CONS_11; NOT_CONS_NIL; LENGTH_EQ_NIL;
               EQ_SYM_EQ; ARITH_RULE `~(0 = 1)`;
