@@ -12626,7 +12626,155 @@ let memory_rel_ByteArray_words_IMP =
      w2n (decode_length c x) < dimword (:'a) /\
      w2n (decode_length c x) = LENGTH vals DIV (dimindex (:'a)
        DIV 8) + 1)`)
-  CHEAT_TAC;;
+  (* the words of a byte array, read out of the memory: the
+     reference's v_inv gives the pointer, bc_ref_inv (at the
+     reference itself, which reaches itself) gives the Bytes
+     element of the heap, get_real_addr_get_addr turns the pointer
+     into the address, and the word_el of the element is the header
+     cell beside the word_list of the bytes.  The length comes off
+     the cond of the word_el, where decode_length of the header is
+     the length of the list, and the w2n of that is the length
+     itself because the cond also bounds it *)
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let rec facs t =
+     if hd_is "STAR" t then
+       let args = snd(strip_comb t) in
+       facs (el 0 args) @ facs (el 1 args)
+     else [t] in
+   let rec remove1 t = function
+       [] -> []
+     | h :: rest -> if h = t then rest else h :: remove1 t rest in
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail()) asl in
+   let is_hl th = hd_is "heap_lookup" (lhs (concl th)) in
+   let sepfront names =
+     W(fun (asl,w) ->
+       let pred = rator (lhand w) in
+       let fs = facs pred in
+       let picked = map (fun n -> find (hd_is n) fs) names in
+       let rest = filter (fun t -> not (mem t picked)) fs in
+       let st = fst(strip_comb pred) in
+       let mk a b = mk_comb(mk_comb(st,a),b) in
+       let target = itlist mk picked (end_itlist mk rest) in
+       SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
+        [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+   let usesep =
+     FIRST_ASSUM(fun th ->
+       if (try hd_is "STAR" (rator (concl th))
+           with Failure _ -> false)
+       then MP_TAC th else fail()) in
+   MEMORY_REL_TAC THEN V_INV_TAC THEN
+   TRY(FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
+     CONTR_TAC(REWRITE_RULE[injectivity "option";
+                            distinctness "bvlSem_ref"]
+                 (TRANS (SYM t1) t2))))) THEN
+   FIRST_X_ASSUM(fun th ->
+     if is_forall (concl th) &&
+        hd_is "bc_ref_inv" (rand (snd(strip_forall(concl th))))
+     then MP_TAC(SPEC `p:num` th) else fail()) THEN
+   ANTS_TAC THENL
+    [CONJ_TAC THENL
+      [REWRITE_TAC[cake_def "reachable_refs"; MEM] THEN
+       EXISTS_TAC `RefPtr bl p:dataSem_v` THEN
+       EXISTS_TAC `p:num` THEN
+       REWRITE_TAC[cake_def "get_refs"; MEM;
+                   CONJUNCT1(SPEC_ALL RTC_RULES)];
+       ASM_REWRITE_TAC[]];
+     ALL_TAC] THEN
+   REWRITE_TAC[cake_def "bc_ref_inv"] THEN
+   ASM_SIMP_TAC[FLOOKUP_DEF] THEN
+   MATCH_REDUCE_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   DISCH_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     if hd_is "heap_in_memory_store" (concl th)
+     then MP_TAC(REWRITE_RULE[cake_def "heap_in_memory_store"] th)
+     else fail()) THEN
+   STRIP_TAC THEN
+   W(fun (asl,w) ->
+     let hl = grab asl is_hl in
+     let hlen = grab asl (fun th ->
+       hd_is "heap_length" (lhand (concl th))) in
+     let cu = grab asl (fun th ->
+       hd_is "FLOOKUP" (lhs (concl th)) &&
+       fst(dest_const(rand(lhs(concl th)))) = "CurrHeap") in
+     let gd = grab asl (fun th -> concl th = `good_dimindex (:'a)`) in
+     let ga = grab asl (fun th -> hd_is "get_addr" (lhs (concl th))) in
+     let gr = grab asl (fun th ->
+       hd_is "get_real_addr" (lhs (concl th))) in
+     let th = CONJUNCT2(SPEC (rand (lhs (concl ga)))
+       (GEN `w:('a)word_loc`
+         (MATCH_MP (cake_thm "get_real_addr_get_addr")
+           (CONJ hlen (CONJ hl (CONJ cu gd)))))) in
+     let eq = REWRITE_RULE[injectivity "option"]
+                (TRANS (SYM gr) (REWRITE_RULE[ga] th)) in
+     let r = rhs (concl eq) in
+     let args = snd(strip_comb (rand r)) in
+     let mul = fst(strip_comb (rand r)) in
+     let swap = mk_comb(rator r,
+                  mk_comb(mk_comb(mul,el 1 args),el 0 args)) in
+     SUBST_ALL_TAC(TRANS eq (WORD_RULE (mk_eq(r,swap))))) THEN
+   W(fun (asl,w) ->
+     MP_TAC(MATCH_MP (cake_thm "heap_lookup_SPLIT")
+              (grab asl is_hl))) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   VAR_EQ_TAC THEN
+   FIRST_X_ASSUM(fun th ->
+     if (try hd_is "fmap_apply" (lhs (concl th))
+         with Failure _ -> false)
+     then SUBST_ALL_TAC th else fail()) THEN
+   FIRST_X_ASSUM(fun th ->
+     if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+     then MP_TAC th else fail()) THEN
+   REWRITE_TAC[cake_thm "word_heap_APPEND"; cake_def "word_heap";
+               cake_def "Bytes"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[cake_def "word_el"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[cake_def "word_payload"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   REWRITE_TAC[cake_def "misc_word_list"; LENGTH_MAP;
+               cake_thm "LENGTH_write_bytes"; LENGTH_REPLICATE] THEN
+   sepfront ["cond"] THEN
+   REWRITE_TAC[cond_STAR] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC) THEN
+   sepfront ["set_sep_one"] THEN
+   DISCH_THEN(fun sep ->
+     let rd = MATCH_MP read_fun2set sep in
+     EXISTS_TAC (rand (rhs (concl (CONJUNCT1 rd)))) THEN
+     ASSUME_TAC sep THEN STRIP_ASSUME_TAC rd) THEN
+   W(fun (asl,w) ->
+     let sep = grab asl (fun th -> hd_is "STAR" (rator (concl th))) in
+     let fs = facs (rator (concl sep)) in
+     let wl = find (hd_is "misc_word_list") fs in
+     let rest = remove1 wl fs in
+     let st = fst(strip_comb (rator (concl sep))) in
+     let mk a b = mk_comb(mk_comb(st,a),b) in
+     EXISTS_TAC (end_itlist mk rest)) THEN
+   FIRST_ASSUM(fun dl ->
+     if (try hd_is "decode_length" (lhs (concl dl))
+         with Failure _ -> false)
+     then REWRITE_TAC[dl] else fail()) THEN
+   REWRITE_TAC[VAL_WORD; GSYM dimword] THEN
+   SUBGOAL_THEN
+     `(LENGTH (vals:(word8)list) DIV (dimindex (:'a) DIV 8) + 1)
+        MOD dimword (:'a) =
+      LENGTH vals DIV (dimindex (:'a) DIV 8) + 1`
+     SUBST1_TAC THENL
+    [MATCH_MP_TAC MOD_LT THEN
+     TRANS_TAC LTE_TRANS `2 EXP (dimindex (:'a) - 4)` THEN
+     ASM_REWRITE_TAC[dimword] THEN
+     SIMP_TAC[LE_EXP; ARITH] THEN ARITH_TAC;
+     ALL_TAC] THEN
+   ASM_REWRITE_TAC[] THEN
+   REPEAT CONJ_TAC THENL
+    [usesep THEN REWRITE_TAC[STAR_AC];
+     TRANS_TAC LTE_TRANS `2 EXP (dimindex (:'a) - 4)` THEN
+     ASM_REWRITE_TAC[dimword] THEN
+     SIMP_TAC[LE_EXP; ARITH] THEN ARITH_TAC]);;
 
 let poly_inj_lemma = cake_theorem "poly_inj_lemma"
   (fun () ->
