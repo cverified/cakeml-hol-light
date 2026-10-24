@@ -13171,7 +13171,84 @@ let memory_rel_And = cake_theorem "memory_rel_And"
       memory_rel c be ts refs sp st m dm
         ((Number (&(w2n (i && j))),wordLang_Word (wi && (wj:'a
           word))) :: vars)`)
-  CHEAT_TAC;;
+  (* the and of two bytes as the and of their roots: both roots are
+     the Smallnum of their byte, because a byte is a small integer,
+     and the and of two Smallnums of bytes is the Smallnum of the
+     and of the bytes, because the Smallnum of a byte has the bits
+     of the byte two places up *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    (* the Smallnum of a natural number is four times it, and the and
+       with the complement of one leaves such a word alone *)
+    let smn = prove
+     (`!n. Smallnum (&n) = (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN REWRITE_TAC[cake_def "Smallnum"] THEN
+      REWRITE_TAC[INT_ARITH `~((&n:int) < &0)`] THEN
+      REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]) in
+    (* the bits of the Smallnum of a byte: two above the bits
+       of the byte *)
+    let bitsm = prove
+     (`!(x:(M)word) i.
+         bit i (n2w (4 * w2n x):(N)word) <=>
+         i < dimindex (:N) /\ 2 <= i /\ bit (i - 2) x`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+      ASM_CASES_TAC `2 <= i` THENL
+       [FIRST_ASSUM(X_CHOOSE_THEN `k:num` SUBST1_TAC o
+          REWRITE_RULE[LE_EXISTS]) THEN
+        REWRITE_TAC[ARITH_RULE `(2 + k) - 2 = k`; BIT_VAL] THEN
+        REWRITE_TAC[EXP_ADD; ARITH_RULE `2 EXP 2 = 4`] THEN
+        SIMP_TAC[DIV_MULT2; ARITH_EQ] THEN
+        REWRITE_TAC[ARITH_RULE `(2 <= 2 + k) <=> T`] THEN
+        CONV_TAC TAUT;
+        ASM_REWRITE_TAC[] THEN
+        FIRST_ASSUM(fun th ->
+          DISJ_CASES_THEN SUBST1_TAC
+            (MATCH_MP (ARITH_RULE
+               `~(2 <= i) ==> i = 0 \/ i = 1`) th)) THEN
+        CONV_TAC NUM_REDUCE_CONV THEN
+        REWRITE_TAC[DIV_1] THEN
+        REWRITE_TAC[ARITH_RULE `4 * n = 2 * (2 * n)`] THEN
+        SIMP_TAC[DIV_MULT; ARITH_EQ] THEN
+        REWRITE_TAC[ODD_MULT] THEN CONV_TAC NUM_REDUCE_CONV THEN
+        CONV_TAC TAUT]) in
+    (* and the Smallnum of a bitwise operation on bytes is the
+       operation on the Smallnums *)
+    let andsm = prove
+     (`!(x:word8) y.
+         word_and (Smallnum (&(w2n x))) (Smallnum (&(w2n y))) =
+         (Smallnum (&(w2n (word_and x y))):(N)word)`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[smn; WORD_EQ_BITS_ALT] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_REWRITE_TAC[BIT_WORD_AND_ALT; bitsm] THEN CONV_TAC TAUT) in
+
+    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    W(fun (asl,w) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let mr = grab asl (fun th -> hd_is "memory_rel" (concl th)) in
+      let tl = cake_thm "memory_rel_tail" in
+      let mr2 = MATCH_MP tl mr in
+      let mr3 = MATCH_MP tl mr2 in
+      let inj = REWRITE_RULE[injectivity "word_loc"] in
+      let siw = MATCH_MP (cake_thm "small_int_w2n") gd in
+      let byte th =
+        rand (rand (rand (fst(dest_pair(lhand(last
+          (snd(strip_comb (concl th)))))))) ) in
+      let wv = find (fun v -> type_of v = type_of (byte mr))
+                 (frees (concl siw)) in
+      let num = cake_thm "memory_rel_Number_IMP" in
+      let e1 = inj (MATCH_MP num
+                      (CONJ gd (CONJ (INST [byte mr,wv] siw) mr))) in
+      let e2 = inj (MATCH_MP num
+                      (CONJ gd (CONJ (INST [byte mr2,wv] siw) mr2))) in
+      REWRITE_TAC[e1; e2; andsm] THEN
+      MATCH_MP_TAC (cake_thm "IMP_memory_rel_Number") THEN
+      ASM_REWRITE_TAC[siw; mr3]));;
 
 let memory_rel_Or = cake_theorem "memory_rel_Or"
   (fun () ->
@@ -13182,7 +13259,82 @@ let memory_rel_Or = cake_theorem "memory_rel_Or"
       memory_rel c be ts refs sp st m dm
         ((Number (&(w2n (i || j))),wordLang_Word (wi || (wj:'a
           word))) :: vars)`)
-  CHEAT_TAC;;
+  (* the or of two bytes as the or of their roots: both roots are
+     the Smallnum of their byte, because a byte is a small integer,
+     and the or of two Smallnums of bytes is the Smallnum of the
+     or of the bytes, because the Smallnum of a byte has the bits
+     of the byte two places up *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    (* the Smallnum of a natural number is four times it, and the and
+       with the complement of one leaves such a word alone *)
+    let smn = prove
+     (`!n. Smallnum (&n) = (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN REWRITE_TAC[cake_def "Smallnum"] THEN
+      REWRITE_TAC[INT_ARITH `~((&n:int) < &0)`] THEN
+      REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]) in
+    (* the bits of the Smallnum of a byte: two above the bits
+       of the byte *)
+    let bitsm = prove
+     (`!(x:(M)word) i.
+         bit i (n2w (4 * w2n x):(N)word) <=>
+         i < dimindex (:N) /\ 2 <= i /\ bit (i - 2) x`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+      ASM_CASES_TAC `2 <= i` THENL
+       [FIRST_ASSUM(X_CHOOSE_THEN `k:num` SUBST1_TAC o
+          REWRITE_RULE[LE_EXISTS]) THEN
+        REWRITE_TAC[ARITH_RULE `(2 + k) - 2 = k`; BIT_VAL] THEN
+        REWRITE_TAC[EXP_ADD; ARITH_RULE `2 EXP 2 = 4`] THEN
+        SIMP_TAC[DIV_MULT2; ARITH_EQ] THEN
+        REWRITE_TAC[ARITH_RULE `(2 <= 2 + k) <=> T`] THEN
+        CONV_TAC TAUT;
+        ASM_REWRITE_TAC[] THEN
+        FIRST_ASSUM(fun th ->
+          DISJ_CASES_THEN SUBST1_TAC
+            (MATCH_MP (ARITH_RULE
+               `~(2 <= i) ==> i = 0 \/ i = 1`) th)) THEN
+        CONV_TAC NUM_REDUCE_CONV THEN
+        REWRITE_TAC[DIV_1] THEN
+        REWRITE_TAC[ARITH_RULE `4 * n = 2 * (2 * n)`] THEN
+        SIMP_TAC[DIV_MULT; ARITH_EQ] THEN
+        REWRITE_TAC[ODD_MULT] THEN CONV_TAC NUM_REDUCE_CONV THEN
+        CONV_TAC TAUT]) in
+    let orsm = prove
+     (`!(x:word8) y.
+         word_or (Smallnum (&(w2n x))) (Smallnum (&(w2n y))) =
+         (Smallnum (&(w2n (word_or x y))):(N)word)`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[smn; WORD_EQ_BITS_ALT] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_REWRITE_TAC[BIT_WORD_OR_ALT; bitsm] THEN CONV_TAC TAUT) in
+
+    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    W(fun (asl,w) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let mr = grab asl (fun th -> hd_is "memory_rel" (concl th)) in
+      let tl = cake_thm "memory_rel_tail" in
+      let mr2 = MATCH_MP tl mr in
+      let mr3 = MATCH_MP tl mr2 in
+      let inj = REWRITE_RULE[injectivity "word_loc"] in
+      let siw = MATCH_MP (cake_thm "small_int_w2n") gd in
+      let byte th =
+        rand (rand (rand (fst(dest_pair(lhand(last
+          (snd(strip_comb (concl th)))))))) ) in
+      let wv = find (fun v -> type_of v = type_of (byte mr))
+                 (frees (concl siw)) in
+      let num = cake_thm "memory_rel_Number_IMP" in
+      let e1 = inj (MATCH_MP num
+                      (CONJ gd (CONJ (INST [byte mr,wv] siw) mr))) in
+      let e2 = inj (MATCH_MP num
+                      (CONJ gd (CONJ (INST [byte mr2,wv] siw) mr2))) in
+      REWRITE_TAC[e1; e2; orsm] THEN
+      MATCH_MP_TAC (cake_thm "IMP_memory_rel_Number") THEN
+      ASM_REWRITE_TAC[siw; mr3]));;
 
 let memory_rel_Xor = cake_theorem "memory_rel_Xor"
   (fun () ->
@@ -13193,7 +13345,82 @@ let memory_rel_Xor = cake_theorem "memory_rel_Xor"
       memory_rel c be ts refs sp st m dm
         ((Number (&(w2n (word_xor i j))),wordLang_Word (word_xor
           wi wj:'a word)) :: vars)`)
-  CHEAT_TAC;;
+  (* the xor of two bytes as the xor of their roots: both roots are
+     the Smallnum of their byte, because a byte is a small integer,
+     and the xor of two Smallnums of bytes is the Smallnum of the
+     xor of the bytes, because the Smallnum of a byte has the bits
+     of the byte two places up *)
+  (let hd_is n t =
+      (try fst(dest_const(fst(strip_comb t))) = n
+       with Failure _ -> false) in
+    let grab asl p =
+      tryfind (fun (_,th) ->
+        if (try p th with Failure _ -> false) then th else fail())
+        asl in
+    (* the Smallnum of a natural number is four times it, and the and
+       with the complement of one leaves such a word alone *)
+    let smn = prove
+     (`!n. Smallnum (&n) = (n2w (4 * n)):(N)word`,
+      GEN_TAC THEN REWRITE_TAC[cake_def "Smallnum"] THEN
+      REWRITE_TAC[INT_ARITH `~((&n:int) < &0)`] THEN
+      REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]) in
+    (* the bits of the Smallnum of a byte: two above the bits
+       of the byte *)
+    let bitsm = prove
+     (`!(x:(M)word) i.
+         bit i (n2w (4 * w2n x):(N)word) <=>
+         i < dimindex (:N) /\ 2 <= i /\ bit (i - 2) x`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[BIT_WORD] THEN
+      ASM_CASES_TAC `2 <= i` THENL
+       [FIRST_ASSUM(X_CHOOSE_THEN `k:num` SUBST1_TAC o
+          REWRITE_RULE[LE_EXISTS]) THEN
+        REWRITE_TAC[ARITH_RULE `(2 + k) - 2 = k`; BIT_VAL] THEN
+        REWRITE_TAC[EXP_ADD; ARITH_RULE `2 EXP 2 = 4`] THEN
+        SIMP_TAC[DIV_MULT2; ARITH_EQ] THEN
+        REWRITE_TAC[ARITH_RULE `(2 <= 2 + k) <=> T`] THEN
+        CONV_TAC TAUT;
+        ASM_REWRITE_TAC[] THEN
+        FIRST_ASSUM(fun th ->
+          DISJ_CASES_THEN SUBST1_TAC
+            (MATCH_MP (ARITH_RULE
+               `~(2 <= i) ==> i = 0 \/ i = 1`) th)) THEN
+        CONV_TAC NUM_REDUCE_CONV THEN
+        REWRITE_TAC[DIV_1] THEN
+        REWRITE_TAC[ARITH_RULE `4 * n = 2 * (2 * n)`] THEN
+        SIMP_TAC[DIV_MULT; ARITH_EQ] THEN
+        REWRITE_TAC[ODD_MULT] THEN CONV_TAC NUM_REDUCE_CONV THEN
+        CONV_TAC TAUT]) in
+    let xorsm = prove
+     (`!(x:word8) y.
+         word_xor (Smallnum (&(w2n x))) (Smallnum (&(w2n y))) =
+         (Smallnum (&(w2n (word_xor x y))):(N)word)`,
+      REPEAT GEN_TAC THEN REWRITE_TAC[smn; WORD_EQ_BITS_ALT] THEN
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      ASM_REWRITE_TAC[BIT_WORD_XOR_ALT; bitsm] THEN CONV_TAC TAUT) in
+
+    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    W(fun (asl,w) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let mr = grab asl (fun th -> hd_is "memory_rel" (concl th)) in
+      let tl = cake_thm "memory_rel_tail" in
+      let mr2 = MATCH_MP tl mr in
+      let mr3 = MATCH_MP tl mr2 in
+      let inj = REWRITE_RULE[injectivity "word_loc"] in
+      let siw = MATCH_MP (cake_thm "small_int_w2n") gd in
+      let byte th =
+        rand (rand (rand (fst(dest_pair(lhand(last
+          (snd(strip_comb (concl th)))))))) ) in
+      let wv = find (fun v -> type_of v = type_of (byte mr))
+                 (frees (concl siw)) in
+      let num = cake_thm "memory_rel_Number_IMP" in
+      let e1 = inj (MATCH_MP num
+                      (CONJ gd (CONJ (INST [byte mr,wv] siw) mr))) in
+      let e2 = inj (MATCH_MP num
+                      (CONJ gd (CONJ (INST [byte mr2,wv] siw) mr2))) in
+      REWRITE_TAC[e1; e2; xorsm] THEN
+      MATCH_MP_TAC (cake_thm "IMP_memory_rel_Number") THEN
+      ASM_REWRITE_TAC[siw; mr3]));;
 
 let memory_rel_Number_IMP_Word =
   cake_theorem "memory_rel_Number_IMP_Word"
