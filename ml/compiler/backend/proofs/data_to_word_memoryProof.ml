@@ -5754,6 +5754,62 @@ let v_inv_IMP = prove
      MATCH_ACCEPT_TAC(MATCH_MP v_inv_IMP_lemma
        (REWRITE_RULE[GSYM v_inv_eq] th)))));;
 
+(* the port's own: a heap in which one element is replaced by one
+   of the same length.  A split of it gives the halves of the old
+   heap, up to that element, and a lookup in it is the old one
+   unless it is that element that is found.  Both are used by the
+   two theorems about a store into a byte array. *)
+
+let heap_length_clauses = prove
+ (`heap_length [] = 0 /\
+   (!x xs. heap_length (CONS x xs) =
+           el_length x + heap_length xs)`,
+  REWRITE_TAC[heap_length_def; MAP; SUM_DEF; ITLIST]);;
+
+let heap_split_replace = prove
+ (`!e ha u v hb h1 h2.
+     heap_split e (ha ++ [u] ++ hb) = SOME (h1,h2) /\
+     el_length u = el_length v
+     ==> ?h1' h2'. heap_split e (ha ++ [v] ++ hb) = SOME (h1',h2') /\
+                   (!z. MEM z h1' ==> MEM z h1 \/ z = v)`,
+  (* the witnesses are what the equations of the goal say *)
+  let witness =
+    W(fun (asl,w) ->
+      let vs,bod = strip_exists w in
+      MAP_EVERY EXISTS_TAC (map lhs (conjuncts (lhand bod)))) THEN
+    REWRITE_TAC[] THEN
+    REPEAT(FIRST_X_ASSUM(fun eq ->
+      if is_eq (concl eq) && is_var (rhs (concl eq)) &&
+         not (lhs (concl eq) = rhs (concl eq))
+      then SUBST_ALL_TAC (SYM eq) else fail())) THEN
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[APPEND_NIL; APPEND; MEM_APPEND; MEM] THEN
+    CONV_TAC TAUT in
+  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
+  REWRITE_TAC[heap_split_APPEND_if] THEN COND_CASES_TAC THEN
+  DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+  ASM_REWRITE_TAC[heap_length_clauses; heap_split_def] THEN
+  REPEAT(COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
+  EVERY_CASE_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  REPEAT STRIP_TAC THEN witness);;
+
+let heap_lookup_replace = prove
+ (`!n ha u v hb z.
+     heap_lookup n (ha ++ [u] ++ hb) = SOME z /\
+     el_length u = el_length v /\ ~(z = u)
+     ==> heap_lookup n (ha ++ [v] ++ hb) = SOME z`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
+  REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 MP_TAC
+    (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC)) THEN
+  ASM_REWRITE_TAC[heap_lookup_def; heap_length_clauses] THEN
+  REPEAT(COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
+  REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+  ASM_MESON_TAC[]);;
+
 (* [local] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -5761,7 +5817,93 @@ let gen_state_ok_update_byte = prove
  (cake_as_vars (fun () ->
     `gen_state_ok a k (ha ++ [Bytes be fl xs ws] ++ hb) gens ==>
      gen_state_ok a k (ha ++ [Bytes be fl ys ws] ++ hb) gens`),
-  CHEAT_TAC);;
+  (* the two elements are of the same length and the one that is
+     written holds no pointer, so a split of the heap gives the
+     halves of the old one, up to that element *)
+  ((* the head constant of a term, by name, and the assumption
+      that a test picks out *)
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   let samelen b =
+     prove(b,
+       REWRITE_TAC[bytes_def] THEN
+       CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+       REWRITE_TAC[el_length_def; LENGTH_write_bytes]) in
+   let use_split =
+     W(fun (asl,w) ->
+       let sp = grab asl (fun th ->
+                  hd_is "heap_split" (lhand (concl th))) in
+       let c = concl sp in
+       let e = rand (rator (lhand c)) in
+       let old = rand (lhand c) in
+       let ha = lhand old in
+       let u = rand (rator (lhand (rand old))) in
+       let hb = rand (rand old) in
+       let h1,h2 = dest_pair (rand (rand c)) in
+       let _,bod = strip_exists w in
+       let newh = rand (lhand (lhand bod)) in
+       let v = rand (rator (lhand (rand newh))) in
+       MP_TAC(ISPECL [e; ha; u; v; hb; h1; h2]
+                heap_split_replace)) THEN
+     DISCH_THEN(fun imp ->
+       FIRST_ASSUM(fun sp ->
+         if not (hd_is "heap_split" (lhand (concl sp)))
+         then fail() else
+         MP_TAC(MATCH_MP imp
+                  (CONJ sp (samelen (rand (lhand (concl imp)))))))) THEN
+     DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) in
+   let bytes_nopt =
+     W(fun (asl,w) ->
+       let eqv = grab asl (fun th -> is_eq (concl th) &&
+                   hd_is "DataElement" (lhs (concl th))) in
+       let r3 = REWRITE_RULE[injectivity "heap_element"]
+                  (CONV_RULE(TOP_DEPTH_CONV let_CONV)
+                     (REWRITE_RULE[bytes_def] eqv)) in
+       let m = grab asl (fun th ->
+                 hd_is "MEM" (concl th) &&
+                 not (hd_is "DataElement"
+                        (rand (rator (concl th))))) in
+       MP_TAC(REWRITE_RULE[CONJUNCT1 r3; MEM] m)) THEN
+     REWRITE_TAC[] in
+   STRUCT_CASES_TAC(ISPEC `gens:gen_state`
+     (cases_of `:gen_state`)) THEN
+   REWRITE_TAC[gen_state_ok_def] THEN
+   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+   ASM_REWRITE_TAC[] THEN
+   FIRST_X_ASSUM(fun ev ->
+     if hd_is "ALL" (concl ev) &&
+        hd_is "gen_start_ok" (lhand (concl ev))
+     then MP_TAC(REWRITE_RULE[GSYM ALL_MEM] ev) else fail()) THEN
+   REWRITE_TAC[GSYM ALL_MEM] THEN
+   DISCH_TAC THEN GEN_TAC THEN DISCH_TAC THEN
+   FIRST_ASSUM(fun ev ->
+     FIRST_ASSUM(fun mm -> MP_TAC(MATCH_MP ev mm))) THEN
+   REWRITE_TAC[gen_start_ok_def] THEN
+   DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+   use_split THEN
+   W(fun (asl,w) ->
+     let sp2 = grab asl (fun th ->
+                 hd_is "heap_split" (lhand (concl th))) in
+     let a,b = dest_pair (rand (rand (concl sp2))) in
+     MAP_EVERY EXISTS_TAC [a; b]) THEN
+   ASM_REWRITE_TAC[] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM(fun tr ->
+     if not (is_forall (concl tr)) then fail() else
+     FIRST_ASSUM(fun m ->
+       if not (hd_is "MEM" (concl m)) then fail() else
+       MP_TAC(MATCH_MP (SPEC_ALL tr) m))) THEN
+   DISCH_THEN(DISJ_CASES_THEN2 ASSUME_TAC ASSUME_TAC) THENL
+    [(* the element is one of the old half, so the old condition
+        says what the goal says *)
+     ASM_MESON_TAC[];
+     (* or it is the one that was written, which holds no pointer *)
+     bytes_nopt]));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:5900-5902: a theorem that
    HOL4 states as the value of an ML expression: heap_length_Bytes *)
@@ -5775,7 +5917,111 @@ let unused_space_inv_byte_update = prove
          (ha ++ [Bytes be fl xs (REPLICATE ws (n2w 0))] ++ hb) ==>
      unused_space_inv a (sp + sp1)
          (ha ++ [Bytes be fl ys (REPLICATE ws (n2w 0))] ++ hb)`),
-  CHEAT_TAC);;
+  (* the unused element is not the one that was written, the heap
+     is as long as it was, and the part below the pointer still
+     holds data *)
+  ((* the head constant of a term, by name, and the assumption
+      that a test picks out *)
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   let bytefacts =
+     REWRITE_TAC[bytes_def] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) in
+   let samelen b =
+     prove(b, bytefacts THEN
+              REWRITE_TAC[el_length_def; LENGTH_write_bytes]) in
+   REWRITE_TAC[unused_space_inv_def] THEN
+   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+   REPEAT CONJ_TAC THENL
+    [DISCH_TAC THEN
+     FIRST_ASSUM(fun imp ->
+       if not (is_imp (concl imp)) then fail() else
+       FIRST_ASSUM(fun ne -> MP_TAC(MATCH_MP imp ne))) THEN
+     DISCH_TAC THEN
+     W(fun (asl,w) ->
+       let lk = grab asl (fun th ->
+                  hd_is "heap_lookup" (lhand (concl th))) in
+       let c = concl lk in
+       let n = rand (rator (lhand c)) in
+       let old = rand (lhand c) in
+       let ha = lhand old in
+       let u = rand (rator (lhand (rand old))) in
+       let hb = rand (rand old) in
+       let z = rand (rand c) in
+       let newh = rand (lhand w) in
+       let v = rand (rator (lhand (rand newh))) in
+       MP_TAC(ISPECL [n; ha; u; v; hb; z] heap_lookup_replace)) THEN
+     DISCH_THEN(fun imp ->
+       FIRST_ASSUM(fun lk ->
+         if not (hd_is "heap_lookup" (lhand (concl lk)))
+         then fail() else
+         let ants = conjuncts (lhand (concl imp)) in
+         let notit = prove(el 2 ants,
+           bytefacts THEN
+           REWRITE_TAC[distinctness "heap_element"]) in
+         ACCEPT_TAC(MATCH_MP imp
+           (CONJ lk (CONJ (samelen (el 1 ants)) notit)))));
+     FIRST_ASSUM(fun le ->
+       if hd_is "<=" (concl le) then MP_TAC le else fail()) THEN
+     REWRITE_TAC[heap_length_APPEND; heap_length_clauses;
+                 bytes_def] THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     REWRITE_TAC[el_length_def; LENGTH_write_bytes];
+     FIRST_ASSUM(fun du ->
+       if hd_is "data_up_to" (concl du) then MP_TAC du
+       else fail()) THEN
+     REWRITE_TAC[data_up_to_def] THEN
+     DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+     W(fun (asl,w) ->
+       let sp = grab asl (fun th ->
+                  hd_is "heap_split" (lhand (concl th))) in
+       let c = concl sp in
+       let e = rand (rator (lhand c)) in
+       let old = rand (lhand c) in
+       let ha = lhand old in
+       let u = rand (rator (lhand (rand old))) in
+       let hb = rand (rand old) in
+       let h1,h2 = dest_pair (rand (rand c)) in
+       let _,bod = strip_exists w in
+       let newh = rand (lhand (lhand bod)) in
+       let v = rand (rator (lhand (rand newh))) in
+       MP_TAC(ISPECL [e; ha; u; v; hb; h1; h2]
+                heap_split_replace)) THEN
+     DISCH_THEN(fun imp ->
+       FIRST_ASSUM(fun sp ->
+         if not (hd_is "heap_split" (lhand (concl sp)))
+         then fail() else
+         MP_TAC(MATCH_MP imp
+           (CONJ sp (samelen (rand (lhand (concl imp)))))))) THEN
+     DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+     W(fun (asl,w) ->
+       let sp2 = grab asl (fun th ->
+                   hd_is "heap_split" (lhand (concl th))) in
+       let a,b = dest_pair (rand (rand (concl sp2))) in
+       MAP_EVERY EXISTS_TAC [a; b]) THEN
+     ASM_REWRITE_TAC[] THEN
+     REWRITE_TAC[GSYM ALL_MEM] THEN
+     GEN_TAC THEN DISCH_TAC THEN
+     FIRST_ASSUM(fun tr ->
+       if not (is_forall (concl tr)) then fail() else
+       FIRST_ASSUM(fun m ->
+         if not (hd_is "MEM" (concl m)) then fail() else
+         MP_TAC(MATCH_MP (SPEC_ALL tr) m))) THEN
+     DISCH_THEN(DISJ_CASES_THEN2 ASSUME_TAC SUBST_ALL_TAC) THENL
+      [FIRST_ASSUM(fun ev ->
+         if hd_is "ALL" (concl ev)
+         then ASM_MESON_TAC[REWRITE_RULE[GSYM ALL_MEM] ev]
+         else fail());
+       bytefacts THEN REWRITE_TAC[isDataElement_def] THEN
+       W(fun (asl,w) ->
+         let _,bod = strip_exists w in
+         MAP_EVERY EXISTS_TAC (snd(strip_comb (lhs bod)))) THEN
+       REFL_TAC]]));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

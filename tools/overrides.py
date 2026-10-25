@@ -1758,6 +1758,68 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # the two lemmas about a heap in which one element is replaced by
+  # one of the same length, which the proofs of the two theorems
+  # about a store into a byte array ask for.  They stand here and
+  # not at the head of the file because the second one needs
+  # heap_lookup_APPEND, which the file itself proves.
+  ('data_to_word_memoryProof', 'gen_state_ok_update_byte'): r"""
+(* the port's own: a heap in which one element is replaced by one
+   of the same length.  A split of it gives the halves of the old
+   heap, up to that element, and a lookup in it is the old one
+   unless it is that element that is found.  Both are used by the
+   two theorems about a store into a byte array. *)
+
+let heap_length_clauses = prove
+ (`heap_length [] = 0 /\
+   (!x xs. heap_length (CONS x xs) =
+           el_length x + heap_length xs)`,
+  REWRITE_TAC[heap_length_def; MAP; SUM_DEF; ITLIST]);;
+
+let heap_split_replace = prove
+ (`!e ha u v hb h1 h2.
+     heap_split e (ha ++ [u] ++ hb) = SOME (h1,h2) /\
+     el_length u = el_length v
+     ==> ?h1' h2'. heap_split e (ha ++ [v] ++ hb) = SOME (h1',h2') /\
+                   (!z. MEM z h1' ==> MEM z h1 \/ z = v)`,
+  (* the witnesses are what the equations of the goal say *)
+  let witness =
+    W(fun (asl,w) ->
+      let vs,bod = strip_exists w in
+      MAP_EVERY EXISTS_TAC (map lhs (conjuncts (lhand bod)))) THEN
+    REWRITE_TAC[] THEN
+    REPEAT(FIRST_X_ASSUM(fun eq ->
+      if is_eq (concl eq) && is_var (rhs (concl eq)) &&
+         not (lhs (concl eq) = rhs (concl eq))
+      then SUBST_ALL_TAC (SYM eq) else fail())) THEN
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[APPEND_NIL; APPEND; MEM_APPEND; MEM] THEN
+    CONV_TAC TAUT in
+  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
+  REWRITE_TAC[heap_split_APPEND_if] THEN COND_CASES_TAC THEN
+  DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+  ASM_REWRITE_TAC[heap_length_clauses; heap_split_def] THEN
+  REPEAT(COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
+  EVERY_CASE_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  REPEAT STRIP_TAC THEN witness);;
+
+let heap_lookup_replace = prove
+ (`!n ha u v hb z.
+     heap_lookup n (ha ++ [u] ++ hb) = SOME z /\
+     el_length u = el_length v /\ ~(z = u)
+     ==> heap_lookup n (ha ++ [v] ++ hb) = SOME z`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
+  REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 MP_TAC
+    (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC)) THEN
+  ASM_REWRITE_TAC[heap_lookup_def; heap_length_clauses] THEN
+  REPEAT(COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
+  REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+  ASM_MESON_TAC[]);;
+""",
   # the two facts about the size of a list that the termination of
   # bvi_let's compile needs: its Let clause recurses on the list
   # without its last expression and on that last expression, and

@@ -390,6 +390,13 @@ class Porter:
     """the statement of a theorem of a source, with its name and
        its attributes; b is the block it comes from, which a
        pointer at the source needs"""
+    # what the port puts before this theorem: the helpers that the
+    # proofs of the file ask for and the source has not, where they
+    # need something the file itself defines and so cannot stand at
+    # its head (overrides.EXTRA_BEFORE)
+    if (self.thy, nm) in overrides.EXTRA_BEFORE:
+      self.out.append(
+        overrides.EXTRA_BEFORE[(self.thy, nm)].strip() + '\n')
     # a statement that HOL Light's parser rejects would stop the
     # file at that phrase, so the port writes the comment that
     # points at the source in its place, as it does for a
