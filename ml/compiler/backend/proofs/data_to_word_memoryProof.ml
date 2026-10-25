@@ -22472,18 +22472,19 @@ let walk_EL = prove
                (ptr_bits c cons_tag 2))])))`,
   (* the attempt: the proof of the source names
      v_to_list_SOME_CONS_IMP, v_inv_def, v_to_list_def,
-     v_inv_v_to_list_lemma, walk_def, BlockRep_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
+     v_inv_v_to_list_lemma, BlockRep_def,
+     data_to_word_memoryProof_walk_def.  What is here rewrites with
+     them and closes by arithmetic or by MESON, and the cheat is
+     behind it until the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-       v_to_list_def; v_inv_v_to_list_lemma; walk_def;
-       BlockRep_def] THEN
+       v_to_list_def; v_inv_v_to_list_lemma; BlockRep_def;
+       data_to_word_memoryProof_walk_def] THEN
      TRY ASM_ARITH_TAC THEN
      TRY(ASM_MESON_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-         v_to_list_def; v_inv_v_to_list_lemma; walk_def;
-         BlockRep_def]))));;
+         v_to_list_def; v_inv_v_to_list_lemma; BlockRep_def;
+         data_to_word_memoryProof_walk_def]))));;
 
 let v_to_list_same_LENGTH = prove
  (`!xs x ys v1 v2 ts1 ts2.
@@ -22620,19 +22621,19 @@ let v_to_list_DROP = prove
      (gc_shared_Pointer (EL k ps) (wordLang_Word (ptr_bits c
        cons_tag 2)),f,tf,heap)`,
   (* the attempt: the proof of the source names v_inv_def,
-     block_drop_def, walk_def, BlockRep_def,
-     v_to_list_SOME_CONS_IMP, v_inv_v_to_list_lemma.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
+     block_drop_def, BlockRep_def, v_to_list_SOME_CONS_IMP,
+     v_inv_v_to_list_lemma, data_to_word_memoryProof_walk_def.  What
+     is here rewrites with them and closes by arithmetic or by
+     MESON, and the cheat is behind it until the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[v_inv_def; block_drop_def; walk_def;
-       BlockRep_def; v_to_list_SOME_CONS_IMP;
-       v_inv_v_to_list_lemma] THEN
+     ASM_REWRITE_TAC[v_inv_def; block_drop_def; BlockRep_def;
+       v_to_list_SOME_CONS_IMP; v_inv_v_to_list_lemma;
+       data_to_word_memoryProof_walk_def] THEN
      TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_inv_def; block_drop_def; walk_def;
-         BlockRep_def; v_to_list_SOME_CONS_IMP;
-         v_inv_v_to_list_lemma]))));;
+     TRY(ASM_MESON_TAC[v_inv_def; block_drop_def; BlockRep_def;
+         v_to_list_SOME_CONS_IMP; v_inv_v_to_list_lemma;
+         data_to_word_memoryProof_walk_def]))));;
 
 let block_drop_DROP = prove
  (`!n v vs.
@@ -22668,18 +22669,19 @@ let walk_ALL_DISTINCT = prove
      ALL_DISTINCT ps`,
   (* the attempt: the proof of the source names
      v_to_list_SOME_CONS_IMP, v_inv_def, v_inv_v_to_list_lemma,
-     walk_def, BlockRep_def, data_to_word_memoryProof_walk_def.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
+     BlockRep_def, data_to_word_memoryProof_walk_def,
+     v_to_list_SOME_NIL_IFF.  What is here rewrites with them and
+     closes by arithmetic or by MESON, and the cheat is behind it
+     until the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-       v_inv_v_to_list_lemma; walk_def; BlockRep_def;
-       data_to_word_memoryProof_walk_def] THEN
+       v_inv_v_to_list_lemma; BlockRep_def;
+       data_to_word_memoryProof_walk_def; v_to_list_SOME_NIL_IFF] THEN
      TRY ASM_ARITH_TAC THEN
      TRY(ASM_MESON_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-         v_inv_v_to_list_lemma; walk_def; BlockRep_def;
-         data_to_word_memoryProof_walk_def]))));;
+         v_inv_v_to_list_lemma; BlockRep_def;
+         data_to_word_memoryProof_walk_def; v_to_list_SOME_NIL_IFF]))));;
 
 let v_to_list_heap_length = prove
  (`v_inv c v refs (x,f,tf,heap) /\

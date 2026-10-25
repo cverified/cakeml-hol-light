@@ -16664,48 +16664,50 @@
 ### walk_EL
   (* the attempt: the proof of the source names
      v_to_list_SOME_CONS_IMP, v_inv_def, v_to_list_def,
-     v_inv_v_to_list_lemma, walk_def, BlockRep_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
+     v_inv_v_to_list_lemma, BlockRep_def,
+     data_to_word_memoryProof_walk_def.  What is here rewrites with
+     them and closes by arithmetic or by MESON, and the cheat is
+     behind it until the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-       v_to_list_def; v_inv_v_to_list_lemma; walk_def;
-       BlockRep_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-         v_to_list_def; v_inv_v_to_list_lemma; walk_def;
-         BlockRep_def])))
-### v_to_list_DROP
-  (* the attempt: the proof of the source names v_inv_def,
-     block_drop_def, walk_def, BlockRep_def,
-     v_to_list_SOME_CONS_IMP, v_inv_v_to_list_lemma.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[v_inv_def; block_drop_def; walk_def;
-       BlockRep_def; v_to_list_SOME_CONS_IMP;
-       v_inv_v_to_list_lemma] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_inv_def; block_drop_def; walk_def;
-         BlockRep_def; v_to_list_SOME_CONS_IMP;
-         v_inv_v_to_list_lemma])))
-### walk_ALL_DISTINCT
-  (* the attempt: the proof of the source names
-     v_to_list_SOME_CONS_IMP, v_inv_def, v_inv_v_to_list_lemma,
-     walk_def, BlockRep_def, data_to_word_memoryProof_walk_def.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-       v_inv_v_to_list_lemma; walk_def; BlockRep_def;
+       v_to_list_def; v_inv_v_to_list_lemma; BlockRep_def;
        data_to_word_memoryProof_walk_def] THEN
      TRY ASM_ARITH_TAC THEN
      TRY(ASM_MESON_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-         v_inv_v_to_list_lemma; walk_def; BlockRep_def;
+         v_to_list_def; v_inv_v_to_list_lemma; BlockRep_def;
          data_to_word_memoryProof_walk_def])))
+### v_to_list_DROP
+  (* the attempt: the proof of the source names v_inv_def,
+     block_drop_def, BlockRep_def, v_to_list_SOME_CONS_IMP,
+     v_inv_v_to_list_lemma, data_to_word_memoryProof_walk_def.  What
+     is here rewrites with them and closes by arithmetic or by
+     MESON, and the cheat is behind it until the proof is written *)
+  (ATTEMPT_TAC 5
+    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[v_inv_def; block_drop_def; BlockRep_def;
+       v_to_list_SOME_CONS_IMP; v_inv_v_to_list_lemma;
+       data_to_word_memoryProof_walk_def] THEN
+     TRY ASM_ARITH_TAC THEN
+     TRY(ASM_MESON_TAC[v_inv_def; block_drop_def; BlockRep_def;
+         v_to_list_SOME_CONS_IMP; v_inv_v_to_list_lemma;
+         data_to_word_memoryProof_walk_def])))
+### walk_ALL_DISTINCT
+  (* the attempt: the proof of the source names
+     v_to_list_SOME_CONS_IMP, v_inv_def, v_inv_v_to_list_lemma,
+     BlockRep_def, data_to_word_memoryProof_walk_def,
+     v_to_list_SOME_NIL_IFF.  What is here rewrites with them and
+     closes by arithmetic or by MESON, and the cheat is behind it
+     until the proof is written *)
+  (ATTEMPT_TAC 5
+    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
+       v_inv_v_to_list_lemma; BlockRep_def;
+       data_to_word_memoryProof_walk_def; v_to_list_SOME_NIL_IFF] THEN
+     TRY ASM_ARITH_TAC THEN
+     TRY(ASM_MESON_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
+         v_inv_v_to_list_lemma; BlockRep_def;
+         data_to_word_memoryProof_walk_def; v_to_list_SOME_NIL_IFF])))
 ### memory_rel_do_build
   (* the attempt: the proof of the source names do_build_def,
      build_words_def, memory_rel_def, heap_in_memory_store_def,

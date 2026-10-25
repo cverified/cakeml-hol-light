@@ -2705,3 +2705,49 @@ the three occurrences in a goal it is the first that it reaches.
 Where one specific sum is meant, `SUBGOAL_THEN \`j + 1 = 1 + j\`
 SUBST1_TAC THENL [ARITH_TAC; ALL_TAC]` rewrites that term and
 nothing else.
+
+## 39. The attempt of a statement that is not proved yet
+
+Phase three replaces a `CHEAT_TAC` with a proof, one statement at a
+time, and what stands at a statement nobody has got to yet used to
+be the bare cheat.  It is better for the attempt to be there:
+
+```
+### <name>
+  (* the attempt: the proof of the source names <facts>.  What is
+     here rewrites with them and closes by arithmetic or by MESON,
+     and the cheat is behind it until the proof is written *)
+  (ATTEMPT_TAC 5
+    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[<facts>] THEN
+     TRY ASM_ARITH_TAC THEN
+     TRY(ASM_MESON_TAC[<facts>])))
+```
+
+`ATTEMPT_TAC secs tac` of `ml/lib/tactics.ml` gives the attempt
+`secs` seconds of processor time and falls back on `CHEAT_TAC` when
+it does not close the goal.  It cannot be written as
+`FIRST [SOLVED tac; CHEAT_TAC]`, because `Cake_timeout` is not a
+`Failure` and `FIRST` would not catch it.
+
+What this buys: the work that is left is in the port and not in a
+list beside it, the facts named are the ones the source proof uses
+(so the next round starts where the source starts), and
+`length (axioms())` still counts exactly the statements that are
+not proved -- an attempt that starts to go through takes its own
+cheat away.
+
+Two filters are needed when the facts are read off the source
+proof.  A fact is only usable if **this file's closure** binds it:
+`finalise_cons_def` is of `bvi_tmc`, which
+`data_to_word_memoryProof` does not need, and naming it stops the
+load.  And a fact that **this file** binds must be bound *before*
+the statement, which is what `tools/scope.py` reports: HOL4 names a
+theorem `xor_bytes_xor_words` of another theory inside the proof of
+its own `xor_bytes_xor_words`, and the port's one stands further
+down.
+
+What it costs is the load: an attempt that fails fast costs
+nothing, and one that searches costs its budget.  Keep the budget
+small (five seconds) and the fact list short (six), or a file of a
+hundred attempts adds ten minutes to every load of it.
