@@ -3372,6 +3372,94 @@
    MATCH_REDUCE_TAC THEN
    FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
      MATCH_ACCEPT_TAC(MATCH_MP swap_refs (CONJ th1 th2)))))
+### reachable_refs_MutBlock_UPDATE
+  (* the update replaces the centre of the MutBlock by h,
+     which is the root at the front of the stack: a path
+     through the new references is one through the old ones
+     unless it leaves ptr into h, and then it starts at a
+     root of its own *)
+  ((* the head constant of a term, by name *)
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let mem_block_refs = prove
+   (`!(ys:(dataSem_v)list) ss tt aa.
+       MEM ss (get_refs (Block tt aa ys))
+       ==> ?yy. MEM yy ys /\ MEM ss (get_refs yy)`,
+    REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+    MESON_TAC[]) in
+  let block_refs = prove
+   (`!(ys:(dataSem_v)list) ss tt aa yy.
+       MEM yy ys /\ MEM ss (get_refs yy)
+       ==> MEM ss (get_refs (Block tt aa ys))`,
+    REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+    MESON_TAC[]) in
+  (* an edge that leaves ptr in the old references *)
+  let oldedge = prove
+   (`lookup ptr refs = SOME (bvlSem_MutBlock tg fin ll cc rr) /\
+     MEM (s:num) (get_refs (Block 0 ARB (ll ++ [cc] ++ rr)))
+     ==> ref_edge refs ptr (s:num)`,
+    REWRITE_TAC[ref_edge_def] THEN STRIP_TAC THEN
+    ASM_REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+    ASM_REWRITE_TAC[]) in
+  (* a path through the new references is one through the old ones,
+     or it leaves ptr into h -- and h is a root of its own *)
+  let rtcpath = prove
+   (`lookup ptr refs = SOME (bvlSem_MutBlock tg fin ll cc rr)
+     ==> !u w. RTC (ref_edge (insert ptr
+                 (bvlSem_MutBlock tg fin ll h rr) refs)) u w
+               ==> RTC (ref_edge refs) u w \/
+                   (?s. MEM s (get_refs h) /\
+                        RTC (ref_edge refs) s w)`,
+    DISCH_TAC THEN MATCH_MP_TAC RTC_INDUCT THEN CONJ_TAC THENL
+     [GEN_TAC THEN DISJ1_TAC THEN
+      MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES));
+      MAP_EVERY X_GEN_TAC [`u:num`; `v:num`; `w:num`] THEN
+      REWRITE_TAC[ref_edge_MutBlock] THEN
+      COND_CASES_TAC THEN STRIP_TAC THEN
+      (* the induction hypothesis gives the right half already *)
+      TRY(DISJ2_TAC THEN EXISTS_TAC `s:num` THEN
+          ASM_REWRITE_TAC[] THEN NO_TAC) THEN
+      (* an edge that does not leave ptr is an old edge *)
+      TRY(DISJ1_TAC THEN
+          MATCH_MP_TAC(CONJUNCT2(SPEC_ALL RTC_RULES)) THEN
+          EXISTS_TAC `v:num` THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
+      FIRST_ASSUM(fun m -> MP_TAC(MATCH_MP mem_block_refs m)) THEN
+      DISCH_THEN(X_CHOOSE_THEN `yy:dataSem_v` STRIP_ASSUME_TAC) THEN
+      FIRST_X_ASSUM(fun mm ->
+        if hd_is "MEM" (concl mm) && hd_is "APPEND" (rand (concl mm))
+        then MP_TAC(REWRITE_RULE[MEM_APPEND; MEM] mm) else fail()) THEN
+      STRIP_TAC THEN
+      (* it lands in h, which is a root *)
+      TRY(DISJ2_TAC THEN EXISTS_TAC `v:num` THEN
+          FIRST_X_ASSUM(fun eq ->
+            if is_eq (concl eq) && is_var (lhs (concl eq)) &&
+               is_var (rhs (concl eq))
+            then SUBST_ALL_TAC eq else fail()) THEN
+          ASM_REWRITE_TAC[] THEN NO_TAC) THEN
+      (* or in a part that the old payload has too *)
+      DISJ1_TAC THEN
+      MATCH_MP_TAC(CONJUNCT2(SPEC_ALL RTC_RULES)) THEN
+      EXISTS_TAC `v:num` THEN CONJ_TAC THEN
+      TRY(FIRST_ASSUM ACCEPT_TAC) THEN
+      MATCH_MP_TAC oldedge THEN ASM_REWRITE_TAC[] THEN
+      MATCH_MP_TAC block_refs THEN EXISTS_TAC `yy:dataSem_v` THEN
+      ASM_REWRITE_TAC[MEM_APPEND; MEM]]) in
+  DISCH_THEN(CONJUNCTS_THEN2 (fun lk ->
+      ASSUME_TAC lk THEN ASSUME_TAC(MATCH_MP rtcpath lk)) MP_TAC) THEN
+  REWRITE_TAC[reachable_refs_def] THEN
+  DISCH_THEN(X_CHOOSE_THEN `x:dataSem_v`
+    (X_CHOOSE_THEN `r:num` STRIP_ASSUME_TAC)) THEN
+  FIRST_ASSUM(fun pth ->
+    if not (is_forall (concl pth)) then fail() else
+    FIRST_ASSUM(fun rtc -> MP_TAC(MATCH_MP (SPEC_ALL pth) rtc))) THEN
+  DISCH_THEN(DISJ_CASES_THEN2
+    (fun old ->
+       MAP_EVERY EXISTS_TAC [`x:dataSem_v`; `r:num`] THEN
+       ASM_REWRITE_TAC[old])
+    (X_CHOOSE_THEN `s:num` STRIP_ASSUME_TAC)) THEN
+  MAP_EVERY EXISTS_TAC [`h:dataSem_v`; `s:num`] THEN
+  ASM_REWRITE_TAC[MEM])
 ### LENGTH_write_bytes
   (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
    REWRITE_TAC[write_bytes_def] THEN
