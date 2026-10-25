@@ -385,6 +385,36 @@ let RECORD_CASES_TAC t =
   STRUCT_CASES_TAC (ISPEC t (cases_of (type_of t))) THEN
   REWRITE_TAC (K_DEF :: record_thms nm);;
 
+(* and the accessors of a record over its updates, which is what
+   HOL4's record simp set does: for each of the named fields, the
+   equation of its accessor applied to an update of every field.
+   A proof that follows a function over a record state rewrites
+   with these, where taking the record apart would lose the
+   variable that the induction hypothesis is about. *)
+
+let record_simps name flds =
+  let tbl = assoc name (!the_records) in
+  let accof (_,(accth,_)) =
+    fst(strip_comb(lhs(snd(strip_forall(concl accth))))) in
+  let updof (_,(_,updth)) =
+    fst(strip_comb(lhs(snd(strip_forall(concl updth))))) in
+  let rty = hd(tl(fst(splitlist dest_fun_ty
+                        (type_of (updof (hd tbl)))))) in
+  let sv = mk_var("s",rty) in
+  let cas = cases_of rty in
+  itlist (fun a l ->
+    if not (mem (fst a) flds) then l else
+    itlist (fun u l ->
+      let acc = accof a and upd = updof u in
+      let fty = hd(fst(splitlist dest_fun_ty (type_of upd))) in
+      let f = mk_var("f",fty) in
+      let lhs' = mk_comb(acc,mk_comb(mk_comb(upd,f),sv)) in
+      let rhs' = if fst a = fst u then mk_comb(f,mk_comb(acc,sv))
+                 else mk_comb(acc,sv) in
+      prove(mk_eq(lhs',rhs'),
+            STRUCT_CASES_TAC(ISPEC sv cas) THEN
+            REWRITE_TAC(record_thms name)) :: l) tbl l) tbl [];;
+
 (* HOL4's rveq (var_eq_tac): use up the equations between variables
    that a case split leaves, and keep the others -- the equations
    that say what a function returned are the ones the proof needs.

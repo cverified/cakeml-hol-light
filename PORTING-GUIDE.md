@@ -2435,3 +2435,75 @@ overrides or a hidden name, and the theorem is stated again.
 `tools/tolerant.py` and `tools/bin/harvestall` (the harvest),
 `tools/port.py`'s `state` (the pointer in the place of the
 theorem).
+
+## 34. A term of a tactic, and the types the goal gave it
+
+### The idiom
+
+Not an idiom of HOL4 but of HOL Light, and the one that cost the
+most time in the lemmas about the refs of `v_inv`: a term written
+inside a tactic (`SUBGOAL_THEN`, `ASM_CASES_TAC`, `EXISTS_TAC`) is
+read by itself, with no goal to constrain it.
+
+### What it means
+
+Each quotation is typechecked on its own.  The statement of a
+lemma about the refs of CakeML fixes `refs` to
+`((dataSem_v)bvlSem_ref)spt` because `dest_thunk` is in it; a
+`SUBGOAL_THEN` of the proof that says
+
+```ocaml
+SUBGOAL_THEN
+  `lookup ptr refs = NONE \/
+   ?a b. lookup ptr refs = SOME (ByteArray a b)`
+```
+
+has only `ByteArray` to go on, so its `refs` is `((A)bvlSem_ref)spt`
+with a type variable -- a *different* variable of the same name.
+The subgoal is then about something else than the goal, and what
+fails is not the term but a `MATCH_ACCEPT_TAC` three steps later,
+with `Failure "ACCEPT_TAC"`, or an assumption that no `FIRST_ASSUM`
+of the rest of the proof finds, with `Failure "tryfind"`.
+
+### What the port does
+
+Either the term is taken from the goal, which is always right:
+
+```ocaml
+FIRST_ASSUM(fun h ->
+  let d = lhand(concl h) in
+  ASM_CASES_TAC d THENL [...])
+```
+
+or, where it is written down, it carries the annotation that pins
+it:
+
+```ocaml
+SUBGOAL_THEN
+  `lookup ptr (refs:(dataSem_v bvlSem_ref) spt) = NONE \/ ...`
+```
+
+### What else bites in the same place
+
+`THEN` and `THENL` are one precedence level and associate to the
+left, so
+
+```ocaml
+A THEN (B THENL [b1; b2; b3]) THEN C THENL [c1; c2; c3; c4]
+```
+
+without the parentheses around the second group is
+`((A THEN B THENL [...]) THEN C) THENL [c1; c2; c3; c4]`: the last
+list is applied to the goals of the whole chain, which are three
+times four, and what it says is
+
+```
+Failure "seqapply: Length mismatch"
+```
+
+A tactic with two `THENL`s in sequence brackets each of them.
+
+### Where it lives
+
+The six `v_inv_*_lemma` sections of
+`proofs/compiler/backend/proofs/data_to_word_memoryProof.prf`.
