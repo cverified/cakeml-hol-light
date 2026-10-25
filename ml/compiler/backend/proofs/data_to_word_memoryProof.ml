@@ -6077,12 +6077,15 @@ let abs_ml_inv_stack_permute = prove
 
 (* pop *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let pop_thm = prove
- (`abs_ml_inv conf (xs ++ (stack:(dataSem_v)list)) refs (rs ++
-  roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    (LENGTH xs = LENGTH rs) ==>
-    abs_ml_inv conf (stack) refs (roots,heap,be,a,sp,sp1,gens)
-      limit ts`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs ++ stack) refs (rs ++
+  roots,heap,be,a,sp,sp1,gens) limit ts /\
+      (LENGTH xs = LENGTH rs) ==>
+      abs_ml_inv conf (stack) refs (roots,heap,be,a,sp,sp1,gens)
+        limit ts`),
   (* the stack permutation that keeps none of the values that are
      popped: the pairs of the two lists are the ZIP of them *)
   (let pop = prove
@@ -6122,12 +6125,15 @@ let blocks_unique_duplicate = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let duplicate_thm = prove
- (`abs_ml_inv conf (xs ++ (stack:(dataSem_v)list)) refs (rs ++
-  roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   (LENGTH xs = LENGTH rs) ==>
-   abs_ml_inv conf (xs ++ xs ++ stack) refs (rs ++ rs ++
-     roots,heap,be,a,sp,sp1,gens) limit ts`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs ++ stack) refs (rs ++
+  roots,heap,be,a,sp,sp1,gens) limit ts /\
+     (LENGTH xs = LENGTH rs) ==>
+     abs_ml_inv conf (xs ++ xs ++ stack) refs (rs ++ rs ++
+       roots,heap,be,a,sp,sp1,gens) limit ts`),
   (* the invariant of the doubled stack: the roots and the
      reachable references are the ones of the stack it doubles,
      blocks_unique_duplicate gives the uniqueness, the timestamps of
@@ -6217,19 +6223,20 @@ let blocks_unique_move = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let move_thm = prove
- (`!xs1 rs1 xs2 rs2 xs3 rs3.
-      abs_ml_inv conf (xs1 ++ xs2 ++ xs3 ++ (stack:(dataSem_v)list))
-        refs
-                      (rs1 ++ rs2 ++ rs3 ++
-                        roots,heap,(be:bool),a,sp,sp1,gens) (limit:num)
-                        ts /\
-      (LENGTH xs1 = LENGTH rs1) /\
-      (LENGTH xs2 = LENGTH rs2) /\
-      (LENGTH xs3 = LENGTH rs3) ==>
-      abs_ml_inv conf (xs1 ++ xs3 ++ xs2 ++ stack) refs
-                      (rs1 ++ rs3 ++ rs2 ++
-                        roots,heap,be,a,sp,sp1,gens) limit ts`,
+ (cake_as_vars (fun () ->
+    `!xs1 rs1 xs2 rs2 xs3 rs3.
+        abs_ml_inv conf (xs1 ++ xs2 ++ xs3 ++ stack) refs
+                        (rs1 ++ rs2 ++ rs3 ++
+                          roots,heap,be,a,sp,sp1,gens) limit ts /\
+        (LENGTH xs1 = LENGTH rs1) /\
+        (LENGTH xs2 = LENGTH rs2) /\
+        (LENGTH xs3 = LENGTH rs3) ==>
+        abs_ml_inv conf (xs1 ++ xs3 ++ xs2 ++ stack) refs
+                        (rs1 ++ rs3 ++ rs2 ++
+                          roots,heap,be,a,sp,sp1,gens) limit ts`),
   (* the invariant of the stack with its second and third part
      exchanged: nothing of it depends on the order of the parts, so
      each conjunct is the one of the assumption -- the relation of
@@ -6820,11 +6827,13 @@ let word_ml_inv_Unit = prove
    MATCH_MP_TAC cons0 THEN
    ASM_SIMP_TAC[dimword16]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Unit = prove
- (`memory_rel c (be:bool) ts refs sp st m dm xs /\ good_dimindex (:'a)
-  ==>
-   memory_rel c be ts refs sp st m dm ((Unit,wordLang_Word ((n2w
-     2):'a word)) :: xs)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm xs /\ good_dimindex (:'a) ==>
+     memory_rel c be ts refs sp st m dm ((Unit,wordLang_Word
+       ((n2w 2):'a word)) :: xs)`),
   (REWRITE_TAC[memory_rel_def] THEN REPEAT STRIP_TAC THEN
    ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN
    MATCH_MP_TAC word_ml_inv_Unit THEN ASM_REWRITE_TAC[]));;
@@ -7068,15 +7077,18 @@ let word_ml_inv_neg_num_lemma = prove
    ASM_REWRITE_TAC[] THEN
    ASM_SIMP_TAC[ARITH_RULE `2 <= i ==> ~(i = 0)`]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_neg_num = prove
- (`word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c
-  (dataSem_state_refs s) ws /\
-    good_dimindex (:'a) /\
-    small_enough_int (--(&n)) /\ ~(n = 0) ==>
-    word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c
-      (dataSem_state_refs s)
-      ((Number (--(&n)),wordLang_Word (--(n2w (4 * n):'a word))) ::
-        ws)`,
+ (cake_as_vars (fun () ->
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (dataSem_state_refs
+  s) ws /\
+      good_dimindex (:'a) /\
+      small_enough_int (--(&n)) /\ ~(n = 0) ==>
+      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c
+        (dataSem_state_refs s)
+        ((Number (--(&n)),wordLang_Word (--(n2w (4 * n):'a
+          word))) :: ws)`),
   (* the root of a negative small number is the Data of its
      Smallnum, which is minus four times the number; its two lowest
      bits are clear, so the complement of one takes nothing off, and
@@ -8752,7 +8764,7 @@ let word_list_exists_thm = prove
    REWRITE_TAC[word_list_exists_def] THEN
    REWRITE_TAC[STAR_SEP_EXISTS; SEP_EXISTS_THM] THEN
    REWRITE_TAC[STAR_ASSOC; STAR_cond] THEN
-   REWRITE_TAC[GSYM(CONJUNCT2word_list_def)] THEN
+   REWRITE_TAC[GSYM(CONJUNCT2 word_list_def)] THEN
    REWRITE_TAC[LENGTH_EQ_NIL; emp_def] THENL
     [REWRITE_TAC[UNWIND_THM2; word_list_def; emp_def];
      MESON_TAC[LENGTH_EQ_CONS; LENGTH]]));;

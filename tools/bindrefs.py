@@ -99,10 +99,11 @@ def main():
       ndef += 1
       return dfns[thy][nm]
 
-    s = re.sub(r'\(cake_thm "([^"]+)"\)', thm, s)
+    # the brackets around the lookup stay: they may be the ones of
+    # an application (GSYM(CONJUNCT2(cake_def "misc_word_list")))
+    # and taking them away joins two names into one
     s = re.sub(r'cake_thm "([^"]+)"', thm, s)
     if defs:
-      s = re.sub(r'\(cake_def "([^"]+)"\)', dfn, s)
       s = re.sub(r'cake_def "([^"]+)"', dfn, s)
     # a section names the theorem it proves by its binding as well
     out = []

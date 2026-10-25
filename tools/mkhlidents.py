@@ -42,10 +42,19 @@ MODBIND = re.compile(r"^  (?:let|and)[ \t]+(?:rec[ \t]+)?"
                      r"\(?([A-Za-z_][A-Za-z_0-9']*)", re.M)
 
 
+# a binding of several names, each with its type in brackets, over
+# as many lines as HOL Light writes it (`let (X_GEN_TAC: ...),\n
+# (X_CHOOSE_TAC: ...),\n (EXISTS_TAC: ...) =')
+TYPED = re.compile(r"\(+([A-Za-z_][A-Za-z_0-9']*)\s*[:)]")
+
+
 def names_of(text, module=False):
   out = set()
   for m in BIND.finditer(text):
     out |= set(n.strip() for n in m.group(1).split(','))
+  # the head of such a binding runs to the `=' that ends it
+  for m in re.finditer(r"(?ms)^let (\([^=]*?)=", text):
+    out |= set(TYPED.findall(m.group(1)))
   if module: out |= set(MODBIND.findall(text))
   return out
 
