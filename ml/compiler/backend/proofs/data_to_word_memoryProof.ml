@@ -4175,7 +4175,113 @@ let v_inv_tf_restrict_lemma = prove
            (!x. MEM x (v_all_ts v1) ==> x IN P) /\
            (!x. x IN (all_ts refs stack) ==> x IN P) ==>
              v_inv_ck ck conf v1 refs (y,f,DRESTRICT tf P,heap)`),
-  CHEAT_TAC);;
+  (* the same of a tf whose domain is restricted: a Block keeps its
+     timestamp, which the hypothesis says is in the set, and of an
+     element the induction hypothesis asks for the timestamps of
+     the element (the Block's) -- of the value of a thunk for the
+     refs' (MEM_in_all_ts) *)
+  (let rl = v_inv_ck_rules in
+   let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let nlt = ARITH_RULE `!n. ~(n = 0) ==> n - 1 < n` in
+   (* the value that a thunk of the refs holds is a value of the
+      refs, so its timestamps are the refs' *)
+   let in_av = prove
+    (cake_as_vars (fun () ->
+       `lookup n refs = SOME (Thunk ev v)
+        ==> v IN all_vs refs stack`),
+     DISCH_TAC THEN
+     REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+     DISJ2_TAC THEN DISJ1_TAC THEN
+     MAP_EVERY EXISTS_TAC
+       [`n:num`; `ev:thunk_mode`; `v:dataSem_v`] THEN
+     ASM_REWRITE_TAC[] THEN
+     MATCH_MP_TAC MEM_v_all_vs THEN REWRITE_TAC[MEM]) in
+   (* the two conditions of the lemma *)
+   let prep = DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) in
+   (* the induction hypothesis at ck - 1, with the condition of the
+      value it is applied to proved by the argument *)
+   let ih_by tac =
+     FIRST_ASSUM(fun nz ->
+       let c = concl nz in
+       if not(is_neg c) then fail() else
+       let e = rand c in
+       if not(is_eq e) || not(type_of(lhs e) = `:num`) ||
+          not(rhs e = `0`) then fail() else
+       let lt = MP (SPEC (lhs e) nlt) nz in
+       FIRST_ASSUM(fun ihth ->
+         let ih' = REWRITE_RULE[GSYM IMP_CONJ]
+                     (MP (SPEC (mk_binop `(-):num->num->num`
+                                  (lhs e) `1`) ihth) lt) in
+         MATCH_MP_TAC ih' THEN REPEAT CONJ_TAC THEN
+         TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THEN tac)) in
+   (* the assumption about the timestamps of the value and the one
+      about the timestamps of the refs *)
+   let is_val a =
+     let c = concl a in
+     is_forall c &&
+     (let b = snd(strip_forall c) in
+      is_imp b &&
+      (try hd_is "MEM" (lhand b) with Failure _ -> false)) in
+   let is_refs a =
+     let c = concl a in
+     is_forall c &&
+     (let b = snd(strip_forall c) in
+      is_imp b &&
+      (try hd_is "all_ts" (rand(lhand b)) with Failure _ -> false)) in
+   (* the timestamps of an element of a Block are the Block's *)
+   let ih =
+     ih_by
+      (GEN_TAC THEN DISCH_TAC THEN
+       FIRST_ASSUM(fun a ->
+         if not (is_val a) then fail() else MATCH_MP_TAC a) THEN
+       REWRITE_TAC[vats; MEM; MEM_FLAT; MEM_MAP] THEN
+       ASM_MESON_TAC[]) in
+   (* and those of the value of a thunk are the refs' *)
+   let ih_thunk =
+     ih_by
+      (GEN_TAC THEN DISCH_TAC THEN
+       FIRST_ASSUM(fun b ->
+         if not (is_refs b) then fail() else MATCH_MP_TAC b) THEN
+       FIRST_ASSUM(fun m ->
+         FIRST_ASSUM(fun lk ->
+           MATCH_ACCEPT_TAC(MATCH_MP MEM_in_all_ts
+             (CONJ (MATCH_MP in_av lk) m))))) in
+   (* a Block keeps its timestamp, so the restriction keeps it *)
+   let tp =
+     REWRITE_TAC[FLOOKUP_DRESTRICT] THEN COND_CASES_TAC THENL
+      [FIRST_ASSUM MATCH_ACCEPT_TAC;
+       FIRST_ASSUM(fun nin ->
+         if not (is_neg (concl nin)) then fail() else
+         let t = lhand(rand(concl nin)) in
+         if not (type_of t = `:num`) then fail() else
+         FIRST_ASSUM(fun a ->
+           if not (is_val a) then fail() else
+           MP_TAC(SPEC t a))) THEN
+       REWRITE_TAC[vats; MEM] THEN ASM_REWRITE_TAC[]] in
+   let NOT_VAR_TAC =
+     FIRST_ASSUM(fun nb ->
+       if is_neg(concl nb) && is_var(rand(concl nb))
+       then SUBST_ALL_TAC(EQF_INTRO nb) else fail()) in
+   let wit n =
+     W(fun (asl,w) ->
+       let thunk = tryfind (fun (_,th) ->
+         let t = concl th in
+         if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
+         then rand(rhs t) else fail()) asl in
+       if n = 5 then
+         let x = tryfind (fun (_,th) ->
+           let t = concl th in
+           if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
+           then rand(rand(rhs t)) else fail()) asl in
+         MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
+       else EXISTS_TAC (rand thunk)) in
+   let d_thunk n =
+     NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+     MATCH_MP_TAC(el n rl) THEN wit n THEN REPEAT CONJ_TAC THEN
+     FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC;
+            DISCH_TAC THEN ih_thunk] in
+   V_INV_REFS_TAC_IH ih tp prep ALL_TAC V_INV_HEAP_PLAIN
+     (d_thunk 5) (d_thunk 6)));;
 
 let v_inv_tf_restrict = prove
  (`!conf v refs stack' y f tf heap P.

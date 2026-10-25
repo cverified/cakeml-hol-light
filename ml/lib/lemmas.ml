@@ -178,6 +178,27 @@ let FMAP_FN_FUPDATE = prove
   REWRITE_TAC[SUBSET; IN_INSERT; IN_ELIM_THM] THEN
   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
 
+(* and of a restriction of the domain, which HOL4 states as
+   FLOOKUP_DRESTRICT: the set of the keys it keeps is a part of the
+   domain, so it is finite as well *)
+
+let FMAP_FN_DRESTRICT = prove
+ (`!(fm:(A,B)fmap) s.
+     fmap_fn (DRESTRICT fm s) =
+     (\x. if x IN s then fmap_fn fm x else NONE)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[DRESTRICT] THEN
+  REWRITE_TAC[GSYM(CONJUNCT2 fmap_tybij)] THEN
+  MATCH_MP_TAC FINITE_SUBSET THEN
+  EXISTS_TAC `{x | ~(fmap_fn (fm:(A,B)fmap) x = NONE)}` THEN
+  REWRITE_TAC[FMAP_FN_FINITE; SUBSET; IN_ELIM_THM] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
+
+let FLOOKUP_DRESTRICT = prove
+ (`!(fm:(A,B)fmap) s x.
+     FLOOKUP (DRESTRICT fm s) x =
+     (if x IN s then FLOOKUP fm x else NONE)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[FLOOKUP; FMAP_FN_DRESTRICT]);;
+
 let FAPPLY_FUPDATE_THM = prove
  (`!(fm:(A,B)fmap) k v x.
      FAPPLY (fm |+ (k,v)) x = (if x = k then v else FAPPLY fm x)`,
