@@ -1304,7 +1304,7 @@ _What is next, and what the half-finished attempts are:_
 
 ## The wave of 2026-10-25
 
-_Eleven proofs, in three families, and the loop that
+_Eighteen proofs, in five families, and the loop that
 `~/.claude/.../memory/proof-loop-speed.md` asks for: the closure
 session stays, a scratch layer holds what a proof under development
 needs, and a batch of proofs costs one regeneration and one
@@ -1323,16 +1323,28 @@ needs, and a batch of proofs costs one regeneration and one
 - _the collector's data/refs split: `gen_gc_data_refs_split` and
   `gc_move_refs_data_refs_split` (an induction on the list that r2
   is, because the port has no induction theorem of the
-  definition)._
+  definition);_
+- _`gc_move_data_data_refs_split`, the third of the collector's
+  family, whose recursion is on the measure
+  `limit - heap_length h1` and whose element comes out of `h2` of
+  the state **after** the move of its list: a complete induction on
+  that measure, with the port's `TL` (which HOL4 has at the empty
+  list as well);_
+- _the four lemmas about `v_inv` and a **heap** that changes, which
+  the same induction does with a heap tactic
+  (`V_INV_HEAP_PLAIN` and `V_INV_HEAP_THUNK` of the shared block):
+  `v_inv_BlockRep_upd_lemma` (every lookup is away from the
+  BlockRep at p), `v_inv_Ref_lemma` (the heaps agree on everything
+  that is no RefBlock), `v_inv_IMP_lemma` (a store into a byte
+  array, where `heap_lookup_replace` carries the lookups over) and
+  `cons_thm_EMPTY` (the empty Block, whose root is a Data);_
+- _`reachable_addresses_related`: the path of the old heap is a
+  path of the new one, address by address (an RTC induction);_
+- _`num_eq_thm`: the root of a small integer is the word of four
+  times it, and four times a small integer is within the range of
+  the word, so the word determines the integer._
 
 _What is open:_
-
-- _`gc_move_data_data_refs_split`, the third of the collector's
-  family: its recursion is on the measure `limit - heap_length h1`
-  and the element it moves comes out of `h2` of the state **after**
-  the move of its list, so the induction is a complete induction on
-  that measure and the proof needs `hol4_TL` (the port's `TL`,
-  which HOL4 has at the empty list as well)._
 - _`ml/lib/hol4.ml` now defines `IS_PREFIX` (ISSUES.md): the
   sessions were built before it, so a `tools/bin/retemplate` and a
   `tools/bin/pfbase` are owed before the next whole run.  Nothing
