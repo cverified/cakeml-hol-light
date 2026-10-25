@@ -5062,7 +5062,21 @@
      them, and such a word determines the integer because four
      times a small one is within the range of the word: an eighth
      part of the dimword times four is half of it *)
-  ((* four times a small integer is within the range of the word *)
+  ((* Smallnum as an i2w, which the file proves a few theorems
+      later (smallnum_i2w of the source): a section may only name
+      what stands before it, so the proof stands here as well *)
+   let as_i2w = prove
+    (`Smallnum i = i2w ((&4) * i)`,
+     REWRITE_TAC[smallnum_def] THEN COND_CASES_TAC THENL
+      [REWRITE_TAC[WORD_SUB_LZERO] THEN
+       ONCE_REWRITE_TAC[WORD_IWORD] THEN
+       REWRITE_TAC[GSYM IWORD_INT_NEG] THEN AP_TERM_TAC THEN
+       SUBGOAL_THEN `&0 <= &4 * ((&0) - (i:int))` (fun th ->
+         REWRITE_TAC[MATCH_MP INT_OF_NUM_OF_INT th]) THENL
+        [ASM_INT_ARITH_TAC; INT_ARITH_TAC];
+       ONCE_REWRITE_TAC[WORD_IWORD] THEN AP_TERM_TAC THEN
+       MATCH_MP_TAC INT_OF_NUM_OF_INT THEN ASM_INT_ARITH_TAC]) in
+   (* four times a small integer is within the range of the word *)
    let bnds = prove
     (`small_int (:'a) i ==>
        --(&2 pow (dimindex (:'a) - 1)) <= (&4) * i /\
@@ -5088,7 +5102,7 @@
     (`small_int (:'a) i1 /\ small_int (:'a) i2 ==>
        ((i1 = i2) <=> (Smallnum i1 = (Smallnum i2:'a word)))`,
      STRIP_TAC THEN
-     REWRITE_TAC[smallnum_i2w; GSYM IVAL_EQ] THEN
+     REWRITE_TAC[as_i2w; GSYM IVAL_EQ] THEN
      ASSUM_LIST(fun ths ->
        REWRITE_TAC(mapfilter
          (fun a -> MATCH_MP IVAL_IWORD (MATCH_MP bnds a)) ths)) THEN
