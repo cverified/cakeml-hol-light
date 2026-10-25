@@ -2507,3 +2507,100 @@ A tactic with two `THENL`s in sequence brackets each of them.
 
 The six `v_inv_*_lemma` sections of
 `proofs/compiler/backend/proofs/data_to_word_memoryProof.prf`.
+
+## 35. A definition whose induction theorem the port has not got
+
+### The idiom
+
+```
+Theorem gc_move_refs_data_refs_split[local]:
+  ...
+Proof
+  recInduct (fetch "gen_gc" "gc_move_refs_ind")
+```
+
+and its `ho_match_mp_tac foo_ind` form, which the sources use for
+every theorem about a function that HOL4's `Definition` made.
+
+### What it means
+
+HOL4's `Definition` leaves, beside the clauses, an induction
+theorem shaped like the recursion: one case per clause, with the
+hypothesis at each recursive call.  A proof about the function is
+that induction and then the clauses.
+
+### What resisted
+
+HOL Light's `define` leaves no such theorem, and the first pass of
+the port assumes the termination (`CLAUDE.md`), so there is not
+even the measure theorem to work from.  Worse, the recursion of
+the collector is not structural in anything the statement
+mentions: `gc_move_refs` consumes `r2` **of the state**, and
+`gc_move_data` takes the head of `h2` of the state **after** the
+call it makes, which may be longer than the one it started with.
+
+### What the port does
+
+The statement is generalised over what the recursion consumes and
+the generalisation is **built from the goal**, never written down
+(entry 34: a term of a tactic is read on its own, and the type
+variables of a statement are the parser's).  Two shapes:
+
+```ocaml
+(* the list that a field of the state is *)
+let r2_induct =
+  W(fun (asl,w) ->
+    let vs,bod = strip_forall w in
+    let s = el 1 vs in
+    let r2s = find_term
+      (fun t -> hd_is "gc_state_r2" t && rand t = s) bod in
+    let l = variant (vs @ frees bod) (mk_var("l",type_of r2s)) in
+    let gen = list_mk_forall(l :: vs, mk_imp(mk_eq(r2s,l),bod)) in
+    SUBGOAL_THEN gen (fun th ->
+      MAP_EVERY X_GEN_TAC vs THEN
+      ACCEPT_TAC(MP (SPECL (r2s :: vs) th) (REFL r2s))));;
+```
+
+and, where no field is taken apart, the measure that the
+definition was made with (`MEASURE (\(conf,state). ...)` of the
+`cake_define_try_tac`), with `list_mk_icomb` for the constants so
+that the types are the goal's:
+
+```ocaml
+let meas =
+  mk_binop `(-):num->num->num`
+    (list_mk_icomb "gen_gc_conf_limit" [cc])
+    (list_mk_icomb "heap_length" [list_mk_icomb "gc_state_h1" [s]])
+```
+
+`LIST_INDUCT_TAC` or `INDUCT_TAC` then does the induction, and the
+step that uses the hypothesis is
+`MATCH_MP_TAC(REWRITE_RULE[GSYM IMP_CONJ] ih)` with the witnesses
+read off the goal's own equation.  Of a measure the base case is
+not a case of the function at all: the branch that recurses is the
+one the measure forbids, so it closes by arithmetic
+(`SUBGOAL_THEN \`F\` CONTR_TAC THEN ... ASM_ARITH_TAC`).
+
+### Where it lives
+
+`gc_move_refs_data_refs_split` (a list) and
+`gc_move_data_data_refs_split` (a measure) of
+`proofs/compiler/backend/proofs/data_to_word_memoryProof.prf`, and
+`compile_code_labels` of `bvi_letProof` (the first of them).
+
+### Dead ends
+
+- writing the generalised statement down: the type variables of a
+  statement are invented by the parser (entry 25), so `SPEC` of it
+  fails and `ISPEC` leaves the rest of them to `SPECL`, which
+  fails as well;
+- `MATCH_MP_TAC` of the generalisation against the goal: the goal
+  is the implication of the statement, so the equation has to be a
+  **separate** antecedent of the generalisation, and even then the
+  match is on a conclusion that the theorem's own bound variables
+  stand in -- `MP ... (REFL t)` and `ACCEPT_TAC` is what works;
+- `REWRITE_TAC[GSYM imp]` of the equations that a cheated lemma
+  about the state gives: with the `IS_PREFIX` and `IS_SUFFIX`
+  conjuncts in the set the rewrite does not come back (minutes),
+  where `MAP_EVERY (fun e -> SUBST1_TAC (SYM e))` of the equations
+  alone is instant.
