@@ -2533,6 +2533,73 @@
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC;
      inst a1 x1 a1 x1 THEN STRIP_TAC THEN
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC])
+### cons_thm_EMPTY
+  (* the empty Block is a Data root, so the heap does not change at
+     all: what the invariant asks of the new stack is what it asked
+     of the old one, because blocks_unique says nothing of a Block
+     whose payload is empty, the timestamps only grow, and the
+     Block holds no reference *)
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   (* the witness that an assumption names *)
+   let gv n =
+     W(fun (asl,_) ->
+       let tms = itlist (fun (_,th) acc ->
+                   union (frees(concl th)) acc) asl [] in
+       EXISTS_TAC (find (fun t -> fst(dest_var t) = n) tms)) in
+   (* an empty Block holds no reference, so what the stack with it
+      in front reaches is what the stack reaches *)
+   let rr_nil = prove
+    (`!stack refs n t tag.
+        reachable_refs (Block t tag [] :: stack) refs n
+        ==> reachable_refs stack refs n`,
+     REWRITE_TAC[reachable_refs_def; MEM] THEN REPEAT GEN_TAC THEN
+     DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THENL
+      [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+       FIRST_X_ASSUM(fun m ->
+         CONTR_TAC(REWRITE_RULE[get_refs_def; MAP; FLAT; MEM] m));
+       MAP_EVERY EXISTS_TAC [`x:dataSem_v`; `r:num`] THEN
+       ASM_REWRITE_TAC[]]) in
+   REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def] THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
+    [(* the new root is a Data, so the pointers are the old ones *)
+     USE_CHANGED [roots_ok_def] THEN
+     REWRITE_TAC[roots_ok_def; MEM;
+                 distinctness "heap_address"];
+     ALL_TAC] THEN
+   gv "f" THEN gv "tf" THEN ASM_REWRITE_TAC[] THEN
+   REPEAT CONJ_TAC THENL
+    [(* the timestamps of the stack grow by the Block's own *)
+     FIRST_ASSUM(fun sub ->
+       let t = rand(concl sub) in
+       if hd_is "all_ts" t
+       then MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC t THEN
+            CONJ_TAC THENL [ACCEPT_TAC sub; ALL_TAC]
+       else fail()) THEN
+     REWRITE_TAC[all_ts_cons; APPEND; SUBSET; IN_INSERT] THEN
+     GEN_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[];
+     (* blocks_unique says nothing of a Block whose payload is
+        empty *)
+     REWRITE_TAC[all_vs_Block; APPEND] THEN
+     FIRST_ASSUM(fun bu ->
+       if hd_is "blocks_unique" (concl bu) then MP_TAC bu
+       else fail()) THEN
+     REWRITE_TAC[blocks_unique_def; IN_INSERT;
+                 injectivity "dataSem_v"] THEN
+     DISCH_TAC THEN REPEAT GEN_TAC THEN
+     DISCH_THEN STRIP_ASSUME_TAC THEN TRY CONTRA_TAC THEN
+     FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+     (* and its root is the BlockNil word of its tag *)
+     REWRITE_TAC[ALL2; v_inv_def] THEN ASM_REWRITE_TAC[];
+     (* a reference that the new stack reaches the old one reaches,
+        because the Block holds none *)
+     GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+     CONJ_TAC THENL
+      [FIRST_ASSUM(fun rr ->
+         if not (hd_is "reachable_refs" (concl rr)) then fail() else
+         MATCH_ACCEPT_TAC(MATCH_MP rr_nil rr));
+       FIRST_ASSUM ACCEPT_TAC]])
 ### blocks_unique_Word64
   (* a Block of all_vs refs (Word64 w :: stack) is one of
      all_vs refs (ws ++ stack): the Word64 is no Block, and the rest
@@ -3864,6 +3931,90 @@
     ASM_REWRITE_TAC[] THEN
     REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
     ASM_MESON_TAC[])
+### v_inv_BlockRep_upd_lemma
+  (* the refs do not change and the heap does: every lookup of the
+     old heap that the relation makes is a lookup away from p, so
+     the hypothesis about the two heaps carries it over.  Away from
+     p because the element at p is a BlockRep: of a Block the
+     pointer is one that tf gives, which the hypothesis about tf
+     keeps off p, and of anything else the shape of the element
+     settles it *)
+  (let rl = v_inv_ck_rules in
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   (* what a FLOOKUP says of the map *)
+   let flk = prove
+    (`!f x y. FLOOKUP f x = SOME y ==> x IN FDOM f /\ FAPPLY f x = y`,
+     REWRITE_TAC[FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN
+     COND_CASES_TAC THEN
+     REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[]) in
+   (* the element at p is a BlockRep, so an address whose element is
+      another shape is not p; and a pointer that tf gives is not p,
+      which is what the hypothesis about tf says *)
+   let notp =
+     FIRST
+      [FIRST_ASSUM(fun fl ->
+         let fd = MATCH_MP flk fl in
+         FIRST_ASSUM(fun tfc ->
+           ACCEPT_TAC(REWRITE_RULE[CONJUNCT2 fd]
+             (MATCH_MP tfc (CONJUNCT1 fd)))));
+       DISCH_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+       FIRST_ASSUM(fun blk ->
+         if not (hd_is "BlockRep" (rand(rhs(concl blk)))) then fail()
+         else FIRST_ASSUM(fun l ->
+           if concl l = concl blk then fail() else
+           MP_TAC(TRANS (SYM l) blk))) THEN
+       REWRITE_TAC[injectivity "option"; BlockRep_def; bignum_def;
+                   Word64Rep_def; ThunkBlock_def] THEN
+       TRY PAIRARG_TAC THEN
+       CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+       TRY COND_CASES_TAC THEN
+       REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
+                   distinctness "data_to_word_memoryProof_tag"]] in
+   (* a lookup of the old heap is one of the new heap, away from p *)
+   let hp =
+     FIRST_ASSUM(fun pres ->
+       MATCH_MP_TAC pres THEN CONJ_TAC THENL
+        [notp; FIRST_ASSUM MATCH_ACCEPT_TAC]) in
+   (* the witnesses of the two thunk rules, which the assumptions
+      name: the thunk of the refs and the element of the heap *)
+   let wit_thunk n =
+     W(fun (asl,w) ->
+       let thunk = tryfind (fun (_,th) ->
+         let t = concl th in
+         if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
+         then rand(rhs t) else fail()) asl in
+       if n = 5 then
+         let x = tryfind (fun (_,th) ->
+           let t = concl th in
+           if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
+           then rand(rand(rhs t)) else fail()) asl in
+         MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
+       else EXISTS_TAC (rand thunk)) in
+   let NOT_VAR_TAC =
+     FIRST_ASSUM(fun nb ->
+       if is_neg(concl nb) && is_var(rand(concl nb))
+       then SUBST_ALL_TAC(EQF_INTRO nb) else fail()) in
+   let d5 =
+     REPEAT SUBST_LHS_TAC THEN MATCH_MP_TAC(el 4 rl) THEN
+     ASM_REWRITE_TAC[] in
+   let d6 =
+     NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+     MATCH_MP_TAC(el 5 rl) THEN wit_thunk 5 THEN REPEAT CONJ_TAC THEN
+     FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; hp;
+            DISCH_TAC THEN CK_IH_TAC] in
+   let d7 =
+     NOT_VAR_TAC THEN MATCH_MP_TAC(el 6 rl) THEN wit_thunk 6 THEN
+     REPEAT CONJ_TAC THEN
+     FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; DISCH_TAC THEN CK_IH_TAC] in
+   (* the hypothesis about the heaps, by itself *)
+   let prep =
+     FIRST_ASSUM(fun ds ->
+       if is_conj (concl ds) then MAP_EVERY ASSUME_TAC (CONJUNCTS ds)
+       else fail()) in
+   V_INV_REFS_TAC prep hp d5 d6 d7)
 ### v_inv_MutBlock_hole_lemma
   (* and the same where what sits in the hole changes as well: the
      annotation counts the two sides of the hole and not what is in
