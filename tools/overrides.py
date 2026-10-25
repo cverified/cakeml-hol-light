@@ -2172,6 +2172,24 @@ cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
 # a definition of the port that goes after the one of the source
 # that it belongs behind
 EXTRA_AFTER = {
+  # HOL4's basicSizeTheory has a num_size of its own (the size
+  # function of a numeral, which ml/lib/hol4.ml has), and
+  # data_space's definition shadows it in every theory that has
+  # data_spaceTheory as an ancestor, so the num_size of a later
+  # statement is this one.  The port knows of only one num_size
+  # (ml/lib/hol4.ml is hand written and no source of the port
+  # declares it), so the overload is said here.
+  ('data_space', 'num_size_def'): r"""
+(* HOL4's basicSizeTheory has a num_size of its own (the size
+   function of a numeral, which ml/lib/hol4.ml has), and this
+   definition shadows it in every theory that has data_spaceTheory
+   as an ancestor -- so the num_size of a later statement is this
+   one.  Without the overload the port would read those statements
+   as the size function, and two of
+   compiler/backend/proofs/data_to_word_memoryProof.ml would say
+   something false (see ISSUES.md). *)
+hol4_overload "num_size" "data_space_num_size";;
+""",
   # the size facts and the budget of bvi_let's two definitions are
   # taken back, so that the files after it see what they had
   ('bvi_let', 'compile_sing_def'): r"""

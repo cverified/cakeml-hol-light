@@ -26,6 +26,16 @@ let num_size_def = cake_define
      (if n < 2 EXP 32 then 2:num else 1 + data_space_num_size (n
        DIV 2 EXP 32))`;;
 
+(* HOL4's basicSizeTheory has a num_size of its own (the size
+   function of a numeral, which ml/lib/hol4.ml has), and this
+   definition shadows it in every theory that has data_spaceTheory
+   as an ancestor -- so the num_size of a later statement is this
+   one.  Without the overload the port would read those statements
+   as the size function, and two of
+   compiler/backend/proofs/data_to_word_memoryProof.ml would say
+   something false (see ISSUES.md). *)
+hol4_overload "num_size" "data_space_num_size";;
+
 let part_space_req_def = cake_define_list
   [`part_space_req (W64 s:const_part) = 3`;
    `part_space_req (closLang_Int i:const_part) =
