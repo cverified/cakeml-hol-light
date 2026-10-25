@@ -1418,6 +1418,106 @@
 ### heap_store_rel_v_inv
   (REPEAT STRIP_TAC THEN MATCH_MP_TAC v_inv_SUBMAP THEN
    ASM_REWRITE_TAC[SUBMAP_REFL])
+### heap_store_unused_alt_thm
+  (* the store goes where the unused element of the split sits: the
+     split is as long as the space, so what is left of it after
+     that element is empty, and then heap_store_lemma says what
+     the heap becomes *)
+  ((* the head constant of a term, by name *)
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   (* the assumption that a test picks out *)
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   (* an element of a heap is at least one word long *)
+   let elpos = prove
+    (`!y:(A,B)heap_element. 0 < el_length y`,
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `y:(A,B)heap_element`
+       (cases_of `:(A,B)heap_element`)) THEN
+     REWRITE_TAC[el_length_def] THEN ARITH_TAC) in
+   (* the length of a heap, clause by clause *)
+   let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) =
+              el_length x + heap_length xs)`,
+     REWRITE_TAC[heap_length_def; MAP; SUM_DEF; ITLIST]) in
+   (* so a heap of no length is empty *)
+   let hlen0 = prove
+    (`!hb:((A,B)heap_element)list. heap_length hb = 0 ==> hb = []`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[hlen_cl; NOT_CONS_NIL] THEN
+     MP_TAC(ISPEC `h:(A,B)heap_element` elpos) THEN ARITH_TAC) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[heap_store_unused_alt_def] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+   POP_ASSUM(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun hs ->
+     MP_TAC(MATCH_MP heap_split_heap_length hs)) THEN
+   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+   SUBGOAL_THEN `0 < n` ASSUME_TAC THENL
+    [ASM_MESON_TAC[elpos; LTE_TRANS]; ALL_TAC] THEN
+   FIRST_ASSUM(fun eq ->
+     if is_eq (concl eq) && hd_is "APPEND" (lhand (concl eq))
+     then SUBST_ALL_TAC (SYM eq) else fail()) THEN
+   (* the lookup is inside the first half of the split *)
+   W(fun (asl,w) ->
+     let hl = grab asl (fun th ->
+       hd_is "heap_lookup" (lhand (concl th))) in
+     let ap = rand (lhand (concl hl)) in
+     SUBGOAL_THEN (subst [lhand ap,ap] (concl hl)) ASSUME_TAC THENL
+      [MP_TAC(REWRITE_RULE
+         [data_to_word_memoryProof_heap_lookup_APPEND] hl) THEN
+       ASM_SIMP_TAC[ARITH_RULE `0 < n ==> a < a + n`] THEN
+       TRY(DISCH_THEN ACCEPT_TAC);
+       ALL_TAC]) THEN
+   FIRST_ASSUM(fun hl ->
+     if hd_is "heap_lookup" (lhand (concl hl)) &&
+        is_var (rand (lhand (concl hl)))
+     then MP_TAC(MATCH_MP heap_lookup_SPLIT hl) else fail()) THEN
+   DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+   FIRST_ASSUM(fun eq ->
+     if is_eq (concl eq) && is_var (lhs (concl eq)) &&
+        hd_is "APPEND" (rhs (concl eq))
+     then SUBST_ALL_TAC eq else fail()) THEN
+   (* what is left of the split after that element is empty *)
+   W(fun (asl,w) ->
+     MP_TAC(ISPEC (var_by_name "hb" (asl,w)) hlen0)) THEN
+   ANTS_TAC THENL
+    [FIRST_ASSUM(fun hl ->
+       if is_eq (concl hl) &&
+          hd_is "heap_length" (lhand (concl hl)) &&
+          hd_is "+" (rand (concl hl))
+       then MP_TAC(REWRITE_RULE[heap_length_APPEND; hlen_cl;
+                                el_length_def] hl)
+       else fail()) THEN
+     MP_TAC(ASSUME `0 < n`) THEN
+     FIRST_ASSUM(fun ae ->
+       if is_eq (concl ae) && is_var (lhs (concl ae)) &&
+          hd_is "heap_length" (rhs (concl ae))
+       then SUBST1_TAC ae else fail()) THEN
+     ARITH_TAC;
+     ALL_TAC] THEN
+   DISCH_THEN SUBST_ALL_TAC THEN
+   W(fun (asl,w) -> EXISTS_TAC (var_by_name "ha" (asl,w))) THEN
+   REPEAT CONJ_TAC THEN TRY(REWRITE_TAC[] THEN NO_TAC) THEN
+   TRY(FIRST_ASSUM(fun ae -> ACCEPT_TAC (SYM ae))) THEN
+   (* and the store puts what it stores where that element was *)
+   FIRST_ASSUM(fun hs ->
+     if hd_is "heap_store" (lhand (concl hs))
+     then MP_TAC(REWRITE_RULE[GSYM APPEND_ASSOC; APPEND] hs)
+     else fail()) THEN
+   FIRST_ASSUM(fun ae ->
+     if is_eq (concl ae) && is_var (lhs (concl ae)) &&
+        hd_is "heap_length" (rhs (concl ae))
+     then SUBST1_TAC ae else fail()) THEN
+   REWRITE_TAC[heap_store_lemma; PAIR_EQ] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM) (K ALL_TAC)) THEN
+   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND])
 ### heap_store_unused_alt_heap_lookup
   (* the store into the unused space is a store at the address it
      keeps, so the lookup below that address gives the same; the
@@ -3324,6 +3424,106 @@
    REWRITE_TAC[blocks_unique_def] THEN DISCH_TAC THEN
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc])
+### heap_store_unused_thm
+  (* the store goes where the unused element of the split sits: the
+     split is as long as the space, so what is left of it after
+     that element is empty, and then heap_store_lemma says what
+     the heap becomes *)
+  ((* the head constant of a term, by name *)
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   (* the assumption that a test picks out *)
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   (* an element of a heap is at least one word long *)
+   let elpos = prove
+    (`!y:(A,B)heap_element. 0 < el_length y`,
+     GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `y:(A,B)heap_element`
+       (cases_of `:(A,B)heap_element`)) THEN
+     REWRITE_TAC[el_length_def] THEN ARITH_TAC) in
+   (* the length of a heap, clause by clause *)
+   let hlen_cl = prove
+    (`heap_length [] = 0 /\
+      (!x xs. heap_length (CONS x xs) =
+              el_length x + heap_length xs)`,
+     REWRITE_TAC[heap_length_def; MAP; SUM_DEF; ITLIST]) in
+   (* so a heap of no length is empty *)
+   let hlen0 = prove
+    (`!hb:((A,B)heap_element)list. heap_length hb = 0 ==> hb = []`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[hlen_cl; NOT_CONS_NIL] THEN
+     MP_TAC(ISPEC `h:(A,B)heap_element` elpos) THEN ARITH_TAC) in
+   REPEAT GEN_TAC THEN
+   REWRITE_TAC[heap_store_unused_def] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+   POP_ASSUM(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+   STRIP_TAC THEN
+   FIRST_ASSUM(fun hs ->
+     MP_TAC(MATCH_MP heap_split_heap_length hs)) THEN
+   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+   SUBGOAL_THEN `0 < n` ASSUME_TAC THENL
+    [ASM_MESON_TAC[elpos; LTE_TRANS]; ALL_TAC] THEN
+   FIRST_ASSUM(fun eq ->
+     if is_eq (concl eq) && hd_is "APPEND" (lhand (concl eq))
+     then SUBST_ALL_TAC (SYM eq) else fail()) THEN
+   (* the lookup is inside the first half of the split *)
+   W(fun (asl,w) ->
+     let hl = grab asl (fun th ->
+       hd_is "heap_lookup" (lhand (concl th))) in
+     let ap = rand (lhand (concl hl)) in
+     SUBGOAL_THEN (subst [lhand ap,ap] (concl hl)) ASSUME_TAC THENL
+      [MP_TAC(REWRITE_RULE
+         [data_to_word_memoryProof_heap_lookup_APPEND] hl) THEN
+       ASM_SIMP_TAC[ARITH_RULE `0 < n ==> a < a + n`] THEN
+       TRY(DISCH_THEN ACCEPT_TAC);
+       ALL_TAC]) THEN
+   FIRST_ASSUM(fun hl ->
+     if hd_is "heap_lookup" (lhand (concl hl)) &&
+        is_var (rand (lhand (concl hl)))
+     then MP_TAC(MATCH_MP heap_lookup_SPLIT hl) else fail()) THEN
+   DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+   FIRST_ASSUM(fun eq ->
+     if is_eq (concl eq) && is_var (lhs (concl eq)) &&
+        hd_is "APPEND" (rhs (concl eq))
+     then SUBST_ALL_TAC eq else fail()) THEN
+   (* what is left of the split after that element is empty *)
+   W(fun (asl,w) ->
+     MP_TAC(ISPEC (var_by_name "hb" (asl,w)) hlen0)) THEN
+   ANTS_TAC THENL
+    [FIRST_ASSUM(fun hl ->
+       if is_eq (concl hl) &&
+          hd_is "heap_length" (lhand (concl hl)) &&
+          hd_is "+" (rand (concl hl))
+       then MP_TAC(REWRITE_RULE[heap_length_APPEND; hlen_cl;
+                                el_length_def] hl)
+       else fail()) THEN
+     MP_TAC(ASSUME `0 < n`) THEN
+     FIRST_ASSUM(fun ae ->
+       if is_eq (concl ae) && is_var (lhs (concl ae)) &&
+          hd_is "heap_length" (rhs (concl ae))
+       then SUBST1_TAC ae else fail()) THEN
+     ARITH_TAC;
+     ALL_TAC] THEN
+   DISCH_THEN SUBST_ALL_TAC THEN
+   W(fun (asl,w) -> EXISTS_TAC (var_by_name "ha" (asl,w))) THEN
+   REPEAT CONJ_TAC THEN TRY(REWRITE_TAC[] THEN NO_TAC) THEN
+   TRY(FIRST_ASSUM(fun ae -> ACCEPT_TAC (SYM ae))) THEN
+   (* and the store puts what it stores where that element was *)
+   FIRST_ASSUM(fun hs ->
+     if hd_is "heap_store" (lhand (concl hs))
+     then MP_TAC(REWRITE_RULE[GSYM APPEND_ASSOC; APPEND] hs)
+     else fail()) THEN
+   FIRST_ASSUM(fun ae ->
+     if is_eq (concl ae) && is_var (lhs (concl ae)) &&
+        hd_is "heap_length" (rhs (concl ae))
+     then SUBST1_TAC ae else fail()) THEN
+   REWRITE_TAC[heap_store_lemma; PAIR_EQ] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM) (K ALL_TAC)) THEN
+   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND])
 ### heap_store_unused_heap_lookup
   (* and the same for the store that keeps the unused space at the
      end *)
