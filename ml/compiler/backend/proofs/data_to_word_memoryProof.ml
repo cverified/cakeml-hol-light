@@ -3861,6 +3861,175 @@ let v_inv_tf_update_thm = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_tf_update_thm_lemma]));;
 
+(* the port's own: what the lemmas about a change of the refs
+   share.  Each of them says that the clocked relation holds of a
+   value after a cell of the refs is put in or changed, and each is
+   the same complete induction on the clock, with the same four
+   facts about the lookups of the new refs to be proved of the cell
+   in question. *)
+
+(* the port's own: a key that the refs do not have has no lookup *)
+let no_lk = prove
+ (`~(ptr IN domain (refs:(A)spt)) ==> lookup ptr refs = NONE`,
+  REWRITE_TAC[domain_lookup] THEN
+  STRUCT_CASES_TAC(ISPEC `lookup ptr (refs:(A)spt)`
+    (cases_of `:(A)option`)) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  MESON_TAC[]);;
+
+(* and a key of f is a key of the refs, so it is not one that the
+   refs do not have *)
+let notptr = prove
+ (`lookup ptr refs = NONE /\
+   (!x. x IN FDOM f ==> x IN domain refs) /\ k IN FDOM f
+   ==> ~(k = ptr)`,
+  REWRITE_TAC[domain_lookup] THEN
+  MESON_TAC[distinctness "option"]);;
+
+let v_inv_ck_rules = CONJUNCTS (let (vr,_,_) = v_inv_ck in vr);;
+
+(* the b of a RefPtr that the two thunk rules ask to be false *)
+let NOT_VAR_TAC =
+  FIRST_ASSUM(fun nb ->
+    if is_neg(concl nb) && is_var(rand(concl nb))
+    then SUBST_ALL_TAC(EQF_INTRO nb) else fail());;
+
+(* the four facts that such a lemma proves of its own refs -- the
+   lookup of a thunk, the annotation of a pointer, the dest_thunk
+   of a value and the condition of a plain reference, of the new
+   refs against the old ones -- which its own `same` gives when it
+   is applied to the assumption that says what the refs are *)
+let v_inv_refs_parts same lk =
+  let s = MATCH_MP same lk in
+  (CONJUNCT1 s,CONJUNCT1(CONJUNCT2 s),
+   CONJUNCT1(CONJUNCT2(CONJUNCT2 s)),
+   CONJUNCT2(CONJUNCT2(CONJUNCT2 s)));;
+
+(* the case of a plain reference, whose annotation is the one it
+   was *)
+let V_INV_REFS_PLAIN same =
+  REPEAT SUBST_LHS_TAC THEN
+  FIRST_ASSUM(fun lk ->
+    let (t_eq,a_eq,_,m_imp) = v_inv_refs_parts same lk in
+    REWRITE_TAC[GSYM a_eq] THEN
+    MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN REPEAT CONJ_TAC THENL
+     [FIRST_ASSUM MATCH_ACCEPT_TAC;
+      ASM_REWRITE_TAC[t_eq];
+      MATCH_MP_TAC m_imp THEN FIRST_ASSUM MATCH_ACCEPT_TAC]);;
+
+(* and the case of a thunk, whose value and heap element the rule
+   names and not its conclusion, so MESON applies the rule *)
+let V_INV_REFS_THUNK same n =
+  let lt1 = ARITH_RULE `~(ck = 0) ==> ck - 1 < ck` in
+  NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+  FIRST_ASSUM(fun lk ->
+    let (t_eq,_,dt,_) = v_inv_refs_parts same lk in
+    FIRST_ASSUM(fun ih ->
+      ASM_MESON_TAC[el n v_inv_ck_rules; t_eq; dt;
+                    SPEC `ck - 1` ih; lt1]));;
+
+(* the three cases of a RefPtr where the refs do not change and the
+   heap does: a plain reference reads nothing of the heap, and the
+   heap element of a thunk is the one that the lemma's own
+   hypothesis about the two heaps carries over, which is the
+   argument.  The witnesses of the two thunk rules are the ones
+   that the assumptions name: the thunk of the refs and the
+   element of the heap. *)
+
+let V_INV_HEAP_PLAIN =
+  REPEAT SUBST_LHS_TAC THEN
+  MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN ASM_REWRITE_TAC[];;
+
+let V_INV_HEAP_THUNK hp n =
+  let wit =
+    W(fun (asl,w) ->
+      let thunk = tryfind (fun (_,th) ->
+        let t = concl th in
+        if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
+        then rand(rhs t) else fail()) asl in
+      if n = 5 then
+        let x = tryfind (fun (_,th) ->
+          let t = concl th in
+          if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
+          then rand(rand(rhs t)) else fail()) asl in
+        MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
+      else EXISTS_TAC (rand thunk)) in
+  NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+  MATCH_MP_TAC(el n v_inv_ck_rules) THEN wit THEN
+  REPEAT CONJ_TAC THEN
+  FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; hp;
+         DISCH_TAC THEN CK_IH_TAC];;
+
+(* the induction that the lemmas about a change of the refs share.
+   It is the complete induction on the ck of the relation that
+   v_inv_SUBMAP_lemma does by hand: the value is taken apart with
+   v_inv_def and the rule of the relation for that shape is
+   applied, where the maps are the ones they were and what a Block
+   asks of its elements is the induction hypothesis at ck - 1.  The
+   arguments are the tactic that applies the induction hypothesis
+   (CK_IH_TAC where it takes the assumptions as they stand), the
+   one that proves the FLOOKUP of tf of a Block (an assumption
+   where tf does not change), the tactic that derives from the
+   lemma's own hypothesis what its cases use, the one that proves a
+   heap_lookup of the new heap (ALL_TAC where the heap does not
+   change), and the three of a RefPtr: a plain reference and the
+   two thunks. *)
+let V_INV_REFS_TAC_IH ih tp prep hp d5 d6 d7 =
+  let rl = v_inv_ck_rules in
+  let VAL_CASES_TAC (asl,w) =
+    CASES_ON_TAC (el 2 (snd(strip_comb w))) (asl,w) in
+  let setup =
+    MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
+    DISCH_TAC THEN REPEAT GEN_TAC THEN
+    (DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) ORELSE
+     DISCH_TAC) THEN
+    prep THEN VAL_CASES_TAC THEN USE_CHANGED [v_inv_def] in
+  (* a Number is a small one or a Bignum of the heap *)
+  let c1 =
+    COND_CASES_TAC THEN STRIP_TAC THEN SUBST_LHS_TAC THENL
+     [MATCH_MP_TAC(el 0 rl) THEN ASM_REWRITE_TAC[];
+      MATCH_MP_TAC(el 1 rl) THEN ASM_REWRITE_TAC[] THEN hp] in
+  let c2 =
+    STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+    MATCH_MP_TAC(el 2 rl) THEN ASM_REWRITE_TAC[] THEN hp in
+  (* a Block is a BlockNil or a BlockRep whose elements the
+     induction hypothesis carries over one by one *)
+  let c3 =
+    COND_CASES_TAC THEN STRIP_TAC THEN REPEAT SUBST_LHS_TAC THENL
+     [MATCH_MP_TAC(el 7 rl) THEN ASM_REWRITE_TAC[];
+      MATCH_MP_TAC(el 8 rl) THEN REPEAT CONJ_TAC THENL
+       [FIRST_ASSUM MATCH_ACCEPT_TAC;
+        DISCH_TAC THEN
+        FIRST_ASSUM(fun a2th ->
+          if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
+                 (concl a2th)
+          then MP_TAC a2th else fail()) THEN
+        (* the elements come with their membership of the two
+           lists, which the hypothesis of a lemma about the
+           timestamps asks for *)
+        ONCE_REWRITE_TAC[LIST_REL_MEM] THEN
+        MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
+        REPEAT STRIP_TAC THEN
+        TRY(FIRST_ASSUM(fun imp ->
+          FIRST_ASSUM(fun m1 -> FIRST_ASSUM(fun m2 ->
+            ASSUME_TAC(MP imp (CONJ m1 m2)))))) THEN
+        ih;
+        tp;
+        ASM_REWRITE_TAC[] THEN hp]] in
+  let c4 = STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+           MATCH_ACCEPT_TAC(el 3 rl) in
+  let c5 =
+    DISCH_THEN(DISJ_CASES_THEN2 STRIP_ASSUME_TAC
+      (DISJ_CASES_THEN2 STRIP_ASSUME_TAC STRIP_ASSUME_TAC)) THENL
+     [d5; d6; d7] in
+  setup THENL [c1; c2; c3; c4; c5];;
+
+(* and the induction as the lemmas whose hypothesis the induction
+   hypothesis takes as it stands use it *)
+
+let V_INV_REFS_TAC =
+  V_INV_REFS_TAC_IH CK_IH_TAC (FIRST_ASSUM MATCH_ACCEPT_TAC);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let v_inv_tf_update_thm_alt_lemma = prove
@@ -3869,7 +4038,102 @@ let v_inv_tf_update_thm_alt_lemma = prove
        v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN (all_ts refs
          stack)) /\ ~(ts' IN set_of_list (v_all_ts v)) ==>
            v_inv_ck ck conf v refs (y,f,tf |+ (ts',a),heap)`),
-  CHEAT_TAC);;
+  (* tf is what changes, and only a Block reads it: of the Block
+     itself the timestamp of the update is not its own (the
+     hypothesis says so), and of an element the induction
+     hypothesis asks for the timestamps of the element, which are
+     the Block's.  Of the value that a thunk of the refs holds they
+     are the refs' (MEM_in_all_ts) *)
+  (let rl = v_inv_ck_rules in
+   let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   let nlt = ARITH_RULE `!n. ~(n = 0) ==> n - 1 < n` in
+   (* the value that a thunk of the refs holds is a value of the
+      refs, so its timestamps are the refs' *)
+   let in_av = prove
+    (cake_as_vars (fun () ->
+       `lookup n refs = SOME (Thunk ev v)
+        ==> v IN all_vs refs stack`),
+     DISCH_TAC THEN
+     REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+     DISJ2_TAC THEN DISJ1_TAC THEN
+     MAP_EVERY EXISTS_TAC
+       [`n:num`; `ev:thunk_mode`; `v:dataSem_v`] THEN
+     ASM_REWRITE_TAC[] THEN
+     MATCH_MP_TAC MEM_v_all_vs THEN REWRITE_TAC[MEM]) in
+   (* the assumption that says that the timestamp of the update is
+      none of a value's *)
+   let is_tsc c =
+     is_neg c &&
+     (try hd_is "set_of_list" (rand(rand c)) with Failure _ -> false) in
+   (* the hypothesis of the lemma, conjunct by conjunct *)
+   let prep =
+     FIRST_ASSUM(fun c ->
+       if is_conj (concl c) then MAP_EVERY ASSUME_TAC (CONJUNCTS c)
+       else fail()) in
+   (* the induction hypothesis at ck - 1, with the condition of the
+      value it is applied to proved by the argument *)
+   let ih_by tac =
+     FIRST_ASSUM(fun nz ->
+       let c = concl nz in
+       if not(is_neg c) then fail() else
+       let e = rand c in
+       if not(is_eq e) || not(type_of(lhs e) = `:num`) ||
+          not(rhs e = `0`) then fail() else
+       let lt = MP (SPEC (lhs e) nlt) nz in
+       FIRST_ASSUM(fun ihth ->
+         let ih' = MP (SPEC (mk_binop `(-):num->num->num` (lhs e) `1`)
+                         ihth) lt in
+         MATCH_MP_TAC ih' THEN REPEAT CONJ_TAC THEN
+         TRY(FIRST_ASSUM MATCH_ACCEPT_TAC) THEN tac)) in
+   (* of an element of a Block its timestamps are the Block's *)
+   let ih =
+     ih_by
+      (FIRST_ASSUM(fun tsc ->
+         if not (is_tsc (concl tsc)) then fail() else
+         MP_TAC(REWRITE_RULE[IN_SET_OF_LIST; vats; MEM; MEM_FLAT;
+                             MEM_MAP] tsc)) THEN
+       REWRITE_TAC[IN_SET_OF_LIST] THEN ASM_MESON_TAC[]) in
+   (* and of the value of a thunk they are the refs' *)
+   let ih_thunk =
+     ih_by
+      (REWRITE_TAC[IN_SET_OF_LIST] THEN DISCH_TAC THEN
+       FIRST_ASSUM(fun m ->
+         FIRST_ASSUM(fun lk ->
+           MP_TAC(MATCH_MP MEM_in_all_ts
+             (CONJ (MATCH_MP in_av lk) m)))) THEN
+       ASM_REWRITE_TAC[]) in
+   (* the timestamp of the update is no timestamp of the Block *)
+   let tp =
+     REWRITE_TAC[FLOOKUP_UPDATE] THEN COND_CASES_TAC THENL
+      [FIRST_ASSUM(fun tsc ->
+         if not (is_tsc (concl tsc)) then fail() else
+         MP_TAC(REWRITE_RULE[IN_SET_OF_LIST; vats; MEM] tsc)) THEN
+       ASM_REWRITE_TAC[];
+       FIRST_ASSUM MATCH_ACCEPT_TAC] in
+   let NOT_VAR_TAC =
+     FIRST_ASSUM(fun nb ->
+       if is_neg(concl nb) && is_var(rand(concl nb))
+       then SUBST_ALL_TAC(EQF_INTRO nb) else fail()) in
+   let wit n =
+     W(fun (asl,w) ->
+       let thunk = tryfind (fun (_,th) ->
+         let t = concl th in
+         if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
+         then rand(rhs t) else fail()) asl in
+       if n = 5 then
+         let x = tryfind (fun (_,th) ->
+           let t = concl th in
+           if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
+           then rand(rand(rhs t)) else fail()) asl in
+         MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
+       else EXISTS_TAC (rand thunk)) in
+   let d_thunk n =
+     NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+     MATCH_MP_TAC(el n rl) THEN wit n THEN REPEAT CONJ_TAC THEN
+     FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC;
+            DISCH_TAC THEN ih_thunk] in
+   V_INV_REFS_TAC_IH ih tp prep ALL_TAC V_INV_HEAP_PLAIN
+     (d_thunk 5) (d_thunk 6)));;
 
 let v_inv_tf_update_thm_alt = prove
  (`!conf v refs y f tf heap ts' a stack'.
@@ -4428,157 +4692,6 @@ let reachable_refs_UPDATE1 = prove
        EXISTS_TAC `get_refs (yy:dataSem_v)` THEN CONJ_TAC THENL
         [EXISTS_TAC `yy:dataSem_v` THEN ASM_REWRITE_TAC[];
          FIRST_ASSUM ACCEPT_TAC]]]));;
-
-(* the port's own: what the lemmas about a change of the refs
-   share.  Each of them says that the clocked relation holds of a
-   value after a cell of the refs is put in or changed, and each is
-   the same complete induction on the clock, with the same four
-   facts about the lookups of the new refs to be proved of the cell
-   in question. *)
-
-(* the port's own: a key that the refs do not have has no lookup *)
-let no_lk = prove
- (`~(ptr IN domain (refs:(A)spt)) ==> lookup ptr refs = NONE`,
-  REWRITE_TAC[domain_lookup] THEN
-  STRUCT_CASES_TAC(ISPEC `lookup ptr (refs:(A)spt)`
-    (cases_of `:(A)option`)) THEN
-  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
-  MESON_TAC[]);;
-
-(* and a key of f is a key of the refs, so it is not one that the
-   refs do not have *)
-let notptr = prove
- (`lookup ptr refs = NONE /\
-   (!x. x IN FDOM f ==> x IN domain refs) /\ k IN FDOM f
-   ==> ~(k = ptr)`,
-  REWRITE_TAC[domain_lookup] THEN
-  MESON_TAC[distinctness "option"]);;
-
-let v_inv_ck_rules = CONJUNCTS (let (vr,_,_) = v_inv_ck in vr);;
-
-(* the b of a RefPtr that the two thunk rules ask to be false *)
-let NOT_VAR_TAC =
-  FIRST_ASSUM(fun nb ->
-    if is_neg(concl nb) && is_var(rand(concl nb))
-    then SUBST_ALL_TAC(EQF_INTRO nb) else fail());;
-
-(* the four facts that such a lemma proves of its own refs -- the
-   lookup of a thunk, the annotation of a pointer, the dest_thunk
-   of a value and the condition of a plain reference, of the new
-   refs against the old ones -- which its own `same` gives when it
-   is applied to the assumption that says what the refs are *)
-let v_inv_refs_parts same lk =
-  let s = MATCH_MP same lk in
-  (CONJUNCT1 s,CONJUNCT1(CONJUNCT2 s),
-   CONJUNCT1(CONJUNCT2(CONJUNCT2 s)),
-   CONJUNCT2(CONJUNCT2(CONJUNCT2 s)));;
-
-(* the case of a plain reference, whose annotation is the one it
-   was *)
-let V_INV_REFS_PLAIN same =
-  REPEAT SUBST_LHS_TAC THEN
-  FIRST_ASSUM(fun lk ->
-    let (t_eq,a_eq,_,m_imp) = v_inv_refs_parts same lk in
-    REWRITE_TAC[GSYM a_eq] THEN
-    MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN REPEAT CONJ_TAC THENL
-     [FIRST_ASSUM MATCH_ACCEPT_TAC;
-      ASM_REWRITE_TAC[t_eq];
-      MATCH_MP_TAC m_imp THEN FIRST_ASSUM MATCH_ACCEPT_TAC]);;
-
-(* and the case of a thunk, whose value and heap element the rule
-   names and not its conclusion, so MESON applies the rule *)
-let V_INV_REFS_THUNK same n =
-  let lt1 = ARITH_RULE `~(ck = 0) ==> ck - 1 < ck` in
-  NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
-  FIRST_ASSUM(fun lk ->
-    let (t_eq,_,dt,_) = v_inv_refs_parts same lk in
-    FIRST_ASSUM(fun ih ->
-      ASM_MESON_TAC[el n v_inv_ck_rules; t_eq; dt;
-                    SPEC `ck - 1` ih; lt1]));;
-
-(* the three cases of a RefPtr where the refs do not change and the
-   heap does: a plain reference reads nothing of the heap, and the
-   heap element of a thunk is the one that the lemma's own
-   hypothesis about the two heaps carries over, which is the
-   argument.  The witnesses of the two thunk rules are the ones
-   that the assumptions name: the thunk of the refs and the
-   element of the heap. *)
-
-let V_INV_HEAP_PLAIN =
-  REPEAT SUBST_LHS_TAC THEN
-  MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN ASM_REWRITE_TAC[];;
-
-let V_INV_HEAP_THUNK hp n =
-  let wit =
-    W(fun (asl,w) ->
-      let thunk = tryfind (fun (_,th) ->
-        let t = concl th in
-        if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
-        then rand(rhs t) else fail()) asl in
-      if n = 5 then
-        let x = tryfind (fun (_,th) ->
-          let t = concl th in
-          if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
-          then rand(rand(rhs t)) else fail()) asl in
-        MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
-      else EXISTS_TAC (rand thunk)) in
-  NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
-  MATCH_MP_TAC(el n v_inv_ck_rules) THEN wit THEN
-  REPEAT CONJ_TAC THEN
-  FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; hp;
-         DISCH_TAC THEN CK_IH_TAC];;
-
-(* the induction that the lemmas about a change of the refs share.
-   It is the complete induction on the ck of the relation that
-   v_inv_SUBMAP_lemma does by hand: the value is taken apart with
-   v_inv_def and the rule of the relation for that shape is
-   applied, where the maps are the ones they were and what a Block
-   asks of its elements is the induction hypothesis at ck - 1.  The
-   arguments are the tactic that derives from the lemma's own
-   hypothesis what its cases use, the one that proves a heap_lookup
-   of the new heap (ALL_TAC where the heap does not change), and
-   the three of a RefPtr: a plain reference and the two thunks. *)
-let V_INV_REFS_TAC prep hp d5 d6 d7 =
-  let rl = v_inv_ck_rules in
-  let VAL_CASES_TAC (asl,w) =
-    CASES_ON_TAC (el 2 (snd(strip_comb w))) (asl,w) in
-  let setup =
-    MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
-    DISCH_TAC THEN REPEAT GEN_TAC THEN
-    (DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) ORELSE
-     DISCH_TAC) THEN
-    prep THEN VAL_CASES_TAC THEN USE_CHANGED [v_inv_def] in
-  (* a Number is a small one or a Bignum of the heap *)
-  let c1 =
-    COND_CASES_TAC THEN STRIP_TAC THEN SUBST_LHS_TAC THENL
-     [MATCH_MP_TAC(el 0 rl) THEN ASM_REWRITE_TAC[];
-      MATCH_MP_TAC(el 1 rl) THEN ASM_REWRITE_TAC[] THEN hp] in
-  let c2 =
-    STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
-    MATCH_MP_TAC(el 2 rl) THEN ASM_REWRITE_TAC[] THEN hp in
-  (* a Block is a BlockNil or a BlockRep whose elements the
-     induction hypothesis carries over one by one *)
-  let c3 =
-    COND_CASES_TAC THEN STRIP_TAC THEN REPEAT SUBST_LHS_TAC THENL
-     [MATCH_MP_TAC(el 7 rl) THEN ASM_REWRITE_TAC[];
-      MATCH_MP_TAC(el 8 rl) THEN REPEAT CONJ_TAC THENL
-       [FIRST_ASSUM MATCH_ACCEPT_TAC;
-        DISCH_TAC THEN
-        FIRST_ASSUM(fun a2th ->
-          if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
-                 (concl a2th)
-          then MP_TAC a2th else fail()) THEN
-        MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
-        REPEAT STRIP_TAC THEN CK_IH_TAC;
-        FIRST_ASSUM MATCH_ACCEPT_TAC;
-        ASM_REWRITE_TAC[] THEN hp]] in
-  let c4 = STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
-           MATCH_ACCEPT_TAC(el 3 rl) in
-  let c5 =
-    DISCH_THEN(DISJ_CASES_THEN2 STRIP_ASSUME_TAC
-      (DISJ_CASES_THEN2 STRIP_ASSUME_TAC STRIP_ASSUME_TAC)) THENL
-     [d5; d6; d7] in
-  setup THENL [c1; c2; c3; c4; c5];;
 
 let v_inv_ByteArray_insert_lemma = prove
  (`!ck v1 refs y f tf heap.

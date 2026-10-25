@@ -1759,11 +1759,11 @@ TYPE_TEXT = {
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
   # the induction and the three cases of a RefPtr that the
-  # lemmas about a change of the refs share (the first of them
-  # is v_inv_ByteArray_insert_lemma).  They stand here and not
+  # lemmas about a change of the refs, of the heap or of tf share
+  # (the first of them is v_inv_tf_update_thm_alt_lemma).  They stand here and not
   # at the head of the file because they are about v_inv_ck and
   # v_inv_def, which the file itself states.
-  ('data_to_word_memoryProof', 'v_inv_ByteArray_insert_lemma'): r"""
+  ('data_to_word_memoryProof', 'v_inv_tf_update_thm_alt_lemma'): r"""
 (* the port's own: what the lemmas about a change of the refs
    share.  Each of them says that the clocked relation holds of a
    value after a cell of the refs is put in or changed, and each is
@@ -1869,11 +1869,15 @@ let V_INV_HEAP_THUNK hp n =
    v_inv_def and the rule of the relation for that shape is
    applied, where the maps are the ones they were and what a Block
    asks of its elements is the induction hypothesis at ck - 1.  The
-   arguments are the tactic that derives from the lemma's own
-   hypothesis what its cases use, the one that proves a heap_lookup
-   of the new heap (ALL_TAC where the heap does not change), and
-   the three of a RefPtr: a plain reference and the two thunks. *)
-let V_INV_REFS_TAC prep hp d5 d6 d7 =
+   arguments are the tactic that applies the induction hypothesis
+   (CK_IH_TAC where it takes the assumptions as they stand), the
+   one that proves the FLOOKUP of tf of a Block (an assumption
+   where tf does not change), the tactic that derives from the
+   lemma's own hypothesis what its cases use, the one that proves a
+   heap_lookup of the new heap (ALL_TAC where the heap does not
+   change), and the three of a RefPtr: a plain reference and the
+   two thunks. *)
+let V_INV_REFS_TAC_IH ih tp prep hp d5 d6 d7 =
   let rl = v_inv_ck_rules in
   let VAL_CASES_TAC (asl,w) =
     CASES_ON_TAC (el 2 (snd(strip_comb w))) (asl,w) in
@@ -1903,9 +1907,17 @@ let V_INV_REFS_TAC prep hp d5 d6 d7 =
           if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
                  (concl a2th)
           then MP_TAC a2th else fail()) THEN
+        (* the elements come with their membership of the two
+           lists, which the hypothesis of a lemma about the
+           timestamps asks for *)
+        ONCE_REWRITE_TAC[LIST_REL_MEM] THEN
         MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
-        REPEAT STRIP_TAC THEN CK_IH_TAC;
-        FIRST_ASSUM MATCH_ACCEPT_TAC;
+        REPEAT STRIP_TAC THEN
+        TRY(FIRST_ASSUM(fun imp ->
+          FIRST_ASSUM(fun m1 -> FIRST_ASSUM(fun m2 ->
+            ASSUME_TAC(MP imp (CONJ m1 m2)))))) THEN
+        ih;
+        tp;
         ASM_REWRITE_TAC[] THEN hp]] in
   let c4 = STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
            MATCH_ACCEPT_TAC(el 3 rl) in
@@ -1914,6 +1926,12 @@ let V_INV_REFS_TAC prep hp d5 d6 d7 =
       (DISJ_CASES_THEN2 STRIP_ASSUME_TAC STRIP_ASSUME_TAC)) THENL
      [d5; d6; d7] in
   setup THENL [c1; c2; c3; c4; c5];;
+
+(* and the induction as the lemmas whose hypothesis the induction
+   hypothesis takes as it stands use it *)
+
+let V_INV_REFS_TAC =
+  V_INV_REFS_TAC_IH CK_IH_TAC (FIRST_ASSUM MATCH_ACCEPT_TAC);;
 """,
   # the two lemmas about a heap in which one element is replaced by
   # one of the same length, which the proofs about a store into a
