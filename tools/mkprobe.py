@@ -42,8 +42,11 @@ def statements(path, names):
   text = open(path).read()
   out = []
   for nm in names:
-    m = re.search(r"(?m)^let %s =\n?\s*prove\n \(\(?(`.*?`)," % nm,
-                  text, re.S)
+    # the statement is the first quotation of the block, whether
+    # the block reads it plainly or with cake_as_vars
+    m = re.search(r"(?m)^let %s =\n?\s*prove\n"
+                  r" \((?:cake_as_vars \(fun \(\) ->\n)?\s*"
+                  r"\(?(`.*?`)" % re.escape(nm), text, re.S)
     if m is None:
       print('no statement of %s in %s' % (nm, path), file=sys.stderr)
       continue
@@ -67,7 +70,7 @@ def main():
   for l in open(T + '../tmp/unstated.txt'):
     p = l.rstrip('\n').split('\t')
     if len(p) < 3 or 'typechecking' not in p[2]: continue
-    bad.setdefault(re.sub(r'.*/ml/', '', p[0]), []).append(p[1])
+    bad.setdefault(re.sub(r'^.*?\bml/', '', p[0]), []).append(p[1])
   print(PRELUDE)
   for rel in sys.argv[1:]:
     names = bad.get(rel, [])

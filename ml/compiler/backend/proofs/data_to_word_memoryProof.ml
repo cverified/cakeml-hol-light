@@ -3798,26 +3798,35 @@ let ref_edge_Thunk = prove
    REWRITE_TAC[]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let reachable_refs_UPDATE = prove
- (`reachable_refs (xs ++ (RefPtr b ptr :: (stack:(dataSem_v)list)))
-  (insert ptr (ValueArray xs) refs) n ==>
-     reachable_refs (xs ++ (RefPtr b ptr :: stack)) refs n`,
+ (cake_as_vars (fun () ->
+    `reachable_refs (xs ++ (RefPtr b ptr :: stack)) (insert ptr
+  (ValueArray xs) refs) n ==>
+       reachable_refs (xs ++ (RefPtr b ptr :: stack)) refs n`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let reachable_refs_Thunk_UPDATE = prove
- (`reachable_refs (v :: RefPtr b ptr :: (stack:(dataSem_v)list)) (insert
-  ptr (Thunk ev v) refs) n ==>
-     reachable_refs (v :: RefPtr b ptr :: stack) refs n`,
+ (cake_as_vars (fun () ->
+    `reachable_refs (v :: RefPtr b ptr :: stack) (insert ptr (Thunk ev
+  v) refs) n ==>
+       reachable_refs (v :: RefPtr b ptr :: stack) refs n`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let reachable_refs_UPDATE1 = prove
- (`reachable_refs (xs ++ (RefPtr b ptr :: (stack:(dataSem_v)list)))
-  (insert ptr (ValueArray xs1) refs) n ==>
-     (!v. MEM v xs1 ==> ~(MEM v xs) ==> (?xs2. (lookup ptr refs =
-       SOME (ValueArray xs2)) /\ MEM v xs2)) ==>
-     reachable_refs (xs ++ (RefPtr b ptr :: stack)) refs n`,
+ (cake_as_vars (fun () ->
+    `reachable_refs (xs ++ (RefPtr b ptr :: stack)) (insert ptr
+  (ValueArray xs1) refs) n ==>
+       (!v. MEM v xs1 ==> ~(MEM v xs) ==> (?xs2. (lookup ptr refs =
+         SOME (ValueArray xs2)) /\ MEM v xs2)) ==>
+       reachable_refs (xs ++ (RefPtr b ptr :: stack)) refs n`),
   CHEAT_TAC);;
 
 let v_inv_ByteArray_insert_lemma = prove
@@ -4153,11 +4162,14 @@ let all_ts_SUBSET_ts = prove
    REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN MESON_TAC[]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let all_ts_mutcons = prove
- (`~(ptr IN domain refs) ==>
-     all_ts refs ((l ++ [c] ++ r) ++ (stack:(dataSem_v)list)) SUBSET
-     all_ts (insert ptr (bvlSem_MutBlock tag F l c r) refs) (RefPtr
-       F ptr :: stack)`,
+ (cake_as_vars (fun () ->
+    `~(ptr IN domain refs) ==>
+       all_ts refs ((l ++ [c] ++ r) ++ stack) SUBSET
+       all_ts (insert ptr (bvlSem_MutBlock tag F l c r) refs)
+         (RefPtr F ptr :: stack)`),
   (* every value that the old refs and stack reach is reached by the
      new ones: one of the refs is not the fresh pointer, because the
      fresh one has no value in refs at all, and the three parts of
@@ -4185,12 +4197,14 @@ let all_ts_mutcons = prove
                distinctness "option"])));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_mutcons = prove
- (`blocks_unique ts (all_vs refs ((l ++ [c] ++ r) ++
-  (stack:(dataSem_v)list))) ==>
-   blocks_unique ts
-     (all_vs (insert ptr (bvlSem_MutBlock tag F l c r) refs)
-       (RefPtr F ptr :: stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs ((l ++ [c] ++ r) ++ stack)) ==>
+     blocks_unique ts
+       (all_vs (insert ptr (bvlSem_MutBlock tag F l c r) refs)
+         (RefPtr F ptr :: stack))`),
   (* a Block of the new refs and stack is one of the old ones: the
      MutBlock at the fresh pointer holds the values that the old
      stack has in front of it, and the RefPtr is no Block *)
@@ -4254,11 +4268,14 @@ let reachable_refs_MutCons_lemma = prove
     ASM_MESON_TAC[RTC_RULES]]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let reachable_refs_MutCons = prove
- (`reachable_refs (RefPtr F ptr :: (stack:(dataSem_v)list))
-     (insert ptr (bvlSem_MutBlock tag F l c r) refs) n /\ ~(n = ptr)
-       /\ ~(ptr IN domain refs) ==>
-   reachable_refs ((l ++ [c] ++ r) ++ stack) refs n`,
+ (cake_as_vars (fun () ->
+    `reachable_refs (RefPtr F ptr :: stack)
+       (insert ptr (bvlSem_MutBlock tag F l c r) refs) n /\ ~(n =
+         ptr) /\ ~(ptr IN domain refs) ==>
+     reachable_refs ((l ++ [c] ++ r) ++ stack) refs n`),
   (* reachable_refs_MutCons_lemma says of a path through the new
      references that it is one of the old ones or that it starts
      inside the payload of the MutBlock.  A root of the stack keeps
@@ -4376,44 +4393,51 @@ let dest_thunk_insert_fresh = prove
    handed back is a RefPtr into refs, so f (not tf) gains a binding and no
    timestamp is consumed *)
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let mutcons_thm_alt = prove
- (`abs_ml_inv conf (l ++ [c] ++ r ++ (stack:(dataSem_v)list)) refs
-              (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   LENGTH (l ++ [c] ++ r) < sp /\ ~(ptr IN domain refs) /\
-   (!gs. ~(data_to_word_config_gc_kind conf =
-     data_to_word_Generational gs)) ==>
-   (?rs roots2 heap2.
-     (roots = rs ++ roots2) /\ (LENGTH rs = LENGTH (l ++ [c] ++ r))
-       /\
-     (heap_store_unused_alt a (sp + sp1) (BlockRep tag rs) heap =
-       (heap2,T)) /\
-     abs_ml_inv conf (RefPtr F ptr :: stack)
-       (insert ptr (bvlSem_MutBlock tag F l c r) refs)
-       (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag (LENGTH
-         (l ++ [c] ++ r)))) :: roots2,
-        heap2,be,a + el_length (BlockRep tag rs),
-        sp - el_length (BlockRep tag rs),sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (l ++ [c] ++ r ++ stack) refs
+                (roots,heap,be,a,sp,sp1,gens) limit ts /\
+     LENGTH (l ++ [c] ++ r) < sp /\ ~(ptr IN domain refs) /\
+     (!gs. ~(data_to_word_config_gc_kind conf =
+       data_to_word_Generational gs)) ==>
+     (?rs roots2 heap2.
+       (roots = rs ++ roots2) /\ (LENGTH rs = LENGTH (l ++ [c] ++
+         r)) /\
+       (heap_store_unused_alt a (sp + sp1) (BlockRep tag rs) heap =
+         (heap2,T)) /\
+       abs_ml_inv conf (RefPtr F ptr :: stack)
+         (insert ptr (bvlSem_MutBlock tag F l c r) refs)
+         (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag
+           (LENGTH (l ++ [c] ++ r)))) :: roots2,
+          heap2,be,a + el_length (BlockRep tag rs),
+          sp - el_length (BlockRep tag rs),sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let mutcons_thm = prove
- (`abs_ml_inv conf (xs ++ (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   LENGTH xs < sp /\ index < LENGTH xs /\ ~(ptr IN domain refs) /\
-   (!gs. ~(data_to_word_config_gc_kind conf =
-     data_to_word_Generational gs)) ==>
-   (?rs roots2 heap2.
-     (roots = rs ++ roots2) /\ (LENGTH rs = LENGTH xs) /\
-     (heap_store_unused_alt a (sp + sp1) (BlockRep tag rs) heap =
-       (heap2,T)) /\
-     abs_ml_inv conf (RefPtr F ptr :: stack)
-       (insert ptr (bvlSem_MutBlock tag F (TAKE index xs) (EL index
-         xs)
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs ++ stack) refs (roots,heap,be,a,sp,sp1,gens)
+  limit ts /\
+     LENGTH xs < sp /\ index < LENGTH xs /\ ~(ptr IN domain refs)
+       /\
+     (!gs. ~(data_to_word_config_gc_kind conf =
+       data_to_word_Generational gs)) ==>
+     (?rs roots2 heap2.
+       (roots = rs ++ roots2) /\ (LENGTH rs = LENGTH xs) /\
+       (heap_store_unused_alt a (sp + sp1) (BlockRep tag rs) heap =
+         (heap2,T)) /\
+       abs_ml_inv conf (RefPtr F ptr :: stack)
+         (insert ptr (bvlSem_MutBlock tag F (TAKE index xs) (EL
+           index xs)
                               (DROP (index + 1) xs)) refs)
-       (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag (LENGTH
-         xs))) :: roots2,
-        heap2,be,a + el_length (BlockRep tag rs),
-        sp - el_length (BlockRep tag rs),sp1,gens) limit ts)`,
+         (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag
+           (LENGTH xs))) :: roots2,
+          heap2,be,a + el_length (BlockRep tag rs),
+          sp - el_length (BlockRep tag rs),sp1,gens) limit ts)`),
   (* take_el_drop writes the values as the three parts of the
      MutBlock, which is what mutcons_thm_alt is about, and its
      statement with those three parts in is the goal *)
@@ -4751,12 +4775,14 @@ let data_up_to_heap_store = prove
      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
      FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_update_ref = prove
- (`blocks_unique ts (all_vs refs (xs ++ (RefPtr b ptr ::
-  (stack:(dataSem_v)list)))) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (ValueArray xs) refs)
-          (xs ++ (RefPtr b ptr :: stack)))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (xs ++ (RefPtr b ptr :: stack))) ==>
+       blocks_unique ts
+         (all_vs (insert ptr (ValueArray xs) refs)
+            (xs ++ (RefPtr b ptr :: stack)))`),
   (* the ValueArray that the pointer is given holds the values that
      the stack has in front of it *)
   (let li = prove
@@ -4782,28 +4808,34 @@ let blocks_unique_update_ref = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let update_ref_thm = prove
- (`abs_ml_inv conf (xs ++ ((RefPtr b ptr) :: (stack:(dataSem_v)list)))
-  refs
-    (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    (lookup ptr refs = SOME (ValueArray xs1)) /\ (LENGTH xs = LENGTH
-      xs1) ==>
-    (?p rs roots2 heap2 u.
-      (roots = rs ++ (gc_shared_Pointer p u :: roots2)) /\
-      (heap_store p [RefBlock rs] heap = (heap2,T)) /\
-      abs_ml_inv conf (xs ++ ((RefPtr b ptr) :: stack)) (insert ptr
-        (ValueArray xs) refs)
-        (roots,heap2,be,a,sp,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs ++ ((RefPtr b ptr) :: stack)) refs
+      (roots,heap,be,a,sp,sp1,gens) limit ts /\
+      (lookup ptr refs = SOME (ValueArray xs1)) /\ (LENGTH xs =
+        LENGTH xs1) ==>
+      (?p rs roots2 heap2 u.
+        (roots = rs ++ (gc_shared_Pointer p u :: roots2)) /\
+        (heap_store p [RefBlock rs] heap = (heap2,T)) /\
+        abs_ml_inv conf (xs ++ ((RefPtr b ptr) :: stack)) (insert
+          ptr (ValueArray xs) refs)
+          (roots,heap2,be,a,sp,sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_update_ref1 = prove
- (`0 < LENGTH xs /\
-   lookup ptr refs = SOME (ValueArray xs1) /\
-   blocks_unique ts (all_vs refs (xs ++ (RefPtr b ptr ::
-     (stack:(dataSem_v)list)))) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (ValueArray (LUPDATE (HD xs) i xs1)) refs)
-          (xs ++ (RefPtr b ptr :: stack)))`,
+ (cake_as_vars (fun () ->
+    `0 < LENGTH xs /\
+     lookup ptr refs = SOME (ValueArray xs1) /\
+     blocks_unique ts (all_vs refs (xs ++ (RefPtr b ptr :: stack)))
+       ==>
+       blocks_unique ts
+         (all_vs (insert ptr (ValueArray (LUPDATE (HD xs) i xs1))
+           refs)
+            (xs ++ (RefPtr b ptr :: stack)))`),
   (* the values of the updated array are the old ones and the head
      of the list, which the stack already holds, so every value of
      the new store is one of the old store, and what was unique
@@ -4877,29 +4909,34 @@ let heap_deref_def = cake_define
      (match heap_lookup a heap with SOME (DataElement xs l
        (RefTag,[])) -> SOME xs | _29 -> NONE))`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let update_ref_thm1 = prove
- (`abs_ml_inv conf (xs ++ (RefPtr b ptr :: (stack:(dataSem_v)list)))
-  refs
-    (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    (lookup ptr refs = SOME (ValueArray xs1)) /\ i < LENGTH xs1 /\ 0
-      < LENGTH xs ==>
-    (?p rs roots2 vs1 heap2 u.
-      (roots = rs ++ (gc_shared_Pointer p u :: roots2)) /\ (LENGTH rs
-        = LENGTH xs) /\
-      (heap_deref p heap = SOME vs1) /\ LENGTH vs1 = LENGTH xs1 /\
-      (heap_store p [RefBlock (LUPDATE (HD rs) i vs1)] heap =
-        (heap2,T)) /\
-      abs_ml_inv conf (xs ++ ((RefPtr b ptr) :: stack))
-        (insert ptr (ValueArray (LUPDATE (HD xs) i xs1)) refs)
-        (roots,heap2,be,a,sp,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs ++ (RefPtr b ptr :: stack)) refs
+      (roots,heap,be,a,sp,sp1,gens) limit ts /\
+      (lookup ptr refs = SOME (ValueArray xs1)) /\ i < LENGTH xs1
+        /\ 0 < LENGTH xs ==>
+      (?p rs roots2 vs1 heap2 u.
+        (roots = rs ++ (gc_shared_Pointer p u :: roots2)) /\
+          (LENGTH rs = LENGTH xs) /\
+        (heap_deref p heap = SOME vs1) /\ LENGTH vs1 = LENGTH xs1
+          /\
+        (heap_store p [RefBlock (LUPDATE (HD rs) i vs1)] heap =
+          (heap2,T)) /\
+        abs_ml_inv conf (xs ++ ((RefPtr b ptr) :: stack))
+          (insert ptr (ValueArray (LUPDATE (HD xs) i xs1)) refs)
+          (roots,heap2,be,a,sp,sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_update_thunk = prove
- (`blocks_unique ts (all_vs refs (h :: RefPtr F ptr ::
-  (stack:(dataSem_v)list))) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (Thunk ev h) refs) (h :: RefPtr F ptr ::
-         stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (h :: RefPtr F ptr :: stack)) ==>
+       blocks_unique ts
+         (all_vs (insert ptr (Thunk ev h) refs) (h :: RefPtr F
+           ptr :: stack))`),
   (* the value that the thunk is given is on the stack already *)
   (let li = prove
     (`!k1 k2 v (t:(A)spt) y.
@@ -4937,18 +4974,21 @@ let thunk_deref_def = cake_define
      (match heap_lookup a heap with SOME (DataElement xs l
        (ThunkTag NotEvaluated,[])) -> SOME xs | _30 -> NONE))`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let update_thunk_thm = prove
- (`abs_ml_inv conf (h :: RefPtr F ptr :: (stack:(dataSem_v)list)) refs
-              (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   (lookup ptr refs = SOME (Thunk NotEvaluated v)) /\
-   (ev = Evaluated ==> dest_thunk h refs = NotThunk) ==>
-     (?p r roots2 v1 heap2 u.
-       (roots = r :: gc_shared_Pointer p u :: roots2) /\
-       (thunk_deref p heap = SOME v1) /\
-       (heap_store p [ThunkBlock ev r] heap = (heap2,T)) /\
-       abs_ml_inv conf (h :: (RefPtr F ptr) :: stack)
-         (insert ptr (Thunk ev h) refs)
-         (roots,heap2,be,a,sp,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (h :: RefPtr F ptr :: stack) refs
+                (roots,heap,be,a,sp,sp1,gens) limit ts /\
+     (lookup ptr refs = SOME (Thunk NotEvaluated v)) /\
+     (ev = Evaluated ==> dest_thunk h refs = NotThunk) ==>
+       (?p r roots2 v1 heap2 u.
+         (roots = r :: gc_shared_Pointer p u :: roots2) /\
+         (thunk_deref p heap = SOME v1) /\
+         (heap_store p [ThunkBlock ev r] heap = (heap2,T)) /\
+         abs_ml_inv conf (h :: (RefPtr F ptr) :: stack)
+           (insert ptr (Thunk ev h) refs)
+           (roots,heap2,be,a,sp,sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* ---- UpdateCons: writing the hole of an unfinalised MutBlock.  The cell is
@@ -5132,13 +5172,16 @@ let v_inv_MutBlock_hole = prove
    ASM_MESON_TAC[v_inv_eq; v_inv_MutBlock_hole_lemma]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_update_mutblock = prove
- (`lookup ptr refs = SOME (bvlSem_MutBlock tag fin l cv r) /\
-   blocks_unique ts (all_vs refs (h :: RefPtr F ptr ::
-     (stack:(dataSem_v)list))) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (bvlSem_MutBlock tag fin l h r) refs)
-               (h :: RefPtr F ptr :: stack))`,
+ (cake_as_vars (fun () ->
+    `lookup ptr refs = SOME (bvlSem_MutBlock tag fin l cv r) /\
+     blocks_unique ts (all_vs refs (h :: RefPtr F ptr :: stack))
+       ==>
+       blocks_unique ts
+         (all_vs (insert ptr (bvlSem_MutBlock tag fin l h r) refs)
+                 (h :: RefPtr F ptr :: stack))`),
   (* the elements of the updated reference are among the ones of
      the old store, so what was unique there stays unique: the
      block that the update puts in has its head and its tail in
@@ -5223,30 +5266,36 @@ let ref_edge_MutBlock_UPDATE = prove
 (* the only new edges out of ptr land in the value that was written, which is
    itself on the stack *)
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let reachable_refs_MutBlock_UPDATE = prove
- (`lookup ptr refs = SOME (bvlSem_MutBlock tg fin ll cc rr) /\
-   reachable_refs (h :: RefPtr b ptr :: (stack:(dataSem_v)list))
-                  (insert ptr (bvlSem_MutBlock tg fin ll h rr) refs)
-                    n ==>
-     reachable_refs (h :: RefPtr b ptr :: stack) refs n`,
+ (cake_as_vars (fun () ->
+    `lookup ptr refs = SOME (bvlSem_MutBlock tg fin ll cc rr) /\
+     reachable_refs (h :: RefPtr b ptr :: stack)
+                    (insert ptr (bvlSem_MutBlock tg fin ll h rr)
+                      refs) n ==>
+       reachable_refs (h :: RefPtr b ptr :: stack) refs n`),
   CHEAT_TAC);;
 
 (* mirrors update_thunk_thm: the hole is rewritten in place, so f and the heap
    layout are untouched and only tf shrinks *)
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let update_mutblock_thm = prove
- (`abs_ml_inv conf (h :: RefPtr F ptr :: (stack:(dataSem_v)list)) refs
-              (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   (lookup ptr refs = SOME (bvlSem_MutBlock tag F l cv r)) ==>
-     (?p rr roots2 vs1 heap2 u.
-       (roots = rr :: gc_shared_Pointer p u :: roots2) /\
-       (heap_lookup p heap = SOME (BlockRep tag vs1)) /\
-       (LENGTH vs1 = LENGTH l + 1 + LENGTH r) /\
-       (heap_store p [BlockRep tag (LUPDATE rr (LENGTH l) vs1)] heap
-         = (heap2,T)) /\
-       abs_ml_inv conf (h :: RefPtr F ptr :: stack)
-         (insert ptr (bvlSem_MutBlock tag F l h r) refs)
-         (roots,heap2,be,a,sp,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (h :: RefPtr F ptr :: stack) refs
+                (roots,heap,be,a,sp,sp1,gens) limit ts /\
+     (lookup ptr refs = SOME (bvlSem_MutBlock tag F l cv r)) ==>
+       (?p rr roots2 vs1 heap2 u.
+         (roots = rr :: gc_shared_Pointer p u :: roots2) /\
+         (heap_lookup p heap = SOME (BlockRep tag vs1)) /\
+         (LENGTH vs1 = LENGTH l + 1 + LENGTH r) /\
+         (heap_store p [BlockRep tag (LUPDATE rr (LENGTH l) vs1)]
+           heap = (heap2,T)) /\
+         abs_ml_inv conf (h :: RefPtr F ptr :: stack)
+           (insert ptr (bvlSem_MutBlock tag F l h r) refs)
+           (roots,heap2,be,a,sp,sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* update byte ref *)
@@ -5286,20 +5335,27 @@ let v_size_LESS_EQ = prove
    ASM_REWRITE_TAC[]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let v_inv_IMP_lemma = prove
- (`!ck w refs x f tf.
-     v_inv conf w refs (x,f,tf,ha ++ [Bytes (be:bool) fl xs ws] ++
-       hb) ==>
-       v_inv_ck ck conf w refs (x,f,tf,ha ++ [Bytes be fl ys ws] ++
-         hb)`,
+ (cake_as_vars (fun () ->
+    `!ck w refs x f tf.
+       v_inv conf w refs (x,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
+         ==>
+         v_inv_ck ck conf w refs (x,f,tf,ha ++ [Bytes be fl ys
+           ws] ++ hb)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let v_inv_IMP = prove
- (`!y x f tf ha.
-       v_inv conf y refs (x,f,tf,ha ++ [Bytes (be:bool) fl xs ws] ++
-         hb) ==>
-       v_inv conf y refs (x,f,tf,ha ++ [Bytes be fl ys ws] ++ hb)`,
+ (cake_as_vars (fun () ->
+    `!y x f tf ha.
+         v_inv conf y refs (x,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
+           ==>
+         v_inv conf y refs (x,f,tf,ha ++ [Bytes be fl ys ws] ++
+           hb)`),
   (* the lemma is applied to the assumption and not to the goal:
      where a type variable of the statement stands only in the
      antecedent, MATCH_MP_TAC leaves the lemma's own one there *)
@@ -5310,29 +5366,36 @@ let v_inv_IMP = prove
        (REWRITE_RULE[GSYM v_inv_eq] th)))));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let gen_state_ok_update_byte = prove
- (`gen_state_ok a k (ha ++ [Bytes (be:bool) fl xs ws] ++ hb) gens ==>
-   gen_state_ok a k (ha ++ [Bytes be fl ys ws] ++ hb) gens`,
+ (cake_as_vars (fun () ->
+    `gen_state_ok a k (ha ++ [Bytes be fl xs ws] ++ hb) gens ==>
+     gen_state_ok a k (ha ++ [Bytes be fl ys ws] ++ hb) gens`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:5900-5902: a theorem that
    HOL4 states as the value of an ML expression: heap_length_Bytes *)
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let unused_space_inv_byte_update = prove
- (`unused_space_inv a (sp + sp1)
-       (ha ++ [Bytes (be:bool) fl xs (REPLICATE ws (n2w 0))] ++ hb)
-         ==>
-   unused_space_inv a (sp + sp1)
-       (ha ++ [Bytes be fl ys (REPLICATE ws (n2w 0))] ++ hb)`,
+ (cake_as_vars (fun () ->
+    `unused_space_inv a (sp + sp1)
+         (ha ++ [Bytes be fl xs (REPLICATE ws (n2w 0))] ++ hb) ==>
+     unused_space_inv a (sp + sp1)
+         (ha ++ [Bytes be fl ys (REPLICATE ws (n2w 0))] ++ hb)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_insert_ByteArray = prove
- (`blocks_unique ts (all_vs refs (RefPtr b ptr ::
-  (stack:(dataSem_v)list))) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (ByteArray fl ys) refs) (RefPtr b ptr ::
-         stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (RefPtr b ptr :: stack)) ==>
+       blocks_unique ts
+         (all_vs (insert ptr (ByteArray fl ys) refs) (RefPtr b
+           ptr :: stack))`),
   (* a ByteArray holds no value of the language *)
   (let li = prove
     (`!k1 k2 v (t:(A)spt) y.
@@ -5353,20 +5416,23 @@ let blocks_unique_insert_ByteArray = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let update_byte_ref_thm = prove
- (`abs_ml_inv conf ((RefPtr b ptr) :: (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    (lookup ptr refs = SOME (ByteArray fl xs)) /\ (LENGTH xs = LENGTH
-      ys) ==>
-    (?roots2 h1 h2 ws.
-      (roots = gc_shared_Pointer (heap_length h1) ((wordLang_Word
-        (n2w 0)):'a word_loc) :: roots2) /\
-      heap = h1 ++ [Bytes be fl xs ws] ++ h2 /\
-      LENGTH ws = LENGTH xs DIV (dimindex (:'a) DIV 8) + 1 /\
-      abs_ml_inv conf ((RefPtr b ptr) :: stack) (insert ptr
-        (ByteArray fl ys) refs)
-        (roots,h1 ++ [Bytes be fl ys ws] ++ h2,be,a,sp,sp1,gens)
-          limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf ((RefPtr b ptr) :: stack) refs
+  (roots,heap,be,a,sp,sp1,gens) limit ts /\
+      (lookup ptr refs = SOME (ByteArray fl xs)) /\ (LENGTH xs =
+        LENGTH ys) ==>
+      (?roots2 h1 h2 ws.
+        (roots = gc_shared_Pointer (heap_length h1) ((wordLang_Word
+          (n2w 0)):'a word_loc) :: roots2) /\
+        heap = h1 ++ [Bytes be fl xs ws] ++ h2 /\
+        LENGTH ws = LENGTH xs DIV (dimindex (:'a) DIV 8) + 1 /\
+        abs_ml_inv conf ((RefPtr b ptr) :: stack) (insert ptr
+          (ByteArray fl ys) refs)
+          (roots,h1 ++ [Bytes be fl ys ws] ++
+            h2,be,a,sp,sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -5455,11 +5521,14 @@ let heap_store_unused_gen_state_ok = prove
 
 (* new ref *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_new_ref = prove
- (`blocks_unique ts (all_vs refs (xs ++ (stack:(dataSem_v)list))) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (ValueArray xs) refs)
-          (xs ++ (RefPtr T ptr :: stack)))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (xs ++ stack)) ==>
+       blocks_unique ts
+         (all_vs (insert ptr (ValueArray xs) refs)
+            (xs ++ (RefPtr T ptr :: stack)))`),
   (* the ValueArray of the new reference holds the values that the
      stack has in front of it already *)
   (let li = prove
@@ -5491,20 +5560,23 @@ let blocks_unique_new_ref = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let new_ref_thm = prove
- (`abs_ml_inv conf (xs ++ (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    ~(ptr IN (domain refs)) /\ LENGTH xs + 1 <= sp ==>
-    (?p rs roots2 heap2.
-      (roots = rs ++ roots2) /\ LENGTH rs = LENGTH xs /\
-      (heap_store_unused a (sp + sp1) (RefBlock rs) heap = (heap2,T))
-        /\
-      abs_ml_inv conf (xs ++ ((RefPtr T ptr) :: stack)) (insert ptr
-        (ValueArray xs) refs)
-                 (rs ++ (gc_shared_Pointer ((a + sp + sp1) - (LENGTH
-                   xs + 1)) (wordLang_Word (n2w 0)) ::
-                   roots2),heap2,be,a,
-                  sp - (LENGTH xs + 1),sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs ++ stack) refs (roots,heap,be,a,sp,sp1,gens)
+  limit ts /\
+      ~(ptr IN (domain refs)) /\ LENGTH xs + 1 <= sp ==>
+      (?p rs roots2 heap2.
+        (roots = rs ++ roots2) /\ LENGTH rs = LENGTH xs /\
+        (heap_store_unused a (sp + sp1) (RefBlock rs) heap =
+          (heap2,T)) /\
+        abs_ml_inv conf (xs ++ ((RefPtr T ptr) :: stack)) (insert
+          ptr (ValueArray xs) refs)
+                   (rs ++ (gc_shared_Pointer ((a + sp + sp1) -
+                     (LENGTH xs + 1)) (wordLang_Word (n2w 0)) ::
+                     roots2),heap2,be,a,
+                    sp - (LENGTH xs + 1),sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -5521,11 +5593,14 @@ let v_inv_new_Thunk_insert_lemma = prove
    HOL4 states as the value of an ML expression:
    v_inv_new_Thunk_insert *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_new_thunk = prove
- (`blocks_unique ts (all_vs refs (v :: (stack:(dataSem_v)list))) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (Thunk ev v) refs) (v :: RefPtr F ptr ::
-         stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (v :: stack)) ==>
+       blocks_unique ts
+         (all_vs (insert ptr (Thunk ev v) refs) (v :: RefPtr F
+           ptr :: stack))`),
   (* the value that the thunk holds is on the stack already,
      and the RefPtr that is put there is no Block *)
   (let li = prove
@@ -5569,20 +5644,23 @@ let blocks_unique_new_thunk = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let new_thunk_thm = prove
- (`abs_ml_inv conf (v :: (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    ~(ptr IN (domain refs)) /\ 2 <= sp /\
-    (ev = Evaluated ==> dest_thunk v refs = NotThunk) ==>
-    (?p r roots2 heap2.
-      (roots = r :: roots2) /\
-      (heap_store_unused a (sp + sp1) (ThunkBlock ev r) heap =
-        (heap2,T)) /\
-      abs_ml_inv conf (v :: (RefPtr F ptr) :: stack) (insert ptr
-        (Thunk ev v) refs)
-                 (r :: gc_shared_Pointer ((a + sp + sp1) - 2)
-                   (wordLang_Word (n2w 0)) :: roots2,heap2,be,a,
-                  sp - 2,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (v :: stack) refs (roots,heap,be,a,sp,sp1,gens)
+  limit ts /\
+      ~(ptr IN (domain refs)) /\ 2 <= sp /\
+      (ev = Evaluated ==> dest_thunk v refs = NotThunk) ==>
+      (?p r roots2 heap2.
+        (roots = r :: roots2) /\
+        (heap_store_unused a (sp + sp1) (ThunkBlock ev r) heap =
+          (heap2,T)) /\
+        abs_ml_inv conf (v :: (RefPtr F ptr) :: stack) (insert ptr
+          (Thunk ev v) refs)
+                   (r :: gc_shared_Pointer ((a + sp + sp1) - 2)
+                     (wordLang_Word (n2w 0)) :: roots2,heap2,be,a,
+                    sp - 2,sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* deref *)
@@ -5596,11 +5674,14 @@ let heap_el_def = cake_define
              (ARB,F))
         | _32 -> (ARB,F)`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_deref1 = prove
- (`lookup ptr refs = SOME (Thunk NotEvaluated a') /\
-   blocks_unique ts (all_vs refs (RefPtr F ptr ::
-     (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (a' :: RefPtr F ptr :: stack))`,
+ (cake_as_vars (fun () ->
+    `lookup ptr refs = SOME (Thunk NotEvaluated a') /\
+     blocks_unique ts (all_vs refs (RefPtr F ptr :: stack)) ==>
+       blocks_unique ts (all_vs refs (a' :: RefPtr F ptr ::
+         stack))`),
   (* the value of the thunk is a value of the refs already *)
   (let vcons = prove
     (`!(v:dataSem_v) xs y. MEM y (v_all_vs (CONS v xs)) <=>
@@ -5622,13 +5703,15 @@ let blocks_unique_deref1 = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_deref2 = prove
- (`n < LENGTH l /\
-   lookup ptr refs = SOME (ValueArray l) /\
-   blocks_unique ts (all_vs refs (RefPtr b ptr ::
-     (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (EL n l :: RefPtr b ptr ::
-       stack))`,
+ (cake_as_vars (fun () ->
+    `n < LENGTH l /\
+     lookup ptr refs = SOME (ValueArray l) /\
+     blocks_unique ts (all_vs refs (RefPtr b ptr :: stack)) ==>
+       blocks_unique ts (all_vs refs (EL n l :: RefPtr b ptr ::
+         stack))`),
   (* the value that the dereference puts on the stack is one
      of the ValueArray that the pointer holds *)
   (let cons_app = prove
@@ -5662,32 +5745,37 @@ let blocks_unique_deref2 = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let deref_thm = prove
- (`abs_ml_inv conf (RefPtr b ptr :: (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts ==>
-    (?r roots2.
-      (roots = r :: roots2) /\ ptr IN (domain refs) /\
-      (match THE (lookup ptr refs) with ByteArray _33 _34 -> T |
-        bvlSem_MutBlock _35 _36 _37 _38 _39 -> T | ValueArray vs ->
-      (!n. n < LENGTH vs ==>
-          (?y. (heap_el r n heap = (y,T)) /\
-                abs_ml_inv conf (EL n vs :: RefPtr b ptr :: stack)
-                  refs
-                  (y :: roots,heap,be,a,sp,sp1,gens) limit ts)) |
-                    Thunk Evaluated v -> T | Thunk NotEvaluated v ->
-      (?y. (heap_el r 0 heap = (y,T)) /\
-            abs_ml_inv conf (v :: RefPtr b ptr :: stack) refs
-              (y :: roots,heap,be,a,sp,sp1,gens) limit ts)))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (RefPtr b ptr :: stack) refs
+  (roots,heap,be,a,sp,sp1,gens) limit ts ==>
+      (?r roots2.
+        (roots = r :: roots2) /\ ptr IN (domain refs) /\
+        (match THE (lookup ptr refs) with ByteArray _40 _41 -> T |
+          bvlSem_MutBlock _42 _43 _44 _45 _46 -> T | ValueArray vs ->
+        (!n. n < LENGTH vs ==>
+            (?y. (heap_el r n heap = (y,T)) /\
+                  abs_ml_inv conf (EL n vs :: RefPtr b ptr ::
+                    stack) refs
+                    (y :: roots,heap,be,a,sp,sp1,gens) limit ts)) |
+                      Thunk Evaluated v -> T | Thunk NotEvaluated v ->
+        (?y. (heap_el r 0 heap = (y,T)) /\
+              abs_ml_inv conf (v :: RefPtr b ptr :: stack) refs
+                (y :: roots,heap,be,a,sp,sp1,gens) limit ts)))`),
   CHEAT_TAC);;
 
 (* el *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_el = prove
- (`i < LENGTH xs /\
-   blocks_unique ts (all_vs refs (Block t0 n xs ::
-     (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (EL i xs :: Block t0 n xs ::
-       stack))`,
+ (cake_as_vars (fun () ->
+    `i < LENGTH xs /\
+     blocks_unique ts (all_vs refs (Block t0 n xs :: stack)) ==>
+       blocks_unique ts (all_vs refs (EL i xs :: Block t0 n xs ::
+         stack))`),
   (* and the element of a Block is one of its payload *)
   (let cons_app = prove
     (`!(h:dataSem_v) t. CONS h t = APPEND [h] t`,
@@ -5723,23 +5811,30 @@ let blocks_unique_el = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let el_thm = prove
- (`abs_ml_inv conf (Block t0 n xs :: (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-    i < LENGTH xs ==>
-    (?r roots2 y.
-      (roots = r :: roots2) /\ (heap_el r i heap = (y,T)) /\
-      abs_ml_inv conf (EL i xs :: Block t0 n xs :: stack) refs
-                      (y :: roots,heap,be,a,sp,sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (Block t0 n xs :: stack) refs
+  (roots,heap,be,a,sp,sp1,gens) limit ts /\
+      i < LENGTH xs ==>
+      (?r roots2 y.
+        (roots = r :: roots2) /\ (heap_el r i heap = (y,T)) /\
+        abs_ml_inv conf (EL i xs :: Block t0 n xs :: stack) refs
+                        (y :: roots,heap,be,a,sp,sp1,gens) limit
+                          ts)`),
   CHEAT_TAC);;
 
 (* new byte array *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_new_byte_alt = prove
- (`blocks_unique ts (all_vs refs (stack:(dataSem_v)list)) ==>
-     blocks_unique ts
-       (all_vs (insert ptr (ByteArray fl bs) refs) (RefPtr b ptr ::
-         stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs stack) ==>
+       blocks_unique ts
+         (all_vs (insert ptr (ByteArray fl bs) refs) (RefPtr b
+           ptr :: stack))`),
   (* and the RefPtr that the stack is given is no Block *)
   (let li = prove
     (`!k1 k2 v (t:(A)spt) y.
@@ -5769,48 +5864,53 @@ let blocks_unique_new_byte_alt = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let new_byte_alt_thm = prove
- (`abs_ml_inv conf (stack:(dataSem_v)list) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   Abbrev (ws = LENGTH bs DIV (dimindex (:'a) DIV 8) + 1) /\
-   ~(ptr IN (domain refs)) /\ ws + 1 <= sp ==>
-   (?heap2.
-     (heap_store_unused_alt a (sp + sp1)
-       (Bytes be fl bs (REPLICATE ws ((n2w 0):'a word))) heap =
-         (heap2,T)) /\
-     abs_ml_inv conf ((RefPtr b ptr) :: stack) (insert ptr (ByteArray
-       fl bs) refs)
-                (gc_shared_Pointer a (wordLang_Word (n2w 0)) ::
-                  roots,heap2,be,a + ws + 1,
-                 sp - (ws + 1),sp1,gens) limit ts)`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
+  /\
+     Abbrev (ws = LENGTH bs DIV (dimindex (:'a) DIV 8) + 1) /\
+     ~(ptr IN (domain refs)) /\ ws + 1 <= sp ==>
+     (?heap2.
+       (heap_store_unused_alt a (sp + sp1)
+         (Bytes be fl bs (REPLICATE ws ((n2w 0):'a word))) heap =
+           (heap2,T)) /\
+       abs_ml_inv conf ((RefPtr b ptr) :: stack) (insert ptr
+         (ByteArray fl bs) refs)
+                  (gc_shared_Pointer a (wordLang_Word (n2w 0)) ::
+                    roots,heap2,be,a + ws + 1,
+                   sp - (ws + 1),sp1,gens) limit ts)`),
   CHEAT_TAC);;
 
 (* equality *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let ref_eq_thm = prove
- (`abs_ml_inv conf (RefPtr T p1 :: RefPtr T p2 ::
-  (stack:(dataSem_v)list)) refs
-      (r1 :: r2 :: roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts
-        ==>
-    ((p1 = p2) <=> (r1 = r2)) /\
-    (?p1 p2. r1 = gc_shared_Pointer p1 (wordLang_Word (n2w 0)) /\
-      r2 = gc_shared_Pointer p2 (wordLang_Word (n2w 0)))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (RefPtr T p1 :: RefPtr T p2 :: stack) refs
+        (r1 :: r2 :: roots,heap,be,a,sp,sp1,gens) limit ts ==>
+      ((p1 = p2) <=> (r1 = r2)) /\
+      (?p1 p2. r1 = gc_shared_Pointer p1 (wordLang_Word (n2w 0))
+        /\ r2 = gc_shared_Pointer p2 (wordLang_Word (n2w 0)))`),
   (REWRITE_TAC[abs_ml_inv_def;
                bc_stack_ref_inv_def] THEN
    STRIP_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[ALL2; v_inv_RefPtr_T; INJ]) THEN
    ASM_MESON_TAC[injectivity "heap_address"]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let num_eq_thm = prove
- (`abs_ml_inv conf (Number i1 :: Number i2 :: (stack:(dataSem_v)list))
-  refs
-     (r1 :: r2 :: roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts
-       /\
-   small_int (:'a) i1 /\
-   small_int (:'a) i2 ==>
-   ((i1 = i2) <=> (r1 = r2)) /\
-   r1 = gc_shared_Data (wordLang_Word (Smallnum i1:'a word)) /\
-   r2 = gc_shared_Data (wordLang_Word (Smallnum i2))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (Number i1 :: Number i2 :: stack) refs
+       (r1 :: r2 :: roots,heap,be,a,sp,sp1,gens) limit ts /\
+     small_int (:'a) i1 /\
+     small_int (:'a) i2 ==>
+     ((i1 = i2) <=> (r1 = r2)) /\
+     r1 = gc_shared_Data (wordLang_Word (Smallnum i1:'a word)) /\
+     r2 = gc_shared_Data (wordLang_Word (Smallnum i2))`),
   CHEAT_TAC);;
 
 (* Smallnum_i2w *)
@@ -5943,11 +6043,13 @@ let MEM_v_all_vs_SUBSET = prove
          FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
          FIRST_ASSUM ACCEPT_TAC]]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_stack_permute = prove
- (`set_of_list ys SUBSET set_of_list xs /\
-   blocks_unique ts (all_vs refs (MAP FST xs ++
-     (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (MAP FST ys ++ stack))`,
+ (cake_as_vars (fun () ->
+    `set_of_list ys SUBSET set_of_list xs /\
+     blocks_unique ts (all_vs refs (MAP FST xs ++ stack)) ==>
+       blocks_unique ts (all_vs refs (MAP FST ys ++ stack))`),
   (* and a sublist of the pairs has a sublist of the values *)
   (let inc = prove
     (`!refs (ys:(dataSem_v#A)list) xs stack' t a q.
@@ -5961,14 +6063,16 @@ let blocks_unique_stack_permute = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let abs_ml_inv_stack_permute = prove
- (`!xs ys.
-       abs_ml_inv conf (MAP FST xs ++ (stack:(dataSem_v)list)) refs
-         (MAP SND xs ++ roots,heap,(be:bool),a,sp,sp1,gens)
-           (limit:num) ts /\
-       set_of_list ys SUBSET set_of_list xs ==>
-       abs_ml_inv conf (MAP FST ys ++ stack) refs
-         (MAP SND ys ++ roots,heap,be,a,sp,sp1,gens) limit ts`,
+ (cake_as_vars (fun () ->
+    `!xs ys.
+         abs_ml_inv conf (MAP FST xs ++ stack) refs
+           (MAP SND xs ++ roots,heap,be,a,sp,sp1,gens) limit ts /\
+         set_of_list ys SUBSET set_of_list xs ==>
+         abs_ml_inv conf (MAP FST ys ++ stack) refs
+           (MAP SND ys ++ roots,heap,be,a,sp,sp1,gens) limit ts`),
   CHEAT_TAC);;
 
 (* pop *)
@@ -6001,9 +6105,12 @@ let pop_thm = prove
 
 (* duplicate *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_duplicate = prove
- (`blocks_unique ts (all_vs refs (xs ++ (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (xs ++ xs ++ stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (xs ++ stack)) ==>
+       blocks_unique ts (all_vs refs (xs ++ xs ++ stack))`),
   (* the values of xs ++ xs ++ stack are the values of xs ++ stack *)
   (let inc = prove
     (`!refs xs stack' t a q.
@@ -6088,10 +6195,13 @@ let duplicate_thm = prove
 
 (* move *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_move = prove
- (`blocks_unique ts (all_vs refs (xs1 ++ xs2 ++ xs3 ++
-  (stack:(dataSem_v)list))) ==>
-     blocks_unique ts (all_vs refs (xs1 ++ xs3 ++ xs2 ++ stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (xs1 ++ xs2 ++ xs3 ++ stack)) ==>
+       blocks_unique ts (all_vs refs (xs1 ++ xs3 ++ xs2 ++
+         stack))`),
   (* the values of a stack do not depend on the order of its
      three parts *)
   (let inc = prove
@@ -6184,41 +6294,53 @@ let move_thm = prove
 
 (* splits *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let split1_thm = prove
- (`abs_ml_inv conf (xs1 ++ (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts ==>
-    (?rs1 roots1. (roots = rs1 ++ roots1) /\ (LENGTH rs1 = LENGTH
-      xs1))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs1 ++ stack) refs (roots,heap,be,a,sp,sp1,gens)
+  limit ts ==>
+      (?rs1 roots1. (roots = rs1 ++ roots1) /\ (LENGTH rs1 =
+        LENGTH xs1))`),
   (REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
                LIST_REL_SPLIT1] THEN
    STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let split2_thm = prove
- (`abs_ml_inv conf (xs1 ++ xs2 ++ (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts ==>
-    (?rs1 rs2 roots1. (roots = rs1 ++ rs2 ++ roots1) /\
-      (LENGTH rs1 = LENGTH xs1) /\ (LENGTH rs2 = LENGTH xs2))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs1 ++ xs2 ++ stack) refs
+  (roots,heap,be,a,sp,sp1,gens) limit ts ==>
+      (?rs1 rs2 roots1. (roots = rs1 ++ rs2 ++ roots1) /\
+        (LENGTH rs1 = LENGTH xs1) /\ (LENGTH rs2 = LENGTH xs2))`),
   (REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
                GSYM APPEND_ASSOC; LIST_REL_SPLIT1] THEN
    STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let split3_thm = prove
- (`abs_ml_inv conf (xs1 ++ xs2 ++ xs3 ++ (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts ==>
-    (?rs1 rs2 rs3 roots1. (roots = rs1 ++ rs2 ++ rs3 ++ roots1) /\
-      (LENGTH rs1 = LENGTH xs1) /\ (LENGTH rs2 = LENGTH xs2) /\
-      (LENGTH rs3 = LENGTH xs3))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf (xs1 ++ xs2 ++ xs3 ++ stack) refs
+  (roots,heap,be,a,sp,sp1,gens) limit ts ==>
+      (?rs1 rs2 rs3 roots1. (roots = rs1 ++ rs2 ++ rs3 ++ roots1)
+        /\
+        (LENGTH rs1 = LENGTH xs1) /\ (LENGTH rs2 = LENGTH xs2) /\
+        (LENGTH rs3 = LENGTH xs3))`),
   (REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
                GSYM APPEND_ASSOC; LIST_REL_SPLIT1] THEN
    STRIP_TAC THEN ASM_MESON_TAC[LIST_REL_LENGTH]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let abs_ml_inv_Num = prove
- (`abs_ml_inv conf (stack:(dataSem_v)list) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\ small_int (:'a)
-  i ==>
-    abs_ml_inv conf (Number i :: stack) refs
-      (gc_shared_Data (wordLang_Word ((Smallnum i):'a word)) ::
-        roots,heap,be,a,sp,sp1,gens) limit ts`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
+  /\ small_int (:'a) i ==>
+      abs_ml_inv conf (Number i :: stack) refs
+        (gc_shared_Data (wordLang_Word ((Smallnum i):'a word)) ::
+          roots,heap,be,a,sp,sp1,gens) limit ts`),
   (* the new root is a Data, so the roots stay ok; the value has no
      refs and no timestamps of its own, so what the stack reaches
      and what the timestamps are stay as they are, and v_inv of a
@@ -6302,7 +6424,7 @@ let pointer_bits_def = cake_define
          maxout_bits (LENGTH xs) (data_to_word_config_len_bits conf)
            (data_to_word_config_tag_bits conf + 2) ||
          maxout_bits tag (data_to_word_config_tag_bits conf) 2 ||
-           (n2w 1) | _40 -> all_ones (data_to_word_config_len_bits
+           (n2w 1) | _47 -> all_ones (data_to_word_config_len_bits
            conf + data_to_word_config_tag_bits conf + 1) 0)`;;
 
 let is_all_ones_def = cake_define
@@ -6468,13 +6590,13 @@ let word_heap_def = cake_define_list
 let gen_starts_in_store_def = cake_define
   `gen_starts_in_store c x2 x3 =
       match (x2,x3) with
-        (GenState _41 gen_starts,SOME (wordLang_Word w)) ->
+        (GenState _48 gen_starts,SOME (wordLang_Word w)) ->
      (!gen_sizes. data_to_word_config_gc_kind
         c = data_to_word_Generational gen_sizes ==>
         LENGTH gen_starts = LENGTH gen_sizes /\
         (!x xs. gen_starts = x :: xs ==>
                w = (bytes_in_word * n2w x)))
-      | (_42,_43) -> F`;;
+      | (_49,_50) -> F`;;
 
 let gen_starts_in_store_IMP = prove
  (`gen_starts_in_store c gens x ==> (?w. x = SOME (wordLang_Word w))`,
@@ -6623,17 +6745,22 @@ let ALOOKUP_ZIP_EL = prove
      REPEAT CONJ_TAC THEN TRY ASM_ARITH_TAC THEN
      ASM_REWRITE_TAC[]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_rearrange = prove
- (`(!x. MEM x ys ==> MEM x xs) ==>
-   word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c refs
-     xs ==>
-   word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ys`,
+ (cake_as_vars (fun () ->
+    `(!x. MEM x ys ==> MEM x xs) ==>
+     word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs xs ==>
+     word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ys`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_rearrange = prove
- (`(!x. MEM x ys ==> MEM x xs) ==>
-   memory_rel c (be:bool) ts refs sp st m dm xs ==>
-   memory_rel c be ts refs sp st m dm ys`,
+ (cake_as_vars (fun () ->
+    `(!x. MEM x ys ==> MEM x xs) ==>
+     memory_rel c be ts refs sp st m dm xs ==>
+     memory_rel c be ts refs sp st m dm ys`),
   (* the witnesses of the goal's existential are the ones the
      assumption has: HOL4's asm_exists_tac, ml/lib/tactics.ml *)
   (REWRITE_TAC[memory_rel_def] THEN REPEAT STRIP_TAC THEN
@@ -6642,9 +6769,12 @@ let memory_rel_rearrange = prove
      MATCH_MP_TAC word_ml_inv_rearrange) THEN
    ASM_REWRITE_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_tl = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (x :: xs) ==>
-   memory_rel c be ts refs sp st m dm xs`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (x :: xs) ==>
+     memory_rel c be ts refs sp st m dm xs`),
   (* the source's match_mp_tac takes the lemma's second antecedent
      for the goal's; HOL Light's takes the conclusion, so the two
      antecedents are swapped first and the assumption discharges
@@ -6656,12 +6786,14 @@ let memory_rel_tl = prove
           memory_rel_rearrange) th)) THEN
    REWRITE_TAC[MEM] THEN MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_Unit = prove
- (`word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c refs ws
-  /\
-    good_dimindex (:'a) ==>
-    word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-      ((Unit,wordLang_Word ((n2w 2):'a word)) :: ws)`,
+ (cake_as_vars (fun () ->
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ws /\
+      good_dimindex (:'a) ==>
+      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
+        ((Unit,wordLang_Word ((n2w 2):'a word)) :: ws)`),
   (* Unit is the empty Block of the tuple tag, which cons_thm_EMPTY
      puts on the stack with the root Data (Word (BlockNil 0)), and
      that word is two, whose lowest bit word_addr takes off *)
@@ -6718,7 +6850,7 @@ let get_real_addr_def = cake_define
              ((curr + w) - (n2w 1)) else
              if k <= data_to_word_config_pad_bits conf + 1 then
                SOME (curr + (w >>> (shift_length conf - k))) else
-               SOME (curr + (w >>> (shift_length conf) << k))) | _44
+               SOME (curr + (w >>> (shift_length conf) << k))) | _51
                -> NONE)`;;
 
 let get_real_offset_def = cake_define
@@ -6730,7 +6862,7 @@ let get_real_simple_addr_def = cake_define
   `get_real_simple_addr conf st (w:'a word) =
      (match FLOOKUP st CurrHeap with SOME (wordLang_Word curr) ->
        SOME (curr + w >>> shift_length conf <<
-       backend_common_word_shift (:'a)) | _45 -> NONE)`;;
+       backend_common_word_shift (:'a)) | _52 -> NONE)`;;
 
 (* [local] *)
 let or_1 = prove
@@ -6843,14 +6975,17 @@ let word_ml_inv_num_lemma = prove
    ASM_REWRITE_TAC[] THEN
    ASM_SIMP_TAC[ARITH_RULE `2 <= i ==> ~(i = 0)`]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_ml_inv_num = prove
- (`word_ml_inv (heap,(be:bool),a,sp,sp1,gens) (limit:num) ts c
-  (dataSem_state_refs s) ws /\
-    good_dimindex (:'a) /\
-    small_enough_int (&n) ==>
-    word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c
-      (dataSem_state_refs s)
-      ((Number (&n),wordLang_Word (n2w (4 * n):'a word)) :: ws)`,
+ (cake_as_vars (fun () ->
+    `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (dataSem_state_refs
+  s) ws /\
+      good_dimindex (:'a) /\
+      small_enough_int (&n) ==>
+      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c
+        (dataSem_state_refs s)
+        ((Number (&n),wordLang_Word (n2w (4 * n):'a word)) :: ws)`),
   (* a small enough integer as a root of word_ml_inv: its root is
      the Data of its Smallnum, which abs_ml_inv_Num adds to the
      roots of the abs_ml_inv, and word_addr of that Data is four
@@ -7036,19 +7171,22 @@ let all_ts_head_eq = prove
      CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
      REWRITE_TAC[IN_ELIM_THM]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_El' = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((Block ts' tag vals,ptr) :: vars) /\
-    good_dimindex (:'a) /\
-    index < LENGTH vals ==>
-    (?ptr_w i_w (x:'a word).
-      ptr = wordLang_Word ptr_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
-      memory_rel c be ts refs sp st m dm
-        ((EL index vals,m (x + bytes_in_word + bytes_in_word * n2w
-          index)) ::
-         (Block ts' tag vals,ptr) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((Block ts' tag vals,ptr) :: vars) /\
+      good_dimindex (:'a) /\
+      index < LENGTH vals ==>
+      (?ptr_w i_w (x:'a word).
+        ptr = wordLang_Word ptr_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
+        memory_rel c be ts refs sp st m dm
+          ((EL index vals,m (x + bytes_in_word + bytes_in_word *
+            n2w index)) ::
+           (Block ts' tag vals,ptr) :: vars))`),
   (let hd_is n t =
    (try fst(dest_const(fst(strip_comb t))) = n
     with Failure _ -> false) in
@@ -7269,19 +7407,23 @@ let memory_rel_El' = prove
    ASM_REWRITE_TAC[MAP; ALL2; HD; TL; NOT_CONS_NIL] THEN
    REWRITE_TAC(word_addr_clauses ())));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_El = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((Block ts' tag vals,ptr) :: (Number (&index),i) :: vars) /\
-    good_dimindex (:'a) /\
-    index < LENGTH vals ==>
-    (?ptr_w i_w x (y:'a word).
-      ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      get_real_offset i_w = SOME y /\
-      (x + y) IN dm /\
-      memory_rel c be ts refs sp st m dm
-        ((EL index vals,m (x + y)) ::
-         (Block ts' tag vals,ptr) :: (Number (&index),i) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((Block ts' tag vals,ptr) :: (Number (&index),i) :: vars) /\
+      good_dimindex (:'a) /\
+      index < LENGTH vals ==>
+      (?ptr_w i_w x (y:'a word).
+        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        get_real_offset i_w = SOME y /\
+        (x + y) IN dm /\
+        memory_rel c be ts refs sp st m dm
+          ((EL index vals,m (x + y)) ::
+           (Block ts' tag vals,ptr) :: (Number (&index),i) ::
+             vars))`),
   (* an element of a block at an index that a Number root holds:
      memory_rel_El' with the index read off that root.  Its v_inv
      is the small-integer case, because the condition of the
@@ -7615,9 +7757,12 @@ let memory_rel_El = prove
     ASM_REWRITE_TAC[MAP; ALL2; HD; TL; NOT_CONS_NIL] THEN
     REWRITE_TAC(word_addr_clauses () @ [and4])));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_swap = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (x :: y :: z) ==>
-   memory_rel c be ts refs sp st m dm (y :: x :: z)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (x :: y :: z) ==>
+     memory_rel c be ts refs sp st m dm (y :: x :: z)`),
   (DISCH_TAC THEN
    FIRST_ASSUM(fun th ->
      MATCH_MP_TAC(MATCH_MP
@@ -7625,20 +7770,22 @@ let memory_rel_swap = prove
           memory_rel_rearrange) th)) THEN
    REWRITE_TAC[MEM] THEN MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Deref' = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl nn,ptr) ::
-  vars) /\
-    lookup nn refs = SOME (ValueArray vals) /\
-    good_dimindex (:'a) /\
-    index < LENGTH vals ==>
-    (?ptr_w (x:'a word).
-      ptr = wordLang_Word ptr_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
-      memory_rel c be ts refs sp st m dm
-        ((EL index vals,m (x + bytes_in_word + bytes_in_word * n2w
-          index)) ::
-         (RefPtr bl nn,ptr) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl nn,ptr) :: vars) /\
+      lookup nn refs = SOME (ValueArray vals) /\
+      good_dimindex (:'a) /\
+      index < LENGTH vals ==>
+      (?ptr_w (x:'a word).
+        ptr = wordLang_Word ptr_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
+        memory_rel c be ts refs sp st m dm
+          ((EL index vals,m (x + bytes_in_word + bytes_in_word *
+            n2w index)) ::
+           (RefPtr bl nn,ptr) :: vars))`),
   (* an element of a reference's array, read out of the memory: the
      same shape as memory_rel_El', with bc_ref_inv's RefBlock in
      place of the Block's BlockRep and deref_thm in place of
@@ -7898,20 +8045,23 @@ let memory_rel_Deref' = prove
    ASM_REWRITE_TAC[MAP; ALL2; HD; TL; NOT_CONS_NIL] THEN
    REWRITE_TAC(word_addr_clauses ())));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Deref = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((RefPtr bl nn,ptr) :: (Number (&index),i) :: vars) /\
-    lookup nn refs = SOME (ValueArray vals) /\
-    good_dimindex (:'a) /\
-    index < LENGTH vals ==>
-    (?ptr_w i_w x (y:'a word).
-      ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      get_real_offset i_w = SOME y /\
-      (x + y) IN dm /\
-      memory_rel c be ts refs sp st m dm
-        ((EL index vals,m (x + y)) ::
-         (RefPtr bl nn,ptr) :: (Number (&index),i) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((RefPtr bl nn,ptr) :: (Number (&index),i) :: vars) /\
+      lookup nn refs = SOME (ValueArray vals) /\
+      good_dimindex (:'a) /\
+      index < LENGTH vals ==>
+      (?ptr_w i_w x (y:'a word).
+        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        get_real_offset i_w = SOME y /\
+        (x + y) IN dm /\
+        memory_rel c be ts refs sp st m dm
+          ((EL index vals,m (x + y)) ::
+           (RefPtr bl nn,ptr) :: (Number (&index),i) :: vars))`),
   (* an element of a reference's array at an index that a Number
      root holds: memory_rel_Deref' with the index read off that
      root, the same way as memory_rel_El reads it off its own *)
@@ -8340,58 +8490,70 @@ let gc_kind_update_Ref = prove
          hb))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Update' = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((h,w) :: (RefPtr bl nn,ptr) :: vars) /\
-    lookup nn refs = SOME (ValueArray vals) /\
-    good_dimindex (:'a) /\
-    index < LENGTH vals ==>
-    (?ptr_w (x:'a word).
-      ptr = wordLang_Word ptr_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
-      memory_rel c be ts (insert nn (ValueArray (LUPDATE h index
-        vals)) refs) sp st
-        (((x + bytes_in_word + bytes_in_word * n2w index) =+ w) m) dm
-        ((h,w) :: (RefPtr bl nn,ptr) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((h,w) :: (RefPtr bl nn,ptr) :: vars) /\
+      lookup nn refs = SOME (ValueArray vals) /\
+      good_dimindex (:'a) /\
+      index < LENGTH vals ==>
+      (?ptr_w (x:'a word).
+        ptr = wordLang_Word ptr_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
+        memory_rel c be ts (insert nn (ValueArray (LUPDATE h index
+          vals)) refs) sp st
+          (((x + bytes_in_word + bytes_in_word * n2w index) =+ w)
+            m) dm
+          ((h,w) :: (RefPtr bl nn,ptr) :: vars))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Update = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) :: vars) /\
-    lookup nn refs = SOME (ValueArray vals) /\
-    good_dimindex (:'a) /\
-    index < LENGTH vals ==>
-    (?ptr_w i_w x (y:'a word).
-      ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      get_real_offset i_w = SOME y /\
-      (x + y) IN dm /\
-      memory_rel c be ts (insert nn (ValueArray (LUPDATE h index
-        vals)) refs) sp st
-        (((x + y) =+ w) m) dm
-        ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) ::
-          vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) :: vars)
+         /\
+      lookup nn refs = SOME (ValueArray vals) /\
+      good_dimindex (:'a) /\
+      index < LENGTH vals ==>
+      (?ptr_w i_w x (y:'a word).
+        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        get_real_offset i_w = SOME y /\
+        (x + y) IN dm /\
+        memory_rel c be ts (insert nn (ValueArray (LUPDATE h index
+          vals)) refs) sp st
+          (((x + y) =+ w) m) dm
+          ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) ::
+            vars))`),
   CHEAT_TAC);;
 
 (* mirrors memory_rel_Update: writing the hole of an unfinalised MutBlock is
    the same single memory write as updating a reference's payload *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_UpdateCons = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) :: vars) /\
-    lookup nn refs = SOME (bvlSem_MutBlock tag F l cv r) /\
-    good_dimindex (:'a) /\
-    index = LENGTH l ==>
-    (?ptr_w i_w x (y:'a word).
-      ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      get_real_offset i_w = SOME y /\
-      (x + y) IN dm /\
-      memory_rel c be ts (insert nn (bvlSem_MutBlock tag F l h r)
-        refs) sp st
-        (((x + y) =+ w) m) dm
-        ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) ::
-          vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) :: vars)
+         /\
+      lookup nn refs = SOME (bvlSem_MutBlock tag F l cv r) /\
+      good_dimindex (:'a) /\
+      index = LENGTH l ==>
+      (?ptr_w i_w x (y:'a word).
+        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        get_real_offset i_w = SOME y /\
+        (x + y) IN dm /\
+        memory_rel c be ts (insert nn (bvlSem_MutBlock tag F l h r)
+          refs) sp st
+          (((x + y) =+ w) m) dm
+          ((h,w) :: (RefPtr bl nn,ptr) :: (Number (&index),i) ::
+            vars))`),
   CHEAT_TAC);;
 
 let data_to_word_memoryProof_store_list_def = cake_define_list
@@ -8529,19 +8691,22 @@ let encode_header_IMP = prove
          [`len:num`; `data_to_word_config_len_size c`; `j:num`] hi) THEN
        ASM_REWRITE_TAC[] THEN ARITH_NO_BIT_TAC]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_UpdateThunk_NotEvaluated = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((h,w) :: (RefPtr F nn,ptr) :: vars) /\
-    lookup nn refs = SOME (Thunk NotEvaluated v) /\
-    good_dimindex (:'a) ==>
-    (?ptr_w (x:'a word).
-      ptr = wordLang_Word ptr_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      (x + bytes_in_word) IN dm /\
-      memory_rel c be ts (insert nn (Thunk NotEvaluated h) refs) sp
-        st
-        (((x + bytes_in_word) =+ w) m) dm
-        ((h,w) :: (RefPtr F nn,ptr) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((h,w) :: (RefPtr F nn,ptr) :: vars) /\
+      lookup nn refs = SOME (Thunk NotEvaluated v) /\
+      good_dimindex (:'a) ==>
+      (?ptr_w (x:'a word).
+        ptr = wordLang_Word ptr_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        (x + bytes_in_word) IN dm /\
+        memory_rel c be ts (insert nn (Thunk NotEvaluated h) refs)
+          sp st
+          (((x + bytes_in_word) =+ w) m) dm
+          ((h,w) :: (RefPtr F nn,ptr) :: vars))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -8552,20 +8717,25 @@ let thunk_tag_bits_lemma = prove
    MATCH_REDUCE_TAC THEN
    WORD_NUM_BIT_TAC 4));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_UpdateThunk_Evaluated = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((h,w) :: (RefPtr F nn,ptr) :: vars) /\
-    lookup nn refs = SOME (Thunk NotEvaluated v) /\
-    encode_header c (8 + 6) 1 = SOME hdr /\
-    dest_thunk h refs = NotThunk /\
-    good_dimindex (:'a) ==>
-    (?ptr_w (x:'a word).
-      ptr = wordLang_Word ptr_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      x IN dm /\ (x + bytes_in_word) IN dm /\
-      memory_rel c be ts (insert nn (Thunk Evaluated h) refs) sp st
-        (UPDATE_LIST m [x,wordLang_Word hdr; x + bytes_in_word,w]) dm
-        ((h,w) :: (RefPtr F nn,ptr) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((h,w) :: (RefPtr F nn,ptr) :: vars) /\
+      lookup nn refs = SOME (Thunk NotEvaluated v) /\
+      encode_header c (8 + 6) 1 = SOME hdr /\
+      dest_thunk h refs = NotThunk /\
+      good_dimindex (:'a) ==>
+      (?ptr_w (x:'a word).
+        ptr = wordLang_Word ptr_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        x IN dm /\ (x + bytes_in_word) IN dm /\
+        memory_rel c be ts (insert nn (Thunk Evaluated h) refs) sp
+          st
+          (UPDATE_LIST m [x,wordLang_Word hdr; x +
+            bytes_in_word,w]) dm
+          ((h,w) :: (RefPtr F nn,ptr) :: vars))`),
   CHEAT_TAC);;
 
 let word_list_exists_thm = prove
@@ -11264,7 +11434,7 @@ let copy_list_def = cake_define
      let m = (b =+ x) m in
      let b = b + bytes_in_word in
        if k = 0 then (if c then SOME (b,m) else NONE) else
-         match a with Loc _46 _47 -> NONE | wordLang_Word a ->
+         match a with Loc _53 _54 -> NONE | wordLang_Word a ->
          (match get_real_addr c' st a with NONE -> NONE | SOME a ->
            (let c = (c /\ a + (n2w 2) * bytes_in_word IN dm /\ a +
              bytes_in_word IN dm) in
@@ -12276,7 +12446,7 @@ let memory_rel_RefPtr_gen_IMP = prove
                 0b111100)) = n2w ((0 + 6) * 4)))) |
      // a MutBlock carries a BlockTag header, for which the bit pattern below
      // does not hold; this theorem has no users, so the case is left trivial
-     bvlSem_MutBlock _48 _49 _50 _51 _52 -> T | _53 ->
+     bvlSem_MutBlock _55 _56 _57 _58 _59 -> T | _60 ->
      (?w a x.
        v = wordLang_Word w /\ FAPPLY w 0 /\
        (
@@ -13640,7 +13810,7 @@ let word_cmp_loop_def = cake_define_cheat CHEAT_TAC
              (if w1 = w2 then
                word_cmp_loop (l - (n2w 1)) (a1 - bytes_in_word)
                  (a2 - bytes_in_word) dm m else if w1 <+ w2 then
-                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _54 ->
+                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _61 ->
                    NONE else NONE)`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13106: ML code, not ported *)
@@ -13717,13 +13887,13 @@ let v_same_type_def = cake_define_try_tac (fun () ->
   CHEAT_TAC
   `v_same_type x1 x2 =
         match (x1,x2) with
-          ((Number _57:dataSem_v),(Number _58:dataSem_v)) -> T
-        | ((Word64 _59),(Word64 _60)) -> T
-        | ((Block _61 t1 l1),(Block _62 t2 l2)) -> (t1 = t2 /\ LENGTH
+          ((Number _64:dataSem_v),(Number _65:dataSem_v)) -> T
+        | ((Word64 _66),(Word64 _67)) -> T
+        | ((Block _68 t1 l1),(Block _69 t2 l2)) -> (t1 = t2 /\ LENGTH
           l1 = LENGTH l2 ==> LIST_REL v_same_type l1 l2)
-        | ((CodePtr _63),(CodePtr _64)) -> T
-        | ((RefPtr _65 _66),(RefPtr _67 _68)) -> T
-        | (_69,_70) -> F`;;
+        | ((CodePtr _70),(CodePtr _71)) -> T
+        | ((RefPtr _72 _73),(RefPtr _74 _75)) -> T
+        | (_76,_77) -> F`;;
 
 let memory_rel_Block_MEM = prove
  (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts' n ls,(v:'a
@@ -13944,9 +14114,9 @@ let v_depth_def = cake_define_wf
   `MEASURE dataSem_v_size`
   `v_depth x1 =
         match x1 with
-          (Block _73 _74 ls:dataSem_v) -> (if NULL ls then 0 else 1)
+          (Block _80 _81 ls:dataSem_v) -> (if NULL ls then 0 else 1)
             + MAX_LIST (MAP v_depth ls)
-        | _75 -> 0`;;
+        | _82 -> 0`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13427: ML code, not ported *)
 
@@ -14391,7 +14561,7 @@ let memory_rel_depth_size_limit = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let vb_eq_size_def = cake_define_list_cheat CHEAT_TAC
-  [`vb_eq_size refs (Block _78 t1 l1:dataSem_v) (Block _79 t2
+  [`vb_eq_size refs (Block _85 t1 l1:dataSem_v) (Block _86 t2
   l2:dataSem_v) =
          (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
            isClos t2 l2 then SOME ((1:num),T) else NONE else if (t1 =
@@ -14401,17 +14571,17 @@ let vb_eq_size_def = cake_define_list_cheat CHEAT_TAC
          (if b1 /\ b2 then
            (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
               (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
-                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_86)
-                -> NONE | (_87,SOME (ByteArray T bs2)) -> NONE | _88
+                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_93)
+                -> NONE | (_94,SOME (ByteArray T bs2)) -> NONE | _95
                 -> SOME (1,(n1 = n2))) else NONE)`;
-   `vb_eq_size _89 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
+   `vb_eq_size _96 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
   (1,(n1 = n2))`;
-   `vb_eq_size _90 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
+   `vb_eq_size _97 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
   (1,(w1 = w2))`;
-   `vb_eq_size _91 _92 _93 = NONE`;
-   `vb_eq_size_list _94 [] [] = SOME (0,T)`;
-   `vb_eq_size_list _95 [] _96 = SOME (0,F)`;
-   `vb_eq_size_list _97 _98 [] = SOME (0,F)`;
+   `vb_eq_size _98 _99 _100 = NONE`;
+   `vb_eq_size_list _101 [] [] = SOME (0,T)`;
+   `vb_eq_size_list _102 [] _103 = SOME (0,F)`;
+   `vb_eq_size_list _104 _105 [] = SOME (0,F)`;
    `vb_eq_size_list refs (v1 :: vs1) (v2 :: vs2) =
          (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
            -> SOME (n + 1,F) | SOME (n,T) -> (
@@ -14497,7 +14667,7 @@ let word_header_def = cake_define
   `word_header c st a dm m =
      (match get_real_addr c st a with NONE -> NONE | SOME a1 ->
          (if ~(a1 IN dm) then NONE else
-           match m a1 with wordLang_Word x1 -> SOME (a1,x1) | _99
+           match m a1 with wordLang_Word x1 -> SOME (a1,x1) | _106
              -> NONE))`;;
 
 let data_to_word_memoryProof_fix_clock_def = cake_define_list
@@ -14575,7 +14745,7 @@ let word_eq_def = cake_define_try_tac (fun () ->
                 (a1 + bytes_in_word * (decode_length c h1))
                 (a2 + bytes_in_word * (decode_length c h1)) dm m with
                   NONE -> NONE | SOME res -> SOME (res,l - 1 - w2n
-                  (decode_length c h1),ck))) | _100 -> NONE)) /\
+                  (decode_length c h1),ck))) | _107 -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else
       if ~(a1 IN dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE
@@ -14588,7 +14758,7 @@ let word_eq_def = cake_define_try_tac (fun () ->
                               word_eq_list c st dm m (l - 1) ck (w -
                                 (n2w 1))
                               (a1 + bytes_in_word) (a2 +
-                                bytes_in_word))) | _101 -> NONE))`;;
+                                bytes_in_word))) | _108 -> NONE))`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:14027: ML code, not ported *)
 
@@ -17606,7 +17776,7 @@ let block_drop_def = cake_define
       match (x1,v) with
         (0,v) -> SOME v
       | (SUC n,(Block ts tag [h; vl]:dataSem_v)) -> block_drop n vl
-      | (_102,_103) -> NONE`;;
+      | (_109,_110) -> NONE`;;
 
 let v_to_list_DROP = prove
  (`!vs ptr ps k v ts.
@@ -18233,7 +18403,7 @@ let good_loc_def = cake_define
   `good_loc code x2 =
       match x2 with
         wordLang_Loc n m -> (m = 0 /\ n IN code)
-      | _104 -> T`;;
+      | _111 -> T`;;
 
 let const_parts_to_words_good_loc = prove
  (`const_parts_to_words c parts = SOME ((y0,y1),y2) ==>
