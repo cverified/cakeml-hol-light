@@ -1145,3 +1145,32 @@ let ARITH_NO_DIV_TAC =
            (try fst(dest_const(fst(strip_comb t))) = "DIV"
             with Failure _ -> false))) (concl th))) l)) THEN
   ARITH_TAC;;
+
+(* ------------------------------------------------------------------ *)
+(* The attempt of phase three that is not finished yet: the tactic    *)
+(* that the proof is being written as, with the cheat behind it.      *)
+(* Every statement of the file that has no proof yet carries the      *)
+(* attempt its source proof suggests, so what is left to do is in     *)
+(* the port and not in a list somewhere; the attempt is tried on      *)
+(* every load, under a processor time budget, and the cheat is what   *)
+(* the goal falls back on while the attempt does not close it.  So    *)
+(* `length (axioms())` still counts exactly the statements that are   *)
+(* not proved, and an attempt that starts to go through takes its     *)
+(* cheat away by itself.                                              *)
+(*                                                                    *)
+(* Cake_timeout is not a Failure, which is why this cannot be         *)
+(* written as `FIRST [SOLVED tac; CHEAT_TAC]`.                        *)
+(* ------------------------------------------------------------------ *)
+
+let ATTEMPT_TAC secs tac =
+  fun gl ->
+    let old = !cake_timeout in
+    cake_timeout := secs;
+    let r =
+      (try let (_,gls,_) as gst = with_timeout tac gl in
+           if gls = [] then Some gst else None
+       with _ -> None) in
+    cake_timeout := old;
+    match r with
+      Some gst -> gst
+    | None -> CHEAT_TAC gl;;

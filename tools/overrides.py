@@ -1948,6 +1948,56 @@ let V_INV_REFS_TAC =
   # part_to_words_LENGTH)
   # what the four lemmas about the words of a constant part
   # share (the first user is part_to_words_add)
+  # what says that the words of a constant part are good_loc
+  # (the first user is const_parts_to_words_good_loc)
+  ('data_to_word_memoryProof', 'const_parts_to_words_good_loc'): r"""
+(* the port's own: what says that the words of a constant part are
+   good_loc.  Nothing a part writes is a Loc: it writes words, and
+   the entries of the map, which the invariant of the induction
+   keeps good. *)
+
+let good_loc_Word = prove
+ (`!s w. good_loc s (wordLang_Word w) = T`,
+  REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [good_loc_def] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+let good_loc_LN = prove
+ (`!s k. good_loc s
+           (SND (lookup_mem (LN:(bool#('a word_loc))spt) k))`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[lookup_mem_def; lookup_def] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[SND; good_loc_Word]);;
+
+let part_gl = prove
+ (`(!k. good_loc s (SND (lookup_mem m k))) /\
+   part_to_words c m h (off:'a word) = SOME ((y0,y1),y2)
+   ==> good_loc s y1 /\ EVERY (good_loc s o SND) y2`,
+  STRIP_TAC THEN
+  RULE_ASSUM_TRY (CONV_RULE(REWRITE_CONV[part_to_words_def])) THEN
+  POP_ASSUM MP_TAC THEN
+  CASES_ON_NAME "h" THEN
+  REWRITE_TAC[part_to_words_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  TRY PAIRARG_TAC THEN
+  RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+  TRY(CONV_TAC(TOP_DEPTH_CONV let_CONV)) THEN
+  EVERY_CASE_COND_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  STRIP_TAC THEN VAR_EQ_TAC THEN
+  ASM_REWRITE_TAC[ALL; ALL_MAP; good_loc_Word; o_DEF; SND;
+                  make_ptr_def; make_cons_ptr_def] THEN
+  ASM_REWRITE_TAC[good_loc_Word; ALL_T]);;
+
+let ins_loc = prove
+ (`(!k. good_loc s (SND (lookup_mem m k))) /\ good_loc s y1
+   ==> (!k. good_loc s
+              (SND (lookup_mem (insert i ((y0:bool),y1) m) k)))`,
+  STRIP_TAC THEN GEN_TAC THEN REWRITE_TAC[lookup_mem_insert] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[SND]);;
+""",
+
   ('data_to_word_memoryProof', 'part_to_words_add'): r"""
 (* the port's own: what the four lemmas about the words of a
    constant part share.  HOL4 gets the sum of two aligned words

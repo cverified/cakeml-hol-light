@@ -1350,3 +1350,25 @@ _What is open:_
   `tools/bin/pfbase` are owed before the next whole run.  Nothing
   of the memory file uses it, so the proofs of this wave were
   verified without it._
+
+## Every statement of data_to_word_memoryProof has an attempt
+
+The 115 statements of
+`compiler/backend/proofs/data_to_word_memoryProof.ml` that are not
+proved yet no longer stand as a bare `CHEAT_TAC`.  Each carries the
+attempt that its source proof suggests -- the facts the HOL4 proof
+names, rewritten with and then closed by arithmetic or by MESON --
+under `ATTEMPT_TAC 5` of `ml/lib/tactics.ml`, which gives the
+attempt five seconds of processor time and falls back on the cheat
+when it does not close the goal.
+
+So what is left to do is in the port and not in a list beside it:
+the attempt of a statement is where its proof gets written, the
+facts it names are the ones the source proof uses, and
+`length (axioms())` still counts exactly the statements that are
+not proved -- an attempt that starts to go through takes its cheat
+away by itself.
+
+What it costs is the load: an attempt that fails fast costs
+nothing, and the twenty or so that search cost their five seconds
+each.
