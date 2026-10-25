@@ -9068,24 +9068,27 @@ let get_lowerbits_or_1 = prove
    REWRITE_TAC[get_lowerbits_def] THEN
    MATCH_REDUCE_TAC THEN WORD_BITWISE_TAC));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Word64_alt = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (vs ++ vars) /\
-  good_dimindex (:'a) /\
-   (Word64Rep (:'a) w64:('a word_loc,data_to_word_memoryProof_tag#('a
-     word_loc) list)heap_element) = DataElement [] (LENGTH ws)
-     (Word64Tag,ws) /\
-   LENGTH ws < sp /\
-   encode_header c 3 (LENGTH ws) = SOME hd ==>
-   (?ne curr m1.
-     FLOOKUP st NextFree = SOME (wordLang_Word ne) /\
-     FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-     data_to_word_memoryProof_store_list ne (wordLang_Word hd :: ws)
-       m dm = SOME m1 /\
-     memory_rel c be ts refs (sp - (LENGTH ws + 1))
-        (st |+ (NextFree,wordLang_Word (ne + bytes_in_word * n2w
-          (LENGTH ws + 1)))) m1 dm
-        ((Word64 w64,make_ptr c (ne - curr) ((n2w 0):'a word)
-          (LENGTH ws)) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (vs ++ vars) /\ good_dimindex
+  (:'a) /\
+     (Word64Rep (:'a) w64:('a
+       word_loc,data_to_word_memoryProof_tag#('a word_loc)
+       list)heap_element) = DataElement [] (LENGTH ws) (Word64Tag,ws) /\
+     LENGTH ws < sp /\
+     encode_header c 3 (LENGTH ws) = SOME hd ==>
+     (?ne curr m1.
+       FLOOKUP st NextFree = SOME (wordLang_Word ne) /\
+       FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+       data_to_word_memoryProof_store_list ne (wordLang_Word hd ::
+         ws) m dm = SOME m1 /\
+       memory_rel c be ts refs (sp - (LENGTH ws + 1))
+          (st |+ (NextFree,wordLang_Word (ne + bytes_in_word * n2w
+            (LENGTH ws + 1)))) m1 dm
+          ((Word64 w64,make_ptr c (ne - curr) ((n2w 0):'a word)
+            (LENGTH ws)) :: vars))`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:9026-9028: a theorem that
@@ -9093,75 +9096,86 @@ let memory_rel_Word64_alt = prove
    memory_rel_WordOp64_alt *)
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_memory_rel_bignum_alt = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (vs ++ vars) /\
-    good_dimindex (:'a) /\ ~(small_int (:'a) i) /\
-    (Bignum i:('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
-      list)heap_element) = DataElement [] (LENGTH ws) (NumTag is_neg,MAP
-      wordLang_Word ws) /\
-    LENGTH ws < sp /\
-    encode_header c (w2n ((b2w is_neg << 2 || (n2w 3)):'a word))
-      (LENGTH ws) =
-      SOME (hd:'a word) ==>
-    (?next' curr m1.
-      FLOOKUP st NextFree = SOME (wordLang_Word next') /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      (data_to_word_memoryProof_store_list next' (MAP wordLang_Word
-        (hd :: ws)) m dm = SOME m1 /\
-       memory_rel c be ts refs (sp - (LENGTH ws + 1))
-         (st |+ (NextFree,wordLang_Word (next' + bytes_in_word * n2w
-           (LENGTH ws + 1))))
-         m1 dm ((Number i,make_ptr c (next' - curr) ((n2w 0):'a
-           word) (LENGTH ws)) :: vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (vs ++ vars) /\
+      good_dimindex (:'a) /\ ~(small_int (:'a) i) /\
+      (Bignum i:('a word_loc,data_to_word_memoryProof_tag#('a
+        word_loc) list)heap_element) = DataElement [] (LENGTH ws)
+        (NumTag is_neg,MAP wordLang_Word ws) /\
+      LENGTH ws < sp /\
+      encode_header c (w2n ((b2w is_neg << 2 || (n2w 3)):'a word))
+        (LENGTH ws) =
+        SOME (hd:'a word) ==>
+      (?next' curr m1.
+        FLOOKUP st NextFree = SOME (wordLang_Word next') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (data_to_word_memoryProof_store_list next' (MAP
+          wordLang_Word (hd :: ws)) m dm = SOME m1 /\
+         memory_rel c be ts refs (sp - (LENGTH ws + 1))
+           (st |+ (NextFree,wordLang_Word (next' + bytes_in_word *
+             n2w (LENGTH ws + 1))))
+           m1 dm ((Number i,make_ptr c (next' - curr) ((n2w 0):'a
+             word) (LENGTH ws)) :: vars)))`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:9113-9114: a theorem that
    HOL4 states as the value of an ML expression:
    IMP_memory_rel_bignum_alt *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Cons1 = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (ZIP vals ws ++ vars) /\
-    LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = []) /\
-    encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
-    LENGTH ws < sp /\ good_dimindex (:'a) ==>
-    (?free' (curr:'a word) m1.
-      FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
-        data_to_word_memoryProof_store_list free' (wordLang_Word hd
-          :: ws) m dm = SOME m1 /\
-        memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
-          (st |+ (NextFree,wordLang_Word w)) m1 dm
-          ((Block ts tag vals,make_cons_ptr c (free' - curr) tag
-            (LENGTH ws)) :: vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (ZIP vals ws ++ vars) /\
+      LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = [])
+        /\
+      encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
+      LENGTH ws < sp /\ good_dimindex (:'a) ==>
+      (?free' (curr:'a word) m1.
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
+          data_to_word_memoryProof_store_list free' (wordLang_Word
+            hd :: ws) m dm = SOME m1 /\
+          memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
+            (st |+ (NextFree,wordLang_Word w)) m1 dm
+            ((Block ts tag vals,make_cons_ptr c (free' - curr)
+              tag (LENGTH ws)) :: vars)))`),
   CHEAT_TAC);;
 
 (* mirrors memory_rel_Cons1: a MutBlock is laid out exactly like the Block it
    finalises to, so the allocation is the Cons allocation; what differs is that
    the abstract value handed back is a RefPtr into refs rather than a Block,
    and no timestamp is consumed *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_MutCons = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (ZIP vals ws ++ vars) /\
-    LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = []) /\
-    encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
-    LENGTH ws < sp /\ good_dimindex (:'a) /\
-    index < LENGTH vals /\ ~(ptr IN domain refs) /\
-    (!gs. ~(data_to_word_config_gc_kind c = data_to_word_Generational
-      gs)) ==>
-    (?free' (curr:'a word) m1.
-      FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
-        data_to_word_memoryProof_store_list free' (wordLang_Word hd
-          :: ws) m dm = SOME m1 /\
-        memory_rel c be ts
-          (insert ptr (bvlSem_MutBlock tag F (TAKE index vals) (EL
-            index vals)
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (ZIP vals ws ++ vars) /\
+      LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = [])
+        /\
+      encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
+      LENGTH ws < sp /\ good_dimindex (:'a) /\
+      index < LENGTH vals /\ ~(ptr IN domain refs) /\
+      (!gs. ~(data_to_word_config_gc_kind c =
+        data_to_word_Generational gs)) ==>
+      (?free' (curr:'a word) m1.
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
+          data_to_word_memoryProof_store_list free' (wordLang_Word
+            hd :: ws) m dm = SOME m1 /\
+          memory_rel c be ts
+            (insert ptr (bvlSem_MutBlock tag F (TAKE index vals)
+              (EL index vals)
                               (DROP (index + 1) vals)) refs)
-          (sp - (LENGTH ws + 1))
-          (st |+ (NextFree,wordLang_Word w)) m1 dm
-          ((RefPtr F ptr,make_cons_ptr c (free' - curr) tag (LENGTH
-            ws)) :: vars)))`,
+            (sp - (LENGTH ws + 1))
+            (st |+ (NextFree,wordLang_Word w)) m1 dm
+            ((RefPtr F ptr,make_cons_ptr c (free' - curr) tag
+              (LENGTH ws)) :: vars)))`),
   CHEAT_TAC);;
 
 let INJ_FUPDATE = prove
@@ -9253,10 +9267,13 @@ let v_inv_swap_refs = prove
    REWRITE_TAC[v_inv_eq] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[swap]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_swap_refs = prove
- (`bc_stack_ref_inv c ts vars refs (xs,heap,(be:bool)) /\
-   (!n. sptree_lookup n refs = lookup n refs1) ==>
-   bc_stack_ref_inv c ts vars refs1 (xs,heap,be)`,
+ (cake_as_vars (fun () ->
+    `bc_stack_ref_inv c ts vars refs (xs,heap,be) /\
+     (!n. sptree_lookup n refs = lookup n refs1) ==>
+     bc_stack_ref_inv c ts vars refs1 (xs,heap,be)`),
   (* each part of the invariant reads the refs through a lookup
      only: the domain by domain_lookup, all_ts, all_vs and ref_edge
      by their definitions, and v_inv by v_inv_swap_refs.  So the
@@ -9360,31 +9377,43 @@ let blocks_unique_INSERT = prove
      SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let all_ts_CONS_SUBSET = prove
- (`all_ts refs (stack:(dataSem_v)list) SUBSET all_ts refs (x :: stack)`,
+ (cake_as_vars (fun () ->
+    `all_ts refs stack SUBSET all_ts refs (x :: stack)`),
   (MATCH_MP_TAC all_ts_SUBSET_gen THEN REWRITE_TAC[MEM] THEN
    MESON_TAC[]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let in_all_vs_stack = prove
- (`MEM v (v_all_vs (stack:(dataSem_v)list)) ==> v IN all_vs refs stack`,
+ (cake_as_vars (fun () ->
+    `MEM v (v_all_vs stack) ==> v IN all_vs refs stack`),
   (DISCH_TAC THEN
    REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
    REPEAT DISJ2_TAC THEN ASM_REWRITE_TAC[]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let in_all_vs_MutBlock = prove
- (`lookup n refs = SOME (bvlSem_MutBlock tg fin l c r) /\
-   MEM v (v_all_vs (l ++ [c] ++ r)) ==>
-   v IN all_vs refs (stack:(dataSem_v)list)`,
+ (cake_as_vars (fun () ->
+    `lookup n refs = SOME (bvlSem_MutBlock tg fin l c r) /\
+     MEM v (v_all_vs (l ++ [c] ++ r)) ==>
+     v IN all_vs refs stack`),
   (REPEAT STRIP_TAC THEN
    REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
    DISJ2_TAC THEN DISJ2_TAC THEN DISJ1_TAC THEN ASM_MESON_TAC[]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let all_vs_CONS_SUBSET = prove
- (`x IN all_vs refs (stack:(dataSem_v)list) ==> all_vs refs (x ::
-  stack) SUBSET all_vs refs stack`,
+ (cake_as_vars (fun () ->
+    `x IN all_vs refs stack ==> all_vs refs (x :: stack) SUBSET all_vs
+  refs stack`),
   (* the three parts of all_vs that read the refs are the same, and
      a value of the head is a value of the refs or of the stack
      already, because the head itself is *)
@@ -9403,10 +9432,12 @@ let all_vs_CONS_SUBSET = prove
    ASM_MESON_TAC[]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let all_vs_MutBlock_centre = prove
- (`lookup ptr refs = SOME (bvlSem_MutBlock tag fin left cen right) ==>
-   all_vs refs (cen :: (stack:(dataSem_v)list)) SUBSET all_vs refs
-     stack`,
+ (cake_as_vars (fun () ->
+    `lookup ptr refs = SOME (bvlSem_MutBlock tag fin left cen right) ==>
+     all_vs refs (cen :: stack) SUBSET all_vs refs stack`),
   (* the centre of the MutBlock is a value of the refs already, so
      putting it on the stack adds nothing *)
   (DISCH_TAC THEN MATCH_MP_TAC all_vs_CONS_SUBSET THEN
@@ -9499,26 +9530,33 @@ let dest_thunk_insert_MutBlock = prove
    REWRITE_TAC(opt_rws @ ref_rws) THEN
    REPEAT COND_CASES_TAC THEN REWRITE_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_MutBlock_centre = prove
- (`bc_stack_ref_inv c ts (RefPtr b ptr :: vars) refs (x ::
-  xs,heap,(be:bool)) /\
-   lookup ptr refs = SOME (bvlSem_MutBlock tag F left cen right) ==>
-   (?ptr_n zs.
-     x = gc_shared_Pointer ptr_n (ref_ptr_annot c (lookup ptr refs))
-       /\
-     heap_lookup ptr_n heap = SOME (BlockRep tag zs) /\
-     LENGTH zs = LENGTH left + 1 + LENGTH right /\
-     bc_stack_ref_inv c ts (cen :: RefPtr b ptr :: vars) refs
-                           (EL (LENGTH left) zs :: x ::
-                             xs,heap,be))`,
+ (cake_as_vars (fun () ->
+    `bc_stack_ref_inv c ts (RefPtr b ptr :: vars) refs (x :: xs,heap,be)
+  /\
+     lookup ptr refs = SOME (bvlSem_MutBlock tag F left cen right)
+       ==>
+     (?ptr_n zs.
+       x = gc_shared_Pointer ptr_n (ref_ptr_annot c (lookup ptr
+         refs)) /\
+       heap_lookup ptr_n heap = SOME (BlockRep tag zs) /\
+       LENGTH zs = LENGTH left + 1 + LENGTH right /\
+       bc_stack_ref_inv c ts (cen :: RefPtr b ptr :: vars) refs
+                             (EL (LENGTH left) zs :: x ::
+                               xs,heap,be))`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_union_del_ins_lemma = prove
- (`bc_stack_ref_inv c ts vars (union refs frame) (xs,heap,(be:bool)) /\
-   lookup ptr refs = SOME x ==>
-   bc_stack_ref_inv c ts vars (union (delete ptr refs) (insert ptr
-     x frame)) (xs,heap,be)`,
+ (cake_as_vars (fun () ->
+    `bc_stack_ref_inv c ts vars (union refs frame) (xs,heap,be) /\
+     lookup ptr refs = SOME x ==>
+     bc_stack_ref_inv c ts vars (union (delete ptr refs) (insert
+       ptr x frame)) (xs,heap,be)`),
   (* the two refs have the same lookup everywhere: at ptr the delete
      takes the value out of the left half and the insert puts the
      same value in the right one, and away from ptr neither changes
@@ -9540,39 +9578,50 @@ let bc_stack_ref_inv_union_del_ins_lemma = prove
      MATCH_ACCEPT_TAC(MATCH_MP
        bc_stack_ref_inv_swap_refs (CONJ h c))))));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_MutBlock_F = prove
- (`bc_stack_ref_inv c ts2
-     (res :: RefPtr b ptr :: vars) refs
-     (EL (LENGTH left) zs :: gc_shared_Pointer ptr_n
-        (wordLang_Word (ptr_bits c tag (LENGTH left + (LENGTH right +
-          1)))) :: xs,heap,(be:bool)) /\
-   heap_lookup ptr_n heap = SOME (BlockRep tag zs) /\
-   lookup ptr refs = SOME (bvlSem_MutBlock tag F left cen right) ==>
-   bc_stack_ref_inv c (SUC ts2)
-     (Block ts2 tag (left ++ [res] ++ right) :: vars)
-     (insert ptr (bvlSem_MutBlock tag T left cen right) refs)
-     (gc_shared_Pointer ptr_n
-        (wordLang_Word (ptr_bits c tag (LENGTH left + (LENGTH right
-          + 1)))) :: xs,heap,be)`,
+ (cake_as_vars (fun () ->
+    `bc_stack_ref_inv c ts2
+       (res :: RefPtr b ptr :: vars) refs
+       (EL (LENGTH left) zs :: gc_shared_Pointer ptr_n
+          (wordLang_Word (ptr_bits c tag (LENGTH left + (LENGTH
+            right + 1)))) :: xs,heap,be) /\
+     heap_lookup ptr_n heap = SOME (BlockRep tag zs) /\
+     lookup ptr refs = SOME (bvlSem_MutBlock tag F left cen right)
+       ==>
+     bc_stack_ref_inv c (SUC ts2)
+       (Block ts2 tag (left ++ [res] ++ right) :: vars)
+       (insert ptr (bvlSem_MutBlock tag T left cen right) refs)
+       (gc_shared_Pointer ptr_n
+          (wordLang_Word (ptr_bits c tag (LENGTH left + (LENGTH
+            right + 1)))) :: xs,heap,be)`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bc_stack_ref_inv_FinaliseCons_lemma = prove
- (`!v refs ts_opt v' refs' ts' ts vars' w frame x xs.
-     dataSem_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\
-       ts_opt = SOME ts /\
-     bc_stack_ref_inv c ts (v :: vars') (union refs frame) (x ::
-       xs,heap,(be:bool)) ==>
-     IS_SOME ts' /\
-     bc_stack_ref_inv c (THE ts') (v' :: vars') (union refs' frame)
-       (x :: xs,heap,be)`,
+ (cake_as_vars (fun () ->
+    `!v refs ts_opt v' refs' ts' ts vars' w frame x xs.
+       dataSem_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\
+         ts_opt = SOME ts /\
+       bc_stack_ref_inv c ts (v :: vars') (union refs frame) (x ::
+         xs,heap,be) ==>
+       IS_SOME ts' /\
+       bc_stack_ref_inv c (THE ts') (v' :: vars') (union refs'
+         frame) (x :: xs,heap,be)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_FinaliseCons = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((v,w) :: vars) /\
-    dataSem_finalise_cons v refs (SOME ts) = SOME (v',refs',ts') ==>
-    IS_SOME ts' /\
-    memory_rel c be (THE ts') refs' sp st m dm ((v',w) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((v,w) :: vars) /\
+      dataSem_finalise_cons v refs (SOME ts) = SOME (v',refs',ts')
+        ==>
+      IS_SOME ts' /\
+      memory_rel c be (THE ts') refs' sp st m dm ((v',w) :: vars)`),
   (* the finalisation of a cons: what it does to the refs and to
      the timestamp is what bc_stack_ref_inv_FinaliseCons_lemma
      says of the invariant of the stack, with no frame beside the
@@ -9645,11 +9694,14 @@ let memory_rel_FinaliseCons = prove
         (el 4 (snd(strip_comb (concl bs))))))) THEN
     ASM_REWRITE_TAC[ALL2]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Cons_empty = prove
- (`memory_rel c (be:bool) ts refs sp st m (dm:'a word->bool) vars /\
-    tag < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
-    memory_rel c be ts refs sp st m dm
-      ((Block 0 tag [],wordLang_Word (BlockNil tag)) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m (dm:'a word->bool) vars /\
+      tag < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
+      memory_rel c be ts refs sp st m dm
+        ((Block 0 tag [],wordLang_Word (BlockNil tag)) :: vars)`),
   (* the empty Block of a tag has the root Data (Word (BlockNil
      tag)), which cons_thm_EMPTY adds, and the BlockNil is sixteen
      times the tag plus two, whose lowest bit is clear.  HOL4 has
@@ -9695,59 +9747,69 @@ let memory_rel_Cons_empty = prove
       REWRITE_TAC[BlockNil_def] THEN AP_TERM_TAC THEN
       MATCH_ACCEPT_TAC andsum]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Ref = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (ZIP vals ws ++ vars) /\
-    LENGTH vals = LENGTH (ws:('a word_loc) list) /\
-    encode_header c 2 (LENGTH ws) = SOME hd /\ ~(new IN (domain
-      refs)) /\
-    LENGTH ws < sp /\ good_dimindex (:'a) ==>
-    (?eoh (curr:'a word) trig m1.
-      FLOOKUP st EndOfHeap = SOME (wordLang_Word eoh) /\
-      FLOOKUP st TriggerGC = SOME (wordLang_Word trig) /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      (let w = eoh - bytes_in_word * n2w (LENGTH ws + 1) in
-      let w1 = trig - bytes_in_word * n2w (LENGTH ws + 1) in
-        data_to_word_memoryProof_store_list w (wordLang_Word hd ::
-          ws) m dm = SOME m1 /\
-        memory_rel c be ts (insert new (ValueArray vals) refs) (sp -
-          (LENGTH ws + 1))
-          (st |+ (EndOfHeap,wordLang_Word w) |+
-            (TriggerGC,wordLang_Word w1)) m1 dm
-          ((RefPtr T new,make_ptr c (w - curr) (n2w 0) (LENGTH ws))
-            :: vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (ZIP vals ws ++ vars) /\
+      LENGTH vals = LENGTH (ws:('a word_loc) list) /\
+      encode_header c 2 (LENGTH ws) = SOME hd /\ ~(new IN (domain
+        refs)) /\
+      LENGTH ws < sp /\ good_dimindex (:'a) ==>
+      (?eoh (curr:'a word) trig m1.
+        FLOOKUP st EndOfHeap = SOME (wordLang_Word eoh) /\
+        FLOOKUP st TriggerGC = SOME (wordLang_Word trig) /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (let w = eoh - bytes_in_word * n2w (LENGTH ws + 1) in
+        let w1 = trig - bytes_in_word * n2w (LENGTH ws + 1) in
+          data_to_word_memoryProof_store_list w (wordLang_Word hd
+            :: ws) m dm = SOME m1 /\
+          memory_rel c be ts (insert new (ValueArray vals) refs)
+            (sp - (LENGTH ws + 1))
+            (st |+ (EndOfHeap,wordLang_Word w) |+
+              (TriggerGC,wordLang_Word w1)) m1 dm
+            ((RefPtr T new,make_ptr c (w - curr) (n2w 0) (LENGTH
+              ws)) :: vars)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_AllocThunk = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((v,w) :: vars) /\
-   encode_header c (match ev with Evaluated -> 14 | NotEvaluated ->
-     6) 1 = SOME hd /\
-    ~(new IN (domain refs)) /\
-    (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
-    2 <= sp /\ good_dimindex (:'a) ==>
-    (?eoh (curr:'a word) trig m1.
-      FLOOKUP st EndOfHeap = SOME (wordLang_Word eoh) /\
-      FLOOKUP st TriggerGC = SOME (wordLang_Word trig) /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      (let w' = eoh - bytes_in_word * (n2w 2) in
-      let w1 = trig - bytes_in_word * (n2w 2) in
-        data_to_word_memoryProof_store_list w' [wordLang_Word hd; w]
-          m dm = SOME m1 /\
-        memory_rel c be ts (insert new (Thunk ev v) refs) (sp - 2)
-          (st |+ (EndOfHeap,wordLang_Word w') |+
-            (TriggerGC,wordLang_Word w1)) m1 dm
-          ((RefPtr F new,make_ptr c (w' - curr) (n2w 0) 1) ::
-            vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((v,w) :: vars) /\
+     encode_header c (match ev with Evaluated -> 14 | NotEvaluated
+       -> 6) 1 = SOME hd /\
+      ~(new IN (domain refs)) /\
+      (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
+      2 <= sp /\ good_dimindex (:'a) ==>
+      (?eoh (curr:'a word) trig m1.
+        FLOOKUP st EndOfHeap = SOME (wordLang_Word eoh) /\
+        FLOOKUP st TriggerGC = SOME (wordLang_Word trig) /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (let w' = eoh - bytes_in_word * (n2w 2) in
+        let w1 = trig - bytes_in_word * (n2w 2) in
+          data_to_word_memoryProof_store_list w' [wordLang_Word hd;
+            w] m dm = SOME m1 /\
+          memory_rel c be ts (insert new (Thunk ev v) refs) (sp -
+            2)
+            (st |+ (EndOfHeap,wordLang_Word w') |+
+              (TriggerGC,wordLang_Word w1)) m1 dm
+            ((RefPtr F new,make_ptr c (w' - curr) (n2w 0) 1) ::
+              vars)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_write = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars ==>
-    (?(free':'a word).
-      FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-      (!n.
-        n < sp ==>
-        (let a = free' + bytes_in_word * n2w n in
-          a IN dm /\ memory_rel c be ts refs sp st ((a =+ w) m) dm
-            vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars ==>
+      (?(free':'a word).
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        (!n.
+          n < sp ==>
+          (let a = free' + bytes_in_word * n2w n in
+            a IN dm /\ memory_rel c be ts refs sp st ((a =+ w) m)
+              dm vars)))`),
   CHEAT_TAC);;
 
 let word_list_AND_word_list_exists_IMP = prove
@@ -9847,26 +9909,34 @@ let word_list_AND_word_list_exists_IMP = prove
      REWRITE_TAC[STAR_AC]) in
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Cons_alt = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (ZIP vals ws ++ vars) /\
-    LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = []) /\
-    encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
-    LENGTH ws < sp /\ good_dimindex (:'a) ==>
-    (?free' (curr:'a word) m1.
-      FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      ((misc_word_list free' (wordLang_Word hd :: ws) * SEP_T)
-        (fun2set (m,dm)) ==>
-       memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
-         (st |+ (NextFree,wordLang_Word (free' + bytes_in_word * n2w
-           (LENGTH ws + 1)))) m dm
-         ((Block ts tag vals,make_cons_ptr c (free' - curr) tag
-           (LENGTH ws)) :: vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (ZIP vals ws ++ vars) /\
+      LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = [])
+        /\
+      encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
+      LENGTH ws < sp /\ good_dimindex (:'a) ==>
+      (?free' (curr:'a word) m1.
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        ((misc_word_list free' (wordLang_Word hd :: ws) * SEP_T)
+          (fun2set (m,dm)) ==>
+         memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
+           (st |+ (NextFree,wordLang_Word (free' + bytes_in_word *
+             n2w (LENGTH ws + 1)))) m dm
+           ((Block ts tag vals,make_cons_ptr c (free' - curr) tag
+             (LENGTH ws)) :: vars)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_REPLICATE = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((v,w) :: vars) ==>
-    memory_rel c be ts refs sp st m dm (REPLICATE n (v,w) ++ vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((v,w) :: vars) ==>
+      memory_rel c be ts refs sp st m dm (REPLICATE n (v,w) ++
+        vars)`),
   (MATCH_MP_TAC memory_rel_rearrange THEN
    GEN_TAC THEN REWRITE_TAC[MEM_APPEND; MEM_REPLICATE; MEM] THEN
    CONV_TAC TAUT));;
@@ -9885,10 +9955,13 @@ let word_of_byte_def = cake_define
    that HOL4 states as the value of an ML expression: ADD_DIV_EQ *)
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let set_byte_word_of_byte = prove
- (`good_dimindex (:'a) ==>
-     set_byte a w (word_of_byte ((w2w w):'a word)) (be:bool) =
-       word_of_byte (w2w w)`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) ==>
+       set_byte a w (word_of_byte ((w2w w):'a word)) be =
+         word_of_byte (w2w w)`),
   (* every set_byte of the word that repeats a byte writes the byte
      it already has there: the byte index is a multiple of eight, so
      the position inside the byte is the position modulo eight, and
@@ -10040,12 +10113,15 @@ let w2w_word_of_byte_w2w = prove
                 ARITH_RULE `i < 8 ==> i < 64`]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytes_REPLICATE = prove
- (`!n m.
-       good_dimindex (:'a) ==>
-       write_bytes (REPLICATE m w) (REPLICATE n (word_of_byte (w2w
-         w))) (be:bool) =
-       REPLICATE n (word_of_byte ((w2w w):'a word))`,
+ (cake_as_vars (fun () ->
+    `!n m.
+         good_dimindex (:'a) ==>
+         write_bytes (REPLICATE m w) (REPLICATE n (word_of_byte
+           (w2w w))) be =
+         REPLICATE n (word_of_byte ((w2w w):'a word))`),
   (* the words are written one by one, and writing the bytes of a
      word of one byte over and over leaves it as it is, which
      set_byte_word_of_byte says of each byte.  The flag of the
@@ -10164,15 +10240,19 @@ let write_bytes_APPEND = prove
    REWRITE_TAC[ARITH_RULE `(d * SUC n) = d + d * n`] THEN
    REWRITE_TAC[DROP_DROP; ADD_AC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let set_byte_sort = prove
- (`!n1 n2.
-      set_byte (n2w n1) b1 (set_byte (n2w n2:'a word) b2 w (be:bool))
-        be =
-      (if n1 = n2 then set_byte (n2w n1) b1 w be else
-      if n1 < dimindex (:'a) DIV 8 /\ n2 < dimindex (:'a) DIV 8 /\
-         good_dimindex (:'a) /\ ~(n2 = n1) then
-        set_byte (n2w n2) b2 (set_byte (n2w n1) b1 w be) be else
-        set_byte (n2w n1) b1 (set_byte (n2w n2) b2 w be) be)`,
+ (cake_as_vars (fun () ->
+    `!n1 n2.
+        set_byte (n2w n1) b1 (set_byte (n2w n2:'a word) b2 w be) be
+          =
+        (if n1 = n2 then set_byte (n2w n1) b1 w be else
+        if n1 < dimindex (:'a) DIV 8 /\ n2 < dimindex (:'a) DIV 8
+          /\
+           good_dimindex (:'a) /\ ~(n2 = n1) then
+          set_byte (n2w n2) b2 (set_byte (n2w n1) b1 w be) be else
+          set_byte (n2w n1) b1 (set_byte (n2w n2) b2 w be) be)`),
   (* two set_bytes of a word commute when they write different
      bytes of it: the byte index of a number below the number of
      bytes is eight times it (or eight times its mirror), so two
@@ -10262,33 +10342,36 @@ let set_byte_sort = prove
 (* HOL4 data_to_word_memoryProofScript.sml:10203-10213: ML code, not
    ported *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let set_byte_eq_ARB = prove
- (`good_dimindex (:'a) ==>
-    (!x h h'.
-      (set_byte (n2w 0) x h (be:bool) = set_byte (n2w 0) x (h':'a
-        word) be <=>
-       set_byte (n2w 0) ARB h be = set_byte (n2w 0) ARB h' be) /\
-      (set_byte (n2w 1) x h be = set_byte (n2w 1) x (h':'a word) be
-        <=>
-       set_byte (n2w 1) ARB h be = set_byte (n2w 1) ARB h' be) /\
-      (set_byte (n2w 2) x h be = set_byte (n2w 2) x (h':'a word) be
-        <=>
-       set_byte (n2w 2) ARB h be = set_byte (n2w 2) ARB h' be) /\
-      (set_byte (n2w 3) x h be = set_byte (n2w 3) x (h':'a word) be
-        <=>
-       set_byte (n2w 3) ARB h be = set_byte (n2w 3) ARB h' be) /\
-      (set_byte (n2w 4) x h be = set_byte (n2w 4) x (h':'a word) be
-        <=>
-       set_byte (n2w 4) ARB h be = set_byte (n2w 4) ARB h' be) /\
-      (set_byte (n2w 5) x h be = set_byte (n2w 5) x (h':'a word) be
-        <=>
-       set_byte (n2w 5) ARB h be = set_byte (n2w 5) ARB h' be) /\
-      (set_byte (n2w 6) x h be = set_byte (n2w 6) x (h':'a word) be
-        <=>
-       set_byte (n2w 6) ARB h be = set_byte (n2w 6) ARB h' be) /\
-      (set_byte (n2w 7) x h be = set_byte (n2w 7) x (h':'a word) be
-        <=>
-       set_byte (n2w 7) ARB h be = set_byte (n2w 7) ARB h' be))`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) ==>
+      (!x h h'.
+        (set_byte (n2w 0) x h be = set_byte (n2w 0) x (h':'a word)
+          be <=>
+         set_byte (n2w 0) ARB h be = set_byte (n2w 0) ARB h' be) /\
+        (set_byte (n2w 1) x h be = set_byte (n2w 1) x (h':'a word)
+          be <=>
+         set_byte (n2w 1) ARB h be = set_byte (n2w 1) ARB h' be) /\
+        (set_byte (n2w 2) x h be = set_byte (n2w 2) x (h':'a word)
+          be <=>
+         set_byte (n2w 2) ARB h be = set_byte (n2w 2) ARB h' be) /\
+        (set_byte (n2w 3) x h be = set_byte (n2w 3) x (h':'a word)
+          be <=>
+         set_byte (n2w 3) ARB h be = set_byte (n2w 3) ARB h' be) /\
+        (set_byte (n2w 4) x h be = set_byte (n2w 4) x (h':'a word)
+          be <=>
+         set_byte (n2w 4) ARB h be = set_byte (n2w 4) ARB h' be) /\
+        (set_byte (n2w 5) x h be = set_byte (n2w 5) x (h':'a word)
+          be <=>
+         set_byte (n2w 5) ARB h be = set_byte (n2w 5) ARB h' be) /\
+        (set_byte (n2w 6) x h be = set_byte (n2w 6) x (h':'a word)
+          be <=>
+         set_byte (n2w 6) ARB h be = set_byte (n2w 6) ARB h' be) /\
+        (set_byte (n2w 7) x h be = set_byte (n2w 7) x (h':'a word)
+          be <=>
+         set_byte (n2w 7) ARB h be = set_byte (n2w 7) ARB h' be))`),
   (* the bit of a set_byte is the byte's bit inside the byte and the
      word's outside it, so two set_bytes of the same byte agree
      exactly when the two words agree outside it -- which does not
@@ -10332,26 +10415,32 @@ let set_byte_eq_ARB = prove
    REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
    ASM_SIMP_TAC[bsb; bib; COND_SAME_IFF]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let bytes_to_word_eq_lemma = prove
- (`good_dimindex (:'a) /\ LENGTH bs' = LENGTH bs /\
-    bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs (h:'a word)
-      (be:bool) =
-    bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs h' be ==>
-    bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs' h be =
-    bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs' h' be`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ LENGTH bs' = LENGTH bs /\
+      bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs (h:'a word)
+        be =
+      bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs h' be ==>
+      bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs' h be =
+      bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs' h' be`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytes_inj_lemma = prove
- (`good_dimindex (:'a) ==>
-   (!w1 w2 bs bs'.
-   write_bytes bs w1 (be:bool) = write_bytes bs (w2:('a word) list)
-     be /\
-   LENGTH w1 = LENGTH w2 /\
-   LENGTH bs' = LENGTH bs ==>
-   // ∧
-   // LENGTH bs ≤ LENGTH (w1:α word list) * (dimindex (:α) DIV 8)
-   // ∧ LENGTH (w1:α word list) ≤ LENGTH bs DIV (dimindex(:α) DIV 8) +1
-   write_bytes bs' w1 be = write_bytes bs' w2 be)`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) ==>
+     (!w1 w2 bs bs'.
+     write_bytes bs w1 be = write_bytes bs (w2:('a word) list) be
+       /\
+     LENGTH w1 = LENGTH w2 /\
+     LENGTH bs' = LENGTH bs ==>
+     // ∧
+     // LENGTH bs ≤ LENGTH (w1:α word list) * (dimindex (:α) DIV 8)
+     // ∧ LENGTH (w1:α word list) ≤ LENGTH bs DIV (dimindex(:α) DIV 8) +1
+     write_bytes bs' w1 be = write_bytes bs' w2 be)`),
   (* the words are written one by one: the first word of the one
      list and of the other are the same word written over the same
      bytes, which bytes_to_word_eq_lemma takes to the other bytes,
@@ -10377,26 +10466,29 @@ let write_bytes_inj_lemma = prove
        ASM_REWRITE_TAC[len_drop])]));;
 
 (* slow *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let set_byte_all_64 = prove
- (`dimindex (:'a) = 64 ==>
-   set_byte ((n2w 0):'a word) b1
-     (set_byte (n2w 1) b2
-       (set_byte (n2w 2) b3
-         (set_byte (n2w 3) b4
-           (set_byte (n2w 4) b5
-             (set_byte (n2w 5) b6
-               (set_byte (n2w 6) b7
-                 (set_byte (n2w 7) b8 x (be:bool)) be) be) be) be)
-                   be) be) be =
-   set_byte (n2w 0) b1
-     (set_byte (n2w 1) b2
-       (set_byte (n2w 2) b3
-         (set_byte (n2w 3) b4
-           (set_byte (n2w 4) b5
-             (set_byte (n2w 5) b6
-               (set_byte (n2w 6) b7
-                 (set_byte (n2w 7) b8 y be) be) be) be) be) be) be)
-                   be`,
+ (cake_as_vars (fun () ->
+    `dimindex (:'a) = 64 ==>
+     set_byte ((n2w 0):'a word) b1
+       (set_byte (n2w 1) b2
+         (set_byte (n2w 2) b3
+           (set_byte (n2w 3) b4
+             (set_byte (n2w 4) b5
+               (set_byte (n2w 5) b6
+                 (set_byte (n2w 6) b7
+                   (set_byte (n2w 7) b8 x be) be) be) be) be) be)
+                     be) be =
+     set_byte (n2w 0) b1
+       (set_byte (n2w 1) b2
+         (set_byte (n2w 2) b3
+           (set_byte (n2w 3) b4
+             (set_byte (n2w 4) b5
+               (set_byte (n2w 5) b6
+                 (set_byte (n2w 6) b7
+                   (set_byte (n2w 7) b8 y be) be) be) be) be) be)
+                     be) be`),
   (* and the eight bytes of a word of sixty-four bits cover it the
      same way *)
   (let bsb = prove
@@ -10447,16 +10539,19 @@ let set_byte_all_64 = prove
    COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
    CONV_TAC NUM_REDUCE_CONV THEN ARITH_NO_BIT_TAC));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let set_byte_all_32 = prove
- (`dimindex (:'a) = 32 ==>
-   set_byte ((n2w 0):'a word) b1
-     (set_byte (n2w 1) b2
-       (set_byte (n2w 2) b3
-                 (set_byte (n2w 3) b8 x (be:bool)) be) be) be =
-   set_byte (n2w 0) b1
-     (set_byte (n2w 1) b2
-       (set_byte (n2w 2) b3
-                 (set_byte (n2w 3) b8 y be) be) be) be`,
+ (cake_as_vars (fun () ->
+    `dimindex (:'a) = 32 ==>
+     set_byte ((n2w 0):'a word) b1
+       (set_byte (n2w 1) b2
+         (set_byte (n2w 2) b3
+                   (set_byte (n2w 3) b8 x be) be) be) be =
+     set_byte (n2w 0) b1
+       (set_byte (n2w 1) b2
+         (set_byte (n2w 2) b3
+                   (set_byte (n2w 3) b8 y be) be) be) be`),
   (* the four bytes of a word of thirty-two bits cover it, so what
      the fourth set_byte writes over is never read: every index is in
      one of the four byte ranges, whichever way round the endianness
@@ -10510,18 +10605,21 @@ let set_byte_all_32 = prove
    CONV_TAC NUM_REDUCE_CONV THEN ARITH_NO_BIT_TAC));;
 
 (* slow *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_of_byte_set_byte_64 = prove
- (`dimindex (:'a) = 64 ==>
-   word_of_byte (w2w w) =
-   set_byte (n2w 0) w
-     (set_byte (n2w 1) w
-       (set_byte (n2w 2) w
-         (set_byte (n2w 3) w
-           (set_byte (n2w 4) w
-             (set_byte (n2w 5) w
-               (set_byte (n2w 6) w
-                 (set_byte (n2w 7) w (x:'a word) (be:bool)) be) be)
-                   be) be) be) be) be`,
+ (cake_as_vars (fun () ->
+    `dimindex (:'a) = 64 ==>
+     word_of_byte (w2w w) =
+     set_byte (n2w 0) w
+       (set_byte (n2w 1) w
+         (set_byte (n2w 2) w
+           (set_byte (n2w 3) w
+             (set_byte (n2w 4) w
+               (set_byte (n2w 5) w
+                 (set_byte (n2w 6) w
+                   (set_byte (n2w 7) w (x:'a word) be) be) be)
+                     be) be) be) be) be`),
   (* and the same of a word of sixty-four bits, with eight
      set_bytes and one shift more *)
   (let bsb0 = prove
@@ -10607,14 +10705,16 @@ let word_of_byte_set_byte_64 = prove
    ASM_SIMP_TAC rules THEN
    TRY(SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC)));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_of_byte_set_byte_32 = prove
- (`dimindex (:'a) = 32 ==>
-   word_of_byte (w2w w) =
-   set_byte (n2w 0) w
-     (set_byte (n2w 1) w
-       (set_byte (n2w 2) w
-                 (set_byte (n2w 3) w (x:'a word) (be:bool)) be) be)
-                   be`,
+ (cake_as_vars (fun () ->
+    `dimindex (:'a) = 32 ==>
+     word_of_byte (w2w w) =
+     set_byte (n2w 0) w
+       (set_byte (n2w 1) w
+         (set_byte (n2w 2) w
+                   (set_byte (n2w 3) w (x:'a word) be) be) be) be`),
   (* the word that repeats a byte is what the four set_bytes of a
      word of thirty-two bits write the byte into: at every bit the
      shifts of word_of_byte give the bit of the byte at the position
@@ -10703,11 +10803,14 @@ let last_bytes_def = cake_define
 (* HOL4 data_to_word_memoryProofScript.sml:10399-10403: a theorem
    that HOL4 states as the value of an ML expression: last_bytes_simp *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let last_bytes_bytes_to_word_REPLICATE = prove
- (`!n1 n k a (w:'a word).
-   n <= k /\ b1 = b2 /\ n1 = n ==>
-   bytes_to_word k a (REPLICATE n b2) w (be:bool) =
-   last_bytes n1 b1 a w be`,
+ (cake_as_vars (fun () ->
+    `!n1 n k a (w:'a word).
+     n <= k /\ b1 = b2 /\ n1 = n ==>
+     bytes_to_word k a (REPLICATE n b2) w be =
+     last_bytes n1 b1 a w be`),
   (* the bytes of a replicated byte written one after the other are
      what last_bytes writes, by the induction on the number *)
   (SUBGOAL_THEN
@@ -10885,59 +10988,68 @@ let decode_length_make_byte_header = prove
        (ARITH_RULE `~(8 = 0)`))) THEN
      ARITH_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefByte_content = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\ ~(new IN (domain
-  refs)) /\ byte_len (:'a) n < sp /\
-   byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
-   byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\ n =
-     LENGTH bytes /\
-   good_dimindex (:'a) ==>
-   (?free' curr m1.
-     FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-     FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-     (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a word)
-       in
-      let ws = REPLICATE (byte_len (:'a) n) (n2w 0) in
-      let ws = write_bytes bytes ws be in
-        data_to_word_memoryProof_store_list free' (wordLang_Word
-          (make_byte_header c fl n) :: MAP wordLang_Word ws) m dm = SOME
-          m1 /\
-        memory_rel c be ts (insert new (ByteArray fl bytes) refs)
-          (sp - (byte_len (:'a) n + 1)) (st |+
-            (NextFree,wordLang_Word (free' + w'))) m1 dm
-          ((RefPtr T new,make_ptr c (free' - curr) ((n2w 0):'a
-            word) (byte_len (:'a) n)) :: vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\ ~(new IN (domain refs))
+  /\ byte_len (:'a) n < sp /\
+     byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
+     byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\ n =
+       LENGTH bytes /\
+     good_dimindex (:'a) ==>
+     (?free' curr m1.
+       FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+       FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+       (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a
+         word) in
+        let ws = REPLICATE (byte_len (:'a) n) (n2w 0) in
+        let ws = write_bytes bytes ws be in
+          data_to_word_memoryProof_store_list free' (wordLang_Word
+            (make_byte_header c fl n) :: MAP wordLang_Word ws) m dm =
+            SOME m1 /\
+          memory_rel c be ts (insert new (ByteArray fl bytes) refs)
+            (sp - (byte_len (:'a) n + 1)) (st |+
+              (NextFree,wordLang_Word (free' + w'))) m1 dm
+            ((RefPtr T new,make_ptr c (free' - curr) ((n2w 0):'a
+              word) (byte_len (:'a) n)) :: vars)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefByte_alt = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\ ~(new IN (domain
-  refs)) /\ byte_len (:'a) n < sp /\
-    byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
-    byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\
-    good_dimindex (:'a) ==>
-    (?free' curr m1.
-      FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a
-        word) in
-       let ws = REPLICATE (byte_len (:'a) n) (wordLang_Word
-         (word_of_byte (w2w w))) in
-       let nb = (n MOD (dimindex (:'a) DIV 8)) in
-       let ws = LUPDATE (wordLang_Word (last_bytes nb w (n2w 0) (n2w
-         0) be)) (byte_len (:'a) n - 1) ws in
-         data_to_word_memoryProof_store_list free' (wordLang_Word
-           (make_byte_header c fl n) :: ws) m dm = SOME m1 /\
-         memory_rel c be ts (insert new (ByteArray fl (REPLICATE n
-           w)) refs)
-           (sp - (byte_len (:'a) n + 1)) (st |+
-             (NextFree,wordLang_Word (free' + w'))) m1 dm
-           ((RefPtr T new,make_ptr c (free' - curr) (n2w 0)
-             (byte_len (:'a) n)) :: vars)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\ ~(new IN (domain refs))
+  /\ byte_len (:'a) n < sp /\
+      byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
+      byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\
+      good_dimindex (:'a) ==>
+      (?free' curr m1.
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a
+          word) in
+         let ws = REPLICATE (byte_len (:'a) n) (wordLang_Word
+           (word_of_byte (w2w w))) in
+         let nb = (n MOD (dimindex (:'a) DIV 8)) in
+         let ws = LUPDATE (wordLang_Word (last_bytes nb w (n2w 0)
+           (n2w 0) be)) (byte_len (:'a) n - 1) ws in
+           data_to_word_memoryProof_store_list free' (wordLang_Word
+             (make_byte_header c fl n) :: ws) m dm = SOME m1 /\
+           memory_rel c be ts (insert new (ByteArray fl (REPLICATE
+             n w)) refs)
+             (sp - (byte_len (:'a) n + 1)) (st |+
+               (NextFree,wordLang_Word (free' + w'))) m1 dm
+             ((RefPtr T new,make_ptr c (free' - curr) (n2w 0)
+               (byte_len (:'a) n)) :: vars)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_tail = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (v :: vars) ==>
-    memory_rel c be ts refs sp st m dm vars`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (v :: vars) ==>
+      memory_rel c be ts refs sp st m dm vars`),
   (DISCH_TAC THEN
    FIRST_ASSUM(fun th ->
      MATCH_MP_TAC(MATCH_MP
@@ -10945,9 +11057,12 @@ let memory_rel_tail = prove
           memory_rel_rearrange) th)) THEN
    REWRITE_TAC[MEM] THEN MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_drop = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (vs ++ vars) ==>
-    memory_rel c be ts refs sp st m dm vars`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (vs ++ vars) ==>
+      memory_rel c be ts refs sp st m dm vars`),
   (DISCH_TAC THEN
    FIRST_ASSUM(fun th ->
      MATCH_MP_TAC(MATCH_MP
@@ -10955,10 +11070,13 @@ let memory_rel_drop = prove
           memory_rel_rearrange) th)) THEN
    REWRITE_TAC[MEM_APPEND] THEN MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_IMP_word_list_exists = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\ n <= sp /\
-    FLOOKUP st NextFree = SOME (wordLang_Word f) ==>
-    (word_list_exists f n * SEP_T) (fun2set (m,dm))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\ n <= sp /\
+      FLOOKUP st NextFree = SOME (wordLang_Word f) ==>
+      (word_list_exists f n * SEP_T) (fun2set (m,dm))`),
   (* the free space of the heap is the Unused element at the
      address that NextFree points at, and word_el makes it a
      word_list_exists of its length; the part of it that the
@@ -11086,10 +11204,13 @@ let blocks_unique_CodePtr = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_CodePtr = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars ==>
-    memory_rel c be ts refs sp st m dm ((CodePtr lab,Loc lab 0) ::
-      vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars ==>
+      memory_rel c be ts refs sp st m dm ((CodePtr lab,Loc lab 0)
+        :: vars)`),
   (* the root of a CodePtr is the Data of its Loc, which word_addr
      gives the Loc of; a CodePtr is no Block, so the timestamps and
      the unique blocks of the stack stay as they are, and it has no
@@ -11143,23 +11264,26 @@ let memory_rel_CodePtr = prove
         [FIRST_ASSUM(fun rr -> MATCH_ACCEPT_TAC(MATCH_MP reach rr));
          FIRST_ASSUM MATCH_ACCEPT_TAC]]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Block_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts' tag vals,(v:'a
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Block ts' tag vals,(v:'a
   word_loc)) :: vars) /\
-    good_dimindex (:'a) ==>
-    (?w. v = wordLang_Word w /\
-        // ASK: If the Block has no vals then it's timestamp is 0
-        (if vals = [] then
-          w = n2w tag * (n2w 16) + (n2w 2) /\ ~(FAPPLY w 0) /\
-          tag < dimword (:'a) DIV 16 /\ ts' = 0 else
-          ?a x. FAPPLY
-            w 0 /\ ~(word_bit 3 x) /\ ~(word_bit 2 x) /\
-            get_real_addr c st w = SOME a /\ m a = wordLang_Word x /\
-              a IN dm /\
-            decode_length c x = n2w (LENGTH vals) /\
-            LENGTH vals < 2 EXP (dimindex (:'a) - 4) /\
-            encode_header c (4 * tag) (LENGTH vals) = SOME x /\
-            ts' < ts))`,
+      good_dimindex (:'a) ==>
+      (?w. v = wordLang_Word w /\
+          // ASK: If the Block has no vals then it's timestamp is 0
+          (if vals = [] then
+            w = n2w tag * (n2w 16) + (n2w 2) /\ ~(FAPPLY w 0) /\
+            tag < dimword (:'a) DIV 16 /\ ts' = 0 else
+            ?a x. FAPPLY
+              w 0 /\ ~(word_bit 3 x) /\ ~(word_bit 2 x) /\
+              get_real_addr c st w = SOME a /\ m a = wordLang_Word
+                x /\ a IN dm /\
+              decode_length c x = n2w (LENGTH vals) /\
+              LENGTH vals < 2 EXP (dimindex (:'a) - 4) /\
+              encode_header c (4 * tag) (LENGTH vals) = SOME x /\
+              ts' < ts))`),
   (* what the root of a Block is: of an empty one the Data of its
      BlockNil, whose and with the complement of one leaves it alone
      (its lowest bit is clear, because sixteen times the tag plus
@@ -11254,7 +11378,7 @@ let memory_rel_Block_IMP = prove
    MEMORY_REL_TAC THEN
    ASM_CASES_TAC `vals:(dataSem_v)list = []` THEN
    ASM_REWRITE_TAC[] THENL
-    [VAR_EQ_TAC THEN V_INV_TAC THEN
+    [VAR_EQ_TAC THEN V_INV_TAC v_inv_def THEN
      REWRITE_TAC(word_addr_clauses ()) THEN
      W(fun (asl,w) ->
        EXISTS_TAC
@@ -11265,7 +11389,7 @@ let memory_rel_Block_IMP = prove
        REWRITE_TAC[word_index; BIT_WORD_AND; BIT_WORD_NOT;
                    BIT_WORD_1] THEN
        CONV_TAC NUM_REDUCE_CONV];
-     V_INV_TAC THEN
+     V_INV_TAC v_inv_def THEN
      FIRST_ASSUM(fun ne ->
        if is_neg (concl ne)
        then RULE_ASSUM_TAC(REWRITE_RULE[v_inv_def; ne])
@@ -11346,11 +11470,15 @@ let memory_rel_Block_IMP = prove
        `data_to_word_config_len_size c + 7 < dimindex (:'a)` THEN
      ARITH_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_memory_rel_Number = prove
- (`good_dimindex (:'a) /\ small_int (:'a) i /\
-    memory_rel c (be:bool) ts refs sp st m dm vars ==>
-    memory_rel c be ts refs sp st m dm
-     ((Number i,(wordLang_Word (Smallnum i):'a word_loc)) :: vars)`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ small_int (:'a) i /\
+      memory_rel c be ts refs sp st m dm vars ==>
+      memory_rel c be ts refs sp st m dm
+       ((Number i,(wordLang_Word (Smallnum i):'a word_loc)) ::
+         vars)`),
   (* the root of a small Number is the Data of its Smallnum, which
      abs_ml_inv_Num adds to the roots, and Smallnum is four times
      the integer up to the sign, so word_addr leaves it alone *)
@@ -11402,19 +11530,22 @@ let IMP_memory_rel_Number = prove
        FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
        ASM_SIMP_TAC[andnot1]]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_El_any = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts' tag
-  vals,(ptr:'a word_loc)) :: vars) /\
-    good_dimindex (:'a) /\
-    index < LENGTH vals ==>
-    (?ptr_w x (y:'a word).
-      ptr = wordLang_Word ptr_w /\
-      get_real_addr c st ptr_w = SOME x /\
-      (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
-      memory_rel c be ts refs sp st m dm
-        ((EL index vals,m (x + bytes_in_word + bytes_in_word * n2w
-          index)) ::
-         (Block ts' tag vals,ptr) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Block ts' tag vals,(ptr:'a
+  word_loc)) :: vars) /\
+      good_dimindex (:'a) /\
+      index < LENGTH vals ==>
+      (?ptr_w x (y:'a word).
+        ptr = wordLang_Word ptr_w /\
+        get_real_addr c st ptr_w = SOME x /\
+        (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
+        memory_rel c be ts refs sp st m dm
+          ((EL index vals,m (x + bytes_in_word + bytes_in_word *
+            n2w index)) ::
+           (Block ts' tag vals,ptr) :: vars))`),
   (* the same statement as memory_rel_El', up to an existential
      that neither of the two uses: the source proves it again from
      memory_rel_El, with a Number put into the list for the offset,
@@ -11458,22 +11589,26 @@ let copy_list_def = cake_define
 (* HOL4 data_to_word_memoryProofScript.sml:10872-10965: a theorem
    that HOL4 states as the value of an ML expression: copy_list_thm *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_FromList = prove
- (`v_to_list v = SOME vs /\ ~(vs = []) /\
-    memory_rel c (be:bool) ts refs sp st m dm ((v,(a:'a word_loc)) ::
-      vars) /\
-    encode_header c (4 * tag) (LENGTH vs) = SOME hd /\ LENGTH vs < sp
-      /\
-    good_dimindex (:'a) ==>
-    (?free' curr m1 f1 xs.
-      FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      copy_list c st (LENGTH vs) (a,wordLang_Word hd,free',m,dm) =
-        SOME (f1,m1) /\
-      memory_rel c be (ts + 1) refs (sp - (LENGTH vs + 1)) (st |+
-        (NextFree,wordLang_Word f1)) m1 dm
-        ((Block ts tag vs,
-          make_cons_ptr c (free' - curr) tag (LENGTH vs)) :: vars))`,
+ (cake_as_vars (fun () ->
+    `v_to_list v = SOME vs /\ ~(vs = []) /\
+      memory_rel c be ts refs sp st m dm ((v,(a:'a word_loc)) ::
+        vars) /\
+      encode_header c (4 * tag) (LENGTH vs) = SOME hd /\ LENGTH vs
+        < sp /\
+      good_dimindex (:'a) ==>
+      (?free' curr m1 f1 xs.
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        copy_list c st (LENGTH vs) (a,wordLang_Word hd,free',m,dm)
+          = SOME (f1,m1) /\
+        memory_rel c be (ts + 1) refs (sp - (LENGTH vs + 1)) (st |+
+          (NextFree,wordLang_Word f1)) m1 dm
+          ((Block ts tag vs,
+            make_cons_ptr c (free' - curr) tag (LENGTH vs)) ::
+              vars))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -11632,11 +11767,14 @@ let encode_header_tag_mask = prove
        ONCE_REWRITE_TAC[WORD_AND_SYM] THEN
        REWRITE_TAC[ARITH_RULE `4 * (4 * tag) = 16 * tag`; orsum]]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_tag_limit = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts' tag l,(w:'a
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Block ts' tag l,(w:'a
   word_loc)) :: rest) /\
-    good_dimindex (:'a) ==>
-    tag < dimword (:'a) DIV 16`,
+      good_dimindex (:'a) ==>
+      tag < dimword (:'a) DIV 16`),
   (* the tag of an empty Block is below the bound by what
      memory_rel_Block_IMP says, and the tag of a Block with a
      payload by the header that encode_header gives it *)
@@ -11666,12 +11804,15 @@ let MULT_BIT0 = prove
      REWRITE_TAC[EVEN_MOD; ODD_MOD] THEN ARITH_TAC) in
    REWRITE_TAC[bit0; ODD_MULT]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_test_nil_eq = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts' tag l,(w:'a
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Block ts' tag l,(w:'a
   word_loc)) :: rest) /\
-    n < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
-    (?v. w = wordLang_Word v /\ (v = n2w (16 * n + 2) <=> tag = n
-      /\ l = []))`,
+      n < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
+      (?v. w = wordLang_Word v /\ (v = n2w (16 * n + 2) <=> tag =
+        n /\ l = []))`),
   (* memory_rel_Block_IMP says what the word of the Block is: of an
      empty Block it is sixteen times the tag plus two, whose lowest
      bit is clear, and of a Block with values it is a pointer, whose
@@ -11711,11 +11852,14 @@ let memory_rel_test_nil_eq = prove
        CONTR_TAC(REWRITE_RULE[word_index; BIT_WORD; EXP; DIV_1;
          ODD_ADD; ODD_MULT; ARITH] b0))]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_test_none_eq = prove
- (`encode_header c (4 * n) len = (NONE:('a word) option) /\
-    memory_rel c (be:bool) ts refs sp st m dm ((Block ts' tag l,(w:'a
-      word_loc)) :: rest) /\ ~(len = 0) /\ good_dimindex (:'a) ==>
-    ~(tag = n /\ LENGTH l = len)`,
+ (cake_as_vars (fun () ->
+    `encode_header c (4 * n) len = (NONE:('a word) option) /\
+      memory_rel c be ts refs sp st m dm ((Block ts' tag l,(w:'a
+        word_loc)) :: rest) /\ ~(len = 0) /\ good_dimindex (:'a) ==>
+      ~(tag = n /\ LENGTH l = len)`),
   (* the Block has values, because its length is not zero, so
      memory_rel_Block_IMP gives its header, and encode_header of the
      tag and that length is SOME of it, not NONE *)
@@ -11899,18 +12043,22 @@ let encode_header_EQ = prove
          ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]];
      DISCH_THEN(CONJUNCTS_THEN SUBST1_TAC) THEN REFL_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_ValueArray_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,(v:'a
-  word_loc)) :: vars) /\
-    lookup p refs = SOME (ValueArray vals) /\ good_dimindex (:'a) ==>
-    (?w a x.
-      v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\ ~(word_bit
-        2 x) /\ ~(word_bit 4 x) /\
-      get_real_simple_addr c st w = SOME a /\
-      get_real_addr c st w = SOME a /\
-      m a = wordLang_Word x /\ a IN dm /\
-      decode_length c x = n2w (LENGTH vals) /\
-      LENGTH vals < 2 EXP (dimindex (:'a) - 4))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,(v:'a word_loc))
+  :: vars) /\
+      lookup p refs = SOME (ValueArray vals) /\ good_dimindex (:'a)
+        ==>
+      (?w a x.
+        v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\
+          ~(word_bit 2 x) /\ ~(word_bit 4 x) /\
+        get_real_simple_addr c st w = SOME a /\
+        get_real_addr c st w = SOME a /\
+        m a = wordLang_Word x /\ a IN dm /\
+        decode_length c x = n2w (LENGTH vals) /\
+        LENGTH vals < 2 EXP (dimindex (:'a) - 4))`),
   (* the header of a reference's array, read out of the memory: as
      for a byte array, the v_inv of the RefPtr gives the pointer
      (whose lowest bit is set, which is get_addr_0), bc_ref_inv
@@ -11943,7 +12091,7 @@ let memory_rel_ValueArray_IMP = prove
        let target = itlist mk picked (end_itlist mk rest) in
        SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
         [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
-   MEMORY_REL_TAC THEN V_INV_TAC THEN
+   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
    TRY(FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
      CONTR_TAC(REWRITE_RULE[injectivity "option";
                             distinctness "bvlSem_ref"]
@@ -12104,58 +12252,71 @@ let blocks_unique_Thunk2 = prove
                      v_all_vs_append; MEM_APPEND] THEN
          MESON_TAC[])))));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Thunk_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,(v:'a
-  word_loc)) :: vars) /\
-   lookup p refs = SOME (Thunk ev z) /\
-   good_dimindex (:'a) ==>
-     (~bl /\
-      ev = Evaluated /\
-      (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
-         memory_rel c be ts refs sp st m dm ((z,v) :: vars) /\
-         (?a x. get_real_addr c st w = SOME a /\
-               m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
-                 0b111100)) = n2w ((0 + 6) * 4)) /\ ~((x && (n2w
-                 0b111100)) = n2w ((8 + 6) * 4))))) \/
-     (?w a x.
-       v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\
-         ~(word_bit 2 x) /\ word_bit 4 x /\
-       get_real_simple_addr c st w = SOME a /\
-       get_real_addr c st w = SOME a /\
-       m a = wordLang_Word x /\ a IN dm /\
-       (a + bytes_in_word) IN dm /\
-       decode_length c x = (n2w 1) /\
-       (word_bit 5 x <=> ev = Evaluated) /\
-       memory_rel c be ts refs sp st m dm
-         ((z,m (a + bytes_in_word)) :: (RefPtr bl p,v) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,(v:'a word_loc))
+  :: vars) /\
+     lookup p refs = SOME (Thunk ev z) /\
+     good_dimindex (:'a) ==>
+       (~bl /\
+        ev = Evaluated /\
+        (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
+           memory_rel c be ts refs sp st m dm ((z,v) :: vars) /\
+           (?a x. get_real_addr c st w = SOME a /\
+                 m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
+                   0b111100)) = n2w ((0 + 6) * 4)) /\ ~((x && (n2w
+                   0b111100)) = n2w ((8 + 6) * 4))))) \/
+       (?w a x.
+         v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\
+           ~(word_bit 2 x) /\ word_bit 4 x /\
+         get_real_simple_addr c st w = SOME a /\
+         get_real_addr c st w = SOME a /\
+         m a = wordLang_Word x /\ a IN dm /\
+         (a + bytes_in_word) IN dm /\
+         decode_length c x = (n2w 1) /\
+         (word_bit 5 x <=> ev = Evaluated) /\
+         memory_rel c be ts refs sp st m dm
+           ((z,m (a + bytes_in_word)) :: (RefPtr bl p,v) ::
+             vars))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Thunk_inlined = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,(w:'a
-  word_loc)) :: vars) /\
-   ((?l1 l2. w = Loc l1 l2) \/ (?w1. w = wordLang_Word w1 /\ ~(FAPPLY
-     w1 0))) /\
-   lookup p refs = SOME (Thunk ev z) /\
-   good_dimindex (:'a) ==>
-     ev = Evaluated /\
-     memory_rel c be ts refs sp st m dm ((z,w) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,(w:'a word_loc))
+  :: vars) /\
+     ((?l1 l2. w = Loc l1 l2) \/ (?w1. w = wordLang_Word w1 /\
+       ~(FAPPLY w1 0))) /\
+     lookup p refs = SOME (Thunk ev z) /\
+     good_dimindex (:'a) ==>
+       ev = Evaluated /\
+       memory_rel c be ts refs sp st m dm ((z,w) :: vars)`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:11655-11657: the ML values
    that the definitions below antiquote *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let get_byte_set_byte_alt = prove
- (`good_dimindex (:'a) /\ ~(w = v) /\ byte_align w = byte_align v /\
-    get_byte w s (be:bool) = x ==>
-    get_byte w (set_byte v b (s:'a word) be) be = x`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ ~(w = v) /\ byte_align w = byte_align v /\
+      get_byte w s be = x ==>
+      get_byte w (set_byte v b (s:'a word) be) be = x`),
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[get_byte_set_byte_diff]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let get_byte_bytes_to_word = prove
- (`!zs (t:'a word).
-      i < LENGTH zs /\ i < 2 EXP k /\
-      2 EXP k = dimindex (:'a) DIV 8 /\ good_dimindex (:'a) ==>
-      get_byte (n2w i) (bytes_to_word (2 EXP k) (n2w 0) zs t
-        (be:bool)) be = EL i zs`,
+ (cake_as_vars (fun () ->
+    `!zs (t:'a word).
+        i < LENGTH zs /\ i < 2 EXP k /\
+        2 EXP k = dimindex (:'a) DIV 8 /\ good_dimindex (:'a) ==>
+        get_byte (n2w i) (bytes_to_word (2 EXP k) (n2w 0) zs t
+          be) be = EL i zs`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -12219,10 +12380,13 @@ let w2n_add_byte_align_lemma = prove
    CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
    CONV_TAC NUM_REDUCE_CONV));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let get_byte_byte_align = prove
- (`good_dimindex (:'a) ==>
-    get_byte (a' + byte_align a) w (be:bool) = get_byte a' (w:'a
-      word) be`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) ==>
+      get_byte (a' + byte_align a) w be = get_byte a' (w:'a word)
+        be`),
   (* which byte an address picks out is its remainder by the bytes
      in a word, which adding a byte aligned word does not change *)
   (DISCH_TAC THEN
@@ -12232,9 +12396,12 @@ let get_byte_byte_align = prove
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
    ASM_SIMP_TAC[w2n_add_byte_align_lemma]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let get_byte_eq = prove
- (`good_dimindex (:'a) /\ a = byte_align a + a' ==>
-    get_byte a w (be:bool) = get_byte a' (w:'a word) be`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ a = byte_align a + a' ==>
+      get_byte a w be = get_byte a' (w:'a word) be`),
   (* the byte that an address selects does not change when the
      address is taken modulo the word it is in *)
   (STRIP_TAC THEN
@@ -12243,11 +12410,14 @@ let get_byte_eq = prove
    FIRST_ASSUM(fun gd ->
      MATCH_ACCEPT_TAC(MATCH_MP get_byte_byte_align gd))));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytes_same = prove
- (`!ws b1 b2.
-   (!n. n < LENGTH (ws:('a word) list) * (dimindex (:'a) DIV 8) ==>
-     n < LENGTH b1 /\ n < LENGTH b2 /\ EL n b1 = EL n b2) ==>
-     write_bytes b1 ws (be:bool) = write_bytes b2 ws be`,
+ (cake_as_vars (fun () ->
+    `!ws b1 b2.
+     (!n. n < LENGTH (ws:('a word) list) * (dimindex (:'a) DIV 8)
+       ==> n < LENGTH b1 /\ n < LENGTH b2 /\ EL n b1 = EL n b2) ==>
+       write_bytes b1 ws be = write_bytes b2 ws be`),
   (* the words come out the same because every byte that one of
      them reads is the same in the two lists: the head word reads
      the first bytes (the bytes_to_word of a list of bytes that
@@ -12310,26 +12480,33 @@ let write_bytes_same = prove
      REPEAT CONJ_TAC THEN TRY(MATCH_MP_TAC lt3) THEN
      ASM_REWRITE_TAC[]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let set_byte_bytes_to_word = prove
- (`i < LENGTH ls /\ i < 2 EXP k /\ 2 EXP k = dimindex (:'a) DIV 8 /\
-   good_dimindex (:'a) ==>
-   set_byte (n2w i) b (bytes_to_word (2 EXP k) (n2w 0) ls t
-     (be:bool)) be =
-   bytes_to_word (2 EXP k) ((n2w 0):'a word) (LUPDATE b i ls) t be`,
+ (cake_as_vars (fun () ->
+    `i < LENGTH ls /\ i < 2 EXP k /\ 2 EXP k = dimindex (:'a) DIV 8 /\
+     good_dimindex (:'a) ==>
+     set_byte (n2w i) b (bytes_to_word (2 EXP k) (n2w 0) ls t be)
+       be =
+     bytes_to_word (2 EXP k) ((n2w 0):'a word) (LUPDATE b i ls) t
+       be`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let heap_in_memory_store_UpdateByte = prove
- (`heap_in_memory_store heap a sp sp1 gens c s m dm (limit:num) /\
-   heap = ha ++ [Bytes (be:bool) fl bs ws] ++ hb /\ i < LENGTH bs /\
-   ad = curr + bytes_in_word + n2w i + (bytes_in_word:'a word) * n2w
-     (heap_length ha) /\
-   FLOOKUP s CurrHeap = SOME (wordLang_Word curr) /\
-   m (byte_align ad) = wordLang_Word w /\ good_dimindex (:'a) ==>
-   heap_in_memory_store (ha ++ [Bytes be fl (LUPDATE b i bs) ws] ++
-     hb)
-   a sp sp1 gens c s
-   ((byte_align ad =+ wordLang_Word (set_byte ad b w be)) m) dm
-     limit`,
+ (cake_as_vars (fun () ->
+    `heap_in_memory_store heap a sp sp1 gens c s m dm limit /\
+     heap = ha ++ [Bytes be fl bs ws] ++ hb /\ i < LENGTH bs /\
+     ad = curr + bytes_in_word + n2w i + (bytes_in_word:'a word) *
+       n2w (heap_length ha) /\
+     FLOOKUP s CurrHeap = SOME (wordLang_Word curr) /\
+     m (byte_align ad) = wordLang_Word w /\ good_dimindex (:'a) ==>
+     heap_in_memory_store (ha ++ [Bytes be fl (LUPDATE b i bs) ws]
+       ++ hb)
+     a sp sp1 gens c s
+     ((byte_align ad =+ wordLang_Word (set_byte ad b w be)) m) dm
+       limit`),
   CHEAT_TAC);;
 
 let hide_memory_rel_def = cake_define
@@ -12338,70 +12515,82 @@ let hide_memory_rel_def = cake_define
 let hide_heap_in_memory_store_def = cake_define
   `hide_heap_in_memory_store = heap_in_memory_store`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_ByteArray_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,(v:'a
-  word_loc)) :: vars) /\
-   lookup p refs = SOME (ByteArray fl vals) /\ good_dimindex (:'a)
-     ==>
-   (?w a x l.
-     v = wordLang_Word w /\ FAPPLY w 0 /\
-     make_byte_header c fl (LENGTH vals) = x /\
-     ~(word_bit 3 x) /\ (word_bit 4 x <=> ~fl) /\ word_bit 2 x /\
-     get_real_simple_addr c st w = SOME a /\
-     get_real_addr c st w = SOME a /\
-     m a = wordLang_Word x /\ a IN dm /\
-     (!i. i < LENGTH vals ==>
-          mem_load_byte_aux m dm be (a + bytes_in_word + n2w i) =
-          SOME (EL i vals)) /\
-     (!i w. i < LENGTH vals ==>
-       (let addr' = a + bytes_in_word + n2w i in
-       memory_rel c be ts (insert p (ByteArray fl (LUPDATE w i vals))
-         refs) sp st
-         ((byte_align addr' =+
-           wordLang_Word (set_byte addr' w (theWord (m (byte_align
-             addr'))) be)) m) dm
-           ((RefPtr bl p,v) :: vars))) /\
-     (if dimindex (:'a) = 32 then
-       LENGTH vals + 4 < 2 EXP (dimindex (:'a) - 3) /\
-       (x >>> (dimindex (:'a) - data_to_word_config_len_size c - 2) =
-         n2w (LENGTH vals + 4)) else
-       LENGTH vals + 8 < 2 EXP (dimindex (:'a) - 3) /\
-       (x >>> (dimindex (:'a) - data_to_word_config_len_size c - 3)
-         = n2w (LENGTH vals + 8))))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,(v:'a word_loc))
+  :: vars) /\
+     lookup p refs = SOME (ByteArray fl vals) /\ good_dimindex
+       (:'a) ==>
+     (?w a x l.
+       v = wordLang_Word w /\ FAPPLY w 0 /\
+       make_byte_header c fl (LENGTH vals) = x /\
+       ~(word_bit 3 x) /\ (word_bit 4 x <=> ~fl) /\ word_bit 2 x /\
+       get_real_simple_addr c st w = SOME a /\
+       get_real_addr c st w = SOME a /\
+       m a = wordLang_Word x /\ a IN dm /\
+       (!i. i < LENGTH vals ==>
+            mem_load_byte_aux m dm be (a + bytes_in_word + n2w i) =
+            SOME (EL i vals)) /\
+       (!i w. i < LENGTH vals ==>
+         (let addr' = a + bytes_in_word + n2w i in
+         memory_rel c be ts (insert p (ByteArray fl (LUPDATE w i
+           vals)) refs) sp st
+           ((byte_align addr' =+
+             wordLang_Word (set_byte addr' w (theWord (m
+               (byte_align addr'))) be)) m) dm
+             ((RefPtr bl p,v) :: vars))) /\
+       (if dimindex (:'a) = 32 then
+         LENGTH vals + 4 < 2 EXP (dimindex (:'a) - 3) /\
+         (x >>> (dimindex (:'a) - data_to_word_config_len_size c -
+           2) = n2w (LENGTH vals + 4)) else
+         LENGTH vals + 8 < 2 EXP (dimindex (:'a) - 3) /\
+         (x >>> (dimindex (:'a) - data_to_word_config_len_size c
+           - 3) = n2w (LENGTH vals + 8))))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefPtr_IMP_lemma = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,(v:'a
-  word_loc)) :: vars) ==>
-    (?res. lookup p refs = SOME res)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,(v:'a word_loc))
+  :: vars) ==>
+      (?res. lookup p refs = SOME res)`),
   (* every rule of v_inv for a RefPtr says that the pointer is in
      the refs: the first through the domain of f, the other two
      with the lookup itself *)
-  (MEMORY_REL_TAC THEN V_INV_TAC THEN
+  (MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
    ASM_MESON_TAC[domain_lookup; SUBSET]));;
 
 (* a compare-by-pointer RefPtr can never point at a MutBlock: v_inv's RefPtr
    case demands ~b when the ref is a MutBlock *)
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_MutBlock_IMP_F = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr T p,(v:'a
-  word_loc)) :: vars) /\
-   lookup p refs = SOME (bvlSem_MutBlock tg fin ls cv rs) ==> F`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr T p,(v:'a word_loc)) ::
+  vars) /\
+     lookup p refs = SOME (bvlSem_MutBlock tg fin ls cv rs) ==> F`),
   (* a RefPtr T is no MutBlock: every rule of v_inv that gives one
      a root says so *)
-  (MEMORY_REL_TAC THEN V_INV_TAC THEN ASM_MESON_TAC[]));;
+  (MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefPtr_T_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr T p,v) :: vars) /\
-   good_dimindex (:'a) ==>
-     (?w a x.
-       v = wordLang_Word w /\ FAPPLY w 0 /\
-       (
-        // (word_bit 4 x ⇒ word_bit 2 x) ∧
-        word_bit 3 x <=> ~(word_bit 2 x)) /\
-       get_real_addr c st w = SOME a /\
-       get_real_simple_addr c st w = SOME a /\
-       m a = wordLang_Word (x:'a word) /\ a IN dm)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr T p,v) :: vars) /\
+     good_dimindex (:'a) ==>
+       (?w a x.
+         v = wordLang_Word w /\ FAPPLY w 0 /\
+         (
+          // (word_bit 4 x ⇒ word_bit 2 x) ∧
+          word_bit 3 x <=> ~(word_bit 2 x)) /\
+         get_real_addr c st w = SOME a /\
+         get_real_simple_addr c st w = SOME a /\
+         m a = wordLang_Word (x:'a word) /\ a IN dm)`),
   (* a RefPtr T is no thunk (the rule of v_inv for one asks for a
      RefPtr F) and no MutBlock, so the four cases of the value in
      the refs are the two arrays and two contradictions *)
@@ -12419,21 +12608,23 @@ let memory_rel_RefPtr_T_IMP = prove
 
 (* the MutBlock exclusion is needed: a MutBlock is laid out with a BlockTag
    header, whose bits 2 and 3 are both clear, so the conclusion below fails *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefPtr_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,v) :: vars)
-  /\
-   good_dimindex (:'a) /\
-   (!t a. ~(lookup p refs = SOME (Thunk t a))) /\
-   (!tg fin l cv rs. ~(lookup p refs = SOME (bvlSem_MutBlock tg fin l
-     cv rs))) ==>
-     (?w a x.
-       v = wordLang_Word w /\ FAPPLY w 0 /\
-       (
-        // (word_bit 4 x ⇒ word_bit 2 x) ∧
-        word_bit 3 x <=> ~(word_bit 2 x)) /\
-       get_real_addr c st w = SOME a /\
-       get_real_simple_addr c st w = SOME a /\
-       m a = wordLang_Word (x:'a word) /\ a IN dm)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,v) :: vars) /\
+     good_dimindex (:'a) /\
+     (!t a. ~(lookup p refs = SOME (Thunk t a))) /\
+     (!tg fin l cv rs. ~(lookup p refs = SOME (bvlSem_MutBlock tg
+       fin l cv rs))) ==>
+       (?w a x.
+         v = wordLang_Word w /\ FAPPLY w 0 /\
+         (
+          // (word_bit 4 x ⇒ word_bit 2 x) ∧
+          word_bit 3 x <=> ~(word_bit 2 x)) /\
+         get_real_addr c st w = SOME a /\
+         get_real_simple_addr c st w = SOME a /\
+         m a = wordLang_Word (x:'a word) /\ a IN dm)`),
   (* the pointer has a value in the refs, which is a ValueArray or
      a ByteArray because the hypotheses exclude the other two *)
   (STRIP_TAC THEN
@@ -12446,27 +12637,29 @@ let memory_rel_RefPtr_IMP = prove
    ALL_INST3 memory_rel_ByteArray_IMP THEN
    ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefPtr_gen_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,v) :: vars)
-  /\
-   good_dimindex (:'a) ==>
-   (?r. lookup p refs = SOME r /\
-   (match r with Thunk Evaluated x ->
-     (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
-        (?a x. get_real_addr c st w = SOME a /\
-              m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
-                0b111100)) = n2w ((0 + 6) * 4)))) |
-     // a MutBlock carries a BlockTag header, for which the bit pattern below
-     // does not hold; this theorem has no users, so the case is left trivial
-     bvlSem_MutBlock _55 _56 _57 _58 _59 -> T | _60 ->
-     (?w a x.
-       v = wordLang_Word w /\ FAPPLY w 0 /\
-       (
-        // (word_bit 4 x ⇒ word_bit 2 x) ∧
-        word_bit 3 x <=> ~(word_bit 2 x)) /\
-       get_real_addr c st w = SOME a /\
-       get_real_simple_addr c st w = SOME a /\
-       m a = wordLang_Word (x:'a word) /\ a IN dm)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,v) :: vars) /\
+     good_dimindex (:'a) ==>
+     (?r. lookup p refs = SOME r /\
+     (match r with Thunk Evaluated x ->
+       (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
+          (?a x. get_real_addr c st w = SOME a /\
+                m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
+                  0b111100)) = n2w ((0 + 6) * 4)))) |
+       // a MutBlock carries a BlockTag header, for which the bit pattern below
+       // does not hold; this theorem has no users, so the case is left trivial
+       bvlSem_MutBlock _61 _62 _63 _64 _65 -> T | _66 ->
+       (?w a x.
+         v = wordLang_Word w /\ FAPPLY w 0 /\
+         (
+          // (word_bit 4 x ⇒ word_bit 2 x) ∧
+          word_bit 3 x <=> ~(word_bit 2 x)) /\
+         get_real_addr c st w = SOME a /\
+         get_real_simple_addr c st w = SOME a /\
+         m a = wordLang_Word (x:'a word) /\ a IN dm)))`),
   CHEAT_TAC);;
 
 (* Smallnum_bits *)
@@ -12518,16 +12711,19 @@ let smallnum_bits = prove
      FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
      REWRITE_TAC[shl4; bits01]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_any_Number_IMP = prove
- (`good_dimindex (:'a) /\
-    memory_rel c (be:bool) ts refs sp st m dm ((Number i,(v:'a
-      word_loc)) :: vars) ==>
-    (?w. v = wordLang_Word w /\ (FAPPLY w 0 <=> ~(small_int (:'a)
-      i)))`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\
+      memory_rel c be ts refs sp st m dm ((Number i,(v:'a
+        word_loc)) :: vars) ==>
+      (?w. v = wordLang_Word w /\ (FAPPLY w 0 <=> ~(small_int
+        (:'a) i)))`),
   (* the root of a Number is the Data of its Smallnum, whose lowest
      bit the and with the complement of one clears, or a Pointer,
      whose address has that bit set (get_addr_0) *)
-  (MEMORY_REL_TAC THEN V_INV_TAC THEN
+  (MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
     FIRST_ASSUM(fun e ->
       let c = concl e in
       if is_eq c && is_var (rand c) then SUBST1_TAC (SYM e)
@@ -12539,11 +12735,14 @@ let memory_rel_any_Number_IMP = prove
     CONV_TAC NUM_REDUCE_CONV THEN
     REWRITE_TAC[ARITH_RULE `0 < d <=> 1 <= d`; DIMINDEX_GE_1]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_IMP = prove
- (`good_dimindex (:'a) /\ small_int (:'a) i /\
-    memory_rel c (be:bool) ts refs sp st m dm ((Number i,(v:'a
-      word_loc)) :: vars) ==>
-    v = wordLang_Word (Smallnum i)`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ small_int (:'a) i /\
+      memory_rel c be ts refs sp st m dm ((Number i,(v:'a
+        word_loc)) :: vars) ==>
+      v = wordLang_Word (Smallnum i)`),
   (* the root of a small Number is the Data of its Smallnum,
      whose word_addr takes the tag bit off -- and Smallnum is
      four times the integer, which has that bit clear *)
@@ -12584,50 +12783,58 @@ let memory_rel_Number_IMP = prove
        FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP nmul th]) THEN
        MATCH_MP_TAC word_ml_inv_num_lemma THEN
        FIRST_ASSUM ACCEPT_TAC]) in
-   MEMORY_REL_TAC THEN V_INV_TAC THEN
+   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
    TRY CONTRA_TAC THEN
    FIRST_ASSUM(fun gd ->
      RULE_ASSUM_TAC(REWRITE_RULE[MATCH_MP sm_and gd])) THEN
    ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_bignum_IMP_ALT = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i,v) :: vars) /\
-    ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
-    (?ff w x a y.
-      v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a word)) /\
-      get_real_addr c st w = SOME a /\
-      a IN dm /\ m a = wordLang_Word x /\ (~((x && (n2w 8)) = (n2w
-        0))) /\
-      word_bit 2 x /\ word_bit 3 x /\
-      (word_bit 4 x <=> i < (&0)) /\
-      (misc_word_list (a + bytes_in_word)
-        (MAP wordLang_Word (n2mw (num_of_int (abs i)))) * ff)
-          (fun2set (m,dm)) /\
-      a + bytes_in_word IN dm /\
-      m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs
-        i))) /\
-      ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i) /\
-      LENGTH (n2mw (num_of_int (abs i)):('a word) list) < 2 EXP
-        (dimindex (:'a) - 4) /\
-      LENGTH (n2mw (num_of_int (abs i)):('a word) list) < dimword
-        (:'a) /\
-      decode_length c x = n2w
-        (LENGTH (n2mw (num_of_int (abs i)):('a word) list)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,v) :: vars) /\
+      ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
+      (?ff w x a y.
+        v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a
+          word)) /\
+        get_real_addr c st w = SOME a /\
+        a IN dm /\ m a = wordLang_Word x /\ (~((x && (n2w 8)) =
+          (n2w 0))) /\
+        word_bit 2 x /\ word_bit 3 x /\
+        (word_bit 4 x <=> i < (&0)) /\
+        (misc_word_list (a + bytes_in_word)
+          (MAP wordLang_Word (n2mw (num_of_int (abs i)))) * ff)
+            (fun2set (m,dm)) /\
+        a + bytes_in_word IN dm /\
+        m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs
+          i))) /\
+        ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i) /\
+        LENGTH (n2mw (num_of_int (abs i)):('a word) list) < 2 EXP
+          (dimindex (:'a) - 4) /\
+        LENGTH (n2mw (num_of_int (abs i)):('a word) list) < dimword
+          (:'a) /\
+        decode_length c x = n2w
+          (LENGTH (n2mw (num_of_int (abs i)):('a word) list)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_bignum_header = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i,(v:'a word_loc))
-  :: vars) /\
-    ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
-    (?ff w x a y.
-      v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
-      IS_SOME ((encode_header c (w2n ((b2w (i < (&0)) << 2 || (n2w
-        3)):'a word))
-          (LENGTH (n2mw (num_of_int (abs i)):('a word) list))):('a
-            word) option) /\
-      m a = wordLang_Word (make_header c (b2w (i < (&0)) << 2 || (n2w
-        3))
-              (LENGTH (n2mw (num_of_int (abs i)):('a word) list))))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,(v:'a word_loc)) ::
+  vars) /\
+      ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
+      (?ff w x a y.
+        v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
+        IS_SOME ((encode_header c (w2n ((b2w (i < (&0)) << 2 ||
+          (n2w 3)):'a word))
+            (LENGTH (n2mw (num_of_int (abs i)):('a word)
+              list))):('a word) option) /\
+        m a = wordLang_Word (make_header c (b2w (i < (&0)) << 2 ||
+          (n2w 3))
+                (LENGTH (n2mw (num_of_int (abs i)):('a word)
+                  list))))`),
   (let hd_is n t =
      (try fst(dest_const(fst(strip_comb t))) = n
       with Failure _ -> false) in
@@ -12716,34 +12923,43 @@ let memory_rel_Number_bignum_header = prove
    DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM) (K ALL_TAC)) THEN
    AP_TERM_TAC THEN AP_TERM_TAC THEN CONV_TAC WORD_RULE));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_bignum_cmp = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-        ((Number i1,v1) :: (Number i2,(v2:'a word_loc)) :: vars) /\
-    good_dimindex (:'a) /\ ~(small_int (:'a) i1) /\ ~(small_int (:'a)
-      i2) ==>
-    (?w1 w2 a1 a2 x1 x2.
-       v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
-       get_real_addr c st w1 = SOME a1 /\
-       get_real_addr c st w2 = SOME a2 /\
-       m a1 = wordLang_Word x1 /\
-       m a2 = wordLang_Word x2 /\
-       (~(x1 = x2) ==>
-        (decode_length c (x1) = decode_length c (x2)) ==> ~((((n2w
-          16) && x1) = (n2w 0)) = (((n2w 16) && x2) = (n2w 0)))))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+          ((Number i1,v1) :: (Number i2,(v2:'a word_loc)) :: vars)
+            /\
+      good_dimindex (:'a) /\ ~(small_int (:'a) i1) /\ ~(small_int
+        (:'a) i2) ==>
+      (?w1 w2 a1 a2 x1 x2.
+         v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+         get_real_addr c st w1 = SOME a1 /\
+         get_real_addr c st w2 = SOME a2 /\
+         m a1 = wordLang_Word x1 /\
+         m a2 = wordLang_Word x2 /\
+         (~(x1 = x2) ==>
+          (decode_length c (x1) = decode_length c (x2)) ==>
+            ~((((n2w 16) && x1) = (n2w 0)) = (((n2w 16) && x2) = (n2w
+            0)))))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_bignum_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i,v) :: vars) /\
-    ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
-    (?w x a y.
-      v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a word)) /\
-      get_real_addr c st w = SOME a /\
-      a IN dm /\ m a = wordLang_Word x /\ (~((x && (n2w 8)) = (n2w
-        0))) /\
-      a + bytes_in_word IN dm /\
-      m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs
-        i))) /\
-      ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,v) :: vars) /\
+      ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
+      (?w x a y.
+        v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a
+          word)) /\
+        get_real_addr c st w = SOME a /\
+        a IN dm /\ m a = wordLang_Word x /\ (~((x && (n2w 8)) =
+          (n2w 0))) /\
+        a + bytes_in_word IN dm /\
+        m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs
+          i))) /\
+        ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i))`),
   (* the ALT of it says more; this is what the source keeps *)
   (STRIP_TAC THEN
    FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 -> FIRST_ASSUM(fun t3 ->
@@ -12755,33 +12971,41 @@ let memory_rel_Number_bignum_IMP = prove
      if is_exists(concl th) then CHOOSE_TAC th else fail())) THEN
    ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Word64_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Word64 w64,(v:'a
-  word_loc)) :: vars) /\
-   good_dimindex (:'a) ==>
-   (?ptr x w.
-     v = wordLang_Word (get_addr c ptr (wordLang_Word (n2w 0))) /\
-     get_real_addr c st (get_addr c ptr (wordLang_Word (n2w 0))) =
-       SOME x /\
-     x IN dm /\ m x = wordLang_Word w /\ word_bit 3 w /\ ~(word_bit 4
-       w) /\ word_bit 2 w /\
-     (x + bytes_in_word) IN dm /\
-     (if dimindex (:'a) < 64 then
-       (m (x + bytes_in_word) = wordLang_Word ((63 >< 32) w64) /\
-        (x + (bytes_in_word << 1)) IN dm /\ m (x + (bytes_in_word <<
-          1)) = wordLang_Word ((31 >< 0) w64) /\
-       decode_length c w = (n2w 2) /\
-       w = make_header c (n2w 3) 2) else
-       (m (x + bytes_in_word) = wordLang_Word ((63 >< 0) w64)) /\
-       decode_length c w = (n2w 1) /\
-       w = make_header c (n2w 3) 1))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Word64 w64,(v:'a word_loc)) ::
+  vars) /\
+     good_dimindex (:'a) ==>
+     (?ptr x w.
+       v = wordLang_Word (get_addr c ptr (wordLang_Word (n2w 0)))
+         /\
+       get_real_addr c st (get_addr c ptr (wordLang_Word (n2w 0)))
+         = SOME x /\
+       x IN dm /\ m x = wordLang_Word w /\ word_bit 3 w /\
+         ~(word_bit 4 w) /\ word_bit 2 w /\
+       (x + bytes_in_word) IN dm /\
+       (if dimindex (:'a) < 64 then
+         (m (x + bytes_in_word) = wordLang_Word ((63 >< 32) w64) /\
+          (x + (bytes_in_word << 1)) IN dm /\ m (x + (bytes_in_word
+            << 1)) = wordLang_Word ((31 >< 0) w64) /\
+         decode_length c w = (n2w 2) /\
+         w = make_header c (n2w 3) 2) else
+         (m (x + bytes_in_word) = wordLang_Word ((63 >< 0) w64)) /\
+         decode_length c w = (n2w 1) /\
+         w = make_header c (n2w 3) 1))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_memory_rel_Number_num3 = prove
- (`good_dimindex (:'a) /\ n < 2 EXP (dimindex (:'a) - 3) /\
-    memory_rel c (be:bool) ts refs sp st m dm vars ==>
-    memory_rel c be ts refs sp st m dm
-     ((Number (&n),wordLang_Word ((n2w n << 2):'a word)) :: vars)`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ n < 2 EXP (dimindex (:'a) - 3) /\
+      memory_rel c be ts refs sp st m dm vars ==>
+      memory_rel c be ts refs sp st m dm
+       ((Number (&n),wordLang_Word ((n2w n << 2):'a word)) ::
+         vars)`),
   (* the Smallnum of a natural number is it shifted up by two, and
      a number below two to the dimindex less three is small *)
   (let shl2 = prove
@@ -12808,11 +13032,15 @@ let IMP_memory_rel_Number_num3 = prove
      RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
      CONV_TAC NUM_REDUCE_CONV THEN ARITH_ASM_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let IMP_memory_rel_Number_num = prove
- (`good_dimindex (:'a) /\ n < 2 EXP (dimindex (:'a) - 4) /\
-    memory_rel c (be:bool) ts refs sp st m dm vars ==>
-    memory_rel c be ts refs sp st m dm
-     ((Number (&n),wordLang_Word ((n2w n << 2):'a word)) :: vars)`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ n < 2 EXP (dimindex (:'a) - 4) /\
+      memory_rel c be ts refs sp st m dm vars ==>
+      memory_rel c be ts refs sp st m dm
+       ((Number (&n),wordLang_Word ((n2w n << 2):'a word)) ::
+         vars)`),
   (* and so is one below two to the dimindex less four *)
   (let shl2 = prove
     (`!(v:(N)word). word_shl v 2 = word 4 * v`,
@@ -12838,13 +13066,16 @@ let IMP_memory_rel_Number_num = prove
      RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
      CONV_TAC NUM_REDUCE_CONV THEN ARITH_ASM_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_EQ = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number i1,w1) :: (Number i2,w2) :: vars) /\
-    (small_int (:'a) i1 \/ small_int (:'a) i2) /\
-    good_dimindex (:'a) ==>
-      (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word (v2:'a
-        word) /\ (v1 = v2 <=> i1 = i2))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number i1,w1) :: (Number i2,w2) :: vars) /\
+      (small_int (:'a) i1 \/ small_int (:'a) i2) /\
+      good_dimindex (:'a) ==>
+        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word
+          (v2:'a word) /\ (v1 = v2 <=> i1 = i2))`),
   (* two Numbers of which at least one is small: if both are, both
      roots are Smallnums and num_eq_thm says that two Smallnums are
      equal only for equal integers; if one is not, the lowest bits
@@ -12938,14 +13169,17 @@ let memory_rel_Number_EQ = prove
        if is_disj (concl d) then DISJ_CASES_TAC d else fail()) THEN
      clash]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_LESS = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number i1,w1) :: (Number i2,w2) :: vars) /\
-    small_int (:'a) i1 /\
-    small_int (:'a) i2 /\
-    good_dimindex (:'a) ==>
-      (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2 /\
-        (v1 < (v2:'a word) <=> i1 < i2))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number i1,w1) :: (Number i2,w2) :: vars) /\
+      small_int (:'a) i1 /\
+      small_int (:'a) i2 /\
+      good_dimindex (:'a) ==>
+        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2
+          /\ (v1 < (v2:'a word) <=> i1 < i2))`),
   (* both words are the Smallnum of their integer, and num_less_thm
      says that the order of the two is the order of the integers *)
   (STRIP_TAC THEN
@@ -12953,14 +13187,17 @@ let memory_rel_Number_LESS = prove
    ALL_INST3 memory_rel_Number_IMP THEN
    ASM_MESON_TAC[num_less_thm]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_LESS_EQ = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number i1,w1) :: (Number i2,w2) :: vars) /\
-    small_int (:'a) i1 /\
-    small_int (:'a) i2 /\
-    good_dimindex (:'a) ==>
-      (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2 /\
-        (v1 <= (v2:'a word) <=> i1 <= i2))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number i1,w1) :: (Number i2,w2) :: vars) /\
+      small_int (:'a) i1 /\
+      small_int (:'a) i2 /\
+      good_dimindex (:'a) ==>
+        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2
+          /\ (v1 <= (v2:'a word) <=> i1 <= i2))`),
   (* the order or the equality, which the two theorems above give *)
   (let wle = prove
     (`!(x:(N)word) y. x <= y <=> x < y \/ x = y`,
@@ -12982,11 +13219,14 @@ let memory_rel_Number_LESS_EQ = prove
    ASM_REWRITE_TAC[] THEN
    ASM_MESON_TAC[wle; INT_LE_LT]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_word_msb = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i1,wordLang_Word
-  (w:'a word)) :: vars) /\
-    good_dimindex (:'a) /\ small_int (:'a) i1 ==>
-    (word_msb w <=> i1 < (&0))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i1,wordLang_Word (w:'a
+  word)) :: vars) /\
+      good_dimindex (:'a) /\ small_int (:'a) i1 ==>
+      (word_msb w <=> i1 < (&0))`),
   (* zero is a small integer, so the relation holds of it as
      well, and the order of the two Smallnums is the order of
      the integers: the sign bit of the word says which side of
@@ -13059,20 +13299,26 @@ let memory_rel_RefPtr_EQ_lemma = prove
     [REWRITE_TAC[EXP_EQ_0; ARITH_EQ]; ALL_TAC] THEN
    MESON_TAC[EQ_MULT_RCANCEL]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefPtr_EQ = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((RefPtr T i1,w1) :: (RefPtr T i2,w2) :: vars) /\ good_dimindex
-        (:'a) ==>
-      (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word (v2:'a
-        word) /\ (v1 = v2 <=> i1 = i2))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((RefPtr T i1,w1) :: (RefPtr T i2,w2) :: vars) /\
+          good_dimindex (:'a) ==>
+        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word
+          (v2:'a word) /\ (v1 = v2 <=> i1 = i2))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_RefPtr_EQ_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m (dm:'a word->bool)
-     ((RefPtr b1 i1,wordLang_Word w1) :: (RefPtr b2 i1,wordLang_Word
-       w2) :: vars) /\ good_dimindex (:'a) /\
-   lookup i1 refs = SOME (ByteArray ys_fl ys) ==>
-   w1 = w2`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m (dm:'a word->bool)
+       ((RefPtr b1 i1,wordLang_Word w1) :: (RefPtr b2
+         i1,wordLang_Word w2) :: vars) /\ good_dimindex (:'a) /\
+     lookup i1 refs = SOME (ByteArray ys_fl ys) ==>
+     w1 = w2`),
   (* the value at the pointer is a ByteArray, so the two RefPtrs
      are no thunks and the rule of v_inv for a plain reference
      gives both of them the same address *)
@@ -13084,8 +13330,8 @@ let memory_rel_RefPtr_EQ_IMP = prove
                "sptree_lookup"
            with Failure _ -> false)
        then RULE_ASSUM_TRY(REWRITE_RULE[th]) else fail()) in
-   MEMORY_REL_TAC THEN V_INV_TAC THEN SPLIT_ROOTS_TAC THEN
-   V_INV_TAC THEN
+   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN SPLIT_ROOTS_TAC THEN
+   V_INV_TAC v_inv_def THEN
    LOOKUP_SUBST THEN
    RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
                               distinctness "bvlSem_ref"]) THEN
@@ -13093,10 +13339,13 @@ let memory_rel_RefPtr_EQ_IMP = prove
    FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
      MATCH_ACCEPT_TAC(TRANS (SYM t1) t2)))));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Boolv_T = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\ good_dimindex
-  (:'a) ==> memory_rel c be ts refs sp st m dm ((Boolv T,wordLang_Word
-  ((n2w 18):'a word)) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a)
+  ==> memory_rel c be ts refs sp st m dm ((Boolv T,wordLang_Word ((n2w
+  18):'a word)) :: vars)`),
   (* the true Boolv is the empty Block of the true tag, which is
      one, so its root is the Data of BlockNil 1, the word eighteen *)
   (let shl16 = prove
@@ -13129,10 +13378,13 @@ let memory_rel_Boolv_T = prove
    MATCH_MP_TAC cons1 THEN
    ASM_SIMP_TAC[dimword16]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Boolv_F = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\ good_dimindex
-  (:'a) ==> memory_rel c be ts refs sp st m dm ((Boolv F,wordLang_Word
-  ((n2w 2):'a word)) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a)
+  ==> memory_rel c be ts refs sp st m dm ((Boolv F,wordLang_Word ((n2w
+  2):'a word)) :: vars)`),
   (* the false Boolv is the empty Block of the false tag, which is
      zero, so it is the same root as the one of Unit *)
   (let blocknil0 = prove
@@ -13160,12 +13412,14 @@ let memory_rel_Boolv_F = prove
    MATCH_MP_TAC cons0 THEN
    ASM_SIMP_TAC[dimword16]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Boolv = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\ good_dimindex (:'a)
-  /\
-   (b ==> v = wordLang_Word (n2w 18)) /\ (~b ==> v = wordLang_Word
-     ((n2w 2):'a word)) ==>
-   memory_rel c be ts refs sp st m dm ((Boolv b,v) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) /\
+     (b ==> v = wordLang_Word (n2w 18)) /\ (~b ==> v =
+       wordLang_Word ((n2w 2):'a word)) ==>
+     memory_rel c be ts refs sp st m dm ((Boolv b,v) :: vars)`),
   (STRIP_TAC THEN ASM_CASES_TAC `b:bool` THEN ASM_SIMP_TAC[] THENL
     [MATCH_MP_TAC memory_rel_Boolv_T;
      MATCH_MP_TAC memory_rel_Boolv_F] THEN
@@ -13215,14 +13469,18 @@ let small_int_w2i_i2w = prove
    FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
      ACCEPT_TAC(MATCH_MP bnds (CONJ t1 t2))))));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Add = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number i,wordLang_Word wi) :: (Number j,wordLang_Word wj) ::
-        vars) /\
-    ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
-    good_dimindex (:'a) /\ (w2i (wi + wj) = w2i wi + w2i wj) ==>
-    memory_rel c be ts refs sp st m dm
-      ((Number (i + j),wordLang_Word (wi + (wj:'a word))) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number i,wordLang_Word wi) :: (Number j,wordLang_Word wj)
+          :: vars) /\
+      ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
+      good_dimindex (:'a) /\ (w2i (wi + wj) = w2i wi + w2i wj) ==>
+      memory_rel c be ts refs sp st m dm
+        ((Number (i + j),wordLang_Word (wi + (wj:'a word))) ::
+          vars)`),
   (* the sum of two small integers: the bit zero of each root is
      clear, so memory_rel_any_Number_IMP says that both integers
      are small and memory_rel_Number_IMP that the roots are their
@@ -13311,14 +13569,18 @@ let memory_rel_Add = prove
         (CONJ gd (MATCH_MP w2i_i2w_IMP th))) THEN
       ASM_REWRITE_TAC[mr2 asl])));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Sub = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number i,wordLang_Word wi) :: (Number j,wordLang_Word wj) ::
-        vars) /\
-    ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
-    good_dimindex (:'a) /\ (w2i (wi - wj) = w2i wi - w2i wj) ==>
-    memory_rel c be ts refs sp st m dm
-      ((Number (i - j),wordLang_Word (wi - (wj:'a word))) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number i,wordLang_Word wi) :: (Number j,wordLang_Word wj)
+          :: vars) /\
+      ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
+      good_dimindex (:'a) /\ (w2i (wi - wj) = w2i wi - w2i wj) ==>
+      memory_rel c be ts refs sp st m dm
+        ((Number (i - j),wordLang_Word (wi - (wj:'a word))) ::
+          vars)`),
   (* the difference of two small integers: the bit zero of each
      root is clear, so memory_rel_any_Number_IMP says that both
      integers are small and memory_rel_Number_IMP that the roots
@@ -13429,14 +13691,17 @@ let small_int_w2n = prove
    REWRITE_TAC[DIMINDEX_8] THEN CONV_TAC NUM_REDUCE_CONV THEN
    ARITH_TAC));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_And = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number (&(w2n (i:word8))),wordLang_Word wi) :: (Number (&(w2n
-        j)),wordLang_Word wj) :: vars) /\
-    good_dimindex (:'a) ==>
-    memory_rel c be ts refs sp st m dm
-      ((Number (&(w2n (i && j))),wordLang_Word (wi && (wj:'a
-        word))) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number (&(w2n (i:word8))),wordLang_Word wi) :: (Number
+          (&(w2n j)),wordLang_Word wj) :: vars) /\
+      good_dimindex (:'a) ==>
+      memory_rel c be ts refs sp st m dm
+        ((Number (&(w2n (i && j))),wordLang_Word (wi && (wj:'a
+          word))) :: vars)`),
   (* the and of two bytes as the and of their roots: both roots are
      the Smallnum of their byte, because a byte is a small integer,
      and the and of two Smallnums of bytes is the Smallnum of the
@@ -13516,14 +13781,17 @@ let memory_rel_And = prove
       MATCH_MP_TAC IMP_memory_rel_Number THEN
       ASM_REWRITE_TAC[siw; mr3])));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Or = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number (&(w2n (i:word8))),wordLang_Word wi) :: (Number (&(w2n
-        j)),wordLang_Word wj) :: vars) /\
-    good_dimindex (:'a) ==>
-    memory_rel c be ts refs sp st m dm
-      ((Number (&(w2n (i || j))),wordLang_Word (wi || (wj:'a
-        word))) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number (&(w2n (i:word8))),wordLang_Word wi) :: (Number
+          (&(w2n j)),wordLang_Word wj) :: vars) /\
+      good_dimindex (:'a) ==>
+      memory_rel c be ts refs sp st m dm
+        ((Number (&(w2n (i || j))),wordLang_Word (wi || (wj:'a
+          word))) :: vars)`),
   (* the or of two bytes as the or of their roots: both roots are
      the Smallnum of their byte, because a byte is a small integer,
      and the or of two Smallnums of bytes is the Smallnum of the
@@ -13601,14 +13869,17 @@ let memory_rel_Or = prove
       MATCH_MP_TAC IMP_memory_rel_Number THEN
       ASM_REWRITE_TAC[siw; mr3])));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Xor = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number (&(w2n (i:word8))),wordLang_Word wi) :: (Number (&(w2n
-        j)),wordLang_Word wj) :: vars) /\
-    good_dimindex (:'a) ==>
-    memory_rel c be ts refs sp st m dm
-      ((Number (&(w2n (word_xor i j))),wordLang_Word (word_xor wi
-        wj:'a word)) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number (&(w2n (i:word8))),wordLang_Word wi) :: (Number
+          (&(w2n j)),wordLang_Word wj) :: vars) /\
+      good_dimindex (:'a) ==>
+      memory_rel c be ts refs sp st m dm
+        ((Number (&(w2n (word_xor i j))),wordLang_Word (word_xor
+          wi wj:'a word)) :: vars)`),
   (* the xor of two bytes as the xor of their roots: both roots are
      the Smallnum of their byte, because a byte is a small integer,
      and the xor of two Smallnums of bytes is the Smallnum of the
@@ -13686,30 +13957,42 @@ let memory_rel_Xor = prove
       MATCH_MP_TAC IMP_memory_rel_Number THEN
       ASM_REWRITE_TAC[siw; mr3])));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_IMP_Word = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i,v) :: vars)
-  ==> (?w. v = wordLang_Word w)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,v) :: vars) ==>
+  (?w. v = wordLang_Word w)`),
   (* a Number stands for a Data of its Smallnum or for a Pointer at
      its Bignum, and the word_addr of either is a Word *)
-  (MEMORY_REL_TAC THEN V_INV_TAC THEN ASM_MESON_TAC[]));;
+  (MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_IMP_Word_2 = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i,v) :: (Number
-  j,w) :: vars) ==>
-    (?w1 w2. v = wordLang_Word w1 /\ w = wordLang_Word w2)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,v) :: (Number j,w) ::
+  vars) ==>
+      (?w1 w2. v = wordLang_Word w1 /\ w = wordLang_Word w2)`),
   (* the same of the two Numbers at the head of the list *)
-  (MEMORY_REL_TAC THEN SPLIT_ROOTS_TAC THEN V_INV_TAC THEN
+  (MEMORY_REL_TAC THEN SPLIT_ROOTS_TAC THEN V_INV_TAC v_inv_def THEN
    ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_zero_space = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars ==>
-    memory_rel c be ts refs 0 st m dm vars`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars ==>
+      memory_rel c be ts refs 0 st m dm vars`),
   (REWRITE_TAC[memory_rel_def] THEN STRIP_TAC THEN
    ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[LE_0]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_less_space = prove
- (`memory_rel c (be:bool) ts refs sp st m dm vars /\ sp' <= sp ==>
-   memory_rel c be ts refs sp' st m dm vars`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm vars /\ sp' <= sp ==>
+     memory_rel c be ts refs sp' st m dm vars`),
   (REWRITE_TAC[memory_rel_def] THEN REPEAT STRIP_TAC THEN
    ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC));;
 
@@ -13822,7 +14105,7 @@ let word_cmp_loop_def = cake_define_cheat CHEAT_TAC
              (if w1 = w2 then
                word_cmp_loop (l - (n2w 1)) (a1 - bytes_in_word)
                  (a2 - bytes_in_word) dm m else if w1 <+ w2 then
-                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _61 ->
+                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _67 ->
                    NONE else NONE)`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13106: ML code, not ported *)
@@ -13842,45 +14125,48 @@ let word_cmp_loop_thm = prove
          (n2w 0) | SOME F -> (n2w 2))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_cmp = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i1,v1) :: (Number
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i1,v1) :: (Number
   i2,v2) :: vars) /\
-   good_dimindex (:'a) ==>
-   (?w1 w2.
-     v1 = wordLang_Word w1 /\ v2 = wordLang_Word (w2:'a word) /\
-     (if ~(word_bit 0 w1) /\ ~(word_bit 0 w2) then
-       (i1 < i2 <=> w1 < w2) /\ (i1 = i2 <=> w1 = w2) else if
-         ~(word_bit 0 w1) /\ word_bit 0 w2 then ~(i1 = i2) /\
-       (?a x2. get_real_addr c st w2 = SOME a /\
-              m a = wordLang_Word x2 /\ a IN dm /\
-              word_cmp_res i1 i2 = (if (x2 && (n2w 16)) = (n2w 0)
-                then (n2w 0) else (n2w 2):'a word)) else if word_bit 0
-                w1 /\ word_bit 0 w2 then
-       ?a1 x1 a2 x2.
-         get_real_addr c st w1 = SOME a1 /\ m a1 = wordLang_Word x1
-           /\ a1 IN dm /\
-         get_real_addr c st w2 = SOME a2 /\ m a2 = wordLang_Word x2
-           /\ a2 IN dm /\
-         (if x1 = x2 then
-           let (a1,a2) = (if (x1 && (n2w 16)) = (n2w 0) then (a1,a2)
-             else (a2,a1)) in
-             word_cmp_loop (decode_length c x1)
-               (a1 + bytes_in_word * (decode_length c x1))
-               (a2 + bytes_in_word * (decode_length c x2))
-                 dm m = SOME (word_cmp_res i1 i2) else
-           word_cmp_res i1 i2 =
-           (if (x1 && (n2w 16)) = (n2w 0) then
-              // 0 <= i1
-              if (x2 && (n2w 16)) = (n2w 0) then
-                // 0 <= i2
-                if decode_length c x1 <+ decode_length c x2 then (n2w
-                  0) else (n2w 2):'a word else
-                (n2w 2) else
-              if (x2 && (n2w 16)) = (n2w 0) then
-                // 0 <= i2
-                (n2w 0) else
-                if decode_length c x1 <+ decode_length c x2 then
-                  (n2w 2) else (n2w 0))) else T))`,
+     good_dimindex (:'a) ==>
+     (?w1 w2.
+       v1 = wordLang_Word w1 /\ v2 = wordLang_Word (w2:'a word) /\
+       (if ~(word_bit 0 w1) /\ ~(word_bit 0 w2) then
+         (i1 < i2 <=> w1 < w2) /\ (i1 = i2 <=> w1 = w2) else if
+           ~(word_bit 0 w1) /\ word_bit 0 w2 then ~(i1 = i2) /\
+         (?a x2. get_real_addr c st w2 = SOME a /\
+                m a = wordLang_Word x2 /\ a IN dm /\
+                word_cmp_res i1 i2 = (if (x2 && (n2w 16)) = (n2w 0)
+                  then (n2w 0) else (n2w 2):'a word)) else if word_bit 0
+                  w1 /\ word_bit 0 w2 then
+         ?a1 x1 a2 x2.
+           get_real_addr c st w1 = SOME a1 /\ m a1 = wordLang_Word
+             x1 /\ a1 IN dm /\
+           get_real_addr c st w2 = SOME a2 /\ m a2 = wordLang_Word
+             x2 /\ a2 IN dm /\
+           (if x1 = x2 then
+             let (a1,a2) = (if (x1 && (n2w 16)) = (n2w 0) then
+               (a1,a2) else (a2,a1)) in
+               word_cmp_loop (decode_length c x1)
+                 (a1 + bytes_in_word * (decode_length c x1))
+                 (a2 + bytes_in_word * (decode_length c x2))
+                   dm m = SOME (word_cmp_res i1 i2) else
+             word_cmp_res i1 i2 =
+             (if (x1 && (n2w 16)) = (n2w 0) then
+                // 0 <= i1
+                if (x2 && (n2w 16)) = (n2w 0) then
+                  // 0 <= i2
+                  if decode_length c x1 <+ decode_length c x2 then
+                    (n2w 0) else (n2w 2):'a word else
+                  (n2w 2) else
+                if (x2 && (n2w 16)) = (n2w 0) then
+                  // 0 <= i2
+                  (n2w 0) else
+                  if decode_length c x1 <+ decode_length c x2
+                    then (n2w 2) else (n2w 0))) else T))`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13234-13244: a theorem
@@ -13899,25 +14185,28 @@ let v_same_type_def = cake_define_try_tac (fun () ->
   CHEAT_TAC
   `v_same_type x1 x2 =
         match (x1,x2) with
-          ((Number _64:dataSem_v),(Number _65:dataSem_v)) -> T
-        | ((Word64 _66),(Word64 _67)) -> T
-        | ((Block _68 t1 l1),(Block _69 t2 l2)) -> (t1 = t2 /\ LENGTH
+          ((Number _70:dataSem_v),(Number _71:dataSem_v)) -> T
+        | ((Word64 _72),(Word64 _73)) -> T
+        | ((Block _74 t1 l1),(Block _75 t2 l2)) -> (t1 = t2 /\ LENGTH
           l1 = LENGTH l2 ==> LIST_REL v_same_type l1 l2)
-        | ((CodePtr _70),(CodePtr _71)) -> T
-        | ((RefPtr _72 _73),(RefPtr _74 _75)) -> T
-        | (_76,_77) -> F`;;
+        | ((CodePtr _76),(CodePtr _77)) -> T
+        | ((RefPtr _78 _79),(RefPtr _80 _81)) -> T
+        | (_82,_83) -> F`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Block_MEM = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts' n ls,(v:'a
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Block ts' n ls,(v:'a
   word_loc)) :: vars) /\
-   i < LENGTH ls /\
-   good_dimindex (:'a) ==>
-   (?w a y.
-   get_real_offset (Smallnum (&i)) = SOME y /\
-   v = wordLang_Word w /\ get_real_addr c st w = SOME a /\ (a + y) IN
-     dm /\
-   memory_rel c be ts refs sp st m dm ((EL i ls,m (a + y)) ::
-     (Block ts' n ls,v) :: vars))`,
+     i < LENGTH ls /\
+     good_dimindex (:'a) ==>
+     (?w a y.
+     get_real_offset (Smallnum (&i)) = SOME y /\
+     v = wordLang_Word w /\ get_real_addr c st w = SOME a /\ (a +
+       y) IN dm /\
+     memory_rel c be ts refs sp st m dm ((EL i ls,m (a + y)) ::
+       (Block ts' n ls,v) :: vars))`),
   (* an element of a block at an index, with the root of the index
      put in and taken out again: the length of the block that
      memory_rel_Block_IMP gives is below two to the dimindex less
@@ -14105,10 +14394,12 @@ let do_eq_list_F_IMP_MEM = prove
    ASM_REWRITE_TAC[LT_SUC; EL; TL]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_rotate3 = prove
- (`memory_rel c (be:bool) ts refs sp st m dm (x1 :: x2 :: x3 :: vars)
-  ==>
-   memory_rel c be ts refs sp st m dm (x3 :: x1 :: x2 :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm (x1 :: x2 :: x3 :: vars) ==>
+     memory_rel c be ts refs sp st m dm (x3 :: x1 :: x2 :: vars)`),
   (MATCH_MP_TAC memory_rel_rearrange THEN
    GEN_TAC THEN REWRITE_TAC[MEM] THEN CONV_TAC TAUT));;
 
@@ -14126,18 +14417,21 @@ let v_depth_def = cake_define_wf
   `MEASURE dataSem_v_size`
   `v_depth x1 =
         match x1 with
-          (Block _80 _81 ls:dataSem_v) -> (if NULL ls then 0 else 1)
+          (Block _86 _87 ls:dataSem_v) -> (if NULL ls then 0 else 1)
             + MAX_LIST (MAP v_depth ls)
-        | _82 -> 0`;;
+        | _88 -> 0`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13427: ML code, not ported *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let v_inv_Block_tag_limit = prove
- (`v_inv c (Block ts n l) refs (v,f,tf,(heap:(('a
+ (cake_as_vars (fun () ->
+    `v_inv c (Block ts n l) refs (v,f,tf,(heap:(('a
   word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)
   list)) /\
-   heap_in_memory_store heap a sp sp1 gens c s m (dm:'a word->bool)
-     (limit:num) ==> n < dimword (:'a) DIV 16`,
+     heap_in_memory_store heap a sp sp1 gens c s m (dm:'a
+       word->bool) limit ==> n < dimword (:'a) DIV 16`),
   (* the header of the BlockRep that the Block points at is an
      encode_header of four times the tag, and encode_header is only
      a SOME when that is below a sixteenth of the word size *)
@@ -14340,11 +14634,14 @@ let word_addr_Data_NE_get_addr = prove
      CONTR_TAC(REWRITE_RULE[GSYM eq; word_index; BIT_WORD_AND;
                             BIT_WORD_NOT; BIT_WORD_1] ga))));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Block_ptr_eq = prove
- (`memory_rel c (be:bool) ts refs sp st m (dm:'a word->bool)
-     ((Block t1 a1 b1,x) :: (Block t2 a2 b2,x) :: rest) /\
-   good_dimindex (:'a) ==>
-   Block t1 a1 b1 = Block t2 a2 b2`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m (dm:'a word->bool)
+       ((Block t1 a1 b1,x) :: (Block t2 a2 b2,x) :: rest) /\
+     good_dimindex (:'a) ==>
+     Block t1 a1 b1 = Block t2 a2 b2`),
   CHEAT_TAC);;
 
 let elements_list_all_blocks = prove
@@ -14394,23 +14691,27 @@ let elements_list_all_blocks = prove
      REPEAT CONJ_TAC THEN TRY ARITH_TAC THEN MESON_TAC[]]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_elements_list_distinct_lemma = prove
- (`!vs vars' tag a b.
-     memory_rel c (be:bool) ts refs sp st m (dm:'a word->bool) vars'
-       /\
-     elements_list vs /\ vs = MAP FST vars' /\
-     good_dimindex (:'a) /\ ~(vs = []) /\
-     HD vs = Block tag a b ==>
-     ALL_DISTINCT (MAP SND vars')`,
+ (cake_as_vars (fun () ->
+    `!vs vars' tag a b.
+       memory_rel c be ts refs sp st m (dm:'a word->bool) vars' /\
+       elements_list vs /\ vs = MAP FST vars' /\
+       good_dimindex (:'a) /\ ~(vs = []) /\
+       HD vs = Block tag a b ==>
+       ALL_DISTINCT (MAP SND vars')`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_elements_list_distinct = prove
- (`!vs vars'.
-     memory_rel c (be:bool) ts refs sp st m (dm:'a word->bool) vars'
-       /\
-     elements_list vs /\ vs = MAP FST vars' /\
-     good_dimindex (:'a) ==>
-     ALL_DISTINCT (MAP SND (TL vars'))`,
+ (cake_as_vars (fun () ->
+    `!vs vars'.
+       memory_rel c be ts refs sp st m (dm:'a word->bool) vars' /\
+       elements_list vs /\ vs = MAP FST vars' /\
+       good_dimindex (:'a) ==>
+       ALL_DISTINCT (MAP SND (TL vars'))`),
   (* the roots of the tail of an elements_list are distinct: the
      tail is what the lemma says it of, whose Block the second
      clause of elements_list names (the head of the list is an
@@ -14457,13 +14758,15 @@ let memory_rel_elements_list_distinct = prove
                           hol4_TL]
      else fail())));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_elements_list_words = prove
- (`!vs vars'.
-     memory_rel c (be:bool) ts refs sp st m (dm:'a word->bool) vars'
-       /\
-     elements_list vs /\ vs = MAP FST vars' /\
-     good_dimindex (:'a) ==> ~(vars' = []) ==> EVERY isWord (TL
-       (MAP SND vars'))`,
+ (cake_as_vars (fun () ->
+    `!vs vars'.
+       memory_rel c be ts refs sp st m (dm:'a word->bool) vars' /\
+       elements_list vs /\ vs = MAP FST vars' /\
+       good_dimindex (:'a) ==> ~(vars' = []) ==> EVERY isWord (TL
+         (MAP SND vars'))`),
   (* every root of the tail of an elements_list is a Word: the
      second element of the list is a Block by the third clause of
      elements_list, so the root of the tail that memory_rel_tl
@@ -14562,18 +14865,21 @@ let memory_rel_elements_list_words = prove
         ACCEPT_TAC(REWRITE_RULE[MAP; SND; hol4_TL]
           (MP (SPECL args ih) (CONJ mr (CONJ el gd)))))]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_depth_size_limit = prove
- (`!v w vars'.
-   memory_rel c (be:bool) ts refs sp st m dm ((v,(w:'a word_loc)) ::
-     vars') /\
-   good_dimindex (:'a) ==>
-   vb_size v <= dimword (:'a) EXP (v_depth v + 1)`,
+ (cake_as_vars (fun () ->
+    `!v w vars'.
+     memory_rel c be ts refs sp st m dm ((v,(w:'a word_loc)) ::
+       vars') /\
+     good_dimindex (:'a) ==>
+     vb_size v <= dimword (:'a) EXP (v_depth v + 1)`),
   CHEAT_TAC);;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let vb_eq_size_def = cake_define_list_cheat CHEAT_TAC
-  [`vb_eq_size refs (Block _85 t1 l1:dataSem_v) (Block _86 t2
+  [`vb_eq_size refs (Block _91 t1 l1:dataSem_v) (Block _92 t2
   l2:dataSem_v) =
          (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
            isClos t2 l2 then SOME ((1:num),T) else NONE else if (t1 =
@@ -14583,17 +14889,17 @@ let vb_eq_size_def = cake_define_list_cheat CHEAT_TAC
          (if b1 /\ b2 then
            (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
               (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
-                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_93)
-                -> NONE | (_94,SOME (ByteArray T bs2)) -> NONE | _95
-                -> SOME (1,(n1 = n2))) else NONE)`;
-   `vb_eq_size _96 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
-  (1,(n1 = n2))`;
-   `vb_eq_size _97 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
-  (1,(w1 = w2))`;
-   `vb_eq_size _98 _99 _100 = NONE`;
-   `vb_eq_size_list _101 [] [] = SOME (0,T)`;
-   `vb_eq_size_list _102 [] _103 = SOME (0,F)`;
-   `vb_eq_size_list _104 _105 [] = SOME (0,F)`;
+                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_99)
+                -> NONE | (_100,SOME (ByteArray T bs2)) -> NONE |
+                _101 -> SOME (1,(n1 = n2))) else NONE)`;
+   `vb_eq_size _102 (Number n1:dataSem_v) (Number n2:dataSem_v) =
+  SOME (1,(n1 = n2))`;
+   `vb_eq_size _103 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) =
+  SOME (1,(w1 = w2))`;
+   `vb_eq_size _104 _105 _106 = NONE`;
+   `vb_eq_size_list _107 [] [] = SOME (0,T)`;
+   `vb_eq_size_list _108 [] _109 = SOME (0,F)`;
+   `vb_eq_size_list _110 _111 [] = SOME (0,F)`;
    `vb_eq_size_list refs (v1 :: vs1) (v2 :: vs2) =
          (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
            -> SOME (n + 1,F) | SOME (n,T) -> (
@@ -14608,29 +14914,40 @@ let vb_eq_size_IMP_vb_size = prove
        vb_size v1) + LENGTH v1)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_limit = prove
- (`!v w.
-     memory_rel c (be:bool) ts refs sp st m dm
-       ((v1,(w1:'a word_loc)) :: (v2,(w2:'a word_loc)) :: vars) /\
-     vb_eq_size refs v1 v2 = SOME (n,b) /\
-     good_dimindex (:'a) ==>
-     n * dimword (:'a) < MustTerminate_limit (:'a) - dimword (:'a)`,
+ (cake_as_vars (fun () ->
+    `!v w.
+       memory_rel c be ts refs sp st m dm
+         ((v1,(w1:'a word_loc)) :: (v2,(w2:'a word_loc)) :: vars)
+           /\
+       vb_eq_size refs v1 v2 = SOME (n,b) /\
+       good_dimindex (:'a) ==>
+       n * dimword (:'a) < MustTerminate_limit (:'a) - dimword
+         (:'a)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_ptr_eq = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((v1,x1) :: (v2,(x1:'a
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((v1,x1) :: (v2,(x1:'a
   word_loc)) :: vars) /\
-   do_eq refs v1 v2 = Eq_val b /\
-   good_dimindex (:'a) ==> b`,
+     do_eq refs v1 v2 = Eq_val b /\
+     good_dimindex (:'a) ==> b`),
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Block_Block_small_eq = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((Block ts1 t1 v1,wordLang_Word (w1:'a word)) :: (Block ts2 t2
-       v2,wordLang_Word w2) :: vars) /\
-   good_dimindex (:'a) /\ ~(w1 = w2) /\ ~(word_bit 0 w1) ==>
-     ~(LENGTH v1 = LENGTH v2) \/ ~(t1 = t2)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((Block ts1 t1 v1,wordLang_Word (w1:'a word)) :: (Block ts2
+         t2 v2,wordLang_Word w2) :: vars) /\
+     good_dimindex (:'a) /\ ~(w1 = w2) /\ ~(word_bit 0 w1) ==>
+       ~(LENGTH v1 = LENGTH v2) \/ ~(t1 = t2)`),
   (* the first Block has its lowest bit clear, so it is the empty
      one, whose word is sixteen times its tag plus two.  If the two
      had the same length and the same tag the second would be the
@@ -14664,22 +14981,24 @@ let memory_rel_Block_Block_small_eq = prove
    REWRITE_TAC[] THEN STRIP_TAC THEN subst_vars THEN
    FIRST_ASSUM(fun th -> CONTR_TAC(REWRITE_RULE[] th))));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_simple_eq = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((v1,x1) :: (v2,x2) ::
-  vars) /\
-   do_eq refs v1 v2 = Eq_val b /\
-   good_dimindex (:'a) ==>
-   (?w1 (w2:'a word).
-     x1 = wordLang_Word w1 /\ x2 = wordLang_Word w2 /\
-     (~(word_bit 0 w1) \/ ~(word_bit 0 w2) ==>
-     (w1 = w2) = b))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((v1,x1) :: (v2,x2) :: vars) /\
+     do_eq refs v1 v2 = Eq_val b /\
+     good_dimindex (:'a) ==>
+     (?w1 (w2:'a word).
+       x1 = wordLang_Word w1 /\ x2 = wordLang_Word w2 /\
+       (~(word_bit 0 w1) \/ ~(word_bit 0 w2) ==>
+       (w1 = w2) = b))`),
   CHEAT_TAC);;
 
 let word_header_def = cake_define
   `word_header c st a dm m =
      (match get_real_addr c st a with NONE -> NONE | SOME a1 ->
          (if ~(a1 IN dm) then NONE else
-           match m a1 with wordLang_Word x1 -> SOME (a1,x1) | _106
+           match m a1 with wordLang_Word x1 -> SOME (a1,x1) | _112
              -> NONE))`;;
 
 let data_to_word_memoryProof_fix_clock_def = cake_define_list
@@ -14757,7 +15076,7 @@ let word_eq_def = cake_define_try_tac (fun () ->
                 (a1 + bytes_in_word * (decode_length c h1))
                 (a2 + bytes_in_word * (decode_length c h1)) dm m with
                   NONE -> NONE | SOME res -> SOME (res,l - 1 - w2n
-                  (decode_length c h1),ck))) | _107 -> NONE)) /\
+                  (decode_length c h1),ck))) | _113 -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else
       if ~(a1 IN dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE
@@ -14770,7 +15089,7 @@ let word_eq_def = cake_define_try_tac (fun () ->
                               word_eq_list c st dm m (l - 1) ck (w -
                                 (n2w 1))
                               (a1 + bytes_in_word) (a2 +
-                                bytes_in_word))) | _108 -> NONE))`;;
+                                bytes_in_word))) | _114 -> NONE))`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:14027: ML code, not ported *)
 
@@ -14897,13 +15216,16 @@ let word_eq_min_max_clock = prove
      step (CONJUNCT2 word_eq_add_clock)]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_isClos = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts1 t1
-  v1,wordLang_Word (w1:'a word)) :: vars) /\
-   word_bit 0 w1 /\
-   get_real_addr c st w1 = SOME a' /\ m a' = wordLang_Word x' /\
-     good_dimindex (:'a) ==>
-   (isClos t1 v1 <=> word_is_clos c x')`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Block ts1 t1 v1,wordLang_Word
+  (w1:'a word)) :: vars) /\
+     word_bit 0 w1 /\
+     get_real_addr c st w1 = SOME a' /\ m a' = wordLang_Word x' /\
+       good_dimindex (:'a) ==>
+     (isClos t1 v1 <=> word_is_clos c x')`),
   (* the Block has values, because the lowest bit of its word is
      set, so memory_rel_Block_IMP gives its header and the address
      and the header word are the ones of the goal;
@@ -14990,26 +15312,33 @@ let eq_assum_APPEND = prove
                    WORD_ADD_0_MUL; WORD_ADD_SUC_MUL; CONJ_ASSOC]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Block_explode_lemma = prove
- (`!n.
-     memory_rel c (be:bool) ts refs sp st m dm ((Block ts1 t1
-       v1,wordLang_Word w1) :: vars) /\
-     word_bit 0 w1 /\ get_real_addr c st w1 = SOME a /\ good_dimindex
-       (:'a) ==>
-     memory_rel c be ts refs sp st m dm
-       (eq_explode (a + bytes_in_word) m dm (TAKE n v1) ++ (
-        (Block ts1 t1 v1,wordLang_Word (w1:'a word)) :: vars)) /\
-     eq_assum (a + bytes_in_word) m dm (TAKE n v1)`,
+ (cake_as_vars (fun () ->
+    `!n.
+       memory_rel c be ts refs sp st m dm ((Block ts1 t1
+         v1,wordLang_Word w1) :: vars) /\
+       word_bit 0 w1 /\ get_real_addr c st w1 = SOME a /\
+         good_dimindex (:'a) ==>
+       memory_rel c be ts refs sp st m dm
+         (eq_explode (a + bytes_in_word) m dm (TAKE n v1) ++ (
+          (Block ts1 t1 v1,wordLang_Word (w1:'a word)) :: vars)) /\
+       eq_assum (a + bytes_in_word) m dm (TAKE n v1)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Block_explode = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Block ts1 t1
-  v1,wordLang_Word w1) :: vars) /\
-    word_bit 0 w1 /\ get_real_addr c st w1 = SOME a /\ good_dimindex
-      (:'a) ==>
-    memory_rel c be ts refs sp st m dm
-      (eq_explode (a + (bytes_in_word:'a word)) m dm v1 ++ vars) /\
-    eq_assum (a + bytes_in_word) m dm v1`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Block ts1 t1 v1,wordLang_Word
+  w1) :: vars) /\
+      word_bit 0 w1 /\ get_real_addr c st w1 = SOME a /\
+        good_dimindex (:'a) ==>
+      memory_rel c be ts refs sp st m dm
+        (eq_explode (a + (bytes_in_word:'a word)) m dm v1 ++ vars)
+          /\
+      eq_assum (a + bytes_in_word) m dm v1`),
   (* memory_rel_Block_explode_lemma says it of the first n values of
      the Block, so at the length of the Block it says it of all of
      them; what it gives has the Block itself still in front of the
@@ -15031,10 +15360,13 @@ let memory_rel_Block_explode = prove
        REWRITE_TAC[MEM_APPEND; MEM] THEN MESON_TAC[]);
      FIRST_ASSUM ACCEPT_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Loc = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((v1,Loc n k) :: vars) /\
-   (!ptr. ~(v1 = RefPtr F ptr)) ==>
-   v1 = CodePtr n`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((v1,Loc n k) :: vars) /\
+     (!ptr. ~(v1 = RefPtr F ptr)) ==>
+     v1 = CodePtr n`),
   (* the word_addr of a root is a Loc only for a Data of a Loc,
      which only a CodePtr stands for: the RefPtr that could is a
      RefPtr F, which the hypothesis excludes *)
@@ -15042,24 +15374,27 @@ let memory_rel_Loc = prove
    MEMORY_REL_TAC THEN CASES_ON_NAME "v1" THEN
    RULE_ASSUM_TAC(REWRITE_RULE[injectivity "dataSem_v";
                                noforall]) THEN
-   V_INV_TAC THEN ASM_REWRITE_TAC[]));;
+   V_INV_TAC v_inv_def THEN ASM_REWRITE_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_ByteArray_words_IMP = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,wordLang_Word
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,wordLang_Word
   (w:'a word)) :: vars) /\
-   lookup p refs = SOME (ByteArray fl vals) /\
-   good_dimindex (:'a) /\
-   get_real_addr c st w = SOME a ==>
-   (?x frame.
-     m a = wordLang_Word x /\
-     (
-      misc_word_list (a + bytes_in_word)
-        (MAP wordLang_Word (write_bytes vals (REPLICATE (w2n
-          (decode_length c x)) (n2w 0)) be)) * frame) (fun2set (m,dm))
-          /\
-   w2n (decode_length c x) < dimword (:'a) /\
-   w2n (decode_length c x) = LENGTH vals DIV (dimindex (:'a) DIV 8)
-     + 1)`,
+     lookup p refs = SOME (ByteArray fl vals) /\
+     good_dimindex (:'a) /\
+     get_real_addr c st w = SOME a ==>
+     (?x frame.
+       m a = wordLang_Word x /\
+       (
+        misc_word_list (a + bytes_in_word)
+          (MAP wordLang_Word (write_bytes vals (REPLICATE (w2n
+            (decode_length c x)) (n2w 0)) be)) * frame) (fun2set (m,dm))
+            /\
+     w2n (decode_length c x) < dimword (:'a) /\
+     w2n (decode_length c x) = LENGTH vals DIV (dimindex (:'a)
+       DIV 8) + 1)`),
   (* the words of a byte array, read out of the memory: the
      reference's v_inv gives the pointer, bc_ref_inv (at the
      reference itself, which reaches itself) gives the Bytes
@@ -15100,7 +15435,7 @@ let memory_rel_ByteArray_words_IMP = prove
        if (try hd_is "STAR" (rator (concl th))
            with Failure _ -> false)
        then MP_TAC th else fail()) in
-   MEMORY_REL_TAC THEN V_INV_TAC THEN
+   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
    TRY(FIRST_ASSUM(fun t1 -> FIRST_ASSUM(fun t2 ->
      CONTR_TAC(REWRITE_RULE[injectivity "option";
                             distinctness "bvlSem_ref"]
@@ -15256,14 +15591,17 @@ let mw2n_inj = prove
        ASM_REWRITE_TAC[]];
      DISCH_THEN(CONJUNCTS_THEN SUBST1_TAC) THEN REWRITE_TAC[]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytes_inj = prove
- (`good_dimindex (:'a) ==>
-   (!ws bs1 bs2.
-     LENGTH bs1 = LENGTH bs2 /\
-     LENGTH bs1 <= LENGTH ws * (dimindex (:'a) DIV 8) /\
-     LENGTH ws <= LENGTH bs1 DIV (dimindex (:'a) DIV 8) + 1 ==>
-     (write_bytes bs1 (ws:('a word) list) (be:bool) = write_bytes
-       bs2 ws be <=> bs1 = bs2))`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) ==>
+     (!ws bs1 bs2.
+       LENGTH bs1 = LENGTH bs2 /\
+       LENGTH bs1 <= LENGTH ws * (dimindex (:'a) DIV 8) /\
+       LENGTH ws <= LENGTH bs1 DIV (dimindex (:'a) DIV 8) + 1 ==>
+       (write_bytes bs1 (ws:('a word) list) be = write_bytes bs2
+         ws be <=> bs1 = bs2))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -15305,11 +15643,14 @@ let vb_eq_size_IMP_do_eq = prove
    do_eq refs v1 v2 = Eq_val b`,
   (REWRITE_TAC[CONJUNCT1 do_eq_IFF_vb_eq_size] THEN MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_ptr_vb_eq = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((v1,x1) :: (v2,(x1:'a
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((v1,x1) :: (v2,(x1:'a
   word_loc)) :: vars) /\
-   vb_eq_size refs v1 v2 = SOME (n,b) /\
-   good_dimindex (:'a) ==> b`,
+     vb_eq_size refs v1 v2 = SOME (n,b) /\
+     good_dimindex (:'a) ==> b`),
   (* a vb_eq_size that gives b is a do_eq that gives Eq_val b *)
   (STRIP_TAC THEN
    FIRST_ASSUM(fun th ->
@@ -15318,45 +15659,51 @@ let memory_rel_ptr_vb_eq = prove
    MATCH_MP_TAC memory_rel_ptr_eq THEN
    ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_eq_thm0 = prove
- (`(!refs v1 v2 l ck b w1 w2 n.
-        memory_rel c (be:bool) ts refs sp st m dm
-           ((v1,wordLang_Word w1) :: (v2,(wordLang_Word w2:'a
-             word_loc)) :: vars) /\
-        vb_eq_size refs v1 v2 = SOME (n,b) /\
-        ck = MIN (vs_depth v1) (vs_depth v2) /\
-        n * dimword (:'a) < l /\
-        good_dimindex (:'a) ==>
-        (?res l1 ck1. word_eq c st dm m l ck w1 w2 = SOME
-          (res,l1,ck1) /\
-                 (b <=> (res = (n2w 1))) /\
-                 l <= l1 + n * dimword (:'a))) /\
-     (!refs v1 v2 l ck b w1 w2 t1 t2 n.
-        memory_rel c be ts refs sp st m dm
-           (eq_explode w1 m dm v1 ++ eq_explode w2 m dm v2 ++ vars)
-             /\
-        LENGTH v2 = LENGTH v1 /\ LENGTH v1 < dimword (:'a) /\
-        eq_assum w1 m dm v1 /\ eq_assum w2 m dm v2 /\
-        vb_eq_size_list refs v1 v2 = SOME (n,b) /\
-        ck = MIN (vs_depth_list v1) (vs_depth_list v2) /\
-        n * dimword (:'a) < l /\
-        good_dimindex (:'a) ==>
-        (?res l1 ck1. word_eq_list c st dm m l ck (n2w (LENGTH v1))
-          w1 w2 = SOME (res,l1,ck1) /\
-                 (b <=> (res = (n2w 1))) /\
-                 l <= l1 + n * dimword (:'a)))`,
+ (cake_as_vars (fun () ->
+    `(!refs v1 v2 l ck b w1 w2 n.
+          memory_rel c be ts refs sp st m dm
+             ((v1,wordLang_Word w1) :: (v2,(wordLang_Word w2:'a
+               word_loc)) :: vars) /\
+          vb_eq_size refs v1 v2 = SOME (n,b) /\
+          ck = MIN (vs_depth v1) (vs_depth v2) /\
+          n * dimword (:'a) < l /\
+          good_dimindex (:'a) ==>
+          (?res l1 ck1. word_eq c st dm m l ck w1 w2 = SOME
+            (res,l1,ck1) /\
+                   (b <=> (res = (n2w 1))) /\
+                   l <= l1 + n * dimword (:'a))) /\
+       (!refs v1 v2 l ck b w1 w2 t1 t2 n.
+          memory_rel c be ts refs sp st m dm
+             (eq_explode w1 m dm v1 ++ eq_explode w2 m dm v2 ++
+               vars) /\
+          LENGTH v2 = LENGTH v1 /\ LENGTH v1 < dimword (:'a) /\
+          eq_assum w1 m dm v1 /\ eq_assum w2 m dm v2 /\
+          vb_eq_size_list refs v1 v2 = SOME (n,b) /\
+          ck = MIN (vs_depth_list v1) (vs_depth_list v2) /\
+          n * dimword (:'a) < l /\
+          good_dimindex (:'a) ==>
+          (?res l1 ck1. word_eq_list c st dm m l ck (n2w (LENGTH
+            v1)) w1 w2 = SOME (res,l1,ck1) /\
+                   (b <=> (res = (n2w 1))) /\
+                   l <= l1 + n * dimword (:'a)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_eq_thm = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((v1,wordLang_Word w1) :: (v2,(wordLang_Word w2:'a word_loc))
-        :: vars) /\
-    do_eq refs v1 v2 = Eq_val b /\ good_dimindex (:'a) ==>
-    (?res l1 ck1.
-       word_eq c st dm m (MustTerminate_limit (:'a) - 1)
-         (MIN (vs_depth v1) (vs_depth v2)) w1 w2 = SOME (res,l1,ck1)
-           /\
-       (b <=> (res = (n2w 1))))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((v1,wordLang_Word w1) :: (v2,(wordLang_Word w2:'a
+          word_loc)) :: vars) /\
+      do_eq refs v1 v2 = Eq_val b /\ good_dimindex (:'a) ==>
+      (?res l1 ck1.
+         word_eq c st dm m (MustTerminate_limit (:'a) - 1)
+           (MIN (vs_depth v1) (vs_depth v2)) w1 w2 = SOME
+             (res,l1,ck1) /\
+         (b <=> (res = (n2w 1))))`),
   (* do_eq gives the size of the comparison, memory_rel_limit bounds
      it by the clock of MustTerminate (and the dimword is at least
      one, so the bound by the limit less one holds as well), and
@@ -15448,28 +15795,36 @@ let bignum_words_def = cake_define
        match encode_header c (if sign then 7 else 3) (LENGTH
          payload) with NONE -> NONE | SOME h -> SOME (h :: payload))`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_const_test = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i,wordLang_Word
-  (w:'a word)) :: vars) /\
-    good_dimindex (:'a) ==>
-    (if small_int (:'a) j then
-      (Smallnum j = w <=> i = j) else
-      match bignum_words c j with NONE -> ~(i = j) | SOME words ->
-        (if ~(word_bit 0 w) then ~(i = j) else
-          ?a. get_real_addr c st w = SOME a /\
-              word_mem_eq a words dm m = SOME (i = j)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,wordLang_Word (w:'a
+  word)) :: vars) /\
+      good_dimindex (:'a) ==>
+      (if small_int (:'a) j then
+        (Smallnum j = w <=> i = j) else
+        match bignum_words c j with NONE -> ~(i = j) | SOME words
+          ->
+          (if ~(word_bit 0 w) then ~(i = j) else
+            ?a. get_real_addr c st w = SOME a /\
+                word_mem_eq a words dm m = SOME (i = j)))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Word64_const_test = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Word64 i,v) :: vars) /\
-   good_dimindex (:'a) ==>
-     (?(w:'a word) a words h.
-       v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
-       word_mem_eq (a + bytes_in_word) words dm m = SOME (i = j) /\
-       encode_header c 3 (LENGTH words) = SOME (h:'a word) /\
-       (if dimindex (:'a) < 64 then
-         words = [(63 >< 32) j; (31 >< 0) j] else
-         words = [(63 >< 0) j]))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Word64 i,v) :: vars) /\
+     good_dimindex (:'a) ==>
+       (?(w:'a word) a words h.
+         v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
+         word_mem_eq (a + bytes_in_word) words dm m = SOME (i = j)
+           /\
+         encode_header c 3 (LENGTH words) = SOME (h:'a word) /\
+         (if dimindex (:'a) < 64 then
+           words = [(63 >< 32) j; (31 >< 0) j] else
+           words = [(63 >< 0) j]))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -15633,20 +15988,23 @@ let make_byte_header_eq = prove
      MP_TAC(SPEC `n:num` (MATCH_MP DIVISION (ARITH_RULE `~(8 = 0)`)))
      THEN ASM_ARITH_TAC]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_String_const_test = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl i,v) :: vars)
-  /\
-   lookup i refs = SOME (ByteArray T other) /\
-   good_dimindex (:'a) ==>
-   (let t = implode (MAP (CHR o w2n) other) in
-     (part_to_words c LN (closLang_Str s) ((n2w 0):'a word) = NONE
-       ==> ~(s = t)) /\
-     (!x res.
-       part_to_words c LN (closLang_Str s) (n2w 0) = SOME (x,res) ==>
-       (?(w:'a word) a.
-         v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
-         word_mem_eq a (MAP (get_Word o SND) res) dm m = SOME (s =
-           t))))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl i,v) :: vars) /\
+     lookup i refs = SOME (ByteArray T other) /\
+     good_dimindex (:'a) ==>
+     (let t = implode (MAP (CHR o w2n) other) in
+       (part_to_words c LN (closLang_Str s) ((n2w 0):'a word) =
+         NONE ==> ~(s = t)) /\
+       (!x res.
+         part_to_words c LN (closLang_Str s) (n2w 0) = SOME (x,res)
+           ==>
+         (?(w:'a word) a.
+           v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
+           word_mem_eq a (MAP (get_Word o SND) res) dm m = SOME
+             (s = t))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -15656,36 +16014,45 @@ let word_1_and_eq_0 = prove
                BIT_WORD_1] THEN
    MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_Number_single_mul = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-      ((Number i1,wordLang_Word (w1:'a word)) :: (Number
-        i2,wordLang_Word w2) :: vars) /\
-    good_dimindex (:'a) ==>
-      (let (lw,hw) = single_mul w1 (w2 >>> 1) (n2w 0) in
-        (hw || ((w1 || w2) && (n2w 1))) = (n2w 0) ==>
-        memory_rel c be ts refs sp st m dm ((Number (i1 *
-          i2),wordLang_Word (lw >>> 1)) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+        ((Number i1,wordLang_Word (w1:'a word)) :: (Number
+          i2,wordLang_Word w2) :: vars) /\
+      good_dimindex (:'a) ==>
+        (let (lw,hw) = single_mul w1 (w2 >>> 1) (n2w 0) in
+          (hw || ((w1 || w2) && (n2w 1))) = (n2w 0) ==>
+          memory_rel c be ts refs sp st m dm ((Number (i1 *
+            i2),wordLang_Word (lw >>> 1)) :: vars))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_bounds_check = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((Number i1,wordLang_Word
-  (w1:'a word)) :: vars) /\
-    small_int (:'a) (&n) /\ good_dimindex (:'a) ==>
-    (word_ror w1 2 <+ n2w n <=> (&0) <= i1 /\ i1 < &n) /\
-    (word_ror w1 2 <=+ n2w n <=> (&0) <= i1 /\ i1 <= &n)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i1,wordLang_Word (w1:'a
+  word)) :: vars) /\
+      small_int (:'a) (&n) /\ good_dimindex (:'a) ==>
+      (word_ror w1 2 <+ n2w n <=> (&0) <= i1 /\ i1 < &n) /\
+      (word_ror w1 2 <=+ n2w n <=> (&0) <= i1 /\ i1 <= &n)`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_ByteArray_IMP_store = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p,wordLang_Word
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,wordLang_Word
   (w:'a word)) :: vars) /\
-    lookup p refs = SOME (ByteArray fl vals) /\ good_dimindex (:'a)
-      /\
-    get_real_addr c st w = SOME a /\ i < LENGTH vals ==>
-    (?m1. mem_store_byte_aux m dm be (a + bytes_in_word + n2w i) b =
-      SOME m1 /\
-         memory_rel c be ts (insert p (ByteArray fl (LUPDATE b i
-           vals)) refs) sp st m1 dm
-           ((RefPtr bl p,wordLang_Word (w:'a word)) :: vars))`,
+      lookup p refs = SOME (ByteArray fl vals) /\ good_dimindex
+        (:'a) /\
+      get_real_addr c st w = SOME a /\ i < LENGTH vals ==>
+      (?m1. mem_store_byte_aux m dm be (a + bytes_in_word + n2w i)
+        b = SOME m1 /\
+           memory_rel c be ts (insert p (ByteArray fl (LUPDATE b i
+             vals)) refs) sp st m1 dm
+             ((RefPtr bl p,wordLang_Word (w:'a word)) :: vars))`),
   (* a byte of a byte array can be stored: memory_rel_ByteArray_IMP
      says that the load of that byte works, which tells that the
      cell the store writes holds a word and is in the domain, and
@@ -15825,38 +16192,44 @@ let list_copy_fwd_alias_def = cake_define
                             LUPDATE (EL (xp + 0) ys) (yp + 0)) ys)
                               else NONE)`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_copy_fwd_thm = prove
- (`!n xp yp ys ys1 m.
-      memory_rel c (be:bool) ts (insert p2 (ByteArray fl_ys ys) refs)
-        sp st m dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2) :: vars)
-          /\
-      lookup p1 refs = SOME (ByteArray fl_xs xs) /\
-      list_copy_fwd n xp xs yp ys = SOME ys1 /\
-      good_dimindex (:'a) /\ n < dimword (:'a) /\ ~(p1 = p2) ==>
-      (?w1 (w2:'a word) a1 a2 m1.
-        v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
-        get_real_addr c st w1 = SOME a1 /\
-        get_real_addr c st w2 = SOME a2 /\
-        word_copy_fwd be (n2w n) (a1 + bytes_in_word + n2w xp)
-          (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
-        memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
-          sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2) ::
-            vars))`,
+ (cake_as_vars (fun () ->
+    `!n xp yp ys ys1 m.
+        memory_rel c be ts (insert p2 (ByteArray fl_ys ys) refs)
+          sp st m dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2) ::
+            vars) /\
+        lookup p1 refs = SOME (ByteArray fl_xs xs) /\
+        list_copy_fwd n xp xs yp ys = SOME ys1 /\
+        good_dimindex (:'a) /\ n < dimword (:'a) /\ ~(p1 = p2) ==>
+        (?w1 (w2:'a word) a1 a2 m1.
+          v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+          get_real_addr c st w1 = SOME a1 /\
+          get_real_addr c st w2 = SOME a2 /\
+          word_copy_fwd be (n2w n) (a1 + bytes_in_word + n2w xp)
+            (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
+          memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
+            sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2)
+              :: vars))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_copy_fwd_alias_thm = prove
- (`!n xp yp ys ys1 m.
-      memory_rel c (be:bool) ts (insert p2 (ByteArray fl_ys ys) refs)
-        sp st m dm ((RefPtr bl p2,v2) :: vars) /\
-      list_copy_fwd_alias n xp yp ys = SOME ys1 /\
-      good_dimindex (:'a) /\ n < dimword (:'a) ==>
-      (?(w2:'a word) a2 m1.
-        v2 = wordLang_Word w2 /\
-        get_real_addr c st w2 = SOME a2 /\
-        word_copy_fwd be (n2w n) (a2 + bytes_in_word + n2w xp)
-          (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
-        memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
-          sp st m1 dm ((RefPtr bl p2,v2) :: vars))`,
+ (cake_as_vars (fun () ->
+    `!n xp yp ys ys1 m.
+        memory_rel c be ts (insert p2 (ByteArray fl_ys ys) refs)
+          sp st m dm ((RefPtr bl p2,v2) :: vars) /\
+        list_copy_fwd_alias n xp yp ys = SOME ys1 /\
+        good_dimindex (:'a) /\ n < dimword (:'a) ==>
+        (?(w2:'a word) a2 m1.
+          v2 = wordLang_Word w2 /\
+          get_real_addr c st w2 = SOME a2 /\
+          word_copy_fwd be (n2w n) (a2 + bytes_in_word + n2w xp)
+            (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
+          memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
+            sp st m1 dm ((RefPtr bl p2,v2) :: vars))`),
   CHEAT_TAC);;
 
 (* copy backward *)
@@ -15961,38 +16334,44 @@ let list_copy_bwd_alias_def = cake_define
 (* HOL4 data_to_word_memoryProofScript.sml:15617-15618: ML code, not
    ported *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_copy_bwd_thm = prove
- (`!n xp yp ys ys1 m.
-      memory_rel c (be:bool) ts (insert p2 (ByteArray fl_ys ys) refs)
-        sp st m dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2) :: vars)
-          /\
-      lookup p1 refs = SOME (ByteArray fl_xs xs) /\
-      list_copy_bwd n xp xs yp ys = SOME ys1 /\
-      good_dimindex (:'a) /\ n < dimword (:'a) /\ ~(p1 = p2) ==>
-      (?w1 (w2:'a word) a1 a2 m1.
-        v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
-        get_real_addr c st w1 = SOME a1 /\
-        get_real_addr c st w2 = SOME a2 /\
-        word_copy_bwd be (n2w n) (a1 + bytes_in_word + n2w xp)
-          (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
-        memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
-          sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2) ::
-            vars))`,
+ (cake_as_vars (fun () ->
+    `!n xp yp ys ys1 m.
+        memory_rel c be ts (insert p2 (ByteArray fl_ys ys) refs)
+          sp st m dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2) ::
+            vars) /\
+        lookup p1 refs = SOME (ByteArray fl_xs xs) /\
+        list_copy_bwd n xp xs yp ys = SOME ys1 /\
+        good_dimindex (:'a) /\ n < dimword (:'a) /\ ~(p1 = p2) ==>
+        (?w1 (w2:'a word) a1 a2 m1.
+          v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+          get_real_addr c st w1 = SOME a1 /\
+          get_real_addr c st w2 = SOME a2 /\
+          word_copy_bwd be (n2w n) (a1 + bytes_in_word + n2w xp)
+            (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
+          memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
+            sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2)
+              :: vars))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_copy_bwd_alias_thm = prove
- (`!n xp yp ys ys1 m.
-      memory_rel c (be:bool) ts (insert p2 (ByteArray fl_ys ys) refs)
-        sp st m dm ((RefPtr bl p2,v2) :: vars) /\
-      list_copy_bwd_alias n xp yp ys = SOME ys1 /\
-      good_dimindex (:'a) /\ n < dimword (:'a) ==>
-      (?(w2:'a word) a2 m1.
-        v2 = wordLang_Word w2 /\
-        get_real_addr c st w2 = SOME a2 /\
-        word_copy_bwd be (n2w n) (a2 + bytes_in_word + n2w xp)
-          (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
-        memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
-          sp st m1 dm ((RefPtr bl p2,v2) :: vars))`,
+ (cake_as_vars (fun () ->
+    `!n xp yp ys ys1 m.
+        memory_rel c be ts (insert p2 (ByteArray fl_ys ys) refs)
+          sp st m dm ((RefPtr bl p2,v2) :: vars) /\
+        list_copy_bwd_alias n xp yp ys = SOME ys1 /\
+        good_dimindex (:'a) /\ n < dimword (:'a) ==>
+        (?(w2:'a word) a2 m1.
+          v2 = wordLang_Word w2 /\
+          get_real_addr c st w2 = SOME a2 /\
+          word_copy_bwd be (n2w n) (a2 + bytes_in_word + n2w xp)
+            (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
+          memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
+            sp st m1 dm ((RefPtr bl p2,v2) :: vars))`),
   CHEAT_TAC);;
 
 (* copy array *)
@@ -16133,9 +16512,12 @@ let word_copy_array_def = cake_define
          - (n2w 1)) m dm)`;;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_copy_bwd_0 = prove
- (`good_dimindex (:'a) ==>
-   word_copy_bwd (be:bool) ((n2w 0):'a word) a1 a2 m dm = SOME m`,
+ (cake_as_vars (fun () ->
+    `good_dimindex (:'a) ==>
+     word_copy_bwd be ((n2w 0):'a word) a1 a2 m dm = SOME m`),
   (* a copy of no bytes is the memory itself, and good_dimindex puts
      the dimword above the four that the clause asks for *)
   (REWRITE_TAC[good_dimindex_def] THEN STRIP_TAC THEN
@@ -16143,39 +16525,45 @@ let word_copy_bwd_0 = prove
    ASM_REWRITE_TAC[dimword; WORD_ULT; VAL_WORD; VAL_WORD_0] THEN
    CONV_TAC NUM_REDUCE_CONV));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_copy_array_thm = prove
- (`!n xp yp xs ys ys1 m.
-      memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl1 p1,v1)
-        :: (RefPtr bl2 p2,v2) :: vars) /\
-      lookup p1 refs = SOME (ByteArray fl_xs xs) /\
-      lookup p2 refs = SOME (ByteArray fl_ys ys) /\
-      copy_array (xs,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 /\
-      good_dimindex (:'a) /\ ~(p1 = p2) ==>
-      (?w1 (w2:'a word) a1 a2 m1.
-        v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
-        get_real_addr c st w1 = SOME a1 /\
-        get_real_addr c st w2 = SOME a2 /\
-        word_copy_array be (n2w n) (a1 + bytes_in_word) (n2w xp)
-          (a2 + bytes_in_word) (n2w yp) m dm = SOME m1 /\
-        memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
-          sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2) ::
-            vars))`,
+ (cake_as_vars (fun () ->
+    `!n xp yp xs ys ys1 m.
+        memory_rel c be ts refs sp st m dm ((RefPtr bl1 p1,v1) ::
+          (RefPtr bl2 p2,v2) :: vars) /\
+        lookup p1 refs = SOME (ByteArray fl_xs xs) /\
+        lookup p2 refs = SOME (ByteArray fl_ys ys) /\
+        copy_array (xs,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 /\
+        good_dimindex (:'a) /\ ~(p1 = p2) ==>
+        (?w1 (w2:'a word) a1 a2 m1.
+          v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+          get_real_addr c st w1 = SOME a1 /\
+          get_real_addr c st w2 = SOME a2 /\
+          word_copy_array be (n2w n) (a1 + bytes_in_word) (n2w xp)
+            (a2 + bytes_in_word) (n2w yp) m dm = SOME m1 /\
+          memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
+            sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2)
+              :: vars))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_copy_array_alias_thm = prove
- (`!n xp yp ys ys1 m.
-      memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p2,v2) ::
-        vars) /\
-      lookup p2 refs = SOME (ByteArray fl_ys ys) /\
-      copy_array (ys,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 /\
-      good_dimindex (:'a) ==>
-      (?(w2:'a word) a2 m1.
-        v2 = wordLang_Word w2 /\
-        get_real_addr c st w2 = SOME a2 /\
-        word_copy_array be (n2w n) (a2 + bytes_in_word) (n2w xp)
-          (a2 + bytes_in_word) (n2w yp) m dm = SOME m1 /\
-        memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
-          sp st m1 dm ((RefPtr bl p2,v2) :: vars))`,
+ (cake_as_vars (fun () ->
+    `!n xp yp ys ys1 m.
+        memory_rel c be ts refs sp st m dm ((RefPtr bl p2,v2) ::
+          vars) /\
+        lookup p2 refs = SOME (ByteArray fl_ys ys) /\
+        copy_array (ys,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 /\
+        good_dimindex (:'a) ==>
+        (?(w2:'a word) a2 m1.
+          v2 = wordLang_Word w2 /\
+          get_real_addr c st w2 = SOME a2 /\
+          word_copy_array be (n2w n) (a2 + bytes_in_word) (n2w xp)
+            (a2 + bytes_in_word) (n2w yp) m dm = SOME m1 /\
+          memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
+            sp st m1 dm ((RefPtr bl p2,v2) :: vars))`),
   CHEAT_TAC);;
 
 let word_of_byte_0 = prove
@@ -16186,8 +16574,11 @@ let word_of_byte_0 = prove
    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OR; BIT_WORD_SHL;
                BIT_WORD_0]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let last_bytes_0 = prove
- (`!nb a. last_bytes nb (n2w 0) a (n2w 0) (be:bool) = (n2w 0)`,
+ (cake_as_vars (fun () ->
+    `!nb a. last_bytes nb (n2w 0) a (n2w 0) be = (n2w 0)`),
   (* the bytes of zero written into zero leave zero: a byte set to
      zero in a word of zeroes is an or of words with no bit *)
   (let sb0 = prove
@@ -16212,41 +16603,47 @@ let LUPDATE_REPLICATE = prove
 (* HOL4 data_to_word_memoryProofScript.sml:16179-16183: ML code, not
    ported *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_copy_array_NONE = prove
- (`memory_rel c (be:bool) ts refs sp st m dm ((RefPtr bl p1,(v1:'a
-  word_loc)) :: vars) /\ ~(new IN (domain refs)) /\
-    lookup p1 refs = SOME (ByteArray fl_xs xs) /\
-    copy_array (xs,&xp) (&n) NONE = SOME ys /\
-    byte_len (:'a) n < sp /\ byte_len (:'a) n < 2 EXP (dimindex (:'a)
-      - 4) /\
-    byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\
-      good_dimindex (:'a) ==>
-    (?free' curr a1 a2 m1 m2 w1 w2.
-      v1 = wordLang_Word w1 /\
-      get_real_addr c st w1 = SOME a1 /\
-      make_ptr c (free' - curr) (n2w 0) (byte_len (:'a) n) =
-        wordLang_Word w2 /\
-      get_real_addr c st w2 = SOME a2 /\
-      FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      data_to_word_memoryProof_store_list free'
-        (wordLang_Word (make_byte_header c fl n) ::
-             REPLICATE (byte_len (:'a) n) (wordLang_Word (n2w 0))) m
-               dm = SOME m1 /\
-      word_copy_fwd be (n2w n) (a1 + bytes_in_word + n2w xp)
-        (a2 + bytes_in_word) m1 dm = SOME m2 /\
-      memory_rel c be ts (insert new (ByteArray fl ys) refs)
-       (sp - (byte_len (:'a) n + 1))
-       (st |+ (NextFree,
-               wordLang_Word (free' + bytes_in_word * n2w (byte_len
-                 (:'a) n + 1)))) m2 dm
-       ((RefPtr T new,wordLang_Word w2) :: vars))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((RefPtr bl p1,(v1:'a word_loc))
+  :: vars) /\ ~(new IN (domain refs)) /\
+      lookup p1 refs = SOME (ByteArray fl_xs xs) /\
+      copy_array (xs,&xp) (&n) NONE = SOME ys /\
+      byte_len (:'a) n < sp /\ byte_len (:'a) n < 2 EXP (dimindex
+        (:'a) - 4) /\
+      byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\
+        good_dimindex (:'a) ==>
+      (?free' curr a1 a2 m1 m2 w1 w2.
+        v1 = wordLang_Word w1 /\
+        get_real_addr c st w1 = SOME a1 /\
+        make_ptr c (free' - curr) (n2w 0) (byte_len (:'a) n) =
+          wordLang_Word w2 /\
+        get_real_addr c st w2 = SOME a2 /\
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        data_to_word_memoryProof_store_list free'
+          (wordLang_Word (make_byte_header c fl n) ::
+               REPLICATE (byte_len (:'a) n) (wordLang_Word (n2w
+                 0))) m dm = SOME m1 /\
+        word_copy_fwd be (n2w n) (a1 + bytes_in_word + n2w xp)
+          (a2 + bytes_in_word) m1 dm = SOME m2 /\
+        memory_rel c be ts (insert new (ByteArray fl ys) refs)
+         (sp - (byte_len (:'a) n + 1))
+         (st |+ (NextFree,
+                 wordLang_Word (free' + bytes_in_word * n2w
+                   (byte_len (:'a) n + 1)))) m2 dm
+         ((RefPtr T new,wordLang_Word w2) :: vars))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let write_bytearray_isWord = prove
- (`!ls a m x.
-   isWord (m x) ==>
-   isWord (write_bytearray a ls m dm (be:bool) x)`,
+ (cake_as_vars (fun () ->
+    `!ls a m x.
+     isWord (m x) ==>
+     isWord (write_bytearray a ls m dm be x)`),
   (* writing bytes leaves a word a word: the write either updates
      the address with a word or leaves the memory alone *)
   (let isw = prove
@@ -16276,33 +16673,40 @@ let write_bytearray_append = prove
   CHEAT_TAC);;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_write_bytearray_lemma = prove
- (`!rest bytes bytes0 m refs.
-     memory_rel c (be:bool) stm refs sp st m dm ((RefPtr b
-       n,wordLang_Word (w:'a word)) :: vs) /\
-     lookup n refs = SOME (ByteArray F (bytes0 ++ rest)) /\ LENGTH
-       bytes = LENGTH bytes0 /\
-     get_real_simple_addr c st w = SOME a /\ good_dimindex (:'a) ==>
-     memory_rel c be stm (insert n (ByteArray F (bytes ++ rest))
-       refs) sp st
-       (write_bytearray (a + bytes_in_word) bytes m dm be)
-       dm ((RefPtr b n,wordLang_Word w) :: vs)`,
+ (cake_as_vars (fun () ->
+    `!rest bytes bytes0 m refs.
+       memory_rel c be stm refs sp st m dm ((RefPtr b
+         n,wordLang_Word (w:'a word)) :: vs) /\
+       lookup n refs = SOME (ByteArray F (bytes0 ++ rest)) /\
+         LENGTH bytes = LENGTH bytes0 /\
+       get_real_simple_addr c st w = SOME a /\ good_dimindex (:'a)
+         ==>
+       memory_rel c be stm (insert n (ByteArray F (bytes ++ rest))
+         refs) sp st
+         (write_bytearray (a + bytes_in_word) bytes m dm be)
+         dm ((RefPtr b n,wordLang_Word w) :: vs)`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_memoryProofScript.sml:16298-16299: a theorem
    that HOL4 states as the value of an ML expression:
    memory_rel_write_bytearray *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_space_max = prove
- (`memory_rel c (be:bool) ts refs old_sp st m dm vars ==>
-    (?next_free trig_gc sp.
-      FLOOKUP st NextFree = SOME (wordLang_Word next_free) /\
-      FLOOKUP st TriggerGC = SOME (wordLang_Word trig_gc) /\
-      trig_gc - next_free = bytes_in_word * (n2w sp:'a word) /\
-        old_sp <= sp /\
-      memory_rel c be ts refs sp st m dm vars /\
-      (good_dimindex (:'a) ==> (dimindex (:'a) DIV 8) * sp <
-        dimword (:'a)))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs old_sp st m dm vars ==>
+      (?next_free trig_gc sp.
+        FLOOKUP st NextFree = SOME (wordLang_Word next_free) /\
+        FLOOKUP st TriggerGC = SOME (wordLang_Word trig_gc) /\
+        trig_gc - next_free = bytes_in_word * (n2w sp:'a word) /\
+          old_sp <= sp /\
+        memory_rel c be ts refs sp st m dm vars /\
+        (good_dimindex (:'a) ==> (dimindex (:'a) DIV 8) * sp <
+          dimword (:'a)))`),
   (* the space of the statement is the sp of the invariant itself:
      the store's NextFree and TriggerGC are the two ends of it, so
      their difference is the bytes in a word times it, and what is
@@ -17059,11 +17463,13 @@ let v_all_vs_list_to_v1 = prove
      ASM_MESON_TAC[split; ext_hd; ext_tl; mem_app;
                    injectivity "dataSem_v"; LT_REFL]]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_GT_ts = prove
- (`blocks_unique ts (all_vs refs (t :: (xs ++ (stack:(dataSem_v)list))))
-  /\
-   t' >= ts /\ ~(xs1 = []) ==> ~(Block t' a1 xs1 IN all_vs refs (t
-     :: (xs ++ stack)))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (t :: (xs ++ stack))) /\
+     t' >= ts /\ ~(xs1 = []) ==> ~(Block t' a1 xs1 IN all_vs refs
+       (t :: (xs ++ stack)))`),
   (* blocks_unique gives the timestamp of a Block of the set as one
      below ts, and this one is not *)
   (REWRITE_TAC[blocks_unique_def] THEN REPEAT STRIP_TAC THEN
@@ -17087,53 +17493,61 @@ let v_all_vs_list_to_v2 = prove
      a1 = a2 /\ xs1 = xs2 /\ t' < ts + LENGTH xs`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let blocks_unique_cons_multi = prove
- (`blocks_unique ts (all_vs refs (t :: (xs ++ (stack:(dataSem_v)list))))
-  ==>
-     blocks_unique (ts + LENGTH xs) (all_vs refs (list_to_v ts t xs
-       :: stack))`,
+ (cake_as_vars (fun () ->
+    `blocks_unique ts (all_vs refs (t :: (xs ++ stack))) ==>
+       blocks_unique (ts + LENGTH xs) (all_vs refs (list_to_v ts
+         t xs :: stack))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let cons_multi_thm = prove
- (`abs_ml_inv conf ((t :: xs) ++ (stack:(dataSem_v)list)) refs
-  (roots,heap,(be:bool),a,sp,sp1,gens) (limit:num) ts /\
-   3 * LENGTH xs <= sp /\ ~(xs = []) ==>
-      (?rt rs roots2 heap1 heap2.
-        let Allocd = list_to_BlockReps conf rt a rs in
-          (roots = (rt :: rs) ++ roots2) /\ (LENGTH rs = LENGTH xs)
-            /\
-          heap = heap1 ++ heap_expand (sp + sp1) ++ heap2 /\
-          a = heap_length heap1 /\
-          abs_ml_inv conf
-            (list_to_v ts t xs :: stack) refs
-            (gc_shared_Pointer a (wordLang_Word (ptr_bits conf
-              cons_tag 2)) :: roots2,
-             heap1 ++ Allocd ++ heap_expand ((sp + sp1) - heap_length
-               Allocd) ++ heap2,be,
-             a + heap_length Allocd,sp - heap_length
-               Allocd,sp1,gens) limit (ts + LENGTH xs))`,
+ (cake_as_vars (fun () ->
+    `abs_ml_inv conf ((t :: xs) ++ stack) refs
+  (roots,heap,be,a,sp,sp1,gens) limit ts /\
+     3 * LENGTH xs <= sp /\ ~(xs = []) ==>
+        (?rt rs roots2 heap1 heap2.
+          let Allocd = list_to_BlockReps conf rt a rs in
+            (roots = (rt :: rs) ++ roots2) /\ (LENGTH rs = LENGTH
+              xs) /\
+            heap = heap1 ++ heap_expand (sp + sp1) ++ heap2 /\
+            a = heap_length heap1 /\
+            abs_ml_inv conf
+              (list_to_v ts t xs :: stack) refs
+              (gc_shared_Pointer a (wordLang_Word (ptr_bits conf
+                cons_tag 2)) :: roots2,
+               heap1 ++ Allocd ++ heap_expand ((sp + sp1) -
+                 heap_length Allocd) ++ heap2,be,
+               a + heap_length Allocd,sp - heap_length
+                 Allocd,sp1,gens) limit (ts + LENGTH xs))`),
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_append = prove
- (`memory_rel c (be:bool) ts refs sp st m1 dm
-      (((v,h) :: ZIP in1 ws) ++ vars) /\
-    (misc_word_list next_free
-      (append_writes c init_ptr (make_header c (n2w 0) 2) ws h) *
-        SEP_T)
-      (fun2set (m1,dm)) /\
-    1 < data_to_word_config_len_size c /\
-    LENGTH in1 = LENGTH ws /\ ~(in1 = []) /\
-    3 * LENGTH in1 <= sp /\ good_dimindex (:'a) /\
-    wordLang_Word init_ptr = make_cons_ptr c (next_free - curr) 0 2
-      /\
-    FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-    FLOOKUP st NextFree = SOME (wordLang_Word (next_free:'a word))
-      ==>
-    memory_rel c be (ts + LENGTH in1) refs (sp - 3 * LENGTH in1)
-       (st |+ (NextFree,
-               wordLang_Word (next_free + bytes_in_word * n2w (3 *
-                 LENGTH in1)))) m1 dm
-       ((list_to_v ts v in1,wordLang_Word init_ptr) :: vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m1 dm
+        (((v,h) :: ZIP in1 ws) ++ vars) /\
+      (misc_word_list next_free
+        (append_writes c init_ptr (make_header c (n2w 0) 2) ws h) *
+          SEP_T)
+        (fun2set (m1,dm)) /\
+      1 < data_to_word_config_len_size c /\
+      LENGTH in1 = LENGTH ws /\ ~(in1 = []) /\
+      3 * LENGTH in1 <= sp /\ good_dimindex (:'a) /\
+      wordLang_Word init_ptr = make_cons_ptr c (next_free - curr) 0
+        2 /\
+      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+      FLOOKUP st NextFree = SOME (wordLang_Word (next_free:'a
+        word)) ==>
+      memory_rel c be (ts + LENGTH in1) refs (sp - 3 * LENGTH in1)
+         (st |+ (NextFree,
+                 wordLang_Word (next_free + bytes_in_word * n2w (3
+                   * LENGTH in1)))) m1 dm
+         ((list_to_v ts v in1,wordLang_Word init_ptr) :: vars)`),
   CHEAT_TAC);;
 
 (* --- ML lists cannot exceed heap size: --- *)
@@ -17788,7 +18202,7 @@ let block_drop_def = cake_define
       match (x1,v) with
         (0,v) -> SOME v
       | (SUC n,(Block ts tag [h; vl]:dataSem_v)) -> block_drop n vl
-      | (_109,_110) -> NONE`;;
+      | (_115,_116) -> NONE`;;
 
 let v_to_list_DROP = prove
  (`!vs ptr ps k v ts.
@@ -17868,12 +18282,15 @@ let v_to_list_heap_length = prove
 
 (* ------------------------------------------------------------------------- *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_list_limit = prove
- (`memory_rel c (be:bool) ts refs sp0 st m dm ((v,(w:'a word_loc)) ::
-  vars) /\
-   v_to_list v = SOME xs /\
-   good_dimindex (:'a) ==>
-   3 * (LENGTH xs + 1) * (dimindex (:'a) DIV 8) < dimword (:'a)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp0 st m dm ((v,(w:'a word_loc)) :: vars)
+  /\
+     v_to_list v = SOME xs /\
+     good_dimindex (:'a) ==>
+     3 * (LENGTH xs + 1) * (dimindex (:'a) DIV 8) < dimword (:'a)`),
   (* the heap holds three words per element of the list, and the
      heap in memory leaves room for the limit and three more *)
   (let mul_le = prove
@@ -17962,12 +18379,15 @@ let do_part_SOME_IMP_SOME = prove
    REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC)) THEN
    ASM_MESON_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_IMP_MAP_UPDATE = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-           (((b,w) :: MAP (\k. (map0 k,map0' k)) ks) ++ vars) ==>
-   memory_rel c be ts refs sp st m dm
-           (MAP (\k. ((i =+ b) map0 k,((i =+ w) map0' k))) ks ++
-             vars)`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+             (((b,w) :: MAP (\k. (map0 k,map0' k)) ks) ++ vars) ==>
+     memory_rel c be ts refs sp st m dm
+             (MAP (\k. ((i =+ b) map0 k,((i =+ w) map0' k))) ks
+               ++ vars)`),
   (MATCH_MP_TAC memory_rel_rearrange THEN
    GEN_TAC THEN REWRITE_TAC[MEM_APPEND; MEM_MAP; MEM] THEN
    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -18082,24 +18502,28 @@ let least_notin_domain = prove
 
 let _ = do_list hide_constant ["free"];;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_do_build = prove
- (`!parts' i st free' curr sp map0 map0' refs ts refs1 v m v ws.
-     do_build map0 i parts' refs (SOME ts) = (v,refs1,SOME ts1) /\
-     build_words c map0' i parts' (free' - (curr:'a word)) = SOME
-       (w,ws) /\
-     SUM (MAP part_space_req parts') <= sp /\
-     FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-     FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-     (!ks. memory_rel c (be:bool) ts refs sp st m dm (MAP (\k. (map0
-       k,(map0' k))) ks ++ vars)) /\
-     good_dimindex (:'a) ==>
-     (?m1.
-       let nf = free' + bytes_in_word * n2w (LENGTH ws) in
-         memory_rel c be ts1 refs1 (sp - LENGTH ws)
-           (st |+ (NextFree,wordLang_Word nf)) m1 dm ((v,w) :: vars)
-             /\
-         data_to_word_memoryProof_store_list free' ws m dm = SOME
-           m1)`,
+ (cake_as_vars (fun () ->
+    `!parts' i st free' curr sp map0 map0' refs ts refs1 v m v ws.
+       do_build map0 i parts' refs (SOME ts) = (v,refs1,SOME ts1)
+         /\
+       build_words c map0' i parts' (free' - (curr:'a word)) = SOME
+         (w,ws) /\
+       SUM (MAP part_space_req parts') <= sp /\
+       FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+       FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+       (!ks. memory_rel c be ts refs sp st m dm (MAP (\k. (map0
+         k,(map0' k))) ks ++ vars)) /\
+       good_dimindex (:'a) ==>
+       (?m1.
+         let nf = free' + bytes_in_word * n2w (LENGTH ws) in
+           memory_rel c be ts1 refs1 (sp - LENGTH ws)
+             (st |+ (NextFree,wordLang_Word nf)) m1 dm ((v,w) ::
+               vars) /\
+           data_to_word_memoryProof_store_list free' ws m dm =
+             SOME m1)`),
   CHEAT_TAC);;
 
 let word_and_lsr_0 = prove
@@ -18415,29 +18839,32 @@ let good_loc_def = cake_define
   `good_loc code x2 =
       match x2 with
         wordLang_Loc n m -> (m = 0 /\ n IN code)
-      | _111 -> T`;;
+      | _117 -> T`;;
 
 let const_parts_to_words_good_loc = prove
  (`const_parts_to_words c parts = SOME ((y0,y1),y2) ==>
    good_loc s y1 /\ EVERY (good_loc s o SND) y2`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_do_build_const = prove
- (`do_build_const parts refs (SOME ts) = (v,refs1,SOME ts1) /\
-   const_parts_to_words c parts = SOME (w,ws) /\
-   memory_rel c (be:bool) ts refs sp st m dm vars /\
-   SUM (MAP part_space_req parts) <= sp /\
-   FLOOKUP st NextFree = SOME (wordLang_Word (free:('a)word)) /\
-   FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-   good_dimindex (:'a) ==>
-   (?m1.
-     let nf = free + bytes_in_word * n2w (LENGTH ws) in
-     let adjust = word_cond_add c (free - (curr:'a word)) in
-       memory_rel c be ts1 refs1 (sp - LENGTH ws)
-         (st |+ (NextFree,wordLang_Word nf)) m1 dm ((v,adjust w) ::
-           vars) /\
-       data_to_word_memoryProof_store_list free (MAP adjust ws) m
-         dm = SOME m1)`,
+ (cake_as_vars (fun () ->
+    `do_build_const parts refs (SOME ts) = (v,refs1,SOME ts1) /\
+     const_parts_to_words c parts = SOME (w,ws) /\
+     memory_rel c be ts refs sp st m dm vars /\
+     SUM (MAP part_space_req parts) <= sp /\
+     FLOOKUP st NextFree = SOME (wordLang_Word free) /\
+     FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+     good_dimindex (:'a) ==>
+     (?m1.
+       let nf = free + bytes_in_word * n2w (LENGTH ws) in
+       let adjust = word_cond_add c (free - (curr:'a word)) in
+         memory_rel c be ts1 refs1 (sp - LENGTH ws)
+           (st |+ (NextFree,wordLang_Word nf)) m1 dm ((v,adjust w)
+             :: vars) /\
+         data_to_word_memoryProof_store_list free (MAP adjust ws)
+           m dm = SOME m1)`),
   CHEAT_TAC);;
 
 let read_word_def = cake_define
@@ -18485,9 +18912,12 @@ let xor_words_def = cake_define
      (match xor_words xs ys with NONE -> NONE | SOME rest -> SOME
        (word_xor (x:'a word) y :: rest))`;;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let word_xor_set_byte = prove
- (`word_xor (set_byte a h1 w1 (be:bool)) (set_byte a h2 w2 be) =
-   set_byte a (word_xor h1 h2) (word_xor w1 w2) be`,
+ (cake_as_vars (fun () ->
+    `word_xor (set_byte a h1 w1 be) (set_byte a h2 w2 be) =
+     set_byte a (word_xor h1 h2) (word_xor w1 w2) be`),
   (let bsa = prove
     (`!h l (w:(N)word) j. j < dimindex (:N)
         ==> (bit j (word_slice_alt h l w) <=>
@@ -18534,12 +18964,15 @@ let word_xor_set_byte = prove
    MATCH_ACCEPT_TAC gen));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let xor_bytes_bytes_to_word = prove
- (`!k vals1 vals2 res_vals a.
-     xor_bytes vals1 vals2 = SOME res_vals ==>
-     bytes_to_word k a vals1 (n2w 0) (be:bool) ??
-     bytes_to_word k a vals2 (n2w 0) be =
-     bytes_to_word k a res_vals (n2w 0) be`,
+ (cake_as_vars (fun () ->
+    `!k vals1 vals2 res_vals a.
+       xor_bytes vals1 vals2 = SOME res_vals ==>
+       bytes_to_word k a vals1 (n2w 0) be ??
+       bytes_to_word k a vals2 (n2w 0) be =
+       bytes_to_word k a res_vals (n2w 0) be`),
   CHEAT_TAC);;
 
 let xor_bytes_length = prove
@@ -18607,23 +19040,32 @@ let xor_bytes_drop = prove
          MATCH_ACCEPT_TAC(MATCH_MP ih st)))]]));;
 
 (* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let xor_bytes_xor_words = prove
- (`!zs1 zs2 vals1 vals2 res_vals.
-     xor_bytes vals1 vals2 = SOME res_vals /\ good_dimindex (:'a) /\
-     EVERY (\w. w = (n2w 0)) zs1 /\ EVERY (\w. w = (n2w 0)) zs2 /\
-     LENGTH zs1 = LENGTH vals1 DIV (dimindex (:'a) DIV 8) + 1 /\
-     LENGTH zs2 = LENGTH vals2 DIV (dimindex (:'a) DIV 8) + 1 ==>
-     xor_words (write_bytes vals1 zs1 (be:bool))
-               (write_bytes vals2 zs2 be) =
-     SOME (write_bytes res_vals zs2 be:('a word) list)`,
+ (cake_as_vars (fun () ->
+    `!zs1 zs2 vals1 vals2 res_vals.
+       xor_bytes vals1 vals2 = SOME res_vals /\ good_dimindex (:'a)
+         /\
+       EVERY (\w. w = (n2w 0)) zs1 /\ EVERY (\w. w = (n2w 0)) zs2
+         /\
+       LENGTH zs1 = LENGTH vals1 DIV (dimindex (:'a) DIV 8) + 1 /\
+       LENGTH zs2 = LENGTH vals2 DIV (dimindex (:'a) DIV 8) + 1 ==>
+       xor_words (write_bytes vals1 zs1 be)
+                 (write_bytes vals2 zs2 be) =
+       SOME (write_bytes res_vals zs2 be:('a word) list)`),
   CHEAT_TAC);;
 
 (* xor_bytes_xor_words *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let data_to_word_memoryProof_xor_bytes_xor_words = prove
- (`xor_bytes vals1 vals2 = SOME res_vals /\ good_dimindex (:'a) ==>
-   xor_words (write_bytes vals1 (make_zeros vals1) (be:bool))
-             (write_bytes vals2 (make_zeros vals2) be) =
-   SOME (write_bytes res_vals (make_zeros vals2) be:('a word) list)`,
+ (cake_as_vars (fun () ->
+    `xor_bytes vals1 vals2 = SOME res_vals /\ good_dimindex (:'a) ==>
+     xor_words (write_bytes vals1 (make_zeros vals1) be)
+               (write_bytes vals2 (make_zeros vals2) be) =
+     SOME (write_bytes res_vals (make_zeros vals2) be:('a word)
+       list)`),
   (* the zeroes of make_zeros are as many as the lemma above asks
      for, and they are all zero *)
   (let all_zero = prove
@@ -18659,24 +19101,27 @@ let xor_words_word_list_alias = prove
        word_xor_bytes a1 a1 (n2w (LENGTH vals1)) dm m = SOME m1)`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let xor_bytes_word_list = prove
- (`!a1 a2 be' frame.
-     xor_bytes vals1 vals2 = SOME res_vals /\
-     good_dimindex (:'a) /\ LENGTH (make_zeros vals1:('a word) list)
-       < dimword (:'a) /\
-     (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
-       (make_zeros vals1) be')) *
-      misc_word_list a2 (MAP wordLang_Word (write_bytes vals2
-        (make_zeros vals2) be')) *
-      frame) (fun2set (m,dm)) ==>
-     (?m1.
+ (cake_as_vars (fun () ->
+    `!a1 a2 be' frame.
+       xor_bytes vals1 vals2 = SOME res_vals /\
+       good_dimindex (:'a) /\ LENGTH (make_zeros vals1:('a word)
+         list) < dimword (:'a) /\
        (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
-         (make_zeros vals1:('a word) list) be')) *
-        misc_word_list a2 (MAP wordLang_Word (write_bytes res_vals
-          (make_zeros vals2:('a word) list) be')) *
-        frame) (fun2set (m1,(dm:'a word->bool))) /\
-       word_xor_bytes a1 a2 (n2w (LENGTH (make_zeros vals1:('a
-         word) list))) dm m = SOME m1)`,
+         (make_zeros vals1) be')) *
+        misc_word_list a2 (MAP wordLang_Word (write_bytes vals2
+          (make_zeros vals2) be')) *
+        frame) (fun2set (m,dm)) ==>
+       (?m1.
+         (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
+           (make_zeros vals1:('a word) list) be')) *
+          misc_word_list a2 (MAP wordLang_Word (write_bytes
+            res_vals (make_zeros vals2:('a word) list) be')) *
+          frame) (fun2set (m1,(dm:'a word->bool))) /\
+         word_xor_bytes a1 a2 (n2w (LENGTH (make_zeros vals1:('a
+           word) list))) dm m = SOME m1)`),
   (* the words of the two byte lists are as many as the zeroes, so
      xor_words_word_list is about them, and the xor of the two is
      the one of the result by xor_bytes_xor_words *)
@@ -18691,20 +19136,23 @@ let xor_bytes_word_list = prove
    MATCH_MP_TAC data_to_word_memoryProof_xor_bytes_xor_words THEN
    ASM_REWRITE_TAC[]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let xor_bytes_word_list_alias = prove
- (`!a1 be' frame.
-     xor_bytes vals1 vals1 = SOME res_vals1 /\
-     good_dimindex (:'a) /\ LENGTH (make_zeros vals1:('a word) list)
-       < dimword (:'a) /\
-     (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
-       (make_zeros vals1) be')) *
-      frame) (fun2set (m,dm)) ==>
-     (?m1.
-       (misc_word_list a1 (MAP wordLang_Word (write_bytes res_vals1
-         (make_zeros vals1:('a word) list) be')) *
-        frame) (fun2set (m1,(dm:'a word->bool))) /\
-       word_xor_bytes a1 a1 (n2w (LENGTH (make_zeros vals1:('a
-         word) list))) dm m = SOME m1)`,
+ (cake_as_vars (fun () ->
+    `!a1 be' frame.
+       xor_bytes vals1 vals1 = SOME res_vals1 /\
+       good_dimindex (:'a) /\ LENGTH (make_zeros vals1:('a word)
+         list) < dimword (:'a) /\
+       (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
+         (make_zeros vals1) be')) *
+        frame) (fun2set (m,dm)) ==>
+       (?m1.
+         (misc_word_list a1 (MAP wordLang_Word (write_bytes
+           res_vals1 (make_zeros vals1:('a word) list) be')) *
+          frame) (fun2set (m1,(dm:'a word->bool))) /\
+         word_xor_bytes a1 a1 (n2w (LENGTH (make_zeros vals1:('a
+           word) list))) dm m = SOME m1)`),
   (* and the same where the two lists are one *)
   (REPEAT GEN_TAC THEN STRIP_TAC THEN
    ONCE_REWRITE_TAC[GSYM (ISPECL
@@ -18718,8 +19166,11 @@ let xor_bytes_word_list_alias = prove
 (* HOL4 data_to_word_memoryProofScript.sml:18637-18644: code that the
    source has in a comment *)
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let el_length_Bytes = prove
- (`el_length (Bytes (be:bool) fl vals zeros) = LENGTH zeros + 1`,
+ (cake_as_vars (fun () ->
+    `el_length (Bytes be fl vals zeros) = LENGTH zeros + 1`),
   (REWRITE_TAC[bytes_def] THEN
    CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
    REWRITE_TAC[el_length_def; LENGTH_write_bytes]));;
@@ -18753,26 +19204,29 @@ let blocks_unique_insert_ByteArray2 = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_xor_bytes = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((RefPtr bl1 p1,(v1:'a word_loc)) :: (RefPtr bl2 p2,(v2:'a
-       word_loc)) :: vars) /\
-   lookup p1 refs = SOME (ByteArray fl1 vals1) /\
-   lookup p2 refs = SOME (ByteArray fl2 vals2) /\
-   xor_bytes vals1 vals2 = SOME res_vals /\
-   good_dimindex (:'a) ==>
-   (?w1 a1 w2 a2 x1 m1.
-     v1 = wordLang_Word w1 /\
-     v2 = wordLang_Word w2 /\
-     get_real_addr c st w1 = SOME a1 /\
-     get_real_addr c st w2 = SOME a2 /\
-     m a1 = wordLang_Word x1 /\ a1 IN dm /\
-     word_xor_bytes (a1 + bytes_in_word) (a2 + bytes_in_word)
-                    (decode_length c x1) dm m = SOME m1 /\
-     memory_rel c be ts (insert p2 (ByteArray fl2 res_vals) refs) sp
-       st m1 dm
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
        ((RefPtr bl1 p1,(v1:'a word_loc)) :: (RefPtr bl2 p2,(v2:'a
-         word_loc)) :: vars))`,
+         word_loc)) :: vars) /\
+     lookup p1 refs = SOME (ByteArray fl1 vals1) /\
+     lookup p2 refs = SOME (ByteArray fl2 vals2) /\
+     xor_bytes vals1 vals2 = SOME res_vals /\
+     good_dimindex (:'a) ==>
+     (?w1 a1 w2 a2 x1 m1.
+       v1 = wordLang_Word w1 /\
+       v2 = wordLang_Word w2 /\
+       get_real_addr c st w1 = SOME a1 /\
+       get_real_addr c st w2 = SOME a2 /\
+       m a1 = wordLang_Word x1 /\ a1 IN dm /\
+       word_xor_bytes (a1 + bytes_in_word) (a2 + bytes_in_word)
+                      (decode_length c x1) dm m = SOME m1 /\
+       memory_rel c be ts (insert p2 (ByteArray fl2 res_vals) refs)
+         sp st m1 dm
+         ((RefPtr bl1 p1,(v1:'a word_loc)) :: (RefPtr bl2
+           p2,(v2:'a word_loc)) :: vars))`),
   CHEAT_TAC);;
 
 (* --------- str_cmp --------- *)
@@ -18961,22 +19415,25 @@ let find_diff_str_cmp_thm2 = prove
         num_cmp cmp (w2n r1) (w2n r2)))`,
   CHEAT_TAC);;
 
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
 let memory_rel_str_cmp = prove
- (`memory_rel c (be:bool) ts refs sp st m dm
-     ((RefPtr bl1 p1,(v1:'a word_loc)) :: (RefPtr bl2 p2,(v2:'a
-       word_loc)) :: vars) /\
-   lookup p1 refs = SOME (ByteArray fl1 vals1) /\
-   lookup p2 refs = SOME (ByteArray fl2 vals2) /\
-   good_dimindex (:'a) ==>
-   (?w1 a1 w2 a2 x1 m1 r1 r2.
-     v1 = wordLang_Word w1 /\
-     v2 = wordLang_Word w2 /\
-     get_real_addr c st w1 = SOME a1 /\
-     get_real_addr c st w2 = SOME a2 /\
-     word_str_cmp b a1 a2 dm m be c = SOME (r1,r2) /\
-     str_cmp b cmp (implode (MAP (CHR o w2n) vals1))
-                   (implode (MAP (CHR o w2n) vals2)) =
-     semanticPrimitives_num_cmp cmp (w2n r1) (w2n r2))`,
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       ((RefPtr bl1 p1,(v1:'a word_loc)) :: (RefPtr bl2 p2,(v2:'a
+         word_loc)) :: vars) /\
+     lookup p1 refs = SOME (ByteArray fl1 vals1) /\
+     lookup p2 refs = SOME (ByteArray fl2 vals2) /\
+     good_dimindex (:'a) ==>
+     (?w1 a1 w2 a2 x1 m1 r1 r2.
+       v1 = wordLang_Word w1 /\
+       v2 = wordLang_Word w2 /\
+       get_real_addr c st w1 = SOME a1 /\
+       get_real_addr c st w2 = SOME a2 /\
+       word_str_cmp b a1 a2 dm m be c = SOME (r1,r2) /\
+       str_cmp b cmp (implode (MAP (CHR o w2n) vals1))
+                     (implode (MAP (CHR o w2n) vals2)) =
+       semanticPrimitives_num_cmp cmp (w2n r1) (w2n r2))`),
   CHEAT_TAC);;
 
 (* and the names that this file reads as variables are constants again *)

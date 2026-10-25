@@ -27,12 +27,45 @@ PRELUDE = """let cake_mark s =
             "%(tmp)smark.txt" in
   output_string ch (s ^ "\\n"); close_out ch;;
 
-let cake_unstated nm e =
+let cake_log_unstated nm e =
   let ch = open_out_gen [Open_append; Open_creat] 0o644
             "%(tmp)sunstated.txt" in
-  output_string ch ("%(file)s\\t" ^ nm ^ "\\t" ^ e ^ "\\n");
+  output_string ch ("%(file)s\t" ^ nm ^ "\t" ^ e ^ "\n");
   close_out ch;
-  print_string ("NOT STATED " ^ nm ^ ": " ^ e ^ "\\n");;
+  print_string ("NOT STATED " ^ nm ^ ": " ^ e ^ "\n");;
+
+(* the statement is read again with the overloads of the record
+   fields taken away, here where the file stands: what counts as a
+   field overload grows as the port defines its records, so the
+   answer of a session that holds the whole port is not the answer
+   here *)
+let cake_unstated nm mk e =
+  (* a statement that reads on its own is one whose proof failed,
+     which is not what this harvest is about *)
+  (try let _ = mk () in
+       cake_log_unstated nm ("PROOF " ^ e)
+   with _ ->
+     (try let tm = cake_as_vars mk in
+          let vs = map (fun v -> fst(dest_var v) ^ " " ^
+                                 string_of_type (type_of v))
+                       (frees tm) in
+          cake_log_unstated nm ("AS_VARS |" ^ String.concat "|" vs)
+      with Failure e2 -> cake_log_unstated nm ("NO " ^ e ^ " / " ^ e2)
+         | Invalid_argument e2 ->
+             cake_log_unstated nm ("NO " ^ e ^ " / " ^ e2)));;
+
+(* the same of a block that reads its statement with the overloads
+   taken away already: there the failure is the proof's unless
+   even that read does not work, and a statement that reads
+   plainly as well does not need the entry at all *)
+let cake_unstated_v nm mk e =
+  (try let _ = cake_as_vars mk in
+       (try let _ = mk () in
+            cake_log_unstated nm ("PROOF PLAINOK " ^ e)
+        with _ -> cake_log_unstated nm ("PROOF " ^ e))
+   with Failure e2 -> cake_log_unstated nm ("NO " ^ e ^ " / " ^ e2)
+      | Invalid_argument e2 ->
+          cake_log_unstated nm ("NO " ^ e ^ " / " ^ e2));;
 """
 
 # a theorem of the port, with the `prove' on its line or on the
@@ -48,9 +81,19 @@ def tolerant(phrase, name):
   body = body[:-2].rstrip()
   body = re.sub(r"^let (%s) =(\n?\s*)prove\n" % re.escape(name),
                 r"let \1 =\2try prove\n", body, count=1, flags=re.M)
+  # the statement of the block, so that the handler can read it
+  # again with the overloads taken away
+  m = re.search(r'\(\s*(?:cake_as_vars \(fun \(\) ->\s*)?'
+                r'(`.*?`)\s*\)?\s*,', body, re.S)
+  stmt = m.group(1) if m else '`T`'
+  # the block that reads its statement with the overloads taken
+  # away has its own handler
+  fn = ('cake_unstated_v' if 'cake_as_vars (fun () ->' in body[:400]
+        else 'cake_unstated')
   return (body + '\n  with e ->\n'
-          '    (cake_unstated "%s" (Printexc.to_string e); TRUTH);;'
-          % name)
+          '    (%s "%s" (fun () ->\n%s)\n'
+          '       (Printexc.to_string e); TRUTH);;'
+          % (fn, name, stmt))
 
 
 def main():

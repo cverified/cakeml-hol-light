@@ -1,0 +1,36 @@
+#!/bin/sh
+# asvars <file of the port> : add every statement of the file that
+# HOL Light reads only with the overloads of the record fields
+# taken away to fieldvars.READ, and repeat until the file loads
+# with none left.  The file is loaded in a clone of hol-pfbase
+# (which has to hold its closure), with every theorem in a try, so
+# that one load names every statement (tools/tolerant.py).
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+f="$1"
+for round in 1 2 3 4 5; do
+  python3 -I tools/tolerant.py "ml/$f" tmp/memtol.ml > /dev/null
+  repl-kill dt > /dev/null 2>&1
+  rm -f tmp/dtdone.txt; : > tmp/unstated.txt
+  repl-clone hol-pfbase dt > /dev/null 2>&1
+  sleep 2
+  # repl-step returns at once for a session that was just cloned,
+  # so the sentinel of the load is what says that it is over
+  TIMEOUT=2400 repl-step dt \
+    '#use "/home/freek/claude/hol-light/cakeml/tmp/dtload.ml";;' \
+    > /dev/null 2>&1
+  i=0
+  while [ ! -f tmp/dtdone.txt ] && [ $i -lt 60 ]; do
+    sleep 20; i=$((i+1))
+  done
+  n=$(grep -c . tmp/unstated.txt)
+  echo "round $round: $n statements"
+  [ "$n" = 0 ] && break
+  grep -c "AS_VARS" tmp/unstated.txt | sed 's/^/  of which read with cake_as_vars: /'
+  python3 -I tools/addread.py || break
+  python3 -I tools/port.py "$f" > /dev/null 2>&1 || \
+    { tools/bin/dryport > /dev/null 2>&1
+      cp "tmp/dry/$f" "ml/$f"; }
+done
