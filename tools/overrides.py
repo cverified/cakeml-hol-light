@@ -1831,11 +1831,6 @@ let V_INV_REFS_THUNK same n =
       ASM_MESON_TAC[el n v_inv_ck_rules; t_eq; dt;
                     SPEC `ck - 1` ih; lt1]));;
 
-(* the head constant of a term, by name *)
-let hd_is n t =
-  (try fst(dest_const(fst(strip_comb t))) = n
-   with Failure _ -> false);;
-
 (* the three cases of a RefPtr where the refs do not change and the
    heap does: a plain reference reads nothing of the heap, and the
    heap element of a thunk is the one that the lemma's own

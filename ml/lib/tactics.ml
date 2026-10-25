@@ -27,6 +27,14 @@
    so ONCE_DEPTH_CONV stops at the top of the term and changes
    nothing. *)
 
+(* The head constant of a term, by name: a proof that picks an
+   assumption or a subterm out by the function it is about asks for
+   this all the time. *)
+
+let hd_is n t =
+  (try fst(dest_const(fst(strip_comb t))) = n
+   with Failure _ -> false);;
+
 let MATCH_REDUCE_TAC =
   REPEAT(CHANGED_TAC(CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV)));;
 
