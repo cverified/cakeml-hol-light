@@ -1255,3 +1255,49 @@ memory_rel_Deref'.
   the accessors of a record over its updates
   (`gc_state_h2 (gc_state_ok_fupd (K F) s)`), which the port has
   no simp set for.
+
+## Where the third file stands after the repair of the pass
+
+_The rework of the shape cost the port a week of small repairs,
+which the harvest in the file's own place found one after the
+other (PORTING-GUIDE.md, entries 9, 32 and 33).  All of them are
+in now and the memory file loads with 160 axioms and no failure._
+
+_Of its 611 statements 154 still have a cheat.  Eight went in the
+round after the repair:_
+
+- _the three `reachable_refs` lemmas of an update of a reference
+  (a path through the new references is an old path or starts at
+  a root of its own, by induction along the reflexive transitive
+  closure);_
+- _`reachable_refs_MutBlock_UPDATE`, the same of an update of a
+  MutBlock's centre;_
+- _`heap_store_unused_thm` and its `_alt`, where the split is as
+  long as the space, so what is left of it after the unused
+  element is empty and `heap_store_lemma` says what the heap
+  becomes;_
+- _`update_ref_gen_state_ok` and `update_thunk_gen_state_ok`, two
+  stores above the generations, which keep `gen_state_ok` because
+  `heap_split_heap_store` gives the same first half._
+
+_What is next, and what the half-finished attempts are:_
+
+- _`gen_state_ok_update_byte` and `unused_space_inv_byte_update`
+  replace the contents of a `Bytes` element by another of the same
+  length.  The lemma they both want is in
+  `tmp/next-split_replace.ml`: a split of a heap in which one
+  element is replaced by one of the same length gives the halves
+  of the old one, up to that element.  Its case analysis is done
+  (every branch closes) but the one tactic that closes them all is
+  not: the witnesses of the existential are read off the goal's
+  own equations, and in one branch of `heap_split` the shape is
+  another one.  Finish it branch by branch._
+- _the four attempts of the earlier waves that the round left
+  unproved: `write_bytearray_append` (MATCH_MP of a statement that
+  is not an implication yet), `gc_move_refs_data_refs_split` and
+  `gc_move_data_data_refs_split` (a MESON that is too deep), and
+  `memory_rel_bignum_cmp` (over the budget)._
+- _a proof may only name what the port has: the helpers of the
+  scratch prelude (`hd_is`, `grab`, `hlen_cl`) are defined inside
+  the section that uses them, which is what the sections of the
+  store do._
