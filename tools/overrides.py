@@ -1946,14 +1946,18 @@ let V_INV_REFS_TAC =
   # what says that the words of a constant part are counted
   # by part_space_req (the first user is
   # part_to_words_LENGTH)
-  # what the two lemmas about the words of a constant part
-  # share (the first user is part_to_words_IMP_build_words)
-  ('data_to_word_memoryProof', 'part_to_words_IMP_build_words'): r"""
-(* the port's own: what the two lemmas that read the words of a
-   constant part off the deep embedding share.  HOL4 gets the sum of
-   two aligned words from alignmentTheory; here it comes from the
-   port's own byte_aligned_IMP_shift, by writing each as a multiple
-   of the bytes in a word *)
+  # what the four lemmas about the words of a constant part
+  # share (the first user is part_to_words_add)
+  ('data_to_word_memoryProof', 'part_to_words_add'): r"""
+(* the port's own: what the four lemmas about the words of a
+   constant part share.  HOL4 gets the sum of two aligned words
+   from alignmentTheory; here a shifted word is aligned by the
+   definition of align, and each aligned word is a shifted one
+   (byte_aligned_IMP_shift). *)
+
+let LOG2_RED =
+  REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                       NUM_REDUCE_CONV THENC REWRITE_CONV[]));;
 
 let shl_add = prove
  (`!(a:N word) b n.
@@ -1965,20 +1969,43 @@ let shl_add = prove
   REWRITE_TAC[LEFT_ADD_DISTRIB] THEN CONV_TAC MOD_DOWN_CONV THEN
   REWRITE_TAC[]);;
 
-let shl_mul = prove
- (`!(w:N word) n. word_shl w n = word_mul w (word (2 EXP n))`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_SHL; VAL_WORD_MUL;
-              VAL_WORD] THEN
-  CONV_TAC MOD_DOWN_CONV THEN REWRITE_TAC[MULT_SYM]);;
-
-let bytes_in_word_shift = prove
- (`good_dimindex (:'a)
-   ==> (bytes_in_word:'a word) =
-       word (2 EXP backend_common_word_shift (:'a))`,
-  REWRITE_TAC[good_dimindex_def; bytes_in_word_def;
-              word_shift_def] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
+let byte_aligned_shl = prove
+ (`good_dimindex (:'a) ==>
+   byte_aligned (word_shl (u:'a word)
+                   (backend_common_word_shift (:'a)))`,
+  REWRITE_TAC[byte_aligned_def; aligned_def; align_def] THEN
+  STRIP_TAC THEN
+  (SUBGOAL_THEN `LOG2 (dimindex (:'a) DIV 8) =
+                 backend_common_word_shift (:'a)` SUBST1_TAC THENL
+    [FIRST_ASSUM MP_TAC THEN
+     REWRITE_TAC[good_dimindex_def; word_shift_def] THEN
+     DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+     CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED;
+     ALL_TAC]) THEN
+  REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+              BIT_WORD_SHL; BIT_WORD_SUBWORD;
+              ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+  X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+  REPEAT COND_CASES_TAC THEN
+  ASM_CASES_TAC `word_shift (:'a) <= i` THEN ASM_REWRITE_TAC[] THEN
+  (SUBGOAL_THEN
+     `(word_shift (:'a) + i - word_shift (:'a)) -
+      word_shift (:'a) = i - word_shift (:'a)` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN
+     `i - word_shift (:'a) <
+        (dimindex (:'a) - 1 + 1) - word_shift (:'a) /\
+      word_shift (:'a) <= word_shift (:'a) + i - word_shift (:'a) /\
+      word_shift (:'a) + i - word_shift (:'a) < dimindex (:'a)`
+     STRIP_ASSUME_TAC THENL
+    [FIRST_ASSUM MP_TAC THEN
+     REWRITE_TAC[good_dimindex_def; word_shift_def] THEN
+     ASM_ARITH_TAC;
+     ALL_TAC]) THEN
+  ASM_REWRITE_TAC[] THEN
+  (SUBGOAL_THEN `i - word_shift (:'a) < dimindex (:'a)`
+     ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+  ASM_REWRITE_TAC[]);;
 
 let byte_aligned_add = prove
  (`good_dimindex (:'a) /\ byte_aligned (a:'a word) /\ byte_aligned b
@@ -1990,9 +2017,8 @@ let byte_aligned_add = prove
       if not (hd_is "byte_aligned" (concl ba)) then fail() else
       CHOOSE_THEN SUBST_ALL_TAC
         (MATCH_MP byte_aligned_IMP_shift (CONJ ba gd)))) THEN
-    REWRITE_TAC[GSYM shl_add; shl_mul] THEN
-    ONCE_REWRITE_TAC[GSYM (MATCH_MP bytes_in_word_shift gd)] THEN
-    ASM_SIMP_TAC[byte_align_mult_bytes_in_word]));;
+    REWRITE_TAC[GSYM shl_add] THEN
+    MATCH_ACCEPT_TAC(GEN_ALL(MATCH_MP byte_aligned_shl gd))));;
 
 (* the header of a bignum, which the two definitions write
    differently: the deep embedding takes the sign bit of a word and
@@ -2017,8 +2043,34 @@ let hdr_bits = prove
     STRIP_ASSUME_TAC(REWRITE_RULE[good_dimindex_def] gd)) THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
 
-(* the map of the deep embedding with a word put in, read as the
-   function of the shallow one with that word put in *)
+(* what word_cond_add does to a word that is a pointer and to one
+   that is not *)
+
+let cond_add_F = prove
+ (`!c a x. word_cond_add c a (F,x) = x`,
+  REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [word_cond_add_def] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+let cond_add_T = prove
+ (`!c a (w:'a word). word_cond_add c a (T,wordLang_Word w) =
+     wordLang_Word (w + a << (shift_length c -
+       backend_common_word_shift (:'a)))`,
+  REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [word_cond_add_def] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+(* the map of the deep embedding with a word put in: what it looks
+   up, read as the function of the shallow side with that word put
+   in, and the condition of the two maps carried over it *)
+
+let lookup_mem_insert = prove
+ (`!m i v j. lookup_mem (insert i v m) j =
+             (if j = i then v else lookup_mem m j)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[lookup_mem_def; lookup_insert] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
 
 let upd_lookup = prove
  (`!m i (v:bool#('a word_loc)).
@@ -2026,14 +2078,49 @@ let upd_lookup = prove
      ((i =+ SND v) (\j. SND (lookup_mem m j)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN
   X_GEN_TAC `j:num` THEN REWRITE_TAC[UPDATE] THEN BETA_TAC THEN
+  REWRITE_TAC[lookup_mem_insert] THEN
   (ASM_CASES_TAC `(i:num) = j` THENL
-    [FIRST_ASSUM SUBST_ALL_TAC THEN
-     REWRITE_TAC[lookup_mem_def; lookup_insert] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[];
-     ASM_REWRITE_TAC[lookup_mem_def; lookup_insert] THEN
+    [FIRST_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[];
+     ASM_REWRITE_TAC[] THEN
      (SUBGOAL_THEN `~((j:num) = i)` (fun th -> REWRITE_TAC[th])
         THENL [ASM_MESON_TAC[]; ALL_TAC]) THEN
      REWRITE_TAC[]]));;
+
+let ins_cond = prove
+ (`(!j. SND (lookup_mem m1 j) =
+        word_cond_add c a (lookup_mem m j)) /\
+   SND v = word_cond_add c a w
+   ==> (!j. SND (lookup_mem (insert i v m1) j) =
+            word_cond_add c a (lookup_mem (insert i w m) j))`,
+  STRIP_TAC THEN X_GEN_TAC `j:num` THEN
+  REWRITE_TAC[lookup_mem_insert] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
+
+(* two lists that a map takes to the same list are of one length *)
+
+let len_of_map = prove
+ (`!(l1:A list) (l2:B list) f g.
+     MAP (f:A->C) l1 = MAP (g:B->C) l2 ==> LENGTH l1 = LENGTH l2`,
+  REPEAT GEN_TAC THEN
+  DISCH_THEN(MP_TAC o AP_TERM `LENGTH:C list->num`) THEN
+  REWRITE_TAC[LENGTH_MAP]);;
+
+(* the witnesses of an existential whose body says what each of
+   them is, the assumption that is an induction hypothesis and the
+   one that is the condition of the two maps *)
+
+let EXISTS_EQ_TAC =
+  W(fun (asl,w) ->
+    if not (is_exists w) then fail() else
+    let vs,body = strip_exists w in
+    let eqs = conjuncts body in
+    let wit = map (fun v ->
+      lhs(find (fun t -> is_eq t && rhs t = v) eqs)) vs in
+    MAP_EVERY EXISTS_TAC wit);;
+
+let is_ih t = is_forall t && is_imp(snd(strip_forall t));;
+
+let is_cond t = is_forall t && is_eq(snd(strip_forall t));;
 
 (* and the call of a recursion in an assumption, split into its
    result and that result into a pair *)

@@ -14679,6 +14679,135 @@
    FIRST_ASSUM(fun le -> FIRST_ASSUM(fun gd ->
      MATCH_ACCEPT_TAC(MATCH_MP LENGTH_n2mw_LE_num_size
                         (CONJ gd le)))))
+### part_to_words_add
+  (* the four kinds of part, each written at the offset and at the
+     offset plus a: what is not a pointer is written the same, and
+     a pointer has the shifted a added to it, which is what
+     word_cond_add does *)
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN CASES_ON_NAME "part" THEN
+   REWRITE_TAC[part_to_words_def] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC THEN
+   TRY PAIRARG_TAC THEN
+   RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+   EVERY_CASE_COND_TAC THEN VAR_EQ_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[] THEN
+   REPEAT(CHANGED_TAC(TRY MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[distinctness "option"])) THEN
+   REWRITE_TAC[injectivity "option"; PAIR_EQ; GSYM CONJ_ASSOC] THEN
+   TRY EXISTS_EQ_TAC THEN
+   REWRITE_TAC[cond_add_F; cond_add_T; MAP; GSYM MAP_o; o_DEF] THEN
+   ASM_REWRITE_TAC[] THEN
+   TRY(ASM_SIMP_TAC[make_ptr_add; make_cons_ptr_add;
+                    byte_aligned_add; get_lowerbits_ptrbits]) THEN
+   REWRITE_TAC[cond_add_F; cond_add_T] THEN
+   TRY(AP_TERM_TAC THEN REWRITE_TAC[shl_add] THEN
+       CONV_TAC WORD_RULE))
+### parts_to_words_add
+  (* the parts one after the other: this part's words by the
+     theorem before this one, and the rest by the induction
+     hypothesis of the two maps with this part's word put in
+     (ins_cond), at the offset that the words of this part move on
+     by -- which is aligned (byte_aligned_add) and the same whether
+     a is added before or after it *)
+  (let gen = prove
+    (`!parts' m i (off:'a word) a w ws m1.
+        parts_to_words c m i parts' off = SOME (w,ws) /\
+        byte_aligned off /\ byte_aligned a /\ good_dimindex (:'a) /\
+        backend_common_word_shift (:'a) <= shift_length c /\
+        (!j. SND (lookup_mem m1 j) =
+             word_cond_add c a (lookup_mem m j))
+        ==> (?v vs. parts_to_words c m1 i parts' (off + a) =
+                      SOME (v,vs) /\
+                    MAP SND vs = MAP (word_cond_add c a) ws /\
+                    SND v = word_cond_add c a w)`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[parts_to_words_def] THENL
+      [STRIP_TAC THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
+                                   PAIR_EQ]) THEN
+       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+       REWRITE_TAC[injectivity "option"; PAIR_EQ;
+                   GSYM CONJ_ASSOC] THEN
+       EXISTS_EQ_TAC THEN ASM_REWRITE_TAC[MAP];
+       STRIP_TAC THEN
+       PW_SPLIT_CALL_TAC "part_to_words" THEN
+       PW_SPLIT_CALL_TAC "parts_to_words" THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
+                                   PAIR_EQ]) THEN
+       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+       W(fun g ->
+         let pt = av_find (pw_is_lhs "part_to_words") g
+         and gd = av_find (hd_is "good_dimindex") g
+         and sh = av_find (is_binary "<=") g
+         and cond = av_find is_cond g in
+         let off = last(snd(strip_comb(lhs(concl pt)))) in
+         let a = el 1 (snd(strip_comb(rhs(snd(strip_forall(concl
+                   cond)))))) in
+         let ba_off = av_find (fun t -> hd_is "byte_aligned" t &&
+                                        rand t = off) g
+         and ba_a = av_find (fun t -> hd_is "byte_aligned" t &&
+                                      rand t = a) g in
+         MP_TAC(MATCH_MP (MATCH_MP (SPEC_ALL part_to_words_add)
+           (CONJ ba_off (CONJ ba_a (CONJ gd sh))))
+           (CONJ pt cond))) THEN
+       DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+       W(fun g ->
+         let gd = av_find (hd_is "good_dimindex") g
+         and sh = av_find (is_binary "<=") g
+         and cond = av_find is_cond g
+         and ih = av_find is_ih g
+         and pw = av_find (pw_is_lhs "parts_to_words") g in
+         let body = snd(strip_forall(concl cond)) in
+         let m1t = el 0 (snd(strip_comb(rand(lhs body))))
+         and mt = el 0 (snd(strip_comb(rand(rhs body)))) in
+         let pt = av_find (fun t -> pw_is_lhs "part_to_words" t &&
+                    el 1 (snd(strip_comb(lhs t))) = mt) g
+         and pt1 = av_find (fun t -> pw_is_lhs "part_to_words" t &&
+                     el 1 (snd(strip_comb(lhs t))) = m1t) g in
+         let off = last(snd(strip_comb(lhs(concl pt)))) in
+         let a = el 1 (snd(strip_comb(rhs body))) in
+         let ba_a = av_find (fun t -> hd_is "byte_aligned" t &&
+                                      rand t = a) g in
+         let map_eq = av_find (fun t -> is_eq t &&
+                                 hd_is "MAP" (lhs t)) g in
+         let len_eq = MATCH_MP len_of_map map_eq in
+         let snd_eq = av_find (fun t -> is_eq t &&
+                                 hd_is "SND" (lhs t)) g in
+         let off2 = last(snd(strip_comb(lhs(concl pw)))) in
+         let ba2 = MATCH_MP byte_aligned_add
+           (CONJ gd (CONJ (av_find (fun t ->
+                             hd_is "byte_aligned" t &&
+                             rand t = off) g)
+              (SPEC (rand(rand off2)) (GEN_ALL(CONJUNCT2(MATCH_MP
+                 byte_align_mult_bytes_in_word gd)))))) in
+         let cond2 = MATCH_MP ins_cond (CONJ cond snd_eq) in
+         let ith = MATCH_MP (SPEC_ALL ih)
+           (CONJ pw (CONJ ba2 (CONJ ba_a (CONJ gd
+              (CONJ sh cond2))))) in
+         REWRITE_TAC[pt1] THEN
+         CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV) THEN
+         REWRITE_TAC[len_eq] THEN
+         SUBGOAL_THEN (mk_eq(mk_binop `(+):'a word->'a word->'a word`
+                               (mk_binop
+                                  `(+):'a word->'a word->'a word`
+                                  off a) (rand off2),
+                             mk_binop `(+):'a word->'a word->'a word`
+                               off2 a)) SUBST1_TAC THENL
+          [CONV_TAC WORD_RULE; ALL_TAC] THEN
+         MP_TAC ith THEN
+         DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+         W(fun g2 ->
+           let pw2 = av_find (fun t ->
+             pw_is_lhs "parts_to_words" t &&
+             (try rand(last(snd(strip_comb(lhs t)))) = a
+              with Failure _ -> false)) g2 in
+           REWRITE_TAC[pw2] THEN MATCH_REDUCE_TAC THEN
+           REWRITE_TAC[distinctness "option"; injectivity "option";
+                       PAIR_EQ; GSYM CONJ_ASSOC] THEN
+           EXISTS_EQ_TAC THEN
+           ASM_REWRITE_TAC[MAP_APPEND]))]) in
+   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC(SPEC_ALL gen))
 ### part_to_words_IMP_build_words
   (* the four kinds of part again, where the deep embedding writes
      what the shallow one writes: the header of a bignum differs
