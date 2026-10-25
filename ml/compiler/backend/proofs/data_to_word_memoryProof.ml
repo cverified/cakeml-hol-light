@@ -54,6 +54,7 @@ needs "semantics/ast.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
+needs "semantics/tokens.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let _ = do_list hide_constant ["do_partial"; "not"; "parts"; "vars"];;
@@ -1426,7 +1427,102 @@ let reachable_addresses_related = prove
  (`k IN reachable_addresses roots heap /\ gc_related f heap heap2 /\
    reachable_addresses roots heap SUBSET FDOM f ==> FAPPLY
    f k IN reachable_addresses (ADDR_MAP ((FAPPLY) f) roots) heap2`,
-  CHEAT_TAC);;
+  (* the root that reaches k reaches it over a path of the heap, and
+     the map takes that path to one of the new heap: the first
+     address is a key of the map because it is reachable itself (the
+     path of no steps), and every step gives the next one *)
+  ((* a pointer of the roots is a pointer of the mapped roots *)
+   let mem_addr_map = prove
+    (`!roots x t f.
+        MEM (gc_shared_Pointer x t) roots
+        ==> MEM (gc_shared_Pointer (f x) t) (ADDR_MAP f roots)`,
+     LIST_INDUCT_TAC THEN REWRITE_TAC[MEM; ADDR_MAP_def] THEN
+     REPEAT GEN_TAC THEN CASES_BY_NAME "h" THEN
+     REWRITE_TAC[ADDR_MAP_def; MEM; injectivity "heap_address";
+                 distinctness "heap_address"] THEN
+     REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     TRY DISJ2_TAC THEN
+     TRY(FIRST_ASSUM(fun ih -> FIRST_ASSUM(fun m ->
+       MATCH_ACCEPT_TAC(MATCH_MP ih m))))) in
+   (* and a path of the old heap is a path of the new one, address
+      by address: the element that an edge comes from is the mapped
+      element, so the edge is there, and the address it goes to is one
+      that the map has *)
+   let path = prove
+    (`!hp hp2 g.
+        gc_related g hp hp2 ==>
+        !x k. RTC (gc_edge hp) x k ==> x IN FDOM g
+              ==> RTC (gc_edge hp2) (FAPPLY g x) (FAPPLY g k)`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     MATCH_MP_TAC RTC_INDUCT THEN CONJ_TAC THENL
+      [REPEAT STRIP_TAC THEN
+       MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES));
+       ALL_TAC] THEN
+     REPEAT GEN_TAC THEN
+     DISCH_THEN(CONJUNCTS_THEN2
+       (MP_TAC o REWRITE_RULE[gc_edge_def]) ASSUME_TAC) THEN
+     DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+     DISCH_TAC THEN
+     FIRST_ASSUM(fun gr ->
+       let g3 = CONJUNCT2(CONJUNCT2
+                  (REWRITE_RULE[gc_related_def] gr)) in
+       FIRST_ASSUM(fun hl -> FIRST_ASSUM(fun fd ->
+         let th = MATCH_MP g3 (CONJ fd hl) in
+         FIRST_ASSUM(fun m ->
+           let yin = MATCH_MP (CONJUNCT2 th) m in
+           FIRST_ASSUM(fun ih ->
+             let rtc = MATCH_MP ih yin in
+             MATCH_MP_TAC(CONJUNCT2(SPEC_ALL RTC_RULES)) THEN
+             EXISTS_TAC (el 1 (snd(strip_comb(concl rtc)))) THEN
+             CONJ_TAC THENL
+              [REWRITE_TAC[gc_edge_def] THEN
+               MAP_EVERY EXISTS_TAC
+                 (snd(strip_comb(rand(rhs(concl(CONJUNCT1 th))))) @
+                  [rand(el 0 (snd(strip_comb(concl m))))]) THEN
+               CONJ_TAC THENL
+                [ACCEPT_TAC(CONJUNCT1 th);
+                 MATCH_ACCEPT_TAC(MATCH_MP mem_addr_map m)];
+               ACCEPT_TAC rtc])))))) in
+     REPEAT STRIP_TAC THEN
+     (* the hypothesis: a pointer of the roots and a path to k *)
+     FIRST_ASSUM(fun kin ->
+       if not (hd_is "reachable_addresses" (rand(concl kin)))
+       then fail() else
+       MP_TAC(REWRITE_RULE[IN; reachable_addresses_def] kin)) THEN
+     DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+     (* x is reachable, so it is a key of the map *)
+     FIRST_ASSUM(fun m ->
+       if not (hd_is "MEM" (concl m)) then fail() else
+       FIRST_ASSUM(fun r ->
+         if not (hd_is "RTC" (concl r)) then fail() else
+         let args = snd(strip_comb(concl r)) in
+         let x = el 1 args in
+         FIRST_ASSUM(fun sub ->
+           let impl = SPEC x (REWRITE_RULE[SUBSET] sub) in
+           SUBGOAL_THEN (lhand(concl impl)) (fun a ->
+             let xin = MATCH_MP impl a in
+             FIRST_ASSUM(fun gr ->
+               let rtc =
+                 MATCH_MP (MATCH_MP (MATCH_MP path gr) r) xin in
+               REWRITE_TAC[IN; reachable_addresses_def] THEN
+               MAP_EVERY EXISTS_TAC
+                 [rand(el 0 (snd(strip_comb(concl m))));
+                  el 1 (snd(strip_comb(concl rtc)))] THEN
+               CONJ_TAC THENL
+                [MATCH_ACCEPT_TAC(MATCH_MP mem_addr_map m);
+                 ACCEPT_TAC rtc]))))) THEN
+     (* and the subgoal: x is reachable, by the path of no steps *)
+     (REWRITE_TAC[IN; reachable_addresses_def] THEN
+       FIRST_ASSUM(fun m ->
+         if not (hd_is "MEM" (concl m)) then fail() else
+         FIRST_ASSUM(fun r ->
+           if not (hd_is "RTC" (concl r)) then fail() else
+           MAP_EVERY EXISTS_TAC
+             [rand(el 0 (snd(strip_comb(concl m))));
+              el 1 (snd(strip_comb(concl r)))])) THEN
+      CONJ_TAC THENL
+       [FIRST_ASSUM MATCH_ACCEPT_TAC;
+        MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES))])));;
 
 let IMP_all_reachable_from_roots = prove
  (`FDOM f = reachable_addresses roots heap /\
