@@ -20348,12 +20348,224 @@ let blocks_unique_GT_ts = prove
   (REWRITE_TAC[blocks_unique_def] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[ARITH_RULE `!a b:num. a >= b /\ a < b ==> F`]));;
 
+(* the port's own: what the three lemmas about the chain of conses
+   that list_to_v builds share.  Each of them is an induction on the
+   list the chain is of, and what the steps need is the three ways
+   in which a value is one of the values of the refs and the stack,
+   and the two ways in which a value of the chain and the stack is
+   one of the chain's own. *)
+
+(* a value of the head of the stack, a value of the rest of it, and
+   a value of a shorter stack, are values of the refs and the
+   stack *)
+
+let av_in_stack = prove
+ (`!x refs stack'.
+     MEM x (v_all_vs stack') ==> x IN all_vs refs stack'`,
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+  MESON_TAC[]);;
+
+let av_in_cons = prove
+ (`!x refs v l.
+     MEM x (v_all_vs [v]) ==> x IN all_vs refs (v :: l)`,
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+  MESON_TAC[MEM_v_all_vs_extend_tl]);;
+
+let av_in_tl = prove
+ (`!x refs v l. x IN all_vs refs l ==> x IN all_vs refs (v :: l)`,
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+  MESON_TAC[MEM_v_all_vs_extend_hd]);;
+
+(* and a value of the refs and a stack is one of the stack or one
+   of the refs and any other stack *)
+
+let av_in_refs = prove
+ (`!x refs l1 l2.
+     x IN all_vs refs l1
+     ==> MEM x (v_all_vs l1) \/ x IN all_vs refs l2`,
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+  MESON_TAC[]);;
+
+(* the set of a stack without one of its values is a part of the
+   set with it, and the other way about *)
+
+let av_shrink2 = prove
+ (`!x refs t h h' l.
+     ~(x IN all_vs refs (t :: h :: h' :: l))
+     ==> ~(x IN all_vs refs (t :: h' :: l))`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM; DE_MORGAN_THM] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  ASM_MESON_TAC[MEM_v_all_vs_split; MEM_v_all_vs_extend_hd;
+                MEM_v_all_vs_extend_tl]);;
+
+let av_shrink = prove
+ (`!x refs t h l.
+     ~(x IN all_vs refs (t :: h :: l))
+     ==> ~(x IN all_vs refs (t :: l))`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM; DE_MORGAN_THM] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  ASM_MESON_TAC[MEM_v_all_vs_split; MEM_v_all_vs_extend_hd;
+                MEM_v_all_vs_extend_tl]);;
+
+let av_grow = prove
+ (`!x refs t h l.
+     x IN all_vs refs (t :: l) ==> x IN all_vs refs (t :: h :: l)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+  MESON_TAC[MEM_v_all_vs_split; MEM_v_all_vs_extend_hd;
+            MEM_v_all_vs_extend_tl]);;
+
+(* a value of the values of a chain of conses and a stack is the
+   first Block of the chain, a value of the element it holds, or a
+   value of the rest of the chain and the stack *)
+
+let av_decomp = prove
+ (`!x ts t h xs stack'.
+     MEM x (v_all_vs (list_to_v ts t (h :: xs) :: stack')) ==>
+     x = Block ts cons_tag [h; list_to_v (ts + 1) t xs] \/
+     MEM x (v_all_vs [h]) \/
+     MEM x (v_all_vs (list_to_v (ts + 1) t xs :: stack'))`,
+  (let (_,vsing,_,_) = v_all_vs_clauses () in
+   REPEAT GEN_TAC THEN REWRITE_TAC[dataSem_list_to_v_def] THEN
+   DISCH_THEN(DISJ_CASES_THEN ASSUME_TAC o
+               MATCH_MP MEM_v_all_vs_split) THENL
+    [FIRST_ASSUM(fun m ->
+       if not (hd_is "MEM" (concl m)) then fail() else
+       MP_TAC(REWRITE_RULE[vsing; MEM] m)) THEN
+     DISCH_THEN(DISJ_CASES_THEN ASSUME_TAC) THENL
+      [ASM_REWRITE_TAC[];
+       FIRST_ASSUM(fun m ->
+         if not (hd_is "MEM" (concl m)) then fail() else
+         DISJ_CASES_THEN ASSUME_TAC
+           (MATCH_MP MEM_v_all_vs_split m)) THEN
+       ASM_MESON_TAC[MEM_v_all_vs_extend_tl;
+                     MEM_v_all_vs_extend_hd]];
+     ASM_MESON_TAC[MEM_v_all_vs_extend_hd]]));;
+
+(* and of the two ways that are left when the value is none of the
+   list and the stack, the one through the element the chain holds
+   is out, because that element is on the stack *)
+
+let av_decomp2 = prove
+ (`!x refs ts t h xs stack'.
+     MEM x (v_all_vs (list_to_v ts t (h :: xs) :: stack')) /\
+     ~(x IN all_vs refs (t :: ((h :: xs) ++ stack'))) ==>
+     x = Block ts cons_tag [h; list_to_v (ts + 1) t xs] \/
+     MEM x (v_all_vs (list_to_v (ts + 1) t xs :: stack'))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+  FIRST_ASSUM(fun m ->
+    if not (hd_is "MEM" (concl m)) then fail() else
+    STRIP_ASSUME_TAC(MATCH_MP av_decomp m)) THEN
+  ASM_MESON_TAC[av_in_cons; av_in_tl]);;
+
+(* a Block of the chain's own timestamp that is a value of the rest
+   of the chain is a value of the list and the stack *)
+
+let av_no_mix = prove
+ (`!refs ts t h xs stack' a2 xs2.
+     MEM (Block ts a2 xs2)
+       (v_all_vs (list_to_v (ts + 1) t xs :: stack'))
+     ==> Block ts a2 xs2 IN
+           all_vs refs (t :: ((h :: xs) ++ stack'))`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(fun m ->
+    MP_TAC(MATCH_MP v_all_vs_list_to_v1
+      (CONJ (ARITH_RULE `ts < ts + 1`) m))) THEN
+  REWRITE_TAC[APPEND] THEN
+  ASM_MESON_TAC[av_in_stack; av_grow]);;
+
+(* and one below the chain's timestamps that is a value of the refs
+   and the chain is a value of the refs and the list *)
+
+let av_in_shift = prove
+ (`!refs ts t xs stack' t1 a1 xs1.
+     t1 < ts /\
+     Block t1 a1 xs1 IN all_vs refs (list_to_v ts t xs :: stack')
+     ==> Block t1 a1 xs1 IN all_vs refs (t :: (xs ++ stack'))`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+  STRIP_TAC THEN ASM_MESON_TAC[v_all_vs_list_to_v1]);;
+
+(* while one of the chain's timestamps that is a value of the refs
+   and the chain is a value of the chain itself: a value of the
+   refs would be one of the list and the stack, which
+   blocks_unique_GT_ts says it is not *)
+
+let av_in_mem = prove
+ (`!refs ts t xs stack' t1 a1 xs1.
+     blocks_unique ts (all_vs refs (t :: (xs ++ stack'))) /\
+     ts <= t1 /\ ~(xs1 = []) /\
+     Block t1 a1 xs1 IN all_vs refs (list_to_v ts t xs :: stack')
+     ==> MEM (Block t1 a1 xs1)
+           (v_all_vs (list_to_v ts t xs :: stack'))`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  FIRST_ASSUM(fun inn ->
+    if not (is_binary "IN" (concl inn)) then fail() else
+    DISJ_CASES_THEN2 ACCEPT_TAC
+      (fun inn2 ->
+         ASSUME_TAC inn2 THEN
+         ASM_MESON_TAC[GEN_ALL blocks_unique_GT_ts;
+                       ARITH_RULE `!a b:num. b <= a ==> a >= b`])
+      (SPEC `(t:dataSem_v) :: (xs ++ stack')`
+         (MATCH_MP av_in_refs inn))));;
+
+(* the Block of an assumption that says a value is one of the refs
+   and a stack, the list it holds, and the assumption that says
+   that list is not empty *)
+
+let av_blocks (asl,w) =
+  map snd (filter (fun (_,th) ->
+    is_binary "IN" (concl th) &&
+    hd_is "all_vs" (rand(concl th))) asl);;
+
+let av_xs_of th = last(snd(strip_comb(lhand(concl th))));;
+
+let av_a_of th = el 1 (snd(strip_comb(lhand(concl th))));;
+
+let av_find p (asl,w) =
+  snd(find (fun (_,th) -> p (concl th)) asl);;
+
+let av_nn g x =
+  av_find (fun t -> is_neg t && is_eq (dest_neg t) &&
+                    lhand(dest_neg t) = x) g;;
+
 let Block_NOT_IN_all_vs = prove
  (`!xs t t' a2 xs2 h stack' refs. ~(Block t' a2 xs2 IN all_vs refs (t ::
   h :: (xs ++ stack'))) ==>
      (!m. m > 0 ==> ~(MEM (Block t' a2 xs2) (v_all_vs [list_to_v
        (t' + m) t xs])))`,
-  CHEAT_TAC);;
+  (* the chain of no elements is the value it ends with, which is
+     on the stack, and of one more it is a Block of a later
+     timestamp, whose values are the element's -- also on the stack
+     -- and the rest of the chain's, which the induction
+     hypothesis is about at one timestamp more *)
+  ((let (_,vsing,_,_) = v_all_vs_clauses () in
+    LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+    RULE_ASSUM_TAC(REWRITE_RULE[APPEND]) THEN
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[dataSem_list_to_v_def] THENL
+     [DISCH_TAC THEN ASM_MESON_TAC[av_in_cons];
+      REWRITE_TAC[vsing; MEM; DE_MORGAN_THM] THEN CONJ_TAC THENL
+       [DISCH_THEN(fun eq ->
+          MP_TAC(REWRITE_RULE[injectivity "dataSem_v"] eq)) THEN
+        ASM_ARITH_TAC;
+        DISCH_TAC THEN
+        FIRST_ASSUM(fun m ->
+          if not (hd_is "MEM" (concl m)) then fail() else
+          DISJ_CASES_THEN ASSUME_TAC
+            (MATCH_MP MEM_v_all_vs_split m)) THEN
+        FIRST_ASSUM(fun nin ->
+          if not (is_neg (concl nin)) then fail() else
+          FIRST_ASSUM(fun ih ->
+            if not (is_forall (concl ih)) then fail() else
+            let sh = MATCH_MP av_shrink2 nin in
+            let th = MATCH_MP (MATCH_MP ih sh)
+                       (ARITH_RULE `m + 1 > 0`) in
+            MP_TAC(REWRITE_RULE
+              [ARITH_RULE `t' + (m + 1) = (t' + m) + 1`] th))) THEN
+        ASM_MESON_TAC[av_in_cons; av_in_tl]]])));;
 
 let v_all_vs_list_to_v2 = prove
  (`!xs t' a1 a2 xs1 xs2 ts t stack' refs.
@@ -20364,7 +20576,64 @@ let v_all_vs_list_to_v2 = prove
      stack'))) /\ ~(Block t' a2 xs2 IN all_vs refs (t :: (xs ++
      stack'))) ==>
      a1 = a2 /\ xs1 = xs2 /\ t' < ts + LENGTH xs`,
-  CHEAT_TAC);;
+  (* each of the two Blocks is the chain's first Block or a value
+     of the rest of the chain, because the hypothesis says neither
+     is a value of the list and the stack.  Two first Blocks are
+     the same Block; a first Block and one of the rest cannot have
+     the same timestamp (av_no_mix); and two of the rest are what
+     the induction hypothesis is about *)
+  ((let inj = injectivity "dataSem_v" in
+    let blk th = hd(snd(strip_comb(concl th))) in
+    let not_in x t =
+      is_neg t && is_binary "IN" (dest_neg t) &&
+      lhand(dest_neg t) = x in
+    LIST_INDUCT_TAC THENL
+     [REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
+      RULE_ASSUM_TAC(REWRITE_RULE[dataSem_list_to_v_def; APPEND]) THEN
+      ASM_MESON_TAC[av_in_stack];
+      REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
+      W(fun g ->
+        let (asl,w) = g in
+        let mems = map snd (filter (fun (_,th) ->
+          hd_is "MEM" (concl th)) asl) in
+        let d th =
+          MATCH_MP av_decomp2
+            (CONJ th (av_find (not_in (blk th)) g)) in
+        let d1 = d (hd mems) and d2 = d (hd(tl mems)) in
+        DISJ_CASES_THEN2
+          (fun e1 ->
+            DISJ_CASES_THEN2
+              (fun e2 ->
+                STRIP_ASSUME_TAC(REWRITE_RULE[inj] e1) THEN
+                STRIP_ASSUME_TAC(REWRITE_RULE[inj] e2) THEN
+                ASM_REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC)
+              (fun c2 ->
+                ASSUME_TAC c2 THEN
+                SUBST_ALL_TAC(CONJUNCT1(REWRITE_RULE[inj] e1)) THEN
+                ASM_MESON_TAC[av_no_mix])
+              d2)
+          (fun c1 ->
+            DISJ_CASES_THEN2
+              (fun e2 ->
+                ASSUME_TAC c1 THEN
+                SUBST_ALL_TAC(CONJUNCT1(REWRITE_RULE[inj] e2)) THEN
+                ASM_MESON_TAC[av_no_mix])
+              (fun c2 ->
+                W(fun g2 ->
+                  let nin th =
+                    MATCH_MP av_shrink (REWRITE_RULE[APPEND]
+                      (av_find (not_in (blk th)) g2)) in
+                  FIRST_ASSUM(fun ih ->
+                    if not (is_forall (concl ih)) then fail() else
+                    MP_TAC(MATCH_MP ih
+                      (CONJ c1 (CONJ (av_nn g2 (last(snd(strip_comb
+                         (blk c1))))) (CONJ c2 (CONJ (av_nn g2
+                         (last(snd(strip_comb (blk c2)))))
+                           (CONJ (nin c1) (nin c2))))))))) THEN
+                REWRITE_TAC[LENGTH] THEN STRIP_TAC THEN
+                ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC)
+              d2)
+          d1)])));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -20373,7 +20642,50 @@ let blocks_unique_cons_multi = prove
     `blocks_unique ts (all_vs refs (t :: (xs ++ stack))) ==>
        blocks_unique (ts + LENGTH xs) (all_vs refs (list_to_v ts
          t xs :: stack))`),
-  CHEAT_TAC);;
+  (* a Block of the chain and the stack is below the chain's
+     timestamps, and then it is a value of the list and the stack,
+     of which the hypothesis speaks; or it is one of the chain's
+     own, and then it is a value of the chain (av_in_mem) that the
+     theorem before this one is about *)
+  (DISCH_TAC THEN REWRITE_TAC[blocks_unique_def] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   W(fun (asl,w) ->
+     let third = rand(rand w) in
+     ASM_CASES_TAC
+       (mk_binary "<" (lhand third, lhand(rand third)))) THENL
+    [W(fun g ->
+       let lt = av_find (fun t -> is_binary "<" t) g in
+       let ins = av_blocks g in
+       let bu = REWRITE_RULE[blocks_unique_def]
+                  (av_find (hd_is "blocks_unique") g) in
+       let i1 = MATCH_MP av_in_shift (CONJ lt (el 0 ins))
+       and i2 = MATCH_MP av_in_shift (CONJ lt (el 1 ins)) in
+       STRIP_ASSUME_TAC(MATCH_MP bu
+         (CONJ i1 (CONJ (av_nn g (av_xs_of (el 0 ins)))
+           (CONJ i2 (av_nn g (av_xs_of (el 1 ins)))))))) THEN
+     ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+     W(fun g ->
+       let notlt = av_find (fun t ->
+         is_neg t && is_binary "<" (dest_neg t)) g in
+       let ins = av_blocks g in
+       let bu = av_find (hd_is "blocks_unique") g in
+       let t1 = lhand(dest_neg(concl notlt))
+       and ts = rand(dest_neg(concl notlt)) in
+       let le = MP (ARITH_RULE (mk_imp(concl notlt,
+                  mk_binary "<=" (ts,t1)))) notlt in
+       let ge = MP (ARITH_RULE (mk_imp(concl notlt,
+                  mk_binary ">=" (t1,ts)))) notlt in
+       let mem inn = MATCH_MP av_in_mem
+         (CONJ bu (CONJ le (CONJ (av_nn g (av_xs_of inn)) inn))) in
+       let notin inn = SPEC (av_a_of inn)
+         (MATCH_MP (GEN_ALL blocks_unique_GT_ts)
+            (CONJ bu (CONJ ge (av_nn g (av_xs_of inn))))) in
+       STRIP_ASSUME_TAC(MATCH_MP (GEN_ALL v_all_vs_list_to_v2)
+         (CONJ (mem (el 0 ins)) (CONJ (av_nn g (av_xs_of (el 0 ins)))
+           (CONJ (mem (el 1 ins)) (CONJ (av_nn g
+             (av_xs_of (el 1 ins)))
+             (CONJ (notin (el 0 ins)) (notin (el 1 ins))))))))) THEN
+     ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

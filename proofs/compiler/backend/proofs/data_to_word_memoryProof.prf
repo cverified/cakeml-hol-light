@@ -13573,6 +13573,141 @@
      below ts, and this one is not *)
   (REWRITE_TAC[blocks_unique_def] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[ARITH_RULE `!a b:num. a >= b /\ a < b ==> F`])
+### Block_NOT_IN_all_vs
+  (* the chain of no elements is the value it ends with, which is
+     on the stack, and of one more it is a Block of a later
+     timestamp, whose values are the element's -- also on the stack
+     -- and the rest of the chain's, which the induction
+     hypothesis is about at one timestamp more *)
+  ((let (_,vsing,_,_) = v_all_vs_clauses () in
+    LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+    RULE_ASSUM_TAC(REWRITE_RULE[APPEND]) THEN
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[dataSem_list_to_v_def] THENL
+     [DISCH_TAC THEN ASM_MESON_TAC[av_in_cons];
+      REWRITE_TAC[vsing; MEM; DE_MORGAN_THM] THEN CONJ_TAC THENL
+       [DISCH_THEN(fun eq ->
+          MP_TAC(REWRITE_RULE[injectivity "dataSem_v"] eq)) THEN
+        ASM_ARITH_TAC;
+        DISCH_TAC THEN
+        FIRST_ASSUM(fun m ->
+          if not (hd_is "MEM" (concl m)) then fail() else
+          DISJ_CASES_THEN ASSUME_TAC
+            (MATCH_MP MEM_v_all_vs_split m)) THEN
+        FIRST_ASSUM(fun nin ->
+          if not (is_neg (concl nin)) then fail() else
+          FIRST_ASSUM(fun ih ->
+            if not (is_forall (concl ih)) then fail() else
+            let sh = MATCH_MP av_shrink2 nin in
+            let th = MATCH_MP (MATCH_MP ih sh)
+                       (ARITH_RULE `m + 1 > 0`) in
+            MP_TAC(REWRITE_RULE
+              [ARITH_RULE `t' + (m + 1) = (t' + m) + 1`] th))) THEN
+        ASM_MESON_TAC[av_in_cons; av_in_tl]]]))
+### v_all_vs_list_to_v2
+  (* each of the two Blocks is the chain's first Block or a value
+     of the rest of the chain, because the hypothesis says neither
+     is a value of the list and the stack.  Two first Blocks are
+     the same Block; a first Block and one of the rest cannot have
+     the same timestamp (av_no_mix); and two of the rest are what
+     the induction hypothesis is about *)
+  ((let inj = injectivity "dataSem_v" in
+    let blk th = hd(snd(strip_comb(concl th))) in
+    let not_in x t =
+      is_neg t && is_binary "IN" (dest_neg t) &&
+      lhand(dest_neg t) = x in
+    LIST_INDUCT_TAC THENL
+     [REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
+      RULE_ASSUM_TAC(REWRITE_RULE[dataSem_list_to_v_def; APPEND]) THEN
+      ASM_MESON_TAC[av_in_stack];
+      REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
+      W(fun g ->
+        let (asl,w) = g in
+        let mems = map snd (filter (fun (_,th) ->
+          hd_is "MEM" (concl th)) asl) in
+        let d th =
+          MATCH_MP av_decomp2
+            (CONJ th (av_find (not_in (blk th)) g)) in
+        let d1 = d (hd mems) and d2 = d (hd(tl mems)) in
+        DISJ_CASES_THEN2
+          (fun e1 ->
+            DISJ_CASES_THEN2
+              (fun e2 ->
+                STRIP_ASSUME_TAC(REWRITE_RULE[inj] e1) THEN
+                STRIP_ASSUME_TAC(REWRITE_RULE[inj] e2) THEN
+                ASM_REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC)
+              (fun c2 ->
+                ASSUME_TAC c2 THEN
+                SUBST_ALL_TAC(CONJUNCT1(REWRITE_RULE[inj] e1)) THEN
+                ASM_MESON_TAC[av_no_mix])
+              d2)
+          (fun c1 ->
+            DISJ_CASES_THEN2
+              (fun e2 ->
+                ASSUME_TAC c1 THEN
+                SUBST_ALL_TAC(CONJUNCT1(REWRITE_RULE[inj] e2)) THEN
+                ASM_MESON_TAC[av_no_mix])
+              (fun c2 ->
+                W(fun g2 ->
+                  let nin th =
+                    MATCH_MP av_shrink (REWRITE_RULE[APPEND]
+                      (av_find (not_in (blk th)) g2)) in
+                  FIRST_ASSUM(fun ih ->
+                    if not (is_forall (concl ih)) then fail() else
+                    MP_TAC(MATCH_MP ih
+                      (CONJ c1 (CONJ (av_nn g2 (last(snd(strip_comb
+                         (blk c1))))) (CONJ c2 (CONJ (av_nn g2
+                         (last(snd(strip_comb (blk c2)))))
+                           (CONJ (nin c1) (nin c2))))))))) THEN
+                REWRITE_TAC[LENGTH] THEN STRIP_TAC THEN
+                ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC)
+              d2)
+          d1)]))
+### blocks_unique_cons_multi
+  (* a Block of the chain and the stack is below the chain's
+     timestamps, and then it is a value of the list and the stack,
+     of which the hypothesis speaks; or it is one of the chain's
+     own, and then it is a value of the chain (av_in_mem) that the
+     theorem before this one is about *)
+  (DISCH_TAC THEN REWRITE_TAC[blocks_unique_def] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   W(fun (asl,w) ->
+     let third = rand(rand w) in
+     ASM_CASES_TAC
+       (mk_binary "<" (lhand third, lhand(rand third)))) THENL
+    [W(fun g ->
+       let lt = av_find (fun t -> is_binary "<" t) g in
+       let ins = av_blocks g in
+       let bu = REWRITE_RULE[blocks_unique_def]
+                  (av_find (hd_is "blocks_unique") g) in
+       let i1 = MATCH_MP av_in_shift (CONJ lt (el 0 ins))
+       and i2 = MATCH_MP av_in_shift (CONJ lt (el 1 ins)) in
+       STRIP_ASSUME_TAC(MATCH_MP bu
+         (CONJ i1 (CONJ (av_nn g (av_xs_of (el 0 ins)))
+           (CONJ i2 (av_nn g (av_xs_of (el 1 ins)))))))) THEN
+     ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+     W(fun g ->
+       let notlt = av_find (fun t ->
+         is_neg t && is_binary "<" (dest_neg t)) g in
+       let ins = av_blocks g in
+       let bu = av_find (hd_is "blocks_unique") g in
+       let t1 = lhand(dest_neg(concl notlt))
+       and ts = rand(dest_neg(concl notlt)) in
+       let le = MP (ARITH_RULE (mk_imp(concl notlt,
+                  mk_binary "<=" (ts,t1)))) notlt in
+       let ge = MP (ARITH_RULE (mk_imp(concl notlt,
+                  mk_binary ">=" (t1,ts)))) notlt in
+       let mem inn = MATCH_MP av_in_mem
+         (CONJ bu (CONJ le (CONJ (av_nn g (av_xs_of inn)) inn))) in
+       let notin inn = SPEC (av_a_of inn)
+         (MATCH_MP (GEN_ALL blocks_unique_GT_ts)
+            (CONJ bu (CONJ ge (av_nn g (av_xs_of inn))))) in
+       STRIP_ASSUME_TAC(MATCH_MP (GEN_ALL v_all_vs_list_to_v2)
+         (CONJ (mem (el 0 ins)) (CONJ (av_nn g (av_xs_of (el 0 ins)))
+           (CONJ (mem (el 1 ins)) (CONJ (av_nn g
+             (av_xs_of (el 1 ins)))
+             (CONJ (notin (el 0 ins)) (notin (el 1 ins))))))))) THEN
+     ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC])
 ### v_inv_v_to_list_lemma
   (* a list of at least one element is a Block of the cons tag with
      two elements, and the invariant of a Block that is not empty
