@@ -11771,17 +11771,15 @@ let finalise_cons_none = prove
      dataSem_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\
      lookup ptr refs = NONE ==>
      lookup ptr refs' = NONE`,
-  (* the attempt: the proof of the source names finalise_cons_def,
-     lookup_insert, lookup_delete.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
+  (* the attempt: the proof of the source names lookup_insert,
+     lookup_delete.  What is here rewrites with them and closes by
+     arithmetic or by MESON, and the cheat is behind it until the
+     proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[finalise_cons_def; lookup_insert;
-       lookup_delete] THEN
+     ASM_REWRITE_TAC[lookup_insert; lookup_delete] THEN
      TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[finalise_cons_def; lookup_insert;
-         lookup_delete]))));;
+     TRY(ASM_MESON_TAC[lookup_insert; lookup_delete]))));;
 
 let v_inv_swap_refs = prove
  (`!c v refs1 x f tf heap refs.
@@ -12334,21 +12332,23 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
        IS_SOME ts' /\
        bc_stack_ref_inv c (THE ts') (v' :: vars') (union refs'
          frame) (x :: xs,heap,be)`),
-  (* the attempt: the proof of the source names finalise_cons_def,
-     union_def, lookup_union, bc_stack_ref_inv_MutBlock_centre,
-     bc_stack_ref_inv_union_del_ins_lemma, bc_stack_ref_inv_def.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
+  (* the attempt: the proof of the source names union_def,
+     lookup_union, bc_stack_ref_inv_MutBlock_centre,
+     bc_stack_ref_inv_union_del_ins_lemma, bc_stack_ref_inv_def,
+     THE.  What is here rewrites with them and closes by arithmetic
+     or by MESON, and the cheat is behind it until the proof is
+     written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[finalise_cons_def; union_def; lookup_union;
+     ASM_REWRITE_TAC[union_def; lookup_union;
        bc_stack_ref_inv_MutBlock_centre;
        bc_stack_ref_inv_union_del_ins_lemma;
-       bc_stack_ref_inv_def] THEN
+       bc_stack_ref_inv_def; THE] THEN
      TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[finalise_cons_def; union_def; lookup_union;
+     TRY(ASM_MESON_TAC[union_def; lookup_union;
          bc_stack_ref_inv_MutBlock_centre;
-         bc_stack_ref_inv_union_del_ins_lemma; bc_stack_ref_inv_def]))));;
+         bc_stack_ref_inv_union_del_ins_lemma; bc_stack_ref_inv_def;
+         THE]))));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -16423,9 +16423,10 @@ let smallnum_test = prove
   word)) /\
      good_dimindex (:'a) /\ small_int (:'a) i ==>
      ~(i < (&0)) /\ i < &(2 EXP (dimindex (:'a) - 4))`,
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
@@ -18009,9 +18010,10 @@ let memory_rel_ptr_eq = prove
   word_loc)) :: vars) /\
      do_eq refs v1 v2 = Eq_val b /\
      good_dimindex (:'a) ==> b`),
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
@@ -18263,9 +18265,10 @@ let word_eq_add_clock = prove
    word_eq_list c st dm m l ck w a1 a2 = SOME (res,l',ck1) ==>
    word_eq_list c st dm m l (ck + n) w a1 a2 = SOME (res,l',ck1 +
      n))`,
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
@@ -18757,9 +18760,10 @@ let do_eq_IFF_vb_eq_size = prove
    (!(refs:('a bvlSem_ref) spt) v1 v2 b.
       do_eq_list refs v1 v2 = Eq_val b <=>
         (?n. vb_eq_size_list refs v1 v2 = SOME (n,b)))`,
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
@@ -22951,19 +22955,19 @@ let memory_rel_do_build = prove
            data_to_word_memoryProof_store_list free' ws m dm =
              SOME m1)`),
   (* the attempt: the proof of the source names do_build_def,
-     build_words_def, store_list_def, memory_rel_def,
-     heap_in_memory_store_def, FLOOKUP_UPDATE.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
+     build_words_def, memory_rel_def, heap_in_memory_store_def,
+     FLOOKUP_UPDATE, data_to_word_memoryProof_store_list_def.  What
+     is here rewrites with them and closes by arithmetic or by
+     MESON, and the cheat is behind it until the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[do_build_def; build_words_def;
-       store_list_def; memory_rel_def; heap_in_memory_store_def;
-       FLOOKUP_UPDATE] THEN
+       memory_rel_def; heap_in_memory_store_def; FLOOKUP_UPDATE;
+       data_to_word_memoryProof_store_list_def] THEN
      TRY ASM_ARITH_TAC THEN
      TRY(ASM_MESON_TAC[do_build_def; build_words_def;
-         store_list_def; memory_rel_def; heap_in_memory_store_def;
-         FLOOKUP_UPDATE]))));;
+         memory_rel_def; heap_in_memory_store_def; FLOOKUP_UPDATE;
+         data_to_word_memoryProof_store_list_def]))));;
 
 let word_and_lsr_0 = prove
  (`(!i. k <= i /\ i < dimindex (:'a) ==> ~(FAPPLY w i)) ==> w && n <<
@@ -24103,12 +24107,10 @@ let xor_bytes_xor_words = prove
        xor_words (write_bytes vals1 zs1 be)
                  (write_bytes vals2 zs2 be) =
        SOME (write_bytes res_vals zs2 be:('a word) list)`),
-  (* the attempt: the proof of the source names make_zeros_def and
-     good_dimindex_def, and a theorem of the same name as this one
-     of another theory of HOL4, which the port binds further down
-     and this attempt therefore cannot name (tools/scope.py).  What
-     is here rewrites with the two and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
+  (* the attempt: the proof of the source names make_zeros_def,
+     good_dimindex_def.  What is here rewrites with them and closes
+     by arithmetic or by MESON, and the cheat is behind it until the
+     proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[make_zeros_def; good_dimindex_def] THEN

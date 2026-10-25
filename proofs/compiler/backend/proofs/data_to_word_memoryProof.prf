@@ -14912,6 +14912,65 @@
        ASM_REWRITE_TAC[ARITH_EQ] THEN
        MP_TAC(SPECL [`8`; `strlen a'`; `4`] DIV_MONO2) THEN
        REWRITE_TAC[ARITH] THEN ARITH_TAC)])
+### const_parts_to_words_good_loc
+  (* the parts one after the other, with the map generalised: the
+     map starts empty, where every lookup is a word (good_loc_LN),
+     and what each part puts in is good as well (part_gl), so the
+     invariant holds all the way along (ins_loc) *)
+  (let gen = prove
+    (`!parts' m i (off:'a word) y0 y1 y2.
+        (!k. good_loc s (SND (lookup_mem m k))) /\
+        parts_to_words c m i parts' off = SOME ((y0,y1),y2)
+        ==> good_loc s y1 /\ EVERY (good_loc s o SND) y2`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[parts_to_words_def] THENL
+      [STRIP_TAC THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
+                                   PAIR_EQ]) THEN
+       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+       W(fun g ->
+         let inv = av_find is_forall g in
+         let eq = av_find (fun t -> is_eq t &&
+                             hd_is "lookup_mem" (lhs t)) g in
+         let k = last(snd(strip_comb(lhs(concl eq)))) in
+         REWRITE_TAC[ALL; o_DEF] THEN
+         ACCEPT_TAC(REWRITE_RULE[eq; SND] (SPEC k inv)));
+       STRIP_TAC THEN
+       PW_SPLIT_CALL_TAC "part_to_words" THEN
+       TRY(W(fun g ->
+         let pt = av_find (pw_is_lhs "part_to_words") g in
+         CASES_ON_TAC (fst(dest_pair(rand(rhs(concl pt))))))) THEN
+       PW_SPLIT_CALL_TAC "parts_to_words" THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
+                                   PAIR_EQ]) THEN
+       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+       W(fun g ->
+         let inv = av_find is_forall g
+         and pt = av_find (pw_is_lhs "part_to_words") g
+         and pw = av_find (pw_is_lhs "parts_to_words") g in
+         let gl = MATCH_MP (GEN_ALL part_gl) (CONJ inv pt) in
+         let body = snd(strip_forall(concl inv)) in
+         let st = el 0 (snd(strip_comb body))
+         and sndf = rator(rand body) in
+         let mp = el 1 (snd(strip_comb(lhs(concl pw)))) in
+         let tm = mk_forall(`k:num`,
+                    list_mk_icomb "good_loc"
+                      [st; mk_comb(sndf,
+                             list_mk_icomb "lookup_mem"
+                               [mp; `k:num`])]) in
+         (SUBGOAL_THEN tm ASSUME_TAC THENL
+           [GEN_TAC THEN REWRITE_TAC[lookup_mem_insert] THEN
+            COND_CASES_TAC THEN
+            ASM_REWRITE_TAC[SND; CONJUNCT1 gl];
+            ALL_TAC]) THEN
+         W(fun g2 ->
+           let inv2 = av_find (fun t -> t = tm) g2
+           and ih = av_find is_ih g2 in
+           MP_TAC(MATCH_MP ih (CONJ inv2 pw)) THEN MP_TAC gl)) THEN
+       REWRITE_TAC[ALL_APPEND] THEN
+       REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]]) in
+   REWRITE_TAC[const_parts_to_words_def] THEN
+   ASM_MESON_TAC[gen; good_loc_LN])
 ### const_parts_to_words_LENGTH
   (* the parts one after the other, each counted by
      part_to_words_LENGTH, with the map, the index and the offset
@@ -15779,17 +15838,15 @@
      TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; mutcons_thm;
          bool_def; word_addr_def; heap_in_memory_store_def])))
 ### finalise_cons_none
-  (* the attempt: the proof of the source names finalise_cons_def,
-     lookup_insert, lookup_delete.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
+  (* the attempt: the proof of the source names lookup_insert,
+     lookup_delete.  What is here rewrites with them and closes by
+     arithmetic or by MESON, and the cheat is behind it until the
+     proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[finalise_cons_def; lookup_insert;
-       lookup_delete] THEN
+     ASM_REWRITE_TAC[lookup_insert; lookup_delete] THEN
      TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[finalise_cons_def; lookup_insert;
-         lookup_delete])))
+     TRY(ASM_MESON_TAC[lookup_insert; lookup_delete])))
 ### bc_stack_ref_inv_MutBlock_centre
   (* the attempt: the proof of the source names
      bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
@@ -15820,21 +15877,23 @@
      TRY(ASM_MESON_TAC[bc_stack_ref_inv_def; INJ_FUPDATE; v_inv_def;
          reachable_refs_def; bc_ref_inv_def; FLOOKUP_DEF])))
 ### bc_stack_ref_inv_FinaliseCons_lemma
-  (* the attempt: the proof of the source names finalise_cons_def,
-     union_def, lookup_union, bc_stack_ref_inv_MutBlock_centre,
-     bc_stack_ref_inv_union_del_ins_lemma, bc_stack_ref_inv_def.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
+  (* the attempt: the proof of the source names union_def,
+     lookup_union, bc_stack_ref_inv_MutBlock_centre,
+     bc_stack_ref_inv_union_del_ins_lemma, bc_stack_ref_inv_def,
+     THE.  What is here rewrites with them and closes by arithmetic
+     or by MESON, and the cheat is behind it until the proof is
+     written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[finalise_cons_def; union_def; lookup_union;
+     ASM_REWRITE_TAC[union_def; lookup_union;
        bc_stack_ref_inv_MutBlock_centre;
        bc_stack_ref_inv_union_del_ins_lemma;
-       bc_stack_ref_inv_def] THEN
+       bc_stack_ref_inv_def; THE] THEN
      TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[finalise_cons_def; union_def; lookup_union;
+     TRY(ASM_MESON_TAC[union_def; lookup_union;
          bc_stack_ref_inv_MutBlock_centre;
-         bc_stack_ref_inv_union_del_ins_lemma; bc_stack_ref_inv_def])))
+         bc_stack_ref_inv_union_del_ins_lemma; bc_stack_ref_inv_def;
+         THE])))
 ### memory_rel_Ref
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, new_ref_thm, bool_def, pop_thm, word_addr_def.
@@ -16116,9 +16175,10 @@
      TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; ref_eq_thm;
          word_addr_def; get_addr_def; get_lowerbits_def])))
 ### smallnum_test
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC))
@@ -16230,9 +16290,10 @@
          vb_eq_size_IMP_vb_size; memory_rel_def;
          memory_rel_rearrange; memory_rel_depth_limit])))
 ### memory_rel_ptr_eq
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC))
@@ -16261,9 +16322,10 @@
      TRY ASM_ARITH_TAC THEN
      TRY(ASM_MESON_TAC[fix_clock_IMP])))
 ### word_eq_add_clock
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC))
@@ -16295,9 +16357,10 @@
      TRY(ASM_MESON_TAC[write_bytes_def; bytes_to_word_def;
          good_dimindex_def; DROP; TAKE; TAKE_DROP])))
 ### do_eq_IFF_vb_eq_size
-  (* the attempt: the proof of the source names nothing
-     that the port has, so this is the plain one, with
-     the cheat behind it until the proof is written *)
+  (* the attempt: of what the proof of the source names,
+     the port has nothing in this file's closure, so this
+     is the plain attempt, with the cheat behind it until
+     the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC))
@@ -16645,78 +16708,19 @@
          data_to_word_memoryProof_walk_def])))
 ### memory_rel_do_build
   (* the attempt: the proof of the source names do_build_def,
-     build_words_def, store_list_def, memory_rel_def,
-     heap_in_memory_store_def, FLOOKUP_UPDATE.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
+     build_words_def, memory_rel_def, heap_in_memory_store_def,
+     FLOOKUP_UPDATE, data_to_word_memoryProof_store_list_def.  What
+     is here rewrites with them and closes by arithmetic or by
+     MESON, and the cheat is behind it until the proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[do_build_def; build_words_def;
-       store_list_def; memory_rel_def; heap_in_memory_store_def;
-       FLOOKUP_UPDATE] THEN
+       memory_rel_def; heap_in_memory_store_def; FLOOKUP_UPDATE;
+       data_to_word_memoryProof_store_list_def] THEN
      TRY ASM_ARITH_TAC THEN
      TRY(ASM_MESON_TAC[do_build_def; build_words_def;
-         store_list_def; memory_rel_def; heap_in_memory_store_def;
-         FLOOKUP_UPDATE])))
-### const_parts_to_words_good_loc
-  (* the parts one after the other, with the map generalised: the
-     map starts empty, where every lookup is a word (good_loc_LN),
-     and what each part puts in is good as well (part_gl), so the
-     invariant holds all the way along (ins_loc) *)
-  (let gen = prove
-    (`!parts' m i (off:'a word) y0 y1 y2.
-        (!k. good_loc s (SND (lookup_mem m k))) /\
-        parts_to_words c m i parts' off = SOME ((y0,y1),y2)
-        ==> good_loc s y1 /\ EVERY (good_loc s o SND) y2`,
-     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
-     REWRITE_TAC[parts_to_words_def] THENL
-      [STRIP_TAC THEN
-       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
-                                   PAIR_EQ]) THEN
-       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
-       W(fun g ->
-         let inv = av_find is_forall g in
-         let eq = av_find (fun t -> is_eq t &&
-                             hd_is "lookup_mem" (lhs t)) g in
-         let k = last(snd(strip_comb(lhs(concl eq)))) in
-         REWRITE_TAC[ALL; o_DEF] THEN
-         ACCEPT_TAC(REWRITE_RULE[eq; SND] (SPEC k inv)));
-       STRIP_TAC THEN
-       PW_SPLIT_CALL_TAC "part_to_words" THEN
-       TRY(W(fun g ->
-         let pt = av_find (pw_is_lhs "part_to_words") g in
-         CASES_ON_TAC (fst(dest_pair(rand(rhs(concl pt))))))) THEN
-       PW_SPLIT_CALL_TAC "parts_to_words" THEN
-       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
-                                   PAIR_EQ]) THEN
-       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
-       W(fun g ->
-         let inv = av_find is_forall g
-         and pt = av_find (pw_is_lhs "part_to_words") g
-         and pw = av_find (pw_is_lhs "parts_to_words") g in
-         let gl = MATCH_MP (GEN_ALL part_gl) (CONJ inv pt) in
-         let body = snd(strip_forall(concl inv)) in
-         let st = el 0 (snd(strip_comb body))
-         and sndf = rator(rand body) in
-         let mp = el 1 (snd(strip_comb(lhs(concl pw)))) in
-         let tm = mk_forall(`k:num`,
-                    list_mk_icomb "good_loc"
-                      [st; mk_comb(sndf,
-                             list_mk_icomb "lookup_mem"
-                               [mp; `k:num`])]) in
-         (SUBGOAL_THEN tm ASSUME_TAC THENL
-           [GEN_TAC THEN REWRITE_TAC[lookup_mem_insert] THEN
-            COND_CASES_TAC THEN
-            ASM_REWRITE_TAC[SND; CONJUNCT1 gl];
-            ALL_TAC]) THEN
-         W(fun g2 ->
-           let inv2 = av_find (fun t -> t = tm) g2
-           and ih = av_find is_ih g2 in
-           MP_TAC(MATCH_MP ih (CONJ inv2 pw)) THEN MP_TAC gl)) THEN
-       REWRITE_TAC[ALL_APPEND] THEN
-       REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]]) in
-   REWRITE_TAC[const_parts_to_words_def] THEN
-   ASM_MESON_TAC[gen; good_loc_LN])
+         memory_rel_def; heap_in_memory_store_def; FLOOKUP_UPDATE;
+         data_to_word_memoryProof_store_list_def])))
 ### memory_rel_do_build_const
   (* the attempt: the proof of the source names memory_rel_do_build,
      word_cond_add_def, do_build_const_def, IMP_memory_rel_Number,
@@ -16745,12 +16749,10 @@
      TRY(ASM_MESON_TAC[bytes_to_word_def; xor_bytes_def;
          word_xor_set_byte])))
 ### xor_bytes_xor_words
-  (* the attempt: the proof of the source names make_zeros_def and
-     good_dimindex_def, and a theorem of the same name as this one
-     of another theory of HOL4, which the port binds further down
-     and this attempt therefore cannot name (tools/scope.py).  What
-     is here rewrites with the two and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
+  (* the attempt: the proof of the source names make_zeros_def,
+     good_dimindex_def.  What is here rewrites with them and closes
+     by arithmetic or by MESON, and the cheat is behind it until the
+     proof is written *)
   (ATTEMPT_TAC 5
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[make_zeros_def; good_dimindex_def] THEN
