@@ -1831,6 +1831,43 @@ let V_INV_REFS_THUNK same n =
       ASM_MESON_TAC[el n v_inv_ck_rules; t_eq; dt;
                     SPEC `ck - 1` ih; lt1]));;
 
+(* the head constant of a term, by name *)
+let hd_is n t =
+  (try fst(dest_const(fst(strip_comb t))) = n
+   with Failure _ -> false);;
+
+(* the three cases of a RefPtr where the refs do not change and the
+   heap does: a plain reference reads nothing of the heap, and the
+   heap element of a thunk is the one that the lemma's own
+   hypothesis about the two heaps carries over, which is the
+   argument.  The witnesses of the two thunk rules are the ones
+   that the assumptions name: the thunk of the refs and the
+   element of the heap. *)
+
+let V_INV_HEAP_PLAIN =
+  REPEAT SUBST_LHS_TAC THEN
+  MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN ASM_REWRITE_TAC[];;
+
+let V_INV_HEAP_THUNK hp n =
+  let wit =
+    W(fun (asl,w) ->
+      let thunk = tryfind (fun (_,th) ->
+        let t = concl th in
+        if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
+        then rand(rhs t) else fail()) asl in
+      if n = 5 then
+        let x = tryfind (fun (_,th) ->
+          let t = concl th in
+          if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
+          then rand(rand(rhs t)) else fail()) asl in
+        MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
+      else EXISTS_TAC (rand thunk)) in
+  NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+  MATCH_MP_TAC(el n v_inv_ck_rules) THEN wit THEN
+  REPEAT CONJ_TAC THEN
+  FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; hp;
+         DISCH_TAC THEN CK_IH_TAC];;
+
 (* the induction that the lemmas about a change of the refs share.
    It is the complete induction on the ck of the relation that
    v_inv_SUBMAP_lemma does by hand: the value is taken apart with
@@ -1848,7 +1885,8 @@ let V_INV_REFS_TAC prep hp d5 d6 d7 =
   let setup =
     MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
     DISCH_TAC THEN REPEAT GEN_TAC THEN
-    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    (DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) ORELSE
+     DISCH_TAC) THEN
     prep THEN VAL_CASES_TAC THEN USE_CHANGED [v_inv_def] in
   (* a Number is a small one or a Bignum of the heap *)
   let c1 =
@@ -1883,16 +1921,17 @@ let V_INV_REFS_TAC prep hp d5 d6 d7 =
   setup THENL [c1; c2; c3; c4; c5];;
 """,
   # the two lemmas about a heap in which one element is replaced by
-  # one of the same length, which the proofs of the two theorems
-  # about a store into a byte array ask for.  They stand here and
-  # not at the head of the file because the second one needs
-  # heap_lookup_APPEND, which the file itself proves.
-  ('data_to_word_memoryProof', 'gen_state_ok_update_byte'): r"""
+  # one of the same length, which the proofs about a store into a
+  # byte array ask for (v_inv_IMP_lemma is the first of them).  They
+  # stand here and not at the head of the file because the second
+  # one needs heap_lookup_APPEND, which the file itself proves.
+  ('data_to_word_memoryProof', 'v_inv_IMP_lemma'): r"""
 (* the port's own: a heap in which one element is replaced by one
    of the same length.  A split of it gives the halves of the old
    heap, up to that element, and a lookup in it is the old one
    unless it is that element that is found.  Both are used by the
-   two theorems about a store into a byte array. *)
+   theorems about a store into a byte array, of which
+   v_inv_IMP_lemma is the first. *)
 
 let heap_length_clauses = prove
  (`heap_length [] = 0 /\

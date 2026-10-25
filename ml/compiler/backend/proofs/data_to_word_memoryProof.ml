@@ -4400,6 +4400,43 @@ let V_INV_REFS_THUNK same n =
       ASM_MESON_TAC[el n v_inv_ck_rules; t_eq; dt;
                     SPEC `ck - 1` ih; lt1]));;
 
+(* the head constant of a term, by name *)
+let hd_is n t =
+  (try fst(dest_const(fst(strip_comb t))) = n
+   with Failure _ -> false);;
+
+(* the three cases of a RefPtr where the refs do not change and the
+   heap does: a plain reference reads nothing of the heap, and the
+   heap element of a thunk is the one that the lemma's own
+   hypothesis about the two heaps carries over, which is the
+   argument.  The witnesses of the two thunk rules are the ones
+   that the assumptions name: the thunk of the refs and the
+   element of the heap. *)
+
+let V_INV_HEAP_PLAIN =
+  REPEAT SUBST_LHS_TAC THEN
+  MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN ASM_REWRITE_TAC[];;
+
+let V_INV_HEAP_THUNK hp n =
+  let wit =
+    W(fun (asl,w) ->
+      let thunk = tryfind (fun (_,th) ->
+        let t = concl th in
+        if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
+        then rand(rhs t) else fail()) asl in
+      if n = 5 then
+        let x = tryfind (fun (_,th) ->
+          let t = concl th in
+          if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
+          then rand(rand(rhs t)) else fail()) asl in
+        MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
+      else EXISTS_TAC (rand thunk)) in
+  NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+  MATCH_MP_TAC(el n v_inv_ck_rules) THEN wit THEN
+  REPEAT CONJ_TAC THEN
+  FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; hp;
+         DISCH_TAC THEN CK_IH_TAC];;
+
 (* the induction that the lemmas about a change of the refs share.
    It is the complete induction on the ck of the relation that
    v_inv_SUBMAP_lemma does by hand: the value is taken apart with
@@ -4417,7 +4454,8 @@ let V_INV_REFS_TAC prep hp d5 d6 d7 =
   let setup =
     MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
     DISCH_TAC THEN REPEAT GEN_TAC THEN
-    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    (DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) ORELSE
+     DISCH_TAC) THEN
     prep THEN VAL_CASES_TAC THEN USE_CHANGED [v_inv_def] in
   (* a Number is a small one or a Bignum of the heap *)
   let c1 =
@@ -4714,7 +4752,43 @@ let v_inv_Ref_lemma = prove
      RefBlock_inv heap heap2 ==>
        v_inv_ck ck conf w refs (x,f,tf,heap) = v_inv_ck ck conf w
          refs (x,f,tf,heap2)`,
-  CHEAT_TAC);;
+  (* the two heaps agree on every element that is no RefBlock, and
+     the elements that the relation looks up are none of them: so
+     one direction of the equation is the induction with that
+     carried over, and the other is the hypothesis itself, which
+     says the relation holds at the old heap for every clock *)
+  ((* the two heaps agree on every element that is no RefBlock, and
+      the elements that the relation looks up are none *)
+   let hp =
+     FIRST_ASSUM(fun rb ->
+       let (f1,_) = CONJ_PAIR (REWRITE_RULE[RefBlock_inv_def] rb) in
+       MATCH_MP_TAC f1 THEN CONJ_TAC THENL
+        [FIRST_ASSUM MATCH_ACCEPT_TAC;
+         REWRITE_TAC[isRefBlock_def; RefBlock_def; BlockRep_def;
+                     bignum_def; Word64Rep_def; ThunkBlock_def] THEN
+         CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+         TRY PAIRARG_TAC THEN
+         CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+         TRY COND_CASES_TAC THEN
+         REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
+                     distinctness "data_to_word_memoryProof_tag"] THEN
+         REWRITE_TAC[NOT_EXISTS_THM; DE_MORGAN_THM]]) in
+   (* one direction of the equation: the relation at the new heap *)
+   let dir = prove
+    (`!ck w refs x f tf heap.
+        v_inv conf w refs (x,f,tf,heap) /\ RefBlock_inv heap heap2
+        ==> v_inv_ck ck conf w refs (x,f,tf,heap2)`,
+     V_INV_REFS_TAC ALL_TAC hp V_INV_HEAP_PLAIN
+       (V_INV_HEAP_THUNK hp 5) (V_INV_HEAP_THUNK hp 6)) in
+   (* and the other one is the hypothesis itself, which says the
+      relation holds at the old heap for every clock *)
+   REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+   EQ_TAC THEN DISCH_THEN(K ALL_TAC) THENL
+    [FIRST_ASSUM(fun vi -> FIRST_ASSUM(fun rb ->
+       MATCH_ACCEPT_TAC(SPEC_ALL(MATCH_MP dir (CONJ vi rb)))));
+     FIRST_ASSUM(fun vi ->
+       MATCH_ACCEPT_TAC(SPEC_ALL(REWRITE_RULE[v_inv_eq] vi)))]));;
 
 (* [local] *)
 let v_inv_Ref = prove
@@ -6102,20 +6176,12 @@ let v_inv_BlockRep_upd_lemma = prove
      pointer is one that tf gives, which the hypothesis about tf
      keeps off p, and of anything else the shape of the element
      settles it *)
-  (let rl = v_inv_ck_rules in
-   let hd_is n t =
-     (try fst(dest_const(fst(strip_comb t))) = n
-      with Failure _ -> false) in
-   (* what a FLOOKUP says of the map *)
-   let flk = prove
+  (let flk = prove
     (`!f x y. FLOOKUP f x = SOME y ==> x IN FDOM f /\ FAPPLY f x = y`,
      REWRITE_TAC[FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN
      COND_CASES_TAC THEN
      REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
      STRIP_TAC THEN ASM_REWRITE_TAC[]) in
-   (* the element at p is a BlockRep, so an address whose element is
-      another shape is not p; and a pointer that tf gives is not p,
-      which is what the hypothesis about tf says *)
    let notp =
      FIRST
       [FIRST_ASSUM(fun fl ->
@@ -6141,43 +6207,13 @@ let v_inv_BlockRep_upd_lemma = prove
      FIRST_ASSUM(fun pres ->
        MATCH_MP_TAC pres THEN CONJ_TAC THENL
         [notp; FIRST_ASSUM MATCH_ACCEPT_TAC]) in
-   (* the witnesses of the two thunk rules, which the assumptions
-      name: the thunk of the refs and the element of the heap *)
-   let wit_thunk n =
-     W(fun (asl,w) ->
-       let thunk = tryfind (fun (_,th) ->
-         let t = concl th in
-         if is_eq t && hd_is "bvlSem_Thunk" (rand(rhs t))
-         then rand(rhs t) else fail()) asl in
-       if n = 5 then
-         let x = tryfind (fun (_,th) ->
-           let t = concl th in
-           if is_eq t && hd_is "ThunkBlock" (rand(rhs t))
-           then rand(rand(rhs t)) else fail()) asl in
-         MAP_EVERY EXISTS_TAC [lhand thunk; rand thunk; x]
-       else EXISTS_TAC (rand thunk)) in
-   let NOT_VAR_TAC =
-     FIRST_ASSUM(fun nb ->
-       if is_neg(concl nb) && is_var(rand(concl nb))
-       then SUBST_ALL_TAC(EQF_INTRO nb) else fail()) in
-   let d5 =
-     REPEAT SUBST_LHS_TAC THEN MATCH_MP_TAC(el 4 rl) THEN
-     ASM_REWRITE_TAC[] in
-   let d6 =
-     NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
-     MATCH_MP_TAC(el 5 rl) THEN wit_thunk 5 THEN REPEAT CONJ_TAC THEN
-     FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; hp;
-            DISCH_TAC THEN CK_IH_TAC] in
-   let d7 =
-     NOT_VAR_TAC THEN MATCH_MP_TAC(el 6 rl) THEN wit_thunk 6 THEN
-     REPEAT CONJ_TAC THEN
-     FIRST [FIRST_ASSUM MATCH_ACCEPT_TAC; DISCH_TAC THEN CK_IH_TAC] in
-   (* the hypothesis about the heaps, by itself *)
+   (* the hypothesis about the heaps, conjunct by conjunct *)
    let prep =
      FIRST_ASSUM(fun ds ->
        if is_conj (concl ds) then MAP_EVERY ASSUME_TAC (CONJUNCTS ds)
        else fail()) in
-   V_INV_REFS_TAC prep hp d5 d6 d7));;
+   V_INV_REFS_TAC prep hp V_INV_HEAP_PLAIN
+     (V_INV_HEAP_THUNK hp 5) (V_INV_HEAP_THUNK hp 6)));;
 
 (* the binders are renamed apart from the names used at the application sites,
    so that qexists can name the witnesses *)
@@ -6506,42 +6542,12 @@ let v_size_LESS_EQ = prove
   (REPEAT STRIP_TAC THEN MATCH_MP_TAC misc_MEM_list_size THEN
    ASM_REWRITE_TAC[]));;
 
-(* [local] *)
-(* the names of record fields that this statement uses for
-   variables of its own are read as variables *)
-let v_inv_IMP_lemma = prove
- (cake_as_vars (fun () ->
-    `!ck w refs x f tf.
-       v_inv conf w refs (x,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
-         ==>
-         v_inv_ck ck conf w refs (x,f,tf,ha ++ [Bytes be fl ys
-           ws] ++ hb)`),
-  CHEAT_TAC);;
-
-(* [local] *)
-(* the names of record fields that this statement uses for
-   variables of its own are read as variables *)
-let v_inv_IMP = prove
- (cake_as_vars (fun () ->
-    `!y x f tf ha.
-         v_inv conf y refs (x,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
-           ==>
-         v_inv conf y refs (x,f,tf,ha ++ [Bytes be fl ys ws] ++
-           hb)`),
-  (* the lemma is applied to the assumption and not to the goal:
-     where a type variable of the statement stands only in the
-     antecedent, MATCH_MP_TAC leaves the lemma's own one there *)
-  (REWRITE_TAC[v_inv_eq] THEN REPEAT GEN_TAC THEN
-   DISCH_THEN(fun th ->
-     GEN_TAC THEN
-     MATCH_ACCEPT_TAC(MATCH_MP v_inv_IMP_lemma
-       (REWRITE_RULE[GSYM v_inv_eq] th)))));;
-
 (* the port's own: a heap in which one element is replaced by one
    of the same length.  A split of it gives the halves of the old
    heap, up to that element, and a lookup in it is the old one
    unless it is that element that is found.  Both are used by the
-   two theorems about a store into a byte array. *)
+   theorems about a store into a byte array, of which
+   v_inv_IMP_lemma is the first. *)
 
 let heap_length_clauses = prove
  (`heap_length [] = 0 /\
@@ -6592,6 +6598,67 @@ let heap_lookup_replace = prove
   REPEAT(COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
   REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
   ASM_MESON_TAC[]);;
+
+(* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
+let v_inv_IMP_lemma = prove
+ (cake_as_vars (fun () ->
+    `!ck w refs x f tf.
+       v_inv conf w refs (x,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
+         ==>
+         v_inv_ck ck conf w refs (x,f,tf,ha ++ [Bytes be fl ys
+           ws] ++ hb)`),
+  (* the store replaces the contents of a byte array by another, and
+     the element it writes is as long as the one that was there (a
+     write keeps the words), so a lookup that finds something else
+     finds it in the new heap as well (heap_lookup_replace) *)
+  ((* the element that the store replaces is a Bytes, and what the
+      relation looks up is none: so the lookup is the old one
+      (heap_lookup_replace), because the two elements are as long *)
+   let notbytes = prove
+    (cake_as_vars (fun () ->
+       `~(Bignum i = Bytes be flag bs (ys:('a word)list)) /\
+        ~(Word64Rep (:'a) w = Bytes be flag bs ys) /\
+        ~(BlockRep n xs = Bytes be flag bs ys) /\
+        ~(ThunkBlock ev x = Bytes be flag bs ys)`),
+     REWRITE_TAC[ThunkBlock_def; bignum_def; Word64Rep_def;
+                 BlockRep_def; bytes_def] THEN
+     PAIRARG_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     COND_CASES_TAC THEN
+     REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
+                 distinctness "data_to_word_memoryProof_tag";
+                 NOT_CONS_NIL]) in
+   let hp =
+     MATCH_MP_TAC heap_lookup_replace THEN ASM_EXISTS_TAC THEN
+     REPEAT CONJ_TAC THENL
+      [FIRST_ASSUM MATCH_ACCEPT_TAC;
+       (* the two elements are as long: a write keeps the words *)
+       REWRITE_TAC[bytes_def] THEN
+       CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+       REWRITE_TAC[el_length_def; LENGTH_write_bytes];
+       REWRITE_TAC[notbytes]] in
+   V_INV_REFS_TAC ALL_TAC hp V_INV_HEAP_PLAIN
+     (V_INV_HEAP_THUNK hp 5) (V_INV_HEAP_THUNK hp 6)));;
+
+(* [local] *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
+let v_inv_IMP = prove
+ (cake_as_vars (fun () ->
+    `!y x f tf ha.
+         v_inv conf y refs (x,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
+           ==>
+         v_inv conf y refs (x,f,tf,ha ++ [Bytes be fl ys ws] ++
+           hb)`),
+  (* the lemma is applied to the assumption and not to the goal:
+     where a type variable of the statement stands only in the
+     antecedent, MATCH_MP_TAC leaves the lemma's own one there *)
+  (REWRITE_TAC[v_inv_eq] THEN REPEAT GEN_TAC THEN
+   DISCH_THEN(fun th ->
+     GEN_TAC THEN
+     MATCH_ACCEPT_TAC(MATCH_MP v_inv_IMP_lemma
+       (REWRITE_RULE[GSYM v_inv_eq] th)))));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
