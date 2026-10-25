@@ -360,9 +360,12 @@
    let sz = size_thms "bvi_exp" in
    let labs_rws = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                    UNION_EMPTY; EMPTY_UNION] in
+   (* the type of the list says which get_code_labels this is: the
+      name is an overload of several theories, and a later one of
+      them wins where nothing pins it down *)
    let labs_APPEND = prove
     (`!a b. BIGUNION (set_of_list (MAP get_code_labels
-              (APPEND a b))) =
+              (APPEND (a:bvi_exp list) b))) =
             BIGUNION (set_of_list (MAP get_code_labels a)) UNION
             BIGUNION (set_of_list (MAP get_code_labels b))`,
      LIST_INDUCT_TAC THEN
@@ -381,7 +384,7 @@
                  UNION_EMPTY]) in
    let labs_delete_var = prove
     (`!l. BIGUNION (set_of_list (MAP get_code_labels
-            (MAP delete_var l))) =
+            (MAP delete_var (l:bvi_exp list)))) =
           BIGUNION (set_of_list (MAP get_code_labels l))`,
      LIST_INDUCT_TAC THEN
      ASM_REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;

@@ -751,6 +751,40 @@ one entry of that list, with a match of their own
 `do_eq`/`do_eq_list` of `dataSem`, `bvlSem`, `closSem`,
 `flatSem` and `semanticPrimitives`.
 
+## A statement that means another theory's constant
+
+HOL4 reads an overloaded name as the constant of the theory in the
+**ancestry** of the file that writes it.  The port has one
+interface, so every theory's overload of a name is in it and the
+one that was declared last wins where the types do not decide.  A
+statement whose types do not pin the name down therefore means
+what the file that loaded last says, which is not what HOL4 says.
+
+Two proofs of the port fail for that reason, and only in a **run**
+(where the whole load order is in the session); each of them goes
+through when its own file is loaded in its own closure, which is
+why `tools/bin/verifyfile` says they are fine:
+
+- `compiler/backend/proofs/bvi_letProof.ml`, `compile_code_labels`:
+  the inline lemma `labs_APPEND` says `MAP get_code_labels (a ++
+  b)` with nothing to fix the type of `a`, so in a run it is
+  another theory's `get_code_labels` and the rewrite does not fire.
+  The type of the list is written down now.
+- `compiler/backend/proofs/bvl_constProof.ml`,
+  `evaluate_delete_var_Rerr`: still open.  The statement of the
+  source is `evaluate (xs,env2,s) = (Rerr e,r) ==> evaluate (MAP
+  delete_var xs,env2,s) = (Rerr e,r)`, and which `evaluate` it
+  means has to come out of the ancestry of bvl_constProof.
+
+Both were failing before the port's theorems became bindings as
+well: the shape that preceded it caught the failure, wrote NOT
+PROVED and made the statement an axiom, so a run reported nothing.
+The fix for the class is to take the constants of theories outside
+a file's ancestry out of the interface while that file loads,
+which is what `hide_overloads` does for the accessors of a record
+field (PORTING-GUIDE.md, entry 11) -- for every ambiguous name,
+not only those.
+
 ## The order in which the port is loaded
 
 The files of the port are loaded in the order of
