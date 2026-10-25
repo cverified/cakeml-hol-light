@@ -1742,7 +1742,121 @@ let gc_move_data_data_refs_split = prove
       ++ gc_state_h2 s1) /\
     EVERY data_to_word_memoryProof_isRef (gc_state_r1 s1 ++
       gc_state_r2 s1 ++ gc_state_r3 s1 ++ gc_state_r4 s1)`,
-  CHEAT_TAC);;
+  (* the move of the data takes the head of h2 -- of the state
+     after the move of its list, not of the state it started from,
+     so the induction is not on a list but on the measure of the
+     definition: the room that is left under the limit, which the
+     element that moves into h1 makes smaller *)
+  (let gcsimps = record_simps "gc_state"
+     ["h1"; "h2"; "r1"; "r2"; "r3"; "r4"] in
+   (* a DataElement is a reference when its tag is a mutable one,
+      and is a data element whatever it holds *)
+   let isref = prove
+    (`!ys l tag qs.
+        data_to_word_memoryProof_isRef (DataElement ys l (tag,qs)) <=>
+        isMutTag tag`,
+     REPEAT GEN_TAC THEN REWRITE_TAC[isRef_def] THEN
+     MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[injectivity "heap_element"; PAIR_EQ] THEN
+     CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+     REWRITE_TAC[EXISTS_UNIQUE_REFL; SELECT_REFL]) in
+   let isdata = prove
+    (`!ys l d. isDataElement (DataElement ys l d)`,
+     REWRITE_TAC[isDataElement_def] THEN MESON_TAC[]) in
+   (* what the recursion moves is the tail of h2, and the port's TL
+      is HOL4's, which is the empty list of the empty list *)
+   let all_tl = prove
+    (`!p (l:(A)list). ALL p l ==> ALL p (TL l)`,
+     GEN_TAC THEN LIST_INDUCT_TAC THEN
+     REWRITE_TAC[hol4_TL; ALL] THEN CONV_TAC TAUT) in
+   let hlen = [heap_length_APPEND; heap_length_CONS; heap_length_NIL;
+               el_length_def] in
+   (* an equation that says what a field of the state was *)
+   let is_fld th =
+     is_eq(concl th) &&
+     (try let h = fst(dest_const(fst(strip_comb(lhs(concl th))))) in
+          String.length h > 9 && String.sub h 0 9 = "gc_state_"
+      with Failure _ -> false) in
+   (* the statement generalised over the measure of the definition,
+      built from the goal: what the recursion makes smaller is the
+      room that is left under the limit, and the port has no
+      induction theorem of the definition *)
+   let meas_induct =
+     W(fun (asl,w) ->
+       let vs,bod = strip_forall w in
+       let cc = el 0 vs and s = el 1 vs in
+       let meas =
+         mk_binop `(-):num->num->num`
+           (list_mk_icomb "gen_gc_conf_limit" [cc])
+           (list_mk_icomb "heap_length"
+              [list_mk_icomb "gc_state_h1" [s]]) in
+       let n = variant (vs @ frees bod) (mk_var("n",`:num`)) in
+       let gen = list_mk_forall(n :: vs,
+                   mk_imp(mk_binop `(<=):num->num->bool` meas n,
+                          bod)) in
+       SUBGOAL_THEN gen (fun th ->
+         MAP_EVERY X_GEN_TAC vs THEN
+         ACCEPT_TAC(MP (SPECL (meas :: vs) th)
+                       (SPEC meas LE_REFL)))) in
+   (* the states that the collector gives back without recursing:
+      the state itself, or the state with the ok flag taken away *)
+   let triv =
+     DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM)
+       STRIP_ASSUME_TAC) THEN
+     ASM_REWRITE_TAC(K_DEF :: gcsimps) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[ALL_APPEND; ALL]) THEN
+     ASM_REWRITE_TAC[ALL_APPEND; ALL] THEN TRY(CONV_TAC TAUT) in
+   let common =
+     REPEAT GEN_TAC THEN DISCH_TAC THEN
+     ONCE_REWRITE_TAC[gc_move_data_def] THEN EVERY_CASE_TAC THEN
+     REWRITE_TAC[COND_ID] THEN TRY COND_CASES_TAC THEN
+     TRY(triv THEN NO_TAC) in
+   (* of a measure that is 0 there is no room for the element that
+      the recursion moves, so the branch cannot be taken *)
+   let absurd =
+     SUBGOAL_THEN `F` CONTR_TAC THEN
+     RULE_ASSUM_TRY(REWRITE_RULE hlen) THEN ASM_ARITH_TAC in
+   (* and the element moves into h1, which leaves the room under the
+      limit smaller by its own length: what the move of its list
+      leaves in h2 and r4 is what the induction hypothesis asks of
+      them, and the other fields are the ones the move did not
+      touch *)
+   let data =
+     CASES_ON_NAME "a2" THEN PAIRARG_TAC THEN
+     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+     DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM)
+       STRIP_ASSUME_TAC) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[ALL_APPEND; ALL]) THEN
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_conj (concl th) then STRIP_ASSUME_TAC th
+       else fail())) THEN
+     FIRST_ASSUM(fun a1 ->
+       if not(is_pair(rhs(concl a1))) then fail() else
+       MP_TAC(MATCH_MP
+                (REWRITE_RULE[IMP_CONJ]
+                   (GEN_ALL gc_move_list_data_refs_split)) a1) THEN
+       MP_TAC(MATCH_MP gc_move_list_IMP a1)) THEN
+     DISCH_THEN STRIP_ASSUME_TAC THEN
+     ASM_REWRITE_TAC[ALL; ALL_APPEND] THEN
+     DISCH_THEN STRIP_ASSUME_TAC THEN
+     ASSUM_LIST(fun ths ->
+       RULE_ASSUM_TRY(REWRITE_RULE(filter is_fld ths))) THEN
+     ASSUM_LIST(fun ths ->
+       MAP_EVERY ASSUME_TAC (mapfilter (MATCH_MP all_tl) ths)) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE[isref]) THEN
+     REWRITE_TAC[ALL_APPEND] THEN
+     FIRST_ASSUM(fun ih ->
+       MATCH_MP_TAC(REWRITE_RULE[GSYM IMP_CONJ] ih)) THEN
+     W(fun (asl,w) ->
+       let vs,bod = strip_exists w in
+       let tm = rhs (el 1 (conjuncts bod)) in
+       MAP_EVERY EXISTS_TAC [lhand tm; rand tm]) THEN
+     ASM_REWRITE_TAC(K_DEF :: gcsimps @
+                     [ALL_APPEND; ALL; isref; isdata]) THEN
+     RULE_ASSUM_TRY(REWRITE_RULE hlen) THEN
+     REWRITE_TAC hlen THEN ASM_ARITH_TAC in
+   meas_induct THEN INDUCT_TAC THENL
+    [common THEN absurd; common THEN data]));;
 
 (* [local] *)
 let gc_move_loop_data_refs_split = prove
