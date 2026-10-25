@@ -1943,6 +1943,31 @@ let V_INV_REFS_TAC =
   # what the three lemmas about the chain of conses that
   # list_to_v builds share (the first of them is
   # Block_NOT_IN_all_vs)
+  # what says that the words of a constant part are counted
+  # by part_space_req (the first user is
+  # part_to_words_LENGTH)
+  ('data_to_word_memoryProof', 'part_to_words_LENGTH'): r"""
+(* the port's own: a number that is below 2 EXP 29 is a small int,
+   whichever of the two word sizes it is -- which is what says that
+   the words of a constant part are counted by part_space_req *)
+
+let small_29 = prove
+ (`good_dimindex (:'a) /\ num_of_int (abs i) < 2 EXP 29
+   ==> small_int (:'a) i`,
+  REWRITE_TAC[good_dimindex_def; small_int_def; dimword] THEN
+  STRIP_TAC THEN
+  (SUBGOAL_THEN `abs (i:int) < &(2 EXP 29)` MP_TAC THENL
+    [FIRST_ASSUM(fun lt ->
+       if not (is_binary "<" (concl lt)) then fail() else
+       ACCEPT_TAC(ONCE_REWRITE_RULE
+         [MATCH_MP INT_OF_NUM_OF_INT (SPEC `i:int` INT_ABS_POS)]
+         (REWRITE_RULE[GSYM INT_OF_NUM_LT] lt)));
+     ALL_TAC]) THEN
+  ASM_REWRITE_TAC[ARITH_RULE `2 EXP 32 DIV 8 = 2 EXP 29`;
+                  ARITH_RULE `2 EXP 64 DIV 8 = 2 EXP 61`] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN INT_ARITH_TAC);;
+""",
+
   ('data_to_word_memoryProof', 'Block_NOT_IN_all_vs'): r"""
 (* the port's own: what the three lemmas about the chain of conses
    that list_to_v builds share.  Each of them is an induction on the

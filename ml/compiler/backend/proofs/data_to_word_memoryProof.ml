@@ -22008,17 +22008,119 @@ let LESS_EQ_num_size = prove
      MATCH_ACCEPT_TAC(MATCH_MP LENGTH_n2mw_LE_num_size
                         (CONJ gd le))))));;
 
+(* the port's own: a number that is below 2 EXP 29 is a small int,
+   whichever of the two word sizes it is -- which is what says that
+   the words of a constant part are counted by part_space_req *)
+
+let small_29 = prove
+ (`good_dimindex (:'a) /\ num_of_int (abs i) < 2 EXP 29
+   ==> small_int (:'a) i`,
+  REWRITE_TAC[good_dimindex_def; small_int_def; dimword] THEN
+  STRIP_TAC THEN
+  (SUBGOAL_THEN `abs (i:int) < &(2 EXP 29)` MP_TAC THENL
+    [FIRST_ASSUM(fun lt ->
+       if not (is_binary "<" (concl lt)) then fail() else
+       ACCEPT_TAC(ONCE_REWRITE_RULE
+         [MATCH_MP INT_OF_NUM_OF_INT (SPEC `i:int` INT_ABS_POS)]
+         (REWRITE_RULE[GSYM INT_OF_NUM_LT] lt)));
+     ALL_TAC]) THEN
+  ASM_REWRITE_TAC[ARITH_RULE `2 EXP 32 DIV 8 = 2 EXP 29`;
+                  ARITH_RULE `2 EXP 64 DIV 8 = 2 EXP 61`] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN INT_ARITH_TAC);;
+
 let part_to_words_LENGTH = prove
  (`part_to_words c m h a = SOME ((w:bool#'a word_loc),ws) /\
    good_dimindex (:'a) ==>
    LENGTH ws <= part_space_req h`,
-  CHEAT_TAC);;
+  (* the four kinds of constant part, each written as a header and
+     the words of its content: a small int writes nothing, a Con
+     writes its elements, a W64 at most three words, and a string
+     as many as its bytes fill *)
+  (REPEAT GEN_TAC THEN CASES_ON_NAME "h" THEN
+   REWRITE_TAC[part_to_words_def; part_space_req_def] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC THEN
+   TRY PAIRARG_TAC THEN
+   RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+   EVERY_CASE_COND_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[NULL_EQ]) THEN VAR_EQ_TAC THEN
+   ASM_REWRITE_TAC[LENGTH; LENGTH_MAP; LENGTH_write_bytes;
+                   LENGTH_REPLICATE] THEN
+   TRY ASM_ARITH_TAC THEN
+   FIRST
+    [(* a list of no elements that is not empty *)
+     SOLVED(SUBGOAL_THEN `F` CONTR_TAC THEN
+            ASM_MESON_TAC[LENGTH_EQ_NIL]);
+     (* a number below 2 EXP 29 that is not a small int *)
+     SOLVED(SUBGOAL_THEN `F` CONTR_TAC THEN
+            ASM_MESON_TAC[GEN_ALL small_29]);
+     (* and otherwise the words of the number, which num_size
+        bounds *)
+     SOLVED
+      (RULE_ASSUM_TAC(REWRITE_RULE[i2mw_def; PAIR_EQ]) THEN
+       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+       FIRST_ASSUM(fun gd ->
+         if not (hd_is "good_dimindex" (concl gd)) then fail() else
+         MATCH_MP_TAC(MATCH_MP LESS_EQ_num_size gd)) THEN
+       REWRITE_TAC[LE_REFL]);
+     (* the bytes of a string, of which a word holds four or
+        eight *)
+     SOLVED
+      (REWRITE_TAC[byte_len_def; LENGTH_explode] THEN
+       FIRST_ASSUM(fun gd ->
+         if not (hd_is "good_dimindex" (concl gd)) then fail() else
+         STRIP_ASSUME_TAC(REWRITE_RULE[good_dimindex_def] gd)) THEN
+       ASM_REWRITE_TAC[ARITH_EQ] THEN
+       MP_TAC(SPECL [`8`; `strlen a'`; `4`] DIV_MONO2) THEN
+       REWRITE_TAC[ARITH] THEN ARITH_TAC)]));;
 
 let const_parts_to_words_LENGTH = prove
  (`const_parts_to_words c parts = SOME ((w:bool#'a word_loc),ws) /\
    good_dimindex (:'a) ==>
    LENGTH ws <= SUM (MAP part_space_req parts)`,
-  CHEAT_TAC);;
+  (* the parts one after the other, each counted by
+     part_to_words_LENGTH, with the map, the index and the offset
+     that the recursion changes generalised *)
+  (let sum_cons = prove
+    (`!f h t. SUM (MAP f (CONS h t)) = f h + SUM (MAP f t)`,
+     REWRITE_TAC[MAP; SUM_DEF; ITLIST]) in
+   let gen = prove
+    (`!parts' c m i (off:'a word) w ws.
+        parts_to_words c m i parts' off = SOME (w,ws) /\
+        good_dimindex (:'a)
+        ==> LENGTH ws <= SUM (MAP part_space_req parts')`,
+     LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[parts_to_words_def; sum_cons] THENL
+      [STRIP_TAC THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
+                                   PAIR_EQ]) THEN
+       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+       REWRITE_TAC[LENGTH; LE_0];
+       STRIP_TAC THEN EVERY_CASE_TAC THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option";
+                                   PAIR_EQ]) THEN
+       SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+       REWRITE_TAC[LENGTH_APPEND] THEN
+       MATCH_MP_TAC LE_ADD2 THEN CONJ_TAC THENL
+        [FIRST_ASSUM(fun pt ->
+           if not (hd_is "part_to_words" (lhs(concl pt)))
+           then fail() else
+           FIRST_ASSUM(fun gd ->
+             if not (hd_is "good_dimindex" (concl gd)) then fail()
+             else
+             MATCH_ACCEPT_TAC(MATCH_MP part_to_words_LENGTH
+               (CONJ pt gd))));
+         FIRST_ASSUM(fun ih ->
+           if not (is_forall (concl ih)) then fail() else
+           FIRST_ASSUM(fun pw ->
+             if not (hd_is "parts_to_words" (lhs(concl pw))) then
+               fail() else
+             FIRST_ASSUM(fun gd ->
+               if not (hd_is "good_dimindex" (concl gd)) then
+                 fail() else
+               MATCH_ACCEPT_TAC(MATCH_MP (SPEC_ALL ih)
+                 (CONJ pw gd)))))]]) in
+   REWRITE_TAC[const_parts_to_words_def] THEN
+   MATCH_ACCEPT_TAC(SPEC_ALL gen)));;
 
 let good_loc_def = cake_define
   `good_loc code x2 =
