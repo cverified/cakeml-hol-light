@@ -1258,3 +1258,36 @@ applies; the port's proof of it is the first one, which stands
 earlier in the file.  That is a deviation from the source's proof
 (not from its statement), and it is recorded in the section's
 comment as well.
+
+## `IS_PREFIX` was a free variable, so four statements said nothing
+
+HOL4's `rich_listTheory` has two relations that CakeML's garbage
+collector states its lemmas with: `IS_SUFFIX l1 l2` (l2 is a suffix
+of l1) and `IS_PREFIX l1 l2` (l2 is a prefix of l1).  The port had
+the first (`ml/lib/hol4.ml`) and not the second, and `isPREFIX` of
+`listTheory`, which the port does have, is the same relation with
+its arguments the other way round -- so it is no overload of it.
+
+What that cost: `IS_PREFIX` in a statement of the port was read as
+a **free variable** applied to two lists, so the statement said
+nothing about the prefix and, being universally quantified over
+that variable when the theorem is proved, was not provable as it
+stood.  Four statements are concerned, all of them still assumed:
+`gc_move_IMP` and `gc_move_list_IMP` of `gen_gc` (what a move of
+the collector leaves of the state: `h2` grows at the end and `r4`
+at the front), `lookup_fromList2_prefix` of `word_to_stackProof`,
+`nsLookupMod_FOLDR_nsLift_none` of `namespaceProps` and
+`constrain_op_error_msg_sanity` of `infer` (where it stands in a
+definition as well).
+
+**Fixed.**  `ml/lib/hol4.ml` defines `IS_PREFIX` beside
+`IS_SUFFIX`, in the form that HOL4's `IS_PREFIX_APPEND` gives it:
+
+```ocaml
+let IS_PREFIX = new_definition
+  `IS_PREFIX l1 (l2:A list) <=> ?l. l1 = APPEND l2 l`;;
+```
+
+The rule it illustrates: a name that HOL4 resolves to a constant of
+a library theory and the port does not have is read as a variable
+and nothing says so, which `tools/stmtfree.py` is the check for.

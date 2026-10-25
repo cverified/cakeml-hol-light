@@ -1301,3 +1301,40 @@ _What is next, and what the half-finished attempts are:_
   scratch prelude (`hd_is`, `grab`, `hlen_cl`) are defined inside
   the section that uses them, which is what the sections of the
   store do._
+
+## The wave of 2026-10-25
+
+_Eleven proofs, in three families, and the loop that
+`~/.claude/.../memory/proof-loop-speed.md` asks for: the closure
+session stays, a scratch layer holds what a proof under development
+needs, and a batch of proofs costs one regeneration and one
+`verifyquick`._
+
+- _the finalised MutBlock on the stack: `all_vs_MutBlock_T` and
+  `reachable_refs_MutBlock_T` (the payload of the cell moves into
+  the new Block, so the values and the edges are the old ones);_
+- _the six lemmas about a change of the refs
+  (`v_inv_ByteArray_insert_lemma`, `v_inv_ValueArray_insert_lemma`,
+  `v_inv_MutBlock_insert_lemma`, `v_inv_MutBlock_fin_lemma`,
+  `v_inv_MutBlock_hole_lemma`, `v_inv_new_Thunk_insert_lemma`),
+  which share the complete induction on the clock of the relation
+  (`V_INV_REFS_TAC` of `overrides.EXTRA_BEFORE`) and differ only in
+  the four facts about the lookups of the new refs;_
+- _the collector's data/refs split: `gen_gc_data_refs_split` and
+  `gc_move_refs_data_refs_split` (an induction on the list that r2
+  is, because the port has no induction theorem of the
+  definition)._
+
+_What is open:_
+
+- _`gc_move_data_data_refs_split`, the third of the collector's
+  family: its recursion is on the measure `limit - heap_length h1`
+  and the element it moves comes out of `h2` of the state **after**
+  the move of its list, so the induction is a complete induction on
+  that measure and the proof needs `hol4_TL` (the port's `TL`,
+  which HOL4 has at the empty list as well)._
+- _`ml/lib/hol4.ml` now defines `IS_PREFIX` (ISSUES.md): the
+  sessions were built before it, so a `tools/bin/retemplate` and a
+  `tools/bin/pfbase` are owed before the next whole run.  Nothing
+  of the memory file uses it, so the proofs of this wave were
+  verified without it._

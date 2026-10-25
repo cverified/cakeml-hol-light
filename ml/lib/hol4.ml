@@ -421,6 +421,17 @@ let IS_SUBLIST = new_recursive_definition list_RECURSION
 let IS_SUFFIX = new_definition
   `IS_SUFFIX l1 (l2:A list) <=> ?l. l1 = APPEND l l2`;;
 
+(* and IS_PREFIX of the same theory: l2 is a prefix of l1, which
+   HOL4 defines by recursion (rich_listScript.sml:272-287) and its
+   IS_PREFIX_APPEND says is this.  The port's isPREFIX of
+   listTheory is the same relation with the arguments the other way
+   round, which is not an overload: a statement that says IS_PREFIX
+   without the definition has a free variable where HOL4 has the
+   constant, and says nothing (ISSUES.md) *)
+
+let IS_PREFIX = new_definition
+  `IS_PREFIX l1 (l2:A list) <=> ?l. l1 = APPEND l2 l`;;
+
 let LAST_DEF = new_definition
   `LAST_N n (l:A list) = DROP (LENGTH l - n) l`;;
 

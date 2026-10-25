@@ -1725,7 +1725,7 @@ let gc_move_refs_data_refs_split = prove
     [REPEAT GEN_TAC THEN DISCH_TAC THEN
      ONCE_REWRITE_TAC[gc_move_refs_def] THEN ASM_REWRITE_TAC[] THEN
      MATCH_REDUCE_TAC THEN base;
-     step_common THEN data];;));;
+     step_common THEN data]));;
 
 (* [local] *)
 let gc_move_data_data_refs_split = prove
