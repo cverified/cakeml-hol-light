@@ -4046,6 +4046,124 @@ let reachable_refs_UPDATE1 = prove
         [EXISTS_TAC `yy:dataSem_v` THEN ASM_REWRITE_TAC[];
          FIRST_ASSUM ACCEPT_TAC]]]));;
 
+(* the port's own: what the lemmas about a change of the refs
+   share.  Each of them says that the clocked relation holds of a
+   value after a cell of the refs is put in or changed, and each is
+   the same complete induction on the clock, with the same four
+   facts about the lookups of the new refs to be proved of the cell
+   in question. *)
+
+(* the port's own: a key that the refs do not have has no lookup *)
+let no_lk = prove
+ (`~(ptr IN domain (refs:(A)spt)) ==> lookup ptr refs = NONE`,
+  REWRITE_TAC[domain_lookup] THEN
+  STRUCT_CASES_TAC(ISPEC `lookup ptr (refs:(A)spt)`
+    (cases_of `:(A)option`)) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  MESON_TAC[]);;
+
+(* and a key of f is a key of the refs, so it is not one that the
+   refs do not have *)
+let notptr = prove
+ (`lookup ptr refs = NONE /\
+   (!x. x IN FDOM f ==> x IN domain refs) /\ k IN FDOM f
+   ==> ~(k = ptr)`,
+  REWRITE_TAC[domain_lookup] THEN
+  MESON_TAC[distinctness "option"]);;
+
+let v_inv_ck_rules = CONJUNCTS (let (vr,_,_) = v_inv_ck in vr);;
+
+(* the b of a RefPtr that the two thunk rules ask to be false *)
+let NOT_VAR_TAC =
+  FIRST_ASSUM(fun nb ->
+    if is_neg(concl nb) && is_var(rand(concl nb))
+    then SUBST_ALL_TAC(EQF_INTRO nb) else fail());;
+
+(* the four facts that such a lemma proves of its own refs -- the
+   lookup of a thunk, the annotation of a pointer, the dest_thunk
+   of a value and the condition of a plain reference, of the new
+   refs against the old ones -- which its own `same` gives when it
+   is applied to the assumption that says what the refs are *)
+let v_inv_refs_parts same lk =
+  let s = MATCH_MP same lk in
+  (CONJUNCT1 s,CONJUNCT1(CONJUNCT2 s),
+   CONJUNCT1(CONJUNCT2(CONJUNCT2 s)),
+   CONJUNCT2(CONJUNCT2(CONJUNCT2 s)));;
+
+(* the case of a plain reference, whose annotation is the one it
+   was *)
+let V_INV_REFS_PLAIN same =
+  REPEAT SUBST_LHS_TAC THEN
+  FIRST_ASSUM(fun lk ->
+    let (t_eq,a_eq,_,m_imp) = v_inv_refs_parts same lk in
+    REWRITE_TAC[GSYM a_eq] THEN
+    MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN REPEAT CONJ_TAC THENL
+     [FIRST_ASSUM MATCH_ACCEPT_TAC;
+      ASM_REWRITE_TAC[t_eq];
+      MATCH_MP_TAC m_imp THEN FIRST_ASSUM MATCH_ACCEPT_TAC]);;
+
+(* and the case of a thunk, whose value and heap element the rule
+   names and not its conclusion, so MESON applies the rule *)
+let V_INV_REFS_THUNK same n =
+  let lt1 = ARITH_RULE `~(ck = 0) ==> ck - 1 < ck` in
+  NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+  FIRST_ASSUM(fun lk ->
+    let (t_eq,_,dt,_) = v_inv_refs_parts same lk in
+    FIRST_ASSUM(fun ih ->
+      ASM_MESON_TAC[el n v_inv_ck_rules; t_eq; dt;
+                    SPEC `ck - 1` ih; lt1]));;
+
+(* the induction that the lemmas about a change of the refs share.
+   It is the complete induction on the ck of the relation that
+   v_inv_SUBMAP_lemma does by hand: the value is taken apart with
+   v_inv_def and the rule of the relation for that shape is
+   applied, where the maps are the ones they were and what a Block
+   asks of its elements is the induction hypothesis at ck - 1.  The
+   arguments are the tactic that derives from the lemma's own
+   hypothesis what its cases use, the one that proves a heap_lookup
+   of the new heap (ALL_TAC where the heap does not change), and
+   the three of a RefPtr: a plain reference and the two thunks. *)
+let V_INV_REFS_TAC prep hp d5 d6 d7 =
+  let rl = v_inv_ck_rules in
+  let VAL_CASES_TAC (asl,w) =
+    CASES_ON_TAC (el 2 (snd(strip_comb w))) (asl,w) in
+  let setup =
+    MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
+    DISCH_TAC THEN REPEAT GEN_TAC THEN
+    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    prep THEN VAL_CASES_TAC THEN USE_CHANGED [v_inv_def] in
+  (* a Number is a small one or a Bignum of the heap *)
+  let c1 =
+    COND_CASES_TAC THEN STRIP_TAC THEN SUBST_LHS_TAC THENL
+     [MATCH_MP_TAC(el 0 rl) THEN ASM_REWRITE_TAC[];
+      MATCH_MP_TAC(el 1 rl) THEN ASM_REWRITE_TAC[] THEN hp] in
+  let c2 =
+    STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+    MATCH_MP_TAC(el 2 rl) THEN ASM_REWRITE_TAC[] THEN hp in
+  (* a Block is a BlockNil or a BlockRep whose elements the
+     induction hypothesis carries over one by one *)
+  let c3 =
+    COND_CASES_TAC THEN STRIP_TAC THEN REPEAT SUBST_LHS_TAC THENL
+     [MATCH_MP_TAC(el 7 rl) THEN ASM_REWRITE_TAC[];
+      MATCH_MP_TAC(el 8 rl) THEN REPEAT CONJ_TAC THENL
+       [FIRST_ASSUM MATCH_ACCEPT_TAC;
+        DISCH_TAC THEN
+        FIRST_ASSUM(fun a2th ->
+          if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
+                 (concl a2th)
+          then MP_TAC a2th else fail()) THEN
+        MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
+        REPEAT STRIP_TAC THEN CK_IH_TAC;
+        FIRST_ASSUM MATCH_ACCEPT_TAC;
+        ASM_REWRITE_TAC[] THEN hp]] in
+  let c4 = STRIP_TAC THEN REPEAT SUBST_LHS_TAC THEN
+           MATCH_ACCEPT_TAC(el 3 rl) in
+  let c5 =
+    DISCH_THEN(DISJ_CASES_THEN2 STRIP_ASSUME_TAC
+      (DISJ_CASES_THEN2 STRIP_ASSUME_TAC STRIP_ASSUME_TAC)) THENL
+     [d5; d6; d7] in
+  setup THENL [c1; c2; c3; c4; c5];;
+
 let v_inv_ByteArray_insert_lemma = prove
  (`!ck v1 refs y f tf heap.
      v_inv conf v1 refs (y,f,tf,heap) /\
@@ -4053,7 +4171,70 @@ let v_inv_ByteArray_insert_lemma = prove
          (ByteArray a b))) ==>
          v_inv_ck ck conf v1 (insert ptr (ByteArray fl xs) refs)
            (y,f,tf,heap)`,
-  CHEAT_TAC);;
+  (* the refs that the lemma puts a byte array into: v_inv reads
+     the cell at ptr to see whether it is a thunk, to annotate a
+     pointer to it and in the dest_thunk of a value, and a byte
+     array is no thunk and no MutBlock, as what was there is not
+     either *)
+  (let opt = [distinctness "option"; injectivity "option"] in
+   let rfs = [distinctness "bvlSem_ref";
+              injectivity "bvlSem_ref";
+              distinctness "dataSem_dest_thunk_ret"] in
+   let same = prove
+    (`(ptr IN domain refs ==>
+       ?a b. lookup ptr refs = SOME (ByteArray a b)) ==>
+      (!k ev v.
+         lookup k (insert ptr (ByteArray fl xs) refs) =
+           SOME (Thunk ev v) <=>
+         lookup k refs = SOME (Thunk ev v)) /\
+      (!k. ref_ptr_annot conf
+             (lookup k (insert ptr (ByteArray fl xs) refs)) =
+           ref_ptr_annot conf (lookup k refs)) /\
+      (!v. dest_thunk v refs = NotThunk ==>
+           dest_thunk v (insert ptr (ByteArray fl xs) refs) =
+             NotThunk) /\
+      (!k bb.
+         (!t2 g2 m2 d2 s2.
+            lookup k refs = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+              ==> ~bb)
+         ==> (!t2 g2 m2 d2 s2.
+            lookup k (insert ptr (ByteArray fl xs) refs) =
+              SOME (bvlSem_MutBlock t2 g2 m2 d2 s2) ==> ~bb))`,
+     DISCH_TAC THEN
+     (* the cell at ptr is a byte array, or the refs have no cell
+        there: the two are what the rules of a RefPtr read *)
+     (SUBGOAL_THEN
+       `lookup ptr (refs:(dataSem_v bvlSem_ref) spt) = NONE \/
+        ?a b. lookup ptr refs = SOME (ByteArray a b)`
+       STRIP_ASSUME_TAC THENL
+      [FIRST_ASSUM(fun h ->
+         let d = lhand(concl h) in
+         ASM_CASES_TAC d THENL
+          [DISJ2_TAC THEN MATCH_ACCEPT_TAC(MP h (ASSUME d));
+           DISJ1_TAC THEN
+           MATCH_ACCEPT_TAC(MATCH_MP no_lk (ASSUME(mk_neg d)))]);
+       ALL_TAC; ALL_TAC]) THEN
+     (REPEAT CONJ_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC(opt @ rfs);
+       GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+       REWRITE_TAC[ref_ptr_annot_def] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[];
+       GEN_TAC THEN CASES_ON_NAME "v" THEN
+       ONCE_REWRITE_TAC[dataSem_dest_thunk_def] THEN
+       SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+       REWRITE_TAC[lookup_insert] THEN
+       ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+       TRY MATCH_REDUCE_TAC THEN REWRITE_TAC(opt @ rfs) THEN
+       REPEAT COND_CASES_TAC THEN REWRITE_TAC[] THEN
+       TRY(CONV_TAC TAUT);
+       REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+       REWRITE_TAC[lookup_insert] THEN COND_CASES_TAC THEN
+       ASM_REWRITE_TAC(opt @ rfs) THEN
+       TRY(FIRST_ASSUM MATCH_ACCEPT_TAC)])) in
+   V_INV_REFS_TAC ALL_TAC ALL_TAC (V_INV_REFS_PLAIN same)
+     (V_INV_REFS_THUNK same 5) (V_INV_REFS_THUNK same 6)));;
 
 let v_inv_ByteArray_insert = prove
  (`!conf v1 refs v2 f tf heap ptr fl xs.
@@ -4291,7 +4472,70 @@ let v_inv_ValueArray_insert_lemma = prove
          (ValueArray as))) ==>
          v_inv_ck ck conf v1 (insert ptr (ValueArray xs) refs)
            (y,f,tf,heap)`,
-  CHEAT_TAC);;
+  (* the same of an array of values, whose annotation is zero as
+     well.  The hypothesis about the cell at ptr is the second
+     conjunct of what the lemma assumes, and prep gives it by
+     itself *)
+  (let opt = [distinctness "option"; injectivity "option"] in
+   let rfs = [distinctness "bvlSem_ref";
+              injectivity "bvlSem_ref";
+              distinctness "dataSem_dest_thunk_ret"] in
+   let same = prove
+    (`(ptr IN domain refs ==>
+       ?as. lookup ptr refs = SOME (ValueArray as)) ==>
+      (!k ev v.
+         lookup k (insert ptr (ValueArray xs) refs) =
+           SOME (Thunk ev v) <=>
+         lookup k refs = SOME (Thunk ev v)) /\
+      (!k. ref_ptr_annot conf
+             (lookup k (insert ptr (ValueArray xs) refs)) =
+           ref_ptr_annot conf (lookup k refs)) /\
+      (!v. dest_thunk v refs = NotThunk ==>
+           dest_thunk v (insert ptr (ValueArray xs) refs) =
+             NotThunk) /\
+      (!k bb.
+         (!t2 g2 m2 d2 s2.
+            lookup k refs = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+              ==> ~bb)
+         ==> (!t2 g2 m2 d2 s2.
+            lookup k (insert ptr (ValueArray xs) refs) =
+              SOME (bvlSem_MutBlock t2 g2 m2 d2 s2) ==> ~bb))`,
+     DISCH_TAC THEN
+     (* the cell at ptr is an array of values, or the refs have no
+        cell there: the two are what the rules of a RefPtr read *)
+     (SUBGOAL_THEN
+       `lookup ptr (refs:(dataSem_v bvlSem_ref) spt) = NONE \/
+        ?as. lookup ptr refs = SOME (ValueArray as)`
+       STRIP_ASSUME_TAC THENL
+      [FIRST_ASSUM(fun h ->
+         let d = lhand(concl h) in
+         ASM_CASES_TAC d THENL
+          [DISJ2_TAC THEN MATCH_ACCEPT_TAC(MP h (ASSUME d));
+           DISJ1_TAC THEN
+           MATCH_ACCEPT_TAC(MATCH_MP no_lk (ASSUME(mk_neg d)))]);
+       ALL_TAC; ALL_TAC]) THEN
+     (REPEAT CONJ_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC(opt @ rfs);
+       GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+       REWRITE_TAC[ref_ptr_annot_def] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[];
+       GEN_TAC THEN CASES_ON_NAME "v" THEN
+       ONCE_REWRITE_TAC[dataSem_dest_thunk_def] THEN
+       SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+       REWRITE_TAC[lookup_insert] THEN
+       ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+       TRY MATCH_REDUCE_TAC THEN REWRITE_TAC(opt @ rfs) THEN
+       REPEAT COND_CASES_TAC THEN REWRITE_TAC[] THEN
+       TRY(CONV_TAC TAUT);
+       REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+       REWRITE_TAC[lookup_insert] THEN COND_CASES_TAC THEN
+       ASM_REWRITE_TAC(opt @ rfs) THEN
+       TRY(FIRST_ASSUM MATCH_ACCEPT_TAC)])) in
+   let prep = FIRST_ASSUM(fun a -> ASSUME_TAC(CONJUNCT2 a)) in
+   V_INV_REFS_TAC prep ALL_TAC (V_INV_REFS_PLAIN same)
+     (V_INV_REFS_THUNK same 5) (V_INV_REFS_THUNK same 6)));;
 
 let v_inv_ValueArray_insert = prove
  (`!conf v1 refs v2 f tf heap ptr xs heap2.
@@ -4314,7 +4558,74 @@ let v_inv_MutBlock_insert_lemma = prove
      ~(ptr IN domain refs) /\ FDOM f SUBSET domain refs ==>
        v_inv_ck ck conf v1 (insert ptr (bvlSem_MutBlock tag fin l
          cv r) refs) (y,f,tf,heap)`,
-  CHEAT_TAC);;
+  (* here the cell is put at a key that the refs do not have, so a
+     MutBlock appears where there was nothing: the annotation of a
+     pointer and the condition of a plain reference are the old
+     ones away from ptr, and a pointer of the relation is a key of
+     f, which is a key of the refs *)
+  (let opt = [distinctness "option"; injectivity "option"] in
+   let rfs = [distinctness "bvlSem_ref";
+              injectivity "bvlSem_ref";
+              distinctness "dataSem_dest_thunk_ret"] in
+   let same = prove
+    (`lookup ptr refs = NONE ==>
+      (!k ev v.
+         lookup k (insert ptr (bvlSem_MutBlock tag fin l cv r)
+           refs) = SOME (Thunk ev v) <=>
+         lookup k refs = SOME (Thunk ev v)) /\
+      (!k. ~(k = ptr) ==>
+         ref_ptr_annot conf
+           (lookup k (insert ptr (bvlSem_MutBlock tag fin l cv r)
+             refs)) =
+         ref_ptr_annot conf (lookup k refs)) /\
+      (!v. dest_thunk v refs = NotThunk ==>
+           dest_thunk v (insert ptr
+             (bvlSem_MutBlock tag fin l cv r) refs) = NotThunk) /\
+      (!k bb.
+         ~(k = ptr) /\
+         (!t2 g2 m2 d2 s2.
+            lookup k refs = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+              ==> ~bb)
+         ==> (!t2 g2 m2 d2 s2.
+            lookup k (insert ptr (bvlSem_MutBlock tag fin l cv r)
+              refs) = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+                ==> ~bb))`,
+     DISCH_TAC THEN
+     (REPEAT CONJ_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC(opt @ rfs);
+       REPEAT STRIP_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       ASM_REWRITE_TAC[];
+       GEN_TAC THEN CASES_ON_NAME "v" THEN
+       ONCE_REWRITE_TAC[dataSem_dest_thunk_def] THEN
+       SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+       REWRITE_TAC[lookup_insert] THEN
+       ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+       TRY MATCH_REDUCE_TAC THEN REWRITE_TAC(opt @ rfs) THEN
+       REPEAT COND_CASES_TAC THEN REWRITE_TAC[] THEN
+       TRY(CONV_TAC TAUT);
+       REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+       REWRITE_TAC[lookup_insert] THEN ASM_REWRITE_TAC[] THEN
+       TRY(FIRST_ASSUM MATCH_ACCEPT_TAC)])) in
+   let prep =
+     FIRST_ASSUM(fun ds ->
+       ASSUME_TAC(MATCH_MP no_lk (CONJUNCT1 ds)) THEN
+       ASSUME_TAC(REWRITE_RULE[SUBSET] (CONJUNCT2 ds))) in
+   let d5 =
+     REPEAT SUBST_LHS_TAC THEN
+     FIRST_ASSUM(fun nolk ->
+       let (t_eq,a_eq,_,m_imp) = v_inv_refs_parts same nolk in
+       FIRST_ASSUM(fun sub -> FIRST_ASSUM(fun fd ->
+         let np = MATCH_MP notptr (CONJ nolk (CONJ sub fd)) in
+         REWRITE_TAC[GSYM (MATCH_MP a_eq np)] THEN
+         MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN
+         REPEAT CONJ_TAC THENL
+          [FIRST_ASSUM MATCH_ACCEPT_TAC;
+           ASM_REWRITE_TAC[t_eq];
+           MATCH_MP_TAC m_imp THEN CONJ_TAC THENL
+            [ACCEPT_TAC np; FIRST_ASSUM MATCH_ACCEPT_TAC]]))) in
+   V_INV_REFS_TAC prep ALL_TAC d5
+     (V_INV_REFS_THUNK same 5) (V_INV_REFS_THUNK same 6)));;
 
 let v_inv_MutBlock_insert = prove
  (`!conf v1 refs v2 f tf heap ptr tag fin l cv r.
@@ -4336,7 +4647,59 @@ let v_inv_MutBlock_fin_lemma = prove
        v_inv_ck ck conf v1 (insert ptr (bvlSem_MutBlock tag fin2 ll
          cv rr) refs)
          (y,f,tf,heap)`,
-  CHEAT_TAC);;
+  (* the cell at ptr keeps its tag and its payload, so all four
+     lookups of the new refs are the old ones: the annotation is
+     the ptr_bits of the tag and the two lengths, which the flag
+     does not enter, and a MutBlock is no thunk *)
+  (let opt = [distinctness "option"; injectivity "option"] in
+   let rfs = [distinctness "bvlSem_ref";
+              injectivity "bvlSem_ref";
+              distinctness "dataSem_dest_thunk_ret"] in
+   let same = prove
+    (`lookup ptr refs = SOME (bvlSem_MutBlock tag fin1 ll cv rr) ==>
+      (!k ev v.
+         lookup k (insert ptr (bvlSem_MutBlock tag fin2 ll cv rr)
+           refs) = SOME (Thunk ev v) <=>
+         lookup k refs = SOME (Thunk ev v)) /\
+      (!k. ref_ptr_annot conf
+             (lookup k (insert ptr
+               (bvlSem_MutBlock tag fin2 ll cv rr) refs)) =
+           ref_ptr_annot conf (lookup k refs)) /\
+      (!v. dest_thunk v (insert ptr
+             (bvlSem_MutBlock tag fin2 ll cv rr) refs) =
+           dest_thunk v refs) /\
+      (!k bb.
+         (!t2 g2 m2 d2 s2.
+            lookup k refs = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+              ==> ~bb)
+         ==> (!t2 g2 m2 d2 s2.
+            lookup k (insert ptr (bvlSem_MutBlock tag fin2 ll cv rr)
+              refs) = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+                ==> ~bb))`,
+     DISCH_TAC THEN
+     (REPEAT CONJ_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC(opt @ rfs);
+       GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+       REWRITE_TAC[ref_ptr_annot_def] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[];
+       GEN_TAC THEN CASES_ON_NAME "v" THEN
+       ONCE_REWRITE_TAC[dataSem_dest_thunk_def] THEN
+       SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+       REWRITE_TAC[lookup_insert] THEN
+       ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+       TRY MATCH_REDUCE_TAC THEN REWRITE_TAC(opt @ rfs) THEN
+       REPEAT COND_CASES_TAC THEN REWRITE_TAC[];
+       REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+       (REWRITE_TAC[lookup_insert] THEN COND_CASES_TAC THENL
+         [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+          DISCH_THEN(K ALL_TAC) THEN
+          FIRST_ASSUM(fun a -> FIRST_ASSUM(fun lk ->
+            ACCEPT_TAC(MATCH_MP a lk)));
+          FIRST_ASSUM MATCH_ACCEPT_TAC])])) in
+   V_INV_REFS_TAC ALL_TAC ALL_TAC (V_INV_REFS_PLAIN same)
+     (V_INV_REFS_THUNK same 5) (V_INV_REFS_THUNK same 6)));;
 
 (* bound variables deliberately avoid the names used at the use sites, so that
    irule/MATCH_MP_TAC does not fail on a free/bound name clash *)
@@ -5462,7 +5825,58 @@ let v_inv_MutBlock_hole_lemma = prove
        v_inv_ck ck conf v1 (insert ptr (bvlSem_MutBlock tag fin2 ll
          cv2 rr) refs)
          (y,f,tf,heap)`,
-  CHEAT_TAC);;
+  (* and the same where what sits in the hole changes as well: the
+     annotation counts the two sides of the hole and not what is in
+     it *)
+  (let opt = [distinctness "option"; injectivity "option"] in
+   let rfs = [distinctness "bvlSem_ref";
+              injectivity "bvlSem_ref";
+              distinctness "dataSem_dest_thunk_ret"] in
+   let same = prove
+    (`lookup ptr refs = SOME (bvlSem_MutBlock tag fin1 ll cv1 rr) ==>
+      (!k ev v.
+         lookup k (insert ptr (bvlSem_MutBlock tag fin2 ll cv2 rr)
+           refs) = SOME (Thunk ev v) <=>
+         lookup k refs = SOME (Thunk ev v)) /\
+      (!k. ref_ptr_annot conf
+             (lookup k (insert ptr
+               (bvlSem_MutBlock tag fin2 ll cv2 rr) refs)) =
+           ref_ptr_annot conf (lookup k refs)) /\
+      (!v. dest_thunk v (insert ptr
+             (bvlSem_MutBlock tag fin2 ll cv2 rr) refs) =
+           dest_thunk v refs) /\
+      (!k bb.
+         (!t2 g2 m2 d2 s2.
+            lookup k refs = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+              ==> ~bb)
+         ==> (!t2 g2 m2 d2 s2.
+            lookup k (insert ptr (bvlSem_MutBlock tag fin2 ll cv2 rr)
+              refs) = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+                ==> ~bb))`,
+     DISCH_TAC THEN
+     (REPEAT CONJ_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC(opt @ rfs);
+       GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+       REWRITE_TAC[ref_ptr_annot_def] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[];
+       GEN_TAC THEN CASES_ON_NAME "v" THEN
+       ONCE_REWRITE_TAC[dataSem_dest_thunk_def] THEN
+       SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+       REWRITE_TAC[lookup_insert] THEN
+       ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+       TRY MATCH_REDUCE_TAC THEN REWRITE_TAC(opt @ rfs) THEN
+       REPEAT COND_CASES_TAC THEN REWRITE_TAC[];
+       REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+       (REWRITE_TAC[lookup_insert] THEN COND_CASES_TAC THENL
+         [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+          DISCH_THEN(K ALL_TAC) THEN
+          FIRST_ASSUM(fun a -> FIRST_ASSUM(fun lk ->
+            ACCEPT_TAC(MATCH_MP a lk)));
+          FIRST_ASSUM MATCH_ACCEPT_TAC])])) in
+   V_INV_REFS_TAC ALL_TAC ALL_TAC (V_INV_REFS_PLAIN same)
+     (V_INV_REFS_THUNK same 5) (V_INV_REFS_THUNK same 6)));;
 
 (* [local] *)
 let v_inv_MutBlock_hole = prove
@@ -6320,7 +6734,91 @@ let v_inv_new_Thunk_insert_lemma = prove
      (ev = Evaluated ==> dest_thunk h refs = NotThunk) ==>
        v_inv_ck ck conf v (insert ptr (Thunk ev h) refs)
          (x,f,tf,heap)`,
-  CHEAT_TAC);;
+  (* a thunk at a key that the refs do not have: now a lookup of
+     the new refs does find a thunk where the old ones found
+     nothing, so the facts hold away from ptr -- and a pointer of
+     the relation is a key of f, which ptr is not, while a thunk of
+     the old refs is one of the new refs wherever it is *)
+  (let opt = [distinctness "option"; injectivity "option"] in
+   let rfs = [distinctness "bvlSem_ref";
+              injectivity "bvlSem_ref";
+              distinctness "dataSem_dest_thunk_ret"] in
+   let notptr3 = prove
+    (`~(ptr IN FDOM f) /\ k IN FDOM f ==> ~(k = ptr)`,
+     MESON_TAC[]) in
+   let thunk_tr = prove
+    (`lookup ptr refs = NONE ==>
+      (!k ev2 v2. lookup k refs = SOME (Thunk ev2 v2) ==>
+         lookup k (insert ptr (Thunk ev h) refs) =
+           SOME (Thunk ev2 v2))`,
+     DISCH_TAC THEN REPEAT GEN_TAC THEN
+     REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THEN ASM_REWRITE_TAC(opt @ rfs)) in
+   let same = prove
+    (`lookup ptr refs = NONE ==>
+      (!k. ~(k = ptr) ==>
+         (!ev2 v2.
+            lookup k (insert ptr (Thunk ev h) refs) =
+              SOME (Thunk ev2 v2) <=>
+            lookup k refs = SOME (Thunk ev2 v2))) /\
+      (!k. ~(k = ptr) ==>
+         ref_ptr_annot conf
+           (lookup k (insert ptr (Thunk ev h) refs)) =
+         ref_ptr_annot conf (lookup k refs)) /\
+      (!v. dest_thunk v refs = NotThunk ==>
+           dest_thunk v (insert ptr (Thunk ev h) refs) = NotThunk) /\
+      (!k bb.
+         (!t2 g2 m2 d2 s2.
+            lookup k refs = SOME (bvlSem_MutBlock t2 g2 m2 d2 s2)
+              ==> ~bb)
+         ==> (!t2 g2 m2 d2 s2.
+            lookup k (insert ptr (Thunk ev h) refs) =
+              SOME (bvlSem_MutBlock t2 g2 m2 d2 s2) ==> ~bb))`,
+     DISCH_TAC THEN
+     (REPEAT CONJ_TAC THENL
+      [REPEAT STRIP_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       ASM_REWRITE_TAC[];
+       REPEAT STRIP_TAC THEN REWRITE_TAC[lookup_insert] THEN
+       ASM_REWRITE_TAC[];
+       GEN_TAC THEN CASES_ON_NAME "v" THEN
+       ONCE_REWRITE_TAC[dataSem_dest_thunk_def] THEN
+       SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+       REWRITE_TAC[lookup_insert] THEN
+       ASM_CASES_TAC `a1:num = ptr` THEN ASM_REWRITE_TAC[] THEN
+       TRY MATCH_REDUCE_TAC THEN REWRITE_TAC(opt @ rfs) THEN
+       REPEAT COND_CASES_TAC THEN REWRITE_TAC[] THEN
+       TRY(CONV_TAC TAUT);
+       REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+       REWRITE_TAC[lookup_insert] THEN COND_CASES_TAC THEN
+       ASM_REWRITE_TAC(opt @ rfs) THEN
+       TRY(FIRST_ASSUM MATCH_ACCEPT_TAC)])) in
+   let lt1 = ARITH_RULE `~(ck = 0) ==> ck - 1 < ck` in
+   let prep =
+     FIRST_ASSUM(fun ds ->
+       ASSUME_TAC(CONJUNCT1 ds) THEN
+       ASSUME_TAC(MATCH_MP no_lk (CONJUNCT1(CONJUNCT2 ds)))) in
+   let d5 =
+     REPEAT SUBST_LHS_TAC THEN
+     FIRST_ASSUM(fun nolk ->
+       let (t_eq,a_eq,_,m_imp) = v_inv_refs_parts same nolk in
+       FIRST_ASSUM(fun nf -> FIRST_ASSUM(fun fd ->
+         let np = MATCH_MP notptr3 (CONJ nf fd) in
+         REWRITE_TAC[GSYM (MATCH_MP a_eq np)] THEN
+         MATCH_MP_TAC(el 4 v_inv_ck_rules) THEN
+         REPEAT CONJ_TAC THENL
+          [FIRST_ASSUM MATCH_ACCEPT_TAC;
+           ASM_REWRITE_TAC[MATCH_MP t_eq np];
+           MATCH_MP_TAC m_imp THEN
+           FIRST_ASSUM MATCH_ACCEPT_TAC]))) in
+   let d_nt n =
+     NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+     FIRST_ASSUM(fun nolk ->
+       let (_,_,dt,_) = v_inv_refs_parts same nolk in
+       let tr = MATCH_MP thunk_tr nolk in
+       FIRST_ASSUM(fun ih ->
+         ASM_MESON_TAC[el n v_inv_ck_rules; tr; dt;
+                       SPEC `ck - 1` ih; lt1])) in
+   V_INV_REFS_TAC prep ALL_TAC d5 (d_nt 5) (d_nt 6)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:6472-6476: a theorem that
    HOL4 states as the value of an ML expression:
@@ -10185,7 +10683,87 @@ let all_vs_MutBlock_T = prove
           (Block ts2 tag (left ++ [res] ++ right) :: vars) SUBSET
    Block ts2 tag (left ++ [res] ++ right) INSERT
    all_vs refs (res :: RefPtr b ptr :: vars)`,
-  CHEAT_TAC);;
+  (* the three parts of all_vs that read the refs see the cell at
+     ptr with the payload it had, and the new stack carries that
+     payload and the written value: so a value of the left side is
+     a value of the refs, a value of the new stack, or the new
+     Block itself *)
+  (let (vnil,vsing,vats,vcons) = v_all_vs_clauses () in
+   (* the values of the stack with the new Block in front: the
+      Block itself, the three parts of its payload, and the rest *)
+   let stack_mem = prove
+    (`MEM (w:dataSem_v)
+        (v_all_vs (Block t2 g (p ++ [q] ++ s) :: l)) <=>
+      w = Block t2 g (p ++ [q] ++ s) \/ MEM w (v_all_vs p) \/
+      MEM w (v_all_vs [q]) \/ MEM w (v_all_vs s) \/
+      MEM w (v_all_vs l)`,
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [vcons] THEN
+     REWRITE_TAC[vsing; MEM_APPEND; MEM; v_all_vs_append] THEN
+     CONV_TAC TAUT) in
+   (* and the values of a stack of two values in front of a rest *)
+   let vmem2 = prove
+    (`MEM (w:dataSem_v) (v_all_vs (a :: aa :: l)) <=>
+      MEM w (v_all_vs [a]) \/ MEM w (v_all_vs [aa]) \/
+      MEM w (v_all_vs l)`,
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [vcons] THEN
+     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV)
+       [vcons] THEN
+     REWRITE_TAC[MEM_APPEND]) in
+   (* the cell that the lookup of a part of all_vs found: at ptr it
+      is the one the insert put there and away from ptr the one of
+      the refs *)
+   let open_lk =
+     FIRST_X_ASSUM(fun th ->
+       MP_TAC(CONV_RULE(LAND_CONV(REWR_CONV lookup_insert)) th)) THEN
+     COND_CASES_TAC in
+   let by_mut tac =
+     SUBGOAL_THEN `MEM w (v_all_vs (left ++ [cen] ++ right))`
+       (fun m -> FIRST_ASSUM(fun lk ->
+          MATCH_ACCEPT_TAC(MATCH_MP in_all_vs_MutBlock (CONJ lk m))))
+     THEN tac in
+   let by_stack =
+     SUBGOAL_THEN `MEM w (v_all_vs (res :: RefPtr b ptr :: vars))`
+       (fun m -> MATCH_ACCEPT_TAC(MATCH_MP in_all_vs_stack m)) THEN
+     ASM_REWRITE_TAC[vmem2] in
+   (* a cell that is no MutBlock is not the one at ptr, and is the
+      cell it was *)
+   let plain =
+     open_lk THENL
+      [REWRITE_TAC[injectivity "option";
+                   distinctness "bvlSem_ref"];
+       DISCH_TAC THEN DISJ2_TAC THEN
+       REWRITE_TAC[all_vs_def; IN_UNION; IN_ELIM_THM] THEN
+       ASM_MESON_TAC[]] in
+   DISCH_TAC THEN REWRITE_TAC[SUBSET] THEN
+   X_GEN_TAC `w:dataSem_v` THEN
+   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [all_vs_def] THEN
+   REWRITE_TAC[IN_UNION; IN_ELIM_THM; IN_INSERT; stack_mem] THEN
+   DISCH_THEN STRIP_ASSUME_TAC THENL
+    [(* the ValueArrays and the Thunks of the refs are untouched *)
+     plain;
+     plain;
+     (* the cell at ptr keeps its payload, and the other MutBlocks
+        are the ones they were *)
+     open_lk THENL
+      [REWRITE_TAC[injectivity "option";
+                   injectivity "bvlSem_ref"] THEN
+       STRIP_TAC THEN DISJ2_TAC THEN by_mut (ASM_REWRITE_TAC[]);
+       DISCH_TAC THEN DISJ2_TAC THEN
+       FIRST_ASSUM(fun m -> FIRST_ASSUM(fun lk ->
+         MATCH_ACCEPT_TAC(MATCH_MP in_all_vs_MutBlock
+           (CONJ lk m))))];
+     (* the new Block itself *)
+     ASM_REWRITE_TAC[];
+     (* its left part and its right part are the payload of the
+        cell at ptr *)
+     DISJ2_TAC THEN
+     by_mut (ASM_REWRITE_TAC[v_all_vs_append; MEM_APPEND]);
+     (* and the written value and the rest of the stack are roots
+        of the right side *)
+     DISJ2_TAC THEN by_stack;
+     DISJ2_TAC THEN
+     by_mut (ASM_REWRITE_TAC[v_all_vs_append; MEM_APPEND]);
+     DISJ2_TAC THEN by_stack]));;
 
 (* the hole of a MutBlock is reachable from the pointer to it *)
 (* [local] *)
@@ -10241,7 +10819,43 @@ let reachable_refs_MutBlock_T = prove
                   (insert ptr (bvlSem_MutBlock tag T left cen right)
                     refs) n ==>
    reachable_refs (res :: RefPtr b ptr :: vars) refs n`,
-  CHEAT_TAC);;
+  (* the payload of the cell at ptr is the one it was, so the edges
+     are the old ones; a ref that the new Block reaches it reaches
+     through its left part, the written value or its right part,
+     and the first and the last of those are in the payload of the
+     cell, which the pointer reaches in one step *)
+  (let blk_refs = prove
+    (`MEM ss (get_refs (Block tt aa ys)) <=>
+      ?yy. MEM yy ys /\ MEM ss (get_refs yy)`,
+     REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+     MESON_TAC[]) in
+   let by_ptr =
+     MAP_EVERY EXISTS_TAC [`RefPtr b ptr:dataSem_v`; `ptr:num`] THEN
+     REWRITE_TAC[get_refs_def; MEM] THEN
+     MATCH_MP_TAC(CONJUNCT2(SPEC_ALL RTC_RULES)) THEN
+     EXISTS_TAC `rr:num` THEN ASM_REWRITE_TAC[] THEN
+     ASM_REWRITE_TAC[ref_edge_def] THEN MATCH_REDUCE_TAC THEN
+     REWRITE_TAC[blk_refs; MEM_APPEND; MEM] THEN
+     EXISTS_TAC `yy:dataSem_v` THEN ASM_REWRITE_TAC[] in
+   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
+   FIRST_ASSUM(fun th ->
+     REWRITE_TAC[reachable_refs_def; MEM;
+                 MATCH_MP ref_edge_insert_MutBlock th]) THEN
+   DISCH_THEN(X_CHOOSE_THEN `xx:dataSem_v`
+     (X_CHOOSE_THEN `rr:num` STRIP_ASSUME_TAC)) THEN
+   REWRITE_TAC[reachable_refs_def; MEM] THENL
+    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+     FIRST_X_ASSUM(fun th ->
+       MP_TAC(CONV_RULE(REWR_CONV blk_refs) th)) THEN
+     REWRITE_TAC[MEM_APPEND; MEM] THEN
+     DISCH_THEN(X_CHOOSE_THEN `yy:dataSem_v`
+       STRIP_ASSUME_TAC) THENL
+      [by_ptr;
+       MAP_EVERY EXISTS_TAC [`yy:dataSem_v`; `rr:num`] THEN
+       ASM_REWRITE_TAC[];
+       by_ptr];
+     MAP_EVERY EXISTS_TAC [`xx:dataSem_v`; `rr:num`] THEN
+     ASM_REWRITE_TAC[]]));;
 
 (* [local] *)
 let dest_thunk_insert_MutBlock = prove
