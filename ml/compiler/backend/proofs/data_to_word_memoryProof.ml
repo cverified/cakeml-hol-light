@@ -4186,7 +4186,7 @@ let v_inv_tf_update_lemma = prove
          if not (hd_is "v_inv" (concl vi)) then fail() else
          MATCH_ACCEPT_TAC(SPEC_ALL(REWRITE_RULE[v_inv_eq]
            (MATCH_MP v_inv_tf_update_thm_alt
-             (CONJ vi (CONJ nts ts)))))))));;
+             (CONJ vi (CONJ nts ts))))))))));;
 
 let v_inv_tf_update = prove
  (`!conf refs y f tf heap heap1 a stack' ts ts' tag xs.
