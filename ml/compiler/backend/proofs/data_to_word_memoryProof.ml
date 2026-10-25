@@ -1161,15 +1161,15 @@ let v_inv_related_lemma = prove
   (* the attempt: the proof of the source names v_inv_def,
      small_int_def, ADDR_APPLY_def, gc_related_def, ADDR_MAP_def,
      Word64Rep_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_inv_def; small_int_def; ADDR_APPLY_def;
        gc_related_def; ADDR_MAP_def; Word64Rep_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_inv_def; small_int_def; ADDR_APPLY_def;
-         gc_related_def; ADDR_MAP_def; Word64Rep_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let v_inv_related = prove
@@ -1215,15 +1215,15 @@ let bc_ref_inv_related = prove
   (* the attempt: the proof of the source names bc_ref_inv_def,
      v_inv_related, gc_related_def, RefBlock_def, BlockRep_def,
      FLOOKUP.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bc_ref_inv_def; v_inv_related;
        gc_related_def; RefBlock_def; BlockRep_def; FLOOKUP] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bc_ref_inv_def; v_inv_related;
-         gc_related_def; RefBlock_def; BlockRep_def; FLOOKUP]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let gc_inline_rel = cake_inductive
   `(gc_inline_rel inline h1 x x) /\
@@ -1378,17 +1378,16 @@ let gc_heap_inline_rel_v_inv_lemma = prove
      small_int_def, ThunkBlock_def,
      LIST_REL_gc_heap_inline_DataElement, Word64Rep_def,
      BlockRep_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_inv_def; small_int_def; ThunkBlock_def;
        LIST_REL_gc_heap_inline_DataElement; Word64Rep_def;
        BlockRep_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_inv_def; small_int_def; ThunkBlock_def;
-         LIST_REL_gc_heap_inline_DataElement; Word64Rep_def;
-         BlockRep_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -1419,17 +1418,16 @@ let bc_stack_ref_inv_gc_inline = prove
      bc_stack_ref_inv_def, gc_inline_def,
      gc_heap_inline_rel_heap_lookup, gc_heap_inline_rel_v_inv,
      LIST_REL_EL_EQN, reachable_refs_def.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bc_stack_ref_inv_def; gc_inline_def;
        gc_heap_inline_rel_heap_lookup; gc_heap_inline_rel_v_inv;
        LIST_REL_EL_EQN; reachable_refs_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bc_stack_ref_inv_def; gc_inline_def;
-         gc_heap_inline_rel_heap_lookup; gc_heap_inline_rel_v_inv;
-         LIST_REL_EL_EQN; reachable_refs_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -1442,17 +1440,16 @@ let bc_stack_ref_inv_gc_related_roots_heap = prove
   (* the attempt: the proof of the source names
      bc_stack_ref_inv_def, gc_related_roots_heap_def, f_o_f,
      gc_related_def, LENGTH_ADDR_MAP, FDOM.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bc_stack_ref_inv_def;
        gc_related_roots_heap_def; f_o_f; gc_related_def;
        LENGTH_ADDR_MAP; FDOM] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bc_stack_ref_inv_def;
-         gc_related_roots_heap_def; f_o_f; gc_related_def;
-         LENGTH_ADDR_MAP; FDOM]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -1672,17 +1669,16 @@ let data_to_word_memoryProof_full_gc_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      full_gc_related, heap_length_def, full_gc_LENGTH,
      unused_space_inv_def, heap_expand_def.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; full_gc_related;
        heap_length_def; full_gc_LENGTH; unused_space_inv_def;
        heap_expand_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; full_gc_related;
-         heap_length_def; full_gc_LENGTH; unused_space_inv_def;
-         heap_expand_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let make_gc_conf_def = cake_define
   `make_gc_conf limit' =
@@ -2272,15 +2268,15 @@ let data_to_word_memoryProof_gen_gc_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      make_gc_conf_def, gen_gc_def, heap_ok_def, gen_gc_related,
      gen_gc_ok.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; make_gc_conf_def;
        gen_gc_def; heap_ok_def; gen_gc_related; gen_gc_ok] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; make_gc_conf_def; gen_gc_def;
-         heap_ok_def; gen_gc_related; gen_gc_ok]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let has_gen_def = cake_define
   `has_gen (GenState _26 xs) <=> ~(xs = [])`;;
@@ -2415,17 +2411,16 @@ let gen_gc_partial_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      make_gc_conf_def, partial_gc_def, heap_ok_def,
      make_partial_conf_def, partial_gc_related.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; make_gc_conf_def;
        partial_gc_def; heap_ok_def; make_partial_conf_def;
        partial_gc_related] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; make_gc_conf_def;
-         partial_gc_def; heap_ok_def; make_partial_conf_def;
-         partial_gc_related]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let data_pointers_def = cake_define
   `data_pointers x1 =
@@ -2685,17 +2680,16 @@ let gc_combined_thm = prove
   (* the attempt: the proof of the source names gc_combined_def,
      make_gc_conf_def, abs_ml_inv_def, unused_space_inv_def,
      gc_kind_inv_def, data_up_to_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[gc_combined_def; make_gc_conf_def;
        abs_ml_inv_def; unused_space_inv_def; gc_kind_inv_def;
        data_up_to_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[gc_combined_def; make_gc_conf_def;
-         abs_ml_inv_def; unused_space_inv_def; gc_kind_inv_def;
-         data_up_to_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* Write to unused heap space is fine, e.g. cons *)
 
@@ -2816,17 +2810,16 @@ let IMP_heap_store_unused = prove
   (* the attempt: the proof of the source names
      heap_store_unused_def, heap_store_rel_def, el_length_def,
      unused_space_inv_def, heap_lookup_SPLIT, heap_store_lemma.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     What is here rewrites with them and closes by arithmetic, and
+     the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[heap_store_unused_def; heap_store_rel_def;
        el_length_def; unused_space_inv_def; heap_lookup_SPLIT;
        heap_store_lemma] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[heap_store_unused_def; heap_store_rel_def;
-         el_length_def; unused_space_inv_def; heap_lookup_SPLIT;
-         heap_store_lemma]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let IMP_heap_store_unused_alt = prove
@@ -2854,17 +2847,16 @@ let IMP_heap_store_unused_alt = prove
   (* the attempt: the proof of the source names
      heap_store_unused_alt_def, heap_store_rel_def, el_length_def,
      unused_space_inv_def, heap_lookup_SPLIT, heap_store_lemma.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     What is here rewrites with them and closes by arithmetic, and
+     the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[heap_store_unused_alt_def;
        heap_store_rel_def; el_length_def; unused_space_inv_def;
        heap_lookup_SPLIT; heap_store_lemma] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[heap_store_unused_alt_def;
-         heap_store_rel_def; el_length_def; unused_space_inv_def;
-         heap_lookup_SPLIT; heap_store_lemma]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let heap_store_rel_lemma = prove
@@ -3437,17 +3429,16 @@ let list_to_BlockReps_Pointer_lem = prove
   (* the attempt: the proof of the source names
      list_to_BlockReps_MEM, list_to_BlockReps_def, BlockRep_def,
      heap_length_def, el_length_def, heap_lookup_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[list_to_BlockReps_MEM;
        list_to_BlockReps_def; BlockRep_def; heap_length_def;
        el_length_def; heap_lookup_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[list_to_BlockReps_MEM; list_to_BlockReps_def;
-         BlockRep_def; heap_length_def; el_length_def;
-         heap_lookup_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2435-2437: a theorem that
    HOL4 states as the value of an ML expression:
@@ -3617,15 +3608,15 @@ let v_inv_list_to_v_lem = prove
   (* the attempt: the proof of the source names FDOM, list_to_v_def,
      list_to_BlockReps_def, v_inv_def, BlockRep_def,
      heap_length_APPEND.  What is here rewrites with them and closes
-     by arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     by arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[FDOM; list_to_v_def; list_to_BlockReps_def;
        v_inv_def; BlockRep_def; heap_length_APPEND] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[FDOM; list_to_v_def; list_to_BlockReps_def;
-         v_inv_def; BlockRep_def; heap_length_APPEND]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2670-2671: a theorem that
    HOL4 states as the value of an ML expression: v_inv_list_to_v *)
@@ -4653,17 +4644,16 @@ let cons_thm_alt = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, FDOM, LIST_REL_SPLIT1,
      unused_space_inv_def, IMP_heap_store_unused_alt.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def; FDOM;
        LIST_REL_SPLIT1; unused_space_inv_def;
        IMP_heap_store_unused_alt] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def; FDOM;
-         LIST_REL_SPLIT1; unused_space_inv_def;
-         IMP_heap_store_unused_alt]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -4792,17 +4782,16 @@ let word64_alt_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      el_length_def, Word64Rep_def, IMP_heap_store_unused_alt,
      roots_ok_def, heap_store_rel_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; el_length_def;
        Word64Rep_def; IMP_heap_store_unused_alt; roots_ok_def;
        heap_store_rel_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; el_length_def; Word64Rep_def;
-         IMP_heap_store_unused_alt; roots_ok_def;
-         heap_store_rel_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* bignum *)
 
@@ -4849,17 +4838,16 @@ let bignum_alt_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      el_length_def, IMP_heap_store_unused_alt, roots_ok_def,
      heap_store_rel_def, isSomeDataElement_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; el_length_def;
        IMP_heap_store_unused_alt; roots_ok_def;
        heap_store_rel_def; isSomeDataElement_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; el_length_def;
-         IMP_heap_store_unused_alt; roots_ok_def;
-         heap_store_rel_def; isSomeDataElement_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* update ref *)
 
@@ -5900,17 +5888,16 @@ let mutcons_thm_alt = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, LIST_REL_SPLIT1, unused_space_inv_def,
      IMP_heap_store_unused_alt, BlockRep_def.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        LIST_REL_SPLIT1; unused_space_inv_def;
        IMP_heap_store_unused_alt; BlockRep_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         LIST_REL_SPLIT1; unused_space_inv_def;
-         IMP_heap_store_unused_alt; BlockRep_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -6108,15 +6095,15 @@ let v_inv_Thunk_insert_lemma = prove
   (* the attempt: the proof of the source names v_inv_def,
      small_int_def, ThunkBlock_def, Word64Rep_def, BlockRep_def,
      LIST_REL_EL_EQN.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_inv_def; small_int_def; ThunkBlock_def;
        Word64Rep_def; BlockRep_def; LIST_REL_EL_EQN] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_inv_def; small_int_def; ThunkBlock_def;
-         Word64Rep_def; BlockRep_def; LIST_REL_EL_EQN]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:4636-4640: a theorem that
    HOL4 states as the value of an ML expression: v_inv_Thunk_insert *)
@@ -6419,17 +6406,16 @@ let update_ref_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, EVERY2_APPEND_CONS, v_inv_def,
      reachable_refs_def, bc_ref_inv_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        EVERY2_APPEND_CONS; v_inv_def; reachable_refs_def;
        bc_ref_inv_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         EVERY2_APPEND_CONS; v_inv_def; reachable_refs_def;
-         bc_ref_inv_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -6537,17 +6523,16 @@ let update_ref_thm1 = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, EVERY2_APPEND_CONS, v_inv_def,
      reachable_refs_def, bc_ref_inv_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        EVERY2_APPEND_CONS; v_inv_def; reachable_refs_def;
        bc_ref_inv_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         EVERY2_APPEND_CONS; v_inv_def; reachable_refs_def;
-         bc_ref_inv_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -6612,15 +6597,15 @@ let update_thunk_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
      bc_ref_inv_def, FLOOKUP.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        v_inv_def; reachable_refs_def; bc_ref_inv_def; FLOOKUP] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         v_inv_def; reachable_refs_def; bc_ref_inv_def; FLOOKUP]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* ---- UpdateCons: writing the hole of an unfinalised MutBlock.  The cell is
    laid out as a BlockRep, so the heap-level machinery is the RefBlock/
@@ -7111,15 +7096,15 @@ let update_mutblock_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
      bc_ref_inv_def, FLOOKUP.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        v_inv_def; reachable_refs_def; bc_ref_inv_def; FLOOKUP] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         v_inv_def; reachable_refs_def; bc_ref_inv_def; FLOOKUP]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* update byte ref *)
 
@@ -7536,16 +7521,16 @@ let update_byte_ref_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
      bc_ref_inv_def, FLOOKUP_DEF.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        v_inv_def; reachable_refs_def; bc_ref_inv_def;
        FLOOKUP_DEF] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         v_inv_def; reachable_refs_def; bc_ref_inv_def; FLOOKUP_DEF]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let heap_store_unused_thm = prove
@@ -7790,17 +7775,16 @@ let new_ref_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, EVERY2_APPEND_IMP_APPEND, el_length_def,
      RefBlock_def, unused_space_inv_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        EVERY2_APPEND_IMP_APPEND; el_length_def; RefBlock_def;
        unused_space_inv_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         EVERY2_APPEND_IMP_APPEND; el_length_def; RefBlock_def;
-         unused_space_inv_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let v_inv_new_Thunk_insert_lemma = prove
@@ -7971,17 +7955,16 @@ let new_thunk_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, EVERY2_APPEND_IMP_APPEND, el_length_def,
      ThunkBlock_def, unused_space_inv_def.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        EVERY2_APPEND_IMP_APPEND; el_length_def; ThunkBlock_def;
        unused_space_inv_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         EVERY2_APPEND_IMP_APPEND; el_length_def; ThunkBlock_def;
-         unused_space_inv_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* deref *)
 
@@ -8087,16 +8070,16 @@ let deref_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
      bc_ref_inv_def, FLOOKUP_DEF.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        v_inv_def; reachable_refs_def; bc_ref_inv_def;
        FLOOKUP_DEF] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         v_inv_def; reachable_refs_def; bc_ref_inv_def; FLOOKUP_DEF]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* el *)
 
@@ -8158,15 +8141,15 @@ let el_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, v_inv_def, heap_el_def, BlockRep_def,
      roots_ok_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        v_inv_def; heap_el_def; BlockRep_def; roots_ok_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         v_inv_def; heap_el_def; BlockRep_def; roots_ok_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* new byte array *)
 
@@ -8227,17 +8210,16 @@ let new_byte_alt_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, EVERY2_APPEND_IMP_APPEND, el_length_def,
      unused_space_inv_def, IMP_heap_store_unused_alt.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        EVERY2_APPEND_IMP_APPEND; el_length_def;
        unused_space_inv_def; IMP_heap_store_unused_alt] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         EVERY2_APPEND_IMP_APPEND; el_length_def;
-         unused_space_inv_def; IMP_heap_store_unused_alt]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* equality *)
 
@@ -8494,17 +8476,16 @@ let abs_ml_inv_stack_permute = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, roots_ok_def, DRESTRICT, all_ts_def,
      blocks_unique_stack_permute.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        roots_ok_def; DRESTRICT; all_ts_def;
        blocks_unique_stack_permute] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         roots_ok_def; DRESTRICT; all_ts_def;
-         blocks_unique_stack_permute]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* pop *)
 
@@ -9192,15 +9173,15 @@ let word_ml_inv_rearrange = prove
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ys`),
   (* the attempt: the proof of the source names word_ml_inv_def,
      THE, ALOOKUP, EVERY2_MAP_MAP, EVERY2_IMP_EVERY, MEM_FIRST_EL.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     What is here rewrites with them and closes by arithmetic, and
+     the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[word_ml_inv_def; THE; ALOOKUP;
        EVERY2_MAP_MAP; EVERY2_IMP_EVERY; MEM_FIRST_EL] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[word_ml_inv_def; THE; ALOOKUP;
-         EVERY2_MAP_MAP; EVERY2_IMP_EVERY; MEM_FIRST_EL]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -9340,17 +9321,16 @@ let get_real_addr_get_addr = prove
   (* the attempt: the proof of the source names get_addr_def,
      get_real_addr_def, get_real_simple_addr_def, heap_lookup_LESS,
      shift_length_def, dimword.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[get_addr_def; get_real_addr_def;
        get_real_simple_addr_def; heap_lookup_LESS;
        shift_length_def; dimword] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[get_addr_def; get_real_addr_def;
-         get_real_simple_addr_def; heap_lookup_LESS;
-         shift_length_def; dimword]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let get_real_offset_thm = prove
  (`good_dimindex (:'a) ==>
@@ -10957,17 +10937,16 @@ let gc_kind_update_Ref = prove
   (* the attempt: the proof of the source names gc_kind_inv_def,
      gen_state_ok_def, gen_start_ok_def, heap_split_APPEND_if,
      heap_split_def, el_length_def.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[gc_kind_inv_def; gen_state_ok_def;
        gen_start_ok_def; heap_split_APPEND_if; heap_split_def;
        el_length_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[gc_kind_inv_def; gen_state_ok_def;
-         gen_start_ok_def; heap_split_APPEND_if; heap_split_def;
-         el_length_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -10990,15 +10969,15 @@ let memory_rel_Update' = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, update_ref_thm1, LENGTH_EQ_1, bool_def,
      word_addr_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        update_ref_thm1; LENGTH_EQ_1; bool_def; word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         update_ref_thm1; LENGTH_EQ_1; bool_def; word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -11023,15 +11002,15 @@ let memory_rel_Update = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, update_ref_thm1, LENGTH_EQ_1, bool_def,
      word_addr_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        update_ref_thm1; LENGTH_EQ_1; bool_def; word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         update_ref_thm1; LENGTH_EQ_1; bool_def; word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* mirrors memory_rel_Update: writing the hole of an unfinalised MutBlock is
    the same single memory write as updating a reference's payload *)
@@ -11058,16 +11037,16 @@ let memory_rel_UpdateCons = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, compare_def, abs_ml_inv_def,
      bc_stack_ref_inv_def, v_inv_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        compare_def; abs_ml_inv_def; bc_stack_ref_inv_def;
        v_inv_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; compare_def;
-         abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let data_to_word_memoryProof_store_list_def = cake_define_list
   [`data_to_word_memoryProof_store_list a [] (m:'a word->'a word_loc)
@@ -11223,15 +11202,15 @@ let memory_rel_UpdateThunk_NotEvaluated = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, update_thunk_thm, LENGTH_EQ_1, bool_def,
      word_addr_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        update_thunk_thm; LENGTH_EQ_1; bool_def; word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         update_thunk_thm; LENGTH_EQ_1; bool_def; word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let thunk_tag_bits_lemma = prove
@@ -11263,15 +11242,15 @@ let memory_rel_UpdateThunk_Evaluated = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, update_thunk_thm, LENGTH_EQ_1, bool_def,
      word_addr_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        update_thunk_thm; LENGTH_EQ_1; bool_def; word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         update_thunk_thm; LENGTH_EQ_1; bool_def; word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let word_list_exists_thm = prove
  (`(word_list_exists a 0 = emp) /\
@@ -11615,16 +11594,16 @@ let memory_rel_Word64_alt = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, EVERY2_SWAP, EVERY2_APPEND_IMP_APPEND,
      LIST_REL_LENGTH, word64_alt_thm.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        EVERY2_SWAP; EVERY2_APPEND_IMP_APPEND; LIST_REL_LENGTH;
        word64_alt_thm] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; EVERY2_SWAP;
-         EVERY2_APPEND_IMP_APPEND; LIST_REL_LENGTH; word64_alt_thm]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:9026-9028: a theorem that
    HOL4 states as the value of an ML expression:
@@ -11657,16 +11636,16 @@ let IMP_memory_rel_bignum_alt = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, EVERY2_SWAP, EVERY2_APPEND_IMP_APPEND,
      LIST_REL_LENGTH, bignum_alt_thm.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        EVERY2_SWAP; EVERY2_APPEND_IMP_APPEND; LIST_REL_LENGTH;
        bignum_alt_thm] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; EVERY2_SWAP;
-         EVERY2_APPEND_IMP_APPEND; LIST_REL_LENGTH; bignum_alt_thm]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:9113-9114: a theorem that
    HOL4 states as the value of an ML expression:
@@ -11694,17 +11673,16 @@ let memory_rel_Cons1 = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, cons_thm_alt, bool_def, word_addr_def,
      heap_in_memory_store_def.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        cons_thm_alt; bool_def; word_addr_def;
        heap_in_memory_store_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         cons_thm_alt; bool_def; word_addr_def;
-         heap_in_memory_store_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* mirrors memory_rel_Cons1: a MutBlock is laid out exactly like the Block it
    finalises to, so the allocation is the Cons allocation; what differs is that
@@ -11739,16 +11717,16 @@ let memory_rel_MutCons = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, mutcons_thm, bool_def, word_addr_def,
      heap_in_memory_store_def.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        mutcons_thm; bool_def; word_addr_def;
        heap_in_memory_store_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; mutcons_thm;
-         bool_def; word_addr_def; heap_in_memory_store_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let INJ_FUPDATE = prove
  (`INJ (FAPPLY tf) (FDOM tf) s /\ ~(ts2 IN FDOM tf) /\ ~(x IN FRANGE tf)
@@ -11773,13 +11751,14 @@ let finalise_cons_none = prove
      lookup ptr refs' = NONE`,
   (* the attempt: the proof of the source names lookup_insert,
      lookup_delete.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[lookup_insert; lookup_delete] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[lookup_insert; lookup_delete]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let v_inv_swap_refs = prove
  (`!c v refs1 x f tf heap refs.
@@ -12245,17 +12224,16 @@ let bc_stack_ref_inv_MutBlock_centre = prove
   (* the attempt: the proof of the source names
      bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
      bc_ref_inv_def, FLOOKUP_DEF, LIST_REL_LENGTH.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bc_stack_ref_inv_def; v_inv_def;
        reachable_refs_def; bc_ref_inv_def; FLOOKUP_DEF;
        LIST_REL_LENGTH] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bc_stack_ref_inv_def; v_inv_def;
-         reachable_refs_def; bc_ref_inv_def; FLOOKUP_DEF;
-         LIST_REL_LENGTH]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -12308,16 +12286,16 @@ let bc_stack_ref_inv_MutBlock_F = prove
   (* the attempt: the proof of the source names
      bc_stack_ref_inv_def, INJ_FUPDATE, v_inv_def,
      reachable_refs_def, bc_ref_inv_def, FLOOKUP_DEF.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bc_stack_ref_inv_def; INJ_FUPDATE;
        v_inv_def; reachable_refs_def; bc_ref_inv_def;
        FLOOKUP_DEF] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bc_stack_ref_inv_def; INJ_FUPDATE; v_inv_def;
-         reachable_refs_def; bc_ref_inv_def; FLOOKUP_DEF]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -12335,20 +12313,17 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
   (* the attempt: the proof of the source names union_def,
      lookup_union, bc_stack_ref_inv_MutBlock_centre,
      bc_stack_ref_inv_union_del_ins_lemma, bc_stack_ref_inv_def,
-     THE.  What is here rewrites with them and closes by arithmetic
-     or by MESON, and the cheat is behind it until the proof is
-     written *)
-  (ATTEMPT_TAC 5
+     THE.  What is here rewrites with them and closes by arithmetic,
+     and the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[union_def; lookup_union;
        bc_stack_ref_inv_MutBlock_centre;
        bc_stack_ref_inv_union_del_ins_lemma;
        bc_stack_ref_inv_def; THE] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[union_def; lookup_union;
-         bc_stack_ref_inv_MutBlock_centre;
-         bc_stack_ref_inv_union_del_ins_lemma; bc_stack_ref_inv_def;
-         THE]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -12509,15 +12484,15 @@ let memory_rel_Ref = prove
               ws)) :: vars)))`),
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, new_ref_thm, bool_def, pop_thm, word_addr_def.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     What is here rewrites with them and closes by arithmetic, and
+     the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        new_ref_thm; bool_def; pop_thm; word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; new_ref_thm;
-         bool_def; pop_thm; word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -12546,15 +12521,15 @@ let memory_rel_AllocThunk = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, new_thunk_thm, bool_def, abs_ml_inv_def,
      pop_thm.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        new_thunk_thm; bool_def; abs_ml_inv_def; pop_thm] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         new_thunk_thm; bool_def; abs_ml_inv_def; pop_thm]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -12571,17 +12546,16 @@ let memory_rel_write = prove
   (* the attempt: the proof of the source names memory_rel_def,
      heap_in_memory_store_def, word_ml_inv_def, abs_ml_inv_def,
      unused_space_inv_def, heap_lookup_SPLIT.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; heap_in_memory_store_def;
        word_ml_inv_def; abs_ml_inv_def; unused_space_inv_def;
        heap_lookup_SPLIT] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; heap_in_memory_store_def;
-         word_ml_inv_def; abs_ml_inv_def; unused_space_inv_def;
-         heap_lookup_SPLIT]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let word_list_AND_word_list_exists_IMP = prove
  (`!ws aa frame n.
@@ -12702,15 +12676,15 @@ let memory_rel_Cons_alt = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, cons_thm_alt, FLOOKUP,
      heap_in_memory_store_def, bool_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        cons_thm_alt; FLOOKUP; heap_in_memory_store_def; bool_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         cons_thm_alt; FLOOKUP; heap_in_memory_store_def; bool_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -13209,15 +13183,15 @@ let bytes_to_word_eq_lemma = prove
       bytes_to_word (dimindex (:'a) DIV 8) (n2w 0) bs' h' be`),
   (* the attempt: the proof of the source names good_dimindex_def,
      bytes_to_word_def, set_byte_eq_ARB.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[good_dimindex_def; bytes_to_word_def;
        set_byte_eq_ARB] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[good_dimindex_def; bytes_to_word_def;
-         set_byte_eq_ARB]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -13587,17 +13561,16 @@ let write_bytes_change_extra = prove
   (* the attempt: the proof of the source names write_bytes_def,
      byte_len_def, good_dimindex_def, bytes_to_word_def,
      set_byte_all_64, set_byte_all_32.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[write_bytes_def; byte_len_def;
        good_dimindex_def; bytes_to_word_def; set_byte_all_64;
        set_byte_all_32] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[write_bytes_def; byte_len_def;
-         good_dimindex_def; bytes_to_word_def; set_byte_all_64;
-         set_byte_all_32]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let last_bytes_def = cake_define
   `last_bytes k b a w be' =
@@ -13821,15 +13794,15 @@ let memory_rel_RefByte_content = prove
   (* the attempt: the proof of the source names memory_rel_def,
      bytes_def, word_ml_inv_def, new_byte_alt_thm, byte_len_def,
      good_dimindex_def.  What is here rewrites with them and closes
-     by arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     by arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; bytes_def; word_ml_inv_def;
        new_byte_alt_thm; byte_len_def; good_dimindex_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; bytes_def; word_ml_inv_def;
-         new_byte_alt_thm; byte_len_def; good_dimindex_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -13861,17 +13834,16 @@ let memory_rel_RefByte_alt = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, new_byte_alt_thm, byte_len_def,
      good_dimindex_def, bool_def.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        new_byte_alt_thm; byte_len_def; good_dimindex_def;
        bool_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         new_byte_alt_thm; byte_len_def; good_dimindex_def;
-         bool_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -14441,17 +14413,16 @@ let memory_rel_FromList = prove
   (* the attempt: the proof of the source names FLOOKUP,
      memory_rel_def, heap_in_memory_store_def,
      memory_rel_IMP_word_list_exists, memory_rel_Cons_alt.  What is
-     here rewrites with them and closes by arithmetic or by MESON,
-     and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     here rewrites with them and closes by arithmetic, and the cheat
+     is behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[FLOOKUP; memory_rel_def;
        heap_in_memory_store_def; memory_rel_IMP_word_list_exists;
        memory_rel_Cons_alt] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[FLOOKUP; memory_rel_def;
-         heap_in_memory_store_def; memory_rel_IMP_word_list_exists;
-         memory_rel_Cons_alt]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let make_header_tag_mask = prove
@@ -15125,17 +15096,16 @@ let memory_rel_Thunk_IMP = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
      v_inv_def, word_addr_def.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
        word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
-         word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -15152,17 +15122,16 @@ let memory_rel_Thunk_inlined = prove
   (* the attempt: the proof of the source names
      memory_rel_Thunk_IMP, memory_rel_def, word_ml_inv_def,
      abs_ml_inv_def, bc_stack_ref_inv_def, all_ts_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_Thunk_IMP; memory_rel_def;
        word_ml_inv_def; abs_ml_inv_def; bc_stack_ref_inv_def;
        all_ts_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_Thunk_IMP; memory_rel_def;
-         word_ml_inv_def; abs_ml_inv_def; bc_stack_ref_inv_def;
-         all_ts_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:11655-11657: the ML values
    that the definitions below antiquote *)
@@ -15188,17 +15157,16 @@ let get_byte_bytes_to_word = prove
   (* the attempt: the proof of the source names bytes_to_word_def,
      good_dimindex_get_byte_set_byte, get_byte_set_byte_alt,
      byte_align_def, good_dimindex_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bytes_to_word_def;
        good_dimindex_get_byte_set_byte; get_byte_set_byte_alt;
        byte_align_def; good_dimindex_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bytes_to_word_def;
-         good_dimindex_get_byte_set_byte; get_byte_set_byte_alt;
-         byte_align_def; good_dimindex_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let MOD_MULT_MOD_LEMMA = prove
@@ -15373,13 +15341,14 @@ let set_byte_bytes_to_word = prove
        be`),
   (* the attempt: the proof of the source names good_dimindex_def,
      set_byte_sort.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[good_dimindex_def; set_byte_sort] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[good_dimindex_def; set_byte_sort]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -15399,17 +15368,16 @@ let heap_in_memory_store_UpdateByte = prove
   (* the attempt: the proof of the source names
      heap_in_memory_store_def, heap_length_APPEND, byte_aligned_def,
      byte_align_def, align_def, bytes_in_word_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[heap_in_memory_store_def;
        heap_length_APPEND; byte_aligned_def; byte_align_def;
        align_def; bytes_in_word_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[heap_in_memory_store_def; heap_length_APPEND;
-         byte_aligned_def; byte_align_def; align_def;
-         bytes_in_word_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let hide_memory_rel_def = cake_define
   `hide_memory_rel = memory_rel`;;
@@ -15453,17 +15421,16 @@ let memory_rel_ByteArray_IMP = prove
   (* the attempt: the proof of the source names hide_memory_rel_def,
      make_byte_header_def, memory_rel_def, word_ml_inv_def,
      bc_stack_ref_inv_def, v_inv_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[hide_memory_rel_def; make_byte_header_def;
        memory_rel_def; word_ml_inv_def; bc_stack_ref_inv_def;
        v_inv_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[hide_memory_rel_def; make_byte_header_def;
-         memory_rel_def; word_ml_inv_def; bc_stack_ref_inv_def;
-         v_inv_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -15579,17 +15546,16 @@ let memory_rel_RefPtr_gen_IMP = prove
      memory_rel_RefPtr_IMP_lemma, memory_rel_ValueArray_IMP,
      memory_rel_ByteArray_IMP, memory_rel_Thunk_IMP,
      make_header_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_RefPtr_IMP_lemma;
        memory_rel_ValueArray_IMP; memory_rel_ByteArray_IMP;
        memory_rel_Thunk_IMP; make_header_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_RefPtr_IMP_lemma;
-         memory_rel_ValueArray_IMP; memory_rel_ByteArray_IMP;
-         memory_rel_Thunk_IMP; make_header_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* Smallnum_bits *)
 let smallnum_bits = prove
@@ -15748,17 +15714,16 @@ let memory_rel_Number_bignum_IMP_ALT = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
      v_inv_def, word_addr_def.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
        word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
-         word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -15887,15 +15852,15 @@ let memory_rel_bignum_cmp = prove
   (* the attempt: the proof of the source names
      memory_rel_Number_bignum_header,
      memory_rel_Number_bignum_IMP_ALT, memory_rel_tail.  What is
-     here rewrites with them and closes by arithmetic or by MESON,
-     and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     here rewrites with them and closes by arithmetic, and the cheat
+     is behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_Number_bignum_header;
        memory_rel_Number_bignum_IMP_ALT; memory_rel_tail] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_Number_bignum_header;
-         memory_rel_Number_bignum_IMP_ALT; memory_rel_tail]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -15951,17 +15916,16 @@ let memory_rel_Word64_IMP = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
      v_inv_def, word_addr_def.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
        word_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
-         word_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -16277,15 +16241,15 @@ let memory_rel_RefPtr_EQ = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, ref_eq_thm, word_addr_def, get_addr_def,
      get_lowerbits_def.  What is here rewrites with them and closes
-     by arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     by arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def; ref_eq_thm;
        word_addr_def; get_addr_def; get_lowerbits_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def; ref_eq_thm;
-         word_addr_def; get_addr_def; get_lowerbits_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -16427,7 +16391,7 @@ let smallnum_test = prove
      the port has nothing in this file's closure, so this
      is the plain attempt, with the cheat behind it until
      the proof is written *)
-  (ATTEMPT_TAC 5
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
 
@@ -17108,15 +17072,15 @@ let word_cmp_loop_thm = prove
          (n2w 0) | SOME F -> (n2w 2))`,
   (* the attempt: the proof of the source names SNOC, SNOC_CASES,
      SNOC_APPEND, FRONT_SNOC, word_list_APPEND, word_list_def.  What
-     is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     is here rewrites with them and closes by arithmetic, and the
+     cheat is behind it until the proof is written.  A MESON over
+     them is what the next round adds; it costs a load ten minutes
+     to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[SNOC; SNOC_CASES; SNOC_APPEND; FRONT_SNOC;
        word_list_APPEND; word_list_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[SNOC; SNOC_CASES; SNOC_APPEND; FRONT_SNOC;
-         word_list_APPEND; word_list_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -17164,17 +17128,16 @@ let memory_rel_Number_cmp = prove
      memory_rel_Number_IMP_Word_2, small_int_def,
      memory_rel_any_Number_IMP, memory_rel_tail,
      memory_rel_Number_EQ, memory_rel_Number_LESS.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_Number_IMP_Word_2; small_int_def;
        memory_rel_any_Number_IMP; memory_rel_tail;
        memory_rel_Number_EQ; memory_rel_Number_LESS] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_Number_IMP_Word_2; small_int_def;
-         memory_rel_any_Number_IMP; memory_rel_tail;
-         memory_rel_Number_EQ; memory_rel_Number_LESS]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13234-13244: a theorem
    that HOL4 states as the value of an ML expression:
@@ -17515,15 +17478,15 @@ let memory_rel_depth_limit = prove
        elements_list (MAP FST ls ++ (v :: (MAP FST vars'))))`,
   (* the attempt: the proof of the source names NULL_EQ, MAX_LIST,
      memory_rel_Block_MEM, LESS_LENGTH.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[NULL_EQ; MAX_LIST; memory_rel_Block_MEM;
        LESS_LENGTH] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[NULL_EQ; MAX_LIST; memory_rel_Block_MEM;
-         LESS_LENGTH]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let not_all_distinct_map_snd = prove
@@ -17662,17 +17625,16 @@ let memory_rel_Block_ptr_eq = prove
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
      word_addr_def, get_addr_def.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
        abs_ml_inv_def; bc_stack_ref_inv_def; word_addr_def;
        get_addr_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_def; word_ml_inv_def;
-         abs_ml_inv_def; bc_stack_ref_inv_def; word_addr_def;
-         get_addr_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let elements_list_all_blocks = prove
  (`elements_list xs /\ ~(xs = []) /\ (?t a b. HD xs = Block t a b) ==>
@@ -17734,17 +17696,16 @@ let memory_rel_elements_list_distinct_lemma = prove
   (* the attempt: the proof of the source names
      not_all_distinct_map_snd, memory_rel_def, memory_rel_rearrange,
      vb_size_def, elements_list_all_blocks, transitive_def.  What is
-     here rewrites with them and closes by arithmetic or by MESON,
-     and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     here rewrites with them and closes by arithmetic, and the cheat
+     is behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[not_all_distinct_map_snd; memory_rel_def;
        memory_rel_rearrange; vb_size_def;
        elements_list_all_blocks; transitive_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[not_all_distinct_map_snd; memory_rel_def;
-         memory_rel_rearrange; vb_size_def;
-         elements_list_all_blocks; transitive_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -17920,15 +17881,15 @@ let memory_rel_depth_size_limit = prove
   (* the attempt: the proof of the source names vb_size_def,
      NULL_EQ, memory_rel_Block_IMP, dimword, good_dimindex_def,
      MAX_LIST.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[vb_size_def; NULL_EQ; memory_rel_Block_IMP;
        dimword; good_dimindex_def; MAX_LIST] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[vb_size_def; NULL_EQ; memory_rel_Block_IMP;
-         dimword; good_dimindex_def; MAX_LIST]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -17967,13 +17928,14 @@ let vb_eq_size_IMP_vb_size = prove
      vb_eq_size_list refs v1 v2 = SOME (n,b) ==> n <= SUM (MAP
        vb_size v1) + LENGTH v1)`,
   (* the attempt: the proof of the source names vb_size_def.  What
-     is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     is here rewrites with them and closes by arithmetic, and the
+     cheat is behind it until the proof is written.  A MESON over
+     them is what the next round adds; it costs a load ten minutes
+     to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[vb_size_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[vb_size_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -17990,17 +17952,16 @@ let memory_rel_limit = prove
   (* the attempt: the proof of the source names dimword,
      memory_rel_depth_size_limit, vb_eq_size_IMP_vb_size,
      memory_rel_def, memory_rel_rearrange, memory_rel_depth_limit.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     What is here rewrites with them and closes by arithmetic, and
+     the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[dimword; memory_rel_depth_size_limit;
        vb_eq_size_IMP_vb_size; memory_rel_def;
        memory_rel_rearrange; memory_rel_depth_limit] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[dimword; memory_rel_depth_size_limit;
-         vb_eq_size_IMP_vb_size; memory_rel_def;
-         memory_rel_rearrange; memory_rel_depth_limit]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -18014,7 +17975,7 @@ let memory_rel_ptr_eq = prove
      the port has nothing in this file's closure, so this
      is the plain attempt, with the cheat behind it until
      the proof is written *)
-  (ATTEMPT_TAC 5
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
 
@@ -18075,17 +18036,16 @@ let memory_rel_simple_eq = prove
   (* the attempt: the proof of the source names
      memory_rel_RefPtr_EQ, memory_rel_RefPtr_IMP, memory_rel_tl,
      memory_rel_Number_cmp, memory_rel_swap, memory_rel_Word64_IMP.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     What is here rewrites with them and closes by arithmetic, and
+     the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_RefPtr_EQ; memory_rel_RefPtr_IMP;
        memory_rel_tl; memory_rel_Number_cmp; memory_rel_swap;
        memory_rel_Word64_IMP] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_RefPtr_EQ; memory_rel_RefPtr_IMP;
-         memory_rel_tl; memory_rel_Number_cmp; memory_rel_swap;
-         memory_rel_Word64_IMP]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let word_header_def = cake_define
   `word_header c st a dm m =
@@ -18194,13 +18154,14 @@ let word_eq_LESS_EQ = prove
         word_eq_list c st dm m l ck w a1 a2 = SOME (x0,l1,ck1) ==>
           l1 <= l /\ ck1 <= ck)`,
   (* the attempt: the proof of the source names fix_clock_IMP.  What
-     is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     is here rewrites with them and closes by arithmetic, and the
+     cheat is behind it until the proof is written.  A MESON over
+     them is what the next round adds; it costs a load ten minutes
+     to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[fix_clock_IMP] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[fix_clock_IMP]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let fix_clock_word_eq = prove
@@ -18269,7 +18230,7 @@ let word_eq_add_clock = prove
      the port has nothing in this file's closure, so this
      is the plain attempt, with the cheat behind it until
      the proof is written *)
-  (ATTEMPT_TAC 5
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
 
@@ -18434,17 +18395,16 @@ let memory_rel_Block_explode_lemma = prove
   (* the attempt: the proof of the source names eq_explode_def,
      eq_assum_def, memory_rel_rearrange, SNOC_APPEND,
      eq_explode_APPEND, eq_assum_APPEND.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[eq_explode_def; eq_assum_def;
        memory_rel_rearrange; SNOC_APPEND; eq_explode_APPEND;
        eq_assum_APPEND] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[eq_explode_def; eq_assum_def;
-         memory_rel_rearrange; SNOC_APPEND; eq_explode_APPEND;
-         eq_assum_APPEND]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -18723,15 +18683,15 @@ let write_bytes_inj = prove
          ws be <=> bs1 = bs2))`),
   (* the attempt: the proof of the source names write_bytes_def,
      bytes_to_word_def, good_dimindex_def, DROP, TAKE, TAKE_DROP.
-     What is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     What is here rewrites with them and closes by arithmetic, and
+     the cheat is behind it until the proof is written.  A MESON
+     over them is what the next round adds; it costs a load ten
+     minutes to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[write_bytes_def; bytes_to_word_def;
        good_dimindex_def; DROP; TAKE; TAKE_DROP] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[write_bytes_def; bytes_to_word_def;
-         good_dimindex_def; DROP; TAKE; TAKE_DROP]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let MIN_ADD = prove
@@ -18764,7 +18724,7 @@ let do_eq_IFF_vb_eq_size = prove
      the port has nothing in this file's closure, so this
      is the plain attempt, with the cheat behind it until
      the proof is written *)
-  (ATTEMPT_TAC 5
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
 
@@ -18828,17 +18788,16 @@ let word_eq_thm0 = prove
      memory_rel_Number_cmp, memory_rel_swap, word_header_def,
      small_int_def, memory_rel_any_Number_IMP,
      memory_rel_Number_bignum_IMP_ALT.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_Number_cmp; memory_rel_swap;
        word_header_def; small_int_def; memory_rel_any_Number_IMP;
        memory_rel_Number_bignum_IMP_ALT] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_Number_cmp; memory_rel_swap;
-         word_header_def; small_int_def; memory_rel_any_Number_IMP;
-         memory_rel_Number_bignum_IMP_ALT]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -18962,17 +18921,16 @@ let memory_rel_Number_const_test = prove
      memory_rel_any_Number_IMP, IMP_memory_rel_Number,
      memory_rel_Number_EQ, small_int_def, bignum_words_def,
      i2mw_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_any_Number_IMP;
        IMP_memory_rel_Number; memory_rel_Number_EQ;
        small_int_def; bignum_words_def; i2mw_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_any_Number_IMP;
-         IMP_memory_rel_Number; memory_rel_Number_EQ; small_int_def;
-         bignum_words_def; i2mw_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -18991,17 +18949,16 @@ let memory_rel_Word64_const_test = prove
   (* the attempt: the proof of the source names
      memory_rel_Word64_IMP, word_mem_eq_def, isWord_def,
      memory_rel_def, word_ml_inv_def, abs_ml_inv_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_Word64_IMP; word_mem_eq_def;
        isWord_def; memory_rel_def; word_ml_inv_def;
        abs_ml_inv_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_Word64_IMP; word_mem_eq_def;
-         isWord_def; memory_rel_def; word_ml_inv_def;
-         abs_ml_inv_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let or_seven_eq = prove
@@ -19184,17 +19141,16 @@ let memory_rel_String_const_test = prove
   (* the attempt: the proof of the source names
      memory_rel_ByteArray_IMP, part_to_words_def, good_dimindex_def,
      byte_len_def, make_byte_header_def, memory_rel_def.  What is
-     here rewrites with them and closes by arithmetic or by MESON,
-     and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     here rewrites with them and closes by arithmetic, and the cheat
+     is behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_ByteArray_IMP; part_to_words_def;
        good_dimindex_def; byte_len_def; make_byte_header_def;
        memory_rel_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_ByteArray_IMP; part_to_words_def;
-         good_dimindex_def; byte_len_def; make_byte_header_def;
-         memory_rel_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let word_1_and_eq_0 = prove
@@ -19218,17 +19174,16 @@ let memory_rel_Number_single_mul = prove
   (* the attempt: the proof of the source names word_or_eq_0,
      memory_rel_swap, memory_rel_Number_const_test, small_int_def,
      good_dimindex_def, single_mul_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[word_or_eq_0; memory_rel_swap;
        memory_rel_Number_const_test; small_int_def;
        good_dimindex_def; single_mul_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[word_or_eq_0; memory_rel_swap;
-         memory_rel_Number_const_test; small_int_def;
-         good_dimindex_def; single_mul_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -19242,17 +19197,16 @@ let memory_rel_bounds_check = prove
   (* the attempt: the proof of the source names
      memory_rel_any_Number_IMP, dimword, small_int_def,
      good_dimindex_def, word_index, memory_rel_Number_IMP.  What is
-     here rewrites with them and closes by arithmetic or by MESON,
-     and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     here rewrites with them and closes by arithmetic, and the cheat
+     is behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_any_Number_IMP; dimword;
        small_int_def; good_dimindex_def; word_index;
        memory_rel_Number_IMP] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_any_Number_IMP; dimword;
-         small_int_def; good_dimindex_def; word_index;
-         memory_rel_Number_IMP]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -19430,17 +19384,16 @@ let word_copy_fwd_thm = prove
   (* the attempt: the proof of the source names list_copy_fwd_def,
      dimword, good_dimindex_def, memory_rel_ByteArray_IMP,
      lookup_insert, memory_rel_swap.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[list_copy_fwd_def; dimword;
        good_dimindex_def; memory_rel_ByteArray_IMP;
        lookup_insert; memory_rel_swap] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[list_copy_fwd_def; dimword;
-         good_dimindex_def; memory_rel_ByteArray_IMP; lookup_insert;
-         memory_rel_swap]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -19462,17 +19415,16 @@ let word_copy_fwd_alias_thm = prove
      list_copy_fwd_alias_def, dimword, good_dimindex_def,
      memory_rel_ByteArray_IMP, lookup_insert,
      memory_rel_ByteArray_IMP_store.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[list_copy_fwd_alias_def; dimword;
        good_dimindex_def; memory_rel_ByteArray_IMP;
        lookup_insert; memory_rel_ByteArray_IMP_store] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[list_copy_fwd_alias_def; dimword;
-         good_dimindex_def; memory_rel_ByteArray_IMP; lookup_insert;
-         memory_rel_ByteArray_IMP_store]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* copy backward *)
 
@@ -19599,17 +19551,16 @@ let word_copy_bwd_thm = prove
   (* the attempt: the proof of the source names list_copy_bwd_def,
      dimword, good_dimindex_def, memory_rel_ByteArray_IMP,
      lookup_insert, memory_rel_swap.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[list_copy_bwd_def; dimword;
        good_dimindex_def; memory_rel_ByteArray_IMP;
        lookup_insert; memory_rel_swap] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[list_copy_bwd_def; dimword;
-         good_dimindex_def; memory_rel_ByteArray_IMP; lookup_insert;
-         memory_rel_swap]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -19631,17 +19582,16 @@ let word_copy_bwd_alias_thm = prove
      list_copy_bwd_alias_def, dimword, good_dimindex_def,
      memory_rel_ByteArray_IMP, lookup_insert,
      memory_rel_ByteArray_IMP_store.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[list_copy_bwd_alias_def; dimword;
        good_dimindex_def; memory_rel_ByteArray_IMP;
        lookup_insert; memory_rel_ByteArray_IMP_store] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[list_copy_bwd_alias_def; dimword;
-         good_dimindex_def; memory_rel_ByteArray_IMP; lookup_insert;
-         memory_rel_ByteArray_IMP_store]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* copy array *)
 
@@ -20504,16 +20454,16 @@ let word_copy_array_thm = prove
   (* the attempt: the proof of the source names list_copy_thm,
      list_copy_def, copy_array_def, dimword,
      memory_rel_ByteArray_IMP, memory_rel_swap.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[list_copy_thm; list_copy_def;
        copy_array_def; dimword; memory_rel_ByteArray_IMP;
        memory_rel_swap] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[list_copy_thm; list_copy_def; copy_array_def;
-         dimword; memory_rel_ByteArray_IMP; memory_rel_swap]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -20535,17 +20485,16 @@ let word_copy_array_alias_thm = prove
   (* the attempt: the proof of the source names list_copy_alias_thm,
      list_copy_alias_def, copy_array_def, dimword,
      memory_rel_ByteArray_IMP, good_dimindex_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[list_copy_alias_thm; list_copy_alias_def;
        copy_array_def; dimword; memory_rel_ByteArray_IMP;
        good_dimindex_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[list_copy_alias_thm; list_copy_alias_def;
-         copy_array_def; dimword; memory_rel_ByteArray_IMP;
-         good_dimindex_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let word_of_byte_0 = prove
  (`word_of_byte (n2w 0) = (n2w 0)`,
@@ -20619,17 +20568,16 @@ let memory_rel_copy_array_NONE = prove
   (* the attempt: the proof of the source names memory_rel_swap,
      copy_array_NONE_IMP, word_copy_fwd_thm, FLOOKUP_DEF,
      good_dimindex_def, byte_len_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_swap; copy_array_NONE_IMP;
        word_copy_fwd_thm; FLOOKUP_DEF; good_dimindex_def;
        byte_len_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_swap; copy_array_NONE_IMP;
-         word_copy_fwd_thm; FLOOKUP_DEF; good_dimindex_def;
-         byte_len_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -20667,15 +20615,15 @@ let write_bytearray_append = prove
   (* the attempt: the proof of the source names write_bytearray_def,
      mem_store_byte_aux_def, mem_load_byte_aux_def,
      write_bytearray_isWord, isWord_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[write_bytearray_def; mem_store_byte_aux_def;
        mem_load_byte_aux_def; write_bytearray_isWord; isWord_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[write_bytearray_def; mem_store_byte_aux_def;
-         mem_load_byte_aux_def; write_bytearray_isWord; isWord_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -20696,15 +20644,15 @@ let memory_rel_write_bytearray_lemma = prove
   (* the attempt: the proof of the source names bytes_def,
      write_bytearray_def, memory_rel_ByteArray_IMP, SNOC,
      SNOC_CASES, SNOC_APPEND.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bytes_def; write_bytearray_def;
        memory_rel_ByteArray_IMP; SNOC; SNOC_CASES; SNOC_APPEND] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bytes_def; write_bytearray_def;
-         memory_rel_ByteArray_IMP; SNOC; SNOC_CASES; SNOC_APPEND]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:16298-16299: a theorem
    that HOL4 states as the value of an ML expression:
@@ -21002,15 +20950,15 @@ let append_writes_list_to_BlockReps = prove
   (* the attempt: the proof of the source names append_writes_def,
      list_to_BlockReps_def, BlockRep_def, word_heap_def,
      el_length_def, word_el_def.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[append_writes_def; list_to_BlockReps_def;
        BlockRep_def; word_heap_def; el_length_def; word_el_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[append_writes_def; list_to_BlockReps_def;
-         BlockRep_def; word_heap_def; el_length_def; word_el_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let bind_each_eq_tf = prove
  (`!k tf ts n i x.
@@ -21278,17 +21226,16 @@ let bind_each_isSomeDataElement = prove
   (* the attempt: the proof of the source names bind_each_def,
      bind_each_FUPDATE, FAPPLY_FUPDATE_THM, list_to_BlockReps_def,
      BlockRep_def, heap_lookup_def.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bind_each_def; bind_each_FUPDATE;
        FAPPLY_FUPDATE_THM; list_to_BlockReps_def; BlockRep_def;
        heap_lookup_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bind_each_def; bind_each_FUPDATE;
-         FAPPLY_FUPDATE_THM; list_to_BlockReps_def; BlockRep_def;
-         heap_lookup_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let bind_each_eq_INJ = prove
  (`!n x y tf ts k i.
@@ -21878,17 +21825,16 @@ let cons_multi_thm = prove
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, LIST_REL_SPLIT1, LIST_REL_LENGTH,
      unused_space_inv_def, heap_lookup_SPLIT.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
        LIST_REL_SPLIT1; LIST_REL_LENGTH; unused_space_inv_def;
        heap_lookup_SPLIT] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-         LIST_REL_SPLIT1; LIST_REL_LENGTH; unused_space_inv_def;
-         heap_lookup_SPLIT]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -21916,17 +21862,16 @@ let memory_rel_append = prove
   (* the attempt: the proof of the source names ptr_bits_def,
      shift_length_def, append_writes_def, memory_rel_def,
      word_ml_inv_def, cons_multi_thm.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[ptr_bits_def; shift_length_def;
        append_writes_def; memory_rel_def; word_ml_inv_def;
        cons_multi_thm] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[ptr_bits_def; shift_length_def;
-         append_writes_def; memory_rel_def; word_ml_inv_def;
-         cons_multi_thm]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* --- ML lists cannot exceed heap size: --- *)
 
@@ -22157,17 +22102,16 @@ let heap_length_Blocks = prove
   (* the attempt: the proof of the source names heap_lookup_SPLIT,
      heap_length_def, ALL_DISTINCT, heap_lookup_APPEND,
      heap_lookup_def, heap_length_APPEND.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[heap_lookup_SPLIT; heap_length_def;
        ALL_DISTINCT; heap_lookup_APPEND; heap_lookup_def;
        heap_length_APPEND] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[heap_lookup_SPLIT; heap_length_def;
-         ALL_DISTINCT; heap_lookup_APPEND; heap_lookup_def;
-         heap_length_APPEND]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let walk_heap_lookup = prove
  (`!vs p ps v ts.
@@ -22474,17 +22418,16 @@ let walk_EL = prove
      v_to_list_SOME_CONS_IMP, v_inv_def, v_to_list_def,
      v_inv_v_to_list_lemma, BlockRep_def,
      data_to_word_memoryProof_walk_def.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
        v_to_list_def; v_inv_v_to_list_lemma; BlockRep_def;
        data_to_word_memoryProof_walk_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-         v_to_list_def; v_inv_v_to_list_lemma; BlockRep_def;
-         data_to_word_memoryProof_walk_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let v_to_list_same_LENGTH = prove
  (`!xs x ys v1 v2 ts1 ts2.
@@ -22623,17 +22566,16 @@ let v_to_list_DROP = prove
   (* the attempt: the proof of the source names v_inv_def,
      block_drop_def, BlockRep_def, v_to_list_SOME_CONS_IMP,
      v_inv_v_to_list_lemma, data_to_word_memoryProof_walk_def.  What
-     is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     is here rewrites with them and closes by arithmetic, and the
+     cheat is behind it until the proof is written.  A MESON over
+     them is what the next round adds; it costs a load ten minutes
+     to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_inv_def; block_drop_def; BlockRep_def;
        v_to_list_SOME_CONS_IMP; v_inv_v_to_list_lemma;
        data_to_word_memoryProof_walk_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_inv_def; block_drop_def; BlockRep_def;
-         v_to_list_SOME_CONS_IMP; v_inv_v_to_list_lemma;
-         data_to_word_memoryProof_walk_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let block_drop_DROP = prove
  (`!n v vs.
@@ -22671,17 +22613,16 @@ let walk_ALL_DISTINCT = prove
      v_to_list_SOME_CONS_IMP, v_inv_def, v_inv_v_to_list_lemma,
      BlockRep_def, data_to_word_memoryProof_walk_def,
      v_to_list_SOME_NIL_IFF.  What is here rewrites with them and
-     closes by arithmetic or by MESON, and the cheat is behind it
-     until the proof is written *)
-  (ATTEMPT_TAC 5
+     closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
        v_inv_v_to_list_lemma; BlockRep_def;
        data_to_word_memoryProof_walk_def; v_to_list_SOME_NIL_IFF] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[v_to_list_SOME_CONS_IMP; v_inv_def;
-         v_inv_v_to_list_lemma; BlockRep_def;
-         data_to_word_memoryProof_walk_def; v_to_list_SOME_NIL_IFF]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let v_to_list_heap_length = prove
  (`v_inv c v refs (x,f,tf,heap) /\
@@ -22959,17 +22900,16 @@ let memory_rel_do_build = prove
   (* the attempt: the proof of the source names do_build_def,
      build_words_def, memory_rel_def, heap_in_memory_store_def,
      FLOOKUP_UPDATE, data_to_word_memoryProof_store_list_def.  What
-     is here rewrites with them and closes by arithmetic or by
-     MESON, and the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     is here rewrites with them and closes by arithmetic, and the
+     cheat is behind it until the proof is written.  A MESON over
+     them is what the next round adds; it costs a load ten minutes
+     to have it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[do_build_def; build_words_def;
        memory_rel_def; heap_in_memory_store_def; FLOOKUP_UPDATE;
        data_to_word_memoryProof_store_list_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[do_build_def; build_words_def;
-         memory_rel_def; heap_in_memory_store_def; FLOOKUP_UPDATE;
-         data_to_word_memoryProof_store_list_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let word_and_lsr_0 = prove
  (`(!i. k <= i /\ i < dimindex (:'a) ==> ~(FAPPLY w i)) ==> w && n <<
@@ -23900,17 +23840,16 @@ let memory_rel_do_build_const = prove
   (* the attempt: the proof of the source names memory_rel_do_build,
      word_cond_add_def, do_build_const_def, IMP_memory_rel_Number,
      good_dimindex_def, const_parts_to_words_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_do_build; word_cond_add_def;
        do_build_const_def; IMP_memory_rel_Number;
        good_dimindex_def; const_parts_to_words_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_do_build; word_cond_add_def;
-         do_build_const_def; IMP_memory_rel_Number;
-         good_dimindex_def; const_parts_to_words_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let read_word_def = cake_define
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;
@@ -24020,15 +23959,15 @@ let xor_bytes_bytes_to_word = prove
        bytes_to_word k a res_vals (n2w 0) be`),
   (* the attempt: the proof of the source names bytes_to_word_def,
      xor_bytes_def, word_xor_set_byte.  What is here rewrites with
-     them and closes by arithmetic or by MESON, and the cheat is
-     behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     them and closes by arithmetic, and the cheat is behind it until
+     the proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[bytes_to_word_def; xor_bytes_def;
        word_xor_set_byte] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[bytes_to_word_def; xor_bytes_def;
-         word_xor_set_byte]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let xor_bytes_length = prove
  (`!xs ys zs.
@@ -24111,13 +24050,14 @@ let xor_bytes_xor_words = prove
        SOME (write_bytes res_vals zs2 be:('a word) list)`),
   (* the attempt: the proof of the source names make_zeros_def,
      good_dimindex_def.  What is here rewrites with them and closes
-     by arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     by arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[make_zeros_def; good_dimindex_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[make_zeros_def; good_dimindex_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* xor_bytes_xor_words *)
 (* the names of record fields that this statement uses for
@@ -24153,15 +24093,15 @@ let xor_words_word_list = prove
   (* the attempt: the proof of the source names xor_words_def,
      good_dimindex_def, word_list_def, read_word_def, isWord_def,
      theWord_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[xor_words_def; good_dimindex_def;
        word_list_def; read_word_def; isWord_def; theWord_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[xor_words_def; good_dimindex_def;
-         word_list_def; read_word_def; isWord_def; theWord_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let xor_words_word_list_alias = prove
  (`!vals1 res_vals a1 be' frame m.
@@ -24176,15 +24116,15 @@ let xor_words_word_list_alias = prove
   (* the attempt: the proof of the source names xor_words_def,
      good_dimindex_def, word_list_def, read_word_def, isWord_def,
      theWord_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[xor_words_def; good_dimindex_def;
        word_list_def; read_word_def; isWord_def; theWord_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[xor_words_def; good_dimindex_def;
-         word_list_def; read_word_def; isWord_def; theWord_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -24315,17 +24255,16 @@ let memory_rel_xor_bytes = prove
   (* the attempt: the proof of the source names get_real_addr_def,
      memory_rel_tl, memory_rel_ByteArray_IMP, make_zeros_def,
      dimword, good_dimindex_def.  What is here rewrites with them
-     and closes by arithmetic or by MESON, and the cheat is behind
-     it until the proof is written *)
-  (ATTEMPT_TAC 5
+     and closes by arithmetic, and the cheat is behind it until the
+     proof is written.  A MESON over them is what the next round
+     adds; it costs a load ten minutes to have it in every attempt
+     and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[get_real_addr_def; memory_rel_tl;
        memory_rel_ByteArray_IMP; make_zeros_def; dimword;
        good_dimindex_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[get_real_addr_def; memory_rel_tl;
-         memory_rel_ByteArray_IMP; make_zeros_def; dimword;
-         good_dimindex_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* --------- str_cmp --------- *)
 
@@ -24379,13 +24318,14 @@ let word_str_loop_thm = prove
      SOME (find_diff (TAKE k vals1) (TAKE k vals2) r1 r2)`,
   (* the attempt: the proof of the source names
      word_str_cmp_loop_def, find_diff_def.  What is here rewrites
-     with them and closes by arithmetic or by MESON, and the cheat
-     is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     with them and closes by arithmetic, and the cheat is behind it
+     until the proof is written.  A MESON over them is what the next
+     round adds; it costs a load ten minutes to have it in every
+     attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[word_str_cmp_loop_def; find_diff_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[word_str_cmp_loop_def; find_diff_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* [local] *)
 let compoare_aux_append_xs = prove
@@ -24499,15 +24439,15 @@ let find_diff_str_cmp_thm1 = prove
   (* the attempt: the proof of the source names find_diff_def,
      str_cmp_cons, dimword, good_dimindex_def, str_cmp_def,
      fast_lt_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[find_diff_def; str_cmp_cons; dimword;
        good_dimindex_def; str_cmp_def; fast_lt_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[find_diff_def; str_cmp_cons; dimword;
-         good_dimindex_def; str_cmp_def; fast_lt_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 let MIN_SUC_SUC = prove
  (`MIN (SUC m) (SUC n) = SUC (MIN m n)`,
@@ -24533,15 +24473,15 @@ let find_diff_str_cmp_thm2 = prove
   (* the attempt: the proof of the source names find_diff_def,
      num_cmp_def, str_cmp_def, fast_lt_def, fast_gt_def,
      fast_le_def.  What is here rewrites with them and closes by
-     arithmetic or by MESON, and the cheat is behind it until the
-     proof is written *)
-  (ATTEMPT_TAC 5
+     arithmetic, and the cheat is behind it until the proof is
+     written.  A MESON over them is what the next round adds; it
+     costs a load ten minutes to have it in every attempt and it
+     closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[find_diff_def; num_cmp_def; str_cmp_def;
        fast_lt_def; fast_gt_def; fast_le_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[find_diff_def; num_cmp_def; str_cmp_def;
-         fast_lt_def; fast_gt_def; fast_le_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -24565,17 +24505,16 @@ let memory_rel_str_cmp = prove
   (* the attempt: the proof of the source names
      memory_rel_ByteArray_IMP, memory_rel_tl, word_str_cmp_def,
      isWord_def, theWord_def, make_byte_header_def.  What is here
-     rewrites with them and closes by arithmetic or by MESON, and
-     the cheat is behind it until the proof is written *)
-  (ATTEMPT_TAC 5
+     rewrites with them and closes by arithmetic, and the cheat is
+     behind it until the proof is written.  A MESON over them is
+     what the next round adds; it costs a load ten minutes to have
+     it in every attempt and it closed none of them *)
+  (ATTEMPT_TAC 2
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[memory_rel_ByteArray_IMP; memory_rel_tl;
        word_str_cmp_def; isWord_def; theWord_def;
        make_byte_header_def] THEN
-     TRY ASM_ARITH_TAC THEN
-     TRY(ASM_MESON_TAC[memory_rel_ByteArray_IMP; memory_rel_tl;
-         word_str_cmp_def; isWord_def; theWord_def;
-         make_byte_header_def]))));;
+     TRY ASM_ARITH_TAC)));;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
