@@ -7669,7 +7669,55 @@ let num_eq_thm = prove
      ((i1 = i2) <=> (r1 = r2)) /\
      r1 = gc_shared_Data (wordLang_Word (Smallnum i1:'a word)) /\
      r2 = gc_shared_Data (wordLang_Word (Smallnum i2))`),
-  CHEAT_TAC);;
+  (* the roots of two small integers are the words of four times
+     them, and such a word determines the integer because four
+     times a small one is within the range of the word: an eighth
+     part of the dimword times four is half of it *)
+  ((* four times a small integer is within the range of the word *)
+   let bnds = prove
+    (`small_int (:'a) i ==>
+       --(&2 pow (dimindex (:'a) - 1)) <= (&4) * i /\
+       (&4) * i < &2 pow (dimindex (:'a) - 1)`,
+     let exp1 = prove
+      (`!d. 1 <= d ==> 2 EXP d = 2 * 2 EXP (d - 1)`,
+       INDUCT_TAC THEN
+       REWRITE_TAC[ARITH_RULE `~(1 <= 0)`; SUC_SUB1; EXP]) in
+     let key = prove
+      (`4 * (2 EXP (dimindex (:'a)) DIV 8)
+        <= 2 EXP (dimindex (:'a) - 1)`,
+       MP_TAC(SPECL [`2 EXP (dimindex (:'a))`; `8`] DIVISION) THEN
+       REWRITE_TAC[ARITH_EQ] THEN
+       MP_TAC(MATCH_MP exp1 (ISPEC `(:'a)` DIMINDEX_GE_1)) THEN
+       ARITH_TAC) in
+     REWRITE_TAC[small_int_def; dimword] THEN
+     MP_TAC key THEN
+     REWRITE_TAC[GSYM INT_OF_NUM_POW; GSYM INT_OF_NUM_LE;
+                 GSYM INT_OF_NUM_MUL] THEN
+     INT_ARITH_TAC) in
+   (* so the word of a small integer determines it *)
+   let num_eq = prove
+    (`small_int (:'a) i1 /\ small_int (:'a) i2 ==>
+       ((i1 = i2) <=> (Smallnum i1 = (Smallnum i2:'a word)))`,
+     STRIP_TAC THEN
+     REWRITE_TAC[smallnum_i2w; GSYM IVAL_EQ] THEN
+     ASSUM_LIST(fun ths ->
+       REWRITE_TAC(mapfilter
+         (fun a -> MATCH_MP IVAL_IWORD (MATCH_MP bnds a)) ths)) THEN
+     INT_ARITH_TAC) in
+   REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def] THEN
+   STRIP_TAC THEN
+   RULE_ASSUM_TRY(REWRITE_RULE[ALL2; v_inv_def]) THEN
+   (* the two roots are the words of the integers *)
+   FIRST_ASSUM(fun c ->
+     if not (is_conj (concl c)) then fail() else
+     FIRST_ASSUM(fun s1 -> FIRST_ASSUM(fun s2 ->
+       if concl s1 = concl s2 then fail() else
+       STRIP_ASSUME_TAC(REWRITE_RULE[s1; s2] c)))) THEN
+   ASM_REWRITE_TAC[injectivity "heap_address";
+                   injectivity "word_loc"] THEN
+   FIRST_ASSUM(fun s1 -> FIRST_ASSUM(fun s2 ->
+     if concl s1 = concl s2 then fail() else
+     ACCEPT_TAC(MATCH_MP num_eq (CONJ s1 s2))))));;
 
 (* Smallnum_i2w *)
 let smallnum_i2w = prove
