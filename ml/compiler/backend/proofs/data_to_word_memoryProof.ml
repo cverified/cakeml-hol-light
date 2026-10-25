@@ -4155,7 +4155,38 @@ let v_inv_tf_update_lemma = prove
            v1 IN (all_vs refs stack) /\ ~(ts' IN all_ts refs stack)
              ==>
              v_inv_ck ck conf v1 refs (y,f,tf |+ (ts',a),heap))`),
-  CHEAT_TAC);;
+  (* a Block of the refs and the stack: its timestamps are among
+     the stack's (MEM_in_all_ts), so the new one is none of them
+     and v_inv_tf_update_thm_alt applies *)
+  (let no_ts = prove
+    (cake_as_vars (fun () ->
+       `x IN all_vs refs stack /\ ~(ts' IN all_ts refs stack)
+        ==> ~(ts' IN set_of_list (v_all_ts x))`),
+     REWRITE_TAC[IN_SET_OF_LIST] THEN REPEAT STRIP_TAC THEN
+     FIRST_ASSUM(fun m ->
+       if not (hd_is "MEM" (concl m)) then fail() else
+       FIRST_ASSUM(fun av ->
+         if not (hd_is "all_vs" (rand(concl av))) then fail() else
+         MP_TAC(MATCH_MP MEM_in_all_ts (CONJ av m)))) THEN
+     ASM_REWRITE_TAC[]) in
+   REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+   (* the two equations of the antecedent are substituted, and the
+      first of them in the two hypotheses that follow it *)
+   DISCH_THEN(fun th ->
+     let e1 = CONJUNCT1 th and r1 = CONJUNCT2 th in
+     let e2 = CONJUNCT1 r1 in
+     SUBST_ALL_TAC e1 THEN SUBST_ALL_TAC e2 THEN
+     STRIP_ASSUME_TAC(REWRITE_RULE[e1] (CONJUNCT2 r1))) THEN
+   FIRST_ASSUM(fun av ->
+     if not (hd_is "all_vs" (rand(concl av))) then fail() else
+     FIRST_ASSUM(fun nts ->
+       if not (is_neg (concl nts)) then fail() else
+       let ts = MATCH_MP no_ts (CONJ av nts) in
+       FIRST_ASSUM(fun vi ->
+         if not (hd_is "v_inv" (concl vi)) then fail() else
+         MATCH_ACCEPT_TAC(SPEC_ALL(REWRITE_RULE[v_inv_eq]
+           (MATCH_MP v_inv_tf_update_thm_alt
+             (CONJ vi (CONJ nts ts)))))))));;
 
 let v_inv_tf_update = prove
  (`!conf refs y f tf heap heap1 a stack' ts ts' tag xs.
@@ -18542,6 +18573,438 @@ let list_copy_alias_def = cake_define
        ys else list_copy_bwd_alias n ((xp + n) - 1) ((yp + n) - 1)
        ys)`;;
 
+(* the port's own: what the six lemmas about a copy of a part of a
+   list into another share.  HOL4 proves each of them by the
+   induction of its definition, which the port has not got (see
+   PORTING-GUIDE entry 35), so each is a complete induction on the
+   number of elements to copy, in which the four updates of a
+   clause of the definition are done one element at a time (the
+   step), the first of them against the destination as it stands
+   (the base), and the result of the recursion is put together with
+   them (the glue). *)
+
+(* an update at the length of a first list is one at the head of
+   the second *)
+
+let copy_upd_at = prove
+ (`!(l1:A list) l2 x.
+     LUPDATE x (LENGTH l1) (l1 ++ l2) = l1 ++ LUPDATE x 0 l2`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[LENGTH; APPEND; LUPDATE; NOT_SUC; SUC_SUB1]);;
+
+(* and one at the end of a first list, whose length the index is
+   given as, is one of the head of the second *)
+
+let copy_upd_pre = prove
+ (`!(l1:A list) k. LENGTH l1 = k ==>
+     !e rest x.
+        LUPDATE x k (l1 ++ (e :: rest)) = l1 ++ (x :: rest)`,
+  REPEAT GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
+  REWRITE_TAC[copy_upd_at; LUPDATE]);;
+
+(* one element more of a copy that goes forward: the update is at
+   the head of what is left of the destination, and what it writes
+   is the next element of the source *)
+
+let copy_step = prove
+ (`!(xs:A list) ys xp yp j.
+     xp + (j + 1) <= LENGTH xs /\ yp + (j + 1) <= LENGTH ys ==>
+     LUPDATE (EL (xp + j) xs) (yp + j)
+       (TAKE yp ys ++ TAKE j (DROP xp xs) ++ DROP (j + yp) ys) =
+     TAKE yp ys ++ TAKE (j + 1) (DROP xp xs) ++
+       DROP ((j + 1) + yp) ys`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (SUBGOAL_THEN `LENGTH (TAKE yp (ys:A list)) = yp` ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `LENGTH (TAKE j (DROP xp (xs:A list))) = j`
+     ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN REWRITE_TAC[LENGTH_DROP] THEN
+     ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `yp + j =
+     LENGTH (TAKE yp (ys:A list) ++ TAKE j (DROP xp (xs:A list)))`
+     SUBST1_TAC THENL
+    [ASM_REWRITE_TAC[LENGTH_APPEND]; ALL_TAC]) THEN
+  REWRITE_TAC[APPEND_ASSOC; copy_upd_at] THEN
+  MP_TAC(SPECL [`ys:A list`; `j + yp`] DROP_EL_CONS) THEN
+  (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+  DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LUPDATE] THEN
+  (SUBGOAL_THEN `TAKE (j + 1) (DROP xp (xs:A list)) =
+                 TAKE j (DROP xp xs) ++ [EL (xp + j) xs]`
+     SUBST1_TAC THENL
+    [REWRITE_TAC[TAKE_SUM] THEN AP_TERM_TAC THEN
+     REWRITE_TAC[DROP_DROP] THEN
+     MP_TAC(SPECL [`xs:A list`; `j + xp`] DROP_EL_CONS) THEN
+     (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+     DISCH_THEN SUBST1_TAC THEN
+     REWRITE_TAC[TAKE; TAKE_0; ARITH_EQ; ADD_AC;
+                 ARITH_RULE `1 - 1 = 0`];
+     ALL_TAC]) THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC; APPEND;
+              ARITH_RULE `(j + 1) + yp = SUC (j + yp)`]);;
+
+(* the first of them, where the destination is the list itself *)
+
+let copy_base =
+  GEN_ALL(REWRITE_RULE[TAKE_0; APPEND; ADD_CLAUSES; TAKE_DROP]
+    (SPECL [`xs:A list`; `ys:A list`; `xp:num`; `yp:num`; `0`]
+      copy_step));;
+
+(* the four updates of a clause, and what the recursion copies of
+   the destination they made, are the copy *)
+
+let copy_glue = prove
+ (`!(xs:A list) ys xp yp n.
+     4 <= n /\ xp + n <= LENGTH xs /\ yp + n <= LENGTH ys ==>
+     TAKE (yp + 4)
+       (TAKE yp ys ++ TAKE 4 (DROP xp xs) ++ DROP (4 + yp) ys) ++
+     TAKE (n - 4) (DROP (xp + 4) xs) ++
+     DROP ((n - 4) + (yp + 4))
+       (TAKE yp ys ++ TAKE 4 (DROP xp xs) ++ DROP (4 + yp) ys) =
+     TAKE yp ys ++ TAKE n (DROP xp xs) ++ DROP (n + yp) ys`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (SUBGOAL_THEN `LENGTH (TAKE yp (ys:A list)) = yp` ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `LENGTH (TAKE 4 (DROP xp (xs:A list))) = 4`
+     ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN REWRITE_TAC[LENGTH_DROP] THEN
+     ASM_ARITH_TAC; ALL_TAC]) THEN
+  (* the first yp + 4 elements of the destination are the part
+     before the copy and the four elements copied *)
+  (SUBGOAL_THEN
+     `TAKE (yp + 4)
+        (TAKE yp (ys:A list) ++ TAKE 4 (DROP xp (xs:A list)) ++
+           DROP (4 + yp) ys) =
+      TAKE yp ys ++ TAKE 4 (DROP xp xs)` SUBST1_TAC THENL
+    [REWRITE_TAC[APPEND_ASSOC] THEN
+     (SUBGOAL_THEN `yp + 4 =
+        LENGTH (TAKE yp (ys:A list) ++ TAKE 4 (DROP xp (xs:A list)))`
+        SUBST1_TAC THENL
+       [ASM_REWRITE_TAC[LENGTH_APPEND]; ALL_TAC]) THEN
+     MATCH_ACCEPT_TAC TAKE_LENGTH_APPEND;
+     ALL_TAC]) THEN
+  (* and from the end of the copy on it is the destination's own *)
+  (SUBGOAL_THEN
+     `DROP ((n - 4) + (yp + 4))
+        (TAKE yp (ys:A list) ++ TAKE 4 (DROP xp (xs:A list)) ++
+           DROP (4 + yp) ys) = DROP (n + yp) ys` SUBST1_TAC THENL
+    [REWRITE_TAC[APPEND_ASSOC] THEN
+     (SUBGOAL_THEN `(n - 4) + (yp + 4) = (n - 4) +
+        LENGTH (TAKE yp (ys:A list) ++ TAKE 4 (DROP xp (xs:A list)))`
+        SUBST1_TAC THENL
+       [ASM_REWRITE_TAC[LENGTH_APPEND]; ALL_TAC]) THEN
+     REWRITE_TAC[GSYM DROP_DROP] THEN
+     REWRITE_TAC[DROP_LENGTH_APPEND] THEN
+     REWRITE_TAC[DROP_DROP] THEN
+     AP_THM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC;
+     ALL_TAC]) THEN
+  (* the four elements and the rest of the copy are the copy *)
+  REWRITE_TAC[APPEND_ASSOC] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC] THEN AP_TERM_TAC THEN
+  MP_TAC(SPECL [`DROP xp (xs:A list)`; `4`; `n - 4`] TAKE_SUM) THEN
+  REWRITE_TAC[DROP_DROP] THEN
+  (SUBGOAL_THEN `4 + (n - 4) = n` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `4 + xp = xp + 4` SUBST1_TAC THENL
+    [ARITH_TAC; ALL_TAC]) THEN
+  DISCH_THEN(ACCEPT_TAC o SYM));;
+
+(* the same of an alias, where the copy is of the list it is
+   written into: what the four updates wrote is below the source of
+   the rest, so the rest reads the list it started with *)
+
+let copy_glue_alias = prove
+ (`!(ys:A list) xp yp n.
+     yp <= xp /\ 4 <= n /\ xp + n <= LENGTH ys /\
+     yp + n <= LENGTH ys ==>
+     TAKE (yp + 4)
+       (TAKE yp ys ++ TAKE 4 (DROP xp ys) ++ DROP (4 + yp) ys) ++
+     TAKE (n - 4)
+       (DROP (xp + 4)
+         (TAKE yp ys ++ TAKE 4 (DROP xp ys) ++
+            DROP (4 + yp) ys)) ++
+     DROP ((n - 4) + (yp + 4))
+       (TAKE yp ys ++ TAKE 4 (DROP xp ys) ++ DROP (4 + yp) ys) =
+     TAKE yp ys ++ TAKE n (DROP xp ys) ++ DROP (n + yp) ys`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (SUBGOAL_THEN `LENGTH (TAKE yp (ys:A list)) = yp` ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `LENGTH (TAKE 4 (DROP xp (ys:A list))) = 4`
+     ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN REWRITE_TAC[LENGTH_DROP] THEN
+     ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN
+     `DROP (xp + 4)
+        (TAKE yp (ys:A list) ++ TAKE 4 (DROP xp ys) ++
+           DROP (4 + yp) ys) = DROP (xp + 4) ys` SUBST1_TAC THENL
+    [REWRITE_TAC[APPEND_ASSOC] THEN
+     (SUBGOAL_THEN
+        `DROP (xp + 4)
+           ((TAKE yp (ys:A list) ++ TAKE 4 (DROP xp ys)) ++
+              DROP (4 + yp) ys) =
+         DROP ((xp + 4) -
+           LENGTH (TAKE yp ys ++ TAKE 4 (DROP xp ys)))
+             (DROP (4 + yp) ys)`
+        SUBST1_TAC THENL
+       [MATCH_MP_TAC DROP_APPEND2 THEN
+        ASM_REWRITE_TAC[LENGTH_APPEND] THEN ASM_ARITH_TAC;
+        ALL_TAC]) THEN
+     ASM_REWRITE_TAC[LENGTH_APPEND; DROP_DROP] THEN
+     AP_THM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC;
+     ALL_TAC]) THEN
+  MATCH_MP_TAC copy_glue THEN ASM_ARITH_TAC);;
+
+(* one element more of a copy that goes backward: the update is at
+   the end of the part of the destination that is still its own *)
+
+let copy_step_bwd = prove
+ (`!(xs:A list) ys xp yp j.
+     j <= xp /\ xp < LENGTH xs /\ j <= yp /\ yp < LENGTH ys ==>
+     LUPDATE (EL (xp - j) xs) (yp - j)
+       (TAKE ((yp + 1) - j) ys ++
+          TAKE j (DROP ((xp + 1) - j) xs) ++ DROP (yp + 1) ys) =
+     TAKE ((yp + 1) - (j + 1)) ys ++
+       TAKE (j + 1) (DROP ((xp + 1) - (j + 1)) xs) ++
+         DROP (yp + 1) ys`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (SUBGOAL_THEN `(yp + 1) - j = (yp - j) + 1` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `(yp + 1) - (j + 1) = yp - j` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `(xp + 1) - (j + 1) = xp - j` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `LENGTH (TAKE (yp - j) (ys:A list)) = yp - j`
+     ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN ASM_ARITH_TAC; ALL_TAC]) THEN
+  (* the element of the destination that this update writes over *)
+  (SUBGOAL_THEN
+     `TAKE ((yp - j) + 1) (ys:A list) =
+      TAKE (yp - j) ys ++ [EL (yp - j) ys]` SUBST1_TAC THENL
+    [REWRITE_TAC[TAKE_SUM] THEN AP_TERM_TAC THEN
+     MP_TAC(SPECL [`ys:A list`; `yp - j`] DROP_EL_CONS) THEN
+     (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+     DISCH_THEN SUBST1_TAC THEN
+     REWRITE_TAC[TAKE; TAKE_0; ARITH_EQ; ARITH_RULE `1 - 1 = 0`];
+     ALL_TAC]) THEN
+  (* and the element of the source that it writes, which heads what
+     is copied *)
+  (SUBGOAL_THEN
+     `TAKE (j + 1) (DROP (xp - j) (xs:A list)) =
+      [EL (xp - j) xs] ++ TAKE j (DROP ((xp + 1) - j) xs)`
+     SUBST1_TAC THENL
+    [(SUBGOAL_THEN `j + 1 = 1 + j` SUBST1_TAC THENL
+       [ARITH_TAC; ALL_TAC]) THEN
+     REWRITE_TAC[TAKE_SUM; DROP_DROP] THEN
+     (SUBGOAL_THEN `1 + (xp - j) = (xp + 1) - j` SUBST1_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     (SUBGOAL_THEN `TAKE 1 (DROP (xp - j) (xs:A list)) =
+                    [EL (xp - j) xs]` SUBST1_TAC THENL
+       [MP_TAC(SPECL [`xs:A list`; `xp - j`] DROP_EL_CONS) THEN
+        (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+        DISCH_THEN SUBST1_TAC THEN
+        REWRITE_TAC[TAKE; TAKE_0; ARITH_EQ;
+                    ARITH_RULE `1 - 1 = 0`];
+        ALL_TAC]) THEN
+     REFL_TAC;
+     ALL_TAC]) THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
+  FIRST_ASSUM(fun len ->
+    if not (hd_is "LENGTH" (lhs(concl len))) then fail() else
+    REWRITE_TAC[MATCH_MP copy_upd_pre len]) THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC; APPEND]);;
+
+let copy_base_bwd =
+  GEN_ALL(REWRITE_RULE[SUB_0; LE_0; TAKE_0; APPEND; ADD_CLAUSES;
+                       TAKE_DROP]
+    (SPECL [`xs:A list`; `ys:A list`; `xp:num`; `yp:num`; `0`]
+      copy_step_bwd));;
+
+(* the glue of a copy that goes backward.  The destination may have
+   no four elements below the one that is written first, and then
+   the recursion is of none, because the number that the definition
+   recurses on is a natural one *)
+
+let copy_glue_bwd = prove
+ (`!(xs:A list) ys xp yp n.
+     4 <= n /\ n <= xp + 1 /\ xp < LENGTH xs /\ n <= yp + 1 /\
+     yp < LENGTH ys ==>
+     TAKE (((yp - 4) + 1) - (n - 4))
+       (TAKE ((yp + 1) - 4) ys ++
+          TAKE 4 (DROP ((xp + 1) - 4) xs) ++ DROP (yp + 1) ys) ++
+     TAKE (n - 4) (DROP (((xp - 4) + 1) - (n - 4)) xs) ++
+     DROP ((yp - 4) + 1)
+       (TAKE ((yp + 1) - 4) ys ++
+          TAKE 4 (DROP ((xp + 1) - 4) xs) ++ DROP (yp + 1) ys) =
+     TAKE ((yp + 1) - n) ys ++ TAKE n (DROP ((xp + 1) - n) xs) ++
+       DROP (yp + 1) ys`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (SUBGOAL_THEN `LENGTH (TAKE ((yp + 1) - 4) (ys:A list)) =
+                 (yp + 1) - 4` ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN
+     `LENGTH (TAKE 4 (DROP ((xp + 1) - 4) (xs:A list))) = 4`
+     ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN REWRITE_TAC[LENGTH_DROP] THEN
+     ASM_ARITH_TAC; ALL_TAC]) THEN
+  (ASM_CASES_TAC `4 <= yp` THENL
+    [ALL_TAC;
+     (SUBGOAL_THEN `yp = 3 /\ n = 4` STRIP_ASSUME_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     ASM_REWRITE_TAC[ARITH; TAKE_0; APPEND; TAKE_DROP] THEN
+     NO_TAC]) THEN
+  (SUBGOAL_THEN `(yp - 4) + 1 = (yp + 1) - 4` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN `((yp + 1) - 4) - (n - 4) = (yp + 1) - n`
+     SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  (* what the recursion keeps of the destination is the part below
+     the copy, and what it drops is the four elements copied *)
+  (SUBGOAL_THEN
+     `TAKE ((yp + 1) - n)
+        (TAKE ((yp + 1) - 4) (ys:A list) ++
+           TAKE 4 (DROP ((xp + 1) - 4) (xs:A list)) ++
+             DROP (yp + 1) ys) = TAKE ((yp + 1) - n) ys`
+     SUBST1_TAC THENL
+    [MP_TAC(SPECL [`TAKE ((yp + 1) - 4) (ys:A list)`;
+                   `TAKE 4 (DROP ((xp + 1) - 4) (xs:A list)) ++
+                      DROP (yp + 1) (ys:A list)`;
+                   `(yp + 1) - n`] TAKE_APPEND1) THEN
+     (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+     DISCH_THEN SUBST1_TAC THEN
+     MATCH_MP_TAC TAKE_TAKE THEN ASM_ARITH_TAC;
+     ALL_TAC]) THEN
+  (SUBGOAL_THEN
+     `DROP ((yp + 1) - 4)
+        (TAKE ((yp + 1) - 4) (ys:A list) ++
+           TAKE 4 (DROP ((xp + 1) - 4) (xs:A list)) ++
+             DROP (yp + 1) ys) =
+      TAKE 4 (DROP ((xp + 1) - 4) xs) ++ DROP (yp + 1) ys`
+     SUBST1_TAC THENL
+    [FIRST_ASSUM(fun len ->
+       if not (hd_is "TAKE" (rand(lhs(concl len)))) then fail() else
+       GEN_REWRITE_TAC (LAND_CONV o RATOR_CONV o RAND_CONV)
+         [SYM len]) THEN
+     MATCH_ACCEPT_TAC DROP_LENGTH_APPEND;
+     ALL_TAC]) THEN
+  (* and the four elements complete the copy *)
+  AP_TERM_TAC THEN REWRITE_TAC[APPEND_ASSOC] THEN
+  AP_THM_TAC THEN AP_TERM_TAC THEN
+  (ASM_CASES_TAC `4 <= xp` THENL
+    [(SUBGOAL_THEN `((xp - 4) + 1) - (n - 4) = (xp + 1) - n`
+        SUBST1_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     MP_TAC(SPECL [`DROP ((xp + 1) - n) (xs:A list)`; `n - 4`; `4`]
+       TAKE_SUM) THEN
+     REWRITE_TAC[DROP_DROP] THEN
+     (SUBGOAL_THEN `(n - 4) + ((xp + 1) - n) = (xp + 1) - 4`
+        SUBST1_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     (SUBGOAL_THEN `(n - 4) + 4 = n` SUBST1_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     DISCH_THEN(ACCEPT_TAC o SYM);
+     (* the source has no four elements below the first it is read
+        at either, so the recursion copies none *)
+     (SUBGOAL_THEN `n = 4` SUBST_ALL_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     REWRITE_TAC[ARITH; TAKE_0; APPEND]]));;
+
+(* and of an alias, where what the four updates wrote is above the
+   source of the rest *)
+
+let copy_glue_bwd_alias = prove
+ (`!(ys:A list) xp yp n.
+     xp <= yp /\ 4 <= n /\ n <= xp + 1 /\ xp < LENGTH ys /\
+     n <= yp + 1 /\ yp < LENGTH ys ==>
+     TAKE (((yp - 4) + 1) - (n - 4))
+       (TAKE ((yp + 1) - 4) ys ++
+          TAKE 4 (DROP ((xp + 1) - 4) ys) ++ DROP (yp + 1) ys) ++
+     TAKE (n - 4)
+       (DROP (((xp - 4) + 1) - (n - 4))
+         (TAKE ((yp + 1) - 4) ys ++
+            TAKE 4 (DROP ((xp + 1) - 4) ys) ++
+              DROP (yp + 1) ys)) ++
+     DROP ((yp - 4) + 1)
+       (TAKE ((yp + 1) - 4) ys ++
+          TAKE 4 (DROP ((xp + 1) - 4) ys) ++ DROP (yp + 1) ys) =
+     TAKE ((yp + 1) - n) ys ++ TAKE n (DROP ((xp + 1) - n) ys) ++
+       DROP (yp + 1) ys`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (SUBGOAL_THEN `LENGTH (TAKE ((yp + 1) - 4) (ys:A list)) =
+                 (yp + 1) - 4` ASSUME_TAC THENL
+    [MATCH_MP_TAC LENGTH_TAKE THEN ASM_ARITH_TAC; ALL_TAC]) THEN
+  (SUBGOAL_THEN
+     `TAKE (n - 4)
+        (DROP (((xp - 4) + 1) - (n - 4))
+          (TAKE ((yp + 1) - 4) (ys:A list) ++
+             TAKE 4 (DROP ((xp + 1) - 4) ys) ++
+               DROP (yp + 1) ys)) =
+      TAKE (n - 4) (DROP (((xp - 4) + 1) - (n - 4)) ys)`
+     SUBST1_TAC THENL
+    [(ASM_CASES_TAC `n = 4` THENL
+       [POP_ASSUM SUBST_ALL_TAC THEN
+        REWRITE_TAC[ARITH; TAKE_0];
+        ALL_TAC]) THEN
+     (SUBGOAL_THEN `((xp - 4) + 1) - (n - 4) = (xp + 1) - n`
+        SUBST1_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     MP_TAC(SPECL [`TAKE ((yp + 1) - 4) (ys:A list)`;
+                   `TAKE 4 (DROP ((xp + 1) - 4) (ys:A list)) ++
+                      DROP (yp + 1) (ys:A list)`;
+                   `(xp + 1) - n`] DROP_APPEND1) THEN
+     (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+     DISCH_THEN SUBST1_TAC THEN
+     MP_TAC(SPECL [`DROP ((xp + 1) - n)
+                      (TAKE ((yp + 1) - 4) (ys:A list))`;
+                   `TAKE 4 (DROP ((xp + 1) - 4) (ys:A list)) ++
+                      DROP (yp + 1) (ys:A list)`;
+                   `n - 4`] TAKE_APPEND1) THEN
+     (ANTS_TAC THENL
+       [REWRITE_TAC[LENGTH_DROP] THEN ASM_ARITH_TAC; ALL_TAC]) THEN
+     DISCH_THEN SUBST1_TAC THEN
+     REWRITE_TAC[DROP_TAKE] THEN
+     MATCH_MP_TAC TAKE_TAKE THEN ASM_ARITH_TAC;
+     ALL_TAC]) THEN
+  MATCH_MP_TAC copy_glue_bwd THEN ASM_ARITH_TAC);;
+
+(* the bounds of the shape a + k <= b, and of the shape k <= v for
+   a copy that goes backward, that arithmetic gives of the goal for
+   the four k that the clauses of a definition use, and the length
+   of every TAKE of it *)
+
+let COPY_BNDS_TAC =
+  W(fun (asl,w) ->
+    let bnds = itlist (fun (_,th) acc ->
+      (try let l,r = dest_binary "<=" (concl th) in
+           let a,_ = dest_binary "+" l in
+           (map (fun k -> mk_binary "<="
+                   (mk_binary "+" (a,mk_small_numeral k), r))
+                [1; 2; 3; 4]) @ acc
+       with Failure _ -> acc)) asl [] in
+    MAP_EVERY (fun tm ->
+      TRY(SUBGOAL_THEN tm ASSUME_TAC THENL
+           [ASM_ARITH_TAC; ALL_TAC])) (setify bnds));;
+
+let COPY_BNDS_B_TAC =
+  W(fun (asl,w) ->
+    let vs = setify(filter (fun v -> type_of v = `:num`)
+      (itlist (fun (_,th) acc -> frees(concl th) @ acc) asl
+         (frees w))) in
+    MAP_EVERY (fun (k,v) ->
+      TRY(SUBGOAL_THEN (mk_binary "<=" (mk_small_numeral k, v))
+            ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC]))
+      (allpairs (fun k v -> (k,v)) [1; 2; 3] vs));;
+
+let COPY_LEN_TAC =
+  W(fun (asl,w) ->
+    let takes = setify(find_terms (fun t ->
+      hd_is "TAKE" t && length (snd(strip_comb t)) = 2) w) in
+    MAP_EVERY (fun t ->
+      let k = hd(snd(strip_comb t)) in
+      TRY(SUBGOAL_THEN (mk_eq(mk_icomb(`LENGTH`,t), k)) ASSUME_TAC
+           THENL
+           [MATCH_MP_TAC LENGTH_TAKE THEN
+            REWRITE_TAC[LENGTH_DROP] THEN ASM_ARITH_TAC;
+            ALL_TAC])) takes);;
+
 (* [local] *)
 let list_copy_fwd_eq = prove
  (`!n xp xs yp ys.
@@ -18552,7 +19015,55 @@ let list_copy_fwd_eq = prove
        (TAKE yp ys ++
        TAKE n (DROP xp xs) ++
        DROP (n + yp) ys)`,
-  CHEAT_TAC);;
+  (* a complete induction on the number of elements to copy: none,
+     one, two or three of them are the chain of the updates that a
+     clause of the definition does, and four or more are the same
+     four and the induction hypothesis of what they made *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_fwd_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[TAKE_0; APPEND; ADD_CLAUSES; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[copy_base]; ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_TAC THEN
+   ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH; ADD_CLAUSES] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [CONJ_TAC THENL
+       [ASM_ARITH_TAC;
+        COPY_LEN_TAC THEN
+        ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+        ASM_ARITH_TAC];
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue THEN ASM_ARITH_TAC));;
 
 (* [local] *)
 let list_copy_bwd_eq = prove
@@ -18564,13 +19075,91 @@ let list_copy_bwd_eq = prove
        (TAKE ((yp + 1) - n) ys ++
        TAKE n (DROP ((xp + 1) - n) xs) ++
        DROP (yp + 1) ys)`,
-  CHEAT_TAC);;
+  (* the same of a copy that goes backward, where the number that
+     the definition recurses on is a natural one *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_bwd_def] THEN
+   REWRITE_TAC[minus_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[SUB_0; TAKE_0; APPEND; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN ASM_SIMP_TAC[copy_base_bwd];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_B_TAC THEN
+   ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                ARITH] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [REPEAT CONJ_TAC THEN COPY_LEN_TAC THEN
+      ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+      ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue_bwd THEN ASM_ARITH_TAC));;
 
 let list_copy_thm = prove
  (`!xs ys xp yp n ys1.
       copy_array (xs,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 ==>
       list_copy n xp xs yp ys = SOME ys1`,
-  CHEAT_TAC);;
+  (* the offsets are of naturals, so copy_array is NONE exactly
+     when one of the two lists is too short and otherwise is the
+     copy that the two equations give, forward when the destination
+     is not above the source and backward from the end of it when
+     it is *)
+  (REPEAT GEN_TAC THEN
+   REWRITE_TAC[copy_array_def; I_THM; INT_OF_NUM_ADD; INT_ABS_NUM;
+               NUM_OF_INT_OF_NUM; INT_OF_NUM_LT; LT] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN MATCH_REDUCE_TAC THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   REWRITE_TAC[injectivity "option"] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+   REWRITE_TAC[list_copy_def] THEN
+   (COND_CASES_TAC THENL
+     [W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+          list_copy_fwd_eq (lhand w))) THEN
+      (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+      DISCH_THEN SUBST1_TAC THEN
+      (SUBGOAL_THEN `n + yp = yp + n` SUBST1_TAC THENL
+        [ARITH_TAC; ALL_TAC]) THEN
+      REFL_TAC;
+      W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+          list_copy_bwd_eq (lhand w))) THEN
+      (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+      DISCH_THEN SUBST1_TAC THEN
+      (SUBGOAL_THEN `(((yp + n) - 1) + 1) - n = yp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `(((xp + n) - 1) + 1) - n = xp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `((yp + n) - 1) + 1 = yp + n` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      REFL_TAC])));;
 
 (* see more interesting theorem below *)
 
@@ -18585,7 +19174,51 @@ let list_copy_fwd_alias_eq = prove
        (TAKE yp ys ++
        TAKE n (DROP xp ys) ++
        DROP (n + yp) ys)`,
-  CHEAT_TAC);;
+  (* the same of an alias, where the copy is of the list it is
+     written into *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_fwd_alias_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[TAKE_0; APPEND; ADD_CLAUSES; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[copy_base]; ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_TAC THEN
+   ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH; ADD_CLAUSES] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [REPEAT CONJ_TAC THEN COPY_LEN_TAC THEN
+      ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+      ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue_alias THEN ASM_ARITH_TAC));;
 
 (* [local] *)
 let list_copy_bwd_alias_eq = prove
@@ -18598,13 +19231,98 @@ let list_copy_bwd_alias_eq = prove
        (TAKE ((yp + 1) - n) ys ++
        TAKE n (DROP ((xp + 1) - n) ys) ++
        DROP (yp + 1) ys)`,
-  CHEAT_TAC);;
+  (* and of an alias that goes backward *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_bwd_alias_def] THEN
+   REWRITE_TAC[minus_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[SUB_0; TAKE_0; APPEND; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN ASM_SIMP_TAC[copy_base_bwd];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_B_TAC THEN
+   ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                ARITH] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [REPEAT CONJ_TAC THEN COPY_LEN_TAC THEN
+      ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+      ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue_bwd_alias THEN ASM_ARITH_TAC));;
 
 let list_copy_alias_thm = prove
  (`!ys xp yp n ys1.
       copy_array (ys,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 ==>
       list_copy_alias n xp yp ys = SOME ys1`,
-  CHEAT_TAC);;
+  (* the same of an alias.  Of a copy of none the forward
+     equation says nothing, because the destination may be above
+     the source there, and the definition gives it of itself *)
+  (REPEAT GEN_TAC THEN
+   REWRITE_TAC[copy_array_def; I_THM; INT_OF_NUM_ADD; INT_ABS_NUM;
+               NUM_OF_INT_OF_NUM; INT_OF_NUM_LT; LT] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN MATCH_REDUCE_TAC THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   REWRITE_TAC[injectivity "option"] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+   REWRITE_TAC[list_copy_alias_def] THEN
+   (COND_CASES_TAC THENL
+     [(ASM_CASES_TAC `(yp:num) <= xp` THENL
+        [W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+             list_copy_fwd_alias_eq (lhand w))) THEN
+         (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+         DISCH_THEN SUBST1_TAC THEN
+         (SUBGOAL_THEN `n + yp = yp + n` SUBST1_TAC THENL
+           [ARITH_TAC; ALL_TAC]) THEN
+         REFL_TAC;
+         (SUBGOAL_THEN `n = 0 /\ xp = 0` STRIP_ASSUME_TAC THENL
+           [ASM_ARITH_TAC; ALL_TAC]) THEN
+         ASM_REWRITE_TAC[] THEN
+         ONCE_REWRITE_TAC[list_copy_fwd_alias_def] THEN
+         (COND_CASES_TAC THENL
+           [ALL_TAC;
+            SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC]) THEN
+         REWRITE_TAC[ARITH_EQ; TAKE_0; APPEND; ADD_CLAUSES;
+                     TAKE_DROP]]);
+      W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+          list_copy_bwd_alias_eq (lhand w))) THEN
+      (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+      DISCH_THEN SUBST1_TAC THEN
+      (SUBGOAL_THEN `(((yp + n) - 1) + 1) - n = yp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `(((xp + n) - 1) + 1) - n = xp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `((yp + n) - 1) + 1 = yp + n` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      REFL_TAC])));;
 
 let copy_array_NONE_IMP = prove
  (`!xs ys xp n.

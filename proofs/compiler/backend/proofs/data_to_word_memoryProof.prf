@@ -12612,6 +12612,273 @@
    ASM_REWRITE_TAC[mem_store_byte_aux_def] THEN
    MATCH_REDUCE_TAC THEN
    ASM_REWRITE_TAC[injectivity "option"; UNWIND_THM1; UNWIND_THM2])
+### list_copy_fwd_eq
+  (* a complete induction on the number of elements to copy: none,
+     one, two or three of them are the chain of the updates that a
+     clause of the definition does, and four or more are the same
+     four and the induction hypothesis of what they made *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_fwd_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[TAKE_0; APPEND; ADD_CLAUSES; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[copy_base]; ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_TAC THEN
+   ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH; ADD_CLAUSES] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [CONJ_TAC THENL
+       [ASM_ARITH_TAC;
+        COPY_LEN_TAC THEN
+        ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+        ASM_ARITH_TAC];
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue THEN ASM_ARITH_TAC)
+### list_copy_bwd_eq
+  (* the same of a copy that goes backward, where the number that
+     the definition recurses on is a natural one *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_bwd_def] THEN
+   REWRITE_TAC[minus_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[SUB_0; TAKE_0; APPEND; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN ASM_SIMP_TAC[copy_base_bwd];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_B_TAC THEN
+   ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                ARITH] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [REPEAT CONJ_TAC THEN COPY_LEN_TAC THEN
+      ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+      ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue_bwd THEN ASM_ARITH_TAC)
+### list_copy_thm
+  (* the offsets are of naturals, so copy_array is NONE exactly
+     when one of the two lists is too short and otherwise is the
+     copy that the two equations give, forward when the destination
+     is not above the source and backward from the end of it when
+     it is *)
+  (REPEAT GEN_TAC THEN
+   REWRITE_TAC[copy_array_def; I_THM; INT_OF_NUM_ADD; INT_ABS_NUM;
+               NUM_OF_INT_OF_NUM; INT_OF_NUM_LT; LT] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN MATCH_REDUCE_TAC THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   REWRITE_TAC[injectivity "option"] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+   REWRITE_TAC[list_copy_def] THEN
+   (COND_CASES_TAC THENL
+     [W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+          list_copy_fwd_eq (lhand w))) THEN
+      (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+      DISCH_THEN SUBST1_TAC THEN
+      (SUBGOAL_THEN `n + yp = yp + n` SUBST1_TAC THENL
+        [ARITH_TAC; ALL_TAC]) THEN
+      REFL_TAC;
+      W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+          list_copy_bwd_eq (lhand w))) THEN
+      (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+      DISCH_THEN SUBST1_TAC THEN
+      (SUBGOAL_THEN `(((yp + n) - 1) + 1) - n = yp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `(((xp + n) - 1) + 1) - n = xp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `((yp + n) - 1) + 1 = yp + n` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      REFL_TAC]))
+### list_copy_fwd_alias_eq
+  (* the same of an alias, where the copy is of the list it is
+     written into *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_fwd_alias_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[TAKE_0; APPEND; ADD_CLAUSES; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[copy_base]; ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_TAC THEN
+      ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH;
+                   ADD_CLAUSES];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_TAC THEN
+   ASM_SIMP_TAC[o_THM; copy_base; copy_step; ARITH; ADD_CLAUSES] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [REPEAT CONJ_TAC THEN COPY_LEN_TAC THEN
+      ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+      ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue_alias THEN ASM_ARITH_TAC)
+### list_copy_bwd_alias_eq
+  (* and of an alias that goes backward *)
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   ONCE_REWRITE_TAC[list_copy_bwd_alias_def] THEN
+   REWRITE_TAC[minus_def] THEN ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 0` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN
+      REWRITE_TAC[SUB_0; TAKE_0; APPEND; TAKE_DROP];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 1` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN ASM_SIMP_TAC[copy_base_bwd];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 2` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   (ASM_CASES_TAC `n = 3` THENL
+     [POP_ASSUM SUBST_ALL_TAC THEN COPY_BNDS_B_TAC THEN
+      ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                   ARITH];
+      ALL_TAC]) THEN
+   ASM_REWRITE_TAC[] THEN
+   COPY_BNDS_B_TAC THEN
+   ASM_SIMP_TAC[o_THM; SUB_0; copy_base_bwd; copy_step_bwd;
+                ARITH] THEN
+   W(fun (asl,w) ->
+     let args = snd(strip_comb(lhs w)) in
+     FIRST_ASSUM(fun ih ->
+       if not (is_forall(concl ih)) then fail() else
+       MP_TAC(SPEC (hd args) ih))) THEN
+   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN(fun ih2 ->
+     W(fun (asl,w) ->
+       let args = snd(strip_comb(lhs w)) in
+       MP_TAC(SPECL (tl args) ih2))) THEN
+   (ANTS_TAC THENL
+     [REPEAT CONJ_TAC THEN COPY_LEN_TAC THEN
+      ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_DROP] THEN
+      ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+   DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN
+   MATCH_MP_TAC copy_glue_bwd_alias THEN ASM_ARITH_TAC)
+### list_copy_alias_thm
+  (* the same of an alias.  Of a copy of none the forward
+     equation says nothing, because the destination may be above
+     the source there, and the definition gives it of itself *)
+  (REPEAT GEN_TAC THEN
+   REWRITE_TAC[copy_array_def; I_THM; INT_OF_NUM_ADD; INT_ABS_NUM;
+               NUM_OF_INT_OF_NUM; INT_OF_NUM_LT; LT] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN MATCH_REDUCE_TAC THEN
+   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+   REWRITE_TAC[injectivity "option"] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+   REWRITE_TAC[list_copy_alias_def] THEN
+   (COND_CASES_TAC THENL
+     [(ASM_CASES_TAC `(yp:num) <= xp` THENL
+        [W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+             list_copy_fwd_alias_eq (lhand w))) THEN
+         (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+         DISCH_THEN SUBST1_TAC THEN
+         (SUBGOAL_THEN `n + yp = yp + n` SUBST1_TAC THENL
+           [ARITH_TAC; ALL_TAC]) THEN
+         REFL_TAC;
+         (SUBGOAL_THEN `n = 0 /\ xp = 0` STRIP_ASSUME_TAC THENL
+           [ASM_ARITH_TAC; ALL_TAC]) THEN
+         ASM_REWRITE_TAC[] THEN
+         ONCE_REWRITE_TAC[list_copy_fwd_alias_def] THEN
+         (COND_CASES_TAC THENL
+           [ALL_TAC;
+            SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC]) THEN
+         REWRITE_TAC[ARITH_EQ; TAKE_0; APPEND; ADD_CLAUSES;
+                     TAKE_DROP]]);
+      W(fun (_,w) -> MP_TAC(PART_MATCH (lhs o rand)
+          list_copy_bwd_alias_eq (lhand w))) THEN
+      (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+      DISCH_THEN SUBST1_TAC THEN
+      (SUBGOAL_THEN `(((yp + n) - 1) + 1) - n = yp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `(((xp + n) - 1) + 1) - n = xp` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      (SUBGOAL_THEN `((yp + n) - 1) + 1 = yp + n` SUBST1_TAC THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+      REFL_TAC]))
 ### copy_array_NONE_IMP
   (* the offsets are of naturals, so copy_array is NONE exactly when
      the source is too short and otherwise takes the n elements from

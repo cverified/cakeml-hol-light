@@ -2604,3 +2604,104 @@ one the measure forbids, so it closes by arithmetic
   conjuncts in the set the rewrite does not come back (minutes),
   where `MAP_EVERY (fun e -> SUBST1_TAC (SYM e))` of the equations
   alone is instant.
+
+## 36. Where a tactic broke, without splitting it by hand
+
+`prove` says which exception came out of a tactic and nothing
+else: `Failure "tryfind"` for an unguarded `FIRST_ASSUM` that
+found nothing, `Failure "ACCEPT_TAC"` for a term whose types are
+not the goal's, `seqapply: Length mismatch` for a `THENL` over
+more goals than its list has.  None of them says *where*, and the
+proof that produced it can be fifty lines, so finding the step
+used to mean cutting the proof into a `bsteps` list by hand and
+reading the goal state of each step -- a round of the session per
+guess.
+
+`tools/bh.ml` now shadows `THEN` and `THENL`:
+
+```ocaml
+let b_watch lab (t:tactic) : tactic =
+  fun g -> b_note lab g; let r = t g in b_steps := !b_steps + 1; r
+
+let ((THEN):tactic->tactic->tactic) =
+  fun t1 t2 -> b_orig_then (b_watch "" t1) (b_watch "" t2)
+```
+
+so every step records the goal it is applied to, and `bp`/`bt`
+print the record of the step that got **furthest** when the
+attempt fails.  Of two records the deeper one is the one to show,
+because the failures inside `ORELSE`, `FIRST`, `REPEAT` and `TRY`
+are expected and shallow; the chronologically last is printed as
+well when it differs.  The kernel's own combinators are untouched,
+so only the tactics written after the harness is loaded are
+instrumented -- which is exactly the attempt being developed --
+and the cost is one `ref` write per step.
+
+A failure that is *not* an exception (`TAC_PROOF: Unsolved
+goals`) is the other half: there `b_show` prints the goals that
+are left, which is what the attempt has to be read against.  So
+the two reports together are what the session used to be needed
+for, and a trial is one round of the REPL again.
+
+`bp` is the same attempt against a **term** instead of a theorem
+of the file, for the lemmas a proof wants on the way, and it hands
+the theorem back (`b_the`) so the next attempt of the round can
+use it.
+
+## 37. The direction of APPEND_ASSOC
+
+HOL4's `APPEND_ASSOC` associates to the left
+(`(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3)`), HOL Light's to the right:
+
+```
+APPEND_ASSOC |- !l m n. l ++ m ++ n = (l ++ m) ++ n
+```
+
+and `++` prints right-associated, so `A ++ B ++ C` on the page is
+`A ++ (B ++ C)`.  `REWRITE_TAC[APPEND_ASSOC]` therefore brings a
+term to the **left**-associated form and `GSYM APPEND_ASSOC` to
+the right one -- the opposite way round from the HOL4 proof that
+is being read.  A rewrite that has to see `(A ++ B) ++ C` (an
+update at `LENGTH (A ++ B)`, say) wants the plain theorem, and a
+goal whose two sides differ only in the bracketing closes with
+`GSYM APPEND_ASSOC` and the clauses of `APPEND` together, which
+turn `[x] ++ C` into `x :: C` as well.
+
+## 38. What the parser reads of a term that a tactic writes
+
+Entry 34 is about the types that a term of a tactic invents.  Two
+more of its kind, both of which typecheck and so are found only by
+the proof going wrong somewhere else:
+
+**`::` binds looser than `++`.**  HOL4 prints `l1 ++ e::rest` for
+the list that is `l1 ++ (e :: rest)`, and in HOL Light the same
+line reads `(l1 ++ e) :: rest` -- which typechecks, with `e` a
+list and `rest` a list of lists, so a lemma written that way is
+proved and then never applies.  A cons next to an append is
+parenthesised.
+
+**An overloaded token takes the latest overload.**  The port
+defines the integer operations of CakeML, so the token `<=` in a
+term that a tactic writes is `int_le` unless something forces the
+other reading.  `ASM_CASES_TAC \`yp <= xp\`` therefore splits on a
+statement about two *integer* variables that the goal has never
+heard of, the assumption it adds is useless, and what fails is the
+`ASM_ARITH_TAC` three steps later (`linear_ineqs: no
+contradiction`, with the conjunct printed untranslated among
+`real_of_int` ones -- that is the tell).  A numeral in the term is
+enough to force `num` (`4 <= yp` is fine), and otherwise the
+variable is annotated: `(yp:num) <= xp`.
+
+Terms built up with `mk_binary "<="` and `mk_small_numeral` are
+not affected, because those name the constant rather than the
+token -- which is one reason the tactics that read bounds off the
+goal (`COPY_BNDS_TAC` of `data_to_word_memoryProof`) build their
+terms that way.
+
+**A general `ARITH_RULE` in a rewrite is a schema.**
+`REWRITE_TAC[ARITH_RULE \`j + 1 = 1 + j\`]` rewrites `xp + 1` to
+`1 + xp` as well, because the rule's variables are generalised; of
+the three occurrences in a goal it is the first that it reaches.
+Where one specific sum is meant, `SUBGOAL_THEN \`j + 1 = 1 + j\`
+SUBST1_TAC THENL [ARITH_TAC; ALL_TAC]` rewrites that term and
+nothing else.

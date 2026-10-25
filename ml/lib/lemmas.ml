@@ -421,6 +421,120 @@ let DROP_DROP = prove
                 ADD_SUC] THEN
     ASM_REWRITE_TAC[]]);;
 
+(* HOL4's TAKE_0, LENGTH_TAKE, TAKE_SUM, TAKE_TAKE, DROP_TAKE,   *)
+(* TAKE_LENGTH_APPEND, DROP_LENGTH_APPEND, TAKE_APPEND1,         *)
+(* DROP_APPEND1 and DROP_APPEND2.  The clauses of TAKE and DROP   *)
+(* decide on the number, so a TAKE of none, and a TAKE or a DROP  *)
+(* of as many as a first list has, do not reduce by themselves;   *)
+(* the proofs that copy a part of a list into another go through  *)
+(* these.                                                         *)
+(* ------------------------------------------------------------------ *)
+
+let TAKE_0 = prove
+ (`!l:A list. TAKE 0 l = []`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE]);;
+
+let LENGTH_TAKE = prove
+ (`!(l:A list) k. k <= LENGTH l ==> LENGTH (TAKE k l) = k`,
+  LIST_INDUCT_TAC THEN GEN_TAC THEN REWRITE_TAC[TAKE; LENGTH] THENL
+   [ARITH_TAC;
+    DISCH_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN
+    SUBGOAL_THEN `LENGTH (TAKE (k - 1) (t:A list)) = k - 1`
+      SUBST1_TAC THENL
+     [FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC;
+      ASM_ARITH_TAC]]);;
+
+let TAKE_SUM = prove
+ (`!(l:A list) a b.
+     TAKE (a + b) l = TAKE a l ++ TAKE b (DROP a l)`,
+  LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+  REWRITE_TAC[TAKE; DROP; APPEND] THEN
+  STRUCT_CASES_TAC(SPEC `a:num` num_CASES) THEN
+  ASM_REWRITE_TAC[TAKE_0; TAKE; DROP; APPEND; ADD_CLAUSES;
+                  NOT_SUC; SUC_SUB1]);;
+
+let TAKE_TAKE = prove
+ (`!(l:A list) m k. k <= m ==> TAKE k (TAKE m l) = TAKE k l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE] THEN
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  (ASM_CASES_TAC `m = 0` THENL
+    [ASM_REWRITE_TAC[TAKE] THEN
+     (SUBGOAL_THEN `k = 0` SUBST1_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+     REWRITE_TAC[TAKE_0];
+     ALL_TAC]) THEN
+  ASM_REWRITE_TAC[TAKE] THEN COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[] THEN AP_TERM_TAC THEN
+  FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC);;
+
+let DROP_TAKE = prove
+ (`!(l:A list) m k. DROP k (TAKE m l) = TAKE (m - k) (DROP k l)`,
+  LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[TAKE; DROP];
+    REPEAT GEN_TAC THEN REWRITE_TAC[TAKE] THEN
+    (ASM_CASES_TAC `m = 0` THENL
+      [ASM_REWRITE_TAC[DROP; ARITH_RULE `0 - k = 0`; TAKE_0];
+       ALL_TAC]) THEN
+    ASM_REWRITE_TAC[DROP] THEN
+    (ASM_CASES_TAC `k = 0` THENL
+      [ASM_REWRITE_TAC[SUB_0; TAKE; DROP_0]; ALL_TAC]) THEN
+    ASM_REWRITE_TAC[] THEN
+    (SUBGOAL_THEN `(m - 1) - (k - 1) = m - k` SUBST1_TAC THENL
+      [ASM_ARITH_TAC; ALL_TAC]) THEN
+    REWRITE_TAC[]]);;
+
+let TAKE_LENGTH_APPEND = prove
+ (`!(l1:A list) l2. TAKE (LENGTH l1) (l1 ++ l2) = l1`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[LENGTH; APPEND; TAKE; TAKE_0; NOT_SUC;
+                  SUC_SUB1]);;
+
+let DROP_LENGTH_APPEND = prove
+ (`!(l1:A list) l2. DROP (LENGTH l1) (l1 ++ l2) = l2`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[LENGTH; APPEND; DROP; DROP_0; NOT_SUC;
+                  SUC_SUB1]);;
+
+let TAKE_APPEND1 = prove
+ (`!(l1:A list) l2 k.
+     k <= LENGTH l1 ==> TAKE k (l1 ++ l2) = TAKE k l1`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; APPEND; TAKE] THENL
+   [REPEAT GEN_TAC THEN DISCH_TAC THEN
+    (SUBGOAL_THEN `k = 0` SUBST1_TAC THENL
+      [ASM_ARITH_TAC; ALL_TAC]) THEN
+    REWRITE_TAC[TAKE_0];
+    REPEAT GEN_TAC THEN DISCH_TAC THEN COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[] THEN AP_TERM_TAC THEN
+    FIRST_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC]);;
+
+let DROP_APPEND1 = prove
+ (`!(l1:A list) l2 k.
+     k <= LENGTH l1 ==> DROP k (l1 ++ l2) = DROP k l1 ++ l2`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; APPEND; DROP] THENL
+   [REPEAT GEN_TAC THEN DISCH_TAC THEN
+    (SUBGOAL_THEN `k = 0` SUBST1_TAC THENL
+      [ASM_ARITH_TAC; ALL_TAC]) THEN
+    REWRITE_TAC[DROP_0; APPEND];
+    REPEAT GEN_TAC THEN DISCH_TAC THEN COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[APPEND] THEN FIRST_ASSUM MATCH_MP_TAC THEN
+    ASM_ARITH_TAC]);;
+
+let DROP_APPEND2 = prove
+ (`!(l1:A list) l2 k.
+     LENGTH l1 <= k
+     ==> DROP k (l1 ++ l2) = DROP (k - LENGTH l1) l2`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  MP_TAC(SPECL [`l1:A list`; `l2:A list`] DROP_LENGTH_APPEND) THEN
+  DISCH_THEN(fun th ->
+    MP_TAC(AP_TERM
+      `DROP (k - LENGTH (l1:A list)):A list->A list` th)) THEN
+  REWRITE_TAC[DROP_DROP] THEN
+  (SUBGOAL_THEN `(k - LENGTH (l1:A list)) + LENGTH l1 = k`
+     SUBST1_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC]) THEN
+  DISCH_THEN ACCEPT_TAC);;
+
+(* ------------------------------------------------------------------ *)
 (* HOL4's MEM_FLAT: an element of the flattening is an element of
    one of the lists *)
 
