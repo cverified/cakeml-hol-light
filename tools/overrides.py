@@ -1946,6 +1946,121 @@ let V_INV_REFS_TAC =
   # what says that the words of a constant part are counted
   # by part_space_req (the first user is
   # part_to_words_LENGTH)
+  # what the two lemmas about the words of a constant part
+  # share (the first user is part_to_words_IMP_build_words)
+  ('data_to_word_memoryProof', 'part_to_words_IMP_build_words'): r"""
+(* the port's own: what the two lemmas that read the words of a
+   constant part off the deep embedding share.  HOL4 gets the sum of
+   two aligned words from alignmentTheory; here it comes from the
+   port's own byte_aligned_IMP_shift, by writing each as a multiple
+   of the bytes in a word *)
+
+let shl_add = prove
+ (`!(a:N word) b n.
+     word_shl (word_add a b) n =
+     word_add (word_shl a n) (word_shl b n)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_SHL; VAL_WORD_ADD] THEN
+  CONV_TAC MOD_DOWN_CONV THEN
+  REWRITE_TAC[LEFT_ADD_DISTRIB] THEN CONV_TAC MOD_DOWN_CONV THEN
+  REWRITE_TAC[]);;
+
+let shl_mul = prove
+ (`!(w:N word) n. word_shl w n = word_mul w (word (2 EXP n))`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_SHL; VAL_WORD_MUL;
+              VAL_WORD] THEN
+  CONV_TAC MOD_DOWN_CONV THEN REWRITE_TAC[MULT_SYM]);;
+
+let bytes_in_word_shift = prove
+ (`good_dimindex (:'a)
+   ==> (bytes_in_word:'a word) =
+       word (2 EXP backend_common_word_shift (:'a))`,
+  REWRITE_TAC[good_dimindex_def; bytes_in_word_def;
+              word_shift_def] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
+
+let byte_aligned_add = prove
+ (`good_dimindex (:'a) /\ byte_aligned (a:'a word) /\ byte_aligned b
+   ==> byte_aligned (a + b)`,
+  STRIP_TAC THEN
+  FIRST_ASSUM(fun gd ->
+    if not (hd_is "good_dimindex" (concl gd)) then fail() else
+    REPEAT(FIRST_X_ASSUM(fun ba ->
+      if not (hd_is "byte_aligned" (concl ba)) then fail() else
+      CHOOSE_THEN SUBST_ALL_TAC
+        (MATCH_MP byte_aligned_IMP_shift (CONJ ba gd)))) THEN
+    REWRITE_TAC[GSYM shl_add; shl_mul] THEN
+    ONCE_REWRITE_TAC[GSYM (MATCH_MP bytes_in_word_shift gd)] THEN
+    ASM_SIMP_TAC[byte_align_mult_bytes_in_word]));;
+
+(* the header of a bignum, which the two definitions write
+   differently: the deep embedding takes the sign bit of a word and
+   the shallow one the number 7 or 3 *)
+
+let or43 = prove
+ (`((n2w 4):'a word) || n2w 3 = n2w 7`, WORD_NUM_BIT_TAC 3);;
+
+let or03 = prove
+ (`((n2w 0):'a word) || n2w 3 = n2w 3`, WORD_NUM_BIT_TAC 2);;
+
+let hdr_bits = prove
+ (`good_dimindex (:'a) ==>
+   w2n ((b2w sign << 2 || (n2w 3)):'a word) =
+   (if sign then 7 else 3)`,
+  REWRITE_TAC[b2w_def] THEN DISCH_TAC THEN
+  STRUCT_CASES_TAC(SPEC `sign:bool` BOOL_CASES_AX) THEN
+  REWRITE_TAC[b2n_def; WORD_SHL_WORD] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[or43; or03; VAL_WORD] THEN
+  FIRST_ASSUM(fun gd ->
+    STRIP_ASSUME_TAC(REWRITE_RULE[good_dimindex_def] gd)) THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
+
+(* the map of the deep embedding with a word put in, read as the
+   function of the shallow one with that word put in *)
+
+let upd_lookup = prove
+ (`!m i (v:bool#('a word_loc)).
+     (\j. SND (lookup_mem (insert i v m) j)) =
+     ((i =+ SND v) (\j. SND (lookup_mem m j)))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN
+  X_GEN_TAC `j:num` THEN REWRITE_TAC[UPDATE] THEN BETA_TAC THEN
+  (ASM_CASES_TAC `(i:num) = j` THENL
+    [FIRST_ASSUM SUBST_ALL_TAC THEN
+     REWRITE_TAC[lookup_mem_def; lookup_insert] THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[];
+     ASM_REWRITE_TAC[lookup_mem_def; lookup_insert] THEN
+     (SUBGOAL_THEN `~((j:num) = i)` (fun th -> REWRITE_TAC[th])
+        THENL [ASM_MESON_TAC[]; ALL_TAC]) THEN
+     REWRITE_TAC[]]));;
+
+(* and the call of a recursion in an assumption, split into its
+   result and that result into a pair *)
+
+let pw_is_lhs n t = (try hd_is n (lhs t) with Failure _ -> false);;
+
+let pw_has_call n t =
+  (try hd_is n (find_term (hd_is n) t) with Failure _ -> false);;
+
+let PW_SPLIT_CALL_TAC n =
+  W(fun g ->
+    let th = av_find (pw_has_call n) g in
+    CASES_ON_TAC (find_term (hd_is n) (concl th))) THEN
+  TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option"]) THEN
+  TRY(FIRST_ASSUM CONTR_TAC) THEN
+  TRY(W(fun g ->
+    let th = av_find (fun t -> pw_is_lhs n t &&
+                               hd_is "SOME" (rhs t)) g in
+    CASES_ON_TAC (rand(rhs(concl th))))) THEN
+  TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option";
+                               injectivity "option"; PAIR_EQ]) THEN
+  TRY(FIRST_ASSUM CONTR_TAC) THEN
+  TRY SAFE_MATCH_REDUCE_ASM_TAC;;
+""",
+
   ('data_to_word_memoryProof', 'part_to_words_LENGTH'): r"""
 (* the port's own: a number that is below 2 EXP 29 is a small int,
    whichever of the two word sizes it is -- which is what says that
