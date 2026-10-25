@@ -2251,6 +2251,131 @@
   (REWRITE_TAC[ref_edge_def; lookup_insert] THEN
    COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
    REWRITE_TAC[])
+### reachable_refs_UPDATE
+  (* induction along the reflexive transitive closure: an edge of
+     the new references is one of the old ones, or it leaves ptr
+     and lands in the array, whose values are roots of their own
+     (they are the xs at the front of the stack) *)
+  (let rtcpath = prove
+    (`!r1 n.
+        RTC (ref_edge (insert ptr (ValueArray xs) refs)) r1 n ==>
+        RTC (ref_edge refs) r1 n \/
+        (?s. MEM s (get_refs (Block 0 ARB xs)) /\
+             RTC (ref_edge refs) s n)`,
+     MATCH_MP_TAC RTC_INDUCT THEN CONJ_TAC THENL
+      [GEN_TAC THEN DISJ1_TAC THEN
+       MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES));
+       REPEAT GEN_TAC THEN REWRITE_TAC[ref_edge_ValueArray] THEN
+       COND_CASES_TAC THEN STRIP_TAC THEN
+       ASM_MESON_TAC[RTC_RULES]]) in
+   let mem_block_refs = prove
+    (`!(ys:(dataSem_v)list) ss tt aa.
+        MEM ss (get_refs (Block tt aa ys))
+        ==> ?yy. MEM yy ys /\ MEM ss (get_refs yy)`,
+     REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+     MESON_TAC[]) in
+   REWRITE_TAC[reachable_refs_def] THEN
+   DISCH_THEN(X_CHOOSE_THEN `x:dataSem_v`
+     (X_CHOOSE_THEN `r:num` STRIP_ASSUME_TAC)) THEN
+   FIRST_ASSUM(fun rtc -> MP_TAC(MATCH_MP rtcpath rtc)) THEN
+   DISCH_THEN(DISJ_CASES_THEN2
+     (fun old ->
+        MAP_EVERY EXISTS_TAC [`x:dataSem_v`; `r:num`] THEN
+        ASM_REWRITE_TAC[old])
+     (X_CHOOSE_THEN `s:num` STRIP_ASSUME_TAC)) THEN
+   FIRST_ASSUM(fun m -> MP_TAC(MATCH_MP mem_block_refs m)) THEN
+   DISCH_THEN(X_CHOOSE_THEN `yy:dataSem_v` STRIP_ASSUME_TAC) THEN
+   MAP_EVERY EXISTS_TAC [`yy:dataSem_v`; `s:num`] THEN
+   ASM_REWRITE_TAC[MEM_APPEND])
+### reachable_refs_Thunk_UPDATE
+  (* the same, with the thunk's value for the array: the payload of
+     the edge that leaves ptr is the one value v, which is the
+     root at the front of the stack *)
+  (let rtcpath = prove
+    (`!r1 n.
+        RTC (ref_edge (insert ptr (Thunk ev v) refs)) r1 n ==>
+        RTC (ref_edge refs) r1 n \/
+        (?s. MEM s (get_refs v) /\ RTC (ref_edge refs) s n)`,
+     MATCH_MP_TAC RTC_INDUCT THEN CONJ_TAC THENL
+      [GEN_TAC THEN DISJ1_TAC THEN
+       MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES));
+       REPEAT GEN_TAC THEN REWRITE_TAC[ref_edge_Thunk] THEN
+       REWRITE_TAC[get_refs_def; MAP; FLAT; APPEND_NIL] THEN
+       COND_CASES_TAC THEN STRIP_TAC THEN
+       ASM_MESON_TAC[RTC_RULES]]) in
+   REWRITE_TAC[reachable_refs_def] THEN
+   DISCH_THEN(X_CHOOSE_THEN `x:dataSem_v`
+     (X_CHOOSE_THEN `r:num` STRIP_ASSUME_TAC)) THEN
+   FIRST_ASSUM(fun rtc -> MP_TAC(MATCH_MP rtcpath rtc)) THEN
+   DISCH_THEN(DISJ_CASES_THEN2
+     (fun old ->
+        MAP_EVERY EXISTS_TAC [`x:dataSem_v`; `r:num`] THEN
+        ASM_REWRITE_TAC[old])
+     (X_CHOOSE_THEN `s:num` STRIP_ASSUME_TAC)) THEN
+   MAP_EVERY EXISTS_TAC [`v:dataSem_v`; `s:num`] THEN
+   ASM_REWRITE_TAC[MEM])
+### reachable_refs_UPDATE1
+  (* the array that is written is not the stack's xs here, so a
+     value of it that was not on the stack has to have sat in the
+     old array at ptr -- and then the edge that leaves ptr is an
+     edge of the old references too, with ptr itself as the root *)
+  (let rtcpath = prove
+    (`!r1 n.
+        RTC (ref_edge (insert ptr (ValueArray xs1) refs)) r1 n ==>
+        RTC (ref_edge refs) r1 n \/
+        (?s. MEM s (get_refs (Block 0 ARB xs1)) /\
+             RTC (ref_edge refs) s n)`,
+     MATCH_MP_TAC RTC_INDUCT THEN CONJ_TAC THENL
+      [GEN_TAC THEN DISJ1_TAC THEN
+       MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES));
+       REPEAT GEN_TAC THEN REWRITE_TAC[ref_edge_ValueArray] THEN
+       COND_CASES_TAC THEN STRIP_TAC THEN
+       ASM_MESON_TAC[RTC_RULES]]) in
+   let mem_block_refs = prove
+    (`!(ys:(dataSem_v)list) ss tt aa.
+        MEM ss (get_refs (Block tt aa ys))
+        ==> ?yy. MEM yy ys /\ MEM ss (get_refs yy)`,
+     REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+     MESON_TAC[]) in
+   let oldedge = prove
+    (`!xs2 s. (lookup ptr refs = SOME (ValueArray xs2)) /\
+              MEM s (get_refs (Block 0 ARB xs2))
+              ==> ref_edge refs ptr s`,
+     REWRITE_TAC[ref_edge_def] THEN REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+     ASM_REWRITE_TAC[]) in
+   REWRITE_TAC[reachable_refs_def] THEN
+   DISCH_THEN(X_CHOOSE_THEN `x:dataSem_v`
+     (X_CHOOSE_THEN `r:num` STRIP_ASSUME_TAC)) THEN
+   DISCH_TAC THEN
+   FIRST_ASSUM(fun rtc -> MP_TAC(MATCH_MP rtcpath rtc)) THEN
+   DISCH_THEN(DISJ_CASES_THEN2
+     (fun old ->
+        MAP_EVERY EXISTS_TAC [`x:dataSem_v`; `r:num`] THEN
+        ASM_REWRITE_TAC[old])
+     (X_CHOOSE_THEN `s:num` STRIP_ASSUME_TAC)) THEN
+   FIRST_ASSUM(fun m -> MP_TAC(MATCH_MP mem_block_refs m)) THEN
+   DISCH_THEN(X_CHOOSE_THEN `yy:dataSem_v` STRIP_ASSUME_TAC) THEN
+   ASM_CASES_TAC `MEM (yy:dataSem_v) xs` THENL
+    [MAP_EVERY EXISTS_TAC [`yy:dataSem_v`; `s:num`] THEN
+     ASM_REWRITE_TAC[MEM_APPEND];
+     FIRST_X_ASSUM(fun side ->
+       MP_TAC(MATCH_MP (MATCH_MP side (ASSUME `MEM (yy:dataSem_v)
+         xs1`)) (ASSUME `~(MEM (yy:dataSem_v) xs)`))) THEN
+     DISCH_THEN(X_CHOOSE_THEN `xs2:(dataSem_v)list`
+       STRIP_ASSUME_TAC) THEN
+     MAP_EVERY EXISTS_TAC
+       [`RefPtr b ptr:dataSem_v`; `ptr:num`] THEN
+     REWRITE_TAC[MEM_APPEND; MEM; get_refs_def] THEN
+     MATCH_MP_TAC(CONJUNCT2(SPEC_ALL RTC_RULES)) THEN
+     EXISTS_TAC `s:num` THEN ASM_REWRITE_TAC[] THEN
+     MATCH_MP_TAC oldedge THEN EXISTS_TAC `xs2:(dataSem_v)list` THEN
+     CONJ_TAC THENL
+      [FIRST_ASSUM ACCEPT_TAC;
+       REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+       EXISTS_TAC `get_refs (yy:dataSem_v)` THEN CONJ_TAC THENL
+        [EXISTS_TAC `yy:dataSem_v` THEN ASM_REWRITE_TAC[];
+         FIRST_ASSUM ACCEPT_TAC]]])
 ### v_inv_ByteArray_insert
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_ByteArray_insert_lemma])
