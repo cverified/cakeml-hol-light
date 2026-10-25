@@ -1078,6 +1078,14 @@ class Porter:
     if self.hideconsts:
       text += ('\n(* and the accessors of those fields are'
                ' overloaded again *)\nlet _ = unhide_overloads ();;\n')
+    # the lemmas that the port adds to this theory, which a proof
+    # of phase three asks for and the source has not: they are in
+    # tools/extra/<theory>.ml, so that a re-port keeps them (a
+    # block written into the generated file by hand is thrown away
+    # the next time the port runs)
+    xp = T + 'extra/' + self.thy + '.ml'
+    if os.path.exists(xp):
+      text += '\n' + open(xp).read().rstrip() + '\n'
     # the files that the translation needs
     deps = sorted(set(self.deps) |
                   self.db.providers(self.thy, strip_ml(text),
