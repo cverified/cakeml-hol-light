@@ -4910,7 +4910,50 @@ let update_ref_gen_state_ok = prove
  (`heap_store b [RefBlock t1] heap = (heap2,T) /\ a <= b /\
        gen_state_ok a (a + (sp + sp1)) heap gens ==>
        gen_state_ok a (a + (sp + sp1)) heap2 gens`,
-  CHEAT_TAC);;
+  ((* the head constant of a term, by name, and the assumption
+      that a test picks out *)
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   (* the generations are all below a and the pointers of the part
+     below each of them stay where they were: the store is at b,
+     which is at or above a, so the split at a generation's start
+     gives the same first half (heap_split_heap_store) *)
+  STRUCT_CASES_TAC(ISPEC `gens:gen_state`
+    (cases_of `:gen_state`)) THEN
+  REWRITE_TAC[gen_state_ok_def] THEN
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+  ASM_REWRITE_TAC[] THEN
+  FIRST_X_ASSUM(fun ev ->
+    if hd_is "ALL" (concl ev) &&
+       hd_is "gen_start_ok" (lhand (concl ev))
+    then MP_TAC(REWRITE_RULE[GSYM ALL_MEM] ev) else fail()) THEN
+  REWRITE_TAC[GSYM ALL_MEM] THEN
+  DISCH_TAC THEN GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(fun ev ->
+    FIRST_ASSUM(fun mm -> MP_TAC(MATCH_MP ev mm))) THEN
+  REWRITE_TAC[gen_start_ok_def] THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+  W(fun (asl,w) ->
+    let ev = grab asl (fun th -> hd_is "ALL" (concl th)) in
+    let m  = grab asl (fun th -> hd_is "MEM" (concl th) &&
+               rand (concl th) = rand (concl ev)) in
+    let ab = grab asl (fun th -> hd_is "<=" (concl th)) in
+    let sp = grab asl (fun th ->
+               hd_is "heap_split" (lhand (concl th))) in
+    let st = grab asl (fun th ->
+               hd_is "heap_store" (lhand (concl th))) in
+    let xa = BETA_RULE(MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] ev) m) in
+    let xb = MATCH_MP (MATCH_MP (ARITH_RULE
+               `(x:num) <= a ==> a <= b ==> x <= b`) xa) ab in
+    MP_TAC(MATCH_MP heap_split_heap_store
+             (CONJ sp (CONJ st xb)))) THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN ASSUME_TAC) THEN
+  ASM_MESON_TAC[]));;
 
 (* [local] *)
 let data_up_to_alt = prove
@@ -4936,7 +4979,50 @@ let update_thunk_gen_state_ok = prove
  (`heap_store b [ThunkBlock ev t1] heap = (heap2,T) /\ a <= b /\
        gen_state_ok a (a + (sp + sp1)) heap gens ==>
        gen_state_ok a (a + (sp + sp1)) heap2 gens`,
-  CHEAT_TAC);;
+  ((* the head constant of a term, by name, and the assumption
+      that a test picks out *)
+   let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   (* the generations are all below a and the pointers of the part
+     below each of them stay where they were: the store is at b,
+     which is at or above a, so the split at a generation's start
+     gives the same first half (heap_split_heap_store) *)
+  STRUCT_CASES_TAC(ISPEC `gens:gen_state`
+    (cases_of `:gen_state`)) THEN
+  REWRITE_TAC[gen_state_ok_def] THEN
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+  ASM_REWRITE_TAC[] THEN
+  FIRST_X_ASSUM(fun ev ->
+    if hd_is "ALL" (concl ev) &&
+       hd_is "gen_start_ok" (lhand (concl ev))
+    then MP_TAC(REWRITE_RULE[GSYM ALL_MEM] ev) else fail()) THEN
+  REWRITE_TAC[GSYM ALL_MEM] THEN
+  DISCH_TAC THEN GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(fun ev ->
+    FIRST_ASSUM(fun mm -> MP_TAC(MATCH_MP ev mm))) THEN
+  REWRITE_TAC[gen_start_ok_def] THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+  W(fun (asl,w) ->
+    let ev = grab asl (fun th -> hd_is "ALL" (concl th)) in
+    let m  = grab asl (fun th -> hd_is "MEM" (concl th) &&
+               rand (concl th) = rand (concl ev)) in
+    let ab = grab asl (fun th -> hd_is "<=" (concl th)) in
+    let sp = grab asl (fun th ->
+               hd_is "heap_split" (lhand (concl th))) in
+    let st = grab asl (fun th ->
+               hd_is "heap_store" (lhand (concl th))) in
+    let xa = BETA_RULE(MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] ev) m) in
+    let xb = MATCH_MP (MATCH_MP (ARITH_RULE
+               `(x:num) <= a ==> a <= b ==> x <= b`) xa) ab in
+    MP_TAC(MATCH_MP heap_split_heap_store
+             (CONJ sp (CONJ st xb)))) THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN ASSUME_TAC) THEN
+  ASM_MESON_TAC[]));;
 
 let data_up_to_heap_store = prove
  (`!heap a b heap2 y.
