@@ -1547,10 +1547,21 @@ the shared block name the array that is written `vls`, because a
 proof whose own `xs` is another list cannot aim a lemma whose free
 variable is `xs` (PORTING-GUIDE.md entry 55).
 
-So the two theorems that are left of the four are
-`update_thunk_thm` and `update_mutblock_thm` (a store into a thunk
-and into a mutable block, HOL4
-`data_to_word_memoryProofScript.sml:5183` and `:5609`) and
+`update_thunk_thm` is proved as well, and with it the block of
+`update_ref_thm` has been turned round: the lemmas that do the work
+now take the three transfers that an update of the references
+leaves -- what the invariant says of a value, what a value says of
+a thunk, and what the references hold at another key -- as
+hypotheses (`v_inv_update_gen`, `EVERY2_v_inv_update_gen`,
+`bc_ref_inv_update_gen`, `bc_ref_inv_update_other_gen`), and the
+kind of the update only has to say what its three transfers are
+(`VA_trans` for an array of values, `TH_trans` for a thunk).  The
+four arms of `bc_ref_inv` are gone through once, in
+`bc_ref_inv_update_gen`, for every update.
+
+So what is left of the four is `update_mutblock_thm` (a store into
+a mutable block, HOL4 `data_to_word_memoryProofScript.sml:5609`,
+which needs a `MB_trans` and the arm of a mutable block) and
 `update_byte_ref_thm` (a store into a byte array, `:5934`), which
 replaces the element of the heap in place instead of storing into
 it.
