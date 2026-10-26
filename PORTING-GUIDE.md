@@ -3092,3 +3092,30 @@ Two things to watch:
 - a relation applied to a lambda leaves a beta-redex in the goals,
   so `CONV_TAC(TOP_DEPTH_CONV BETA_CONV)` goes before the
   `ACCEPT_TAC`s.
+
+## 50. A test of a section loads what the file loads, and no more
+
+The quick check after `tools/bin/portfile` is to lift the generated
+section into a file and `bt` it in the session.  That test is only
+worth something if the file it loads has **nothing in it that the
+port does not have**.  A test file that begins
+
+```
+let SHOW lab = W(fun gl -> b_state lab 0 gl; ALL_TAC);;
+```
+
+and a section that still carries a `SHOW` in the last alternative
+of a `FIRST` -- a probe left behind from the round that wrote the
+proof -- pass the test together and then kill the load of the file
+itself:
+
+```
+Error: Unbound value SHOW
+Error in included file .../data_to_word_memoryProof.ml
+```
+
+`verifyquick` reports it as `AXIOMS-ADDED 58` and an error, which
+looks like something much worse than a leftover probe.  So: grep the
+section for the names of the probes (`SHOW`, `b_state`, `say`,
+`b_watch`) before landing it, and keep the harness names out of
+`tools/overrides.py` and the `.prf`.
