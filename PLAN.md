@@ -1496,3 +1496,35 @@ assumed and the proof of it is now written (it stands in
 `dataSem`'s `finalise_cons`, which is `size_delete_LESS` and the
 measure HOL4 gives.  Both are a cheat of another file, so they wait
 until this file is done.
+
+## Where update_ref_thm stands
+
+`update_ref_thm` is the keystone of the four update theorems
+(`update_ref_thm1`, `update_thunk_thm`, `update_mutblock_thm`,
+`update_byte_ref_thm` take the same steps), so its machinery is
+built first.  Fourteen lemmas of it are proved and stand in
+`tools/wip-update_ref.ml` (which nothing loads), with the proof as
+far as it goes in a comment at the end of that file:
+
+- the roots and the heap after a store into a RefBlock:
+  `roots_ok_iso`, `heap_ok_store_ref`, `unused_store_ref`;
+- the timestamps cut down to the ones of the new stack:
+  `DRESTRICT_DEF` (HOL4's), `INJ_DRESTRICT`, `INJ_SUBSET_DOM`;
+- what reaches a reference: `reach_refptr`;
+- the lists: HOL4's `LIST_REL_APPEND_IMP` and `EVERY2_MEM_MONO`,
+  and `mem_zip_left`;
+- the two transfers of `v_inv` over the update, for a value of the
+  stack and for one inside a reference: `v_inv_update_ref`,
+  `v_inv_update_ref_ref`, `MEM_ref_all_vs`;
+- and `domain_insert` of the references.
+
+What the proof closes already: the split of the roots
+(`EVERY2_APPEND_CONS`), the arm of the reference (`arm_VA` of the
+shared block), the store (`heap_store_RefBlock`), the five
+witnesses, and of the new invariant `roots_ok`, `heap_ok`,
+`unused_space_inv`, the two maps and the values of the stack.
+
+What is left: `gc_kind_inv` (HOL4
+`data_to_word_memoryProofScript.sml:4789-4812`, which wants
+`update_ref_gen_state_ok` and the `heap_split` dance) and the arms
+of the references the stack reaches (4845 onwards).
