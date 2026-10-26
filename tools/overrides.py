@@ -1758,6 +1758,86 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # the port's own facts about the alignment of the address of a
+  # byte of a word, which the lemmas about bytes_to_word share (the
+  # first of them is get_byte_bytes_to_word).  They stand here
+  # because they are about byte_align and the dimindex, which the
+  # file itself reasons about all the time.
+  ('data_to_word_memoryProof', 'get_byte_bytes_to_word'): r"""
+(* the port's own: the address of a byte of the first word of a
+   memory is below the bytes in a word, and the facts that the
+   proofs about such an address need of it -- that it is aligned to
+   the word, and that two of them are different words *)
+
+(* LOG2 of a numeral, by the equation that defines it *)
+let LOG2_RED =
+  REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                       NUM_REDUCE_CONV THENC REWRITE_CONV[]));;
+
+(* the slice that takes the bits from p up is the word shifted down
+   by p and up again *)
+let slice_shl = prove
+ (`!p (w:(N)word).
+     word_slice (dimindex (:N) - 1) p w = word_shl (word_ushr w p) p`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+              BIT_WORD_SHL; BIT_WORD_SUBWORD; BIT_WORD_USHR] THEN
+  X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+  ASM_CASES_TAC `p:num <= i` THEN ASM_REWRITE_TAC[] THEN
+  SUBGOAL_THEN
+    `i - p < MIN ((dimindex (:N) - 1 + 1) - p) (dimindex (:N))`
+    (fun th -> REWRITE_TAC[th]) THENL
+   [REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+    COND_CASES_TAC THEN ASM_ARITH_TAC;
+    REWRITE_TAC[ARITH_RULE `p + (i - p) = (i - p) + p`]]);;
+
+(* a number below two to the p has nothing left when it is shifted
+   down by p *)
+let ushr_small = prove
+ (`!x p. x < 2 EXP p /\ p <= dimindex (:'a)
+         ==> word_ushr ((n2w x):'a word) p = n2w 0`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[GSYM VAL_EQ_0; VAL_WORD_USHR; VAL_WORD] THEN
+  MATCH_MP_TAC DIV_LT THEN
+  MP_TAC (SPECL [`x:num`; `2 EXP dimindex (:'a)`] MOD_LE) THEN
+  ASM_ARITH_TAC);;
+
+(* so the address of a byte of the first word is aligned to it *)
+let align_small = prove
+ (`!x. good_dimindex (:'a) /\ x < dimindex (:'a) DIV 8
+       ==> byte_align ((n2w x):'a word) = n2w 0`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[byte_align_def; align_def; slice_shl] THEN
+  SUBGOAL_THEN `word_ushr ((n2w x):'a word)
+                  (LOG2 (dimindex (:'a) DIV 8)) = n2w 0`
+    SUBST1_TAC THENL
+   [MATCH_MP_TAC ushr_small THEN
+    FIRST_X_ASSUM(DISJ_CASES_THEN (fun eq ->
+      RULE_ASSUM_TAC(REWRITE_RULE[eq]) THEN SUBST1_TAC eq) o
+      REWRITE_RULE[good_dimindex_def]) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
+    CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC;
+    REWRITE_TAC[word_shl; VAL_WORD_0; MULT_CLAUSES]]);;
+
+(* and two numbers below the width of a word are different words *)
+let n2w_ne = prove
+ (`!a b. a < 2 EXP dimindex (:'a) /\ b < 2 EXP dimindex (:'a) /\
+         ~(a = b) ==> ~(((n2w a):'a word) = n2w b)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[GSYM VAL_EQ; VAL_WORD] THEN
+  ASM_SIMP_TAC[MOD_LT]);;
+
+let ne_small = prove
+ (`!a b. good_dimindex (:'a) /\ a < dimindex (:'a) DIV 8 /\
+         b < dimindex (:'a) DIV 8 /\ ~(a = b)
+         ==> ~(((n2w a):'a word) = n2w b)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MATCH_MP_TAC n2w_ne THEN
+  FIRST_X_ASSUM(DISJ_CASES_THEN (fun eq ->
+    RULE_ASSUM_TAC(REWRITE_RULE[eq]) THEN SUBST1_TAC eq) o
+    REWRITE_RULE[good_dimindex_def]) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC);;
+""",
   # the induction and the three cases of a RefPtr that the
   # lemmas about a change of the refs, of the heap or of tf share
   # (the first of them is v_inv_tf_update_thm_alt_lemma).  They stand here and not

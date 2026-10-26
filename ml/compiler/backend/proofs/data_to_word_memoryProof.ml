@@ -15145,6 +15145,80 @@ let get_byte_set_byte_alt = prove
       get_byte w (set_byte v b (s:'a word) be) be = x`),
   (REPEAT STRIP_TAC THEN ASM_MESON_TAC[get_byte_set_byte_diff]));;
 
+(* the port's own: the address of a byte of the first word of a
+   memory is below the bytes in a word, and the facts that the
+   proofs about such an address need of it -- that it is aligned to
+   the word, and that two of them are different words *)
+
+(* LOG2 of a numeral, by the equation that defines it *)
+let LOG2_RED =
+  REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                       NUM_REDUCE_CONV THENC REWRITE_CONV[]));;
+
+(* the slice that takes the bits from p up is the word shifted down
+   by p and up again *)
+let slice_shl = prove
+ (`!p (w:(N)word).
+     word_slice (dimindex (:N) - 1) p w = word_shl (word_ushr w p) p`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+              BIT_WORD_SHL; BIT_WORD_SUBWORD; BIT_WORD_USHR] THEN
+  X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+  ASM_CASES_TAC `p:num <= i` THEN ASM_REWRITE_TAC[] THEN
+  SUBGOAL_THEN
+    `i - p < MIN ((dimindex (:N) - 1 + 1) - p) (dimindex (:N))`
+    (fun th -> REWRITE_TAC[th]) THENL
+   [REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+    COND_CASES_TAC THEN ASM_ARITH_TAC;
+    REWRITE_TAC[ARITH_RULE `p + (i - p) = (i - p) + p`]]);;
+
+(* a number below two to the p has nothing left when it is shifted
+   down by p *)
+let ushr_small = prove
+ (`!x p. x < 2 EXP p /\ p <= dimindex (:'a)
+         ==> word_ushr ((n2w x):'a word) p = n2w 0`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[GSYM VAL_EQ_0; VAL_WORD_USHR; VAL_WORD] THEN
+  MATCH_MP_TAC DIV_LT THEN
+  MP_TAC (SPECL [`x:num`; `2 EXP dimindex (:'a)`] MOD_LE) THEN
+  ASM_ARITH_TAC);;
+
+(* so the address of a byte of the first word is aligned to it *)
+let align_small = prove
+ (`!x. good_dimindex (:'a) /\ x < dimindex (:'a) DIV 8
+       ==> byte_align ((n2w x):'a word) = n2w 0`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[byte_align_def; align_def; slice_shl] THEN
+  SUBGOAL_THEN `word_ushr ((n2w x):'a word)
+                  (LOG2 (dimindex (:'a) DIV 8)) = n2w 0`
+    SUBST1_TAC THENL
+   [MATCH_MP_TAC ushr_small THEN
+    FIRST_X_ASSUM(DISJ_CASES_THEN (fun eq ->
+      RULE_ASSUM_TAC(REWRITE_RULE[eq]) THEN SUBST1_TAC eq) o
+      REWRITE_RULE[good_dimindex_def]) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
+    CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC;
+    REWRITE_TAC[word_shl; VAL_WORD_0; MULT_CLAUSES]]);;
+
+(* and two numbers below the width of a word are different words *)
+let n2w_ne = prove
+ (`!a b. a < 2 EXP dimindex (:'a) /\ b < 2 EXP dimindex (:'a) /\
+         ~(a = b) ==> ~(((n2w a):'a word) = n2w b)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[GSYM VAL_EQ; VAL_WORD] THEN
+  ASM_SIMP_TAC[MOD_LT]);;
+
+let ne_small = prove
+ (`!a b. good_dimindex (:'a) /\ a < dimindex (:'a) DIV 8 /\
+         b < dimindex (:'a) DIV 8 /\ ~(a = b)
+         ==> ~(((n2w a):'a word) = n2w b)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MATCH_MP_TAC n2w_ne THEN
+  FIRST_X_ASSUM(DISJ_CASES_THEN (fun eq ->
+    RULE_ASSUM_TAC(REWRITE_RULE[eq]) THEN SUBST1_TAC eq) o
+    REWRITE_RULE[good_dimindex_def]) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let get_byte_bytes_to_word = prove
@@ -15154,19 +15228,77 @@ let get_byte_bytes_to_word = prove
         2 EXP k = dimindex (:'a) DIV 8 /\ good_dimindex (:'a) ==>
         get_byte (n2w i) (bytes_to_word (2 EXP k) (n2w 0) zs t
           be) be = EL i zs`),
-  (* the attempt: the proof of the source names bytes_to_word_def,
-     good_dimindex_get_byte_set_byte, get_byte_set_byte_alt,
-     byte_align_def, good_dimindex_def.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[bytes_to_word_def;
-       good_dimindex_get_byte_set_byte; get_byte_set_byte_alt;
-       byte_align_def; good_dimindex_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the source takes the list of bytes apart into the four or the
+     eight bytes of a word.  Here one lemma does it for every
+     length, by the induction of bytes_to_word over the list: the
+     byte at the address of the first set_byte is the head of the
+     list (good_dimindex_get_byte_set_byte), and a byte further on
+     is the byte of the word that the rest of the list makes
+     (get_byte_set_byte_alt, whose two addresses align to the same
+     word by align_small).  The lemma is about the word at an
+     offset, because that is what the recursive call of
+     bytes_to_word is about *)
+  (let aux = prove
+    (`!ls n m i (t:'a word) be'.
+        i < n /\ i < LENGTH ls /\ m + n <= dimindex (:'a) DIV 8 /\
+        good_dimindex (:'a)
+        ==> get_byte (n2w (m + i))
+              (bytes_to_word n (n2w m) ls t be') be' = EL i ls`,
+     LIST_INDUCT_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[LENGTH; CONJUNCT1 LT];
+       ALL_TAC] THEN
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC (SPEC `n:num` num_CASES) THENL
+      [REWRITE_TAC[CONJUNCT1 LT]; ALL_TAC] THEN
+     REWRITE_TAC[LENGTH] THEN
+     STRUCT_CASES_TAC (SPEC `i:num` num_CASES) THENL
+      [(* the byte that the first set_byte of the word sets *)
+       REWRITE_TAC[ADD_CLAUSES; EL; HD] THEN
+       STRIP_TAC THEN
+       ONCE_REWRITE_TAC[bytes_to_word_def] THEN
+       REWRITE_TAC[NOT_SUC; SUC_SUB1] THEN MATCH_REDUCE_TAC THEN
+       FIRST_ASSUM (fun gd ->
+         MATCH_ACCEPT_TAC (GEN_ALL
+           (MATCH_MP good_dimindex_get_byte_set_byte gd)));
+       (* or a byte further on, which the set_byte does not touch *)
+       REWRITE_TAC[EL; TL] THEN
+       STRIP_TAC THEN
+       ONCE_REWRITE_TAC[bytes_to_word_def] THEN
+       REWRITE_TAC[NOT_SUC; SUC_SUB1] THEN MATCH_REDUCE_TAC THEN
+       (* both addresses are bytes of the same word *)
+       W(fun (asl,w) ->
+         let gb = find_term (hd_is "get_byte") w in
+         let a1 = rand (el 0 (snd (strip_comb gb))) in
+         let sb = find_term (hd_is "set_byte") w in
+         let a2 = rand (el 0 (snd (strip_comb sb))) in
+         let dd = find_term (hd_is "DIV")
+                    (list_mk_conj (map (concl o snd) asl)) in
+         MAP_EVERY (fun a ->
+           SUBGOAL_THEN (mk_binop `(<):num->num->bool` a dd)
+             ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) [a1; a2]) THEN
+       MATCH_MP_TAC (GEN_ALL get_byte_set_byte_alt) THEN
+       REPEAT CONJ_TAC THENL
+        [FIRST_ASSUM ACCEPT_TAC;
+         MATCH_MP_TAC ne_small THEN
+         REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+         ASM_ARITH_TAC;
+         ASM_SIMP_TAC[align_small];
+         REWRITE_TAC[GSYM WORD_ADD] THEN
+         ONCE_REWRITE_TAC[ARITH_RULE `m + SUC j = (m + 1) + j`] THEN
+         FIRST_X_ASSUM MATCH_MP_TAC THEN
+         REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+         ASM_ARITH_TAC]]) in
+   REPEAT STRIP_TAC THEN
+   W(fun (asl,w) ->
+     let gargs = snd (strip_comb (lhs w)) in
+     let i = rand (el 0 gargs) in
+     let bargs = snd (strip_comb (el 1 gargs)) in
+     MP_TAC (SPECL [el 2 bargs; el 0 bargs; `0`; i; el 3 bargs;
+                    el 2 gargs] aux)) THEN
+   REWRITE_TAC[ADD_CLAUSES] THEN
+   DISCH_THEN MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   ASM_ARITH_TAC));;
 
 (* [local] *)
 let MOD_MULT_MOD_LEMMA = prove
