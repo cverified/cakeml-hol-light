@@ -24,6 +24,7 @@ needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
 needs "compiler/backend/jsonLang.ml";;
 needs "compiler/backend/labLang.ml";;
+needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
@@ -1213,18 +1214,253 @@ let bc_ref_inv_related = prove
        bc_ref_inv conf n refs (f,tf,heap1,be) /\ (FAPPLY f n) IN
          FDOM g ==>
        bc_ref_inv conf n refs (g f_o_f f,g f_o_f tf,heap2,be)`),
-  (* the attempt: the proof of the source names bc_ref_inv_def,
-     v_inv_related, gc_related_def, RefBlock_def, BlockRep_def,
-     FLOOKUP.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[bc_ref_inv_def; v_inv_related;
-       gc_related_def; RefBlock_def; BlockRep_def; FLOOKUP] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the arms of bc_ref_inv, one lemma each: the two lookups decide
+     which arm it is, and the maps and the heap of the lemma stay
+     free, so it applies to the old invariant and to the new one
+     alike.  Then the collection takes the address of the reference
+     to its own (gc_related, in `move' below) and what lies there
+     to the element it had with its pointers mapped, and
+     v_inv_related says that the values of the element survive
+     that *)
+  (let arm_VA = prove
+     (cake_as_vars (fun () ->
+        `FLOOKUP f n = SOME x /\
+         sptree_lookup n refs = SOME (bvlSem_ValueArray ys)
+         ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+              (?zs. heap_lookup x heap = SOME (RefBlock zs) /\
+                    EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap))
+                      zs ys))`),
+      STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+      MATCH_REDUCE_TAC THEN
+      CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) in
+   let arm_BA = prove
+     (cake_as_vars (fun () ->
+        `FLOOKUP f n = SOME x /\
+         sptree_lookup n refs = SOME (bvlSem_ByteArray flag bs)
+         ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+              (let ws = LENGTH bs DIV (dimindex (:'a) DIV 8) + 1 in
+                (heap_lookup x heap = SOME (Bytes be' flag bs
+                  (REPLICATE ws ((n2w 0):'a word))))))`),
+      STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+      MATCH_REDUCE_TAC THEN
+      CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) in
+   let arm_TH = prove
+     (cake_as_vars (fun () ->
+        `FLOOKUP f n = SOME x /\
+         sptree_lookup n refs = SOME (bvlSem_Thunk ev v)
+         ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+              (?(z:('a word_loc) heap_address).
+                 heap_lookup x heap = SOME (ThunkBlock ev z) /\
+                 (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
+                 v_inv conf v refs (z,f,tf,heap)))`),
+      STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+      MATCH_REDUCE_TAC THEN
+      CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) in
+   let arm_MB = prove
+     (cake_as_vars (fun () ->
+        `FLOOKUP f n = SOME x /\
+         sptree_lookup n refs = SOME (bvlSem_MutBlock tg fin l c r)
+         ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+              ((!gs. ~(data_to_word_config_gc_kind conf =
+                       data_to_word_Generational gs)) /\
+               (~fin ==> ~(x IN IMAGE (FAPPLY tf) (FDOM tf))) /\
+               (?zs. heap_lookup x heap = SOME (BlockRep tg zs) /\
+                     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap))
+                       zs (l ++ [c] ++ r))))`),
+      STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+      MATCH_REDUCE_TAC THEN
+      CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]) in
+   let move = prove
+     (`gc_related g heap1 heap2 /\ a IN FDOM g /\
+       heap_lookup a heap1 = SOME (DataElement xs l d)
+       ==> heap_lookup (FAPPLY g a) heap2 =
+           SOME (DataElement (ADDR_MAP (FAPPLY g) xs) l d) /\
+           (!ptr u. MEM (gc_shared_Pointer ptr u) xs
+                    ==> ptr IN FDOM g)`,
+      REWRITE_TAC[gc_related_def] THEN MESON_TAC[]) in
+   let addr1 = prove
+     (`!f (z:(A)heap_address). ADDR_MAP f [z] = [ADDR_APPLY f z]`,
+      REPEAT GEN_TAC THEN
+      STRUCT_CASES_TAC(ISPEC `z:(A)heap_address`
+                         (cases_of `:(A)heap_address`)) THEN
+      REWRITE_TAC[ADDR_MAP_def; ADDR_APPLY_def]) in
+   let G_INJ = prove
+     (`gc_related g heap1 heap2
+       ==> (!a b. a IN FDOM g /\ b IN FDOM g /\
+                  (FAPPLY g a:num) = FAPPLY g b ==> a = b)`,
+      REWRITE_TAC[gc_related_def] THEN STRIP_TAC THEN
+      REPEAT GEN_TAC THEN STRIP_TAC THEN
+      FIRST_X_ASSUM (fun inj ->
+        if not (hd_is "INJ" (concl inj)) then fail() else
+        MATCH_MP_TAC (CONJUNCT2 (REWRITE_RULE[INJ] inj))) THEN
+      ASM_REWRITE_TAC[]) in
+   let v_rel = GEN_ALL (DISCH_ALL (CONJUNCT1
+     (UNDISCH (SPEC_ALL (GEN_ALL v_inv_related))))) in
+   let the_asm p (asl,w) =
+     snd (find (fun (_,th) -> p (concl th)) asl) in
+   (* the arm of the old invariant and the arm of the new one, from
+      the two lookups that each of them goes by *)
+   let USE_ARM =
+     W(fun (asl,w as gl) ->
+       let lk2 = the_asm (fun c -> is_eq c &&
+                   hd_is "sptree_lookup" (lhand c) &&
+                   hd_is "SOME" (rand c)) gl in
+       let lk1s = filter (fun (_,th) ->
+                    let c = concl th in
+                    is_eq c && hd_is "FLOOKUP" (lhand c) &&
+                    hd_is "SOME" (rand c)) asl in
+       let arms = [arm_VA; arm_BA; arm_TH; arm_MB] in
+       let ths =
+         itlist (fun (_,lk1) a ->
+           itlist (fun arm b ->
+             (try [MATCH_MP arm (CONJ lk1 lk2)]
+              with Failure _ -> []) @ b) arms a) lk1s [] in
+       RULE_ASSUM_TRY (REWRITE_RULE ths) THEN REWRITE_TAC ths) in
+   (* the element at the collected address *)
+   let MOVE =
+     W(fun (asl,w as gl) ->
+       let hl = the_asm (fun c -> is_eq c &&
+                  hd_is "heap_lookup" (lhand c)) gl in
+       let hl' = CONV_RULE(TOP_DEPTH_CONV let_CONV)
+                   (REWRITE_RULE[RefBlock_def; BlockRep_def;
+                                 ThunkBlock_def; bytes_def] hl) in
+       let gc = the_asm (hd_is "gc_related") gl in
+       let ins = filter (fun (_,th) -> hd_is "IN" (concl th)) asl in
+       STRIP_ASSUME_TAC (tryfind (fun (_,i) ->
+         MATCH_MP move (CONJ gc (CONJ i hl'))) ins)) in
+   (* and what the arm says of a value of the old heap says of the
+      mapped value in the new one *)
+   let USE_V_REL =
+     MATCH_MP_TAC v_rel THEN
+     W(fun gl ->
+       let gc = the_asm (hd_is "gc_related") gl in
+       EXISTS_TAC (el 1 (snd (strip_comb (concl gc))))) THEN
+     REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+     REPEAT STRIP_TAC THEN
+     FIRST_X_ASSUM (fun mp ->
+       let b = snd (strip_forall (concl mp)) in
+       if not (is_imp b) || not (hd_is "MEM" (lhand b)) then fail()
+       else MATCH_MP_TAC mp) THEN
+     POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
+       (fun th -> let c = concl th in
+          hd_is "MEM" c || (is_eq c && is_var (lhand c))) l)) THEN
+     ASM_MESON_TAC[MEM] in
+   STRIP_TAC THEN
+   (* the key has an address and the references a value, or the
+      invariant does not hold of them *)
+   NAMED_CASES_TAC (cake_as_vars (fun () ->
+     `FLOOKUP (f:(num,num)fmap) n`)) [[]; ["x"]] THEN
+   NAMED_CASES_TAC (cake_as_vars (fun () ->
+     `sptree_lookup n (refs:((dataSem_v)bvlSem_ref)spt)`))
+     [[]; ["rv"]] THEN
+   TRY (SOLVED (FIRST_X_ASSUM (fun inv ->
+     if not (hd_is "bc_ref_inv" (concl inv)) then fail() else
+     MP_TAC (REWRITE_RULE[bc_ref_inv_def] inv)) THEN
+     ASM_REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+     CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[])) THEN
+   (* the key is in the old map and its address in the one of the
+      collection *)
+   SUBGOAL_THEN (cake_as_vars (fun () ->
+     `(n:num) IN FDOM (f:(num,num)fmap) /\ FAPPLY f n = x`))
+     STRIP_ASSUME_TAC THENL
+    [FIRST_ASSUM (fun lk ->
+       if not (hd_is "FLOOKUP" (lhand (concl lk))) then fail() else
+       MP_TAC (REWRITE_RULE[FLOOKUP_DEF] lk)) THEN
+     COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[distinctness "option"; injectivity "option"];
+     ALL_TAC] THEN
+   (* so the new map takes the key to the collected address *)
+   SUBGOAL_THEN (cake_as_vars (fun () ->
+     `FLOOKUP ((g:(num,num)fmap) f_o_f (f:(num,num)fmap)) (n:num) =
+      SOME (FAPPLY g x)`))
+     ASSUME_TAC THENL
+    [ASM_REWRITE_TAC[FLOOKUP_f_o_f];
+     ALL_TAC] THEN
+   (* and the addresses that the arms speak of are the collected
+      ones *)
+   FIRST_ASSUM (fun eq ->
+     let c = concl eq in
+     if not (is_eq c) || not (hd_is "fmap_apply" (lhand c))
+     then fail() else RULE_ASSUM_TRY (REWRITE_RULE[eq])) THEN
+   (* the arm of the invariant is the one of the value that the
+      references hold *)
+   NAMED_CASES_TAC (cake_as_vars (fun () ->
+     `rv:(dataSem_v)bvlSem_ref`))
+     [["ys"]; ["flag"; "bs"]; ["ev"; "vv"];
+      ["tg"; "fin"; "ll"; "cc"; "rr"]] THEN
+   USE_ARM THEN
+   (* the arm with a let: the count of the words of a byte array *)
+   RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+   TRY (CONV_TAC(TOP_DEPTH_CONV let_CONV)) THEN
+   SPLIT_ASM_TAC THEN
+   TRY (FIRST_X_ASSUM (fun ex ->
+     if not (is_exists (concl ex)) then fail() else
+     STRIP_ASSUME_TAC ex)) THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   (* the element of the new heap is the old one with its pointers
+      mapped *)
+   TRY (W(fun gl ->
+     let lk = the_asm (fun c -> is_eq c &&
+                hd_is "FLOOKUP" (lhand c) &&
+                hd_is "f_o_f" (lhand (lhand c))) gl in
+     let ap = rator (rand (rand (concl lk))) in
+     let hl = the_asm (fun c -> is_eq c &&
+                hd_is "heap_lookup" (lhand c)) gl in
+     let blk = rand (rand (concl hl)) in
+     let z = last (snd (strip_comb blk)) in
+     if hd_is "ThunkBlock" blk
+     then EXISTS_TAC (list_mk_icomb "ADDR_APPLY" [ap; z])
+     else if hd_is "Bytes" blk then fail()
+     else EXISTS_TAC (list_mk_icomb "ADDR_MAP" [ap; z]))) THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   (* its address *)
+   TRY (SOLVED
+         (REWRITE_TAC[RefBlock_def; BlockRep_def; ThunkBlock_def;
+                      bytes_def] THEN
+          TRY (CONV_TAC(TOP_DEPTH_CONV let_CONV)) THEN
+          MOVE THEN
+          ASM_REWRITE_TAC[addr1; ADDR_MAP_def;
+            data_to_word_memoryProof_LENGTH_ADDR_MAP])) THEN
+   (* the values of the elements of a block *)
+   TRY (SOLVED
+         (MOVE THEN
+          REWRITE_TAC[EVERY2_ADDR_MAP] THEN
+          FIRST_X_ASSUM (fun e2 ->
+            if not (hd_is "ALL2" (concl e2)) then fail() else
+            MP_TAC e2) THEN
+          MATCH_MP_TAC EVERY2_IMP_EVERY2 THEN
+          CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+          REPEAT STRIP_TAC THEN
+          USE_V_REL)) THEN
+   (* and the value of a thunk *)
+   TRY (SOLVED (MOVE THEN USE_V_REL)) THEN
+   (* the cell of a block that is not finalised is no timestamp's
+      cell, and the map of the collection is injective on its
+      domain, so the collected cell is none either *)
+   DISCH_TAC THEN
+   FIRST_X_ASSUM (fun imp ->
+     let c = concl imp in
+     if not (is_imp c) then fail() else
+     MP_TAC (MATCH_MP imp (ASSUME (lhand c)))) THEN
+   REWRITE_TAC[IN_IMAGE; CONJUNCT1 f_o_f_DEF; IN_ELIM_THM] THEN
+   REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM (fun no ->
+     let c = concl no in
+     if not (is_neg c) || not (is_exists (rand c)) then fail() else
+     MP_TAC no) THEN
+   REWRITE_TAC[] THEN
+   W(fun gl ->
+     let eq = the_asm (fun c -> is_eq c &&
+                hd_is "fmap_apply" (lhand c) &&
+                hd_is "fmap_apply" (rand c) &&
+                hd_is "f_o_f" (lhand (rand c))) gl in
+     EXISTS_TAC (rand (rand (concl eq)))) THEN
+   CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   FIRST_ASSUM (fun gc ->
+     if not (hd_is "gc_related" (concl gc)) then fail() else
+     MATCH_MP_TAC (MATCH_MP G_INJ gc)) THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   ASM_SIMP_TAC[FAPPLY_f_o_f]));;
 
 let gc_inline_rel = cake_inductive
   `(gc_inline_rel inline h1 x x) /\

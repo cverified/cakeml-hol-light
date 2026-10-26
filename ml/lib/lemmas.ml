@@ -611,6 +611,23 @@ let FLOOKUP_DEF = prove
                          (cases_of `:(B)option`)) THEN
   REWRITE_TAC[THE; distinctness "option"]);;
 
+(* and the lookup of a composition, which a proof that takes the
+   arm of an invariant by the lookup of the composed map asks for.
+   HOL4 has no name for it and goes through f_o_f_DEF and
+   FLOOKUP_DEF, as this does through FMAP_FN_f_o_f above *)
+
+let FLOOKUP_f_o_f = prove
+ (`!(f:(B,C)fmap) (g:(A,B)fmap) x.
+     FLOOKUP (f f_o_f g) x =
+     (if x IN FDOM g /\ FAPPLY g x IN FDOM f
+      then SOME (FAPPLY f (FAPPLY g x)) else NONE)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[FLOOKUP; FMAP_FN_f_o_f] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN
+  FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC) THEN
+  ASM_REWRITE_TAC[GSYM FLOOKUP; FLOOKUP_DEF]);;
+
 let FLOOKUP_SUBMAP = prove
  (`!(f:(A,B)fmap) g k v.
      f SUBMAP g /\ FLOOKUP f k = SOME v ==> FLOOKUP g k = SOME v`,
