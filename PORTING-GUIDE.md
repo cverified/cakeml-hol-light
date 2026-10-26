@@ -2751,3 +2751,90 @@ What it costs is the load: an attempt that fails fast costs
 nothing, and one that searches costs its budget.  Keep the budget
 small (five seconds) and the fact list short (six), or a file of a
 hundred attempts adds ten minutes to every load of it.
+
+## 40. The epsilon term that MATCH_CONV leaves
+
+`MATCH_CONV` reduces a match whose scrutinee is a constructor.
+Where the scrutinee is a term that a rewrite has just produced --
+the `SOME rest` of a recursive call, say -- it does not fail: it
+gives the relational form of the match, with the pattern as a
+condition and the branch as an epsilon term:
+
+```
+(if existsunique p. ?rest. p = SOME (b :: rest) /\ SOME rest = SOME a'
+ then @p. ?rest. p = SOME (b :: rest) /\ SOME rest = SOME a'
+ else @x. false) = SOME res
+```
+
+`safe_match_conv` of `ml/lib/tactics.ml` refuses to make one of
+these (that is what it is for), but `MATCH_REDUCE_TAC` makes them,
+and a proof that has one in front of it is stuck until it is taken
+apart.  Three steps do it, in this order:
+
+```
+   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   TRY (CONV_TAC(REDEPTH_CONV UNWIND_CONV)) THEN
+   REWRITE_TAC[EXISTS_UNIQUE_REFL; SELECT_REFL;
+               distinctness "option"; injectivity "option"]
+```
+
+The first one makes the condition of the pattern an equation of the
+bound variable (`SOME rest = SOME a'` becomes `rest = a'`), which
+is what `UNWIND_CONV` asks for; the second one solves the
+existential away; and then `EXISTS_UNIQUE_REFL` makes the guard
+true and `SELECT_REFL` reads the branch off the epsilon term.  The
+order matters: `UNWIND_THM1` as a rewrite does not fire on
+`?rest. p = f rest /\ SOME rest = SOME a'`, and `UNWIND_CONV` does
+not fire before the `SOME`s are peeled.
+
+## 41. An inner lemma that SPECL has to instantiate
+
+A proof of a statement about `dimindex (:'a)` often proves a
+general lemma first and applies it to the statement.  If the
+application is by `SPECL`, the lemma has to be stated **with the
+type variable of the statement**:
+
+```
+   let aux = prove
+    (`!ls n m i b (t:'a word) be'. ... `, ...) in
+   ...
+   MP_TAC (SPECL [ls; n; `0`; i; b; t; be] aux)
+```
+
+`SPEC` instantiates the term variables of a theorem and not its
+types, so an `aux` about `(N)word` and a goal about `'a word` give
+`Failure "SPECL"`.  `ISPECL` instantiates both, and is what to use
+for a lemma of the library (`EL_DROP`, `NOT_CONS_NIL`), whose type
+variables are its own.  `MATCH_MP_TAC` and `MATCH_ACCEPT_TAC`
+instantiate types as well, so a lemma that is applied that way can
+be stated with any type variable.
+
+## 42. Three ways a tactic loses what it was given
+
+Each of these took a run to find, and each shows up as
+`Failure "tryfind"` or as a goal that has lost an assumption:
+
+- `DISJ_CASES_THEN f th` hands the disjunct to `f` and does **not**
+  put it in the assumptions.  A branch that ends in
+  `ASM_MESON_TAC[]` has to be written `(fun e -> ... MESON_TAC[e])`
+  or start with `ASSUME_TAC e`.
+- `STRUCT_CASES_TAC` rewrites the goal and not the assumptions, so
+  the induction hypothesis of an induction whose list it takes
+  apart is about the old variable and useless.  `CASES_ON_NAME` of
+  `ml/lib/tactics.ml` is the one to use there: it substitutes
+  everywhere.
+- `FIRST_ASSUM`/`FIRST_X_ASSUM` with a test that is too loose picks
+  the wrong assumption and the step after it fails somewhere else.
+  A test on the head constant of the conclusion is rarely enough in
+  a proof about an invariant, where four assumptions are `!`s: the
+  test that works is on the shape, as in
+  `let bod = snd (strip_forall (concl th)) in
+   is_imp bod && hd_is "bc_ref_inv" (rand bod)`.
+
+And one that is not about losing anything but shows up the same
+way: the equation `SOME (MutBlock ...) = SOME (Thunk ...)` is not
+refuted by `distinctness "bvlSem_ref"` alone.  The rewrite needs
+`injectivity "option"` as well, to peel the `SOME` off both sides
+first -- without it the disjuncts of `v_inv` that a reference of
+another kind would take stay in the goal, and the `THENL` after
+them reports `seqapply: Length mismatch`.

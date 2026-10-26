@@ -1372,3 +1372,48 @@ away by itself.
 What it costs is the load: an attempt that fails fast costs
 nothing, and the twenty or so that search cost their five seconds
 each.
+
+## The bytes of a word, and nine proofs of 2026-10-26
+
+Nine of the statements of
+`compiler/backend/proofs/data_to_word_memoryProof.ml` that carried
+an attempt carry a proof now (115 of them were left, 106 are), and
+`verifyquick` loads the file in 724 seconds with 152 axioms, six
+fewer than the round before it:
+
+- `write_bytearray_append`: the load that the statement assumes at
+  the first byte makes its store go through, so both sides take the
+  `SOME` branch of the match;
+- `xor_bytes_bytes_to_word` and `xor_bytes_xor_words`: the xor of
+  two words is the word of the xor of the bytes;
+- `set_byte_bytes_to_word` and `get_byte_bytes_to_word`: where the
+  source takes the list of bytes apart into the four or the eight
+  bytes of a word, one lemma does it for every length, by the
+  induction of `bytes_to_word` over the list;
+- `write_bytes_change_extra` and `write_bytes_inj`: the words that
+  a list of bytes fills, with `DIV_SUB_STEP` for the count;
+- `list_to_BlockReps_Pointer_lem` and
+  `bc_stack_ref_inv_MutBlock_centre`: a pointer of a block of a
+  list, and the centre of a MutBlock on the stack of the
+  invariant.
+
+Three things came out of them that outlast them:
+
+- `ml/lib/lemmas.ml` has `DIV_SUB_STEP` and `DIV_SUB` (HOL4's
+  `DIV_SUB` of `arithmeticTheory`): taking the bytes of one word
+  off the front of a list takes one off the count of the words it
+  fills, which every proof about `write_bytes` needs;
+- `overrides.py` puts a block of the port's own before
+  `get_byte_bytes_to_word`: `slice_shl`, `ushr_small`,
+  `align_small` (the address of a byte of the first word is
+  aligned to it) and `ne_small` (two of them are different words),
+  which is what the lemmas about `set_byte` and `get_byte` share;
+- `ml/lib/tactics.ml` has `in_goal`, which takes a subterm of the
+  goal or of one of its assumptions, because the types of the goal
+  are not the types a term written by hand gets.
+
+Entries 40 to 42 of `PORTING-GUIDE.md` say what cost a run to find:
+the epsilon term that `MATCH_CONV` leaves and the three steps that
+take it apart, the type variable an inner lemma has to be stated
+with for `SPECL`, and the three ways a tactic loses what it was
+given.
