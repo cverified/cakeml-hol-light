@@ -1602,6 +1602,19 @@ all; that is the only thing still owed on what is in.
   and `blocks_unique_update_mutblock`,
   `reachable_refs_MutBlock_UPDATE`.
 
+Six of its lemmas are proved already and stand in
+`tools/wip-update_mutblock.ml` (which nothing loads):
+`LUPDATE_LENGTH` (for `ml/lib/lemmas.ml`), `v_inv_BlockRep_upd`
+(HOL4 states it as the value of an ML expression, so the port
+derives it from the lemma), `dest_thunk_insert_MutBlock`,
+`ptrs_store_el` (the general form of `ptrs_store_LUPDATE`:
+the pointers of the element that an update of one value writes),
+`MB_trans` and `bc_ref_inv_update_mutblock_at`.  What is left of
+that theorem is its proof, which is `update_thunk_thm`'s with the
+differences above; the parts of that proof that carry over
+unchanged are cut out in `/tmp` and easy to cut again from the
+`.prf`.
+
 The sessions are gone with the maintenance, so the first step of
 the next round is `tools/bin/pfbase` (half an hour) to build the
 closure of the file again; `tools/bin/verifyquick` clones it.
