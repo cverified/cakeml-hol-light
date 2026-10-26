@@ -1417,3 +1417,38 @@ the epsilon term that `MATCH_CONV` leaves and the three steps that
 take it apart, the type variable an inner lemma has to be stated
 with for `SPECL`, and the three ways a tactic loses what it was
 given.
+
+## The inconsistent definitions of the port
+
+`vb_eq_size` of `data_to_word_memoryProof` was assumed as a list of
+clauses of which the last one,
+`vb_eq_size _104 _105 _106 = NONE`, catches the pairs that the
+earlier ones have already given a value.  As a conjunction that is
+inconsistent, and `|- false` follows from it in four steps:
+instantiate the catch-all at `(Number n1,Number n2)` and compare it
+with the clause above it.
+
+`ISSUES.md` said already that the port writes an overlapping
+definition as one clause with a `match` and that `overlapping` of
+`tools/port.py` finds the overlaps itself -- but it gives up as
+soon as the clause list defines more than one function ("a match is
+one clause, so it cannot define a family"), and that is exactly the
+shape in which the sources write a mutual recursion with a
+catch-all clause per function.  `do_eq` of the five semantics was
+put in `MATCH_CLAUSES` for that reason; `vb_eq_size` is there now
+as well, and the file loads with 149 axioms instead of 152.
+
+A scan of the axioms of the closure (2613 of them) finds five more
+of the same shape, in other files: `vs_depth` of `dataSem`, `do_eq`
+and `pmatch`/`pmatch_list` of `semanticPrimitives`, `pmatch` of
+`pattern_semantics` and `has_Eval` of `flat_elim`.  Each is one
+`MATCH_CLAUSES` entry and a run of its file; `ISSUES.md` lists them
+with what follows from each.  (The scan also flags thirteen
+definitions of the `*_sing`/`*_list` shape, where the catch-all
+clause and the specific one agree -- those are consistent, only
+redundant.)
+
+The scan itself is four lines of the session: an axiom is
+suspicious when its clauses, grouped by the function each defines,
+give one function both a clause whose arguments are all variables
+and another clause.
