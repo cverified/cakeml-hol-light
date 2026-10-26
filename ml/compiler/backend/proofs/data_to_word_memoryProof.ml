@@ -15339,16 +15339,70 @@ let set_byte_bytes_to_word = prove
        be =
      bytes_to_word (2 EXP k) ((n2w 0):'a word) (LUPDATE b i ls) t
        be`),
-  (* the attempt: the proof of the source names good_dimindex_def,
-     set_byte_sort.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[good_dimindex_def; set_byte_sort] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the source takes the list of bytes apart into the four or the
+     eight bytes of a word and sorts the set_bytes of each case.
+     Here one lemma does it for every length, by the induction of
+     bytes_to_word over the list: the byte that the first set_byte
+     of the word sets is the head, and a byte further on commutes
+     with it (set_byte_sort), where the induction hypothesis sets it
+     in the rest.  The lemma is about the word at an offset, because
+     that is what the recursive call of bytes_to_word is about, and
+     it is stated with the type variable of the statement, because
+     SPECL instantiates the term variables of a theorem and not its
+     types *)
+  (let aux = prove
+    (`!ls n m i b (t:'a word) be'.
+        i < n /\ i < LENGTH ls /\ m + n <= dimindex (:'a) DIV 8 /\
+        good_dimindex (:'a)
+        ==> set_byte (n2w (m + i)) b
+              (bytes_to_word n (n2w m) ls t be') be' =
+            bytes_to_word n (n2w m) (LUPDATE b i ls) t be'`,
+     LIST_INDUCT_TAC THENL
+      [REPEAT GEN_TAC THEN REWRITE_TAC[LENGTH; CONJUNCT1 LT];
+       ALL_TAC] THEN
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC (SPEC `n:num` num_CASES) THENL
+      [REWRITE_TAC[CONJUNCT1 LT]; ALL_TAC] THEN
+     REWRITE_TAC[LENGTH] THEN
+     STRUCT_CASES_TAC (SPEC `i:num` num_CASES) THENL
+      [(* the byte that the first set_byte of the word sets *)
+       REWRITE_TAC[ADD_CLAUSES; LUPDATE] THEN
+       STRIP_TAC THEN
+       ONCE_REWRITE_TAC[bytes_to_word_def] THEN
+       REWRITE_TAC[NOT_SUC; SUC_SUB1] THEN MATCH_REDUCE_TAC THEN
+       ONCE_REWRITE_TAC[GEN_ALL set_byte_sort] THEN
+       REWRITE_TAC[];
+       (* or a byte further on, where the two set_bytes commute *)
+       REWRITE_TAC[LUPDATE; NOT_SUC; SUC_SUB1] THEN
+       STRIP_TAC THEN
+       ONCE_REWRITE_TAC[bytes_to_word_def] THEN
+       REWRITE_TAC[NOT_SUC; SUC_SUB1] THEN MATCH_REDUCE_TAC THEN
+       ONCE_REWRITE_TAC[GEN_ALL set_byte_sort] THEN
+       COND_CASES_TAC THENL
+        [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+       COND_CASES_TAC THENL
+        [ALL_TAC;
+         SUBGOAL_THEN `F` CONTR_TAC THEN
+         FIRST_X_ASSUM MP_TAC THEN ASM_REWRITE_TAC[] THEN
+         ASM_ARITH_TAC] THEN
+       AP_THM_TAC THEN AP_TERM_TAC THEN
+       REWRITE_TAC[GSYM WORD_ADD] THEN
+       ONCE_REWRITE_TAC[ARITH_RULE `m + SUC j = (m + 1) + j`] THEN
+       FIRST_X_ASSUM MATCH_MP_TAC THEN
+       REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+       ASM_ARITH_TAC]) in
+   REPEAT STRIP_TAC THEN
+   W(fun (asl,w) ->
+     let sargs = snd (strip_comb (lhs w)) in
+     let i = rand (el 0 sargs) in
+     let bb = el 1 sargs in
+     let bargs = snd (strip_comb (el 2 sargs)) in
+     MP_TAC (SPECL [el 2 bargs; el 0 bargs; `0`; i; bb; el 3 bargs;
+                    el 3 sargs] aux)) THEN
+   REWRITE_TAC[ADD_CLAUSES] THEN
+   DISCH_THEN MATCH_MP_TAC THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   ASM_ARITH_TAC));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
