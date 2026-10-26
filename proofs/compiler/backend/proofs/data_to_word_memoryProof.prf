@@ -16299,7 +16299,7 @@
      MATCH_TIDY_TAC THEN
      TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
      MATCH_TIDY_TAC in
-   let CLOSE = TRY (SOLVED (VAR_EQ_TAC THEN ASM_REWRITE_TAC[])) in
+   let CLOSE_ARM = TRY (SOLVED (VAR_EQ_TAC THEN ASM_REWRITE_TAC[])) in
    let the_asm p (asl,w) =
      snd (find (fun (_,th) -> p (concl th)) asl) in
    (* the assumption that says what the call gives: a COND by its
@@ -16339,21 +16339,21 @@
      (* a value that is not a pointer leaves the references alone *)
      CASES_ON_TAC `v:dataSem_v` THEN
      OPEN_FC THEN
-     SAFE_MATCH_REDUCE_ASM_TAC THEN MATCH_TIDY_TAC THEN CLOSE THEN
+     SAFE_MATCH_REDUCE_ASM_TAC THEN MATCH_TIDY_TAC THEN CLOSE_ARM THEN
      (* and so does a pointer at anything but an unfinalised
         MutBlock *)
-     SPLIT_LOOKUP THEN TIDY THEN CLOSE THEN
-     SPLIT_REF THEN TIDY THEN CLOSE THEN
+     SPLIT_LOOKUP THEN TIDY THEN CLOSE_ARM THEN
+     SPLIT_REF THEN TIDY THEN CLOSE_ARM THEN
      (* the block is not finalised yet, or the result would be
         NONE *)
      W(fun gl ->
        ASM_CASES_TAC (lhand (rator (lhand (concl (big_asm gl)))))) THEN
-     ASM_FS_TAC THEN TIDY THEN CLOSE THEN
+     ASM_FS_TAC THEN TIDY THEN CLOSE_ARM THEN
      (* and the call on its centre goes through *)
      W(fun gl ->
        CASES_ON_TAC (find_term (hd_is "dataSem_finalise_cons")
-                       (concl (big_asm gl)))) THEN TIDY THEN CLOSE THEN
-     REPEAT SPLIT_PAIR_ARG THEN TIDY THEN CLOSE THEN
+                       (concl (big_asm gl)))) THEN TIDY THEN CLOSE_ARM THEN
+     REPEAT SPLIT_PAIR_ARG THEN TIDY THEN CLOSE_ARM THEN
      (* the pointer is not the key of the block that is finalised,
         because the references have nothing under it *)
      VAR_EQ_TAC THEN

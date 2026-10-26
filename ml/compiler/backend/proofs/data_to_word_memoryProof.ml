@@ -9,7 +9,6 @@
   Part of the correctness proof for data_to_word
 *)
 
-needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/backend_common.ml";;
@@ -24,7 +23,6 @@ needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
 needs "compiler/backend/jsonLang.ml";;
 needs "compiler/backend/labLang.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
@@ -1288,7 +1286,7 @@ let USE_ARM =
 (* the collection takes the address of an element to its own and
    what lies there to the element with its pointers mapped *)
 
-let move = prove
+let heap_move = prove
  (`gc_related g heap1 heap2 /\ a IN FDOM g /\
    heap_lookup a heap1 = SOME (DataElement xs l d)
    ==> heap_lookup (FAPPLY g a) heap2 =
@@ -1316,7 +1314,7 @@ let G_INJ = prove
     MATCH_MP_TAC (CONJUNCT2 (REWRITE_RULE[INJ] inj))) THEN
   ASM_REWRITE_TAC[]);;
 
-let v_rel = GEN_ALL (DISCH_ALL (CONJUNCT1
+let v_inv_moved = GEN_ALL (DISCH_ALL (CONJUNCT1
   (UNDISCH (SPEC_ALL (GEN_ALL v_inv_related)))));;
 
 (* the element at the collected address, from the arm's own
@@ -1332,13 +1330,13 @@ let MOVE =
     let gc = the_asm (hd_is "gc_related") gl in
     let ins = filter (fun (_,th) -> hd_is "IN" (concl th)) asl in
     STRIP_ASSUME_TAC (tryfind (fun (_,i) ->
-      MATCH_MP move (CONJ gc (CONJ i hl'))) ins));;
+      MATCH_MP heap_move (CONJ gc (CONJ i hl'))) ins));;
 
 (* and what the arm says of a value of the old heap says of the
    mapped value in the new one *)
 
 let USE_V_REL =
-  MATCH_MP_TAC v_rel THEN
+  MATCH_MP_TAC v_inv_moved THEN
   W(fun gl ->
     let gc = the_asm (hd_is "gc_related") gl in
     EXISTS_TAC (el 1 (snd (strip_comb (concl gc))))) THEN
@@ -12523,7 +12521,7 @@ let finalise_cons_none = prove
      MATCH_TIDY_TAC THEN
      TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
      MATCH_TIDY_TAC in
-   let CLOSE = TRY (SOLVED (VAR_EQ_TAC THEN ASM_REWRITE_TAC[])) in
+   let CLOSE_ARM = TRY (SOLVED (VAR_EQ_TAC THEN ASM_REWRITE_TAC[])) in
    let the_asm p (asl,w) =
      snd (find (fun (_,th) -> p (concl th)) asl) in
    (* the assumption that says what the call gives: a COND by its
@@ -12563,21 +12561,21 @@ let finalise_cons_none = prove
      (* a value that is not a pointer leaves the references alone *)
      CASES_ON_TAC `v:dataSem_v` THEN
      OPEN_FC THEN
-     SAFE_MATCH_REDUCE_ASM_TAC THEN MATCH_TIDY_TAC THEN CLOSE THEN
+     SAFE_MATCH_REDUCE_ASM_TAC THEN MATCH_TIDY_TAC THEN CLOSE_ARM THEN
      (* and so does a pointer at anything but an unfinalised
         MutBlock *)
-     SPLIT_LOOKUP THEN TIDY THEN CLOSE THEN
-     SPLIT_REF THEN TIDY THEN CLOSE THEN
+     SPLIT_LOOKUP THEN TIDY THEN CLOSE_ARM THEN
+     SPLIT_REF THEN TIDY THEN CLOSE_ARM THEN
      (* the block is not finalised yet, or the result would be
         NONE *)
      W(fun gl ->
        ASM_CASES_TAC (lhand (rator (lhand (concl (big_asm gl)))))) THEN
-     ASM_FS_TAC THEN TIDY THEN CLOSE THEN
+     ASM_FS_TAC THEN TIDY THEN CLOSE_ARM THEN
      (* and the call on its centre goes through *)
      W(fun gl ->
        CASES_ON_TAC (find_term (hd_is "dataSem_finalise_cons")
-                       (concl (big_asm gl)))) THEN TIDY THEN CLOSE THEN
-     REPEAT SPLIT_PAIR_ARG THEN TIDY THEN CLOSE THEN
+                       (concl (big_asm gl)))) THEN TIDY THEN CLOSE_ARM THEN
+     REPEAT SPLIT_PAIR_ARG THEN TIDY THEN CLOSE_ARM THEN
      (* the pointer is not the key of the block that is finalised,
         because the references have nothing under it *)
      VAR_EQ_TAC THEN

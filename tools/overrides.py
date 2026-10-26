@@ -1969,7 +1969,7 @@ let USE_ARM =
 (* the collection takes the address of an element to its own and
    what lies there to the element with its pointers mapped *)
 
-let move = prove
+let heap_move = prove
  (`gc_related g heap1 heap2 /\ a IN FDOM g /\
    heap_lookup a heap1 = SOME (DataElement xs l d)
    ==> heap_lookup (FAPPLY g a) heap2 =
@@ -1997,7 +1997,7 @@ let G_INJ = prove
     MATCH_MP_TAC (CONJUNCT2 (REWRITE_RULE[INJ] inj))) THEN
   ASM_REWRITE_TAC[]);;
 
-let v_rel = GEN_ALL (DISCH_ALL (CONJUNCT1
+let v_inv_moved = GEN_ALL (DISCH_ALL (CONJUNCT1
   (UNDISCH (SPEC_ALL (GEN_ALL v_inv_related)))));;
 
 (* the element at the collected address, from the arm's own
@@ -2013,13 +2013,13 @@ let MOVE =
     let gc = the_asm (hd_is "gc_related") gl in
     let ins = filter (fun (_,th) -> hd_is "IN" (concl th)) asl in
     STRIP_ASSUME_TAC (tryfind (fun (_,i) ->
-      MATCH_MP move (CONJ gc (CONJ i hl'))) ins));;
+      MATCH_MP heap_move (CONJ gc (CONJ i hl'))) ins));;
 
 (* and what the arm says of a value of the old heap says of the
    mapped value in the new one *)
 
 let USE_V_REL =
-  MATCH_MP_TAC v_rel THEN
+  MATCH_MP_TAC v_inv_moved THEN
   W(fun gl ->
     let gc = the_asm (hd_is "gc_related") gl in
     EXISTS_TAC (el 1 (snd (strip_comb (concl gc))))) THEN
