@@ -15978,16 +15978,201 @@
        heap_in_memory_store_def] THEN
      TRY ASM_ARITH_TAC))
 ### finalise_cons_none
-  (* the attempt: the proof of the source names lookup_insert,
-     lookup_delete.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[lookup_insert; lookup_delete] THEN
-     TRY ASM_ARITH_TAC))
+  (* the clauses of the definition decide on the value and on what
+     the references hold under the pointer, and the recursion is on
+     the references with that key deleted, so the induction is on
+     their size (HOL4's finalise_cons_ind, which the port does not
+     have) *)
+  (* the size of a tree under a delete, which the measure needs:
+     HOL4 has it as size_delete of sptreeTheory
+     (sptreeScript.sml:1940) and that a tree something is in is not
+     empty as lookup_zero of miscTheory (miscScript.sml:3977, which
+     ml/misc/misc.ml assumes).  They stand here because this is the
+     only proof of the port that needs them; the size of the two
+     smart constructors is the size of the plain ones, as their
+     lookup is (lookup_mk_BN of ml/lib/sptree.ml) *)
+  (let size_mk_BN = prove
+     (`!t1 (t2:(A)spt).
+         sptree_size (mk_BN t1 t2) = sptree_size (BN t1 t2)`,
+      REPEAT GEN_TAC THEN
+      GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BN_def] THEN
+      STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
+      STRUCT_CASES_TAC(ISPEC `t2:(A)spt` (cases_of `:(A)spt`)) THEN
+      MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
+   let size_mk_BS = prove
+     (`!t1 (x:A) t2.
+         sptree_size (mk_BS t1 x t2) = sptree_size (BS t1 x t2)`,
+      REPEAT GEN_TAC THEN
+      GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BS_def] THEN
+      STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
+      STRUCT_CASES_TAC(ISPEC `t2:(A)spt` (cases_of `:(A)spt`)) THEN
+      MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
+   let lookup_zero = prove
+     (`!(t:(A)spt) n x.
+         sptree_lookup n t = SOME x ==> ~(sptree_size t = 0)`,
+      MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THENL
+       [REWRITE_TAC[lookup_def; distinctness "option"];
+        REPEAT GEN_TAC THEN REWRITE_TAC[lookup_def; size_def] THEN
+        DISCH_TAC THEN ARITH_TAC;
+        (* the key of a BN goes down one of the two subtrees, and
+           the size of that one is not zero by its hypothesis *)
+        REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+        REWRITE_TAC[lookup_def; size_def] THEN
+        COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+        COND_CASES_TAC THEN DISCH_TAC THEN
+        FIRST_X_ASSUM (fun ih -> FIRST_ASSUM (fun lk ->
+          MP_TAC (MATCH_MP (GEN_ALL ih) lk))) THEN ARITH_TAC;
+        (* and a BS holds one itself *)
+        REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+        REWRITE_TAC[lookup_def; size_def] THEN
+        DISCH_TAC THEN ARITH_TAC]) in
+   let size_delete = prove
+     (`!(t:(A)spt) n.
+         sptree_size (sptree_delete n t) =
+         (if sptree_lookup n t = NONE then sptree_size t
+          else sptree_size t - 1)`,
+      let FIN =
+        W(fun (asl,w) ->
+          CASES_ON_TAC (find_term (hd_is "sptree_lookup") w)) THEN
+        REWRITE_TAC[distinctness "option"] THEN
+        TRY (FIRST_ASSUM (fun th ->
+          MP_TAC (MATCH_MP (GEN_ALL lookup_zero) th))) THEN
+        ARITH_TAC in
+      MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THEN
+      REPEAT STRIP_TAC THEN
+      REWRITE_TAC[delete_def; lookup_def; size_def] THEN
+      COND_CASES_TAC THEN
+      ASM_REWRITE_TAC[size_def; distinctness "option"] THEN
+      TRY ARITH_TAC THEN
+      COND_CASES_TAC THEN
+      ASM_REWRITE_TAC[size_mk_BN; size_mk_BS; size_def] THEN
+      FIN) in
+   let size_delete_LESS = prove
+     (`!(t:(A)spt) n x.
+         sptree_lookup n t = SOME x
+         ==> sptree_size (sptree_delete n t) < sptree_size t`,
+      REPEAT GEN_TAC THEN DISCH_TAC THEN
+      ASM_SIMP_TAC[size_delete; distinctness "option"] THEN
+      FIRST_ASSUM (fun th ->
+        MP_TAC (MATCH_MP (GEN_ALL lookup_zero) th)) THEN
+      ARITH_TAC) in
+   let ref_rws =
+     let ds = CONJUNCTS (distinctness "bvlSem_ref") in
+     injectivity "option" :: distinctness "option" ::
+     injectivity "bvlSem_ref" :: ds @ map GSYM ds in
+   (* the equation of the definition, in the one assumption that is
+      about the call: a rewrite of every assumption would open the
+      call of the induction hypothesis as well *)
+   let OPEN_FC =
+     FIRST_X_ASSUM (fun fc ->
+       let c = concl fc in
+       if not (is_eq c) ||
+          not (hd_is "dataSem_finalise_cons" (lhs c)) then fail() else
+       ASSUME_TAC (ONCE_REWRITE_RULE[dataSem_finalise_cons_def] fc)) in
+   (* a pattern that MATCH_CONV leaves as a guard is decided by the
+      constructors of the reference, in both orders: the guard has
+      the pattern on the left *)
+   let TIDY =
+     RULE_ASSUM_TRY (REWRITE_RULE ref_rws) THEN
+     MATCH_TIDY_TAC THEN
+     TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+     MATCH_TIDY_TAC in
+   let CLOSE = TRY (SOLVED (VAR_EQ_TAC THEN ASM_REWRITE_TAC[])) in
+   let the_asm p (asl,w) =
+     snd (find (fun (_,th) -> p (concl th)) asl) in
+   (* the assumption that says what the call gives: a COND by its
+      head constant, because the file redefines is_cond *)
+   let big_asm = the_asm (fun c -> is_eq c && hd_is "COND" (lhand c)) in
+   let SPLIT_LOOKUP =
+     W(fun gl ->
+       CASES_ON_TAC (find_term (hd_is "sptree_lookup")
+                       (concl (big_asm gl)))) in
+   let SPLIT_REF =
+     W(fun gl ->
+       let lk = the_asm (fun c -> is_eq c &&
+                  hd_is "sptree_lookup" (lhand c) &&
+                  hd_is "SOME" (rand c)) gl in
+       CASES_ON_TAC (rand (rand (concl lk)))) in
+   (* the result of the call is a triple, and the arm of the match
+      only reduces once its components are there *)
+   let SPLIT_PAIR_ARG =
+     W(fun gl ->
+       let fc = the_asm (fun c -> is_eq c &&
+                  hd_is "dataSem_finalise_cons" (lhand c) &&
+                  hd_is "SOME" (rand c)) gl in
+       let rec pv t =
+         if is_var t && prod_type (type_of t) then t
+         else if hd_is "," t then pv (rand t)
+         else failwith "pv" in
+       CASES_ON_TAC (pv (rand (rand (concl fc))))) in
+   let aux = prove
+    (`!n v (refs:((dataSem_v)bvlSem_ref)spt) ts_opt v' refs' ts'.
+        sptree_size refs = n /\
+        dataSem_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\
+        sptree_lookup ptr refs = NONE
+        ==> sptree_lookup ptr refs' = NONE`,
+     MATCH_MP_TAC num_WF THEN
+     X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+     REPEAT GEN_TAC THEN STRIP_TAC THEN
+     (* a value that is not a pointer leaves the references alone *)
+     CASES_ON_TAC `v:dataSem_v` THEN
+     OPEN_FC THEN
+     SAFE_MATCH_REDUCE_ASM_TAC THEN MATCH_TIDY_TAC THEN CLOSE THEN
+     (* and so does a pointer at anything but an unfinalised
+        MutBlock *)
+     SPLIT_LOOKUP THEN TIDY THEN CLOSE THEN
+     SPLIT_REF THEN TIDY THEN CLOSE THEN
+     (* the block is not finalised yet, or the result would be
+        NONE *)
+     W(fun gl ->
+       ASM_CASES_TAC (lhand (rator (lhand (concl (big_asm gl)))))) THEN
+     ASM_FS_TAC THEN TIDY THEN CLOSE THEN
+     (* and the call on its centre goes through *)
+     W(fun gl ->
+       CASES_ON_TAC (find_term (hd_is "dataSem_finalise_cons")
+                       (concl (big_asm gl)))) THEN TIDY THEN CLOSE THEN
+     REPEAT SPLIT_PAIR_ARG THEN TIDY THEN CLOSE THEN
+     (* the pointer is not the key of the block that is finalised,
+        because the references have nothing under it *)
+     VAR_EQ_TAC THEN
+     ASM_REWRITE_TAC[lookup_insert] THEN
+     COND_CASES_TAC THENL
+      [POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC
+         (filter (fun th -> not (is_forall (concl th))) l)) THEN
+       ASM_MESON_TAC[distinctness "option"];
+       ALL_TAC] THEN
+     (* and the references of the call have nothing under it
+        either *)
+     W(fun gl ->
+       let lk = the_asm (fun c -> is_eq c &&
+                  hd_is "sptree_lookup" (lhand c) &&
+                  hd_is "NONE" (rand c)) gl in
+       let fc = the_asm (fun c -> is_eq c &&
+                  hd_is "dataSem_finalise_cons" (lhand c)) gl in
+       let dl = el 1 (snd (strip_comb (lhand (concl fc)))) in
+       SUBGOAL_THEN (mk_eq (mk_comb (rator (lhand (concl lk)), dl),
+                            rand (concl lk))) ASSUME_TAC THENL
+        [ASM_REWRITE_TAC[lookup_delete]; ALL_TAC]) THEN
+     (* so the hypothesis of the induction applies to the call: the
+        delete makes the references smaller *)
+     FIRST_X_ASSUM (fun ih ->
+       if not (is_forall (concl ih)) then fail() else
+       W(fun gl ->
+         let fc = the_asm (fun c -> is_eq c &&
+                    hd_is "dataSem_finalise_cons" (lhand c)) gl in
+         let dl = el 1 (snd (strip_comb (lhand (concl fc)))) in
+         MP_TAC (SPEC (list_mk_icomb "sptree_size" [dl]) ih))) THEN
+     (ANTS_TAC THENL
+       [FIRST_ASSUM (fun lk ->
+          let c = concl lk in
+          if not (is_eq c) || not (hd_is "sptree_lookup" (lhand c)) ||
+             not (hd_is "SOME" (rand c)) then fail() else
+          MP_TAC (MATCH_MP (GEN_ALL size_delete_LESS) lk)) THEN
+        ASM_ARITH_TAC;
+        ALL_TAC]) THEN
+     DISCH_THEN MATCH_MP_TAC THEN
+     ASM_MESON_TAC[]) in
+   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_MESON_TAC[aux])
 ### bc_stack_ref_inv_MutBlock_centre
   (* the invariant of the longer stack holds of the same f and tf:
      the pointer of the reference is what v_inv gives (its Thunk
