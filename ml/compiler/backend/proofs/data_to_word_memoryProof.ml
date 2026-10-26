@@ -7684,7 +7684,8 @@ let a_vtr gl = the_asm (fun c ->
 let a_dtr gl = the_asm (fun c ->
                  let vs,bd = strip_forall c in
                  length vs = 1 && is_imp bd &&
-                 hd_is "dest_thunk" (lhand (lhand bd))) gl;;
+                 (try hd_is "dataSem_dest_thunk" (lhand (lhand bd))
+                  with Failure _ -> false)) gl;;
 let a_ltr gl = the_asm (fun c ->
                  let vs,bd = strip_forall c in
                  length vs = 1 && is_imp bd && is_eq (rand bd) &&

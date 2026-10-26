@@ -3249,3 +3249,27 @@ not use (the block of `update_ref_thm` calls the array that is
 written `vls`).  `INST` on the lemma before the `MATCH_MP` does the
 same thing by hand, and is what to reach for when the lemma cannot
 be renamed.
+
+## 56. A block assembled from scratch files takes the last version
+
+The lemmas of a proof are written in a scratch file each
+(`tmp/tryNNN.ml`), and the one that lands in `tools/overrides.py`
+is assembled from them.  A picker that is fixed in a later round
+sits in two scratch files then, and the assembly has to take it
+from the later one.  Taking it from the earlier one gives a block
+that the session proves and the file does not:
+
+```
+val EVERY2_ARM_GEN_TAC : thm -> goal -> goalstate = <fun>
+Exception: Failure "TAC_PROOF: Unsolved goals".
+```
+
+-- because the session still has the fixed picker bound from the
+round that fixed it, while the file has the stale one.  The same
+trap catches the check afterwards: a session that loaded the file
+before the fix keeps the file's old binding, so a scratch test of
+the regenerated lemma still fails until the fixed picker is loaded
+into the session by hand.  So: assemble from the latest scratch
+file of each piece, and when a lemma that the session proved fails
+in the file, diff the file's text of **every** helper it names
+against the scratch file's before looking anywhere else.
