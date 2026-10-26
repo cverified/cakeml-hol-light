@@ -18688,15 +18688,102 @@ let word_eq_LESS_EQ = prove
      (!c st dm m l ck w a1 (a2:'a word) x0 l1 ck1.
         word_eq_list c st dm m l ck w a1 a2 = SOME (x0,l1,ck1) ==>
           l1 <= l /\ ck1 <= ck)`,
-  (* the attempt: the proof of the source names fix_clock_IMP.  What
-     is here rewrites with them and closes by arithmetic, and the
-     cheat is behind it until the proof is written.  A MESON over
-     them is what the next round adds; it costs a load ten minutes
-     to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[fix_clock_IMP] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the induction that HOL4's Definition leaves of word_eq is not
+     there (PORTING-GUIDE.md entry 35), so the proof is the complete
+     induction on the l that the definition recurses on.  The
+     branches that give a value give the l and the ck they were
+     handed, the inner word_eq of a list is bounded by
+     fix_clock_IMP, and the two recursive calls ask the hypothesis
+     about an l one smaller *)
+  (let USE_IH nm =
+    W(fun (asl,w) ->
+      let ok th =
+        let b = snd (strip_forall (concl th)) in
+        is_imp b && can (find_term (hd_is nm)) (lhand b) in
+      let ih =
+        try snd (find (fun (_,th) -> ok th) asl)
+        with Failure _ ->
+          let c = snd (find (fun (_,th) ->
+            is_conj (concl th) && is_forall (lhand (concl th))) asl) in
+          if ok (CONJUNCT1 c) then CONJUNCT1 c else CONJUNCT2 c in
+      FIRST_ASSUM (fun h ->
+        if not (is_eq (concl h) && hd_is nm (lhs (concl h))) then fail()
+        else
+        let args = snd (strip_comb (lhs (concl h))) in
+        SUBGOAL_THEN (mk_binop `(<=):num->num->bool` (el 4 args)
+                        `k:num`)
+          (fun le -> MP_TAC (MATCH_MP ih (CONJ le h))) THENL
+         [ASM_ARITH_TAC; ALL_TAC])) in
+  let SPLIT_LOOP =
+    REPEAT (CHANGED_TAC (REPEAT COND_CASES_TAC) ORELSE
+            CHANGED_TAC EVERY_CASE_COND_TAC ORELSE
+            CHANGED_TAC (REWRITE_TAC[distinctness "option";
+                                     injectivity "option";
+                                     PAIR_EQ])) in
+  let FIX_BNDS =
+    TRY (FIRST_ASSUM (fun h ->
+      if not (is_eq (concl h) &&
+              hd_is "data_to_word_memoryProof_fix_clock"
+                (lhs (concl h))) then fail() else
+      STRIP_ASSUME_TAC (MATCH_MP
+        (GEN_ALL data_to_word_memoryProof_fix_clock_IMP) h))) in
+  let aux = prove
+     (  `!k. (!c st dm m l ck w1 (w2:'a word) x0 l1 ck1.
+            l <= k /\ word_eq c st dm m l ck w1 w2 = SOME (x0,l1,ck1)
+            ==> l1 <= l /\ ck1 <= ck) /\
+         (!c st dm m l ck w a1 (a2:'a word) x0 l1 ck1.
+            l <= k /\
+            word_eq_list c st dm m l ck w a1 a2 = SOME (x0,l1,ck1)
+            ==> l1 <= l /\ ck1 <= ck)`,
+    INDUCT_TAC THEN CONJ_TAC THEN REPEAT GEN_TAC THEN
+    ONCE_REWRITE_TAC[word_eq_def] THENL
+     [(* no step is left, so word_eq gives what it was given *)
+      SPLIT_LOOP THEN FIX_BNDS THEN
+      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
+      STRIP_TAC THEN ASM_ARITH_TAC;
+      (* and word_eq_list gives nothing *)
+      SPLIT_LOOP THEN FIX_BNDS THEN
+      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
+      STRIP_TAC THEN ASM_ARITH_TAC;
+      (* a step of word_eq: the list of the block is one shorter *)
+      SPLIT_LOOP THEN FIX_BNDS THEN
+      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
+      STRIP_TAC THEN TRY (USE_IH "word_eq_list") THEN ASM_ARITH_TAC;
+      (* and a step of word_eq_list: the words of the two addresses,
+         the result of the inner word_eq (whose bounds fix_clock_IMP
+         gives) and then the rest of the list *)
+      REPEAT COND_CASES_TAC THEN
+      REWRITE_TAC[distinctness "option"; injectivity "option";
+                  PAIR_EQ] THEN
+      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
+      REPEAT (CHANGED_TAC (W(fun (asl,w) ->
+        CASES_ON_TAC (find_term (fun t ->
+          is_comb t && is_var (rator t) && is_var (rand t)) w)))) THEN
+      TRY SAFE_MATCH_REDUCE_TAC THEN
+      REWRITE_TAC[distinctness "option"; injectivity "option";
+                  PAIR_EQ] THEN
+      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
+      TRY (W(fun (asl,w) ->
+        CASES_ON_TAC (find_term
+          (hd_is "data_to_word_memoryProof_fix_clock") w))) THEN
+      REPEAT (CHANGED_TAC (W(fun (asl,w) ->
+        CASES_ON_TAC (find_term (fun t ->
+          is_var t && prod_type (type_of t)) w)))) THEN
+      TRY SAFE_MATCH_REDUCE_TAC THEN
+      REWRITE_TAC[distinctness "option"; injectivity "option";
+                  PAIR_EQ] THEN
+      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
+      FIX_BNDS THEN
+      REPEAT COND_CASES_TAC THEN
+      REWRITE_TAC[distinctness "option"; injectivity "option";
+                  PAIR_EQ] THEN
+      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
+      STRIP_TAC THEN TRY (USE_IH "word_eq_list") THEN
+      ASM_ARITH_TAC]) in
+   CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+    [MATCH_MP_TAC (CONJUNCT1 (SPEC `l:num` aux));
+     MATCH_MP_TAC (CONJUNCT2 (SPEC `l:num` aux))] THEN
+   ASM_REWRITE_TAC[LE_REFL] THEN ASM_MESON_TAC[]));;
 
 (* [local] *)
 let fix_clock_word_eq = prove
