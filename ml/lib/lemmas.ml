@@ -597,6 +597,16 @@ let ALL2_SWAP = prove
     FIRST_ASSUM(fun th -> MP_TAC(SPEC `k:num` th)) THEN
     ASM_SIMP_TAC[]]);;
 
+(* the transitivity of the reflexive transitive closure, which HOL4
+   has as RTC_RTC of relationTheory (relationScript.sml:181) and
+   which the port's ml/lib/relation.ml does not carry *)
+
+let RTC_RTC = prove
+ (`!(R:A->A->bool) x y. RTC R x y ==> !z. RTC R y z ==> RTC R x z`,
+  GEN_TAC THEN MATCH_MP_TAC RTC_INDUCT THEN
+  REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN ASM_MESON_TAC[RTC_RULES]);;
+
 (* the lookup of a finite map read by its domain and its
    application, HOL4's FLOOKUP_DEF, and what a SUBMAP does to one,
    HOL4's FLOOKUP_SUBMAP *)

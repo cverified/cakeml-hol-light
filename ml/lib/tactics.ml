@@ -50,6 +50,12 @@ let in_goal (asl,w) p =
 let the_asm p (asl,w) =
   snd (find (fun (_,th) -> p (concl th)) asl);;
 
+(* and the components of a tuple of a term, which the witnesses of
+   an invariant are read off *)
+
+let rec tparts t =
+  if is_pair t then let a,b = dest_pair t in a :: tparts b else [t];;
+
 let MATCH_REDUCE_TAC =
   REPEAT(CHANGED_TAC(CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV)));;
 

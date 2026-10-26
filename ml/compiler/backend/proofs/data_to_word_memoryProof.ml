@@ -1353,6 +1353,37 @@ let USE_V_REL =
        hd_is "MEM" c || (is_eq c && is_var (lhand c))) l)) THEN
   ASM_MESON_TAC[MEM];;
 
+(* the port's own: what reaches a reference.  reachable_refs is a
+   path of ref_edge from a reference of a value of the stack, so a
+   value of the stack reaches no more than the stack does, and a
+   value inside a reference that the stack reaches reaches no more
+   either.  The proofs about a collection and about an update of the
+   references share these *)
+
+let reach_mem = prove
+ (cake_as_vars (fun () ->
+    `MEM v stack' /\ reachable_refs [v] refs n
+     ==> reachable_refs stack' refs n`),
+  REWRITE_TAC[reachable_refs_def; MEM] THEN
+  STRIP_TAC THEN ASM_MESON_TAC[]);;
+
+let reach_val = prove
+ (cake_as_vars (fun () ->
+    `reachable_refs stack' refs m /\
+     (!r2. MEM r2 (get_refs v) ==> ref_edge refs m r2) /\
+     reachable_refs [v] refs n
+     ==> reachable_refs stack' refs n`),
+  REWRITE_TAC[reachable_refs_def; MEM] THEN
+  REPEAT STRIP_TAC THEN
+  ASM_MESON_TAC[RTC_RTC; RTC_RULES]);;
+
+let refs_in_block = prove
+ (cake_as_vars (fun () ->
+    `MEM v ys /\ MEM r (get_refs v)
+     ==> MEM r (get_refs (Block ts tag ys))`),
+  REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+  ASM_MESON_TAC[]);;
+
 (* [local] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -1666,6 +1697,116 @@ let gc_heap_inline_rel_v_inv = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; gc_heap_inline_rel_v_inv_lemma]));;
 
+(* the port's own: the steps that a lemma about gc_inline takes.
+   The relation of the two heaps moves an element and relates
+   the values in it, and gc_heap_inline_rel_v_inv carries v_inv
+   over for one of them; the proofs of this part of the file
+   share them *)
+
+(* that a value of a list is one of its elements *)
+let MEM_CLOSE =
+  FIRST
+   [SOLVED (REWRITE_TAC[MEM] THEN ASM_REWRITE_TAC[]);
+    SOLVED (REWRITE_TAC[MEM_EL] THEN EXISTS_TAC `i:num` THEN
+            ASM_REWRITE_TAC[] THEN
+            POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
+              (fun t -> let c = concl t in
+                 hd_is "<" c ||
+                 (is_eq c && (hd_is "LENGTH" (lhand c) ||
+                              hd_is "LENGTH" (rand c)))) l)) THEN
+            ASM_ARITH_TAC);
+    SOLVED (MATCH_MP_TAC MEM_EL THEN ASM_ARITH_TAC);
+    SOLVED (ASM_SIMP_TAC[MEM_EL])];;
+
+let AT_I nm =
+  (* the rest inside the search: two assumptions can be about the
+     same relation, and only one of them has an index bound that
+     the goal gives (PORTING-GUIDE.md entry 42) *)
+  FIRST_X_ASSUM (fun th ->
+    let b = snd (strip_forall (concl th)) in
+    if not (is_imp b) || not (hd_is nm (rand b)) then fail() else
+    MP_TAC (SPEC `i:num` th) THEN
+    (ANTS_TAC THENL
+      [POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
+         (fun t -> let c = concl t in
+            hd_is "<" c ||
+            (is_eq c && (hd_is "LENGTH" (lhand c) ||
+                         hd_is "LENGTH" (rand c)))) l)) THEN
+       ASM_ARITH_TAC;
+       ALL_TAC]) THEN
+    DISCH_TAC);;
+
+(* the element of the new heap that the relation gives for the one
+   the arm names *)
+let MOVE_INLINE =
+  W(fun (asl,w as gl) ->
+    let lr = the_asm (fun c -> hd_is "ALL2" c &&
+               hd_is "gc_heap_inline_rel"
+                 (el 0 (snd (strip_comb c)))) gl in
+    let hl = the_asm (fun c -> is_eq c &&
+               hd_is "heap_lookup" (lhand c) &&
+               hd_is "SOME" (rand c)) gl in
+    let hl' = CONV_RULE(TOP_DEPTH_CONV let_CONV)
+                (REWRITE_RULE[RefBlock_def; BlockRep_def;
+                              ThunkBlock_def; bytes_def] hl) in
+    STRIP_ASSUME_TAC (MATCH_MP
+      (MATCH_MP LIST_REL_gc_heap_inline_DataElement lr) hl'));;
+
+(* the value of an element of the old heap, in the new one *)
+let SURVIVES =
+  MATCH_MP_TAC (GEN_ALL gc_heap_inline_rel_v_inv) THEN
+  W(fun gl ->
+    let vi = the_asm (hd_is "v_inv") gl in
+    let xs = tparts (rand (concl vi)) in
+    let bri = the_asm (fun c ->
+      let b = snd (strip_forall c) in
+      is_imp b && hd_is "bc_ref_inv" (rand b)) gl in
+    let bs = tparts (rand (rand (snd (strip_forall (concl bri))))) in
+    EXISTS_TAC (el 3 bs) THEN EXISTS_TAC (el 2 bs) THEN
+    EXISTS_TAC (el 0 xs)) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  TRY (SOLVED (REWRITE_TAC[LIST_REL_EL_EQN] THEN
+               ASM_REWRITE_TAC[])) THEN
+  (* and the references it reaches are reachable from the stack *)
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (fun bri ->
+    let b = snd (strip_forall (concl bri)) in
+    if not (is_imp b) || not (hd_is "bc_ref_inv" (rand b))
+    then fail() else MATCH_MP_TAC bri) THEN
+  CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  FIRST
+   [(* the value is on the stack *)
+    SOLVED (MATCH_MP_TAC (GEN_ALL reach_mem) THEN
+    W(fun gl ->
+      let rr = the_asm (fun c -> hd_is "reachable_refs" c &&
+                 hd_is "CONS" (el 0 (snd (strip_comb c)))) gl in
+      EXISTS_TAC (lhand (el 0 (snd (strip_comb (concl rr)))))) THEN
+    CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+    MEM_CLOSE);
+    (* or inside a reference that the stack reaches *)
+    SOLVED (W(fun gl ->
+      let rr2 = the_asm (fun c -> hd_is "reachable_refs" c &&
+                  hd_is "CONS" (el 0 (snd (strip_comb c)))) gl in
+      let v = lhand (el 0 (snd (strip_comb (concl rr2)))) in
+      let rr1 = the_asm (fun c -> hd_is "reachable_refs" c &&
+                  not (hd_is "CONS"
+                         (el 0 (snd (strip_comb c))))) gl in
+      let args = snd (strip_comb (concl rr1)) in
+      let r2 = mk_var("r2", type_of (el 2 args)) in
+      let tm = mk_forall (r2,
+        mk_imp (list_mk_icomb "MEM" [r2; list_mk_icomb "get_refs" [v]],
+                list_mk_icomb "ref_edge" [el 1 args; el 2 args; r2])) in
+      SUBGOAL_THEN tm (fun edges ->
+        ACCEPT_TAC (MATCH_MP reach_val
+          (CONJ rr1 (CONJ edges rr2)))) THEN
+      (* the value is one of the reference's own *)
+      REWRITE_TAC[ref_edge_def] THEN ASM_REWRITE_TAC[] THEN
+      MATCH_REDUCE_TAC THEN REPEAT STRIP_TAC THEN
+      MATCH_MP_TAC (GEN_ALL refs_in_block) THEN
+      EXISTS_TAC v THEN
+      CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+      MEM_CLOSE))];;
+
 (* [local] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -1674,20 +1815,132 @@ let bc_stack_ref_inv_gc_inline = prove
     `gc_inline dest_evaluated_thunk_rel (roots1,heap1) (roots2,heap2) /\
      bc_stack_ref_inv conf ts stack refs (roots1,heap1,be) ==>
        bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`),
-  (* the attempt: the proof of the source names
-     bc_stack_ref_inv_def, gc_inline_def,
-     gc_heap_inline_rel_heap_lookup, gc_heap_inline_rel_v_inv,
-     LIST_REL_EL_EQN, reachable_refs_def.  What is here rewrites
-     with them and closes by arithmetic, and the cheat is behind it
-     until the proof is written.  A MESON over them is what the next
-     round adds; it costs a load ten minutes to have it in every
-     attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[bc_stack_ref_inv_def; gc_inline_def;
-       gc_heap_inline_rel_heap_lookup; gc_heap_inline_rel_v_inv;
-       LIST_REL_EL_EQN; reachable_refs_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the steps over the relation of the two heaps are above the
+     statement (tools/overrides.py), with what reaches a
+     reference.  The two maps of the invariant are the same
+     ones: what changes is the heap, and the addresses that
+     hold data are the same in both
+     (gc_heap_inline_rel_heap_lookup) *)
+  (STRIP_TAC THEN
+   FIRST_X_ASSUM (fun gi ->
+     if not (hd_is "gc_inline" (concl gi)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[gc_inline_def] gi)) THEN
+   FIRST_X_ASSUM (fun inv ->
+     if not (hd_is "bc_stack_ref_inv" (concl inv)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[bc_stack_ref_inv_def] inv)) THEN
+   REWRITE_TAC[bc_stack_ref_inv_def] THEN
+   W(fun gl ->
+     let sub p = rand (lhand (concl (the_asm (fun c ->
+       hd_is "SUBSET" c && hd_is p (rand c)) gl))) in
+     EXISTS_TAC (sub "domain") THEN EXISTS_TAC (sub "all_ts")) THEN
+   (* the addresses that hold data are the same in the two heaps *)
+   W(fun gl ->
+     let lr = the_asm (fun c -> hd_is "ALL2" c &&
+                hd_is "gc_heap_inline_rel"
+                  (el 0 (snd (strip_comb c)))) gl in
+     RULE_ASSUM_TRY (REWRITE_RULE
+       [MATCH_MP gc_heap_inline_rel_heap_lookup lr])) THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THENL
+    [(* the roots of the new heap are the old ones' partners, and
+        v_inv survives the relation *)
+         (REWRITE_TAC[LIST_REL_EL_EQN] THEN
+          RULE_ASSUM_TRY (REWRITE_RULE[LIST_REL_EL_EQN]) THEN
+          SPLIT_ASM_TAC THEN
+          CONJ_TAC THENL
+           [ASM_MESON_TAC[];
+            ALL_TAC] THEN
+          X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+          CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+          AT_I "v_inv" THEN AT_I "gc_inline_rel" THEN
+          RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV BETA_CONV)) THEN
+          SURVIVES);
+     (* and the invariant of a reference that the stack reaches *)
+     X_GEN_TAC `m:num` THEN STRIP_TAC THEN
+     FIRST_ASSUM (fun bri ->
+       let b = snd (strip_forall (concl bri)) in
+       if not (is_imp b) || not (hd_is "bc_ref_inv" (rand b))
+       then fail() else MP_TAC (SPEC `m:num` bri)) THEN
+     (ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC]) THEN
+     DISCH_TAC THEN
+     (* which arm of the invariant it is *)
+     NAMED_CASES_TAC (cake_as_vars (fun () ->
+       `FLOOKUP (f:(num,num)fmap) (m:num)`)) [[]; ["x"]] THEN
+     NAMED_CASES_TAC (cake_as_vars (fun () ->
+       `sptree_lookup m (refs:((dataSem_v)bvlSem_ref)spt)`))
+       [[]; ["rv"]] THEN
+     TRY (SOLVED (FIRST_X_ASSUM (fun inv ->
+       if not (hd_is "bc_ref_inv" (concl inv)) then fail() else
+       MP_TAC (REWRITE_RULE[bc_ref_inv_def] inv)) THEN
+       ASM_REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+       CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[])) THEN
+     NAMED_CASES_TAC (cake_as_vars (fun () ->
+       `rv:(dataSem_v)bvlSem_ref`))
+       [["ys"]; ["flag"; "bs"]; ["ev"; "vv"];
+        ["tg"; "fin"; "ll"; "cc"; "rr"]] THEN
+     USE_ARM THEN
+     SPLIT_ASM_TAC THEN
+     TRY (FIRST_X_ASSUM (fun ex ->
+       if not (is_exists (concl ex)) then fail() else
+       STRIP_ASSUME_TAC ex)) THEN
+     RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+     TRY (CONV_TAC(TOP_DEPTH_CONV let_CONV)) THEN
+     REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+     MOVE_INLINE THEN
+     (* a one-element list on the one side is one on the other *)
+     TRY (W(fun gl ->
+       let lr = the_asm (fun c -> hd_is "ALL2" c &&
+                  hd_is "gc_inline_rel"
+                    (el 0 (snd (strip_comb c)))) gl in
+       let args = snd (strip_comb (concl lr)) in
+       if not (hd_is "CONS" (el 1 args)) then fail() else
+       CASES_ON_TAC (el 2 args))) THEN
+     RULE_ASSUM_TRY (REWRITE_RULE[ALL2_DEF; HD; TL;
+                                  NOT_CONS_NIL]) THEN
+     TRY (FIRST_ASSUM CONTR_TAC) THEN
+     SPLIT_ASM_TAC THEN VAR_EQ_TAC THEN
+     (* the witness is what the relation gives for the element *)
+     TRY (W(fun (asl,w as gl) ->
+       let nh = the_asm (fun c -> is_eq c &&
+                  hd_is "heap_lookup" (lhand c) &&
+                  can (fun t -> hd_is "DataElement" (rand t))
+                    (rand c)) gl in
+       let ys2 = el 0 (snd (strip_comb (rand (rand (concl nh))))) in
+       let v = fst (dest_exists w) in
+       if type_of v = type_of ys2 then EXISTS_TAC ys2
+       else EXISTS_TAC (lhand ys2))) THEN
+     REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+     (* the element at the address *)
+     W(fun (asl,w) ->
+       if not (is_eq w && hd_is "heap_lookup" (lhand w)) then ALL_TAC
+       else
+        (REWRITE_TAC[RefBlock_def; BlockRep_def; ThunkBlock_def;
+                     bytes_def] THEN
+         TRY (CONV_TAC(TOP_DEPTH_CONV let_CONV)) THEN
+         TRY (FIRST_ASSUM (fun lr ->
+           if not (hd_is "ALL2" (concl lr)) then fail() else
+           SUBST1_TAC (SYM (MATCH_MP LIST_REL_LENGTH lr)))) THEN
+         ASM_REWRITE_TAC[])) THEN
+     (* the values of the elements of a block *)
+     W(fun (asl,w) -> if not (hd_is "ALL2" w) then ALL_TAC else
+          (REWRITE_TAC[LIST_REL_EL_EQN] THEN
+            RULE_ASSUM_TRY (REWRITE_RULE[LIST_REL_EL_EQN]) THEN
+            SPLIT_ASM_TAC THEN
+            REPEAT CONJ_TAC THEN
+            TRY (SOLVED (POP_ASSUM_LIST (fun l ->
+              MAP_EVERY ASSUME_TAC (filter
+                (fun th -> let c = concl th in
+                   hd_is "<" c ||
+                   (is_eq c && (hd_is "LENGTH" (lhand c) ||
+                                hd_is "LENGTH" (rand c)))) l)) THEN
+              ASM_ARITH_TAC)) THEN
+            X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+            CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+            AT_I "v_inv" THEN AT_I "gc_inline_rel" THEN
+            RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV BETA_CONV)) THEN
+            SURVIVES)) THEN
+     (* and the value of a thunk *)
+     W(fun (asl,w) ->
+       if not (hd_is "v_inv" w) then ALL_TAC else SURVIVES)]));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
