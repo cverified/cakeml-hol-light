@@ -3041,3 +3041,54 @@ for nm in ['CLOSE_ARM','heap_move','v_inv_moved']:
   print(nm, [t for t,_ in d.defs.get(nm,[])])
 PY
 ```
+
+## 49. A lemma that MATCH_MP_TAC can aim, not a term dug out by hand
+
+The proofs of this port grow a tail of `W(fun gl -> ... the_asm
+... el 1 (snd (strip_comb ...)) ...)` steps that pick an assumption
+out and build a term from its pieces.  Every one of them is a
+guess about the goal, and when the guess is wrong the report is a
+`Failure "find"` or `"tryfind"` several steps later, in a state
+that says nothing about which `the_asm` missed.  `el_thm` cost nine
+rounds that way.
+
+The cheap alternative is to state the step as a **lemma with every
+variable quantified**, whose conclusion is the goal:
+
+```
+let all2_el_cons = prove
+ (`!(P:A->B->bool) xs ys i a b st rs.
+     EVERY2 P xs ys /\ i < LENGTH xs /\ P a b /\ EVERY2 P st rs
+     ==> EVERY2 P (EL i xs :: a :: st) (EL i ys :: b :: rs)`,
+  ...)
+```
+
+and then the proof is
+
+```
+MATCH_MP_TAC all2_el_cons THEN
+CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+<the one goal that is not an assumption>
+```
+
+-- the conclusion does the matching, HOL Light instantiates every
+variable from the goal, and what is left is a list of goals that
+`FIRST_ASSUM ACCEPT_TAC` closes one by one.  Nothing can pick the
+wrong assumption, and the lemma is reusable and testable on its
+own (one `bp` in a batch, seconds of feedback, instead of a
+twelve-minute file).
+
+Two things to watch:
+
+- a lemma whose variables are **free** rather than quantified does
+  not generalise: `MATCH_MP_TAC` leaves such a variable fixed, so
+  the goal it makes is unprovable (`x1` of
+  `gc_heap_inline_rel_v_inv`).  `GEN_ALL` first, and then the
+  variables that the conclusion does not mention become
+  existentials, in `GEN_ALL`'s order -- which is worth printing
+  once (`say (String.concat "," (map (fst o dest_var) (fst
+  (strip_exists w))))`) rather than guessed;
+- a relation applied to a lambda leaves a beta-redex in the goals,
+  so `CONV_TAC(TOP_DEPTH_CONV BETA_CONV)` goes before the
+  `ACCEPT_TAC`s.
