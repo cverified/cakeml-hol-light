@@ -1826,9 +1826,7 @@ let heap_el_block = prove
     SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
             CONV_TAC(TOP_DEPTH_CONV MATCH_CONV) THEN
             CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
-            ASM_REWRITE_TAC[]);
-    (REWRITE_TAC[heap_el_def] THEN MATCH_REDUCE_TAC THEN
-     ASM_REWRITE_TAC[BlockRep_def] THEN SHOW "where it stops")]);;
+            ASM_REWRITE_TAC[])]);;
 
 let roots_ok_el = prove
  (`heap_ok heap limit' /\
@@ -1859,8 +1857,7 @@ let roots_ok_el = prove
     FIRST [SOLVED (REWRITE_TAC[MEM_EL] THEN EXISTS_TAC `i:num` THEN
                    ASM_REWRITE_TAC[]);
            SOLVED (MATCH_MP_TAC MEM_EL THEN ASM_ARITH_TAC);
-           SOLVED (ASM_SIMP_TAC[MEM_EL]);
-           SHOW "the MEM goal"];
+           SOLVED (ASM_SIMP_TAC[MEM_EL])];
     (* and the old roots are what they were *)
     FIRST_X_ASSUM MATCH_MP_TAC THEN
     W(fun gl ->
