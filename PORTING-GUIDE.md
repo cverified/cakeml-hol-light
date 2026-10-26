@@ -2996,3 +2996,48 @@ another way in the session that is used to write it.  The symptom
 is a `Failure "find"` from a `find` over the assumptions that
 plainly should have matched one.  Write such a test with `hd_is`:
 `hd_is "COND" (lhand c)` rather than `is_cond (lhs c)`.
+
+## 48. A helper of a proof may not be named after a CakeML constant
+
+The `needs` lines of a generated file are not the Ancestors of the
+source: `providers` of `tools/db.py` takes every name the generated
+text uses and adds the theory that defines it.  So a proof whose
+helper is called
+
+```
+let CLOSE = TRY (SOLVED (VAR_EQ_TAC THEN ASM_REWRITE_TAC[])) in
+let move = prove (...) in
+let v_rel = GEN_ALL (...) in
+```
+
+gives the file three `needs` it has nothing to do with --
+`basis/pure/mlsexp.ml` (which has a `CLOSE`),
+`compiler/backend/stackLang.ml` (a `move`) and
+`compiler/backend/proofs/bvi_letProof.ml` (a `v_rel`).
+
+That is worse than untidy.  A `needs` that the closure of
+`tools/bin/pfbase` was not built with is **loaded** into the clone
+that `tools/bin/verifyquick` uses, and a file of the port that is
+loaded a second time into a session that already has its constants
+dies -- the report is an error deep in another file:
+
+```
+Exception: Failure "bvi_let_compile has the types ... and ..."
+Error in included file .../ml/compiler/backend/bvi_let.ml
+```
+
+So: after `tools/bin/portfile`, look at whether the `needs` lines
+changed (`git diff` of the generated file, `grep '^[-+]needs'`).  If
+they did and the proof did not mean to use anything new, a helper
+has collided with a constant of CakeML; rename it (`CLOSE_ARM`,
+`heap_move`, `v_inv_moved`).  The names that are free can be checked
+before writing:
+
+```
+python3 -I - <<'PY'
+import sys; sys.path.insert(0,'tools'); import db
+d = db.Db()
+for nm in ['CLOSE_ARM','heap_move','v_inv_moved']:
+  print(nm, [t for t,_ in d.defs.get(nm,[])])
+PY
+```
