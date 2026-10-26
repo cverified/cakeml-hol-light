@@ -141,6 +141,38 @@ let EL_LEN_APPEND = prove
   ASM_REWRITE_TAC[LENGTH; APPEND; EL; HD; TL]);;
 
 (* ------------------------------------------------------------------ *)
+(* The three theorems of HOL4's listTheory about LUPDATE that the     *)
+(* proofs of the update theorems of data_to_word_memoryProof use.     *)
+(* ------------------------------------------------------------------ *)
+
+let LENGTH_LUPDATE = prove
+ (`!(x:A) n ys. LENGTH (LUPDATE x n ys) = LENGTH ys`,
+  GEN_TAC THEN
+  SUBGOAL_THEN `!ys n. LENGTH (LUPDATE (x:A) n ys) = LENGTH ys`
+    (fun th -> MESON_TAC[th]) THEN
+  LIST_INDUCT_TAC THEN REWRITE_TAC[LUPDATE; LENGTH] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[LENGTH]);;
+
+let MEM_LUPDATE_E = prove
+ (`!(l:A list) x y i. MEM x (LUPDATE y i l) ==> x = y \/ MEM x l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[LUPDATE; MEM] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[MEM] THEN
+  ASM_MESON_TAC[]);;
+
+let EVERY2_LUPDATE_same = prove
+ (`!(P:A->B->bool) l1 l2 n v1 v2.
+     P v1 v2 /\ EVERY2 P l1 l2
+     ==> EVERY2 P (LUPDATE v1 n l1) (LUPDATE v2 n l2)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+   [REWRITE_TAC[LUPDATE; ALL2_DEF] THEN STRIP_TAC THEN
+    ASM_REWRITE_TAC[LUPDATE];
+    STRUCT_CASES_TAC(ISPEC `l2:B list` (cases_of `:(B)list`)) THEN
+    REWRITE_TAC[LUPDATE; ALL2_DEF; HD; TL; NOT_CONS_NIL] THEN
+    STRIP_TAC THEN COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[ALL2_DEF; HD; TL; NOT_CONS_NIL] THEN
+    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
+
+(* ------------------------------------------------------------------ *)
 (* NULL as an equation, which HOL4 has as NULL_EQ of listTheory, and  *)
 (* the list cases with names that an induction has not taken.         *)
 (* ------------------------------------------------------------------ *)

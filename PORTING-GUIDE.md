@@ -3217,3 +3217,35 @@ about which half is missing; `CONJ reach (the_asm ...)` is the step.
 Both halves are among the assumptions when the goal is the same
 invariant of the new heap, because stripping its own `!n ... ==>`
 puts them there.
+
+## 55. A lemma's free variable may not be the goal's other list
+
+A lemma of a block that several proofs share is applied with
+`MATCH_ACCEPT_TAC (MATCH_MP lemma (CONJ ...))`: the hypotheses fix
+most of its variables and `MATCH_ACCEPT_TAC` instantiates the rest
+from the goal.  That last step fails when a variable it has to
+instantiate **has the same name and type as a variable of the
+goal that stands for something else**.  The lemma
+
+```
+RefBlock_inv heap heap2 /\ lookup ptr refs = SOME (ValueArray as1) /\
+v_inv conf v1 refs (v2,f,tf,heap) /\ MEM v1 stack'
+==> v_inv conf v1 (insert ptr (ValueArray xs) refs)
+      (v2,f,DRESTRICT tf (all_ts (insert ptr (ValueArray xs) refs)
+                            stack'),heap2)
+```
+
+has `xs` for the array that is written, and no hypothesis mentions
+it, so the match has to find it in the goal.  In `update_ref_thm`
+the array written *is* the goal's `xs` and the match succeeds; in
+`update_ref_thm1` it is `LUPDATE (HD xs) i xs1`, and the goal's
+`stack'` is `xs ++ RefPtr b ptr::stack` -- the same `xs`.  An
+instantiation `xs := LUPDATE (HD xs) i xs1` would rewrite the
+stack as well, so there is none and the step fails with
+`Failure "ACCEPT_TAC"`.
+
+The fix is to name the variable of the lemma something the goals do
+not use (the block of `update_ref_thm` calls the array that is
+written `vls`).  `INST` on the lemma before the `MATCH_MP` does the
+same thing by hand, and is what to reach for when the lemma cannot
+be renamed.

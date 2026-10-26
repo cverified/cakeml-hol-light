@@ -1535,7 +1535,23 @@ stands in the `EXTRA_BEFORE` block of its statement
   `bc_ref_inv_FLOOKUP` for the address that the invariant of a
   reference has.
 
-So the next three theorems are the ones to write, and they are a
-different store (`LUPDATE` of one element, a thunk, a mutable
-block, a byte array) into the same shape of proof.
+`update_ref_thm1`, the store of one value of the array, is proved
+as well, from the same shape of proof with `LUPDATE` in place of
+the whole array: its own lemmas (`MEM_HD`, `EVERY2_HD`,
+`ptrs_store_LUPDATE`, `reach_refs_update_ref1`,
+`bc_ref_inv_update_ref_at1`, `a_pos`) are in the `EXTRA_BEFORE`
+block of its statement, and the three theorems of HOL4's
+`listTheory` that it names (`LENGTH_LUPDATE`, `MEM_LUPDATE_E`,
+`EVERY2_LUPDATE_same`) are in `ml/lib/lemmas.ml`.  The lemmas of
+the shared block name the array that is written `vls`, because a
+proof whose own `xs` is another list cannot aim a lemma whose free
+variable is `xs` (PORTING-GUIDE.md entry 55).
+
+So the two theorems that are left of the four are
+`update_thunk_thm` and `update_mutblock_thm` (a store into a thunk
+and into a mutable block, HOL4
+`data_to_word_memoryProofScript.sml:5183` and `:5609`) and
+`update_byte_ref_thm` (a store into a byte array, `:5934`), which
+replaces the element of the heap in place instead of storing into
+it.
 
