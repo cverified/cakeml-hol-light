@@ -2748,9 +2748,13 @@ let VA_trans = prove
 
 (* the values of a list of an arm, for an insert of an array *)
 let EVERY2_ARM_TAC memlem =
-  W(fun gl ->
-    ASSUME_TAC (CONJUNCT1 (MATCH_MP VA_trans
-      (CONJ (a_ri gl) (a_lkptr gl))))) THEN
+  W(fun (asl,w as gl) ->
+    let ins = find_term (hd_is "sptree_insert") w in
+    let tr = CONJUNCT1 (MATCH_MP VA_trans
+               (CONJ (a_ri gl) (a_lkptr gl))) in
+    let v = find_term (fun t -> is_var t &&
+              fst (dest_var t) = "vls") (concl tr) in
+    ASSUME_TAC (INST [rand (el 1 (snd (strip_comb ins))),v] tr)) THEN
   EVERY2_ARM_GEN_TAC memlem;;
 
 (* what the invariant says of a value of the stack survives the
