@@ -43,6 +43,13 @@ let hd_is n t =
 let in_goal (asl,w) p =
   find_term p (list_mk_conj (w :: map (concl o snd) asl));;
 
+(* and the assumption that a predicate picks out, which is what a
+   proof that applies a lemma to one of them does by hand all the
+   time.  It fails like `find' when there is none. *)
+
+let the_asm p (asl,w) =
+  snd (find (fun (_,th) -> p (concl th)) asl);;
+
 let MATCH_REDUCE_TAC =
   REPEAT(CHANGED_TAC(CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV)));;
 

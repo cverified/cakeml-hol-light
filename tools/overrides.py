@@ -1773,6 +1773,156 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  ('data_to_word_memoryProof', 'bc_ref_inv_related'): r"""
+(* the port's own: the arms of bc_ref_inv, one lemma each, and the
+   steps that every lemma about a collection of the heap takes.
+   They stand here because the proofs of this file share them (the
+   first of them is bc_ref_inv_related): the two lookups of the
+   invariant decide which arm it is, and the maps and the heap of
+   the arm lemma stay free, so one lemma reads the old invariant
+   and the new one alike (PORTING-GUIDE.md entry 43) *)
+
+let arm_VA = prove
+ (cake_as_vars (fun () ->
+    `FLOOKUP f n = SOME x /\
+     sptree_lookup n refs = SOME (bvlSem_ValueArray ys)
+     ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+          (?zs. heap_lookup x heap = SOME (RefBlock zs) /\
+                EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap))
+                  zs ys))`),
+  STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+  MATCH_REDUCE_TAC THEN
+  CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]);;
+
+let arm_BA = prove
+ (cake_as_vars (fun () ->
+    `FLOOKUP f n = SOME x /\
+     sptree_lookup n refs = SOME (bvlSem_ByteArray flag bs)
+     ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+          (let ws = LENGTH bs DIV (dimindex (:'a) DIV 8) + 1 in
+            (heap_lookup x heap = SOME (Bytes be' flag bs (REPLICATE
+              ws ((n2w 0):'a word))))))`),
+  STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+  MATCH_REDUCE_TAC THEN
+  CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]);;
+
+let arm_TH = prove
+ (cake_as_vars (fun () ->
+    `FLOOKUP f n = SOME x /\
+     sptree_lookup n refs = SOME (bvlSem_Thunk ev v)
+     ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+          (?(z:('a word_loc) heap_address).
+             heap_lookup x heap = SOME (ThunkBlock ev z) /\
+             (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
+             v_inv conf v refs (z,f,tf,heap)))`),
+  STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+  MATCH_REDUCE_TAC THEN
+  CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]);;
+
+let arm_MB = prove
+ (cake_as_vars (fun () ->
+    `FLOOKUP f n = SOME x /\
+     sptree_lookup n refs = SOME (bvlSem_MutBlock tg fin l c r)
+     ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
+          ((!gs. ~(data_to_word_config_gc_kind conf =
+                   data_to_word_Generational gs)) /\
+           (~fin ==> ~(x IN IMAGE (FAPPLY tf) (FDOM tf))) /\
+           (?zs. heap_lookup x heap = SOME (BlockRep tg zs) /\
+                 EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
+                   (l ++ [c] ++ r))))`),
+  STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
+  MATCH_REDUCE_TAC THEN
+  CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[]);;
+
+(* the arm of the old invariant and the arm of the new one, from
+   the two lookups that each of them goes by *)
+
+let USE_ARM =
+  W(fun (asl,w as gl) ->
+    let lk2 = the_asm (fun c -> is_eq c &&
+                hd_is "sptree_lookup" (lhand c) &&
+                hd_is "SOME" (rand c)) gl in
+    let lk1s = filter (fun (_,th) ->
+                 let c = concl th in
+                 is_eq c && hd_is "FLOOKUP" (lhand c) &&
+                 hd_is "SOME" (rand c)) asl in
+    let arms = [arm_VA; arm_BA; arm_TH; arm_MB] in
+    let ths =
+      itlist (fun (_,lk1) a ->
+        itlist (fun arm b ->
+          (try [MATCH_MP arm (CONJ lk1 lk2)] with Failure _ -> [])
+          @ b) arms a) lk1s [] in
+    RULE_ASSUM_TRY (REWRITE_RULE ths) THEN REWRITE_TAC ths);;
+
+(* the collection takes the address of an element to its own and
+   what lies there to the element with its pointers mapped *)
+
+let move = prove
+ (`gc_related g heap1 heap2 /\ a IN FDOM g /\
+   heap_lookup a heap1 = SOME (DataElement xs l d)
+   ==> heap_lookup (FAPPLY g a) heap2 =
+       SOME (DataElement (ADDR_MAP (FAPPLY g) xs) l d) /\
+       (!ptr u. MEM (gc_shared_Pointer ptr u) xs ==> ptr IN FDOM g)`,
+  REWRITE_TAC[gc_related_def] THEN MESON_TAC[]);;
+
+let addr1 = prove
+ (`!f (z:(A)heap_address). ADDR_MAP f [z] = [ADDR_APPLY f z]`,
+  REPEAT GEN_TAC THEN
+  STRUCT_CASES_TAC(ISPEC `z:(A)heap_address`
+                     (cases_of `:(A)heap_address`)) THEN
+  REWRITE_TAC[ADDR_MAP_def; ADDR_APPLY_def]);;
+
+(* and it is injective on its domain *)
+
+let G_INJ = prove
+ (`gc_related g heap1 heap2
+   ==> (!a b. a IN FDOM g /\ b IN FDOM g /\
+              (FAPPLY g a:num) = FAPPLY g b ==> a = b)`,
+  REWRITE_TAC[gc_related_def] THEN STRIP_TAC THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  FIRST_X_ASSUM (fun inj ->
+    if not (hd_is "INJ" (concl inj)) then fail() else
+    MATCH_MP_TAC (CONJUNCT2 (REWRITE_RULE[INJ] inj))) THEN
+  ASM_REWRITE_TAC[]);;
+
+let v_rel = GEN_ALL (DISCH_ALL (CONJUNCT1
+  (UNDISCH (SPEC_ALL (GEN_ALL v_inv_related)))));;
+
+(* the element at the collected address, from the arm's own
+   equation *)
+
+let MOVE =
+  W(fun (asl,w as gl) ->
+    let hl = the_asm (fun c -> is_eq c &&
+               hd_is "heap_lookup" (lhand c)) gl in
+    let hl' = CONV_RULE(TOP_DEPTH_CONV let_CONV)
+                (REWRITE_RULE[RefBlock_def; BlockRep_def;
+                              ThunkBlock_def; bytes_def] hl) in
+    let gc = the_asm (hd_is "gc_related") gl in
+    let ins = filter (fun (_,th) -> hd_is "IN" (concl th)) asl in
+    STRIP_ASSUME_TAC (tryfind (fun (_,i) ->
+      MATCH_MP move (CONJ gc (CONJ i hl'))) ins));;
+
+(* and what the arm says of a value of the old heap says of the
+   mapped value in the new one *)
+
+let USE_V_REL =
+  MATCH_MP_TAC v_rel THEN
+  W(fun gl ->
+    let gc = the_asm (hd_is "gc_related") gl in
+    EXISTS_TAC (el 1 (snd (strip_comb (concl gc))))) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (fun mp ->
+    let b = snd (strip_forall (concl mp)) in
+    if not (is_imp b) || not (hd_is "MEM" (lhand b)) then fail()
+    else MATCH_MP_TAC mp) THEN
+  POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
+    (fun th -> let c = concl th in
+       hd_is "MEM" c || (is_eq c && is_var (lhand c))) l)) THEN
+  ASM_MESON_TAC[MEM];;
+""",
+
   # the port's own facts about the alignment of the address of a
   # byte of a word, which the lemmas about bytes_to_word share (the
   # first of them is get_byte_bytes_to_word).  They stand here
