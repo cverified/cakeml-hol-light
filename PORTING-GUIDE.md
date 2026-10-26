@@ -2838,3 +2838,52 @@ refuted by `distinctness "bvlSem_ref"` alone.  The rewrite needs
 first -- without it the disjuncts of `v_inv` that a reference of
 another kind would take stay in the goal, and the `THENL` after
 them reports `seqapply: Length mismatch`.
+
+## 43. A proof that was fast while the definition was wrong
+
+Two proofs of `data_to_word_memoryProof` went through in a session
+in minutes and then cost the file **tens of minutes** when it was
+loaded from the start.  The reason is worth knowing before writing
+the next one.
+
+### What happened
+
+`vb_eq_size` was assumed as a list of clauses, one per pair of
+constructors, with a catch-all clause at the end -- the shape that
+entry 42 and `ISSUES.md` say is inconsistent.  A session that had
+that list had the clause of each pair as a **rewrite**, so a proof
+that takes the two values apart found its case in one step.  With
+the definition in the one `match` that HOL4 means (`MATCH_CLAUSES`
+of `tools/overrides.py`), the same proof reduces that match again
+in each of the twenty-five cases, and `MATCH_CONV` on a match of
+five arms with a nested match of four is not cheap.
+
+The same thing in the large: a proof that closes every leaf of the
+case tree of `word_eq` with `ASM_ARITH_TAC` pays the linear
+arithmetic prover per leaf, with fifteen assumptions each, most of
+them not arithmetic at all.
+
+### What to do
+
+- derive the clause of each constructor pair **once**, as a lemma
+  of the proof (`prove(\`f (Number n1) (Number n2) = ...\`,
+  ONCE_REWRITE_TAC[f_def] THEN MATCH_REDUCE_TAC)`), and rewrite
+  with those nine lemmas in the case analysis;
+- close the leaves with the cheapest thing that works:
+  `ASM_REWRITE_TAC[LE_REFL]` where the equations of `PAIR_EQ` are
+  in the assumptions, `EXISTS_TAC` of the witness the assumption
+  gives and `ACCEPT_TAC` for an existential goal, and
+  `ASM_ARITH_TAC` only where there is real arithmetic;
+- never leave `ASM_MESON_TAC[]` at the end of a proof whose
+  assumptions include the induction hypothesis of a family: MESON
+  takes the `!`s as clauses and searches for minutes.
+
+### How to see it
+
+A `verifyquick` is the only honest measure (the session that wrote
+the proof has the file's earlier content in it, and -- as above --
+may have other things too).  `tools/bin/verifyquick` prints the
+seconds; the file was 743 seconds with ten proofs of this round in
+it.  A proof that is written and too slow belongs in the attempt's
+comment, with what it needs, until it is made cheap -- which is
+where `word_eq_LESS_EQ` and `vb_eq_size_IMP_vb_size` stand.

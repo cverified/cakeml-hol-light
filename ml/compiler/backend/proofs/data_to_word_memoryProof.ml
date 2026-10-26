@@ -18353,124 +18353,21 @@ let vb_eq_size_IMP_vb_size = prove
    (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
      vb_eq_size_list refs v1 v2 = SOME (n,b) ==> n <= SUM (MAP
        vb_size v1) + LENGTH v1)`,
-  (* the source is the induction that HOL4's Definition leaves of
-     vb_eq_size, which the port has not got (PORTING-GUIDE.md entry
-     35), so the proof is the complete induction on the size of the
-     first value that the definition recurses on: a block asks the
-     hypothesis about its payload, and a list about its head and
-     about its rest *)
-  (let szs = size_thms "dataSem_v" in
-  (* the clauses of the size functions, without the one that says
-     dataSem_v_size1 is a list_size: a goal about the size of a list
-     is in terms of dataSem_v_size1, as the clause of a value is *)
-  let szs = filter (fun th ->
-    not (can (find_term (hd_is "list_size")) (concl th))) szs in
-  (* the induction hypothesis of the family, applied to a smaller
-     value (the first part) or to a smaller list (the second) *)
-  let USE_IH part =
-    W(fun (asl,w) ->
-      let nm = if part = 1 then "vb_eq_size" else "vb_eq_size_list" in
-      let ok th =
-        let b = snd (strip_forall (concl th)) in
-        is_imp b && can (find_term (hd_is nm)) (lhand b) in
-      let ih =
-        try snd (find (fun (_,th) -> ok th) asl)
-        with Failure _ ->
-          let c = snd (find (fun (_,th) ->
-            is_conj (concl th) && is_forall (lhand (concl th))) asl) in
-          if ok (CONJUNCT1 c) then CONJUNCT1 c else CONJUNCT2 c in
-      FIRST_ASSUM (fun h ->
-        if not (is_eq (concl h) && hd_is nm (lhs (concl h))) then fail()
-        else
-        let args = snd (strip_comb (lhs (concl h))) in
-        let sz = if part = 1 then "dataSem_v_size" else
-                 "dataSem_v_size1" in
-        SUBGOAL_THEN (mk_binop `(<=):num->num->bool`
-                        (list_mk_icomb sz [el 1 args]) `k:num`)
-          (fun le -> MP_TAC (MATCH_MP ih (CONJ le h))) THENL
-         [RULE_ASSUM_TAC(REWRITE_RULE szs) THEN
-          REWRITE_TAC szs THEN ASM_ARITH_TAC;
-          ALL_TAC])) in
-  let aux = prove
-     (  `!k. (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
-            dataSem_v_size v1 <= k /\
-            vb_eq_size refs v1 v2 = SOME (n,b) ==> n <= vb_size v1) /\
-         (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
-            dataSem_v_size1 v1 <= k /\
-            vb_eq_size_list refs v1 v2 = SOME (n,b)
-            ==> n <= SUM (MAP vb_size v1) + LENGTH v1)`,
-    INDUCT_TAC THEN CONJ_TAC THEN REPEAT GEN_TAC THENL
-     [(* no value has size zero *)
-      STRUCT_CASES_TAC (ISPEC `v1:dataSem_v` (cases_of `:dataSem_v`)) THEN
-      REWRITE_TAC(szs @ [ARITH_RULE `~(1 <= 0)`;
-                         ARITH_RULE `~(1 + n <= 0)`]);
-      (* and the only list of size zero is the empty one *)
-      STRUCT_CASES_TAC (ISPEC `v1:(dataSem_v)list`
-                          (cases_of `:(dataSem_v)list`)) THEN
-      REWRITE_TAC(szs @ [ARITH_RULE `~(1 + n <= 0)`]) THEN
-      ONCE_REWRITE_TAC[vb_eq_size_def] THEN
-      STRUCT_CASES_TAC (ISPEC `v2:(dataSem_v)list`
-                          (cases_of `:(dataSem_v)list`)) THEN
-      MATCH_REDUCE_TAC THEN
-      REWRITE_TAC[injectivity "option"; PAIR_EQ; LENGTH; MAP;
-                  SUM_DEF; ITLIST] THEN
-      STRIP_TAC THEN ASM_ARITH_TAC;
-      (* a value of size one more: the four pairs that have a value *)
-      STRUCT_CASES_TAC (ISPEC `v1:dataSem_v` (cases_of `:dataSem_v`)) THEN
-      STRUCT_CASES_TAC (ISPEC `v2:dataSem_v` (cases_of `:dataSem_v`)) THEN
-      ONCE_REWRITE_TAC[vb_eq_size_def] THEN
-      TRY SAFE_MATCH_REDUCE_TAC THEN
-      REWRITE_TAC[distinctness "option"] THEN
-      ONCE_REWRITE_TAC[vb_size_def] THEN
-      TRY SAFE_MATCH_REDUCE_TAC THEN
-      REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
-      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
-      (* the conditions of the two blocks, and the lookups of two
-         references *)
-      TRY (REPEAT COND_CASES_TAC) THEN
-      REWRITE_TAC[distinctness "option"; injectivity "option";
-                  PAIR_EQ] THEN
-      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
-      TRY EVERY_CASE_TAC THEN
-      REWRITE_TAC[distinctness "option"; injectivity "option";
-                  PAIR_EQ] THEN
-      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
-      (* what is left is the payload of the two blocks, which the
-         hypothesis is about *)
-      W(fun (asl,w) ->
-        CASES_ON_TAC (find_term (hd_is "vb_eq_size_list") w)) THEN
-      REWRITE_TAC[OPTION_MAP; distinctness "option"] THEN
-      TRY (W(fun (asl,w) ->
-        let eq = snd (find (fun (_,th) -> is_eq (concl th) &&
-                       hd_is "vb_eq_size_list" (lhs (concl th))) asl) in
-        let r = rand (rhs (concl eq)) in
-        if is_var r && prod_type (type_of r) then CASES_ON_TAC r
-        else ALL_TAC)) THEN
-      CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-      REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
-      STRIP_TAC THEN USE_IH 2 THEN
-      REWRITE_TAC[SUM_DEF] THEN ASM_ARITH_TAC;
-      (* and a list of size one more *)
-      STRUCT_CASES_TAC (ISPEC `v1:(dataSem_v)list`
-                          (cases_of `:(dataSem_v)list`)) THEN
-      STRUCT_CASES_TAC (ISPEC `v2:(dataSem_v)list`
-                          (cases_of `:(dataSem_v)list`)) THEN
-      ONCE_REWRITE_TAC[vb_eq_size_def] THEN
-      TRY SAFE_MATCH_REDUCE_TAC THEN
-      REWRITE_TAC[injectivity "option"; PAIR_EQ; LENGTH; MAP;
-                  SUM_DEF; ITLIST] THEN
-      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
-      (* the two conses: the head and then the rest *)
-      EVERY_CASE_TAC THEN
-      REWRITE_TAC[distinctness "option"; injectivity "option";
-                  PAIR_EQ] THEN
-      TRY (STRIP_TAC THEN ASM_ARITH_TAC) THEN
-      STRIP_TAC THEN USE_IH 1 THEN TRY (USE_IH 2) THEN
-      REWRITE_TAC[SUM_DEF] THEN ASM_ARITH_TAC]) in
-   CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
-    [MATCH_MP_TAC (CONJUNCT1 (SPEC `dataSem_v_size v1` aux));
-     MATCH_MP_TAC (CONJUNCT2 (SPEC `dataSem_v_size1 v1` aux))] THEN
-   ASM_REWRITE_TAC[LE_REFL] THEN ASM_MESON_TAC[]));;
+  (* the attempt, again: the proof of this one is written as well
+     (the complete induction on the size of the value that the
+     definition recurses on, as PORTING-GUIDE.md entry 35 says to
+     do) and it went through while vb_eq_size was still a list of
+     clauses -- but that list was inconsistent, and now that the
+     definition is the one match that HOL4 means, every case of the
+     proof reduces that match again and the file would take tens of
+     minutes.  What it needs first is the clause of each pair of
+     constructors derived once from the match (nine lemmas), and
+     cheap closers at the leaves instead of ASM_ARITH_TAC and
+     ASM_MESON_TAC *)
+  (ATTEMPT_TAC 2
+    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
+     ASM_REWRITE_TAC[vb_size_def] THEN
+     TRY ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
