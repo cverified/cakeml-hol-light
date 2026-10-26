@@ -376,6 +376,35 @@ sources, and why.
   `MATCH_FORM` in `tools/overrides.py` names the ones where it
   cannot see the overlap.
 - The overlap of the clauses of a definition is **not** always
+  seen, and where it is not, the axiom that the port assumes
+  instead of the definition is **inconsistent**: `|- false`
+  follows from it.  `tools/port.py`'s `overlapping` gives up as
+  soon as the clause list defines more than one function ("a match
+  is one clause, so it cannot define a family"), and that is
+  exactly the shape in which the sources write a mutual recursion
+  with a catch-all clause per function.  A scan of the axioms of
+  the closure of `data_to_word_memoryProof` (2613 of them) finds
+  six such definitions:
+
+  | definition | file | what follows |
+  | --- | --- | --- |
+  | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | `SOME (1,n1 = n2) = NONE` |
+  | `vs_depth` | `compiler/backend/semantics/dataSem.ml` | `vs_depth_list ls = 0` |
+  | `do_eq` | `semantics/semanticPrimitives.ml` | the `Eq_val` of a pair is `Eq_type_error` |
+  | `pmatch`/`pmatch_list` | `semantics/semanticPrimitives.ml` | `Match env = Match_type_error` |
+  | `pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | `PMatchSuccess = PTypeFailure` |
+  | `has_Eval` | `compiler/backend/flat_elim.ml` | `op = Src Eval \/ has_Eval_list es <=> false` |
+
+  The `vb_eq_size` of `data_to_word_memoryProof` is now in
+  `MATCH_CLAUSES` of `tools/overrides.py` and the port writes it as
+  a match; the other five need the same entry and a run of their
+  files.  (The scan also flags thirteen definitions of the
+  `*_sing`/`*_list` shape -- `remove_ticks`, `let_op`, `calls`,
+  `alt_free`, `scan_expr` and the like -- where the catch-all
+  clause and the specific one agree, so those are consistent, only
+  redundant.)
+
+- The overlap of the clauses of a definition is **not** always
   seen.  `dataSem$do_eq` (and the `do_eq` of `bvlSem`, `closSem`,
   `flatSem` and `semanticPrimitives`, which are the same
   definition) is a mutual recursion of `do_eq` and `do_eq_list`

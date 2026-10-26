@@ -1038,6 +1038,21 @@ MATCH_FORM = set([
 # clauses of the named constants written as one clause with a match
 # each.  The text is the comment that goes over the definition.
 MATCH_CLAUSES = {
+  # the mutual vb_eq_size/vb_eq_size_list of
+  # data_to_word_memoryProof, which is the same shape as the do_eq
+  # above: the last clause of each catches what the earlier ones
+  # have already given a value, and as a list of clauses that is
+  # inconsistent (`vb_eq_size refs (Number n1) (Number n2)` is
+  # both `SOME (1,n1 = n2)` and `NONE`)
+  ('data_to_word_memoryProof', 'vb_eq_size_def'):
+    (['vb_eq_size', 'vb_eq_size_list'], """
+(* the clauses of the source overlap -- the last one says NONE of a
+   pair that an earlier one has already given a value -- and HOL4
+   takes the first that matches, so the port writes them as a
+   match, which takes the first arm (see ml/lib/define.ml, "A
+   definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
+"""),
   # the mutual do_eq/do_eq_list of the five semantics: the last
   # clause of each catches the pairs that the earlier ones have
   # already given a value, and the port did not see it (the
