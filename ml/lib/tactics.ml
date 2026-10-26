@@ -35,6 +35,14 @@ let hd_is n t =
   (try fst(dest_const(fst(strip_comb t))) = n
    with Failure _ -> false);;
 
+(* A subterm of the goal or of one of its assumptions: a tactic that
+   builds a term of its own needs the term as the goal has it,
+   because the types of the goal are not the types that a term
+   written by hand gets. *)
+
+let in_goal (asl,w) p =
+  find_term p (list_mk_conj (w :: map (concl o snd) asl));;
+
 let MATCH_REDUCE_TAC =
   REPEAT(CHANGED_TAC(CONV_TAC(ONCE_DEPTH_CONV MATCH_CONV)));;
 

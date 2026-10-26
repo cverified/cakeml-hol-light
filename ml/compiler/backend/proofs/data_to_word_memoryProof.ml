@@ -20612,18 +20612,118 @@ let write_bytearray_append = prove
      write_bytearray a (xs ++ ys) m dm be' =
      write_bytearray a xs (write_bytearray (a + n2w (LENGTH xs)) ys
        m dm be') dm be'`,
-  (* the attempt: the proof of the source names write_bytearray_def,
-     mem_store_byte_aux_def, mem_load_byte_aux_def,
-     write_bytearray_isWord, isWord_def.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[write_bytearray_def; mem_store_byte_aux_def;
-       mem_load_byte_aux_def; write_bytearray_isWord; isWord_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the induction of the source: the load of the first byte, which
+     the hypothesis of the statement gives, makes the store of that
+     byte go through, and the induction hypothesis rewrites the
+     writes of the rest *)
+  (let addr_shift = prove
+    (`!(a:'a word) n. (a + n2w 1) + n2w n = a + n2w (n + 1)`,
+     REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE) in
+   let store_ok = prove
+    (`!m dm be' a b.
+        mem_load_byte_aux m dm be' a = SOME b ==>
+        (!a2 ls x. ?mm.
+           mem_store_byte_aux (write_bytearray a2 ls m dm be')
+             dm be' a x = SOME mm)`,
+     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[mem_load_byte_aux_def]) THEN
+     (* the byte is in a word of the memory, inside the domain *)
+     W(fun g ->
+       let sc = in_goal g (fun t ->
+         is_comb t && hd_is "byte_align" (rand t) &&
+         is_var (rator t)) in
+       CASES_ON_TAC sc) THEN
+     RULE_ASSUM_TRY (CONV_RULE(REDEPTH_CONV MATCH_CONV)) THEN
+     RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option"]) THEN
+     TRY(FIRST_ASSUM CONTR_TAC) THEN
+     (* so the writes leave a word there, and the store of the
+        byte goes through *)
+     W(fun g ->
+       let wb = in_goal g (hd_is "write_bytearray") in
+       let ba = in_goal g (hd_is "byte_align") in
+       SUBGOAL_THEN (list_mk_icomb "isWord" [mk_comb(wb,ba)])
+         MP_TAC THENL
+        [MATCH_MP_TAC (GEN_ALL write_bytearray_isWord) THEN
+         ASM_REWRITE_TAC[isWord_def] THEN
+         TRY MATCH_REDUCE_TAC THEN REWRITE_TAC[];
+         ALL_TAC]) THEN
+     REWRITE_TAC[isWord_def; mem_store_byte_aux_def] THEN
+     W(fun g ->
+       let sc = in_goal g (fun t ->
+         is_comb t && hd_is "byte_align" (rand t) &&
+         hd_is "write_bytearray" (rator t)) in
+       CASES_ON_TAC sc) THEN
+     MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
+     ASM_REWRITE_TAC[] THEN
+     COND_CASES_TAC THEN
+     TRY(FIRST_ASSUM(fun neg ->
+       if not (is_neg (concl neg)) then fail() else
+       RULE_ASSUM_TAC(REWRITE_RULE[neg;
+         distinctness "option"]))) THEN
+     TRY(FIRST_ASSUM CONTR_TAC) THEN
+     REWRITE_TAC[injectivity "option"] THEN
+     MESON_TAC[]) in
+   (* the induction hypothesis is the assumption that concludes an
+      equation, the hypothesis of the statement the one that
+      concludes a load *)
+   let find_ih asl =
+     snd (find (fun (_,th) ->
+       let b = snd(strip_forall(concl th)) in
+       is_imp b && is_eq (rand b)) asl) in
+   let find_hyp asl =
+     snd (find (fun (_,th) ->
+       let b = snd(strip_forall(concl th)) in
+       is_imp b && is_exists (rand b)) asl) in
+   LIST_INDUCT_TAC THEN
+   REWRITE_TAC[APPEND; write_bytearray_def; LENGTH; WORD_ADD_0;
+               ADD1] THEN
+   REPEAT GEN_TAC THEN DISCH_TAC THEN
+   (* the load at the first byte, which is the hypothesis at 0 *)
+   W(fun (asl,w) ->
+     let hyp = find_hyp asl in
+     let sp = SPEC `0` hyp in
+     SUBGOAL_THEN (lhand (concl sp)) (fun th ->
+       MP_TAC (MP sp th)) THENL
+      [ARITH_TAC; ALL_TAC]) THEN
+   DISCH_THEN CHOOSE_TAC THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[WORD_ADD_0]) THEN
+   (* so the store of that byte, over the writes of both sides,
+      goes through *)
+   W(fun (asl,w) ->
+     let lo = snd (find (fun (_,th) ->
+       is_eq (concl th) &&
+       hd_is "mem_load_byte_aux" (lhs (concl th))) asl) in
+     let s = find_term (hd_is "mem_store_byte_aux") w in
+     let args = snd (strip_comb s) in
+     let wargs = snd (strip_comb (hd args)) in
+     STRIP_ASSUME_TAC (SPECL [el 0 wargs; el 1 wargs; el 4 args]
+                         (MATCH_MP store_ok lo))) THEN
+   (* and the induction hypothesis rewrites the writes of the
+      rest, with the hypothesis shifted by one byte *)
+   W(fun (asl,w) ->
+     let ih = find_ih asl in
+     let inst = find_term (fun tm ->
+       hd_is "write_bytearray" tm &&
+       (let args = snd(strip_comb tm) in
+        length args = 5 && hd_is "APPEND" (el 1 args))) w in
+     let ih' = PART_MATCH (lhs o rand) ih inst in
+     SUBGOAL_THEN (lhand (concl ih')) (fun p ->
+       SUBST_ALL_TAC (MATCH_MP ih' p)) THENL
+      [GEN_TAC THEN DISCH_TAC THEN
+       W(fun (asl,w) ->
+         let hyp = find_hyp asl in
+         (* n2w is the port's name of HOL Light's word *)
+         let iv = rand (find_term (fun tm ->
+           hd_is "word" tm && is_var (rand tm)) w) in
+         let sp = SPEC (mk_binop `(+):num->num->num` iv `1`) hyp in
+         SUBGOAL_THEN (lhand (concl sp)) (fun th ->
+           MP_TAC (MP sp th)) THENL
+          [ASM_ARITH_TAC; ALL_TAC]) THEN
+       REWRITE_TAC[addr_shift];
+       ALL_TAC]) THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[addr_shift]) THEN
+   ASM_REWRITE_TAC[addr_shift] THEN
+   MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
