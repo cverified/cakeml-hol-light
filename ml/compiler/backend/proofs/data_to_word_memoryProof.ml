@@ -16656,18 +16656,93 @@ let memory_rel_RefPtr_EQ = prove
           good_dimindex (:'a) ==>
         (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word
           (v2:'a word) /\ (v1 = v2 <=> i1 = i2))`),
-  (* the attempt: the proof of the source names memory_rel_def,
-     word_ml_inv_def, ref_eq_thm, word_addr_def, get_addr_def,
-     get_lowerbits_def.  What is here rewrites with them and closes
-     by arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def; ref_eq_thm;
-       word_addr_def; get_addr_def; get_lowerbits_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the invariant gives the heap and the roots, and ref_eq_thm
+     gives the two roots as pointers with a zero annotation and
+     says that the two references are the same exactly when the two
+     roots are.  So the words of the statement are the two
+     addresses, and they determine the pointers
+     (memory_rel_RefPtr_EQ_lemma): a pointer of the roots is an
+     element of the heap (roots_ok, heap_lookup_LESS), and the heap
+     is short enough for the shift not to wrap
+     (heap_in_memory_store) *)
+  (let rec ntimes k t = if k <= 0 then ALL_TAC else t THEN ntimes (k-1) t in
+  let SPLIT_ROOT =
+    W(fun (asl,w) ->
+      let lr = snd (find (fun (_,th) -> hd_is "ALL2" (concl th)) asl) in
+      let hs = el 1 (snd (strip_comb (concl lr))) in
+      if is_var hs then CASES_ON_TAC hs else fail()) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[ALL2]) THEN
+    TRY (FIRST_ASSUM CONTR_TAC) THEN
+    RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV BETA_CONV)) THEN
+    SPLIT_ASM_TAC in
+   STRIP_TAC THEN
+   FIRST_X_ASSUM (fun mr ->
+     if not (hd_is "memory_rel" (concl mr)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[memory_rel_def; word_ml_inv_def;
+                                    MAP] mr)) THEN
+   ntimes 2 SPLIT_ROOT THEN
+   (* the two roots are pointers, and the references are the same
+      exactly when they are (ref_eq_thm) *)
+   FIRST_ASSUM (fun ai ->
+     if not (hd_is "abs_ml_inv" (concl ai)) then fail() else
+     STRIP_ASSUME_TAC (MATCH_MP (GEN_ALL ref_eq_thm) ai)) THEN
+   VAR_EQ_TAC THEN
+   REWRITE_TAC[word_addr_def] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[injectivity "word_loc"] THEN
+   W(fun (asl,w) ->
+     let vs,bod = strip_exists w in
+     let cs = conjuncts bod in
+     MAP_EVERY EXISTS_TAC [lhs (el 0 cs); lhs (el 1 cs)]) THEN
+   REWRITE_TAC[] THEN
+   (* so the goal is that the two addresses are the same exactly
+      when the two pointers are *)
+   FIRST_ASSUM (fun eq ->
+     if not (is_iff (concl eq)) then fail() else
+     REWRITE_TAC[eq; injectivity "heap_address"]) THEN
+   EQ_TAC THENL
+    [ALL_TAC;
+     DISCH_THEN SUBST1_TAC THEN REFL_TAC] THEN
+   (* the addresses are the pointers shifted up with a one in the
+      lowest bit, so they determine the pointers *)
+   REWRITE_TAC[get_addr_def; get_lowerbits_def] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[word_bits; WORD_SUBWORD_0; WORD_OR_0] THEN
+   DISCH_TAC THEN
+   MATCH_MP_TAC (GEN_ALL memory_rel_RefPtr_EQ_lemma) THEN
+   EXISTS_TAC `shift_length c` THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   TRY (REWRITE_TAC[shift_length_def] THEN ARITH_TAC) THEN
+   (* a pointer of the roots is an element of the heap, and the heap
+      is short enough for the shift not to wrap *)
+   W(fun (asl,w) ->
+     let p = lhand (lhand w) in
+     let tp = rand (lhand w) in
+     let dw = rand w in
+     FIRST_ASSUM (fun ai ->
+       if not (hd_is "abs_ml_inv" (concl ai)) then fail() else
+       let rk = REWRITE_RULE[roots_ok_def]
+                  (CONJUNCT1 (REWRITE_RULE[abs_ml_inv_def] ai)) in
+       MP_TAC (SPEC p rk)) THEN
+     REWRITE_TAC[MEM; isSomeDataElement_def] THEN
+     DISCH_THEN (fun th ->
+       MP_TAC (REWRITE_RULE[] (SPEC `wordLang_Word ((n2w 0):'a word)`
+                                th))) THEN
+     REWRITE_TAC[] THEN
+     DISCH_THEN (REPEAT_TCL CHOOSE_THEN (fun hl ->
+       ASSUME_TAC (MATCH_MP (GEN_ALL heap_lookup_LESS) hl))) THEN
+     FIRST_ASSUM (fun hm ->
+       if not (hd_is "heap_in_memory_store" (concl hm)) then fail()
+       else
+       ASSUME_TAC (CONJUNCT1
+         (REWRITE_RULE[heap_in_memory_store_def] hm))) THEN
+     MP_TAC (SPECL [tp; dw; p] LDIV_LT_EQ) THEN
+     REWRITE_TAC[EXP_EQ_0; ARITH_RULE `~(2 = 0)`] THEN
+     DISCH_THEN (fun iff ->
+       SUBGOAL_THEN (lhs (concl iff)) (fun lt ->
+         MP_TAC (EQ_MP iff lt)) THENL
+        [ASM_ARITH_TAC; ALL_TAC]) THEN
+     REWRITE_TAC[LEFT_ADD_DISTRIB; MULT_CLAUSES; MULT_AC] THEN
+     ASM_ARITH_TAC)));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
