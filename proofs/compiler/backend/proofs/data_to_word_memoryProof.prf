@@ -16778,28 +16778,174 @@
        good_dimindex_def; const_parts_to_words_def] THEN
      TRY ASM_ARITH_TAC))
 ### xor_bytes_bytes_to_word
-  (* the attempt: the proof of the source names bytes_to_word_def,
-     xor_bytes_def, word_xor_set_byte.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[bytes_to_word_def; xor_bytes_def;
-       word_xor_set_byte] THEN
-     TRY ASM_ARITH_TAC))
+  (* the induction of the source on the number of bytes: the xor of
+     the two bytes that the two words take is the byte that the word
+     of the xor takes (word_xor_set_byte), and the induction
+     hypothesis says it of the rest.  MATCH_CONV leaves the match on
+     the result of the recursive call as an epsilon term, which
+     UNWIND_CONV and the two theorems about one take apart *)
+  (INDUCT_TAC THENL
+    [ONCE_REWRITE_TAC[bytes_to_word_def] THEN
+     REWRITE_TAC[WORD_XOR_0];
+     ALL_TAC] THEN
+   REPEAT GEN_TAC THEN
+   LIST_CASES_TAC ["vals1"; "vals2"] THEN
+   ONCE_REWRITE_TAC[xor_bytes_def] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[distinctness "option"] THEN
+   TRY (W(fun (asl,w) ->
+     CASES_ON_TAC (find_term (hd_is "xor_bytes") w))) THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   TRY (CONV_TAC(REDEPTH_CONV UNWIND_CONV)) THEN
+   REWRITE_TAC[EXISTS_UNIQUE_REFL; SELECT_REFL;
+               distinctness "option"; injectivity "option"] THEN
+   DISCH_THEN (SUBST1_TAC o SYM) THEN
+   ONCE_REWRITE_TAC[bytes_to_word_def] THEN
+   REWRITE_TAC[NOT_SUC; SUC_SUB1] THEN MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[WORD_XOR_0; word_xor_set_byte] THEN
+   FIRST_X_ASSUM (fun ih -> FIRST_ASSUM (fun h ->
+     REWRITE_TAC[GEN_ALL (MATCH_MP ih h)])))
 ### xor_bytes_xor_words
-  (* the attempt: the proof of the source names make_zeros_def,
-     good_dimindex_def.  What is here rewrites with them and closes
-     by arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[make_zeros_def; good_dimindex_def] THEN
-     TRY ASM_ARITH_TAC))
+  (* the induction of the source on the first list of words: the
+     first word of both takes the bytes that fit in a word, and the
+     xor of those two words is the word of the xor of the bytes
+     (xor_bytes_bytes_to_word).  For the rest, either there are
+     bytes left, and the induction hypothesis says it of them (with
+     the length of a list of words one shorter, which is what
+     div_step is for), or the bytes fitted in the first word, and
+     then there is no word left and the two lists of the rest are
+     the same list *)
+  (let div_step = prove
+    (`!k n. 0 < k /\ k <= n ==> ((n - k) DIV k) + 1 = n DIV k`,
+     REPEAT STRIP_TAC THEN
+     MP_TAC (SPECL [`1`; `(n:num) - k`; `k:num`]
+               (el 2 (CONJUNCTS DIV_MULT_ADD))) THEN
+     REWRITE_TAC[MULT_CLAUSES] THEN
+     ASM_SIMP_TAC[ARITH_RULE `0 < k ==> ~(k = 0)`] THEN
+     SUBGOAL_THEN `((n:num) - k) + k = n` SUBST1_TAC THENL
+      [ASM_ARITH_TAC; ALL_TAC] THEN
+     DISCH_THEN (ACCEPT_TAC o SYM)) in
+   (* the induction hypothesis is the assumption that concludes an
+      equation, and the assumption about xor_bytes is the one that
+      the lemmas about it are applied to *)
+   let find_ih asl =
+     snd (find (fun (_,th) ->
+       let b = snd(strip_forall(concl th)) in
+       is_imp b && is_eq (rand b)) asl) in
+   let is_xb th =
+     is_eq (concl th) && hd_is "xor_bytes" (lhs (concl th)) in
+   let nil_of t = mk_list([], hd (snd (dest_type (type_of t)))) in
+   let TAIL_TAC =
+     W(fun (asl,w) ->
+       let ws = snd (strip_comb (lhs w)) in
+       let a1 = snd (strip_comb (el 0 ws)) in
+       let k = rand (rator (el 0 a1)) in
+       let v1 = rand (el 0 a1) in
+       ASM_CASES_TAC (mk_binop `(<=):num->num->bool` k
+                        (list_mk_icomb "LENGTH" [v1]))) THENL
+      [(* the rest of the bytes is the rest of the words *)
+       W(fun (asl,w) ->
+         let ws = snd (strip_comb (lhs w)) in
+         let a1 = snd (strip_comb (el 0 ws)) in
+         let a2 = snd (strip_comb (el 1 ws)) in
+         let k = rand (rator (el 0 a1)) in
+         let v2 = rand (el 0 a2) in
+         SUBGOAL_THEN (mk_binop `(<=):num->num->bool` k
+                         (list_mk_icomb "LENGTH" [v2])) ASSUME_TAC THENL
+          [ASM_ARITH_TAC; ALL_TAC]) THEN
+       W(fun (asl,w) ->
+         let ih = find_ih asl in
+         let ws = snd (strip_comb (lhs w)) in
+         let a1 = snd (strip_comb (el 0 ws)) in
+         let a2 = snd (strip_comb (el 1 ws)) in
+         let dr = el 0 (snd (strip_comb (rand (rhs w)))) in
+         let ih' = SPECL [el 1 a2; el 0 a1; el 0 a2; dr] ih in
+         SUBGOAL_THEN (lhand (concl ih'))
+           (fun th -> ACCEPT_TAC (MP ih' th))) THEN
+       REPEAT CONJ_TAC THEN
+       TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+       TRY (W(fun (asl,w) ->
+         let k = rand (rator (find_term (hd_is "DROP") w)) in
+         FIRST_ASSUM (fun h ->
+           ACCEPT_TAC (MATCH_MP (SPEC k xor_bytes_drop) h)))) THEN
+       REWRITE_TAC[LENGTH_DROP] THEN
+       ASM_SIMP_TAC[div_step] THEN ASM_ARITH_TAC;
+       (* or the bytes fit in the first word, and there is no word
+          left *)
+       W(fun (asl,w) ->
+         let ws = snd (strip_comb (lhs w)) in
+         let a1 = snd (strip_comb (el 0 ws)) in
+         let k = rand (rator (el 0 a1)) in
+         let v1 = rand (el 0 a1) in
+         let t1 = el 1 a1 in
+         SUBGOAL_THEN (mk_eq (t1, nil_of t1)) SUBST_ALL_TAC THENL
+          [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN
+           SUBGOAL_THEN (mk_binop `(<):num->num->bool`
+                           (list_mk_icomb "LENGTH" [v1]) k)
+             (fun lt -> ASSUME_TAC (MATCH_MP DIV_LT lt)) THENL
+            [ASM_ARITH_TAC; ALL_TAC] THEN
+           ASM_ARITH_TAC;
+           ALL_TAC]) THEN
+       REWRITE_TAC[write_bytes_def] THEN
+       ONCE_REWRITE_TAC[xor_words_def] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[injectivity "option"] THEN
+       W(fun (asl,w) ->
+         let k = rand (rator (find_term (hd_is "DROP") w)) in
+         FIRST_ASSUM (fun h ->
+           if not (is_xb h) then fail() else
+           let v1 = el 0 (snd (strip_comb (lhs (concl h)))) in
+           MP_TAC (MATCH_MP (SPEC k xor_bytes_drop) h) THEN
+           SUBGOAL_THEN (mk_eq (list_mk_icomb "DROP" [k; v1],
+                                nil_of v1)) SUBST1_TAC THENL
+            [REWRITE_TAC[DROP_NIL] THEN ASM_ARITH_TAC; ALL_TAC])) THEN
+       ONCE_REWRITE_TAC[xor_bytes_def] THEN MATCH_REDUCE_TAC THEN
+       REWRITE_TAC[injectivity "option"] THEN
+       DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[]] in
+   (* a list of words of the length that the statement asks for is
+      not empty *)
+   LIST_INDUCT_TAC THENL
+    [REPEAT GEN_TAC THEN
+     REWRITE_TAC[LENGTH; ARITH_RULE `(0 = n + 1) <=> F`];
+     ALL_TAC] THEN
+   REPEAT GEN_TAC THEN
+   LIST_CASES_TAC ["zs2"] THENL
+    [REWRITE_TAC[LENGTH; ARITH_RULE `(0 = n + 1) <=> F`];
+     ALL_TAC] THEN
+   REWRITE_TAC[write_bytes_def; LENGTH; ALL] THEN
+   CONV_TAC(DEPTH_CONV let_CONV) THEN
+   ONCE_REWRITE_TAC[xor_words_def] THEN MATCH_REDUCE_TAC THEN
+   STRIP_TAC THEN VAR_EQ_TAC THEN
+   FIRST_ASSUM (fun h ->
+     if is_xb h then STRIP_ASSUME_TAC (MATCH_MP xor_bytes_length h)
+     else fail()) THEN
+   (* a word holds at least one byte *)
+   W(fun (asl,w) ->
+     let k = rand (rator (find_term (hd_is "DROP") w)) in
+     SUBGOAL_THEN (mk_binop `(<):num->num->bool` `0` k)
+       ASSUME_TAC THENL
+      [FIRST_ASSUM (fun gd ->
+         if hd_is "good_dimindex" (concl gd) then MP_TAC gd
+         else fail()) THEN
+       REWRITE_TAC[good_dimindex_def] THEN
+       DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
+       CONV_TAC NUM_REDUCE_CONV;
+       ALL_TAC]) THEN
+   W(fun (asl,w) ->
+     let xw = find_term (fun tm -> hd_is "xor_words" tm &&
+                length(snd(strip_comb tm)) = 2) w in
+     let tl = rand (rand (rhs w)) in
+     SUBGOAL_THEN (mk_eq (xw, list_mk_icomb "SOME" [tl]))
+       SUBST1_TAC THENL
+      [TAIL_TAC; ALL_TAC]) THEN
+   (* and the first word is the xor of the first words *)
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+   TRY (CONV_TAC(REDEPTH_CONV UNWIND_CONV)) THEN
+   REWRITE_TAC[EXISTS_UNIQUE_REFL; SELECT_REFL;
+               distinctness "option"; injectivity "option"] THEN
+   REWRITE_TAC[CONS_11] THEN
+   FIRST_ASSUM (fun h ->
+     MATCH_ACCEPT_TAC (GEN_ALL (MATCH_MP xor_bytes_bytes_to_word h))))
 ### xor_words_word_list
   (* the attempt: the proof of the source names xor_words_def,
      good_dimindex_def, word_list_def, read_word_def, isWord_def,
