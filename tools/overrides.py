@@ -1773,6 +1773,119 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  ('data_to_word_memoryProof', 'el_thm'): r"""
+(* the port's own: the steps that the lemmas about abs_ml_inv of a
+   stack take.  A value put on the stack only adds timestamps
+   (all_ts_mono) and reaches no more references than the Block it
+   comes out of (reach_block); the pointers of an element of a good
+   heap are addresses of it (heap_ok_in), which is what the new root
+   of such a lemma asks for (roots_ok_el); heap_el reads the element
+   of a Block's representation (heap_el_block); and the values of
+   the two stacks are related elementwise (all2_el_cons) *)
+
+let all_ts_mono = prove
+ (cake_as_vars (fun () ->
+    `all_ts refs stack' SUBSET all_ts refs (v :: stack')`),
+  REWRITE_TAC[all_ts_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM] THEN
+  MESON_TAC[]);;
+
+let reach_block = prove
+ (cake_as_vars (fun () ->
+    `MEM v ys /\ reachable_refs (v :: Block ts tag ys :: stack') refs n
+     ==> reachable_refs (Block ts tag ys :: stack') refs n`),
+  REWRITE_TAC[reachable_refs_def; MEM] THEN
+  REPEAT STRIP_TAC THEN
+  ASM_MESON_TAC[refs_in_block]);;
+
+let heap_ok_in = prove
+ (`heap_ok heap limit' /\
+   heap_lookup a heap = SOME (DataElement xs l d)
+   ==> (!ptr u. MEM (gc_shared_Pointer ptr u) xs
+                ==> isSomeDataElement (heap_lookup ptr heap))`,
+  REWRITE_TAC[heap_ok_def] THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM MATCH_MP_TAC THEN
+  ASM_MESON_TAC[heap_lookup_MEM]);;
+
+let heap_el_block = prove
+ (`heap_lookup ptr heap = SOME (BlockRep n ys) /\ i < LENGTH ys
+   ==> heap_el (gc_shared_Pointer ptr u) i heap = (EL i ys,T)`,
+  STRIP_TAC THEN
+  FIRST
+   [SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
+            MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
+    SOLVED (REWRITE_TAC[heap_el_def] THEN MATCH_REDUCE_TAC THEN
+            ASM_REWRITE_TAC[BlockRep_def] THEN MATCH_TIDY_TAC THEN
+            MATCH_REDUCE_TAC THEN MATCH_TIDY_TAC THEN
+            ASM_REWRITE_TAC[]);
+    SOLVED (REWRITE_TAC[heap_el_def] THEN SAFE_MATCH_REDUCE_TAC THEN
+            ASM_REWRITE_TAC[BlockRep_def] THEN
+            SAFE_MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
+    SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
+            CONV_TAC(TOP_DEPTH_CONV MATCH_CONV) THEN
+            CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
+            ASM_REWRITE_TAC[]);
+    (REWRITE_TAC[heap_el_def] THEN MATCH_REDUCE_TAC THEN
+     ASM_REWRITE_TAC[BlockRep_def] THEN SHOW "where it stops")]);;
+
+let roots_ok_el = prove
+ (`heap_ok heap limit' /\
+   heap_lookup ptr heap = SOME (BlockRep n ys) /\
+   i < LENGTH ys /\ roots_ok rs heap
+   ==> roots_ok (EL i ys :: rs) heap`,
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun ro ->
+    if not (hd_is "roots_ok" (concl ro)) then fail() else
+    MP_TAC (REWRITE_RULE[roots_ok_def] ro)) THEN
+  REWRITE_TAC[roots_ok_def; MEM] THEN
+  DISCH_TAC THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THENL
+   [(* the new root is a pointer of the Block's element *)
+    FIRST_ASSUM (fun ho ->
+      if not (hd_is "heap_ok" (concl ho)) then fail() else
+      FIRST_ASSUM (fun hl ->
+        if not (is_eq (concl hl)) ||
+           not (hd_is "heap_lookup" (lhand (concl hl))) then fail()
+        else MP_TAC (MATCH_MP heap_ok_in (CONJ ho
+               (REWRITE_RULE[BlockRep_def] hl))))) THEN
+    DISCH_THEN MATCH_MP_TAC THEN
+    W(fun gl ->
+      let e = the_asm (fun c -> is_eq c &&
+                hd_is "gc_shared_Pointer" (lhand c)) gl in
+      EXISTS_TAC (rand (lhand (concl e))) THEN
+      ONCE_REWRITE_TAC[e]) THEN
+    FIRST [SOLVED (REWRITE_TAC[MEM_EL] THEN EXISTS_TAC `i:num` THEN
+                   ASM_REWRITE_TAC[]);
+           SOLVED (MATCH_MP_TAC MEM_EL THEN ASM_ARITH_TAC);
+           SOLVED (ASM_SIMP_TAC[MEM_EL]);
+           SHOW "the MEM goal"];
+    (* and the old roots are what they were *)
+    FIRST_X_ASSUM MATCH_MP_TAC THEN
+    W(fun gl ->
+      let m = the_asm (hd_is "MEM") gl in
+      EXISTS_TAC (rand (el 0 (snd (strip_comb (concl m)))))) THEN
+    FIRST_ASSUM ACCEPT_TAC]);;
+
+let all2_el_cons = prove
+ (`!(P:A->B->bool) xs ys i a b st rs.
+     EVERY2 P xs ys /\ i < LENGTH xs /\ P a b /\ EVERY2 P st rs
+     ==> EVERY2 P (EL i xs :: a :: st) (EL i ys :: b :: rs)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[ALL2_DEF; HD; TL; NOT_CONS_NIL] THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  MP_TAC (SPEC `i:num` (CONJUNCT2 (REWRITE_RULE[LIST_REL_EL_EQN]
+    (ASSUME `EVERY2 (P:A->B->bool) xs ys`)))) THEN
+  ASM_REWRITE_TAC[]);;
+
+(* the assumption that says what the heap holds for a Block *)
+
+let blockrep_asm =
+  the_asm (fun c -> is_eq c && hd_is "heap_lookup" (lhand c) &&
+             can (fun t -> hd_is "BlockRep" (rand t)) (rand c));;
+""",
+
   ('data_to_word_memoryProof', 'bc_stack_ref_inv_gc_inline'): r"""
 (* the port's own: the steps that a lemma about gc_inline takes.
    The relation of the two heaps moves an element and relates

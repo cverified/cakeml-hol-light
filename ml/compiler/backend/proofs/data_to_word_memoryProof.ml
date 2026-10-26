@@ -8799,6 +8799,117 @@ let blocks_unique_el = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the port's own: the steps that the lemmas about abs_ml_inv of a
+   stack take.  A value put on the stack only adds timestamps
+   (all_ts_mono) and reaches no more references than the Block it
+   comes out of (reach_block); the pointers of an element of a good
+   heap are addresses of it (heap_ok_in), which is what the new root
+   of such a lemma asks for (roots_ok_el); heap_el reads the element
+   of a Block's representation (heap_el_block); and the values of
+   the two stacks are related elementwise (all2_el_cons) *)
+
+let all_ts_mono = prove
+ (cake_as_vars (fun () ->
+    `all_ts refs stack' SUBSET all_ts refs (v :: stack')`),
+  REWRITE_TAC[all_ts_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM] THEN
+  MESON_TAC[]);;
+
+let reach_block = prove
+ (cake_as_vars (fun () ->
+    `MEM v ys /\ reachable_refs (v :: Block ts tag ys :: stack') refs n
+     ==> reachable_refs (Block ts tag ys :: stack') refs n`),
+  REWRITE_TAC[reachable_refs_def; MEM] THEN
+  REPEAT STRIP_TAC THEN
+  ASM_MESON_TAC[refs_in_block]);;
+
+let heap_ok_in = prove
+ (`heap_ok heap limit' /\
+   heap_lookup a heap = SOME (DataElement xs l d)
+   ==> (!ptr u. MEM (gc_shared_Pointer ptr u) xs
+                ==> isSomeDataElement (heap_lookup ptr heap))`,
+  REWRITE_TAC[heap_ok_def] THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM MATCH_MP_TAC THEN
+  ASM_MESON_TAC[heap_lookup_MEM]);;
+
+let heap_el_block = prove
+ (`heap_lookup ptr heap = SOME (BlockRep n ys) /\ i < LENGTH ys
+   ==> heap_el (gc_shared_Pointer ptr u) i heap = (EL i ys,T)`,
+  STRIP_TAC THEN
+  FIRST
+   [SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
+            MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
+    SOLVED (REWRITE_TAC[heap_el_def] THEN MATCH_REDUCE_TAC THEN
+            ASM_REWRITE_TAC[BlockRep_def] THEN MATCH_TIDY_TAC THEN
+            MATCH_REDUCE_TAC THEN MATCH_TIDY_TAC THEN
+            ASM_REWRITE_TAC[]);
+    SOLVED (REWRITE_TAC[heap_el_def] THEN SAFE_MATCH_REDUCE_TAC THEN
+            ASM_REWRITE_TAC[BlockRep_def] THEN
+            SAFE_MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
+    SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
+            CONV_TAC(TOP_DEPTH_CONV MATCH_CONV) THEN
+            CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
+            ASM_REWRITE_TAC[]);
+    (REWRITE_TAC[heap_el_def] THEN MATCH_REDUCE_TAC THEN
+     ASM_REWRITE_TAC[BlockRep_def] THEN SHOW "where it stops")]);;
+
+let roots_ok_el = prove
+ (`heap_ok heap limit' /\
+   heap_lookup ptr heap = SOME (BlockRep n ys) /\
+   i < LENGTH ys /\ roots_ok rs heap
+   ==> roots_ok (EL i ys :: rs) heap`,
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun ro ->
+    if not (hd_is "roots_ok" (concl ro)) then fail() else
+    MP_TAC (REWRITE_RULE[roots_ok_def] ro)) THEN
+  REWRITE_TAC[roots_ok_def; MEM] THEN
+  DISCH_TAC THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THENL
+   [(* the new root is a pointer of the Block's element *)
+    FIRST_ASSUM (fun ho ->
+      if not (hd_is "heap_ok" (concl ho)) then fail() else
+      FIRST_ASSUM (fun hl ->
+        if not (is_eq (concl hl)) ||
+           not (hd_is "heap_lookup" (lhand (concl hl))) then fail()
+        else MP_TAC (MATCH_MP heap_ok_in (CONJ ho
+               (REWRITE_RULE[BlockRep_def] hl))))) THEN
+    DISCH_THEN MATCH_MP_TAC THEN
+    W(fun gl ->
+      let e = the_asm (fun c -> is_eq c &&
+                hd_is "gc_shared_Pointer" (lhand c)) gl in
+      EXISTS_TAC (rand (lhand (concl e))) THEN
+      ONCE_REWRITE_TAC[e]) THEN
+    FIRST [SOLVED (REWRITE_TAC[MEM_EL] THEN EXISTS_TAC `i:num` THEN
+                   ASM_REWRITE_TAC[]);
+           SOLVED (MATCH_MP_TAC MEM_EL THEN ASM_ARITH_TAC);
+           SOLVED (ASM_SIMP_TAC[MEM_EL]);
+           SHOW "the MEM goal"];
+    (* and the old roots are what they were *)
+    FIRST_X_ASSUM MATCH_MP_TAC THEN
+    W(fun gl ->
+      let m = the_asm (hd_is "MEM") gl in
+      EXISTS_TAC (rand (el 0 (snd (strip_comb (concl m)))))) THEN
+    FIRST_ASSUM ACCEPT_TAC]);;
+
+let all2_el_cons = prove
+ (`!(P:A->B->bool) xs ys i a b st rs.
+     EVERY2 P xs ys /\ i < LENGTH xs /\ P a b /\ EVERY2 P st rs
+     ==> EVERY2 P (EL i xs :: a :: st) (EL i ys :: b :: rs)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[ALL2_DEF; HD; TL; NOT_CONS_NIL] THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  MP_TAC (SPEC `i:num` (CONJUNCT2 (REWRITE_RULE[LIST_REL_EL_EQN]
+    (ASSUME `EVERY2 (P:A->B->bool) xs ys`)))) THEN
+  ASM_REWRITE_TAC[]);;
+
+(* the assumption that says what the heap holds for a Block *)
+
+let blockrep_asm =
+  the_asm (fun c -> is_eq c && hd_is "heap_lookup" (lhand c) &&
+             can (fun t -> hd_is "BlockRep" (rand t)) (rand c));;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let el_thm = prove
@@ -8811,18 +8922,130 @@ let el_thm = prove
         abs_ml_inv conf (EL i xs :: Block t0 n xs :: stack) refs
                         (y :: roots,heap,be,a,sp,sp1,gens) limit
                           ts)`),
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     bc_stack_ref_inv_def, v_inv_def, heap_el_def, BlockRep_def,
-     roots_ok_def.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-       v_inv_def; heap_el_def; BlockRep_def; roots_ok_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the steps that this lemma and the ones after it take are
+     above the statement (tools/overrides.py).  The roots are a
+     cons whose head is the Block's pointer, the element of the
+     payload at the index is the element of its representation
+     there, and the invariant of the new stack is the old one
+     with that value in front *)
+  (STRIP_TAC THEN
+   (* what the invariant says of the stack with the Block at its
+      head *)
+   FIRST_X_ASSUM (fun inv ->
+     if not (hd_is "abs_ml_inv" (concl inv)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def;
+                                    bc_stack_ref_inv_def] inv)) THEN
+   (* the roots are a cons, and its head is the Block's *)
+   W(fun gl ->
+     let lr = the_asm (fun c -> hd_is "ALL2" c) gl in
+     CASES_ON_TAC (el 2 (snd (strip_comb (concl lr))))) THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[ALL2_DEF; HD; TL; NOT_CONS_NIL]) THEN
+   TRY (FIRST_ASSUM CONTR_TAC) THEN
+   SPLIT_ASM_TAC THEN
+   (* the payload is not empty, because the index is below its
+      length *)
+   SUBGOAL_THEN `~((xs:dataSem_v list) = [])` ASSUME_TAC THENL
+    [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ASM_ARITH_TAC;
+     ALL_TAC] THEN
+   (* the Block is a pointer at its representation in the heap; the
+      invariant of the Block itself is kept, because the values of
+      the new stack ask for it *)
+   FIRST_ASSUM (fun vb ->
+     if not (hd_is "v_inv" (concl vb)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[v_inv_def;
+       ASSUME `~((xs:dataSem_v list) = [])`] vb)) THEN
+   VAR_EQ_TAC THEN
+   (* the witnesses: the head of the roots, its tail, and the
+      element of the Block's representation at the index *)
+   W(fun (asl,w as gl) ->
+     let cns = lhs (hd (conjuncts (snd (strip_exists w)))) in
+     let ys = el 1 (snd (strip_comb (rand (rand
+                (concl (blockrep_asm gl)))))) in
+     EXISTS_TAC (lhand cns) THEN EXISTS_TAC (rand cns) THEN
+     EXISTS_TAC (list_mk_icomb "EL" [`i:num`; ys])) THEN
+   (* the payload and its representation are of a length *)
+   FIRST_ASSUM (fun lr ->
+     if not (hd_is "ALL2" (concl lr)) then fail() else
+     ASSUME_TAC (MATCH_MP LIST_REL_LENGTH lr)) THEN
+   (* so the index is below the length of the representation *)
+   W(fun gl ->
+     let lt = the_asm (hd_is "<") gl in
+     let le = the_asm (fun c -> is_eq c &&
+                hd_is "LENGTH" (lhand c)) gl in
+     SUBGOAL_THEN (mk_binop `(<):num->num->bool`
+                     (lhand (concl lt)) (rand (concl le)))
+       ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED REFL_TAC) THEN
+   (* what the heap holds at the index *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let hl = blockrep_asm gl in
+            let lt = the_asm (fun c -> hd_is "<" c &&
+                       hd_is "LENGTH" (rand c)) gl in
+            MATCH_ACCEPT_TAC (MATCH_MP heap_el_block
+              (CONJ hl lt))))) THEN
+   (* the invariant with the element on the stack *)
+   REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def] THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   (* the new root is a pointer of the Block's element, and the
+      pointers of a good heap are addresses of it *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let ho = the_asm (hd_is "heap_ok") gl in
+            let hl = blockrep_asm gl in
+            let lt = the_asm (fun c -> hd_is "<" c &&
+                       hd_is "LENGTH" (rand c)) gl in
+            let ro = the_asm (hd_is "roots_ok") gl in
+            MATCH_ACCEPT_TAC (MATCH_MP roots_ok_el
+              (CONJ ho (CONJ hl (CONJ lt ro))))))) THEN
+   (* the two maps are the same ones *)
+   W(fun gl ->
+     let sub p = rand (lhand (concl (the_asm (fun c ->
+       hd_is "SUBSET" c && hd_is p (rand c)) gl))) in
+     EXISTS_TAC (sub "domain") THEN EXISTS_TAC (sub "all_ts")) THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   (* the timestamps of the stack only grow *)
+   TRY (SOLVED
+         (MATCH_MP_TAC SUBSET_TRANS THEN
+          W(fun gl ->
+            let s = the_asm (fun c -> hd_is "SUBSET" c &&
+                      hd_is "all_ts" (rand c)) gl in
+            EXISTS_TAC (rand (concl s))) THEN
+          CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+          MATCH_ACCEPT_TAC all_ts_mono)) THEN
+   (* the blocks of the stack stay unique *)
+   TRY (SOLVED
+         (MATCH_MP_TAC (GEN_ALL blocks_unique_el) THEN
+          CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* the values of the stack are the old ones and the element *)
+   (* the values of the stack are the old ones and the element,
+      which the relation of the payload gives at the index
+      (all2_el_cons) *)
+   TRY (SOLVED
+         (MATCH_MP_TAC all2_el_cons THEN
+          CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+          REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+          POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
+            (fun t -> let c = concl t in
+               hd_is "<" c ||
+               (is_eq c && (hd_is "LENGTH" (lhand c) ||
+                            hd_is "LENGTH" (rand c)))) l)) THEN
+          ASM_ARITH_TAC)) THEN
+   (* and a reference that the element reaches is one that the
+      Block reaches *)
+   REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM (fun bri ->
+     let b = snd (strip_forall (concl bri)) in
+     if not (is_imp b) || not (hd_is "bc_ref_inv" (rand b))
+     then fail() else MATCH_MP_TAC bri) THEN
+   CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   MATCH_MP_TAC (GEN_ALL reach_block) THEN
+   W(fun gl ->
+     let rr = the_asm (hd_is "reachable_refs") gl in
+     EXISTS_TAC (lhand (el 0 (snd (strip_comb (concl rr)))))) THEN
+   CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   MEM_CLOSE));;
 
 (* new byte array *)
 
