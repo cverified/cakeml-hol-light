@@ -1452,3 +1452,47 @@ The scan itself is four lines of the session: an axiom is
 suspicious when its clauses, grouped by the function each defines,
 give one function both a clause whose arguments are all variables
 and another clause.
+
+## The round of 2026-10-26, after the nine
+
+Three more proofs of `data_to_word_memoryProof` are in, and the
+file stands at 103 unproved statements of 611 (147 axioms added,
+702 seconds):
+
+- `bc_stack_ref_inv_gc_related_roots_heap`: the two maps of the new
+  invariant are `g f_o_f f` and `g f_o_f tf`, so `ml/lib/lemmas.ml`
+  now has what the composition of two finite maps is
+  (`FMAP_FN_f_o_f`, `FAPPLY_f_o_f` and HOL4's `f_o_f_DEF`);
+- `memory_rel_RefPtr_EQ`, from the round before it;
+- `finalise_cons_none`, the first proof of the port that needed an
+  induction of a definition that the port does not have.
+
+`PORTING-GUIDE.md` entries 44 to 47 are what that last one cost:
+
+- 44: the complete induction on the measure to write where HOL4
+  takes `foo_ind`, the decrease as the one real lemma, and that a
+  lemma about a tree cannot stand in `ml/lib/lemmas.ml`, because
+  `ml/lib/preamble.ml` loads that file before `ml/lib/sptree.ml`;
+- 45: `MATCH_CONV`'s guard has the pattern on the **left**, so
+  `distinctness` needs its `GSYM`s as well (and `case_rws` of
+  `ml/lib/tactics.ml` has only the one orientation);
+- 46: a rewrite with a recursive definition in *every* assumption
+  opens the call of the induction hypothesis as well, and the
+  proof dies of a stack overflow several steps later;
+- 47: the file's own `let is_cond` (line 24033) shadows HOL
+  Light's, so a tactic of a proof earlier in the file behaves one
+  way in the file and another in the session that writes it.
+
+### What is next
+
+`bc_ref_inv_related`, with the four arms of `bc_ref_inv` as a
+lemma each (entry 43's advice: derive the clause once), and then
+the lemmas that the collection theorems share: `v_inv_related_lemma`
+and `bc_stack_ref_inv_gc_inline`.
+
+A by-product to pick up: `lookup_zero` of `ml/misc/misc.ml` is
+assumed and the proof of it is now written (it stands in
+`finalise_cons_none`); the same holds for the termination of
+`dataSem`'s `finalise_cons`, which is `size_delete_LESS` and the
+measure HOL4 gives.  Both are a cheat of another file, so they wait
+until this file is done.

@@ -2887,3 +2887,112 @@ seconds; the file was 743 seconds with ten proofs of this round in
 it.  A proof that is written and too slow belongs in the attempt's
 comment, with what it needs, until it is made cheap -- which is
 where `word_eq_LESS_EQ` and `vb_eq_size_IMP_vb_size` stand.
+
+## 44. The induction of a definition that the port does not have
+
+HOL4's `Definition` gives a `foo_ind` with it, and a proof of the
+source starts `ho_match_mp_tac foo_ind`.  The port has no such
+theorem: `cake_define_try_tac` makes the constant and its clauses
+and nothing else.  Where the recursion is on a measure -- and in
+the sources that is where the termination needed a
+`WF_REL_TAC 'measure ...'` -- the induction to write by hand is a
+complete induction on that measure:
+
+```
+let aux = prove
+ (`!n v refs ts_opt v' refs' ts'.
+     sptree_size refs = n /\ ... ==> ...`,
+  MATCH_MP_TAC num_WF THEN
+  X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THEN ...) in
+REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_MESON_TAC[aux]
+```
+
+The extra variable `n` with `measure x = n` as a conjunct is what
+makes the hypothesis usable: it is `!m. m < n ==> !...`, and the
+recursive call is reached by `SPEC` of the measure at the smaller
+argument, with the decrease discharged from the clause's own
+condition.  `MEASURE_INDUCT_TAC` of `ml/lib/tactics.ml` does the
+same with `INDUCT_TAC` on a bound, which leaves a base case that
+has to be proved as well; `num_WF` has none, so prefer it where
+the decrease is strict.
+
+The decrease is a lemma of its own and the one real piece of work:
+for `finalise_cons` it is that a delete of a key that is there
+makes the tree smaller, which HOL4 gets from `size_delete` of
+`sptreeTheory` and `lookup_zero` of `miscTheory`.  Both are proved
+by `MATCH_MP_TAC spt_INDUCT`, and the smart constructors need the
+size law that `lookup_mk_BN` of `ml/lib/sptree.ml` is the lookup
+law of.
+
+**Where such a lemma goes.**  Not in `ml/lib/lemmas.ml`: that file
+is loaded from `ml/lib/preamble.ml`, which comes **before**
+`ml/lib/sptree.ml` (and before `ml/misc/misc.ml`), so a lemma about
+a tree does not even parse there.  Either it stands in the proof
+that needs it -- which is what `finalise_cons_none` does -- or it
+belongs in `ml/lib/sptree.ml` itself, and then the closure of every
+file below has to be built again (`tools/bin/pfbase`, half an
+hour).  The first is right while one proof needs it.
+
+## 45. The guard of a pattern has the pattern on the left
+
+`MATCH_CONV` turns an arm whose pattern binds variables into a
+guard, and the guard is
+
+```
+if ?tag fin l c r. SOME (MutBlock tag fin l c r) = lookup k refs
+then ... else ...
+```
+
+-- the **pattern** on the left of the equation and the scrutinee on
+the right.  So `distinctness "bvlSem_ref"`, whose conjuncts are
+`~(ValueArray a = ByteArray b c)` in the declaration's order, does
+not fire on it, and neither does `case_rws` of
+`ml/lib/tactics.ml`, which is the list that `PRUNE_TAC` and
+`EVERY_CASE_TAC` use.  The rewrite set that decides such a guard is
+
+```
+let ds = CONJUNCTS (distinctness "bvlSem_ref") in
+injectivity "option" :: distinctness "option" ::
+injectivity "bvlSem_ref" :: ds @ map GSYM ds
+```
+
+with `injectivity "option"` to peel the `SOME` (entry 42) and the
+`GSYM`s for the orientation.  Without them the four arms of the
+match stay side by side in the assumption and every later step is
+applied to a goal that still has all of them.
+
+## 46. Do not open a recursive definition in every assumption
+
+`RULE_ASSUM_TRY (ONCE_REWRITE_RULE[foo_def])` after a case split
+looks like the way to reduce the one assumption that says what the
+call gives.  It also rewrites the **induction hypothesis**, which
+holds a call of `foo` too: the hypothesis becomes the whole body of
+the definition under two quantifiers, and the proof dies with
+`Stack overflow` several steps later, with nothing in the report to
+say why.  Open the one assumption:
+
+```
+FIRST_X_ASSUM (fun fc ->
+  let c = concl fc in
+  if not (is_eq c) ||
+     not (hd_is "dataSem_finalise_cons" (lhs c)) then fail() else
+  ASSUME_TAC (ONCE_REWRITE_RULE[dataSem_finalise_cons_def] fc))
+```
+
+## 47. A name of the file that shadows one of HOL Light
+
+`data_to_word_memoryProof.ml` has
+
+```
+let is_cond t = is_forall t && is_eq(snd(strip_forall t));;
+```
+
+at line 24033 (a helper of one of its proofs, which the source
+writes as an ML value).  From there on `is_cond` is that, and a
+session that has the file loaded sees it everywhere -- so a tactic
+of a proof **earlier** in the file behaves one way in the file and
+another way in the session that is used to write it.  The symptom
+is a `Failure "find"` from a `find` over the assumptions that
+plainly should have matched one.  Write such a test with `hd_is`:
+`hd_is "COND" (lhand c)` rather than `is_cond (lhs c)`.
