@@ -261,17 +261,194 @@ let v_inv_update_ref_ref = prove
     CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC;
     REWRITE_TAC[]]);;
 
+(* the halves of the split after a store above the first one: the
+   second half is the old one with the element replaced, so it is
+   still all references (HOL4 does this inline, with
+   heap_split_length of gen_gc_partialTheory) *)
+
+let heap_split_store_ref = prove
+ (`heap_split k heap = SOME (h1,h2) /\
+   heap_lookup p heap = SOME (RefBlock zs) /\
+   ~(p < k) /\ LENGTH rs = LENGTH zs /\
+   heap_store p [RefBlock rs] heap = (heap2,T) /\
+   EVERY isRef h2
+   ==> (?h3. heap_split k heap2 = SOME (h1,h3) /\ EVERY isRef h3)`,
+  STRIP_TAC THEN
+  (* the heap is its two halves, and the first is of the length *)
+  FIRST_ASSUM (fun hs ->
+    if not (is_eq (concl hs)) ||
+       not (hd_is "heap_split" (lhand (concl hs))) then fail() else
+    STRIP_ASSUME_TAC (MATCH_MP heap_split_heap_length hs)) THEN
+  FIRST_X_ASSUM (fun e ->
+    let c = concl e in
+    if not (is_eq c) || not (hd_is "APPEND" (lhand c)) ||
+       not (is_var (rand c)) then fail() else
+    SUBST_ALL_TAC (SYM e)) THEN
+  (* so the element written is in the second half *)
+  FIRST_X_ASSUM (fun hl ->
+    let c = concl hl in
+    if not (is_eq c) || not (hd_is "heap_lookup" (lhand c))
+    then fail() else
+    ASSUME_TAC (REWRITE_RULE[heap_lookup_APPEND] hl)) THEN
+  ASM_FS_TAC THEN
+  (* and the second half splits there *)
+  W(fun gl ->
+    let hl2 = the_asm (fun c -> is_eq c &&
+                hd_is "heap_lookup" (lhand c) &&
+                hd_is "SOME" (rand c)) gl in
+    STRIP_ASSUME_TAC (MATCH_MP heap_lookup_SPLIT hl2)) THEN
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    let c = concl e in
+    if not (is_eq c) || not (is_var (lhand c)) then fail() else
+    SUBST_ALL_TAC e)) THEN
+  (* the address written is the length of what lies before it *)
+  W(fun gl ->
+    let e = the_asm (fun c -> is_eq c &&
+              hd_is "-" (lhand c) &&
+              hd_is "heap_length" (rand c)) gl in
+    let ha = rand (rand (concl e)) in
+    let hl1 = the_asm (fun c -> is_eq c &&
+                hd_is "heap_length" (lhand c) &&
+                not (hd_is "APPEND" (rand (lhand c)))) gl in
+    let h1 = rand (lhand (concl hl1)) in
+    let p = lhand (lhand (concl e)) in
+    SUBGOAL_THEN (mk_eq (p, list_mk_icomb "heap_length"
+                              [list_mk_icomb "APPEND" [h1; ha]]))
+      ASSUME_TAC THENL
+     [REWRITE_TAC[heap_length_APPEND] THEN ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+  FIRST_X_ASSUM (fun e ->
+    let c = concl e in
+    if not (is_eq c) || not (is_var (lhand c)) ||
+       not (hd_is "heap_length" (rand c)) then fail() else
+    SUBST_ALL_TAC e) THEN
+  (* so the store writes the new element in the middle *)
+  RULE_ASSUM_TRY (REWRITE_RULE[APPEND_ASSOC]) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[heap_store_lemma; PAIR_EQ]) THEN
+  SPLIT_ASM_TAC THEN
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    let c = concl e in
+    if not (is_eq c) || not (is_var (rand c)) ||
+       not (hd_is "APPEND" (lhand c)) then fail() else
+    SUBST_ALL_TAC (SYM e))) THEN
+  (* so the split of the new heap keeps the first half *)
+  REWRITE_TAC[GSYM APPEND_ASSOC] THEN
+  W(fun gl ->
+    let e = the_asm (fun c -> is_eq c &&
+              hd_is "heap_length" (lhand c) &&
+              is_var (rand (lhand c)) && is_var (rand c)) gl in
+    ONCE_REWRITE_TAC[SYM e]) THEN
+  REWRITE_TAC[heap_split_length] THEN
+  W(fun (asl,w) ->
+    let bod = snd (strip_exists w) in
+    let sm = rand (lhand (hd (conjuncts bod))) in
+    EXISTS_TAC (rand sm)) THEN
+  REWRITE_TAC[] THEN
+  (* and the second half is the old one with the new element *)
+  RULE_ASSUM_TRY (REWRITE_RULE[ALL_APPEND; ALL]) THEN
+  REWRITE_TAC[ALL_APPEND; ALL] THEN
+  ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[isRef_def; RefBlock_def] THEN
+  MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[isMutTag_def]);;
+
+(* and so the kind of the collection survives the store *)
+
+let gc_kind_store_ref = prove
+ (cake_as_vars (fun () ->
+    `gc_kind_inv conf a sp sp1 gens heap /\
+     heap_store p [RefBlock rs] heap = (heap2,T) /\
+     heap_lookup p heap = SOME (RefBlock zs) /\
+     LENGTH rs = LENGTH zs
+     ==> gc_kind_inv conf a sp sp1 gens heap2`),
+  REWRITE_TAC[gc_kind_inv_def] THEN STRIP_TAC THEN
+  W(fun (asl,w) ->
+    CASES_ON_TAC (find_term
+      (hd_is "data_to_word_config_gc_kind") w)) THEN
+  RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV MATCH_CONV)) THEN
+  MATCH_REDUCE_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  SPLIT_ASM_TAC THEN
+  FIRST_X_ASSUM (fun ex ->
+    if not (is_exists (concl ex)) then fail() else
+    STRIP_ASSUME_TAC ex) THEN
+  (* a RefBlock is a reference, so the element written is not in
+     the half of the split that holds none *)
+  W(fun (asl,w as gl) ->
+    let hs = the_asm (fun c -> is_eq c &&
+               hd_is "heap_split" (lhand c)) gl in
+    let hl = the_asm (fun c -> is_eq c &&
+               hd_is "heap_lookup" (lhand c)) gl in
+    let k = el 0 (snd (strip_comb (lhand (concl hs)))) in
+    let p = el 0 (snd (strip_comb (lhand (concl hl)))) in
+    SUBGOAL_THEN (mk_neg (mk_binop `(<):num->num->bool` p k))
+      ASSUME_TAC THENL
+     [DISCH_TAC THEN
+      MP_TAC (MATCH_MP heap_lookup_heap_split (CONJ hs hl)) THEN
+      ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
+      W(fun (asl,w as gl) ->
+        let m = the_asm (hd_is "MEM") gl in
+        let ev = the_asm (fun c -> hd_is "ALL" c &&
+                   el 1 (snd (strip_comb c)) = rand (concl m)) gl in
+        MP_TAC (MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] ev) m)) THEN
+      REWRITE_TAC[isRef_def; RefBlock_def] THEN
+      MATCH_REDUCE_TAC THEN
+      REWRITE_TAC[isMutTag_def];
+      ALL_TAC]) THEN
+  CONJ_TAC THENL
+   [(* the generation state: the store is above the nursery *)
+    W(fun gl ->
+      let st = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_store" (lhand c)) gl in
+      let gs = the_asm (hd_is "gen_state_ok") gl in
+      let p = el 0 (snd (strip_comb (lhand (concl st)))) in
+      let a = el 0 (snd (strip_comb (concl gs))) in
+      SUBGOAL_THEN (mk_binop `(<=):num->num->bool` a p)
+        (fun le -> MATCH_ACCEPT_TAC
+          (MATCH_MP update_ref_gen_state_ok
+            (CONJ st (CONJ le gs)))) THEN
+      POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
+        (fun t -> let c = concl t in
+           hd_is "<" c || (is_neg c && hd_is "<" (rand c)) ||
+           hd_is "<=" c) l)) THEN
+      ASM_ARITH_TAC);
+    (* and the two halves of the new heap *)
+    W(fun gl ->
+      let hs = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_split" (lhand c)) gl in
+      let hl = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_lookup" (lhand c)) gl in
+      let nlt = the_asm (fun c -> is_neg c && hd_is "<" (rand c)) gl in
+      let len = the_asm (fun c -> is_eq c &&
+                  hd_is "LENGTH" (lhand c)) gl in
+      let st = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_store" (lhand c)) gl in
+      let h2 = rand (rand (rand (concl hs))) in
+      let ev = the_asm (fun c -> hd_is "ALL" c &&
+                 el 1 (snd (strip_comb c)) = h2) gl in
+      STRIP_ASSUME_TAC (MATCH_MP heap_split_store_ref
+        (CONJ hs (CONJ hl (CONJ nlt (CONJ len (CONJ st ev))))))) THEN
+    W(fun gl ->
+      let hs2 = the_asm (fun c -> is_eq c &&
+                  hd_is "heap_split" (lhand c) &&
+                  hd_is "SOME" (rand c)) gl in
+      EXISTS_TAC (lhand (rand (rand (concl hs2)))) THEN
+      EXISTS_TAC (rand (rand (rand (concl hs2))))) THEN
+    REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC]);;
+
 (* ------------------------------------------------------------------ *)
 (* The proof of update_ref_thm as far as it goes.  What it closes:    *)
 (* the split of the roots, the arm of the reference, the store, the   *)
 (* five witnesses, and of the new invariant roots_ok, heap_ok,        *)
-(* unused_space_inv, the two maps with the timestamps restricted and  *)
-(* the values of the stack.  What is left: gc_kind_inv (HOL4          *)
-(* data_to_word_memoryProofScript.sml:4789-4812, which needs          *)
-(* update_ref_gen_state_ok and the heap_split dance) and the arms of  *)
-(* the references that the stack reaches (4845 onwards: the written   *)
-(* one takes the new roots, another one keeps its element because the *)
-(* store only touched the address of the written one).                *)
+(* gc_kind_inv, unused_space_inv, the two maps with the timestamps    *)
+(* restricted, and the values of the stack.  What is left is the one  *)
+(* goal of the arms of the references that the stack reaches (HOL4    *)
+(* data_to_word_memoryProofScript.sml:4845 onwards): for the          *)
+(* reference written it takes the new roots, and for another one it   *)
+(* keeps its element, because the store only touched the address of   *)
+(* the written one -- which needs the four arms, the INJ of f for     *)
+(* the two addresses being different, and a dest_thunk that an        *)
+(* insert of a ValueArray does not change.                           *)
 (* ------------------------------------------------------------------ *)
 
 (*
@@ -351,7 +528,8 @@ let _ = bt "update_ref_thm" update_ref_thm
     SUBGOAL_THEN (mk_eq (list_mk_icomb "LENGTH" [zs],
                          list_mk_icomb "LENGTH" [t1]))
       (fun le -> STRIP_ASSUME_TAC
-        (MATCH_MP heap_store_RefBlock (CONJ le hl))) THENL
+        (MATCH_MP heap_store_RefBlock (CONJ le hl)) THEN
+        ASSUME_TAC le THEN ASSUME_TAC (SYM le)) THENL
      [POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
         (fun t -> let c = concl t in
            is_eq c && (hd_is "LENGTH" (lhand c) ||
@@ -421,6 +599,25 @@ let _ = bt "update_ref_thm" update_ref_thm
                       hd_is "heap_store" (lhand c)) gl in
            ACCEPT_TAC (MATCH_MP unused_store_ref
              (CONJ us (CONJ ri (CONJ hlen st))))))) THEN
+  (* the kind of the collection: the store is above the nursery and
+     writes a reference where one was (gc_kind_store_ref) *)
+  TRY (SOLVED
+        (W(fun gl ->
+           let gk = the_asm (hd_is "gc_kind_inv") gl in
+           let st = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_store" (lhand c)) gl in
+           let hl = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_lookup" (lhand c) &&
+                      can (fun t -> hd_is "RefBlock" (rand t))
+                        (rand c) &&
+                      el 1 (snd (strip_comb (lhand c))) =
+                        el 2 (snd (strip_comb (lhand (concl st))))) gl in
+           let zs = rand (rand (rand (concl hl))) in
+           let len = the_asm (fun c -> is_eq c &&
+                       hd_is "LENGTH" (lhand c) &&
+                       rand c = list_mk_icomb "LENGTH" [zs]) gl in
+           MATCH_ACCEPT_TAC (MATCH_MP gc_kind_store_ref
+             (CONJ gk (CONJ st (CONJ hl len))))))) THEN
   (* the maps of the new invariant: the addresses are the ones they
      were, and the timestamps are cut to the ones of the new
      references and stack *)

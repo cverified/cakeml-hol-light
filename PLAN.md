@@ -1524,7 +1524,16 @@ shared block), the store (`heap_store_RefBlock`), the five
 witnesses, and of the new invariant `roots_ok`, `heap_ok`,
 `unused_space_inv`, the two maps and the values of the stack.
 
-What is left: `gc_kind_inv` (HOL4
-`data_to_word_memoryProofScript.sml:4789-4812`, which wants
-`update_ref_gen_state_ok` and the `heap_split` dance) and the arms
-of the references the stack reaches (4845 onwards).
+`gc_kind_inv` is in as well now: `heap_split_store_ref` says that
+the second half of the split is the old one with the element
+replaced (the `heap_split` dance of HOL4's proof, with
+`heap_split_length` of `gen_gc_partial`), and `gc_kind_store_ref`
+puts that together with `update_ref_gen_state_ok`.
+
+What is left is one goal: the arms of the references that the stack
+reaches (HOL4 `data_to_word_memoryProofScript.sml:4845` onwards).
+For the reference written it takes the new roots; for another one
+it keeps its element, because the store only touched the address of
+the written one -- which asks for the four arms, the `INJ` of `f`
+to tell the two addresses apart, and that an insert of a
+`ValueArray` does not change a `dest_thunk`.
