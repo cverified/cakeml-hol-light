@@ -16924,20 +16924,11 @@
      (xor_bytes_bytes_to_word).  For the rest, either there are
      bytes left, and the induction hypothesis says it of them (with
      the length of a list of words one shorter, which is what
-     div_step is for), or the bytes fitted in the first word, and
+     DIV_SUB_STEP is for), or the bytes fitted in the first word,
+     and
      then there is no word left and the two lists of the rest are
      the same list *)
-  (let div_step = prove
-    (`!k n. 0 < k /\ k <= n ==> ((n - k) DIV k) + 1 = n DIV k`,
-     REPEAT STRIP_TAC THEN
-     MP_TAC (SPECL [`1`; `(n:num) - k`; `k:num`]
-               (el 2 (CONJUNCTS DIV_MULT_ADD))) THEN
-     REWRITE_TAC[MULT_CLAUSES] THEN
-     ASM_SIMP_TAC[ARITH_RULE `0 < k ==> ~(k = 0)`] THEN
-     SUBGOAL_THEN `((n:num) - k) + k = n` SUBST1_TAC THENL
-      [ASM_ARITH_TAC; ALL_TAC] THEN
-     DISCH_THEN (ACCEPT_TAC o SYM)) in
-   (* the induction hypothesis is the assumption that concludes an
+  ((* the induction hypothesis is the assumption that concludes an
       equation, and the assumption about xor_bytes is the one that
       the lemmas about it are applied to *)
    let find_ih asl =
@@ -16981,7 +16972,7 @@
          FIRST_ASSUM (fun h ->
            ACCEPT_TAC (MATCH_MP (SPEC k xor_bytes_drop) h)))) THEN
        REWRITE_TAC[LENGTH_DROP] THEN
-       ASM_SIMP_TAC[div_step] THEN ASM_ARITH_TAC;
+       ASM_SIMP_TAC[DIV_SUB_STEP] THEN ASM_ARITH_TAC;
        (* or the bytes fit in the first word, and there is no word
           left *)
        W(fun (asl,w) ->

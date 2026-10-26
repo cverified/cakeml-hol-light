@@ -734,3 +734,27 @@ let USHR_OR_LOW = prove
     ASM_SIMP_TAC[BIT_TRIVIAL;
                  ARITH_RULE `~((a:num) < b) ==> b <= a`]]);;
 
+
+(* ------------------------------------------------------------------ *)
+(* The count of the words that a list of bytes fills: taking the      *)
+(* bytes of one word off the front takes one off the count.  HOL4     *)
+(* has it as DIV_SUB of arithmeticTheory, and the proofs about        *)
+(* write_bytes use it as the step of the count.                       *)
+(* ------------------------------------------------------------------ *)
+
+let DIV_SUB_STEP = prove
+ (`!m n. 0 < n /\ n <= m ==> (m - n) DIV n + 1 = m DIV n`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MP_TAC (SPECL [`1`; `(m:num) - n`; `n:num`]
+            (el 2 (CONJUNCTS DIV_MULT_ADD))) THEN
+  REWRITE_TAC[MULT_CLAUSES] THEN
+  ASM_SIMP_TAC[ARITH_RULE `0 < n ==> ~(n = 0)`] THEN
+  SUBGOAL_THEN `((m:num) - n) + n = m` SUBST1_TAC THENL
+   [ASM_ARITH_TAC; ALL_TAC] THEN
+  DISCH_THEN (ACCEPT_TAC o SYM));;
+
+let DIV_SUB = prove
+ (`!m n. 0 < n /\ n <= m ==> (m - n) DIV n = m DIV n - 1`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MP_TAC (SPECL [`m:num`; `n:num`] DIV_SUB_STEP) THEN
+  ASM_REWRITE_TAC[] THEN ARITH_TAC);;
