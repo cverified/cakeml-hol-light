@@ -3119,3 +3119,101 @@ looks like something much worse than a leftover probe.  So: grep the
 section for the names of the probes (`SHOW`, `b_state`, `say`,
 `b_watch`) before landing it, and keep the harness names out of
 `tools/overrides.py` and the `.prf`.
+
+## 51. A GSYM of an injectivity theorem loops the rewriter
+
+Entry 45 gives the rewrite set that decides the guard of a pattern,
+and the `GSYM`s in it are of the **distinctness** theorems only.
+The temptation is to write
+
+```
+let ds = [distinctness "option"; injectivity "option";
+          distinctness "bvlSem_ref"; injectivity "bvlSem_ref"] in
+REWRITE_TAC (ds @ map GSYM ds)
+```
+
+and that is a `Stack overflow`: `injectivity "option"` is
+`SOME a = SOME b <=> (a = b)` and its `GSYM` is
+`(a = b) <=> SOME a = SOME b`, so the two rewrite each other for
+ever.  A distinctness theorem is a negation and has no such
+partner, so
+
+```
+let ds = [distinctness "option"; distinctness "bvlSem_ref"] in
+REWRITE_TAC (injectivity "option" :: ds @ map GSYM ds)
+```
+
+is the set to use.  The reduction of a match that the patterns
+cannot decide is worth keeping as one tactic (the port has it as
+`REDUCE_MATCH_HARD` above `update_ref_thm`): `MATCH_REDUCE_TAC`,
+the set above, `UNWIND_CONV`, `SELECT_REFL` and
+`EXISTS_UNIQUE_REFL` for the epsilon terms that are left, and
+`MATCH_REDUCE_TAC` once more.
+
+## 52. Split the assumptions, then choose, then split again
+
+`SPLIT_ASM_TAC` takes the conjunctions of the assumptions apart and
+a `CHOOSE_TAC` pass takes their existentials apart, and the order of
+the two is not a matter of taste.  The arm of `bc_ref_inv` for a
+`MutBlock` is
+
+```
+(!gs. ~(gc_kind conf = Generational gs)) /\
+(~fin ==> ~(x IN IMAGE (FAPPLY tf) (FDOM tf))) /\
+(?zs. heap_lookup x heap = SOME (BlockRep tg zs) /\ ...)
+```
+
+-- an existential **inside** a conjunction.  A pass that chooses
+first finds nothing to choose, the split then leaves the
+existential standing, and the one arm of four that has this shape
+is the one that fails, with the other three closed.  So: split,
+choose, split.
+
+## 53. The lists of an invariant and of its arm go the other way
+
+`bc_stack_ref_inv` relates the stack to the roots,
+
+```
+EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) stack' roots
+```
+
+-- the values first -- and the `ValueArray` arm of `bc_ref_inv`
+relates the roots to the values,
+
+```
+EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
+```
+
+-- the roots first.  So the part of the split of the first that
+belongs in the second has to be turned round with `EVERY2_SWAP`
+(HOL4 does it with `imp_res_tac EVERY2_SWAP`), and the lambda that
+comes out of it is a redex:
+
+```
+CONV_RULE(TOP_DEPTH_CONV BETA_CONV) (MATCH_MP EVERY2_SWAP old)
+```
+
+Without the `BETA_CONV` the theorem is about
+`\y x. (\v x'. v_inv ...) x y` and no `ACCEPT_TAC` of the arm sees
+it.  A picker that goes by which list is which (`el 1` against
+`el 2` of the `ALL2`) tells the two apart without reading the
+lambda.
+
+## 54. Read the definition before resolving against its assumption
+
+`res_tac` of HOL4 resolves an assumption against the others and
+says nothing about what it used.  The port does it by hand, and
+then the antecedent has to be the one the definition has.  The
+invariant of the references of `bc_stack_ref_inv` is
+
+```
+!n. reachable_refs stack' refs n /\ n IN FDOM f
+    ==> bc_ref_inv conf n refs (f,tf,heap,be')
+```
+
+-- a conjunction of two, not the reachability alone.  `MP (SPEC n
+inv) reach` is then `MP: theorems do not agree`, which says nothing
+about which half is missing; `CONJ reach (the_asm ...)` is the step.
+Both halves are among the assumptions when the goal is the same
+invariant of the new heap, because stripping its own `!n ... ==>`
+puts them there.
