@@ -1560,9 +1560,49 @@ four arms of `bc_ref_inv` are gone through once, in
 `bc_ref_inv_update_gen`, for every update.
 
 So what is left of the four is `update_mutblock_thm` (a store into
-a mutable block, HOL4 `data_to_word_memoryProofScript.sml:5609`,
-which needs a `MB_trans` and the arm of a mutable block) and
-`update_byte_ref_thm` (a store into a byte array, `:5934`), which
-replaces the element of the heap in place instead of storing into
-it.
+a mutable block, HOL4 `data_to_word_memoryProofScript.sml:5609`)
+and `update_byte_ref_thm` (a store into a byte array, `:5934`),
+which replaces the element of the heap in place instead of storing
+into it.
+
+## Where to pick up (97 of the 611 sections unproved)
+
+The last verify of the file: `AXIOMS-ADDED 140`, `OWN-AXIOMS 15`,
+753 s, no load error.  One warning (`unused variable gl`, a binder
+of the proof of `update_thunk_thm`) is put right since, so the next
+`tools/bin/verifyquick` of the file has to report no warning at
+all; that is the only thing still owed on what is in.
+
+`update_mutblock_thm` is the next one, and it is
+`update_thunk_thm`'s proof with a mutable block for the thunk:
+
+- the stack is `h :: RefPtr F ptr :: stack` again, so
+  `SPLIT_ROOTS_TAC` twice, and the root of the pointer comes from
+  the **first** of the three ways a pointer is related (the
+  reference is no thunk, and `~b` holds because the block is
+  unfinalised), not the second;
+- the element is `BlockRep tag vs1` and the store writes
+  `BlockRep tag (LUPDATE rr (LENGTH l) vs1)`, with HOL4's
+  `heap_store_BlockRep`;
+- the three transfers are an `MB_trans` over HOL4's
+  `v_inv_BlockRep_upd` (which needs that no timestamp points at the
+  cell, from the unfinalised block's own arm) and
+  `v_inv_MutBlock_hole`, with a `dest_thunk_insert_MutBlock` that
+  takes the steps of `dest_thunk_insert_ValueArray`;
+- `gc_kind_inv` is free: the arm of a mutable block says the
+  collection is not a generational one;
+- the heap: `heap_ok_store_el` again, with the pointers of the
+  element written from `MEM_LUPDATE_E` -- which asks for
+  `ptrs_store_LUPDATE` to be restated for an element that is any
+  `DataElement zs l2 d2` (it is stated for a `RefBlock zs` now) and
+  for the written root to be given as `MEM w roots` rather than as
+  the head of the roots of a stack prefix;
+- the arm of the reference written needs `l ++ [h] ++ r =
+  LUPDATE h (LENGTH l) (l ++ [cv] ++ r)` (HOL4's `LUPDATE_LENGTH`)
+  and `blocks_unique_update_mutblock`,
+  `reachable_refs_MutBlock_UPDATE`.
+
+The sessions are gone with the maintenance, so the first step of
+the next round is `tools/bin/pfbase` (half an hour) to build the
+closure of the file again; `tools/bin/verifyquick` clones it.
 

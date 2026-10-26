@@ -9547,7 +9547,7 @@ let update_thunk_thm = prove
                 (SPECL [el 0 args; el 1 args] nt)) lk)))) THEN
      (* and the two lookups of the key agree, which leaves the
         second way and puts the third out *)
-     TRY (W(fun (asl,w as gl) ->
+     TRY (W(fun (asl,_) ->
        let lks = mapfilter (fun (_,th) ->
                    let c = concl th in
                    if is_eq c && hd_is "sptree_lookup" (lhand c) &&
