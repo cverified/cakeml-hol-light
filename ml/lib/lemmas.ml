@@ -199,6 +199,43 @@ let FLOOKUP_DRESTRICT = prove
      (if x IN s then FLOOKUP fm x else NONE)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[FLOOKUP; FMAP_FN_DRESTRICT]);;
 
+(* and of a composition: the keys it keeps are keys of the inner
+   map, so they are finite as well.  HOL4 states what is below it
+   as f_o_f_DEF *)
+
+let FMAP_FN_f_o_f = prove
+ (`!(f:(B,C)fmap) (g:(A,B)fmap).
+     fmap_fn (f f_o_f g) =
+     (\x. if x IN FDOM g /\ FAPPLY g x IN FDOM f
+          then fmap_fn f (FAPPLY g x) else NONE)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[f_o_f] THEN
+  REWRITE_TAC[GSYM(CONJUNCT2 fmap_tybij)] THEN
+  MATCH_MP_TAC FINITE_SUBSET THEN
+  EXISTS_TAC `{x | ~(fmap_fn (g:(A,B)fmap) x = NONE)}` THEN
+  REWRITE_TAC[FMAP_FN_FINITE; SUBSET; IN_ELIM_THM] THEN
+  GEN_TAC THEN REWRITE_TAC[FDOM; IN_ELIM_THM] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+
+let FAPPLY_f_o_f = prove
+ (`!(f:(B,C)fmap) (g:(A,B)fmap) x.
+     x IN FDOM g /\ FAPPLY g x IN FDOM f
+     ==> FAPPLY (f f_o_f g) x = FAPPLY f (FAPPLY g x)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [fmap_apply] THEN
+  REWRITE_TAC[FMAP_FN_f_o_f] THEN
+  ASM_REWRITE_TAC[] THEN REWRITE_TAC[fmap_apply]);;
+
+let f_o_f_DEF = prove
+ (`FDOM ((f:(B,C)fmap) f_o_f (g:(A,B)fmap)) =
+     {x | x IN FDOM g /\ FAPPLY g x IN FDOM f} /\
+   (!x. x IN FDOM (f f_o_f g)
+        ==> FAPPLY (f f_o_f g) x = FAPPLY f (FAPPLY g x))`,
+  REWRITE_TAC[FDOM; FMAP_FN_f_o_f; fmap_apply; EXTENSION;
+              IN_ELIM_THM] THEN
+  CONJ_TAC THEN GEN_TAC THEN COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[] THEN
+  ASM_MESON_TAC[FDOM; IN_ELIM_THM]);;
+
 let FAPPLY_FUPDATE_THM = prove
  (`!(fm:(A,B)fmap) k v x.
      FAPPLY (fm |+ (k,v)) x = (if x = k then v else FAPPLY fm x)`,

@@ -1437,19 +1437,106 @@ let bc_stack_ref_inv_gc_related_roots_heap = prove
     `gc_related_roots_heap g (roots1,heap1) (roots2,heap2) /\
      bc_stack_ref_inv conf ts stack refs (roots1,heap1,be) ==>
        bc_stack_ref_inv conf ts stack refs (roots2,heap2,be)`),
-  (* the attempt: the proof of the source names
-     bc_stack_ref_inv_def, gc_related_roots_heap_def, f_o_f,
-     gc_related_def, LENGTH_ADDR_MAP, FDOM.  What is here rewrites
-     with them and closes by arithmetic, and the cheat is behind it
-     until the proof is written.  A MESON over them is what the next
-     round adds; it costs a load ten minutes to have it in every
-     attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[bc_stack_ref_inv_def;
-       gc_related_roots_heap_def; f_o_f; gc_related_def;
-       LENGTH_ADDR_MAP; FDOM] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the two maps of the new invariant are the old ones composed
+     with the map of the collection (f_o_f, whose domain and whose
+     application are f_o_f_DEF and FAPPLY_f_o_f of
+     ml/lib/lemmas.ml).  The domains only shrink, the two
+     injections compose, the roots of the new heap are the old ones
+     mapped (EL_ADDR_MAP) with v_inv_related for each of them, and
+     a reference that is reachable keeps its block by
+     bc_ref_inv_related *)
+  (STRIP_TAC THEN
+   FIRST_X_ASSUM (fun gr ->
+     if not (hd_is "gc_related_roots_heap" (concl gr)) then fail()
+     else STRIP_ASSUME_TAC
+            (REWRITE_RULE[gc_related_roots_heap_def] gr)) THEN
+   FIRST_X_ASSUM (fun inv ->
+     if not (hd_is "bc_stack_ref_inv" (concl inv)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[bc_stack_ref_inv_def] inv)) THEN
+   VAR_EQ_TAC THEN
+   REWRITE_TAC[bc_stack_ref_inv_def] THEN
+   (* the two maps of the new invariant are the old ones after the
+      map of the collection *)
+   W(fun (asl,w) ->
+     let sub p = rand (lhand (concl (snd (find (fun (_,th) ->
+       hd_is "SUBSET" (concl th) &&
+       hd_is p (rand (concl th))) asl)))) in
+     let gc = snd (find (fun (_,th) ->
+       hd_is "gc_related" (concl th)) asl) in
+     let g = el 0 (snd (strip_comb (concl gc))) in
+     EXISTS_TAC (list_mk_icomb "f_o_f" [g; sub "domain"]) THEN
+     EXISTS_TAC (list_mk_icomb "f_o_f" [g; sub "all_ts"])) THEN
+   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+   (* the domains only shrink *)
+   TRY (SOLVED
+         (REWRITE_TAC[SUBSET; f_o_f_DEF; IN_ELIM_THM] THEN
+          REPEAT STRIP_TAC THEN
+          FIRST_ASSUM (fun sub ->
+            if not (hd_is "SUBSET" (concl sub)) then fail() else
+            MATCH_MP_TAC (REWRITE_RULE[SUBSET; IN_ELIM_THM] sub))
+          THEN
+          FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* and the two injections compose *)
+   TRY (SOLVED
+         (POP_ASSUM_LIST (fun l ->
+            MAP_EVERY ASSUME_TAC
+              (filter (fun th ->
+                 let c = concl th in
+                 hd_is "INJ" c || hd_is "gc_related" c) l)) THEN
+          RULE_ASSUM_TRY (REWRITE_RULE[gc_related_def]) THEN
+          SPLIT_ASM_TAC THEN
+          RULE_ASSUM_TRY (REWRITE_RULE[INJ; IN_ELIM_THM]) THEN
+          SPLIT_ASM_TAC THEN
+          REWRITE_TAC[INJ; f_o_f_DEF; IN_ELIM_THM] THEN
+          REPEAT STRIP_TAC THEN
+          ASM_SIMP_TAC[FAPPLY_f_o_f] THEN
+          RULE_ASSUM_TRY (REWRITE_RULE[FAPPLY_f_o_f]) THEN
+          ASM_MESON_TAC[FAPPLY_f_o_f])) THEN
+   (* the roots of the new heap are the old ones mapped, and
+      v_inv_related says the relation survives the map *)
+   TRY (SOLVED
+         (REWRITE_TAC[LIST_REL_EL_EQN; LENGTH_ADDR_MAP] THEN
+          RULE_ASSUM_TRY (REWRITE_RULE[LIST_REL_EL_EQN]) THEN
+          SPLIT_ASM_TAC THEN
+          CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+          X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+          W(fun (asl,w) ->
+            let am = find_term (hd_is "ADDR_MAP") w in
+            SUBGOAL_THEN (mk_binop `(<):num->num->bool` `i:num`
+                            (list_mk_icomb "LENGTH" [rand am]))
+              ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+          ASM_SIMP_TAC[EL_ADDR_MAP] THEN
+          CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+          (* the old relation at the same index *)
+          FIRST_ASSUM (fun lr ->
+            let b = snd (strip_forall (concl lr)) in
+            if not (is_imp b && can (find_term (hd_is "v_inv"))
+                      (rand b)) then fail() else
+            MP_TAC (SPEC `i:num` lr)) THEN
+          (ANTS_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC]) THEN
+          DISCH_TAC THEN
+          MATCH_MP_TAC (GEN_ALL (DISCH_ALL (CONJUNCT1
+            (UNDISCH (SPEC_ALL (GEN_ALL v_inv_related)))))) THEN
+          W(fun (asl,w) ->
+            let gc = snd (find (fun (_,th) ->
+              hd_is "gc_related" (concl th)) asl) in
+            EXISTS_TAC (el 1 (snd (strip_comb (concl gc))))) THEN
+          REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+          REPEAT STRIP_TAC THEN
+          FIRST_X_ASSUM MATCH_MP_TAC THEN
+          ASM_MESON_TAC[MEM_EL])) THEN
+   (* and the invariant of a reference that is reachable *)
+   REPEAT STRIP_TAC THEN
+   FIRST_ASSUM (fun gc ->
+     if not (hd_is "gc_related" (concl gc)) then fail() else
+     MATCH_MP_TAC (GEN_ALL bc_ref_inv_related) THEN
+     EXISTS_TAC (el 1 (snd (strip_comb (concl gc))))) THEN
+   CONJ_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
+   CONJ_TAC THENL
+    [FIRST_X_ASSUM MATCH_MP_TAC THEN
+     CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+     ASM_MESON_TAC[f_o_f_DEF; IN_ELIM_THM];
+     ASM_MESON_TAC[f_o_f_DEF; IN_ELIM_THM]]));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
