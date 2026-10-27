@@ -8118,10 +8118,10 @@ let mutcons_thm_alt = prove
     (* and the invariant of each reference that the new stack
        reaches: the point of the block, or one that the old stack
        reached *)
-    W(fun (asl,w as gl) ->
+    W(fun (asl,w) ->
       if not (is_forall w) then ALL_TAC else
       (REPEAT STRIP_TAC THEN
-       W(fun (asl,w as gl) ->
+       W(fun (asl,w) ->
          let ins = find_term (hd_is "sptree_insert") w in
          let ptr = el 0 (snd (strip_comb ins)) in
          let n = el 1 (snd (strip_comb w)) in
@@ -8204,7 +8204,7 @@ let mutcons_thm_alt = prove
                  [ACCEPT_TAC hl;
                   MATCH_ACCEPT_TAC (MATCH_MP EVERY2_v_inv_alloc
                     (CONJ (a_vtr gl) sw))]))) THEN
-       W(fun (asl,w as gl) ->
+       W(fun (asl,w) ->
          let n = el 1 (snd (strip_comb w)) in
          let ins = find_term (hd_is "sptree_insert") w in
          if n = el 0 (snd (strip_comb ins)) then ALL_TAC else
@@ -8253,7 +8253,6 @@ let mutcons_thm_alt = prove
                             is_eq (rand c) &&
                             lhand (rand c) = n) gl in
                 let hsr = the_asm (hd_is "heap_store_rel") gl in
-                let fm = el 0 (tparts (el 3 (snd (strip_comb w)))) in
                 let inn = the_asm (fun c -> hd_is "IN" c &&
                             hd_is "FDOM" (rand c) &&
                             el 0 (snd (strip_comb c)) = n &&
