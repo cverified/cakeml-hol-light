@@ -5859,6 +5859,168 @@ let v_inv_cons_step = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'new_byte_alt_thm'): r"""
+(* the port's own: what the proof of new_byte_alt_thm needs of an
+   array of bytes written at a key that the references do not have.
+   What sits at the key holds no value, so the paths through the
+   new references are the ones there were (ref_edge_ByteArray) and
+   a reference that the new stack reaches is the key or one that
+   the old stack reached; the timestamps of the references and the
+   stack only grow, and what the invariant said of a value it says
+   of it with the key written and the store done *)
+
+(* a path cannot leave an address that has no edge *)
+let RTC_dead = prove
+ (`!(R:A->A->bool) x y. RTC R x y /\ (!z. ~(R x z)) ==> x = y`,
+  MESON_TAC[RTC_CASES]);;
+
+(* the edges of the references with an array of bytes written at a
+   key they did not have are the ones they had *)
+let ref_edge_ByteArray = prove
+ (cake_as_vars (fun () ->
+    `~(ptr IN domain refs)
+     ==> ref_edge (sptree_insert ptr (ByteArray fl xs) refs) =
+         ref_edge refs`),
+  REWRITE_TAC[GSYM lookup_NONE_domain] THEN DISCH_TAC THEN
+  REWRITE_TAC[FUN_EQ_THM] THEN REPEAT GEN_TAC THEN
+  REWRITE_TAC[ref_edge_def; lookup_insert] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+(* so a reference that the stack with the pointer of the array on
+   it reaches is the key of the array or one that the stack
+   reached *)
+let reachable_refs_new_byte = prove
+ (cake_as_vars (fun () ->
+    `reachable_refs (RefPtr b ptr :: stack)
+       (sptree_insert ptr (ByteArray fl xs) refs) n /\
+     ~(ptr IN domain refs)
+     ==> n = ptr \/ reachable_refs stack refs n`),
+  (* the path starts at a root of the stack, which keeps it, or at
+     the pointer of the array, and then it does not start at all,
+     because the key is fresh and so has no edge *)
+  STRIP_TAC THEN
+  W(fun gl ->
+    let nd = the_asm (fun c -> is_neg c && hd_is "IN" (rand c)) gl in
+    let rr = the_asm (hd_is "reachable_refs") gl in
+    MP_TAC (REWRITE_RULE[GSYM lookup_NONE_domain] nd) THEN
+    MP_TAC (REWRITE_RULE[reachable_refs_def; MEM;
+                         MATCH_MP ref_edge_ByteArray nd] rr)) THEN
+  REWRITE_TAC[reachable_refs_def] THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+  DISCH_TAC THENL
+   [(* the pointer of the array: the path starts at the key, which
+        has no edge, so it does not go anywhere *)
+    DISJ1_TAC THEN
+    W(fun gl ->
+      let xe = the_asm (fun c -> is_eq c && is_var (lhand c) &&
+                 hd_is "dataSem_RefPtr" (rand c)) gl in
+      let m = the_asm (fun c -> hd_is "MEM" c &&
+                hd_is "get_refs" (rand c)) gl in
+      let rtc = the_asm (hd_is "RTC") gl in
+      let req = REWRITE_RULE[xe; get_refs_def; MEM] m in
+      let rfs = rand (el 0 (snd (strip_comb (concl rtc)))) in
+      let ptr = rand (concl req) in
+      let zv = genvar `:num` in
+      SUBGOAL_THEN (mk_forall (zv, mk_neg (list_mk_icomb "ref_edge"
+                      [rfs; ptr; zv])))
+        (fun ne -> ACCEPT_TAC (SYM (MATCH_MP RTC_dead
+           (CONJ (REWRITE_RULE[req] rtc) ne)))) THEN
+      GEN_TAC THEN REWRITE_TAC[ref_edge_def] THEN
+      ASM_REWRITE_TAC[] THEN
+      MATCH_REDUCE_TAC THEN REWRITE_TAC[]);
+    (* or a root of the stack, which keeps its path *)
+    DISJ2_TAC THEN
+    W(fun gl ->
+      let m = the_asm (fun c -> hd_is "MEM" c &&
+                hd_is "get_refs" (rand c)) gl in
+      EXISTS_TAC (el 0 (snd (strip_comb (rand (concl m))))) THEN
+      EXISTS_TAC (el 0 (snd (strip_comb (concl m))))) THEN
+    ASM_REWRITE_TAC[]]);;
+
+(* and what the invariant says of a value it says of it with the
+   array written and the store done *)
+let v_inv_new_byte_step = prove
+ (cake_as_vars (fun () ->
+    `v_inv conf w1 refs (w2,f,tf,heap) /\ ~(ptr IN domain refs) /\
+     FDOM f SUBSET domain refs /\ heap_store_rel heap heap2 /\
+     f2 = f |+ (ptr,aa) /\
+     refs2 = sptree_insert ptr (ByteArray fl xs) refs
+     ==> v_inv conf w1 refs2 (w2,f2,tf,heap2)`),
+  (* the key is fresh in the references, so it is not in the domain
+     of the map and the map is a SUBMAP of its update there;
+     v_inv_SUBMAP takes the relation to the bigger map and the
+     bigger heap, and v_inv_ByteArray_insert writes the array into
+     the references *)
+  (let submap_fupd = prove
+    (`!(g:(A,B)fmap) k v. ~(k IN FDOM g) ==> g SUBMAP (g |+ (k,v))`,
+     REWRITE_TAC[SUBMAP; FDOM_FUPDATE; IN_INSERT;
+                 FAPPLY_FUPDATE_THM] THEN MESON_TAC[]) in
+   STRIP_TAC THEN SPLIT_ASM_TAC THEN
+   REPEAT (FIRST_X_ASSUM (fun e ->
+     let c = concl e in
+     if is_eq c && is_var (lhand c) then SUBST_ALL_TAC e
+     else fail())) THEN
+   (* the key is in neither domain *)
+   W(fun gl ->
+     let nd = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                hd_is "domain" (rand (rand c))) gl in
+     let su = the_asm (fun c -> hd_is "SUBSET" c) gl in
+     SUBGOAL_THEN (mk_neg (list_mk_icomb "IN"
+                     [el 0 (snd (strip_comb (rand (concl nd))));
+                      list_mk_icomb "FDOM"
+                        [rand (lhand (concl su))]])) ASSUME_TAC THENL
+      [MP_TAC nd THEN MP_TAC su THEN REWRITE_TAC[SUBSET] THEN
+       MESON_TAC[];
+       ALL_TAC]) THEN
+   MATCH_MP_TAC (GEN_ALL v_inv_SUBMAP) THEN
+   W(fun gl -> MAP_EVERY (fun n -> EXISTS_TAC (var_by_name n gl))
+                 ["f"; "tf"; "heap"]) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   TRY (SOLVED (MATCH_ACCEPT_TAC SUBMAP_REFL)) THEN
+   TRY (SOLVED (W(fun gl ->
+     let nf = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                hd_is "FDOM" (rand (rand c))) gl in
+     MATCH_ACCEPT_TAC (MATCH_MP submap_fupd nf)))) THEN
+   MATCH_MP_TAC v_inv_ByteArray_insert THEN
+   ASM_MESON_TAC[]));;
+
+(* the timestamps of the references and the stack only grow when a
+   key the references did not have is written and a value is put on
+   the stack *)
+let all_ts_insert_SUBSET = prove
+ (cake_as_vars (fun () ->
+    `!ptr rr refs stack v.
+       ~(ptr IN domain refs)
+       ==> all_ts refs stack SUBSET
+           all_ts (sptree_insert ptr rr refs) (v :: stack)`),
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  MATCH_MP_TAC all_ts_SUBSET_gen THEN
+  REWRITE_TAC[MEM] THEN
+  W(fun (asl,w as gl) ->
+    let nd = the_asm (fun c -> is_neg c) gl in
+    let ptr = el 0 (snd (strip_comb (rand (concl nd)))) in
+    let ins = find_term (hd_is "sptree_insert") w in
+    let refs = el 2 (snd (strip_comb ins)) in
+    let nv = genvar `:num` in
+    let rv = genvar (type_of (el 1 (snd (strip_comb ins)))) in
+    SUBGOAL_THEN
+      (list_mk_forall([nv; rv],
+         mk_imp(mk_eq (list_mk_icomb "sptree_lookup" [nv; refs],
+                       list_mk_icomb "SOME" [rv]),
+                mk_eq (list_mk_icomb "sptree_lookup" [nv; ins],
+                       list_mk_icomb "SOME" [rv]))))
+      (fun th -> MESON_TAC[th]) THEN
+    REPEAT STRIP_TAC THEN
+    ASM_CASES_TAC (mk_eq (nv, ptr)) THENL
+     [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+      MP_TAC (REWRITE_RULE[GSYM lookup_NONE_domain] nd) THEN
+      ASM_REWRITE_TAC[distinctness "option"];
+      ASM_REWRITE_TAC[lookup_insert]]));;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take.  A value put on the stack only adds timestamps
