@@ -1,0 +1,52 @@
+#!/bin/sh
+# trybase <file of the port> <statement> [session] : a session that
+# holds the file up to the statement and nothing of what comes
+# after it, to clone for every try of a proof of that statement.
+#
+# The session that a verify leaves has the whole file in it, and a
+# scratch round binds its own versions of the helpers on top: a
+# lemma can then be proved in that session and fail when the file
+# loads it (PORTING-GUIDE.md entry 56).  A base cut at the
+# statement cannot be fooled that way -- what comes after is simply
+# absent, and a fresh clone has nothing of a scratch round in it.
+#
+# The block that tools/overrides.py writes above the statement is
+# included, because the port writes it immediately before; to work
+# on the block itself, cut at the statement before it.
+C=/home/freek/claude/hol-light/cakeml
+. $C/tools/holenv.sh
+f="$1"
+nm="$2"
+s="${3:-tb}"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+[ -n "$nm" ] || { echo "trybase: no statement named"; exit 1; }
+date +%s > $C/tmp/trybase-start.txt
+python3 -I - "$f" "$nm" > $C/tmp/trybase.ml <<'PY'
+import re, sys
+f, nm = sys.argv[1], sys.argv[2]
+s = open(f).read()
+m = re.search(r'(?m)^let %s(\s|,)' % re.escape(nm), s)
+if not m:
+  sys.stderr.write('trybase: %s is not a statement of the file\n' % nm)
+  sys.exit(1)
+sys.stdout.write(s[:m.start()])
+sys.stdout.write('print_string "TRYBASEDONE\\n";;\n')
+PY
+[ -s $C/tmp/trybase.ml ] || exit 1
+tmux has -t hol-pfbase 2> /dev/null || {
+  echo "trybase: no hol-pfbase (tools/bin/pfbase <file>)"; exit 1; }
+repl-kill "$s" > /dev/null 2>&1
+repl-clone hol-pfbase "$s" > /dev/null 2>&1
+# the closure may be older than ml/lib/lemmas.ml and tactics.ml
+reload "$s" > /dev/null 2>&1
+TIMEOUT=5400 repl-step "$s" "#use \"$C/tmp/trybase.ml\";;" \
+  > /dev/null 2>&1
+while ! tmux capture-pane -p -J -S - -t "hol-$s" |
+      sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' |
+      grep -qE '^TRYBASEDONE|^Error|^Exception'
+do sleep 10; done
+tmux capture-pane -p -J -S - -t "hol-$s" |
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+  grep -E '^Error|^Exception|Warning' | tail -3
+echo "hol-$s: $(( $(date +%s) - $(cat $C/tmp/trybase-start.txt) ))s,\
+ $(grep -c '' $C/tmp/trybase.ml) lines up to $nm"

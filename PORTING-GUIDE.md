@@ -3273,3 +3273,36 @@ into the session by hand.  So: assemble from the latest scratch
 file of each piece, and when a lemma that the session proved fails
 in the file, diff the file's text of **every** helper it names
 against the scratch file's before looking anywhere else.
+
+## 57. The session to try a proof in is cut at the statement
+
+There are three bases a try can run in, and they are not equally
+honest:
+
+- `hol-pfbase` (`tools/bin/pfbase`) holds the **closure** of a
+  file -- every file it `needs` and nothing of the file itself.
+  Half an hour to build, a second to clone; `verifyquick` clones it
+  and loads the whole file on top.
+- the session a `verifyquick` leaves (`hol-vq`) holds the **whole
+  file**.  It is free, because the verify has to run anyway, and a
+  try in it costs one `repl-step` -- which is why the proofs of
+  this round were written in it.
+- `tools/bin/trybase <file> <statement>` holds the file **up to the
+  statement**: a clone of `pfbase` with the prefix loaded.
+
+The second is the fast one and the dangerous one.  It has every
+later definition of the file in scope, so a proof can lean on a
+name that the file does not have yet (`tools/scope.py` catches
+that), and worse, it accumulates **the bindings of the rounds that
+wrote the lemmas** -- a fixed picker, a renamed lemma, an older
+version of a tactic.  A lemma then proves in the session and fails
+when the file loads it, which is entry 56 twice over.  A base cut
+at the statement cannot be fooled either way: what comes after is
+absent, and a fresh clone has nothing of a scratch round in it.
+
+What it costs is the prefix: `update_mutblock_thm` sits at line
+10398 of 29042, so its base is about a third of the file's 753
+second load.  That is paid once per statement and cloned per try,
+and it buys a try that means what it says.  So: `trybase` for the
+statement being proved, and the verify's session only for reading
+a goal state when nothing is being landed.
