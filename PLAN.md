@@ -1615,8 +1615,53 @@ What is left of the four is `update_byte_ref_thm` (a store into a
 byte array, HOL4 `data_to_word_memoryProofScript.sml:5934`), which
 replaces the element of the heap in place (`h1 ++ [Bytes be fl ys
 ws] ++ h2`) instead of storing into it, so it needs its own
-account of the heap rather than `heap_store`; a `BA_trans` and the
-arm of a byte array are the pieces to write.
+account of the heap rather than `heap_store`.
+
+Eight of its lemmas are proved and stand in
+`tools/wip-update_byte.ml` (which nothing loads): `samelen_bytes`,
+`isSomeDataElement_Bytes` and `isSomeDataElement_byte_update`,
+`heap_ok_byte_update`, `dest_thunk_insert_ByteArray`,
+`ByteArray_in_domain`, `reach_refs_update_byte` (a byte array has
+no edge to another reference, so `ref_edge` does not change) and
+`BA_trans` (over the file's own `v_inv_IMP` and
+`v_inv_ByteArray_insert`).  The file also already has
+`gen_state_ok_update_byte`, `unused_space_inv_byte_update`,
+`blocks_unique_insert_ByteArray`, `heap_split_replace` and
+`heap_lookup_replace`, which are the port's own helpers for this
+replacement.
+
+**What is left: `gc_kind_byte_update`**, the arm of the reference
+written, and the proof.  The hard one is the first: in the
+generational case `gc_kind_inv` asks for a split of the heap whose
+first half holds no reference and whose second holds only
+references, and the element replaced sits in the first half
+(a byte array is not a reference, so `EVERY isRef h2` keeps it
+out).  `gen_state_ok_update_byte` gives the other conjunct.  Three
+routes, in the order they look worth trying:
+
+1. strengthen `heap_split_replace` (port-own, above
+   `v_inv_IMP_lemma`) from the bound it gives on the first half to
+   one on the second as well, plus `MEM v h2' ==> MEM u h2`.  Its
+   proof ends in `CONV_TAC TAUT` and that does not carry the extra
+   conjuncts; `MESON_TAC[]` in its place goes "solve_goal: Too
+   deep", so the endgame has to be written out rather than left to
+   a decision procedure.  (Tried on 2026-10-27, both ways.)
+2. derive the store equation
+   `heap_store (heap_length ha) [Bytes be fl ys ws]
+      (ha ++ [Bytes be fl xs ws] ++ hb) = (...,T)`
+   from `heap_store_lemma` and `samelen_bytes`, then write a
+   general `heap_store_el` (the clauses that `heap_store_RefBlock`,
+   `heap_store_BlockRep` and `heap_store_ThunkBlock` each state for
+   their kind) and a `gc_kind_store_nonref`.  More work for this
+   theorem, but it would let the byte proof use
+   `heap_ok_store_el`, `unused_store_el` and the arms machinery
+   instead of the byte-specific lemmas, and it is the lemma the
+   three per-kind ones should be derived from.
+3. follow HOL4 inline (`heap_split_APPEND_if`, the length facts and
+   a case analysis on where the cut falls), which is what its own
+   proof does.
+
+
 
 A cleanup that is owed: `ptrs_store_LUPDATE` (in the block of
 `update_ref_thm1`) is the special case of `ptrs_store_el` (in the
