@@ -11508,6 +11508,541 @@ let blocks_unique_insert_ByteArray = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the port's own: what the proof of update_byte_ref_thm adds to
+   the block above update_ref_thm.  The update writes an array of
+   bytes where one of the same length was, so the heap is given as
+   an append and not by a heap_store: the element replaced is of
+   the length it had (samelen_bytes), whence the addresses that
+   hold data are the ones that held data, the heap and the unused
+   space stay good, and the kind of the collection survives
+   (gc_kind_byte_update, over the halves of a split of the new
+   heap).  The three transfers of such a store are BA_trans, over
+   HOL4's v_inv_IMP and v_inv_ByteArray_insert *)
+
+(* the heap of a store into a byte array, out of a term that holds
+   it: the append whose middle element is the array of bytes *)
+let byte_heap t =
+  find_term (fun s -> hd_is "APPEND" s &&
+    (try hd_is "Bytes" (lhand (lhand (rand s)))
+     with Failure _ -> false)) t;;
+
+(* and the one whose element is not the element given *)
+let byte_heap_not u t =
+  find_term (fun s -> hd_is "APPEND" s &&
+    (try hd_is "Bytes" (lhand (lhand (rand s))) &&
+         not (lhand (lhand (rand s)) = u)
+     with Failure _ -> false)) t;;
+
+(* tools/wip-update_byte.ml: the lemmas that the proof of
+   update_byte_ref_thm of data_to_word_memoryProof needs, each
+   proved in a session cut at the statement (tools/bin/trybase) and
+   waiting for the proof itself.  Nothing loads this file: the
+   lemmas go into the EXTRA_BEFORE block of the statement when the
+   proof is done, and the file is deleted then.
+
+   What is still to write: gc_kind_byte_update (the halves of the
+   split of the new heap, over the port's own heap_split_replace),
+   bc_ref_inv_update_byte_at (the arm of the reference written) and
+   the proof itself, which is update_thunk_thm's with a byte array
+   for the thunk -- except that the heap is given as an append
+   (h1 ++ [Bytes ...] ++ h2) and not by a heap_store. *)
+
+(* the two elements of a byte array that is written are of a
+   length, whatever the bytes are *)
+let samelen_bytes = prove
+ (cake_as_vars (fun () ->
+    `el_length (Bytes be fl ys ws) = el_length (Bytes be fl xs ws)`),
+  REWRITE_TAC[bytes_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[el_length_def; LENGTH_write_bytes]);;
+
+(* the element of a byte array is data *)
+let isSomeDataElement_Bytes = prove
+ (cake_as_vars (fun () ->
+    `isSomeDataElement (SOME (Bytes be fl bs ws))`),
+  REWRITE_TAC[isSomeDataElement_def; bytes_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  W(fun (asl,w) ->
+    let vs,bod = strip_exists w in
+    MAP_EVERY EXISTS_TAC
+      (snd (strip_comb (rand (lhand bod))))) THEN
+  REWRITE_TAC[]);;
+
+(* so the addresses that hold data are the ones that held data *)
+let isSomeDataElement_byte_update = prove
+ (cake_as_vars (fun () ->
+    `!n. isSomeDataElement
+           (heap_lookup n (ha ++ [Bytes be fl ys ws] ++ hb)) =
+         isSomeDataElement
+           (heap_lookup n (ha ++ [Bytes be fl xs ws] ++ hb))`),
+  GEN_TAC THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC;
+              data_to_word_memoryProof_heap_lookup_APPEND;
+              heap_length_clauses; ADD_CLAUSES; heap_lookup_def;
+              samelen_bytes] THEN
+  REPEAT (COND_CASES_TAC THEN
+          ASM_REWRITE_TAC[isSomeDataElement_Bytes]) THEN
+  REWRITE_TAC[isSomeDataElement_Bytes]);;
+
+(* the heap stays good when a byte array is written: it is as long
+   as it was, it has the forward pointers it had, and the element
+   written holds no pointer *)
+let heap_ok_byte_update = prove
+ (cake_as_vars (fun () ->
+    `heap_ok (ha ++ [Bytes be fl xs ws] ++ hb) limit' /\
+     LENGTH xs = LENGTH ys
+     ==> heap_ok (ha ++ [Bytes be fl ys ws] ++ hb) limit'`),
+  REWRITE_TAC[heap_ok_def; heap_length_APPEND;
+              heap_length_clauses; ADD_CLAUSES; samelen_bytes;
+              FILTER_APPEND; FILTER] THEN
+  REWRITE_TAC[bytes_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[isForwardPointer_def; LENGTH_write_bytes] THEN
+  STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  ASM_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[MEM_APPEND; MEM] THEN
+  STRIP_TAC THEN
+  (let isd = REWRITE_RULE[LENGTH_write_bytes]
+               (CONV_RULE(TOP_DEPTH_CONV let_CONV)
+                 (REWRITE_RULE[bytes_def]
+                    isSomeDataElement_byte_update)) in
+   REWRITE_TAC[isd]) THEN
+  FIRST_ASSUM (fun ho ->
+    if not (length (fst (strip_forall (concl ho))) = 5) then fail()
+    else MATCH_MP_TAC ho) THEN
+  REWRITE_TAC[MEM_APPEND; MEM] THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[injectivity "heap_element"]) THEN
+  SPLIT_ASM_TAC THEN
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    let c = concl e in
+    if not (is_eq c) || not (is_var (lhand c)) then fail() else
+    SUBST_ALL_TAC e)) THEN
+  TRY (SOLVED (ASM_MESON_TAC[MEM])) THEN
+  ASM_MESON_TAC[MEM]);;
+
+(* an insert of a byte array where one was leaves what a value says
+   of a thunk *)
+let dest_thunk_insert_ByteArray = prove
+ (cake_as_vars (fun () ->
+    `sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs)
+     ==> dest_thunk v (insert ptr (ByteArray fl ys) refs) =
+         dest_thunk v refs`),
+  STRIP_TAC THEN
+  CASES_ON_TAC (cake_as_vars (fun () -> `v:dataSem_v`)) THEN
+  REWRITE_TAC[dataSem_dest_thunk_def] THEN
+  MATCH_REDUCE_TAC THEN TRY (SOLVED (REWRITE_TAC[])) THEN
+  ASM_CASES_TAC `a1:num = ptr` THEN
+  ASM_REWRITE_TAC[lookup_insert] THEN
+  (let ds = [distinctness "option"; distinctness "bvlSem_ref"] in
+   REWRITE_TAC (injectivity "option" :: ds @ map GSYM ds)) THEN
+  CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
+  REWRITE_TAC[SELECT_REFL; EXISTS_UNIQUE_REFL] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+(* what the insert of a byte array asks of the cell it writes *)
+let ByteArray_in_domain = prove
+ (cake_as_vars (fun () ->
+    `sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs)
+     ==> (ptr IN domain refs
+          ==> ?a b. sptree_lookup ptr refs =
+                    SOME (bvlSem_ByteArray a b))`),
+  STRIP_TAC THEN DISCH_THEN (K ALL_TAC) THEN
+  EXISTS_TAC (cake_as_vars (fun () -> `fl:bool`)) THEN
+  EXISTS_TAC (cake_as_vars (fun () -> `xs:(word8)list`)) THEN
+  FIRST_ASSUM ACCEPT_TAC);;
+
+(* a byte array has no edge to another reference, so a reference
+   that the stack reaches after the update it reached before *)
+let reach_refs_update_byte = prove
+ (cake_as_vars (fun () ->
+    `reachable_refs stack' (insert ptr (ByteArray fl ys) refs) n /\
+     sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs)
+     ==> reachable_refs stack' refs n`),
+  STRIP_TAC THEN
+  REWRITE_TAC[reachable_refs_def] THEN
+  SUBGOAL_THEN (cake_as_vars (fun () ->
+    `ref_edge (insert ptr (ByteArray fl ys)
+       (refs:((dataSem_v)bvlSem_ref)spt)) = ref_edge refs`))
+    (fun e -> FIRST_X_ASSUM (fun rr ->
+       if not (hd_is "reachable_refs" (concl rr)) then fail() else
+       ACCEPT_TAC (REWRITE_RULE[e]
+         (REWRITE_RULE[reachable_refs_def] rr)))) THEN
+  REWRITE_TAC[FUN_EQ_THM; ref_edge_def; lookup_insert] THEN
+  REPEAT GEN_TAC THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+(* the three transfers that a store into a byte array leaves: of
+   the element written the lookup of the heap says which one it is,
+   so the heaps of the transfers are the ones of the store *)
+let BA_trans = prove
+ (cake_as_vars (fun () ->
+    `sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs) /\
+     heap_lookup p (ha ++ [Bytes be fl xs ws] ++ hb) =
+       SOME (Bytes be fl xs ws) /\
+     LENGTH xs = LENGTH ys
+     ==> (!w1 w2. v_inv conf w1 refs
+                    (w2,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
+                  ==> v_inv conf w1
+                        (insert ptr (ByteArray fl ys) refs)
+                        (w2,f,tf,ha ++ [Bytes be fl ys ws] ++ hb)) /\
+         (!w. dest_thunk w refs = NotThunk
+              ==> dest_thunk w (insert ptr (ByteArray fl ys) refs) =
+                  NotThunk) /\
+         (!m. ~(m = ptr)
+              ==> sptree_lookup m
+                    (insert ptr (ByteArray fl ys) refs) =
+                  sptree_lookup m refs)`),
+  DISCH_THEN (fun hs ->
+    let lk = CONJUNCT1 hs in
+    REPEAT CONJ_TAC THENL
+     [REPEAT GEN_TAC THEN
+      DISCH_THEN (fun vi ->
+        MATCH_ACCEPT_TAC (MATCH_MP v_inv_ByteArray_insert
+          (CONJ (MATCH_MP v_inv_IMP vi)
+            (MATCH_MP ByteArray_in_domain lk))));
+      GEN_TAC THEN
+      REWRITE_TAC[MATCH_MP dest_thunk_insert_ByteArray lk] THEN
+      DISCH_THEN ACCEPT_TAC;
+      REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[lookup_insert]]));;
+
+(* the element that a heap holds at the length of a prefix *)
+let heap_lookup_at = prove
+ (  `!ha u hb. heap_lookup (heap_length ha) (ha ++ [u] ++ hb) = SOME u`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC;
+              data_to_word_memoryProof_heap_lookup_APPEND;
+              LT_REFL; SUB_REFL; heap_length_clauses;
+              ADD_CLAUSES] THEN
+  COND_CASES_TAC THEN
+  REWRITE_TAC[APPEND; heap_lookup_def] THEN
+  POP_ASSUM MP_TAC THEN
+  REWRITE_TAC[] THEN
+  MESON_TAC[el_length_NOT_0; ARITH_RULE
+    `!n. ~(n = 0) ==> 0 < n`]);;
+
+(* the halves of the split of a heap whose element is replaced by
+   one of its length, when the cut is above the element: the second
+   half is the one it was, and the first is the one it was with the
+   element replaced *)
+let heap_split_replace2 = prove
+ (`!e ha u v hb h1 h2.
+     heap_split e (ha ++ [u] ++ hb) = SOME (h1,h2) /\
+     el_length u = el_length v /\ heap_length ha < e
+     ==> ?h1'. heap_split e (ha ++ [v] ++ hb) = SOME (h1',h2) /\
+               (!z. MEM z h1' ==> MEM z h1 \/ z = v)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (* the lengths of the halves of the old split, and their append *)
+  FIRST_ASSUM (fun hs ->
+    if not (is_eq (concl hs)) ||
+       not (hd_is "heap_split" (lhand (concl hs))) then fail() else
+    STRIP_ASSUME_TAC (MATCH_MP heap_split_heap_length hs)) THEN
+  (* so the first half is ha and a piece of what follows it, or ha
+     is the first half and a piece, which the cut's place forbids *)
+  W(fun (asl,w as gl) ->
+    let ap = the_asm (fun c -> is_eq c &&
+               hd_is "APPEND" (lhand c) &&
+               hd_is "APPEND" (rand c)) gl in
+    STRIP_ASSUME_TAC (MATCH_MP APPEND_EQ_APPEND ap)) THEN
+  TRY (SOLVED
+        (W(fun (asl,w as gl) ->
+           let eq = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_length" (lhand c) &&
+                      is_var (rand c)) gl in
+           let lf = rator (lhand (concl eq)) in
+           let aps = mapfilter (fun (_,th) ->
+             let c = concl th in
+             if is_eq c && is_var (lhand c) &&
+                type_of (lhand c) = type_of (rand (lhand (concl eq)))
+             then AP_TERM lf th else fail()) asl in
+           let lt = the_asm (fun c -> hd_is "<" c) gl in
+           MAP_EVERY MP_TAC (eq :: lt :: aps)) THEN
+         REWRITE_TAC[heap_length_APPEND] THEN ARITH_TAC)) THEN
+  (* the piece that the first half has past ha begins with the
+     element, so the first half is ha, the element and the rest *)
+  W(fun (asl,w as gl) ->
+    let eq = the_asm (fun c -> is_eq c && is_var (lhand c) &&
+               hd_is "APPEND" (rand c)) gl in
+    CASES_ON_TAC (rand (rand (concl eq)))) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[APPEND; APPEND_NIL; CONS_11]) THEN
+  SPLIT_ASM_TAC THEN
+  TRY (SOLVED
+        (W(fun (asl,w as gl) ->
+           let eq = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_length" (lhand c) &&
+                      is_var (rand c)) gl in
+           let lf = rator (lhand (concl eq)) in
+           let aps = mapfilter (fun (_,th) ->
+             let c = concl th in
+             if is_eq c && is_var (lhand c) &&
+                type_of (lhand c) = type_of (rand (lhand (concl eq)))
+             then AP_TERM lf th else fail()) asl in
+           let lt = the_asm (fun c -> hd_is "<" c) gl in
+           MAP_EVERY MP_TAC (eq :: lt :: aps)) THEN
+         REWRITE_TAC[heap_length_APPEND; heap_length_clauses;
+                     ADD_CLAUSES] THEN ARITH_TAC)) THEN
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    let c = concl e in
+    if not (is_eq c) || not (is_var (lhand c)) ||
+       is_var (rand c) then fail() else SUBST_ALL_TAC e)) THEN
+  (* so the new heap is ha, the new element and the rest, and the
+     split of it at the length of that front is what the goal says
+     (heap_split_length) *)
+  W(fun (asl,w as gl) ->
+    let hl = the_asm (fun c -> is_eq c &&
+               hd_is "heap_length" (lhand c) &&
+               is_var (rand c)) gl in
+    let front = rand (lhand (concl hl)) in
+    let ha = lhand front in
+    let p = rand (rand front) in
+    let vt = find_term (fun t -> is_var t &&
+               fst (dest_var t) = "v") w in
+    let newfront = list_mk_icomb "APPEND"
+                     [ha; list_mk_icomb "CONS" [vt; p]] in
+    EXISTS_TAC newfront THEN
+    SUBGOAL_THEN (mk_eq (rand (concl hl),
+                         list_mk_icomb "heap_length" [newfront]))
+      (fun e -> ONCE_REWRITE_TAC[e]) THENL
+     [MP_TAC hl THEN
+      (let el = the_asm (fun c -> is_eq c &&
+                  hd_is "el_length" (lhand c)) gl in
+       let ue = mapfilter (fun (_,th) ->
+         let c = concl th in
+         if not (is_eq c) || not (is_var (lhand c)) ||
+            not (is_var (rand c)) ||
+            not (type_of (lhand c) = type_of vt) then fail()
+         else if fst (dest_var (lhand c)) = "u" then GSYM th
+         else th) asl in
+       REWRITE_TAC (heap_length_APPEND :: heap_length_clauses ::
+                    el :: ue)) THEN
+      ARITH_TAC;
+      ALL_TAC] THEN
+    REWRITE_TAC[APPEND] THEN
+    REWRITE_TAC[GSYM (CONJUNCT2 APPEND)] THEN
+    REWRITE_TAC[APPEND_ASSOC] THEN
+    REWRITE_TAC[heap_split_length] THEN
+    REWRITE_TAC[MEM_APPEND; MEM] THEN
+    MESON_TAC[]));;
+
+(* a byte array is no reference *)
+let isRef_Bytes = prove
+ (cake_as_vars (fun () ->
+    `~(data_to_word_memoryProof_isRef (Bytes be fl bs ws))`),
+  REWRITE_TAC[isRef_def; bytes_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  MATCH_REDUCE_TAC THEN
+  (let ds = [distinctness "data_to_word_memoryProof_tag"] in
+   REWRITE_TAC (isMutTag_def :: ds @ map GSYM ds)));;
+
+(* the kind of the collection survives a store into a byte array:
+   the element replaced is no reference, so it is in the first half
+   of the split, and the second half is the one it was *)
+let gc_kind_byte_update = prove
+ (cake_as_vars (fun () ->
+    `gc_kind_inv conf a sp sp1 gens
+       (ha ++ [Bytes be fl xs ws] ++ hb) /\
+     LENGTH xs = LENGTH ys
+     ==> gc_kind_inv conf a sp sp1 gens
+           (ha ++ [Bytes be fl ys ws] ++ hb)`),
+  REWRITE_TAC[gc_kind_inv_def] THEN STRIP_TAC THEN
+  W(fun (asl,w) ->
+    CASES_ON_TAC (find_term
+      (hd_is "data_to_word_config_gc_kind") w)) THEN
+  RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV MATCH_CONV)) THEN
+  MATCH_REDUCE_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  SPLIT_ASM_TAC THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if is_exists (concl th) then CHOOSE_TAC th else fail())) THEN
+  SPLIT_ASM_TAC THEN
+  CONJ_TAC THENL
+   [(* the generation state (gen_state_ok_update_byte) *)
+    W(fun gl ->
+      let gs = the_asm (hd_is "gen_state_ok") gl in
+      MATCH_ACCEPT_TAC (MATCH_MP gen_state_ok_update_byte gs));
+    ALL_TAC] THEN
+  (* the element replaced is in the first half, because the second
+     holds references only and a byte array is none *)
+  W(fun (asl,w as gl) ->
+    let hs = the_asm (fun c -> is_eq c &&
+               hd_is "heap_split" (lhand c)) gl in
+    let args = snd (strip_comb (lhand (concl hs))) in
+    let k = el 0 args in
+    let hp = el 1 args in
+    let lk = ISPECL [lhand hp; lhand (lhand (rand hp));
+                     rand (rand hp)] heap_lookup_at in
+    SUBGOAL_THEN (list_mk_icomb "<"
+                    [list_mk_icomb "heap_length" [lhand hp]; k])
+      ASSUME_TAC THENL
+     [MP_TAC (MATCH_MP heap_lookup_heap_split (CONJ hs lk)) THEN
+      COND_CASES_TAC THENL
+       [DISCH_THEN (K ALL_TAC) THEN REWRITE_TAC[];
+        DISCH_TAC THEN
+        W(fun gl ->
+          let ev = the_asm (fun c -> hd_is "ALL" c &&
+                     not (is_abs (el 0 (snd (strip_comb c))))) gl in
+          let m = the_asm (hd_is "MEM") gl in
+          MP_TAC (MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] ev) m)) THEN
+        REWRITE_TAC[isRef_Bytes]];
+      ALL_TAC]) THEN
+  (* so the split of the new heap keeps the second half *)
+  W(fun (asl,w as gl) ->
+    let hs = the_asm (fun c -> is_eq c &&
+               hd_is "heap_split" (lhand c)) gl in
+    let lt = the_asm (fun c -> hd_is "<" c &&
+               hd_is "heap_length" (lhand c)) gl in
+    let hp = el 1 (snd (strip_comb (lhand (concl hs)))) in
+    let k = el 0 (snd (strip_comb (lhand (concl hs)))) in
+    let u = lhand (lhand (rand hp)) in
+    let vt = find_term (fun t -> hd_is "Bytes" t &&
+               not (t = u)) w in
+    let pr = rand (rand (concl hs)) in
+    let th = ISPECL [k; lhand hp; u; vt; rand (rand hp);
+                     lhand pr; rand pr] heap_split_replace2 in
+    (* samelen_bytes carries the type variable of the proof that
+       made it, so it is matched against the element of the goal *)
+    let sl = PART_MATCH lhs (GSYM samelen_bytes)
+               (list_mk_icomb "el_length" [u]) in
+    STRIP_ASSUME_TAC (MP th (CONJ hs (CONJ sl lt)))) THEN
+  W(fun (asl,w as gl) ->
+    let hs2 = the_asm (fun c -> is_eq c &&
+                hd_is "heap_split" (lhand c) &&
+                not (can (find_term (fun t -> is_var t &&
+                       fst (dest_var t) = "xs")) (lhand c))) gl in
+    let pr = rand (rand (concl hs2)) in
+    EXISTS_TAC (lhand pr) THEN EXISTS_TAC (rand pr) THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    (* the first half holds no reference: its elements are the old
+       ones or the byte array written *)
+    REWRITE_TAC[GSYM ALL_MEM] THEN
+    REPEAT STRIP_TAC THEN
+    W(fun gl ->
+      let bd = the_asm (fun c ->
+                 length (fst (strip_forall c)) = 1 &&
+                 is_imp (snd (strip_forall c)) &&
+                 is_disj (rand (snd (strip_forall c)))) gl in
+      let m = the_asm (hd_is "MEM") gl in
+      STRIP_ASSUME_TAC (MATCH_MP (SPEC_ALL bd) m)) THEN
+    TRY (SOLVED
+          (W(fun gl ->
+             let ev = the_asm (fun c -> hd_is "ALL" c &&
+                        is_abs (el 0 (snd (strip_comb c)))) gl in
+             let m = the_asm (fun c -> hd_is "MEM" c) gl in
+             MP_TAC (MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] ev) m)) THEN
+           CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+           ASM_REWRITE_TAC[])) THEN
+    ASM_MESON_TAC[isRef_Bytes]));;
+
+(* the element singled out of a heap, as an append of three *)
+let APPEND_SINGLE = prove
+ (`!(ha:A list) x hb. ha ++ (x :: hb) = ha ++ [x] ++ hb`,
+  REWRITE_TAC[APPEND]);;
+
+(* the annotation that the root of a reference carries is zero
+   unless the reference holds a mutable block *)
+let ref_ptr_annot_ByteArray = prove
+ (cake_as_vars (fun () ->
+    `sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs)
+     ==> ref_ptr_annot conf (sptree_lookup ptr refs) =
+         (wordLang_Word (n2w 0):'a word_loc)`),
+  DISCH_THEN (fun lk -> REWRITE_TAC[lk; ref_ptr_annot_def]) THEN
+  MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
+
+(* the elements of a heap other than the one replaced are where
+   they were: a lookup below the element lands in the front, and
+   one above it skips an element of the length it had *)
+let heap_lookup_other_replace = prove
+ (`!ha u v hb.
+     el_length u = el_length v
+     ==> !m y. ~(m = heap_length ha) /\
+               heap_lookup m (ha ++ [u] ++ hb) = SOME y
+               ==> heap_lookup m (ha ++ [v] ++ hb) = SOME y`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC;
+              data_to_word_memoryProof_heap_lookup_APPEND;
+              heap_length_clauses; ADD_CLAUSES; heap_lookup_def] THEN
+  REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
+  POP_ASSUM MP_TAC THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN
+  (* the element itself is not looked up, so the lookup is past it *)
+  W(fun (asl,w) ->
+    let c = find_term (fun t -> is_eq t && hd_is "-" (lhand t) &&
+              rand t = `0`) w in
+    SUBGOAL_THEN (mk_neg c) ASSUME_TAC) THENL
+   [W(fun gl ->
+      let lt = the_asm (fun c -> is_neg c && hd_is "<" (rand c)) gl in
+      let ne = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                 hd_is "heap_length" (rand (rand c))) gl in
+      MP_TAC lt THEN MP_TAC ne) THEN ARITH_TAC;
+    ALL_TAC] THEN
+  ASM_REWRITE_TAC[]);;
+
+(* which for a store into a byte array is the heap transfer that
+   the lemmas about the invariant of another reference ask for *)
+let heap_lookup_byte_other = prove
+ (cake_as_vars (fun () ->
+    `heap_lookup p (ha ++ [Bytes be fl xs ws] ++ hb) =
+       SOME (Bytes be fl xs ws) /\
+     p = heap_length ha /\
+     LENGTH xs = LENGTH ys
+     ==> !m y. ~(m = p) /\
+               heap_lookup m (ha ++ [Bytes be fl xs ws] ++ hb) =
+                 SOME y
+               ==> heap_lookup m (ha ++ [Bytes be fl ys ws] ++ hb) =
+                     SOME y`),
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun e ->
+    let c = concl e in
+    if not (is_eq c) || not (is_var (lhand c)) ||
+       not (hd_is "heap_length" (rand c)) then fail() else
+    SUBST_ALL_TAC e) THEN
+  W(fun (asl,w as gl) ->
+    let hl = the_asm (fun c -> is_eq c &&
+               hd_is "heap_lookup" (lhand c)) gl in
+    let old = el 1 (snd (strip_comb (lhand (concl hl)))) in
+    let u = lhand (lhand (rand old)) in
+    let nw = byte_heap_not u w in
+    let v = lhand (lhand (rand nw)) in
+    MATCH_ACCEPT_TAC (MP (ISPECL [lhand old; u; v; rand (rand old)]
+                            heap_lookup_other_replace)
+      (PART_MATCH lhs (GSYM samelen_bytes)
+         (list_mk_icomb "el_length" [u])))));;
+
+(* the invariant of the reference written when a byte array is
+   stored: the element is the one the store wrote, and the bytes
+   are as many as they were *)
+let bc_ref_inv_update_byte_at = prove
+ (cake_as_vars (fun () ->
+    `FLOOKUP (f:(num,num)fmap) ptr = SOME p /\
+     heap_lookup p (ha ++ [Bytes be fl xs ws] ++ hb) =
+       SOME (Bytes be fl xs ws) /\
+     p = heap_length ha /\
+     sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs) /\
+     LENGTH xs = LENGTH ys /\
+     ws = REPLICATE (LENGTH xs DIV (dimindex (:'a) DIV 8) + 1)
+            ((n2w 0):'a word)
+     ==> bc_ref_inv conf ptr (insert ptr (ByteArray fl ys) refs)
+           (f,tf2,ha ++ [Bytes be fl ys ws] ++ hb,be)`),
+  STRIP_TAC THEN
+  W(fun (asl,w as gl) ->
+    let lk1 = the_asm (fun c -> is_eq c &&
+                hd_is "FLOOKUP" (lhand c)) gl in
+    let ins = find_term (hd_is "sptree_insert") w in
+    let iargs = snd (strip_comb ins) in
+    SUBGOAL_THEN (mk_eq (list_mk_icomb "sptree_lookup"
+                           [el 0 iargs; ins],
+                         list_mk_icomb "SOME" [el 1 iargs]))
+      (fun lkn -> REWRITE_TAC[MATCH_MP arm_BA (CONJ lk1 lkn)]) THENL
+     [REWRITE_TAC[lookup_insert]; ALL_TAC]) THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  W(fun gl ->
+    let pe = the_asm (fun c -> is_eq c && is_var (lhand c) &&
+               hd_is "heap_length" (rand c)) gl in
+    ONCE_REWRITE_TAC[pe]) THEN
+  ASM_REWRITE_TAC[heap_lookup_at]);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let update_byte_ref_thm = prove
@@ -11525,19 +12060,350 @@ let update_byte_ref_thm = prove
           (ByteArray fl ys) refs)
           (roots,h1 ++ [Bytes be fl ys ws] ++
             h2,be,a,sp,sp1,gens) limit ts)`),
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
-     bc_ref_inv_def, FLOOKUP_DEF.  What is here rewrites with them
-     and closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-       v_inv_def; reachable_refs_def; bc_ref_inv_def;
-       FLOOKUP_DEF] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the steps are above the statement (tools/overrides.py).  The
+     root of the pointer is the address of its reference, which
+     v_inv of a pointer gives in the first of its three ways,
+     because the reference holds an array of bytes, and the
+     annotation that such a root carries is zero; the invariant of
+     the reference gives the element of the heap that holds the
+     bytes, and heap_lookup_SPLIT cuts the heap at it.  The store
+     writes an element of the length it replaces, so the heap, the
+     roots and the unused space are as good as they were, and of
+     the reference written the invariant is the element with the
+     bytes put in while of any other one it is the element it had,
+     which the store did not touch *)
+  (STRIP_TAC THEN
+    (* what the invariant says of the stack with the pointer on it *)
+    FIRST_X_ASSUM (fun inv ->
+      if not (hd_is "abs_ml_inv" (concl inv)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def;
+                                     bc_stack_ref_inv_def] inv)) THEN
+    (* the roots are the one of the pointer and the rest *)
+    SPLIT_ROOTS_TAC THEN
+    (* and the root of the pointer is the address of its reference *)
+    FIRST_ASSUM (fun vr ->
+      let c = concl vr in
+      if not (hd_is "v_inv" c) ||
+         not (hd_is "dataSem_RefPtr" (el 1 (snd (strip_comb c))))
+      then fail()
+      else STRIP_ASSUME_TAC (REWRITE_RULE[v_inv_def] vr)) THEN
+    (* of the three ways a pointer is related only the first is left,
+       because the reference holds an array of bytes: the two that
+       are about a thunk say the reference holds one *)
+    (let rws = distinctness "thunk_mode" :: ref_rws in
+     RULE_ASSUM_TRY (REWRITE_RULE rws) THEN
+     TRY (FIRST_ASSUM CONTR_TAC) THEN
+     TRY (W(fun (asl,_) ->
+       let lks = mapfilter (fun (_,th) ->
+                   let c = concl th in
+                   if is_eq c && hd_is "sptree_lookup" (lhand c) &&
+                      hd_is "SOME" (rand c) then th else fail()) asl in
+       if length lks < 2 then fail() else
+       MP_TAC (TRANS (SYM (el 0 lks)) (el 1 lks)) THEN
+       REWRITE_TAC (injectivity "option" ::
+                    injectivity "bvlSem_ref" :: rws) THEN
+       STRIP_TAC)) THEN
+     SPLIT_ASM_TAC THEN
+     TRY VAR_EQ_TAC) THEN
+    (* the annotation that the root of an array of bytes carries is
+       zero *)
+    W(fun gl ->
+      let lk = the_asm (fun c -> is_eq c &&
+                 hd_is "sptree_lookup" (lhand c) &&
+                 hd_is "SOME" (rand c)) gl in
+      let an = MATCH_MP ref_ptr_annot_ByteArray lk in
+      RULE_ASSUM_TRY (REWRITE_RULE[an]) THEN REWRITE_TAC[an]) THEN
+    (* the reference has an address *)
+    (SUBGOAL_THEN (cake_as_vars (fun () ->
+       `FLOOKUP (f:(num,num)fmap) (ptr:num) = SOME (FAPPLY f ptr:num)`))
+       ASSUME_TAC THENL
+      [ASM_REWRITE_TAC[FLOOKUP_DEF]; ALL_TAC]) THEN
+    (* and it is reachable, so the invariant holds of it *)
+    (SUBGOAL_THEN (cake_as_vars (fun () ->
+       `reachable_refs (RefPtr b ptr :: stack) refs ptr`))
+       ASSUME_TAC THENL
+      [MATCH_MP_TAC (GEN_ALL reach_refptr) THEN
+       FIRST [EXISTS_TAC (cake_as_vars (fun () -> `b:bool`));
+              ALL_TAC] THEN
+       REWRITE_TAC[MEM];
+       ALL_TAC]) THEN
+    W(fun (asl,w as gl) ->
+      let bri = the_asm (fun c ->
+        let vs,bd = strip_forall c in
+        length vs = 1 && is_imp bd &&
+        hd_is "bc_ref_inv" (rand bd)) gl in
+      let rr = the_asm (hd_is "reachable_refs") gl in
+      let n = el 2 (snd (strip_comb (concl rr))) in
+      let nin = the_asm (fun c -> hd_is "IN" c &&
+                  hd_is "FDOM" (rand c) &&
+                  el 0 (snd (strip_comb c)) = n) gl in
+      ASSUME_TAC (MP (SPEC n bri) (CONJ rr nin))) THEN
+    (* which is the arm of an array of bytes: the element of the heap
+       that holds the bytes *)
+    W(fun gl ->
+      let lk1 = the_asm (fun c -> is_eq c &&
+                  hd_is "FLOOKUP" (lhand c)) gl in
+      let lk2 = the_asm (fun c -> is_eq c &&
+                  hd_is "sptree_lookup" (lhand c) &&
+                  hd_is "SOME" (rand c)) gl in
+      FIRST_X_ASSUM (fun inv ->
+        if not (hd_is "bc_ref_inv" (concl inv)) then fail() else
+        ASSUME_TAC (CONV_RULE(TOP_DEPTH_CONV let_CONV)
+          (REWRITE_RULE[MATCH_MP arm_BA (CONJ lk1 lk2)] inv)))) THEN
+    (* so the heap is the element and what is around it *)
+    W(fun gl ->
+      let hl = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_lookup" (lhand c) &&
+                 hd_is "SOME" (rand c)) gl in
+      STRIP_ASSUME_TAC (ONCE_REWRITE_RULE[APPEND_SINGLE]
+        (MATCH_MP heap_lookup_SPLIT hl))) THEN
+    FIRST_X_ASSUM (fun e ->
+      let c = concl e in
+      if not (is_eq c) || not (is_var (lhand c)) ||
+         not (hd_is "APPEND" (rand c)) then fail() else
+      SUBST_ALL_TAC e) THEN
+    (* the witnesses: the rest of the roots, the heap around the
+       element, and the bytes that the element holds *)
+    W(fun (asl,w as gl) ->
+      let hl = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_lookup" (lhand c) &&
+                 hd_is "SOME" (rand c)) gl in
+      let old = el 1 (snd (strip_comb (lhand (concl hl)))) in
+      let u = lhand (lhand (rand old)) in
+      let rts = lhand (hd (conjuncts (snd (strip_exists w)))) in
+      let rts = if not (is_var rts) then rts else
+                rand (concl (the_asm (fun c -> is_eq c &&
+                               lhand c = rts) gl)) in
+      MAP_EVERY EXISTS_TAC
+        [rand rts; lhand old; rand (rand old);
+         el 3 (snd (strip_comb u))]) THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (ASM_REWRITE_TAC[])) THEN
+    TRY (SOLVED (REWRITE_TAC[LENGTH_REPLICATE])) THEN
+    (* the addresses that hold data are the ones that held data *)
+    (W(fun (asl,w as gl) ->
+       let nw = byte_heap w in
+       let old = byte_heap (concl (the_asm (hd_is "heap_ok") gl)) in
+       let n = genvar `:num` in
+       let iso h = list_mk_icomb "isSomeDataElement"
+                     [list_mk_icomb "heap_lookup" [n; h]] in
+       SUBGOAL_THEN (mk_forall(n, mk_eq (iso nw, iso old)))
+         ASSUME_TAC) THENL
+     [MATCH_ACCEPT_TAC isSomeDataElement_byte_update; ALL_TAC]) THEN
+    (* the elements that the store did not write are where they were
+       (heap_lookup_byte_other), and what the invariant, a thunk and
+       the other references say is what they said (BA_trans) *)
+    W(fun gl ->
+      let hl = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_lookup" (lhand c) &&
+                 hd_is "SOME" (rand c)) gl in
+      let pe = the_asm (fun c -> is_eq c &&
+                 hd_is "fmap_apply" (lhand c) &&
+                 hd_is "heap_length" (rand c)) gl in
+      let le = the_asm (fun c -> is_eq c &&
+                 hd_is "LENGTH" (lhand c)) gl in
+      let lk = the_asm (fun c -> is_eq c &&
+                 hd_is "sptree_lookup" (lhand c) &&
+                 hd_is "SOME" (rand c)) gl in
+      MAP_EVERY ASSUME_TAC
+        (MATCH_MP heap_lookup_byte_other (CONJ hl (CONJ pe le)) ::
+         CONJUNCTS (MATCH_MP BA_trans (CONJ lk (CONJ hl le))))) THEN
+    (* and the invariant of the new heap and references *)
+    REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def] THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    (* the roots are the ones they were, of a heap as good *)
+    TRY (SOLVED
+          (W(fun gl ->
+             let iso = the_asm (fun c ->
+               let bd = snd (strip_forall c) in
+               is_eq bd && hd_is "isSomeDataElement" (lhand bd)) gl in
+             let ro = the_asm (hd_is "roots_ok") gl in
+             ACCEPT_TAC (MATCH_MP roots_ok_iso (CONJ ro iso))))) THEN
+    (* the heap stays good (heap_ok_byte_update) *)
+    TRY (SOLVED
+          (W(fun gl ->
+             let ho = the_asm (hd_is "heap_ok") gl in
+             let le = the_asm (fun c -> is_eq c &&
+                        hd_is "LENGTH" (lhand c)) gl in
+             MATCH_ACCEPT_TAC (MATCH_MP heap_ok_byte_update
+               (CONJ ho le))))) THEN
+    (* the kind of the collection (gc_kind_byte_update) *)
+    TRY (SOLVED
+          (W(fun gl ->
+             let gk = the_asm (hd_is "gc_kind_inv") gl in
+             let le = the_asm (fun c -> is_eq c &&
+                        hd_is "LENGTH" (lhand c)) gl in
+             MATCH_ACCEPT_TAC (MATCH_MP gc_kind_byte_update
+               (CONJ gk le))))) THEN
+    (* and the unused space (unused_space_inv_byte_update) *)
+    TRY (SOLVED
+          (W(fun gl ->
+             let us = the_asm (hd_is "unused_space_inv") gl in
+             MATCH_ACCEPT_TAC (MATCH_MP unused_space_inv_byte_update
+               us)))) THEN
+    (* the maps of the new invariant: the addresses are the ones they
+       were, and the timestamps are cut to the ones of the new
+       references and stack *)
+    W(fun (asl,w as gl) ->
+      if not (is_exists w) then ALL_TAC else
+      (let sub p = rand (lhand (concl (the_asm (fun c ->
+         hd_is "SUBSET" c && hd_is p (rand c)) gl))) in
+       let ats = find_term (hd_is "all_ts") w in
+       EXISTS_TAC (sub "domain") THEN
+       EXISTS_TAC (list_mk_icomb "DRESTRICT" [sub "all_ts"; ats]))) THEN
+    REPEAT CONJ_TAC THEN TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    (* the addresses of the maps are the ones of the old heap *)
+    TRY (SOLVED
+          (W(fun gl ->
+             let iso = the_asm (fun c ->
+               let bd = snd (strip_forall c) in
+               is_eq bd && hd_is "isSomeDataElement" (lhand bd)) gl in
+             ONCE_REWRITE_TAC[iso]) THEN
+           FIRST [SOLVED (FIRST_ASSUM ACCEPT_TAC);
+                  SOLVED (W(fun (asl,w as gl) ->
+                    let dr = find_term (hd_is "DRESTRICT") w in
+                    let inj = the_asm (fun c -> hd_is "INJ" c &&
+                      rand (el 0 (snd (strip_comb c))) = lhand dr) gl in
+                    MATCH_ACCEPT_TAC
+                      (MATCH_MP INJ_DRESTRICT inj)))])) THEN
+    (* the domain of the references has the key in it *)
+    TRY (SOLVED
+          (REWRITE_TAC[domain_insert] THEN
+           MATCH_MP_TAC SUBSET_TRANS THEN
+           W(fun gl ->
+             let su = the_asm (fun c -> hd_is "SUBSET" c &&
+                        hd_is "domain" (rand c)) gl in
+             EXISTS_TAC (rand (concl su))) THEN
+           CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+           SET_TAC[])) THEN
+    (* the timestamps of the restricted map are of the stack, and
+       below the counter *)
+    TRY (SOLVED
+          (REWRITE_TAC[(CONJUNCT1 o SPEC_ALL) DRESTRICT_DEF] THEN
+           FIRST [SOLVED (REWRITE_TAC[INTER_SUBSET]);
+                  SOLVED (MATCH_MP_TAC SUBSET_TRANS THEN
+                          W(fun gl ->
+                            let su = the_asm (fun c ->
+                              hd_is "SUBSET" c &&
+                              hd_is "FDOM" (lhand c)) gl in
+                            EXISTS_TAC (lhand (concl su))) THEN
+                          CONJ_TAC THEN
+                          TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+                          REWRITE_TAC[INTER_SUBSET])])) THEN
+    (* the blocks of the stack stay unique *)
+    TRY (SOLVED
+          (W(fun gl ->
+             let bu = the_asm (hd_is "blocks_unique") gl in
+             MATCH_ACCEPT_TAC (MATCH_MP blocks_unique_insert_ByteArray
+               bu)))) THEN
+    (* the values of the stack: the pointer in front and the rest *)
+    W(fun (asl,w) -> if not (hd_is "ALL2" w) then ALL_TAC else
+      (REWRITE_TAC[ALL2] THEN
+       CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+       REPEAT CONJ_TAC THEN
+       TRY (SOLVED
+             (W(fun (asl,w as gl) ->
+                let args = snd (strip_comb w) in
+                let v1 = el 1 args in
+                let ats = find_term (hd_is "all_ts") w in
+                let vi = the_asm (fun c -> hd_is "v_inv" c &&
+                           el 1 (snd (strip_comb c)) = v1 &&
+                           not (el 2 (snd (strip_comb c)) =
+                                  lhand ats)) gl in
+                SUBGOAL_THEN
+                  (list_mk_icomb "MEM" [v1; rand ats])
+                  (fun mm -> MATCH_ACCEPT_TAC (MATCH_MP
+                     v_inv_update_gen
+                     (CONJ (a_vtr gl) (CONJ vi
+                       (MP (SPECL [v1; rand ats; lhand ats]
+                             MEM_stack_all_vs) mm))))) THEN
+                REWRITE_TAC[MEM]))) THEN
+       W(fun (asl,w as gl) ->
+         let old = the_asm (fun c -> hd_is "ALL2" c &&
+                     el 1 (snd (strip_comb c)) =
+                       el 1 (snd (strip_comb w))) gl in
+         let ats = find_term (hd_is "all_ts") w in
+         let vs = el 1 (snd (strip_comb w)) in
+         let v = genvar (hd (snd (dest_type (type_of (rand ats))))) in
+         SUBGOAL_THEN
+           (mk_forall(v, mk_imp(list_mk_icomb "MEM" [v; vs],
+              list_mk_icomb "IN"
+                [v; list_mk_icomb "all_vs" [lhand ats; rand ats]])))
+           (fun mem -> ACCEPT_TAC (MATCH_MP EVERY2_v_inv_update_stack
+              (CONJ (a_vtr gl) (CONJ mem old)))) THEN
+         REPEAT STRIP_TAC THEN
+         W(fun gl ->
+           let mm = the_asm (hd_is "MEM") gl in
+           let v1 = el 0 (snd (strip_comb (concl mm))) in
+           SUBGOAL_THEN (list_mk_icomb "MEM" [v1; rand ats])
+             (fun m2 -> MATCH_ACCEPT_TAC (MP (SPECL [v1; rand ats;
+                          lhand ats] MEM_stack_all_vs) m2)) THEN
+           ASM_REWRITE_TAC[MEM])))) THEN
+    (* and the invariant of each reference that the stack reaches: it
+       was reachable before the store (reach_refs_update_byte) *)
+    W(fun (asl,w) -> if not (is_forall w) then ALL_TAC else
+      (REPEAT STRIP_TAC THEN
+       W(fun gl ->
+         let rr = the_asm (fun c -> hd_is "reachable_refs" c &&
+                    hd_is "sptree_insert"
+                      (el 1 (snd (strip_comb c)))) gl in
+         ASSUME_TAC (MATCH_MP reach_refs_update_byte
+           (CONJ rr (a_lkptr gl)))) THEN
+       W(fun (asl,w as gl) ->
+         let n = el 1 (snd (strip_comb w)) in
+         let bri = the_asm (fun c ->
+           let vs,bd = strip_forall c in
+           length vs = 1 && is_imp bd &&
+           hd_is "bc_ref_inv" (rand bd)) gl in
+         let rr = the_asm (fun c -> hd_is "reachable_refs" c &&
+           not (hd_is "sptree_insert"
+                  (el 1 (snd (strip_comb c))))) gl in
+         let nin = the_asm (fun c -> hd_is "IN" c &&
+           hd_is "FDOM" (rand c) &&
+           el 0 (snd (strip_comb c)) = n) gl in
+         ASSUME_TAC (MP (SPEC n bri) (CONJ rr nin))) THEN
+       (* the reference written, or another one *)
+       W(fun (asl,w as gl) ->
+         ASM_CASES_TAC (mk_eq (el 1 (snd (strip_comb w)),
+                               g_ptr gl))) THEN
+       TRY VAR_EQ_TAC THEN
+       (* the one written: the element holds the bytes put in *)
+       TRY (SOLVED
+             (W(fun gl ->
+                let lk1 = the_asm (fun c -> is_eq c &&
+                            hd_is "FLOOKUP" (lhand c)) gl in
+                let hl = the_asm (fun c -> is_eq c &&
+                           hd_is "heap_lookup" (lhand c) &&
+                           hd_is "SOME" (rand c)) gl in
+                let pe = the_asm (fun c -> is_eq c &&
+                           hd_is "fmap_apply" (lhand c) &&
+                           hd_is "heap_length" (rand c)) gl in
+                let le = the_asm (fun c -> is_eq c &&
+                           hd_is "LENGTH" (lhand c)) gl in
+                let ws = el 3 (snd (strip_comb
+                           (rand (rand (concl hl))))) in
+                MATCH_ACCEPT_TAC (MATCH_MP bc_ref_inv_update_byte_at
+                  (CONJ lk1 (CONJ hl (CONJ pe (CONJ (a_lkptr gl)
+                    (CONJ le (REFL ws)))))))))) THEN
+       (* another one: its element did not move *)
+       TRY (SOLVED
+             (W(fun (asl,w as gl) ->
+                let fm = el 0 (tparts (el 3 (snd (strip_comb w)))) in
+                let inj = the_asm (fun c -> hd_is "INJ" c &&
+                            rand (el 0 (snd (strip_comb c))) = fm) gl in
+                let pin = the_asm (fun c -> hd_is "IN" c &&
+                            hd_is "FDOM" (rand c) &&
+                            el 0 (snd (strip_comb c)) = g_ptr gl) gl in
+                let neq = the_asm (fun c -> is_neg c &&
+                            is_eq (rand c) &&
+                            rand (rand c) = g_ptr gl) gl in
+                let inv = the_asm (hd_is "bc_ref_inv") gl in
+                MATCH_ACCEPT_TAC (MATCH_MP bc_ref_inv_update_other_gen
+                  (CONJ inj (CONJ pin (CONJ neq (CONJ (a_vtr gl)
+                    (CONJ (a_dtr gl) (CONJ (a_ltr gl)
+                      (CONJ (a_tr gl) inv))))))))))))) THEN
+    ALL_TAC));;
 
 (* [local] *)
 let heap_store_unused_thm = prove

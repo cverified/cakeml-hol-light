@@ -180,6 +180,45 @@ let EVERY2_LUPDATE_same = prove
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
 
 (* ------------------------------------------------------------------ *)
+(* HOL4's APPEND_EQ_APPEND of listTheory, which the proof of the byte *)
+(* array update of data_to_word_memoryProof cuts a heap with.         *)
+(* ------------------------------------------------------------------ *)
+
+let APPEND_EQ_APPEND = prove
+ (`!(l1:A list) l2 m1 m2.
+     l1 ++ l2 = m1 ++ m2
+     ==> (?l. l1 = m1 ++ l /\ m2 = l ++ l2) \/
+         (?l. m1 = l1 ++ l /\ l2 = l ++ m2)`,
+  (* the witness is one of the pieces that the assumptions name *)
+  (let pieces =
+     W(fun (asl,_) ->
+       let cands = flat (mapfilter (fun (_,th) ->
+         let c = concl th in
+         if is_eq c && hd_is "APPEND" (rand c)
+         then [lhand (rand c); rand (rand c)] else fail()) asl) in
+       FIRST (flat (map (fun t ->
+         [SOLVED (DISJ1_TAC THEN EXISTS_TAC t THEN
+                  ASM_REWRITE_TAC[APPEND]);
+          SOLVED (DISJ2_TAC THEN EXISTS_TAC t THEN
+                  ASM_REWRITE_TAC[APPEND])]) cands))) in
+   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
+    [REWRITE_TAC[APPEND] THEN DISCH_TAC THEN
+     DISJ2_TAC THEN EXISTS_TAC `m1:A list` THEN
+     ASM_REWRITE_TAC[APPEND];
+     STRUCT_CASES_TAC(ISPEC `m1:A list` (cases_of `:(A)list`)) THEN
+     REWRITE_TAC[APPEND; CONS_11] THENL
+      [DISCH_TAC THEN DISJ1_TAC THEN
+       EXISTS_TAC `CONS (h:A) t` THEN ASM_REWRITE_TAC[APPEND];
+       STRIP_TAC THEN
+       FIRST_X_ASSUM (fun ih ->
+         if not (is_forall (concl ih)) then fail() else
+         W(fun (asl,w as gl) ->
+           let eq = the_asm (fun c -> is_eq c &&
+                      hd_is "APPEND" (lhand c)) gl in
+           STRIP_ASSUME_TAC (MATCH_MP (SPEC_ALL ih) eq))) THEN
+       ASM_REWRITE_TAC[] THEN pieces]]));;
+
+(* ------------------------------------------------------------------ *)
 (* NULL as an equation, which HOL4 has as NULL_EQ of listTheory, and  *)
 (* the list cases with names that an induction has not taken.         *)
 (* ------------------------------------------------------------------ *)
