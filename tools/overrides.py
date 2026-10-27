@@ -4259,6 +4259,176 @@ let bignum_header = prove
     TRY (SOLVED (ACCEPT_TAC xeq))));;
 """,
 
+  ('data_to_word_memoryProof', 'gc_kind_update_Ref'): r"""
+(* the port's own: what the proof of gc_kind_update_Ref needs.  The
+   store writes an element of the length it replaces, and the
+   element is a reference, so it is at or above the pointer -- the
+   first half of the split of a generational heap holds no
+   reference.  The halves of the new split are then the first one
+   it was and the second with the element written in it
+   (heap_split_replace3), and the state of the generations is the
+   one it was, because every start of one is at or below the
+   pointer (gen_start_ok_replace, gen_state_ok_replace) *)
+
+(* two elements of one length and one tag are of one length *)
+let el_length_DataElement = prove
+ (`!(xs:((A)heap_address)list) (ys:((A)heap_address)list) l (d:B).
+     el_length (DataElement xs l d) = el_length (DataElement ys l d)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[el_length_def]);;
+
+(* an element of a reference is a reference *)
+let isRef_RefTag = prove
+ (`data_to_word_memoryProof_isRef (DataElement xs l (RefTag,[]))`,
+  REWRITE_TAC[isRef_def] THEN MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[isMutTag_def]);;
+
+(* the halves of the split of a heap whose element is replaced by
+   one of its length, when the cut is at or before the element: the
+   first half is the one it was, and the second is the one it was
+   with the element replaced *)
+let heap_split_replace3 = prove
+ (`!e ha u v hb h1 h2.
+     heap_split e (ha ++ [u] ++ hb) = SOME (h1,h2) /\
+     el_length u = el_length v /\ ~(heap_length ha < e)
+     ==> ?h2'. heap_split e (ha ++ [v] ++ hb) = SOME (h1,h2') /\
+               (!z. MEM z h2' ==> MEM z h2 \/ z = v)`,
+  REPEAT GEN_TAC THEN
+  (* the element and what follows it, as one list: a split of the
+     heap is then a split of the front or of that list *)
+  REWRITE_TAC[APPEND] THEN
+  REWRITE_TAC[heap_split_SOME_APPEND] THEN
+  COND_CASES_TAC THEN
+  STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if is_exists (concl th) then CHOOSE_TAC th else fail())) THEN
+  SPLIT_ASM_TAC THENL
+   [(* the cut is below the element, so the halves of the front are
+       the ones they were and the element is in the second *)
+    W(fun (asl,w as gl) ->
+      let hs = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_split" (lhand c)) gl in
+      let pr = rand (rand (concl hs)) in
+      let vt = find_term (fun t -> is_var t &&
+                 fst (dest_var t) = "v") w in
+      let hb = find_term (fun t -> is_var t &&
+                 fst (dest_var t) = "hb") w in
+      let tail = list_mk_icomb "CONS" [vt; hb] in
+      EXISTS_TAC (list_mk_icomb "APPEND" [rand pr; tail]) THEN
+      CONJ_TAC THENL
+       [REWRITE_TAC[] THEN
+        EXISTS_TAC (lhand pr) THEN EXISTS_TAC (rand pr) THEN
+        ASM_REWRITE_TAC[];
+        ASM_REWRITE_TAC[MEM_APPEND; MEM] THEN MESON_TAC[]]);
+    (* and the cut is at the element, so the first half is what is
+       before it and the second begins with the element *)
+    W(fun (asl,w as gl) ->
+      let sub = in_goal gl (fun t -> hd_is "-" t &&
+                  hd_is "heap_length" (rand t)) in
+      SUBGOAL_THEN (mk_eq (sub, `0`)) ASSUME_TAC THENL
+       [W(fun (asl,_) ->
+          MAP_EVERY MP_TAC (mapfilter (fun (_,th) ->
+            let c = concl th in
+            if is_neg c && hd_is "<" (rand c) then th else fail())
+            asl)) THEN
+        ARITH_TAC;
+        ALL_TAC]) THEN
+    W(fun gl ->
+      let z = the_asm (fun c -> is_eq c && hd_is "-" (lhand c) &&
+                rand c = `0`) gl in
+      RULE_ASSUM_TRY (REWRITE_RULE[z; heap_split_def;
+        injectivity "option"; PAIR_EQ]) THEN
+      REWRITE_TAC[z]) THEN
+    SPLIT_ASM_TAC THEN
+    REPEAT (FIRST_X_ASSUM (fun e ->
+      let c = concl e in
+      if not (is_eq c) || not (is_var (rand c)) then fail() else
+      SUBST_ALL_TAC (SYM e))) THEN
+    W(fun (asl,w) ->
+      let vt = find_term (fun t -> is_var t &&
+                 fst (dest_var t) = "v") w in
+      let hb = find_term (fun t -> is_var t &&
+                 fst (dest_var t) = "hb") w in
+      EXISTS_TAC (list_mk_icomb "CONS" [vt; hb])) THEN
+    CONJ_TAC THENL
+     [ASM_REWRITE_TAC[heap_split_def; injectivity "option";
+                      PAIR_EQ] THEN
+      CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
+      ASM_REWRITE_TAC[APPEND_NIL];
+      ASM_REWRITE_TAC[MEM] THEN MESON_TAC[]]]);;
+
+(* the pointer condition of a generation survives a store that
+   writes an element of the length it replaces at or above the
+   start of the generation: the half that the condition is about is
+   the one it was (heap_split_replace3) *)
+let gen_start_ok_replace = prove
+ (cake_as_vars (fun () ->
+    `gen_start_ok (ha ++ [u] ++ hb) k s /\
+     el_length u = el_length v /\ ~(heap_length ha < s)
+     ==> gen_start_ok (ha ++ [v] ++ hb) k s`),
+  REWRITE_TAC[gen_start_ok_def] THEN
+  STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if is_exists (concl th) then CHOOSE_TAC th else fail())) THEN
+  SPLIT_ASM_TAC THEN
+  W(fun gl ->
+    let hs = the_asm (fun c -> is_eq c &&
+               hd_is "heap_split" (lhand c)) gl in
+    let le = the_asm (fun c -> is_eq c &&
+               hd_is "el_length" (lhand c)) gl in
+    let lt = the_asm (fun c -> is_neg c && hd_is "<" (rand c)) gl in
+    STRIP_ASSUME_TAC (MATCH_MP heap_split_replace3
+      (CONJ hs (CONJ le lt)))) THEN
+  W(fun (asl,w as gl) ->
+    let vt = find_term (fun t -> is_var t &&
+               fst (dest_var t) = "v") w in
+    let hs2 = the_asm (fun c -> is_eq c &&
+                hd_is "heap_split" (lhand c) &&
+                can (find_term (fun t -> t = vt)) (lhand c)) gl in
+    let pr = rand (rand (concl hs2)) in
+    EXISTS_TAC (lhand pr) THEN EXISTS_TAC (rand pr) THEN
+    CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC));;
+
+(* and so does the state of the generations, because every start of
+   one is at or below the pointer and the element is above it *)
+let gen_state_ok_replace = prove
+ (cake_as_vars (fun () ->
+    `gen_state_ok a k (ha ++ [u] ++ hb) gens /\
+     el_length u = el_length v /\ ~(heap_length ha < a)
+     ==> gen_state_ok a k (ha ++ [v] ++ hb) gens`),
+  W(fun (asl,w) ->
+    let gens = find_term (fun t -> is_var t &&
+                 fst (dest_var t) = "gens") w in
+    STRUCT_CASES_TAC (ISPEC gens (cases_of `:gen_state`))) THEN
+  REWRITE_TAC[gen_state_ok_def] THEN
+  STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  REWRITE_TAC[GSYM ALL_MEM] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+  REPEAT STRIP_TAC THEN
+  W(fun gl ->
+    let mm = the_asm (hd_is "MEM") gl in
+    let s = el 0 (snd (strip_comb (concl mm))) in
+    let evs = mapfilter (fun (_,th) ->
+      let c = concl th in
+      if hd_is "ALL" c then
+        MP (SPEC s (REWRITE_RULE[GSYM ALL_MEM] th)) mm
+      else fail()) (fst gl) in
+    MAP_EVERY (fun th ->
+      ASSUME_TAC (CONV_RULE(TOP_DEPTH_CONV BETA_CONV) th)) evs) THEN
+  W(fun gl ->
+    let le = the_asm (fun c -> is_eq c &&
+               hd_is "el_length" (lhand c)) gl in
+    let gs = the_asm (hd_is "gen_start_ok") gl in
+    let s = el 2 (snd (strip_comb (concl gs))) in
+    let lt = the_asm (fun c -> is_neg c && hd_is "<" (rand c)) gl in
+    let sle = the_asm (fun c -> hd_is "<=" c && lhand c = s) gl in
+    let hl = lhand (rand (concl lt)) in
+    SUBGOAL_THEN (mk_neg (list_mk_icomb "<" [hl; s]))
+      (fun nlt -> MATCH_ACCEPT_TAC (MATCH_MP gen_start_ok_replace
+         (CONJ gs (CONJ le nlt)))) THEN
+    MP_TAC lt THEN MP_TAC sle THEN ARITH_TAC));;
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take.  A value put on the stack only adds timestamps
