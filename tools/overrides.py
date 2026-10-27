@@ -5859,6 +5859,304 @@ let v_inv_cons_step = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'new_ref_thm'): r"""
+(* the port's own: what the proof of new_ref_thm needs.  The
+   element is written at the top of the unused space, where it is
+   a reference and so belongs to the second half of the split that
+   a generational collection goes by (gc_kind_store_unused); the
+   references gain a key that they did not have, which holds the
+   values that the stack has in front of it, so a path through the
+   new references is one of the old ones or starts inside those
+   values (reachable_refs_new_ref), and what the invariant said of
+   a value it says of it with the key written and the store done
+   (v_inv_new_ref_step) *)
+
+(* the kind of the collection survives a store into the unused
+   space at its top: the state of the generations is what
+   heap_store_unused_gen_state_ok says, and the split of the new
+   heap is lower by the element, which is a reference and so goes
+   into the second half *)
+let gc_kind_store_unused = prove
+ (cake_as_vars (fun () ->
+    `data_to_word_memoryProof_isRef x /\ el_length x <= sp /\
+     gc_kind_inv conf a sp sp1 gens heap /\
+     heap_store_unused a (sp + sp1) x heap = (heap2,T) /\
+     unused_space_inv a ((sp + sp1) - el_length x) heap2
+     ==> gc_kind_inv conf a (sp - el_length x) sp1 gens heap2`),
+  REWRITE_TAC[gc_kind_inv_def] THEN STRIP_TAC THEN
+  W(fun (asl,w) ->
+    CASES_ON_TAC (find_term
+      (hd_is "data_to_word_config_gc_kind") w)) THEN
+  RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV MATCH_CONV)) THEN
+  MATCH_REDUCE_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  SPLIT_ASM_TAC THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if is_exists (concl th) then CHOOSE_TAC th else fail())) THEN
+  SPLIT_ASM_TAC THEN
+  CONJ_TAC THENL
+   [(* the state of the generations *)
+    W(fun (asl,w as gl) ->
+      let gs = the_asm (hd_is "gen_state_ok") gl in
+      let st = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_store_unused" (lhand c)) gl in
+      let th = MATCH_MP heap_store_unused_gen_state_ok
+                 (CONJ st gs) in
+      let addr = el 1 (snd (strip_comb w)) in
+      let addr2 = el 1 (snd (strip_comb (concl th))) in
+      SUBGOAL_THEN (mk_eq (addr, addr2)) SUBST1_TAC THENL
+       [ASM_ARITH_TAC; MATCH_ACCEPT_TAC th]);
+    ALL_TAC] THEN
+  (* the shape of the new heap: what was below the space, the space
+     that is left, the element written and the references *)
+  W(fun (asl,w as gl) ->
+    let hs = the_asm (fun c -> is_eq c &&
+               hd_is "heap_split" (lhand c)) gl in
+    let st = the_asm (fun c -> is_eq c &&
+               hd_is "heap_store_unused" (lhand c)) gl in
+    let us = the_asm (fun c -> hd_is "unused_space_inv" c &&
+               can (find_term (hd_is "-")) c) gl in
+    STRIP_ASSUME_TAC (MATCH_MP heap_store_unused_thm
+      (CONJ hs (CONJ st us)))) THEN
+  W(fun (asl,w as gl) ->
+    let st = the_asm (fun c -> is_eq c &&
+               hd_is "heap_store_unused" (lhand c)) gl in
+    let heap2 = lhand (rand (concl st)) in
+    let sh = the_asm (fun c -> is_eq c && lhand c = heap2 &&
+               hd_is "APPEND" (rand c)) gl in
+    let rhs = rand (concl sh) in
+    let pre = list_mk_icomb "APPEND" [lhand rhs; lhand (rand rhs)] in
+    let rest = rand (rand rhs) in
+    let addr = el 0 (snd (strip_comb
+                 (lhand (hd (conjuncts (snd (strip_exists w))))))) in
+    EXISTS_TAC pre THEN EXISTS_TAC rest THEN
+    REPEAT CONJ_TAC THENL
+     [(* the split of the new heap is lower by the element *)
+      SUBGOAL_THEN (mk_eq (heap2,
+                      list_mk_icomb "APPEND" [pre; rest]))
+        (fun e -> ONCE_REWRITE_TAC[e]) THENL
+       [ONCE_REWRITE_TAC[sh] THEN REWRITE_TAC[APPEND_ASSOC];
+        ALL_TAC] THEN
+      SUBGOAL_THEN (mk_eq (list_mk_icomb "heap_length" [pre], addr))
+        (fun le -> MATCH_ACCEPT_TAC (MATCH_MP heap_split_pre le)) THEN
+      REWRITE_TAC[heap_length_APPEND; heap_length_clauses;
+                  heap_length_heap_expand] THEN
+      ASM_ARITH_TAC;
+      (* no element below the split is a reference: of what was
+         below the space the old split says so, and the space holds
+         no element *)
+      REWRITE_TAC[ALL_APPEND] THEN
+      CONJ_TAC THEN
+      TRY (SOLVED (MATCH_ACCEPT_TAC isRef_heap_expand)) THEN
+      W(fun gl ->
+        let ev = the_asm (fun c -> hd_is "ALL" c &&
+                   is_abs (el 0 (snd (strip_comb c)))) gl in
+        let sh1 = the_asm (fun c -> is_eq c &&
+                    el 1 (snd (strip_comb (concl ev))) = lhand c &&
+                    hd_is "APPEND" (rand c)) gl in
+        MP_TAC (REWRITE_RULE[sh1; ALL_APPEND] ev)) THEN
+      DISCH_THEN (ACCEPT_TAC o CONJUNCT1);
+      (* and the element written is a reference, as are the ones
+         that were above the space *)
+      REWRITE_TAC[ALL_APPEND; ALL] THEN
+      REPEAT CONJ_TAC THEN
+      TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC))]));;
+
+(* the edges that the references gain when an array of values is
+   written at a key they did not have leave that key and land
+   inside the values *)
+let ref_edge_ValueArray = prove
+ (cake_as_vars (fun () ->
+    `ref_edge (sptree_insert ptr (ValueArray xs) refs) x y =
+     (if x = ptr then MEM y (get_refs (Block 0 ARB xs))
+      else ref_edge refs x y)`),
+  REWRITE_TAC[ref_edge_def; lookup_insert] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[]);;
+
+(* [local] *)
+let reachable_refs_new_ref_lemma = prove
+ (cake_as_vars (fun () ->
+    `!r1 n.
+       RTC (ref_edge (sptree_insert ptr (ValueArray xs) refs)) r1 n
+       ==> ~(n = ptr) ==>
+       RTC (ref_edge refs) r1 n \/
+       (?s. MEM s (get_refs (Block 0 ARB xs)) /\
+            RTC (ref_edge refs) s n)`),
+  (* induction along the reflexive transitive closure: an edge of
+     the new references is one of the old ones, or it leaves the
+     key and lands inside the values *)
+  MATCH_MP_TAC RTC_INDUCT THEN CONJ_TAC THENL
+   [GEN_TAC THEN DISCH_TAC THEN DISJ1_TAC THEN
+    MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES));
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[ref_edge_ValueArray] THEN
+    COND_CASES_TAC THEN STRIP_TAC THEN DISCH_TAC THEN
+    ASM_MESON_TAC[RTC_RULES]]);;
+
+(* so a reference that the stack with the pointer of the array on
+   it reaches is one that the values of the array and the rest of
+   the stack reach *)
+let reachable_refs_new_ref = prove
+ (cake_as_vars (fun () ->
+    `reachable_refs (xs ++ (RefPtr T ptr :: stack))
+       (sptree_insert ptr (ValueArray xs) refs) n /\ ~(n = ptr) /\
+     ~(ptr IN domain refs)
+     ==> reachable_refs (xs ++ stack) refs n`),
+  (* reachable_refs_new_ref_lemma says of a path through the new
+     references that it is one of the old ones or that it starts
+     inside the values of the array.  A root of the stack keeps its
+     path; the only other root is the pointer of the array, whose
+     path cannot start at all, because the key is fresh and so has
+     no edge; and a path from the values has its root among them *)
+  (let mem_block_refs = prove
+    (`!(ys:(dataSem_v)list) ss tt aa.
+        MEM ss (get_refs (Block tt aa ys))
+        ==> ?yy. MEM yy ys /\ MEM ss (get_refs yy)`,
+     REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+     MESON_TAC[]) in
+   let subst_vars =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_eq(concl th) && is_var(lhand(concl th))
+       then SUBST_ALL_TAC th else fail())) in
+   let payload b =
+     X_CHOOSE_THEN `ss:num` (CONJUNCTS_THEN2
+       (fun m -> MP_TAC(MATCH_MP mem_block_refs m)) ASSUME_TAC) b THEN
+     DISCH_THEN(X_CHOOSE_THEN `yy:dataSem_v` STRIP_ASSUME_TAC) THEN
+     MAP_EVERY EXISTS_TAC [`yy:dataSem_v`; `ss:num`] THEN
+     ASM_REWRITE_TAC[MEM_APPEND] in
+   let noedge a =
+     MP_TAC(ONCE_REWRITE_RULE[RTC_CASES] a) THEN
+     FIRST_ASSUM(fun nd ->
+       let th = REWRITE_RULE[GSYM lookup_NONE_domain] nd in
+       if concl th = concl nd then fail()
+       else REWRITE_TAC[ref_edge_def; th]) THEN
+     MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[] in
+   let stackcase a =
+     ASSUME_TAC a THEN
+     W(fun gl ->
+       let m = the_asm (fun c -> hd_is "MEM" c &&
+                 hd_is "get_refs" (rand c)) gl in
+       EXISTS_TAC (el 0 (snd (strip_comb (rand (concl m))))) THEN
+       EXISTS_TAC (el 0 (snd (strip_comb (concl m))))) THEN
+     ASM_REWRITE_TAC[MEM_APPEND] in
+   let uselemma =
+     FIRST_ASSUM(fun rtc -> FIRST_ASSUM(fun ne ->
+       MP_TAC(MATCH_MP (MATCH_MP
+         reachable_refs_new_ref_lemma rtc) ne))) in
+   REWRITE_TAC[reachable_refs_def; MEM_APPEND; MEM] THEN
+   STRIP_TAC THENL
+    [uselemma THEN DISCH_THEN(DISJ_CASES_THEN2 stackcase payload);
+     subst_vars THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[get_refs_def; MEM]) THEN
+     subst_vars THEN uselemma THEN
+     DISCH_THEN(DISJ_CASES_THEN2 noedge payload);
+     uselemma THEN DISCH_THEN(DISJ_CASES_THEN2 stackcase payload)]));;
+
+(* and what the invariant says of a value it says of it with the
+   array written and the store done *)
+let v_inv_new_ref_step = prove
+ (cake_as_vars (fun () ->
+    `v_inv conf w1 refs (w2,f,tf,heap) /\ ~(ptr IN domain refs) /\
+     FDOM f SUBSET domain refs /\ heap_store_rel heap heap2 /\
+     f2 = f |+ (ptr,aa) /\
+     refs2 = sptree_insert ptr (ValueArray xs) refs
+     ==> v_inv conf w1 refs2 (w2,f2,tf,heap2)`),
+  (* the key is fresh in the references, so it is not in the domain
+     of the map and the map is a SUBMAP of its update there;
+     v_inv_SUBMAP takes the relation to the bigger map and the
+     bigger heap, and v_inv_ValueArray_insert writes the array into
+     the references, with the heap it had (RefBlock_inv is then
+     nothing) *)
+  (let submap_fupd = prove
+    (`!(g:(A,B)fmap) k v. ~(k IN FDOM g) ==> g SUBMAP (g |+ (k,v))`,
+     REWRITE_TAC[SUBMAP; FDOM_FUPDATE; IN_INSERT;
+                 FAPPLY_FUPDATE_THM] THEN MESON_TAC[]) in
+   STRIP_TAC THEN SPLIT_ASM_TAC THEN
+   REPEAT (FIRST_X_ASSUM (fun e ->
+     let c = concl e in
+     if is_eq c && is_var (lhand c) then SUBST_ALL_TAC e
+     else fail())) THEN
+   W(fun gl ->
+     let nd = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                hd_is "domain" (rand (rand c))) gl in
+     let su = the_asm (fun c -> hd_is "SUBSET" c) gl in
+     SUBGOAL_THEN (mk_neg (list_mk_icomb "IN"
+                     [el 0 (snd (strip_comb (rand (concl nd))));
+                      list_mk_icomb "FDOM"
+                        [rand (lhand (concl su))]])) ASSUME_TAC THENL
+      [MP_TAC nd THEN MP_TAC su THEN REWRITE_TAC[SUBSET] THEN
+       MESON_TAC[];
+       ALL_TAC]) THEN
+   MATCH_MP_TAC (GEN_ALL v_inv_SUBMAP) THEN
+   W(fun gl -> MAP_EVERY (fun n -> EXISTS_TAC (var_by_name n gl))
+                 ["f"; "tf"; "heap"]) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   TRY (SOLVED (MATCH_ACCEPT_TAC SUBMAP_REFL)) THEN
+   TRY (SOLVED (W(fun gl ->
+     let nf = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                hd_is "FDOM" (rand (rand c))) gl in
+     MATCH_ACCEPT_TAC (MATCH_MP submap_fupd nf)))) THEN
+   MATCH_MP_TAC v_inv_ValueArray_insert THEN
+   W(fun gl -> EXISTS_TAC (var_by_name "heap" gl)) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   TRY (SOLVED (REWRITE_TAC[RefBlock_inv_def] THEN MESON_TAC[])) THEN
+   ASM_MESON_TAC[]));;
+
+(* a reference is a reference *)
+let isRef_RefBlock = prove
+ (`data_to_word_memoryProof_isRef (RefBlock xs)`,
+  REWRITE_TAC[isRef_def; RefBlock_def] THEN MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[isMutTag_def]);;
+
+(* the values of a stack with a value put in the middle of it *)
+let EVERY2_APPEND_CONS_IMP = prove
+ (`!(P:A->B->bool) xs1 ys1 x y xs2 ys2.
+     ALL2 P xs1 ys1 /\ P x y /\ ALL2 P xs2 ys2
+     ==> ALL2 P (APPEND xs1 (CONS x xs2))
+           (APPEND ys1 (CONS y ys2))`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+  CASES_BY_NAME "ys1" THEN
+  REWRITE_TAC[ALL2; APPEND] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
+
+(* the timestamps of the references and the stack only grow when a
+   key the references did not have is written and the stack keeps
+   the values it had *)
+let all_ts_insert_SUBSET = prove
+ (cake_as_vars (fun () ->
+    `!ptr rr refs stack1 stack2.
+       ~(ptr IN domain refs) /\ (!x. MEM x stack1 ==> MEM x stack2)
+       ==> all_ts refs stack1 SUBSET
+           all_ts (sptree_insert ptr rr refs) stack2`),
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MATCH_MP_TAC all_ts_SUBSET_gen THEN
+  W(fun (asl,w as gl) ->
+    let nd = the_asm (fun c -> is_neg c) gl in
+    let ptr = el 0 (snd (strip_comb (rand (concl nd)))) in
+    let ins = find_term (hd_is "sptree_insert") w in
+    let refs = el 2 (snd (strip_comb ins)) in
+    let nv = genvar `:num` in
+    let rv = genvar (type_of (el 1 (snd (strip_comb ins)))) in
+    SUBGOAL_THEN
+      (list_mk_forall([nv; rv],
+         mk_imp(mk_eq (list_mk_icomb "sptree_lookup" [nv; refs],
+                       list_mk_icomb "SOME" [rv]),
+                mk_eq (list_mk_icomb "sptree_lookup" [nv; ins],
+                       list_mk_icomb "SOME" [rv]))))
+      (fun th -> ASM_MESON_TAC[th]) THEN
+    REPEAT STRIP_TAC THEN
+    ASM_CASES_TAC (mk_eq (nv, ptr)) THENL
+     [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+      MP_TAC (REWRITE_RULE[GSYM lookup_NONE_domain] nd) THEN
+      ASM_REWRITE_TAC[distinctness "option"];
+      ASM_REWRITE_TAC[lookup_insert]]));;
+
+""",
+
   ('data_to_word_memoryProof', 'new_byte_alt_thm'): r"""
 (* the port's own: what the proof of new_byte_alt_thm needs of an
    array of bytes written at a key that the references do not have.
@@ -5985,40 +6283,6 @@ let v_inv_new_byte_step = prove
      MATCH_ACCEPT_TAC (MATCH_MP submap_fupd nf)))) THEN
    MATCH_MP_TAC v_inv_ByteArray_insert THEN
    ASM_MESON_TAC[]));;
-
-(* the timestamps of the references and the stack only grow when a
-   key the references did not have is written and a value is put on
-   the stack *)
-let all_ts_insert_SUBSET = prove
- (cake_as_vars (fun () ->
-    `!ptr rr refs stack v.
-       ~(ptr IN domain refs)
-       ==> all_ts refs stack SUBSET
-           all_ts (sptree_insert ptr rr refs) (v :: stack)`),
-  REPEAT GEN_TAC THEN DISCH_TAC THEN
-  MATCH_MP_TAC all_ts_SUBSET_gen THEN
-  REWRITE_TAC[MEM] THEN
-  W(fun (asl,w as gl) ->
-    let nd = the_asm (fun c -> is_neg c) gl in
-    let ptr = el 0 (snd (strip_comb (rand (concl nd)))) in
-    let ins = find_term (hd_is "sptree_insert") w in
-    let refs = el 2 (snd (strip_comb ins)) in
-    let nv = genvar `:num` in
-    let rv = genvar (type_of (el 1 (snd (strip_comb ins)))) in
-    SUBGOAL_THEN
-      (list_mk_forall([nv; rv],
-         mk_imp(mk_eq (list_mk_icomb "sptree_lookup" [nv; refs],
-                       list_mk_icomb "SOME" [rv]),
-                mk_eq (list_mk_icomb "sptree_lookup" [nv; ins],
-                       list_mk_icomb "SOME" [rv]))))
-      (fun th -> MESON_TAC[th]) THEN
-    REPEAT STRIP_TAC THEN
-    ASM_CASES_TAC (mk_eq (nv, ptr)) THENL
-     [FIRST_X_ASSUM SUBST_ALL_TAC THEN
-      MP_TAC (REWRITE_RULE[GSYM lookup_NONE_domain] nd) THEN
-      ASM_REWRITE_TAC[distinctness "option"];
-      ASM_REWRITE_TAC[lookup_insert]]));;
-
 """,
 
   ('data_to_word_memoryProof', 'el_thm'): r"""
