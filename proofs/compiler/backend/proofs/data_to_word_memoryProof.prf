@@ -16073,19 +16073,420 @@
        v_inv_def; BlockRep_def; heap_length_APPEND] THEN
      TRY ASM_ARITH_TAC))
 ### cons_thm_alt
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     bc_stack_ref_inv_def, FDOM, LIST_REL_SPLIT1,
-     unused_space_inv_def, IMP_heap_store_unused_alt.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def; FDOM;
-       LIST_REL_SPLIT1; unused_space_inv_def;
-       IMP_heap_store_unused_alt] THEN
-     TRY ASM_ARITH_TAC))
+  (* the steps are above the statement (tools/overrides.py).  The
+     timestamp of the block is one that the map of the timestamps
+     does not have, because every one of its is below it; the roots
+     of the values of the block are the front of the roots of the
+     stack (LIST_REL_SPLIT1), the block fits in the unused space
+     and IMP_heap_store_unused_alt writes it there.  The heap, the
+     roots and the space are then as good as they were
+     (gc_kind_store_unused_alt of the kind of the collection), the
+     map of the timestamps gains the one of the block with the
+     address it was written at, and of every reference that the
+     stack reaches the invariant holds as it did
+     (bc_ref_inv_step) *)
+  (STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    (* what the invariant says of the stack that the block is built
+       from *)
+    FIRST_X_ASSUM (fun inv ->
+      if not (hd_is "abs_ml_inv" (concl inv)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def;
+                                     bc_stack_ref_inv_def] inv)) THEN
+    (* the timestamp of the block is fresh: every timestamp of the
+       map is below it *)
+    W(fun (asl,w as gl) ->
+      let su = the_asm (fun c -> hd_is "SUBSET" c &&
+                 hd_is "GSPEC" (rand c)) gl in
+      let tf = rand (lhand (concl su)) in
+      let bl = find_term (hd_is "dataSem_Block") w in
+      let ts = el 0 (snd (strip_comb bl)) in
+      SUBGOAL_THEN (mk_neg (list_mk_icomb "IN"
+                      [ts; list_mk_icomb "FDOM" [tf]])) ASSUME_TAC THENL
+       [MP_TAC su THEN REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN
+        MESON_TAC[LT_REFL];
+        ALL_TAC]) THEN
+    (* the roots of the values of the block, and the rest *)
+    W(fun gl ->
+      let e2 = the_asm (hd_is "ALL2") gl in
+      STRIP_ASSUME_TAC (ONCE_REWRITE_RULE[LIST_REL_SPLIT1] e2)) THEN
+    (* the roots of the block are as many as its values *)
+    W(fun (asl,w as gl) ->
+      let bl = find_term (hd_is "dataSem_Block") w in
+      let xs = el 2 (snd (strip_comb bl)) in
+      let e1 = the_asm (fun c -> hd_is "ALL2" c &&
+                 el 1 (snd (strip_comb c)) = xs) gl in
+      ASSUME_TAC (MATCH_MP LIST_REL_LENGTH e1)) THEN
+    (* so the block fits in the unused space, and the store writes it
+       there *)
+    W(fun (asl,w as gl) ->
+      let us = the_asm (hd_is "unused_space_inv") gl in
+      let spsp = el 1 (snd (strip_comb (concl us))) in
+      let bl = find_term (hd_is "dataSem_Block") w in
+      let xs = el 2 (snd (strip_comb bl)) in
+      let e1 = the_asm (fun c -> hd_is "ALL2" c &&
+                 el 1 (snd (strip_comb c)) = xs) gl in
+      let ys1 = el 2 (snd (strip_comb (concl e1))) in
+      let br = rator (find_term (hd_is "BlockRep") w) in
+      let el1 = mk_comb (br, ys1) in
+      SUBGOAL_THEN (list_mk_icomb "<="
+                      [list_mk_icomb "el_length" [el1]; spsp])
+        (fun bd -> STRIP_ASSUME_TAC (MATCH_MP
+           IMP_heap_store_unused_alt (CONJ us bd))) THENL
+       [REWRITE_TAC[BlockRep_def; el_length_def] THEN
+        ASM_ARITH_TAC;
+        ALL_TAC]) THEN
+    (* the block is a data element, which is what the two facts about
+       the store ask for *)
+    W(fun gl ->
+      let st = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_store_unused_alt" (lhand c)) gl in
+      let el1 = el 2 (snd (strip_comb (lhand (concl st)))) in
+      let isd = is_data_el el1 in
+      MAP_EVERY (fun th -> ASSUME_TAC (MP th isd))
+        (mapfilter (fun (_,th) ->
+           let c = concl th in
+           if is_imp c && hd_is "isDataElement" (lhand c) then th
+           else fail()) (fst gl))) THEN
+    (* the witnesses: the roots of the block, the rest of them, and
+       the heap that the store wrote *)
+    W(fun (asl,w as gl) ->
+      let st = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_store_unused_alt" (lhand c)) gl in
+      let ys1 = el 1 (snd (strip_comb
+                  (el 2 (snd (strip_comb (lhand (concl st))))))) in
+      let heap2 = lhand (rand (concl st)) in
+      let rts = the_asm (fun c -> is_eq c && is_var (lhand c) &&
+                  hd_is "APPEND" (rand c)) gl in
+      MAP_EVERY EXISTS_TAC [ys1; rand (rand (concl rts)); heap2]) THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    TRY (SOLVED (W(fun gl ->
+      let le = the_asm (fun c -> is_eq c &&
+                 hd_is "LENGTH" (lhand c) &&
+                 hd_is "LENGTH" (rand c)) gl in
+      ACCEPT_TAC (SYM le)))) THEN
+    (* and the invariant of the new heap and stack *)
+    REWRITE_TAC[abs_ml_inv_def] THEN
+    (* the addresses that hold data are the ones that did, and the
+       one the store wrote *)
+    W(fun gl ->
+      let seq = the_asm (fun c -> is_eq c &&
+                  hd_is "INSERT" (rand c)) gl in
+      let ro = the_asm (hd_is "roots_ok") gl in
+      ASSUME_TAC (REWRITE_RULE[EXTENSION; IN_INSERT; IN_ELIM_THM]
+                    seq) THEN
+      ASSUME_TAC (REWRITE_RULE[roots_ok_def] ro)) THEN
+    REPEAT CONJ_TAC THEN
+    (* the roots: the one of the block is the address it was written
+       at, and the others are the ones they were *)
+    TRY (SOLVED
+          (REWRITE_TAC[roots_ok_def; MEM] THEN
+           REPEAT STRIP_TAC THEN
+           W(fun gl ->
+             let iso = the_asm (fun c ->
+                         let vs,bd = strip_forall c in
+                         length vs = 1 && is_eq bd &&
+                         hd_is "isSomeDataElement" (lhand bd)) gl in
+             REWRITE_TAC[iso]) THEN
+           TRY (SOLVED
+                 (DISJ1_TAC THEN
+                  FIRST_X_ASSUM (fun e ->
+                    if not (is_eq (concl e)) ||
+                       not (hd_is "gc_shared_Pointer" (rand (concl e)))
+                    then fail() else
+                    MP_TAC e) THEN
+                  REWRITE_TAC[injectivity "heap_address"] THEN
+                  MESON_TAC[])) THEN
+           DISJ2_TAC THEN
+           ASM_MESON_TAC[MEM_APPEND])) THEN
+    (* the heap is good: it is as long as it was, it has no forward
+       pointer, and the pointers of the block are roots of the stack *)
+    TRY (SOLVED
+          (REWRITE_TAC[heap_ok_def] THEN
+           REPEAT CONJ_TAC THEN
+           TRY (SOLVED
+                 (W(fun gl ->
+                    let ho = REWRITE_RULE[heap_ok_def]
+                               (the_asm (hd_is "heap_ok") gl) in
+                    let hl = the_asm (fun c -> is_eq c &&
+                               hd_is "heap_length" (lhand c)) gl in
+                    MP_TAC ho THEN REWRITE_TAC[hl] THEN
+                    STRIP_TAC THEN ASM_REWRITE_TAC[]))) THEN
+           TRY (SOLVED
+                 (W(fun gl ->
+                    let ho = REWRITE_RULE[heap_ok_def]
+                               (the_asm (hd_is "heap_ok") gl) in
+                    let impl = the_asm (fun c -> is_imp c &&
+                                 is_neg (lhand c) &&
+                                 hd_is "isForwardPointer"
+                                   (rand (lhand c))) gl in
+                    let st = the_asm (fun c -> is_eq c &&
+                               hd_is "heap_store_unused_alt"
+                                 (lhand c)) gl in
+                    let el1 = el 2 (snd (strip_comb
+                                (lhand (concl st)))) in
+                    SUBGOAL_THEN (mk_neg (list_mk_icomb
+                                    "isForwardPointer" [el1]))
+                      (fun nf -> MP_TAC ho THEN
+                         REWRITE_TAC[MP impl nf] THEN
+                         STRIP_TAC THEN ASM_REWRITE_TAC[]) THEN
+                    REWRITE_TAC[BlockRep_def; isForwardPointer_def] THEN
+                    MATCH_REDUCE_TAC THEN REWRITE_TAC[]))) THEN
+           (* the pointers: of the block they are its roots, which the
+              stack had, and of any other element they are what they
+              were *)
+           REPEAT GEN_TAC THEN
+           W(fun gl ->
+             let mem = the_asm (fun c ->
+                         let vs,bd = strip_forall c in
+                         length vs = 3 && is_eq bd &&
+                         hd_is "MEM" (lhand bd)) gl in
+             REWRITE_TAC[mem]) THEN
+           STRIP_TAC THEN
+           W(fun gl ->
+             let iso = the_asm (fun c ->
+                         let vs,bd = strip_forall c in
+                         length vs = 1 && is_eq bd &&
+                         hd_is "isSomeDataElement" (lhand bd)) gl in
+             REWRITE_TAC[iso]) THEN
+           DISJ2_TAC THEN
+           TRY (SOLVED
+                 (W(fun gl ->
+                    let eq = the_asm (fun c -> is_eq c &&
+                               hd_is "BlockRep" (lhand c)) gl in
+                    MP_TAC eq) THEN
+                  REWRITE_TAC[BlockRep_def;
+                              injectivity "heap_element"] THEN
+                  STRIP_TAC THEN
+                  ASM_MESON_TAC[MEM_APPEND])) THEN
+           W(fun gl ->
+             let ho = REWRITE_RULE[heap_ok_def]
+                        (the_asm (hd_is "heap_ok") gl) in
+             MP_TAC ho) THEN
+           ASM_MESON_TAC[])) THEN
+    (* the kind of the collection: the store into the unused space
+       keeps it (gc_kind_store_unused_alt).  The statement says
+       el_length (BlockRep tag rs) of the pointer and of the space
+       with a type variable of its own, so the length of the block
+       is worked out on both sides before they are matched
+       (entry 61) *)
+    W(fun (asl,w as gl) ->
+      if not (hd_is "gc_kind_inv" w) then ALL_TAC else
+      (let gk = the_asm (hd_is "gc_kind_inv") gl in
+       let st = the_asm (fun c -> is_eq c &&
+                  hd_is "heap_store_unused_alt" (lhand c)) gl in
+       let el1 = el 2 (snd (strip_comb (lhand (concl st)))) in
+       let sp = el 2 (snd (strip_comb (concl gk))) in
+       let us2 = the_asm (fun c -> hd_is "unused_space_inv" c &&
+                   can (find_term (hd_is "-")) c) gl in
+       let nr = PART_MATCH I isRef_BlockRep
+                  (mk_neg (list_mk_icomb
+                     "data_to_word_memoryProof_isRef" [el1])) in
+       let reduce th = CONV_RULE(TOP_DEPTH_CONV MATCH_CONV)
+                         (REWRITE_RULE[BlockRep_def;
+                                       el_length_def] th) in
+       SUBGOAL_THEN (list_mk_icomb "<="
+                       [list_mk_icomb "el_length" [el1]; sp])
+         (fun bd ->
+            REWRITE_TAC[BlockRep_def; el_length_def] THEN
+            CONV_TAC(TOP_DEPTH_CONV MATCH_CONV) THEN
+            MATCH_ACCEPT_TAC (reduce (MATCH_MP
+              gc_kind_store_unused_alt
+              (CONJ nr (CONJ bd (CONJ gk (CONJ st us2))))))) THEN
+       REWRITE_TAC[BlockRep_def; el_length_def] THEN
+       ASM_ARITH_TAC)) THEN
+    (* the unused space: what the store lemma says, with the length
+       of the block taken off the first part of it.  The statement
+       says el_length (BlockRep tag rs) of the pointer and of the
+       space with two type variables of its own, so both are reduced
+       to the length of the block first (entry 61) *)
+    W(fun (asl,w as gl) ->
+      if not (hd_is "unused_space_inv" w) then ALL_TAC else
+      (let us = the_asm (fun c -> hd_is "unused_space_inv" c &&
+                  can (find_term (hd_is "-")) c) gl in
+       REWRITE_TAC[BlockRep_def; el_length_def] THEN
+       MP_TAC (REWRITE_RULE[BlockRep_def; el_length_def] us) THEN
+       W(fun (asl,w) ->
+         let usub = el 1 (snd (strip_comb (lhand w))) in
+         let gsub = el 1 (snd (strip_comb (rand w))) in
+         SUBGOAL_THEN (mk_eq (usub, gsub)) ASSUME_TAC THENL
+          [ASM_ARITH_TAC; ASM_REWRITE_TAC[]]))) THEN
+    (* the maps: the timestamp of the block into the one of the
+       timestamps, and the addresses as they were *)
+    REWRITE_TAC[bc_stack_ref_inv_def] THEN
+    W(fun (asl,w as gl) ->
+      let su = the_asm (fun c -> hd_is "SUBSET" c &&
+                 hd_is "domain" (rand c)) gl in
+      let f = rand (lhand (concl su)) in
+      let tfsu = the_asm (fun c -> hd_is "SUBSET" c &&
+                   hd_is "all_ts" (rand c)) gl in
+      let tf = rand (lhand (concl tfsu)) in
+      let st = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_store_unused_alt" (lhand c)) gl in
+      let aa = el 0 (snd (strip_comb (lhand (concl st)))) in
+      let bl = find_term (hd_is "dataSem_Block") w in
+      let ts = el 0 (snd (strip_comb bl)) in
+      EXISTS_TAC f THEN
+      EXISTS_TAC (list_mk_icomb "|+" [tf; mk_pair (ts, aa)])) THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    (* the map of the timestamps: the one of the block is fresh and
+       its address the one the store wrote at *)
+    W(fun (asl,w as gl) ->
+      if not (hd_is "INJ" w) ||
+         not (can (find_term (hd_is "|+")) w) then ALL_TAC else
+      (let iso = the_asm (fun c ->
+                   let vs,bd = strip_forall c in
+                   length vs = 1 && is_eq bd &&
+                   hd_is "isSomeDataElement" (lhand bd)) gl in
+       let inj = the_asm (fun c -> hd_is "INJ" c &&
+                   hd_is "fmap_apply" (el 0 (snd (strip_comb c))) &&
+                   rand (el 0 (snd (strip_comb c))) =
+                     lhand (rand (el 0 (snd (strip_comb w))))) gl in
+       let nd = the_asm (fun c -> is_neg c &&
+                  hd_is "isSomeDataElement" (rand c)) gl in
+       MATCH_MP_TAC INJ_FUPDATE_fresh THEN
+       EXISTS_TAC (rand (concl inj)) THEN
+       REPEAT CONJ_TAC THEN
+       TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+       TRY (SOLVED (MP_TAC nd THEN REWRITE_TAC[IN_ELIM_THM])) THEN
+       REWRITE_TAC[IN_ELIM_THM] THEN
+       MATCH_ACCEPT_TAC iso)) THEN
+    (* and the map of the addresses goes into the bigger set of
+       addresses *)
+    W(fun (asl,w as gl) ->
+      if not (hd_is "INJ" w) then ALL_TAC else
+      (let iso = the_asm (fun c ->
+                   let vs,bd = strip_forall c in
+                   length vs = 1 && is_eq bd &&
+                   hd_is "isSomeDataElement" (lhand bd)) gl in
+       let inj = the_asm (fun c -> hd_is "INJ" c &&
+                   el 0 (snd (strip_comb c)) =
+                     el 0 (snd (strip_comb w))) gl in
+       MATCH_MP_TAC INJ_bigger THEN
+       EXISTS_TAC (rand (concl inj)) THEN
+       CONJ_TAC THENL
+        [ACCEPT_TAC inj;
+         REWRITE_TAC[IN_ELIM_THM] THEN
+         REWRITE_TAC[iso] THEN MESON_TAC[]])) THEN
+    (* the timestamps of the stack with the block on it are the
+       ones it had and the block's own (all_ts_cons) *)
+    TRY (SOLVED
+          (REWRITE_TAC[FDOM_FUPDATE; all_ts_cons] THEN
+           W(fun gl ->
+             let su = the_asm (fun c -> hd_is "SUBSET" c &&
+                        hd_is "all_ts" (rand c)) gl in
+             MP_TAC su) THEN
+           SET_TAC[])) THEN
+    (* and they are below the timestamp that the new stack counts
+       from *)
+    TRY (SOLVED
+          (REWRITE_TAC[FDOM_FUPDATE] THEN
+           W(fun gl ->
+             let su = the_asm (fun c -> hd_is "SUBSET" c &&
+                        hd_is "GSPEC" (rand c)) gl in
+             MP_TAC su) THEN
+           REWRITE_TAC[SUBSET; IN_INSERT; IN_ELIM_THM] THEN
+           MESON_TAC[ARITH_RULE `!m n. m < n ==> m < n + 1`;
+                     ARITH_RULE `!n. n < n + 1`])) THEN
+    (* the blocks of the stack stay unique, because the block is a
+       new one (blocks_unique_cons_thm) *)
+    TRY (SOLVED
+          (REWRITE_TAC[all_vs_Block] THEN
+           W(fun gl ->
+             let bu = the_asm (hd_is "blocks_unique") gl in
+             MATCH_ACCEPT_TAC (MATCH_MP blocks_unique_cons_thm
+               bu)))) THEN
+    (* the transfer that the allocation leaves: what the invariant
+       said of a value it says of it with the block allocated
+       (v_inv_cons_step) *)
+    W(fun (asl,w as gl) ->
+      let nd = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                 hd_is "FDOM" (rand (rand c))) gl in
+      let hsr = the_asm (hd_is "heap_store_rel") gl in
+      let old = the_asm (fun c -> hd_is "ALL2" c &&
+                  is_var (el 1 (snd (strip_comb c)))) gl in
+      let pred = el 0 (snd (strip_comb (concl old))) in
+      let v,b1 = dest_abs pred in
+      let x,vtm = dest_abs b1 in
+      let tf2 = find_term (hd_is "|+") w in
+      ASSUME_TAC (GENL [v; x] (DISCH vtm
+        (MATCH_MP v_inv_cons_step
+          (CONJ (ASSUME vtm)
+            (CONJ nd (CONJ hsr (REFL tf2)))))))) THEN
+    (* the values of the stack with the pointer of the block on
+       it *)
+    W(fun (asl,w) ->
+      if not (hd_is "ALL2" w) then ALL_TAC else
+      (REWRITE_TAC[ALL2] THEN
+       CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+       CONJ_TAC THENL
+        [(* the block: its pointer is the address that the store
+             wrote at, and its values the roots of the front *)
+         W(fun (asl,w as gl) ->
+           let st = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_store_unused_alt" (lhand c)) gl in
+           let aa = el 0 (snd (strip_comb (lhand (concl st)))) in
+           let ys1 = el 1 (snd (strip_comb
+                       (el 2 (snd (strip_comb
+                         (lhand (concl st))))))) in
+           REWRITE_TAC[v_inv_def] THEN ASM_REWRITE_TAC[] THEN
+           EXISTS_TAC aa THEN EXISTS_TAC ys1 THEN
+           REPEAT CONJ_TAC THEN
+           TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+           TRY (SOLVED (REWRITE_TAC[FLOOKUP_UPDATE])) THEN
+           TRY (SOLVED (W(fun gl ->
+             let old = the_asm (fun c -> hd_is "ALL2" c &&
+                         el 2 (snd (strip_comb c)) = ys1) gl in
+             MATCH_ACCEPT_TAC (MATCH_MP EVERY2_v_inv_alloc_stack
+               (CONJ (a_vtr gl) old))))) THEN
+           W(fun gl ->
+             let le = the_asm (fun c -> is_eq c &&
+                        hd_is "LENGTH" (lhand c) &&
+                        hd_is "LENGTH" (rand c)) gl in
+             REWRITE_TAC[le]));
+         (* and the rest of the stack, with the transfer *)
+         W(fun (asl,w as gl) ->
+           let stk = el 1 (snd (strip_comb w)) in
+           let old = the_asm (fun c -> hd_is "ALL2" c &&
+                       el 1 (snd (strip_comb c)) = stk) gl in
+           MATCH_ACCEPT_TAC (MATCH_MP EVERY2_v_inv_alloc_stack
+             (CONJ (a_vtr gl) old)))])) THEN
+    (* and the invariant of every reference that the new stack
+       reaches: the old stack reached it, and the allocation keeps
+       what the invariant says of it (bc_ref_inv_step) *)
+    REPEAT STRIP_TAC THEN
+    W(fun (asl,w as gl) ->
+      let rr = the_asm (fun c -> hd_is "reachable_refs" c) gl in
+      ASSUME_TAC (MATCH_MP reachable_refs_cons rr)) THEN
+    W(fun (asl,w as gl) ->
+      let n = el 1 (snd (strip_comb w)) in
+      let bri = the_asm (fun c ->
+                  let vs,bd = strip_forall c in
+                  length vs = 1 && is_imp bd &&
+                  hd_is "bc_ref_inv" (rand bd)) gl in
+      let rr = the_asm (fun c -> hd_is "reachable_refs" c &&
+                 not (can (find_term (hd_is "dataSem_Block"))
+                        (el 0 (snd (strip_comb c))))) gl in
+      let inn = the_asm (fun c -> hd_is "IN" c &&
+                  hd_is "FDOM" (rand c) &&
+                  el 0 (snd (strip_comb c)) = n) gl in
+      let inv = MP (SPEC n bri) (CONJ rr inn) in
+      let hsr = the_asm (hd_is "heap_store_rel") gl in
+      let stp = REWRITE_RULE[IMP_CONJ] bc_ref_inv_step in
+      let th = MATCH_MP (MATCH_MP (MATCH_MP (MATCH_MP stp
+                 (a_vtr gl)) inn) hsr) inv in
+      MATCH_MP_TAC (REWRITE_RULE[IMP_IMP] th)) THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (REWRITE_TAC[])) THEN
+    TRY (SOLVED (W(fun gl ->
+      let nd = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                 hd_is "FDOM" (rand (rand c))) gl in
+      let nsd = the_asm (fun c -> is_neg c &&
+                  hd_is "isSomeDataElement" (rand c)) gl in
+      MATCH_ACCEPT_TAC (MATCH_MP IMAGE_FUPDATE_fresh
+        (CONJ nd nsd))))) THEN
+    MESON_TAC[])
 ### word64_alt_thm
   (* the attempt: the proof of the source names abs_ml_inv_def,
      el_length_def, Word64Rep_def, IMP_heap_store_unused_alt,
@@ -16300,8 +16701,6 @@
                         length vs = 1 && is_neg bd) gl in
              MATCH_ACCEPT_TAC (MATCH_MP gc_kind_not_gen_any
                (CONJ gk ng))))) THEN
-    (* the unused space: what the store lemma says, with the length
-       of the block taken off the first part of it *)
     (* the unused space: what the store lemma says, with the length
        of the block taken off the first part of it.  The statement
        says el_length (BlockRep tag rs) of the pointer and of the
@@ -16627,10 +17026,16 @@
                             hd_is "FDOM" (rand c) &&
                             el 0 (snd (strip_comb c)) = n &&
                             not (can (find_term (hd_is "|+")) c)) gl in
-                MATCH_ACCEPT_TAC (MATCH_MP bc_ref_inv_alloc_gen
-                  (CONJ neq (CONJ inn (CONJ hsr (CONJ (a_vtr gl)
-                    (CONJ (a_dtr gl) (CONJ (a_ltr gl)
-                      inv)))))))))))) THEN
+                (MATCH_MP_TAC (REWRITE_RULE[IMP_IMP]
+                   (MATCH_MP (MATCH_MP (MATCH_MP (MATCH_MP
+                     (REWRITE_RULE[IMP_CONJ] bc_ref_inv_step)
+                     (a_vtr gl)) inn) hsr) inv)) THEN
+                 REPEAT CONJ_TAC THEN
+                 TRY (SOLVED
+                       (ACCEPT_TAC (MATCH_MP (a_ltr gl) neq))) THEN
+                 TRY (SOLVED (ACCEPT_TAC (a_dtr gl))) THEN
+                 TRY (SOLVED (MESON_TAC[])) THEN
+                 ASM_REWRITE_TAC[FLOOKUP_UPDATE])))))) THEN
     ALL_TAC)
 ### v_inv_Thunk_insert_lemma
   (* the attempt: the proof of the source names v_inv_def,
