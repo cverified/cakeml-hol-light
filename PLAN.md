@@ -1639,27 +1639,39 @@ references, and the element replaced sits in the first half
 out).  `gen_state_ok_update_byte` gives the other conjunct.  Three
 routes, in the order they look worth trying:
 
-1. strengthen `heap_split_replace` (port-own, above
-   `v_inv_IMP_lemma`) from the bound it gives on the first half to
-   one on the second as well, plus `MEM v h2' ==> MEM u h2`.  Its
-   proof ends in `CONV_TAC TAUT` and that does not carry the extra
-   conjuncts; `MESON_TAC[]` in its place goes "solve_goal: Too
-   deep", so the endgame has to be written out rather than left to
-   a decision procedure.  (Tried on 2026-10-27, both ways.)
-2. derive the store equation
-   `heap_store (heap_length ha) [Bytes be fl ys ws]
-      (ha ++ [Bytes be fl xs ws] ++ hb) = (...,T)`
-   from `heap_store_lemma` and `samelen_bytes`, then write a
-   general `heap_store_el` (the clauses that `heap_store_RefBlock`,
-   `heap_store_BlockRep` and `heap_store_ThunkBlock` each state for
-   their kind) and a `gc_kind_store_nonref`.  More work for this
-   theorem, but it would let the byte proof use
-   `heap_ok_store_el`, `unused_store_el` and the arms machinery
-   instead of the byte-specific lemmas, and it is the lemma the
-   three per-kind ones should be derived from.
-3. follow HOL4 inline (`heap_split_APPEND_if`, the length facts and
-   a case analysis on where the cut falls), which is what its own
-   proof does.
+The route is worked out and written at the end of
+`tools/wip-update_byte.ml`, where the ninth proved lemma
+(`heap_lookup_at`, the element a heap holds at the length of a
+prefix) is the first step of it.  In short: the element replaced is
+in the first half of the split (`heap_lookup_at`,
+`heap_lookup_heap_split`, and `EVERY isRef h2` keeps a byte array
+out of the second), so `heap_length ha < e`; then
+`heap_split_heap_length` and a **new list lemma** (HOL Light has no
+`APPEND_EQ_APPEND`: prove `l1 ++ l2 = m1 ++ m2 ==> (?l. l1 = m1 ++ l
+/\ m2 = l ++ l2) \/ (?l. m1 = l1 ++ l /\ l2 = l ++ m2)` by
+induction and put it in `ml/lib/lemmas.ml`) give `h1 = ha ++ u :: p`
+and `hb = p ++ h2`, and `heap_split_length` of `gen_gc_partial`
+gives the split of the new heap with the same second half.
+
+Two routes that are dead ends as they stand, both tried on
+2026-10-27: rewriting with `heap_split_APPEND_if` and bashing the
+case tree (a false goal is left, and MESON goes "solve_goal: Too
+deep"), and strengthening the port's `heap_split_replace` (its
+`CONV_TAC TAUT` endgame does not carry a conjunct about the second
+half).
+
+A third route worth weighing first, because it would pay for
+itself: derive the store equation
+`heap_store (heap_length ha) [Bytes be fl ys ws] (ha ++ [Bytes be fl
+xs ws] ++ hb) = (...,T)` from `heap_store_lemma` and
+`samelen_bytes`, write the general `heap_store_el` (the clauses that
+`heap_store_RefBlock`, `heap_store_BlockRep` and
+`heap_store_ThunkBlock` each state for their own kind) and a
+`gc_kind_store_nonref`.  Then the byte proof uses
+`heap_ok_store_el`, `unused_store_el` and the arms machinery like
+the other three, the three per-kind store lemmas are derivable from
+one, and `ptrs_store_LUPDATE` can be derived from
+`ptrs_store_el` at the same time.
 
 
 

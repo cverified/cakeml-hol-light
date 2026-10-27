@@ -165,3 +165,64 @@ let BA_trans = prove
       REWRITE_TAC[MATCH_MP dest_thunk_insert_ByteArray lk] THEN
       DISCH_THEN ACCEPT_TAC;
       REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[lookup_insert]]));;
+
+(* the element that a heap holds at the length of a prefix *)
+let heap_lookup_at = prove
+ (  `!ha u hb. heap_lookup (heap_length ha) (ha ++ [u] ++ hb) = SOME u`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[GSYM APPEND_ASSOC;
+              data_to_word_memoryProof_heap_lookup_APPEND;
+              LT_REFL; SUB_REFL; heap_length_clauses;
+              ADD_CLAUSES] THEN
+  COND_CASES_TAC THEN
+  REWRITE_TAC[APPEND; heap_lookup_def] THEN
+  POP_ASSUM MP_TAC THEN
+  REWRITE_TAC[] THEN
+  MESON_TAC[el_length_NOT_0; ARITH_RULE
+    `!n. ~(n = 0) ==> 0 < n`]);;
+
+(* ------------------------------------------------------------------ *)
+(* What is left, with the route worked out on 2026-10-27.             *)
+(*                                                                    *)
+(* gc_kind_byte_update:                                               *)
+(*   gc_kind_inv conf a sp sp1 gens (ha ++ [Bytes be fl xs ws] ++ hb) *)
+(*   /\ LENGTH xs = LENGTH ys                                         *)
+(*   ==> gc_kind_inv conf a sp sp1 gens                               *)
+(*         (ha ++ [Bytes be fl ys ws] ++ hb)                          *)
+(*                                                                    *)
+(* The generational case asks for a split whose first half holds no   *)
+(* reference and whose second holds only references.  The element      *)
+(* replaced is in the first half: heap_lookup_at says the heap holds   *)
+(* it at heap_length ha, heap_lookup_heap_split says a lookup lands    *)
+(* in the half its address falls in, and EVERY isRef h2 keeps a byte   *)
+(* array (~isRef) out of the second -- so heap_length ha < e.  Then    *)
+(* the halves of the new heap are the old ones with the element        *)
+(* replaced, and the second is unchanged:                             *)
+(*                                                                    *)
+(*   heap_split e (ha ++ [u] ++ hb) = SOME (h1,h2) /\                 *)
+(*   el_length u = el_length v /\ heap_length ha < e                  *)
+(*   ==> ?h1'. heap_split e (ha ++ [v] ++ hb) = SOME (h1',h2) /\      *)
+(*             (!z. MEM z h1' ==> MEM z h1 \/ z = v)                  *)
+(*                                                                    *)
+(* Two routes were tried and are dead ends as they stand: rewriting    *)
+(* with heap_split_APPEND_if and bashing the cases (the case tree      *)
+(* leaves a false goal, and MESON goes "solve_goal: Too deep"), and    *)
+(* strengthening the port's heap_split_replace (its CONV_TAC TAUT      *)
+(* endgame does not carry an h2 conjunct).                            *)
+(*                                                                    *)
+(* The route that does work on paper:                                 *)
+(*  - heap_split_heap_length gives h1 ++ h2 = ha ++ [u] ++ hb and      *)
+(*    heap_length h1 = e;                                             *)
+(*  - with heap_length ha < e, split that append: HOL Light has no     *)
+(*    APPEND_EQ_APPEND, so prove                                      *)
+(*      !l1 l2 m1 m2. l1 ++ l2 = m1 ++ m2                             *)
+(*      ==> (?l. l1 = m1 ++ l /\ m2 = l ++ l2) \/                    *)
+(*          (?l. m1 = l1 ++ l /\ l2 = l ++ m2)                        *)
+(*    by induction on l1 (and put it in ml/lib/lemmas.ml);            *)
+(*  - the second disjunct contradicts heap_length ha < e by            *)
+(*    heap_length_APPEND, and the first gives h1 = ha ++ u :: p and    *)
+(*    hb = p ++ h2;                                                   *)
+(*  - so the new heap is (ha ++ v :: p) ++ h2 and heap_split_length    *)
+(*    (gen_gc_partial) gives its split, with                          *)
+(*    heap_length (ha ++ v :: p) = heap_length (ha ++ u :: p) = e.    *)
+(* ------------------------------------------------------------------ *)
