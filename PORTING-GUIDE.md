@@ -3306,3 +3306,89 @@ second load.  That is paid once per statement and cloned per try,
 and it buys a try that means what it says.  So: `trybase` for the
 statement being proved, and the verify's session only for reading
 a goal state when nothing is being landed.
+
+## 58. A helper lemma of a store names its heaps in a hypothesis
+
+A helper lemma of a proof is applied to the assumptions with
+`MATCH_MP` and then to the goal with `MATCH_ACCEPT_TAC`, so every
+variable of it is fixed from one of the two sides -- and the
+matching is _syntactic_.  A variable that stands only in the
+conclusion is fixed by the goal, which is fine as long as it is a
+variable there too; a variable that stands only in the conclusion
+and is a _compound term_ in the goal is not fixed at all, and the
+lemma comes out about its own variable.
+
+That is what makes a transfer of a store awkward.  `BA_trans` says
+what a store into a byte array does to the invariant:
+
+```
+  (!w1 w2. v_inv conf w1 refs (w2,f,tf,ha ++ [Bytes be fl xs ws] ++ hb)
+           ==> v_inv conf w1 (insert ptr (ByteArray fl ys) refs)
+                 (w2,f,tf,ha ++ [Bytes be fl ys ws] ++ hb))
+```
+
+and the proof hands it to `bc_ref_inv_update_other_gen`, which
+wants that transfer and the old invariant together: the two have
+to be about the _same_ heap, so the heap of the transfer must be
+the goal's heap and not the lemma's `ha ++ [Bytes be fl xs ws] ++
+hb`.  In `update_byte_ref_thm` the `ws` of the goal is
+`REPLICATE (LENGTH xs DIV (dimindex (:'a) DIV 8) + 1) 0w`, not a
+variable, so nothing fixed it and the application failed with
+`MP: theorems do not agree`.
+
+The cure is to give the lemma a hypothesis that the proof has
+anyway and that mentions what the conclusion needs:
+
+```
+  heap_lookup p (ha ++ [Bytes be fl xs ws] ++ hb) =
+    SOME (Bytes be fl xs ws) /\ LENGTH xs = LENGTH ys
+```
+
+-- the lookup of the element fixes `ha`, `hb`, `be`, `fl`, `xs`,
+`ws` and `p`, the length equation fixes `ys`, and the rest
+(`conf`, `f`, `tf`) are variables of the goal as well.  The
+hypothesis is not used in the proof of the lemma at all; it is
+there to say which store is meant.  The same shape is what
+`heap_lookup_byte_other` and `bc_ref_inv_update_byte_at` take, and
+it is why `unused_space_inv_byte_update` of the source reads the
+way it does.
+
+So when a helper is written: list the variables of its conclusion,
+and for each one name the hypothesis that fixes it.  A lemma with
+no hypothesis at all (`isSomeDataElement_byte_update`) cannot be
+applied this way and is used the other way round -- the proof
+states the instance it wants as a `SUBGOAL_THEN` built from the
+goal's own terms and closes it with `MATCH_ACCEPT_TAC`.
+
+## 59. find_term finds the old heap first
+
+A picker that reads a heap off a term with `find_term` gets the
+_first_ one in the term order.  In a goal that has both heaps of a
+store that is the one written into, not the one written:
+
+```
+  !m y. ~(m = heap_length ha) /\ heap_lookup m OLD = SOME y
+        ==> heap_lookup m NEW = SOME y
+```
+
+so `byte_heap` of that goal is `OLD`, and a proof that wanted the
+new element got `el_length u = el_length u` and an `MP` that did
+not agree.  The pickers of a store therefore come in pairs:
+`byte_heap t` and `byte_heap_not u t`, the second skipping the
+append whose element is the one given.
+
+## 60. port.py writes without a preface; portfile is the tool
+
+`python3 -I tools/port.py <theory>` writes into `ml/` directly --
+and a plain run of it writes **every** file of the load order,
+without the prefaces, because `tools/preface.py` runs after the
+port and only `tools/bin/dryport` arranges that.  The result is a
+clean `git status` turning into 113 modified files whose prefaces
+have been cut back to two lines.
+
+`tools/bin/portfile <theory> ...` is the tool: it ports the whole
+load order into `tmp/dry` (50 seconds, prefaces and all) and
+copies out only the files asked for.  The recovery, if port.py has
+already been run, is `git checkout -- ml/` with the hand-written
+files of `ml/lib/` saved first -- they are sources, not output,
+and a checkout would take the round's work on them with it.

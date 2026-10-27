@@ -1611,76 +1611,86 @@ from HOL4's lemma, `dest_thunk_insert_MutBlock`, `ptrs_store_el`,
 `LUPDATE_LENGTH` is in `ml/lib/lemmas.ml` with the other three
 theorems about `LUPDATE`.
 
-What is left of the four is `update_byte_ref_thm` (a store into a
-byte array, HOL4 `data_to_word_memoryProofScript.sml:5934`), which
-replaces the element of the heap in place (`h1 ++ [Bytes be fl ys
-ws] ++ h2`) instead of storing into it, so it needs its own
-account of the heap rather than `heap_store`.
-
-Eight of its lemmas are proved and stand in
-`tools/wip-update_byte.ml` (which nothing loads): `samelen_bytes`,
+`update_byte_ref_thm` is proved as well, and with it **all five
+update theorems**.  It is the one that does not go through
+`heap_store`: the store writes an array of bytes of the length it
+replaces, so the heap is given as an append (`h1 ++ [Bytes be fl ys
+ws] ++ h2`) and the proof needs its own account of it.  Its block
+(the `EXTRA_BEFORE` of its statement) holds, in the order it needs
+them: `byte_heap` and `byte_heap_not` (the pickers that read a
+heap of such a store off a term, entry 59), `samelen_bytes`,
 `isSomeDataElement_Bytes` and `isSomeDataElement_byte_update`,
 `heap_ok_byte_update`, `dest_thunk_insert_ByteArray`,
-`ByteArray_in_domain`, `reach_refs_update_byte` (a byte array has
-no edge to another reference, so `ref_edge` does not change) and
-`BA_trans` (over the file's own `v_inv_IMP` and
-`v_inv_ByteArray_insert`).  The file also already has
-`gen_state_ok_update_byte`, `unused_space_inv_byte_update`,
-`blocks_unique_insert_ByteArray`, `heap_split_replace` and
-`heap_lookup_replace`, which are the port's own helpers for this
-replacement.
+`ByteArray_in_domain`, `reach_refs_update_byte`, `BA_trans`,
+`heap_lookup_at`, `heap_split_replace2`, `isRef_Bytes`,
+`gc_kind_byte_update`, `APPEND_SINGLE`,
+`ref_ptr_annot_ByteArray`, `heap_lookup_other_replace`,
+`heap_lookup_byte_other` and `bc_ref_inv_update_byte_at`; HOL4's
+`APPEND_EQ_APPEND` is in `ml/lib/lemmas.ml` with the other
+theorems of `listTheory` that the port needs.
 
-**What is left: `gc_kind_byte_update`**, the arm of the reference
-written, and the proof.  The hard one is the first: in the
+The hard one of those was `gc_kind_byte_update`: in the
 generational case `gc_kind_inv` asks for a split of the heap whose
 first half holds no reference and whose second holds only
-references, and the element replaced sits in the first half
-(a byte array is not a reference, so `EVERY isRef h2` keeps it
-out).  `gen_state_ok_update_byte` gives the other conjunct.  Three
-routes, in the order they look worth trying:
+references.  The element replaced is in the first half
+(`heap_lookup_at` says the heap holds it at `heap_length ha`,
+`heap_lookup_heap_split` says a lookup lands in the half its
+address falls in, and `EVERY isRef h2` keeps a byte array out of
+the second), so `heap_length ha < e`; then `heap_split_replace2`
+gives the split of the new heap with the same second half, over
+`heap_split_heap_length`, `APPEND_EQ_APPEND` and
+`heap_split_length` of `gen_gc_partial`.  Two routes that are dead
+ends as they stand: rewriting with `heap_split_APPEND_if` and
+bashing the case tree (a false goal is left, and MESON goes
+"solve_goal: Too deep"), and strengthening the port's
+`heap_split_replace` (its `CONV_TAC TAUT` endgame carries no
+conjunct about the second half).
 
-The route is worked out and written at the end of
-`tools/wip-update_byte.ml`, where the ninth proved lemma
-(`heap_lookup_at`, the element a heap holds at the length of a
-prefix) is the first step of it.  In short: the element replaced is
-in the first half of the split (`heap_lookup_at`,
-`heap_lookup_heap_split`, and `EVERY isRef h2` keeps a byte array
-out of the second), so `heap_length ha < e`; then
-`heap_split_heap_length` and a **new list lemma** (HOL Light has no
-`APPEND_EQ_APPEND`: prove `l1 ++ l2 = m1 ++ m2 ==> (?l. l1 = m1 ++ l
-/\ m2 = l ++ l2) \/ (?l. m1 = l1 ++ l /\ l2 = l ++ m2)` by
-induction and put it in `ml/lib/lemmas.ml`) give `h1 = ha ++ u :: p`
-and `hb = p ++ h2`, and `heap_split_length` of `gen_gc_partial`
-gives the split of the new heap with the same second half.
+What the five cost: `verifyquick` of the file is **783 seconds**
+with `AXIOMS-ADDED 102` and `OWN-AXIOMS 15`, where the round
+before the byte array was 741 seconds and 103.
 
-Two routes that are dead ends as they stand, both tried on
-2026-10-27: rewriting with `heap_split_APPEND_if` and bashing the
-case tree (a false goal is left, and MESON goes "solve_goal: Too
-deep"), and strengthening the port's `heap_split_replace` (its
-`CONV_TAC TAUT` endgame does not carry a conjunct about the second
-half).
+## Where to pick up (95 of the 611 sections unproved)
 
-A third route worth weighing first, because it would pay for
-itself: derive the store equation
-`heap_store (heap_length ha) [Bytes be fl ys ws] (ha ++ [Bytes be fl
-xs ws] ++ hb) = (...,T)` from `heap_store_lemma` and
-`samelen_bytes`, write the general `heap_store_el` (the clauses that
-`heap_store_RefBlock`, `heap_store_BlockRep` and
-`heap_store_ThunkBlock` each state for their own kind) and a
-`gc_kind_store_nonref`.  Then the byte proof uses
-`heap_ok_store_el`, `unused_store_el` and the arms machinery like
-the other three, the three per-kind store lemmas are derivable from
-one, and `ptrs_store_LUPDATE` can be derived from
-`ptrs_store_el` at the same time.
+The five update theorems are in, so the next family is the one
+that uses them: the `memory_rel` theorems of a store
+(`memory_rel_Update`, `memory_rel_UpdateCons`,
+`memory_rel_UpdateThunk_NotEvaluated`,
+`memory_rel_UpdateThunk_Evaluated`,
+`heap_in_memory_store_UpdateByte`), which need the word level
+(`word_ml_inv_rearrange`, `abs_ml_inv_stack_permute`,
+`get_real_addr_get_addr`) under them.
 
+Two things to weigh before starting there:
 
+- `abs_ml_inv_stack_permute` keeps the heap and the references and
+  changes only the stack, so the three transfers of the generic
+  machinery are identities and what is left is the `all_ts`
+  bookkeeping.  `bc_ref_inv_update_gen` almost fits: it asks for a
+  `ptr` that the permute has none of.  The honest fix is to
+  strengthen it -- replace the `ptr` hypotheses by what they are
+  used for (`lookup n refs2 = lookup n refs` and the transfer of
+  the one element at `x`) and derive the present statement from
+  the stronger one in the same block, so the four landed proofs do
+  not change.
+- a batch of short ones is worth clearing first, because they are
+  spread over the file and each is a few lines of HOL4:
+  `memory_rel_bignum_cmp` (11 lines, over
+  `memory_rel_Number_bignum_header` and `memory_rel_tail`),
+  `word_eq_add_clock` (13), `bytes_to_word_eq_lemma` (14),
+  `memory_rel_copy_array_NONE` (15),
+  `memory_rel_RefPtr_gen_IMP` (16), `word_cmp_loop_thm` (14) --
+  and the three that entry 43 owes (`word_eq_LESS_EQ`,
+  `vb_eq_size_IMP_vb_size`, `do_eq_IFF_vb_eq_size`), for which
+  that entry writes the recipe.
+
+`memory_rel_ptr_eq` looks like the cheapest of all (three lines of
+HOL4) and is not: it leans on `memory_rel_pointer_eq`, which HOL4
+states as the value of an ML expression and the port does not
+state (PENDING.md), so its eighty lines of induction have to be a
+lemma of the block first.
 
 A cleanup that is owed: `ptrs_store_LUPDATE` (in the block of
 `update_ref_thm1`) is the special case of `ptrs_store_el` (in the
 block of `update_mutblock_thm`) for a `RefBlock` and the head of
 the roots, and one of them should be derived from the other.
-
-The sessions are gone with the maintenance, so the first step of
-the next round is `tools/bin/pfbase` (half an hour) to build the
-closure of the file again; `tools/bin/verifyquick` clones it.
-
