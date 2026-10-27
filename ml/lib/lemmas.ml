@@ -180,6 +180,25 @@ let EVERY2_LUPDATE_same = prove
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
 
 (* ------------------------------------------------------------------ *)
+(* Two steps that a proof about the headers of data_to_word takes:    *)
+(* a word that bounds two lengths says they are one, and a number is  *)
+(* below zero exactly when zero is not below it.                      *)
+(* ------------------------------------------------------------------ *)
+
+(* two lengths that a word of each bounds are one *)
+let n2w_eq_LENGTH = prove
+ (`!l1 l2. l1 < dimword (:'a) /\ l2 < dimword (:'a) /\
+           (n2w l1:'a word) = n2w l2
+           ==> l1 = l2`,
+  REWRITE_TAC[dimword] THEN MESON_TAC[WORD_EQ_IMP]);;
+
+(* a number is below zero exactly when zero is not below it *)
+let int_sign_iff = prove
+ (`((&0:int) <= i1 <=> (&0:int) <= i2)
+   ==> ((i1:int) < &0 <=> (i2:int) < &0)`,
+  REWRITE_TAC[GSYM INT_NOT_LE] THEN CONV_TAC TAUT);;
+
+(* ------------------------------------------------------------------ *)
 (* HOL4's APPEND_EQ_APPEND of listTheory, which the proof of the byte *)
 (* array update of data_to_word_memoryProof cuts a heap with.         *)
 (* ------------------------------------------------------------------ *)

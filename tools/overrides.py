@@ -2534,7 +2534,8 @@ let bc_ref_inv_update_gen = prove
               ==> v_inv conf w1 refs2 (w2,f,tf,heap2)) /\
      (!w. dest_thunk w refs = NotThunk
           ==> dest_thunk w refs2 = NotThunk) /\
-     (!m. ~(m = ptr) ==> sptree_lookup m refs2 = sptree_lookup m refs) /\
+     (!m. ~(m = ptr)
+          ==> sptree_lookup m refs2 = sptree_lookup m refs) /\
      (!m y. ~(m = FAPPLY f ptr) /\ heap_lookup m heap = SOME y
             ==> heap_lookup m heap2 = SOME y) /\
      bc_ref_inv conf n refs (f,tf,heap,be')
@@ -4125,6 +4126,137 @@ let bc_ref_inv_update_byte_at = prove
                hd_is "heap_length" (rand c)) gl in
     ONCE_REWRITE_TAC[pe]) THEN
   ASM_REWRITE_TAC[heap_lookup_at]);;
+""",
+
+  ('data_to_word_memoryProof', 'memory_rel_bignum_cmp'): r"""
+(* the port's own: what the proof of memory_rel_bignum_cmp needs.
+   The invariant says of a bignum both that the element of the heap
+   holds its header (memory_rel_Number_bignum_header) and what the
+   header is made of (memory_rel_Number_bignum_IMP_ALT), of one
+   address but with a root of its own each time, so the two are put
+   together into one statement (bignum_header) first.  Of two
+   bignums whose elements are not one, the signs then cannot be one
+   when the lengths are (bignum_cmp_sign), because a header is the
+   sign and the length *)
+
+(* the element of the heap that holds a bignum is its header: what
+   the invariant says of the number twice over, as the element and
+   as the header, is of one address *)
+let bignum_elt_eq = prove
+ (cake_as_vars (fun () ->
+    `(v:'a word_loc) = wordLang_Word w /\
+     get_real_addr c st w = SOME a /\ m a = wordLang_Word x /\
+     v = wordLang_Word w2 /\ get_real_addr c st w2 = SOME a2 /\
+     m a2 = wordLang_Word y
+     ==> (x:'a word) = y`),
+  REPEAT STRIP_TAC THEN
+  ASM_MESON_TAC[injectivity "word_loc"; injectivity "option"]);;
+
+(* of two bignums whose elements are not one: if the headers have
+   one length then the signs are not one, because a header is the
+   sign and the length *)
+let bignum_cmp_sign = prove
+ (cake_as_vars (fun () ->
+    `(x1:'a word) = make_header c (b2w ((i1:int) < (&0)) << 2 ||
+       (n2w 3)) l1 /\
+     x2 = make_header c (b2w ((i2:int) < (&0)) << 2 || (n2w 3))
+       l2 /\
+     decode_length c x1 = n2w l1 /\ decode_length c x2 = n2w l2 /\
+     l1 < dimword (:'a) /\ l2 < dimword (:'a) /\
+     ((x1 && (n2w 16) = (n2w 0)) <=> (&0) <= i1) /\
+     ((x2 && (n2w 16) = (n2w 0)) <=> (&0) <= i2)
+     ==> (~(x1 = x2)
+          ==> decode_length c x1 = decode_length c x2
+          ==> ~(((n2w 16) && x1 = (n2w 0)) <=>
+                ((n2w 16) && x2 = (n2w 0))))`),
+  STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  DISCH_TAC THEN DISCH_TAC THEN
+  (* the signs, which the two iffs of the assumptions give once the
+     AND of each is in the order that the rewriter puts it *)
+  W(fun (asl,_) ->
+    let sgs = mapfilter (fun (_,th) ->
+                let c = concl th in
+                if is_eq c && type_of (lhand c) = bool_ty &&
+                   can (find_term (hd_is "word_and")) (lhand c)
+                then REWRITE_RULE[WORD_AND_SYM] th else fail()) asl in
+    REWRITE_TAC (WORD_AND_SYM :: sgs)) THEN
+  STRIP_TAC THEN
+  (* the two lengths are one, because the headers' are *)
+  SUBGOAL_THEN `(l1:num) = l2` ASSUME_TAC THENL
+   [MATCH_MP_TAC n2w_eq_LENGTH THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+  (* and so are the signs *)
+  FIRST_ASSUM (fun th -> ASSUME_TAC (MATCH_MP int_sign_iff th)) THEN
+  (* so the headers are one, which the elements are not *)
+  FIRST_X_ASSUM (fun ne ->
+    if not (is_neg (concl ne)) || not (is_eq (rand (concl ne)))
+    then fail() else MP_TAC (NOT_ELIM ne)) THEN
+  DISCH_THEN MATCH_MP_TAC THEN
+  ASM_REWRITE_TAC[]);;
+
+(* what the invariant says of a bignum, with the element of the
+   heap read as the header that it is *)
+let bignum_header = prove
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,v) :: vars) /\
+     ~(small_int (:'a) i) /\ good_dimindex (:'a)
+     ==> (?w a x.
+            v = wordLang_Word w /\
+            get_real_addr c st w = SOME a /\
+            m a = wordLang_Word (x:'a word) /\
+            x = make_header c (b2w ((i:int) < (&0)) << 2 ||
+                  (n2w 3))
+                  (LENGTH (n2mw (num_of_int (abs i)):('a word)
+                     list)) /\
+            decode_length c x = n2w (LENGTH (n2mw (num_of_int
+              (abs i)):('a word) list)) /\
+            LENGTH (n2mw (num_of_int (abs i)):('a word) list)
+              < dimword (:'a) /\
+            ((x && (n2w 16) = (n2w 0)) <=> (&0) <= i))`),
+  STRIP_TAC THEN
+  (* the element of the heap, and the header that the invariant
+     says of the same address *)
+  W(fun gl ->
+    let mr = the_asm (hd_is "memory_rel") gl in
+    let ns = the_asm (fun c -> is_neg c &&
+               hd_is "small_int" (rand c)) gl in
+    let gd = the_asm (hd_is "good_dimindex") gl in
+    STRIP_ASSUME_TAC (MATCH_MP memory_rel_Number_bignum_IMP_ALT
+      (CONJ mr (CONJ ns gd))) THEN
+    STRIP_ASSUME_TAC (MATCH_MP memory_rel_Number_bignum_header
+      (CONJ mr (CONJ ns gd)))) THEN
+  W(fun (asl,gw as gl) ->
+    let mr = the_asm (hd_is "memory_rel") gl in
+    let margs = snd (strip_comb (concl mr)) in
+    let mem = el 6 margs in
+    let vt = rand (lhand (el 8 margs)) in
+    let elts = mapfilter (fun (_,th) ->
+      let c = concl th in
+      if is_eq c && is_comb (lhand c) &&
+         rator (lhand c) = mem && hd_is "wordLang_Word" (rand c)
+      then th else fail()) asl in
+    let triple e =
+      let a = rand (lhand (concl e)) in
+      let ga = the_asm (fun c -> is_eq c &&
+                 hd_is "get_real_addr" (lhand c) &&
+                 rand (rand c) = a) gl in
+      let wv = el 2 (snd (strip_comb (lhand (concl ga)))) in
+      let vw = the_asm (fun c -> is_eq c && lhand c = vt &&
+                 rand c = list_mk_icomb "wordLang_Word" [wv]) gl in
+      (vw,ga,e) in
+    let alt = find (fun e -> is_var (rand (rand (concl e)))) elts in
+    let hdr = find (fun e ->
+                not (is_var (rand (rand (concl e))))) elts in
+    let (va,ga,ma) = triple alt in
+    let (vh,gh,mh) = triple hdr in
+    let xeq = MATCH_MP bignum_elt_eq
+                (CONJ va (CONJ ga (CONJ ma
+                  (CONJ vh (CONJ gh mh))))) in
+    MAP_EVERY EXISTS_TAC
+      [el 2 (snd (strip_comb (lhand (concl ga))));
+       rand (lhand (concl ma)); rand (rand (concl ma))] THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    TRY (SOLVED (ACCEPT_TAC xeq))));;
 """,
 
   ('data_to_word_memoryProof', 'el_thm'): r"""

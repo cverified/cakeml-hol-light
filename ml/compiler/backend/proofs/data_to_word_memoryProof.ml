@@ -7822,7 +7822,8 @@ let bc_ref_inv_update_gen = prove
               ==> v_inv conf w1 refs2 (w2,f,tf,heap2)) /\
      (!w. dest_thunk w refs = NotThunk
           ==> dest_thunk w refs2 = NotThunk) /\
-     (!m. ~(m = ptr) ==> sptree_lookup m refs2 = sptree_lookup m refs) /\
+     (!m. ~(m = ptr)
+          ==> sptree_lookup m refs2 = sptree_lookup m refs) /\
      (!m y. ~(m = FAPPLY f ptr) /\ heap_lookup m heap = SOME y
             ==> heap_lookup m heap2 = SOME y) /\
      bc_ref_inv conf n refs (f,tf,heap,be')
@@ -8181,7 +8182,9 @@ let update_ref_thm = prove
    FIRST_ASSUM (fun vr ->
      let c = concl vr in
      if not (hd_is "v_inv" c) ||
-        not (hd_is "dataSem_RefPtr" (el 1 (snd (strip_comb c)))) then fail()
+        not (hd_is "dataSem_RefPtr"
+               (el 1 (snd (strip_comb c))))
+        then fail()
      else STRIP_ASSUME_TAC (REWRITE_RULE[v_inv_def] vr)) THEN
    RULE_ASSUM_TRY (REWRITE_RULE ref_rws) THEN
    ASM_FS_TAC THEN
@@ -8323,7 +8326,8 @@ let update_ref_thm = prove
                        can (fun t -> hd_is "RefBlock" (rand t))
                          (rand c) &&
                        el 1 (snd (strip_comb (lhand c))) =
-                         el 2 (snd (strip_comb (lhand (concl st))))) gl in
+                         el 2 (snd (strip_comb
+                                  (lhand (concl st))))) gl in
             let zs = rand (rand (rand (concl hl))) in
             let len = the_asm (fun c -> is_eq c &&
                         hd_is "LENGTH" (lhand c) &&
@@ -8442,7 +8446,8 @@ let update_ref_thm = prove
         ASSUME_TAC (MP (SPEC n bri) (CONJ rr nin))) THEN
       (* the reference written, or another one *)
       W(fun (asl,w as gl) ->
-        ASM_CASES_TAC (mk_eq (el 1 (snd (strip_comb w)), g_ptr gl))) THEN
+        ASM_CASES_TAC (mk_eq (el 1 (snd (strip_comb w)),
+                              g_ptr gl))) THEN
       TRY VAR_EQ_TAC THEN
       (* the one written: its values are the new ones
          (bc_ref_inv_update_ref_at) *)
@@ -8753,7 +8758,9 @@ let update_ref_thm1 = prove
    FIRST_ASSUM (fun vr ->
      let c = concl vr in
      if not (hd_is "v_inv" c) ||
-        not (hd_is "dataSem_RefPtr" (el 1 (snd (strip_comb c)))) then fail()
+        not (hd_is "dataSem_RefPtr"
+               (el 1 (snd (strip_comb c))))
+        then fail()
      else STRIP_ASSUME_TAC (REWRITE_RULE[v_inv_def] vr)) THEN
    RULE_ASSUM_TRY (REWRITE_RULE ref_rws) THEN
    ASM_FS_TAC THEN
@@ -8926,7 +8933,8 @@ let update_ref_thm1 = prove
                        can (fun t -> hd_is "RefBlock" (rand t))
                          (rand c) &&
                        el 1 (snd (strip_comb (lhand c))) =
-                         el 2 (snd (strip_comb (lhand (concl st))))) gl in
+                         el 2 (snd (strip_comb
+                                  (lhand (concl st))))) gl in
             let zs = rand (rand (rand (concl hl))) in
             let len = the_asm (fun c -> is_eq c &&
                         hd_is "LENGTH" (lhand c) &&
@@ -9053,7 +9061,8 @@ let update_ref_thm1 = prove
         ASSUME_TAC (MP (SPEC n bri) (CONJ rr nin))) THEN
       (* the reference written, or another one *)
       W(fun (asl,w as gl) ->
-        ASM_CASES_TAC (mk_eq (el 1 (snd (strip_comb w)), g_ptr gl))) THEN
+        ASM_CASES_TAC (mk_eq (el 1 (snd (strip_comb w)),
+                              g_ptr gl))) THEN
       TRY VAR_EQ_TAC THEN
       (* the one written: its values are the new ones
          (bc_ref_inv_update_ref_at) *)
@@ -9801,7 +9810,8 @@ let update_thunk_thm = prove
                   with Failure _ -> false)) gl in
       MAP_EVERY ASSUME_TAC (CONJUNCTS (MATCH_MP TH_trans
         (CONJ inj (CONJ pin (CONJ lk (CONJ hl (CONJ viy
-          (CONJ dt (CONJ st (CONJ hl2 (CONJ (a_tr gl) viq)))))))))))) THEN
+          (CONJ dt (CONJ st (CONJ hl2
+            (CONJ (a_tr gl) viq)))))))))))) THEN
     (* the values of the stack: the thunk's value and the pointer in
        front of it, and the rest *)
     W(fun (asl,w) -> if not (hd_is "ALL2" w) then ALL_TAC else
@@ -16994,7 +17004,8 @@ let finalise_cons_none = prove
      (* and the call on its centre goes through *)
      W(fun gl ->
        CASES_ON_TAC (find_term (hd_is "dataSem_finalise_cons")
-                       (concl (big_asm gl)))) THEN TIDY THEN CLOSE_ARM THEN
+                       (concl (big_asm gl)))) THEN
+                       TIDY THEN CLOSE_ARM THEN
      REPEAT SPLIT_PAIR_ARG THEN TIDY THEN CLOSE_ARM THEN
      (* the pointer is not the key of the block that is finalised,
         because the references have nothing under it *)
@@ -21451,6 +21462,135 @@ let memory_rel_Number_bignum_header = prove
    DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM) (K ALL_TAC)) THEN
    AP_TERM_TAC THEN AP_TERM_TAC THEN CONV_TAC WORD_RULE));;
 
+(* the port's own: what the proof of memory_rel_bignum_cmp needs.
+   The invariant says of a bignum both that the element of the heap
+   holds its header (memory_rel_Number_bignum_header) and what the
+   header is made of (memory_rel_Number_bignum_IMP_ALT), of one
+   address but with a root of its own each time, so the two are put
+   together into one statement (bignum_header) first.  Of two
+   bignums whose elements are not one, the signs then cannot be one
+   when the lengths are (bignum_cmp_sign), because a header is the
+   sign and the length *)
+
+(* the element of the heap that holds a bignum is its header: what
+   the invariant says of the number twice over, as the element and
+   as the header, is of one address *)
+let bignum_elt_eq = prove
+ (cake_as_vars (fun () ->
+    `(v:'a word_loc) = wordLang_Word w /\
+     get_real_addr c st w = SOME a /\ m a = wordLang_Word x /\
+     v = wordLang_Word w2 /\ get_real_addr c st w2 = SOME a2 /\
+     m a2 = wordLang_Word y
+     ==> (x:'a word) = y`),
+  REPEAT STRIP_TAC THEN
+  ASM_MESON_TAC[injectivity "word_loc"; injectivity "option"]);;
+
+(* of two bignums whose elements are not one: if the headers have
+   one length then the signs are not one, because a header is the
+   sign and the length *)
+let bignum_cmp_sign = prove
+ (cake_as_vars (fun () ->
+    `(x1:'a word) = make_header c (b2w ((i1:int) < (&0)) << 2 ||
+       (n2w 3)) l1 /\
+     x2 = make_header c (b2w ((i2:int) < (&0)) << 2 || (n2w 3))
+       l2 /\
+     decode_length c x1 = n2w l1 /\ decode_length c x2 = n2w l2 /\
+     l1 < dimword (:'a) /\ l2 < dimword (:'a) /\
+     ((x1 && (n2w 16) = (n2w 0)) <=> (&0) <= i1) /\
+     ((x2 && (n2w 16) = (n2w 0)) <=> (&0) <= i2)
+     ==> (~(x1 = x2)
+          ==> decode_length c x1 = decode_length c x2
+          ==> ~(((n2w 16) && x1 = (n2w 0)) <=>
+                ((n2w 16) && x2 = (n2w 0))))`),
+  STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  DISCH_TAC THEN DISCH_TAC THEN
+  (* the signs, which the two iffs of the assumptions give once the
+     AND of each is in the order that the rewriter puts it *)
+  W(fun (asl,_) ->
+    let sgs = mapfilter (fun (_,th) ->
+                let c = concl th in
+                if is_eq c && type_of (lhand c) = bool_ty &&
+                   can (find_term (hd_is "word_and")) (lhand c)
+                then REWRITE_RULE[WORD_AND_SYM] th else fail()) asl in
+    REWRITE_TAC (WORD_AND_SYM :: sgs)) THEN
+  STRIP_TAC THEN
+  (* the two lengths are one, because the headers' are *)
+  SUBGOAL_THEN `(l1:num) = l2` ASSUME_TAC THENL
+   [MATCH_MP_TAC n2w_eq_LENGTH THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+  (* and so are the signs *)
+  FIRST_ASSUM (fun th -> ASSUME_TAC (MATCH_MP int_sign_iff th)) THEN
+  (* so the headers are one, which the elements are not *)
+  FIRST_X_ASSUM (fun ne ->
+    if not (is_neg (concl ne)) || not (is_eq (rand (concl ne)))
+    then fail() else MP_TAC (NOT_ELIM ne)) THEN
+  DISCH_THEN MATCH_MP_TAC THEN
+  ASM_REWRITE_TAC[]);;
+
+(* what the invariant says of a bignum, with the element of the
+   heap read as the header that it is *)
+let bignum_header = prove
+ (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm ((Number i,v) :: vars) /\
+     ~(small_int (:'a) i) /\ good_dimindex (:'a)
+     ==> (?w a x.
+            v = wordLang_Word w /\
+            get_real_addr c st w = SOME a /\
+            m a = wordLang_Word (x:'a word) /\
+            x = make_header c (b2w ((i:int) < (&0)) << 2 ||
+                  (n2w 3))
+                  (LENGTH (n2mw (num_of_int (abs i)):('a word)
+                     list)) /\
+            decode_length c x = n2w (LENGTH (n2mw (num_of_int
+              (abs i)):('a word) list)) /\
+            LENGTH (n2mw (num_of_int (abs i)):('a word) list)
+              < dimword (:'a) /\
+            ((x && (n2w 16) = (n2w 0)) <=> (&0) <= i))`),
+  STRIP_TAC THEN
+  (* the element of the heap, and the header that the invariant
+     says of the same address *)
+  W(fun gl ->
+    let mr = the_asm (hd_is "memory_rel") gl in
+    let ns = the_asm (fun c -> is_neg c &&
+               hd_is "small_int" (rand c)) gl in
+    let gd = the_asm (hd_is "good_dimindex") gl in
+    STRIP_ASSUME_TAC (MATCH_MP memory_rel_Number_bignum_IMP_ALT
+      (CONJ mr (CONJ ns gd))) THEN
+    STRIP_ASSUME_TAC (MATCH_MP memory_rel_Number_bignum_header
+      (CONJ mr (CONJ ns gd)))) THEN
+  W(fun (asl,gw as gl) ->
+    let mr = the_asm (hd_is "memory_rel") gl in
+    let margs = snd (strip_comb (concl mr)) in
+    let mem = el 6 margs in
+    let vt = rand (lhand (el 8 margs)) in
+    let elts = mapfilter (fun (_,th) ->
+      let c = concl th in
+      if is_eq c && is_comb (lhand c) &&
+         rator (lhand c) = mem && hd_is "wordLang_Word" (rand c)
+      then th else fail()) asl in
+    let triple e =
+      let a = rand (lhand (concl e)) in
+      let ga = the_asm (fun c -> is_eq c &&
+                 hd_is "get_real_addr" (lhand c) &&
+                 rand (rand c) = a) gl in
+      let wv = el 2 (snd (strip_comb (lhand (concl ga)))) in
+      let vw = the_asm (fun c -> is_eq c && lhand c = vt &&
+                 rand c = list_mk_icomb "wordLang_Word" [wv]) gl in
+      (vw,ga,e) in
+    let alt = find (fun e -> is_var (rand (rand (concl e)))) elts in
+    let hdr = find (fun e ->
+                not (is_var (rand (rand (concl e))))) elts in
+    let (va,ga,ma) = triple alt in
+    let (vh,gh,mh) = triple hdr in
+    let xeq = MATCH_MP bignum_elt_eq
+                (CONJ va (CONJ ga (CONJ ma
+                  (CONJ vh (CONJ gh mh))))) in
+    MAP_EVERY EXISTS_TAC
+      [el 2 (snd (strip_comb (lhand (concl ga))));
+       rand (lhand (concl ma)); rand (rand (concl ma))] THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    TRY (SOLVED (ACCEPT_TAC xeq))));;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_bignum_cmp = prove
@@ -21470,18 +21610,65 @@ let memory_rel_bignum_cmp = prove
           (decode_length c (x1) = decode_length c (x2)) ==>
             ~((((n2w 16) && x1) = (n2w 0)) = (((n2w 16) && x2) = (n2w
             0)))))`),
-  (* the attempt: the proof of the source names
-     memory_rel_Number_bignum_header,
-     memory_rel_Number_bignum_IMP_ALT, memory_rel_tail.  What is
-     here rewrites with them and closes by arithmetic, and the cheat
-     is behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_Number_bignum_header;
-       memory_rel_Number_bignum_IMP_ALT; memory_rel_tail] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the steps are above the statement (tools/overrides.py).  Of
+     each of the two numbers the invariant gives the element of the
+     heap as its header (bignum_header), and the header is the sign
+     and the length of each: if the lengths are one and the signs
+     are one then the headers are one, which the elements of the
+     two are not (bignum_cmp_sign) *)
+  (STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    (* what the invariant says of each of the two numbers *)
+    W(fun gl ->
+      let mr = the_asm (hd_is "memory_rel") gl in
+      let gd = the_asm (hd_is "good_dimindex") gl in
+      let lst = el 8 (snd (strip_comb (concl mr))) in
+      let num t = rand (lhand (lhand t)) in
+      let ns i = the_asm (fun c -> is_neg c &&
+                   hd_is "small_int" (rand c) &&
+                   el 1 (snd (strip_comb (rand c))) = i) gl in
+      MAP_EVERY STRIP_ASSUME_TAC
+        [MATCH_MP bignum_header (CONJ mr (CONJ (ns (num lst)) gd));
+         MATCH_MP bignum_header
+           (CONJ (MATCH_MP memory_rel_tail mr)
+             (CONJ (ns (num (rand lst))) gd))]) THEN
+    (* the witnesses: the root, the address and the element of each *)
+    W(fun (asl,gw as gl) ->
+      let mr = the_asm (hd_is "memory_rel") gl in
+      let lst = el 8 (snd (strip_comb (concl mr))) in
+      let pieces vt =
+        let vw = the_asm (fun c -> is_eq c && lhand c = vt &&
+                   hd_is "wordLang_Word" (rand c)) gl in
+        let wv = rand (rand (concl vw)) in
+        let ga = the_asm (fun c -> is_eq c &&
+                   hd_is "get_real_addr" (lhand c) &&
+                   el 2 (snd (strip_comb (lhand c))) = wv) gl in
+        let a = rand (rand (concl ga)) in
+        let ma = the_asm (fun c -> is_eq c && is_comb (lhand c) &&
+                   rand (lhand c) = a &&
+                   hd_is "wordLang_Word" (rand c)) gl in
+        let x = rand (rand (concl ma)) in
+        let he = the_asm (fun c -> is_eq c && lhand c = x &&
+                   hd_is "make_header" (rand c)) gl in
+        let dl = the_asm (fun c -> is_eq c &&
+                   hd_is "decode_length" (lhand c) &&
+                   rand (lhand c) = x) gl in
+        let l = rand (rand (concl dl)) in
+        let bd = the_asm (fun c -> hd_is "<" c && lhand c = l &&
+                   hd_is "dimword" (rand c)) gl in
+        let sg = the_asm (fun c -> is_eq c &&
+                   type_of (lhand c) = bool_ty &&
+                   is_eq (lhand c) &&
+                   can (find_term (fun t -> t = x)) (lhand c)) gl in
+        (wv,a,x,he,dl,bd,sg) in
+      let (w1,a1,x1,he1,dl1,bd1,sg1) = pieces (rand (lhand lst)) in
+      let (w2,a2,x2,he2,dl2,bd2,sg2) =
+        pieces (rand (lhand (rand lst))) in
+      MAP_EVERY EXISTS_TAC [w1; w2; a1; a2; x1; x2] THEN
+      REPEAT CONJ_TAC THEN
+      TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+      MATCH_ACCEPT_TAC (MATCH_MP bignum_cmp_sign
+        (CONJ he1 (CONJ he2 (CONJ dl1 (CONJ dl2 (CONJ bd1 (CONJ bd2
+          (CONJ sg1 sg2)))))))))));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -21868,7 +22055,8 @@ let memory_rel_RefPtr_EQ = prove
      element of the heap (roots_ok, heap_lookup_LESS), and the heap
      is short enough for the shift not to wrap
      (heap_in_memory_store) *)
-  (let rec ntimes k t = if k <= 0 then ALL_TAC else t THEN ntimes (k-1) t in
+  (let rec ntimes k t =
+     if k <= 0 then ALL_TAC else t THEN ntimes (k-1) t in
   let SPLIT_ROOT =
     W(fun (asl,w) ->
       let lr = snd (find (fun (_,th) -> hd_is "ALL2" (concl th)) asl) in
@@ -30128,7 +30316,8 @@ let xor_bytes_xor_words = prove
                distinctness "option"; injectivity "option"] THEN
    REWRITE_TAC[CONS_11] THEN
    FIRST_ASSUM (fun h ->
-     MATCH_ACCEPT_TAC (GEN_ALL (MATCH_MP xor_bytes_bytes_to_word h)))));;
+     MATCH_ACCEPT_TAC
+       (GEN_ALL (MATCH_MP xor_bytes_bytes_to_word h)))));;
 
 (* xor_bytes_xor_words *)
 (* the names of record fields that this statement uses for
