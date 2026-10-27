@@ -3827,7 +3827,7 @@ let IMP_heap_store_unused = prove
     REWRITE_TAC[heap_store_unused_def] THEN
     ASM_REWRITE_TAC[heap_lookup_PREFIX] THEN
     REWRITE_TAC[heap_store_lemma] THEN
-    W(fun (asl,w as gl) ->
+    W(fun (asl,w) ->
       let pr = lhand (hd (conjuncts (snd (strip_exists w)))) in
       EXISTS_TAC (lhand pr)) THEN
     REWRITE_TAC[PAIR_EQ] THEN
@@ -4203,7 +4203,7 @@ let data_up_to_alt = prove
      ==> data_up_to (heap_length ha + el_length x)
            (ha ++ (([x] ++ he) ++ hb))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  W(fun (asl,w as gl) ->
+  W(fun (asl,w) ->
     let args = snd (strip_comb w) in
     let addr = el 0 args in
     let hp = el 1 args in
@@ -4284,7 +4284,7 @@ let IMP_heap_store_unused_alt = prove
     REWRITE_TAC[heap_store_unused_alt_def] THEN
     ASM_REWRITE_TAC[heap_lookup_PREFIX] THEN
     REWRITE_TAC[heap_store_lemma] THEN
-    W(fun (asl,w as gl) ->
+    W(fun (asl,w) ->
       let pr = lhand (hd (conjuncts (snd (strip_exists w)))) in
       EXISTS_TAC (lhand pr)) THEN
     REWRITE_TAC[PAIR_EQ] THEN
@@ -7629,13 +7629,11 @@ let bc_ref_inv_alloc_gen = prove
                 hd_is "FDOM" (rand c)) gl in
     let n = el 0 (snd (strip_comb (concl inn))) in
     let fm = rand (rand (concl inn)) in
-    let neq = the_asm (fun c -> is_neg c && is_eq (rand c) &&
-                lhand (rand c) = n) gl in
     let x = list_mk_icomb "fmap_apply" [fm; n] in
     SUBGOAL_THEN (mk_eq (list_mk_icomb "FLOOKUP" [fm; n],
                          list_mk_icomb "SOME" [x])) ASSUME_TAC THENL
      [ASM_REWRITE_TAC[FLOOKUP_DEF]; ALL_TAC] THEN
-    W(fun (asl,w as gl) ->
+    W(fun (asl,w) ->
       let upd = find_term (fun t -> hd_is "|+" t) w in
       SUBGOAL_THEN (mk_eq (list_mk_icomb "FLOOKUP" [upd; n],
                            list_mk_icomb "SOME" [x])) ASSUME_TAC THENL
@@ -7965,9 +7963,6 @@ let mutcons_thm_alt = prove
       let aa = el 0 (snd (strip_comb (lhand (concl st)))) in
       let ins = find_term (hd_is "sptree_insert") w in
       let ptr = el 0 (snd (strip_comb ins)) in
-      say ("  F " ^ string_of_term f ^ "  TF " ^
-           string_of_term tf ^ "  AA " ^ string_of_term aa ^
-           "  PTR " ^ string_of_term ptr ^ "\n");
       EXISTS_TAC (list_mk_icomb "|+" [f; mk_pair (ptr, aa)]) THEN
       EXISTS_TAC tf) THEN
     REPEAT CONJ_TAC THEN
