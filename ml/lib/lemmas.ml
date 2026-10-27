@@ -159,6 +159,13 @@ let MEM_LUPDATE_E = prove
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[MEM] THEN
   ASM_MESON_TAC[]);;
 
+let LUPDATE_LENGTH = prove
+ (`!(l:A list) x y r. LUPDATE x (LENGTH l) (l ++ (y :: r)) =
+                      l ++ (x :: r)`,
+  LIST_INDUCT_TAC THEN
+  REWRITE_TAC[LENGTH; APPEND; LUPDATE; SUC_SUB1; NOT_SUC] THEN
+  ASM_REWRITE_TAC[ARITH_RULE `~(SUC n = 0)`]);;
+
 let EVERY2_LUPDATE_same = prove
  (`!(P:A->B->bool) l1 l2 n v1 v2.
      P v1 v2 /\ EVERY2 P l1 l2

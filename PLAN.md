@@ -1602,18 +1602,26 @@ all; that is the only thing still owed on what is in.
   and `blocks_unique_update_mutblock`,
   `reachable_refs_MutBlock_UPDATE`.
 
-Six of its lemmas are proved already and stand in
-`tools/wip-update_mutblock.ml` (which nothing loads):
-`LUPDATE_LENGTH` (for `ml/lib/lemmas.ml`), `v_inv_BlockRep_upd`
-(HOL4 states it as the value of an ML expression, so the port
-derives it from the lemma), `dest_thunk_insert_MutBlock`,
-`ptrs_store_el` (the general form of `ptrs_store_LUPDATE`:
-the pointers of the element that an update of one value writes),
-`MB_trans` and `bc_ref_inv_update_mutblock_at`.  What is left of
-that theorem is its proof, which is `update_thunk_thm`'s with the
-differences above; the parts of that proof that carry over
-unchanged are cut out in `/tmp` and easy to cut again from the
-`.prf`.
+`update_mutblock_thm` is proved as well, from the same shape of
+proof with the hole of a mutable block for the thunk: its own
+lemmas are in the `EXTRA_BEFORE` block of its statement
+(`IMAGE_NOT_point`, `gc_kind_not_gen`, `v_inv_BlockRep_upd` derived
+from HOL4's lemma, `dest_thunk_insert_MutBlock`, `ptrs_store_el`,
+`MB_trans`, `bc_ref_inv_update_mutblock_at`), and HOL4's
+`LUPDATE_LENGTH` is in `ml/lib/lemmas.ml` with the other three
+theorems about `LUPDATE`.
+
+What is left of the four is `update_byte_ref_thm` (a store into a
+byte array, HOL4 `data_to_word_memoryProofScript.sml:5934`), which
+replaces the element of the heap in place (`h1 ++ [Bytes be fl ys
+ws] ++ h2`) instead of storing into it, so it needs its own
+account of the heap rather than `heap_store`; a `BA_trans` and the
+arm of a byte array are the pieces to write.
+
+A cleanup that is owed: `ptrs_store_LUPDATE` (in the block of
+`update_ref_thm1`) is the special case of `ptrs_store_el` (in the
+block of `update_mutblock_thm`) for a `RefBlock` and the head of
+the roots, and one of them should be derived from the other.
 
 The sessions are gone with the maintenance, so the first step of
 the next round is `tools/bin/pfbase` (half an hour) to build the
