@@ -6157,6 +6157,175 @@ let all_ts_insert_SUBSET = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'new_thunk_thm'): r"""
+(* the port's own: what the proof of new_thunk_thm needs.  The
+   element is written at the top of the unused space, where it is a
+   reference (gc_kind_store_unused); the references gain a key that
+   they did not have, holding the value that the stack has in front
+   of it, so a path through the new references is one of the old
+   ones or starts at that value (reachable_refs_new_thunk), and
+   what the invariant said of a value it says of it with the key
+   written and the store done (v_inv_new_thunk_step) *)
+
+(* a thunk is a reference, and its element is two words long *)
+let isRef_ThunkBlock = prove
+ (`data_to_word_memoryProof_isRef (ThunkBlock ev x)`,
+  REWRITE_TAC[isRef_def; ThunkBlock_def] THEN MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[isMutTag_def] THEN MESON_TAC[]);;
+
+let el_length_ThunkBlock = prove
+ (`!ev x. el_length (ThunkBlock ev x) = 2`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[ThunkBlock_def; el_length_def] THEN
+  MATCH_REDUCE_TAC THEN ARITH_TAC);;
+
+(* the values of a stack whose head is given *)
+let EVERY2_CONS_IMP = prove
+ (`!(P:A->B->bool) x xs ys.
+     ALL2 P (CONS x xs) ys
+     ==> ?y ys2. ys = CONS y ys2 /\ P x y /\ ALL2 P xs ys2`,
+  REPEAT GEN_TAC THEN
+  STRUCT_CASES_TAC(ISPEC `ys:B list` list_CASES_v) THEN
+  REWRITE_TAC[ALL2] THEN MESON_TAC[]);;
+
+(* what the invariant says of a value with a thunk written at a key
+   that the references do not have *)
+let v_inv_new_Thunk_insert = prove
+ (`v_inv conf v refs (x,f,tf,heap) /\ ~(ptr IN FDOM f) /\
+   ~(ptr IN domain refs) /\
+   (ev = Evaluated ==> dest_thunk h refs = NotThunk)
+   ==> v_inv conf v (insert ptr (Thunk ev h) refs) (x,f,tf,heap)`,
+  (REPEAT STRIP_TAC THEN
+   ASM_MESON_TAC[v_inv_eq; v_inv_new_Thunk_insert_lemma]));;
+
+(* the edges that the references gain when a thunk is written at a
+   key they did not have leave that key and land at its value *)
+let ref_edge_Thunk = prove
+ (cake_as_vars (fun () ->
+    `ref_edge (sptree_insert ptr (Thunk ev h) refs) x y =
+     (if x = ptr then MEM y (get_refs (Block 0 ARB [h]))
+      else ref_edge refs x y)`),
+  REWRITE_TAC[ref_edge_def; lookup_insert] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[]);;
+
+(* [local] *)
+let reachable_refs_new_thunk_lemma = prove
+ (cake_as_vars (fun () ->
+    `!r1 n.
+       RTC (ref_edge (sptree_insert ptr (Thunk ev h) refs)) r1 n
+       ==> ~(n = ptr) ==>
+       RTC (ref_edge refs) r1 n \/
+       (?s. MEM s (get_refs (Block 0 ARB [h])) /\
+            RTC (ref_edge refs) s n)`),
+  MATCH_MP_TAC RTC_INDUCT THEN CONJ_TAC THENL
+   [GEN_TAC THEN DISCH_TAC THEN DISJ1_TAC THEN
+    MATCH_ACCEPT_TAC(CONJUNCT1(SPEC_ALL RTC_RULES));
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[ref_edge_Thunk] THEN
+    COND_CASES_TAC THEN STRIP_TAC THEN DISCH_TAC THEN
+    ASM_MESON_TAC[RTC_RULES]]);;
+
+(* so a reference that the stack with the pointer of the thunk on
+   it reaches is one that the value of the thunk and the rest of
+   the stack reach *)
+let reachable_refs_new_thunk = prove
+ (cake_as_vars (fun () ->
+    `reachable_refs (h :: (RefPtr F ptr :: stack))
+       (sptree_insert ptr (Thunk ev h) refs) n /\ ~(n = ptr) /\
+     ~(ptr IN domain refs)
+     ==> reachable_refs (h :: stack) refs n`),
+  (let mem_block_refs = prove
+    (`!(ys:(dataSem_v)list) ss tt aa.
+        MEM ss (get_refs (Block tt aa ys))
+        ==> ?yy. MEM yy ys /\ MEM ss (get_refs yy)`,
+     REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+     MESON_TAC[]) in
+   let subst_vars =
+     REPEAT(FIRST_X_ASSUM(fun th ->
+       if is_eq(concl th) && is_var(lhand(concl th))
+       then SUBST_ALL_TAC th else fail())) in
+   let payload b =
+     X_CHOOSE_THEN `ss:num` (CONJUNCTS_THEN2
+       (fun m -> MP_TAC(MATCH_MP mem_block_refs m)) ASSUME_TAC) b THEN
+     DISCH_THEN(X_CHOOSE_THEN `yy:dataSem_v`
+       (fun th -> STRIP_ASSUME_TAC (REWRITE_RULE[MEM] th))) THEN
+     MAP_EVERY EXISTS_TAC [`yy:dataSem_v`; `ss:num`] THEN
+     ASM_REWRITE_TAC[MEM] in
+   let noedge a =
+     MP_TAC(ONCE_REWRITE_RULE[RTC_CASES] a) THEN
+     FIRST_ASSUM(fun nd ->
+       let th = REWRITE_RULE[GSYM lookup_NONE_domain] nd in
+       if concl th = concl nd then fail()
+       else REWRITE_TAC[ref_edge_def; th]) THEN
+     MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[] in
+   let stackcase a =
+     ASSUME_TAC a THEN
+     W(fun gl ->
+       let m = the_asm (fun c -> hd_is "MEM" c &&
+                 hd_is "get_refs" (rand c)) gl in
+       EXISTS_TAC (el 0 (snd (strip_comb (rand (concl m))))) THEN
+       EXISTS_TAC (el 0 (snd (strip_comb (concl m))))) THEN
+     ASM_REWRITE_TAC[MEM] in
+   let uselemma =
+     FIRST_ASSUM(fun rtc -> FIRST_ASSUM(fun ne ->
+       MP_TAC(MATCH_MP (MATCH_MP
+         reachable_refs_new_thunk_lemma rtc) ne))) in
+   REWRITE_TAC[reachable_refs_def; MEM] THEN
+   STRIP_TAC THENL
+    [uselemma THEN DISCH_THEN(DISJ_CASES_THEN2 stackcase payload);
+     subst_vars THEN
+     RULE_ASSUM_TAC(REWRITE_RULE[get_refs_def; MEM]) THEN
+     subst_vars THEN uselemma THEN
+     DISCH_THEN(DISJ_CASES_THEN2 noedge payload);
+     uselemma THEN DISCH_THEN(DISJ_CASES_THEN2 stackcase payload)]));;
+
+(* and what the invariant says of a value it says of it with the
+   thunk written and the store done *)
+let v_inv_new_thunk_step = prove
+ (cake_as_vars (fun () ->
+    `v_inv conf w1 refs (w2,f,tf,heap) /\ ~(ptr IN domain refs) /\
+     FDOM f SUBSET domain refs /\ heap_store_rel heap heap2 /\
+     (ev = Evaluated ==> dest_thunk h refs = NotThunk) /\
+     f2 = f |+ (ptr,aa) /\
+     refs2 = sptree_insert ptr (Thunk ev h) refs
+     ==> v_inv conf w1 refs2 (w2,f2,tf,heap2)`),
+  (let submap_fupd = prove
+    (`!(g:(A,B)fmap) k v. ~(k IN FDOM g) ==> g SUBMAP (g |+ (k,v))`,
+     REWRITE_TAC[SUBMAP; FDOM_FUPDATE; IN_INSERT;
+                 FAPPLY_FUPDATE_THM] THEN MESON_TAC[]) in
+   STRIP_TAC THEN SPLIT_ASM_TAC THEN
+   REPEAT (FIRST_X_ASSUM (fun e ->
+     let c = concl e in
+     if is_eq c && is_var (lhand c) then SUBST_ALL_TAC e
+     else fail())) THEN
+   W(fun gl ->
+     let nd = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                hd_is "domain" (rand (rand c))) gl in
+     let su = the_asm (fun c -> hd_is "SUBSET" c) gl in
+     SUBGOAL_THEN (mk_neg (list_mk_icomb "IN"
+                     [el 0 (snd (strip_comb (rand (concl nd))));
+                      list_mk_icomb "FDOM"
+                        [rand (lhand (concl su))]])) ASSUME_TAC THENL
+      [MP_TAC nd THEN MP_TAC su THEN REWRITE_TAC[SUBSET] THEN
+       MESON_TAC[];
+       ALL_TAC]) THEN
+   MATCH_MP_TAC (GEN_ALL v_inv_SUBMAP) THEN
+   W(fun gl -> MAP_EVERY (fun n -> EXISTS_TAC (var_by_name n gl))
+                 ["f"; "tf"; "heap"]) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   TRY (SOLVED (MATCH_ACCEPT_TAC SUBMAP_REFL)) THEN
+   TRY (SOLVED (W(fun gl ->
+     let nf = the_asm (fun c -> is_neg c && hd_is "IN" (rand c) &&
+                hd_is "FDOM" (rand (rand c))) gl in
+     MATCH_ACCEPT_TAC (MATCH_MP submap_fupd nf)))) THEN
+   MATCH_MP_TAC v_inv_new_Thunk_insert THEN
+   REPEAT CONJ_TAC THEN
+   FIRST_ASSUM ACCEPT_TAC));;
+
+""",
+
   ('data_to_word_memoryProof', 'new_byte_alt_thm'): r"""
 (* the port's own: what the proof of new_byte_alt_thm needs of an
    array of bytes written at a key that the references do not have.
