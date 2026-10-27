@@ -5162,6 +5162,302 @@ let heap_store_rel_store_unused = prove
           CONTR_TAC (MP (NOT_ELIM (CONJUNCT2 ins)) isd))]]));;
 """,
 
+  ('data_to_word_memoryProof', 'IMP_heap_store_unused_alt'): r"""
+(* the port's own: what the proof of IMP_heap_store_unused_alt
+   needs.  This store writes the element first and the space that
+   is left after it, so the element is at the start of what was
+   unused (heap_lookup_alt_at_start) and the space that is left
+   behind it (heap_lookup_alt_unused); outside the space the heap
+   is the one it was and inside it neither heap holds data, as for
+   the other store, and the last three lemmas put that together
+   into the addresses that hold data, the elements the heap keeps,
+   and what is below the space that is left (the element written is
+   data, which is why the theorem asks for isDataElement) *)
+
+(* the other store into the unused space writes the element first
+   and the space that is left after it *)
+let heap_lookup_alt_at_start = prove
+ (`!ha k x hb.
+     heap_lookup (heap_length ha)
+       (ha ++ (([x] ++ heap_expand k) ++ hb)) = SOME x`,
+  REPEAT GEN_TAC THEN
+  W(fun (asl,w) -> MP_TAC (ISPEC (rand (rand w)) el_length_GT_0)) THEN
+  DISCH_TAC THEN
+  REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+              LT_REFL; SUB_REFL; APPEND; heap_length_clauses;
+              ADD_CLAUSES; heap_lookup_def] THEN
+  REPEAT (CHANGED_TAC
+            (COND_CASES_TAC THEN
+             ASM_REWRITE_TAC[heap_lookup_def; ADD_CLAUSES])) THEN
+  TRY (SOLVED (ASM_ARITH_TAC)));;
+
+let heap_lookup_alt_unused = prove
+ (`!ha k x hb.
+     ~(k = 0) ==>
+     heap_lookup (heap_length ha + el_length x)
+       (ha ++ (([x] ++ heap_expand k) ++ hb)) = SOME (Unused (k - 1))`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[heap_expand_def] THEN
+  REWRITE_TAC[APPEND] THEN
+  W(fun (asl,w) ->
+    MP_TAC (ISPEC (rand (rand (el 0 (snd (strip_comb (lhand w))))))
+              el_length_GT_0)) THEN
+  DISCH_TAC THEN
+  REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+              heap_length_APPEND; heap_length_clauses;
+              ADD_CLAUSES; LT_REFL; SUB_REFL; heap_lookup_def;
+              el_length_def] THEN
+  REPEAT (CHANGED_TAC
+            (COND_CASES_TAC THEN
+             ASM_REWRITE_TAC[heap_lookup_def; LT_REFL; SUB_REFL;
+                             ADD_CLAUSES; el_length_def])) THEN
+  ASM_ARITH_TAC);;
+
+(* outside the space that the store wrote, the heap is the one it
+   was, as for the other store *)
+let heap_lookup_alt_outside = prove
+ (`!ha sp e x hb y.
+     ~(sp = 0) /\ el_length x = e /\ e <= sp /\
+     (y < heap_length ha \/ heap_length ha + sp <= y)
+     ==> heap_lookup y (ha ++ (([x] ++ heap_expand (sp - e)) ++ hb)) =
+         heap_lookup y (ha ++ (Unused (sp - 1) :: hb))`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THENL
+   [W(fun gl ->
+      let lt = the_asm (fun c -> hd_is "<" c &&
+                 hd_is "heap_length" (rand c)) gl in
+      REWRITE_TAC[MATCH_MP LESS_IMP_heap_lookup lt]);
+    W(fun (asl,w as gl) ->
+      let ge = the_asm (fun c -> hd_is "<=" c &&
+                 hd_is "+" (lhand c)) gl in
+      let a = lhand (lhand (concl ge)) in
+      let sp = rand (lhand (concl ge)) in
+      let y = rand (concl ge) in
+      let nlt = MP (ISPECL [a; sp; y] (ARITH_RULE
+                  `!a s y. (a:num) + s <= y ==> ~(y < a)`)) ge in
+      REWRITE_TAC[MATCH_MP NOT_LESS_IMP_heap_lookup nlt]) THEN
+    W(fun gl ->
+      let le = the_asm (fun c -> hd_is "<=" c &&
+                 not (hd_is "+" (lhand c))) gl in
+      let eq = the_asm (fun c -> is_eq c &&
+                 hd_is "el_length" (lhand c)) gl in
+      let ne0 = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                  rand (rand c) = `0`) gl in
+      let sp = rand (concl le) in
+      let e = lhand (concl le) in
+      let seq = MP (ISPECL [sp; e] (ARITH_RULE
+                  `!s e. (e:num) <= s ==> e + (s - e) = s`)) le in
+      let s1 = MP (ISPEC sp (ARITH_RULE
+                 `!s. ~((s:num) = 0) ==> s - 1 + 1 = s`)) ne0 in
+      REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+                  heap_length_APPEND; heap_length_heap_expand;
+                  heap_length_clauses; ADD_CLAUSES; eq; seq; s1;
+                  heap_lookup_def; el_length_def]) THEN
+    REPEAT (CHANGED_TAC
+              (COND_CASES_TAC THEN
+               ASM_REWRITE_TAC[heap_lookup_def; ADD_CLAUSES])) THEN
+  ASM_ARITH_TAC]);;
+
+(* and inside it, away from the element written, neither heap holds
+   data *)
+let heap_lookup_alt_inside = prove
+ (`!ha sp e x hb y.
+     ~(sp = 0) /\ el_length x = e /\ 1 <= e /\ e <= sp /\
+     ~(y < heap_length ha) /\ y < heap_length ha + sp /\
+     ~(y = heap_length ha)
+     ==> ~isSomeDataElement
+           (heap_lookup y
+              (ha ++ (([x] ++ heap_expand (sp - e)) ++ hb))) /\
+         ~isSomeDataElement
+           (heap_lookup y (ha ++ (Unused (sp - 1) :: hb)))`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  W(fun gl ->
+    let nlt = the_asm (fun c -> is_neg c && hd_is "<" (rand c) &&
+                hd_is "heap_length" (rand (rand c))) gl in
+    REWRITE_TAC[MATCH_MP NOT_LESS_IMP_heap_lookup nlt]) THEN
+  W(fun gl ->
+    let le = the_asm (fun c -> hd_is "<=" c && is_var (lhand c) &&
+               is_var (rand c)) gl in
+    let eq = the_asm (fun c -> is_eq c &&
+               hd_is "el_length" (lhand c)) gl in
+    let ne0 = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                rand (rand c) = `0`) gl in
+    let sp = rand (concl le) in
+    let e = lhand (concl le) in
+    let seq = MP (ISPECL [sp; e] (ARITH_RULE
+                `!s e. (e:num) <= s ==> e + (s - e) = s`)) le in
+    let s1 = MP (ISPEC sp (ARITH_RULE
+               `!s. ~((s:num) = 0) ==> s - 1 + 1 = s`)) ne0 in
+    REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND;
+                heap_length_APPEND; heap_length_heap_expand;
+                heap_length_clauses; ADD_CLAUSES; eq; seq; s1;
+                heap_expand_def; heap_lookup_def;
+                el_length_def]) THEN
+  CONJ_TAC THEN
+  REPEAT (CHANGED_TAC
+            (COND_CASES_TAC THEN
+             ASM_REWRITE_TAC[heap_lookup_def; ADD_CLAUSES;
+                             el_length_def])) THEN
+  REWRITE_TAC[isSomeDataElement_def] THEN
+  (let ds = [distinctness "heap_element"] in
+   REWRITE_TAC (injectivity "option" :: distinctness "option" ::
+                NOT_EXISTS_THM :: ds @ map GSYM ds)) THEN
+  TRY (SOLVED (REWRITE_TAC[])) THEN
+  ASM_ARITH_TAC);;
+
+(* the addresses that hold data, after the other store: the ones
+   the heap had and the one the store wrote *)
+let isSome_store_unused_alt = prove
+ (`!ha sp e x hb.
+     ~(sp = 0) /\ el_length x = e /\ 1 <= e /\ e <= sp /\
+     isDataElement x
+     ==> {a | isSomeDataElement
+                (heap_lookup a
+                   (ha ++ (([x] ++ heap_expand (sp - e)) ++ hb)))} =
+         heap_length ha INSERT
+         {a | isSomeDataElement
+                (heap_lookup a (ha ++ (Unused (sp - 1) :: hb)))}`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  REWRITE_TAC[EXTENSION; IN_INSERT; IN_ELIM_THM] THEN
+  GEN_TAC THEN
+  W(fun (asl,w as gl) ->
+    let addr = rand (lhand (rand w)) in
+    let y = lhand (lhand (rand w)) in
+    let hp = el 1 (snd (strip_comb
+               (find_term (hd_is "heap_lookup") (lhand w)))) in
+    let ha = lhand hp in
+    let x = lhand (lhand (lhand (rand hp))) in
+    let hb = rand (rand hp) in
+    let ne0 = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                rand (rand c) = `0`) gl in
+    let eq = the_asm (fun c -> is_eq c &&
+               hd_is "el_length" (lhand c)) gl in
+    let one = the_asm (fun c -> hd_is "<=" c &&
+                lhand c = `1`) gl in
+    let le = the_asm (fun c -> hd_is "<=" c && is_var (lhand c) &&
+               is_var (rand c)) gl in
+    let sp = rand (concl le) in
+    let e = lhand (concl le) in
+    let isd = the_asm (hd_is "isDataElement") gl in
+    (* the address of the element written *)
+    ASM_CASES_TAC (mk_eq (y, addr)) THENL
+     [ASM_REWRITE_TAC[] THEN
+      REWRITE_TAC[ISPECL [ha; list_mk_icomb "-" [sp; e]; x; hb]
+                    heap_lookup_alt_at_start] THEN
+      MP_TAC isd THEN
+      REWRITE_TAC[isDataElement_def; isSomeDataElement_def] THEN
+      MESON_TAC[];
+      ALL_TAC] THEN
+    ASM_REWRITE_TAC[] THEN
+    DISJ_CASES_TAC (ISPECL [y; addr; sp] (ARITH_RULE
+      `!y a s. (y < a \/ a + s <= y) \/
+               (~(y < a) /\ y < a + s)`)) THENL
+     [W(fun gl ->
+        let d = the_asm is_disj gl in
+        REWRITE_TAC[MATCH_MP (ISPECL [ha; sp; e; x; hb; y]
+                                heap_lookup_alt_outside)
+                      (CONJ ne0 (CONJ eq (CONJ le d)))]);
+      W(fun gl ->
+        let d = the_asm (fun c -> is_conj c &&
+                  is_neg (lhand c)) gl in
+        let nq = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                   rand (rand c) = addr) gl in
+        let ins = MATCH_MP (ISPECL [ha; sp; e; x; hb; y]
+                              heap_lookup_alt_inside)
+                    (CONJ ne0 (CONJ eq (CONJ one (CONJ le
+                      (CONJ (CONJUNCT1 d) (CONJ (CONJUNCT2 d)
+                        nq)))))) in
+        REWRITE_TAC[CONJUNCT1 ins; CONJUNCT2 ins])]));;
+
+(* and the elements that the heap had, it keeps *)
+let heap_store_rel_alt = prove
+ (`!ha sp e x hb.
+     ~(sp = 0) /\ el_length x = e /\ 1 <= e /\ e <= sp
+     ==> heap_store_rel (ha ++ (Unused (sp - 1) :: hb))
+           (ha ++ (([x] ++ heap_expand (sp - e)) ++ hb))`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  REWRITE_TAC[heap_store_rel_def] THEN
+  GEN_TAC THEN DISCH_TAC THEN
+  W(fun (asl,w as gl) ->
+    let hp = el 1 (snd (strip_comb
+               (find_term (hd_is "heap_lookup") (lhand w)))) in
+    let ha = lhand hp in
+    let x = lhand (lhand (lhand (rand hp))) in
+    let hb = rand (rand hp) in
+    let a = list_mk_icomb "heap_length" [ha] in
+    let ne0 = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                rand (rand c) = `0`) gl in
+    let eq = the_asm (fun c -> is_eq c &&
+               hd_is "el_length" (lhand c)) gl in
+    let one = the_asm (fun c -> hd_is "<=" c &&
+                lhand c = `1`) gl in
+    let le = the_asm (fun c -> hd_is "<=" c && is_var (lhand c) &&
+               is_var (rand c)) gl in
+    let sp = rand (concl le) in
+    let e = lhand (concl le) in
+    let ptr = el 0 (snd (strip_comb
+                (find_term (hd_is "heap_lookup") (lhand w)))) in
+    DISJ_CASES_TAC (ISPECL [ptr; a; sp] (ARITH_RULE
+      `!y a s. (y < a \/ a + s <= y) \/
+               (~(y < a) /\ y < a + s)`)) THENL
+     [W(fun gl ->
+        let d = the_asm is_disj gl in
+        ACCEPT_TAC (MATCH_MP (ISPECL [ha; sp; e; x; hb; ptr]
+                                heap_lookup_alt_outside)
+                      (CONJ ne0 (CONJ eq (CONJ le d)))));
+      ASM_CASES_TAC (mk_eq (ptr, a)) THENL
+       [W(fun gl ->
+          let isd = the_asm (hd_is "isSomeDataElement") gl in
+          let eqp = the_asm (fun c -> is_eq c && lhand c = ptr) gl in
+          MP_TAC (ONCE_REWRITE_RULE[eqp] isd) THEN
+          REWRITE_TAC[heap_lookup_PREFIX; isSomeDataElement_def] THEN
+          (let ds = [distinctness "heap_element"] in
+           REWRITE_TAC (injectivity "option" ::
+                        NOT_EXISTS_THM :: ds @ map GSYM ds)) THEN
+          REWRITE_TAC[]);
+        W(fun gl ->
+          let d = the_asm (fun c -> is_conj c &&
+                    is_neg (lhand c)) gl in
+          let nq = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                     lhand (rand c) = ptr) gl in
+          let isd = the_asm (hd_is "isSomeDataElement") gl in
+          let ins = MATCH_MP (ISPECL [ha; sp; e; x; hb; ptr]
+                                heap_lookup_alt_inside)
+                      (CONJ ne0 (CONJ eq (CONJ one (CONJ le
+                        (CONJ (CONJUNCT1 d) (CONJ (CONJUNCT2 d)
+                          nq)))))) in
+          CONTR_TAC (MP (NOT_ELIM (CONJUNCT2 ins)) isd))]]));;
+
+(* what is below the unused space after the other store: what was
+   below it and the element written *)
+let data_up_to_alt = prove
+ (`!ha x he hb.
+     EVERY isDataElement ha /\ isDataElement x
+     ==> data_up_to (heap_length ha + el_length x)
+           (ha ++ (([x] ++ he) ++ hb))`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  W(fun (asl,w as gl) ->
+    let args = snd (strip_comb w) in
+    let addr = el 0 args in
+    let hp = el 1 args in
+    let ha = lhand hp in
+    let x = lhand (lhand (lhand (rand hp))) in
+    let he = rand (lhand (rand hp)) in
+    let hb = rand (rand hp) in
+    let front = list_mk_icomb "APPEND" [ha; mk_flist [x]] in
+    let nw = list_mk_icomb "APPEND"
+               [front; list_mk_icomb "APPEND" [he; hb]] in
+    SUBGOAL_THEN (mk_eq (hp, nw))
+      (fun e -> ONCE_REWRITE_TAC[e]) THENL
+     [REWRITE_TAC[APPEND_ASSOC]; ALL_TAC] THEN
+    SUBGOAL_THEN (mk_eq (addr, list_mk_icomb "heap_length" [front]))
+      (fun e -> ONCE_REWRITE_TAC[e]) THENL
+     [REWRITE_TAC[heap_length_APPEND; heap_length_clauses;
+                  ADD_CLAUSES];
+      ALL_TAC]) THEN
+  REWRITE_TAC[data_up_to_APPEND; ALL_APPEND; ALL] THEN
+  ASM_REWRITE_TAC[]);;
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take.  A value put on the stack only adds timestamps
