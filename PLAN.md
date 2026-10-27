@@ -1650,61 +1650,63 @@ What the five cost: `verifyquick` of the file is **783 seconds**
 with `AXIOMS-ADDED 102` and `OWN-AXIOMS 15`, where the round
 before the byte array was 741 seconds and 103.
 
-## Where to pick up (93 of the 611 sections unproved)
+## Where to pick up (89 of the 611 sections unproved)
 
-Two more are in since the five update theorems:
+The round of 2026-10-27 landed, in this order:
+`update_byte_ref_thm` (the last of the five update theorems),
+`memory_rel_bignum_cmp`, `gc_kind_update_Ref`,
+`abs_ml_inv_stack_permute`, `word_ml_inv_rearrange`,
+`IMP_heap_store_unused` and `IMP_heap_store_unused_alt`.  Each one
+verified: `AXIOMS-ADDED` went from 103 to 96 and the file loads in
+about 690 seconds.
 
-- `memory_rel_bignum_cmp`: the invariant gives the element of the
-  heap of a bignum as its header (`bignum_header`, which puts
-  `memory_rel_Number_bignum_header` and
-  `memory_rel_Number_bignum_IMP_ALT` together over one address --
-  each of the two says it of a root of its own, and `bignum_elt_eq`
-  is what says the two roots are one), and a header is the sign and
-  the length, so two elements that are not one cannot have one
-  length and one sign (`bignum_cmp_sign`).  `n2w_eq_LENGTH` and
-  `int_sign_iff` went to `ml/lib/lemmas.ml`.
-- `gc_kind_update_Ref`: the mirror of `gc_kind_byte_update`.  The
-  element written is a reference, so it is at or above the pointer
-  and the halves of the new split are the first one it was and the
-  second with the element written in it (`heap_split_replace3`,
-  the companion of `heap_split_replace2` for a cut at or before
-  the element, with `gen_start_ok_replace` and
-  `gen_state_ok_replace` for the state of the generations).
+What that bought, beyond the seven theorems:
 
-So the heap layer of the file now has, in the blocks of
-`update_ref_thm`, `update_byte_ref_thm` and `gc_kind_update_Ref`,
-both directions of the replacement of one element by one of its
-length: the halves of a split either side of the cut, the transfers
-of the invariant, and the state of the generations.  What uses that
-next:
+- the **stack layer**: `abs_ml_inv_stack_permute` keeps the heap
+  and the references and changes only the stack, so the four
+  `*_restrict` lemmas (`v_inv_restrict_gen`,
+  `EVERY2_v_inv_restrict`, `EVERY2_v_inv_restrict_gen`,
+  `bc_ref_inv_restrict`) are in the port now, and
+  `word_ml_inv_rearrange` -- which `memory_rel_rearrange`,
+  `memory_rel_tail` and `memory_rel_rotate3` were all proved from
+  as a cheat -- is a theorem.
+- the **allocation layer**: both stores into the unused space are
+  proved, with thirteen lemmas about the regions of such a store
+  (the element at one end, the space that is left at the other,
+  the heap outside the space, no data inside it, the addresses
+  that hold data, the elements the heap keeps).  Everything that
+  allocates goes through them: `new_ref_thm`, `new_thunk_thm`,
+  `cons_thm_alt`, `word64_alt_thm`, `bignum_alt_thm`,
+  `mutcons_thm_alt`, `new_byte_alt_thm`.
 
-- `gc_kind_update_Ref` is a `[local]` lemma of HOL4's
-  `memory_rel_Update` family, which is the family to go for:
-  `memory_rel_Update'`, `memory_rel_Update`,
-  `memory_rel_UpdateCons`, `memory_rel_UpdateThunk_NotEvaluated`,
-  `memory_rel_UpdateThunk_Evaluated` and
-  `heap_in_memory_store_UpdateByte`.  They need the word level
-  under them (`word_ml_inv_rearrange`,
-  `abs_ml_inv_stack_permute`, `get_real_addr_get_addr`).
-- `abs_ml_inv_stack_permute` keeps the heap and the references and
-  changes only the stack, so the three transfers of the generic
-  machinery are identities and what is left is the `all_ts`
-  bookkeeping.  `bc_ref_inv_update_gen` almost fits: it asks for a
-  `ptr` that the permute has none of.  The honest fix is to
-  strengthen it -- replace the `ptr` hypotheses by what they are
-  used for (`lookup n refs2 = lookup n refs` and the transfer of
-  the one element at `x`) and derive the present statement from the
-  stronger one in the same block, so the four landed proofs do not
-  change.
-- of the short ones that are left, `word_eq_add_clock` (13 lines of
-  HOL4), `bytes_to_word_eq_lemma` (14),
-  `memory_rel_copy_array_NONE` (15) and
-  `memory_rel_RefPtr_gen_IMP` (16) are the next to weigh, and the
-  three that entry 43 owes (`word_eq_LESS_EQ`,
-  `vb_eq_size_IMP_vb_size`, `do_eq_IFF_vb_eq_size`) all need the
-  same piece: the clause of each pair of constructors of
-  `vb_eq_size` and of `do_eq` derived once from the match, so that
-  a case analysis does not reduce the match again in each case.
+So the allocation family is what to do next, and the way to do it
+is to read two of them side by side first (`mutcons_thm_alt` is
+the shortest at 87 lines of HOL4, `cons_thm_alt` the one the
+others are written after at 138) and to put what they share in one
+block, as the update theorems' shared block was put together.
+
+What the rest of the file needs, by layer (the count is the lines
+of the HOL4 proof):
+
+- **no induction, no separation logic**: 48 of the 89, among them
+  `get_real_addr_get_addr` (58), `deref_thm` (97),
+  `v_inv_list_to_v_lem` (95), `bc_stack_ref_inv_MutBlock_F` (115),
+  the four `word_copy_*` (63-92) and the GC theorems
+  (`gc_combined_thm` 22, `full_gc_thm` 34, `gen_gc_thm` 43,
+  `gen_gc_partial_thm` 129).
+- **an induction the port does not have** (entry 44 says how):
+  `vb_eq_size_IMP_vb_size`, `do_eq_IFF_vb_eq_size`,
+  `word_eq_LESS_EQ`, `word_eq_add_clock`,
+  `bc_stack_ref_inv_FinaliseCons_lemma`, `memory_rel_depth_limit`,
+  `v_inv_related_lemma`.  The first three are what entry 43 owes,
+  and all of them want the same piece first: the clause of each
+  pair of constructors derived once from the match.
+- **the separation logic of the word level** (`word_heap`,
+  `word_el`, `word_payload`, `SEP_R_TAC`, `SEP_W_TAC`): the
+  `memory_rel_*` family, about 30 of them.  `ml/lib/set_sep.ml`
+  has `read_fun2set` and `write_fun2set` for HOL4's two tactics,
+  and `memory_rel_Number_bignum_header` of the port shows the
+  shape; none of this round touched that layer.
 
 `memory_rel_ptr_eq` looks like the cheapest of all (three lines of
 HOL4) and is not: it leans on `memory_rel_pointer_eq`, which HOL4
