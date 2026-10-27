@@ -3392,3 +3392,68 @@ copies out only the files asked for.  The recovery, if port.py has
 already been run, is `git checkout -- ml/` with the hand-written
 files of `ml/lib/` saved first -- they are sources, not output,
 and a checkout would take the round's work on them with it.
+
+## 61. The two sides of a lemma may not share a type variable
+
+```ocaml
+let el_length_DataElement = prove
+ (`el_length (DataElement xs l d) = el_length (DataElement ys l d)`,
+  REWRITE_TAC[el_length_def]);;
+```
+
+reads as it should and is not what it looks like.  `el_length`
+gives a number, so nothing ties the two applications together:
+`xs` is `((?1126164)heap_address)list` and `ys` is
+`((?1051005)heap_address)list`, two type variables that happen to
+print the same way.  `PART_MATCH lhs` against the element of a
+goal then fixes the first and leaves the second, and the `INST`
+that was to fill it in fails with `vsubst: Bad substitution list`
+-- the error says nothing about types, and the terms print
+identically, so this costs an hour if the types are not printed.
+
+The cure is to say the type once and quantify:
+
+```ocaml
+let el_length_DataElement = prove
+ (`!(xs:((A)heap_address)list) (ys:((A)heap_address)list) l (d:B).
+     el_length (DataElement xs l d) = el_length (DataElement ys l d)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[el_length_def]);;
+```
+
+and then to instantiate it with `ISPECL`, which instantiates the
+types as well, rather than with `PART_MATCH` and `INST`.  The rule
+of thumb: a lemma whose two sides are related only through a
+*number* (a length, a count, a size) needs its types said out
+loud, and `say ("  X " ^ string_of_term t ^ " : " ^
+string_of_type (type_of t))` is what shows it when a match fails
+for no visible reason.
+
+## 62. A scratch session has unhidden what the file hides
+
+A proof file of the port hides the names that HOL4 reads as
+variables (`vars`, `el`, `not`, `parts`, `sign`, `free`,
+`do_partial` for `data_to_word_memoryProof`) at its head and
+**unhides them at its end**.  So in a session that has loaded the
+file -- which is exactly the session a `verifyquick` leaves, the
+cheap place to try a proof -- a quotation of a statement of that
+file no longer parses:
+
+```
+Exception: Failure "typechecking error (initial type assignment):
+  vars has type (?242981)term->num->bool, it cannot be used with
+  type (dataSem_v#(_)word_loc)list".
+```
+
+A scratch file for such a session therefore begins with the hide
+again:
+
+```ocaml
+let _ = do_list hide_constant
+  ["do_partial"; "el"; "free"; "not"; "parts"; "sign"; "vars"];;
+```
+
+(the list is the one at the end of the ported file, which says
+what it unhid).  The same holds for a session cut at a statement
+with `tools/bin/trybase`: there the hides of the head are still in
+force, so nothing is needed -- one more reason the cut base says
+what it means (entry 57).

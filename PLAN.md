@@ -1650,19 +1650,42 @@ What the five cost: `verifyquick` of the file is **783 seconds**
 with `AXIOMS-ADDED 102` and `OWN-AXIOMS 15`, where the round
 before the byte array was 741 seconds and 103.
 
-## Where to pick up (95 of the 611 sections unproved)
+## Where to pick up (93 of the 611 sections unproved)
 
-The five update theorems are in, so the next family is the one
-that uses them: the `memory_rel` theorems of a store
-(`memory_rel_Update`, `memory_rel_UpdateCons`,
-`memory_rel_UpdateThunk_NotEvaluated`,
-`memory_rel_UpdateThunk_Evaluated`,
-`heap_in_memory_store_UpdateByte`), which need the word level
-(`word_ml_inv_rearrange`, `abs_ml_inv_stack_permute`,
-`get_real_addr_get_addr`) under them.
+Two more are in since the five update theorems:
 
-Two things to weigh before starting there:
+- `memory_rel_bignum_cmp`: the invariant gives the element of the
+  heap of a bignum as its header (`bignum_header`, which puts
+  `memory_rel_Number_bignum_header` and
+  `memory_rel_Number_bignum_IMP_ALT` together over one address --
+  each of the two says it of a root of its own, and `bignum_elt_eq`
+  is what says the two roots are one), and a header is the sign and
+  the length, so two elements that are not one cannot have one
+  length and one sign (`bignum_cmp_sign`).  `n2w_eq_LENGTH` and
+  `int_sign_iff` went to `ml/lib/lemmas.ml`.
+- `gc_kind_update_Ref`: the mirror of `gc_kind_byte_update`.  The
+  element written is a reference, so it is at or above the pointer
+  and the halves of the new split are the first one it was and the
+  second with the element written in it (`heap_split_replace3`,
+  the companion of `heap_split_replace2` for a cut at or before
+  the element, with `gen_start_ok_replace` and
+  `gen_state_ok_replace` for the state of the generations).
 
+So the heap layer of the file now has, in the blocks of
+`update_ref_thm`, `update_byte_ref_thm` and `gc_kind_update_Ref`,
+both directions of the replacement of one element by one of its
+length: the halves of a split either side of the cut, the transfers
+of the invariant, and the state of the generations.  What uses that
+next:
+
+- `gc_kind_update_Ref` is a `[local]` lemma of HOL4's
+  `memory_rel_Update` family, which is the family to go for:
+  `memory_rel_Update'`, `memory_rel_Update`,
+  `memory_rel_UpdateCons`, `memory_rel_UpdateThunk_NotEvaluated`,
+  `memory_rel_UpdateThunk_Evaluated` and
+  `heap_in_memory_store_UpdateByte`.  They need the word level
+  under them (`word_ml_inv_rearrange`,
+  `abs_ml_inv_stack_permute`, `get_real_addr_get_addr`).
 - `abs_ml_inv_stack_permute` keeps the heap and the references and
   changes only the stack, so the three transfers of the generic
   machinery are identities and what is left is the `all_ts`
@@ -1670,19 +1693,18 @@ Two things to weigh before starting there:
   `ptr` that the permute has none of.  The honest fix is to
   strengthen it -- replace the `ptr` hypotheses by what they are
   used for (`lookup n refs2 = lookup n refs` and the transfer of
-  the one element at `x`) and derive the present statement from
-  the stronger one in the same block, so the four landed proofs do
-  not change.
-- a batch of short ones is worth clearing first, because they are
-  spread over the file and each is a few lines of HOL4:
-  `memory_rel_bignum_cmp` (11 lines, over
-  `memory_rel_Number_bignum_header` and `memory_rel_tail`),
-  `word_eq_add_clock` (13), `bytes_to_word_eq_lemma` (14),
-  `memory_rel_copy_array_NONE` (15),
-  `memory_rel_RefPtr_gen_IMP` (16), `word_cmp_loop_thm` (14) --
-  and the three that entry 43 owes (`word_eq_LESS_EQ`,
-  `vb_eq_size_IMP_vb_size`, `do_eq_IFF_vb_eq_size`), for which
-  that entry writes the recipe.
+  the one element at `x`) and derive the present statement from the
+  stronger one in the same block, so the four landed proofs do not
+  change.
+- of the short ones that are left, `word_eq_add_clock` (13 lines of
+  HOL4), `bytes_to_word_eq_lemma` (14),
+  `memory_rel_copy_array_NONE` (15) and
+  `memory_rel_RefPtr_gen_IMP` (16) are the next to weigh, and the
+  three that entry 43 owes (`word_eq_LESS_EQ`,
+  `vb_eq_size_IMP_vb_size`, `do_eq_IFF_vb_eq_size`) all need the
+  same piece: the clause of each pair of constructors of
+  `vb_eq_size` and of `do_eq` derived once from the match, so that
+  a case analysis does not reduce the match again in each case.
 
 `memory_rel_ptr_eq` looks like the cheapest of all (three lines of
 HOL4) and is not: it leans on `memory_rel_pointer_eq`, which HOL4
