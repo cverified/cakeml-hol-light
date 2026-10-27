@@ -8080,7 +8080,7 @@ let mutcons_thm_alt = prove
       let hyp = rand (lhand (concl dtf)) in
       ASSUME_TAC (GEN (pk "v")
         (DISCH hyp (MATCH_MP dtf (CONJ nd (ASSUME hyp))))) THEN
-      W(fun (asl,w as gl) ->
+      W(fun (asl,w) ->
         let m = genvar `:num` in
         let tr = mk_forall(m,
                    mk_imp(mk_neg (mk_eq (m, el 0 iargs)),
