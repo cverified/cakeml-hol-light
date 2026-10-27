@@ -3382,6 +3382,14 @@ let isSomeDataElement_heap_lookup_lemma3 = prove
     [MATCH_MP_TAC(TAUT `~a ==> ~(a /\ b)`) THEN ASM_ARITH_TAC;
      ASM_SIMP_TAC[ARITH_RULE `~(a:num < b) ==> (b <= a <=> T)`]]));;
 
+(* the clauses of heap_length, which the lemmas of this block and
+   of the ones after it rewrite with *)
+let heap_length_clauses = prove
+ (`heap_length [] = 0 /\
+   (!x xs. heap_length (CONS x xs) =
+           el_length x + heap_length xs)`,
+  REWRITE_TAC[heap_length_def; MAP; SUM_DEF; ITLIST]);;
+
 (* the port's own: what the proof of IMP_heap_store_unused needs.
    A store into the unused space writes the space that is left, the
    element, and what followed the space -- an append of four, which
@@ -11613,12 +11621,6 @@ let v_size_LESS_EQ = prove
    unless it is that element that is found.  Both are used by the
    theorems about a store into a byte array, of which
    v_inv_IMP_lemma is the first. *)
-
-let heap_length_clauses = prove
- (`heap_length [] = 0 /\
-   (!x xs. heap_length (CONS x xs) =
-           el_length x + heap_length xs)`,
-  REWRITE_TAC[heap_length_def; MAP; SUM_DEF; ITLIST]);;
 
 let heap_split_replace = prove
  (`!e ha u v hb h1 h2.

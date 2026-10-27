@@ -16,13 +16,23 @@ ML = (sys.argv[1] if sys.argv[1:] else
       os.path.dirname(os.path.abspath(__file__)) + "/../ml/")
 
 
-def main():
-  bad = incomment = 0
+def files():
+  """the files to check: the one named, or every file under the
+     directory named (ml/ by default)"""
+  if os.path.isfile(ML): return [(ML, ML)]
+  out = []
   for root, _, fs in os.walk(ML):
     for f in sorted(fs):
-      if not f.endswith('.ml'): continue
-      p = os.path.join(root, f)
-      rel = os.path.relpath(p, ML)
+      if f.endswith('.ml'):
+        p = os.path.join(root, f)
+        out.append((p, os.path.relpath(p, ML)))
+  return sorted(out)
+
+
+def main():
+  bad = incomment = 0
+  if True:
+    for p, rel in files():
       text = open(p).read()
       bare = nohol4.code_free(text).split('\n')
       for i, l in enumerate(text.split('\n')):

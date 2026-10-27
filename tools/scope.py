@@ -76,8 +76,20 @@ def check(path):
         bad.append((i + 1, name, id, k + 1))
   return bad
 
+def paths():
+  """the files to check: the ones named, or every file of ml/"""
+  if sys.argv[1:]: return sys.argv[1:]
+  import os
+  ml = os.path.dirname(os.path.abspath(__file__)) + "/../ml/"
+  out = []
+  for root, _, fs in os.walk(ml):
+    for f in sorted(fs):
+      if f.endswith('.ml'): out.append(os.path.join(root, f))
+  return sorted(out)
+
+
 n = 0
-for path in sys.argv[1:]:
+for path in paths():
   for ln, name, id, k in sorted(check(path)):
     print('%s:%d: %s uses %s, which the file defines at %d'
           % (path, ln, name, id, k))
