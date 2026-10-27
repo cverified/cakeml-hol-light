@@ -3491,3 +3491,72 @@ anything new there is real.
 The session cannot catch this one: it has the whole file loaded,
 so a lemma of a later block is in scope there and the proof goes
 through (entry 57 again, from the other side).
+
+## 64. An element's shape lemma carries a type variable of its own
+
+`BlockRep tag xs = DataElement xs (LENGTH xs) (BlockTag tag,[])` and
+`ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])` both end in
+`[]`, whose element type nothing in the equation fixes.  So
+`BlockRep` and `ThunkBlock` have **two** type variables, and a lemma
+about them (`el_length_ThunkBlock`, `isRef_BlockRep`,
+`samelen_bytes`) carries its own copy of the second one.
+
+`ISPECL [ev; y] el_length_ThunkBlock` therefore gives
+`el_length (ThunkBlock ev y) = 2` whose `ThunkBlock` is at the
+lemma's type, not at the heap's: it prints exactly like the one of
+the goal and matches nothing (entry 61 again).  `MATCH_MP` then says
+`No match`, or `term_match` says `safe_insert`.
+
+What works is to build the instance from a term of the goal:
+
+```
+let elt = PART_MATCH lhs el_length_ThunkBlock
+            (list_mk_icomb "el_length" [el1]) in
+```
+
+where `el1` is read off an assumption whose type the heap fixes (the
+element of `heap_store_unused a (sp + sp1) el1 heap = (heap2,T)`).
+`PART_MATCH` and `MATCH_MP` instantiate types; `ISPECL` and `SPEC`
+only instantiate the type of what they specialise.
+
+## 65. GEN fails when a bound name is a free name of an assumption
+
+The transfer that an allocation leaves is built from the predicate
+of the old `EVERY2`:
+
+```
+let v0,b1 = dest_abs pred in
+let x0,bod = dest_abs b1 in
+ASSUME_TAC (GENL [v0; x0] (DISCH bod (MATCH_MP step ...)))
+```
+
+`dest_abs` renames a bound variable only to avoid capture inside the
+term, so of `\v x. v_inv conf v refs (x,f,tf,heap)` it hands back `v`
+and `x` -- and `new_thunk_thm` has a value **named `v`** of its own,
+which is free in the assumption `ev = Evaluated ==> dest_thunk v
+refs = NotThunk` that the step takes.  An assumption of a goal is a
+theorem `A |- A`, so that `v` is free in the hypotheses of what is
+generalised and `GEN` refuses: `Failure "ABS"`.
+
+So rename the pair before generalising:
+
+```
+let v1 = genvar (type_of v0) and x1 = genvar (type_of x0) in
+let vtm = vsubst [v1,v0; x1,x0] bod in
+ASSUME_TAC (GENL [v1; x1] (DISCH vtm (MATCH_MP step ...)))
+```
+
+A genvar cannot be a name of the statement, and the names of the
+transfer do not matter to anything that uses it.
+
+## 66. Which disjunct of v_inv a RefPtr has depends on its flag
+
+The `RefPtr b n` clause of `v_inv` is three disjuncts: the plain
+pointer, the pointer to a thunk, and a thunk that has been
+evaluated away.  The second and the third ask for `~b`, so of a
+`RefPtr T ptr` (`new_ref_thm`, `new_byte_alt_thm`) the rewrite with
+`v_inv_def` leaves the first disjunct alone and `TRY DISJ1_TAC` is
+the whole choice; of a `RefPtr F ptr` (`new_thunk_thm`) all three
+stay, and the one that holds is the **second**, because the key does
+hold a thunk -- `DISJ1_TAC` there reduces the goal to `false`, which
+is what the report shows.

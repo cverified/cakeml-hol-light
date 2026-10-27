@@ -1718,3 +1718,41 @@ A cleanup that is owed: `ptrs_store_LUPDATE` (in the block of
 `update_ref_thm1`) is the special case of `ptrs_store_el` (in the
 block of `update_mutblock_thm`) for a `RefBlock` and the head of
 the roots, and one of them should be derived from the other.
+
+## The allocation layer is in (this round)
+
+Five of the allocation theorems are proved and the machinery they
+share stands in two blocks:
+
+- the block of `cons_thm_alt` (the first of them in the file) has
+  what every allocation needs: `gc_kind_store_unused_alt` (the
+  kind of the collection survives a store into the unused space at
+  its low end, the generational case included), `bc_ref_inv_step`
+  (the invariant of a reference that a step did not touch, with
+  its hypotheses an implication each so that a proof hands over
+  what it has -- `IMP_CONJ`), `EVERY2_v_inv_alloc` and its stack
+  twin, `INJ_FUPDATE_fresh`, `IMAGE_FUPDATE_fresh`, `INJ_bigger`,
+  `heap_split_pre`, `isSome_lookup`, `isRef_BlockRep`,
+  `reachable_refs_cons` and `v_inv_cons_step`;
+- the block of `new_ref_thm` has the same for a store at the *top*
+  of the unused space (`gc_kind_store_unused`, where the element
+  is a reference and so lands above the split) and
+  `all_ts_insert_SUBSET`.
+
+What each of the five costs the reader is now its own block of
+five to eight lemmas (the shape of its element, the edges that its
+key adds, the transfer of `v_inv`) and a proof that is the same
+eight steps: split the invariant, split the roots, write the
+element, give the witnesses, then `roots_ok`, `heap_ok`,
+`gc_kind_inv`, the unused space and `bc_stack_ref_inv`.
+
+What is left of the family: `word64_alt_thm` and `bignum_alt_thm`,
+which are the two that *shrink* the stack (`ws ++ stack` becomes
+`Word64 w64 :: stack`), so their timestamps have to be cut
+(`DRESTRICT tf (all_ts refs stack)`) and they want the restrict
+layer -- which sits in the block of `abs_ml_inv_stack_permute`
+eight thousand lines later and rests on `v_inv_update_gen` and
+`EVERY2_v_inv_update_stack` (9986, 11577), both of them after
+these two statements.  Moving that layer up is the piece to do
+first, and `deref_thm` (which reads a reference and changes
+nothing) is the cheapest one that needs none of it.
