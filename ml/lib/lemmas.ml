@@ -180,6 +180,41 @@ let EVERY2_LUPDATE_same = prove
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
 
 (* ------------------------------------------------------------------ *)
+(* The nth pair of a relation between two lists and the nth pair of   *)
+(* a zip, which HOL4 has as LIST_REL_EL_EQN and MEM_ZIP.              *)
+(* ------------------------------------------------------------------ *)
+
+(* the nth pair of a relation between two lists *)
+let ALL2_EL = prove
+ (`!(P:A->B->bool) l1 l2 n.
+     ALL2 P l1 l2 /\ n < LENGTH l1 ==> P (EL n l1) (EL n l2)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[LENGTH; ARITH_RULE `~((n:num) < 0)`];
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `l2:(B)list` (cases_of `:(B)list`)) THEN
+    REWRITE_TAC[ALL2; LENGTH] THEN
+    STRUCT_CASES_TAC(ISPEC `n:num` num_CASES) THEN
+    REWRITE_TAC[EL; HD; TL; LT_SUC; LT_0] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
+
+(* and the nth pair of a zip is one of it *)
+let MEM_ZIP_EL = prove
+ (`!(l1:A list) (l2:B list) n.
+     n < LENGTH l1 /\ LENGTH l2 = LENGTH l1
+     ==> MEM (EL n l1,EL n l2) (ZIP l1 l2)`,
+  LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[LENGTH; ARITH_RULE `~((n:num) < 0)`];
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `l2:(B)list` (cases_of `:(B)list`)) THEN
+    REWRITE_TAC[LENGTH; NOT_SUC; ZIP] THEN
+    STRUCT_CASES_TAC(ISPEC `n:num` num_CASES) THEN
+    REWRITE_TAC[EL; HD; TL; LT_SUC; LT_0; MEM; SUC_INJ] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    DISJ2_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+    ASM_REWRITE_TAC[]]);;
+
+(* ------------------------------------------------------------------ *)
 (* Two steps that a proof about the headers of data_to_word takes:    *)
 (* a word that bounds two lengths says they are one, and a number is  *)
 (* below zero exactly when zero is not below it.                      *)

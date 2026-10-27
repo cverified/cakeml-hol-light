@@ -14614,6 +14614,191 @@ let ALOOKUP_ZIP_EL = prove
      REPEAT CONJ_TAC THEN TRY ASM_ARITH_TAC THEN
      ASM_REWRITE_TAC[]]));;
 
+(* the port's own: what the proof of word_ml_inv_rearrange needs.
+   The roots of the new stack are the ones the old stack gave its
+   pairs, which the lookup of a pair in the association of the old
+   stack with its roots finds (ALOOKUP_root); the relation between
+   the values and the roots then holds pair by pair
+   (EVERY2_rearrange_roots), and the invariant itself is
+   abs_ml_inv_stack_permute with nothing on the stack but the pairs
+   (abs_ml_inv_rearrange, which has to say the stack of the one and
+   of the other as a MAP over one list of pairs) *)
+
+(* the root that a pair of the stack has: the pairs before the
+   first one that is it are not it, so the lookup lands there *)
+let ALOOKUP_root = prove
+ (`!(xs:(A)list) (hs:(B)list) y.
+     LENGTH hs = LENGTH xs /\ MEM y xs
+     ==> ?n. n < LENGTH xs /\ EL n xs = y /\
+             THE (ALOOKUP (ZIP xs hs) y) = EL n hs`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  FIRST_X_ASSUM (fun m ->
+    if not (hd_is "MEM" (concl m)) then fail() else
+    STRIP_ASSUME_TAC (REWRITE_RULE[MEM_FIRST_EL] m)) THEN
+  W(fun gl ->
+    let eq = the_asm (fun c -> is_eq c && hd_is "EL" (lhand c)) gl in
+    EXISTS_TAC (lhand (lhand (concl eq)))) THEN
+  REPEAT CONJ_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  W(fun gl ->
+    let eq = the_asm (fun c -> is_eq c && hd_is "EL" (lhand c)) gl in
+    let lt = the_asm (fun c -> hd_is "<" c) gl in
+    let le = the_asm (fun c -> is_eq c &&
+               hd_is "LENGTH" (lhand c)) gl in
+    let mn = the_asm (fun c ->
+               length (fst (strip_forall c)) = 1 &&
+               is_imp (snd (strip_forall c)) &&
+               is_neg (rand (snd (strip_forall c)))) gl in
+    let al = MATCH_MP ALOOKUP_ZIP_EL (CONJ lt (CONJ le mn)) in
+    MATCH_ACCEPT_TAC (MATCH_MP IMP_THE_EQ
+      (ONCE_REWRITE_RULE[eq] al))));;
+
+(* the roots of a stack that the other stack has: each pair of the
+   one is a pair of the other, and the lookup finds its root *)
+let EVERY2_rearrange_roots = prove
+ (`!(P:C->B->bool) (ys:(A#B)list) xs (hs:(C)list).
+     (!x. MEM x ys ==> MEM x xs) /\ LENGTH hs = LENGTH xs /\
+     ALL2 P hs (MAP SND xs)
+     ==> ALL2 P (MAP (\y. THE (ALOOKUP (ZIP xs hs) y)) ys)
+                (MAP SND ys)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  REWRITE_TAC[EVERY2_MAP_MAP; GSYM ALL_MEM] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+  REPEAT STRIP_TAC THEN
+  (* the pair is one of the old stack, so the lookup finds the
+     root that the old stack gave it *)
+  W(fun gl ->
+    let m = the_asm (hd_is "MEM") gl in
+    let sub = the_asm (fun c ->
+                length (fst (strip_forall c)) = 1 &&
+                is_imp (snd (strip_forall c)) &&
+                hd_is "MEM" (rand (snd (strip_forall c)))) gl in
+    let le = the_asm (fun c -> is_eq c &&
+               hd_is "LENGTH" (lhand c)) gl in
+    STRIP_ASSUME_TAC (MATCH_MP ALOOKUP_root
+      (CONJ le (MP (SPEC (el 0 (snd (strip_comb (concl m)))) sub)
+                  m)))) THEN
+  W(fun gl ->
+    let thq = the_asm (fun c -> is_eq c &&
+                hd_is "THE" (lhand c)) gl in
+    let eqy = the_asm (fun c -> is_eq c &&
+                hd_is "EL" (lhand c)) gl in
+    let e2 = the_asm (hd_is "ALL2") gl in
+    let le = the_asm (fun c -> is_eq c &&
+               hd_is "LENGTH" (lhand c)) gl in
+    let lt = the_asm (fun c -> hd_is "<" c) gl in
+    let n = lhand (lhand (concl eqy)) in
+    let xs = rand (lhand (concl eqy)) in
+    let el = MATCH_MP ALL2_EL
+               (CONJ e2 (ONCE_REWRITE_RULE[GSYM le] lt)) in
+    let mp = MP (ISPECL [lhand (rand (concl e2)); n; xs]
+                   EL_MAP) lt in
+    ONCE_REWRITE_TAC[thq] THEN
+    ACCEPT_TAC (REWRITE_RULE[mp; eqy] el)));;
+
+(* abs_ml_inv_stack_permute with nothing on the stack but the
+   pairs, which is how HOL4 instantiates it as well *)
+let abs_ml_inv_stack_permute_nil =
+  let th = abs_ml_inv_stack_permute in
+  let fvs = frees (concl th) in
+  let pick n = find (fun v -> fst (dest_var v) = n) fvs in
+  let nil_like v = rand (lhand (concl (ISPEC v APPEND_NIL))) in
+  let st = pick "stack" and rt = pick "roots" in
+  REWRITE_RULE[APPEND_NIL]
+    (INST [nil_like st,st; nil_like rt,rt] th);;
+
+(* the invariant over a stack that the other stack has: the pairs
+   of the one are pairs of the other, with the root that the lookup
+   finds, so the lemma above says it *)
+let abs_ml_inv_rearrange = prove
+ (cake_as_vars (fun () ->
+    `(!x. MEM x ys ==> MEM x xs) /\ LENGTH hs = LENGTH xs /\
+     abs_ml_inv conf (MAP FST xs) refs
+       (hs,heap,be,a,sp,sp1,gens) limit ts
+     ==> abs_ml_inv conf (MAP FST ys) refs
+           (MAP (\y. THE (ALOOKUP (ZIP xs hs) y)) ys,
+            heap,be,a,sp,sp1,gens) limit ts`),
+  STRIP_TAC THEN SPLIT_ASM_TAC THEN
+  W(fun (asl,w as gl) ->
+    let inv = the_asm (hd_is "abs_ml_inv") gl in
+    let iargs = snd (strip_comb (concl inv)) in
+    let fstm = lhand (el 1 iargs) in
+    let xs = rand (el 1 iargs) in
+    let hs = el 0 (tparts (el 3 iargs)) in
+    let gargs = snd (strip_comb w) in
+    let ys = rand (el 1 gargs) in
+    let rts = el 0 (tparts (el 3 gargs)) in
+    let g = lhand rts in
+    let v,bod = dest_abs g in
+    let pairf = mk_abs (v, mk_pair (mk_comb (fstm,v), bod)) in
+    let pty = type_of v in
+    let vty = hd (snd (dest_type pty)) in
+    let rty = type_of bod in
+    let zpty = mk_type("prod",[vty; rty]) in
+    let fstz = mk_mconst("FST", mk_fun_ty zpty vty) in
+    let sndz = mk_mconst("SND", mk_fun_ty zpty rty) in
+
+    let zs = list_mk_icomb "MAP" [pairf; ys] in
+
+    let ws = list_mk_icomb "ZIP"
+               [list_mk_icomb "MAP" [fstm; xs]; hs] in
+    let le = the_asm (fun c -> is_eq c &&
+               hd_is "LENGTH" (lhand c)) gl in
+    let lz = TRANS (ISPECL [xs; fstm] LENGTH_MAP) (SYM le) in
+
+    let maps = [MATCH_MP MAP_FST_ZIP lz; MATCH_MP MAP_SND_ZIP lz] in
+
+    let lv = genvar (type_of ys) in
+    let mapstep = LIST_INDUCT_TAC THEN REWRITE_TAC[MAP] THEN
+                  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+                  ASM_REWRITE_TAC[FST; SND] in
+    let eq1 = SPEC ys (prove(mk_forall(lv,
+                 mk_eq (list_mk_icomb "MAP"
+                          [fstz; list_mk_icomb "MAP" [pairf; lv]],
+                        list_mk_icomb "MAP" [fstm; lv])),
+                 mapstep)) in
+    let eq2 = SPEC ys (prove(mk_forall(lv,
+                 mk_eq (list_mk_icomb "MAP"
+                          [sndz; list_mk_icomb "MAP" [pairf; lv]],
+                        list_mk_icomb "MAP" [g; lv])),
+                 mapstep)) in
+
+    let perm = REWRITE_RULE (eq1 :: eq2 :: maps)
+                 (ISPECL [ws; zs] abs_ml_inv_stack_permute_nil) in
+    (* the pairs of the new stack are pairs of the old one: the
+       root of each is the one the lookup finds *)
+    SUBGOAL_THEN (list_mk_icomb "SUBSET"
+                    [list_mk_icomb "set_of_list" [zs];
+                     list_mk_icomb "set_of_list" [ws]])
+      (fun ss -> MATCH_ACCEPT_TAC (MATCH_MP perm (CONJ inv ss))) THEN
+    (REWRITE_TAC[SUBSET; IN_SET_OF_LIST; MEM_MAP] THEN
+      REPEAT STRIP_TAC THEN
+      W(fun gl ->
+        let m = the_asm (fun c -> hd_is "MEM" c) gl in
+        let sub = the_asm (fun c ->
+                    length (fst (strip_forall c)) = 1 &&
+                    is_imp (snd (strip_forall c)) &&
+                    hd_is "MEM" (rand (snd (strip_forall c)))) gl in
+        STRIP_ASSUME_TAC (MATCH_MP ALOOKUP_root
+          (CONJ le (MP (SPEC (el 0 (snd (strip_comb (concl m)))) sub)
+                      m)))) THEN
+      W(fun (asl,w as gl) ->
+        let eqy = the_asm (fun c -> is_eq c &&
+                    hd_is "EL" (lhand c)) gl in
+        let thq = the_asm (fun c -> is_eq c &&
+                    hd_is "THE" (lhand c)) gl in
+        let lt = the_asm (fun c -> hd_is "<" c) gl in
+        let n = lhand (lhand (concl eqy)) in
+        let ltm = ONCE_REWRITE_RULE
+                    [SYM (ISPECL [xs; fstm] LENGTH_MAP)] lt in
+        let mem = MP (ISPECL [list_mk_icomb "MAP" [fstm; xs]; hs; n]
+                        MEM_ZIP_EL) (CONJ ltm (SYM lz)) in
+        let elm = MP (ISPECL [fstm; n; xs] EL_MAP) lt in
+        ASM_REWRITE_TAC[] THEN
+        CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+        ASM_REWRITE_TAC[] THEN
+        ACCEPT_TAC (REWRITE_RULE[elm; eqy; thq] mem)))));;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let word_ml_inv_rearrange = prove
@@ -14621,17 +14806,46 @@ let word_ml_inv_rearrange = prove
     `(!x. MEM x ys ==> MEM x xs) ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs xs ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ys`),
-  (* the attempt: the proof of the source names word_ml_inv_def,
-     THE, ALOOKUP, EVERY2_MAP_MAP, EVERY2_IMP_EVERY, MEM_FIRST_EL.
-     What is here rewrites with them and closes by arithmetic, and
-     the cheat is behind it until the proof is written.  A MESON
-     over them is what the next round adds; it costs a load ten
-     minutes to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[word_ml_inv_def; THE; ALOOKUP;
-       EVERY2_MAP_MAP; EVERY2_IMP_EVERY; MEM_FIRST_EL] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the steps are above the statement (tools/overrides.py).  The
+     roots of the new stack are the ones that the old stack gave
+     its pairs: the lookup of a pair in the association of the old
+     stack with its roots finds it, and the invariant and the
+     relation between the values and the roots then come from
+     abs_ml_inv_rearrange and EVERY2_rearrange_roots *)
+  (STRIP_TAC THEN
+    REWRITE_TAC[word_ml_inv_def] THEN
+    DISCH_THEN (CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    (* the roots are as many as the pairs of the stack *)
+    W(fun gl ->
+      let e2 = the_asm (hd_is "ALL2") gl in
+      ASSUME_TAC (REWRITE_RULE[LENGTH_MAP]
+                    (MATCH_MP LIST_REL_LENGTH e2))) THEN
+    (* and the root of a pair of the new stack is the one that the
+       old stack gave it *)
+    W(fun (asl,w as gl) ->
+      let inv = the_asm (hd_is "abs_ml_inv") gl in
+      let iargs = snd (strip_comb (concl inv)) in
+      let xs = rand (el 1 iargs) in
+      let hs = el 0 (tparts (el 3 iargs)) in
+      let e2 = the_asm (hd_is "ALL2") gl in
+      let le = the_asm (fun c -> is_eq c &&
+                 hd_is "LENGTH" (lhand c)) gl in
+      let sub = the_asm (fun c ->
+                  length (fst (strip_forall c)) = 1 &&
+                  is_imp (snd (strip_forall c)) &&
+                  hd_is "MEM" (rand (snd (strip_forall c)))) gl in
+      let ys = el 1 (snd (strip_comb
+                 (lhand (snd (strip_forall (concl sub)))))) in
+      let v = genvar (hd (snd (dest_type (type_of ys)))) in
+      let g = mk_abs (v, list_mk_icomb "THE"
+                [list_mk_icomb "ALOOKUP"
+                   [list_mk_icomb "ZIP" [xs; hs]; v]]) in
+      EXISTS_TAC (list_mk_icomb "MAP" [g; ys]) THEN
+      CONJ_TAC THENL
+       [MATCH_ACCEPT_TAC (MATCH_MP abs_ml_inv_rearrange
+          (CONJ sub (CONJ le inv)));
+        MATCH_ACCEPT_TAC (MATCH_MP EVERY2_rearrange_roots
+          (CONJ sub (CONJ le e2)))])));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

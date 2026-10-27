@@ -18146,17 +18146,46 @@
          MATCH_ACCEPT_TAC (MATCH_MP bc_ref_inv_restrict
            (MP (SPEC n bri) (CONJ rr nin)))))))
 ### word_ml_inv_rearrange
-  (* the attempt: the proof of the source names word_ml_inv_def,
-     THE, ALOOKUP, EVERY2_MAP_MAP, EVERY2_IMP_EVERY, MEM_FIRST_EL.
-     What is here rewrites with them and closes by arithmetic, and
-     the cheat is behind it until the proof is written.  A MESON
-     over them is what the next round adds; it costs a load ten
-     minutes to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[word_ml_inv_def; THE; ALOOKUP;
-       EVERY2_MAP_MAP; EVERY2_IMP_EVERY; MEM_FIRST_EL] THEN
-     TRY ASM_ARITH_TAC))
+  (* the steps are above the statement (tools/overrides.py).  The
+     roots of the new stack are the ones that the old stack gave
+     its pairs: the lookup of a pair in the association of the old
+     stack with its roots finds it, and the invariant and the
+     relation between the values and the roots then come from
+     abs_ml_inv_rearrange and EVERY2_rearrange_roots *)
+  (STRIP_TAC THEN
+    REWRITE_TAC[word_ml_inv_def] THEN
+    DISCH_THEN (CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    (* the roots are as many as the pairs of the stack *)
+    W(fun gl ->
+      let e2 = the_asm (hd_is "ALL2") gl in
+      ASSUME_TAC (REWRITE_RULE[LENGTH_MAP]
+                    (MATCH_MP LIST_REL_LENGTH e2))) THEN
+    (* and the root of a pair of the new stack is the one that the
+       old stack gave it *)
+    W(fun (asl,w as gl) ->
+      let inv = the_asm (hd_is "abs_ml_inv") gl in
+      let iargs = snd (strip_comb (concl inv)) in
+      let xs = rand (el 1 iargs) in
+      let hs = el 0 (tparts (el 3 iargs)) in
+      let e2 = the_asm (hd_is "ALL2") gl in
+      let le = the_asm (fun c -> is_eq c &&
+                 hd_is "LENGTH" (lhand c)) gl in
+      let sub = the_asm (fun c ->
+                  length (fst (strip_forall c)) = 1 &&
+                  is_imp (snd (strip_forall c)) &&
+                  hd_is "MEM" (rand (snd (strip_forall c)))) gl in
+      let ys = el 1 (snd (strip_comb
+                 (lhand (snd (strip_forall (concl sub)))))) in
+      let v = genvar (hd (snd (dest_type (type_of ys)))) in
+      let g = mk_abs (v, list_mk_icomb "THE"
+                [list_mk_icomb "ALOOKUP"
+                   [list_mk_icomb "ZIP" [xs; hs]; v]]) in
+      EXISTS_TAC (list_mk_icomb "MAP" [g; ys]) THEN
+      CONJ_TAC THENL
+       [MATCH_ACCEPT_TAC (MATCH_MP abs_ml_inv_rearrange
+          (CONJ sub (CONJ le inv)));
+        MATCH_ACCEPT_TAC (MATCH_MP EVERY2_rearrange_roots
+          (CONJ sub (CONJ le e2)))]))
 ### get_real_addr_get_addr
   (* the attempt: the proof of the source names get_addr_def,
      get_real_addr_def, get_real_simple_addr_def, heap_lookup_LESS,
