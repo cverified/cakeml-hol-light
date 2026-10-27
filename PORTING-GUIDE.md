@@ -3457,3 +3457,37 @@ what it unhid).  The same holds for a session cut at a statement
 with `tools/bin/trybase`: there the hides of the head are still in
 force, so nothing is needed -- one more reason the cut base says
 what it means (entry 57).
+
+## 63. The two checks take a file or nothing, and said nothing
+
+`tools/lines.py` walks a directory and `tools/scope.py` walks the
+files it is given.  So
+
+```
+python3 -I tools/lines.py <one file>     # checked nothing: 0
+python3 -I tools/scope.py                # checked nothing: 0
+```
+
+were both silent for a whole round of proofs, and both reports
+were read as clean.  What they were hiding:
+
+- eleven lines of the proof store had gone over 72 characters (the
+  `.prf` text is indented by two when it lands in the file, so a
+  line of 71 becomes one of 73);
+- the block of `IMP_heap_store_unused` rewrote with
+  `heap_length_clauses`, which stood in the block of
+  `update_byte_ref_thm` eight thousand lines later, so the file did
+  not load at all -- and that costs a twelve minute `verifyquick`
+  to find out.
+
+Both tools now take either a file or nothing.  The habit to keep:
+**run `lines.py` and `scope.py` with no argument after every
+`portfile`**, and read the counts, not the silence.  `scope.py`
+over the whole port reports thirteen hits, all of them in
+definition files where a `let` lower down has the name of a
+constant of a statement higher up; the proof files are clean, so
+anything new there is real.
+
+The session cannot catch this one: it has the whole file loaded,
+so a lemma of a later block is in scope there and the proof goes
+through (entry 57 again, from the other side).

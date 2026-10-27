@@ -4950,9 +4950,7 @@ let heap_lookup_store_outside = prove
     REPEAT (CHANGED_TAC
               (COND_CASES_TAC THEN
                ASM_REWRITE_TAC[heap_lookup_def; ADD_CLAUSES])) THEN
-    TRY (SOLVED (ASM_ARITH_TAC)) THEN
-    SHOW "outside" THEN
-    ALL_TAC]);;
+    ASM_ARITH_TAC]);;
 
 (* and inside that space, away from the element written, neither
    heap holds data: the one has what is left of the space there and
