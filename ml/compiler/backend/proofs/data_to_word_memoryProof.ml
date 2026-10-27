@@ -8092,7 +8092,7 @@ let mutcons_thm_alt = prove
          [REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[lookup_insert];
           ALL_TAC])) THEN
     (* the values of the stack with the pointer of the block on it *)
-    W(fun (asl,w as gl) ->
+    W(fun (asl,w) ->
       if not (hd_is "ALL2" w) then ALL_TAC else
       (REWRITE_TAC[ALL2] THEN
        CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
@@ -8127,7 +8127,7 @@ let mutcons_thm_alt = prove
          let n = el 1 (snd (strip_comb w)) in
          ASM_CASES_TAC (mk_eq (n, ptr))) THEN
        TRY VAR_EQ_TAC THEN
-       W(fun (asl,w as gl) ->
+       W(fun (asl,w) ->
          let n = el 1 (snd (strip_comb w)) in
          let ins = find_term (hd_is "sptree_insert") w in
          if not (n = el 0 (snd (strip_comb ins))) then ALL_TAC else
@@ -8164,7 +8164,7 @@ let mutcons_thm_alt = prove
               TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
               (* no timestamp has the address of the block, because it
                  held no data *)
-              W(fun (asl,w as gl) ->
+              W(fun (asl,w) ->
                 if not (is_neg w) ||
                    not (hd_is "IN" (rand w)) then ALL_TAC else
                 (REWRITE_TAC[IN_IMAGE] THEN
