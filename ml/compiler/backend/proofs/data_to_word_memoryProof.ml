@@ -13566,6 +13566,222 @@ let blocks_unique_stack_permute = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the port's own: what the proof of abs_ml_inv_stack_permute
+   needs.  The stack changes and the references and the heap do
+   not, so every transfer of the generic machinery above
+   update_ref_thm is the identity here and what is left is the
+   timestamps: they are cut to the ones of the new stack, which is
+   what v_inv_restrict_gen, EVERY2_v_inv_restrict (the values of a
+   stack), EVERY2_v_inv_restrict_gen (the values of the arm of a
+   reference, the other way round -- entry 53) and
+   bc_ref_inv_restrict say.  The pairs of the new stack are pairs
+   of the old one, which is what the four after them say of the
+   roots, of a map and of the relation between the values and the
+   roots *)
+
+(* what the invariant says of a value, of the values of a stack and
+   of the values of the arm of a reference, with the timestamps cut
+   to the ones of a stack: the references and the heap are the ones
+   they were, so the transfer of each generic lemma is the identity *)
+let v_inv_restrict_gen = prove
+ (cake_as_vars (fun () ->
+    `v_inv conf v1 refs (v2,f,tf,heap) /\
+     v1 IN all_vs refs stack'
+     ==> v_inv conf v1 refs
+           (v2,f,DRESTRICT tf (all_ts refs stack'),heap)`),
+  STRIP_TAC THEN
+  MATCH_MP_TAC v_inv_update_gen THEN
+  REPEAT CONJ_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  REPEAT STRIP_TAC THEN FIRST_ASSUM ACCEPT_TAC);;
+
+let EVERY2_v_inv_restrict = prove
+ (cake_as_vars (fun () ->
+    `(!v. MEM v vs ==> v IN all_vs refs stack') /\
+     EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
+     ==> EVERY2 (\v x. v_inv conf v refs
+           (x,f,DRESTRICT tf (all_ts refs stack'),heap)) vs rs`),
+  STRIP_TAC THEN
+  MATCH_MP_TAC EVERY2_v_inv_update_stack THEN
+  REPEAT CONJ_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  REPEAT STRIP_TAC THEN FIRST_ASSUM ACCEPT_TAC);;
+
+let EVERY2_v_inv_restrict_gen = prove
+ (cake_as_vars (fun () ->
+    `(!v. MEM v ys ==> v IN all_vs refs stack') /\
+     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
+     ==> EVERY2 (\z y. v_inv conf y refs
+           (z,f,DRESTRICT tf (all_ts refs stack'),heap)) zs ys`),
+  STRIP_TAC THEN
+  MATCH_MP_TAC EVERY2_v_inv_update_gen THEN
+  REPEAT CONJ_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  REPEAT STRIP_TAC THEN FIRST_ASSUM ACCEPT_TAC);;
+
+(* the values of the arm of a reference are values of the stack,
+   whichever arm it is: the lemma that says so is the argument *)
+let EVERY2_ARM_RESTRICT_TAC memlem =
+  W(fun (asl,w as gl) ->
+    let ats = find_term (hd_is "all_ts") w in
+    let refs2 = lhand ats in
+    let ys = el 2 (snd (strip_comb w)) in
+    let v = genvar (hd (snd (dest_type (type_of (rand ats))))) in
+    SUBGOAL_THEN
+      (mk_forall(v, mk_imp(list_mk_icomb "MEM" [v; ys],
+         list_mk_icomb "IN"
+           [v; list_mk_icomb "all_vs" [refs2; rand ats]])))
+      (fun mem ->
+         let old = the_asm (hd_is "ALL2") gl in
+         MATCH_ACCEPT_TAC (MATCH_MP EVERY2_v_inv_restrict_gen
+           (CONJ mem old))) THEN
+    REPEAT STRIP_TAC THEN
+    W(fun gl ->
+      let mm = the_asm (hd_is "MEM") gl in
+      MATCH_ACCEPT_TAC (MATCH_MP memlem
+        (CONJ (a_lkref refs2 gl) mm))));;
+
+(* and so the invariant of a reference with the timestamps cut *)
+let bc_ref_inv_restrict = prove
+ (cake_as_vars (fun () ->
+    `bc_ref_inv conf n refs ((f:(num,num)fmap),tf,heap,be')
+     ==> bc_ref_inv conf n refs
+           (f,DRESTRICT tf (all_ts refs stack'),heap,be')`),
+  STRIP_TAC THEN
+  (* the key has an address *)
+  FIRST_ASSUM (fun inv ->
+    if not (hd_is "bc_ref_inv" (concl inv)) then fail() else
+    CHOOSE_THEN ASSUME_TAC (MATCH_MP bc_ref_inv_FLOOKUP inv)) THEN
+  (* and the kind of what the key holds says which arm it is *)
+  W(fun gl ->
+    let inv = the_asm (hd_is "bc_ref_inv") gl in
+    let args = snd (strip_comb (concl inv)) in
+    NAMED_CASES_TAC (list_mk_icomb "sptree_lookup"
+                       [el 1 args; el 2 args]) [[]; ["rv"]]) THEN
+  TRY (SOLVED (FIRST_X_ASSUM (fun inv ->
+    if not (hd_is "bc_ref_inv" (concl inv)) then fail() else
+    MP_TAC (REWRITE_RULE[bc_ref_inv_def] inv)) THEN
+    ASM_REWRITE_TAC[] THEN REDUCE_MATCH_HARD)) THEN
+  NAMED_CASES_TAC (cake_as_vars (fun () ->
+    `rv:(dataSem_v)bvlSem_ref`))
+    [["l"]; ["flag"; "bs"]; ["ev"; "vv"];
+     ["tg"; "fin"; "ll"; "cc"; "rr"]] THEN
+  USE_ARMS THEN
+  SPLIT_ASM_TAC THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if is_exists (concl th) then CHOOSE_TAC th else fail())) THEN
+  SPLIT_ASM_TAC THEN
+  (* the array of values: the element is where it was and its
+     values are values of the stack *)
+  TRY (SOLVED
+        (W(fun gl ->
+           let hl = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_lookup" (lhand c) &&
+                      hd_is "SOME" (rand c)) gl in
+           EXISTS_TAC (rand (rand (rand (concl hl)))) THEN
+           CONJ_TAC THENL
+            [ACCEPT_TAC hl;
+             EVERY2_ARM_RESTRICT_TAC MEM_ref_all_vs]))) THEN
+  (* the array of bytes: only the element *)
+  TRY (SOLVED
+        (CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+         RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+         FIRST_ASSUM ACCEPT_TAC)) THEN
+  (* the thunk: the element, that it is still not a thunk, and its
+     value *)
+  TRY (SOLVED
+        (W(fun gl ->
+           let hl = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_lookup" (lhand c) &&
+                      hd_is "SOME" (rand c)) gl in
+           EXISTS_TAC (rand (rand (rand (concl hl)))) THEN
+           REPEAT CONJ_TAC THEN
+           TRY (SOLVED (ACCEPT_TAC hl)) THEN
+           TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+           W(fun (asl,w as gl) ->
+             let vi = the_asm (hd_is "v_inv") gl in
+             let refs2 = lhand (find_term (hd_is "all_ts") w) in
+             let inn = MATCH_MP MEM_thunk_all_vs
+                         (a_lkref refs2 gl) in
+             MATCH_ACCEPT_TAC (MATCH_MP v_inv_restrict_gen
+               (CONJ vi inn)))))) THEN
+  (* the mutable block: the kind of the collection, the address
+     that no timestamp has, the element and its values *)
+  TRY (SOLVED
+        (REPEAT CONJ_TAC THEN
+         TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+         TRY (SOLVED
+               (W(fun gl ->
+                  let impl = the_asm (fun c -> is_imp c &&
+                               is_neg (lhand c) &&
+                               is_neg (rand c)) gl in
+                  DISCH_THEN (fun nf -> MATCH_ACCEPT_TAC
+                    (MATCH_MP IMAGE_DRESTRICT_NOT (MP impl nf)))))) THEN
+         W(fun gl ->
+           let hl = the_asm (fun c -> is_eq c &&
+                      hd_is "heap_lookup" (lhand c) &&
+                      hd_is "SOME" (rand c)) gl in
+           EXISTS_TAC (rand (rand (rand (concl hl)))) THEN
+           CONJ_TAC THENL
+            [ACCEPT_TAC hl;
+             EVERY2_ARM_RESTRICT_TAC MEM_mutblock_all_vs]))));;
+
+(* the roots of a stack that the other stack has are good when the
+   other's are *)
+let roots_ok_subset = prove
+ (`(!x. MEM x rs2 ==> MEM x rs1) /\ roots_ok rs1 heap
+   ==> roots_ok rs2 heap`,
+  REWRITE_TAC[roots_ok_def] THEN MESON_TAC[]);;
+
+(* and what one list of pairs has of the other, after a map *)
+let MEM_MAP_subset = prove
+ (`!(g:A->B) ys xs l.
+     (!p. MEM p ys ==> MEM p xs)
+     ==> !x. MEM x (MAP g ys ++ l) ==> MEM x (MAP g xs ++ l)`,
+  REWRITE_TAC[MEM_APPEND; MEM_MAP] THEN MESON_TAC[]);;
+
+(* a relation between the values and the roots of a list of pairs
+   holds of every list of its pairs *)
+let EVERY2_FST_SND_subset = prove
+ (`!(P:A->B->bool) ys xs.
+     (!p. MEM p ys ==> MEM p xs) /\
+     EVERY2 P (MAP FST xs) (MAP SND xs)
+     ==> EVERY2 P (MAP FST ys) (MAP SND ys)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[EVERY2_MAP_FST_SND; GSYM ALL_MEM] THEN
+  MESON_TAC[]);;
+
+(* so the values of a stack that the other stack has are related to
+   their roots when the other's are *)
+let EVERY2_stack_permute = prove
+ (cake_as_vars (fun () ->
+    `(!p. MEM p ys ==> MEM p xs) /\
+     EVERY2 P (MAP FST xs ++ stack) (MAP SND xs ++ roots)
+     ==> EVERY2 P (MAP FST ys ++ stack) (MAP SND ys ++ roots)`),
+  STRIP_TAC THEN
+  W(fun gl ->
+    let old = the_asm (hd_is "ALL2") gl in
+    let args = snd (strip_comb (concl old)) in
+    let l1 = lhand (el 1 args) in
+    let l2 = lhand (el 2 args) in
+    let leq = prove(mk_eq (list_mk_icomb "LENGTH" [l1],
+                           list_mk_icomb "LENGTH" [l2]),
+                    REWRITE_TAC[LENGTH_MAP]) in
+    STRIP_ASSUME_TAC (MATCH_MP LIST_REL_APPEND_IMP
+      (CONJ old leq))) THEN
+  MATCH_MP_TAC LIST_REL_APPEND_I THEN
+  CONJ_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  W(fun gl ->
+    let sub = the_asm (fun c ->
+                length (fst (strip_forall c)) = 1 &&
+                is_imp (snd (strip_forall c)) &&
+                hd_is "MEM" (lhand (snd (strip_forall c)))) gl in
+    let e2 = the_asm (fun c -> hd_is "ALL2" c &&
+               hd_is "MAP" (el 1 (snd (strip_comb c)))) gl in
+    MATCH_ACCEPT_TAC (MATCH_MP EVERY2_FST_SND_subset
+      (CONJ sub e2))));;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let abs_ml_inv_stack_permute = prove
@@ -13576,19 +13792,150 @@ let abs_ml_inv_stack_permute = prove
          set_of_list ys SUBSET set_of_list xs ==>
          abs_ml_inv conf (MAP FST ys ++ stack) refs
            (MAP SND ys ++ roots,heap,be,a,sp,sp1,gens) limit ts`),
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     bc_stack_ref_inv_def, roots_ok_def, DRESTRICT, all_ts_def,
-     blocks_unique_stack_permute.  What is here rewrites with them
-     and closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-       roots_ok_def; DRESTRICT; all_ts_def;
-       blocks_unique_stack_permute] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the steps are above the statement (tools/overrides.py).  The
+     heap and the references are the ones they were, so the heap,
+     the unused space and the kind of the collection say what they
+     said; the roots of the new stack are among the old ones
+     (roots_ok_subset), its pairs are pairs of the old stack
+     (EVERY2_stack_permute, blocks_unique_stack_permute) and what
+     it reaches the old stack reached
+     (reachable_refs_stack_subset); and the timestamps are cut to
+     the ones of the new stack, which the invariant of a value and
+     of a reference survive (EVERY2_v_inv_restrict,
+     bc_ref_inv_restrict) *)
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    (* the pairs of the new stack are pairs of the old *)
+    W(fun gl ->
+      let sub = the_asm (hd_is "SUBSET") gl in
+      ASSUME_TAC (REWRITE_RULE[SUBSET; IN_SET_OF_LIST] sub)) THEN
+    (* and what the invariant says of the old stack *)
+    FIRST_X_ASSUM (fun inv ->
+      if not (hd_is "abs_ml_inv" (concl inv)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def;
+                                     bc_stack_ref_inv_def] inv)) THEN
+    REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def] THEN
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    (* the roots are good, because they are among the old ones *)
+    TRY (SOLVED
+          (W(fun (asl,w as gl) ->
+             let ro = the_asm (hd_is "roots_ok") gl in
+             let sub = the_asm (fun c ->
+                         length (fst (strip_forall c)) = 1 &&
+                         is_imp (snd (strip_forall c)) &&
+                         hd_is "MEM"
+                           (lhand (snd (strip_forall c)))) gl in
+             let xs = el 1 (snd (strip_comb
+                        (rand (snd (strip_forall (concl sub)))))) in
+             let rs2 = el 0 (snd (strip_comb w)) in
+             let margs = snd (strip_comb (lhand rs2)) in
+             let mem = MP (ISPECL [el 0 margs; el 1 margs; xs;
+                                   rand rs2] MEM_MAP_subset) sub in
+             ACCEPT_TAC (MATCH_MP roots_ok_subset (CONJ mem ro))))) THEN
+    (* the maps: the addresses are the ones they were and the
+       timestamps are cut to the ones of the new stack *)
+    W(fun (asl,w as gl) ->
+      if not (is_exists w) then ALL_TAC else
+      (let sub p = rand (lhand (concl (the_asm (fun c ->
+         hd_is "SUBSET" c && hd_is p (rand c)) gl))) in
+       let ats = find_term (hd_is "all_ts") w in
+       EXISTS_TAC (sub "domain") THEN
+       EXISTS_TAC (list_mk_icomb "DRESTRICT" [sub "all_ts"; ats]))) THEN
+    REPEAT CONJ_TAC THEN TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    (* the addresses of the restricted map are the ones it had *)
+    TRY (SOLVED
+          (W(fun (asl,w as gl) ->
+             let dr = find_term (hd_is "DRESTRICT") w in
+             let inj = the_asm (fun c -> hd_is "INJ" c &&
+               rand (el 0 (snd (strip_comb c))) = lhand dr) gl in
+             MATCH_ACCEPT_TAC (MATCH_MP INJ_DRESTRICT inj)))) THEN
+    (* the timestamps of the restricted map are of the new stack, and
+       below the counter *)
+    TRY (SOLVED
+          (REWRITE_TAC[(CONJUNCT1 o SPEC_ALL) DRESTRICT_DEF] THEN
+           FIRST [SOLVED (REWRITE_TAC[INTER_SUBSET]);
+                  SOLVED (MATCH_MP_TAC SUBSET_TRANS THEN
+                          W(fun gl ->
+                            let su = the_asm (fun c ->
+                              hd_is "SUBSET" c &&
+                              hd_is "FDOM" (lhand c)) gl in
+                            EXISTS_TAC (lhand (concl su))) THEN
+                          CONJ_TAC THEN
+                          TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+                          REWRITE_TAC[INTER_SUBSET])])) THEN
+    (* the blocks of the stack stay unique *)
+    TRY (SOLVED
+          (W(fun gl ->
+             let bu = the_asm (hd_is "blocks_unique") gl in
+             let sub = the_asm (fun c -> hd_is "SUBSET" c &&
+                         hd_is "set_of_list" (lhand c)) gl in
+             MATCH_ACCEPT_TAC (MATCH_MP blocks_unique_stack_permute
+               (CONJ sub bu))))) THEN
+    (* the values of the new stack are related to their roots, with
+       the timestamps cut *)
+    W(fun (asl,w as gl) ->
+      if not (hd_is "ALL2" w) then ALL_TAC else
+      (let ats = find_term (hd_is "all_ts") w in
+       let vs = el 1 (snd (strip_comb w)) in
+       let old = the_asm (fun c -> hd_is "ALL2" c) gl in
+       let sub = the_asm (fun c ->
+                   length (fst (strip_forall c)) = 1 &&
+                   is_imp (snd (strip_forall c)) &&
+                   hd_is "MEM" (lhand (snd (strip_forall c)))) gl in
+       let perm = MATCH_MP EVERY2_stack_permute (CONJ sub old) in
+       let v = genvar (hd (snd (dest_type (type_of vs)))) in
+       SUBGOAL_THEN
+         (mk_forall(v, mk_imp(list_mk_icomb "MEM" [v; vs],
+            list_mk_icomb "IN"
+              [v; list_mk_icomb "all_vs" [lhand ats; rand ats]])))
+         (fun mem -> ACCEPT_TAC (MATCH_MP EVERY2_v_inv_restrict
+            (CONJ mem perm))) THEN
+       REPEAT STRIP_TAC THEN
+       W(fun gl ->
+         let mm = the_asm (hd_is "MEM") gl in
+         let v1 = el 0 (snd (strip_comb (concl mm))) in
+         MATCH_ACCEPT_TAC (MP (SPECL [v1; rand ats; lhand ats]
+                                 MEM_stack_all_vs) mm)))) THEN
+    (* and the invariant of each reference that the new stack
+       reaches: the old stack reached it as well *)
+    W(fun (asl,w) -> if not (is_forall w) then ALL_TAC else
+      (REPEAT STRIP_TAC THEN
+       W(fun (asl,w as gl) ->
+         let rr = the_asm (hd_is "reachable_refs") gl in
+         let sub = the_asm (fun c ->
+                     length (fst (strip_forall c)) = 1 &&
+                     is_imp (snd (strip_forall c)) &&
+                     hd_is "MEM" (lhand (snd (strip_forall c)))) gl in
+         let xs = el 1 (snd (strip_comb
+                    (rand (snd (strip_forall (concl sub)))))) in
+         let st = el 0 (snd (strip_comb (concl rr))) in
+         let margs = snd (strip_comb (lhand st)) in
+         let mem = MP (ISPECL [el 0 margs; el 1 margs; xs; rand st]
+                         MEM_MAP_subset) sub in
+         let old = list_mk_icomb "APPEND"
+                     [list_mk_icomb "MAP" [el 0 margs; xs];
+                      rand st] in
+         SUBGOAL_THEN (list_mk_icomb "SUBSET"
+                         [list_mk_icomb "set_of_list" [st];
+                          list_mk_icomb "set_of_list" [old]])
+           (fun ss -> ASSUME_TAC (MATCH_MP reachable_refs_stack_subset
+              (CONJ rr ss))) THENL
+          [REWRITE_TAC[SUBSET; IN_SET_OF_LIST] THEN ACCEPT_TAC mem;
+           ALL_TAC]) THEN
+       W(fun (asl,w as gl) ->
+         let n = el 1 (snd (strip_comb w)) in
+         let bri = the_asm (fun c ->
+           let vs,bd = strip_forall c in
+           length vs = 1 && is_imp bd &&
+           hd_is "bc_ref_inv" (rand bd)) gl in
+         let rr = the_asm (fun c -> hd_is "reachable_refs" c &&
+           can (find_term (fun t -> is_var t &&
+                  fst (dest_var t) = "xs")) c) gl in
+         let nin = the_asm (fun c -> hd_is "IN" c &&
+           hd_is "FDOM" (rand c) &&
+           el 0 (snd (strip_comb c)) = n) gl in
+         MATCH_ACCEPT_TAC (MATCH_MP bc_ref_inv_restrict
+           (MP (SPEC n bri) (CONJ rr nin))))))));;
 
 (* pop *)
 
