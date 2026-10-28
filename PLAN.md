@@ -2063,3 +2063,31 @@ had to add for it is the little that HOL4 gets from `SORTED_APPEND`
 block above its statement: of two elements of a sorted list the
 earlier one relates to the later.  Anything else of the file that
 needs a sorted list has them now.
+
+## Where walk_EL stands
+
+`walk_EL` is the next one to finish and it is half written.  Its
+proof is `walk_heap_lookup`'s (which is proved): the same helpers
+(`all2cons1`, `some_SOME`, `grab`, `pwit`), the same double list
+induction, and the same unfolding of `walk` once the `some` of its
+definition is resolved.  What is different:
+
+- the base of the outer induction is vacuous, because
+  `SUC n < LENGTH [h]` is false, so that branch is
+  `REWRITE_TAC[LENGTH; ARITH_RULE `~(SUC n < SUC 0)`]`;
+- where `walk_heap_lookup` proves an `EVERY` of the walk, this
+  proves a statement about `EL n` and `EL (SUC n)` of it, so after
+  the walk is unfolded to `ptr :: walk c heap p k` the index is
+  taken apart with `STRUCT_CASES_TAC (SPEC `n:num` num_CASES)`:
+  at nought the goal is about `ptr` and `HD (walk c heap p k)`,
+  which is `p` (the walk is unfolded once more, and its `some` is
+  `SOME` of something because the heap holds a cons at `p`), and
+  at `SUC n'` it is the induction hypothesis at `n'`.
+
+The one piece that was still fighting back is that second
+unfolding: the goal there is `HD (match some (..) with ..) = p`,
+and the `some` has to be turned into `SOME <something>` before the
+match will reduce.  `some_EX` -- `(?x. P x) ==> ?y. some P = SOME
+y` -- is the shape to use (uniqueness is not needed for the head),
+and the witness is the pointer of the `Pointer` in the heap's cons
+at `p`.
