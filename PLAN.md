@@ -1822,3 +1822,26 @@ it is the same shape again with the old heap in front (its state
 has `old`, and the split is at the start of the generation rather
 than at the end of the first heap).  129 lines of HOL4, the longest
 of the three.
+
+## What the shortest remaining proofs cost (measured, not guessed)
+
+`tools/` has no ranking for this, so here it is: the HOL4 proofs of
+the 80 that are left, shortest first, with what each one really
+wants.
+
+| HOL4 lines | theorem | what it wants first |
+|---|---|---|
+| 3 | `memory_rel_ptr_eq` | `memory_rel_pointer_eq`, which HOL4 states as the value of an ML expression and the port does not state (PENDING.md) |
+| 6, 10 | `vb_eq_size_IMP_vb_size`, `do_eq_IFF_vb_eq_size` | the clause of each pair of constructors of `vb_eq_size` derived once (entry 43); the proofs are written and too slow, not missing |
+| 11 | `memory_rel_FromList` | `copy_list_thm`, another of HOL4's ML-expression theorems that the port does not state |
+| 11, 13 | `word_eq_LESS_EQ`, `word_eq_add_clock` | the same clause-at-a-time treatment of `word_eq` |
+| 14-16 | `bytes_to_word_eq_lemma`, `word_cmp_loop_thm`, `memory_rel_copy_array_NONE`, `memory_rel_RefPtr_gen_IMP` | the word level: `word_heap`, `SEP_R_TAC`/`SEP_W_TAC` over `ml/lib/set_sep.ml` |
+
+So there is no cheap one left: the three kinds of work that remain
+are the clause-at-a-time treatment of the two big `match`
+definitions, the theorems that HOL4 never names (which have to be
+stated first), and the word level, which nothing of the port has
+touched yet.  `gen_gc_partial_thm` (129 lines) is the one big proof
+whose pieces are all in the port already -- its `heap_gen_ok heap
+cc` alone is thirty lines of HOL4 about `heap_split` and
+`heap_segment`.
