@@ -24364,19 +24364,121 @@
     TRY (SOLVED ARITH_ASM_TAC) THEN
     ARITH_TAC])
 ### memory_rel_limit
-  (* the attempt: the proof of the source names dimword,
-     memory_rel_depth_size_limit, vb_eq_size_IMP_vb_size,
-     memory_rel_def, memory_rel_rearrange, memory_rel_depth_limit.
-     What is here rewrites with them and closes by arithmetic, and
-     the cheat is behind it until the proof is written.  A MESON
-     over them is what the next round adds; it costs a load ten
-     minutes to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[dimword; memory_rel_depth_size_limit;
-       vb_eq_size_IMP_vb_size; memory_rel_def;
-       memory_rel_rearrange; memory_rel_depth_limit] THEN
-     TRY ASM_ARITH_TAC))
+(* the proof of the source bounds the size by
+   memory_rel_depth_size_limit and vb_eq_size_IMP_vb_size, and the
+   depth by the stack that memory_rel_depth_limit gives: its roots
+   are distinct (memory_rel_elements_list_distinct) words
+   (memory_rel_elements_list_words), so there are no more of them
+   than there are words (word_list_limit).  What is left is the
+   arithmetic, which is the lemma below: the size is at most the
+   word size to the depth and one more, the depth at most the word
+   size, and the limit of the source has the word size to the word
+   size to the word size in it *)
+  (let mtl = prove
+   (`!n d l. 2 <= d /\ n <= d EXP (l + 1) /\ l <= d ==>
+       n * d < (2 * d + d * d + d EXP d + d EXP d EXP d) - d`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `~(d = 0) /\ ~(d = 1)` STRIP_ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    MATCH_MP_TAC (ARITH_RULE
+      `!p q r s t. 1 <= q /\ p <= t
+                   ==> p < (2 * q + r + s + t) - q`) THEN
+    CONJ_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+    MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `d EXP (l + 2)` THEN
+    CONJ_TAC THENL
+     [RULE_ASSUM_TRY (REWRITE_RULE[EXP_ADD; EXP_1]) THEN
+      ONCE_REWRITE_TAC[ARITH_RULE `l + 2 = (l + 1) + 1`] THEN
+      REWRITE_TAC[EXP_ADD; EXP_1] THEN
+      MATCH_MP_TAC LE_MULT2 THEN ASM_REWRITE_TAC[LE_REFL];
+      MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `d EXP (d + 2)` THEN
+      CONJ_TAC THENL
+       [ASM_REWRITE_TAC[LE_EXP] THEN ASM_ARITH_TAC;
+        REWRITE_TAC[GSYM EXP_MULT] THEN
+        ASM_REWRITE_TAC[LE_EXP] THEN
+        MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `(d:num) * 2` THEN
+        CONJ_TAC THENL
+         [ASM_ARITH_TAC; ASM_REWRITE_TAC[LE_MULT_LCANCEL]]]]) in
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  SUBGOAL_THEN `2 <= dimword (:'a)` ASSUME_TAC THENL
+   [FIRST_ASSUM (fun gd ->
+      if hd_is "good_dimindex" (concl gd)
+      then MP_TAC (REWRITE_RULE[good_dimindex_def] gd)
+      else fail()) THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[dimword] THEN
+    CONV_TAC NUM_REDUCE_CONV;
+    ALL_TAC] THEN
+  FIRST_ASSUM (fun vb ->
+    if (try hd_is "vb_eq_size" (lhs (concl vb))
+        with Failure _ -> false)
+    then STRIP_ASSUME_TAC
+           (MATCH_MP (CONJUNCT1 vb_eq_size_IMP_vb_size) vb)
+    else fail()) THEN
+  FIRST_ASSUM (fun mr ->
+    if not (hd_is "memory_rel" (concl mr)) then fail() else
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      STRIP_ASSUME_TAC (MATCH_MP (GEN_ALL
+        memory_rel_depth_size_limit) (CONJ mr gd)))) THEN
+  SUBGOAL_THEN (cake_as_vars (fun () ->
+    `memory_rel c be ts refs sp st m dm
+       [(v1,(w1:'a word_loc))]`)) ASSUME_TAC THENL
+   [FIRST_ASSUM (fun mr ->
+      if not (hd_is "memory_rel" (concl mr)) then fail() else
+      MP_TAC mr THEN MATCH_MP_TAC memory_rel_rearrange THEN
+      REWRITE_TAC[MEM] THEN MESON_TAC[]);
+    ALL_TAC] THEN
+  FIRST_ASSUM (fun mr1 ->
+    if not (hd_is "memory_rel" (concl mr1)) then fail() else
+    let stack = last (snd (strip_comb (concl mr1))) in
+    if not (length (dest_list stack) = 1) then fail() else
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      let el1 = prove
+        (`elements_list (CONS (v1:dataSem_v)
+            (MAP FST ([]:(dataSem_v # ('a word_loc))list)))`,
+         REWRITE_TAC[MAP; elements_list_def]) in
+      STRIP_ASSUME_TAC (MATCH_MP (GEN_ALL memory_rel_depth_limit)
+        (CONJ mr1 (CONJ el1 gd))))) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[MAP]) THEN
+  MP_TAC (ISPECL
+    [`MAP FST (ls:(dataSem_v # ('a word_loc))list) ++ [v1]`;
+     `(ls:(dataSem_v # ('a word_loc))list) ++ [v1,(w1:'a word_loc)]`]
+    memory_rel_elements_list_distinct) THEN
+  ASM_REWRITE_TAC[MAP_APPEND; MAP; FST] THEN DISCH_TAC THEN
+  MP_TAC (ISPECL
+    [`MAP FST (ls:(dataSem_v # ('a word_loc))list) ++ [v1]`;
+     `(ls:(dataSem_v # ('a word_loc))list) ++ [v1,(w1:'a word_loc)]`]
+    memory_rel_elements_list_words) THEN
+  ASM_REWRITE_TAC[MAP_APPEND; MAP; FST; APPEND_EQ_NIL;
+                  NOT_CONS_NIL] THEN
+  DISCH_TAC THEN
+  SUBGOAL_THEN `LENGTH (ls:(dataSem_v # ('a word_loc))list)
+                  <= dimword (:'a)` ASSUME_TAC THENL
+   [ASM_CASES_TAC `ls:(dataSem_v # ('a word_loc))list = []` THENL
+     [ASM_REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    MP_TAC (ISPEC `ls:(dataSem_v # ('a word_loc))list`
+              list_CASES) THEN
+    ASM_REWRITE_TAC[] THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[APPEND; MAP; MAP_APPEND; FST;
+                                 SND; hol4_TL]) THEN
+    FIRST_ASSUM (fun ev ->
+      if not (hd_is "ALL" (concl ev)) then fail() else
+      FIRST_ASSUM (fun ad ->
+        if not (hd_is "ALL_DISTINCT" (concl ad)) then fail() else
+        MP_TAC (MATCH_MP (GEN_ALL word_list_limit)
+                  (CONJ ev ad)))) THEN
+    REWRITE_TAC[LENGTH_MAP; LENGTH_APPEND; LENGTH] THEN
+    ASM_ARITH_TAC;
+    ALL_TAC] THEN
+  REWRITE_TAC[MustTerminate_limit_def] THEN
+  MATCH_MP_TAC mtl THEN
+  EXISTS_TAC `v_depth (v1:dataSem_v)` THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THENL
+   [MATCH_MP_TAC LE_TRANS THEN
+    EXISTS_TAC `vb_size (v1:dataSem_v)` THEN
+    CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC;
+    ASM_REWRITE_TAC[] THEN FIRST_ASSUM ACCEPT_TAC])
 ### memory_rel_ptr_eq
   (* the attempt: of what the proof of the source names,
      the port has nothing in this file's closure, so this
