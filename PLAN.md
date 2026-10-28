@@ -1949,3 +1949,39 @@ order:
    the "prefix of a prefix" lemma for it.
 2. the word level (`memory_rel_*`, about thirty of them), which
    starts at `ml/lib/set_sep.ml` and `word_heap`.
+
+## The collection, all three
+
+`gen_gc_partial_thm` is in, so the three collections of
+`gc_combined` are proved and `gc_combined_thm` no longer rests on a
+cheat of this file (the GC theories' own `partial_gc_related`,
+`gen_gc_related`, `full_gc_related` and the rest are still cheats of
+`ml/compiler/backend/gc/`, which is where they belong).
+
+What the third one needed beyond the template of the other two:
+
+- `heap_gen_ok heap cc`, the thirty HOL4 lines that are the real
+  work, now `heap_gen_ok_inv` above the statement: the start of the
+  generation splits the heap through the split at the end of the
+  space (`heap_split_heap_split`) and through the split at the end
+  of the data, so the three pieces are the segment that
+  `heap_segment` names and what is below the start is data;
+- `ref_EVERY_d`, which turns the invariant's "no element of this
+  piece has reference data" into `EVERY`, in both directions;
+- `similar_isRef`, that what the collection copied holds a
+  reference only where what it copied from does -- which is what
+  `EVERY2 (similar_data c) refs r1` of `partial_gc_IMP` is for;
+- and one tactic per conjunct (entry 76), because the five pieces
+  of the invariant are five different proofs and a `TRY (SOLVED ..)`
+  chain hides which one broke.
+
+So the file is at **75** attempts.  What is left, in order:
+
+1. `memory_rel_ptr_eq` and `memory_rel_FromList`, which want
+   theorems HOL4 states as the value of an ML expression
+   (`memory_rel_pointer_eq`, `copy_list_thm`) and the port does not
+   state at all (`PENDING.md`);
+2. the word level (`memory_rel_*`, about thirty of them), which
+   starts at `ml/lib/set_sep.ml` and `word_heap`;
+3. the rest of the stack layer (`bc_stack_ref_inv_MutBlock_F`,
+   `v_inv_list_to_v_lem`, `word64_alt_thm`, `bignum_alt_thm`).

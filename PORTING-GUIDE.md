@@ -3821,3 +3821,42 @@ Three details that each cost a round:
   without it the bound is unprovable, the `THENL` that discharges
   it fails, and the whole hypothesis step is skipped by its `TRY`
   with no sign of why.
+
+## 76. One tactic per conjunct, and pickers that discriminate
+
+`gen_gc_partial_thm` unfolds to five named pieces (`roots_ok`,
+`heap_ok`, `gc_kind_inv`, `unused_space_inv`, `bc_stack_ref_inv`),
+and the first shape of its proof was the one the other collections
+use: `REPEAT CONJ_TAC` and then a chain of
+`TRY (SOLVED (<the piece>))`.  Three rounds went on that shape and
+none of them said anything:
+
+- a piece that fails is **silently skipped**, so the report shows
+  the goals that are left and nothing about why;
+- a piece that is written for one goal is **tried on the others**,
+  so its own error (`rand: Not a combination`) comes from a goal it
+  was never meant for -- and in that round the chain had four
+  tactics for five goals, so every piece after the third ran on the
+  wrong goal;
+- the failure report follows the first goal only (entry 73), so the
+  state it prints is from yet another branch.
+
+`REPEAT CONJ_TAC THENL [p1; p2; p3; p4; p5]` fixes all three at
+once: each piece gets its own goal, a piece that fails says so with
+its own exception, and the count is checked (a `Length mismatch` is
+the mistake, immediately).
+
+The same round is where the pickers had to learn to discriminate.
+`the_asm (hd_is "heap_split")` is not enough when the proof has made
+**two** splits of the same heap: pick by an argument --
+
+```
+the_asm (fun c -> is_eq c && hd_is "heap_split" (lhand c) &&
+           el 0 (snd (strip_comb (lhand c))) = <the point>) gl
+```
+
+-- and likewise for the two `EVERY isDataElement` of two pieces, and
+for the two conditions of `heap_gen_ok` that differ only in whether
+the conclusion is negated.  A picker that takes the first match
+silently builds the wrong instance, and what then fails is the
+`ACCEPT_TAC` three steps later.
