@@ -131,6 +131,17 @@ it once, three quarters of an hour of loading).  So:
   of `ml/lib/tactics.ml` or `ml/lib/lemmas.ml` needs instead of a
   rebuild.
 
+- **A `trybase` and a `verifyquick` together is one too many.**
+  Both load the whole file, and with `hol-base`, the template,
+  `hol-pfbase` and two sessions of a round still alive that is
+  seven: 2.2 GB went to swap and both loads crawled -- twenty-five
+  minutes on one proof (`heap_split_heap_split`) that a load
+  without contention takes seconds.  The symptom to recognise is
+  two panes whose last line is the **same** statement for minutes
+  on end; `free -m` then shows the swap.  `repl-kill` of the
+  sessions of the round that is landed (their work is in `ml/` and
+  in git) gave 2 GB back and both loads went on.
+
 ## Interrupting and killing
 
 A clone is forked from another HOL Light process, so it is not a
