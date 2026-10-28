@@ -326,3 +326,15 @@ order, which a session that has loaded its `needs` no longer has
 (the files after it overload `Var` again): the clone for
 `bvl_const`'s own definitions re-ran `hol4_overload "Var"
 "bvl_Var"` and the eight others first.
+
+## The session a proof round runs in
+
+`verifyquick` leaves `hol-vq` with the whole file in it, and that
+is the session to try the next proof in: everything the file
+defines is there and every statement of it is there as a cheat.
+What does *not* work is cloning it to a second session while the
+next verify is running -- the clone of a clone died under the two
+loads (2026-10-28, `hol-s1` gone from `tmux ls` before its first
+step), so a round either has `hol-vq` to itself between two
+verifies, or it runs in a session cut from `hol-pfbase` with the
+few definitions of the file it needs made by hand.
