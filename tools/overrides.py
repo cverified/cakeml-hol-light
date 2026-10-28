@@ -7192,6 +7192,63 @@ let len_step = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'word_str_loop_thm'): r"""
+(* the port's own: what a loop over the bytes of a string needs.
+   Four word equations say where the next byte is and what the
+   counter of the loop becomes (wsl_add0, wsl_zero, wsl_addr and
+   wsl_down), wsl_ne says that the length the loop counts down is
+   not the one it stops at while it is below the word size, and
+   loads_cons is what HOL4 gets from `first_assum dxrule`: the
+   head of the list is the byte at the address, and the tail is
+   what the induction is about *)
+
+let wsl_add0 = prove
+ (`!(a:'a word). a + n2w 0 = a`,
+  CONV_TAC WORD_RULE);;
+
+let wsl_zero = prove
+ (`!(w:'a word). n2w 0 + w = w`,
+  CONV_TAC WORD_RULE);;
+
+let wsl_down = prove
+ (`!(w:'a word) n. (n2w (SUC n) + w) - n2w 1 = n2w n + w`,
+  REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let wsl_addr = prove
+ (`!(a:'a word) i. a + n2w (SUC i) = (a + n2w 1) + n2w i`,
+  REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let wsl_ne = prove
+ (`!(w:'a word) n. n < dimword (:'a) ==> (n2w n + w = w <=> n = 0)`,
+  REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `(n2w n + w:'a word = w) <=> (n2w n:'a word) = n2w 0`
+     SUBST1_TAC THENL
+    [CONV_TAC WORD_RULE;
+     ASM_SIMP_TAC[WORD_EQ_0; GSYM dimword]]);;
+
+let wsl_nil = prove
+ (`!(l:A list). TAKE 0 l = []`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE]);;
+
+let loads_cons = prove
+ (`!m dm be' (a:'a word) h t.
+    (!i. i < LENGTH (CONS h t) ==>
+         mem_load_byte_aux m dm be' (a + n2w i) =
+         SOME (EL i (CONS h t)))
+    ==> mem_load_byte_aux m dm be' a = SOME h /\
+        (!i. i < LENGTH t ==>
+             mem_load_byte_aux m dm be' ((a + n2w 1) + n2w i) =
+             SOME (EL i t))`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN CONJ_TAC THENL
+    [FIRST_ASSUM (MP_TAC o SPEC `0`) THEN
+     REWRITE_TAC[LENGTH; EL; HD; LT_0; wsl_add0] THEN
+     DISCH_THEN ACCEPT_TAC;
+     GEN_TAC THEN DISCH_TAC THEN
+     ONCE_REWRITE_TAC[GSYM wsl_addr] THEN
+     ASM_SIMP_TAC[LENGTH; LT_SUC; EL; TL]]);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads

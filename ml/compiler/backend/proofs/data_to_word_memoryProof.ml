@@ -29806,7 +29806,7 @@ let word_cmp_loop_thm = prove
    [ASM_ARITH_TAC; ALL_TAC] THEN
   RULE_ASSUM_TRY (CONV_RULE NUM_REDUCE_CONV) THEN
   (* the two cells, out of the memory *)
-  W(fun (asl,w as gl) ->
+  W(fun (asl,_) ->
     MAP_EVERY (fun th -> TRY (STRIP_ASSUME_TAC th))
       (mapfilter (fun (_,t) ->
          MATCH_MP sep_read (MATCH_MP star_front t)) asl)) THEN
@@ -38035,6 +38035,60 @@ let find_diff_def = cake_define_list
    `find_diff (x :: xs) (y :: ys) r1 r2 = (if x = y then find_diff
   xs ys r1 r2 else (w2w x,w2w y))`];;
 
+(* the port's own: what a loop over the bytes of a string needs.
+   Four word equations say where the next byte is and what the
+   counter of the loop becomes (wsl_add0, wsl_zero, wsl_addr and
+   wsl_down), wsl_ne says that the length the loop counts down is
+   not the one it stops at while it is below the word size, and
+   loads_cons is what HOL4 gets from `first_assum dxrule`: the
+   head of the list is the byte at the address, and the tail is
+   what the induction is about *)
+
+let wsl_add0 = prove
+ (`!(a:'a word). a + n2w 0 = a`,
+  CONV_TAC WORD_RULE);;
+
+let wsl_zero = prove
+ (`!(w:'a word). n2w 0 + w = w`,
+  CONV_TAC WORD_RULE);;
+
+let wsl_down = prove
+ (`!(w:'a word) n. (n2w (SUC n) + w) - n2w 1 = n2w n + w`,
+  REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let wsl_addr = prove
+ (`!(a:'a word) i. a + n2w (SUC i) = (a + n2w 1) + n2w i`,
+  REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let wsl_ne = prove
+ (`!(w:'a word) n. n < dimword (:'a) ==> (n2w n + w = w <=> n = 0)`,
+  REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `(n2w n + w:'a word = w) <=> (n2w n:'a word) = n2w 0`
+     SUBST1_TAC THENL
+    [CONV_TAC WORD_RULE;
+     ASM_SIMP_TAC[WORD_EQ_0; GSYM dimword]]);;
+
+let wsl_nil = prove
+ (`!(l:A list). TAKE 0 l = []`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE]);;
+
+let loads_cons = prove
+ (`!m dm be' (a:'a word) h t.
+    (!i. i < LENGTH (CONS h t) ==>
+         mem_load_byte_aux m dm be' (a + n2w i) =
+         SOME (EL i (CONS h t)))
+    ==> mem_load_byte_aux m dm be' a = SOME h /\
+        (!i. i < LENGTH t ==>
+             mem_load_byte_aux m dm be' ((a + n2w 1) + n2w i) =
+             SOME (EL i t))`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN CONJ_TAC THENL
+    [FIRST_ASSUM (MP_TAC o SPEC `0`) THEN
+     REWRITE_TAC[LENGTH; EL; HD; LT_0; wsl_add0] THEN
+     DISCH_THEN ACCEPT_TAC;
+     GEN_TAC THEN DISCH_TAC THEN
+     ONCE_REWRITE_TAC[GSYM wsl_addr] THEN
+     ASM_SIMP_TAC[LENGTH; LT_SUC; EL; TL]]);;
+
 let word_str_loop_thm = prove
  (`!k a1 a2 r1 r2 dm m be' d vals1 vals2.
      (!i. i < LENGTH vals1 ==> mem_load_byte_aux m dm be' (a1 + n2w
@@ -38047,16 +38101,50 @@ let word_str_loop_thm = prove
      word_str_cmp_loop a1 a2 r1 r2 (n2w k + (bytes_in_word:'a word))
        dm m be' d =
      SOME (find_diff (TAKE k vals1) (TAKE k vals2) r1 r2)`,
-  (* the attempt: the proof of the source names
-     word_str_cmp_loop_def, find_diff_def.  What is here rewrites
-     with them and closes by arithmetic, and the cheat is behind it
-     until the proof is written.  A MESON over them is what the next
-     round adds; it costs a load ten minutes to have it in every
-     attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[word_str_cmp_loop_def; find_diff_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is an induction on the number of bytes
+   the loop has still to read.  At nought the length is the one
+   the loop stops at and both lists are taken to nothing; at a
+   step the cells at the two addresses are the heads of the lists
+   (loads_cons), the loop reads them and goes on with the tails
+   while they agree, and find_diff does the same *)
+  (INDUCT_TAC THENL
+   [(* the loop is at the length it stops at *)
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    ONCE_REWRITE_TAC[word_str_cmp_loop_def] THEN
+    SUBGOAL_THEN `~(d = 0)` ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    ASM_REWRITE_TAC[wsl_zero; wsl_nil; find_diff_def];
+    (* both lists have a cell to read *)
+    REPEAT GEN_TAC THEN
+    CASES_BY_NAME "vals1" THENL
+     [REWRITE_TAC[LENGTH; ARITH_RULE `~(SUC k <= 0)`];
+      CASES_BY_NAME "vals2" THENL
+       [REWRITE_TAC[LENGTH; ARITH_RULE `~(SUC k <= 0)`];
+        STRIP_TAC THEN
+        (* the head of each list is what the loop reads, and the
+           tail is what the induction is about *)
+        REPEAT (FIRST_X_ASSUM (fun th ->
+          if is_forall (concl th)
+          then STRIP_ASSUME_TAC (MATCH_MP loads_cons th)
+          else fail())) THEN
+        REWRITE_TAC[TAKE; NOT_SUC; SUC_SUB1; find_diff_def] THEN
+        ONCE_REWRITE_TAC[word_str_cmp_loop_def] THEN
+        SUBGOAL_THEN `SUC k < dimword (:'a)` ASSUME_TAC THENL
+         [ASM_ARITH_TAC; ALL_TAC] THEN
+        SUBGOAL_THEN `~(d = 0)` ASSUME_TAC THENL
+         [ASM_ARITH_TAC; ALL_TAC] THEN
+        ASM_SIMP_TAC[wsl_ne; NOT_SUC] THEN
+        TRY SAFE_MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[] THEN
+        TRY SAFE_MATCH_REDUCE_TAC THEN
+        COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+        (* and the loop goes on with the tails *)
+        REWRITE_TAC[wsl_down] THEN
+        FIRST_ASSUM MATCH_MP_TAC THEN
+        RULE_ASSUM_TAC (REWRITE_RULE[LENGTH]) THEN
+        REPEAT CONJ_TAC THENL
+         [FIRST_ASSUM ACCEPT_TAC; FIRST_ASSUM ACCEPT_TAC;
+          ASM_ARITH_TAC; ASM_ARITH_TAC; ASM_ARITH_TAC;
+          ASM_ARITH_TAC]]]]));;
 
 (* [local] *)
 let compoare_aux_append_xs = prove
