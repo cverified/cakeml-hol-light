@@ -34071,19 +34071,360 @@
                   REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
         ACCEPT_TAC (REWRITE_RULE[GSYM eq] sep2))))))
 ### heap_length_Blocks
-  (* the attempt: the proof of the source names heap_lookup_SPLIT,
-     heap_length_def, ALL_DISTINCT, heap_lookup_APPEND,
-     heap_lookup_def, heap_length_APPEND.  What is here rewrites
-     with them and closes by arithmetic, and the cheat is behind it
-     until the proof is written.  A MESON over them is what the next
-     round adds; it costs a load ten minutes to have it in every
-     attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[heap_lookup_SPLIT; heap_length_def;
-       ALL_DISTINCT; heap_lookup_APPEND; heap_lookup_def;
-       heap_length_APPEND] THEN
-     TRY ASM_ARITH_TAC))
+(* the pointers of a list of conses take three words each: the
+   induction on the number of the pointers, where the heap splits
+   at the first of them (heap_lookup_SPLIT) into the part before
+   the cons, the cons itself and the rest.  A pointer of the rest
+   of the list is either before the cons or three words past it,
+   because it is not the cons itself (the list has no repetition)
+   and the two words inside the cons hold no element
+   (heap_lookup_def).  So the pointers of the rest split into the
+   ones before the cons and the ones after it, which moved down by
+   three words are the pointers of the heap without the cons: they
+   are as many as the pointers of the rest
+   (ALL_DISTINCT_FILTER_LENGTH), they have no repetition
+   (FILTER_ALL_DISTINCT and the map that takes three off, which is
+   one to one past the cons) and each has its element there
+   (heap_lookup_APPEND).  The induction hypothesis counts them in
+   that heap, which is three words shorter *)
+  ((let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+  (* the induction on the number of the pointers *)
+  let strong = prove
+   (`!P. (!l. (!m. LENGTH m < LENGTH l ==> P m) ==> P l)
+         ==> !l:(num)list. P l`,
+    GEN_TAC THEN DISCH_TAC THEN
+    SUBGOAL_THEN `!n l:(num)list. LENGTH l = n ==> P l`
+      (fun th -> MESON_TAC[th]) THEN
+    MATCH_MP_TAC num_WF THEN ASM_MESON_TAC[]) in
+  (* the pointers that a filter keeps have no repetition either,
+     and the image of a map that is one to one on them has none,
+     and neither has the append of two lists with nothing in
+     common *)
+  let filt_ad = prove
+   (`!P (l:(A)list). ALL_DISTINCT l ==> ALL_DISTINCT (FILTER P l)`,
+    GEN_TAC THEN LIST_INDUCT_TAC THEN
+    REWRITE_TAC[FILTER; ALL_DISTINCT_CLAUSES] THEN
+    STRIP_TAC THEN COND_CASES_TAC THEN
+    ASM_SIMP_TAC[ALL_DISTINCT_CLAUSES; MEM_FILTER]) in
+  let map_ad = prove
+   (`!(f:A->B) l. ALL_DISTINCT l /\
+        (!x y. MEM x l /\ MEM y l /\ f x = f y ==> x = y)
+        ==> ALL_DISTINCT (MAP f l)`,
+    GEN_TAC THEN LIST_INDUCT_TAC THEN
+    REWRITE_TAC[MAP; ALL_DISTINCT_CLAUSES; MEM] THEN
+    STRIP_TAC THEN CONJ_TAC THENL
+     [REWRITE_TAC[MEM_MAP] THEN ASM_MESON_TAC[];
+      FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]]) in
+  let app_ad = prove
+   (`!(l1:(A)list) l2.
+       ALL_DISTINCT l1 /\ ALL_DISTINCT l2 /\
+       (!x. MEM x l1 ==> ~(MEM x l2))
+       ==> ALL_DISTINCT (l1 ++ l2)`,
+    REWRITE_TAC[ALL_DISTINCT; PAIRWISE_APPEND] THEN MESON_TAC[]) in
+  (* and the two filters take each pointer once *)
+  let adfl = prove
+   (`ALL_DISTINCT (xs:(A)list)
+     ==> LENGTH (FILTER P xs) + LENGTH (FILTER ((~) o P) xs) =
+         LENGTH xs`,
+    DISCH_TAC THEN
+    FIRST_ASSUM (fun ad ->
+      MP_TAC (MATCH_MP ALL_DISTINCT_FILTER_LENGTH ad)) THEN
+    ARITH_TAC) in
+  (* the three words of a cons *)
+  let el3 = prove
+   (`!x y. el_length (BlockRep cons_tag [x; y]) = 3`,
+    REWRITE_TAC[BlockRep_def; el_length_def; LENGTH] THEN
+    ARITH_TAC) in
+  (* a lookup at the element that a heap holds after its first
+     part, and inside it: there the lookup has nothing *)
+  let lk_in = prove
+   (`!ha el hb k.
+       heap_lookup (heap_length ha + k) (ha ++ (el :: hb)) =
+       (if k = 0 then SOME el else
+        if k < el_length el then NONE
+        else heap_lookup (k - el_length el) hb)`,
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[heap_lookup_APPEND] THEN
+    REWRITE_TAC[ARITH_RULE `~(h + k < h)`;
+                ARITH_RULE `(h + k) - h = k`] THEN
+    REWRITE_TAC[heap_lookup_def]) in
+  let mid_none = prove
+   (`!ha el hb k. 0 < k /\ k < el_length el
+       ==> heap_lookup (heap_length ha + k) (ha ++ (el :: hb)) =
+           NONE`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    REWRITE_TAC[lk_in] THEN
+    ASM_SIMP_TAC[ARITH_RULE `!k:num. 0 < k ==> ~(k = 0)`]) in
+  let in_none = prove
+   (`!ha x y hb k. 0 < k /\ k < 3
+       ==> heap_lookup (heap_length ha + k)
+             (ha ++ (BlockRep cons_tag [x; y] :: hb)) = NONE`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    MATCH_MP_TAC mid_none THEN ASM_REWRITE_TAC[el3]) in
+  let none1 = prove
+   (`!ha x y hb. heap_lookup (heap_length ha + 1)
+       (ha ++ (BlockRep cons_tag [x; y] :: hb)) = NONE`,
+    REPEAT GEN_TAC THEN MATCH_MP_TAC in_none THEN ARITH_TAC) in
+  let none2 = prove
+   (`!ha x y hb. heap_lookup (heap_length ha + 2)
+       (ha ++ (BlockRep cons_tag [x; y] :: hb)) = NONE`,
+    REPEAT GEN_TAC THEN MATCH_MP_TAC in_none THEN ARITH_TAC) in
+  (* and a lookup before the element, or after it, is the one of
+     the heap without it *)
+  let lk_bef = prove
+   (`!ha el hb k. k < heap_length ha
+       ==> heap_lookup k (ha ++ (el :: hb)) =
+           heap_lookup k (ha ++ hb)`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    ASM_REWRITE_TAC[heap_lookup_APPEND]) in
+  let lk_bef3 = prove
+   (`!ha x y hb k. k < heap_length ha
+       ==> heap_lookup k (ha ++ (BlockRep cons_tag [x; y] :: hb)) =
+           heap_lookup k (ha ++ hb)`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    FIRST_ASSUM (fun lt -> MATCH_ACCEPT_TAC (MATCH_MP lk_bef lt)))
+    in
+  let lk_aft3 = prove
+   (`!ha x y hb k. heap_length ha + 3 <= k
+       ==> heap_lookup k (ha ++ (BlockRep cons_tag [x; y] :: hb)) =
+           heap_lookup (k - 3) (ha ++ hb)`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[heap_lookup_APPEND] THEN
+    FIRST_ASSUM (fun le ->
+      let f1 = MATCH_MP (ARITH_RULE
+                 `!a c:num. a + 3 <= c ==> ~(c < a)`) le in
+      let f2 = MATCH_MP (ARITH_RULE
+                 `!a c:num. a + 3 <= c ==> ~((c - 3) < a)`) le in
+      let f3 = MATCH_MP (ARITH_RULE
+                 `!a c:num. a + 3 <= c ==> ~(c - a = 0)`) le in
+      let f4 = MATCH_MP (ARITH_RULE
+                 `!a c:num. a + 3 <= c ==> ~(c - a < 3)`) le in
+      REWRITE_TAC[f1; f2] THEN
+      REWRITE_TAC[heap_lookup_def; el3; f3; f4] THEN
+      REWRITE_TAC[ARITH_RULE
+        `!a c:num. (c - a) - 3 = (c - 3) - a`])) in
+  (* a pointer of the list that is not before the cons is three
+     words past it: it is not the cons itself (the list has no
+     repetition) and the two words inside the cons hold no
+     element *)
+  let aft_lem = prove
+   (`!(ha:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
+      list)heap_element) list) x y hb t.
+      ~(MEM (heap_length ha) t) /\
+      (!z. MEM z t
+           ==> ?u w. heap_lookup z
+                       (ha ++ (BlockRep cons_tag [x; y] :: hb)) =
+                     SOME (BlockRep cons_tag [u; w]))
+      ==> !z. MEM z t /\ ~(z < heap_length ha)
+              ==> heap_length ha + 3 <= z`,
+    REPEAT GEN_TAC THEN
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "nm")
+      (LABEL_TAC "ev")) THEN
+    X_GEN_TAC `z:num` THEN STRIP_TAC THEN
+    FIRST_ASSUM (fun nlt ->
+      if not (is_neg (concl nlt)) then fail() else
+      MP_TAC (MATCH_MP (ARITH_RULE
+        `!z h:num. ~(z < h)
+                   ==> z = h \/ z = h + 1 \/ z = h + 2 \/
+                       h + 3 <= z`) nlt)) THEN
+    DISCH_THEN (REPEAT_TCL DISJ_CASES_THEN (fun th ->
+      if is_eq (concl th) then SUBST_ALL_TAC th
+      else ACCEPT_TAC th)) THENL
+     [FIRST_ASSUM (fun m ->
+        USE_THEN "nm" (fun nm ->
+          W(fun (asl,gl) ->
+            ACCEPT_TAC (CONTR gl (MP (NOT_ELIM nm) m)))));
+      USE_THEN "ev" (fun ev -> FIRST_ASSUM (fun m ->
+        MP_TAC (MATCH_MP ev m))) THEN
+      REWRITE_TAC[none1; distinctness "option"];
+      USE_THEN "ev" (fun ev -> FIRST_ASSUM (fun m ->
+        MP_TAC (MATCH_MP ev m))) THEN
+      REWRITE_TAC[none2; distinctness "option"]]) in
+  (* so the pointers before the cons and the ones after it moved
+     down by its three words have no repetition *)
+  let ad2_lem = prove
+   (`!(ha:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
+      list)heap_element) list) t.
+      ALL_DISTINCT t /\
+      (!z. MEM z t /\ ~(z < heap_length ha)
+           ==> heap_length ha + 3 <= z)
+      ==> ALL_DISTINCT
+            (FILTER (\z. z < heap_length ha) t ++
+             MAP (\z. z - 3)
+               (FILTER ((~) o (\z. z < heap_length ha)) t))`,
+    REPEAT GEN_TAC THEN
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "ad")
+      (LABEL_TAC "aft")) THEN
+    MATCH_MP_TAC app_ad THEN REPEAT CONJ_TAC THENL
+     [USE_THEN "ad" (fun ad ->
+        MATCH_ACCEPT_TAC (MATCH_MP filt_ad ad));
+      MATCH_MP_TAC map_ad THEN CONJ_TAC THENL
+       [USE_THEN "ad" (fun ad ->
+          MATCH_ACCEPT_TAC (MATCH_MP filt_ad ad));
+        X_GEN_TAC `z1:num` THEN X_GEN_TAC `z2:num` THEN
+        REWRITE_TAC[MEM_FILTER; o_THM] THEN
+        CONV_TAC (TOP_DEPTH_CONV BETA_CONV) THEN
+        STRIP_TAC THEN
+        SUBGOAL_THEN `heap_length (ha:(('a word_loc,
+          data_to_word_memoryProof_tag#('a word_loc)
+          list)heap_element) list) + 3 <= z1` ASSUME_TAC THENL
+         [USE_THEN "aft" MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+          ALL_TAC] THEN
+        SUBGOAL_THEN `heap_length (ha:(('a word_loc,
+          data_to_word_memoryProof_tag#('a word_loc)
+          list)heap_element) list) + 3 <= z2` ASSUME_TAC THENL
+         [USE_THEN "aft" MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+          ALL_TAC] THEN
+        ASM_ARITH_TAC];
+      X_GEN_TAC `z1:num` THEN
+      REWRITE_TAC[MEM_FILTER; MEM_MAP; o_THM] THEN
+      CONV_TAC (TOP_DEPTH_CONV BETA_CONV) THEN
+      STRIP_TAC THEN
+      DISCH_THEN (X_CHOOSE_THEN `z2:num` STRIP_ASSUME_TAC) THEN
+      SUBGOAL_THEN `heap_length (ha:(('a word_loc,
+        data_to_word_memoryProof_tag#('a word_loc)
+        list)heap_element) list) + 3 <= z2` ASSUME_TAC THENL
+       [USE_THEN "aft" MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+        ALL_TAC] THEN
+      ASM_ARITH_TAC]) in
+  (* and each of them has its element in the heap without the
+     cons *)
+  let ev2_lem = prove
+   (`!(ha:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
+      list)heap_element) list) x y hb t.
+      (!z. MEM z t
+           ==> ?u w. heap_lookup z
+                       (ha ++ (BlockRep cons_tag [x; y] :: hb)) =
+                     SOME (BlockRep cons_tag [u; w])) /\
+      (!z. MEM z t /\ ~(z < heap_length ha)
+           ==> heap_length ha + 3 <= z)
+      ==> EVERY (\p. ?u w. heap_lookup p (ha ++ hb) =
+            SOME (BlockRep cons_tag [u; w]))
+            (FILTER (\z. z < heap_length ha) t ++
+             MAP (\z. z - 3)
+               (FILTER ((~) o (\z. z < heap_length ha)) t))`,
+    REPEAT GEN_TAC THEN
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "ev")
+      (LABEL_TAC "aft")) THEN
+    REWRITE_TAC[ALL_APPEND; GSYM ALL_MEM; MEM_FILTER; MEM_MAP;
+                o_THM] THEN
+    CONV_TAC (TOP_DEPTH_CONV BETA_CONV) THEN
+    CONJ_TAC THENL
+     [X_GEN_TAC `z1:num` THEN STRIP_TAC THEN
+      USE_THEN "ev" (fun ev ->
+        FIRST_ASSUM (fun m ->
+          if not (try hd_is "MEM" (concl m) with Failure _ -> false)
+          then fail() else
+          FIRST_ASSUM (fun lt ->
+            if not (try hd_is "<" (concl lt)
+                    with Failure _ -> false) then fail() else
+            ACCEPT_TAC (REWRITE_RULE[MATCH_MP lk_bef3 lt]
+              (MP (SPEC `z1:num` ev) m)))));
+      X_GEN_TAC `z1:num` THEN
+      DISCH_THEN (X_CHOOSE_THEN `z2:num` STRIP_ASSUME_TAC) THEN
+      FIRST_X_ASSUM SUBST_ALL_TAC THEN
+      SUBGOAL_THEN `heap_length (ha:(('a word_loc,
+        data_to_word_memoryProof_tag#('a word_loc)
+        list)heap_element) list) + 3 <= z2` ASSUME_TAC THENL
+       [USE_THEN "aft" MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+        ALL_TAC] THEN
+      USE_THEN "ev" (fun ev ->
+        FIRST_ASSUM (fun m ->
+          if not (try hd_is "MEM" (concl m) with Failure _ -> false)
+          then fail() else
+          FIRST_ASSUM (fun le ->
+            if not (try hd_is "<=" (concl le)
+                    with Failure _ -> false) then fail() else
+            ACCEPT_TAC (REWRITE_RULE[MATCH_MP lk_aft3 le]
+              (MP (SPEC `z2:num` ev) m)))))]) in
+  (* the step of the induction: the heap splits at the first
+     pointer, and the induction hypothesis counts the others in
+     the heap without the cons that it holds there *)
+  let core = prove
+   (`!(ha:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
+      list)heap_element) list) x y hb t.
+      ALL_DISTINCT t /\ ~(MEM (heap_length ha) t) /\
+      (!z. MEM z t
+           ==> ?u w. heap_lookup z
+                       (ha ++ (BlockRep cons_tag [x; y] :: hb)) =
+                     SOME (BlockRep cons_tag [u; w])) /\
+      (!ps2. LENGTH ps2 < LENGTH t + 1
+             ==> !hp:(('a word_loc,
+                   data_to_word_memoryProof_tag#('a word_loc)
+                   list)heap_element) list.
+                      ALL_DISTINCT ps2 /\
+                      EVERY (\p. ?u w. heap_lookup p hp =
+                        SOME (BlockRep cons_tag [u; w])) ps2
+                      ==> 3 * LENGTH ps2 <= heap_length hp)
+      ==> 3 * (LENGTH t + 1) <=
+          heap_length (ha ++ (BlockRep cons_tag [x; y] :: hb))`,
+    REPEAT GEN_TAC THEN
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "ad")
+      (CONJUNCTS_THEN2 (LABEL_TAC "nm")
+        (CONJUNCTS_THEN2 (LABEL_TAC "ev") (LABEL_TAC "ih")))) THEN
+    USE_THEN "nm" (fun nm -> USE_THEN "ev" (fun ev ->
+      LABEL_TAC "aft" (MATCH_MP aft_lem (CONJ nm ev)))) THEN
+    SUBGOAL_THEN
+      `LENGTH (FILTER (\z. z < heap_length (ha:(('a word_loc,
+                 data_to_word_memoryProof_tag#('a word_loc)
+                 list)heap_element) list)) t ++
+               MAP (\z. z - 3)
+                 (FILTER ((~) o (\z. z < heap_length ha)) t)) =
+       LENGTH t` (LABEL_TAC "len") THENL
+     [REWRITE_TAC[LENGTH_APPEND; LENGTH_MAP] THEN
+      USE_THEN "ad" (fun ad ->
+        MATCH_ACCEPT_TAC (MATCH_MP adfl ad));
+      ALL_TAC] THEN
+    W(fun (asl,gl) ->
+      let app = rand (rand gl) in
+      let hp = list_mk_comb (rator (rator app),
+                 [lhand app; rand (rand app)]) in
+      SUBGOAL_THEN (mk_binop `(<=):num->num->bool`
+                      `3 * LENGTH (t:(num)list)`
+                      (mk_icomb (`heap_length`, hp))) MP_TAC) THENL
+     [USE_THEN "ih" (fun ih -> USE_THEN "len" (fun len ->
+        MP_TAC (REWRITE_RULE[len]
+          (SPEC (rand (lhand (concl len))) ih)))) THEN
+      REWRITE_TAC[ARITH_RULE `!n:num. n < n + 1`] THEN
+      DISCH_THEN MATCH_MP_TAC THEN CONJ_TAC THENL
+       [USE_THEN "ad" (fun ad -> USE_THEN "aft" (fun aft ->
+          MATCH_ACCEPT_TAC (MATCH_MP ad2_lem (CONJ ad aft))));
+        USE_THEN "ev" (fun ev -> USE_THEN "aft" (fun aft ->
+          MATCH_ACCEPT_TAC (MATCH_MP ev2_lem (CONJ ev aft))))];
+      ALL_TAC] THEN
+    REWRITE_TAC[heap_length_APPEND; heap_length_CONS; el3] THEN
+    ARITH_TAC) in
+  MATCH_MP_TAC strong THEN X_GEN_TAC `ps:(num)list` THEN
+  DISCH_THEN (LABEL_TAC "ih") THEN
+  DISJ_CASES_THEN2 SUBST_ALL_TAC
+    (X_CHOOSE_THEN `p:num`
+       (X_CHOOSE_THEN `t:(num)list` SUBST_ALL_TAC))
+    (ISPEC `ps:(num)list` list_CASES) THENL
+   [REWRITE_TAC[LENGTH; MULT_CLAUSES; LE_0];
+    ALL_TAC] THEN
+  GEN_TAC THEN
+  REWRITE_TAC[ALL_DISTINCT_CLAUSES; ALL; LENGTH; ADD1] THEN
+  CONV_TAC (TOP_DEPTH_CONV BETA_CONV) THEN
+  DISCH_THEN (CONJUNCTS_THEN2
+    (CONJUNCTS_THEN2 (LABEL_TAC "nm") (LABEL_TAC "ad"))
+    (CONJUNCTS_THEN2 (LABEL_TAC "ex") (LABEL_TAC "evt"))) THEN
+  (* the heap splits at the first pointer *)
+  USE_THEN "ex" (REPEAT_TCL CHOOSE_THEN (fun lk ->
+    STRIP_ASSUME_TAC (MATCH_MP heap_lookup_SPLIT lk))) THEN
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    if not (try is_eq (concl e) && is_var (lhs (concl e)) &&
+                (hd_is "APPEND" (rhs (concl e)) ||
+                 hd_is "heap_length" (rhs (concl e)))
+            with Failure _ -> false) then fail() else
+    SUBST_ALL_TAC e)) THEN
+  USE_THEN "ad" (fun ad -> USE_THEN "nm" (fun nm ->
+    USE_THEN "evt" (fun evt -> USE_THEN "ih" (fun ih ->
+      let evf = REWRITE_RULE[GSYM ALL_MEM] evt in
+      let ihf = REWRITE_RULE[LENGTH; ADD1] ih in
+      MATCH_ACCEPT_TAC
+        (MATCH_MP core (CONJ ad (CONJ nm (CONJ evf ihf))))))))))
 ### walk_EL
 (* the proof of the source is the induction of walk_heap_lookup,
    and the same steps take the cons of the list and the BlockRep of
