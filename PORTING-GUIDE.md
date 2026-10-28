@@ -3733,3 +3733,36 @@ prints the goals that are **really** left, with their assumptions
 (`b_asm := true`).  That is the state to read.  Once the proof is
 right, the `TRY`s that turned out to be needed are the ones that say
 where a branch closes early, and the rest come out.
+
+## 74. Do not split every variable of a product type
+
+Opening the case tree of a definition means splitting the scrutinee
+of each match and the argument of a constructor that a pattern takes
+apart -- the pair under the `SOME` of `SOME (a1,h1)`.  The obvious
+way to write the second one,
+
+```
+W(fun (asl,w) -> CASES_ON_TAC
+  (find_term (fun t -> is_var t && prod_type (type_of t)) w))
+```
+
+finds **the records of the arguments** as well: a record of the port
+is a product type (`ml/lib/records.ml`), so `c` (a
+`data_to_word_config`) and `st` (a `wordSem_state`) are variables of
+a product type, and splitting them splits every field, whose own
+product fields split again.  The report said *the step that got
+furthest broke after 88368 step(s)*, and the attempt spent its whole
+processor-time budget there.
+
+`CASE_SPLIT_TAC` of `ml/lib/tactics.ml` is the one to use:
+`scruts_of_goal` splits a variable **only where a pattern of a match
+looks into it**, so the pair under a `SOME` is split and the record
+of an argument is not.  What it does not find is a scrutinee whose
+head is a variable (`m a1`, the memory at an address), because its
+`ok` asks for a constant head; that one is split by hand.
+
+The same round is where the leaves became cheap, as entry 43 says
+they must: `we_tidy` (the constructor rewrites of the goal **and**
+the assumptions, then `FIRST_ASSUM CONTR_TAC`) and `we_close`
+(`STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL]`) after every split, so
+that a branch the split has settled is gone before the next one.

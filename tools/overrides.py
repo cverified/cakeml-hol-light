@@ -6726,6 +6726,57 @@ let vb_eq_size_list_cases = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'word_eq_LESS_EQ'): r"""
+(* the port's own: the case tree of word_eq, which its two
+   theorems about the budget and the clock open in the same way,
+   split in the order the definition has it.
+   EVERY_CASE_COND_TAC on the whole tree does not come back: the
+   conditions of an arm are under a match that is not reduced yet,
+   so the splits it makes there are vacuous and it makes them again
+   in every branch (PORTING-GUIDE.md entry 74) *)
+let a_loc w = find_term (fun t ->
+  (try fst (dest_type (type_of t)) = "word_loc"
+   with Failure _ -> false) &&
+  not (is_var t) && not (is_con_app t)) w;;
+let we_rws =
+  [distinctness "option"; injectivity "option"; PAIR_EQ;
+   distinctness "word_loc"; injectivity "word_loc"];;
+let we_tidy =
+  REWRITE_TAC we_rws THEN
+  RULE_ASSUM_TRY (REWRITE_RULE we_rws) THEN
+  TRY (FIRST_ASSUM CONTR_TAC);;
+let we_reduce =
+  TRY SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC;;
+let we_split p =
+  TRY (CHANGED_TAC
+    (W(fun (asl,w) -> CASES_ON_TAC (p w)) THEN
+     we_reduce THEN we_tidy));;
+let we_close = TRY (SOLVED (STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL]));;
+let we_step we_close =
+  CHANGED_TAC (CASE_SPLIT_TAC THEN we_reduce THEN
+               we_tidy THEN we_close);;
+let we_tree we_close =
+  let we_step = we_step we_close in
+  (* the two conditions the comparison starts with *)
+  REPEAT COND_CASES_TAC THEN we_tidy THEN we_close THEN
+  (* the scrutinees that the patterns of the match look into: the
+     headers of the two words and the pair each gives, and the
+     inner comparison of two words with its budget and clock.
+     CASES_ON_TAC of every variable of a product type instead
+     splits the two records of the arguments into their fields,
+     which was 88368 steps and no progress *)
+  REPEAT we_step THEN
+  (* the memory at the two addresses, which is an application of a
+     variable and so no scrutinee that scruts_of_goal picks *)
+  we_split a_loc THEN we_split a_loc THEN
+  we_reduce THEN we_tidy THEN we_close THEN
+  REPEAT we_step THEN
+  (* the conditions of the arm the two headers left *)
+  REPEAT COND_CASES_TAC THEN we_tidy THEN we_close THEN
+  REPEAT we_step;;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads

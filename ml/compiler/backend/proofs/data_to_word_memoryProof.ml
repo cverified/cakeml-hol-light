@@ -30311,6 +30311,54 @@ let word_eq_def = cake_define_try_tac (fun () ->
 
 (* HOL4 data_to_word_memoryProofScript.sml:14027: ML code, not ported *)
 
+(* the port's own: the case tree of word_eq, which its two
+   theorems about the budget and the clock open in the same way,
+   split in the order the definition has it.
+   EVERY_CASE_COND_TAC on the whole tree does not come back: the
+   conditions of an arm are under a match that is not reduced yet,
+   so the splits it makes there are vacuous and it makes them again
+   in every branch (PORTING-GUIDE.md entry 74) *)
+let a_loc w = find_term (fun t ->
+  (try fst (dest_type (type_of t)) = "word_loc"
+   with Failure _ -> false) &&
+  not (is_var t) && not (is_con_app t)) w;;
+let we_rws =
+  [distinctness "option"; injectivity "option"; PAIR_EQ;
+   distinctness "word_loc"; injectivity "word_loc"];;
+let we_tidy =
+  REWRITE_TAC we_rws THEN
+  RULE_ASSUM_TRY (REWRITE_RULE we_rws) THEN
+  TRY (FIRST_ASSUM CONTR_TAC);;
+let we_reduce =
+  TRY SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC;;
+let we_split p =
+  TRY (CHANGED_TAC
+    (W(fun (asl,w) -> CASES_ON_TAC (p w)) THEN
+     we_reduce THEN we_tidy));;
+let we_close = TRY (SOLVED (STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL]));;
+let we_step we_close =
+  CHANGED_TAC (CASE_SPLIT_TAC THEN we_reduce THEN
+               we_tidy THEN we_close);;
+let we_tree we_close =
+  let we_step = we_step we_close in
+  (* the two conditions the comparison starts with *)
+  REPEAT COND_CASES_TAC THEN we_tidy THEN we_close THEN
+  (* the scrutinees that the patterns of the match look into: the
+     headers of the two words and the pair each gives, and the
+     inner comparison of two words with its budget and clock.
+     CASES_ON_TAC of every variable of a product type instead
+     splits the two records of the arguments into their fields,
+     which was 88368 steps and no progress *)
+  REPEAT we_step THEN
+  (* the memory at the two addresses, which is an application of a
+     variable and so no scrutinee that scruts_of_goal picks *)
+  we_split a_loc THEN we_split a_loc THEN
+  we_reduce THEN we_tidy THEN we_close THEN
+  REPEAT we_step THEN
+  (* the conditions of the arm the two headers left *)
+  REPEAT COND_CASES_TAC THEN we_tidy THEN we_close THEN
+  REPEAT we_step;;
+
 let word_eq_LESS_EQ = prove
  (`(!c st dm m l ck w1 (w2:'a word) x0 l1 ck1.
         word_eq c st dm m l ck w1 w2 = SOME (x0,l1,ck1) ==> l1 <= l
@@ -30318,20 +30366,75 @@ let word_eq_LESS_EQ = prove
      (!c st dm m l ck w a1 (a2:'a word) x0 l1 ck1.
         word_eq_list c st dm m l ck w a1 a2 = SOME (x0,l1,ck1) ==>
           l1 <= l /\ ck1 <= ck)`,
-  (* the attempt, again: the proof of this one is written (the
-     complete induction on the l that the definition recurses on,
-     with fix_clock_IMP for the inner word_eq and the hypothesis for
-     the two recursive calls) and it goes through, but it closes
-     every leaf of the case tree of word_eq with ASM_ARITH_TAC and
-     that costs the file tens of minutes.  What it needs before it
-     can stand here is a cheap closer for the leaves that only say
-     the l and the ck came back unchanged (ASM_REWRITE_TAC[LE_REFL]
-     where the equations of PAIR_EQ are in the assumptions), with
-     the arithmetic left for the few leaves that need it *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[fix_clock_IMP] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the complete induction on the budget l that the definition
+     recurses on (PORTING-GUIDE.md entry 44).  The case tree of the
+     definition is opened by the steps above the statement
+     (tools/overrides.py), which close a leaf as soon as a split
+     settles it: most of them give back the budget and the clock
+     they were given, so ASM_REWRITE_TAC[LE_REFL] does it where the
+     equations of PAIR_EQ are among the assumptions (entry 43: the
+     old round paid ASM_ARITH_TAC per leaf and cost the file tens
+     of minutes).  What is left is the leaf that counts down by the
+     length it read, the inner comparison of a list -- whose budget
+     and clock fix_clock_IMP bounds -- and the recursive call, by
+     the hypothesis *)
+  ((* the hypothesis of the complete induction on the budget that
+     the definition recurses on, at the budget of a recursive
+     call: the bound is the first goal *)
+  let ih_at which t use (asl,w as gl) =
+    let ih = the_asm (fun c -> is_forall c &&
+               (try hd_is "<" (lhand (snd (strip_forall c)))
+                with Failure _ -> false)) gl in
+    let kk = rand (lhand (snd (strip_forall (concl ih)))) in
+    (SUBGOAL_THEN (mk_binop `(<):num->num->bool` t kk)
+       (fun lt -> use (which (MP (SPEC t ih) lt)))) gl in
+  let the_call nm gl =
+    the_asm (fun c -> is_eq c && hd_is nm (lhand c) &&
+               hd_is "SOME" (rand c)) gl in
+  SUBGOAL_THEN
+   `!k. (!c st dm m l ck w1 (w2:'a word) x0 l1 ck1.
+           l <= k /\ word_eq c st dm m l ck w1 w2 = SOME (x0,l1,ck1)
+           ==> l1 <= l /\ ck1 <= ck) /\
+        (!c st dm m l ck w a1 (a2:'a word) x0 l1 ck1.
+           l <= k /\
+           word_eq_list c st dm m l ck w a1 a2 = SOME (x0,l1,ck1)
+           ==> l1 <= l /\ ck1 <= ck)`
+   (fun th ->
+      CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+       [MP_TAC (CONJUNCT1 (SPEC `l:num` th));
+        MP_TAC (CONJUNCT2 (SPEC `l:num` th))] THEN
+      ASM_MESON_TAC[LE_REFL]) THEN
+  MATCH_MP_TAC num_WF THEN GEN_TAC THEN DISCH_TAC THEN
+  CONJ_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (* the definition at the arguments, and its case tree *)
+  FIRST_X_ASSUM (fun eq ->
+    if not (is_eq (concl eq) &&
+            (hd_is "word_eq" (lhand (concl eq)) ||
+             hd_is "word_eq_list" (lhand (concl eq)))) then fail()
+    else MP_TAC (ONCE_REWRITE_RULE[word_eq_def] eq)) THEN
+  we_tree THEN
+  (* the leaf that counts down by the length it read *)
+  TRY (SOLVED (STRIP_TAC THEN ARITH_ASM_TAC)) THEN
+  (* the inner comparison of a list, whose budget and clock the
+     fix_clock bounds *)
+  TRY (FIRST_ASSUM (fun fc ->
+    if not (is_eq (concl fc) &&
+            hd_is "data_to_word_memoryProof_fix_clock"
+              (lhand (concl fc))) then fail()
+    else ASSUME_TAC (MATCH_MP
+      (GEN_ALL data_to_word_memoryProof_fix_clock_IMP) fc))) THEN
+  SPLIT_ASM_TAC THEN
+  TRY (SOLVED (STRIP_TAC THEN ARITH_ASM_TAC)) THEN
+  TRY (SOLVED ARITH_ASM_TAC) THEN
+  (* and the recursive call, by the hypothesis *)
+  TRY STRIP_TAC THEN
+  W(fun gl ->
+    let eq = the_call "word_eq_list" gl in
+    let t = el 4 (snd (strip_comb (lhand (concl eq)))) in
+    ih_at CONJUNCT2 t
+      (fun c2 -> MP_TAC (MATCH_MP c2 (CONJ (SPEC t LE_REFL) eq)))) THEN
+  TRY (SOLVED ARITH_ASM_TAC) THEN
+  ARITH_ASM_TAC));;
 
 (* [local] *)
 let fix_clock_word_eq = prove
