@@ -28129,6 +28129,51 @@ let memory_rel_Number_IMP = prove
      RULE_ASSUM_TAC(REWRITE_RULE[MATCH_MP sm_and gd])) THEN
    ASM_MESON_TAC[]));;
 
+(* the port's own: what the payload and the header of a bignum
+   need.  n2mw_cons is the first word of the payload (HOL4 gets it
+   from n2mw_def and n2w_mod), abs_nonzero is why there is one at
+   all -- a number the invariant keeps as a bignum is not nought --
+   and1_bit0 and and_pow2_zero read a bit of a word off an AND with
+   a power of two, which is the form the statement has *)
+
+let n2mw_cons = prove
+ (`!k. ~(k = 0) ==> (?ns. (n2mw k:('a word) list) = n2w k :: ns)`,
+  REPEAT STRIP_TAC THEN
+  EXISTS_TAC `n2mw (k DIV dimword (:'a)):('a word) list` THEN
+  GEN_REWRITE_TAC LAND_CONV [n2mw_def] THEN
+  ASM_REWRITE_TAC[dimword; WORD_MOD_SIZE]);;
+
+let abs_nonzero = prove
+ (`good_dimindex (:'a) /\ ~small_int (:'a) i
+    ==> ~(num_of_int (abs i) = 0)`,
+  REWRITE_TAC[small_int_def; good_dimindex_def; dimword] THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    if (try lhs (concl dd) = `dimindex (:'a)`
+         with Failure _ -> false)
+    then RULE_ASSUM_TAC (REWRITE_RULE[dd]) else fail()) THEN
+  RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV) THEN
+  MP_TAC (SPEC `abs (i:int)` INT_OF_NUM_OF_INT) THEN
+  REWRITE_TAC[INT_ABS_POS] THEN
+  ASM_REWRITE_TAC[] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  ASM_INT_ARITH_TAC);;
+
+let and1_bit0 = prove
+ (`!(x:'a word). ~((x && (n2w 1)) = n2w 0) <=> word_bit 0 x`,
+  GEN_TAC THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               BIT_WORD_1] THEN
+  MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`]);;
+
+let and_pow2_zero = prove
+ (`!(x:'a word) k. k < dimindex (:'a)
+    ==> ((x && (n2w (2 EXP k)) = n2w 0) <=> ~(word_bit k x))`,
+  REPEAT STRIP_TAC THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               BIT_WORD_POW2] THEN
+  ASM_MESON_TAC[]);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_Number_bignum_IMP_ALT = prove
@@ -28156,19 +28201,183 @@ let memory_rel_Number_bignum_IMP_ALT = prove
           (:'a) /\
         decode_length c x = n2w
           (LENGTH (n2mw (num_of_int (abs i)):('a word) list)))`),
-  (* the attempt: the proof of the source names memory_rel_def,
-     word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
-     v_inv_def, word_addr_def.  What is here rewrites with them and
-     closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
-       abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
-       word_addr_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is the template of
+   memory_rel_ValueArray_IMP at a Bignum, and the three things it
+   needs beyond it are above the statement: the payload has a first
+   word (n2mw_cons, abs_nonzero), the header's bits come off
+   make_header as they do there, and what the statement writes as
+   an AND with a power of two is a bit of the header
+   (and_pow2_zero).  The frame of the separating conjunction that
+   the statement leaves existential is what is left of the heap
+   when the word_list of the payload is taken out of it *)
+  (let hd_is n t =
+    (try fst(dest_const(fst(strip_comb t))) = n
+     with Failure _ -> false) in
+  let rec facs t =
+    if hd_is "STAR" t then
+      let args = snd(strip_comb t) in
+      facs (el 0 args) @ facs (el 1 args)
+    else [t] in
+  let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail()) asl in
+  let is_hl th = hd_is "heap_lookup" (lhs (concl th)) in
+  let sepfront names =
+    W(fun (asl,w) ->
+      let pred = rator (lhand w) in
+      let fs = facs pred in
+      let picked = map (fun n -> find (hd_is n) fs) names in
+      let rest = filter (fun t -> not (mem t picked)) fs in
+      let st = fst(strip_comb pred) in
+      let mk a b = mk_comb(mk_comb(st,a),b) in
+      let target = itlist mk picked (end_itlist mk rest) in
+      SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
+       [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+  MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
+  FIRST_ASSUM(fun e ->
+    let c = concl e in
+    if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+    then SUBST1_TAC (SYM e) else fail()) THEN
+  REWRITE_TAC[injectivity "word_loc"] THEN
+  CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+  FIRST_X_ASSUM(fun th ->
+    if hd_is "heap_in_memory_store" (concl th)
+    then MP_TAC(REWRITE_RULE[heap_in_memory_store_def] th)
+    else fail()) THEN
+  STRIP_TAC THEN
+  W(fun (asl,w) ->
+    MP_TAC(MATCH_MP heap_lookup_SPLIT (grab asl is_hl))) THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  VAR_EQ_TAC THEN
+   W(fun (asl,w) ->
+     let hl = grab asl is_hl in
+     let hlen = grab asl (fun th ->
+       hd_is "heap_length" (lhand (concl th))) in
+     let cu = grab asl (fun th ->
+       hd_is "FLOOKUP" (lhs (concl th)) &&
+       fst(dest_const(rand(lhs(concl th)))) = "CurrHeap") in
+     let gd = grab asl (fun th -> concl th = `good_dimindex (:'a)`) in
+     let gat = tryfind (fun t ->
+       find_term (fun u ->
+         hd_is "get_addr" u && length (snd(strip_comb u)) = 3) t)
+       (w :: map (fun (_,th) -> concl th) asl) in
+     let th = SPEC (last (snd(strip_comb gat)))
+       (GEN `w:('a)word_loc`
+         (MATCH_MP get_real_addr_get_addr
+           (CONJ hlen (CONJ hl (CONJ cu gd))))) in
+     let r = rhs (concl (CONJUNCT1 th)) in
+     let a = rand r in
+     let args = snd(strip_comb (rand a)) in
+     let mul = fst(strip_comb (rand a)) in
+     let swap = mk_comb(rator a,
+                  mk_comb(mk_comb(mul,el 1 args),el 0 args)) in
+     let sw = WORD_RULE (mk_eq(a,swap)) in
+     STRIP_ASSUME_TAC(REWRITE_RULE[sw] th)) THEN
+  (* the payload of the bignum has a first word *)
+  W(fun gl ->
+    let gd = the_asm (fun c -> c = `good_dimindex (:'a)`) gl in
+    let si = the_asm (fun c ->
+               try is_neg c && hd_is "small_int" (rand c)
+               with Failure _ -> false) gl in
+    STRIP_ASSUME_TAC (MATCH_MP n2mw_cons
+      (MATCH_MP abs_nonzero (CONJ gd si)))) THEN
+  (* the cells of the heap at the bignum *)
+  FIRST_X_ASSUM(fun th ->
+    if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+    then MP_TAC th else fail()) THEN
+  REWRITE_TAC[word_heap_APPEND; word_heap_def; bignum_def;
+              i2mw_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_el_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_payload_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[LENGTH_MAP] THEN
+  sepfront ["cond"] THEN
+  REWRITE_TAC[cond_STAR] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC) THEN
+  FIRST_X_ASSUM (fun cons ->
+    if not (try is_eq (concl cons) &&
+                hd_is "CONS" (rand (concl cons)) &&
+                length (snd (strip_comb (lhs (concl cons)))) = 1
+            with Failure _ -> false)
+    then fail() else
+    DISCH_THEN (fun sep ->
+      let front th cell =
+        let p = rator (concl th) in
+        let fs = facs p in
+        let st = fst (strip_comb p) in
+        let mk a b = mk_comb (mk_comb (st, a), b) in
+        let rest = filter (fun t -> not (t = cell)) fs in
+        let target = mk cell (end_itlist mk rest) in
+        let eq = prove (mk_eq (p, target), REWRITE_TAC[STAR_AC]) in
+        MATCH_MP read_fun2set (REWRITE_RULE[eq] th) in
+      let sep2 = REWRITE_RULE[cons; MAP; word_list_def] sep in
+      let cells th =
+        map (front th) (filter (hd_is "set_sep_one") (facs
+          (rator (concl th)))) in
+      let rds2 = cells sep2 in
+      let sep1 = REWRITE_RULE[word_list_def] sep in
+      let rds1 = cells sep1 in
+      let hdr = hd rds1 in
+      let x = rand (rhs (concl (CONJUNCT1 hdr))) in
+      let a = rand (lhs (concl (CONJUNCT1 hdr))) in
+      let p1 = rator (concl sep1) in
+      let fs1 = facs p1 in
+      let st1 = fst (strip_comb p1) in
+      let mk1 u v = mk_comb (mk_comb (st1, u), v) in
+      let wl = find (hd_is "misc_word_list") fs1 in
+      let rest1 = filter (fun t -> not (t = wl)) fs1 in
+      let eq1 = prove (mk_eq (p1, mk1 wl (end_itlist mk1 rest1)),
+                  REWRITE_TAC[STAR_AC]) in
+      let sep3 = REWRITE_RULE[eq1] sep1 in
+      MAP_EVERY EXISTS_TAC [rand (rator (concl sep3)); x; a] THEN
+      MAP_EVERY STRIP_ASSUME_TAC
+        (sep3 :: (rds1 @ rds2)))) THEN
+  (* the bits of the header, off make_header *)
+  SUBGOAL_THEN `3 < dimindex (:'a) /\ 4 < dimindex (:'a)`
+    STRIP_ASSUME_TAC THENL
+   [UNDISCH_TAC
+      `data_to_word_config_len_size c + 7 < dimindex (:'a)` THEN
+    ARITH_TAC;
+    ALL_TAC] THEN
+  SUBGOAL_THEN `2 EXP (dimindex (:'a) - 4) <= dimword (:'a)`
+    ASSUME_TAC THENL
+   [REWRITE_TAC[dimword; LE_EXP] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC;
+    ALL_TAC] THEN
+  ASM_REWRITE_TAC[and1_bit0;
+    REWRITE_RULE[word_index] get_addr_0] THEN
+  ASM_SIMP_TAC[ARITH_RULE `8 = 2 EXP 3`;
+               ARITH_RULE `16 = 2 EXP 4`; and_pow2_zero] THEN
+  REPEAT CONJ_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+  REWRITE_TAC[make_header_def; b2w_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  ASM_CASES_TAC `(i:int) < &0` THEN
+  FIRST
+   [SUBGOAL_THEN `((&0:int) <= i) <=> F`
+      (fun e -> REWRITE_TAC[e]) THENL
+     [ASM_INT_ARITH_TAC; ALL_TAC];
+    SUBGOAL_THEN `((&0:int) <= i) <=> T`
+      (fun e -> REWRITE_TAC[e]) THENL
+     [ASM_INT_ARITH_TAC; ALL_TAC]] THEN
+  ASM_REWRITE_TAC[b2n_def] THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+              BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  TRY (W(fun gl ->
+    UNDISCH_TAC (concl (the_asm (fun c ->
+      try is_binop `(<):num->num->bool` c &&
+          hd_is "LENGTH" (lhand c)
+      with Failure _ -> false) gl)))) THEN
+  TRY (UNDISCH_TAC
+    `2 EXP (dimindex (:'a) - 4) <= dimword (:'a)`) THEN
+  UNDISCH_TAC `4 < dimindex (:'a)` THEN
+  UNDISCH_TAC `3 < dimindex (:'a)` THEN
+  UNDISCH_TAC
+    `data_to_word_config_len_size c + 7 < dimindex (:'a)` THEN
+  ARITH_TAC));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

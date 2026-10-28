@@ -7600,6 +7600,54 @@ let extract64_full = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'memory_rel_Number_bignum_IMP_ALT'): r"""
+(* the port's own: what the payload and the header of a bignum
+   need.  n2mw_cons is the first word of the payload (HOL4 gets it
+   from n2mw_def and n2w_mod), abs_nonzero is why there is one at
+   all -- a number the invariant keeps as a bignum is not nought --
+   and1_bit0 and and_pow2_zero read a bit of a word off an AND with
+   a power of two, which is the form the statement has *)
+
+let n2mw_cons = prove
+ (`!k. ~(k = 0) ==> (?ns. (n2mw k:('a word) list) = n2w k :: ns)`,
+  REPEAT STRIP_TAC THEN
+  EXISTS_TAC `n2mw (k DIV dimword (:'a)):('a word) list` THEN
+  GEN_REWRITE_TAC LAND_CONV [n2mw_def] THEN
+  ASM_REWRITE_TAC[dimword; WORD_MOD_SIZE]);;
+
+let abs_nonzero = prove
+ (`good_dimindex (:'a) /\ ~small_int (:'a) i
+    ==> ~(num_of_int (abs i) = 0)`,
+  REWRITE_TAC[small_int_def; good_dimindex_def; dimword] THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    if (try lhs (concl dd) = `dimindex (:'a)`
+         with Failure _ -> false)
+    then RULE_ASSUM_TAC (REWRITE_RULE[dd]) else fail()) THEN
+  RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV) THEN
+  MP_TAC (SPEC `abs (i:int)` INT_OF_NUM_OF_INT) THEN
+  REWRITE_TAC[INT_ABS_POS] THEN
+  ASM_REWRITE_TAC[] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  ASM_INT_ARITH_TAC);;
+
+let and1_bit0 = prove
+ (`!(x:'a word). ~((x && (n2w 1)) = n2w 0) <=> word_bit 0 x`,
+  GEN_TAC THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               BIT_WORD_1] THEN
+  MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`]);;
+
+let and_pow2_zero = prove
+ (`!(x:'a word) k. k < dimindex (:'a)
+    ==> ((x && (n2w (2 EXP k)) = n2w 0) <=> ~(word_bit k x))`,
+  REPEAT STRIP_TAC THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_0;
+               BIT_WORD_POW2] THEN
+  ASM_MESON_TAC[]);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads
