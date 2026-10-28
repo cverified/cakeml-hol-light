@@ -38474,8 +38474,13 @@ let find_diff_str_cmp_thm2 = prove
     (* both lists have a byte each *)
     prep THEN
     W(fun (asl,w) ->
-      let c = find_term is_cond (snd (strip_exists w)) in
-      ASM_CASES_TAC (fst (dest_cond c))) THENL
+      (* this file binds is_cond to something else of its own
+         (line 36808), so the test for a conditional is here *)
+      let a_cond t =
+        try fst (dest_const (fst (strip_comb t))) = "COND"
+        with Failure _ -> false in
+      let c = find_term a_cond (snd (strip_exists w)) in
+      ASM_CASES_TAC (el 0 (snd (strip_comb c)))) THENL
      [(* the two bytes agree: the comparison steps over them and
          find_diff goes on with the tails, one byte further on *)
       FIRST_X_ASSUM (fun th ->

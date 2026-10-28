@@ -3903,3 +3903,33 @@ Three things that cost a round each in the first such proof:
   assumptions into the goal's shape; `LENGTH y = LENGTH y'` (its
   `SYM`) rewrites the goal away from it, and then the hypothesis of
   the induction no longer matches what the branch has.
+
+## 78. The file binds names of HOL Light's own
+
+`data_to_word_memoryProof.ml` has, at line 36808,
+
+```
+let is_cond t = is_forall t && is_eq(snd(strip_forall t));;
+```
+
+-- a helper of one of its proofs, and from there to the end of the
+file `is_cond` is **that** and not HOL Light's test for a
+conditional.  A proof written in a scratch session, where the
+shadowing is not there, works; the same proof in the file dies with
+`Exception: Failure "find_term"` twelve minutes into a verify, and
+the report says nothing about why.
+
+So a proof of this file does not use `is_cond`, and in general does
+not use a one-word name of HOL Light's that a file of the port may
+have taken for a helper of its own.  What a conditional is tested
+by instead:
+
+```
+let a_cond t =
+  try fst (dest_const (fst (strip_comb t))) = "COND"
+  with Failure _ -> false in
+```
+
+and its condition is `el 0 (snd (strip_comb c))`.  `grep -n "^let
+[a-z_]* [a-z]" <the file>` lists the helpers a file binds, and
+`is_cond` is the only one of them that collides today.
