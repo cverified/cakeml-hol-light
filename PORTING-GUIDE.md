@@ -3993,3 +3993,55 @@ The bits of the header come off `make_header_def` with
 `BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD`, `NUM_REDUCE_CONV` and the
 assumption `len_size + 7 < dimindex`, which is what says that the
 length of the header does not reach down to the bits the tag has.
+
+## 80. A term quoted inside a proof and the record fields
+
+The names of the record fields of the sources (`c`, `be`, `ts`,
+`m`, `st`, `sp`, `dm`, `refs`, `vars`, ...) are overloaded onto the
+accessors, which is why a statement that uses them for variables of
+its own goes through `cake_as_vars`.  The same holds for a term
+that a _tactic_ quotes: a `SUBGOAL_THEN` of a `memory_rel` with the
+variables of the statement in it has to be written
+
+```
+SUBGOAL_THEN (cake_as_vars (fun () ->
+  `memory_rel c be ts refs sp st m dm [(v1,(w1:'a word_loc))]`))
+  ASSUME_TAC
+```
+
+Without the wrapper the quotation does not parse, and what comes
+out is `Failure "typechecking error (overload resolution)"` -- at
+the point where the thunk of the proof is evaluated, so the harness
+reports it against whatever step it had reached, which is usually a
+step of a lemma of the proof and has nothing to do with it.  A
+quotation that names no field (a list of the proof's own variables,
+an arithmetic statement) needs no wrapper.
+
+## 81. HOL Light's precedences are not HOL4's
+
+Two of them bite when a lemma of a proof is written to match a
+goal:
+
+- `EXP` is _left_ associative, so `d EXP d EXP d` is `(d EXP d) EXP
+  d` and not `d EXP (d EXP d)`.  (`MustTerminate_limit` of the port
+  therefore has the word size to the square of the word size in it,
+  where the source has it to the word size to the word size.
+  Either is "a number that's large enough", which is all the source
+  asks of it.)
+- `-` binds _tighter_ than `+`, so `a + b - c` is `a + (b - c)`.  A
+  goal of the shape `(A + B + C) - D` is matched by a lemma whose
+  statement has the parentheses written out.
+
+`MATCH_MP_TAC` says `No match` when a lemma is written the other
+way, and the term it shows looks the same as the goal.
+
+## 82. `TL` of the port is `hol4_TL`
+
+HOL4's `TL []` is `[]`, HOL Light's `TL` says nothing of the empty
+list, so the port has `hol4_TL` (ml/lib/hol4.ml) with both clauses
+and overloads `TL` onto it.  A `REWRITE_RULE[TL]` with HOL Light's
+theorem therefore leaves the port's `TL (h :: t)` standing: the
+rewrite to use is `hol4_TL`.  `MAP_TL` of the source (`MAP f (TL l)
+= TL (MAP f l)`) is not in the port; where a proof needs the two
+sides to meet, the list is split (`list_CASES` on it) and both are
+rewritten with `APPEND; MAP; MAP_APPEND; hol4_TL`.
