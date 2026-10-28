@@ -25896,18 +25896,232 @@
        memory_rel_ByteArray_IMP; SNOC; SNOC_CASES; SNOC_APPEND] THEN
      TRY ASM_ARITH_TAC))
 ### append_writes_list_to_BlockReps
-  (* the attempt: the proof of the source names append_writes_def,
-     list_to_BlockReps_def, BlockRep_def, word_heap_def,
-     el_length_def, word_el_def.  What is here rewrites with them
-     and closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[append_writes_def; list_to_BlockReps_def;
-       BlockRep_def; word_heap_def; el_length_def; word_el_def] THEN
-     TRY ASM_ARITH_TAC))
+(* the proof of the source is the induction of the list, with both
+   sides unfolded one cons at a time.  Of one element the writes are
+   the header, the root of the element and the value, and the heap
+   is the BlockRep of the two, whose payload has the same three
+   cells and a cond that encode_header_lemma discharges.  Of a
+   longer list the third cell is the pointer of the next cons, which
+   is the lemma below: the pointer of the source is the offset
+   shifted into place with the bits of a cons under it
+   (make_cons_ptr_thm, bytes_in_word_mul_eq_shift), and three words
+   on is the pointer of the next, both as the sum that
+   ptr_bits_lemma makes of the parts.  The rest is the induction
+   hypothesis three words along *)
+  (let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail())
+      asl in
+
+  let cond_T = btry "cond_T"
+   `cond T = (emp:(A->bool)->bool)`
+   (fun () ->
+     REWRITE_TAC[FUN_EQ_THM; cond_def; emp_def]) in
+
+  let shl_shl = prove
+   (`!(w:'a word) a b. (w << a) << b = w << (a + b)`,
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_SHL] THEN
+    REPEAT STRIP_TAC THEN
+    REWRITE_TAC[ARITH_RULE `(i:num) - b - a = i - (a + b)`] THEN
+    EQ_TAC THEN STRIP_TAC THEN REPEAT CONJ_TAC THEN
+    TRY (FIRST_ASSUM ACCEPT_TAC) THEN ASM_ARITH_TAC) in
+
+  let shl_mul = prove
+   (`!(x:'a word) k. x << k = x * word (2 EXP k)`,
+    REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+    CONV_TAC MOD_DOWN_CONV THEN REWRITE_TAC[MULT_AC]) in
+
+  let ptr_step = prove
+   (cake_as_vars (fun () ->
+     `!c init_ptr offset.
+        good_dimindex (:'a) /\
+        backend_common_word_shift (:'a) <= shift_length c /\
+        wordLang_Word (init_ptr:'a word) =
+          make_cons_ptr c (bytes_in_word * n2w offset) 0 2 ==>
+        (init_ptr + (n2w 3 << shift_length c) =
+           get_addr c (offset + 3) (wordLang_Word (ptr_bits c 0 2)) /\
+         wordLang_Word (init_ptr + (n2w 3 << shift_length c)) =
+           make_cons_ptr c (bytes_in_word * n2w (offset + 3)) 0 2)`),
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      RULE_ASSUM_TRY (REWRITE_RULE[make_cons_ptr_thm;
+        injectivity "word_loc";
+        MATCH_MP bytes_in_word_mul_eq_shift gd; shl_shl])) THEN
+    FIRST_ASSUM (fun le ->
+      if not (try hd_is "<=" (concl le) with Failure _ -> false)
+      then fail() else
+      RULE_ASSUM_TRY (REWRITE_RULE[MATCH_MP
+        (ARITH_RULE `w <= s ==> w + (s - w) = s`) le])) THEN
+    REWRITE_TAC[make_cons_ptr_thm; get_addr_def;
+                get_lowerbits_ptrbits; injectivity "word_loc"] THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      REWRITE_TAC[MATCH_MP bytes_in_word_mul_eq_shift gd;
+                  shl_shl]) THEN
+    FIRST_ASSUM (fun le ->
+      if not (try hd_is "<=" (concl le) with Failure _ -> false)
+      then fail() else
+      REWRITE_TAC[MATCH_MP
+        (ARITH_RULE `w <= s ==> w + (s - w) = s`) le]) THEN
+    FIRST_ASSUM (fun ip ->
+      if not (try is_eq (concl ip) && is_var (lhs (concl ip))
+              with Failure _ -> false) then fail() else
+      ASM_REWRITE_TAC[]) THEN
+    W(fun (asl,gl) ->
+      let ok t = (try hd_is "word_or" t &&
+                      hd_is "word_or" (rand t) &&
+                      hd_is "word" (lhand (rand t))
+                  with Failure _ -> false) in
+      MAP_EVERY (fun t ->
+        let a = lhand t and bc = rand t in
+        let b = lhand bc and c2 = rand bc in
+        let sw = mk_comb (mk_comb (fst (strip_comb t), a),
+                   mk_comb (mk_comb (fst (strip_comb bc), c2), b)) in
+        SUBST1_TAC (WORD_BITWISE_RULE (mk_eq (t, sw))))
+        (find_terms ok gl)) THEN
+    REWRITE_TAC[ptr_bits_lemma] THEN
+    REWRITE_TAC[GSYM WORD_ADD; shl_mul] THEN
+    CONV_TAC WORD_RULE) in
+  LIST_INDUCT_TAC THENL
+   [REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_ASSUM (fun le ->
+      if not (try is_eq (concl le) &&
+                  hd_is "LENGTH" (lhs (concl le))
+              with Failure _ -> false) then fail() else
+      MP_TAC le) THEN
+    REWRITE_TAC[LENGTH] THEN CONV_TAC (LAND_CONV SYM_CONV) THEN
+    REWRITE_TAC[LENGTH_EQ_NIL] THEN
+    DISCH_THEN SUBST_ALL_TAC THEN
+    ONCE_REWRITE_TAC[append_writes_def] THEN
+    ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[word_heap_def; word_el_def; BlockRep_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[word_payload_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[word_list_def; LENGTH; MAP] THEN
+    REWRITE_TAC[cons_tag_def] THEN CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[WORD_RULE `(n2w 0:'a word) << 2 = n2w 0`] THEN
+    (* the root of the head is the word of the writes *)
+    FIRST_ASSUM (fun lr ->
+      if not (hd_is "ALL2" (concl lr)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[ALL2; MAP] lr)) THEN
+    ASM_REWRITE_TAC[] THEN
+    (* and the cond of the payload holds *)
+    W(fun (asl,gl) ->
+      let cnd = rand (find_term (hd_is "cond") gl) in
+      SUBGOAL_THEN cnd (fun th ->
+        REWRITE_TAC[EQT_INTRO th; cond_T; emp_STAR; STAR_emp;
+                    STAR_AC]) THENL
+       [REPEAT CONJ_TAC THEN
+        TRY (FIRST_ASSUM (fun gd ->
+          if not (hd_is "good_dimindex" (concl gd)) then fail() else
+          MP_TAC (REWRITE_RULE[good_dimindex_def] gd) THEN
+          STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+          CONV_TAC NUM_REDUCE_CONV)) THEN
+        FIRST_ASSUM (fun gd ->
+          if not (hd_is "good_dimindex" (concl gd)) then fail() else
+          FIRST_ASSUM (fun l1 ->
+            FIRST_ASSUM (fun l2 ->
+              STRIP_ASSUME_TAC (MATCH_MP encode_header_lemma
+                (CONJ l1 (CONJ l2 gd)))))) THEN
+        ASM_REWRITE_TAC[]]) THEN
+    ALL_TAC;
+    (* a longer list: the writes and the heap of the head, and the
+       induction hypothesis of the tail *)
+    REPEAT GEN_TAC THEN
+    W(fun (asl,gl) ->
+      STRUCT_CASES_TAC (ISPEC
+        (rand (rhs (hd (conjuncts (lhand gl))))) list_CASES)) THEN
+    REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ] THEN
+    STRIP_TAC THEN
+    ONCE_REWRITE_TAC[append_writes_def] THEN
+    ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[NOT_CONS_NIL] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[word_heap_def; word_el_def; BlockRep_def;
+                el_length_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[word_payload_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[word_list_def; LENGTH; MAP] THEN
+    REWRITE_TAC[cons_tag_def] THEN CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[WORD_RULE `(n2w 0:'a word) << 2 = n2w 0`] THEN
+    (* the root of the head is the word of the writes *)
+    FIRST_ASSUM (fun lr ->
+      if not (hd_is "ALL2" (concl lr)) then fail() else
+      ASSUME_TAC (CONJUNCT1 (REWRITE_RULE[ALL2; MAP] lr))) THEN
+    ASM_REWRITE_TAC[] THEN
+    (* the cond of the payload holds *)
+    W(fun (asl,gl) ->
+      let cnd = rand (find_term (hd_is "cond") gl) in
+      SUBGOAL_THEN cnd (fun th ->
+        REWRITE_TAC[EQT_INTRO th; cond_T; emp_STAR; STAR_emp])
+      THENL
+       [REPEAT CONJ_TAC THEN
+        TRY (FIRST_ASSUM (fun gd ->
+          if not (hd_is "good_dimindex" (concl gd)) then fail() else
+          MP_TAC (REWRITE_RULE[good_dimindex_def] gd) THEN
+          STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+          CONV_TAC NUM_REDUCE_CONV)) THEN
+        FIRST_ASSUM (fun gd ->
+          if not (hd_is "good_dimindex" (concl gd)) then fail() else
+          FIRST_ASSUM (fun l1 ->
+            FIRST_ASSUM (fun l2 ->
+              STRIP_ASSUME_TAC (MATCH_MP encode_header_lemma
+                (CONJ l1 (CONJ l2 gd)))))) THEN
+        ASM_REWRITE_TAC[];
+        ALL_TAC]) THEN
+    (* the pointer of the next cons *)
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      FIRST_ASSUM (fun le ->
+        if not (try hd_is "<=" (concl le) with Failure _ -> false)
+        then fail() else
+        FIRST_ASSUM (fun ip ->
+          if not (try is_eq (concl ip) &&
+                      hd_is "make_cons_ptr" (rhs (concl ip))
+                  with Failure _ -> false) then fail() else
+          STRIP_ASSUME_TAC (MATCH_MP ptr_step
+            (CONJ gd (CONJ le ip)))))) THEN
+    REWRITE_TAC(word_addr_clauses ()) THEN
+    FIRST_ASSUM (fun pe ->
+      if not (try is_eq (concl pe) &&
+                  hd_is "get_addr" (rhs (concl pe))
+              with Failure _ -> false) then fail() else
+      REWRITE_TAC[SYM pe]) THEN
+    (* and the induction hypothesis of the tail *)
+    W(fun (asl,gl) ->
+      let ih = grab asl (fun th -> is_forall (concl th)) in
+      let lr = grab asl (fun th -> hd_is "ALL2" (concl th)) in
+      let a2 = CONJUNCT2 (ONCE_REWRITE_RULE[ALL2] lr) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      let len = grab asl (fun th ->
+        is_eq (concl th) && hd_is "LENGTH" (lhs (concl th))) in
+      let c1 = grab asl (fun th ->
+        hd_is "<" (concl th) && lhand (concl th) = `1`) in
+      let c2 = grab asl (fun th ->
+        hd_is "<" (concl th) && hd_is "+" (lhand (concl th))) in
+      let ws = grab asl (fun th -> hd_is "<=" (concl th)) in
+      let ip2 = grab asl (fun th ->
+        is_eq (concl th) &&
+        hd_is "make_cons_ptr" (rhs (concl th)) &&
+        not (is_var (rand (lhs (concl th))))) in
+      let ihi = REWRITE_RULE[GSYM WORD_ADD] (MATCH_MP ih
+        (CONJ len (CONJ gd (CONJ c1 (CONJ c2
+           (CONJ ws (CONJ a2 ip2))))))) in
+      let addr = lhand (lhs (concl ihi)) in
+      let wl = find_term (hd_is "misc_word_list") gl in
+      let wh = find_term (hd_is "word_heap") gl in
+      SUBST1_TAC (WORD_RULE (mk_eq (lhand wl, addr))) THEN
+      SUBST1_TAC (WORD_RULE (mk_eq
+        (el 0 (snd (strip_comb wh)), addr))) THEN
+      REWRITE_TAC[ihi] THEN
+      REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp])])
 ### bind_each_isSomeDataElement
   (* the attempt: the proof of the source names bind_each_def,
      bind_each_FUPDATE, FAPPLY_FUPDATE_THM, list_to_BlockReps_def,
