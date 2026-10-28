@@ -2064,36 +2064,75 @@ block above its statement: of two elements of a sorted list the
 earlier one relates to the later.  Anything else of the file that
 needs a sorted list has them now.
 
-## Where walk_EL stands
+## The walk of a list, and ten more proofs
 
-`walk_EL` is the next one to finish and it is half written.  Its
-proof is `walk_heap_lookup`'s (which is proved): the same helpers
-(`all2cons1`, `some_SOME`, `grab`, `pwit`), the same double list
-induction, and the same unfolding of `walk` once the `some` of its
-definition is resolved.  What is different:
+`data_to_word_memoryProof.ml` is at **53** attempts (it was 63 at
+the start of this round).  What went in, in order:
 
-- the base of the outer induction is vacuous, because
-  `SUC n < LENGTH [h]` is false, so that branch is
-  `REWRITE_TAC[LENGTH; ARITH_RULE `~(SUC n < SUC 0)`]`;
-- where `walk_heap_lookup` proves an `EVERY` of the walk, this
-  proves a statement about `EL n` and `EL (SUC n)` of it, so after
-  the walk is unfolded to `ptr :: walk c heap p k` the index is
-  taken apart with `STRUCT_CASES_TAC (SPEC `n:num` num_CASES)`:
-  at nought the goal is about `ptr` and `HD (walk c heap p k)`,
-  which is `p`, and at `SUC n'` it is the induction hypothesis at
-  `n'` (with `EL (SUC n') (ptr :: w) = EL n' w`, which is `EL` and
-  `TL`).
+- `memory_rel_Thunk_inlined` -- the first conjunct is
+  `memory_rel_Thunk_IMP`, the second the invariant rebuilt on the
+  same heap, the same roots and the same two maps, where the clause
+  of `v_inv` that inlines a thunk gives the root of its value;
+- `memory_rel_write` -- a write below the next free address keeps
+  the invariant, because the memory is in one place only (the
+  separation predicate of `heap_in_memory_store`).  The lemma that
+  does the work is the port's own: `read_fun2set` and
+  `write_fun2set` over a whole `word_list_exists`;
+- `memory_rel_depth_limit` and `memory_rel_limit` -- the induction
+  over the values is HOL Light's for the type, with the hypothesis
+  of a `Block` over its list (`v_ind`, built from
+  `dataSem_v_INDUCT`), and the arithmetic of `MustTerminate_limit`
+  is a lemma of the proof;
+- `memory_rel_Block_ptr_eq` -- two `Block`s with one root: the
+  `BlockNil` of a tag tells the tag, a pointer's word is odd, two
+  pointers that make one word have one address (the lower bits go
+  in the shift), so the timestamps are equal and `blocks_unique`
+  finishes;
+- `smallnum_test` -- the and with the top two bits bounds the
+  value, and a negative number's value is too big for it;
+- `walk_EL`, `walk_ALL_DISTINCT`, `v_to_list_DROP` -- the walk of
+  the heap along a list.  The port's own `walk_CONS` (before
+  `walk_EL`) says the walk starts at its pointer, which is what the
+  head of the walk of a tail needs; the distinctness is the length
+  argument of the source (a pointer of the walk carries the drop of
+  the list at it, and `v_to_list_same_LENGTH` makes the whole list
+  as long as a drop of its tail);
+- `append_writes_list_to_BlockReps` -- the writes of an append are
+  the heap of the `BlockRep`s, by the induction of the list with a
+  lemma for the pointer of the next cons.
 
-The piece that is not written is the nought case.  `HD (walk c
-heap p k) = p` wants `walk` unfolded a second time, and its `some`
-then wants the heap's cons at `p` -- which is the *second* cons of
-the list, so the v_inv of the tail has to be taken apart as well.
-What does **not** work is transplanting the steps that took the
-first one apart: the second time the list of the `BlockRep` is a
-variable, not a literal pair, so the `ALL2` step leaves an equation
-`SOME (BlockRep cons_tag ys') = SOME (BlockRep cons_tag [a; b])`
-standing, and everything after it is in the wrong state.  The
-second unfolding has to be written for the state it is in, and
-`some_EX` -- `(?x. P x) ==> ?y. some P = SOME y` -- is the shape
-for the `some` (uniqueness is not needed for the head of the walk,
-only existence, which the cons at `p` gives).
+What the round cost per theorem: between four and sixteen rounds of
+`tools/bin/trydef`-style batches, and one `verifyquick` (circa 850
+seconds) per landing or pair of landings.
+
+## What the remaining 53 want
+
+Of the ones that are left, two cannot be proved as the port stands
+(`memory_rel_ptr_eq` wants `memory_rel_pointer_eq` and
+`memory_rel_FromList` wants `copy_list_thm`, and HOL4 states both
+as the value of an ML expression, so `PENDING.md` has them out).
+The rest fall into four kinds:
+
+- the store family (`memory_rel_Ref`, `memory_rel_AllocThunk`,
+  `memory_rel_Word64_alt`, `IMP_memory_rel_bignum_alt`,
+  `memory_rel_RefByte_alt`): a `store_list` into the unused space
+  at the end of the heap, all with the same shape -- the one to
+  write first is the one that makes the shape, and the others
+  follow it;
+- the write family (`memory_rel_Update`, `memory_rel_UpdateCons`,
+  `memory_rel_UpdateThunk_*`, `heap_in_memory_store_UpdateByte`):
+  `write_fun2set` into a cell of an element, where
+  `memory_rel_write`'s lemma is the template;
+- the word level (`get_real_addr_get_addr`,
+  `memory_rel_bounds_check`, `memory_rel_Number_cmp`,
+  `word_eq_thm0`, `bytes_to_word_eq_lemma`): bits and shifts, with
+  `good_dimindex` splitting the two word sizes;
+- the inductions (`word_copy_fwd_thm` and its three siblings,
+  `v_inv_related_lemma`, `v_inv_list_to_v_lem`, `memory_rel_do_build`,
+  `heap_length_Blocks`, `gc_heap_inline_rel_v_inv_lemma`), where
+  the port has to build the induction that HOL4's definition gave
+  it for free.
+
+Two sptree facts that three of them want are not in `ml/lib/sptree.ml`
+and would have to be lemmas of a proof: `insert_unchanged`
+(`lookup k t = SOME v ==> insert k v t = t`) and `insert_insert`.
