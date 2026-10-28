@@ -23412,18 +23412,414 @@ let memory_rel_UpdateThunk_Evaluated = prove
           (UPDATE_LIST m [x,wordLang_Word hdr; x +
             bytes_in_word,w]) dm
           ((h,w) :: (RefPtr F nn,ptr) :: vars))`),
-  (* the attempt: the proof of the source names memory_rel_def,
-     word_ml_inv_def, update_thunk_thm, LENGTH_EQ_1, bool_def,
-     word_addr_def.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
-       update_thunk_thm; LENGTH_EQ_1; bool_def; word_addr_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the same proof as memory_rel_UpdateThunk_NotEvaluated, which the
+   source names the same theorems for -- memory_rel_def,
+   word_ml_inv_def, update_thunk_thm, LENGTH_EQ_1, word_addr_def,
+   thunk_deref_def, get_real_addr_get_addr, heap_lookup_SPLIT and
+   the store lemma -- but now the mode of the thunk changes, so the
+   header of the new element is another word than the header of the
+   old one: encode_header_def says the hdr of the statement is
+   make_header of n2w 14, thunk_tag_bits_lemma says the bits of an
+   evaluated thunk with the six are that same word, and so the two
+   cells that write_fun2set writes are the header and the root of
+   the value; the cond of the new element is the length that
+   encode_header_IMP reads back off the hdr (what HOL4 does with
+   SEP_R_TAC and SEP_W_TAC) *)
+  (let len1 = prove
+   (`!l. LENGTH (l:(A)list) = 1 <=> ?x. l = [x]`,
+    GEN_TAC THEN
+    STRUCT_CASES_TAC (ISPEC `l:(A)list` list_CASES) THEN
+    REWRITE_TAC[LENGTH; CONS_11; NOT_CONS_NIL; ARITH_EQ] THEN
+    REWRITE_TAC[ARITH_RULE `SUC n = 1 <=> n = 0`; LENGTH_EQ_NIL] THEN
+    MESON_TAC[]) in
+
+  let rec facs t =
+    if hd_is "STAR" t then
+      let args = snd (strip_comb t) in
+      facs (el 0 args) @ facs (el 1 args)
+    else [t] in
+
+  let sfront nm sep =
+    let pred = rator (concl sep) in
+    let fs = facs pred in
+    let cell = find (hd_is nm) fs in
+    let rest = filter (fun t -> not (t = cell)) fs in
+    let st = fst (strip_comb pred) in
+    let mk x y = mk_comb (mk_comb (st,x),y) in
+    let target = mk cell (end_itlist mk rest) in
+    let eq = prove (mk_eq (pred,target), REWRITE_TAC[STAR_AC]) in
+    REWRITE_RULE[eq] sep in
+  let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail())
+      asl in
+  let utn = INST [`Evaluated`,`ev:thunk_mode`] update_thunk_thm in
+  let indm =
+    W(fun (asl,gl) ->
+      tryfind (fun (_,th) ->
+        if not (try hd_is "IN" (concl th)
+                with Failure _ -> false) then fail() else
+        let eq = WORD_RULE (mk_eq (lhand gl, lhand (concl th))) in
+        SUBST1_TAC eq THEN ACCEPT_TAC th) asl) in
+  let someif = prove
+   (`!p (x:A) y. (if p then SOME x else NONE) = SOME y ==> x = y`,
+    REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+    REWRITE_TAC[distinctness "option"; injectivity "option"]) in
+  STRIP_TAC THEN
+  (* what encode_header gave back is make_header of the tag *)
+  FIRST_ASSUM (fun eh ->
+    if not (try hd_is "encode_header" (lhs (concl eh))
+            with Failure _ -> false) then fail() else
+    ASSUME_TAC (CONV_RULE NUM_REDUCE_CONV (MATCH_MP someif
+      (REWRITE_RULE[encode_header_def] eh)))) THEN
+  FIRST_ASSUM (fun mr ->
+    if hd_is "memory_rel" (concl mr)
+    then STRIP_ASSUME_TAC (REWRITE_RULE[memory_rel_def] mr)
+    else fail()) THEN
+  FIRST_ASSUM (fun h ->
+    if hd_is "heap_in_memory_store" (concl h)
+    then STRIP_ASSUME_TAC
+           (REWRITE_RULE[heap_in_memory_store_def] h)
+    else fail()) THEN
+  FIRST_ASSUM (fun wi ->
+    if hd_is "word_ml_inv" (concl wi)
+    then STRIP_ASSUME_TAC (REWRITE_RULE[word_ml_inv_def] wi)
+    else fail()) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[MAP; FST; SND]) THEN
+  FIRST_ASSUM (fun ai ->
+    if not (hd_is "abs_ml_inv" (concl ai)) then fail() else
+    FIRST_ASSUM (fun lk ->
+      if not (try hd_is "sptree_lookup" (lhs (concl lk))
+              with Failure _ -> false) then fail() else
+      FIRST_ASSUM (fun dt ->
+        if not (try hd_is "dataSem_dest_thunk" (lhs (concl dt)) ||
+                    hd_is "dest_thunk" (lhs (concl dt))
+                with Failure _ -> false) then fail() else
+        STRIP_ASSUME_TAC (MATCH_MP (GEN_ALL utn)
+          (CONJ ai (CONJ lk
+             (DISCH `(Evaluated:thunk_mode) = Evaluated` dt))))))) THEN
+  REWRITE_TAC[UPDATE_LIST_THM; FST; SND] THEN
+  (* the roots are the root of the value and the pointer *)
+  FIRST_ASSUM (fun e ->
+    if not (try is_eq (concl e) && is_var (lhs (concl e)) &&
+                hd_is "CONS" (rhs (concl e))
+            with Failure _ -> false) then fail() else
+    SUBST_ALL_TAC e) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[ALL2]) THEN
+  REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC)) THEN
+  (* the heap has a data element at the pointer *)
+  FIRST_ASSUM (fun ai ->
+    if not (hd_is "abs_ml_inv" (concl ai) &&
+            not (hd_is "sptree_insert"
+                   (el 2 (snd (strip_comb (concl ai))))))
+    then fail() else
+    STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def] ai)) THEN
+  FIRST_ASSUM (fun rk ->
+    if not (hd_is "roots_ok" (concl rk)) then fail() else
+    MP_TAC (REWRITE_RULE[roots_ok_def; MEM] rk)) THEN
+  W(fun (asl,gl) ->
+    let td = grab asl (fun th ->
+      try hd_is "thunk_deref" (lhs (concl th))
+      with Failure _ -> false) in
+    let pp = lhand (lhs (concl td)) in
+    let wa = grab asl (fun th ->
+      try hd_is "word_addr" (lhs (concl th)) &&
+          hd_is "gc_shared_Pointer" (rand (lhs (concl th))) &&
+          lhand (rand (lhs (concl th))) = pp
+      with Failure _ -> false) in
+    let uu = rand (rand (lhs (concl wa))) in
+    DISCH_THEN (fun rk -> MP_TAC (SPECL [pp; uu] rk))) THEN
+  REWRITE_TAC[] THEN
+  REWRITE_TAC[isSomeDataElement_def] THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  (* which is the thunk that was not evaluated *)
+  FIRST_ASSUM (fun hl ->
+    if not (try is_eq (concl hl) &&
+                hd_is "heap_lookup" (lhs (concl hl))
+            with Failure _ -> false) then fail() else
+    FIRST_ASSUM (fun td ->
+      if not (try hd_is "thunk_deref" (lhs (concl td))
+              with Failure _ -> false) then fail() else
+      MP_TAC (REWRITE_RULE[thunk_deref_def; hl] td))) THEN
+  EVERY_CASE_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  DISCH_THEN (SUBST_ALL_TAC o SYM) THEN
+  (* the heap splits at the pointer *)
+  FIRST_ASSUM (fun hl ->
+    if not (try is_eq (concl hl) &&
+                hd_is "heap_lookup" (lhs (concl hl))
+            with Failure _ -> false) then fail() else
+    STRIP_ASSUME_TAC (MATCH_MP heap_lookup_SPLIT hl)) THEN
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    if not (try is_eq (concl e) && is_var (lhs (concl e)) &&
+                (hd_is "APPEND" (rhs (concl e)) ||
+                 hd_is "heap_length" (rhs (concl e)))
+            with Failure _ -> false) then fail() else
+    SUBST_ALL_TAC e)) THEN
+  (* and the store put the new thunk there *)
+  FIRST_ASSUM (fun hs ->
+    if not (try is_eq (concl hs) &&
+                hd_is "heap_store" (lhs (concl hs))
+            with Failure _ -> false) then fail() else
+    MP_TAC (REWRITE_RULE[heap_store_lemma; PAIR_EQ;
+              ThunkBlock_def; heap_length_def; el_length_def; MAP;
+              SUM_DEF; ITLIST] hs)) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  (* the element has one word *)
+  SUBGOAL_THEN `l = 1` SUBST_ALL_TAC THENL
+   [ASM_ARITH_TAC; ALL_TAC] THEN
+  (* the address of the pointer *)
+  FIRST_ASSUM (fun hb ->
+    if not (try hd_is "<=" (concl hb) with Failure _ -> false)
+    then fail() else
+    FIRST_ASSUM (fun hl ->
+      if not (try is_eq (concl hl) &&
+                  hd_is "heap_lookup" (lhs (concl hl))
+              with Failure _ -> false) then fail() else
+      FIRST_ASSUM (fun ch ->
+        if not (try is_eq (concl ch) &&
+                    hd_is "FLOOKUP" (lhs (concl ch))
+                with Failure _ -> false) then fail() else
+        FIRST_ASSUM (fun gd ->
+          if not (hd_is "good_dimindex" (concl gd)) then fail() else
+          STRIP_ASSUME_TAC (MATCH_MP (GEN_ALL get_real_addr_get_addr)
+            (CONJ hb (CONJ hl (CONJ ch gd)))))))) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE(word_addr_clauses ())) THEN
+  W(fun (asl,gl) ->
+    let wa = grab asl (fun th ->
+      try is_eq (concl th) &&
+          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "get_addr" (rand (lhs (concl th)))
+      with Failure _ -> false) in
+    let uu = rand (rand (lhs (concl wa))) in
+    let fa = grab asl (fun th ->
+      is_forall (concl th) &&
+      (try can (find_term (hd_is "get_real_addr")) (concl th)
+       with Failure _ -> false)) in
+    STRIP_ASSUME_TAC (SPEC uu fa)) THEN
+  (* so the goal is about that address *)
+  W(fun (asl,gl) ->
+    let wa = grab asl (fun th ->
+      try is_eq (concl th) &&
+          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "get_addr" (rand (lhs (concl th)))
+      with Failure _ -> false) in
+    let pw = rand (lhs (concl wa)) in
+    let gra = grab asl (fun th ->
+      try is_eq (concl th) &&
+          hd_is "get_real_addr" (lhs (concl th))
+      with Failure _ -> false) in
+    let xv = rand (rhs (concl gra)) in
+    MAP_EVERY EXISTS_TAC [pw; xv]) THEN
+  (* the two cells of the thunk *)
+  FIRST_ASSUM (fun sep ->
+    if not (try hd_is "STAR" (rator (concl sep))
+            with Failure _ -> false) then fail() else
+    MP_TAC (REWRITE_RULE[word_heap_APPEND; word_heap_def;
+      word_el_def; el_length_def] sep)) THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_payload_def] THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_list_def; STAR_ASSOC] THEN
+  DISCH_THEN (fun sep ->
+     STRIP_ASSUME_TAC (REWRITE_RULE[cond_STAR]
+       (sfront "cond" sep))) THEN
+  FIRST_ASSUM (fun le ->
+    if not (try is_eq (concl le) && hd_is "LENGTH" (lhs (concl le))
+            with Failure _ -> false) then fail() else
+    STRIP_ASSUME_TAC (REWRITE_RULE[len1] le)) THEN
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    if not (try is_eq (concl e) && is_var (lhs (concl e)) &&
+                hd_is "CONS" (rhs (concl e))
+            with Failure _ -> false) then fail() else
+    SUBST_ALL_TAC e)) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[MAP; word_list_def; STAR_ASSOC;
+                              emp_STAR; STAR_emp]) THEN
+  (* the two cells of the thunk, read and then written *)
+  FIRST_ASSUM (fun sep ->
+    if not (try hd_is "STAR" (rator (concl sep))
+            with Failure _ -> false) then fail() else
+    let front sp cell =
+      let pred = rator (concl sp) in
+      let fs = facs pred in
+      let rest = filter (fun t -> not (t = cell)) fs in
+      let st = fst (strip_comb pred) in
+      let mk x y = mk_comb (mk_comb (st,x),y) in
+      let target = mk cell (end_itlist mk rest) in
+      let eq = prove (mk_eq (pred,target),
+                REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
+      REWRITE_RULE[eq] sp in
+    let ispay t = (try let a = fst (dest_pair (rand t)) in
+                       hd_is "word_add" a &&
+                       hd_is "bytes_in_word" (rand a)
+                   with Failure _ -> false) in
+    let cells = filter (hd_is "set_sep_one")
+                  (facs (rator (concl sep))) in
+    let hdrc = find (fun t -> not (ispay t)) cells in
+    MAP_EVERY STRIP_ASSUME_TAC
+      (map (fun c -> MATCH_MP read_fun2set (front sep c)) cells) THEN
+    W(fun (asl,gl) ->
+      let mrl = last (conjuncts gl) in
+      let upd1 = el 6 (snd (strip_comb mrl)) in
+      let wv1 = rand (rator (rand upd1)) in
+      let wh1 = SPEC wv1 (MATCH_MP write_fun2set (front sep hdrc)) in
+      let payc = find ispay (facs (rator (concl wh1))) in
+      ASSUME_TAC (MATCH_MP write_fun2set (front wh1 payc)))) THEN
+  (* the first four conjuncts *)
+  REPEAT CONJ_TAC THENL
+   [FIRST_ASSUM (fun wa ->
+      if not (try is_eq (concl wa) &&
+                  hd_is "wordLang_Word" (lhs (concl wa)) &&
+                  hd_is "get_addr" (rand (lhs (concl wa)))
+              with Failure _ -> false) then fail() else
+      ACCEPT_TAC (SYM wa));
+    FIRST_ASSUM ACCEPT_TAC;
+    indm; indm;
+    ALL_TAC] THEN
+  (* the invariant with the new thunk in the heap *)
+  REWRITE_TAC[memory_rel_def] THEN
+  W(fun (asl,gl) ->
+    let ai = grab asl (fun th ->
+      hd_is "abs_ml_inv" (concl th) &&
+      (try hd_is "sptree_insert"
+             (el 2 (snd (strip_comb (concl th))))
+       with Failure _ -> false)) in
+    let args = snd (strip_comb (concl ai)) in
+    let ps = tparts (el 3 args) in
+    MAP_EVERY EXISTS_TAC [el 1 ps; el 4 args; el 3 ps; el 4 ps;
+                          el 5 ps; el 6 ps]) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  TRY (REWRITE_TAC[word_ml_inv_def] THEN
+       W(fun (asl,gl) ->
+         let ai = grab asl (fun th ->
+           hd_is "abs_ml_inv" (concl th) &&
+           (try hd_is "sptree_insert"
+                  (el 2 (snd (strip_comb (concl th))))
+            with Failure _ -> false)) in
+         EXISTS_TAC (el 0 (tparts (el 3 (snd (strip_comb
+           (concl ai))))))) THEN
+       REWRITE_TAC[MAP; FST; SND; ALL2] THEN
+       REWRITE_TAC(word_addr_clauses ()) THEN
+       ASM_REWRITE_TAC[] THEN NO_TAC) THEN
+  (* the store, whose memory is the written one *)
+  REWRITE_TAC[heap_in_memory_store_def] THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[LENGTH]) THEN
+  (* the new heap is as long as the old one *)
+  W(fun (asl,gl) ->
+    let h2 = grab asl (fun th ->
+      try is_eq (concl th) && hd_is "APPEND" (lhs (concl th))
+      with Failure _ -> false) in
+    let sep = grab asl (fun th ->
+      try hd_is "STAR" (rator (concl th)) &&
+          length (filter (hd_is "word_heap")
+                    (facs (rator (concl th)))) = 2
+      with Failure _ -> false) in
+    let oldheap = el 1 (snd (strip_comb
+      (hd (filter (hd_is "word_heap")
+             (facs (rator (concl sep))))))) in
+    let hl t = mk_icomb (`heap_length`, t) in
+    SUBGOAL_THEN (mk_eq (hl (rhs (concl h2)), hl oldheap))
+      (fun le -> REWRITE_TAC[le]) THENL
+     [REWRITE_TAC[SYM h2; APPEND] THEN
+      REWRITE_TAC[heap_length_APPEND] THEN
+      REWRITE_TAC[heap_length_CONS; el_length_def] THEN
+      ARITH_TAC;
+      ALL_TAC]) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  FIRST_ASSUM (fun sep ->
+    if not (try hd_is "STAR" (rator (concl sep))
+            with Failure _ -> false) then fail() else
+    let fs = facs (rator (concl sep)) in
+    let whs = filter (hd_is "word_heap") fs in
+    if not (length whs = 2) then fail() else
+    MAP_EVERY EXISTS_TAC
+      [el 0 (snd (strip_comb (el 0 whs)));
+       el 0 (snd (strip_comb (el 1 whs)))]) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  FIRST_ASSUM (fun h2 ->
+    if not (try is_eq (concl h2) && hd_is "APPEND" (lhs (concl h2))
+            with Failure _ -> false) then fail() else
+    REWRITE_TAC[SYM h2]) THEN
+  REWRITE_TAC[word_heap_APPEND; word_heap_def; word_el_def;
+              el_length_def] THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_payload_def] THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_list_def; MAP; LENGTH; STAR_ASSOC] THEN
+  REWRITE_TAC[thunk_tag_bits_lemma] THEN
+  FIRST_ASSUM (fun mh ->
+    if not (try is_eq (concl mh) &&
+                hd_is "make_header" (lhs (concl mh))
+            with Failure _ -> false) then fail() else
+    REWRITE_TAC[mh]) THEN
+  W(fun (asl,gl) ->
+    let pred = rator gl in
+    let fs = facs pred in
+    let cell = find (hd_is "cond") fs in
+    let rest = filter (fun t -> not (t = cell)) fs in
+    let st = fst (strip_comb pred) in
+    let mk x y = mk_comb (mk_comb (st,x),y) in
+    let target = mk cell (end_itlist mk rest) in
+    SUBGOAL_THEN (mk_eq (pred,target)) SUBST1_TAC THENL
+     [REWRITE_TAC[STAR_AC]; ALL_TAC]) THEN
+  REWRITE_TAC[cond_STAR] THEN
+  CONJ_TAC THENL
+   [(* the length that encode_header_IMP reads back off the hdr *)
+    REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN
+    SUBGOAL_THEN (cake_as_vars (fun () ->
+      `data_to_word_config_len_size c + 5 < dimindex (:'a)`))
+      ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+    FIRST_ASSUM (fun eh ->
+      if not (try hd_is "encode_header" (lhs (concl eh))
+              with Failure _ -> false) then fail() else
+      FIRST_ASSUM (fun c2 ->
+        if not (try hd_is "<" (concl c2) &&
+                    hd_is "+" (lhand (concl c2))
+                with Failure _ -> false) then fail() else
+        FIRST_ASSUM (fun gd ->
+          if not (hd_is "good_dimindex" (concl gd)) then fail()
+          else STRIP_ASSUME_TAC (MATCH_MP encode_header_IMP
+            (CONJ eh (CONJ c2 gd)))))) THEN
+    ASM_REWRITE_TAC[];
+    ALL_TAC] THEN
+  ASM_REWRITE_TAC[] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[heap_length_CONS; heap_length_NIL; el_length_def] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[emp_STAR; STAR_emp; STAR_ASSOC] THEN
+  RULE_ASSUM_TRY (CONV_RULE NUM_REDUCE_CONV) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[emp_STAR; STAR_emp; STAR_ASSOC]) THEN
+  (* the address of the write, as the cell of the thunk has it *)
+  W(fun (asl,gl) ->
+    let upd = fst (dest_pair (rand (rand gl))) in
+    let ia = lhand (rator (rand upd)) in
+    let cells = filter (hd_is "set_sep_one") (facs (rator gl)) in
+    let addrs = map (fun c -> fst (dest_pair (rand c))) cells in
+    let targ = find (fun a ->
+      can WORD_RULE (mk_eq (ia,a))) addrs in
+    if targ = ia then ALL_TAC
+    else SUBST1_TAC (WORD_RULE (mk_eq (ia,targ)))) THEN
+  W(fun (asl,gl) ->
+    let upd = fst (dest_pair (rand (rand gl))) in
+    let gaddr = lhand (rator upd) in
+    let ind = grab asl (fun th ->
+      try hd_is "IN" (concl th) &&
+          hd_is "word_add" (lhand (concl th))
+      with Failure _ -> false) in
+    let taddr = lhand (concl ind) in
+    if gaddr = taddr then ALL_TAC
+    else SUBST1_TAC (WORD_RULE (mk_eq (gaddr, taddr)))) THEN
+  W(fun (asl,gl) ->
+    let pred = rator gl in
+    let wv = rand (rator (fst (dest_pair (rand (rand gl))))) in
+    FIRST_ASSUM (fun wth ->
+      let th = (try SPEC wv wth with Failure _ -> wth) in
+      let wp = rator (concl th) in
+      if not (hd_is "STAR" wp) then fail() else
+      let eq = prove (mk_eq (pred,wp),
+                REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
+      ACCEPT_TAC (REWRITE_RULE[GSYM eq] th)))));;
 
 let word_list_exists_thm = prove
  (`(word_list_exists a 0 = emp) /\
