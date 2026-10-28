@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""tools/parens.py [<file.prf> ...]: the parenthesis balance of every
-section of a proof store.
+"""tools/parens.py [<file.prf>|<file.ml> ...]: the parenthesis
+balance of every section of a proof store, or of every top-level
+unit of a file of the port.
 
 A section of proofs/<path>.prf is a tactic *expression*, which the
 generator writes into `prove(<statement>, <section>);;`.  A section
@@ -10,7 +11,13 @@ second.
 
 Comments and HOL quotations are stripped before counting, and a
 string of OCaml is read as such, so a bracket inside one does not
-count.  With no argument it checks every store of proofs/."""
+count.  With no argument it checks every store of proofs/.
+
+A file of ml/ is checked unit by unit instead: `let foo = ...;;`
+up to the next one that starts a line.  That is what catches a
+block of tools/overrides.py whose brackets the hand-editing of a
+round got wrong -- the three checks all passed on such a block and
+only a verify said `This expression has type term`."""
 
 import re
 import sys
@@ -70,6 +77,34 @@ def check(path):
   finish()
   return bad
 
+def check_ml(path):
+  """the top-level units of a file of the port that are not
+  balanced"""
+  bad = []
+  name = None
+  start = 0
+  body = []
+  lines = open(path).read().split('\n')
+  def finish():
+    if name is None:
+      return
+    t = strip('\n'.join(body))
+    for (o, c, what) in [('(', ')', 'round'), ('[', ']', 'square')]:
+      d = t.count(o) - t.count(c)
+      if d:
+        bad.append((start, name, what, d))
+  for (k, line) in enumerate(lines, 1):
+    m = re.match(r'let (\w+)', line)
+    if m:
+      finish()
+      name = m.group(1)
+      start = k
+      body = [line]
+    elif name is not None:
+      body.append(line)
+  finish()
+  return bad
+
 def main(argv):
   files = argv[1:]
   if not files:
@@ -79,7 +114,8 @@ def main(argv):
           files.append(os.path.join(root, nm))
   total = 0
   for path in sorted(files):
-    for (line, name, what, d) in check(path):
+    these = check_ml(path) if path.endswith('.ml') else check(path)
+    for (line, name, what, d) in these:
       sign = '+' if d > 0 else '-'
       print('%s:%d: %s: %s%d %s bracket(s)' %
             (path, line, name, sign, abs(d), what))
