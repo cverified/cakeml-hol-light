@@ -43161,19 +43161,552 @@ let memory_rel_append = prove
                  wordLang_Word (next_free + bytes_in_word * n2w (3
                    * LENGTH in1)))) m1 dm
          ((list_to_v ts v in1,wordLang_Word init_ptr) :: vars)`),
-  (* the attempt: the proof of the source names ptr_bits_def,
-     shift_length_def, append_writes_def, memory_rel_def,
-     word_ml_inv_def, cons_multi_thm.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[ptr_bits_def; shift_length_def;
-       append_writes_def; memory_rel_def; word_ml_inv_def;
-       cons_multi_thm] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the invariant of a list that the append built: cons_multi_thm
+   gives the blocks of the values in the unused space and the
+   invariant of the list that points at them, and what is left to
+   see is that the words of the statement are the heap of those
+   blocks.  The writes of the append are in the memory already (the
+   hypothesis of the statement), so
+   word_list_AND_word_list_exists_IMP takes them out of the space
+   that word_list_exists holds, and
+   append_writes_list_to_BlockReps says that those words are the
+   word_heap of list_to_BlockReps -- the lemma wants the lists as
+   conses, which the lengths of the statement make them.  The
+   pointer of the list is make_cons_ptr of the offset, which the
+   statement gives, and the space the blocks take is three words to
+   a value (list_to_BlockReps_heap_length and
+   append_writes_LENGTH) *)
+  ((let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+  let rec facs t =
+    if hd_is "STAR" t then
+      let args = snd(strip_comb t) in
+      facs (el 0 args) @ facs (el 1 args)
+    else [t] in
+  let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail())
+      asl in
+  let front sp cell =
+    let pred = rator (concl sp) in
+    let fs = facs pred in
+    let rest = filter (fun t -> not (t = cell)) fs in
+    let st = fst(strip_comb pred) in
+    let mk x y = mk_comb(mk_comb(st,x),y) in
+    let target = mk cell (end_itlist mk rest) in
+    let eq = prove (mk_eq (pred,target),
+              REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
+    REWRITE_RULE[eq] sp in
+  (* an ALL2 over two appends of matching lengths *)
+  let all2app = prove
+   (`!(P:A->B->bool) xs1 ys1 xs2 ys2.
+       LENGTH xs1 = LENGTH ys1
+       ==> (ALL2 P (xs1 ++ xs2) (ys1 ++ ys2) <=>
+            ALL2 P xs1 ys1 /\ ALL2 P xs2 ys2)`,
+    GEN_TAC THEN LIST_INDUCT_TAC THENL
+     [X_GEN_TAC `ys1:(B)list` THEN
+      STRUCT_CASES_TAC (ISPEC `ys1:(B)list` list_CASES) THEN
+      REWRITE_TAC[LENGTH; APPEND; ALL2; NOT_SUC;
+                  ARITH_RULE `~(0 = SUC n)`];
+      X_GEN_TAC `ys1:(B)list` THEN
+      STRUCT_CASES_TAC (ISPEC `ys1:(B)list` list_CASES) THEN
+      REWRITE_TAC[LENGTH; APPEND; ALL2; NOT_SUC;
+                  ARITH_RULE `~(SUC n = 0)`; SUC_INJ] THEN
+      REPEAT GEN_TAC THEN DISCH_TAC THEN
+      ASM_SIMP_TAC[] THEN CONV_TAC TAUT]) in
+  (* two steps of an address in one *)
+  let addsum = prove
+   (`!(a:'a word) x y.
+       a + bytes_in_word * n2w x + bytes_in_word * n2w y =
+       a + bytes_in_word * n2w (x + y)`,
+    REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE) in
+  (* the numeric facts that the assumptions give *)
+  let numfacts asl =
+    mapfilter (fun (_,th) ->
+      let c = concl th in
+      if (try hd_is "<=" c || hd_is "<" c ||
+              (is_eq c && hd_is "LENGTH" (lhs c) &&
+               hd_is "LENGTH" (rhs c))
+          with Failure _ -> false) then th else fail()) asl in
+  let addreq asl t1 t2 =
+      let fs = numfacts asl in
+      let extra = (try
+        let lt = grab asl (fun th ->
+          try hd_is "<" (concl th) &&
+              hd_is "LENGTH" (lhand (concl th))
+          with Failure _ -> false) in
+        let spe = grab asl (fun th ->
+          try hd_is "<=" (concl th) && is_var (lhand (concl th)) &&
+              is_var (rand (concl th))
+          with Failure _ -> false) in
+        [MATCH_MP (ARITH_RULE
+           `!a b c:num. a < b /\ b <= c ==> a + 1 <= c`)
+           (CONJ lt spe)]
+        with Failure _ -> []) in
+      let cnd = end_itlist CONJ (fs @ extra) in
+      MP (prove (mk_imp (concl cnd, mk_eq (t1,t2)),
+            DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN
+              (fun th -> ASSUME_TAC
+                 (REWRITE_RULE[LENGTH; ADD1] th))) THEN
+            ASM_REWRITE_TAC[BlockRep_def; el_length_def;
+                            LENGTH; ADD1] THEN
+            REWRITE_TAC[WORD_SUB; WORD_ADD] THEN
+            ASM_SIMP_TAC[ARITH_RULE
+              `!l s h:num. l <= s ==> l <= h + s`;
+              ARITH_RULE
+              `!a b c:num. a <= b /\ b <= c ==> a <= c`] THEN
+            CONV_TAC WORD_RULE)) cnd in
+  let wordeq =
+    W(fun (asl,gl) ->
+      REWRITE_TAC[addreq asl (rand (rand (lhs gl)))
+                    (rand (rand (rhs gl)))]) in
+  (* a store that says the same of a key, with the numbers of the
+     new element in place of the old ones *)
+  let numeq =
+    W(fun (asl,gl) ->
+      let fl = grab asl (fun th ->
+        try hd_is "FLOOKUP" (lhs (concl th)) &&
+            rand (lhs (concl th)) = rand (lhs gl) &&
+            not (concl th = gl)
+        with Failure _ -> false) in
+      let isn t = (try hd_is "word" t &&
+                       type_of (rand t) = `:num` &&
+                       not (is_numeral (rand t))
+                   with Failure _ -> false) in
+      let ge = find_term isn (rhs gl) in
+      let fe = find_term isn (rhs (concl fl)) in
+      let fs = numfacts asl in
+      let cnd = end_itlist CONJ fs in
+      let eq = MP (prove (mk_imp (concl cnd,
+                    mk_eq (rand ge, rand fe)),
+                  DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN
+                    ASSUME_TAC) THEN
+                  REWRITE_TAC[BlockRep_def; el_length_def;
+                              LENGTH; ADD1] THEN
+                  ASM_ARITH_TAC)) cnd in
+      REWRITE_TAC[eq] THEN FIRST_ASSUM ACCEPT_TAC) in
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+  (* what the invariant says of the stack *)
+  FIRST_ASSUM (fun mr ->
+    if hd_is "memory_rel" (concl mr)
+    then MP_TAC (REWRITE_RULE[memory_rel_def; word_ml_inv_def;
+                              MAP; FST; SND; MAP_APPEND] mr)
+    else fail()
+  ) THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  (* the values and the words that the ZIP of the stack holds *)
+  W(fun (asl,gl) ->
+    let le = grab asl (fun th ->
+      try is_eq (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+          hd_is "LENGTH" (rhs (concl th))
+      with Failure _ -> false) in
+    RULE_ASSUM_TRY (REWRITE_RULE[MATCH_MP MAP_FST_ZIP le;
+                                 MATCH_MP MAP_SND_ZIP le])) THEN
+  (* the blocks that the append makes of the values *)
+  W(fun (asl,gl) ->
+    let ai = grab asl (fun th -> hd_is "abs_ml_inv" (concl th)) in
+    let lt = grab asl (fun th ->
+      try hd_is "<=" (concl th) && hd_is "*" (lhand (concl th))
+      with Failure _ -> false) in
+    let spe = grab asl (fun th ->
+      try hd_is "<=" (concl th) && is_var (lhand (concl th)) &&
+          is_var (rand (concl th))
+      with Failure _ -> false) in
+    let bnd = MATCH_MP (ARITH_RULE
+                `!a b c:num. a <= b /\ b <= c ==> a <= c`)
+                (CONJ lt spe) in
+    let ne = grab asl (fun th ->
+      try hd_is "NIL" (rhs (dest_neg (concl th)))
+      with Failure _ -> false) in
+    MP_TAC (MATCH_MP (GEN_ALL cons_multi_thm)
+      (CONJ ai (CONJ bnd ne)))) THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  (* the roots of the blocks and the roots of the stack *)
+  REPEAT (FIRST_X_ASSUM (fun e ->
+    if not (try is_eq (concl e) && is_var (lhs (concl e)) &&
+                (hd_is "APPEND" (rhs (concl e)) ||
+                 hd_is "heap_length" (rhs (concl e)))
+            with Failure _ -> false) then fail() else
+    SUBST_ALL_TAC e)) THEN
+  W(fun (asl,gl) ->
+    let a2 = grab asl (fun th ->
+      try hd_is "ALL2" (concl th) &&
+          hd_is "APPEND" (el 1 (snd(strip_comb (concl th))))
+      with Failure _ -> false) in
+    let a2b = REWRITE_RULE[GSYM APPEND] a2 in
+    let args = snd(strip_comb (concl a2b)) in
+    let l1 = grab asl (fun th ->
+      try is_eq (concl th) && lhs (concl th) =
+            mk_icomb (`LENGTH`,rand (lhand (el 1 args)))
+      with Failure _ -> false) in
+    let l2 = grab asl (fun th ->
+      try is_eq (concl th) && lhs (concl th) = rhs (concl l1) &&
+          hd_is "LENGTH" (rhs (concl th))
+      with Failure _ -> false) in
+    let rw = TRANS l1 l2 in
+    let le = MP (prove (mk_imp (concl rw,
+                  mk_eq (mk_icomb (`LENGTH`,lhand (el 1 args)),
+                         mk_icomb (`LENGTH`,
+                           lhand (el 2 args)))),
+                DISCH_TAC THEN ASM_REWRITE_TAC[LENGTH])) rw in
+    STRIP_ASSUME_TAC (REWRITE_RULE[MATCH_MP all2app le; ALL2]
+      a2b)) THEN
+  (* the ends of the heap that the store holds *)
+  FIRST_ASSUM (fun hs ->
+    if hd_is "heap_in_memory_store" (concl hs)
+    then STRIP_ASSUME_TAC
+           (REWRITE_RULE[heap_in_memory_store_def] hs)
+    else fail()) THEN
+  (* the store says the same of its keys as the statement *)
+  MAP_EVERY (fun n ->
+    W(fun (asl,gl) ->
+      let fs = mapfilter (fun (_,th) ->
+        if (try hd_is "FLOOKUP" (lhs (concl th)) &&
+                fst (dest_const (rand (lhs (concl th)))) = n
+            with Failure _ -> false) then th else fail()) asl in
+      if length fs < 2 then ALL_TAC else
+      let eq = REWRITE_RULE[injectivity "option";
+                 injectivity "word_loc"]
+                 (TRANS (SYM (el 0 fs)) (el 1 fs)) in
+      SUBST_ALL_TAC (if is_var (lhs (concl eq)) then eq
+                     else SYM eq)))
+    ["CurrHeap"; "NextFree"] THEN
+  (* the words of the unused space, where the blocks go *)
+  W(fun (asl,gl) ->
+    let sep = grab asl (fun th ->
+      try hd_is "STAR" (rator (concl th)) &&
+          length (filter (hd_is "word_heap")
+                    (facs (rator (concl th)))) = 2
+      with Failure _ -> false) in
+    ASSUME_TAC (REWRITE_RULE[word_heap_APPEND;
+      word_heap_heap_expand; heap_length_APPEND;
+      heap_length_heap_expand; STAR_ASSOC] sep)) THEN
+  (* which the writes of the statement have filled *)
+  W(fun (asl,gl) ->
+    let hyp = grab asl (fun th ->
+      try hd_is "STAR" (rator (concl th)) &&
+          exists (hd_is "SEP_T") (facs (rator (concl th)))
+      with Failure _ -> false) in
+    let iscell t = hd_is "word_list_exists" t &&
+                   not (is_var (el 1 (snd(strip_comb t)))) in
+    let sep = grab asl (fun th ->
+      try hd_is "STAR" (rator (concl th)) &&
+          exists iscell (facs (rator (concl th)))
+      with Failure _ -> false) in
+    let cell = find iscell (facs (rator (concl sep))) in
+    let aw = el 1 (snd(strip_comb (find (hd_is "misc_word_list")
+               (facs (rator (concl hyp)))))) in
+    let ne = grab asl (fun th ->
+      try hd_is "NIL" (rhs (dest_neg (concl th)))
+      with Failure _ -> false) in
+    let wsl = el 3 (snd(strip_comb aw)) in
+    let inst = PART_MATCH (lhs o snd o dest_imp)
+                 append_writes_LENGTH
+                 (mk_icomb (`LENGTH`,aw)) in
+    let nel = grab asl (fun th ->
+      try is_eq (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+          rhs (concl th) = mk_icomb (`LENGTH`,wsl)
+      with Failure _ -> false) in
+    let nw = MP (prove (mk_imp (mk_conj (concl ne, concl nel),
+                  lhand (concl inst)),
+                DISCH_THEN (CONJUNCTS_THEN ASSUME_TAC) THEN
+                REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN
+                FIRST_ASSUM (fun le ->
+                  if not (try is_eq (concl le) &&
+                              hd_is "LENGTH" (lhs (concl le))
+                          with Failure _ -> false) then fail()
+                  else REWRITE_TAC[GSYM le]) THEN
+                ASM_REWRITE_TAC[LENGTH_EQ_NIL]))
+                (CONJ ne nel) in
+    let awl = MP inst nw in
+    let fs = numfacts asl in
+    let cnd = end_itlist CONJ fs in
+    let b0 = MP (prove (mk_imp (concl cnd,
+                  mk_binop `(<=):num->num->bool` (rhs (concl awl))
+                    (el 1 (snd(strip_comb cell)))),
+                DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN
+                  ASSUME_TAC) THEN
+                ASM_ARITH_TAC)) cnd in
+    let bnd = REWRITE_RULE[GSYM awl] b0 in
+    ASSUME_TAC (MATCH_MP word_list_AND_word_list_exists_IMP
+      (CONJ hyp (CONJ (front sep cell) bnd)))) THEN
+  (* the invariant with the blocks in the heap *)
+  REWRITE_TAC[memory_rel_def] THEN
+  W(fun (asl,gl) ->
+    let ai = grab asl (fun th ->
+      hd_is "abs_ml_inv" (concl th) &&
+      (try hd_is "CONS" (el 1 (snd(strip_comb (concl th))))
+       with Failure _ -> false)) in
+    let args = snd(strip_comb (concl ai)) in
+    let ps = tparts (el 3 args) in
+    MAP_EVERY EXISTS_TAC
+      [el 1 ps; el 4 args; el 3 ps; el 4 ps; el 5 ps; el 6 ps]) THEN
+  REPEAT CONJ_TAC THENL
+   [ALL_TAC;
+    (* the roots: the pointer of the blocks and the rest *)
+    REWRITE_TAC[word_ml_inv_def] THEN
+    W(fun (asl,gl) ->
+      let ai = grab asl (fun th ->
+        hd_is "abs_ml_inv" (concl th) &&
+        (try hd_is "CONS" (el 1 (snd(strip_comb (concl th))))
+         with Failure _ -> false)) in
+      EXISTS_TAC
+        (el 0 (tparts (el 3 (snd(strip_comb (concl ai))))))) THEN
+    REWRITE_TAC[MAP; FST; SND; ALL2] THEN
+    CONV_TAC (TOP_DEPTH_CONV BETA_CONV) THEN
+    REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+    (* the word of the pointer is the one the statement gives *)
+    W(fun (asl,gl) ->
+      let mkp = grab asl (fun th ->
+        try is_eq (concl th) &&
+            hd_is "make_cons_ptr" (rhs (concl th))
+        with Failure _ -> false) in
+      let sub = el 1 (snd(strip_comb (rhs (concl mkp)))) in
+      let pt = lhand (rand (lhs gl)) in
+      let bwterm = rand (lhand sub) in
+      let mulp = mk_comb (rator bwterm,
+                   mk_comb (rator (rand bwterm), pt)) in
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      REWRITE_TAC[mkp] THEN
+      SUBST1_TAC (addreq asl sub mulp) THEN
+      REWRITE_TAC(word_addr_clauses ()) THEN
+      REWRITE_TAC[make_cons_ptr_thm; get_addr_def;
+                  get_lowerbits_ptrbits; cons_tag_def] THEN
+      REWRITE_TAC[MATCH_MP bytes_in_word_mul_eq_shift gd;
+                  WORD_SHL_COMPOSE] THEN
+      ASM_SIMP_TAC[ARITH_RULE
+        `!a b:num. a <= b ==> a + (b - a) = b`] THEN
+      AP_TERM_TAC THEN WORD_BITWISE_TAC);
+    FIRST_ASSUM ACCEPT_TAC;
+    W(fun (asl,gl) ->
+    let ne = grab asl (fun th ->
+      try hd_is "NIL" (rhs (dest_neg (concl th)))
+      with Failure _ -> false) in
+    let lrs = grab asl (fun th ->
+      try is_eq (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+          rhs (concl th) = mk_icomb (`LENGTH`,
+            lhand (dest_neg (concl ne)))
+      with Failure _ -> false) in
+    let bl = MATCH_MP list_to_BlockReps_heap_length
+               (REWRITE_RULE[LENGTH_EQ_NIL]
+                 (REWRITE_RULE[GSYM lrs]
+                   (REWRITE_RULE[GSYM LENGTH_EQ_NIL] ne))) in
+      let fs = numfacts asl in
+      REWRITE_TAC[bl] THEN MP_TAC (end_itlist CONJ fs)) THEN
+    REWRITE_TAC[LENGTH; ADD1] THEN ARITH_TAC] THEN
+  (* the store of the new heap *)
+  REWRITE_TAC[heap_in_memory_store_def] THEN
+  W(fun (asl,gl) ->
+    let ne = grab asl (fun th ->
+      try hd_is "NIL" (rhs (dest_neg (concl th)))
+      with Failure _ -> false) in
+    let lrs = grab asl (fun th ->
+      try is_eq (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+          rhs (concl th) = mk_icomb (`LENGTH`,
+            lhand (dest_neg (concl ne)))
+      with Failure _ -> false) in
+    let bl = MATCH_MP list_to_BlockReps_heap_length
+               (REWRITE_RULE[LENGTH_EQ_NIL]
+                 (REWRITE_RULE[GSYM lrs]
+                   (REWRITE_RULE[GSYM LENGTH_EQ_NIL] ne))) in
+    REWRITE_TAC[heap_length_APPEND; heap_length_heap_expand] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[heap_length_APPEND;
+                                 heap_length_heap_expand]) THEN
+    REWRITE_TAC[bl] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[bl])) THEN
+  (* the length of the heap is the one it was *)
+  W(fun (asl,gl) ->
+    let nw = lhand (hd (conjuncts gl)) in
+    let ol = grab asl (fun th ->
+      try hd_is "<=" (concl th) &&
+          rand (concl th) = rand (hd (conjuncts gl))
+      with Failure _ -> false) in
+    let fs = numfacts asl in
+    let cnd = end_itlist CONJ fs in
+    let eq = MP (prove (mk_imp (concl cnd,
+                  mk_eq (nw, lhand (concl ol))),
+                DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN
+                  ASSUME_TAC) THEN
+                ASM_ARITH_TAC)) cnd in
+    REWRITE_TAC[eq]) THEN
+  W(fun (asl,gl) ->
+    let dis = CONJUNCTS (distinctness "store_name") in
+    REWRITE_TAC([FLOOKUP_UPDATE; FDOM_FUPDATE; IN_INSERT] @
+                dis @ map GSYM dis)) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  (* the two heaps of the store *)
+  W(fun (asl,gl) ->
+    let flk n = grab asl (fun th ->
+      try hd_is "FLOOKUP" (lhs (concl th)) &&
+          fst (dest_const (rand (lhs (concl th)))) = n
+      with Failure _ -> false) in
+    MAP_EVERY EXISTS_TAC
+      [rand (rand (rhs (concl (flk "CurrHeap"))));
+       rand (rand (rhs (concl (flk "OtherHeap"))))]) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  TRY (wordeq THEN NO_TAC) THEN
+  TRY (numeq THEN NO_TAC) THEN
+  (* the writes of the append are the heap of the blocks *)
+  W(fun (asl,gl) ->
+    let wa = grab asl (fun th ->
+      try is_eq (concl th) && hd_is "word_addr" (lhs (concl th))
+      with Failure _ -> false) in
+    RULE_ASSUM_TRY (REWRITE_RULE[GSYM wa])) THEN
+  W(fun (asl,gl) ->
+    let ne = grab asl (fun th ->
+      try hd_is "NIL" (rhs (dest_neg (concl th)))
+      with Failure _ -> false) in
+    let lrs = grab asl (fun th ->
+      try is_eq (concl th) && hd_is "LENGTH" (lhs (concl th)) &&
+          rhs (concl th) = mk_icomb (`LENGTH`,
+            lhand (dest_neg (concl ne)))
+      with Failure _ -> false) in
+    let lws = grab asl (fun th ->
+      try is_eq (concl th) &&
+          lhs (concl th) = mk_icomb (`LENGTH`,
+            lhand (dest_neg (concl ne))) &&
+          hd_is "LENGTH" (rhs (concl th))
+      with Failure _ -> false) in
+    let ne0 = REWRITE_RULE[GSYM LENGTH_EQ_NIL] ne in
+    let rsne = REWRITE_RULE[LENGTH_EQ_NIL]
+                 (REWRITE_RULE[GSYM lrs] ne0) in
+    let wsne = REWRITE_RULE[LENGTH_EQ_NIL]
+                 (REWRITE_RULE[lws] ne0) in
+    ASSUME_TAC rsne THEN ASSUME_TAC wsne THEN
+    CASES_ON_TAC (rand (lhs (concl lrs))) THEN
+    CASES_ON_TAC (rand (rhs (concl lws)))) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[]) THEN
+  TRY (FIRST_ASSUM CONTR_TAC) THEN
+  (* which is what append_writes_list_to_BlockReps says *)
+  REWRITE_TAC[word_heap_APPEND; word_heap_heap_expand;
+              heap_length_APPEND; heap_length_heap_expand;
+              STAR_ASSOC] THEN
+  W(fun (asl,gl) ->
+    let a2 = grab asl (fun th ->
+      try hd_is "ALL2" (concl th) &&
+          hd_is "CONS" (el 1 (snd(strip_comb (concl th)))) &&
+          hd_is "CONS" (el 2 (snd(strip_comb (concl th))))
+      with Failure _ -> false) in
+    let args = snd(strip_comb (concl a2)) in
+    let l1 = grab asl (fun th ->
+      try is_eq (concl th) &&
+          lhs (concl th) = mk_icomb (`LENGTH`,el 1 args)
+      with Failure _ -> false) in
+    let l2 = grab asl (fun th ->
+      try is_eq (concl th) && lhs (concl th) = rhs (concl l1) &&
+          rhs (concl th) = mk_icomb (`LENGTH`,el 2 args)
+      with Failure _ -> false) in
+    let le = REWRITE_RULE[LENGTH; SUC_INJ] (TRANS l1 l2) in
+    let gd = grab asl (fun th ->
+      hd_is "good_dimindex" (concl th)) in
+    let ls = grab asl (fun th ->
+      try hd_is "<" (concl th) && is_numeral (lhand (concl th)) &&
+          hd_is "data_to_word_config_len_size" (rand (concl th))
+      with Failure _ -> false) in
+    let ls7 = grab asl (fun th ->
+      try hd_is "<" (concl th) && hd_is "+" (lhand (concl th)) &&
+          hd_is "data_to_word_config_len_size"
+            (lhand (lhand (concl th)))
+      with Failure _ -> false) in
+    let ls5 = MATCH_MP (ARITH_RULE
+                `!a b:num. a + 7 < b ==> a + 5 < b`) ls7 in
+    let wsh = grab asl (fun th ->
+      try hd_is "<=" (concl th) &&
+          hd_is "shift_length" (rand (concl th))
+      with Failure _ -> false) in
+    let mkp0 = grab asl (fun th ->
+      try is_eq (concl th) &&
+          hd_is "make_cons_ptr" (rhs (concl th))
+      with Failure _ -> false) in
+    let sub = el 1 (snd(strip_comb (rhs (concl mkp0)))) in
+    let bwterm = rand (lhand sub) in
+    let offs = el 2 (snd(strip_comb (find_term
+                 (hd_is "list_to_BlockReps") gl))) in
+    let mulp = mk_comb (rator bwterm,
+                 mk_comb (rator (rand bwterm), offs)) in
+    let mkp = REWRITE_RULE[addreq asl sub mulp] mkp0 in
+    let lem = MATCH_MP (GEN_ALL append_writes_list_to_BlockReps)
+                (CONJ le (CONJ gd (CONJ ls (CONJ ls5
+                   (CONJ wsh (CONJ a2 mkp)))))) in
+    REWRITE_TAC[GSYM lem]) THEN
+  W(fun (asl,gl) ->
+    let sep = grab asl (fun th ->
+      try hd_is "STAR" (rator (concl th)) &&
+          exists (hd_is "misc_word_list") (facs (rator (concl th)))
+      with Failure _ -> false) in
+    let aw = find_term (hd_is "append_writes") (concl sep) in
+    let ne = grab asl (fun th ->
+      try hd_is "NIL" (rhs (dest_neg (concl th))) &&
+          lhand (dest_neg (concl th)) =
+            el 3 (snd(strip_comb aw))
+      with Failure _ -> false) in
+    let awl = MP (PART_MATCH (lhs o snd o dest_imp)
+                append_writes_LENGTH (mk_icomb (`LENGTH`,aw))) ne in
+    let bls = find_term (hd_is "list_to_BlockReps") gl in
+    let ne2 = grab asl (fun th ->
+      try hd_is "NIL" (rhs (dest_neg (concl th))) &&
+          lhand (dest_neg (concl th)) =
+            el 3 (snd(strip_comb bls))
+      with Failure _ -> false) in
+    let bl = MATCH_MP list_to_BlockReps_heap_length ne2 in
+    let sep2 = REWRITE_RULE[awl; word_heap_heap_expand;
+                 STAR_ASSOC; emp_STAR; STAR_emp; addsum] sep in
+    let l1 = grab asl (fun th ->
+      try is_eq (concl th) &&
+          lhs (concl th) = mk_icomb (`LENGTH`,
+            el 3 (snd(strip_comb bls)))
+      with Failure _ -> false) in
+    let l2 = grab asl (fun th ->
+      try is_eq (concl th) && lhs (concl th) = rhs (concl l1) &&
+          rhs (concl th) = mk_icomb (`LENGTH`,
+            el 3 (snd(strip_comb aw)))
+      with Failure _ -> false) in
+    let leq = TRANS l1 l2 in
+    let cnt = el 1 (snd(strip_comb (find
+                (hd_is "word_list_exists")
+                (facs (rator (concl sep2)))))) in
+    let fs = numfacts asl in
+    let cnd = end_itlist CONJ fs in
+    let ar = MP (prove (mk_imp (concl cnd,
+                  mk_eq (mk_binop `(+):num->num->num`
+                           (rand cnt) cnt, lhand cnt)),
+                DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN
+                  (fun th -> ASSUME_TAC
+                     (REWRITE_RULE[LENGTH] th))) THEN
+                REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC)) cnd in
+    REWRITE_TAC[bl; leq] THEN
+    W(fun (asl2,gl2) ->
+      let gwh = filter (hd_is "word_heap") (facs (rator gl2)) in
+      let swh = filter (hd_is "word_heap")
+                  (facs (rator (concl sep2))) in
+      let a1t,a2t = tryfind (fun g -> tryfind (fun h ->
+          if el 1 (snd(strip_comb g)) = el 1 (snd(strip_comb h)) &&
+             not (el 0 (snd(strip_comb g)) =
+                  el 0 (snd(strip_comb h)))
+          then (el 0 (snd(strip_comb g)),
+                el 0 (snd(strip_comb h)))
+          else fail()) swh) gwh in
+      let xt = lhand (lhand a1t) in
+      let bwp = rand (lhand a1t) in
+      let bwq = rand a1t in
+      let sum = mk_comb (rator (rand bwp),
+                  mk_binop `(+):num->num->num`
+                    (rand (rand bwp)) (rand (rand bwq))) in
+      let mid = mk_comb (mk_comb (rator (rator a1t), xt),
+                  mk_comb (rator bwp, sum)) in
+      let step1 = prove (mk_eq (a1t,mid),
+                    REWRITE_TAC[WORD_ADD] THEN
+                    CONV_TAC WORD_RULE) in
+      let aeq = TRANS step1 (REWRITE_CONV[ar] mid) in
+      REWRITE_TAC[aeq] THEN
+      W(fun (asl3,gl3) ->
+        let eq = prove (mk_eq (rator gl3, rator (concl sep2)),
+                  REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
+        ACCEPT_TAC (REWRITE_RULE[GSYM eq] sep2)))))));;
 
 (* --- ML lists cannot exceed heap size: --- *)
 
