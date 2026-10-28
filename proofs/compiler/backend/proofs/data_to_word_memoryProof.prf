@@ -22592,19 +22592,219 @@
        new_thunk_thm; bool_def; abs_ml_inv_def; pop_thm] THEN
      TRY ASM_ARITH_TAC))
 ### memory_rel_write
-  (* the attempt: the proof of the source names memory_rel_def,
-     heap_in_memory_store_def, word_ml_inv_def, abs_ml_inv_def,
-     unused_space_inv_def, heap_lookup_SPLIT.  What is here rewrites
-     with them and closes by arithmetic, and the cheat is behind it
-     until the proof is written.  A MESON over them is what the next
-     round adds; it costs a load ten minutes to have it in every
-     attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_def; heap_in_memory_store_def;
-       word_ml_inv_def; abs_ml_inv_def; unused_space_inv_def;
-       heap_lookup_SPLIT] THEN
-     TRY ASM_ARITH_TAC))
+(* the proof of the source names memory_rel_def,
+   heap_in_memory_store_def, word_ml_inv_def, abs_ml_inv_def,
+   unused_space_inv_def and heap_lookup_SPLIT, and writes the cell
+   with HOL4's SEP_W_TAC.  Here the next free address is the one
+   the store says and the space from it is the Unused element that
+   unused_space_inv puts at the end of the data of the heap; a
+   write below the space keeps the invariant, because nothing of it
+   but the memory of heap_in_memory_store has the memory in it, and
+   what that says of the written memory is the lemma below, which
+   is read_fun2set and write_fun2set over a whole space *)
+  ((* the factors of a separation predicate, and the predicate with
+     the factor of a kind brought to the front *)
+  let rec facs t =
+    if hd_is "STAR" t then
+      let args = snd (strip_comb t) in
+      facs (el 0 args) @ facs (el 1 args)
+    else [t] in
+  let sfront nm sep =
+    let pred = rator (concl sep) in
+    let fs = facs pred in
+    let cell = find (hd_is nm) fs in
+    let rest = filter (fun t -> not (t = cell)) fs in
+    let st = fst (strip_comb pred) in
+    let mk x y = mk_comb (mk_comb (st,x),y) in
+    let target = mk cell (end_itlist mk rest) in
+    let eq = prove (mk_eq (pred,target), REWRITE_TAC[STAR_AC]) in
+    REWRITE_RULE[eq] sep in
+  let cfront = prove
+   (`!(q:(A->bool)->bool) r c. (q * cond c) * r = cond c * (q * r)`,
+    REWRITE_TAC[STAR_AC]) in
+  let mswap = WORD_RULE
+    `!(a:'a word) n.
+       a + n2w n * bytes_in_word = a + bytes_in_word * n2w n` in
+  let is_heapeq th =
+    try is_eq (concl th) && is_var (lhs (concl th)) &&
+        hd_is "APPEND" (rand (concl th))
+    with Failure _ -> false in
+  let is_aeq th =
+    try is_eq (concl th) && is_var (lhs (concl th)) &&
+        hd_is "heap_length" (rand (concl th))
+    with Failure _ -> false in
+  let is_sep th =
+    try hd_is "STAR" (rator (concl th)) with Failure _ -> false in
+  let sepof wv th =
+    let th1 = (try SPEC wv th with Failure _ -> th) in
+    let th2 = (try CONJUNCT2 th1 with Failure _ -> th1) in
+    if is_sep th2 then th2 else failwith "sepof" in
+  (* the port's own: a cell of an unused space of the heap is in
+     the memory and can be written, and what the space says of the
+     memory it says of the written one -- the list of the words of
+     the space is the old list with one word replaced, which is as
+     long as it was.  This is what HOL4's SEP_R_TAC and SEP_W_TAC
+     do to the assumption, here as a lemma over the space *)
+  let word_list_exists_write = prove
+   (`!(a:'a word) k n p m dm w.
+       (word_list_exists a k * p) (fun2set (m,dm)) /\ n < k ==>
+       (a + bytes_in_word * n2w n) IN dm /\
+       (word_list_exists a k * p)
+         (fun2set (((a + bytes_in_word * n2w n) =+ w) m,dm))`,
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[word_list_exists_def; SEP_EXISTS_STAR;
+                SEP_EXISTS_THM] THEN
+    DISCH_THEN (CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+    REWRITE_TAC[cfront; cond_STAR] THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    FIRST_ASSUM (fun le ->
+      if (try is_eq (concl le) && hd_is "LENGTH" (lhs (concl le))
+          with Failure _ -> false)
+      then FIRST_ASSUM (fun lt ->
+             if (try hd_is "<" (concl lt) with Failure _ -> false)
+             then STRIP_ASSUME_TAC (MATCH_MP LESS_LENGTH
+                    (ONCE_REWRITE_RULE[GSYM le] lt))
+             else fail())
+      else fail()) THEN
+    FIRST_X_ASSUM (fun eq ->
+      if is_heapeq eq then SUBST_ALL_TAC eq else fail()) THEN
+    FIRST_X_ASSUM (fun lne ->
+      if (try is_eq (concl lne) &&
+              hd_is "LENGTH" (lhs (concl lne)) &&
+              is_var (rand (concl lne))
+          with Failure _ -> false)
+      then SUBST_ALL_TAC (SYM lne) else fail()) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[word_list_APPEND; word_list_def;
+                                 STAR_ASSOC; mswap]) THEN
+    FIRST_ASSUM (fun sep ->
+      if not (is_sep sep) then fail() else
+      let sep' = sfront "set_sep_one" sep in
+      STRIP_ASSUME_TAC (MATCH_MP read_fun2set sep') THEN
+      STRIP_ASSUME_TAC (MATCH_MP write_fun2set sep')) THEN
+    CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+    W(fun (asl,gl) ->
+      let bod = snd (dest_exists gl) in
+      let pr = rand (rand (rand bod)) in
+      let wv = rand (rator (fst (dest_pair pr))) in
+      let sep = find (fun th ->
+        (try is_sep th &&
+             exists (hd_is "set_sep_one") (facs (rator (concl th)))
+         with Failure _ -> false)) (map snd asl) in
+      let fs = facs (rator (concl sep)) in
+      let wls = filter (hd_is "misc_word_list") fs in
+      EXISTS_TAC (list_mk_icomb "APPEND"
+        [rand (el 0 wls);
+         list_mk_icomb "CONS" [wv; rand (el 1 wls)]])) THEN
+    CONJ_TAC THENL
+     [RULE_ASSUM_TRY (REWRITE_RULE[LENGTH_APPEND; LENGTH]) THEN
+      REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ASM_ARITH_TAC;
+      REWRITE_TAC[word_list_APPEND; word_list_def; STAR_ASSOC;
+                  mswap] THEN
+      W(fun (asl,gl) ->
+        let pred = rator gl in
+        let wv = rand (rator (fst (dest_pair (rand (rand gl))))) in
+        FIRST_ASSUM (fun wth ->
+          let th = sepof wv wth in
+          let eq = prove (mk_eq (pred,rator (concl th)),
+                          REWRITE_TAC[STAR_AC]) in
+          ACCEPT_TAC (REWRITE_RULE[GSYM eq] th)))]) in
+  (* the next free address is the one the store says, and the space
+     from it is the Unused element that unused_space_inv puts at the
+     end of the data of the heap (heap_lookup_SPLIT splits the heap
+     at it).  A write below the space keeps the invariant: nothing
+     of it but the memory of heap_in_memory_store has the memory in
+     it, and that is the lemma above *)
+  STRIP_TAC THEN
+  FIRST_ASSUM (fun mr ->
+    if hd_is "memory_rel" (concl mr)
+    then STRIP_ASSUME_TAC (REWRITE_RULE[memory_rel_def] mr)
+    else fail()) THEN
+  FIRST_ASSUM (fun h ->
+    if hd_is "heap_in_memory_store" (concl h)
+    then STRIP_ASSUME_TAC
+           (REWRITE_RULE[heap_in_memory_store_def] h)
+    else fail()) THEN
+  ASM_EXISTS_TAC THEN CONJ_TAC THEN
+  TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  FIRST_ASSUM (fun wi ->
+    if hd_is "word_ml_inv" (concl wi)
+    then STRIP_ASSUME_TAC (REWRITE_RULE[word_ml_inv_def;
+           abs_ml_inv_def; unused_space_inv_def] wi)
+    else fail()) THEN
+  FIRST_ASSUM (fun imp ->
+    let c = concl imp in
+    if is_imp c &&
+       (try hd_is "heap_lookup" (lhs (rand c))
+        with Failure _ -> false)
+    then SUBGOAL_THEN (lhand c)
+           (fun th -> STRIP_ASSUME_TAC (MP imp th)) THENL
+          [ASM_ARITH_TAC; ALL_TAC]
+    else fail()) THEN
+  FIRST_ASSUM (fun hl ->
+    if (try hd_is "heap_lookup" (lhs (concl hl))
+        with Failure _ -> false)
+    then STRIP_ASSUME_TAC (MATCH_MP heap_lookup_SPLIT hl)
+    else fail()) THEN
+  FIRST_ASSUM (fun heq ->
+    if not (is_heapeq heq) then fail() else
+    FIRST_ASSUM (fun aeq ->
+      if not (is_aeq aeq) then fail() else
+      FIRST_ASSUM (fun sep ->
+        if not (is_sep sep) then fail() else
+        ASSUME_TAC (REWRITE_RULE[heq; word_heap_APPEND;
+          word_heap_def; word_el_def; el_length_def;
+          STAR_ASSOC; GSYM aeq] sep)))) THEN
+  FIRST_ASSUM (fun sep ->
+    if not (is_sep sep) ||
+       not (exists (hd_is "word_list_exists")
+              (facs (rator (concl sep)))) then fail() else
+    let sep' = sfront "word_list_exists" sep in
+    let cell = find (hd_is "word_list_exists")
+                 (facs (rator (concl sep'))) in
+    let k = el 1 (snd (strip_comb cell)) in
+    SUBGOAL_THEN (mk_binop `(<):num->num->bool` `n:num` k)
+      (fun lt -> STRIP_ASSUME_TAC
+         (MATCH_MP word_list_exists_write (CONJ sep' lt))) THENL
+     [ASM_ARITH_TAC; ALL_TAC]) THEN
+  CONJ_TAC THENL
+   [FIRST_ASSUM (fun th -> ACCEPT_TAC (CONJUNCT1 (SPEC_ALL th)));
+    ALL_TAC] THEN
+  REWRITE_TAC[memory_rel_def] THEN
+  FIRST_ASSUM (fun h ->
+    if hd_is "heap_in_memory_store" (concl h)
+    then let args = snd (strip_comb (concl h)) in
+         MAP_EVERY EXISTS_TAC [el 0 args; el 9 args; el 1 args;
+                               el 2 args; el 3 args; el 4 args]
+    else fail()) THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  REWRITE_TAC[heap_in_memory_store_def] THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  FIRST_ASSUM (fun sep ->
+    if not (is_sep sep) then fail() else
+    let fs = facs (rator (concl sep)) in
+    let whs = filter (hd_is "word_heap") fs in
+    if not (length whs = 2) then fail() else
+    MAP_EVERY EXISTS_TAC
+      [el 0 (snd (strip_comb (el 0 whs)));
+       el 0 (snd (strip_comb (el 1 whs)))]) THEN
+  REPEAT CONJ_TAC THEN
+  TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  FIRST_ASSUM (fun heq ->
+    if not (is_heapeq heq) then fail() else
+    FIRST_ASSUM (fun aeq ->
+      if not (is_aeq aeq) then fail() else
+      REWRITE_TAC[heq; word_heap_APPEND; word_heap_def;
+        word_el_def; el_length_def; STAR_ASSOC; GSYM aeq])) THEN
+  W(fun (asl,gl) ->
+    let pred = rator gl in
+    let wv = rand (rator (fst (dest_pair (rand (rand gl))))) in
+    FIRST_ASSUM (fun wth ->
+      let th = sepof wv wth in
+      let eq = prove (mk_eq (pred,rator (concl th)),
+                      REWRITE_TAC[STAR_AC]) in
+      ACCEPT_TAC (REWRITE_RULE[GSYM eq] th))))
 ### memory_rel_Cons_alt
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, cons_thm_alt, FLOOKUP,
