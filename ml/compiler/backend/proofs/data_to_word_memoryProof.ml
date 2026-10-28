@@ -3638,7 +3638,7 @@ let heap_gen_ok_inv = prove
      data_to_word_config_gc_kind conf = data_to_word_Generational xs
      ==> heap_gen_ok heap
            (make_partial_conf (make_gc_conf limit) gens
-              (a + (sp + sp1)))`)),
+              (a + (sp + sp1)))`),
   (   (* the split of the heap at a point, as an assumption gives it *)
    let the_split t gl =
      the_asm (fun c -> is_eq c && hd_is "heap_split" (lhand c) &&
@@ -3787,7 +3787,7 @@ let heap_gen_ok_inv = prove
           (fun nl -> REWRITE_TAC[nl]) THENL
          [ARITH_ASM_TAC; ALL_TAC] THEN
         REWRITE_TAC[s3] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
-        REWRITE_TAC[distinctness "option"]))));;
+        REWRITE_TAC[distinctness "option"])))));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
