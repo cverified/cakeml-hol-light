@@ -32855,6 +32855,52 @@ let memory_rel_Number_const_test = prove
        small_int_def; bignum_words_def; i2mw_def] THEN
      TRY ASM_ARITH_TAC)));;
 
+(* the port's own: that the two halves of a 64-bit value, or the
+   whole of it, decide the value.  HOL4 gets this from BITS_THM and
+   DIVISION; here it is the bits of the two words, with the index
+   of the upper half shifted by thirty-two *)
+
+let extract64_eq = prove
+ (`!(i:word64) j. dimindex (:'a) = 32 ==>
+    ((((63 >< 32) i):'a word = (63 >< 32) j) /\
+     (((31 >< 0) i):'a word = (31 >< 0) j) <=> i = j)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
+               DIMINDEX_64] THEN
+  ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[TAUT
+     `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`] THEN
+  EQ_TAC THENL
+    [DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "hi")
+       (LABEL_TAC "lo")) THEN
+     X_GEN_TAC `k:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `k < 32` THENL
+      [USE_THEN "lo" (fun lo -> ASM_SIMP_TAC[lo]);
+       SUBGOAL_THEN `32 + (k - 32) = k /\ k - 32 < 32`
+         STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+       USE_THEN "hi" (fun hi ->
+         FIRST_ASSUM (fun e ->
+           MP_TAC (ONCE_REWRITE_RULE[e] (SPEC `k - 32` hi)))) THEN
+       ASM_REWRITE_TAC[]];
+     DISCH_THEN (LABEL_TAC "all") THEN CONJ_TAC THEN
+     X_GEN_TAC `k:num` THEN DISCH_TAC THENL
+      [USE_THEN "all" (fun a -> MP_TAC (SPEC `32 + k` a)) THEN
+       ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> 32 + k < 64`];
+       USE_THEN "all" (fun a -> MP_TAC (SPEC `k:num` a)) THEN
+       ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> k < 64`]]]);;
+
+let extract64_full = prove
+ (`!(i:word64) j. dimindex (:'a) = 64 ==>
+    ((((63 >< 0) i):'a word = (63 >< 0) j) <=> i = j)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
+               DIMINDEX_64] THEN
+  ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[TAUT
+     `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`]);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_Word64_const_test = prove
@@ -32869,19 +32915,170 @@ let memory_rel_Word64_const_test = prove
          (if dimindex (:'a) < 64 then
            words = [(63 >< 32) j; (31 >< 0) j] else
            words = [(63 >< 0) j]))`),
-  (* the attempt: the proof of the source names
-     memory_rel_Word64_IMP, word_mem_eq_def, isWord_def,
-     memory_rel_def, word_ml_inv_def, abs_ml_inv_def.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_Word64_IMP; word_mem_eq_def;
-       isWord_def; memory_rel_def; word_ml_inv_def;
-       abs_ml_inv_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is the template of
+   memory_rel_ValueArray_IMP at a Word64Rep, as memory_rel_Word64_IMP
+   is, and what it adds is the comparison: word_mem_eq reads the one
+   or two cells of the value and compares them with the halves of
+   the constant, and extract64_eq and extract64_full above say that
+   those decide the value.  The header the statement asks for is the
+   one the cond of the payload says encode_header gives *)
+  (let hd_is n t =
+    (try fst(dest_const(fst(strip_comb t))) = n
+     with Failure _ -> false) in
+  let rec facs t =
+    if hd_is "STAR" t then
+      let args = snd(strip_comb t) in
+      facs (el 0 args) @ facs (el 1 args)
+    else [t] in
+  let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail()) asl in
+  let is_hl th = hd_is "heap_lookup" (lhs (concl th)) in
+  let sepfront names =
+    W(fun (asl,w) ->
+      let pred = rator (lhand w) in
+      let fs = facs pred in
+      let picked = map (fun n -> find (hd_is n) fs) names in
+      let rest = filter (fun t -> not (mem t picked)) fs in
+      let st = fst(strip_comb pred) in
+      let mk a b = mk_comb(mk_comb(st,a),b) in
+      let target = itlist mk picked (end_itlist mk rest) in
+      SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
+       [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+  MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
+  FIRST_ASSUM(fun e ->
+    let c = concl e in
+    if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+    then SUBST1_TAC (SYM e) else fail()) THEN
+  REWRITE_TAC[injectivity "word_loc"] THEN
+  CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
+  FIRST_X_ASSUM(fun th ->
+    if hd_is "heap_in_memory_store" (concl th)
+    then MP_TAC(REWRITE_RULE[heap_in_memory_store_def] th)
+    else fail()) THEN
+  STRIP_TAC THEN
+  W(fun (asl,w) ->
+    MP_TAC(MATCH_MP heap_lookup_SPLIT (grab asl is_hl))) THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  VAR_EQ_TAC THEN
+   W(fun (asl,w) ->
+     let hl = grab asl is_hl in
+     let hlen = grab asl (fun th ->
+       hd_is "heap_length" (lhand (concl th))) in
+     let cu = grab asl (fun th ->
+       hd_is "FLOOKUP" (lhs (concl th)) &&
+       fst(dest_const(rand(lhs(concl th)))) = "CurrHeap") in
+     let gd = grab asl (fun th -> concl th = `good_dimindex (:'a)`) in
+     let gat = tryfind (fun t ->
+       find_term (fun u ->
+         hd_is "get_addr" u && length (snd(strip_comb u)) = 3) t)
+       (w :: map (fun (_,th) -> concl th) asl) in
+     let th = SPEC (last (snd(strip_comb gat)))
+       (GEN `w:('a)word_loc`
+         (MATCH_MP get_real_addr_get_addr
+           (CONJ hlen (CONJ hl (CONJ cu gd))))) in
+     let r = rhs (concl (CONJUNCT1 th)) in
+     let a = rand r in
+     let args = snd(strip_comb (rand a)) in
+     let mul = fst(strip_comb (rand a)) in
+     let swap = mk_comb(rator a,
+                  mk_comb(mk_comb(mul,el 1 args),el 0 args)) in
+     let sw = WORD_RULE (mk_eq(a,swap)) in
+     EXISTS_TAC swap THEN
+     STRIP_ASSUME_TAC(REWRITE_RULE[sw] th)) THEN
+  ASM_CASES_TAC `dimindex (:'a) < 64` THEN
+  ASM_REWRITE_TAC[] THEN
+  W(fun (asl,gw) ->
+    EXISTS_TAC (rand (last (conjuncts (snd (strip_exists gw)))))) THEN
+  FIRST_X_ASSUM(fun th ->
+    if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+    then MP_TAC th else fail()) THEN
+  REWRITE_TAC[word_heap_APPEND; word_heap_def; Word64Rep_def] THEN
+  ASM_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_el_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_payload_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_list_def; LENGTH_MAP] THEN
+  sepfront ["cond"] THEN
+  REWRITE_TAC[cond_STAR] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC) THEN
+  DISCH_THEN (fun sep ->
+    let p = rator (concl sep) in
+    let fs = facs p in
+    let st = fst (strip_comb p) in
+    let mk a b = mk_comb (mk_comb (st, a), b) in
+    let front cell =
+      let rest = filter (fun t -> not (t = cell)) fs in
+      let target = mk cell (end_itlist mk rest) in
+      let eq = prove (mk_eq (p, target), REWRITE_TAC[STAR_AC]) in
+      MATCH_MP read_fun2set (REWRITE_RULE[eq] sep) in
+    let rds = map front (filter (hd_is "set_sep_one") fs) in
+    EXISTS_TAC (rand (rhs (concl (CONJUNCT1 (hd rds))))) THEN
+    MAP_EVERY STRIP_ASSUME_TAC rds) THEN
+  (* what the header encodes, out of the cond of the payload *)
+  W(fun gl ->
+    let is = the_asm (hd_is "IS_SOME") gl in
+    let eh = rand (concl is) in
+    let mh = rand (rhs (concl (the_asm (fun c ->
+               try is_eq c && hd_is "wordLang_Word" (rand c) &&
+                   hd_is "make_header" (rand (rand c))
+               with Failure _ -> false) gl))) in
+    SUBGOAL_THEN (mk_eq (eh, mk_icomb (`SOME`, mh)))
+      (fun e -> REWRITE_TAC[LENGTH] THEN
+                CONV_TAC NUM_REDUCE_CONV THEN
+                ASM_REWRITE_TAC[e]) THENL
+     [MP_TAC is THEN REWRITE_TAC[encode_header_def] THEN
+      COND_CASES_TAC THEN ASM_REWRITE_TAC[IS_SOME];
+      ALL_TAC]) THEN
+  (* and the comparison of the cells, byte by byte *)
+  REWRITE_TAC[word_mem_eq_def] THEN
+  ASM_REWRITE_TAC[isWord_def; shl1_add; WORD_ADD_ASSOC] THEN
+  TRY SAFE_MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[injectivity "word_loc"] THEN
+  FIRST
+   [(SUBGOAL_THEN `dimindex (:'a) = 32` ASSUME_TAC THENL
+      [W(fun gl ->
+         let gd = the_asm (fun c ->
+                    c = `good_dimindex (:'a)`) gl in
+         let lt = the_asm (fun c ->
+                    try is_binop `(<):num->num->bool` c &&
+                        rand c = `64`
+                    with Failure _ -> false) gl in
+         MP_TAC (REWRITE_RULE[good_dimindex_def] gd) THEN
+         MP_TAC lt) THEN
+       ARITH_TAC;
+       ALL_TAC] THEN
+     W(fun (asl,gw as gl) ->
+       let ij = rand (rand gw) in
+       let d = the_asm (fun c -> c = `dimindex (:'a) = 32`) gl in
+       MP_TAC (MATCH_MP
+         (ISPECL [lhand ij; rand ij] extract64_eq) d)) THEN
+     DISCH_THEN (fun ee ->
+       REPEAT COND_CASES_TAC THEN
+       ASM_REWRITE_TAC[injectivity "option"; GSYM ee]));
+    (SUBGOAL_THEN `dimindex (:'a) = 64` ASSUME_TAC THENL
+      [W(fun gl ->
+         let gd = the_asm (fun c ->
+                    c = `good_dimindex (:'a)`) gl in
+         let lt = the_asm (fun c ->
+                    try is_neg c &&
+                        is_binop `(<):num->num->bool` (rand c) &&
+                        rand (rand c) = `64`
+                    with Failure _ -> false) gl in
+         MP_TAC (REWRITE_RULE[good_dimindex_def] gd) THEN
+         MP_TAC lt) THEN
+       ARITH_TAC;
+       ALL_TAC] THEN
+     W(fun (asl,gw as gl) ->
+       let ij = rand (rand gw) in
+       let d = the_asm (fun c -> c = `dimindex (:'a) = 64`) gl in
+       MP_TAC (MATCH_MP
+         (ISPECL [lhand ij; rand ij] extract64_full) d)) THEN
+     DISCH_THEN (fun ee ->
+       REPEAT COND_CASES_TAC THEN
+       ASM_REWRITE_TAC[injectivity "option"; GSYM ee]))]));;
 
 (* [local] *)
 let or_seven_eq = prove
