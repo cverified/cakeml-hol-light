@@ -34471,7 +34471,6 @@ let memory_rel_copy_array_NONE = prove
       (CONJ mr (CONJ lk (CONJ lc (CONJ gd (CONJ nd pn))))))) THEN
   (* and then every piece of the statement is an assumption *)
   W(fun (asl,gw as gl) ->
-    let vs = fst (strip_exists gw) in
     let wof v = rand (rand (concl (the_asm (fun c ->
                   try is_eq c && lhs c = v with Failure _ -> false)
                   gl))) in
