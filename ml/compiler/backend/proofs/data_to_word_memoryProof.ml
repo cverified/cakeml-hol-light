@@ -38297,19 +38297,242 @@ let v_to_list_DROP = prove
    v_inv c (THE (block_drop k v)) refs
      (gc_shared_Pointer (EL k ps) (wordLang_Word (ptr_bits c
        cons_tag 2)),f,tf,heap)`,
-  (* the attempt: the proof of the source names v_inv_def,
-     block_drop_def, BlockRep_def, v_to_list_SOME_CONS_IMP,
-     v_inv_v_to_list_lemma, data_to_word_memoryProof_walk_def.  What
-     is here rewrites with them and closes by arithmetic, and the
-     cheat is behind it until the proof is written.  A MESON over
-     them is what the next round adds; it costs a load ten minutes
-     to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[v_inv_def; block_drop_def; BlockRep_def;
-       v_to_list_SOME_CONS_IMP; v_inv_v_to_list_lemma;
-       data_to_word_memoryProof_walk_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is the induction of walk_heap_lookup
+   once more, with the index taken apart rather than inducted on.
+   Of none the drop is the value itself and the walk starts at the
+   pointer (walk_CONS), so the statement is what the invariant
+   already says.  Of a successor the walk unfolds at the pointer
+   (the same choice of the next pointer, with the cons at the
+   pointer for its only witness), which is the equation that the
+   proof states: the goal and the distinctness are then about the
+   walk of the tail, where the induction hypothesis gives the drop
+   one index down *)
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   (* an ALL2 whose first list is a cons *)
+   let all2cons1 = prove
+    (`!P h t (l:(B)list).
+        ALL2 P (CONS (h:A) t) l <=>
+        ?a b. l = CONS a b /\ P h a /\ ALL2 P t b`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `l:(B)list` list_CASES) THEN
+     REWRITE_TAC[ALL2; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[]) in
+   (* what HOL4's some binder is of a predicate with one witness *)
+   let some_SOME = prove
+    (`!(P:A->bool) x. P x /\ (!y. P y ==> y = x) ==> some P = SOME x`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[some_DEF] THEN
+     COND_CASES_TAC THENL
+      [AP_TERM_TAC THEN MATCH_MP_TAC SELECT_UNIQUE THEN
+       GEN_TAC THEN ASM_MESON_TAC[];
+       ASM_MESON_TAC[]]) in
+   (* the heap_lookup of a pointer that the invariant gives *)
+  let el_cons = prove
+   (`!a l k. EL (SUC k) (CONS a l) = EL k l`,
+    REWRITE_TAC[EL; TL; hol4_TL]) in
+  LIST_INDUCT_TAC THENL
+   [REPEAT GEN_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
+  REPEAT GEN_TAC THEN
+  STRUCT_CASES_TAC (SPEC `k:num` num_CASES) THEN
+  DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THENL
+   [(* the drop of none is the value, and the walk starts at the
+        pointer of it *)
+    ONCE_REWRITE_TAC[block_drop_def] THEN MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[THE] THEN
+    FIRST_ASSUM (fun vi ->
+      if not (hd_is "v_inv" (concl vi)) then fail() else
+      FIRST_ASSUM (fun vl ->
+        if not (try hd_is "dataSem_v_to_list" (lhs (concl vl)) &&
+                    rand (lhs (concl vl)) =
+                      el 1 (snd (strip_comb (concl vi)))
+                with Failure _ -> false) then fail() else
+        let lst = rand (rhs (concl vl)) in
+        let ne = ISPECL [lhand lst; rand lst] NOT_CONS_NIL in
+        MP_TAC (MATCH_MP walk_CONS (CONJ vi (CONJ vl ne))))) THEN
+    FIRST_ASSUM (fun we ->
+      if not (try hd_is "data_to_word_memoryProof_walk"
+                    (lhs (concl we)) with Failure _ -> false)
+      then fail() else REWRITE_TAC[we]) THEN
+    DISCH_THEN (CHOOSE_THEN SUBST1_TAC) THEN
+    REWRITE_TAC[EL; HD] THEN FIRST_ASSUM ACCEPT_TAC;
+    ALL_TAC] THEN
+   FIRST_ASSUM(fun th ->
+     if hd_is "dataSem_v_to_list" (lhs (concl th))
+     then MP_TAC(SPEC_ALL(MATCH_MP
+            v_to_list_SOME_CONS_IMP th))
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) && is_var (lhs (concl e)) &&
+        hd_is "dataSem_Block" (rhs (concl e))
+     then SUBST_ALL_TAC e else fail()) THEN
+   FIRST_X_ASSUM(fun vi ->
+     if hd_is "v_inv" (concl vi)
+     then MP_TAC(REWRITE_RULE[v_inv_def; NOT_CONS_NIL] vi)
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST_X_ASSUM(fun a2 ->
+     if hd_is "ALL2" (concl a2)
+     then MP_TAC(REWRITE_RULE[all2cons1; CONJUNCT1 ALL2_DEF] a2)
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   REPEAT(FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) && is_var (lhs (concl e)) &&
+        (hd_is "CONS" (rhs (concl e)) || hd_is "NIL" (rhs (concl e)))
+     then SUBST_ALL_TAC e else fail())) THEN
+   FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) &&
+        hd_is "gc_shared_Pointer" (lhs (concl e)) &&
+        hd_is "gc_shared_Pointer" (rhs (concl e))
+     then MP_TAC(REWRITE_RULE[injectivity "heap_address"] e)
+     else fail()) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (K ALL_TAC)) THEN
+  CASES_ON_NAME "t" THENL
+   [FIRST_ASSUM (fun lt ->
+      if not (try hd_is "<" (concl lt) with Failure _ -> false)
+      then fail() else MP_TAC lt) THEN
+    REWRITE_TAC[LENGTH] THEN ARITH_TAC;
+    ALL_TAC] THEN
+   W(fun (asl,w) ->
+     let vi,vl = tryfind (fun (_,th) ->
+       if not (hd_is "v_inv" (concl th)) then fail() else
+       (th, grab asl (fun u ->
+          hd_is "dataSem_v_to_list" (lhs (concl u)) &&
+          rand (lhs (concl u)) = el 1 (snd(strip_comb (concl th))) &&
+          hd_is "CONS" (rand (rhs (concl u)))))) asl in
+     let lst = rand (rhs (concl vl)) in
+     let ne = ISPECL [lhand lst; rand lst] NOT_CONS_NIL in
+     MP_TAC(MATCH_MP v_inv_v_to_list_lemma
+              (CONJ vi (CONJ vl ne)))) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) && is_var (lhs (concl e)) &&
+        hd_is "gc_shared_Pointer" (rhs (concl e))
+     then SUBST_ALL_TAC e else fail()) THEN
+  (* the walk unfolds at the pointer *)
+  W(fun (asl,gl) ->
+    let we = grab asl (fun th ->
+      is_eq (concl th) &&
+      hd_is "data_to_word_memoryProof_walk" (lhs (concl th))) in
+    let wfull = lhs (concl we) in
+    let args = snd (strip_comb wfull) in
+    let vi2 = grab asl (fun th ->
+      hd_is "v_inv" (concl th) &&
+      (try let tup = el 3 (snd (strip_comb (concl th))) in
+           let rt = fst (dest_pair tup) in
+           hd_is "gc_shared_Pointer" rt &&
+           not (lhand rt = el 2 args)
+       with Failure _ -> false)) in
+    let pp = lhand (fst (dest_pair
+      (el 3 (snd (strip_comb (concl vi2)))))) in
+    let yv = el 1 (snd (strip_comb (concl vi2))) in
+    let vl2 = grab asl (fun th ->
+      hd_is "dataSem_v_to_list" (lhs (concl th)) &&
+      rand (lhs (concl th)) = yv) in
+    let lst = rand (rhs (concl vl2)) in
+    let wtail = list_mk_comb (fst (strip_comb wfull),
+      [el 0 args; el 1 args; pp; mk_icomb (`LENGTH`, lst)]) in
+    SUBGOAL_THEN (mk_eq (wfull,
+      list_mk_icomb "CONS" [el 2 args; wtail])) ASSUME_TAC THENL
+     [
+      REWRITE_TAC[LENGTH] THEN
+      GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+        [data_to_word_memoryProof_walk_def] THEN
+      REWRITE_TAC[ARITH_RULE `(SUC (SUC n) = 0) <=> F`;
+                  ARITH_RULE `(SUC (SUC n) = 1) <=> F`;
+                  ARITH_RULE `SUC (SUC n) - 1 = SUC n`] THEN
+      W(fun (asl,w) ->
+        let sm = find_term (hd_is "some") w in
+        let ptr = lhand (find_term (hd_is "heap_lookup") sm) in
+        let hl = grab asl (fun th ->
+          hd_is "heap_lookup" (lhs (concl th)) &&
+          lhand (lhs (concl th)) = ptr) in
+        let xs = rand (rand (rhs (concl hl))) in
+        let x1 = lhand xs in
+        let y1 = lhand (rand xs) in
+        let p2 = lhand y1 in
+        SUBGOAL_THEN (mk_eq(sm, mk_icomb(`SOME`,p2))) SUBST1_TAC THENL
+         [MATCH_MP_TAC some_SOME THEN
+          CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+          CONJ_TAC THENL
+           [MAP_EVERY EXISTS_TAC [x1; y1] THEN ASM_REWRITE_TAC[];
+            X_GEN_TAC `q:num` THEN
+            REWRITE_TAC[REWRITE_RULE[BlockRep_def] hl;
+                        BlockRep_def] THEN
+            REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN
+            REWRITE_TAC[injectivity "option";
+                        injectivity "heap_element"; CONS_11;
+                     PAIR_EQ] THEN
+            STRIP_TAC THEN
+            FIRST_ASSUM(fun e1 -> FIRST_ASSUM(fun e2 ->
+              let th = TRANS e1 e2 in
+              if hd_is "gc_shared_Pointer" (lhs (concl th)) &&
+                 hd_is "gc_shared_Pointer" (rhs (concl th))
+              then MP_TAC(REWRITE_RULE[injectivity "heap_address"] th)
+              else fail())) THEN
+            STRIP_TAC THEN ASM_REWRITE_TAC[]];
+          ALL_TAC]) THEN
+      MATCH_REDUCE_TAC THEN REWRITE_TAC[LENGTH];
+      ALL_TAC]) THEN
+  (* so the goal and the distinctness are about the walk of the
+     tail, and the induction hypothesis gives it *)
+  FIRST_ASSUM (fun ue ->
+    if not (try is_eq (concl ue) &&
+                hd_is "data_to_word_memoryProof_walk"
+                  (lhs (concl ue)) &&
+                hd_is "CONS" (rhs (concl ue))
+            with Failure _ -> false) then fail() else
+    FIRST_ASSUM (fun we ->
+      if not (try is_eq (concl we) &&
+                  hd_is "data_to_word_memoryProof_walk"
+                    (lhs (concl we)) &&
+                  is_var (rhs (concl we))
+              with Failure _ -> false) then fail() else
+      RULE_ASSUM_TRY (REWRITE_RULE[SYM we; ue;
+                                   ALL_DISTINCT_CLAUSES]) THEN
+      REWRITE_TAC[SYM we; ue])) THEN
+  REWRITE_TAC[el_cons] THEN
+  ONCE_REWRITE_TAC[block_drop_def] THEN MATCH_REDUCE_TAC THEN
+  W(fun (asl,gl) ->
+    let ih = grab asl (fun th -> is_forall (concl th)) in
+    let wg = find_term (hd_is "data_to_word_memoryProof_walk") gl in
+    let args = snd (strip_comb wg) in
+    let pp = el 2 args in
+    let vi = grab asl (fun th ->
+      hd_is "v_inv" (concl th) &&
+      (try let tup = el 3 (snd (strip_comb (concl th))) in
+           let rt = fst (dest_pair tup) in
+           hd_is "gc_shared_Pointer" rt && lhand rt = pp
+       with Failure _ -> false)) in
+    let yv = el 1 (snd (strip_comb (concl vi))) in
+    let vl = grab asl (fun th ->
+      hd_is "dataSem_v_to_list" (lhs (concl th)) &&
+      rand (lhs (concl th)) = yv) in
+    let lst = rand (rhs (concl vl)) in
+    let ne = ISPECL [lhand lst; rand lst] NOT_CONS_NIL in
+    let wlen = list_mk_comb (fst (strip_comb wg),
+      [el 0 args; el 1 args; pp; mk_icomb (`LENGTH`, lst)]) in
+    let weq = REFL wlen in
+    let ad = (try CONJUNCT2 (grab asl (fun th ->
+                is_conj (concl th) &&
+                hd_is "ALL_DISTINCT" (rand (concl th))))
+              with Failure _ -> grab asl (fun th ->
+                hd_is "ALL_DISTINCT" (concl th))) in
+    let kv = lhand (find_term (hd_is "EL") gl) in
+    SUBGOAL_THEN (mk_binop `(<):num->num->bool` kv
+                    (mk_icomb (`LENGTH`, lst)))
+      (fun lt -> MATCH_ACCEPT_TAC (MATCH_MP ih
+         (CONJ vi (CONJ vl (CONJ ne (CONJ weq (CONJ ad lt)))))))
+    THENL
+     [REWRITE_TAC[LENGTH] THEN
+      FIRST_ASSUM (fun lt ->
+        if not (try hd_is "<" (concl lt) with Failure _ -> false)
+        then fail() else MP_TAC lt) THEN
+      REWRITE_TAC[LENGTH] THEN ARITH_TAC])));;
 
 let block_drop_DROP = prove
  (`!n v vs.
