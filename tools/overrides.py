@@ -7463,6 +7463,37 @@ let offset_cell = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'memory_rel_copy_array_NONE'): r"""
+(* the port's own: that the address of a value does not change
+   when the store's NextFree does (get_real_addr reads CurrHeap
+   only), and that a byte array that fits in the heap is shorter
+   than the word size, which is the one arithmetic step of HOL4's
+   impl_tac here *)
+
+let get_real_addr_update = prove
+ (`!w. get_real_addr conf (st |+ (NextFree,x)) (w:'a word) =
+      get_real_addr conf st w`,
+  REWRITE_TAC[get_real_addr_def; FLOOKUP_UPDATE;
+              distinctness "store_name";
+              GSYM (distinctness "store_name")]);;
+
+let byte_len_bound = prove
+ (`good_dimindex (:'a) /\
+  byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4)
+  ==> n < dimword (:'a)`,
+  REWRITE_TAC[good_dimindex_def; byte_len_def; dimword] THEN
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    if is_eq (concl dd) then SUBST_ALL_TAC dd else fail()) THEN
+  RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV o REWRITE_RULE[]) THEN
+  REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+  MP_TAC (SPECL [`n:num`; `4`] DIVISION) THEN
+  MP_TAC (SPECL [`n:num`; `8`] DIVISION) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  ASM_ARITH_TAC);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads

@@ -34322,6 +34322,34 @@ let LUPDATE_REPLICATE = prove
 (* HOL4 data_to_word_memoryProofScript.sml:16179-16183: ML code, not
    ported *)
 
+(* the port's own: that the address of a value does not change
+   when the store's NextFree does (get_real_addr reads CurrHeap
+   only), and that a byte array that fits in the heap is shorter
+   than the word size, which is the one arithmetic step of HOL4's
+   impl_tac here *)
+
+let get_real_addr_update = prove
+ (`!w. get_real_addr conf (st |+ (NextFree,x)) (w:'a word) =
+      get_real_addr conf st w`,
+  REWRITE_TAC[get_real_addr_def; FLOOKUP_UPDATE;
+              distinctness "store_name";
+              GSYM (distinctness "store_name")]);;
+
+let byte_len_bound = prove
+ (`good_dimindex (:'a) /\
+  byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4)
+  ==> n < dimword (:'a)`,
+  REWRITE_TAC[good_dimindex_def; byte_len_def; dimword] THEN
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    if is_eq (concl dd) then SUBST_ALL_TAC dd else fail()) THEN
+  RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV o REWRITE_RULE[]) THEN
+  REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+  MP_TAC (SPECL [`n:num`; `4`] DIVISION) THEN
+  MP_TAC (SPECL [`n:num`; `8`] DIVISION) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  ASM_ARITH_TAC);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_copy_array_NONE = prove
@@ -34354,19 +34382,128 @@ let memory_rel_copy_array_NONE = prove
                  wordLang_Word (free' + bytes_in_word * n2w
                    (byte_len (:'a) n + 1)))) m2 dm
          ((RefPtr T new,wordLang_Word w2) :: vars))`),
-  (* the attempt: the proof of the source names memory_rel_swap,
-     copy_array_NONE_IMP, word_copy_fwd_thm, FLOOKUP_DEF,
-     good_dimindex_def, byte_len_def.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_swap; copy_array_NONE_IMP;
-       word_copy_fwd_thm; FLOOKUP_DEF; good_dimindex_def;
-       byte_len_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the lemma of the source is memory_rel_RefByte_alt at a zero
+   byte, where the bytes the new array is made of are all zero
+   (word_of_byte_0, last_bytes_0, LUPDATE_REPLICATE), and the one
+   thing to watch is that the type of the pointer's lower bits is a
+   type variable of the statement, so the lemma has to be
+   instantiated at it before its conclusion will match.  After it
+   the new array goes in front of the old one (memory_rel_swap),
+   copy_array_NONE_IMP turns the copy into the one of the word
+   level, word_copy_fwd_thm does it, and what is left is the same
+   list of pairs in another order *)
+  ((* the lemma of the source is memory_rel_RefByte_alt at a zero
+     byte, where the bytes it writes are all zero *)
+  let refbyte_zero =
+    REWRITE_RULE[WORD_ZX_0; word_of_byte_0; last_bytes_0;
+                 LUPDATE_REPLICATE]
+      (CONV_RULE (TOP_DEPTH_CONV let_CONV)
+         (INST [`n2w 0:word8`, `w:word8`]
+            memory_rel_RefByte_alt)) in
+  let hd_of n t =
+    (try fst (dest_const (fst (strip_comb t))) = n
+     with Failure _ -> false) in
+  STRIP_TAC THEN
+  W(fun (asl,gw as gl) ->
+    let mr = the_asm (fun c ->
+               try length (snd (strip_comb c)) = 9 && not (is_eq c)
+               with Failure _ -> false) gl in
+    let lst = last (snd (strip_comb (concl mr))) in
+    let tyof t = hd (snd (dest_type (type_of (el 2 (snd (strip_comb
+                   (find_term (hd_of "make_ptr") t))))))) in
+    let th = INST_TYPE [tyof gw, tyof (concl refbyte_zero)]
+               refbyte_zero in
+    let ant = lhand (concl th) in
+    let vv = last (snd (strip_comb (hd (conjuncts ant)))) in
+    MP_TAC (INST [lst, vv] th)) THEN
+  ANTS_TAC THENL
+   [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  (* the new array in front of the old one, the copy of the source
+     into the zeroes it holds, and the two things the word level
+     asks of the lengths *)
+  FIRST_ASSUM (fun mr ->
+    if (try let args = snd (strip_comb (concl mr)) in
+            length args = 9 && not (is_var (el 3 args))
+        with Failure _ -> false)
+    then ASSUME_TAC (MATCH_MP memory_rel_swap mr) else fail()) THEN
+  FIRST_ASSUM (fun ca ->
+    ASSUME_TAC (MATCH_MP copy_array_NONE_IMP ca)) THEN
+  SUBGOAL_THEN `~((p1:num) = new)` ASSUME_TAC THENL
+   [W(fun gl ->
+      let nd = the_asm (fun c ->
+                 try is_neg c &&
+                     fst (dest_const (rator (rator (rand c)))) =
+                     "IN"
+                 with Failure _ -> false) gl in
+      let lk = the_asm (fun c ->
+                 try is_eq c &&
+                     fst (dest_const (fst (strip_comb (rand (rand
+                       c))))) = "bvlSem_ByteArray"
+                 with Failure _ -> false) gl in
+      MESON_TAC[nd; lk; domain_lookup]);
+    ALL_TAC] THEN
+  SUBGOAL_THEN `n < dimword (:'a)` ASSUME_TAC THENL
+   [ASM_SIMP_TAC[byte_len_bound]; ALL_TAC] THEN
+  (* the copy of the source into the zeroes of the new array *)
+  W(fun (asl,gw as gl) ->
+    let mr = the_asm (fun c ->
+               try let a = snd (strip_comb c) in
+                   length a = 9 && not (is_var (el 3 a))
+               with Failure _ -> false) gl in
+    let lk = the_asm (fun c ->
+               try is_eq c &&
+                   fst (dest_const (fst (strip_comb (rand (rand
+                     c))))) = "bvlSem_ByteArray"
+               with Failure _ -> false) gl in
+    let lc = the_asm (fun c ->
+               try is_eq c &&
+                   length (snd (strip_comb (lhs c))) = 5
+               with Failure _ -> false) gl in
+    let gd = the_asm (fun c -> c = `good_dimindex (:'a)`) gl in
+    let nd = the_asm (fun c ->
+               try rand c = `dimword (:'a)` && not (is_eq c)
+               with Failure _ -> false) gl in
+    let pn = the_asm (fun c ->
+               try is_neg c && is_eq (rand c)
+               with Failure _ -> false) gl in
+    STRIP_ASSUME_TAC (MATCH_MP word_copy_fwd_thm
+      (CONJ mr (CONJ lk (CONJ lc (CONJ gd (CONJ nd pn))))))) THEN
+  (* and then every piece of the statement is an assumption *)
+  W(fun (asl,gw as gl) ->
+    let vs = fst (strip_exists gw) in
+    let wof v = rand (rand (concl (the_asm (fun c ->
+                  try is_eq c && lhs c = v with Failure _ -> false)
+                  gl))) in
+    let som p = rand (rand (concl (the_asm (fun c ->
+                  try is_eq c && p (lhs c) with Failure _ -> false)
+                  gl))) in
+    let w1 = wof (var_by_name "v1" gl) in
+    let w2 = wof (the_asm (fun c ->
+               try is_eq c && hd_of "make_ptr" (lhs c)
+               with Failure _ -> false) gl |> concl |> lhs) in
+    MAP_EVERY EXISTS_TAC
+      [rand (som (fun t -> hd_of "FLOOKUP" t &&
+               fst (dest_const (rand t)) = "NextFree"));
+       rand (som (fun t -> hd_of "FLOOKUP" t &&
+               fst (dest_const (rand t)) = "CurrHeap"));
+       som (fun t -> hd_of "get_real_addr" t &&
+              last (snd (strip_comb t)) = w1);
+       som (fun t -> hd_of "get_real_addr" t &&
+              last (snd (strip_comb t)) = w2);
+       som (fun t -> hd_of "data_to_word_memoryProof_store_list" t);
+       som (fun t -> hd_of "word_copy_fwd" t);
+       w1; w2]) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[get_real_addr_update;
+                               WORD_ADD_0]) THEN
+  ASM_REWRITE_TAC[] THEN
+  FIRST_ASSUM (fun mr ->
+    if (try length (snd (strip_comb (concl mr))) = 9 &&
+            not (is_eq (concl mr))
+        with Failure _ -> false)
+    then MP_TAC mr else fail()) THEN
+  MATCH_MP_TAC memory_rel_rearrange THEN
+  ASM_REWRITE_TAC[MEM] THEN MESON_TAC[]));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
