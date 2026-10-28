@@ -3860,3 +3860,46 @@ for the two conditions of `heap_gen_ok` that differ only in whether
 the conclusion is negated.  A picker that takes the first match
 silently builds the wrong instance, and what then fails is the
 `ACCEPT_TAC` three steps later.
+
+## 77. The word level: what a cell of the memory costs
+
+Thirty-odd theorems of `data_to_word_memoryProof` are about the
+memory as a separating conjunction, and HOL4 reads a cell out of one
+with `SEP_R_TAC`.  The port needs **no** new infrastructure for
+that: `ml/lib/set_sep.ml` already has `read_fun2set`
+(`(one (a,x) * p) (fun2set (f,d)) ==> f a = x /\ a IN d`),
+`write_fun2set` and `STAR_AC`.  What a proof needs beside them, and
+what the block above `word_cmp_loop_thm` holds, is:
+
+- `star_front`: `((p * one c) * f) s ==> (one c * (p * f)) s`, the
+  rearrangement that `read_fun2set` asks for.  Its proof is
+  `SUBGOAL_THEN <the star equation> (fun e -> REWRITE_TAC[e]) THENL
+  [CONV_TAC (AC STAR_AC)]` -- and note the `THENL` takes **one**
+  tactic, because rewriting with the equation closes the main goal.
+- `word_list_SNOC`: the last cell of a `word_list`, which is where a
+  loop over one starts (`word_list a (xs ++ [x]) = word_list a xs *
+  one (a + n2w (LENGTH xs) * bytes_in_word,x)`).
+- the three word equations of such a loop: the address of the last
+  cell (`a + bw * n2w (n + 1) = (a + bw) + n2w n * bw`), the step
+  back from it, and the counter (`n2w (n + 1) - n2w 1 = n2w n`).
+  Each is `REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE` --
+  `WORD_ADD` is the port's `n2w (x + y) = n2w x + n2w y`, and
+  without it `WORD_RULE` cannot see that `n2w (n + 1)` is a sum.
+
+Three things that cost a round each in the first such proof:
+
+- **`lhand` is not the function of an application.**  For an
+  assumption `(p * q) (fun2set (m,dm))`, the predicate is
+  `rator c`, not `lhand c` (which is `q`).  Reading the address and
+  the frame out of such an assumption with `lhand` builds the wrong
+  instance, and what fails is the `ACCEPT_TAC` or the `SPECL` three
+  steps later.
+- **a picker's test must not raise.**  `the_asm (fun c -> hd_is ".."
+  (rand c) && ..)` dies with `rand: Not a combination` as soon as
+  one assumption is `true`; wrap the whole test in
+  `try .. with Failure _ -> false`.
+- **an equation between the two lengths is a rewrite in one
+  direction only.**  `LENGTH y' = LENGTH y` rewrites the
+  assumptions into the goal's shape; `LENGTH y = LENGTH y'` (its
+  `SYM`) rewrites the goal away from it, and then the hypothesis of
+  the induction no longer matches what the branch has.
