@@ -2176,3 +2176,54 @@ step, not a probe, and read the goal the harness prints; keep the
 statement and the tactic in one `tmp/tryXX.ml` that
 `tools/landproof.py` lands; check the brackets and the line length
 before every send; and land several proofs per `verifyquick`.
+
+## The pass after the allocations
+
+The store family and the allocation family are in, and what this
+pass added is of four other kinds:
+
+- the byte arrays: `memory_rel_RefByte_content` and
+  `memory_rel_RefByte_alt`, the allocation proofs with
+  `new_byte_alt_thm` for the element and the port's own
+  `decode_length_byte_header` for the condition of the payload.
+  The alt is the content proof with one lemma in front of it: the
+  words of its statement (a replicated word with the bytes of the
+  last one written into it) are the bytes of the array written into
+  as many words of zero.
+- `bytes_to_word_eq_lemma`: the bits that the bytes do not cover,
+  one bit at a time (`WORD_EQ_BITS_ALT` and the step of
+  `set_byte_eq_ARB` that a bit of a `set_byte` is the byte's inside
+  the byte and the word's outside it).
+- `get_real_addr_get_addr`: the address a pointer stands for, by
+  the bits of the shift up and down, where the lower bits that
+  `get_addr` adds are below the small shift and the shift down
+  loses them.
+- `v_inv_Thunk_insert_lemma`: the first of the `v_inv` family,
+  which `V_INV_REFS_TAC_IH` carries -- the induction hypothesis is
+  the lemma's own (it asks for everything the lemma asks), and the
+  three cases of a `RefPtr` are the plain reference, the thunk that
+  the insert changes and another thunk.
+- `heap_length_Blocks`: the pointers of a list of conses take three
+  words each, by the induction on their number, where the pointers
+  of the rest of the list split into the ones before the cons and
+  the ones after it moved down by three words.
+
+`PORTING-GUIDE.md` 83-85 are what cost the time: a quotation of a
+proof has type variables of its own (and the heap of CakeML is
+where that bites), two assumptions that contradict each other
+cancel under `ASM_REWRITE_TAC`, and the port's `ASM_ARITH_TAC`
+hands over only what it reads as arithmetic.
+
+What is left, by the length of HOL4's proof: `memory_rel_bounds_check`
+and `memory_rel_depth_size_limit` (arithmetic), the rest of the
+`v_inv` family (`v_inv_related_lemma`,
+`gc_heap_inline_rel_v_inv_lemma`, `v_inv_list_to_v_lem`) which
+`v_inv_SUBMAP_lemma` of the port is the template for,
+`bc_stack_ref_inv_MutBlock_F`, the two allocations at
+`abs_ml_inv` level (`word64_alt_thm`, `bignum_alt_thm`, with
+`new_byte_alt_thm` as the template), `heap_in_memory_store_UpdateByte`
+with `memory_rel_ByteArray_IMP` and the four `word_copy_*` proofs
+behind it, `memory_rel_do_build`, `cons_multi_thm`, and the three
+that want a theorem the port does not state (`memory_rel_ptr_eq`,
+`memory_rel_FromList`, the `word_copy_array_*` pair), which a
+port-own lemma has to carry.
