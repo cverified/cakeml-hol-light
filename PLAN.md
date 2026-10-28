@@ -2136,3 +2136,43 @@ The rest fall into four kinds:
 Two sptree facts that three of them want are not in `ml/lib/sptree.ml`
 and would have to be lemmas of a proof: `insert_unchanged`
 (`lookup k t = SOME v ==> insert k v t = t`) and `insert_insert`.
+
+## The store family, and the way of working
+
+This round the file went from 51 ATTEMPT_TAC sections to 42, and
+the two families that most of the rest belongs to are open:
+
+- _the writes:_ `memory_rel_Update` (the whole opening of
+  `memory_rel_Deref` carries over, `update_ref_thm1` at a stack of
+  one value, `heap_store_RefBlock_thm`, `write_fun2set`),
+  `memory_rel_Update'` (the same without the Number root) and
+  `memory_rel_UpdateCons` (`v_inv_RefPtr_T` for the F of the
+  pointer, `update_mutblock_thm`, `heap_store_BlockRep_thm`).
+- _the allocations:_ `memory_rel_Ref` (`new_ref_thm`, `pop_thm`,
+  `heap_store_unused`, `word_list_exists_ADD`, `store_list_thm`,
+  and `make_ptr` as the shift of `get_addr`),
+  `memory_rel_AllocThunk` (the same with an element of two words
+  and a case on the mode of the thunk) and `memory_rel_Cons1`
+  (`cons_thm_alt` and `heap_store_unused_alt`: the element at the
+  _start_ of the space, `NextFree` in place of the two ends, and
+  `make_cons_ptr` with `get_lowerbits_or_1`).
+- and `xor_words_word_list` with its alias, a strong induction on
+  the length with two words to a step.
+
+What the allocations share is in the proofs as local helpers:
+`addreq` (an address equation out of the numeric facts of the
+assumptions), `numeq` (a store that says the same of a key with
+the numbers of the new element), `addsum` (two steps of an address
+in one) and the `front`/`facs` pair that brings a factor of a
+separating product forward.  The siblings that are left --
+`memory_rel_MutCons`, `memory_rel_Cons_alt`, `memory_rel_Word64_alt`,
+`IMP_memory_rel_bignum_alt`, `memory_rel_RefByte_alt` and
+`memory_rel_RefByte_content` -- are these proofs with another
+element, and `memory_rel_Cons_alt` wants
+`word_list_AND_word_list_exists_IMP` in place of `store_list_thm`.
+
+The way of working that this round settled on: write the whole
+step, not a probe, and read the goal the harness prints; keep the
+statement and the tactic in one `tmp/tryXX.ml` that
+`tools/landproof.py` lands; check the brackets and the line length
+before every send; and land several proofs per `verifyquick`.
