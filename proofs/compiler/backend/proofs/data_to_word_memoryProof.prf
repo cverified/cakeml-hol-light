@@ -26123,19 +26123,175 @@
       REWRITE_TAC[ihi] THEN
       REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp])])
 ### bind_each_isSomeDataElement
-  (* the attempt: the proof of the source names bind_each_def,
-     bind_each_FUPDATE, FAPPLY_FUPDATE_THM, list_to_BlockReps_def,
-     BlockRep_def, heap_lookup_def.  What is here rewrites with them
-     and closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[bind_each_def; bind_each_FUPDATE;
-       FAPPLY_FUPDATE_THM; list_to_BlockReps_def; BlockRep_def;
-       heap_lookup_def] THEN
-     TRY ASM_ARITH_TAC))
+(* the proof of the source is the induction of the list.  Of one
+   element the one timestamp goes to nought, which is the head of
+   the BlockReps; of a longer one the first timestamp goes there as
+   well and the others into the tail, where the induction hypothesis
+   has them -- three words along, because an element of the list
+   takes three.  That the clock of a timestamp of the tail is three
+   above the clock the hypothesis gives it is the lemma below, off
+   bind_each_MINUS, with bind_each_eq_lt_FDOM to say that a
+   timestamp that is not tf's is not below the clock *)
+  (let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail())
+      asl in
+  let step_lemma = prove
+   (`!n tf ts x.
+   (!t. t IN FDOM tf ==> t < ts) /\ ts + 1 <= x /\
+   x < (ts + 1) + n ==>
+   FAPPLY (bind_each tf (ts + 1) 3 3 n) x =
+     3 + FAPPLY (bind_each tf (ts + 1) 0 3 n) x`,
+
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `~((x:num) IN FDOM (tf:(num,num)fmap))`
+      ASSUME_TAC THENL
+     [DISCH_TAC THEN
+      FIRST_ASSUM (fun fd ->
+        if not (is_forall (concl fd)) then fail() else
+        FIRST_ASSUM (fun mem ->
+          if not (try hd_is "IN" (concl mem) with Failure _ -> false)
+          then fail() else
+          MP_TAC (MP (SPEC `x:num` fd) mem))) THEN
+      ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    SUBGOAL_THEN `!t. t IN FDOM (tf:(num,num)fmap) ==> t < ts + 1`
+      ASSUME_TAC THENL
+     [GEN_TAC THEN DISCH_TAC THEN
+      FIRST_ASSUM (fun fd ->
+        if not (is_forall (concl fd)) then fail() else
+        FIRST_ASSUM (fun mem ->
+          if not (try hd_is "IN" (concl mem) with Failure _ -> false)
+          then fail() else
+          MP_TAC (MP (SPEC_ALL fd) mem))) THEN
+      ARITH_TAC;
+      ALL_TAC] THEN
+    SUBGOAL_THEN
+      `(x:num) IN {x | ts + 1 <= x /\ x < (ts + 1) + n}` ASSUME_TAC
+    THENL
+     [REWRITE_TAC[IN_ELIM_THM] THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    SUBGOAL_THEN `(x:num) IN FDOM (bind_each tf (ts + 1) 3 3 n)`
+      ASSUME_TAC THENL
+     [REWRITE_TAC[bind_each_FDOM; IN_UNION; IN_ELIM_THM] THEN
+      DISJ2_TAC THEN ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    SUBGOAL_THEN
+      `~(FAPPLY (bind_each (tf:(num,num)fmap) (ts + 1) 3 3 n) x < 3)`
+      ASSUME_TAC THENL
+     [DISCH_TAC THEN
+      FIRST_ASSUM (fun lt ->
+        FIRST_ASSUM (fun fdm ->
+          if not (try hd_is "IN" (concl fdm) &&
+                      hd_is "FDOM" (rand (concl fdm)) &&
+                      hd_is "bind_each" (rand (rand (concl fdm)))
+                  with Failure _ -> false) then fail() else
+          MP_TAC (MATCH_MP (GEN_ALL bind_each_eq_lt_FDOM)
+                    (CONJ fdm lt)))) THEN
+      ASM_REWRITE_TAC[];
+      ALL_TAC] THEN
+    MP_TAC (SPECL [`n:num`; `tf:(num,num)fmap`; `ts + 1`; `x:num`;
+                   `3`; `3`; `3`] bind_each_MINUS) THEN
+    ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+    ASM_ARITH_TAC) in
+  LIST_INDUCT_TAC THENL [REWRITE_TAC[]; ALL_TAC] THEN
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[IN_ELIM_THM; LENGTH] THEN STRIP_TAC THEN
+  CASES_ON_NAME "t" THENL
+   [(* the list of one: the one timestamp goes to the head *)
+    RULE_ASSUM_TRY (REWRITE_RULE[LENGTH]) THEN
+    ONCE_REWRITE_TAC[bind_each_def] THEN
+    REWRITE_TAC[bind_each_def; FAPPLY_FUPDATE_THM] THEN
+    SUBGOAL_THEN `x:num = ts` SUBST1_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[heap_lookup_def; isSomeDataElement_def;
+                BlockRep_def] THEN
+    MESON_TAC[];
+    ALL_TAC] THEN
+  (* the general case: the first timestamp goes to the head of the
+     BlockReps and the others into the tail *)
+  ONCE_REWRITE_TAC[bind_each_def] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[FAPPLY_FUPDATE_THM] THEN
+  ASM_CASES_TAC `x:num = ts` THEN ASM_REWRITE_TAC[] THENL
+   [ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[heap_lookup_def; isSomeDataElement_def;
+                BlockRep_def] THEN
+    MESON_TAC[];
+    ALL_TAC] THEN
+  (* the timestamps of tf are below the ones of the tail *)
+  SUBGOAL_THEN `!t. t IN FDOM (tf:(num,num)fmap) ==> t < ts + 1`
+    ASSUME_TAC THENL
+   [GEN_TAC THEN DISCH_TAC THEN
+    W(fun (asl,gl) ->
+      let tv = lhand gl in
+      FIRST_ASSUM (fun fd ->
+        if not (try is_forall (concl fd) &&
+                    hd_is "IN"
+                      (lhand (snd (strip_forall (concl fd))))
+                with Failure _ -> false) then fail() else
+        FIRST_ASSUM (fun mem ->
+          if not (try hd_is "IN" (concl mem)
+                  with Failure _ -> false) then fail() else
+          MP_TAC (MP (SPEC tv fd) mem)))) THEN
+    ARITH_TAC;
+    ALL_TAC] THEN
+  (* and x is one of them *)
+  W(fun (asl,gl) ->
+    let be = find_term (hd_is "bind_each") gl in
+    let nn = el 4 (snd (strip_comb be)) in
+    let plus a b = mk_binop `(+):num->num->num` a b in
+    let ar = mk_conj
+      (mk_binop `(<=):num->num->bool` (plus `ts:num` `1`) `x:num`,
+       mk_binop `(<):num->num->bool` `x:num`
+         (plus (plus `ts:num` `1`) nn)) in
+    SUBGOAL_THEN ar ASSUME_TAC THENL
+     [RULE_ASSUM_TRY (REWRITE_RULE[LENGTH]) THEN
+      REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC;
+      ALL_TAC]) THEN
+  (* so the index is three more than the index in the tail *)
+  FIRST_ASSUM (fun ar ->
+    if not (is_conj (concl ar)) then fail() else
+    FIRST_ASSUM (fun fd ->
+      if not (try is_forall (concl fd) &&
+                  hd_is "IN"
+                    (lhand (snd (strip_forall (concl fd)))) &&
+                  rand (rand (snd (strip_forall (concl fd)))) =
+                    `ts:num`
+              with Failure _ -> false) then fail() else
+      SUBST1_TAC (MATCH_MP step_lemma (CONJ fd ar)))) THEN
+  (* the lookup goes past the first BlockRep *)
+  ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
+  MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[heap_lookup_def; BlockRep_def; el_length_def;
+              LENGTH] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[ARITH_RULE `~(3 + v = 0)`;
+              ARITH_RULE `~(3 + v < 3)`;
+              ARITH_RULE `(3 + v) - 3 = v`] THEN
+  (* and the induction hypothesis of the tail *)
+  REWRITE_TAC[LENGTH] THEN
+  W(fun (asl,gl) ->
+    let ih = REWRITE_RULE[IN_ELIM_THM; LENGTH]
+      (grab asl (fun th ->
+         is_forall (concl th) &&
+         (try hd_is "isSomeDataElement"
+                (rand (snd (strip_forall (concl th))))
+          with Failure _ -> false))) in
+    let lbr = find_term (hd_is "list_to_BlockReps") gl in
+    let lst = el 3 (snd (strip_comb lbr)) in
+    let ne = ISPECL [lhand lst; rand lst] NOT_CONS_NIL in
+    let ar = REWRITE_RULE[LENGTH]
+      (grab asl (fun th -> is_conj (concl th))) in
+    let fd1 = grab asl (fun th ->
+      try is_forall (concl th) &&
+          hd_is "IN" (lhand (snd (strip_forall (concl th)))) &&
+          hd_is "+" (rand (rand (snd (strip_forall (concl th)))))
+      with Failure _ -> false) in
+    MATCH_ACCEPT_TAC (MATCH_MP ih (CONJ ne (CONJ ar fd1)))))
 ### cons_multi_thm
   (* the attempt: the proof of the source names abs_ml_inv_def,
      bc_stack_ref_inv_def, LIST_REL_SPLIT1, LIST_REL_LENGTH,
