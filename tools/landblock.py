@@ -48,7 +48,7 @@ def one(s, name):
     sys.exit('landblock: %s is not an attempt of the file' % name)
   # the tactic's thunk is the one that starts a line: a statement
   # written with cake_as_vars has a thunk of its own, inside
-  m2 = re.search(r'(?m)^ ?\(fun \(\) ->\n', s[m.start():])
+  m2 = re.search(r'(?m)^ ?\(fun \(\) ->', s[m.start():])
   if not m2:
     sys.exit('landblock: %s has no tactic thunk' % name)
   cut = m.start() + m2.start()

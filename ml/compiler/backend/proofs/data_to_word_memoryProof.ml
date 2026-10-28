@@ -13,6 +13,7 @@ needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_elim.ml";;
@@ -29666,6 +29667,51 @@ let word_cmp_loop_def = cake_define_cheat CHEAT_TAC
 
 (* HOL4 data_to_word_memoryProofScript.sml:13106: ML code, not ported *)
 
+(* the port's own: the word level of this file begins here, and
+   what it needs of the separating conjunction.  HOL4's SEP_R_TAC
+   is read_fun2set applied to an assumption, with the star
+   rearranged so that the cell is at the front (star_front, over
+   the STAR_AC of ml/lib/set_sep.ml); the last cell of a word_list
+   is where a loop over it starts (word_list_SNOC); and the three
+   word equations are the addresses and the counter of such a loop
+   (addr_step, addr_prev, len_step) *)
+
+let sep_read = prove
+ (`!a x p (f:B->A) d. (set_sep_one (a,x) * p) (fun2set (f,d))
+    ==> f a = x /\ a IN d`,
+  MATCH_ACCEPT_TAC read_fun2set);;
+
+let star_front = prove
+ (`!p c f (s:(B#A->bool)). ((p * set_sep_one c) * f) s
+    ==> (set_sep_one c * (p * f)) s`,
+  REPEAT GEN_TAC THEN
+   SUBGOAL_THEN
+     `((p:(B#A->bool)->bool) * set_sep_one c) * f =
+      set_sep_one c * (p * f)`
+     (fun e -> REWRITE_TAC[e]) THENL
+    [CONV_TAC (AC STAR_AC)]);;
+
+let word_list_SNOC = prove
+ (`!xs x a. misc_word_list a (xs ++ [x]) =
+           misc_word_list a xs *
+           set_sep_one (a + n2w (LENGTH xs) * bytes_in_word,x)`,
+  REWRITE_TAC[word_list_APPEND; word_list_def; STAR_emp]);;
+
+let addr_step = prove
+ (`!(a:'a word) n. a + bytes_in_word * n2w (n + 1) =
+                  (a + bytes_in_word) + n2w n * bytes_in_word`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let addr_prev = prove
+ (`!(a:'a word) n.
+    ((a + bytes_in_word) + n2w n * bytes_in_word) - bytes_in_word =
+    a + bytes_in_word * n2w n`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let len_step = prove
+ (`!n. (n2w (n + 1):'a word) - n2w 1 = n2w n`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
 (* [local] *)
 let word_cmp_loop_thm = prove
  (`!xs1 (xs2:('a word) list) f1 f2 (a1:'a word) a2.
@@ -29679,17 +29725,165 @@ let word_cmp_loop_thm = prove
        (a2 + bytes_in_word * n2w (LENGTH xs1)) dm m =
        SOME (match mw_cmp xs1 xs2 with NONE -> (n2w 1) | SOME T ->
          (n2w 0) | SOME F -> (n2w 2))`,
-  (* the attempt: the proof of the source names SNOC, SNOC_CASES,
-     SNOC_APPEND, FRONT_SNOC, word_list_APPEND, word_list_def.  What
-     is here rewrites with them and closes by arithmetic, and the
-     cheat is behind it until the proof is written.  A MESON over
-     them is what the next round adds; it costs a load ten minutes
-     to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[SNOC; SNOC_CASES; SNOC_APPEND; FRONT_SNOC;
-       word_list_APPEND; word_list_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the first proof of the word level, and the shape the thirty
+     others of this file have.  The induction is the complete one
+     on the length of the two lists, which is what mw_cmp recurses
+     on (PORTING-GUIDE.md entry 44, since the port has no
+     mw_cmp_ind); the loop starts at the last cell of each list, so
+     each list is taken apart at its end (SNOC_CASES) and the cell
+     of its last element comes out of the memory by the steps above
+     the statement -- star_front and read_fun2set, which is what
+     HOL4's SEP_R_TAC does; the addresses and the counter of the
+     step back are the three word equations of the block; and the
+     hypothesis at the two fronts is what the branch where the two
+     last elements agree leaves *)
+  ((* the complete induction on the length of the two lists, which
+     is what mw_cmp recurses on *)
+  SUBGOAL_THEN
+   `!k xs1 (xs2:('a word) list) f1 f2 (a1:'a word) a2.
+      LENGTH xs1 <= k /\ LENGTH xs1 = LENGTH xs2 /\
+      LENGTH xs1 < dimword (:'a) /\
+      (misc_word_list (a1 + bytes_in_word) (MAP wordLang_Word xs1) *
+        f1) (fun2set (m,dm)) /\
+      (misc_word_list (a2 + bytes_in_word) (MAP wordLang_Word xs2) *
+        f2) (fun2set (m,dm))
+      ==> word_cmp_loop (n2w (LENGTH xs1))
+            (a1 + bytes_in_word * n2w (LENGTH xs1))
+            (a2 + bytes_in_word * n2w (LENGTH xs1)) dm m =
+          SOME (match mw_cmp xs1 xs2 with NONE -> (n2w 1)
+                | SOME T -> (n2w 0) | SOME F -> (n2w 2))`
+   (fun th ->
+      REPEAT GEN_TAC THEN DISCH_TAC THEN
+      MP_TAC (SPEC `LENGTH (xs1:('a word) list)` th) THEN
+      ASM_MESON_TAC[LE_REFL]) THEN
+  MATCH_MP_TAC num_WF THEN GEN_TAC THEN DISCH_TAC THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (* of two empty lists the loop stops at once *)
+  ASM_CASES_TAC `xs1:('a word) list = []` THENL
+   [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[LENGTH]) THEN
+    SUBGOAL_THEN `xs2:('a word) list = []` SUBST_ALL_TAC THENL
+     [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN
+      FIRST_ASSUM (ACCEPT_TAC o SYM);
+      ALL_TAC] THEN
+    ONCE_REWRITE_TAC[word_cmp_loop_def; mw_cmp_def] THEN
+    REWRITE_TAC[LENGTH] THEN
+    TRY SAFE_MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[];
+    ALL_TAC] THEN
+  (* and of two lists that end in an element: the two elements *)
+  W(fun gl ->
+    let x1 = var_by_name "xs1" gl in
+    STRIP_ASSUME_TAC (MATCH_MP SNOC_CASES
+      (the_asm (fun c -> is_neg c && is_eq (rand c) &&
+         lhand (rand c) = x1) gl))) THEN
+  FIRST_X_ASSUM SUBST_ALL_TAC THEN
+  (* and so does the other list, because they are of one length *)
+  W(fun gl ->
+    let x2 = var_by_name "xs2" gl in
+    let ety = hd (snd (dest_type (type_of x2))) in
+    SUBGOAL_THEN (mk_neg (mk_eq (x2,
+        mk_const ("NIL", [ety,`:A`]))))
+      (fun ne -> STRIP_ASSUME_TAC (MATCH_MP SNOC_CASES ne))) THENL
+   [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[LENGTH_SNOC]) THEN
+    ASM_ARITH_TAC;
+    ALL_TAC] THEN
+  FIRST_X_ASSUM SUBST_ALL_TAC THEN
+  (* the cell of each last element, taken out of the memory *)
+  RULE_ASSUM_TRY (REWRITE_RULE[SNOC_APPEND; MAP_APPEND; MAP;
+                               word_list_SNOC; LENGTH_MAP]) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[LENGTH_SNOC; LENGTH_APPEND;
+                               LENGTH]) THEN
+  REWRITE_TAC[LENGTH_SNOC] THEN
+  (* the two lists are of one length, and the counter is a sum *)
+  W(fun (asl,w as gl) ->
+    let y = var_by_name "y" gl and y' = var_by_name "y'" gl in
+    SUBGOAL_THEN (mk_eq (list_mk_icomb "LENGTH" [y'],
+                         list_mk_icomb "LENGTH" [y]))
+      (fun e -> RULE_ASSUM_TRY (REWRITE_RULE[e]) THEN
+                ASSUME_TAC e)) THENL
+   [ASM_ARITH_TAC; ALL_TAC] THEN
+  RULE_ASSUM_TRY (CONV_RULE NUM_REDUCE_CONV) THEN
+  (* the two cells, out of the memory *)
+  W(fun (asl,w as gl) ->
+    MAP_EVERY (fun th -> TRY (STRIP_ASSUME_TAC th))
+      (mapfilter (fun (_,t) ->
+         MATCH_MP sep_read (MATCH_MP star_front t)) asl)) THEN
+  (* the address of the last cell is where the loop starts *)
+  REWRITE_TAC[addr_step] THEN
+  (* the loop and the comparison, one step each *)
+  ONCE_REWRITE_TAC[word_cmp_loop_def] THEN
+  ONCE_REWRITE_TAC[mw_cmp_def] THEN
+  REWRITE_TAC[NOT_SNOC_NIL; LAST_SNOC; FRONT_SNOC] THEN
+  (* the counter is not zero, because the lists are not empty *)
+  W(fun (asl,w as gl) ->
+    let lt = the_asm (fun c ->
+               is_binop `(<):num->num->bool` c &&
+               hd_is "dimword" (rand c)) gl in
+    REWRITE_TAC[MATCH_MP WORD_EQ_0 (REWRITE_RULE[dimword] lt)]) THEN
+  REWRITE_TAC[ADD_EQ_0; ARITH_EQ] THEN
+  (* the two addresses are in the domain and hold the two last
+     elements *)
+  ASM_REWRITE_TAC[] THEN
+  TRY SAFE_MATCH_REDUCE_TAC THEN
+  (* the step back to the cell before the last, and the counter *)
+  REWRITE_TAC[addr_prev; len_step] THEN
+  (* the rest of the two lists, for the hypothesis *)
+  RULE_ASSUM_TRY (REWRITE_RULE[GSYM STAR_ASSOC]) THEN
+  (* where the two last elements differ the loop stops *)
+  TRY (SOLVED (COND_CASES_TAC THEN REWRITE_TAC[])) THEN
+  (* the front of the list is shorter than the whole of it *)
+  W(fun (asl,w as gl) ->
+    let y = var_by_name "y" gl in
+    let lt = the_asm (fun c ->
+               is_binop `(<):num->num->bool` c &&
+               hd_is "dimword" (rand c)) gl in
+    SUBGOAL_THEN (mk_binop `(<):num->num->bool`
+        (list_mk_icomb "LENGTH" [y]) (rand (concl lt)))
+       ASSUME_TAC) THENL
+   [ASM_ARITH_TAC; ALL_TAC] THEN
+  (* and where they agree it goes on, which is the hypothesis at
+     the two fronts *)
+  W(fun (asl,w as gl) ->
+    let y = var_by_name "y" gl in
+    let ih = the_asm (fun c -> is_forall c &&
+               (try hd_is "<" (lhand (snd (strip_forall c)))
+                with Failure _ -> false)) gl in
+    let kk = rand (lhand (snd (strip_forall (concl ih)))) in
+    SUBGOAL_THEN (mk_binop `(<):num->num->bool`
+        (list_mk_icomb "LENGTH" [y]) kk)
+      (fun lt -> MP_TAC (MP (SPEC (list_mk_icomb "LENGTH" [y]) ih)
+                            lt))) THENL
+   [ASM_ARITH_TAC; ALL_TAC] THEN
+  DISCH_THEN (fun th ->
+    W(fun (asl,w as gl) ->
+      let y = var_by_name "y" gl and y' = var_by_name "y'" gl in
+      let lst c = rand (el 1 (snd (strip_comb
+                    (lhand (rator c))))) in
+      let w1 = the_asm (fun c ->
+                 (try lst c = y with Failure _ -> false)) gl in
+      let w2 = the_asm (fun c ->
+                 (try lst c = y' with Failure _ -> false)) gl in
+      let f1 = rand (rator (concl w1)) in
+      let f2 = rand (rator (concl w2)) in
+      let adr c = lhand (el 0 (snd (strip_comb
+                    (lhand (rator c))))) in
+      let a1 = adr (concl w1) in
+      let a2 = adr (concl w2) in
+      MP_TAC (SPECL [y; y'; f1; f2; a1; a2] th))) THEN
+  (* its hypotheses are the branch's own *)
+  ASM_REWRITE_TAC[LE_REFL] THEN
+  DISCH_THEN (fun th -> REWRITE_TAC[th]) THEN
+  (* and the two last elements decide the one step *)
+  COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[] THEN
+  TRY SAFE_MATCH_REDUCE_TAC THEN
+  TRY (SOLVED (REWRITE_TAC[])) THEN
+  COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[] THEN
+  TRY SAFE_MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"]));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

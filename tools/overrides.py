@@ -7144,6 +7144,54 @@ let heap_gen_ok_inv = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'word_cmp_loop_thm'): r"""
+(* the port's own: the word level of this file begins here, and
+   what it needs of the separating conjunction.  HOL4's SEP_R_TAC
+   is read_fun2set applied to an assumption, with the star
+   rearranged so that the cell is at the front (star_front, over
+   the STAR_AC of ml/lib/set_sep.ml); the last cell of a word_list
+   is where a loop over it starts (word_list_SNOC); and the three
+   word equations are the addresses and the counter of such a loop
+   (addr_step, addr_prev, len_step) *)
+
+let sep_read = prove
+ (`!a x p (f:B->A) d. (set_sep_one (a,x) * p) (fun2set (f,d))
+    ==> f a = x /\ a IN d`,
+  MATCH_ACCEPT_TAC read_fun2set);;
+
+let star_front = prove
+ (`!p c f (s:(B#A->bool)). ((p * set_sep_one c) * f) s
+    ==> (set_sep_one c * (p * f)) s`,
+  REPEAT GEN_TAC THEN
+   SUBGOAL_THEN
+     `((p:(B#A->bool)->bool) * set_sep_one c) * f =
+      set_sep_one c * (p * f)`
+     (fun e -> REWRITE_TAC[e]) THENL
+    [CONV_TAC (AC STAR_AC)]);;
+
+let word_list_SNOC = prove
+ (`!xs x a. misc_word_list a (xs ++ [x]) =
+           misc_word_list a xs *
+           set_sep_one (a + n2w (LENGTH xs) * bytes_in_word,x)`,
+  REWRITE_TAC[word_list_APPEND; word_list_def; STAR_emp]);;
+
+let addr_step = prove
+ (`!(a:'a word) n. a + bytes_in_word * n2w (n + 1) =
+                  (a + bytes_in_word) + n2w n * bytes_in_word`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let addr_prev = prove
+ (`!(a:'a word) n.
+    ((a + bytes_in_word) + n2w n * bytes_in_word) - bytes_in_word =
+    a + bytes_in_word * n2w n`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+let len_step = prove
+ (`!n. (n2w (n + 1):'a word) - n2w 1 = n2w n`,
+  REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads
