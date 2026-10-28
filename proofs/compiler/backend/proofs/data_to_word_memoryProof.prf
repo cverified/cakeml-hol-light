@@ -22004,19 +22004,238 @@
         MATCH_ACCEPT_TAC (MATCH_MP EVERY2_rearrange_roots
           (CONJ sub (CONJ le e2)))]))
 ### get_real_addr_get_addr
-  (* the attempt: the proof of the source names get_addr_def,
-     get_real_addr_def, get_real_simple_addr_def, heap_lookup_LESS,
-     shift_length_def, dimword.  What is here rewrites with them and
-     closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[get_addr_def; get_real_addr_def;
-       get_real_simple_addr_def; heap_lookup_LESS;
-       shift_length_def; dimword] THEN
-     TRY ASM_ARITH_TAC))
+(* the address of a pointer: the heap fits below the shift
+   (LE_RDIV_EQ of the bound of the statement) and the pointer is
+   inside the heap (heap_lookup_LESS), so no bit of it is as high
+   as the shift, and the shift down of the address that get_addr
+   built gives the pointer back -- the lower bits that get_addr
+   put in are below the small shift and the shift down loses them
+   (the local lemma, by the bits of the two sides).  The simple
+   address shifts the pointer up by the word shift again, which is
+   the multiplication by bytes_in_word
+   (bytes_in_word_mul_eq_shift), and get_real_addr does the same
+   in the two cases where the shift it uses leaves the word shift;
+   where the shift is the word shift itself the address is the
+   pointer and the one bit that get_addr adds (or_1,
+   WORD_ADD_OR), which the subtraction of the one takes off *)
+  ((let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+  let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail())
+      asl in
+  (* a word that is not shifted *)
+  let shl0 = prove
+   (`!(x:'a word). x << 0 = x`,
+    GEN_TAC THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_SHL; SUB_0; LE_0] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN ASM_REWRITE_TAC[]) in
+  let divlt = prove
+   (`!m n. m < n ==> m DIV n = 0`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    SUBGOAL_THEN `~(n = 0)` (fun nz ->
+      REWRITE_TAC[MP (SPECL [`m:num`; `n:num`] DIV_EQ_0) nz]) THENL
+     [ASM_ARITH_TAC; FIRST_ASSUM ACCEPT_TAC]) in
+  (* a pointer that fits below the shift has no bit that high *)
+  let ptbits = prove
+   (`!n s. n * 2 EXP s < dimword (:'a)
+           ==> !i. word_bit i ((n2w n):'a word)
+                   ==> i + s < dimindex (:'a)`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    X_GEN_TAC `i:num` THEN REWRITE_TAC[BIT_WORD] THEN STRIP_TAC THEN
+    SUBGOAL_THEN `2 EXP i <= n` ASSUME_TAC THENL
+     [REWRITE_TAC[GSYM NOT_LT] THEN DISCH_TAC THEN
+      FIRST_X_ASSUM (fun odd ->
+        if not (hd_is "ODD" (concl odd)) then fail() else
+        MP_TAC odd) THEN
+      ASM_SIMP_TAC[divlt; ODD];
+      ALL_TAC] THEN
+    SUBGOAL_THEN `2 EXP (i + s) <= n * 2 EXP s` MP_TAC THENL
+     [REWRITE_TAC[EXP_ADD] THEN ASM_SIMP_TAC[LE_MULT_RCANCEL];
+      ALL_TAC] THEN
+    MP_TAC (SPECL [`2`; `dimindex (:'a)`; `i + s`] LE_EXP) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    MP_TAC (ASSUME `n * 2 EXP s < dimword (:'a)`) THEN
+    REWRITE_TAC[dimword] THEN ARITH_TAC) in
+  (* and the lower bits of a pointer are below the small shift *)
+  let lowbits = prove
+   (`!i x. word_bit i (get_lowerbits c x)
+           ==> i < small_shift_length c`,
+    REPEAT GEN_TAC THEN CASES_ON_NAME "x" THEN
+    REWRITE_TAC[get_lowerbits_def] THEN
+    TRY SAFE_MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[BIT_WORD_OR; BIT_WORD_1; word_bits;
+                BIT_WORD_SUBWORD; small_shift_length_def] THEN
+    STRIP_TAC THEN ASM_ARITH_TAC) in
+  (* so the shift down of a pointer that was shifted up leaves the
+     pointer shifted up by what is left: the lower bits vanish and
+     the bits of the pointer are low enough that the shift up kept
+     them *)
+  let l1 = prove
+   (`!n (lw:'a word) k t.
+       (!i. word_bit i lw ==> i < t) /\
+       (!i. word_bit i ((n2w n):'a word)
+            ==> i + (k + t) < dimindex (:'a))
+       ==> ((n2w n) << (k + t) || lw) >>> t =
+           ((n2w n):'a word) << k`,
+    REPEAT GEN_TAC THEN
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "lw")
+      (LABEL_TAC "pt")) THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    REWRITE_TAC[BIT_WORD_USHR; BIT_WORD_OR; BIT_WORD_SHL] THEN
+    SUBGOAL_THEN `~(word_bit (i + t) (lw:'a word))`
+      (fun th -> REWRITE_TAC[th]) THENL
+     [USE_THEN "lw" (fun h1 -> MP_TAC (SPEC `i + t` h1)) THEN
+      MATCH_MP_TAC (TAUT `~q ==> (p ==> q) ==> ~p`) THEN ARITH_TAC;
+      ALL_TAC] THEN
+    REWRITE_TAC[ARITH_RULE `(i + t) - (k + t) = i - k`;
+                ARITH_RULE `(k + t <= i + t) <=> k <= i`] THEN
+    ASM_CASES_TAC `word_bit (i - k) ((n2w n):'a word)` THEN
+    ASM_REWRITE_TAC[] THEN
+    USE_THEN "pt" (fun h2 ->
+      MP_TAC (MP (SPEC `i - k` h2)
+        (ASSUME `word_bit (i - k) ((n2w n):'a word)`))) THEN
+    MP_TAC (ASSUME `i < dimindex (:'a)`) THEN ARITH_TAC) in
+  (* the address that the shift down and up gives *)
+  let shift_step kk extra =
+    W(fun (asl,gl) ->
+      let ushr = find_term (hd_is "word_ushr") gl in
+      let x = lhand ushr and tt = rand ushr in
+      let shl = lhand x and lw = rand x in
+      let s = rand shl in
+      let nn = rand (lhand shl) in
+      let ptf = grab asl (fun th ->
+        try is_forall (concl th) &&
+            hd_is "bit" (lhand (body (rand (concl th))))
+        with Failure _ -> false) in
+      let mkp tm tac =
+        if extra = [] then prove (tm, tac) else
+        MP (prove (mk_imp (end_itlist (curry mk_conj)
+                             (map concl extra), tm),
+             DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+             tac))
+           (end_itlist CONJ extra) in
+      let lwf = mkp (mk_forall (`i:num`,
+                  mk_imp (list_mk_icomb "bit" [`i:num`; lw],
+                    mk_binop `(<):num->num->bool` `i:num` tt)))
+                  (GEN_TAC THEN
+                   DISCH_THEN (fun b ->
+                     MP_TAC (MATCH_MP lowbits b)) THEN
+                   REWRITE_TAC[small_shift_length_def;
+                               shift_length_def] THEN
+                   ASM_ARITH_TAC) in
+      let seq = mkp (mk_eq (mk_binop `(+):num->num->num` kk tt, s))
+                  (REWRITE_TAC[shift_length_def] THEN
+                   ASM_ARITH_TAC) in
+      let inst = REWRITE_RULE[seq] (SPECL [nn; lw; kk; tt] l1) in
+      REWRITE_TAC[MP inst (CONJ lwf ptf); shl0]) in
+  (* and the address that the word shift of a pointer is *)
+  let fin =
+    W(fun (asl,gl) ->
+      let gd = grab asl (fun th ->
+        hd_is "good_dimindex" (concl th)) in
+      REWRITE_TAC[GSYM (MATCH_MP bytes_in_word_mul_eq_shift gd)] THEN
+      CONV_TAC WORD_RULE) in
+  STRIP_TAC THEN
+  (* the pointer is inside the heap, which fits below the shift *)
+  SUBGOAL_THEN `n * 2 EXP shift_length c < dimword (:'a)`
+    ASSUME_TAC THENL
+   [W(fun (asl,gl) ->
+      let hl = grab asl (fun th ->
+        try hd_is "<=" (concl th) &&
+            hd_is "heap_length" (lhand (concl th))
+        with Failure _ -> false) in
+      let lk = grab asl (fun th ->
+        try hd_is "heap_lookup" (lhs (concl th))
+        with Failure _ -> false) in
+      let tp = rand (rand (concl hl)) in
+      let hh = lhand (concl hl) in
+      let nz = prove (mk_neg (mk_eq (tp, `0`)),
+                REWRITE_TAC[EXP_EQ_0] THEN ARITH_TAC) in
+      let hl2 = REWRITE_RULE[MP (SPECL [tp; `dimword (:'a)`; hh]
+                                  LE_RDIV_EQ) nz] hl in
+      let lt = MATCH_MP heap_lookup_LESS lk in
+      let mono = EQ_MP (SYM (SPECL [`n:num`; hh; tp]
+                          LT_MULT_RCANCEL)) (CONJ lt nz) in
+      MP_TAC hl2 THEN MP_TAC mono THEN
+      REWRITE_TAC[MULT_SYM] THEN ARITH_TAC);
+    ALL_TAC] THEN
+  (* so no bit of it is as high as the shift *)
+  SUBGOAL_THEN
+    `!i. word_bit i ((n2w n):'a word)
+         ==> i + shift_length c < dimindex (:'a)` ASSUME_TAC THENL
+   [FIRST_ASSUM (fun th ->
+      if not (try hd_is "<" (concl th) &&
+                  hd_is "dimword" (rand (concl th))
+              with Failure _ -> false) then fail() else
+      ACCEPT_TAC (MATCH_MP ptbits th));
+    ALL_TAC] THEN
+  (* the two addresses that the store of the heap gives *)
+  W(fun (asl,gl) ->
+    let flk = grab asl (fun th ->
+      try hd_is "FLOOKUP" (lhs (concl th))
+      with Failure _ -> false) in
+    REWRITE_TAC[get_real_simple_addr_def; get_real_addr_def;
+                flk]) THEN
+  TRY SAFE_MATCH_REDUCE_TAC THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[get_addr_def; injectivity "option"] THEN
+  CONJ_TAC THENL
+   [(* the simple address: the shift down gives the pointer and
+        the shift up the bytes it stands for *)
+    shift_step `0` [] THEN fin;
+    ALL_TAC] THEN
+  COND_CASES_TAC THEN
+  TRY (REWRITE_TAC[injectivity "option"]) THENL
+   [(* the pointer is the address and the one bit, which the
+        subtraction takes off *)
+    W(fun (asl,gl) ->
+      let cnd = grab asl (fun th ->
+        try is_conj (concl th) &&
+            hd_is "backend_common_word_shift" (lhs (lhand (concl th)))
+        with Failure _ -> false) in
+      let cs = CONJUNCTS cnd in
+      let lb = MP (prove (mk_imp (mk_conj (concl (el 1 cs),
+                                           concl (el 2 cs)),
+                    `get_lowerbits c w = ((n2w 1):'a word)`),
+                    CASES_ON_NAME "w" THEN
+                    REWRITE_TAC[get_lowerbits_def] THEN
+                    TRY SAFE_MATCH_REDUCE_TAC THEN
+                    STRIP_TAC THEN
+                    ASM_REWRITE_TAC[small_shift_length_def] THEN
+                    CONV_TAC NUM_REDUCE_CONV THEN
+                    REWRITE_TAC[or_1]))
+                (CONJ (el 1 cs) (el 2 cs)) in
+      let dis = prove
+                 (`((n2w n) << shift_length c) && (n2w 1) =
+                   ((n2w 0):'a word)`,
+                  MP_TAC (prove (`1 <= shift_length c`,
+                    REWRITE_TAC[shift_length_def] THEN
+                    ARITH_TAC)) THEN
+                  REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND;
+                              BIT_WORD_1; BIT_WORD_0;
+                              BIT_WORD_SHL] THEN
+                  REPEAT STRIP_TAC THEN ASM_ARITH_TAC) in
+      REWRITE_TAC[lb] THEN
+      REWRITE_TAC[GSYM (MATCH_MP WORD_ADD_OR dis)] THEN
+      REWRITE_TAC[GSYM (el 0 cs)]) THEN
+    fin;
+    ALL_TAC] THEN
+  COND_CASES_TAC THEN
+  TRY (REWRITE_TAC[injectivity "option"]) THENL
+   [(* the shift down is the one that leaves the word shift *)
+    W(fun (asl,gl) ->
+      let cnd = grab asl (fun th ->
+        try hd_is "<=" (concl th) &&
+            hd_is "backend_common_word_shift" (lhand (concl th))
+        with Failure _ -> false) in
+      shift_step (lhand (concl cnd)) [cnd]) THEN
+    fin;
+    (* and above the word shift the two shifts are the simple
+       address again *)
+    shift_step `0` [] THEN fin]))
 ### gc_kind_update_Ref
   (* the steps are above the statement (tools/overrides.py).  The
      element written is a reference of the length of the one it
