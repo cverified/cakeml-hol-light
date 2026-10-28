@@ -24005,17 +24005,140 @@
        memory_rel_Number_EQ; memory_rel_Number_LESS] THEN
      TRY ASM_ARITH_TAC))
 ### memory_rel_depth_limit
-  (* the attempt: the proof of the source names NULL_EQ, MAX_LIST,
-     memory_rel_Block_MEM, LESS_LENGTH.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[NULL_EQ; MAX_LIST; memory_rel_Block_MEM;
-       LESS_LENGTH] THEN
-     TRY ASM_ARITH_TAC))
+(* the proof of the source is the induction of the values, with
+   NULL_EQ, MAX_LIST, memory_rel_Block_MEM and LESS_LENGTH.  Here
+   the induction is HOL Light's for the type, with the hypothesis
+   of a Block over its list (the first lemma below), and a value
+   that is not a Block has depth nought and wants no stack.  For a
+   Block the deepest of its elements is one of them (the second
+   lemma), and that element with its root is what the stack gains:
+   memory_rel_Block_MEM puts the element in front of the Block, the
+   element of the induction hypothesis gives the stack of it, and
+   elements_list of the two says that the element is one of the
+   Block's *)
+  (let v_ind = prove
+   (`!P. (!i. P (Number i)) /\ (!w. P (Word64 w)) /\
+         (!ts t l. ALL P l ==> P (Block ts t l)) /\
+         (!n. P (CodePtr n)) /\ (!b n. P (RefPtr b n)) ==>
+         (!v. P (v:dataSem_v))`,
+    GEN_TAC THEN DISCH_TAC THEN
+    MP_TAC (ISPECL [`P:dataSem_v->bool`; `ALL (P:dataSem_v->bool)`]
+              dataSem_v_INDUCT) THEN
+    ASM_REWRITE_TAC[ALL] THEN
+    DISCH_THEN (ACCEPT_TAC o CONJUNCT1)) in
+  let MAX_LIST_MEM = prove
+   (`!l. ~(l = []) ==> MEM (MAX_LIST l) l`,
+    LIST_INDUCT_TAC THEN
+    REWRITE_TAC[NOT_CONS_NIL; MEM; MAX_LIST] THEN
+    ASM_CASES_TAC `t:num list = []` THENL
+     [ASM_REWRITE_TAC[MAX_LIST; ARITH_RULE `MAX h 0 = h`];
+      DISJ_CASES_TAC (ARITH_RULE
+        `MAX h (MAX_LIST t) = h \/ MAX h (MAX_LIST t) = MAX_LIST t`)
+      THEN ASM_REWRITE_TAC[] THEN ASM_SIMP_TAC[]]) in
+  let depth_conv =
+    GEN_REWRITE_TAC LAND_CONV [v_depth_def] THEN
+    MATCH_REDUCE_TAC in
+  let nb =
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    EXISTS_TAC `[]:(dataSem_v # ('a word_loc)) list` THEN
+    REWRITE_TAC[APPEND; MAP; LENGTH] THEN
+    REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+    depth_conv THEN REWRITE_TAC[] in
+  W(fun (asl,gl) ->
+    let v,bod = dest_forall gl in
+    MATCH_MP_TAC (CONV_RULE (TOP_DEPTH_CONV BETA_CONV)
+                    (ISPEC (mk_abs (v,bod)) v_ind))) THEN
+  REPEAT CONJ_TAC THENL
+   [nb; nb;
+    REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
+    STRIP_TAC THEN
+    ASM_CASES_TAC `l:(dataSem_v) list = []` THENL
+     [EXISTS_TAC `[]:(dataSem_v # ('a word_loc)) list` THEN
+      REWRITE_TAC[APPEND; MAP; LENGTH] THEN
+      REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+      depth_conv THEN
+      ASM_REWRITE_TAC[NULL; MAP; MAX_LIST] THEN ARITH_TAC;
+      ALL_TAC] THEN
+    SUBGOAL_THEN `~(MAP v_depth (l:(dataSem_v)list) = [])`
+      (fun th -> MP_TAC (MATCH_MP MAX_LIST_MEM th)) THENL
+     [ASM_REWRITE_TAC[MAP_EQ_NIL]; ALL_TAC] THEN
+    REWRITE_TAC[MEM_MAP] THEN
+    DISCH_THEN (X_CHOOSE_THEN `e:dataSem_v`
+                 STRIP_ASSUME_TAC) THEN
+    FIRST_ASSUM (fun mm ->
+      if hd_is "MEM" (concl mm)
+      then STRIP_ASSUME_TAC
+             (REWRITE_RULE[MEM_APPEND_DECOMPOSE] mm)
+      else fail()) THEN
+    SUBGOAL_THEN
+      `LENGTH (l1:(dataSem_v)list) < LENGTH (l:(dataSem_v)list)`
+      ASSUME_TAC THENL
+     [ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ARITH_TAC;
+      ALL_TAC] THEN
+    SUBGOAL_THEN
+      `EL (LENGTH (l1:(dataSem_v)list)) l = (e:dataSem_v)`
+      ASSUME_TAC THENL
+     [ASM_REWRITE_TAC[EL_APPEND; LT_REFL; SUB_REFL; EL; HD];
+      ALL_TAC] THEN
+    FIRST_ASSUM (fun mr ->
+      if hd_is "memory_rel" (concl mr)
+      then FIRST_ASSUM (fun lt ->
+             if (try hd_is "<" (concl lt) with Failure _ -> false)
+             then FIRST_ASSUM (fun gd ->
+                    if hd_is "good_dimindex" (concl gd)
+                    then STRIP_ASSUME_TAC
+                           (MATCH_MP (GEN_ALL memory_rel_Block_MEM)
+                             (CONJ mr (CONJ lt gd)))
+                    else fail())
+             else fail())
+      else fail()) THEN
+    FIRST_ASSUM (fun elq ->
+      if (try is_eq (concl elq) && hd_is "EL" (lhs (concl elq))
+          with Failure _ -> false)
+      then RULE_ASSUM_TRY (REWRITE_RULE[elq]) else fail()) THEN
+    SUBGOAL_THEN `elements_list ((e:dataSem_v) ::
+                    MAP FST ((Block ts' t l,(w:'a word_loc)) ::
+                      (vars':(dataSem_v # ('a word_loc))list)))`
+      ASSUME_TAC THENL
+     [REWRITE_TAC[MAP; FST; elements_list_def] THEN
+      MAP_EVERY EXISTS_TAC
+        [`ts':num`; `t:num`; `l1:(dataSem_v)list`;
+         `l2:(dataSem_v)list`] THEN
+      ASM_REWRITE_TAC[APPEND];
+      ALL_TAC] THEN
+    FIRST_ASSUM (fun ih ->
+      if not (hd_is "ALL" (concl ih)) then fail() else
+      FIRST_ASSUM (fun mm ->
+        if not (try hd_is "MEM" (concl mm)
+                with Failure _ -> false) then fail() else
+        let ihe = MATCH_MP (REWRITE_RULE[GSYM ALL_MEM] ih) mm in
+        FIRST_ASSUM (fun mr ->
+          if not (hd_is "memory_rel" (concl mr)) then fail() else
+          FIRST_ASSUM (fun elm ->
+            if not (hd_is "elements_list" (concl elm)) then fail()
+            else FIRST_ASSUM (fun gd ->
+              if not (hd_is "good_dimindex" (concl gd)) then fail()
+              else STRIP_ASSUME_TAC (MATCH_MP ihe
+                     (CONJ mr (CONJ elm gd)))))))) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[MAP; FST]) THEN
+    FIRST_ASSUM (fun mr ->
+      if not (hd_is "memory_rel" (concl mr)) then fail() else
+      let stack = last (snd (strip_comb (concl mr))) in
+      if not (hd_is "APPEND" stack) then fail() else
+      let args = snd (strip_comb stack) in
+      let pair = hd (snd (strip_comb (el 1 args))) in
+      EXISTS_TAC (list_mk_icomb "APPEND"
+        [el 0 args; mk_list ([pair], type_of pair)])) THEN
+    REPEAT CONJ_TAC THENL
+     [REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
+      FIRST_ASSUM ACCEPT_TAC;
+      depth_conv THEN
+      ASM_REWRITE_TAC[NULL_EQ; LENGTH_APPEND; LENGTH] THEN
+      ARITH_TAC;
+      REWRITE_TAC[MAP_APPEND; MAP; FST; GSYM APPEND_ASSOC;
+                  APPEND] THEN
+      FIRST_ASSUM ACCEPT_TAC];
+    nb; nb])
 ### memory_rel_Block_ptr_eq
   (* the attempt: the proof of the source names memory_rel_def,
      word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
