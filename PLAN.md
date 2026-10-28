@@ -1756,3 +1756,36 @@ eight thousand lines later and rests on `v_inv_update_gen` and
 these two statements.  Moving that layer up is the piece to do
 first, and `deref_thm` (which reads a reference and changes
 nothing) is the cheapest one that needs none of it.
+
+## What the round after the allocation layer did
+
+Two more, of two other kinds:
+
+- `gc_combined_thm`, which is the three kinds of collection and
+  nothing else: the one that does nothing, `full_gc_thm`,
+  `gen_gc_partial_thm` and `gen_gc_thm` (all three still cheats of
+  their own), with the arithmetic of the heap that the collection
+  wrote on top -- it holds data, so its data length is its heap
+  length.  Its own block is one inline lemma
+  (`gen_gc_conf_limit (make_gc_conf l) = l`).
+- `deref_thm`, which reads a reference, and with it the generic
+  half of `el_thm`'s block: `all_ts_mono`, `heap_ok_in`,
+  `heap_el_data`, `roots_ok_data`, `all2_el_cons` and `reach_ref`
+  now stand in `deref_thm`'s block, and `el_thm`'s two lemmas are
+  the generic ones with a Block's shape put in.  The five kinds
+  that a key can hold are three claims of nothing and two of
+  something, and the two are the same proof with another element.
+
+So the file is at 82 cheats, and what the layers look like now:
+
+- the allocation layer: done but for `word64_alt_thm` and
+  `bignum_alt_thm`, which want the restrict layer moved up;
+- the stack layer: `el_thm`, `deref_thm` and the `*_restrict`
+  lemmas are in, `bc_stack_ref_inv_MutBlock_F` and
+  `v_inv_list_to_v_lem` are not;
+- the collection: `gc_combined_thm` is in, the three theorems it
+  rests on are not (and they are the ones that ask for the GC
+  theories' own lemmas, of which `ml/compiler/backend/gc/` has
+  many as cheats);
+- the word level (`memory_rel_*`, about thirty of them): nothing of
+  it yet, and `ml/lib/set_sep.ml` is where it would start.

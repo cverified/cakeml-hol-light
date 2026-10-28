@@ -3560,3 +3560,41 @@ the whole choice; of a `RefPtr F ptr` (`new_thunk_thm`) all three
 stay, and the one that holds is the **second**, because the key does
 hold a thunk -- `DISJ1_TAC` there reduces the goal to `false`, which
 is what the report shows.
+
+## 67. MATCH_MP_TAC of a statement without quantifiers leaves a free
+variable
+
+`MATCH_MP_TAC` existentially quantifies the variables of the
+antecedent that the conclusion does not fix -- but only the ones the
+theorem quantifies itself.  A lemma of the port is usually written
+without them (`cake_as_vars` hands back a term whose names are free),
+so of
+
+```
+let reach_ref = prove
+ (cake_as_vars (fun () ->
+    `(!y. MEM y (get_refs v) ==> ref_edge refs ptr y) /\
+     reachable_refs (v :: RefPtr b ptr :: stack') refs n
+     ==> reachable_refs (RefPtr b ptr :: stack') refs n`), ...)
+```
+
+`MATCH_MP_TAC reach_ref` leaves a goal about the lemma's own `v`,
+which nothing can close -- the report shows `MEM y (get_refs v)` with
+a `v` that is in no assumption.  `MATCH_MP_TAC (GEN_ALL reach_ref)`
+gives `?v. ...` instead, and an `EXISTS_TAC` of the value from the
+goal follows.  The same holds of `refs_in_block`, `v_inv_SUBMAP` and
+`blocks_unique_cons_thm`: where the port writes
+`MATCH_MP_TAC (GEN_ALL ...)` it is for this reason.
+
+## 68. STRUCT_CASES_TAC splits the goal, CASES_ON_TAC the assumptions
+too
+
+Of a variable `md` of `thunk_mode` in the goal,
+`STRUCT_CASES_TAC (ISPEC md (cases "thunk_mode"))` replaces it in the
+goal and leaves the assumptions alone -- so an assumption
+`lookup ptr refs = SOME (Thunk md vv)` keeps the variable and a lemma
+about `Thunk NotEvaluated vv` does not apply to it.  `CASES_ON_TAC md`
+(ml/lib/tactics.ml) is `SUBST_ALL_TAC` of each case for a variable, so
+the goal *and* the assumptions get the constructor.  Use it whenever
+the case is to be used on an assumption, which in a proof about
+`bc_ref_inv` or `v_inv` is almost always.
