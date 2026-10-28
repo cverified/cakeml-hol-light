@@ -4045,3 +4045,61 @@ rewrite to use is `hol4_TL`.  `MAP_TL` of the source (`MAP f (TL l)
 = TL (MAP f l)`) is not in the port; where a proof needs the two
 sides to meet, the list is split (`list_CASES` on it) and both are
 rewritten with `APPEND; MAP; MAP_APPEND; hol4_TL`.
+
+## 83. A quotation of a proof has type variables of its own
+
+A statement that a tactic writes down (`SUBGOAL_THEN`, the term of
+a local lemma) is parsed on its own, so a variable of it that the
+quotation does not pin down gets a _fresh_ type -- and the variable
+of the goal with the same name is then another variable.  Nothing
+says so: `SUBGOAL_THEN` proves the statement that was asked for,
+and the `MP` or the `ACCEPT_TAC` that was to use it says
+`theorems do not agree` or `ACCEPT_TAC`, with the two terms
+printing the same.
+
+The heap of CakeML is where it bites, because the elements of the
+port's `BlockRep`, `Bytes` and `ThunkBlock` have a type parameter
+of their own (`BlockRep cons_tag [x; y]` is a
+`('a word_loc,data_to_word_memoryProof_tag#(?)list)heap_element`,
+with `?` free): a quotation about a heap therefore has to carry the
+type
+
+```
+  (ha:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
+    list)heap_element) list)
+```
+
+on its first heap variable, or the term has to be built from the
+goal (`W(fun (asl,gl) -> ... mk_icomb (`heap_length`, hp) ...)`),
+which is what the proof of `heap_length_Blocks` does for the heap
+it hands to the induction hypothesis.
+
+## 84. Two assumptions that contradict each other cancel
+
+`ASM_REWRITE_TAC[]` with `MEM x t` and `~(MEM x t)` among the
+assumptions rewrites the one with the other and leaves the goal
+standing (`T ==> ...` and `F ==> ...` both reduce, and which of
+them it is depends on the order).  The contradiction has to be
+taken by hand:
+
+```
+  FIRST_ASSUM (fun m -> USE_THEN "nm" (fun nm ->
+    W(fun (asl,gl) -> ACCEPT_TAC (CONTR gl (MP (NOT_ELIM nm) m)))))
+```
+
+## 85. `ASM_ARITH_TAC` of the port hands over the arithmetic
+
+The port's `ASM_ARITH_TAC` (ml/lib/tactics.ml) gives `ARITH_TAC`
+the assumptions it reads as arithmetic, and an assumption about
+`heap_length ha` or `el_length el` is not always one of them.  A
+proof that needs such a fact states it:
+
+```
+  MP_TAC (MATCH_MP (ARITH_RULE
+    `!a b c:num. a + b <= c ==> ~(c < a)`) le) THEN ...
+```
+
+and a side condition of a conditional rewrite has to have its
+variables in the conclusion -- `SIMP_TAC` cannot use
+`0 < b /\ a + b <= c ==> ~(c - a = 0)`, because `b` is nowhere in
+`~(c - a = 0)`.
