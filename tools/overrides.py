@@ -7311,6 +7311,80 @@ let acc_step = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'memory_rel_str_cmp'): r"""
+(* the port's own: what the comparison of two byte arrays needs of
+   the header and of the address arithmetic.  header_shift is the
+   one place where the two word sizes are taken apart: what
+   memory_rel_ByteArray_IMP says of the header is a conditional on
+   dimindex, and this turns it into the length plus 2 EXP the word
+   shift, whichever the word size is, so that nothing after it has
+   to case split again.  biw_shift and len_plus are the same step
+   for bytes_in_word, min_shift for the shorter of two lengths,
+   take_all and take_all_eq for the whole of a list, and n2w_11_lt
+   says that two numbers below the word size make the same word
+   only when they are the same *)
+
+let take_all = prove
+ (`!(l:A list). TAKE (LENGTH l) l = l`,
+  GEN_TAC THEN
+  MP_TAC (ISPECL [`l:A list`; `[]:A list`] TAKE_LENGTH_APPEND) THEN
+  REWRITE_TAC[APPEND_NIL]);;
+
+let take_all_eq = prove
+ (`!(l1:A list) l2.
+     LENGTH l1 = LENGTH l2 ==> TAKE (LENGTH l1) l2 = l2`,
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[take_all]);;
+
+let min_shift = prove
+ (`!a b s. MIN (a + s) (b + s) = MIN a b + s`,
+  ARITH_TAC);;
+
+let biw_shift = prove
+ (`good_dimindex (:'a) ==>
+  (bytes_in_word:'a word) =
+  n2w (2 EXP backend_common_word_shift (:'a))`,
+  REWRITE_TAC[good_dimindex_def; bytes_in_word_def;
+              word_shift_def] THEN
+  STRIP_TAC THEN FIRST_X_ASSUM SUBST1_TAC THEN
+  REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
+
+let len_plus = prove
+ (`!n. good_dimindex (:'a) ==>
+    n2w n + (bytes_in_word:'a word) =
+    n2w (n + 2 EXP backend_common_word_shift (:'a))`,
+  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[biw_shift; WORD_ADD]);;
+
+let header_shift = prove
+ (`good_dimindex (:'a) /\
+  (if dimindex (:'a) = 32 then
+     n + 4 < 2 EXP (dimindex (:'a) - 3) /\
+     (x:'a word) >>> (dimindex (:'a) -
+       data_to_word_config_len_size c - 2) = n2w (n + 4)
+   else
+     n + 8 < 2 EXP (dimindex (:'a) - 3) /\
+     x >>> (dimindex (:'a) -
+       data_to_word_config_len_size c - 3) = n2w (n + 8))
+  ==> x >>> (dimindex (:'a) - data_to_word_config_len_size c -
+             backend_common_word_shift (:'a)) =
+      n2w (n + 2 EXP backend_common_word_shift (:'a)) /\
+      n + 2 EXP backend_common_word_shift (:'a) < dimword (:'a)`,
+  REWRITE_TAC[good_dimindex_def; word_shift_def; dimword] THEN
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    if is_eq (concl dd) then SUBST_ALL_TAC dd else fail()) THEN
+  RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV o REWRITE_RULE[]) THEN
+  REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+  ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+
+let n2w_11_lt = prove
+ (`!m n. m < dimword (:'a) /\ n < dimword (:'a)
+    ==> (((n2w m):'a word) = n2w n <=> m = n)`,
+  REPEAT STRIP_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [GSYM VAL_EQ] THEN
+  ASM_SIMP_TAC[val_n2w_lt]);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads

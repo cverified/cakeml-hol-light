@@ -38511,6 +38511,77 @@ let find_diff_str_cmp_thm2 = prove
         ASM_REWRITE_TAC[distinctness "ordering"; COND_ID] THEN
         ASM_ARITH_TAC]]]));;
 
+(* the port's own: what the comparison of two byte arrays needs of
+   the header and of the address arithmetic.  header_shift is the
+   one place where the two word sizes are taken apart: what
+   memory_rel_ByteArray_IMP says of the header is a conditional on
+   dimindex, and this turns it into the length plus 2 EXP the word
+   shift, whichever the word size is, so that nothing after it has
+   to case split again.  biw_shift and len_plus are the same step
+   for bytes_in_word, min_shift for the shorter of two lengths,
+   take_all and take_all_eq for the whole of a list, and n2w_11_lt
+   says that two numbers below the word size make the same word
+   only when they are the same *)
+
+let take_all = prove
+ (`!(l:A list). TAKE (LENGTH l) l = l`,
+  GEN_TAC THEN
+  MP_TAC (ISPECL [`l:A list`; `[]:A list`] TAKE_LENGTH_APPEND) THEN
+  REWRITE_TAC[APPEND_NIL]);;
+
+let take_all_eq = prove
+ (`!(l1:A list) l2.
+     LENGTH l1 = LENGTH l2 ==> TAKE (LENGTH l1) l2 = l2`,
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[take_all]);;
+
+let min_shift = prove
+ (`!a b s. MIN (a + s) (b + s) = MIN a b + s`,
+  ARITH_TAC);;
+
+let biw_shift = prove
+ (`good_dimindex (:'a) ==>
+  (bytes_in_word:'a word) =
+  n2w (2 EXP backend_common_word_shift (:'a))`,
+  REWRITE_TAC[good_dimindex_def; bytes_in_word_def;
+              word_shift_def] THEN
+  STRIP_TAC THEN FIRST_X_ASSUM SUBST1_TAC THEN
+  REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
+
+let len_plus = prove
+ (`!n. good_dimindex (:'a) ==>
+    n2w n + (bytes_in_word:'a word) =
+    n2w (n + 2 EXP backend_common_word_shift (:'a))`,
+  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[biw_shift; WORD_ADD]);;
+
+let header_shift = prove
+ (`good_dimindex (:'a) /\
+  (if dimindex (:'a) = 32 then
+     n + 4 < 2 EXP (dimindex (:'a) - 3) /\
+     (x:'a word) >>> (dimindex (:'a) -
+       data_to_word_config_len_size c - 2) = n2w (n + 4)
+   else
+     n + 8 < 2 EXP (dimindex (:'a) - 3) /\
+     x >>> (dimindex (:'a) -
+       data_to_word_config_len_size c - 3) = n2w (n + 8))
+  ==> x >>> (dimindex (:'a) - data_to_word_config_len_size c -
+             backend_common_word_shift (:'a)) =
+      n2w (n + 2 EXP backend_common_word_shift (:'a)) /\
+      n + 2 EXP backend_common_word_shift (:'a) < dimword (:'a)`,
+  REWRITE_TAC[good_dimindex_def; word_shift_def; dimword] THEN
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    if is_eq (concl dd) then SUBST_ALL_TAC dd else fail()) THEN
+  RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV o REWRITE_RULE[]) THEN
+  REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+  ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+
+let n2w_11_lt = prove
+ (`!m n. m < dimword (:'a) /\ n < dimword (:'a)
+    ==> (((n2w m):'a word) = n2w n <=> m = n)`,
+  REPEAT STRIP_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [GSYM VAL_EQ] THEN
+  ASM_SIMP_TAC[val_n2w_lt]);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_str_cmp = prove
@@ -38530,19 +38601,136 @@ let memory_rel_str_cmp = prove
        str_cmp b cmp (implode (MAP (CHR o w2n) vals1))
                      (implode (MAP (CHR o w2n) vals2)) =
        semanticPrimitives_num_cmp cmp (w2n r1) (w2n r2))`),
-  (* the attempt: the proof of the source names
-     memory_rel_ByteArray_IMP, memory_rel_tl, word_str_cmp_def,
-     isWord_def, theWord_def, make_byte_header_def.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_ByteArray_IMP; memory_rel_tl;
-       word_str_cmp_def; isWord_def; theWord_def;
-       make_byte_header_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source takes the two byte arrays out of the
+   memory (memory_rel_ByteArray_IMP, twice, with memory_rel_tl in
+   between), reads the length of each off its header
+   (header_shift), and then word_str_cmp is the loop of
+   word_str_loop_thm: for the fast comparison over both strings if
+   the two lengths are the same and nothing at all if they are not,
+   and for the slow one to the shorter of the two.  What is left of
+   the comparison of the strings is the first of the two lemmas
+   above in the one case and the second of them at nought in the
+   other *)
+  ((* this file binds is_cond to something else of its own (line
+     36808), so the test for a conditional is here *)
+  let a_cond t =
+    try fst (dest_const (fst (strip_comb t))) = "COND"
+    with Failure _ -> false in
+  (* what the memory holds for a byte array *)
+  let byte_array =
+    FIRST_ASSUM (fun mr -> FIRST_ASSUM (fun lk ->
+      FIRST_ASSUM (fun gd ->
+        STRIP_ASSUME_TAC (MATCH_MP memory_rel_ByteArray_IMP
+          (CONJ mr (CONJ lk gd)))))) in
+  (* the header of each, shifted down, is the length plus the word
+     size, whichever the word size is *)
+  let header =
+    REPEAT (FIRST_X_ASSUM (fun cd ->
+      if not (a_cond (concl cd)) then fail() else
+      FIRST_ASSUM (fun gd ->
+        STRIP_ASSUME_TAC (MATCH_MP header_shift (CONJ gd cd))))) in
+  (* the loop of the comparison, at the number of bytes it reads *)
+  let loop_at k =
+    W(fun (asl,w) ->
+      let lp = find_term (fun t ->
+                 hd_is "word_str_cmp_loop" t &&
+                 length (snd (strip_comb t)) = 9)
+                 (snd (strip_exists w)) in
+      let g = snd (strip_comb lp) in
+      MP_TAC (ISPECL [k; el 0 g; el 1 g; el 2 g; el 3 g; el 5 g;
+                     el 6 g; el 7 g; el 8 g; var_by_name "vals1"
+                     (asl,w); var_by_name "vals2" (asl,w)]
+                word_str_loop_thm)) in
+  STRIP_TAC THEN byte_array THEN
+  FIRST_ASSUM (fun mr -> ASSUME_TAC (MATCH_MP memory_rel_tl mr)) THEN
+  byte_array THEN header THEN
+  (* the two words and the two addresses *)
+  W(fun (asl,w as gl) ->
+    let vs = fst (strip_exists w) in
+    let wof v = rand (rand (concl (the_asm (fun c ->
+                  try is_eq c && lhs c = v with Failure _ -> false)
+                  gl))) in
+    let aof wd = rand (rand (concl (the_asm (fun c ->
+                  try is_eq c && hd_is "get_real_addr" (lhs c) &&
+                      el 2 (snd (strip_comb (lhs c))) = wd
+                  with Failure _ -> false) gl))) in
+    let w1 = wof (var_by_name "v1" gl)
+    and w2 = wof (var_by_name "v2" gl) in
+    MAP_EVERY EXISTS_TAC
+      [w1; aof w1; w2; aof w2; el 4 vs; el 5 vs]) THEN
+  ASM_REWRITE_TAC[word_str_cmp_def] THEN
+  CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+  ASM_REWRITE_TAC[isWord_def; theWord_def] THEN
+  TRY SAFE_MATCH_REDUCE_TAC THEN
+  ASM_SIMP_TAC[val_n2w_lt; n2w_11_lt; min_shift] THEN
+  ASM_CASES_TAC `b:bool` THEN ASM_REWRITE_TAC[] THENL
+   [(* the fast comparison, and the two lengths are the same: the
+       loop runs over both strings *)
+    ASM_CASES_TAC
+      `LENGTH (vals1:word8 list) = LENGTH (vals2:word8 list)` THENL
+     [SUBGOAL_THEN
+        `~(~(LENGTH (vals1:word8 list) +
+             2 EXP backend_common_word_shift (:'a) =
+             LENGTH (vals2:word8 list) +
+             2 EXP backend_common_word_shift (:'a)))`
+        (fun th -> REWRITE_TAC[th]) THENL
+       [ASM_ARITH_TAC; ALL_TAC] THEN
+      loop_at `LENGTH (vals1:word8 list)` THEN
+      ANTS_TAC THENL
+       [REWRITE_TAC[GSYM WORD_ADD_ASSOC] THEN
+        REPEAT CONJ_TAC THEN
+        TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+        ASM_ARITH_TAC;
+        ALL_TAC] THEN
+      ASM_SIMP_TAC[len_plus; take_all; take_all_eq] THEN
+      DISCH_THEN SUBST1_TAC THEN
+      REWRITE_TAC[injectivity "option"] THEN
+      MATCH_MP_TAC find_diff_str_cmp_thm1 THEN ASM_REWRITE_TAC[];
+      (* and they are not: the longer string is the greater one,
+         and so is its word *)
+      SUBGOAL_THEN
+        `~(LENGTH (vals1:word8 list) +
+           2 EXP backend_common_word_shift (:'a) =
+           LENGTH (vals2:word8 list) +
+           2 EXP backend_common_word_shift (:'a))`
+        (fun th -> REWRITE_TAC[th]) THENL
+       [ASM_ARITH_TAC; ALL_TAC] THEN
+      MAP_EVERY EXISTS_TAC
+        [`n2w (LENGTH (vals1:word8 list) +
+               2 EXP backend_common_word_shift (:'a)):'a word`;
+         `n2w (LENGTH (vals2:word8 list) +
+               2 EXP backend_common_word_shift (:'a)):'a word`] THEN
+      REWRITE_TAC[] THEN
+      ASM_SIMP_TAC[val_n2w_lt] THEN
+      CASES_ON_NAME "cmp" THEN
+      REWRITE_TAC[str_cmp_def] THEN MATCH_REDUCE_TAC THEN
+      REWRITE_TAC[fast_lt_def; fast_le_def; fast_gt_def;
+                  fast_ge_def; strlen_def; LENGTH_MAP;
+                  num_cmp_def; GT; GE] THEN
+      ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC];
+    (* the slow comparison: the loop runs to the shorter of the
+       two, and what is left is the second of the two lemmas *)
+    loop_at `MIN (LENGTH (vals1:word8 list))
+                 (LENGTH (vals2:word8 list))` THEN
+    ANTS_TAC THENL
+     [REWRITE_TAC[GSYM WORD_ADD_ASSOC] THEN
+      REPEAT CONJ_TAC THEN
+      TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+      ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    ASM_SIMP_TAC[len_plus] THEN
+    DISCH_THEN SUBST1_TAC THEN
+    REWRITE_TAC[injectivity "option"] THEN
+    MP_TAC (ISPECL [`0`; `vals1:word8 list`; `vals2:word8 list`;
+                   `LENGTH (vals1:word8 list) +
+                    2 EXP backend_common_word_shift (:'a)`;
+                   `LENGTH (vals2:word8 list) +
+                    2 EXP backend_common_word_shift (:'a)`]
+              find_diff_str_cmp_thm2) THEN
+    REWRITE_TAC[abbrev_def; ADD_CLAUSES] THEN
+    ANTS_TAC THENL
+     [ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+      DISCH_THEN ACCEPT_TAC]]));;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
