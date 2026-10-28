@@ -3642,3 +3642,94 @@ definition of the statement (here `make_gc_conf`) makes the main goal
 unmatchable afterwards.  `THENL [<the subgoal's proof>; ALL_TAC]` is
 the form to use whenever the proof of the side condition rewrites
 with anything the goal also mentions.
+
+## 71. A definition whose clauses overlap: invert it once
+
+Entry 43 says what a `match` definition costs a proof that takes its
+arguments apart: the match is reduced again in each of the cases, and
+`vb_eq_size` (five constructors against five, with a nested match on
+two lookups) is twenty-five of them.  Entry 43's remedy is the clause
+of each pair of constructors as a lemma.  There is a cheaper one when
+what the proof needs is not *the value* of the function but *what a
+value of it can be*: one inversion lemma per function.
+
+```
+let vb_eq_size_cases = prove
+ (`!refs v1 v2 n b.
+     vb_eq_size refs v1 v2 = SOME (n,b)
+     ==> n = 1 \/
+         (?ts1 t1 l1 ts2 t2 l2 m.
+            v1 = Block ts1 t1 l1 /\ v2 = Block ts2 t2 l2 /\
+            vb_eq_size_list refs l1 l2 = SOME (m,b) /\ n = m + 1)`,
+  ...)
+```
+
+Twenty-five cases are paid **once**, inside the lemma, and the two
+theorems about the function are then three lines each: the complete
+induction of entry 44, `MATCH_MP` of the inversion lemma on the
+assumption, and arithmetic at the leaves.  Measured: the block of six
+lemmas is 0.9 seconds and the two theorems 1.6, where the old round's
+proofs -- the same statements, reduced per case -- were tens of
+minutes.
+
+What the inversion lemma's own proof wants:
+
+- the case split of the two arguments (`CASES_ON_TAC`), the
+  definition unfolded in the **antecedent only** (entry 72), the
+  conditions decided (`REPEAT COND_CASES_TAC`) and the nested
+  matches split (`EVERY_CASE_TAC`);
+- `UNWIND_THM1`/`UNWIND_THM2` beside `injectivity`, `distinctness`
+  and `PAIR_EQ` in the rewrite list: they are what turns
+  `?n. 1 = n /\ P` into `P`, so no branch needs a `MESON_TAC`;
+- the witnesses of the one branch that has a conclusion, read off
+  the goal's own conjuncts (`conjuncts (snd (strip_exists w))`) and
+  the equation the split left among the assumptions;
+- a `TRY` around the witness step, because a branch that the split
+  settled on its own is already past it.
+
+## 72. Unfolding a definition in the antecedent only
+
+`ONCE_REWRITE_TAC[f_def]` on a goal
+
+```
+f refs v1 v2 = SOME (n,b) ==> ... f_list refs l1 l2 = SOME (m,b) ...
+```
+
+unfolds **both** occurrences: `ONCE_DEPTH_CONV` takes the topmost
+instance of *each* disjoint branch of the term, and the two sides of
+an implication are two branches.  The conclusion then holds the whole
+case tree of the definition -- which is what the lemma was written to
+avoid -- and a goal that was two lines prints as fifty.
+
+```
+GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [f_def] THEN
+CONV_TAC (LAND_CONV (REDEPTH_CONV safe_match_conv))
+```
+
+is the form: the antecedent is unfolded and reduced, the conclusion
+is untouched.  `MATCH_REDUCE_TAC` is not the reducer to use here --
+it is `MATCH_CONV` under a traversal, and on a match whose scrutinee
+the patterns cannot decide `MATCH_CONV` does not fail but returns an
+`@x. ...` term, after which the goal is lost (entry 42's epsilon
+goals, fifty lines of `GEN%PVAR` in the report).
+`safe_match_conv` refuses exactly those.
+
+## 73. The failure report follows the first goal only
+
+`bp`/`bt` of `tools/bh.ml` replay the tactic a step at a time to say
+which step broke.  The replay is `e tac`, which applies to the
+**first** goal of the stack, so from the first branching step on it is
+no longer the proof that ran: a state it prints may be one the real
+proof had already closed, and the step it blames may be a step that
+in the real proof never saw that goal.  The symptom is a report whose
+goal cannot possibly fail (`n = x + 1` with `x + 1 = n` among its
+assumptions).
+
+What to do when a report looks impossible: make every step of the
+tactic **total** -- a `TRY` around each step that can fail on a
+branch it does not belong to -- and run it again.  `prove` then fails
+with `TAC_PROOF: Unsolved goals` instead of an exception, and `bp`
+prints the goals that are **really** left, with their assumptions
+(`b_asm := true`).  That is the state to read.  Once the proof is
+right, the `TRY`s that turned out to be needed are the ones that say
+where a branch closes early, and the rest come out.

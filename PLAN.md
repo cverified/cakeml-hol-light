@@ -1845,3 +1845,37 @@ touched yet.  `gen_gc_partial_thm` (129 lines) is the one big proof
 whose pieces are all in the port already -- its `heap_gen_ok heap
 cc` alone is thirty lines of HOL4 about `heap_split` and
 `heap_segment`.
+
+## The two theorems of entry 43, and what made them cheap
+
+`vb_eq_size_IMP_vb_size` and `do_eq_IFF_vb_eq_size` were the two
+whose proofs were "written and too slow": the definition of
+`vb_eq_size` is the one `match` that HOL4 means, so a proof that
+takes two values apart reduces that match in each of twenty-five
+cases.  The round that landed them did not write the clause of each
+pair of constructors (entry 43's remedy, nine lemmas) but **one
+inversion lemma per function** (entry 71): what a `SOME` of
+`vb_eq_size` can be, and what a `SOME` of `vb_eq_size_list` can be.
+The twenty-five cases are paid once, inside the lemma.
+
+The two theorems are then the complete induction on the size of the
+value (entry 44) with those two lemmas and arithmetic.  Measured in
+the session: the block of six lemmas 0.9 seconds, the two theorems
+0.2 and 1.3.  Two theorems that the file already proved *from*
+`do_eq_IFF_vb_eq_size` (`do_eq_IMP_vb_eq_size`,
+`vb_eq_size_IMP_do_eq`) no longer rest on a cheat.
+
+Two traps cost a round each and are in the guide: a definition
+unfolded with `ONCE_REWRITE_TAC` reaches the **conclusion** as well
+as the antecedent (entry 72), and the failure report of
+`tools/bh.ml` follows the first goal only, so a report that looks
+impossible means the tactic has to be made total and run again
+(entry 73).
+
+So the file is at 78 attempts, and of the "shortest remaining" table
+the first two rows are gone.  What is next, in order: `word_eq`'s own
+two (`word_eq_LESS_EQ`, `word_eq_add_clock`), the same shape with the
+budget `l` as the measure -- `fix_clock_IMP` bounds the inner
+comparison for the first, and `fix_clock_word_eq` (which the file
+proves from the first) removes the `fix_clock` altogether for the
+second; then `gen_gc_partial_thm`; then the word level.
