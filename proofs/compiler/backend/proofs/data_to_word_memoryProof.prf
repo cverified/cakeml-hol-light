@@ -31767,18 +31767,281 @@
       gl)) THEN
   ARITH_TAC)
 ### memory_rel_depth_size_limit
-  (* the attempt: the proof of the source names vb_size_def,
-     NULL_EQ, memory_rel_Block_IMP, dimword, good_dimindex_def,
-     MAX_LIST.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[vb_size_def; NULL_EQ; memory_rel_Block_IMP;
-       dimword; good_dimindex_def; MAX_LIST] THEN
-     TRY ASM_ARITH_TAC))
+(* the size of a value is below the word size to its depth and
+   one, by the induction of the values.  A value that is no Block
+   has size one and depth nought, an empty Block is its tag, which
+   a sixteenth of the word holds (memory_rel_Block_IMP), and a
+   Block with elements has its tag, its length and the sizes of
+   its elements: each element is one that the memory holds in
+   front of the Block (memory_rel_Block_MEM), so the induction
+   hypothesis bounds its size by the word size to its own depth,
+   and the greatest of those bounds is the word size to the
+   greatest depth (MAX_LIST_MAP of the power, which grows with the
+   depth).  The sum of the sizes is then below the length times
+   that bound (MAX_LIST_sum_bound), and the tag and the length are
+   each below a sixteenth of the word (v_inv_Block_tag_limit and
+   the header's length), which is what the arithmetic of the step
+   asks for *)
+  ((let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+  (* the induction of the values, with the hypothesis of a Block
+     over its list *)
+  let v_ind = prove
+   (`!P. (!i. P (Number i)) /\ (!w. P (Word64 w)) /\
+         (!ts t l. ALL P l ==> P (Block ts t l)) /\
+         (!n. P (CodePtr n)) /\ (!b n. P (RefPtr b n)) ==>
+         (!v. P (v:dataSem_v))`,
+    GEN_TAC THEN DISCH_TAC THEN
+    MP_TAC (ISPECL [`P:dataSem_v->bool`;
+                    `ALL (P:dataSem_v->bool)`] dataSem_v_INDUCT) THEN
+    ASM_REWRITE_TAC[ALL] THEN
+    DISCH_THEN (ACCEPT_TAC o CONJUNCT1)) in
+  (* HOL4's SUM is ITLIST (+) l 0 in the port (ml/lib/hol4.ml), so
+     its clauses come first *)
+  let sum_cl = prove
+   (`SUM [] = 0 /\ (!h t. SUM (CONS h t) = h + SUM t)`,
+    REWRITE_TAC[SUM_DEF; ITLIST]) in
+  (* a word of the machine has room for sixteen, and for one to
+     any power of itself *)
+  let dwpos = prove
+   (`good_dimindex (:'a) ==> 16 <= dimword (:'a)`,
+    REWRITE_TAC[good_dimindex_def; dimword] THEN
+    DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+    CONV_TAC NUM_REDUCE_CONV) in
+  let one_le = prove
+   (`!n. 1 <= dimword (:'a) EXP n`,
+    INDUCT_TAC THEN REWRITE_TAC[EXP; LE_REFL] THEN
+    MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `1 * 1` THEN
+    CONJ_TAC THENL
+     [REWRITE_TAC[MULT_CLAUSES; LE_REFL];
+      MATCH_MP_TAC LE_MULT2 THEN ASM_REWRITE_TAC[] THEN
+      REWRITE_TAC[dimword; ARITH_RULE `1 <= n <=> ~(n = 0)`;
+                  EXP_EQ_0] THEN ARITH_TAC]) in
+  (* the power of the word size grows with the depth *)
+  let mono_exp = prove
+   (`good_dimindex (:'a)
+     ==> !x y. x < y ==> dimword (:'a) EXP (x + 1) <
+                         dimword (:'a) EXP (y + 1)`,
+    DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[LT_EXP] THEN
+    FIRST_ASSUM (fun gd -> MP_TAC (MATCH_MP dwpos gd)) THEN
+    ASM_ARITH_TAC) in
+  (* and a sixteenth of it is what the header of a Block leaves *)
+  let dwdiv = prove
+   (`good_dimindex (:'a)
+     ==> dimword (:'a) DIV 16 = 2 EXP (dimindex (:'a) - 4)`,
+    REWRITE_TAC[good_dimindex_def; dimword] THEN
+    DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+    CONV_TAC NUM_REDUCE_CONV) in
+  let exp_split = prove
+   (`!m. dimword (:'a) EXP ((1 + m) + 1) =
+         dimword (:'a) * dimword (:'a) EXP (m + 1)`,
+    GEN_TAC THEN REWRITE_TAC[EXP_ADD; EXP_1] THEN
+    REWRITE_TAC[MULT_AC]) in
+  (* two lists that a map of each element gives are related when
+     the elements are, and the head of a related list is *)
+  let all2_map = prove
+   (`!(f:A->num) g l. (!x. MEM x l ==> f x <= g x)
+        ==> ALL2 (<=) (MAP f l) (MAP g l)`,
+    REPEAT GEN_TAC THEN SPEC_TAC (`l:(A)list`,`l:(A)list`) THEN
+    LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALL2; MEM] THEN
+    ASM_MESON_TAC[]) in
+  let all2_hd = prove
+   (`!P x xs ys. ALL2 (P:A->B->bool) (CONS x xs) ys ==> ?y. P x y`,
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC (ISPEC `ys:(B)list` list_CASES) THEN
+    REWRITE_TAC[ALL2] THEN MESON_TAC[]) in
+  let map_dep = prove
+   (`!l. MAP (\x. dimword (:'a) EXP (v_depth x + 1)) l =
+         MAP (\y. dimword (:'a) EXP (y + 1)) (MAP v_depth l)`,
+    LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP]) in
+  (* so the greatest size of an element is below the word size to
+     the greatest depth of one (MAX_LIST_MAP of the power, which
+     grows) *)
+  let max_bound = prove
+   (cake_as_vars (fun () ->
+      `good_dimindex (:'a) /\ ~(l = []) /\
+       (!e. MEM e l
+            ==> vb_size e <= dimword (:'a) EXP (v_depth e + 1))
+       ==> MAX_LIST (MAP vb_size l) <=
+           dimword (:'a) EXP (MAX_LIST (MAP v_depth l) + 1)`),
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "gd")
+      (CONJUNCTS_THEN2 (LABEL_TAC "nn") (LABEL_TAC "eb"))) THEN
+    MATCH_MP_TAC LE_TRANS THEN
+    EXISTS_TAC `MAX_LIST (MAP (\x. dimword (:'a) EXP
+                  (v_depth x + 1)) l)` THEN
+    CONJ_TAC THENL
+     [MATCH_MP_TAC MAX_LIST_bounded_elements THEN
+      MATCH_MP_TAC all2_map THEN
+      CONV_TAC (TOP_DEPTH_CONV BETA_CONV) THEN
+      USE_THEN "eb" MATCH_ACCEPT_TAC;
+      REWRITE_TAC[map_dep] THEN
+      USE_THEN "gd" (fun gd ->
+        let mono = MATCH_MP mono_exp gd in
+        MP_TAC (BETA_RULE (MP (BETA_RULE (SPECL
+          [`\y. dimword (:'a) EXP (y + 1)`;
+           `MAP v_depth (l:(dataSem_v)list)`] MAX_LIST_MAP))
+          mono))) THEN
+      USE_THEN "nn" (fun nn ->
+        ASM_REWRITE_TAC[NULL_EQ; MAP_EQ_NIL]) THEN
+      DISCH_THEN (fun th -> REWRITE_TAC[th; LE_REFL])]) in
+  (* and each element of a Block is one that the memory holds in
+     front of it (memory_rel_Block_MEM), so the induction
+     hypothesis bounds its size *)
+  let elem_bound = prove
+   (cake_as_vars (fun () ->
+      `ALL (\e. !w vars'.
+              memory_rel c be ts refs sp st m dm ((e,(w:'a
+                word_loc)) :: vars') /\ good_dimindex (:'a)
+              ==> vb_size e <= dimword (:'a) EXP (v_depth e + 1))
+         l /\
+       memory_rel c be ts refs sp st m dm ((Block ts' t l,(w:'a
+         word_loc)) :: vars') /\
+       good_dimindex (:'a)
+       ==> !e. MEM e l
+               ==> vb_size e <= dimword (:'a) EXP (v_depth e + 1)`),
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "ih")
+      (CONJUNCTS_THEN2 (LABEL_TAC "mr") (LABEL_TAC "gd"))) THEN
+    X_GEN_TAC `e:dataSem_v` THEN DISCH_TAC THEN
+    FIRST_ASSUM (fun mm ->
+      if not (try hd_is "MEM" (concl mm) with Failure _ -> false)
+      then fail() else
+      MP_TAC (REWRITE_RULE[MEM_EXISTS_EL] mm)) THEN
+    DISCH_THEN (X_CHOOSE_THEN `i:num` STRIP_ASSUME_TAC) THEN
+    USE_THEN "mr" (fun mr -> USE_THEN "gd" (fun gd ->
+      FIRST_ASSUM (fun lt ->
+        if not (try hd_is "<" (concl lt) &&
+                    hd_is "LENGTH" (rand (concl lt))
+                with Failure _ -> false) then fail() else
+        STRIP_ASSUME_TAC (MATCH_MP (GEN_ALL memory_rel_Block_MEM)
+          (CONJ mr (CONJ lt gd)))))) THEN
+    FIRST_ASSUM (fun eq ->
+      if not (try is_eq (concl eq) && hd_is "EL" (rhs (concl eq))
+              with Failure _ -> false) then fail() else
+      RULE_ASSUM_TRY (REWRITE_RULE[GSYM eq])) THEN
+    USE_THEN "ih" (fun ih ->
+      FIRST_ASSUM (fun mm ->
+        if not (try hd_is "MEM" (concl mm)
+                with Failure _ -> false) then fail() else
+        USE_THEN "gd" (fun gd ->
+          FIRST_ASSUM (fun mr2 ->
+            if not (hd_is "memory_rel" (concl mr2)) then fail() else
+            MATCH_ACCEPT_TAC (MATCH_MP (BETA_RULE (MATCH_MP
+              (REWRITE_RULE[GSYM ALL_MEM] ih) mm))
+              (CONJ mr2 gd))))))) in
+  (* the arithmetic of the step: the sizes of the elements and the
+     tag and the length of the Block all fit *)
+  let arith_core = prove
+   (`!d t l s sz.
+       1 <= sz /\ 16 <= d /\ t < d DIV 16 /\ l < d DIV 16 /\
+       s <= l * sz ==> 1 + t + s + l <= d * sz`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `1 + t + s + l = (1 + t + l) + s` SUBST1_TAC THENL
+     [ARITH_TAC; ALL_TAC] THEN
+    MATCH_MP_TAC LE_TRANS THEN
+    EXISTS_TAC `(d DIV 8) * sz + l * sz` THEN CONJ_TAC THENL
+     [MATCH_MP_TAC LE_ADD2 THEN CONJ_TAC THENL
+       [MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `(d DIV 8) * 1` THEN
+        CONJ_TAC THENL
+         [REWRITE_TAC[MULT_CLAUSES] THEN ASM_ARITH_TAC;
+          MATCH_MP_TAC LE_MULT2 THEN ASM_REWRITE_TAC[LE_REFL]];
+        FIRST_ASSUM ACCEPT_TAC];
+      REWRITE_TAC[GSYM RIGHT_ADD_DISTRIB] THEN
+      MATCH_MP_TAC LE_MULT2 THEN REWRITE_TAC[LE_REFL] THEN
+      ASM_ARITH_TAC]) in
+  let unfold =
+    ONCE_REWRITE_TAC[vb_size_def; v_depth_def] THEN
+    MATCH_REDUCE_TAC in
+  (* a value that is no Block has size one and depth nought *)
+  let nb =
+    REPEAT GEN_TAC THEN STRIP_TAC THEN unfold THEN
+    REWRITE_TAC[ADD_CLAUSES] THEN MATCH_ACCEPT_TAC one_le in
+  W(fun (asl,gl) ->
+    let v,bod = dest_forall gl in
+    MATCH_MP_TAC (CONV_RULE (TOP_DEPTH_CONV BETA_CONV)
+                    (ISPEC (mk_abs (v,bod)) v_ind))) THEN
+  REPEAT CONJ_TAC THENL
+   [nb; nb;
+    REPEAT GEN_TAC THEN DISCH_THEN (LABEL_TAC "ih") THEN
+    REPEAT GEN_TAC THEN
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "mr")
+      (LABEL_TAC "gd")) THEN
+    unfold THEN
+    ASM_CASES_TAC `l:(dataSem_v) list = []` THENL
+     [(* the empty Block is its tag and the two words of its
+         header *)
+      ASM_REWRITE_TAC[MAP; sum_cl; LENGTH; NULL; MAX_LIST;
+                      ADD_CLAUSES; EXP_1] THEN
+      USE_THEN "mr" (fun mr -> USE_THEN "gd" (fun gd ->
+        FIRST_ASSUM (fun nl ->
+          if not (is_eq (concl nl)) then fail() else
+          STRIP_ASSUME_TAC (REWRITE_RULE[nl]
+            (MATCH_MP memory_rel_Block_IMP (CONJ mr gd)))))) THEN
+      ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    (* the length of a Block and its tag fit in a sixteenth of the
+       word *)
+    USE_THEN "mr" (fun mr -> USE_THEN "gd" (fun gd ->
+      FIRST_ASSUM (fun nl ->
+        if not (is_neg (concl nl)) then fail() else
+        STRIP_ASSUME_TAC (REWRITE_RULE[nl]
+          (MATCH_MP memory_rel_Block_IMP (CONJ mr gd)))))) THEN
+    USE_THEN "mr" (fun mr ->
+      STRIP_ASSUME_TAC (REWRITE_RULE[memory_rel_def;
+        word_ml_inv_def; abs_ml_inv_def; bc_stack_ref_inv_def;
+        MAP; FST] mr)) THEN
+    FIRST_ASSUM (fun a2 ->
+      if not (hd_is "ALL2" (concl a2)) then fail() else
+      MP_TAC (BETA_RULE (MATCH_MP all2_hd a2))) THEN
+    DISCH_THEN (CHOOSE_THEN ASSUME_TAC) THEN
+    FIRST_ASSUM (fun vi ->
+      if not (hd_is "v_inv" (concl vi)) then fail() else
+      FIRST_ASSUM (fun hm ->
+        if not (hd_is "heap_in_memory_store" (concl hm))
+        then fail() else
+        ASSUME_TAC (MATCH_MP v_inv_Block_tag_limit
+          (CONJ vi hm)))) THEN
+    (* the greatest size of an element *)
+    USE_THEN "ih" (fun ih ->
+      USE_THEN "mr" (fun mr ->
+        USE_THEN "gd" (fun gd ->
+          FIRST_ASSUM (fun nn ->
+            if not (is_neg (concl nn)) then fail() else
+            let eb = MATCH_MP elem_bound (CONJ ih (CONJ mr gd)) in
+            ASSUME_TAC (MATCH_MP max_bound
+              (CONJ gd (CONJ nn eb))))))) THEN
+    (* so the sum of the sizes is below the length times it *)
+    SUBGOAL_THEN
+      `SUM (MAP vb_size (l:(dataSem_v)list)) <= LENGTH l *
+         dimword (:'a) EXP (MAX_LIST (MAP v_depth l) + 1)`
+      ASSUME_TAC THENL
+     [MATCH_MP_TAC LE_TRANS THEN
+      EXISTS_TAC `MAX_LIST (MAP vb_size (l:(dataSem_v)list)) *
+                  LENGTH (l:(dataSem_v)list)` THEN
+      CONJ_TAC THENL
+       [MP_TAC (INST [`MAP vb_size (l:(dataSem_v)list)`,
+                      mk_var("ls",`:(num)list`)]
+                  MAX_LIST_sum_bound) THEN
+        REWRITE_TAC[LENGTH_MAP];
+        ONCE_REWRITE_TAC[SPECL
+          [`MAX_LIST (MAP vb_size (l:(dataSem_v)list))`;
+           `LENGTH (l:(dataSem_v)list)`] MULT_SYM] THEN
+        MATCH_MP_TAC LE_MULT2 THEN
+        ASM_REWRITE_TAC[LE_REFL]];
+      ALL_TAC] THEN
+    (* and what is left is the arithmetic *)
+    ASM_REWRITE_TAC[NULL_EQ] THEN
+    REWRITE_TAC[exp_split] THEN
+    MATCH_MP_TAC arith_core THEN REPEAT CONJ_TAC THENL
+     [MATCH_ACCEPT_TAC one_le;
+      USE_THEN "gd" (fun gd ->
+        MATCH_ACCEPT_TAC (MATCH_MP dwpos gd));
+      FIRST_ASSUM MATCH_ACCEPT_TAC;
+      USE_THEN "gd" (fun gd -> REWRITE_TAC[MATCH_MP dwdiv gd]) THEN
+      FIRST_ASSUM MATCH_ACCEPT_TAC;
+      FIRST_ASSUM MATCH_ACCEPT_TAC];
+    nb; nb]))
 ### vb_eq_size_IMP_vb_size
   (* the complete induction on the size of the value that the
      definition recurses on (PORTING-GUIDE.md entry 44), with
