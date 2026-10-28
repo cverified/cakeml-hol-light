@@ -30412,7 +30412,7 @@ let word_eq_LESS_EQ = prove
             (hd_is "word_eq" (lhand (concl eq)) ||
              hd_is "word_eq_list" (lhand (concl eq)))) then fail()
     else MP_TAC (ONCE_REWRITE_RULE[word_eq_def] eq)) THEN
-  we_tree THEN
+  we_tree we_close THEN
   (* the leaf that counts down by the length it read *)
   TRY (SOLVED (STRIP_TAC THEN ARITH_ASM_TAC)) THEN
   (* the inner comparison of a list, whose budget and clock the
