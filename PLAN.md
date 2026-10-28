@@ -1789,3 +1789,36 @@ So the file is at 82 cheats, and what the layers look like now:
   many as cheats);
 - the word level (`memory_rel_*`, about thirty of them): nothing of
   it yet, and `ml/lib/set_sep.ml` is where it would start.
+
+## The collection, two of its three
+
+`full_gc_thm` and `gen_gc_thm` are in, and they are one proof twice:
+what the collection leaves is what its two theorems of the GC
+theory say (`full_gc_related`/`full_gc_ok`,
+`gen_gc_related`/`gen_gc_ok`, all four still cheats of
+`ml/compiler/backend/gc/`), the two say it of one collection so its
+value is one, and then
+
+- the heap it wrote holds data up to the space that is left, which
+  is the expansion (`data_up_to_APPEND`, `heap_lookup_APPEND`);
+- the stack and the references go over with
+  `bc_stack_ref_inv_related`, where the inlining its relation
+  allows is the identity one (`all2_refl` of `gc_inline_rel` and of
+  `gc_heap_inline_rel`) and what is left is
+  `gc_related_roots_heap`, whose third condition is that a pointer
+  of the roots is an address they reach;
+- the heap is reachable from the roots it returned
+  (`IMP_all_reachable_from_roots`).
+
+`gen_gc_thm` adds the kind of the collection: the generations that
+`reset_gens` makes all start where the first heap ends
+(`gen_state_ok_reset`) and the split at the end of the space has
+the data below it and the references above
+(`gen_gc_data_refs_split`, `heap_split_length`,
+`heap_expand_not_isRef`).
+
+So `gen_gc_partial_thm` is the one of the three that is left, and
+it is the same shape again with the old heap in front (its state
+has `old`, and the split is at the start of the generation rather
+than at the end of the first heap).  129 lines of HOL4, the longest
+of the three.

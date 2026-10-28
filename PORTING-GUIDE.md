@@ -3598,3 +3598,47 @@ about `Thunk NotEvaluated vv` does not apply to it.  `CASES_ON_TAC md`
 the goal *and* the assumptions get the constructor.  Use it whenever
 the case is to be used on an assumption, which in a proof about
 `bc_ref_inv` or `v_inv` is almost always.
+
+## 69. MATCH_MP of a statement with free variables needs GEN_ALL too
+
+`MATCH_MP` instantiates the leading quantifiers of a theorem, and
+nothing else: of
+
+```
+gen_gc_data_refs_split:
+  !cc roots heap. gen_gc cc (roots,heap) = (roots1,s) /\ ... ==> ...
+```
+
+the `roots1` and the `s` are **free**, so `MATCH_MP
+gen_gc_data_refs_split eq` asks the equation to have exactly those
+two names in it and says `No match` otherwise.  `MATCH_MP (GEN_ALL
+gen_gc_data_refs_split) eq` works, and that is why HOL4's proof
+writes `old_drule (GEN_ALL gen_gc_data_refs_split)`: HOL4's `drule`
+does the `GEN_ALL` itself.  The same holds of `gen_state_ok_reset`
+and of any lemma whose statement was written with free names (which
+in this port is most of them).
+
+The other side of it: once the hypotheses are supplied, a quantifier
+of a variable they do **not** fix is still there, so
+`MATCH_MP (GEN_ALL gen_state_ok_reset) ho` has the shape
+`!conf. gen_state_ok ...`.  Reading `el 1 (snd (strip_comb (concl
+th)))` off that gives the body of the quantifier, not the second
+argument -- `Failure "hd"` -- so the `SPEC_ALL` belongs there:
+
+```
+let th = SPEC_ALL (MATCH_MP (GEN_ALL gen_state_ok_reset) ho) in
+```
+
+## 70. A SUBGOAL_THEN whose rewrite is for the subgoal alone
+
+```
+SUBGOAL_THEN tm (fun ir -> STRIP_ASSUME_TAC (MATCH_MP lemma ir)) THEN
+REWRITE_TAC[make_gc_conf_def]
+```
+
+rewrites the **main** goal as well as the new subgoal, because `THEN`
+applies to every goal that is left -- and a rewrite that unfolds a
+definition of the statement (here `make_gc_conf`) makes the main goal
+unmatchable afterwards.  `THENL [<the subgoal's proof>; ALL_TAC]` is
+the form to use whenever the proof of the side condition rewrites
+with anything the goal also mentions.
