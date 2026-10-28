@@ -2054,3 +2054,67 @@ which element of the heap they are about:
 - and `memory_rel_Number_bignum_IMP_ALT` and the two
   `memory_rel_..._const_test` ones put a `Bignum` in place of the
   `Word64Rep`.
+
+## What the next theorem of the file needs
+
+`memory_rel_elements_list_distinct_lemma` is the cheapest of the
+sixty-six that are left, and its proof is HOL4's: by contradiction,
+`not_all_distinct_map_snd` gives two pairs of the stack with the
+same word, `elements_list_all_blocks` says the values are blocks
+and sorted by `vb_size`, so the first of the two is the smaller,
+and `memory_rel_Block_ptr_eq` says two blocks with the same word
+are the same block -- which it is not.
+
+What the port has to add for it is the little that HOL4 gets from
+`SORTED_APPEND`, and these four are written and proved (they are
+not in `ml/` yet because nothing uses them there until the proof
+lands):
+
+```
+let sorted_tl = prove
+ (`!R x l. SORTED R (CONS x l) ==> SORTED R l`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[SORTED_DEF] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]);;
+
+let sorted_drop = prove
+ (`!R l1 l2. SORTED R (l1 ++ l2) ==> SORTED R l2`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
+  REWRITE_TAC[APPEND] THEN
+  TRY (DISCH_THEN ACCEPT_TAC) THEN
+  DISCH_THEN (fun th ->
+    FIRST_ASSUM (fun ih ->
+      ACCEPT_TAC (MATCH_MP ih (MATCH_MP sorted_tl th)))));;
+
+let sorted_head = prove
+ (`!R l x y. (!a b c. R a b /\ R b c ==> R a c) /\
+             SORTED R (CONS x l) /\ MEM y l ==> R x y`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+  REWRITE_TAC[MEM; SORTED_DEF] THEN REPEAT STRIP_TAC THENL
+   [ASM_REWRITE_TAC[];
+    FIRST_ASSUM (fun tr ->
+      if length (fst (strip_forall (concl tr))) = 3
+      then MATCH_MP_TAC tr else fail()) THEN
+    W(fun gl -> EXISTS_TAC (var_by_name "h" gl)) THEN
+    ASM_REWRITE_TAC[] THEN
+    FIRST_ASSUM (fun ih ->
+      if length (fst (strip_forall (concl ih))) = 2
+      then MATCH_MP_TAC ih else fail()) THEN
+    ASM_REWRITE_TAC[]]);;
+
+let sorted_pair = prove
+ (`!R l1 l2 l3 u v.
+     (!a b c. R a b /\ R b c ==> R a c) /\
+     SORTED R (l1 ++ [u] ++ l2 ++ [v] ++ l3) ==> R u v`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MATCH_MP_TAC sorted_head THEN
+  FIRST_ASSUM (fun s ->
+    if (try fst (dest_const (fst (strip_comb (concl s)))) =
+            "SORTED"
+        with Failure _ -> false)
+    then EXISTS_TAC (rand (rand (rand (concl s)))) else fail()) THEN
+  REPEAT CONJ_TAC THENL
+   [FIRST_ASSUM ACCEPT_TAC;
+    FIRST_ASSUM (fun s -> MP_TAC (MATCH_MP sorted_drop s)) THEN
+    REWRITE_TAC[APPEND] THEN DISCH_THEN ACCEPT_TAC;
+    REWRITE_TAC[MEM_APPEND; MEM]]);;
+```
