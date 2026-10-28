@@ -2330,19 +2330,152 @@ let data_to_word_memoryProof_full_gc_thm = prove
         all_reachable_from_roots roots2 (heap2 ++ heap_expand
           (limit - a2)) /\
         EVERY isDataElement heap2)`),
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     full_gc_related, heap_length_def, full_gc_LENGTH,
-     unused_space_inv_def, heap_expand_def.  What is here rewrites
-     with them and closes by arithmetic, and the cheat is behind it
-     until the proof is written.  A MESON over them is what the next
-     round adds; it costs a load ten minutes to have it in every
-     attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; full_gc_related;
-       heap_length_def; full_gc_LENGTH; unused_space_inv_def;
-       heap_expand_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* what the collection leaves is what full_gc_related,
+     full_gc_LENGTH and full_gc_ok say of it, and the three say it
+     of one collection, so its value is one.  The heap it wrote
+     holds data up to the space that is left, which is the
+     expansion at its end; the stack and the references go over
+     with bc_stack_ref_inv_related, where the inlining that its
+     relation allows is the identity one and what is left is that
+     the collection relates the roots and the heap; and the heap is
+     reachable from the roots it returned
+     (IMP_all_reachable_from_roots), because a pointer of the roots
+     is an address that they reach *)
+  ((* the values of a list are related to themselves by a reflexive
+      relation *)
+   let all2_refl = prove
+    (`!(R:A->A->bool) l. (!x. R x x) ==> ALL2 R l l`,
+     GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_SIMP_TAC[ALL2]) in
+   STRIP_TAC THEN SPLIT_ASM_TAC THEN
+   (* what the invariant says of the stack *)
+   FIRST_ASSUM (fun inv ->
+     if not (hd_is "abs_ml_inv" (concl inv)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def] inv)) THEN
+   (* what the collection leaves: the heap it wrote, the map of the
+      addresses it moved, and that both are good *)
+   W(fun gl ->
+     let ro = the_asm (hd_is "roots_ok") gl in
+     let ho = the_asm (hd_is "heap_ok") gl in
+     STRIP_ASSUME_TAC (MATCH_MP full_gc_related (CONJ ro ho)) THEN
+     STRIP_ASSUME_TAC (MATCH_MP full_gc_LENGTH (CONJ ro ho)) THEN
+     STRIP_ASSUME_TAC (MATCH_MP full_gc_ok (CONJ ro ho))) THEN
+   (* the three say it of one collection, so its value is one *)
+   W(fun gl ->
+     let eqs = mapfilter (fun (_,th) ->
+                 let c = concl th in
+                 if is_eq c && hd_is "full_gc" (lhand c)
+                 then th else fail()) (fst gl) in
+     let e0 = hd eqs in
+     MAP_EVERY (fun e ->
+       if e = e0 then ALL_TAC else
+       STRIP_ASSUME_TAC (REWRITE_RULE[e0; PAIR_EQ] e)) (tl eqs)) THEN
+   REPEAT (FIRST_X_ASSUM (fun th ->
+     let c = concl th in
+     if is_eq c && is_var (lhand c) then SUBST_ALL_TAC th
+     else if is_eq c && is_var (rand c) then SUBST_ALL_TAC (SYM th)
+     else fail())) THEN
+   (* the witnesses: what the collection returned *)
+   W(fun gl ->
+     let e0 = the_asm (fun c -> is_eq c &&
+                hd_is "full_gc" (lhand c)) gl in
+     let ps = tparts (rand (concl e0)) in
+     MAP_EVERY EXISTS_TAC [el 0 ps; el 1 ps; el 2 ps]) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* the length of the heap it wrote is the length of what the
+      roots reach *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let hl = the_asm (fun c -> is_eq c &&
+                       hd_is "heap_length" (lhand c) &&
+                       hd_is "heap_length" (rand c)) gl in
+            let fd = the_asm (fun c -> is_eq c &&
+                       hd_is "FDOM" (lhand c)) gl in
+            ACCEPT_TAC (SYM (REWRITE_RULE[fd] hl))))) THEN
+   (* the heap it wrote is reachable from the roots it returned *)
+   TRY (SOLVED
+         (MATCH_MP_TAC (GEN_ALL IMP_all_reachable_from_roots) THEN
+          W(fun gl ->
+            let fd = the_asm (fun c -> is_eq c &&
+                       hd_is "FDOM" (lhand c)) gl in
+            EXISTS_TAC (el 1 (snd (strip_comb
+              (rand (concl fd)))))) THEN
+          ASM_REWRITE_TAC[gc_related_APPEND_heap_expand;
+                          isSomeDataElement_heap_lookup])) THEN
+   (* and the invariant of the heap it wrote *)
+   REWRITE_TAC[abs_ml_inv_def] THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* the kind of the collection says only that the second part of
+      the space is empty, and it is *)
+   TRY (SOLVED
+         (REWRITE_TAC[gc_kind_inv_def] THEN
+          ASM_REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+          REWRITE_TAC[])) THEN
+   (* the space that is left is the expansion at the end of the
+      heap, and the heap holds data up to it *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let dl = the_asm (fun c -> hd_is "ALL" c &&
+                       hd_is "isDataElement"
+                         (el 0 (snd (strip_comb c)))) gl in
+            REWRITE_TAC[unused_space_inv_def; ADD_CLAUSES] THEN
+            REPEAT CONJ_TAC THEN
+            TRY (SOLVED
+                  (DISCH_TAC THEN
+                   REWRITE_TAC[heap_lookup_APPEND; LT_REFL;
+                               SUB_REFL; heap_expand_def] THEN
+                   ASM_REWRITE_TAC[heap_lookup_def])) THEN
+            TRY (SOLVED
+                  (REWRITE_TAC[heap_length_APPEND;
+                               heap_length_heap_expand] THEN
+                   ASM_ARITH_TAC)) THEN
+            REWRITE_TAC[data_up_to_APPEND] THEN
+            ACCEPT_TAC dl))) THEN
+   (* the stack and the references: the inlining that the relation
+      of the collection allows is the identity one, so what is left
+      is that the collection relates the roots and the heap *)
+   MATCH_MP_TAC (GEN_ALL bc_stack_ref_inv_related) THEN
+   W(fun gl ->
+     let bsi = the_asm (hd_is "bc_stack_ref_inv") gl in
+     let ps = tparts (el 4 (snd (strip_comb (concl bsi)))) in
+     let gc = the_asm (hd_is "gc_related") gl in
+     let fm = el 0 (snd (strip_comb (concl gc))) in
+     MAP_EVERY EXISTS_TAC [fm; el 0 ps; el 1 ps]) THEN
+   CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   REWRITE_TAC[gc_inline_related_def; gc_inline_def;
+               gc_related_roots_heap_def] THEN
+   W(fun (asl,w) ->
+     let cs = conjuncts (snd (strip_exists w)) in
+     EXISTS_TAC (el 1 (snd (strip_comb (el 0 cs)))) THEN
+     EXISTS_TAC (el 1 (snd (strip_comb (el 1 cs))))) THEN
+   REPEAT CONJ_TAC THEN
+   (* the roots and the heap are related to themselves *)
+   TRY (SOLVED
+         (MATCH_MP_TAC all2_refl THEN
+          MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL
+            (let (r,_,_) = gc_inline_rel in r))))) THEN
+   TRY (SOLVED
+         (MATCH_MP_TAC all2_refl THEN
+          MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL
+            (let (r,_,_) = gc_heap_inline_rel in r))))) THEN
+   (* the collection relates the heap it read and the heap it
+      wrote, and the roots it returned are the ones it moved *)
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   TRY (SOLVED (REFL_TAC)) THEN
+   (* and a pointer of the roots is an address that they reach *)
+   REPEAT GEN_TAC THEN DISCH_TAC THEN
+   W(fun gl ->
+     let fd = the_asm (fun c -> is_eq c &&
+                hd_is "FDOM" (lhand c)) gl in
+     let m = the_asm (hd_is "MEM") gl in
+     REWRITE_TAC[fd; IN; reachable_addresses_def] THEN
+     EXISTS_TAC (rand (el 0 (snd (strip_comb (concl m))))) THEN
+     EXISTS_TAC (lhand (el 0 (snd (strip_comb (concl m))))) THEN
+     CONJ_TAC THENL
+      [ACCEPT_TAC m;
+       MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL RTC_RULES))])));;
 
 let make_gc_conf_def = cake_define
   `make_gc_conf limit' =
@@ -17005,7 +17138,7 @@ let deref_thm = prove
    TRY (FIRST_ASSUM CONTR_TAC) THEN
    SPLIT_ASM_TAC THEN
    (* the witnesses: the head of the roots and its tail *)
-   W(fun (asl,w as gl) ->
+   W(fun (asl,w) ->
      let cns = lhs (hd (conjuncts (snd (strip_exists w)))) in
      EXISTS_TAC (lhand cns) THEN EXISTS_TAC (rand cns)) THEN
    (* the relation of the pointer: a pointer to the reference, a
@@ -17136,9 +17269,6 @@ let deref_thm = prove
    (* what the heap holds at the address of the key: of an array of
       values a RefBlock, of a thunk a ThunkBlock *)
    W(fun (asl,w as gl) ->
-     let lk = the_asm (fun c -> is_eq c &&
-                hd_is "sptree_lookup" (lhand c) &&
-                hd_is "SOME" (rand c)) gl in
      let inn = the_asm (fun c -> hd_is "IN" c &&
                  hd_is "FDOM" (rand c)) gl in
      let n = el 0 (snd (strip_comb (concl inn))) in
@@ -17266,7 +17396,7 @@ let deref_thm = prove
       of values the relation of its values, the other way round
       (entry 53), gives it at the index; of a thunk the relation of
       its value is the one the arm gave *)
-   W(fun (asl,w as gl) ->
+   W(fun (asl,w) ->
      if not (hd_is "ALL2" w) then ALL_TAC else
      (let gp = el 0 (snd (strip_comb w)) in
       let olds = mapfilter (fun (_,th) ->
