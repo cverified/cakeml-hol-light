@@ -31289,19 +31289,227 @@ let memory_rel_Block_ptr_eq = prove
        ((Block t1 a1 b1,x) :: (Block t2 a2 b2,x) :: rest) /\
      good_dimindex (:'a) ==>
      Block t1 a1 b1 = Block t2 a2 b2`),
-  (* the attempt: the proof of the source names memory_rel_def,
-     word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
-     word_addr_def, get_addr_def.  What is here rewrites with them
-     and closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
-       abs_ml_inv_def; bc_stack_ref_inv_def; word_addr_def;
-       get_addr_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source takes the roots of the two Blocks apart.
+   An empty Block has the Data of the BlockNil of its tag for a
+   root, and the and with the complement of one leaves that alone
+   (the lemmas below are the ones of memory_rel_Block_IMP), so the
+   tags are equal -- sixteen times a tag and two is below the word
+   size, which is what makes the BlockNil of a tag tell the tag.  A
+   non-empty one has a pointer, whose word is odd, so the two cases
+   do not meet (word_addr_Data_NE_get_addr).  Two pointers that
+   make the same word have the same address: the lower bits go in
+   the shift (get_lowerbits_shift_length) and what is left is the
+   address shifted up and down again (shift_shift), which is itself
+   because an address of the heap is below the word size divided by
+   the shift.  Then the timestamps are equal, because tf takes them
+   to the one address and is injective, and blocks_unique says that
+   two Blocks of one timestamp among the values are equal *)
+  (let shl16 = prove
+   (`!(v:(N)word). word 16 * v = word_shl v 4`,
+    REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+    CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[MULT_AC]) in
+  let shl1 = prove
+   (`!(v:(N)word). word_shl v 1 = word 2 * v`,
+    REWRITE_TAC[word_shl; GSYM VAL_EQ; VAL_WORD_MUL; VAL_WORD] THEN
+    CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[MULT_AC]) in
+  let andid = prove
+   (`!(x:(N)word).
+       word_and (word_shl x 4 + word 2) (word_not (word 1)) =
+       x * word 16 + word 2`,
+    GEN_TAC THEN
+    SUBGOAL_THEN
+      `word_shl (x:(N)word) 4 + word 2 = x * word 16 + word 2`
+      SUBST1_TAC THENL
+     [REWRITE_TAC[shl16] THEN CONV_TAC WORD_RULE; ALL_TAC] THEN
+    SUBGOAL_THEN `~(bit 0 ((x:(N)word) * word 16 + word 2))`
+      MP_TAC THENL
+     [SUBGOAL_THEN `(x:(N)word) * word 16 + word 2 =
+                    word_shl (word 8 * x + word 1) 1` SUBST1_TAC THENL
+       [REWRITE_TAC[shl1] THEN CONV_TAC WORD_RULE; ALL_TAC] THEN
+      REWRITE_TAC[BIT_WORD_SHL] THEN CONV_TAC NUM_REDUCE_CONV;
+      ALL_TAC] THEN
+    DISCH_TAC THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_AND; BIT_WORD_NOT;
+                BIT_WORD_1] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    ASM_CASES_TAC `(i:num) = 0` THEN ASM_REWRITE_TAC[] THEN
+    CONV_TAC TAUT) in
+  (* the tag of an empty Block is what its root says *)
+  let bnil_inj = prove
+   (`!a1 a2. (n2w a1 * word 16 + word 2:'a word) =
+             n2w a2 * word 16 + word 2 /\
+             a1 < dimword (:'a) DIV 16 /\
+             a2 < dimword (:'a) DIV 16 ==> a1 = a2`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN
+      `a1 * 16 + 2 < dimword (:'a) /\ a2 * 16 + 2 < dimword (:'a)`
+      STRIP_ASSUME_TAC THENL
+     [MP_TAC (SPECL [`dimword (:'a)`; `16`] DIVISION) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    FIRST_X_ASSUM (fun eq ->
+      if not (try hd_is "word_add" (lhs (concl eq))
+              with Failure _ -> false) then fail() else
+      MP_TAC (REWRITE_RULE[GSYM VAL_EQ; VAL_WORD_ADD; VAL_WORD_MUL;
+                           VAL_WORD; GSYM dimword] eq)) THEN
+    CONV_TAC MOD_DOWN_CONV THEN
+    ASM_SIMP_TAC[MOD_LT] THEN ARITH_TAC) in
+  (* a pointer below the heap is below the words *)
+  let mul_lt = prove
+   (`!p h d k. p < h /\ h <= d DIV k /\ ~(k = 0) ==> p * k < d`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    MATCH_MP_TAC LTE_TRANS THEN
+    EXISTS_TAC `(d DIV k) * k` THEN CONJ_TAC THENL
+     [ASM_REWRITE_TAC[LT_MULT_RCANCEL] THEN ASM_ARITH_TAC;
+      MP_TAC (SPECL [`d:num`; `k:num`] DIVISION) THEN
+      ASM_REWRITE_TAC[] THEN ARITH_TAC]) in
+  let n2w_inj = prove
+   (`!a b. (n2w a:'a word) = n2w b /\ a < dimword (:'a) /\
+           b < dimword (:'a) ==> a = b`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_X_ASSUM (fun eq ->
+      if not (try is_eq (concl eq) && hd_is "word" (lhs (concl eq))
+              with Failure _ -> false) then fail() else
+      MP_TAC (REWRITE_RULE[GSYM VAL_EQ; VAL_WORD; GSYM dimword]
+                eq)) THEN
+    ASM_SIMP_TAC[MOD_LT]) in
+  let exp2_nz = prove
+   (`!n. ~(2 EXP n = 0)`,
+    REWRITE_TAC[EXP_EQ_0; ARITH_EQ]) in
+  let lt_mul = prove
+   (`!p k d. p * k < d /\ ~(k = 0) ==> p < d`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    MATCH_MP_TAC LET_TRANS THEN EXISTS_TAC `(p:num) * k` THEN
+    ASM_REWRITE_TAC[] THEN
+    SUBGOAL_THEN `(p:num) * 1 <= p * k` MP_TAC THENL
+     [REWRITE_TAC[LE_MULT_LCANCEL] THEN ASM_ARITH_TAC;
+      ARITH_TAC]) in
+  (* two timestamps that the map takes to one address are one *)
+  let flookup_inj = prove
+   (`!(f:(num,num)fmap) s x y p.
+       INJ (FAPPLY f) (FDOM f) s /\ FLOOKUP f x = SOME p /\
+       FLOOKUP f y = SOME p ==> x = y`,
+    REWRITE_TAC[INJ; FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN
+    REPEAT COND_CASES_TAC THEN
+    REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+    ASM_MESON_TAC[]) in
+  let tl_hd = MATCH_MP (GEN_ALL IN_all_vs_TL) IN_all_vs_HD in
+  MEMORY_REL_TAC THEN SPLIT_ROOTS_TAC THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[v_inv_def]) THEN
+  ASM_CASES_TAC `b1:(dataSem_v)list = []` THEN
+  FIRST_ASSUM (fun e ->
+    RULE_ASSUM_TRY (REWRITE_RULE[e]) THEN ASSUME_TAC e) THEN
+  ASM_CASES_TAC `b2:(dataSem_v)list = []` THEN
+  FIRST_ASSUM (fun e ->
+    RULE_ASSUM_TRY (REWRITE_RULE[e]) THEN ASSUME_TAC e) THEN
+  REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC)) THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if is_exists (concl th) then CHOOSE_TAC th else fail())) THEN
+  REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC)) THEN
+  REPEAT SUBST_LHS_TAC THEN
+  RULE_ASSUM_TRY (REWRITE_RULE (word_addr_clauses () @
+    [distinctness "word_loc"; injectivity "word_loc"])) THEN
+  TRY (FIRST_ASSUM (fun eq ->
+    if (try is_eq (concl eq) && is_var (rand (concl eq)) &&
+            not (is_var (lhs (concl eq)))
+        with Failure _ -> false)
+    then SUBST_ALL_TAC (SYM eq) else fail())) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[injectivity "word_loc";
+                               distinctness "word_loc"]) THENL
+   [(* both Blocks are empty: their roots are the BlockNils of the
+       tags, whose and with the complement of one is themselves *)
+    FIRST_ASSUM (fun eq ->
+      if not (try hd_is "word_and" (lhs (concl eq))
+              with Failure _ -> false) then fail() else
+      let eq' = REWRITE_RULE[BlockNil_def; andid] eq in
+      FIRST_ASSUM (fun lt1 ->
+        FIRST_ASSUM (fun lt2 ->
+          if concl lt1 = concl lt2 then fail() else
+          STRIP_ASSUME_TAC (MATCH_MP bnil_inj
+            (CONJ eq' (CONJ lt1 lt2)))))) THEN
+    ASM_REWRITE_TAC[];
+    (* one is empty and the other is not: a Data is not the word
+       of an address, whose lowest bit is set *)
+    FIRST_ASSUM (fun eq ->
+      let mk side rl =
+        let ga = PART_MATCH (rand o rator) (GEN_ALL get_addr_0)
+                   (side (concl eq)) in
+        REWRITE_RULE[rl eq; word_index; BIT_WORD_AND; BIT_WORD_NOT;
+                     BIT_WORD_1] ga in
+      let th = (try mk rand GSYM
+                with Failure _ -> mk lhs (fun t -> t)) in
+      if concl th = `F` then CONTR_TAC th else fail());
+    FIRST_ASSUM (fun eq ->
+      let mk side rl =
+        let ga = PART_MATCH (rand o rator) (GEN_ALL get_addr_0)
+                   (side (concl eq)) in
+        REWRITE_RULE[rl eq; word_index; BIT_WORD_AND; BIT_WORD_NOT;
+                     BIT_WORD_1] ga in
+      let th = (try mk rand GSYM
+                with Failure _ -> mk lhs (fun t -> t)) in
+      if concl th = `F` then CONTR_TAC th else fail());
+    (* both are pointers, and the addresses they shift up are the
+       same, so the timestamps that the map takes to them are the
+       same, and then blocks_unique says the Blocks are *)
+    FIRST_ASSUM (fun h ->
+      if hd_is "heap_in_memory_store" (concl h)
+      then STRIP_ASSUME_TAC
+             (REWRITE_RULE[heap_in_memory_store_def] h)
+      else fail()) THEN
+    ASSUM_LIST (fun asl ->
+      let mkbound hl =
+        FIRST_ASSUM (fun hb ->
+          if not (try hd_is "heap_length" (lhand (concl hb)) &&
+                      hd_is "DIV" (rand (concl hb))
+                  with Failure _ -> false) then fail() else
+          let k = rand (rand (concl hb)) in
+          let th = MATCH_MP mul_lt
+            (CONJ (MATCH_MP (GEN_ALL heap_lookup_LESS) hl)
+                  (CONJ hb (SPEC (rand k) exp2_nz))) in
+          STRIP_ASSUME_TAC th THEN
+          STRIP_ASSUME_TAC (MATCH_MP lt_mul
+            (CONJ th (SPEC (rand k) exp2_nz)))) in
+      MAP_EVERY mkbound (filter (fun th ->
+        try hd_is "heap_lookup" (lhs (concl th))
+        with Failure _ -> false) asl)) THEN
+    FIRST_ASSUM (fun eq ->
+      if not (try hd_is "get_addr" (lhs (concl eq)) &&
+                  hd_is "get_addr" (rand (concl eq))
+              with Failure _ -> false) then fail() else
+      let slt = cake_as_vars (fun () -> `shift_length c`) in
+      let v = mk_var ("w", type_of (lhs (concl eq))) in
+      let f = mk_abs (v, list_mk_icomb "word_ushr" [v; slt]) in
+      MP_TAC (CONV_RULE (TOP_DEPTH_CONV BETA_CONV)
+                (AP_TERM f (REWRITE_RULE[get_addr_def] eq)))) THEN
+    REWRITE_TAC[MATCH_MP (GEN_ALL get_lowerbits_shift_length)
+                  get_lowerbits_LSL_shift_length] THEN
+    ASM_SIMP_TAC[shift_shift] THEN
+    DISCH_THEN (fun eq ->
+      FIRST_ASSUM (fun lt1 ->
+        FIRST_ASSUM (fun lt2 ->
+          if concl lt1 = concl lt2 then fail() else
+          SUBST_ALL_TAC (MATCH_MP n2w_inj
+            (CONJ eq (CONJ lt1 lt2)))))) THEN
+    FIRST_ASSUM (fun inj ->
+      if not (try hd_is "INJ" (concl inj) with Failure _ -> false)
+      then fail() else
+      FIRST_ASSUM (fun f1 ->
+        if not (try hd_is "FLOOKUP" (lhs (concl f1))
+                with Failure _ -> false) then fail() else
+        FIRST_ASSUM (fun f2 ->
+          if concl f1 = concl f2 then fail() else
+          SUBST_ALL_TAC (MATCH_MP flookup_inj
+            (CONJ inj (CONJ f1 f2)))))) THEN
+    W(fun (asl,gl) ->
+      let bl1 = lhs gl and bl2 = rand gl in
+      let a1 = snd (strip_comb bl1) and a2 = snd (strip_comb bl2) in
+      FIRST_ASSUM (fun bu ->
+        if not (hd_is "blocks_unique" (concl bu)) then fail() else
+        MP_TAC (SPECL [el 0 a1; el 1 a1; el 2 a1; el 1 a2; el 2 a2]
+                  (REWRITE_RULE[blocks_unique_def] bu)))) THEN
+    ASM_REWRITE_TAC[IN_all_vs_HD; tl_hd] THEN
+    DISCH_THEN (fun th -> ASM_REWRITE_TAC[th])]));;
 
 let elements_list_all_blocks = prove
  (`elements_list xs /\ ~(xs = []) /\ (?t a b. HD xs = Block t a b) ==>
