@@ -27877,6 +27877,26 @@ let memory_rel_RefPtr_IMP = prove
    ALL_INST3 memory_rel_ByteArray_IMP THEN
    ASM_MESON_TAC[]));;
 
+(* the port's own: the bit of the header that tells an evaluated
+   thunk from the pattern the statement rules out.  HOL4 gives the
+   fifth bit to CART_EQ and lets EVAL_TAC do the rest; here
+   and60_ne24 says what that comes to, and dim5 is the word size
+   being wide enough for the bit to be there at all *)
+
+let and60_ne24 = prove
+ (`!(x:'a word). 5 < dimindex (:'a) /\ word_bit 5 x
+    ==> ~((x && (n2w 60)) = n2w 24)`,
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (MP_TAC o SPEC `5` o
+    REWRITE_RULE[WORD_EQ_BITS_ALT]) THEN
+  ASM_REWRITE_TAC[BIT_WORD_AND; BIT_WORD] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[]);;
+
+let dim5 = prove
+ (`good_dimindex (:'a) ==> 5 < dimindex (:'a)`,
+  REWRITE_TAC[good_dimindex_def] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_RefPtr_gen_IMP = prove
@@ -27900,20 +27920,86 @@ let memory_rel_RefPtr_gen_IMP = prove
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)))`),
-  (* the attempt: the proof of the source names
-     memory_rel_RefPtr_IMP_lemma, memory_rel_ValueArray_IMP,
-     memory_rel_ByteArray_IMP, memory_rel_Thunk_IMP,
-     make_header_def.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_RefPtr_IMP_lemma;
-       memory_rel_ValueArray_IMP; memory_rel_ByteArray_IMP;
-       memory_rel_Thunk_IMP; make_header_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source takes the kind of the reference out of
+   the lookup (memory_rel_RefPtr_IMP_lemma) and then has a case for
+   each: an array of values has bit 3 of its header set and bit 2
+   clear, an array of bytes the other way round, a MutBlock is the
+   case the statement leaves trivial, and a thunk is the one real
+   case.  For an evaluated one memory_rel_Thunk_IMP either says
+   what the pattern wants or says that bit 5 of the header is set,
+   which says it too (and60_ne24); for one that is not evaluated
+   the first of its two cases says it is, so the second is the one *)
+  ((* the lemma of a kind of reference, at this memory and this
+     lookup *)
+  let use_lemma th =
+    FIRST_ASSUM (fun mr -> FIRST_ASSUM (fun lk ->
+      FIRST_ASSUM (fun gd ->
+        STRIP_ASSUME_TAC (MATCH_MP th (CONJ mr (CONJ lk gd)))))) in
+  (* the word of the value, the address it points at and what the
+     memory holds there, out of the assumptions *)
+  let pick n =
+    W(fun (asl,gw as gl) ->
+      let vs = fst (strip_exists gw) in
+      let wty = type_of (el 0 vs) in
+      let mm = var_by_name "m" gl in
+      let ad = rand (rand (concl (the_asm (fun c ->
+                 try is_eq c && type_of (rand (rand c)) = wty &&
+                     fst (dest_const (rator (rand c))) = "SOME"
+                 with Failure _ -> false) gl))) in
+      let xd = rand (rand (concl (the_asm (fun c ->
+                 try is_eq c && rator (lhs c) = mm
+                 with Failure _ -> false) gl))) in
+      if n = 2 then MAP_EVERY EXISTS_TAC [ad; xd] else
+      let vv = var_by_name "v" gl in
+      let wd = rand (rand (concl (the_asm (fun c ->
+                 try is_eq c && lhs c = vv
+                 with Failure _ -> false) gl))) in
+      MAP_EVERY EXISTS_TAC [wd; ad; xd]) in
+  STRIP_TAC THEN
+  FIRST_ASSUM (fun mr ->
+    STRIP_ASSUME_TAC (MATCH_MP memory_rel_RefPtr_IMP_lemma mr)) THEN
+  FIRST_ASSUM (fun lk ->
+    EXISTS_TAC (rand (rand (concl lk)))) THEN
+  ASM_REWRITE_TAC[] THEN
+  W(fun gl -> CASES_ON_TAC (var_by_name "res" gl)) THEN
+  TRY SAFE_MATCH_REDUCE_TAC THENL
+   [(* an array of values: its header has bit 3 set and bit 2
+        clear *)
+    use_lemma memory_rel_ValueArray_IMP THEN pick 3 THEN
+    ASM_REWRITE_TAC[];
+    (* an array of bytes: the other way round *)
+    use_lemma memory_rel_ByteArray_IMP THEN pick 3 THEN
+    ASM_REWRITE_TAC[];
+    (* a thunk, and the two modes of one *)
+    W(fun gl -> CASES_ON_TAC (var_by_name "a0" gl)) THEN
+    REWRITE_TAC[distinctness "thunk_mode"] THEN
+    TRY SAFE_MATCH_REDUCE_TAC THENL
+     [(* an evaluated thunk: the lemma either says what the
+          pattern wants or says that bit 5 of the header is set,
+          which says it too *)
+      GEN_TAC THEN DISCH_TAC THEN
+      use_lemma memory_rel_Thunk_IMP THENL
+       [FIRST_ASSUM (fun h -> FIRST_ASSUM (fun th ->
+          MP_TAC (MATCH_MP th h))) THEN
+        STRIP_TAC THEN pick 2 THEN ASM_REWRITE_TAC[];
+        FIRST_ASSUM (fun h ->
+          let e0 = CONJUNCT1 h in
+          FIRST_ASSUM (fun e1 ->
+            if concl e1 = concl e0 then fail() else
+            SUBST_ALL_TAC (REWRITE_RULE[injectivity "word_loc"]
+              (TRANS (SYM e1) e0)))) THEN
+        pick 2 THEN ASM_REWRITE_TAC[] THEN
+        CONV_TAC NUM_REDUCE_CONV THEN
+        MATCH_MP_TAC and60_ne24 THEN CONJ_TAC THENL
+         [MATCH_MP_TAC dim5 THEN FIRST_ASSUM ACCEPT_TAC;
+          ASM_REWRITE_TAC[]]];
+      (* a thunk that is not evaluated: the first of the lemma's
+         two cases says it is, so the second one is the one *)
+      use_lemma memory_rel_Thunk_IMP THENL
+       [RULE_ASSUM_TAC (REWRITE_RULE[distinctness "thunk_mode";
+          GSYM (distinctness "thunk_mode")]) THEN
+        FIRST_X_ASSUM CONTR_TAC;
+        pick 3 THEN ASM_REWRITE_TAC[]]]]));;
 
 (* Smallnum_bits *)
 let smallnum_bits = prove

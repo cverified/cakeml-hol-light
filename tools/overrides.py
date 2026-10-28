@@ -7385,6 +7385,29 @@ let n2w_11_lt = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'memory_rel_RefPtr_gen_IMP'): r"""
+(* the port's own: the bit of the header that tells an evaluated
+   thunk from the pattern the statement rules out.  HOL4 gives the
+   fifth bit to CART_EQ and lets EVAL_TAC do the rest; here
+   and60_ne24 says what that comes to, and dim5 is the word size
+   being wide enough for the bit to be there at all *)
+
+let and60_ne24 = prove
+ (`!(x:'a word). 5 < dimindex (:'a) /\ word_bit 5 x
+    ==> ~((x && (n2w 60)) = n2w 24)`,
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (MP_TAC o SPEC `5` o
+    REWRITE_RULE[WORD_EQ_BITS_ALT]) THEN
+  ASM_REWRITE_TAC[BIT_WORD_AND; BIT_WORD] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[]);;
+
+let dim5 = prove
+ (`good_dimindex (:'a) ==> 5 < dimindex (:'a)`,
+  REWRITE_TAC[good_dimindex_def] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads
