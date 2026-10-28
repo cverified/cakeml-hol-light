@@ -7418,6 +7418,51 @@ let shl1_add = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'memory_rel_Block_explode_lemma'): r"""
+(* the port's own: what the explosion of a block needs of TAKE and
+   of the offset of an element.  take_nil, take_suc and
+   take_too_long are the three clauses of TAKE that the induction
+   uses (HOL4 has them as TAKE_def, SNOC_EL_TAKE and
+   TAKE_LENGTH_TOO_LONG), and offset_cell is get_real_offset of the
+   index as a number: a cell further on is one bytes_in_word
+   further on, whichever the word size is *)
+
+let take_nil = prove
+ (`!(l:A list). TAKE 0 l = []`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE]);;
+
+let take_suc = prove
+ (`!n (l:A list). n < LENGTH l
+    ==> TAKE (SUC n) l = TAKE n l ++ [EL n l]`,
+  INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[LENGTH; ARITH_RULE `~(n < 0)`; LT_SUC; LT_0; TAKE;
+              NOT_SUC; SUC_SUB1; EL; HD; TL; APPEND; take_nil] THEN
+  ASM_SIMP_TAC[]);;
+
+let take_too_long = prove
+ (`!n (l:A list). LENGTH l <= n ==> TAKE n l = l`,
+  INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[TAKE; LENGTH; LE_SUC; NOT_SUC; SUC_SUB1;
+              ARITH_RULE `~(SUC n <= 0)`] THEN
+  ASM_SIMP_TAC[]);;
+
+let offset_cell = prove
+ (`!n. good_dimindex (:'a) ==>
+    get_real_offset (Smallnum (&n)) =
+    SOME ((bytes_in_word + n2w n * bytes_in_word):'a word)`,
+  REWRITE_TAC[get_real_offset_def; smallnum_def; INT_OF_NUM_LT;
+              ARITH_RULE `~(n < 0)`; INT_OF_NUM_MUL;
+              NUM_OF_INT_OF_NUM; good_dimindex_def] THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    REWRITE_TAC[dd; bytes_in_word_def; shl1_add]) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[GSYM WORD_MUL; GSYM WORD_ADD] THEN
+  REWRITE_TAC[injectivity "option"] THEN AP_TERM_TAC THEN
+  ARITH_TAC);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads

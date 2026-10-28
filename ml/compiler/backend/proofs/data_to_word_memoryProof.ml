@@ -50,6 +50,7 @@ needs "lib/regexp_compiler.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/walkstar.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
@@ -31842,6 +31843,48 @@ let eq_assum_APPEND = prove
    ASM_REWRITE_TAC[APPEND; eq_assum_def; LENGTH;
                    WORD_ADD_0_MUL; WORD_ADD_SUC_MUL; CONJ_ASSOC]));;
 
+(* the port's own: what the explosion of a block needs of TAKE and
+   of the offset of an element.  take_nil, take_suc and
+   take_too_long are the three clauses of TAKE that the induction
+   uses (HOL4 has them as TAKE_def, SNOC_EL_TAKE and
+   TAKE_LENGTH_TOO_LONG), and offset_cell is get_real_offset of the
+   index as a number: a cell further on is one bytes_in_word
+   further on, whichever the word size is *)
+
+let take_nil = prove
+ (`!(l:A list). TAKE 0 l = []`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE]);;
+
+let take_suc = prove
+ (`!n (l:A list). n < LENGTH l
+    ==> TAKE (SUC n) l = TAKE n l ++ [EL n l]`,
+  INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[LENGTH; ARITH_RULE `~(n < 0)`; LT_SUC; LT_0; TAKE;
+              NOT_SUC; SUC_SUB1; EL; HD; TL; APPEND; take_nil] THEN
+  ASM_SIMP_TAC[]);;
+
+let take_too_long = prove
+ (`!n (l:A list). LENGTH l <= n ==> TAKE n l = l`,
+  INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[TAKE; LENGTH; LE_SUC; NOT_SUC; SUC_SUB1;
+              ARITH_RULE `~(SUC n <= 0)`] THEN
+  ASM_SIMP_TAC[]);;
+
+let offset_cell = prove
+ (`!n. good_dimindex (:'a) ==>
+    get_real_offset (Smallnum (&n)) =
+    SOME ((bytes_in_word + n2w n * bytes_in_word):'a word)`,
+  REWRITE_TAC[get_real_offset_def; smallnum_def; INT_OF_NUM_LT;
+              ARITH_RULE `~(n < 0)`; INT_OF_NUM_MUL;
+              NUM_OF_INT_OF_NUM; good_dimindex_def] THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM (fun dd ->
+    REWRITE_TAC[dd; bytes_in_word_def; shl1_add]) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[GSYM WORD_MUL; GSYM WORD_ADD] THEN
+  REWRITE_TAC[injectivity "option"] THEN AP_TERM_TAC THEN
+  ARITH_TAC);;
+
 (* [local] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -31856,19 +31899,86 @@ let memory_rel_Block_explode_lemma = prove
          (eq_explode (a + bytes_in_word) m dm (TAKE n v1) ++ (
           (Block ts1 t1 v1,wordLang_Word (w1:'a word)) :: vars)) /\
        eq_assum (a + bytes_in_word) m dm (TAKE n v1)`),
-  (* the attempt: the proof of the source names eq_explode_def,
-     eq_assum_def, memory_rel_rearrange, SNOC_APPEND,
-     eq_explode_APPEND, eq_assum_APPEND.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[eq_explode_def; eq_assum_def;
-       memory_rel_rearrange; SNOC_APPEND; eq_explode_APPEND;
-       eq_assum_APPEND] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is an induction on how much of the block
+   is exploded.  At nought nothing is, and the memory_rel is the
+   one of the assumptions; one element more is the element of the
+   block at that index (memory_rel_Block_MEM, at the memory_rel
+   with the block in front of what is exploded so far), whose
+   offset is the one of offset_cell and whose word and address are
+   the ones of the assumptions.  Both times what is left is the
+   same list of pairs in another order, which memory_rel_rearrange
+   does *)
+  ((* the memory_rel of the assumptions, with the block in front and
+     what is exploded so far behind it *)
+  let block_first =
+    W(fun (asl,w as gl) ->
+      let mr = the_asm (fun c ->
+                 try hd_is "memory_rel" c &&
+                     can lhand (last (snd (strip_comb c)))
+                 with Failure _ -> false) gl in
+      let lst = last (snd (strip_comb (concl mr))) in
+      let ex = lhand lst and rest = rand lst in
+      let vs = rand rest in
+      let nl = mk_comb (rator rest,
+                 mk_comb (mk_comb (rator (rator lst), ex), vs)) in
+      SUBGOAL_THEN (mk_comb (rator (concl mr), nl)) ASSUME_TAC THENL
+       [MP_TAC mr THEN MATCH_MP_TAC memory_rel_rearrange THEN
+        REWRITE_TAC[MEM; MEM_APPEND] THEN MESON_TAC[];
+        ALL_TAC]) in
+  INDUCT_TAC THEN STRIP_TAC THENL
+   [(* nothing of the block is taken *)
+    ASM_REWRITE_TAC[take_nil; eq_explode_def; eq_assum_def; APPEND];
+    (* one element more, if the block has one *)
+    ASM_CASES_TAC `n < LENGTH (v1:dataSem_v list)` THENL
+     [FIRST_ASSUM (fun ih ->
+        if is_imp (concl ih) then MP_TAC ih else fail()) THEN
+      ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
+      STRIP_TAC THEN
+      block_first THEN
+      (* the element of the block at that index, and that its
+         offset, its word and its address are the ones of the
+         assumptions *)
+      FIRST_ASSUM (fun mr -> FIRST_ASSUM (fun lt ->
+        FIRST_ASSUM (fun gd ->
+          STRIP_ASSUME_TAC (MATCH_MP memory_rel_Block_MEM
+            (CONJ mr (CONJ lt gd)))))) THEN
+      FIRST_ASSUM (fun gd ->
+        let oc = MATCH_MP (SPEC_ALL offset_cell) gd in
+        FIRST_X_ASSUM (fun go ->
+          SUBST_ALL_TAC (REWRITE_RULE[injectivity "option"]
+            (TRANS (SYM go) oc)))) THEN
+      FIRST_X_ASSUM (fun e ->
+        if (try hd_is "wordLang_Word" (lhs (concl e)) &&
+                is_var (rand (rand (concl e)))
+            with Failure _ -> false)
+        then SUBST_ALL_TAC (SYM (REWRITE_RULE[injectivity
+               "word_loc"] e))
+        else fail()) THEN
+      FIRST_ASSUM (fun g1 -> FIRST_X_ASSUM (fun g2 ->
+        if concl g1 = concl g2 then fail() else
+        SUBST_ALL_TAC (REWRITE_RULE[injectivity "option"]
+          (TRANS (SYM g2) g1)))) THEN
+      (* and then the two lists are the same one *)
+      FIRST_ASSUM (fun lt ->
+        ASM_REWRITE_TAC[MATCH_MP take_suc lt; eq_explode_APPEND;
+          eq_assum_APPEND; eq_explode_def; eq_assum_def;
+          MATCH_MP LENGTH_TAKE (MATCH_MP LT_IMP_LE lt);
+          GSYM WORD_ADD_ASSOC; APPEND]) THEN
+      FIRST_ASSUM (fun mr ->
+        MATCH_MP_TAC (MATCH_MP (ONCE_REWRITE_RULE
+          [TAUT `(p ==> q ==> r) <=> (q ==> p ==> r)`]
+          memory_rel_rearrange) mr)) THEN
+      REWRITE_TAC[MEM; MEM_APPEND] THEN MESON_TAC[];
+      (* the block has not: the two takes are the same *)
+      SUBGOAL_THEN `TAKE (SUC n) (v1:dataSem_v list) = TAKE n v1`
+        (fun e -> REWRITE_TAC[e]) THENL
+       [FIRST_ASSUM (fun nl ->
+          ASM_SIMP_TAC[take_too_long; MATCH_MP (ARITH_RULE
+            `~(n < m) ==> m <= n /\ m <= SUC n`) nl]);
+        ALL_TAC] THEN
+      FIRST_ASSUM (fun ih ->
+        if is_imp (concl ih) then MP_TAC ih else fail()) THEN
+      ANTS_TAC THENL [ASM_REWRITE_TAC[]; DISCH_THEN ACCEPT_TAC]]]));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
