@@ -1975,7 +1975,10 @@ What the third one needed beyond the template of the other two:
   of the invariant are five different proofs and a `TRY (SOLVED ..)`
   chain hides which one broke.
 
-So the file is at **75** attempts.  What is left, in order:
+So the file is at **75** attempts, and the verify of the five
+proofs of this pass says it: no error, no warning,
+`AXIOMS-ADDED 82` where the pass began at 95 and
+`OWN-AXIOMS 15`, in 783 seconds.  What is left, in order:
 
 1. `memory_rel_ptr_eq` and `memory_rel_FromList`, which want
    theorems HOL4 states as the value of an ML expression
