@@ -2080,14 +2080,20 @@ definition is resolved.  What is different:
   the walk is unfolded to `ptr :: walk c heap p k` the index is
   taken apart with `STRUCT_CASES_TAC (SPEC `n:num` num_CASES)`:
   at nought the goal is about `ptr` and `HD (walk c heap p k)`,
-  which is `p` (the walk is unfolded once more, and its `some` is
-  `SOME` of something because the heap holds a cons at `p`), and
-  at `SUC n'` it is the induction hypothesis at `n'`.
+  which is `p`, and at `SUC n'` it is the induction hypothesis at
+  `n'` (with `EL (SUC n') (ptr :: w) = EL n' w`, which is `EL` and
+  `TL`).
 
-The one piece that was still fighting back is that second
-unfolding: the goal there is `HD (match some (..) with ..) = p`,
-and the `some` has to be turned into `SOME <something>` before the
-match will reduce.  `some_EX` -- `(?x. P x) ==> ?y. some P = SOME
-y` -- is the shape to use (uniqueness is not needed for the head),
-and the witness is the pointer of the `Pointer` in the heap's cons
-at `p`.
+The piece that is not written is the nought case.  `HD (walk c
+heap p k) = p` wants `walk` unfolded a second time, and its `some`
+then wants the heap's cons at `p` -- which is the *second* cons of
+the list, so the v_inv of the tail has to be taken apart as well.
+What does **not** work is transplanting the steps that took the
+first one apart: the second time the list of the `BlockRep` is a
+variable, not a literal pair, so the `ALL2` step leaves an equation
+`SOME (BlockRep cons_tag ys') = SOME (BlockRep cons_tag [a; b])`
+standing, and everything after it is in the wrong state.  The
+second unfolding has to be written for the state it is in, and
+`some_EX` -- `(?x. P x) ==> ?y. some P = SOME y` -- is the shape
+for the `some` (uniqueness is not needed for the head of the walk,
+only existence, which the cons at `p` gives).
