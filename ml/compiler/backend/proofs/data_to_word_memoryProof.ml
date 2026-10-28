@@ -28509,6 +28509,13 @@ let memory_rel_Number_bignum_IMP = prove
      if is_exists(concl th) then CHOOSE_TAC th else fail())) THEN
    ASM_MESON_TAC[]));;
 
+(* the port's own: a shift by one is a doubling, which is what the
+   second word of a 64-bit value on a 32-bit target is at *)
+
+let shl1_add = prove
+ (`!(w:'a word). w << 1 = w + w`,
+  CONV_TAC WORD_RULE);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_Word64_IMP = prove
@@ -28533,19 +28540,112 @@ let memory_rel_Word64_IMP = prove
          (m (x + bytes_in_word) = wordLang_Word ((63 >< 0) w64)) /\
          decode_length c w = (n2w 1) /\
          w = make_header c (n2w 3) 1))`),
-  (* the attempt: the proof of the source names memory_rel_def,
-     word_ml_inv_def, abs_ml_inv_def, bc_stack_ref_inv_def,
-     v_inv_def, word_addr_def.  What is here rewrites with them and
-     closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_def; word_ml_inv_def;
-       abs_ml_inv_def; bc_stack_ref_inv_def; v_inv_def;
-       word_addr_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is the one of memory_rel_ValueArray_IMP
+   with Word64Rep in place of the RefBlock: v_inv gives the heap
+   lookup at the pointer, heap_in_memory_store and
+   get_real_addr_get_addr give the address, and the heap split
+   there lets word_heap be unfolded down to the three cells (two on
+   a 64-bit target) that the statement reads.  The two word sizes
+   are one case split, because Word64Rep is a conditional on the
+   same test the statement has, and the bits of the header come off
+   make_header as they do there *)
+  (let hd_is n t =
+    (try fst(dest_const(fst(strip_comb t))) = n
+     with Failure _ -> false) in
+  let rec facs t =
+    if hd_is "STAR" t then
+      let args = snd(strip_comb t) in
+      facs (el 0 args) @ facs (el 1 args)
+    else [t] in
+  let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail()) asl in
+  let is_hl th = hd_is "heap_lookup" (lhs (concl th)) in
+  let sepfront names =
+    W(fun (asl,w) ->
+      let pred = rator (lhand w) in
+      let fs = facs pred in
+      let picked = map (fun n -> find (hd_is n) fs) names in
+      let rest = filter (fun t -> not (mem t picked)) fs in
+      let st = fst(strip_comb pred) in
+      let mk a b = mk_comb(mk_comb(st,a),b) in
+      let target = itlist mk picked (end_itlist mk rest) in
+      SUBGOAL_THEN (mk_eq(pred,target)) SUBST1_TAC THENL
+       [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+  MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
+  W(fun gl -> EXISTS_TAC (var_by_name "ptr" gl)) THEN
+  FIRST_X_ASSUM(fun th ->
+    if hd_is "heap_in_memory_store" (concl th)
+    then MP_TAC(REWRITE_RULE[heap_in_memory_store_def] th)
+    else fail()) THEN
+  STRIP_TAC THEN
+  W(fun (asl,w) ->
+    MP_TAC(MATCH_MP heap_lookup_SPLIT (grab asl is_hl))) THEN
+  DISCH_THEN STRIP_ASSUME_TAC THEN
+  VAR_EQ_TAC THEN
+  W(fun (asl,w) ->
+    let hl = grab asl is_hl in
+    let hlen = grab asl (fun th ->
+      hd_is "heap_length" (lhand (concl th))) in
+    let cu = grab asl (fun th ->
+      hd_is "FLOOKUP" (lhs (concl th)) &&
+      fst(dest_const(rand(lhs(concl th)))) = "CurrHeap") in
+    let gd = grab asl (fun th -> concl th = `good_dimindex (:'a)`) in
+    let gat = tryfind (fun t ->
+      find_term (fun u ->
+        hd_is "get_addr" u && length (snd(strip_comb u)) = 3) t)
+      (w :: map (fun (_,th) -> concl th) asl) in
+    let th = SPEC (last (snd(strip_comb gat)))
+      (GEN `w:('a)word_loc`
+        (MATCH_MP get_real_addr_get_addr
+          (CONJ hlen (CONJ hl (CONJ cu gd))))) in
+    let r = rhs (concl (CONJUNCT1 th)) in
+    let a = rand r in
+    let args = snd(strip_comb (rand a)) in
+    let mul = fst(strip_comb (rand a)) in
+    let swap = mk_comb(rator a,
+                 mk_comb(mk_comb(mul,el 1 args),el 0 args)) in
+    let sw = WORD_RULE (mk_eq(a,swap)) in
+    EXISTS_TAC swap THEN
+    STRIP_ASSUME_TAC(REWRITE_RULE[sw] th)) THEN
+  FIRST_X_ASSUM(fun th ->
+    if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+    then MP_TAC th else fail()) THEN
+  REWRITE_TAC[word_heap_APPEND; word_heap_def; Word64Rep_def] THEN
+  COND_CASES_TAC THEN
+  REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_el_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_payload_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[word_list_def; LENGTH_MAP] THEN
+  sepfront ["cond"] THEN
+  REWRITE_TAC[cond_STAR] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC) THEN
+  DISCH_THEN (fun sep ->
+    let p = rator (concl sep) in
+    let fs = facs p in
+    let st = fst (strip_comb p) in
+    let mk a b = mk_comb (mk_comb (st, a), b) in
+    let front cell =
+      let rest = filter (fun t -> not (t = cell)) fs in
+      let target = mk cell (end_itlist mk rest) in
+      let eq = prove (mk_eq (p, target), REWRITE_TAC[STAR_AC]) in
+      MATCH_MP read_fun2set (REWRITE_RULE[eq] sep) in
+    let rds = map front (filter (hd_is "set_sep_one") fs) in
+    EXISTS_TAC (rand (rhs (concl (CONJUNCT1 (hd rds))))) THEN
+    MAP_EVERY STRIP_ASSUME_TAC rds) THEN
+  REWRITE_TAC[shl1_add; WORD_ADD_ASSOC] THEN
+  ASM_REWRITE_TAC[LENGTH] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[make_header_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  UNDISCH_TAC
+    `data_to_word_config_len_size c + 7 < dimindex (:'a)` THEN
+  ARITH_TAC));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

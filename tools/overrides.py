@@ -7408,6 +7408,16 @@ let dim5 = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'memory_rel_Word64_IMP'): r"""
+(* the port's own: a shift by one is a doubling, which is what the
+   second word of a 64-bit value on a 32-bit target is at *)
+
+let shl1_add = prove
+ (`!(w:'a word). w << 1 = w + w`,
+  CONV_TAC WORD_RULE);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads
