@@ -38246,6 +38246,38 @@ let str_cmp_cons = prove
                GT; GE; ARITH_RULE `SUC m >= SUC n <=> m >= n`;
                ARITH_RULE `SUC m > SUC n <=> m > n`]));;
 
+(* the port's own: what the comparison of two strings of bytes
+   needs of the characters.  HOL4's EVAL_TAC computes with ORD and
+   CHR, and what that comes to here is ord_chr, the one fact that
+   the eight bits of a character of the port spell the number it
+   came from; ord_chr_w2n is its instance at a byte, w2w_val_8 says
+   that a byte keeps its value in a word of the target, and lt_asym
+   is what a case of LT_CASES leaves to say *)
+
+let ord_chr = prove
+ (`!n. n < 256 ==> ORD (CHR n) = n`,
+  REWRITE_TAC[CHR; ORD] THEN CONV_TAC EXPAND_CASES_CONV THEN
+   CONV_TAC NUM_REDUCE_CONV);;
+
+let ord_chr_w2n = prove
+ (`!(w:word8). ORD (CHR (w2n w)) = w2n w`,
+  GEN_TAC THEN MATCH_MP_TAC ord_chr THEN
+   MP_TAC (ISPEC `w:word8` VAL_BOUND) THEN
+   REWRITE_TAC[DIMINDEX_8] THEN CONV_TAC NUM_REDUCE_CONV THEN
+   DISCH_THEN ACCEPT_TAC);;
+
+let w2w_val_8 = prove
+ (`!(w:word8). good_dimindex (:'a) ==>
+    w2n ((w2w:word8->'a word) w) = w2n w`,
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC VAL_WORD_ZX THEN
+   REWRITE_TAC[DIMINDEX_8] THEN
+   FIRST_ASSUM (MP_TAC o REWRITE_RULE[good_dimindex_def]) THEN
+   ARITH_TAC);;
+
+let lt_asym = prove
+ (`!a b:num. a < b ==> ~(b < a)`,
+  ARITH_TAC);;
+
 let find_diff_str_cmp_thm1 = prove
  (`!vals1 vals2.
      LENGTH (vals1:word8 list) = LENGTH (vals2:word8 list) /\
@@ -38255,18 +38287,86 @@ let find_diff_str_cmp_thm1 = prove
        (str_cmp T cmp (implode (MAP (CHR o w2n) vals1)) (implode (MAP
          (CHR o w2n) vals2)) <=>
         num_cmp cmp (w2n r1) (w2n r2)))`,
-  (* the attempt: the proof of the source names find_diff_def,
-     str_cmp_cons, dimword, good_dimindex_def, str_cmp_def,
-     fast_lt_def.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[find_diff_def; str_cmp_cons; dimword;
-       good_dimindex_def; str_cmp_def; fast_lt_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is an induction on the first list.  Two
+   empty lists compare equal and the two accumulators are the same
+   number, so each of the four comparisons holds of the one exactly
+   when it holds of the other; with a byte in front of each, either
+   the two bytes are the same, and then str_cmp_cons steps over
+   them and find_diff does too, which is the induction hypothesis,
+   or they differ, and then the first character decides the
+   comparison of the strings and the two bytes decide the
+   comparison of the numbers *)
+  (LIST_INDUCT_TAC THEN GEN_TAC THENL
+   [(* both lists are empty: the strings compare equal, and so do
+       the two accumulators *)
+    STRIP_TAC THEN
+    FIRST_ASSUM (fun th ->
+      SUBST_ALL_TAC (REWRITE_RULE[LENGTH_EQ_NIL]
+        (SYM (REWRITE_RULE[LENGTH] th)))) THEN
+    MAP_EVERY EXISTS_TAC [`(n2w l):'a word`; `(n2w l):'a word`] THEN
+    REWRITE_TAC[find_diff_def; MAP; PAIR_EQ] THEN
+    CASES_ON_NAME "cmp" THEN
+    REWRITE_TAC[str_cmp_def] THEN MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[fast_lt_def; fast_le_def; fast_gt_def; fast_ge_def;
+                mlstring_lt_def; mlstring_le_def; mlstring_gt_def;
+                mlstring_ge_def; mlstring_compare_def; strlen_def;
+                LENGTH; LT_REFL] THEN
+    ONCE_REWRITE_TAC[compare_aux_def] THEN
+    REWRITE_TAC[num_cmp_def; distinctness "ordering"; LE_REFL;
+                LT_REFL; GT; GE];
+    (* the two lists have a first byte each *)
+    CASES_BY_NAME "vals2" THENL
+     [REWRITE_TAC[LENGTH; NOT_SUC];
+      STRIP_TAC THEN
+      RULE_ASSUM_TAC (REWRITE_RULE[LENGTH; SUC_INJ]) THEN
+      (* the two first bytes, out of the call of find_diff *)
+      W(fun (asl,w) ->
+        let fd = find_term (hd_is "find_diff")
+                   (snd (strip_exists w)) in
+        let args = snd (strip_comb fd) in
+        ASM_CASES_TAC (mk_eq (hd (snd (strip_comb (el 0 args))),
+                              hd (snd (strip_comb (el 1 args))))))
+        THENL
+       [(* they agree: the comparison steps over them, and so does
+           find_diff, so the induction hypothesis is what is left *)
+        FIRST_X_ASSUM (fun th ->
+          if (try is_var (lhs (concl th)) with Failure _ -> false)
+          then SUBST_ALL_TAC th else fail()) THEN
+        REWRITE_TAC[find_diff_def; MAP; o_THM; str_cmp_cons] THEN
+        FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+        (* they differ, and the first one decides the comparison *)
+        ASM_REWRITE_TAC[find_diff_def; MAP; o_THM] THEN
+        W(fun (asl,w) ->
+          let ps = tparts (lhand (hd (conjuncts
+                     (snd (strip_exists w))))) in
+          MAP_EVERY EXISTS_TAC [el 0 ps; el 1 ps]) THEN
+        REWRITE_TAC[PAIR_EQ] THEN
+        (* the two bytes differ as numbers, and a byte is a number
+           of the word size *)
+        RULE_ASSUM_TRY (REWRITE_RULE[GSYM VAL_EQ]) THEN
+        FIRST_ASSUM (fun gd ->
+          REWRITE_TAC[MATCH_MP (SPEC_ALL w2w_val_8) gd]) THEN
+        CASES_ON_NAME "cmp" THEN
+        REWRITE_TAC[str_cmp_def] THEN MATCH_REDUCE_TAC THEN
+        REWRITE_TAC[fast_lt_def; fast_le_def; fast_gt_def;
+                    fast_ge_def; mlstring_lt_def; mlstring_le_def;
+                    mlstring_gt_def; mlstring_ge_def;
+                    mlstring_compare_def; strlen_def; LENGTH;
+                    LENGTH_MAP] THEN
+        ASM_REWRITE_TAC[LT_REFL] THEN
+        ONCE_REWRITE_TAC[compare_aux_def] THEN
+        REWRITE_TAC[NOT_SUC; strsub_def; EL; HD; char_lt;
+                    ord_chr_w2n] THEN
+        REWRITE_TAC[num_cmp_def; GT; GE] THEN
+        FIRST_ASSUM (fun ne ->
+          let (a,b) = dest_eq (rand (concl ne)) in
+          STRIP_ASSUME_TAC (SPECL [a; b] LT_CASES)) THEN
+        FIRST
+         [CONTRA_TAC;
+          FIRST_ASSUM (fun th ->
+            ASSUME_TAC (MATCH_MP lt_asym th)) THEN
+          ASM_REWRITE_TAC[distinctness "ordering"] THEN
+          ASM_ARITH_TAC]]]]));;
 
 let MIN_SUC_SUC = prove
  (`MIN (SUC m) (SUC n) = SUC (MIN m n)`,

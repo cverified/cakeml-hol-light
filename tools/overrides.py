@@ -7249,6 +7249,41 @@ let loads_cons = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'find_diff_str_cmp_thm1'): r"""
+(* the port's own: what the comparison of two strings of bytes
+   needs of the characters.  HOL4's EVAL_TAC computes with ORD and
+   CHR, and what that comes to here is ord_chr, the one fact that
+   the eight bits of a character of the port spell the number it
+   came from; ord_chr_w2n is its instance at a byte, w2w_val_8 says
+   that a byte keeps its value in a word of the target, and lt_asym
+   is what a case of LT_CASES leaves to say *)
+
+let ord_chr = prove
+ (`!n. n < 256 ==> ORD (CHR n) = n`,
+  REWRITE_TAC[CHR; ORD] THEN CONV_TAC EXPAND_CASES_CONV THEN
+   CONV_TAC NUM_REDUCE_CONV);;
+
+let ord_chr_w2n = prove
+ (`!(w:word8). ORD (CHR (w2n w)) = w2n w`,
+  GEN_TAC THEN MATCH_MP_TAC ord_chr THEN
+   MP_TAC (ISPEC `w:word8` VAL_BOUND) THEN
+   REWRITE_TAC[DIMINDEX_8] THEN CONV_TAC NUM_REDUCE_CONV THEN
+   DISCH_THEN ACCEPT_TAC);;
+
+let w2w_val_8 = prove
+ (`!(w:word8). good_dimindex (:'a) ==>
+    w2n ((w2w:word8->'a word) w) = w2n w`,
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC VAL_WORD_ZX THEN
+   REWRITE_TAC[DIMINDEX_8] THEN
+   FIRST_ASSUM (MP_TAC o REWRITE_RULE[good_dimindex_def]) THEN
+   ARITH_TAC);;
+
+let lt_asym = prove
+ (`!a b:num. a < b ==> ~(b < a)`,
+  ARITH_TAC);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads
