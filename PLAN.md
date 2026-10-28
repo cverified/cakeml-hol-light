@@ -1879,3 +1879,35 @@ budget `l` as the measure -- `fix_clock_IMP` bounds the inner
 comparison for the first, and `fix_clock_word_eq` (which the file
 proves from the first) removes the `fix_clock` altogether for the
 second; then `gen_gc_partial_thm`; then the word level.
+
+## word_eq's two, and what opening a case tree costs
+
+`word_eq_LESS_EQ` and `word_eq_add_clock` are the other two that
+entry 43 had parked, and they are one shape twice: the complete
+induction on the budget `l` (entry 44), the definition unfolded
+once, and then its case tree -- two conditions, the headers of the
+two words, the memory at the two addresses, the inner comparison,
+six more conditions and the comparison of the two contents.
+
+What the round learned about opening such a tree is in entry 74 and
+in the block above `word_eq_LESS_EQ`:
+
+- `EVERY_CASE_COND_TAC` over the whole tree does not come back: the
+  conditions of an arm are under a match that is not reduced yet,
+  so the splits it makes there are vacuous and it makes them again
+  in every branch;
+- splitting *every variable of a product type* splits the two
+  records of the arguments into their fields -- 88368 steps and no
+  progress.  `CASE_SPLIT_TAC` splits a variable only where a
+  pattern looks into it, and the one scrutinee it does not find
+  (`m a1`, an application of a variable) is split by hand;
+- a leaf has to be closed as soon as a split settles it, with
+  `ASM_REWRITE_TAC[LE_REFL]` and the constructor rewrites of the
+  goal *and* the assumptions, not with `ASM_ARITH_TAC` per leaf
+  (entry 43).
+
+`fix_clock_word_eq`, which the file proves from `word_eq_LESS_EQ`,
+is what makes the second theorem tractable: it removes the
+`fix_clock` of the inner comparison from both sides, so the two
+case trees differ only in the clock, and `ADD_EQ_0` makes the guard
+of a zero clock decidable on the side where the clock is `ck + n`.
