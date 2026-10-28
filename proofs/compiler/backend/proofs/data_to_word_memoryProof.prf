@@ -16061,23 +16061,7 @@
      - and the stack and the references go over with the inlining
        that the relation of the collection allows, which is the
        identity one (bc_stack_ref_inv_related) *)
-  (`abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
-  /\
-    has_gen gens /\ data_to_word_config_gc_kind conf =
-      data_to_word_Generational xs ==>
-     (?roots2 state2.
-       partial_gc
-         (make_partial_conf (make_gc_conf limit) gens (a + (sp +
-           sp1)))
-         (roots,heap) = (roots2,state2) /\
-       abs_ml_inv conf stack refs
-         (roots2,gc_state_old state2 ++ gc_state_h1 state2 ++
-           heap_expand (gc_state_n state2) ++ gc_state_r1
-           state2,be,gc_state_a
-          state2,gc_state_n state2,0,reset_gens conf (gc_state_a
-            state2)) limit ts /\ gc_state_ok state2)`))
- (fun () ->
-  let plain_heap_ok gl =
+  (let plain_heap_ok gl =
     the_asm (fun c -> hd_is "heap_ok" c &&
                not (hd_is "gen_gc_partial_conf_limit"
                       (el 1 (snd (strip_comb c))))) gl in

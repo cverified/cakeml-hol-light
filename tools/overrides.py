@@ -6800,16 +6800,14 @@ let pconf_fields = prove
   (!tag qs. gen_gc_partial_conf_isRef
      (make_partial_conf (make_gc_conf l) (GenState u ss) rs)
        (tag,qs) <=> isMutTag tag)`,
-  (fun () ->
-   REWRITE_TAC (make_partial_conf_def :: make_gc_conf_def ::
+  (   REWRITE_TAC (make_partial_conf_def :: make_gc_conf_def ::
                 record_thms "gen_gc_partial_conf" @
                 record_thms "gen_gc_conf") THEN
    REWRITE_TAC[o_THM; FST]);;
 
 let isRef_isDataElement = prove
  (`!x. data_to_word_memoryProof_isRef x ==> isDataElement x`,
-  (fun () ->
-   GEN_TAC THEN CASES_ON_NAME "x" THEN
+  (   GEN_TAC THEN CASES_ON_NAME "x" THEN
    REWRITE_TAC[isRef_def] THEN SAFE_MATCH_REDUCE_TAC THEN
    REWRITE_TAC[isDataElement_def] THEN
    TRY (SOLVED (MESON_TAC[])) THEN
@@ -6818,8 +6816,7 @@ let isRef_isDataElement = prove
 let isRef_EVERY_data = prove
  (`!l. EVERY data_to_word_memoryProof_isRef l
       ==> EVERY isDataElement l`,
-  (fun () ->
-   LIST_INDUCT_TAC THEN REWRITE_TAC[ALL] THEN
+  (   LIST_INDUCT_TAC THEN REWRITE_TAC[ALL] THEN
    ASM_MESON_TAC[isRef_isDataElement]);;
 
 let split_EVERY = prove
@@ -6827,8 +6824,7 @@ let split_EVERY = prove
     heap_split n1 heap = SOME (h1,h2) /\
     heap_split n2 heap = SOME (g1,g2) /\ n1 <= n2 /\ EVERY P g1
     ==> EVERY P h1`,
-  (fun () ->
-   REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (   REPEAT GEN_TAC THEN STRIP_TAC THEN
    FIRST_ASSUM (fun le ->
      if not (is_binop `(<=):num->num->bool` (concl le)) then fail()
      else
@@ -6863,8 +6859,7 @@ let ref_part = prove
         ==> gen_gc_partial_conf_isRef
               (make_partial_conf (make_gc_conf l)
                  (GenState u ss) rs) (tag,qs)))`,
-  (fun () ->
-   REWRITE_TAC[GSYM ALL_MEM; pconf_fields] THEN
+  (   REWRITE_TAC[GSYM ALL_MEM; pconf_fields] THEN
    CONJ_TAC THEN REPEAT STRIP_TAC THEN
    FIRST_X_ASSUM (fun al ->
      FIRST_ASSUM (fun mm -> MP_TAC (MATCH_MP al mm))) THEN
@@ -6890,8 +6885,7 @@ let ref_EVERY_d = prove
           (make_partial_conf (make_gc_conf lm) (GenState u ss) rs)
           d)
    ==> EVERY data_to_word_memoryProof_isRef l)`,
-  (fun () ->
-   REWRITE_TAC[GSYM ALL_MEM] THEN
+  (   REWRITE_TAC[GSYM ALL_MEM] THEN
    CONJ_TAC THEN REPEAT STRIP_TAC THEN
    FIRST_X_ASSUM (fun dl ->
      FIRST_ASSUM (fun mm ->
@@ -6936,8 +6930,7 @@ let similar_isRef = prove
  (`!l1 l2. EVERY2 (similar_data c) l1 l2 /\
           EVERY data_to_word_memoryProof_isRef l1
           ==> EVERY data_to_word_memoryProof_isRef l2`,
-  (fun () ->
-   LIST_INDUCT_TAC THEN GEN_TAC THEN
+  (   LIST_INDUCT_TAC THEN GEN_TAC THEN
    CASES_ON_NAME "l2" THEN
    REWRITE_TAC[ALL2; ALL] THEN
    TRY (SOLVED (REWRITE_TAC[])) THEN
@@ -6999,8 +6992,7 @@ let heap_gen_ok_inv = prove
      ==> heap_gen_ok heap
            (make_partial_conf (make_gc_conf limit) gens
               (a + (sp + sp1)))`)),
-  (fun () ->
-   (* the split of the heap at a point, as an assumption gives it *)
+  (   (* the split of the heap at a point, as an assumption gives it *)
    let the_split t gl =
      the_asm (fun c -> is_eq c && hd_is "heap_split" (lhand c) &&
                 el 0 (snd (strip_comb (lhand c))) = t) gl in

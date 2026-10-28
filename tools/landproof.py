@@ -30,7 +30,12 @@ def tactic_of(path, name):
   m = re.search(r'(?m)^let %s = btry\b' % re.escape(name), s)
   if not m:
     sys.exit('landproof: %s is not an attempt of %s' % (name, path))
-  i = s.index('(fun () ->', m.start()) + len('(fun () ->')
+  # the tactic's thunk is the one that starts a line: a statement
+  # written with cake_as_vars has a thunk of its own, inside
+  m2 = re.search(r'(?m)^ ?\(fun \(\) ->', s[m.start():])
+  if not m2:
+    sys.exit('landproof: %s has no tactic thunk' % name)
+  i = m.start() + m2.end()
   # the attempt ends at the first `);;` at the start of a line's
   # text, which is where btry's own paren closes
   j = s.index(');;', i)
