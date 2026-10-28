@@ -24763,18 +24763,98 @@
           ASM_REWRITE_TAC[distinctness "ordering"] THEN
           ASM_ARITH_TAC]]]])
 ### find_diff_str_cmp_thm2
-  (* the attempt: the proof of the source names find_diff_def,
-     num_cmp_def, str_cmp_def, fast_lt_def, fast_gt_def,
-     fast_le_def.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[find_diff_def; num_cmp_def; str_cmp_def;
-       fast_lt_def; fast_gt_def; fast_le_def] THEN
-     TRY ASM_ARITH_TAC))
+(* the proof of the source is an induction on the first list, with
+   four cases.  Two empty lists give the same word twice; one empty
+   list gives the shorter string and the smaller word, whichever it
+   is; and with a byte in front of each, either the two bytes agree
+   and str_cmp_cons and the induction hypothesis one byte further
+   on (acc_step) do the rest, or they differ and the first
+   character decides the comparison whatever the two lengths are,
+   which is why the three branches of mlstring_compare all give the
+   same answer here *)
+  ((* the hypotheses of the statement, with the two abbreviations
+     put in and the lengths of the two lists worked out *)
+  let prep =
+    STRIP_TAC THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if (try is_var (lhs (concl th)) with Failure _ -> false)
+      then SUBST_ALL_TAC th else fail())) THEN
+    RULE_ASSUM_TAC (REWRITE_RULE[LENGTH]) THEN
+    REWRITE_TAC[LENGTH; min_0l; min_0r; MIN_SUC_SUC; TAKE;
+                NOT_SUC; SUC_SUB1; find_diff_def] in
+  (* the two words that find_diff returns *)
+  let pick_pair =
+    W(fun (asl,w) ->
+      let ps = tparts (lhand (hd (conjuncts
+                 (snd (strip_exists w))))) in
+      MAP_EVERY EXISTS_TAC [el 0 ps; el 1 ps]) THEN
+    REWRITE_TAC[PAIR_EQ] in
+  (* each of the four comparisons, down to the comparison of the
+     two strings that mlstring_compare makes *)
+  let cmp_cases =
+    CASES_ON_NAME "cmp" THEN
+    REWRITE_TAC[str_cmp_def] THEN MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[mlstring_lt_def; mlstring_le_def; mlstring_gt_def;
+                mlstring_ge_def; mlstring_compare_def; strlen_def;
+                MAP; o_THM; LENGTH; LENGTH_MAP; num_cmp_def;
+                GT; GE] in
+  REWRITE_TAC[abbrev_def] THEN
+  ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN
+  LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+  CASES_BY_NAME "vals2" THENL
+   [(* both lists are empty: the two words are the same *)
+    prep THEN pick_pair THEN cmp_cases THEN
+    REWRITE_TAC[LT_REFL] THEN
+    ONCE_REWRITE_TAC[compare_aux_def] THEN
+    REWRITE_TAC[distinctness "ordering"; LT_REFL; LE_REFL];
+    (* the first list is empty, so it is the smaller string, and
+       its word is the smaller number *)
+    prep THEN pick_pair THEN
+    ASM_SIMP_TAC[val_n2w_lt] THEN cmp_cases THEN
+    REWRITE_TAC[LT_0; ARITH_RULE `~(SUC n < 0)`] THEN
+    ONCE_REWRITE_TAC[compare_aux_def] THEN
+    REWRITE_TAC[distinctness "ordering"] THEN ARITH_TAC;
+    (* the second list is empty, so the first is the greater
+       string and its word is the greater number *)
+    prep THEN pick_pair THEN
+    ASM_SIMP_TAC[val_n2w_lt] THEN cmp_cases THEN
+    REWRITE_TAC[LT_0; ARITH_RULE `~(SUC n < 0)`] THEN
+    ONCE_REWRITE_TAC[compare_aux_def] THEN
+    REWRITE_TAC[distinctness "ordering"] THEN ARITH_TAC;
+    (* both lists have a byte each *)
+    prep THEN
+    W(fun (asl,w) ->
+      let c = find_term is_cond (snd (strip_exists w)) in
+      ASM_CASES_TAC (fst (dest_cond c))) THENL
+     [(* the two bytes agree: the comparison steps over them and
+         find_diff goes on with the tails, one byte further on *)
+      FIRST_X_ASSUM (fun th ->
+        if (try is_var (lhs (concl th)) with Failure _ -> false)
+        then SUBST_ALL_TAC th else fail()) THEN
+      REWRITE_TAC[MAP; o_THM; str_cmp_cons; acc_step] THEN
+      FIRST_ASSUM MATCH_MP_TAC THEN
+      REPEAT CONJ_TAC THENL
+       [REFL_TAC; REFL_TAC; ASM_ARITH_TAC; ASM_ARITH_TAC;
+        FIRST_ASSUM ACCEPT_TAC];
+      (* they differ, and the first character decides the
+         comparison, whatever the two lengths are *)
+      ASM_REWRITE_TAC[] THEN pick_pair THEN
+      RULE_ASSUM_TRY (REWRITE_RULE[GSYM VAL_EQ]) THEN
+      FIRST_ASSUM (fun gd ->
+        REWRITE_TAC[MATCH_MP (SPEC_ALL w2w_val_8) gd]) THEN
+      cmp_cases THEN
+      GEN_REWRITE_TAC ONCE_DEPTH_CONV [compare_aux_def] THEN
+      REWRITE_TAC[NOT_SUC; strsub_def; EL; HD; char_lt;
+                  ord_chr_w2n] THEN
+      FIRST_ASSUM (fun ne ->
+        let (a,b) = dest_eq (rand (concl ne)) in
+        STRIP_ASSUME_TAC (SPECL [a; b] LT_CASES)) THEN
+      FIRST
+       [CONTRA_TAC;
+        FIRST_ASSUM (fun th ->
+          ASSUME_TAC (MATCH_MP lt_asym th)) THEN
+        ASM_REWRITE_TAC[distinctness "ordering"; COND_ID] THEN
+        ASM_ARITH_TAC]]])
 ### memory_rel_str_cmp
   (* the attempt: the proof of the source names
      memory_rel_ByteArray_IMP, memory_rel_tl, word_str_cmp_def,

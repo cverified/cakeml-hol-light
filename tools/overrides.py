@@ -7284,6 +7284,33 @@ let lt_asym = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'find_diff_str_cmp_thm2'): r"""
+(* the port's own: the three things the statement below needs of
+   numbers.  The two MIN clauses and MIN_SUC_SUC above are what
+   HOL4's simplifier knows of MIN; val_n2w_lt is the number of a
+   word that was made of one below the word size; and acc_step is
+   the step of the two accumulators -- a byte more in front of the
+   list is one more on the counter *)
+
+let min_0l = prove
+ (`!n. MIN 0 n = 0`,
+  REWRITE_TAC[MIN; LE_0]);;
+
+let min_0r = prove
+ (`!n. MIN n 0 = 0`,
+  GEN_TAC THEN REWRITE_TAC[MIN] THEN
+  COND_CASES_TAC THEN ASM_ARITH_TAC);;
+
+let val_n2w_lt = prove
+ (`!n. n < dimword (:'a) ==> w2n ((n2w n):'a word) = n`,
+  REWRITE_TAC[dimword] THEN MATCH_ACCEPT_TAC VAL_WORD_EQ);;
+
+let acc_step = prove
+ (`!k n s. k + (SUC n + s) = (k + 1) + (n + s)`,
+  ARITH_TAC);;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads

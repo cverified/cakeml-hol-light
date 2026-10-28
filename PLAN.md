@@ -1988,3 +1988,46 @@ proofs of this pass says it: no error, no warning,
    starts at `ml/lib/set_sep.ml` and `word_heap`;
 3. the rest of the stack layer (`bc_stack_ref_inv_MutBlock_F`,
    `v_inv_list_to_v_lem`, `word64_alt_thm`, `bignum_alt_thm`).
+
+## The string level
+
+Four theorems of this pass are the comparison of two strings, which
+is where the word level and the string library of the port meet:
+
+- `word_cmp_loop_thm`, the first of them, and the block above it
+  (`sep_read`, `star_front`, `word_list_SNOC`, `addr_step`,
+  `addr_prev`, `len_step`) which is what the port needs of a
+  separating conjunction and of the address arithmetic of a loop --
+  entry 77 of the guide says what each of them is for;
+- `word_str_loop_thm`, the loop over the bytes of a string, by
+  induction on the number of bytes it has still to read, with
+  `loads_cons` above it: the head of a list is the byte at the
+  address and the tail is what the induction is about;
+- `find_diff_str_cmp_thm1` and `find_diff_str_cmp_thm2`, that the
+  byte where two strings first differ decides every one of the
+  eight comparisons of `str_cmp`.  What these needed of the
+  characters is `ord_chr`, that the eight bits of a character of
+  the port spell the number it came from (HOL4 gets it from
+  `EVAL_TAC`), and `val_n2w_lt`, the number of a word made of one
+  below the word size.  `find_diff_str_cmp_thm2` has the four cases
+  of two lists, and in its last one the first character decides
+  whatever the two lengths are, which is why the three branches of
+  `mlstring_compare` all give the same answer there.
+
+Two things of this level are worth keeping in mind:
+
+- `REAL_ARITH`, which `ARITH_TAC` is built on, does not case split
+  on a disequality: `~(a = b) ==> a < b \/ b < a` is *not* an
+  `ARITH_RULE`.  What works is `LT_CASES` and then `CONTRA_TAC` on
+  the case that the disequality rules out.
+- the assumption that says what the memory holds is a *conditional
+  rewrite*, so `ASM_SIMP_TAC` will rewrite a load at `a + n2w i`
+  with it and leave the goal's load at `(a + n2w 1) + n2w i`
+  untouched; the goal's address has to be rewritten back
+  (`GSYM wsl_addr`) first.
+
+`memory_rel_str_cmp` is what the four of them are for, and
+`memory_rel_ByteArray_IMP` hands it the shifted header
+(`x >>> (dimindex (:'a) - c.len_size - 2) = n2w (LENGTH vals + 4)`),
+so the one real step that is left there is the case of
+`good_dimindex` and the two calls of `word_str_loop_thm`.
