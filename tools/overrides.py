@@ -6803,7 +6803,7 @@ let pconf_fields = prove
   (   REWRITE_TAC (make_partial_conf_def :: make_gc_conf_def ::
                 record_thms "gen_gc_partial_conf" @
                 record_thms "gen_gc_conf") THEN
-   REWRITE_TAC[o_THM; FST]);;
+   REWRITE_TAC[o_THM; FST]));;
 
 let isRef_isDataElement = prove
  (`!x. data_to_word_memoryProof_isRef x ==> isDataElement x`,
@@ -6811,13 +6811,13 @@ let isRef_isDataElement = prove
    REWRITE_TAC[isRef_def] THEN SAFE_MATCH_REDUCE_TAC THEN
    REWRITE_TAC[isDataElement_def] THEN
    TRY (SOLVED (MESON_TAC[])) THEN
-   REWRITE_TAC[]);;
+   REWRITE_TAC[]));;
 
 let isRef_EVERY_data = prove
  (`!l. EVERY data_to_word_memoryProof_isRef l
       ==> EVERY isDataElement l`,
   (   LIST_INDUCT_TAC THEN REWRITE_TAC[ALL] THEN
-   ASM_MESON_TAC[isRef_isDataElement]);;
+   ASM_MESON_TAC[isRef_isDataElement]));;
 
 let split_EVERY = prove
  (`!heap n1 n2 h1 h2 g1 g2 P.
@@ -6846,7 +6846,7 @@ let split_EVERY = prove
      then SUBST_ALL_TAC th else fail())) THEN
    RULE_ASSUM_TRY (REWRITE_RULE[ALL_APPEND]) THEN
    SPLIT_ASM_TAC THEN
-   FIRST_ASSUM ACCEPT_TAC);;
+   FIRST_ASSUM ACCEPT_TAC));;
 
 let ref_part = prove
  (`(EVERY (\x. ~(data_to_word_memoryProof_isRef x)) l1
@@ -6870,7 +6870,7 @@ let ref_part = prove
       as the goal *)
    ONCE_REWRITE_TAC[isRef_def] THEN
    TRY SAFE_MATCH_REDUCE_TAC THEN
-   ASM_REWRITE_TAC[]);;
+   ASM_REWRITE_TAC[]));;
 
 let ref_EVERY_d = prove
  (`(EVERY isDataElement l /\
@@ -6924,7 +6924,7 @@ let ref_EVERY_d = prove
      ASSUME_TAC (MATCH_MP (SPEC_ALL imp) mm)) THEN
    RULE_ASSUM_TRY (REWRITE_RULE[pconf_fields]) THEN
    TRY (SOLVED CONTRA_TAC) THEN
-   ASM_REWRITE_TAC[]);;
+   ASM_REWRITE_TAC[]));;
 
 let similar_isRef = prove
  (`!l1 l2. EVERY2 (similar_data c) l1 l2 /\
@@ -6981,7 +6981,7 @@ let similar_isRef = prove
    RULE_ASSUM_TRY (CONV_RULE (REDEPTH_CONV UNWIND_CONV)) THEN
    TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
    RULE_ASSUM_TRY (REWRITE_RULE[]) THEN
-   ASM_REWRITE_TAC[]);;
+   ASM_REWRITE_TAC[]));;
 
 let heap_gen_ok_inv = prove
  (cake_as_vars (fun () ->
