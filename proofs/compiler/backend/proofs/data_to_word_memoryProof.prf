@@ -22922,21 +22922,108 @@
        dimword; good_dimindex_def; MAX_LIST] THEN
      TRY ASM_ARITH_TAC))
 ### vb_eq_size_IMP_vb_size
-  (* the attempt, again: the proof of this one is written as well
-     (the complete induction on the size of the value that the
-     definition recurses on, as PORTING-GUIDE.md entry 35 says to
-     do) and it went through while vb_eq_size was still a list of
-     clauses -- but that list was inconsistent, and now that the
-     definition is the one match that HOL4 means, every case of the
-     proof reduces that match again and the file would take tens of
-     minutes.  What it needs first is the clause of each pair of
-     constructors derived once from the match (nine lemmas), and
-     cheap closers at the leaves instead of ASM_ARITH_TAC and
-     ASM_MESON_TAC *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[vb_size_def] THEN
-     TRY ASM_ARITH_TAC))
+  (* the complete induction on the size of the value that the
+     definition recurses on (PORTING-GUIDE.md entry 44), with
+     the measure bounded so that the hypothesis is about the
+     measure of a sub-term.  What a value of the two functions
+     can be is above the statement (tools/overrides.py): of a
+     value one word or one more than what the payloads of two
+     Blocks took, of a list nothing or the element and then the
+     rest.  The payload of a Block is smaller than the Block
+     (vb_size_Block) and so are an element of a list and the
+     rest of it, which is what the bound of each use of the
+     hypothesis comes to; the leaves are arithmetic *)
+  ((* the measure of a list of values: what the statement about the
+     list function bounds its value by *)
+  let meas l = mk_binop `(+):num->num->num`
+      (list_mk_icomb "SUM" [list_mk_icomb "MAP" [`vb_size`; l]])
+      (list_mk_icomb "LENGTH" [l]) in
+  (* the hypothesis of the complete induction at a measure, used
+     on an equation of the assumptions: the bound is the first
+     goal, and the value of the sub-term is bounded in the second *)
+  let use_ih which t eq (asl,w as gl) =
+    let ih = the_asm (fun c -> is_forall c &&
+               (try hd_is "<" (lhand (snd (strip_forall c)))
+                with Failure _ -> false)) gl in
+    let kk = rand (lhand (snd (strip_forall (concl ih)))) in
+    (SUBGOAL_THEN (mk_binop `(<):num->num->bool` t kk)
+       (fun lt -> MP_TAC (MATCH_MP (which (MP (SPEC t ih) lt))
+                            (CONJ (SPEC t LE_REFL) eq)))) gl in
+  (* the equation of the assumptions that a function left, with
+     the sub-term it is about *)
+  let the_eq nm vr gl =
+    let eq = the_asm (fun c -> is_eq c && hd_is nm (lhand c) &&
+               (not vr ||
+                (try is_var (el 1 (snd (strip_comb (lhand c))))
+                 with Failure _ -> false))) gl in
+    eq,el 1 (snd (strip_comb (lhand (concl eq)))) in
+  (* the statement of the induction, with the measure bounded, so
+     that the hypothesis is about the measure of a sub-term and not
+     about the bound (PORTING-GUIDE.md entry 5) *)
+  SUBGOAL_THEN
+   `!k. (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
+           vb_size v1 <= k /\ vb_eq_size refs v1 v2 = SOME (n,b)
+           ==> n <= vb_size v1) /\
+        (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
+           SUM (MAP vb_size v1) + LENGTH v1 <= k /\
+           vb_eq_size_list refs v1 v2 = SOME (n,b)
+           ==> n <= SUM (MAP vb_size v1) + LENGTH v1)`
+   (fun th ->
+      CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+       [MP_TAC (CONJUNCT1 (SPEC `vb_size (v1:dataSem_v)` th));
+        MP_TAC (CONJUNCT2 (SPEC
+          `SUM (MAP vb_size (v1:dataSem_v list)) +
+           LENGTH (v1:dataSem_v list)` th))] THEN
+      ASM_MESON_TAC[LE_REFL]) THEN
+  MATCH_MP_TAC num_WF THEN GEN_TAC THEN DISCH_TAC THEN
+  CONJ_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THENL
+   [(* a value: its size is one word, or one more than what the
+       payloads of two Blocks took *)
+    FIRST_ASSUM (fun eq ->
+      if not (is_eq (concl eq) &&
+              hd_is "vb_eq_size" (lhand (concl eq))) then fail()
+      else STRIP_ASSUME_TAC (MATCH_MP vb_eq_size_cases eq)) THEN
+    TRY (SOLVED (ASM_REWRITE_TAC[vb_size_ge_1])) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (lhand c) &&
+         not (vfree_in (lhand c) (rand c))
+      then SUBST_ALL_TAC th else fail())) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[vb_size_Block]) THEN
+    REWRITE_TAC[vb_size_Block] THEN
+    (* the payload is smaller than the Block it is in *)
+    W(fun gl ->
+      let lk,l1 = the_eq "vb_eq_size_list" false gl in
+      use_ih CONJUNCT2 (meas l1) lk) THEN
+    TRY (SOLVED ARITH_ASM_TAC) THEN
+    ARITH_TAC;
+    (* a list of values: nothing, or its first element and the
+       rest of the list *)
+    FIRST_ASSUM (fun eq ->
+      if not (is_eq (concl eq) &&
+              hd_is "vb_eq_size_list" (lhand (concl eq)))
+      then fail()
+      else STRIP_ASSUME_TAC (MATCH_MP vb_eq_size_list_cases eq)) THEN
+    TRY (SOLVED (ASM_REWRITE_TAC[LE_0])) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (lhand c) &&
+         not (vfree_in (lhand c) (rand c))
+      then SUBST_ALL_TAC th else fail())) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[MAP; LENGTH; vb_sum_clauses]) THEN
+    REWRITE_TAC[MAP; LENGTH; vb_sum_clauses] THEN
+    (* the element is smaller than the list it is in *)
+    W(fun gl ->
+      let eq,x1 = the_eq "vb_eq_size" false gl in
+      use_ih CONJUNCT1 (list_mk_icomb "vb_size" [x1]) eq) THEN
+    TRY (SOLVED ARITH_ASM_TAC) THEN
+    (* and so is the rest of it, where the value of the element
+       left one *)
+    TRY (W(fun gl ->
+           let lk,t1 = the_eq "vb_eq_size_list" true gl in
+           use_ih CONJUNCT2 (meas t1) lk)) THEN
+    TRY (SOLVED ARITH_ASM_TAC) THEN
+    ARITH_TAC])
 ### memory_rel_limit
   (* the attempt: the proof of the source names dimword,
      memory_rel_depth_size_limit, vb_eq_size_IMP_vb_size,

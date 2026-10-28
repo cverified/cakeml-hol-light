@@ -29854,27 +29854,246 @@ let vb_eq_size_def = cake_define_list_cheat CHEAT_TAC
            match vb_eq_size_list refs vs1 vs2 with NONE -> NONE
              | SOME (m,b) -> SOME (m + n + 1,b)))`];;
 
+(* the port's own: what the two theorems about vb_eq_size go by.
+   The definition is the one match that HOL4 means (its clauses
+   overlap), so a proof that takes two values apart would reduce
+   that match again in each of the twenty-five cases
+   (PORTING-GUIDE.md entry 43).  The two lemmas below pay that
+   reduction once and say what a SOME of each of the two functions
+   can be, and the proofs after them are a complete induction on
+   the size of the value with those two, the size of a Block and
+   arithmetic *)
+
+(* the clauses of SUM, which the port defines as an ITLIST *)
+let vb_sum_clauses = prove
+ (`SUM [] = 0 /\ (!h t. SUM (CONS h t) = h + SUM t)`,
+  REWRITE_TAC[SUM_DEF; ITLIST]);;
+
+(* what a value of the map of the successor of a pair is *)
+let option_map_pair_eq = prove
+ (`OPTION_MAP (\(k,c). (k + 1,c)) (x:(num#bool)option) = SOME (n,b)
+   <=> (?m. x = SOME (m,b) /\ n = m + 1)`,
+  CASES_ON_TAC `x:(num#bool)option` THEN
+  REWRITE_TAC[OPTION_MAP; distinctness "option"] THEN
+  TRY (SOLVED (REWRITE_TAC[])) THEN
+  W(fun (asl,w) -> CASES_ON_TAC (rand (rand (lhand (lhand w))))) THEN
+  REWRITE_TAC[OPTION_MAP] THEN
+  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+  MESON_TAC[]);;
+
+(* a value is at least one word big, and a Block is as big as its
+   payload *)
+let vb_size_ge_1 = prove
+ (`!v. 1 <= vb_size (v:dataSem_v)`,
+  GEN_TAC THEN CASES_ON_TAC `v:dataSem_v` THEN
+  ONCE_REWRITE_TAC[vb_size_def] THEN SAFE_MATCH_REDUCE_TAC THEN
+  ARITH_TAC);;
+
+let vb_size_Block = prove
+ (`vb_size (Block ts t ls:dataSem_v) =
+   1 + t + SUM (MAP vb_size ls) + LENGTH ls`,
+  ONCE_REWRITE_TAC[vb_size_def] THEN SAFE_MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[]);;
+
+(* what a SOME of vb_eq_size can be: one word, or one more than
+   what the payloads of two Blocks took.  The definition is
+   unfolded in the antecedent only -- the function stands in the
+   conclusion as well, and a rewrite that reaches it there unfolds
+   the match the lemma is there to avoid *)
+let vb_eq_size_cases = prove
+ (`!(refs:('a bvlSem_ref) spt) v1 v2 n b.
+     vb_eq_size refs v1 v2 = SOME (n,b)
+     ==> n = 1 \/
+         (?ts1 t1 l1 ts2 t2 l2 m.
+            v1 = Block ts1 t1 l1 /\ v2 = Block ts2 t2 l2 /\
+            vb_eq_size_list refs l1 l2 = SOME (m,b) /\ n = m + 1)`,
+  REPEAT GEN_TAC THEN
+  CASES_ON_TAC `v1:dataSem_v` THEN CASES_ON_TAC `v2:dataSem_v` THEN
+  GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [vb_eq_size_def] THEN
+  CONV_TAC (LAND_CONV (REDEPTH_CONV safe_match_conv)) THEN
+  REPEAT COND_CASES_TAC THEN
+  REWRITE_TAC[option_map_pair_eq; distinctness "option";
+              injectivity "option"; PAIR_EQ] THEN
+  (* of two values that are no Block, and of two Blocks that the
+     function decided by their tags: one word *)
+  TRY (SOLVED (STRIP_TAC THEN ASM_REWRITE_TAC[])) THEN
+  (* of two Blocks whose payloads it went into: one more than
+     what the payloads took *)
+  TRY (SOLVED
+    (STRIP_TAC THEN DISJ2_TAC THEN
+     W(fun (asl,w as gl) ->
+       let cs = conjuncts (snd (strip_exists w)) in
+       let lk = the_asm (fun c -> is_eq c &&
+                  hd_is "vb_eq_size_list" (lhand c)) gl in
+       MAP_EVERY EXISTS_TAC
+         (snd (strip_comb (lhand (el 0 cs))) @
+          snd (strip_comb (lhand (el 1 cs))) @
+          [lhand (rand (rand (concl lk)))])) THEN
+     ASM_REWRITE_TAC[])) THEN
+  (* of two pointers: whatever the two lookups are, it is one *)
+  DISCH_TAC THEN EVERY_CASE_TAC THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option";
+                              injectivity "option"; PAIR_EQ]) THEN
+  TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+  ASM_REWRITE_TAC[]);;
+
+(* and what a SOME of the list function can be: nothing, or the
+   value of the two elements and then that of the two rests *)
+let vb_eq_size_list_cases = prove
+ (`!(refs:('a bvlSem_ref) spt) l1 l2 n b.
+     vb_eq_size_list refs l1 l2 = SOME (n,b)
+     ==> n = 0 \/
+         (?x1 t1 x2 t2 k.
+            l1 = CONS x1 t1 /\ l2 = CONS x2 t2 /\
+            ((vb_eq_size refs x1 x2 = SOME (k,F) /\ n = k + 1) \/
+             (?m. vb_eq_size refs x1 x2 = SOME (k,T) /\
+                  vb_eq_size_list refs t1 t2 = SOME (m,b) /\
+                  n = m + k + 1)))`,
+  REPEAT GEN_TAC THEN
+  CASES_ON_TAC `l1:dataSem_v list` THEN
+  CASES_ON_TAC `l2:dataSem_v list` THEN
+  GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [vb_eq_size_def] THEN
+  CONV_TAC (LAND_CONV (REDEPTH_CONV safe_match_conv)) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  (* of two lists of which one is empty: nothing *)
+  TRY (SOLVED (STRIP_TAC THEN ASM_REWRITE_TAC[])) THEN
+  (* and of two lists with an element each: the elements, and then
+     the rests where the elements were equal.  A branch that the
+     split of the two values settled on its own is past the
+     witnesses, which is what the TRYs are for *)
+  DISCH_TAC THEN EVERY_CASE_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+  TRY DISJ2_TAC THEN
+  TRY (W(fun (asl,w as gl) ->
+    let cs = conjuncts (snd (strip_exists w)) in
+    let eq = the_asm (fun c -> is_eq c &&
+               hd_is "vb_eq_size" (lhand c)) gl in
+    MAP_EVERY EXISTS_TAC
+      (snd (strip_comb (lhand (el 0 cs))) @
+       snd (strip_comb (lhand (el 1 cs))) @
+       [lhand (rand (rand (concl eq)))]))) THEN
+  TRY (ASM_REWRITE_TAC[injectivity "option"; PAIR_EQ]) THEN
+  TRY (SOLVED (ARITH_ASM_TAC)) THEN
+  W(fun gl ->
+    let lk = the_asm (fun c -> is_eq c &&
+               hd_is "vb_eq_size_list" (lhand c) &&
+               hd_is "SOME" (rand c) &&
+               (try is_var (el 1 (snd (strip_comb (lhand c))))
+                with Failure _ -> false)) gl in
+    EXISTS_TAC (lhand (rand (rand (concl lk))))) THEN
+  ASM_REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+  TRY (SOLVED (ARITH_ASM_TAC)));;
+
 let vb_eq_size_IMP_vb_size = prove
  (`(!(refs:('a bvlSem_ref) spt) v1 v2 n b.
      vb_eq_size refs v1 v2 = SOME (n,b) ==> n <= vb_size v1) /\
    (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
      vb_eq_size_list refs v1 v2 = SOME (n,b) ==> n <= SUM (MAP
        vb_size v1) + LENGTH v1)`,
-  (* the attempt, again: the proof of this one is written as well
-     (the complete induction on the size of the value that the
-     definition recurses on, as PORTING-GUIDE.md entry 35 says to
-     do) and it went through while vb_eq_size was still a list of
-     clauses -- but that list was inconsistent, and now that the
-     definition is the one match that HOL4 means, every case of the
-     proof reduces that match again and the file would take tens of
-     minutes.  What it needs first is the clause of each pair of
-     constructors derived once from the match (nine lemmas), and
-     cheap closers at the leaves instead of ASM_ARITH_TAC and
-     ASM_MESON_TAC *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[vb_size_def] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the complete induction on the size of the value that the
+     definition recurses on (PORTING-GUIDE.md entry 44), with
+     the measure bounded so that the hypothesis is about the
+     measure of a sub-term.  What a value of the two functions
+     can be is above the statement (tools/overrides.py): of a
+     value one word or one more than what the payloads of two
+     Blocks took, of a list nothing or the element and then the
+     rest.  The payload of a Block is smaller than the Block
+     (vb_size_Block) and so are an element of a list and the
+     rest of it, which is what the bound of each use of the
+     hypothesis comes to; the leaves are arithmetic *)
+  ((* the measure of a list of values: what the statement about the
+     list function bounds its value by *)
+  let meas l = mk_binop `(+):num->num->num`
+      (list_mk_icomb "SUM" [list_mk_icomb "MAP" [`vb_size`; l]])
+      (list_mk_icomb "LENGTH" [l]) in
+  (* the hypothesis of the complete induction at a measure, used
+     on an equation of the assumptions: the bound is the first
+     goal, and the value of the sub-term is bounded in the second *)
+  let use_ih which t eq (asl,w as gl) =
+    let ih = the_asm (fun c -> is_forall c &&
+               (try hd_is "<" (lhand (snd (strip_forall c)))
+                with Failure _ -> false)) gl in
+    let kk = rand (lhand (snd (strip_forall (concl ih)))) in
+    (SUBGOAL_THEN (mk_binop `(<):num->num->bool` t kk)
+       (fun lt -> MP_TAC (MATCH_MP (which (MP (SPEC t ih) lt))
+                            (CONJ (SPEC t LE_REFL) eq)))) gl in
+  (* the equation of the assumptions that a function left, with
+     the sub-term it is about *)
+  let the_eq nm vr gl =
+    let eq = the_asm (fun c -> is_eq c && hd_is nm (lhand c) &&
+               (not vr ||
+                (try is_var (el 1 (snd (strip_comb (lhand c))))
+                 with Failure _ -> false))) gl in
+    eq,el 1 (snd (strip_comb (lhand (concl eq)))) in
+  (* the statement of the induction, with the measure bounded, so
+     that the hypothesis is about the measure of a sub-term and not
+     about the bound (PORTING-GUIDE.md entry 5) *)
+  SUBGOAL_THEN
+   `!k. (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
+           vb_size v1 <= k /\ vb_eq_size refs v1 v2 = SOME (n,b)
+           ==> n <= vb_size v1) /\
+        (!(refs:('a bvlSem_ref) spt) v1 v2 n b.
+           SUM (MAP vb_size v1) + LENGTH v1 <= k /\
+           vb_eq_size_list refs v1 v2 = SOME (n,b)
+           ==> n <= SUM (MAP vb_size v1) + LENGTH v1)`
+   (fun th ->
+      CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+       [MP_TAC (CONJUNCT1 (SPEC `vb_size (v1:dataSem_v)` th));
+        MP_TAC (CONJUNCT2 (SPEC
+          `SUM (MAP vb_size (v1:dataSem_v list)) +
+           LENGTH (v1:dataSem_v list)` th))] THEN
+      ASM_MESON_TAC[LE_REFL]) THEN
+  MATCH_MP_TAC num_WF THEN GEN_TAC THEN DISCH_TAC THEN
+  CONJ_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THENL
+   [(* a value: its size is one word, or one more than what the
+       payloads of two Blocks took *)
+    FIRST_ASSUM (fun eq ->
+      if not (is_eq (concl eq) &&
+              hd_is "vb_eq_size" (lhand (concl eq))) then fail()
+      else STRIP_ASSUME_TAC (MATCH_MP vb_eq_size_cases eq)) THEN
+    TRY (SOLVED (ASM_REWRITE_TAC[vb_size_ge_1])) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (lhand c) &&
+         not (vfree_in (lhand c) (rand c))
+      then SUBST_ALL_TAC th else fail())) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[vb_size_Block]) THEN
+    REWRITE_TAC[vb_size_Block] THEN
+    (* the payload is smaller than the Block it is in *)
+    W(fun gl ->
+      let lk,l1 = the_eq "vb_eq_size_list" false gl in
+      use_ih CONJUNCT2 (meas l1) lk) THEN
+    TRY (SOLVED ARITH_ASM_TAC) THEN
+    ARITH_TAC;
+    (* a list of values: nothing, or its first element and the
+       rest of the list *)
+    FIRST_ASSUM (fun eq ->
+      if not (is_eq (concl eq) &&
+              hd_is "vb_eq_size_list" (lhand (concl eq)))
+      then fail()
+      else STRIP_ASSUME_TAC (MATCH_MP vb_eq_size_list_cases eq)) THEN
+    TRY (SOLVED (ASM_REWRITE_TAC[LE_0])) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (lhand c) &&
+         not (vfree_in (lhand c) (rand c))
+      then SUBST_ALL_TAC th else fail())) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[MAP; LENGTH; vb_sum_clauses]) THEN
+    REWRITE_TAC[MAP; LENGTH; vb_sum_clauses] THEN
+    (* the element is smaller than the list it is in *)
+    W(fun gl ->
+      let eq,x1 = the_eq "vb_eq_size" false gl in
+      use_ih CONJUNCT1 (list_mk_icomb "vb_size" [x1]) eq) THEN
+    TRY (SOLVED ARITH_ASM_TAC) THEN
+    (* and so is the rest of it, where the value of the element
+       left one *)
+    TRY (W(fun gl ->
+           let lk,t1 = the_eq "vb_eq_size_list" true gl in
+           use_ih CONJUNCT2 (meas t1) lk)) THEN
+    TRY (SOLVED ARITH_ASM_TAC) THEN
+    ARITH_TAC]));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

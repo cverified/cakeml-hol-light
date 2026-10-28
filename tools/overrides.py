@@ -6584,6 +6584,141 @@ let reach_ref = prove
 
 """,
 
+  ('data_to_word_memoryProof', 'vb_eq_size_IMP_vb_size'): r"""
+(* the port's own: what the two theorems about vb_eq_size go by.
+   The definition is the one match that HOL4 means (its clauses
+   overlap), so a proof that takes two values apart would reduce
+   that match again in each of the twenty-five cases
+   (PORTING-GUIDE.md entry 43).  The two lemmas below pay that
+   reduction once and say what a SOME of each of the two functions
+   can be, and the proofs after them are a complete induction on
+   the size of the value with those two, the size of a Block and
+   arithmetic *)
+
+(* the clauses of SUM, which the port defines as an ITLIST *)
+let vb_sum_clauses = prove
+ (`SUM [] = 0 /\ (!h t. SUM (CONS h t) = h + SUM t)`,
+  REWRITE_TAC[SUM_DEF; ITLIST]);;
+
+(* what a value of the map of the successor of a pair is *)
+let option_map_pair_eq = prove
+ (`OPTION_MAP (\(k,c). (k + 1,c)) (x:(num#bool)option) = SOME (n,b)
+   <=> (?m. x = SOME (m,b) /\ n = m + 1)`,
+  CASES_ON_TAC `x:(num#bool)option` THEN
+  REWRITE_TAC[OPTION_MAP; distinctness "option"] THEN
+  TRY (SOLVED (REWRITE_TAC[])) THEN
+  W(fun (asl,w) -> CASES_ON_TAC (rand (rand (lhand (lhand w))))) THEN
+  REWRITE_TAC[OPTION_MAP] THEN
+  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+  MESON_TAC[]);;
+
+(* a value is at least one word big, and a Block is as big as its
+   payload *)
+let vb_size_ge_1 = prove
+ (`!v. 1 <= vb_size (v:dataSem_v)`,
+  GEN_TAC THEN CASES_ON_TAC `v:dataSem_v` THEN
+  ONCE_REWRITE_TAC[vb_size_def] THEN SAFE_MATCH_REDUCE_TAC THEN
+  ARITH_TAC);;
+
+let vb_size_Block = prove
+ (`vb_size (Block ts t ls:dataSem_v) =
+   1 + t + SUM (MAP vb_size ls) + LENGTH ls`,
+  ONCE_REWRITE_TAC[vb_size_def] THEN SAFE_MATCH_REDUCE_TAC THEN
+  REWRITE_TAC[]);;
+
+(* what a SOME of vb_eq_size can be: one word, or one more than
+   what the payloads of two Blocks took.  The definition is
+   unfolded in the antecedent only -- the function stands in the
+   conclusion as well, and a rewrite that reaches it there unfolds
+   the match the lemma is there to avoid *)
+let vb_eq_size_cases = prove
+ (`!(refs:('a bvlSem_ref) spt) v1 v2 n b.
+     vb_eq_size refs v1 v2 = SOME (n,b)
+     ==> n = 1 \/
+         (?ts1 t1 l1 ts2 t2 l2 m.
+            v1 = Block ts1 t1 l1 /\ v2 = Block ts2 t2 l2 /\
+            vb_eq_size_list refs l1 l2 = SOME (m,b) /\ n = m + 1)`,
+  REPEAT GEN_TAC THEN
+  CASES_ON_TAC `v1:dataSem_v` THEN CASES_ON_TAC `v2:dataSem_v` THEN
+  GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [vb_eq_size_def] THEN
+  CONV_TAC (LAND_CONV (REDEPTH_CONV safe_match_conv)) THEN
+  REPEAT COND_CASES_TAC THEN
+  REWRITE_TAC[option_map_pair_eq; distinctness "option";
+              injectivity "option"; PAIR_EQ] THEN
+  (* of two values that are no Block, and of two Blocks that the
+     function decided by their tags: one word *)
+  TRY (SOLVED (STRIP_TAC THEN ASM_REWRITE_TAC[])) THEN
+  (* of two Blocks whose payloads it went into: one more than
+     what the payloads took *)
+  TRY (SOLVED
+    (STRIP_TAC THEN DISJ2_TAC THEN
+     W(fun (asl,w as gl) ->
+       let cs = conjuncts (snd (strip_exists w)) in
+       let lk = the_asm (fun c -> is_eq c &&
+                  hd_is "vb_eq_size_list" (lhand c)) gl in
+       MAP_EVERY EXISTS_TAC
+         (snd (strip_comb (lhand (el 0 cs))) @
+          snd (strip_comb (lhand (el 1 cs))) @
+          [lhand (rand (rand (concl lk)))])) THEN
+     ASM_REWRITE_TAC[])) THEN
+  (* of two pointers: whatever the two lookups are, it is one *)
+  DISCH_TAC THEN EVERY_CASE_TAC THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option";
+                              injectivity "option"; PAIR_EQ]) THEN
+  TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+  ASM_REWRITE_TAC[]);;
+
+(* and what a SOME of the list function can be: nothing, or the
+   value of the two elements and then that of the two rests *)
+let vb_eq_size_list_cases = prove
+ (`!(refs:('a bvlSem_ref) spt) l1 l2 n b.
+     vb_eq_size_list refs l1 l2 = SOME (n,b)
+     ==> n = 0 \/
+         (?x1 t1 x2 t2 k.
+            l1 = CONS x1 t1 /\ l2 = CONS x2 t2 /\
+            ((vb_eq_size refs x1 x2 = SOME (k,F) /\ n = k + 1) \/
+             (?m. vb_eq_size refs x1 x2 = SOME (k,T) /\
+                  vb_eq_size_list refs t1 t2 = SOME (m,b) /\
+                  n = m + k + 1)))`,
+  REPEAT GEN_TAC THEN
+  CASES_ON_TAC `l1:dataSem_v list` THEN
+  CASES_ON_TAC `l2:dataSem_v list` THEN
+  GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [vb_eq_size_def] THEN
+  CONV_TAC (LAND_CONV (REDEPTH_CONV safe_match_conv)) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  (* of two lists of which one is empty: nothing *)
+  TRY (SOLVED (STRIP_TAC THEN ASM_REWRITE_TAC[])) THEN
+  (* and of two lists with an element each: the elements, and then
+     the rests where the elements were equal.  A branch that the
+     split of the two values settled on its own is past the
+     witnesses, which is what the TRYs are for *)
+  DISCH_TAC THEN EVERY_CASE_TAC THEN
+  TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+  TRY DISJ2_TAC THEN
+  TRY (W(fun (asl,w as gl) ->
+    let cs = conjuncts (snd (strip_exists w)) in
+    let eq = the_asm (fun c -> is_eq c &&
+               hd_is "vb_eq_size" (lhand c)) gl in
+    MAP_EVERY EXISTS_TAC
+      (snd (strip_comb (lhand (el 0 cs))) @
+       snd (strip_comb (lhand (el 1 cs))) @
+       [lhand (rand (rand (concl eq)))]))) THEN
+  TRY (ASM_REWRITE_TAC[injectivity "option"; PAIR_EQ]) THEN
+  TRY (SOLVED (ARITH_ASM_TAC)) THEN
+  W(fun gl ->
+    let lk = the_asm (fun c -> is_eq c &&
+               hd_is "vb_eq_size_list" (lhand c) &&
+               hd_is "SOME" (rand c) &&
+               (try is_var (el 1 (snd (strip_comb (lhand c))))
+                with Failure _ -> false)) gl in
+    EXISTS_TAC (lhand (rand (rand (concl lk))))) THEN
+  ASM_REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+  TRY (SOLVED (ARITH_ASM_TAC)));;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads
