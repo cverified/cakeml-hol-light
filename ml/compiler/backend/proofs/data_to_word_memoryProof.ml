@@ -29882,6 +29882,13 @@ let option_map_pair_eq = prove
   REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
   MESON_TAC[]);;
 
+(* and the same under the existential that the two theorems put
+   it under *)
+let exists_option_map_pair = prove
+ (`(?n. OPTION_MAP (\(k,c). (k + 1,c)) (x:(num#bool)option)
+          = SOME (n,b)) <=> (?m. x = SOME (m,b))`,
+  REWRITE_TAC[option_map_pair_eq] THEN MESON_TAC[]);;
+
 (* a value is at least one word big, and a Block is as big as its
    payload *)
 let vb_size_ge_1 = prove
@@ -31002,13 +31009,109 @@ let do_eq_IFF_vb_eq_size = prove
    (!(refs:('a bvlSem_ref) spt) v1 v2 b.
       do_eq_list refs v1 v2 = Eq_val b <=>
         (?n. vb_eq_size_list refs v1 v2 = SOME (n,b)))`,
-  (* the attempt: of what the proof of the source names,
-     the port has nothing in this file's closure, so this
-     is the plain attempt, with the cheat behind it until
-     the proof is written *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
+  (* the complete induction on the size of the value again
+     (PORTING-GUIDE.md entry 44), with what a value of the two
+     functions can be above the statement.  Of two values the
+     two definitions are reduced together: their conditions are
+     the same conditions, so one split decides both, and of two
+     Blocks with the same tag what is left is the hypothesis at
+     their payloads.  Of two lists the hypothesis at the two
+     elements, at each flag, decides both matches -- a
+     combination it rules out closes its branch -- and the
+     hypothesis at the two rests is the goal they leave *)
+  (let meas l = mk_binop `(+):num->num->num`
+      (list_mk_icomb "SUM" [list_mk_icomb "MAP" [`vb_size`; l]])
+      (list_mk_icomb "LENGTH" [l]) in
+  (* the hypothesis of the complete induction, at a measure: what
+     it says of the sub-term is used as the step of the goal or
+     put among the assumptions, and the bound is the first goal *)
+  let ih_tac which t use (asl,w as gl) =
+    let ih = the_asm (fun c -> is_forall c &&
+               (try hd_is "<" (lhand (snd (strip_forall c)))
+                with Failure _ -> false)) gl in
+    let kk = rand (lhand (snd (strip_forall (concl ih)))) in
+    (SUBGOAL_THEN (mk_binop `(<):num->num->bool` t kk)
+       (fun lt -> use (which (MP (SPEC t ih) lt)))) gl in
+  let tidy = [distinctness "eq_result"; injectivity "eq_result";
+              distinctness "option"; injectivity "option";
+              PAIR_EQ; UNWIND_THM1; UNWIND_THM2] in
+  SUBGOAL_THEN
+   `!k. (!(refs:('a bvlSem_ref) spt) v1 v2 b.
+           vb_size v1 <= k
+           ==> (do_eq refs v1 v2 = Eq_val b <=>
+                (?n. vb_eq_size refs v1 v2 = SOME (n,b)))) /\
+        (!(refs:('a bvlSem_ref) spt) v1 v2 b.
+           SUM (MAP vb_size v1) + LENGTH v1 <= k
+           ==> (do_eq_list refs v1 v2 = Eq_val b <=>
+                (?n. vb_eq_size_list refs v1 v2 = SOME (n,b))))`
+   (fun th ->
+      CONJ_TAC THEN REPEAT GEN_TAC THENL
+       [MATCH_MP_TAC (CONJUNCT1 (SPEC `vb_size (v1:dataSem_v)` th));
+        MATCH_MP_TAC (CONJUNCT2 (SPEC
+          `SUM (MAP vb_size (v1:dataSem_v list)) +
+           LENGTH (v1:dataSem_v list)` th))] THEN
+      REWRITE_TAC[LE_REFL]) THEN
+  MATCH_MP_TAC num_WF THEN GEN_TAC THEN DISCH_TAC THEN
+  CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
+   [(* two values, by their constructors *)
+    CASES_ON_TAC `v1:dataSem_v` THEN CASES_ON_TAC `v2:dataSem_v` THEN
+    ONCE_REWRITE_TAC[dataSem_do_eq_def; vb_eq_size_def] THEN
+    SAFE_MATCH_REDUCE_TAC THEN
+    REPEAT COND_CASES_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE tidy) THEN
+    TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+    REWRITE_TAC tidy THEN
+    (* where neither is a Block, and where the two tags decided *)
+    TRY (SOLVED (ASM_REWRITE_TAC tidy)) THEN
+    (* of two Blocks with the same tag: their payloads, by the
+       hypothesis *)
+    TRY (SOLVED
+      (RULE_ASSUM_TRY (REWRITE_RULE[vb_size_Block]) THEN
+       REWRITE_TAC[exists_option_map_pair] THEN
+       W(fun (asl,w) ->
+         let l1 = el 1 (snd (strip_comb (lhand (lhand w)))) in
+         ih_tac CONJUNCT2 (meas l1) MATCH_MP_TAC) THENL
+        [ARITH_ASM_TAC; REWRITE_TAC[LE_REFL]])) THEN
+    (* of two pointers: whatever the two lookups are *)
+    EVERY_CASE_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE tidy) THEN
+    TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+    ASM_REWRITE_TAC tidy;
+    (* two lists, by their shape *)
+    CASES_ON_TAC `v1:dataSem_v list` THEN
+    CASES_ON_TAC `v2:dataSem_v list` THEN
+    ONCE_REWRITE_TAC[dataSem_do_eq_def; vb_eq_size_def] THEN
+    SAFE_MATCH_REDUCE_TAC THEN
+    REWRITE_TAC tidy THEN
+    (* where one of the two is empty *)
+    TRY (SOLVED (ASM_REWRITE_TAC tidy)) THEN
+    (* and of two lists with an element each: what the hypothesis
+       says of the two elements decides both matches, and what it
+       says of the two rests is the goal they leave *)
+    RULE_ASSUM_TRY (REWRITE_RULE[MAP; LENGTH; vb_sum_clauses]) THEN
+    W(fun (asl,w) ->
+      let args = snd (strip_comb
+                   (find_term (hd_is "vb_eq_size") w)) in
+      ih_tac CONJUNCT1 (list_mk_icomb "vb_size" [el 1 args])
+        (fun c1 ->
+           let i = REWRITE_RULE[LE_REFL] (SPECL args c1) in
+           MAP_EVERY ASSUME_TAC [SPEC `T` i; SPEC `F` i])) THENL
+     [ARITH_ASM_TAC; ALL_TAC] THEN
+    W(fun (asl,w) ->
+      let args = snd (strip_comb
+                   (find_term (hd_is "vb_eq_size_list") w)) in
+      ih_tac CONJUNCT2 (meas (el 1 args))
+        (fun c2 -> ASSUME_TAC
+           (REWRITE_RULE[LE_REFL] (SPECL args c2)))) THENL
+     [ARITH_ASM_TAC; ALL_TAC] THEN
+    EVERY_CASE_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE tidy) THEN
+    TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+    TRY (SOLVED (ASM_REWRITE_TAC tidy)) THEN
+    (* and where the element has no value at all: of neither
+       flag is its comparison a value *)
+    W(fun gl -> BOOL_CASES_TAC (var_by_name "b" gl)) THEN
+    ASM_REWRITE_TAC tidy]));;
 
 let do_eq_IMP_vb_eq_size = prove
  (`do_eq refs v1 v2 = Eq_val b ==>

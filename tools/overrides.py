@@ -6613,6 +6613,13 @@ let option_map_pair_eq = prove
   REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
   MESON_TAC[]);;
 
+(* and the same under the existential that the two theorems put
+   it under *)
+let exists_option_map_pair = prove
+ (`(?n. OPTION_MAP (\(k,c). (k + 1,c)) (x:(num#bool)option)
+          = SOME (n,b)) <=> (?m. x = SOME (m,b))`,
+  REWRITE_TAC[option_map_pair_eq] THEN MESON_TAC[]);;
+
 (* a value is at least one word big, and a Block is as big as its
    payload *)
 let vb_size_ge_1 = prove
