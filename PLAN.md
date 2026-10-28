@@ -1911,3 +1911,41 @@ is what makes the second theorem tractable: it removes the
 `fix_clock` of the inner comparison from both sides, so the two
 case trees differ only in the clock, and `ADD_EQ_0` makes the guard
 of a zero clock decidable on the side where the clock is `ck + n`.
+
+## Entry 43's debt is paid
+
+All four theorems that `PORTING-GUIDE.md` entry 43 had parked as
+"written and too slow" are proofs now:
+
+| theorem | what made it cheap |
+|---|---|
+| `vb_eq_size_IMP_vb_size` | one inversion lemma per function (entry 71), 0.2 s |
+| `do_eq_IFF_vb_eq_size` | the same two lemmas, both definitions reduced together, 1.3 s |
+| `word_eq_LESS_EQ` | the case tree opened in the order the definition has it, leaves closed as the splits settle them (entry 74) |
+| `word_eq_add_clock` | one tree, not two: the assumption unfolded and the goal left folded (entry 75) |
+
+and three theorems the file proved *from* them
+(`do_eq_IMP_vb_eq_size`, `vb_eq_size_IMP_do_eq`,
+`fix_clock_word_eq`) no longer rest on a cheat.  The file is at
+**76** attempts.
+
+So the "shortest remaining" table has only its last two rows left:
+`memory_rel_ptr_eq` and `memory_rel_FromList`, which want theorems
+HOL4 states as the value of an ML expression and the port does not
+state at all (`PENDING.md`), and the word level.  What is next, in
+order:
+
+1. `gen_gc_partial_thm` -- the third of the collection template,
+   129 lines of HOL4 whose pieces are all in the port:
+   `partial_gc_related` gives the collection's value, the heap it
+   wrote and `gc_related`; `gen_gc_partial_partial_gc_IMP` gives
+   `a = heap_length (old ++ h1)` (the `partial_gc_IMP` that PLAN
+   said was missing is the *other* one, at
+   `gen_gc_partial.ml:175`); `roots_ok` of the result comes from
+   `gc_related` and `MEM_ADDR_MAP`.  The one real piece of work is
+   `heap_gen_ok heap cc`, thirty lines of HOL4 about
+   `heap_split_heap_split`, `gen_start_ok` and `data_up_to` --
+   `tmp/try880.ml` has the field lemmas of `make_partial_conf` and
+   the "prefix of a prefix" lemma for it.
+2. the word level (`memory_rel_*`, about thirty of them), which
+   starts at `ml/lib/set_sep.ml` and `word_heap`.

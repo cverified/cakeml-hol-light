@@ -3766,3 +3766,58 @@ they must: `we_tidy` (the constructor rewrites of the goal **and**
 the assumptions, then `FIRST_ASSUM CONTR_TAC`) and `we_close`
 (`STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL]`) after every split, so
 that a branch the split has settled is gone before the next one.
+
+## 75. A theorem between two calls of the same definition: one tree
+
+`word_eq_add_clock` says that a comparison run with a larger clock
+returns what it returned:
+
+```
+word_eq c st dm m l ck a1 a2 = SOME (res,l',ck1)
+==> word_eq c st dm m l (ck + n) a1 a2 = SOME (res,l',ck1 + n)
+```
+
+The obvious proof unfolds the definition **on both sides** and
+opens the two case trees together.  It does not work: the two
+inner comparisons (`word_eq ... (ck - 1) ...` and
+`word_eq ... (ck + n - 1) ...`) are different terms, so the splits
+multiply, and in a branch where the two trees took different arms
+there is nothing in the goal to settle it -- the hypothesis of the
+induction is what identifies the two, and by then the branch has
+already been split and reduced.  Six rounds went on that.
+
+What works is **one** tree:
+
+- unfold the definition in the **assumption** only (`MP_TAC` of the
+  unfolded equation) and leave the goal folded, so every split is
+  a split of the assumption;
+- in the branch it leaves, collect what the branch knows, then
+  apply the hypothesis to each recursive call of the assumption;
+- **then** unfold the goal, once, and let `ASM_REWRITE_TAC` and the
+  match reduction drive its tree: every condition of it is decided
+  by the branch, and every recursive call of it is what the
+  hypothesis just gave.
+
+Three details that each cost a round:
+
+- **orient the branch's equations.**  A leaf of the assumption says
+  `n2w 0 = res`; used as a rewrite that way it turns every zero of
+  the goal's tree into `res` and the conditions stop matching.  One
+  that says `SOME (a,h) = word_header ...` reduces no header at
+  all.  So `VAR_EQ_TAC` first, and then `SYM` on every equation
+  whose right side is a variable of the claim or whose left side is
+  a constructor application.
+- **only half of De Morgan.**  `~(a1 IN dm \/ ... \/ l = 0 \/
+  ck = 0)` has to come apart for `ARITH_ASM_TAC` to see `~(l = 0)`
+  (a negated disjunction is not an arithmetic fact and the filter
+  drops it), but rewriting with the whole `DE_MORGAN_THM` also
+  turns `~(word_bit 0 a1 /\ word_bit 0 a2)` into a disjunction --
+  and that negated conjunction is exactly what the goal's own tree
+  asks for.  `GEN_ALL (CONJUNCT2 (SPEC_ALL DE_MORGAN_THM))` is the
+  rewrite to use.
+- **the bound of a recursive call** whose budget came out of an
+  inner call (`word_eq_list ... (l'' - 1) ...`) needs the first
+  theorem of the pair (`word_eq_LESS_EQ`) to know `l'' <= l - 1`;
+  without it the bound is unprovable, the `THENL` that discharges
+  it fails, and the whole hypothesis step is skipped by its `TRY`
+  with no sign of why.
