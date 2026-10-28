@@ -3380,7 +3380,7 @@ let gc_combined_thm = prove
       STRIP_ASSUME_TAC
         (MATCH_MP data_to_word_memoryProof_full_gc_thm
            (CONJ inv kd)))) THEN
-   W(fun (asl,w as gl) ->
+   W(fun (asl,w) ->
      if not (can (find_term (hd_is "partial_gc")) w) ||
         not (can (find_term (hd_is "COND")) w) then ALL_TAC else
      COND_CASES_TAC) THEN
@@ -3408,7 +3408,7 @@ let gc_combined_thm = prove
       collection is run with is a let of its own, so the lets come
       first and the equation of the result after them *)
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-   W(fun (asl,w as gl) ->
+   W(fun (asl,w) ->
      let eqs = mapfilter (fun (_,th) ->
                  let c = concl th in
                  if is_eq c &&
@@ -3419,7 +3419,7 @@ let gc_combined_thm = prove
      REWRITE_TAC eqs) THEN
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
    (* so the witnesses are the parts of that value *)
-   W(fun (asl,w as gl) ->
+   W(fun (asl,w) ->
      let bod = snd (strip_exists w) in
      let vl = lhand (hd (conjuncts bod)) in
      let ps = tparts vl in
@@ -3476,7 +3476,7 @@ let gc_combined_thm = prove
    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
    (* the heap that the collection left holds data, so its data
       length is its heap length *)
-   W(fun (asl,w as gl) ->
+   W(fun (asl,w) ->
      let dls = mapfilter (fun (_,th) ->
                  let c = concl th in
                  if hd_is "ALL" c &&
@@ -16829,6 +16829,133 @@ let blocks_unique_deref2 = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
+(* the port's own: what the proof of deref_thm needs, and what the
+   lemmas about abs_ml_inv of a stack share with it.  A value put
+   on the stack only adds timestamps (all_ts_mono); the pointers of
+   an element of a good heap are addresses of it (heap_ok_in),
+   which is what the new root of such a lemma asks for
+   (roots_ok_data); heap_el reads an element of a data element
+   (heap_el_data); the values of the two stacks are related
+   elementwise (all2_el_cons); and a reference that the value of a
+   reference reaches is one that a pointer to that reference
+   reaches, because the pointer has an edge to it (reach_ref) *)
+
+let all_ts_mono = prove
+ (cake_as_vars (fun () ->
+    `all_ts refs stack' SUBSET all_ts refs (v :: stack')`),
+  REWRITE_TAC[all_ts_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM] THEN
+  MESON_TAC[]);;
+
+let heap_ok_in = prove
+ (`heap_ok heap limit' /\
+   heap_lookup a heap = SOME (DataElement xs l d)
+   ==> (!ptr u. MEM (gc_shared_Pointer ptr u) xs
+                ==> isSomeDataElement (heap_lookup ptr heap))`,
+  REWRITE_TAC[heap_ok_def] THEN
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM MATCH_MP_TAC THEN
+  ASM_MESON_TAC[heap_lookup_MEM]);;
+
+(* heap_el reads the element of a data element at an index *)
+let heap_el_data = prove
+ (`heap_lookup ptr heap = SOME (DataElement ys l d) /\ i < LENGTH ys
+   ==> heap_el (gc_shared_Pointer ptr u) i heap = (EL i ys,T)`,
+  STRIP_TAC THEN
+  ASM_REWRITE_TAC[heap_el_def] THEN
+  SAFE_MATCH_REDUCE_TAC THEN
+  ASM_REWRITE_TAC[]);;
+
+(* and the root it reads is an address of a good heap *)
+let roots_ok_data = prove
+ (`heap_ok heap limit' /\
+   heap_lookup ptr heap = SOME (DataElement ys l d) /\
+   i < LENGTH ys /\ roots_ok rs heap
+   ==> roots_ok (EL i ys :: rs) heap`,
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun ro ->
+    if not (hd_is "roots_ok" (concl ro)) then fail() else
+    MP_TAC (REWRITE_RULE[roots_ok_def] ro)) THEN
+  REWRITE_TAC[roots_ok_def; MEM] THEN
+  DISCH_TAC THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THENL
+   [(* the new root is a pointer of the element *)
+    W(fun gl ->
+      let ho = the_asm (hd_is "heap_ok") gl in
+      let hl = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_lookup" (lhand c)) gl in
+      MP_TAC (MATCH_MP heap_ok_in (CONJ ho hl))) THEN
+    DISCH_THEN MATCH_MP_TAC THEN
+    W(fun gl ->
+      let e = the_asm (fun c -> is_eq c &&
+                hd_is "gc_shared_Pointer" (lhand c)) gl in
+      EXISTS_TAC (rand (lhand (concl e))) THEN
+      ONCE_REWRITE_TAC[e]) THEN
+    FIRST [SOLVED (REWRITE_TAC[MEM_EL] THEN EXISTS_TAC `i:num` THEN
+                   ASM_REWRITE_TAC[]);
+           SOLVED (MATCH_MP_TAC MEM_EL THEN ASM_ARITH_TAC);
+           SOLVED (ASM_SIMP_TAC[MEM_EL])];
+    (* and the old roots are what they were *)
+    FIRST_X_ASSUM MATCH_MP_TAC THEN
+    W(fun gl ->
+      let m = the_asm (hd_is "MEM") gl in
+      EXISTS_TAC (rand (el 0 (snd (strip_comb (concl m)))))) THEN
+    FIRST_ASSUM ACCEPT_TAC]);;
+
+let all2_el_cons = prove
+ (`!(P:A->B->bool) xs ys i a b st rs.
+     EVERY2 P xs ys /\ i < LENGTH xs /\ P a b /\ EVERY2 P st rs
+     ==> EVERY2 P (EL i xs :: a :: st) (EL i ys :: b :: rs)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  REWRITE_TAC[ALL2_DEF; HD; TL; NOT_CONS_NIL] THEN
+  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+  MP_TAC (SPEC `i:num` (CONJUNCT2 (REWRITE_RULE[LIST_REL_EL_EQN]
+    (ASSUME `EVERY2 (P:A->B->bool) xs ys`)))) THEN
+  ASM_REWRITE_TAC[]);;
+
+(* a reference that a value of a reference reaches is one that a
+   pointer to that reference reaches: the pointer has an edge to
+   everything the value's references are *)
+let reach_ref = prove
+ (cake_as_vars (fun () ->
+    `(!y. MEM y (get_refs v) ==> ref_edge refs ptr y) /\
+     reachable_refs (v :: RefPtr b ptr :: stack') refs n
+     ==> reachable_refs (RefPtr b ptr :: stack') refs n`),
+  REWRITE_TAC[reachable_refs_def; MEM] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+    (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC)) THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    let c = concl th in
+    if is_eq c && is_var (lhand c) then SUBST_ALL_TAC th
+    else fail())) THEN
+  W(fun (asl,w as gl) ->
+    let ed = the_asm (fun c ->
+               let vs,bd = strip_forall c in
+               length vs = 1 && is_imp bd &&
+               hd_is "ref_edge" (rand bd)) gl in
+    let gr = rand (lhand (snd (strip_forall (concl ed)))) in
+    let m = the_asm (fun c -> hd_is "MEM" c &&
+              hd_is "get_refs" (rand c)) gl in
+    let rv = el 0 (snd (strip_comb (concl m))) in
+    let rtc = the_asm (hd_is "RTC") gl in
+    if rand (concl m) = gr then
+      (* the path starts inside the value: then it starts at the
+         pointer of the reference, with the edge of the pointer in
+         front of it *)
+      (let rp = find_term (hd_is "dataSem_RefPtr") w in
+       EXISTS_TAC rp THEN EXISTS_TAC (rand rp) THEN
+       REWRITE_TAC[get_refs_def; MEM] THEN
+       MATCH_MP_TAC (CONJUNCT2 (SPEC_ALL RTC_RULES)) THEN
+       EXISTS_TAC rv THEN
+       CONJ_TAC THENL
+        [ACCEPT_TAC (MATCH_MP ed m); ACCEPT_TAC rtc])
+    else
+      (* or at a root of the stack, which keeps its path *)
+      (EXISTS_TAC (el 0 (snd (strip_comb (rand (concl m))))) THEN
+       EXISTS_TAC rv THEN
+       ASM_REWRITE_TAC[MEM])));;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let deref_thm = prove
@@ -16848,19 +16975,357 @@ let deref_thm = prove
         (?y. (heap_el r 0 heap = (y,T)) /\
               abs_ml_inv conf (v :: RefPtr b ptr :: stack) refs
                 (y :: roots,heap,be,a,sp,sp1,gens) limit ts)))`),
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     bc_stack_ref_inv_def, v_inv_def, reachable_refs_def,
-     bc_ref_inv_def, FLOOKUP_DEF.  What is here rewrites with them
-     and closes by arithmetic, and the cheat is behind it until the
-     proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-       v_inv_def; reachable_refs_def; bc_ref_inv_def;
-       FLOOKUP_DEF] THEN
-     TRY ASM_ARITH_TAC)));;
+  (* the steps are above the statement (tools/overrides.py).  The
+     roots are a cons whose head is what the relation gives the
+     pointer: of a pointer to a reference the address of its
+     element, and of a pointer to a thunk the address of the thunk
+     -- while a thunk that has been evaluated away is the value
+     itself, and of that kind the claim is nothing.  The references
+     reach the key, because the pointer is a root of the stack, so
+     bc_ref_inv says what the heap holds at the address: of an
+     array of values a RefBlock, of a thunk a ThunkBlock.  The
+     value that the dereference reads is the element of that at the
+     index (heap_el_data), it is a pointer of a good heap
+     (roots_ok_data), the timestamps only grow (all_ts_mono), the
+     blocks stay unique (blocks_unique_deref1 and the second of
+     them) and a reference that the value reaches is one that the
+     pointer reaches (reach_ref) *)
+  (STRIP_TAC THEN
+   (* what the invariant says of the stack with the pointer at its
+      head *)
+   FIRST_X_ASSUM (fun inv ->
+     if not (hd_is "abs_ml_inv" (concl inv)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def;
+                                    bc_stack_ref_inv_def] inv)) THEN
+   (* the roots are a cons, and its head is the pointer's *)
+   W(fun gl ->
+     let lr = the_asm (fun c -> hd_is "ALL2" c) gl in
+     CASES_ON_TAC (el 2 (snd (strip_comb (concl lr))))) THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[ALL2_DEF; HD; TL; NOT_CONS_NIL]) THEN
+   TRY (FIRST_ASSUM CONTR_TAC) THEN
+   SPLIT_ASM_TAC THEN
+   (* the witnesses: the head of the roots and its tail *)
+   W(fun (asl,w as gl) ->
+     let cns = lhs (hd (conjuncts (snd (strip_exists w)))) in
+     EXISTS_TAC (lhand cns) THEN EXISTS_TAC (rand cns)) THEN
+   (* the relation of the pointer: a pointer to the reference, a
+      pointer to a thunk, or the value of a thunk that has been
+      evaluated away *)
+   FIRST_ASSUM (fun vi ->
+     if not (hd_is "v_inv" (concl vi)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[v_inv_def] vi)) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED REFL_TAC) THEN
+   (* the key of the pointer is one of the references: it is a key
+      of the map of the addresses, or the references hold a thunk
+      for it *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let inn = the_asm (fun c -> hd_is "IN" c &&
+                        hd_is "FDOM" (rand c)) gl in
+            let su = the_asm (fun c -> hd_is "SUBSET" c &&
+                       hd_is "domain" (rand c)) gl in
+            MP_TAC inn THEN MP_TAC su) THEN
+          REWRITE_TAC[SUBSET] THEN MESON_TAC[])) THEN
+   TRY (SOLVED
+         (REWRITE_TAC[domain_lookup] THEN
+          W(fun gl ->
+            let lk = the_asm (fun c -> is_eq c &&
+                       hd_is "sptree_lookup" (lhand c)) gl in
+            MESON_TAC[lk]))) THEN
+   (* and what the references hold at the key decides the claim *)
+   W(fun (asl,w) ->
+     NAMED_CASES_TAC (find_term (hd_is "sptree_lookup") w)
+       [[]; ["rv"]]) THEN
+   (* the references have a value for the key, so the lookup is no
+      NONE *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let lk = the_asm (fun c -> is_eq c &&
+                       hd_is "sptree_lookup" (lhand c) &&
+                       not (hd_is "SOME" (rand c))) gl in
+            let inn = the_asm (fun c -> hd_is "IN" c &&
+                        hd_is "FDOM" (rand c)) gl in
+            let su = the_asm (fun c -> hd_is "SUBSET" c &&
+                       hd_is "domain" (rand c)) gl in
+            MP_TAC (REWRITE_RULE[lookup_NONE_domain] lk) THEN
+            MP_TAC inn THEN MP_TAC su THEN
+            REWRITE_TAC[SUBSET] THEN MESON_TAC[]))) THEN
+   TRY (SOLVED
+         (W(fun gl ->
+            let lk = the_asm (fun c -> is_eq c &&
+                       hd_is "sptree_lookup" (lhand c) &&
+                       not (hd_is "SOME" (rand c))) gl in
+            let lk2 = the_asm (fun c -> is_eq c &&
+                        hd_is "sptree_lookup" (lhand c) &&
+                        hd_is "SOME" (rand c)) gl in
+            MP_TAC lk THEN MP_TAC lk2 THEN
+            REWRITE_TAC[distinctness "option"] THEN
+            MESON_TAC[]))) THEN
+   NAMED_CASES_TAC (cake_as_vars (fun () ->
+     `rv:(dataSem_v)bvlSem_ref`))
+     [["vl"]; ["flag"; "bs"]; ["md"; "vv"]; ["tg"; "fin"; "ll";
+      "cc"; "rr"]] THEN
+   (* of an array of bytes and of a mutable block there is nothing
+      to say, and of a thunk only when it has not been evaluated *)
+   RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV MATCH_CONV)) THEN
+   (* the kind that the case gives and the one of the relation are
+      the same, so their fields are the same as well *)
+   RULE_ASSUM_TRY (REWRITE_RULE[injectivity "option";
+                               injectivity "bvlSem_ref";
+                               distinctness "option";
+                               distinctness "bvlSem_ref"]) THEN
+   TRY (FIRST_ASSUM CONTR_TAC) THEN
+   SPLIT_ASM_TAC THEN
+   REPEAT (FIRST_X_ASSUM (fun th ->
+     let c = concl th in
+     if is_eq c && is_var (lhand c) &&
+        (is_var (rand c) ||
+         (try fst (dest_type (type_of (lhand c))) = "thunk_mode"
+          with Failure _ -> false))
+     then SUBST_ALL_TAC th else fail())) THEN
+   (* a pointer to a thunk is one that the source marks with F *)
+   REPEAT (FIRST_X_ASSUM (fun th ->
+     let c = concl th in
+     if is_neg c && is_var (rand c)
+     then SUBST_ALL_TAC (EQF_INTRO th) else fail())) THEN
+   (* the value of the key, which THE of its lookup is *)
+   REWRITE_TAC[THE] THEN
+   MATCH_REDUCE_TAC THEN
+   TRY (SOLVED (REWRITE_TAC[])) THEN
+   (* and of a thunk whether it has been evaluated: of one that
+      has there is nothing to say either *)
+   W(fun (asl,w) ->
+     let md = fun t -> is_var t &&
+                (try fst (dest_type (type_of t)) = "thunk_mode"
+                 with Failure _ -> false) in
+     if not (can (find_term md) w) then ALL_TAC else
+     CASES_ON_TAC (find_term md w)) THEN
+   REWRITE_TAC[distinctness "thunk_mode"] THEN
+   MATCH_REDUCE_TAC THEN
+   TRY (SOLVED (REWRITE_TAC[])) THEN
+   (* the kind that the case gives and the kind that the relation
+      of the pointer gives are the same one *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let bad = the_asm (fun c ->
+                        let vs,bd = strip_forall c in
+                        length vs = 2 && is_neg bd &&
+                        is_conj (rand bd)) gl in
+            MP_TAC bad) THEN
+          MESON_TAC[])) THEN
+   (* the references reach the key, because the pointer of the
+      stack is a root that has it *)
+   W(fun (asl,w as gl) ->
+     let bri = the_asm (fun c ->
+                 let vs,bd = strip_forall c in
+                 length vs = 1 && is_imp bd &&
+                 hd_is "bc_ref_inv" (rand bd)) gl in
+     let inn = the_asm (fun c -> hd_is "IN" c &&
+                 hd_is "FDOM" (rand c)) gl in
+     let n = el 0 (snd (strip_comb (concl inn))) in
+     SUBGOAL_THEN (lhand (lhand (concl (SPEC n bri))))
+       ASSUME_TAC THENL
+      [REWRITE_TAC[reachable_refs_def] THEN
+       W(fun (asl,w) ->
+         let rp = find_term (hd_is "dataSem_RefPtr") w in
+         EXISTS_TAC rp THEN EXISTS_TAC (rand rp)) THEN
+       REWRITE_TAC[MEM; get_refs_def] THEN
+       MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL RTC_RULES));
+       ALL_TAC]) THEN
+   (* what the heap holds at the address of the key: of an array of
+      values a RefBlock, of a thunk a ThunkBlock *)
+   W(fun (asl,w as gl) ->
+     let lk = the_asm (fun c -> is_eq c &&
+                hd_is "sptree_lookup" (lhand c) &&
+                hd_is "SOME" (rand c)) gl in
+     let inn = the_asm (fun c -> hd_is "IN" c &&
+                 hd_is "FDOM" (rand c)) gl in
+     let n = el 0 (snd (strip_comb (concl inn))) in
+     let fm = rand (rand (concl inn)) in
+     let bri = the_asm (fun c ->
+                 let vs,bd = strip_forall c in
+                 length vs = 1 && is_imp bd &&
+                 hd_is "bc_ref_inv" (rand bd)) gl in
+     let rr = the_asm (hd_is "reachable_refs") gl in
+     let flk = ASSUME (mk_eq (list_mk_icomb "FLOOKUP" [fm; n],
+                 list_mk_icomb "SOME"
+                   [list_mk_icomb "fmap_apply" [fm; n]])) in
+     SUBGOAL_THEN (concl flk) ASSUME_TAC THENL
+      [ASM_REWRITE_TAC[FLOOKUP_DEF]; ALL_TAC] THEN
+     ASSUME_TAC (MP (SPEC n bri) (CONJ rr inn))) THEN
+   W(fun gl ->
+     let lk = the_asm (fun c -> is_eq c &&
+                hd_is "sptree_lookup" (lhand c) &&
+                hd_is "SOME" (rand c)) gl in
+     let flk = the_asm (fun c -> is_eq c &&
+                 hd_is "FLOOKUP" (lhand c)) gl in
+     let inv = the_asm (hd_is "bc_ref_inv") gl in
+     let arm = tryfind (fun a -> MATCH_MP a (CONJ flk lk))
+                 [arm_VA; arm_TH] in
+     STRIP_ASSUME_TAC (REWRITE_RULE[arm] inv)) THEN
+   (* the index is below the length of the element, which is as
+      long as the array of values *)
+   W(fun gl ->
+     let e2 = the_asm (fun c -> hd_is "ALL2" c &&
+                is_abs (el 0 (snd (strip_comb c)))) gl in
+     ASSUME_TAC (MATCH_MP LIST_REL_LENGTH e2)) THEN
+   REPEAT STRIP_TAC THEN
+   (* the root to add is the element of the heap's element at the
+      index, and of a thunk it is the one value it holds *)
+   W(fun (asl,w as gl) ->
+     let hl = the_asm (fun c -> is_eq c &&
+                hd_is "heap_lookup" (lhand c) &&
+                hd_is "SOME" (rand c)) gl in
+     let el1 = rand (rand (concl hl)) in
+     let args = snd (strip_comb el1) in
+     let zs = last args in
+     let bod = snd (strip_exists w) in
+     let idx = lhand (lhand (hd (conjuncts bod))) in
+     if hd_is "ThunkBlock" el1
+     then EXISTS_TAC zs
+     else EXISTS_TAC (list_mk_icomb "EL" [idx; zs])) THEN
+   CONJ_TAC THEN
+   (* what the heap reads at the index *)
+   TRY (SOLVED
+         (W(fun (asl,w as gl) ->
+            let hl = the_asm (fun c -> is_eq c &&
+                       hd_is "heap_lookup" (lhand c) &&
+                       hd_is "SOME" (rand c)) gl in
+            let rq = the_asm (fun c -> is_eq c && is_var (lhand c) &&
+                       hd_is "gc_shared_Pointer" (rand c)) gl in
+            let hl2 = REWRITE_RULE[RefBlock_def;
+                                   ThunkBlock_def] hl in
+            let ys = el 0 (snd (strip_comb
+                       (rand (rand (concl hl2))))) in
+            let idx = lhand (lhand w) in
+            SUBGOAL_THEN (list_mk_icomb "<"
+                [idx; list_mk_icomb "LENGTH" [ys]])
+              (fun ltx ->
+                 ONCE_REWRITE_TAC[rq] THEN
+                 MATCH_ACCEPT_TAC (REWRITE_RULE[EL; HD]
+                   (MATCH_MP heap_el_data (CONJ hl2 ltx)))) THEN
+            REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC))) THEN
+   (* and the invariant of the stack with that value in front *)
+   REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def] THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* the new root is a pointer of a good heap *)
+   TRY (SOLVED
+         (W(fun (asl,w as gl) ->
+            let ho = the_asm (hd_is "heap_ok") gl in
+            let hl = the_asm (fun c -> is_eq c &&
+                       hd_is "heap_lookup" (lhand c) &&
+                       hd_is "SOME" (rand c)) gl in
+            let hl2 = REWRITE_RULE[RefBlock_def;
+                                   ThunkBlock_def] hl in
+            let ys = el 0 (snd (strip_comb
+                       (rand (rand (concl hl2))))) in
+            let ro = the_asm (hd_is "roots_ok") gl in
+            let hd0 = lhand (el 0 (snd (strip_comb w))) in
+            let idx = if hd_is "EL" hd0 then lhand hd0
+                      else mk_small_numeral 0 in
+            SUBGOAL_THEN (list_mk_icomb "<"
+                [idx; list_mk_icomb "LENGTH" [ys]])
+              (fun ltx -> MATCH_ACCEPT_TAC (REWRITE_RULE[EL; HD]
+                 (MATCH_MP roots_ok_data
+                    (CONJ ho (CONJ hl2 (CONJ ltx ro)))))) THEN
+            REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC))) THEN
+   (* the two maps are the ones they were *)
+   W(fun gl ->
+     let sub p = rand (lhand (concl (the_asm (fun c ->
+       hd_is "SUBSET" c && hd_is p (rand c)) gl))) in
+     EXISTS_TAC (sub "domain") THEN EXISTS_TAC (sub "all_ts")) THEN
+   REPEAT CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* the timestamps of the stack only grow *)
+   TRY (SOLVED
+         (MATCH_MP_TAC SUBSET_TRANS THEN
+          W(fun gl ->
+            let s = the_asm (fun c -> hd_is "SUBSET" c &&
+                      hd_is "all_ts" (rand c)) gl in
+            EXISTS_TAC (rand (concl s))) THEN
+          CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+          MATCH_ACCEPT_TAC all_ts_mono)) THEN
+   (* the blocks of the stack stay unique, because the value is one
+      of a reference that the stack has already *)
+   TRY (SOLVED
+         (W(fun gl ->
+            let lk = the_asm (fun c -> is_eq c &&
+                       hd_is "sptree_lookup" (lhand c) &&
+                       hd_is "SOME" (rand c)) gl in
+            let bu = the_asm (hd_is "blocks_unique") gl in
+            let lt = try [the_asm (hd_is "<") gl]
+                     with Failure _ -> [] in
+            MATCH_ACCEPT_TAC (tryfind (fun f -> f ())
+              [(fun () -> MATCH_MP blocks_unique_deref1
+                  (CONJ lk bu));
+               (fun () -> MATCH_MP blocks_unique_deref2
+                  (CONJ (hd lt) (CONJ lk bu)))])))) THEN
+   (* the values of the stack with the value in front: of an array
+      of values the relation of its values, the other way round
+      (entry 53), gives it at the index; of a thunk the relation of
+      its value is the one the arm gave *)
+   W(fun (asl,w as gl) ->
+     if not (hd_is "ALL2" w) then ALL_TAC else
+     (let gp = el 0 (snd (strip_comb w)) in
+      let olds = mapfilter (fun (_,th) ->
+                   let c = concl th in
+                   if hd_is "ALL2" c &&
+                      not (el 0 (snd (strip_comb c)) = gp)
+                   then CONV_RULE(TOP_DEPTH_CONV BETA_CONV)
+                          (MATCH_MP EVERY2_SWAP th)
+                   else fail()) asl in
+      MAP_EVERY ASSUME_TAC olds THEN
+      FIRST
+       [(MATCH_MP_TAC all2_el_cons THEN
+         CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+         REPEAT CONJ_TAC THEN
+         TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+         ASM_ARITH_TAC);
+        (REWRITE_TAC[ALL2] THEN
+         CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+         REPEAT CONJ_TAC THEN
+         TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)))])) THEN
+   (* and a reference that the value reaches is one that the
+      pointer reaches, because the pointer has an edge to it *)
+   REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM (fun bri ->
+     let b = snd (strip_forall (concl bri)) in
+     if not (is_imp b) || not (hd_is "bc_ref_inv" (rand b))
+     then fail() else MATCH_MP_TAC bri) THEN
+   CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   MATCH_MP_TAC (GEN_ALL reach_ref) THEN
+   (* the value whose references are the ones to account for *)
+   W(fun (asl,w as gl) ->
+     if not (is_exists w) then ALL_TAC else
+     (let rr = the_asm (fun c -> hd_is "reachable_refs" c &&
+                 not (hd_is "dataSem_RefPtr"
+                        (lhand (el 0 (snd (strip_comb c)))))) gl in
+      EXISTS_TAC (lhand (el 0 (snd (strip_comb (concl rr))))))) THEN
+   CONJ_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* the edge of the pointer lands at every reference of the
+      value, because what the key holds has the value in it *)
+   GEN_TAC THEN DISCH_TAC THEN
+   W(fun gl ->
+     let lk = the_asm (fun c -> is_eq c &&
+                hd_is "sptree_lookup" (lhand c) &&
+                hd_is "SOME" (rand c)) gl in
+     REWRITE_TAC[ref_edge_def; lk]) THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[EL; HD] THEN
+   W(fun gl ->
+     let m = the_asm (fun c -> hd_is "MEM" c &&
+               hd_is "get_refs" (rand c)) gl in
+     let vv = el 0 (snd (strip_comb (rand (concl m)))) in
+     MATCH_MP_TAC (GEN_ALL refs_in_block) THEN
+     EXISTS_TAC vv THEN
+     CONJ_TAC THENL
+      [FIRST [SOLVED (MATCH_MP_TAC MEM_EL THEN ASM_ARITH_TAC);
+              SOLVED (REWRITE_TAC[MEM])];
+       ACCEPT_TAC m])));;
 
 (* el *)
 
@@ -16908,21 +17373,24 @@ let blocks_unique_el = prove
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
-   stack take.  A value put on the stack only adds timestamps
-   (all_ts_mono) and reaches no more references than the Block it
-   comes out of (reach_block); the pointers of an element of a good
-   heap are addresses of it (heap_ok_in), which is what the new root
-   of such a lemma asks for (roots_ok_el); heap_el reads the element
-   of a Block's representation (heap_el_block); and the values of
-   the two stacks are related elementwise (all2_el_cons) *)
+   stack take, over the ones of deref_thm's block.  heap_el reads
+   the element of a Block's representation (heap_el_block) and the
+   root it reads is an address of a good heap (roots_ok_el), which
+   are the two generic lemmas with the Block's shape put in; and a
+   value put on the stack reaches no more references than the Block
+   it comes out of (reach_block) *)
 
-let all_ts_mono = prove
- (cake_as_vars (fun () ->
-    `all_ts refs stack' SUBSET all_ts refs (v :: stack')`),
-  REWRITE_TAC[all_ts_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM] THEN
-  MESON_TAC[]);;
+let heap_el_block = prove
+ (`heap_lookup ptr heap = SOME (BlockRep n ys) /\ i < LENGTH ys
+   ==> heap_el (gc_shared_Pointer ptr u) i heap = (EL i ys,T)`,
+  REWRITE_TAC[BlockRep_def] THEN MATCH_ACCEPT_TAC heap_el_data);;
+
+let roots_ok_el = prove
+ (`heap_ok heap limit' /\
+   heap_lookup ptr heap = SOME (BlockRep n ys) /\
+   i < LENGTH ys /\ roots_ok rs heap
+   ==> roots_ok (EL i ys :: rs) heap`,
+  REWRITE_TAC[BlockRep_def] THEN MATCH_ACCEPT_TAC roots_ok_data);;
 
 let reach_block = prove
  (cake_as_vars (fun () ->
@@ -16931,83 +17399,6 @@ let reach_block = prove
   REWRITE_TAC[reachable_refs_def; MEM] THEN
   REPEAT STRIP_TAC THEN
   ASM_MESON_TAC[refs_in_block]);;
-
-let heap_ok_in = prove
- (`heap_ok heap limit' /\
-   heap_lookup a heap = SOME (DataElement xs l d)
-   ==> (!ptr u. MEM (gc_shared_Pointer ptr u) xs
-                ==> isSomeDataElement (heap_lookup ptr heap))`,
-  REWRITE_TAC[heap_ok_def] THEN
-  REPEAT STRIP_TAC THEN
-  FIRST_X_ASSUM MATCH_MP_TAC THEN
-  ASM_MESON_TAC[heap_lookup_MEM]);;
-
-let heap_el_block = prove
- (`heap_lookup ptr heap = SOME (BlockRep n ys) /\ i < LENGTH ys
-   ==> heap_el (gc_shared_Pointer ptr u) i heap = (EL i ys,T)`,
-  STRIP_TAC THEN
-  FIRST
-   [SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
-            MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
-    SOLVED (REWRITE_TAC[heap_el_def] THEN MATCH_REDUCE_TAC THEN
-            ASM_REWRITE_TAC[BlockRep_def] THEN MATCH_TIDY_TAC THEN
-            MATCH_REDUCE_TAC THEN MATCH_TIDY_TAC THEN
-            ASM_REWRITE_TAC[]);
-    SOLVED (REWRITE_TAC[heap_el_def] THEN SAFE_MATCH_REDUCE_TAC THEN
-            ASM_REWRITE_TAC[BlockRep_def] THEN
-            SAFE_MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
-    SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
-            CONV_TAC(TOP_DEPTH_CONV MATCH_CONV) THEN
-            CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
-            ASM_REWRITE_TAC[])]);;
-
-let roots_ok_el = prove
- (`heap_ok heap limit' /\
-   heap_lookup ptr heap = SOME (BlockRep n ys) /\
-   i < LENGTH ys /\ roots_ok rs heap
-   ==> roots_ok (EL i ys :: rs) heap`,
-  STRIP_TAC THEN
-  FIRST_X_ASSUM (fun ro ->
-    if not (hd_is "roots_ok" (concl ro)) then fail() else
-    MP_TAC (REWRITE_RULE[roots_ok_def] ro)) THEN
-  REWRITE_TAC[roots_ok_def; MEM] THEN
-  DISCH_TAC THEN
-  REPEAT GEN_TAC THEN STRIP_TAC THENL
-   [(* the new root is a pointer of the Block's element *)
-    FIRST_ASSUM (fun ho ->
-      if not (hd_is "heap_ok" (concl ho)) then fail() else
-      FIRST_ASSUM (fun hl ->
-        if not (is_eq (concl hl)) ||
-           not (hd_is "heap_lookup" (lhand (concl hl))) then fail()
-        else MP_TAC (MATCH_MP heap_ok_in (CONJ ho
-               (REWRITE_RULE[BlockRep_def] hl))))) THEN
-    DISCH_THEN MATCH_MP_TAC THEN
-    W(fun gl ->
-      let e = the_asm (fun c -> is_eq c &&
-                hd_is "gc_shared_Pointer" (lhand c)) gl in
-      EXISTS_TAC (rand (lhand (concl e))) THEN
-      ONCE_REWRITE_TAC[e]) THEN
-    FIRST [SOLVED (REWRITE_TAC[MEM_EL] THEN EXISTS_TAC `i:num` THEN
-                   ASM_REWRITE_TAC[]);
-           SOLVED (MATCH_MP_TAC MEM_EL THEN ASM_ARITH_TAC);
-           SOLVED (ASM_SIMP_TAC[MEM_EL])];
-    (* and the old roots are what they were *)
-    FIRST_X_ASSUM MATCH_MP_TAC THEN
-    W(fun gl ->
-      let m = the_asm (hd_is "MEM") gl in
-      EXISTS_TAC (rand (el 0 (snd (strip_comb (concl m)))))) THEN
-    FIRST_ASSUM ACCEPT_TAC]);;
-
-let all2_el_cons = prove
- (`!(P:A->B->bool) xs ys i a b st rs.
-     EVERY2 P xs ys /\ i < LENGTH xs /\ P a b /\ EVERY2 P st rs
-     ==> EVERY2 P (EL i xs :: a :: st) (EL i ys :: b :: rs)`,
-  REPEAT GEN_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[ALL2_DEF; HD; TL; NOT_CONS_NIL] THEN
-  REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
-  MP_TAC (SPEC `i:num` (CONJUNCT2 (REWRITE_RULE[LIST_REL_EL_EQN]
-    (ASSUME `EVERY2 (P:A->B->bool) xs ys`)))) THEN
-  ASM_REWRITE_TAC[]);;
 
 (* the assumption that says what the heap holds for a Block *)
 

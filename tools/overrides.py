@@ -6454,15 +6454,17 @@ let v_inv_new_byte_step = prove
    ASM_MESON_TAC[]));;
 """,
 
-  ('data_to_word_memoryProof', 'el_thm'): r"""
-(* the port's own: the steps that the lemmas about abs_ml_inv of a
-   stack take.  A value put on the stack only adds timestamps
-   (all_ts_mono) and reaches no more references than the Block it
-   comes out of (reach_block); the pointers of an element of a good
-   heap are addresses of it (heap_ok_in), which is what the new root
-   of such a lemma asks for (roots_ok_el); heap_el reads the element
-   of a Block's representation (heap_el_block); and the values of
-   the two stacks are related elementwise (all2_el_cons) *)
+  ('data_to_word_memoryProof', 'deref_thm'): r"""
+(* the port's own: what the proof of deref_thm needs, and what the
+   lemmas about abs_ml_inv of a stack share with it.  A value put
+   on the stack only adds timestamps (all_ts_mono); the pointers of
+   an element of a good heap are addresses of it (heap_ok_in),
+   which is what the new root of such a lemma asks for
+   (roots_ok_data); heap_el reads an element of a data element
+   (heap_el_data); the values of the two stacks are related
+   elementwise (all2_el_cons); and a reference that the value of a
+   reference reaches is one that a pointer to that reference
+   reaches, because the pointer has an edge to it (reach_ref) *)
 
 let all_ts_mono = prove
  (cake_as_vars (fun () ->
@@ -6471,14 +6473,6 @@ let all_ts_mono = prove
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM] THEN
   MESON_TAC[]);;
-
-let reach_block = prove
- (cake_as_vars (fun () ->
-    `MEM v ys /\ reachable_refs (v :: Block ts tag ys :: stack') refs n
-     ==> reachable_refs (Block ts tag ys :: stack') refs n`),
-  REWRITE_TAC[reachable_refs_def; MEM] THEN
-  REPEAT STRIP_TAC THEN
-  ASM_MESON_TAC[refs_in_block]);;
 
 let heap_ok_in = prove
  (`heap_ok heap limit' /\
@@ -6490,28 +6484,19 @@ let heap_ok_in = prove
   FIRST_X_ASSUM MATCH_MP_TAC THEN
   ASM_MESON_TAC[heap_lookup_MEM]);;
 
-let heap_el_block = prove
- (`heap_lookup ptr heap = SOME (BlockRep n ys) /\ i < LENGTH ys
+(* heap_el reads the element of a data element at an index *)
+let heap_el_data = prove
+ (`heap_lookup ptr heap = SOME (DataElement ys l d) /\ i < LENGTH ys
    ==> heap_el (gc_shared_Pointer ptr u) i heap = (EL i ys,T)`,
   STRIP_TAC THEN
-  FIRST
-   [SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
-            MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
-    SOLVED (REWRITE_TAC[heap_el_def] THEN MATCH_REDUCE_TAC THEN
-            ASM_REWRITE_TAC[BlockRep_def] THEN MATCH_TIDY_TAC THEN
-            MATCH_REDUCE_TAC THEN MATCH_TIDY_TAC THEN
-            ASM_REWRITE_TAC[]);
-    SOLVED (REWRITE_TAC[heap_el_def] THEN SAFE_MATCH_REDUCE_TAC THEN
-            ASM_REWRITE_TAC[BlockRep_def] THEN
-            SAFE_MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]);
-    SOLVED (ASM_REWRITE_TAC[heap_el_def; BlockRep_def] THEN
-            CONV_TAC(TOP_DEPTH_CONV MATCH_CONV) THEN
-            CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
-            ASM_REWRITE_TAC[])]);;
+  ASM_REWRITE_TAC[heap_el_def] THEN
+  SAFE_MATCH_REDUCE_TAC THEN
+  ASM_REWRITE_TAC[]);;
 
-let roots_ok_el = prove
+(* and the root it reads is an address of a good heap *)
+let roots_ok_data = prove
  (`heap_ok heap limit' /\
-   heap_lookup ptr heap = SOME (BlockRep n ys) /\
+   heap_lookup ptr heap = SOME (DataElement ys l d) /\
    i < LENGTH ys /\ roots_ok rs heap
    ==> roots_ok (EL i ys :: rs) heap`,
   STRIP_TAC THEN
@@ -6521,14 +6506,12 @@ let roots_ok_el = prove
   REWRITE_TAC[roots_ok_def; MEM] THEN
   DISCH_TAC THEN
   REPEAT GEN_TAC THEN STRIP_TAC THENL
-   [(* the new root is a pointer of the Block's element *)
-    FIRST_ASSUM (fun ho ->
-      if not (hd_is "heap_ok" (concl ho)) then fail() else
-      FIRST_ASSUM (fun hl ->
-        if not (is_eq (concl hl)) ||
-           not (hd_is "heap_lookup" (lhand (concl hl))) then fail()
-        else MP_TAC (MATCH_MP heap_ok_in (CONJ ho
-               (REWRITE_RULE[BlockRep_def] hl))))) THEN
+   [(* the new root is a pointer of the element *)
+    W(fun gl ->
+      let ho = the_asm (hd_is "heap_ok") gl in
+      let hl = the_asm (fun c -> is_eq c &&
+                 hd_is "heap_lookup" (lhand c)) gl in
+      MP_TAC (MATCH_MP heap_ok_in (CONJ ho hl))) THEN
     DISCH_THEN MATCH_MP_TAC THEN
     W(fun gl ->
       let e = the_asm (fun c -> is_eq c &&
@@ -6557,11 +6540,85 @@ let all2_el_cons = prove
     (ASSUME `EVERY2 (P:A->B->bool) xs ys`)))) THEN
   ASM_REWRITE_TAC[]);;
 
+(* a reference that a value of a reference reaches is one that a
+   pointer to that reference reaches: the pointer has an edge to
+   everything the value's references are *)
+let reach_ref = prove
+ (cake_as_vars (fun () ->
+    `(!y. MEM y (get_refs v) ==> ref_edge refs ptr y) /\
+     reachable_refs (v :: RefPtr b ptr :: stack') refs n
+     ==> reachable_refs (RefPtr b ptr :: stack') refs n`),
+  REWRITE_TAC[reachable_refs_def; MEM] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
+    (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC)) THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    let c = concl th in
+    if is_eq c && is_var (lhand c) then SUBST_ALL_TAC th
+    else fail())) THEN
+  W(fun (asl,w as gl) ->
+    let ed = the_asm (fun c ->
+               let vs,bd = strip_forall c in
+               length vs = 1 && is_imp bd &&
+               hd_is "ref_edge" (rand bd)) gl in
+    let gr = rand (lhand (snd (strip_forall (concl ed)))) in
+    let m = the_asm (fun c -> hd_is "MEM" c &&
+              hd_is "get_refs" (rand c)) gl in
+    let rv = el 0 (snd (strip_comb (concl m))) in
+    let rtc = the_asm (hd_is "RTC") gl in
+    if rand (concl m) = gr then
+      (* the path starts inside the value: then it starts at the
+         pointer of the reference, with the edge of the pointer in
+         front of it *)
+      (let rp = find_term (hd_is "dataSem_RefPtr") w in
+       EXISTS_TAC rp THEN EXISTS_TAC (rand rp) THEN
+       REWRITE_TAC[get_refs_def; MEM] THEN
+       MATCH_MP_TAC (CONJUNCT2 (SPEC_ALL RTC_RULES)) THEN
+       EXISTS_TAC rv THEN
+       CONJ_TAC THENL
+        [ACCEPT_TAC (MATCH_MP ed m); ACCEPT_TAC rtc])
+    else
+      (* or at a root of the stack, which keeps its path *)
+      (EXISTS_TAC (el 0 (snd (strip_comb (rand (concl m))))) THEN
+       EXISTS_TAC rv THEN
+       ASM_REWRITE_TAC[MEM])));;
+
+""",
+
+  ('data_to_word_memoryProof', 'el_thm'): r"""
+(* the port's own: the steps that the lemmas about abs_ml_inv of a
+   stack take, over the ones of deref_thm's block.  heap_el reads
+   the element of a Block's representation (heap_el_block) and the
+   root it reads is an address of a good heap (roots_ok_el), which
+   are the two generic lemmas with the Block's shape put in; and a
+   value put on the stack reaches no more references than the Block
+   it comes out of (reach_block) *)
+
+let heap_el_block = prove
+ (`heap_lookup ptr heap = SOME (BlockRep n ys) /\ i < LENGTH ys
+   ==> heap_el (gc_shared_Pointer ptr u) i heap = (EL i ys,T)`,
+  REWRITE_TAC[BlockRep_def] THEN MATCH_ACCEPT_TAC heap_el_data);;
+
+let roots_ok_el = prove
+ (`heap_ok heap limit' /\
+   heap_lookup ptr heap = SOME (BlockRep n ys) /\
+   i < LENGTH ys /\ roots_ok rs heap
+   ==> roots_ok (EL i ys :: rs) heap`,
+  REWRITE_TAC[BlockRep_def] THEN MATCH_ACCEPT_TAC roots_ok_data);;
+
+let reach_block = prove
+ (cake_as_vars (fun () ->
+    `MEM v ys /\ reachable_refs (v :: Block ts tag ys :: stack') refs n
+     ==> reachable_refs (Block ts tag ys :: stack') refs n`),
+  REWRITE_TAC[reachable_refs_def; MEM] THEN
+  REPEAT STRIP_TAC THEN
+  ASM_MESON_TAC[refs_in_block]);;
+
 (* the assumption that says what the heap holds for a Block *)
 
 let blockrep_asm =
   the_asm (fun c -> is_eq c && hd_is "heap_lookup" (lhand c) &&
              can (fun t -> hd_is "BlockRep" (rand t)) (rand c));;
+
 """,
 
   ('data_to_word_memoryProof', 'bc_stack_ref_inv_gc_inline'): r"""
