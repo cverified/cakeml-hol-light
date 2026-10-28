@@ -17869,18 +17869,259 @@
                  ASM_REWRITE_TAC[FLOOKUP_UPDATE])))))) THEN
     ALL_TAC)
 ### v_inv_Thunk_insert_lemma
-  (* the attempt: the proof of the source names v_inv_def,
-     small_int_def, ThunkBlock_def, Word64Rep_def, BlockRep_def,
-     LIST_REL_EL_EQN.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[v_inv_def; small_int_def; ThunkBlock_def;
-       Word64Rep_def; BlockRep_def; LIST_REL_EL_EQN] THEN
-     TRY ASM_ARITH_TAC))
+(* the thunk that the store wrote holds the new value, and the
+   invariant of a value survives it: the induction is the one that
+   the lemmas about a change of the refs share
+   (V_INV_REFS_TAC_IH), where the induction hypothesis asks for
+   everything the lemma asks and for the v_inv of the value.  Of a
+   Number, a Word64 or a Block the element is where it was, because
+   the element that the store wrote is a thunk and theirs is not
+   (the tags differ), and of a reference there are the three cases
+   of v_inv: a plain reference is not the thunk of the insert (that
+   one is a thunk already) and the refs say of it what they said; a
+   thunk is either the one that the insert changes, whose value is
+   the new one and whose element is the one the store wrote, or
+   another one, whose element the store left (the map of the
+   addresses is one to one, so its address is not the one that was
+   written); and a thunk whose value the root is was evaluated,
+   which the one of the insert is not.  That a value which is no
+   thunk of the refs is none of the new refs is the local lemma *)
+  ((let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+  let grab asl p =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail())
+      asl in
+  let rl = v_inv_ck_rules in
+  let opt = [distinctness "option"; injectivity "option"] in
+  let rfs = [distinctness "bvlSem_ref"; injectivity "bvlSem_ref";
+             distinctness "dataSem_dest_thunk_ret"] in
+  (* a value that is no thunk of the refs is none of the new refs:
+     a reference to the thunk that the insert changes was one
+     already *)
+  let dtp = prove
+   (`!u. dest_thunk u refs = NotThunk /\
+         lookup ptr refs = SOME (Thunk NotEvaluated v)
+         ==> dest_thunk u (insert ptr (Thunk ev h) refs) =
+             NotThunk`,
+    GEN_TAC THEN CASES_ON_NAME "u" THEN
+    ONCE_REWRITE_TAC[dataSem_dest_thunk_def] THEN
+    CONV_TAC (ONCE_DEPTH_CONV MATCH_CONV) THEN
+    REWRITE_TAC[] THEN STRIP_TAC THEN
+    ASM_CASES_TAC `a1:num = ptr` THEN
+    ASM_REWRITE_TAC[lookup_insert] THEN
+    (* the thunk that the insert changes was a thunk already *)
+    SUBGOAL_THEN `F` CONTR_TAC THEN
+    FIRST_X_ASSUM (fun dt ->
+      if hd_is "_MATCH" (lhand (concl dt)) then MP_TAC dt
+      else fail()) THEN
+    ASM_REWRITE_TAC[] THEN
+    CONV_TAC (ONCE_DEPTH_CONV MATCH_CONV) THEN
+    COND_CASES_TAC THEN REWRITE_TAC(opt @ rfs)) in
+  (* the address of another reference is not the one of the thunk
+     that the store wrote, because the map of the addresses is one
+     to one *)
+  let addr_ne =
+    W(fun (asl,gl) ->
+      let inj = grab asl (fun th -> hd_is "INJ" (concl th)) in
+      let fd = CONJUNCT2 (REWRITE_RULE[INJ] inj) in
+      let nn = rand (lhand (dest_neg gl)) in
+      MP_TAC (SPECL [nn; `ptr:num`] fd) THEN
+      ASM_REWRITE_TAC[] THEN CONV_TAC TAUT) in
+  (* a lookup of the old heap is one of the new heap, away from
+     the thunk that the store wrote: away from it because the
+     element there is a thunk and the elements of the cases are
+     not *)
+  let notp =
+    DISCH_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+    FIRST_ASSUM (fun thk ->
+      if not (hd_is "ThunkBlock" (rand (rhs (concl thk))))
+      then fail() else
+      FIRST_ASSUM (fun l ->
+        if concl l = concl thk then fail() else
+        MP_TAC (TRANS (SYM l) thk))) THEN
+    REWRITE_TAC[injectivity "option"; ThunkBlock_def; bignum_def;
+                Word64Rep_def; BlockRep_def] THEN
+    TRY PAIRARG_TAC THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    TRY COND_CASES_TAC THEN
+    REWRITE_TAC[injectivity "heap_element"; PAIR_EQ;
+                distinctness "data_to_word_memoryProof_tag"] in
+  let hp =
+    FIRST_ASSUM (fun pres ->
+      MATCH_MP_TAC pres THEN CONJ_TAC THENL
+       [notp; FIRST_ASSUM MATCH_ACCEPT_TAC]) in
+  (* the induction hypothesis, which asks for the v_inv of the
+     value and for everything the lemma asks *)
+  let ih_tac =
+    W(fun (asl,gl) ->
+      let nz = grab asl (fun th ->
+        try is_neg (concl th) && is_eq (rand (concl th)) &&
+            rhs (rand (concl th)) = `0`
+        with Failure _ -> false) in
+      let ck = lhs (rand (concl nz)) in
+      let lt = MP (SPEC ck (ARITH_RULE
+                 `!n. ~(n = 0) ==> n - 1 < n`)) nz in
+      let ih = grab asl (fun th ->
+        try is_forall (concl th) &&
+            hd_is "<" (lhand (body (rand (concl th))))
+        with Failure _ -> false) in
+      let ih' = MP (SPEC (mk_binop `(-):num->num->num` ck `1`) ih)
+                  lt in
+      let big = grab asl (fun th -> is_conj (concl th)) in
+      FIRST_ASSUM (fun vi ->
+        if not (hd_is "v_inv" (concl vi)) then fail() else
+        ACCEPT_TAC (MATCH_MP ih' (CONJ vi big)))) in
+  (* the lemma's own hypotheses, one by one *)
+  let prep =
+    FIRST_ASSUM (fun ds ->
+      if is_conj (concl ds) then MAP_EVERY ASSUME_TAC (CONJUNCTS ds)
+      else fail()) in
+  (* a plain reference is not the thunk that the insert changes, so
+     the refs say of it what they said *)
+  let d5 =
+    REPEAT SUBST_LHS_TAC THEN
+    W(fun (asl,gl) ->
+      let nn = rand (el 2 (snd (strip_comb gl))) in
+      let nq = mk_neg (mk_eq (nn, `ptr:num`)) in
+      SUBGOAL_THEN nq ASSUME_TAC THENL
+       [DISCH_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+        ASM_MESON_TAC[];
+        ALL_TAC]) THEN
+    W(fun (asl,gl) ->
+      let nn = rand (el 2 (snd (strip_comb gl))) in
+      let nq = mk_neg (mk_eq (nn, `ptr:num`)) in
+      let lkeq = MP (prove (mk_imp (nq,
+                    mk_eq (list_mk_icomb "sptree_lookup"
+                      [nn; el 3 (snd (strip_comb gl))],
+                      list_mk_icomb "sptree_lookup"
+                        [nn; `refs:(dataSem_v bvlSem_ref) spt`])),
+                    DISCH_TAC THEN REWRITE_TAC[lookup_insert] THEN
+                    ASM_REWRITE_TAC[])) (ASSUME nq) in
+      SUBST1_TAC (SYM lkeq) THEN
+      MATCH_MP_TAC (el 4 rl) THEN
+      ASM_REWRITE_TAC[lkeq]) in
+  (* the thunk of a reference: the one that the insert changes
+     holds the new value, whose v_inv the lemma gives, and another
+     one holds what it held, at an address that the store left *)
+  let d6 =
+    NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+    W(fun (asl,gl) ->
+      let nn = rand (el 2 (snd (strip_comb gl))) in
+      ASM_CASES_TAC (mk_eq (nn, `ptr:num`))) THEN
+    POP_ASSUM (fun pq ->
+      if is_neg (concl pq) then ASSUME_TAC pq else
+      SUBST_ALL_TAC pq) THENL
+     [(* the thunk that the insert changes *)
+      FIRST_ASSUM (fun lk ->
+        if not (try hd_is "sptree_lookup" (lhs (concl lk)) &&
+                    lhand (lhs (concl lk)) = `ptr:num`
+                with Failure _ -> false) then fail() else
+        FIRST_ASSUM (fun lk2 ->
+          if concl lk2 = concl lk then fail() else
+          if not (try hd_is "sptree_lookup" (lhs (concl lk2)) &&
+                      lhand (lhs (concl lk2)) = `ptr:num`
+                  with Failure _ -> false) then fail() else
+          MP_TAC (TRANS (SYM lk2) lk))) THEN
+      REWRITE_TAC(opt @ rfs) THEN
+      DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN
+        (fun th -> TRY (SUBST_ALL_TAC (SYM th)))) THEN
+      MATCH_MP_TAC (el 5 rl) THEN
+      W(fun (asl,gl) ->
+        (* the element that the store wrote, whose mode is the
+           variable of the statement *)
+        let hl2 = grab asl (fun th ->
+          try hd_is "heap_lookup" (lhs (concl th)) &&
+              hd_is "ThunkBlock" (rand (rhs (concl th))) &&
+              is_var (el 0 (snd (strip_comb
+                (rand (rhs (concl th))))))
+          with Failure _ -> false) in
+        let tbs = snd (strip_comb (rand (rhs (concl hl2)))) in
+        let ins = find_term (hd_is "sptree_insert") gl in
+        let thk = el 1 (snd (strip_comb ins)) in
+        MAP_EVERY EXISTS_TAC
+          [el 0 tbs; rand thk; el 1 tbs]) THEN
+      REPEAT CONJ_TAC THENL
+       [REWRITE_TAC[lookup_insert];
+        DISCH_TAC THEN
+        FIRST_ASSUM (fun dt ->
+          if not (is_imp (concl dt)) then fail() else
+          MATCH_MP_TAC dtp THEN CONJ_TAC THENL
+           [MATCH_MP_TAC dt THEN FIRST_ASSUM MATCH_ACCEPT_TAC;
+            FIRST_ASSUM MATCH_ACCEPT_TAC]);
+        FIRST_ASSUM MATCH_ACCEPT_TAC;
+        FIRST_ASSUM MATCH_ACCEPT_TAC;
+        DISCH_TAC THEN ih_tac];
+      (* another reference, whose element the store left *)
+      MATCH_MP_TAC (el 5 rl) THEN
+      W(fun (asl,gl) ->
+        let lk = grab asl (fun th ->
+          try hd_is "sptree_lookup" (lhs (concl th)) &&
+              hd_is "bvlSem_Thunk" (rand (rhs (concl th)))
+          with Failure _ -> false) in
+        let hl = grab asl (fun th ->
+          try hd_is "heap_lookup" (lhs (concl th)) &&
+              hd_is "ThunkBlock" (rand (rhs (concl th))) &&
+              not (rand (lhand (lhs (concl th))) = `ptr:num`)
+          with Failure _ -> false) in
+        MAP_EVERY EXISTS_TAC
+          [lhand (rand (rhs (concl lk)));
+           rand (rand (rhs (concl lk)));
+           rand (rand (rhs (concl hl)))]) THEN
+      REPEAT CONJ_TAC THENL
+       [W(fun (asl,gl) ->
+          REWRITE_TAC[lookup_insert] THEN
+          ASM_REWRITE_TAC[] THEN FIRST_ASSUM MATCH_ACCEPT_TAC);
+        DISCH_TAC THEN
+        MATCH_MP_TAC dtp THEN CONJ_TAC THENL
+         [FIRST_ASSUM (fun dt ->
+            if not (is_imp (concl dt)) then fail() else
+            MATCH_MP_TAC dt THEN FIRST_ASSUM MATCH_ACCEPT_TAC);
+          FIRST_ASSUM MATCH_ACCEPT_TAC];
+        FIRST_ASSUM MATCH_ACCEPT_TAC;
+        FIRST_ASSUM (fun pres ->
+          MATCH_MP_TAC pres THEN CONJ_TAC THENL
+           [addr_ne; FIRST_ASSUM MATCH_ACCEPT_TAC]);
+        DISCH_TAC THEN ih_tac]] in
+  (* and the thunk whose value the root is: it is not the one that
+     the insert changes, because that one is not evaluated *)
+  let d7 =
+    NOT_VAR_TAC THEN REPEAT SUBST_LHS_TAC THEN
+    W(fun (asl,gl) ->
+      let nn = rand (el 2 (snd (strip_comb gl))) in
+      let nq = mk_neg (mk_eq (nn, `ptr:num`)) in
+      SUBGOAL_THEN nq ASSUME_TAC THENL
+       [DISCH_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+        FIRST_ASSUM (fun lk ->
+          if not (try hd_is "sptree_lookup" (lhs (concl lk)) &&
+                      hd_is "bvlSem_Thunk" (rand (rhs (concl lk)))
+                  with Failure _ -> false) then fail() else
+          FIRST_ASSUM (fun lk2 ->
+            if concl lk2 = concl lk then fail() else
+            if not (try hd_is "sptree_lookup" (lhs (concl lk2)) &&
+                        hd_is "bvlSem_Thunk"
+                          (rand (rhs (concl lk2)))
+                    with Failure _ -> false) then fail() else
+            MP_TAC (TRANS (SYM lk2) lk))) THEN
+        REWRITE_TAC(opt @ rfs) THEN
+        REWRITE_TAC[distinctness "thunk_mode"];
+        ALL_TAC]) THEN
+    MATCH_MP_TAC (el 6 rl) THEN
+    W(fun (asl,gl) ->
+      let lk = grab asl (fun th ->
+        try hd_is "sptree_lookup" (lhs (concl th)) &&
+            hd_is "bvlSem_Thunk" (rand (rhs (concl th)))
+        with Failure _ -> false) in
+      EXISTS_TAC (rand (rand (rhs (concl lk))))) THEN
+    REPEAT CONJ_TAC THENL
+     [REWRITE_TAC[lookup_insert] THEN
+      ASM_REWRITE_TAC[] THEN FIRST_ASSUM MATCH_ACCEPT_TAC;
+      MATCH_MP_TAC dtp THEN CONJ_TAC THEN
+      FIRST_ASSUM MATCH_ACCEPT_TAC;
+      DISCH_TAC THEN ih_tac] in
+  V_INV_REFS_TAC_IH ih_tac (FIRST_ASSUM MATCH_ACCEPT_TAC) prep hp
+    d5 d6 d7))
 ### update_ref_thm
   (* the steps that this proof and the three after it take are
      above the statement (tools/overrides.py).  The roots split
