@@ -16032,19 +16032,355 @@
       [ACCEPT_TAC m;
        MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL RTC_RULES))]))
 ### gen_gc_partial_thm
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     make_gc_conf_def, partial_gc_def, heap_ok_def,
-     make_partial_conf_def, partial_gc_related.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; make_gc_conf_def;
-       partial_gc_def; heap_ok_def; make_partial_conf_def;
-       partial_gc_related] THEN
-     TRY ASM_ARITH_TAC))
+  (* the third of the collection template, and the same shape as
+     full_gc_thm and gen_gc_thm with the old generation in front.
+     The steps above the statement (tools/overrides.py) give the
+     fields of the configuration and heap_gen_ok of the heap, which
+     is what partial_gc_related asks for beside roots_ok and
+     heap_ok; what the collection left is then its theorem and
+     partial_gc_IMP, and the five parts of the invariant are taken
+     one at a time (THENL, so that each says where it broke):
+
+     - a pointer of the roots it returned is an address of the heap
+       it wrote, because it is the image of a pointer of the roots
+       it was given (MEM_ADDR_MAP), that one is in the map, and the
+       map goes into the addresses of the heap (gc_related);
+     - the heap is good for the limit of the invariant, which is
+       the limit of the configuration;
+     - the generations that reset_gens makes all start where the
+       heap it wrote ends (gen_state_ok_reset), and the split at
+       the end of the space has the data below it and the
+       references above -- what was below the generation and what
+       the collection wrote hold no reference (ref_EVERY_d; a
+       reference in what it wrote would be one in the generation it
+       copied), the expansion holds none (isRef_heap_expand), and
+       what is above the space is a reference because it was copied
+       from one (similar_isRef);
+     - the space that is left is the expansion between the heap it
+       wrote and the references;
+     - and the stack and the references go over with the inlining
+       that the relation of the collection allows, which is the
+       identity one (bc_stack_ref_inv_related) *)
+  (`abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
+  /\
+    has_gen gens /\ data_to_word_config_gc_kind conf =
+      data_to_word_Generational xs ==>
+     (?roots2 state2.
+       partial_gc
+         (make_partial_conf (make_gc_conf limit) gens (a + (sp +
+           sp1)))
+         (roots,heap) = (roots2,state2) /\
+       abs_ml_inv conf stack refs
+         (roots2,gc_state_old state2 ++ gc_state_h1 state2 ++
+           heap_expand (gc_state_n state2) ++ gc_state_r1
+           state2,be,gc_state_a
+          state2,gc_state_n state2,0,reset_gens conf (gc_state_a
+            state2)) limit ts /\ gc_state_ok state2)`))
+ (fun () ->
+  let plain_heap_ok gl =
+    the_asm (fun c -> hd_is "heap_ok" c &&
+               not (hd_is "gen_gc_partial_conf_limit"
+                      (el 1 (snd (strip_comb c))))) gl in
+  STRIP_TAC THEN
+  W(fun gl -> CASES_ON_TAC (var_by_name "gens" gl)) THEN
+  FIRST_ASSUM (fun inv ->
+    if not (hd_is "abs_ml_inv" (concl inv)) then fail() else
+    STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def] inv)) THEN
+  (* the heap is good for the limit of the configuration that the
+     collection is run with *)
+  W(fun (asl,w as gl) ->
+    let cc = find_term (hd_is "make_partial_conf") w in
+    let ho = plain_heap_ok gl in
+    SUBGOAL_THEN (list_mk_icomb "heap_ok"
+        [el 0 (snd (strip_comb (concl ho)));
+         list_mk_icomb "gen_gc_partial_conf_limit" [cc]])
+      ASSUME_TAC THENL
+     [REWRITE_TAC[pconf_fields] THEN ACCEPT_TAC ho; ALL_TAC]) THEN
+  (* and good for the generation it collects *)
+  W(fun gl ->
+    let gk = the_asm (hd_is "gc_kind_inv") gl in
+    let us = the_asm (hd_is "unused_space_inv") gl in
+    let ho = plain_heap_ok gl in
+    let hg = the_asm (hd_is "has_gen") gl in
+    let ke = the_asm (fun c -> is_eq c &&
+               hd_is "data_to_word_config_gc_kind" (lhand c)) gl in
+    ASSUME_TAC (MATCH_MP heap_gen_ok_inv
+      (end_itlist CONJ [gk; us; ho; hg; ke]))) THEN
+  (* what the collection leaves: the roots it mapped, the heap it
+     wrote, the map of the addresses it moved, and that both the
+     heap and the state are good *)
+  W(fun gl ->
+    let ro = the_asm (hd_is "roots_ok") gl in
+    let ho = the_asm (fun c -> hd_is "heap_ok" c &&
+               hd_is "gen_gc_partial_conf_limit"
+                 (el 1 (snd (strip_comb c)))) gl in
+    let hg = the_asm (hd_is "heap_gen_ok") gl in
+    STRIP_ASSUME_TAC (MATCH_MP partial_gc_related
+      (CONJ ro (CONJ ho hg)))) THEN
+  (* and what it says of the lengths it wrote *)
+  W(fun gl ->
+    let pg = the_asm (fun c -> is_eq c &&
+               hd_is "partial_gc" (lhand c)) gl in
+    let ok = the_asm (hd_is "gc_state_ok") gl in
+    STRIP_ASSUME_TAC (MATCH_MP
+      (GEN_ALL gen_gc_partial_partial_gc_IMP) (CONJ pg ok))) THEN
+  (* what the collection left below the generation is what was
+     there: the segment of the heap that it names is the segment
+     that heap_gen_ok names *)
+  W(fun gl ->
+    let hg = the_asm (hd_is "heap_gen_ok") gl in
+    STRIP_ASSUME_TAC (REWRITE_RULE[heap_gen_ok_def] hg)) THEN
+  W(fun gl ->
+    let s1 = the_asm (fun c -> is_eq c &&
+               hd_is "heap_segment" (rand c)) gl in
+    let s2 = the_asm (fun c -> is_eq c &&
+               hd_is "heap_segment" (lhand c)) gl in
+    STRIP_ASSUME_TAC (REWRITE_RULE[injectivity "option"; PAIR_EQ]
+      (TRANS s1 s2))) THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    let c = concl th in
+    if is_eq c && is_var (lhand c) &&
+       not (vfree_in (lhand c) (rand c))
+    then SUBST_ALL_TAC th else fail())) THEN
+  (* the witnesses: what the collection returned *)
+  W(fun gl ->
+    let e0 = the_asm (fun c -> is_eq c &&
+               hd_is "partial_gc" (lhand c)) gl in
+    let ps = tparts (rand (concl e0)) in
+    MAP_EVERY EXISTS_TAC [el 0 ps; el 1 ps]) THEN
+  REPEAT CONJ_TAC THENL
+   [(* its value *)
+    FIRST_ASSUM ACCEPT_TAC;
+    (* the invariant of the heap it wrote *)
+    REWRITE_TAC[abs_ml_inv_def] THEN REPEAT CONJ_TAC THENL
+     [(* a pointer of the roots it returned is an address of the heap
+     it wrote: it is the image of a pointer of the roots it was
+     given (MEM_ADDR_MAP), that one is in the map (the condition
+     of the collection) and the map goes into the addresses of the
+     heap it wrote (gc_related) *)
+  (REWRITE_TAC[roots_ok_def] THEN REPEAT GEN_TAC THEN
+     DISCH_THEN (fun mm ->
+       STRIP_ASSUME_TAC (MATCH_MP MEM_ADDR_MAP mm)) THEN
+     W(fun gl ->
+       let fd = the_asm (fun c -> is_forall c &&
+                  can (find_term (hd_is "FDOM")) c &&
+                  can (find_term (hd_is "MEM")) c) gl in
+       let gr = the_asm (hd_is "gc_related") gl in
+       let mm = the_asm (hd_is "MEM") gl in
+       let inn = MATCH_MP (SPEC_ALL fd) mm in
+       let inj = REWRITE_RULE[INJ; IN_ELIM_THM]
+                   (CONJUNCT1 (REWRITE_RULE[gc_related_def] gr)) in
+       MP_TAC (MATCH_MP (CONJUNCT1 inj) inn)) THEN
+     ASM_REWRITE_TAC[])
+      ;
+  (* the heap is good, for the limit of the invariant *)
+    (W(fun gl ->
+       let ho = the_asm (fun c -> hd_is "heap_ok" c &&
+                  hd_is "APPEND" (el 0 (snd (strip_comb c)))) gl in
+       ACCEPT_TAC (REWRITE_RULE[pconf_fields] ho)))
+      ;
+  (* the kind of the collection: the generations that reset_gens
+     makes all start where the heap it wrote ends, and the split
+     at the end of the space has the data below it and the
+     references above *)
+  (W(fun (asl,w as gl) ->
+     let av = el 1 (snd (strip_comb w)) in
+     let hp = el 5 (snd (strip_comb w)) in
+     SUBGOAL_THEN (mk_eq (av,
+         list_mk_icomb "heap_length"
+           [list_mk_icomb "APPEND"
+              [lhand hp; lhand (rand hp)]])) SUBST1_TAC THENL
+      [REWRITE_TAC[heap_length_APPEND] THEN ASM_ARITH_TAC;
+       ALL_TAC]) THEN
+   ONCE_REWRITE_TAC[APPEND_ASSOC] THEN
+   REWRITE_TAC[gc_kind_inv_def] THEN
+   W(fun gl ->
+     let ke = the_asm (fun c -> is_eq c &&
+                hd_is "data_to_word_config_gc_kind" (lhand c)) gl in
+     REWRITE_TAC[ke]) THEN
+   TRY SAFE_MATCH_REDUCE_TAC THEN
+   CONJ_TAC THENL
+    [(* the generations that reset_gens makes *)
+     W(fun (asl,w as gl) ->
+       let ho = the_asm (fun c -> hd_is "heap_ok" c &&
+                  hd_is "APPEND" (el 0 (snd (strip_comb c)))) gl in
+       let th = SPEC_ALL (MATCH_MP (GEN_ALL gen_state_ok_reset)
+                  (ONCE_REWRITE_RULE[APPEND_ASSOC] ho)) in
+       let addr = el 1 (snd (strip_comb w)) in
+       let addr2 = el 1 (snd (strip_comb (concl th))) in
+       SUBGOAL_THEN (mk_eq (addr, addr2)) SUBST1_TAC THENL
+        [ARITH_TAC; MATCH_ACCEPT_TAC th]);
+     (* and the split at the end of the space *)
+     W(fun (asl,w as gl) ->
+       let c0 = hd (conjuncts (snd (strip_exists w))) in
+       let hp = el 1 (snd (strip_comb (lhand c0))) in
+       let pre = list_mk_icomb "APPEND"
+                   [lhand hp; lhand (rand hp)] in
+       let r1 = rand (rand hp) in
+       EXISTS_TAC pre THEN EXISTS_TAC r1 THEN
+       REPEAT CONJ_TAC THENL
+        [SUBGOAL_THEN (mk_eq (hp,
+             list_mk_icomb "APPEND" [pre; r1]))
+           (fun e -> ONCE_REWRITE_TAC[e]) THENL
+          [REWRITE_TAC[APPEND_ASSOC]; ALL_TAC] THEN
+         SUBGOAL_THEN (mk_eq (el 0 (snd (strip_comb (lhand c0))),
+             list_mk_icomb "heap_length" [pre]))
+           (fun e -> ONCE_REWRITE_TAC[e]) THENL
+          [REWRITE_TAC[heap_length_APPEND;
+                       heap_length_heap_expand] THEN ARITH_TAC;
+           ALL_TAC] THEN
+         MATCH_ACCEPT_TAC heap_split_length;
+         (* nothing below the end of the space is a reference:
+            what was below the generation, what the collection
+            wrote, and the expansion *)
+         REWRITE_TAC[ALL_APPEND] THEN
+         REPEAT CONJ_TAC THEN
+         TRY (SOLVED (MATCH_ACCEPT_TAC isRef_heap_expand)) THEN
+         TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+         TRY (SOLVED
+           (W(fun (asl,w as gl) ->
+              let lst = el 1 (snd (strip_comb w)) in
+              let dl = the_asm (fun c -> hd_is "ALL" c &&
+                         hd_is "isDataElement"
+                           (el 0 (snd (strip_comb c))) &&
+                         el 1 (snd (strip_comb c)) = lst) gl in
+              let cond = the_asm (fun c -> is_forall c &&
+                           can (find_term (hd_is
+                             "gen_gc_partial_conf_isRef")) c &&
+                           can (find_term (fun t -> t = lst)) c &&
+                           is_neg
+                             (rand (snd (strip_forall c)))) gl in
+              ACCEPT_TAC (MATCH_MP (CONJUNCT1 ref_EVERY_d)
+                            (CONJ dl cond))))) THEN
+         (* what the collection wrote holds no reference, because
+            a reference in it would be one in the generation it
+            copied *)
+         W(fun (asl,w as gl) ->
+           let lst = el 1 (snd (strip_comb w)) in
+           let dl = the_asm (fun c -> hd_is "ALL" c &&
+                      hd_is "isDataElement"
+                        (el 0 (snd (strip_comb c))) &&
+                      el 1 (snd (strip_comb c)) = lst) gl in
+           let cl = the_asm (fun c -> is_forall c &&
+                      can (find_term (fun t -> t = lst)) c &&
+                      is_imp (snd (strip_forall c)) &&
+                      is_exists (rand (snd (strip_forall c)))) gl in
+           let cu = the_asm (fun c -> is_forall c &&
+                      can (find_term (hd_is
+                        "gen_gc_partial_conf_isRef")) c &&
+                      is_neg (rand (snd (strip_forall c))) &&
+                      not (can (find_term (fun t -> t = lst)) c)) gl in
+           let cur = el 1 (snd (strip_comb
+                       (lhand (snd (strip_forall (concl cu)))))) in
+           SUBGOAL_THEN (subst [lst,cur] (concl cu))
+             (fun cond -> ACCEPT_TAC
+                (MATCH_MP (CONJUNCT1 ref_EVERY_d)
+                   (CONJ dl cond))) THENL
+            [MESON_TAC[cl; cu]]);
+         (* and everything above the space is a reference: the
+            collection copied the references of the generation *)
+         W(fun (asl,w as gl) ->
+           let lst = el 1 (snd (strip_comb w)) in
+           let sim = the_asm (fun c -> hd_is "ALL2" c &&
+                       el 2 (snd (strip_comb c)) = lst) gl in
+           let refs = el 1 (snd (strip_comb (concl sim))) in
+           let dl = the_asm (fun c -> hd_is "ALL" c &&
+                      hd_is "isDataElement"
+                        (el 0 (snd (strip_comb c))) &&
+                      el 1 (snd (strip_comb c)) = refs) gl in
+           let cond = the_asm (fun c -> is_forall c &&
+                        can (find_term (hd_is
+                          "gen_gc_partial_conf_isRef")) c &&
+                        can (find_term (fun t -> t = refs)) c &&
+                        not (is_neg
+                          (rand (snd (strip_forall c))))) gl in
+           ACCEPT_TAC (MATCH_MP similar_isRef
+             (CONJ sim (MATCH_MP (CONJUNCT2 ref_EVERY_d)
+                          (CONJ dl cond)))))])])
+
+      ;
+  (* the space that is left is the expansion between the heap it
+     wrote and the references: the collection got to the end of
+     the old generation and of the heap it wrote *)
+  (W(fun (asl,w as gl) ->
+       let av = el 0 (snd (strip_comb w)) in
+       let hp = el 2 (snd (strip_comb w)) in
+       let old = lhand hp and h1 = lhand (rand hp) in
+       SUBGOAL_THEN (mk_eq (av,
+           list_mk_icomb "heap_length"
+             [list_mk_icomb "APPEND" [old; h1]]))
+         SUBST1_TAC THENL
+        [REWRITE_TAC[heap_length_APPEND] THEN ASM_ARITH_TAC;
+         ALL_TAC]) THEN
+     ONCE_REWRITE_TAC[APPEND_ASSOC] THEN
+     W(fun gl ->
+       let dl = the_asm (fun c -> hd_is "ALL" c &&
+                  hd_is "isDataElement"
+                    (el 0 (snd (strip_comb c))) &&
+                  hd_is "gc_state_h1"
+                    (el 1 (snd (strip_comb c)))) gl in
+       let dold = the_asm (fun c -> hd_is "ALL" c &&
+                    hd_is "isDataElement"
+                      (el 0 (snd (strip_comb c))) &&
+                    hd_is "gc_state_old"
+                      (el 1 (snd (strip_comb c)))) gl in
+       REWRITE_TAC[unused_space_inv_def; ADD_CLAUSES] THEN
+       REPEAT CONJ_TAC THEN
+       TRY (SOLVED
+         (DISCH_TAC THEN
+          REWRITE_TAC[heap_lookup_APPEND; LT_REFL; SUB_REFL;
+                      heap_length_heap_expand] THEN
+          COND_CASES_TAC THEN
+          TRY (SOLVED (ASM_ARITH_TAC)) THEN
+          ASM_REWRITE_TAC[heap_expand_def; heap_lookup_def])) THEN
+       TRY (SOLVED
+         (REWRITE_TAC[heap_length_APPEND;
+                      heap_length_heap_expand] THEN
+          ARITH_TAC)) THEN
+       TRY (SOLVED
+         (REWRITE_TAC[data_up_to_APPEND; ALL_APPEND] THEN
+          CONJ_TAC THEN
+          TRY (SOLVED (ACCEPT_TAC dold)) THEN
+          ACCEPT_TAC dl)) THEN
+       ALL_TAC))
+
+      ;
+  (* the stack and the references go over with the inlining that
+     the relation of the collection allows, which is the identity
+     one *)
+  (let all2_refl = prove
+      (`!(R:A->A->bool) l. (!x. R x x) ==> ALL2 R l l`,
+       GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_SIMP_TAC[ALL2]) in
+     MATCH_MP_TAC (GEN_ALL bc_stack_ref_inv_related) THEN
+     W(fun gl ->
+       let bsi = the_asm (hd_is "bc_stack_ref_inv") gl in
+       let ps = tparts (el 4 (snd (strip_comb (concl bsi)))) in
+       let gc = the_asm (hd_is "gc_related") gl in
+       let fm = el 0 (snd (strip_comb (concl gc))) in
+       MAP_EVERY EXISTS_TAC [fm; el 0 ps; el 1 ps]) THEN
+     CONJ_TAC THEN
+     TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+     REWRITE_TAC[gc_inline_related_def; gc_inline_def;
+                 gc_related_roots_heap_def] THEN
+     W(fun (asl,w) ->
+       let cs = conjuncts (snd (strip_exists w)) in
+       EXISTS_TAC (el 1 (snd (strip_comb (el 0 cs)))) THEN
+       EXISTS_TAC (el 1 (snd (strip_comb (el 1 cs))))) THEN
+     REPEAT CONJ_TAC THEN
+     TRY (SOLVED
+       (MATCH_MP_TAC all2_refl THEN
+        MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL
+          (let (r,_,_) = gc_inline_rel in r))))) THEN
+     TRY (SOLVED
+       (MATCH_MP_TAC all2_refl THEN
+        MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL
+          (let (r,_,_) = gc_heap_inline_rel in r))))) THEN
+     TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+     TRY (SOLVED (REFL_TAC)) THEN
+     FIRST_ASSUM MATCH_ACCEPT_TAC)
+      ];
+    (* and that its state is good *)
+    FIRST_ASSUM ACCEPT_TAC])
 ### gc_combined_thm
   (* the three kinds of collection, each of them a theorem of its
      own: the one that does nothing leaves the heap as it is and
@@ -23173,7 +23509,6 @@
                rand (rand c) = `0`) gl in
     let th = MATCH_MP ckn nz in
     (REWRITE_TAC[th] THEN RULE_ASSUM_TRY (REWRITE_RULE[th])) gl in
-  let ac_close = TRY (SOLVED (STRIP_TAC THEN ASM_REWRITE_TAC[])) in
   (* the half of De Morgan that takes a negated disjunction apart;
      a negated conjunction is what the goal's own tree asks for
      and stays as it is *)

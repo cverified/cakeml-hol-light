@@ -6777,6 +6777,381 @@ let we_tree we_close =
 
 """,
 
+  ('data_to_word_memoryProof', 'gen_gc_partial_thm'): r"""
+(* the port's own: what the theorem about the partial collection
+   goes by.  The configuration it is run with is make_partial_conf
+   of the generations, so its fields are read off once
+   (pconf_fields); what the invariant of the generation says of the
+   heap is heap_gen_ok of the collection's own theory, and the
+   thirty lines of HOL4 that derive it are heap_gen_ok_inv, with
+   the pieces of a split (split_EVERY, ref_part) and the elements
+   of a list of references (isRef_EVERY_data, ref_EVERY_d) beside
+   it; and what the collection copied holds a reference only where
+   what it copied from does (similar_isRef) *)
+
+let pconf_fields = prove
+ (`(gen_gc_partial_conf_limit
+     (make_partial_conf (make_gc_conf l) (GenState u ss) rs) = l) /\
+  (gen_gc_partial_conf_gen_start
+     (make_partial_conf (make_gc_conf l) (GenState u ss) rs)
+       = HD ss) /\
+  (gen_gc_partial_conf_refs_start
+     (make_partial_conf (make_gc_conf l) (GenState u ss) rs) = rs) /\
+  (!tag qs. gen_gc_partial_conf_isRef
+     (make_partial_conf (make_gc_conf l) (GenState u ss) rs)
+       (tag,qs) <=> isMutTag tag)`,
+  (fun () ->
+   REWRITE_TAC (make_partial_conf_def :: make_gc_conf_def ::
+                record_thms "gen_gc_partial_conf" @
+                record_thms "gen_gc_conf") THEN
+   REWRITE_TAC[o_THM; FST]);;
+
+let isRef_isDataElement = prove
+ (`!x. data_to_word_memoryProof_isRef x ==> isDataElement x`,
+  (fun () ->
+   GEN_TAC THEN CASES_ON_NAME "x" THEN
+   REWRITE_TAC[isRef_def] THEN SAFE_MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[isDataElement_def] THEN
+   TRY (SOLVED (MESON_TAC[])) THEN
+   REWRITE_TAC[]);;
+
+let isRef_EVERY_data = prove
+ (`!l. EVERY data_to_word_memoryProof_isRef l
+      ==> EVERY isDataElement l`,
+  (fun () ->
+   LIST_INDUCT_TAC THEN REWRITE_TAC[ALL] THEN
+   ASM_MESON_TAC[isRef_isDataElement]);;
+
+let split_EVERY = prove
+ (`!heap n1 n2 h1 h2 g1 g2 P.
+    heap_split n1 heap = SOME (h1,h2) /\
+    heap_split n2 heap = SOME (g1,g2) /\ n1 <= n2 /\ EVERY P g1
+    ==> EVERY P h1`,
+  (fun () ->
+   REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM (fun le ->
+     if not (is_binop `(<=):num->num->bool` (concl le)) then fail()
+     else
+     W(fun gl ->
+       let s1 = the_asm (fun c -> is_eq c &&
+                  hd_is "heap_split" (lhand c) &&
+                  el 0 (snd (strip_comb (lhand c)))
+                    = lhand (concl le)) gl in
+       let s2 = the_asm (fun c -> is_eq c &&
+                  hd_is "heap_split" (lhand c) &&
+                  el 0 (snd (strip_comb (lhand c)))
+                    = rand (concl le)) gl in
+       STRIP_ASSUME_TAC (MATCH_MP heap_split_heap_split
+         (CONJ s2 (CONJ s1 le))))) THEN
+   REPEAT (FIRST_X_ASSUM (fun th ->
+     let c = concl th in
+     if is_eq c && is_var (lhand c) &&
+        not (vfree_in (lhand c) (rand c))
+     then SUBST_ALL_TAC th else fail())) THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[ALL_APPEND]) THEN
+   SPLIT_ASM_TAC THEN
+   FIRST_ASSUM ACCEPT_TAC);;
+
+let ref_part = prove
+ (`(EVERY (\x. ~(data_to_word_memoryProof_isRef x)) l1
+   ==> (!xs n tag qs. MEM (DataElement xs n (tag,qs)) l1
+        ==> ~(gen_gc_partial_conf_isRef
+                (make_partial_conf (make_gc_conf l)
+                   (GenState u ss) rs) (tag,qs)))) /\
+  (EVERY data_to_word_memoryProof_isRef l2
+   ==> (!xs n tag qs. MEM (DataElement xs n (tag,qs)) l2
+        ==> gen_gc_partial_conf_isRef
+              (make_partial_conf (make_gc_conf l)
+                 (GenState u ss) rs) (tag,qs)))`,
+  (fun () ->
+   REWRITE_TAC[GSYM ALL_MEM; pconf_fields] THEN
+   CONJ_TAC THEN REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM (fun al ->
+     FIRST_ASSUM (fun mm -> MP_TAC (MATCH_MP al mm))) THEN
+   ONCE_REWRITE_TAC[isRef_def] THEN
+   TRY SAFE_MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[] THEN
+   (* and the direction where the strip left the reference itself
+      as the goal *)
+   ONCE_REWRITE_TAC[isRef_def] THEN
+   TRY SAFE_MATCH_REDUCE_TAC THEN
+   ASM_REWRITE_TAC[]);;
+
+let ref_EVERY_d = prove
+ (`(EVERY isDataElement l /\
+   (!xs n d. MEM (DataElement xs n d) l
+    ==> ~(gen_gc_partial_conf_isRef
+            (make_partial_conf (make_gc_conf lm) (GenState u ss) rs)
+            d))
+   ==> EVERY (\x. ~(data_to_word_memoryProof_isRef x)) l) /\
+  (EVERY isDataElement l /\
+   (!xs n d. MEM (DataElement xs n d) l
+    ==> gen_gc_partial_conf_isRef
+          (make_partial_conf (make_gc_conf lm) (GenState u ss) rs)
+          d)
+   ==> EVERY data_to_word_memoryProof_isRef l)`,
+  (fun () ->
+   REWRITE_TAC[GSYM ALL_MEM] THEN
+   CONJ_TAC THEN REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM (fun dl ->
+     FIRST_ASSUM (fun mm ->
+       STRIP_ASSUME_TAC
+         (REWRITE_RULE[isDataElement_def] (MATCH_MP dl mm)))) THEN
+   VAR_EQ_TAC THEN
+   (* the data of the element, which both tests look into *)
+   W(fun (asl,w as gl) ->
+     let de = in_goal gl (fun t -> hd_is "DataElement" t &&
+                (try let a = el 2 (snd (strip_comb t)) in
+                     is_var a && prod_type (type_of a)
+                 with Failure _ -> false)) in
+     CASES_ON_TAC (el 2 (snd (strip_comb de)))) THEN
+   VAR_EQ_TAC THEN
+   RULE_ASSUM_TRY (fun th ->
+     if hd_is "data_to_word_memoryProof_isRef" (concl th)
+     then CONV_RULE (REDEPTH_CONV safe_match_conv)
+            (ONCE_REWRITE_RULE[isRef_def] th) else fail()) THEN
+   ONCE_REWRITE_TAC[isRef_def] THEN
+   TRY SAFE_MATCH_REDUCE_TAC THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[pconf_fields]) THEN
+   TRY (SOLVED CONTRA_TAC) THEN
+   TRY (SOLVED
+     (FIRST_X_ASSUM MATCH_MP_TAC THEN
+      W(fun (asl,w as gl) ->
+        let mm = the_asm (hd_is "MEM") gl in
+        let args = snd (strip_comb
+                     (el 0 (snd (strip_comb (concl mm))))) in
+        MAP_EVERY EXISTS_TAC [el 0 args; el 1 args] THEN
+        ACCEPT_TAC mm))) THEN
+   W(fun gl ->
+     let imp = the_asm (fun c -> is_forall c &&
+                 can (find_term (hd_is
+                   "gen_gc_partial_conf_isRef")) c) gl in
+     let mm = the_asm (hd_is "MEM") gl in
+     ASSUME_TAC (MATCH_MP (SPEC_ALL imp) mm)) THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[pconf_fields]) THEN
+   TRY (SOLVED CONTRA_TAC) THEN
+   ASM_REWRITE_TAC[]);;
+
+let similar_isRef = prove
+ (`!l1 l2. EVERY2 (similar_data c) l1 l2 /\
+          EVERY data_to_word_memoryProof_isRef l1
+          ==> EVERY data_to_word_memoryProof_isRef l2`,
+  (fun () ->
+   LIST_INDUCT_TAC THEN GEN_TAC THEN
+   CASES_ON_NAME "l2" THEN
+   REWRITE_TAC[ALL2; ALL] THEN
+   TRY (SOLVED (REWRITE_TAC[])) THEN
+   REPEAT STRIP_TAC THEN
+   (* the rest of the list, by the hypothesis *)
+   TRY (SOLVED
+     (W(fun gl ->
+        let ih = the_asm (fun c -> is_forall c &&
+                   can (find_term (hd_is "ALL2")) c) gl in
+        MATCH_MP_TAC ih) THEN
+      CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC)) THEN
+   (* and its first element: of two data elements the data is the
+      same, and nothing else is a reference *)
+   W(fun gl -> CASES_ON_TAC (var_by_name "h" gl)) THEN
+   W(fun (asl,w as gl) ->
+     let sd = the_asm (hd_is "similar_data") gl in
+     CASES_ON_TAC (el 2 (snd (strip_comb (concl sd))))) THEN
+   (* and the data of a data element, which the test looks into *)
+   TRY (W(fun (asl,w as gl) ->
+     let de = in_goal gl (fun t -> hd_is "DataElement" t &&
+                (try let a = el 2 (snd (strip_comb t)) in
+                     is_var a && prod_type (type_of a)
+                 with Failure _ -> false)) in
+     CASES_ON_TAC (el 2 (snd (strip_comb de))))) THEN
+   (* the equations that the splits left, used up *)
+   VAR_EQ_TAC THEN
+   RULE_ASSUM_TRY (fun th ->
+     if hd_is "similar_data" (concl th)
+     then CONV_RULE (REDEPTH_CONV safe_match_conv)
+            (REWRITE_RULE[similar_data_def] th) else fail()) THEN
+   RULE_ASSUM_TRY (fun th ->
+     if hd_is "data_to_word_memoryProof_isRef" (concl th)
+     then CONV_RULE (REDEPTH_CONV safe_match_conv)
+            (ONCE_REWRITE_RULE[isRef_def] th) else fail()) THEN
+   ONCE_REWRITE_TAC[isRef_def] THEN
+   TRY SAFE_MATCH_REDUCE_TAC THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[distinctness "heap_element";
+                                injectivity "heap_element"]) THEN
+   SPLIT_ASM_TAC THEN
+   TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+   TRY (SOLVED (ASM_REWRITE_TAC[])) THEN
+   (* the data of the element, as the split of the pair gives it *)
+   W(fun (asl,w as gl) ->
+     let eq = the_asm (fun c -> is_eq c && is_pair (lhand c) &&
+                is_var (rand c)) gl in
+     RULE_ASSUM_TRY (REWRITE_RULE[SYM eq])) THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[PAIR_EQ]) THEN
+   RULE_ASSUM_TRY (CONV_RULE (REDEPTH_CONV UNWIND_CONV)) THEN
+   TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[]) THEN
+   ASM_REWRITE_TAC[]);;
+
+let heap_gen_ok_inv = prove
+ (cake_as_vars (fun () ->
+    `gc_kind_inv conf a sp sp1 gens heap /\
+     unused_space_inv a (sp + sp1) heap /\
+     heap_ok heap limit /\ has_gen gens /\
+     data_to_word_config_gc_kind conf = data_to_word_Generational xs
+     ==> heap_gen_ok heap
+           (make_partial_conf (make_gc_conf limit) gens
+              (a + (sp + sp1)))`)),
+  (fun () ->
+   (* the split of the heap at a point, as an assumption gives it *)
+   let the_split t gl =
+     the_asm (fun c -> is_eq c && hd_is "heap_split" (lhand c) &&
+                el 0 (snd (strip_comb (lhand c))) = t) gl in
+   STRIP_TAC THEN
+   (* the generations, and the start of the one that is collected *)
+   W(fun gl -> CASES_ON_TAC (var_by_name "gens" gl)) THEN
+   RULE_ASSUM_TRY (REWRITE_RULE[has_gen_def]) THEN
+   W(fun gl ->
+     let hg = the_asm (fun c -> is_neg c && is_eq (rand c) &&
+                (try fst (dest_const (rand (rand c))) = "NIL"
+                 with Failure _ -> false)) gl in
+     CASES_ON_TAC (lhand (rand (concl hg)))) THEN
+   (* of no generation there is nothing to collect: has_gen said
+      the starts are not the empty list *)
+   RULE_ASSUM_TRY (REWRITE_RULE[]) THEN
+   TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+   (* what the kind of the collection says of the heap *)
+   W(fun gl ->
+     let ke = the_asm (fun c -> is_eq c &&
+                hd_is "data_to_word_config_gc_kind" (lhand c)) gl in
+     let gk = the_asm (hd_is "gc_kind_inv") gl in
+     STRIP_ASSUME_TAC (CONV_RULE (REDEPTH_CONV safe_match_conv)
+       (REWRITE_RULE[gc_kind_inv_def; ke] gk))) THEN
+   (* the starts are below the end of the data and each of them
+      splits the heap, the data goes up to the end of the space,
+      and the heap is as long as the limit *)
+   W(fun gl ->
+     let gs = the_asm (hd_is "gen_state_ok") gl in
+     STRIP_ASSUME_TAC (REWRITE_RULE[gen_state_ok_def; ALL] gs)) THEN
+   FIRST_ASSUM (fun th ->
+     if not (hd_is "gen_start_ok" (concl th)) then fail() else
+     STRIP_ASSUME_TAC (REWRITE_RULE[gen_start_ok_def] th)) THEN
+   W(fun gl ->
+     let us = the_asm (hd_is "unused_space_inv") gl in
+     let ho = the_asm (hd_is "heap_ok") gl in
+     (STRIP_ASSUME_TAC (REWRITE_RULE[unused_space_inv_def;
+                                     data_up_to_def] us) THEN
+      STRIP_ASSUME_TAC (REWRITE_RULE[heap_ok_def] ho))) THEN
+   REWRITE_TAC[heap_gen_ok_def; pconf_fields; HD] THEN
+   (* the split at the start of the generation goes through the
+      split at the end of the space, and the middle piece is the
+      generation that is collected *)
+   W(fun (asl,w as gl) ->
+     let c0 = hd (conjuncts (snd (strip_exists w))) in
+     let st = lhand c0 and en = rand c0 in
+     SUBGOAL_THEN (mk_binop `(<=):num->num->bool` st en)
+       (fun le -> STRIP_ASSUME_TAC (MATCH_MP heap_split_heap_split
+          (CONJ (the_split en gl)
+             (CONJ (the_split st gl) le))))) THENL
+    [ARITH_ASM_TAC; ALL_TAC] THEN
+   (* and through the split at the end of the data, so that what
+      is below the start is data *)
+   W(fun (asl,w as gl) ->
+     let c0 = hd (conjuncts (snd (strip_exists w))) in
+     let st = lhand c0 in
+     let av = var_by_name "a" gl in
+     SUBGOAL_THEN (mk_binop `(<=):num->num->bool` st av)
+       (fun le -> STRIP_ASSUME_TAC (MATCH_MP heap_split_heap_split
+          (CONJ (the_split av gl) (CONJ (the_split st gl) le))))) THENL
+    [ARITH_ASM_TAC; ALL_TAC] THEN
+   (* what holds of a piece of the heap holds of its parts *)
+   W(fun (asl,w as gl) ->
+     let hv = var_by_name "heap" gl in
+     let eqs = mapfilter (fun (_,th) ->
+                 let c = concl th in
+                 if is_eq c && hd_is "APPEND" (rand c) &&
+                    not (lhand c = hv) then th else fail()) asl in
+     RULE_ASSUM_TRY (REWRITE_RULE (ALL_APPEND :: eqs))) THEN
+   SPLIT_ASM_TAC THEN
+   (* what is below the start, the generation, and what is above
+      the space *)
+   W(fun (asl,w as gl) ->
+     let c0 = hd (conjuncts (snd (strip_exists w))) in
+     let st = lhand c0 and en = rand c0 in
+     let p1 = rand (rand (concl (the_split st gl))) in
+     let s3 = the_asm (fun c -> is_eq c &&
+                hd_is "heap_split" (lhand c) &&
+                el 1 (snd (strip_comb (lhand c))) = rand p1 &&
+                lhand (el 0 (snd (strip_comb (lhand c)))) = en) gl in
+     MAP_EVERY EXISTS_TAC
+       [lhand p1; lhand (rand (rand (concl s3)));
+        rand (rand (rand (concl (the_split en gl))))]) THEN
+   (* what is below the start of the generation and the generation
+      itself hold no reference, because what is below the end of
+      the space holds none *)
+   TRY (W(fun (asl,w as gl) ->
+     let al = the_asm (fun c -> hd_is "ALL" c &&
+                is_abs (el 0 (snd (strip_comb c)))) gl in
+     let lst = el 1 (snd (strip_comb (concl al))) in
+     let eq = the_asm (fun c -> is_eq c && lhand c = lst &&
+                hd_is "APPEND" (rand c)) gl in
+     STRIP_ASSUME_TAC
+       (REWRITE_RULE[ALL_APPEND] (REWRITE_RULE[eq] al)))) THEN
+   REPEAT CONJ_TAC THEN
+   (* the start is below the end of the space, and the space ends
+      below the limit *)
+   TRY (SOLVED ARITH_ASM_TAC) THEN
+   (* what is below the start is data, and what is above the space
+      is data because it is references *)
+   TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+   TRY (SOLVED
+     (W(fun gl ->
+        let ir = the_asm (fun c -> hd_is "ALL" c &&
+                   hd_is "data_to_word_memoryProof_isRef"
+                     (el 0 (snd (strip_comb c)))) gl in
+        ACCEPT_TAC (MATCH_MP isRef_EVERY_data ir)))) THEN
+   (* the pointers of what is below the start go into itself or
+      into the references *)
+   TRY (SOLVED (FIRST_ASSUM MATCH_ACCEPT_TAC)) THEN
+   (* and what is a reference and what is not: of the piece that
+      the element is in, the invariant says which *)
+   TRY (REPEAT GEN_TAC THEN DISCH_TAC THEN
+   W(fun (asl,w as gl) ->
+     let mm = the_asm (hd_is "MEM") gl in
+     let el0 = el 0 (snd (strip_comb (concl mm))) in
+     CASES_ON_TAC (el 2 (snd (strip_comb el0)))) THEN
+   W(fun (asl,w as gl) ->
+     let mm = the_asm (hd_is "MEM") gl in
+     let lst = el 1 (snd (strip_comb (concl mm))) in
+     let al = the_asm (fun c -> hd_is "ALL" c &&
+                el 1 (snd (strip_comb c)) = lst) gl in
+     let part = if is_abs (el 0 (snd (strip_comb (concl al))))
+                then CONJUNCT1 ref_part else CONJUNCT2 ref_part in
+     let args = snd (strip_comb (el 0 (snd (strip_comb
+                  (concl mm))))) in
+     MATCH_MP_TAC (MATCH_MP part al) THEN
+     MAP_EVERY EXISTS_TAC [el 0 args; el 1 args] THEN
+     ACCEPT_TAC mm)) THEN
+   (* the three pieces are the segment of the heap between the
+      start of the generation and the end of the space *)
+   (
+     (CONV_TAC SYM_CONV THEN
+      W(fun (asl,w as gl) ->
+        let seg = snd (strip_comb (lhand w)) in
+        let st = lhand (el 0 seg) and en = rand (el 0 seg) in
+        let s1 = the_split st gl in
+        let s3 = the_asm (fun c -> is_eq c &&
+                   hd_is "heap_split" (lhand c) &&
+                   el 1 (snd (strip_comb (lhand c)))
+                     = rand (rand (rand (concl s1))) &&
+                   lhand (el 0 (snd (strip_comb (lhand c)))) = en) gl in
+        REWRITE_TAC[heap_segment_def; s1] THEN
+        TRY SAFE_MATCH_REDUCE_TAC THEN
+        SUBGOAL_THEN (mk_neg (mk_binop `(<):num->num->bool` en st))
+          (fun nl -> REWRITE_TAC[nl]) THENL
+         [ARITH_ASM_TAC; ALL_TAC] THEN
+        REWRITE_TAC[s3] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
+        REWRITE_TAC[distinctness "option"]))));;
+
+""",
+
   ('data_to_word_memoryProof', 'el_thm'): r"""
 (* the port's own: the steps that the lemmas about abs_ml_inv of a
    stack take, over the ones of deref_thm's block.  heap_el reads
