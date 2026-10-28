@@ -1773,6 +1773,144 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  ('data_to_word_memoryProof', 'walk_EL'): r"""
+
+(* the port's own: the walk from the pointer of a non-empty list
+   starts at that pointer.  Of a list of one the walk is the
+   pointer alone, and of a longer one the choice of the next
+   pointer has the pointer of the tail for a witness, so the walk
+   is the pointer and the walk from there.  walk_EL asks for it to
+   say what the head of the walk of the tail is, which is the
+   pointer that the cons at the head of the walk points at *)
+let walk_CONS = prove
+ (cake_as_vars (fun () ->
+    `!vs ptr v.
+       v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word
+         (ptr_bits c cons_tag 2)),f,tf,heap) /\
+       v_to_list v = SOME vs /\ ~(vs = []) ==>
+       (?ws. data_to_word_memoryProof_walk c heap ptr (LENGTH vs) =
+          CONS ptr ws)`),
+  let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   let grab asl p =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+   (* an ALL2 whose first list is a cons *)
+   let all2cons1 = prove
+    (`!P h t (l:(B)list).
+        ALL2 P (CONS (h:A) t) l <=>
+        ?a b. l = CONS a b /\ P h a /\ ALL2 P t b`,
+     REPEAT GEN_TAC THEN
+     STRUCT_CASES_TAC(ISPEC `l:(B)list` list_CASES) THEN
+     REWRITE_TAC[ALL2; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[]) in
+   (* what HOL4's some binder is of a predicate with one witness *)
+   let some_SOME = prove
+    (`!(P:A->bool) x. P x /\ (!y. P y ==> y = x) ==> some P = SOME x`,
+     REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[some_DEF] THEN
+     COND_CASES_TAC THENL
+      [AP_TERM_TAC THEN MATCH_MP_TAC SELECT_UNIQUE THEN
+       GEN_TAC THEN ASM_MESON_TAC[];
+       ASM_MESON_TAC[]]) in
+
+  REPEAT GEN_TAC THEN
+  STRUCT_CASES_TAC (ISPEC `vs:(dataSem_v)list` list_CASES) THENL
+   [REWRITE_TAC[]; ALL_TAC] THEN
+   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
+   FIRST_ASSUM(fun th ->
+     if hd_is "dataSem_v_to_list" (lhs (concl th))
+     then MP_TAC(SPEC_ALL(MATCH_MP
+            v_to_list_SOME_CONS_IMP th))
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) && is_var (lhs (concl e)) &&
+        hd_is "dataSem_Block" (rhs (concl e))
+     then SUBST_ALL_TAC e else fail()) THEN
+   FIRST_X_ASSUM(fun vi ->
+     if hd_is "v_inv" (concl vi)
+     then MP_TAC(REWRITE_RULE[v_inv_def; NOT_CONS_NIL] vi)
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST_X_ASSUM(fun a2 ->
+     if hd_is "ALL2" (concl a2)
+     then MP_TAC(REWRITE_RULE[all2cons1; CONJUNCT1 ALL2_DEF] a2)
+     else fail()) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   REPEAT(FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) && is_var (lhs (concl e)) &&
+        (hd_is "CONS" (rhs (concl e)) || hd_is "NIL" (rhs (concl e)))
+     then SUBST_ALL_TAC e else fail())) THEN
+   FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) &&
+        hd_is "gc_shared_Pointer" (lhs (concl e)) &&
+        hd_is "gc_shared_Pointer" (rhs (concl e))
+     then MP_TAC(REWRITE_RULE[injectivity "heap_address"] e)
+     else fail()) THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (K ALL_TAC)) THEN
+  CASES_ON_NAME "t" THENL
+   [REWRITE_TAC[LENGTH] THEN
+    ONCE_REWRITE_TAC[data_to_word_memoryProof_walk_def] THEN
+    REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN
+    EXISTS_TAC `[]:num list` THEN REWRITE_TAC[];
+    ALL_TAC] THEN
+   W(fun (asl,w) ->
+     let vi,vl = tryfind (fun (_,th) ->
+       if not (hd_is "v_inv" (concl th)) then fail() else
+       (th, grab asl (fun u ->
+          hd_is "dataSem_v_to_list" (lhs (concl u)) &&
+          rand (lhs (concl u)) = el 1 (snd(strip_comb (concl th))) &&
+          hd_is "CONS" (rand (rhs (concl u)))))) asl in
+     let lst = rand (rhs (concl vl)) in
+     let ne = ISPECL [lhand lst; rand lst] NOT_CONS_NIL in
+     MP_TAC(MATCH_MP v_inv_v_to_list_lemma
+              (CONJ vi (CONJ vl ne)))) THEN
+   DISCH_THEN STRIP_ASSUME_TAC THEN
+   FIRST_X_ASSUM(fun e ->
+     if is_eq (concl e) && is_var (lhs (concl e)) &&
+        hd_is "gc_shared_Pointer" (rhs (concl e))
+     then SUBST_ALL_TAC e else fail()) THEN
+   REWRITE_TAC[LENGTH] THEN
+   ONCE_REWRITE_TAC[data_to_word_memoryProof_walk_def] THEN
+   REWRITE_TAC[ARITH_RULE `(SUC (SUC n) = 0) <=> F`;
+               ARITH_RULE `(SUC (SUC n) = 1) <=> F`;
+               ARITH_RULE `SUC (SUC n) - 1 = SUC n`] THEN
+   W(fun (asl,w) ->
+     let sm = find_term (hd_is "some") w in
+     let ptr = lhand (find_term (hd_is "heap_lookup") sm) in
+     let hl = grab asl (fun th ->
+       hd_is "heap_lookup" (lhs (concl th)) &&
+       lhand (lhs (concl th)) = ptr) in
+     let xs = rand (rand (rhs (concl hl))) in
+     let x1 = lhand xs in
+     let y1 = lhand (rand xs) in
+     let p2 = lhand y1 in
+     SUBGOAL_THEN (mk_eq(sm, mk_icomb(`SOME`,p2))) SUBST1_TAC THENL
+      [MATCH_MP_TAC some_SOME THEN
+       CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+       CONJ_TAC THENL
+        [MAP_EVERY EXISTS_TAC [x1; y1] THEN ASM_REWRITE_TAC[];
+         X_GEN_TAC `q:num` THEN
+         REWRITE_TAC[REWRITE_RULE[BlockRep_def] hl;
+                     BlockRep_def] THEN
+         REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN
+         REWRITE_TAC[injectivity "option";
+                     injectivity "heap_element"; CONS_11; PAIR_EQ] THEN
+         STRIP_TAC THEN
+         FIRST_ASSUM(fun e1 -> FIRST_ASSUM(fun e2 ->
+           let th = TRANS e1 e2 in
+           if hd_is "gc_shared_Pointer" (lhs (concl th)) &&
+              hd_is "gc_shared_Pointer" (rhs (concl th))
+           then MP_TAC(REWRITE_RULE[injectivity "heap_address"] th)
+           else fail())) THEN
+         STRIP_TAC THEN ASM_REWRITE_TAC[]];
+       ALL_TAC]) THEN
+  MATCH_REDUCE_TAC THEN
+  W(fun (asl,gl) ->
+    EXISTS_TAC (rand (lhs (snd (dest_exists gl))))) THEN
+  REWRITE_TAC[]);;
+""",
   ('data_to_word_memoryProof', 'update_ref_thm'): r"""
 (* the port's own: the steps that the proofs of update_ref_thm and
    of the four update theorems after it take.  A store into the
