@@ -30672,6 +30672,60 @@ let elements_list_all_blocks = prove
                      MAP; LENGTH; sumc] THEN
      REPEAT CONJ_TAC THEN TRY ARITH_TAC THEN MESON_TAC[]]));;
 
+(* the port's own: the four things HOL4 gets from SORTED_APPEND.
+   sorted_tl and sorted_drop say that what follows a sorted list is
+   sorted, sorted_head that the head of a sorted list relates to
+   every member of the tail, and sorted_pair puts the two together:
+   of two elements of a sorted list the earlier one relates to the
+   later *)
+
+let sorted_tl = prove
+ (`!R x l. SORTED R (CONS x l) ==> SORTED R l`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[SORTED_DEF] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]);;
+
+let sorted_drop = prove
+ (`!R l1 l2. SORTED R (l1 ++ l2) ==> SORTED R l2`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
+  REWRITE_TAC[APPEND] THEN
+  TRY (DISCH_THEN ACCEPT_TAC) THEN
+  DISCH_THEN (fun th ->
+    FIRST_ASSUM (fun ih ->
+       ACCEPT_TAC (MATCH_MP ih (MATCH_MP sorted_tl th)))));;
+
+let sorted_head = prove
+ (`!R l x y. (!a b c. R a b /\ R b c ==> R a c) /\
+            SORTED R (CONS x l) /\ MEM y l ==> R x y`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+  REWRITE_TAC[MEM; SORTED_DEF] THEN REPEAT STRIP_TAC THENL
+    [ASM_REWRITE_TAC[];
+    FIRST_ASSUM (fun tr ->
+       if length (fst (strip_forall (concl tr))) = 3
+       then MATCH_MP_TAC tr else fail()) THEN
+    W(fun gl -> EXISTS_TAC (var_by_name "h" gl)) THEN
+    ASM_REWRITE_TAC[] THEN
+    FIRST_ASSUM (fun ih ->
+       if length (fst (strip_forall (concl ih))) = 2
+       then MATCH_MP_TAC ih else fail()) THEN
+    ASM_REWRITE_TAC[]]);;
+
+let sorted_pair = prove
+ (`!R l1 l2 l3 u v.
+    (!a b c. R a b /\ R b c ==> R a c) /\
+    SORTED R (l1 ++ [u] ++ l2 ++ [v] ++ l3) ==> R u v`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MATCH_MP_TAC sorted_head THEN
+  FIRST_ASSUM (fun s ->
+    if (try fst (dest_const (fst (strip_comb (concl s)))) =
+             "SORTED"
+         with Failure _ -> false)
+    then EXISTS_TAC (rand (rand (rand (concl s)))) else fail()) THEN
+  REPEAT CONJ_TAC THENL
+    [FIRST_ASSUM ACCEPT_TAC;
+    FIRST_ASSUM (fun s -> MP_TAC (MATCH_MP sorted_drop s)) THEN
+    REWRITE_TAC[APPEND] THEN DISCH_THEN ACCEPT_TAC;
+    REWRITE_TAC[MEM_APPEND; MEM]]);;
+
 (* [local] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -30683,19 +30737,99 @@ let memory_rel_elements_list_distinct_lemma = prove
        good_dimindex (:'a) /\ ~(vs = []) /\
        HD vs = Block tag a b ==>
        ALL_DISTINCT (MAP SND vars')`),
-  (* the attempt: the proof of the source names
-     not_all_distinct_map_snd, memory_rel_def, memory_rel_rearrange,
-     vb_size_def, elements_list_all_blocks, transitive_def.  What is
-     here rewrites with them and closes by arithmetic, and the cheat
-     is behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[not_all_distinct_map_snd; memory_rel_def;
-       memory_rel_rearrange; vb_size_def;
-       elements_list_all_blocks; transitive_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the proof of the source is by contradiction:
+   not_all_distinct_map_snd gives two pairs of the stack with the
+   same word, elements_list_all_blocks says the values are blocks
+   and sorted by their size, so the earlier of the two is the
+   smaller (sorted_pair above), and memory_rel_Block_ptr_eq says
+   that two blocks the memory holds the same word for are the same
+   block -- which the two sizes say they are not *)
+  (let hd_of n t =
+    (try fst (dest_const (fst (strip_comb t))) = n
+     with Failure _ -> false) in
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  (* by contradiction: two pairs of the stack with the same word *)
+  MATCH_MP_TAC (TAUT `(~p ==> F) ==> p`) THEN DISCH_TAC THEN
+  FIRST_ASSUM (fun nd ->
+    STRIP_ASSUME_TAC (MATCH_MP not_all_distinct_map_snd nd)) THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if (try is_eq (concl th) && is_var (lhs (concl th)) &&
+            not (is_var (rand (concl th)))
+        with Failure _ -> false)
+    then SUBST_ALL_TAC th else fail())) THEN
+  (* the values of the stack are blocks, and sorted by their
+     size *)
+  W(fun gl ->
+    let e1 = the_asm (hd_of "elements_list") gl in
+    let e2 = the_asm (fun c ->
+               try is_neg c && is_eq (rand c) &&
+                   hd_of "MAP" (lhand (rand c))
+               with Failure _ -> false) gl in
+    let hh = the_asm (fun c ->
+               try is_eq c && hd_of "HD" (lhs c)
+               with Failure _ -> false) gl in
+    let ps = snd (strip_comb (rand (concl hh))) in
+    let vs = map (fun t -> genvar (type_of t)) ps in
+    let ex = list_mk_exists (vs,
+               mk_eq (lhs (concl hh),
+                 list_mk_comb (fst (strip_comb (rand (concl hh))),
+                   vs))) in
+    SUBGOAL_THEN ex (fun e ->
+      STRIP_ASSUME_TAC (MATCH_MP elements_list_all_blocks
+        (CONJ e1 (CONJ e2 e)))) THENL
+     [MAP_EVERY EXISTS_TAC ps THEN ACCEPT_TAC hh; ALL_TAC]) THEN
+  (* the two words of the two pairs, and the size of the first is
+     below the size of the second *)
+  RULE_ASSUM_TRY (REWRITE_RULE[MAP_APPEND; MAP; FST;
+                               ALL_APPEND; ALL]) THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if is_conj (concl th) || is_exists (concl th)
+    then STRIP_ASSUME_TAC th else fail())) THEN
+  W(fun gl ->
+    let so = the_asm (hd_of "SORTED") gl in
+    let r = el 0 (snd (strip_comb (concl so))) in
+    let ty = hd (snd (dest_type (type_of r))) in
+    let a = mk_var ("a",ty) and b = mk_var ("b",ty)
+    and c = mk_var ("c",ty) in
+    let ap x y = mk_comb (mk_comb (r,x), y) in
+    let tr = prove (list_mk_forall ([a;b;c],
+               mk_imp (mk_conj (ap a b, ap b c), ap a c)),
+               REWRITE_TAC[] THEN ARITH_TAC) in
+    ASSUME_TAC (REWRITE_RULE[]
+      (MATCH_MP sorted_pair (CONJ tr so)))) THEN
+  (* both of them are blocks *)
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    if (try is_eq (concl th) && is_var (lhs (concl th)) &&
+            hd_of "dataSem_Block" (rand (concl th))
+        with Failure _ -> false)
+    then SUBST_ALL_TAC th else fail())) THEN
+  (* so the memory holds the same word for two blocks, and
+     memory_rel_Block_ptr_eq says they are the same block *)
+  W(fun gl ->
+    let mr = the_asm (fun c ->
+               try length (snd (strip_comb c)) = 9 && not (is_eq c)
+               with Failure _ -> false) gl in
+    let lst = last (snd (strip_comb (concl mr))) in
+    let p1 = hd (dest_list (lhand (rand lst))) in
+    let p2 = hd (dest_list (lhand (rand (rand (rand lst))))) in
+    SUBGOAL_THEN (mk_comb (rator (concl mr),
+                    mk_list ([p1; p2], type_of p1))) ASSUME_TAC THENL
+     [MP_TAC mr THEN MATCH_MP_TAC memory_rel_rearrange THEN
+      REWRITE_TAC[MEM; MEM_APPEND] THEN MESON_TAC[];
+      ALL_TAC]) THEN
+  W(fun gl ->
+    let mr2 = the_asm (fun c ->
+                try length (dest_list (last (snd (strip_comb c))))
+                    = 2
+                with Failure _ -> false) gl in
+    let gd = the_asm (fun c -> c = `good_dimindex (:'a)`) gl in
+    MP_TAC (MATCH_MP memory_rel_Block_ptr_eq (CONJ mr2 gd))) THEN
+  DISCH_THEN (fun e -> RULE_ASSUM_TRY (REWRITE_RULE[e])) THEN
+  W(fun gl ->
+    MP_TAC (the_asm (fun c ->
+      try is_binop `(<):num->num->bool` c with Failure _ -> false)
+      gl)) THEN
+  ARITH_TAC));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
