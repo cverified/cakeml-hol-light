@@ -3933,3 +3933,63 @@ let a_cond t =
 and its condition is `el 0 (snd (strip_comb c))`.  `grep -n "^let
 [a-z_]* [a-z]" <the file>` lists the helpers a file binds, and
 `is_cond` is the only one of them that collides today.
+
+## 79. The template of a `memory_rel_..._IMP`
+
+Thirty of the theorems of `data_to_word_memoryProof` read a header
+or a cell of the heap out of a `memory_rel`, and HOL4 proves each
+of them the same way: `fs [memory_rel_def, word_ml_inv_def, ...]`,
+then `imp_res_tac get_real_addr_get_addr`, then
+`imp_res_tac heap_lookup_SPLIT`, then `fs [word_heap_APPEND,
+word_heap_def, word_el_def, word_list_def]` and `SEP_R_TAC`.  The
+port's `memory_rel_ValueArray_IMP` is that proof written out, and
+it is the template; `memory_rel_Word64_IMP` is the same proof with
+`Word64Rep` in place of the `RefBlock`.  The steps, in order:
+
+- `MEMORY_REL_TAC THEN V_INV_TAC v_inv_def` -- the invariant and
+  the rule of `v_inv` that the value has, which leaves the heap
+  lookup at the pointer as an assumption;
+- `EXISTS_TAC` of the pointer (`var_by_name "ptr"`), because what
+  the statement says of it is the assumption `Word (get_addr c ptr
+  ..) = v` the other way round;
+- `heap_in_memory_store_def`, which gives `FLOOKUP st CurrHeap` and
+  the bound on `heap_length`;
+- `heap_lookup_SPLIT` on the lookup, which splits the heap into
+  `ha ++ <the element> :: hb` and makes the pointer `heap_length
+  ha`;
+- `get_real_addr_get_addr` of those four, with the multiplication
+  of the address swapped by `WORD_RULE` into the form the goal has,
+  and `EXISTS_TAC` of it;
+- `word_heap_APPEND`, `word_heap_def`, the definition of the
+  element, `word_el_def`, `word_payload_def`, `word_list_def`, each
+  followed by `TOP_DEPTH_CONV let_CONV` -- which leaves one
+  separating conjunction of the cells of the element and a `cond`
+  of what the header decodes to;
+- the `cond` to the front (`sepfront ["cond"]`, which is
+  `STAR_AC`), `cond_STAR`, and the facts of it assumed;
+- and then every cell read with `read_fun2set`, each time with that
+  cell rearranged to the front by `STAR_AC`:
+
+  ```
+  DISCH_THEN (fun sep ->
+    let p = rator (concl sep) in
+    let fs = facs p in
+    let st = fst (strip_comb p) in
+    let mk a b = mk_comb (mk_comb (st, a), b) in
+    let front cell =
+      let rest = filter (fun t -> not (t = cell)) fs in
+      let target = mk cell (end_itlist mk rest) in
+      let eq = prove (mk_eq (p, target), REWRITE_TAC[STAR_AC]) in
+      MATCH_MP read_fun2set (REWRITE_RULE[eq] sep) in
+    let rds = map front (filter (hd_is "set_sep_one") fs) in
+    EXISTS_TAC (rand (rhs (concl (CONJUNCT1 (hd rds))))) THEN
+    MAP_EVERY STRIP_ASSUME_TAC rds)
+  ```
+
+  (`facs` flattens a `STAR` into its factors, in the order they
+  stand, so the first cell is the header.)
+
+The bits of the header come off `make_header_def` with
+`BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD`, `NUM_REDUCE_CONV` and the
+assumption `len_size + 7 < dimindex`, which is what says that the
+length of the header does not reach down to the bits the tag has.

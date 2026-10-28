@@ -2031,3 +2031,26 @@ Two things of this level are worth keeping in mind:
 (`x >>> (dimindex (:'a) - c.len_size - 2) = n2w (LENGTH vals + 4)`),
 so the one real step that is left there is the case of
 `good_dimindex` and the two calls of `word_str_loop_thm`.
+
+## The word level, and its template
+
+`memory_rel_Word64_IMP` is the first of the thirty theorems that
+read the heap out of a `memory_rel`, and it is the one that settles
+how the rest of them go: `memory_rel_ValueArray_IMP` was already
+proved and is the template, entry 79 of the guide writes the steps
+out, and the only thing the port needed beyond it was the reading
+of *several* cells of one element -- `read_fun2set` wants the cell
+at the front of the separating conjunction, so each cell is brought
+there by `STAR_AC` in turn.
+
+With that in hand the remaining word-level theorems are a matter of
+which element of the heap they are about:
+
+- `memory_rel_Word64_alt`, `memory_rel_RefByte_content`,
+  `memory_rel_ByteArray_IMP` and `memory_rel_Thunk_IMP` are the
+  same shape at another element;
+- `memory_rel_write`, `memory_rel_Update` and the rest of the
+  writing ones go the other way, with `write_fun2set`;
+- and `memory_rel_Number_bignum_IMP_ALT` and the two
+  `memory_rel_..._const_test` ones put a `Bignum` in place of the
+  `Word64Rep`.
