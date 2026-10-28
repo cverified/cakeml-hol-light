@@ -29738,13 +29738,107 @@ let smallnum_test = prove
   word)) /\
      good_dimindex (:'a) /\ small_int (:'a) i ==>
      ~(i < (&0)) /\ i < &(2 EXP (dimindex (:'a) - 4))`,
-  (* the attempt: of what the proof of the source names,
-     the port has nothing in this file's closure, so this
-     is the plain attempt, with the cheat behind it until
-     the proof is written *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC)));;
+(* the proof of the source splits the two word sizes and reads the
+   bits of the number off BITS.  Here the and with the top two bits
+   says that the value is below two to the dimindex less two (the
+   first two lemmas: the mask of the source is the complement of
+   the mask of the lower bits, and what the and with that leaves is
+   what HOL Light's VAL_WORD_AND_NOT_MASK_WORD says).  Of a
+   negative number the value is the word size less four times it,
+   and small_int keeps that above half the word size, which is too
+   big; so the number is not negative, four times it is the value,
+   and a quarter of the bound is the bound of the statement *)
+  (let mask_shl = prove
+   (`!k. (--(word 1):'a word) << k = word_not (word (2 EXP k - 1))`,
+    GEN_TAC THEN
+    REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_SHL; WORD_NEG_1;
+                BIT_WORD_NOT; BIT_WORD_0; GSYM WORD_OF_BITS_MASK;
+                BIT_WORD_OF_BITS; IN_ELIM_THM] THEN
+    REPEAT STRIP_TAC THEN ASM_ARITH_TAC) in
+  let top_bits = prove
+   (`!(w:'a word) k. (w && --(word 1) << k) = word 0 ==>
+       val w < 2 EXP k`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[mask_shl] THEN
+    DISCH_THEN (MP_TAC o REWRITE_RULE[GSYM VAL_EQ]) THEN
+    REWRITE_TAC[VAL_WORD_AND_NOT_MASK_WORD; VAL_WORD_0] THEN
+    SIMP_TAC[MULT_EQ_0; EXP_EQ_0; ARITH_EQ; DIV_EQ_0]) in
+  let e16 = prove
+   (`!x. 2 EXP (x + 4) = 16 * 2 EXP x /\
+         2 EXP (x + 4) DIV 8 = 2 * 2 EXP x /\
+         2 EXP (x + 2) = 4 * 2 EXP x`,
+    GEN_TAC THEN REWRITE_TAC[EXP_ADD] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    SIMP_TAC[ARITH_RULE `2 EXP x * 16 = 8 * (2 * 2 EXP x)`;
+             DIV_MULT; ARITH_EQ] THEN ARITH_TAC) in
+  let div16 = prove
+   (`!y. (16 * y) DIV 8 = 2 * y`,
+    GEN_TAC THEN ONCE_REWRITE_TAC[ARITH_RULE `16 * y = 8 * (2 * y)`]
+    THEN SIMP_TAC[DIV_MULT; ARITH_EQ]) in
+  STRIP_TAC THEN
+  FIRST_ASSUM (fun c ->
+    if (try hd_is "word_and" (lhs (concl c))
+        with Failure _ -> false)
+    then ASSUME_TAC (MATCH_MP top_bits c) else fail()) THEN
+  SUBGOAL_THEN `?x. dimindex (:'a) = x + 4` MP_TAC THENL
+   [EXISTS_TAC `dimindex (:'a) - 4` THEN
+    FIRST_ASSUM (fun gd ->
+      if hd_is "good_dimindex" (concl gd)
+      then MP_TAC (REWRITE_RULE[good_dimindex_def] gd)
+      else fail()) THEN ARITH_TAC;
+    ALL_TAC] THEN
+  DISCH_THEN (CHOOSE_THEN (fun eq ->
+    SUBST_ALL_TAC eq THEN ASSUME_TAC eq)) THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[ARITH_RULE `(x + 4) - 2 = x + 2`;
+                               ARITH_RULE `(x + 4) - 4 = x`]) THEN
+  REWRITE_TAC[ARITH_RULE `(x + 4) - 4 = x`] THEN
+  DISJ_CASES_THEN (X_CHOOSE_THEN `n:num` SUBST_ALL_TAC)
+    (SPEC `i:int` INT_IMAGE) THENL
+   [(* the number is not negative *)
+    RULE_ASSUM_TRY (REWRITE_RULE[smallnum_def; small_int_def;
+      INT_OF_NUM_LT; INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM;
+      ARITH_RULE `~(m < 0)`; dimword; VAL_WORD; e16]) THEN
+    REWRITE_TAC[INT_OF_NUM_LT; ARITH_RULE `~(m < 0)`] THEN
+    FIRST_ASSUM (fun b ->
+      if not (try hd_is "MOD" (lhand (concl b))
+              with Failure _ -> false) then fail() else
+      SUBGOAL_THEN (mk_binop `(<):num->num->bool`
+                      (lhand (lhand (concl b)))
+                      (rand (lhand (concl b))))
+        (fun lt -> MP_TAC (REWRITE_RULE[MATCH_MP MOD_LT lt] b))
+      THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+    ASM_ARITH_TAC;
+    (* the number is negative, which the top bits deny *)
+    ASM_CASES_TAC `0 < n` THENL
+     [RULE_ASSUM_TRY (REWRITE_RULE[smallnum_def; small_int_def;
+        INT_NEG_LT0; INT_OF_NUM_LT; INT_OF_NUM_LE; INT_LE_NEG2;
+        INT_SUB_LZERO; INT_NEG_NEG; INT_OF_NUM_MUL;
+        NUM_OF_INT_OF_NUM; WORD_SUB_LZERO; dimword]) THEN
+      FIRST_ASSUM (fun pos ->
+        if not (try concl pos = `0 < n`
+                with Failure _ -> false) then fail() else
+        RULE_ASSUM_TRY (REWRITE_RULE[pos]) THEN ASSUME_TAC pos) THEN
+      FIRST_ASSUM (fun eq ->
+        if (try hd_is "dimindex" (lhs (concl eq))
+            with Failure _ -> false)
+        then RULE_ASSUM_TRY (REWRITE_RULE[VAL_WORD_NEG_CASES;
+               VAL_WORD; eq; e16; div16]) else fail())
+      THEN
+      SUBGOAL_THEN `4 * n < 16 * 2 EXP x` ASSUME_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC] THEN
+      FIRST_ASSUM (fun lt ->
+        if not (try concl lt = `4 * n < 16 * 2 EXP x`
+                with Failure _ -> false) then fail() else
+        RULE_ASSUM_TRY (REWRITE_RULE[MATCH_MP MOD_LT lt])) THEN
+      FIRST_ASSUM (fun pos ->
+        if not (try concl pos = `0 < n`
+                with Failure _ -> false) then fail() else
+        RULE_ASSUM_TRY (REWRITE_RULE[EQF_INTRO (MATCH_MP
+          (ARITH_RULE `0 < n ==> ~(4 * n = 0)`) pos)])) THEN
+      ASM_ARITH_TAC;
+      SUBGOAL_THEN `n = 0` SUBST_ALL_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC] THEN
+      REWRITE_TAC[INT_NEG_0; INT_OF_NUM_LT; INT_LT_REFL] THEN
+      SIMP_TAC[LT_NZ; EXP_EQ_0; ARITH_EQ]]]));;
 
 (* [local] *)
 let small_int_w2i_i2w = prove
