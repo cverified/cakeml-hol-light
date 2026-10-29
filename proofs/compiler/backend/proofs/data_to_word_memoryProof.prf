@@ -33591,19 +33591,264 @@
     (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
      ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC))
 ### memory_rel_simple_eq
-  (* the attempt: the proof of the source names
-     memory_rel_RefPtr_EQ, memory_rel_RefPtr_IMP, memory_rel_tl,
-     memory_rel_Number_cmp, memory_rel_swap, memory_rel_Word64_IMP.
-     What is here rewrites with them and closes by arithmetic, and
-     the cheat is behind it until the proof is written.  A MESON
-     over them is what the next round adds; it costs a load ten
-     minutes to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_RefPtr_EQ; memory_rel_RefPtr_IMP;
-       memory_rel_tl; memory_rel_Number_cmp; memory_rel_swap;
-       memory_rel_Word64_IMP] THEN
-     TRY ASM_ARITH_TAC))
+(* the cases of the source: the five shapes of the one value
+   against the five of the other, of which the clause of do_eq
+   settles twenty-one at once, because they give a type error and
+   not a value.  What is left are two values of the same shape.
+     Two numbers: the comparison of the source
+   (memory_rel_Number_cmp, used on the invariant and on the
+   swapped one, so that the word of each of the two is in hand)
+   says of each word whether it is the number itself, and then
+   the words are the same exactly when the numbers are.
+     Two words of sixty-four bits and two references: both roots
+   are pointers (memory_rel_Word64_IMP and
+   memory_rel_RefPtr_T_IMP after the invariant is shortened with
+   memory_rel_tail), so the lowest bit of each of them is set and
+   the step of the statement holds of itself; of the clause for
+   two references only the arm of two that are not byte arrays is
+   left, and there the two are equal exactly when the numbers of
+   the references are.
+     Two Blocks: the words of them are the roots
+   (memory_rel_Block_IMP), and the clause of do_eq splits into
+   three.  Two closures have elements, so both roots are pointers
+   and the step of the statement is denied.  Otherwise the two
+   roots are the same or they are not: the same root is the same
+   value (memory_rel_ptr_eq), and two roots that differ have a
+   different tag or a different length
+   (memory_rel_Block_Block_small_eq, used on the invariant or on
+   the swapped one, after which the root whose lowest bit is
+   clear goes first), which the arm of the clause denies *)
+  ((let grab_asm p asl =
+    tryfind (fun (_,th) ->
+      if (try p th with Failure _ -> false) then th else fail())
+      asl in
+  let the_mr asl =
+    grab_asm (fun th -> hd_is "memory_rel" (concl th)) asl in
+  let the_gd asl =
+    grab_asm (fun th -> hd_is "good_dimindex" (concl th)) asl in
+  let the_deq asl =
+    grab_asm (fun th ->
+      is_eq (concl th) &&
+      hd_is "dataSem_do_eq" (lhand (concl th))) asl in
+  let the_cjeq asl =
+    grab_asm (fun th ->
+      is_conj (concl th) && is_eq (lhand (concl th)) &&
+      is_eq (rand (concl th))) asl in
+  let the_bitdisj asl =
+    grab_asm (fun th ->
+      is_disj (concl th) &&
+      hd_is "bit" (rand (lhand (concl th)))) asl in
+  (* the two roots both have their lowest bit set, which the step
+     of the statement denies; the disjunction has to be refuted by
+     hand, because as an assumption it is a rewrite to truth *)
+  let kill_disj =
+    W(fun (asl,gl) ->
+      let dj = the_bitdisj asl in
+      let b1 = rand (lhand (concl dj))
+      and b2 = rand (rand (concl dj)) in
+      let t1 = grab_asm (fun th -> concl th = b1) asl
+      and t2 = grab_asm (fun th -> concl th = b2) asl in
+      CONTR_TAC (EQ_MP (REWRITE_CONV[EQT_INTRO t1; EQT_INTRO t2]
+        (concl dj)) dj)) in
+  (* two assumptions that deny each other close any goal *)
+  let contra2 =
+    W(fun (asl,gl) ->
+      tryfind (fun (_,th) ->
+        let nth = snd (find (fun (_,t) ->
+          concl t = mk_neg (concl th)) asl) in
+        CONTR_TAC (EQ_MP (EQF_INTRO nth) th)) asl) in
+  (* the tag and the length of the two Blocks are the same, which
+     is what the small lemma denies *)
+  let sm_contr =
+    W(fun (asl,gl) ->
+      let c1,c2 = CONJ_PAIR (the_cjeq asl) in
+      let sm = snd (find (fun (s,_) -> s = "sm") asl) in
+      CONTR_TAC (EQ_MP (REWRITE_CONV[c1; c2] (concl sm)) sm)) in
+  (* the two roots, from a lemma that gives each of them: the
+     second one after the invariant is shortened *)
+  let two_roots lem =
+    W(fun (asl,gl) ->
+      let mr = the_mr asl in
+      let gd = the_gd asl in
+      let mr2 = MATCH_MP memory_rel_tail mr in
+      MP_TAC (MATCH_MP lem (CONJ mr gd)) THEN
+      MP_TAC (MATCH_MP lem (CONJ mr2 gd))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) in
+  (* and then the lowest bit of each of them is set, so the
+     implication of the statement holds of itself *)
+  let bits_set =
+    W(fun (asl,gl) ->
+      let cs = conjuncts (snd (strip_exists gl)) in
+      let e t = grab_asm (fun th ->
+        is_eq (concl th) && lhs (concl th) = t &&
+        hd_is "wordLang_Word" (rhs (concl th))) asl in
+      MAP_EVERY EXISTS_TAC
+        [rand (rhs (concl (e (lhs (el 0 cs)))));
+         rand (rhs (concl (e (lhs (el 1 cs)))))]) THEN
+    ASM_REWRITE_TAC[] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[word_index]) THEN
+    ASM_REWRITE_TAC[REWRITE_RULE[word_index] get_addr_0] in
+  (* the five shapes of a value against the five of the other:
+     of the twenty-five pairs the clause of do_eq settles all
+     but the four of two values of the same shape *)
+  let setup =
+    STRIP_TAC THEN
+    CASES_ON_NAME "v1" THEN CASES_ON_NAME "v2" THEN
+    FIRST_ASSUM (fun de ->
+      if not (is_eq (concl de)) ||
+         not (hd_is "dataSem_do_eq" (lhs (concl de)))
+      then fail() else
+      ASSUME_TAC (CONV_RULE (TOP_DEPTH_CONV MATCH_CONV)
+        (ONCE_REWRITE_RULE[CONJUNCT1 dataSem_do_eq_def] de))) THEN
+    TRY (SOLVED (FIRST_ASSUM (fun th ->
+      MP_TAC (REWRITE_RULE[distinctness "eq_result"] th)) THEN
+      REWRITE_TAC[])) in
+  (* two numbers: the comparison of the source gives the words of
+     both of them, in both orders *)
+  let number_branch_pre =
+    FIRST_ASSUM (fun de ->
+      if not (is_eq (concl de)) ||
+         not (hd_is "Eq_val" (lhs (concl de))) then fail() else
+      SUBST_ALL_TAC
+        (SYM (REWRITE_RULE[injectivity "eq_result"] de))) THEN
+    W(fun (asl,gl) ->
+      let mr = the_mr asl in
+      let gd = the_gd asl in
+      MP_TAC (MATCH_MP memory_rel_Number_cmp
+                (CONJ (MATCH_MP memory_rel_swap mr) gd)) THEN
+      MP_TAC (MATCH_MP memory_rel_Number_cmp (CONJ mr gd))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) in
+  (* the two instances of the comparison speak of the same two
+     words *)
+  let unify_words =
+    REPEAT (W(fun (asl,gl) ->
+      let cs = conjuncts (snd (strip_exists gl)) in
+      let xs = [lhs (el 0 cs); lhs (el 1 cs)] in
+      tryfind (fun x ->
+        let es = filter (fun (_,th) ->
+          (try is_eq (concl th) && lhs (concl th) = x &&
+               hd_is "wordLang_Word" (rhs (concl th))
+           with Failure _ -> false)) asl in
+        if length es < 2 then fail() else
+        let eq = REWRITE_RULE[injectivity "word_loc"]
+                   (TRANS (SYM (snd (el 0 es))) (snd (el 1 es))) in
+        if lhs (concl eq) = rhs (concl eq) then fail() else
+        SUBST_ALL_TAC eq) xs)) in
+  let number_branch =
+    number_branch_pre THEN unify_words THEN
+    W(fun (asl,gl) ->
+      let cs = conjuncts (snd (strip_exists gl)) in
+      let e t = grab_asm (fun th ->
+        is_eq (concl th) && lhs (concl th) = t &&
+        hd_is "wordLang_Word" (rhs (concl th))) asl in
+      MAP_EVERY EXISTS_TAC
+        [rand (rhs (concl (e (lhs (el 0 cs)))));
+         rand (rhs (concl (e (lhs (el 1 cs)))))]) THEN
+    ASM_REWRITE_TAC[] THEN
+    W(fun (asl,gl) ->
+      let ant = lhand gl in
+      MAP_EVERY ASM_CASES_TAC
+        [rand (lhand ant); rand (rand ant)]) THEN
+    ASM_FS_TAC THEN TRY (SOLVED (ASM_MESON_TAC[])) in
+  (* two references: of the clause of do_eq only the arm of two
+     that are not byte arrays is left, and there both roots are
+     pointers *)
+  let refptr_branch =
+    FIRST_ASSUM (fun de ->
+      if not (is_eq (concl de)) ||
+         not (hd_is "COND" (lhs (concl de))) then fail() else
+      MP_TAC de) THEN
+    COND_CASES_TAC THEN
+    REWRITE_TAC[distinctness "eq_result"] THEN DISCH_TAC THEN
+    FIRST_ASSUM (fun cj ->
+      if not (is_conj (concl cj)) then fail() else
+      CONJUNCTS_THEN (fun th -> SUBST_ALL_TAC (EQT_INTRO th)) cj) THEN
+    two_roots memory_rel_RefPtr_T_IMP THEN bits_set in
+  (* two Blocks: the words of both of them are the roots, and the
+     clause of do_eq splits into the arm of two closures, the arm
+     of a tag and a length that agree, and the arm that gives
+     falsity *)
+  let blk_pre =
+    two_roots memory_rel_Block_IMP THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (lhs c) && hd_is "wordLang_Word" (rhs c)
+      then SUBST_ALL_TAC th else fail())) THEN
+    W(fun (asl,gl) ->
+      let cs = conjuncts (snd (strip_exists gl)) in
+      MAP_EVERY EXISTS_TAC
+        [rand (lhs (el 0 cs)); rand (lhs (el 1 cs))]) THEN
+    REWRITE_TAC[] THEN DISCH_TAC THEN
+    FIRST_ASSUM (fun de ->
+      if not (is_eq (concl de)) ||
+         not (hd_is "COND" (lhs (concl de))) then fail() else
+      MP_TAC de) THEN
+    REPEAT COND_CASES_TAC THEN
+    REWRITE_TAC[distinctness "eq_result";
+                injectivity "eq_result"] THEN
+    TRY (SOLVED ASM_FS_TAC) in
+  (* a closure has elements, so its root is a pointer and the
+     lowest bit of it is set, which the step of the statement
+     denies *)
+  let clos_case =
+    DISCH_TAC THEN
+    FIRST_ASSUM (fun cj ->
+      if not (is_conj (concl cj)) then fail() else
+      MP_TAC (REWRITE_RULE[dataSem_isClos_def] cj)) THEN
+    STRIP_TAC THEN
+    W(fun (asl,gl) ->
+      let nils = filter (fun (_,th) ->
+        (try is_neg (concl th) && is_eq (rand (concl th)) &&
+             fst (dest_const (rand (rand (concl th)))) = "NIL"
+         with Failure _ -> false)) asl in
+      RULE_ASSUM_TRY (REWRITE_RULE (map snd nils))) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if is_exists (concl th) then STRIP_ASSUME_TAC th
+      else fail())) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[word_index]) THEN
+    kill_disj in
+  (* two Blocks whose roots differ have a different tag or a
+     different length, by the small lemma; the root whose lowest
+     bit is clear goes first, so the lemma is used on the
+     invariant of the source or on the swapped one *)
+  let small_eq_use =
+    W(fun (asl,gl) ->
+      let mr = the_mr asl in
+      let gd = the_gd asl in
+      let ne = grab_asm (fun th ->
+        is_neg (concl th) && is_eq (rand (concl th)) &&
+        hd_is "bit" (concl th) = false &&
+        type_of (lhs (rand (concl th))) =
+        type_of (rand (rand (concl th)))) asl in
+      let dj = grab_asm (fun th -> is_disj (concl th)) asl in
+      DISJ_CASES_THEN (fun nb ->
+        let same = rand (rand (concl nb)) = lhs (rand (concl ne)) in
+        let mr' = if same then mr else MATCH_MP memory_rel_swap mr in
+        let ne' = if same then ne else GSYM ne in
+        LABEL_TAC "sm" (MATCH_MP memory_rel_Block_Block_small_eq
+          (CONJ mr' (CONJ gd (CONJ ne' nb))))) dj) in
+  (* and two Blocks whose roots are the same are the same value,
+     by the pointer lemma *)
+  let blocks_case =
+    DISCH_TAC THEN
+    W(fun (asl,gl) ->
+      let weq = lhs gl in
+      ASM_CASES_TAC weq THENL
+       [W(fun (asl2,gl2) ->
+          ASSUME_TAC (MATCH_MP memory_rel_ptr_eq
+            (CONJ (REWRITE_RULE[ASSUME weq] (the_mr asl2))
+              (CONJ (the_deq asl2) (the_gd asl2))))) THEN
+        ASM_REWRITE_TAC[] THEN TRY (SOLVED contra2);
+        ASM_REWRITE_TAC[] THEN
+        TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+        small_eq_use THEN sm_contr]) in
+  setup THENL
+   [number_branch;
+    two_roots memory_rel_Word64_IMP THEN bits_set;
+    blk_pre THENL [clos_case; blocks_case; blocks_case];
+    refptr_branch]))
 ### word_eq_LESS_EQ
   (* the complete induction on the budget l that the definition
      recurses on (PORTING-GUIDE.md entry 44).  The case tree of the
