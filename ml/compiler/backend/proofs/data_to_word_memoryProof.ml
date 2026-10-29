@@ -29875,20 +29875,342 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
        IS_SOME ts' /\
        bc_stack_ref_inv c (THE ts') (v' :: vars') (union refs'
          frame) (x :: xs,heap,be)`),
-  (* the attempt: the proof of the source names union_def,
-     lookup_union, bc_stack_ref_inv_MutBlock_centre,
-     bc_stack_ref_inv_union_del_ins_lemma, bc_stack_ref_inv_def,
-     THE.  What is here rewrites with them and closes by arithmetic,
-     and the cheat is behind it until the proof is written.  A MESON
-     over them is what the next round adds; it costs a load ten
-     minutes to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[union_def; lookup_union;
-       bc_stack_ref_inv_MutBlock_centre;
-       bc_stack_ref_inv_union_del_ins_lemma;
-       bc_stack_ref_inv_def; THE] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the induction of the source is the one of the definition
+   (finalise_cons_ind), which the port does not have, so the proof
+   goes by the size of the references: the recursion is on them
+   with the pointer of the block deleted, which makes them smaller
+   (the lemmas of finalise_cons_none above, for the same reason).
+     A value that is no pointer, and a pointer at anything but an
+   unfinalised MutBlock, leaves the references and the timestamp
+   as they are, and there the goal is the assumption.  For the
+   block: the stack holds its pointer, so the invariant gives the
+   element of the heap and the invariant of its centre
+   (bc_stack_ref_inv_MutBlock_centre), and moving the reference
+   from the references to the frame keeps that
+   (bc_stack_ref_inv_union_del_ins_lemma) -- which is what the
+   call is about, so the hypothesis of the induction applies to it
+   and gives the invariant of the finalised centre with the
+   timestamp of the call.  That timestamp is one (IS_SOME), and
+   the one of the step is its successor; the invariant of the
+   block then comes from bc_stack_ref_inv_MutBlock_F, and the
+   references of the goal have the same lookup at every key as the
+   ones of that step (bc_stack_ref_inv_swap_refs): at the pointer
+   both give the finalised block, and away from it the call's
+   references answer first in both *)
+  ((let grab_asm p asl =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+  (* the size of a tree under a delete, which the measure of the
+     induction needs: the recursion of finalise_cons is on the
+     references with the pointer of the block deleted.  HOL4 has
+     the induction of the definition (finalise_cons_ind), which
+     the port does not have, and the proof of finalise_cons_none
+     above has the same lemmas for the same reason *)
+  let size_mk_BN = prove
+   (`!t1 (t2:(A)spt).
+       sptree_size (mk_BN t1 t2) = sptree_size (BN t1 t2)`,
+    REPEAT GEN_TAC THEN
+    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BN_def] THEN
+    STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
+    STRUCT_CASES_TAC(ISPEC `t2:(A)spt` (cases_of `:(A)spt`)) THEN
+    MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
+  let size_mk_BS = prove
+   (`!t1 (x:A) t2.
+       sptree_size (mk_BS t1 x t2) = sptree_size (BS t1 x t2)`,
+    REPEAT GEN_TAC THEN
+    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BS_def] THEN
+    STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
+    STRUCT_CASES_TAC(ISPEC `t2:(A)spt` (cases_of `:(A)spt`)) THEN
+    MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
+  let lookup_zero = prove
+   (`!(t:(A)spt) n x.
+       sptree_lookup n t = SOME x ==> ~(sptree_size t = 0)`,
+    MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THENL
+     [REWRITE_TAC[lookup_def; distinctness "option"];
+      REPEAT GEN_TAC THEN REWRITE_TAC[lookup_def; size_def] THEN
+      DISCH_TAC THEN ARITH_TAC;
+      REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+      REWRITE_TAC[lookup_def; size_def] THEN
+      COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+      COND_CASES_TAC THEN DISCH_TAC THEN
+      FIRST_X_ASSUM (fun ih -> FIRST_ASSUM (fun lk ->
+        MP_TAC (MATCH_MP (GEN_ALL ih) lk))) THEN ARITH_TAC;
+      REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+      REWRITE_TAC[lookup_def; size_def] THEN
+      DISCH_TAC THEN ARITH_TAC]) in
+  let size_delete = prove
+   (`!(t:(A)spt) n.
+       sptree_size (sptree_delete n t) =
+       (if sptree_lookup n t = NONE then sptree_size t
+        else sptree_size t - 1)`,
+    let FIN =
+      W(fun (asl,w) ->
+        CASES_ON_TAC (find_term (hd_is "sptree_lookup") w)) THEN
+      REWRITE_TAC[distinctness "option"] THEN
+      TRY (FIRST_ASSUM (fun th ->
+        MP_TAC (MATCH_MP (GEN_ALL lookup_zero) th))) THEN
+      ARITH_TAC in
+    MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THEN
+    REPEAT STRIP_TAC THEN
+    REWRITE_TAC[delete_def; lookup_def; size_def] THEN
+    COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[size_def; distinctness "option"] THEN
+    TRY ARITH_TAC THEN
+    COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[size_mk_BN; size_mk_BS; size_def] THEN
+    FIN) in
+  let size_delete_LESS = prove
+   (`!(t:(A)spt) n x.
+       sptree_lookup n t = SOME x
+       ==> sptree_size (sptree_delete n t) < sptree_size t`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    ASM_SIMP_TAC[size_delete; distinctness "option"] THEN
+    FIRST_ASSUM (fun th ->
+      MP_TAC (MATCH_MP (GEN_ALL lookup_zero) th)) THEN
+    ARITH_TAC) in
+  (* a lookup of a union that the left half answers, and one that
+     it leaves to the right half *)
+  let lu_left = prove
+   (`!m1 m2 k (x:A). sptree_lookup k m1 = SOME x
+       ==> sptree_lookup k (sptree_union m1 m2) = SOME x`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    ASM_REWRITE_TAC[lookup_union] THEN MATCH_REDUCE_TAC) in
+  let lu_none = prove
+   (`!m1 m2 k. sptree_lookup k m1 = NONE
+       ==> sptree_lookup k (sptree_union m1 (m2:(A)spt)) =
+           sptree_lookup k m2`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    ASM_REWRITE_TAC[lookup_union] THEN MATCH_REDUCE_TAC) in
+  let ref_rws =
+    let ds = CONJUNCTS (distinctness "bvlSem_ref") in
+    injectivity "option" :: distinctness "option" ::
+    injectivity "bvlSem_ref" :: ds @ map GSYM ds in
+  (* the equation of the definition, in the one assumption that is
+     about the call: a rewrite of every assumption would open the
+     call of the induction hypothesis as well *)
+  let OPEN_FC =
+    FIRST_X_ASSUM (fun fc ->
+      let c = concl fc in
+      if not (is_eq c) ||
+         not (hd_is "dataSem_finalise_cons" (lhs c)) then fail()
+      else
+      ASSUME_TAC (ONCE_REWRITE_RULE[dataSem_finalise_cons_def] fc))
+    in
+  let TIDY =
+    RULE_ASSUM_TRY (REWRITE_RULE ref_rws) THEN
+    MATCH_TIDY_TAC THEN
+    TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+    MATCH_TIDY_TAC in
+  (* the arms where the references are untouched: there the goal
+     is the assumption, with the timestamp of the call *)
+  let CLOSE2 =
+    TRY (SOLVED (VAR_EQ_TAC THEN
+      ASM_REWRITE_TAC[IS_SOME; THE; distinctness "option";
+                      injectivity "option"])) in
+  let the_asm p (asl,w) =
+    snd (find (fun (_,th) -> p (concl th)) asl) in
+  let big_asm = the_asm (fun c -> is_eq c && hd_is "COND" (lhand c))
+    in
+  let SPLIT_LOOKUP =
+    W(fun gl ->
+      CASES_ON_TAC (find_term (hd_is "sptree_lookup")
+                      (concl (big_asm gl)))) in
+  let SPLIT_REF =
+    W(fun gl ->
+      let lk = the_asm (fun c -> is_eq c &&
+                 hd_is "sptree_lookup" (lhand c) &&
+                 hd_is "SOME" (rand c)) gl in
+      CASES_ON_TAC (rand (rand (concl lk)))) in
+  let SPLIT_PAIR_ARG =
+    W(fun gl ->
+      let fc = the_asm (fun c -> is_eq c &&
+                 hd_is "dataSem_finalise_cons" (lhand c) &&
+                 hd_is "SOME" (rand c)) gl in
+      let rec pv t =
+        if is_var t && prod_type (type_of t) then t
+        else if hd_is "," t then pv (rand t)
+        else failwith "pv" in
+      CASES_ON_TAC (pv (rand (rand (concl fc))))) in
+  (* the assumptions of the step that the lemmas of the invariant
+     are applied to *)
+  let the_lk asl =
+    grab_asm (fun th ->
+      hd_is "sptree_lookup" (lhs (concl th)) &&
+      hd_is "bvlSem_MutBlock" (rand (rhs (concl th)))) asl in
+  let the_fc asl =
+    grab_asm (fun th ->
+      hd_is "dataSem_finalise_cons" (lhs (concl th))) asl in
+  let rec conses t =
+    if hd_is "CONS" t then 1 + conses (rand t) else 0 in
+  let the_inv_n n asl =
+    grab_asm (fun th ->
+      hd_is "bc_stack_ref_inv" (concl th) &&
+      conses (el 2 (snd (strip_comb (concl th)))) = n) asl in
+  let the_invdel asl =
+    grab_asm (fun th ->
+      hd_is "bc_stack_ref_inv" (concl th) &&
+      (let r = el 3 (snd (strip_comb (concl th))) in
+       hd_is "sptree_union" r && hd_is "sptree_delete" (lhand r)))
+      asl in
+  let the_invdel2 asl =
+    grab_asm (fun th ->
+      hd_is "bc_stack_ref_inv" (concl th) &&
+      (let r = el 3 (snd (strip_comb (concl th))) in
+       hd_is "sptree_union" r && hd_is "sptree_insert" (rand r)))
+      asl in
+  (* the centre of the block, whose invariant the step is about *)
+  let centre =
+    W(fun (asl,gl) ->
+      let lk = the_lk asl in
+      let inv = the_inv_n 1 asl in
+      let fr = rand (el 3 (snd (strip_comb (concl inv)))) in
+      let lu = SPEC fr (MATCH_MP lu_left lk) in
+      MP_TAC (MATCH_MP bc_stack_ref_inv_MutBlock_centre
+                (CONJ inv lu))) in
+  (* with the reference moved from the references to the frame,
+     which is what the recursive call is about *)
+  let delins =
+    W(fun (asl,gl) ->
+      let lk = the_lk asl in
+      let inv = the_inv_n 2 asl in
+      MP_TAC (MATCH_MP bc_stack_ref_inv_union_del_ins_lemma
+                (CONJ inv lk))) in
+  (* the hypothesis of the induction, which the delete lets in *)
+  let useih =
+    W(fun (asl,gl) ->
+      let ih = grab_asm (fun th -> is_forall (concl th) &&
+                 hd_is "<" (lhand (body (rand (concl th))))) asl in
+      let fc = the_fc asl in
+      let dl = el 1 (snd (strip_comb (lhs (concl fc)))) in
+      MP_TAC (SPEC (list_mk_icomb "sptree_size" [dl]) ih)) THEN
+    (ANTS_TAC THENL
+      [W(fun (asl,gl) ->
+         let lk = the_lk asl in
+         MP_TAC (MATCH_MP (GEN_ALL size_delete_LESS) lk)) THEN
+       ASM_ARITH_TAC;
+       ALL_TAC]) THEN
+    W(fun (asl,gl) ->
+      let fc = the_fc asl in
+      let inv = the_invdel asl in
+      let dl = el 1 (snd (strip_comb (lhs (concl fc)))) in
+      let tso = el 2 (snd (strip_comb (lhs (concl fc)))) in
+      DISCH_THEN (fun ih ->
+        MP_TAC (MATCH_MP ih
+          (CONJ (REFL (list_mk_icomb "sptree_size" [dl]))
+            (CONJ fc (CONJ (REFL tso) inv)))))) THEN
+    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "issome")
+                                (LABEL_TAC "ihc")) in
+  (* the timestamp of the call is one, so the one of the step is
+     its successor *)
+  let doy =
+    USE_THEN "issome" (fun is -> CASES_ON_TAC (rand (concl is))) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[IS_SOME; THE; OPTION_MAP;
+                                 distinctness "option"]) THEN
+    TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+    RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV MATCH_CONV)) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (rhs c) && not (vfree_in (rhs c) (lhs c))
+      then SUBST_ALL_TAC (SYM th) else fail())) THEN
+    REWRITE_TAC[IS_SOME; THE] in
+  (* the root of the reference, which the annotation of the
+     pointer spells out *)
+  let doroot =
+    W(fun (asl,gl) ->
+      let lk = the_lk asl in
+      let xe = grab_asm (fun th ->
+        is_eq (concl th) && is_var (lhs (concl th)) &&
+        hd_is "gc_shared_Pointer" (rhs (concl th))) asl in
+      let fr = rand (el 3 (snd (strip_comb
+                 (concl (the_inv_n 1 asl))))) in
+      let lu = SPEC fr (MATCH_MP lu_left lk) in
+      SUBST_ALL_TAC (CONV_RULE (TOP_DEPTH_CONV MATCH_CONV)
+        (REWRITE_RULE[lu; ref_ptr_annot_def] xe))) in
+  let addnorm = ARITH_RULE `!a b. a + 1 + b = a + (b + 1)` in
+  (* the block is finalised: the invariant of it comes from the
+     one of its centre (bc_stack_ref_inv_MutBlock_F), and the
+     references of the goal have the same lookups as the ones of
+     that step (bc_stack_ref_inv_swap_refs) *)
+  let finish =
+    REWRITE_TAC[addnorm] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[addnorm]) THEN
+    W(fun (asl,gl) ->
+      let gr = el 3 (snd (strip_comb gl)) in
+      let ihc = the_invdel2 asl in
+      let r = el 3 (snd (strip_comb (concl ihc))) in
+      MATCH_MP_TAC (GEN_ALL bc_stack_ref_inv_swap_refs) THEN
+      EXISTS_TAC (mk_comb (rator (lhand gr), r))) THEN
+    CONJ_TAC THENL
+     [MATCH_MP_TAC (GEN_ALL bc_stack_ref_inv_MutBlock_F) THEN
+      W(fun (asl,gl) ->
+        let ihc = the_invdel2 asl in
+        let rp = lhand (rand (el 2 (snd (strip_comb (concl ihc)))))
+          in
+        let hl = grab_asm (fun th ->
+          hd_is "heap_lookup" (lhs (concl th)) &&
+          hd_is "BlockRep" (rand (rhs (concl th)))) asl in
+        MAP_EVERY EXISTS_TAC
+          [lhand rp; rand (rand (rhs (concl hl)))]) THEN
+      REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM MATCH_ACCEPT_TAC) THEN
+      (* the reference is still the unfinalised block under the
+         pointer: the call left nothing there
+         (finalise_cons_none), so the lookup goes to the frame *)
+      W(fun (asl,gl) ->
+        let fc = the_fc asl in
+        let args = snd (strip_comb
+                    (el 1 (snd (strip_comb (lhs (concl fc)))))) in
+        let pt = el 0 args in
+        let dnone = REWRITE_RULE[]
+                      (ISPECL [el 1 args; pt; pt] lookup_delete) in
+        let none = MATCH_MP (GEN_ALL finalise_cons_none)
+                     (CONJ fc dnone) in
+        REWRITE_TAC[MATCH_MP lu_none none; lookup_insert]);
+      GEN_TAC THEN REWRITE_TAC[lookup_insert; lookup_union] THEN
+      COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+      TRY MATCH_REDUCE_TAC] in
+  let aux = prove
+   (cake_as_vars (fun () ->
+     `!n v (refs:((dataSem_v)bvlSem_ref)spt) ts_opt v' refs' ts' ts
+         vars' frame x xs.
+        sptree_size refs = n /\
+        dataSem_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\
+        ts_opt = SOME ts /\
+        bc_stack_ref_inv c ts (v :: vars') (sptree_union refs frame)
+          (x :: xs,heap,be)
+        ==> IS_SOME ts' /\
+            bc_stack_ref_inv c (THE ts') (v' :: vars')
+              (sptree_union refs' frame) (x :: xs,heap,be)`),
+    MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    CASES_ON_NAME "v" THEN OPEN_FC THEN
+    SAFE_MATCH_REDUCE_ASM_TAC THEN MATCH_TIDY_TAC THEN CLOSE2 THEN
+    SPLIT_LOOKUP THEN TIDY THEN CLOSE2 THEN
+    SPLIT_REF THEN TIDY THEN CLOSE2 THEN
+    W(fun gl ->
+      ASM_CASES_TAC (lhand (rator (lhand (concl (big_asm gl)))))) THEN
+    ASM_FS_TAC THEN TIDY THEN CLOSE2 THEN
+    W(fun gl ->
+      CASES_ON_TAC (find_term (hd_is "dataSem_finalise_cons")
+                      (concl (big_asm gl)))) THEN
+    TIDY THEN CLOSE2 THEN
+    REPEAT SPLIT_PAIR_ARG THEN TIDY THEN CLOSE2 THEN
+    centre THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    delins THEN DISCH_TAC THEN
+    useih THEN doy THEN doroot THEN finish) in
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  W(fun (asl,gl) ->
+    let fc = the_fc asl in
+    let rf = el 1 (snd (strip_comb (lhs (concl fc)))) in
+    let tseq = grab_asm (fun th ->
+      is_eq (concl th) && is_var (lhs (concl th)) &&
+      hd_is "SOME" (rhs (concl th))) asl in
+    let inv = grab_asm (fun th ->
+      hd_is "bc_stack_ref_inv" (concl th)) asl in
+    let sz = list_mk_icomb "sptree_size" [rf] in
+    MATCH_ACCEPT_TAC (MATCH_MP (SPEC sz aux)
+      (CONJ (REFL sz) (CONJ fc (CONJ tseq inv))))))));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
