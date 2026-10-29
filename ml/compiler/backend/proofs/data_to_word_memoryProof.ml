@@ -2189,20 +2189,561 @@ let gc_heap_inline_rel_v_inv_lemma = prove
              bc_ref_inv conf n refs (f,tf,heap1,be)) /\
          gc_inline_rel dest_evaluated_thunk_rel heap1 x1 x2 ==>
            v_inv_ck ck conf v refs (x2,f,tf,heap2)`),
-  (* the attempt: the proof of the source names v_inv_def,
-     small_int_def, ThunkBlock_def,
-     LIST_REL_gc_heap_inline_DataElement, Word64Rep_def,
-     BlockRep_def.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[v_inv_def; small_int_def; ThunkBlock_def;
-       LIST_REL_gc_heap_inline_DataElement; Word64Rep_def;
-       BlockRep_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the induction of the source: on the counter, and then the cases
+   of the value.  The inlining of a root either keeps it or takes
+   the root of the element that the root points at, and that
+   element is an evaluated thunk's (the cases of gc_inline_rel and
+   of dest_evaluated_thunk_rel, in one lemma).  So every case has
+   two branches, and the one of the inlining step is closed by
+   ThunkBlock_not_EQ wherever the element at the pointer is a
+   number, a word of sixty-four bits or a Block.
+     Where the root is kept, the element of the value has to be
+   found in the new heap: an element without roots stands where it
+   stood and an element with one root keeps it inlined (two lemmas
+   from LIST_REL_gc_heap_inline_DataElement), and the roots of a
+   Block are related one by one.  The invariant of an element of a
+   Block and of the value of a thunk then comes from the
+   hypothesis of the counter, which asks for the invariant of the
+   heap at that value: the references of an element of a Block are
+   references of the Block, and the references of the value of a
+   thunk are the references of the reference that holds it one
+   edge further (RTC of ref_edge), which is what the three
+   reachability lemmas say.
+     A reference that holds no thunk is the one case where the
+   inlining step is not about the value of the goal at all: there
+   the invariant of the heap at that reference says which arm it
+   is, and no arm of it is an element of a thunk *)
+  ((let grab_asm p asl =
+     tryfind (fun (_,th) ->
+       if (try p th with Failure _ -> false) then th else fail())
+       asl in
+  (* the cases of the two relations of the inlining and the rules
+     of the invariant with a counter *)
+  let (irules,_,ic) = gc_inline_rel in
+  let (_,_,dc) = dest_evaluated_thunk_rel in
+  let (vr,_,_) = v_inv_ck in
+  let rl = CONJUNCTS vr in
+  (* a root that the inlining relates to another is that root
+     itself, or a pointer to the element of an evaluated thunk *)
+  let inl_cases = prove
+   (`!(h1:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
+      list)heap_element) list) x y.
+      gc_inline_rel dest_evaluated_thunk_rel h1 x y
+      ==> x = y \/
+          ?p u. x = gc_shared_Pointer p u /\
+                heap_lookup p h1 = SOME (ThunkBlock Evaluated y)`,
+    REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [ic] THEN
+    REWRITE_TAC[dc] THEN MESON_TAC[]) in
+  (* an element of the heap without roots the inlining of the heap
+     keeps where it is *)
+  let keep_de = prove
+   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+       heap1 (heap2:(('a word_loc,
+         data_to_word_memoryProof_tag#('a word_loc)
+         list)heap_element) list)
+     ==> !ptr l d. heap_lookup ptr heap1 = SOME (DataElement [] l d)
+           ==> heap_lookup ptr heap2 = SOME (DataElement [] l d)`,
+    DISCH_THEN (fun lr ->
+      REPEAT GEN_TAC THEN DISCH_THEN (fun hl ->
+        MP_TAC (MATCH_MP (MATCH_MP
+          LIST_REL_gc_heap_inline_DataElement lr) hl))) THEN
+    REWRITE_TAC[ALL2_DEF] THEN
+    DISCH_THEN (CHOOSE_THEN
+      (CONJUNCTS_THEN2 MP_TAC SUBST1_TAC)) THEN
+    REWRITE_TAC[]) in
+  (* a list that a relation relates to a list of one element is a
+     list of one element *)
+  let all2_single = prove
+   (`!R (y:A) (ys:(B)list).
+       ALL2 R [y] ys <=> ?y'. ys = [y'] /\ R y y'`,
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC (ISPEC `ys:(B)list` list_CASES) THEN
+    REWRITE_TAC[ALL2_DEF; NOT_CONS_NIL; GSYM NOT_CONS_NIL;
+                CONS_11; HD; TL] THEN
+    MESON_TAC[]) in
+  (* so an element with one root it keeps with the root inlined *)
+  let keep_de1 = prove
+   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+       heap1 (heap2:(('a word_loc,
+         data_to_word_memoryProof_tag#('a word_loc)
+         list)heap_element) list)
+     ==> !ptr y l d.
+           heap_lookup ptr heap1 = SOME (DataElement [y] l d)
+           ==> ?y'. heap_lookup ptr heap2 =
+                      SOME (DataElement [y'] l d) /\
+                    gc_inline_rel dest_evaluated_thunk_rel
+                      heap1 y y'`,
+    DISCH_THEN (fun lr ->
+      REPEAT GEN_TAC THEN DISCH_THEN (fun hl ->
+        MP_TAC (MATCH_MP (MATCH_MP
+          LIST_REL_gc_heap_inline_DataElement lr) hl))) THEN
+    REWRITE_TAC[all2_single] THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (lhs c) &&
+         not (vfree_in (lhs c) (rhs c))
+      then SUBST_ALL_TAC th else fail())) THEN
+    W(fun (asl,gl) ->
+      let r = grab_asm (fun th ->
+        hd_is "gc_inline_rel" (concl th)) asl in
+      EXISTS_TAC (rand (concl r))) THEN
+    CONJ_TAC THEN FIRST_ASSUM MATCH_ACCEPT_TAC) in
+  (* the element of a reference that holds no thunk is no element
+     of a thunk, whichever arm of the invariant it is *)
+  let not_thunk_elt = prove
+   (cake_as_vars (fun () ->
+     `n IN FDOM f /\
+      (!ev vv. ~(sptree_lookup n refs = SOME (bvlSem_Thunk ev vv)))
+      /\ bc_ref_inv conf n refs (f,tf,heap,be)
+      ==> ~(heap_lookup (FAPPLY f n) heap =
+            SOME (ThunkBlock ev' (y:('a word_loc)heap_address)))`),
+    REPEAT STRIP_TAC THEN
+    SUBGOAL_THEN (cake_as_vars (fun () ->
+      `FLOOKUP (f:(num,num)fmap) n = SOME (FAPPLY f n)`))
+      ASSUME_TAC THENL
+     [ASM_REWRITE_TAC[FLOOKUP_DEF]; ALL_TAC] THEN
+    NAMED_CASES_TAC (cake_as_vars (fun () ->
+      `sptree_lookup n (refs:((dataSem_v)bvlSem_ref)spt)`))
+      [[]; ["rv"]] THENL
+     [FIRST_X_ASSUM (fun inv ->
+        if not (hd_is "bc_ref_inv" (concl inv)) then fail() else
+        MP_TAC (REWRITE_RULE[bc_ref_inv_def] inv)) THEN
+      ASM_REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
+      CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN REWRITE_TAC[];
+      ALL_TAC] THEN
+    NAMED_CASES_TAC (cake_as_vars (fun () ->
+      `rv:(dataSem_v)bvlSem_ref`))
+      [["ys"]; ["flag"; "bs"]; ["ev"; "vv"];
+       ["tg"; "fin"; "ll"; "cc"; "rr"]] THEN
+    USE_ARM THEN
+    RULE_ASSUM_TRY (CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
+    ASM_MESON_TAC[ThunkBlock_not_EQ; injectivity "option"]) in
+  (* a reference of an element of a Block is a reference of it *)
+  let refs_block = prove
+   (`!ts t vs e r. MEM (e:dataSem_v) vs /\ MEM r (get_refs e)
+       ==> MEM r (get_refs (Block ts t vs))`,
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN
+    STRIP_TAC THEN EXISTS_TAC `get_refs (e:dataSem_v)` THEN
+    CONJ_TAC THENL
+     [EXISTS_TAC `e:dataSem_v` THEN ASM_REWRITE_TAC[];
+      FIRST_ASSUM MATCH_ACCEPT_TAC]) in
+  (* so the references that an element of a Block reaches the
+     Block reaches as well *)
+  let reach_block = prove
+   (`!ts t vs e refs r. MEM (e:dataSem_v) vs /\
+       reachable_refs [e] refs r
+       ==> reachable_refs [Block ts t vs] refs r`,
+    REWRITE_TAC[reachable_refs_def; MEM] THEN
+    MESON_TAC[refs_block]) in
+  (* the references of the value of a thunk the reference that
+     holds it reaches, one edge further *)
+  let reach_thunk = prove
+   (cake_as_vars (fun () ->
+     `!b n refs ev v r.
+        sptree_lookup n refs = SOME (bvlSem_Thunk ev v) /\
+        reachable_refs [v] refs r
+        ==> reachable_refs [RefPtr b n] refs r`),
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[reachable_refs_def; get_refs_def; MEM] THEN
+    STRIP_TAC THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if is_eq c && is_var (lhs c) &&
+         not (vfree_in (lhs c) (rhs c))
+      then SUBST_ALL_TAC th else fail())) THEN
+    W(fun (asl,gl) ->
+      let mm = grab_asm (fun th -> hd_is "MEM" (concl th)) asl in
+      MAP_EVERY EXISTS_TAC
+        [cake_as_vars (fun () -> `RefPtr b n:dataSem_v`);
+         `n:num`] THEN
+      REWRITE_TAC[get_refs_def; MEM] THEN
+      MATCH_MP_TAC (CONJUNCT2 (SPEC_ALL RTC_RULES)) THEN
+      EXISTS_TAC (lhand (concl mm))) THEN
+    CONJ_TAC THENL
+     [ASM_REWRITE_TAC[ref_edge_def] THEN MATCH_REDUCE_TAC THEN
+      ASM_REWRITE_TAC[get_refs_def; FLAT; MAP; APPEND_NIL];
+      FIRST_ASSUM MATCH_ACCEPT_TAC]) in
+  (* and a reference reaches itself *)
+  let reach_self = prove
+   (cake_as_vars (fun () ->
+     `!b n refs. reachable_refs [RefPtr b n] refs n`),
+    REPEAT GEN_TAC THEN REWRITE_TAC[reachable_refs_def] THEN
+    MAP_EVERY EXISTS_TAC
+      [cake_as_vars (fun () -> `RefPtr b n:dataSem_v`);
+       `n:num`] THEN
+    REWRITE_TAC[get_refs_def; MEM] THEN
+    MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL RTC_RULES))) in
+  (* an equation of an assumption of which one side is a variable,
+     substituted away *)
+  let SUBST_VAR_ASM =
+    FIRST_X_ASSUM (fun th ->
+      let c = concl th in
+      if not (is_eq c) then fail() else
+      if is_var (lhs c) && not (vfree_in (lhs c) (rhs c))
+      then SUBST_ALL_TAC th
+      else if is_var (rhs c) && not (vfree_in (rhs c) (lhs c))
+      then SUBST_ALL_TAC (SYM th) else fail()) in
+  let dist2 = CONJ (distinctness "heap_address")
+                   (GSYM (distinctness "heap_address")) in
+  (* the inlining of the root of the value: it keeps it, or the
+     root is a pointer and the element there is an evaluated
+     thunk's *)
+  let inl_step =
+    W(fun (asl,gl) ->
+      let gi = grab_asm (fun th ->
+        hd_is "gc_inline_rel" (concl th)) asl in
+      MP_TAC (REWRITE_RULE[injectivity "heap_address"; dist2]
+                (MATCH_MP inl_cases gi))) THEN
+    DISCH_THEN (REPEAT_TCL STRIP_THM_THEN STRIP_ASSUME_TAC) THEN
+    REPEAT SUBST_VAR_ASM in
+  (* and the element of a thunk is no element of a value of
+     another kind *)
+  let thunk_clash =
+    W(fun (asl,gl) ->
+      let t1 = grab_asm (fun th ->
+        hd_is "heap_lookup" (lhs (concl th)) &&
+        hd_is "ThunkBlock" (rand (rhs (concl th)))) asl in
+      let t2 = grab_asm (fun th ->
+        hd_is "heap_lookup" (lhs (concl th)) &&
+        lhs (concl th) = lhs (concl t1) &&
+        not (hd_is "ThunkBlock" (rand (rhs (concl th))))) asl in
+      MP_TAC (REWRITE_RULE[injectivity "option"]
+                (TRANS (SYM t1) t2)) THEN
+      REWRITE_TAC[ThunkBlock_not_EQ]) in
+  (* a number and a word of sixty-four bits take an element of the
+     heap without roots, so the inlining keeps the element of one
+     where it is.  The two lemmas say that of the element itself,
+     because the equation that makes it one without roots cannot
+     be used in the proof of the goal: it is an assumption of the
+     step, and then the types of the goal are not the types of it
+     (PORTING-GUIDE.md entry 86) *)
+  let keep_bignum = prove
+   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+       heap1 (heap2:(('a word_loc,
+         data_to_word_memoryProof_tag#('a word_loc)
+         list)heap_element) list)
+     ==> !ptr i. heap_lookup ptr heap1 = SOME (Bignum i)
+           ==> heap_lookup ptr heap2 = SOME (Bignum i)`,
+    DISCH_TAC THEN REPEAT GEN_TAC THEN
+    MP_TAC (prove
+     (`!i. ?l d. (Bignum i:(('a word_loc,
+          data_to_word_memoryProof_tag#('a word_loc)
+          list)heap_element)) = DataElement [] l d`,
+      GEN_TAC THEN REWRITE_TAC[bignum_def] THEN
+      PAIRARG_TAC THEN CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+      MESON_TAC[])) THEN
+    DISCH_THEN (fun th ->
+      REPEAT_TCL CHOOSE_THEN SUBST1_TAC (SPEC `i:int` th)) THEN
+    FIRST_ASSUM (fun lr ->
+      MATCH_ACCEPT_TAC (MATCH_MP keep_de lr))) in
+  let keep_w64 = prove
+   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+       heap1 (heap2:(('a word_loc,
+         data_to_word_memoryProof_tag#('a word_loc)
+         list)heap_element) list)
+     ==> !ptr w. heap_lookup ptr heap1 =
+                   SOME (Word64Rep (:'a) w)
+           ==> heap_lookup ptr heap2 = SOME (Word64Rep (:'a) w)`,
+    DISCH_TAC THEN REPEAT GEN_TAC THEN
+    MP_TAC (SPECL [`(:'a)`; `w:word64`] Word64Rep_DataElement) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN SUBST1_TAC) THEN
+    FIRST_ASSUM (fun lr ->
+      MATCH_ACCEPT_TAC (MATCH_MP keep_de lr))) in
+  let keep_elt lem =
+    W(fun (asl,gl) ->
+      let lr = grab_asm (fun th -> hd_is "ALL2" (concl th)) asl in
+      let hl = grab_asm (fun th ->
+        hd_is "heap_lookup" (lhs (concl th)) &&
+        rhs (concl th) = rhs gl) asl in
+      ACCEPT_TAC (MATCH_MP (MATCH_MP lem lr) hl)) in
+  (* the references that the invariant of the heap speaks of, for
+     one value that the value of the goal reaches *)
+  let spec_bc elt trans =
+    W(fun (asl,gl) ->
+      let bc = grab_asm (fun th ->
+        let _,bod = dest_forall (concl th) in
+        hd_is "bc_ref_inv" (snd (dest_imp bod))) asl in
+      let rr = find_term (hd_is "reachable_refs") (concl bc) in
+      let roots = el 0 (snd (strip_comb rr)) in
+      SUBGOAL_THEN (subst [mk_flist [elt], roots] (concl bc))
+        (LABEL_TAC "bc2") THENL
+       [GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC bc THEN
+        CONJ_TAC THENL [FIRST_ASSUM ACCEPT_TAC; trans];
+        ALL_TAC]) in
+  let trans_block elt =
+    MATCH_MP_TAC reach_block THEN EXISTS_TAC elt THEN
+    CONJ_TAC THENL
+     [MATCH_MP_TAC MEM_EL THEN FIRST_ASSUM MATCH_ACCEPT_TAC;
+      FIRST_ASSUM ACCEPT_TAC] in
+  let trans_thunk =
+    W(fun (asl,gl) ->
+      let lk = grab_asm (fun th ->
+        hd_is "sptree_lookup" (lhs (concl th)) &&
+        hd_is "bvlSem_Thunk" (rand (rhs (concl th)))) asl in
+      let thk = rand (rhs (concl lk)) in
+      MATCH_MP_TAC reach_thunk THEN
+      MAP_EVERY EXISTS_TAC [lhand thk; rand thk]) THEN
+    CONJ_TAC THEN FIRST_ASSUM MATCH_ACCEPT_TAC in
+  (* and the invariant of that value, by the hypothesis of the
+     counter *)
+  let use_ckih vi gi =
+    W(fun (asl,gl) ->
+      let lr = grab_asm (fun th ->
+        hd_is "ALL2" (concl th) &&
+        hd_is "gc_heap_inline_rel"
+          (el 0 (snd (strip_comb (concl th))))) asl in
+      let nz = grab_asm (fun th ->
+        is_neg (concl th) && is_eq (rand (concl th)) &&
+        rhs (rand (concl th)) = `0`) asl in
+      let ck = lhs (rand (concl nz)) in
+      let ltck = MP (SPEC ck (ARITH_RULE
+                   `!n. ~(n = 0) ==> n - 1 < n`)) nz in
+      USE_THEN "ckih" (fun ih ->
+        USE_THEN "bc2" (fun bc2 ->
+          let ih' = MP (SPEC (mk_binop `(-):num->num->num` ck `1`)
+                       ih) ltck in
+          MATCH_ACCEPT_TAC (MATCH_MP (MATCH_MP ih' vi)
+            (CONJ lr (CONJ bc2 gi)))))) in
+  (* the element of the Block in the new heap, with its roots *)
+  let blk_move =
+    W(fun (asl,gl) ->
+      let lr = grab_asm (fun th ->
+        hd_is "ALL2" (concl th) &&
+        hd_is "gc_heap_inline_rel"
+          (el 0 (snd (strip_comb (concl th))))) asl in
+      let hl = grab_asm (fun th ->
+        hd_is "heap_lookup" (lhs (concl th)) &&
+        hd_is "BlockRep" (rand (rhs (concl th)))) asl in
+      MP_TAC (MATCH_MP (MATCH_MP
+        LIST_REL_gc_heap_inline_DataElement lr)
+        (REWRITE_RULE[BlockRep_def] hl))) THEN
+    DISCH_THEN (CHOOSE_THEN
+      (CONJUNCTS_THEN2 (LABEL_TAC "hl2") (LABEL_TAC "lr2"))) in
+  (* an element of the Block: the invariant of it comes from the
+     hypothesis of the counter, with the references of the Block
+     for the ones of the element *)
+  let elem_tac =
+    W(fun (asl,gl) ->
+      let elt = el 2 (snd (strip_comb gl)) in
+      spec_bc elt (trans_block elt)) THEN
+    W(fun (asl,gl) ->
+      let lt = grab_asm (fun th ->
+        hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th))) asl in
+      let j = lhand (concl lt) in
+      let a2v = grab_asm (fun th ->
+        hd_is "ALL2" (concl th) &&
+        is_abs (el 0 (snd (strip_comb (concl th))))) asl in
+      let eqv = REWRITE_RULE[LIST_REL_EL_EQN] a2v in
+      let vi = BETA_RULE (MP (SPEC j (CONJUNCT2 eqv)) lt) in
+      USE_THEN "lr2" (fun lr2 ->
+        let eqx = REWRITE_RULE[LIST_REL_EL_EQN] lr2 in
+        let ltx = MATCH_MP (ARITH_RULE
+                    `!j la lx:num. j < la /\ la = lx ==> j < lx`)
+                    (CONJ lt (CONJUNCT1 eqv)) in
+        let gi = MP (SPEC j (CONJUNCT2 eqx)) ltx in
+        use_ckih vi gi)) in
+  (* the flag of a reference that holds a thunk is false *)
+  let notb =
+    FIRST_ASSUM (fun th ->
+      if is_neg (concl th) && is_var (rand (concl th))
+      then SUBST_ALL_TAC (EQF_INTRO th) else NO_TAC) in
+  (* the invariant of the heap holds for the reference of the
+     value itself *)
+  let bc_self =
+    W(fun (asl,gl) ->
+      let bc = grab_asm (fun th ->
+        let _,bod = dest_forall (concl th) in
+        hd_is "bc_ref_inv" (snd (dest_imp bod))) asl in
+      let rr = find_term (hd_is "reachable_refs") (concl bc) in
+      let roots = el 0 (snd (strip_comb rr)) in
+      let nterm = rand (hd (dest_list roots)) in
+      let nv,bod = dest_forall (concl bc) in
+      let _,con = dest_imp bod in
+      SUBGOAL_THEN (subst [nterm, nv] con) ASSUME_TAC THENL
+       [MATCH_MP_TAC bc THEN CONJ_TAC THENL
+         [FIRST_ASSUM ACCEPT_TAC; MATCH_ACCEPT_TAC reach_self];
+        ALL_TAC]) in
+  (* so a reference that holds no thunk has no element of a thunk,
+     and the inlining cannot take one for it *)
+  let no_thunk_ref =
+    bc_self THEN
+    W(fun (asl,gl) ->
+      let inv = grab_asm (fun th ->
+        hd_is "bc_ref_inv" (concl th)) asl in
+      let fd = grab_asm (fun th -> hd_is "IN" (concl th)) asl in
+      let nt = grab_asm (fun th ->
+        is_forall (concl th) &&
+        can (find_term (hd_is "bvlSem_Thunk")) (concl th)) asl in
+      let hl = grab_asm (fun th ->
+        hd_is "heap_lookup" (lhs (concl th)) &&
+        hd_is "ThunkBlock" (rand (rhs (concl th)))) asl in
+      let ntv = MATCH_MP not_thunk_elt (CONJ fd (CONJ nt inv)) in
+      ACCEPT_TAC (CONTR gl (MATCH_MP (NOT_ELIM ntv) hl))) in
+  (* a number: it is small, and then the root is a word that the
+     inlining keeps, or it is an element of the heap without
+     roots, which the inlining keeps where it is *)
+  let c1 =
+    COND_CASES_TAC THEN REPEAT STRIP_TAC THEN
+    REPEAT SUBST_VAR_ASM THEN inl_step THEN
+    TRY (SOLVED thunk_clash) THENL
+     [MATCH_MP_TAC (el 0 rl) THEN FIRST_ASSUM MATCH_ACCEPT_TAC;
+      MATCH_MP_TAC (el 1 rl) THEN CONJ_TAC THENL
+       [FIRST_ASSUM MATCH_ACCEPT_TAC; keep_elt keep_bignum]] in
+  (* a word of sixty-four bits: the same, without the small case *)
+  let c2 =
+    REPEAT STRIP_TAC THEN REPEAT SUBST_VAR_ASM THEN inl_step THEN
+    TRY (SOLVED thunk_clash) THEN
+    MATCH_MP_TAC (el 2 rl) THEN keep_elt keep_w64 in
+  (* a Block: the empty one is a word, and one with elements is an
+     element of the heap whose roots the inlining relates one by
+     one to the roots of the element of the new heap *)
+  let c3 =
+    COND_CASES_TAC THEN REPEAT STRIP_TAC THEN
+    REPEAT SUBST_VAR_ASM THEN inl_step THEN
+    TRY (SOLVED thunk_clash) THENL
+     [MATCH_MP_TAC (el 7 rl) THEN ASM_REWRITE_TAC[];
+      blk_move THEN
+      USE_THEN "lr2" (fun lr2 ->
+        SUBST1_TAC (CONJUNCT1
+          (REWRITE_RULE[LIST_REL_EL_EQN] lr2))) THEN
+      MATCH_MP_TAC (el 8 rl) THEN REPEAT CONJ_TAC THENL
+       [FIRST_ASSUM MATCH_ACCEPT_TAC;
+        DISCH_TAC THEN REWRITE_TAC[LIST_REL_EL_EQN] THEN
+        CONJ_TAC THENL
+         [W(fun (asl,gl) ->
+            let a2v = grab_asm (fun th ->
+              hd_is "ALL2" (concl th) &&
+              is_abs (el 0 (snd (strip_comb (concl th))))) asl in
+            USE_THEN "lr2" (fun lr2 ->
+              ACCEPT_TAC (TRANS
+                (CONJUNCT1 (REWRITE_RULE[LIST_REL_EL_EQN] a2v))
+                (CONJUNCT1 (REWRITE_RULE[LIST_REL_EL_EQN] lr2)))));
+          X_GEN_TAC `j:num` THEN DISCH_TAC THEN elem_tac];
+        FIRST_ASSUM MATCH_ACCEPT_TAC;
+        USE_THEN "hl2" (fun hl2 -> USE_THEN "lr2" (fun lr2 ->
+          let len = CONJUNCT1
+                      (REWRITE_RULE[LIST_REL_EL_EQN] lr2) in
+          REWRITE_TAC[BlockRep_def] THEN
+          ACCEPT_TAC (REWRITE_RULE[len] hl2)))]] in
+  (* a pointer of the code: the root is a word *)
+  let c4 =
+    REPEAT STRIP_TAC THEN REPEAT SUBST_VAR_ASM THEN inl_step THEN
+    MATCH_ACCEPT_TAC (el 3 rl) in
+  (* a reference that holds no thunk: the invariant of the heap
+     says what its element is, and it is no thunk's *)
+  let d5a =
+    REPEAT SUBST_VAR_ASM THEN inl_step THEN
+    TRY (SOLVED no_thunk_ref) THEN
+    MATCH_MP_TAC (el 4 rl) THEN REPEAT CONJ_TAC THEN
+    FIRST_ASSUM MATCH_ACCEPT_TAC in
+  (* a reference that holds a thunk which the heap holds: the
+     inlining keeps the root, and then the element of the thunk
+     moves with its own root, or it takes the root of the element
+     for the root of the value, and then the value of the thunk
+     stands where the thunk stood *)
+  let d5b =
+    notb THEN REPEAT SUBST_VAR_ASM THEN inl_step THENL
+     [MATCH_MP_TAC (el 5 rl) THEN
+      W(fun (asl,gl) ->
+        let lr = grab_asm (fun th ->
+          hd_is "ALL2" (concl th) &&
+          hd_is "gc_heap_inline_rel"
+            (el 0 (snd (strip_comb (concl th))))) asl in
+        let hl = grab_asm (fun th ->
+          hd_is "heap_lookup" (lhs (concl th)) &&
+          hd_is "ThunkBlock" (rand (rhs (concl th)))) asl in
+        MP_TAC (MATCH_MP (MATCH_MP keep_de1 lr)
+                  (REWRITE_RULE[ThunkBlock_def] hl))) THEN
+      DISCH_THEN (CHOOSE_THEN
+        (CONJUNCTS_THEN2 (LABEL_TAC "hl2") (LABEL_TAC "gi"))) THEN
+      W(fun (asl,gl) ->
+        let lk = grab_asm (fun th ->
+          hd_is "sptree_lookup" (lhs (concl th)) &&
+          hd_is "bvlSem_Thunk" (rand (rhs (concl th)))) asl in
+        let thk = rand (rhs (concl lk)) in
+        USE_THEN "gi" (fun gi ->
+          MAP_EVERY EXISTS_TAC
+            [lhand thk; rand thk; rand (concl gi)])) THEN
+      REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM MATCH_ACCEPT_TAC) THEN
+      TRY (SOLVED (USE_THEN "hl2" (fun hl2 ->
+        REWRITE_TAC[ThunkBlock_def] THEN ACCEPT_TAC hl2))) THEN
+      DISCH_TAC THEN
+      W(fun (asl,gl) ->
+        let vi = grab_asm (fun th ->
+          hd_is "v_inv" (concl th)) asl in
+        spec_bc (el 1 (snd (strip_comb (concl vi)))) trans_thunk)
+      THEN
+      W(fun (asl,gl) ->
+        let vi = grab_asm (fun th ->
+          hd_is "v_inv" (concl th)) asl in
+        USE_THEN "gi" (fun gi -> use_ckih vi gi));
+      W(fun (asl,gl) ->
+        let hls = filter (fun (_,th) ->
+          (try hd_is "heap_lookup" (lhs (concl th)) &&
+               hd_is "ThunkBlock" (rand (rhs (concl th)))
+           with Failure _ -> false)) asl in
+        MP_TAC (REWRITE_RULE[injectivity "option"; ThunkBlock_11]
+                  (TRANS (SYM (snd (el 0 hls)))
+                         (snd (el 1 hls))))) THEN
+      DISCH_THEN STRIP_ASSUME_TAC THEN REPEAT SUBST_VAR_ASM THEN
+      MATCH_MP_TAC (el 6 rl) THEN
+      W(fun (asl,gl) ->
+        let lk = grab_asm (fun th ->
+          hd_is "sptree_lookup" (lhs (concl th)) &&
+          hd_is "bvlSem_Thunk" (rand (rhs (concl th)))) asl in
+        EXISTS_TAC (rand (rand (rhs (concl lk))))) THEN
+      REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM MATCH_ACCEPT_TAC) THEN
+      TRY (SOLVED (FIRST_ASSUM (fun im ->
+        if not (is_imp (concl im)) then NO_TAC else
+        MATCH_ACCEPT_TAC
+          (MP im (REFL (lhs (lhand (concl im)))))))) THEN
+      DISCH_TAC THEN
+      W(fun (asl,gl) ->
+        let vi = grab_asm (fun th ->
+          hd_is "v_inv" (concl th)) asl in
+        spec_bc (el 1 (snd (strip_comb (concl vi)))) trans_thunk)
+      THEN
+      W(fun (asl,gl) ->
+        let vi = grab_asm (fun th ->
+          hd_is "v_inv" (concl th)) asl in
+        let gr = grab_asm (fun th ->
+          hd_is "gc_inline_rel" (concl th)) asl in
+        let ar = snd (strip_comb (concl gr)) in
+        let x = el 0 (tparts (el 3 (snd (strip_comb (concl vi))))) in
+        let gi = ISPECL [el 0 ar; el 1 ar; x] (CONJUNCT1 irules) in
+        use_ckih vi gi)] in
+  (* and a reference that holds a thunk which was evaluated: the
+     value of it stands where the reference stands *)
+  let d5c =
+    notb THEN REPEAT SUBST_VAR_ASM THEN
+    MATCH_MP_TAC (el 6 rl) THEN
+    W(fun (asl,gl) ->
+      let lk = grab_asm (fun th ->
+        hd_is "sptree_lookup" (lhs (concl th)) &&
+        hd_is "bvlSem_Thunk" (rand (rhs (concl th)))) asl in
+      EXISTS_TAC (rand (rand (rhs (concl lk))))) THEN
+    REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM MATCH_ACCEPT_TAC) THEN
+    DISCH_TAC THEN
+    W(fun (asl,gl) ->
+      let vi = grab_asm (fun th -> hd_is "v_inv" (concl th)) asl in
+      spec_bc (el 1 (snd (strip_comb (concl vi)))) trans_thunk) THEN
+    W(fun (asl,gl) ->
+      let vi = grab_asm (fun th -> hd_is "v_inv" (concl th)) asl in
+      let gi = grab_asm (fun th ->
+        hd_is "gc_inline_rel" (concl th)) asl in
+      use_ckih vi gi) in
+  let c5 = REPEAT STRIP_TAC THENL [d5a; d5b; d5c] in
+  (* the induction of the source: on the counter, and the cases of
+     the value *)
+  let setup =
+    MATCH_MP_TAC num_WF THEN X_GEN_TAC `ck:num` THEN
+    DISCH_THEN (LABEL_TAC "ckih") THEN REPEAT GEN_TAC THEN
+    STRIP_TAC THEN CASES_ON_NAME "v" THEN
+    USE_CHANGED [v_inv_def] in
+  setup THENL [c1; c2; c3; c4; c5])));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for

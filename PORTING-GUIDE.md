@@ -4103,3 +4103,34 @@ and a side condition of a conditional rewrite has to have its
 variables in the conclusion -- `SIMP_TAC` cannot use
 `0 < b /\ a + b <= c ==> ~(c - a = 0)`, because `b` is nowhere in
 `~(c - a = 0)`.
+
+## 86. An assumption cannot be a rewrite across type variables
+
+Entry 83 is about a quotation of a proof; the same fresh type of
+the goal makes a _rule of the step_ unusable.  A statement of the
+port that does not pin its heap down (the one of
+`gc_heap_inline_rel_v_inv_lemma` does not) has a goal whose heap
+type is a fresh variable, and the lemmas of the proof have `'a`.
+A proved lemma is no trouble -- `MATCH_MP`, `MATCH_ACCEPT_TAC` and
+`REWRITE_TAC` instantiate the type variables of a theorem -- but a
+theorem that `CHOOSE_THEN` hands over has its own variables among
+its _hypotheses_, so they are local constants of the match, and a
+type variable in the type of one of them can no longer be
+instantiated:
+
+```
+  (* `?l d. Bignum i = DataElement [] l d', then *)
+  REWRITE_RULE[eq] hl   (* does nothing, and says nothing *)
+```
+
+because `d`'s type carries the `'a`.  What works is to prove the
+step as a lemma of its own (`heap_lookup ptr heap1 = SOME (Bignum
+i) ==> heap_lookup ptr heap2 = SOME (Bignum i)`, with the
+existential used inside its proof) and to apply _that_ with
+`MATCH_MP`.
+
+The other way to lose a type: a quotation of an overloaded name
+alone.  `` `FAPPLY (g:(num,num)fmap)` `` is the map's application,
+but `mk_icomb (`FAPPLY`, g)` fails with `type_match`, because
+`FAPPLY` on its own does not resolve to `fmap_apply`.  Write the
+application in the quotation.
