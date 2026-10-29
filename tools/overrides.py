@@ -1115,6 +1115,21 @@ TERMINATION = {
   # is left over -- and what the port writes here is the tactic it
   # would prove a leftover with, not a cheat
   ('bvi_let', 'compile_sing_def'): 'TERM_TAC',
+  # the four loops over the words of the memory: their measure is
+  # the counter, which every step takes down by a constant, and
+  # what the condition then asks for is the word arithmetic of
+  # VAL_WORD_SUB_1_LT and VAL_WORD_SUB_4_LT (ml/lib/lemmas.ml, in
+  # cake_term_lemmas) and of VAL_WORD_SUB_2_LT (EXTRA_BEFORE of
+  # word_xor_bytes_def below, because it is about good_dimindex,
+  # which the library layer does not have).  With those among the
+  # lemmas TERM_TAC discharges the conditions itself, and the
+  # admissibility of the three whose call is under an OPTION_BIND
+  # as well (AGREE_TAC proves the step of the measure with
+  # TERM_TAC again)
+  ('data_to_word_memoryProof', 'word_cmp_loop_def'): 'TERM_TAC',
+  ('data_to_word_memoryProof', 'word_copy_fwd_def'): 'TERM_TAC',
+  ('data_to_word_memoryProof', 'word_copy_bwd_def'): 'TERM_TAC',
+  ('data_to_word_memoryProof', 'word_xor_bytes_def'): 'TERM_TAC',
 }
 
 # the definitions whose termination the port proves with the
@@ -1140,6 +1155,13 @@ DEFINE_REL = set([
 ])
 
 MEASURE = {
+  # the counter of the loop that compares the words of two bignums.
+  # HOL4's Definition guesses the measure of this one (its source
+  # gives no Termination), and the port gives it here, with the
+  # lemmas of ml/lib/lemmas.ml for the word arithmetic of the
+  # condition (VAL_WORD_SUB_1_LT)
+  ('data_to_word_memoryProof', 'word_cmp_loop_def'):
+    'MEASURE (w2n o FST)',
   # the elements of the vector that are left, which HOL4 gives in
   # the Termination of the definition
   ('mlvector', 'toList_aux_def'): 'MEASURE (\\(vec,n). length vec - n)',
@@ -1773,6 +1795,36 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  ('data_to_word_memoryProof', 'word_xor_bytes_def'): r"""
+
+(* the port's own: the step of the loop over the words of two byte
+   arrays takes the counter down by two, and the guard of the step
+   says that the counter is not below two and that the word of the
+   machine is of thirty-two bits or of sixty-four, so two is below
+   the word size and the value of the counter goes down.  It stands
+   here, and not with VAL_WORD_SUB_1_LT and VAL_WORD_SUB_4_LT in
+   ml/lib/lemmas.ml, because good_dimindex is of the port's own
+   sources; cake_term_lemmas is what the termination proof of the
+   definition below reads it from *)
+let VAL_WORD_SUB_2_LT = prove
+ (`!(n:(N)word). ~(n <+ word 2 \/ ~good_dimindex (:N))
+     ==> val (word_sub n (word 2)) < val n`,
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   GEN_TAC THEN REWRITE_TAC[DE_MORGAN_THM] THEN STRIP_TAC THEN
+   MATCH_MP_TAC VAL_WORD_SUB_LT THEN
+   ASM_REWRITE_TAC[] THEN
+   FIRST_ASSUM (fun gd ->
+     if not (hd_is "good_dimindex" (concl gd)) then NO_TAC else
+     MP_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+   REWRITE_TAC[dimword] THEN
+   DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+   CONV_TAC NUM_REDUCE_CONV));;
+
+let _ = cake_term_lemmas :=
+  VAL_WORD_SUB_2_LT :: (!cake_term_lemmas);;
+""",
   ('data_to_word_memoryProof', 'memory_rel_RefByte_content'): r"""
 
 (* the port's own: the length that decode_length reads off the

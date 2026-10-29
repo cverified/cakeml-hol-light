@@ -954,3 +954,43 @@ let DIV_SUB = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC (SPECL [`m:num`; `n:num`] DIV_SUB_STEP) THEN
   ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+(* ------------------------------------------------------------------ *)
+(* The measure of a loop over the words of the memory: it steps the   *)
+(* counter down by a constant, and the guard of the step says that    *)
+(* the counter is not below it, so the value of the counter goes      *)
+(* down.  HOL4's Definition guesses such a measure and discharges     *)
+(* the condition with its own word arithmetic; the port needs the     *)
+(* fact among cake_term_lemmas, in the two shapes that the guards of  *)
+(* its definitions have (a counter that is not nought, and one that   *)
+(* is not below four).                                                *)
+(* ------------------------------------------------------------------ *)
+
+let VAL_WORD_SUB_LT = prove
+ (`!(n:(N)word) k. 0 < k /\ k < dimword (:N) /\ ~(n <+ word k)
+     ==> val (word_sub n (word k)) < val n`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[WORD_ULT; NOT_LT] THEN
+  STRIP_TAC THEN
+  SUBGOAL_THEN `val (word k:(N)word) = k` ASSUME_TAC THENL
+   [REWRITE_TAC[VAL_WORD] THEN MATCH_MP_TAC MOD_LT THEN
+    ASM_REWRITE_TAC[GSYM dimword];
+    ALL_TAC] THEN
+  ASM_REWRITE_TAC[VAL_WORD_SUB_CASES] THEN
+  TRY COND_CASES_TAC THEN ASM_ARITH_TAC);;
+
+let VAL_WORD_SUB_1_LT = prove
+ (`!(l:(N)word). ~(l = word 0)
+     ==> val (word_sub l (word 1)) < val l`,
+  GEN_TAC THEN REWRITE_TAC[GSYM VAL_EQ_0] THEN DISCH_TAC THEN
+  MATCH_MP_TAC VAL_WORD_SUB_LT THEN
+  ASM_REWRITE_TAC[WORD_ULT; VAL_WORD_1; ONE_LT_dimword] THEN
+  ASM_ARITH_TAC);;
+
+let VAL_WORD_SUB_4_LT = prove
+ (`!(n:(N)word). ~(dimword (:N) <= 4) /\ ~(n <+ word 4)
+     ==> val (word_sub n (word 4)) < val n`,
+  GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC VAL_WORD_SUB_LT THEN
+  ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+
+cake_term_lemmas :=
+  VAL_WORD_SUB_1_LT :: VAL_WORD_SUB_4_LT :: (!cake_term_lemmas);;

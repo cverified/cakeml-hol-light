@@ -38881,9 +38881,10 @@ let word_cmp_res_def = cake_define
      (if i = j then (n2w 1) else if i < j then (n2w 0) else (n2w
        2))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let word_cmp_loop_def = cake_define_cheat CHEAT_TAC
+(* the termination relation is not in the HOL4 source *)
+let word_cmp_loop_def = cake_define_try_tac (fun () ->
+  `MEASURE (w2n o FST)`)
+  TERM_TAC
   `word_cmp_loop (l:'a word) (a1:'a word) a2 dm (m:'a word->'a word_loc)
   =
      (if l = (n2w 0) then SOME (n2w 1) else
@@ -43144,11 +43145,9 @@ let memory_rel_ByteArray_IMP_store = prove
 
 (* HOL4 data_to_word_memoryProofScript.sml:15324-15329: the tactic
    that proves the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 let word_copy_fwd_def = cake_define_try_tac (fun () ->
   `MEASURE (w2n o FST o SND)`)
-  CHEAT_TAC
+  TERM_TAC
   `word_copy_fwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
@@ -43290,11 +43289,9 @@ let word_copy_fwd_alias_thm = prove
 
 (* HOL4 data_to_word_memoryProofScript.sml:15569-15574: the tactic
    that proves the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 let word_copy_bwd_def = cake_define_try_tac (fun () ->
   `MEASURE (w2n o FST o SND)`)
-  CHEAT_TAC
+  TERM_TAC
   `word_copy_bwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
@@ -49933,13 +49930,39 @@ let memory_rel_do_build_const = prove
 let read_word_def = cake_define
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;
 
+(* the port's own: the step of the loop over the words of two byte
+   arrays takes the counter down by two, and the guard of the step
+   says that the counter is not below two and that the word of the
+   machine is of thirty-two bits or of sixty-four, so two is below
+   the word size and the value of the counter goes down.  It stands
+   here, and not with VAL_WORD_SUB_1_LT and VAL_WORD_SUB_4_LT in
+   ml/lib/lemmas.ml, because good_dimindex is of the port's own
+   sources; cake_term_lemmas is what the termination proof of the
+   definition below reads it from *)
+let VAL_WORD_SUB_2_LT = prove
+ (`!(n:(N)word). ~(n <+ word 2 \/ ~good_dimindex (:N))
+     ==> val (word_sub n (word 2)) < val n`,
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   GEN_TAC THEN REWRITE_TAC[DE_MORGAN_THM] THEN STRIP_TAC THEN
+   MATCH_MP_TAC VAL_WORD_SUB_LT THEN
+   ASM_REWRITE_TAC[] THEN
+   FIRST_ASSUM (fun gd ->
+     if not (hd_is "good_dimindex" (concl gd)) then NO_TAC else
+     MP_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+   REWRITE_TAC[dimword] THEN
+   DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+   CONV_TAC NUM_REDUCE_CONV));;
+
+let _ = cake_term_lemmas :=
+  VAL_WORD_SUB_2_LT :: (!cake_term_lemmas);;
+
 (* HOL4 data_to_word_memoryProofScript.sml:18378-18384: the tactic
    that proves the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 let word_xor_bytes_def = cake_define_try_tac (fun () ->
   `MEASURE (\(a1,a2,len,dm,m). w2n len)`)
-  CHEAT_TAC
+  TERM_TAC
   `word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
      (if len <+ (n2w 2) \/ ~(good_dimindex (:'a)) then
        if len = (n2w 0) then SOME m else
