@@ -1795,6 +1795,211 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  ('data_to_word_memoryProof', 'word_copy_array_thm'): r"""
+
+(* the port's own: what the two lemmas about a copy of a part of a
+   byte array into another share.  HOL4 takes insert_unchanged
+   from sptreeTheory (sptreeScript.sml:2255, with splem1 for the
+   key of a subtree) and gets the other three with fs from the
+   definitions; the steps below are the ones that both proofs
+   take, and they stand here for the same reason as the arms of
+   bc_ref_inv above *)
+
+let grab_asm p asl =
+  tryfind (fun (_,th) ->
+    if (try p th with Failure _ -> false) then th else fail()) asl;;
+let DIV2_SUB1_LESS = prove
+ (`!k. ~(k = 0) ==> (k - 1) DIV 2 < k`,
+  (GEN_TAC THEN DISCH_TAC THEN
+  MP_TAC (SPECL [`k - 1`; `2`] DIV_LE) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC));;
+let insert_unchanged = prove
+ (`!k (t:(A)spt) y. sptree_lookup k t = SOME y
+    ==> sptree_insert k y t = t`,
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `k:num` THEN DISCH_TAC THEN
+  MAP_EVERY X_GEN_TAC [`t:(A)spt`; `y:A`] THEN
+  STRUCT_CASES_TAC (ISPEC `t:(A)spt` (cases_of `:(A)spt`)) THEN
+  ONCE_REWRITE_TAC[insert_def] THEN REWRITE_TAC[lookup_def] THEN
+  REWRITE_TAC[distinctness "option"] THEN
+  COND_CASES_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  TRY (SOLVED (DISCH_THEN (fun th -> REWRITE_TAC[th]))) THEN
+  DISCH_TAC THEN
+  FIRST_ASSUM (fun ih ->
+    if not (is_forall (concl ih)) then fail() else
+    MP_TAC (SPEC `(k - 1) DIV 2` ih)) THEN
+  FIRST_ASSUM (fun nz ->
+    if not (is_neg (concl nz)) then fail() else
+    REWRITE_TAC[MATCH_MP DIV2_SUB1_LESS nz]) THEN
+  DISCH_THEN (fun ih ->
+    FIRST_ASSUM (fun lk ->
+      if not (hd_is "sptree_lookup" (lhs (concl lk))) then fail()
+      else MP_TAC (MATCH_MP ih lk))) THEN
+  COND_CASES_TAC THEN
+  DISCH_THEN (fun th -> REWRITE_TAC[th])));;
+(* and a second insert at the same key, which the stores of the
+   bytes of an array one at a time leave behind.  HOL4 has the
+   general insert_insert (sptreeScript.sml:1612), of which the
+   proofs of the port only need this case *)
+let insert_insert_same = prove
+ (`!k v1 v2 (t:(A)spt).
+    sptree_insert k v1 (sptree_insert k v2 t) = sptree_insert k v1 t`,
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `k:num` THEN DISCH_TAC THEN
+  MAP_EVERY X_GEN_TAC [`v1:A`; `v2:A`; `t:(A)spt`] THEN
+  STRUCT_CASES_TAC (ISPEC `t:(A)spt` (cases_of `:(A)spt`)) THEN
+  ONCE_REWRITE_TAC[insert_def] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  TRY (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
+  GEN_REWRITE_TAC LAND_CONV [insert_def] THEN
+  ASM_REWRITE_TAC[] THEN
+  FIRST_ASSUM (fun ih ->
+    if not (is_forall (concl ih)) then fail() else
+    FIRST_ASSUM (fun nz ->
+      if not (is_neg (concl nz)) || not (is_eq (rand (concl nz)))
+      then fail() else
+      REWRITE_TAC[MP (SPEC `(k - 1) DIV 2` ih)
+                    (MATCH_MP DIV2_SUB1_LESS nz)])) THEN
+  TRY (REWRITE_TAC[])));;
+
+(* the offsets and the count of a copy that goes through are
+   within the two lists: copy_array is NONE otherwise *)
+let copy_array_bounds = prove
+ ((cake_as_vars (fun () ->
+   `copy_array (xs,&xp) (&n) (SOME (ys,&yp)) = SOME ys1
+    ==> xp + n <= LENGTH xs /\ yp + n <= LENGTH ys`)),
+  (REWRITE_TAC[copy_array_def; I_THM; INT_OF_NUM_ADD; INT_ABS_NUM;
+              NUM_OF_INT_OF_NUM; INT_OF_NUM_LT; LT] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN MATCH_REDUCE_TAC THEN
+  COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+  POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN ARITH_TAC));;
+(* a byte array of the memory is shorter than the word size,
+   which the header of it says (memory_rel_ByteArray_IMP) *)
+let byte_array_LENGTH_LESS = prove
+ ((cake_as_vars (fun () ->
+   `memory_rel c be ts refs sp st m dm
+      ((RefPtr bl p,(v:'a word_loc)) :: vars) /\
+    lookup p refs = SOME (ByteArray fl vals) /\
+    good_dimindex (:'a)
+    ==> LENGTH vals < dimword (:'a)`)),
+  (REWRITE_TAC[dimword] THEN
+  DISCH_THEN (fun th ->
+    MP_TAC (MATCH_MP memory_rel_ByteArray_IMP th) THEN
+    MP_TAC (REWRITE_RULE[good_dimindex_def]
+              (CONJUNCT2 (CONJUNCT2 th)))) THEN
+  DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  STRIP_TAC THEN ASM_ARITH_TAC));;
+(* a comparison of two offsets as words is the one of the
+   numbers, because both are below the word size *)
+let n2w_LE_n2w = prove
+ (`!a b. a < dimword (:'a) /\ b < dimword (:'a)
+    ==> (((n2w a):'a word) <=+ n2w b <=> a <= b)`,
+  (REWRITE_TAC[dimword] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+  ASM_SIMP_TAC[WORD_ULE; VAL_WORD; MOD_LT]));;
+(* and a copy of no bytes forward leaves the memory alone, as
+   word_copy_bwd_0 above says of one backward *)
+let word_copy_fwd_0 = prove
+ ((cake_as_vars (fun () ->
+   `good_dimindex (:'a) ==>
+    word_copy_fwd be ((n2w 0):'a word) a1 a2 m dm = SOME m`)),
+  (REWRITE_TAC[good_dimindex_def] THEN STRIP_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [word_copy_fwd_def] THEN
+  ASM_REWRITE_TAC[dimword; WORD_ULT; VAL_WORD; VAL_WORD_0] THEN
+  CONV_TAC NUM_REDUCE_CONV));;
+(* the assumptions of the step that the lemmas are applied to *)
+let the_mr asl =
+    grab_asm (fun th -> hd_is "memory_rel" (concl th)) asl;;
+let the_gd asl =
+    grab_asm (fun th -> hd_is "good_dimindex" (concl th)) asl;;
+let the_lkp p asl =
+    grab_asm (fun th ->
+      hd_is "sptree_lookup" (lhs (concl th)) &&
+      lhand (lhs (concl th)) = p) asl;;
+let the_eq h asl =
+    grab_asm (fun th -> hd_is h (lhs (concl th))) asl;;
+(* the count of the copy and an offset of it are below the word
+   size, because the list they are of is *)
+let ndw_of asl =
+    let a1 = grab_asm (fun th ->
+      hd_is "<=" (concl th) && hd_is "+" (lhand (concl th)) &&
+      hd_is "LENGTH" (rand (concl th))) asl in
+    let a2 = grab_asm (fun th ->
+      hd_is "<" (concl th) && hd_is "LENGTH" (lhand (concl th))) asl in
+    MATCH_MP (ARITH_RULE
+      `!a b c d:num. a + b <= c /\ c < d ==> b < d`) (CONJ a1 a2);;
+let off_lt t asl =
+    let le = grab_asm (fun th ->
+      hd_is "<=" (concl th) && hd_is "+" (lhand (concl th)) &&
+      lhand (lhand (concl th)) = t &&
+      hd_is "LENGTH" (rand (concl th))) asl in
+    let l = rand (concl le) in
+    let lt = grab_asm (fun th ->
+      hd_is "<" (concl th) && lhand (concl th) = l) asl in
+    MATCH_MP (ARITH_RULE `!a b c d:num. a + b <= c /\ c < d ==> a < d`)
+      (CONJ le lt);;
+(* the condition of word_copy_array is the one of list_copy *)
+let COPY_COND =
+    W(fun (asl,gl) ->
+      let cnd = fst (dest_cond (lhs gl)) in
+      let yp = rand (lhand cnd) in
+      let xp = rand (rand cnd) in
+      REWRITE_TAC[MP (ISPECL [yp; xp] n2w_LE_n2w)
+                    (CONJ (off_lt yp asl) (off_lt xp asl))]);;
+(* where there is nothing to copy no byte moves either way *)
+let COPY_NOTHING =
+    FIRST_ASSUM (fun d ->
+      if not (is_disj (concl d)) then fail() else
+      DISJ_CASES_THEN2
+        (fun le -> W(fun (asl,gl) ->
+           let ne = grab_asm (fun th ->
+             is_neg (concl th) && hd_is "<=" (rand (concl th))) asl in
+           ACCEPT_TAC (CONTR gl (MP (NOT_ELIM ne) le))))
+        (fun z -> SUBST_ALL_TAC (MATCH_MP
+           (ARITH_RULE `!a b:num. a + b = 0 ==> a = 0`) z))
+        d) THEN
+    W(fun (asl,gl) ->
+      let gd = the_gd asl in
+      let wcf = the_eq "word_copy_fwd" asl in
+      let z = PART_MATCH lhs (MATCH_MP word_copy_fwd_0 gd)
+                (lhs (concl wcf)) in
+      let eq = REWRITE_RULE[injectivity "option"]
+                 (TRANS (SYM wcf) z) in
+      REWRITE_TAC[MATCH_MP word_copy_bwd_0 gd; eq]);;
+(* the destination is above the source, so the copy of the step
+   is the backward one *)
+let COPY_NOT_FWD =
+    W(fun (asl,gl) ->
+      let nd = grab_asm (fun th ->
+        is_neg (concl th) && is_disj (rand (concl th))) asl in
+      let le = grab_asm (fun th ->
+        hd_is "<=" (concl th) &&
+        lhand (concl th) = lhand (lhand (rand (concl nd)))) asl in
+      ACCEPT_TAC (CONTR gl (MP (NOT_ELIM nd)
+        (DISJ1 le (rand (rand (concl nd)))))));;
+(* and it starts at the last byte of the two parts *)
+let COPY_BWD_ADDR =
+    W(fun (asl,gl) ->
+      let nd = grab_asm (fun th ->
+        is_neg (concl th) && is_disj (rand (concl th))) asl in
+      let ps = CONJUNCTS (REWRITE_RULE[DE_MORGAN_THM] nd) in
+      let le1 = MATCH_MP (ARITH_RULE
+        `!a b:num. ~(a + b = 0) ==> 1 <= b + a`) (el 1 ps) in
+      let le2 = MATCH_MP (ARITH_RULE
+        `!a b c:num. ~(a <= b) ==> 1 <= a + c`) (el 0 ps) in
+      let wcb = the_eq "word_copy_bwd" asl in
+      let ga = snd (strip_comb (lhs gl)) in
+      let aa = snd (strip_comb (lhs (concl wcb))) in
+      let hyps = mk_conj (concl le1, concl le2) in
+      let adeq i =
+        MP (prove (mk_imp (hyps, mk_eq (el i ga, el i aa)),
+              DISCH_THEN (CONJUNCTS_THEN ASSUME_TAC) THEN
+              ASM_SIMP_TAC[WORD_SUB; GSYM WORD_ADD] THEN
+              CONV_TAC WORD_RULE))
+           (CONJ le1 le2) in
+      REWRITE_TAC[adeq 2; adeq 3]) THEN
+    ASM_REWRITE_TAC[];;
+""",
   ('data_to_word_memoryProof', 'word_xor_bytes_def'): r"""
 
 (* the port's own: the step of the loop over the words of two byte

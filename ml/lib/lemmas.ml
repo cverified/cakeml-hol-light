@@ -994,3 +994,29 @@ let VAL_WORD_SUB_4_LT = prove
 
 cake_term_lemmas :=
   VAL_WORD_SUB_1_LT :: VAL_WORD_SUB_4_LT :: (!cake_term_lemmas);;
+
+(* and the induction from the right, which a proof that writes the
+   bytes of a list one at a time goes by (HOL4's SNOC_INDUCT of
+   listTheory): a list is the reverse of one, and the step of the
+   induction of that one puts the byte at the end. *)
+
+let SNOC_INDUCT = prove
+ (`!P. P [] /\ (!l (x:A). P l ==> P (SNOC x l)) ==> !l. P l`,
+  GEN_TAC THEN STRIP_TAC THEN
+  SUBGOAL_THEN `!l:A list. P (REVERSE l)` ASSUME_TAC THENL
+   [LIST_INDUCT_TAC THEN REWRITE_TAC[REVERSE] THEN
+    ASM_MESON_TAC[SNOC_APPEND];
+    GEN_TAC THEN
+    FIRST_ASSUM (fun th ->
+      MP_TAC (SPEC `REVERSE (l:A list)` th)) THEN
+    REWRITE_TAC[REVERSE_REVERSE]]);;
+
+(* an element of the second half of an append, which HOL4 has as
+   EL_APPEND2 of listTheory *)
+
+let EL_APPEND2 = prove
+ (`!(l:A list) m k. LENGTH l <= k
+     ==> EL k (APPEND l m) = EL (k - LENGTH l) m`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[EL_APPEND] THEN
+  ASM_SIMP_TAC[GSYM NOT_LT;
+               ARITH_RULE `!a b:num. a <= b ==> ~(b < a)`]);;
