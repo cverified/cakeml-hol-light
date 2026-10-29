@@ -18648,33 +18648,26 @@
         (CONJ nd nsd))))) THEN
     MESON_TAC[])
 ### word64_alt_thm
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     el_length_def, Word64Rep_def, IMP_heap_store_unused_alt,
-     roots_ok_def, heap_store_rel_def.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; el_length_def;
-       Word64Rep_def; IMP_heap_store_unused_alt; roots_ok_def;
-       heap_store_rel_def] THEN
-     TRY ASM_ARITH_TAC))
+(* the steps are above the statement (tools/overrides.py), and
+   they are the ones that cons_thm_alt and new_byte_alt_thm take:
+   the element is a word longer than the words it holds, so it fits
+   in the unused space and IMP_heap_store_unused_alt writes it
+   there; the heap, the roots and the space are then as good as
+   they were, and of every reference that the stack reaches the
+   invariant holds as it did.  The two maps are the ones they were,
+   except that the map of the timestamps is restricted to the ones
+   of the new stack -- the values that this allocation replaces are
+   taken off, so a timestamp of one of them is no longer a
+   timestamp of the stack *)
+  ((alloc_el w64_pre isFwd_Word64Rep isRef_Word64Rep
+    blocks_unique_Word64 reachable_refs_w64 vhead_ptr))
 ### bignum_alt_thm
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     el_length_def, IMP_heap_store_unused_alt, roots_ok_def,
-     heap_store_rel_def, isSomeDataElement_def.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; el_length_def;
-       IMP_heap_store_unused_alt; roots_ok_def;
-       heap_store_rel_def; isSomeDataElement_def] THEN
-     TRY ASM_ARITH_TAC))
+(* the same steps as word64_alt_thm, of a bignum instead of a word
+   of sixty-four bits: the number is not small, so the value of the
+   statement is the pointer to the cell that the allocation
+   wrote *)
+  ((alloc_el bignum_pre isFwd_Bignum isRef_Bignum
+    blocks_unique_Number reachable_refs_num vhead_ptr))
 ### mutcons_thm_alt
   (* the steps are above the statement (tools/overrides.py).  The
      roots of the values of the block are the front of the roots

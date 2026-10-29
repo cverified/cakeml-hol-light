@@ -1069,3 +1069,63 @@ let FUPDATE_SUBMAP = prove
   X_GEN_TAC `z:A` THEN DISCH_TAC THEN
   SUBGOAL_THEN `~(z:A = x)` ASSUME_TAC THENL
    [ASM_MESON_TAC[]; ASM_REWRITE_TAC[]]);;
+
+(* two facts about a relation of two lists that HOL4 has in
+   listTheory: what it says of an append of two lists of a length,
+   and that a relation which is weaker on the pairs of the lists
+   holds of them as well (LIST_REL_APPEND_IMP and EVERY2_MEM_MONO
+   there).  They stood with the proof of the memory invariant that
+   first needed them until an earlier one needed them too *)
+
+let LIST_REL_APPEND_IMP = prove
+ (`!(P:A->B->bool) xs ys xs1 ys1.
+     EVERY2 P (xs ++ xs1) (ys ++ ys1) /\ LENGTH xs = LENGTH ys
+     ==> EVERY2 P xs ys /\ EVERY2 P xs1 ys1`,
+  GEN_TAC THEN LIST_INDUCT_TAC THENL
+   [REPEAT GEN_TAC THEN REWRITE_TAC[APPEND; LENGTH] THEN
+    STRIP_TAC THEN
+    SUBGOAL_THEN `(ys:B list) = []` SUBST_ALL_TAC THENL
+     [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[APPEND]) THEN
+    ASM_REWRITE_TAC[APPEND; ALL2_DEF];
+    REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC(ISPEC `ys:B list` (cases_of `:(B)list`)) THEN
+    REWRITE_TAC[APPEND; LENGTH; ALL2_DEF; HD; TL; NOT_CONS_NIL;
+                NOT_SUC; SUC_INJ] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
+
+let EVERY2_MEM_MONO = prove
+ (`!(P:A->B->bool) Q l1 l2.
+     (!x y. MEM (x,y) (ZIP l1 l2) /\ P x y ==> Q x y) /\
+     EVERY2 P l1 l2 ==> EVERY2 Q l1 l2`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REPEAT GEN_TAC THEN
+  STRUCT_CASES_TAC(ISPEC `l2:B list` (cases_of `:(B)list`)) THEN
+  REWRITE_TAC[ZIP; ALL2_DEF; MEM; HD; TL; NOT_CONS_NIL;
+              PAIR_EQ] THEN
+  STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN
+  CONJ_TAC THENL
+   [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[];
+    FIRST_X_ASSUM MATCH_MP_TAC THEN
+    ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]]);;
+
+
+(* and the domain of a restriction, and what it applies to a key it
+   keeps (HOL4's FDOM_DRESTRICT and DRESTRICT_DEF) *)
+
+let FDOM_DRESTRICT = prove
+ (`!(fm:(A,B)fmap) s. FDOM (DRESTRICT fm s) = FDOM fm INTER s`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[EXTENSION; FDOM; IN_INTER; IN_ELIM_THM;
+              FMAP_FN_DRESTRICT] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
+
+let FAPPLY_DRESTRICT = prove
+ (`!(fm:(A,B)fmap) s x.
+     x IN s ==> FAPPLY (DRESTRICT fm s) x = FAPPLY fm x`,
+  REPEAT STRIP_TAC THEN
+  REWRITE_TAC[fmap_apply; FMAP_FN_DRESTRICT] THEN
+  ASM_REWRITE_TAC[]);;
