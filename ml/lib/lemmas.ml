@@ -1056,3 +1056,16 @@ let DIV2_SUB1_LESS = prove
   GEN_TAC THEN DISCH_TAC THEN
   MP_TAC (SPECL [`k - 1`; `2`] DIV_LE) THEN
   CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC);;
+
+(* a map that a binding at a new key is added to is a submap of the
+   result, which HOL4 has as SUBMAP_FUPDATE_EQN of
+   finite_mapTheory *)
+
+let FUPDATE_SUBMAP = prove
+ (`!(g:(A,B)fmap) x y. ~(x IN FDOM g) ==> g SUBMAP g |+ (x,y)`,
+  REPEAT STRIP_TAC THEN
+  REWRITE_TAC[SUBMAP; FDOM_FUPDATE; IN_INSERT;
+              FAPPLY_FUPDATE_THM] THEN
+  X_GEN_TAC `z:A` THEN DISCH_TAC THEN
+  SUBGOAL_THEN `~(z:A = x)` ASSUME_TAC THENL
+   [ASM_MESON_TAC[]; ASM_REWRITE_TAC[]]);;
