@@ -35,6 +35,17 @@ let hd_is n t =
   (try fst(dest_const(fst(strip_comb t))) = n
    with Failure _ -> false);;
 
+(* and the assumption that a predicate on theorems picks out, which
+   is how a proof hands one of them to a lemma.  It is the_asm of
+   below with the test on the theorem and not on its conclusion,
+   because a test that asks for a lemma to apply does so by
+   MATCH_MP; it stood with the lemmas about the copy of a byte
+   array until the loops of that copy needed it as well. *)
+
+let grab_asm p asl =
+  tryfind (fun (_,th) ->
+    if (try p th with Failure _ -> false) then th else fail()) asl;;
+
 (* A subterm of the goal or of one of its assumptions: a tactic that
    builds a term of its own needs the term as the goal has it,
    because the types of the goal are not the types that a term

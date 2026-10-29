@@ -1020,3 +1020,39 @@ let EL_APPEND2 = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[EL_APPEND] THEN
   ASM_SIMP_TAC[GSYM NOT_LT;
                ARITH_RULE `!a b:num. a <= b ==> ~(b < a)`]);;
+
+(* the value of a word that was made of a number below the word
+   size, and what that makes of an equality and of an unsigned
+   comparison of two of them: a statement of CakeML counts in
+   numbers and the definition it is about counts in words, so a
+   proof of one goes from the words to the numbers first.  They
+   stood with the two lemmas about the comparison of byte arrays
+   until the copy of a byte array needed them as well *)
+
+let val_n2w_lt = prove
+ (`!n. n < dimword (:'a) ==> w2n ((n2w n):'a word) = n`,
+  REWRITE_TAC[dimword] THEN MATCH_ACCEPT_TAC VAL_WORD_EQ);;
+
+let n2w_11_lt = prove
+ (`!m n. m < dimword (:'a) /\ n < dimword (:'a)
+    ==> (((n2w m):'a word) = n2w n <=> m = n)`,
+  REPEAT STRIP_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [GSYM VAL_EQ] THEN
+  ASM_SIMP_TAC[val_n2w_lt]);;
+
+let n2w_lo_lt = prove
+ (`!m n. m < dimword (:'a) /\ n < dimword (:'a)
+     ==> (((n2w m):'a word) <+ n2w n <=> m < n)`,
+  SIMP_TAC[WORD_ULT; val_n2w_lt]);;
+
+(* the key of a subtree of a sparse tree is below the key it came
+   from, which the induction of a proof about one goes by (it is
+   what HOL4's splem1 of sptreeTheory does there).  It stood with
+   the lemmas about the copy of a byte array until the loops of
+   that copy needed it as well *)
+
+let DIV2_SUB1_LESS = prove
+ (`!k. ~(k = 0) ==> (k - 1) DIV 2 < k`,
+  GEN_TAC THEN DISCH_TAC THEN
+  MP_TAC (SPECL [`k - 1`; `2`] DIV_LE) THEN
+  CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC);;

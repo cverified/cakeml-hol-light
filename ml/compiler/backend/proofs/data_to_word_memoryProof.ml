@@ -43788,6 +43788,306 @@ let list_copy_fwd_alias_def = cake_define
                             LUPDATE (EL (xp + 0) ys) (yp + 0)) ys)
                               else NONE)`;;
 
+(* the port's own: what the four lemmas about the copy of a part of
+   a byte array share.  The lemmas are three facts about the word
+   size and about the arithmetic of the addresses, and the second
+   insert at a key that the stores leave behind; the rest are the
+   steps that the four proofs take, which are the same in all four
+   because the four definitions of the loop are the same up to the
+   direction of the step *)
+
+let dimword_facts = prove
+ (`good_dimindex (:'a)
+     ==> (~(dimword (:'a) <= 4) /\ 0 < dimword (:'a) /\
+          2 < dimword (:'a) /\ 4 < dimword (:'a))`,
+  (REWRITE_TAC[good_dimindex_def; dimword; NOT_LE] THEN
+   DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+   CONV_TAC NUM_REDUCE_CONV));;
+(* the four guards of the loop, as guards about the counter *)
+let word_copy_guards = prove
+ (`!n. good_dimindex (:'a) /\ n < dimword (:'a)
+     ==> ((((n2w n):'a word) <+ n2w 4 <=> n < 4) /\
+          (((n2w n):'a word) <+ n2w 2 <=> n < 2) /\
+          (((n2w n):'a word) = n2w 0 <=> n = 0) /\
+          (((n2w n):'a word) = n2w 2 <=> n = 2))`,
+  (GEN_TAC THEN STRIP_TAC THEN
+   FIRST_ASSUM (fun gd ->
+     if not (hd_is "good_dimindex" (concl gd)) then fail() else
+     MP_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+   STRIP_TAC THEN
+   (SUBGOAL_THEN `0 < dimword (:'a) /\ 2 < dimword (:'a) /\
+                  4 < dimword (:'a)` STRIP_ASSUME_TAC THENL
+     [ASM_REWRITE_TAC[dimword] THEN CONV_TAC NUM_REDUCE_CONV;
+      ASM_SIMP_TAC[n2w_lo_lt; n2w_11_lt]])));;
+(* a step of the backward loop takes the address down, and the
+   index of the array goes down with it *)
+let sub_n2w_step = prove
+ (`!(a:'a word) k j. j <= k
+     ==> (a + n2w k) - n2w j = a + n2w (k - j)`,
+  (REPEAT STRIP_TAC THEN ASM_SIMP_TAC[WORD_SUB] THEN
+   CONV_TAC WORD_RULE));;
+(* and a second insert at the same key, which the stores of the
+   bytes of an array one at a time leave behind.  HOL4 has the
+   general insert_insert (sptreeScript.sml:1612), of which the
+   proofs of the port only need this case *)
+let insert_insert_same = prove
+ (`!k v1 v2 (t:(A)spt).
+    sptree_insert k v1 (sptree_insert k v2 t) = sptree_insert k v1 t`,
+  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `k:num` THEN DISCH_TAC THEN
+  MAP_EVERY X_GEN_TAC [`v1:A`; `v2:A`; `t:(A)spt`] THEN
+  STRUCT_CASES_TAC (ISPEC `t:(A)spt` (cases_of `:(A)spt`)) THEN
+  ONCE_REWRITE_TAC[insert_def] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  TRY (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
+  GEN_REWRITE_TAC LAND_CONV [insert_def] THEN
+  ASM_REWRITE_TAC[] THEN
+  FIRST_ASSUM (fun ih ->
+    if not (is_forall (concl ih)) then fail() else
+    FIRST_ASSUM (fun nz ->
+      if not (is_neg (concl nz)) || not (is_eq (rand (concl nz)))
+      then fail() else
+      REWRITE_TAC[MP (SPEC `(k - 1) DIV 2` ih)
+                    (MATCH_MP DIV2_SUB1_LESS nz)])) THEN
+  TRY (REWRITE_TAC[])));;
+(* the assumptions that the steps below are built from *)
+let the_mr asl =
+  grab_asm (fun th -> hd_is "memory_rel" (concl th)) asl;;
+let the_gd asl =
+  grab_asm (fun th -> hd_is "good_dimindex" (concl th)) asl;;
+let the_lk asl =
+  grab_asm (fun th ->
+    is_eq (concl th) && hd_is "sptree_lookup" (lhs (concl th)) &&
+    hd_is "SOME" (rhs (concl th))) asl;;
+let the_ne asl =
+  grab_asm (fun th ->
+    is_neg (concl th) && is_eq (rand (concl th)) &&
+    is_var (lhs (rand (concl th))) &&
+    is_var (rand (rand (concl th))) &&
+    type_of (lhs (rand (concl th))) = `:num`) asl;;
+let the_weq v asl =
+  grab_asm (fun th ->
+    is_eq (concl th) && lhs (concl th) = v &&
+    hd_is "wordLang_Word" (rhs (concl th))) asl;;
+let the_gra w asl =
+  grab_asm (fun th ->
+    is_eq (concl th) && hd_is "get_real_addr" (lhs (concl th)) &&
+    rand (lhs (concl th)) = w) asl;;
+let refs_of mr = el 3 (snd (strip_comb (concl mr)));;
+let mem_of mr = el 6 (snd (strip_comb (concl mr)));;
+let vars_of mr = el 8 (snd (strip_comb (concl mr)));;
+let ins_of mr = snd (strip_comb (refs_of mr));;
+let hd_of mr = rand (rator (vars_of mr));;
+(* the array that the insert of the refs of the invariant put
+   there, and the invariant turned so that the pointer of it comes
+   first; where a store has been done already the root of that
+   pointer is a word there, and otherwise it is the one that the
+   lemma about the array gave *)
+let ins_lk mr =
+  let ins = ins_of mr in
+  REWRITE_RULE[] (ISPECL [el 0 ins; el 0 ins; el 1 ins; el 2 ins]
+    lookup_insert);;
+let turn mr =
+  if rand (lhand (hd_of mr)) = el 0 (ins_of mr) then mr
+  else MATCH_MP memory_rel_swap mr;;
+let turn_mr asl =
+  let mr0 = turn (the_mr asl) in
+  let v = rand (hd_of mr0) in
+  if is_var v then
+    let weq = the_weq v asl in
+    REWRITE_RULE[weq] mr0, rand (rhs (concl weq))
+  else mr0, rand v;;
+let get_ins =
+  W(fun (asl,gl) ->
+    let mr = turn (the_mr asl) in
+    MP_TAC (MATCH_MP memory_rel_ByteArray_IMP
+      (CONJ mr (CONJ (ins_lk mr) (the_gd asl))))) THEN
+  DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC);;
+(* and the array of the other pointer, which is in the refs that
+   the insert was done to, because the two keys are not the same *)
+let get_other =
+  W(fun (asl,gl) ->
+    let mr = the_mr asl in
+    let ins = ins_of mr in
+    let lk = the_lk asl in
+    let lk' = TRANS (REWRITE_RULE[EQF_INTRO (the_ne asl)]
+      (ISPECL [el 0 ins; lhand (lhs (concl lk)); el 1 ins;
+        el 2 ins] lookup_insert)) lk in
+    MP_TAC (MATCH_MP memory_rel_ByteArray_IMP
+      (CONJ mr (CONJ lk' (the_gd asl))))) THEN
+  DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC);;
+(* the load of the byte at an index of an array, from what the
+   lemma about that array says of every index of it *)
+let load_at xs i =
+  W(fun (asl,gl) ->
+    let lds = grab_asm (fun th ->
+      is_forall (concl th) &&
+      can (find_term (hd_is "mem_load_byte_aux")) (concl th) &&
+      can (find_term (fun t -> hd_is "EL" t && rand t = xs))
+        (concl th)) asl in
+    let sp = SPEC i lds in
+    let lt = grab_asm (fun th -> concl th = lhand (concl sp)) asl in
+    ASSUME_TAC (MP sp lt));;
+(* and the store of a byte at an index of the array of the insert,
+   which gives a memory and an invariant of that memory; the
+   second insert that it leaves at the key is the first one *)
+let store_at i b =
+  W(fun (asl,gl) ->
+    let vals = rand (el 1 (ins_of (the_mr asl))) in
+    let mr,w = turn_mr asl in
+    let lt0 = grab_asm (fun th ->
+      hd_is "<" (concl th) && lhand (concl th) = i) asl in
+    let lt = ONCE_REWRITE_RULE
+      [SYM (REWRITE_CONV[LENGTH_LUPDATE] (mk_comb (rator (rand
+         (concl lt0)), vals)))] lt0 in
+    MP_TAC (MATCH_MP (INST [i,`i:num`; b,`b:word8`]
+      memory_rel_ByteArray_IMP_store)
+      (CONJ mr (CONJ (ins_lk mr) (CONJ (the_gd asl)
+        (CONJ (the_gra w asl) lt)))))) THEN
+  DISCH_THEN (CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+  FIRST_X_ASSUM (fun mr ->
+    if not (hd_is "memory_rel" (concl mr)) then fail() else
+    let mr' = REWRITE_RULE[insert_insert_same] mr in
+    (if can (MATCH_MP memory_rel_swap) mr'
+     then ASSUME_TAC (MATCH_MP memory_rel_swap mr')
+     else ALL_TAC) THEN
+    ASSUME_TAC mr');;
+(* what the loads and the stores of a case need of the bounds, from
+   the bound that the definition of the copy gave.  The assumptions
+   about the word size are left out of the arithmetic, which cannot
+   take dimword for an atom *)
+let bounds tm =
+  SUBGOAL_THEN tm STRIP_ASSUME_TAC THENL
+   [EVERY_ASSUM (fun th ->
+      let c = concl th in
+      if not (can (find_term (hd_is "dimword")) c) &&
+         (is_conj c || hd_is "<" c || hd_is "<=" c ||
+          (is_neg c &&
+           ((is_eq (rand c) && is_numeral (rand (rand c))) ||
+            is_conj (rand c))))
+      then MP_TAC th else ALL_TAC) THEN
+    ARITH_TAC;
+    ALL_TAC];;
+(* the roots and the memory that the lemmas gave are the witnesses
+   of the statement; where a root is in the goal already it is the
+   word of it *)
+let wof asl t =
+  if hd_is "wordLang_Word" t then rand t
+  else rand (rhs (concl (the_weq t asl)));;
+let wit1 =
+  W(fun (asl,gl) ->
+    let cs = conjuncts (snd (strip_exists gl)) in
+    let w = wof asl (lhs (el 0 cs)) in
+    MAP_EVERY EXISTS_TAC [w; rand (rhs (concl (the_gra w asl)))]);;
+let wit2 =
+  W(fun (asl,gl) ->
+    let cs = conjuncts (snd (strip_exists gl)) in
+    let w1 = wof asl (lhs (el 0 cs))
+    and w2 = wof asl (lhs (el 1 cs)) in
+    MAP_EVERY EXISTS_TAC
+      [w1; w2; rand (rhs (concl (the_gra w1 asl)));
+       rand (rhs (concl (the_gra w2 asl)))]);;
+let is_wc t = hd_is "word_copy_fwd" t || hd_is "word_copy_bwd" t;;
+let wit_m =
+  W(fun (asl,gl) ->
+    let eqn = find (fun t -> is_eq t && is_wc (lhs t))
+      (conjuncts (snd (strip_exists gl))) in
+    EXISTS_TAC (el 4 (snd (strip_comb (lhs eqn)))));;
+let wit_store =
+  W(fun (asl,gl) ->
+    EXISTS_TAC (rand (rhs (concl (grab_asm (fun th ->
+      is_eq (concl th) &&
+      hd_is "mem_store_byte_aux" (lhs (concl th))) asl)))));;
+let wit_wcf =
+  W(fun (asl,gl) ->
+    EXISTS_TAC (rand (rhs (concl (grab_asm (fun th ->
+      is_eq (concl th) && is_wc (lhs (concl th))) asl)))));;
+let subst_vs =
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    let c = concl th in
+    if is_eq c && is_var (lhs c) && hd_is "wordLang_Word" (rhs c)
+    then SUBST_ALL_TAC th else fail()));;
+(* the roots of the hypothesis of the induction are the roots of
+   the goal, and so are the real addresses of them *)
+let unify_wds =
+  RULE_ASSUM_TRY (REWRITE_RULE[injectivity "word_loc"]) THEN
+  REPEAT (FIRST_X_ASSUM (fun th ->
+    let c = concl th in
+    if is_eq c && is_var (lhs c) && is_var (rand c) &&
+       not (lhs c = rand c) &&
+       (try fst (dest_type (type_of (lhs c))) = "word"
+        with Failure _ -> false)
+    then SUBST_ALL_TAC (SYM th) else fail()));;
+let unify_addrs =
+  REPEAT (W(fun (asl,gl) ->
+    let gr th =
+      is_eq (concl th) && hd_is "get_real_addr" (lhs (concl th)) in
+    tryfind (fun (_,th1) ->
+      if not (gr th1) then fail() else
+      tryfind (fun (_,th2) ->
+        if not (gr th2) || not (lhs (concl th1) = lhs (concl th2))
+           || rand (rhs (concl th1)) = rand (rhs (concl th2))
+        then fail() else
+        SUBST_ALL_TAC (REWRITE_RULE[injectivity "option"]
+          (TRANS (SYM th1) th2))) asl) asl));;
+(* the hypothesis of the induction, at the counter less four and at
+   the arrays and the memory that the four stores left *)
+let use_ih xt yt =
+  W(fun (asl,gl) ->
+    let ih = grab_asm (fun th ->
+      is_forall (concl th) &&
+      can (find_term is_wc) (concl th)) asl in
+    let mr = the_mr asl in
+    let lt = grab_asm (fun th -> concl th = `n - 4 < n`) asl in
+    MP_TAC (SPECL [xt; yt; rand (el 1 (ins_of mr));
+      `ys1:word8 list`; mem_of mr] (MP (SPEC `n - 4` ih) lt))) THEN
+  (ANTS_TAC THENL
+    [REPEAT CONJ_TAC THEN
+     TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+     EVERY_ASSUM (fun th ->
+       if hd_is "<" (concl th) then MP_TAC th else ALL_TAC) THEN
+     ARITH_TAC;
+     ALL_TAC]) THEN
+  DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+  unify_wds THEN unify_addrs;;
+(* the counter of the loop goes down by four, and the word of that
+   is the word of the counter less four *)
+let sub4 =
+  W(fun (asl,gl) ->
+    let le = grab_asm (fun th -> concl th = `4 <= n`) asl in
+    REWRITE_TAC[GSYM (REWRITE_RULE[EQT_INTRO le]
+      (ISPECL [`n:num`; `4`] WORD_SUB))]);;
+(* the loop at the counter of a case, with the guards settled and
+   the addresses of the loads and of the stores brought to the
+   shape that the lemmas about the arrays give them in *)
+let open_wc def =
+  ONCE_REWRITE_TAC[def] THEN
+  ASM_SIMP_TAC[dimword_facts; word_copy_guards] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  RULE_ASSUM_TRY (REWRITE_RULE[WORD_ADD; WORD_ADD_ASSOC]) THEN
+  ASM_SIMP_TAC[OPTION_BIND; WORD_ADD; WORD_ADD_ASSOC;
+               sub_n2w_step];;
+(* and the five cases of the counter, from the definition of the
+   copy: the counter is zero, or one, or two, or three, or it is
+   four or more and the loop takes a step *)
+let setup_cp def rws =
+  MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
+  REPEAT GEN_TAC THEN
+  ONCE_REWRITE_TAC[def] THEN
+  STRIP_TAC THEN
+  FIRST_X_ASSUM (fun th ->
+    if is_eq (concl th) && hd_is "COND" (lhs (concl th))
+    then MP_TAC th else fail()) THEN
+  REPEAT COND_CASES_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  DISCH_THEN (fun th ->
+    if is_eq (concl th) && is_var (rand (concl th))
+    then SUBST_ALL_TAC (SYM th) else ASSUME_TAC th) THEN
+  TRY (FIRST_X_ASSUM (fun th ->
+    if is_eq (concl th) && is_var (lhs (concl th)) &&
+       is_numeral (rand (concl th)) then SUBST_ALL_TAC th
+    else fail())) THEN
+  REWRITE_TAC rws THEN RULE_ASSUM_TRY (REWRITE_RULE rws);;
+
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let word_copy_fwd_thm = prove
@@ -43808,19 +44108,55 @@ let word_copy_fwd_thm = prove
           memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
             sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2)
               :: vars))`),
-  (* the attempt: the proof of the source names list_copy_fwd_def,
-     dimword, good_dimindex_def, memory_rel_ByteArray_IMP,
-     lookup_insert, memory_rel_swap.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[list_copy_fwd_def; dimword;
-       good_dimindex_def; memory_rel_ByteArray_IMP;
-       lookup_insert; memory_rel_swap] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the complete induction of the source on the counter, and then
+   the five cases that the definition of the copy of a list has:
+   the counter is zero, or one, or two, or three, or it is four or
+   more and four bytes are copied before the loop goes on.
+     In each case the two arrays are the ones that the invariant
+   speaks of (memory_rel_ByteArray_IMP of the pointer that the
+   insert of the refs is at, and of the other pointer after its
+   lookup is taken through that insert), the bytes are loaded from
+   the first array (the load of every index of it that the lemma
+   gives) and stored into the second one
+   (memory_rel_ByteArray_IMP_store, which gives the memory of the
+   store and the invariant of that memory), and the guards of the
+   loop are decided by the counter (word_copy_guards).  In the
+   last case the hypothesis of the induction copies what is left,
+   at the counter less four *)
+  ((let pre = bounds `xp < LENGTH (xs:word8 list) /\
+                    yp < LENGTH (ys:word8 list)` in
+  let bnd k = bounds (subst [mk_small_numeral k,`k:num`]
+    `xp + k < LENGTH (xs:word8 list) /\
+     yp + k < LENGTH (ys:word8 list)`) in
+  let load k = load_at `xs:word8 list`
+    (if k = 0 then `xp:num` else
+     subst [mk_small_numeral k,`k:num`] `xp + k`) in
+  let store k =
+    if k = 0 then store_at `yp:num` `EL xp (xs:word8 list)`
+    else store_at (subst [mk_small_numeral k,`k:num`] `yp + k`)
+      (subst [mk_small_numeral k,`k:num`]
+        `EL (xp + k) (xs:word8 list)`) in
+  let zero =
+    get_other THEN get_ins THEN wit2 THEN wit_m THEN subst_vs THEN
+    open_wc word_copy_fwd_def in
+  let small j =
+    get_other THEN get_ins THEN pre THEN
+    EVERY (map bnd (1--j)) THEN
+    EVERY (map load (0--j)) THEN
+    EVERY (map store (0--j)) THEN
+    wit2 THEN wit_store THEN subst_vs THEN
+    open_wc word_copy_fwd_def in
+  let step =
+    bounds `~(n < 4) /\ 4 <= n /\ n - 4 < n` THEN
+    get_other THEN get_ins THEN pre THEN
+    EVERY (map bnd [1; 2; 3]) THEN
+    EVERY (map load [0; 1; 2; 3]) THEN
+    EVERY (map store [0; 1; 2; 3]) THEN
+    subst_vs THEN use_ih `xp + 4` `yp + 4` THEN
+    wit2 THEN wit_wcf THEN open_wc word_copy_fwd_def THEN
+    sub4 THEN ASM_REWRITE_TAC[WORD_ADD; WORD_ADD_ASSOC] in
+  setup_cp list_copy_fwd_def [o_THM; ADD_CLAUSES] THENL
+   [zero; small 0; small 1; small 2; step])));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -43838,20 +44174,45 @@ let word_copy_fwd_alias_thm = prove
             (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
           memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
             sp st m1 dm ((RefPtr bl p2,v2) :: vars))`),
-  (* the attempt: the proof of the source names
-     list_copy_fwd_alias_def, dimword, good_dimindex_def,
-     memory_rel_ByteArray_IMP, lookup_insert,
-     memory_rel_ByteArray_IMP_store.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[list_copy_fwd_alias_def; dimword;
-       good_dimindex_def; memory_rel_ByteArray_IMP;
-       lookup_insert; memory_rel_ByteArray_IMP_store] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the same five cases as word_copy_fwd_thm, of one array that is
+   copied into itself: the four bytes are loaded before any of
+   them is stored, so the loads are the loads of the array as the
+   invariant of the source has it, and only the stores go through
+   memory_rel_ByteArray_IMP_store one after the other *)
+  ((let pre = bounds `xp < LENGTH (ys:word8 list) /\
+                    yp < LENGTH (ys:word8 list)` in
+  let bnd k = bounds (subst [mk_small_numeral k,`k:num`]
+    `xp + k < LENGTH (ys:word8 list) /\
+     yp + k < LENGTH (ys:word8 list)`) in
+  let load k = load_at `ys:word8 list`
+    (if k = 0 then `xp:num` else
+     subst [mk_small_numeral k,`k:num`] `xp + k`) in
+  let store k =
+    if k = 0 then store_at `yp:num` `EL xp (ys:word8 list)`
+    else store_at (subst [mk_small_numeral k,`k:num`] `yp + k`)
+      (subst [mk_small_numeral k,`k:num`]
+        `EL (xp + k) (ys:word8 list)`) in
+  let zero =
+    get_ins THEN wit1 THEN wit_m THEN subst_vs THEN
+    open_wc word_copy_fwd_def in
+  let small j =
+    get_ins THEN pre THEN
+    EVERY (map bnd (1--j)) THEN
+    EVERY (map load (0--j)) THEN
+    EVERY (map store (0--j)) THEN
+    wit1 THEN wit_store THEN subst_vs THEN
+    open_wc word_copy_fwd_def in
+  let step =
+    bounds `~(n < 4) /\ 4 <= n /\ n - 4 < n` THEN
+    get_ins THEN pre THEN
+    EVERY (map bnd [1; 2; 3]) THEN
+    EVERY (map load [0; 1; 2; 3]) THEN
+    EVERY (map store [0; 1; 2; 3]) THEN
+    subst_vs THEN use_ih `xp + 4` `yp + 4` THEN
+    wit1 THEN wit_wcf THEN open_wc word_copy_fwd_def THEN
+    sub4 THEN ASM_REWRITE_TAC[WORD_ADD; WORD_ADD_ASSOC] in
+  setup_cp list_copy_fwd_alias_def [o_THM; ADD_CLAUSES] THENL
+   [zero; small 0; small 1; small 2; step])));;
 
 (* copy backward *)
 
@@ -43973,19 +44334,78 @@ let word_copy_bwd_thm = prove
           memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
             sp st m1 dm ((RefPtr bl1 p1,v1) :: (RefPtr bl2 p2,v2)
               :: vars))`),
-  (* the attempt: the proof of the source names list_copy_bwd_def,
-     dimword, good_dimindex_def, memory_rel_ByteArray_IMP,
-     lookup_insert, memory_rel_swap.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[list_copy_bwd_def; dimword;
-       good_dimindex_def; memory_rel_ByteArray_IMP;
-       lookup_insert; memory_rel_swap] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the same five cases as word_copy_fwd_thm, with the addresses
+   and the indices going down instead of up (sub_n2w_step, whose
+   condition is that the index is at least as big as the step --
+   which the bound of the definition of the copy gives).
+     Where an index is below four the step is the last one: the
+   bound says that the counter is at most the index plus one, so
+   the counter is four, and then the loop and the copy both do
+   nothing more, whatever the addresses of that step are *)
+  ((let pre = bounds `xp < LENGTH (xs:word8 list) /\
+                    yp < LENGTH (ys:word8 list)` in
+  let bnd k = bounds (subst [mk_small_numeral k,`k:num`]
+    `k <= xp /\ k <= yp /\ xp - k < LENGTH (xs:word8 list) /\
+     yp - k < LENGTH (ys:word8 list)`) in
+  let load k = load_at `xs:word8 list`
+    (if k = 0 then `xp:num` else
+     subst [mk_small_numeral k,`k:num`] `xp - k`) in
+  let store k =
+    if k = 0 then store_at `yp:num` `EL xp (xs:word8 list)`
+    else store_at (subst [mk_small_numeral k,`k:num`] `yp - k`)
+      (subst [mk_small_numeral k,`k:num`]
+        `EL (xp - k) (xs:word8 list)`) in
+  let zero =
+    get_other THEN get_ins THEN wit2 THEN wit_m THEN subst_vs THEN
+    open_wc word_copy_bwd_def in
+  let small j =
+    get_other THEN get_ins THEN pre THEN
+    EVERY (map bnd (1--j)) THEN
+    EVERY (map load (0--j)) THEN
+    EVERY (map store (0--j)) THEN
+    wit2 THEN wit_store THEN subst_vs THEN
+    open_wc word_copy_bwd_def in
+  (* where an index is below four this step is the last one, the
+     counter being four, and then the loop and the copy do
+     nothing more *)
+  let tail =
+    bounds `n = 4` THEN
+    FIRST_X_ASSUM (fun th ->
+      if concl th = `n = 4` then SUBST_ALL_TAC th else fail()) THEN
+    bounds `xp - 4 < LENGTH (xs:word8 list) /\
+            yp - 4 < LENGTH (ys:word8 list)` THEN
+    FIRST_X_ASSUM (fun lc ->
+      if not (is_eq (concl lc)) ||
+         not (hd_is "list_copy_bwd" (lhs (concl lc)))
+      then fail() else
+      MP_TAC (CONV_RULE NUM_REDUCE_CONV
+        (ONCE_REWRITE_RULE[list_copy_bwd_def] lc))) THEN
+    ASM_REWRITE_TAC[LE_0; LENGTH_LUPDATE;
+                    injectivity "option"] THEN
+    DISCH_THEN (fun th ->
+      if is_var (lhs (concl th)) then SUBST_ALL_TAC th
+      else SUBST_ALL_TAC (SYM th)) THEN
+    wit2 THEN wit_store THEN open_wc word_copy_bwd_def THEN
+    REWRITE_TAC[WORD_SUB_REFL] THEN
+    ONCE_REWRITE_TAC[word_copy_bwd_def] THEN
+    ASM_SIMP_TAC[dimword_facts; word_copy_guards] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[] in
+  let step =
+    bounds `~(n < 4) /\ 4 <= n /\ n - 4 < n` THEN
+    get_other THEN get_ins THEN pre THEN
+    EVERY (map bnd [1; 2; 3]) THEN
+    EVERY (map load [0; 1; 2; 3]) THEN
+    EVERY (map store [0; 1; 2; 3]) THEN
+    subst_vs THEN
+    (ASM_CASES_TAC `4 <= xp /\ 4 <= yp` THENL
+      [FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC) THEN
+       use_ih `xp - 4` `yp - 4` THEN
+       wit2 THEN wit_wcf THEN open_wc word_copy_bwd_def THEN
+       sub4 THEN ASM_REWRITE_TAC[WORD_ADD; WORD_ADD_ASSOC];
+       tail]) in
+  setup_cp list_copy_bwd_def
+    [o_THM; minus_def; ADD_CLAUSES; SUB_0] THENL
+   [zero; small 0; small 1; small 2; step])));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -44003,20 +44423,72 @@ let word_copy_bwd_alias_thm = prove
             (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
           memory_rel c be ts (insert p2 (ByteArray fl_ys ys1) refs)
             sp st m1 dm ((RefPtr bl p2,v2) :: vars))`),
-  (* the attempt: the proof of the source names
-     list_copy_bwd_alias_def, dimword, good_dimindex_def,
-     memory_rel_ByteArray_IMP, lookup_insert,
-     memory_rel_ByteArray_IMP_store.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[list_copy_bwd_alias_def; dimword;
-       good_dimindex_def; memory_rel_ByteArray_IMP;
-       lookup_insert; memory_rel_ByteArray_IMP_store] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the backward copy of one array into itself: the cases of
+   word_copy_bwd_thm, with the loads of word_copy_fwd_alias_thm *)
+  ((let pre = bounds `xp < LENGTH (ys:word8 list) /\
+                    yp < LENGTH (ys:word8 list)` in
+  let bnd k = bounds (subst [mk_small_numeral k,`k:num`]
+    `k <= xp /\ k <= yp /\ xp - k < LENGTH (ys:word8 list) /\
+     yp - k < LENGTH (ys:word8 list)`) in
+  let load k = load_at `ys:word8 list`
+    (if k = 0 then `xp:num` else
+     subst [mk_small_numeral k,`k:num`] `xp - k`) in
+  let store k =
+    if k = 0 then store_at `yp:num` `EL xp (ys:word8 list)`
+    else store_at (subst [mk_small_numeral k,`k:num`] `yp - k`)
+      (subst [mk_small_numeral k,`k:num`]
+        `EL (xp - k) (ys:word8 list)`) in
+  let zero =
+    get_ins THEN wit1 THEN wit_m THEN subst_vs THEN
+    open_wc word_copy_bwd_def in
+  let small j =
+    get_ins THEN pre THEN
+    EVERY (map bnd (1--j)) THEN
+    EVERY (map load (0--j)) THEN
+    EVERY (map store (0--j)) THEN
+    wit1 THEN wit_store THEN subst_vs THEN
+    open_wc word_copy_bwd_def in
+  (* where an index is below four this step is the last one, the
+     counter being four, and then the loop and the copy do
+     nothing more *)
+  let tail =
+    bounds `n = 4` THEN
+    FIRST_X_ASSUM (fun th ->
+      if concl th = `n = 4` then SUBST_ALL_TAC th else fail()) THEN
+    bounds `xp - 4 < LENGTH (ys:word8 list) /\
+            yp - 4 < LENGTH (ys:word8 list)` THEN
+    FIRST_X_ASSUM (fun lc ->
+      if not (is_eq (concl lc)) ||
+         not (hd_is "list_copy_bwd_alias" (lhs (concl lc)))
+      then fail() else
+      MP_TAC (CONV_RULE NUM_REDUCE_CONV
+        (ONCE_REWRITE_RULE[list_copy_bwd_alias_def] lc))) THEN
+    ASM_REWRITE_TAC[LE_0; LENGTH_LUPDATE;
+                    injectivity "option"] THEN
+    DISCH_THEN (fun th ->
+      if is_var (lhs (concl th)) then SUBST_ALL_TAC th
+      else SUBST_ALL_TAC (SYM th)) THEN
+    wit1 THEN wit_store THEN open_wc word_copy_bwd_def THEN
+    REWRITE_TAC[WORD_SUB_REFL] THEN
+    ONCE_REWRITE_TAC[word_copy_bwd_def] THEN
+    ASM_SIMP_TAC[dimword_facts; word_copy_guards] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[] in
+  let step =
+    bounds `~(n < 4) /\ 4 <= n /\ n - 4 < n` THEN
+    get_ins THEN pre THEN
+    EVERY (map bnd [1; 2; 3]) THEN
+    EVERY (map load [0; 1; 2; 3]) THEN
+    EVERY (map store [0; 1; 2; 3]) THEN
+    subst_vs THEN
+    (ASM_CASES_TAC `4 <= xp /\ 4 <= yp` THENL
+      [FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC) THEN
+       use_ih `xp - 4` `yp - 4` THEN
+       wit1 THEN wit_wcf THEN open_wc word_copy_bwd_def THEN
+       sub4 THEN ASM_REWRITE_TAC[WORD_ADD; WORD_ADD_ASSOC];
+       tail]) in
+  setup_cp list_copy_bwd_alias_def
+    [o_THM; minus_def; ADD_CLAUSES; SUB_0] THENL
+   [zero; small 0; small 1; small 2; step])));;
 
 (* copy array *)
 
@@ -44859,19 +45331,11 @@ let word_copy_bwd_0 = prove
 (* the port's own: what the two lemmas about a copy of a part of a
    byte array into another share.  HOL4 takes insert_unchanged
    from sptreeTheory (sptreeScript.sml:2255, with splem1 for the
-   key of a subtree) and gets the other three with fs from the
+   key of a subtree) and gets the other two with fs from the
    definitions; the steps below are the ones that both proofs
    take, and they stand here for the same reason as the arms of
    bc_ref_inv above *)
 
-let grab_asm p asl =
-  tryfind (fun (_,th) ->
-    if (try p th with Failure _ -> false) then th else fail()) asl;;
-let DIV2_SUB1_LESS = prove
- (`!k. ~(k = 0) ==> (k - 1) DIV 2 < k`,
-  (GEN_TAC THEN DISCH_TAC THEN
-  MP_TAC (SPECL [`k - 1`; `2`] DIV_LE) THEN
-  CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC));;
 let insert_unchanged = prove
  (`!k (t:(A)spt) y. sptree_lookup k t = SOME y
     ==> sptree_insert k y t = t`,
@@ -44896,30 +45360,6 @@ let insert_unchanged = prove
       else MP_TAC (MATCH_MP ih lk))) THEN
   COND_CASES_TAC THEN
   DISCH_THEN (fun th -> REWRITE_TAC[th])));;
-(* and a second insert at the same key, which the stores of the
-   bytes of an array one at a time leave behind.  HOL4 has the
-   general insert_insert (sptreeScript.sml:1612), of which the
-   proofs of the port only need this case *)
-let insert_insert_same = prove
- (`!k v1 v2 (t:(A)spt).
-    sptree_insert k v1 (sptree_insert k v2 t) = sptree_insert k v1 t`,
-  (MATCH_MP_TAC num_WF THEN X_GEN_TAC `k:num` THEN DISCH_TAC THEN
-  MAP_EVERY X_GEN_TAC [`v1:A`; `v2:A`; `t:(A)spt`] THEN
-  STRUCT_CASES_TAC (ISPEC `t:(A)spt` (cases_of `:(A)spt`)) THEN
-  ONCE_REWRITE_TAC[insert_def] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-  TRY (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
-  GEN_REWRITE_TAC LAND_CONV [insert_def] THEN
-  ASM_REWRITE_TAC[] THEN
-  FIRST_ASSUM (fun ih ->
-    if not (is_forall (concl ih)) then fail() else
-    FIRST_ASSUM (fun nz ->
-      if not (is_neg (concl nz)) || not (is_eq (rand (concl nz)))
-      then fail() else
-      REWRITE_TAC[MP (SPEC `(k - 1) DIV 2` ih)
-                    (MATCH_MP DIV2_SUB1_LESS nz)])) THEN
-  TRY (REWRITE_TAC[])));;
-
 (* the offsets and the count of a copy that goes through are
    within the two lists: copy_array is NONE otherwise *)
 let copy_array_bounds = prove
@@ -52627,10 +53067,9 @@ let MIN_SUC_SUC = prove
 
 (* the port's own: the three things the statement below needs of
    numbers.  The two MIN clauses and MIN_SUC_SUC above are what
-   HOL4's simplifier knows of MIN; val_n2w_lt is the number of a
-   word that was made of one below the word size; and acc_step is
-   the step of the two accumulators -- a byte more in front of the
-   list is one more on the counter *)
+   HOL4's simplifier knows of MIN; and acc_step is the step of the
+   two accumulators -- a byte more in front of the list is one
+   more on the counter *)
 
 let min_0l = prove
  (`!n. MIN 0 n = 0`,
@@ -52640,10 +53079,6 @@ let min_0r = prove
  (`!n. MIN n 0 = 0`,
   GEN_TAC THEN REWRITE_TAC[MIN] THEN
   COND_CASES_TAC THEN ASM_ARITH_TAC);;
-
-let val_n2w_lt = prove
- (`!n. n < dimword (:'a) ==> w2n ((n2w n):'a word) = n`,
-  REWRITE_TAC[dimword] THEN MATCH_ACCEPT_TAC VAL_WORD_EQ);;
 
 let acc_step = prove
  (`!k n s. k + (SUC n + s) = (k + 1) + (n + s)`,
@@ -52827,13 +53262,6 @@ let header_shift = prove
   RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV o REWRITE_RULE[]) THEN
   REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
   ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
-
-let n2w_11_lt = prove
- (`!m n. m < dimword (:'a) /\ n < dimword (:'a)
-    ==> (((n2w m):'a word) = n2w n <=> m = n)`,
-  REPEAT STRIP_TAC THEN
-  GEN_REWRITE_TAC LAND_CONV [GSYM VAL_EQ] THEN
-  ASM_SIMP_TAC[val_n2w_lt]);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
