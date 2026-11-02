@@ -35156,8 +35156,6 @@ let memory_rel_RefByte_content = prove
                 ARITH_RULE `!n:num. n + 0 = n`; addsum;
                 arith] THEN
     W(fun (asl2,gl2) ->
-      say ("  GOALP " ^ string_of_term (rator gl2) ^ "\n");
-      say ("  SEPP " ^ string_of_term (rator (concl sl2)) ^ "\n");
       let eq = prove (mk_eq (rator gl2, rator (concl sl2)),
                 REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
       ACCEPT_TAC (REWRITE_RULE[GSYM eq] sl2))))));;
@@ -35816,8 +35814,6 @@ let memory_rel_RefByte_alt = prove
                 ARITH_RULE `!n:num. n + 0 = n`; addsum;
                 arith] THEN
     W(fun (asl2,gl2) ->
-      say ("  GOALP " ^ string_of_term (rator gl2) ^ "\n");
-      say ("  SEPP " ^ string_of_term (rator (concl sl2)) ^ "\n");
       let eq = prove (mk_eq (rator gl2, rator (concl sl2)),
                 REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
       ACCEPT_TAC (REWRITE_RULE[GSYM eq] sl2))))));;
