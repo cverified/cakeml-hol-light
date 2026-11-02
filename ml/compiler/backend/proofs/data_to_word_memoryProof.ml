@@ -41,6 +41,7 @@ needs "compiler/encoders/asm/asmProps.ml";;
 needs "lib/alignment.ml";;
 needs "lib/balanced_map.ml";;
 needs "lib/binary_ieee.ml";;
+needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/errorMonad.ml";;
@@ -52910,19 +52911,176 @@ let memory_rel_do_build_const = prove
              :: vars) /\
          data_to_word_memoryProof_store_list free (MAP adjust ws)
            m dm = SOME m1)`),
-  (* the attempt: the proof of the source names memory_rel_do_build,
-     word_cond_add_def, do_build_const_def, IMP_memory_rel_Number,
-     good_dimindex_def, const_parts_to_words_def.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_do_build; word_cond_add_def;
-       do_build_const_def; IMP_memory_rel_Number;
-       good_dimindex_def; const_parts_to_words_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the step is memory_rel_do_build with the map of the constants
+   for the values and the word zero for the words: do_build_const
+   is do_build of the map that gives every key the integer zero,
+   and the words of the constants are the ones the deep embedding
+   gives with the offset of the heap added -- which is what
+   parts_to_words_add says of the empty map, whose words are no
+   pointers and so are left alone by the offset, and what
+   parts_to_words_IMP_build_words turns into build_words.  That
+   offset is byte aligned because the free pointer is the heap
+   pointer plus a multiple of the word size.  And the invariant of
+   the values of the map is the one of the stack with the pairs of
+   the map in front of it, which the induction over the keys
+   gives: every one of them is the small integer zero, whose
+   Smallnum is the word zero *)
+  ((let si0 = prove
+   (`good_dimindex (:'a) ==> small_int (:'a) (&0)`,
+    REWRITE_TAC[good_dimindex_def; small_int_def; dimword] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN INT_ARITH_TAC) in
+  let sm0 = prove
+   (`Smallnum (&0) = (word 0:(N)word)`,
+    REWRITE_TAC[smallnum_def] THEN
+    REWRITE_TAC[INT_ARITH `~((&0:int) < &0)`] THEN
+    REWRITE_TAC[INT_ARITH `(&4:int) * &0 = &0`;
+                NUM_OF_INT_OF_NUM]) in
+  (* the empty map of the deep embedding gives every key the word
+     zero, and that word is no pointer, so the offset of the heap
+     leaves it alone *)
+  let lm_LN = prove
+   (`!i. lookup_mem (LN:(bool#('a)word_loc)spt) i =
+         (F,wordLang_Word ((n2w 0):'a word))`,
+    GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [lookup_mem_def] THEN
+    REWRITE_TAC[lookup_def] THEN MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[]) in
+  let cond_LN = prove
+   (`!c a i. SND (lookup_mem (LN:(bool#('a)word_loc)spt) i) =
+             word_cond_add c a (lookup_mem LN i)`,
+    REWRITE_TAC[lm_LN; cond_add_F; SND]) in
+  let add0 = prove
+   (`!x:'a word. n2w 0 + x = x`, WORD_ARITH_TAC) in
+  let db_spine =
+    STRIP_TAC THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    (* the free pointer is the heap pointer plus a multiple of the
+       word size, so what is between them is byte aligned *)
+    W(fun (asl,gl) ->
+      let body = snd (dest_exists gl) in
+      let mp = el 1 (snd (strip_comb (lhs (rand body)))) in
+      let adj = rand (rator mp) in
+      SUBGOAL_THEN (mk_conj
+        (list_mk_icomb "byte_aligned" [rand adj],
+         list_mk_icomb "<="
+           [`backend_common_word_shift (:'a)`;
+            list_mk_icomb "shift_length" [lhand adj]]))
+        STRIP_ASSUME_TAC) THENL
+     [FIRST_ASSUM (fun mr ->
+        if not (hd_is "memory_rel" (concl mr)) then fail() else
+        MP_TAC (REWRITE_RULE[memory_rel_def] mr)) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      FIRST_ASSUM (fun th ->
+        if not (hd_is "heap_in_memory_store" (concl th)) then fail()
+        else MP_TAC (REWRITE_RULE[heap_in_memory_store_def] th)) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      CONJ_TAC THENL
+       [W(fun (asl,gl) ->
+          let fv = lhand (rand gl) and cv = rand (rand gl) in
+          let flks = map snd (filter (fun (_,th) ->
+            is_eq (concl th) && hd_is "FLOOKUP" (lhs (concl th)))
+            asl) in
+          let same th = filter (fun th2 ->
+            lhs (concl th2) = lhs (concl th) &&
+            not (rhs (concl th2) = rhs (concl th))) flks in
+          let pick v =
+            let th = hd (filter (fun th ->
+              (try rand (rand (rhs (concl th))) = v
+               with Failure _ -> false)) flks) in
+            REWRITE_RULE[injectivity "option"; injectivity "word_loc"]
+              (TRANS (SYM th) (hd (same th))) in
+          let gd = grab_asm (fun th ->
+            hd_is "good_dimindex" (concl th)) asl in
+          REWRITE_TAC[pick fv; pick cv] THEN
+          REWRITE_TAC[WORD_ARITH
+            `!(a:'a word) b. (a + b) - a = b`] THEN
+          MATCH_ACCEPT_TAC (GEN_ALL (CONJUNCT2 (SPEC_ALL
+            (MATCH_MP byte_align_mult_bytes_in_word gd)))));
+        FIRST_ASSUM ACCEPT_TAC];
+      ALL_TAC] THEN
+    W(fun (_,gl) ->
+      let body = snd (dest_exists gl) in
+      let mp = el 1 (snd (strip_comb (lhs (rand body)))) in
+      SUBST1_TAC (SYM (ISPECL [rand mp; rand (rator mp)] LENGTH_MAP)))
+      THEN
+    MATCH_MP_TAC (CONV_RULE (TOP_DEPTH_CONV let_CONV)
+      memory_rel_do_build) THEN
+    W(fun (asl,gl) ->
+      let body = snd (strip_exists gl) in
+      let bw = el 1 (conjuncts body) in
+      let adj = rator (lhand (rand (rhs bw))) in
+      let db = REWRITE_RULE[dataSem_do_build_const_def]
+        (grab_asm (fun th -> is_eq (concl th) &&
+           hd_is "dataSem_do_build_const" (lhs (concl th))) asl) in
+      let args = snd (strip_comb (lhs (concl db))) in
+      MAP_EVERY EXISTS_TAC
+        [el 2 args; el 1 args; rand (rand adj); el 0 args;
+         `\(n:num). wordLang_Word ((n2w 0):'a word)`;
+         el 3 args; rand (el 4 args)] THEN
+      (REPEAT CONJ_TAC THEN
+       TRY (SOLVED (ACCEPT_TAC db)) THEN
+       TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)))) in
+  (* the words of the constants: what the deep embedding gives with
+     the offset of the heap added is what build_words gives *)
+  let db_words =
+    W(fun (asl,gl) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let ba = grab_asm (fun th ->
+        hd_is "byte_aligned" (concl th)) asl in
+      let wsle = grab_asm (fun th ->
+        hd_is "<=" (concl th) &&
+        hd_is "backend_common_word_shift" (lhand (concl th))) asl in
+      let pw = REWRITE_RULE[const_parts_to_words_def]
+        (grab_asm (fun th -> is_eq (concl th) &&
+           hd_is "const_parts_to_words" (lhs (concl th))) asl) in
+      let off = el 4 (snd (strip_comb (lhs (concl pw)))) in
+      let ba0 = prove (list_mk_icomb "byte_aligned" [off],
+        REWRITE_TAC[byte_aligned_def; aligned_def; align_def;
+                    word_slice; word_bits; WORD_SUBWORD_0;
+                    WORD_SHL_0]) in
+      let adj = rator (lhand (rand (rhs gl))) in
+      let add = MATCH_MP parts_to_words_add
+        (CONJ pw (CONJ ba0 (CONJ ba (CONJ gd (CONJ wsle
+          (SPECL [rand (rator adj); rand adj] cond_LN)))))) in
+      MP_TAC add) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    W(fun (asl,gl) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let wsle = grab_asm (fun th ->
+        hd_is "<=" (concl th) &&
+        hd_is "backend_common_word_shift" (lhand (concl th))) asl in
+      let pw2 = REWRITE_RULE[add0]
+        (grab_asm (fun th -> is_eq (concl th) &&
+           hd_is "parts_to_words" (lhs (concl th))) asl) in
+      let ba2 = grab_asm (fun th ->
+        hd_is "byte_aligned" (concl th)) asl in
+      let bw = MATCH_MP parts_to_words_IMP_build_words
+        (CONJ pw2 (CONJ gd (CONJ ba2 wsle))) in
+      MATCH_ACCEPT_TAC (REWRITE_RULE[lm_LN; SND; add0]
+        (ONCE_REWRITE_RULE (map ASSUME (map concl (filter
+          (fun th -> is_eq (concl th) &&
+            (hd_is "MAP" (lhs (concl th)) ||
+             hd_is "SND" (lhs (concl th))))
+          (map snd asl)))) bw))) in
+  (* every key of the map is the small integer zero, whose word is
+     the word zero *)
+  let db_ks =
+    CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+    LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; APPEND] THENL
+     [FIRST_ASSUM ACCEPT_TAC;
+      W(fun (asl,gl) ->
+        let gd = grab_asm (fun th ->
+          hd_is "good_dimindex" (concl th)) asl in
+        let x = rand (last (snd (strip_comb gl))) in
+        let ih = grab_asm (fun th ->
+          hd_is "memory_rel" (concl th) &&
+          last (snd (strip_comb (concl th))) = x) asl in
+        MATCH_ACCEPT_TAC (REWRITE_RULE[sm0]
+          (MATCH_MP IMP_memory_rel_Number
+            (CONJ gd (CONJ (MATCH_MP si0 gd) ih)))))] in
+  db_spine THENL [db_words; db_ks])));;
 
 let read_word_def = cake_define
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;
