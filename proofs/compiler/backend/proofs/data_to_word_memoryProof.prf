@@ -28336,19 +28336,598 @@
      REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
      ASM_MESON_TAC[GEN_ALL reachable_refs_MutBlock_centre]))
 ### bc_stack_ref_inv_MutBlock_F
-  (* the attempt: the proof of the source names
-     bc_stack_ref_inv_def, INJ_FUPDATE, v_inv_def,
-     reachable_refs_def, bc_ref_inv_def, FLOOKUP_DEF.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[bc_stack_ref_inv_def; INJ_FUPDATE;
-       v_inv_def; reachable_refs_def; bc_ref_inv_def;
-       FLOOKUP_DEF] THEN
-     TRY ASM_ARITH_TAC))
+(* the step keeps the addresses of the references and adds the
+   timestamp of the block to the map of the timestamps, with the
+   address of the block it finalises for a value: the pointer of
+   the stack is that address (v_inv of a RefPtr), and what the old
+   invariant says of that key is the cell of the block, the
+   invariant of its payload, and that no timestamp points at it --
+   which, with the timestamp of the step being a new one, is what
+   INJ of the grown map needs.
+   Of the nine parts of the invariant the addresses and the byte
+   order are the ones of the assumptions, the domain grows with
+   the key, the timestamps stay below the one of the step, the
+   blocks stay unique (all_vs_MutBlock_T), and the timestamps of
+   the refs and the stack carry over (all_ts_SUBSET_ts, whose four
+   cases are a value of a reference, the value that was written,
+   the pointer of the block and the rest of the stack).  The new
+   stack is the block, whose payload has the written value in the
+   middle (el_mid_at) and the values the reference had away from it
+   (el_mid), and the old stack transported.  And the invariant of a
+   key that the new stack reaches is the old one of that key
+   (reachable_refs_MutBlock_T) with its arm carried over: a
+   ByteArray says nothing about the references, the values of the
+   other arms go over one by one (v_inv_SUBMAP with
+   v_inv_MutBlock_fin), a Thunk keeps its dest_thunk
+   (dest_thunk_insert_MutBlock), and a MutBlock other than this one
+   keeps its condition about the timestamps, because INJ of the
+   addresses gives it an address of its own *)
+  ((let the_lkmb asl =
+    grab_asm (fun th ->
+      is_eq (concl th) && hd_is "sptree_lookup" (lhs (concl th)) &&
+      hd_is "SOME" (rhs (concl th))) asl in
+  let the_inn asl =
+    grab_asm (fun th ->
+      hd_is "IN" (concl th) && hd_is "FDOM" (rand (concl th))) asl in
+  let the_hlmb asl =
+    grab_asm (fun th ->
+      is_eq (concl th) && hd_is "heap_lookup" (lhs (concl th))) asl in
+  let hsr_refl = prove
+   (`!heap:((A,B)heap_element)list. heap_store_rel heap heap`,
+    REWRITE_TAC[heap_store_rel_def]) in
+  let el_mid_at = prove
+   (`!(l:(A)list) x r. EL (LENGTH l) (l ++ [x] ++ r) = x`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[EL_APPEND] THEN
+    REWRITE_TAC[LT_REFL; SUB_REFL; LENGTH; LT_0; EL; HD]) in
+  let el_mid = prove
+   (`!(l:(A)list) x y r n. ~(n = LENGTH l)
+       ==> EL n (l ++ [x] ++ r) = EL n (l ++ [y] ++ r)`,
+    REPEAT STRIP_TAC THEN REWRITE_TAC[EL_APPEND] THEN
+    COND_CASES_TAC THEN REWRITE_TAC[LENGTH] THEN
+    SUBGOAL_THEN `~(n - LENGTH (l:(A)list) < SUC 0)` ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ASM_REWRITE_TAC[]]) in
+  let setupmb =
+    STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    FIRST_X_ASSUM (fun inv ->
+      if not (hd_is "bc_stack_ref_inv" (concl inv)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[bc_stack_ref_inv_def] inv)) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[ALL2]) THEN
+    SPLIT_ASM_TAC in
+  let the_ptr =
+    FIRST_X_ASSUM (fun vi ->
+      if not (hd_is "v_inv" (concl vi)) ||
+         not (hd_is "dataSem_RefPtr"
+           (el 1 (snd (strip_comb (concl vi)))))
+      then fail() else
+      MP_TAC (REWRITE_RULE[v_inv_def] vi)) THEN
+    ASM_REWRITE_TAC[ref_ptr_annot_def; distinctness "bvlSem_ref";
+                    injectivity "option"] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[distinctness "bvlSem_ref"; injectivity "option";
+                GSYM (distinctness "bvlSem_ref")] THEN
+    STRIP_TAC THEN SPLIT_ASM_TAC in
+  let subst_ptr =
+    FIRST_X_ASSUM (fun eq ->
+      if not (is_eq (concl eq)) ||
+         not (hd_is "gc_shared_Pointer" (lhs (concl eq))) then fail()
+      else MP_TAC (REWRITE_RULE[injectivity "heap_address"] eq)) THEN
+    STRIP_TAC THEN
+    FIRST_X_ASSUM (fun eq ->
+      if not (is_eq (concl eq)) || not (is_var (lhs (concl eq)))
+      then fail() else SUBST_ALL_TAC eq) in
+  let the_bri =
+    W(fun (asl,gl) ->
+      let old = grab_asm (fun th ->
+        is_forall (concl th) &&
+        can (find_term (hd_is "bc_ref_inv")) (concl th)) asl in
+      let inn = grab_asm (fun th ->
+        hd_is "IN" (concl th) &&
+        hd_is "FDOM" (rand (concl th))) asl in
+      let ptr = el 0 (snd (strip_comb (concl inn))) in
+      let spo = SPEC ptr old in
+      let lst = el 0 (snd (strip_comb (lhand (lhand (concl spo))))) in
+      let rp = rand (rator (rand lst)) in
+      SUBGOAL_THEN (lhand (lhand (concl spo)))
+        (fun rr -> ASSUME_TAC (MP spo (CONJ rr inn))) THENL
+       [REWRITE_TAC[reachable_refs_def] THEN
+        MAP_EVERY EXISTS_TAC [rp; ptr] THEN
+        REWRITE_TAC[MEM; get_refs_def] THEN MATCH_REDUCE_TAC THEN
+        REWRITE_TAC[MEM; CONJUNCT1 (SPEC_ALL RTC_RULES)];
+        ALL_TAC]) in
+  let open_bri =
+    W(fun (asl,gl) ->
+      let inn = grab_asm (fun th ->
+        hd_is "IN" (concl th) &&
+        hd_is "FDOM" (rand (concl th))) asl in
+      let ptr = el 0 (snd (strip_comb (concl inn))) in
+      let fm = rand (rand (concl inn)) in
+      SUBGOAL_THEN (mk_eq (list_mk_icomb "FLOOKUP" [fm; ptr],
+        list_mk_icomb "SOME" [list_mk_icomb "fmap_apply" [fm; ptr]]))
+        ASSUME_TAC THENL
+       [ASM_REWRITE_TAC[FLOOKUP_DEF]; ALL_TAC]) THEN
+    FIRST_X_ASSUM (fun bri ->
+      if not (hd_is "bc_ref_inv" (concl bri)) then fail() else
+      MP_TAC (REWRITE_RULE[bc_ref_inv_def] bri)) THEN
+    ASM_REWRITE_TAC[] THEN REDUCE_MATCH_HARD THEN
+    STRIP_TAC THEN SPLIT_ASM_TAC in
+  let mb_facts =
+    FIRST_X_ASSUM (fun eq ->
+      if not (is_eq (concl eq)) ||
+         not (hd_is "BlockRep" (lhs (concl eq))) then fail() else
+      SUBST_ALL_TAC (SYM (CONJUNCT1 (REWRITE_RULE[BlockRep_def;
+        injectivity "heap_element"] eq)))) THEN
+    W(fun (asl,gl) ->
+      let su = grab_asm (fun th ->
+        hd_is "SUBSET" (concl th) &&
+        can (find_term (hd_is "<")) (concl th)) asl in
+      let tf = rand (lhand (concl su)) in
+      SUBGOAL_THEN (mk_neg (list_mk_icomb "IN"
+        [`ts2:num`; list_mk_icomb "FDOM" [tf]])) ASSUME_TAC THENL
+       [MP_TAC su THEN REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN
+        DISCH_THEN (fun th -> MP_TAC (SPEC `ts2:num` th)) THEN
+        REWRITE_TAC[LT_REFL] THEN DISCH_THEN ACCEPT_TAC;
+        ALL_TAC]) THEN
+    W(fun (asl,gl) ->
+      let img = grab_asm (fun th ->
+        is_neg (concl th) && hd_is "IN" (rand (concl th)) &&
+        hd_is "IMAGE" (rand (rand (concl th)))) asl in
+      let x = lhand (rand (concl img)) in
+      let tf = rand (rand (rand (rand (concl img)))) in
+      SUBGOAL_THEN (mk_neg (list_mk_icomb "IN"
+        [x; list_mk_icomb "FRANGE" [tf]])) ASSUME_TAC THENL
+       [MP_TAC img THEN
+        REWRITE_TAC[FMAP_IN_FRANGE; IN_IMAGE] THEN MESON_TAC[];
+        ALL_TAC]) in
+  let mb_wit =
+    REWRITE_TAC[bc_stack_ref_inv_def] THEN
+    W(fun (asl,gl) ->
+      let inn = grab_asm (fun th ->
+        hd_is "IN" (concl th) &&
+        hd_is "FDOM" (rand (concl th))) asl in
+      let ptr = el 0 (snd (strip_comb (concl inn))) in
+      let fm = rand (rand (concl inn)) in
+      let su = grab_asm (fun th ->
+        hd_is "SUBSET" (concl th) &&
+        can (find_term (hd_is "<")) (concl th)) asl in
+      let tf = rand (lhand (concl su)) in
+      EXISTS_TAC fm THEN
+      EXISTS_TAC (list_mk_icomb "|+" [tf;
+        mk_pair (`ts2:num`, list_mk_icomb "fmap_apply" [fm; ptr])])) in
+  let mb_dom =
+    W(fun (asl,gl) ->
+      MP_TAC (grab_asm (fun th ->
+        hd_is "SUBSET" (concl th) &&
+        hd_is "domain" (rand (concl th))) asl)) THEN
+    REWRITE_TAC[domain_insert] THEN SET_TAC[] in
+  let mb_inj =
+    W(fun (asl,gl) ->
+      let inj = grab_asm (fun th ->
+        hd_is "INJ" (concl th) &&
+        rand (el 0 (snd (strip_comb (concl th)))) =
+          lhand (rand (el 0 (snd (strip_comb gl))))) asl in
+      let nts = grab_asm (fun th ->
+        is_neg (concl th) && hd_is "IN" (rand (concl th)) &&
+        hd_is "FDOM" (rand (rand (concl th)))) asl in
+      let nfr = grab_asm (fun th ->
+        is_neg (concl th) && hd_is "IN" (rand (concl th)) &&
+        hd_is "FRANGE" (rand (rand (concl th)))) asl in
+      let x = rand (rand (rand (el 0 (snd (strip_comb gl))))) in
+      SUBGOAL_THEN (list_mk_icomb "IN" [x; rand gl])
+        (fun isd -> MATCH_ACCEPT_TAC (MATCH_MP INJ_FUPDATE
+           (CONJ inj (CONJ nts (CONJ nfr isd))))) THEN
+      REWRITE_TAC[IN_ELIM_THM] THEN
+      W(fun (asl2,gl2) ->
+        let hl = the_hlmb asl2 in
+        ACCEPT_TAC (MATCH_MP isSome_lookup
+          (CONJ hl (is_data_el (rand (rhs (concl hl)))))))) in
+  let mb_below =
+    W(fun (asl,gl) ->
+      MP_TAC (grab_asm (fun th ->
+        hd_is "SUBSET" (concl th) &&
+        can (find_term (hd_is "<")) (concl th)) asl)) THEN
+    REWRITE_TAC[FDOM_FUPDATE; SUBSET; IN_INSERT; IN_ELIM_THM] THEN
+    DISCH_TAC THEN GEN_TAC THEN STRIP_TAC THEN
+    TRY (SOLVED (ASM_REWRITE_TAC[] THEN ARITH_TAC)) THEN
+    FIRST_X_ASSUM (fun th ->
+      if not (is_forall (concl th)) then fail() else
+      W(fun (asl2,gl2) -> MP_TAC (SPEC (lhand gl2) th))) THEN
+    ASM_REWRITE_TAC[] THEN ARITH_TAC in
+  let mb_unique =
+    W(fun (asl,gl) ->
+      let bu = grab_asm (fun th ->
+        hd_is "blocks_unique" (concl th)) asl in
+      let sub = MATCH_MP all_vs_MutBlock_T (the_lkmb asl) in
+      let tgt = list_mk_icomb "blocks_unique"
+        [el 0 (snd (strip_comb gl)); rand (concl sub)] in
+      let bu2 = PART_MATCH I (MATCH_MP blocks_unique_INSERT bu) tgt in
+      MATCH_ACCEPT_TAC (MATCH_MP blocks_unique_SUBSET
+        (CONJ bu2 sub))) in
+  let mb_tr asl th =
+    let lk = the_lkmb asl in
+    let nts = grab_asm (fun t ->
+      is_neg (concl t) && hd_is "IN" (rand (concl t)) &&
+      hd_is "FDOM" (rand (rand (concl t)))) asl in
+    let inn = the_inn asl in
+    let fv = rand (rand (concl inn)) in
+    let ptr = el 0 (snd (strip_comb (concl inn))) in
+    let x = list_mk_icomb "fmap_apply" [fv; ptr] in
+    let fu = SPEC x (MATCH_MP FUPDATE_SUBMAP nts) in
+    let ps = tparts (el 3 (snd (strip_comb (concl th)))) in
+    MATCH_MP v_inv_SUBMAP
+      (CONJ (ISPEC fv SUBMAP_REFL)
+        (CONJ fu (CONJ (ISPEC (el 3 ps) hsr_refl)
+          (SPEC `T` (MATCH_MP v_inv_MutBlock_fin (CONJ th lk)))))) in
+  let the_stackev asl =
+    grab_asm (fun th ->
+      hd_is "ALL2" (concl th) &&
+      (try
+        let pred = el 0 (snd (strip_comb (concl th))) in
+        let v,b1 = dest_abs pred in
+        let _,vtm = dest_abs b1 in
+        hd_is "v_inv" vtm && el 1 (snd (strip_comb vtm)) = v
+       with Failure _ -> false)) asl in
+  let the_payev asl =
+    grab_asm (fun th ->
+      hd_is "ALL2" (concl th) &&
+      (try
+        let pred = el 0 (snd (strip_comb (concl th))) in
+        let _,b1 = dest_abs pred in
+        let x,vtm = dest_abs b1 in
+        hd_is "v_inv" vtm && el 1 (snd (strip_comb vtm)) = x
+       with Failure _ -> false)) asl in
+  let mb_payload =
+    REWRITE_TAC[LIST_REL_EL_EQN] THEN
+    CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+    CONJ_TAC THENL
+     [W(fun (asl,gl) ->
+        MP_TAC (MATCH_MP LIST_REL_LENGTH (the_payev asl))) THEN
+      REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ARITH_TAC;
+      GEN_TAC THEN DISCH_TAC THEN
+      W(fun (asl,gl) ->
+        let el1 = el 1 (snd (strip_comb gl)) in
+        ASM_CASES_TAC (mk_eq (lhand el1,
+          list_mk_icomb "LENGTH" [lhand (rand el1)]))) THENL
+       [(* the value that was written *)
+        ASM_REWRITE_TAC[el_mid_at] THEN
+        W(fun (asl,gl) ->
+          let vres = grab_asm (fun th ->
+            hd_is "v_inv" (concl th) &&
+            el 1 (snd (strip_comb (concl th))) =
+              el 1 (snd (strip_comb gl))) asl in
+          MATCH_ACCEPT_TAC (mb_tr asl vres));
+        (* and the ones that were there *)
+        W(fun (asl,gl) ->
+          let pev = the_payev asl in
+          let el1 = el 1 (snd (strip_comb gl)) in
+          let n = lhand el1 in
+          let lst = rand el1 in
+          let res = lhand (lhand (rand lst)) in
+          let right = rand (rand lst) in
+          let ne = grab_asm (fun th ->
+            is_neg (concl th) && is_eq (rand (concl th)) &&
+            lhand (rand (concl th)) = n) asl in
+          let eqs = CONJUNCTS (CONV_RULE (TOP_DEPTH_CONV BETA_CONV)
+            (REWRITE_RULE[LIST_REL_EL_EQN] pev)) in
+          let sp = SPEC n (el 1 eqs) in
+          let cen = lhand (lhand (rand (rand (el 1 (snd (strip_comb
+                      (rand (concl sp)))))))) in
+          let swap = SPECL [cen; res; right] (MATCH_MP el_mid ne) in
+          SUBGOAL_THEN (lhand (concl sp))
+            (fun lt -> MATCH_ACCEPT_TAC
+               (mb_tr asl (SUBS [swap] (MP sp lt)))) THEN
+          MP_TAC (MATCH_MP LIST_REL_LENGTH pev) THEN
+          W(fun (asl2,gl2) ->
+            MP_TAC (grab_asm (fun th ->
+              hd_is "<" (concl th)) asl2)) THEN
+          REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ARITH_TAC)]] in
+  let mb_stack =
+    REWRITE_TAC[ALL2] THEN
+    CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+    CONJ_TAC THENL
+     [(* the block of the step, which is no empty one *)
+      REWRITE_TAC[v_inv_def] THEN COND_CASES_TAC THENL
+       [FIRST_X_ASSUM MP_TAC THEN
+        REWRITE_TAC[APPEND_EQ_NIL; APPEND; NOT_CONS_NIL];
+        ALL_TAC] THEN
+      W(fun (asl,gl) ->
+        let hl = the_hlmb asl in
+        MAP_EVERY EXISTS_TAC
+          [lhand (lhs (concl hl)); rand (rand (rhs (concl hl)))]) THEN
+      REWRITE_TAC[FLOOKUP_UPDATE] THEN
+      REPEAT CONJ_TAC THEN
+      TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+      (* the words of the pointer count the payload *)
+      TRY (SOLVED
+            (W(fun (asl,gl) ->
+               MP_TAC (MATCH_MP LIST_REL_LENGTH (the_payev asl))) THEN
+             REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN
+             DISCH_THEN (fun th -> REWRITE_TAC[th]) THEN
+             REWRITE_TAC[injectivity "heap_address";
+                         injectivity "word_loc"] THEN
+             AP_TERM_TAC THEN ARITH_TAC)) THEN
+      mb_payload;
+      (* and the values of the stack *)
+      W(fun (asl,gl) ->
+        let ev = the_stackev asl in
+        let pred = el 0 (snd (strip_comb (concl ev))) in
+        let v,b1 = dest_abs pred in
+        let x,vtm = dest_abs b1 in
+        MATCH_ACCEPT_TAC (MATCH_MP EVERY2_v_inv_alloc_stack
+          (CONJ (GENL [v; x] (DISCH vtm (mb_tr asl (ASSUME vtm))))
+            ev)))] in
+  let the_fr asl =
+    grab_asm (fun th -> hd_is "find_ref" (concl th)) asl in
+  let the_lk fr asl =
+    grab_asm (fun th ->
+      is_eq (concl th) &&
+      hd_is "sptree_lookup" (lhs (concl th)) &&
+      hd_is "SOME" (rhs (concl th)) &&
+      rand (rhs (concl th)) = lhand (concl fr)) asl in
+  let the_mb asl =
+    grab_asm (fun th ->
+      is_eq (concl th) &&
+      hd_is "sptree_lookup" (lhs (concl th)) &&
+      hd_is "SOME" (rhs (concl th)) &&
+      hd_is "bvlSem_MutBlock" (rand (rhs (concl th)))) asl in
+  let the_vt asl =
+    grab_asm (fun th ->
+      hd_is "MEM" (concl th) &&
+      hd_is "v_all_ts" (rand (concl th))) asl in
+  let allts_ref =
+    W(fun (asl,_) ->
+      let fr = the_fr asl in
+      let lk = the_lk fr asl in
+      let n = lhand (lhs (concl lk)) in
+      EXISTS_TAC (rand (concl fr)) THEN
+      (CONJ_TAC THENL
+        [DISJ1_TAC THEN EXISTS_TAC n THEN
+         ASM_CASES_TAC (mk_eq (n, `ptr:num`)) THENL
+          [(* the block of the new refs, taken from the goal: a block
+              written out here would have a type variable of its own *)
+           W(fun (_,gl) ->
+             EXISTS_TAC (lhand (rand (lhs (lhand
+               (snd (dest_exists gl))))))) THEN
+           ASM_REWRITE_TAC[lookup_insert; find_ref_def] THEN
+           MATCH_REDUCE_TAC THEN
+           (* the value of the reference is the payload of the block
+              of the old refs, which is the payload of the new one *)
+           W(fun (asl2,_) ->
+             let mb = the_mb asl2 in
+             let np = grab_asm (fun th ->
+               concl th = mk_eq (n, `ptr:num`)) asl2 in
+             let req = REWRITE_RULE[injectivity "option"]
+                         (TRANS (SYM (SUBS [np] lk)) mb) in
+             MP_TAC (SUBS [req] fr)) THEN
+           REWRITE_TAC[find_ref_def] THEN MATCH_REDUCE_TAC THEN
+           DISCH_THEN ACCEPT_TAC;
+           EXISTS_TAC (rand (rhs (concl lk))) THEN
+           ASM_REWRITE_TAC[lookup_insert]];
+         FIRST_ASSUM ACCEPT_TAC])) in
+  let allts_res =
+    W(fun (_,gl) ->
+      EXISTS_TAC
+        (rand (lhand (rand (lhand (snd (dest_exists gl))))))) THEN
+    CONJ_TAC THENL
+     [DISJ2_TAC THEN REWRITE_TAC[MEM];
+      GEN_REWRITE_TAC RAND_CONV [v_all_ts_def] THEN
+      MATCH_REDUCE_TAC THEN
+      REWRITE_TAC[MEM; MEM_FLAT; MEM_MAP] THEN
+      DISJ2_TAC THEN
+      W(fun (asl,_) ->
+        let vt = the_vt asl in
+        EXISTS_TAC (rand (concl vt)) THEN
+        (CONJ_TAC THENL
+          [EXISTS_TAC (rand (rand (concl vt))) THEN
+           ASM_REWRITE_TAC[MEM_APPEND; MEM];
+           FIRST_ASSUM ACCEPT_TAC]))] in
+  let allts_ptr =
+    FIRST_X_ASSUM (fun eq ->
+      if not (is_eq (concl eq)) then fail() else
+      SUBST_ALL_TAC eq) THEN
+    FIRST_X_ASSUM (fun vt ->
+      if not (hd_is "MEM" (concl vt)) ||
+         not (hd_is "v_all_ts" (rand (concl vt))) then fail()
+      else MP_TAC vt) THEN
+    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [v_all_ts_def] THEN
+    MATCH_REDUCE_TAC THEN REWRITE_TAC[MEM] in
+  let allts_var =
+    W(fun (asl,_) ->
+      let vt = the_vt asl in
+      EXISTS_TAC (rand (rand (concl vt)))) THEN
+    CONJ_TAC THENL
+     [DISJ2_TAC THEN ASM_REWRITE_TAC[MEM];
+      FIRST_ASSUM ACCEPT_TAC] in
+  let allts_cases =
+    MATCH_MP_TAC all_ts_SUBSET_ts THEN
+    REPEAT GEN_TAC THEN REWRITE_TAC[MEM] THEN STRIP_TAC THEN
+    SPLIT_ASM_TAC THEN
+    FIRST [SOLVED allts_ref; SOLVED allts_res; SOLVED allts_ptr;
+           SOLVED allts_var] in
+  let mb_allts =
+    REWRITE_TAC[SUBSET; FDOM_FUPDATE; IN_INSERT] THEN
+    GEN_TAC THEN
+    DISCH_THEN (DISJ_CASES_THEN2 SUBST1_TAC ASSUME_TAC) THENL
+     [(* the timestamp of this block is its own *)
+      REWRITE_TAC[all_ts_def] THEN
+      CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+      REWRITE_TAC[IN_ELIM_THM] THEN
+      W(fun (_,gl) ->
+        EXISTS_TAC (lhand (rand (rand (lhand
+          (snd (dest_exists gl))))))) THEN
+      CONJ_TAC THENL
+       [DISJ2_TAC THEN REWRITE_TAC[MEM];
+        GEN_REWRITE_TAC RAND_CONV [v_all_ts_def] THEN
+        MATCH_REDUCE_TAC THEN REWRITE_TAC[MEM]];
+      (* and the others were timestamps of the old refs and stack *)
+      W(fun (asl,gl) ->
+        let su = grab_asm (fun th ->
+          hd_is "SUBSET" (concl th) &&
+          hd_is "all_ts" (rand (concl th))) asl in
+        let inx = grab_asm (fun th ->
+          hd_is "IN" (concl th) &&
+          hd_is "FDOM" (rand (concl th)) &&
+          lhand (concl th) = lhand gl) asl in
+        let old = MP (SPEC (lhand gl) (REWRITE_RULE[SUBSET] su)) inx in
+        SUBGOAL_THEN (list_mk_icomb "SUBSET"
+          [rand (concl su); rand gl])
+          (fun sub -> ACCEPT_TAC (MP
+             (SPEC (lhand gl) (REWRITE_RULE[SUBSET] sub)) old))) THEN
+      allts_cases] in
+  let the_big asl =
+    grab_asm (fun th ->
+      is_forall (concl th) &&
+      (let b = snd (strip_forall (concl th)) in
+       is_imp b && hd_is "bc_ref_inv" (rand b))) asl in
+  let the_nin n asl =
+    grab_asm (fun th ->
+      hd_is "IN" (concl th) &&
+      hd_is "FDOM" (rand (concl th)) &&
+      lhand (concl th) = n) asl in
+  let the_mbF asl =
+    grab_asm (fun th ->
+      is_eq (concl th) && hd_is "sptree_lookup" (lhs (concl th)) &&
+      hd_is "SOME" (rhs (concl th)) &&
+      hd_is "bvlSem_MutBlock" (rand (rhs (concl th))) &&
+      el 1 (snd (strip_comb (rand (rhs (concl th))))) = `F`) asl in
+  let the_innp lk asl =
+    grab_asm (fun th ->
+      hd_is "IN" (concl th) && hd_is "FDOM" (rand (concl th)) &&
+      lhand (concl th) = lhand (lhs (concl lk))) asl in
+  let mb_tr9 asl th =
+    let lk = the_mbF asl in
+    let nts = grab_asm (fun t ->
+      is_neg (concl t) && hd_is "IN" (rand (concl t)) &&
+      hd_is "FDOM" (rand (rand (concl t)))) asl in
+    let inn = the_innp lk asl in
+    let fv = rand (rand (concl inn)) in
+    let p = lhand (concl inn) in
+    let x = list_mk_icomb "fmap_apply" [fv; p] in
+    let fu = SPEC x (MATCH_MP FUPDATE_SUBMAP nts) in
+    let ps = tparts (el 3 (snd (strip_comb (concl th)))) in
+    MATCH_MP v_inv_SUBMAP
+      (CONJ (ISPEC fv SUBMAP_REFL)
+        (CONJ fu (CONJ (ISPEC (el 3 ps) hsr_refl)
+          (SPEC `T` (MATCH_MP v_inv_MutBlock_fin (CONJ th lk)))))) in
+  let image_fupd = prove
+   (`!(tf:(A,B)fmap) k v x.
+       ~(x = v) /\ ~(x IN IMAGE (FAPPLY tf) (FDOM tf))
+       ==> ~(x IN IMAGE (FAPPLY (tf |+ (k,v))) (FDOM (tf |+ (k,v))))`,
+    REWRITE_TAC[IN_IMAGE; FDOM_FUPDATE; IN_INSERT; FAPPLY_FUPDATE_THM;
+                NOT_EXISTS_THM; DE_MORGAN_THM] THEN
+    REPEAT GEN_TAC THEN STRIP_TAC THEN X_GEN_TAC `y:A` THEN
+    ASM_CASES_TAC `(y:A) = k` THEN ASM_REWRITE_TAC[] THEN
+    ASM_MESON_TAC[]) in
+  let r9_same = DISCH_THEN ACCEPT_TAC in
+  let r9_thunk =
+    STRIP_TAC THEN
+    W(fun (asl,_) ->
+      let hl = grab_asm (fun th ->
+        is_eq (concl th) && hd_is "heap_lookup" (lhs (concl th))) asl in
+      EXISTS_TAC (rand (rand (rhs (concl hl))))) THEN
+    REPEAT CONJ_TAC THENL
+     [FIRST_ASSUM ACCEPT_TAC;
+      W(fun (asl,_) ->
+        REWRITE_TAC[MATCH_MP dest_thunk_insert_MutBlock
+                      (the_mbF asl)]) THEN
+      FIRST_ASSUM ACCEPT_TAC;
+      W(fun (asl,_) ->
+        let vi = grab_asm (fun th -> hd_is "v_inv" (concl th)) asl in
+        MATCH_ACCEPT_TAC (mb_tr9 asl vi))] in
+  let r9_blk =
+    W(fun (asl,gl) ->
+      let l = el 2 (snd (strip_comb (rand (snd (dest_exists gl))))) in
+      let ev = grab_asm (fun th ->
+        hd_is "ALL2" (concl th) &&
+        el 2 (snd (strip_comb (concl th))) = l) asl in
+      let pred = el 0 (snd (strip_comb (concl ev))) in
+      let z,b1 = dest_abs pred in
+      let y,vtm = dest_abs b1 in
+      EXISTS_TAC (el 1 (snd (strip_comb (concl ev)))) THEN
+      (CONJ_TAC THENL
+        [FIRST_ASSUM ACCEPT_TAC;
+         MATCH_ACCEPT_TAC (MATCH_MP EVERY2_v_inv_alloc
+           (CONJ (GENL [y; z] (DISCH vtm (mb_tr9 asl (ASSUME vtm))))
+             ev))])) in
+  let r9_va = STRIP_TAC THEN r9_blk in
+  let r9_mb =
+    STRIP_TAC THEN
+    CONJ_TAC THENL
+     [W(fun (asl,_) ->
+        let lk = the_mbF asl in
+        let p = lhand (lhs (concl lk)) in
+        let inn = the_innp lk asl in
+        let fv = rand (rand (concl inn)) in
+        let nin = grab_asm (fun th ->
+          hd_is "IN" (concl th) && rand (concl th) = rand (concl inn) &&
+          not (lhand (concl th) = p)) asl in
+        let n = lhand (concl nin) in
+        let np = grab_asm (fun th ->
+          is_neg (concl th) && is_eq (rand (concl th)) &&
+          lhand (rand (concl th)) = n &&
+          rand (rand (concl th)) = p) asl in
+        let inj = REWRITE_RULE[INJ]
+          (grab_asm (fun th -> hd_is "INJ" (concl th) &&
+             rand (el 0 (snd (strip_comb (concl th)))) = fv) asl) in
+        let imp0 = SPECL [n; p] (CONJUNCT2 inj) in
+        let eqt = rand (rand (lhand (concl imp0))) in
+        let imp = DISCH eqt
+                    (MP imp0 (CONJ nin (CONJ inn (ASSUME eqt)))) in
+        let ne = MP (MATCH_MP
+                       (TAUT `(a ==> b) ==> ~b ==> ~a`) imp) np in
+        let old = grab_asm (fun th ->
+          is_imp (concl th) && is_neg (rand (concl th)) &&
+          hd_is "IN" (rand (rand (concl th))) &&
+          hd_is "IMAGE" (rand (rand (rand (concl th))))) asl in
+        DISCH_THEN (fun nf -> MATCH_ACCEPT_TAC
+          (MATCH_MP image_fupd (CONJ ne (MP old nf)))));
+      r9_blk] in
+  let mb_ref9 =
+    REPEAT STRIP_TAC THEN
+    (* the key is reachable in the old refs and stack, so the old
+       invariant has it *)
+    W(fun (asl,gl) ->
+      let n = el 1 (snd (strip_comb gl)) in
+      let rr = grab_asm (fun th ->
+        hd_is "reachable_refs" (concl th)) asl in
+      let lkp = the_lkmb asl in
+      let nin = the_nin n asl in
+      let old = MP (SPEC n (the_big asl))
+                   (CONJ (MATCH_MP reachable_refs_MutBlock_T
+                            (CONJ lkp rr)) nin) in
+      let fl = REWRITE_RULE[nin]
+                 (ISPECL [rand (rand (concl nin)); n] FLOOKUP_DEF) in
+      MP_TAC (REWRITE_RULE[fl] (ONCE_REWRITE_RULE[bc_ref_inv_def] old))
+        THEN
+      ONCE_REWRITE_TAC[bc_ref_inv_def] THEN
+      REWRITE_TAC[fl] THEN
+      ASM_CASES_TAC (mk_eq (n, `ptr:num`))) THENL
+     [(* the block that was finalised: the same payload, and nothing
+         to prove about the timestamps of a finalised one *)
+      FIRST_ASSUM (fun np -> REWRITE_TAC[np]) THEN
+      ASM_REWRITE_TAC[lookup_insert] THEN MATCH_REDUCE_TAC THEN
+      STRIP_TAC THEN r9_blk;
+      (* and a reference that the insert did not touch: a ByteArray
+         says nothing about the refs, and the values of the others go
+         over one by one *)
+      ASM_REWRITE_TAC[lookup_insert] THEN
+      W(fun (asl,_) ->
+        let lkp = the_mbF asl in
+        let p = lhand (lhs (concl lkp)) in
+        let np = grab_asm (fun th ->
+          is_neg (concl th) && is_eq (rand (concl th)) &&
+          rand (rand (concl th)) = p) asl in
+        let n = lhand (rand (concl np)) in
+        NAMED_CASES_TAC (subst [n, p] (lhs (concl lkp)))
+          [[]; ["rv"]]) THEN
+      TRY (CASES_ON_NAME "rv") THEN
+      TRY MATCH_REDUCE_TAC THEN
+      FIRST [SOLVED r9_same; SOLVED r9_va; SOLVED r9_thunk;
+             SOLVED r9_mb]] in
+  setupmb THEN the_ptr THEN subst_ptr THEN the_bri THEN
+  open_bri THEN mb_facts THEN
+  (mb_wit THEN REPEAT CONJ_TAC THENL
+    [FIRST_ASSUM ACCEPT_TAC; mb_dom; mb_inj; mb_allts; mb_below;
+     FIRST_ASSUM ACCEPT_TAC; mb_unique; mb_stack; mb_ref9])))
 ### bc_stack_ref_inv_FinaliseCons_lemma
 (* the induction of the source is the one of the definition
    (finalise_cons_ind), which the port does not have, so the proof
