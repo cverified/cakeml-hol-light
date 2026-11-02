@@ -1126,6 +1126,10 @@ TERMINATION = {
   # admissibility of the three whose call is under an OPTION_BIND
   # as well (AGREE_TAC proves the step of the measure with
   # TERM_TAC again)
+  # v_same_type recurses under a LIST_REL, whose admissibility the
+  # library layer has no proforma of: with the one of EXTRA_BEFORE
+  # registered, the measure of the source leaves nothing over
+  ('data_to_word_memoryProof', 'v_same_type_def'): 'TERM_TAC',
   ('data_to_word_memoryProof', 'word_cmp_loop_def'): 'TERM_TAC',
   ('data_to_word_memoryProof', 'word_copy_fwd_def'): 'TERM_TAC',
   ('data_to_word_memoryProof', 'word_copy_bwd_def'): 'TERM_TAC',
@@ -2396,6 +2400,55 @@ let bignum_pre =
   REWRITE_TAC[injectivity "heap_element"; PAIR_EQ] THEN
   DISCH_THEN (fun th -> REWRITE_TAC[GSYM th]) THEN
   REWRITE_TAC[LENGTH_MAP];;
+""",
+
+  ('data_to_word_memoryProof', 'v_same_type_def'): r"""
+
+(* the port's own: the admissibility of a recursive call under a
+   LIST_REL, which the library layer has the proformas of a MAP, of
+   an ALL and of an EX of but not this one.  Two functions that
+   agree on the members of the two lists give the same LIST_REL, so
+   a call under it is admissible, and with the proforma registered
+   cake_define makes the definition below with the measure that the
+   source gives.  (The other proformas stand in ml/lib/fastdef.ml;
+   this one stands here because the library layer is changed in
+   batches, when a file is finished.) *)
+
+let ALL2_EQ_MEM = prove
+ (`!l1 l2 (f:A->B->bool) g.
+     (!x y. MEM x l1 /\ MEM y l2 ==> (f x y <=> g x y))
+     ==> (ALL2 f l1 l2 <=> ALL2 g l1 l2)`,
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN
+   STRUCT_CASES_TAC (ISPEC `l2:(B)list` list_CASES) THEN
+   REWRITE_TAC[ALL2_DEF; MEM; NOT_CONS_NIL; HD; TL] THEN
+   REPEAT GEN_TAC THEN DISCH_TAC THEN
+   BINOP_TAC THENL
+    [FIRST_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[];
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+     ASM_REWRITE_TAC[]]));;
+
+let ADMISSIBLE_ALL2 = prove
+ (`!(<<) p s (h:(A->B)->P->C->D->bool) l1 l2.
+     admissible(<<) p s l1 /\ admissible(<<) p s l2 /\
+     admissible (<<)
+       (\f ((y,z),x). p f x /\ MEM y (l1 f x) /\ MEM z (l2 f x))
+       (\((y,z),x). s x) (\f ((y,z),x). h f x y z)
+     ==> admissible (<<) p s
+           (\f:A->B x:P. ALL2 (h f x) (l1 f x) (l2 f x))`,
+  (REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN
+   REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC(MESON[]
+     `x = y /\ u = v /\ (ALL2 ff x u <=> ALL2 gg x u)
+      ==> (ALL2 (ff:C->D->bool) x u <=> ALL2 gg y v)`) THEN
+   REPEAT CONJ_TAC THENL
+    [ASM_MESON_TAC[]; ASM_MESON_TAC[]; ALL_TAC] THEN
+   MATCH_MP_TAC ALL2_EQ_MEM THEN
+   REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[FORALL_PAIR_THM] THEN ASM_MESON_TAC[]));;
+
+let _ = admissible_extra :=
+  ("ALL2",ADMISSIBLE_ALL2) :: (!admissible_extra);;
 """,
 
   ('data_to_word_memoryProof', 'word_copy_fwd_thm'): r"""

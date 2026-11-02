@@ -41463,14 +41463,58 @@ let memory_rel_Number_cmp = prove
 
 (* HOL4 data_to_word_memoryProofScript.sml:13246: ML code, not ported *)
 
+(* the port's own: the admissibility of a recursive call under a
+   LIST_REL, which the library layer has the proformas of a MAP, of
+   an ALL and of an EX of but not this one.  Two functions that
+   agree on the members of the two lists give the same LIST_REL, so
+   a call under it is admissible, and with the proforma registered
+   cake_define makes the definition below with the measure that the
+   source gives.  (The other proformas stand in ml/lib/fastdef.ml;
+   this one stands here because the library layer is changed in
+   batches, when a file is finished.) *)
+
+let ALL2_EQ_MEM = prove
+ (`!l1 l2 (f:A->B->bool) g.
+     (!x y. MEM x l1 /\ MEM y l2 ==> (f x y <=> g x y))
+     ==> (ALL2 f l1 l2 <=> ALL2 g l1 l2)`,
+  (LIST_INDUCT_TAC THEN GEN_TAC THEN
+   STRUCT_CASES_TAC (ISPEC `l2:(B)list` list_CASES) THEN
+   REWRITE_TAC[ALL2_DEF; MEM; NOT_CONS_NIL; HD; TL] THEN
+   REPEAT GEN_TAC THEN DISCH_TAC THEN
+   BINOP_TAC THENL
+    [FIRST_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[];
+     FIRST_X_ASSUM MATCH_MP_TAC THEN
+     REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
+     ASM_REWRITE_TAC[]]));;
+
+let ADMISSIBLE_ALL2 = prove
+ (`!(<<) p s (h:(A->B)->P->C->D->bool) l1 l2.
+     admissible(<<) p s l1 /\ admissible(<<) p s l2 /\
+     admissible (<<)
+       (\f ((y,z),x). p f x /\ MEM y (l1 f x) /\ MEM z (l2 f x))
+       (\((y,z),x). s x) (\f ((y,z),x). h f x y z)
+     ==> admissible (<<) p s
+           (\f:A->B x:P. ALL2 (h f x) (l1 f x) (l2 f x))`,
+  (REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN
+   REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC(MESON[]
+     `x = y /\ u = v /\ (ALL2 ff x u <=> ALL2 gg x u)
+      ==> (ALL2 (ff:C->D->bool) x u <=> ALL2 gg y v)`) THEN
+   REPEAT CONJ_TAC THENL
+    [ASM_MESON_TAC[]; ASM_MESON_TAC[]; ALL_TAC] THEN
+   MATCH_MP_TAC ALL2_EQ_MEM THEN
+   REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+   ASM_REWRITE_TAC[FORALL_PAIR_THM] THEN ASM_MESON_TAC[]));;
+
+let _ = admissible_extra :=
+  ("ALL2",ADMISSIBLE_ALL2) :: (!admissible_extra);;
+
 let _ = size_thms "dataSem_v";;
 (* HOL4 data_to_word_memoryProofScript.sml:13255-13261: the tactic
    that proves the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 let v_same_type_def = cake_define_try_tac (fun () ->
   `MEASURE (dataSem_v_size o FST)`)
-  CHEAT_TAC
+  TERM_TAC
   `v_same_type x1 x2 =
         match (x1,x2) with
           ((Number _70:dataSem_v),(Number _71:dataSem_v)) -> T
