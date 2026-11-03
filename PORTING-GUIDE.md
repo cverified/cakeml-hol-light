@@ -4468,3 +4468,80 @@ COND_CASES_TAC THEN
 W(fun (asl,gl) -> MAP_EVERY MP_TAC (int_facts asl)) THEN
 INT_ARITH_TAC
 ```
+
+## 98. The name a term is printed with is not its constant
+
+`hd_is` tests the *constant's* name, and three of the names this
+file prints are not constant names at all:
+
+| printed      | constant       |
+|--------------|----------------|
+| `EVERY2`     | `ALL2`         |
+| `FAPPLY f x` | `fmap_apply`   |
+| `LIST_REL`   | `ALL2`         |
+
+So `hd_is "EVERY2" gl` is false of every goal, and a dispatch
+over the parts of an invariant that asks it takes the wrong arm
+without a word (the `tryfind` of a `FIRST_ASSUM` at the end of
+the chain is all that is seen).  `fst (dest_const (fst (strip_comb
+t)))` in the REPL settles what the name is.
+
+The same for a term that is *built*: `` mk_icomb (`FAPPLY`, fm) ``
+fails with `type_match`, because a bare `` `FAPPLY` `` is a
+constant of another theory (`:'a word -> num -> bool`) and not
+the map application at all.  What builds it is
+`list_mk_icomb "fmap_apply" [fm; x]`.  `` `FDOM` `` is a constant
+of its own name and does work that way.
+
+## 99. Four ways an instantiation of a lemma fails
+
+A proof of this file hands a lemma its hypotheses as a theorem
+and takes the conclusion; four things go wrong there, and each
+has its own error:
+
+- `Failure "SPEC"` / `"SPECL"`: the lemma's type variables are
+  not the goal's.  `SPEC` and `SPECL` do not instantiate a type,
+  so a lemma of the file (whose word type is a variable of the
+  file) needs `ISPEC` or `ISPECL`.  `ISPECL` reports the failure
+  of its own `SPECL`, so the message names `SPECL` either way.
+- `Failure "MATCH_MP: No match"` where the two terms *print* the
+  same: a type variable that the lemma does not pin down.  Here
+  `list_to_BlockReps` has the type `... -> (('a word_loc,tag#'b
+  list)heap_element)list`, with `'b` free, so an `ISPECL` of
+  `bind_each_isSomeDataElement` leaves `'b` uninstantiated and
+  the term it builds has two incompatible element types in it.
+  `INST_TYPE (type_match (type_of <the blocks of the instance>)
+  (type_of <the blocks of the goal>) [])` puts it right; printing
+  with `print_types_of_subterms := 2` is what shows it.
+- a `MATCH_MP` whose result is a `!`: `MATCH_MP th1 th2` moves
+  the variables of `th1` that its *hypothesis* does not mention
+  into the conclusion as `!`s, so `MATCH_MP bind_each_SUBMAP lim`
+  is `|- !n k i. tf SUBMAP bind_each tf ts k i n` and does not
+  fit the `tf SUBMAP tf1` of `v_inv_SUBMAP`.  `SPEC_ALL` of it
+  does, and `MATCH_ACCEPT_TAC` then reads `k`, `i` and `n` off
+  the goal.
+- a `MATCH_MP_TAC` whose goal is a `?`: the mirror image.  A
+  lemma whose hypothesis names what its conclusion does not
+  (`unused_nodata_k`, with the start of the space as a variable
+  `k`) leaves `?k. ...`, and the step after it is `EXISTS_TAC`.
+
+## 100. A diagnostic run prints the goal, not a cut of it
+
+The harness cuts a goal to one line, which is unreadable for a
+goal of this size, and prints every type.  One run of the attempt
+with
+
+```
+W(fun (asl,gl) ->
+  let pt = !print_types_of_subterms in
+  print_types_of_subterms := 0;
+  say ("\nBL ------\n" ^ string_of_term gl ^ "\n");
+  print_types_of_subterms := pt;
+  ALL_TAC)
+```
+
+in the place of the diagnostic, and a second with the same over
+`asl`, gives the goal and its thirty-odd assumptions as a reader
+sees them, and after that every grab in the proof can be written
+from the text instead of guessed at.  (`let o = ...` does not
+parse: `o` is an infix of HOL Light.)

@@ -41344,19 +41344,1287 @@
       with Failure _ -> false) in
     MATCH_ACCEPT_TAC (MATCH_MP ih (CONJ ne (CONJ ar fd1)))))
 ### cons_multi_thm
-  (* the attempt: the proof of the source names abs_ml_inv_def,
-     bc_stack_ref_inv_def, LIST_REL_SPLIT1, LIST_REL_LENGTH,
-     unused_space_inv_def, heap_lookup_SPLIT.  What is here rewrites
-     with them and closes by arithmetic, and the cheat is behind it
-     until the proof is written.  A MESON over them is what the next
-     round adds; it costs a load ten minutes to have it in every
-     attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[abs_ml_inv_def; bc_stack_ref_inv_def;
-       LIST_REL_SPLIT1; LIST_REL_LENGTH; unused_space_inv_def;
-       heap_lookup_SPLIT] THEN
-     TRY ASM_ARITH_TAC))
+(* the invariant of the heap that the blocks of a cons chain were
+   written into.  The proof of the source takes the invariant
+   apart, splits the roots of the values off the roots of the
+   stack (LIST_REL_SPLIT1) and reads the space off the heap
+   (heap_lookup_SPLIT), which gives the witnesses -- the heap
+   below the space, the addresses of the values, and the roots of
+   the stack -- and leaves the five parts of the invariant.
+     roots_ok: a root is the pointer to the blocks, which point at
+   data elements of themselves, or a root of the stack, which the
+   new heap holds where the old one held it.
+     unused_space_inv: the space that the blocks left starts where
+   they end, its room is inside the heap, and below it the heap is
+   all data.
+     heap_ok: the blocks hold no forward pointer, and their
+   pointers go to the blocks themselves or to the values.
+     gc_kind_inv: the simple kind asks that the refs stay above
+   the space, which they do because the blocks are no refs, and
+   the generational one that the generations start where they
+   started.
+     bc_stack_ref_inv: the maps are the one of the refs and the
+   one of the timestamps with the ones of the blocks added
+   (bind_each).  The new heap holds a data element wherever the
+   old one did (inj_store_rel), a new timestamp goes to a block of
+   its own (bind_each_isSomeDataElement) and the blocks lie in the
+   space, where the old heap held none (bind_each_nodata), which
+   is why the injections hold (inj_bind_each); the timestamps are
+   the ones of the stack with the list on it
+   (all_ts_SUBSET_list_to_v, new_all_ts_SUBSET_list_to_v) and
+   below the new count (FDOM_bind_each_lemma); the first root is
+   the value of the list (v_inv_list_to_v_lem) and the others are
+   the roots of the stack over the greater map and heap
+   (v_inv_SUBMAP); and a ref that the list reaches is one that its
+   values or the stack reach (reachable_list_to_v), so
+   bc_ref_inv_step carries the invariant of the refs over *)
+  ((* HOL4's INJ_SUBSET: an injection keeps its domain and widens its
+     codomain *)
+  let INJ_SUBSET = prove
+   (`!(g:A->B) s t s2 t2.
+       INJ g s t /\ s2 SUBSET s /\ t SUBSET t2 ==> INJ g s2 t2`,
+    REWRITE_TAC[INJ; SUBSET] THEN MESON_TAC[]) in
+  (* a heap that keeps its data elements keeps the codomain of the
+     injections of the invariant *)
+  let isde_SUBSET = prove
+   (`!(heap:((A,B) heap_element) list) heap2.
+       heap_store_rel heap heap2
+       ==> {m | isSomeDataElement (heap_lookup m heap)} SUBSET
+           {m | isSomeDataElement (heap_lookup m heap2)}`,
+    REWRITE_TAC[heap_store_rel_def; SUBSET; IN_ELIM_THM] THEN
+    MESON_TAC[]) in
+  (* so an injection into the old heap is one into the new one *)
+  let inj_store_rel = prove
+   (`!(g:C->num) s (heap:((A,B) heap_element) list) heap2.
+       heap_store_rel heap heap2 /\
+       INJ g s {m | isSomeDataElement (heap_lookup m heap)}
+       ==> INJ g s {m | isSomeDataElement (heap_lookup m heap2)}`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    W(fun (asl,gl) ->
+      let hsr = grab_asm (fun th ->
+        hd_is "heap_store_rel" (concl th)) asl in
+      let inj = grab_asm (fun th -> hd_is "INJ" (concl th)) asl in
+      MATCH_MP_TAC INJ_SUBSET THEN
+      MAP_EVERY EXISTS_TAC
+        [lhand (concl inj); rand (concl inj)] THEN
+      REWRITE_TAC[SUBSET_REFL] THEN CONJ_TAC THENL
+       [ACCEPT_TAC inj; ACCEPT_TAC (MATCH_MP isde_SUBSET hsr)])) in
+  (* nothing in the unused space of a heap is a data element *)
+  let unused_nodata = prove
+   (`!(ha:((A,B) heap_element) list) n hb m.
+       heap_length ha <= m /\ m < heap_length ha + n
+       ==> ~isSomeDataElement
+             (heap_lookup m (ha ++ heap_expand n ++ hb))`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `~(n = 0)` ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    ASM_SIMP_TAC[heap_lookup_APPEND1; heap_expand_def; APPEND] THEN
+    ONCE_REWRITE_TAC[heap_lookup_def] THEN
+    REWRITE_TAC[el_length_def] THEN
+    SUBGOAL_THEN `m - heap_length (ha:((A,B) heap_element) list) <
+                  (n - 1) + 1` (fun th -> REWRITE_TAC[th]) THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    COND_CASES_TAC THEN
+    REWRITE_TAC[isSomeDataElement_def; injectivity "option";
+                distinctness "option";
+                distinctness "heap_element"] THEN
+    MESON_TAC[]) in
+  (* and a lookup that gives a data element is inside the heap *)
+  let isde_LESS = prove
+   (`!m (xs:((A,B) heap_element) list).
+       isSomeDataElement (heap_lookup m xs) ==> m < heap_length xs`,
+    REWRITE_TAC[isSomeDataElement_def] THEN REPEAT STRIP_TAC THEN
+    ASM_MESON_TAC[GEN_ALL heap_lookup_LESS]) in
+  (* a lookup of the heap that the blocks were written into: where
+     the heap that was there has a data element, this one has the
+     same one, because the blocks and what is left of the space take
+     the room of the space that was *)
+  let lookup_over = prove
+   (`!(hm:((A,B) heap_element) list) ha hb n ptr.
+       heap_length hm <= n /\
+       isSomeDataElement (heap_lookup ptr (ha ++ heap_expand n ++ hb))
+       ==> heap_lookup ptr
+             (ha ++ hm ++ heap_expand (n - heap_length hm) ++ hb) =
+           heap_lookup ptr (ha ++ heap_expand n ++ hb)`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    ASM_CASES_TAC `ptr < heap_length (ha:((A,B) heap_element) list)`
+    THENL
+     [ASM_SIMP_TAC[heap_lookup_APPEND2]; ALL_TAC] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[NOT_LT]) THEN
+    ASM_CASES_TAC
+      `ptr - heap_length (ha:((A,B) heap_element) list) < n` THENL
+     [(* inside the space the old heap has no data element *)
+      SUBGOAL_THEN `F` CONTR_TAC THEN
+      FIRST_X_ASSUM (fun isd ->
+        if not (hd_is "isSomeDataElement" (concl isd)) then fail()
+        else MP_TAC isd) THEN
+      ASM_SIMP_TAC[heap_lookup_APPEND1; heap_lookup_APPEND2;
+        heap_length_heap_expand;
+        isSomeDataElement_heap_lookup_heap_expand];
+      ALL_TAC] THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[NOT_LT]) THEN
+    SUBGOAL_THEN
+      `heap_length (hm:((A,B) heap_element) list) <=
+       ptr - heap_length (ha:((A,B) heap_element) list) /\
+       n - heap_length (hm:((A,B) heap_element) list) <=
+       ptr - heap_length (ha:((A,B) heap_element) list) -
+         heap_length hm`
+      STRIP_ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    ASM_SIMP_TAC[heap_lookup_APPEND1; heap_length_heap_expand] THEN
+    AP_THM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC) in
+  (* the space that is left after the blocks: it starts where they
+     end, and it is the one element of the heap that it was *)
+  let lookup_space = prove
+   (`!(hm:((A,B) heap_element) list) ha hb n.
+       heap_length hm <= n /\ ~(n - heap_length hm = 0)
+       ==> heap_lookup (heap_length ha + heap_length hm)
+             (ha ++ hm ++ heap_expand (n - heap_length hm) ++ hb) =
+           SOME (Unused (n - heap_length hm - 1))`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN
+      `heap_length (ha:((A,B) heap_element) list) <=
+       heap_length ha + heap_length (hm:((A,B) heap_element) list)`
+      ASSUME_TAC THENL
+     [ARITH_TAC; ALL_TAC] THEN
+    ASM_SIMP_TAC[heap_lookup_APPEND1] THEN
+    REWRITE_TAC[ADD_SUB2] THEN
+    FIRST_ASSUM (fun nz ->
+      if not (is_neg (concl nz) && is_eq (rand (concl nz))) then fail()
+      else REWRITE_TAC[heap_expand_def; nz]) THEN
+    REWRITE_TAC[heap_lookup_heap_length; APPEND; heap_lookup_def]) in
+  (* what is below the space of the new heap is all data: what was
+     below it and the blocks that were written *)
+  let data_up_to_blocks = prove
+   (`!(ha:((A,B) heap_element) list) hm h2.
+       EVERY isDataElement ha /\ EVERY isDataElement hm
+       ==> data_up_to (heap_length ha + heap_length hm)
+             (ha ++ hm ++ h2)`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    REWRITE_TAC[GSYM heap_length_APPEND; APPEND_ASSOC;
+      data_up_to_APPEND; ALL_APPEND] THEN
+    ASM_REWRITE_TAC[]) in
+  (* the split of a heap exactly where the first half ends *)
+  let split_exact = prove
+   (`!(h1:((A,B) heap_element) list) h2.
+       heap_split (heap_length h1) (h1 ++ h2) = SOME (h1,h2)`,
+    LIST_INDUCT_TAC THEN GEN_TAC THEN
+    REWRITE_TAC[APPEND; heap_length_NIL; heap_split_0;
+      heap_length_CONS] THEN
+    ONCE_REWRITE_TAC[heap_split_def] THEN
+    MP_ISPEC_NAME "h" el_length_GT_0 THEN DISCH_TAC THEN
+    COND_CASES_TAC THENL
+     [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    COND_CASES_TAC THENL
+     [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    REWRITE_TAC[ADD_SUB2] THEN
+    ASM_REWRITE_TAC[] THEN
+    MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
+  (* the blocks that are written into the space are a store of the
+     heap at the address of it *)
+  let store_blocks = prove
+   (`!(ha:((A,B) heap_element) list) hb y n.
+       0 < n /\ heap_length y = n
+       ==> heap_store (heap_length ha) y
+             (ha ++ (Unused (n - 1) :: hb)) = (ha ++ y ++ hb,T)`,
+    LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+    REWRITE_TAC[APPEND; heap_length_NIL; heap_length_CONS] THEN
+    ONCE_REWRITE_TAC[heap_store_def] THEN
+    REWRITE_TAC[el_length_def] THENL
+     [ASM_REWRITE_TAC[PAIR_EQ] THEN ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    MP_ISPEC_NAME "h" el_length_GT_0 THEN DISCH_TAC THEN
+    COND_CASES_TAC THENL
+     [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    COND_CASES_TAC THENL
+     [SUBGOAL_THEN `F` CONTR_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    REWRITE_TAC[ADD_SUB2] THEN
+    ASM_SIMP_TAC[] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[PAIR_EQ]) in
+  (* a lookup inside the blocks that were written *)
+  let lookup_inside = prove
+   (`!(hm:((A,B) heap_element) list) ha rest ptr.
+       heap_length ha <= ptr /\
+       ptr - heap_length ha < heap_length hm
+       ==> heap_lookup ptr (ha ++ hm ++ rest) =
+           heap_lookup (ptr - heap_length ha) hm`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    ASM_SIMP_TAC[heap_lookup_APPEND1] THEN
+    ASM_SIMP_TAC[heap_lookup_APPEND2]) in
+  (* the two lemmas above, with the address of the start of the
+     space as a variable of its own *)
+  let unused_nodata_k = prove
+   (`!(ha:((A,B) heap_element) list) n hb m k.
+       heap_length ha = k /\ k <= m /\ m < k + n
+       ==> ~isSomeDataElement
+             (heap_lookup m (ha ++ heap_expand n ++ hb))`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_X_ASSUM (fun eq ->
+      RULE_ASSUM_TAC (REWRITE_RULE[GSYM eq]) THEN
+      MATCH_MP_TAC unused_nodata THEN CONJ_TAC THEN
+      FIRST_ASSUM ACCEPT_TAC)) in
+  let lookup_inside_k = prove
+   (`!(ha:((A,B) heap_element) list) hm rest ptr k.
+       heap_length ha = k /\ k <= ptr /\ ptr - k < heap_length hm
+       ==> heap_lookup ptr (ha ++ hm ++ rest) =
+           heap_lookup (ptr - k) hm`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_X_ASSUM (fun eq ->
+      RULE_ASSUM_TAC (REWRITE_RULE[GSYM eq]) THEN
+      REWRITE_TAC[GSYM eq] THEN
+      MATCH_MP_TAC lookup_inside THEN CONJ_TAC THEN
+      FIRST_ASSUM ACCEPT_TAC)) in
+  (* the timestamps that the blocks bind are an injection into the
+     new heap: the ones of tf keep the addresses that tf gives them,
+     where the new heap holds what the old one held, and a new one
+     goes to its own block *)
+  let inj_bind_each = prove
+   (`!(ha:((A,B) heap_element) list) hm hb sp n k tf ts.
+       heap_length ha = k /\ heap_length hm = 3 * n /\
+       heap_length hm <= sp /\
+       (!t. t IN FDOM tf ==> t < ts) /\
+       (!x. ts <= x /\ x < ts + n
+            ==> isSomeDataElement
+                  (heap_lookup (FAPPLY (bind_each tf ts 0 3 n) x)
+                    hm)) /\
+       INJ (FAPPLY tf) (FDOM tf)
+         {m | isSomeDataElement
+                (heap_lookup m (ha ++ heap_expand sp ++ hb))}
+       ==> INJ (FAPPLY (bind_each tf ts k 3 n))
+             (FDOM (bind_each tf ts k 3 n))
+             {m | isSomeDataElement (heap_lookup m
+                    (ha ++ hm ++ heap_expand (sp - heap_length hm)
+                     ++ hb))}`,
+    let zt = `z:num` and xt = `x:num` and yt = `y:num` in
+    let sb u t = vsubst [u,zt] t in
+    let nin u = sb u `~(z IN FDOM (tf:(num,num)fmap))` in
+    let inb u =
+      sb u `z IN FDOM (bind_each (tf:(num,num)fmap) ts k 3 n)` in
+    let fap u =
+      sb u `FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) z` in
+    let gek u = mk_binary "<=" (`k:num`, fap u) in
+    let ltkk u = mk_binary "<" (fap u, `k:num`) in
+    let ltk u = mk_binary "<" (fap u, `k + 3 * n`) in
+    let gek3 u = mk_binary "<=" (`3 * n + k`, fap u) in
+    let lo u = sb u `(ts:num) <= z` in
+    let hi u = sb u `z < (ts:num) + n` in
+    let tseq u = mk_eq (fap u,
+      sb u `FAPPLY (tf:(num,num)fmap) z`) in
+    let olds u = sb u `isSomeDataElement (heap_lookup
+        (FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) z)
+        ((ha:((A,B) heap_element) list) ++ heap_expand sp ++ hb))` in
+    let minus u = sb u
+      `FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) z - k =
+       FAPPLY (bind_each tf ts 0 3 n) z` in
+    let isdeblk u = sb u `isSomeDataElement (heap_lookup
+        (FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) z - k)
+        (hm:((A,B) heap_element) list))` in
+    let lookeq u = sb u `heap_lookup
+        (FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) z)
+        ((ha:((A,B) heap_element) list) ++ hm ++
+         heap_expand (sp - heap_length hm) ++ hb) =
+      heap_lookup
+        (FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) z - k) hm` in
+    let feqxy = mk_eq (fap xt, fap yt) in
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    (* the new heap keeps the data elements of the old one *)
+    SUBGOAL_THEN
+      `heap_store_rel ((ha:((A,B) heap_element) list) ++
+                       heap_expand sp ++ hb)
+         (ha ++ hm ++ heap_expand (sp - heap_length hm) ++ hb)`
+      ASSUME_TAC THENL
+     [REWRITE_TAC[heap_store_rel_def] THEN GEN_TAC THEN DISCH_TAC THEN
+      MATCH_MP_TAC lookup_over THEN CONJ_TAC THEN
+      FIRST_ASSUM ACCEPT_TAC;
+      ALL_TAC] THEN
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let hsr = gr (fun th -> hd_is "heap_store_rel" (concl th)) in
+      let inj = gr (fun th -> hd_is "INJ" (concl th)) in
+      let hyp = gr (fun th -> is_forall (concl th) &&
+        can (find_term (hd_is "FDOM")) (concl th)) in
+      let blk = gr (fun th -> is_forall (concl th) &&
+        can (find_term (hd_is "isSomeDataElement")) (concl th)) in
+      let injo = REWRITE_RULE[INJ; IN_ELIM_THM] inj in
+      let inj2 = REWRITE_RULE[INJ; IN_ELIM_THM]
+        (MATCH_MP inj_store_rel (CONJ hsr inj)) in
+      (* a new timestamp is none of tf, it is one of the blocks, and
+         its address is at the blocks or above them *)
+      let newf u =
+        SUBGOAL_THEN (nin u) ASSUME_TAC THENL
+         [DISCH_TAC THEN
+          FIRST_X_ASSUM (fun h -> MP_TAC (MATCH_MP hyp h)) THEN
+          ASM_ARITH_TAC;
+          ALL_TAC] THEN
+        SUBGOAL_THEN (inb u) ASSUME_TAC THENL
+         [REWRITE_TAC[bind_each_FDOM; IN_UNION; IN_ELIM_THM] THEN
+          ASM_REWRITE_TAC[];
+          ALL_TAC] THEN
+        SUBGOAL_THEN (gek u) ASSUME_TAC THENL
+         [REWRITE_TAC[GSYM NOT_LT] THEN DISCH_TAC THEN
+          MESON_TAC[bind_each_eq_lt_FDOM; ASSUME (inb u);
+                    ASSUME (ltkk u); ASSUME (nin u)];
+          ALL_TAC] in
+      (* and it is below the end of the blocks, so the old heap holds
+         no data element there *)
+      let nodata u =
+        newf u THEN
+        SUBGOAL_THEN (ltk u) ASSUME_TAC THENL
+         [REWRITE_TAC[GSYM NOT_LE] THEN DISCH_TAC THEN
+          SUBGOAL_THEN (gek3 u) ASSUME_TAC THENL
+           [ASM_ARITH_TAC; ALL_TAC] THEN
+          MESON_TAC[bind_each_eq_ge_FDOM; ARITH_RULE `~(3 = 0)`;
+                    ASSUME (inb u); ASSUME (gek3 u); ASSUME (nin u)];
+          ALL_TAC] THEN
+        SUBGOAL_THEN (mk_neg (olds u)) ASSUME_TAC THENL
+         [MATCH_MP_TAC unused_nodata_k THEN EXISTS_TAC `k:num` THEN
+          REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+          ASM_ARITH_TAC;
+          ALL_TAC] in
+      (* a timestamp of tf keeps the address that tf gives it, and
+         the old heap holds a data element there *)
+      let tfaddr u =
+        SUBGOAL_THEN (tseq u) ASSUME_TAC THENL
+         [MATCH_MP_TAC bind_each_eq_tf THEN CONJ_TAC THENL
+           [ACCEPT_TAC hyp;
+            MATCH_MP_TAC hyp THEN FIRST_ASSUM ACCEPT_TAC];
+          ALL_TAC] THEN
+        SUBGOAL_THEN (olds u) ASSUME_TAC THENL
+         [REWRITE_TAC[ASSUME (tseq u)] THEN
+          MATCH_MP_TAC (CONJUNCT1 injo) THEN FIRST_ASSUM ACCEPT_TAC;
+          ALL_TAC] in
+      REWRITE_TAC[INJ; IN_ELIM_THM] THEN CONJ_TAC THENL
+       [(* the image of a timestamp of tf, and of a new one *)
+        GEN_TAC THEN
+        REWRITE_TAC[bind_each_FDOM; IN_UNION; IN_ELIM_THM] THEN
+        STRIP_TAC THENL
+         [tfaddr xt THEN
+          REWRITE_TAC[ASSUME (tseq xt)] THEN
+          MATCH_MP_TAC (CONJUNCT1 inj2) THEN FIRST_ASSUM ACCEPT_TAC;
+          newf xt THEN
+          (* the address of a new timestamp, counted from the start
+             of the blocks, is the one that the blocks give it *)
+          SUBGOAL_THEN (minus xt) ASSUME_TAC THENL
+           [MATCH_MP_TAC EQ_TRANS THEN
+            EXISTS_TAC (sb xt
+              `FAPPLY (bind_each (tf:(num,num)fmap) ts (k - k) 3 n) z`)
+            THEN CONJ_TAC THENL
+             [MESON_TAC[REWRITE_RULE[IN_ELIM_THM] bind_each_MINUS;
+                        LE_REFL; hyp; ASSUME (lo xt); ASSUME (hi xt)];
+              REWRITE_TAC[SUB_REFL]];
+            ALL_TAC] THEN
+          SUBGOAL_THEN (isdeblk xt) ASSUME_TAC THENL
+           [REWRITE_TAC[ASSUME (minus xt)] THEN
+            MATCH_MP_TAC blk THEN CONJ_TAC THEN
+            FIRST_ASSUM ACCEPT_TAC;
+            ALL_TAC] THEN
+          SUBGOAL_THEN (lookeq xt) SUBST1_TAC THENL
+           [MATCH_MP_TAC lookup_inside_k THEN
+            REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+            ACCEPT_TAC (MATCH_MP isde_LESS (ASSUME (isdeblk xt)));
+            ALL_TAC] THEN
+          FIRST_ASSUM ACCEPT_TAC];
+        (* the injection: two timestamps of tf, one of each, and two
+           new ones *)
+        REPEAT GEN_TAC THEN
+        REWRITE_TAC[bind_each_FDOM; IN_UNION; IN_ELIM_THM] THEN
+        STRIP_TAC THENL
+         [tfaddr xt THEN tfaddr yt THEN
+          MATCH_MP_TAC (CONJUNCT2 injo) THEN
+          REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+          MESON_TAC[ASSUME (tseq xt); ASSUME (tseq yt);
+                    ASSUME feqxy];
+          tfaddr xt THEN nodata yt THEN
+          MESON_TAC[ASSUME (olds xt); ASSUME (mk_neg (olds yt));
+                    ASSUME feqxy];
+          nodata xt THEN tfaddr yt THEN
+          MESON_TAC[ASSUME (olds yt); ASSUME (mk_neg (olds xt));
+                    ASSUME feqxy];
+          newf xt THEN newf yt THEN
+          MESON_TAC[REWRITE_RULE[IN_ELIM_THM] bind_each_eq_INJ;
+                    ARITH_RULE `~(3 = 0)`; ASSUME (nin xt);
+                    ASSUME (nin yt); ASSUME (lo xt); ASSUME (hi xt);
+                    ASSUME (lo yt); ASSUME (hi yt);
+                    ASSUME feqxy]]])) in
+  (* the address of a timestamp that tf does not bind is in the space
+     that the blocks were taken out of, where the old heap holds no
+     data element *)
+  let bind_each_nodata = prove
+   (`!(ha:((A,B) heap_element) list) hb sp n k tf ts y.
+       heap_length ha = k /\ 3 * n <= sp /\
+       (!t. t IN FDOM tf ==> t < ts) /\
+       y IN FDOM (bind_each tf ts k 3 n) /\ ~(y IN FDOM tf)
+       ==> ~isSomeDataElement
+             (heap_lookup (FAPPLY (bind_each tf ts k 3 n) y)
+               (ha ++ heap_expand sp ++ hb))`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    (* it is one of the new ones *)
+    SUBGOAL_THEN `ts <= y /\ y < ts + n` STRIP_ASSUME_TAC THENL
+     [W(fun (asl,gl) ->
+        MP_TAC (grab_asm (fun th -> hd_is "IN" (concl th) &&
+          hd_is "FDOM" (rand (concl th)) &&
+          hd_is "bind_each" (rand (rand (concl th)))) asl)) THEN
+      REWRITE_TAC[bind_each_FDOM; IN_UNION; IN_ELIM_THM] THEN
+      ASM_REWRITE_TAC[];
+      ALL_TAC] THEN
+    (* so its address is at the blocks or above them *)
+    SUBGOAL_THEN
+      `k <= FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) y`
+      ASSUME_TAC THENL
+     [REWRITE_TAC[GSYM NOT_LT] THEN DISCH_TAC THEN
+      ASM_MESON_TAC[bind_each_eq_lt_FDOM];
+      ALL_TAC] THEN
+    (* and below the end of them *)
+    SUBGOAL_THEN
+      `FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) y < k + 3 * n`
+      ASSUME_TAC THENL
+     [REWRITE_TAC[GSYM NOT_LE] THEN DISCH_TAC THEN
+      SUBGOAL_THEN `3 * n + k <=
+        FAPPLY (bind_each (tf:(num,num)fmap) ts k 3 n) y`
+        ASSUME_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC] THEN
+      ASM_MESON_TAC[bind_each_eq_ge_FDOM; ARITH_RULE `~(3 = 0)`];
+      ALL_TAC] THEN
+    MATCH_MP_TAC unused_nodata_k THEN EXISTS_TAC `k:num` THEN
+    REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+    ASM_ARITH_TAC) in
+  (* a ref that the list reaches is one that its elements or the
+     stack reach *)
+  let reachable_list_to_v = prove
+   (`!refs t xs stack' n ts.
+       reachable_refs (list_to_v ts t xs :: stack') refs n
+       ==> reachable_refs ((t :: xs) ++ stack') refs n`,
+    REWRITE_TAC[reachable_refs_def; MEM; MEM_APPEND] THEN
+    REPEAT STRIP_TAC THEN ASM_MESON_TAC[list_to_v_get_refs]) in
+  (* a pointer that the old heap or the roots had: the new heap has
+     the element it pointed at, where it was *)
+  let cm_transfer old =
+    W(fun (asl,gl) ->
+      let hle = grab_asm (fun th -> hd_is "<=" (concl th) &&
+        hd_is "heap_length" (lhand (concl th)) &&
+        hd_is "list_to_BlockReps" (rand (lhand (concl th))) &&
+        hd_is "+" (rand (concl th))) asl in
+      REWRITE_TAC[MATCH_MP lookup_over (CONJ hle old)] THEN
+      ACCEPT_TAC old) in
+  (* the invariant of the stack with the value and the list at the
+     front: the roots of the two, the ones of the stack, and the
+     unused space that the blocks of the cons are taken out of *)
+  let cm_open =
+    REWRITE_TAC[abs_ml_inv_def] THEN
+    STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    FIRST_X_ASSUM (fun bs ->
+      if not (hd_is "bc_stack_ref_inv" (concl bs)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[bc_stack_ref_inv_def] bs)) THEN
+    FIRST_X_ASSUM (fun e2 ->
+      if not (hd_is "ALL2" (concl e2)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[LIST_REL_SPLIT1] e2)) in
+  (* the root of the value and the roots of the list *)
+  let cm_roots =
+    W(fun (asl,gl) ->
+      let e1 = grab_asm (fun th -> hd_is "ALL2" (concl th) &&
+        hd_is "CONS" (el 1 (snd (strip_comb (concl th))))) asl in
+      CASES_ON_TAC (el 2 (snd (strip_comb (concl e1))))) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[ALL2]) THEN
+    TRY (SOLVED (FIRST_ASSUM CONTR_TAC)) THEN
+    SPLIT_ASM_TAC in
+  (* the space that the blocks of the cons are taken out of *)
+  let cm_space =
+    SUBGOAL_THEN `0 < sp` ASSUME_TAC THENL
+     [FIRST_ASSUM (fun ne ->
+        if not (is_neg (concl ne) && is_eq (rand (concl ne)) &&
+                is_const (rhs (rand (concl ne)))) then fail() else
+        MP_TAC (REWRITE_RULE[GSYM LENGTH_EQ_NIL] ne)) THEN
+      FIRST_ASSUM (fun le ->
+        if not (hd_is "<=" (concl le)) then fail() else
+        MP_TAC le) THEN
+      ARITH_TAC;
+      ALL_TAC] THEN
+    W(fun (asl,gl) ->
+      let us = grab_asm (fun th ->
+        hd_is "unused_space_inv" (concl th)) asl in
+      STRIP_ASSUME_TAC (REWRITE_RULE[unused_space_inv_def] us)) THEN
+    W(fun (asl,gl) ->
+      let hl = grab_asm (fun th -> is_imp (concl th) &&
+        hd_is "heap_lookup" (lhs (rand (concl th)))) asl in
+      let sppos = grab_asm (fun th -> hd_is "<" (concl th) &&
+        lhand (concl th) = `0`) asl in
+      let nz = MP (ARITH_RULE
+        (mk_imp (concl sppos, lhand (concl hl)))) sppos in
+      STRIP_ASSUME_TAC (MATCH_MP heap_lookup_SPLIT (MP hl nz))) in
+  let cm_wit =
+    W(fun (asl,gl) ->
+      let req = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (rhs (concl th)) &&
+        hd_is "CONS" (lhand (rhs (concl th)))) asl in
+      let rt = lhand (lhand (rhs (concl req))) in
+      let rs = rand (lhand (rhs (concl req))) in
+      let roots2 = rand (rhs (concl req)) in
+      let heq = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (rhs (concl th)) &&
+        hd_is "CONS" (rand (rhs (concl th)))) asl in
+      let ha = lhand (rhs (concl heq)) in
+      let hb = rand (rand (rhs (concl heq))) in
+      MAP_EVERY EXISTS_TAC [rt; rs; roots2; ha; hb]) THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) in
+  let cm_easy =
+    REPEAT CONJ_TAC THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    (* the length of the roots of the list *)
+    TRY (SOLVED
+      (W(fun (asl,gl) ->
+         let e2 = grab_asm (fun th -> hd_is "ALL2" (concl th)) asl in
+         MATCH_ACCEPT_TAC (SYM (MATCH_MP LIST_REL_LENGTH e2))))) THEN
+    (* and the shape of the heap, where the space is one element *)
+    TRY (SOLVED
+      (W(fun (asl,gl) ->
+         let heq = grab_asm (fun th -> is_eq (concl th) &&
+           hd_is "APPEND" (rhs (concl th)) &&
+           hd_is "CONS" (rand (rhs (concl th)))) asl in
+         let sppos = grab_asm (fun th -> hd_is "<" (concl th) &&
+           lhand (concl th) = `0`) asl in
+         let he = find_term (hd_is "heap_expand") gl in
+         let nz = MP (ARITH_RULE (mk_imp (concl sppos,
+           mk_neg (mk_eq (rand he, `0`))))) sppos in
+         REWRITE_TAC[heap_expand_def; nz; APPEND] THEN
+         ACCEPT_TAC heq))) in
+  (* the blocks of the cons: there is one for every element of the
+     list, the room they take comes out of the space, and the heap
+     that was there is what is below the space, the space and the
+     references *)
+  let cm_facts =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let xne = gr (fun th -> is_neg (concl th) &&
+        is_eq (rand (concl th)) &&
+        is_const (rhs (rand (concl th)))) in
+      let xs = lhs (rand (concl xne)) in
+      let e2 = gr (fun th -> hd_is "ALL2" (concl th) &&
+        el 1 (snd (strip_comb (concl th))) = xs) in
+      let le = MATCH_MP LIST_REL_LENGTH e2 in
+      let rne = REWRITE_RULE[LENGTH_EQ_NIL]
+        (REWRITE_RULE[le] (REWRITE_RULE[GSYM LENGTH_EQ_NIL] xne)) in
+      let lb = find_term (hd_is "list_to_BlockReps") gl in
+      let rs = el 3 (snd (strip_comb lb)) in
+      let hl = mk_icomb (`heap_length`, lb) in
+      let sps = gr (fun th -> hd_is "<=" (concl th) &&
+        hd_is "+" (lhand (concl th)) &&
+        hd_is "heap_length" (rand (concl th))) in
+      let spsp = rand (lhand (concl sps)) in
+      let heq = gr (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (rhs (concl th)) &&
+        hd_is "CONS" (rand (rhs (concl th)))) in
+      let ha = lhand (rhs (concl heq)) in
+      let hb = rand (rand (rhs (concl heq))) in
+      let app a b = list_mk_icomb "APPEND" [a; b] in
+      let hexp0 = find_term (hd_is "heap_expand") gl in
+      let hexp = mk_comb (rator hexp0, spsp) in
+      let tgt = mk_eq (lhs (concl heq), app ha (app hexp hb)) in
+      let sppos = gr (fun th -> hd_is "<" (concl th) &&
+        lhand (concl th) = `0`) in
+      let nz = MP (ARITH_RULE (mk_imp (concl sppos,
+        mk_neg (mk_eq (spsp, `0`))))) sppos in
+      ASSUME_TAC rne THEN ASSUME_TAC le THEN
+      SUBGOAL_THEN tgt ASSUME_TAC THENL
+       [REWRITE_TAC[heap_expand_def; nz; APPEND] THEN
+        ACCEPT_TAC heq;
+        ALL_TAC] THEN
+      SUBGOAL_THEN (mk_eq (hl,
+        mk_binary "*" (`3`, mk_icomb (`LENGTH`, rs)))) ASSUME_TAC THENL
+       [ASM_SIMP_TAC[list_to_BlockReps_heap_length]; ALL_TAC] THEN
+      let le3 = gr (fun th -> hd_is "<=" (concl th) &&
+        hd_is "*" (lhand (concl th))) in
+      SUBGOAL_THEN (mk_conj (mk_binary "<" (`0`, hl),
+        mk_conj (mk_binary "<=" (hl, spsp),
+          mk_binary "<=" (hl, rand (concl le3))))) STRIP_ASSUME_TAC
+      THENL
+       [FIRST_ASSUM (fun ne ->
+          if not (is_neg (concl ne) && is_eq (rand (concl ne)) &&
+                  is_const (rhs (rand (concl ne)))) then fail() else
+          MP_TAC (REWRITE_RULE[GSYM LENGTH_EQ_NIL] ne)) THEN
+        ASM_ARITH_TAC;
+        ALL_TAC]) in
+  (* the roots of the new heap: the pointer of the cons points at
+     the blocks, and the roots of the stack point where they did *)
+  let cm_roots_ok =
+    REWRITE_TAC[roots_ok_def; MEM] THEN
+    REPEAT STRIP_TAC THENL
+     [(* the pointer of the cons, at the first of the blocks *)
+      FIRST_X_ASSUM (fun e ->
+        STRIP_ASSUME_TAC
+          (REWRITE_RULE[injectivity "heap_address"] e)) THEN
+      W(fun (asl,gl) ->
+        let hl0 = grab_asm (fun th -> hd_is "<" (concl th) &&
+          lhand (concl th) = `0`) asl in
+        ASM_REWRITE_TAC[heap_lookup_APPEND; LT_REFL; SUB_REFL;
+          hl0; LENGTH_EQ_NIL;
+          ARITH_RULE `0 < 3 * n <=> ~(n = 0)`] THEN
+        ASM_SIMP_TAC[list_to_BlockReps_heap_lookup_0]);
+      (* and the roots of the stack, where the old ones were *)
+      W(fun (asl,gl) ->
+        let gr p = grab_asm p asl in
+        let ro = gr (fun th -> hd_is "roots_ok" (concl th)) in
+        let me = gr (fun th -> hd_is "MEM" (concl th)) in
+        let req = gr (fun th -> is_eq (concl th) &&
+          hd_is "APPEND" (rhs (concl th)) &&
+          hd_is "CONS" (lhand (rhs (concl th)))) in
+        let cnv = REWRITE_CONV[req; MEM_APPEND]
+          (list_mk_icomb "MEM" [lhand (concl me); lhs (concl req)]) in
+        let mroots = EQ_MP (SYM cnv)
+          (DISJ2 (lhand (rhs (concl cnv))) me) in
+        let heq2 = gr (fun th -> is_eq (concl th) &&
+          can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+        let old = REWRITE_RULE[heq2]
+          (MATCH_MP (REWRITE_RULE[roots_ok_def] ro) mroots) in
+        let hle = gr (fun th -> hd_is "<=" (concl th) &&
+          hd_is "heap_length" (lhand (concl th)) &&
+          hd_is "list_to_BlockReps" (rand (lhand (concl th))) &&
+          hd_is "+" (rand (concl th))) in
+        let eq = MATCH_MP lookup_over (CONJ hle old) in
+        REWRITE_TAC[eq] THEN ACCEPT_TAC old)] in
+  (* the space that the blocks left: it starts where they end, its
+     room is inside the heap, and below it the heap is all data *)
+  let cm_unused =
+    REWRITE_TAC[unused_space_inv_def] THEN
+    REPEAT CONJ_TAC THENL
+     [(* the space itself *)
+      DISCH_TAC THEN
+      W(fun (asl,gl) ->
+        let gr p = grab_asm p asl in
+        let aeq = gr (fun th -> is_eq (concl th) &&
+          hd_is "heap_length" (rhs (concl th))) in
+        let hle = gr (fun th -> hd_is "<=" (concl th) &&
+          hd_is "heap_length" (lhand (concl th)) &&
+          hd_is "list_to_BlockReps" (rand (lhand (concl th))) &&
+          hd_is "+" (rand (concl th))) in
+        let lb = rand (lhand (concl hle)) in
+        let spsp = rand (concl hle) in
+        let heq = gr (fun th -> is_eq (concl th) &&
+          hd_is "APPEND" (rhs (concl th)) &&
+          hd_is "CONS" (rand (rhs (concl th)))) in
+        let ha = lhand (rhs (concl heq)) in
+        let hb = rand (rand (rhs (concl heq))) in
+        let nzh = gr (fun th -> is_neg (concl th) &&
+          is_eq (rand (concl th)) &&
+          hd_is "+" (lhs (rand (concl th)))) in
+        let hlsp = gr (fun th -> hd_is "<=" (concl th) &&
+          hd_is "heap_length" (lhand (concl th)) &&
+          hd_is "list_to_BlockReps" (rand (lhand (concl th))) &&
+          not (hd_is "+" (rand (concl th)))) in
+        let nz2 = MP (ARITH_RULE (mk_imp (mk_conj (concl nzh,
+          concl hlsp), mk_neg (mk_eq (mk_binary "-" (spsp,
+            mk_icomb (`heap_length`, lb)), `0`)))))
+          (CONJ nzh hlsp) in
+        let inst = MP (ISPECL [lb; ha; hb; spsp] lookup_space)
+          (CONJ hle nz2) in
+        REWRITE_TAC[REWRITE_RULE[GSYM aeq] inst] THEN
+        AP_TERM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC);
+      (* its room, inside the heap *)
+      W(fun (asl,gl) ->
+        let heq2 = grab_asm (fun th -> is_eq (concl th) &&
+          can (find_term (hd_is "heap_expand"))
+            (rhs (concl th))) asl in
+        let hle = grab_asm (fun th -> hd_is "<=" (concl th) &&
+          hd_is "+" (lhand (concl th)) &&
+          hd_is "heap_length" (rand (concl th))) asl in
+        MP_TAC (REWRITE_RULE[heq2; heap_length_APPEND;
+          heap_length_heap_expand] hle)) THEN
+      REWRITE_TAC[heap_length_APPEND; heap_length_heap_expand] THEN
+      ASM_ARITH_TAC;
+      (* and the data below it *)
+      W(fun (asl,gl) ->
+        let gr p = grab_asm p asl in
+        let aeq = gr (fun th -> is_eq (concl th) &&
+          hd_is "heap_length" (rhs (concl th))) in
+        let du = gr (fun th -> hd_is "data_up_to" (concl th)) in
+        let heq2 = gr (fun th -> is_eq (concl th) &&
+          can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+        let lb = find_term (hd_is "list_to_BlockReps") gl in
+        let rs = el 3 (snd (strip_comb lb)) in
+        let rne = gr (fun th -> is_neg (concl th) &&
+          is_eq (rand (concl th)) &&
+          lhs (rand (concl th)) = rs) in
+        let dha = REWRITE_RULE[data_up_to_APPEND]
+          (REWRITE_RULE[heq2; aeq] du) in
+        REWRITE_TAC[aeq] THEN
+        MATCH_MP_TAC data_up_to_blocks THEN
+        CONJ_TAC THENL
+         [ACCEPT_TAC dha;
+          MATCH_MP_TAC list_to_BlockReps_isDataElement THEN
+          ACCEPT_TAC rne])] in
+  (* the pointers of the elements of the new heap: of the elements
+     that were there, of the blocks that were written (where
+     list_to_BlockReps_Pointer_lem says a pointer is one of the
+     roots of the list or one into the blocks), and of the space,
+     which is no element at all *)
+  let cm_ptrs =
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    W(fun (asl,gl) ->
+      let me = grab_asm (fun th -> hd_is "MEM" (concl th) &&
+        hd_is "DataElement" (lhand (concl th))) asl in
+      STRIP_ASSUME_TAC (REWRITE_RULE[MEM_APPEND;
+        MEM_heap_expand_FALSE] me)) THEN
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let me = gr (fun th -> hd_is "MEM" (concl th) &&
+        hd_is "DataElement" (lhand (concl th)) &&
+        not (hd_is "APPEND" (rand (concl th)))) in
+      let mptr = gr (fun th -> hd_is "MEM" (concl th) &&
+        hd_is "gc_shared_Pointer" (lhand (concl th))) in
+      let heq2 = gr (fun th -> is_eq (concl th) &&
+        can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+      if hd_is "list_to_BlockReps" (rand (concl me)) then
+        let rs = el 3 (snd (strip_comb (rand (concl me)))) in
+        let rne = gr (fun th -> is_neg (concl th) &&
+          is_eq (rand (concl th)) &&
+          lhs (rand (concl th)) = rs) in
+        let lem = CONV_RULE (TOP_DEPTH_CONV let_CONV)
+          (SPEC_ALL list_to_BlockReps_Pointer_lem) in
+        STRIP_ASSUME_TAC (MATCH_MP lem (CONJ rne (CONJ me mptr)))
+      else
+        let ho = gr (fun th -> hd_is "heap_ok" (concl th)) in
+        let hop = CONJUNCT2 (CONJUNCT2
+          (REWRITE_RULE[heap_ok_def] ho)) in
+        let mtm = list_mk_icomb "MEM"
+          [lhand (concl me); lhs (concl heq2)] in
+        SUBGOAL_THEN mtm (fun mheap ->
+          cm_transfer (REWRITE_RULE[heq2]
+            (MATCH_MP hop (CONJ mheap mptr)))) THEN
+        REWRITE_TAC[heq2; MEM_APPEND] THEN ASM_REWRITE_TAC[]) THEN
+    (* the three cases of a pointer of the blocks *)
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let mptr = gr (fun th -> hd_is "MEM" (concl th) &&
+        hd_is "gc_shared_Pointer" (lhand (concl th))) in
+      let ptm = lhand (concl mptr) in
+      let heq2 = gr (fun th -> is_eq (concl th) &&
+        can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+      let req = gr (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (rhs (concl th)) &&
+        hd_is "CONS" (lhand (rhs (concl th)))) in
+      let isd = fun () -> gr (fun th ->
+        hd_is "isSomeDataElement" (concl th) &&
+        can (find_term (hd_is "list_to_BlockReps")) (concl th)) in
+      if can isd () then
+        let isdt = isd () in
+        let aeq = gr (fun th -> is_eq (concl th) &&
+          hd_is "heap_length" (rhs (concl th))) in
+        let lb = rand (rand (concl isdt)) in
+        let ha = rand (rhs (concl aeq)) in
+        let rest = rand (rand (rand (rand gl))) in
+        let ptr = lhand (lhand (rand (concl isdt))) in
+        SUBGOAL_THEN (mk_conj
+          (mk_binary "<=" (mk_icomb (`heap_length`, ha), ptr),
+           mk_binary "<" (mk_binary "-" (ptr,
+             mk_icomb (`heap_length`, ha)),
+             mk_icomb (`heap_length`, lb)))) STRIP_ASSUME_TAC THENL
+         [ASM_ARITH_TAC; ALL_TAC] THEN
+        W(fun (a2,g2) ->
+          let hle2 = grab_asm (fun th -> hd_is "<=" (concl th) &&
+            hd_is "heap_length" (lhand (concl th)) &&
+            rand (lhand (concl th)) = ha) a2 in
+          let lt2 = grab_asm (fun th -> hd_is "<" (concl th) &&
+            hd_is "-" (lhand (concl th))) a2 in
+          REWRITE_TAC[REWRITE_RULE[GSYM aeq]
+            (MP (ISPECL [lb; ha; rest; ptr] lookup_inside)
+                (CONJ hle2 lt2))] THEN
+          ACCEPT_TAC isdt)
+      else
+        let ro = gr (fun th -> hd_is "roots_ok" (concl th)) in
+        let mtm = list_mk_icomb "MEM" [ptm; lhs (concl req)] in
+        SUBGOAL_THEN mtm (fun mroots ->
+          cm_transfer (REWRITE_RULE[heq2]
+            (MATCH_MP (REWRITE_RULE[roots_ok_def] ro) mroots))) THEN
+        REWRITE_TAC[req; MEM_APPEND; MEM] THEN ASM_REWRITE_TAC[]) in
+  (* the heap that the blocks were written into is as long as it
+     was, has no forward pointers, and every pointer of an element
+     of it points at an element *)
+  let cm_heap_ok =
+    REWRITE_TAC[heap_ok_def] THEN
+    REPEAT CONJ_TAC THENL
+     [(* the length *)
+      W(fun (asl,gl) ->
+        let gr p = grab_asm p asl in
+        let ho = gr (fun th -> hd_is "heap_ok" (concl th)) in
+        let heq2 = gr (fun th -> is_eq (concl th) &&
+          can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+        MP_TAC (REWRITE_RULE[heq2; heap_length_APPEND;
+          heap_length_heap_expand]
+          (CONJUNCT1 (REWRITE_RULE[heap_ok_def] ho)))) THEN
+      REWRITE_TAC[heap_length_APPEND; heap_length_heap_expand] THEN
+      ASM_ARITH_TAC;
+      (* no forward pointers *)
+      W(fun (asl,gl) ->
+        let gr p = grab_asm p asl in
+        let ho = gr (fun th -> hd_is "heap_ok" (concl th)) in
+        let heq2 = gr (fun th -> is_eq (concl th) &&
+          can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+        let lb = find_term (hd_is "list_to_BlockReps") gl in
+        let rs = el 3 (snd (strip_comb lb)) in
+        let rne = gr (fun th -> is_neg (concl th) &&
+          is_eq (rand (concl th)) &&
+          lhs (rand (concl th)) = rs) in
+        let fp = REWRITE_RULE[heq2; FILTER_APPEND; APPEND_EQ_NIL]
+          (CONJUNCT1 (CONJUNCT2 (REWRITE_RULE[heap_ok_def] ho))) in
+        REWRITE_TAC[FILTER_APPEND; APPEND_EQ_NIL;
+          FILTER_isForward_heap_expand_lemma;
+          MATCH_MP list_to_BlockReps_ForwardPointer rne] THEN
+        REWRITE_TAC[CONJUNCT1 fp; CONJUNCT2 (CONJUNCT2 fp)]);
+      (* and the pointers *)
+      cm_ptrs] in
+  (* the generations of the new heap: a start of one is at or below
+     where the blocks were written, so what is below it is what was
+     (heap_split_heap_store of the store that the write is), and the
+     split at the end of the space has the blocks and the space that
+     is left in its first half, which hold no reference *)
+  let cm_gc_store =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let heq = gr (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (rhs (concl th)) &&
+        hd_is "CONS" (rand (rhs (concl th)))) in
+      let aeq = gr (fun th -> is_eq (concl th) &&
+        hd_is "heap_length" (rhs (concl th))) in
+      let ha = rand (rhs (concl aeq)) in
+      let hb = rand (rand (rhs (concl heq))) in
+      let hle = gr (fun th -> hd_is "<=" (concl th) &&
+        hd_is "heap_length" (lhand (concl th)) &&
+        hd_is "list_to_BlockReps" (rand (lhand (concl th))) &&
+        hd_is "+" (rand (concl th))) in
+      let lb = rand (lhand (concl hle)) in
+      let spsp = rand (concl hle) in
+      let nh = last (snd (strip_comb gl)) in
+      let hexp = lhand (rand (rand nh)) in
+      let y = list_mk_icomb "APPEND" [lb; hexp] in
+      let sppos = gr (fun th -> hd_is "<" (concl th) &&
+        lhand (concl th) = `0` &&
+        not (hd_is "heap_length" (rand (concl th)))) in
+      SUBGOAL_THEN (mk_eq (mk_icomb (`heap_length`, y), spsp))
+        ASSUME_TAC THENL
+       [REWRITE_TAC[heap_length_APPEND; heap_length_heap_expand] THEN
+        ASM_ARITH_TAC;
+        ALL_TAC] THEN
+      SUBGOAL_THEN (mk_eq (list_mk_icomb "heap_store"
+        [mk_icomb (`heap_length`, ha); y; lhs (concl heq)],
+        mk_pair (nh, `T`))) ASSUME_TAC THENL
+       [W(fun (a2,g2) ->
+          let len = grab_asm (fun th -> is_eq (concl th) &&
+            hd_is "heap_length" (lhs (concl th)) &&
+            rhs (concl th) = spsp) a2 in
+          let pos = MP (ARITH_RULE (mk_imp (concl sppos,
+            mk_binary "<" (`0`, spsp)))) sppos in
+          ACCEPT_TAC (REWRITE_RULE[GSYM APPEND_ASSOC; GSYM heq]
+            (MP (ISPECL [ha; hb; y; spsp] store_blocks)
+                (CONJ pos len))));
+        ALL_TAC]) in
+  (* the generations of the new heap: the starts are still below
+     where the blocks end, and what is below each of them is what
+     was, because the write is a store above it *)
+  let cm_gens =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gso = gr (fun th -> hd_is "ALL" (concl th) &&
+        not (can (find_term (hd_is "gen_start_ok")) (concl th))) in
+      let gsk = gr (fun th -> hd_is "ALL" (concl th) &&
+        can (find_term (hd_is "gen_start_ok")) (concl th)) in
+      let hs = gr (fun th -> is_eq (concl th) &&
+        hd_is "heap_store" (lhs (concl th))) in
+      let aeq = gr (fun th -> is_eq (concl th) &&
+        hd_is "heap_length" (rhs (concl th))) in
+      CONJ_TAC THENL
+       [MATCH_MP_TAC ALL_IMP THEN
+        EXISTS_TAC (lhand (concl gso)) THEN
+        CONJ_TAC THENL
+         [GEN_TAC THEN REWRITE_TAC[] THEN STRIP_TAC THEN ASM_ARITH_TAC;
+          ACCEPT_TAC gso];
+        MATCH_MP_TAC ALL_IMP THEN
+        EXISTS_TAC (lhand (concl gso)) THEN
+        CONJ_TAC THENL
+         [GEN_TAC THEN REWRITE_TAC[] THEN STRIP_TAC THEN
+          W(fun (a2,g2) ->
+            let me = grab_asm (fun th -> hd_is "MEM" (concl th)) a2 in
+            let st = lhand (concl me) in
+            let old =
+              MP (SPEC st (REWRITE_RULE[GSYM ALL_MEM] gsk)) me in
+            STRIP_ASSUME_TAC (REWRITE_RULE[gen_start_ok_def] old) THEN
+            REWRITE_TAC[gen_start_ok_def] THEN
+            W(fun (a3,g3) ->
+              let sp3 = grab_asm (fun th -> is_eq (concl th) &&
+                hd_is "heap_split" (lhs (concl th)) &&
+                rand (lhs (concl th)) = rand (lhs (concl hs)))
+                a3 in
+              let le3 = grab_asm (fun th -> hd_is "<=" (concl th) &&
+                lhand (concl th) = st) a3 in
+              STRIP_ASSUME_TAC (MATCH_MP heap_split_heap_store
+                (CONJ sp3 (CONJ hs (REWRITE_RULE[aeq] le3)))) THEN
+              ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[]));
+          ACCEPT_TAC gso]]) in
+  (* the split of the new heap at the end of the space: the blocks
+     and the space that is left are below it, and they hold no
+     reference *)
+  let cm_gc_split =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let bod = snd (strip_exists gl) in
+      let spc = lhand bod in
+      let gpt = lhand (lhand spc) in
+      let nh = rand (lhand spc) in
+      let ha = lhand nh in
+      let r1 = rand nh in
+      let lb = lhand r1 in
+      let r2 = rand r1 in
+      let hexp = lhand r2 in
+      let hb = rand r2 in
+      let heq2 = gr (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (rhs (concl th)) &&
+        can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+      let hexpo = lhand (rand (rhs (concl heq2))) in
+      let spo = gr (fun th -> is_eq (concl th) &&
+        hd_is "heap_split" (lhs (concl th))) in
+      let h1o,h2o = dest_pair (rand (rhs (concl spo))) in
+      let rne = gr (fun th -> is_neg (concl th) &&
+        is_eq (rand (concl th)) &&
+        lhs (rand (concl th)) = el 3 (snd (strip_comb lb))) in
+      let app a b = list_mk_icomb "APPEND" [a; b] in
+      let h1n = app ha (app lb hexp) in
+      SUBGOAL_THEN (mk_conj (mk_eq (h1o, app ha hexpo),
+        mk_eq (h2o, hb))) STRIP_ASSUME_TAC THENL
+       [W(fun (a2,g2) ->
+          let old = REWRITE_RULE[GSYM APPEND_ASSOC; GSYM heq2]
+            (ISPECL [app ha hexpo; hb] split_exact) in
+          SUBGOAL_THEN (mk_eq (mk_icomb (`heap_length`,
+            app ha hexpo), gpt)) (fun e ->
+            MP_TAC (REWRITE_RULE[e] old)) THENL
+           [REWRITE_TAC[heap_length_APPEND;
+              heap_length_heap_expand] THEN ASM_ARITH_TAC;
+            ALL_TAC] THEN
+          REWRITE_TAC[spo; injectivity "option"; PAIR_EQ] THEN
+          DISCH_THEN (fun th -> REWRITE_TAC[GSYM th]));
+        ALL_TAC] THEN
+      MAP_EVERY EXISTS_TAC [h1n; hb] THEN
+      REPEAT CONJ_TAC THENL
+       [W(fun (a2,g2) ->
+          let inst = REWRITE_RULE[GSYM APPEND_ASSOC]
+            (ISPECL [h1n; hb] split_exact) in
+          SUBGOAL_THEN (mk_eq (mk_icomb (`heap_length`, h1n), gpt))
+            (fun e -> REWRITE_TAC[GSYM e] THEN ACCEPT_TAC inst) THEN
+          REWRITE_TAC[heap_length_APPEND; heap_length_heap_expand] THEN
+          ASM_ARITH_TAC);
+        REWRITE_TAC[ALL_APPEND; isRef_heap_expand;
+          MATCH_MP list_to_BlockReps_Ref rne] THEN
+        W(fun (a2,g2) ->
+          let ide = grab_asm (fun th ->
+            concl th = mk_eq (h1o, app ha hexpo)) a2 in
+          let nr = grab_asm (fun th -> hd_is "ALL" (concl th) &&
+            rand (concl th) = h1o) a2 in
+          ACCEPT_TAC (CONJUNCT1 (REWRITE_RULE[ALL_APPEND]
+            (REWRITE_RULE[ide] nr))));
+        W(fun (a2,g2) ->
+          let ide2 = grab_asm (fun th ->
+            concl th = mk_eq (h2o, hb)) a2 in
+          let rr = grab_asm (fun th -> hd_is "ALL" (concl th) &&
+            rand (concl th) = h2o) a2 in
+          ACCEPT_TAC (REWRITE_RULE[ide2] rr))]) in
+  let cm_gc_kind =
+    cm_gc_store THEN
+    W(fun (asl,gl) ->
+      let gk = grab_asm (fun th ->
+        hd_is "gc_kind_inv" (concl th)) asl in
+      MP_TAC (REWRITE_RULE[gc_kind_inv_def] gk)) THEN
+    REWRITE_TAC[gc_kind_inv_def] THEN
+    W(fun (asl,gl) ->
+      CASES_ON_TAC
+        (find_term (hd_is "data_to_word_config_gc_kind") gl)) THEN
+    MATCH_REDUCE_TAC THEN
+    TRY (SOLVED (DISCH_THEN ACCEPT_TAC)) THEN
+    STRIP_TAC THEN
+    W(fun (asl,gl) ->
+      let gsa = grab_asm (fun th ->
+        hd_is "gen_state_ok" (concl th)) asl in
+      let oldrs = el 1 (snd (strip_comb (concl gsa))) in
+      let newrs = el 1 (snd (strip_comb (lhand gl))) in
+      SUBGOAL_THEN (mk_eq (newrs, oldrs)) SUBST1_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC]) THEN
+    CONJ_TAC THENL
+     [W(fun (asl,gl) ->
+        let gsa = grab_asm (fun th ->
+          hd_is "gen_state_ok" (concl th)) asl in
+        CASES_ON_TAC (last (snd (strip_comb (concl gsa))))) THEN
+      RULE_ASSUM_TRY (REWRITE_RULE[gen_state_ok_def]) THEN
+      SPLIT_ASM_TAC THEN
+      REWRITE_TAC[gen_state_ok_def] THEN
+      cm_gens;
+      cm_gc_split] in
+  (* the invariant of the stack: the map of the references is the
+     one it was, and the timestamps of the blocks of the cons are
+     bound to their addresses (bind_each) *)
+  (* the grabs that the parts of the invariant of the stack share *)
+  let cmb_aeq asl = grab_asm (fun th -> is_eq (concl th) &&
+    is_var (lhs (concl th)) &&
+    hd_is "heap_length" (rhs (concl th))) asl in
+  let cmb_heq2 asl = grab_asm (fun th -> is_eq (concl th) &&
+    hd_is "APPEND" (rhs (concl th)) &&
+    can (find_term (hd_is "heap_expand")) (rhs (concl th))) asl in
+  let cmb_le asl = grab_asm (fun th -> is_eq (concl th) &&
+    hd_is "LENGTH" (lhs (concl th)) &&
+    hd_is "LENGTH" (rhs (concl th))) asl in
+  let cmb_hle asl = grab_asm (fun th -> hd_is "<=" (concl th) &&
+    hd_is "heap_length" (lhand (concl th)) &&
+    hd_is "list_to_BlockReps" (rand (lhand (concl th))) &&
+    hd_is "+" (rand (concl th))) asl in
+  let cmb_tfl asl = grab_asm (fun th -> hd_is "SUBSET" (concl th) &&
+    hd_is "FDOM" (lhand (concl th)) &&
+    can (find_term (fun t -> hd_is "<" t)) (rand (concl th))) asl in
+  let cmb_hsr asl = grab_asm (fun th ->
+    hd_is "heap_store_rel" (concl th)) asl in
+  let cmb_lim asl = REWRITE_RULE[SUBSET; IN_ELIM_THM] (cmb_tfl asl) in
+  (* the injection of the refs: the new heap holds a data element
+     wherever the old one did *)
+  let cmb_inj_f =
+    W(fun (asl,gl) ->
+      let fm = rand (lhand gl) in
+      let old = grab_asm (fun th -> hd_is "INJ" (concl th) &&
+        rand (lhand (concl th)) = fm) asl in
+      MATCH_ACCEPT_TAC
+        (MATCH_MP inj_store_rel (CONJ (cmb_hsr asl) old))) in
+  (* and the injection of the timestamps, which inj_bind_each gives
+     from the one of tf and the blocks that the list builds *)
+  let cmb_inj_tf =
+    W(fun (asl,gl) ->
+      let bq = rand (lhand gl) in
+      let tfm = hd (snd (strip_comb bq)) in
+      let tsv = el 1 (snd (strip_comb bq)) in
+      let aeq = cmb_aeq asl and heq2 = cmb_heq2 asl in
+      let le = cmb_le asl and hle = cmb_hle asl in
+      let lim = cmb_lim asl in
+      let hl3 = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "heap_length" (lhs (concl th)) &&
+        hd_is "*" (rhs (concl th))) asl in
+      let inj = grab_asm (fun th -> hd_is "INJ" (concl th) &&
+        rand (lhand (concl th)) = tfm) asl in
+      let lb = find_term (hd_is "list_to_BlockReps") gl in
+      let conft = el 0 (snd (strip_comb lb)) in
+      let rtt = el 1 (snd (strip_comb lb)) in
+      let att = el 2 (snd (strip_comb lb)) in
+      let rst = el 3 (snd (strip_comb lb)) in
+      let rne = grab_asm (fun th -> is_neg (concl th) &&
+        is_eq (rand (concl th)) &&
+        lhs (rand (concl th)) = rst) asl in
+      let bi1 = ISPECL [rst; tfm; tsv; `x:num`; rtt; att; conft]
+        (REWRITE_RULE[IN_ELIM_THM] bind_each_isSomeDataElement) in
+      let i3 = REWRITE_RULE[GSYM le]
+        (INST_TYPE (type_match (type_of
+          (rand (rand (rand (concl bi1))))) (type_of lb) []) bi1) in
+      let bt = lhand (rand (lhand (concl i3))) in
+      let i5 = GEN `x:num` (DISCH bt
+        (MP i3 (CONJ rne (CONJ (ASSUME bt) lim)))) in
+      MATCH_ACCEPT_TAC (MATCH_MP inj_bind_each
+        (CONJ (GSYM aeq) (CONJ (REWRITE_RULE[GSYM le] hl3)
+          (CONJ hle (CONJ lim (CONJ i5
+            (REWRITE_RULE[heq2] inj)))))))) in
+  (* the timestamps that the blocks bind are below the new count *)
+  let cmb_ts_lim =
+    W(fun (asl,gl) ->
+      MATCH_MP_TAC FDOM_bind_each_lemma THEN
+      ACCEPT_TAC (cmb_tfl asl)) in
+  (* and they are timestamps of the stack with the list on it: the
+     ones of tf are, and the new ones are the ones of the list *)
+  let cmb_ts_stack =
+    REWRITE_TAC[bind_each_FDOM; UNION_SUBSET] THEN
+    CONJ_TAC THENL
+     [W(fun (asl,gl) ->
+        let tfa = REWRITE_RULE[APPEND]
+          (grab_asm (fun th -> hd_is "SUBSET" (concl th) &&
+            hd_is "FDOM" (lhand (concl th)) &&
+            can (find_term (hd_is "all_ts")) (concl th)) asl) in
+        MATCH_MP_TAC SUBSET_TRANS THEN
+        EXISTS_TAC (rand (concl tfa)) THEN
+        REWRITE_TAC[all_ts_SUBSET_list_to_v] THEN
+        ACCEPT_TAC tfa);
+      REWRITE_TAC[new_all_ts_SUBSET_list_to_v]] in
+  (* the blocks of the chain are the only ones of their timestamps *)
+  let cmb_bu =
+    W(fun (asl,gl) ->
+      let bu = grab_asm (fun th ->
+        hd_is "blocks_unique" (concl th)) asl in
+      MATCH_ACCEPT_TAC (MATCH_MP blocks_unique_cons_multi
+        (REWRITE_RULE[APPEND] bu))) in
+  (* the roots of the list and of the stack: the first is the value
+     of the list (v_inv_list_to_v_lem), the others are the ones of
+     the stack over the heap and the map that the blocks left *)
+  let cmb_roots =
+    REWRITE_TAC[ALL2] THEN CONJ_TAC THENL
+     [W(fun (asl,gl) ->
+        let aeq = cmb_aeq asl and heq2 = cmb_heq2 asl in
+        let hle = cmb_hle asl and lim = cmb_lim asl in
+        let lb = find_term (hd_is "list_to_BlockReps") gl in
+        let rst = el 3 (snd (strip_comb lb)) in
+        let rne = grab_asm (fun th -> is_neg (concl th) &&
+          is_eq (rand (concl th)) &&
+          lhs (rand (concl th)) = rst) asl in
+        let vt = grab_asm (fun th -> hd_is "v_inv" (concl th)) asl in
+        let lr = grab_asm (fun th -> hd_is "ALL2" (concl th) &&
+          rand (concl th) = rst) asl in
+        let lem = CONV_RULE (TOP_DEPTH_CONV let_CONV)
+          (SPEC_ALL v_inv_list_to_v_lem) in
+        MATCH_ACCEPT_TAC (REWRITE_RULE[GSYM aeq] (MATCH_MP lem
+          (CONJ rne (CONJ (REWRITE_RULE[heq2] vt)
+            (CONJ (REWRITE_RULE[heq2] lr)
+              (CONJ (REWRITE_RULE[aeq] hle) lim)))))));
+      W(fun (asl,gl) ->
+        let old = grab_asm (fun th -> hd_is "ALL2" (concl th) &&
+          rand (concl th) = rand gl) asl in
+        let vv = find_term (hd_is "v_inv") gl in
+        let fm = el 1 (tparts (last (snd (strip_comb vv)))) in
+        let sub = SPEC_ALL (MATCH_MP bind_each_SUBMAP (cmb_lim asl)) in
+        let hsr = cmb_hsr asl in
+        MP_TAC old THEN MATCH_MP_TAC MONO_ALL2 THEN
+        REPEAT GEN_TAC THEN CONV_TAC (TOP_DEPTH_CONV BETA_CONV) THEN
+        DISCH_TAC THEN
+        FIRST_ASSUM (fun vi -> MATCH_ACCEPT_TAC
+          (MATCH_MP v_inv_SUBMAP (CONJ (ISPEC fm SUBMAP_REFL)
+            (CONJ sub (CONJ hsr vi))))))] in
+  (* the refs that the value reaches are the ones that the stack with
+     the list taken apart reaches, and the invariant of them carries
+     over to the new heap and the new map (bc_ref_inv_step): the
+     timestamps that the blocks add go to addresses of the space,
+     where the old heap held no data element *)
+  let cmb_refs =
+    GEN_TAC THEN STRIP_TAC THEN
+    W(fun (asl,gl) ->
+      let hsr = cmb_hsr asl and lim = cmb_lim asl in
+      let aeq = cmb_aeq asl and heq2 = cmb_heq2 asl in
+      let le = cmb_le asl and hle = cmb_hle asl in
+      let hl3 = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "heap_length" (lhs (concl th)) &&
+        hd_is "*" (rhs (concl th))) asl in
+      let spb = REWRITE_RULE[hl3; GSYM le] hle in
+      let sub = SPEC_ALL (MATCH_MP bind_each_SUBMAP lim) in
+      let fm = el 0 (tparts (last (snd (strip_comb gl)))) in
+      let nv = el 1 (snd (strip_comb gl)) in
+      let rr = grab_asm (fun th ->
+        hd_is "reachable_refs" (concl th)) asl in
+      let nin = grab_asm (fun th -> hd_is "IN" (concl th) &&
+        hd_is "FDOM" (rand (concl th))) asl in
+      let old = grab_asm (fun th -> is_forall (concl th) &&
+        can (find_term (hd_is "bc_ref_inv")) (concl th)) asl in
+      let bri = MP (SPEC nv old)
+        (CONJ (MATCH_MP reachable_list_to_v rr) nin) in
+      MATCH_MP_TAC bc_ref_inv_step THEN
+      REPEAT CONJ_TAC THEN
+      W(fun (a2,g2) ->
+        if hd_is "bc_ref_inv" g2 then ACCEPT_TAC bri
+        else if is_eq g2 then REFL_TAC
+        else if hd_is "IN" g2 || hd_is "heap_store_rel" g2
+        then FIRST_ASSUM ACCEPT_TAC
+        else if can (find_term (hd_is "dest_thunk")) g2
+        then REPEAT STRIP_TAC THEN FIRST_ASSUM ACCEPT_TAC
+        else if can (find_term (hd_is "v_inv")) g2 then
+          (REPEAT GEN_TAC THEN DISCH_TAC THEN
+           FIRST_ASSUM (fun vi -> MATCH_ACCEPT_TAC
+             (MATCH_MP v_inv_SUBMAP (CONJ (ISPEC fm SUBMAP_REFL)
+               (CONJ sub (CONJ hsr vi))))))
+        else
+          (GEN_TAC THEN STRIP_TAC THEN
+           REWRITE_TAC[IN_IMAGE; NOT_EXISTS_THM; DE_MORGAN_THM] THEN
+           GEN_TAC THEN
+           W(fun (a3,g3) ->
+             let inb = find_term (fun t -> hd_is "IN" t &&
+               hd_is "FDOM" (rand t) &&
+               hd_is "bind_each" (rand (rand t))) g3 in
+             let xt = lhand inb in
+             let bq = rand (rand inb) in
+             let tft = hd (snd (strip_comb bq)) in
+             let intf = list_mk_icomb "IN"
+               [xt; mk_icomb (`FDOM`, tft)] in
+             ASM_CASES_TAC inb THENL
+              [DISJ1_TAC THEN
+               ASM_CASES_TAC intf THENL
+                [(* tf binds it, so its address is the one of tf *)
+                 SUBGOAL_THEN (mk_eq
+                   (list_mk_icomb "fmap_apply" [bq; xt],
+                    list_mk_icomb "fmap_apply" [tft; xt]))
+                   SUBST1_TAC THENL
+                  [MATCH_MP_TAC bind_each_eq_tf THEN CONJ_TAC THENL
+                    [ACCEPT_TAC lim;
+                     MATCH_MP_TAC lim THEN FIRST_ASSUM ACCEPT_TAC];
+                   ALL_TAC] THEN
+                 MESON_TAC[SPEC xt (REWRITE_RULE[IN_IMAGE;
+                   NOT_EXISTS_THM; DE_MORGAN_THM]
+                   (grab_asm (fun th -> is_neg (concl th) &&
+                     hd_is "IN" (rand (concl th)) &&
+                     hd_is "IMAGE" (rand (rand (concl th)))) a3));
+                   ASSUME intf];
+                 (* it does not, so the old heap held no data element
+                    at that address *)
+                 MESON_TAC[MATCH_MP bind_each_nodata
+                   (CONJ (GSYM aeq) (CONJ spb (CONJ lim
+                     (CONJ (ASSUME inb) (ASSUME (mk_neg intf))))));
+                   REWRITE_RULE[heq2]
+                     (grab_asm (fun th ->
+                       hd_is "isSomeDataElement" (concl th)) a3)]];
+               DISJ2_TAC THEN FIRST_ASSUM ACCEPT_TAC])))) in
+  let cm_bcs =
+
+    REWRITE_TAC[bc_stack_ref_inv_def] THEN
+    (* the elements that the heap had, it has where it had them *)
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let heq2 = gr (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (rhs (concl th)) &&
+        can (find_term (hd_is "heap_expand")) (rhs (concl th))) in
+      let hle = gr (fun th -> hd_is "<=" (concl th) &&
+        hd_is "heap_length" (lhand (concl th)) &&
+        hd_is "list_to_BlockReps" (rand (lhand (concl th))) &&
+        hd_is "+" (rand (concl th))) in
+      let nh = rand (find_term (hd_is "heap_lookup") gl) in
+      SUBGOAL_THEN (list_mk_icomb "heap_store_rel"
+        [lhs (concl heq2); nh]) ASSUME_TAC THENL
+       [REWRITE_TAC[heap_store_rel_def] THEN GEN_TAC THEN
+        REWRITE_TAC[heq2] THEN DISCH_TAC THEN
+        W(fun (a2,g2) ->
+          let isd = grab_asm (fun th ->
+            hd_is "isSomeDataElement" (concl th)) a2 in
+          ACCEPT_TAC (MATCH_MP lookup_over (CONJ hle isd)));
+        ALL_TAC]) THEN
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let fs = gr (fun th -> hd_is "SUBSET" (concl th) &&
+        can (find_term (hd_is "domain")) (concl th)) in
+      let fm = rand (lhand (concl fs)) in
+      let tfl = gr (fun th -> hd_is "SUBSET" (concl th) &&
+        hd_is "FDOM" (lhand (concl th)) &&
+        can (find_term (fun t -> hd_is "<" t)) (rand (concl th))) in
+      let tfm = rand (lhand (concl tfl)) in
+      let tsv = rand (find_term (fun t -> hd_is "<" t)
+        (rand (concl tfl))) in
+      let aeq = gr (fun th -> is_eq (concl th) &&
+        hd_is "heap_length" (rhs (concl th))) in
+      let lxs = find_term (hd_is "LENGTH") gl in
+      MAP_EVERY EXISTS_TAC [fm;
+        list_mk_icomb "bind_each"
+          [tfm; tsv; lhs (concl aeq); `3`; lxs]]) THEN
+    REPEAT CONJ_TAC THEN
+    W(fun (asl,gl) ->
+      if hd_is "INJ" gl then
+        (if can (find_term (hd_is "bind_each")) gl then cmb_inj_tf
+         else cmb_inj_f)
+      else if hd_is "SUBSET" gl &&
+              can (find_term (hd_is "bind_each")) gl then
+        (if can (find_term (hd_is "all_ts")) gl then cmb_ts_stack
+         else cmb_ts_lim)
+      else if hd_is "ALL2" gl then cmb_roots
+      else if hd_is "blocks_unique" gl then cmb_bu
+      else if is_forall gl then cmb_refs
+      else FIRST_ASSUM ACCEPT_TAC) in
+    cm_open THEN cm_roots THEN cm_space THEN cm_wit THEN cm_facts THEN
+    cm_easy THEN
+    W(fun (asl,gl) ->
+      if hd_is "roots_ok" gl then cm_roots_ok
+      else if hd_is "unused_space_inv" gl then cm_unused
+      else if hd_is "heap_ok" gl then cm_heap_ok
+      else if hd_is "gc_kind_inv" gl then cm_gc_kind
+      else cm_bcs))
 ### memory_rel_append
 (* the invariant of a list that the append built: cons_multi_thm
    gives the blocks of the values in the unused space and the
