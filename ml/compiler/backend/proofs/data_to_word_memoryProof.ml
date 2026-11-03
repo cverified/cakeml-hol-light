@@ -43142,20 +43142,622 @@ let memory_rel_Number_cmp = prove
                   (n2w 0) else
                   if decode_length c x1 <+ decode_length c x2
                     then (n2w 2) else (n2w 0))) else T))`),
-  (* the attempt: the proof of the source names
-     memory_rel_Number_IMP_Word_2, small_int_def,
-     memory_rel_any_Number_IMP, memory_rel_tail,
-     memory_rel_Number_EQ, memory_rel_Number_LESS.  What is here
-     rewrites with them and closes by arithmetic, and the cheat is
-     behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_Number_IMP_Word_2; small_int_def;
-       memory_rel_any_Number_IMP; memory_rel_tail;
-       memory_rel_Number_EQ; memory_rel_Number_LESS] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the comparison of two numbers of the invariant, in the four
+   cases of the two roots: memory_rel_Number_IMP_Word_2 gives the
+   two roots and memory_rel_any_Number_IMP says that the lowest
+   bit of one is set exactly when its number is too big to be a
+   root itself.  Two small numbers are what
+   memory_rel_Number_EQ and memory_rel_Number_LESS compare.  A
+   small number against a big one is decided by the sign that the
+   header of the big one holds (memory_rel_Number_bignum_IMP_ALT),
+   because a small number is inside the bound that a big one is
+   outside of.  Two big ones are compared by their words:
+   memory_rel_bignum_cmp says that two headers which differ hold
+   different lengths when the signs agree, so where the headers
+   are one, word_cmp_loop_thm reads the words of the two bignums
+   and mw_cmp_thm turns the comparison of the words into the one
+   of the two numbers (mw2n_n2mw), with the sign of the header
+   saying which way round the loop walks them; and where the
+   headers differ the lengths do, and the length of n2mw grows
+   with the number.  The theorems of HOL4's multiwordTheory that
+   the port does not have are proved here: mw2n_APPEND (HOL4
+   multiwordScript.sml:143-147), mw2n_lt (187-191), mw2n_n2mw
+   (299-305), LENGTH_n2mw_LESS_LENGTH_n2mw (370-383) and
+   mw_cmp_thm (1113-1130) *)
+  ((* a word holds something *)
+  let dw_nz = prove
+   (`~(dimword (:'a) = 0)`,
+   REWRITE_TAC[dimword; EXP_EQ_0; ARITH_EQ]) in
+  (* HOL4 multiwordScript.sml:143-147: mw2n_APPEND, where the port
+     writes dimword (:'a) EXP n for HOL4's dimwords n (:'a) *)
+  let mw2n_APPEND = prove
+   (`!xs ys. mw2n (APPEND (xs:('a word) list) ys) =
+             mw2n xs + dimword (:'a) EXP (LENGTH xs) * mw2n ys`,
+    LIST_INDUCT_TAC THEN
+    ASM_REWRITE_TAC[APPEND; mw2n_def; LENGTH; EXP] THEN
+    CONV_TAC NUM_RING) in
+  (* HOL4 multiwordScript.sml:187-191: mw2n_lt *)
+  let mw2n_lt = prove
+   (`!xs. mw2n (xs:('a word) list) < dimword (:'a) EXP (LENGTH xs)`,
+    LIST_INDUCT_TAC THENL
+     [REWRITE_TAC[mw2n_def; LENGTH; EXP] THEN ARITH_TAC; ALL_TAC] THEN
+    REWRITE_TAC[mw2n_def; LENGTH; EXP; MULT_CLAUSES] THEN
+    W(fun (asl,gl) ->
+      let pr = rand (lhand gl) in
+      let mt = rand pr in
+      MP_TAC (ISPEC (rand (lhand (lhand gl))) VAL_BOUND) THEN
+      REWRITE_TAC[GSYM dimword] THEN DISCH_TAC THEN
+      TRANS_TAC LTE_TRANS
+        (mk_binary "*" (`dimword (:'a)`, mk_binary "+" (mt, `1`))) THEN
+      CONJ_TAC THENL
+       [REWRITE_TAC[LEFT_ADD_DISTRIB; MULT_CLAUSES] THEN ASM_ARITH_TAC;
+        REWRITE_TAC[LE_MULT_LCANCEL] THEN DISJ2_TAC THEN
+        ASM_ARITH_TAC])) in
+  (* HOL4 multiwordScript.sml:299-305: mw2n_n2mw *)
+  let mw2n_n2mw = prove
+   (`!n. mw2n ((n2mw n):('a word) list) = n`,
+    MATCH_MP_TAC num_WF THEN GEN_TAC THEN DISCH_TAC THEN
+    ONCE_REWRITE_TAC[n2mw_def] THEN
+    COND_CASES_TAC THEN ASM_REWRITE_TAC[mw2n_def] THEN
+    FIRST_X_ASSUM (fun ih ->
+      MP_TAC (SPEC `n DIV dimword (:'a)` ih)) THEN
+    ANTS_TAC THENL
+     [ASM_SIMP_TAC[DIV_LT_dimword]; ALL_TAC] THEN
+    DISCH_THEN SUBST1_TAC THEN
+    ASM_SIMP_TAC[VAL_WORD; GSYM dimword; MOD_MOD_REFL; dw_nz] THEN
+    MP_TAC (SPEC `n:num` (MATCH_MP DIVISION dw_nz)) THEN
+    DISCH_THEN (fun th ->
+      GEN_REWRITE_TAC RAND_CONV [CONJUNCT1 th]) THEN
+    CONV_TAC NUM_RING) in
+  (* HOL4 multiwordScript.sml:370-383:
+     LENGTH_n2mw_LESS_LENGTH_n2mw *)
+  let len_n2mw_mono = prove
+   (`!m n. m <= n
+           ==> LENGTH ((n2mw m):('a word) list) <=
+               LENGTH ((n2mw n):('a word) list)`,
+    MATCH_MP_TAC num_WF THEN GEN_TAC THEN DISCH_TAC THEN
+    GEN_TAC THEN DISCH_TAC THEN
+    ONCE_REWRITE_TAC[n2mw_def] THEN
+    COND_CASES_TAC THEN REWRITE_TAC[LENGTH; LE_0] THEN
+    COND_CASES_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    REWRITE_TAC[LENGTH; LE_SUC] THEN
+    FIRST_X_ASSUM (fun ih ->
+      MP_TAC (SPEC `m DIV dimword (:'a)` ih)) THEN
+    ANTS_TAC THENL
+     [ASM_SIMP_TAC[DIV_LT_dimword]; ALL_TAC] THEN
+    DISCH_THEN (fun th ->
+      MP_TAC (SPEC `n DIV dimword (:'a)` th)) THEN
+    ASM_SIMP_TAC[DIV_MONO]) in
+  (* the words of two multiwords of the same length, where the top
+     ones differ: HOL4 closes it with MULT_ADD_LESS_MULT_ADD of
+     arithmeticTheory *)
+  let add_mul_lt = prove
+   (`!a b k p q:num. a < k /\ p < q ==> a + k * p < b + k * q`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    TRANS_TAC LTE_TRANS `(k:num) * (p + 1)` THEN CONJ_TAC THENL
+     [REWRITE_TAC[LEFT_ADD_DISTRIB; MULT_CLAUSES] THEN ASM_ARITH_TAC;
+      TRANS_TAC LE_TRANS `(k:num) * q` THEN CONJ_TAC THENL
+       [REWRITE_TAC[LE_MULT_LCANCEL] THEN DISJ2_TAC THEN
+        ASM_ARITH_TAC;
+        ARITH_TAC]]) in
+  (* so the comparison of the two tops decides the two multiwords *)
+  let cmp_hi = prove
+   (`!a b k p q:num. a < k /\ b < k /\ ~(p = q)
+       ==> ~(a + k * p = b + k * q) /\
+           ((a + k * p < b + k * q) <=> p < q)`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    ASM_CASES_TAC `p < q:num` THENL
+     [MP_TAC (SPECL [`a:num`; `b:num`; `k:num`; `p:num`; `q:num`]
+        add_mul_lt) THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+      MP_TAC (SPECL [`b:num`; `a:num`; `k:num`; `q:num`; `p:num`]
+        add_mul_lt) THEN ASM_REWRITE_TAC[] THEN
+      ANTS_TAC THENL [ASM_ARITH_TAC; ASM_ARITH_TAC]]) in
+  (* HOL4 multiwordScript.sml:1113-1130: mw_cmp_thm *)
+  let mw_cmp_thm = prove
+   (`!xs ys. LENGTH ys = LENGTH (xs:('a word) list)
+             ==> mw_cmp xs ys =
+                   (if mw2n xs = mw2n ys then NONE
+                    else SOME (mw2n xs < mw2n ys))`,
+    MATCH_MP_TAC SNOC_INDUCT THEN CONJ_TAC THENL
+     [GEN_TAC THEN REWRITE_TAC[LENGTH; LENGTH_EQ_NIL] THEN
+      DISCH_THEN SUBST1_TAC THEN
+      ONCE_REWRITE_TAC[mw_cmp_def] THEN REWRITE_TAC[];
+      ALL_TAC] THEN
+    REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN
+    REWRITE_TAC[SNOC_APPEND] THEN DISCH_TAC THEN
+    (* the list that the comparison walks down to *)
+    SUBGOAL_THEN `?zs (z:'a word). ys = APPEND zs [z]`
+      STRIP_ASSUME_TAC THENL
+     [MAP_EVERY EXISTS_TAC [`BUTLAST (ys:('a word) list)`;
+        `LAST (ys:('a word) list)`] THEN
+      CONV_TAC SYM_CONV THEN MATCH_MP_TAC APPEND_BUTLAST_LAST THEN
+      W(fun (asl,gl) ->
+        let le = grab_asm (fun th -> is_eq (concl th) &&
+          hd_is "LENGTH" (lhs (concl th))) asl in
+        MP_TAC (REWRITE_RULE[LENGTH_APPEND; LENGTH] le)) THEN
+      DISCH_THEN (fun le ->
+        DISCH_THEN (fun ye ->
+          MP_TAC (REWRITE_RULE[ye; LENGTH] le))) THEN
+      ARITH_TAC;
+      ALL_TAC] THEN
+    FIRST_X_ASSUM SUBST_ALL_TAC THEN
+    (* of the same length as the one of the step *)
+    SUBGOAL_THEN
+      `LENGTH (zs:('a word) list) = LENGTH (xs:('a word) list)`
+      ASSUME_TAC THENL
+     [W(fun (asl,gl) ->
+        let le = grab_asm (fun th -> is_eq (concl th) &&
+          hd_is "LENGTH" (lhs (concl th)) &&
+          hd_is "APPEND" (rand (lhs (concl th)))) asl in
+        MP_TAC (REWRITE_RULE[LENGTH_APPEND; LENGTH] le)) THEN
+      ARITH_TAC;
+      ALL_TAC] THEN
+    (* the comparison reads the two tops *)
+    ONCE_REWRITE_TAC[mw_cmp_def] THEN
+    REWRITE_TAC[APPEND_EQ_NIL; NOT_CONS_NIL; LAST_APPEND;
+      BUTLAST_APPEND; LAST; BUTLAST; APPEND_NIL] THEN
+    REWRITE_TAC[mw2n_APPEND; mw2n_def; MULT_CLAUSES; ADD_CLAUSES] THEN
+    ASM_CASES_TAC `(x:'a word) = z` THENL
+     [FIRST_X_ASSUM SUBST_ALL_TAC THEN
+      FIRST_X_ASSUM (fun ih ->
+        MP_TAC (SPEC `zs:('a word) list` ih)) THEN
+      ASM_REWRITE_TAC[] THEN
+      DISCH_THEN SUBST1_TAC THEN
+      ASM_REWRITE_TAC[EQ_ADD_RCANCEL; LT_ADD_RCANCEL];
+      ALL_TAC] THEN
+    (* which differ, so they decide the comparison *)
+    ASM_REWRITE_TAC[] THEN
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let le = gr (fun th -> is_eq (concl th) &&
+        hd_is "LENGTH" (lhs (concl th)) &&
+        hd_is "LENGTH" (rhs (concl th))) in
+      let ne = gr (fun th -> is_neg (concl th) &&
+        is_eq (rand (concl th))) in
+      let cnd = fst (dest_cond (rhs gl)) in
+      let al = lhand (lhs cnd) in
+      let bl = lhand (rhs cnd) in
+      let lt1 = SPEC (rand al) mw2n_lt in
+      let lt2 = REWRITE_RULE[le] (SPEC (rand bl) mw2n_lt) in
+      let pne = REWRITE_RULE[GSYM VAL_EQ] ne in
+      let ch = MATCH_MP cmp_hi (CONJ lt1 (CONJ lt2 pne)) in
+      REWRITE_TAC[WORD_ULT; CONJUNCT1 ch; CONJUNCT2 ch])) in
+  (* the number that the words of a bignum hold *)
+  let num_abs = prove
+   (`!i. &(num_of_int (abs i)) = abs i`,
+    GEN_TAC THEN MATCH_MP_TAC INT_OF_NUM_OF_INT THEN
+    REWRITE_TAC[INT_ABS_POS]) in
+  (* so the comparison of the two numbers is the one of the two
+     absolute values *)
+  let abs_cmp = prove
+   (`!i1 i2. ((num_of_int (abs i1) = num_of_int (abs i2)) <=>
+              abs i1 = abs i2) /\
+             ((num_of_int (abs i1) < num_of_int (abs i2)) <=>
+              abs i1 < abs i2)`,
+    REWRITE_TAC[GSYM INT_OF_NUM_EQ; GSYM INT_OF_NUM_LT; num_abs]) in
+  (* a word that holds a length, against another *)
+  let n2w_lo = prove
+   (`!l1 l2. l1 < dimword (:'a) /\ l2 < dimword (:'a)
+       ==> ((((n2w l1):'a word) <+ n2w l2) <=> l1 < l2)`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    ASM_SIMP_TAC[WORD_ULT; VAL_WORD; GSYM dimword; MOD_LT]) in
+  (* the lengths of two bignums that differ say which of the two
+     numbers is the bigger *)
+  let len_lt = prove
+   (`!m n. ~(LENGTH ((n2mw m):('a word) list) =
+             LENGTH ((n2mw n):('a word) list))
+           ==> ((LENGTH ((n2mw m):('a word) list) <
+                 LENGTH ((n2mw n):('a word) list)) <=> m < n)`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    MP_TAC (SPECL [`n:num`; `m:num`] len_n2mw_mono) THEN
+    MP_TAC (SPECL [`m:num`; `n:num`] len_n2mw_mono) THEN
+    ASM_ARITH_TAC) in
+  (* so two headers that hold different lengths compare as the two
+     numbers do *)
+  let dl_lt = prove
+   (`!m n. ~(((n2w (LENGTH ((n2mw m):('a word) list))):'a word) =
+             n2w (LENGTH ((n2mw n):('a word) list))) /\
+           LENGTH ((n2mw m):('a word) list) < dimword (:'a) /\
+           LENGTH ((n2mw n):('a word) list) < dimword (:'a)
+           ==> ((((n2w (LENGTH ((n2mw m):('a word) list))):'a word) <+
+                 n2w (LENGTH ((n2mw n):('a word) list))) <=> m < n)`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `~(LENGTH ((n2mw m):('a word) list) =
+                    LENGTH ((n2mw n):('a word) list))` ASSUME_TAC THENL
+     [DISCH_THEN (MP_TAC o AP_TERM `n2w:num->'a word`) THEN
+      ASM_REWRITE_TAC[];
+      ALL_TAC] THEN
+    ASM_SIMP_TAC[n2w_lo; len_lt]) in
+  (* the two roots that the invariant has for the two numbers *)
+  let nc_open =
+    STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    W(fun (asl,gl) ->
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      STRIP_ASSUME_TAC (MATCH_MP memory_rel_Number_IMP_Word_2 mr)) THEN
+    REPEAT (FIRST_X_ASSUM (fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         hd_is "wordLang_Word" (rhs (concl e))
+      then SUBST_ALL_TAC e else fail())) THEN
+    W(fun (asl,gl) ->
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      let vs = el 8 (snd (strip_comb (concl mr))) in
+      let w1 = rand (snd (dest_pair (lhand vs))) in
+      let w2 = rand (snd (dest_pair (lhand (rand vs)))) in
+      MAP_EVERY EXISTS_TAC [w1; w2]) THEN
+    REWRITE_TAC[] in
+  (* the lowest bit of the root of a number of the invariant is set
+     exactly when the number is too big to be one *)
+  let nc_sm =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let mr = gr (fun th -> hd_is "memory_rel" (concl th)) in
+      let t1 = MATCH_MP memory_rel_any_Number_IMP (CONJ gd mr) in
+      let t2 = MATCH_MP memory_rel_any_Number_IMP
+        (CONJ gd (MATCH_MP memory_rel_tail mr)) in
+      MAP_EVERY (fun th -> STRIP_ASSUME_TAC
+        (REWRITE_RULE[injectivity "word_loc"; word_index] th))
+        [t1; t2]) THEN
+    REPEAT (FIRST_X_ASSUM (fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         is_var (rhs (concl e)) && not (lhs (concl e) = rhs (concl e))
+      then SUBST_ALL_TAC (SYM e) else fail())) in
+  (* so a clear bit says that the number is small, and a set one
+     that it is not *)
+  let small_of asl w =
+    let b = grab_asm (fun th -> is_eq (concl th) &&
+      hd_is "bit" (lhs (concl th)) &&
+      rand (lhs (concl th)) = w) asl in
+    let nb = grab_asm (fun th -> is_neg (concl th) &&
+      hd_is "bit" (rand (concl th)) &&
+      rand (rand (concl th)) = w) asl in
+    REWRITE_RULE[nb] b in
+  let big_of asl w =
+    let b = grab_asm (fun th -> is_eq (concl th) &&
+      hd_is "bit" (lhs (concl th)) &&
+      rand (lhs (concl th)) = w) asl in
+    let pb = grab_asm (fun th -> hd_is "bit" (concl th) &&
+      rand (concl th) = w) asl in
+    REWRITE_RULE[pb] b in
+  (* the roots of the two numbers, as the invariant has them *)
+  let nc_mr_roots asl =
+    let mr = grab_asm (fun th ->
+      hd_is "memory_rel" (concl th)) asl in
+    let vs = el 8 (snd (strip_comb (concl mr))) in
+    (rand (snd (dest_pair (lhand vs))),
+     rand (snd (dest_pair (lhand (rand vs))))) in
+  (* the first of the four: two small numbers, where the comparisons
+     of the roots are the ones of the numbers *)
+  let nc_both_small =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let mr = gr (fun th -> hd_is "memory_rel" (concl th)) in
+      let w1,w2 = nc_mr_roots asl in
+      let s1 = small_of asl w1 in
+      let s2 = small_of asl w2 in
+      let eqth = MATCH_MP memory_rel_Number_EQ
+        (CONJ mr (CONJ (DISJ1 s1 (concl s2)) gd)) in
+      let ltth = MATCH_MP memory_rel_Number_LESS
+        (CONJ mr (CONJ s1 (CONJ s2 gd))) in
+      MAP_EVERY (fun th -> STRIP_ASSUME_TAC
+        (REWRITE_RULE[injectivity "word_loc"] th)) [eqth; ltth]) THEN
+    REPEAT (FIRST_X_ASSUM (fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         is_var (rhs (concl e)) && not (lhs (concl e) = rhs (concl e))
+      then SUBST_ALL_TAC (SYM e) else fail())) THEN
+    ASM_REWRITE_TAC[] in
+  (* the second of the four: a small number against a big one,
+     where the sign of the big one decides *)
+  let nc_small_big =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let mr = gr (fun th -> hd_is "memory_rel" (concl th)) in
+      let w1,w2 = nc_mr_roots asl in
+      let b2 = big_of asl w2 in
+      let bg = MATCH_MP memory_rel_Number_bignum_IMP_ALT
+        (CONJ (MATCH_MP memory_rel_tail mr) (CONJ b2 gd)) in
+      STRIP_ASSUME_TAC
+        (REWRITE_RULE[injectivity "word_loc"] bg)) THEN
+    REPEAT (FIRST_X_ASSUM (fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         is_var (rhs (concl e)) && not (lhs (concl e) = rhs (concl e))
+      then SUBST_ALL_TAC (SYM e) else fail())) THEN
+    (* the numbers differ, because one is small and the other is
+       not *)
+    W(fun (asl,gl) -> SUBGOAL_THEN (lhand gl) ASSUME_TAC) THENL
+     [DISCH_THEN (fun ie ->
+        W(fun (asl,gl) ->
+          let w1,w2 = nc_mr_roots asl in
+          CONTR_TAC (REWRITE_RULE[REWRITE_RULE[ie] (small_of asl w1)]
+            (big_of asl w2))));
+      ALL_TAC] THEN
+    CONJ_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
+    (* the address of the big one and the header it has there *)
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gra = gr (fun th -> is_eq (concl th) &&
+        hd_is "get_real_addr" (lhs (concl th))) in
+      let a = rand (rhs (concl gra)) in
+      let ma = gr (fun th -> is_eq (concl th) &&
+        hd_is "wordLang_Word" (rhs (concl th)) &&
+        is_var (rand (rhs (concl th))) &&
+        lhs (concl th) = mk_comb (`m:'a word->'a word_loc`, a)) in
+      MAP_EVERY EXISTS_TAC [a; rand (rhs (concl ma))]) THEN
+    REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+    (* and the comparison that the sign of the header gives *)
+    (W(fun (asl,gl) ->
+       let gr p = grab_asm p asl in
+       let ne = gr (fun th -> is_neg (concl th) &&
+         is_eq (rand (concl th)) &&
+         type_of (lhs (rand (concl th))) = `:int`) in
+       let sg = gr (fun th -> is_eq (concl th) &&
+         is_eq (lhs (concl th)) &&
+         hd_is "word_and" (lhand (lhs (concl th)))) in
+       REWRITE_TAC[word_cmp_res_def; ne; sg]) THEN
+     W(fun (asl,gl) ->
+       SUBGOAL_THEN (mk_eq (fst (dest_cond (lhs gl)),
+         fst (dest_cond (rhs gl)))) SUBST1_TAC) THENL
+      [W(fun (asl,gl) ->
+         let w1,w2 = nc_mr_roots asl in
+         MP_TAC (small_of asl w1) THEN MP_TAC (big_of asl w2)) THEN
+       REWRITE_TAC[small_int_def] THEN INT_ARITH_TAC;
+       REFL_TAC]) in
+  (* the numbers of the invariant, as it has them *)
+  let nc_mr_nums asl =
+    let mr = grab_asm (fun th ->
+      hd_is "memory_rel" (concl th)) asl in
+    let vs = el 8 (snd (strip_comb (concl mr))) in
+    (rand (fst (dest_pair (lhand vs))),
+     rand (fst (dest_pair (lhand (rand vs))))) in
+  (* two readings of one root give one address and one header *)
+  let nc_ident =
+    REPEAT (W(fun (asl,gl) ->
+      let eqs = map snd (filter (fun (_,th) ->
+        is_eq (concl th)) asl) in
+      let t1,t2 = find (fun (t1,t2) ->
+        lhs (concl t1) = lhs (concl t2) &&
+        not (rhs (concl t1) = rhs (concl t2)) &&
+        (hd_is "SOME" (rhs (concl t1)) ||
+         hd_is "wordLang_Word" (rhs (concl t1))))
+        (allpairs (fun a b -> (a,b)) eqs eqs) in
+      let ie = REWRITE_RULE[injectivity "option";
+        injectivity "word_loc"] (TRANS (SYM t1) t2) in
+      if is_var (lhs (concl ie)) then SUBST_ALL_TAC ie
+      else SUBST_ALL_TAC (SYM ie))) in
+  (* what the memory holds of the two bignums *)
+  let nc_big_open =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let mr = gr (fun th -> hd_is "memory_rel" (concl th)) in
+      let w1,w2 = nc_mr_roots asl in
+      let b1 = big_of asl w1 in
+      let b2 = big_of asl w2 in
+      let cmp = MATCH_MP memory_rel_bignum_cmp
+        (CONJ mr (CONJ gd (CONJ b1 b2))) in
+      let g1 = MATCH_MP memory_rel_Number_bignum_IMP_ALT
+        (CONJ mr (CONJ b1 gd)) in
+      let g2 = MATCH_MP memory_rel_Number_bignum_IMP_ALT
+        (CONJ (MATCH_MP memory_rel_tail mr) (CONJ b2 gd)) in
+      MAP_EVERY (fun th -> STRIP_ASSUME_TAC
+        (REWRITE_RULE[injectivity "word_loc"] th)) [cmp; g1; g2]) THEN
+    REPEAT (FIRST_X_ASSUM (fun e ->
+      if is_eq (concl e) && is_var (lhs (concl e)) &&
+         is_var (rhs (concl e)) && not (lhs (concl e) = rhs (concl e))
+      then SUBST_ALL_TAC (SYM e) else fail())) THEN
+    nc_ident THEN
+    (* the two addresses and the two headers that it asks for *)
+    W(fun (asl,gl) ->
+      let w1,w2 = nc_mr_roots asl in
+      let gra w = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "get_real_addr" (lhs (concl th)) &&
+        rand (lhs (concl th)) = w) asl in
+      let a1 = rand (rhs (concl (gra w1))) in
+      let a2 = rand (rhs (concl (gra w2))) in
+      let hdr a = rand (rhs (concl (grab_asm (fun th ->
+        is_eq (concl th) &&
+        lhs (concl th) = mk_comb (`m:'a word->'a word_loc`, a) &&
+        hd_is "wordLang_Word" (rhs (concl th))) asl))) in
+      MAP_EVERY EXISTS_TAC [a1; hdr a1; a2; hdr a2]) THEN
+    REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) in
+  (* the condition of the sign that a header holds, as the case of
+     the proof has it *)
+  let nc_sign_asm asl =
+    grab_asm (fun th ->
+      let c = concl th in
+      let b = if is_neg c then rand c else c in
+      is_eq b && hd_is "word_and" (lhand b) &&
+      not (type_of (rhs b) = bool_ty)) asl in
+  (* the loop over the words of the two bignums, which the memory
+     holds where the two addresses say *)
+  let nc_loop =
+    W(fun (asl,gl) ->
+      let args = snd (strip_comb (lhs gl)) in
+      let aa = lhand (el 1 args) in
+      let ab = lhand (el 2 args) in
+      let sep_of a = snd (find (fun (_,th) ->
+        hd_is "STAR" (rator (concl th)) &&
+        can (find_term (hd_is "fun2set")) (concl th) &&
+        lhand (el 0 (snd (strip_comb
+          (lhand (rator (concl th)))))) = a) asl) in
+      let sa = sep_of aa and sb = sep_of ab in
+      let xs_of s = rand (rand (lhand (rator (concl s)))) in
+      let ff_of s = rand (rator (concl s)) in
+      let xsa = xs_of sa and xsb = xs_of sb in
+      let dls = map snd (filter (fun (_,th) -> is_eq (concl th) &&
+        hd_is "decode_length" (lhs (concl th))) asl) in
+      let d1 = el 0 dls and d2 = el 1 dls in
+      let l1 = rand (rhs (concl d1)) and l2 = rand (rhs (concl d2)) in
+      let bnd l = grab_asm (fun th -> hd_is "<" (concl th) &&
+        lhand (concl th) = l &&
+        hd_is "dimword" (rand (concl th))) asl in
+      let leq0 = MP (SPECL [l1; l2] n2w_eq_LENGTH)
+        (CONJ (bnd l1) (CONJ (bnd l2) (TRANS (SYM d1) d2))) in
+      let la = mk_icomb (`LENGTH:('a word) list->num`, xsa) in
+      let leq = if lhs (concl leq0) = la then leq0 else SYM leq0 in
+      let dla = if rand (rhs (concl d1)) = la then d1 else d2 in
+      let th = ISPECL [xsa; xsb; ff_of sa; ff_of sb; aa; ab]
+        word_cmp_loop_thm in
+      MP_TAC th THEN
+      ANTS_TAC THENL
+       [REPEAT CONJ_TAC THENL
+         [ACCEPT_TAC leq;
+          ACCEPT_TAC (bnd la);
+          ACCEPT_TAC sa;
+          ACCEPT_TAC sb];
+        ALL_TAC] THEN
+      DISCH_THEN (fun lt ->
+        REWRITE_TAC[REWRITE_RULE[GSYM dla] lt]) THEN
+      AP_TERM_TAC THEN
+      REWRITE_TAC[MP (SPECL [xsa; xsb] mw_cmp_thm) (SYM leq);
+        mw2n_n2mw; word_cmp_res_def]) THEN
+    (* where the comparison of the two numbers is the one of the two
+       absolute values, because the signs are the same *)
+    W(fun (asl,gl) ->
+      let lg = lhand gl and rg = rand gl in
+      let ne = find_term (fun t -> is_eq t &&
+        hd_is "num_of_int" (lhs t)) lg in
+      let nl = find_term (fun t -> hd_is "<" t &&
+        hd_is "num_of_int" (lhand t)) lg in
+      let ie = fst (dest_cond rg) in
+      let il = fst (dest_cond (rand rg)) in
+      let cc = nc_sign_asm asl in
+      let sgs = map snd (filter (fun (_,th) -> is_eq (concl th) &&
+        is_eq (lhs (concl th)) &&
+        hd_is "word_and" (lhand (lhs (concl th)))) asl) in
+      SUBGOAL_THEN (mk_conj (mk_eq (ne,ie), mk_eq (nl,il)))
+        (CONJUNCTS_THEN SUBST1_TAC) THENL
+       [CONJ_TAC THEN REWRITE_TAC[abs_cmp] THEN
+        MAP_EVERY (fun sg -> MP_TAC (REWRITE_RULE[cc] sg)) sgs THEN
+        INT_ARITH_TAC;
+        ALL_TAC]) THEN
+    COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+    TRY (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
+    MATCH_REDUCE_TAC THEN REWRITE_TAC[] in
+  (* the two headers are one, so the two bignums have one length and
+     one sign: the loop walks the words of both *)
+  let nc_same_hdr =
+    W(fun (asl,gl) ->
+      let cnd = find_term (fun t -> is_eq t &&
+        hd_is "word_and" (lhand t) &&
+        not (type_of (rhs t) = bool_ty)) gl in
+      ASM_CASES_TAC cnd) THEN
+    W(fun (asl,gl) -> REWRITE_TAC[nc_sign_asm asl]) THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    nc_loop in
+  (* the facts about the two numbers that the signs and the lengths
+     give, as the two cases of the comparison need them *)
+  let nc_int_asms asl =
+    let isint t =
+      (is_eq t && type_of (lhs t) = `:int`) ||
+      hd_is "int_le" t || hd_is "int_lt" t in
+    map snd (filter (fun (_,th) ->
+      let c = concl th in
+      isint (if is_neg c then rand c else c)) asl) in
+  (* the two headers differ, so the signs differ or the lengths do:
+     either way the comparison of the two numbers follows *)
+  let nc_diff_hdr =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let cmpi = gr (fun th -> is_imp (concl th) &&
+        is_imp (rand (concl th))) in
+      let xne = gr (fun th -> is_neg (concl th) &&
+        is_eq (rand (concl th)) &&
+        is_var (lhs (rand (concl th))) &&
+        is_var (rhs (rand (concl th)))) in
+      let x1 = lhs (rand (concl xne)) in
+      let x2 = rhs (rand (concl xne)) in
+      let sw x = ISPECL [`(n2w 16):'a word`; x] WORD_AND_SYM in
+      let sgs = map snd (filter (fun (_,th) -> is_eq (concl th) &&
+        is_eq (lhs (concl th)) &&
+        hd_is "word_and" (lhand (lhs (concl th)))) asl) in
+      ASSUME_TAC (REWRITE_RULE (sgs @ [sw x1; sw x2])
+        (MP cmpi xne)) THEN
+      REWRITE_TAC sgs) THEN
+    (* the four cases of the two signs *)
+    W(fun (asl,gl) ->
+      let sgs = map snd (filter (fun (_,th) -> is_eq (concl th) &&
+        is_eq (lhs (concl th)) &&
+        hd_is "word_and" (lhand (lhs (concl th)))) asl) in
+      MAP_EVERY ASM_CASES_TAC
+        (rev (map (fun sg -> rhs (concl sg)) sgs))) THEN
+    W(fun (asl,gl) -> REWRITE_TAC (nc_int_asms asl)) THEN
+    REWRITE_TAC[word_cmp_res_def] THEN
+    W(fun (asl,gl) ->
+      let sfs0 = nc_int_asms asl in
+      if not (is_neg (concl (el 0 sfs0)) =
+              is_neg (concl (el 1 sfs0))) then
+        (* the signs differ, so they say which is the bigger *)
+        (COND_CASES_TAC THEN TRY COND_CASES_TAC THEN
+         REWRITE_TAC[] THEN
+         SUBGOAL_THEN `F` CONTR_TAC THEN
+         W(fun (asl2,gl2) ->
+           MAP_EVERY MP_TAC (nc_int_asms asl2)) THEN
+         INT_ARITH_TAC)
+      else
+        (* the signs agree, so the lengths differ and they decide *)
+        let gr p = grab_asm p asl in
+        let i1,i2 = nc_mr_nums asl in
+        let lo = fst (dest_cond (rand gl)) in
+        let dls = map snd (filter (fun (_,th) -> is_eq (concl th) &&
+          hd_is "decode_length" (lhs (concl th))) asl) in
+        let d1 = find (fun th -> lhs (concl th) = lhand lo) dls in
+        let d2 = find (fun th -> lhs (concl th) = rand lo) dls in
+        let n1 = rand (rand (rand (rhs (concl d1)))) in
+        let n2 = rand (rand (rand (rhs (concl d2)))) in
+        let l1 = rand (rhs (concl d1)) in
+        let l2 = rand (rhs (concl d2)) in
+        let bnd l = grab_asm (fun th -> hd_is "<" (concl th) &&
+          lhand (concl th) = l &&
+          hd_is "dimword" (rand (concl th))) asl in
+        let imp = gr (fun th -> is_imp (concl th) &&
+          is_eq (lhand (concl th)) &&
+          hd_is "decode_length" (lhs (lhand (concl th)))) in
+        let sfs = nc_int_asms asl in
+        let ne = REWRITE_RULE sfs imp in
+        let ne2 = REWRITE_RULE[d1; d2] ne in
+        let dl = MP (SPECL [n1; n2] dl_lt)
+          (CONJ ne2 (CONJ (bnd l1) (bnd l2))) in
+        let ie = fst (dest_cond (lhs gl)) in
+        let il = fst (dest_cond (rand (lhs gl))) in
+        let nl = rhs (concl dl) in
+        let pos = not (is_neg (concl (hd sfs))) in
+        let rhsc = if pos then il else mk_neg il in
+        let v = genvar `:int` in
+        let lam = mk_abs (v, subst [v,i1] (rhs (concl d1))) in
+        REWRITE_TAC[d1; d2; dl] THEN
+        SUBGOAL_THEN (mk_neg ie) ASSUME_TAC THENL
+         [DISCH_THEN (fun e -> MP_TAC (AP_TERM lam e)) THEN
+          CONV_TAC (DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[ne2];
+          ALL_TAC] THEN
+        SUBGOAL_THEN (mk_eq (nl, rhsc)) SUBST1_TAC THENL
+         [REWRITE_TAC[abs_cmp] THEN
+          MAP_EVERY MP_TAC (ASSUME (mk_neg ie) :: sfs) THEN
+          INT_ARITH_TAC;
+          ALL_TAC] THEN
+        FIRST_ASSUM (fun ne -> REWRITE_TAC[ne]) THEN
+        REWRITE_TAC[COND_SWAP]) in
+    nc_open THEN nc_sm THEN
+    COND_CASES_TAC THENL
+     [SPLIT_ASM_TAC THEN nc_both_small;
+      COND_CASES_TAC THENL
+       [SPLIT_ASM_TAC THEN nc_small_big;
+        (W(fun (asl,gl) -> ASM_CASES_TAC (fst (dest_cond gl))) THENL
+         [FIRST_ASSUM (fun cc -> REWRITE_TAC[cc]) THEN
+          SPLIT_ASM_TAC THEN
+          nc_big_open THEN
+          (W(fun (asl,gl) ->
+             ASM_CASES_TAC (fst (dest_cond gl))) THENL
+           [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[] THEN
+            nc_same_hdr;
+            FIRST_ASSUM (fun cc -> REWRITE_TAC[cc]) THEN
+            nc_diff_hdr]);
+          FIRST_ASSUM (fun cc -> REWRITE_TAC[cc])])]]));;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13234-13244: a theorem
    that HOL4 states as the value of an ML expression:

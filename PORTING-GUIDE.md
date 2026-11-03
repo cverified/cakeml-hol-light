@@ -4404,3 +4404,67 @@ chose.  Quantify the lemma over what the use site has to fix
 variable and leaves the hypotheses alone.  `SPEC`, `SPECL`,
 `ISPEC` and the *minor* premise of `MATCH_MP` are all safe;
 `INST` and `INST_TYPE` on a theorem with hypotheses are not.
+
+## 95a. The diagnostics have to come out
+
+A proof that a script assembles out of the files of its
+development carries the prints that the development needed
+(`ppf`, `mrk`, a `say` of a goal).  They are not defined where
+the port loads, so one that is left behind costs a whole verify
+to find: the file dies with `Error: Unbound value ppf` and the
+twelve minutes with it.  The script that assembles the proof
+strips them, and `grep -n 'ppf\|say \|mrk ' <the try file>` is
+what says it worked -- before the landing, not after.
+
+## 96. A conditional whose branches are booleans
+
+`COND_CASES_TAC` splits a goal that holds a conditional into the
+two cases of its condition -- unless the conditional is a
+*boolean* one.  The statement of `memory_rel_Number_cmp` ends in
+
+```
+else if word_bit 0 w1 /\ word_bit 0 w2 then (...) else T
+```
+
+and on that goal `COND_CASES_TAC` does not leave two goals, so a
+`THENL` of two tactics after it fails with `seqapply: Length
+mismatch`, which says nothing about where the trouble is.  The
+split by hand does work:
+
+```
+W(fun (asl,gl) -> ASM_CASES_TAC (fst (dest_cond gl))) THENL
+ [FIRST_ASSUM (fun cc -> REWRITE_TAC[cc]) THEN ...;
+  FIRST_ASSUM (fun cc -> REWRITE_TAC[cc])]
+```
+
+The rewrite that collapses the conditional has to **name the case
+assumption**: `ASM_REWRITE_TAC[]` is not enough, because another
+assumption may have the condition as its left-hand side (here
+`word_bit 0 w1 <=> ~small_int (:'a) i1`), and then the condition
+is rewritten into that instead of into `T`.  While on the
+subject: `lhand` of a conditional is its *then* branch, so the
+condition is `fst (dest_cond t)` and nothing else.
+
+## 97. What a `W` sees
+
+`W(fun (asl,gl) -> ...)` runs its function when the tactic it
+builds is applied, so the assumptions it reads are the ones of
+that moment.  A `W` whose body is a chain that splits cases
+builds the whole chain out of the assumptions of *before* the
+split:
+
+```
+W(fun (asl,gl) ->
+  COND_CASES_TAC THEN
+  MAP_EVERY MP_TAC (int_facts asl) THEN INT_ARITH_TAC)
+```
+
+never sees what `COND_CASES_TAC` assumed, and the arithmetic is
+one fact short.  The facts of a step belong in a `W` of their
+own, after it:
+
+```
+COND_CASES_TAC THEN
+W(fun (asl,gl) -> MAP_EVERY MP_TAC (int_facts asl)) THEN
+INT_ARITH_TAC
+```
