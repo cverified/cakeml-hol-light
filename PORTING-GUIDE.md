@@ -4297,3 +4297,80 @@ same, and copying them is what the port does with a local lemma.
   put the statement back (`mk_thm ([], <the statement>)`) before
   the next one -- or read the failure of a second run with that in
   mind.
+
+## 93. What a proof over the invariant has to keep, and three traps
+
+`MEMORY_REL_TAC` unfolds memory_rel, word_ml_inv, abs_ml_inv and
+bc_stack_ref_inv in one go and strips what comes out, which is
+what most proofs of data_to_word_memoryProof want.  A proof that
+has to **use** one of those folded facts again cannot have it
+unfolded:
+
+- `memory_rel_ByteArray_IMP` wants `update_byte_ref_thm`, whose
+  hypothesis is an `abs_ml_inv`, so its opening unfolds only
+  memory_rel and word_ml_inv, applies that theorem (with the array
+  that is written left open -- `DISCH` the two hypotheses it can
+  have now and `GEN` the third), and only then unfolds abs_ml_inv
+  and bc_stack_ref_inv by hand;
+- and it wants `heap_in_memory_store_UpdateByte`, whose hypothesis
+  is the folded `heap_in_memory_store`, so the step that unfolds
+  that one uses `FIRST_ASSUM`, not `FIRST_X_ASSUM`, and both the
+  folded fact and its pieces stay.
+
+Two splits of one heap then come out of two theorems (bc_ref_inv's
+`heap_lookup_SPLIT` and update_byte_ref_thm's own), and they are
+at one and the same address because the root of the reference
+points at both: the equation of the roots gives
+`heap_length ha = heap_length h1` through `CONS_11` and the
+injectivity of `heap_address`, and that is all the identification
+the proof needs -- HOL4 proves `h1 = ha` with `APPEND_EQ_APPEND`
+and the port does not have to.
+
+Three traps of the round:
+
+- `MATCH_MP` moves a theorem's **quantified** variables that the
+  antecedent does not determine inside the conclusion, but a
+  **free** variable of the theorem stays free and uninstantiated.
+  A lemma `good_dimindex (:'a) /\ ... ==> ~word_bit 3
+  (make_byte_header c fl len)` whose hypotheses say nothing about
+  `len` therefore comes back about `len`, and rewriting with it
+  does nothing: `INST` the variable from the goal first.
+- `ASM_SIMP_TAC` and `SIMP_TAC` simplify the branches of a
+  conditional with its condition as context, so a goal that was
+  `if dimindex (:'a) = 32 then A else B` comes back with `A` and
+  `B` already specialised to the two word sizes.  A lemma that
+  states the generic form then needs `COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[]` to meet it, not `ACCEPT_TAC`.
+- `hd_is` tests the **real** constant name, and the port's
+  interface hides two of the ones these proofs grab for:
+  `word_bit` is HOL Light's `bit` and `word_list` is
+  `misc_word_list`.  A `grab_asm` or a `find_term` that looks for
+  the printed name finds nothing.
+
+## 94. A rule over the assumptions may not use an assumption
+
+`RULE_ASSUM_TAC` (and the port's `RULE_ASSUM_TRY`) throws the
+assumptions away and assumes what the rule gives back:
+
+```
+let RULE_ASSUM_TAC rule (asl,w) =
+  (POP_ASSUM_LIST (K ALL_TAC) THEN
+   MAP_EVERY (fun th -> ASSUME_TAC (rule th)) (rev asl)) (asl,w);;
+```
+
+So a rule that rewrites with a theorem **derived from an
+assumption** -- `MATCH_MP lemma (the memory_rel assumption)`, say --
+hands back theorems whose hypotheses include that assumption,
+which is no longer in the list: the tactic is then *invalid*, and
+nothing says so until the end.  Interactively `e` reports
+`VALID: Invalid tactic`; inside `prove` the failure comes much
+later and reads like something else entirely (`CHOOSE`, with a
+goal that has nothing to do with the step).
+
+What to do instead: put the derived theorem into the goal, not
+into the assumptions.  `MP_TAC (REWRITE_RULE[derived] assumption)`
+keeps the hypotheses where they belong and leaves the goal
+`<the rewritten assumption> ==> <the goal>`, which is valid
+because the theorem's hypotheses are still assumptions of the
+goal.  Rewrite the assumptions with a plain theorem (one with no
+hypotheses) and nothing else.

@@ -34040,19 +34040,907 @@
     ub_store THEN ub_unfold THEN ub_split THEN ub_words THEN
     ub_cond THEN ub_read THEN ub_write)
 ### memory_rel_ByteArray_IMP
-  (* the attempt: the proof of the source names hide_memory_rel_def,
-     make_byte_header_def, memory_rel_def, word_ml_inv_def,
-     bc_stack_ref_inv_def, v_inv_def.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[hide_memory_rel_def; make_byte_header_def;
-       memory_rel_def; word_ml_inv_def; bc_stack_ref_inv_def;
-       v_inv_def] THEN
-     TRY ASM_ARITH_TAC))
+(* the byte array of a reference, read out of the memory: as for
+   an array of values (memory_rel_ValueArray_IMP), the v_inv of the
+   RefPtr gives the pointer, whose lowest bit is set (get_addr_0),
+   bc_ref_inv gives the element of the heap that holds the bytes
+   and get_real_addr_get_addr the address of it.  What is kept from
+   before abs_ml_inv is unfolded is the invariant of the heap with
+   an array of the same length written in place of this one
+   (update_byte_ref_thm), with the array that is written still
+   open; the write of the statement is what closes it.
+
+   Of the header: the tag of a byte array is seven, or
+   twenty-three when it is not compared by its contents, which is
+   where the bits two, three and four of the statement come from,
+   and the length sits above them -- so the shift of the statement
+   reads the length back (USHR_SHL_CANCEL and USHR_OR_LOW, as
+   decode_length_byte_header does it), and it is below the space
+   that the header has for it.
+
+   Of the bytes: the words of the element hold them (write_bytes),
+   and the index of a byte says which word of them holds it
+   (DIVISION) and which byte of that word it is.  The byte
+   alignment of the address of the byte is the address of its word,
+   which is the alignment of HOL4's alignmentTheory that the port
+   does not have, proved here as the proof of
+   heap_in_memory_store_UpdateByte proves it (PORTING-GUIDE.md 91);
+   the words of the heap split at that word (LESS_LENGTH,
+   write_bytes_APPEND, word_list_APPEND), read_fun2set says that
+   the memory holds it, and get_byte_bytes_to_word that the byte of
+   it is the one the array has (EL_DROP).
+
+   And of the write of a byte: heap_in_memory_store_UpdateByte
+   writes the word of the array in the store and
+   update_byte_ref_thm gives the invariant of the heap with the
+   written array -- where the two splits of the heap, the one of
+   bc_ref_inv and the one of update_byte_ref_thm, are at one and
+   the same address, because the root of the reference points at
+   both *)
+  ((* the alignment of a word is the word shifted down and up again *)
+  let slice_shl = prove
+   (`!p (w:(N)word).
+       word_slice (dimindex (:N) - 1) p w = word_shl (word_ushr w p) p`,
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[word_slice; word_bits; WORD_EQ_BITS_ALT;
+      BIT_WORD_SHL; BIT_WORD_SUBWORD; BIT_WORD_USHR] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    ASM_CASES_TAC `p:num <= i` THEN ASM_REWRITE_TAC[] THEN
+    SUBGOAL_THEN
+      `i - p < MIN ((dimindex (:N) - 1 + 1) - p) (dimindex (:N))`
+      (fun th -> REWRITE_TAC[th]) THENL
+     [REWRITE_TAC[ARITH_RULE `MIN a b = if a <= b then a else b`] THEN
+      COND_CASES_TAC THEN ASM_ARITH_TAC;
+      REWRITE_TAC[ARITH_RULE `p + (i - p) = (i - p) + p`]]) in
+  let align_shl = prove
+   (`!p (w:'a word). align p w = word_shl (word_ushr w p) p`,
+   REWRITE_TAC[align_def; slice_shl]) in
+  (* so the value of it is the value with the lowest bits cleared *)
+  let val_align = prove
+   (`!p (w:'a word). p <= dimindex (:'a)
+       ==> val (align p w) = 2 EXP p * (val w DIV 2 EXP p)`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[align_shl; VAL_WORD_SHL; VAL_WORD_USHR] THEN
+    MATCH_MP_TAC MOD_LT THEN
+    TRANS_TAC LET_TRANS `val (w:'a word)` THEN
+    REWRITE_TAC[VAL_BOUND; DIV_MUL_LE]) in
+  (* and a word is aligned when those bits are clear *)
+  let aligned_val = prove
+   (`!p (w:'a word). p <= dimindex (:'a)
+       ==> (alignment_aligned p w <=> val w MOD 2 EXP p = 0)`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[aligned_def; GSYM VAL_EQ] THEN
+    FIRST_ASSUM (fun th -> REWRITE_TAC[MATCH_MP val_align th]) THEN
+    MP_TAC (SPECL [`val (w:'a word)`; `2 EXP p`] DIVISION) THEN
+    REWRITE_TAC[EXP_EQ_0; ARITH_EQ] THEN
+    DISCH_THEN (fun th -> MP_TAC (CONJUNCT1 th)) THEN
+    ARITH_TAC) in
+  (* a value whose lowest bits are clear is the multiple that its
+     quotient gives *)
+  let val_mult = prove
+   (`!p n. n MOD 2 EXP p = 0 ==> 2 EXP p * (n DIV 2 EXP p) = n`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    MP_TAC (SPECL [`n:num`; `2 EXP p`] DIVISION) THEN
+    ASM_REWRITE_TAC[EXP_EQ_0; ARITH_EQ; ADD_CLAUSES] THEN
+    DISCH_THEN (fun th ->
+      ONCE_REWRITE_TAC[MULT_SYM] THEN
+      ACCEPT_TAC (SYM (CONJUNCT1 th)))) in
+  (* a multiple of two to the p and a rest below it: the sum is
+     still below the word size and has the same quotient *)
+  let mult_bound = prove
+   (`!p d va vb. p <= d /\ va MOD 2 EXP p = 0 /\ va < 2 EXP d /\
+       vb < 2 EXP p
+       ==> va + vb < 2 EXP d /\
+           (va + vb) DIV 2 EXP p = va DIV 2 EXP p`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    (* the value is two to the p times its quotient *)
+    FIRST_ASSUM (fun md ->
+      if not (is_eq (concl md) && hd_is "MOD" (lhs (concl md)))
+      then fail() else
+      MP_TAC (MATCH_MP val_mult md)) THEN
+    ABBREV_TAC `k = va DIV 2 EXP p` THEN
+    DISCH_THEN (SUBST_ALL_TAC o SYM) THEN
+    (* the word size is two to the p times the rest of it *)
+    SUBGOAL_THEN `2 EXP d = 2 EXP p * 2 EXP (d - p)` ASSUME_TAC THENL
+     [REWRITE_TAC[GSYM EXP_ADD] THEN AP_TERM_TAC THEN ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    (* so the quotient is below that rest *)
+    SUBGOAL_THEN `k < 2 EXP (d - p)` ASSUME_TAC THENL
+     [FIRST_ASSUM (fun ed ->
+        if not (is_eq (concl ed) && hd_is "EXP" (lhs (concl ed)))
+        then fail() else
+        FIRST_ASSUM (fun lt ->
+          if not (hd_is "<" (concl lt) &&
+                  hd_is "*" (lhand (concl lt))) then fail() else
+          MP_TAC (ONCE_REWRITE_RULE[ed] lt))) THEN
+      REWRITE_TAC[LT_MULT_LCANCEL; EXP_EQ_0; ARITH_EQ] THEN
+      DISCH_THEN ACCEPT_TAC;
+      ALL_TAC] THEN
+    CONJ_TAC THENL
+     [(* the sum is below the word size *)
+      FIRST_ASSUM (fun ed ->
+        if not (is_eq (concl ed) && hd_is "EXP" (lhs (concl ed)))
+        then fail() else ONCE_REWRITE_TAC[ed]) THEN
+      TRANS_TAC LTE_TRANS `2 EXP p * (k + 1)` THEN
+      CONJ_TAC THENL
+       [REWRITE_TAC[LEFT_ADD_DISTRIB; MULT_CLAUSES;
+          LT_ADD_LCANCEL] THEN
+        FIRST_ASSUM ACCEPT_TAC;
+        REWRITE_TAC[LE_MULT_LCANCEL] THEN ASM_ARITH_TAC];
+      (* and the quotient is the one of the multiple *)
+      ONCE_REWRITE_TAC[ADD_SYM] THEN
+      ASM_SIMP_TAC[DIV_MULT_ADD; DIV_MULT; EXP_EQ_0; ARITH_EQ] THEN
+      ASM_SIMP_TAC[DIV_LT; ADD_CLAUSES]]) in
+  (* and a word below two to the p added to an aligned word does not
+     reach the next multiple: HOL4's align_add_aligned *)
+  let align_add_aligned = prove
+   (`!p (a:'a word) (b:'a word).
+       alignment_aligned p a /\ val b < 2 EXP p /\
+       p <= dimindex (:'a)
+       ==> align p (a + b) = a`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    (* the lowest bits of the aligned word are clear *)
+    FIRST_X_ASSUM (fun al ->
+      if not (hd_is "alignment_aligned" (concl al)) then fail() else
+      FIRST_ASSUM (fun le ->
+        if not (hd_is "<=" (concl le)) then fail() else
+        ASSUME_TAC (REWRITE_RULE[MATCH_MP aligned_val le] al))) THEN
+    (* so the two values add up below the word size and the sum has
+       the quotient of the first *)
+    FIRST_ASSUM (fun md ->
+      if not (is_eq (concl md) && hd_is "MOD" (lhs (concl md)))
+      then fail() else
+      FIRST_ASSUM (fun le ->
+        if not (hd_is "<=" (concl le)) then fail() else
+        FIRST_ASSUM (fun lt ->
+          if not (hd_is "<" (concl lt) &&
+                  hd_is "EXP" (rand (concl lt))) then fail() else
+          STRIP_ASSUME_TAC (MATCH_MP mult_bound
+            (CONJ le (CONJ md (CONJ (ISPEC `a:'a word` VAL_BOUND)
+              lt))))))) THEN
+    REWRITE_TAC[GSYM VAL_EQ] THEN
+    FIRST_ASSUM (fun le ->
+      if not (hd_is "<=" (concl le)) then fail() else
+      REWRITE_TAC[MATCH_MP val_align le]) THEN
+    REWRITE_TAC[VAL_WORD_ADD] THEN
+    ASM_SIMP_TAC[MOD_LT; val_mult]) in
+  (* the lowest bits of a sum that the word size cuts down *)
+  let mod_pow_add = prove
+   (`!p d x y. p <= d /\ x MOD 2 EXP p = 0 /\ y MOD 2 EXP p = 0
+       ==> (x + y) MOD 2 EXP d MOD 2 EXP p = 0`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    REWRITE_TAC[MOD_MOD_EXP_MIN] THEN
+    ASM_SIMP_TAC[ARITH_RULE `p <= d ==> MIN d p = p`] THEN
+    ONCE_REWRITE_TAC[GSYM MOD_ADD_MOD] THEN
+    ASM_REWRITE_TAC[ADD_CLAUSES; MOD_0]) in
+  (* and of a multiple of two to the p *)
+  let mod_pow_mult = prove
+   (`!p d n. p <= d ==> (n * 2 EXP p) MOD 2 EXP d MOD 2 EXP p = 0`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[MOD_MOD_EXP_MIN] THEN
+    ASM_SIMP_TAC[ARITH_RULE `p <= d ==> MIN d p = p`] THEN
+    ONCE_REWRITE_TAC[MULT_SYM] THEN REWRITE_TAC[MOD_MULT]) in
+  (* a multiple of two to the p added to an aligned word leaves it
+     aligned: HOL4's aligned_add_pow *)
+  let aligned_add_pow = prove
+   (`!p n (a:'a word).
+       alignment_aligned p a /\ p <= dimindex (:'a)
+       ==> alignment_aligned p (a + n2w (n * 2 EXP p))`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_ASSUM (fun le ->
+      if not (hd_is "<=" (concl le)) then fail() else
+      FIRST_X_ASSUM (fun al ->
+        if not (hd_is "alignment_aligned" (concl al)) then fail() else
+        ASSUME_TAC (REWRITE_RULE[MATCH_MP aligned_val le] al)) THEN
+      REWRITE_TAC[MATCH_MP aligned_val le]) THEN
+    REWRITE_TAC[VAL_WORD_ADD; VAL_WORD] THEN
+    MATCH_MP_TAC mod_pow_add THEN
+    ASM_SIMP_TAC[mod_pow_mult]) in
+  (* the two word sizes of the target: the bytes in a word are two
+     to the shift of them, which is below the word size *)
+  let gd_shift = prove
+   (`good_dimindex (:'a)
+     ==> 2 EXP (LOG2 (dimindex (:'a) DIV 8)) = dimindex (:'a) DIV 8 /\
+         LOG2 (dimindex (:'a) DIV 8) <= dimindex (:'a) /\
+         (bytes_in_word:'a word) =
+           n2w (2 EXP (LOG2 (dimindex (:'a) DIV 8)))`,
+    let LOG2_RED =
+      REPEATC(CHANGED_CONV(ONCE_DEPTH_CONV(REWR_CONV LOG2) THENC
+                           NUM_REDUCE_CONV THENC REWRITE_CONV[])) in
+    REWRITE_TAC[good_dimindex_def; bytes_in_word_def] THEN
+    DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN CONV_TAC LOG2_RED THEN
+    CONV_TAC NUM_REDUCE_CONV) in
+  (* an address of a word of the heap is aligned *)
+  let heap_addr_aligned = prove
+   (`!(curr:'a word) k.
+       byte_aligned curr /\ good_dimindex (:'a)
+       ==> alignment_aligned (LOG2 (dimindex (:'a) DIV 8))
+             (curr + bytes_in_word * n2w k)`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      STRIP_ASSUME_TAC (MATCH_MP gd_shift gd)) THEN
+    FIRST_ASSUM (fun bw ->
+      if not (is_eq (concl bw) &&
+              hd_is "bytes_in_word" (lhs (concl bw))) then fail() else
+      REWRITE_TAC[bw]) THEN
+    REWRITE_TAC[GSYM WORD_MUL] THEN
+    ONCE_REWRITE_TAC[MULT_SYM] THEN
+    MATCH_MP_TAC aligned_add_pow THEN
+    CONJ_TAC THENL
+     [FIRST_ASSUM (fun ba ->
+        if not (hd_is "byte_aligned" (concl ba)) then fail() else
+        ACCEPT_TAC (REWRITE_RULE[byte_aligned_def] ba));
+      FIRST_ASSUM (fun le ->
+        if not (hd_is "<=" (concl le)) then fail() else
+        ACCEPT_TAC le)]) in
+  (* the bytes in a word are below the word size *)
+  let bw_bound = prove
+   (`good_dimindex (:'a)
+     ==> dimindex (:'a) DIV 8 <= 2 EXP dimindex (:'a)`,
+    REWRITE_TAC[good_dimindex_def] THEN
+    DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+    CONV_TAC NUM_REDUCE_CONV) in
+  (* so the byte alignment of an address of the heap and a byte
+     below the bytes in a word is the address *)
+  let byte_align_add = prove
+   (`!(curr:'a word) k r.
+       byte_aligned curr /\ good_dimindex (:'a) /\
+       r < dimindex (:'a) DIV 8
+       ==> byte_align ((curr + bytes_in_word * n2w k) + n2w r) =
+           curr + bytes_in_word * n2w k`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    REWRITE_TAC[byte_align_def] THEN
+    MATCH_MP_TAC align_add_aligned THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      STRIP_ASSUME_TAC (MATCH_MP gd_shift gd) THEN
+      STRIP_ASSUME_TAC (MATCH_MP bw_bound gd)) THEN
+    REPEAT CONJ_TAC THENL
+     [MATCH_MP_TAC heap_addr_aligned THEN ASM_REWRITE_TAC[];
+      FIRST_ASSUM (fun ep ->
+        if not (is_eq (concl ep) && hd_is "EXP" (lhs (concl ep)))
+        then fail() else REWRITE_TAC[ep]) THEN
+      REWRITE_TAC[VAL_WORD] THEN
+      SUBGOAL_THEN `r MOD 2 EXP dimindex (:'a) = r` SUBST1_TAC THENL
+       [MATCH_MP_TAC MOD_LT THEN
+        TRANS_TAC LTE_TRANS `dimindex (:'a) DIV 8` THEN
+        ASM_REWRITE_TAC[];
+        FIRST_ASSUM ACCEPT_TAC];
+      FIRST_ASSUM (fun le ->
+        if not (hd_is "<=" (concl le) &&
+                hd_is "LOG2" (lhand (concl le))) then fail() else
+        ACCEPT_TAC le)]) in
+  let rec facs t =
+    if hd_is "STAR" t then
+      let args = snd (strip_comb t) in
+      facs (el 0 args) @ facs (el 1 args)
+    else [t] in
+  let is_hl th = hd_is "heap_lookup" (lhs (concl th)) in
+  let sepfront names =
+    W(fun (asl,w) ->
+      let pred = rator (lhand w) in
+      let fs = facs pred in
+      let picked = map (fun n -> find (hd_is n) fs) names in
+      let rest = filter (fun t -> not (mem t picked)) fs in
+      let st = fst (strip_comb pred) in
+      let mk a b = mk_comb (mk_comb (st,a),b) in
+      let target = itlist mk picked (end_itlist mk rest) in
+      SUBGOAL_THEN (mk_eq (pred,target)) SUBST1_TAC THENL
+       [REWRITE_TAC[STAR_AC]; ALL_TAC]) in
+  (* the address of a byte of an array, as the words of the heap
+     have it: the word of the array that holds the byte and the byte
+     of that word *)
+  let addr_split2 = prove
+   (`!(curr:'a word) hl i bw j r.
+       ~(bw = 0) /\ i = j * bw + r /\
+       bytes_in_word = ((n2w bw):'a word)
+       ==> (curr + bytes_in_word * n2w hl) + bytes_in_word + n2w i =
+           (curr + bytes_in_word * n2w (hl + 1 + j)) + n2w r`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    ASM_REWRITE_TAC[WORD_ADD; WORD_MUL] THEN
+    CONV_TAC WORD_RULE) in
+  (* a byte of the array that the words of the heap hold: the memory
+     holds the word of it, and the byte of that word is the one *)
+  let bytes_read = prove
+   (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\ byte_aligned (curr:'a word) /\
+     (set_sep_one (curr + bytes_in_word * n2w hl, hw) *
+      word_list ((curr + bytes_in_word * n2w hl) + bytes_in_word)
+        (MAP wordLang_Word (write_bytes vals
+          (REPLICATE ws ((n2w 0):'a word)) be)) * q)
+       (fun2set (m,dm)) /\
+     LENGTH vals <= ws * (dimindex (:'a) DIV 8) /\ i < LENGTH vals
+     ==> mem_load_byte_aux m dm be
+           ((curr + bytes_in_word * n2w hl) + bytes_in_word + n2w i) =
+         SOME (EL i vals)`),
+    STRIP_TAC THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      STRIP_ASSUME_TAC (MATCH_MP gd_shift gd) THEN
+      STRIP_ASSUME_TAC (MATCH_MP bw_bound gd)) THEN
+    SUBGOAL_THEN `~(dimindex (:'a) DIV 8 = 0)` ASSUME_TAC THENL
+     [FIRST_ASSUM (fun ep ->
+        if not (is_eq (concl ep) && hd_is "EXP" (lhs (concl ep)))
+        then fail() else
+        ONCE_REWRITE_TAC[GSYM ep]) THEN
+      REWRITE_TAC[EXP_EQ_0; ARITH_EQ];
+      ALL_TAC] THEN
+    FIRST_ASSUM (fun nz ->
+      if not (is_neg (concl nz) &&
+              hd_is "DIV" (lhs (rand (concl nz)))) then fail() else
+      STRIP_ASSUME_TAC (MP (SPECL [`i:num`; `dimindex (:'a) DIV 8`]
+        DIVISION) nz)) THEN
+    (* the word of the array that holds the byte *)
+    SUBGOAL_THEN `i DIV (dimindex (:'a) DIV 8) < ws` ASSUME_TAC THENL
+     [ASM_SIMP_TAC[RDIV_LT_EQ] THEN
+      TRANS_TAC LTE_TRANS `LENGTH (vals:(word8)list)` THEN
+      ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[MULT_SYM] THEN
+      FIRST_ASSUM ACCEPT_TAC;
+      ALL_TAC] THEN
+    (* the address of the byte, and its byte alignment *)
+    W(fun (asl,gl) ->
+      let bw = `dimindex (:'a) DIV 8` in
+      let jj = mk_binary "DIV" (`i:num`, bw) in
+      let rr = mk_binary "MOD" (`i:num`, bw) in
+      let gr p = grab_asm p asl in
+      let nz = gr (fun th -> is_neg (concl th) &&
+        hd_is "DIV" (lhs (rand (concl th)))) in
+      let ieq = gr (fun th -> is_eq (concl th) &&
+        lhs (concl th) = `i:num`) in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let bal = gr (fun th -> hd_is "byte_aligned" (concl th)) in
+      let rlt = gr (fun th -> hd_is "<" (concl th) &&
+        lhand (concl th) = rr) in
+      let ad = MP (ISPECL [`curr:'a word`; `hl:num`; `i:num`; bw;
+        jj; rr] addr_split2) (CONJ nz (CONJ ieq bytes_in_word_def)) in
+      let kk = rand (rand (rand (lhand (rhs (concl ad))))) in
+      let ba = MP (ISPECL [`curr:'a word`; kk; rr]
+        byte_align_add) (CONJ bal (CONJ gd rlt)) in
+      REWRITE_TAC[ad; mem_load_byte_aux_def; ba] THEN
+      ASSUME_TAC ad THEN ASSUME_TAC ba) THEN
+    (* the words of the array, split at the one that holds it *)
+    W(fun (asl,gl) ->
+      let jlt = grab_asm (fun th -> hd_is "<" (concl th) &&
+        hd_is "DIV" (lhand (concl th)) &&
+        is_var (rand (concl th))) asl in
+      let rep = `REPLICATE ws ((n2w 0):'a word)` in
+      let lenr = ISPECL [`ws:num`; `(n2w 0):'a word`]
+        LENGTH_REPLICATE in
+      STRIP_ASSUME_TAC (MP (REWRITE_RULE[lenr]
+        (ISPECL [rep; lhand (concl jlt)] LESS_LENGTH)) jlt)) THEN
+    FIRST_X_ASSUM (fun re ->
+      if not (is_eq (concl re) &&
+              hd_is "REPLICATE" (lhs (concl re))) then fail() else
+      SUBST_ALL_TAC re) THEN
+    RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV let_CONV) o
+      REWRITE_RULE[write_bytes_APPEND; write_bytes_def]) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[MAP_APPEND; MAP; word_list_APPEND;
+      word_list_def; STAR_ASSOC; LENGTH_MAP; LENGTH_write_bytes]) THEN
+    FIRST_ASSUM (fun le ->
+      if not (is_eq (concl le) && hd_is "LENGTH" (lhs (concl le)) &&
+              hd_is "DIV" (rhs (concl le))) then fail() else
+      RULE_ASSUM_TRY (REWRITE_RULE[le]) THEN ASSUME_TAC le) THEN
+    (* which the memory holds there *)
+    W(fun (asl,gl) ->
+      let ba = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "byte_align" (lhs (concl th))) asl in
+      let a2 = rhs (concl ba) in
+      let sep = grab_asm (fun th ->
+        hd_is "STAR" (rator (concl th)) &&
+        can (find_term (hd_is "fun2set")) (concl th)) asl in
+      let fs = facs (rator (concl sep)) in
+      let cell = find (fun t -> hd_is "set_sep_one" t &&
+        can (find_term (hd_is "bytes_to_word")) (rand t)) fs in
+      let a1 = fst (dest_pair (rand cell)) in
+      let aeq = WORD_RULE (mk_eq (a1,a2)) in
+      let rest = filter (fun t -> not (t = cell)) fs in
+      let st = fst (strip_comb (rator (concl sep))) in
+      let mk x y = mk_comb (mk_comb (st,x),y) in
+      let target = mk cell (end_itlist mk rest) in
+      let eq = prove (mk_eq (rator (concl sep), target),
+        REWRITE_TAC[STAR_AC]) in
+      let rd = MATCH_MP read_fun2set (REWRITE_RULE[eq] sep) in
+      STRIP_ASSUME_TAC (REWRITE_RULE[aeq] rd)) THEN
+    ASM_REWRITE_TAC[] THEN
+    MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[injectivity "option"] THEN
+    (* and the byte of that word is the one the array has *)
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let ba0 = gr (fun th -> is_eq (concl th) &&
+        hd_is "byte_align" (lhs (concl th))) in
+      let ep = gr (fun th -> is_eq (concl th) &&
+        hd_is "EXP" (lhs (concl th))) in
+      let bwe = gr (fun th -> is_eq (concl th) &&
+        hd_is "bytes_in_word" (lhs (concl th))) in
+      let ba = REWRITE_RULE[bwe; ep] ba0 in
+      let gargs = snd (strip_comb (lhs gl)) in
+      let aa = el 0 gargs in
+      let bt = el 1 gargs in
+      let rr = rand (rand aa) in
+      let zs = el 2 (snd (strip_comb bt)) in
+      let yy = el 3 (snd (strip_comb bt)) in
+      (* the address reads the byte that the rest of the index says *)
+      let tgt = mk_eq (aa, list_mk_icomb "word_add"
+        [list_mk_icomb "byte_align" [aa]; rand aa]) in
+      let c1 = REWRITE_CONV[ba] tgt in
+      let fact = EQ_MP (SYM c1) (WORD_RULE (rand (concl c1))) in
+      let gbe = MATCH_MP get_byte_eq (CONJ gd fact) in
+      (* and the word holds it where the array has it *)
+      let gb0 = INST [rr, `i:num`;
+        `LOG2 (dimindex (:'a) DIV 8)`, `k:num`]
+        get_byte_bytes_to_word in
+      let gb = REWRITE_RULE[ep] (ISPECL [zs; yy] gb0) in
+      REWRITE_TAC[gbe] THEN
+      SUBGOAL_THEN (lhand (concl gb)) (fun th ->
+        REWRITE_TAC[MP gb th]) THENL
+       [REWRITE_TAC[LENGTH_DROP] THEN
+        REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+        ASM_ARITH_TAC;
+        ALL_TAC] THEN
+      (* which is the byte of the array *)
+      MP_TAC (ISPECL [`vals:(word8)list`; rr; lhand zs] EL_DROP) THEN
+      ANTS_TAC THENL
+       [ASM_ARITH_TAC;
+        DISCH_THEN SUBST1_TAC THEN
+        AP_THM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC])) in
+  (* the three bits of the header of a byte array that the statement
+     reads: the tag of it is seven or twenty-three, and the length
+     above it sits five bits up or higher *)
+  let byte_header_bits = prove
+   (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\
+     data_to_word_config_len_size c + 7 < dimindex (:'a)
+     ==> ~word_bit 3 ((make_byte_header c fl len):'a word) /\
+         (word_bit 4 ((make_byte_header c fl len):'a word) <=> ~fl) /\
+         word_bit 2 ((make_byte_header c fl len):'a word)`),
+    REWRITE_TAC[make_byte_header_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    STRIP_TAC THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+    ASM_REWRITE_TAC[ARITH_EQ] THEN
+    COND_CASES_TAC THEN
+    REWRITE_TAC[BIT_WORD_OR_ALT; BIT_WORD_SHL; BIT_WORD] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    ASM_REWRITE_TAC[] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    ASM_ARITH_TAC) in
+  (* the length that the header of a byte array holds, which the
+     statement reads with a shift of its own: make_byte_header shifts
+     the length plus the bytes in a word up by two (or three) less
+     than the word size and ors the tag in below that, so the shift
+     down gives the length back *)
+  let byte_header_len = prove
+   (cake_as_vars (fun () ->
+    `good_dimindex (:'a) /\
+     data_to_word_config_len_size c + 7 < dimindex (:'a) /\
+     len + 2 EXP word_shift (:'a) <
+       2 EXP (data_to_word_config_len_size c + word_shift (:'a))
+     ==> (if dimindex (:'a) = 32 then
+            len + 4 < 2 EXP (dimindex (:'a) - 3) /\
+            (((make_byte_header c fl len):'a word) >>>
+               (dimindex (:'a) - data_to_word_config_len_size c - 2) =
+             n2w (len + 4))
+          else
+            len + 8 < 2 EXP (dimindex (:'a) - 3) /\
+            (((make_byte_header c fl len):'a word) >>>
+               (dimindex (:'a) - data_to_word_config_len_size c - 3) =
+             n2w (len + 8)))`),
+    let hi = prove
+     (`!n r (i:num). n < 2 EXP r /\ r <= i
+         ==> ~(word_bit i ((n2w n):'a word))`,
+      MATCH_ACCEPT_TAC BIT_WORD_HI) in
+    let tag5 = prove
+     (`!fl j. word_bit j ((if fl then (n2w 7) else (n2w 23)):'a word)
+              ==> j < 5`,
+      REPEAT GEN_TAC THEN
+      ASM_CASES_TAC `(j:num) < 5` THEN ASM_REWRITE_TAC[] THEN
+      COND_CASES_TAC THENL
+       [MP_TAC (ISPECL [`7`; `5`; `j:num`] hi);
+        MP_TAC (ISPECL [`23`; `5`; `j:num`] hi)] THEN
+      CONV_TAC NUM_REDUCE_CONV THEN
+      ASM_SIMP_TAC[ARITH_RULE `~((j:num) < 5) ==> 5 <= j`]) in
+    let usedim =
+      FIRST_X_ASSUM (fun dd ->
+        let c = concl dd in
+        if is_eq c &&
+           (try fst (dest_const (fst (strip_comb (lhs c)))) = "dimindex"
+            with Failure _ -> false)
+        then RULE_ASSUM_TAC (REWRITE_RULE[dd; word_shift_def]) THEN
+             ASSUME_TAC dd
+        else fail()) in
+    STRIP_TAC THEN
+    FIRST_ASSUM (DISJ_CASES_THEN ASSUME_TAC o
+      REWRITE_RULE[good_dimindex_def]) THEN
+    usedim THEN
+    RULE_ASSUM_TAC (CONV_RULE NUM_REDUCE_CONV) THEN
+    REWRITE_TAC[make_byte_header_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+    (CONJ_TAC THENL
+     [(* the length is below the space that the header has for it *)
+      W(fun (asl,gl) ->
+        let pc = grab_asm (fun th -> hd_is "<" (concl th) &&
+          hd_is "+" (lhand (concl th)) &&
+          hd_is "EXP" (rand (concl th))) asl in
+        let nn = int_of_string (string_of_num
+          (dest_numeral (rand gl))) in
+        let rec lg x k = if x <= 1 then k else lg (x / 2) (k + 1) in
+        let eq = NUM_REDUCE_CONV (mk_binary "EXP"
+          (`2`, mk_small_numeral (lg nn 0))) in
+        TRANS_TAC LTE_TRANS (rand (concl pc)) THEN
+        REWRITE_TAC[pc; GSYM eq; LE_EXP] THEN
+        CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC);
+      (* and the shift gives it back *)
+      W(fun (asl,gl) ->
+        let sh = rand (lhs gl) in
+        SUBGOAL_THEN (list_mk_forall ([`j:num`],
+          mk_imp (list_mk_icomb "bit" [`j:num`;
+            `(if fl then (n2w 7) else (n2w 23)):'a word`],
+            mk_binary "<" (`j:num`, sh))))
+          (fun th -> REWRITE_TAC[MATCH_MP USHR_OR_LOW th])) THENL
+       [GEN_TAC THEN
+        DISCH_THEN (fun th -> MP_TAC (MATCH_MP tag5 th)) THEN
+        ASM_ARITH_TAC;
+        ALL_TAC] THEN
+      W(fun (asl,gl) ->
+        let sh1 = rand (lhand (lhs gl)) in
+        let sh2 = rand (lhs gl) in
+        if sh1 = sh2 then ALL_TAC
+        else REWRITE_TAC[ARITH_RULE (mk_eq (sh2,sh1))]) THEN
+      MATCH_MP_TAC USHR_SHL_CANCEL THEN
+      X_GEN_TAC `j:num` THEN
+      W(fun (asl,gl) ->
+        let pc = grab_asm (fun th -> hd_is "<" (concl th) &&
+          hd_is "+" (lhand (concl th)) &&
+          hd_is "EXP" (rand (concl th))) asl in
+        let r = rand (rand (concl pc)) in
+        ASM_CASES_TAC (rand gl) THENL
+         [ASM_REWRITE_TAC[];
+          ASM_REWRITE_TAC[] THEN
+          MP_TAC (ISPECL [lhand (concl pc); r; `j:num`] hi) THEN
+          SUBGOAL_THEN (mk_binary "<=" (r, `j:num`))
+            (fun th -> REWRITE_TAC[th]) THENL
+           [ASM_ARITH_TAC; ASM_REWRITE_TAC[]]])])) in
+  (* the bytes of an array fit in the words that hold them *)
+  let div_mul_bound = prove
+   (`!n bw. ~(bw = 0) ==> n <= (n DIV bw + 1) * bw`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    MP_TAC (SPECL [`n:num`; `bw:num`] DIVISION) THEN
+    ASM_REWRITE_TAC[] THEN
+    REWRITE_TAC[RIGHT_ADD_DISTRIB; MULT_CLAUSES] THEN
+    ARITH_TAC) in
+  (* a separation predicate with the factors of some kinds brought
+     to the front, as a rule *)
+  let sepfront2 names sep =
+    let pred = rator (concl sep) in
+    let fs = facs pred in
+    let picked = map (fun n -> find (hd_is n) fs) names in
+    let rest = filter (fun t -> not (mem t picked)) fs in
+    let st = fst (strip_comb pred) in
+    let mk a b = mk_comb (mk_comb (st,a),b) in
+    let target = itlist mk picked (end_itlist mk rest) in
+    let eq = prove (mk_eq (pred,target), REWRITE_TAC[STAR_AC]) in
+    REWRITE_RULE[eq] sep in
+  (* update_byte_ref_thm with the array that is written last, so
+     that the invariant of the reference can be taken apart before
+     the array is known *)
+  let ubr =
+    let hyp = lhand (concl update_byte_ref_thm) in
+    let h1,h23 = dest_conj hyp in
+    let h2,h3 = dest_conj h23 in
+    let ys = rand (rand (concl (SPEC_ALL (ASSUME h3)))) in
+    let h12 = mk_conj (h1,h2) in
+    DISCH h12 (GEN ys (DISCH h3 (MP update_byte_ref_thm
+      (CONJ (CONJUNCT1 (ASSUME h12))
+        (CONJ (CONJUNCT2 (ASSUME h12)) (ASSUME h3)))))) in
+  (* a memory that a byte can be read from holds a word there *)
+  let mem_load_word = prove
+   (`!(m:'a word->'a word_loc) dm be ad b.
+       mem_load_byte_aux m dm be ad = SOME b
+       ==> ?v. m (byte_align ad) = wordLang_Word v`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[mem_load_byte_aux_def] THEN
+    CASES_ON_TAC `(m:'a word->'a word_loc) (byte_align (ad:'a word))`
+      THEN
+    SAFE_MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[distinctness "option"] THEN MESON_TAC[]) in
+  (* the three bits of the header that the statement reads *)
+  let ba_bits =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let lsz = gr (fun th -> hd_is "<" (concl th) &&
+        hd_is "+" (lhand (concl th)) &&
+        hd_is "data_to_word_config_len_size"
+          (lhand (lhand (concl th)))) in
+      let mbh = find_term (hd_is "make_byte_header") gl in
+      let ln = el 2 (snd (strip_comb mbh)) in
+      REWRITE_TAC[MATCH_MP (INST [ln, `len:num`] byte_header_bits)
+        (CONJ gd lsz)]) in
+  (* the length that it holds *)
+  let ba_len =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let lsz = gr (fun th -> hd_is "<" (concl th) &&
+        hd_is "+" (lhand (concl th)) &&
+        hd_is "data_to_word_config_len_size"
+          (lhand (lhand (concl th)))) in
+      let pc = gr (fun th -> hd_is "<" (concl th) &&
+        hd_is "+" (lhand (concl th)) &&
+        hd_is "LENGTH" (lhand (lhand (concl th)))) in
+      MP_TAC (MATCH_MP byte_header_len (CONJ gd (CONJ lsz
+        (REWRITE_RULE[GSYM word_shift_def] pc))))) THEN
+    COND_CASES_TAC THEN ASM_REWRITE_TAC[] in
+  (* and the bytes that the words of the array hold *)
+  let ba_read =
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let cu = lhand (lhand (el 3 (snd (strip_comb (lhs gl))))) in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let bal = gr (fun th -> hd_is "byte_aligned" (concl th) &&
+        rand (concl th) = cu) in
+      let ilt = gr (fun th -> hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th))) in
+      let nz = gr (fun th -> is_neg (concl th) &&
+        hd_is "DIV" (lhs (rand (concl th)))) in
+      let sep = sepfront2 ["set_sep_one"; "misc_word_list"]
+        (gr (fun th -> hd_is "STAR" (rator (concl th)) &&
+          can (find_term (hd_is "fun2set")) (concl th))) in
+      let lb = SPEC (rand (concl ilt))
+        (MATCH_MP div_mul_bound nz) in
+      MATCH_ACCEPT_TAC (MATCH_MP bytes_read
+        (CONJ gd (CONJ bal (CONJ sep (CONJ lb ilt)))))) in
+  (* the invariant of the reference, as memory_rel_ValueArray_IMP
+     takes it apart -- but with the invariant of the written array
+     kept (update_byte_ref_thm) before abs_ml_inv is unfolded *)
+  let ba_open =
+    CONV_TAC (RAND_CONV (REWRITE_CONV[GSYM hide_memory_rel_def])) THEN
+    REWRITE_TAC[memory_rel_def; word_ml_inv_def] THEN
+    STRIP_TAC THEN
+    REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC)) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[MAP; FST; SND]) THEN
+    W(fun (asl,gl) ->
+      let ai = grab_asm (fun th -> hd_is "abs_ml_inv" (concl th)) asl in
+      let lk = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "sptree_lookup" (lhs (concl th))) asl in
+      let ub = MATCH_MP ubr (CONJ ai lk) in
+      UNDISCH_TAC (concl ai) THEN
+      DISCH_THEN (fun ai2 ->
+        STRIP_ASSUME_TAC (REWRITE_RULE[abs_ml_inv_def;
+          bc_stack_ref_inv_def] ai2)) THEN
+      ASSUME_TAC ub) THEN
+    SPLIT_ROOTS_TAC THEN
+    V_INV_TAC v_inv_def THEN
+    TRY (FIRST_ASSUM (fun t1 -> FIRST_ASSUM (fun t2 ->
+      CONTR_TAC (REWRITE_RULE[injectivity "option";
+                              distinctness "bvlSem_ref"]
+                   (TRANS (SYM t1) t2))))) THEN
+    FIRST_ASSUM (fun e ->
+      let c = concl e in
+      if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+      then SUBST1_TAC (SYM e) else fail()) THEN
+    REWRITE_TAC[injectivity "word_loc"] THEN
+    CONV_TAC (REDEPTH_CONV UNWIND_CONV) THEN
+    REWRITE_TAC[get_addr_0] THEN
+    FIRST_X_ASSUM (fun th ->
+      if is_forall (concl th) &&
+         hd_is "bc_ref_inv" (rand (snd (strip_forall (concl th))))
+      then MP_TAC (SPEC `p:num` th) else fail()) THEN
+    ANTS_TAC THENL
+     [CONJ_TAC THENL
+       [REWRITE_TAC[reachable_refs_def; MEM] THEN
+        EXISTS_TAC `RefPtr bl p:dataSem_v` THEN
+        EXISTS_TAC `p:num` THEN
+        REWRITE_TAC[get_refs_def; MEM;
+                    CONJUNCT1 (SPEC_ALL RTC_RULES)];
+        ASM_REWRITE_TAC[]];
+      ALL_TAC] THEN
+    REWRITE_TAC[bc_ref_inv_def] THEN
+    ASM_SIMP_TAC[FLOOKUP_DEF] THEN
+    MATCH_REDUCE_TAC THEN
+    DISCH_THEN STRIP_ASSUME_TAC in
+  (* the heap splits at the element of the array, whose address is
+     the one that the root of the RefPtr points at; the store of the
+     source is kept, because the write of the byte wants it *)
+  let ba_heap =
+    RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV let_CONV)) THEN
+    FIRST_ASSUM (fun th ->
+      if hd_is "heap_in_memory_store" (concl th)
+      then MP_TAC (REWRITE_RULE[heap_in_memory_store_def] th)
+      else fail()) THEN
+    STRIP_TAC THEN
+    W(fun (asl,w) ->
+      MP_TAC (MATCH_MP heap_lookup_SPLIT (grab_asm is_hl asl))) THEN
+    DISCH_THEN STRIP_ASSUME_TAC THEN
+    VAR_EQ_TAC THEN
+    FIRST_X_ASSUM (fun th ->
+      if (try hd_is "fmap_apply" (lhs (concl th))
+          with Failure _ -> false)
+      then SUBST_ALL_TAC th else fail()) THEN
+    W(fun (asl,w) ->
+      let hl = grab_asm is_hl asl in
+      let hlen = grab_asm (fun th ->
+        hd_is "heap_length" (lhand (concl th))) asl in
+      let cu = grab_asm (fun th -> hd_is "FLOOKUP" (lhs (concl th)) &&
+        fst (dest_const (rand (lhs (concl th)))) = "CurrHeap") asl in
+      let gd = grab_asm (fun th ->
+        concl th = `good_dimindex (:'a)`) asl in
+      let gat = tryfind (fun t -> find_term (fun u ->
+        hd_is "get_addr" u && length (snd (strip_comb u)) = 3) t)
+        (w :: map (fun (_,th) -> concl th) asl) in
+      let th = SPEC (last (snd (strip_comb gat)))
+        (GEN `w:('a)word_loc`
+          (MATCH_MP get_real_addr_get_addr
+            (CONJ hlen (CONJ hl (CONJ cu gd))))) in
+      let r = rhs (concl (CONJUNCT1 th)) in
+      let aa = rand r in
+      let args = snd (strip_comb (rand aa)) in
+      let mul = fst (strip_comb (rand aa)) in
+      let swap = mk_comb (rator aa,
+                   mk_comb (mk_comb (mul, el 1 args), el 0 args)) in
+      let sw = WORD_RULE (mk_eq (aa,swap)) in
+      EXISTS_TAC swap THEN
+      STRIP_ASSUME_TAC (REWRITE_RULE[sw] th)) in
+  let ba_words =
+    FIRST_X_ASSUM (fun th ->
+      if (try hd_is "STAR" (rator (concl th)) with Failure _ -> false)
+      then MP_TAC th else fail()) THEN
+    REWRITE_TAC[word_heap_APPEND; word_heap_def; bytes_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[word_el_def; word_payload_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    REWRITE_TAC[word_list_def; LENGTH_MAP; STAR_ASSOC] THEN
+    sepfront ["cond"] THEN
+    REWRITE_TAC[cond_STAR] THEN
+    DISCH_THEN (CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC) THEN
+    sepfront ["set_sep_one"] THEN
+    DISCH_THEN (fun sep ->
+      STRIP_ASSUME_TAC (MATCH_MP read_fun2set sep) THEN
+      ASSUME_TAC sep) in
+  (* the invariant after the write of a byte: the store writes the
+     word of the array that holds it, and the heap holds the array
+     with the byte in it *)
+  let ba_write =
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    (* the memory holds the word that the byte is in *)
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let ba = find_term (hd_is "byte_align") gl in
+      let cu = lhand (lhand (rand ba)) in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let bal = gr (fun th -> hd_is "byte_aligned" (concl th) &&
+        rand (concl th) = cu) in
+      let ilt = gr (fun th -> hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th))) in
+      let nz = gr (fun th -> is_neg (concl th) &&
+        hd_is "DIV" (lhs (rand (concl th)))) in
+      let sep = sepfront2 ["set_sep_one"; "misc_word_list"]
+        (gr (fun th -> hd_is "STAR" (rator (concl th)) &&
+          can (find_term (hd_is "fun2set")) (concl th))) in
+      let lb = SPEC (rand (concl ilt))
+        (MATCH_MP div_mul_bound nz) in
+      let rd = MATCH_MP bytes_read
+        (CONJ gd (CONJ bal (CONJ sep (CONJ lb ilt)))) in
+      STRIP_ASSUME_TAC (MATCH_MP mem_load_word rd)) THEN
+    ASM_REWRITE_TAC[theWord_def] THEN
+    (* the heap with the array written, and where it splits *)
+    W(fun (asl,gl) ->
+      let ub = grab_asm (fun th -> is_forall (concl th) &&
+        can (find_term (hd_is "abs_ml_inv")) (concl th)) asl in
+      let lu = find_term (hd_is "LUPDATE") gl in
+      let largs = snd (strip_comb lu) in
+      let le = SYM (ISPECL [el 0 largs; el 1 largs; el 2 largs]
+        LENGTH_LUPDATE) in
+      let sp1 = SPEC lu ub in
+      let ubi = MP sp1 le in
+      REPEAT_TCL CHOOSE_THEN
+        (REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) ubi) THEN
+    (* the two splits of the heap are at the same address *)
+    FIRST_ASSUM (fun re ->
+      if not (is_eq (concl re) && hd_is "CONS" (lhs (concl re)) &&
+              hd_is "CONS" (rhs (concl re))) then fail() else
+      STRIP_ASSUME_TAC (REWRITE_RULE[CONS_11;
+        injectivity "heap_address"] re)) THEN
+    (* the heap of the source, as the invariant of the written array
+       has it, and the address of the byte as the write has it *)
+    FIRST_ASSUM (fun hle ->
+      if not (is_eq (concl hle) &&
+              hd_is "heap_length" (lhs (concl hle)) &&
+              hd_is "heap_length" (rhs (concl hle))) then fail() else
+      REWRITE_TAC[hle] THEN RULE_ASSUM_TRY (REWRITE_RULE[hle])) THEN
+    W(fun (asl,gl) ->
+      let mw = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "wordLang_Word" (rhs (concl th)) &&
+        is_var (rator (lhs (concl th)))) asl in
+      let adg = rand (rand (lhs (concl mw))) in
+      let xx = lhand adg in
+      let cu = lhand xx in
+      let mul = rand xx in
+      let biwt = lhand mul in
+      let n2wi = rand (rand adg) in
+      let wadd x y = list_mk_icomb "word_add" [x; y] in
+      let tgt = wadd cu (wadd biwt (wadd n2wi mul)) in
+      let adeq = WORD_RULE (mk_eq (adg, tgt)) in
+      REWRITE_TAC[adeq] THEN RULE_ASSUM_TRY (REWRITE_RULE[adeq])) THEN
+    (* the store of the heap with the byte written *)
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let heq = gr (fun th -> is_eq (concl th) &&
+        hd_is "APPEND" (lhs (concl th)) &&
+        hd_is "APPEND" (rhs (concl th))) in
+      let him = gr (fun th ->
+        hd_is "heap_in_memory_store" (concl th)) in
+      let mw = gr (fun th -> is_eq (concl th) &&
+        hd_is "wordLang_Word" (rhs (concl th)) &&
+        is_var (rator (lhs (concl th)))) in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      let ilt = gr (fun th -> hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th))) in
+      let ch = gr (fun th -> is_eq (concl th) &&
+        hd_is "FLOOKUP" (lhs (concl th)) &&
+        hd_is "CurrHeap" (rand (lhs (concl th)))) in
+      let him2 = REWRITE_RULE[heq] him in
+      let adg = rand (rand (lhs (concl mw))) in
+      let ub = MATCH_MP heap_in_memory_store_UpdateByte
+        (CONJ him2 (CONJ (REFL (rhs (concl heq)))
+          (CONJ ilt (CONJ (REFL adg)
+            (CONJ ch (CONJ mw gd)))))) in
+      ASSUME_TAC ub) THEN
+    (* and the invariant of the heap with it *)
+    REWRITE_TAC[hide_memory_rel_def; memory_rel_def] THEN
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let ub0 = gr (fun th ->
+        hd_is "heap_in_memory_store" (concl th) &&
+        can (find_term (hd_is "UPDATE")) (concl th)) in
+      let bv = el 1 (snd (strip_comb
+        (find_term (hd_is "set_byte") (concl ub0)))) in
+      let wb = el 1 (snd (strip_comb
+        (find_term (hd_is "set_byte") gl))) in
+      let ub = INST [wb, bv] ub0 in
+      let ai = gr (fun th -> hd_is "abs_ml_inv" (concl th) &&
+        can (find_term (hd_is "sptree_insert")) (concl th)) in
+      let uargs = snd (strip_comb (concl ub)) in
+      let aargs = snd (strip_comb (concl ai)) in
+      let roots = el 0 (tparts (el 3 aargs)) in
+      MAP_EVERY EXISTS_TAC [el 0 uargs; el 9 uargs; el 1 uargs;
+        el 2 uargs; el 3 uargs; el 4 uargs] THEN
+      REPEAT CONJ_TAC THENL
+       [MATCH_ACCEPT_TAC ub;
+        REWRITE_TAC[word_ml_inv_def] THEN EXISTS_TAC roots THEN
+        REWRITE_TAC[MAP; ALL2; FST; SND] THEN
+        REWRITE_TAC(word_addr_clauses ()) THEN
+        W(fun (asl2,gl2) ->
+          let lk = grab_asm (fun th -> is_eq (concl th) &&
+            hd_is "sptree_lookup" (lhs (concl th))) asl2 in
+          let rp = grab_asm (fun th -> is_eq (concl th) &&
+            hd_is "ref_ptr_annot" (lhs (concl th))) asl2 in
+          REWRITE_TAC[REWRITE_RULE[lk] rp]) THEN
+        ASM_REWRITE_TAC[];
+        FIRST_ASSUM ACCEPT_TAC;
+        FIRST_ASSUM ACCEPT_TAC]) in
+    ba_open THEN ba_heap THEN ba_words THEN
+    SUBGOAL_THEN `~(dimindex (:'a) DIV 8 = 0)` ASSUME_TAC THENL
+     [FIRST_ASSUM (fun gd ->
+        if not (hd_is "good_dimindex" (concl gd)) then fail() else
+        STRIP_ASSUME_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+      ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV;
+      ALL_TAC] THEN
+    REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+    W(fun (asl,gl) ->
+      if can (find_term (hd_is "bit")) gl then ba_bits
+      else if can (find_term (hd_is "mem_load_byte_aux")) gl
+      then ba_read
+      else if can (find_term (hd_is "hide_memory_rel")) gl
+      then ba_write
+      else ba_len))
 ### memory_rel_RefPtr_gen_IMP
 (* the proof of the source takes the kind of the reference out of
    the lookup (memory_rel_RefPtr_IMP_lemma) and then has a case for
