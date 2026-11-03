@@ -4181,3 +4181,30 @@ the side condition `i < dimindex (:N)` in it, so rewriting with it
 leaves a goal of that -- `BIT_WORD_OR_ALT` is the unconditional
 one; and `INT_OF_NUM_EXISTS` is `(?n. x = &n) <=> &0 <= x`, so the
 step from a bound to the number needs its `GSYM`.
+
+## 89. A statement with a `let` loses it in an induction
+
+The statement of `memory_rel_do_build` ends in
+
+```
+  ?m1. let nf = free + bytes_in_word * n2w (LENGTH ws) in
+         memory_rel ... (st |+ (NextFree,Word nf)) m1 ... /\
+         store_list free ws m dm = SOME m1
+```
+
+and `LIST_INDUCT_TAC` hands the proof an _induction hypothesis
+with the `let` reduced_ while the goal keeps it.  A step of the
+proof that is stated as a lemma with the hypothesis "the induction
+hypothesis" (which is how a long induction keeps its cases apart)
+therefore has to state that hypothesis **without** the `let` and
+its own conclusion **with** it, or `MATCH_MP` says `No match` and
+nothing says why.  Print the two and compare them whenever a match
+of a hypothesis that reads the same fails.
+
+And a trap of the harness, not of HOL Light: a case that is
+dispatched with `FIRST [SOLVED <the real tactic>; CHEAT_TAC]`
+reports `OK` when the real tactic fails, because the cheat closes
+the goal.  While a case is being written, dispatch on something
+that _fails_ for the other cases (here: the constructor that
+`do_part` gives, by `grab_asm`), so that the failure of the case
+under work is the failure of the proof.
