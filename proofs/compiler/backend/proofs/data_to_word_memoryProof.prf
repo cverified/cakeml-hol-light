@@ -34980,13 +34980,630 @@
     CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC;
     ASM_REWRITE_TAC[] THEN FIRST_ASSUM ACCEPT_TAC])
 ### memory_rel_ptr_eq
-  (* the attempt: of what the proof of the source names,
-     the port has nothing in this file's closure, so this
-     is the plain attempt, with the cheat behind it until
-     the proof is written *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[] THEN TRY ASM_ARITH_TAC))
+(* the proof of the source is imp_res_tac memory_rel_pointer_eq,
+   and HOL4 states memory_rel_pointer_eq (13328-13410) as the value
+   of an ML expression, so the port has no name for it and it is
+   the lemma of this proof.  Its own lemma word_cmp_loop_refl
+   (13234-13244) is a theorem of that kind as well, so it is the
+   lemma of the lemma.
+
+   The lemma is the induction over a value, and it says that two
+   values at one and the same root that do_eq compares are equal:
+   two numbers because a small one is the root itself and because
+   the loop that compares two big ones runs over one and the same
+   address, two 64-bit words because the cell, or the two cells,
+   that hold them are one, two pointers because
+   memory_rel_RefPtr_EQ says so, and two blocks because their
+   headers are one word, so the tags and the lengths agree, and an
+   element where they differed would be read out of one and the
+   same cell, which the induction hypothesis of that element
+   contradicts *)
+  ((* the lemma's variables renamed apart from the goal's: the
+     lemma's m would otherwise have to be matched against a memory
+     that mentions the goal's m *)
+  let fresh_lem th =
+    INST (map (fun v -> (genvar (type_of v), v)) (frees (concl th)))
+      th in
+  (* the list of a memory_rel, how long it is and its tail *)
+  let mr_list th = el 8 (snd (strip_comb (concl th))) in
+  let rec mr_size t = if hd_is "CONS" t then 1 + mr_size (rand t)
+                      else 0 in
+  let rec mr_tail t k = if k = 0 then t
+                        else mr_tail (rand t) (k - 1) in
+  (* a boolean assumption used as the rewrite that it is true *)
+  let b_true th = SUBST_ALL_TAC (EQT_INTRO th) in
+  (* the two values are at one and the same root, so the two words
+     that a lemma reads out of it are one word *)
+  let pf_same =
+    W(fun (asl,_) ->
+      let ws = filter (fun th -> is_eq (concl th) &&
+        hd_is "wordLang_Word" (rhs (concl th))) (map snd asl) in
+      SUBST_ALL_TAC (REWRITE_RULE[injectivity "word_loc"]
+        (TRANS (SYM (hd ws)) (hd (tl ws))))) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[]) in
+  (* two assumptions that read one and the same thing say the
+     same, so what they read is equal *)
+  let pf_pairs =
+    W(fun (asl,_) ->
+      let eqs = filter (fun th -> is_eq (concl th)) (map snd asl) in
+      let rec prs l =
+        match l with
+          [] -> []
+        | h :: t -> map (fun u -> (h,u)) t @ prs t in
+      let news = mapfilter (fun (th1,th2) ->
+        if lhs (concl th1) = lhs (concl th2) &&
+           not (rhs (concl th1) = rhs (concl th2))
+        then REWRITE_RULE[injectivity "option";
+                          injectivity "word_loc"]
+               (TRANS (SYM th1) th2)
+        else fail()) (prs eqs) in
+      EVERY (map ASSUME_TAC news)) in
+  (* an equation between two reads of one kind, used to bring the
+     two sides of the proof to one and the same term *)
+  let pf_merge n =
+    FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && hd_is n (lhs (concl th)) &&
+         not (lhs (concl th) = rhs (concl th))
+      then RULE_ASSUM_TAC (REWRITE_RULE[th]) else fail()) in
+  (* and an equation between two variables is a substitution *)
+  let pf_subst =
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && is_var (lhs (concl th)) &&
+         is_var (rhs (concl th)) then SUBST_ALL_TAC th
+      else fail())) in
+  (* the numbers of the two pointers are one number *)
+  let pf_num_eq =
+    FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && is_var (lhs (concl th)) &&
+         is_var (rhs (concl th)) &&
+         type_of (lhs (concl th)) = `:num`
+      then SUBST_ALL_TAC th else fail()) in
+  (* what the value of do_eq says, once the match is reduced *)
+  let pf_fin =
+    RULE_ASSUM_TRY (REWRITE_RULE[injectivity "eq_result";
+      distinctness "eq_result"]) THEN
+    TRY (FIRST_ASSUM CONTR_TAC) THEN
+    TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC)) THEN
+    TRY (SOLVED (ASM_REWRITE_TAC[])) in
+  (* and what it says of the two values is the goal *)
+  let pf_concl =
+    W(fun (asl,gl) ->
+      let iff = grab_asm (fun th -> is_eq (concl th) &&
+        rhs (concl th) = gl && is_eq (lhs (concl th))) asl in
+      let eq = grab_asm (fun th -> concl th = lhs (concl iff))
+        asl in
+      ACCEPT_TAC (EQ_MP iff eq)) in
+  (* two assumptions of which one is the negation of the other *)
+  let pf_contra =
+    W(fun (asl,_) ->
+      let ths = map snd asl in
+      let pos = find (fun th -> exists (fun u ->
+        concl u = mk_neg (concl th)) ths) ths in
+      let neg = find (fun th -> concl th = mk_neg (concl pos))
+        ths in
+      CONTR_TAC (MP (NOT_ELIM neg) pos)) in
+  (* a field of a word, bit by bit: the two words have the same
+     bits in the field when the two subwords of the field are
+     equal *)
+  let subword_bits = prove
+   (`!(a:word64) (a':word64) p n k.
+       dimindex(:'a) = k /\ n <= k /\
+       (word_subword a (p,n):('a)word) = word_subword a' (p,n)
+       ==> !j. j < n ==> (bit (p + j) a <=> bit (p + j) a')`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    X_GEN_TAC `j:num` THEN DISCH_TAC THEN
+    FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && hd_is "word_subword" (lhs (concl th))
+      then MP_TAC (ONCE_REWRITE_RULE[WORD_EQ_BITS_ALT] th)
+      else fail()) THEN
+    DISCH_THEN (MP_TAC o SPEC `j:num`) THEN
+    ASM_REWRITE_TAC[BIT_WORD_SUBWORD] THEN
+    ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+    (* the index is inside the field, so the hypothesis of the bit
+       of the subword holds and the equation of the two bits is
+       what is left *)
+    SUBGOAL_THEN `j < MIN n (k:num)`
+      (fun t -> REWRITE_TAC[t]) THENL
+     [REWRITE_TAC[ARITH_RULE `j < MIN n k <=> j < n /\ j < k`] THEN
+      ASM_ARITH_TAC]) in
+  (* on a 64-bit target one cell holds the whole word *)
+  let w64_whole = prove
+   (`!(a:word64) (a':word64).
+       dimindex(:'a) = 64 /\ ((63 >< 0) a:('a)word) = (63 >< 0) a'
+       ==> a = a'`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[word_extract] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN STRIP_TAC THEN
+    ONCE_REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+    REWRITE_TAC[DIMINDEX_64] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    MP_TAC (ISPECL [`a:word64`; `a':word64`; `0`; `64`; `64`]
+      subword_bits) THEN
+    ASM_REWRITE_TAC[LE_REFL] THEN
+    DISCH_THEN (MP_TAC o SPEC `i:num`) THEN
+    ASM_REWRITE_TAC[ADD_CLAUSES]) in
+  (* and on a 32-bit target the two halves do *)
+  let w64_halves = prove
+   (`!(a:word64) (a':word64).
+       dimindex(:'a) = 32 /\
+       ((63 >< 32) a:('a)word) = (63 >< 32) a' /\
+       ((31 >< 0) a:('a)word) = (31 >< 0) a'
+       ==> a = a'`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[word_extract] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN STRIP_TAC THEN
+    ONCE_REWRITE_TAC[WORD_EQ_BITS_ALT] THEN
+    REWRITE_TAC[DIMINDEX_64] THEN
+    X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+    ASM_CASES_TAC `i < 32` THENL
+     [MP_TAC (ISPECL [`a:word64`; `a':word64`; `0`; `32`; `32`]
+        subword_bits) THEN
+      ASM_REWRITE_TAC[LE_REFL] THEN
+      DISCH_THEN (MP_TAC o SPEC `i:num`) THEN
+      ASM_REWRITE_TAC[ADD_CLAUSES];
+      SUBGOAL_THEN `i - 32 < 32 /\ 32 + (i - 32) = i`
+        STRIP_ASSUME_TAC THENL
+       [ASM_ARITH_TAC; ALL_TAC] THEN
+      MP_TAC (ISPECL [`a:word64`; `a':word64`; `32`; `32`; `32`]
+        subword_bits) THEN
+      ASM_REWRITE_TAC[LE_REFL] THEN
+      DISCH_THEN (MP_TAC o SPEC `i - 32`) THEN
+      ASM_REWRITE_TAC[]]) in
+  (* the three values of word_cmp_res are three words *)
+  let wcr_ne = prove
+   (`good_dimindex (:'a) ==>
+       ~(((n2w 0):('a)word) = n2w 1) /\
+       ~(((n2w 2):('a)word) = n2w 1)`,
+    REWRITE_TAC[good_dimindex_def] THEN STRIP_TAC THEN
+    ONCE_REWRITE_TAC[GSYM VAL_EQ] THEN
+    ASM_REWRITE_TAC[VAL_WORD] THEN CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[]) in
+  (* one step of the loop takes the counter down *)
+  let wcl_step = prove
+   (`!(l:('a)word). ~(l = n2w 0) ==> w2n (l - n2w 1) < w2n l`,
+    GEN_TAC THEN DISCH_TAC THEN
+    REWRITE_TAC[VAL_WORD_SUB_CASES; VAL_WORD_1] THEN
+    SUBGOAL_THEN `1 <= w2n (l:('a)word)` ASSUME_TAC THENL
+     [REWRITE_TAC[ARITH_RULE `1 <= n <=> ~(n = 0)`] THEN
+      ASM_REWRITE_TAC[VAL_EQ_0]; ALL_TAC] THEN
+    ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC) in
+  (* so the loop over two addresses that are one address, which
+     never finds two words that differ, gives the value of
+     equality *)
+  let wcl_n = prove
+   (`!n (l:('a)word) a dm mm x.
+       w2n l = n /\ word_cmp_loop l a a dm mm = SOME x
+       ==> x = n2w 1`,
+    MATCH_MP_TAC num_WF THEN
+    GEN_TAC THEN DISCH_TAC THEN
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) &&
+         hd_is "word_cmp_loop" (lhs (concl th))
+      then MP_TAC (ONCE_REWRITE_RULE[word_cmp_loop_def] th)
+      else fail()) THEN
+    COND_CASES_TAC THENL
+     [REWRITE_TAC[injectivity "option"] THEN
+      DISCH_THEN (ACCEPT_TAC o SYM); ALL_TAC] THEN
+    COND_CASES_TAC THENL
+     [ALL_TAC; REWRITE_TAC[distinctness "option"]] THEN
+    (* the two cells are one cell, so the two words are one word *)
+    CASES_ON_TAC `(mm:('a)word->('a)word_loc) a` THEN
+    TRY MATCH_REDUCE_TAC THEN
+    REWRITE_TAC[distinctness "option"] THEN
+    (* and the next step of the loop is the induction hypothesis *)
+    DISCH_TAC THEN
+    SUBGOAL_THEN `w2n ((l:('a)word) - n2w 1) < n` ASSUME_TAC THENL
+     [FIRST_ASSUM (fun th ->
+        if is_eq (concl th) && rand (concl th) = `n:num`
+        then SUBST1_TAC (SYM th) else fail()) THEN
+      FIRST_ASSUM (fun th -> ACCEPT_TAC (MATCH_MP wcl_step th));
+      ALL_TAC] THEN
+    W(fun (asl,_) ->
+      let ih = grab_asm (fun th ->
+        let b = snd (strip_forall (concl th)) in
+        is_imp b && hd_is "<" (lhand b)) asl in
+      let lt = grab_asm (fun th -> hd_is "<" (concl th)) asl in
+      let cmp = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "word_cmp_loop" (lhs (concl th))) asl in
+      let args = snd (strip_comb (lhs (concl cmp))) in
+      let inst = SPECL [el 0 args; el 1 args; el 3 args;
+        el 4 args; rand (rhs (concl cmp))]
+        (MP (SPEC (lhand (concl lt)) ih) lt) in
+      ACCEPT_TAC (MP inst (CONJ (REFL (lhand (concl lt))) cmp)))) in
+  (* which is the theorem of the source *)
+  let word_cmp_loop_refl = prove
+   (`!(l:('a)word) a dm mm x.
+       word_cmp_loop l a a dm mm = SOME x ==> x = n2w 1`,
+    REPEAT GEN_TAC THEN DISCH_TAC THEN
+    MP_TAC (SPECL [`w2n (l:('a)word)`; `l:('a)word`; `a:('a)word`;
+      `dm:('a)word->bool`; `mm:('a)word->('a)word_loc`;
+      `x:('a)word`] wcl_n) THEN
+    ASM_REWRITE_TAC[]) in
+  (* the root of an empty block is sixteen times its tag plus two,
+     and a tag is small enough for that number to be below the
+     word size, so the root is the tag *)
+  let blk_tag = prove
+   (`!t1 t2.
+       t1 < dimword (:'a) DIV 16 /\ t2 < dimword (:'a) DIV 16 /\
+       ((n2w t1 * n2w 16 + n2w 2):('a)word) =
+         n2w t2 * n2w 16 + n2w 2
+       ==> t1 = t2`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_X_ASSUM (MP_TAC o
+      REWRITE_RULE[GSYM WORD_ADD; GSYM WORD_MUL]) THEN
+    ONCE_REWRITE_TAC[GSYM VAL_EQ] THEN
+    REWRITE_TAC[VAL_WORD; GSYM dimword] THEN
+    SUBGOAL_THEN `t1 * 16 + 2 < dimword (:'a) /\
+                  t2 * 16 + 2 < dimword (:'a)` MP_TAC THENL
+     [MP_TAC (SPECL [`dimword (:'a)`; `16`] DIVISION) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC; ALL_TAC] THEN
+    DISCH_THEN (CONJUNCTS_THEN (fun th ->
+      REWRITE_TAC[MATCH_MP MOD_LT th])) THEN
+    ARITH_TAC) in
+  (* the induction over a value, with the property of a list being
+     the property of every member *)
+  let v_ind_tac =
+    W(fun (_,gl) ->
+      let v1,bod = dest_forall gl in
+      let p0 = mk_abs (v1, bod) in
+      let lv = mk_var ("l", mk_type ("list", [type_of v1])) in
+      let xv = mk_var ("x", type_of v1) in
+      let p1 = mk_abs (lv, mk_forall (xv, mk_imp
+        (list_mk_icomb "MEM" [xv; lv], mk_comb (p0, xv)))) in
+      let ind = CONV_RULE (TOP_DEPTH_CONV BETA_CONV)
+        (ISPECL [p0; p1] dataSem_v_INDUCT) in
+      MATCH_MP_TAC (DISCH_ALL (CONJUNCT1 (UNDISCH ind)))) in
+  (* the two values of a do_eq that gives a value, with the match
+     of the definition reduced and the arms that cannot give one
+     gone *)
+  let pe_open =
+    REWRITE_TAC[MEM] THEN
+    REPEAT STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    W(fun (asl,_) ->
+      (try let de = grab_asm (fun th -> is_eq (concl th) &&
+             hd_is "dataSem_do_eq" (lhs (concl th))) asl in
+           let v2 = el 2 (snd (strip_comb (lhs (concl de)))) in
+           if is_var v2 then CASES_ON_TAC v2 else ALL_TAC
+       with Failure _ -> ALL_TAC)) THEN
+    RULE_ASSUM_TRY (ONCE_REWRITE_RULE[dataSem_do_eq_def]) THEN
+    RULE_ASSUM_TRY (CONV_RULE (ONCE_DEPTH_CONV MATCH_REDUCE_CONV))
+      THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[distinctness "eq_result";
+      GSYM (distinctness "eq_result"); injectivity "eq_result"])
+      THEN
+    TRY (FIRST_ASSUM CONTR_TAC) in
+  (* a member of the list: the induction hypothesis of the value
+     or of the rest of the list *)
+  let pe_cons =
+    REWRITE_TAC[MEM] THEN
+    REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
+    DISCH_THEN (DISJ_CASES_THEN2 SUBST1_TAC ASSUME_TAC) THENL
+     [FIRST_ASSUM MATCH_ACCEPT_TAC;
+      W(fun (asl,_) ->
+        let ih = grab_asm (fun th -> is_forall (concl th) &&
+          hd_is "MEM" (lhand (snd (strip_forall (concl th))))) asl
+          in
+        let mem = grab_asm (fun th -> hd_is "MEM" (concl th)) asl
+          in
+        MATCH_ACCEPT_TAC (MP (SPEC (lhand (concl mem)) ih) mem))]
+    in
+  (* the two numbers at one root: either both are small, and then
+     the two words of the roots are the two numbers, or both are
+     big, and then the loop that compares them runs over one and
+     the same address and says they are equal *)
+  let pf_number =
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Number_cmp)
+        (CONJ mr gd))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    pf_same THEN
+    W(fun (asl,_) ->
+      let ws = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "wordLang_Word" (rhs (concl th))) asl in
+      ASM_CASES_TAC (list_mk_icomb "bit"
+        [`0`; rand (rhs (concl ws))])) THEN
+    FIRST_ASSUM (fun th ->
+      RULE_ASSUM_TRY (REWRITE_RULE[th])) THEN
+    SPLIT_ASM_TAC THEN
+    TRY (SOLVED pf_concl) THEN
+    (* the two big numbers are in the heap at one and the same
+       address, so the loop compares the number with itself *)
+    FIRST_X_ASSUM (fun th ->
+      if is_exists (concl th)
+      then REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC th
+      else fail()) THEN
+    pf_pairs THEN pf_subst THEN pf_pairs THEN pf_subst THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[COND_ID]) THEN
+    RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV let_CONV)) THEN
+    W(fun (asl,_) ->
+      let cmp = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "word_cmp_loop" (lhs (concl th))) asl in
+      ASSUME_TAC (MATCH_MP (fresh_lem word_cmp_loop_refl) cmp)) THEN
+    (* and a comparison that says equal says the numbers are
+       equal *)
+    FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && hd_is "word_cmp_res" (lhs (concl th))
+      then MP_TAC (ONCE_REWRITE_RULE[word_cmp_res_def] th)
+      else fail()) THEN
+    COND_CASES_TAC THENL
+     [DISCH_THEN (K ALL_TAC) THEN pf_concl;
+      FIRST_ASSUM (fun gd ->
+        if hd_is "good_dimindex" (concl gd)
+        then COND_CASES_TAC THEN REWRITE_TAC[MATCH_MP wcr_ne gd]
+        else fail())] in
+  (* the word that a Word64 holds, in the one cell of a 64-bit
+     target or in the two cells of a 32-bit one *)
+  let pf_word64 =
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Word64_IMP)
+        (CONJ (MATCH_MP (fresh_lem memory_rel_tail) mr) gd)) THEN
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Word64_IMP)
+        (CONJ mr gd))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    (* the target is of one of the two word sizes *)
+    FIRST_ASSUM (fun th ->
+      if hd_is "good_dimindex" (concl th)
+      then MP_TAC (REWRITE_RULE[good_dimindex_def] th)
+      else fail()) THEN
+    DISCH_THEN (DISJ_CASES_THEN (fun dim ->
+      RULE_ASSUM_TRY (REWRITE_RULE[] o
+        CONV_RULE NUM_REDUCE_CONV o REWRITE_RULE[dim]) THEN
+      ASSUME_TAC dim)) THEN
+    SPLIT_ASM_TAC THEN
+    (* the two words are at one root, so in one cell *)
+    pf_pairs THEN pf_merge "get_addr" THEN
+    pf_pairs THEN pf_subst THEN pf_pairs THEN
+    (* and the one word, or the two halves, are the Word64 *)
+    W(fun (asl,_) ->
+      let dim = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "dimindex" (lhs (concl th))) asl in
+      let ext l = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "><" (lhs (concl th)) &&
+        el 1 (snd (strip_comb (lhs (concl th)))) = l) asl in
+      let eq =
+        if rhs (concl dim) = `64` then
+          MATCH_MP w64_whole (CONJ dim (ext `0`))
+        else MATCH_MP w64_halves
+          (CONJ dim (CONJ (ext `32`) (ext `0`))) in
+      let iff = grab_asm (fun th -> is_eq (concl th) &&
+        lhs (concl th) = concl eq) asl in
+      ACCEPT_TAC (EQ_MP iff eq)) in
+  (* the two pointers: unless both flags are set do_eq is an
+     Eq_type_error, and with both set memory_rel_RefPtr_EQ says
+     the two numbers are equal because the two roots are *)
+  let pf_refptr =
+    W(fun (asl,_) ->
+      let de = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "COND" (lhs (concl th))) asl in
+      ASM_CASES_TAC (fst (dest_cond (lhs (concl de))))) THENL
+     [POP_ASSUM (CONJUNCTS_THEN b_true) THEN
+      RULE_ASSUM_TRY (REWRITE_RULE[]) THEN
+      W(fun (asl,_) ->
+        let gd = grab_asm (fun th ->
+          hd_is "good_dimindex" (concl th)) asl in
+        let mr = grab_asm (fun th ->
+          hd_is "memory_rel" (concl th)) asl in
+        MP_TAC (MATCH_MP (fresh_lem memory_rel_RefPtr_EQ)
+          (CONJ mr gd))) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      pf_same THEN pf_num_eq THEN
+      (* and the two lookups give one and the same reference *)
+      EVERY_CASE_TAC THEN pf_fin;
+      FIRST_X_ASSUM (fun th ->
+        RULE_ASSUM_TAC (REWRITE_RULE[th;
+          distinctness "eq_result"])) THEN
+      FIRST_ASSUM CONTR_TAC] in
+  (* the two blocks are at one and the same root, so their tags
+     and their lengths agree: of an empty block the root is the
+     tag itself, and of one that is not empty it is a pointer to
+     a header that the tag and the length are encoded in *)
+  (* the two blocks are at one and the same root, so their tags
+     and their lengths agree: of an empty block the root is the
+     tag itself, and of one that is not empty it is a pointer to
+     a header that has the tag and the length in it *)
+  let pf_header =
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Block_IMP)
+        (CONJ (MATCH_MP (fresh_lem memory_rel_swap) mr) gd)) THEN
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Block_IMP)
+        (CONJ mr gd))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    (* and whether each of the two is empty *)
+    CASES_ON_TAC `a2:(dataSem_v)list` THEN
+    CASES_ON_TAC `a2':(dataSem_v)list` THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[NOT_CONS_NIL]) THEN
+    SPLIT_ASM_TAC THEN pf_pairs THEN pf_subst THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if is_exists (concl th)
+      then REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC th
+      else fail())) THEN
+    pf_pairs THEN pf_subst THEN pf_pairs THEN pf_subst THEN
+    FIRST
+     [(* one of the two is empty and the other is not, so the
+         lowest bit of the root is both clear and set *)
+      SOLVED pf_contra;
+      (* both are empty, so the two roots are the two tags *)
+      SOLVED (W(fun (asl,_) ->
+        let eq = grab_asm (fun th -> is_eq (concl th) &&
+          hd_is "word_add" (lhs (concl th))) asl in
+        let tg t = grab_asm (fun th -> hd_is "<" (concl th) &&
+          lhand (concl th) = t) asl in
+        let num s = rand (lhand (lhand s)) in
+        let t1 = num (lhs (concl eq))
+        and t2 = num (rhs (concl eq)) in
+        CONJ_TAC THENL
+         [ACCEPT_TAC (MATCH_MP blk_tag
+            (CONJ (tg t1) (CONJ (tg t2) eq)));
+          REWRITE_TAC[]]));
+      (* or neither is, and then the two headers are one word,
+         which encode_header_EQ reads the tag and the length of.
+         That the length has room in a header is what the
+         invariant of the heap says *)
+      SOLVED (W(fun (asl,_) ->
+        let mr = grab_asm (fun th ->
+          hd_is "memory_rel" (concl th)) asl in
+        MP_TAC (REWRITE_RULE[memory_rel_def] mr)) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      FIRST_ASSUM (fun th ->
+        if hd_is "heap_in_memory_store" (concl th)
+        then MP_TAC (REWRITE_RULE[heap_in_memory_store_def] th)
+        else fail()) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      W(fun (asl,_) ->
+        let b7 = grab_asm (fun th -> hd_is "<" (concl th) &&
+          hd_is "data_to_word_config_len_size"
+            (lhand (lhand (concl th)))) asl in
+        let lens = MATCH_MP (ARITH_RULE
+          `!a b. a + 7 < b ==> a + 2 < b`) b7 in
+        let ehs = filter (fun th -> is_eq (concl th) &&
+          hd_is "encode_header" (lhs (concl th))) (map snd asl) in
+        let e1 = hd ehs and e2 = hd (tl ehs) in
+        MP_TAC (EQ_MP (MATCH_MP encode_header_EQ
+          (CONJ e1 (CONJ e2 lens)))
+          (REFL (rand (rhs (concl e1))))))  THEN
+      DISCH_THEN (CONJUNCTS_THEN2
+        (fun tg -> CONJ_TAC THENL
+           [MP_TAC tg THEN ARITH_TAC; ALL_TAC])
+        (fun lg -> MP_TAC lg THEN ARITH_TAC)))] in
+  (* the elements of two blocks that do_eq says differ: the two
+     sit in one and the same cell, which is what the induction
+     hypothesis of the element asks for *)
+  let pf_block =
+    (* a do_eq that says the two values are equal is the goal *)
+    ASM_CASES_TAC `b:bool` THENL
+     [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
+    FIRST_X_ASSUM (fun th ->
+      RULE_ASSUM_TRY (REWRITE_RULE[EQF_INTRO th])) THEN
+    FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && hd_is "COND" (lhs (concl th))
+      then MP_TAC th else fail()) THEN
+    (* two closures are equal, and a closure against a block that
+       is not one is a type error *)
+    COND_CASES_TAC THENL
+     [COND_CASES_TAC THEN
+      REWRITE_TAC[distinctness "eq_result";
+        injectivity "eq_result"];
+      ALL_TAC] THEN
+    SUBGOAL_THEN `(a1:num) = a1' /\
+        LENGTH (a2':(dataSem_v)list) = LENGTH (a2:(dataSem_v)list)`
+      STRIP_ASSUME_TAC THENL
+     [pf_header; ALL_TAC] THEN
+    ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
+    (* so an element where the two lists differ *)
+    W(fun (asl,_) ->
+      let dl = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "dataSem_do_eq_list" (lhs (concl th))) asl in
+      let le = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "LENGTH" (lhs (concl th))) asl in
+      MP_TAC (MATCH_MP do_eq_list_F_IMP_MEM (CONJ dl le))) THEN
+    DISCH_THEN (X_CHOOSE_THEN `i:num` STRIP_ASSUME_TAC) THEN
+    (* and the cell of that element of the first block *)
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      let lt = grab_asm (fun th -> hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th))) asl in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Block_MEM)
+        (CONJ mr (CONJ lt gd)))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    (* and of the second block, which the rotation brings in
+       front *)
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let le = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "LENGTH" (lhs (concl th))) asl in
+      let lt = grab_asm (fun th -> hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th))) asl in
+      let mr = grab_asm (fun th -> hd_is "memory_rel" (concl th) &&
+        not (hd_is "dataSem_Block"
+          (lhand (lhand (mr_list th))))) asl in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Block_MEM)
+        (CONJ (MATCH_MP (fresh_lem memory_rel_rotate3) mr)
+          (CONJ (ONCE_REWRITE_RULE[SYM le] lt) gd)))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    (* the two blocks are at one address, so the two elements are
+       in one and the same cell *)
+    pf_pairs THEN pf_subst THEN pf_pairs THEN pf_subst THEN
+    pf_pairs THEN pf_subst THEN
+    (* which is what the induction hypothesis of the element asks
+       for, and it says the two are equal *)
+    W(fun (asl,_) ->
+      let ih = grab_asm (fun th -> is_forall (concl th) &&
+        hd_is "MEM" (lhand (snd (strip_forall (concl th))))) asl
+        in
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let eqf = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "dataSem_do_eq" (lhs (concl th))) asl in
+      let lt = grab_asm (fun th -> hd_is "<" (concl th) &&
+        hd_is "LENGTH" (rand (concl th))) asl in
+      let mrs = filter (fun th -> hd_is "memory_rel" (concl th))
+        (map snd asl) in
+      let big = hd (sort (fun t u ->
+        mr_size (mr_list t) > mr_size (mr_list u)) mrs) in
+      let xs = mr_list big in
+      let args = snd (strip_comb (lhs (concl eqf))) in
+      let e1 = el 1 args and e2 = el 2 args in
+      let wl = rand (lhand xs) in
+      let ys = list_mk_icomb "CONS" [mk_pair (e1,wl);
+        list_mk_icomb "CONS" [mk_pair (e2,wl); mr_tail xs 4]] in
+      let x = mk_var ("x", hd (snd (dest_type (type_of ys)))) in
+      let sub = prove (mk_forall (x, mk_imp
+        (list_mk_icomb "MEM" [x; ys],
+         list_mk_icomb "MEM" [x; xs])),
+        REWRITE_TAC[MEM] THEN CONV_TAC TAUT) in
+      let mr2 = MATCH_MP (MATCH_MP
+        (fresh_lem memory_rel_rearrange) sub) big in
+      let mem = MP (ISPECL [rand (rand (concl lt)); `i:num`]
+        MEM_EL) lt in
+      let ihi = SPECL [e2; wl; `F`] (MP (SPEC e1 ih) mem) in
+      (* the hypothesis of the induction has the match of do_eq's
+         definition, which is what the element's do_eq unfolds
+         to *)
+      let eqm = ONCE_REWRITE_RULE[dataSem_do_eq_def] eqf in
+      CONTR_TAC (MP ihi (CONJ gd (CONJ eqm mr2)))) in
+  (* HOL4 13328-13410: memory_rel_pointer_eq *)
+  let memory_rel_pointer_eq = prove
+   (cake_as_vars (fun () ->
+      `!v1 v2 (w:'a word_loc) b.
+         good_dimindex (:'a) /\ do_eq refs v1 v2 = Eq_val b /\
+         memory_rel c be ts refs sp st m dm
+           ((v1,w) :: (v2,w) :: vars)
+         ==> b`),
+    v_ind_tac THEN REPEAT CONJ_TAC THENL
+     [pe_open THEN pf_number;
+      pe_open THEN pf_word64;
+      pe_open THEN pf_block;
+      pe_open;
+      pe_open THEN pf_refptr;
+      REWRITE_TAC[MEM];
+      pe_cons]) in
+  STRIP_TAC THEN
+  W(fun (asl,_) ->
+    let gd = grab_asm (fun th ->
+      hd_is "good_dimindex" (concl th)) asl in
+    let de = grab_asm (fun th -> is_eq (concl th) &&
+      hd_is "dataSem_do_eq" (lhs (concl th))) asl in
+    let mr = grab_asm (fun th ->
+      hd_is "memory_rel" (concl th)) asl in
+    ACCEPT_TAC (MATCH_MP memory_rel_pointer_eq
+      (CONJ gd (CONJ de mr)))))
 ### memory_rel_simple_eq
 (* the cases of the source: the five shapes of the one value
    against the five of the other, of which the clause of do_eq
