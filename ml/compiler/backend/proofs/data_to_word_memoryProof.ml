@@ -45941,19 +45941,227 @@ let memory_rel_bounds_check = prove
       small_int (:'a) (&n) /\ good_dimindex (:'a) ==>
       (word_ror w1 2 <+ n2w n <=> (&0) <= i1 /\ i1 < &n) /\
       (word_ror w1 2 <=+ n2w n <=> (&0) <= i1 /\ i1 <= &n)`),
-  (* the attempt: the proof of the source names
-     memory_rel_any_Number_IMP, dimword, small_int_def,
-     good_dimindex_def, word_index, memory_rel_Number_IMP.  What is
-     here rewrites with them and closes by arithmetic, and the cheat
-     is behind it until the proof is written.  A MESON over them is
-     what the next round adds; it costs a load ten minutes to have
-     it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_any_Number_IMP; dimword;
-       small_int_def; good_dimindex_def; word_index;
-       memory_rel_Number_IMP] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the rotation by two takes the two low bits of the word to the
+   top, so its value is the value of the word divided by four plus
+   a quarter of the dimword for every one of those two bits
+   (VAL_WORD_ROR).  Of the three kinds of word: a number that is
+   not small has the lowest bit set, so the rotation is at least a
+   quarter of the dimword, which is more than n, and the number is
+   out of the range of both comparisons as well; a small number
+   that is not negative has four times itself for a value, so the
+   rotation is the number and the two comparisons are the two of
+   the statement; and a small negative number has the top bit set
+   (memory_rel_Number_word_msb), so its value is at least half the
+   dimword and a quarter of that is more than n again *)
+  (((* a lemma whose own variables are renamed apart from the ones of
+     the goal: the lemma's m would otherwise have to be matched
+     against a memory that mentions the goal's m *)
+  let fresh_lem th =
+    INST (map (fun v -> (genvar (type_of v), v)) (frees (concl th)))
+      th in
+  let nc_tidy =
+    RULE_ASSUM_TRY (REWRITE_RULE[injectivity "word_loc";
+                                 word_index]) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if not (is_eq (concl th)) then fail() else
+      let l = lhs (concl th) and r = rhs (concl th) in
+      if is_var r && not (is_var l) then SUBST_ALL_TAC (SYM th)
+      else if is_var l && not (is_var r) then SUBST_ALL_TAC th
+      else if is_var l && is_var r && not (l = r) then SUBST_ALL_TAC th
+      else fail())) THEN
+    REPEAT (CHANGED_TAC (W(fun (asl,_) ->
+      let eqs = map snd (filter (fun (_,th) -> is_eq (concl th)) asl)
+        in
+      let rec pair = function
+          [] -> failwith "nc_tidy"
+        | th :: rest ->
+            (try let th2 = find (fun t ->
+                   lhs (concl t) = lhs (concl th) &&
+                   not (rhs (concl t) = rhs (concl th))) rest in
+                 (th, th2)
+             with Failure _ -> pair rest) in
+      let th1,th2 = pair eqs in
+      let eq = REWRITE_RULE[injectivity "option";
+                 injectivity "word_loc"] (TRANS (SYM th1) th2) in
+      if is_var (lhs (concl eq)) then SUBST_ALL_TAC eq
+      else SUBST_ALL_TAC (SYM eq)))) in
+  let no_range = prove
+   (`!(i:int) (n:num) (k:num).
+       ~(--(&k) <= i /\ i < &k) /\ n < k
+       ==> ~(&0 <= i /\ i <= &n)`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[GSYM INT_OF_NUM_LT] THEN
+    INT_ARITH_TAC) in
+  (* the value of the Smallnum of a number that is not negative *)
+  let val_small_pos = prove
+   (`!p. 4 * p < dimword (:'a)
+       ==> w2n (Smallnum (&p):'a word) = 4 * p`,
+    REPEAT STRIP_TAC THEN
+    REWRITE_TAC[smallnum_def; INT_OF_NUM_MUL;
+                NUM_OF_INT_OF_NUM] THEN
+    REWRITE_TAC[INT_OF_NUM_LT; ARITH_RULE `~(p < 0)`] THEN
+    REWRITE_TAC[VAL_WORD; GSYM dimword] THEN
+    MATCH_MP_TAC MOD_LT THEN FIRST_ASSUM ACCEPT_TAC) in
+  let no_range2 = prove
+   (`!(i:int) (n:num). ~(&0 <= i /\ i <= &n)
+       ==> ~(&0 <= i /\ i < &n)`,
+    REPEAT GEN_TAC THEN INT_ARITH_TAC) in
+
+  STRIP_TAC THEN
+  (* what a small integer says about n, and the value of the
+     rotation in terms of the value of the word *)
+  SUBGOAL_THEN `n < dimword (:'a) DIV 8` ASSUME_TAC THENL
+   [FIRST_ASSUM (fun si ->
+      if not (hd_is "small_int" (concl si)) then fail() else
+      MP_TAC (REWRITE_RULE[small_int_def] si)) THEN
+    REWRITE_TAC[INT_OF_NUM_LT] THEN
+    STRIP_TAC THEN FIRST_ASSUM ACCEPT_TAC;
+    ALL_TAC] THEN
+  REWRITE_TAC[WORD_ULT; WORD_ULE] THEN
+  SUBGOAL_THEN `val ((n2w n):'a word) = n` SUBST1_TAC THENL
+   [REWRITE_TAC[VAL_WORD] THEN MATCH_MP_TAC MOD_LT THEN
+    FIRST_ASSUM (fun lt ->
+      if not (hd_is "<" (concl lt)) then fail() else
+      MP_TAC (REWRITE_RULE[dimword] lt)) THEN
+    MP_TAC (REWRITE_RULE[dimword]
+      (SPECL [`dimword (:'a)`; `8`] DIV_LE)) THEN
+    ARITH_TAC;
+    ALL_TAC] THEN
+  SUBGOAL_THEN
+    `val (word_ror (w1:'a word) 2) =
+     2 EXP (dimindex (:'a) - 2) * (val w1 MOD 4) + val w1 DIV 4`
+    SUBST1_TAC THENL
+   [MP_TAC (ISPECL [`w1:'a word`; `2`] VAL_WORD_ROR) THEN
+    MP_TAC (ISPEC `(:'a)` DIMINDEX_GE_1) THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      MP_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+    DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN DISCH_TAC THEN
+    DISCH_THEN MATCH_ACCEPT_TAC;
+    ALL_TAC] THEN
+  ASM_CASES_TAC `small_int (:'a) i1` THENL
+   [(* a small integer: its word is the Smallnum, whose value is
+        four times the number when it is not negative, and the
+        dimword less that when it is *)
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      let si = grab_asm (fun th -> hd_is "small_int" (concl th) &&
+        is_var (rand (concl th))) asl in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Number_IMP)
+        (CONJ gd (CONJ si mr)))) THEN
+    REWRITE_TAC[injectivity "word_loc"] THEN
+    DISCH_THEN SUBST_ALL_TAC THEN
+    ASM_CASES_TAC `(&0):int <= i1` THENL
+     [(* not negative: the value is four times the number *)
+      W(fun (asl,_) ->
+        let ge = grab_asm (fun th -> hd_is "int_le" (concl th) &&
+          hd_is "int_of_num" (lhand (concl th))) asl in
+        MP_TAC (REWRITE_RULE[GSYM INT_OF_NUM_EXISTS] ge)) THEN
+      DISCH_THEN (CHOOSE_THEN SUBST_ALL_TAC) THEN
+      W(fun (asl,_) ->
+        let si = grab_asm (fun th -> hd_is "small_int" (concl th) &&
+          hd_is "int_of_num" (rand (concl th)) &&
+          not (rand (rand (concl th)) = `n:num`)) asl in
+        let pv = rand (rand (concl si)) in
+        let sip = CONJUNCT2 (REWRITE_RULE[small_int_def;
+          INT_OF_NUM_LT] si) in
+        let lt4 = MP (ARITH_RULE (mk_imp (concl sip,
+          mk_binary "<" (mk_binary "*" (`4`, pv),
+            `dimword (:'a)`)))) sip in
+        REWRITE_TAC[MATCH_MP val_small_pos lt4]) THEN
+      REWRITE_TAC[MOD_MULT;
+                  MATCH_MP DIV_MULT (ARITH_RULE `~(4 = 0)`);
+                  MULT_CLAUSES; ADD_CLAUSES] THEN
+      REWRITE_TAC[INT_POS; INT_OF_NUM_LT; INT_OF_NUM_LE];
+      (* negative: the value is the dimword less four times the
+         number, so a quarter of it is more than n *)
+      ASM_REWRITE_TAC[] THEN
+      (* its word has the top bit set, so its value is at least
+         half the dimword and a quarter of that is more than n *)
+      W(fun (asl,_) ->
+        let gd = grab_asm (fun th ->
+          hd_is "good_dimindex" (concl th)) asl in
+        let mr = grab_asm (fun th ->
+          hd_is "memory_rel" (concl th)) asl in
+        let si = grab_asm (fun th -> hd_is "small_int" (concl th) &&
+          is_var (rand (concl th))) asl in
+        let nge = grab_asm (fun th -> is_neg (concl th) &&
+          hd_is "int_le" (rand (concl th))) asl in
+        let lt0 = MP (INT_ARITH (mk_imp (concl nge,
+          `i1 < (&0):int`))) nge in
+        let msb = EQ_MP (SYM (MATCH_MP
+          (fresh_lem memory_rel_Number_word_msb)
+          (CONJ mr (CONJ gd si)))) lt0 in
+        MP_TAC (REWRITE_RULE[word_msb; MSB_VAL] msb)) THEN
+      FIRST_ASSUM (fun gd ->
+        if not (hd_is "good_dimindex" (concl gd)) then fail() else
+        MP_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+      FIRST_ASSUM (fun nlt ->
+        if not (hd_is "<" (concl nlt)) ||
+           not (hd_is "DIV" (rand (concl nlt))) then fail() else
+        MP_TAC (REWRITE_RULE[dimword] nlt)) THEN
+      MP_TAC (ISPEC `Smallnum i1:'a word` VAL_BOUND) THEN
+      REWRITE_TAC[dimword] THEN
+      DISCH_TAC THEN DISCH_TAC THEN
+      DISCH_THEN (DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+      POP_ASSUM_LIST (fun ths ->
+        MP_TAC (end_itlist CONJ (filter (fun th ->
+          hd_is "<" (concl th) || hd_is "<=" (concl th)) ths))) THEN
+      CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC];
+    (* a number that is not small has its lowest bit set, so the
+       rotation puts that bit at the top and the value of it is at
+       least a quarter of the dimword, which is more than n *)
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_any_Number_IMP)
+        (CONJ gd mr))) THEN
+    DISCH_THEN (CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    nc_tidy THEN
+    W(fun (asl,_) ->
+      let bt = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "bit" (lhs (concl th))) asl in
+      let wd = rand (lhs (concl bt)) in
+      SUBGOAL_THEN (mk_neg (mk_eq (mk_binary "MOD"
+        (list_mk_icomb "val" [wd], `4`), `0`))) ASSUME_TAC THENL
+       [MP_TAC (SPECL [list_mk_icomb "val" [wd]; `2`; `2`]
+          MOD_MOD) THEN
+        MP_TAC (REWRITE_RULE[ODD_MOD; BIT_LSB] bt) THEN
+        ASM_REWRITE_TAC[] THEN
+        CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC;
+        ALL_TAC]) THEN
+    W(fun (asl,_) ->
+      let ns = grab_asm (fun th -> is_neg (concl th) &&
+        hd_is "small_int" (rand (concl th))) asl in
+      let lt = grab_asm (fun th -> hd_is "<" (concl th) &&
+        hd_is "DIV" (rand (concl th))) asl in
+      let nr = MATCH_MP no_range
+        (CONJ (REWRITE_RULE[small_int_def] ns) lt) in
+      ASSUME_TAC nr THEN ASSUME_TAC (MATCH_MP no_range2 nr)) THEN
+    ASM_REWRITE_TAC[] THEN
+    FIRST_ASSUM (fun gd ->
+      if not (hd_is "good_dimindex" (concl gd)) then fail() else
+      MP_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+    FIRST_ASSUM (fun lt ->
+      if not (hd_is "<" (concl lt)) then fail() else
+      MP_TAC (REWRITE_RULE[dimword] lt)) THEN
+    FIRST_ASSUM (fun nz ->
+      if not (is_neg (concl nz)) ||
+         not (is_eq (rand (concl nz))) then fail() else
+      MP_TAC nz) THEN
+    DISCH_TAC THEN DISCH_TAC THEN
+    DISCH_THEN (DISJ_CASES_THEN SUBST_ALL_TAC) THEN
+    POP_ASSUM_LIST (fun ths ->
+      MP_TAC (end_itlist CONJ (filter (fun th ->
+        hd_is "<" (concl th) ||
+        (is_neg (concl th) && is_eq (rand (concl th)))) ths))) THEN
+    CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC]
+  )));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
