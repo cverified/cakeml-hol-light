@@ -53999,19 +53999,923 @@ let memory_rel_do_build = prove
                vars) /\
            data_to_word_memoryProof_store_list free' ws m dm =
              SOME m1)`),
-  (* the attempt: the proof of the source names do_build_def,
-     build_words_def, memory_rel_def, heap_in_memory_store_def,
-     FLOOKUP_UPDATE, data_to_word_memoryProof_store_list_def.  What
-     is here rewrites with them and closes by arithmetic, and the
-     cheat is behind it until the proof is written.  A MESON over
-     them is what the next round adds; it costs a load ten minutes
-     to have it in every attempt and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[do_build_def; build_words_def;
-       memory_rel_def; heap_in_memory_store_def; FLOOKUP_UPDATE;
-       data_to_word_memoryProof_store_list_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* the parts one after the other: do_build makes the value of each
+   part and puts it in the map at the index of it, and build_words
+   makes the root of it and the words that the store holds.  The
+   induction is over the list of parts.
+
+   The empty list stores nothing and its value is what the map has
+   at the index before the first, which the invariant that every
+   list of keys has gives for the list of that one key (d_nil).
+
+   A part and the rest of them: the step of the induction (d_step)
+   is the induction hypothesis at the rest, with the free pointer
+   moved on by the words of the part, the space cut down by them
+   and the store that holds them -- the store of the whole is the
+   one of the part and then the one of the rest
+   (store_list_append), and the two moves of the free pointer are
+   one (nf_add).  What a part has to give for that is the store of
+   its own words and the invariant with its root in front, for
+   every list of keys (d_store_big, where
+   memory_rel_IMP_MAP_UPDATE turns the one of a list of keys into
+   the one of every list), and that is the lemma of the part:
+
+   - a small number stores nothing, and IMP_memory_rel_Number
+     gives the root of it (d_parts_int_small);
+   - a number that is not small has the multiword of it for its
+     payload (Bignum), which IMP_memory_rel_bignum_alt stores
+     behind the header; the payload is no longer than the space of
+     the part because LENGTH_n2mw_LE_num_size counts it and a
+     number that is not small is at least two to the twenty-nine
+     (big_int_29) (d_c1_big);
+   - a block of no elements stores nothing and memory_rel_Cons_empty
+     gives the root of it (d_parts_con_nil), and one with elements
+     has memory_rel_Cons1 store the header and the roots of the
+     elements, which the invariant holds as the pairs of the two
+     maps (ZIP_MAP_MAP) (d_c1_con);
+   - a word of sixty-four bits is the one or two words of
+     Word64Rep, which memory_rel_Word64_alt stores (d_c1_w64);
+   - and a string is a new byte array, of which
+     memory_rel_RefByte_content stores the header and the words
+     that hold the bytes (d_c1_str): the pointer of it is the least
+     one the references do not have (least_notin_domain), the
+     big-endianness of the words is the one of the invariant
+     (mr_be), and the words of it are a quarter or an eighth of the
+     bytes (byte_len) where the space of the part counts a quarter
+     of them and two more *)
+  ((* the free pointer that no word of a part moves on *)
+  let nf0 = prove
+   (`!(f:'a word). f + bytes_in_word * n2w 0 = f`,
+    CONV_TAC WORD_RULE) in
+  (* and the free pointer that the words of two parts move on *)
+  let nf_add = prove
+   (`!(f:'a word) a b.
+       (f + bytes_in_word * n2w a) + bytes_in_word * n2w b =
+       f + bytes_in_word * n2w (a + b)`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[WORD_ADD] THEN
+    CONV_TAC WORD_RULE) in
+  (* the offset of a part, which the source counts from the heap *)
+  let nf_sub = prove
+   (`!(f:'a word) curr a.
+       (f + bytes_in_word * n2w a) - curr =
+       (f - curr) + bytes_in_word * n2w a`,
+    REPEAT GEN_TAC THEN CONV_TAC WORD_RULE) in
+  (* the store that two parts update at one and the same name *)
+  let fupd_same = prove
+   (`!(fm:(A,B)fmap) k a b. (fm |+ (k,a)) |+ (k,b) = fm |+ (k,b)`,
+    REPEAT GEN_TAC THEN MATCH_MP_TAC FMAP_FN_INJ THEN
+    REWRITE_TAC[FMAP_FN_FUPDATE; FST; SND; FUN_EQ_THM] THEN
+    GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]) in
+  (* and the update that writes back what the store has *)
+  let fupd_elim = prove
+   (`!(fm:(A,B)fmap) k v. FLOOKUP fm k = SOME v ==> fm |+ (k,v) = fm`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[FLOOKUP; FUPDATE] THEN
+    DISCH_TAC THEN
+    SUBGOAL_THEN
+      `(\x. if x = k then SOME v else fmap_fn (fm:(A,B)fmap) x) =
+       fmap_fn fm` SUBST1_TAC THENL
+     [REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN COND_CASES_TAC THEN
+      ASM_REWRITE_TAC[]; ALL_TAC] THEN
+    REWRITE_TAC[CONJUNCT1 fmap_tybij]) in
+  (* the root of a block of no elements *)
+  let blocknil = prove
+   (`!n. BlockNil n = (n2w (16 * n + 2):('a)word)`,
+    GEN_TAC THEN REWRITE_TAC[BlockNil_def; GSYM VAL_EQ;
+      VAL_WORD_ADD; VAL_WORD_SHL; VAL_WORD] THEN
+    CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[MULT_AC]) in
+  (* the clauses of SUM, which the port has as an ITLIST *)
+  let sum_cl = prove
+   (`SUM [] = 0 /\ (!h t. SUM (CONS h t) = h + SUM t)`,
+    REWRITE_TAC[SUM_DEF; ITLIST]) in
+  (* the words of a part that a condition of the source guards *)
+  let cond_some = prove
+   (`((if p then SOME (a:A) else NONE) = SOME b) <=> p /\ a = b`,
+    BOOL_CASES_TAC `p:bool` THEN
+    REWRITE_TAC[distinctness "option"; GSYM (distinctness "option");
+      injectivity "option"]) in
+  (* the big-endianness of the configuration is the one of the
+     invariant *)
+  let mr_be = prove
+   (cake_as_vars (fun () ->
+      `memory_rel c be ts refs sp st m dm vars
+       ==> data_to_word_config_be c = be`),
+    REWRITE_TAC[memory_rel_def; word_ml_inv_def; abs_ml_inv_def;
+      bc_stack_ref_inv_def; be_ok_def] THEN
+    STRIP_TAC THEN FIRST_ASSUM ACCEPT_TAC) in
+  (* what an equation of a pair of a definition says *)
+  let d_subst =
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && is_var (rhs (concl th)) &&
+         not (is_var (lhs (concl th)))
+      then SUBST_ALL_TAC (SYM th) else fail())) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && is_var (rhs (concl th)) &&
+         is_var (lhs (concl th)) &&
+         not (lhs (concl th) = rhs (concl th))
+      then SUBST_ALL_TAC (SYM th) else fail())) in
+  (* a condition of the source that a case split has decided *)
+  let d_dec =
+    POP_ASSUM (fun th ->
+      let e = (try EQF_INTRO th with Failure _ -> EQT_INTRO th) in
+      RULE_ASSUM_TRY (REWRITE_RULE[e]) THEN ASSUME_TAC th) in
+  (* the condition of a block: whether it has elements *)
+  let d_con_red =
+    RULE_ASSUM_TRY (REWRITE_RULE[NULL]) THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[]) THEN
+    W(fun (asl,_) ->
+      let bp0 = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "COND" (lhs (concl th))) asl in
+      ASM_CASES_TAC (fst (dest_cond (lhs (concl bp0))))) THEN
+    d_dec THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option";
+      injectivity "option"; PAIR_EQ]) THEN
+    SPLIT_ASM_TAC THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
+    d_subst in
+  (* the part and the rest of the list, as the two definitions
+     take them apart *)
+  let d_open =
+    REWRITE_TAC[dataSem_do_build_def; build_words_def] THEN
+    REPEAT GEN_TAC THEN STRIP_TAC THEN SPLIT_ASM_TAC THEN
+    W(fun (asl,_) ->
+      let dp = grab_asm (fun th -> is_eq (concl th) &&
+        can (find_term (hd_is "dataSem_do_part")) (lhs (concl th)))
+        asl in
+      CASES_ON_TAC (find_term (hd_is "dataSem_do_part")
+        (lhs (concl dp)))) THEN
+    W(fun (asl,_) ->
+      let dp = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "dataSem_do_part" (lhs (concl th))) asl in
+      CASES_ON_TAC (rand (rhs (concl dp)))) THEN
+    RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV let_CONV)) THEN
+    (* the words of the part, and of the rest *)
+    W(fun (asl,_) ->
+      let bp = grab_asm (fun th -> is_eq (concl th) &&
+        can (find_term (hd_is "build_part_words")) (concl th)) asl in
+      CASES_ON_TAC (find_term (hd_is "build_part_words")
+        (concl bp))) THEN
+    TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option"]) THEN
+    TRY (FIRST_ASSUM CONTR_TAC) THEN
+    (* the word and the words of the part *)
+    W(fun (asl,_) ->
+      let bp = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "build_part_words" (lhs (concl th))) asl in
+      CASES_ON_TAC (rand (rhs (concl bp)))) THEN
+    TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+    (* and the words of the rest *)
+    W(fun (asl,_) ->
+      let bw = grab_asm (fun th -> is_eq (concl th) &&
+        can (find_term (hd_is "build_words")) (concl th) &&
+        not (hd_is "build_words" (lhs (concl th)))) asl in
+      CASES_ON_TAC (find_term (hd_is "build_words") (concl bw))) THEN
+    TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option"]) THEN
+    TRY (FIRST_ASSUM CONTR_TAC) THEN
+    W(fun (asl,_) ->
+      let bw = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "build_words" (lhs (concl th))) asl in
+      CASES_ON_TAC (rand (rhs (concl bw)))) THEN
+    TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[injectivity "option"; PAIR_EQ]) THEN
+    SPLIT_ASM_TAC THEN
+    d_subst THEN
+    (* the timestamp that do_part gives back *)
+    W(fun (asl,_) ->
+      let dp = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "dataSem_do_part" (lhs (concl th))) asl in
+      STRIP_ASSUME_TAC (MATCH_MP do_part_SOME_IMP_SOME dp)) THEN
+    d_subst THEN
+    (* and which part it is *)
+    CASES_ON_TAC `h:const_part` THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[dataSem_do_part_def;
+      build_part_words_def]) THEN
+    RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV let_CONV)) in
+  (* the empty list of parts: nothing is stored and the root is
+     the one that the map has at the index before the first *)
+  let d_nil =
+    REWRITE_TAC[dataSem_do_build_def; build_words_def] THEN
+    REPEAT GEN_TAC THEN
+    REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
+    STRIP_TAC THEN d_subst THEN
+    REWRITE_TAC[LENGTH; nf0; SUB_0;
+      data_to_word_memoryProof_store_list_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    W(fun (asl,_) ->
+      let fl = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "FLOOKUP" (lhs (concl th)) &&
+        hd_is "NextFree" (rand (lhs (concl th)))) asl in
+      REWRITE_TAC[MATCH_MP fupd_elim fl]) THEN
+    W(fun (asl,gl) ->
+      let big = grab_asm (fun th -> is_forall (concl th) &&
+        hd_is "memory_rel" (snd (strip_forall (concl th)))) asl in
+      let args = snd (strip_comb (snd (strip_forall (concl big)))) in
+      let bod = snd (dest_exists gl) in
+      let lst = el 8 (snd (strip_comb (lhand bod))) in
+      let k = rand (lhand (lhand lst)) in
+      EXISTS_TAC (el 6 args) THEN
+      REWRITE_TAC[] THEN
+      MP_TAC (SPEC (list_mk_icomb "CONS" [k; `[]:(num)list`]) big) THEN
+      REWRITE_TAC[MAP; APPEND] THEN DISCH_THEN ACCEPT_TAC) in
+  (* the step of the induction: the part of the list and then
+     the rest of it, as the step of the source takes them *)
+  let d_step = prove
+   (cake_as_vars (fun () ->
+    `(!i st (free':'a word) curr sp map0 map0' refs ts refs1 m v ws.
+        do_build map0 i t refs (SOME ts) = (v,refs1,SOME ts1) /\
+        build_words c map0' i t (free' - curr) = SOME (w,ws) /\
+        SUM (MAP part_space_req t) <= sp /\
+        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        (!ks. memory_rel c be ts refs sp st m dm
+                (MAP (\k. (map0 k,map0' k)) ks ++ vars)) /\
+        good_dimindex (:'a)
+        ==> (?m1. memory_rel c be ts1 refs1 (sp - LENGTH ws)
+                      (st |+ (NextFree,wordLang_Word
+                         (free' + bytes_in_word * n2w (LENGTH ws))))
+                      m1 dm ((v,w) :: vars) /\
+                    data_to_word_memoryProof_store_list free' ws m dm
+                      = SOME m1)) ==>
+     data_to_word_memoryProof_store_list (free':'a word) xs m dm =
+       SOME m0 ==>
+     free2 = free' + bytes_in_word * n2w (LENGTH xs) ==>
+     sp2 = sp - LENGTH xs ==>
+     FLOOKUP st2 NextFree = SOME (wordLang_Word free2) ==>
+     FLOOKUP st2 CurrHeap = SOME (wordLang_Word curr) ==>
+     (!nf. st2 |+ (NextFree,wordLang_Word nf) =
+           st |+ (NextFree,wordLang_Word nf)) ==>
+     (!ks. memory_rel c be ts2 refs2 sp2 st2 m0 dm
+             (MAP (\k. ((i =+ b) mp k,(i =+ w2) mp' k)) ks
+               ++ vars)) ==>
+     do_build ((i =+ b) mp) (i + 1) t refs2 (SOME ts2) =
+       (v,refs1,SOME ts1) ==>
+     build_words c ((i =+ w2) mp') (i + 1) t (free2 - curr) =
+       SOME (w,ys) ==>
+     SUM (MAP part_space_req t) <= sp2 ==>
+     good_dimindex (:'a)
+     ==> (?m1. let nf = free' + bytes_in_word * n2w (LENGTH (xs ++ ys))
+                 in
+                 memory_rel c be ts1 refs1 (sp - LENGTH (xs ++ ys))
+                   (st |+ (NextFree,wordLang_Word nf)) m1 dm
+                   ((v,w) :: vars) /\
+                 data_to_word_memoryProof_store_list free' (xs ++ ys)
+                   m dm = SOME m1)`),
+    REPEAT DISCH_TAC THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && is_var (lhs (concl th)) &&
+         not (free_in (lhs (concl th)) (rhs (concl th)))
+      then SUBST_ALL_TAC th else fail())) THEN
+    (* the induction hypothesis at the rest of the list, with the
+       store that the words of the part moved on *)
+    FIRST_X_ASSUM (fun ih ->
+      W(fun (asl,_) ->
+        let gr p = grab_asm p asl in
+        let db = gr (fun th -> is_eq (concl th) &&
+          hd_is "dataSem_do_build" (lhs (concl th))) in
+        let bw = gr (fun th -> is_eq (concl th) &&
+          hd_is "build_words" (lhs (concl th))) in
+        let sm = gr (fun th -> hd_is "<=" (concl th)) in
+        let big = gr (fun th -> is_forall (concl th) &&
+          hd_is "memory_rel" (snd (strip_forall (concl th)))) in
+        let fl1 = gr (fun th -> is_eq (concl th) &&
+          hd_is "FLOOKUP" (lhs (concl th)) &&
+          hd_is "NextFree" (rand (lhs (concl th)))) in
+        let fl2 = gr (fun th -> is_eq (concl th) &&
+          hd_is "FLOOKUP" (lhs (concl th)) &&
+          hd_is "CurrHeap" (rand (lhs (concl th)))) in
+        let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+        MP_TAC (MATCH_MP ih (CONJ db (CONJ bw (CONJ sm (CONJ fl1
+          (CONJ fl2 (CONJ big gd))))))))) THEN
+    (* the store of the words of the part and then of the rest *)
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    W(fun (asl,_) ->
+      let fu = grab_asm (fun th -> is_forall (concl th) &&
+        is_eq (snd (strip_forall (concl th))) &&
+        hd_is "|+" (lhs (snd (strip_forall (concl th))))) asl in
+      REWRITE_TAC[fu]) THEN
+    REWRITE_TAC[nf_add; LENGTH_APPEND; store_list_append;
+      ARITH_RULE `a - b - c = a - (b + c)`] THEN
+    DISCH_THEN (CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    W(fun (asl,_) ->
+      let sl = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "data_to_word_memoryProof_store_list" (lhs (concl th)) &&
+        not (is_var (el 0 (snd (strip_comb (lhs (concl th))))))) asl in
+      EXISTS_TAC (rand (rhs (concl sl)))) THEN
+    CONJ_TAC THENL
+     [FIRST_ASSUM ACCEPT_TAC;
+      W(fun (asl,_) ->
+        let sl = grab_asm (fun th -> is_eq (concl th) &&
+          hd_is "data_to_word_memoryProof_store_list"
+            (lhs (concl th)) &&
+          is_var (el 0 (snd (strip_comb (lhs (concl th)))))) asl in
+        EXISTS_TAC (rand (rhs (concl sl)))) THEN
+      CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC]) in
+  (* a subterm replaced by another, which vsubst cannot do *)
+  let repl old nw tm =
+    let rec go t =
+      if t = old then nw
+      else if is_comb t then
+        let f,a = dest_comb t in mk_comb (go f, go a)
+      else if is_abs t then
+        let v,b = dest_abs t in mk_abs (v, go b)
+      else t in
+    go tm in
+  (* the finish of a part of the build: what the step of the
+     induction asks for, with the store of the part's words and the
+     invariant of its root as the argument *)
+  let d_fin mk_parts =
+    W(fun (asl,gl) ->
+      let gr p = grab_asm p asl in
+      let ih = gr (fun th -> is_forall (concl th) &&
+        can (find_term (hd_is "dataSem_do_build")) (concl th)) in
+      let db = gr (fun th -> is_eq (concl th) &&
+        hd_is "dataSem_do_build" (lhs (concl th))) in
+      let bw0 = gr (fun th -> is_eq (concl th) &&
+        hd_is "build_words" (lhs (concl th))) in
+      let sm = gr (fun th -> hd_is "<=" (concl th) &&
+        hd_is "SUM" (lhand (concl th))) in
+      let fl1 = gr (fun th -> is_eq (concl th) &&
+        hd_is "FLOOKUP" (lhs (concl th)) &&
+        hd_is "NextFree" (rand (lhs (concl th)))) in
+      let fl2 = gr (fun th -> is_eq (concl th) &&
+        hd_is "FLOOKUP" (lhs (concl th)) &&
+        hd_is "CurrHeap" (rand (lhs (concl th)))) in
+      let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+      (* the goal says what the words of this part are, where the
+         store goes and what is left of the space *)
+      let bod0 = snd (dest_exists gl) in
+      let bod = (try rhs (concl (TOP_DEPTH_CONV let_CONV bod0))
+                 with Failure _ -> bod0) in
+      let args = snd (strip_comb (lhs (rand bod))) in
+      let both = el 1 args in
+      let xs = lhand both in
+      let fr = el 0 args in
+      let mrargs = snd (strip_comb (lhand bod)) in
+      let spterm = el 4 mrargs and stterm = el 5 mrargs in
+      let nfterm = rand (rand (rand stterm)) in
+      let sl,big20 = mk_parts asl (xs,fr,el 2 args,el 3 args) in
+      (* the lengths of the lists, in one and the same form on both
+         sides of the step *)
+      let norm th = CONV_RULE NUM_REDUCE_CONV
+        (REWRITE_RULE[LENGTH_MAP; LENGTH; ADD1;
+          LENGTH_write_bytes; LENGTH_REPLICATE] th) in
+      let big2 = norm big20 in
+      let b2args = snd (strip_comb (snd (strip_forall (concl big2)))) in
+      let sp2 = el 4 b2args and st2 = el 5 b2args in
+      let free2 = (try rand (rand (rand st2))
+                   with Failure _ -> fr) in
+      let dis = CONJUNCTS (distinctness "store_name") in
+      let conv = REWRITE_CONV ([FLOOKUP_UPDATE] @ dis @
+        map GSYM dis) in
+      let unch th = lhs (concl th) = rhs (concl th) in
+      let fl1' = (try let th = conv (list_mk_icomb "FLOOKUP"
+                        [st2; `NextFree`]) in
+                      if unch th then fl1 else th
+                  with Failure _ -> fl1) in
+      let fl2' = (try let th = conv (list_mk_icomb "FLOOKUP"
+                        [st2; `CurrHeap`]) in
+                      if unch th then fl2 else TRANS th fl2
+                  with Failure _ -> fl2) in
+      let nfv = genvar (type_of fr) in
+      let stnf = repl nfterm nfv stterm in
+      let st2nf = list_mk_icomb "|+" [st2; rand stnf] in
+      let fu = GEN nfv (try REWRITE_CONV[fupd_same] st2nf
+                        with Failure _ -> REFL st2nf) in
+      let fe = prove (mk_eq (free2, repl both xs nfterm),
+        REWRITE_TAC[LENGTH; nf0; ADD1; SUB_0; ADD_CLAUSES;
+          LENGTH_write_bytes; LENGTH_REPLICATE;
+          LENGTH_MAP] THEN TRY (CONV_TAC NUM_REDUCE_CONV)) in
+      let se = prove (mk_eq (sp2, repl both xs spterm),
+        REWRITE_TAC[LENGTH; nf0; ADD1; SUB_0; ADD_CLAUSES;
+          LENGTH_write_bytes; LENGTH_REPLICATE;
+          LENGTH_MAP] THEN TRY (CONV_TAC NUM_REDUCE_CONV)) in
+      let bw1 = CONV_RULE (LAND_CONV (RAND_CONV
+        (REWRITE_CONV[nf0; GSYM nf_sub]))) (norm bw0) in
+      (* and the space that is left is enough for the rest *)
+      let hts = rand (lhand (concl sm)) in
+      let smtail = (if hd_is "CONS" hts then rand hts
+                    else mk_comb (rator hts, rand (rand hts))) in
+      let smterm = mk_binary "<="
+        (list_mk_icomb "SUM" [smtail], sp2) in
+      SUBGOAL_THEN smterm ASSUME_TAC THENL
+       [MP_TAC sm THEN
+        FIRST
+         [REWRITE_TAC[MAP; sum_cl; part_space_req_def; LENGTH;
+            NOT_SUC; LENGTH_MAP] THEN
+          CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN ARITH_TAC;
+          ASM_REWRITE_TAC[MAP; sum_cl; part_space_req_def; LENGTH;
+            NOT_SUC; LENGTH_MAP] THEN
+          CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN ASM_ARITH_TAC;
+          (* a bignum, whose payload the num_size of the number
+             bounds *)
+          FIRST_ASSUM (fun nb ->
+            if hd_is "<=" (concl nb) &&
+               hd_is "SUC" (lhand (concl nb))
+            then MP_TAC nb else fail()) THEN
+          W(fun (asl,_) ->
+            let n29 = grab_asm (fun th -> is_neg (concl th) &&
+              hd_is "<" (rand (concl th))) asl in
+            REWRITE_TAC[MAP; sum_cl; part_space_req_def;
+              EQF_INTRO n29]) THEN
+          ARITH_TAC];
+        W(fun (asl2,_) ->
+          let sm1 = grab_asm (fun th -> concl th = smterm) asl2 in
+          let ps = [ih; sl; fe; se; fl1'; fl2'; fu; big2;
+                    db; bw1; sm1; gd] in
+          MATCH_ACCEPT_TAC (itlist (fun p th -> MATCH_MP th p)
+            (rev ps) d_step))]) in
+  (* the empty list of a type *)
+  let nil_of ty =
+    mk_const ("NIL", [hd (snd (dest_type ty)), mk_vartype "A"]) in
+  (* the words of the part, as the goal of a step has them *)
+  let d_words gl =
+    let bod0 = snd (dest_exists (snd (strip_forall gl))) in
+    let bod = (try rhs (concl (TOP_DEPTH_CONV let_CONV bod0))
+               with Failure _ -> bod0) in
+    lhand (el 1 (snd (strip_comb (lhs (rand bod))))) in
+  (* two assumptions that read one and the same thing say the same *)
+  let d_pairs =
+    W(fun (asl,_) ->
+      let eqs = filter (fun th -> is_eq (concl th)) (map snd asl) in
+      let rec prs l =
+        match l with
+          [] -> []
+        | h :: t -> map (fun u -> (h,u)) t @ prs t in
+      let news = mapfilter (fun (th1,th2) ->
+        if lhs (concl th1) = lhs (concl th2) &&
+           not (rhs (concl th1) = rhs (concl th2))
+        then REWRITE_RULE[injectivity "option";
+                          injectivity "word_loc"]
+               (TRANS (SYM th1) th2)
+        else fail()) (prs eqs) in
+      EVERY (map ASSUME_TAC news)) in
+  (* the memory_rel of an assumption whose list has the part's root
+     in front, and the one that every list of keys has *)
+  let d_front asl =
+    grab_asm (fun th -> hd_is "memory_rel" (concl th) &&
+      hd_is "CONS" (el 8 (snd (strip_comb (concl th))))) asl in
+  let d_all asl =
+    grab_asm (fun th -> is_forall (concl th) &&
+      hd_is "memory_rel" (snd (strip_forall (concl th)))) asl in
+  (* the invariant that every list of keys has, as a term built
+     from the one that the lemma of the part gives: the update of
+     the two maps at the part's own key *)
+  let d_updterm asl =
+    let mr = d_front asl in
+    let db = grab_asm (fun th -> is_eq (concl th) &&
+      hd_is "dataSem_do_build" (lhs (concl th))) asl in
+    let iv = el 0 (snd (strip_comb (el 0 (snd (strip_comb
+      (lhs (concl db))))))) in
+    let args = snd (strip_comb (concl mr)) in
+    let l = el 8 args in
+    let bw = lhand l in
+    let b = lhand bw and w2 = rand bw in
+    let rest = rand l in
+    let mapt = lhand rest in
+    let ks = rand mapt in
+    let f = rand (rator mapt) in
+    let kv,body = dest_abs f in
+    let map0 = rator (lhand body) and map0' = rator (rand body) in
+    let upd x mp = list_mk_icomb "UPDATE" [iv; x; mp] in
+    let f2 = mk_abs (kv, mk_pair (mk_comb (upd b map0, kv),
+                                  mk_comb (upd w2 map0', kv))) in
+    let l2 = list_mk_icomb "APPEND"
+      [list_mk_icomb "MAP" [f2; ks]; rand rest] in
+    mk_forall (ks, list_mk_comb (fst (strip_comb (concl mr)),
+      [el 0 args; el 1 args; el 2 args; el 3 args; el 4 args;
+       el 5 args; el 6 args; el 7 args; l2])) in
+  (* the store of the part's words and that invariant: the lemma of
+     the part gives both, for one list of keys and then for every
+     one, and the memory it stores is the same memory each time *)
+  let d_store_big mk_c1 =
+    W(fun (asl0,gl0) ->
+      let xs = d_words gl0 in
+      let kty = type_of (fst (dest_forall (concl (d_all asl0)))) in
+      MP_TAC (mk_c1 asl0 xs (genvar kty)) THEN
+      CONV_TAC (LAND_CONV (TOP_DEPTH_CONV let_CONV)) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      d_pairs THEN d_subst THEN d_pairs THEN d_subst THEN
+      W(fun (asl,_) ->
+        SUBGOAL_THEN (d_updterm asl) ASSUME_TAC) THENL
+       [GEN_TAC THEN
+        MATCH_MP_TAC memory_rel_IMP_MAP_UPDATE THEN
+        REWRITE_TAC[CONJUNCT2 APPEND] THEN
+        W(fun (asl,gl) -> MP_TAC (mk_c1 asl xs
+          (rand (lhand (rand (el 8 (snd (strip_comb gl)))))))) THEN
+        CONV_TAC (LAND_CONV (TOP_DEPTH_CONV let_CONV)) THEN
+        DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+        d_pairs THEN d_subst THEN d_pairs THEN d_subst THEN
+        W(fun (asl,_) -> ACCEPT_TAC (d_front asl));
+        ALL_TAC]) in
+  (* and then the store and the invariant are assumptions *)
+  let d_parts_asm asl (xs,fr,mm,dmm) =
+    let sl = grab_asm (fun th -> is_eq (concl th) &&
+      hd_is "data_to_word_memoryProof_store_list" (lhs (concl th)) &&
+      el 1 (snd (strip_comb (lhs (concl th)))) = xs) asl in
+    let olds = concl (d_all (rev asl)) in
+    let big2 = grab_asm (fun th -> is_forall (concl th) &&
+      hd_is "memory_rel" (snd (strip_forall (concl th))) &&
+      not (concl th = olds)) asl in
+    (sl,big2) in
+  (* the words of the part fit in the space that the source asks
+     for *)
+  let d_tail_of xs =
+    if hd_is "CONS" xs then rand xs else rand (rand xs) in
+  let d_lt_sp =
+    W(fun (asl,gl) ->
+      let bod0 = snd (dest_exists gl) in
+      let bod = (try rhs (concl (TOP_DEPTH_CONV let_CONV bod0))
+                 with Failure _ -> bod0) in
+      let args = snd (strip_comb (lhs (rand bod))) in
+      let ws = d_tail_of (lhand (el 1 args)) in
+      let mrargs = snd (strip_comb (lhand bod)) in
+      SUBGOAL_THEN (mk_binary "<"
+        (list_mk_icomb "LENGTH" [ws],
+         lhand (el 4 mrargs))) ASSUME_TAC) THENL
+     [TRY (FIRST_ASSUM ACCEPT_TAC) THEN
+      REWRITE_TAC[LENGTH_MAP; LENGTH] THEN
+      FIRST_ASSUM (fun sm ->
+        if hd_is "<=" (concl sm) && hd_is "SUM" (lhand (concl sm))
+        then MP_TAC sm else fail()) THEN
+      FIRST
+       [REWRITE_TAC[MAP; sum_cl; part_space_req_def; LENGTH;
+          NOT_SUC; LENGTH_MAP] THEN
+        CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN ARITH_TAC;
+        ASM_REWRITE_TAC[MAP; sum_cl; part_space_req_def; LENGTH;
+          NOT_SUC; LENGTH_MAP] THEN
+        CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN ASM_ARITH_TAC];
+      ALL_TAC] in
+  (* a word of sixty-four bits: memory_rel_Word64_alt stores the
+     header and the one or two words of it *)
+  let d_c1_w64 asl xs ks =
+    let gr p = grab_asm p asl in
+    let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+    let big = d_all asl in
+    let eh = gr (fun th -> is_eq (concl th) &&
+      hd_is "encode_header" (lhs (concl th))) in
+    let lt = gr (fun th -> hd_is "<" (concl th) &&
+      hd_is "LENGTH" (lhand (concl th))) in
+    let db = gr (fun th -> is_eq (concl th) &&
+      hd_is "dataSem_do_build" (lhs (concl th))) in
+    let dim = gr (fun th -> is_eq (concl th) &&
+      hd_is "dimindex" (lhs (concl th))) in
+    let ww = rand (el 1 (snd (strip_comb (el 0 (snd (strip_comb
+      (lhs (concl db)))))))) in
+    let big1 = SPEC ks big in
+    let lst = el 8 (snd (strip_comb (concl big1))) in
+    let ap = GSYM (PART_MATCH rhs (CONJUNCT1 APPEND) lst) in
+    let big1' = CONV_RULE (RAND_CONV (REWR_CONV ap)) big1 in
+    let wd0 = REWRITE_RULE[dim] (SPEC ww Word64Rep_def) in
+    let wd0 = CONV_RULE NUM_REDUCE_CONV (REWRITE_RULE[] wd0) in
+    (* the address type of the heap element, which the definition
+       leaves general *)
+    let wl = mk_type ("word_loc",[mk_vartype "'a"]) in
+    let tvs = filter (fun ty -> not (ty = mk_vartype "'a"))
+      (type_vars_in_term (concl wd0)) in
+    let wd = INST_TYPE (map (fun ty -> (wl,ty)) tvs) wd0 in
+    let wsl = rand (rand (rhs (concl wd))) in
+    let leq = prove (mk_eq (list_mk_icomb "LENGTH" [wsl],
+      el 1 (snd (strip_comb (rhs (concl wd))))),
+      REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV) in
+    let wrep = CONV_RULE (RAND_CONV (REWRITE_CONV[GSYM leq])) wd in
+    MATCH_MP memory_rel_Word64_alt
+      (end_itlist CONJ [big1'; gd; wrep; lt; eh]) in
+  (* a small number: nothing is stored and its root is its
+     Smallnum *)
+  let d_parts_int_small asl (xs,fr,mm,dmm) =
+    let gr p = grab_asm p asl in
+    let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+    let si = gr (fun th -> hd_is "small_int" (concl th)) in
+    let big = d_all asl in
+    let sl = prove (mk_eq (list_mk_icomb
+      "data_to_word_memoryProof_store_list" [fr; xs; mm; dmm],
+      list_mk_icomb "SOME" [mm]),
+      REWRITE_TAC[data_to_word_memoryProof_store_list_def]) in
+    let ksv = genvar (type_of (fst (dest_forall (concl big)))) in
+    let big2 = GEN ksv (MATCH_MP memory_rel_IMP_MAP_UPDATE
+      (REWRITE_RULE[GSYM (CONJUNCT2 APPEND)]
+        (MATCH_MP IMP_memory_rel_Number
+          (CONJ gd (CONJ si (SPEC ksv big)))))) in
+    (sl,big2) in
+  (* the block with elements: memory_rel_Cons1 stores the header and
+     the roots of the elements *)
+  let d_c1_con asl xs ks =
+    let gr p = grab_asm p asl in
+    let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+    let big = d_all asl in
+    let eh0 = gr (fun th -> is_eq (concl th) &&
+      hd_is "encode_header" (lhs (concl th))) in
+    let lt = gr (fun th -> hd_is "<" (concl th) &&
+      hd_is "LENGTH" (lhand (concl th))) in
+    let ws = rand xs in
+    let l = rand ws in
+    let bargs = snd (strip_comb (snd (strip_forall (concl big)))) in
+    let mapf = rator (lhand (el 8 bargs)) in
+    let big1 = SPEC (list_mk_icomb "APPEND" [l; ks]) big in
+    let zth = PART_MATCH rhs data_to_word_memoryProof_ZIP_MAP_MAP
+      (mk_comb (mapf, l)) in
+    let big1' = REWRITE_RULE[MAP_APPEND; GSYM APPEND_ASSOC;
+      GSYM zth] big1 in
+    let vals = lhand (lhand (el 8 (snd (strip_comb (concl big1'))))) in
+    let lmap = prove (mk_eq (list_mk_icomb "LENGTH" [vals],
+      list_mk_icomb "LENGTH" [ws]), REWRITE_TAC[LENGTH_MAP]) in
+    let ne = prove (mk_neg (mk_eq (vals, nil_of (type_of vals))),
+      REWRITE_TAC[MAP; NOT_CONS_NIL]) in
+    let eh = EQ_MP (SYM (REWRITE_CONV[LENGTH_MAP]
+      (repl (list_mk_icomb "LENGTH" [l])
+        (list_mk_icomb "LENGTH" [ws]) (concl eh0)))) eh0 in
+    MATCH_MP memory_rel_Cons1
+      (end_itlist CONJ [big1'; lmap; ne; eh; lt; gd]) in
+  (* the empty block: nothing is stored and its root is the block *)
+  let d_parts_con_nil asl (xs,fr,mm,dmm) =
+    let gr p = grab_asm p asl in
+    let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+    let lt = gr (fun th -> hd_is "<" (concl th) &&
+      hd_is "DIV" (rand (concl th))) in
+    let big = gr (fun th -> is_forall (concl th) &&
+      hd_is "memory_rel" (snd (strip_forall (concl th)))) in
+    let sl = prove (mk_eq (list_mk_icomb
+      "data_to_word_memoryProof_store_list" [fr; xs; mm; dmm],
+      list_mk_icomb "SOME" [mm]),
+      REWRITE_TAC[data_to_word_memoryProof_store_list_def]) in
+    let ksv = genvar (type_of (fst (dest_forall (concl big)))) in
+    let big2 = GEN ksv (MATCH_MP memory_rel_IMP_MAP_UPDATE
+      (REWRITE_RULE[blocknil; GSYM (CONJUNCT2 APPEND)]
+        (MATCH_MP memory_rel_Cons_empty
+          (CONJ (SPEC ksv big) (CONJ lt gd))))) in
+    (sl,big2) in
+  (* a number that is not small is at least two to the twenty-nine,
+     which is what the space of a part of the source counts by *)
+  let big_int_29 = prove
+   (`good_dimindex (:'a) /\ ~(small_int (:'a) i)
+     ==> ~(num_of_int (abs i) < 2 EXP 29)`,
+    REWRITE_TAC[small_int_def] THEN
+    DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+    SUBGOAL_THEN `&(dimword (:'a) DIV 8) <= abs (i:int)`
+      ASSUME_TAC THENL
+     [FIRST_X_ASSUM (fun ns ->
+        if is_neg (concl ns) then MP_TAC ns else fail()) THEN
+      MP_TAC (SPEC `dimword (:'a) DIV 8` INT_POS) THEN
+      INT_ARITH_TAC; ALL_TAC] THEN
+    (* so the number of it is at least an eighth of the word size *)
+    SUBGOAL_THEN `dimword (:'a) DIV 8 <= num_of_int (abs (i:int))`
+      MP_TAC THENL
+     [REWRITE_TAC[GSYM INT_OF_NUM_LE] THEN
+      SUBGOAL_THEN `&(num_of_int (abs (i:int))) = abs i`
+        SUBST1_TAC THENL
+       [MATCH_MP_TAC INT_OF_NUM_OF_INT THEN INT_ARITH_TAC;
+        ALL_TAC] THEN
+      FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
+    (* and an eighth of the word size is at least two to the
+       twenty-nine *)
+    FIRST_X_ASSUM (fun gd ->
+      if hd_is "good_dimindex" (concl gd)
+      then MP_TAC (REWRITE_RULE[good_dimindex_def] gd) else fail())
+      THEN
+    REWRITE_TAC[dimword] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC) in
+  (* a number that is not small: its payload is the multiword of it,
+     and IMP_memory_rel_bignum_alt stores the header and that *)
+  let d_c1_big asl xs ks =
+    let gr p = grab_asm p asl in
+    let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+    let big = d_all asl in
+    let nsi = gr (fun th -> is_neg (concl th) &&
+      hd_is "small_int" (rand (concl th))) in
+    let eh = gr (fun th -> is_eq (concl th) &&
+      hd_is "encode_header" (lhs (concl th))) in
+    let lt = gr (fun th -> hd_is "<" (concl th) &&
+      hd_is "LENGTH" (lhand (concl th))) in
+    let db = gr (fun th -> is_eq (concl th) &&
+      hd_is "dataSem_do_build" (lhs (concl th))) in
+    let ii = rand (el 1 (snd (strip_comb (el 0 (snd (strip_comb
+      (lhs (concl db)))))))) in
+    let big1 = SPEC ks big in
+    let lst = el 8 (snd (strip_comb (concl big1))) in
+    let ap = GSYM (PART_MATCH rhs (CONJUNCT1 APPEND) lst) in
+    let big1' = CONV_RULE (RAND_CONV (REWR_CONV ap)) big1 in
+    let bg0 = CONV_RULE (TOP_DEPTH_CONV let_CONV)
+      (REWRITE_RULE[i2mw_def] (SPEC ii bignum_def)) in
+    let wl = mk_type ("word_loc",[mk_vartype "'a"]) in
+    let tvs = filter (fun ty -> not (ty = mk_vartype "'a"))
+      (type_vars_in_term (concl bg0)) in
+    let bg = INST_TYPE (map (fun ty -> (wl,ty)) tvs) bg0 in
+    MATCH_MP IMP_memory_rel_bignum_alt
+      (end_itlist CONJ [big1'; gd; nsi; bg; lt; eh]) in
+  (* which part the step is at, by the value that do_part gives *)
+  let d_part n =
+    W(fun (asl,_) ->
+      let _ = grab_asm (fun th -> is_eq (concl th) &&
+        can (find_term (hd_is n)) (concl th)) asl in
+      ALL_TAC) in
+  (* a new byte array: memory_rel_RefByte_content stores the header
+     of the array and the words that hold the bytes of the string *)
+  let d_c1_str asl xs ks =
+    let gr p = grab_asm p asl in
+    let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
+    let big = d_all asl in
+    let lt = gr (fun th -> hd_is "<" (concl th) &&
+      hd_is "byte_len" (lhand (concl th)) &&
+      not (hd_is "EXP" (rand (concl th)))) in
+    let e1 = gr (fun th -> hd_is "<" (concl th) &&
+      hd_is "byte_len" (lhand (concl th)) &&
+      hd_is "EXP" (rand (concl th)) &&
+      can (find_term (hd_is "dimindex")) (rand (concl th))) in
+    let e2 = gr (fun th -> hd_is "<" (concl th) &&
+      hd_is "byte_len" (lhand (concl th)) &&
+      hd_is "EXP" (rand (concl th)) &&
+      can (find_term (hd_is "data_to_word_config_len_size"))
+        (rand (concl th))) in
+    (* the array that the source puts in the references: its
+       pointer, whether it is compared by its contents, and its
+       bytes *)
+    let db = gr (fun th -> is_eq (concl th) &&
+      hd_is "dataSem_do_build" (lhs (concl th))) in
+    let rf = el 3 (snd (strip_comb (lhs (concl db)))) in
+    let iargs = snd (strip_comb rf) in
+    let refst = el 2 iargs in
+    let baargs = snd (strip_comb (el 1 iargs)) in
+    let bytes = el 1 baargs in
+    let sptty = type_of refst in
+    let nin = INST [refst, mk_var ("refs", sptty)]
+      (INST_TYPE [hd (snd (dest_type sptty)), mk_vartype "'a"]
+        least_notin_domain) in
+    let neq = SYM (REWRITE_CONV[LENGTH_MAP; LENGTH_explode]
+      (list_mk_icomb "LENGTH" [bytes])) in
+    let th0 = INST [el 0 baargs, mk_var ("fl", bool_ty)]
+      memory_rel_RefByte_content in
+    MATCH_MP th0
+      (end_itlist CONJ [SPEC ks big; nin; lt; e1; e2; neq; gd]) in
+  (* the string: do_part gives its bytes a new pointer in the
+     references and build_part_words the words that hold them *)
+  let d_case_str =
+    d_part "dataSem_RefPtr" THEN
+    (* the value, the references and the timestamp of do_part *)
+    RULE_ASSUM_TRY (REWRITE_RULE[PAIR_EQ]) THEN
+    SPLIT_ASM_TAC THEN d_subst THEN
+    (* and the two bounds that the words of the string satisfy *)
+    RULE_ASSUM_TRY (REWRITE_RULE[cond_some; PAIR_EQ]) THEN
+    SPLIT_ASM_TAC THEN d_subst THEN
+    (* the bytes of the string, as many as its length *)
+    RULE_ASSUM_TRY (REWRITE_RULE[LENGTH_MAP; LENGTH_explode]) THEN
+    REWRITE_TAC[LENGTH_MAP; LENGTH_explode] THEN
+    (* the big-endianness of the configuration *)
+    W(fun (asl,_) ->
+      let big = d_all asl in
+      let kty = type_of (fst (dest_forall (concl big))) in
+      let eb = MATCH_MP mr_be (SPEC (genvar kty) big) in
+      RULE_ASSUM_TRY (REWRITE_RULE[eb]) THEN REWRITE_TAC[eb]) THEN
+    (* the words of the array: its header in front of them *)
+    REWRITE_TAC[MAP] THEN RULE_ASSUM_TRY (REWRITE_RULE[MAP]) THEN
+    (* and the space that the words of the array take, which the
+       source counts as a quarter of the bytes and the target as a
+       quarter or an eighth of them *)
+    W(fun (asl,_) ->
+      let gr p = grab_asm p asl in
+      let sm = gr (fun th -> hd_is "<=" (concl th) &&
+        hd_is "SUM" (lhand (concl th))) in
+      let e1 = gr (fun th -> hd_is "<" (concl th) &&
+        hd_is "byte_len" (lhand (concl th))) in
+      let bl = lhand (concl e1) in
+      let spt = rand (concl sm) in
+      let hts = rand (lhand (concl sm)) in
+      let smtail = (if hd_is "CONS" hts then rand hts
+                    else mk_comb (rator hts, rand (rand hts))) in
+      let smt = list_mk_icomb "SUM" [smtail] in
+      SUBGOAL_THEN (mk_conj (mk_binary "<" (bl, spt),
+        mk_binary "<=" (mk_binary "+" (smt,
+          mk_binary "+" (bl, `1`)), spt))) STRIP_ASSUME_TAC THENL
+       [MP_TAC sm THEN
+        REWRITE_TAC[MAP; sum_cl; part_space_req_def; byte_len_def]
+          THEN
+        FIRST_ASSUM (fun gd ->
+          if hd_is "good_dimindex" (concl gd)
+          then STRIP_ASSUME_TAC (REWRITE_RULE[good_dimindex_def] gd)
+          else fail()) THEN
+        ASM_REWRITE_TAC[ARITH_EQ] THEN
+        MP_TAC (SPECL [`8`; rand bl; `4`] DIV_MONO2) THEN
+        REWRITE_TAC[ARITH] THEN ARITH_TAC;
+        ALL_TAC]) THEN
+    d_store_big d_c1_str THEN
+    d_fin d_parts_asm in
+  let d_case_int =
+    d_part "dataSem_Number" THEN
+    d_con_red THENL
+     [d_fin d_parts_int_small;
+      (* the multiword of the number and the header of the cell *)
+      RULE_ASSUM_TRY (REWRITE_RULE[i2mw_def]) THEN
+      RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV let_CONV)) THEN
+      W(fun (asl,_) ->
+        let bp0 = grab_asm (fun th -> is_eq (concl th) &&
+          can (find_term (hd_is "encode_header"))
+            (lhs (concl th))) asl in
+        CASES_ON_TAC (find_term (hd_is "encode_header")
+          (lhs (concl bp0)))) THEN
+      TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+      RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option";
+        injectivity "option"; PAIR_EQ]) THEN
+      SPLIT_ASM_TAC THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
+      d_subst THEN
+      (* the payload is no longer than the space of the part *)
+      W(fun (asl,_) ->
+        let gd = grab_asm (fun th ->
+          hd_is "good_dimindex" (concl th)) asl in
+        let nsi = grab_asm (fun th -> is_neg (concl th) &&
+          hd_is "small_int" (rand (concl th))) asl in
+        let nn = lhand (rand (concl (MATCH_MP big_int_29
+          (CONJ gd nsi)))) in
+        STRIP_ASSUME_TAC (MATCH_MP big_int_29 (CONJ gd nsi)) THEN
+        STRIP_ASSUME_TAC (MP (SPECL [nn; nn]
+          LENGTH_n2mw_LE_num_size) (CONJ gd (SPEC nn LE_REFL)))) THEN
+      W(fun (asl,gl) ->
+        let gr p = grab_asm p asl in
+        let sm = gr (fun th -> hd_is "<=" (concl th) &&
+          hd_is "SUM" (lhand (concl th))) in
+        let nb = gr (fun th -> hd_is "<=" (concl th) &&
+          hd_is "SUC" (lhand (concl th))) in
+        let n29 = gr (fun th -> is_neg (concl th) &&
+          hd_is "<" (rand (concl th))) in
+        let bod0 = snd (dest_exists gl) in
+        let bod = (try rhs (concl (TOP_DEPTH_CONV let_CONV bod0))
+                   with Failure _ -> bod0) in
+        let args = snd (strip_comb (lhs (rand bod))) in
+        let ws = d_tail_of (lhand (el 1 args)) in
+        let mrargs = snd (strip_comb (lhand bod)) in
+        SUBGOAL_THEN (mk_binary "<" (list_mk_icomb "LENGTH" [ws],
+          lhand (el 4 mrargs))) ASSUME_TAC THENL
+         [MP_TAC sm THEN MP_TAC nb THEN
+          REWRITE_TAC[MAP; sum_cl; part_space_req_def;
+            EQF_INTRO n29] THEN
+          ARITH_TAC;
+          ALL_TAC]) THEN
+      d_lt_sp THEN
+      d_store_big d_c1_big THEN
+      d_fin d_parts_asm] in
+  let d_case_con =
+    d_part "dataSem_Block" THEN
+    CASES_ON_TAC `a1:(num)list` THENL
+     [d_con_red THEN
+      d_fin d_parts_con_nil;
+      RULE_ASSUM_TRY (REWRITE_RULE[NULL; NOT_CONS_NIL]) THEN
+      RULE_ASSUM_TRY (REWRITE_RULE[]) THEN
+      W(fun (asl,_) ->
+        let bp0 = grab_asm (fun th -> is_eq (concl th) &&
+          can (find_term (hd_is "encode_header"))
+            (lhs (concl th))) asl in
+        CASES_ON_TAC (find_term (hd_is "encode_header")
+          (lhs (concl bp0)))) THEN
+      TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+      RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option";
+        injectivity "option"; PAIR_EQ]) THEN
+      SPLIT_ASM_TAC THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
+      d_subst THEN
+      d_lt_sp THEN
+      d_store_big d_c1_con THEN
+      d_fin d_parts_asm] in
+  let d_case_w64 =
+    d_part "dataSem_Word64" THEN
+    (* the two word sizes of the target *)
+    FIRST_ASSUM (fun gd ->
+      if hd_is "good_dimindex" (concl gd)
+      then MP_TAC (REWRITE_RULE[good_dimindex_def] gd)
+      else fail()) THEN
+    DISCH_THEN (DISJ_CASES_THEN (fun dim ->
+      RULE_ASSUM_TRY (REWRITE_RULE[] o
+        CONV_RULE NUM_REDUCE_CONV o REWRITE_RULE[dim]) THEN
+      ASSUME_TAC dim)) THEN
+    RULE_ASSUM_TRY (CONV_RULE (TOP_DEPTH_CONV let_CONV)) THEN
+    (* and the header of the cell *)
+    W(fun (asl,_) ->
+      let bp0 = grab_asm (fun th -> is_eq (concl th) &&
+        can (find_term (hd_is "encode_header"))
+          (lhs (concl th))) asl in
+      CASES_ON_TAC (find_term (hd_is "encode_header")
+        (lhs (concl bp0)))) THEN
+    TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
+    RULE_ASSUM_TRY (REWRITE_RULE[distinctness "option";
+      injectivity "option"; PAIR_EQ]) THEN
+    SPLIT_ASM_TAC THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
+    d_subst THEN
+    (* the words of the cell, as a list with the header in front *)
+    REWRITE_TAC[MAP] THEN RULE_ASSUM_TRY (REWRITE_RULE[MAP]) THEN
+    (* and the length of them, which the source counts as words and
+       the lemma as roots *)
+    W(fun (asl,gl) ->
+      let eh = grab_asm (fun th -> is_eq (concl th) &&
+        hd_is "encode_header" (lhs (concl th))) asl in
+      let plain = rand (rand (lhs (concl eh))) in
+      let wsl = rand (d_words gl) in
+      let eq = prove (mk_eq (list_mk_icomb "LENGTH" [plain],
+        list_mk_icomb "LENGTH" [wsl]), REWRITE_TAC[LENGTH]) in
+      REWRITE_TAC[eq] THEN RULE_ASSUM_TRY (REWRITE_RULE[eq])) THEN
+    d_lt_sp THEN
+    d_store_big d_c1_w64 THEN
+    d_fin d_parts_asm in
+  LIST_INDUCT_TAC THENL
+   [d_nil;
+    d_open THEN
+    (d_case_w64 ORELSE d_case_str ORELSE d_case_con ORELSE
+     d_case_int)]));;
 
 let word_and_lsr_0 = prove
  (`(!i. k <= i /\ i < dimindex (:'a) ==> ~(FAPPLY w i)) ==> w && n <<

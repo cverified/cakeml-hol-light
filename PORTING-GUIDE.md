@@ -4208,3 +4208,31 @@ the goal.  While a case is being written, dispatch on something
 that _fails_ for the other cases (here: the constructor that
 `do_part` gives, by `grab_asm`), so that the failure of the case
 under work is the failure of the proof.
+
+## 90. The session's scratch layer is not the proof
+
+A long induction is written in a session as two dozen top-level
+helpers (`d_open`, `d_step`, `d_fin`, a lemma per case), and what
+lands is _one_ term: the tactic of `prove`, with every helper a
+`let ... in` of it.  Doing that by hand is where the round loses
+its proof, so do it by machine:
+
+- write the helpers into one flat file, in dependency order, with
+  each `b_the (bp "x" `...` (fun () -> ...))` turned into a plain
+  `prove`, and load that file: it is the proof, still with its own
+  names at the top level;
+- check that **every** name the file uses is either defined in it
+  or stands before the proof in the port -- a name that is only in
+  the session is the trap, because the session has it and a fresh
+  load does not;
+- then turn each top-level `;;` into ` in`, indent the whole by
+  three and wrap it in the thunk that `tools/landproof.py` reads.
+
+The check is not optional and a grep for the scratch vocabulary
+(`say`, `mk`, `bp`, `b_the`) does not do it: of the helpers of
+`memory_rel_do_build` one (`d_open`) was simply not copied into
+the flat file, the session's own was used, and the only sign of it
+was that the log of the run had the `MARK`s of the session's
+version in it -- which the copy no longer has.  List the names,
+`grep -c '^let <name> '` each one, and let the list be what says
+the file is complete.
