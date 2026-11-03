@@ -4236,3 +4236,64 @@ was that the log of the run had the `MARK`s of the session's
 version in it -- which the copy no longer has.  List the names,
 `grep -c '^let <name> '` each one, and let the list be what says
 the file is complete.
+
+## 91. The alignment that HOL4 has and the port does not
+
+`ml/lib/alignment.ml` has the four definitions of HOL4's
+alignmentTheory (`align`, `aligned`, `byte_align`, `byte_aligned`)
+and not one theorem of it, so a proof that works with the address
+of a byte has to prove what it needs.  The two that HOL4 uses are
+
+```
+align_add_aligned: aligned p a /\ w2n b < 2 EXP p
+                   ==> align p (a + b) = a
+aligned_add_pow:   aligned k (w + n2w (n * 2 EXP k)) <=> aligned k w
+```
+
+and both come out of one reading of `align`: it is the word
+shifted down by `p` and up again (`slice_shl`, which the proof of
+`w2n_add_byte_align_lemma` already had), so the value of
+`align p w` is `2 EXP p * (val w DIV 2 EXP p)` -- the value with
+the lowest `p` bits cleared -- and `aligned p w` is exactly
+`val w MOD 2 EXP p = 0`.  From there both are arithmetic over
+`VAL_WORD_ADD` and `MOD_MOD_EXP_MIN`, where the one step that
+needs care is that a multiple of `2 EXP p` below `2 EXP d` plus a
+rest below `2 EXP p` does not wrap (`mult_bound`).
+
+The proof of `heap_in_memory_store_UpdateByte` has all of this as
+its own lemmas, with `gd_shift` (the bytes in a word are
+`2 EXP LOG2 (dimindex (:'a) DIV 8)`), `heap_addr_aligned`,
+`byte_align_add` and `heap_addr_mod` on top of them;
+`memory_rel_ByteArray_IMP` and `memory_rel_xor_bytes` want the
+same, and copying them is what the port does with a local lemma.
+
+## 92. Four ways a rewrite or an ARITH goes wrong
+
+- `ONCE_REWRITE_TAC[th]` is `ONCE_DEPTH_CONV`, which rewrites the
+  topmost instance in **every** branch of the term, not the first
+  one in the whole term.  With `th` an equation whose left side is
+  a variable (`va = va DIV 2 EXP p * 2 EXP p`) that means every
+  occurrence of the variable goes, including the ones inside the
+  right side's own shape, and a step that closed the goal while
+  there was one occurrence breaks when the goal grows another.
+  Rewrite with an explicit path (`GEN_REWRITE_TAC (LAND_CONV o
+  LAND_CONV) [th]`) or, better, do not rewrite with such an
+  equation at all: `ABBREV_TAC` the quotient and `SUBST_ALL_TAC`
+  the variable away.
+- a product is **one atom** for `ARITH_TAC`: `LENGTH ys1 * bw` and
+  `LENGTH ys1 * (dimindex (:'a) DIV 8)` are two atoms, and an
+  assumption `bw = dimindex (:'a) DIV 8` does not bridge them.  A
+  lemma whose hypothesis is such a product has to be stated in the
+  multiplication order of the place that uses it, with no
+  abbreviating variable in between.
+- an `ARITH_RULE` whose term holds no numeral gets the default
+  type of `<=`, which in the port is not `num`:
+  `ARITH_RULE `a <= b ==> n < a ==> n < b`` fails with
+  "linear_ineqs: no contradiction" until it says `(a:num)`.
+- `btry` gives `TRUTH` when the attempt fails, so a try file that
+  takes its statement from `concl <name>` **poisons the session**:
+  the next load states `true`, proves it, and the error it reports
+  is about a goal that is not the theorem.  After a failed run,
+  put the statement back (`mk_thm ([], <the statement>)`) before
+  the next one -- or read the failure of a second run with that in
+  mind.
