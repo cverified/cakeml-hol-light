@@ -45153,20 +45153,334 @@ let memory_rel_Number_const_test = prove
           (if ~(word_bit 0 w) then ~(i = j) else
             ?a. get_real_addr c st w = SOME a /\
                 word_mem_eq a words dm m = SOME (i = j)))`),
-  (* the attempt: the proof of the source names
-     memory_rel_any_Number_IMP, IMP_memory_rel_Number,
-     memory_rel_Number_EQ, small_int_def, bignum_words_def,
-     i2mw_def.  What is here rewrites with them and closes by
-     arithmetic, and the cheat is behind it until the proof is
-     written.  A MESON over them is what the next round adds; it
-     costs a load ten minutes to have it in every attempt and it
-     closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[memory_rel_any_Number_IMP;
-       IMP_memory_rel_Number; memory_rel_Number_EQ;
-       small_int_def; bignum_words_def; i2mw_def] THEN
-     TRY ASM_ARITH_TAC)));;
+(* a small integer is compared with its Smallnum
+   (memory_rel_Number_EQ), and a bignum with the header and the
+   payload of its cell.  Of the three ways the two can differ: a
+   small integer is no bignum, so one of each are different
+   numbers; a bignum whose header encode_header cannot make is not
+   the one in the memory, which has one; and two bignums with
+   headers are equal exactly when the headers and the payloads are
+   (encode_header_EQ for the header, which carries the sign and the
+   length, and word_mem_eq_thm for the payload, which the memory
+   holds behind the header).  The two payloads are the same list of
+   words exactly when the two numbers are the same (n2mw_11, the
+   lemma of this proof, by complete induction on the number), and
+   with the signs of the headers equal that makes the integers
+   equal *)
+  (((* a lemma whose own variables are renamed apart from the ones of
+     the goal: the lemma's m would otherwise have to be matched
+     against a memory that mentions the goal's m *)
+  let fresh_lem th =
+    INST (map (fun v -> (genvar (type_of v), v)) (frees (concl th)))
+      th in
+  (* the tag of a bignum header, which the deep embedding writes
+     as the sign bit above the two low ones.  The same three
+     lemmas stand later in the file, with the proofs of the
+     bignum; they are local here because a proof uses only what
+     stands before it *)
+  let or43 = prove
+   (`((n2w 4):'a word) || n2w 3 = n2w 7`, WORD_NUM_BIT_TAC 3) in
+  let or03 = prove
+   (`((n2w 0):'a word) || n2w 3 = n2w 3`, WORD_NUM_BIT_TAC 2) in
+  let hdr_bits = prove
+   (`good_dimindex (:'a) ==>
+     w2n ((b2w sign << 2 || (n2w 3)):'a word) =
+     (if sign then 7 else 3)`,
+    REWRITE_TAC[b2w_def] THEN DISCH_TAC THEN
+    STRUCT_CASES_TAC(SPEC `sign:bool` BOOL_CASES_AX) THEN
+    REWRITE_TAC[b2n_def; WORD_SHL_WORD] THEN
+    CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[or43; or03; VAL_WORD] THEN
+    FIRST_ASSUM(fun gd ->
+      STRIP_ASSUME_TAC(REWRITE_RULE[good_dimindex_def] gd)) THEN
+    ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV) in
+  let n2mw_11 = prove
+   ( `!m n. ((n2mw m):('a word) list) = n2mw n <=> m = n`,
+    MATCH_MP_TAC num_WF THEN X_GEN_TAC `m:num` THEN DISCH_TAC THEN
+    X_GEN_TAC `n:num` THEN
+    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [n2mw_def] THEN
+    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [n2mw_def] THEN
+    ASM_CASES_TAC `m = 0` THEN ASM_CASES_TAC `n = 0` THEN
+    ASM_REWRITE_TAC[NOT_CONS_NIL; GSYM NOT_CONS_NIL; CONS_11] THEN
+    MP_TAC (INST_TYPE [`:'a`,`:N`] ONE_LT_dimword) THEN
+    DISCH_TAC THEN
+    SUBGOAL_THEN `m DIV dimword (:'a) < m` ASSUME_TAC THENL
+     [MP_TAC (SPECL [`dimword (:'a)`; `m:num`; `2`] DIV_MONO2) THEN
+      MP_TAC (SPEC `m:num`
+        (ARITH_RULE `!m. ~(m = 0) ==> m DIV 2 < m`)) THEN
+      ASM_ARITH_TAC;
+      ALL_TAC] THEN
+    FIRST_X_ASSUM (fun ih ->
+      MP_TAC (SPEC `n DIV dimword (:'a)`
+        (MATCH_MP ih (ASSUME `m DIV dimword (:'a) < m`)))) THEN
+    DISCH_THEN (fun th -> REWRITE_TAC[th]) THEN
+    REWRITE_TAC[GSYM VAL_EQ; VAL_WORD; GSYM dimword; MOD_MOD_REFL]
+      THEN
+    EQ_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    ASM_MESON_TAC[CONJUNCT1 DIVISION_SIMP]) in
+  let nc_tidy =
+    RULE_ASSUM_TRY (REWRITE_RULE[injectivity "word_loc";
+                                 word_index]) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if not (is_eq (concl th)) then fail() else
+      let l = lhs (concl th) and r = rhs (concl th) in
+      if is_var r && not (is_var l) then SUBST_ALL_TAC (SYM th)
+      else if is_var l && not (is_var r) then SUBST_ALL_TAC th
+      else if is_var l && is_var r && not (l = r) then SUBST_ALL_TAC th
+      else fail())) THEN
+    REPEAT (CHANGED_TAC (W(fun (asl,_) ->
+      let eqs = map snd (filter (fun (_,th) -> is_eq (concl th)) asl)
+        in
+      let rec pair = function
+          [] -> failwith "nc_tidy"
+        | th :: rest ->
+            (try let th2 = find (fun t ->
+                   lhs (concl t) = lhs (concl th) &&
+                   not (rhs (concl t) = rhs (concl th))) rest in
+                 (th, th2)
+             with Failure _ -> pair rest) in
+      let th1,th2 = pair eqs in
+      let eq = REWRITE_RULE[injectivity "option";
+                 injectivity "word_loc"] (TRANS (SYM th1) th2) in
+      if is_var (lhs (concl eq)) then SUBST_ALL_TAC eq
+      else SUBST_ALL_TAC (SYM eq)))) in
+  let abs_eq = prove
+   (`!i j. (i < &0 <=> j < &0)
+       ==> (num_of_int (abs i) = num_of_int (abs j) <=> i = j)`,
+    REPEAT STRIP_TAC THEN
+    MP_TAC (MATCH_MP INT_OF_NUM_OF_INT (SPEC `i:int` INT_ABS_POS))
+      THEN
+    MP_TAC (MATCH_MP INT_OF_NUM_OF_INT (SPEC `j:int` INT_ABS_POS))
+      THEN
+    REPEAT DISCH_TAC THEN
+    EQ_TAC THEN DISCH_TAC THENL
+     [FIRST_X_ASSUM (fun th ->
+        MP_TAC (AP_TERM `int_of_num` th)) THEN
+      ASM_REWRITE_TAC[] THEN DISCH_TAC THEN ASM_INT_ARITH_TAC;
+      ASM_REWRITE_TAC[]]) in
+  let is_some_eq = prove
+   (`!x:(A)option. IS_SOME x ==> ?h. x = SOME h`,
+    MATCH_MP_TAC option_INDUCT THEN REWRITE_TAC[IS_SOME] THEN
+    MESON_TAC[]) in
+  let eh_some = prove
+   (`!c t l h. encode_header c t l = SOME h
+      ==> h = make_header c (n2w t) l`,
+    REPEAT GEN_TAC THEN REWRITE_TAC[encode_header_def] THEN
+    COND_CASES_TAC THEN
+    REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+    DISCH_THEN (SUBST1_TAC o SYM) THEN REWRITE_TAC[]) in
+
+  STRIP_TAC THEN
+  W(fun (asl,_) ->
+    let gd = grab_asm (fun th ->
+      hd_is "good_dimindex" (concl th)) asl in
+    let mr = grab_asm (fun th -> hd_is "memory_rel" (concl th)) asl
+      in
+    MP_TAC (MATCH_MP (fresh_lem memory_rel_any_Number_IMP)
+      (CONJ gd mr))) THEN
+  DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+  COND_CASES_TAC THENL
+   [(* a small integer: the two Smallnums are equal iff the
+        integers are *)
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th -> hd_is "memory_rel" (concl th))
+        asl in
+      let si = grab_asm (fun th ->
+        hd_is "small_int" (concl th)) asl in
+      MP_TAC (MATCH_MP (fresh_lem IMP_memory_rel_Number)
+        (CONJ gd (CONJ si mr)))) THEN
+    DISCH_TAC THEN
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr2 = grab_asm (fun th -> hd_is "memory_rel" (concl th) &&
+        hd_is "dataSem_Number" (lhand (lhand
+          (el 8 (snd (strip_comb (concl th))))))) asl in
+      let si = grab_asm (fun th ->
+        hd_is "small_int" (concl th)) asl in
+      let ii = rand (lhand (lhand (rand
+        (el 8 (snd (strip_comb (concl mr2))))))) in
+      MP_TAC (MATCH_MP (fresh_lem memory_rel_Number_EQ)
+        (CONJ mr2 (CONJ (DISJ1 si
+          (mk_comb (rator (concl si), ii))) gd)))) THEN
+    DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+    nc_tidy THEN
+    W(fun (asl,_) ->
+      let ie = grab_asm (fun th ->
+        is_eq (concl th) && is_eq (lhs (concl th)) &&
+        is_eq (rhs (concl th))) asl in
+      ACCEPT_TAC (TRANS ie (ISPECL
+        [lhs (rhs (concl ie)); rhs (rhs (concl ie))] EQ_SYM_EQ)));
+    (* a bignum: the header and the payload of the two are equal
+       exactly when the integers are *)
+    nc_tidy THEN
+    REWRITE_TAC[bignum_words_def; i2mw_def] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+    ASM_CASES_TAC `small_int (:'a) i` THENL
+     [(* a small integer is no bignum *)
+      EVERY_CASE_TAC THEN ASM_REWRITE_TAC[] THEN
+      REPEAT STRIP_TAC THEN
+      W(fun (asl,_) ->
+        let eq = grab_asm (fun th -> is_eq (concl th) &&
+          type_of (lhs (concl th)) = `:int`) asl in
+        SUBST_ALL_TAC eq) THEN
+      W(fun (asl,_) ->
+        let nsi = grab_asm (fun th -> is_neg (concl th) &&
+          hd_is "small_int" (rand (concl th))) asl in
+        UNDISCH_TAC (concl nsi)) THEN
+      ASM_REWRITE_TAC[];
+      (* the bignum of i has a header, and so has the one of j when
+         the two are equal *)
+      W(fun (asl,_) ->
+        let gd = grab_asm (fun th ->
+          hd_is "good_dimindex" (concl th)) asl in
+        let mr = grab_asm (fun th ->
+          hd_is "memory_rel" (concl th)) asl in
+        let iv = rand (lhand (lhand
+          (el 8 (snd (strip_comb (concl mr)))))) in
+        let nsi = grab_asm (fun th -> is_neg (concl th) &&
+          hd_is "small_int" (rand (concl th)) &&
+          rand (rand (concl th)) = iv) asl in
+        MP_TAC (REWRITE_RULE[MATCH_MP hdr_bits gd]
+          (MATCH_MP (fresh_lem memory_rel_Number_bignum_header)
+            (CONJ mr (CONJ nsi gd))))) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      nc_tidy THEN ASM_REWRITE_TAC[] THEN
+      EVERY_CASE_TAC THEN ASM_REWRITE_TAC[] THEN
+      (* the header of i is in the memory, and the payload of i
+         stands behind it *)
+      TRY (SOLVED
+            (REPEAT STRIP_TAC THEN
+             W(fun (asl,_) ->
+               let eq = grab_asm (fun th -> is_eq (concl th) &&
+                 type_of (lhs (concl th)) = `:int`) asl in
+               SUBST_ALL_TAC eq) THEN
+             W(fun (asl,_) ->
+               let iss = grab_asm (fun th ->
+                 hd_is "IS_SOME" (concl th)) asl in
+               UNDISCH_TAC (concl iss)) THEN
+             ASM_REWRITE_TAC[IS_SOME])) THEN
+      W(fun (asl,_) ->
+        let gd = grab_asm (fun th ->
+          hd_is "good_dimindex" (concl th)) asl in
+        let mr = grab_asm (fun th ->
+          hd_is "memory_rel" (concl th)) asl in
+        let iv = rand (lhand (lhand
+          (el 8 (snd (strip_comb (concl mr)))))) in
+        let nsi = grab_asm (fun th -> is_neg (concl th) &&
+          hd_is "small_int" (rand (concl th)) &&
+          rand (rand (concl th)) = iv) asl in
+        MP_TAC (MATCH_MP (fresh_lem memory_rel_Number_bignum_IMP_ALT)
+          (CONJ mr (CONJ nsi gd)))) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      nc_tidy THEN
+      ONCE_REWRITE_TAC[CONJUNCT2 word_mem_eq_def] THEN
+      ASM_REWRITE_TAC[isWord_def] THEN
+      MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[] THEN
+      (* the header that encode_header gives of i, and what
+         encode_header_EQ says of the two headers *)
+      W(fun (asl,_) ->
+        let iss = grab_asm (fun th ->
+          hd_is "IS_SOME" (concl th)) asl in
+        MP_TAC (MATCH_MP is_some_eq iss)) THEN
+      DISCH_THEN (CHOOSE_THEN (fun eq ->
+        ASSUME_TAC eq THEN
+        ASSUME_TAC (REWRITE_RULE[WORD_VAL]
+          (MATCH_MP eh_some eq)))) THEN
+      nc_tidy THEN
+      W(fun (asl,_) ->
+        let mr = grab_asm (fun th ->
+          hd_is "memory_rel" (concl th)) asl in
+        MP_TAC (REWRITE_RULE[memory_rel_def] mr)) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      FIRST_ASSUM (fun th ->
+        if not (hd_is "heap_in_memory_store" (concl th)) then fail()
+        else MP_TAC (REWRITE_RULE[heap_in_memory_store_def] th)) THEN
+      DISCH_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
+      W(fun (asl,_) ->
+        let ehs = filter (fun th -> is_eq (concl th) &&
+          hd_is "encode_header" (lhs (concl th)) &&
+          hd_is "SOME" (rhs (concl th))) (map snd asl) in
+        let lt7 = grab_asm (fun th -> hd_is "<" (concl th) &&
+          hd_is "+" (lhand (concl th)) &&
+          hd_is "data_to_word_config_len_size"
+            (lhand (lhand (concl th)))) asl in
+        let lt2 = MP (ARITH_RULE (mk_imp (concl lt7,
+          mk_binary "<" (mk_binary "+"
+            (lhand (lhand (concl lt7)), `2`),
+            rand (concl lt7))))) lt7 in
+        MP_TAC (MATCH_MP (fresh_lem encode_header_EQ)
+          (CONJ (el 1 ehs) (CONJ (el 0 ehs) lt2)))) THEN
+      (* the tag of a header is the sign and its length is the
+         length of the payload, so the two headers are equal
+         exactly when the signs and the lengths are *)
+      W(fun (asl,_) ->
+        let gd = grab_asm (fun th ->
+          hd_is "good_dimindex" (concl th)) asl in
+        REWRITE_TAC[GSYM (MATCH_MP hdr_bits gd); WORD_VAL]) THEN
+      DISCH_TAC THEN
+      W(fun (_,gl) ->
+        let cnd,_ = dest_cond (lhand gl) in
+        ASM_CASES_TAC (rand cnd)) THEN
+      ASM_REWRITE_TAC[] THEN
+      (* the payloads, which word_mem_eq compares, and the signs,
+         which the tags of the headers give *)
+      TRY (SOLVED
+            (W(fun (asl,_) ->
+               let iff = grab_asm (fun th -> is_eq (concl th) &&
+                 is_eq (lhs (concl th)) &&
+                 is_conj (rhs (concl th))) asl in
+               let heq = grab_asm (fun th -> is_eq (concl th) &&
+                 hd_is "wordLang_Word" (lhs (concl th))) asl in
+               MP_TAC (EQ_MP iff
+                 (SYM (REWRITE_RULE[injectivity "word_loc"]
+                   heq)))) THEN
+             STRIP_TAC THEN
+             W(fun (asl,_) ->
+               let wl = grab_asm (fun th ->
+                 (try hd_is "fun2set" (rand (concl th)) &&
+                      hd_is "misc_word_list"
+                        (lhand (rator (concl th)))
+                  with Failure _ -> false)) asl in
+               let le = grab_asm (fun th -> is_eq (concl th) &&
+                 hd_is "LENGTH" (lhs (concl th)) &&
+                 hd_is "LENGTH" (rhs (concl th))) asl in
+               MP_TAC (MATCH_MP (fresh_lem word_mem_eq_thm)
+                 (CONJ wl (SYM le)))) THEN
+             DISCH_THEN (fun th -> REWRITE_TAC[th]) THEN
+             REWRITE_TAC[n2mw_11; injectivity "option"] THEN
+             MATCH_MP_TAC abs_eq THEN
+             W(fun (asl,_) ->
+               let gd = grab_asm (fun th ->
+                 hd_is "good_dimindex" (concl th)) asl in
+               let tg = grab_asm (fun th -> is_eq (concl th) &&
+                 hd_is "val" (lhs (concl th))) asl in
+               MP_TAC (REWRITE_RULE[MATCH_MP hdr_bits gd] tg)) THEN
+             COND_CASES_TAC THEN COND_CASES_TAC THEN
+             ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV)) THEN
+      (* and when the headers differ the integers differ *)
+      REWRITE_TAC[injectivity "option"] THEN
+      TRY (MATCH_MP_TAC (TAUT `~p ==> (F <=> p)`)) THEN
+      STRIP_TAC THEN
+      W(fun (asl,_) ->
+        let eq = grab_asm (fun th -> is_eq (concl th) &&
+          type_of (lhs (concl th)) = `:int`) asl in
+        SUBST_ALL_TAC eq) THEN
+      W(fun (asl,_) ->
+        let iff = grab_asm (fun th -> is_eq (concl th) &&
+          is_eq (lhs (concl th)) && is_conj (rhs (concl th))) asl in
+        let hne = grab_asm (fun th -> is_neg (concl th) &&
+          is_eq (rand (concl th)) &&
+          hd_is "wordLang_Word" (lhs (rand (concl th)))) asl in
+        let parts = conjuncts (rhs (concl iff)) in
+        let heq = EQ_MP (SYM iff)
+          (end_itlist CONJ (map (fun t -> REFL (lhs t)) parts)) in
+        ACCEPT_TAC (MP (NOT_ELIM hne)
+          (AP_TERM (rator (lhs (rand (concl hne)))) (SYM heq))))]]
+  )));;
 
 (* the port's own: that the two halves of a 64-bit value, or the
    whole of it, decide the value.  HOL4 gets this from BITS_THM and
