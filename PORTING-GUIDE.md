@@ -4374,3 +4374,33 @@ keeps the hypotheses where they belong and leaves the goal
 because the theorem's hypotheses are still assumptions of the
 goal.  Rewrite the assumptions with a plain theorem (one with no
 hypotheses) and nothing else.
+
+## 95. `INST` rewrites the hypotheses with the rest
+
+`MATCH_MP lemma assumption` gives a theorem whose *hypothesis* is
+that assumption, and a hypothesis is a term like any other: an
+`INST` on the theorem instantiates the variables of it too.  When
+the variable instantiated is one the hypothesis mentions -- and
+the names collide easily, because a lemma about a word calls it
+`w` and so does the statement -- what comes back is a theorem
+whose hypothesis is *not* an assumption of the goal:
+
+```
+let lsz = CONJUNCT1 (MATCH_MP mr_len_size mr) in
+  (* memory_rel c be ts refs sp st m dm
+       ((RefPtr bl i,Word w) :: vars)
+     |- data_to_word_config_len_size c + 7 < dimindex (:'a) *)
+let dlb = INST [x', `w:'a word`]
+            (MATCH_MP decode_length_bound lsz) in
+  (* memory_rel c be ts refs sp st m dm
+       ((RefPtr bl i,Word x') :: vars) |- ... *)
+```
+
+The step goes through and the proof still closes; what fails is
+the end of `prove`, with the `CHOOSE` of entry 94, because the
+stray hypothesis mentions a variable that `STRIP_ASSUME_TAC`
+chose.  Quantify the lemma over what the use site has to fix
+(`... ==> !w. ...`) and use `SPEC`, which instantiates the bound
+variable and leaves the hypotheses alone.  `SPEC`, `SPECL`,
+`ISPEC` and the *minor* premise of `MATCH_MP` are all safe;
+`INST` and `INST_TYPE` on a theorem with hypotheses are not.
