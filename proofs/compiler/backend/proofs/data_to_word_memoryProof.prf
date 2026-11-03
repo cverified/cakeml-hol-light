@@ -36908,19 +36908,365 @@
        memory_rel_def] THEN
      TRY ASM_ARITH_TAC))
 ### memory_rel_Number_single_mul
-  (* the attempt: the proof of the source names word_or_eq_0,
-     memory_rel_swap, memory_rel_Number_const_test, small_int_def,
-     good_dimindex_def, single_mul_def.  What is here rewrites with
-     them and closes by arithmetic, and the cheat is behind it until
-     the proof is written.  A MESON over them is what the next round
-     adds; it costs a load ten minutes to have it in every attempt
-     and it closed none of them *)
-  (ATTEMPT_TAC 2
-    (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
-     ASM_REWRITE_TAC[word_or_eq_0; memory_rel_swap;
-       memory_rel_Number_const_test; small_int_def;
-       good_dimindex_def; single_mul_def] THEN
-     TRY ASM_ARITH_TAC))
+(* the single word multiplication of the two roots, with the high
+   word of it zero: the two numbers are small, because the and of
+   the two roots with one is zero, so each root is the Smallnum of
+   its number, which is four times it.
+
+   Of the two numbers: one that is zero makes the product zero and
+   the root of it zero as well; one that is negative cannot be,
+   because the value of its root is then at least half the word
+   size and the value of the half of the other root at least two
+   (or four and a quarter of the word size the other way round), so
+   the product of the two values is at least the word size and the
+   high word of the multiplication is not zero.  What is left are
+   two numbers that are not negative, where the product of the two
+   values is four times the one and twice the other, so eight times
+   the product of the two numbers, and the low word shifted down by
+   one is that product shifted up by two -- which is the root of
+   it, and the product is small because eight times it is below the
+   word size (IMP_memory_rel_Number_num3) *)
+  ((* the lemma's variables renamed apart from the goal's *)
+  let fresh_lem th =
+    INST (map (fun v -> (genvar (type_of v), v)) (frees (concl th)))
+      th in
+  (* the root of a small number, and of a negative one *)
+  let sn_pos = prove
+   (`!n. Smallnum (&n) = (n2w (4 * n):('a)word)`,
+    GEN_TAC THEN REWRITE_TAC[smallnum_def; INT_OF_NUM_LT;
+      ARITH_RULE `~(n < 0)`; INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]) in
+  let sn_neg = prove
+   (`!n. 0 < n ==>
+       Smallnum (--(&n)) = (n2w 0 - n2w (4 * n):('a)word)`,
+    GEN_TAC THEN DISCH_TAC THEN
+    SUBGOAL_THEN `(--(&n):int) < &0`
+      (fun th -> REWRITE_TAC[smallnum_def; th]) THENL
+     [ASM_REWRITE_TAC[INT_NEG_LT0; INT_OF_NUM_LT]; ALL_TAC] THEN
+    REWRITE_TAC[INT_SUB_LZERO; INT_NEG_NEG; INT_OF_NUM_MUL;
+      NUM_OF_INT_OF_NUM]) in
+  (* the word size, which good_dimindex makes a multiple of
+     eight *)
+  let gd_div = prove
+   (`good_dimindex (:'a) ==>
+       8 * (dimword (:'a) DIV 8) = dimword (:'a) /\
+       0 < dimword (:'a) DIV 8 /\
+       dimword (:'a) = 8 * 2 EXP (dimindex (:'a) - 3)`,
+    REWRITE_TAC[good_dimindex_def; dimword] THEN STRIP_TAC THEN
+    ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV) in
+  (* a high word of zero says the product of the two values is
+     below the word size *)
+  let no_ovf = prove
+   (`!(x:('a)word) (y:('a)word).
+       ((n2w ((w2n x * w2n y) DIV dimword (:'a))):('a)word) = n2w 0
+       ==> w2n x * w2n y < dimword (:'a)`,
+    REPEAT GEN_TAC THEN
+    MP_TAC (ISPEC `x:('a)word` VAL_BOUND) THEN
+    MP_TAC (ISPEC `y:('a)word` VAL_BOUND) THEN
+    REWRITE_TAC[GSYM dimword] THEN REPEAT STRIP_TAC THEN
+    SUBGOAL_THEN `~(dimword (:'a) = 0)` ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    SUBGOAL_THEN `(w2n (x:('a)word) * w2n (y:('a)word))
+                    DIV dimword (:'a) < dimword (:'a)`
+      ASSUME_TAC THENL
+     [ASM_SIMP_TAC[RDIV_LT_EQ] THEN MATCH_MP_TAC LT_MULT2 THEN
+      ASM_REWRITE_TAC[]; ALL_TAC] THEN
+    FIRST_X_ASSUM (MP_TAC o AP_TERM `w2n:('a)word->num`) THEN
+    ASM_SIMP_TAC[VAL_WORD; VAL_WORD_0; GSYM dimword; MOD_LT;
+      MOD_0] THEN
+    ASM_SIMP_TAC[DIV_EQ_0]) in
+  (* the value of the root of a small number, and of its half *)
+  let vpos = prove
+   (`!n. 8 * (dimword (:'a) DIV 8) = dimword (:'a) /\
+       n < dimword (:'a) DIV 8 ==>
+       w2n ((n2w (4 * n)):('a)word) = 4 * n /\
+       w2n (((n2w (4 * n)):('a)word) >>> 1) = 2 * n /\
+       w2n ((n2w (2 * n)):('a)word) = 2 * n /\
+       ((n2w (4 * n)):('a)word) >>> 1 = n2w (2 * n)`,
+    GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `4 * n < dimword (:'a) /\ 2 * n < dimword (:'a)`
+      STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+    SUBGOAL_THEN `w2n (((n2w (4 * n)):('a)word) >>> 1) = 2 * n`
+      ASSUME_TAC THENL
+     [ASM_SIMP_TAC[VAL_WORD_USHR; VAL_WORD; GSYM dimword;
+        MOD_LT] THEN
+      REWRITE_TAC[ARITH_RULE `2 EXP 1 = 2`;
+        ARITH_RULE `4 * n = 2 * (2 * n)`] THEN
+      SIMP_TAC[DIV_MULT; ARITH_RULE `~(2 = 0)`]; ALL_TAC] THEN
+    ASM_SIMP_TAC[VAL_WORD; GSYM dimword; MOD_LT] THEN
+    REWRITE_TAC[GSYM VAL_EQ] THEN
+    ASM_SIMP_TAC[VAL_WORD; GSYM dimword; MOD_LT]) in
+  let vneg = prove
+   (`!n. 8 * (dimword (:'a) DIV 8) = dimword (:'a) /\
+       0 < n /\ n <= dimword (:'a) DIV 8 ==>
+       w2n ((n2w 0 - n2w (4 * n)):('a)word) =
+         dimword (:'a) - 4 * n /\
+       w2n (((n2w 0 - n2w (4 * n)):('a)word) >>> 1) =
+         (dimword (:'a) - 4 * n) DIV 2 /\
+       4 * (dimword (:'a) DIV 8) <=
+         w2n ((n2w 0 - n2w (4 * n)):('a)word) /\
+       2 * (dimword (:'a) DIV 8) <=
+         w2n (((n2w 0 - n2w (4 * n)):('a)word) >>> 1)`,
+    GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `4 * n < dimword (:'a) /\ 0 < 4 * n`
+      STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+    SUBGOAL_THEN `w2n ((n2w 0 - n2w (4 * n)):('a)word) =
+                  dimword (:'a) - 4 * n` ASSUME_TAC THENL
+     [ASM_SIMP_TAC[VAL_WORD_SUB_CASES; VAL_WORD; VAL_WORD_0;
+        GSYM dimword; MOD_LT] THEN
+      ASM_SIMP_TAC[ARITH_RULE `0 < m ==> ~(m <= 0)`] THEN
+      ASM_ARITH_TAC; ALL_TAC] THEN
+    ASM_REWRITE_TAC[VAL_WORD_USHR; ARITH_RULE `2 EXP 1 = 2`] THEN
+    SUBGOAL_THEN `dimword (:'a) - 4 * n =
+                  2 * (4 * (dimword (:'a) DIV 8) - 2 * n)`
+      SUBST1_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+    SIMP_TAC[DIV_MULT; ARITH_RULE `~(2 = 0)`] THEN
+    ASM_ARITH_TAC) in
+  (* the shift up by two of a number and the shift down of twice
+     it *)
+  let shl_4 = prove
+   (`!n. ((n2w n):('a)word) << 2 = n2w (4 * n)`,
+    GEN_TAC THEN
+    REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_SHL; VAL_WORD] THEN
+    CONV_TAC MOD_DOWN_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+    REWRITE_TAC[MULT_AC]) in
+  let ushr_8 = prove
+   (`!n. 8 * n < dimword (:'a) ==>
+       ((n2w (8 * n)):('a)word) >>> 1 = n2w (4 * n)`,
+    GEN_TAC THEN DISCH_TAC THEN
+    ASM_SIMP_TAC[GSYM VAL_EQ; VAL_WORD_USHR; VAL_WORD;
+      GSYM dimword; MOD_LT;
+      ARITH_RULE `8 * n < d ==> 4 * n < d`] THEN
+    REWRITE_TAC[ARITH_RULE `2 EXP 1 = 2`;
+      ARITH_RULE `8 * n = 2 * (4 * n)`] THEN
+    SIMP_TAC[DIV_MULT; ARITH_RULE `~(2 = 0)`]) in
+  (* what small_int says of a number of each sign *)
+  let small_pos = prove
+   (`!n. small_int (:'a) (&n) ==> n < dimword (:'a) DIV 8`,
+    GEN_TAC THEN REWRITE_TAC[small_int_def] THEN
+    DISCH_THEN (MP_TAC o CONJUNCT2) THEN
+    REWRITE_TAC[INT_OF_NUM_LT]) in
+  let small_neg = prove
+   (`!n. small_int (:'a) (--(&n)) ==> n <= dimword (:'a) DIV 8`,
+    GEN_TAC THEN REWRITE_TAC[small_int_def] THEN
+    DISCH_THEN (MP_TAC o CONJUNCT1) THEN
+    REWRITE_TAC[INT_LE_NEG2; INT_OF_NUM_LE]) in
+  (* an integer is a number or the negation of a positive one *)
+  let int_cases2 = prove
+   (`!x:int. (?n. x = &n) \/ (?n. 0 < n /\ x = --(&n))`,
+    GEN_TAC THEN MP_TAC (ISPEC `x:int` INT_IMAGE) THEN
+    STRIP_TAC THENL
+     [DISJ1_TAC THEN EXISTS_TAC `n:num` THEN ASM_REWRITE_TAC[];
+      ASM_CASES_TAC `n = 0` THENL
+       [DISJ1_TAC THEN EXISTS_TAC `0` THEN
+        ASM_REWRITE_TAC[INT_NEG_0];
+        DISJ2_TAC THEN EXISTS_TAC `n:num` THEN
+        ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]]) in
+  (* the word of zero *)
+  let w0 = prove
+   (`!(x:('a)word).
+       (n2w 0) * x = n2w 0 /\ x * n2w 0 = n2w 0 /\
+       ((n2w 0):('a)word) + n2w 0 = n2w 0 /\
+       ((n2w 0):('a)word) >>> 1 = n2w 0`,
+    GEN_TAC THEN REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_MUL;
+      VAL_WORD_ADD; VAL_WORD_USHR; VAL_WORD_0; MULT_CLAUSES;
+      ADD_CLAUSES; DIV_0; MOD_0]) in
+  (* a negative factor makes the product of the two values at
+     least the word size, which a high word of zero forbids: the
+     value of the root of a negative number is at least half the
+     word size and the value of its half a quarter of it, and the
+     value of the root of a positive one is at least four and of
+     its half at least two *)
+  let neg_F = prove
+   (`!i1 i2.
+       good_dimindex (:'a) /\ ~(i1 = &0) /\ ~(i2 = &0) /\
+       small_int (:'a) i1 /\ small_int (:'a) i2 /\
+       ((i1:int) < &0 \/ (i2:int) < &0) /\
+       w2n ((Smallnum i1):('a)word) *
+       w2n (((Smallnum i2):('a)word) >>> 1) < dimword (:'a)
+       ==> F`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_ASSUM (fun gd -> if hd_is "good_dimindex" (concl gd)
+      then STRIP_ASSUME_TAC (MATCH_MP gd_div gd) else fail()) THEN
+    (* each of the two numbers is of a sign *)
+    MP_TAC (ISPEC `i1:int` int_cases2) THEN
+    MP_TAC (ISPEC `i2:int` int_cases2) THEN
+    DISCH_THEN (DISJ_CASES_THEN
+      (X_CHOOSE_THEN `k2:num` STRIP_ASSUME_TAC)) THEN
+    DISCH_THEN (DISJ_CASES_THEN
+      (X_CHOOSE_THEN `k1:num` STRIP_ASSUME_TAC)) THEN
+    REPEAT (FIRST_X_ASSUM (fun th ->
+      if is_eq (concl th) && is_var (lhs (concl th)) &&
+         type_of (lhs (concl th)) = `:int`
+      then SUBST_ALL_TAC th else fail())) THEN
+    (* and two that are not negative are not this case *)
+    RULE_ASSUM_TRY (REWRITE_RULE[INT_NEG_LT0; INT_OF_NUM_LT;
+      LT]) THEN
+    TRY (FIRST_ASSUM CONTR_TAC) THEN
+    (* the bound of each of the two, and the value of each root *)
+    RULE_ASSUM_TRY (fun th ->
+      try MATCH_MP small_pos th
+      with Failure _ -> MATCH_MP small_neg th) THEN
+    FIRST_X_ASSUM (fun lt ->
+      if hd_is "<" (concl lt) && hd_is "*" (lhand (concl lt))
+      then MP_TAC lt else fail()) THEN
+    ASM_SIMP_TAC[sn_pos; sn_neg; vpos; vneg] THEN DISCH_TAC THEN
+    (* so the product of the two is at least the word size *)
+    W(fun (asl,_) ->
+      let lt = grab_asm (fun th -> hd_is "<" (concl th) &&
+        hd_is "*" (lhand (concl th))) asl in
+      let p = lhand (concl lt) in
+      let a = lhand p and b = rand p in
+      let q = `dimword (:'a) DIV 8` in
+      let b1 = mk_conj (mk_binary "<=" (`4`, a),
+        mk_binary "<=" (mk_binary "*" (`2`, q), b)) in
+      let b2 = mk_conj (mk_binary "<=" (mk_binary "*" (`4`, q), a),
+        mk_binary "<=" (`2`, b)) in
+      FIRST
+       [SOLVED (SUBGOAL_THEN b1 (MP_TAC o MATCH_MP LE_MULT2) THENL
+          [ASM_ARITH_TAC; ALL_TAC] THEN ASM_ARITH_TAC);
+        SOLVED (SUBGOAL_THEN b2 (MP_TAC o MATCH_MP LE_MULT2) THENL
+          [ASM_ARITH_TAC; ALL_TAC] THEN ASM_ARITH_TAC)])) in
+  (* two numbers that are not negative: the product of the two
+     roots is the root of the product, which is small *)
+  let pos_pos = prove
+   (`!k1 k2.
+       good_dimindex (:'a) /\ small_int (:'a) (&k1) /\
+       small_int (:'a) (&k2) /\
+       w2n ((Smallnum (&k1)):('a)word) *
+       w2n (((Smallnum (&k2)):('a)word) >>> 1) < dimword (:'a)
+       ==> (((Smallnum (&k1)):('a)word) *
+            (((Smallnum (&k2)):('a)word) >>> 1) + n2w 0) >>> 1 =
+           (n2w (k1 * k2):('a)word) << 2 /\
+           k1 * k2 < 2 EXP (dimindex (:'a) - 3)`,
+    REPEAT GEN_TAC THEN STRIP_TAC THEN
+    FIRST_ASSUM (fun gd -> if hd_is "good_dimindex" (concl gd)
+      then STRIP_ASSUME_TAC (MATCH_MP gd_div gd) else fail()) THEN
+    RULE_ASSUM_TRY (MATCH_MP small_pos) THEN
+    FIRST_X_ASSUM (fun lt ->
+      if hd_is "<" (concl lt) && hd_is "*" (lhand (concl lt))
+      then MP_TAC lt else fail()) THEN
+    ASM_SIMP_TAC[sn_pos; vpos] THEN
+    REWRITE_TAC[NUM_RING `(4 * a) * (2 * b) = 8 * (a * b)`] THEN
+    DISCH_TAC THEN CONJ_TAC THENL
+     [ASM_SIMP_TAC[GSYM WORD_MUL; WORD_ADD_0] THEN
+      ASM_SIMP_TAC[NUM_RING `(4 * a) * (2 * b) = 8 * (a * b)`;
+        ushr_8; shl_4];
+      ASM_ARITH_TAC]) in
+  (* a factor of zero: the product and the root are zero *)
+  let sm_zero =
+    POP_ASSUM SUBST_ALL_TAC THEN
+    REWRITE_TAC[sn_pos; MULT_CLAUSES; w0; INT_MUL_LZERO;
+      INT_MUL_RZERO] THEN
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      let mr2 = MATCH_MP (fresh_lem memory_rel_tail)
+        (MATCH_MP (fresh_lem memory_rel_tail) mr) in
+      let lt = prove (`0 < 2 EXP (dimindex (:'a) - 3)`,
+        REWRITE_TAC[LT_NZ; EXP_EQ_0] THEN ARITH_TAC) in
+      MP_TAC (MATCH_MP IMP_memory_rel_Number_num3
+        (CONJ gd (CONJ lt mr2)))) THEN
+    REWRITE_TAC[shl_4; MULT_CLAUSES; w0] THEN
+    DISCH_THEN ACCEPT_TAC in
+  (* the lowest bit of each root is clear, so both numbers are
+     small, and a small number is its Smallnum *)
+  let sm_setup =
+    STRIP_TAC THEN
+    REWRITE_TAC[single_mul_def] THEN
+    CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN
+    ONCE_REWRITE_TAC[WORD_AND_SYM] THEN
+    REWRITE_TAC[WORD_OR_EQ_0; word_1_and_eq_0; BIT_WORD_OR_ALT;
+                DE_MORGAN_THM] THEN
+    STRIP_TAC THEN
+    W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let mr = grab_asm (fun th ->
+        hd_is "memory_rel" (concl th)) asl in
+      let mr2 = MATCH_MP (fresh_lem memory_rel_tail) mr in
+      let bits th = CONV_RULE (REDEPTH_CONV UNWIND_CONV)
+        (REWRITE_RULE[injectivity "word_loc"]
+          (MATCH_MP (fresh_lem memory_rel_any_Number_IMP)
+            (CONJ gd th))) in
+      let small th =
+        let b = grab_asm (fun u -> is_neg (concl u) &&
+          hd_is "bit" (rand (concl u)) &&
+          rand (rand (concl u)) =
+            lhand (lhand (concl (bits th)))) asl in
+        REWRITE_RULE[] (REWRITE_RULE[word_index; EQF_INTRO b]
+          (bits th)) in
+      let sm th = REWRITE_RULE[injectivity "word_loc"]
+        (MATCH_MP (fresh_lem memory_rel_Number_IMP)
+          (CONJ gd (CONJ (small th) th))) in
+      SUBST_ALL_TAC (sm mr) THEN SUBST_ALL_TAC (sm mr2) THEN
+      ASSUME_TAC (small mr) THEN ASSUME_TAC (small mr2)) in
+  (* the two numbers of the pair, as the product that is below the
+     word size has them *)
+  let sides lt =
+    let p = lhand (concl lt) in
+    (rand (rand (lhand p)), rand (lhand (rand (rand p)))) in
+  sm_setup THEN
+  (* the high word is zero, so the product of the two values is
+     below the word size *)
+  W(fun (asl,_) ->
+    let h = grab_asm (fun th -> is_eq (concl th) &&
+      hd_is "word" (lhs (concl th)) &&
+      hd_is "DIV" (rand (lhs (concl th)))) asl in
+    ASSUME_TAC (MATCH_MP no_ovf
+      (REWRITE_RULE[VAL_WORD_0; ADD_CLAUSES] h))) THEN
+  (* a factor that is zero makes the product and the root zero *)
+  ASM_CASES_TAC `i1 = (&0:int)` THENL [sm_zero; ALL_TAC] THEN
+  ASM_CASES_TAC `i2 = (&0:int)` THENL [sm_zero; ALL_TAC] THEN
+  (* and a factor that is negative cannot be *)
+  ASM_CASES_TAC `(i1:int) < &0 \/ (i2:int) < &0` THENL
+   [W(fun (asl,_) ->
+      let gd = grab_asm (fun th ->
+        hd_is "good_dimindex" (concl th)) asl in
+      let dj = grab_asm (fun th -> is_disj (concl th)) asl in
+      let lt = grab_asm (fun th -> hd_is "<" (concl th) &&
+        hd_is "*" (lhand (concl th))) asl in
+      let j1,j2 = sides lt in
+      let nz i = grab_asm (fun th -> is_neg (concl th) &&
+        is_eq (rand (concl th)) &&
+        lhs (rand (concl th)) = i) asl in
+      let sm i = grab_asm (fun th ->
+        hd_is "small_int" (concl th) && rand (concl th) = i) asl in
+      CONTR_TAC (MATCH_MP neg_F (CONJ gd (CONJ (nz j1)
+        (CONJ (nz j2) (CONJ (sm j1) (CONJ (sm j2)
+          (CONJ dj lt))))))));
+    ALL_TAC] THEN
+  (* so both are numbers, and then the root of the product is the
+     product of the two numbers shifted up by two *)
+  FIRST_X_ASSUM (fun th -> MP_TAC (REWRITE_RULE[DE_MORGAN_THM;
+    INT_NOT_LT; GSYM INT_OF_NUM_EXISTS] th)) THEN
+  DISCH_THEN (CONJUNCTS_THEN2
+    (X_CHOOSE_THEN `k1:num` SUBST_ALL_TAC)
+    (X_CHOOSE_THEN `k2:num` SUBST_ALL_TAC)) THEN
+  W(fun (asl,_) ->
+    let gd = grab_asm (fun th ->
+      hd_is "good_dimindex" (concl th)) asl in
+    let lt = grab_asm (fun th -> hd_is "<" (concl th) &&
+      hd_is "*" (lhand (concl th))) asl in
+    let j1,j2 = sides lt in
+    let sm i = grab_asm (fun th ->
+      hd_is "small_int" (concl th) && rand (concl th) = i) asl in
+    STRIP_ASSUME_TAC (MATCH_MP pos_pos
+      (CONJ gd (CONJ (sm j1) (CONJ (sm j2) lt))))) THEN
+  ASM_REWRITE_TAC[INT_OF_NUM_MUL] THEN
+  (* which is what the root of a small number is *)
+  W(fun (asl,_) ->
+    let gd = grab_asm (fun th ->
+      hd_is "good_dimindex" (concl th)) asl in
+    let mr = grab_asm (fun th ->
+      hd_is "memory_rel" (concl th)) asl in
+    let bd = grab_asm (fun th -> hd_is "<" (concl th) &&
+      hd_is "EXP" (rand (concl th))) asl in
+    let mr2 = MATCH_MP (fresh_lem memory_rel_tail)
+      (MATCH_MP (fresh_lem memory_rel_tail) mr) in
+    MATCH_ACCEPT_TAC (MATCH_MP IMP_memory_rel_Number_num3
+      (CONJ gd (CONJ bd mr2)))))
 ### memory_rel_bounds_check
 (* the rotation by two takes the two low bits of the word to the
    top, so its value is the value of the word divided by four plus

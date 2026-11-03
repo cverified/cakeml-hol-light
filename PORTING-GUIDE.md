@@ -4134,3 +4134,50 @@ alone.  `` `FAPPLY (g:(num,num)fmap)` `` is the map's application,
 but `mk_icomb (`FAPPLY`, g)` fails with `type_match`, because
 `FAPPLY` on its own does not resolve to `fmap_apply`.  Write the
 application in the quotation.
+
+## 87. A hand-written comparison of integers is one of the reals
+
+The port's `&`, `--`, `+`, `<` and `<=` are overloaded over the
+numbers, the integers and the reals, and a quotation that pins
+none of them down is read as a statement about the _reals_:
+
+```
+  is_cond `--(&n) < &0`      (* real_lt, not int_lt *)
+```
+
+so a step written like that does not touch what a definition of
+the port says.  `Smallnum`'s own condition is `i < &0` with
+`int_lt` in it, and the subgoal above neither reduces it nor can
+be proved from `0 < n`.  Annotate one side -- `` `(--(&n):int) <
+&0` `` -- or let a rule of the integers (`INT_ARITH`,
+`INT_OF_NUM_LT`) build the term.
+
+The same trap in the words: a statement whose two words are not
+both pinned down,
+
+```
+  `!(a:word64) a' p n.
+     word_subword a (p,n) = word_subword a' (p,n) ==> ...`
+```
+
+has `a'` of a word type of its own, because `word_subword` takes
+any width to any width, and an `AP_TERM` of `w2n` over such an
+equation then fails with `mk_comb: types do not agree`.  Write the
+type of each variable the statement compares.
+
+## 88. The names of HOL Light that this file rebinds
+
+Entry 78 is the list of the names the _port_ rebinds; a file can
+rebind one of its own, for the proofs after it.  In
+data_to_word_memoryProof the `EXTRA_BEFORE` of `part_to_words_add`
+binds `is_cond` to "a statement whose body is an equation", so
+every proof after that point has to test for a conditional with
+`hd_is "COND"` instead (the file says so where it uses the
+rebound one).  A `Failure "tryfind"` out of a `grab_asm` whose
+predicate looks right is what this looks like.
+
+Two more of HOL Light's own that cost a round: `BIT_WORD_OR` has
+the side condition `i < dimindex (:N)` in it, so rewriting with it
+leaves a goal of that -- `BIT_WORD_OR_ALT` is the unconditional
+one; and `INT_OF_NUM_EXISTS` is `(?n. x = &n) <=> &0 <= x`, so the
+step from a bound to the number needs its `GSYM`.
