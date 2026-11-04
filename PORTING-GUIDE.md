@@ -5072,3 +5072,50 @@ there for the toplevel to read (`#use` says `Cannot find file`),
 so a patch goes into `cakeml/tmp/`; and a `print_string` of a
 machinery step scrolls out of the pane behind the terms it
 prints, so the capture needs `-S -8000`.
+
+## 114. HOL Light's own record library does not fit the port
+
+HOL Light has had a record package since 2026 (`Library/records.ml`
+over `Library/components.ml`, both ported from s2n-bignum), so the
+question comes up whether the port should drop `ml/lib/records.ml`
+for it and whether the statements would then read more like HOL4's.
+They would not, for three reasons, and the first one is fatal.
+
+- **A field is a constant of its bare name.**
+  `define_record_type "dataSem_state = { clock:num; stack:(num)list
+  }"` introduces `clock` and `stack` as constants of type
+  `(dataSem_state,num)component` -- a lens, a reader and a writer
+  in one value.  So a second record type with a field `clock`
+  cannot be defined: `new_constant: constant clock has already
+  been declared`.  CakeML has 66 record types with 418 fields over
+  298 names, 62 of those names in more than one type (182 of the
+  fields): `clock` is a field of ten of them, `ffi` of nine,
+  `compile` and `compile_oracle` of eight, `code` of seven.  One
+  could spell the fields `dataSem_state_clock` in the
+  specification, which is what the port's accessors are called
+  anyway, and then the package gives nothing that is not there.
+- **There is no field syntax.**  Selection is `read clock s` and
+  update `write clock x s`; the constructor is positional
+  (`dataSem_state_RECORD a0 a1 a2`), so a record literal is not by
+  field name either.  HOL4's `s.clock`, `s with clock := x` and
+  `<|clock := x; ...|>` have no counterpart, and `read clock s` is
+  no closer to `s.clock` than the port's `state_clock s` is.
+  `dec_clock` is the measure of it: HOL4 writes `s with clock :=
+  s.clock - 1`, the port `state_clock_fupd (K (state_clock s - 1))
+  s`, the lens version `write clock (read clock s - 1) s`.
+- **The `_fupd` names would go.**  HOL4 names the functional
+  update of a field `<type>_<field>_fupd` and states theorems about
+  it, and the port has 3424 uses of the accessors and the updates
+  under those names.  A lens has one writer and no such constant.
+
+What the package does have that the port's has not is the
+read-over-write and the orthogonality theorems of every field,
+proved for it; the port gets them from `record_thms` and
+`RECORD_CASES_TAC` in a line where it needs them, which is rarely.
+
+One practical point if the question is tried again: the port runs
+the opam switch's HOL Light (`tools/bin/hol.sh`, the install under
+`~/.opam/hol-light/lib/hol_light`), so a `git pull` of a checkout
+elsewhere does not put `Library/records.ml` where `needs` looks for
+it.  The test above was made by loading the two files from
+`cakeml/tmp/` into a bare toplevel.
