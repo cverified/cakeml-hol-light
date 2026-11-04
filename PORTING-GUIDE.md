@@ -4545,3 +4545,67 @@ in the place of the diagnostic, and a second with the same over
 sees them, and after that every grab in the proof can be written
 from the text instead of guessed at.  (`let o = ...` does not
 parse: `o` is an infix of HOL Light.)
+
+## 101. A binding of the right name and the wrong theorem
+
+`REWRITE_TAC[dest_thunk_def]` is a no-op, and nothing says so: the
+name is bound (to a theorem of another theory), the rewrite makes
+no change, and `REWRITE_TAC` of a list that changes nothing else
+*fails*, so a `TRY` around it swallows the step without a word.
+What this file's definition is called is
+`dataSem_dest_thunk_def`, and the port's own proofs say so:
+
+```
+grep -n 'dest_thunk' ml/compiler/backend/proofs/*.ml | grep REWRITE
+```
+
+finds `ONCE_REWRITE_TAC[dataSem_dest_thunk_def]` in three of them.
+Before using `foo_def` of a definition of this file, check that the
+name is the one the file binds; the printed name of the constant
+(entry 98) is not it either.
+
+A definition with a `match` wants `ONCE_REWRITE_TAC` and then
+`SAFE_MATCH_REDUCE_TAC`, and the scrutinee has to be in constructor
+shape *first*: the branch of a `match` binds its own variables, so
+a rewrite with `lookup n refs = SOME (Thunk ev v)` does not reach
+the `lookup n refs` inside the branch of an unreduced match.  What
+is left after the reduction is a chain of `if`s over
+`NONE = SOME ...` and `?v'. SOME (C v') = SOME (C v)`, which
+`distinctness`, `injectivity` and `EXISTS_REFL` finish.
+
+## 102. A case split that the goal does not mention
+
+`CASES_ON_TAC` and `NAMED_CASES_TAC` use `SUBST_ALL_TAC`, which
+fails with `SUBS_CONV` when the variable does not occur in the
+goal.  That is the usual case in a proof of the memory invariant:
+the value is in the assumptions and the goal is about the memory.
+A local copy of `NAMED_CASES_TAC` whose `use` is
+
+```
+let use eq = RULE_ASSUM_TAC (REWRITE_RULE[eq]) THEN
+             TRY (SUBST1_TAC eq) in
+```
+
+splits it there.  The order of the names is the order of the
+constructors in `cases_of` (for `heap_address` that is `Pointer`
+then `Data`, for `word_loc` `Word` then `Loc`), and a wrong order
+shows up as `Failure "dest_binder"`.
+
+## 103. The lets of word_el, and what MESON must not be given
+
+`word_el a (DataElement ys l (tag,qs)) conf` is a `let (h,ts,c) =
+word_payload ... in ...`, a let of *three* variables.  The port's
+`PAIRARG_TAC` takes a pair, so on that let it introduces two
+variables for three and leaves the let stuck; the way through is
+the one the landed proofs use: rewrite `word_payload_def` first,
+which makes the bound term a literal triple, and only then
+`let_CONV`.  `PAIRARG_TAC` is for the pair of a definition's own
+let (`let (sign,payload) = i2mw i in ...` of a bignum), and that
+one comes before `word_el_def`.
+
+In the same proofs, `ASM_MESON_TAC[]` over the assumptions of a
+memory invariant is a hang, and a plain `MESON_TAC[...; MEM]` is
+another: with the clauses of `MEM` in the list and a heap of the
+shape `ha ++ x :: hb` in the goal, MESON unfolds the list for as
+long as it is allowed to.  Both are to be replaced by the facts
+the step needs, two or three of them, named by `grab_asm`.
