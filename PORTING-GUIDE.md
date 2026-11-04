@@ -5119,3 +5119,20 @@ the opam switch's HOL Light (`tools/bin/hol.sh`, the install under
 elsewhere does not put `Library/records.ml` where `needs` looks for
 it.  The test above was made by loading the two files from
 `cakeml/tmp/` into a bare toplevel.
+
+The switch has `hol_light.3.0.0`, and the newest release in the
+opam repository, `3.1.0` of 2025-06-19, has no `Library/records.ml`
+either: it went into the master branch on 2026-04-01.  So the way
+to a HOL Light that has it is a pin of the package to the branch,
+
+    opam pin add --switch hol-light hol_light.3.1.0 \
+      git+https://github.com/jrh13/hol-light.git#master
+
+which runs the `make` of the branch and copies the tree over the
+install, `hol.sh` and all.  **That moves the ground the port stands
+on**: `tools/bin/retemplate` (5 min), `pfbase` (33 min) and a
+`tools/bin/runall` (over an hour) to see that the 270 files still
+load, against a branch that renames things between releases.  To go
+back: `opam pin remove hol_light` and install `3.0.0` again.  To
+have the two files without moving anything, copy them into
+`~/.opam/hol-light/lib/hol_light/Library/` and `needs` finds them.
