@@ -4828,3 +4828,47 @@ reasons:
   the match cannot reduce, and `MATCH_REDUCE_TAC` turns the goal
   into a choice term (`@GEN%PVAR%`).  So the rewrite with
   `fix_clock_word_eq` comes immediately after the unfolding.
+
+## 111. Six traps of a hand written tactic
+
+The proof of `word_eq_thm0` is a thousand lines of tactic that
+reads the goal and the assumptions, and six of its rounds went on
+one of these:
+
+- **`a + b - c` is `a + (b - c)`.**  HOL Light's `-` binds tighter
+  than its `+`, where HOL4's two bind equally and associate to the
+  left.  So
+
+  ```
+  WORD_RULE `x + bytes_in_word * n2w 2 - bytes_in_word =
+             x + bytes_in_word`
+  ```
+
+  is a true statement about `x + (bytes_in_word * n2w 2 -
+  bytes_in_word)`, its left side is not the term that the goal
+  has, and a rewrite with it does nothing at all.  The
+  parentheses are written out.
+- **a theorem of `WORD_RULE` is not generalised.**  It keeps `x`
+  free, so as a rewrite it matches that one variable and not the
+  goal's other address; `GEN_ALL` is what makes it a rule about
+  both.
+- **the name of a constant is not the name it prints.**  `n2w` is
+  `word`, `w2n` is `val`, `word_bit` is `bit`, `>>>` is
+  `word_ushr`, `lookup` of a sptree is `sptree_lookup`, and
+  `isClos` of a dataSem value is `dataSem_isClos` and not
+  `bvlSem_isClos`.  A `hd_is` with the printed name picks nothing
+  and says nothing, and the `mapfilter` over the assumptions that
+  it guards then rewrites with the empty list.
+- **a fact rewritten with itself is `T`.**  `RULE_ASSUM_TRY
+  (REWRITE_RULE bits)` where `bits` are assumptions of the goal
+  turns each of them into `true` and loses it.  The rule has to
+  skip the facts it rewrites with (`use_facts` of that proof).
+- **`FIRST [tryfind ...; tryfind ...]` raises.**  The list is
+  evaluated before `FIRST` sees it, so the first `tryfind` that
+  finds nothing takes the whole tactic with it.  Two steps where
+  one is the fallback of the other are `try ... with Failure _ ->
+  ...` and not `FIRST`.
+- **a `prove` inside a tactic may not use an assumption.**  `prove
+  (tm, ... ACCEPT_TAC th)` with `th` from the assumption list
+  fails with "prove: additional assumptions in result"; what is
+  wanted is `MP (prove (mk_imp (concl th,tm), ...)) th`.
