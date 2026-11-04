@@ -2174,28 +2174,38 @@ once per wrong assumption.
 
 ### The idiom
 
-A proof of the store is the third argument of `cake_theorem`, so
-the file of the port reads
+A tactic that a wrapper of a definition takes stands as one
+argument of a curried function, so the file of the port reads
 
 ```
-let foo = cake_theorem "foo"
-  (fun () -> `...`)
-  (DISCH_TAC THEN REWRITE_TAC[...] THEN ARITH_TAC);;
+let foo_def = cake_define_try_tac
+  (fun () -> `MEASURE (\x. x)`)
+  (TERM_TAC THEN REWRITE_TAC[...] THEN ARITH_TAC)
+  `foo x = ...`;;
 ```
+
+and so does the body of a section of the proof store, which
+`tools/landproof.py` wraps in brackets of its own.
 
 ### What it means
 
 `THEN` is an infix of OCaml, so without the brackets the line reads
-as `(cake_theorem "foo" (fun () -> ...) DISCH_TAC) THEN
-REWRITE_TAC[...]`: the theorem gets `DISCH_TAC` as its proof and
-the rest of the chain is applied to the **theorem**.  OCaml then
-says
+as `(cake_define_try_tac (fun () -> ...) TERM_TAC) THEN
+REWRITE_TAC[...]`: the wrapper gets `TERM_TAC` as its tactic and
+the rest of the chain is applied to what the application gives --
+a function, or, while the port's theorems took their proof as the
+third argument of `cake_theorem` (a wrapper the library no longer
+has, because a theorem of the port is a plain `prove` now), a
+**theorem**.  OCaml then says
 
 ```
 Error: This expression has type thm = Hol.thm
 ```
 
-and the file does not load from that line on.  `tmp/sectest.py`
+and the file does not load from that line on.  A `prove` is safe,
+its two arguments standing inside its own brackets; every curried
+wrapper of a definition (`cake_define_try_tac`, `cake_define_tac`,
+`cake_define_cheat`, `cake_define_wf`) is not.  `tmp/sectest.py`
 does not catch it, because it binds the body to a name
 (`let t = <body>;;`), where a bare chain is fine; the section of
 `w2i_i2w_IMP` went through three commits that way.
