@@ -4721,3 +4721,67 @@ A factor is picked out of a separating conjunction by what its
 the whole factor holds: the address of the second array has the
 first array's `el_length` in it, so `free_in vals1 t` picks both
 and the reordering it asks for cannot be proved.
+
+
+## 108. The case tree of a definition, as lemmas
+
+`word_eq`'s body is a tree of nine conditions over the headers of
+two values, and `word_eq_thm0` has to go down it in each of the
+four cases of two values and again in the case of two lists.
+Reducing the tree in the goal costs that work four times over and
+leaves a goal that no longer says `word_eq`, so five lemmas of the
+proof's own say what the comparison gives at each leaf instead:
+
+- `word_eq_refl`: of a root with itself it is one;
+- `word_eq_zero`: of two roots that are not one word and whose
+  headers say that the two values differ, zero;
+- `word_eq_clos`: of two closures, one;
+- `word_eq_block`: of two blocks of one header, the comparison of
+  the values that they hold;
+- `word_eq_loop`: of two values that are compared by their
+  contents, the loop over the two payloads.
+
+Each one is `ONCE_REWRITE_TAC[word_eq_def] THEN ASM_REWRITE_TAC[]
+THEN TRY SAFE_MATCH_REDUCE_TAC THEN ASM_REWRITE_TAC[]` over a
+dozen lines of hypotheses.  A leaf of the main proof then reads
+
+```
+MP_TAC (INST [...] (PART_MATCH (fun t -> lhs (snd (dest_imp t)))
+                      word_eq_loop (lhs geq))) THEN
+ANTS_TAC THENL
+ [REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN ...;
+  DISCH_THEN (fun th -> REWRITE_TAC[th] THEN ...)]
+```
+
+-- `PART_MATCH` of the lemma's own conclusion against the goal's
+`word_eq` term fixes every variable of the statement, `INST` fixes
+the four that only its hypotheses mention (the two addresses and
+the two headers), and what is left per leaf is the semantics:
+which value the memory holds, and not the tree.
+
+## 109. A runaway tactic costs the session, not the round
+
+A `MESON_TAC` over the assumptions of a goal of the memory
+invariant, on a goal that is not provable (the statement's `n2w 1`
+had become `n2w n`, because an assumption `1 = n` was used as a
+rewrite left to right), took the heap of the development session
+from 1.2 GB to 6.4 GB in ten minutes, filled the swap, and the
+kernel killed the session.  `repl-int <session>` stops the tactic
+but not the heap: `Gc.compact ()` cannot finish while the swap is
+full.  What it cost was the session -- 36 minutes of closure
+(`tools/bin/pfbase`) and 14 of file (`tools/bin/trybase`).
+
+Three things follow:
+
+- an assumption `<numeral> = <variable>` is oriented before
+  anything rewrites with it: the reduction of a `match` of the
+  source leaves `1 = n` and `a = a' <=> b`, and the first of them
+  as a rewrite rule puts `n` where the statement says one.  A
+  `SUBST_ALL_TAC (SYM th)` over the assumptions whose right side
+  is a variable settles both.
+- a leaf of a case split is closed with `ASM_REWRITE_TAC[...] THEN
+  CONV_TAC TAUT`, not with `MESON_TAC` (entry 103 says the same of
+  the lists of a heap).
+- a round that takes longer than it should is watched with `top
+  -bn1 | grep ocaml`: an RSS that grows past 2 GB is a runaway,
+  and the interrupt has to come before the swap fills.
