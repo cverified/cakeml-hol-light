@@ -4646,3 +4646,78 @@ definition is cheated for that alone), and a second attempt in the
 same session fails with `dest_var: not a variable`, because the
 first one has declared the renamed constant.  Both are dealt with
 by hand: put the names back, and change the suffix for each try.
+
+## 105. A statement about word_heap ties no types
+
+`word_heap` takes an address and a heap of elements, and the two
+have type variables of their own: nothing in
+`(word_heap curr heap c * frame) (fun2set (m,dm))` says that the
+address is of the same word type as the cells of the heap.  A
+statement written without annotations is then more general than
+it looks, and a `MATCH_MP` of a lemma of the file against it
+fails with `type_match`, which says nothing about what did not
+match.  So a statement of the port's own about the memory pins
+the type by hand:
+
+```
+`(word_heap (curr:'a word) (h1 ++ [Bytes be fl2 vals2
+    (make_zeros vals2:('a word) list)] ++ h2) c * frame)
+  (fun2set (m:'a word->'a word_loc,dm:'a word->bool)) /\ ...`
+```
+
+Every place that carries the type variable is annotated once: the
+address, the zeros of each array (which is what fixes the element
+type), the memory and its domain, and the word that a
+`decode_length` gives.  The check is to print `type_of` of the
+two sides of the match and look for a `?` in either.
+
+## 106. A rewrite whose left side is a variable does nothing
+
+To put `x` back where a theorem has `make_byte_header c fl1
+(LENGTH vals1)`, `REWRITE_TAC[GSYM hdr]` with `hdr :
+make_byte_header c fl1 (LENGTH vals1) = x` is no help: the rule's
+left side is a variable, so the rewriter drops it -- silently,
+because the tactic succeeds and the goal stands.  What works is
+to rewrite the theorem with `hdr` and accept that:
+
+```
+let nm2 = REWRITE_RULE[hdr] nm in ... ACCEPT_TAC nm2
+```
+
+And in a proof about two arrays every `grab_asm` that picks "the"
+fact of a shape picks the first of two: the header of the other
+array, the length bound of the other array, the `decode_length`
+of the other array.  Each of those cost a round of its own.  The
+picker has to say which of the two it wants -- `rhs (concl th) =
+rand (el 2 gas)` for the header that the goal's length is made
+of, or `free_in len1 (concl th)` for the bound of the first
+array.
+
+## 107. The same heap, decomposed twice
+
+A proof that writes an array decomposes the memory of the heap
+twice: as the heap is, and with the new bytes in it.  The factors
+of the two have to come out the same, and three things stand in
+the way:
+
+- the address that `word_heap_def` gives the rest of the heap has
+  `el_length x` in it, and `bytes_def` has already turned that
+  element into a `DataElement` that holds the *bytes*, so the
+  addresses after the array are not the same term in the two.
+  `el_length_def` in the rewrite list is what makes them one
+  (`LENGTH (make_zeros vals) + 1`, which the bytes do not enter).
+- the header of a byte array is `make_byte_header c fl (LENGTH
+  bs)`, so the new one says `LENGTH res_vals`; rewriting the goal
+  with `LENGTH res_vals = LENGTH vals2` (`xor_bytes_length`)
+  takes it back to the old one.
+- the `cond` factors of `word_el` sit in the frame of the lemma
+  that writes the memory, and are out of the frame of the goal,
+  where `cond_STAR` has pulled them out as facts.  So the goal is
+  accepted not with the lemma's result but with that result with
+  its own conds pulled out the same way.
+
+A factor is picked out of a separating conjunction by what its
+*list* argument holds (`free_in vals1 (rand t)`), never by what
+the whole factor holds: the address of the second array has the
+first array's `el_length` in it, so `free_in vals1 t` picks both
+and the reordering it asks for cannot be proved.
