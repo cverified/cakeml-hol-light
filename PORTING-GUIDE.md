@@ -4973,3 +4973,19 @@ shape -- the alternative is sixty `prove`s at the top of the file
 instead of sixty `let`s inside the section, which costs the same
 -- so the timing stands in the comment of the section, as entry
 109 asks.
+
+And the landing of a section of this size has a bracket of its
+own to get right: `tools/mkland.py` strips `\)*;;` from the end
+of the attempt and writes `));;` back, and
+`tools/landproof.py` takes the text up to the first `);;` and
+wraps it in `( )`.  That comes out balanced only when the
+attempt's tactic stands in brackets of its own,
+
+```
+let _ = bp "nm" stmt (fun () ->
+  (<the tactic>));;
+```
+
+and without them the section is one `)` over, which
+`tools/parens.py` says as `-1 round bracket(s)` and a verify
+would say twelve minutes later.
