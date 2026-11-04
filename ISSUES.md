@@ -1352,10 +1352,13 @@ source over it):
 | `data_up_to_alt` | 6399 | 12569 `[local]` | another statement altogether (what is below the unused space after a store, against the source's two clauses of `data_up_to`), so it keeps a name of its own |
 | `exp_size_get_bin_args` | `bvi_tailrec` 235 | `bvi_tailrec` 181 | the copy is the source's statement proved, where the source's own place still has the `CHEAT_TAC` of phase two: the proof belongs in the store, under the name of the source, and the copy goes |
 
-The other two of the seven are not a lemma of the port's own:
-`dataProps$initial_state_with_simp` and
-`pegComplete$option_case_eq`, where the port states a theorem of
-one name twice and the source binds it once.
+Two of the seven were a fault of the check instead, and are
+gone: the scan for the comment that says the name and the
+attributes ran back to the blank line over the binding, and where
+a pointer at the source stands between two theorems with no blank
+line after the `;;`, the second one took the note of the first
+(`dataProps$do_stack_const` and `pegComplete$MAP_EQ_CONS`), so the
+check saw one name with two statements.
 
 The rule it illustrates: a lemma that the port adds of its own
 needs a name that no theorem of the file has, or the file says two
