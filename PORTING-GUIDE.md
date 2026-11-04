@@ -4872,3 +4872,104 @@ one of these:
   (tm, ... ACCEPT_TAC th)` with `th` from the assumption list
   fails with "prove: additional assumptions in result"; what is
   wanted is `MP (prove (mk_imp (concl th,tm), ...)) th`.
+
+## 112. Nine traps of the last two leaves
+
+The last rounds of `word_eq_thm0` went on the two leaves that
+were left -- two bignums of one header, and two references of a
+kind that is not compared by its contents -- and each of these
+cost one of them:
+
+- **a `let` that binds a pair to a conditional does not reduce.**
+  What `memory_rel_Number_cmp` says of two bignums of one header
+  is
+
+  ```
+  let (a1,a2) = (if (x1 && (n2w 16)) = (n2w 0) then (a1,a2)
+                 else (a2,a1)) in
+    word_cmp_loop (decode_length c x1) (a1 + ...) (a2 + ...) dm m
+      = SOME (word_cmp_res i1 i2)
+  ```
+
+  and `let_CONV` (so the `TOP_DEPTH_CONV let_CONV` of a
+  `RULE_ASSUM_TRY`) cannot take it: the paired beta reduction
+  wants a pair, and what stands there is a conditional.  The fact
+  goes into the goal (`MP_TAC`), `COND_CASES_TAC` leaves a pair in
+  each branch, the reduction takes it, and `DISCH_TAC` puts the
+  fact back.
+- **`CONTR_TAC` wants `F`, not two assumptions that clash.**  That
+  case analysis leaves a branch against a test that the facts have
+  settled, so `x1 && (n2w 16) = n2w 0` and its negation stand side
+  by side -- and `FIRST_ASSUM CONTR_TAC` does nothing there,
+  because `CONTR` asks for a theorem whose conclusion is `F`.  The
+  closer is `FIRST_ASSUM (fun n -> FIRST_ASSUM (fun p -> CONTR_TAC
+  (MP (NOT_ELIM n) p)))`.
+- **and the two may clash only after the substitutions.**  The
+  test of the conditional was about the second header and the fact
+  about the first, so the clash appears when `REPEAT
+  SUBST_LHS_TAC` has made the two headers one word.  A closer that
+  stands before the substitutions is applied to a branch that is
+  not contradictory yet, and says nothing.
+- **a leaf lemma carries what the closer rewrites with.**  The
+  kinds a `RefPtr T` can hold gave `~(word_bit 2 x) \/ ~(word_bit
+  3 x) /\ word_bit 4 x`, which is what the disjunct of
+  `word_eq_zero` asks for -- and the same disjunct asks for
+  `~((x && (n2w 12)) = n2w 0)`, which `bit_pattern_1100` turns
+  into `~(~(word_bit 2 x) /\ ~(word_bit 3 x))`: that needs the bit
+  that is *set*, which the lemma had dropped.  So the lemma says
+  `word_bit 3 x /\ ~(word_bit 2 x) \/ word_bit 2 x /\ ~(word_bit 3
+  x) /\ word_bit 4 x`.
+- **`BOOL_CASES_TAC` substitutes in the goal.**  The flag of a
+  `ByteArray` that the case analysis of the kinds introduces
+  occurs in the assumptions only, so the case analysis on it gives
+  two branches that are the same and the proof does the work twice
+  (and still reads the flag as a variable).  What the branch
+  needed was the fact itself: `~(?bs. ByteArray T bs = ByteArray b
+  bs')` is `~b` after `injectivity "bvlSem_ref"` and `(?z. p /\ z
+  = a) <=> p`.
+- **the budget of a loop is the word count, not a length that a
+  fact names.**  `dlen_tac` and `cmp_arith` read the length out of
+  a `decode_length c x = n2w k` fact, which every boxed value of
+  the invariant has -- except a byte array, whose
+  `memory_rel_ByteArray_IMP` gives the header as
+  `make_byte_header c fl (LENGTH bs) = x` and no `decode_length`
+  equation at all.  What the two goals of the loop (`w2n
+  (decode_length c x) < l` and `l <= l - 1 - w2n (decode_length c
+  x) + n * dimword (:'a)`) ask for is `VAL_BOUND` instead: a word
+  counts no further than `dimword (:'a)`, and the budget of the
+  statement is above that, so
+  `ASSUME_TAC (REWRITE_RULE[GSYM dimword] (ISPEC dl VAL_BOUND))`
+  and `ARITH_ASM_TAC` close both.
+- **`SPEC` does not instantiate types.**  `SPEC `decode_length c
+  x` VAL_BOUND` fails with `Failure "SPEC"`, because the bound
+  variable of `!w. w2n w < 2 EXP dimindex (:N)` stands at the type
+  variable of the library and `SPEC` asks for a term of that same
+  type; `ISPEC` matches the types first.  And a step that fails
+  inside a `TRY (SOLVED ...)` says nothing at all -- the leaf is
+  skipped, the round reports the goal that is left, and the
+  failure is found by running the step on that goal by hand.
+- **a leaf accepts the orientation that the goal has.**  The case
+  analysis on the two headers leaves `~(x' = x)` and the disjunct
+  of `word_eq_zero` asks for `~(x = x')`, which `FIRST_ASSUM
+  ACCEPT_TAC` does not see.  Before a leaf, both orientations of
+  every inequality of the assumptions go in
+  (`ONCE_REWRITE_RULE[EQ_SYM_EQ]` of each).
+- **`grab_asm` picks the first of two facts of one shape.**
+  `memory_rel_RefPtr_IMP_lemma` adds `sptree_lookup p refs = SOME
+  res` and the case analysis of the kinds adds `sptree_lookup p
+  refs = SOME (ByteArray b bs)`: a search for "the lookup of this
+  pointer" finds the first of them, and the lemma that wanted the
+  kind gets the variable.  The search is tied to the fact that is
+  unique in the branch instead -- here the negation that the arm
+  of `vb_eq_size` left, `~(?bs. ByteArray T bs = r)`, whose `r`
+  says which lookup is meant.
+
+What the whole thing costs is four minutes of every load of
+`data_to_word_memoryProof`: about two and a half of them the
+sixty lemmas above the tactic (the `MESON`s of
+`word_cmp_loop_bytes` and of `mw_cmp_NONE` are the slow ones) and
+the rest the case tree.  A proof of this size has no cheaper
+shape -- the alternative is sixty `prove`s at the top of the file
+instead of sixty `let`s inside the section, which costs the same
+-- so the timing stands in the comment of the section, as entry
+109 asks.
