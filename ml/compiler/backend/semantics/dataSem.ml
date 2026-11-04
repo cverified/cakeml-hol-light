@@ -405,9 +405,17 @@ let vb_size_def = cake_define
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
+(* the clauses of the source overlap -- the second one says 0 of
+   every value, the Block of the first one among them -- and HOL4
+   takes the first that matches, so the port writes them as a
+   match, which takes the first arm (see ml/lib/define.ml, "A
+   definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
 let vs_depth_def = cake_define_list_cheat CHEAT_TAC
-  [`vs_depth (Block ts t ls:dataSem_v) = vs_depth_list ls`;
-   `vs_depth _40 = 0`;
+  [`vs_depth x1 =
+         match x1 with
+           (Block ts t ls:dataSem_v) -> vs_depth_list ls
+         | _40 -> 0`;
    `vs_depth_list [] = 0`;
    `vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list
   xs)`];;

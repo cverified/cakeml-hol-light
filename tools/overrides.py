@@ -1059,6 +1059,18 @@ MATCH_CLAUSES = {
   # clauses are written out one by one and the overlap is between
   # two of them, not between a clause and a catch-all of the same
   # shape), so a list of clauses would be inconsistent
+  # vs_depth of dataSem: the second clause catches every value,
+  # the Block of the first one among them, so a list of clauses
+  # would be inconsistent (`vs_depth (Block ts t ls)` is both
+  # `vs_depth_list ls` and 0)
+  ('dataSem', 'vs_depth_def'): (['vs_depth'], """
+(* the clauses of the source overlap -- the second one says 0 of
+   every value, the Block of the first one among them -- and HOL4
+   takes the first that matches, so the port writes them as a
+   match, which takes the first arm (see ml/lib/define.ml, "A
+   definition whose clauses overlap").  As a list of clauses they
+   would be inconsistent. *)
+"""),
   ('dataSem', 'do_eq_def'): (['do_eq', 'do_eq_list'], """
 (* the clauses of the source overlap -- a later one says
    Eq_type_error of a pair that an earlier one has already given a

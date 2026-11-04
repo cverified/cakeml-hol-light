@@ -395,10 +395,14 @@ sources, and why.
   | `pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | `PMatchSuccess = PTypeFailure` |
   | `has_Eval` | `compiler/backend/flat_elim.ml` | `op = Src Eval \/ has_Eval_list es <=> false` |
 
-  The `vb_eq_size` of `data_to_word_memoryProof` is now in
-  `MATCH_CLAUSES` of `tools/overrides.py` and the port writes it as
-  a match; the other five need the same entry and a run of their
-  files.  (The scan also flags thirteen definitions of the
+  The `vb_eq_size` of `data_to_word_memoryProof` and the
+  `vs_depth` of `dataSem` are now in `MATCH_CLAUSES` of
+  `tools/overrides.py` and the port writes each of them as a
+  match; the other four need the same entry and a run of their
+  files.  (`vs_depth` was fixed because `word_eq_thm0` of
+  `data_to_word_memoryProof` has it in its statement: a proof of
+  that theorem which rewrites with an inconsistent `vs_depth_def`
+  would say nothing.)  (The scan also flags thirteen definitions of the
   `*_sing`/`*_list` shape -- `remove_ticks`, `let_op`, `calls`,
   `alt_free`, `scan_expr` and the like -- where the catch-all
   clause and the specific one agree, so those are consistent, only
