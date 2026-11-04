@@ -41,17 +41,19 @@ def rows():
 
 
 def thy_of_name():
-  """the theory whose port states a theorem of this name"""
-  import os
+  """the theory whose port states a theorem of this name, by the
+     name of the source and by the binding (tools/stmts.py)"""
+  import os, stmts
   ml = T + '../ml/'
   out = {}
   for dp, _, fs in os.walk(ml):
     for f in sorted(fs):
       if not f.endswith('.ml'): continue
       p = os.path.join(dp, f)
-      for m in re.finditer(r'cake_theorem\s*\n?\s*"([^"\[]+)',
-                           open(p).read()):
-        out.setdefault(m.group(1), os.path.relpath(p, ml))
+      rel = os.path.relpath(p, ml)
+      for bind, nm, _, _, _ in stmts.theorems(open(p).read()):
+        out.setdefault(nm, rel)
+        out.setdefault(bind, rel)
   return out
 
 

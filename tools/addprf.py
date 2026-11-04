@@ -6,7 +6,10 @@ A section of a new file replaces one of the same name in the .prf.
 The sections come out in the order in which the file of the port
 states the theorems.
 """
-import sys, re
+import sys, os
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import stmts
 
 def parse(p):
   out, name, body = [], None, []
@@ -30,14 +33,16 @@ for f in sys.argv[3:]:
     if n not in secs: order.append(n)
     secs[n] = b
 
-src = open(ml).read()
+# where the file of the port states each theorem: a section of the
+# store names a theorem by its binding, and one that the file
+# states more than once by the binding and the count
+# (tools/stmts.py knows the shape)
 pos = {}
 seen = {}
-for m in re.finditer(r'cake_theorem "([A-Za-z_0-9\']+)', src):
-  n = m.group(1)
-  seen[n] = seen.get(n, 0) + 1
-  pos.setdefault(n, m.start())
-  pos['%s#%d' % (n, seen[n])] = m.start()
+for b, _, _, line, _ in stmts.theorems(open(ml).read()):
+  seen[b] = seen.get(b, 0) + 1
+  pos.setdefault(b, line)
+  pos['%s#%d' % (b, seen[b])] = line
 
 def key(n):
   if n not in pos:

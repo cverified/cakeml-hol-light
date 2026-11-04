@@ -12,6 +12,13 @@ C = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PHRASE = re.compile(r"^let ([A-Za-z0-9_']+)[ ,].*?;;$", re.M | re.S)
 DECLARE = re.compile(r"""cake_declare\s+"([A-Za-z0-9_']+)\"""")
+# a theorem of the port (and a lemma of its own): the head of the
+# first clause of its statement is no constant that it defines.
+# While phase two was going the test was for cake_theorem, the
+# wrapper of the library; a theorem is a plain prove now, and the
+# test that stayed behind made the heads of 496 statements into
+# constants and sent 409 real ones to a theorem about them
+PROVED = re.compile(r"^let [A-Za-z0-9_']+ =\s*prove\b")
 
 
 def clause_heads(phrase):
@@ -43,9 +50,9 @@ def sites():
       rel = os.path.relpath(p, C + '/ml')
       src = open(p).read()
       for m in PHRASE.finditer(src):
-        # a theorem of phase two is not a definition of the
-        # constants its statement mentions
-        if 'cake_theorem' in m.group(0): continue
+        # a theorem is not a definition of the constants its
+        # statement mentions
+        if PROVED.match(m.group(0)): continue
         for h in clause_heads(m.group(0)):
           out.setdefault(h, (rel, m.group(1)))
       for m in DECLARE.finditer(src):

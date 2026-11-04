@@ -26,12 +26,15 @@ def main():
     print(text)
   else:
     for nm in want:
-      m = re.search(r'^let [A-Za-z0-9_\']+ = cake_theorem\s*\n?\s*'
-                    r'"%s(\[[^"]*\])?"(.*?);;\n' % re.escape(nm),
-                    text, re.S | re.M)
+      # the binding of a theorem is the name of the source, or
+      # that name with the theory in front of it where two files
+      # state a theorem of one name
+      m = re.search(r'^let %s[A-Za-z0-9_\']* =.*?;;\n'
+                    % re.escape(nm), text, re.S | re.M)
       if not m:
-        m = re.search(r'^let %s[A-Za-z0-9_\']* =.*?;;\n'
-                      % re.escape(nm), text, re.S | re.M)
+        m = re.search(r'^let [A-Za-z0-9_\']*%s[A-Za-z0-9_\']* ='
+                      r'.*?;;\n' % re.escape(nm), text,
+                      re.S | re.M)
       print(m.group(0) if m else '%s: not in the port' % nm)
   for w in p.warn:
     if not want or any(nm in w for nm in want):
