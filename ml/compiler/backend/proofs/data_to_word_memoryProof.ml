@@ -46054,6 +46054,26 @@ let memory_rel_depth_size_limit = prove
    match, which takes the first arm (see ml/lib/define.ml, "A
    definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
+(* What is assumed here is the definition itself and not only its
+   termination, because no strategy of ml/lib/define.ml can make
+   it: the two functions are mutual, so define_mutual is the one
+   that would (define_prim_rec and define_match each want one
+   function, and define_match a scrutinee that is an argument and
+   not a pair of two), and its existence step dies in
+   cake_pure_prove_recursive_function_exists of ml/lib/fastdef.ml
+   with "TAC_PROOF: Unsolved goals".  With cake_proforma set, the
+   log of the dispatch (cakeml/tmp/proforma.txt) shows the
+   admissibility of the match tree and of the recursive call under
+   the OPTION_MAP going through, and the goals that are left over
+   are the termination conditions of the shape
+
+     ... /\ v1' :: vs1',v2' :: vs2' = x2,x3 /\ ...
+     ==> INR (refs,vs1',vs2') << INR (refs,x2,x3)
+
+   which SIMP_ADMISS_TAC is the one to hand to the caller as its
+   hypothesis.  So this one is no proof of phase three but a
+   missing piece of the library layer, and six other definitions
+   of the port are assumed for the same reason. *)
 let vb_eq_size_def = cake_define_list_cheat CHEAT_TAC
   [`vb_eq_size refs x2 x3 =
          match (x2,x3) with
