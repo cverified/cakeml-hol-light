@@ -54,13 +54,21 @@ def note_of(text, start):
      the binding at that offset is, out of the comments that stand
      right over it -- the port writes the note first and the one
      that says that the statement is read with the names of the
-     fields as variables after it, so the note is any line of the
-     block over the binding that has nothing else on it"""
+     fields as variables after it, so the note is the last line of
+     the comments over the binding that has nothing else on it.
+
+     The block ends at a blank line or at the end of the phrase
+     before it: a pointer at the source may stand between two
+     theorems with no blank line after the `;;`, and a scan that
+     runs past it takes the note of the theorem before (which
+     made two statements of dataProps and of pegComplete carry
+     the name of the one over them)"""
   lines = text[:start].split('\n')[:-1]
   i = len(lines)
-  while i > 0 and lines[i - 1].strip():
+  while i > 0 and lines[i - 1].strip() and \
+        not lines[i - 1].rstrip().endswith(';;'):
     i -= 1
-  for l in lines[i:]:
+  for l in reversed(lines[i:]):
     m = NOTE.match(l)
     if m:
       at = m.group(2)
