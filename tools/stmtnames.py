@@ -18,23 +18,16 @@ import sys, os, re
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
 import hol4, hterm, db as dbmod, port as portmod, overrides
-
-STR = re.compile(r'"((?:[^"\\]|\\.)*)"')
+import stmts
 
 
 def statements(text):
   """name -> the statements that the port has for it (a source may
      state a theorem of the same name twice, which HOL4 allows
-     with allow_rebind)"""
+     with allow_rebind).  tools/stmts.py reads the shape"""
   out = {}
-  for m in re.finditer(r'\bcake_theorem\b', text):
-    s = STR.search(text, m.end())
-    if not s or text[m.end():s.start()].strip(): continue
-    i = text.find('`', s.end())
-    j = text.find('`', i + 1) if i >= 0 else -1
-    if j < 0: continue
-    out.setdefault(re.sub(r'\[.*', '', s.group(1)),
-                   []).append(text[i + 1:j])
+  for _, nm, _, _, stmt in stmts.theorems(text):
+    out.setdefault(nm, []).append(stmt)
   return out
 
 

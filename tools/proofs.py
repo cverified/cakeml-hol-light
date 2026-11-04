@@ -13,18 +13,19 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import proofstore
+import proofstore, stmts
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 ML = T + '../ml/'
 
 
 def stated(mlrel):
-  """the names of the theorems that a file of the port states"""
+  """the bindings of the theorems that a file of the port states,
+     which is what a section of the proof store names one by"""
   p = ML + mlrel
   if not os.path.exists(p): return None
   s = open(p, encoding='utf-8').read()
-  return set(re.findall(r'cake_theorem\s*\n?\s*"([^"\[]+)', s))
+  return set(b for b, _, _, _, _ in stmts.theorems(s))
 
 
 def main():

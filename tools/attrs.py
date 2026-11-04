@@ -16,32 +16,29 @@ import sys, os, re
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
-import db as dbmod, hol4
+import db as dbmod, hol4, stmts
 
 ML = T + '../ml/'
-
-# the name of a statement of the port, with its attributes in it
-STMT = re.compile(r'cake_(?:theorem|alias)\s*\n?\s*"([^"]+)"')
 
 
 def main():
   want = set(sys.argv[1:])
   db = dbmod.Db()
-  n = bad = 0
+  n = bad = own = 0
   for thy, path, kind in dbmod.load_order():
     if kind != 'cakeml' or (want and thy not in want): continue
     try:
       text = open(ML + db.mlpath_of(thy)).read()
     except OSError:
       continue
-    # the attributes that the port gives every name it states
+    # the attributes that the port gives every name it states,
+    # out of the comment over the statement (tools/stmts.py); a
+    # theorem that the source states as the value of another one
+    # is a binding of that one, with its attributes over it
     got = {}
-    for m in STMT.finditer(text):
-      s = m.group(1)
-      k = s.find('[')
-      nm = s[:k] if k >= 0 else s
-      at = s[k+1:-1].split(',') if k >= 0 and s.endswith(']') else []
-      got.setdefault(nm, []).append([a for a in at if a])
+    for _, nm, at, _, _ in (stmts.theorems(text) +
+                            stmts.aliases(text)):
+      got.setdefault(nm, []).append(list(at))
     # the attributes that the source gives every name it binds (a
     # name that it binds more than once is in with each of them)
     src = {}
@@ -64,6 +61,12 @@ def main():
     # of it, so what it states has to be one of what the source
     # binds under that name, not the one in the same place
     for nm, mines in got.items():
+      # a lemma of the port's own (one that an override table adds
+      # before a proof that needs it) is no theorem of the source,
+      # so there is nothing to compare its name with
+      if nm not in src:
+        own += len(mines)
+        continue
       left = list(src.get(nm, []))
       for mine in mines:
         n += 1
@@ -78,6 +81,8 @@ def main():
                                src.get(nm, [])) or 'nothing'))
   print('%d statements of the port, %d with other attributes than '
         'the source gives the theorem' % (n, bad))
+  print('%d lemmas of the port\'s own, which no theorem of a '
+        'source names' % own)
   return bad
 
 

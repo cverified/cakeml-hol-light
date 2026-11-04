@@ -2,7 +2,7 @@
 
   python3 -I tools/thmcheck.py [<file>...]
 
-writes tmp/stmts.txt: every `cake_theorem` statement of the port
+writes tmp/stmts.txt: every statement of the port
 (or of the files named), with the file, the line and the name.
 A session that has the port loaded reads that file (tmp/diag.ml)
 and says of every statement whether it parses, whether it is a
@@ -12,9 +12,10 @@ to work on the statements of phase two: no run needed.
 import sys, os, re
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
-ML = T + '../ml/'
+sys.path.insert(0, T)
+import stmts
 
-STR = re.compile(r'"((?:[^"\\]|\\.)*)"')
+ML = T + '../ml/'
 
 
 def statements(path):
@@ -23,32 +24,17 @@ def statements(path):
   return scan(open(path).read())
 
 
-def strip_dslash(text):
-  """the text without the comments of a term of the port, which
-     stand after // and run to the end of the line (a comment of
-     the source that is inside a block keeps its place that way).
-     What follows such a comment on its line is the quotation
-     closing around it, which stays: a comment of the port holds
-     no backquote (one would end the quotation of OCaml, so the
-     port writes such a comment outside it), and the one at the
-     end of a term has the closing ` of it on its own line"""
-  return re.sub(r'(?m)^(\s*`?)//[^`\n]*', r'\1', text)
+# the comments of a term of the port, which stand after // and run
+# to the end of the line, are not part of the statement
+strip_dslash = stmts.strip_dslash
 
 
 def scan(text):
-  """the same of the text of a ported file"""
-  for m in re.finditer(r'\bcake_theorem\b', text):
-    s = STR.search(text, m.end())
-    if not s or text[m.end():s.start()].strip():
-      continue
-    i = text.find('`', s.end())
-    if i < 0:
-      continue
-    j = text.find('`', i + 1)
-    if j < 0:
-      continue
-    yield (s.group(1), text[:m.start()].count('\n') + 1,
-           strip_dslash(text[i + 1:j]))
+  """the same of the text of a ported file: the binding of every
+     theorem (which is what names a phrase of the port and what a
+     proof of the store names it by), its line and its statement"""
+  for bind, _, _, line, stmt in stmts.theorems(text):
+    yield bind, line, stmt
 
 
 def files():
