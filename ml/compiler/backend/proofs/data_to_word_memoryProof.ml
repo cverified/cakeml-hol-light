@@ -48739,7 +48739,8 @@ let word_eq_thm0 = prove
 (* the comparison of two values of the invariant, by the induction
    on the size of the first that vb_eq_size recurses on.  HOL4 does
    it with the induction theorem of that definition, which the port
-   has no counterpart of (its definition is assumed), so what
+   has no counterpart of (the machinery of HOL Light gives the
+   clauses of a definition and no induction theorem), so what
    stands here is the complete induction on dataSem_v_size, with
    the statement of a value and the statement of a list of values
    proved together and the size bounded by the induction's number.
