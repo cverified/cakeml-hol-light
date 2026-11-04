@@ -47448,14 +47448,27 @@ let word_is_clos_def = cake_define
    ck is an upper bound on the number of stack frames
       allocated by an equality comparison.
   *)
+(* what the termination of the loop below goes by: the limit and
+   the clock that a step gives back are no greater than the ones it
+   was given, which is the fact that HOL4's Termination uses
+   (imp_res_tac fix_clock_IMP).  The semantics files put theirs
+   among cake_term_facts in the same way, and that is where
+   TERM_TAC reads it from *)
+let _ = cake_term_facts :=
+  data_to_word_memoryProof_fix_clock_IMP :: (!cake_term_facts);;
+
+(* and the budget of the attempt: eight seconds is what a
+   definition that the machinery can do takes, and this one takes
+   four of them in a warm session and more in a cold one, so the
+   cheat would be taken for want of time alone *)
+let _ = cake_cheat_budget := 120;;
+
 (* HOL4 data_to_word_memoryProofScript.sml:14020-14025: the tactic
    that proves the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 let word_eq_def = cake_define_try_tac (fun () ->
   `MEASURE (\x. match x with INL (c,st,dm,m,l1,ck1,w1,w2) -> l1 | INR
   (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`)
-  CHEAT_TAC
+  TERM_TAC
   `(word_eq c st dm m l ck w1 (w2:'a word) =
       (if w1 = w2 then SOME (((n2w 1):'a word),l,ck) else
       if ~(word_bit 0 w1 /\ word_bit 0 w2) then SOME ((n2w 0),l,ck)
@@ -47502,6 +47515,9 @@ let word_eq_def = cake_define_try_tac (fun () ->
                                 (n2w 1))
                               (a1 + bytes_in_word) (a2 +
                                 bytes_in_word))) | _102 -> NONE))`;;
+
+(* the budget of the attempt, as it was *)
+let _ = cake_cheat_budget := 8;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:14027: ML code, not ported *)
 

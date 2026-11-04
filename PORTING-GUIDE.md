@@ -4609,3 +4609,40 @@ another: with the clauses of `MEM` in the list and a heap of the
 shape `ha ++ x :: hb` in the goal, MESON unfolds the list for as
 long as it is allowed to.  Both are to be replaced by the facts
 the step needs, two or three of them, named by `grab_asm`.
+
+## 104. A termination that is only short of time
+
+`word_eq`'s cheat was not a missing proof: the fact that HOL4's
+`Termination` uses (`imp_res_tac fix_clock_IMP`) is the port's own
+`data_to_word_memoryProof_fix_clock_IMP`, and with it among
+`cake_term_facts` -- which is how the semantics files register
+theirs -- `TERM_TAC` discharges every condition of the measure
+that HOL4 gives.  Two things had to be put right at once:
+
+- the fact has to be *pushed*: `cake_term_facts := <the fact> ::
+  (!cake_term_facts)` before the definition, which `EXTRA_BEFORE`
+  of `tools/overrides.py` writes into the file.  Nothing registers
+  a file's own fix_clock_IMP by itself.
+- the attempt has a **budget of eight seconds**
+  (`cake_cheat_budget`, `with_short_budget`), and this one takes
+  four in a warm session and more in the session of a run, so the
+  cheat was taken for want of time.  `cake_cheat_budget := 120`
+  before the definition and `:= 8` after it (`EXTRA_BEFORE` and
+  `EXTRA_AFTER`) is what the file does about it.
+
+So a `cake_define ... CHEATED` line says nothing about whether the
+termination is hard.  What tells is `tools/bin/trydef`, with
+`S=<session>` to use a session that already holds the file:
+
+```
+S=s2 trydef word_eq
+```
+
+It makes the definition again with the constants renamed, and the
+why column is empty when nothing was cheated.  Two traps: the
+renaming turns every *other* head of a clause into a free variable
+(`isClos` becomes `isClos_zz`, which is a variable, and the
+definition is cheated for that alone), and a second attempt in the
+same session fails with `dest_var: not a variable`, because the
+first one has declared the renamed constant.  Both are dealt with
+by hand: put the names back, and change the suffix for each try.

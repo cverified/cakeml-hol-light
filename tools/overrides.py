@@ -1134,6 +1134,14 @@ TERMINATION = {
   ('data_to_word_memoryProof', 'word_copy_fwd_def'): 'TERM_TAC',
   ('data_to_word_memoryProof', 'word_copy_bwd_def'): 'TERM_TAC',
   ('data_to_word_memoryProof', 'word_xor_bytes_def'): 'TERM_TAC',
+  # the loop that compares two values: the measure of HOL4 is the
+  # limit, which a step takes down by one -- but the limit that the
+  # step gives back is the one the nested call gives, and that one
+  # is no greater than the limit it was given (fix_clock_IMP, which
+  # EXTRA_BEFORE puts among cake_term_facts, as the semantics files
+  # do with theirs).  With that fact TERM_TAC discharges the
+  # conditions, which is HOL4's `imp_res_tac fix_clock_IMP`
+  ('data_to_word_memoryProof', 'word_eq_def'): 'TERM_TAC',
 }
 
 # the definitions whose termination the port proves with the
@@ -2927,6 +2935,23 @@ let COPY_BWD_ADDR =
       REWRITE_TAC[adeq 2; adeq 3]) THEN
     ASM_REWRITE_TAC[];;
 """,
+  ('data_to_word_memoryProof', 'word_eq_def'): r'''
+
+(* what the termination of the loop below goes by: the limit and
+   the clock that a step gives back are no greater than the ones it
+   was given, which is the fact that HOL4's Termination uses
+   (imp_res_tac fix_clock_IMP).  The semantics files put theirs
+   among cake_term_facts in the same way, and that is where
+   TERM_TAC reads it from *)
+let _ = cake_term_facts :=
+  data_to_word_memoryProof_fix_clock_IMP :: (!cake_term_facts);;
+
+(* and the budget of the attempt: eight seconds is what a
+   definition that the machinery can do takes, and this one takes
+   four of them in a warm session and more in a cold one, so the
+   cheat would be taken for want of time alone *)
+let _ = cake_cheat_budget := 120;;
+''',
   ('data_to_word_memoryProof', 'word_xor_bytes_def'): r"""
 
 (* the port's own: the step of the loop over the words of two byte
@@ -11128,6 +11153,11 @@ cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
 # a definition of the port that goes after the one of the source
 # that it belongs behind
 EXTRA_AFTER = {
+  ('data_to_word_memoryProof', 'word_eq_def'): r'''
+
+(* the budget of the attempt, as it was *)
+let _ = cake_cheat_budget := 8;;
+''',
   # HOL4's basicSizeTheory has a num_size of its own (the size
   # function of a numeral, which ml/lib/hol4.ml has), and
   # data_space's definition shadows it in every theory that has
