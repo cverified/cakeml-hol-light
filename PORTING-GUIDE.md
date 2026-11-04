@@ -4785,3 +4785,46 @@ Three things follow:
 - a round that takes longer than it should is watched with `top
   -bn1 | grep ocaml`: an RSS that grows past 2 GB is a runaway,
   and the interrupt has to come before the swap fills.
+
+## 110. Five traps of a leaf lemma of a case tree
+
+Entry 108 says what the leaf lemmas of `word_eq`'s tree are.  Each
+of the five cost a round of its own, and for five different
+reasons:
+
+- **a quotation with no numeral in it is not `num`.**  In a session
+  that has the whole port loaded `<` and `<=` are overloaded, so
+
+  ```
+  ARITH_RULE `n < l ==> ((l <= n) <=> F)`
+  ```
+
+  is read at another type and fails with ``REAL_ARITH `~(n < l /\
+  l <= n)`: linear_ineqs: no contradiction``.  One numeral in the
+  quotation settles the type of everything in it (`1 <= n <=> ~(n
+  = 0)` is read as `num` and goes through), and a statement of
+  variables only needs `(n:num)` written out.  The same holds for
+  a `!p d l l0.` of an arithmetic lemma: `!(p:num) d l l0.`
+- **`ONCE_REWRITE_TAC[<def>]` unfolds the other side as well.**  A
+  leaf lemma whose right side names the function again (`word_eq
+  ... = word_eq_list ...`) is unfolded on both sides and the two
+  do not meet; `GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
+  [<def>]` unfolds the left side only.
+- **a fact of the first header is not a fact of the second.**  The
+  lemma assumes `h1 = h2`, `ASM_REWRITE_TAC` puts `h2` in the goal
+  with it, and the test `h2 && n2w 12 = n2w 0` is then settled by
+  an assumption that still says `h1`.  `REPEAT SUBST_LHS_TAC`
+  before the unfolding makes the assumptions say `h2` too.
+- **`COND_ID` is not a basic rewrite.**  Where the facts of the
+  leaf do not settle a test of the tree but both of its branches
+  give the same answer, the goal is `(if b then x else x) = x` and
+  `ASM_REWRITE_TAC[]` leaves it; `ASM_REWRITE_TAC[COND_ID]` closes
+  it.
+- **`fix_clock` has to be read before the call it wraps is.**  The
+  body of `word_eq_list` has `fix_clock (ck - 1) (l - 1) (word_eq
+  ... )`, and `fix_clock_word_eq` matches that only while the
+  `word_eq` is still there: an `ASM_REWRITE_TAC` that replaces the
+  call by its value first leaves a `fix_clock` of a `SOME` that
+  the match cannot reduce, and `MATCH_REDUCE_TAC` turns the goal
+  into a choice term (`@GEN%PVAR%`).  So the rewrite with
+  `fix_clock_word_eq` comes immediately after the unfolding.
