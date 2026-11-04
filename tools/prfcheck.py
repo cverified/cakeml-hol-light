@@ -6,13 +6,18 @@ file and nothing after it (the port loads a file from the top).
 This says which sections name a theorem the file does not have and
 which use a binding of the file that comes later than they do.
 
-  python3 tools/prfcheck.py <path of the port, relative to ml/>
+  python3 tools/prfcheck.py [<path of the port, relative to ml/>]
+
+With no path it checks every file of the store, which is what
+tools/bin/checks does after a re-port.
 """
 
 import re
 import sys
 
 T = __file__.rsplit('/', 1)[0] + '/'
+sys.path.insert(0, T.rstrip('/') or '.')
+import proofstore
 
 
 def check(mlrel):
@@ -31,8 +36,10 @@ def check(mlrel):
       if g and g != '_' and g not in at: at[g] = m.start()
   # and where each theorem of a name is stated
   thm = {}
-  for m in re.finditer(r"^let ([A-Za-z_][A-Za-z_0-9']*) = prove$",
-                       ml, re.M):
+  # the port puts the prove on the next line where the binding is
+  # too long for one (tools/port.py: prove_head, tools/stmts.py)
+  for m in re.finditer(r"^let ([A-Za-z_][A-Za-z_0-9']*) =\n?"
+                       r"[ ]*prove$", ml, re.M):
     thm.setdefault(m.group(1), []).append(m.start())
   bad = 0
   name = None
@@ -49,17 +56,31 @@ def check(mlrel):
       print('%s: the file states it %d time(s)'
             % (name, len(thm[nm]))); return 1
     pos = thm[nm][k - 1]
-    # the body stands where an argument stands, so a tactic of
-    # several steps has to be parenthesised: without the brackets
-    # `a THEN b` would read as `cake_theorem ... a THEN b`
+    # the body stands where an argument stands (tools/landproof.py
+    # wraps it in brackets of its own), so a tactic of several
+    # steps has to be parenthesised: without the brackets
+    # `a THEN b` reads as `(prove (`...`, a)) THEN b`
+    # (PORTING-GUIDE.md, entry 30)
     text = re.sub(r'\(\*.*?\*\)', '', '\n'.join(body), flags=re.S)
     text = text.strip()
     if re.search(r'\bTHEN[L]?\b', text) and not (
         text.startswith('(') and text.endswith(')')):
       print('%s: the tactic needs brackets round it' % name)
       out += 1
+    # the names the section binds itself (its helpers stand in a
+    # `let ... in` of its own), which say nothing about what the
+    # file binds; and the scan is over the text without the
+    # comments, where a name may stand for what it says and not
+    # for what the tactic uses
+    mine = set()
+    for m in re.finditer(r'\blet\s+(?:rec\s+)?\(?\s*'
+                         r'([A-Za-z_][A-Za-z_0-9\']*'
+                         r'(?:\s*,\s*[A-Za-z_][A-Za-z_0-9\']*)*)',
+                         text):
+      for w in m.group(1).split(','): mine.add(w.strip())
     for w in sorted(set(re.findall(r'[A-Za-z_][A-Za-z_0-9\']*',
-                                   '\n'.join(body)))):
+                                   text))):
+      if w in mine: continue
       if w in at and at[w] > pos:
         print('%s: uses %s, which the file binds later' % (name, w))
         out += 1
@@ -79,4 +100,6 @@ def check(mlrel):
 
 
 if __name__ == '__main__':
-  sys.exit(1 if check(sys.argv[1]) else 0)
+  paths = sys.argv[1:] or [proofstore.mlrel_of(f)
+                           for f in proofstore.files()]
+  sys.exit(1 if sum(check(p) for p in paths) else 0)

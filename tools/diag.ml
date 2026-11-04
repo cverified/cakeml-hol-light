@@ -40,7 +40,7 @@ let diag_run infile outfile =
   let n = ref 0 and bad = ref 0 and fv = ref 0 in
   let hid = ref ([]:string list) in
   let nexthid = ref ([]:string list) in
-  (* the pairs that cake_hide_consts of the file takes out of the
+  (* the pairs that the hide_overloads of the file takes out of the
      interface: a name that the accessors of a record field have
      as well keeps those *)
   let hidc = ref ([]:(string * string) list) in
@@ -128,7 +128,7 @@ let diag_run infile outfile =
       (match String.split_on_char '\t' line with
          _::f::l::nm::_ -> cur := (f,l,nm)
        | _ -> cur := ("?","0","?"));
-      (* a file hides what its own cake_hide says and nothing of
+      (* a file hides what its own hide_constant says and nothing of
          the file before it *)
       let f,_,_ = !cur in
       if f <> !curfile then
