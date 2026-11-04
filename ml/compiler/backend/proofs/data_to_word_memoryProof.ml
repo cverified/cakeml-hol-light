@@ -49439,6 +49439,24 @@ let word_eq_thm0 = prove
           (CONJ mr0 (CONJ b0 (CONJ gra (CONJ mx gd)))) in
       MAP_EVERY ASSUME_TAC
         [facts mr; facts (MATCH_MP memory_rel_tl mr)]) in
+  (* what the invariant says of the length field of a header: there
+     is room for the tag bits above it (heap_in_memory_store) *)
+  let memory_rel_len_size = prove
+   (cake_as_vars (fun () ->
+      `memory_rel c be ts refs sp st m dm
+         (vars:(dataSem_v # ('a)word_loc)list)
+       ==> data_to_word_config_len_size c + 2 < dimindex (:'a)`),
+    REWRITE_TAC[memory_rel_def] THEN STRIP_TAC THEN
+    FIRST_X_ASSUM (fun th ->
+      if not (hd_is "heap_in_memory_store" (concl th)) then fail()
+      else MP_TAC (REWRITE_RULE[heap_in_memory_store_def] th)) THEN
+    STRIP_TAC THEN
+    FIRST_ASSUM (fun th ->
+      if not (hd_is "<" (concl th)) ||
+         not (can (find_term
+           (hd_is "data_to_word_config_len_size")) (lhand (concl th)))
+      then fail() else MP_TAC th) THEN
+    ARITH_TAC) in
   (* that two blocks of one tag and one length have one header
      (encode_header_EQ, with the room that the invariant gives the
      length field of a header) *)
@@ -49553,16 +49571,10 @@ let word_eq_thm0 = prove
   let n2w_suc_sub1 = prove
    (`((n2w (SUC n)):('a)word) - n2w 1 = n2w n`,
     REWRITE_TAC[ADD1; WORD_ADD] THEN CONV_TAC WORD_RULE) in
-  (* the budget that the comparison of two heads leaves, and the one
-     that the comparison of the two rests leaves after it *)
+  (* the budget that the comparison of two heads leaves *)
   let budget_head = prove
    (`!(p:num) d l l0. l - 1 <= l0 + p /\ ~(l = 0) /\ 1 <= d
      ==> l <= l0 + (p + d)`,
-    ARITH_TAC) in
-  let budget_rest = prove
-   (`!(p:num) r d l l0 l2. l - 1 <= l0 + p /\ l0 - 1 <= l2 + r /\
-      ~(l = 0) /\ ~(l0 = 0) /\ 2 <= d
-      ==> l <= l2 + (r + (p + d))`,
     ARITH_TAC) in
   (* two lists with one element at the end are one exactly when the
      two fronts and the two elements are *)
@@ -49927,24 +49939,6 @@ let word_eq_thm0 = prove
          (hd_is "SOME" (lhs (concl th)) ||
           hd_is "NONE" (lhs (concl th)))
       then SYM th else fail()) in
-  (* what the invariant says of the length field of a header: there
-     is room for the tag bits above it (heap_in_memory_store) *)
-  let memory_rel_len_size = prove
-   (cake_as_vars (fun () ->
-      `memory_rel c be ts refs sp st m dm
-         (vars:(dataSem_v # ('a)word_loc)list)
-       ==> data_to_word_config_len_size c + 2 < dimindex (:'a)`),
-    REWRITE_TAC[memory_rel_def] THEN STRIP_TAC THEN
-    FIRST_X_ASSUM (fun th ->
-      if not (hd_is "heap_in_memory_store" (concl th)) then fail()
-      else MP_TAC (REWRITE_RULE[heap_in_memory_store_def] th)) THEN
-    STRIP_TAC THEN
-    FIRST_ASSUM (fun th ->
-      if not (hd_is "<" (concl th)) ||
-         not (can (find_term
-           (hd_is "data_to_word_config_len_size")) (lhand (concl th)))
-      then fail() else MP_TAC th) THEN
-    ARITH_TAC) in
   (* a test that the reduction of a match leaves, which says that a
      value is the value that it is *)
   let exists_eq_T = prove

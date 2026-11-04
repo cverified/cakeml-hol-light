@@ -4989,3 +4989,23 @@ let _ = bp "nm" stmt (fun () ->
 and without them the section is one `)` over, which
 `tools/parens.py` says as `-1 round bracket(s)` and a verify
 would say twelve minutes later.
+
+The other one is the order of the helpers inside the section.
+`memory_rel_len_size` was proved in the lemma file of an earlier
+round, so it stood at the top level of the scratch session, and in
+the development file its own `let` came four hundred lines after
+the first use of it -- the file loaded all the same, round after
+round.  What said so was the verify, fourteen minutes in:
+
+```
+Error: Unbound value memory_rel_len_size
+```
+
+and the load of the file stopped there (so `AXIOMS-ADDED` came out
+as 1, not as the 2 that the state before it had).  The check for
+it is `tools/secorder.py`, which costs a second: every outer
+`let` of every section against the first line that names it,
+comments and quotations taken out.  `tools/scope.py` is the same
+check *between* the sections of a file and does not look inside
+one, and a session that has been given six scratch files cannot
+say which of their bindings the section itself has.

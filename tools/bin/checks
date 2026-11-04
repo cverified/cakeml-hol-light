@@ -29,6 +29,8 @@
 #             block that the source it is about has
 #   proofs    every proof of proofs/ names a theorem that the port
 #             states, and no line of one is over 72 characters
+#   secorder  a helper of a section stands before its first use
+#             (the scratch session has it from an earlier round)
 C=/home/freek/claude/hol-light/cakeml
 cd $C
 echo "=== coverage"
@@ -65,3 +67,6 @@ echo "=== the entries of the override tables"
 python3 -I tools/stale.py 2>&1 | tail -3
 echo "=== the proofs of phase three"
 python3 -I tools/proofs.py 2>&1 | tail -2
+echo "=== the helpers of a section, against their first use"
+python3 -I tools/secorder.py $(find ml -name '*.ml' -not -path 'ml/lib/*' |
+  sort) 2>&1 | tail -3
