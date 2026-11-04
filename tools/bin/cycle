@@ -90,7 +90,7 @@ tmux capture-pane -p -t hol-smoke -S -40 |
   tail -6
 [ "$NORUN" = 1 ] && exit 0
 echo "=== the next run"
-nohup env TIMEOUT=900 CAKE_DEBUG=1 runall \
+nohup env TIMEOUT=${TIMEOUT:-2700} CAKE_DEBUG=1 runall \
   > tmp/run.log 2>&1 &
 sleep 10
 ps -eo args --no-headers | grep -q '[c]heckseq' &&

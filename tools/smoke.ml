@@ -234,56 +234,50 @@ print_string (Printf.sprintf
   (length(definitions()) - d1));;
 
 (* ---------------------------------------------------------------- *)
-(* phase two: a theorem of a source, with CHEAT_TAC where HOL4 has  *)
-(* its proof, and one whose statement does not typecheck            *)
+(* phase two: a theorem of a source is in the port the way HOL      *)
+(* Light writes one, with the attributes of HOL4 in a comment over  *)
+(* it and CHEAT_TAC where phase three has yet to put a proof.  The  *)
+(* name, the attributes and the order are the work of the generator *)
+(* (tools/port.py), and a statement that does not typecheck is the  *)
+(* business of a tolerant load (tools/tolerant.py): the library     *)
+(* layer has no wrapper of its own for a theorem any more.          *)
 (* ---------------------------------------------------------------- *)
 
-let smoke_thm = cake_theorem "smoke_thm[simp,local]"
-  (fun () ->
-    `!n. ge (IMove n) = 1`)
-  CHEAT_TAC;;
+let a2 = length(axioms());;
 
-let smoke_bad = cake_theorem "smoke_bad"
-  (fun () ->
-    `!n. ge n n n`)
-  CHEAT_TAC;;
+(* [simp,local] *)
+let smoke_thm = prove
+ (`!n. ge (IMove n) = 1`,
+  CHEAT_TAC);;
 
-print_string
-  ("\nSMOKETHM " ^ string_of_int (length (cake_theorems ())) ^
-   " stated, " ^ string_of_int (length (cake_unstated ())) ^
-   " not stated (1 and 1), attributes " ^
-   (let _,a,_ = hd (cake_theorems ()) in
-    String.concat "," a) ^ "\n");;
+(* a theorem that a source states as the value of another one
+   (HOL4's Theorem foo = bar) *)
+let smoke_same = smoke_thm;;
+
+print_string (Printf.sprintf
+  "\nSMOKETHM axioms %d (was %d), alias %B (one more, true)\n"
+  (length(axioms())) a2 (smoke_same == smoke_thm));;
 
 (* ---------------------------------------------------------------- *)
 (* a statement that uses the name of a record field for a variable
-   of its own, which HOL4 does (a bare field name is not a
-   constant there), and one that uses a name that no theory in the
-   scope of this file defines, which a cake_hide takes care of *)
+   of its own, which HOL4 does (a bare field name is not a constant
+   there): cake_as_vars reads it with the overloads of the fields
+   taken out of the interface, so the name comes back free -- and
+   without it the statement does not even typecheck, because the
+   accessor is a function *)
 
 let smoke_rec_FIELDS = define_record "smoke_rec" ["sfld","num"];;
 hol4_field_overload "sfld" "smoke_rec_sfld";;
 
-let smoke_opaque = new_definition
-  `smoke_opaque (n:num) = n + 1`;;
+let smoke_fieldvar = cake_as_vars (fun () -> `sfld + 1 = 2`);;
 
-cake_hide ["smoke_opaque"];;
-
-let smoke_fieldvar = cake_theorem "smoke_fieldvar"
-  (fun () ->
-    `sfld + smoke_opaque = 2`)
-  CHEAT_TAC;;
-
-cake_hide [];;
-
-print_string
-  ("\nSMOKEVARS fieldvars " ^
-   String.concat "," (cake_fieldvars ()) ^ " (smoke_fieldvar), free " ^
-   String.concat ","
-     (map (fun v -> fst (dest_var v))
-        (sort (<) (frees (concl (let _,_,th = last (cake_theorems ()) in
-                                  th))))) ^
-   " (sfld,smoke_opaque)\n");;
+print_string (Printf.sprintf
+  "\nSMOKEVARS free %s, as a constant %B, accessor %B \
+(sfld, false, true)\n"
+  (String.concat "," (map (fun v -> fst (dest_var v))
+                          (frees smoke_fieldvar)))
+  (can (fun () -> `sfld + 1 = 2`) ())
+  (can (fun () -> `sfld (r:smoke_rec)`) ()));;
 
 (* ---------------------------------------------------------------- *)
 (* the parts of the hand written library layer that the statements
@@ -291,41 +285,20 @@ print_string
    the greatest fixed point written out), the domain and the range
    of a relation of its set_relationTheory and its GSPEC *)
 
-let smoke_lib = cake_theorem "smoke_lib"
-  (fun () ->
-    `okpath R (toPath (x,fromList tr)) /\
-     (hol4_GSPEC (\a. (f a,P a)) = set_relation_domain r) /\
-     (set_relation_range r = s)`)
-  CHEAT_TAC;;
+let smoke_lib =
+  `okpath R (toPath (x,fromList tr)) /\
+   (hol4_GSPEC (\a. (f a,P a)) = set_relation_domain r) /\
+   (set_relation_range r = s)`;;
 
-print_string
-  ("\nSMOKELIB " ^
-   (let n,_,th = last (cake_theorems ()) in
-    n ^ " " ^ string_of_int (length (hyp th))) ^
-   " stated " ^
-   string_of_bool (not (mem "smoke_lib"
-                          (map fst (cake_unstated ())))) ^
-   " (smoke_lib 0 stated true)\n");;
-
-(* ---------------------------------------------------------------- *)
-(* a theorem that a source states as the value of another one
-   (HOL4's Theorem foo = bar), which the port binds with
-   cake_alias so that the name of the source is in the port *)
-
-let smoke_same = cake_alias "smoke_same[simp]" smoke_thm;;
-
-print_string
-  ("\nSMOKEALIAS " ^
-   (let n,a,th = hd (rev (cake_theorems ())) in
-    n ^ " " ^ String.concat "," a ^ " " ^
-    string_of_bool (th == smoke_thm)) ^ " (smoke_same simp true)\n");;
+print_string (Printf.sprintf "\nSMOKELIB %B (true)\n"
+  (type_of smoke_lib = `:bool`));;
 
 (* ---------------------------------------------------------------- *)
 (* a name that the accessors of a record field have as well: only
-   the constant that the file cannot see goes out of the interface
-   (cake_hide_consts), and the field keeps the name; and a name
-   that the source hides from there on (cake_hide_more, which adds
-   to the list of the file instead of replacing it) *)
+   the pair that the file cannot see comes out of the interface
+   (hide_overloads), and the field keeps the name; and a name that
+   no theory in the scope of the file defines, which HOL Light's own
+   hide_constant takes care of *)
 
 let smoke_rec2_FIELDS = define_record "smoke_rec2" ["sfld2","num"];;
 hol4_field_overload "sfld2" "smoke_rec2_sfld2";;
@@ -340,32 +313,24 @@ hol4_overload "sfld2" "smoke_other_sfld2";;
 let smoke_opaque2 = new_definition
   `smoke_opaque2 (n:num) = n + 2`;;
 
-cake_hide ["smoke_opaque"];;
-cake_hide_more ["smoke_opaque2"];;
-cake_hide_consts ["sfld2","smoke_other_sfld2"];;
+let _ = hide_overloads ["sfld2","smoke_other_sfld2"];;
+let _ = hide_constant "smoke_opaque2";;
 
-let smoke_hidec = cake_theorem "smoke_hidec"
-  (fun () ->
-    `sfld2 (r:smoke_rec2) = 1 /\ smoke_opaque2 = 2`)
-  CHEAT_TAC;;
+let smoke_hidec = `sfld2 (r:smoke_rec2) = 1 /\ smoke_opaque2 = 2`;;
 
-cake_hide [];;
-cake_hide_consts [];;
+let _ = unhide_overloads ();;
+let _ = unhide_constant "smoke_opaque2";;
 
-print_string
-  ("\nSMOKEHIDEC " ^
-   (let n,_,th = last (cake_theorems ()) in
-    n ^ " accessor " ^
-    string_of_bool (mem "smoke_rec2_sfld2"
-                      (map (fun t -> fst (dest_const t))
-                         (filter is_const
-                            (find_terms is_const (concl th))))) ^
-    " free " ^
-    String.concat ","
-      (map (fun v -> fst (dest_var v))
-         (sort (<) (frees (concl th))))) ^
-   " (smoke_hidec accessor true free r,smoke_opaque2)\n");;
-
+print_string (Printf.sprintf
+  "\nSMOKEHIDEC accessor %B free %s, back %B \
+(true, r,smoke_opaque2, true)\n"
+  (mem "smoke_rec2_sfld2"
+     (map (fun t -> fst (dest_const t))
+        (filter is_const (find_terms is_const smoke_hidec))))
+  (String.concat ","
+     (map (fun v -> fst (dest_var v)) (sort (<) (frees smoke_hidec))))
+  (exists (fun (n,(c,_)) -> n = "sfld2" && c = "smoke_other_sfld2")
+          (!the_interface)));;
 (* ---------------------------------------------------------------- *)
 (* a comment of a source that stands inside a block: the port keeps
    it where it stands, as the comment of HOL Light (// and to the
