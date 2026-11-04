@@ -933,7 +933,14 @@ let define_mutual wfs tm =
     prove(gcl,
           REPEAT GEN_TAC THEN TRY DEPAIR_TAC THEN REWRITE_TAC fdefs THEN
           GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [gth] THEN
-          REWRITE_TAC[OUTL; OUTR]) in
+          REWRITE_TAC[OUTL; OUTR] THEN
+          (* the depairing above was applied to the clause as it
+             was given, and the specification of the mutual
+             function kept the paired lambda, so where a clause
+             has one the two sides differ by it here
+             (vb_eq_size's OPTION_MAP (\(n,b). (n + 1,b)) of
+             data_to_word_memoryProof) *)
+          TRY (DEPAIR_TAC THEN REWRITE_TAC[])) in
   map derive (conjuncts(snd(strip_forall tm))),gth;;
 
 (* ================================================================== *)

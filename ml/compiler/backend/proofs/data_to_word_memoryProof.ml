@@ -46046,35 +46046,33 @@ let memory_rel_depth_size_limit = prove
       FIRST_ASSUM MATCH_ACCEPT_TAC];
     nb; nb])));;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
+let _ = size_thms "dataSem_v";;
+(* the termination relation is not in the HOL4 source *)
 (* the clauses of the source overlap -- the last one says NONE of a
    pair that an earlier one has already given a value -- and HOL4
    takes the first that matches, so the port writes them as a
    match, which takes the first arm (see ml/lib/define.ml, "A
    definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-(* What is assumed here is the definition itself and not only its
-   termination, because no strategy of ml/lib/define.ml can make
-   it: the two functions are mutual, so define_mutual is the one
-   that would (define_prim_rec and define_match each want one
+(* The two functions are mutual, so define_mutual is the strategy
+   that makes them (define_prim_rec and define_match each want one
    function, and define_match a scrutinee that is an argument and
-   not a pair of two), and its existence step dies in
-   cake_pure_prove_recursive_function_exists of ml/lib/fastdef.ml
-   with "TAC_PROOF: Unsolved goals".  With cake_proforma set, the
-   log of the dispatch (cakeml/tmp/proforma.txt) shows the
-   admissibility of the match tree and of the recursive call under
-   the OPTION_MAP going through, and the goals that are left over
-   are the termination conditions of the shape
-
-     ... /\ v1' :: vs1',v2' :: vs2' = x2,x3 /\ ...
-     ==> INR (refs,vs1',vs2') << INR (refs,x2,x3)
-
-   which SIMP_ADMISS_TAC is the one to hand to the caller as its
-   hypothesis.  So this one is no proof of phase three but a
-   missing piece of the library layer, and six other definitions
-   of the port are assumed for the same reason. *)
-let vb_eq_size_def = cake_define_list_cheat CHEAT_TAC
+   not a pair of two), and two things stood in its way.  The
+   measure that the machinery guesses reads the components of the
+   tuple with FST and SND, and the match of such a measure does
+   not reduce, which leaves TERM_TAC with `dataSem_v_size v1' <
+   list_size dataSem_v_size x2`; the measure above says the
+   components by their patterns instead, and then TERM_TAC
+   discharges the nine conditions of the mutual encoding.  And the
+   OPTION_MAP of the first clause has a paired lambda, which
+   define_mutual's last step depaired on the clause as it was
+   given while the specification of the mutual function kept it,
+   so the two sides of the clause differed by that one lambda
+   (ml/lib/define.ml, "the depairing above was applied to the
+   clause as it was given"). *)
+let vb_eq_size_def = cake_define_list_wf
+  `MEASURE (\x. match x with INL (refs,v1,v2) -> dataSem_v_size v1 |
+  INR (refs,l1,l2) -> list_size dataSem_v_size l1)`
   [`vb_eq_size refs x2 x3 =
          match (x2,x3) with
            ((Block _91 t1 l1:dataSem_v),(Block _92 t2 l2:dataSem_v))

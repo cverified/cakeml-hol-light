@@ -73,7 +73,6 @@ dataSem size_of_def
 dataSem vs_depth_def
 data_to_word StoreAnyConsts_def
 data_to_word_memoryProof v_same_type_def
-data_to_word_memoryProof vb_eq_size_def
 data_to_word_memoryProof word_cmp_loop_def
 data_to_word_memoryProof word_copy_bwd_def
 data_to_word_memoryProof word_copy_fwd_def

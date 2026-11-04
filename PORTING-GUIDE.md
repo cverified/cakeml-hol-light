@@ -5009,3 +5009,66 @@ comments and quotations taken out.  `tools/scope.py` is the same
 check *between* the sections of a file and does not look inside
 one, and a session that has been given six scratch files cannot
 say which of their bindings the section itself has.
+
+## 113. A mutual definition that the machinery can make after all
+
+`vb_eq_size`/`vb_eq_size_list` was the last definition of
+`data_to_word_memoryProof` that the port assumed, and it was
+assumed **as a whole** (`cake_cheat`), not only its termination:
+the reason a run gave for it was `TAC_PROOF: Unsolved goals`.
+Three things stood in the way.
+
+- **the strategy that makes it is `define_mutual`.**
+  `define_prim_rec` and `define_match` each want one function, and
+  `define_match` a scrutinee that is an argument and not a pair of
+  two, so the chain of `cake_define_gen` goes all the way to
+  `measure` and `guess`, and those call `define_mutual`.
+- **`derive` depaired the clause and not the specification.**  Its
+  last step proves the clauses as the source gives them from the
+  clauses of the mutual function, with
+
+  ```
+  REPEAT GEN_TAC THEN TRY DEPAIR_TAC THEN REWRITE_TAC fdefs THEN
+  GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [gth] THEN
+  REWRITE_TAC[OUTL; OUTR]
+  ```
+
+  and that `DEPAIR_TAC` turns the `OPTION_MAP (\(n,b). (n + 1,b))`
+  of the clause into `OPTION_MAP (\p. (FST p + 1,SND p))` while
+  `gth` keeps the paired form.  The two sides of the goal then
+  differ by that one lambda and nothing else, and the rest of the
+  tactic has no step that puts them together.  A `TRY (DEPAIR_TAC
+  THEN REWRITE_TAC[])` after the rewrites does, and it is
+  monotone: it is applied to a goal that is not closed yet.
+- **the measure that the machinery guesses does not reduce.**
+  `candidate_measures` gives
+
+  ```
+  MEASURE (\x. match x with INL y -> dataSem_v_size (FST (SND y))
+             | INR y -> list_size dataSem_v_size (FST (SND y)))
+  ```
+
+  whose match does not reduce where the argument is `INL
+  (refs,v1,v2)`, so `TERM_TAC` is left with `dataSem_v_size v1' <
+  list_size dataSem_v_size x2`.  The measure that
+  `overrides.MEASURE` gives says the components by their patterns
+  instead, and then `TERM_TAC` discharges the nine conditions of
+  the mutual encoding by itself.
+
+With the three together the definition is made with **no axiom**,
+and `tools/cheats.txt` loses its line for it -- otherwise the
+port keeps writing a `CHEAT_TAC` into the text of the definition
+that nothing uses any more.
+
+What found it: a copy of `define_mutual` with a `cake_log` of the
+goal that `derive` leaves and a `print_string` after each of its
+stages (existence, specification, definitions, derive), called
+by hand under `with_cheat_tac` in a clone of the closure, and
+`cake_proforma := true` for the dispatch of the admissibility
+(which went through all along, and said so in
+`cakeml/tmp/proforma.txt`).  Two things to know for a session
+like that: a file of the **scratchpad** of a Claude session is not
+there for the toplevel to read (`#use` says `Cannot find file`),
+so a patch goes into `cakeml/tmp/`; and a `print_string` of a
+machinery step scrolls out of the pane behind the terms it
+prints, so the capture needs `-S -8000`.

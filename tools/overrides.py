@@ -1052,26 +1052,22 @@ MATCH_CLAUSES = {
    match, which takes the first arm (see ml/lib/define.ml, "A
    definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-(* What is assumed here is the definition itself and not only its
-   termination, because no strategy of ml/lib/define.ml can make
-   it: the two functions are mutual, so define_mutual is the one
-   that would (define_prim_rec and define_match each want one
+(* The two functions are mutual, so define_mutual is the strategy
+   that makes them (define_prim_rec and define_match each want one
    function, and define_match a scrutinee that is an argument and
-   not a pair of two), and its existence step dies in
-   cake_pure_prove_recursive_function_exists of ml/lib/fastdef.ml
-   with "TAC_PROOF: Unsolved goals".  With cake_proforma set, the
-   log of the dispatch (cakeml/tmp/proforma.txt) shows the
-   admissibility of the match tree and of the recursive call under
-   the OPTION_MAP going through, and the goals that are left over
-   are the termination conditions of the shape
-
-     ... /\ v1' :: vs1',v2' :: vs2' = x2,x3 /\ ...
-     ==> INR (refs,vs1',vs2') << INR (refs,x2,x3)
-
-   which SIMP_ADMISS_TAC is the one to hand to the caller as its
-   hypothesis.  So this one is no proof of phase three but a
-   missing piece of the library layer, and six other definitions
-   of the port are assumed for the same reason. *)
+   not a pair of two), and two things stood in its way.  The
+   measure that the machinery guesses reads the components of the
+   tuple with FST and SND, and the match of such a measure does
+   not reduce, which leaves TERM_TAC with `dataSem_v_size v1' <
+   list_size dataSem_v_size x2`; the measure above says the
+   components by their patterns instead, and then TERM_TAC
+   discharges the nine conditions of the mutual encoding.  And the
+   OPTION_MAP of the first clause has a paired lambda, which
+   define_mutual's last step depaired on the clause as it was
+   given while the specification of the mutual function kept it,
+   so the two sides of the clause differed by that one lambda
+   (ml/lib/define.ml, "the depairing above was applied to the
+   clause as it was given"). *)
 """),
   # the mutual do_eq/do_eq_list of the five semantics: the last
   # clause of each catches the pairs that the earlier ones have
@@ -1222,6 +1218,17 @@ MEASURE = {
     'MEASURE (list_size bvi_exp_size o SND o SND)',
   ('bvl_const', 'compile_def'):
     'MEASURE (list_size bvl_exp_size o SND)',
+  # the mutual vb_eq_size/vb_eq_size_list, which recurses on the
+  # first value and on the first list of values.  HOL4's Definition
+  # guesses it (its source gives no Termination); the port gives it
+  # here, because the candidate that the machinery guesses reads
+  # the components with FST and SND and the match of the measure
+  # then does not reduce, which leaves TERM_TAC with
+  # `dataSem_v_size v1' < list_size dataSem_v_size x2`
+  ('data_to_word_memoryProof', 'vb_eq_size_def'):
+    'MEASURE (\\x. match x with'
+    ' INL (refs,v1,v2) -> dataSem_v_size v1'
+    ' | INR (refs,l1,l2) -> list_size dataSem_v_size l1)',
   ('bvl_to_bvi', 'global_count_sing_def'):
     'MEASURE (\\x. match x with INL e -> bvl_exp_size e'
     ' | INR es -> list_size bvl_exp_size es)',
