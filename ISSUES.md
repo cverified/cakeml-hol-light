@@ -1324,3 +1324,42 @@ let IS_PREFIX = new_definition
 The rule it illustrates: a name that HOL4 resolves to a constant of
 a library theory and the port does not have is read as a variable
 and nothing says so, which `tools/stmtfree.py` is the check for.
+
+## Five names that a lemma of the port's own takes from a theorem
+
+When `tools/stmts.py` gave `tools/attrs.py` and
+`tools/stmtshape.py` their statements back (they had looked for
+`cake_theorem`, so they had reported `0 statements of the port`
+since phase two ended), the two checks found seven statements to
+read, and all seven are the same thing: a file of the port binds
+one name to two theorems, because an override table adds a lemma
+of its own before the proof that needs it and gives it the name
+that the source has for a theorem of its own.  OCaml takes the
+later binding from there on, so the proofs on either side of the
+second one use what they mean to use and the port loads -- but the
+name says two things in one file, and the checks cannot pair a
+statement with its source.
+
+The five, with the line of each in its file of the port and which
+of the two the generator wrote (the one with the attributes of the
+source over it):
+
+| name | the port's own | the source's | what to do |
+|---|---|---|---|
+| `ref_edge_ValueArray` | 18311 | 10438 `[local]` | the same statement, and the source's stands first: drop the copy |
+| `ref_edge_Thunk` | 19245 | 10447 `[local]` | the same: drop the copy |
+| `dest_thunk_insert_MutBlock` | 16028 | 30568 `[local]` | the copy is the general form (the fourth component of the block may change) and stands first, so it keeps a name of its own |
+| `data_up_to_alt` | 6399 | 12569 `[local]` | another statement altogether (what is below the unused space after a store, against the source's two clauses of `data_up_to`), so it keeps a name of its own |
+| `exp_size_get_bin_args` | `bvi_tailrec` 235 | `bvi_tailrec` 181 | the copy is the source's statement proved, where the source's own place still has the `CHEAT_TAC` of phase two: the proof belongs in the store, under the name of the source, and the copy goes |
+
+The other two of the seven are not a lemma of the port's own:
+`dataProps$initial_state_with_simp` and
+`pegComplete$option_case_eq`, where the port states a theorem of
+one name twice and the source binds it once.
+
+The rule it illustrates: a lemma that the port adds of its own
+needs a name that no theorem of the file has, or the file says two
+things with one name.  `tools/attrs.py` is the check -- it counts
+the statements of a name against the bindings the source has of
+it -- and it reports the lemmas of the port's own apart (296 of
+them) so that the ones with a name of the source stand out.
