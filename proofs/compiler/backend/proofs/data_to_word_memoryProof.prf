@@ -17781,7 +17781,7 @@
              let hpg = el 1 (snd (strip_comb (snd gl))) in
              let he = rand (lhand (rand hpg)) in
              ACCEPT_TAC (MATCH_MP (ISPECL [ha; x; he; hb]
-                            data_up_to_alt) (CONJ ev isd)))])
+                            data_up_to_written) (CONJ ev isd)))])
       else if is_eq w && hd_is "heap_lookup" (lhand w) then
         REWRITE_TAC[heap_lookup_alt_at_start]
       else if is_neg w && hd_is "isSomeDataElement" (rand w) then

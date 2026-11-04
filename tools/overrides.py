@@ -4891,7 +4891,7 @@ let v_inv_BlockRep_upd =
 
 (* an insert of a mutable block where one was leaves what a value
    says of a thunk *)
-let dest_thunk_insert_MutBlock = prove
+let dest_thunk_insert_MutBlock_any = prove
  (cake_as_vars (fun () ->
     `sptree_lookup ptr refs = SOME (bvlSem_MutBlock tag fin l cv r)
      ==> dest_thunk v (insert ptr (MutBlock tag fin2 l h r) refs) =
@@ -4978,7 +4978,7 @@ let MB_trans = prove
           (CONJ (MATCH_MP v_inv_BlockRep_upd
                    (CONJ vi (CONJ hl (CONJ tfc tr)))) lk)));
       GEN_TAC THEN
-      REWRITE_TAC[MATCH_MP dest_thunk_insert_MutBlock lk] THEN
+      REWRITE_TAC[MATCH_MP dest_thunk_insert_MutBlock_any lk] THEN
       DISCH_THEN ACCEPT_TAC;
       REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[lookup_insert]]));;
 
@@ -6903,7 +6903,7 @@ let heap_store_rel_alt = prove
 
 (* what is below the unused space after the other store: what was
    below it and the element written *)
-let data_up_to_alt = prove
+let data_up_to_written = prove
  (`!ha x he hb.
      EVERY isDataElement ha /\ isDataElement x
      ==> data_up_to (heap_length ha + el_length x)
@@ -7495,17 +7495,6 @@ let gc_kind_store_unused = prove
       REPEAT CONJ_TAC THEN
       TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC))]));;
 
-(* the edges that the references gain when an array of values is
-   written at a key they did not have leave that key and land
-   inside the values *)
-let ref_edge_ValueArray = prove
- (cake_as_vars (fun () ->
-    `ref_edge (sptree_insert ptr (ValueArray xs) refs) x y =
-     (if x = ptr then MEM y (get_refs (Block 0 ARB xs))
-      else ref_edge refs x y)`),
-  REWRITE_TAC[ref_edge_def; lookup_insert] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
-  REWRITE_TAC[]);;
 
 (* [local] *)
 let reachable_refs_new_ref_lemma = prove
@@ -7731,16 +7720,10 @@ let v_inv_new_Thunk_insert = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_new_Thunk_insert_lemma]));;
 
-(* the edges that the references gain when a thunk is written at a
-   key they did not have leave that key and land at its value *)
-let ref_edge_Thunk = prove
- (cake_as_vars (fun () ->
-    `ref_edge (sptree_insert ptr (Thunk ev h) refs) x y =
-     (if x = ptr then MEM y (get_refs (Block 0 ARB [h]))
-      else ref_edge refs x y)`),
-  REWRITE_TAC[ref_edge_def; lookup_insert] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
-  REWRITE_TAC[]);;
+(* the edges that a reference gains when it is written are
+   ref_edge_ValueArray and ref_edge_Thunk, theorems of the
+   source that this file states before this, so the proofs
+   below use those and the port does not prove them twice *)
 
 (* [local] *)
 let reachable_refs_new_thunk_lemma = prove
@@ -11168,7 +11151,7 @@ if concl stackSem_fix_clock_IMP <> `T` then
   ('bvi_tailrec', 'term_ok_int_def'): r'''
 let _ = size_thms "bvi_exp";;
 
-let exp_size_get_bin_args = prove
+let exp_size_get_bin_args_term = prove
  (`!x x1 x2. get_bin_args x = SOME (x1,x2)
              ==> bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
   GEN_TAC THEN
@@ -11185,7 +11168,8 @@ let exp_size_get_bin_args = prove
   REWRITE_TAC(all_size_thms()) THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN ARITH_TAC);;
 
-cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
+cake_term_facts := exp_size_get_bin_args_term ::
+  (!cake_term_facts);;
 ''',
 }
 
