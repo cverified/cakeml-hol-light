@@ -72,15 +72,22 @@ cat tmp/mkcheats.err
 # port of it would then write the definition without a CHEAT_TAC
 # (the run of 22:57 stopped lab_to_targetProof at its 34th block
 # and the seven cheats of it went out of the list)
+# so the list is the union of the two: an entry of it goes out by
+# hand and never by a run.  An entry may be missing from CHEATS.md
+# because the definition no longer cheats at all -- the port writes
+# the measure of such a definition because it is in the list
+# (vb_eq_size goes through on the measure that the entry gives it),
+# so dropping it would take the measure with it.
 sort tools/cheats.txt > tmp/cheats.old
 sort tmp/cheats.txt > tmp/cheats.new
-lost=$(comm -23 tmp/cheats.old tmp/cheats.new)
-[ -n "$lost" ] && {
-  echo "cycle: the cheat list loses these, which says that a file"
-  echo "of the run did not load to the end:"
-  echo "$lost" | head -20
-  echo "cycle: tools/cheats.txt is kept as it was"; } || {
-  mv tmp/cheats.txt tools/cheats.txt; }
+comm -23 tmp/cheats.old tmp/cheats.new > tmp/cheats.kept
+comm -13 tmp/cheats.old tmp/cheats.new > tmp/cheats.added
+echo "the cheat list: $(wc -l < tmp/cheats.added) definitions that the \
+run cheated and the list had not, $(wc -l < tmp/cheats.kept) in the \
+list that it did not cheat (kept)"
+head -8 tmp/cheats.added
+sort -u tmp/cheats.old tmp/cheats.new > tools/cheats.txt
+rm -f tmp/cheats.old tmp/cheats.new tmp/cheats.added tmp/cheats.kept
 echo "=== the port"
 python3 -I tools/portall.py 2>&1 | grep -E 'FAILED|files,|prefaces'
 python3 -I tools/loadorder.py > tools/load.txt

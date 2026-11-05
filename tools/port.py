@@ -23,13 +23,31 @@ EMITTED_DEFS = []
 # HOL4 for these, so that what is left to do is visible in the
 # file and local to it (tools/mkcheats.py makes the list from
 # ml/CHEATS.md, which a run writes)
+# The name in an entry is the name of the block of the HOL4 source
+# (`Definition compile_def:` of bvi_to_data is `bvi_to_data
+# compile_def`), which is what the port looks a definition up by.
+# An entry may name the binding that the port makes of it instead
+# (`bvi_to_data bvi_to_data_compile_def`), because tools/mkcheats.py
+# reads ml/CHEATS.md, which has the constants of the port and not
+# the names of the source: the theory in front of such a name comes
+# off, so that both spellings find the definition.  Twenty entries
+# were the second kind and found nothing, which left their
+# definitions to the machinery -- the measure of one of them timed
+# out for thirty seconds and the definition was assumed in the end
+# all the same, with "timeout in measure" for a reason.
 def _cheat_set():
   f = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                    'cheats.txt')
+  out = set()
   try:
-    return set(tuple(l.split()) for l in open(f) if l.split())
+    rows = [l.split() for l in open(f) if l.split()]
   except OSError:
-    return set()
+    return out
+  for r in rows:
+    out.add(tuple(r))
+    if len(r) == 2 and r[1].startswith(r[0] + '_'):
+      out.add((r[0], r[1][len(r[0]) + 1:]))
+  return out
 
 CHEATS = _cheat_set()
 hterm.NAME_MAP = overrides.NAME_MAP

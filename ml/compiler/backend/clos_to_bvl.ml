@@ -471,8 +471,11 @@ let force_thunk_code_def = cake_define
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let clos_to_bvl_compile_exps_def = cake_define_list_wf
-  `MEASURE (list_size closLang_exp_size o FST o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let clos_to_bvl_compile_exps_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o FST o SND)`)
+  CHEAT_TAC
   [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
    `clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs) aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux

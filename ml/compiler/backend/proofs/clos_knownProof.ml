@@ -1022,8 +1022,11 @@ let _ = size_thms "closSem_v";;
    the names that the port gives the constants *)
 (* HOL4 clos_knownProofScript.sml:2614-2617: the tactic that proves
    the termination *)
-let clos_knownProof_v_rel_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let clos_knownProof_v_rel_def = cake_define_list_try_tac (fun () ->
   `MEASURE (closSem_v_size o FST o SND o SND)`)
+  CHEAT_TAC
   [`clos_knownProof_v_rel c g (closSem_Number i:closSem_v) v <=> v =
   (closSem_Number i:closSem_v)`;
    `clos_knownProof_v_rel c g (Word64 w:closSem_v) v <=> v = (Word64

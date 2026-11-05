@@ -141,7 +141,9 @@ let is_valid_mapped_write_def = cake_define
            (Inst (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md) else F)`;;
 
-let targetSem_evaluate_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let targetSem_evaluate_def = cake_define_cheat CHEAT_TAC
   `targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state)
   k (ms:'a) =
      (if k = 0 then (TimeOut,ms,ffi) else

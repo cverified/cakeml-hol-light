@@ -136,13 +136,15 @@ let flatSem_ctor_same_type_def = cake_define
         | (_3,_4) -> F`;;
 hol4_overload "ctor_same_type" "flatSem_ctor_same_type";;
 
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let flatSem_do_eq_def = cake_define_list
+let flatSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`flatSem_do_eq (Litv l1:flatSem_v) (Litv l2:flatSem_v) =
        (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
          Eq_type_error)`;
@@ -665,9 +667,12 @@ let _ = size_thms "flatLang_pat";;
    the names that the port gives the constants *)
 (* HOL4 flatSemScript.sml:704-708: the tactic that proves the
    termination *)
-let flatSem_pmatch_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flatSem_pmatch_def = cake_define_list_try_tac (fun () ->
   `inv_image (<) (\x. match x with INL (x,p,y,z) -> flatLang_pat_size p
      | INR (x,ps,y,z) -> list_size flatLang_pat_size ps)`)
+  CHEAT_TAC
   [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
         (Match ((x,v') :: bindings))`;
    `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
@@ -847,7 +852,9 @@ if concl flatSem_fix_clock_IMP <> `T` then
    the names that the port gives the constants *)
 (* HOL4 flatSemScript.sml:932-945: the tactic that proves the
    termination *)
-let flatSem_evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flatSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `inv_image ((<) LEX (<))
           (\x. match x with INL (env,s,exps) -> (state_clock s,SUM
             (MAP
@@ -857,6 +864,7 @@ let flatSem_evaluate_def = cake_define_list_try (fun () ->
               (s,ds))) ->
             (state_clock s,SUM (MAP dec_alt_size ds) + LENGTH ds +
               1))`)
+  CHEAT_TAC
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)
   (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;

@@ -2168,8 +2168,11 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3725-3731: the tactic that proves the
    termination *)
-let closProps_get_code_labels_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let closProps_get_code_labels_def = cake_define_list_try_tac (fun () ->
   `MEASURE closLang_exp_size`)
+  CHEAT_TAC
   [`closProps_get_code_labels (Var _394 _395:closLang_exp) = {}`;
    `closProps_get_code_labels (If _397 e1 e2 e3:closLang_exp) =
         closProps_get_code_labels e1 UNION

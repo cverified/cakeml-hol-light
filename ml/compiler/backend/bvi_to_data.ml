@@ -94,7 +94,9 @@ let iAssign_def = cake_define
 
 let _ = do_list hide_constant ["tail"];;
 
-let bvi_to_data_compile_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let bvi_to_data_compile_def = cake_define_list_cheat CHEAT_TAC
   [`bvi_to_data_compile (n:num) (env:num list) tail live [] =
         (dataLang_Skip,([]:num list),n)`;
    `bvi_to_data_compile (n:num) (env:num list) tail live (x :: y :: xs)

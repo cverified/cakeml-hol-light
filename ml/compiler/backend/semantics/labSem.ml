@@ -544,8 +544,11 @@ let share_mem_op_def = cake_define_list
 
 (* HOL4 labSemScript.sml:610-617: the tactic that proves the
    termination *)
-let labSem_evaluate_def = cake_define_wf
-  `MEASURE (\s. state_clock s)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let labSem_evaluate_def = cake_define_try_tac (fun () ->
+  `MEASURE (\s. state_clock s)`)
+  CHEAT_TAC
   `labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      (if labSem_state_clock s = 0 then (TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _46 _47) ->

@@ -100,8 +100,11 @@ let read_char_as_3digits_reduces = prove
 
 (* HOL4 lexer_funScript.sml:122-126: the tactic that proves the
    termination *)
-let lexer_fun_read_string_def = cake_define_wf
-  `MEASURE (LENGTH o FST)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let lexer_fun_read_string_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o FST)`)
+  CHEAT_TAC
   `lexer_fun_read_string str s (loc:locn) =
      (if str = "" then (ErrorS,loc,"") else
      if HD str = (CHR 34) then (StringS s,loc,TL str) else

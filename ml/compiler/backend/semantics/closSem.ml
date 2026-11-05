@@ -134,13 +134,15 @@ let closSem_Boolv_def = cake_define
   false_tag) [])`;;
 hol4_overload "Boolv" "closSem_Boolv";;
 
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let closSem_do_eq_def = cake_define_list
+let closSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`closSem_do_eq x y =
          (match x with closSem_Number i ->
              (match y with closSem_Number j -> Eq_val (i = j) | _3
@@ -961,13 +963,16 @@ if concl closSem_fix_clock_IMP <> `T` then
    the names that the port gives the constants *)
 (* HOL4 closSemScript.sml:828-843: the tactic that proves the
    termination *)
-let closSem_evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let closSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
                       (\x. match x with INL (xs,env,s) ->
                         (state_clock
                         s,list_size closSem_exp_alt_size xs,0) | INR
                         (l,f,args,s) -> (state_clock s,0,LENGTH
                           args)))`)
+  CHEAT_TAC
   [`closSem_evaluate ([],(env:closSem_v
   list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =

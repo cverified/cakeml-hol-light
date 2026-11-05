@@ -269,8 +269,11 @@ let next_sym_eq = prove
 
 (* HOL4 lexer_implScript.sml:344-347: the tactic that proves the
    termination *)
-let lexer_impl_lex_aux_def = cake_define_wf
-  `MEASURE (LENGTH o FST o SND o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let lexer_impl_lex_aux_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o FST o SND o SND)`)
+  CHEAT_TAC
   `lexer_impl_lex_aux acc (d:num) input loc =
      (match next_token input loc with
        // case: end of input

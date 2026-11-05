@@ -268,7 +268,9 @@ let op_sets_globals_EX = prove
  (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
   CHEAT_TAC);;
 
-let flat_pattern_compile_exp_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flat_pattern_compile_exp_def = cake_define_list_cheat CHEAT_TAC
   [`flat_pattern_compile_exp cfg (flatLang_Var_local t vid) =
         (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =

@@ -132,13 +132,15 @@ let isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "bvlSem_isClos";;
 
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of the source overlap -- a later one says
    Eq_type_error of a pair that an earlier one has already given a
    value -- and HOL4 takes the first that matches, so the port
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let bvlSem_do_eq_def = cake_define_list
+let bvlSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`bvlSem_do_eq refs x2 x3 =
          match (x2,x3) with
            ((bvlSem_CodePtr _4:bvlSem_v),_5) -> Eq_type_error
@@ -836,9 +838,12 @@ if concl bvlSem_fix_clock_IMP <> `T` then
 let _ = size_thms "bvl_exp";;
 (* HOL4 bvlSemScript.sml:660-668: the tactic that proves the
    termination *)
-let bvlSem_evaluate_def = cake_define_wf
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let bvlSem_evaluate_def = cake_define_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (list_size bvl_exp_size))
-                            (\(xs,env,s). (state_clock s,xs)))`
+                            (\(xs,env,s). (state_clock s,xs)))`)
+  CHEAT_TAC
   `(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s)) /\
    (bvlSem_evaluate (x :: y :: xs,env,s) =
       (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval

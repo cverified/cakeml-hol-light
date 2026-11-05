@@ -1,4 +1,5 @@
 mlint_int_gcd
+fromString_unsafe
 size_of_clash_tree
 size_of_live_tree
 the_Litv_IntLit

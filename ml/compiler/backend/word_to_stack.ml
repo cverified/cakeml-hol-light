@@ -470,7 +470,9 @@ let copy_ret_def = cake_define
        (SeqStackFree n kont))`;;
 
 (* Return should be 2,4,6,...,2k,2k+1,... *)
-let word_to_stack_comp_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_to_stack_comp_def = cake_define_cheat CHEAT_TAC
   `word_to_stack_comp conf perf x3 bs kf =
         match x3 with
           (Skip:'a wordLang_prog) -> ((Skip:'a stackLang_prog),bs)

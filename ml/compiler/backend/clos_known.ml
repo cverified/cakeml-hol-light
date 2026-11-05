@@ -149,7 +149,9 @@ let get_size_sc_SOME = prove
   clos_known_get_size exp = n`,
   CHEAT_TAC);;
 
-let clos_known_free_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let clos_known_free_def = cake_define_list_cheat CHEAT_TAC
   [`clos_known_free [] = ([],db_vars_Empty)`;
    `clos_known_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_known_free [x] in

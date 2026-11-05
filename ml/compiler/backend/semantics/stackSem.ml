@@ -411,8 +411,11 @@ let full_read_bitmap_def = cake_define
    the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:330-334: the tactic that proves the
    termination *)
-let stackSem_enc_stack_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let stackSem_enc_stack_def = cake_define_list_try_tac (fun () ->
   `MEASURE (LENGTH o SND)`)
+  CHEAT_TAC
   [`stackSem_enc_stack bitmaps [] = NONE`;
    `stackSem_enc_stack bitmaps (w :: ws) =
          (if w = wordLang_Word (n2w 0) then (if ws = [] then SOME []
@@ -429,8 +432,11 @@ hol4_overload "enc_stack" "stackSem_enc_stack";;
    the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:349-354: the tactic that proves the
    termination *)
-let stackSem_dec_stack_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let stackSem_dec_stack_def = cake_define_list_try_tac (fun () ->
   `MEASURE (LENGTH o SND o SND)`)
+  CHEAT_TAC
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
    `stackSem_dec_stack bitmaps ts (w :: ws) =
         (if w = wordLang_Word (n2w 0) then (if ts = [] /\ ws = []
@@ -855,10 +861,13 @@ let _ = size_thms "stackLang_prog";;
    the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:1022-1029: the tactic that proves the
    termination *)
-let stackSem_evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let stackSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
                               (\(xs,(s:('a,'c,'ffi)stackSem_state)).
                               (stackSem_state_clock s,xs)))`)
+  CHEAT_TAC
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =

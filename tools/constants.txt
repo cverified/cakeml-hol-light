@@ -451,7 +451,6 @@ isClosure
 flatProps_esgc_free
 flatProps_elist_globals
 flatProps_set_globals
-flatProps_set_globals_mutual
 flatProps_op_gbag
 flatProps_eval_sim
 bind_locals_list
@@ -646,6 +645,7 @@ data_to_word_memoryProof_fix_clock_rec
 word_header
 vb_eq_size_list
 vb_eq_size
+vb_eq_size_mutual
 elements_list
 v_depth
 v_same_type
@@ -1852,6 +1852,7 @@ dataSem_list_to_v_rec
 dataSem_do_install
 dataSem_do_eq_list
 dataSem_do_eq
+dataSem_do_eq_mutual
 dataSem_isClos
 dataSem_v_to_words
 dataSem_v_to_bytes
@@ -1863,6 +1864,7 @@ stack_consumed
 eq_code_stack_max
 vs_depth_list
 vs_depth
+vs_depth_mutual
 vb_size
 space_consumed
 dataSem_v_to_list
@@ -2973,6 +2975,7 @@ bvlSem_v_to_words
 bvlSem_v_to_bytes
 bvlSem_do_eq_list
 bvlSem_do_eq
+bvlSem_do_eq_mutual
 bvlSem_isClos
 bvlSem_list_to_v
 bvlSem_v_to_list
@@ -6466,10 +6469,6 @@ bvl_const_compile_list
 bvl_const_compile_list_rec
 bvl_const_compile_sing_rec
 bvl_const_compile
-bvl_const_compile_el
-bvl_const_compile_el_list
-bvl_const_compile_el_list_rec
-bvl_const_compile_el_rec
 bvl_const_delete_var
 bvl_const_extract_list
 bvl_const_extract
@@ -8181,6 +8180,7 @@ option_size
 pair_size
 list_size
 LAST_N
+IS_PREFIX
 IS_SUFFIX
 IS_SUBLIST
 isPREFIX
@@ -8214,6 +8214,7 @@ SNOC
 SUM
 FLAT
 FOLDL
+hol4_TL
 OPT_MMAP
 some
 OPTION_GUARD
@@ -8322,7 +8323,6 @@ bit
 bitvector
 mk_word
 bitval
-list_size_T
 superadmissible
 tailadmissible
 admissible

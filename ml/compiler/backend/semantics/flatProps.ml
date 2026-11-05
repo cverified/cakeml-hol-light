@@ -457,9 +457,12 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 flatPropsScript.sml:819-833: the tactic that proves the
    termination *)
-let flatProps_set_globals_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flatProps_set_globals_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\a. match a with INL e -> flatLang_exp_size e | INR es ->
      list_size flatLang_exp_size es)`)
+  CHEAT_TAC
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)

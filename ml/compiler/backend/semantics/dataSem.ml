@@ -595,13 +595,15 @@ let dataSem_isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "dataSem_isClos";;
 
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of the source overlap -- a later one says
    Eq_type_error of a pair that an earlier one has already given a
    value -- and HOL4 takes the first that matches, so the port
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let dataSem_do_eq_def = cake_define_list
+let dataSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`dataSem_do_eq refs x2 x3 =
          match (x2,x3) with
            ((CodePtr _50:dataSem_v),_51) -> Eq_type_error
@@ -977,8 +979,11 @@ hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
    each block produced by the finalisation gets a fresh time stamp *)
 (* HOL4 dataSemScript.sml:854-858: the tactic that proves the
    termination *)
-let dataSem_finalise_cons_def = cake_define_wf
-  `MEASURE (sptree_size o FST o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let dataSem_finalise_cons_def = cake_define_try_tac (fun () ->
+  `MEASURE (sptree_size o FST o SND)`)
+  CHEAT_TAC
   `dataSem_finalise_cons v refs ts =
         match v with
           (RefPtr b ptr:dataSem_v) ->
@@ -1685,9 +1690,12 @@ let _ = size_thms "dataLang_prog";;
    the names that the port gives the constants *)
 (* HOL4 dataSemScript.sml:1486-1495: the tactic that proves the
    termination *)
-let dataSem_evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let dataSem_evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE dataLang_prog_size)
                               (\(xs,s). (state_clock s,xs)))`)
+  CHEAT_TAC
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =
