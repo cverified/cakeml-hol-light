@@ -1333,6 +1333,25 @@ def _int_result_fns():
 INT_RESULT_FNS = _int_result_fns()
 
 
+def _port_constants():
+  """the name of every constant of the port (tools/constants.txt,
+     which tools/bin/intargs writes out of a session): an
+     application of one that is not in tools/intres.txt is of
+     another type than int, so a numeral beside it is a numeral of
+     that type and not &n"""
+  out = set()
+  f = os.path.dirname(os.path.abspath(__file__)) + '/constants.txt'
+  try:
+    for l in open(f):
+      if l.strip(): out.add(l.strip())
+  except OSError:
+    pass
+  return out
+
+
+PORT_CONSTANTS = _port_constants()
+
+
 def int_arg_pos(nm):
   """the arguments of a constant whose type is int"""
   return INT_ARGS_OF.get(nm, (set(), {}))[0]
@@ -1824,6 +1843,34 @@ class Printer:
       return self.intvar(e.e)
     return False
 
+  def notint(self, e):
+    """does this expression hold something that is not an integer?
+       It does where it is an application of a constant of the port
+       whose result is of another type: a numeral beside such an
+       application is a numeral of that type, whatever the type of
+       the term that the numeral stands in (mlint's
+       fromString_unsafe is an integer, and the strlen str = 0 and
+       the strsub str 0 of its body are of natural numbers)"""
+    while e.kind in ('paren', 'typed', 'rawtyped'): e = e.e
+    if e.kind != 'app': return False
+    h, args = strip_app(e)
+    if h.kind != 'id' or not args: return False
+    n = self.ctx.name(h.name)
+    # an element of a container has the type of its elements,
+    # which the name of the container's function does not say
+    # (linear_scanProof's 0 < EL i l, whose l is a list of
+    # integers)
+    if n in ELEM_FUNS: return False
+    return (n in PORT_CONSTANTS and n not in INT_RESULT_FNS
+            and not self.intvar(e))
+
+  def is_body(self, e):
+    """is this expression the body of a definition rather than
+       something that a comparison compares?"""
+    while e.kind in ('paren', 'typed', 'rawtyped'): e = e.e
+    return e.kind in ('cond', 'case', 'do', 'let', 'quant', 'resq',
+                      'reclit', 'recupd', 'setabs')
+
   def pr0(self, e, prec):
     k = e.kind
     if k == 'id':
@@ -2048,6 +2095,18 @@ class Printer:
       if ((op in NUMCTX or op in ('=', '<>')) and
           (self.intvar(e.l) or self.intvar(e.r))):
         self.ctx.intnums = True
+      # and a numeral next to an application whose result is of
+      # another type is a numeral of that type, which an integer
+      # around the two of them does not change (mlint's
+      # fromString_unsafe is an integer and compares the strlen of
+      # its argument with 0, a natural number).  The equation that
+      # a definition is does not count: its left hand side is the
+      # constant itself, and what tells the two apart is that the
+      # body of a definition is a term that a comparison is not
+      elif ((op in NUMCTX or op in ('=', '<>')) and self.ctx.intnums
+            and (self.notint(e.l) or self.notint(e.r))
+            and not self.is_body(e.l) and not self.is_body(e.r)):
+        self.ctx.intnums = False
       # HOL Light's EXP is of natural numbers, so a power of an
       # integer is &(b EXP n) (dataSem's small_num has 2 ** 61 of
       # an integer); its pow is of a real, so a power of a real is
