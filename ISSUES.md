@@ -947,6 +947,22 @@ port's `++`: the library layer gives the name to HOL Light's
 constant, a file overloads it and gives it back, and the file
 after it has to see the one it was given back to).
 
+One axiom of the port moved when the cut came in, and it moved the
+right way: `compiler/parsing/fromSexp.ml` adds **137** axioms with
+the cut where it added 136 without it (the run of 01:33, the last
+one before every file said its theories).  Loading that file on its
+own closure -- its eleven `needs` and nothing else -- adds 137 as
+well, and the same 137 statements, whether `hol4_ancestors` cuts the
+interface or is made a no-op: with only the file's own closure
+loaded there is hardly anything to cut.  So 137 is what the file
+says by itself, 136 was what the load order of 157 other files made
+of it, and the cut is what makes a run agree with the closure that
+a proof of the file is written against.  That is the whole point of
+it (`bvlProps$evaluate_CONS` is the same disagreement the other way
+round), so the extra axiom is the cut working, not a regression:
+a definition of the file reads what its source says now, and needs
+one assumption more than the reading the load order gave it.
+
 `tools/scope.ml` reads every statement again with the interface cut
 down, to see what the cut would break, and `tools/scope.py` reads
 that against the same reading without the cut: of the 559
