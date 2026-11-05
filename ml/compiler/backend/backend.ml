@@ -41,6 +41,16 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/primTypes.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "backend"
+  ["bvi_to_data"; "bvl_to_bvi"; "clos_to_bvl"; "data_to_word";
+   "flat_to_clos"; "jsonLang"; "lab_to_target"; "presLang";
+   "primTypes"; "source_to_flat"; "source_to_source"; "stack_to_lab";
+   "word_to_stack"; "word_to_word"];;
+
 let _ = do_list hide_constant ["bvl_to_bvi"];;
 
 let backend_config_FIELDS = define_record "backend_config"
@@ -662,3 +672,7 @@ let set_oracle_def = cake_define
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["bvl_to_bvi"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

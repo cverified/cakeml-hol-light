@@ -17,6 +17,13 @@ needs "lib/peg.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "pegSound"
+  ["cmlPEG"; "gram"; "gramProps"];;
+
 (* Set up ML bindings *)
 (* HOL4 pegSoundScript.sml:12: ML code, not ported *)
 
@@ -391,3 +398,7 @@ let peg_sound = prove
             MAP (grammar_TOK ## I) i0 = real_fringe pt ++ MAP
               (grammar_TOK ## I) i)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

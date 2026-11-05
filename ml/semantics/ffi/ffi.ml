@@ -12,6 +12,13 @@
 needs "basis/pure/mlstring.ml";;
 needs "misc/misc.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "ffi"
+  ["misc"; "mlstring"];;
+
 (*
   An oracle says how to perform an FFI call based on its internal
   state, represented by the type variable 'ffi.
@@ -116,3 +123,7 @@ let trace_oracle_def = cake_define
        (if s = s' /\ MAP FST bytes2 = input /\ conf = conf' then
          Oracle_return (THE (LTL io_trace)) (MAP SND bytes2) else
            Oracle_final FFI_failed))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

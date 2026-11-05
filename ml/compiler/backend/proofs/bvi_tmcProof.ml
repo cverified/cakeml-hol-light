@@ -25,6 +25,14 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_tmcProof"
+  ["backend_common"; "bviProps"; "bviSem"; "bvi_tmc"; "bvlSem";
+   "semanticPrimitivesProps"];;
+
 let _ = do_list hide_constant ["all"; "parts"; "vars"];;
 
 (* HOL4 bvi_tmcProofScript.sml:10: the ML values that the definitions
@@ -2090,3 +2098,7 @@ let _ = do_list unhide_constant
   ["all";
    "parts";
    "vars"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

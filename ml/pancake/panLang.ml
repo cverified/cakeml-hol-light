@@ -19,6 +19,13 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 (* for binop and cmp *)
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "panLang"
+  ["asm"; "backend_common"; "mlstring"];;
+
 
 (* for overloading the shift operation *)
 
@@ -435,3 +442,7 @@ let inlinable_def = cake_define
       match x1 with
         Function fi -> fun_decl_inline fi
       | _64 -> F`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

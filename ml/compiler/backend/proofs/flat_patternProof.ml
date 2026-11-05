@@ -26,6 +26,15 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flat_patternProof"
+  ["backendProps"; "backend_common"; "ffi"; "flatLang"; "flatProps";
+   "flatSem"; "flat_pattern"; "misc"; "mlstring"; "pattern_semantics";
+   "semanticPrimitives"; "semanticPrimitivesProps"];;
 (* HOL4 ancestors outside the port: bag *)
 
 (* HOL4 flat_patternProofScript.sml:14: ML code, not ported *)
@@ -993,3 +1002,7 @@ let compile_exp_no_Mat = prove
 let compile_decs_no_Mat = prove
  (`!decs. no_Mat_decs (MAP (compile_dec cfg) decs)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

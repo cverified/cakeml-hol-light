@@ -21,6 +21,14 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_instProof"
+  ["asm"; "wordConvs"; "wordLang"; "wordProps"; "wordSem";
+   "word_inst"];;
+
 let _ = do_list hide_constant ["C"];;
 
 (* resolve ambiguity between semanticsPrimitives$result and wordSem$result
@@ -388,3 +396,7 @@ let evaluate_three_to_two_reg_prog = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

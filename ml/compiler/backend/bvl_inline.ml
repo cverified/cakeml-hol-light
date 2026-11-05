@@ -18,6 +18,13 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_inline"
+  ["bvl"; "bvl_handle"];;
+
 (* tick_inline -- a function that inlines a function body *)
 
 (* the first pass assumes the termination:
@@ -434,3 +441,7 @@ let bvl_inline_compile_prog_def = cake_define
   `bvl_inline_compile_prog limit' split_seq cut_size prog =
      bvl_inline_compile_inc limit' split_seq cut_size LN prog`;;
 hol4_overload "compile_prog" "bvl_inline_compile_prog";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

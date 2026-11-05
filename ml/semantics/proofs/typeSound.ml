@@ -26,6 +26,16 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "typeSound"
+  ["ast"; "evaluate"; "evaluateProps"; "fpSem"; "namespaceProps";
+   "primSemEnv"; "semanticPrimitives"; "semanticPrimitivesProps";
+   "semantics"; "typeSoundInvariants"; "typeSysProps"; "typeSystem";
+   "weakening"];;
+
 (* HOL4 typeSoundScript.sml:17-32: ML code, not ported *)
 
 let list_rel_flat = prove
@@ -582,3 +592,7 @@ let semantics_type_sound = prove
     type_sound_invariant st env ctMap tenvS tids tenv ==> ~(r =
       ffi_Fail)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

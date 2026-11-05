@@ -45,6 +45,15 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "presLang"
+  ["ast"; "bvi"; "bvl"; "closLang"; "clos_to_bvl"; "dataLang";
+   "displayLang"; "flatLang"; "labLang"; "mlint"; "mloption";
+   "source_to_flat"; "stackLang"; "wordLang"];;
+
 (* basics *)
 
 let empty_item_def = cake_define
@@ -1737,3 +1746,7 @@ val data_prog_tm =
 val _ = data_to_strs data_prog_tm names_tm |> print_strs
 
 *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

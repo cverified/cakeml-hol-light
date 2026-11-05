@@ -25,6 +25,13 @@ needs "lib/term.ml";;
 needs "lib/unifDef.ml";;
 needs "lib/walk.ml";;
 needs "lib/walkstar.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "unify"
+  ["infer_t"];;
 (* HOL4 ancestors outside the port: unifProps transfer cps *)
 
 hol4_overload "++" "OPTION_CHOICE";;
@@ -1621,3 +1628,7 @@ let t_compat_eqs_t_unify = prove
   CHEAT_TAC);;
 
 hol4_only "++" "APPEND";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

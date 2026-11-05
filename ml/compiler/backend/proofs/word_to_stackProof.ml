@@ -38,6 +38,14 @@ needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 (* for extend_with_resource_limit *)
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_to_stackProof"
+  ["backend_common"; "mllist"; "semanticsProps"; "stackLang";
+   "stackProps"; "stackSem"; "wordProps"; "wordSem"; "word_to_stack"];;
+
 let _ = do_list hide_constant ["every"; "fv"];;
 
 (* this file reads the name of a record field as a variable and
@@ -3599,5 +3607,6 @@ let _ = do_list unhide_constant
   ["every";
    "fv"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

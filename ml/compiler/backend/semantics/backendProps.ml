@@ -13,6 +13,13 @@
 needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "backendProps"
+  ["misc"];;
+
 let state_cc_def = cake_define
   `state_cc f cc =
      (\(state,cfg) prog.
@@ -355,3 +362,7 @@ let OPTION_MAP2_MAX_ASSOC = prove
  (`OPTION_MAP2 MAX x (OPTION_MAP2 MAX y z) =
    OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) z`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

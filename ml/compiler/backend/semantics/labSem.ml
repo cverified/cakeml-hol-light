@@ -27,6 +27,13 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "labSem"
+  ["labLang"; "targetSem"; "wordSem"];;
+
 let word8_loc_INDUCT,word8_loc_RECURSION = define_datatype
   "word8_loc = Byte (word8) | LocByte (num) (num) (num)";;
 
@@ -537,11 +544,8 @@ let share_mem_op_def = cake_define_list
 
 (* HOL4 labSemScript.sml:610-617: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let labSem_evaluate_def = cake_define_try_tac (fun () ->
-  `MEASURE (\s. state_clock s)`)
-  CHEAT_TAC
+let labSem_evaluate_def = cake_define_wf
+  `MEASURE (\s. state_clock s)`
   `labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      (if labSem_state_clock s = 0 then (TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _46 _47) ->
@@ -697,3 +701,7 @@ let labSem_semantics_def = cake_define
             (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
               (SND (evaluate (state_clock_fupd (K k) s)))))) UNIV)))`;;
 hol4_overload "semantics" "labSem_semantics";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

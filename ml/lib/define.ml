@@ -1913,8 +1913,29 @@ let define_match tm =
    same, so the port gives the constants of such a name different
    names and overloads the name that HOL4 uses with all of them. *)
 
+(* The theory of every overload: the file that registers one is the
+   port of a theory, and it says which one (hol4_ancestors, in
+   ml/lib/theorem.ml) before it registers anything.  HOL4 reads a
+   name as the constant of a theory that the ancestry of the file
+   has, so a file reads its statements with the overloads of the
+   theories out of its scope taken out of the interface -- and this
+   is what says which those are.  It is what the file announced and
+   not a guess by the name of the constant, which does not say the
+   theory: backend_common defines bvl_to_bvi_namespaces. *)
+
+let the_thy_loading = ref "";;
+
+let the_overload_thy = ref ([]:((string * string) * string) list);;
+
+let note_overload_thy name cname =
+  if !the_thy_loading <> "" &&
+     not (can (assoc (name,cname)) (!the_overload_thy)) then
+    the_overload_thy :=
+      ((name,cname),!the_thy_loading) :: (!the_overload_thy);;
+
 let hol4_overload name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
+  note_overload_thy name cname;
   overload_interface(name,mk_mconst(cname,get_const_type cname));;
 
 (* HOL4's add_numeral_form makes & an injection of the type of the
@@ -1938,6 +1959,7 @@ let hol4_numeral_form cname =
 
 let hol4_overload_last name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
+  note_overload_thy name cname;
   the_interface :=
     !the_interface @ [(name,(cname,get_const_type cname))];;
 

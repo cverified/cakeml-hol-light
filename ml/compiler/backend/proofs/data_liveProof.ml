@@ -17,6 +17,13 @@ needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "data_liveProof"
+  ["dataProps"; "dataSem"; "data_live"];;
+
 hol4_overload "get_vars" "dataSem_get_vars";;
 hol4_overload "cut_env" "dataSem_cut_env";;
 
@@ -225,3 +232,7 @@ let get_code_labels_compile = prove
  (`!x y. dataProps_get_code_labels (FST (compile x y)) SUBSET
   dataProps_get_code_labels x`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

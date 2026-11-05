@@ -20,6 +20,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_letopProof"
+  ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_letop"];;
+
 
 (* HOL4 clos_letopProofScript.sml:11: ML code, not ported *)
 
@@ -428,3 +435,7 @@ let let_op_get_code_labels = prove
  (`!es. MAP closProps_get_code_labels (clos_letop_let_op es) = MAP
   closProps_get_code_labels es`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -13,6 +13,13 @@ needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "arm8_config"
+  ["asmProps"; "asmSem"; "backend"];;
 (* HOL4 ancestors outside the port: arm8_target *)
 
 let arm8_names_def = cake_define
@@ -56,3 +63,7 @@ let arm8_backend_config_def = cake_define
                 (mk_stack_to_lab_config arm8_names F F)
                 (mk_lab_to_target_config LN [] 0 5 NONE [] 104729) []
                 default_tap_config []`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

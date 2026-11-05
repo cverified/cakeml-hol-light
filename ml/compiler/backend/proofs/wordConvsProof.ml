@@ -28,6 +28,15 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "wordConvsProof"
+  ["wordConvs"; "wordLang"; "word_alloc"; "word_copy"; "word_cse";
+   "word_elim"; "word_inst"; "word_remove"; "word_simp";
+   "word_to_word"; "word_unreach"];;
+
 let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
 
 (***
@@ -1518,3 +1527,7 @@ let _ = do_list unhide_constant
   ["C";
    "comp";
    "dummy"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

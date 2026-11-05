@@ -20,6 +20,14 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "pattern_comp"
+  ["ast"; "pattern_common"; "pattern_exh"; "pattern_semantics";
+   "semanticPrimitives"];;
+
 (* moving constant patterns up *)
 
 let is_const_row_def = cake_define
@@ -284,3 +292,7 @@ let comp_thm = prove
      dt_eval refs v (pattern_comp_comp rows) =
        pattern_semantics_match refs rows v`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

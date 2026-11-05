@@ -15,6 +15,13 @@ needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "evaluate"
+  ["ast"; "ffi"; "fpSem"; "namespace"; "semanticPrimitives"];;
+
 (* The semantics is defined here using fix_clock so that HOL4 generates
  * provable termination conditions. However, after termination is proved, we
  * clean up the definition (in HOL4) to remove occurrences of fix_clock. *)
@@ -390,3 +397,7 @@ let fix_clock_evaluate = prove
 
 (* HOL4 evaluateScript.sml:358-362: a theorem that HOL4 states as the
    value of an ML expression: evaluate_decs_ind *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

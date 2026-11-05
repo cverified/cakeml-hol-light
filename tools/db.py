@@ -141,6 +141,8 @@ class Db:
     self.con_argty_thy = {}    # (thy,constructor,index) -> type text
     self._overloaded = None
     self._dist = {}
+    self._announce = {}
+    self._announced = {}
     # the OCaml bindings that the theorems of the port have taken
     # (a theorem keeps its own name where no other theory and no
     # name of HOL Light has it)
@@ -586,6 +588,45 @@ class Db:
     for t in self.deps.get(thy, []):
       if t in ng: continue
       out |= self.ancestors(t)
+    return out
+
+  def announce(self, thy):
+    """the theories that a file of the port says its source can see
+       (ml/lib/theorem.ml, hol4_ancestors), so that the overloads
+       of every other theory come out of the interface while it
+       loads: the ancestors of its own Ancestors blocks whose
+       grammar it has.  The library closes that over the lists that
+       those theories announced themselves, so the list is the
+       Ancestors block of the source and not its closure -- and
+       what the closure of the lists misses comes after it, because
+       the grammar of an ancestor has the names of the ancestors
+       whose grammar _it_ ignores as well (gram_ancestors)."""
+    if thy in self._announce: return self._announce[thy]
+    self._announce[thy] = []
+    ng = set(self.nogram.get(thy, []))
+    direct = [t for t in self.deps.get(thy, [])
+              if t != thy and t not in ng and
+                 self.kind_of_thy.get(t) == 'cakeml']
+    have = set()
+    for t in direct:
+      have.add(t)
+      have |= self.announced(t)
+    want = set(t for t in self.gram_ancestors(thy)
+               if t != thy and self.kind_of_thy.get(t) == 'cakeml')
+    out = sorted(set(direct) | (want - have))
+    self._announce[thy] = out
+    return out
+
+  def announced(self, thy):
+    """the theories that the library makes of such a list: its
+       closure over the lists of the theories in it"""
+    if thy in self._announced: return self._announced[thy]
+    self._announced[thy] = set()
+    out = set()
+    for t in self.announce(thy):
+      out.add(t)
+      out |= self.announced(t)
+    self._announced[thy] = out
     return out
 
   def scope(self, thy):

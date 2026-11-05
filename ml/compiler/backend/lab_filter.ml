@@ -13,6 +13,13 @@
 
 needs "compiler/backend/labLang.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "lab_filter"
+  ["labLang"];;
+
 let not_skip_def = cake_define
   `not_skip l = (match l with labLang_Asm (Asmi (asm_Inst asm_Skip))
   _1 _2 -> F | _3 -> T)`;;
@@ -26,3 +33,7 @@ let filter_skip_MAP = prove
  (`!ls. filter_skip ls = MAP (\x. match x with Section n xs -> Section
   n (FILTER not_skip xs)) ls`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

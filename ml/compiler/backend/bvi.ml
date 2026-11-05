@@ -15,6 +15,13 @@
 needs "compiler/backend/closLang.ml";;
 (* for op *)
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi"
+  ["closLang"];;
+
 (* BVI = bytecode-value intermediate language *)
 
 (* BVI is a stepping stone on the way from BVL to dataLang. BVI is almost
@@ -76,3 +83,7 @@ hol4_overload "Return" "bvi_Return";;
 
 (* HOL4 bviScript.sml:63-64: the overload TailCall, which the port
    expands *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

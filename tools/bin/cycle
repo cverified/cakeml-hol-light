@@ -86,8 +86,9 @@ repl-clone hol-template-cakeml smoke > /dev/null 2>&1
 TIMEOUT=600 repl-step smoke \
   "loadt \"$C/tools/smoke.ml\";;" > /dev/null 2>&1
 tmux capture-pane -p -t hol-smoke -S -40 |
-  grep -E 'SMOKEALL|SMOKECHEAT|SMOKETHM|SMOKEVARS|SMOKELIB|Exception|Error' |
-  tail -6
+  grep -E -e 'SMOKEALL|SMOKECHEAT|SMOKETHM|SMOKEVARS|SMOKELIB' \
+          -e 'SMOKEANCESTORS|Exception|Error' |
+  tail -7
 [ "$NORUN" = 1 ] && exit 0
 echo "=== the next run"
 nohup env TIMEOUT=${TIMEOUT:-2700} CAKE_DEBUG=1 runall \

@@ -28,6 +28,13 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stackSem"
+  ["stackLang"; "wordSem"];;
+
 
 let stackSem_result_INDUCT,stackSem_result_RECURSION = define_datatype
   "stackSem_result = stackSem_Result ('w word_loc) | \
@@ -404,11 +411,8 @@ let full_read_bitmap_def = cake_define
    the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:330-334: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let stackSem_enc_stack_def = cake_define_list_try_tac (fun () ->
+let stackSem_enc_stack_def = cake_define_list_try (fun () ->
   `MEASURE (LENGTH o SND)`)
-  CHEAT_TAC
   [`stackSem_enc_stack bitmaps [] = NONE`;
    `stackSem_enc_stack bitmaps (w :: ws) =
          (if w = wordLang_Word (n2w 0) then (if ws = [] then SOME []
@@ -425,11 +429,8 @@ hol4_overload "enc_stack" "stackSem_enc_stack";;
    the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:349-354: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let stackSem_dec_stack_def = cake_define_list_try_tac (fun () ->
+let stackSem_dec_stack_def = cake_define_list_try (fun () ->
   `MEASURE (LENGTH o SND o SND)`)
-  CHEAT_TAC
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
    `stackSem_dec_stack bitmaps ts (w :: ws) =
         (if w = wordLang_Word (n2w 0) then (if ts = [] /\ ws = []
@@ -854,13 +855,10 @@ let _ = size_thms "stackLang_prog";;
    the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:1022-1029: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let stackSem_evaluate_def = cake_define_list_try_tac (fun () ->
+let stackSem_evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
                               (\(xs,(s:('a,'c,'ffi)stackSem_state)).
                               (stackSem_state_clock s,xs)))`)
-  CHEAT_TAC
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =
@@ -1217,3 +1215,7 @@ let read_stack_space_def = cake_define
 (* clean up *)
 
 (* HOL4 stackSemScript.sml:1154: ML code, not ported *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

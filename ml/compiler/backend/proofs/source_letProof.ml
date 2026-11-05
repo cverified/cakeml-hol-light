@@ -21,6 +21,15 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "source_letProof"
+  ["ast"; "evaluate"; "evaluateProps"; "misc"; "semanticPrimitives";
+   "semanticPrimitivesProps"; "semantics"; "source_evalProof";
+   "source_let"];;
+
 
 (* [local] *)
 let env_c_lemma = prove
@@ -87,3 +96,7 @@ let compile_semantics_oracle = prove
              (adjust_oracle ci (source_let_compile_decs o f)) s)
          env prog outcome`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

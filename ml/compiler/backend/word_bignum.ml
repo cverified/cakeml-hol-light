@@ -25,6 +25,13 @@ needs "lib/sptree.ml";;
 needs "lib/term.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_bignum"
+  ["ast"; "wordLang"];;
+
 (* syntax of a little language *)
 
 let address_INDUCT,address_RECURSION = define_datatype
@@ -657,3 +664,7 @@ let generated_bignum_stubs_def = cake_define
 
 (* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as
    the value of an ML expression: generated_bignum_stubs_eq *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

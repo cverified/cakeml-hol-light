@@ -44,6 +44,13 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "backend_passes"
+  ["backend"; "presLang"];;
+
 
 let any_prog_INDUCT,any_prog_RECURSION = define_datatype
   "any_prog = backend_passes_Source (dec list) | backend_passes_Flat \
@@ -547,3 +554,7 @@ let compile_tap_def = cake_define
 let backend_passes_compile_alt = prove
  (`compile asm_conf c p = FST (compile_tap asm_conf c p)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

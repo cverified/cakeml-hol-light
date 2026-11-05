@@ -28,6 +28,14 @@ needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_to_lab"
+  ["bvl_to_bvi"; "labLang"; "stackLang"; "stack_alloc"; "stack_names";
+   "stack_rawcall"; "stack_remove"; "word_to_stack"];;
+
 (* HOL4 stack_to_labScript.sml:17: the overload Asm, which the port
    expands *)
 
@@ -53,9 +61,7 @@ let find_lab_def = cake_define
 
 hol4_overload "++" "misc_Append";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let stack_to_lab_flatten_def = cake_define_cheat CHEAT_TAC
+let stack_to_lab_flatten_def = cake_define
   `stack_to_lab_flatten t p n m conts breaks =
      (match p with Tick -> (List [(\a. labLang_Asm (Asmi a)) (Inst
        (asm_Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi
@@ -194,3 +200,7 @@ let compile_no_stubs_def = cake_define
          (MAP stack_alloc_prog_comp prog)))`;;
 
 hol4_only "++" "APPEND";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

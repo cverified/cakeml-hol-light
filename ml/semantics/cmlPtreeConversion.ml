@@ -19,6 +19,13 @@ needs "semantics/gram.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/tokenUtils.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "cmlPtreeConversion"
+  ["ast"; "gram"; "namespace"; "tokenUtils"];;
+
 let _ = do_list hide_constant ["assert"; "pmatch"];;
 
 (* handling constructor arities gets very complicated when "open" is
@@ -1374,3 +1381,7 @@ hol4_only "++" "APPEND";;
 let _ = do_list unhide_constant
   ["assert";
    "pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

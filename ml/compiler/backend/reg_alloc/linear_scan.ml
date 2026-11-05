@@ -16,6 +16,13 @@ needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "linear_scan"
+  ["ml_monadBase"; "mllist"; "reg_alloc"];;
+
 hol4_overload "++" "otherwise";;
 
 let live_tree_INDUCT,live_tree_RECURSION = define_datatype
@@ -866,11 +873,8 @@ let partition_moves_def = cake_define_wf
              (swap_moves l (r - 1)) (
              partition_moves l ppiv (r - 1))))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let linear_scan_sort_moves_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(l,r). r - l)`)
-  CHEAT_TAC
+let linear_scan_sort_moves_def = cake_define_wf
+  `MEASURE (\(l,r). r - l)`
   `linear_scan_sort_moves l r =
      (if r <= l + 1 then
        st_ex_return one else
@@ -1113,3 +1117,7 @@ let linear_scan_reg_alloc_def = cake_define
    a comment *)
 
 hol4_only "++" "APPEND";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

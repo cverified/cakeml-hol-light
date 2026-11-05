@@ -16,6 +16,13 @@ needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "reg_alloc"
+  ["ml_monadBase"; "mllist"];;
+
 
 hol4_overload "++" "otherwise";;
 
@@ -1528,3 +1535,7 @@ let reg_alloc_def = cake_define
      reg_alloc_aux alg scost k moves ct forced fs (mk_bij ct)`;;
 
 hol4_only "++" "APPEND";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

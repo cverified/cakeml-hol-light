@@ -23,6 +23,14 @@ needs "lib/sptree.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_inlineProof"
+  ["backendProps"; "bvlProps"; "bvlSem"; "bvl_handleProof";
+   "bvl_inline"];;
+
 (* removal of ticks *)
 
 let bvl_inlineProof_state_rel_def = cake_define
@@ -728,3 +736,7 @@ let compile_prog_get_code_labels = prove
    BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND o
      SND) p))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -40,6 +40,13 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "pattern_exh"
+  ["ast"; "pattern_common"; "pattern_semantics"];;
+
 
 (* -------------------------------------------------------------------- *
    Constructors of values.
@@ -777,3 +784,7 @@ let exh_rows_thm = prove
  (`~(pattern_semantics_match refs rows v = NONE) /\ exh_rows rows ==>
   ~(pattern_semantics_match refs rows v = SOME MatchFailure)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

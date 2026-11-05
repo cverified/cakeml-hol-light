@@ -16,6 +16,13 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "lib/mergesort.ml";;
 needs "lib/sptree.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_knownProps"
+  ["closProps"; "clos_known"];;
+
 (* HOL4 clos_knownPropsScript.sml:10: ML code, not ported *)
 
 (* [simp] *)
@@ -142,3 +149,7 @@ let mk_Ticks_alt = prove
      clos_known_mk_Ticks t (tc + 1) n (closLang_Tick (mk_cons t tc)
      e))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

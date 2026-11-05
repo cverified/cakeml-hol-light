@@ -16,6 +16,13 @@
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_ticks"
+  ["closLang"];;
+
 let clos_ticks_remove_ticks_def = cake_define_list
   [`clos_ticks_remove_ticks [] = []`;
    `clos_ticks_remove_ticks ((x:closLang_exp) :: y :: xs) =
@@ -124,3 +131,7 @@ let remove_ticks_sing_eq = prove
 let clos_ticks_compile_inc_def = cake_define
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;
 hol4_overload "compile_inc" "clos_ticks_compile_inc";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

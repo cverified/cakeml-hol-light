@@ -21,6 +21,13 @@ needs "compiler/backend/stackLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_rawcall"
+  ["data_to_word"; "stackLang"];;
+
 (* collect stack allocation information *)
 
 let seq_stack_alloc_def = cake_define
@@ -95,3 +102,7 @@ let stack_rawcall_compile_def = cake_define
      (let i = collect_info prog LN in
        MAP (\(n,(b:'a stackLang_prog)). (n,comp_top i b)) prog)`;;
 hol4_overload "compile" "stack_rawcall_compile";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

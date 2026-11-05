@@ -18,6 +18,13 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_annotate"
+  ["closLang"; "db_vars"; "misc"];;
+
 (* alt_free calculates free variable annotations, and replaces unused lets with dummies *)
 
 let const_0_def = cake_define
@@ -436,3 +443,7 @@ let compile_inc_eq = prove
  (`clos_annotate_compile_inc (e,aux) = (annotate_list 0
   e,clos_annotate_compile aux)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

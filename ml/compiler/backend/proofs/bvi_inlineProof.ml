@@ -25,6 +25,13 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_inlineProof"
+  ["backendProps"; "bviProps"; "bviSem"; "bvi_inline"];;
+
 let _ = do_list hide_constant ["error"];;
 
 (* [simp] *)
@@ -885,3 +892,7 @@ let compile_prog_semantics = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["error"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -18,6 +18,14 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "type_dCanon"
+  ["ast"; "inferProps"; "namespace"; "namespaceProps";
+   "typeSoundInvariants"; "typeSysProps"; "typeSystem"];;
+
 let _ = do_list hide_constant ["all"; "id"];;
 
 (* TODO: move *)
@@ -669,3 +677,7 @@ let type_d_canon_tenv_ok = prove
 let _ = do_list unhide_constant
   ["all";
    "id"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

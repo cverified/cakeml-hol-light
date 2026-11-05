@@ -71,6 +71,13 @@
 
 needs "lib/alignment.ml";;
 needs "semantics/ast.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "asm"
+  ["ast"];;
 (* HOL4 ancestors outside the port: words *)
 
 (* -- syntax of ASM instruction -- *)
@@ -381,3 +388,7 @@ let is_load_def = cake_define
         | asm_Load16 -> T
         | asm_Load32 -> T
         | _1 -> F`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

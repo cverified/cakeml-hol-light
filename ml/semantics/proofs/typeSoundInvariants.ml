@@ -18,6 +18,14 @@ needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "typeSoundInvariants"
+  ["ast"; "namespace"; "namespaceProps"; "semanticPrimitives";
+   "typeSystem"];;
+
 let store_t_INDUCT,store_t_RECURSION = define_datatype
   "store_t = Ref_t (t) | W8array_t | Varray_t (t)";;
 
@@ -256,3 +264,7 @@ let type_sound_invariant_def = cake_define
      consistent_ctMap st type_idents ctMap /\
      type_all_env ctMap tenvS env tenv /\
      type_s ctMap (semanticPrimitives_state_refs st) tenvS`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

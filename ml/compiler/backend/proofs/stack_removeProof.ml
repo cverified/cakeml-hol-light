@@ -30,6 +30,14 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_removeProof"
+  ["semanticsProps"; "stackLang"; "stackProps"; "stackSem";
+   "stack_remove"];;
+
 let _ = do_list hide_constant ["C"; "gen_gc"; "num_stubs"; "shift"];;
 
 (* this file reads the name of a record field as a variable and
@@ -1572,5 +1580,6 @@ let _ = do_list unhide_constant
    "num_stubs";
    "shift"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

@@ -27,6 +27,13 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "targetSem"
+  ["asmProps"; "evaluateProps"; "ffi"; "lab_to_target"; "wordSem"];;
+
 (* -- execute target machine with interference from environment -- *)
 
 let machine_result_INDUCT,machine_result_RECURSION = define_datatype
@@ -134,9 +141,7 @@ let is_valid_mapped_write_def = cake_define
            (Inst (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md) else F)`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let targetSem_evaluate_def = cake_define_cheat CHEAT_TAC
+let targetSem_evaluate_def = cake_define
   `targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state)
   k (ms:'a) =
      (if k = 0 then (TimeOut,ms,ffi) else
@@ -622,3 +627,7 @@ let installed_def = cake_define
                               shmem_extra) /\
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword
        (:'a)))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

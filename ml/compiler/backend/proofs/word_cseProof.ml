@@ -26,6 +26,14 @@ needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_cseProof"
+  ["reg_alloc"; "wordConvs"; "wordLang"; "wordProps"; "wordSem";
+   "word_cse"; "word_simp"];;
+
 let _ = do_list hide_constant ["Greater"];;
 (* HOL4 ancestors outside the port: alist *)
 
@@ -1596,3 +1604,7 @@ let full_inst_ok_less_word_common_subexp_elim = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Greater"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

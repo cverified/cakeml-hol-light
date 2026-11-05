@@ -28,6 +28,13 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "data_simp"
+  ["dataLang"];;
+
 let pSeq_def = cake_define
   `pSeq c1 c2 =
      (if c2 = dataLang_Skip then c1 else dataLang_Seq c1 c2)`;;
@@ -45,3 +52,7 @@ let simp_def = cake_define
         pSeq (Call ret dest args (SOME (v,simp handler
           dataLang_Skip))) c
         | c1 -> pSeq c1 c`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

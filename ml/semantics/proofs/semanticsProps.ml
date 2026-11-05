@@ -17,6 +17,13 @@ needs "semantics/proofs/typeSound.ml";;
 needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semantics.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "semanticsProps"
+  ["evaluate"; "evaluateProps"; "semantics"; "typeSound"];;
+
 let evaluate_prog_events_determ = prove
  (`!st env k p k'.
    LENGTH (ffi_state_io_events (FST (evaluate_prog_with_clock st env
@@ -163,3 +170,7 @@ let extend_with_resource_limit'_SUBSET = prove
  (`extend_with_resource_limit' b s SUBSET
    extend_with_resource_limit s`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

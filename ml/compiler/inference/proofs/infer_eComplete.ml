@@ -23,6 +23,15 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "infer_eComplete"
+  ["ast"; "envRel"; "infer"; "inferProps"; "infer_t"; "namespace";
+   "namespaceProps"; "semanticPrimitives"; "typeSysProps";
+   "typeSystem"; "unify"];;
+
 let _ = do_list hide_constant ["id"];;
 
 (*Useful lemmas about pure add constraints, some of these imply the others*)
@@ -724,3 +733,7 @@ let infer_e_complete = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

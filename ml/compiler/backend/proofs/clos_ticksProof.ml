@@ -20,6 +20,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_ticksProof"
+  ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_ticks"];;
+
 (* HOL4 clos_ticksProofScript.sml:10-11: ML code, not ported *)
 
 (* HOL4 clos_ticksProofScript.sml:15: the overload remove_ticks,
@@ -479,3 +486,7 @@ let clos_ticksProof_remove_ticks_code_labels = prove
  (`!es. MAP closProps_get_code_labels (clos_ticks_remove_ticks es) =
   MAP closProps_get_code_labels es`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

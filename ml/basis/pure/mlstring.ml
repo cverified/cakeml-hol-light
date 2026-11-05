@@ -18,6 +18,13 @@ needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "mlstring"
+  ["misc"; "mllist"];;
+
 let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
 
 (* HOL4 mlstringScript.sml:13-14: ML code, not ported *)
@@ -935,3 +942,7 @@ let _ = do_list unhide_constant
   ["Equal";
    "Greater";
    "Less"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

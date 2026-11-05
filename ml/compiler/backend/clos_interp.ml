@@ -15,6 +15,13 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_interp"
+  ["backend_common"; "closLang"];;
+
 let _ = do_list hide_constant ["pmatch"];;
 
 (* fits in subset *)
@@ -514,3 +521,7 @@ let to_constant_op_pmatch = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

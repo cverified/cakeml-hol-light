@@ -18,6 +18,14 @@ needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "gc_combined"
+  ["copying_gc"; "data_to_word"; "gc_shared"; "gen_gc";
+   "gen_gc_partial"];;
+
 let gen_state_INDUCT,gen_state_RECURSION = define_datatype
   "gen_state = GenState (num) (num list)";;
 
@@ -50,3 +58,7 @@ let gc_combined_def = cake_define
             ++ gc_state_r1 state,gc_state_a
            state,gc_state_n state,GenState 0 (MAP (K (gc_state_a
              state)) limits),gc_state_ok state)))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

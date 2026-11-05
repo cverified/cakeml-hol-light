@@ -15,6 +15,13 @@
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_letop"
+  ["closLang"];;
+
 (* let_op -- a function that optimises Let [...] (Op op [Var ...]) *)
 
 let clos_letop_var_list_def = cake_define
@@ -34,9 +41,7 @@ let clos_letop_dest_op_def = cake_define
         | _3 -> NONE`;;
 hol4_overload "dest_op" "clos_letop_dest_op";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_letop_let_op_def = cake_define_list_cheat CHEAT_TAC
+let clos_letop_let_op_def = cake_define_list
   [`clos_letop_let_op [] = []`;
    `clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
          HD (clos_letop_let_op [x]) :: clos_letop_let_op (y ::
@@ -142,3 +147,7 @@ let let_op_sing_eq = prove
 let clos_letop_compile_inc_def = cake_define
   `clos_letop_compile_inc (e,xs) = (clos_letop_let_op e,[])`;;
 hol4_overload "compile_inc" "clos_letop_compile_inc";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

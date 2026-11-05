@@ -18,6 +18,13 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_copy"
+  ["reg_alloc"; "wordLang"];;
+
 (*
   The copy propagator does the "propagation" but
     does not delete the old copy, i.e.:
@@ -375,3 +382,7 @@ let copy_prop_prog_def = cake_define
 let copy_prop_def = cake_define
   `copy_prop (e:'a wordLang_prog) =
      FST (copy_prop_prog e empty_eq)`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

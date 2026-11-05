@@ -22,6 +22,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_callProof"
+  ["backendProps"; "closProps"; "closSem"; "clos_call"; "db_vars"];;
+
 let _ = do_list hide_constant ["C"; "vars"];;
 
 (* TODO These are the same. Put in closLang? *)
@@ -221,11 +228,8 @@ let _ = size_thms "closSem_v";;
    the names that the port gives the constants *)
 (* HOL4 clos_callProofScript.sml:330-333: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_callProof_v_rel_def = cake_define_list_try_tac (fun () ->
+let clos_callProof_v_rel_def = cake_define_list_try (fun () ->
   `MEASURE (closSem_v_size o FST o SND o SND o SND)`)
-  CHEAT_TAC
   [`clos_callProof_v_rel g l code (closSem_Number i:closSem_v) v <=>
   v = (closSem_Number i:closSem_v)`;
    `clos_callProof_v_rel g l code (Word64 w:closSem_v) v <=> v =
@@ -1395,3 +1399,7 @@ let calls_no_Labels = prove
 let _ = do_list unhide_constant
   ["C";
    "vars"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

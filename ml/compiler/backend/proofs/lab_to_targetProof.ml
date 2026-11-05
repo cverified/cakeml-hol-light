@@ -35,6 +35,15 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "lab_to_targetProof"
+  ["asm"; "asmProps"; "asmSem"; "ffi"; "labProps"; "labSem";
+   "lab_filterProof"; "lab_to_target"; "stack_removeProof";
+   "targetProps"; "targetSem"; "wordSem"];;
+
 let _ = do_list hide_constant ["contain"; "invariant"; "not"];;
 
 (* this file reads the name of a record field as a variable and
@@ -4663,5 +4672,6 @@ let _ = do_list unhide_constant
    "invariant";
    "not"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

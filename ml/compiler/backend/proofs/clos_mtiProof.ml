@@ -20,6 +20,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_mtiProof"
+  ["backendProps"; "closProps"; "closSem"; "clos_mti"];;
+
 (* HOL4 clos_mtiProofScript.sml:18: ML code, not ported *)
 
 (* code relation *)
@@ -683,3 +690,7 @@ let clos_mtiProof_semantics_compile = prove
         do_mti max_app xs) =
       closSem_semantics ffi max_app FEMPTY co cc1 xs`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

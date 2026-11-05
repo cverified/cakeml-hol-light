@@ -31,6 +31,15 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_to_bvi"
+  ["backend_common"; "bvi"; "bvi_inline"; "bvi_let"; "bvi_tailrec";
+   "bvi_tmc"; "bvl"; "bvl_const"; "bvl_handle"; "bvl_inline";
+   "dataLang"];;
+
 let _ = do_list hide_constant ["num_stubs"; "pmatch"];;
 
 let destLet_def = cake_define
@@ -651,3 +660,7 @@ hol4_only "++" "APPEND";;
 let _ = do_list unhide_constant
   ["num_stubs";
    "pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

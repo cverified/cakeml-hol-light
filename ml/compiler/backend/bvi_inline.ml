@@ -19,6 +19,13 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_inline"
+  ["backend_common"; "bvi"];;
+
 let bvi_mk_tick_def = cake_define
   `bvi_mk_tick n e = FUNPOW bvi_Tick n e`;;
 
@@ -191,3 +198,7 @@ let final_tick_cleanup_example = prove
      Call 0 (SOME 10) [Var 0]
        (SOME (bvi_LetCall 1 0 11 [Var 1] (bvi_Return [Var 0])))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

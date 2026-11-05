@@ -22,6 +22,13 @@ needs "lib/byte.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_gcFunctions"
+  ["data_to_word"; "gc_shared"; "wordSem"; "word_simpProof"];;
+
 let _ = do_list hide_constant ["shift"];;
 
 (* HOL4 word_gcFunctionsScript.sml:12: ML code, not ported *)
@@ -754,3 +761,7 @@ let word_gc_fun_has_fp_ops = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["shift"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

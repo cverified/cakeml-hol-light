@@ -25,6 +25,15 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "inferSound"
+  ["ast"; "envRel"; "infer"; "inferProps"; "infer_eComplete";
+   "infer_eSound"; "infer_t"; "namespaceProps"; "semanticPrimitives";
+   "typeSysProps"; "typeSystem"; "type_eDeterm"; "unify"];;
+
 (* [local] *)
 let letrec_lemma2 = prove
  (`!funs_ts l l' s s'.
@@ -149,3 +158,7 @@ let db_subst_infer_subst_swap2 = prove
 
 (* HOL4 inferSoundScript.sml:754-1137: code that the source has in a
    comment *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

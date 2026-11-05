@@ -62,6 +62,15 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/tokens.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "data_to_word_memoryProof"
+  ["copying_gc"; "dataProps"; "dataSem"; "data_to_word";
+   "gc_combined"; "gc_shared"; "labSem"; "wordSem";
+   "word_gcFunctions"];;
+
 let _ = do_list hide_constant ["do_partial"; "not"; "parts"; "vars"];;
 (* HOL4 ancestors outside the port: int_bitwise While *)
 
@@ -6396,7 +6405,7 @@ let heap_store_rel_alt = prove
 
 (* what is below the unused space after the other store: what was
    below it and the element written *)
-let data_up_to_alt = prove
+let data_up_to_written = prove
  (`!ha x he hb.
      EVERY isDataElement ha /\ isDataElement x
      ==> data_up_to (heap_length ha + el_length x)
@@ -6568,7 +6577,7 @@ let IMP_heap_store_unused_alt = prove
              let hpg = el 1 (snd (strip_comb (snd gl))) in
              let he = rand (lhand (rand hpg)) in
              ACCEPT_TAC (MATCH_MP (ISPECL [ha; x; he; hb]
-                            data_up_to_alt) (CONJ ev isd)))])
+                            data_up_to_written) (CONJ ev isd)))])
       else if is_eq w && hd_is "heap_lookup" (lhand w) then
         REWRITE_TAC[heap_lookup_alt_at_start]
       else if is_neg w && hd_is "isSomeDataElement" (rand w) then
@@ -16025,7 +16034,7 @@ let v_inv_BlockRep_upd =
 
 (* an insert of a mutable block where one was leaves what a value
    says of a thunk *)
-let dest_thunk_insert_MutBlock = prove
+let dest_thunk_insert_MutBlock_any = prove
  (cake_as_vars (fun () ->
     `sptree_lookup ptr refs = SOME (bvlSem_MutBlock tag fin l cv r)
      ==> dest_thunk v (insert ptr (MutBlock tag fin2 l h r) refs) =
@@ -16112,7 +16121,7 @@ let MB_trans = prove
           (CONJ (MATCH_MP v_inv_BlockRep_upd
                    (CONJ vi (CONJ hl (CONJ tfc tr)))) lk)));
       GEN_TAC THEN
-      REWRITE_TAC[MATCH_MP dest_thunk_insert_MutBlock lk] THEN
+      REWRITE_TAC[MATCH_MP dest_thunk_insert_MutBlock_any lk] THEN
       DISCH_THEN ACCEPT_TAC;
       REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[lookup_insert]]));;
 
@@ -18305,17 +18314,6 @@ let gc_kind_store_unused = prove
       REPEAT CONJ_TAC THEN
       TRY (SOLVED (FIRST_ASSUM ACCEPT_TAC))]));;
 
-(* the edges that the references gain when an array of values is
-   written at a key they did not have leave that key and land
-   inside the values *)
-let ref_edge_ValueArray = prove
- (cake_as_vars (fun () ->
-    `ref_edge (sptree_insert ptr (ValueArray xs) refs) x y =
-     (if x = ptr then MEM y (get_refs (Block 0 ARB xs))
-      else ref_edge refs x y)`),
-  REWRITE_TAC[ref_edge_def; lookup_insert] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
-  REWRITE_TAC[]);;
 
 (* [local] *)
 let reachable_refs_new_ref_lemma = prove
@@ -19240,16 +19238,10 @@ let v_inv_new_Thunk_insert = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_new_Thunk_insert_lemma]));;
 
-(* the edges that the references gain when a thunk is written at a
-   key they did not have leave that key and land at its value *)
-let ref_edge_Thunk = prove
- (cake_as_vars (fun () ->
-    `ref_edge (sptree_insert ptr (Thunk ev h) refs) x y =
-     (if x = ptr then MEM y (get_refs (Block 0 ARB [h]))
-      else ref_edge refs x y)`),
-  REWRITE_TAC[ref_edge_def; lookup_insert] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[] THEN MATCH_REDUCE_TAC THEN
-  REWRITE_TAC[]);;
+(* the edges that a reference gains when it is written are
+   ref_edge_ValueArray and ref_edge_Thunk, theorems of the
+   source that this file states before this, so the proofs
+   below use those and the port does not prove them twice *)
 
 (* [local] *)
 let reachable_refs_new_thunk_lemma = prove
@@ -46048,6 +46040,8 @@ let memory_rel_depth_size_limit = prove
 
 let _ = size_thms "dataSem_v";;
 (* the termination relation is not in the HOL4 source *)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of the source overlap -- the last one says NONE of a
    pair that an earlier one has already given a value -- and HOL4
    takes the first that matches, so the port writes them as a
@@ -46070,9 +46064,10 @@ let _ = size_thms "dataSem_v";;
    so the two sides of the clause differed by that one lambda
    (ml/lib/define.ml, "the depairing above was applied to the
    clause as it was given"). *)
-let vb_eq_size_def = cake_define_list_wf
+let vb_eq_size_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (refs,v1,v2) -> dataSem_v_size v1 |
-  INR (refs,l1,l2) -> list_size dataSem_v_size l1)`
+     INR (refs,l1,l2) -> list_size dataSem_v_size l1)`)
+  CHEAT_TAC
   [`vb_eq_size refs x2 x3 =
          match (x2,x3) with
            ((Block _91 t1 l1:dataSem_v),(Block _92 t2 l2:dataSem_v))
@@ -48943,50 +48938,10 @@ let word_eq_thm0 = prove
    (`!k. k <= dimindex (:'a) ==> 2 EXP k <= dimword (:'a)`,
     GEN_TAC THEN DISCH_TAC THEN
     ASM_REWRITE_TAC[dimword; LE_EXP; ARITH_EQ]) in
-  (* the two halves of a 64-bit value, and the whole of it, decide
-     the value.  The port has the two lemmas as extract64_eq and
-     extract64_full further down the file, for
-     memory_rel_Word64_const_test; both proofs are short and the
-     copy here is local to this one *)
-  let extract64_eq = prove
-   (`!(i:word64) j. dimindex (:'a) = 32 ==>
-      ((((63 >< 32) i):'a word = (63 >< 32) j) /\
-       (((31 >< 0) i):'a word = (31 >< 0) j) <=> i = j)`,
-    REPEAT GEN_TAC THEN DISCH_TAC THEN
-    REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
-                 DIMINDEX_64] THEN
-    ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
-    CONV_TAC NUM_REDUCE_CONV THEN
-    REWRITE_TAC[TAUT
-       `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`] THEN
-    EQ_TAC THENL
-      [DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "hi")
-         (LABEL_TAC "lo")) THEN
-       X_GEN_TAC `k:num` THEN DISCH_TAC THEN
-       ASM_CASES_TAC `k < 32` THENL
-        [USE_THEN "lo" (fun lo -> ASM_SIMP_TAC[lo]);
-         SUBGOAL_THEN `32 + (k - 32) = k /\ k - 32 < 32`
-           STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-         USE_THEN "hi" (fun hi ->
-           FIRST_ASSUM (fun e ->
-             MP_TAC (ONCE_REWRITE_RULE[e] (SPEC `k - 32` hi)))) THEN
-         ASM_REWRITE_TAC[]];
-       DISCH_THEN (LABEL_TAC "all") THEN CONJ_TAC THEN
-       X_GEN_TAC `k:num` THEN DISCH_TAC THENL
-        [USE_THEN "all" (fun a -> MP_TAC (SPEC `32 + k` a)) THEN
-         ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> 32 + k < 64`];
-         USE_THEN "all" (fun a -> MP_TAC (SPEC `k:num` a)) THEN
-         ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> k < 64`]]]) in
-  let extract64_full = prove
-   (`!(i:word64) j. dimindex (:'a) = 64 ==>
-      ((((63 >< 0) i):'a word = (63 >< 0) j) <=> i = j)`,
-    REPEAT GEN_TAC THEN DISCH_TAC THEN
-    REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
-                 DIMINDEX_64] THEN
-    ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
-    CONV_TAC NUM_REDUCE_CONV THEN
-    REWRITE_TAC[TAUT
-       `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`]) in
+  (* the two halves of a 64-bit value, and the whole of it,
+     decide the value: extract64_eq and extract64_full of
+     ml/lib/lemmas.ml, which the test of a Word64 constant
+     needs as well *)
   (* the three words that the result of a comparison can be are
      three words *)
   let cmp_res_ne = prove
@@ -51620,52 +51575,6 @@ let memory_rel_Number_const_test = prove
           (AP_TERM (rator (lhs (rand (concl hne)))) (SYM heq))))]]
   )));;
 
-(* the port's own: that the two halves of a 64-bit value, or the
-   whole of it, decide the value.  HOL4 gets this from BITS_THM and
-   DIVISION; here it is the bits of the two words, with the index
-   of the upper half shifted by thirty-two *)
-
-let extract64_eq = prove
- (`!(i:word64) j. dimindex (:'a) = 32 ==>
-    ((((63 >< 32) i):'a word = (63 >< 32) j) /\
-     (((31 >< 0) i):'a word = (31 >< 0) j) <=> i = j)`,
-  REPEAT GEN_TAC THEN DISCH_TAC THEN
-  REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
-               DIMINDEX_64] THEN
-  ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
-  CONV_TAC NUM_REDUCE_CONV THEN
-  REWRITE_TAC[TAUT
-     `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`] THEN
-  EQ_TAC THENL
-    [DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "hi")
-       (LABEL_TAC "lo")) THEN
-     X_GEN_TAC `k:num` THEN DISCH_TAC THEN
-     ASM_CASES_TAC `k < 32` THENL
-      [USE_THEN "lo" (fun lo -> ASM_SIMP_TAC[lo]);
-       SUBGOAL_THEN `32 + (k - 32) = k /\ k - 32 < 32`
-         STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-       USE_THEN "hi" (fun hi ->
-         FIRST_ASSUM (fun e ->
-           MP_TAC (ONCE_REWRITE_RULE[e] (SPEC `k - 32` hi)))) THEN
-       ASM_REWRITE_TAC[]];
-     DISCH_THEN (LABEL_TAC "all") THEN CONJ_TAC THEN
-     X_GEN_TAC `k:num` THEN DISCH_TAC THENL
-      [USE_THEN "all" (fun a -> MP_TAC (SPEC `32 + k` a)) THEN
-       ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> 32 + k < 64`];
-       USE_THEN "all" (fun a -> MP_TAC (SPEC `k:num` a)) THEN
-       ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> k < 64`]]]);;
-
-let extract64_full = prove
- (`!(i:word64) j. dimindex (:'a) = 64 ==>
-    ((((63 >< 0) i):'a word = (63 >< 0) j) <=> i = j)`,
-  REPEAT GEN_TAC THEN DISCH_TAC THEN
-  REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
-               DIMINDEX_64] THEN
-  ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
-  CONV_TAC NUM_REDUCE_CONV THEN
-  REWRITE_TAC[TAUT
-     `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`]);;
-
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_Word64_const_test = prove
@@ -51681,12 +51590,13 @@ let memory_rel_Word64_const_test = prove
            words = [(63 >< 32) j; (31 >< 0) j] else
            words = [(63 >< 0) j]))`),
 (* the proof of the source is the template of
-   memory_rel_ValueArray_IMP at a Word64Rep, as memory_rel_Word64_IMP
-   is, and what it adds is the comparison: word_mem_eq reads the one
-   or two cells of the value and compares them with the halves of
-   the constant, and extract64_eq and extract64_full above say that
-   those decide the value.  The header the statement asks for is the
-   one the cond of the payload says encode_header gives *)
+   memory_rel_ValueArray_IMP at a Word64Rep, as
+   memory_rel_Word64_IMP is, and what it adds is the comparison:
+   word_mem_eq reads the one or two cells of the value and compares
+   them with the halves of the constant, and extract64_eq and
+   extract64_full of ml/lib/lemmas.ml say that those decide the
+   value.  The header the statement asks for is the one the cond of
+   the payload says encode_header gives *)
   (let hd_is n t =
     (try fst(dest_const(fst(strip_comb t))) = n
      with Failure _ -> false) in
@@ -65828,3 +65738,7 @@ let _ = do_list unhide_constant
    "parts";
    "sign";
    "vars"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

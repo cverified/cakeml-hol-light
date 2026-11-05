@@ -2,8 +2,8 @@
 (*  jsonLang: ported from HOL4's
     compiler/backend/jsonLangScript.sml
     A definition theory, with 6 definitions, 1 datatype and no
-    theorems.  Needed by backend.ml, displayLang.ml, infer_t.ml and
-    presLang.ml.  *)
+    theorems.  Needed by backend.ml, data_to_word_memoryProof.ml,
+    displayLang.ml, infer_t.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -18,6 +18,13 @@ needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "lib/balanced_map.ml";;
 needs "lib/integer_word.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "jsonLang"
+  ["mlint"; "mlstring"];;
 
 let obj_INDUCT,obj_RECURSION = define_datatype
   "obj = jsonLang_Object ((mlstring#obj) list) | jsonLang_Array (obj \
@@ -83,3 +90,7 @@ let json_to_mlstring_def = cake_define_list
               json_to_mlstring obj)`];;
 
 hol4_only "++" "APPEND";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -22,6 +22,13 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_interpProof"
+  ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_interp"];;
+
 (* ------------------------------------------------------------------------- *
    correctness of interpreter
  * ------------------------------------------------------------------------- *)
@@ -468,3 +475,7 @@ let insert_interp_esgc_free = prove
  (`EVERY closProps_esgc_free (insert_interp xs) = EVERY
   closProps_esgc_free xs`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

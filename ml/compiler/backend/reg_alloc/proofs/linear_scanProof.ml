@@ -19,6 +19,14 @@ needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "linear_scanProof"
+  ["linear_scan"; "ml_monadBase"; "mllist"; "reg_alloc";
+   "reg_allocProof"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -2233,5 +2241,6 @@ let linear_scan_reg_alloc_correct = prove
 
 hol4_only "++" "APPEND";;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

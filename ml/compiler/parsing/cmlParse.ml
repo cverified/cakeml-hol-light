@@ -20,6 +20,13 @@ needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "cmlParse"
+  ["cmlPEG"; "cmlPtreeConversion"];;
+
 (* HOL4 cmlParseScript.sml:13: the overload cmlpegexec, which the
    port expands *)
 
@@ -93,3 +100,7 @@ let parse_prog_def = cake_define
        optlift (ptree_TopLevelDecs pt)))`;;
 
 hol4_only "++" "APPEND";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -18,6 +18,13 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 (* for bytes_in_word *)
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stackLang"
+  ["asm"; "backend_common"; "misc"];;
+
 
 let store_name_INDUCT,store_name_RECURSION = define_datatype
   "store_name = NextFree | EndOfHeap | TriggerGC | HeapLength | \
@@ -168,3 +175,7 @@ hol4_overload "store_consts_stub_location"
    value of an ML expression: gc_stub_location_eq *)
 (* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as
    the value of an ML expression: store_consts_stub_location_eq *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -15,6 +15,13 @@ needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "typeSystem"
+  ["ast"; "namespace"; "semanticPrimitives"];;
+
 new_type_abbrev("type_ident",`: num`);;
 
 (* Types *)
@@ -973,3 +980,7 @@ type_prog extra_checks (union_decls decls1 decls) (extend_dec_tenv tenv1 tenv) t
 type_prog extra_checks decls tenv (top :: tops)
   (union_decls decls2 decls1) (extend_dec_tenv tenv2 tenv1)
   *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

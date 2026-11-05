@@ -17,6 +17,13 @@ needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "data_spaceProof"
+  ["dataProps"; "dataSem"; "data_space"];;
+
 let _ = do_list hide_constant ["vars"];;
 
 hol4_overload "get_vars" "dataSem_get_vars";;
@@ -122,3 +129,7 @@ let data_spaceProof_get_code_labels_compile = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["vars"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

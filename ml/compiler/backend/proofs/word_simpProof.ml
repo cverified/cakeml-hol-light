@@ -22,6 +22,13 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_simpProof"
+  ["mllist"; "wordLang"; "wordProps"; "wordSem"; "word_simp"];;
+
 let _ = do_list hide_constant ["addr"; "dummy"];;
 (* HOL4 ancestors outside the port: alist *)
 
@@ -591,3 +598,7 @@ let compile_exp_thm = prove
 let _ = do_list unhide_constant
   ["addr";
    "dummy"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

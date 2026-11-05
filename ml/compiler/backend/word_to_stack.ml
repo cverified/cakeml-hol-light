@@ -25,6 +25,14 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_to_stack"
+  ["asm"; "mlstring"; "parmove"; "stackLang"; "wordLang";
+   "word_alloc"];;
+
 (* bitmaps_length stores the current length of the bitmaps *)
 let word_to_stack_config_FIELDS = define_record "word_to_stack_config"
   ["bitmaps_length","num";
@@ -462,9 +470,7 @@ let copy_ret_def = cake_define
        (SeqStackFree n kont))`;;
 
 (* Return should be 2,4,6,...,2k,2k+1,... *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let word_to_stack_comp_def = cake_define_cheat CHEAT_TAC
+let word_to_stack_comp_def = cake_define
   `word_to_stack_comp conf perf x3 bs kf =
         match x3 with
           (Skip:'a wordLang_prog) -> ((Skip:'a stackLang_prog),bs)
@@ -658,3 +664,7 @@ let word_to_stack_stub_names_def = cake_define
      (raise_stub_location,implode "_Raise");
      (store_consts_stub_location,implode "_StoreConsts")]`;;
 hol4_overload "stub_names" "word_to_stack_stub_names";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

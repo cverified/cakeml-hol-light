@@ -17,6 +17,13 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_constantProof"
+  ["closLang"; "closSem"; "clos_to_bvl"];;
+
 (* HOL4 clos_constantProofScript.sml:11-23: code that the source has
    in a comment *)
 
@@ -226,3 +233,7 @@ let build_const'_def = cake_define
 let make_const_thm = prove
  (`make_const c = build_const' (to_parts c)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

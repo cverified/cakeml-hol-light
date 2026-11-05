@@ -18,6 +18,13 @@ needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "infer_t"
+  ["ast"; "mlint"; "mlstring"; "semanticPrimitives"; "typeSystem"];;
+
 let infer_t_INDUCT,infer_t_RECURSION = define_datatype
   "infer_t = Infer_Tvar_db (num) | Infer_Tapp (infer_t list) (num) | \
    Infer_Tuvar (num)";;
@@ -128,3 +135,7 @@ let inf_type_to_string_rec_def = cake_define_list_try (fun () ->
 
 let inf_type_to_string_def = cake_define
   `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

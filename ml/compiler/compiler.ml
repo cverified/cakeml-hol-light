@@ -50,6 +50,19 @@ needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "compiler"
+  ["ag32_config"; "arm7_config"; "arm8_config"; "backend";
+   "backend_passes"; "cmlParse"; "evaluateProps"; "export_ag32";
+   "export_arm7"; "export_arm8"; "export_mips"; "export_riscv";
+   "export_x64"; "fromSexp"; "infer"; "lexer_fun"; "lexer_impl";
+   "mips_config"; "mlint"; "mlstring"; "panLang"; "primSemEnv";
+   "riscv_config"; "semanticPrimitivesProps"; "semantics";
+   "typeSoundInvariants"; "typeSysProps"; "x64_config"];;
 (* HOL4 ancestors outside the port: basisProg panPtreeConversion
    pan_to_target panStatic pan_passes *)
 
@@ -1082,3 +1095,7 @@ let compile_pancake_32_def = cake_define
 (* PENDING: the file system of the basis library, which the port does
    not have (add_stdout, add_stderr, fastForwardFD) *)
 (* HOL4 compilerScript.sml:835-849: the definition *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

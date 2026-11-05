@@ -32,6 +32,13 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/namespace.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "source_to_flat"
+  ["ast"; "evaluate"; "flatLang"; "flat_elim"; "flat_pattern"];;
+
 let var_name_INDUCT,var_name_RECURSION = define_datatype
   "var_name = source_to_flat_Glob (tra) (num) | source_to_flat_Local \
    (tra) (mlstring)";;
@@ -132,16 +139,12 @@ let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let source_to_flat_compile_exp_def = cake_define_list_try_tac (fun () ->
+let source_to_flat_compile_exp_def = cake_define_list_wf
   `inv_image (<) (\x. match x with INL (t,x,e) -> ast_exp_size e | INR
-     (INL (t,x,es)) -> list_size ast_exp_size es | INR (INR (INL
-     (t,x,pes))) -> list_size (pair_size ast_pat_size ast_exp_size)
-       pes |
-     INR (INR (INR (t,x,funs))) -> list_size (pair_size mlstring_size
-     (pair_size mlstring_size ast_exp_size)) funs)`)
-  CHEAT_TAC
+  (INL (t,x,es)) -> list_size ast_exp_size es | INR (INR (INL
+  (t,x,pes))) -> list_size (pair_size ast_pat_size ast_exp_size) pes |
+  INR (INR (INR (t,x,funs))) -> list_size (pair_size mlstring_size
+  (pair_size mlstring_size ast_exp_size)) funs)`
   [`source_to_flat_compile_exp (t:mlstring list)
   (env:source_to_flat_environment) (Raise e:ast_exp) =
         flatLang_Raise backend_common_None
@@ -404,11 +407,8 @@ let simple_dlet_def = cake_define
        (pv,v) | _12 -> NONE) | _13 -> NONE)`;;
 
 let _ = size_thms "dec";;
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let source_to_flat_compile_decs_def = cake_define_try_tac (fun () ->
-  `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`)
-  CHEAT_TAC
+let source_to_flat_compile_decs_def = cake_define_wf
+  `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`
   `source_to_flat_compile_decs t n next' env envs' x6 =
         match (t,x6) with
           ((t:mlstring list),[Dlet locs p e]) ->
@@ -598,3 +598,7 @@ let inc_compile_def = cake_define
      let p' = MAP (compile_dec (source_to_flat_config_pattern_cfg
        c')) p' in
        (c',p'))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -25,6 +25,13 @@ needs "lib/comparison.ml";;
 needs "lib/set_sep.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_const"
+  ["bvl"];;
+
 let _ = do_list hide_constant ["pmatch"];;
 
 let dest_simple_def = cake_define
@@ -578,3 +585,7 @@ let bvl_const_compile_exp_eq = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

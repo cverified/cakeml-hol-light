@@ -28,6 +28,15 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_allocProof"
+  ["backend_common"; "linear_scan"; "linear_scanProof"; "mllist";
+   "reg_alloc"; "reg_allocProof"; "wordConvs"; "wordLang";
+   "wordProps"; "wordSem"; "word_alloc"];;
+
 let _ = do_list hide_constant ["C"; "not"; "sloc"; "val"];;
 
 (* this file reads the name of a record field as a variable and
@@ -2864,5 +2873,6 @@ let _ = do_list unhide_constant
    "sloc";
    "val"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

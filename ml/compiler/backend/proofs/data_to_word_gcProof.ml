@@ -45,6 +45,17 @@ needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "data_to_word_gcProof"
+  ["backendProps"; "copying_gc"; "dataProps"; "dataSem";
+   "data_to_word"; "data_to_word_memoryProof"; "gc_shared"; "gen_gc";
+   "gen_gc_partial"; "mllist"; "semanticsProps"; "wordLang";
+   "wordProps"; "wordSem"; "word_bignum"; "word_bignumProof";
+   "word_gcFunctions"];;
+
 let _ = do_list hide_constant ["stack_alloc"; "vars"];;
 
 (* this file reads the name of a record field as a variable and
@@ -3883,5 +3894,6 @@ let _ = do_list unhide_constant
   ["stack_alloc";
    "vars"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

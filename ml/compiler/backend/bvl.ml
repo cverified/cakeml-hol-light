@@ -32,6 +32,13 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 (* for op *)
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl"
+  ["backend_common"; "closLang"];;
+
 let bvl_exp_INDUCT,bvl_exp_RECURSION = define_datatype
   "bvl_exp = bvl_Var (num) | bvl_If (bvl_exp) (bvl_exp) (bvl_exp) | \
    bvl_Let (bvl_exp list) (bvl_exp) | bvl_Raise (bvl_exp) | \
@@ -63,3 +70,7 @@ let mk_tick_def = cake_define
 
 (* HOL4 bvlScript.sml:52: the overload mk_elem_at, which the port
    expands *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

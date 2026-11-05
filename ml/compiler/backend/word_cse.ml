@@ -20,6 +20,13 @@ needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_cse"
+  ["wordLang"];;
 (* HOL4 ancestors outside the port: words bool *)
 
 
@@ -921,3 +928,7 @@ let test_if_merge_clobber = prove
   CHEAT_TAC);;
 
 (* HOL4 word_cseScript.sml:905: ML code, not ported *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

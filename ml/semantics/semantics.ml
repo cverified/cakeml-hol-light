@@ -20,6 +20,13 @@ needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "semantics"
+  ["cmlPtreeConversion"; "lexer_fun"; "primTypes"];;
+
 let semantics_parse_def = cake_define
   `semantics_parse toks =
      (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt =
@@ -100,3 +107,7 @@ let semantics_init_def = cake_define
      semantics_semantics (mk_semantics_state prim_tenv
        prim_type_ids (FST (THE (prim_sem_env ffi))) (SND (THE
        (prim_sem_env ffi))))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

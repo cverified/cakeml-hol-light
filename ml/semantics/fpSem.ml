@@ -14,6 +14,13 @@ needs "lib/machine_ieee.ml";;
 needs "semantics/ast.ml";;
 (* order important because of FP_Add in ast & binary_ieee *)
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "fpSem"
+  ["ast"];;
+
 let fp_cmp_INDUCT,fp_cmp_RECURSION = define_datatype
   "fp_cmp = FP_Less | FP_LessEqual | FP_Greater | FP_GreaterEqual | \
    FP_Equal";;
@@ -64,3 +71,7 @@ let fpfma_def = cake_define
 
 let fp_top_comp_def = cake_define
   `fp_top_comp fop = fpfma`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

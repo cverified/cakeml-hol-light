@@ -15,6 +15,13 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/word_remove.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_removeProof"
+  ["wordConvs"; "wordProps"; "wordSem"; "word_remove"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -342,5 +349,6 @@ let word_remove_correct = prove
 
 (* HOL4 word_removeProofScript.sml:430: a proof *)
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

@@ -20,6 +20,13 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_copyProof"
+  ["wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_copy"];;
+
 let _ = do_list hide_constant ["addr"; "val"];;
 
 (* this file reads the name of a record field as a variable and
@@ -694,5 +701,6 @@ let _ = do_list unhide_constant
   ["addr";
    "val"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

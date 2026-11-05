@@ -15,6 +15,13 @@ needs "compiler/backend/closLang.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_number"
+  ["closLang"];;
+
 (* add fresh code locations *)
 
 let _ = size_thms "closLang_exp";;
@@ -95,3 +102,7 @@ hol4_overload "compile_inc" "clos_number_compile_inc";;
 let ignore_table_def = cake_define
   `ignore_table f st (code,aux) = (let (st',code') = f st code in
   (st',(code',aux)))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

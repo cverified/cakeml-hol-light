@@ -20,6 +20,13 @@ needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "export"
+  ["mlint"; "mlstring"; "mlvector"];;
+
 (* HOL4 exportScript.sml:17-20: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
@@ -201,3 +208,7 @@ let emit_symbol_def = cake_define
 let emit_symbols_def = cake_define
   `emit_symbols lsyms =
      FOLDL emit_symbol misc_Nil lsyms`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

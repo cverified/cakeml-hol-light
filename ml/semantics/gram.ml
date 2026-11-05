@@ -16,6 +16,13 @@ needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "gram"
+  ["tokens"];;
+
 
 (* HOL4 gramScript.sml:12-58: ML code, not ported *)
 
@@ -311,3 +318,7 @@ let lfl_def = cake_define
 (* HOL4 gramScript.sml:277-282: ML code, not ported *)
 
 (* HOL4 gramScript.sml:284-285: ML code, not ported *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -20,6 +20,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "closProps"
+  ["backendProps"; "closLang"; "closSem"];;
+
 let _ = do_list hide_constant ["comp"];;
 
 (* this file reads the name of a record field as a variable and
@@ -2161,11 +2168,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3725-3731: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let closProps_get_code_labels_def = cake_define_list_try_tac (fun () ->
+let closProps_get_code_labels_def = cake_define_list_try (fun () ->
   `MEASURE closLang_exp_size`)
-  CHEAT_TAC
   [`closProps_get_code_labels (Var _394 _395:closLang_exp) = {}`;
    `closProps_get_code_labels (If _397 e1 e2 e3:closLang_exp) =
         closProps_get_code_labels e1 UNION
@@ -2228,5 +2232,6 @@ let initial_state_clock = prove
 let _ = do_list unhide_constant
   ["comp"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

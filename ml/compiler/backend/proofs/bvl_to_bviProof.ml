@@ -37,6 +37,16 @@ needs "semantics/namespace.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_to_bviProof"
+  ["backendProps"; "bviProps"; "bviSem"; "bvi_inlineProof";
+   "bvi_letProof"; "bvi_tailrecProof"; "bvi_tmcProof"; "bvlProps";
+   "bvlSem"; "bvl_constProof"; "bvl_handleProof"; "bvl_inlineProof";
+   "bvl_to_bvi"; "ffi"];;
+
 let _ = do_list hide_constant ["id"; "parts"];;
 
 let _ = do_list hide_constant ["str"];;
@@ -1447,3 +1457,7 @@ let _ = do_list unhide_constant
   ["id";
    "parts";
    "str"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -14,6 +14,13 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "source_let"
+  ["ast"; "evaluate"; "misc"];;
+
 
 (* HOL4 source_letScript.sml:12: the overload string_size, which the
    port expands *)
@@ -103,3 +110,7 @@ val test5 = EVAL “
     Dlet l (Pvar "foo") (Var (Short "bar"))
     ]”;
  *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

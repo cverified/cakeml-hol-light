@@ -16,6 +16,13 @@
 needs "lib/sorting.ml";;
 needs "misc/misc.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "parmove"
+  ["misc"];;
+
 (* Non-deterministic algorithm *)
 
 (* The state is three lists of moves:
@@ -514,3 +521,7 @@ let parmove_MAP_INJ = prove
    parmove (MAP (f ## f) ls) = MAP (OPTION_MAP f ## OPTION_MAP f)
      (parmove ls)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

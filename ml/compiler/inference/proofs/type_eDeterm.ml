@@ -26,6 +26,15 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "type_eDeterm"
+  ["ast"; "envRel"; "evaluate"; "infer"; "inferProps";
+   "infer_eComplete"; "infer_eSound"; "namespace"; "namespaceProps";
+   "semanticPrimitives"; "typeSysProps"; "typeSystem"; "unify"];;
+
 (* [local] *)
 let sub_completion_empty = prove
  (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s' /\
@@ -167,3 +176,7 @@ let infer_funs_complete = prove
    FDOM s = count (infer_st_next_uvar st') /\
    MAP SND bindings = MAP (convert_t o t_walkstar s) funs_ts)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

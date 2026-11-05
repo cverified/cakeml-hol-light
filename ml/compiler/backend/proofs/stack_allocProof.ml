@@ -34,6 +34,14 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_allocProof"
+  ["stackLang"; "stackProps"; "stackSem"; "stack_alloc"; "wordSem";
+   "word_gcFunctions"];;
+
 let _ = do_list hide_constant ["not"; "shift"; "stack_alloc"];;
 
 (* this file reads the name of a record field as a variable and
@@ -2786,5 +2794,6 @@ let _ = do_list unhide_constant
    "shift";
    "stack_alloc"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

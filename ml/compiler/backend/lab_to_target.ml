@@ -20,6 +20,13 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "lab_to_target"
+  ["ffi"; "labLang"; "lab_filter"];;
+
 (* Number of bytes per FFI *)
 let ffi_offset_def = cake_define
   `ffi_offset = (16:num)`;;
@@ -468,3 +475,7 @@ let lab_to_target_compile_def = cake_define
   `lab_to_target_compile asm_conf c sec_list = compile_lab asm_conf c
   (filter_skip sec_list)`;;
 hol4_overload "compile" "lab_to_target_compile";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

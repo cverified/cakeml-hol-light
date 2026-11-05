@@ -378,3 +378,41 @@ print_string (Printf.sprintf
 print_string (Printf.sprintf
   "\nSMOKECEOT end of term %B (true)\n"
   (can get_const_type "smoke_ceot"));;
+
+(* the theories that a file can see: a name that two theories
+   overload with constants of the same type is the one of the
+   theory that registered it last, and a file that says which
+   theories its source has in its ancestry reads the one of those
+   (ml/lib/theorem.ml, hol4_ancestors) *)
+
+let smoke_ovl_a_def = new_definition
+  `smoke_ovl_a (n:num) = n + 1`;;
+
+let smoke_ovl_b_def = new_definition
+  `smoke_ovl_b (n:num) = n + 2`;;
+
+let _ = hol4_ancestors "smoke_thy_a" [];;
+hol4_overload "smoke_ovl" "smoke_ovl_a";;
+
+let _ = hol4_ancestors "smoke_thy_b" [];;
+hol4_overload "smoke_ovl" "smoke_ovl_b";;
+
+let smoke_ovl_of () =
+  fst(dest_const(fst(strip_comb(parse_term "smoke_ovl 1"))));;
+
+let smoke_ovl_last = smoke_ovl_of ();;
+
+let _ = hol4_ancestors "smoke_thy_c" ["smoke_thy_a"];;
+let smoke_ovl_in_a = smoke_ovl_of ();;
+let _ = unhide_overloads ();;
+
+let _ = hol4_ancestors "smoke_thy_d" ["smoke_thy_b"];;
+let smoke_ovl_in_b = smoke_ovl_of ();;
+let _ = unhide_overloads ();;
+
+let smoke_ovl_back = smoke_ovl_of ();;
+
+print_string (Printf.sprintf
+  "\nSMOKEANCESTORS last %s a %s b %s back %s \
+(smoke_ovl_b smoke_ovl_a smoke_ovl_b smoke_ovl_b)\n"
+  smoke_ovl_last smoke_ovl_in_a smoke_ovl_in_b smoke_ovl_back);;

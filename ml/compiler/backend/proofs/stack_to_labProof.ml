@@ -53,6 +53,16 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_to_labProof"
+  ["data_to_word_gcProof"; "labProps"; "labSem"; "semanticsProps";
+   "stackProps"; "stackSem"; "stack_alloc"; "stack_allocProof";
+   "stack_namesProof"; "stack_rawcallProof"; "stack_removeProof";
+   "stack_to_lab"; "wordProps"; "wordSem"; "word_to_stackProof"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -1560,5 +1570,6 @@ let stack_to_lab_compile_no_install = prove
    labProps_no_install prog'`,
   CHEAT_TAC);;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

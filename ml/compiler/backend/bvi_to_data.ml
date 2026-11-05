@@ -21,6 +21,13 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_to_data"
+  ["bvi"; "dataLang"; "data_live"; "data_simp"; "data_space"];;
+
 let _ = do_list hide_constant ["pmatch"];;
 
 (* compilation from BVI to dataLang *)
@@ -87,9 +94,7 @@ let iAssign_def = cake_define
 
 let _ = do_list hide_constant ["tail"];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bvi_to_data_compile_def = cake_define_list_cheat CHEAT_TAC
+let bvi_to_data_compile_def = cake_define_list
   [`bvi_to_data_compile (n:num) (env:num list) tail live [] =
         (dataLang_Skip,([]:num list),n)`;
    `bvi_to_data_compile (n:num) (env:num list) tail live (x :: y :: xs)
@@ -364,3 +369,7 @@ let compile_exp_eq = prove
 let _ = do_list unhide_constant
   ["pmatch";
    "tail"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

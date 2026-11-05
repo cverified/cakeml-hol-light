@@ -26,6 +26,13 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_alloc"
+  ["asm"; "linear_scan"; "misc"; "mllist"; "reg_alloc"; "wordLang"];;
+
 let _ = do_list hide_constant ["inst"];;
 
 (* HOL4 word_allocScript.sml:19: the overload Move0, which the port
@@ -1875,3 +1882,7 @@ let full_ssa_cc_trans_def = cake_define
 let _ = do_list unhide_constant
   ["inst";
    "mem"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

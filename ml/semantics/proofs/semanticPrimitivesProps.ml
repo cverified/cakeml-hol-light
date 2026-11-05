@@ -16,6 +16,13 @@ needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "semanticPrimitivesProps"
+  ["ast"; "ffi"; "namespace"; "namespaceProps"; "semanticPrimitives"];;
+
 let _ = do_list hide_constant ["id"];;
 
 
@@ -613,3 +620,7 @@ let do_arith_check_type = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

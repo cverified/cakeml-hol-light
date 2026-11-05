@@ -2,8 +2,8 @@
 (*  tokens: ported from HOL4's
     semantics/tokensScript.sml
     A definition theory, with no definitions, 2 datatypes and no
-    theorems.  Needed by gram.ml, lexer_fun.ml, lexer_impl.ml and
-    tokenUtils.ml.  *)
+    theorems.  Needed by data_to_word_memoryProof.ml, gram.ml,
+    lexer_fun.ml, lexer_impl.ml and tokenUtils.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -12,6 +12,13 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "tokens"
+  ["mlstring"];;
 (* HOL4 ancestors outside the port: integer *)
 
 let tokens_path_INDUCT,tokens_path_RECURSION = define_datatype
@@ -109,3 +116,7 @@ hol4_overload "SymbolT" "tokens_SymbolT";;
 hol4_overload "LongidT" "tokens_LongidT";;
 hol4_overload "FFIT" "tokens_FFIT";;
 hol4_overload "REPLIDT" "tokens_REPLIDT";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

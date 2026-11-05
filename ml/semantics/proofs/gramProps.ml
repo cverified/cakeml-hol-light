@@ -16,6 +16,13 @@ needs "lib/NTproperties.ml";;
 needs "lib/grammar.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "gramProps"
+  ["gram"];;
 (* HOL4 ancestors outside the port: pred_set *)
 
 (* HOL4 gramPropsScript.sml:12-13: ML code, not ported *)
@@ -152,3 +159,7 @@ let fringe_lengths_V = prove
 
 (* HOL4 gramPropsScript.sml:340-350: a theorem that HOL4 states as
    the value of an ML expression: parsing_ind *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

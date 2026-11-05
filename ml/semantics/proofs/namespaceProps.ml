@@ -12,6 +12,13 @@
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "namespaceProps"
+  ["ast"; "namespace"];;
+
 let _ = do_list hide_constant ["id"; "path"];;
 
 (* [simp] *)
@@ -610,3 +617,7 @@ let nsDomMod_nsAppend_flat = prove
 let _ = do_list unhide_constant
   ["id";
    "path"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

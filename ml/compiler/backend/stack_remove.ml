@@ -21,6 +21,13 @@ needs "misc/misc.ml";;
 (* for bytes_in_word *)
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_remove"
+  ["misc"; "mlstring"; "stackLang"];;
+
 let _ = do_list hide_constant ["dummy"; "gc"; "gen_gc"];;
 
 
@@ -469,3 +476,7 @@ let _ = do_list unhide_constant
   ["dummy";
    "gc";
    "gen_gc"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

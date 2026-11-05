@@ -984,6 +984,14 @@ class Porter:
                         else self.db.hidden_for(self.thy, blocks))
     self.ctx.hidden = set(hide)
     self.hideconsts = hideconsts
+    # the theories that the source of this file can see, which the
+    # library closes over the lists of those theories themselves
+    # (tools/db.py, announce).  A HOL4 library theory of the library
+    # layer registers its overloads before any file of the port
+    # announces a theory, so it is in the scope of every file and is
+    # not in the list
+    self.anc_scope = ([] if self.kind == 'lib'
+                      else self.db.announce(self.thy))
     self.hidmore = False
     self.hidnames = set()
     self.varannot = set()
@@ -1082,9 +1090,10 @@ class Porter:
                ';\n   '.join('"%s"' % n for n in
                               sorted(set(hide) | self.hidnames)) +
                '];;\n')
-    if self.hideconsts:
-      text += ('\n(* and the accessors of those fields are'
-               ' overloaded again *)\nlet _ = unhide_overloads ();;\n')
+    if self.hideconsts or self.anc_scope:
+      text += ('\n(* and the overloads that this file cannot see are'
+               ' back in the\n   interface *)\n'
+               'let _ = unhide_overloads ();;\n')
     # the lemmas that the port adds to this theory, which a proof
     # of phase three asks for and the source has not: they are in
     # tools/extra/<theory>.ml, so that a re-port keeps them (a
@@ -1113,6 +1122,27 @@ class Porter:
     needs = lines
     head = '\n'.join(needs) if needs else \
            '(* this file needs nothing of the port *)'
+    # the theories whose names the source of this file can read:
+    # the overloads of all the others come out of the interface
+    # while the file loads, so that a name that no type pins down
+    # is the constant that HOL4 reads there and not the one of the
+    # theory that the load order registered last (ml/lib/theorem.ml,
+    # hol4_ancestors; ISSUES.md "A statement that means another
+    # theory's constant")
+    if self.anc_scope:
+      lines = ['  ["' + self.anc_scope[0] + '"']
+      for n in self.anc_scope[1:]:
+        # the last line of the list carries the ];; as well
+        if len(lines[-1]) + len(n) + 7 > 72:
+          lines.append('   "' + n + '"')
+        else:
+          lines[-1] += '; "' + n + '"'
+      head += ('\n\n(* the theories whose names the Ancestors blocks'
+               ' of the source\n   bring, which are the ones that its'
+               ' statements read: the\n   overloads of every other'
+               ' theory come out of the interface\n   while this file'
+               ' loads *)\nlet _ = hol4_ancestors "%s"\n' % self.thy
+               + ';\n'.join(lines) + '];;')
     if hide:
       # a Parse.hide of the source: the name is a variable in this
       # file and a constant again at the end of it, which is what

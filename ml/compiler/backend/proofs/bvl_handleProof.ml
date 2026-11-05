@@ -22,6 +22,13 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_handleProof"
+  ["bvlProps"; "bvlSem"; "bvl_constProof"; "bvl_handle"];;
+
 let can_raise_thm = prove
  (`(!e env s (s:('a,'b)bvlSem_state).
      evaluate ([e],env,s) = (Rerr (Rraise a),r) ==> can_raise e) /\
@@ -396,3 +403,7 @@ let compile_seqs_code_labels = prove
      (match acc with NONE -> {} | SOME r ->
        bvlProps_get_code_labels r)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

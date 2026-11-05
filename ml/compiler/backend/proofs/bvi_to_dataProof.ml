@@ -32,6 +32,14 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_to_dataProof"
+  ["bviProps"; "bviSem"; "bvi_to_data"; "dataProps"; "dataSem";
+   "data_liveProof"; "data_simpProof"; "data_spaceProof"];;
+
 let _ = do_list hide_constant ["isException"; "isResult"; "parts"];;
 
 (* value relation *)
@@ -643,3 +651,7 @@ let _ = do_list unhide_constant
   ["isException";
    "isResult";
    "parts"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

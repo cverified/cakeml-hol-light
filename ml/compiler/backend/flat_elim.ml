@@ -19,6 +19,13 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flat_elim"
+  ["flatLang"; "misc"];;
+
 (**************************** ANALYSIS FUNCTIONS *****************************)
 
 (* is_hidden exp = T means there is no direct execution of GlobalVarLookup *)
@@ -258,3 +265,7 @@ let remove_flat_prog_def = cake_define
        let (r,t) = analyse_code code in
        let reachable = closure_spt r t in
        remove_unreachable reachable code)`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -35,6 +35,16 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "source_to_flatProof"
+  ["backendProps"; "backend_common"; "ffi"; "flatLang"; "flatProps";
+   "flatSem"; "flat_elimProof"; "flat_patternProof"; "misc";
+   "namespaceProps"; "semanticPrimitives"; "semanticPrimitivesProps";
+   "semantics"; "source_evalProof"; "source_to_flat"];;
+
 let _ = do_list hide_constant ["gc"; "id"; "path"; "vars"];;
 
 (* HOL4 source_to_flatProofScript.sml:20: ML code, not ported *)
@@ -2431,3 +2441,7 @@ let _ = do_list unhide_constant
    "id";
    "path";
    "vars"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

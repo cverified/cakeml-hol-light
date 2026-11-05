@@ -23,6 +23,13 @@ needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flat_to_clos"
+  ["backend_common"; "closLang"; "clos_interp"; "flatLang"];;
+
 let _ = do_list hide_constant ["pmatch"];;
 
 let dest_pat_def = cake_define
@@ -465,11 +472,8 @@ let SmartCons_def = cake_define
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let flat_to_clos_compile_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size flatLang_exp_size o SND)`)
-  CHEAT_TAC
+let flat_to_clos_compile_def = cake_define_list_wf
+  `MEASURE (list_size flatLang_exp_size o SND)`
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;
@@ -548,3 +552,7 @@ let HD_compile = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

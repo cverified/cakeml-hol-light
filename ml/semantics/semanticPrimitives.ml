@@ -22,6 +22,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "semanticPrimitives"
+  ["ast"; "ffi"; "fpSem"; "misc"; "mlstring"; "namespace"];;
+
 (* Constructors and exceptions need unique identities, which we represent by stamps. *)
 let stamp_INDUCT,stamp_RECURSION = define_datatype
   "stamp = \
@@ -1411,3 +1418,7 @@ let extend_dec_env_def = cake_define
 (* HOL4 semanticPrimitivesScript.sml:1376: ML code, not ported *)
 (* HOL4 semanticPrimitivesScript.sml:1377: the overload +++, which
    the port writes as an application of extend_dec_env *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

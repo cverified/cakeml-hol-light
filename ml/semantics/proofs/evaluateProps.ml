@@ -19,6 +19,14 @@ needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "evaluateProps"
+  ["ast"; "evaluate"; "namespace"; "namespaceProps";
+   "semanticPrimitives"; "semanticPrimitivesProps"];;
+
 let call_FFI_LENGTH = prove
  (`(call_FFI st index conf x = FFI_return new_st new_bytes) ==>
     (LENGTH x = LENGTH new_bytes)`,
@@ -941,3 +949,7 @@ let evaluate_Apps = prove
          (sem_env_v_fupd (K (nsAppend (alist_to_ns (ZIP (REVERSE
            ns) (BUTLAST vs))) (sem_env_v env1))) env1) [e])`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

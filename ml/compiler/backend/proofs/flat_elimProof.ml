@@ -23,6 +23,14 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flat_elimProof"
+  ["ast"; "ffi"; "flatLang"; "flatProps"; "flatSem"; "flat_elim";
+   "misc"];;
+
 (************************** LEMMAS ***************************)
 
 (* HOL4 flat_elimProofScript.sml:15-56: code that the source has in a
@@ -693,3 +701,7 @@ let remove_flat_prog_distinct_globals = prove
  (`BAG_ALL_DISTINCT (flatProps_elist_globals ds) ==>
    BAG_ALL_DISTINCT (flatProps_elist_globals (remove_flat_prog ds))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

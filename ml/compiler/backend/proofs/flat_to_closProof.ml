@@ -29,6 +29,16 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flat_to_closProof"
+  ["ast"; "backendProps"; "backend_common"; "closLang"; "closProps";
+   "closSem"; "clos_interpProof"; "ffi"; "flatLang"; "flatProps";
+   "flatSem"; "flat_to_clos"; "misc"; "semanticPrimitives";
+   "semanticPrimitivesProps"];;
+
 let LIST_REL_EL = prove
  (`// TODO: move
    !xs ys r.
@@ -1068,3 +1078,7 @@ let FST_inc_compile_esgc_free = prove
    no_Mat_decs decs ==>
    EVERY closProps_esgc_free (FST (inc_compile_decs decs))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

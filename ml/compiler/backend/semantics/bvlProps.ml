@@ -19,6 +19,13 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvlProps"
+  ["backend_common"; "bvl"; "bvlSem"; "bvl_const"];;
+
 let _ = do_list hide_constant ["parts"];;
 
 (* HOL4 bvlPropsScript.sml:14: the ML values that the definitions
@@ -554,3 +561,7 @@ let mk_tick_code_labels = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["parts"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

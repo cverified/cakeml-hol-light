@@ -11,6 +11,13 @@
 
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "lib/integer_word.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "gen_gc"
+  ["gc_shared"];;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 gen_gcScript.sml:16: ML code, not ported *)
@@ -735,3 +742,7 @@ let gen_gc_a = prove
     roots_ok xs heap /\ heap_ok heap (gen_gc_conf_limit c) ==>
     (gc_state_a s1 = heap_length (gc_state_h1 s1))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

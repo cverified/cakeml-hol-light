@@ -16,6 +16,13 @@
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_mti"
+  ["closLang"];;
+
 let collect_args_def = cake_define
   `collect_args max_app num_args e =
         match e with
@@ -184,3 +191,7 @@ let cond_mti_compile_inc_def = cake_define
 let clos_mti_compile_nil = prove
  (`clos_mti_compile do_mti max_app [] = []`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

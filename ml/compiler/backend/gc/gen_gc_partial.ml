@@ -12,6 +12,13 @@
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "lib/integer_word.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "gen_gc_partial"
+  ["gc_shared"; "gen_gc"];;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 gen_gc_partialScript.sml:14: ML code, not ported *)
@@ -96,12 +103,9 @@ let gen_gc_partial_gc_move_list_IMP = prove
 
 (* HOL4 gen_gc_partialScript.sml:113-119: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let gen_gc_partial_gc_move_data_def = cake_define_try_tac (fun () ->
+let gen_gc_partial_gc_move_data_def = cake_define_wf
   `MEASURE (\(conf,state). limit conf - heap_length (gc_state_h1
-  state))`)
-  CHEAT_TAC
+  state))`
   `(gen_gc_partial_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
        (if limit conf < heap_length (gc_state_h1 state ++ (h :: h2))
@@ -1410,3 +1414,7 @@ let gen_gc_partial_partial_gc_IMP = prove
                           (?xs l d. MEM (DataElement xs l d) curr
                             /\ isRef c d)))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

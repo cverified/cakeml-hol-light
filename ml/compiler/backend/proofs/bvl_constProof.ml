@@ -30,6 +30,13 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_constProof"
+  ["bvlProps"; "bvlSem"; "bvl_const"];;
+
 let bvl_constProof_v_rel_def = cake_define
   `bvl_constProof_v_rel (:'c) (:'ffi) a x y xs ys =
      (match a with Var n -> (\l n. oEL n l) ys n = SOME x | Op _1 _2
@@ -2124,3 +2131,7 @@ let bvl_constProof_compile_exp_code_labels = prove
             bvl_constProof_compile_code_labels) THEN
    REWRITE_TAC[FILTER; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY]));;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

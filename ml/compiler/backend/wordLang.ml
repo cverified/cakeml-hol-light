@@ -18,6 +18,13 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "wordLang"
+  ["stackLang"];;
+
 new_type_abbrev("wordLang_shift",`: ast_shift`);;
 
 let wordLang_exp_INDUCT,wordLang_exp_RECURSION = define_datatype
@@ -389,3 +396,7 @@ let word_loc_INDUCT,word_loc_RECURSION = define_datatype
   "word_loc = wordLang_Word ('a word) | wordLang_Loc (num) (num)";;
 hol4_overload "Word" "wordLang_Word";;
 hol4_overload "Loc" "wordLang_Loc";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

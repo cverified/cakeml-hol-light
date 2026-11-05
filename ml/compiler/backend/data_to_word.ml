@@ -31,6 +31,14 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "data_to_word"
+  ["backend_common"; "dataLang"; "wordLang"; "word_bignum";
+   "word_depth"; "word_to_word"];;
+
 let gc_kind_INDUCT,gc_kind_RECURSION = define_datatype
   "gc_kind = \
    // this configuration is used in data_to_wordProof and stack_alloc\n\
@@ -3297,3 +3305,7 @@ let AnyArith_call_tree_thm = prove
        (data_to_word_stubs (:'a) (data_conf))))
      AnyArith_call_tree`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

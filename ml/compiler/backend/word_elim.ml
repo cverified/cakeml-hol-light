@@ -22,6 +22,13 @@ needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_elim"
+  ["wordLang"];;
+
 
 let find_word_loc_def = cake_define
   `(find_word_loc ((name:num),_1,_2) = name)`;;
@@ -67,3 +74,7 @@ let remove_word_prog_def = cake_define
        let reachable = closure_spt (sptree_insert n one (LN:1 spt)) t
          in
        remove_word_code reachable code)`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

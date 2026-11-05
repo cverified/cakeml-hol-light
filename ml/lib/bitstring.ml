@@ -2,8 +2,8 @@
 (*  bitstring: ported from HOL4's
     src/n-bit/bitstringScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by export_arm8.ml, misc.ml and
-    word_to_stackProof.ml.  *)
+    that CakeML needs.  Needed by data_to_word_memoryProof.ml,
+    export_arm8.ml, misc.ml and word_to_stackProof.ml.  *)
 (* ======================================================== *)
 
 needs "lib/numposrep.ml";;

@@ -2,7 +2,7 @@
 (*  clos_to_bvl: ported from HOL4's
     compiler/backend/clos_to_bvlScript.sml
     A definition theory, with 45 definitions, 1 datatype and 24
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -57,6 +57,14 @@ needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_to_bvl"
+  ["backend_common"; "bvl"; "bvl_jump"; "closLang"; "clos_annotate";
+   "clos_call"; "clos_known"; "clos_mti"; "clos_number"];;
 
 let _ = do_list hide_constant ["pmatch"];;
 
@@ -463,11 +471,8 @@ let force_thunk_code_def = cake_define
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_to_bvl_compile_exps_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size o FST o SND)`)
-  CHEAT_TAC
+let clos_to_bvl_compile_exps_def = cake_define_list_wf
+  `MEASURE (list_size closLang_exp_size o FST o SND)`
   [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
    `clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs) aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
@@ -1011,3 +1016,7 @@ let clos_to_bvl_clos_to_bvl_compile_inc_def = cake_define
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

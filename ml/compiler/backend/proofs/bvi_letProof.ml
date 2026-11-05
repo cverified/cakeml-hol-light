@@ -26,6 +26,13 @@ needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_letProof"
+  ["bviProps"; "bviSem"; "bvi_let"];;
+
 hol4_overload "compile" "bvi_let_compile";;
 
 let v_rel_def = cake_define
@@ -1136,3 +1143,7 @@ let compile_exp_code_labels = prove
    REWRITE_TAC[compile_code_labels] THEN
    REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
                UNION_EMPTY]));;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -2,8 +2,7 @@
 (*  word_inst: ported from HOL4's
     compiler/backend/word_instScript.sml
     A definition theory, with 14 definitions and 7 theorems.  Needed
-    by backend.ml, backend_passes.ml, wordConvsProof.ml,
-    word_instProof.ml, word_to_word.ml and word_to_wordProof.ml.  *)
+    by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -16,6 +15,13 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "semantics/ast.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_inst"
+  ["stackLang"; "wordLang"];;
 
 let _ = do_list hide_constant ["pmatch"];;
 
@@ -541,3 +547,7 @@ let three_to_two_reg_prog_def = cake_define
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

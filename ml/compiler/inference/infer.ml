@@ -27,6 +27,14 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "infer"
+  ["ast"; "infer_t"; "misc"; "ml_monadBase"; "namespace";
+   "namespaceProps"; "primTypes"; "typeSystem"; "unify"];;
+
 let _ = do_list hide_constant ["not"];;
 (* HOL4 ancestors outside the port: string *)
 
@@ -1263,3 +1271,7 @@ hol4_only "++" "APPEND";;
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["not"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

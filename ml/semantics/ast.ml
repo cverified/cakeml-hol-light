@@ -12,6 +12,13 @@
 needs "basis/pure/mlstring.ml";;
 needs "lib/location.ml";;
 needs "semantics/namespace.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "ast"
+  ["mlstring"; "namespace"];;
 (* HOL4 ancestors outside the port: integer words string *)
 
 (* Literal constants *)
@@ -372,3 +379,7 @@ let apps_def = cake_define_list
 let funs_def = cake_define_list
   [`Funs [] e = e`;
    `Funs (x :: xs) e = ast_Fun x (Funs xs e)`];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

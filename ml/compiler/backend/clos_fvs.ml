@@ -12,6 +12,13 @@
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_fvs"
+  ["closLang"];;
+
 let remove_fvs_def = cake_define_list
   [`remove_fvs fvs [] = []`;
    `remove_fvs fvs ((x:closLang_exp) :: y :: xs) =
@@ -136,3 +143,7 @@ hol4_overload "compile_inc" "clos_fvs_compile_inc";;
 let LENGTH_remove_fvs = prove
  (`!fvs xs. LENGTH (remove_fvs fvs xs) = LENGTH xs`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

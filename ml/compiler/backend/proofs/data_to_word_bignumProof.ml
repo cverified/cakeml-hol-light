@@ -48,6 +48,18 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "data_to_word_bignumProof"
+  ["backend_common"; "copying_gc"; "dataProps"; "dataSem";
+   "data_to_word"; "data_to_word_gcProof"; "data_to_word_memoryProof";
+   "gc_shared"; "gen_gc"; "gen_gc_partial"; "mllist";
+   "semanticsProps"; "wordLang"; "wordProps"; "wordSem";
+   "word_bignum"; "word_bignumProof"; "word_depthProof";
+   "word_gcFunctions"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -388,5 +400,6 @@ let structure_le_IMP_option_le = prove
    statement HOL Light does not read (tools/unstated.py):
    eval_Call_Arith *)
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

@@ -22,6 +22,14 @@ needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "envRel"
+  ["ast"; "infer"; "inferProps"; "infer_t"; "namespaceProps";
+   "semanticPrimitives"; "typeSysProps"; "typeSystem"; "unify"];;
+
 let _ = do_list hide_constant ["id"];;
 
 (* ---------- Converting infer types and envs to type system ones ---------- *)
@@ -455,3 +463,7 @@ let tenv_to_ienv_lift = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

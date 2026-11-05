@@ -25,6 +25,13 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flat_pattern"
+  ["flatLang"; "misc"; "pattern_comp"; "pattern_semantics"];;
+
 
 let flat_pattern_config_FIELDS = define_record "flat_pattern_config"
   ["pat_heuristic","num"
@@ -261,9 +268,7 @@ let op_sets_globals_EX = prove
  (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
   CHEAT_TAC);;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let flat_pattern_compile_exp_def = cake_define_list_cheat CHEAT_TAC
+let flat_pattern_compile_exp_def = cake_define_list
   [`flat_pattern_compile_exp cfg (flatLang_Var_local t vid) =
         (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =
@@ -347,3 +352,7 @@ let LENGTH_SND_compile_exps = prove
 
 let compile_dec_def = cake_define
   `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -17,6 +17,13 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "wordConvs"
+  ["asm"; "reg_alloc"; "wordLang"];;
+
 let _ = do_list hide_constant ["inst"];;
 (*** Mono and conj lemmas for every_var/every_stack_var ***)
 let every_var_inst_mono = prove
@@ -562,3 +569,7 @@ let no_share_inst_subprogs_def = cake_define
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["inst"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

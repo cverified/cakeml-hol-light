@@ -11,6 +11,13 @@
 
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "lib/integer_word.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "copying_gc"
+  ["gc_shared"];;
 (* HOL4 ancestors outside the port: words *)
 
 (* The GC is a copying collector which moves elements *)
@@ -342,3 +349,7 @@ let full_gc_IMP_isDataElement = prove
  (`(full_gc (roots,heap,limit) = (roots1,heap1,a,T)) ==>
     EVERY isDataElement heap1`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -35,6 +35,14 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "dataSem"
+  ["backendProps"; "bvlSem"; "dataLang"; "data_live"; "data_simp";
+   "data_space"; "data_to_word"];;
+
 let dataSem_v_INDUCT,dataSem_v_RECURSION = define_datatype
   "dataSem_v = dataSem_Number (int) \
    // integer\n\
@@ -587,15 +595,13 @@ let dataSem_isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "dataSem_isClos";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of the source overlap -- a later one says
    Eq_type_error of a pair that an earlier one has already given a
    value -- and HOL4 takes the first that matches, so the port
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let dataSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
+let dataSem_do_eq_def = cake_define_list
   [`dataSem_do_eq refs x2 x3 =
          match (x2,x3) with
            ((CodePtr _50:dataSem_v),_51) -> Eq_type_error
@@ -971,11 +977,8 @@ hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
    each block produced by the finalisation gets a fresh time stamp *)
 (* HOL4 dataSemScript.sml:854-858: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let dataSem_finalise_cons_def = cake_define_try_tac (fun () ->
-  `MEASURE (sptree_size o FST o SND)`)
-  CHEAT_TAC
+let dataSem_finalise_cons_def = cake_define_wf
+  `MEASURE (sptree_size o FST o SND)`
   `dataSem_finalise_cons v refs ts =
         match v with
           (RefPtr b ptr:dataSem_v) ->
@@ -1682,12 +1685,9 @@ let _ = size_thms "dataLang_prog";;
    the names that the port gives the constants *)
 (* HOL4 dataSemScript.sml:1486-1495: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let dataSem_evaluate_def = cake_define_list_try_tac (fun () ->
+let dataSem_evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE dataLang_prog_size)
                               (\(xs,s). (state_clock s,xs)))`)
-  CHEAT_TAC
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =
@@ -1935,3 +1935,7 @@ let compute_limits_def = cake_define
 (* clean up *)
 
 (* HOL4 dataSemScript.sml:1660: ML code, not ported *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

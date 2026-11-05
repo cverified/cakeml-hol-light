@@ -20,6 +20,13 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/jsonLang.ml";;
 needs "lib/integer_word.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "displayLang"
+  ["backend_common"; "jsonLang"; "mlint"; "mlsexp"];;
+
 let sExp_INDUCT,sExp_RECURSION = define_datatype
   "sExp = displayLang_Item (tra option) (mlstring) (sExp list) | \
    displayLang_String (mlstring) | displayLang_Tuple (sExp list) | \
@@ -86,3 +93,7 @@ let display_to_str_tree_def = cake_define_list
    `display_to_str_tree_list [] = []`;
    `display_to_str_tree_list (x :: xs) =
         display_to_str_tree x :: display_to_str_tree_list xs`];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

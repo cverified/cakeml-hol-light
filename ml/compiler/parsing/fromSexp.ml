@@ -25,6 +25,13 @@ needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "fromSexp"
+  ["ast"; "fpSem"; "mlstring"];;
+
 let _ = do_list hide_constant ["assert"];;
 
 (* this file reads the name of a record field as a variable and
@@ -1727,5 +1734,6 @@ hol4_only "++" "APPEND";;
 let _ = do_list unhide_constant
   ["assert"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

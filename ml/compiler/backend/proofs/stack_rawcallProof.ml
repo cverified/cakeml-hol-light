@@ -23,6 +23,14 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semantics.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_rawcallProof"
+  ["labProps"; "stackLang"; "stackProps"; "stackSem"; "stack_rawcall";
+   "wordSem"];;
+
 
 (* HOL4 stack_rawcallProofScript.sml:12: ML code, not ported *)
 
@@ -226,3 +234,7 @@ let stack_get_handler_labels_comp = prove
      stack_get_handler_labels k (comp_top i p) =
      stack_get_handler_labels k p`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

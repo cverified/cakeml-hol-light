@@ -23,6 +23,14 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "source_evalProof"
+  ["ast"; "evaluate"; "evaluateProps"; "namespaceProps";
+   "semanticPrimitives"; "semanticPrimitivesProps"; "semantics"];;
+
 let _ = do_list hide_constant ["compile_decs"; "id"];;
 
 (* this file reads the name of a record field as a variable and
@@ -1357,5 +1365,6 @@ let _ = do_list unhide_constant
   ["compile_decs";
    "id"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

@@ -19,6 +19,13 @@ needs "compiler/backend/word_depth.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_depthProof"
+  ["backendProps"; "wordLang"; "wordProps"; "wordSem"; "word_depth"];;
+
 (* [local,simp] *)
 let option_le_X_MAX_X = prove
  (`option_le x (OPTION_MAP2 MAX m x) /\
@@ -153,3 +160,7 @@ let max_depth_Call_NONE = prove
          (max_depth (wordSem_state_stack_size s) (full_call_graph
            dest funs))))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

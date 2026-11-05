@@ -17,6 +17,13 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_tailrec"
+  ["backend_common"; "bvi"];;
+
 let _ = do_list hide_constant ["pmatch"];;
 
 let dummy_def = cake_define
@@ -232,7 +239,7 @@ let is_rel_PMATCH = prove
 
 let _ = size_thms "bvi_exp";;
 
-let exp_size_get_bin_args = prove
+let exp_size_get_bin_args_term = prove
  (`!x x1 x2. get_bin_args x = SOME (x1,x2)
              ==> bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
   GEN_TAC THEN
@@ -249,7 +256,8 @@ let exp_size_get_bin_args = prove
   REWRITE_TAC(all_size_thms()) THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN ARITH_TAC);;
 
-cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
+cake_term_facts := exp_size_get_bin_args_term ::
+  (!cake_term_facts);;
 
 let _ = size_thms "bvi_exp";;
 (* HOL4 bvi_tailrecScript.sml:280-284: the tactic that proves the
@@ -918,3 +926,7 @@ let rev_compile_exp = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

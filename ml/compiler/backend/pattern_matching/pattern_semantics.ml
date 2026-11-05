@@ -14,6 +14,13 @@ needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "pattern_semantics"
+  ["ast"; "pattern_common"; "semanticPrimitives"];;
+
 new_type_abbrev("kind",`: num`);;
 new_type_abbrev("pattern_semantics_tag",`: num`);;
 new_type_abbrev("siblings",`: ((num#num) list) option`);;
@@ -82,12 +89,9 @@ let is_sibling_def = cake_define_list
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let pattern_semantics_pmatch_def = cake_define_list_try_tac (fun () ->
+let pattern_semantics_pmatch_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (r,p,_7) -> pattern_semantics_pat_size
      p | INR (r,ps,_8) -> list_size pattern_semantics_pat_size ps)`)
-  CHEAT_TAC
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
@@ -191,3 +195,7 @@ let dt_eval_def = cake_define_list
    `dt_eval refs v (If guard' dt1 dt2:dTree) =
          (match dt_eval_guard refs v guard' with NONE -> NONE |
            SOME b -> dt_eval refs v (if b then dt1 else dt2))`];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

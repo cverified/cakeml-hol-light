@@ -23,6 +23,13 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bviSem"
+  ["backendProps"; "backend_common"; "bvi"; "bvlSem"];;
+
 (* HOL4 bviSemScript.sml:13: the overload num_stubs, which the port
    expands *)
 
@@ -83,11 +90,8 @@ let bvl_to_bvi_def = cake_define
 
 (* HOL4 bviSemScript.sml:69-77: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bviSem_finalise_cons_def = cake_define_try_tac (fun () ->
-  `MEASURE (CARD o FDOM o SND)`)
-  CHEAT_TAC
+let bviSem_finalise_cons_def = cake_define_wf
+  `MEASURE (CARD o FDOM o SND)`
   `bviSem_finalise_cons v refs =
         match v with
           (RefPtr b ptr:bvlSem_v) ->
@@ -284,12 +288,9 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 bviSemScript.sml:339-347: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bviSem_evaluate_def = cake_define_list_try_tac (fun () ->
+let bviSem_evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
                               (\(xs,env,s). (state_clock s,xs)))`)
-  CHEAT_TAC
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (x :: y :: xs,env,s) =
@@ -448,3 +449,7 @@ hol4_overload "semantics" "bviSem_semantics";;
 (* clean up *)
 
 (* HOL4 bviSemScript.sml:437: ML code, not ported *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -21,6 +21,15 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "primSemEnv"
+  ["ast"; "evaluate"; "namespace"; "namespaceProps"; "primTypes";
+   "semanticPrimitives"; "semanticPrimitivesProps"; "semantics";
+   "typeSoundInvariants"; "typeSysProps"; "typeSystem"];;
+
 (* HOL4 primSemEnvScript.sml:12-13: a theorem that HOL4 states as the
    value of an ML expression: prim_sem_env_eq *)
 
@@ -33,3 +42,7 @@ let prim_type_sound_invariants = prove
          prim_tenv /\
        FRANGE ((SND o SND) o_f ctMap) SUBSET prim_type_ids)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -24,6 +24,13 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_tailrecProof"
+  ["bviProps"; "bviSem"; "bvi_tailrec"];;
+
 let _ = do_list hide_constant ["all"];;
 
 (* TODO
@@ -884,3 +891,7 @@ let bvi_tailrecProof_compile_prog_good_code_labels = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

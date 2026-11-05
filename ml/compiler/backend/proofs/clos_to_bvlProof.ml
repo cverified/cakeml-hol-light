@@ -40,6 +40,14 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_to_bvlProof"
+  ["backendProps"; "bvlProps"; "bvlSem"; "closProps"; "closSem";
+   "clos_to_bvl"; "ffi"];;
+
 let _ = do_list hide_constant ["C"; "all"; "build_const'";
        "globals_approx_every_Fn_SOME";
        "globals_approx_every_Fn_vs_NONE"; "known_co"; "parts";
@@ -3384,5 +3392,6 @@ let _ = do_list unhide_constant
    "syntax_ok";
    "update_tag"];;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

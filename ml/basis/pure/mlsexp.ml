@@ -16,6 +16,13 @@ needs "lib/peg.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "mlsexp"
+  ["mlstring"];;
+
 (*--------------------------------------------------------------*
    Definition of s-expression
  *--------------------------------------------------------------*)
@@ -538,3 +545,7 @@ let fromString_sexp_to_string = prove
 let fromString_sexp_to_pretty_string = prove
  (`fromString (sexp_to_pretty_string x) = SOME x`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

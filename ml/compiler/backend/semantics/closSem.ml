@@ -27,6 +27,14 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 (* for opw_lookup_def and others *)
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "closSem"
+  ["backend_common"; "closLang"; "flatLang";
+   "semanticPrimitivesProps"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -126,15 +134,13 @@ let closSem_Boolv_def = cake_define
   false_tag) [])`;;
 hol4_overload "Boolv" "closSem_Boolv";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let closSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
+let closSem_do_eq_def = cake_define_list
   [`closSem_do_eq x y =
          (match x with closSem_Number i ->
              (match y with closSem_Number j -> Eq_val (i = j) | _3
@@ -955,16 +961,13 @@ if concl closSem_fix_clock_IMP <> `T` then
    the names that the port gives the constants *)
 (* HOL4 closSemScript.sml:828-843: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let closSem_evaluate_def = cake_define_list_try_tac (fun () ->
+let closSem_evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
                       (\x. match x with INL (xs,env,s) ->
                         (state_clock
                         s,list_size closSem_exp_alt_size xs,0) | INR
                         (l,f,args,s) -> (state_clock s,0,LENGTH
                           args)))`)
-  CHEAT_TAC
   [`closSem_evaluate ([],(env:closSem_v
   list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =
@@ -1162,5 +1165,6 @@ let semantics_def = cake_define
                  (SND (closSem_evaluate (es,[],st k)))))) UNIV)))`;;
 hol4_overload "semantics" "closSem_semantics";;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

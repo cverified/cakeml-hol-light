@@ -18,6 +18,13 @@ needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_unreachProof"
+  ["wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_unreach"];;
+
 (* HOL4 word_unreachProofScript.sml:10: the ML values that the
    definitions below antiquote *)
 
@@ -172,3 +179,7 @@ let evaluate_remove_unreach = prove
        ==>
      wordSem_evaluate (remove_unreach p,s) = (res,s1)`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -12,6 +12,13 @@
 
 needs "compiler/encoders/asm/asm.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "labLang"
+  ["asm"];;
+
 new_type_abbrev("labLang_reg",`: num`);;
 
 (* A label refers to either a section name or a local label definition
@@ -68,3 +75,7 @@ let section_lines_def = cake_define
 
 (* HOL4 labLangScript.sml:61: the type abbreviation prog, which the
    port expands *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

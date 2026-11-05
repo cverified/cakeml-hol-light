@@ -26,6 +26,13 @@ needs "lib/comparison.ml";;
 needs "lib/multiword.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "stack_alloc"
+  ["data_to_word"; "stackLang"];;
+
 let memcpy_code_def = cake_define
   `memcpy_code =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 0
@@ -936,9 +943,7 @@ let next_lab_def = cake_define
 (* HOL4 stack_allocScript.sml:664-674: a theorem that HOL4 states as
    the value of an ML expression: next_lab_pmatch *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let stack_alloc_comp_def = cake_define_cheat CHEAT_TAC
+let stack_alloc_comp_def = cake_define
   `stack_alloc_comp n m p =
      (match p with Seq p1 p2 ->
          (let (q1,m) = stack_alloc_comp n m p1 in
@@ -973,3 +978,7 @@ let stack_alloc_compile_def = cake_define
   `stack_alloc_compile c prog = stubs c ++ MAP stack_alloc_prog_comp
   prog`;;
 hol4_overload "compile" "stack_alloc_compile";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -19,6 +19,13 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bviProps"
+  ["backendProps"; "bviSem"; "bvlProps"];;
+
 let _ = do_list hide_constant ["error"];;
 
 (* initial_state_simp[simp] *)
@@ -465,11 +472,8 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 bviPropsScript.sml:711-718: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bviProps_get_code_labels_def = cake_define_list_try_tac (fun () ->
+let bviProps_get_code_labels_def = cake_define_list_try (fun () ->
   `MEASURE flatLang_exp_size`)
-  CHEAT_TAC
   [`bviProps_get_code_labels (Var _2:bvi_exp) = {}`;
    `bviProps_get_code_labels (If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION
@@ -688,3 +692,7 @@ let semantics_CURRY_I = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["error"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

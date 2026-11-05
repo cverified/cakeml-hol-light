@@ -793,10 +793,10 @@ one that was declared last wins where the types do not decide.  A
 statement whose types do not pin the name down therefore means
 what the file that loaded last says, which is not what HOL4 says.
 
-Two proofs of the port fail for that reason, and only in a **run**
-(where the whole load order is in the session); each of them goes
-through when its own file is loaded in its own closure, which is
-why `tools/bin/verifyfile` says they are fine:
+Two proofs of the port failed for that reason, and only in a
+**run** (where the whole load order is in the session); each of
+them went through when its own file was loaded in its own closure,
+which is why `tools/bin/verifyfile` said they were fine:
 
 - `compiler/backend/proofs/bvi_letProof.ml`, `compile_code_labels`:
   the inline lemma `labs_APPEND` says `MAP get_code_labels (a ++
@@ -804,19 +804,72 @@ why `tools/bin/verifyfile` says they are fine:
   another theory's `get_code_labels` and the rewrite does not fire.
   The type of the list is written down now.
 - `compiler/backend/proofs/bvl_constProof.ml`,
-  `evaluate_delete_var_Rerr`: still open.  The statement of the
-  source is `evaluate (xs,env2,s) = (Rerr e,r) ==> evaluate (MAP
-  delete_var xs,env2,s) = (Rerr e,r)`, and which `evaluate` it
-  means has to come out of the ancestry of bvl_constProof.
+  `evaluate_delete_var_Rerr`: the run of 2026-11-04 failed at it
+  with `Failure "tryfind"`.  The statement of the source is
+  `evaluate (xs,env2,s) = (Rerr e,r) ==> evaluate (MAP delete_var
+  xs,env2,s) = (Rerr e,r)`, and the proof rewrites with
+  `bvlProps$evaluate_CONS` -- whose own statement
+
+      evaluate (x :: xs,env,s) =
+        (match evaluate ([x],env,s) with ...)
+
+  pins no type at all, so in the run it was about
+  **`bviSem_evaluate`**: the rewrite fired nowhere, said nothing,
+  and the tactic that followed it failed three steps later.  In a
+  verify of that one file it passed, because `bviSem.ml` is not in
+  its closure.
 
 Both were failing before the port's theorems became bindings as
 well: the shape that preceded it caught the failure, wrote NOT
 PROVED and made the statement an axiom, so a run reported nothing.
-The fix for the class is to take the constants of theories outside
-a file's ancestry out of the interface while that file loads,
-which is what `hide_overloads` does for the accessors of a record
-field (PORTING-GUIDE.md, entry 11) -- for every ambiguous name,
-not only those.
+
+**How wide it is.**  `tools/mkcsts.py` writes the constants of
+every theorem that a session has, which are the statements as the
+port really read them, and `tools/thyscope.py` says which of them
+come out of a theory that the source of the file cannot see: **72
+names in 64 theorems** that the scope of the file has a constant of
+the same overloaded name for, so that the statement means that one
+and the port had it wrong.  `bvlProps` reads `bviSem_evaluate` 13
+times, `closProps` and `bviProps` and `bvlProps` read
+`dataSem_do_app`, `bvi_tailrecProof` reads `bvi_tmc_compile_exp`,
+`dataProps` reads `stackSem_evaluate`.
+
+**The fix** (2026-11-05) is the one this entry called for: the
+constants of the theories outside a file's ancestry come out of the
+interface while that file loads.  Every file of the port says, in a
+line that `tools/port.py` writes under its `needs` lines, which
+theories its source can see:
+
+    let _ = hol4_ancestors "bvlProps"
+      ["backend_common"; "bvl"; "bvlSem"; "bvl_const"];;
+
+`hol4_ancestors` (`ml/lib/theorem.ml`) takes the overloads of every
+other theory out of the interface, and the `unhide_overloads ()` at
+the end of the file puts the interface back as it stood -- not with
+the pairs in front, which would decide another name for the file
+after it.  The theory of an overload is the file that registered
+it, which announced its name (`the_overload_thy` in
+`ml/lib/define.ml`), and not a guess from the name of the constant:
+`backend_common` defines `bvl_to_bvi_namespaces`.  The list is the
+`Ancestors` block of the source, and the library closes it over the
+lists of those theories themselves (`tools/db.py`, `announce`), so
+the 1085 names in the files stand for the 5518 of the closure.
+
+What it does **not** settle is a name that more than one theory
+*in* the scope defines: there the interface decides again, by the
+order the files loaded in.  That order agrees with HOL4 in the
+cases seen -- HOL4 takes the theory closest in the ancestry, which
+loads last of them, and the interface tries the one registered last
+first -- and `bvi_letProof`'s `delete_var` (`bvi_let`'s, with
+`bvl_const`'s in scope as well) is right in the port for that
+reason.
+
+`tools/scope.ml` reads every statement again with the interface cut
+down, to see what the cut would break; what it reports has to be
+read against the same reading without the cut (`tmp/plain.out`,
+`tools/scope.py`), because a re-reading in a session that has the
+whole port loaded fails for statements that their own file read
+without trouble.
 
 ## The order in which the port is loaded
 
@@ -1344,13 +1397,16 @@ The five, with the line of each in its file of the port and which
 of the two the generator wrote (the one with the attributes of the
 source over it):
 
-| name | the port's own | the source's | what to do |
+| name | the port's own | the source's | what was done |
 |---|---|---|---|
-| `ref_edge_ValueArray` | 18311 | 10438 `[local]` | the same statement, and the source's stands first: drop the copy |
-| `ref_edge_Thunk` | 19245 | 10447 `[local]` | the same: drop the copy |
-| `dest_thunk_insert_MutBlock` | 16028 | 30568 `[local]` | the copy is the general form (the fourth component of the block may change) and stands first, so it keeps a name of its own |
-| `data_up_to_alt` | 6399 | 12569 `[local]` | another statement altogether (what is below the unused space after a store, against the source's two clauses of `data_up_to`), so it keeps a name of its own |
-| `exp_size_get_bin_args` | `bvi_tailrec` 235 | `bvi_tailrec` 181 | the copy is the source's statement proved, where the source's own place still has the `CHEAT_TAC` of phase two: the proof belongs in the store, under the name of the source, and the copy goes |
+| `ref_edge_ValueArray` | 18311 | 10438 `[local]` | the same statement, and the source's stands first: the copy is gone |
+| `ref_edge_Thunk` | 19245 | 10447 `[local]` | the same: the copy is gone (a note in its place says where the two stand) |
+| `dest_thunk_insert_MutBlock` | 16028 | 30568 `[local]` | the copy is the general form (the fourth component of the block may change) and stands first, so it is `dest_thunk_insert_MutBlock_any` now |
+| `data_up_to_alt` | 6399 | 12569 `[local]` | another statement altogether (what is below the unused space after a store, against the source's two clauses of `data_up_to`), so it is `data_up_to_written` now |
+| `exp_size_get_bin_args` | `bvi_tailrec` 235 | `bvi_tailrec` 181 | the copy is the source's statement proved, where the source's own place still has the `CHEAT_TAC` of phase two: it is `exp_size_get_bin_args_term` now, and the proof of the source's own belongs in the store |
+
+All five are in `tools/overrides.py`, so a re-port carries them;
+`tools/attrs.py` says 0 since 2026-11-05.
 
 Two of the seven were a fault of the check instead, and are
 gone: the scan for the comment that says the name and the

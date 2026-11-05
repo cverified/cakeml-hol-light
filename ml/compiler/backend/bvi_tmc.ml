@@ -13,6 +13,13 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_tmc"
+  ["backend_common"; "bvi"];;
 (* HOL4 ancestors outside the port: integer *)
 
 let bvi_tmc_pure_op_def = cake_define
@@ -593,3 +600,7 @@ let bvi_tmc_compile_prog_def = cake_define
   `bvi_tmc_compile_prog do_it next' xs =
      (if do_it then bvi_tmc_compile_each next' xs else (next',xs))`;;
 hol4_overload "compile_prog" "bvi_tmc_compile_prog";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

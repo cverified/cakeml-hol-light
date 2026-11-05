@@ -13,6 +13,13 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_jump"
+  ["bvl"];;
+
 (* HOL4 bvl_jumpScript.sml:22-30: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
@@ -37,3 +44,7 @@ let JumpList_def = cake_define_try_tac (fun () ->
 let jump_def = cake_define
   `bvl_jump_Jump x xs = Let [x] (JumpList 0 xs)`;;
 hol4_overload "Jump" "bvl_jump_Jump";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

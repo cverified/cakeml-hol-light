@@ -18,6 +18,13 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "export_x64"
+  ["export"];;
+
 (*
 CakeML expects 4 arguments in order:
 
@@ -349,3 +356,7 @@ let x64_export_def = cake_define
   |> concl |> rand |> listSyntax.dest_list |> fst |> map rand
   |> map stringSyntax.fromHOLstring |> concat |> print
 *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

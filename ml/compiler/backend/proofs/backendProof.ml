@@ -75,6 +75,22 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "backendProof"
+  ["backend"; "backendProps"; "backend_common"; "backend_passes";
+   "bvi_inlineProof"; "bvi_to_dataProof"; "bvl_jumpProof";
+   "bvl_to_bviProof"; "clos_annotateProof"; "clos_callProof";
+   "clos_constantProof"; "clos_fvsProof"; "clos_knownProof";
+   "clos_knownProps"; "clos_letopProof"; "clos_mtiProof";
+   "clos_numberProof"; "clos_opProof"; "clos_ticksProof";
+   "clos_to_bvlProof"; "dataProps"; "data_to_wordProof";
+   "flat_to_closProof"; "lab_to_targetProof"; "primSemEnv";
+   "semanticsProps"; "source_to_flatProof"; "source_to_sourceProof";
+   "stack_to_labProof"; "word_to_stack"; "word_to_stackProof"];;
+
 let _ = do_list hide_constant ["done"];;
 
 (* TODO: move/rephrase *)
@@ -1846,3 +1862,7 @@ let compile_correct_eval = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["done"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

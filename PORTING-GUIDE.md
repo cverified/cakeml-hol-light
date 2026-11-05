@@ -5146,3 +5146,73 @@ load, against a branch that renames things between releases.  To go
 back: `opam pin remove hol_light` and install `3.0.0` again.  To
 have the two files without moving anything, copy them into
 `~/.opam/hol-light/lib/hol_light/Library/` and `needs` finds them.
+
+## 115. The theory that an overloaded name means
+
+A name that several theories of CakeML define is one name in the
+port: the constants get the name of their theory in front
+(`bvlSem_evaluate`, `bviSem_evaluate`, `dataSem_evaluate`, ...) and
+the bare name is overloaded with all of them, so that a statement
+can write what the source writes.  HOL Light resolves such a name
+by the type of what it is applied to, as HOL4 does -- and where
+nothing in the statement pins that type down, the two do not agree
+at all:
+
+- **HOL4** has only the names of the theories of the `Ancestors`
+  blocks of the file in its grammar.  In `bvlPropsScript.sml`,
+  whose ancestors are `bvl bvlSem bvl_const backend_common`, the
+  name `evaluate` can only be `bvlSem$evaluate`.
+- **HOL Light** has one interface for the whole port, and
+  `overload_interface` puts the newest entry in front of it.  So an
+  unpinned `evaluate` is the one of the theory that registered it
+  last, which is the **load order**.
+
+A statement of the port that pins nothing therefore says what the
+load order made of it, and it says something different in a run
+(where every file is loaded) than in the closure of a single file.
+`bvlProps$evaluate_CONS` is the one that cost the most: its
+statement is
+
+    evaluate (x :: xs,env,s) = (match evaluate ([x],env,s) with ...)
+
+where no argument has a type of its own, and in a run it was
+`bviSem_evaluate` -- so a proof of `bvl_constProof` that rewrites
+with it did nothing, the rewrite was silent, and the file failed at
+its 29th block with `Failure "tryfind"` three tactics later.  In a
+verify of that one file it passed, because `bviSem.ml` is not in
+the closure.
+
+Since 2026-11-05 every file of the port says which theories its
+source can see, in the line that `tools/port.py` writes under its
+`needs` lines:
+
+    let _ = hol4_ancestors "bvlProps"
+      ["backend_common"; "bvl"; "bvlSem"; "bvl_const"];;
+
+`hol4_ancestors` (`ml/lib/theorem.ml`) takes the overloads of every
+other theory out of the interface for as long as the file loads,
+and the `unhide_overloads ()` at the end of the file puts them
+back.  The list is the `Ancestors` block of the source, and the
+library closes it over the lists of those theories themselves
+(`tools/db.py`, `announce`), so what stands in the file is as short
+as what stands in the source.  The theory of an overload is the
+file that registered it, which announced its name
+(`the_overload_thy` in `ml/lib/define.ml`); it is **not** a guess
+from the name of the constant, because that does not say the theory
+(`backend_common` defines `bvl_to_bvi_namespaces`).
+
+What to do when a rewrite with a theorem of a `Props` theory does
+nothing, which is how this shows itself: print the theorem and look
+at which theory's constant it is about.
+
+    string_of_term(concl evaluate_CONS);;
+
+A statement of a *definition* theory is mostly safe, because the
+constant it defines pins the types of its arguments; the ones to
+watch are the generic theorems of a `Props` theory -- `_CONS`,
+`_APPEND`, `_SNOC`, `_IMP_LENGTH` -- whose variables have no type
+but the one the name gives them.
+
+`tools/thyscope.py` is the check: it reads the constants of every
+theorem out of a session (`tools/mkcsts.py`) and says which of them
+come out of a theory that the source of the file cannot see.

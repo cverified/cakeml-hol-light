@@ -21,6 +21,14 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flatProps"
+  ["ast"; "evaluateProps"; "flatLang"; "flatSem";
+   "semanticPrimitivesProps"];;
+
 let _ = do_list hide_constant ["C"];;
 
 let ctor_same_type_OPTREL = prove
@@ -449,12 +457,9 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 flatPropsScript.sml:819-833: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let flatProps_set_globals_def = cake_define_list_try_tac (fun () ->
+let flatProps_set_globals_def = cake_define_list_try (fun () ->
   `MEASURE (\a. match a with INL e -> flatLang_exp_size e | INR es ->
      list_size flatLang_exp_size es)`)
-  CHEAT_TAC
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)
@@ -829,3 +834,7 @@ hol4_overload "mk_flat_install_conf" "flatProps_mk_flat_install_conf";;
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

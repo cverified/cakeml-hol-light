@@ -19,6 +19,13 @@ needs "compiler/backend/db_vars.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_call"
+  ["closLang"; "db_vars"];;
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let free_def = cake_define_list_cheat CHEAT_TAC
@@ -444,3 +451,7 @@ let compile_nil = prove
   (* compiler evaluation *)
 (* HOL4 clos_callScript.sml:471-474: the ML values that the
    definitions below antiquote *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

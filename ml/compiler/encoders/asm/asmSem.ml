@@ -17,6 +17,13 @@ needs "misc/misc.ml";;
 (* for bytes_in_memory *)
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "asmSem"
+  ["asm"; "misc"];;
+
 (* -- semantics of ASM program -- *)
 
 let asm_state_FIELDS = define_record "asm_state"
@@ -321,3 +328,7 @@ let asm_step_def = cake_define
      (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH (asm_config_encode
        c i))) s1 = s2) /\
      ~(asm_state_failed s2) /\ asm_ok i c`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

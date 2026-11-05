@@ -2,7 +2,7 @@
 (*  mllist: ported from HOL4's
     basis/pure/mllistScript.sml
     A definition theory, with 26 definitions and 43 theorems.
-    Needed by 17 files of the port.  *)
+    Needed by 18 files of the port.  *)
 (* ======================================================== *)
 
 (*

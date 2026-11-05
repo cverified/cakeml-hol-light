@@ -20,6 +20,13 @@ needs "semantics/ast.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/tokenUtils.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "cmlPEG"
+  ["gram"; "tokenUtils"];;
+
 (* HOL4 cmlPEGScript.sml:14: the overload monad_bind, which the port
    expands *)
 hol4_overload "assert" "OPTION_GUARD";;
@@ -758,3 +765,7 @@ let PEG_wellformed = prove
    value of an ML expression: NTS_in_PEG_exprs *)
 
 (* HOL4 cmlPEGScript.sml:844: ML code, not ported *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

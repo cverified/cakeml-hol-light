@@ -14,6 +14,13 @@ needs "basis/pure/mlstring.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "lexer_fun"
+  ["tokens"];;
 (* HOL4 ancestors outside the port: string list *)
 
 (* This script defines the functional spec for the assembly
@@ -93,11 +100,8 @@ let read_char_as_3digits_reduces = prove
 
 (* HOL4 lexer_funScript.sml:122-126: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let lexer_fun_read_string_def = cake_define_try_tac (fun () ->
-  `MEASURE (LENGTH o FST)`)
-  CHEAT_TAC
+let lexer_fun_read_string_def = cake_define_wf
+  `MEASURE (LENGTH o FST)`
   `lexer_fun_read_string str s (loc:locn) =
      (if str = "" then (ErrorS,loc,"") else
      if HD str = (CHR 34) then (StringS s,loc,TL str) else
@@ -488,3 +492,7 @@ let split_top_level_semi_def = cake_define_try_tac (fun () ->
   `(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i ->
         TAKE i toks :: split_top_level_semi (DROP i toks)))`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -22,6 +22,13 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "targetProps"
+  ["asm"; "asmProps"; "asmSem"; "ffi"; "misc"; "targetSem"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -861,5 +868,6 @@ let ccache_interfer_ok_post_ccache_asm = prove
        (machine_config_ccache_interfer mc_conf k (a1,a2,ms2))`),
   CHEAT_TAC);;
 
-(* and the accessors of those fields are overloaded again *)
+(* and the overloads that this file cannot see are back in the
+   interface *)
 let _ = unhide_overloads ();;

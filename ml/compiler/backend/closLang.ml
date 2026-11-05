@@ -16,6 +16,13 @@ needs "compiler/backend/backend_common.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "closLang"
+  ["ast"; "backend_common"; "fpSem"; "mlstring"];;
+
 (* compilation from this language removes closures *)
 
 let const_INDUCT,const_RECURSION = define_datatype
@@ -334,3 +341,7 @@ new_type_abbrev("clos_prog",`: closLang_exp
 
 (* HOL4 closLangScript.sml:228: the type abbreviation clos_cc, which
    the port expands *)
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

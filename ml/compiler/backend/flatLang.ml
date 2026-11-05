@@ -26,6 +26,13 @@
 needs "compiler/backend/backend_common.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "flatLang"
+  ["ast"; "backend_common"];;
+
 let _ = do_list hide_constant ["id"; "pmatch"];;
 
 (* Most ops are inherited from ast$op via the Src wrapper.
@@ -161,3 +168,7 @@ let SmartIf_PMATCH = prove
 let _ = do_list unhide_constant
   ["id";
    "pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

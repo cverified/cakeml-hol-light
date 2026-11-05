@@ -51,6 +51,13 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/set_sep.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvi_let"
+  ["bvi"];;
+
 let bvi_let_extract_def = cake_define
   `bvi_let_extract x1 ys =
         match x1 with
@@ -421,3 +428,7 @@ let bvi_let_compile_exp_eq = prove
   (let ce = bvi_let_compile_exp_def in
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_sing] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

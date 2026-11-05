@@ -29,6 +29,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvlSem"
+  ["backendProps"; "bvl"; "closSem"; "clos_to_bvl"];;
+
 let _ = do_list hide_constant ["str"];;
 
 (* --- Semantics of BVL --- *)
@@ -125,15 +132,13 @@ let isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "bvlSem_isClos";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of the source overlap -- a later one says
    Eq_type_error of a pair that an earlier one has already given a
    value -- and HOL4 takes the first that matches, so the port
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let bvlSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
+let bvlSem_do_eq_def = cake_define_list
   [`bvlSem_do_eq refs x2 x3 =
          match (x2,x3) with
            ((bvlSem_CodePtr _4:bvlSem_v),_5) -> Eq_type_error
@@ -831,12 +836,9 @@ if concl bvlSem_fix_clock_IMP <> `T` then
 let _ = size_thms "bvl_exp";;
 (* HOL4 bvlSemScript.sml:660-668: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bvlSem_evaluate_def = cake_define_try_tac (fun () ->
+let bvlSem_evaluate_def = cake_define_wf
   `(inv_image (MEASURE I LEX MEASURE (list_size bvl_exp_size))
-                            (\(xs,env,s). (state_clock s,xs)))`)
-  CHEAT_TAC
+                            (\(xs,env,s). (state_clock s,xs)))`
   `(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s)) /\
    (bvlSem_evaluate (x :: y :: xs,env,s) =
       (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval
@@ -987,3 +989,7 @@ hol4_overload "semantics" "bvlSem_semantics";;
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["str"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

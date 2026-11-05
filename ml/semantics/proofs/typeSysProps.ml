@@ -17,6 +17,14 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "typeSysProps"
+  ["ast"; "namespace"; "namespaceProps"; "semanticPrimitivesProps";
+   "typeSoundInvariants"; "typeSystem"];;
+
 let _ = do_list hide_constant ["id"];;
 
 (* HOL4 typeSysPropsScript.sml:14: ML code, not ported *)
@@ -1050,3 +1058,7 @@ let type_ds_sing = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

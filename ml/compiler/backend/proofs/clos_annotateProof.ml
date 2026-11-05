@@ -22,6 +22,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_annotateProof"
+  ["backendProps"; "closProps"; "closSem"; "clos_annotate"; "db_vars"];;
+
 
 hol4_overload "do_app" "closSem_do_app";;
 hol4_overload "compile" "clos_annotate_compile";;
@@ -637,3 +644,7 @@ let every_Fn_SOME_ann = prove
       every_Fn_SOME (MAP (SND o SND) xs) ==>
       every_Fn_SOME (MAP (SND o SND) (clos_annotate_compile xs))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

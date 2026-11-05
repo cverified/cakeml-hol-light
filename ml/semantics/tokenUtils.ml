@@ -13,6 +13,13 @@
 needs "lib/grammar.ml";;
 needs "semantics/tokens.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "tokenUtils"
+  ["tokens"];;
+
 
 let isInt_def = cake_define
   `isInt x1 =
@@ -163,3 +170,7 @@ let destREPLIDT_def = cake_define
         match x1 with
           tokens_REPLIDT s -> SOME s
         | _35 -> NONE`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

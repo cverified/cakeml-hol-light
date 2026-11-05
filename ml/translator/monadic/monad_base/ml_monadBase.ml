@@ -12,6 +12,13 @@
 
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "ml_monadBase"
+  ["semanticPrimitives"];;
+
 (* 'a is the type of the state, 'b is the type of successful computations, and
  * 'c is the type of exceptions *)
 
@@ -382,3 +389,7 @@ let run_def = cake_define
   `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
 
 hol4_only "++" "APPEND";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

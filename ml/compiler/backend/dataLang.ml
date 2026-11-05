@@ -38,6 +38,13 @@ needs "misc/misc.ml";;
 (* for num_set *)
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "dataLang"
+  ["closLang"; "misc"];;
+
 
 (* --- Syntax of dataLang --- *)
 let op_space_reset_def = cake_define
@@ -99,3 +106,7 @@ hol4_overload "Force" "dataLang_Force";;
 
 let mk_ticks_def = cake_define
   `mk_ticks n e = FUNPOW (dataLang_Seq dataLang_Tick) n e`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

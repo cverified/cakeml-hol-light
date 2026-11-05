@@ -21,6 +21,13 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_numberProof"
+  ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_number"];;
+
 hol4_overload "lookup" "sptree_lookup";;
 hol4_overload "insert" "sptree_insert";;
 hol4_overload "delete" "sptree_delete";;
@@ -502,3 +509,7 @@ let semantics_number = prove
       closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
         co (state_cc (ignore_table clos_number_compile_inc) cc) xs`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

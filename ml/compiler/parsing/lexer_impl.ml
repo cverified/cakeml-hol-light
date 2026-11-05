@@ -18,6 +18,13 @@ needs "misc/misc.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/tokens.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "lexer_impl"
+  ["lexer_fun"; "misc"; "tokens"];;
+
 let _ = do_list hide_constant ["val"];;
 (* HOL4 ancestors outside the port: rich_list *)
 
@@ -262,11 +269,8 @@ let next_sym_eq = prove
 
 (* HOL4 lexer_implScript.sml:344-347: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let lexer_impl_lex_aux_def = cake_define_try_tac (fun () ->
-  `MEASURE (LENGTH o FST o SND o SND)`)
-  CHEAT_TAC
+let lexer_impl_lex_aux_def = cake_define_wf
+  `MEASURE (LENGTH o FST o SND o SND)`
   `lexer_impl_lex_aux acc (d:num) input loc =
      (match next_token input loc with
        // case: end of input
@@ -476,3 +480,7 @@ let lexer_correct = prove
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["val"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

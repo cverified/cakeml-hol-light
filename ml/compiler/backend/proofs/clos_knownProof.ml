@@ -29,6 +29,15 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_knownProof"
+  ["backendProps"; "closLang"; "closProps"; "closSem";
+   "clos_fvsProof"; "clos_known"; "clos_knownProps";
+   "clos_letopProof"; "clos_opProof"; "clos_ticksProof"; "db_vars"];;
+
 (* HOL4 clos_knownProofScript.sml:19: an overload that the source
    brings to the front: domain *)
 
@@ -1013,11 +1022,8 @@ let _ = size_thms "closSem_v";;
    the names that the port gives the constants *)
 (* HOL4 clos_knownProofScript.sml:2614-2617: the tactic that proves
    the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_knownProof_v_rel_def = cake_define_list_try_tac (fun () ->
+let clos_knownProof_v_rel_def = cake_define_list_try (fun () ->
   `MEASURE (closSem_v_size o FST o SND o SND)`)
-  CHEAT_TAC
   [`clos_knownProof_v_rel c g (closSem_Number i:closSem_v) v <=> v =
   (closSem_Number i:closSem_v)`;
    `clos_knownProof_v_rel c g (Word64 w:closSem_v) v <=> v = (Word64
@@ -1907,3 +1913,7 @@ let get_code_labels_mk_Ticks = prove
  (`!a b c d. closProps_get_code_labels (mk_Ticks a b c d) =
   closProps_get_code_labels d`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -16,6 +16,13 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "word_unreach"
+  ["wordLang"];;
+
 (* function that makes all Seq associate to the right *)
 
 let dest_Seq_Move_def = cake_define
@@ -83,3 +90,7 @@ let remove_unreach_test = prove
                        (wordLang_Move 1 [(3,1); (2,99)])) =
    wordLang_Move 1 [(3,11); (2,99); (1,11)]`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

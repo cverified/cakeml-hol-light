@@ -28,6 +28,14 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "clos_known"
+  ["closLang"; "clos_fvs"; "clos_letop"; "clos_op"; "clos_ticks";
+   "db_vars"];;
+
 let _ = do_list hide_constant ["all"; "pmatch"];;
 
 (* HOL4 clos_knownScript.sml:16: code that the source has in a
@@ -141,9 +149,7 @@ let get_size_sc_SOME = prove
   clos_known_get_size exp = n`,
   CHEAT_TAC);;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_known_free_def = cake_define_list_cheat CHEAT_TAC
+let clos_known_free_def = cake_define_list
   [`clos_known_free [] = ([],db_vars_Empty)`;
    `clos_known_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_known_free [x] in
@@ -754,3 +760,7 @@ EVAL ``
 let _ = do_list unhide_constant
   ["all";
    "pmatch"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

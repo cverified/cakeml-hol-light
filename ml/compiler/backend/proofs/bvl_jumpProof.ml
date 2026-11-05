@@ -16,6 +16,13 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "bvl_jumpProof"
+  ["bvlProps"; "bvlSem"; "bvl_jump"];;
+
 (* [local] *)
 let evaluate_JumpList = prove
  (`!n xs k.
@@ -35,3 +42,7 @@ let bvl_get_code_labels_JumpList = prove
  (`!n xs. bvlProps_get_code_labels (JumpList n xs) = BIGUNION
   (set_of_list (MAP bvlProps_get_code_labels xs))`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;
