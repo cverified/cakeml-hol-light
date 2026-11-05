@@ -451,6 +451,7 @@ isClosure
 flatProps_esgc_free
 flatProps_elist_globals
 flatProps_set_globals
+flatProps_set_globals_mutual
 flatProps_op_gbag
 flatProps_eval_sim
 bind_locals_list
