@@ -22,6 +22,12 @@ def arities(text):
   out = {}
   for part in text.replace('\\\n', ' ').split(';'):
     if '=' not in part: continue
+    # a // comment of the specification is the comment of the
+    # source and runs to the \n that ends it (the string of the
+    # port writes that newline as an escape) or to the end of the
+    # specification: the parentheses of its prose are not
+    # arguments of the constructor before it
+    part = re.sub(r'//.*?(?:\\n|$)', ' ', part)
     for alt in part.split('=', 1)[1].split('|'):
       alt = alt.strip()
       if not alt: continue
