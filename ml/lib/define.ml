@@ -1935,7 +1935,8 @@ let the_thy_loading = ref "";;
 
 let hol4_lib () = the_thy_loading := "";;
 
-let the_overload_thy = ref ([]:((string * string) * string) list);;
+let the_overload_thy =
+  ref ([]:((string * string) * string list) list);;
 
 (* and the overloads that the file registers while its own scope is
    in the interface, in front and at the back of it: they go back
@@ -1950,20 +1951,42 @@ let the_file_overloads =
 let the_file_overloads_last =
   ref ([]:(string * (string * hol_type)) list);;
 
-(* the first registration of a pair is the one that says its
-   theory, and a pair that the library layer registers (sptree's
-   lookup) is of no theory of the port and in the scope of every
-   file: a source that brings such a name to the front of the
-   overloads has the port register the pair again, in a file of a
-   theory that is not where the constant comes from, and taking
-   that for its theory took sptree's lookup out of the interface of
-   data_to_word_memoryProof -- where balanced_map's lookup then won
-   and nine hundred lines of statements did not typecheck *)
+(* the theories that have registered a pair, which are the ones
+   that can see it: a pair that the library layer registers
+   (sptree's lookup) is of no theory of the port and in the scope
+   of every file, because every source of CakeML has it through
+   its preamble.  A source that brings such a name to the front of
+   the overloads has the port register the pair again, in a file
+   of a theory that is not where the constant comes from, so the
+   theories are kept together and not one of them: taking the file
+   that brought it to the front for the theory of the pair took
+   sptree's lookup out of the interface of
+   data_to_word_memoryProof -- where balanced_map's lookup then
+   won and nine hundred lines of statements did not typecheck --
+   and taking the first registration for it made every later
+   theory's pair one of the library layer, which no scope takes
+   out (fromSexp's ++ of options then won in closProps, whose
+   source cannot see it, and thirteen clauses of code_locs did not
+   fit together). *)
 
 let note_overload_thy name cname =
-  if not (can (assoc (name,cname)) (!the_overload_thy)) then
+  let ts = try assoc (name,cname) (!the_overload_thy)
+           with Failure _ -> [] in
+  if not (mem (!the_thy_loading) ts) then
     the_overload_thy :=
-      ((name,cname),!the_thy_loading) :: (!the_overload_thy);;
+      ((name,cname),(!the_thy_loading) :: ts) ::
+        filter (fun (p,_) -> p <> (name,cname)) (!the_overload_thy);;
+
+(* and a pair that goes out of the interface altogether is of no
+   theory any more: HOL4's Overload of a name that the library
+   layer has registered already (simpleSexp's ++ of options, which
+   the port puts back to the APPEND of HOL Light at the end of the
+   file) leaves the pair for the files after it as if the library
+   layer had never had it *)
+
+let forget_overload_thy name =
+  the_overload_thy :=
+    filter (fun ((n,_),_) -> n <> name) (!the_overload_thy);;
 
 let hol4_overload name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
@@ -2044,6 +2067,10 @@ let cake_as_vars f =
 
 let hol4_only name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
+  (* override_interface takes every other pair of the name out of
+     the interface, so none of them is of a theory any more *)
+  forget_overload_thy name;
+  note_overload_thy name cname;
   override_interface(name,mk_mconst(cname,get_const_type cname));;
 
 (* HOL4's Datatype, which also registers the recursion theorem and (as*)

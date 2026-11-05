@@ -442,3 +442,51 @@ let _ = unhide_overloads ();;
 
 print_string (Printf.sprintf
   "\nSMOKEANCLIB %s (smoke_ovl_lib)\n" smoke_ovl_still);;
+
+(* a name that the library layer overloads and then gives back to
+   a constant of HOL Light (simpleSexp's ++, which is OPTION_CHOICE
+   in that file and APPEND after it) is that constant for the files
+   after it: a theory that overloads the name again gives it to the
+   files that can see that theory and to no others, although the
+   pair is one that the library layer had *)
+
+let smoke_only_of () =
+  fst(dest_const(fst(strip_comb(parse_term "smoke_only 1"))));;
+
+the_thy_loading := "";;
+hol4_overload "smoke_only" "smoke_ovl_lib";;
+hol4_only "smoke_only" "smoke_ovl_a";;
+
+let _ = hol4_ancestors "smoke_thy_g" [];;
+hol4_overload "smoke_only" "smoke_ovl_lib";;
+let smoke_only_in_g = smoke_only_of ();;
+let _ = unhide_overloads ();;
+
+let _ = hol4_ancestors "smoke_thy_h" [];;
+let smoke_only_in_h = smoke_only_of ();;
+let _ = unhide_overloads ();;
+
+print_string (Printf.sprintf
+  "\nSMOKEANCONLY g %s h %s (smoke_ovl_lib smoke_ovl_a)\n"
+  smoke_only_in_g smoke_only_in_h);;
+
+(* and a pair that two theories have registered is in the scope of
+   a file that can see either of them *)
+
+let smoke_twice_of () =
+  fst(dest_const(fst(strip_comb(parse_term "smoke_twice 1"))));;
+
+let _ = hol4_ancestors "smoke_thy_i" [];;
+hol4_overload "smoke_twice" "smoke_ovl_a";;
+let _ = unhide_overloads ();;
+
+let _ = hol4_ancestors "smoke_thy_j" [];;
+hol4_overload "smoke_twice" "smoke_ovl_a";;
+let _ = unhide_overloads ();;
+
+let _ = hol4_ancestors "smoke_thy_k" ["smoke_thy_j"];;
+let smoke_twice_in_k = can smoke_twice_of ();;
+let _ = unhide_overloads ();;
+
+print_string (Printf.sprintf
+  "\nSMOKEANCTWICE %b (true)\n" smoke_twice_in_k);;
