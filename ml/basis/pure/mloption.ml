@@ -45,3 +45,7 @@ let mloption_compare_def = cake_define
        LESS) | SOME vx -> (match y with NONE -> GREATER | SOME vy ->
        f vx vy))`;;
 hol4_overload "compare" "mloption_compare";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

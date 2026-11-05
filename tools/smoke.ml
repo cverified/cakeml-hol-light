@@ -416,3 +416,29 @@ print_string (Printf.sprintf
   "\nSMOKEANCESTORS last %s a %s b %s back %s \
 (smoke_ovl_b smoke_ovl_a smoke_ovl_b smoke_ovl_b)\n"
   smoke_ovl_last smoke_ovl_in_a smoke_ovl_in_b smoke_ovl_back);;
+
+(* and a name that the library layer overloads is in the scope of
+   every file, however many files bring it to the front of the
+   interface again: it is the first registration of a pair that
+   says its theory, and ml/lib/sptree.ml's lookup is of no theory
+   of the port *)
+
+let smoke_ovl_lib_def = new_definition
+  `smoke_ovl_lib (n:num) = n + 3`;;
+
+(* no file of the port is loading, which is how the library layer
+   registers its own overloads *)
+the_thy_loading := "";;
+hol4_overload "smoke_ovl" "smoke_ovl_lib";;
+
+(* and a file of the port brings the name to the front again *)
+let _ = hol4_ancestors "smoke_thy_e" [];;
+hol4_overload "smoke_ovl" "smoke_ovl_lib";;
+let _ = unhide_overloads ();;
+
+let _ = hol4_ancestors "smoke_thy_f" [];;
+let smoke_ovl_still = smoke_ovl_of ();;
+let _ = unhide_overloads ();;
+
+print_string (Printf.sprintf
+  "\nSMOKEANCLIB %s (smoke_ovl_lib)\n" smoke_ovl_still);;

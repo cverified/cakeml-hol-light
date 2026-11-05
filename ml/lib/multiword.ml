@@ -6,6 +6,10 @@
 (* ======================================================== *)
 
 needs "lib/ASCIInumbers.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: pred_set res_quan arithmetic
    words bit pair list rich_list relation pair integer fcp *)
 

@@ -39,3 +39,7 @@ let pmatchResult_INDUCT,pmatchResult_RECURSION = define_datatype
 *)
 let matchResult_INDUCT,matchResult_RECURSION = define_datatype
   "matchResult = MatchSuccess (num) | MatchFailure";;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

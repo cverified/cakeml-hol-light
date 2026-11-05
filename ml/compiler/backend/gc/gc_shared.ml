@@ -523,3 +523,7 @@ let heap_filter_aux_APPEND = prove
 let heap_filter_aux_heap_addresses_UNION = prove
  (`!xs n s. heap_filter_aux n (heap_addresses n xs UNION s) xs = xs`,
   CHEAT_TAC);;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

@@ -11,6 +11,10 @@ needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/simpleSexp.ml";;
 needs "lib/simpleSexpPEG.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: list pair string *)
 
 let parse_sexp_def = cake_define

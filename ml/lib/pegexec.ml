@@ -7,6 +7,10 @@
 
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: rich_list *)
 
 let kont_INDUCT,kont_RECURSION = define_datatype

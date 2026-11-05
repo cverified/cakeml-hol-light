@@ -6,6 +6,10 @@
 (* ======================================================== *)
 
 needs "lib/location.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: list pred_set finite_map relation *)
 let grammar_symbol_INDUCT,grammar_symbol_RECURSION = define_datatype
   "grammar_symbol = grammar_TOK ('a) | grammar_NT ('b+num)";;

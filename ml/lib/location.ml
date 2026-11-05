@@ -5,6 +5,12 @@
     that CakeML needs.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
+(* this file needs nothing of the port *)
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
+
 let locn_INDUCT,locn_RECURSION = define_datatype
   "locn = UNKNOWNpt | EOFpt | POSN (num) (num)";;
 

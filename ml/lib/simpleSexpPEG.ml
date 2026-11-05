@@ -8,6 +8,10 @@
 needs "lib/peg.ml";;
 needs "lib/simpleSexp.ml";;
 
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
+
 let tokeq_def = cake_define
   `simpleSexpPEG_tokeq t = peg_tok ((=) t) (K (SX_SYM [t]))`;;
 hol4_overload "tokeq" "simpleSexpPEG_tokeq";;

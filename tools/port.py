@@ -1066,6 +1066,15 @@ class Porter:
     for i, (blanks, c) in enumerate(chunks):
       if i: text += '\n' * (1 + min(blanks, 2))
       text += c
+    # the head of the file goes where the Ancestors block of the
+    # source put the marker; a source that has no Ancestors block
+    # of its own (location, ternaryComparisons, errorMonad) gets it
+    # under the banner, or the file would have no needs lines and
+    # no line to say that it is of no theory of the port -- and the
+    # overloads it registers would go down as the theory of the
+    # file whose needs loaded it
+    if NEEDS not in text:
+      text = NEEDS + '\n\n' + text
     text = (self.head + '\n' + text if self.head else text) + '\n'
     # an infix that this file overloads with an append of its own is
     # the one of HOL Light again for the files that come after
@@ -1138,6 +1147,13 @@ class Porter:
     # without it they would go down as the theory of the file
     # before it (misc, mllist, backend_common, db_vars and
     # gc_shared have no CakeML ancestor)
+    if self.kind == 'lib':
+      # a HOL4 library theory is of no theory of the port: the
+      # overloads it registers are in the scope of every file, and
+      # a needs of it stands inside a file that is a theory
+      head += ('\n\n(* this file is of no theory of the port: the'
+               ' overloads it\n   registers are in the scope of'
+               ' every file *)\nlet _ = hol4_lib ();;')
     if self.kind != 'lib':
       lines = ['  ["' + self.anc_scope[0] + '"'] if self.anc_scope \
               else []

@@ -93,8 +93,8 @@ TIMEOUT=600 repl-step smoke \
   "loadt \"$C/tools/smoke.ml\";;" > /dev/null 2>&1
 tmux capture-pane -p -t hol-smoke -S -40 |
   grep -E -e 'SMOKEALL|SMOKECHEAT|SMOKETHM|SMOKEVARS|SMOKELIB' \
-          -e 'SMOKEANCESTORS|Exception|Error' |
-  tail -7
+          -e 'SMOKEANCESTORS|SMOKEANCLIB|Exception|Error' |
+  tail -8
 [ "$NORUN" = 1 ] && exit 0
 echo "=== the next run"
 nohup env TIMEOUT=${TIMEOUT:-2700} CAKE_DEBUG=1 runall \

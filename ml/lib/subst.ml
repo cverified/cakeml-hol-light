@@ -7,6 +7,10 @@
 (* ======================================================== *)
 
 needs "lib/term.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: pred_set relation finite_map
    While prim_rec arithmetic bag list *)
 

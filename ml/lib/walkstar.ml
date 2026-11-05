@@ -9,6 +9,10 @@
 needs "lib/subst.ml";;
 needs "lib/term.ml";;
 needs "lib/walk.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: relation pair bag prim_rec
    finite_map pred_set *)
 

@@ -365,3 +365,7 @@ let flat_rev_thm = prove
 let _ = do_list unhide_constant
   ["length";
    "negate"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

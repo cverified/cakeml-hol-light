@@ -51,14 +51,16 @@ let the_saved_interface =
 let unhide_overloads () =
   match !the_saved_interface with
     Some saved ->
-      (* what the file registered itself goes in front of the
-         interface it had, which is where it would have stood *)
-      let added =
-        filter (fun (n,(c,_)) ->
-                  not (exists (fun (n2,(c2,_)) -> n2 = n && c2 = c)
-                              saved))
-               (!the_interface) in
-      the_interface := added @ saved;
+      (* the interface the file had, with what the file registered
+         itself in front of it and at the back of it, which is
+         where those stood while it loaded: a pair that was in the
+         interface already and that the file registered again
+         (HOL4's bring_to_front_overload) is in front of the one
+         further back, as HOL4 keeps it for the files after this *)
+      the_interface :=
+        (!the_file_overloads) @ saved @ (!the_file_overloads_last);
+      the_file_overloads := [];
+      the_file_overloads_last := [];
       the_saved_interface := None;
       the_removed_overloads := []
   | None ->
@@ -116,10 +118,15 @@ let hol4_ancestors thy anc =
     (the_ancestry := (thy,anc) :: (!the_ancestry);
      Hashtbl.reset the_anc_scope);
   if !the_saved_interface = None then
-    the_saved_interface := Some (!the_interface);
+    (the_saved_interface := Some (!the_interface);
+     the_file_overloads := [];
+     the_file_overloads_last := []);
   let seen = thy :: anc_scope thy in
+  (* a pair of no theory is the library layer's own (sptree's
+     lookup), which every source of CakeML has through its
+     preamble: it stays in the interface *)
   let gone =
-    map fst (filter (fun (_,t) -> not (mem t seen))
+    map fst (filter (fun (_,t) -> t <> "" && not (mem t seen))
                     (!the_overload_thy)) in
   the_interface :=
     filter (fun (n,(c,_)) -> not (mem (n,c) gone)) (!the_interface);;

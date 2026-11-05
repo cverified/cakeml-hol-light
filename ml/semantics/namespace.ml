@@ -110,3 +110,7 @@ let nsMap_def = cake_define
   `nsMap (f:'v->'w) ((Bind v m):('m,'n,'v)namespace) =
      Bind (MAP (\(n,x). (n,f x)) v) (MAP (\(mn,e). (mn,nsMap f e))
        m)`;;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

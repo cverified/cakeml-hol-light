@@ -1925,17 +1925,51 @@ let define_match tm =
 
 let the_thy_loading = ref "";;
 
+(* a file of the library layer is of no theory of the port: the
+   overloads it registers (sptree's lookup) are in the scope of
+   every file, because every source of CakeML has them through its
+   preamble.  It says so at its head, because a needs of it stands
+   inside a file that _is_ a theory -- so without this its pairs
+   would go down as that theory and come out of the interface of
+   every file that cannot see it. *)
+
+let hol4_lib () = the_thy_loading := "";;
+
 let the_overload_thy = ref ([]:((string * string) * string) list);;
 
+(* and the overloads that the file registers while its own scope is
+   in the interface, in front and at the back of it: they go back
+   in front of the interface, and at the back of it, when the file
+   puts the interface back (ml/lib/theorem.ml, unhide_overloads),
+   so that a bring_to_front_overload of a source holds for the
+   files after it as HOL4 keeps it *)
+
+let the_file_overloads =
+  ref ([]:(string * (string * hol_type)) list);;
+
+let the_file_overloads_last =
+  ref ([]:(string * (string * hol_type)) list);;
+
+(* the first registration of a pair is the one that says its
+   theory, and a pair that the library layer registers (sptree's
+   lookup) is of no theory of the port and in the scope of every
+   file: a source that brings such a name to the front of the
+   overloads has the port register the pair again, in a file of a
+   theory that is not where the constant comes from, and taking
+   that for its theory took sptree's lookup out of the interface of
+   data_to_word_memoryProof -- where balanced_map's lookup then won
+   and nine hundred lines of statements did not typecheck *)
+
 let note_overload_thy name cname =
-  if !the_thy_loading <> "" &&
-     not (can (assoc (name,cname)) (!the_overload_thy)) then
+  if not (can (assoc (name,cname)) (!the_overload_thy)) then
     the_overload_thy :=
       ((name,cname),!the_thy_loading) :: (!the_overload_thy);;
 
 let hol4_overload name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
   note_overload_thy name cname;
+  the_file_overloads :=
+    (name,(cname,get_const_type cname)) :: (!the_file_overloads);
   overload_interface(name,mk_mconst(cname,get_const_type cname));;
 
 (* HOL4's add_numeral_form makes & an injection of the type of the
@@ -1947,6 +1981,8 @@ let hol4_overload name cname =
 
 let hol4_numeral_form cname =
   (try make_overloadable "&" `:num->A` with Failure _ -> ());
+  the_file_overloads_last :=
+    (!the_file_overloads_last) @ [("&",(cname,get_const_type cname))];
   the_interface :=
     !the_interface @ [("&",(cname,get_const_type cname))];;
 
@@ -1960,6 +1996,9 @@ let hol4_numeral_form cname =
 let hol4_overload_last name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
   note_overload_thy name cname;
+  the_file_overloads_last :=
+    (!the_file_overloads_last) @
+      [(name,(cname,get_const_type cname))];
   the_interface :=
     !the_interface @ [(name,(cname,get_const_type cname))];;
 

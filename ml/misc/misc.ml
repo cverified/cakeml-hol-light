@@ -2501,3 +2501,7 @@ let TotOrd_pair_cmp = prove
 let _ = do_list unhide_constant
   ["C";
    "num_cmp"];;
+
+(* and the overloads that this file cannot see are back in the
+   interface *)
+let _ = unhide_overloads ();;

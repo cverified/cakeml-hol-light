@@ -8,6 +8,10 @@
 needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
 needs "lib/ternaryComparisons.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
 

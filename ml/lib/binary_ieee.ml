@@ -6,6 +6,10 @@
 (* ======================================================== *)
 
 needs "lib/integer_word.ml";;
+
+(* this file is of no theory of the port: the overloads it
+   registers are in the scope of every file *)
+let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: words real intreal pred_set
    set_relation arithmetic *)
 
