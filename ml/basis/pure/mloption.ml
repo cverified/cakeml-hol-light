@@ -11,6 +11,12 @@
 
 needs "lib/ternaryComparisons.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "mloption" [];;
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let getOpt_def = cake_define_list_cheat CHEAT_TAC

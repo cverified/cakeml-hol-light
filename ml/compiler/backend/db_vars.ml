@@ -12,6 +12,12 @@
 
 needs "lib/sptree.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "db_vars" [];;
+
 let db_var_set_INDUCT,db_var_set_RECURSION = define_datatype
   "db_var_set = db_vars_Empty | db_vars_Var (num) | db_vars_Shift \
    (num) (db_var_set) | db_vars_Union (db_var_set) (db_var_set)";;

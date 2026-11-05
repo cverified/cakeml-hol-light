@@ -11,6 +11,12 @@
 *)
 
 (* this file needs nothing of the port *)
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "namespace" [];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 namespaceScript.sml:11: the type abbreviation alist, which

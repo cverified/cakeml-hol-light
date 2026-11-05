@@ -51,12 +51,18 @@ def main():
     cnt[(a.replace('the run ', '').strip(), b.strip())] += 1
   for (a, b), n in cnt.most_common(16):
     print('  %-34s -> %-30s %d' % (a[:34], b[:30], n))
-  fr = set(sc['SFREE']) - set(pl['SFREE'])
+  # a name that the cut leaves no constant of at all is a free
+  # variable of the statement, which says less than the source
+  gained = []
+  for k, v in sc['SFREE'].items():
+    was = set(pl['SFREE'].get(k, '').split())
+    new = [w for w in v.split() if w not in was]
+    if new and k not in set(pl['SFAIL']): gained.append((k, new))
   print('%d statements with a free variable that the session reads '
-        'as a constant' % len(fr))
-  for f, nm in sorted(fr)[:10]:
-    print('  %s$%s: %s' % (os.path.basename(f)[:-3], nm,
-                           sc['SFREE'][(f, nm)][:40]))
+        'as a constant:' % len(gained))
+  cnt = collections.Counter(w for _, ws in gained for w in ws)
+  for w, n in cnt.most_common(12):
+    print('  %-28s %d' % (w, n))
 
 
 if __name__ == '__main__':

@@ -11,6 +11,12 @@
 
 needs "lib/sptree.ml";;
 (* for delete *)
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "backend_common" [];;
 (* HOL4 ancestors outside the port: arithmetic integer words *)
 
 let opw_INDUCT,opw_RECURSION = define_datatype

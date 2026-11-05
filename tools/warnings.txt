@@ -24,19 +24,19 @@ misc	ML code skipped: val _ = augment_srw_ss [rewrites [map_some_eq,map_some_eq_
 misc	ML code skipped: val is_subseq_ind = theorem"is_subseq_ind";
 misc	ML code skipped: val steps_rel_ind = theorem"steps_rel_ind";
 misc	ML code skipped: val LESS4 = DECIDE ``n < 4 <=> (n = 0) \/ (n = 1) \/ (n = 2)
-misc	line 44 is 102 characters
-misc	line 46 is 73 characters
-misc	line 110 is 80 characters
-misc	line 234 is 77 characters
-misc	line 458 is 79 characters
-misc	line 539 is 73 characters
-misc	line 544 is 73 characters
-misc	line 741 is 74 characters
-misc	line 1896 is 92 characters
-misc	line 2459 is 78 characters
-misc	line 2492 is 73 characters
-mllist	line 25 is 80 characters
-mllist	line 356 is 73 characters
+misc	line 50 is 102 characters
+misc	line 52 is 73 characters
+misc	line 116 is 80 characters
+misc	line 240 is 77 characters
+misc	line 464 is 79 characters
+misc	line 545 is 73 characters
+misc	line 550 is 73 characters
+misc	line 747 is 74 characters
+misc	line 1902 is 92 characters
+misc	line 2465 is 78 characters
+misc	line 2498 is 73 characters
+mllist	line 31 is 80 characters
+mllist	line 362 is 73 characters
 mlstring	ML code skipped: val cpn_distinct = TypeBase.distinct_of ``:ordering`` val cp
 mlstring	ML code skipped: val _ = add_strliteral_form{inj=“implode”, ldelim = "«"};
 mlstring	Overload strlit
@@ -57,16 +57,16 @@ ast	line 108 is 83 characters
 ast	line 219 is 86 characters
 backend_common	ML code skipped: val _ = set_fixity "▷" (Infixl 480);
 backend_common	ML code skipped: val _ = set_fixity "§" (Infixl 480);
-backend_common	line 64 is 80 characters
-backend_common	line 79 is 73 characters
-backend_common	line 84 is 77 characters
-backend_common	line 85 is 75 characters
-backend_common	line 86 is 77 characters
-backend_common	line 88 is 80 characters
-backend_common	line 89 is 80 characters
-backend_common	line 90 is 79 characters
+backend_common	line 70 is 80 characters
+backend_common	line 85 is 73 characters
+backend_common	line 90 is 77 characters
+backend_common	line 91 is 75 characters
+backend_common	line 92 is 77 characters
 backend_common	line 94 is 80 characters
-backend_common	line 170 is 74 characters
+backend_common	line 95 is 80 characters
+backend_common	line 96 is 79 characters
+backend_common	line 100 is 80 characters
+backend_common	line 176 is 74 characters
 closLang	ML code skipped: val exp_size_def = definition"exp_size_def";
 closLang	Theorem exp1_size_lemma: the auxiliary size function exp1_size
 closLang	line 172 is 73 characters

@@ -10,6 +10,12 @@
 *)
 
 needs "lib/integer_word.ml";;
+
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "gc_shared" [];;
 (* HOL4 ancestors outside the port: finite_map words *)
 
 (* The ML heap is represented as a list of heap_elements. *)

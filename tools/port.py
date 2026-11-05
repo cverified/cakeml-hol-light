@@ -1129,8 +1129,15 @@ class Porter:
     # theory that the load order registered last (ml/lib/theorem.ml,
     # hol4_ancestors; ISSUES.md "A statement that means another
     # theory's constant")
-    if self.anc_scope:
-      lines = ['  ["' + self.anc_scope[0] + '"']
+    # every file of the port says it, a file whose source has no
+    # ancestor of its own as well: the line is what says which
+    # theory the overloads that the file registers are of, and
+    # without it they would go down as the theory of the file
+    # before it (misc, mllist, backend_common, db_vars and
+    # gc_shared have no CakeML ancestor)
+    if self.kind != 'lib':
+      lines = ['  ["' + self.anc_scope[0] + '"'] if self.anc_scope \
+              else []
       for n in self.anc_scope[1:]:
         # the last line of the list carries the ];; as well
         if len(lines[-1]) + len(n) + 7 > 72:
@@ -1141,8 +1148,10 @@ class Porter:
                ' of the source\n   bring, which are the ones that its'
                ' statements read: the\n   overloads of every other'
                ' theory come out of the interface\n   while this file'
-               ' loads *)\nlet _ = hol4_ancestors "%s"\n' % self.thy
-               + ';\n'.join(lines) + '];;')
+               ' loads *)\nlet _ = hol4_ancestors "%s"'
+               % self.thy
+               + ('\n' + ';\n'.join(lines) + '];;' if lines
+                  else ' [];;'))
     if hide:
       # a Parse.hide of the source: the name is a variable in this
       # file and a constant again at the end of it, which is what

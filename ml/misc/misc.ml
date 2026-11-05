@@ -29,6 +29,12 @@ needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 
+(* the theories whose names the Ancestors blocks of the source
+   bring, which are the ones that its statements read: the
+   overloads of every other theory come out of the interface
+   while this file loads *)
+let _ = hol4_ancestors "misc" [];;
+
 let _ = do_list hide_constant ["C"; "num_cmp"];;
 (* HOL4 ancestors outside the port: alist arithmetic blast bag combin
    container list pred_set finite_map rich_list llist option pair
