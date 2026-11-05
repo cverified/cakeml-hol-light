@@ -1090,7 +1090,10 @@ class Porter:
                ';\n   '.join('"%s"' % n for n in
                               sorted(set(hide) | self.hidnames)) +
                '];;\n')
-    if self.hideconsts or self.anc_scope:
+    # every file that said which theories it can see puts the
+    # interface back, a file whose source has no CakeML ancestor as
+    # well: it cut the interface down to nothing of the port
+    if self.hideconsts or self.kind != 'lib':
       text += ('\n(* and the overloads that this file cannot see are'
                ' back in the\n   interface *)\n'
                'let _ = unhide_overloads ();;\n')
