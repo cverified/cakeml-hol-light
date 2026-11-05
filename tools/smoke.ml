@@ -490,3 +490,30 @@ let _ = unhide_overloads ();;
 
 print_string (Printf.sprintf
   "\nSMOKEANCTWICE %b (true)\n" smoke_twice_in_k);;
+
+(* and a name that a file of the port gives back to a constant of
+   HOL Light (the fourteen hol4_only of ++, which is OPTION_CHOICE
+   in the file and APPEND after it) is that constant for every file
+   after it: what the file registered of the name goes with the
+   hol4_only, or the restore of the interface would put it back *)
+
+let smoke_back_of () =
+  fst(dest_const(fst(strip_comb(parse_term "smoke_back 1"))));;
+
+(* as ml/lib/hol4.ml gives ++ to HOL Light's APPEND *)
+the_thy_loading := "";;
+hol4_only "smoke_back" "smoke_ovl_a";;
+
+let _ = hol4_ancestors "smoke_thy_l" [];;
+hol4_overload "smoke_back" "smoke_ovl_b";;
+let smoke_back_in_l = smoke_back_of ();;
+hol4_only "smoke_back" "smoke_ovl_a";;
+let _ = unhide_overloads ();;
+
+let _ = hol4_ancestors "smoke_thy_m" [];;
+let smoke_back_in_m = smoke_back_of ();;
+let _ = unhide_overloads ();;
+
+print_string (Printf.sprintf
+  "\nSMOKEANCBACK l %s m %s (smoke_ovl_b smoke_ovl_a)\n"
+  smoke_back_in_l smoke_back_in_m);;

@@ -2068,9 +2068,22 @@ let cake_as_vars f =
 let hol4_only name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
   (* override_interface takes every other pair of the name out of
-     the interface, so none of them is of a theory any more *)
+     the interface, so none of them is of a theory any more; the
+     pair that it leaves is of no theory either, as the ones that
+     ml/lib/hol4.ml registers are -- a name that the port gives
+     back to a constant of HOL Light is in the scope of every file,
+     and recording it under the theory that gave it back would
+     take it out of the interface of every file that cannot see
+     that theory (fourteen files give ++ back to APPEND).  What
+     the file registered of the name goes as well, or the restore
+     of the interface at the end of the file would put it back in
+     front of what the name is given back to: that is what left
+     three entries of OPTION_CHOICE in front of ++'s APPEND. *)
   forget_overload_thy name;
-  note_overload_thy name cname;
+  the_file_overloads :=
+    filter (fun (n,_) -> n <> name) (!the_file_overloads);
+  the_file_overloads_last :=
+    filter (fun (n,_) -> n <> name) (!the_file_overloads_last);
   override_interface(name,mk_mconst(cname,get_const_type cname));;
 
 (* HOL4's Datatype, which also registers the recursion theorem and (as*)
