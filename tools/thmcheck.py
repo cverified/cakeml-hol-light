@@ -46,29 +46,36 @@ def files():
   return sorted(out)
 
 
-HIDE = re.compile(r'^cake_hide \[(.*?)\];;', re.S | re.M)
+# a Parse.hide of the source, which the port writes as HOL Light's
+# own hide_constant (tools/port.py): the list at the head of the
+# file and the ones that a hide further down the source adds
+HIDE = re.compile(r'^let _ = do_list hide_constant\s*\n?\s*'
+                  r'\[(.*?)\];;', re.S | re.M)
+
+# the pairs of a name and a constant that the file takes out of the
+# interface, where it reads the name of a record field as a
+# variable and needs the accessors of that field as well
+HIDEC = re.compile(r'^let _ = hide_overloads\s*\n?\s*'
+                   r'\[(.*?)\];;', re.S | re.M)
 
 
 def hidden(path):
   """the names that the file hides while it reads a statement: the
      list at the head of it and the ones that a Parse.hide of the
-     source adds further down (cake_hide_more), which this takes
-     for the whole file -- the statements before such a line do
-     not use the name, or the source could not hide it there"""
-  txt = open(path).read()
-  m = HIDE.search(txt)
-  out = re.findall(r'"([^"]+)"', m.group(1)) if m else []
-  for m in re.finditer(r'cake_hide_more \[([^]]*)\]', txt):
+     source adds further down, which this takes for the whole file
+     -- the statements before such a line do not use the name, or
+     the source could not hide it there"""
+  out = []
+  for m in HIDE.finditer(open(path).read()):
     out += re.findall(r'"([^"]+)"', m.group(1))
   return out
 
 
 def hidden_consts(path):
   """the name and the constant of every pair that the file takes
-     out of the interface (cake_hide_consts)"""
+     out of the interface (hide_overloads)"""
   out = []
-  for m in re.finditer(r'cake_hide_consts\s*\n?\s*\[([^]]*)\]',
-                       open(path).read()):
+  for m in HIDEC.finditer(open(path).read()):
     out += re.findall(r'"([^"]+)"\s*,\s*"([^"]+)"', m.group(1))
   return out
 
