@@ -1129,3 +1129,50 @@ let FAPPLY_DRESTRICT = prove
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[fmap_apply; FMAP_FN_DRESTRICT] THEN
   ASM_REWRITE_TAC[]);;
+
+
+(* the port's own: that the two halves of a 64-bit value, or the
+   whole of it, decide the value.  HOL4 gets this from BITS_THM and
+   DIVISION; here it is the bits of the two words, with the index
+   of the upper half shifted by thirty-two *)
+
+let extract64_eq = prove
+ (`!(i:word64) j. dimindex (:'a) = 32 ==>
+    ((((63 >< 32) i):'a word = (63 >< 32) j) /\
+     (((31 >< 0) i):'a word = (31 >< 0) j) <=> i = j)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
+               DIMINDEX_64] THEN
+  ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[TAUT
+     `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`] THEN
+  EQ_TAC THENL
+    [DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "hi")
+       (LABEL_TAC "lo")) THEN
+     X_GEN_TAC `k:num` THEN DISCH_TAC THEN
+     ASM_CASES_TAC `k < 32` THENL
+      [USE_THEN "lo" (fun lo -> ASM_SIMP_TAC[lo]);
+       SUBGOAL_THEN `32 + (k - 32) = k /\ k - 32 < 32`
+         STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+       USE_THEN "hi" (fun hi ->
+         FIRST_ASSUM (fun e ->
+           MP_TAC (ONCE_REWRITE_RULE[e] (SPEC `k - 32` hi)))) THEN
+       ASM_REWRITE_TAC[]];
+     DISCH_THEN (LABEL_TAC "all") THEN CONJ_TAC THEN
+     X_GEN_TAC `k:num` THEN DISCH_TAC THENL
+      [USE_THEN "all" (fun a -> MP_TAC (SPEC `32 + k` a)) THEN
+       ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> 32 + k < 64`];
+       USE_THEN "all" (fun a -> MP_TAC (SPEC `k:num` a)) THEN
+       ASM_SIMP_TAC[ARITH_RULE `k < 32 ==> k < 64`]]]);;
+
+let extract64_full = prove
+ (`!(i:word64) j. dimindex (:'a) = 64 ==>
+    ((((63 >< 0) i):'a word = (63 >< 0) j) <=> i = j)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  REWRITE_TAC[word_extract; WORD_EQ_BITS_ALT; BIT_WORD_SUBWORD;
+               DIMINDEX_64] THEN
+  ASM_REWRITE_TAC[MIN; ADD_CLAUSES] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  REWRITE_TAC[TAUT
+     `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`]);;
