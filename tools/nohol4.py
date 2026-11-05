@@ -153,6 +153,14 @@ def pointers():
         body = '\n'.join(lines[a-1:z])
         pat = next((p for k, p in EXPECT if what.startswith(k)), None)
         if pat is None:
+          # a pointer whose text is the name of what it points at
+          # ("mw2n_lt", or "mw2n_APPEND, where the port writes
+          # dimword (:'a) EXP n for HOL4's dimwords n (:'a)"): the
+          # test is that the name is on the lines it points at
+          named = re.match(r"([A-Za-z_][A-Za-z0-9_']*)\b", what)
+          if named and re.search(r'\b%s\b' % re.escape(named.group(1)),
+                                 body):
+            continue
           print('%s:%d: no test for %r' % (rel, line, what[:40]))
           bad += 1; continue
         if not re.search(pat, body, re.M):
