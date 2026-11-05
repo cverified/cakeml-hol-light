@@ -43,8 +43,20 @@ def main():
     print('  %-46s %d' % (f, n))
   print('%d that only the session cannot read (the scope puts them '
         'right)' % len(pfail - sfail))
+  # a statement whose constants are not the ones of the theorem
+  # that the run made.  Both readings have them, because the
+  # interface of a session that has the whole port loaded is in
+  # another order than the one each file saw: what the cut itself
+  # changes is the statements where the two readings differ
   ch = sc['SCHANGE']
-  print('%d statements whose constants the scope changes:' % len(ch))
+  pch = pl['SCHANGE']
+  print('%d statements that read another constant than the theorem '
+        'the run made, %d of them in the reading without the cut as '
+        'well, %d where the cut reads something else than the '
+        'session does'
+        % (len(ch), len([k for k in ch if k in pch]),
+           len([k for k in ch if pch.get(k) != ch[k]])))
+  print('the changes against the run:')
   cnt = collections.Counter()
   for (f, nm), d in ch.items():
     a, _, b = d.partition(' / the scope ')

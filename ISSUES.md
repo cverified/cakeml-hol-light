@@ -865,11 +865,19 @@ first -- and `bvi_letProof`'s `delete_var` (`bvi_let`'s, with
 reason.
 
 `tools/scope.ml` reads every statement again with the interface cut
-down, to see what the cut would break; what it reports has to be
-read against the same reading without the cut (`tmp/plain.out`,
-`tools/scope.py`), because a re-reading in a session that has the
-whole port loaded fails for statements that their own file read
-without trouble.
+down, to see what the cut would break, and `tools/scope.py` reads
+that against the same reading without the cut: of the 559
+statements that the cut cannot read, **all 559** are statements
+that the session cannot read either, not one statement gains a free
+variable, and not one reads another constant than it does without
+the cut.  So the cut breaks nothing.
+
+That last number is zero because a re-reading is not what a run
+does: the interface of a session that has the whole port loaded is
+in another order than the one each file saw, so **113** statements
+read another constant there than the theorem the run made of them
+-- which is the drift this entry is about, and what the cut takes
+away at the time that matters, when the file loads.
 
 ## The order in which the port is loaded
 
