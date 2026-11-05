@@ -3,15 +3,17 @@
    what has free variables (a constant the port lacks becomes
    one), and what takes more than a second to typecheck.  The
    statements are read as ml/lib/theorem.ml reads them: with the
-   names that the file hides as variables, and, where that fails,
-   with the overloads of the record field names taken away. *)
+   interface cut down to the theories that the source of the file
+   can see (hol4_ancestors, tools/scopelib.ml), with the names that
+   the file hides as variables, and, where that fails, with the
+   overloads of the record field names taken away.
 
-let slurp_lines f =
-  let ic = open_in f in
-  let out = ref [] in
-  (try while true do out := input_line ic :: !out done
-   with End_of_file -> ());
-  close_in ic; rev !out;;
+   The cut matters here: without it a statement is read with every
+   file's overloads in the interface, which is not what its own
+   file reads it with, and 559 statements of the port that a run
+   reads without trouble do not parse at all. *)
+
+loadt "/home/freek/claude/hol-light/cakeml/tools/scopelib.ml";;
 
 (* the overloads of the accessors of a record field: the name and
    the constant of every one (tools/fieldovl.py writes them) *)
@@ -35,6 +37,7 @@ let as_vars f =
   try let x = f () in fin (); x with e -> (fin (); raise e);;
 
 let diag_run infile outfile =
+  read_scopes (); read_cstthy ();
   let ic = open_in infile in
   let oc = open_out outfile in
   let n = ref 0 and bad = ref 0 and fv = ref 0 in
@@ -46,6 +49,10 @@ let diag_run infile outfile =
   let hidc = ref ([]:(string * string) list) in
   let nexthidc = ref ([]:(string * string) list) in
   let curfile = ref "" in
+  (* the theories that the source of the file can see: its
+     statements are read with the overloads of the others out of
+     the interface *)
+  let scope = ref ([]:string list) in
   let cur = ref ("","","") and buf = ref ([]:string list) in
   let say tag f l nm s =
     output_string oc (tag^"\t"^f^"\t"^l^"\t"^nm^"\t"^s^"\n");
@@ -65,7 +72,12 @@ let diag_run infile outfile =
         let fin () =
           do_list unhide_constant !hid;
           if !hidc <> [] then the_interface := saved in
-        try let tm = parse_term s in fin (); tm
+        (* the cut is of the interface as it stands, so that the
+           field overloads that as_vars takes out below stay out *)
+        try let tm = if !scope = [] then parse_term s
+                     else with_interface (in_scope !scope)
+                            (fun () -> parse_term s) in
+            fin (); tm
         with e -> (fin (); raise e) in
       (try
         let tm = (try read () with
@@ -133,7 +145,8 @@ let diag_run infile outfile =
       let f,_,_ = !cur in
       if f <> !curfile then
         (curfile := f; hid := !nexthid; nexthid := [];
-         hidc := !nexthidc; nexthidc := [])
+         hidc := !nexthidc; nexthidc := [];
+         scope := (try assoc f (!the_scopes) with Failure _ -> []))
     end else buf := line :: !buf
   done with End_of_file -> ());
   one ();

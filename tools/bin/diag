@@ -11,12 +11,19 @@
 # port made a variable, and tools/stmtfree.py which free variable
 # of a statement is a name that a theory of the scope of its
 # source defines -- HOL4 reads a constant there.
-PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+# A statement is read with the interface cut down to the theories
+# that its own source can see (tools/scopelib.ml), as the file
+# reads it: without that, 559 statements that a run reads without
+# trouble do not parse here.
+B=/home/freek/claude/hol-light
+PATH=$B/bin:$B/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 s=${1:-seq}
 cd $C
 python3 -I tools/thmcheck.py
 python3 -I tools/fieldovl.py
+# the scope of every file, which the statements are read with
+python3 -I tools/mkscope.py
 TIMEOUT=300 repl-step $s "loadt \"$C/tools/diag.ml\";;" \
   > /dev/null 2>&1
 TIMEOUT=3600 repl-step $s \
