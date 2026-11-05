@@ -5,8 +5,9 @@
 #   1 the reports of the run that finished (they talk to hol-seq,
 #     so they go before the retemplate), and the table of the
 #     arguments of the constants whose type is int
-#   1a what a session reads differently from the source, which
-#     talks to the clone as well
+#   1a what a session reads differently from the source, and which
+#     theorem reads a constant of a theory out of the scope of its
+#     source, which talk to the clone as well
 #   2 the cheat list from ml/CHEATS.md, which says where the port
 #     writes a CHEAT_TAC
 #   3 the port, with that list
@@ -58,6 +59,11 @@ intargs
 # the retemplate as well
 echo "=== the statements as a session reads them"
 TIMEOUT=3600 diag try 2>&1 | tail -12
+# and which theorem reads a constant of a theory that the source of
+# its file cannot see (ISSUES.md "A statement that means another
+# theory's constant"): it talks to the clone as well
+echo "=== the theories that the statements read"
+scope try 2>&1 | tail -5
 echo "=== the cheat list"
 python3 -I tools/mkcheats.py > tmp/cheats.txt 2> tmp/mkcheats.err
 cat tmp/mkcheats.err

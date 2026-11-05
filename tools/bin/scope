@@ -1,0 +1,29 @@
+#!/bin/sh
+# scope [session] : which theorem of the port reads a constant of a
+# theory that the source of its file cannot see -- the statements
+# as the port read them, out of the theorems that a session has
+# (hol-seq by default, or a clone of it).  No run is needed, but a
+# session that has the whole port loaded is.
+#   tools/mkscope.py   the scope of every file and the theory of
+#                      every constant
+#   tools/mkcsts.py    the ML that prints the constants of every
+#                      theorem to tmp/csts.txt
+#   tools/thyscope.py  the check over the two
+# ISSUES.md "A statement that means another theory's constant" says
+# what a finding of this means; since 2026-11-05 every file takes
+# the overloads of the theories out of its scope out of the
+# interface while it loads (ml/lib/theorem.ml, hol4_ancestors), so
+# what this reports should stay at nothing.
+B=/home/freek/claude/hol-light
+PATH=$B/bin:$B/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-seq}
+cd $C
+python3 -I tools/mkscope.py
+python3 -I tools/mkcsts.py > tmp/csts.ml
+TIMEOUT=1800 repl-step $s "loadt \"$C/tmp/csts.ml\";;" \
+  > /dev/null 2>&1
+tmux capture-pane -p -J -S -4 -t hol-$s |
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+  grep -E 'CSTS DONE|Error|Exception' | tail -2
+python3 -I tools/thyscope.py | tail -8

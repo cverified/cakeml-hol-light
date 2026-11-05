@@ -24,6 +24,22 @@ import stmts
 C = T + '../'
 ML = C + 'ml/'
 
+
+def failed():
+  """the files that the run did not load to the end (tmp/cs.out):
+     the bindings they would have made are not in the session, and
+     one unbound name stops the whole dump, so they are left out"""
+  out = set()
+  try:
+    for l in open(C + 'tmp/cs.out'):
+      if 'Exception' in l or 'Error' in l or 'timeout' in l:
+        out.add(l.split()[0])
+  except OSError:
+    pass
+  return out
+
+
+bad = failed()
 seen = {}
 order = []
 for dp, dn, fn in os.walk(ML):
@@ -32,6 +48,7 @@ for dp, dn, fn in os.walk(ML):
     if not f.endswith('.ml'): continue
     p = os.path.join(dp, f)
     rel = p[len(ML):]
+    if rel in bad: continue
     text = open(p).read()
     for b, nm, at, ln, _ in stmts.theorems(text) + \
                             [(b, nm, at, ln, None)
@@ -54,4 +71,6 @@ out.append('close_out cstout;;')
 out.append('print_string "CSTS DONE\\n";;')
 print('\n'.join(out))
 sys.stderr.write('%d theorems, %d bindings that more than one file '
-                 'has (left out)\n' % (n, len(dup)))
+                 'has (left out), %d file(s) that the run did not '
+                 'load to the end (left out)\n'
+                 % (n, len(dup), len(bad)))
