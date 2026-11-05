@@ -89,10 +89,19 @@ def main():
       # quotations of their own, between which an OCaml comment
       # stands (PENDING.md says where that stands)
       if b.kind not in ('Comment', 'ML'):
-        for c in hol4.comments_of(b.body or ''):
-          t = ' '.join(c[2:-2].split())
-          if t and t in flat: continue
-          if t: inside += 1
+        # a block that the port does not state has a pointer at its
+        # lines instead (CLAUDE.md), and that pointer stands for
+        # the comments inside it as well: the eight of
+        # lab_to_targetProofScript.sml's semantics_compile_lemma'
+        # and the two of stack_to_labProofScript.sml are inside a
+        # statement that HOL Light does not read
+        ba = getattr(b, 'src', 0) or 0
+        bz = getattr(b, 'src_end', 0) or ba
+        if not any(x <= ba and bz <= y for x, y in at):
+          for c in hol4.comments_of(b.body or ''):
+            t = ' '.join(c[2:-2].split())
+            if t and t in flat: continue
+            if t: inside += 1
       if b.kind != 'Comment': continue
       n += 1
       s = body(b.text)
