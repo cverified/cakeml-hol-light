@@ -864,6 +864,27 @@ first -- and `bvi_letProof`'s `delete_var` (`bvi_let`'s, with
 `bvl_const`'s in scope as well) is right in the port for that
 reason.
 
+The other thing it leaves standing is the **library layer**: a pair
+that a HOL4 library theory of `ml/lib` registers is in the scope of
+every file (it says so itself, with `hol4_lib`), because a `needs`
+of such a file stands inside a file that is a theory and the pair
+would otherwise go down as that theory.  So `sptree`'s `lookup` and
+`balanced_map`'s are still told apart by the order of the
+interface, and what gives `data_to_word_memoryProof` the right one
+is a `bring_to_front_overload` of `data_spaceProof`, 27 files
+earlier in the load order.  Reading those by the ancestry as well
+is the next step of this; it needs its own measurement, because
+`tools/deps.py` has the ancestry of a library theory out of the
+`Libs` line of the source and a name cut by mistake there breaks a
+statement that nothing else can read.
+
+Two faults of the cut itself cost a run each, and both were about
+which theory an overload is of: the library layer registered its
+pairs while a theory was loading (above), and the restore of the
+interface was undoing the file's own `bring_to_front_overload`,
+which HOL4 keeps for the files after it.  `ml/lib/define.ml` tracks
+what a file registers for that reason.
+
 `tools/scope.ml` reads every statement again with the interface cut
 down, to see what the cut would break, and `tools/scope.py` reads
 that against the same reading without the cut: of the 559

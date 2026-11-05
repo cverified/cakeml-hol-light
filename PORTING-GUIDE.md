@@ -5216,3 +5216,25 @@ but the one the name gives them.
 `tools/thyscope.py` is the check: it reads the constants of every
 theorem out of a session (`tools/mkcsts.py`) and says which of them
 come out of a theory that the source of the file cannot see.
+
+Two things the line does not do, and both have bitten:
+
+- a pair that a HOL4 library theory of `ml/lib` registers is in the
+  scope of every file (`hol4_lib` at the head of such a file says
+  so), because a `needs` of one stands inside a file that is a
+  theory.  So `sptree`'s `lookup` and `balanced_map`'s are told
+  apart by the order of the interface and not by the ancestry, and
+  a statement of `data_to_word_memoryProof` reads the first because
+  `data_spaceProof` brings it to the front 27 files earlier.
+- a name that more than one theory *in* the scope defines is
+  decided by the interface as before.  HOL4 takes the theory
+  closest in the ancestry; the interface tries the one registered
+  last first, which is the one that loads last, and the two agree
+  in the cases seen (`bvi_letProof`'s `delete_var` is `bvi_let`'s
+  with `bvl_const`'s in scope as well).
+
+So a file's own `bring_to_front_overload` has to hold for the files
+after it, as it does in HOL4: `ml/lib/define.ml` tracks what a file
+registers (`the_file_overloads`) and `unhide_overloads` puts it
+back in front of the interface.  Undoing it took sptree's `lookup`
+away from `data_to_word_memoryProof` and cost a whole run.
