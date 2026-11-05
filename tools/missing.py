@@ -23,7 +23,9 @@ SKIP = set(['let', 'in', 'and', 'if', 'then', 'else', 'match',
             'cake_define_list', 'cake_define_wf', 'thm', 'term',
             'define_datatype', 'define_record', 'hol4_overload',
             'hol4_only', 'cake_inductive', 'cake_declare',
-            'hol4_field_overload', 'cake_theorem', 'CHEAT_TAC',
+            'hol4_field_overload', 'prove', 'CHEAT_TAC',
+            'hol4_ancestors', 'hide_constant', 'hide_overloads',
+            'unhide_constant', 'unhide_overloads',
             'cake_define_list_wf', 'new_type_abbrev', 'size_thms',
             'MEASURE', 'INDUCT', 'RECURSION', 'FIELDS', 'T', 'F'])
 

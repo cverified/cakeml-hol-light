@@ -1968,8 +1968,9 @@ let hol4_overload_last name cname =
    a name that HOL4 does not have a constant of: there a field is
    syntax (r.stack), and a bare stack is a variable.  So a
    statement of a source may use such a name for a variable of its
-   own, and cake_theorem reads one that does with these overloads
-   taken away. *)
+   own, and the port reads one that does with these overloads taken
+   away (cake_as_vars below, which tools/port.py wraps the
+   statement in). *)
 
 (* the name of a field and the accessor that it overloads: a name
    that a constant of its own has as well (bvl_to_bvi's compile
