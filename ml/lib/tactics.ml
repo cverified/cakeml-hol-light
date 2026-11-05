@@ -56,7 +56,7 @@ let in_goal (asl,w) p =
 
 (* and the assumption that a predicate picks out, which is what a
    proof that applies a lemma to one of them does by hand all the
-   time.  It fails like `find' when there is none. *)
+   time.  It fails like find when there is none. *)
 
 let the_asm p (asl,w) =
   snd (find (fun (_,th) -> p (concl th)) asl);;
