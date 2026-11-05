@@ -941,8 +941,11 @@ about which theory an overload is of:
   restore drops the entry further back.
 
 `tools/smoke.ml` has a test of each of the four, and of what a
-scope is: `SMOKEANCESTORS`, `SMOKEANCLIB`, `SMOKEANCONLY` and
-`SMOKEANCTWICE`.
+scope is: `SMOKEANCESTORS`, `SMOKEANCLIB`, `SMOKEANCONLY`,
+`SMOKEANCTWICE` and `SMOKEANCBACK` (the last is the shape of the
+port's `++`: the library layer gives the name to HOL Light's
+constant, a file overloads it and gives it back, and the file
+after it has to see the one it was given back to).
 
 `tools/scope.ml` reads every statement again with the interface cut
 down, to see what the cut would break, and `tools/scope.py` reads
@@ -958,6 +961,23 @@ in another order than the one each file saw, so **113** statements
 read another constant there than the theorem the run made of them
 -- which is the drift this entry is about, and what the cut takes
 away at the time that matters, when the file loads.
+
+The same holds for the statements that such a session cannot read
+at all: `tools/bin/diag` reads all 10424 of them again in the
+session of a finished run and **125** do not go through, 123 of
+them with a name that resolves to more than one constant (32 in
+`lab_to_targetProof`, 25 in `stack_removeProof`, 13 in `misc`, ten
+in `word_to_stackProof`, nine each in `word_instProof` and
+`targetProps`, and the rest in six files more).  The second entry
+of a pair that the restore left in the interface was the obvious
+suspect, because such an entry is one that no later
+`override_interface` takes out; it is not the cause.  The run with
+the restore put right has the same 123, so what those statements
+need is the interface of their own file and not of the whole port
+-- a re-reading in a session that has everything loaded is simply
+not what the file saw, and `tools/bin/scope` (which does read each
+statement with its file's own scope) says **0** names of a theory
+out of the scope of the source, in 0 theorems.
 
 ## The order in which the port is loaded
 

@@ -5261,6 +5261,6 @@ one by one.  A pair that `hol4_only` takes out of the interface
 altogether is of no theory any more, as if the library layer had
 never had it.
 
-The four tests of all of this are in `tools/smoke.ml`
-(`SMOKEANCESTORS`, `SMOKEANCLIB`, `SMOKEANCONLY`, `SMOKEANCTWICE`),
-which a cycle runs on the rebuilt template.
+The five tests of all of this are in `tools/smoke.ml`
+(`SMOKEANCESTORS`, `SMOKEANCLIB`, `SMOKEANCONLY`, `SMOKEANCTWICE`
+and `SMOKEANCBACK`), which a cycle runs on the rebuilt template.
