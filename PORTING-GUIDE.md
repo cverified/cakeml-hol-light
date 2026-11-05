@@ -5238,3 +5238,29 @@ after it, as it does in HOL4: `ml/lib/define.ml` tracks what a file
 registers (`the_file_overloads`) and `unhide_overloads` puts it
 back in front of the interface.  Undoing it took sptree's `lookup`
 away from `data_to_word_memoryProof` and cost a whole run.
+What a file registers is put back **in front of** the interface and
+not beside it: a pair that the interface had already goes to the
+front and the entry further back goes, which is what
+`overload_interface` itself does.  A second entry of a pair is one
+that no `override_interface` of a later file can take out again, so
+leaving it in gave `++` three entries of `OPTION_CHOICE` in front of
+`APPEND`.
+
+And the theory of a pair is **every** theory that registered it, not
+the first one: a pair that the library layer registers and that a
+file of the port registers again is otherwise the library layer's
+for good, which no scope takes out.  `ml/lib/simpleSexp.ml`
+overloads `++` with `OPTION_CHOICE`, as its source does, and gives
+the name back to HOL Light's `APPEND` at the end of the file with
+`hol4_only`; `unify`, `cmlPtreeConversion` and `fromSexp` then
+overload it with `OPTION_CHOICE` again, each in a theory of its own.
+`closProps` can see none of the three, and with the pair down as the
+library layer's it read its `c1 ++ c2` as an option: the thirteen
+clauses of `code_locs` did not fit together and the run assumed them
+one by one.  A pair that `hol4_only` takes out of the interface
+altogether is of no theory any more, as if the library layer had
+never had it.
+
+The four tests of all of this are in `tools/smoke.ml`
+(`SMOKEANCESTORS`, `SMOKEANCLIB`, `SMOKEANCONLY`, `SMOKEANCTWICE`),
+which a cycle runs on the rebuilt template.

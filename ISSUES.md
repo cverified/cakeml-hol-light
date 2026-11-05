@@ -364,6 +364,34 @@ sources, and why.
   The three places now have the parentheses.  A hand-written term
   of the port that mixes `+` and `-` has to be read twice.
 
+- HOL4 types a numeral by what stands around it, and the port has
+  to say which type it is: `&n` is the integer (and the real) of
+  HOL Light, and a plain numeral is a natural number.
+  `tools/hterm.py` turns the integers on where a numeral stands
+  beside something that holds one -- a variable the pattern binds
+  as an integer, a field of that type, an application of a
+  constant whose result is an integer (`tools/intres.txt`) -- and
+  that last one reaches too far: the regenerated table has
+  `fromString_unsafe` in it, whose result **is** an integer, so
+  every numeral of its body became one and `mlint` wrote
+
+      if strlen str = (&0) then (&0:int) else
+      if strsub str (&0) = (CHR 126) then ...
+
+  of a source that says `0i` for the one numeral that is an
+  integer and `0` for the two that are of natural numbers.  Those
+  two do not typecheck, and the file lost the 35 blocks after the
+  definition.  A numeral beside an application of a constant of
+  the port whose result is of another type is a numeral of that
+  type now, whatever the type of the term around the two of them.
+  What the rule still cannot see is a numeral in an **argument**
+  of such a constant that no comparison stands in: there the port
+  would write `&n` where the argument is of a natural number, and
+  `tools/bin/intargs` would have to dump the argument positions
+  whose type is a concrete type other than `int` for the port to
+  know.  None of the 270 files has one today (the two of `mlint`
+  were both in a comparison), so the table is not there yet.
+
 ## Definitions
 
 - A definition whose clauses overlap relies on HOL4's
@@ -878,12 +906,43 @@ is the next step of this; it needs its own measurement, because
 `Libs` line of the source and a name cut by mistake there breaks a
 statement that nothing else can read.
 
-Two faults of the cut itself cost a run each, and both were about
-which theory an overload is of: the library layer registered its
-pairs while a theory was loading (above), and the restore of the
-interface was undoing the file's own `bring_to_front_overload`,
-which HOL4 keeps for the files after it.  `ml/lib/define.ml` tracks
-what a file registers for that reason.
+Four faults of the cut itself cost a run each, and all four were
+about which theory an overload is of:
+
+- the library layer registered its pairs while a theory was
+  loading (above), so `sptree`'s `lookup` came out of the
+  interface of `data_to_word_memoryProof` and `balanced_map`'s won;
+- the restore of the interface was undoing the file's own
+  `bring_to_front_overload`, which HOL4 keeps for the files after
+  it.  `ml/lib/define.ml` tracks what a file registers for that
+  reason;
+- the theory of a pair was the one of its **first** registration,
+  so a pair that the library layer registers and that a file of
+  the port registers again stayed one of the library layer, in the
+  scope of every file.  `ml/lib/simpleSexp.ml` overloads `++` with
+  `OPTION_CHOICE`, as its source does, and gives the name back to
+  `APPEND` at the end of the file; `unify`, `cmlPtreeConversion`
+  and `fromSexp` overload it with `OPTION_CHOICE` again, each in a
+  theory of its own, and `closProps` can see none of the three --
+  but the pair was the library layer's, so `OPTION_CHOICE` stood
+  in front of `APPEND` while `closProps` loaded, the `c1 ++ c2` of
+  `code_locs` read as an option, its thirteen clauses did not fit
+  together and the run assumed them one by one (twelve axioms).
+  The theories of a pair are kept together now, and a pair is in
+  the scope of a file where **any** of them is; a pair that
+  `override_interface` takes out of the interface altogether
+  (`hol4_only`) is of no theory any more, as if the library layer
+  had never had it;
+- and the restore put the file's own registrations in front of the
+  interface it saved, which leaves a **second** entry of a pair
+  that was in the interface already.  `overload_interface` moves
+  such a pair to the front instead, and a second entry is one that
+  no `override_interface` of a later file can take out, so the
+  restore drops the entry further back.
+
+`tools/smoke.ml` has a test of each of the four, and of what a
+scope is: `SMOKEANCESTORS`, `SMOKEANCLIB`, `SMOKEANCONLY` and
+`SMOKEANCTWICE`.
 
 `tools/scope.ml` reads every statement again with the interface cut
 down, to see what the cut would break, and `tools/scope.py` reads
