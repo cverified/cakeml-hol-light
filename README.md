@@ -58,6 +58,32 @@ heap, so load the closure of what you care about instead.
 You do **not** need HOL4, and you do not need the HOL4 sources, to
 load the port or to read it.
 
+## The shape of a definition
+
+Every definition of the port is made by `cake_define`
+(`ml/lib/define.ml`), and there are 4296 of them.  It takes the
+whole definition as one term and tries a ladder of strategies:
+`new_definition`, then the recursion theorem of the type, then
+eight ways of rearranging the clauses, then a measure, and at the
+end a guess.  Whichever works, works.
+
+It has a wart, and it is the first thing to say about it.  When no
+strategy works, or the time budget runs out, `cake_define`
+**assumes** the definition and records the reason in
+`ml/CHEATS.md`.  So a `cake_define` at a call site does not tell a
+reader whether a definition or an axiom came out of it; only
+`ml/CHEATS.md` does, and `length (axioms ())` counts them.  The
+same name covers both, which is exactly what one does not want.
+
+Where this is going: the port already harvests which strategy won
+each definition (`cake_strategies ()`, `tools/bin/strategies`).
+With that recorded, a file can say the primitive itself --
+`new_definition`, or `new_recursive_definition`, or a `define` with
+the measure it needed -- and `cake_define` leaves the surface of
+the port altogether, which is both faster to load and honest about
+what each line does.  An assumed definition then says so in a word
+of its own.  Comments on that plan are welcome.
+
 ## Writing a proof
 
 Proofs do not live in `ml/`.  **The files under `ml/` are
