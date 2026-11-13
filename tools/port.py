@@ -1186,6 +1186,13 @@ class Porter:
     xp = T + 'extra/' + self.thy + '.ml'
     if os.path.exists(xp):
       text += '\n' + open(xp).read().rstrip() + '\n'
+    # and the ones this port takes from LightCake, the other HOL
+    # Light port of CakeML, whose HOL4 library layer is proved
+    # (tools/lightcake.py writes them; README.md says where the
+    # clone comes from)
+    lp = T + 'lightcake/' + self.thy + '.ml'
+    if os.path.exists(lp):
+      text += '\n' + open(lp).read().rstrip() + '\n'
     # the files that the translation needs
     deps = sorted(set(self.deps) |
                   self.db.providers(self.thy, strip_ml(text),
