@@ -67,7 +67,8 @@ let is_hidden_def,is_hidden_ind = define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let total_pat_def = define_mutual_guess_cheat
+let total_pat_def,total_pat_ind = define_mutual_shaped_rec_cheat
+  "maplist>measure"
   [`total_pat (Pany:flatLang_pat) = T`;
    `total_pat (Pvar _3:flatLang_pat) = T`;
    `total_pat (Pcon NONE xs:flatLang_pat) = total_pat_list xs`;
@@ -108,8 +109,8 @@ hol4_overload "is_pure" "flat_elim_is_pure";;
 (* HOL4 flat_elimScript.sml:82: a theorem that HOL4 states as the
    value of an ML expression: is_pure_def1 *)
 
-let has_Eval_def = define_mutual_shaped_rec
-  "nested"
+let has_Eval_def,has_Eval_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`has_Eval (App t op es:flatLang_exp) <=> op = flatLang_Src
   ast_Eval \/ has_Eval_list es`;
    `has_Eval (Mat _9 e pes:flatLang_exp) <=> has_Eval e \/
@@ -153,9 +154,8 @@ let dest_GlobalVarLookup_def = new_definition
    port cannot state yet: exp_size_map_snd_snd *)
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 flat_elimScript.sml:151-156: the tactic that proves the
-   termination *)
-let find_loc_def = define_mutual_guess
+let find_loc_def,find_loc_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`find_loc ((Raise _35 er):flatLang_exp) = ((find_loc er):1 spt)`;
    `find_loc (Handle _37 eh p_es:flatLang_exp) =
             ((sptree_union (find_loc eh) (find_locL (MAP SND
@@ -182,9 +182,8 @@ let find_loc_def = define_mutual_guess
    `find_locL (e :: es) = sptree_union (find_loc e) (find_locL es)`];;
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 flat_elimScript.sml:180-186: the tactic that proves the
-   termination *)
-let find_lookups_def = define_mutual_guess
+let find_lookups_def,find_lookups_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`find_lookups (Raise _65 er:flatLang_exp) = find_lookups er`;
    `find_lookups (Handle _67 eh p_es:flatLang_exp) =
             sptree_union (find_lookups eh) (find_lookupsL (MAP

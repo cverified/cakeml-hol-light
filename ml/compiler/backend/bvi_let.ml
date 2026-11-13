@@ -162,7 +162,9 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:158-168: the tactic that proves the
    termination *)
-let bvi_let_compile_sing_def = define_mutual_wf_tac
+let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
+  define_mutual_shaped_wf_tac
+  "maplist>measure"
   `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
   (_12,_13,es) -> list_size bvi_exp_size es)`
   TERM_TAC

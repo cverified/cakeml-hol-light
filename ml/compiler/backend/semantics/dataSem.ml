@@ -186,9 +186,8 @@ let bignum_size_def = new_definition
      1 + bignum_digits arch64 (num_of_int (abs i))`;;
 
 let _ = size_thms "dataSem_v";;
-(* HOL4 dataSemScript.sml:138-145: the tactic that proves the
-   termination *)
-let size_of_def,size_of_ind = define_guess
+let size_of_def,size_of_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`size_of lims [] refs seen = (0,refs,seen)`;
    `size_of lims (x :: y :: ys) refs seen =
         (let (n1,refs1,seen1) = check_res refs (size_of lims (y ::
@@ -423,7 +422,7 @@ let _ = size_thms "dataSem_v";;
    match, which takes the first arm (see ml/lib/define.ml, "A
    definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let vs_depth_def = define_mutual_wf
+let vs_depth_def,vs_depth_ind = define_mutual_wf
   `MEASURE (sum_measure (\x0. dataSem_v_size x0) (\x0. dataSem_v_size1
   x0))`
   [`vs_depth x1 =
@@ -612,7 +611,7 @@ let _ = size_thms "spt";;
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let dataSem_do_eq_def = define_mutual_wf
+let dataSem_do_eq_def,dataSem_do_eq_ind = define_mutual_wf
   `MEASURE (sum_measure  (\(x0,x1,x2).       spt_size (bvlSem_ref_size
   (\x. 0)) x0 +       dataSem_v_size x1 +       dataSem_v_size x2)
   (\(x0,x1,x2).      spt_size (bvlSem_ref_size (\x. 0)) x0 +
@@ -1701,9 +1700,8 @@ if concl dataSem_fix_clock_IMP <> `T` then
   cake_term_facts := dataSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "dataLang_prog";;
-(* HOL4 dataSemScript.sml:1486-1495: the tactic that proves the
-   termination *)
-let dataSem_evaluate_def,dataSem_evaluate_ind = define_guess
+let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =

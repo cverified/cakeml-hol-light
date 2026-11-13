@@ -363,7 +363,7 @@ let _ = size_thms "simpleSexp_sexp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_alt_def = define_mutual_wf_cheat
+let sexptype_alt_def,sexptype_alt_ind = define_mutual_wf_cheat
   `inv_image (MEASURE simpleSexp_sexp_size)
                    (\x. match x with INL y -> y | INR y -> y)`
   [`sexptype_alt s =
@@ -472,7 +472,7 @@ let _ = size_thms "simpleSexp_sexp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_alt_def = define_mutual_wf_cheat
+let sexppat_alt_def,sexppat_alt_ind = define_mutual_wf_cheat
   `inv_image (MEASURE simpleSexp_sexp_size) (\x. match x with INL y ->
   y | INR y -> y)`
   [`sexppat_alt s =
@@ -758,17 +758,8 @@ let sexpexp_def,sexpexp_ind = define_wf_cheat
 
 (* translator friendly version for bootstrapping *)
 let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* HOL4 fromSexpScript.sml:991-1002: the tactic that proves the
-   termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let sexpexp_alt_def = define_mutual_wf_cheat
-  `inv_image (MEASURE simpleSexp_sexp_size)
-       (\x. match x with INL y -> y | INR (INL y) -> y | INR (INR
-         (INL y)) -> y | INR (INR (INR (INL y))) -> y | INR (INR (INR
-         (INR (INL y)))) -> y | INR (INR (INR (INR (INR y)))) -> y)`
+let sexpexp_alt_def,sexpexp_alt_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`sexpexp_alt s =
          (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
               (if nm = "Raise" /\ LENGTH args = 1 then
@@ -931,7 +922,7 @@ let _ = size_thms "simpleSexp_sexp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_alt_def = define_mutual_wf_cheat
+let sexpdec_alt_def,sexpdec_alt_ind = define_mutual_wf_cheat
   `inv_image (MEASURE simpleSexp_sexp_size)
        (\x. match x with INL y -> y | INR y -> y)`
   [`sexpdec_alt s =

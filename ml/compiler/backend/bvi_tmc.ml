@@ -40,7 +40,7 @@ let bvi_tmc_pure_op_def = new_definition
 hol4_overload "pure_op" "bvi_tmc_pure_op";;
 
 let _ = size_thms "bvi_exp";;
-let pure_exp_def = define_mutual_rec
+let pure_exp_def,pure_exp_ind = define_mutual_rec
   [`pure_exp n (Var v:bvi_exp) = (v < n)`;
    `pure_exp n (If e1 e2 e3:bvi_exp) = F`;
    `pure_exp n (Let es e:bvi_exp) = (pure_exp n e /\ pure_exps n es)`;
@@ -177,7 +177,8 @@ let shift_cb_dist = prove
    If an effectful operation appears right of the recursive call, the expression is not eligible for transformation and NONE is returned.
    If multiple recursive calls are found, all but the last are let bound. *)
 let _ = size_thms "bvi_exp";;
-let bvi_to_cb_aux_def = define_mutual_guess
+let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
        (match call_to_cb loc t loc' args h with SOME (bs,cb) ->
          SOME (bs,INR (CallBlock tag [] cb [])) | _49 -> NONE)`;

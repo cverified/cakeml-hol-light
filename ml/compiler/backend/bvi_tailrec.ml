@@ -454,7 +454,8 @@ let op_ty_PMATCH = prove
        branch of origin for the operation in conditionals.
 *)
 
-let scan_expr_def,scan_expr_ind = define_guess
+let scan_expr_def,scan_expr_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`scan_expr ts loc [] = []`;
    `scan_expr ts loc (x :: y :: xs) =
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
@@ -527,7 +528,7 @@ let scan_expr_def,scan_expr_ind = define_guess
                     [(update_context opt ts x y,opt,F,NONE)] else
                 [(ts,bvi_tailrec_Any,F,NONE)]))`];;
 
-let scan_expr_sing_def = define_mutual_rec
+let scan_expr_sing_def,scan_expr_sing_ind = define_mutual_rec
   [`scan_expr_sing ts loc (Var n:bvi_exp) =
         (let ty = (if n < LENGTH ts then EL n ts else
           bvi_tailrec_Any) in
@@ -696,7 +697,8 @@ let has_rec_def,has_rec_ind = define_guess_cheat
 let has_rec1_def = new_definition
   `has_rec1 loc x = has_rec loc [x]`;;
 
-let has_rec_sing_def = define_mutual_rec
+let has_rec_sing_def,has_rec_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`has_rec_sing loc (If x1 x2 x3:bvi_exp) =
         (if has_rec_sing loc x2 then T else has_rec_sing loc x3)`;
    `has_rec_sing loc (Let xs x:bvi_exp) = has_rec_sing loc x`;

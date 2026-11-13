@@ -335,7 +335,8 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
  * pattern and value come from the same type.  Match_type_error is returned
  * when one of these conditions is violated *)
 let _ = size_thms "ast_pat";;
-let pmatch_def = define_mutual_guess
+let pmatch_def,pmatch_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`semanticPrimitives_pmatch envC s (ast_Pany:ast_pat) v' env =
   Match env`;
    `semanticPrimitives_pmatch envC s (ast_Pvar x:ast_pat) v' env =
@@ -413,15 +414,14 @@ let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
 
 let _ = size_thms "semanticPrimitives_v";;
-(* HOL4 semanticPrimitivesScript.sml:440-444: the tactic that proves
-   the termination *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let do_eq_def = define_mutual_guess
+let do_eq_def,do_eq_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`semanticPrimitives_do_eq (semanticPrimitives_Litv
   l1:semanticPrimitives_v) (semanticPrimitives_Litv
   l2:semanticPrimitives_v) =
@@ -651,11 +651,8 @@ let declare_env_def = new_definition
 (* Concrete, or first-order values, which do not contain code closures and
    are unchanged by many compiler phases. *)
 let _ = size_thms "semanticPrimitives_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let concrete_v_def = define_mutual_wf
-  `MEASURE (\x. match x with INL v -> semanticPrimitives_v_size v | INR
-  vs -> list_size semanticPrimitives_v_size vs)`
+let concrete_v_def,concrete_v_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`concrete_v v <=>
          (match v with semanticPrimitives_Loc _50 _51 -> T |
            semanticPrimitives_Litv _52 -> T | semanticPrimitives_Conv

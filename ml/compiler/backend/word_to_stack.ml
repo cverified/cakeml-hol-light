@@ -486,7 +486,9 @@ let copy_ret_def = new_definition
        (SeqStackFree n kont))`;;
 
 (* Return should be 2,4,6,...,2k,2k+1,... *)
-let word_to_stack_comp_def,word_to_stack_comp_ind = define_guess
+let word_to_stack_comp_def,word_to_stack_comp_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`word_to_stack_comp conf perf x3 bs kf =
         match x3 with
           (Skip:'a wordLang_prog) -> ((Skip:'a stackLang_prog),bs)

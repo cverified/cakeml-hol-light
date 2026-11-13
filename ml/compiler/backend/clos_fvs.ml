@@ -20,7 +20,7 @@ let _ = hol4_ancestors "clos_fvs"
   ["closLang"];;
 
 let remove_fvs_def,remove_fvs_ind = define_shaped_rec
-  "nested"
+  "sing>nested"
   [`remove_fvs fvs [] = []`;
    `remove_fvs fvs ((x:closLang_exp) :: y :: xs) =
          HD (remove_fvs fvs [x]) :: remove_fvs fvs (y :: xs)`;
@@ -66,8 +66,8 @@ let remove_fvs_def,remove_fvs_ind = define_shaped_rec
           (num_args + fvs) [x1]))])`];;
 
 let _ = size_thms "closLang_exp";;
-let remove_fvs_sing_def = define_mutual_shaped_rec
-  "nested"
+let remove_fvs_sing_def,remove_fvs_sing_ind = define_mutual_shaped_rec
+  "maplist>maplist>nested"
   [`remove_fvs_sing fvs (Var t v:closLang_exp) =
         (if v < fvs then (Var t v:closLang_exp) else closLang_Op
           t (closLang_MemOp closLang_El) [])`;

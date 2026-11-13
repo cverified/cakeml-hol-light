@@ -453,15 +453,9 @@ let flatProps_op_gbag_def = new_definition
 hol4_overload "op_gbag" "flatProps_op_gbag";;
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* HOL4 flatPropsScript.sml:819-833: the tactic that proves the
-   termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let flatProps_set_globals_def = define_mutual_wf_cheat
-  `MEASURE (\a. match a with INL e -> flatLang_exp_size e | INR es ->
-  list_size flatLang_exp_size es)`
+let flatProps_set_globals_def,flatProps_set_globals_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)
@@ -801,9 +795,8 @@ let result_vs_def = new_definition
    port cannot state yet: v_size_aux *)
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 flatPropsScript.sml:1484-1489: the tactic that proves the
-   termination *)
-let no_Mat_def,no_Mat_ind = define_guess
+let no_Mat_def,no_Mat_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
    `no_Mat (flatLang_Var_local t v) <=> T`;

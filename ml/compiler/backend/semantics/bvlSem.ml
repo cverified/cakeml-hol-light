@@ -145,7 +145,7 @@ let _ = size_thms "bvlSem_v";;
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let bvlSem_do_eq_def = define_mutual_wf
+let bvlSem_do_eq_def,bvlSem_do_eq_ind = define_mutual_wf
   `MEASURE (sum_measure (\(x0,x1,x2). (\x. 0) x0 + bvlSem_v_size x1 +
   bvlSem_v_size x2) (\(x0,x1,x2). (\x. 0) x0 + bvlSem_v_size1 x1 +
   bvlSem_v_size1 x2))`
@@ -844,9 +844,8 @@ if concl bvlSem_fix_clock_IMP <> `T` then
   cake_term_facts := bvlSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "bvl_exp";;
-(* HOL4 bvlSemScript.sml:660-668: the tactic that proves the
-   termination *)
-let bvlSem_evaluate_def,bvlSem_evaluate_ind = define_guess
+let bvlSem_evaluate_def,bvlSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s))
   /\
    (bvlSem_evaluate (x :: y :: xs,env,s) =

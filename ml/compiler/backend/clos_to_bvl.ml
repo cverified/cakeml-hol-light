@@ -104,7 +104,7 @@ let add_part_def = new_definition
              1,n,sptree_insert h ((p,n) :: bucket) aux,p :: acc) |
              SOME k -> (n,k,aux,acc)))`;;
 
-let add_parts_def = define_mutual_rec
+let add_parts_def,add_parts_ind = define_mutual_rec
   [`add_parts (ConstInt i) n aux acc = add_part n (Int i) aux acc`;
    `add_parts (ConstStr s) n aux acc = add_part n (closLang_Str s)
   aux acc`;
@@ -472,10 +472,9 @@ let force_thunk_code_def = new_definition
            Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_to_bvlScript.sml:483-493: the tactic that proves the
-   termination *)
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
-  define_guess
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
    `clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs) aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
@@ -589,9 +588,8 @@ hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 let _ = size_thms "bvl_exp";;
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_to_bvlScript.sml:575-583: the tactic that proves the
-   termination *)
-let compile_exp_sing_def = define_mutual_guess
+let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`compile_exp_sing max_app (Var t v:closLang_exp) aux = (((Var
   v):bvl_exp),aux)`;
    `compile_exp_sing max_app (If t x1 x2 x3:closLang_exp) aux =
@@ -786,7 +784,8 @@ let code_split_LENGTH = prove
       LENGTH xs + LENGTH ys = LENGTH ts1 + LENGTH ts2 + LENGTH ts3`,
   CHEAT_TAC);;
 
-let code_sort_def = define_cases
+let code_sort_def,code_sort_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`code_sort [] = []`;
    `code_sort [x] = [x]`;
    `code_sort (x :: y :: xs) =
@@ -841,9 +840,8 @@ let add_src_names_def,add_src_names_ind = define_rec
         1) x l))`];;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_to_bvlScript.sml:812-817: the tactic that proves the
-   termination *)
-let get_src_names_def,get_src_names_ind = define_guess
+let get_src_names_def,get_src_names_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`get_src_names [] l = l`;
    `get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
   (get_src_names [x] l)`;
@@ -874,9 +872,9 @@ let get_src_names_def,get_src_names_ind = define_guess
            add_src_names n names l1)`];;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_to_bvlScript.sml:844-851: the tactic that proves the
-   termination *)
-let get_src_names_sing_def = define_mutual_guess
+let get_src_names_sing_def,get_src_names_sing_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`get_src_names_sing (closLang_If _38 x y z) l =
       get_src_names_sing x (get_src_names_sing y
         (get_src_names_sing z l))`;

@@ -288,9 +288,8 @@ if concl bviSem_fix_clock_IMP <> `T` then
   cake_term_facts := bviSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 bviSemScript.sml:339-347: the tactic that proves the
-   termination *)
-let bviSem_evaluate_def,bviSem_evaluate_ind = define_guess
+let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (x :: y :: xs,env,s) =

@@ -149,9 +149,8 @@ let ref_rel_simp = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:158-161: the tactic that proves the
-   termination *)
-let code_locs_def,code_locs_ind = define_guess
+let code_locs_def,code_locs_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`code_locs [] = []`;
    `code_locs (x :: y :: xs) =
          (let c1 = code_locs [x] in
@@ -264,9 +263,8 @@ let contains_App_SOME_EXISTS = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:275-278: the tactic that proves the
-   termination *)
-let every_Fn_SOME_def,every_Fn_SOME_ind = define_guess
+let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`every_Fn_SOME [] <=> T`;
    `every_Fn_SOME (x :: y :: xs) <=>
          every_Fn_SOME [x] /\
@@ -311,9 +309,8 @@ let every_Fn_SOME_APPEND = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:327-330: the tactic that proves the
-   termination *)
-let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = define_guess
+let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`every_Fn_vs_NONE [] <=> T`;
    `every_Fn_vs_NONE (x :: y :: xs) <=>
          every_Fn_vs_NONE [x] /\
@@ -364,9 +361,8 @@ let every_Fn_vs_NONE_APPEND = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:386-389: the tactic that proves the
-   termination *)
-let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = define_guess
+let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`every_Fn_vs_SOME [] <=> T`;
    `every_Fn_vs_SOME (x :: y :: xs) <=>
          every_Fn_vs_SOME [x] /\
@@ -453,9 +449,8 @@ let no_mti_def,no_mti_ind = define_shaped_rec
         EVERY no_mti es`];;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:473-476: the tactic that proves the
-   termination *)
-let fv_def,fv_ind = define_guess
+let fv_def,fv_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`fv n [] <=> F`;
    `fv n ((x:closLang_exp) :: y :: xs) <=>
          fv n [x] \/ fv n (y :: xs)`;
@@ -1131,9 +1126,8 @@ hol4_overload "op_gbag" "closProps_op_gbag";;
    port cannot state yet: exp2_size_rw *)
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:1783-1786: the tactic that proves the
-   termination *)
-let set_globals_def = define_mutual_guess
+let set_globals_def,set_globals_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`closProps_set_globals (Var _212 _213:closLang_exp) = EMPTY_BAG`;
    `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) =
   (BAG_UNION) ((BAG_UNION) (closProps_set_globals e1)
@@ -1961,9 +1955,8 @@ let evaluate_code_SUBMAP = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:3554-3560: the tactic that proves the
-   termination *)
-let obeys_max_app_def,obeys_max_app_ind = define_guess
+let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`obeys_max_app m (Var _296 _297:closLang_exp) <=> T`;
    `obeys_max_app m (If _299 e1 e2 e3:closLang_exp) <=> obeys_max_app
   m e1 /\ obeys_max_app m e2 /\ obeys_max_app m e3`;
@@ -1989,9 +1982,8 @@ let obeys_max_app_def,obeys_max_app_ind = define_guess
    the value of an ML expression: obeys_max_app_def *)
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:3578-3584: the tactic that proves the
-   termination *)
-let no_Labels_def,no_Labels_ind = define_guess
+let no_Labels_def,no_Labels_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`no_Labels (Var _334 _335:closLang_exp) <=> T`;
    `no_Labels (If _337 e1 e2 e3:closLang_exp) <=> no_Labels e1 /\
   no_Labels e2 /\ no_Labels e3`;
@@ -2015,9 +2007,8 @@ let no_Labels_def,no_Labels_ind = define_guess
    the value of an ML expression: no_Labels_def *)
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:3631-3634: the tactic that proves the
-   termination *)
-let app_call_dests_def,app_call_dests_ind = define_guess
+let app_call_dests_def,app_call_dests_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`app_call_dests opt [] = {}`;
    `app_call_dests opt (x :: y :: xs) =
          (let c1 = app_call_dests opt [x] in
@@ -2109,10 +2100,9 @@ let any_dests_call_dests_app_dests = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 closPropsScript.sml:3725-3731: the tactic that proves the
-   termination *)
 let closProps_get_code_labels_def,closProps_get_code_labels_ind =
-  define_guess
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`closProps_get_code_labels (Var _394 _395:closLang_exp) = {}`;
    `closProps_get_code_labels (If _397 e1 e2 e3:closLang_exp) =
         closProps_get_code_labels e1 UNION

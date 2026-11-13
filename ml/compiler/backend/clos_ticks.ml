@@ -25,7 +25,7 @@ let _ = hol4_ancestors "clos_ticks"
 
 let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
   define_shaped_rec
-  "nested"
+  "sing>nested"
   [`clos_ticks_remove_ticks [] = []`;
    `clos_ticks_remove_ticks ((x:closLang_exp) :: y :: xs) =
          HD (clos_ticks_remove_ticks [x]) ::
@@ -65,8 +65,9 @@ let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
            (clos_ticks_remove_ticks [x1]))]`];;
 hol4_overload "remove_ticks" "clos_ticks_remove_ticks";;
 
-let clos_ticks_remove_ticks_sing_def = define_mutual_shaped_rec
-  "nested"
+let clos_ticks_remove_ticks_sing_def,clos_ticks_remove_ticks_sing_ind =
+  define_mutual_shaped_rec
+  "maplist>maplist>nested"
   [`clos_ticks_remove_ticks_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp))`;
    `clos_ticks_remove_ticks_sing (If t x1 x2 x3:closLang_exp) =

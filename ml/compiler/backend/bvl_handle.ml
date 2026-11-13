@@ -29,7 +29,7 @@ let _ = hol4_ancestors "bvl_handle"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let can_raise_def = define_mutual_rec
+let can_raise_def,can_raise_ind = define_mutual_rec
   [`can_raise (Var v:bvl_exp) = F`;
    `can_raise (If x1 x2 x3:bvl_exp) = (can_raise x1 \/ can_raise x2
   \/ can_raise x3)`;
@@ -69,7 +69,7 @@ let dest_handle_If_def = new_definition
         NONE)
       | _3 -> NONE`;;
 
-let handle_adj_vars_def = define_mutual_rec
+let handle_adj_vars_def,handle_adj_vars_ind = define_mutual_rec
   [`(handle_adj_vars l d (Var v:bvl_exp) = Var (if v < l then v else v +
   d)) /\
    (handle_adj_vars l d (If x1 x2 x3) =
@@ -94,7 +94,7 @@ let handle_adj_vars_def = define_mutual_rec
    (handle_adj_vars1 l d (x :: xs) = handle_adj_vars l d x ::
      handle_adj_vars1 l d xs)`];;
 
-let handle_size_def = define_mutual_rec
+let handle_size_def,handle_size_ind = define_mutual_rec
   [`handle_size (Var v:bvl_exp) = 1`;
    `handle_size (If x1 x2 x3:bvl_exp) = 1 + handle_size x1 +
   handle_size x2 + handle_size x3`;
@@ -116,9 +116,8 @@ let handle_size_non_zero = prove
  (`0 < handle_size x`,
   CHEAT_TAC);;
 
-(* HOL4 bvl_handleScript.sml:112-123: the tactic that proves the
-   termination *)
-let handle_simp_def = define_mutual_guess
+let handle_simp_def,handle_simp_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
    `handle_simp (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `handle_simp (If x1 x2 x3:bvl_exp) = If (handle_simp x1)
@@ -245,7 +244,8 @@ hol4_overload "compile" "bvl_handle_compile";;
 
 (* HOL4 bvl_handleScript.sml:214: ML code, not ported *)
 
-let bvl_handle_compile_sing_def = define_mutual_rec
+let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind =
+  define_mutual_rec
   [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then (Var
   v,Var v,1,T) else (Op (closLang_IntOp (closLang_Const (&0)))
   [],db_vars_Empty,1,T))`;

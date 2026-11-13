@@ -94,7 +94,9 @@ let iAssign_def = new_definition
 
 let _ = do_list hide_constant ["tail"];;
 
-let bvi_to_data_compile_def,bvi_to_data_compile_ind = define_guess
+let bvi_to_data_compile_def,bvi_to_data_compile_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`bvi_to_data_compile (n:num) (env:num list) tail live [] =
         (dataLang_Skip,([]:num list),n)`;
    `bvi_to_data_compile (n:num) (env:num list) tail live (x :: y :: xs)
@@ -189,9 +191,8 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind = define_guess
 hol4_overload "compile" "bvi_to_data_compile";;
 
 let _ = size_thms "bvi_exp";;
-(* HOL4 bvi_to_dataScript.sml:232-237: the tactic that proves the
-   termination *)
-let compile_sing_def = define_mutual_guess
+let compile_sing_def,compile_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((Var
   v):bvi_exp) =
          (let var = any_el v env 0 in

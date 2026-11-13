@@ -105,7 +105,7 @@ let mk_conses_def,mk_conses_ind = define_rec
   mk_conses t pss`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-let expand_def = define_mutual_rec
+let expand_def,expand_ind = define_mutual_rec
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (Lit l:pattern_semantics_pat) = [(Lit
@@ -236,7 +236,7 @@ let default_mat_def,default_mat_ind = define_rec
  * -------------------------------------------------------------------- *)
 
 let _ = size_thms "pattern_semantics_pat";;
-let pat_weight_def = define_mutual_rec
+let pat_weight_def,pat_weight_ind = define_mutual_rec
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
    `pat_weight (Lit l:pattern_semantics_pat) = ((0):num)`;
@@ -341,7 +341,8 @@ let mat_len_default_mat_less = prove
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_matrix_def = define_mutual_wf_cheat
+let exh_matrix_def,exh_matrix_ind = define_mutual_shaped_wf_cheat
+  "maplist>measure"
   `inv_image ((<) LEX (<) LEX (<))
        (\x. match x with INL rows -> (mat_weight rows,mat_len
          rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
@@ -380,7 +381,7 @@ let exh_rows_def = new_definition
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_steps_def = define_mutual_wf_cheat
+let exh_steps_def,exh_steps_ind = define_mutual_wf_cheat
   `inv_image ((<) LEX (<) LEX (<))
        (\x. match x with INL rows -> (mat_weight rows,mat_len
          rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH

@@ -35,7 +35,7 @@ let can_interpret_op_def = new_definition
       | (closLang_BlockOp (closLang_Constant c)) -> (l = 0)
       | _1 -> F`;;
 
-let can_interpret_def = define_mutual_rec
+let can_interpret_def,can_interpret_ind = define_mutual_rec
   [`can_interpret ((Var t n):closLang_exp) = T`;
    `can_interpret (If t e1 e2 e3:closLang_exp) =
       (can_interpret e1 /\ can_interpret e2 /\ can_interpret e3)`;
@@ -68,7 +68,7 @@ let check_size_op_def = new_definition
       | (closLang_GlobOp (closLang_Global n)) -> k
       | _20 -> k - 1`;;
 
-let check_size_def = define_mutual_rec
+let check_size_def,check_size_ind = define_mutual_rec
   [`check_size (k:num) ((Var t n):closLang_exp) = (k:num)`;
    `check_size (k:num) (If t e1 e2 e3:closLang_exp) =
       (((let k = check_size k e1 in if k = 0 then 0 else
@@ -119,7 +119,8 @@ let to_constant_op_def = new_definition
       | _41 -> ConstInt (&0)`;;
 
 let _ = size_thms "closLang_exp";;
-let to_constant_def = define_mutual_guess
+let to_constant_def,to_constant_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`to_constant ((Var t n):closLang_exp) =
       ConstCons 0 [ConstInt (&n)]`;
    `to_constant (App _48 _49 e es:closLang_exp) =

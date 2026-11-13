@@ -74,7 +74,7 @@ let _ = size_thms "flatSem_v";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let find_v_globals_def = define_mutual_wf_cheat
+let find_v_globals_def,find_v_globals_ind = define_mutual_wf_cheat
   `MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
   list_size flatSem_v_size y)`
   [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1

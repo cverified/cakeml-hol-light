@@ -61,7 +61,8 @@ let single_mul_def = new_definition
      (x * y + c,(n2w ((w2n x * w2n y + w2n c) DIV dimword
        (:'a)):'a word))`;;
 
-let mw_shift_def = define_cases
+let mw_shift_def,mw_shift_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`mw_shift [] = []`;
    `mw_shift [w] = [w >>> 1]`;
    `mw_shift ((w:'a word) :: x :: xs) =

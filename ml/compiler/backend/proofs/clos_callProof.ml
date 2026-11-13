@@ -224,9 +224,9 @@ let env_rel_cong = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closSem_v";;
-(* HOL4 clos_callProofScript.sml:330-333: the tactic that proves the
-   termination *)
-let clos_callProof_v_rel_def,clos_callProof_v_rel_ind = define_guess
+let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`clos_callProof_v_rel g l code (closSem_Number i:closSem_v) v <=>
   v = (closSem_Number i:closSem_v)`;
    `clos_callProof_v_rel g l code (Word64 w:closSem_v) v <=> v =

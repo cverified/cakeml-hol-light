@@ -143,7 +143,7 @@ let _ = size_thms "closSem_v";;
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let closSem_do_eq_def = define_mutual_wf
+let closSem_do_eq_def,closSem_do_eq_ind = define_mutual_wf
   `MEASURE (sum_measure (\(x0,x1). closSem_v_size x0 + closSem_v_size
   x1) (\(x0,x1). closSem_v_size1 x0 + closSem_v_size1 x1))`
   [`closSem_do_eq x y =
@@ -891,7 +891,7 @@ hol4_overload "AppUnit" "closSem_AppUnit";;
 let _ = size_thms "closLang_op";;
 let _ = size_thms "mlstring";;
 let _ = size_thms "tra";;
-let exp_alt_size_def = define_mutual_rec
+let exp_alt_size_def,exp_alt_size_ind = define_mutual_rec
   [`closSem_exp_alt_size (Var a0 a1:closLang_exp) = 1 + (tra_size a0
   + a1)`;
    `closSem_exp_alt_size (If a0 a1 a2 a3:closLang_exp) =
@@ -964,9 +964,8 @@ let closSem_fix_clock_IMP =
 if concl closSem_fix_clock_IMP <> `T` then
   cake_term_facts := closSem_fix_clock_IMP :: (!cake_term_facts);;
 
-(* HOL4 closSemScript.sml:828-843: the tactic that proves the
-   termination *)
-let closSem_evaluate_def = define_mutual_guess
+let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`closSem_evaluate ([],(env:closSem_v
   list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =

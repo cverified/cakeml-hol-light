@@ -26,7 +26,8 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "clos_call"
   ["closLang"; "db_vars"];;
 
-let free_def,free_ind = define_guess
+let free_def,free_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`clos_call_free [] = ([],db_vars_Empty)`;
    `clos_call_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_call_free [x] in
@@ -83,8 +84,8 @@ hol4_overload "free" "clos_call_free";;
 
 (* HOL4 clos_callScript.sml:63: ML code, not ported *)
 
-let free_sing_def = define_mutual_shaped_rec
-  "nested"
+let free_sing_def,free_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`free_sing (Var t v:closLang_exp) = ((Var t v:closLang_exp),Var v)`;
    `free_sing (If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
@@ -211,9 +212,8 @@ let calls_list_def,calls_list_ind = define_rec
    port cannot state yet: exp3_size_MAP_SND *)
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_callScript.sml:309-317: the tactic that proves the
-   termination *)
-let calls_def,calls_ind = define_guess
+let calls_def,calls_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`calls [] g = ([],g)`;
    `calls ((x:closLang_exp) :: y :: xs) g =
          (let (e1,g) = calls [x] g in
@@ -304,9 +304,8 @@ let calls_def,calls_ind = define_guess
                  (HD e1)],g))`];;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_callScript.sml:388-393: the tactic that proves the
-   termination *)
-let calls_sing_def = define_mutual_guess
+let calls_sing_def,calls_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`calls_sing (Var t v:closLang_exp) g =
          ((Var t v:closLang_exp),g)`;
    `calls_sing (If t x1 x2 x3:closLang_exp) g =

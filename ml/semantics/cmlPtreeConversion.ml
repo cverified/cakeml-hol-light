@@ -208,7 +208,7 @@ let _ = size_thms "parsetree";;
 let _ = size_thms "tokens_token";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let ptree_Type_def = define_mutual_wf
+let ptree_Type_def,ptree_Type_ind = define_mutual_wf
   `MEASURE (sum_measure  (\(x0,x1). parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x1) (sum_measure (\x0. parsetree_size (\x. 0)
   MMLnonT_size tokens_token_size x0) (sum_measure (\x0. parsetree_size
@@ -583,7 +583,7 @@ let _ = size_thms "parsetree";;
 let _ = size_thms "tokens_token";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let ptree_Pattern_def = define_mutual_wf
+let ptree_Pattern_def,ptree_Pattern_ind = define_mutual_wf
   `MEASURE (sum_measure  (\(x0,x1). parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x1) (\x0. parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x0))`
@@ -838,7 +838,8 @@ let letFromPat_def = new_definition
        ast_Pany -> ast_Let NONE rhs body | ast_Pvar v -> ast_Let
          (SOME v) rhs body | _79 -> ast_Mat rhs [(p,body)])`;;
 
-let ptree_Expr_def = define_mutual_guess
+let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`ptree_Expr ent (Lf _80) = NONE`;
    `ptree_Expr ent (Nd (nt',loc) subs) =
     OPTION_BIND (if (INL:MMLnonT->MMLnonT+num) ent = nt' then
@@ -1315,7 +1316,7 @@ let _ = size_thms "parsetree";;
 let _ = size_thms "tokens_token";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let ptree_Decl_def = define_mutual_wf
+let ptree_Decl_def,ptree_Decl_ind = define_mutual_wf
   `MEASURE (sum_measure  (\x0. parsetree_size locs_size MMLnonT_size
   tokens_token_size x0) (sum_measure  (\x0. parsetree_size locs_size
   MMLnonT_size tokens_token_size x0) (\x0. parsetree_size locs_size
@@ -1411,7 +1412,7 @@ let _ = size_thms "parsetree";;
 let _ = size_thms "tokens_token";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let ptree_TopLevelDecs_def = define_mutual_wf
+let ptree_TopLevelDecs_def,ptree_TopLevelDecs_ind = define_mutual_wf
   `MEASURE (sum_measure  (\x0. parsetree_size locs_size MMLnonT_size
   tokens_token_size x0) (\x0. parsetree_size locs_size MMLnonT_size
   tokens_token_size x0))`

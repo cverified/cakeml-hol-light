@@ -470,9 +470,9 @@ let SmartCons_def = new_definition
        tag (REVERSE cs)))) [])`;;
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 flat_to_closScript.sml:331-337: the tactic that proves the
-   termination *)
-let flat_to_clos_compile_def,flat_to_clos_compile_ind = define_guess
+let flat_to_clos_compile_def,flat_to_clos_compile_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;

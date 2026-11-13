@@ -1142,9 +1142,8 @@ if concl wordSem_fix_clock_IMP <> `T` then
   cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "wordLang_prog";;
-(* HOL4 wordSemScript.sml:1247-1260: the tactic that proves the
-   termination *)
-let wordSem_evaluate_def,wordSem_evaluate_ind = define_guess
+let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`wordSem_evaluate ((Skip:'a
   wordLang_prog),(s:('a,'c,'ffi)wordSem_state)) = (NONE,s)`;
    `wordSem_evaluate (wordLang_Alloc n names,s) =

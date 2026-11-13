@@ -314,7 +314,7 @@ let dec_INDUCT,dec_RECURSION = define_datatype
    Denv (mlstring)";;
 
 (* Computes the bindings of a pattern *)
-let pat_bindings_def = define_mutual_rec
+let pat_bindings_def,pat_bindings_ind = define_mutual_rec
   [`ast_pat_bindings (ast_Pany:ast_pat) = []`;
    `ast_pat_bindings (ast_Pvar n:ast_pat) = [n]`;
    `ast_pat_bindings (ast_Plit l:ast_pat) = []`;

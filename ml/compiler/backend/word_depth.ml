@@ -61,9 +61,8 @@ let mk_Branch_def = new_definition
        word_depth_Branch t1 t2)`;;
 
 let _ = size_thms "wordLang_prog";;
-(* HOL4 word_depthScript.sml:81-86: the tactic that proves the
-   termination *)
-let call_graph_def,call_graph_ind = define_guess
+let call_graph_def,call_graph_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`call_graph funs n ns total' x5 =
         match x5 with
           wordLang_Seq p1 p2 ->

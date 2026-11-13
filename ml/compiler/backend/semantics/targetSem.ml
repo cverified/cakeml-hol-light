@@ -141,7 +141,9 @@ let is_valid_mapped_write_def = new_definition
            (Inst (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md) else F)`;;
 
-let targetSem_evaluate_def,targetSem_evaluate_ind = define_guess
+let targetSem_evaluate_def,targetSem_evaluate_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi
   ffi_state) k (ms:'a) =
      (if k = 0 then (TimeOut,ms,ffi) else

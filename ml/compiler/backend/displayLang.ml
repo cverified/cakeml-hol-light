@@ -79,7 +79,7 @@ let display_to_json_def,display_to_json_ind = define_shaped_rec
     (display_to_json (List es) = jsonLang_Array (MAP
       display_to_json es))`];;
 
-let display_to_str_tree_def = define_mutual_rec
+let display_to_str_tree_def,display_to_str_tree_ind = define_mutual_rec
   [`display_to_str_tree (displayLang_Item tra name es) =
          mlsexp_Trees (mlsexp_Str name ::
            display_to_str_tree_list es)`;

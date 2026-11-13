@@ -45,8 +45,8 @@ let clos_letop_dest_op_def = new_definition
         | _3 -> NONE`;;
 hol4_overload "dest_op" "clos_letop_dest_op";;
 
-let clos_letop_let_op_def,clos_letop_let_op_ind = define_shaped_rec
-  "nested"
+let clos_letop_let_op_def,clos_letop_let_op_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`clos_letop_let_op [] = []`;
    `clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
          HD (clos_letop_let_op [x]) :: clos_letop_let_op (y ::
@@ -92,8 +92,9 @@ let LENGTH_let_op = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-let clos_letop_let_op_sing_def = define_mutual_shaped_rec
-  "nested"
+let clos_letop_let_op_sing_def,clos_letop_let_op_sing_ind =
+  define_mutual_shaped_rec
+  "maplist>maplist>nested"
   [`clos_letop_let_op_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp))`;
    `clos_letop_let_op_sing (If t x1 x2 x3:closLang_exp) =

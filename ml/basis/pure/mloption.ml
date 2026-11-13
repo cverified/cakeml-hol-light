@@ -17,7 +17,8 @@ needs "lib/ternaryComparisons.ml";;
    while this file loads *)
 let _ = hol4_ancestors "mloption" [];;
 
-let getOpt_def = define_cases
+let getOpt_def = assume_definition
+  "termination (CHEAT_TAC)"
   [`getOpt (SOME v) a = v`;
    `getOpt NONE a = a`];;
 

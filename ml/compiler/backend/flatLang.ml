@@ -76,7 +76,8 @@ hol4_overload "Pcon" "flatLang_Pcon";;
 hol4_overload "Pas" "flatLang_Pas";;
 hol4_overload "Pref" "flatLang_Pref";;
 
-let flatLang_pat_bindings_def = define_mutual_rec
+let flatLang_pat_bindings_def,flatLang_pat_bindings_ind =
+  define_mutual_rec
   [`flatLang_pat_bindings (Pany:flatLang_pat) = []`;
    `flatLang_pat_bindings (Pvar n:flatLang_pat) = [n]`;
    `flatLang_pat_bindings (Plit l:flatLang_pat) = []`;

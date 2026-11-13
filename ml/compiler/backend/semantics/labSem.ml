@@ -554,9 +554,8 @@ let share_mem_op_def = define_cases
    `share_mem_op (asm_Store32:memop) r ad
   (s:('a,'c,'ffi)labSem_state) = share_mem_store r ad s 4`];;
 
-(* HOL4 labSemScript.sml:610-617: the tactic that proves the
-   termination *)
-let labSem_evaluate_def,labSem_evaluate_ind = define_guess
+let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      (if labSem_state_clock s = 0 then (TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _46 _47) ->

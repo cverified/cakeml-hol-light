@@ -96,7 +96,7 @@ let alloc_glob_count_def,alloc_glob_count_ind = define_wf
 let _ = size_thms "bvl_exp";;
 (* HOL4 bvl_to_bviScript.sml:88-93: the tactic that proves the
    termination *)
-let global_count_sing_def = define_mutual_rec
+let global_count_sing_def,global_count_sing_ind = define_mutual_rec
   [`global_count_sing ((Var _7):bvl_exp) = 0`;
    `global_count_sing (If x y z:bvl_exp) =
          global_count_sing x +
@@ -384,9 +384,8 @@ let compile_aux_def = new_definition
        1,args,bvi_let_compile_exp p)]`;;
 
 let _ = size_thms "bvl_exp";;
-(* HOL4 bvl_to_bviScript.sml:381-387: the tactic that proves the
-   termination *)
-let compile_exps_def,compile_exps_ind = define_guess
+let compile_exps_def,compile_exps_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
@@ -444,9 +443,8 @@ let compile_exps_def,compile_exps_ind = define_guess
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let _ = size_thms "bvl_exp";;
-(* HOL4 bvl_to_bviScript.sml:439-446: the tactic that proves the
-   termination *)
-let compile_exps_sing_def = define_mutual_guess
+let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`(compile_exps_sing n (Var v:bvl_exp) = (((Var
   v):bvi_exp),misc_Nil,n)) /\
    (compile_exps_sing n (If x1 x2 x3) =

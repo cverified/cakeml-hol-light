@@ -468,10 +468,9 @@ let bviProps_evaluate_genlist_vars = prove
   CHEAT_TAC);;
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 bviPropsScript.sml:711-718: the tactic that proves the
-   termination *)
 let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
-  define_guess
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`bviProps_get_code_labels (Var _2:bvi_exp) = {}`;
    `bviProps_get_code_labels (If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION

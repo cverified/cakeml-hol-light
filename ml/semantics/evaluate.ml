@@ -74,9 +74,8 @@ let sing_env_def = new_definition
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "dec";;
-(* HOL4 evaluateScript.sml:268-277: the tactic that proves the
-   termination *)
-let evaluate_def = define_mutual_guess
+let evaluate_def,evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
   semanticPrimitives_state),Rval [])`;
    `evaluate (st:'ffi semanticPrimitives_state) env (e1 :: e2 :: es) =

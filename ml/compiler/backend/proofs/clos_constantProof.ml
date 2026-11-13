@@ -34,7 +34,7 @@ let make_part_def = new_definition
      (match ALOOKUP aux p with SOME k -> (n,k,aux) | NONE -> (n +
        1,n,(p,n) :: aux))`;;
 
-let parts_def = define_mutual_rec
+let parts_def,parts_ind = define_mutual_rec
   [`parts (ConstInt i) n aux = make_part n (Int i) aux /\
    parts (ConstStr s) n aux = make_part n (closLang_Str s) aux /\
    parts (ConstWord64 w) n aux = make_part n (W64 w) aux /\

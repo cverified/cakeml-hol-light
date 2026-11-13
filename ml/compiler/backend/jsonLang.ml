@@ -78,7 +78,7 @@ let encode_str_def = new_definition
 let _ = size_thms "obj";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let json_to_mlstring_def = define_mutual_wf
+let json_to_mlstring_def,json_to_mlstring_ind = define_mutual_wf
   `MEASURE (sum_measure (\x0. obj_size x0) (\x0. obj_size3 x0))`
   [`json_to_mlstring obj =
         (match obj with jsonLang_Object mems -> misc_List [(implode

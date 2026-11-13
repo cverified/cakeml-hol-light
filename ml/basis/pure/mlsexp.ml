@@ -261,7 +261,7 @@ let newlines_def,newlines_ind = define_wf
 let _ = size_thms "str_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let v2pretty_def = define_mutual_wf
+let v2pretty_def,v2pretty_ind = define_mutual_wf
   `MEASURE (sum_measure (\x0. str_tree_size x0) (\x0. str_tree_size1
   x0))`
   [`v2pretty v =
@@ -390,13 +390,13 @@ let make_str_safe_def = new_definition
      if str_every is_safe_char (strlen s) s then s else escape_str
        s)`;;
 
-let sexp2tree_def = define_mutual_rec
+let sexp2tree_def,sexp2tree_ind = define_mutual_rec
   [`sexp2tree (Atom s) = mlsexp_Str (make_str_safe s)`;
    `sexp2tree (Expr l) = mlsexp_Trees (sexp2trees l)`;
    `sexp2trees [] = []`;
    `sexp2trees (v :: vs) = sexp2tree v :: sexp2trees vs`];;
 
-let sexp_to_app_list_def = define_mutual_rec
+let sexp_to_app_list_def,sexp_to_app_list_ind = define_mutual_rec
   [`sexp_to_app_list (Atom s) = misc_List [make_str_safe s]`;
    `sexp_to_app_list (Expr l) =
       Append (misc_List [(implode "(")])

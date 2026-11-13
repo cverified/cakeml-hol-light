@@ -2132,7 +2132,14 @@ class Porter:
     # where the definition is made and only its condition assumed.
     why = next((ASSUMED[nm] for nm in sorted(names)
                 if nm in ASSUMED), None)
-    assumed = why is not None and not why.startswith('termination')
+    # a definition that nothing made is what the harvest says by
+    # having no strategy for it, which is what the give-up path
+    # of the old chain leaves behind.  ml/CHEATS.md says so too,
+    # but it calls the reason "termination (CHEAT_TAC)" where the
+    # cheat tactic was offered and the chain failed all the same,
+    # which reads like the other kind.
+    assumed = (way is not None and strat == '') or \
+              (why is not None and not why.startswith('termination'))
     if assumed:
       strat, found_rel, assumed_term = '', '', False
     elif why is not None:

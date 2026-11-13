@@ -38,15 +38,8 @@ let firstSet_def = new_definition
   `firstSet G sf = {t | ?rest. (\G. RTC (derive G)) G sf (grammar_TOK
   t :: rest)}`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* HOL4 NTpropertiesScript.sml:368-380: the tactic that proves the
-   termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let firstSetML_def,firstSetML_ind = define_wf_cheat
-  `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
-  LENGTH`
+let firstSetML_def,firstSetML_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`firstSetML G seen [] = {}`;
    `firstSetML G seen (grammar_TOK t :: _2) = {t}`;
    `firstSetML G seen (grammar_NT n :: rest) =

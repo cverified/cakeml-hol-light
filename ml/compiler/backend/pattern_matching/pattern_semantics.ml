@@ -87,7 +87,9 @@ let is_sibling_def = define_cases
    `is_sibling x (SOME l) = MEM x l`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-let pattern_semantics_pmatch_def = define_mutual_guess
+let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv

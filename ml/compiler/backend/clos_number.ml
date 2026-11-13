@@ -25,9 +25,9 @@ let _ = hol4_ancestors "clos_number"
 (* add fresh code locations *)
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_numberScript.sml:56-64: the tactic that proves the
-   termination *)
-let renumber_code_locs_def = define_mutual_guess
+let renumber_code_locs_def,renumber_code_locs_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`renumber_code_locs_list n [] = (n,[])`;
    `renumber_code_locs_list n (x :: xs) =
          (let (n,x) = renumber_code_locs n x in

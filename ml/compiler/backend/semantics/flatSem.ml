@@ -142,7 +142,8 @@ hol4_overload "ctor_same_type" "flatSem_ctor_same_type";;
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let flatSem_do_eq_def = define_mutual_guess
+let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`flatSem_do_eq (Litv l1:flatSem_v) (Litv l2:flatSem_v) =
        (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
          Eq_type_error)`;
@@ -673,9 +674,8 @@ let pmatch_stamps_ok = cake_inductive
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
 let _ = size_thms "flatLang_pat";;
-(* HOL4 flatSemScript.sml:704-708: the tactic that proves the
-   termination *)
-let flatSem_pmatch_def = define_mutual_guess
+let flatSem_pmatch_def,flatSem_pmatch_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
         (Match ((x,v') :: bindings))`;
    `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
@@ -765,7 +765,8 @@ let _ = size_thms "flatLang_pat";;
 let _ = size_thms "lit";;
 let _ = size_thms "mlstring";;
 let _ = size_thms "tra";;
-let flatSem_exp_alt_size_def = define_mutual_rec
+let flatSem_exp_alt_size_def,flatSem_exp_alt_size_ind =
+  define_mutual_rec
   [`flatSem_exp_alt_size (Raise a0 a1:flatLang_exp) = 1 + (tra_size
   a0 + flatSem_exp_alt_size a1)`;
    `flatSem_exp_alt_size (Handle a0 a1 a2:flatLang_exp) =
@@ -851,9 +852,8 @@ let flatSem_fix_clock_IMP =
 if concl flatSem_fix_clock_IMP <> `T` then
   cake_term_facts := flatSem_fix_clock_IMP :: (!cake_term_facts);;
 
-(* HOL4 flatSemScript.sml:932-945: the tactic that proves the
-   termination *)
-let flatSem_evaluate_def = define_mutual_guess
+let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)
   (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;

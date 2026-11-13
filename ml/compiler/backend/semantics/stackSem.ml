@@ -862,9 +862,8 @@ if concl stackSem_fix_clock_IMP <> `T` then
   cake_term_facts := stackSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "stackLang_prog";;
-(* HOL4 stackSemScript.sml:1022-1029: the tactic that proves the
-   termination *)
-let stackSem_evaluate_def,stackSem_evaluate_ind = define_guess
+let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =

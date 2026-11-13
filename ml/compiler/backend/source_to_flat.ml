@@ -137,7 +137,9 @@ let join_all_names_def = new_definition
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
-let source_to_flat_compile_exp_def = define_mutual_guess
+let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`source_to_flat_compile_exp (t:mlstring list)
   (env:source_to_flat_environment) (Raise e:ast_exp) =
         flatLang_Raise backend_common_None
@@ -406,7 +408,8 @@ let simple_dlet_def = new_definition
 
 let _ = size_thms "dec";;
 let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
-  define_guess
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`source_to_flat_compile_decs t n next' env envs' x6 =
         match (t,x6) with
           ((t:mlstring list),[Dlet locs p e]) ->

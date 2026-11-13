@@ -39,7 +39,8 @@ let no_overlap_def,no_overlap_ind = define_wf
    `no_overlap (SUC n) l <=>
          (if has_var n l then F else no_overlap n l)`];;
 
-let alt_free_def,alt_free_ind = define_guess
+let alt_free_def,alt_free_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`alt_free [] = ([],db_vars_Empty)`;
    `alt_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = alt_free [x] in
@@ -101,7 +102,8 @@ let alt_free_def,alt_free_ind = define_guess
            ([closLang_Call t ticks dest c1],l1))`];;
 
 let _ = size_thms "closLang_exp";;
-let alt_free_sing_def = define_mutual_guess
+let alt_free_sing_def,alt_free_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`alt_free_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp),Var v)`;
    `alt_free_sing (If t x1 x2 x3:closLang_exp) =
@@ -210,7 +212,8 @@ let shifted_env_def,shifted_env_ind = define_rec
    `shifted_env (n:num) (x :: xs) = sptree_insert x (n:num)
   (shifted_env (n + 1) xs)`];;
 
-let shift_def,shift_ind = define_guess
+let shift_def,shift_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;
    `clos_annotate_shift ((x:closLang_exp) :: y :: xs) (m:num) (l:num)
   (i:num spt) =
@@ -282,7 +285,8 @@ let shift_def,shift_ind = define_guess
 hol4_overload "shift" "clos_annotate_shift";;
 
 let _ = size_thms "closLang_exp";;
-let shift_sing_def = define_mutual_guess
+let shift_sing_def,shift_sing_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`shift_sing (Var t v:closLang_exp) (m:num) (l:num) (i:num spt) =
          Var t (clos_annotate_get_var m l i v)`;
    `shift_sing (If t x1 x2 x3:closLang_exp) (m:num) (l:num) (i:num spt)

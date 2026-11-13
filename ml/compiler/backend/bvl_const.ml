@@ -329,7 +329,8 @@ let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
   (bvl_const_compile env xs)]`];;
 hol4_overload "compile" "bvl_const_compile";;
 
-let bvl_const_compile_sing_def = define_mutual_rec
+let bvl_const_compile_sing_def,bvl_const_compile_sing_ind =
+  define_mutual_rec
   [`bvl_const_compile_sing env (Var v:bvl_exp) =
          (match (\l n. oEL n l) env v with NONE -> Var v | SOME
            NONE -> Var v | SOME (SOME (Var i)) -> Var (v + i) | SOME

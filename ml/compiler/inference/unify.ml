@@ -46,7 +46,7 @@ let i_o_f = prove
 let atom_INDUCT,atom_RECURSION = define_datatype
   "atom = TC_tag (num) | DB_tag (num) | Tapp_tag | Null_tag";;
 
-let encode_infer_t_def = define_mutual_rec
+let encode_infer_t_def,encode_infer_t_ind = define_mutual_rec
   [`encode_infer_t (Infer_Tvar_db n) =
       term_Const (DB_tag n)`;
    `encode_infer_t (Infer_Tapp ts tc) =
@@ -68,7 +68,7 @@ let encode_infer_t_11 = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let decode_infer_t_def = define_mutual_guess_cheat
+let decode_infer_t_def,decode_infer_t_ind = define_mutual_guess_cheat
   [`decode_infer_t (term_Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (term_Const (DB_tag n)) =

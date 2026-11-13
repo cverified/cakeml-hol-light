@@ -270,7 +270,7 @@ hol4_overload "Op" "closLang_Op";;
 let _ = size_thms "closLang_exp";;
 (* HOL4 closLangScript.sml:159-168: the tactic that proves the
    termination *)
-let has_install_def = define_mutual_shaped_rec
+let has_install_def,has_install_ind = define_mutual_shaped_rec
   "nested"
   [`has_install ((Var t n):closLang_exp) = F`;
    `has_install (If t e1 e2 e3:closLang_exp) = (has_install e1 \/

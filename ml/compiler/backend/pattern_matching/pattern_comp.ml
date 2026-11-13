@@ -180,7 +180,7 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let pat_to_guard_def = define_mutual_wf_cheat
+let pat_to_guard_def,pat_to_guard_ind = define_mutual_wf_cheat
   `MEASURE (\x. match x with INL (_11,p) -> pattern_semantics_pat_size
   p | INR (_12,k,p) -> list_size pattern_semantics_pat_size p)`
   [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =

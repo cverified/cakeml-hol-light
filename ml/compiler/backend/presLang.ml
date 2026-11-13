@@ -80,10 +80,8 @@ let bool_to_display_def = new_definition
   `bool_to_display b = empty_item (if b then (implode "True") else
   (implode "False"))`;;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let num_to_hex_def,num_to_hex_ind = define_wf
-  `MEASURE (\x0. (\n. n) x0)`
+let num_to_hex_def,num_to_hex_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`num_to_hex n =
      (if n < 16 then [] else num_to_hex (n DIV 16)) ++
      num_to_hex_digit (n MOD 16)`];;
@@ -319,11 +317,8 @@ let id_to_display_def,id_to_display_ind = define_rec
         id_to_display i]`];;
 
 let _ = size_thms "ast_t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let ast_t_to_display_def = define_mutual_wf
-  `MEASURE (\x. match x with INL v -> ast_t_size v | INR v -> list_size
-  ast_t_size v)`
+let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`ast_t_to_display c =
       (match c with Atvar n -> displayLang_Item NONE (implode
         "Atvar") [String n] | Atfun t1 t2 -> displayLang_Item NONE
@@ -337,11 +332,8 @@ let ast_t_to_display_def = define_mutual_wf
         ast_t_to_display x :: ast_t_to_display_list xs`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let pat_to_display_def = define_mutual_wf
-  `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-  INR v -> list_size pattern_semantics_pat_size v)`
+let pat_to_display_def,pat_to_display_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`pat_to_display (c:ast_pat) =
       (match c with Pany -> displayLang_Item NONE (implode "Pany")
         [] | Pvar v -> displayLang_Item NONE (implode "Pvar") [String v]
@@ -364,9 +356,8 @@ let pat_to_display_def = define_mutual_wf
    `pat_to_display_list (x :: xs) =
         pat_to_display x :: pat_to_display_list xs`];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let exp_to_display_def = define_mutual_guess_cheat
+let exp_to_display_def,exp_to_display_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`exp_to_display (c:ast_exp) =
       (match c with Lit l -> displayLang_Item NONE (implode "Lit")
         [lit_to_display l] | Raise e -> displayLang_Item NONE (implode
@@ -423,11 +414,9 @@ let exp_to_display_def = define_mutual_guess_cheat
         fun_to_display_list xs`];;
 
 let _ = size_thms "dec";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let source_to_display_dec_def = define_mutual_wf
-  `MEASURE (\x. match x with INL v -> dec_size v | INR v -> list_size
-  dec_size v)`
+let source_to_display_dec_def,source_to_display_dec_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`source_to_display_dec (d:dec) =
       (match d with Dlet _3 pat e -> displayLang_Item NONE (implode
         "Dlet") [pat_to_display pat; exp_to_display e] | Dletrec _4 fns
@@ -475,11 +464,9 @@ let opt_con_to_display_def = new_definition
   "ConIdTyped") [c; t])`;;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let flat_pat_to_display_def = define_mutual_wf
-  `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-  INR v -> list_size pattern_semantics_pat_size v)`
+let flat_pat_to_display_def,flat_pat_to_display_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`flat_pat_to_display p =
         (match p with flatLang_Pvar varN -> displayLang_Item NONE
           (implode "Pvar") [string_imp varN] | Pany -> empty_item
@@ -521,8 +508,8 @@ let add_name_hint_def = new_definition
      mlstring_concat [prefix; (implode "<"); name_hint; (implode
        ">")]`;;
 
-let flat_to_display_def = define_mutual_shaped_rec
-  "nested"
+let flat_to_display_def,flat_to_display_ind = define_mutual_shaped_rec
+  "maplist>maplist>maplist>nested"
   [`flat_to_display (flatLang_Raise tra exp) =
         displayLang_Item (SOME tra) (implode "raise")
           [flat_to_display exp]`;
@@ -620,7 +607,7 @@ let const_part_to_display_def = define_cases
       displayLang_Item NONE (implode "W64") [word_to_display w]`];;
 
 let _ = size_thms "const";;
-let const_to_display_def = define_mutual_rec
+let const_to_display_def,const_to_display_ind = define_mutual_rec
   [`const_to_display (ConstInt i:const) =
       displayLang_Item NONE (implode "ConstInt") [int_to_display
         i]`;
@@ -773,9 +760,8 @@ hol4_overload "commas" "presLang_commas";;
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
 let _ = size_thms "flatLang_exp";;
-(* HOL4 presLangScript.sml:744-751: the tactic that proves the
-   termination *)
-let clos_to_display_def = define_mutual_guess
+let clos_to_display_def,clos_to_display_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`clos_to_display ns h (Var t n:closLang_exp) =
         displayLang_Item (SOME t) (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -875,7 +861,8 @@ let clos_dec_to_display_def = new_definition
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let bvl_to_display_def = define_mutual_wf
+let bvl_to_display_def,bvl_to_display_ind = define_mutual_shaped_wf
+  "maplist>measure"
   `MEASURE (\x.
      match x with
        INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs)) ->
@@ -936,7 +923,8 @@ let bvl_fun_to_display_def = new_definition
    port cannot state yet: MEM_bvi_exps_size *)
 
 let _ = size_thms "flatLang_exp";;
-let bvi_to_display_def = define_mutual_guess
+let bvi_to_display_def,bvi_to_display_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`bvi_to_display ns h (Var n:bvi_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -1031,7 +1019,7 @@ let list_size_append_data_seqs = prove
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let data_prog_to_display_def = define_mutual_wf
+let data_prog_to_display_def,data_prog_to_display_ind = define_mutual_wf
   `MEASURE (\x.
      match x with
        INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`
@@ -1250,7 +1238,9 @@ let list_size_append_stack_seqs = prove
    labLang_prog_size ARB x + 1`,
   CHEAT_TAC);;
 
-let stack_prog_to_display_def = define_mutual_guess
+let stack_prog_to_display_def,stack_prog_to_display_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`stack_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item
   (implode "skip")`;
@@ -1446,7 +1436,7 @@ let MEM_append_word_seqs = prove
    the value of an ML expression: MEM_word_exps_size_ARB *)
 
 let _ = size_thms "wordLang_exp";;
-let word_exp_to_display_def = define_mutual_rec
+let word_exp_to_display_def,word_exp_to_display_ind = define_mutual_rec
   [`word_exp_to_display (wordLang_Const v) = item_with_word (implode
   "Const") v`;
    `word_exp_to_display (wordLang_Var n) = item_with_num (implode
@@ -1478,7 +1468,9 @@ let num_sets_to_display_def = new_definition
      Tuple [num_set_to_display l;
             num_set_to_display r]`;;
 
-let word_prog_to_display_def = define_mutual_guess
+let word_prog_to_display_def,word_prog_to_display_ind =
+  assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`word_prog_to_display 0 ns x = empty_item (implode "...")`;
    `word_prog_to_display (SUC k) ns wordLang_Skip = empty_item
   (implode "skip")`;

@@ -44,9 +44,8 @@ let _ = do_list hide_constant ["all"; "pmatch"];;
 (* This definition is written to short-circuit,
    i.e. exit as soon as possible. *)
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_knownScript.sml:63-66: the tactic that proves the
-   termination *)
-let get_size_sc_aux_def,get_size_sc_aux_ind = define_guess
+let get_size_sc_aux_def,get_size_sc_aux_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`get_size_sc_aux n [] = n`;
    `get_size_sc_aux n (x :: y :: xs) =
          (if n = 0 then n else
@@ -143,7 +142,8 @@ let get_size_sc_SOME = prove
   clos_known_get_size exp = n`,
   CHEAT_TAC);;
 
-let clos_known_free_def,clos_known_free_ind = define_guess
+let clos_known_free_def,clos_known_free_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`clos_known_free [] = ([],db_vars_Empty)`;
    `clos_known_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_known_free [x] in
@@ -499,9 +499,8 @@ let decide_inline_LetInline = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 clos_knownScript.sml:630-639: the tactic that proves the
-   termination *)
-let known_def,known_ind = define_guess
+let known_def,known_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`known c [] vs (g:val_approx spt) = ([],g)`;
    `known c ((x:closLang_exp) :: y :: xs) vs (g:val_approx spt) =
          (let (eas1,g) = known c [x] vs g in

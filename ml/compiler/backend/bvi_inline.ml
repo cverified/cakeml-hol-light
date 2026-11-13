@@ -54,9 +54,8 @@ let wrapper_ok_def = new_definition
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass). *)
 let _ = size_thms "bvi_exp";;
-(* HOL4 bvi_inlineScript.sml:75-80: the tactic that proves the
-   termination *)
-let inline_exp_def = define_mutual_guess
+let inline_exp_def,inline_exp_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
    `inline_exp cs (bvi_If x y z) =
          bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp
@@ -101,7 +100,8 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* HOL4 bvi_inlineScript.sml:115-120: the tactic that proves the
    termination *)
-let remove_ticks_exp_def = define_mutual_wf
+let remove_ticks_exp_def,remove_ticks_exp_ind = define_mutual_shaped_wf
+  "maplist>measure"
   `MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
   list_size bvi_exp_size es)`
   [`remove_ticks_exp (bvi_Var n) = bvi_Var n`;

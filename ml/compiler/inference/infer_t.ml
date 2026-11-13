@@ -103,7 +103,9 @@ let add_parens_def = new_definition
 let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let inf_type_to_string_rec_def = define_mutual_wf
+let inf_type_to_string_rec_def,inf_type_to_string_rec_ind =
+  define_mutual_shaped_wf
+  "maplist>measure"
   `MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
   -> list_size infer_t_size ts)`
   [`inf_type_to_string_rec tys (Infer_Tuvar n) =

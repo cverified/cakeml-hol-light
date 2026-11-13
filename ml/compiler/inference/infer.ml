@@ -169,7 +169,7 @@ let inf_env_FIELDS = define_record "inf_env"
 (* Generalise the unification variables greater than m, starting at deBruijn index n.
  * Return how many were generalised, the generalised type, and a substitution
  * that describes the generalisation *)
-let generalise_def = define_mutual_rec
+let generalise_def,generalise_ind = define_mutual_rec
   [`generalise m n s (Infer_Tapp ts tc) =
       (let (num_gen,s',ts') = generalise_list m n s ts in
         (num_gen,s',Infer_Tapp ts' tc))`;
@@ -189,7 +189,7 @@ let generalise_def = define_mutual_rec
         in
         (num_gen + num_gen',s'',t' :: ts'))`];;
 
-let infer_type_subst_def = define_mutual_rec
+let infer_type_subst_def,infer_type_subst_ind = define_mutual_rec
   [`infer_type_subst s (Tvar tv) =
       (match ALOOKUP s tv with SOME t -> t | NONE ->
         Infer_Tvar_db 0)`;
@@ -214,7 +214,8 @@ let infer_type_subst_alt = prove
      Infer_Tapp (MAP (infer_type_subst s) ts) tn)`,
   CHEAT_TAC);;
 
-let infer_deBruijn_subst_def = define_mutual_rec
+let infer_deBruijn_subst_def,infer_deBruijn_subst_ind =
+  define_mutual_rec
   [`infer_deBruijn_subst s (Infer_Tvar_db n) =
       (if n < LENGTH s then
         EL n s else
@@ -244,7 +245,8 @@ let infer_deBruijn_subst_alt = prove
 let _ = size_thms "ast_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let type_name_check_subst_def = define_mutual_wf
+let type_name_check_subst_def,type_name_check_subst_ind =
+  define_mutual_wf
   `MEASURE (sum_measure (\(x0,x1,x2,x3,x4). ast_t_size x4)
   (\(x0,x1,x2,x3,x4). ast_t_size1 x4))`
   [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
@@ -313,7 +315,7 @@ let st_ex_bind_triple = prove
 let _ = size_thms "ast_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let type_name_check_sub_def = define_mutual_wf
+let type_name_check_sub_def,type_name_check_sub_ind = define_mutual_wf
   `MEASURE (sum_measure (\(x0,x1,x2,x3). ast_t_size x3)
   (\(x0,x1,x2,x3). ast_t_size1 x3))`
   [`type_name_check_sub l tenvT fvs (Atvar tv) =
@@ -502,7 +504,8 @@ let check_type_definition_def = new_definition
 (* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the
    value of an ML expression: check_type_definition_expand *)
 
-let infer_p_def = define_mutual_guess
+let infer_p_def,infer_p_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`infer_p l ienv (ast_Pvar n:ast_pat) =
         st_ex_bind fresh_uvar (\t.
            st_ex_return (t,[(n,t)]))`;
@@ -841,9 +844,8 @@ let constrain_op_error_msg_sanity = prove
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
-(* HOL4 inferScript.sml:1016-1025: the tactic that proves the
-   termination *)
-let infer_e_def = define_mutual_guess
+let infer_e_def,infer_e_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
@@ -1048,7 +1050,8 @@ let lift_ienv_def = new_definition
      mk_inf_env (nsLift mn (inf_env_inf_v ienv)) (nsLift mn
        (inf_env_inf_c ienv)) (nsLift mn (inf_env_inf_t ienv))`;;
 
-let infer_d_def = define_mutual_guess
+let infer_d_def,infer_d_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`infer_d ienv (Dlet locs p e) =
       st_ex_bind init_state (\one. st_ex_bind get_next_uvar (\
          n. st_ex_bind (infer_e (mk_loc_err_info (SOME locs)
@@ -1259,8 +1262,8 @@ let alist_nub_def,alist_nub_ind = define_wf_cheat
    `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
   FST t)) xs)`];;
 
-let ns_nub_def = define_mutual_shaped_rec
-  "nested"
+let ns_nub_def,ns_nub_ind = define_mutual_shaped_rec
+  "maplist>nested"
   [`ns_nub (Bind xs ys) = Bind (alist_nub xs) (alist_nub
   (inner_ns_nubs ys))`;
    `inner_ns_nubs [] = []`;

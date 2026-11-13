@@ -32,7 +32,7 @@ let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
 (* HOL4 mlvectorScript.sml:13-14: a theorem that HOL4 states as the
    value of an ML expression: sub_def *)
 
-let sub_unsafe_def,sub_unsafe_ind = define_guess
+let sub_unsafe_def = define_general
   [`// same as sub_def, but translator targets Vsub_unsafe
    sub_unsafe (Vector l) n = EL n l`];;
 

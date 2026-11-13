@@ -27,8 +27,8 @@ let _ = hol4_ancestors "bvl_inline"
 
 (* tick_inline -- a function that inlines a function body *)
 
-let tick_inline_def,tick_inline_ind = define_shaped_rec
-  "nested"
+let tick_inline_def,tick_inline_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`tick_inline cs [] = []`;
    `tick_inline cs (x :: y :: xs) =
          HD (tick_inline cs [x]) :: tick_inline cs (y :: xs)`;
@@ -57,7 +57,7 @@ let tick_inline_def,tick_inline_ind = define_shaped_rec
            dest (tick_inline cs xs)] | SOME (arity,code) -> [Let
            (tick_inline cs xs) (mk_tick (SUC ticks) code)]))`];;
 
-let tick_inline_sing_def = define_mutual_rec
+let tick_inline_sing_def,tick_inline_sing_ind = define_mutual_rec
   [`tick_inline_sing cs (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `tick_inline_sing cs (If x1 x2 x3:bvl_exp) =
          (If (tick_inline_sing cs x1)
@@ -129,7 +129,7 @@ let is_small_aux_def,is_small_aux_ind = define_wf
          (let n = n - 1 in if n = 0 then 0 else
            is_small_aux n xs)`];;
 
-let is_small_sing_def = define_mutual_rec
+let is_small_sing_def,is_small_sing_ind = define_mutual_rec
   [`is_small_sing n (Var v:bvl_exp) = n`;
    `is_small_sing n (If x1 x2 x3:bvl_exp) =
          (let n = n - 1 in if n = 0 then 0 else
@@ -201,7 +201,7 @@ let bvl_inline_is_rec_def,bvl_inline_is_rec_ind = define_wf
          (if dest = SOME n then T else bvl_inline_is_rec n xs)`];;
 hol4_overload "is_rec" "bvl_inline_is_rec";;
 
-let is_rec_sing_def = define_mutual_rec
+let is_rec_sing_def,is_rec_sing_ind = define_mutual_rec
   [`is_rec_sing n (Var v:bvl_exp) = F`;
    `is_rec_sing n (If x1 x2 x3:bvl_exp) =
          (if is_rec_sing n x1 then T else
@@ -264,7 +264,7 @@ let HD_tick_inline = prove
 (* remove_ticks -- a function that removes Ticks *)
 
 let remove_ticks_def,remove_ticks_ind = define_shaped_rec
-  "nested"
+  "sing>nested"
   [`bvl_inline_remove_ticks [] = []`;
    `bvl_inline_remove_ticks (x :: y :: xs) =
          HD (bvl_inline_remove_ticks [x]) ::
@@ -292,7 +292,7 @@ let remove_ticks_def,remove_ticks_ind = define_shaped_rec
          [Call 0 dest (bvl_inline_remove_ticks xs)]`];;
 hol4_overload "remove_ticks" "bvl_inline_remove_ticks";;
 
-let remove_ticks_sing_def = define_mutual_rec
+let remove_ticks_sing_def,remove_ticks_sing_ind = define_mutual_rec
   [`bvl_inline_remove_ticks_sing (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `bvl_inline_remove_ticks_sing (If x1 x2 x3:bvl_exp) =
          If (bvl_inline_remove_ticks_sing x1)
@@ -361,8 +361,8 @@ let dest_op_def = new_definition
       | _19 -> NONE`;;
 hol4_overload "dest_op" "bvl_inline_dest_op";;
 
-let let_op_def,let_op_ind = define_shaped_rec
-  "nested"
+let let_op_def,let_op_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`bvl_inline_let_op [] = []`;
    `bvl_inline_let_op ((x:bvl_exp) :: y :: xs) =
          HD (bvl_inline_let_op [x]) :: bvl_inline_let_op (y ::
@@ -391,7 +391,7 @@ let let_op_def,let_op_ind = define_shaped_rec
   dest (bvl_inline_let_op xs)]`];;
 hol4_overload "let_op" "bvl_inline_let_op";;
 
-let let_op_one_def = define_mutual_rec
+let let_op_one_def,let_op_one_ind = define_mutual_rec
   [`let_op_one (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `let_op_one (If x1 x2 x3:bvl_exp) =
          If (let_op_one x1)

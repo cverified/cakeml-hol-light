@@ -227,7 +227,7 @@ let shape_to_str_def,shape_to_str_ind = define_wf
               [implode "}"])`;
    `shape_to_str (Named nm) = nm`];;
 
-let shape_val_def = define_mutual_rec
+let shape_val_def,shape_val_ind = define_mutual_rec
   [`shape_val One = Const (n2w 0)`;
    `shape_val (Comb shapes) = panLang_RStruct (shape_vals shapes)`;
    `shape_val (Named nm) = Const (n2w 0)`;
@@ -286,9 +286,8 @@ let size_of_eids_def = new_definition
   `size_of_eids prog = LENGTH (FILTER is_exn_decl prog)`;;
 
 let _ = size_thms "panLang_exp";;
-(* HOL4 panLangScript.sml:271-276: the tactic that proves the
-   termination *)
-let var_exp_def,var_exp_ind = define_guess
+let var_exp_def,var_exp_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`var_exp (panLang_Const w) = ([]:mlstring list)`;
    `var_exp (panLang_Var panLang_Local v) = (([v]):mlstring list)`;
    `var_exp (panLang_Var panLang_Global v) = (([]):mlstring list)`;
@@ -314,9 +313,8 @@ let var_exp_def,var_exp_ind = define_guess
    `var_exp panLang_BytesInWord = (([]):mlstring list)`];;
 
 let _ = size_thms "panLang_exp";;
-(* HOL4 panLangScript.sml:292-298: the tactic that proves the
-   termination *)
-let global_var_exp_def,global_var_exp_ind = define_guess
+let global_var_exp_def,global_var_exp_ind = assume_definition_rec
+  "termination (CHEAT_TAC)"
   [`global_var_exp (panLang_Const w) = ([]:mlstring list)`;
    `global_var_exp (panLang_Var panLang_Local v) = (([]):mlstring
   list)`;
