@@ -2152,6 +2152,10 @@ class Porter:
         text = (sizes + matchnote +
                 'let %s = define_shaped "%s"\n  %s;;'
                 % (bind, strat, body))
+      elif strat == 'define_single':
+        text = (sizes + matchnote +
+                'let %s = define_general%s\n  %s;;'
+                % (bind, '_cheat' if cheat else '', body))
       elif term is not None and key not in overrides.ONE_QUOTATION \
            and strat != 'new_recursive_definition':
         text = sizes + 'let %s = new_definition\n  `%s`;;' % (bind,
@@ -2164,7 +2168,9 @@ class Porter:
       # none} x {a relation, the measure of the arguments matched
       # on, HOL Light's own guess} x {proved, assumed, a tactic}
       shape = strat if strat in SHAPES else ''
-      if rel is not None: kind = '_wf'
+      if strat == 'define_single' and rel is None and not shape:
+        kind = '_guess'
+      elif rel is not None: kind = '_wf'
       elif strat == 'guess' and not shape and not cheat and not tac:
         kind = '_guess'
       else: kind = '_rec'
