@@ -1,9 +1,14 @@
 #!/bin/sh
-# abstract [session] : load the whole port into a session as an
+# abstract [session] [file] : load the port into a session as an
 # abstract -- every definition makes its constant and assumes its
 # equations, every induction theorem is its statement assumed, and
 # every proof is skipped.  About ten minutes against the two hours
 # a real load takes.
+#
+# With a file (a path as tools/load.txt writes it) it stops in
+# front of that one and does not load it, which is how to develop
+# a proof of it: the port it stands on is there in a few minutes,
+# and the file itself is then loaded for real.
 #
 # NOTHING IS PROVED in such a session, and length (axioms ()) says
 # nothing about the port while it is on.  It is for developing the
@@ -14,6 +19,7 @@ C=/home/freek/claude/hol-light/cakeml
 PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
 . $C/tools/holenv.sh > /dev/null 2>&1
 s=${1:-abs}
+upto=$2
 repl-kill $s > /dev/null 2>&1
 rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
 repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
@@ -21,6 +27,7 @@ repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
 repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" > /dev/null 2>&1
 python3 -I $C/tools/loadorder.py > $C/tools/load.txt
 for f in $(cat $C/tools/load.txt); do
+  [ -n "$upto" ] && [ "$f" = "$upto" ] && break
   TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$C/ml/$f\";;" \
     2>&1 | grep -E "Exception|Error in" | sed "s|^|$f: |"
 done
