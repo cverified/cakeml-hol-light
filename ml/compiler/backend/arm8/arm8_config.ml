@@ -22,7 +22,7 @@ let _ = hol4_ancestors "arm8_config"
   ["asmProps"; "asmSem"; "backend"];;
 (* HOL4 ancestors outside the port: arm8_target *)
 
-let arm8_names_def = cake_define
+let arm8_names_def = new_definition
   `arm8_names =
      ((
       // source can use 29 regs (0-28),
@@ -53,7 +53,7 @@ let arm8_names_def = cake_define
 (* HOL4 arm8_configScript.sml:39-42: the ML values that the
    definitions below antiquote *)
 
-let arm8_backend_config_def = cake_define
+let arm8_backend_config_def = new_definition
   `arm8_backend_config =
               mk_backend_config prim_src_config
                 (clos_to_bvl_default_config)

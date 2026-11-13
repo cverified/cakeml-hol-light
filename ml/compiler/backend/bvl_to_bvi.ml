@@ -42,7 +42,7 @@ let _ = hol4_ancestors "bvl_to_bvi"
 
 let _ = do_list hide_constant ["num_stubs"; "pmatch"];;
 
-let destLet_def = cake_define
+let destLet_def = new_definition
   `destLet x1 =
         match x1 with
           ((Let xs b):bvl_exp) -> (xs,b)
@@ -58,14 +58,18 @@ let destLet_pmatch = prove
 (* HOL4 bvl_to_bviScript.sml:37: the ML values that the definitions
    below antiquote *)
 
-let compile_int_def = cake_define
+let compile_int_def = new_definition
   `compile_int (i:int) =
      bvi_Op (if --((&268435457):int) <= i /\ i <=
        ((&268435457):int) then closLang_IntOp (closLang_Const i) else
        closLang_BlockOp (closLang_Build [Int i])) []`;;
 
-let alloc_glob_count_def = cake_define
-  `alloc_glob_count x1 =
+let _ = size_thms "bvl_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let alloc_glob_count_def,alloc_glob_count_ind = define_wf
+  `MEASURE (\x0. bvl_exp_size1 x0)`
+  [`alloc_glob_count x1 =
         match x1 with
           [] -> (0:num)
         | (x :: y :: xs) ->
@@ -87,14 +91,12 @@ let alloc_glob_count_def = cake_define
         (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
           alloc_glob_count xs else alloc_glob_count xs)
         | [_6] -> 0
-        // Impossible`;;
+        // Impossible`];;
 
 let _ = size_thms "bvl_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let global_count_sing_def = cake_define_list_wf
-  `MEASURE (\x. match x with INL e -> bvl_exp_size e | INR es ->
-  list_size bvl_exp_size es)`
+(* HOL4 bvl_to_bviScript.sml:88-93: the tactic that proves the
+   termination *)
+let global_count_sing_def = define_mutual_rec
   [`global_count_sing ((Var _7):bvl_exp) = 0`;
    `global_count_sing (If x y z:bvl_exp) =
          global_count_sing x +
@@ -122,21 +124,21 @@ let alloc_glob_count_eq_global_count_list = prove
    (!es. global_count_list es = alloc_glob_count es)`,
   CHEAT_TAC);;
 
-let AllocGlobal_location_def = cake_define
+let AllocGlobal_location_def = new_definition
   `AllocGlobal_location = data_num_stubs`;;
-let CopyGlobals_location_def = cake_define
+let CopyGlobals_location_def = new_definition
   `CopyGlobals_location = AllocGlobal_location + 1`;;
-let InitGlobals_location_def = cake_define
+let InitGlobals_location_def = new_definition
   `InitGlobals_location = CopyGlobals_location + 1`;;
-let ListLength_location_def = cake_define
+let ListLength_location_def = new_definition
   `ListLength_location = InitGlobals_location + 1`;;
-let FromListByte_location_def = cake_define
+let FromListByte_location_def = new_definition
   `FromListByte_location = ListLength_location + 1`;;
-let ToListByte_location_def = cake_define
+let ToListByte_location_def = new_definition
   `ToListByte_location = FromListByte_location + 1`;;
-let SumListLength_location_def = cake_define
+let SumListLength_location_def = new_definition
   `SumListLength_location = ToListByte_location + 1`;;
-let ConcatByte_location_def = cake_define
+let ConcatByte_location_def = new_definition
   `ConcatByte_location = SumListLength_location + 1`;;
 
 (* HOL4 bvl_to_bviScript.sml:129-130: a theorem that HOL4 states as
@@ -156,7 +158,7 @@ let ConcatByte_location_def = cake_define
 (* HOL4 bvl_to_bviScript.sml:143-144: a theorem that HOL4 states as
    the value of an ML expression: ConcatByte_location_eq *)
 
-let AllocGlobal_code_def = cake_define
+let AllocGlobal_code_def = new_definition
   `AllocGlobal_code = ((1:num),
      Let [Op (closLang_GlobOp closLang_GlobalsPtr) []] (
      Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
@@ -175,7 +177,7 @@ let AllocGlobal_code_def = cake_define
                  (closLang_IntOp (closLang_Const (&1))) []; Var 3]]
                  NONE)))))))))`;;
 
-let CopyGlobals_code_def = cake_define
+let CopyGlobals_code_def = new_definition
   `CopyGlobals_code = ((3:num),
      // ptr to new array, ptr to old array, index to copy
      Let [Op (closLang_MemOp closLang_Update) [Op (closLang_MemOp
@@ -186,10 +188,10 @@ let CopyGlobals_code_def = cake_define
            (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
            (closLang_Const (&1))) []; Var 3]] NONE)))`;;
 
-let InitGlobals_max_def = cake_define
+let InitGlobals_max_def = new_definition
   `InitGlobals_max = 10000`;;
 
-let InitGlobals_code_def = cake_define
+let InitGlobals_code_def = new_definition
   `InitGlobals_code start' n = ((0:num),
      (let n = MIN (MAX n 1) InitGlobals_max in
        Let [Op (closLang_MemOp closLang_RefArray) [Op (closLang_IntOp
@@ -201,7 +203,7 @@ let InitGlobals_code_def = cake_define
            (Let [Op (closLang_GlobOp closLang_SetGlobalsPtr) [Var 1]]
               (Call 0 (SOME start') [] (SOME (Var 0)))))))`;;
 
-let ListLength_code_def = cake_define
+let ListLength_code_def = new_definition
   `ListLength_code = (2,
      // ptr to array, accumulated length
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
@@ -212,7 +214,7 @@ let ListLength_code_def = cake_define
                     (closLang_IntOp (closLang_Const (&1))) []]]
                     NONE))`;;
 
-let FromListByte_code_def = cake_define
+let FromListByte_code_def = new_definition
   `FromListByte_code = (3,
      // list, current index, byte array
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
@@ -227,7 +229,7 @@ let FromListByte_code_def = cake_define
               (closLang_IntOp (closLang_Const (&1))) []];
             Var 3] NONE)))`;;
 
-let ToListByte_code_def = cake_define
+let ToListByte_code_def = new_definition
   `ToListByte_code = (3,
      // list, current index, byte array
      If (Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
@@ -240,7 +242,7 @@ let ToListByte_code_def = cake_define
             Var 1;
             Var 4] NONE))))`;;
 
-let SumListLength_code_def = cake_define
+let SumListLength_code_def = new_definition
   `SumListLength_code = (2,
      // ptr to list, accumulated length
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
@@ -254,7 +256,7 @@ let SumListLength_code_def = cake_define
                               (closLang_IntOp (closLang_Const (&0)))
                               []; Var 0]]]] NONE))`;;
 
-let ConcatByte_code_def = cake_define
+let ConcatByte_code_def = new_definition
   `ConcatByte_code = (3,
      // list, current index, destination
      If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
@@ -271,7 +273,7 @@ let ConcatByte_code_def = cake_define
                 Op (closLang_IntOp closLang_Add) [Var 4; Var 1];
                 Var 5] NONE)))))`;;
 
-let stubs_def = cake_define
+let stubs_def = new_definition
   `bvl_to_bvi_stubs start' n = [(AllocGlobal_location,AllocGlobal_code);
                     (CopyGlobals_location,CopyGlobals_code);
                     (InitGlobals_location,InitGlobals_code start' n);
@@ -285,7 +287,7 @@ hol4_overload "stubs" "bvl_to_bvi_stubs";;
 (* HOL4 bvl_to_bviScript.sml:243: the overload num_stubs, which the
    port expands *)
 
-let compile_op_def = cake_define
+let compile_op_def = new_definition
   `bvl_to_bvi_compile_op op c1 =
      (match op with closLang_IntOp (closLang_Const i) ->
        (match c1 with [] -> compile_int i | _12 -> Let [Op
@@ -376,20 +378,16 @@ hol4_overload "++" "SmartAppend";;
 (* HOL4 bvl_to_bviScript.sml:324: the overload nss, which the port
    expands *)
 
-let compile_aux_def = cake_define
+let compile_aux_def = new_definition
   `compile_aux (k,args,p) =
      List [(bvl_num_stubs + bvl_to_bvi_namespaces * k +
        1,args,bvi_let_compile_exp p)]`;;
 
 let _ = size_thms "bvl_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let compile_exps_def = cake_define_try_tac (fun () ->
-  `MEASURE (list_size bvl_exp_size o SND)`)
-  CHEAT_TAC
-  `(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
+(* HOL4 bvl_to_bviScript.sml:381-387: the tactic that proves the
+   termination *)
+let compile_exps_def,compile_exps_ind = define_guess
+  [`(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
       let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
@@ -442,19 +440,14 @@ let compile_exps_def = cake_define_try_tac (fun () ->
         ([Call ticks
                (match dest with NONE -> NONE | SOME n -> SOME
                  (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
-                 NONE],aux1,n1)))`;;
+                 NONE],aux1,n1)))`];;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let _ = size_thms "bvl_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let compile_exps_sing_def = cake_define_try_tac (fun () ->
-  `MEASURE (\x. match x with INL (n,e) -> bvl_exp_size e | INR (n,es)
-  -> list_size bvl_exp_size es)`)
-  CHEAT_TAC
-  `(compile_exps_sing n (Var v:bvl_exp) = (((Var
+(* HOL4 bvl_to_bviScript.sml:439-446: the tactic that proves the
+   termination *)
+let compile_exps_sing_def = define_mutual_guess
+  [`(compile_exps_sing n (Var v:bvl_exp) = (((Var
   v):bvi_exp),misc_Nil,n)) /\
    (compile_exps_sing n (If x1 x2 x3) =
       (let (c1,aux1,n1) = compile_exps_sing n x1 in
@@ -506,7 +499,7 @@ let compile_exps_sing_def = cake_define_try_tac (fun () ->
    (compile_exps_list n ((x:bvl_exp) :: xs) =
       (let (c1,aux1,n1) = compile_exps_sing n x in
       let (c2,aux2,n2) = compile_exps_list n1 xs in
-        (c1 :: c2,aux1 ++ aux2,n2)))`;;
+        (c1 :: c2,aux1 ++ aux2,n2)))`];;
 
 let compile_exps_sing = prove
  (`(!n e. bvl_to_bvi_compile_exps n [e] =
@@ -528,7 +521,7 @@ let compile_exps_SING = prove
  (`(bvl_to_bvi_compile_exps n [x] = (c,aux,n1)) ==> (?y. c = [y])`,
   CHEAT_TAC);;
 
-let compile_single_def = cake_define
+let compile_single_def = new_definition
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
      (let (c,aux,n1) = bvl_to_bvi_compile_exps n [exp] in
        (
@@ -544,7 +537,7 @@ let compile_single_eq = prove
            name,arg_count,bvi_let_compile_exp c)] ++ aux,n1))`,
   CHEAT_TAC);;
 
-let compile_list_def = cake_define_list
+let compile_list_def,compile_list_ind = define_rec
   [`bvl_to_bvi_compile_list n [] = (List [],n)`;
    `bvl_to_bvi_compile_list n (p :: progs) =
          (let (code1,n1) = bvl_to_bvi_compile_single n p in
@@ -552,14 +545,14 @@ let compile_list_def = cake_define_list
            (code1 ++ code2,n2))`];;
 hol4_overload "compile_list" "bvl_to_bvi_compile_list";;
 
-let bvl_to_bvi_compile_inc_def = cake_define
+let bvl_to_bvi_compile_inc_def = new_definition
   `// incremental version used by Install
    bvl_to_bvi_compile_inc n prog =
      (let (p1,n1) = bvl_to_bvi_compile_list n prog in
        (n1,append p1))`;;
 hol4_overload "compile_inc" "bvl_to_bvi_compile_inc";;
 
-let bvl_to_bvi_compile_prog_def = cake_define
+let bvl_to_bvi_compile_prog_def = new_definition
   `bvl_to_bvi_compile_prog start' n prog =
      (let k = alloc_glob_count (MAP (\(_14,_15,p). p) prog) in
      let (code,n1) = compile_list n prog in
@@ -587,13 +580,13 @@ let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
    "inlines","(num#bvl_exp) spt";
    "bvi_inlines","(num#bvi_exp) spt"];;
 
-let default_config_def = cake_define
+let default_config_def = new_definition
   `bvl_to_bvi_default_config =
      mk_bvl_to_bvi_config 10 1000 T (bvl_num_stubs + 1)
        (bvl_num_stubs + 2) (bvl_num_stubs + 3) T T LN LN`;;
 hol4_overload "default_config" "bvl_to_bvi_default_config";;
 
-let get_names_def = cake_define
+let get_names_def = new_definition
   `bvl_to_bvi_get_names final_nums old_names =
      fromAList (MAP (\n. (n,
        (if n = InitGlobals_location then implode "start" else
@@ -615,7 +608,7 @@ let get_names_def = cake_define
            "_bvi_aux") in (\x y. strcat x y) n aux))) final_nums)`;;
 hol4_overload "get_names" "bvl_to_bvi_get_names";;
 
-let bvl_to_bvi_compile_def = cake_define
+let bvl_to_bvi_compile_def = new_definition
   `bvl_to_bvi_compile start' c names prog =
      (let (inlines,prog) = bvl_inline_compile_prog
        (bvl_to_bvi_config_inline_size_limit c)
@@ -631,7 +624,7 @@ let bvl_to_bvi_compile_def = cake_define
         bvl_to_bvi_get_names (MAP FST code') names))`;;
 hol4_overload "compile" "bvl_to_bvi_compile";;
 
-let bvl_to_bvi_compile_inc_all_def = cake_define
+let bvl_to_bvi_compile_inc_all_def = new_definition
   `bvl_to_bvi_compile_inc_all c p =
      (let (inl,p) = bvl_inline_compile_inc
        (bvl_to_bvi_config_inline_size_limit c)

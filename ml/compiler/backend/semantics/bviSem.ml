@@ -65,7 +65,7 @@ hol4_overload "state_code_fupd" "bviSem_state_code_fupd";;
 hol4_overload "state_ffi" "bviSem_state_ffi";;
 hol4_overload "state_ffi_fupd" "bviSem_state_ffi_fupd";;
 
-let bviSem_dec_clock_def = cake_define
+let bviSem_dec_clock_def = new_definition
   `bviSem_dec_clock x s = state_clock_fupd (K (state_clock s - x)) s`;;
 hol4_overload "dec_clock" "bviSem_dec_clock";;
 
@@ -76,26 +76,27 @@ let bviSem_LESS_EQ_dec_clock = prove
        state_clock s`,
   CHEAT_TAC);;
 
-let bvi_to_bvl_def = cake_define
+let bvi_to_bvl_def = new_definition
   `(bvi_to_bvl:('c,'ffi)bviSem_state->('c,'ffi)bvlSem_state) s =
      mk_bvlSem_state ARB (state_refs s) (state_clock s) ARB ARB
        (sptree_map (K ARB) (state_code s)) (state_ffi s)`;;
 
-let bvl_to_bvi_def = cake_define
+let bvl_to_bvi_def = new_definition
   `(bvl_to_bvi:('c,'ffi)bvlSem_state->('c,'ffi)bviSem_state->('c
   ,'ffi)bviSem_state) s t = state_ffi_fupd (K (state_ffi s))
   (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K (state_refs
   s))
      t))`;;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bviSemScript.sml:69-77: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bviSem_finalise_cons_def = cake_define_try_tac (fun () ->
-  `MEASURE (CARD o FDOM o SND)`)
-  CHEAT_TAC
-  `bviSem_finalise_cons v refs =
+let bviSem_finalise_cons_def,bviSem_finalise_cons_ind = define_wf_cheat
+  `MEASURE (CARD o FDOM o SND)`
+  [`bviSem_finalise_cons v refs =
         match v with
           (RefPtr b ptr:bvlSem_v) ->
        (match FLOOKUP refs ptr with SOME (bvlSem_MutBlock tag
@@ -106,13 +107,13 @@ let bviSem_finalise_cons_def = cake_define_try_tac (fun () ->
                (ptr,bvlSem_MutBlock tag T l c r)) | NONE -> NONE) else
                NONE) | SOME res -> SOME (RefPtr b ptr,refs) | NONE ->
                NONE)
-        | v -> SOME (v,refs)`;;
+        | v -> SOME (v,refs)`];;
 hol4_overload "finalise_cons" "bviSem_finalise_cons";;
 
 (* HOL4 bviSemScript.sml:79: the ML values that the definitions below
    antiquote *)
 
-let do_app_aux_def = cake_define
+let do_app_aux_def = new_definition
   `bviSem_do_app_aux op (vs:bvlSem_v list) (s:('c,'ffi)bviSem_state) =
      (match (op,vs) with (closLang_IntOp (closLang_Const i),xs) ->
        (if small_enough_int i /\ NULL xs then
@@ -189,7 +190,7 @@ let do_app_aux_def = cake_define
            (closLang_CopyByte T),_17) -> NONE | _18 -> SOME NONE)`;;
 hol4_overload "do_app_aux" "bviSem_do_app_aux";;
 
-let bviSem_do_install_def = cake_define
+let bviSem_do_install_def = new_definition
   `bviSem_do_install vs (s:('c,'ffi)bviSem_state) =
        (match vs with [v1; v2; vl1; vl2] ->
             (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -220,7 +221,7 @@ let bviSem_do_install_def = cake_define
                              Rtype_error))`;;
 hol4_overload "do_install" "bviSem_do_install";;
 
-let bviSem_do_app_def = cake_define
+let bviSem_do_app_def = new_definition
   `bviSem_do_app op vs (s:('c,'ffi)bviSem_state) =
      (if op = closLang_Install then do_install vs s else
      match bviSem_do_app_aux op vs s with NONE -> Rerr (Rabort
@@ -238,7 +239,7 @@ hol4_overload "BadRef" "bviSem_BadRef";;
 hol4_overload "NotThunk" "bviSem_NotThunk";;
 hol4_overload "IsThunk" "bviSem_IsThunk";;
 
-let bviSem_dest_thunk_def = cake_define
+let bviSem_dest_thunk_def = new_definition
   `bviSem_dest_thunk vs refs =
       match vs with
         (RefPtr b ptr:bvlSem_v) ->
@@ -255,7 +256,7 @@ hol4_overload "dest_thunk" "bviSem_dest_thunk";;
 (* The evaluation is defined as a clocked functional version of
    a conventional big-step operational semantics. *)
 
-let bviSem_fix_clock_def = cake_define
+let bviSem_fix_clock_def = new_definition
   `bviSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "bviSem_fix_clock";;
@@ -287,16 +288,9 @@ if concl bviSem_fix_clock_IMP <> `T` then
   cake_term_facts := bviSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bviSemScript.sml:339-347: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bviSem_evaluate_def = cake_define_list_try_tac (fun () ->
-  `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
-                              (\(xs,env,s). (state_clock s,xs)))`)
-  CHEAT_TAC
+let bviSem_evaluate_def,bviSem_evaluate_ind = define_guess
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (x :: y :: xs,env,s) =
@@ -426,12 +420,12 @@ let bviSem_fix_clock_evaluate = prove
 
 (* observational semantics *)
 
-let bviSem_initial_state_def = cake_define
+let bviSem_initial_state_def = new_definition
   `bviSem_initial_state ffi code co cc k = mk_bviSem_state FEMPTY k
   NONE cc co code ffi`;;
 hol4_overload "initial_state" "bviSem_initial_state";;
 
-let bviSem_semantics_def = cake_define
+let bviSem_semantics_def = new_definition
   `bviSem_semantics init_ffi code co cc start' =
    (let es = [bvi_Call 0 (SOME start') [] NONE] in
    let init = initial_state init_ffi code co cc in

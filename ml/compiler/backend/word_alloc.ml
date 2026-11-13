@@ -41,28 +41,28 @@ let _ = do_list hide_constant ["inst"];;
    expands *)
 
 (*SSA form*)
-let apply_nummap_key_def = cake_define
+let apply_nummap_key_def = new_definition
   `apply_nummap_key f names =
    fromAList (MAP (\(x,y). f x,y) (toAList names))`;;
 
-let apply_nummaps_key_def = cake_define
+let apply_nummaps_key_def = new_definition
   `apply_nummaps_key f names =
    (fromAList (MAP (\(x,y). f x,y) (toAList (FST names))),
     fromAList (MAP (\(x,y). f x,y) (toAList (SND names))))`;;
 
-let option_lookup_def = cake_define
+let option_lookup_def = new_definition
   `option_lookup t v = (match sptree_lookup v t with NONE -> 0 | SOME
   x -> x)`;;
 
-let even_list_def = cake_define
+let even_list_def = new_definition
   `(even_list = GENLIST (\x. 2 * x))`;;
 
 (*Consistently sets up the next alloc variable rename for v*)
-let next_var_rename_def = cake_define
+let next_var_rename_def = new_definition
   `next_var_rename v ssa (na:num) = (na,sptree_insert v na ssa,na +
   4)`;;
 
-let list_next_var_rename_def = cake_define_list
+let list_next_var_rename_def,list_next_var_rename_ind = define_rec
   [`list_next_var_rename [] ssa (na:num) = ([],ssa,na)`;
    `list_next_var_rename (x :: xs) ssa (na:num) =
         // Write this way to make it ascending, can also use acc passing
@@ -70,11 +70,11 @@ let list_next_var_rename_def = cake_define_list
         let (ys,ssa'',na'') = list_next_var_rename xs ssa' na' in
           (y :: ys,ssa'',na''))`];;
 
-let fake_move_def = cake_define
+let fake_move_def = new_definition
   `(fake_move v:'a wordLang_prog) = Inst (asm_Const v (n2w 0))`;;
 
 (*Do the merging moves only*)
-let merge_moves_def = cake_define_list
+let merge_moves_def,merge_moves_ind = define_rec
   [`word_alloc_merge_moves [] ssa_L ssa_R (na:num) =
   ([],[],na,ssa_L,ssa_R)`;
    `word_alloc_merge_moves (x :: xs) ssa_L ssa_R (na:num) =
@@ -103,7 +103,7 @@ hol4_overload "merge_moves" "word_alloc_merge_moves";;
   T, INL <- left side
   F, INR <- right side
 *)
-let priority_def = cake_define
+let priority_def = new_definition
   `priority x1 b =
         match x1 with
           NONE -> 1
@@ -113,7 +113,7 @@ let priority_def = cake_define
        (if b then 1 else 2)`;;
 
 (*Separately do the fake moves*)
-let fake_moves_def = cake_define_list
+let fake_moves_def,fake_moves_ind = define_rec
   [`fake_moves prio [] ssa_L ssa_R (na:num) = ((Skip:'a
   wordLang_prog),(Skip:'a wordLang_prog),na,ssa_L,ssa_R)`;
    `fake_moves prio (x :: xs) ssa_L ssa_R (na:num) =
@@ -135,7 +135,7 @@ let fake_moves_def = cake_define_list
               ssa_L',sptree_insert x na' ssa_R')) | _4 ->
               (seqL,seqR,na',ssa_L',ssa_R'))`];;
 
-let fix_inconsistencies_def = cake_define
+let fix_inconsistencies_def = new_definition
   `fix_inconsistencies prio ssa_L ssa_R na =
    (let var_union = MAP FST (toAList (sptree_union ssa_L ssa_R)) in
    let (Lmov,Rmov,na',ssa_L',ssa_R') =
@@ -148,7 +148,7 @@ let fix_inconsistencies_def = cake_define
 (*ssa_cc_trans_inst does not need to interact with stack*)
 (* Note: this needs to return a prog to support specific registers for AddCarry and other special insts
 *)
-let ssa_cc_trans_inst_def = cake_define
+let ssa_cc_trans_inst_def = new_definition
   `ssa_cc_trans_inst x ssa na =
         match x with
           asm_Skip -> (Skip,ssa,na)
@@ -289,8 +289,12 @@ let ssa_cc_trans_inst_def = cake_define
 
 (*Expressions only ever need to lookup a variable's current ssa map
   so it doesn't need the other parts *)
-let ssa_cc_trans_exp_def = cake_define
-  `ssa_cc_trans_exp t expr =
+let _ = size_thms "wordLang_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ssa_cc_trans_exp_def,ssa_cc_trans_exp_ind = define_wf
+  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
+  [`ssa_cc_trans_exp t expr =
         match expr with
           wordLang_Var num' ->
        Var (option_lookup t num')
@@ -299,13 +303,13 @@ let ssa_cc_trans_exp_def = cake_define
        wordLang_Op wop (MAP (ssa_cc_trans_exp t) ls)
         | (Shift sh exp nexp) ->
        Shift sh (ssa_cc_trans_exp t exp) (ssa_cc_trans_exp t nexp)
-        | expr -> expr`;;
+        | expr -> expr`];;
 
 (*Attempt to pull out "renaming" moves
   This takes a current name map and updates the names of all the vars
   Intended for Alloc,Call cutset restoration moves
 *)
-let list_next_var_rename_move_def = cake_define
+let list_next_var_rename_move_def = new_definition
   `list_next_var_rename_move ssa n ls =
      (let cur_ls = MAP (option_lookup ssa) ls in
      let (new_ls,ssa',n') = list_next_var_rename ls ssa n in
@@ -313,12 +317,12 @@ let list_next_var_rename_move_def = cake_define
 
 (* force the renaming map to send x -> y unless
   x is already remapped *)
-let force_rename_def = cake_define_list
+let force_rename_def,force_rename_ind = define_rec
   [`force_rename [] ssa = ssa`;
    `force_rename ((x,y) :: xs) ssa =
         force_rename xs (sptree_insert x y ssa)`];;
 
-let mk_prio_def = cake_define
+let mk_prio_def = new_definition
   `mk_prio el er =
    (if el = wordLang_Skip then SOME (INL one) else if er =
      wordLang_Skip then SOME (INR one) else NONE)`;;
@@ -334,7 +338,7 @@ let mk_prio_def = cake_define
   because v was added to cur_ssa later (so Case 3 in the proof analysis
   applies: position tgt_ssa(v) = v gets moved), or the source cut also
   fails, making the theorem vacuous.*)
-let ssa_reconcile_def = cake_define
+let ssa_reconcile_def = new_definition
   `ssa_reconcile cur_ssa tgt_ssa ns =
      (let vars' = MAP FST (toAList ns) in
      let moves = FILTER (\(a,b). ~(a = b))
@@ -348,7 +352,7 @@ let ssa_reconcile_def = cake_define
    option_lookup ssa_refreshed is INJ on each. For vars already in ssa we
    emit a real Move; for vars not in ssa we allocate fresh ssa entries
    and fake_move-initialise the corresponding target registers. *)
-let loop_setup_def = cake_define
+let loop_setup_def = new_definition
   `loop_setup (names:1 spt) (exit_names:1 spt) ssa na =
      (let all_vars_ls = MAP FST (toAList (sptree_union names
        exit_names)) in
@@ -365,9 +369,7 @@ let loop_setup_def = cake_define
        list_next_var_rename_move ssa_ext na_ext refresh_ls in
      (Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let ssa_cc_trans_def = cake_define_list_cheat CHEAT_TAC
+let ssa_cc_trans_def,ssa_cc_trans_ind = define_guess
   [`ssa_cc_trans wordLang_Skip ssa na lt = (wordLang_Skip,ssa,na)`;
    `ssa_cc_trans (wordLang_Move pri ls) ssa na lt =
         (let ls_1 = MAP FST ls in
@@ -630,8 +632,12 @@ let ssa_cc_trans_def = cake_define_list_cheat CHEAT_TAC
 
 (*Recursively applying colours to a program*)
 
-let apply_colour_exp_def = cake_define
-  `apply_colour_exp f expr =
+let _ = size_thms "wordLang_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let apply_colour_exp_def,apply_colour_exp_ind = define_wf
+  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
+  [`apply_colour_exp f expr =
         match expr with
           wordLang_Var num' -> Var (f num')
         | (Load exp) -> Load (apply_colour_exp f exp)
@@ -639,15 +645,15 @@ let apply_colour_exp_def = cake_define
           (apply_colour_exp f) ls)
         | (Shift sh exp nexp) -> Shift sh (apply_colour_exp f exp)
           (apply_colour_exp f nexp)
-        | expr -> expr`;;
+        | expr -> expr`];;
 
-let apply_colour_imm_def = cake_define
+let apply_colour_imm_def = new_definition
   `apply_colour_imm f x =
         match x with
           Reg n -> Reg (f n)
         | x -> x`;;
 
-let apply_colour_inst_def = cake_define
+let apply_colour_inst_def = new_definition
   `apply_colour_inst f x =
         match x with
           asm_Skip -> Skip
@@ -691,8 +697,12 @@ let apply_colour_inst_def = cake_define
         | x -> x`;;
 (*Catchall -- for future instructions to be added*)
 
-let apply_colour_def = cake_define
-  `apply_colour f p =
+let _ = size_thms "wordLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let apply_colour_def,apply_colour_ind = define_wf
+  `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
+  [`apply_colour f p =
         match p with
           wordLang_Skip -> wordLang_Skip
         | (wordLang_Move pri ls) ->
@@ -701,14 +711,14 @@ let apply_colour_def = cake_define
         | (wordLang_Assign num' exp) -> wordLang_Assign (f num')
           (apply_colour_exp f exp)
         | (Get num' store) -> wordLang_Get (f num') store
-        | (Store exp num') -> wordLang_Store (apply_colour_exp f exp)
-          (f num')
+        | (Store exp num') -> wordLang_Store (apply_colour_exp f
+          exp) (f num')
         | (Call ret dest args h) ->
        (let ret = (match ret with NONE -> NONE | SOME
          (vs,cutset,ret_handler,l1,l2) ->
                              SOME (MAP f vs,apply_nummaps_key f
-                               cutset,apply_colour f ret_handler,l1,l2))
-                               in
+                               cutset,apply_colour f
+                               ret_handler,l1,l2)) in
        let args = MAP f args in
        let h = (match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
          SOME (f v,apply_colour f prog,l1,l2)) in
@@ -718,8 +728,8 @@ let apply_colour_def = cake_define
         | (wordLang_MustTerminate s1) -> wordLang_MustTerminate
           (apply_colour f s1)
         | (If cmp r1 ri e2 e3) ->
-       wordLang_If cmp (f r1) (apply_colour_imm f ri) (apply_colour f
-         e2) (apply_colour f e3)
+       wordLang_If cmp (f r1) (apply_colour_imm f ri) (apply_colour
+         f e2) (apply_colour f e3)
         | (Install r1 r2 r3 r4 numset) ->
        wordLang_Install (f r1) (f r2) (f r3) (f r4)
          (apply_nummaps_key f numset)
@@ -737,22 +747,24 @@ let apply_colour_def = cake_define
         | (StoreConsts a b c d ws) ->
        wordLang_StoreConsts (f a) (f b) (f c) (f d) ws
         | (Raise num') -> wordLang_Raise (f num')
-        | (Return num1 nums) -> wordLang_Return (f num1) (MAP f nums)
+        | (Return num1 nums) -> wordLang_Return (f num1) (MAP f
+          nums)
         | Tick -> wordLang_Tick
         | (Set n exp) -> wordLang_Set n (apply_colour_exp f exp)
-        | (OpCurrHeap b n1 n2) -> wordLang_OpCurrHeap b (f n1) (f n2)
+        | (OpCurrHeap b n1 n2) -> wordLang_OpCurrHeap b (f n1) (f
+          n2)
         | (wordLang_ShareInst op v exp) -> wordLang_ShareInst op (f
           v) (apply_colour_exp f exp)
         | (Loop names body exit_names) ->
-       wordLang_Loop (apply_nummap_key f names) (apply_colour f body)
-         (apply_nummap_key f exit_names)
-        | p -> p`;;
+       wordLang_Loop (apply_nummap_key f names) (apply_colour f
+         body) (apply_nummap_key f exit_names)
+        | p -> p`];;
 
 
 (* Liveness Analysis*)
 
 (*Writes made by any inst as a sptree*)
-let get_writes_inst_def = cake_define
+let get_writes_inst_def = new_definition
   `get_writes_inst inst' =
         match inst' with
           asm_Const reg w -> sptree_insert reg one LN
@@ -783,7 +795,7 @@ let get_writes_inst_def = cake_define
 
 (*Liveness for instructions, follows liveness equations
   live-sets are num_sets a.k.a. unit-sptrees*)
-let get_live_inst_def = cake_define
+let get_live_inst_def = new_definition
   `get_live_inst x live =
         match x with
           asm_Skip -> live
@@ -839,11 +851,15 @@ let get_live_inst_def = cake_define
         // Catchall -- for future instructions to be added
         | x -> live`;;
 
-let big_union_def = cake_define
+let big_union_def = new_definition
   `big_union ls = ITLIST (\x y. sptree_union x y) ls LN`;;
 
-let get_live_exp_def = cake_define
-  `get_live_exp expr =
+let _ = size_thms "wordLang_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_live_exp_def,get_live_exp_ind = define_wf
+  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
+  [`get_live_exp expr =
         match expr with
           wordLang_Var num' -> sptree_insert num' one LN
         | (Load exp) -> get_live_exp exp
@@ -851,16 +867,19 @@ let get_live_exp_def = cake_define
        big_union (MAP get_live_exp ls)
         | (Shift sh exp nexp) -> sptree_union (get_live_exp exp)
           (get_live_exp nexp)
-        | expr -> LN`;;
+        | expr -> LN`];;
 
-let word_alloc_numset_list_insert_def = cake_define_list
+let word_alloc_numset_list_insert_def,
+    word_alloc_numset_list_insert_ind =
+  define_rec
   [`word_alloc_numset_list_insert [] t = t`;
    `word_alloc_numset_list_insert (x :: xs) t = sptree_insert x one
   (word_alloc_numset_list_insert xs t)`];;
 hol4_overload "numset_list_insert" "word_alloc_numset_list_insert";;
 
-let get_live_def = cake_define
-  `get_live x1 live lt =
+let get_live_def,get_live_ind = define_shaped_rec
+  "match"
+  [`get_live x1 live lt =
         match x1 with
           wordLang_Skip -> live
         // All SNDs are read and all FSTs are written
@@ -888,10 +907,11 @@ let get_live_def = cake_define
        (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
        let union_live = sptree_union e2_live e3_live in
-          match ri with Reg r2 -> sptree_insert r2 one (sptree_insert
-            r1 one union_live) | _9 -> sptree_insert r1 one union_live)
-        | (Alloc num' numset) -> sptree_insert num' one (sptree_union
-          (FST numset) (SND numset))
+          match ri with Reg r2 -> sptree_insert r2 one
+            (sptree_insert r1 one union_live) | _9 -> sptree_insert r1
+            one union_live)
+        | (Alloc num' numset) -> sptree_insert num' one
+          (sptree_union (FST numset) (SND numset))
         | (StoreConsts a b c d ws) ->
        sptree_insert c one (sptree_insert d one (sptree_delete a
          (sptree_delete b live)))
@@ -904,8 +924,8 @@ let get_live_def = cake_define
        list_insert [r1; r2] live
         | (FFI ffi_index ptr1 len1 ptr2 len2 numset) ->
       sptree_insert ptr1 one (sptree_insert len1 one
-        (sptree_insert ptr2 one (sptree_insert len2 one (sptree_union
-          (FST numset) (SND numset)))))
+        (sptree_insert ptr2 one (sptree_insert len2 one
+          (sptree_union (FST numset) (SND numset)))))
         | (StoreConsts a b c d ws) ->
         (sptree_insert c one (sptree_insert d one live))
         | (Raise num') -> sptree_insert num' one live
@@ -914,13 +934,13 @@ let get_live_def = cake_define
         | Tick -> live
         | (LocValue r l1) -> sptree_delete r live
         | (Set n exp) -> sptree_union (get_live_exp exp) live
-        | (OpCurrHeap b n1 n2) -> sptree_insert n2 one (sptree_delete
-          n1 live)
+        | (OpCurrHeap b n1 n2) -> sptree_insert n2 one
+          (sptree_delete n1 live)
         | (wordLang_ShareInst mop v exp) ->
        (let sub' = get_live_exp exp in
          if mop = Store \/ mop = asm_Store8 \/ mop = asm_Store16 \/
-           mop = asm_Store32 then sptree_union sub' (sptree_insert v one
-           live) else sptree_union sub' (sptree_delete v live))
+           mop = asm_Store32 then sptree_union sub' (sptree_insert v
+           one live) else sptree_union sub' (sptree_delete v live))
         // Loop: entry-live is names (for cut_state). Body's entry-live must be
         // covered by cut state (domain names), handled via strong_locals_rel
         // extension at proof time.
@@ -941,10 +961,10 @@ let get_live_def = cake_define
         | (Call NONE dest args h) -> numset_list_insert args LN
         | (Call (SOME (_10,cutset,_11)) dest args h) ->
        sptree_union (sptree_union (FST cutset) (SND cutset))
-         (numset_list_insert args LN)`;;
+         (numset_list_insert args LN)`];;
 
 (* Dead instruction removal *)
-let remove_dead_inst_def = cake_define
+let remove_dead_inst_def = new_definition
   `remove_dead_inst x live =
         match (x,live) with
           (asm_Skip,(live:1 spt)) -> T
@@ -992,10 +1012,8 @@ let remove_dead_inst_def = cake_define
   This code is written assuming flat_exp_conventions,
     so many trivial cases are omitted.
 *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let remove_dead_def = cake_define_cheat CHEAT_TAC
-  `remove_dead prog live nlive lt =
+let remove_dead_def,remove_dead_ind = define_guess
+  [`remove_dead prog live nlive lt =
         match prog with
           wordLang_Move pri ls ->
        (let ls = FILTER (\(x,y). sptree_lookup x live = SOME one) ls
@@ -1103,13 +1121,13 @@ let remove_dead_def = cake_define_cheat CHEAT_TAC
         | (Continue n) ->
        (let prog = Continue n in
          (prog,get_live prog live lt,[]))
-        | prog -> (prog,get_live prog live lt,nlive)`;;
+        | prog -> (prog,get_live prog live lt,nlive)`];;
 
-let remove_dead_prog_def = cake_define
+let remove_dead_prog_def = new_definition
   `remove_dead_prog prog = FST (remove_dead prog LN [] [])`;;
 
 (*Single step immediate writes by a prog*)
-let get_writes_def = cake_define
+let get_writes_def = new_definition
   `get_writes prog =
         match prog with
           wordLang_Move pri ls -> numset_list_insert (MAP FST ls) LN
@@ -1155,7 +1173,7 @@ let get_writes_pmatch = prove
    comment *)
 
 (* Potentially more efficient liveset representation for checking / allocation*)
-let get_delta_inst_def = cake_define
+let get_delta_inst_def = new_definition
   `get_delta_inst x =
         match x with
           asm_Skip -> reg_alloc_Delta [] []
@@ -1199,8 +1217,12 @@ let get_delta_inst_def = cake_define
         // Catchall -- for future instructions to be added
         | x -> reg_alloc_Delta [] []`;;
 
-let get_reads_exp_def = cake_define
-  `get_reads_exp expr =
+let _ = size_thms "wordLang_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_reads_exp_def,get_reads_exp_ind = define_wf
+  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
+  [`get_reads_exp expr =
         match expr with
           wordLang_Var num' -> [num']
         | (Load exp) -> get_reads_exp exp
@@ -1208,11 +1230,9 @@ let get_reads_exp_def = cake_define
          FLAT (MAP get_reads_exp ls)
         | (Shift sh exp nexp) -> get_reads_exp exp ++ get_reads_exp
           nexp
-        | expr -> []`;;
+        | expr -> []`];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
+let get_clash_tree_def,get_clash_tree_ind = define_guess
   [`get_clash_tree wordLang_Skip lt = reg_alloc_Delta [] []`;
    `get_clash_tree (wordLang_Move pri ls) lt =
         reg_alloc_Delta (MAP FST ls) (MAP SND ls)`;
@@ -1307,10 +1327,15 @@ let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
 (* Preference edges
   The allocator tries hard to coalesce these edges
 *)
-let get_prefs_def = cake_define
-  `get_prefs prog acc =
+let _ = size_thms "wordLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_prefs_def,get_prefs_ind = define_wf
+  `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x0)`
+  [`get_prefs prog acc =
         match prog with
-          wordLang_Move pri ls -> (MAP (\(x,y). (pri,x,y)) ls) ++ acc
+          wordLang_Move pri ls -> (MAP (\(x,y). (pri,x,y)) ls) ++
+            acc
         | (wordLang_MustTerminate s1) ->
        get_prefs s1 acc
         | (Seq s1 s2) ->
@@ -1322,7 +1347,7 @@ let get_prefs_def = cake_define
          NONE -> get_prefs ret_handler acc | SOME (v,prog,l1,l2) ->
            get_prefs prog (get_prefs ret_handler acc))
         | (Loop names body exit_names) -> get_prefs body acc
-        | prog -> acc`;;
+        | prog -> acc`];;
 
 let get_prefs_pmatch = prove
  (`!s acc.
@@ -1357,42 +1382,42 @@ new_type_abbrev("heu_data",`: num#num#num#num#num`);;
 
 let _ = do_list hide_constant ["mem"];;
 
-let add1_lhs_const_def = cake_define
+let add1_lhs_const_def = new_definition
   `add1_lhs_const x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
      sptree_insert x (1,0,0,0,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
      sptree_insert x (const + 1,reg,mem',rreg,rmem) t)`;;
 
-let add1_lhs_reg_def = cake_define
+let add1_lhs_reg_def = new_definition
   `add1_lhs_reg x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
      sptree_insert x (0,1,0,0,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
      sptree_insert x (const,reg + 1,mem',rreg,rmem) t)`;;
 
-let add1_lhs_mem_def = cake_define
+let add1_lhs_mem_def = new_definition
   `add1_lhs_mem x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
      sptree_insert x (0,0,1,0,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
      sptree_insert x (const,reg,mem' + 1,rreg,rmem) t)`;;
 
-let add1_rhs_reg_def = cake_define
+let add1_rhs_reg_def = new_definition
   `add1_rhs_reg x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
      sptree_insert x (0,0,0,1,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
      sptree_insert x (const,reg,mem',rreg + 1,rmem) t)`;;
 
-let add1_rhs_mem_def = cake_define
+let add1_rhs_mem_def = new_definition
   `add1_rhs_mem x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
      sptree_insert x (0,0,0,0,1) t | SOME (const,reg,mem',rreg,rmem)
        ->
      sptree_insert x (const,reg,mem',rreg,rmem + 1) t)`;;
 
-let get_heu_inst_def = cake_define
+let get_heu_inst_def = new_definition
   `get_heu_inst x tup =
         match x with
           asm_Skip -> tup
@@ -1470,11 +1495,11 @@ let get_heu_inst_def = cake_define
         | x -> tup`;;
 
 (* For Ifs, as a heuristic we take the max over branching paths *)
-let heu_max_def = cake_define
+let heu_max_def = new_definition
   `heu_max (c1,r1,m1,rr1,rm1) (c2,r2,m2,rr2,rm2) =
      (MAX c1 c2,MAX r1 r2,MAX m1 m2,MAX rr1 rr2,MAX rm1 rm2)`;;
 
-let heu_max_all_def = cake_define
+let heu_max_all_def = new_definition
   `heu_max_all t1 t2 =
    (let t1r = difference t1 t2 in
    // everything in t1 not already in t2
@@ -1484,19 +1509,17 @@ let heu_max_all_def = cake_define
      match sptree_lookup k t1 with
        NONE -> v | SOME v' -> heu_max v v') t2))`;;
 
-let heu_merge_call_def = cake_define
+let heu_merge_call_def = new_definition
   `heu_merge_call (t1:1 spt) t2 =
    sptree_union t1 t2`;;
 
 (* We use "lr" to approximate any new vars not already tracked in calls *)
-let add_call_def = cake_define
+let add_call_def = new_definition
   `(add_call lr calls':1 spt) =
    sptree_union (sptree_map (\v. one) lr) calls'`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let get_heu_def = cake_define_cheat CHEAT_TAC
-  `get_heu fc f lr =
+let get_heu_def,get_heu_ind = define_guess
+  [`get_heu fc f lr =
         match (f,lr) with
           (wordLang_Move pri ls,(lr,calls')) ->
        (ITLIST add1_lhs_reg
@@ -1558,11 +1581,17 @@ let get_heu_def = cake_define_cheat CHEAT_TAC
         // pov of register allocation, since all their temps are already forced into
         // specific registers
         // Omitted: Skip, Assign, Store, FFI, Alloc, Raise, Tick, Call NONE
-        | (f,lrc) -> lrc`;;
+        | (f,lrc) -> lrc`];;
 
 (* Forced edges for certain instructions *)
-let get_forced_def = cake_define
-  `get_forced c prog acc =
+let _ = size_thms "asm_config";;
+let _ = size_thms "wordLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_forced_def,get_forced_ind = define_wf
+  `MEASURE (\(x0,x1,x2). asm_config_size (\x. 0) x0 +
+  wordLang_prog_size (\x. 0) x1)`
+  [`get_forced c prog acc =
         match (c,prog) with
           ((c:'a asm_config),((Inst i):'a wordLang_prog)) ->
        (match i with
@@ -1604,7 +1633,7 @@ let get_forced_def = cake_define
          NONE -> get_forced c ret_handler acc | SOME (v,prog,l1,l2)
            -> get_forced c prog (get_forced c ret_handler acc))
         | (c,(Loop names body exit_names)) -> get_forced c body acc
-        | (c,prog) -> acc`;;
+        | (c,prog) -> acc`];;
 
 let get_forced_pmatch = prove
  (`!c prog acc.
@@ -1651,19 +1680,19 @@ let get_forced_pmatch = prove
   CHEAT_TAC);;
 
 (*col is injective over every cut set*)
-let check_colouring_ok_alt_def = cake_define_list
+let check_colouring_ok_alt_def,check_colouring_ok_alt_ind = define_rec
   [`check_colouring_ok_alt col [] = T`;
    `check_colouring_ok_alt col (x :: xs) <=>
         (let names = MAP (col o FST) (toAList x) in
           ALL_DISTINCT names /\ check_colouring_ok_alt col xs)`];;
 
-let every_even_colour_def = cake_define
+let every_even_colour_def = new_definition
   `every_even_colour col <=>
    EVERY (\(x,y). if is_phy_var x then y = x DIV 2 else T)
      (toAList col)`;;
 
 (*Extract a colouring function from the generated sptree*)
-let total_colour_def = cake_define
+let total_colour_def = new_definition
   `total_colour col x =
      (match sptree_lookup x col with NONE -> (if is_phy_var x then
        x else 0) | SOME x -> 2 * x)`;;
@@ -1673,7 +1702,7 @@ let total_colour_alt = prove
   CHEAT_TAC);;
 
 (*Check that the oracle provided colour (if it exists) is okay*)
-let oracle_colour_ok_def = cake_define
+let oracle_colour_ok_def = new_definition
   `oracle_colour_ok k col_opt tree prog ls =
    (match col_opt with
      NONE -> NONE | SOME col ->
@@ -1702,14 +1731,14 @@ let oracle_colour_ok_def = cake_define
   Then SORT them by lexicographic order, and count
   returns (num, maxpriority, (x,y))
 *)
-let canonize_moves_aux_def = cake_define_list
+let canonize_moves_aux_def,canonize_moves_aux_ind = define_rec
   [`canonize_moves_aux curp curm ctr [] acc = (ctr,curp,curm) :: acc`;
    `canonize_moves_aux curp curm ctr ((p,m) :: xs) acc =
         (if curm = m then
           canonize_moves_aux (MAX curp p) m (ctr + 1) xs acc else
           canonize_moves_aux p m 1 xs ((ctr,curp,curm) :: acc))`];;
 
-let canonize_moves_def = cake_define
+let canonize_moves_def = new_definition
   `canonize_moves ls =
    (let can1 = MAP (\((p:num),((x:num),(y:num))). if (x <= y) then
      (p,(x,y)) else (p,(y,x))) ls in
@@ -1723,7 +1752,7 @@ let canonize_moves_def = cake_define
 
 (* TODO: ALL of these magic numbers must be adjusted!! *)
 
-let get_spillcost_def = cake_define
+let get_spillcost_def = new_definition
   `get_spillcost (c,lr,lm,rr,rm) istail =
    (c + 2 * lr + 4 * lm + 2 * rr + 4 * rm) *
    (if istail then 5 else 1)`;;
@@ -1732,14 +1761,14 @@ let get_spillcost_def = cake_define
   Prioritize moves that happen a lot, and have high max priority
   also give some weight to the spill cost of their endpoints
 *)
-let get_coalescecost_def = cake_define
+let get_coalescecost_def = new_definition
   `get_coalescecost spillcost (n,p,x,y) =
    (let xcost = (if sptree_lookup x spillcost = NONE then 0 else 1)
      in
    let ycost = (if sptree_lookup y spillcost = NONE then 0 else 1) in
    (n * (10 * (p + 1) + xcost + ycost),(x,y)))`;;
 
-let get_heuristics_def = cake_define
+let get_heuristics_def = new_definition
   `get_heuristics alg fc prog =
    (if alg MOD 2 = 1 then
      let (lr,calls') = get_heu fc prog (LN,LN) in
@@ -1752,7 +1781,7 @@ let get_heuristics_def = cake_define
      let moves = get_prefs prog [] in
      (moves,NONE))`;;
 
-let select_reg_alloc_def = cake_define
+let select_reg_alloc_def = new_definition
   `select_reg_alloc alg spillcosts k heu_moves tree forced fs =
      (if 4 <= alg then
        linear_scan_reg_alloc k heu_moves tree forced else
@@ -1765,7 +1794,7 @@ let select_reg_alloc_def = cake_define
     if y is a stack variable or forced stack,
     then we mark x as forced stack as well
 *)
-let merge_stack_only_def = cake_define
+let merge_stack_only_def = new_definition
   `merge_stack_only (x,y) (ts,fs) =
    (if sptree_lookup x ts = SOME one then
      let ts = (if is_alloc_var y then sptree_insert y one ts else ts)
@@ -1779,14 +1808,14 @@ let merge_stack_only_def = cake_define
        (ts,fs) else
        (sptree_delete y ts,fs))`;;
 
-let merge_stack_sets_def = cake_define
+let merge_stack_sets_def = new_definition
   `merge_stack_sets (ts,fs) (tsL,fsL) (tsR,fsR) =
    (let keep1 = inter tsR (inter tsL ts) in
    let keep2 = sptree_union (difference tsL ts) (difference tsR ts)
      in
      (sptree_union keep1 keep2,sptree_union fsL fsR))`;;
 
-let remove_temp_stack_def = cake_define
+let remove_temp_stack_def = new_definition
   `remove_temp_stack ls (ts,fs) =
      (ITLIST sptree_delete ls ts,fs)`;;
 
@@ -1794,8 +1823,8 @@ let remove_temp_stack_def = cake_define
   only ever involved in stack moves *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let get_stack_only_aux_def = cake_define_cheat CHEAT_TAC
-  `get_stack_only_aux tfs prog =
+let get_stack_only_aux_def,get_stack_only_aux_ind = define_guess_cheat
+  [`get_stack_only_aux tfs prog =
         match prog with
           wordLang_Move pri ls ->
        ITLIST merge_stack_only ls tfs
@@ -1823,10 +1852,10 @@ let get_stack_only_aux_def = cake_define_cheat CHEAT_TAC
        get_stack_only_aux tfs body
         | prog ->
        (match get_clash_tree prog [] with
-         reg_alloc_Delta ws rs -> remove_temp_stack (ws ++ rs) tfs
-           | _95 -> tfs)`;;
+         reg_alloc_Delta ws rs -> remove_temp_stack (ws ++ rs)
+           tfs | _95 -> tfs)`];;
 
-let get_stack_only_def = cake_define
+let get_stack_only_def = new_definition
   `get_stack_only prog = SND (get_stack_only_aux (LN,LN) prog)`;;
 
 (*
@@ -1841,7 +1870,7 @@ let get_stack_only_def = cake_define
   prog is the program to be colored
   col_opt is an optional oracle colour
 *)
-let word_alloc_def = cake_define
+let word_alloc_def = new_definition
   `word_alloc fc c alg k prog col_opt =
    (let tree = get_clash_tree prog [] in
    let fs = get_stack_only prog in
@@ -1860,18 +1889,18 @@ let word_alloc_def = cake_define
        col_prog)`;;
 
 (*The initial move, ssa and limit vars*)
-let setup_ssa_def = cake_define
+let setup_ssa_def = new_definition
   `setup_ssa n lim (prog:'a wordLang_prog) =
    (let args = even_list n in
    let (new_ls,ssa',n') = list_next_var_rename args LN lim in
      ((wordLang_Move 1) (ZIP new_ls args),ssa',n'))`;;
 
-let limit_var_def = cake_define
+let limit_var_def = new_definition
   `limit_var prog =
      (let x = max_var prog in
      x + (4 - (x MOD 4)) + 1)`;;
 
-let full_ssa_cc_trans_def = cake_define
+let full_ssa_cc_trans_def = new_definition
   `full_ssa_cc_trans n prog =
      (let lim = limit_var prog in
      let (mov,ssa,na) = setup_ssa n lim prog in

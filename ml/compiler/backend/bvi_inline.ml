@@ -26,7 +26,7 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "bvi_inline"
   ["backend_common"; "bvi"];;
 
-let bvi_mk_tick_def = cake_define
+let bvi_mk_tick_def = new_definition
   `bvi_mk_tick n e = FUNPOW bvi_Tick n e`;;
 
 (* First-order form for cv_compute, which has no [FUNPOW]. *)
@@ -37,7 +37,7 @@ let bvi_mk_tick_eq = prove
 
 (* [Op] reverses its argument list, so a wrapper that boxes the worker's
    [rets] results in order lists them reversed under the [Cons]. *)
-let canonical_wrapper_def = cake_define
+let canonical_wrapper_def = new_definition
   `canonical_wrapper name arity x3 =
         match x3 with
           bvi_LetCall rets ticks worker args
@@ -47,21 +47,16 @@ let canonical_wrapper_def = cake_define
         rvs = REVERSE (GENLIST bvi_Var rets)
         | _1 -> F`;;
 
-let wrapper_ok_def = cake_define
+let wrapper_ok_def = new_definition
   `wrapper_ok name arity body <=> canonical_wrapper name arity body`;;
 
 (* [cs] is a cache of code-table entries.  The correctness invariant
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass). *)
 let _ = size_thms "bvi_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let inline_exp_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\x. match x with INL (_2,e) -> bvi_exp_size e | INR (_3,es)
-     -> list_size bvi_exp_size es)`)
-  CHEAT_TAC
+(* HOL4 bvi_inlineScript.sml:75-80: the tactic that proves the
+   termination *)
+let inline_exp_def = define_mutual_guess
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
    `inline_exp cs (bvi_If x y z) =
          bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp
@@ -92,7 +87,7 @@ let inline_exp_def = cake_define_list_try_tac (fun () ->
    `inline_exps cs [] = []`;
    `inline_exps cs (x :: xs) = inline_exp cs x :: inline_exps cs xs`];;
 
-let inline_all_def = cake_define_list
+let inline_all_def,inline_all_ind = define_rec
   [`inline_all cs [] = (cs,[])`;
    `inline_all cs ((name,arity,body) :: prog) =
          (let body = inline_exp cs body in
@@ -104,7 +99,9 @@ let inline_all_def = cake_define_list
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let remove_ticks_exp_def = cake_define_list_wf
+(* HOL4 bvi_inlineScript.sml:115-120: the tactic that proves the
+   termination *)
+let remove_ticks_exp_def = define_mutual_wf
   `MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
   list_size bvi_exp_size es)`
   [`remove_ticks_exp (bvi_Var n) = bvi_Var n`;
@@ -130,14 +127,14 @@ let remove_ticks_exp_def = cake_define_list_wf
    `remove_ticks_exps (x :: xs) =
          remove_ticks_exp x :: remove_ticks_exps xs`];;
 
-let compile_inc_def = cake_define
+let compile_inc_def = new_definition
   `bvi_inline_compile_inc cs prog =
      (let (cs1,prog1) = inline_all cs prog in
        (cs1,MAP (\(name,arity,body).
                    (name,arity,remove_ticks_exp body)) prog1))`;;
 hol4_overload "compile_inc" "bvi_inline_compile_inc";;
 
-let bvi_inline_compile_prog_def = cake_define
+let bvi_inline_compile_prog_def = new_definition
   `bvi_inline_compile_prog prog = bvi_inline_compile_inc LN prog`;;
 hol4_overload "compile_prog" "bvi_inline_compile_prog";;
 

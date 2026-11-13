@@ -12,40 +12,41 @@ needs "lib/simpleSexp.ml";;
    registers are in the scope of every file *)
 let _ = hol4_lib ();;
 
-let tokeq_def = cake_define
+let tokeq_def = new_definition
   `simpleSexpPEG_tokeq t = peg_tok ((=) t) (K (SX_SYM [t]))`;;
 hol4_overload "tokeq" "simpleSexpPEG_tokeq";;
-let grabWS_def = cake_define
+let grabWS_def = new_definition
   `grabWS s = ignoreL (peg_rpt (peg_tok isSpace (K arb_sexp)) (K
   arb_sexp)) s`;;
 
-let pnt_def = cake_define
+let pnt_def = new_definition
   `simpleSexpPEG_pnt ntsym = peg_nt (INL ntsym) I`;;
 hol4_overload "pnt" "simpleSexpPEG_pnt";;
 
-let replace_nil_def = cake_define
-  `replace_nil x z =
+let replace_nil_def,replace_nil_ind = define_shaped_rec
+  "match"
+  [`replace_nil x z =
         match x with
           SX_SYM s -> (if s = "nil" then z else SX_SYM s)
         | (SX_CONS x y) -> SX_CONS x (replace_nil y z)
-        | x -> x`;;
+        | x -> x`];;
 
-let sumID_def = cake_define_list
+let sumID_def = define_cases
   [`simpleSexpPEG_sumID (INL x) = x`;
    `simpleSexpPEG_sumID (INR y) = y`];;
 hol4_overload "sumID" "simpleSexpPEG_sumID";;
-let simpleSexpPEG_choicel_def = cake_define_list
+let simpleSexpPEG_choicel_def,simpleSexpPEG_choicel_ind = define_rec
   [`simpleSexpPEG_choicel [] = peg_not (peg_empty arb_sexp) arb_sexp`;
    `simpleSexpPEG_choicel (h :: t) = peg_choice h
   (simpleSexpPEG_choicel t) simpleSexpPEG_sumID`];;
 hol4_overload "choicel" "simpleSexpPEG_choicel";;
 
-let simpleSexpPEG_pegf_def = cake_define
+let simpleSexpPEG_pegf_def = new_definition
   `simpleSexpPEG_pegf sym f = peg_seq sym (peg_empty arb_sexp) (\l1
   l2. f l1)`;;
 hol4_overload "pegf" "simpleSexpPEG_pegf";;
 
-let sexpPEG_def = cake_define
+let sexpPEG_def = new_definition
   `(sexpPEG:(char,sexpNT,simpleSexp_sexp,string)peg) =
    mk_peg (simpleSexpPEG_pnt sxnt_sexp) "Unexpected EOF (any)"
      "Failed to see expected token"

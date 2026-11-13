@@ -32,7 +32,7 @@ let call_FFI_LENGTH = prove
     (LENGTH x = LENGTH new_bytes)`,
   CHEAT_TAC);;
 
-let call_FFI_rel_def = cake_define
+let call_FFI_rel_def = new_definition
   `call_FFI_rel s1 s2 <=> (?n conf bytes t. call_FFI s1 n conf bytes
   = FFI_return s2 t)`;;
 
@@ -44,10 +44,10 @@ let RTC_call_FFI_rel_consts = prove
  (`!s1 s2. RTC call_FFI_rel s1 s2 ==> (oracle s2 = oracle s1)`,
   CHEAT_TAC);;
 
-let dest_IO_event_def = cake_define
-  `dest_IO_event (IO_event s c b) = (s,c,b)`;;
+let dest_IO_event_def = define_general
+  [`dest_IO_event (IO_event s c b) = (s,c,b)`];;
 
-let io_events_mono_def = cake_define
+let io_events_mono_def = new_definition
   `io_events_mono s1 s2 <=> ffi_state_io_events
      s1 <<= ffi_state_io_events s2 /\
      (ffi_state_io_events s2 = ffi_state_io_events s1 ==> s2 = s1)`;;
@@ -157,7 +157,7 @@ let evaluate_io_events_mono_imp = prove
        (semanticPrimitives_state_ffi s'))`,
   CHEAT_TAC);;
 
-let is_clock_io_mono_def = cake_define
+let is_clock_io_mono_def = new_definition
   `is_clock_io_mono f s = (match f s with (s',r) ->
          io_events_mono (semanticPrimitives_state_ffi s)
            (semanticPrimitives_state_ffi s') /\
@@ -223,7 +223,7 @@ let is_clock_io_mono_bind = prove
           (s',r) -> g r s') s`,
   CHEAT_TAC);;
 
-let adj_clock_def = cake_define
+let adj_clock_def = new_definition
   `adj_clock inc dec s = (semanticPrimitives_state_clock_fupd (K
   ((semanticPrimitives_state_clock s + inc) - dec)) s)`;;
 

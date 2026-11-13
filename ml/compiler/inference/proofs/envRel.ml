@@ -35,16 +35,14 @@ let _ = do_list hide_constant ["id"];;
 (* ---------- Converting infer types and envs to type system ones ---------- *)
 
 let _ = size_thms "infer_t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 envRelScript.sml:16-23: the tactic that proves the
    termination *)
-let convert_t_def = cake_define_list_try (fun () ->
-  `MEASURE infer_t_size`)
+let convert_t_def,convert_t_ind = define_shaped_rec
+  "nested"
   [`convert_t (Infer_Tvar_db n) = Tvar_db n`;
    `convert_t (Infer_Tapp ts tc) = Tapp (MAP convert_t ts) tc`];;
 
-let convert_env_def = cake_define
+let convert_env_def = new_definition
   `convert_env s env = MAP (\(x,t). (x,convert_t (t_walkstar s t)))
   env`;;
 
@@ -194,7 +192,7 @@ let infer_type_subst_nil = prove
  *
  * *)
 
-let tscheme_approx_def = cake_define
+let tscheme_approx_def = new_definition
   `tscheme_approx max_tvs s (tvs,t) (tvs',t') <=>
      (?subst'.
        LENGTH subst' = tvs' /\
@@ -243,7 +241,7 @@ let tscheme_inst_to_approx = prove
      t')`,
   CHEAT_TAC);;
 
-let env_rel_sound_def = cake_define
+let env_rel_sound_def = new_definition
   `env_rel_sound s ienv tenv tenvE <=> inf_env_inf_t
      ienv = type_env_t tenv /\ inf_env_inf_c
      ienv = type_env_c tenv /\
@@ -352,7 +350,7 @@ let env_rel_e_sound_letrec_merge0 = prove
                            (COUNT_LIST (LENGTH funs)))) tenvE)`,
   CHEAT_TAC);;
 
-let env_rel_complete_def = cake_define
+let env_rel_complete_def = new_definition
   `env_rel_complete s ienv tenv tenvE <=> inf_env_inf_t
      ienv = type_env_t tenv /\ inf_env_inf_c
      ienv = type_env_c tenv /\
@@ -383,7 +381,7 @@ let env_rel_e_sound_empty_to = prove
   CHEAT_TAC);;
 
 (* Environment relation at infer_d and above *)
-let envRel_env_rel_def = cake_define
+let envRel_env_rel_def = new_definition
   `envRel_env_rel tenv ienv <=>
     ienv_ok {} ienv /\
     tenv_ok tenv /\
@@ -419,7 +417,7 @@ let env_rel_lift = prove
   (tenvLift mn tenv) (lift_ienv mn ienv)`,
   CHEAT_TAC);;
 
-let ienv_to_tenv_def = cake_define
+let ienv_to_tenv_def = new_definition
   `ienv_to_tenv ienv =
      mk_type_env (nsMap (\(tvs,t). (tvs,convert_t t))
        (inf_env_inf_v ienv)) (inf_env_inf_c ienv) (inf_env_inf_t
@@ -440,7 +438,7 @@ let env_rel_ienv_to_tenv = prove
  (`!ienv. ienv_ok {} ienv ==> envRel_env_rel (ienv_to_tenv ienv) ienv`,
   CHEAT_TAC);;
 
-let tenv_to_ienv_def = cake_define
+let tenv_to_ienv_def = new_definition
   `tenv_to_ienv tenv =
      mk_inf_env (nsMap (\(tvs,t). (tvs,unconvert_t t)) (type_env_v
        tenv)) (type_env_c tenv) (type_env_t tenv)`;;

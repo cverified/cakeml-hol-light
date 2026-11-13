@@ -47,7 +47,7 @@ let buffer_FIELDS = define_record "buffer"
    "buffer","('b word) list";
    "space_left","num"];;
 
-let buffer_flush_def = cake_define
+let buffer_flush_def = new_definition
   `buffer_flush cb (w1:'a word) w2 =
      (if buffer_position cb = w1 /\ buffer_position cb + (n2w
        (dimindex (:'b) DIV 8)) * n2w (LENGTH (buffer_buffer cb)) = w2
@@ -56,7 +56,7 @@ let buffer_flush_def = cake_define
          []) (buffer_position_fupd (K w2)
              cb)) else NONE)`;;
 
-let buffer_write_def = cake_define
+let buffer_write_def = new_definition
   `buffer_write cb (w:'a word) (b:'b word) =
      (if buffer_position cb + (n2w (dimindex (:'b) DIV 8)) * n2w
        (LENGTH (buffer_buffer cb)) = w /\ 0 < buffer_space_left cb then
@@ -64,16 +64,16 @@ let buffer_write_def = cake_define
          (buffer_buffer_fupd (K (buffer_buffer cb ++ [b])) cb)) else
          NONE)`;;
 
-let is_fwd_ptr_def = cake_define
+let is_fwd_ptr_def = new_definition
   `is_fwd_ptr x1 =
         match x1 with
           wordLang_Word w -> ((w && (n2w 3)) = (n2w 0))
         | _1 -> F`;;
 
-let theWord_def = cake_define
-  `theWord (wordLang_Word w) = w`;;
+let theWord_def = define_general
+  [`theWord (wordLang_Word w) = w`];;
 
-let isWord_def = cake_define
+let isWord_def = new_definition
   `isWord x1 =
         match x1 with
           wordLang_Word w -> T
@@ -83,7 +83,7 @@ let isWord_exists = prove
  (`isWord x <=> (?w. x = wordLang_Word w)`,
   CHEAT_TAC);;
 
-let wordSem_word_cmp_def = cake_define
+let wordSem_word_cmp_def = new_definition
   `wordSem_word_cmp x1 x2 x3 =
         match (x1,x2,x3) with
           ((Equal:cmp),wordLang_Word w1,wordLang_Word w2) -> SOME (w1
@@ -109,7 +109,7 @@ let wordSem_word_cmp_def = cake_define
         | (_5,_6,_7) -> NONE`;;
 hol4_overload "word_cmp" "wordSem_word_cmp";;
 
-let mem_load_32_def = cake_define
+let mem_load_32_def = new_definition
   `mem_load_32 m dm be' (w:'a word) =
    (if alignment_aligned 2 w then match m (byte_align w) with Loc _8
      _9 -> NONE | wordLang_Word v ->
@@ -119,7 +119,7 @@ let mem_load_32_def = cake_define
                get_byte (w + (n2w 2)) v be'; get_byte (w + (n2w
                  3)) v be']) else NONE) else NONE)`;;
 
-let mem_store_32_def = cake_define
+let mem_store_32_def = new_definition
   `mem_store_32 m dm be' (w:'a word) (hw:word32) =
    (if alignment_aligned 2 w then match m (byte_align w) with
      wordLang_Word v ->
@@ -184,21 +184,21 @@ let mem_store_32_alt = prove
                       else NONE) | _16 -> NONE else NONE)`),
   CHEAT_TAC);;
 
-let mem_load_byte_aux_def = cake_define
+let mem_load_byte_aux_def = new_definition
   `mem_load_byte_aux m dm be' w =
      (match m (byte_align w) with Loc _17 _18 -> NONE | wordLang_Word
        v ->
          (if byte_align w IN dm then SOME (get_byte w v be') else
            NONE))`;;
 
-let mem_store_byte_aux_def = cake_define
+let mem_store_byte_aux_def = new_definition
   `mem_store_byte_aux m dm be' w b =
      (match m (byte_align w) with wordLang_Word v ->
          (if byte_align w IN dm then SOME ((byte_align w =+
            wordLang_Word (set_byte w b v be')) m) else NONE) | _19 ->
            NONE)`;;
 
-let write_bytearray_def = cake_define_list
+let write_bytearray_def,write_bytearray_ind = define_guess
   [`write_bytearray a [] m dm be' = m`;
    `write_bytearray a (b :: bs) m dm be' =
          (match mem_store_byte_aux (write_bytearray (a + (n2w
@@ -214,7 +214,7 @@ let stack_frame_INDUCT,stack_frame_RECURSION = define_datatype
 (* HOL4 wordSemScript.sml:193-197: the type abbreviation gc_fun_type,
    which the port expands *)
 
-let gc_bij_ok_def = cake_define
+let gc_bij_ok_def = new_definition
   `gc_bij_ok (seq':num->num->num) = (!n. BIJ (seq' n) UNIV UNIV)`;;
 
 let wordSem_state_FIELDS = define_record "wordSem_state"
@@ -299,13 +299,13 @@ hol4_field_overload "be_fupd" "wordSem_state_be_fupd";;
 hol4_overload "state_ffi" "wordSem_state_ffi";;
 hol4_overload "state_ffi_fupd" "wordSem_state_ffi_fupd";;
 
-let stack_size_frame_def = cake_define
+let stack_size_frame_def = new_definition
   `stack_size_frame x1 =
       match x1 with
         StackFrame n _20 _21 NONE -> n
       | (StackFrame n _22 _23 (SOME _24)) -> OPTION_MAP ((+) 3) n`;;
 
-let stack_size_def = cake_define
+let stack_size_def = new_definition
   `stack_size = FOLDR (OPTION_MAP2 (+) o stack_size_frame) (SOME 1)`;;
 
 (* HOL4 wordSemScript.sml:239: ML code, not ported *)
@@ -325,14 +325,14 @@ hol4_overload "NotEnoughSpace" "wordSem_NotEnoughSpace";;
 hol4_overload "FinalFFI" "wordSem_FinalFFI";;
 hol4_overload "Error" "wordSem_Error";;
 
-let isResult_def = cake_define
+let isResult_def = new_definition
   `wordSem_isResult x1 =
         match x1 with
           wordSem_Result a b -> T
         | _25 -> F`;;
 hol4_overload "isResult" "wordSem_isResult";;
 
-let isException_def = cake_define
+let isException_def = new_definition
   `wordSem_isException x1 =
         match x1 with
           wordSem_Exception a b -> T
@@ -342,12 +342,12 @@ hol4_overload "isException" "wordSem_isException";;
 (* HOL4 wordSemScript.sml:260: the ML values that the definitions
    below antiquote *)
 
-let wordSem_dec_clock_def = cake_define
+let wordSem_dec_clock_def = new_definition
   `wordSem_dec_clock (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "wordSem_dec_clock";;
 
-let wordSem_fix_clock_def = cake_define
+let wordSem_fix_clock_def = new_definition
   `wordSem_fix_clock old_s (res,new_s) =
      (res,wordSem_state_termdep_fupd (K (wordSem_state_termdep
        old_s)) (wordSem_state_clock_fupd (K (if wordSem_state_clock
@@ -355,17 +355,17 @@ let wordSem_fix_clock_def = cake_define
        old_s else wordSem_state_clock new_s)) new_s))`;;
 hol4_overload "fix_clock" "wordSem_fix_clock";;
 
-let is_word_def = cake_define
+let is_word_def = new_definition
   `is_word x1 =
         match x1 with
           wordLang_Word w -> T
         | _27 -> F`;;
 
-let get_word_def = cake_define
-  `get_word (wordLang_Word w) = w`;;
+let get_word_def = define_general
+  [`get_word (wordLang_Word w) = w`];;
 
 
-let wordSem_mem_store_def = cake_define
+let wordSem_mem_store_def = new_definition
   `wordSem_mem_store (addr':'a word) (w:'a word_loc)
   (s:('a,'c,'ffi)wordSem_state) =
      (if addr' IN wordSem_state_mdomain s then
@@ -373,24 +373,24 @@ let wordSem_mem_store_def = cake_define
          (wordSem_state_memory s))) s) else NONE)`;;
 hol4_overload "mem_store" "wordSem_mem_store";;
 
-let wordSem_mem_load_def = cake_define
+let wordSem_mem_load_def = new_definition
   `wordSem_mem_load (addr':'a word) (s:('a,'c,'ffi)wordSem_state) =
      (if addr' IN wordSem_state_mdomain s then
        SOME (wordSem_state_memory s addr') else NONE)`;;
 hol4_overload "mem_load" "wordSem_mem_load";;
 
-let the_words_def = cake_define_list
+let the_words_def,the_words_ind = define_rec
   [`the_words [] = SOME []`;
    `the_words (w :: ws) =
          (match (w,the_words ws) with (SOME (wordLang_Word
            x),SOME xs) -> SOME (x :: xs) | _29 -> NONE)`];;
 
-let wordSem_get_var_def = cake_define
+let wordSem_get_var_def = new_definition
   `wordSem_get_var v (s:('a,'c,'ffi)wordSem_state) = sptree_lookup v
   (wordSem_state_locals s)`;;
 hol4_overload "get_var" "wordSem_get_var";;
 
-let wordSem_get_vars_def = cake_define_list
+let wordSem_get_vars_def,wordSem_get_vars_ind = define_rec
   [`wordSem_get_vars [] (s:('a,'c,'ffi)wordSem_state) = SOME []`;
    `wordSem_get_vars (v :: vs) (s:('a,'c,'ffi)wordSem_state) =
          (match wordSem_get_var v s with NONE -> NONE | SOME x
@@ -398,41 +398,39 @@ let wordSem_get_vars_def = cake_define_list
            xs -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "wordSem_get_vars";;
 
-let wordSem_set_var_def = cake_define
+let wordSem_set_var_def = new_definition
   `wordSem_set_var v x (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_locals_fupd (K (sptree_insert v x
        (wordSem_state_locals s))) s)`;;
 hol4_overload "set_var" "wordSem_set_var";;
 
-let unset_var_def = cake_define
+let unset_var_def = new_definition
   `wordSem_unset_var v (s:('a,'c,'ffi)wordSem_state) =
   (wordSem_state_locals_fupd (K (sptree_delete v
   (wordSem_state_locals s))) s)`;;
 hol4_overload "unset_var" "wordSem_unset_var";;
 
-let wordSem_set_vars_def = cake_define
+let wordSem_set_vars_def = new_definition
   `wordSem_set_vars vs xs (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_locals_fupd (K (alist_insert vs xs
        (wordSem_state_locals s))) s)`;;
 hol4_overload "set_vars" "wordSem_set_vars";;
 
-let get_store_def = cake_define
+let get_store_def = new_definition
   `wordSem_get_store v (s:('a,'c,'ffi)wordSem_state) = (FLOOKUP
   (wordSem_state_store s) v)`;;
 hol4_overload "get_store" "wordSem_get_store";;
 
-let set_store_def = cake_define
+let set_store_def = new_definition
   `wordSem_set_store v x (s:('a,'c,'ffi)wordSem_state) =
   (wordSem_state_store_fupd (K (wordSem_state_store s |+ (v,x))) s)`;;
 hol4_overload "set_store" "wordSem_set_store";;
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 wordSemScript.sml:357-362: the tactic that proves the
    termination *)
-let word_exp_def = cake_define_list_try (fun () ->
-  `MEASURE (wordLang_exp_size ARB o SND)`)
+let word_exp_def,word_exp_ind = define_shaped_rec
+  "nested"
   [`wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Const w)
   = SOME (wordLang_Word w)`;
    `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Var v) =
@@ -457,7 +455,7 @@ let word_exp_def = cake_define_list_try (fun () ->
 hol4_overload "word_exp" "wordSem_word_exp";;
 
 (* Flushes the locals and (optionally) the store *)
-let wordSem_flush_state_def = cake_define_list
+let wordSem_flush_state_def = define_general
   [`wordSem_flush_state T (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_locals_size_fupd (K (SOME 0))
   (wordSem_state_store_fupd (K FEMPTY) (wordSem_state_stack_fupd (K
@@ -467,7 +465,7 @@ let wordSem_flush_state_def = cake_define_list
   (wordSem_state_locals_fupd (K LN) s)`];;
 hol4_overload "flush_state" "wordSem_flush_state";;
 
-let sh_mem_store_def = cake_define
+let sh_mem_store_def = new_definition
   `wordSem_sh_mem_store (a:'a word) (w:'a word)
   (s:('a,'c,'ffi)wordSem_state) =
      (if a IN wordSem_state_sh_mdomain s then
@@ -481,7 +479,7 @@ let sh_mem_store_def = cake_define
                        else (SOME wordSem_Error,s))`;;
 hol4_overload "sh_mem_store" "wordSem_sh_mem_store";;
 
-let sh_mem_load_def = cake_define
+let sh_mem_load_def = new_definition
   `wordSem_sh_mem_load (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
      (if a IN wordSem_state_sh_mdomain s then
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
@@ -489,7 +487,7 @@ let sh_mem_load_def = cake_define
                      (word_to_bytes a F)) else NONE)`;;
 hol4_overload "sh_mem_load" "wordSem_sh_mem_load";;
 
-let sh_mem_store_byte_def = cake_define
+let sh_mem_store_byte_def = new_definition
   `wordSem_sh_mem_store_byte (a:'a word) (w:'a word)
   (s:('a,'c,'ffi)wordSem_state) =
      (if byte_align a IN wordSem_state_sh_mdomain s then
@@ -503,7 +501,7 @@ let sh_mem_store_byte_def = cake_define
            else (SOME wordSem_Error,s))`;;
 hol4_overload "sh_mem_store_byte" "wordSem_sh_mem_store_byte";;
 
-let sh_mem_store16_def = cake_define
+let sh_mem_store16_def = new_definition
   `wordSem_sh_mem_store16 (a:'a word) (w:'a word)
   (s:('a,'c,'ffi)wordSem_state) =
      (if byte_align a IN wordSem_state_sh_mdomain s then
@@ -517,7 +515,7 @@ let sh_mem_store16_def = cake_define
            else (SOME wordSem_Error,s))`;;
 hol4_overload "sh_mem_store16" "wordSem_sh_mem_store16";;
 
-let sh_mem_store32_def = cake_define
+let sh_mem_store32_def = new_definition
   `wordSem_sh_mem_store32 (a:'a word) (w:'a word)
   (s:('a,'c,'ffi)wordSem_state) =
      (if byte_align a IN wordSem_state_sh_mdomain s then
@@ -531,7 +529,7 @@ let sh_mem_store32_def = cake_define
            else (SOME wordSem_Error,s))`;;
 hol4_overload "sh_mem_store32" "wordSem_sh_mem_store32";;
 
-let sh_mem_load_byte_def = cake_define
+let sh_mem_load_byte_def = new_definition
   `wordSem_sh_mem_load_byte (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
      (if byte_align a IN wordSem_state_sh_mdomain s then
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
@@ -539,7 +537,7 @@ let sh_mem_load_byte_def = cake_define
                      (word_to_bytes a F)) else NONE)`;;
 hol4_overload "sh_mem_load_byte" "wordSem_sh_mem_load_byte";;
 
-let sh_mem_load16_def = cake_define
+let sh_mem_load16_def = new_definition
   `wordSem_sh_mem_load16 (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
      (if byte_align a IN wordSem_state_sh_mdomain s then
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
@@ -547,7 +545,7 @@ let sh_mem_load16_def = cake_define
                      (word_to_bytes a F)) else NONE)`;;
 hol4_overload "sh_mem_load16" "wordSem_sh_mem_load16";;
 
-let sh_mem_load32_def = cake_define
+let sh_mem_load32_def = new_definition
   `wordSem_sh_mem_load32 (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
      (if byte_align a IN wordSem_state_sh_mdomain s then
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
@@ -556,7 +554,7 @@ let sh_mem_load32_def = cake_define
 hol4_overload "sh_mem_load32" "wordSem_sh_mem_load32";;
 
 (* set variable given the output from ShareLoad(Byte) *)
-let sh_mem_set_var_def = cake_define
+let sh_mem_set_var_def = new_definition
   `sh_mem_set_var x1 v s =
         match (x1,s) with
           (SOME (FFI_final outcome),(s:('a,'c,'ffi)wordSem_state)) ->
@@ -566,7 +564,7 @@ let sh_mem_set_var_def = cake_define
           0) new_bytes)) (wordSem_state_ffi_fupd (K new_ffi) s))
         | (_40,s) -> (SOME wordSem_Error,s)`;;
 
-let share_inst_def = cake_define_list
+let share_inst_def = define_cases
   [`share_inst (Load:memop) v ad s = sh_mem_set_var
   (wordSem_sh_mem_load ad s) v s`;
    `share_inst asm_Load8 v ad s = sh_mem_set_var
@@ -588,7 +586,7 @@ let share_inst_def = cake_define_list
   v s with SOME (wordLang_Word v) -> wordSem_sh_mem_store32 ad v s
   | _52 -> (SOME wordSem_Error,s))`];;
 
-let wordSem_call_env_def = cake_define
+let wordSem_call_env_def = new_definition
   `wordSem_call_env args size' (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX
   (wordSem_state_stack_max s) (OPTION_MAP2 (+) (stack_size
@@ -597,7 +595,7 @@ let wordSem_call_env_def = cake_define
      s))`;;
 hol4_overload "call_env" "wordSem_call_env";;
 
-let list_rearrange_def = cake_define
+let list_rearrange_def = new_definition
   `list_rearrange mover xs =
      // if the mover function is actually a permutation,
      // i.e. it bijects (or injects) the keys 0...n-1 to 0...n-1
@@ -609,7 +607,7 @@ let list_rearrange_def = cake_define
 
 (* Compare on keys, if keys match (never), then compare on
    the word_loc vals. Treat Words as < Locs *)
-let key_val_compare_def = cake_define
+let key_val_compare_def = new_definition
   `key_val_compare x y =
      (let ((a:num),b) = x in
      let ((a':num),b') = y in
@@ -624,7 +622,7 @@ let key_val_compare_def = cake_define
 EVAL ``key_val_compare (1,Loc 3 4) (1,Loc 1 2)``
 *)
 
-let env_to_list_def = cake_define
+let env_to_list_def = new_definition
   `env_to_list env (bij_seq:num->num->num) =
      (let mover = bij_seq 0 in
      let permute = (\n. bij_seq (n + 1)) in
@@ -633,7 +631,7 @@ let env_to_list_def = cake_define
      let l = list_rearrange mover l in
        (l,permute))`;;
 
-let wordSem_push_env_def = cake_define_list
+let wordSem_push_env_def = define_cases
   [`wordSem_push_env envs' NONE (s:('a,'c,'ffi)wordSem_state) =
         (let l0 = toAList (FST envs') in let
             (l,permute) = env_to_list (SND envs')
@@ -661,7 +659,7 @@ let wordSem_push_env_def = cake_define_list
           s))))`];;
 hol4_overload "push_env" "wordSem_push_env";;
 
-let wordSem_pop_env_def = cake_define
+let wordSem_pop_env_def = new_definition
   `wordSem_pop_env (s:('a,'c,'ffi)wordSem_state) =
      (match wordSem_state_stack s with (StackFrame m e0 e NONE :: xs)
        ->
@@ -689,7 +687,7 @@ let wordSem_pop_env_clock = prove
   (wordSem_state_clock s1 = wordSem_state_clock s)`,
   CHEAT_TAC);;
 
-let wordSem_jump_exc_def = cake_define
+let wordSem_jump_exc_def = new_definition
   `wordSem_jump_exc (s:('a,'c,'ffi)wordSem_state) =
      (if wordSem_state_handler s < LENGTH (wordSem_state_stack s)
        then
@@ -702,38 +700,38 @@ let wordSem_jump_exc_def = cake_define
              s))),l1,l2) | _58 -> NONE else NONE)`;;
 hol4_overload "jump_exc" "wordSem_jump_exc";;
 
-let cut_names_def = cake_define
+let cut_names_def = new_definition
   `cut_names name_set env =
        (if domain name_set SUBSET domain env then SOME (inter env
          name_set) else NONE)`;;
 
-let cut_envs_def = cake_define
+let cut_envs_def = new_definition
   `cut_envs (name_sets:1 spt#1 spt) env =
      (match (cut_names (FST name_sets) env,cut_names (SND
        name_sets) env) with (SOME e1,SOME e2) -> SOME (e1,e2) | _59
        -> NONE)`;;
 
-let wordSem_cut_env_def = cake_define
+let wordSem_cut_env_def = new_definition
   `wordSem_cut_env (name_sets:1 spt#1 spt) env =
      (match cut_envs name_sets env with SOME (e1,e2) -> SOME
        (sptree_union e2 e1) | _60 -> NONE)`;;
 hol4_overload "cut_env" "wordSem_cut_env";;
 (* -- *)
 
-let wordSem_cut_state_def = cake_define
+let wordSem_cut_state_def = new_definition
   `wordSem_cut_state names (s:('a,'c,'ffi)wordSem_state) =
      (match wordSem_cut_env names (wordSem_state_locals s) with
        NONE -> NONE | SOME env -> SOME (wordSem_state_locals_fupd (K
        env) s))`;;
 hol4_overload "cut_state" "wordSem_cut_state";;
 
-let wordSem_cut_state_opt_def = cake_define
+let wordSem_cut_state_opt_def = new_definition
   `wordSem_cut_state_opt names (s:('a,'c,'ffi)wordSem_state) =
      (match names with NONE -> SOME s | SOME names ->
        wordSem_cut_state names s)`;;
 hol4_overload "cut_state_opt" "wordSem_cut_state_opt";;
 
-let wordSem_find_code_def = cake_define_list
+let wordSem_find_code_def = define_cases
   [`wordSem_find_code (SOME p) args code ssize =
          (match sptree_lookup p code with NONE -> NONE | SOME
            (arity,exp) -> (if LENGTH args = arity then SOME
@@ -747,14 +745,22 @@ let wordSem_find_code_def = cake_define_list
                  else NONE)) | other -> NONE)`];;
 hol4_overload "find_code" "wordSem_find_code";;
 
-let enc_stack_def = cake_define_list
+let _ = size_thms "stack_frame";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let enc_stack_def,enc_stack_ind = define_wf
+  `MEASURE (\x0. list_size (stack_frame_size (\x. 0)) x0)`
   [`wordSem_enc_stack [] = []`;
    `wordSem_enc_stack (StackFrame n _61 l handler :: st) = MAP SND
   l ++ wordSem_enc_stack st`];;
 hol4_overload "enc_stack" "wordSem_enc_stack";;
 
-let dec_stack_def = cake_define
-  `wordSem_dec_stack xs x2 =
+let _ = size_thms "stack_frame";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let dec_stack_def,dec_stack_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (stack_frame_size (\x. 0)) x1)`
+  [`wordSem_dec_stack xs x2 =
         match (xs,x2) with
           ([],[]) -> SOME []
         | (xs,(StackFrame n l0 l handler :: st)) ->
@@ -762,10 +768,10 @@ let dec_stack_def = cake_define
           match wordSem_dec_stack (DROP (LENGTH l) xs) st with NONE
             -> NONE | SOME s -> SOME (StackFrame n l0
               (ZIP (MAP FST l) (TAKE (LENGTH l) xs)) handler :: s))
-        | (_62,_63) -> NONE`;;
+        | (_62,_63) -> NONE`];;
 hol4_overload "dec_stack" "wordSem_dec_stack";;
 
-let gc_def = cake_define
+let gc_def = new_definition
   `// gc runs the garbage collector algorithm
    wordSem_gc (s:('a,'c,'ffi)wordSem_state) =
      (let wl_list = wordSem_enc_stack (wordSem_state_stack s) in
@@ -779,7 +785,7 @@ let gc_def = cake_define
                (wordSem_state_stack_fupd (K stack') s)))))`;;
 hol4_overload "gc" "wordSem_gc";;
 
-let has_space_def = cake_define
+let has_space_def = new_definition
   `wordSem_has_space wl (s:('a,'c,'ffi)wordSem_state) =
      (match (wl,wordSem_get_store NextFree s,wordSem_get_store
        TriggerGC s) with (wordLang_Word w,SOME (wordLang_Word n),SOME
@@ -788,7 +794,7 @@ let has_space_def = cake_define
 hol4_overload "has_space" "wordSem_has_space";;
 
 (* to_ask: should we not update stack size here?  *)
-let alloc_def = cake_define
+let alloc_def = new_definition
   `wordSem_alloc (w:'a word) names (s:('a,'c,'ffi)wordSem_state) =
      // prune local names
      (match cut_envs names (wordSem_state_locals s) with NONE ->
@@ -825,24 +831,24 @@ let alloc_def = cake_define
                             ,wordSem_flush_state T s))))))`;;
 hol4_overload "alloc" "wordSem_alloc";;
 
-let wordSem_assign_def = cake_define
+let wordSem_assign_def = new_definition
   `wordSem_assign reg exp (s:('a,'c,'ffi)wordSem_state) =
      (match wordSem_word_exp s exp with NONE -> NONE | SOME w ->
        SOME (wordSem_set_var reg w s))`;;
 hol4_overload "assign" "wordSem_assign";;
 
-let get_fp_var_def = cake_define
+let get_fp_var_def = new_definition
   `wordSem_get_fp_var v (s:('a,'c,'ffi)wordSem_state) = FLOOKUP
   (wordSem_state_fp_regs s) v`;;
 hol4_overload "get_fp_var" "wordSem_get_fp_var";;
 
-let set_fp_var_def = cake_define
+let set_fp_var_def = new_definition
   `wordSem_set_fp_var v x (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_fp_regs_fupd (K (wordSem_state_fp_regs s |+
        (v,x))) s)`;;
 hol4_overload "set_fp_var" "wordSem_set_fp_var";;
 
-let wordSem_inst_def = cake_define
+let wordSem_inst_def = new_definition
   `wordSem_inst i (s:('a,'c,'ffi)wordSem_state) =
      (match i with Skip -> SOME s | Const reg w -> wordSem_assign reg
        (Const w) s | Arith (asm_Binop bop r1 r2 ri) ->
@@ -1030,20 +1036,20 @@ let wordSem_inst_def = cake_define
                roundTiesToEven i) s)) | NONE -> NONE | _96 -> NONE))`;;
 hol4_overload "inst" "wordSem_inst";;
 
-let get_var_imm_def = cake_define_list
+let get_var_imm_def = define_cases
   [`wordSem_get_var_imm ((Reg n):'a asm_reg_imm)
   (s:('a,'c,'ffi)wordSem_state) = wordSem_get_var n s`;
    `wordSem_get_var_imm (Imm w) (s:('a,'c,'ffi)wordSem_state) =
   SOME (wordLang_Word w)`];;
 hol4_overload "get_var_imm" "wordSem_get_var_imm";;
 
-let add_ret_loc_def = cake_define_list
+let add_ret_loc_def = define_cases
   [`add_ret_loc NONE xs = xs`;
    `add_ret_loc (SOME (n,names,ret_handler,l1,l2)) xs =
   (wordLang_Loc l1 l2) :: xs`];;
 
 (*Avoid case split*)
-let bad_dest_args_def = cake_define
+let bad_dest_args_def = new_definition
   `bad_dest_args dest args <=> dest = NONE /\ args = []`;;
 
 (* [local] *)
@@ -1063,7 +1069,7 @@ let fix_clock_IMP_LESS_EQ = prove
   wordSem_state_termdep s1 = wordSem_state_termdep s`,
   CHEAT_TAC);;
 
-let MustTerminate_limit_def = cake_define
+let MustTerminate_limit_def = new_definition
   `MustTerminate_limit (:'a) =
      // This is just a number that's large enough for our purposes.
      // It stated in a way that makes proofs easy.
@@ -1072,22 +1078,25 @@ let MustTerminate_limit_def = cake_define
      dimword (:'a) EXP dimword (:'a) +
      dimword (:'a) EXP dimword (:'a) EXP dimword (:'a)`;;
 
-let const_addresses_def = cake_define_list
+let const_addresses_def,const_addresses_ind = define_rec
   [`const_addresses a [] d = T`;
    `const_addresses a (x :: xs) d =
       (a IN d /\ const_addresses (a + bytes_in_word) xs d)`];;
 
-let const_writes_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let const_writes_def,const_writes_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). list_size (pair_size (\x. 0) (\x. 0)) x2)`
   [`const_writes (a:'a word) off [] m = m`;
    `const_writes (a:'a word) off ((b,(x:'a word)) :: xs) m =
       const_writes (a + bytes_in_word) off xs
         ((a =+ wordLang_Word (if b then x + off else x)) m)`];;
 
-let STOP_def = cake_define
+let STOP_def = new_definition
   `wordSem_STOP x = x`;;
 hol4_overload "STOP" "wordSem_STOP";;
 
-let bad_fun_return_def = cake_define
+let bad_fun_return_def = new_definition
   `wordSem_bad_fun_return x1 =
       match x1 with
         NONE -> T
@@ -1096,7 +1105,7 @@ let bad_fun_return_def = cake_define
       | _99 -> F`;;
 hol4_overload "bad_fun_return" "wordSem_bad_fun_return";;
 
-let cont_loop_def = cake_define
+let cont_loop_def = new_definition
   `wordSem_cont_loop x1 =
       match x1 with
         NONE -> T
@@ -1104,7 +1113,7 @@ let cont_loop_def = cake_define
       | _100 -> F`;;
 hol4_overload "cont_loop" "wordSem_cont_loop";;
 
-let exit_loop_def = cake_define
+let exit_loop_def = new_definition
   `wordSem_exit_loop res =
       match res with
         SOME (Break n) -> SOME (Break (n - 1))
@@ -1133,19 +1142,9 @@ if concl wordSem_fix_clock_IMP <> `T` then
   cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "wordLang_prog";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 wordSemScript.sml:1247-1260: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let wordSem_evaluate_def = cake_define_list_try_tac (fun () ->
-  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE (wordLang_prog_size
-     (K 0)))
-                     (\(xs,((s:('a,'c,'ffi)wordSem_state))).
-                       (wordSem_state_termdep s,wordSem_state_clock
-                       s,xs)))`)
-  CHEAT_TAC
+let wordSem_evaluate_def,wordSem_evaluate_ind = define_guess
   [`wordSem_evaluate ((Skip:'a
   wordLang_prog),(s:('a,'c,'ffi)wordSem_state)) = (NONE,s)`;
    `wordSem_evaluate (wordLang_Alloc n names,s) =
@@ -1475,7 +1474,7 @@ let wordSem_fix_clock_evaluate = prove
 
 (* observational semantics *)
 
-let wordSem_semantics_def = cake_define
+let wordSem_semantics_def = new_definition
   `wordSem_semantics (s:('a,'c,'ffi)wordSem_state) start' =
    (let prog = Call NONE (SOME start') [0] NONE in
    if ?k. match FST (wordSem_evaluate (prog,wordSem_state_clock_fupd
@@ -1500,7 +1499,7 @@ let wordSem_semantics_def = cake_define
                  (prog,wordSem_state_clock_fupd (K k) s)))))) UNIV)))`;;
 hol4_overload "semantics" "wordSem_semantics";;
 
-let word_lang_safe_for_space_def = cake_define
+let word_lang_safe_for_space_def = new_definition
   `word_lang_safe_for_space (s:('a,'c,'ffi)wordSem_state) start' =
      (let prog = Call NONE (SOME start') [0] NONE in
        (!k res t. wordSem_evaluate (prog,wordSem_state_clock_fupd (K

@@ -34,7 +34,7 @@ let _ = hol4_ancestors "clos_mtiProof"
 (* HOL4 clos_mtiProofScript.sml:22-23: a theorem that HOL4 states as
    the value of an ML expression: no_mti_def *)
 
-let clos_mtiProof_code_rel_def = cake_define
+let clos_mtiProof_code_rel_def = new_definition
   `clos_mtiProof_code_rel max_app e1 e2 <=>
      EVERY no_mti e1 /\ (e2 = intro_multi max_app e1)`;;
 hol4_overload "code_rel" "clos_mtiProof_code_rel";;
@@ -63,11 +63,11 @@ let clos_mtiProof_code_rel_CONS_CONS = prove
 
 (* value relation *)
 
-let mk_Fns_def = cake_define_list
+let mk_Fns_def,mk_Fns_ind = define_rec
   [`mk_Fns [] e = e`;
    `mk_Fns (t :: ts) e = closLang_Fn t NONE NONE 1 (mk_Fns ts e)`];;
 
-let clos_mtiProof_f_rel_def = cake_define
+let clos_mtiProof_f_rel_def = new_definition
   `clos_mtiProof_f_rel max_app (a1,e1) (a2,e2) <=>
      (?b1 ts.
        clos_mtiProof_code_rel max_app [b1] [e2] /\ a2 <= max_app /\
@@ -118,7 +118,7 @@ let clos_mtiProof_v_rel = cake_inductive
         (Recclosure NONE args2 env2 funs2 n))`;;
 hol4_overload "v_rel" "clos_mtiProof_v_rel";;
 
-let v_rel_opt_def = cake_define
+let v_rel_opt_def = new_definition
   `v_rel_opt max_app x2 x3 =
         match (x2,x3) with
           (NONE,NONE) -> T
@@ -140,7 +140,7 @@ hol4_overload "ref_rel" "clos_mtiProof_ref_rel";;
 (* HOL4 clos_mtiProofScript.sml:128-132: a theorem that HOL4 states
    as the value of an ML expression: ref_rel_simps *)
 
-let clos_mtiProof_FMAP_REL_def = cake_define
+let clos_mtiProof_FMAP_REL_def = new_definition
   `clos_mtiProof_FMAP_REL r f1 f2 <=>
      FDOM f1 = FDOM f2 /\
      (!k v. FLOOKUP f1 k = SOME v ==>
@@ -154,7 +154,7 @@ let SND_compile_inc = prove
  (`SND (clos_mti_compile_inc max_app p) = []`,
   CHEAT_TAC);;
 
-let clos_mtiProof_state_rel_def = cake_define
+let clos_mtiProof_state_rel_def = new_definition
   `clos_mtiProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = [] /\
@@ -233,7 +233,7 @@ let collect_apps_cons = prove
      collect_apps (m - 1) [] e1 = (other,e2)`,
   CHEAT_TAC);;
 
-let mk_Apps_def = cake_define_list
+let mk_Apps_def,mk_Apps_ind = define_rec
   [`mk_Apps e [] = e`;
    `mk_Apps e ((t,other) :: ts) = App t NONE (mk_Apps e ts) [other]`];;
 
@@ -281,7 +281,7 @@ let evaluate_mk_Apps_err = prove
        e3,s2')`,
   CHEAT_TAC);;
 
-let evaluate_apps_def = cake_define_list
+let evaluate_apps_def,evaluate_apps_ind = define_rec
   [`evaluate_apps f [] s = (Rval [f],s)`;
    `evaluate_apps f (x :: xs) s =
       (match evaluate_apps f xs s with (Rval [v],s1) ->

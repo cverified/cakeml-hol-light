@@ -17,7 +17,7 @@ let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: string arithmetic finite_map
    pred_set bag relation prim_rec pair *)
 
-let ext_s_check_def = cake_define
+let ext_s_check_def = new_definition
   `ext_s_check s v t = (if oc s t v then NONE else SOME (s |+ (v,t)))`;;
 
 let UNIFYR_RULES,UNIFYR_INDUCT,UNIFYR_CASES =

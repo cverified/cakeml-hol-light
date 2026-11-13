@@ -34,7 +34,7 @@ let _ = hol4_ancestors "bvl_const"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let dest_simple_def = cake_define
+let dest_simple_def = new_definition
   `dest_simple x1 =
         match x1 with
           bvl_Op (closLang_IntOp (closLang_Const i)) xs -> (if NULL
@@ -53,7 +53,7 @@ let dest_simple_pmatch = prove
   (GEN_TAC THEN REWRITE_TAC[dest_simple_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
-let case_op_const_def = cake_define
+let case_op_const_def = new_definition
   `case_op_const exp =
        (match exp with (Op op [x1; Op (closLang_IntOp
          (closLang_Const n2)) l]) -> (if NULL l then SOME (op,x1,n2)
@@ -66,7 +66,7 @@ let case_op_const_pmatch = prove
   (GEN_TAC THEN REWRITE_TAC[case_op_const_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
-let SmartOp_flip_def = cake_define
+let SmartOp_flip_def = new_definition
   `SmartOp_flip op x1 x2 =
      (match (dest_simple x1) with (SOME i) ->
          (if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
@@ -87,7 +87,7 @@ let SmartOp_flip_pmatch = prove
      term and the definition is the whole proof *)
   (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_flip_def]));;
 
-let SmartOp2_def = cake_define
+let SmartOp2_def = new_definition
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
      (let mk_add_const = (\x1 c2.
        if c2 = (&0) then x1 else Op (closLang_IntOp closLang_Add)
@@ -210,7 +210,7 @@ let SmartOp2_def = cake_define
 (* HOL4 bvl_constScript.sml:206: ML code, not ported *)
 
 
-let dest_EqualInt_def = cake_define
+let dest_EqualInt_def = new_definition
   `dest_EqualInt x1 =
       match x1 with
         closLang_BlockOp (closLang_EqualConst (closLang_Int i)) ->
@@ -222,14 +222,14 @@ let dest_EqualInt_pmatch = prove
   (closLang_EqualConst (closLang_Int i)) -> SOME i | _26 -> NONE)`,
   (REWRITE_TAC[dest_EqualInt_def]));;
 
-let SmartOp1_def = cake_define
+let SmartOp1_def = new_definition
   `SmartOp1 op x =
      (match dest_EqualInt op with NONE -> Op op [x] | SOME i ->
        (match dest_simple x with NONE -> Op op [x] | SOME j ->
          bvl_Bool (j = i)))`;;
 
 
-let SmartOp_def = cake_define
+let SmartOp_def = new_definition
   `bvl_const_SmartOp op xs =
      (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2) |
        [x] -> SmartOp1 op x | _27 -> Op op xs)`;;
@@ -241,7 +241,7 @@ let SmartOp_pmatch = prove
      [x] -> SmartOp1 op x | _28 -> Op op xs)`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_def]));;
 
-let bvl_const_extract_def = cake_define
+let bvl_const_extract_def = new_definition
   `bvl_const_extract x1 ys =
         match x1 with
           ((Var n):bvl_exp) -> SOME ((Var (n + LENGTH ys +
@@ -265,13 +265,13 @@ let extract_pmatch = prove
   (REPEAT GEN_TAC THEN REWRITE_TAC[bvl_const_extract_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
-let bvl_const_extract_list_def = cake_define_list
+let bvl_const_extract_list_def,bvl_const_extract_list_ind = define_rec
   [`bvl_const_extract_list [] = []`;
    `bvl_const_extract_list (x :: xs) = extract x xs ::
   bvl_const_extract_list xs`];;
 hol4_overload "extract_list" "bvl_const_extract_list";;
 
-let bvl_const_delete_var_def = cake_define
+let bvl_const_delete_var_def = new_definition
   `bvl_const_delete_var x =
         match x with
           ((Var n):bvl_exp) -> Op (closLang_IntOp (closLang_Const
@@ -289,15 +289,10 @@ let delete_var_pmatch = prove
 
 let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source *)
-(* the port proves the termination with that relation, which
-   define_single takes as it stands: the strategies that
-   cake_define_gen tries before it declare the constant and
-   leave it no chance (a minute, which is what this costs) *)
-let bvl_const_compile_def =
-  let th = end_itlist CONJ (fst (define_single
-    [(`MEASURE (list_size bvl_exp_size o SND)`,
-      TERM_TAC)]
-    (cake_conj_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
+  `MEASURE (list_size bvl_exp_size o SND)`
   [`bvl_const_compile env [] = []`;
    `bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
   ++ bvl_const_compile env (y :: xs)`;
@@ -331,11 +326,10 @@ let bvl_const_compile_def =
            | SOME NONE -> [Force loc v] | SOME (SOME (Var i)) ->
            [Force loc (v + i)] | SOME (SOME x) -> [Force loc v])`;
    `bvl_const_compile env [(Call t dest xs:bvl_exp)] = [Call t dest
-  (bvl_const_compile env xs)]`]))) in
-  (note_dest_fact th; cake_note_def th; th);;
+  (bvl_const_compile env xs)]`];;
 hol4_overload "compile" "bvl_const_compile";;
 
-let bvl_const_compile_sing_def = cake_define_list
+let bvl_const_compile_sing_def = define_mutual_rec
   [`bvl_const_compile_sing env (Var v:bvl_exp) =
          (match (\l n. oEL n l) env v with NONE -> Var v | SOME
            NONE -> Var v | SOME (SOME (Var i)) -> Var (v + i) | SOME
@@ -565,7 +559,7 @@ let bvl_const_compile_HD_SING = prove
    CONV_TAC NUM_REDUCE_CONV THEN
    TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]));;
 
-let bvl_const_compile_exp_def = cake_define
+let bvl_const_compile_exp_def = new_definition
   `bvl_const_compile_exp x =
      (match bvl_const_compile [] [x] with (y :: _31) -> y | _32 ->
        Var 0)

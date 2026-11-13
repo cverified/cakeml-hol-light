@@ -87,7 +87,7 @@ let evaluate_SmartLet = prove
   x],env,s)`,
   CHEAT_TAC);;
 
-let let_ok_def = cake_define
+let let_ok_def = new_definition
   `let_ok x1 =
         match x1 with
           (Let xs b:bvl_exp) -> EVERY isVar xs /\ bVarBound (LENGTH
@@ -97,11 +97,12 @@ let let_ok_def = cake_define
 let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
+(* HOL4 bvl_handleProofScript.sml:186-190: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let handle_ok_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size bvl_exp_size)`)
-  CHEAT_TAC
+let handle_ok_def,handle_ok_ind = define_wf_cheat
+  `MEASURE (list_size bvl_exp_size)`
   [`handle_ok [] <=> T`;
    `handle_ok ((x:bvl_exp) :: y :: xs) <=>
          handle_ok [x] /\ handle_ok (y :: xs)`;
@@ -126,7 +127,7 @@ let handle_ok_def = cake_define_list_try_tac (fun () ->
 (* HOL4 bvl_handleProofScript.sml:192-195: a theorem that HOL4 states
    as the value of an ML expression: evaluate_GENLIST *)
 
-let bvl_handleProof_env_rel_def = cake_define
+let bvl_handleProof_env_rel_def = new_definition
   `bvl_handleProof_env_rel l env env1 =
      LIST_RELi (\i v1 v2. has_var i l ==> v1 = v2) env env1`;;
 hol4_overload "env_rel" "bvl_handleProof_env_rel";;

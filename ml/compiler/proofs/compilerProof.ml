@@ -48,7 +48,7 @@ let _ = hol4_ancestors "compilerProof"
    "pegComplete"; "pegSound"; "semantics"; "targetSem"; "typeSound";
    "typeSoundInvariants"];;
 
-let config_ok_def = cake_define
+let config_ok_def = new_definition
   `config_ok (cc:'a compiler_config) mc <=>
      env_rel prim_tenv (compiler_config_inferencer_config cc) /\
      inf_set_tids_ienv prim_type_ids
@@ -64,7 +64,7 @@ let config_ok_def = cake_define
      mc_conf_ok mc /\ mc_init_ok (compiler_config_asm_config cc)
        (compiler_config_backend_config cc) mc`;;
 
-let initial_condition_def = cake_define
+let initial_condition_def = new_definition
   `initial_condition (st:'ffi semantics_state) (cc:'a compiler_config)
   mc <=>
      (semantics_state_sem_st st,semantics_state_sem_env st) = THE
@@ -115,13 +115,13 @@ let compile_tap_compile = prove
      backend_compile asm_conf conf p = res`,
   CHEAT_TAC);;
 
-let compilerProof_read_limits_def = cake_define
+let compilerProof_read_limits_def = new_definition
   `compilerProof_read_limits cc mc ms = backendProof_read_limits
   (compiler_config_asm_config cc) (compiler_config_backend_config cc)
   mc ms`;;
 hol4_overload "read_limits" "compilerProof_read_limits";;
 
-let compilerProof_is_safe_for_space_def = cake_define
+let compilerProof_is_safe_for_space_def = new_definition
   `compilerProof_is_safe_for_space ffi cc =
   backendProof_is_safe_for_space ffi (compiler_config_asm_config cc)
   (compiler_config_backend_config cc)`;;

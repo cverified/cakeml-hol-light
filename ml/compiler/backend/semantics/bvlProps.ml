@@ -256,7 +256,7 @@ let evaluate_expand_env = prove
      (evaluate (xs,a ++ env,s) = evaluate (xs,a,s))`,
   CHEAT_TAC);;
 
-let inc_clock_def = cake_define
+let inc_clock_def = new_definition
   `bvlProps_inc_clock ck s = bvlSem_state_clock_fupd (K
   (bvlSem_state_clock s + ck)) s`;;
 hol4_overload "inc_clock" "bvlProps_inc_clock";;
@@ -441,7 +441,7 @@ let evaluate_refs_SUBSET = prove
   SUBSET FDOM (state_refs t)`,
   CHEAT_TAC);;
 
-let bvlProps_get_vars_def = cake_define_list
+let bvlProps_get_vars_def,bvlProps_get_vars_ind = define_rec
   [`bvlProps_get_vars [] env = SOME []`;
    `bvlProps_get_vars (n :: ns) env =
          (if n < LENGTH env then
@@ -449,14 +449,14 @@ let bvlProps_get_vars_def = cake_define_list
              SOME vs -> SOME (EL n env :: vs)) else NONE)`];;
 hol4_overload "get_vars" "bvlProps_get_vars";;
 
-let isVar_def = cake_define
+let isVar_def = new_definition
   `isVar x1 =
         match x1 with
           ((Var n):bvl_exp) -> T
         | _1 -> F`;;
 
-let destVar_def = cake_define
-  `(destVar ((Var n):bvl_exp) = n)`;;
+let destVar_def = define_general
+  [`(destVar ((Var n):bvl_exp) = n)`];;
 
 let evaluate_Var_list = prove
  (`!l. EVERY isVar l ==>
@@ -469,7 +469,9 @@ let evaluate_Var_list = prove
 let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let bVarBound_def = cake_define_list_wf
+(* HOL4 bvlPropsScript.sml:836-840: the tactic that proves the
+   termination *)
+let bVarBound_def,bVarBound_ind = define_wf
   `MEASURE (list_size bvl_exp_size o SND)`
   [`bVarBound n [] <=> T`;
    `bVarBound n ((x:bvl_exp) :: y :: xs) <=>
@@ -490,7 +492,9 @@ let bVarBound_def = cake_define_list_wf
 let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let bEvery_def = cake_define_list_wf
+(* HOL4 bvlPropsScript.sml:858-862: the tactic that proves the
+   termination *)
+let bEvery_def,bEvery_ind = define_wf
   `MEASURE (list_size bvl_exp_size o SND)`
   [`bEvery P [] <=> T`;
    `bEvery P ((x:bvl_exp) :: y :: xs) <=>
@@ -525,8 +529,9 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 bvlPropsScript.sml:888-895: the tactic that proves the
    termination *)
-let bvlProps_get_code_labels_def = cake_define_list_try (fun () ->
-  `MEASURE flatLang_exp_size`)
+let bvlProps_get_code_labels_def,bvlProps_get_code_labels_ind =
+  define_wf
+  `MEASURE flatLang_exp_size`
   [`bvlProps_get_code_labels (bvl_Var _2) = {}`;
    `bvlProps_get_code_labels (If e1 e2 e3:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2 UNION

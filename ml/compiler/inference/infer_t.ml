@@ -32,7 +32,7 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
 (* HOL4 infer_tScript.sml:19-20: a theorem that HOL4 states as the
    value of an ML expression: infer_t_ind *)
 
-let id_to_string_def = cake_define_list
+let id_to_string_def,id_to_string_ind = define_rec
   [`id_to_string (Short s) = s`;
    `id_to_string (Long x id') =
         mlstring_concat [x; implode "."; id_to_string id']`];;
@@ -45,7 +45,14 @@ let infer_t_CASE = new_recursive_definition infer_t_RECURSION
    (infer_t_CASE (Infer_Tapp its n) dbf appf uvf = appf its n) /\
    (infer_t_CASE (Infer_Tuvar n) dbf appf uvf = uvf n)`;;
 
-let get_tyname_def = cake_define_list
+let _ = size_thms "mlstring";;
+let _ = size_thms "namespace";;
+let _ = size_thms "t";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_tyname_def,get_tyname_ind = define_wf
+  `MEASURE (\(x0,x1).      namespace_size (pair_size (\x. 0) t_size)
+  mlstring_size mlstring_size x1)`
   [`get_tyname n (Bind [] []) = NONE`;
    `get_tyname n (Bind [] ((m,ys) :: xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind []
@@ -55,7 +62,7 @@ let get_tyname_def = cake_define_list
       (if (match t with Tapp _2 m -> m = n | _3 -> F) then
         SOME tyname else get_tyname n (Bind xs m))`];;
 
-let type_ident_to_string_def = cake_define
+let type_ident_to_string_def = new_definition
   `type_ident_to_string tys ti =
    (if ti = Tarray_num then
      (implode "Array.array") else if ti = Tbool_num then
@@ -74,21 +81,21 @@ let type_ident_to_string_def = cake_define
      match get_tyname ti tys with NONE -> mlint_toString (&ti) |
        SOME s -> s)`;;
 
-let ty_var_name_def = cake_define
+let ty_var_name_def = new_definition
   `ty_var_name n =
      (if n < 28 then implode ("'" ++ [CHR (n + ORD (CHR 97))]) else
                     mlstring_concat [implode "'"; mlint_toString
                       (&n)])`;;
 
-let infer_t_commas_def = cake_define
-  `infer_t_commas c x2 =
+let infer_t_commas_def,infer_t_commas_ind = define_guess
+  [`infer_t_commas c x2 =
       match x2 with
         [] -> []
       | [x] -> [x]
-      | (x :: ys) -> x :: c :: infer_t_commas c ys`;;
+      | (x :: ys) -> x :: c :: infer_t_commas c ys`];;
 hol4_overload "commas" "infer_t_commas";;
 
-let add_parens_def = cake_define
+let add_parens_def = new_definition
   `add_parens threshold' (x,n) =
      (if threshold' < (n:num) then mlstring_concat [(implode "(");
        x; (implode ")")] else x)`;;
@@ -96,9 +103,9 @@ let add_parens_def = cake_define
 let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let inf_type_to_string_rec_def = cake_define_list_try (fun () ->
+let inf_type_to_string_rec_def = define_mutual_wf
   `MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
-     -> list_size infer_t_size ts)`)
+  -> list_size infer_t_size ts)`
   [`inf_type_to_string_rec tys (Infer_Tuvar n) =
         (mlstring_concat [(implode "_"); mlint_toString (&n)],0)`;
    `inf_type_to_string_rec tys (Infer_Tvar_db n) =
@@ -133,7 +140,7 @@ let inf_type_to_string_rec_def = cake_define_list_try (fun () ->
       inf_type_to_string_rec tys t ::
       inf_type_to_string_rec_list tys ts`];;
 
-let inf_type_to_string_def = cake_define
+let inf_type_to_string_def = new_definition
   `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;
 
 (* and the overloads that this file cannot see are back in the

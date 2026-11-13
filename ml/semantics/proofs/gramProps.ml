@@ -33,7 +33,7 @@ let _ = hol4_ancestors "gramProps"
 
 (* HOL4 gramPropsScript.sml:34-36: ML code, not ported *)
 
-let NT_rank_def = cake_define
+let NT_rank_def = new_definition
   `NT_rank N =
      (match N with INR _1 -> 0 | INL n ->
          (if n = nElist1 then 16 else if n = nEseq then 16 else if
@@ -131,7 +131,7 @@ let null2 = prove
 
 (* HOL4 gramPropsScript.sml:282-286: ML code, not ported *)
 
-let fringe_lengths_def = cake_define
+let fringe_lengths_def = new_definition
   `fringe_lengths G sf = {LENGTH i | (\G. RTC (derive G)) G sf (MAP
   grammar_TOK i)}`;;
 

@@ -21,8 +21,8 @@ let regexp_compiler_vector_INDUCT,regexp_compiler_vector_RECURSION =
   define_datatype
   "regexp_compiler_vector = Vector ('a list)";;
 
-let sub_def = cake_define
-  `sub (Vector l) n = EL n l`;;
+let sub_def = define_general
+  [`sub (Vector l) n = EL n l`];;
 
-let length_def = cake_define
-  `length (Vector l) = LENGTH l`;;
+let length_def = define_general
+  [`length (Vector l) = LENGTH l`];;

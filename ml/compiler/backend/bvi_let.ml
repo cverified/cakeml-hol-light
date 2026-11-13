@@ -58,20 +58,20 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "bvi_let"
   ["bvi"];;
 
-let bvi_let_extract_def = cake_define
+let bvi_let_extract_def = new_definition
   `bvi_let_extract x1 ys =
         match x1 with
           ((Var n):bvi_exp) -> n + LENGTH ys + 1
         | _1 -> 0`;;
 hol4_overload "extract" "bvi_let_extract";;
 
-let extract_list_def = cake_define_list
+let extract_list_def,extract_list_ind = define_rec
   [`bvi_let_extract_list [] = []`;
    `bvi_let_extract_list (x :: xs) = extract x xs ::
   bvi_let_extract_list xs`];;
 hol4_overload "extract_list" "bvi_let_extract_list";;
 
-let delete_var_def = cake_define
+let delete_var_def = new_definition
   `bvi_let_delete_var x =
         match x with
           ((Var n):bvi_exp) -> Op (closLang_IntOp (closLang_Const
@@ -104,15 +104,12 @@ cake_cheat_budget := 300;;
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the port proves the termination with that relation, which
-   define_single takes as it stands: the strategies that
-   cake_define_gen tries before it declare the constant and
-   leave it no chance (a minute, which is what this costs) *)
-let bvi_let_compile_def =
-  let th = end_itlist CONJ (fst (define_single
-    [(`MEASURE (list_size bvi_exp_size o SND o SND)`,
-      TERM_TAC)]
-    (cake_conj_list
+(* HOL4 bvi_letScript.sml:110-116: the tactic that proves the
+   termination *)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
+  `MEASURE (list_size bvi_exp_size o SND o SND)`
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;
@@ -157,8 +154,7 @@ let bvi_let_compile_def =
    `bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
          [bvi_LetCall rets t dest (bvi_let_compile env d xs)
             (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d
-              [y]))]`]))) in
-  (note_dest_fact th; cake_note_def th; th);;
+              [y]))]`];;
 hol4_overload "compile" "bvi_let_compile";;
 
 let _ = size_thms "bvi_exp";;
@@ -166,9 +162,9 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:158-168: the tactic that proves the
    termination *)
-let bvi_let_compile_sing_def = cake_define_list_try_tac (fun () ->
+let bvi_let_compile_sing_def = define_mutual_wf_tac
   `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
-     (_12,_13,es) -> list_size bvi_exp_size es)`)
+  (_12,_13,es) -> list_size bvi_exp_size es)`
   TERM_TAC
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Var (v + n)
@@ -413,7 +409,7 @@ let compile_HD_SING = prove
    CONV_TAC NUM_REDUCE_CONV THEN
    TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]));;
 
-let bvi_let_compile_exp_def = cake_define
+let bvi_let_compile_exp_def = new_definition
   `bvi_let_compile_exp x =
      (match bvi_let_compile [] 0 [x] with (y :: _14) -> y | _15 ->
        Var 0)

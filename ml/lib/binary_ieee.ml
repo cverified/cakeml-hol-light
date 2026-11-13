@@ -33,7 +33,7 @@ let float_value_INDUCT,float_value_RECURSION = define_datatype
 (* HOL4 binary_ieeeScript.sml:45: the overload bias, which the port
    expands *)
 
-let float_to_real_def = cake_define
+let float_to_real_def = new_definition
   `float_to_real (x:('t,'w)float) =
       (if float_Exponent x = (n2w 0) then --(&1:real) pow (w2n
         (float_Sign x)) *
@@ -45,64 +45,64 @@ let float_to_real_def = cake_define
            ((&1:real) + &(w2n (float_Significand x)) / (&2:real)
              pow (dimindex (:'t))))`;;
 
-let float_value_def = cake_define
+let float_value_def = new_definition
   `float_value (x:('t,'w)float) =
       (if float_Exponent x = word_T then if float_Significand x =
         (n2w 0) then Infinity else NaN else Float (float_to_real x))`;;
 
-let float_is_nan_def = cake_define
+let float_is_nan_def = new_definition
   `float_is_nan (x:('t,'w)float) =
       (match float_value x with
          NaN -> T | _1 -> F)`;;
 
-let float_is_signalling_def = cake_define
+let float_is_signalling_def = new_definition
   `float_is_signalling (x:('t,'w)float) <=>
       float_is_nan x /\ ~(word_msb (float_Significand x))`;;
 
-let float_is_infinite_def = cake_define
+let float_is_infinite_def = new_definition
   `float_is_infinite (x:('t,'w)float) =
       (match float_value x with
          Infinity -> T | _2 -> F)`;;
 
-let float_is_zero_def = cake_define
+let float_is_zero_def = new_definition
   `float_is_zero (x:('t,'w)float) =
       (match float_value x with
          Float r -> r = (&0) | _3 -> F)`;;
 
-let float_is_finite_def = cake_define
+let float_is_finite_def = new_definition
   `float_is_finite (x:('t,'w)float) =
       (match float_value x with
          Float _4 -> T | _5 -> F)`;;
 
-let float_negate_def = cake_define
+let float_negate_def = new_definition
   `float_negate (x:('t,'w)float) = float_Sign_fupd (K (word_not
   (float_Sign x))) x`;;
 
-let float_abs_def = cake_define
+let float_abs_def = new_definition
   `float_abs (x:('t,'w)float) = float_Sign_fupd (K (n2w 0)) x`;;
 
-let float_plus_infinity_def = cake_define
+let float_plus_infinity_def = new_definition
   `float_plus_infinity (:'t#'w) =
       mk_float (n2w 0) (word_T:'w word) ((n2w 0):'t word)`;;
 
-let float_plus_zero_def = cake_define
+let float_plus_zero_def = new_definition
   `float_plus_zero (:'t#'w) =
       mk_float (n2w 0) ((n2w 0):'w word) ((n2w 0):'t word)`;;
 
-let float_top_def = cake_define
+let float_top_def = new_definition
   `float_top (:'t#'w) =
       mk_float (n2w 0) (word_T - ((n2w 1):'w word)) (word_T:'t
         word)`;;
 
-let float_minus_infinity_def = cake_define
+let float_minus_infinity_def = new_definition
   `float_minus_infinity (:'t#'w) =
       float_negate (float_plus_infinity (:'t#'w))`;;
 
-let float_minus_zero_def = cake_define
+let float_minus_zero_def = new_definition
   `float_minus_zero (:'t#'w) = float_negate (float_plus_zero
   (:'t#'w))`;;
 
-let float_bottom_def = cake_define
+let float_bottom_def = new_definition
   `float_bottom (:'t#'w) = float_negate (float_top (:'t#'w))`;;
 
 let flags_FIELDS = define_record "flags"
@@ -113,46 +113,46 @@ let flags_FIELDS = define_record "flags"
    "Underflow_BeforeRounding","bool";
    "Underflow_AfterRounding","bool"];;
 
-let clear_flags_def = cake_define
+let clear_flags_def = new_definition
   `clear_flags = mk_flags F F F F F F`;;
 
-let invalidop_flags_def = cake_define
+let invalidop_flags_def = new_definition
   `invalidop_flags = flags_InvalidOp_fupd (K T) clear_flags`;;
 
-let dividezero_flags_def = cake_define
+let dividezero_flags_def = new_definition
   `dividezero_flags = flags_DivideByZero_fupd (K T) clear_flags`;;
 
 let rounding_INDUCT,rounding_RECURSION = define_datatype
   "rounding = roundTiesToEven | roundTowardPositive | \
    roundTowardNegative | roundTowardZero";;
 
-let is_closest_def = cake_define
+let is_closest_def = new_definition
   `is_closest s x a <=>
       a IN s /\
       (!b. b IN s ==> abs (float_to_real a - x) <= abs
         (float_to_real b - x))`;;
 
-let closest_such_def = cake_define
+let closest_such_def = new_definition
   `closest_such p s x =
       (@a. is_closest s x a /\ (!b. is_closest s x b /\ p b ==> p
         a))`;;
 
-let closest_def = cake_define
+let closest_def = new_definition
   `closest = closest_such (K T)`;;
 
-let largest_def = cake_define
+let largest_def = new_definition
   `largest (:'t#'w) =
       ((&2:real) pow (UINT_MAX (:'w) - 1) / (&2:real) pow (INT_MAX
         (:'w))) *
       ((&2:real) - inv ((&2:real) pow dimindex (:'t)))`;;
 
-let threshold_def = cake_define
+let threshold_def = new_definition
   `threshold (:'t#'w) =
       ((&2:real) pow (UINT_MAX (:'w) - 1) / (&2:real) pow (INT_MAX
         (:'w))) *
       ((&2:real) - inv ((&2:real) pow SUC (dimindex (:'t))))`;;
 
-let round_def = cake_define
+let round_def = new_definition
   `round mode (x:real) =
    (match mode with
       roundTiesToEven ->
@@ -193,19 +193,19 @@ hol4_overload "FP_Div" "binary_ieee_FP_Div";;
 hol4_overload "FP_MulAdd" "binary_ieee_FP_MulAdd";;
 hol4_overload "FP_MulSub" "binary_ieee_FP_MulSub";;
 
-let float_some_qnan_def = cake_define
+let float_some_qnan_def = new_definition
   `float_some_qnan (fp_op:('t,'w)fp_op) =
    ((@f. let qnan = f fp_op in float_is_nan qnan /\
      ~(float_is_signalling qnan))
      fp_op:('t,'w)float)`;;
 
-let float_round_def = cake_define
+let float_round_def = new_definition
   `float_round mode toneg r =
       (let x = round mode r in
          if float_is_zero x then if toneg then float_minus_zero
            (:'t#'w) else float_plus_zero (:'t#'w) else x)`;;
 
-let float_round_with_flags_def = cake_define
+let float_round_with_flags_def = new_definition
   `float_round_with_flags mode to_neg r =
    (let x = (float_round mode to_neg r:('t,'w)float) and a = abs r in
    let inexact = (~(float_value x = Float r)) in
@@ -222,15 +222,15 @@ let float_round_with_flags_def = cake_define
    // IEEE-754 permits a number of ways to detect underflow. Below
    // are two possible methods.`;;
 
-let check_for_signalling_def = cake_define
+let check_for_signalling_def = new_definition
   `check_for_signalling l = flags_InvalidOp_fupd (K (EXISTS
   float_is_signalling l))
    clear_flags`;;
 
-let real_to_float_def = cake_define
+let real_to_float_def = new_definition
   `real_to_float m = float_round m (m = roundTowardNegative)`;;
 
-let float_to_int_def = cake_define
+let float_to_int_def = new_definition
   `float_to_int mode (x:('t,'w)float) =
    (match float_value x with
       Float r ->
@@ -247,7 +247,7 @@ let float_to_int_def = cake_define
                   (if float_Sign x = (n2w 1) then INT_CEILING r
                     else INT_FLOOR r)) | _6 -> NONE)`;;
 
-let float_sqrt_def = cake_define
+let float_sqrt_def = new_definition
   `float_sqrt mode (x:('t,'w)float) =
       (if float_Sign x = (n2w 0) then
          match float_value x with
@@ -260,7 +260,7 @@ let float_sqrt_def = cake_define
         (invalidop_flags,float_some_qnan (binary_ieee_FP_Sqrt mode
           x)))`;;
 
-let float_add_def = cake_define
+let float_add_def = new_definition
   `float_add mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_7) -> (check_for_signalling [x; y],
@@ -280,7 +280,7 @@ let float_add_def = cake_define
                   x = (n2w 1) else mode = roundTowardNegative) (r1
                     + r2))`;;
 
-let float_sub_def = cake_define
+let float_sub_def = new_definition
   `float_sub mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_11) -> (check_for_signalling [x; y],
@@ -300,7 +300,7 @@ let float_sub_def = cake_define
                   x = (n2w 1) else mode = roundTowardNegative) (r1
                     - r2))`;;
 
-let float_mul_def = cake_define
+let float_mul_def = new_definition
   `float_mul mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_15) -> (check_for_signalling [x; y],
@@ -332,7 +332,7 @@ let float_mul_def = cake_define
             float_round_with_flags mode (~(float_Sign x =
               float_Sign y)) (r1 * r2))`;;
 
-let float_div_def = cake_define
+let float_div_def = new_definition
   `float_div mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_17) -> (check_for_signalling [x; y],
@@ -361,7 +361,7 @@ let float_div_def = cake_define
                              (~(float_Sign x = float_Sign y)) (r1 /
                              r2)))`;;
 
-let float_mul_add_def = cake_define
+let float_mul_add_def = new_definition
   `float_mul_add mode (x:('t,'w)float) (y:('t,'w)float) (z:('t,'w)float)
   =
       (let signP = float_Sign x ?? float_Sign y in
@@ -396,7 +396,7 @@ let float_mul_add_def = cake_define
 let float_compare_INDUCT,float_compare_RECURSION = define_datatype
   "float_compare = LT | EQ | GT | UN";;
 
-let float_compare_def = cake_define
+let float_compare_def = new_definition
   `float_compare (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_21) -> UN | (_22,NaN) -> UN | (Infinity,Infinity) ->
@@ -407,24 +407,24 @@ let float_compare_def = cake_define
               LT) | (Float r1,Float r2) ->
             (if r1 < r2 then LT else if r1 = r2 then EQ else GT))`;;
 
-let float_less_than_def = cake_define
+let float_less_than_def = new_definition
   `float_less_than (x:('t,'w)float) y =
       (float_compare x y = LT)`;;
 
-let float_less_equal_def = cake_define
+let float_less_equal_def = new_definition
   `float_less_equal (x:('t,'w)float) y =
       (match float_compare x y with
          LT -> T | EQ -> T | _25 -> F)`;;
 
-let float_greater_than_def = cake_define
+let float_greater_than_def = new_definition
   `float_greater_than (x:('t,'w)float) y =
       (float_compare x y = GT)`;;
 
-let float_greater_equal_def = cake_define
+let float_greater_equal_def = new_definition
   `float_greater_equal (x:('t,'w)float) y =
       (match float_compare x y with
          GT -> T | EQ -> T | _26 -> F)`;;
 
-let float_equal_def = cake_define
+let float_equal_def = new_definition
   `float_equal (x:('t,'w)float) y =
       (float_compare x y = EQ)`;;

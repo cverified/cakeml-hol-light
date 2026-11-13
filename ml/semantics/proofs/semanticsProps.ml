@@ -73,7 +73,7 @@ let semantics_prog_Diverge_not_Fail = prove
     semantics_prog s e p = {ffi_Diverge y}`,
   CHEAT_TAC);;
 
-let state_invariant_def = cake_define
+let state_invariant_def = new_definition
   `state_invariant st <=>
    (?ctMap tenvS.
      FRANGE ((SND o SND) o_f ctMap) SUBSET semantics_state_type_ids
@@ -99,7 +99,7 @@ let semantics_deterministic = prove
      {b} /\ ~(b = ffi_Fail))`,
   CHEAT_TAC);;
 
-let extend_with_resource_limit_def = cake_define
+let extend_with_resource_limit_def = new_definition
   `extend_with_resource_limit behaviours =
    behaviours UNION
    {ffi_Terminate ffi_Resource_limit_hit io_list | io_list | ?t l.
@@ -107,16 +107,16 @@ let extend_with_resource_limit_def = cake_define
    {ffi_Terminate ffi_Resource_limit_hit io_list | io_list | ?ll.
      ffi_Diverge ll IN behaviours /\ LPREFIX (fromList io_list) ll}`;;
 
-let extend_with_resource_limit'_def = cake_define
+let extend_with_resource_limit'_def = new_definition
   `extend_with_resource_limit' precise behaviours =
      (if precise then behaviours else
        extend_with_resource_limit behaviours)`;;
 
-let implements_def = cake_define
+let implements_def = new_definition
   `implements x y <=>
      (~(ffi_Fail IN y) ==> x SUBSET extend_with_resource_limit y)`;;
 
-let implements'_def = cake_define
+let implements'_def = new_definition
   `implements' precise x y <=> ~(ffi_Fail IN y) ==> x SUBSET
   extend_with_resource_limit' precise y`;;
 

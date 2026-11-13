@@ -43,16 +43,17 @@ let OPTION_CASE_OPTION_MAP = prove
   CHEAT_TAC);;
 
 let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 dataPropsScript.sml:43-48: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let approx_of_def = cake_define_try_tac (fun () ->
+let approx_of_def,approx_of_ind = define_wf_cheat
   `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
                              (\(lims,vs,refs). (sptree_size
-                               refs,vs)))`)
-  CHEAT_TAC
-  `approx_of lims x2 refs =
+                               refs,vs)))`
+  [`approx_of lims x2 refs =
         match x2 with
           [] -> 0
         | (x :: y :: ys) ->
@@ -64,8 +65,8 @@ let approx_of_def = cake_define_try_tac (fun () ->
         | [CodePtr _3] -> 0
         | [RefPtr _4 r] ->
         (match lookup r refs with NONE -> 0 | SOME (ByteArray _5 bs)
-          -> LENGTH bs DIV (arch_size lims DIV 8) + 2 | SOME (ValueArray
-          vs) ->
+          -> LENGTH bs DIV (arch_size lims DIV 8) + 2 | SOME
+          (ValueArray vs) ->
             approx_of lims vs (delete r refs) + LENGTH vs + 1 | SOME
               (Thunk _6 v) ->
             approx_of lims [v] (delete r refs) + 2 | SOME
@@ -74,7 +75,7 @@ let approx_of_def = cake_define_try_tac (fun () ->
             LENGTH ls + LENGTH rs + 2)
         | [Block ts tag []] -> 0
         | [Block ts tag vs] ->
-       approx_of lims vs refs + LENGTH vs + 1`;;
+       approx_of lims vs refs + LENGTH vs + 1`];;
 
 let size_of_approx_of = prove
  (`!lims xs refs seen n1 refs1 seen1.
@@ -169,7 +170,7 @@ let with_same_locals = prove
  (`(dataSem_state_locals_fupd (K (dataSem_state_locals s)) s) = s`,
   CHEAT_TAC);;
 
-let var_corr_def = cake_define
+let var_corr_def = new_definition
   `var_corr env corr t <=>
      EVERY2 (\v x. dataSem_get_var v t = SOME x) corr env`;;
 
@@ -754,7 +755,7 @@ let evaluate_safe_peak_swap = prove
            (dataSem_state_safe_for_space_fupd (K safe') s')))`,
   CHEAT_TAC);;
 
-let same_stack_size_def = cake_define
+let same_stack_size_def = new_definition
   `same_stack_size x y <=> size_of_stack_frame x =
   size_of_stack_frame y`;;
 
@@ -956,7 +957,7 @@ let evaluate_locals_LN = prove
         (Rraise t)))`,
   CHEAT_TAC);;
 
-let locals_ok_def = cake_define
+let locals_ok_def = new_definition
   `locals_ok l1 l2 =
      (!v x. (sptree_lookup v l1 = SOME x) ==> (sptree_lookup v l2
        = SOME x))`;;
@@ -1302,8 +1303,13 @@ let resource_limit_hit_implements_semantics = prove
           {semantics ffi (fromAList prog) co cc lim ss start}`),
   CHEAT_TAC);;
 
-let dataProps_get_code_labels_def = cake_define
-  `dataProps_get_code_labels x1 =
+let _ = size_thms "dataLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let dataProps_get_code_labels_def,dataProps_get_code_labels_ind =
+  define_wf
+  `MEASURE (\x0. dataLang_prog_size x0)`
+  [`dataProps_get_code_labels x1 =
         match x1 with
           (Call r d a h:dataLang_prog) ->
        (match d with SOME x -> {x} | _10 -> {}) UNION
@@ -1315,10 +1321,10 @@ let dataProps_get_code_labels_def = cake_define
         | (If _14 p1 p2) -> dataProps_get_code_labels p1 UNION
           dataProps_get_code_labels p2
         | (Assign _15 op _16 _17) -> assign_get_code_label op
-        | _18 -> {}`;;
+        | _18 -> {}`];;
 hol4_overload "get_code_labels" "dataProps_get_code_labels";;
 
-let dataProps_good_code_labels_def = cake_define
+let dataProps_good_code_labels_def = new_definition
   `dataProps_good_code_labels p elabs <=>
      (BIGUNION (set_of_list (MAP (\(n,m,pp).
        (dataProps_get_code_labels pp)) p))) SUBSET
@@ -1353,7 +1359,7 @@ let evaluate_safe_for_space_mono = prove
        s1 ==> dataSem_state_safe_for_space s`,
   CHEAT_TAC);;
 
-let zero_limits_def = cake_define
+let zero_limits_def = new_definition
   `zero_limits = (mk_limits 0 0 0 ARB ARB ARB:limits)`;;
 
 
@@ -1395,7 +1401,7 @@ let evaluate_zero_limits_ffi = prove
   CHEAT_TAC);;
 
 (* Stack frames equal up-to size component*)
-let stack_frame_size_rel_def = cake_define
+let stack_frame_size_rel_def = new_definition
   `stack_frame_size_rel x1 x2 =
         match (x1,x2) with
           (dataSem_Exc opt spt num',dataSem_Exc opt' spt' num') ->
@@ -1521,7 +1527,7 @@ let evaluate_option_le_stack_max = prove
      (dataSem_state_stack_max s) (dataSem_state_stack_max s1)`,
   CHEAT_TAC);;
 
-let cc_co_only_diff_def = cake_define
+let cc_co_only_diff_def = new_definition
   `cc_co_only_diff (s:('a,'ffi)dataSem_state) (t:('b,'ffi)dataSem_state)
   <=> dataSem_state_locals
      // defined this way to allow s and t to have different types

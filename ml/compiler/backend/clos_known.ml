@@ -44,15 +44,9 @@ let _ = do_list hide_constant ["all"; "pmatch"];;
 (* This definition is written to short-circuit,
    i.e. exit as soon as possible. *)
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_knownScript.sml:63-66: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let get_size_sc_aux_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size o SND)`)
-  CHEAT_TAC
+let get_size_sc_aux_def,get_size_sc_aux_ind = define_guess
   [`get_size_sc_aux n [] = n`;
    `get_size_sc_aux n (x :: y :: xs) =
          (if n = 0 then n else
@@ -96,7 +90,7 @@ let get_size_sc_aux_def = cake_define_list_try_tac (fun () ->
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
            get_size_sc_aux n xs)`];;
 
-let get_size_sc_def = cake_define
+let get_size_sc_def = new_definition
   `get_size_sc limit' e =
      (let n = get_size_sc_aux (limit' + 1) [e] in
        if n = 0 then NONE else SOME ((limit' + 1) - n))`;;
@@ -106,8 +100,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 clos_knownScript.sml:99-102: the tactic that proves the
    termination *)
-let get_size_aux_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size closLang_exp_size)`)
+let get_size_aux_def,get_size_aux_ind = define_wf
+  `MEASURE (list_size closLang_exp_size)`
   [`get_size_aux [] = 0`;
    `get_size_aux (x :: y :: xs) =
          get_size_aux [x] + get_size_aux (y :: xs)`;
@@ -136,7 +130,7 @@ let get_size_aux_def = cake_define_list_try (fun () ->
 
 (* HOL4 clos_knownScript.sml:104: ML code, not ported *)
 
-let get_size_def = cake_define
+let get_size_def = new_definition
   `clos_known_get_size e = get_size_aux [e]`;;
 hol4_overload "get_size" "clos_known_get_size";;
 
@@ -149,9 +143,7 @@ let get_size_sc_SOME = prove
   clos_known_get_size exp = n`,
   CHEAT_TAC);;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_known_free_def = cake_define_list_cheat CHEAT_TAC
+let clos_known_free_def,clos_known_free_ind = define_guess
   [`clos_known_free [] = ([],db_vars_Empty)`;
    `clos_known_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_known_free [x] in
@@ -209,12 +201,16 @@ hol4_overload "free" "clos_known_free";;
 (* HOL4 clos_knownScript.sml:175-220: code that the source has in a
    comment *)
 
-let clos_known_closed_def = cake_define
+let clos_known_closed_def = new_definition
   `clos_known_closed x = (\t. t = LN) (db_to_set (SND
   (clos_known_free [x])))`;;
 hol4_overload "closed" "clos_known_closed";;
 
-let contains_closures_def = cake_define_list
+let _ = size_thms "closLang_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let contains_closures_def,contains_closures_ind = define_wf
+  `MEASURE (\x0. closLang_exp_size1 x0)`
   [`contains_closures [] = F`;
    `contains_closures (x :: y :: xs) =
         (if contains_closures [x] then T else
@@ -280,8 +276,12 @@ hol4_overload "Other" "clos_known_Other";;
 hol4_overload "Impossible" "clos_known_Impossible";;
 (* HOL4 clos_knownScript.sml:276: ML code, not ported *)
 
-let clos_known_merge_def = cake_define
-  `clos_known_merge x y =
+let _ = size_thms "val_approx";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let clos_known_merge_def,clos_known_merge_ind = define_wf
+  `MEASURE (\(x0,x1). val_approx_size x0 + val_approx_size x1)`
+  [`clos_known_merge x y =
         match (x,y) with
           (clos_known_Impossible,y) -> y
         | (x,clos_known_Impossible) -> x
@@ -298,7 +298,7 @@ let clos_known_merge_def = cake_define
           clos_known_Clos m1 n1 e1 s1 else clos_known_Other)
         | ((Int i),(Int j)) -> (if i = j then Int i else
           clos_known_Other)
-        | (_4,_5) -> clos_known_Other`;;
+        | (_4,_5) -> clos_known_Other`];;
 hol4_overload "merge" "clos_known_merge";;
 
 (* HOL4 clos_knownScript.sml:294-295: a theorem that HOL4 states as
@@ -306,11 +306,13 @@ hol4_overload "merge" "clos_known_merge";;
 
 (* Avoid MAP2 *)
 let _ = size_thms "val_approx";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 clos_knownScript.sml:313-321: the tactic that proves the
    termination *)
-let merge_tup_def = cake_define_wf
+let merge_tup_def,merge_tup_ind = define_wf
   `MEASURE (val_approx_size o FST)`
-  `merge_tup x1 =
+  [`merge_tup x1 =
         match x1 with
           (clos_known_Impossible,y) -> y
         | (x,clos_known_Impossible) -> x
@@ -328,7 +330,7 @@ let merge_tup_def = cake_define_wf
           clos_known_Clos m1 n1 e1 s1 else clos_known_Other)
         | (Int i,Int j) -> (if i = j then Int i else
           clos_known_Other)
-        | (_6,_7) -> clos_known_Other`;;
+        | (_6,_7) -> clos_known_Other`];;
 
 (* HOL4 clos_knownScript.sml:323-342: code that the source has in a
    comment *)
@@ -337,7 +339,7 @@ let merge_alt = prove
  (`!x y. merge x y = merge_tup (x,y)`,
   CHEAT_TAC);;
 
-let known_op_def = cake_define
+let known_op_def = new_definition
   `known_op op as g =
         match op with
           closLang_GlobOp (closLang_Global n) ->
@@ -391,13 +393,13 @@ let clos_known_EL_MEM_LEMMA = prove
  (`!xs i x. i < LENGTH xs /\ (x = EL i xs) ==> MEM x xs`,
   CHEAT_TAC);;
 
-let clos_approx_def = cake_define
+let clos_approx_def = new_definition
   `clos_approx max_size loc num_args body =
      (match get_size_sc max_size body with NONE ->
        clos_known_ClosNoInline loc num_args | SOME body_size ->
        clos_known_Clos loc num_args body body_size)`;;
 
-let clos_gen_noinline_def = cake_define_list
+let clos_gen_noinline_def,clos_gen_noinline_ind = define_rec
   [`clos_gen_noinline n i [] = []`;
    `clos_gen_noinline n i ((a,e) :: xs) =
         clos_known_ClosNoInline (n + 2 * i) a ::
@@ -406,7 +408,7 @@ let clos_gen_noinline_def = cake_define_list
 let globalOpt_INDUCT,globalOpt_RECURSION = define_datatype
   "globalOpt = gO_Int (int) | gO_NullTuple (num) | gO_None";;
 
-let isGlobal_def = cake_define
+let isGlobal_def = new_definition
   `isGlobal x1 =
         match x1 with
           closLang_GlobOp (closLang_Global _15) -> T
@@ -419,7 +421,7 @@ let isGlobal_pmatch = prove
        closLang_GlobOp (closLang_Global _17) -> T | _18 -> F)`,
   CHEAT_TAC);;
 
-let gO_destApx_def = cake_define
+let gO_destApx_def = new_definition
   `gO_destApx x1 =
         match x1 with
           (Int i:val_approx) -> gO_Int i
@@ -427,11 +429,13 @@ let gO_destApx_def = cake_define
           gO_NullTuple tag else gO_None)
         | _19 -> gO_None`;;
 
-let mk_Ticks_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let mk_Ticks_def,mk_Ticks_ind = define_wf
   `MEASURE (FST o SND o SND)`
-  `clos_known_mk_Ticks t tc n e =
-     (if n = 0 then e else clos_known_mk_Ticks t (tc + 1) (n - 1)
-       (closLang_Tick (mk_cons t tc) e))`;;
+  [`clos_known_mk_Ticks t tc n e =
+     (if n = 0 then e else clos_known_mk_Ticks t (tc + 1) (n -
+       1) (closLang_Tick (mk_cons t tc) e))`];;
 hol4_overload "mk_Ticks" "clos_known_mk_Ticks";;
 
 let inliningDecision_INDUCT,inliningDecision_RECURSION = define_datatype
@@ -447,31 +451,31 @@ let clos_known_config_FIELDS = define_record "clos_known_config"
    (* TODO: this could replace the explicit g argument in known_def *)
   ];;
 
-let default_inline_factor_def = cake_define
+let default_inline_factor_def = new_definition
   `default_inline_factor = 8`;;
-let default_max_body_size_def = cake_define
+let default_max_body_size_def = new_definition
   `default_max_body_size max_app inline_factor = (max_app + 1) *
   inline_factor`;;
 
-let mk_config_def = cake_define
+let mk_config_def = new_definition
   `mk_config max_body_size inline_factor = mk_clos_known_config
   max_body_size inline_factor inline_factor LN`;;
 
-let clos_known_default_config_def = cake_define
+let clos_known_default_config_def = new_definition
   `clos_known_default_config max_app = mk_config
   (default_max_body_size max_app default_inline_factor)
   default_inline_factor`;;
 hol4_overload "default_config" "clos_known_default_config";;
 
-let dec_inline_factor_def = cake_define
+let dec_inline_factor_def = new_definition
   `dec_inline_factor c = clos_known_config_inline_factor_fupd (K
   (clos_known_config_inline_factor c DIV 2)) c`;;
 
-let reset_inline_factor_def = cake_define
+let reset_inline_factor_def = new_definition
   `reset_inline_factor c = clos_known_config_inline_factor_fupd (K
   (clos_known_config_initial_inline_factor c)) c`;;
 
-let decide_inline_def = cake_define
+let decide_inline_def = new_definition
   `decide_inline c fapx app_lopt app_arity =
      (match fapx with clos_known_ClosNoInline loc arity ->
            (if app_lopt = NONE /\ app_arity = arity then
@@ -495,18 +499,9 @@ let decide_inline_LetInline = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_knownScript.sml:630-639: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let known_def = cake_define_list_try_tac (fun () ->
-  `inv_image (MEASURE I LEX MEASURE I)
-                              (\(c,xs,vs,g).
-                              (clos_known_config_inline_factor
-                              c,list_size closLang_exp_size xs))`)
-  CHEAT_TAC
+let known_def,known_ind = define_guess
   [`known c [] vs (g:val_approx spt) = ([],g)`;
    `known c ((x:closLang_exp) :: y :: xs) vs (g:val_approx spt) =
          (let (eas1,g) = known c [x] vs g in
@@ -625,7 +620,7 @@ let known_sing_EQ_E = prove
   apx. all' = [(e',apx)])`,
   CHEAT_TAC);;
 
-let clos_known_compile_def = cake_define_list
+let clos_known_compile_def = define_cases
   [`clos_known_compile NONE exps = (NONE,exps)`;
    `clos_known_compile (SOME c) exps =
       (let exps = clos_fvs_compile exps in
@@ -636,18 +631,18 @@ let clos_known_compile_def = cake_define_list
           c),es2))`];;
 hol4_overload "compile" "clos_known_compile";;
 
-let clos_known_compile_inc_def = cake_define
+let clos_known_compile_inc_def = new_definition
   `clos_known_compile_inc c g (es,xs) =
      (let (eas,g') = known (reset_inline_factor c) es [] g in
        (g',MAP FST eas,xs))`;;
 hol4_overload "compile_inc" "clos_known_compile_inc";;
 
-let known_static_conf_def = cake_define
+let known_static_conf_def = new_definition
   `known_static_conf kc = (match kc with NONE -> NONE | SOME kc ->
   SOME (clos_known_config_val_approx_spt_fupd (K LN)
   (reset_inline_factor kc)))`;;
 
-let known_compile_inc_def = cake_define_list
+let known_compile_inc_def = define_cases
   [`known_compile_inc NONE spt (p:closLang_exp
   list#(num#num#closLang_exp) list) = (spt,p)`;
    `known_compile_inc (SOME c) spt (p:closLang_exp
@@ -660,11 +655,11 @@ let known_compile_inc_def = cake_define_list
       let p = clos_letop_compile_inc p in
       (spt,p))`];;
 
-let option_val_approx_spt_def = cake_define
+let option_val_approx_spt_def = new_definition
   `option_val_approx_spt kc = (match kc with NONE -> LN | SOME kcfg
   -> clos_known_config_val_approx_spt kcfg)`;;
 
-let option_upd_val_spt_def = cake_define_list
+let option_upd_val_spt_def = define_cases
   [`option_upd_val_spt spt NONE = NONE`;
    `option_upd_val_spt spt (SOME kc) = SOME
   (clos_known_config_val_approx_spt_fupd (K spt) kc)`];;

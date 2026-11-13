@@ -56,38 +56,39 @@ let _ = hol4_ancestors "presLang"
 
 (* basics *)
 
-let empty_item_def = cake_define
+let empty_item_def = new_definition
   `empty_item name = String name`;;
 
-let num_to_display_def = cake_define
+let num_to_display_def = new_definition
   `num_to_display (n:num) = String (toString n)`;;
 
-let int_to_display_def = cake_define
+let int_to_display_def = new_definition
   `int_to_display (i:int) = String (toString i)`;;
 
-let string_imp_def = cake_define
+let string_imp_def = new_definition
   `string_imp s = String s`;;
 
-let item_with_num_def = cake_define
+let item_with_num_def = new_definition
   `item_with_num name n = displayLang_Item NONE name [num_to_display
   n]`;;
 
-let item_with_nums_def = cake_define
+let item_with_nums_def = new_definition
   `item_with_nums name ns = displayLang_Item NONE name (MAP
   num_to_display ns)`;;
 
-let bool_to_display_def = cake_define
+let bool_to_display_def = new_definition
   `bool_to_display b = empty_item (if b then (implode "True") else
   (implode "False"))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let num_to_hex_def = cake_define_cheat CHEAT_TAC
-  `num_to_hex n =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let num_to_hex_def,num_to_hex_ind = define_wf
+  `MEASURE (\x0. (\n. n) x0)`
+  [`num_to_hex n =
      (if n < 16 then [] else num_to_hex (n DIV 16)) ++
-     num_to_hex_digit (n MOD 16)`;;
+     num_to_hex_digit (n MOD 16)`];;
 
-let separate_lines_def = cake_define
+let separate_lines_def = new_definition
   `separate_lines name xs = List (String name :: xs)`;;
 
 (* num_to_hex "implements" words$word_to_hex_string in a
@@ -101,17 +102,17 @@ let num_to_hex_eq = prove
  (`num_to_hex (w2n w) = word_to_hex_string w`,
   CHEAT_TAC);;
 
-let num_to_hex_mlstring_def = cake_define
+let num_to_hex_mlstring_def = new_definition
   `num_to_hex_mlstring n = implode ("0x" ++ num_to_hex n)`;;
 
-let word_to_display_def = cake_define
+let word_to_display_def = new_definition
   `word_to_display w = empty_item (num_to_hex_mlstring (w2n w))`;;
 
-let item_with_word_def = cake_define
+let item_with_word_def = new_definition
   `item_with_word name w = displayLang_Item NONE name
   [word_to_display w]`;;
 
-let lit_to_display_def = cake_define_list
+let lit_to_display_def = define_cases
   [`lit_to_display (ast_IntLit i) =
         displayLang_Item NONE (implode "IntLit") [empty_item
           (toString i)]`;
@@ -137,59 +138,59 @@ let lit_to_display_def = cake_define_list
    which the port expands *)
 (* source *)
 
-let fp_cmp_to_display_def = cake_define
+let fp_cmp_to_display_def = new_definition
   `fp_cmp_to_display cmp = (match cmp with FP_Less -> empty_item
   (implode "FP_Less") | FP_LessEqual -> empty_item (implode
   "FP_LessEqual") | FP_Greater -> empty_item (implode "FP_Greater") |
   FP_GreaterEqual -> empty_item (implode "FP_GreaterEqual") |
   FP_Equal -> empty_item (implode "FP_Equal"))`;;
 
-let fp_uop_to_display_def = cake_define
+let fp_uop_to_display_def = new_definition
   `fp_uop_to_display op = (match op with fpSem_FP_Abs -> empty_item
   (implode "FP_Abs") | fpSem_FP_Neg -> empty_item (implode "FP_Neg")
   | FP_Sqrt -> empty_item (implode "FP_Sqrt"))`;;
 
-let fp_bop_to_display_def = cake_define
+let fp_bop_to_display_def = new_definition
   `fp_bop_to_display op = (match op with FP_Add -> empty_item
   (implode "FP_Add") | FP_Sub -> empty_item (implode "FP_Sub") |
   FP_Mul -> empty_item (implode "FP_Mul") | FP_Div -> empty_item
   (implode "FP_Div"))`;;
 
-let fp_top_to_display_def = cake_define
+let fp_top_to_display_def = new_definition
   `fp_top_to_display op =
      (match op with FP_Fma -> empty_item (implode "FP_Fma"))`;;
 
-let word_size_to_display_def = cake_define_list
+let word_size_to_display_def = define_cases
   [`word_size_to_display ast_W8 = empty_item (implode "W8")`;
    `word_size_to_display (W64:word_size) = empty_item (implode
   "W64")`];;
 
-let opb_to_display_def = cake_define_list
+let opb_to_display_def = define_cases
   [`opb_to_display (ast_Lt:opb) = empty_item (implode "Lt")`;
    `opb_to_display ast_Gt = empty_item (implode "Gt")`;
    `opb_to_display ast_Leq = empty_item (implode "Leq")`;
    `opb_to_display ast_Geq = empty_item (implode "Geq")`];;
 
-let opw_to_display_def = cake_define_list
+let opw_to_display_def = define_cases
   [`opw_to_display backend_common_Andw = empty_item (implode "Andw")`;
    `opw_to_display backend_common_Orw = empty_item (implode "Orw")`;
    `opw_to_display (Xor:opw) = empty_item (implode "Xor")`;
    `opw_to_display (Add:opw) = empty_item (implode "Add")`;
    `opw_to_display (Sub:opw) = empty_item (implode "Sub")`];;
 
-let shift_to_display_def = cake_define_list
+let shift_to_display_def = define_cases
   [`shift_to_display Lsl = empty_item (implode "Lsl")`;
    `shift_to_display Lsr = empty_item (implode "Lsr")`;
    `shift_to_display Asr = empty_item (implode "Asr")`;
    `shift_to_display Ror = empty_item (implode "Ror")`];;
 
-let thunk_mode_to_display_def = cake_define_list
+let thunk_mode_to_display_def = define_cases
   [`thunk_mode_to_display Evaluated = empty_item (implode
   "Evaluated")`;
    `thunk_mode_to_display NotEvaluated = empty_item (implode
   "NotEvaluated")`];;
 
-let thunk_op_to_display_def = cake_define_list
+let thunk_op_to_display_def = define_cases
   [`thunk_op_to_display (AllocThunk m) =
         displayLang_Item NONE (implode "AllocThunk")
           [thunk_mode_to_display m]`;
@@ -199,14 +200,14 @@ let thunk_op_to_display_def = cake_define_list
    `thunk_op_to_display ForceThunk = empty_item (implode
   "ForceThunk")`];;
 
-let test_to_display_def = cake_define_list
+let test_to_display_def = define_cases
   [`test_to_display (Equal:test) = empty_item (implode "Equal")`;
    `test_to_display (ast_Compare cmp) = displayLang_Item NONE
   (implode "Compare") [opb_to_display cmp]`;
    `test_to_display (ast_AltCompare cmp) = displayLang_Item NONE
   (implode "AltCompare") [opb_to_display cmp]`];;
 
-let arith_to_display_def = cake_define_list
+let arith_to_display_def = define_cases
   [`arith_to_display (Add:ast_arith) = empty_item (implode "Add")`;
    `arith_to_display (Sub:ast_arith) = empty_item (implode "Sub")`;
    `arith_to_display (ast_Mul:ast_arith) = empty_item (implode "Mul")`;
@@ -221,7 +222,7 @@ let arith_to_display_def = cake_define_list
    `arith_to_display ast_Sqrt = empty_item (implode "Sqrt")`;
    `arith_to_display ast_FMA = empty_item (implode "FMA")`];;
 
-let prim_type_to_display_def = cake_define
+let prim_type_to_display_def = new_definition
   `prim_type_to_display x1 =
       match x1 with
         ast_BoolT -> empty_item (implode "BoolT")
@@ -232,11 +233,11 @@ let prim_type_to_display_def = cake_define
       | (ast_WordT ast_W8) -> empty_item (implode "WordT_W8")
       | (ast_WordT ast_W64) -> empty_item (implode "WordT_W64")`;;
 
-let lop_to_display_def = cake_define_list
+let lop_to_display_def = define_cases
   [`lop_to_display Andalso = empty_item (implode "Andalso")`;
    `lop_to_display Orelse = empty_item (implode "Orelse")`];;
 
-let op_to_display_def = cake_define
+let op_to_display_def = new_definition
   `op_to_display (p:ast_op) =
    (match p with Shift ws sh num' -> displayLang_Item NONE (implode
      "Shift")
@@ -310,7 +311,7 @@ let op_to_display_def = cake_define
                              "Env_id") | ThunkOp t ->
                              thunk_op_to_display t)`;;
 
-let id_to_display_def = cake_define_list
+let id_to_display_def,id_to_display_ind = define_rec
   [`id_to_display (Short n) =
       displayLang_Item NONE (implode "Short") [String n]`;
    `id_to_display (Long n i) =
@@ -320,12 +321,9 @@ let id_to_display_def = cake_define_list
 let _ = size_thms "ast_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let ast_t_to_display_def = cake_define_list_try_tac (fun () ->
+let ast_t_to_display_def = define_mutual_wf
   `MEASURE (\x. match x with INL v -> ast_t_size v | INR v -> list_size
-     ast_t_size v)`)
-  CHEAT_TAC
+  ast_t_size v)`
   [`ast_t_to_display c =
       (match c with Atvar n -> displayLang_Item NONE (implode
         "Atvar") [String n] | Atfun t1 t2 -> displayLang_Item NONE
@@ -341,12 +339,9 @@ let ast_t_to_display_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let pat_to_display_def = cake_define_list_try_tac (fun () ->
+let pat_to_display_def = define_mutual_wf
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-     INR v -> list_size pattern_semantics_pat_size v)`)
-  CHEAT_TAC
+  INR v -> list_size pattern_semantics_pat_size v)`
   [`pat_to_display (c:ast_pat) =
       (match c with Pany -> displayLang_Item NONE (implode "Pany")
         [] | Pvar v -> displayLang_Item NONE (implode "Pvar") [String v]
@@ -371,7 +366,7 @@ let pat_to_display_def = cake_define_list_try_tac (fun () ->
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exp_to_display_def = cake_define_list_cheat CHEAT_TAC
+let exp_to_display_def = define_mutual_guess_cheat
   [`exp_to_display (c:ast_exp) =
       (match c with Lit l -> displayLang_Item NONE (implode "Lit")
         [lit_to_display l] | Raise e -> displayLang_Item NONE (implode
@@ -430,12 +425,9 @@ let exp_to_display_def = cake_define_list_cheat CHEAT_TAC
 let _ = size_thms "dec";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let source_to_display_dec_def = cake_define_list_try_tac (fun () ->
+let source_to_display_dec_def = define_mutual_wf
   `MEASURE (\x. match x with INL v -> dec_size v | INR v -> list_size
-     dec_size v)`)
-  CHEAT_TAC
+  dec_size v)`
   [`source_to_display_dec (d:dec) =
       (match d with Dlet _3 pat e -> displayLang_Item NONE (implode
         "Dlet") [pat_to_display pat; exp_to_display e] | Dletrec _4 fns
@@ -476,7 +468,7 @@ let source_to_display_dec_def = cake_define_list_try_tac (fun () ->
 (* HOL4 presLangScript.sml:414-418: a theorem whose statement the
    port cannot state yet: MEM_pat_size *)
 
-let opt_con_to_display_def = cake_define
+let opt_con_to_display_def = new_definition
   `opt_con_to_display ocon = (match ocon with NONE -> empty_item
   (implode "ConIdNone") | SOME (c,NONE) -> item_with_num (implode
   "ConIdUntyped") c | SOME (c,SOME t) -> item_with_nums (implode
@@ -485,12 +477,9 @@ let opt_con_to_display_def = cake_define
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let flat_pat_to_display_def = cake_define_list_try_tac (fun () ->
+let flat_pat_to_display_def = define_mutual_wf
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-     INR v -> list_size pattern_semantics_pat_size v)`)
-  CHEAT_TAC
+  INR v -> list_size pattern_semantics_pat_size v)`
   [`flat_pat_to_display p =
         (match p with flatLang_Pvar varN -> displayLang_Item NONE
           (implode "Pvar") [string_imp varN] | Pany -> empty_item
@@ -507,7 +496,7 @@ let flat_pat_to_display_def = cake_define_list_try_tac (fun () ->
    `flat_pat_to_display_list (x :: xs) =
         flat_pat_to_display x :: flat_pat_to_display_list xs`];;
 
-let flat_op_to_display_def = cake_define
+let flat_op_to_display_def = new_definition
   `flat_op_to_display op = (match op with flatLang_Src ast_op ->
   op_to_display ast_op | flatLang_GlobalVarAlloc n -> item_with_num
   (implode "GlobalVarAlloc") n | flatLang_GlobalVarInit n ->
@@ -527,12 +516,13 @@ let flat_op_to_display_def = cake_define
 (* HOL4 presLangScript.sml:471-476: a theorem whose statement the
    port cannot state yet: MEM_pats_size *)
 
-let add_name_hint_def = cake_define
+let add_name_hint_def = new_definition
   `add_name_hint prefix name_hint =
      mlstring_concat [prefix; (implode "<"); name_hint; (implode
        ">")]`;;
 
-let flat_to_display_def = cake_define_list
+let flat_to_display_def = define_mutual_shaped_rec
+  "nested"
   [`flat_to_display (flatLang_Raise tra exp) =
         displayLang_Item (SOME tra) (implode "raise")
           [flat_to_display exp]`;
@@ -587,32 +577,37 @@ let flat_to_display_def = cake_define_list
 
 (* clos to displayLang *)
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 presLangScript.sml:541-543: the tactic that proves the
    termination *)
-let num_to_varn_aux_def = cake_define_wf
+let num_to_varn_aux_def,num_to_varn_aux_ind = define_wf
   `MEASURE I`
-  `num_to_varn_aux n =
-     (if n < 26 then [CHR (97 + n)] else (num_to_varn_aux ((n DIV
-       26) - 1)) ++ ([CHR (97 + (n MOD 26))]))`;;
+  [`num_to_varn_aux n =
+     (if n < 26 then [CHR (97 + n)] else (num_to_varn_aux ((n
+       DIV 26) - 1)) ++ ([CHR (97 + (n MOD 26))]))`];;
 
-let num_to_varn_def = cake_define
+let num_to_varn_def = new_definition
   `num_to_varn n = implode (num_to_varn_aux n)`;;
 
-let display_num_as_varn_def = cake_define
+let display_num_as_varn_def = new_definition
   `display_num_as_varn n = string_imp (num_to_varn n)`;;
 
-let num_to_varn_list_def = cake_define
-  `num_to_varn_list h n =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let num_to_varn_list_def,num_to_varn_list_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
+  [`num_to_varn_list h n =
      (if n = 0 then [] else
-       num_to_varn (h + n) :: num_to_varn_list h (n - 1))`;;
+       num_to_varn (h + n) :: num_to_varn_list h (n - 1))`];;
 
-let attach_name_def = cake_define_list
+let attach_name_def = define_cases
   [`attach_name ns NONE = (implode "none")`;
    `attach_name ns (SOME d) =
       (match sptree_lookup d ns with NONE -> toString d | SOME
         name -> mlstring_concat [name; (implode "@"); toString d])`];;
 
-let const_part_to_display_def = cake_define_list
+let const_part_to_display_def = define_cases
   [`const_part_to_display (Int i:const_part) =
       displayLang_Item NONE (implode "Int") [int_to_display i]`;
    `const_part_to_display (Con t vs:const_part) =
@@ -625,11 +620,7 @@ let const_part_to_display_def = cake_define_list
       displayLang_Item NONE (implode "W64") [word_to_display w]`];;
 
 let _ = size_thms "const";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let const_to_display_def = cake_define_list_try (fun () ->
-  `MEASURE (\x. match x with INL v -> const_size v | INR v -> list_size
-     const_size v)`)
+let const_to_display_def = define_mutual_rec
   [`const_to_display (ConstInt i:const) =
       displayLang_Item NONE (implode "ConstInt") [int_to_display
         i]`;
@@ -646,7 +637,7 @@ let const_to_display_def = cake_define_list_try (fun () ->
    `const_to_display_list (x :: xs) =
         const_to_display x :: const_to_display_list xs`];;
 
-let clos_op_to_display_def = cake_define
+let clos_op_to_display_def = new_definition
   `clos_op_to_display ns op = (match op with closLang_GlobOp
   (closLang_Global num') -> item_with_num (implode "Global") num' |
   closLang_GlobOp (closLang_SetGlobal num') -> item_with_num (implode
@@ -766,34 +757,25 @@ let clos_op_to_display_def = cake_define
 (* HOL4 presLangScript.sml:675-680: a theorem whose statement the
    port cannot state yet: MEM_clos_exps_size *)
 
-let commas_def = cake_define
-  `presLang_commas x1 =
+let _ = size_thms "mlstring";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let commas_def,commas_ind = define_wf
+  `MEASURE (\x0. list_size mlstring_size x0)`
+  [`presLang_commas x1 =
       match x1 with
         [] -> (implode "")
       | [x] -> x
       | (x :: xs) -> (\x y. strcat x y) ((\x y. strcat x y) x
-        (implode ",")) (presLang_commas xs)`;;
+        (implode ",")) (presLang_commas xs)`];;
 hol4_overload "commas" "presLang_commas";;
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 presLangScript.sml:744-751: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_to_display_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\x. match x with INL (_8,_9,e) -> flatLang_exp_size e | INR
-     (INL (_10,_11,e)) -> list_size flatLang_exp_size e | INR (INR
-       (INL
-     (_12,_13,_14,es))) -> list_size flatLang_exp_size es | INR (INR
-       (INR
-     (_15,_16,_17,_18,es))) -> list_size (pair_size I
-       flatLang_exp_size)
-     es)`)
-  CHEAT_TAC
+let clos_to_display_def = define_mutual_guess
   [`clos_to_display ns h (Var t n:closLang_exp) =
         displayLang_Item (SOME t) (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -873,14 +855,14 @@ let clos_to_display_def = cake_define_list_try_tac (fun () ->
             clos_to_display ns (h + len + vn) e] ::
               clos_to_display_letrecs ns h (i - 1) len es`];;
 
-let clos_fun_to_display_def = cake_define
+let clos_fun_to_display_def = new_definition
   `clos_fun_to_display names (n,argc,body) =
      Tuple [String (implode "func");
             String (attach_name names (SOME n));
             Tuple (REVERSE (GENLIST display_num_as_varn argc));
             clos_to_display names argc body]`;;
 
-let clos_dec_to_display_def = cake_define
+let clos_dec_to_display_def = new_definition
   `clos_dec_to_display names dec =
      Tuple [String (implode "dec");
             clos_to_display names 0 dec]`;;
@@ -893,13 +875,12 @@ let clos_dec_to_display_def = cake_define
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let bvl_to_display_def = cake_define_list_try (fun () ->
+let bvl_to_display_def = define_mutual_wf
   `MEASURE (\x.
-        match x with
-          INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs))
-            ->
-            list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
-            list_size flatLang_exp_size xs)`)
+     match x with
+       INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs)) ->
+         list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
+         list_size flatLang_exp_size xs)`
   [`bvl_to_display ns h (Var n:bvl_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -942,7 +923,7 @@ let bvl_to_display_def = cake_define_list_try (fun () ->
           "<-"); bvl_to_display ns h x] :: bvl_to_display_lets ns h
           (i - 1) xs`];;
 
-let bvl_fun_to_display_def = cake_define
+let bvl_fun_to_display_def = new_definition
   `bvl_fun_to_display names (n,argc,body) =
      Tuple [String (implode "func");
             String (attach_name names (SOME n));
@@ -955,18 +936,7 @@ let bvl_fun_to_display_def = cake_define
    port cannot state yet: MEM_bvi_exps_size *)
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bvi_to_display_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\x.
-        match x with
-          INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs))
-            ->
-            list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
-            list_size flatLang_exp_size xs)`)
-  CHEAT_TAC
+let bvi_to_display_def = define_mutual_guess
   [`bvi_to_display ns h (Var n:bvi_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -1021,7 +991,7 @@ let bvi_to_display_def = cake_define_list_try_tac (fun () ->
           "<-"); bvi_to_display ns h x] :: bvi_to_display_lets ns h
           (i - 1) xs`];;
 
-let bvi_fun_to_display_def = cake_define
+let bvi_fun_to_display_def = new_definition
   `bvi_fun_to_display names (n,argc,body) =
      Tuple [String (implode "func");
             String (attach_name names (SOME n));
@@ -1030,17 +1000,21 @@ let bvi_fun_to_display_def = cake_define
 
 (* dataLang *)
 
-let num_set_to_display_def = cake_define
+let num_set_to_display_def = new_definition
   `num_set_to_display ns =
      String (mlstring_concat [(implode "{");
                       presLang_commas (MAP toString (MAP FST
                         (toSortedAList ns)));
                       (implode "}")])`;;
 
-let data_seqs_def = cake_define
-  `data_seqs z =
+let _ = size_thms "dataLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let data_seqs_def,data_seqs_ind = define_wf
+  `MEASURE (\x0. dataLang_prog_size x0)`
+  [`data_seqs z =
      (match z with dataLang_Seq x y -> Append (data_seqs x)
-       (data_seqs y) | _19 -> List [z])`;;
+       (data_seqs y) | _19 -> List [z])`];;
 
 (* [local] *)
 let MEM_append_data_seqs = prove
@@ -1057,13 +1031,10 @@ let list_size_append_data_seqs = prove
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let data_prog_to_display_def = cake_define_list_try_tac (fun () ->
+let data_prog_to_display_def = define_mutual_wf
   `MEASURE (\x.
-        match x with
-          INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`)
-  CHEAT_TAC
+     match x with
+       INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`
   [`data_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `data_prog_to_display (SUC k) ns prog =
           (match prog with dataLang_Skip -> empty_item (implode
@@ -1131,7 +1102,7 @@ let data_prog_to_display_def = cake_define_list_try_tac (fun () ->
         data_prog_to_display k ns x ::
           data_prog_to_display_list k ns xs)`];;
 
-let data_fun_to_display_def = cake_define
+let data_fun_to_display_def = new_definition
   `data_fun_to_display names (n,argc,body) =
      Tuple [String (implode "func");
             String (attach_name names (SOME n));
@@ -1140,18 +1111,18 @@ let data_fun_to_display_def = cake_define
 
 (* asm *)
 
-let asm_binop_to_display_def = cake_define
+let asm_binop_to_display_def = new_definition
   `asm_binop_to_display op = (match op with asm_Add -> empty_item
   (implode "Add") | Sub -> empty_item (implode "Sub") | And ->
   empty_item (implode "And") | Or -> empty_item (implode "Or") | Xor
   -> empty_item (implode "Xor"))`;;
 
-let asm_reg_imm_to_display_def = cake_define
+let asm_reg_imm_to_display_def = new_definition
   `asm_reg_imm_to_display reg_imm' = (match reg_imm' with Reg reg ->
   item_with_num (implode "Reg") reg | Imm imm -> item_with_word
   (implode "Imm") imm)`;;
 
-let asm_arith_to_display_def = cake_define
+let asm_arith_to_display_def = new_definition
   `asm_arith_to_display op = (match op with asm_Binop bop n1 n2 reg_imm'
   -> displayLang_Item NONE (implode "Binop")
          [asm_binop_to_display bop; num_to_display n1; num_to_display
@@ -1172,12 +1143,12 @@ let asm_arith_to_display_def = cake_define
             n4] | asm_SubOverflow n1 n2 n3 n4 -> item_with_nums
             (implode "SubOverflow") [n1; n2; n3; n4])`;;
 
-let asm_addr_to_display_def = cake_define
+let asm_addr_to_display_def = new_definition
   `asm_addr_to_display addr' = (match addr' with Addr reg w ->
   displayLang_Item NONE (implode "Addr")
                           [num_to_display reg; word_to_display w])`;;
 
-let asm_memop_to_display_def = cake_define
+let asm_memop_to_display_def = new_definition
   `asm_memop_to_display op = (match op with Load -> empty_item
   (implode "Load") | asm_Load8 -> empty_item (implode "Load8") |
   asm_Load16 -> empty_item (implode "Load16") | asm_Load32 ->
@@ -1186,7 +1157,7 @@ let asm_memop_to_display_def = cake_define
   asm_Store16 -> empty_item (implode "Store16") | asm_Store32 ->
   empty_item (implode "Store32"))`;;
 
-let asm_cmp_to_display_def = cake_define
+let asm_cmp_to_display_def = new_definition
   `asm_cmp_to_display op = (match op with Equal -> empty_item
   (implode "Equal") | asm_Lower -> empty_item (implode "Lower") |
   Less -> empty_item (implode "Less") | Test -> empty_item (implode
@@ -1195,7 +1166,7 @@ let asm_cmp_to_display_def = cake_define
   empty_item (implode "NotLess") | asm_NotTest -> empty_item (implode
   "NotTest"))`;;
 
-let asm_fp_to_display_def = cake_define
+let asm_fp_to_display_def = new_definition
   `asm_fp_to_display op = (match op with FPLess n1 n2 n3 ->
   item_with_nums (implode "FPLess") [n1; n2; n3] | FPLessEqual n1 n2
   n3 -> item_with_nums (implode "FPLessEqual") [n1; n2; n3] | FPEqual
@@ -1214,7 +1185,7 @@ let asm_fp_to_display_def = cake_define
   FPToInt n1 n2 -> item_with_nums (implode "FPToInt") [n1; n2] |
   FPFromInt n1 n2 -> item_with_nums (implode "FPFromInt") [n1; n2])`;;
 
-let asm_inst_to_display_def = cake_define
+let asm_inst_to_display_def = new_definition
   `asm_inst_to_display inst' = (match inst' with asm_Skip -> empty_item
   (implode "Skip") | Const reg w -> displayLang_Item NONE (implode
   "Const") [num_to_display reg;
@@ -1227,7 +1198,7 @@ let asm_inst_to_display_def = cake_define
            -> displayLang_Item NONE (implode "FP") [asm_fp_to_display
            fp])`;;
 
-let asm_asm_to_display_def = cake_define
+let asm_asm_to_display_def = new_definition
   `asm_asm_to_display inst' = (match inst' with Inst i ->
   asm_inst_to_display i | Jump w -> item_with_word (implode "Jump") w |
   JumpCmp c r to w -> displayLang_Item NONE (implode "JumpCmp")
@@ -1240,7 +1211,7 @@ let asm_asm_to_display_def = cake_define
 
 (* stackLang *)
 
-let store_name_to_display_def = cake_define
+let store_name_to_display_def = new_definition
   `store_name_to_display st = (match st with NextFree -> empty_item
   (implode "NextFree") | EndOfHeap -> empty_item (implode
   "EndOfHeap") | TriggerGC -> empty_item (implode "TriggerGC") |
@@ -1257,10 +1228,14 @@ let store_name_to_display_def = cake_define
   "BitmapBuffer") | BitmapBufferEnd -> empty_item (implode
   "BitmapBufferEnd") | Temp w -> item_with_word (implode "Temp") w)`;;
 
-let stack_seqs_def = cake_define
-  `stack_seqs z =
+let _ = size_thms "stackLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let stack_seqs_def,stack_seqs_ind = define_wf
+  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  [`stack_seqs z =
      (match z with stackLang_Seq x y -> Append (stack_seqs x)
-       (stack_seqs y) | _24 -> List [z])`;;
+       (stack_seqs y) | _24 -> List [z])`];;
 
 (* [local] *)
 let MEM_append_stack_seqs = prove
@@ -1275,15 +1250,7 @@ let list_size_append_stack_seqs = prove
    labLang_prog_size ARB x + 1`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let stack_prog_to_display_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\x.
-        match x with
-          INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`)
-  CHEAT_TAC
+let stack_prog_to_display_def = define_mutual_guess
   [`stack_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item
   (implode "skip")`;
@@ -1409,7 +1376,7 @@ let stack_prog_to_display_def = cake_define_list_try_tac (fun () ->
         stack_prog_to_display k ns x ::
           stack_prog_to_display_list k ns xs)`];;
 
-let stack_fun_to_display_def = cake_define
+let stack_fun_to_display_def = new_definition
   `stack_fun_to_display names (n,body) =
      Tuple [String (implode "func");
             String (attach_name names (SOME n));
@@ -1417,7 +1384,7 @@ let stack_fun_to_display_def = cake_define
 
 (* labLang *)
 
-let lab_asm_to_display_def = cake_define
+let lab_asm_to_display_def = new_definition
   `lab_asm_to_display ns la = (match la with labLang_Jump (labLang_Lab s
   n) ->
          displayLang_Item NONE (implode "jump")
@@ -1438,7 +1405,7 @@ let lab_asm_to_display_def = cake_define
              name] | Install -> empty_item (implode "install") | Halt
              -> empty_item (implode "halt"))`;;
 
-let lab_line_to_display_def = cake_define
+let lab_line_to_display_def = new_definition
   `lab_line_to_display ns line = (match line with Label s n le ->
          displayLang_Item NONE (implode "label") [String (attach_name
            ns (SOME s)); num_to_display n] | labLang_Asm aoc enc len ->
@@ -1452,18 +1419,22 @@ let lab_line_to_display_def = cake_define
                                 labLang_LabAsm la pos enc len ->
                                 lab_asm_to_display ns la)`;;
 
-let lab_fun_to_display_def = cake_define
-  `lab_fun_to_display names (Section n lines) =
+let lab_fun_to_display_def = define_general
+  [`lab_fun_to_display names (Section n lines) =
      List (
             String (attach_name names (SOME n)) :: MAP
-              (lab_line_to_display names) lines)`;;
+              (lab_line_to_display names) lines)`];;
 
 (* wordLang *)
 
-let word_seqs_def = cake_define
-  `word_seqs z =
+let _ = size_thms "wordLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_seqs_def,word_seqs_ind = define_wf
+  `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
+  [`word_seqs z =
      (match z with wordLang_Seq x y -> Append (word_seqs x)
-       (word_seqs y) | _31 -> List [z])`;;
+       (word_seqs y) | _31 -> List [z])`];;
 
 (* [local] *)
 let MEM_append_word_seqs = prove
@@ -1475,11 +1446,7 @@ let MEM_append_word_seqs = prove
    the value of an ML expression: MEM_word_exps_size_ARB *)
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let word_exp_to_display_def = cake_define_list_try (fun () ->
-  `MEASURE (\x. match x with INL v -> wordLang_exp_size ARB v | INR v
-     -> list_size wordLang_exp_size ARB v)`)
+let word_exp_to_display_def = define_mutual_rec
   [`word_exp_to_display (wordLang_Const v) = item_with_word (implode
   "Const") v`;
    `word_exp_to_display (wordLang_Var n) = item_with_num (implode
@@ -1500,25 +1467,18 @@ let word_exp_to_display_def = cake_define_list_try (fun () ->
    `word_exp_to_display_list (x :: xs) =
         word_exp_to_display x :: word_exp_to_display_list xs`];;
 
-let ws_to_display_def = cake_define_list
+let ws_to_display_def,ws_to_display_ind = define_rec
   [`ws_to_display [] = []`;
    `ws_to_display ((b,x) :: xs) =
       Tuple [bool_to_display b; word_to_display x] ::
         ws_to_display xs`];;
 
-let num_sets_to_display_def = cake_define
+let num_sets_to_display_def = new_definition
   `num_sets_to_display (l,r) =
      Tuple [num_set_to_display l;
             num_set_to_display r]`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let word_prog_to_display_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\x. match x with INL (k,_32) -> k | INR (INL (k,_33)) -> k
-     | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`)
-  CHEAT_TAC
+let word_prog_to_display_def = define_mutual_guess
   [`word_prog_to_display 0 ns x = empty_item (implode "...")`;
    `word_prog_to_display (SUC k) ns wordLang_Skip = empty_item
   (implode "skip")`;
@@ -1641,7 +1601,7 @@ let word_prog_to_display_def = cake_define_list_try_tac (fun () ->
             String (attach_name ns (SOME n2));
             num_to_display n3]])`];;
 
-let word_fun_to_display_def = cake_define
+let word_fun_to_display_def = new_definition
   `word_fun_to_display names (n,argc,body) =
      Tuple [String (implode "func");
             String (attach_name names (SOME n));
@@ -1653,29 +1613,29 @@ let word_fun_to_display_def = cake_define
 let tap_config_FIELDS = define_record "tap_config"
   ["explore_flag","bool"];;
 
-let default_tap_config_def = cake_define
+let default_tap_config_def = new_definition
   `default_tap_config = mk_tap_config F`;;
 
 (* ------------------------- *)
 
-let map_to_append_def = cake_define_list
+let map_to_append_def,map_to_append_ind = define_rec
   [`map_to_append f [] = misc_Nil`;
    `map_to_append f (x :: xs) = Append (misc_List (f x))
   (map_to_append f xs)`];;
 
-let source_to_strs_def = cake_define
+let source_to_strs_def = new_definition
   `source_to_strs decs =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     source_to_display_dec) decs`;;
 
-let flat_to_strs_def = cake_define
+let flat_to_strs_def = new_definition
   `flat_to_strs (decs:flatLang_exp list) =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     flat_to_display) decs`;;
 
-let clos_to_strs_def = cake_define
+let clos_to_strs_def = new_definition
   `clos_to_strs (decs,funs) =
      (let names = get_src_names (decs ++ MAP (SND o SND) funs) LN in
        Append (map_to_append (str_tree_to_strs (implode "\n\n") o
@@ -1685,7 +1645,7 @@ let clos_to_strs_def = cake_define
                               display_to_str_tree o
                               clos_fun_to_display names) funs))`;;
 
-let bvl_to_strs_def = cake_define
+let bvl_to_strs_def = new_definition
   `bvl_to_strs names xs =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
@@ -1694,7 +1654,7 @@ let bvl_to_strs_def = cake_define
 (* HOL4 presLangScript.sml:1513-1521: the ML values that the
    definitions below antiquote *)
 
-let bvi_to_strs_def = cake_define
+let bvi_to_strs_def = new_definition
   `bvi_to_strs names xs =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
@@ -1703,7 +1663,7 @@ let bvi_to_strs_def = cake_define
 (* HOL4 presLangScript.sml:1530-1538: the ML values that the
    definitions below antiquote *)
 
-let data_to_strs_def = cake_define
+let data_to_strs_def = new_definition
   `data_to_strs names xs =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
@@ -1712,19 +1672,19 @@ let data_to_strs_def = cake_define
 (* HOL4 presLangScript.sml:1547-1555: the ML values that the
    definitions below antiquote *)
 
-let word_to_strs_def = cake_define
+let word_to_strs_def = new_definition
   `word_to_strs names xs =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     word_fun_to_display names) xs`;;
 
-let stack_to_strs_def = cake_define
+let stack_to_strs_def = new_definition
   `stack_to_strs names xs =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     stack_fun_to_display names) xs`;;
 
-let lab_to_strs_def = cake_define
+let lab_to_strs_def = new_definition
   `lab_to_strs names xs =
      map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o

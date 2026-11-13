@@ -80,11 +80,11 @@ let compiler_instance_FIELDS = define_record "compiler_instance"
    "decs_dom","dec list->bool";
    "init_state","'config"];;
 
-let v_rel_abs = cake_define
+let v_rel_abs = new_definition
   `v_fun_abs fun_dom fun_v v = (some (\x. fun_v x = v /\ x IN
   fun_dom))`;;
 
-let mk_compiler_fun_from_ci_def = cake_define
+let mk_compiler_fun_from_ci_def = new_definition
   `mk_compiler_fun_from_ci ci (env_id,cfg_v,decs) =
      OPTION_BIND (v_fun_abs (compiler_instance_config_dom ci)
        (compiler_instance_config_v ci) cfg_v) (\cfg.
@@ -95,7 +95,7 @@ let mk_compiler_fun_from_ci_def = cake_define
 (* HOL4 source_evalProofScript.sml:41: the overload ci_comp, which
    the port expands *)
 
-let mk_init_eval_state_def = cake_define
+let mk_init_eval_state_def = new_definition
   `mk_init_eval_state ci = EvalDecs (mk_eval_decs_state
   (mk_compiler_fun_from_ci ci) (compiler_instance_config_v ci
   (compiler_instance_init_state ci)) (0,0,1) (v_fun_abs
@@ -104,18 +104,18 @@ let mk_init_eval_state_def = cake_define
 (* an instance of custom_do_eval that behaves as much as possible
    like the no-oracle semantics *)
 
-let v_to_nat_def = cake_define
+let v_to_nat_def = new_definition
   `v_to_nat v = (match v with (semanticPrimitives_Litv (ast_IntLit
   i)) -> (if (&0) <= i then SOME (num_of_int i) else NONE) | _1 ->
   NONE)`;;
 
-let v_to_env_id_def = cake_define
+let v_to_env_id_def = new_definition
   `v_to_env_id v = (match v with semanticPrimitives_Conv NONE
   [gen_id_v; id_v] -> (match (v_to_nat gen_id_v,v_to_nat id_v) with
   (SOME gen_id,SOME id') -> SOME (gen_id,id') | _2 -> NONE) | _3 ->
   NONE)`;;
 
-let do_eval_record_def = cake_define
+let do_eval_record_def = new_definition
   `do_eval_record ci vs (orac:num->(num#num)#semanticPrimitives_v#dec
   list) = (match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
        (let ((i,_4),st,_5) = orac 0 in
@@ -131,7 +131,7 @@ let do_eval_record_def = cake_define
 
 (* a somewhat generic env rel *)
 
-let source_evalProof_env_rel_def = cake_define
+let source_evalProof_env_rel_def = new_definition
   `source_evalProof_env_rel v_rel' (env:semanticPrimitives_v sem_env)
   env' <=> sem_env_c
      env = sem_env_c env' /\ nsDom (sem_env_v env) = nsDom (sem_env_v
@@ -263,7 +263,7 @@ let source_evalProof_v_rel_Boolv = prove
 
 (* HOL4 source_evalProofScript.sml:245: ML code, not ported *)
 
-let recorded_orac_wf_def = cake_define
+let recorded_orac_wf_def = new_definition
   `recorded_orac_wf compiler
   (orac:num->(num#num)#semanticPrimitives_v#dec list) <=>
    (0 < FST (FST (orac 0)) ==>
@@ -273,7 +273,7 @@ let recorded_orac_wf_def = cake_define
      (?r. compiler (orac j) = SOME r /\ FST (SND (orac (j + 1))) =
        FST r))`;;
 
-let s_rel_def = cake_define
+let s_rel_def = new_definition
   `source_evalProof_s_rel ci s s' <=>
    (?dec_s orac_s' refs'. s' =
      semanticPrimitives_state_eval_state_fupd (K (SOME (EvalOracle
@@ -308,7 +308,7 @@ let s_rel_def = cake_define
    recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle orac_s'))`;;
 hol4_overload "s_rel" "source_evalProof_s_rel";;
 
-let orac_s_def = cake_define
+let orac_s_def = new_definition
   `orac_s x1 =
       match x1 with
         SOME (EvalOracle es) -> es
@@ -316,7 +316,7 @@ let orac_s_def = cake_define
 
 (* HOL4 source_evalProofScript.sml:285: ML code, not ported *)
 
-let es_forward_def = cake_define
+let es_forward_def = new_definition
   `es_forward es es' <=>
    (LENGTH (eval_oracle_state_envs es) <= LENGTH
      (eval_oracle_state_envs es')) /\
@@ -356,7 +356,7 @@ let forward_rules = prove
 (* a stronger notion that applies end-to-end over evaluate/evaluate_decs,
    where the generation stack will match at either end and the previous
    generations will be untouched. *)
-let es_stack_forward_def = cake_define
+let es_stack_forward_def = new_definition
   `es_stack_forward es es' <=> eval_oracle_state_generation
    es' = eval_oracle_state_generation es /\
    (!j. j < eval_oracle_state_generation es ==> EL j
@@ -371,7 +371,7 @@ let es_stack_forward_trans = prove
    es_stack_forward es1 es3`,
   CHEAT_TAC);;
 
-let match_result_rel_def = cake_define
+let match_result_rel_def = new_definition
   `source_evalProof_match_result_rel nerr R mr1 mr2 <=> (match mr1
   with No_match -> mr2 = No_match | Match_type_error -> nerr \/ mr2 =
   Match_type_error | Match x -> (?y. mr2 = Match y /\ R x y))`;;
@@ -672,7 +672,7 @@ let declare_env_sim = prove
      t)) (orac_s es2))`,
   CHEAT_TAC);;
 
-let abort_def = cake_define
+let abort_def = new_definition
   `source_evalProof_abort r <=> (match r with Rerr (Rabort a) -> T |
   _9 -> F)`;;
 hol4_overload "abort" "source_evalProof_abort";;
@@ -790,7 +790,7 @@ let source_evalProof_check_dup_ctors_thm = prove
 (* HOL4 source_evalProofScript.sml:1387: the overload shift_seq,
    which the port expands *)
 
-let do_eval_oracle_def = cake_define
+let do_eval_oracle_def = new_definition
   `do_eval_oracle (f:(num#num)#semanticPrimitives_v#dec
   list->(semanticPrimitives_v#word8 list#word64 list) option) (g:dec
   list->dec list) vs (orac:num->(num#num)#semanticPrimitives_v#dec list)
@@ -804,7 +804,7 @@ let do_eval_oracle_def = cake_define
                1))) then SOME (env_id,misc_shift_seq 1 orac,g decs)
                else NONE) | _10 -> NONE)) | _11 -> NONE)`;;
 
-let insert_gen_oracle_def = cake_define
+let insert_gen_oracle_def = new_definition
   `insert_gen_oracle ci g shift_f orac es = (match es with SOME
   (EvalOracle s) -> SOME (EvalOracle (oracle_fupd (K (misc_shift_seq
   (shift_f (oracle s 0)) orac))
@@ -814,19 +814,19 @@ let insert_gen_oracle_def = cake_define
 (* HOL4 source_evalProofScript.sml:1414: the overload insert_oracle,
    which the port expands *)
 
-let orac_agrees_def = cake_define
+let orac_agrees_def = new_definition
   `orac_agrees orac es = (match es with SOME (EvalOracle s) ->
        (!j. j < FST (FST (oracle s 0)) ==> orac j = oracle s (j +
          1)) | _13 -> F)`;;
 
 (* the infinite extension of an oracle is still well-formed with
    respect to the compiler function *)
-let orac_extended_wf_def = cake_define
+let orac_extended_wf_def = new_definition
   `orac_extended_wf f orac =
    (!i x. f (orac i) = SOME x ==> FST x = FST (SND (orac (SUC
      i))))`;;
 
-let record_forward_def = cake_define
+let record_forward_def = new_definition
   `record_forward es es' = (match es with SOME (EvalOracle s) -> (?s'.
   es' = SOME (EvalOracle s') /\
          (FST (FST (oracle s 0)) <= FST (FST (oracle s' 0))) /\
@@ -848,7 +848,7 @@ let orac_agrees_backward = prove
    orac_agrees orac es1`,
   CHEAT_TAC);;
 
-let is_record_def = cake_define
+let is_record_def = new_definition
   `is_record ci es <=> (match es with SOME (EvalOracle s) ->
   eval_oracle_state_custom_do_eval
          s = do_eval_record ci | _17 -> F)`;;
@@ -1064,7 +1064,7 @@ let evaluate_record_suffix = prove
 
 (* Constructs the oracle from an evaluation by using the recorded
    events, padding with null events if necessary. *)
-let extract_oracle_def = cake_define
+let extract_oracle_def = new_definition
   `extract_oracle s env decs n =
      (match (OLEAST (\k. ?s' res.
        evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K
@@ -1108,7 +1108,7 @@ let extract_oracle_agrees = prove
    orac_agrees orac (semanticPrimitives_state_eval_state t')`,
   CHEAT_TAC);;
 
-let get_oracle_def = cake_define
+let get_oracle_def = new_definition
   `get_oracle ci s env decs =
      (let es_record = EvalOracle (mk_eval_oracle_state (K
        ((0,0),compiler_instance_config_v ci
@@ -1117,7 +1117,7 @@ let get_oracle_def = cake_define
      extract_oracle (semanticPrimitives_state_eval_state_fupd (K
        (SOME es_record)) s) env decs)`;;
 
-let put_oracle_def = cake_define
+let put_oracle_def = new_definition
   `put_oracle ci orac = ((\ci. insert_gen_oracle ci I (FST o FST)) ci
   orac
      (SOME (EvalOracle (mk_eval_oracle_state (K
@@ -1138,7 +1138,7 @@ let s_rel_clock2 = prove
   (semanticPrimitives_state_clock_fupd (K k) t)`,
   CHEAT_TAC);;
 
-let precond_eval_state_def = cake_define
+let precond_eval_state_def = new_definition
   `precond_eval_state orac ci s env decs = (match
   semanticPrimitives_state_eval_state s with NONE -> T | SOME (EvalDecs
   eds) -> EvalDecs eds = mk_init_eval_state ci /\
@@ -1229,7 +1229,7 @@ let oracle_semantics_prog = prove
 (* for use in source-to-source phases, a proof that the oracle can be adjusted
    by any stateless compiler *)
 
-let adjust_oracle_def = cake_define
+let adjust_oracle_def = new_definition
   `adjust_oracle ci f es = (match es with
      NONE -> es | SOME (EvalDecs _20) -> es | SOME (EvalOracle o_s)
        -> SOME (EvalOracle
@@ -1244,7 +1244,7 @@ let adjust_oracle_insert_gen_oracle = prove
 (* HOL4 source_evalProofScript.sml:2249: the overload
    s_adjust_oracle, which the port expands *)
 
-let is_insert_oracle_def = cake_define
+let is_insert_oracle_def = new_definition
   `is_insert_oracle ci f es = (?es' shift_f orac. es =
   insert_gen_oracle ci f shift_f orac es')`;;
 

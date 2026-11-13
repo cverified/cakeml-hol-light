@@ -37,7 +37,7 @@ In addition, the first address on the heap should store the address of cake_bitm
 
 Note: this set up does NOT account for restoring clobbered registers
 *)
-let export_riscv_startup_def = cake_define
+let export_riscv_startup_def = new_definition
   `export_riscv_startup ret pk =
      SmartAppend (misc_List
        [(implode "\n");
@@ -78,7 +78,7 @@ let export_riscv_startup_def = cake_define
        [(implode "\n")]))))`;;
 hol4_overload "startup" "export_riscv_startup";;
 
-let export_riscv_ffi_asm_def = cake_define_list
+let export_riscv_ffi_asm_def,export_riscv_ffi_asm_ind = define_rec
   [`export_riscv_ffi_asm [] = misc_Nil`;
    `export_riscv_ffi_asm (ffi :: ffis) =
           SmartAppend (misc_List [
@@ -100,7 +100,7 @@ hol4_overload "ffi_asm" "export_riscv_ffi_asm";;
 (* HOL4 export_riscvScript.sml:98-181: the ML values that the
    definitions below antiquote *)
 
-let export_riscv_export_func_def = cake_define
+let export_riscv_export_func_def = new_definition
   `export_riscv_export_func appl (name,label,start',len) =
      SmartAppend appl (misc_List
      [(implode "\n     .globl  cdecl("); name; (implode ")\n");
@@ -112,13 +112,13 @@ let export_riscv_export_func_def = cake_define
       (implode "     j       "); label; (implode "\n")])`;;
 hol4_overload "export_func" "export_riscv_export_func";;
 
-let export_riscv_export_funcs_def = cake_define
+let export_riscv_export_funcs_def = new_definition
   `export_riscv_export_funcs lsyms exp =
      FOLDL export_riscv_export_func misc_Nil (FILTER ((C MEM exp)
        o FST) lsyms)`;;
 hol4_overload "export_funcs" "export_riscv_export_funcs";;
 
-let riscv_export_def = cake_define
+let riscv_export_def = new_definition
   `riscv_export ffi_names' bytes (data:word64 list) syms exp ret pk =
      (let lsyms = get_sym_labels syms in
      SmartAppend

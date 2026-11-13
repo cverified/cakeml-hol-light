@@ -19,7 +19,8 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "clos_fvs"
   ["closLang"];;
 
-let remove_fvs_def = cake_define_list
+let remove_fvs_def,remove_fvs_ind = define_shaped_rec
+  "nested"
   [`remove_fvs fvs [] = []`;
    `remove_fvs fvs ((x:closLang_exp) :: y :: xs) =
          HD (remove_fvs fvs [x]) :: remove_fvs fvs (y :: xs)`;
@@ -65,13 +66,8 @@ let remove_fvs_def = cake_define_list
           (num_args + fvs) [x1]))])`];;
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let remove_fvs_sing_def = cake_define_list_try (fun () ->
-  `MEASURE (\x. match x with INL (_1,e) -> closLang_exp_size e | INR
-     (INL (_2,es)) -> list_size closLang_exp_size es | INR (INR
-     (_3,_4,es)) -> list_size (pair_size (\x. x) closLang_exp_size)
-       es)`)
+let remove_fvs_sing_def = define_mutual_shaped_rec
+  "nested"
   [`remove_fvs_sing fvs (Var t v:closLang_exp) =
         (if v < fvs then (Var t v:closLang_exp) else closLang_Op
           t (closLang_MemOp closLang_El) [])`;
@@ -127,7 +123,7 @@ let remove_fvs_sing_eq = prove
        new_fvs) [x]))) fns)`,
   CHEAT_TAC);;
 
-let clos_fvs_compile_def = cake_define
+let clos_fvs_compile_def = new_definition
   `clos_fvs_compile exps = remove_fvs 0 exps`;;
 hol4_overload "compile" "clos_fvs_compile";;
 
@@ -136,7 +132,7 @@ let clos_fvs_compile_eq = prove
  (`clos_fvs_compile exps = remove_fvs_list 0 exps`,
   CHEAT_TAC);;
 
-let clos_fvs_compile_inc_def = cake_define
+let clos_fvs_compile_inc_def = new_definition
   `clos_fvs_compile_inc (e,xs) = (clos_fvs_compile e,[])`;;
 hol4_overload "compile_inc" "clos_fvs_compile_inc";;
 

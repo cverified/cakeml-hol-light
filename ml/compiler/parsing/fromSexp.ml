@@ -112,7 +112,7 @@ let strip_sxcons_EQ_CONS = prove
 
 (* end TODO *)
 
-let encode_control_def = cake_define_list
+let encode_control_def,encode_control_ind = define_rec
   [`encode_control "" = ""`;
    `encode_control (c :: cs) =
         (if c = (CHR 92) then c :: c :: (encode_control cs) else if
@@ -120,7 +120,10 @@ let encode_control_def = cake_define_list
              ((CHR 92) :: ((if ORD c < 16 then "0" else "") ++
                num_to_hex_string (ORD c))) ++ (encode_control cs))`];;
 
-let decode_control_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let decode_control_def,decode_control_ind = define_wf
+  `MEASURE (\x0. list_size char_size x0)`
   [`decode_control "" = SOME ""`;
    `decode_control (c :: cs) =
          (if c = (CHR 92) then
@@ -168,7 +171,7 @@ let encode_decode_control = prove
  (`!ls r. decode_control ls = SOME r ==> ls = encode_control r`,
   CHEAT_TAC);;
 
-let SEXSTR_def = cake_define
+let SEXSTR_def = new_definition
   `SEXSTR s = SX_STR (encode_control s)`;;
 
 (* [simp] *)
@@ -184,7 +187,7 @@ let SEXSTR_distinct = prove
    ((SEXSTR s = SX_STR s') <=> s' = encode_control s)`,
   CHEAT_TAC);;
 
-let odestSEXSTR_def = cake_define
+let odestSEXSTR_def = new_definition
   `odestSEXSTR x1 =
         match x1 with
           SX_STR s -> OPTION_MAP implode (decode_control s)
@@ -200,19 +203,19 @@ let SEXSTR_remove = prove
   SX_STR s`,
   CHEAT_TAC);;
 
-let odestSXSTR_def = cake_define
+let odestSXSTR_def = new_definition
   `odestSXSTR x1 =
         match x1 with
           SX_STR s -> SOME (implode s)
         | _4 -> NONE`;;
 
-let odestSXSYM_def = cake_define
+let odestSXSYM_def = new_definition
   `odestSXSYM x1 =
         match x1 with
           SX_SYM s -> SOME (implode s)
         | _5 -> NONE`;;
 
-let odestSXNUM_def = cake_define
+let odestSXNUM_def = new_definition
   `odestSXNUM x1 =
         match x1 with
           SX_NUM n -> SOME n
@@ -223,7 +226,7 @@ let odestSXNUM_SEXSTR = prove
  (`odestSXNUM (SEXSTR str) = NONE`,
   CHEAT_TAC);;
 
-let sexpopt_def = cake_define
+let sexpopt_def = new_definition
   `sexpopt p s =
      OPTION_BIND (odestSXSYM s) (\
         nm. OPTION_IGNORE_BIND
@@ -234,15 +237,16 @@ let sexpopt_def = cake_define
        (OPTION_GUARD (nm = "SOME" /\ LENGTH args = 1)) (
        OPTION_MAP SOME (p (HD args))))`;;
 
-let sexplist_def = cake_define
-  `sexplist p s =
+let sexplist_def,sexplist_ind = define_shaped_rec
+  "match"
+  [`sexplist p s =
      (match s with
        SX_CONS h t ->
          OPTION_BIND (p h) (\
            ph. OPTION_BIND (sexplist p t) (\
            pt.
-           SOME (ph :: pt))) | SX_SYM s -> (if s = "nil" then SOME
-             [] else NONE) | _7 -> NONE)`;;
+           SOME (ph :: pt))) | SX_SYM s -> (if s = "nil" then
+             SOME [] else NONE) | _7 -> NONE)`];;
 
 (* [simp] *)
 let sexplist_thm = prove
@@ -254,7 +258,7 @@ let sexplist_thm = prove
    sexplist p (SX_STR str) = NONE`,
   CHEAT_TAC);;
 
-let sexppair_def = cake_define
+let sexppair_def = new_definition
   `sexppair p1 p2 s =
      (match s with
        SX_CONS s1 s2 -> OPTION_MAP2 (,) (p1 s1) (p2 s2) | _8 ->
@@ -305,14 +309,15 @@ let sexplist_CONG = prove
    expands *)
 
 let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:442-445: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpid_def = cake_define_try_tac (fun () ->
-  `MEASURE (simpleSexp_sexp_size o SND)`)
-  CHEAT_TAC
-  `sexpid p s =
+let sexpid_def,sexpid_ind = define_wf_cheat
+  `MEASURE (simpleSexp_sexp_size o SND)`
+  [`sexpid p s =
      OPTION_BIND (dstrip_sexp s) (\
         (nm,args).
         ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Short"
@@ -320,18 +325,19 @@ let sexpid_def = cake_define_try_tac (fun () ->
                (OPTION_MAP Short (p (EL 0 args))) ++
          (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Long"
            /\ LENGTH args = 2)
-               (OPTION_MAP2 Long (odestSEXSTR (EL 0 args)) (sexpid
-                 p (EL 1 args)))))`;;
+               (OPTION_MAP2 Long (odestSEXSTR (EL 0 args))
+                 (sexpid p (EL 1 args)))))`];;
 
 let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:461-465: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_def = cake_define_try_tac (fun () ->
-  `MEASURE simpleSexp_sexp_size`)
-  CHEAT_TAC
-  `sexptype s =
+let sexptype_def,sexptype_ind = define_wf_cheat
+  `MEASURE simpleSexp_sexp_size`
+  [`sexptype s =
      OPTION_BIND (dstrip_sexp s) (\
         (s,args).
         ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atvar"
@@ -347,7 +353,7 @@ let sexptype_def = cake_define_try_tac (fun () ->
          (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atapp"
            /\ LENGTH args = 2)
                (OPTION_MAP2 Atapp (sexplist sexptype (EL 0 args))
-                      (sexpid odestSEXSTR (EL 1 args)))))`;;
+                      (sexpid odestSEXSTR (EL 1 args)))))`];;
 
 (* translator friendly version for bootstrapping *)
 let _ = size_thms "simpleSexp_sexp";;
@@ -357,10 +363,9 @@ let _ = size_thms "simpleSexp_sexp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_alt_def = cake_define_list_try_tac (fun () ->
+let sexptype_alt_def = define_mutual_wf_cheat
   `inv_image (MEASURE simpleSexp_sexp_size)
-                      (\x. match x with INL y -> y | INR y -> y)`)
-  CHEAT_TAC
+                   (\x. match x with INL y -> y | INR y -> y)`
   [`sexptype_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Atvar" /\ LENGTH args = 1 then
@@ -389,7 +394,7 @@ let sexptype_alt_intro1 = prove
  (`sexptype = sexptype_alt /\ sexplist sexptype = sexptype_list`,
   CHEAT_TAC);;
 
-let sexplit_def = cake_define
+let sexplit_def = new_definition
   `sexplit s =
      OPTION_MAP (ast_IntLit o (&)) (odestSXNUM s) ++
      OPTION_MAP ast_StrLit (odestSEXSTR s) ++
@@ -424,14 +429,15 @@ let sexplit_def = cake_define
 (* don't require Pvar constructors; bare strings can be pattern variables.
    Unclear if this sort of special-casing is ever likely to be helpful *)
 let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:582-594: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_def = cake_define_try_tac (fun () ->
-  `MEASURE simpleSexp_sexp_size`)
-  CHEAT_TAC
-  `sexppat s =
+let sexppat_def,sexppat_ind = define_wf_cheat
+  `MEASURE simpleSexp_sexp_size`
+  [`sexppat s =
      OPTION_MAP ast_Pvar (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
@@ -451,11 +457,12 @@ let sexppat_def = cake_define_try_tac (fun () ->
              (OPTION_MAP2 ast_Pas (sexppat (EL 0 args))
                         (odestSEXSTR (EL 1 args))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pref" /\
-         LENGTH args = 1) (OPTION_MAP ast_Pref (sexppat (EL 0 args))) ++
+         LENGTH args = 1) (OPTION_MAP ast_Pref (sexppat (EL 0 args)))
+         ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Ptannot"
          /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Ptannot (sexppat (EL 0 args))
-               (sexptype (EL 1 args))))`;;
+               (sexptype (EL 1 args))))`];;
 
 (* translator friendly version for bootstrapping *)
 let _ = size_thms "simpleSexp_sexp";;
@@ -465,10 +472,9 @@ let _ = size_thms "simpleSexp_sexp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_alt_def = cake_define_list_try_tac (fun () ->
+let sexppat_alt_def = define_mutual_wf_cheat
   `inv_image (MEASURE simpleSexp_sexp_size) (\x. match x with INL y ->
-     y | INR y -> y)`)
-  CHEAT_TAC
+  y | INR y -> y)`
   [`sexppat_alt s =
         OPTION_MAP ast_Pvar (odestSEXSTR s) ++
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
@@ -506,16 +512,16 @@ let sexppat_alt_intro1 = prove
  (`sexppat = sexppat_alt /\ sexplist sexppat = sexppat_list`,
   CHEAT_TAC);;
 
-let decode_thunk_mode_def = cake_define
+let decode_thunk_mode_def = new_definition
   `decode_thunk_mode s =
      (if s = "Evaluated" then SOME Evaluated else if s =
        "NotEvaluated" then SOME NotEvaluated else NONE)`;;
 
-let encode_thunk_mode_def = cake_define_list
+let encode_thunk_mode_def = define_cases
   [`encode_thunk_mode Evaluated = "Evaluated"`;
    `encode_thunk_mode NotEvaluated = "NotEvaluated"`];;
 
-let fromSexp_decode_test_def = cake_define
+let fromSexp_decode_test_def = new_definition
   `fromSexp_decode_test x1 =
       match x1 with
         SX_SYM s ->
@@ -532,7 +538,7 @@ let fromSexp_decode_test_def = cake_define
       | _11 -> NONE`;;
 hol4_overload "decode_test" "fromSexp_decode_test";;
 
-let decode_prim_type_def = cake_define
+let decode_prim_type_def = new_definition
   `decode_prim_type x1 =
       match x1 with
         SX_SYM s ->
@@ -545,7 +551,7 @@ let decode_prim_type_def = cake_define
       if s = "Float64T" then SOME ast_Float64T else NONE)
       | _12 -> NONE`;;
 
-let sexparith_def = cake_define
+let sexparith_def = new_definition
   `sexparith x1 =
       match x1 with
         SX_SYM s ->
@@ -564,7 +570,7 @@ let sexparith_def = cake_define
       if s = "FMA" then SOME ast_FMA else NONE)
       | _13 -> NONE`;;
 
-let sexplog_def = cake_define
+let sexplog_def = new_definition
   `sexplog x1 =
       match x1 with
         SX_SYM s ->
@@ -572,7 +578,7 @@ let sexplog_def = cake_define
       if s = "Orelse" then SOME Orelse else NONE)
       | _14 -> NONE`;;
 
-let sexpop_def = cake_define
+let sexpop_def = new_definition
   `sexpop x1 =
         match x1 with
           SX_SYM s ->
@@ -646,7 +652,7 @@ let sexpop_def = cake_define
            | _17 -> NONE) else NONE)
         | _18 -> NONE`;;
 
-let sexplocpt_def = cake_define
+let sexplocpt_def = new_definition
   `sexplocpt s =
         match s with
           SX_SYM s ->
@@ -660,7 +666,7 @@ let sexplocpt_def = cake_define
                               (odestSXNUM (EL 0 ls))
                               (odestSXNUM (EL 1 ls))))`;;
 
-let sexplocn_def = cake_define
+let sexplocn_def = new_definition
   `sexplocn s =
      OPTION_BIND (strip_sxcons s) (\
        ls.
@@ -670,18 +676,19 @@ let sexplocn_def = cake_define
               (sexplocpt (EL 1 ls))))`;;
 
 let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:875-881: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpexp_def = cake_define_try_tac (fun () ->
-  `MEASURE simpleSexp_sexp_size`)
-  CHEAT_TAC
-  `sexpexp s =
+let sexpexp_def,sexpexp_ind = define_wf_cheat
+  `MEASURE simpleSexp_sexp_size`
+  [`sexpexp s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
-       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Raise" /\
-         LENGTH args = 1)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Raise"
+         /\ LENGTH args = 1)
              (OPTION_MAP ast_Raise (sexpexp (EL 0 args))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Handle"
          /\ LENGTH args = 2)
@@ -699,7 +706,8 @@ let sexpexp_def = cake_define_try_tac (fun () ->
                     (sexplist sexpexp (EL 1 args))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Var" /\
          LENGTH args = 1)
-             (OPTION_MAP ast_Var (sexpid odestSEXSTR (EL 0 args))) ++
+             (OPTION_MAP ast_Var (sexpid odestSEXSTR (EL 0 args)))
+               ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Fun" /\
          LENGTH args = 2)
              (OPTION_MAP2 ast_Fun (odestSEXSTR (EL 0 args)) (sexpexp
@@ -710,8 +718,8 @@ let sexpexp_def = cake_define_try_tac (fun () ->
                sexpexp (EL 1 args))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Log" /\
          LENGTH args = 3)
-             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Log (sexplog
-               (EL 0 args)))
+             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Log
+               (sexplog (EL 0 args)))
                        (sexpexp (EL 1 args)))
                        (sexpexp (EL 2 args))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "If" /\
@@ -727,8 +735,8 @@ let sexpexp_def = cake_define_try_tac (fun () ->
                (sexplist (sexppair sexppat sexpexp) (EL 1 args))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Let" /\
          LENGTH args = 3)
-             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Let (sexpopt
-               odestSEXSTR (EL 0 args)))
+             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Let
+               (sexpopt odestSEXSTR (EL 0 args)))
                        (sexpexp (EL 1 args)))
                        (sexpexp (EL 2 args))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Letrec"
@@ -746,7 +754,7 @@ let sexpexp_def = cake_define_try_tac (fun () ->
          /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Lannot
                (sexpexp (EL 0 args))
-               (sexplocn (EL 1 args))))`;;
+               (sexplocn (EL 1 args))))`];;
 
 (* translator friendly version for bootstrapping *)
 let _ = size_thms "simpleSexp_sexp";;
@@ -756,14 +764,11 @@ let _ = size_thms "simpleSexp_sexp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpexp_alt_def = cake_define_list_try_tac (fun () ->
+let sexpexp_alt_def = define_mutual_wf_cheat
   `inv_image (MEASURE simpleSexp_sexp_size)
-          (\x. match x with INL y -> y | INR (INL y) -> y | INR (INR
-            (INL y)) -> y | INR (INR (INR (INL y))) -> y | INR (INR
-              (INR
-            (INR (INL y)))) -> y | INR (INR (INR (INR (INR y)))) ->
-              y)`)
-  CHEAT_TAC
+       (\x. match x with INL y -> y | INR (INL y) -> y | INR (INR
+         (INL y)) -> y | INR (INR (INR (INL y))) -> y | INR (INR (INR
+         (INR (INL y)))) -> y | INR (INR (INR (INR (INR y)))) -> y)`
   [`sexpexp_alt s =
          (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
               (if nm = "Raise" /\ LENGTH args = 1 then
@@ -858,7 +863,7 @@ let sexpexp_alt_intro1 = prove
      sexpfuns`,
   CHEAT_TAC);;
 
-let sexptype_def_def = cake_define
+let sexptype_def_def = new_definition
   `sexptype_def =
    sexplist
      (sexppair (sexplist odestSEXSTR)
@@ -866,14 +871,15 @@ let sexptype_def_def = cake_define
          (sexplist (sexppair odestSEXSTR (sexplist sexptype)))))`;;
 
 let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:1104-1108: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_def = cake_define_try_tac (fun () ->
-  `MEASURE simpleSexp_sexp_size`)
-  CHEAT_TAC
-  `sexpdec s =
+let sexpdec_def,sexpdec_ind = define_wf_cheat
+  `MEASURE simpleSexp_sexp_size`
+  [`sexpdec s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dlet" /\
@@ -885,14 +891,15 @@ let sexpdec_def = cake_define_try_tac (fun () ->
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dletrec"
          /\ LENGTH args = 2)
              (OPTION_MAP2 Dletrec (sexplocn (HD args))
-                            (sexplist (sexppair odestSEXSTR (sexppair
-                              odestSEXSTR sexpexp)) (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dtype" /\
-         LENGTH args = 2)
+                            (sexplist (sexppair odestSEXSTR
+                              (sexppair odestSEXSTR sexpexp)) (EL 1
+                              args))) ++
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dtype"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 Dtype (sexplocn (HD args)) (sexptype_def
                (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dtabbrev"
-         /\ LENGTH args = 4)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm =
+         "Dtabbrev" /\ LENGTH args = 4)
              (OPTION_APPLY (OPTION_APPLY (OPTION_APPLY (OPTION_MAP
                Dtabbrev (sexplocn (EL 0 args)))
                             (sexplist odestSEXSTR (EL 1 args)))
@@ -914,7 +921,7 @@ let sexpdec_def = cake_define_try_tac (fun () ->
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dlocal"
          /\ LENGTH args = 2)
              (OPTION_MAP2 Dlocal (sexplist sexpdec (EL 0 args))
-                 (sexplist sexpdec (EL 1 args))))`;;
+                 (sexplist sexpdec (EL 1 args))))`];;
 
 (* translator friendly version for bootstrapping *)
 let _ = size_thms "simpleSexp_sexp";;
@@ -924,10 +931,9 @@ let _ = size_thms "simpleSexp_sexp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_alt_def = cake_define_list_try_tac (fun () ->
+let sexpdec_alt_def = define_mutual_wf_cheat
   `inv_image (MEASURE simpleSexp_sexp_size)
-          (\x. match x with INL y -> y | INR y -> y)`)
-  CHEAT_TAC
+       (\x. match x with INL y -> y | INR y -> y)`
   [`sexpdec_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Dlet" /\ LENGTH args = 3 then
@@ -982,7 +988,7 @@ let sexpdec_alt_intro1 = prove
 
 (* now the reverse: toSexp *)
 
-let listsexp_def = cake_define
+let listsexp_def = new_definition
   `listsexp = FOLDR SX_CONS (SX_SYM "nil")`;;
 
 (* [simp] *)
@@ -996,7 +1002,7 @@ let listsexp_11 = prove
  (`!l1 l2. listsexp l1 = listsexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
 
-let optsexp_def = cake_define_list
+let optsexp_def = define_cases
   [`optsexp NONE = SX_SYM "NONE"`;
    `optsexp (SOME x) = listsexp [SX_SYM "SOME"; x]`];;
 
@@ -1005,7 +1011,7 @@ let optsexp_11 = prove
  (`optsexp o1 = optsexp o2 <=> o1 = o2`,
   CHEAT_TAC);;
 
-let idsexp_def = cake_define_list
+let idsexp_def,idsexp_ind = define_rec
   [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
    `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode
   ns); idsexp n]`];;
@@ -1016,12 +1022,10 @@ let idsexp_11 = prove
   CHEAT_TAC);;
 
 let _ = size_thms "ast_t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:1233-1237: the tactic that proves the
    termination *)
-let typesexp_def = cake_define_list_try (fun () ->
-  `MEASURE ast_t_size`)
+let typesexp_def,typesexp_ind = define_shaped_rec
+  "nested"
   [`typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode
   s)]`;
    `typesexp (Atfun t1 t2) = listsexp [SX_SYM "Atfun"; typesexp t1;
@@ -1036,7 +1040,7 @@ let typesexp_11 = prove
  (`!t1 t2. typesexp t1 = typesexp t2 <=> t1 = t2`,
   CHEAT_TAC);;
 
-let litsexp_def = cake_define_list
+let litsexp_def = define_cases
   [`litsexp (ast_IntLit i) =
        (if i < (&0) then listsexp [SX_SYM "-"; SX_NUM (num_of_int
          (--i))] else SX_NUM (num_of_int i))`;
@@ -1054,12 +1058,10 @@ let litsexp_11 = prove
   CHEAT_TAC);;
 
 let _ = size_thms "ast_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:1277-1284: the tactic that proves the
    termination *)
-let patsexp_def = cake_define_list_try (fun () ->
-  `MEASURE ast_pat_size`)
+let patsexp_def,patsexp_ind = define_shaped_rec
+  "nested"
   [`patsexp (ast_Pany:ast_pat) = listsexp [SX_SYM "Pany"]`;
    `patsexp (ast_Pvar s:ast_pat) = SEXSTR (explode s)`;
    `patsexp (ast_Plit l:ast_pat) = listsexp [SX_SYM "Plit"; litsexp
@@ -1078,7 +1080,7 @@ let patsexp_11 = prove
  (`!p1 p2. patsexp p1 = patsexp p2 <=> p1 = p2`,
   CHEAT_TAC);;
 
-let testsexp_def = cake_define
+let testsexp_def = new_definition
   `testsexp x1 =
       match x1 with
         (Equal:test) -> SX_SYM "Equal"
@@ -1101,7 +1103,7 @@ let sexptest_testsexp = prove
  (`!x. fromSexp_decode_test (testsexp x) = SOME x`,
   CHEAT_TAC);;
 
-let arithsexp_def = cake_define_list
+let arithsexp_def = define_cases
   [`arithsexp (ast_Add:ast_arith) = SX_SYM "Add"`;
    `arithsexp (ast_Sub:ast_arith) = SX_SYM "Sub"`;
    `arithsexp (ast_Mul:ast_arith) = SX_SYM "Mul"`;
@@ -1126,7 +1128,7 @@ let arithsexp_sexparith = prove
  (`!x. sexparith (arithsexp x) = SOME x`,
   CHEAT_TAC);;
 
-let prim_typesexp_def = cake_define
+let prim_typesexp_def = new_definition
   `prim_typesexp x1 =
       match x1 with
         ast_BoolT -> SX_SYM "BoolT"
@@ -1265,7 +1267,7 @@ let prim_typesexp_11 = prove
  (`!l1 l2. prim_typesexp l1 = prim_typesexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
 
-let opsexp_def = cake_define
+let opsexp_def = new_definition
   `opsexp x1 =
         match x1 with
           (ast_Shift ast_W8 Lsl n:ast_op) -> SX_CONS (SX_SYM
@@ -1350,7 +1352,7 @@ let opsexp_11 = prove
  (`!o1 o2. opsexp o1 = opsexp o2 <=> o1 = o2`,
   CHEAT_TAC);;
 
-let logsexp_def = cake_define_list
+let logsexp_def = define_cases
   [`logsexp Andalso = SX_SYM "Andalso"`;
    `logsexp Orelse = SX_SYM "Orelse"`];;
 
@@ -1359,7 +1361,7 @@ let logsexp_11 = prove
  (`!l1 l2. logsexp l1 = logsexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
 
-let locnsexp_def = cake_define_list
+let locnsexp_def = define_cases
   [`locnsexp (POSN n1 n2) = listsexp (MAP SX_NUM [n1; n2])`;
    `locnsexp UNKNOWNpt = SX_SYM "unk"`;
    `locnsexp EOFpt = SX_SYM "eof"`];;
@@ -1369,15 +1371,16 @@ let locnsexp_11 = prove
  (`locnsexp p1 = locnsexp p2 <=> p1 = p2`,
   CHEAT_TAC);;
 
-let locssexp_def = cake_define
-  `locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`;;
+let locssexp_def = define_general
+  [`locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`];;
 
 (* [simp] *)
 let locssexp_11 = prove
  (`!l1 l2. locssexp l1 = locssexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
 
-let expsexp_def = cake_define_list
+let expsexp_def,expsexp_ind = define_shaped_rec
+  "nested"
   [`expsexp (ast_Raise e:ast_exp) = (SX_CONS (SX_SYM "Raise")
   (SX_CONS (expsexp e) (SX_SYM "nil")))`;
    `expsexp (ast_Handle e pes:ast_exp) =
@@ -1430,7 +1433,7 @@ let expsexp_11 = prove
  (`!e1 e2. expsexp e1 = expsexp e2 ==> e1 = e2`,
   CHEAT_TAC);;
 
-let type_defsexp_def = cake_define
+let type_defsexp_def = new_definition
   `type_defsexp = listsexp o
      MAP (\(xs,x,ls).
        SX_CONS (listsexp (MAP (SEXSTR o explode) xs))
@@ -1450,7 +1453,8 @@ let mem_size_lemma = prove
  (`list_size sz xs < N ==> (MEM x xs ==> sz x < N)`,
   CHEAT_TAC);;
 
-let decsexp_def = cake_define_list
+let decsexp_def,decsexp_ind = define_shaped_rec
+  "nested"
   [`decsexp (Dlet locs p e) =
       (SX_CONS (SX_SYM "Dlet") (SX_CONS (locssexp locs) (SX_CONS
         (patsexp p) (SX_CONS (expsexp e) (SX_SYM "nil")))))`;

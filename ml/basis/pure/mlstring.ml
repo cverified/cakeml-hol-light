@@ -42,19 +42,20 @@ let mlstring_INDUCT,mlstring_RECURSION = define_datatype
 (* HOL4 mlstringScript.sml:26: the overload strlit, which the port
    expands *)
 
-let strlen_def = cake_define
-  `strlen (implode s) = LENGTH s`;;
+let strlen_def = define_general
+  [`strlen (implode s) = LENGTH s`];;
 
-let strsub_def = cake_define
-  `strsub (implode s) n = EL n s`;;
+let strsub_def = define_general
+  [`strsub (implode s) n = EL n s`];;
 
 (* the test here is because underspecification is annoying (and SEG is underspecified) *)
 (* the underlying primitive (CopyStrStr) raises an exception if the test is false *)
-let substring_def = cake_define
-  `substring (implode s) off len = implode (if off + len <= LENGTH s
-  then SEG len off s else if off <= LENGTH s then DROP off s else "")`;;
+let substring_def = define_general
+  [`substring (implode s) off len = implode (if off + len <= LENGTH
+  s then SEG len off s else if off <= LENGTH s then DROP off s else
+  "")`];;
 
-let concat_def = cake_define
+let concat_def = new_definition
   `mlstring_concat l = implode (FLAT (MAP (\s. match s with implode x
   -> x) l))`;;
 hol4_overload "concat" "mlstring_concat";;
@@ -64,7 +65,10 @@ let concat_nil = prove
  (`mlstring_concat [] = (implode "")`,
   CHEAT_TAC);;
 
-let explode_aux_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let explode_aux_def,explode_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`explode_aux s n 0 = []`;
    `explode_aux s n (SUC len) =
         strsub s n :: (explode_aux s (n + 1) len)`];;
@@ -75,7 +79,7 @@ let explode_aux_thm = prove
     (explode_aux (implode ls) n max' = DROP n ls)`,
   CHEAT_TAC);;
 
-let explode_def = cake_define
+let explode_def = new_definition
   `explode s = explode_aux s 0 (strlen s)`;;
 
 (* [simp] *)
@@ -125,7 +129,7 @@ let strlen_substring = prove
   <= strlen s then strlen s - i else 0)`,
   CHEAT_TAC);;
 
-let extract_def = cake_define
+let extract_def = new_definition
   `mlstring_extract s i opt =
      (if strlen s <= i then implode [] else match opt with
          SOME x -> substring s i (MIN (strlen s - i) x) | NONE ->
@@ -149,7 +153,7 @@ let substring_too_long = prove
  (`strlen s <= i ==> substring s i j = (implode "")`,
   CHEAT_TAC);;
 
-let strcat_def = cake_define
+let strcat_def = new_definition
   `strcat s1 s2 = mlstring_concat [s1; s2]`;;
 (* HOL4 mlstringScript.sml:183: the overload ^, which the port writes
    as an application of strcat *)
@@ -214,10 +218,10 @@ let strlen_strcat = prove
  (`strlen (strcat s1 s2) = strlen s1 + strlen s2`,
   CHEAT_TAC);;
 
-let concatWith_def = cake_define
+let concatWith_def = new_definition
   `concatWith s l = mlstring_concat (intersperse s l)`;;
 
-let chr_to_str_def = cake_define
+let chr_to_str_def = new_definition
   `chr_to_str (c:char) = implode [c]`;;
 
 hol4_overload "toString" "chr_to_str";;
@@ -232,12 +236,15 @@ let strlen_toString = prove
  (`strlen (toString c) = 1`,
   CHEAT_TAC);;
 
-let translate_aux_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let translate_aux_def,translate_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`translate_aux f s n 0 = []`;
    `translate_aux f s n (SUC len) = f (strsub s n) :: translate_aux
   f s (n + 1) len`];;
 
-let translate_def = cake_define
+let translate_def = new_definition
   `translate f s = implode (translate_aux f s 0 (strlen s))`;;
 
 (* [local] *)
@@ -250,16 +257,18 @@ let translate_thm = prove
  (`!f s. translate f s = implode (MAP f (explode s))`,
   CHEAT_TAC);;
 
-let splitl_aux_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let splitl_aux_def,splitl_aux_ind = define_wf
   `inv_image (<) (\(x,s,i). strlen s - i)`
-  `splitl_aux P s i =
+  [`splitl_aux P s i =
      (if i < strlen s /\ P (strsub s i) then
          splitl_aux P s (i + 1) else (mlstring_extract s 0 (SOME
-           i),mlstring_extract s i NONE))`;;
+           i),mlstring_extract s i NONE))`];;
 
 (* HOL4 mlstringScript.sml:316: ML code, not ported *)
 
-let splitl_def = cake_define
+let splitl_def = new_definition
   `splitl P s = splitl_aux P s 0`;;
 
 let splitl_aux_SPLITP = prove
@@ -273,7 +282,10 @@ let splitl_SPLITL = prove
  (`splitl P s = (implode ## implode) (SPLITL P (explode s))`,
   CHEAT_TAC);;
 
-let tokens_aux_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let tokens_aux_def,tokens_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`tokens_aux f s [] n 0 = []`;
    `tokens_aux f s (h :: t) n 0 = [implode (REVERSE (h :: t))]`;
    `tokens_aux f s [] n (SUC len) =
@@ -286,7 +298,7 @@ let tokens_aux_def = cake_define_list
 
 (* HOL4 mlstringScript.sml:384: ML code, not ported *)
 
-let tokens_def = cake_define
+let tokens_def = new_definition
   `tokens f s = tokens_aux f s [] 0 (strlen s)`;;
 
 
@@ -336,18 +348,20 @@ let tokens_append = prove
         ++ tokens P s2)`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 mlstringScript.sml:520-522: the tactic that proves the
    termination *)
-let tokens_alt_aux_def = cake_define_wf
+let tokens_alt_aux_def,tokens_alt_aux_ind = define_wf
   `MEASURE (\(f,s,i,j,n). n - j)`
-  `(tokens_alt_aux f s i j n =
+  [`(tokens_alt_aux f s i j n =
    (if j < n then
      (if f (strsub s j) then
        (if i = j then tokens_alt_aux f s (i + 1) (j + 1) n else
          substring s i (j - i) ::
          (tokens_alt_aux f s (j + 1) (j + 1) n)) else
        tokens_alt_aux f s i (j + 1) n) else
-     if i = j then [] else [substring s i (j - i)]))`;;
+     if i = j then [] else [substring s i (j - i)]))`];;
 
 let substring_1_strsub = prove
  (`i < strlen s ==>
@@ -379,7 +393,10 @@ let tokens_alt = prove
    tokens_alt_aux f s 0 0 (strlen s)`,
   CHEAT_TAC);;
 
-let fields_aux_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let fields_aux_def,fields_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`fields_aux f s ss n 0 = [implode (REVERSE ss)]`;
    `fields_aux f s ss n (SUC len) =
         (if f (strsub s n) then implode (REVERSE ss) ::
@@ -387,7 +404,7 @@ let fields_aux_def = cake_define_list
           (strsub s n :: ss) (n + 1) len)`];;
 
 
-let fields_def = cake_define
+let fields_def = new_definition
   `fields f s = fields_aux f s [] 0 (strlen s)`;;
 
 
@@ -416,17 +433,19 @@ let fields_length = prove
  (`!f s. LENGTH (fields f s) = (LENGTH (FILTER f (explode s)) + 1)`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 mlstringScript.sml:677-679: the tactic that proves the
    termination *)
-let fields_alt_aux_def = cake_define_wf
+let fields_alt_aux_def,fields_alt_aux_ind = define_wf
   `MEASURE (\(f,s,i,j,n). n - j)`
-  `(fields_alt_aux f s i j n =
+  [`(fields_alt_aux f s i j n =
    (if j < n then
      (if f (strsub s j) then
          substring s i (j - i) ::
          (fields_alt_aux f s (j + 1) (j + 1) n) else
        fields_alt_aux f s i (j + 1) n) else
-     [substring s i (j - i)]))`;;
+     [substring s i (j - i)]))`];;
 
 let fields_alt_fields_alt_aux = prove
  (`!l acc j i.
@@ -443,10 +462,12 @@ let fields_alt = prove
   CHEAT_TAC);;
 
 
-let str_findi_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let str_findi_def,str_findi_ind = define_wf
   `MEASURE (\(P,i,s). strlen s - i)`
-  `str_findi P i s = (if i < strlen s then if P (strsub s i) then
-  SOME i else str_findi P (i + 1) s else NONE)`;;
+  [`str_findi P i s = (if i < strlen s then if P (strsub s i) then
+  SOME i else str_findi P (i + 1) s else NONE)`];;
 
 let str_findi_range = prove
  (`!P i s. str_findi P i s = SOME j ==> i <= j /\ j < strlen s`,
@@ -462,7 +483,10 @@ let str_findi_OLEAST = prove
   (strsub s j)))`,
   CHEAT_TAC);;
 
-let isStringThere_aux_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let isStringThere_aux_def,isStringThere_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`isStringThere_aux s1 s2 s1i s2i 0 = T`;
    `isStringThere_aux s1 s2 s1i s2i (SUC len) =
         (if strsub s1 s1i = strsub s2 s2i then
@@ -472,7 +496,7 @@ let isStringThere_aux_def = cake_define_list
 (* HOL4 mlstringScript.sml:771-781: code that the source has in a
    comment *)
 
-let isPrefix_def = cake_define
+let isPrefix_def = new_definition
   `isPrefix s1 s2 =
      (if strlen s1 <= strlen s2 then isStringThere_aux s1 s2 0 0
        (strlen s1) else F)`;;
@@ -498,18 +522,21 @@ let isprefix_strcat = prove
  (`!s1 s2. isPrefix s1 s2 = (?s3. s2 = strcat s1 s3)`,
   CHEAT_TAC);;
 
-let isSuffix_def = cake_define
+let isSuffix_def = new_definition
   `isSuffix s1 s2 =
      (if strlen s1 <= strlen s2 then isStringThere_aux s1 s2 0
        (strlen s2 - strlen s1) (strlen s1) else F)`;;
 
-let isSubstring_aux_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let isSubstring_aux_def,isSubstring_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`isSubstring_aux s1 s2 lens1 n 0 = F`;
    `isSubstring_aux s1 s2 lens1 n (SUC len) =
         (if (isStringThere_aux s1 s2 0 n lens1) then T else
           isSubstring_aux s1 s2 lens1 (n + 1) len)`];;
 
-let isSubstring_def = cake_define
+let isSubstring_def = new_definition
   `isSubstring s1 s2 =
    (if strlen s1 <= strlen s2 then isSubstring_aux s1 s2 (strlen
      s1) 0 ((strlen s2) - (strlen s1) + 1) else F)`;;
@@ -543,30 +570,34 @@ let isSubString_spec = prove
   CHEAT_TAC);;
 
 (* String orderings *)
-let compare_aux_def = cake_define
-  `compare_aux (s1:mlstring) s2 ord start' len =
+let _ = size_thms "mlstring";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let compare_aux_def,compare_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). mlstring_size x0)`
+  [`compare_aux (s1:mlstring) s2 ord start' len =
      (if len = 0 then
        ord else if strsub s2 start' < strsub s1 start' then
          GREATER else if strsub s1 start' < strsub s2 start' then
-         LESS else compare_aux s1 s2 ord (start' + 1) (len - 1))`;;
+         LESS else compare_aux s1 s2 ord (start' + 1) (len - 1))`];;
 
-let mlstring_compare_def = cake_define
+let mlstring_compare_def = new_definition
   `mlstring_compare s1 s2 = (if (strlen s1) < (strlen s2) then
   compare_aux s1 s2 LESS 0 (strlen s1) else if (strlen s2) < (strlen
   s1) then compare_aux s1 s2 GREATER 0 (strlen s2) else compare_aux
   s1 s2 EQUAL 0 (strlen s2))`;;
 hol4_overload "compare" "mlstring_compare";;
 
-let mlstring_lt_def = cake_define
+let mlstring_lt_def = new_definition
   `mlstring_lt s1 s2 <=> (mlstring_compare s1 s2 = LESS)`;;
 
-let mlstring_le_def = cake_define
+let mlstring_le_def = new_definition
   `mlstring_le s1 s2 <=> (~(mlstring_compare s1 s2 = GREATER))`;;
 
-let mlstring_gt_def = cake_define
+let mlstring_gt_def = new_definition
   `mlstring_gt s1 s2 <=> (mlstring_compare s1 s2 = GREATER)`;;
 
-let mlstring_ge_def = cake_define
+let mlstring_ge_def = new_definition
   `mlstring_ge s1 s2 <=> (~(mlstring_compare s1 s2 = LESS))`;;
 
 let compare_thm = prove
@@ -580,22 +611,22 @@ hol4_overload "<=" "mlstring_le";;
 hol4_overload ">" "mlstring_gt";;
 hol4_overload ">=" "mlstring_ge";;
 
-let fast_lt_def = cake_define
+let fast_lt_def = new_definition
   `fast_lt s1 s2 =
      (if strlen s1 = strlen s2 then mlstring_lt s1 s2 else strlen
        s1 < strlen s2)`;;
 
-let fast_le_def = cake_define
+let fast_le_def = new_definition
   `fast_le s1 s2 =
      (if strlen s1 = strlen s2 then mlstring_le s1 s2 else strlen
        s1 <= strlen s2)`;;
 
-let fast_gt_def = cake_define
+let fast_gt_def = new_definition
   `fast_gt s1 s2 =
      (if strlen s1 = strlen s2 then mlstring_gt s1 s2 else strlen
        s1 > strlen s2)`;;
 
-let fast_ge_def = cake_define
+let fast_ge_def = new_definition
   `fast_ge s1 s2 =
      (if strlen s1 = strlen s2 then mlstring_ge s1 s2 else strlen
        s1 >= strlen s2)`;;
@@ -796,7 +827,10 @@ let StrongLinearOrder_fast_lt = prove
  (`StrongLinearOrder fast_lt`,
   CHEAT_TAC);;
 
-let collate_aux_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let collate_aux_def,collate_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4,x5). (\n. n) x5)`
   [`mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord`;
    `mlstring_collate_aux f (s1:mlstring) s2 ord n (SUC len) =
         (if f (strsub s1 n) (strsub s2 n) = EQUAL then
@@ -804,7 +838,7 @@ let collate_aux_def = cake_define_list
           (strsub s1 n) (strsub s2 n))`];;
 hol4_overload "collate_aux" "mlstring_collate_aux";;
 
-let mlstring_collate_def = cake_define
+let mlstring_collate_def = new_definition
   `mlstring_collate f s1 s2 =
    (if (strlen s1) < (strlen s2) then mlstring_collate_aux f s1 s2
      LESS 0 (strlen s1) else if (strlen s2) < (strlen s1) then
@@ -842,22 +876,22 @@ let collate_thm = prove
   s2)`,
   CHEAT_TAC);;
 
-let char_escape_seq_def = cake_define
+let char_escape_seq_def = new_definition
   `char_escape_seq c =
      (if c = (CHR 9) then SOME (implode "\\t") else if c = (CHR
        10) then SOME (implode "\\n") else if c = (CHR 92) then SOME
        (implode "\\\\") else if c = (CHR 34) then SOME (implode
        "\\\"") else NONE)`;;
 
-let char_escaped_def = cake_define
+let char_escaped_def = new_definition
   `char_escaped c = (match char_escape_seq c with
      NONE -> [c] | SOME s -> explode s)`;;
 
-let escape_str_def = cake_define
+let escape_str_def = new_definition
   `escape_str s = implode ("\"" ++ FLAT (MAP char_escaped (explode
   s)) ++ "\"")`;;
 
-let escape_char_def = cake_define
+let escape_char_def = new_definition
   `escape_char c = implode ("#\"" ++ char_escaped c ++ "\"")`;;
 
 (* [simp] *)
@@ -876,15 +910,20 @@ let app_list_ann_INDUCT,app_list_ann_RECURSION = define_datatype
   "app_list_ann = BigList ('a list) | BigAppend (app_list_ann) \
    (app_list_ann) | Small ('a app_list)";;
 
-let sum_sizes_def = cake_define_list
+let sum_sizes_def,sum_sizes_ind = define_rec
   [`sum_sizes [] k = k`;
    `sum_sizes (l :: ls) k = sum_sizes ls (strlen l + k)`];;
 
 (* HOL4 mlstringScript.sml:1502: the overload size_limit, which the
    port expands *)
 
-let make_app_list_ann_def = cake_define
-  `make_app_list_ann input =
+let _ = size_thms "app_list";;
+let _ = size_thms "mlstring";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let make_app_list_ann_def,make_app_list_ann_ind = define_wf
+  `MEASURE (\x0. app_list_size mlstring_size x0)`
+  [`make_app_list_ann input =
      (match input with misc_Nil -> (Small input,0) | misc_Append l1
        l2 ->
          (let (x1,n1) = make_app_list_ann l1 in
@@ -895,14 +934,14 @@ let make_app_list_ann_def = cake_define
               (BigAppend x1 x2,n)) | misc_List ls ->
          (let n = sum_sizes ls 0 in
             if n < (2048:num) then
-              (Small input,n) else (BigList ls,n)))`;;
+              (Small input,n) else (BigList ls,n)))`];;
 
-let shrink_def = cake_define_list
+let shrink_def,shrink_ind = define_rec
   [`shrink (Small t) = misc_List [mlstring_concat (append t)]`;
    `shrink (BigList ls) = misc_List ls`;
    `shrink (BigAppend l1 l2) = misc_Append (shrink l1) (shrink l2)`];;
 
-let str_app_list_opt_def = cake_define
+let str_app_list_opt_def = new_definition
   `str_app_list_opt l =
      (let (t,n) = make_app_list_ann l in
        shrink t)`;;
@@ -925,16 +964,16 @@ let concat_sing = prove
  (`mlstring_concat [x] = x`,
   CHEAT_TAC);;
 
-let char_to_word8_def = cake_define
+let char_to_word8_def = new_definition
   `char_to_word8 (c:char) = (n2w (ORD c):word8)`;;
 
-let word8_to_char_def = cake_define
+let word8_to_char_def = new_definition
   `word8_to_char (w:word8) = (CHR (w2n w):char)`;;
 
 (* The translator turns each `empty_ffi s` into a call to the FFI with
    an empty name and passing `s` as the argument. The empty FFI is
    used for logging/timing purposes. *)
-let empty_ffi_def = cake_define
+let empty_ffi_def = new_definition
   `empty_ffi (s:mlstring) = one`;;
 
 (* and the names that this file reads as variables are constants again *)

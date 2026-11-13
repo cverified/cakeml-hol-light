@@ -38,47 +38,48 @@ let lexer_fun_symbol_INDUCT,lexer_fun_symbol_RECURSION = define_datatype
    | FFIS (string) | OtherS (string) | ErrorS";;
 
 (* helper functions *)
-let mkCharS_def = cake_define
+let mkCharS_def = new_definition
   `mkCharS x1 =
         match x1 with
           StringS s -> (if LENGTH s = 1 then CharS (HD s) else
             ErrorS)
         | _1 -> ErrorS`;;
 
-let read_while_def = cake_define
-  `read_while P x2 s =
+let read_while_def,read_while_ind = define_shaped_rec
+  "match"
+  [`read_while P x2 s =
         match x2 with
           "" -> (IMPLODE (REVERSE s),"")
         | (STRING c cs) ->
         (if P c then read_while P cs (c :: s) else (IMPLODE
-          (REVERSE s),STRING c cs))`;;
+          (REVERSE s),STRING c cs))`];;
 
 let read_while_thm = prove
  (`!cs s cs' s'.
        (read_while P cs s = (s',cs')) ==> STRLEN cs' <= STRLEN cs`,
   CHEAT_TAC);;
 
-let is_single_char_symbol_def = cake_define
+let is_single_char_symbol_def = new_definition
   `is_single_char_symbol c = MEM c "()[]{},;"`;;
 
-let isSymbol_def = cake_define
+let isSymbol_def = new_definition
   `isSymbol c = MEM c (CHR 96 ::
                 // backquote
                 "!%&$#+-/:<=>?@\\~^|*")`;;
 
-let next_loc_def = cake_define
+let next_loc_def = new_definition
   `next_loc n x =
       match x with
         POSN r c -> POSN r (c + n)
       | x -> x`;;
 
-let next_line_def = cake_define
+let next_line_def = new_definition
   `next_line x =
       match x with
         POSN r c -> POSN (r + 1) 0
       | x -> x`;;
 
-let read_char_as_3digits_def = cake_define
+let read_char_as_3digits_def = new_definition
   `read_char_as_3digits str =
    (let ds = TAKE 3 str in let
        rest = DROP 3 str in
@@ -98,14 +99,16 @@ let read_char_as_3digits_reduces = prove
      LENGTH str0 = LENGTH str + 3`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 lexer_funScript.sml:122-126: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lexer_fun_read_string_def = cake_define_try_tac (fun () ->
-  `MEASURE (LENGTH o FST)`)
-  CHEAT_TAC
-  `lexer_fun_read_string str s (loc:locn) =
+let lexer_fun_read_string_def,lexer_fun_read_string_ind =
+  define_wf_cheat
+  `MEASURE (LENGTH o FST)`
+  [`lexer_fun_read_string str s (loc:locn) =
      (if str = "" then (ErrorS,loc,"") else
      if HD str = (CHR 34) then (StringS s,loc,TL str) else
      if HD str = (CHR 10) then (ErrorS,next_line loc,TL str) else
@@ -117,19 +120,20 @@ let lexer_fun_read_string_def = cake_define_try_tac (fun () ->
          lexer_fun_read_string cs (s ++ "\"") (next_loc 2 loc) | (CHR
          97) :: cs -> lexer_fun_read_string cs (s ++ [CHR 7]) (next_loc
          2 loc) | (CHR 98) :: cs -> lexer_fun_read_string cs (s ++ [CHR
-         8]) (next_loc 2 loc) | (CHR 116) :: cs -> lexer_fun_read_string
-         cs (s ++ [CHR 9]) (next_loc 2 loc) | (CHR 110) :: cs ->
-         lexer_fun_read_string cs (s ++ [CHR 10]) (next_loc 2 loc) |
-         (CHR 118) :: cs -> lexer_fun_read_string cs (s ++ [CHR 11])
-         (next_loc 2 loc) | (CHR 102) :: cs -> lexer_fun_read_string cs
-         (s ++ [CHR 12]) (next_loc 2 loc) | (CHR 114) :: cs ->
-         lexer_fun_read_string cs (s ++ [CHR 13]) (next_loc 2 loc) | c
-         :: cs -> (if isDigit c then
+         8]) (next_loc 2 loc) | (CHR 116) :: cs ->
+         lexer_fun_read_string cs (s ++ [CHR 9]) (next_loc 2 loc) |
+         (CHR 110) :: cs -> lexer_fun_read_string cs (s ++ [CHR 10])
+         (next_loc 2 loc) | (CHR 118) :: cs -> lexer_fun_read_string cs
+         (s ++ [CHR 11]) (next_loc 2 loc) | (CHR 102) :: cs ->
+         lexer_fun_read_string cs (s ++ [CHR 12]) (next_loc 2 loc) |
+         (CHR 114) :: cs -> lexer_fun_read_string cs (s ++ [CHR 13])
+         (next_loc 2 loc) | c :: cs -> (if isDigit c then
                     match read_char_as_3digits (c :: cs) with
                       NONE -> (ErrorS,loc,c :: cs) | SOME (c,cs') ->
                         lexer_fun_read_string cs' (s ++ [c])
-                              (next_loc 4 loc) else (ErrorS,loc,TL
-                                str)) | _2 -> (ErrorS,loc,TL str))`;;
+                              (next_loc 4 loc) else
+                                (ErrorS,loc,TL str)) | _2 ->
+                                (ErrorS,loc,TL str))`];;
 hol4_overload "read_string" "lexer_fun_read_string";;
 
 let read_string_thm = prove
@@ -137,7 +141,10 @@ let read_string_thm = prove
                     (LENGTH x2 <= LENGTH s + LENGTH t)`,
   CHEAT_TAC);;
 
-let skip_comment_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let skip_comment_def,skip_comment_ind = define_wf
+  `MEASURE (\(x0,x1,x2). list_size char_size x0)`
   [`skip_comment "" d _3 = NONE`;
    `skip_comment [x] d _4 = NONE`;
    `skip_comment (x :: y :: xs) d loc =
@@ -154,7 +161,7 @@ let skip_comment_thm = prove
   str <= LENGTH xs`,
   CHEAT_TAC);;
 
-let read_FFIcall_def = cake_define_list
+let read_FFIcall_def,read_FFIcall_ind = define_rec
   [`read_FFIcall "" acc loc = (ErrorS,loc,"")`;
    `read_FFIcall (c :: s0) acc loc =
           (if c = (CHR 41) then
@@ -168,7 +175,7 @@ let read_FFIcall_reduces_input = prove
      read_FFIcall s0 a l0 = (t,l,s) ==> LENGTH s < LENGTH s0 + 1`,
   CHEAT_TAC);;
 
-let read_REPLcommand_def = cake_define_list
+let read_REPLcommand_def,read_REPLcommand_ind = define_rec
   [`read_REPLcommand "" acc loc = (ErrorS,loc,"")`;
    `read_REPLcommand (c :: s0) acc loc =
           (if c = (CHR 125) then
@@ -186,11 +193,11 @@ let read_REPLcommand_reduces_input = prove
        1`,
   CHEAT_TAC);;
 
-let isAlphaNumPrime_def = cake_define
+let isAlphaNumPrime_def = new_definition
   `isAlphaNumPrime c <=> isAlphaNum c \/ (c = (CHR 39)) \/ (c = (CHR
   95))`;;
 
-let read_Ident_ret_def = cake_define
+let read_Ident_ret_def = new_definition
   `read_Ident_ret acc n new_loc rest =
      (if NULL acc then
        (OtherS n,new_loc,rest) else
@@ -202,9 +209,8 @@ let read_Ident_ret_def = cake_define
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let read_Ident_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (LENGTH o FST)`)
-  CHEAT_TAC
+let read_Ident_def,read_Ident_ind = define_wf_cheat
+  `MEASURE (LENGTH o FST)`
   [`read_Ident [] loc acc = (ErrorS,loc,[])`;
    `read_Ident (c :: str) loc acc =
       (if is_single_char_symbol c then
@@ -226,12 +232,9 @@ let read_Ident_def = cake_define_list_try_tac (fun () ->
          ErrorS,loc,str))`];;
 
 (* next_sym reads the next symbol from a string, returning NONE if at eof *)
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 lexer_funScript.sml:314-320: the tactic that proves the
    termination *)
-let next_sym_def = cake_define_list_try (fun () ->
-  `MEASURE (LENGTH o FST)`)
+let next_sym_def,next_sym_ind = define_guess
   [`next_sym "" _5 = NONE`;
    `next_sym (c :: str) loc =
          (if c = (CHR 10) then
@@ -332,7 +335,7 @@ let next_sym_LESS = prove
      LENGTH rest < LENGTH input`,
   CHEAT_TAC);;
 
-let init_loc_def = cake_define
+let init_loc_def = new_definition
   `init_loc = POSN 0 0`;;
 
 (*
@@ -345,14 +348,14 @@ let init_loc_def = cake_define
 
 (* next_token reads the next token from a string *)
 
-let processIdent_def = cake_define
+let processIdent_def = new_definition
   `processIdent s =
      (match s with "" -> tokens_LexErrorT | c :: s ->
             (if isAlpha c then
               tokens_AlphaT (implode (c :: s)) else
               tokens_SymbolT (implode (c :: s))))`;;
 
-let get_token_def = cake_define
+let get_token_def = new_definition
   `get_token s =
      (if s = "#" then tokens_HashT else
      if s = "(" then tokens_LparT else
@@ -410,11 +413,11 @@ let get_token_def = cake_define
        else
      processIdent s)`;;
 
-let to_path_def = cake_define_list
+let to_path_def,to_path_ind = define_rec
   [`to_path [] = tokens_End`;
    `to_path (x :: xs) = tokens_Mod x (to_path xs)`];;
 
-let token_of_sym_def = cake_define
+let token_of_sym_def = new_definition
   `token_of_sym s =
      (match s with ErrorS -> tokens_LexErrorT | StringS s ->
        tokens_StringT (implode s) | CharS c -> tokens_CharT c |
@@ -422,7 +425,7 @@ let token_of_sym_def = cake_define
        xs s -> tokens_LongidT (to_path (MAP implode xs)) (implode s)
        | FFIS s -> tokens_FFIT (implode s) | OtherS s -> get_token s)`;;
 
-let next_token_def = cake_define
+let next_token_def = new_definition
   `next_token input loc =
      (match next_sym input loc with NONE -> NONE | SOME
        (sym,locs,rest_of_input) ->
@@ -435,20 +438,21 @@ let next_token_LESS = prove
 
 (* top-level lexer specification *)
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 lexer_funScript.sml:516-518: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lexer_fun_aux_def = cake_define_try_tac (fun () ->
-  `MEASURE (LENGTH o FST)`)
-  CHEAT_TAC
-  `lexer_fun_aux input loc =
+let lexer_fun_aux_def,lexer_fun_aux_ind = define_wf_cheat
+  `MEASURE (LENGTH o FST)`
+  [`lexer_fun_aux input loc =
      (match next_token input loc with NONE -> [] | SOME (token,Locs
        loc' loc'',rest_of_input) ->
          (token,Locs loc' loc'') ::
-             lexer_fun_aux rest_of_input (next_loc 1 loc''))`;;
+             lexer_fun_aux rest_of_input (next_loc 1 loc''))`];;
 
-let lexer_fun_def = cake_define
+let lexer_fun_def = new_definition
   `lexer_fun input = lexer_fun_aux input init_loc`;;
 
 (*
@@ -467,7 +471,7 @@ let lexer_fun_def = cake_define
 
 (* split a list of tokens at top-level semicolons *)
 
-let toplevel_semi_dex_def = cake_define_list
+let toplevel_semi_dex_def,toplevel_semi_dex_ind = define_rec
   [`toplevel_semi_dex (i:num) (d:num) [] = NONE`;
    `toplevel_semi_dex (i:num) (d:num) ((h,l) :: t) =
         (if h = tokens_SemicolonT /\ (d = 0) then SOME (i + 1)
@@ -485,16 +489,17 @@ let toplevel_semi_dex_non0 = prove
  (`!i d toks j. (toplevel_semi_dex i d toks = SOME j) ==> 0 < j`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 lexer_funScript.sml:570-578: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let split_top_level_semi_def = cake_define_try_tac (fun () ->
-  `MEASURE LENGTH`)
-  CHEAT_TAC
-  `(split_top_level_semi toks =
+let split_top_level_semi_def,split_top_level_semi_ind = define_wf_cheat
+  `MEASURE LENGTH`
+  [`(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i ->
-        TAKE i toks :: split_top_level_semi (DROP i toks)))`;;
+        TAKE i toks :: split_top_level_semi (DROP i toks)))`];;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

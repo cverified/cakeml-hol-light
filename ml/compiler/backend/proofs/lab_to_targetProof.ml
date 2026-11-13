@@ -61,13 +61,17 @@ let evaluate_ignore_clocks = prove
      (r1,ms1,st1) = (r2,ms2,st2)`,
   CHEAT_TAC);;
 
-let sec_loc_to_pc_def = cake_define
-  `(sec_loc_to_pc n2 xs =
+let _ = size_thms "line";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let sec_loc_to_pc_def,sec_loc_to_pc_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (line_size (\x. 0)) x1)`
+  [`(sec_loc_to_pc n2 xs =
     (if n2 = 0 then SOME 0 else match xs with [] -> NONE | (z :: zs)
       ->
       (if (?n1 k. z = labLang_Label n1 n2 k) then SOME 0 else if
         is_Label z then sec_loc_to_pc n2 zs else OPTION_MAP SUC
-        (sec_loc_to_pc n2 zs))))`;;
+        (sec_loc_to_pc n2 zs))))`];;
 
 (* HOL4 lab_to_targetProofScript.sml:39: ML code, not ported *)
 
@@ -99,7 +103,7 @@ let loc_to_pc_thm = prove
 
 (* relate asm step to evaluate step *)
 
-let enc_with_nop_def = cake_define
+let enc_with_nop_def = new_definition
   `enc_with_nop enc (b:'a asm) bytes =
      (let init = enc b in
      let step = enc (asm_Inst asm_Skip) in
@@ -114,7 +118,7 @@ let enc_with_nop_thm = prove
          asm_Skip))))`,
   CHEAT_TAC);;
 
-let asm_step_nop_def = cake_define
+let asm_step_nop_def = new_definition
   `asm_step_nop bytes c s1 i s2 <=>
      bytes_in_memory (asm_state_pc s1) bytes (asm_state_mem s1)
        (asm_state_mem_domain s1) /\
@@ -218,7 +222,7 @@ let asm_step_IMP_evaluate_step_nop = prove
 
 (* define relation between labSem and targetSem states *)
 
-let lab_lookup_def = cake_define
+let lab_lookup_def = new_definition
   `lab_lookup k1 k2 labs =
      (match sptree_lookup k1 labs with NONE -> NONE | SOME f ->
        sptree_lookup k2 f)`;;
@@ -229,7 +233,7 @@ let lab_lookup_IMP = prove
      (find_pos (labLang_Lab l1 l2) labs = x)`,
   CHEAT_TAC);;
 
-let labs_domain_def = cake_define
+let labs_domain_def = new_definition
   `labs_domain labs = {(n1,n2) | ~(lab_lookup n1 n2 labs = NONE)}`;;
 
 (* [simp] *)
@@ -246,14 +250,14 @@ let labs_domain_insert = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let has_odd_inst_def = cake_define_list_cheat CHEAT_TAC
+let has_odd_inst_def,has_odd_inst_ind = define_guess_cheat
   [`has_odd_inst [] = F`;
    `has_odd_inst (Section k [] :: xs) = has_odd_inst xs`;
    `has_odd_inst (Section k (y :: ys) :: xs) <=>
          ~(EVEN (line_length y)) \/ has_odd_inst ((Section k
            ys) :: xs)`];;
 
-let line_similar_def = cake_define
+let line_similar_def = new_definition
   `line_similar x1 x2 =
         match (x1,x2) with
           (labLang_Label k1 k2 l,labLang_Label k1' k2' l') -> (k1 =
@@ -266,15 +270,20 @@ let line_similar_def = cake_define
 
 (* HOL4 lab_to_targetProofScript.sml:398: ML code, not ported *)
 
-let code_similar_def = cake_define
-  `code_similar x1 x2 =
+let _ = size_thms "sec";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let code_similar_def,code_similar_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x0 + list_size
+  (sec_size (\x. 0)) x1)`
+  [`code_similar x1 x2 =
         match (x1,x2) with
           ([],[]) -> T
-        | ((Section s1 lines1 :: rest1),(Section s2 lines2 :: rest2))
-          ->
+        | ((Section s1 lines1 :: rest1),(Section s2 lines2 ::
+          rest2)) ->
         code_similar rest1 rest2 /\
         EVERY2 line_similar lines1 lines2 /\ (s1 = s2)
-        | (_3,_4) -> F`;;
+        | (_3,_4) -> F`];;
 
 (* HOL4 lab_to_targetProofScript.sml:408: ML code, not ported *)
 
@@ -348,7 +357,7 @@ let code_similar_len_no_lab = prove
      c2`,
   CHEAT_TAC);;
 
-let word_loc_val_def = cake_define_list
+let word_loc_val_def = define_cases
   [`word_loc_val p labs (wordLang_Word w) = SOME w`;
    `word_loc_val p labs (wordLang_Loc k1 k2) =
          (match lab_lookup k1 k2 labs with NONE -> NONE | SOME
@@ -356,7 +365,7 @@ let word_loc_val_def = cake_define_list
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let has_io_name_def = cake_define_list_cheat CHEAT_TAC
+let has_io_name_def,has_io_name_ind = define_guess_cheat
   [`has_io_name index [] = F`;
    `has_io_name index (Section k [] :: xs) = has_io_name index xs`;
    `has_io_name index (Section k (y :: ys) :: xs) <=>
@@ -366,12 +375,12 @@ let has_io_name_def = cake_define_list_cheat CHEAT_TAC
 
 (* HOL4 lab_to_targetProofScript.sml:532: ML code, not ported *)
 
-let word_loc_val_byte_def = cake_define
+let word_loc_val_byte_def = new_definition
   `word_loc_val_byte p labs m a be' =
      (match word_loc_val p labs (m (byte_align a)) with SOME w ->
        SOME (get_byte a w be') | NONE -> NONE)`;;
 
-let line_ok_def = cake_define
+let line_ok_def = new_definition
   `line_ok c labs ffis pos x5 =
         match (c,x5) with
           ((c:'a asm_config),labLang_Label _11 _12 l) ->
@@ -405,7 +414,7 @@ let line_ok_def = cake_define
 
 (* HOL4 lab_to_targetProofScript.sml:571: ML code, not ported *)
 
-let lines_ok_def = cake_define_list
+let lines_ok_def,lines_ok_ind = define_rec
   [`lines_ok c labs ffis pos [] = T`;
    `lines_ok c labs ffis pos (y :: ys) <=>
        line_ok c labs ffis pos y /\
@@ -413,7 +422,7 @@ let lines_ok_def = cake_define_list
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let all_enc_ok_def = cake_define_list_cheat CHEAT_TAC
+let all_enc_ok_def,all_enc_ok_ind = define_guess_cheat
   [`all_enc_ok c labs ffis pos [] = T`;
    `all_enc_ok c labs ffis pos (Section k [] :: xs) <=>
          EVEN pos /\ all_enc_ok c labs ffis pos xs`;
@@ -432,7 +441,11 @@ let all_enc_ok_cons = prove
    lines_ok c labs ffis pos ls`,
   CHEAT_TAC);;
 
-let pos_val_def = cake_define_list
+let _ = size_thms "sec";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let pos_val_def,pos_val_ind = define_wf
+  `MEASURE (\(x0,x1,x2). list_size (sec_size (\x. 0)) x2)`
   [`pos_val i (pos:num) [] = (pos:num)`;
    `pos_val i (pos:num) (Section k [] :: xs) = ((pos_val i pos
   xs):num)`;
@@ -449,7 +462,7 @@ let pos_val_0 = prove
       all_enc_ok c labs ffis pos xs ==> (pos_val 0 pos xs = pos)`,
   CHEAT_TAC);;
 
-let sec_pos_val_def = cake_define_list
+let sec_pos_val_def,sec_pos_val_ind = define_rec
   [`sec_pos_val i pos [] = NONE`;
    `sec_pos_val i pos (y :: ys) =
        (if is_Label y then
@@ -486,7 +499,7 @@ let pos_val_thm = prove
         (MAP line_length s)) ss | SOME x -> x))`,
   CHEAT_TAC);;
 
-let lab_to_targetProof_good_code_def = cake_define
+let lab_to_targetProof_good_code_def = new_definition
   `lab_to_targetProof_good_code c labs code <=>
     EVERY sec_ends_with_label code /\
     EVERY sec_labels_ok code /\
@@ -500,14 +513,14 @@ hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let num_pcs_def = cake_define_list_cheat CHEAT_TAC
+let num_pcs_def,num_pcs_ind = define_guess_cheat
   [`num_pcs [] = (0:num)`;
    `num_pcs (Section _13 [] :: rest) = ((num_pcs rest):num)`;
    `num_pcs (Section k (x :: xs) :: rest) = ((if is_Label x then
   num_pcs ((Section k xs) :: rest) else 1 + num_pcs ((Section k xs)
   :: rest)):num)`];;
 
-let share_mem_domain_code_rel_def = cake_define
+let share_mem_domain_code_rel_def = new_definition
   `share_mem_domain_code_rel mc_conf p code2 (s1_shared_mem_domain:'a
   word->bool) <=>
      (
@@ -547,7 +560,7 @@ let share_mem_domain_code_rel_def = cake_define
       (machine_config_shared_addresses mc_conf =
         s1_shared_mem_domain)`;;
 
-let share_mem_state_rel_def = cake_define
+let share_mem_state_rel_def = new_definition
   `share_mem_state_rel mc_conf
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
       (
@@ -624,7 +637,7 @@ let share_mem_state_rel_def = cake_define
        mc_conf = (EL index (machine_config_ffi_entry_pcs
          mc_conf))))`;;
 
-let no_install_or_no_share_mem_def = cake_define
+let no_install_or_no_share_mem_def = new_definition
   `no_install_or_no_share_mem code ffi_names' <=>
     (no_share_mem_inst code /\
      EVERY (\x. ?s. x = ffi_ExtCall s) ffi_names') \/
@@ -635,7 +648,7 @@ let no_install_or_no_share_mem_def = cake_define
    read off the k-th interference application of that family.
    This is positional, so it is kept out of state_rel (which is closed under
    shift_interfer) and threaded through compile_correct separately. *)
-let oracle_tie_def = cake_define
+let oracle_tie_def = new_definition
   `oracle_tie (mc_conf:('a,'state,'b)machine_config) ms
   (s1:('a,'c,'ffi)labSem_state) <=> labSem_state_io_regs
      s1 = target_io_regs mc_conf (labSem_state_ffi s1) ms /\
@@ -789,7 +802,7 @@ let oracle_tie_ExtCall_residues = prove
 (* The code buffer is set-up to immediately follow the current code:
   |---code---|---cb---|
 *)
-let lab_to_targetProof_state_rel_def = cake_define
+let lab_to_targetProof_state_rel_def = new_definition
   `lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
      target_state_rel (machine_config_target mc_conf) t1 ms1 /\
@@ -1830,7 +1843,7 @@ let has_io_name_EXISTS = prove
 
 (* annotated line length *)
 
-let line_len_def = cake_define_list
+let line_len_def = define_cases
   [`line_len (labLang_Label _20 _21 l) = l`;
    `line_len (labLang_Asm _22 _23 l) = l`;
    `line_len (labLang_LabAsm _24 _25 _26 l) = l`];;
@@ -1848,7 +1861,11 @@ let sec_length_sum_line_len = prove
 
 (* simple syntactic properties of compiler functions *)
 
-let enc_lines_again_simp_def = cake_define_list
+let _ = size_thms "line";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). list_size (line_size (\x. 0)) x4)`
   [`enc_lines_again_simp labs ffis pos enc [] = ([],T)`;
    `enc_lines_again_simp labs ffis pos enc (labLang_LabAsm a w bytes l
   :: xs) =
@@ -2119,7 +2136,7 @@ let sec_labels_ok_filter_skip = prove
 
 (* invariant: lines are encoded and non-label lengths annotated *)
 
-let line_encd0_def = cake_define
+let line_encd0_def = new_definition
   `line_encd0 enc x2 =
         match x2 with
           labLang_Asm b bytes len ->
@@ -2129,8 +2146,8 @@ let line_encd0_def = cake_define
         (?w'. len = LENGTH (enc (lab_inst w' l)))
         | _27 -> T`;;
 
-let sec_encd0_def = cake_define
-  `sec_encd0 enc (Section _28 ls) = EVERY (line_encd0 enc) ls`;;
+let sec_encd0_def = define_general
+  [`sec_encd0 enc (Section _28 ls) = EVERY (line_encd0 enc) ls`];;
 
 (* HOL4 lab_to_targetProofScript.sml:3628: the overload all_encd0,
    which the port expands *)
@@ -2173,7 +2190,7 @@ let upd_lab_len_encd0 = prove
 (* invariant: annotated lengths are not too small *)
 (* this is a consequence of encd (below) and not treated separately much *)
 
-let line_length_leq_def = cake_define
+let line_length_leq_def = new_definition
   `line_length_leq x1 =
         match x1 with
           labLang_LabAsm _29 _30 bytes l ->
@@ -2182,22 +2199,22 @@ let line_length_leq_def = cake_define
        LENGTH bytes <= l
         | _32 -> T`;;
 
-let sec_length_leq_def = cake_define
-  `sec_length_leq (Section _33 ls) = EVERY line_length_leq ls`;;
+let sec_length_leq_def = define_general
+  [`sec_length_leq (Section _33 ls) = EVERY line_length_leq ls`];;
 
 (* HOL4 lab_to_targetProofScript.sml:3713: the overload
    all_length_leq, which the port expands *)
 
 (* invariant: label annotated lengths are 0 or 1 *)
 
-let label_one_def = cake_define
+let label_one_def = new_definition
   `label_one x1 =
         match x1 with
           labLang_Label _36 _37 n -> n <= 1
         | _38 -> T`;;
 
-let sec_label_one_def = cake_define
-  `sec_label_one (Section _39 ls) = EVERY label_one ls`;;
+let sec_label_one_def = define_general
+  [`sec_label_one (Section _39 ls) = EVERY label_one ls`];;
 
 (* establishing label_one *)
 
@@ -2251,7 +2268,7 @@ let line_len_pad_section1 = prove
 
 (* invariant: lines are encoded and annotated lengths are correct *)
 
-let line_encd_def = cake_define
+let line_encd_def = new_definition
   `line_encd enc labs ffis pos x5 =
         match x5 with
           labLang_Asm b bytes len ->
@@ -2283,13 +2300,17 @@ let line_encd_def = cake_define
 
 (* HOL4 lab_to_targetProofScript.sml:3836: ML code, not ported *)
 
-let lines_encd_def = cake_define_list
+let lines_encd_def,lines_encd_ind = define_rec
   [`lines_encd enc labs ffis pos [] <=> T`;
    `lines_encd enc labs ffis pos (l :: ls) <=>
        line_encd enc labs ffis pos l /\
        lines_encd enc labs ffis (pos + line_len l) ls`];;
 
-let all_encd_def = cake_define_list
+let _ = size_thms "sec";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let all_encd_def,all_encd_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). list_size (sec_size (\x. 0)) x4)`
   [`all_encd enc labs ffis pos [] <=> T`;
    `all_encd enc labs ffis pos (Section k ls :: ss) <=>
        lines_encd enc labs ffis pos ls /\
@@ -2332,11 +2353,11 @@ let enc_secs_again_encd = prove
 
 (* invariant: annotated lengths are correct *)
 
-let line_length_ok_def = cake_define
+let line_length_ok_def = new_definition
   `line_length_ok l <=> LENGTH (line_bytes l) = line_len l`;;
 
-let sec_length_ok_def = cake_define
-  `sec_length_ok (Section _48 ls) = EVERY line_length_ok ls`;;
+let sec_length_ok_def = define_general
+  [`sec_length_ok (Section _48 ls) = EVERY line_length_ok ls`];;
 
 (* simple consequences of length_ok *)
 
@@ -2348,14 +2369,14 @@ let sec_length_sum_line_length = prove
 
 (* invariant: all labels annotated with length 0 *)
 
-let label_zero_def = cake_define
+let label_zero_def = new_definition
   `label_zero x1 =
         match x1 with
           labLang_Label _51 _52 n -> n = 0
         | _53 -> T`;;
 
-let sec_label_zero_def = cake_define
-  `sec_label_zero (Section _54 ls) = EVERY label_zero ls`;;
+let sec_label_zero_def = define_general
+  [`sec_label_zero (Section _54 ls) = EVERY label_zero ls`];;
 
 (* label_zero preservation *)
 
@@ -2446,14 +2467,14 @@ let all_enc_ok_imp_sec_label_zero = prove
 
 (* invariant: lines aligned *)
 
-let line_aligned_def = cake_define
+let line_aligned_def = new_definition
   `line_aligned m l <=>
      line_len l MOD m = 0 /\
      line_length l MOD m = 0`;;
 
-let sec_aligned_def = cake_define
-  `sec_aligned noplen (Section _55 ls) = EVERY (line_aligned noplen)
-  ls`;;
+let sec_aligned_def = define_general
+  [`sec_aligned noplen (Section _55 ls) = EVERY (line_aligned
+  noplen) ls`];;
 
 (* establishing aligned *)
 
@@ -2485,13 +2506,13 @@ let enc_secs_again_aligned = prove
 
 (* invariant: all initial labels have annotated length 0 *)
 
-let label_prefix_zero_def = cake_define
+let label_prefix_zero_def = new_definition
   `label_prefix_zero ls <=>
       (!n. n < LENGTH ls /\ (!m. m <= n ==> is_Label (EL m ls)) ==>
          (!m. m <= n ==> line_len (EL m ls) = 0))`;;
 
-let sec_label_prefix_zero_def = cake_define
-  `sec_label_prefix_zero (Section k ls) <=> label_prefix_zero ls`;;
+let sec_label_prefix_zero_def = define_general
+  [`sec_label_prefix_zero (Section k ls) <=> label_prefix_zero ls`];;
 
 let label_prefix_zero_cons = prove
  (`(label_prefix_zero (labLang_Label l1 l2 len :: ls) <=> ((len = 0) /\
@@ -2568,7 +2589,7 @@ let label_zero_line_length_pad_section = prove
 
 (* invariant: lines encd with nops *)
 
-let line_enc_with_nop_def = cake_define
+let line_enc_with_nop_def = new_definition
   `line_enc_with_nop enc labs ffis pos x5 =
         match x5 with
           labLang_Asm b bytes len ->
@@ -2601,7 +2622,7 @@ let line_enc_with_nop_def = cake_define
 
 (* HOL4 lab_to_targetProofScript.sml:4357: ML code, not ported *)
 
-let lines_enc_with_nop_def = cake_define_list
+let lines_enc_with_nop_def,lines_enc_with_nop_ind = define_rec
   [`lines_enc_with_nop enc labs ffis pos [] <=> T`;
    `lines_enc_with_nop enc labs ffis pos (l :: ls) <=>
        line_enc_with_nop enc labs ffis pos l /\
@@ -2618,7 +2639,7 @@ let lines_enc_with_nop_append = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let all_enc_with_nop_def = cake_define_list_cheat CHEAT_TAC
+let all_enc_with_nop_def,all_enc_with_nop_ind = define_guess_cheat
   [`all_enc_with_nop enc labs ffis pos [] <=> T`;
    `all_enc_with_nop enc labs ffis pos (Section k [] :: xs) <=>
        all_enc_with_nop enc labs ffis pos xs`;
@@ -2760,14 +2781,14 @@ let all_enc_with_nop_pad_code = prove
 
 (* invariant: label annotation correctly records alignment *)
 
-let line_lab_len_pos_ok_def = cake_define
+let line_lab_len_pos_ok_def = new_definition
   `line_lab_len_pos_ok pos x2 =
         match x2 with
           labLang_Label _68 _69 l ->
         (if EVEN pos then l = 0 else l = 1)
         | _70 -> T`;;
 
-let lab_len_pos_ok_def = cake_define_list
+let lab_len_pos_ok_def,lab_len_pos_ok_ind = define_rec
   [`lab_len_pos_ok pos [] <=> T`;
    `lab_len_pos_ok pos (l :: ls) <=>
          line_lab_len_pos_ok pos l /\
@@ -2780,7 +2801,11 @@ let lab_len_pos_ok_append = prove
    lab_len_pos_ok (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
 
-let all_lab_len_pos_ok_def = cake_define_list
+let _ = size_thms "sec";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let all_lab_len_pos_ok_def,all_lab_len_pos_ok_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
   [`all_lab_len_pos_ok _71 [] <=> T`;
    `all_lab_len_pos_ok pos (Section k ls :: ss) <=>
        lab_len_pos_ok pos ls /\
@@ -2852,14 +2877,14 @@ let all_lab_len_pos_ok_pad_code = prove
 
 (* invariant: jump offsets ok *)
 
-let line_offset_ok_def = cake_define
+let line_offset_ok_def = new_definition
   `line_offset_ok labs ffis pos x4 =
         match x4 with
           labLang_LabAsm a w bytes _72 ->
        w = get_jump_offset a ffis labs pos
         | _73 -> T`;;
 
-let lines_offset_ok_def = cake_define_list
+let lines_offset_ok_def,lines_offset_ok_ind = define_rec
   [`lines_offset_ok labs ffis pos [] <=> T`;
    `lines_offset_ok labs ffis pos (l :: ls) <=>
        line_offset_ok labs ffis pos l /\
@@ -2872,7 +2897,12 @@ let lines_offset_ok_append = prove
     lines_offset_ok labs ffis (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
 
-let lab_to_targetProof_offset_ok_def = cake_define_list
+let _ = size_thms "sec";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let lab_to_targetProof_offset_ok_def,lab_to_targetProof_offset_ok_ind =
+  define_wf
+  `MEASURE (\(x0,x1,x2,x3). list_size (sec_size (\x. 0)) x3)`
   [`lab_to_targetProof_offset_ok labs ffis pos [] <=> T`;
    `lab_to_targetProof_offset_ok labs ffis pos (Section k ls :: ss) <=>
        lines_offset_ok labs ffis pos ls /\
@@ -2921,7 +2951,7 @@ let offset_ok_pad_code = prove
 
 (* invariant: referenced labels exist *)
 
-let line_labs_exist_def = cake_define
+let line_labs_exist_def = new_definition
   `line_labs_exist labs x2 =
         match x2 with
           labLang_LabAsm a _74 _75 _76 ->
@@ -2931,9 +2961,9 @@ let line_labs_exist_def = cake_define
 
 (* HOL4 lab_to_targetProofScript.sml:4998: ML code, not ported *)
 
-let sec_labs_exist_def = cake_define
-  `sec_labs_exist labs (Section _78 ls) <=> EVERY (line_labs_exist
-  labs) ls`;;
+let sec_labs_exist_def = define_general
+  [`sec_labs_exist labs (Section _78 ls) <=> EVERY (line_labs_exist
+  labs) ls`];;
 
 (* HOL4 lab_to_targetProofScript.sml:5004: the overload
    all_labs_exist, which the port expands *)
@@ -3069,7 +3099,7 @@ let labs_domain_compute_labels_alt = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let even_labels_def = cake_define_list_cheat CHEAT_TAC
+let even_labels_def,even_labels_ind = define_guess_cheat
   [`even_labels pos [] <=> T`;
    `even_labels pos (Section _79 [] :: ls) <=> even_labels pos ls`;
    `even_labels pos (Section k (y :: ys) :: ls) <=>
@@ -3078,7 +3108,7 @@ let even_labels_def = cake_define_list_cheat CHEAT_TAC
 
 (* HOL4 lab_to_targetProofScript.sml:5229: ML code, not ported *)
 
-let lines_even_labels_def = cake_define_list
+let lines_even_labels_def,lines_even_labels_ind = define_rec
   [`lines_even_labels pos [] <=> T`;
    `lines_even_labels pos (y :: ys) <=>
        (is_Label y ==> EVEN pos) /\
@@ -3093,7 +3123,7 @@ let even_labels_alt = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let even_labels_strong_def = cake_define_list_cheat CHEAT_TAC
+let even_labels_strong_def,even_labels_strong_ind = define_guess_cheat
   [`even_labels_strong pos [] <=> T`;
    `even_labels_strong pos (Section _81 [] :: ls) <=>
         EVEN pos /\ even_labels_strong pos ls`;
@@ -4096,7 +4126,7 @@ let oracle_tie_ccache_residues = prove
 
 (* relating observable semantics *)
 
-let init_ok_def = cake_define
+let init_ok_def = new_definition
   `init_ok (mc_conf,p) s ms <=>
      (?code2 labs t1.
        state_rel (mc_conf,code2,labs,p) s t1 ms /\
@@ -4111,12 +4141,12 @@ let init_ok_def = cake_define
 
 (* introducing make_init *)
 
-let set_bytes_def = cake_define_list
+let set_bytes_def,set_bytes_ind = define_rec
   [`set_bytes a be' [] = (n2w 0)`;
    `set_bytes a be' (b :: bs) = set_byte a b (set_bytes (a + (n2w
   1)) be' bs) be'`];;
 
-let make_word_def = cake_define
+let make_word_def = new_definition
   `make_word be' m (a:'a word) =
      (if dimindex (:'a) = 32 then
        wordLang_Word (set_bytes a be' [m a; m (a + (n2w 1)); m (a +
@@ -4126,7 +4156,7 @@ let make_word_def = cake_define
                              m (a + (n2w 4)); m (a + (n2w 5)); m
                                (a + (n2w 6)); m (a + (n2w 7))]))`;;
 
-let make_init_def = cake_define
+let make_init_def = new_definition
   `lab_to_targetProof_make_init mc_conf (ffi:'ffi ffi_state) t m dm sdm
   (ms:'state) code
      comp' cbpos cbspace coracle =
@@ -4152,7 +4182,7 @@ let oracle_tie_make_init = prove
 (* HOL4 lab_to_targetProofScript.sml:9586: the ML values that the
    definitions below antiquote *)
 
-let compiler_oracle_ok_def = cake_define
+let compiler_oracle_ok_def = new_definition
   `compiler_oracle_ok coracle init_labs init_pos c ffis <=>
      (
       // Assumptions about initial compile oracle
@@ -4168,7 +4198,7 @@ let compiler_oracle_ok_def = cake_define
 (* mc_conf_ok: conditions on the machine configuration
    which will be discharged for the particular configuration of each target
 *)
-let mc_conf_ok_def = cake_define
+let mc_conf_ok_def = new_definition
   `mc_conf_ok (mc_conf:('a,'b,'c)machine_config) <=>
      good_dimindex (:'a) /\
      encoder_correct (machine_config_target mc_conf) /\
@@ -4213,7 +4243,7 @@ let get_shmem_info_PREPEND = prove
        [] []))`),
   CHEAT_TAC);;
 
-let line_to_info_def = cake_define
+let line_to_info_def = new_definition
   `line_to_info (secs:('a sec) list) p x = (match SND x with
      SOME (labLang_Asm (ShareMem m r ad) bytes l) ->
        (let (name,nb) = get_memop_info m in

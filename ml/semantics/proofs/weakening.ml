@@ -26,14 +26,14 @@ let _ = hol4_ancestors "weakening"
    "typeSoundInvariants"; "typeSysProps"; "typeSystem"];;
 (* HOL4 ancestors outside the port: option rich_list alist *)
 
-let weak_tenvE_def = cake_define
+let weak_tenvE_def = new_definition
   `weak_tenvE tenv tenv' =
      (num_tvs tenv >= num_tvs tenv' /\
       (!n inc tvs t.
        (tveLookup n inc tenv' = SOME (tvs,t)) <=>
        (tveLookup n inc tenv = SOME (tvs,t))))`;;
 
-let weakS_def = cake_define
+let weakS_def = new_definition
   `weakS tenvS tenvS' <=> tenvS' SUBMAP tenvS`;;
 
 let weak_tenvE_refl = prove
@@ -123,7 +123,7 @@ let eLookupV_weak = prove
 (* HOL4 weakeningScript.sml:159-201: code that the source has in a
    comment *)
 
-let weak_def = cake_define
+let weak_def = new_definition
   `weak tenv' tenv <=> type_env_t
      tenv' = type_env_t tenv /\ weak_tenv tenv' tenv`;;
 
@@ -167,7 +167,7 @@ let gt_0 = prove
  (`!(x:num). x >= 0`,
   CHEAT_TAC);;
 
-let weakCT_def = cake_define
+let weakCT_def = new_definition
   `weakCT cenv_impl cenv_spec <=> cenv_spec SUBMAP cenv_impl`;;
 
 (* [local] *)

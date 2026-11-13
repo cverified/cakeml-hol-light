@@ -33,25 +33,25 @@ let store_t_INDUCT,store_t_RECURSION = define_datatype
 new_type_abbrev("tenv_store",`: (num,store_t)fmap`);;
 
 (* Check that the type names map to valid types *)
-let tenv_abbrev_ok_def = cake_define
+let tenv_abbrev_ok_def = new_definition
   `tenv_abbrev_ok tenvT <=> nsAll (\id' (tvs,t). check_freevars 0 tvs
   t) tenvT`;;
 
-let tenv_ctor_ok_def = cake_define
+let tenv_ctor_ok_def = new_definition
   `tenv_ctor_ok tenvC <=> nsAll (\id' (tvs,ts,tn). EVERY
   (check_freevars 0 tvs) ts) tenvC`;;
 
-let tenv_val_ok_def = cake_define
+let tenv_val_ok_def = new_definition
   `tenv_val_ok tenvV <=> nsAll (\id' (tvs,t). check_freevars tvs []
   t) tenvV`;;
 
-let tenv_ok_def = cake_define
+let tenv_ok_def = new_definition
   `tenv_ok tenv <=>
      tenv_val_ok (type_env_v tenv) /\
      tenv_ctor_ok (type_env_c tenv) /\
      tenv_abbrev_ok (type_env_t tenv)`;;
 
-let tenv_val_exp_ok_def = cake_define_list
+let tenv_val_exp_ok_def,tenv_val_exp_ok_ind = define_rec
   [`tenv_val_exp_ok (typeSystem_Empty:tenv_val_exp) <=> T`;
    `tenv_val_exp_ok (typeSystem_Bind_tvar n tenv) <=> tenv_val_exp_ok
   tenv`;
@@ -64,7 +64,7 @@ let tenv_val_exp_ok_def = cake_define_list
  * the identity of the type. *)
 new_type_abbrev("ctMap",`: (stamp,mlstring list#t list#num)fmap`);;
 
-let ctMap_ok_def = cake_define
+let ctMap_ok_def = new_definition
   `ctMap_ok ctMap <=>
      // No free variables in the range
      FEVERY (\(stamp,(tvs,ts,_1)). EVERY (check_freevars 0 tvs) ts)
@@ -89,12 +89,12 @@ let ctMap_ok_def = cake_define
 (* Check that a constructor type environment is consistent with a runtime type
  * enviroment, using the full type keyed constructor type environment to ensure
  * that the correct types are used. *)
-let type_ctor_def = cake_define
+let type_ctor_def = new_definition
   `type_ctor ctMap _2 (n,stamp) (tvs,ts,ti) <=>
      FLOOKUP ctMap stamp = SOME (tvs,ts,ti) /\
      LENGTH ts = n`;;
 
-let add_tenvE_def = cake_define_list
+let add_tenvE_def,add_tenvE_ind = define_rec
   [`add_tenvE (typeSystem_Empty:tenv_val_exp) tenvV = tenvV`;
    `add_tenvE (typeSystem_Bind_tvar _3 tenvE) tenvV = add_tenvE tenvE
   tenvV`;
@@ -178,7 +178,7 @@ let type_v = cake_inductive
      type_v tvs ctMap tenvS (semanticPrimitives_Vectorv vs)
        (Tvector t))`;;
 
-let type_sv_def = cake_define
+let type_sv_def = new_definition
   `type_sv ctMap tenvS x3 x4 =
         match (x3,x4) with
           (semanticPrimitives_Refv v,Ref_t t) -> type_v 0 ctMap tenvS
@@ -190,7 +190,7 @@ let type_sv_def = cake_define
 
 
 (* The type of the store *)
-let type_s_def = cake_define
+let type_s_def = new_definition
   `type_s ctMap envS tenvS <=>
      (!l.
        ((?st. FLOOKUP tenvS l = SOME st) <=> (?v. store_lookup l envS
@@ -201,7 +201,7 @@ let type_s_def = cake_define
          type_sv ctMap tenvS sv st))`;;
 
 (* The global constructor type environment has the primitive exceptions in it *)
-let ctMap_has_exns_def = cake_define
+let ctMap_has_exns_def = new_definition
   `ctMap_has_exns ctMap <=>
      FLOOKUP ctMap bind_stamp = SOME ([],[],Texn_num) /\
      FLOOKUP ctMap chr_stamp = SOME ([],[],Texn_num) /\
@@ -209,7 +209,7 @@ let ctMap_has_exns_def = cake_define
      FLOOKUP ctMap subscript_stamp = SOME ([],[],Texn_num)`;;
 
 (* The global constructor type environment has the list primitives in it *)
-let ctMap_has_lists_def = cake_define
+let ctMap_has_lists_def = new_definition
   `ctMap_has_lists ctMap <=>
      FLOOKUP ctMap (TypeStamp (implode "[]") list_type_num) = SOME
        ([(implode "'a")],[],Tlist_num) /\
@@ -220,7 +220,7 @@ let ctMap_has_lists_def = cake_define
        FLOOKUP ctMap (TypeStamp cn list_type_num) = NONE)`;;
 
 (* The global constructor type environment has the bool primitives in it *)
-let ctMap_has_bools_def = cake_define
+let ctMap_has_bools_def = new_definition
   `ctMap_has_bools ctMap <=>
      FLOOKUP ctMap (TypeStamp (implode "True") bool_type_num) = SOME
        ([],[],Tbool_num) /\
@@ -229,7 +229,7 @@ let ctMap_has_bools_def = cake_define
      (!cn. ~(cn = (implode "True")) /\ ~(cn = (implode "False"))
        ==> FLOOKUP ctMap (TypeStamp cn bool_type_num) = NONE)`;;
 
-let good_ctMap_def = cake_define
+let good_ctMap_def = new_definition
   `good_ctMap ctMap <=>
      ctMap_ok ctMap /\
      ctMap_has_bools ctMap /\
@@ -239,7 +239,7 @@ let good_ctMap_def = cake_define
 (* HOL4 typeSoundInvariantsScript.sml:206-227: code that the source
    has in a comment *)
 
-let consistent_ctMap_def = cake_define
+let consistent_ctMap_def = new_definition
   `consistent_ctMap st type_ids ctMap <=>
      (DISJOINT type_ids (FRANGE ((SND o SND) o_f ctMap))) /\
      (!cn id'.
@@ -251,13 +251,13 @@ let consistent_ctMap_def = cake_define
 (* HOL4 typeSoundInvariantsScript.sml:237-241: code that the source
    has in a comment *)
 
-let type_all_env_def = cake_define
+let type_all_env_def = new_definition
   `type_all_env ctMap tenvS env tenv <=>
      nsAll2 (type_ctor ctMap) (sem_env_c env) (type_env_c tenv) /\
      nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t) (sem_env_v
        env) (type_env_v tenv)`;;
 
-let type_sound_invariant_def = cake_define
+let type_sound_invariant_def = new_definition
   `type_sound_invariant st env ctMap tenvS type_idents tenv <=>
      tenv_ok tenv /\
      good_ctMap ctMap /\

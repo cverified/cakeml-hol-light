@@ -28,14 +28,18 @@ let _ = do_list hide_constant ["pmatch"];;
 
 (*Removes MustTerminate*)
 
-let remove_must_terminate_def = cake_define
-  `remove_must_terminate prog =
+let _ = size_thms "wordLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let remove_must_terminate_def,remove_must_terminate_ind = define_wf
+  `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
+  [`remove_must_terminate prog =
         match prog with
           wordLang_Seq p0 p1 -> Seq (remove_must_terminate p0)
             (remove_must_terminate p1)
         | (If cmp r1 ri e2 e3) ->
-       If cmp r1 ri (remove_must_terminate e2) (remove_must_terminate
-         e3)
+       If cmp r1 ri (remove_must_terminate e2)
+         (remove_must_terminate e3)
         | (wordLang_MustTerminate p) -> remove_must_terminate p
         | (Call ret dest args h) ->
        (let ret = (match ret with NONE -> NONE | SOME
@@ -47,7 +51,7 @@ let remove_must_terminate_def = cake_define
          Call ret dest args h)
         | (Loop names body exit_names) ->
        Loop names (remove_must_terminate body) exit_names
-        | prog -> prog`;;
+        | prog -> prog`];;
 
 let remove_must_terminate_pmatch = prove
  (`!prog.

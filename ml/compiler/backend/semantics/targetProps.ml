@@ -35,7 +35,7 @@ let _ = hol4_ancestors "targetProps"
 let _ = hide_overloads
   ["state_ok","bvl_to_bviProof_state_ok"];;
 
-let shift_interfer_def = cake_define
+let shift_interfer_def = new_definition
   `shift_interfer k s = machine_config_next_interfer_fupd (K
   (misc_shift_seq k (machine_config_next_interfer s)))
      s`;;
@@ -59,7 +59,7 @@ let bytes_in_memory_DIFF = prove
        bytes_in_memory p xs m dm`,
   CHEAT_TAC);;
 
-let ffi_entry_pcs_disjoint_def = cake_define
+let ffi_entry_pcs_disjoint_def = new_definition
   `ffi_entry_pcs_disjoint mc s1 len =
      DISJOINT (set_of_list (machine_config_ffi_entry_pcs mc))
        {asm_state_pc s1 + n2w a | a < len}`;;
@@ -70,19 +70,22 @@ let interference_app_INDUCT,interference_app_RECURSION = define_datatype
   "interference_app = FfiApp (num) (word8 list) ('state) ('state) | \
    CcApp ('a word) ('a word) ('state) ('state)";;
 
-let is_ffi_app_def = cake_define_list
+let is_ffi_app_def = define_cases
   [`is_ffi_app (FfiApp index new_bytes ms_pre ms_post) = T`;
    `is_ffi_app (CcApp a1 a2 ms_pre ms_post) = F`];;
 
-let app_post_def = cake_define_list
+let app_post_def = define_cases
   [`app_post (FfiApp index new_bytes ms_pre ms_post) = ms_post`;
    `app_post (CcApp a1 a2 ms_pre ms_post) = ms_post`];;
 
 (* clocked clone of evaluate that stops at the first interference
    application (FFI, shared-memory or cache-clear) and returns its data
    together with the continuation configuration and ffi state *)
-let find_next_interference_def = cake_define
-  `find_next_interference (mc:('b,'a,'c)machine_config) (ffi:'ffi
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let find_next_interference_def,find_next_interference_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). (\n. n) x2)`
+  [`find_next_interference (mc:('b,'a,'c)machine_config) (ffi:'ffi
   ffi_state) k (ms:'a) =
      (if k = 0 then NONE else
        if (target_get_pc (machine_config_target mc) ms) IN
@@ -130,11 +133,13 @@ let find_next_interference_def = cake_define
              (match EL ffi_index (machine_config_ffi_names mc) with
                ffi_SharedMem op ->
                   (match ALOOKUP (machine_config_mmio_info mc)
-                    ffi_index with NONE -> NONE | SOME (nb,a,reg,pc') ->
+                    ffi_index with NONE -> NONE | SOME (nb,a,reg,pc')
+                    ->
                        (match op with MappedRead ->
                               (match a with Addr r off ->
                               (let ad = target_get_reg
-                                (machine_config_target mc) ms r + off in
+                                (machine_config_target mc) ms r + off
+                                in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
                               (ad IN machine_config_shared_addresses
@@ -188,8 +193,8 @@ let find_next_interference_def = cake_define
                                 ms1,machine_config_ffi_interfer_fupd (K
                                 new_oracle)
                               mc,
-                              new_ffi))) else NONE))))) | ffi_ExtCall
-                                _1 ->
+                              new_ffi))) else NONE))))) |
+                                ffi_ExtCall _1 ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with SOME _2 -> NONE | NONE ->
                        (match read_ffi_bytearrays mc ms with (SOME
@@ -205,16 +210,19 @@ let find_next_interference_def = cake_define
                                 ms1,machine_config_ffi_interfer_fupd (K
                                 new_oracle)
                               mc,
-                              new_ffi))) | _3 -> NONE))))`;;
+                              new_ffi))) | _3 -> NONE))))`];;
 
 (* the limit of find_next_interference over all clocks *)
-let next_interference_def = cake_define
+let next_interference_def = new_definition
   `next_interference mc ffi ms =
      some (\res. ?k. find_next_interference mc ffi k ms = SOME
        res)`;;
 
 (* the sequence of interference applications of a run *)
-let interference_app_seq_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let interference_app_seq_def,interference_app_seq_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`interference_app_seq mc ffi ms 0 = next_interference mc ffi ms`;
    `interference_app_seq mc ffi ms (SUC n) =
          (match next_interference mc ffi ms with NONE -> NONE |
@@ -222,7 +230,10 @@ let interference_app_seq_def = cake_define_list
            (app_post app) n)`];;
 
 (* number of applications satisfying P among the first n applications *)
-let interference_count_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let interference_count_def,interference_count_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`interference_count P mc ffi ms 0 = 0`;
    `interference_count P mc ffi ms (SUC n) =
          interference_count P mc ffi ms n +
@@ -231,7 +242,7 @@ let interference_count_def = cake_define_list
 
 (* position in the application sequence of the k-th application
    satisfying P *)
-let interference_pos_def = cake_define
+let interference_pos_def = new_definition
   `interference_pos P mc ffi ms k =
      some (\n. interference_count P mc ffi ms n = k /\
              (?app mc' ffi'.
@@ -243,7 +254,7 @@ let interference_pos_def = cake_define
    caller-saved register and FP-register residues are read off each
    application's post state; callee-saved (and avoid / out-of-range)
    registers are marked NONE, i.e. preserved *)
-let target_io_regs_def = cake_define
+let target_io_regs_def = new_definition
   `target_io_regs mc ffi ms k (name:ffiname) r =
      (match interference_pos is_ffi_app mc ffi ms k with NONE -> NONE
        | SOME n ->
@@ -257,7 +268,7 @@ let target_io_regs_def = cake_define
                   (target_get_reg (machine_config_target mc) ms_post
                   r)) | _4 -> NONE))`;;
 
-let target_io_fp_regs_def = cake_define
+let target_io_fp_regs_def = new_definition
   `target_io_fp_regs mc ffi ms k (i:num) =
      (match interference_pos is_ffi_app mc ffi ms k with NONE ->
        ((n2w 0):word64) | SOME n ->
@@ -266,7 +277,7 @@ let target_io_fp_regs_def = cake_define
          (machine_config_target
             mc) ms_post i | _5 -> (n2w 0)))`;;
 
-let target_cc_regs_def = cake_define
+let target_cc_regs_def = new_definition
   `target_cc_regs mc ffi ms k r =
      (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k
        with NONE -> NONE | SOME n ->
@@ -281,7 +292,7 @@ let target_cc_regs_def = cake_define
                   (target_get_reg (machine_config_target mc) ms_post
                   r)) | _6 -> NONE))`;;
 
-let target_cc_fp_regs_def = cake_define
+let target_cc_fp_regs_def = new_definition
   `target_cc_fp_regs mc ffi ms k (i:num) =
      (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k
        with NONE -> ((n2w 0):word64) | SOME n ->

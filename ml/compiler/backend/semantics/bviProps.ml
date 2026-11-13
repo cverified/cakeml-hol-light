@@ -169,7 +169,7 @@ let bviProps_evaluate_APPEND = prove
                res -> res)`,
   CHEAT_TAC);;
 
-let bviProps_inc_clock_def = cake_define
+let bviProps_inc_clock_def = new_definition
   `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) =
   bviSem_state_clock_fupd (K (bviSem_state_clock s + n)) s`;;
 hol4_overload "inc_clock" "bviProps_inc_clock";;
@@ -468,15 +468,10 @@ let bviProps_evaluate_genlist_vars = prove
   CHEAT_TAC);;
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bviPropsScript.sml:711-718: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bviProps_get_code_labels_def = cake_define_list_try_tac (fun () ->
-  `MEASURE flatLang_exp_size`)
-  CHEAT_TAC
+let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
+  define_guess
   [`bviProps_get_code_labels (Var _2:bvi_exp) = {}`;
    `bviProps_get_code_labels (If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION
@@ -507,7 +502,7 @@ hol4_overload "get_code_labels" "bviProps_get_code_labels";;
 (* HOL4 bviPropsScript.sml:720-721: a theorem that HOL4 states as the
    value of an ML expression: get_code_labels_def *)
 
-let bviProps_good_code_labels_def = cake_define
+let bviProps_good_code_labels_def = new_definition
   `bviProps_good_code_labels p elabs <=>
      BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) p))
        SUBSET set_of_list (MAP FST p) UNION elabs`;;
@@ -521,14 +516,14 @@ hol4_overload "good_code_labels" "bviProps_good_code_labels";;
    config.  adj_orac below performs that move on a state; it is the BVI
    analogue of closProps' adj_orac_rel.                                    *)
 
-let adj_orac_def = cake_define
+let adj_orac_def = new_definition
   `(adj_orac cc f (s:('a,'ffi)bviSem_state):('b,'ffi)bviSem_state) =
      mk_bviSem_state (bviSem_state_refs s) (bviSem_state_clock s)
        (bviSem_state_global s) cc ((f ## I) o
        bviSem_state_compile_oracle s) (bviSem_state_code s)
        (bviSem_state_ffi s)`;;
 
-let adj_orac_ok_def = cake_define
+let adj_orac_ok_def = new_definition
   `adj_orac_ok cc f (s:('a,'ffi)bviSem_state) <=>
      (!n x y. bviSem_state_compile_oracle s n = (x,y) ==>
        OPTION_MAP (I ## (I ## f)) (bviSem_state_compile s x y) =
@@ -550,7 +545,7 @@ let adj_orac_simps = prove
        cc f s)`,
   CHEAT_TAC);;
 
-let adj_orac_rel_def = cake_define
+let adj_orac_rel_def = new_definition
   `bviProps_adj_orac_rel cc f (s1:('a,'ffi)bviSem_state)
   (s2:('b,'ffi)bviSem_state) <=>
      adj_orac_ok cc f s1 /\ s2 = adj_orac cc f s1`;;

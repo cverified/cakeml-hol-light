@@ -79,7 +79,7 @@ let staterr_INDUCT,staterr_RECURSION = define_datatype
 
 (* HOL4 compilerScript.sml:126-127: ML code, not ported *)
 
-let print_option_def = cake_define
+let print_option_def = new_definition
   `print_option h x =
      (match x with
        NONE -> (implode "") | SOME y -> (\x y. strcat x y) ((\x y.
@@ -89,7 +89,7 @@ let print_option_def = cake_define
 (* HOL4 compilerScript.sml:136-145: the ML values that the
    definitions below antiquote *)
 
-let current_build_info_str_def = cake_define
+let current_build_info_str_def = new_definition
   `current_build_info_str =
      (let commit = print_option (implode "CakeML:")
                      (NONE:mlstring option) in
@@ -125,7 +125,7 @@ let compiler_config_FIELDS = define_record "compiler_config"
    characters that are in it, and this text has newlines and a
    backquote in it. *)
 
-let help_string_def = cake_define
+let help_string_def = new_definition
   (mk_eq(`help_string:mlstring`,
          mk_comb(`implode`, mk_string
   ("\n" ^
@@ -282,28 +282,33 @@ let compile_error_INDUCT,compile_error_RECURSION = define_datatype
   "compile_error = ParseError (mlstring) | TypeError (mlstring) | \
    AssembleError | ConfigError (mlstring) | StaticError (staterr)";;
 
-let find_next_newline_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let find_next_newline_def,find_next_newline_ind = define_wf
   `MEASURE (\(n,s). strlen s - n)`
-  `find_next_newline n s =
+  [`find_next_newline n s =
      (if strlen s <= n then n else
        if strsub s n = (CHR 10) then n else
-         find_next_newline (n + 1) s)`;;
+         find_next_newline (n + 1) s)`];;
 
-let safe_substring_def = cake_define
+let safe_substring_def = new_definition
   `safe_substring s n l =
      (let k = strlen s in
        if k <= n then (implode "") else
          if n + l <= k then
            substring s n l else substring s n (k - n))`;;
 
-let get_nth_line_def = cake_define
-  `get_nth_line k s n =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_nth_line_def,get_nth_line_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x0)`
+  [`get_nth_line k s n =
      (if k = 0 then
        let n1 = find_next_newline n s in
          safe_substring s n (n1 - n) else
-       get_nth_line (k - (1:num)) s (find_next_newline n s + 1))`;;
+       get_nth_line (k - (1:num)) s (find_next_newline n s + 1))`];;
 
-let locs_to_string_def = cake_define
+let locs_to_string_def = new_definition
   `locs_to_string input x2 =
         match x2 with
           NONE -> implode "unknown location"
@@ -327,21 +332,21 @@ let locs_to_string_def = cake_define
 (* HOL4 compilerScript.sml:231: the overload add_locs, which the port
    expands *)
 
-let parse_sexp_input_def = cake_define
+let parse_sexp_input_def = new_definition
   `parse_sexp_input input =
      (let err = (implode "Parsing of sexp syntax failed") in
        match parse_sexp ((MAP (\c. (c,unknown_loc))) input) with
          NONE -> INL err | SOME x -> (match sexplist sexpdec x with
          NONE -> INL err | SOME x -> INR x))`;;
 
-let parse_cml_input_def = cake_define
+let parse_cml_input_def = new_definition
   `parse_cml_input input =
      (match parse_prog (lexer_fun input) with peg_Failure l _5 ->
        INL ((\x y. strcat x y) (implode "Parsing failed at ")
        (locs_to_string (implode input) (SOME l))) | Success _6 x _7
        -> INR x)`;;
 
-let compiler_compile_def = cake_define
+let compiler_compile_def = new_definition
   `compiler_compile c prelude input =
      (let _8 = empty_ffi (implode "finished: start up") in
      match
@@ -385,7 +390,7 @@ cake_declare "pan_compile_tap"
     ((((8)word)list#(('a)word)list#backend_config)option)#
     (mlstring)app_list`;;
 
-let compile_pancake_def = cake_define
+let compile_pancake_def = new_definition
   `compile_pancake asm_conf c input =
    (let _11 = empty_ffi (implode "finished: start up") in
    match parse_topdecs_to_ast input with INR errs ->
@@ -405,7 +410,7 @@ let compile_pancake_def = cake_define
              (bytes,data,c),td,MAP StaticError warns))))`;;
 
 (* The top-level compiler *)
-let error_to_str_def = cake_define_list
+let error_to_str_def = define_cases
   [`error_to_str (ParseError s) =
          concat [(implode "### ERROR: parse error\n"); s;
            (implode "\n")]`;
@@ -429,25 +434,25 @@ let error_to_str_def = cake_define_list
             ShapeErr s -> concat [(implode
             "### ERROR: shape error\n"); s; (implode "\n")])`];;
 
-let is_error_msg_def = cake_define
+let is_error_msg_def = new_definition
   `is_error_msg x = isPrefix (implode "###") x`;;
 
 (* TODO: translator fails inside mlstringLib.mlstring_case_conv
   when the following definition just matches against (strlit str) directly *)
-let parse_num_def = cake_define
+let parse_num_def = new_definition
   `parse_num str =
    (let str = explode str in
    if EVERY isDigit str then
      SOME (num_from_dec_string_alt str) else NONE)`;;
 
-let parse_bool_def = cake_define
+let parse_bool_def = new_definition
   `parse_bool str =
    (if str = (implode "true") then SOME T else if str = (implode
      "false") then SOME F else NONE)`;;
 
 (* Finds the first occurence of the flag and
   returns the rest of the string after it *)
-let find_str_def = cake_define_list
+let find_str_def,find_str_ind = define_rec
   [`find_str flag [] = NONE`;
    `find_str flag (x :: xs) =
         (if isPrefix flag x then
@@ -456,7 +461,7 @@ let find_str_def = cake_define_list
 
 (* Finds all occurences of the flag as a prefix, returning
    the remainder in each occurence. *)
-let find_strs_def = cake_define_list
+let find_strs_def,find_strs_ind = define_rec
   [`find_strs flag [] = []`;
    `find_strs flag (x :: xs) =
         (if isPrefix flag x then
@@ -465,7 +470,7 @@ let find_strs_def = cake_define_list
 
 (* If flag is not present then F, else if it is present then
    we should not get any config string afterwards *)
-let find_bool_def = cake_define
+let find_bool_def = new_definition
   `find_bool flag ls default =
    (match find_str flag ls with
      NONE -> INL default | SOME rest ->
@@ -476,7 +481,7 @@ let find_bool_def = cake_define
 
 (* If flag is not present then INL default, else if it is present then
    the rest of the config string should be a number *)
-let find_num_def = cake_define
+let find_num_def = new_definition
   `find_num flag ls default =
    (match find_str flag ls with
      NONE -> INL default | SOME rest ->
@@ -485,12 +490,12 @@ let find_num_def = cake_define
        "Unable to parse as num: "); rest; (implode " for flag: ");
        flag])))`;;
 
-let get_err_str_def = cake_define_list
+let get_err_str_def = define_cases
   [`get_err_str (INL n) = (implode "")`;
    `get_err_str (INR n) = concat [n; (implode "\n")]`];;
 
 (* All the numbers must parse *)
-let parse_num_list_def = cake_define_list
+let parse_num_list_def,parse_num_list_ind = define_rec
   [`parse_num_list [] = INL []`;
    `parse_num_list (x :: xs) =
          (match parse_num x with
@@ -499,7 +504,7 @@ let parse_num_list_def = cake_define_list
            (match parse_num_list xs with
              INR s -> INR s | INL ns -> INL (n :: ns)))`];;
 
-let comma_tokens_def = cake_define_list
+let comma_tokens_def,comma_tokens_ind = define_rec
   [`comma_tokens acc (xs:string) [] = (if NULL xs then acc else acc
   ++ [implode xs])`;
    `comma_tokens acc (xs:string) (c :: (cs:string)) =
@@ -509,7 +514,7 @@ let comma_tokens_def = cake_define_list
           comma_tokens acc (STRCAT xs [c]) cs)`];;
 
 
-let parse_nums_def = cake_define
+let parse_nums_def = new_definition
   `parse_nums str = (parse_num_list (comma_tokens [] [] (explode
   str)))`;;
 
@@ -526,7 +531,7 @@ let parse_nums_def = cake_define
 *)
 
 (* clos_conf *)
-let parse_clos_conf_def = cake_define
+let parse_clos_conf_def = new_definition
   `parse_clos_conf ls clos =
    (let multi = find_bool (implode "--multi=") ls
      (clos_to_bvl_config_do_mti clos) in
@@ -563,7 +568,7 @@ let parse_clos_conf_def = cake_define
                   get_err_str maxapp]))`;;
 
 (* bvl *)
-let parse_bvl_conf_def = cake_define
+let parse_bvl_conf_def = new_definition
   `parse_bvl_conf ls bvl =
    (let inlinesz = find_num (implode "--inline_size=") ls
      (bvl_to_bvi_config_inline_size_limit bvl) in
@@ -591,7 +596,7 @@ let parse_bvl_conf_def = cake_define
                   get_err_str tailrec]))`;;
 
 (* wtw *)
-let parse_wtw_conf_def = cake_define
+let parse_wtw_conf_def = new_definition
   `parse_wtw_conf ls wtw =
      (let regalg = find_num (implode "--reg_alg=") ls
        (word_to_word_config_reg_alg wtw) in
@@ -599,7 +604,7 @@ let parse_wtw_conf_def = cake_define
          INL r -> INL (word_to_word_config_reg_alg_fupd (K r) wtw)
            | INR s -> INR (get_err_str regalg))`;;
 
-let parse_gc_def = cake_define
+let parse_gc_def = new_definition
   `parse_gc ls default =
    (match find_str (implode "--gc=") ls with
      NONE -> INL default | SOME rest ->
@@ -618,7 +623,7 @@ EVAL ``parse_gc [«--gc=gen1234,1234,1234»] def``
 *)
 
 (* Copy of conf_ok from data_to_word *)
-let conf_ok_check_def = cake_define
+let conf_ok_check_def = new_definition
   `conf_ok_check (:'a) c <=>
      shift_length c < dimindex (:'a) /\
      backend_common_word_shift (:'a) <= shift_length c /\
@@ -627,7 +632,7 @@ let conf_ok_check_def = cake_define
      c + 7 < dimindex (:'a)`;;
 
 (* data *)
-let parse_data_conf_def = cake_define
+let parse_data_conf_def = new_definition
   `parse_data_conf ls data =
    (let tag_bits = find_num (implode "--tag_bits=") ls
      (data_to_word_config_tag_bits data) in
@@ -657,7 +662,7 @@ let parse_data_conf_def = cake_define
                    get_err_str empty_FFI]))`;;
 
 (* stack *)
-let parse_stack_conf_def = cake_define
+let parse_stack_conf_def = new_definition
   `parse_stack_conf ls stack' =
    (let jump = find_bool (implode "--jump=") ls
      (stack_to_lab_config_jump stack') in
@@ -669,12 +674,12 @@ let parse_stack_conf_def = cake_define
        -> INR s | (_18,INR s) -> INR s)`;;
 
 (* tap *)
-let parse_tap_conf_def = cake_define
+let parse_tap_conf_def = new_definition
   `parse_tap_conf ls stack' =
      INL (mk_tap_config (MEMBER (implode "--explore") ls))`;;
 
 (* lab *)
-let parse_lab_conf_def = cake_define
+let parse_lab_conf_def = new_definition
   `parse_lab_conf ls lab =
      (let hs = find_num (implode "--hash_size=") ls
        (lab_to_target_config_hash_size lab) in
@@ -682,7 +687,7 @@ let parse_lab_conf_def = cake_define
          INL r -> INL (lab_to_target_config_hash_size_fupd (K r)
            lab) | INR s -> INR s)`;;
 
-let extend_conf_def = cake_define
+let extend_conf_def = new_definition
   `extend_conf ls conf =
    (let clos = parse_clos_conf ls (backend_config_clos_conf conf) in
    let bvl = parse_bvl_conf ls (backend_config_bvl_conf conf) in
@@ -739,7 +744,7 @@ cake_declare "ag32_enc" `:(32)asm->word8 list`;;
 cake_declare "arm8_valid_immediate" `:binop+cmp->(64)word->bool`;;
 cake_declare "arm7_valid_immediate" `:(32)word->bool`;;
 
-let x64_config_def = cake_define
+let x64_config_def = new_definition
   `x64_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -761,7 +766,7 @@ let x64_config_def = cake_define
        (sw2sw (INT_MINw:(32)word) + n2w 7,
         sw2sw (INT_MAXw:(32)word) + n2w 7)`;;
 
-let arm8_config_def = cake_define
+let arm8_config_def = new_definition
   `arm8_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg
@@ -785,7 +790,7 @@ let arm8_config_def = cake_define
         sw2sw (INT_MAXw:(21)word) + n2w 4)
        (sw2sw (INT_MINw:(32)word),sw2sw (INT_MAXw:(32)word))`;;
 
-let mips_config_def = cake_define
+let mips_config_def = new_definition
   `mips_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -813,7 +818,7 @@ let mips_config_def = cake_define
        (sw2sw (INT_MINw:(32)word) + n2w 12,
         sw2sw (INT_MAXw:(32)word) + n2w 8)`;;
 
-let riscv_config_def = cake_define
+let riscv_config_def = new_definition
   `riscv_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg
@@ -842,7 +847,7 @@ let riscv_config_def = cake_define
         sw2sw (INT_MAXw:(21)word) + n2w 4)
        (sw2sw (INT_MINw:(32)word),n2w 2147481599)`;;
 
-let arm7_config_def = cake_define
+let arm7_config_def = new_definition
   `arm7_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -864,7 +869,7 @@ let arm7_config_def = cake_define
         sw2sw (INT_MAXw:(26)word) + n2w 12)
        (INT_MINw,INT_MAXw)`;;
 
-let ag32_config_def = cake_define
+let ag32_config_def = new_definition
   `ag32_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -884,7 +889,7 @@ let ag32_config_def = cake_define
        (--(n2w 2147483647) + n2w 4,n2w 2147483647)
        (--(n2w 2147483647) + n2w 4,n2w 2147483647)`;;
 
-let parse_target_64_def = cake_define
+let parse_target_64_def = new_definition
   `parse_target_64 ls =
    (match find_str (implode "--target=") ls with
      NONE -> INL (x64_backend_config,x64_export,x64_config) | SOME
@@ -901,7 +906,7 @@ let parse_target_64_def = cake_define
        rest])))`;;
 
 (* Defaults to arm7 if no target given *)
-let parse_target_32_def = cake_define
+let parse_target_32_def = new_definition
   `parse_target_32 ls =
    (match find_str (implode "--target=") ls with
      NONE -> INL (arm7_backend_config,arm7_export,arm7_config) | SOME
@@ -912,7 +917,7 @@ let parse_target_32_def = cake_define
        (ag32_backend_config,ag32_export,ag32_config) else INR (concat
        [(implode "Unrecognized 32-bit target option: "); rest])))`;;
 
-let parse_top_config_def = cake_define
+let parse_top_config_def = new_definition
   `parse_top_config ls =
    (let sexp = find_bool (implode "--sexp=") ls F in
    let prelude = find_bool (implode "--exclude_prelude=") ls F in
@@ -933,18 +938,18 @@ let parse_top_config_def = cake_define
                 get_err_str mainreturn]))`;;
 
 (* Check for version flag *)
-let has_version_flag_def = cake_define
+let has_version_flag_def = new_definition
   `has_version_flag ls = MEM (implode "--version") ls`;;
 
 (* Check for version help *)
-let has_help_flag_def = cake_define
+let has_help_flag_def = new_definition
   `has_help_flag ls = MEM (implode "--help") ls`;;
 
 (* Check for pancake flag *)
-let has_pancake_flag_def = cake_define
+let has_pancake_flag_def = new_definition
   `has_pancake_flag ls = MEM (implode "--pancake") ls`;;
 
-let format_compiler_result_def = cake_define_list
+let format_compiler_result_def = define_cases
   [`format_compiler_result bytes_export (M_failure err) =
       ((List []:mlstring app_list),error_to_str err)`;
    `format_compiler_result bytes_export (M_success ((bytes:word8
@@ -954,7 +959,7 @@ let format_compiler_result_def = cake_define_list
 
 (* FIXME TODO: this is an awful workaround to avoid implementing a file writer
    right now. *)
-let add_tap_output_def = cake_define
+let add_tap_output_def = new_definition
   `add_tap_output td out =
      (if td = misc_Nil then out else td:mlstring app_list)`;;
 
@@ -963,7 +968,7 @@ let add_tap_output_def = cake_define
 (* The top-level compiler with almost everything instantiated except the top-level configuration *)
 cake_declare "basis" `:dec list`;;
 
-let compile_64_def = cake_define
+let compile_64_def = new_definition
   `compile_64 cl input =
    (let confexp = parse_target_64 cl in
    let topconf = parse_top_config cl in
@@ -993,13 +998,13 @@ let compile_64_def = cake_define
      (List [],error_to_str (ConfigError (concat [get_err_str
        confexp; get_err_str topconf]))))`;;
 
-let pancake_backend_conf_def = cake_define
+let pancake_backend_conf_def = new_definition
   `pancake_backend_conf c = backend_config_data_conf_fupd (K
   (data_to_word_config_gc_kind_fupd (K None) (backend_config_data_conf
   c)))
      c`;;
 
-let compile_pancake_64_def = cake_define
+let compile_pancake_64_def = new_definition
   `compile_pancake_64 cl input =
    (let confexp = parse_target_64 cl in
    match confexp with INR err -> (List [],error_to_str (ConfigError
@@ -1033,7 +1038,7 @@ let compile_pancake_64_def = cake_define
    not have (add_stdout, add_stderr, fastForwardFD) *)
 (* HOL4 compilerScript.sml:759-773: the definition *)
 
-let compile_32_def = cake_define
+let compile_32_def = new_definition
   `compile_32 cl input =
    (let confexp = parse_target_32 cl in
    let topconf = parse_top_config cl in
@@ -1062,7 +1067,7 @@ let compile_32_def = cake_define
      (List [],error_to_str (ConfigError (concat [get_err_str
        confexp; get_err_str topconf]))))`;;
 
-let compile_pancake_32_def = cake_define
+let compile_pancake_32_def = new_definition
   `compile_pancake_32 cl input =
    (let confexp = parse_target_32 cl in
    match confexp with INR err -> (List [],error_to_str (ConfigError

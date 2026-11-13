@@ -40,13 +40,17 @@ let _ = hide_overloads
 
 let _ = do_list hide_constant ["mem"];;
 
-let labProps_extract_labels_def = cake_define
-  `labProps_extract_labels x1 =
+let _ = size_thms "line";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
+  `MEASURE (\x0. list_size (line_size (\x. 0)) x0)`
+  [`labProps_extract_labels x1 =
         match x1 with
           [] -> []
         | (labLang_Label l1 l2 _2 :: xs) -> (l1,l2) ::
           labProps_extract_labels xs
-        | (x :: xs) -> labProps_extract_labels xs`;;
+        | (x :: xs) -> labProps_extract_labels xs`];;
 hol4_overload "extract_labels" "labProps_extract_labels";;
 
 (* HOL4 labPropsScript.sml:18: ML code, not ported *)
@@ -57,7 +61,7 @@ let extract_labels_append = prove
      labProps_extract_labels B`,
   CHEAT_TAC);;
 
-let labs_of_def = cake_define
+let labs_of_def = new_definition
   `labs_of x1 =
       match x1 with
         labLang_LocValue _4 (labLang_Lab n1 n2) -> {(n1,n2)}
@@ -65,17 +69,17 @@ let labs_of_def = cake_define
       | (JumpCmp _5 _6 _7 (labLang_Lab n1 n2)) -> {(n1,n2)}
       | _8 -> {}`;;
 
-let line_get_labels_def = cake_define
+let line_get_labels_def = new_definition
   `line_get_labels x1 =
       match x1 with
         labLang_LabAsm a _9 _10 _11 -> labs_of a
       | _12 -> {}`;;
 
-let sec_get_labels_def = cake_define
-  `sec_get_labels (Section _13 lines) =
-     BIGUNION (IMAGE line_get_labels (set_of_list lines))`;;
+let sec_get_labels_def = define_general
+  [`sec_get_labels (Section _13 lines) =
+     BIGUNION (IMAGE line_get_labels (set_of_list lines))`];;
 
-let labProps_get_labels_def = cake_define
+let labProps_get_labels_def = new_definition
   `labProps_get_labels code = BIGUNION (IMAGE sec_get_labels
   (set_of_list code))`;;
 hol4_overload "get_labels" "labProps_get_labels";;
@@ -85,19 +89,19 @@ let get_labels_cons = prove
   labProps_get_labels xs`,
   CHEAT_TAC);;
 
-let line_get_code_labels_def = cake_define
+let line_get_code_labels_def = new_definition
   `line_get_code_labels x1 =
       match x1 with
         labLang_Label _16 l _17 -> {l}
       | _18 -> {}`;;
 
-let sec_get_code_labels_def = cake_define
-  `sec_get_code_labels (Section n1 lines) =
+let sec_get_code_labels_def = define_general
+  [`sec_get_code_labels (Section n1 lines) =
      (n1,0) INSERT
      IMAGE (\n2. (n1,n2)) (BIGUNION (IMAGE line_get_code_labels
-       (set_of_list lines)))`;;
+       (set_of_list lines)))`];;
 
-let labProps_get_code_labels_def = cake_define
+let labProps_get_code_labels_def = new_definition
   `labProps_get_code_labels code = BIGUNION (IMAGE
   sec_get_code_labels (set_of_list code))`;;
 hol4_overload "get_code_labels" "labProps_get_code_labels";;
@@ -112,9 +116,9 @@ let get_code_labels_cons = prove
   labProps_get_code_labels secs`,
   CHEAT_TAC);;
 
-let sec_ends_with_label_def = cake_define
-  `sec_ends_with_label (Section _19 ls) <=>
-     ~(NULL ls) /\ is_Label (LAST ls)`;;
+let sec_ends_with_label_def = define_general
+  [`sec_ends_with_label (Section _19 ls) <=>
+     ~(NULL ls) /\ is_Label (LAST ls)`];;
 
 (* [simp] *)
 let reg_imm_with_clock = prove
@@ -293,7 +297,7 @@ let labProps_fp_upd_consts = prove
       (labSem_fp_upd f x) = state_ffi x`,
   CHEAT_TAC);;
 
-let line_length_def = cake_define_list
+let line_length_def = define_cases
   [`line_length (labLang_Label k1 k2 l) = (if l = 0 then 0 else 1)`;
    `line_length (labLang_Asm b bytes l) = LENGTH bytes`;
    `line_length (labLang_LabAsm a w bytes l) = LENGTH bytes`];;
@@ -337,7 +341,7 @@ let share_mem_op_add_clock_same = prove
    Light does not read (tools/unstated.py):
    evaluate_add_clock_io_events_mono *)
 
-let align_dm_def = cake_define
+let align_dm_def = new_definition
   `align_dm (s:('a,'c,'ffi)labSem_state) =
      (labSem_state_mem_domain_fupd (K (labSem_state_mem_domain s
        INTER byte_aligned)) s)`;;
@@ -553,7 +557,7 @@ let share_mem_op_align_dm_simp = prove
 
 (** align_sdm **)
 
-let align_sdm_def = cake_define
+let align_sdm_def = new_definition
   `align_sdm (s:('a,'c,'ffi)labSem_state) =
      (labSem_state_shared_mem_domain_fupd (K
        (labSem_state_shared_mem_domain s INTER byte_aligned)) s)`;;
@@ -744,30 +748,30 @@ let share_mem_op_align_sdm_simp = prove
 
 
 (* asm_ok checks coming into lab_to_target *)
-let line_ok_pre_def = cake_define
+let line_ok_pre_def = new_definition
   `line_ok_pre c x2 =
         match (c,x2) with
           ((c:'a asm_config),labLang_Asm b bytes l) -> asm_ok
             (cbw_to_asm b) c
         | (c,_20) -> T`;;
 
-let sec_ok_pre_def = cake_define
-  `sec_ok_pre c (Section k ls) <=>
-     EVERY (line_ok_pre c) ls`;;
+let sec_ok_pre_def = define_general
+  [`sec_ok_pre c (Section k ls) <=>
+     EVERY (line_ok_pre c) ls`];;
 
 (* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which
    the port expands *)
 
 (* invariant: labels have correct section number and are non-zero *)
 
-let sec_label_ok_def = cake_define
+let sec_label_ok_def = new_definition
   `sec_label_ok k x2 =
         match x2 with
           labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
         | _21 -> T`;;
 
-let sec_labels_ok_def = cake_define
-  `sec_labels_ok (Section k ls) <=> EVERY (sec_label_ok k) ls`;;
+let sec_labels_ok_def = define_general
+  [`sec_labels_ok (Section k ls) <=> EVERY (sec_label_ok k) ls`];;
 
 let sec_label_ok_extract_labels = prove
  (`EVERY (sec_label_ok n1) lines /\
@@ -797,13 +801,13 @@ let get_code_labels_extract_labels = prove
      code))`,
   CHEAT_TAC);;
 
-let no_install_def = cake_define
+let no_install_def = new_definition
   `labProps_no_install code <=>
    (!p w bytes l. ~(asm_fetch_aux p code =
        SOME (labLang_LabAsm Install w bytes l)))`;;
 hol4_overload "no_install" "labProps_no_install";;
 
-let no_share_mem_inst_def = cake_define
+let no_share_mem_inst_def = new_definition
   `no_share_mem_inst code <=>
    (!p op re a inst' len. ~(asm_fetch_aux p code =
        SOME (labLang_Asm (ShareMem op re a) inst' len)))`;;

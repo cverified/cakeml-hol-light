@@ -268,13 +268,10 @@ hol4_overload "Op" "closLang_Op";;
 (* HOL4 closLangScript.sml:143: ML code, not ported *)
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 closLangScript.sml:159-168: the tactic that proves the
    termination *)
-let has_install_def = cake_define_list_try (fun () ->
-  `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-     list_size closLang_exp_size es)`)
+let has_install_def = define_mutual_shaped_rec
+  "nested"
   [`has_install ((Var t n):closLang_exp) = F`;
    `has_install (If t e1 e2 e3:closLang_exp) = (has_install e1 \/
   has_install e2 \/ has_install e3)`;
@@ -300,7 +297,7 @@ let has_install_def = cake_define_list_try (fun () ->
 (* HOL4 closLangScript.sml:170-175: a theorem whose statement the
    port cannot state yet: exp1_size_lemma *)
 
-let pure_op_def = cake_define
+let pure_op_def = new_definition
   `closLang_pure_op op <=>
      (match op with
        FFI _21 -> F | closLang_GlobOp (closLang_SetGlobal _22) ->
@@ -314,7 +311,8 @@ let pure_op_def = cake_define
 hol4_overload "pure_op" "closLang_pure_op";;
 
 (* pure e means e can neither raise an exception nor side-effect the state *)
-let pure_def = cake_define_list
+let pure_def,pure_ind = define_shaped_rec
+  "nested"
   [`pure (Var _28 _29:closLang_exp) <=> T`;
    `pure (If _31 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure e2 /\
   pure e3`;
@@ -330,7 +328,7 @@ let pure_def = cake_define_list
   closLang_pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)
-let assign_get_code_label_def = cake_define
+let assign_get_code_label_def = new_definition
   `assign_get_code_label x =
         match x with
           closLang_Label x -> {x}

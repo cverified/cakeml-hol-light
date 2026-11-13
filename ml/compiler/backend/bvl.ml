@@ -57,12 +57,12 @@ hol4_overload "Call" "bvl_Call";;
 hol4_overload "Force" "bvl_Force";;
 hol4_overload "Op" "bvl_Op";;
 
-let bool_def = cake_define
+let bool_def = new_definition
   `bvl_Bool b = Op (closLang_BlockOp (closLang_Cons (bool_to_tag b)))
   []`;;
 hol4_overload "Bool" "bvl_Bool";;
 
-let mk_tick_def = cake_define
+let mk_tick_def = new_definition
   `mk_tick n e = (FUNPOW Tick n e:bvl_exp)`;;
 
 (* HOL4 bvlScript.sml:50: the overload mk_unit, which the port

@@ -33,7 +33,7 @@ hol4_field_overload "limit_fupd" "gen_gc_conf_limit_fupd";;
 hol4_field_overload "isRef" "gen_gc_conf_isRef";;
 hol4_field_overload "isRef_fupd" "gen_gc_conf_isRef_fupd";;
 
-let gen_gc_gc_move_def = cake_define_list
+let gen_gc_gc_move_def = define_cases
   [`gen_gc_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data
   d:'a heap_address),state)`;
    `gen_gc_gc_move conf state (gc_shared_Pointer ptr d) =
@@ -80,7 +80,7 @@ let gc_move_IMP = prove
    (IS_SUFFIX (gc_state_r4 state') (gc_state_r4 state))`,
   CHEAT_TAC);;
 
-let gen_gc_gc_move_list_def = cake_define_list
+let gen_gc_gc_move_list_def,gen_gc_gc_move_list_ind = define_rec
   [`gen_gc_gc_move_list conf state [] = ([],state)`;
    `gen_gc_gc_move_list conf state (x :: xs) =
         (let (x,state) = gen_gc_gc_move conf state x in
@@ -99,37 +99,39 @@ let gc_move_list_IMP = prove
     (IS_SUFFIX (gc_state_r4 state') (gc_state_r4 state))`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 gen_gcScript.sml:123-129: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_data_def = cake_define_try_tac (fun () ->
+let gc_move_data_def,gc_move_data_ind = define_wf_cheat
   `MEASURE (\(conf,state). gen_gc_conf_limit conf - heap_length
-  (gc_state_h1 state))`)
-  CHEAT_TAC
-  `(gen_gc_gc_move_data conf state =
+  (gc_state_h1 state))`
+  [`(gen_gc_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
-       (if gen_gc_conf_limit conf < heap_length (gc_state_h1 state ++
-         (h :: h2)) then gc_state_ok_fupd (K F) state else
+       (if gen_gc_conf_limit conf < heap_length (gc_state_h1 state
+         ++ (h :: h2)) then gc_state_ok_fupd (K F) state else
         match h with DataElement xs l d ->
           (let (xs,state) = gen_gc_gc_move_list conf state xs in
           let h1 = gc_state_h1 state ++ [DataElement xs l d] in
           let h2 = TL (gc_state_h2 state) in
-          let ok = (gc_state_ok state /\ ~(gc_state_h2 state = []) /\
-            (HD (gc_state_h2 state) = h)) in
+          let ok = (gc_state_ok state /\ ~(gc_state_h2 state = [])
+            /\ (HD (gc_state_h2 state) = h)) in
             gen_gc_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1)
-              state)))) | _5 -> gc_state_ok_fupd (K F) state)))`;;
+              state)))) | _5 -> gc_state_ok_fupd (K F) state)))`];;
 hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 gen_gcScript.sml:143-147: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_refs_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(conf,state). heap_length (gc_state_r2 state))`)
-  CHEAT_TAC
-  `// maybe more refs (r4 could have more)
+let gc_move_refs_def,gc_move_refs_ind = define_wf_cheat
+  `MEASURE (\(conf,state). heap_length (gc_state_r2 state))`
+  [`// maybe more refs (r4 could have more)
    gc_move_refs conf state =
      (match gc_state_r2 state with [] -> gc_state_r1_fupd (K
        (gc_state_r3 state ++ gc_state_r1 state)) (gc_state_r3_fupd (K
@@ -139,12 +141,15 @@ let gc_move_refs_def = cake_define_try_tac (fun () ->
          let r3 = gc_state_r3 state ++ [DataElement xs l d] in
            gc_move_refs conf (gc_state_r3_fupd (K r3)
              (gc_state_r2_fupd (K r2) state))) | _6 ->
-             gc_state_ok_fupd (K F) state))`;;
+             gc_state_ok_fupd (K F) state))`];;
 
 (* The main gc loop *)
 (* Runs a clock to simplify the termination argument *)
-let gen_gc_gc_move_loop_def = cake_define
-  `gen_gc_gc_move_loop conf state (clock:num) =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let gen_gc_gc_move_loop_def,gen_gc_gc_move_loop_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x2)`
+  [`gen_gc_gc_move_loop conf state (clock:num) =
      (match gc_state_r4 state with [] ->
        (match gc_state_h2 state with [] -> state | (h :: h2) ->
           (let state = gen_gc_gc_move_data conf state in
@@ -153,10 +158,10 @@ let gen_gc_gc_move_loop_def = cake_define
        (let state = gc_move_refs conf (gc_state_r4_fupd (K [])
          (gc_state_r2_fupd (K (gc_state_r4 state)) state)) in
        if clock = 0 then gc_state_ok_fupd (K F) state else
-         gen_gc_gc_move_loop conf state (clock - 1)))`;;
+         gen_gc_gc_move_loop conf state (clock - 1)))`];;
 hol4_overload "gc_move_loop" "gen_gc_gc_move_loop";;
 
-let gen_gc_def = cake_define
+let gen_gc_def = new_definition
   `gen_gc conf (roots,heap) =
      (let state =
          gc_state_ok_fupd (K (heap_length heap = gen_gc_conf_limit
@@ -169,7 +174,7 @@ let gen_gc_def = cake_define
 
 (* Do we point to something that is fully processed? I.e. all children
 are also copied. *)
-let is_final_def = cake_define
+let is_final_def = new_definition
   `is_final conf state ptr =
      (let h1end = heap_length (gc_state_h1 state) in
      let r3start = gc_state_a state + gc_state_n state + heap_length
@@ -180,7 +185,7 @@ let is_final_def = cake_define
      r1start <= ptr \/
      (r3start <= ptr /\ ptr < r3end))`;;
 
-let gen_gc_gc_inv_def = cake_define
+let gen_gc_gc_inv_def = new_definition
   `gen_gc_gc_inv conf state (heap0:(('a,'b)heap_element) list)
   (roots0:('a heap_address) list) =
      (let heap' = gc_state_h1 state ++ gc_state_h2 state ++

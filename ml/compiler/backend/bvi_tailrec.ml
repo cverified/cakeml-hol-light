@@ -26,13 +26,13 @@ let _ = hol4_ancestors "bvi_tailrec"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let dummy_def = cake_define
+let dummy_def = new_definition
   `dummy = bvi_Var 1234567890`;;
 
 (* HOL4 bvi_tailrecScript.sml:21-25: a theorem whose statement the
    port cannot state yet: MEM_exp_size_imp *)
 
-let is_rec_def = cake_define
+let is_rec_def = new_definition
   `bvi_tailrec_is_rec name x2 =
         match x2 with
           bvi_Call _1 d _2 NONE -> d = SOME name
@@ -45,7 +45,7 @@ let is_rec_PMATCH = prove
       Call _4 d _5 NONE -> d = SOME name | _6 -> F)`,
   CHEAT_TAC);;
 
-let is_const_def = cake_define
+let is_const_def = new_definition
   `bvi_tailrec_is_const x1 =
         match x1 with
           closLang_IntOp (closLang_Const i) -> small_enough_int i
@@ -73,20 +73,20 @@ hol4_overload "Int" "bvi_tailrec_Int";;
 hol4_overload "List" "bvi_tailrec_List";;
 hol4_overload "Any" "bvi_tailrec_Any";;
 
-let op_type_def = cake_define
+let op_type_def = new_definition
   `op_type x1 =
       match x1 with
         (Append:assoc_op) -> List
       | bvi_tailrec_Noop -> bvi_tailrec_Any
       | _9 -> Int`;;
 
-let to_op_def = cake_define_list
+let to_op_def = define_cases
   [`to_op bvi_tailrec_Plus = closLang_IntOp closLang_Add`;
    `to_op bvi_tailrec_Times = closLang_IntOp closLang_Mult`;
    `to_op (Append:assoc_op) = closLang_BlockOp ListAppend`;
    `to_op bvi_tailrec_Noop = closLang_IntOp closLang_Mod`];;
 
-let from_op_def = cake_define
+let from_op_def = new_definition
   `from_op op =
      (if op = closLang_IntOp closLang_Add then bvi_tailrec_Plus
        else if op = closLang_IntOp closLang_Mult then
@@ -106,7 +106,7 @@ let from_op_PMATCH = prove
 (* HOL4 bvi_tailrecScript.sml:103-107: a theorem that HOL4 states as
    the value of an ML expression: from_op_thm *)
 
-let op_eq_def = cake_define
+let op_eq_def = new_definition
   `op_eq x1 x2 =
         match (x1,x2) with
           (bvi_tailrec_Plus,(Op op xs:bvi_exp)) -> op =
@@ -135,10 +135,10 @@ let op_eq_to_op = prove
       op = to_op iop /\ ~(iop = bvi_tailrec_Noop)`,
   CHEAT_TAC);;
 
-let apply_op_def = cake_define
+let apply_op_def = new_definition
   `apply_op op e1 e2 = Op (to_op op) [e1; e2]`;;
 
-let id_from_op_def = cake_define_list
+let id_from_op_def = define_cases
   [`id_from_op bvi_tailrec_Plus = bvi_Op (closLang_IntOp
   (closLang_Const (&0))) []`;
    `id_from_op bvi_tailrec_Times = bvi_Op (closLang_IntOp
@@ -147,7 +147,7 @@ let id_from_op_def = cake_define_list
   (closLang_Cons nil_tag)) []`;
    `id_from_op bvi_tailrec_Noop = dummy`];;
 
-let index_of_def = cake_define
+let index_of_def = new_definition
   `index_of x1 =
         match x1 with
           bvi_Var i -> SOME i
@@ -160,7 +160,7 @@ let index_of_PMATCH = prove
          Var i -> SOME i | _16 -> NONE)`,
   CHEAT_TAC);;
 
-let args_from_def = cake_define
+let args_from_def = new_definition
   `args_from x1 =
         match x1 with
           bvi_Call t (SOME d) as hdl -> SOME (t,d,as,hdl)
@@ -173,7 +173,7 @@ let args_from_PMATCH = prove
          Call t (SOME d) as hdl -> SOME (t,d,as,hdl) | _18 -> NONE)`,
   CHEAT_TAC);;
 
-let get_bin_args_def = cake_define
+let get_bin_args_def = new_definition
   `get_bin_args op =
      (match op with bvi_Op _19 [e1; e2] -> SOME (e1,e2) | _20 ->
        NONE)`;;
@@ -191,11 +191,11 @@ let exp_size_get_bin_args = prove
        bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
   CHEAT_TAC);;
 
-let opbinargs_def = cake_define
+let opbinargs_def = new_definition
   `opbinargs opr exp = (if ~(op_eq opr exp) then NONE else
   get_bin_args exp)`;;
 
-let try_update_def = cake_define_list
+let try_update_def = define_cases
   [`try_update vty NONE ts = ts`;
    `try_update vty (SOME n) ts =
         (if n < LENGTH ts then
@@ -205,7 +205,7 @@ let try_update_def = cake_define_list
 
 (* --- Checking termination guarantees --- *)
 
-let is_arith_def = cake_define
+let is_arith_def = new_definition
   `is_arith op =
      (match op with
        closLang_IntOp closLang_Add -> T | closLang_IntOp
@@ -221,7 +221,7 @@ let is_arith_PMATCH = prove
            -> F)`,
   CHEAT_TAC);;
 
-let is_rel_def = cake_define
+let is_rel_def = new_definition
   `is_rel op =
      (match op with
        closLang_IntOp closLang_Less -> T | closLang_IntOp
@@ -260,28 +260,32 @@ cake_term_facts := exp_size_get_bin_args_term ::
   (!cake_term_facts);;
 
 let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvi_tailrecScript.sml:280-284: the tactic that proves the
    termination *)
-let term_ok_int_def = cake_define_wf
+let term_ok_int_def,term_ok_int_ind = define_wf
   `MEASURE (bvi_exp_size o SND)`
-  `term_ok_int ts expr =
+  [`term_ok_int ts expr =
      (match expr with
        Var i -> (if i < LENGTH ts then EL i ts = Int else F) | Op op
          xs ->
          (match get_bin_args expr with
-           NONE -> xs = [] /\ bvi_tailrec_is_const op | SOME (x,y)
-             -> is_arith op /\ term_ok_int ts x /\ term_ok_int ts y)
-             | _27 -> F)`;;
+           NONE -> xs = [] /\ bvi_tailrec_is_const op | SOME
+             (x,y) -> is_arith op /\ term_ok_int ts x /\
+             term_ok_int ts y) | _27 -> F)`];;
 
 (* HOL4 bvi_tailrecScript.sml:286: a theorem that HOL4 states as the
    value of an ML expression: term_ok_int_ind *)
 
 let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvi_tailrecScript.sml:303-307: the tactic that proves the
    termination *)
-let term_ok_any_def = cake_define_wf
+let term_ok_any_def,term_ok_any_ind = define_wf
   `MEASURE (bvi_exp_size o SND o SND)`
-  `term_ok_any ts list' expr =
+  [`term_ok_any ts list' expr =
         match expr with
           (Var i:bvi_exp) ->
        (if ~list' then i < LENGTH ts else if i < LENGTH ts then EL i
@@ -291,13 +295,13 @@ let term_ok_any_def = cake_define_wf
          NONE -> xs = [] /\ (if list' then op = closLang_BlockOp
            (closLang_Cons 0) else bvi_tailrec_is_const op) | SOME (x,y)
            ->
-           (if op = closLang_BlockOp ListAppend then term_ok_any ts T
-             x /\ term_ok_any ts T y else if ~list' /\ is_arith op then
-             term_ok_int ts x /\ term_ok_int ts y else if ~list' /\
-             is_rel op then term_ok_int ts x /\ term_ok_int ts y else if
-             op = closLang_BlockOp (closLang_Cons 0) then term_ok_any ts
-             T x /\ term_ok_any ts F y else F))
-        | expr -> F`;;
+           (if op = closLang_BlockOp ListAppend then term_ok_any ts
+             T x /\ term_ok_any ts T y else if ~list' /\ is_arith op
+             then term_ok_int ts x /\ term_ok_int ts y else if ~list'
+             /\ is_rel op then term_ok_int ts x /\ term_ok_int ts y
+             else if op = closLang_BlockOp (closLang_Cons 0) then
+             term_ok_any ts T x /\ term_ok_any ts F y else F))
+        | expr -> F`];;
 
 let is_op_thms = prove
  (`~(is_arith (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_arith
@@ -321,7 +325,7 @@ let is_op_thms = prove
 (* HOL4 bvi_tailrecScript.sml:324-346: code that the source has in a
    comment *)
 
-let term_ok_def = cake_define
+let term_ok_def = new_definition
   `term_ok ts ty expr =
      (match ty with
        bvi_tailrec_Any -> term_ok_any ts F expr | Int ->
@@ -330,7 +334,7 @@ let term_ok_def = cake_define
 (* --- Simple tail checking before rewriting --- *)
 
 (* Swap arguments when commutative *)
-let try_swap_def = cake_define
+let try_swap_def = new_definition
   `try_swap loc opr exp =
         match opr with
           (Append:assoc_op) -> exp
@@ -341,7 +345,7 @@ let try_swap_def = cake_define
              exp))`;;
 
 (* Check if ok to lift xs into accumulator *)
-let check_op_def = cake_define
+let check_op_def = new_definition
   `check_op ts opr loc exp =
      (match opbinargs opr (try_swap loc opr exp) with
        NONE -> NONE | SOME (xs,f) ->
@@ -352,7 +356,7 @@ let check_op_def = cake_define
 
 (* --- Type analysis --- *)
 
-let decide_ty_def = cake_define
+let decide_ty_def = new_definition
   `decide_ty x1 x2 =
         match (x1,x2) with
           ((Int:v_ty),(Int:v_ty)) -> Int
@@ -367,18 +371,18 @@ let decide_ty_PMATCH = prove
            bvi_tailrec_Any)`,
   CHEAT_TAC);;
 
-let LAST1_def = cake_define
-  `LAST1 x1 =
+let LAST1_def,LAST1_ind = define_guess
+  [`LAST1 x1 =
       match x1 with
         [] -> NONE
       | [x] -> SOME x
-      | (x :: xs) -> LAST1 xs`;;
+      | (x :: xs) -> LAST1 xs`];;
 
-let update_context_def = cake_define
+let update_context_def = new_definition
   `update_context ty ts x1 x2 =
      try_update ty (index_of x2) (try_update ty (index_of x1) ts)`;;
 
-let arg_ty_def = cake_define
+let arg_ty_def = new_definition
   `arg_ty x1 =
       match x1 with
         closLang_IntOp (closLang_Const i) -> (if small_enough_int i
@@ -410,7 +414,7 @@ let arg_ty_PMATCH = prove
            ListAppend -> List | _32 -> bvi_tailrec_Any)`,
   CHEAT_TAC);;
 
-let op_ty_def = cake_define
+let op_ty_def = new_definition
   `op_ty x1 =
         match x1 with
           closLang_IntOp closLang_Add -> Int
@@ -450,9 +454,7 @@ let op_ty_PMATCH = prove
        branch of origin for the operation in conditionals.
 *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let scan_expr_def = cake_define_list_cheat CHEAT_TAC
+let scan_expr_def,scan_expr_ind = define_guess
   [`scan_expr ts loc [] = []`;
    `scan_expr ts loc (x :: y :: xs) =
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
@@ -525,7 +527,7 @@ let scan_expr_def = cake_define_list_cheat CHEAT_TAC
                     [(update_context opt ts x y,opt,F,NONE)] else
                 [(ts,bvi_tailrec_Any,F,NONE)]))`];;
 
-let scan_expr_sing_def = cake_define_list
+let scan_expr_sing_def = define_mutual_rec
   [`scan_expr_sing ts loc (Var n:bvi_exp) =
         (let ty = (if n < LENGTH ts then EL n ts else
           bvi_tailrec_Any) in
@@ -600,7 +602,7 @@ let scan_expr_eq = prove
    (!es ts loc. scan_expr ts loc es = scan_expr_list ts loc es)`,
   CHEAT_TAC);;
 
-let push_call_def = cake_define
+let push_call_def = new_definition
   `push_call n op acc exp x5 =
         match x5 with
           SOME (ticks,dest,args,handler) ->
@@ -608,8 +610,9 @@ let push_call_def = cake_define
          handler
         | _75 -> dummy`;;
 
-let rewrite_def = cake_define
-  `rewrite loc next' opr acc ts exp =
+let rewrite_def,rewrite_ind = define_shaped_rec
+  "match"
+  [`rewrite loc next' opr acc ts exp =
         match exp with
           (Var n:bvi_exp) -> (F,Var n)
         | (If x1 x2 x3) ->
@@ -622,9 +625,10 @@ let rewrite_def = cake_define
         | (Let xs x) ->
        (let ys = scan_expr ts loc xs in
        let tt = MAP (FST o SND) ys in
-       let tr = (match LAST1 ys with NONE -> ts | SOME c -> FST c) in
-       let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (tt ++ tr)
-         x in
+       let tr = (match LAST1 ys with NONE -> ts | SOME c -> FST c)
+         in
+       let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (tt ++
+         tr) x in
          (r,Let xs y))
         | (Tick x) ->
        (let (r,y) = rewrite loc next' opr acc ts x in
@@ -634,8 +638,9 @@ let rewrite_def = cake_define
        (match check_op ts opr loc exp with
          NONE -> (F,apply_op opr (Var acc) exp) | SOME exp ->
            (match opbinargs opr exp with
-             NONE -> (F,apply_op opr (Var acc) exp) | SOME (xs,f)
-               -> (T,push_call next' opr acc xs (args_from f))))`;;
+             NONE -> (F,apply_op opr (Var acc) exp) | SOME
+               (xs,f) -> (T,push_call next' opr acc xs (args_from
+               f))))`];;
 
 let rewrite_PMATCH = prove
  (`!loc next' opr acc ts expr.
@@ -673,8 +678,8 @@ let rewrite_PMATCH = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let has_rec_def = cake_define_cheat CHEAT_TAC
-  `has_rec loc x2 =
+let has_rec_def,has_rec_ind = define_guess_cheat
+  [`has_rec loc x2 =
         match x2 with
           [] -> F
         | (x :: y :: xs) ->
@@ -684,16 +689,14 @@ let has_rec_def = cake_define_cheat CHEAT_TAC
         | [Let xs x] -> has_rec loc [x]
         | [Tick x] -> has_rec loc [x]
         | [Op op xs] ->
-       (if EXISTS (bvi_tailrec_is_rec loc) xs then T else has_rec loc
-         xs)
-        | [x] -> F`;;
+       (if EXISTS (bvi_tailrec_is_rec loc) xs then T else has_rec
+         loc xs)
+        | [x] -> F`];;
 
-let has_rec1_def = cake_define
+let has_rec1_def = new_definition
   `has_rec1 loc x = has_rec loc [x]`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let has_rec_sing_def = cake_define_list_cheat CHEAT_TAC
+let has_rec_sing_def = define_mutual_rec
   [`has_rec_sing loc (If x1 x2 x3:bvi_exp) =
         (if has_rec_sing loc x2 then T else has_rec_sing loc x3)`;
    `has_rec_sing loc (Let xs x:bvi_exp) = has_rec_sing loc x`;
@@ -724,7 +727,7 @@ let has_rec_test2 = prove
   NONE; Var 0]:bvi_exp) <=> T`,
   CHEAT_TAC);;
 
-let check_exp_def = cake_define
+let check_exp_def = new_definition
   `check_exp loc arity exp =
      (if ~(has_rec1 loc exp) then NONE else
        let context = REPLICATE arity bvi_tailrec_Any in
@@ -737,15 +740,15 @@ let check_exp_def = cake_define
 (* HOL4 bvi_tailrecScript.sml:771-772: a theorem that HOL4 states as
    the value of an ML expression: check_exp_eq *)
 
-let let_wrap_def = cake_define
+let let_wrap_def = new_definition
   `let_wrap arity id' exp =
      Let ((GENLIST (\i. Var i) arity) ++ [id']) exp`;;
 
-let mk_aux_call_def = cake_define
+let mk_aux_call_def = new_definition
   `mk_aux_call loc arity id' =
      Call 0 (SOME loc) (id' :: GENLIST (\i. Var i) arity) NONE`;;
 
-let bvi_tailrec_compile_exp_def = cake_define
+let bvi_tailrec_compile_exp_def = new_definition
   `bvi_tailrec_compile_exp loc next' arity exp =
      (match check_exp loc arity exp with
        NONE -> NONE | SOME op ->
@@ -755,7 +758,7 @@ let bvi_tailrec_compile_exp_def = cake_define
          SOME (aux,opt)))`;;
 hol4_overload "compile_exp" "bvi_tailrec_compile_exp";;
 
-let compile_each_def = cake_define_list
+let compile_each_def,compile_each_ind = define_rec
   [`bvi_tailrec_compile_each next' [] = (next',[])`;
    `bvi_tailrec_compile_each next' ((loc,arity,exp) :: xs) =
         (match bvi_tailrec_compile_exp loc next' arity exp with NONE
@@ -768,7 +771,7 @@ let compile_each_def = cake_define_list
               :: ys)))`];;
 hol4_overload "compile_each" "bvi_tailrec_compile_each";;
 
-let bvi_tailrec_compile_prog_def = cake_define
+let bvi_tailrec_compile_prog_def = new_definition
   `bvi_tailrec_compile_prog do_it next' xs =
      (if do_it then bvi_tailrec_compile_each next' xs else
        (next',xs))`;;

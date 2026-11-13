@@ -72,7 +72,7 @@ let tenv_ok_empty = prove
  (`tenv_ok (mk_type_env nsEmpty nsEmpty nsEmpty)`,
   CHEAT_TAC);;
 
-let type_pes_def = cake_define
+let type_pes_def = new_definition
   `type_pes tvs tvs' tenv tenvE pes t1 t2 <=>
      (RES_FORALL (set_of_list pes) (\(p,e).
        ?bindings.
@@ -373,7 +373,7 @@ let tenv_ctor_ok_lookup = prove
 
 (* ---------- tenv_val_exp stuff ---------- *)
 
-let deBruijn_subst_tenvE_def = cake_define_list
+let deBruijn_subst_tenvE_def,deBruijn_subst_tenvE_ind = define_rec
   [`deBruijn_subst_tenvE targs (typeSystem_Empty:tenv_val_exp) =
   (typeSystem_Empty:tenv_val_exp)`;
    `deBruijn_subst_tenvE targs (typeSystem_Bind_tvar tvs env) =
@@ -385,7 +385,7 @@ let deBruijn_subst_tenvE_def = cake_define_list
                               t)
            (deBruijn_subst_tenvE targs env)`];;
 
-let db_merge_def = cake_define_list
+let db_merge_def,db_merge_ind = define_rec
   [`db_merge (typeSystem_Empty:tenv_val_exp) e = e`;
    `db_merge (typeSystem_Bind_tvar tvs e1) e2 = typeSystem_Bind_tvar
   tvs (db_merge e1 e2)`;
@@ -794,7 +794,14 @@ let type_e_subst_lem = prove
 (* ---------- ctMap stuff ---------- *)
 
 
-let type_def_to_ctMap_def = cake_define_list
+let _ = size_thms "ast_t";;
+let _ = size_thms "mlstring";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let type_def_to_ctMap_def,type_def_to_ctMap_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3).      list_size      (pair_size (\x. 0)
+  (pair_size (\x. 0) (list_size (pair_size mlstring_size
+  ast_t_size1))))      x2)`
   [`type_def_to_ctMap tenvT next_stamp [] [] = []`;
    `type_def_to_ctMap tenvT next_stamp ((tvs,tn,ctors) :: tds) (id' ::
   ids) =

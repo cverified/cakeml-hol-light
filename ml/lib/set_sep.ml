@@ -12,26 +12,26 @@
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: pred_set pair words *)
 
-let one_def = cake_define
+let one_def = new_definition
   `set_sep_one x = (\s. (s = {x}))`;;
-let emp_def = cake_define
+let emp_def = new_definition
   `emp = (\s. (s = {}))`;;
-let cond_def = cake_define
+let cond_def = new_definition
   `cond c = (\s. (s = {}) /\ c)`;;
-let SEP_T_def = cake_define
+let SEP_T_def = new_definition
   `SEP_T s = T`;;
-let SPLIT_def = cake_define
+let SPLIT_def = new_definition
   `SPLIT (s:'a->bool) (u,v) <=> (u UNION v = s) /\ DISJOINT u v`;;
-let STAR_def = cake_define
+let STAR_def = new_definition
   `STAR p q = (\s. ?u v. SPLIT s (u,v) /\ p u /\ q v)`;;
 
 overload_interface("*",
   `STAR:((A->bool)->bool)->((A->bool)->bool)->(A->bool)->bool`);;
 
-let SEP_EXISTS = cake_define
+let SEP_EXISTS = new_definition
   `(SEP_EXISTS) = (\f (s:'a->bool). (?) (\y. f y s))`;;
 
-let fun2set_def = cake_define
+let fun2set_def = new_definition
   `fun2set ((f:'b->'a),d) = {(a,f a) | a IN d}`;;
 
 (* ================================================================== *)

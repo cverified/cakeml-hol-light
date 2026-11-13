@@ -177,7 +177,7 @@ let peg_eval_rpt_never_NONE = prove
  (`~(peg_eval G (i,peg_rpt sym f) (peg_Failure fl fe))`,
   CHEAT_TAC);;
 
-let pegsym_to_sym_def = cake_define
+let pegsym_to_sym_def = new_definition
   `pegsym_to_sym x1 =
         match x1 with
           peg_tok P f -> (if f = mktokLf then

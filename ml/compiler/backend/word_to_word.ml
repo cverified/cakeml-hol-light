@@ -38,7 +38,7 @@ let word_to_word_config_FIELDS = define_record "word_to_word_config"
   ["reg_alg","num";
    "col_oracle","((num spt) option) list"];;
 
-let word_to_word_compile_single_def = cake_define
+let word_to_word_compile_single_def = new_definition
   `word_to_word_compile_single two_reg_arith reg_count alg c
   (((name_num:num),arg_count,prog),col_opt) =
    (let prog = word_simp_compile_exp prog in
@@ -56,19 +56,19 @@ let word_to_word_compile_single_def = cake_define
      (name_num,arg_count,reg_prog))`;;
 hol4_overload "compile_single" "word_to_word_compile_single";;
 
-let full_compile_single_def = cake_define
+let full_compile_single_def = new_definition
   `full_compile_single two_reg_arith reg_count alg c p =
    (let (name_num,arg_count,reg_prog) = word_to_word_compile_single
      two_reg_arith reg_count alg c p in
      (name_num,arg_count,remove_must_terminate reg_prog))`;;
 
-let next_n_oracle_def = cake_define
+let next_n_oracle_def = new_definition
   `next_n_oracle n (col:((num spt) option) list) =
    (if n <= LENGTH col then
      (TAKE n col,DROP n col) else
      (REPLICATE n NONE,[]))`;;
 
-let word_to_word_compile_def = cake_define
+let word_to_word_compile_def = new_definition
   `word_to_word_compile word_conf (asm_conf:'a asm_config) progs =
      (let (two_reg_arith,reg_count) = (asm_config_two_reg_arith
        asm_conf,asm_config_reg_count asm_conf - (5 + LENGTH
@@ -80,7 +80,7 @@ let word_to_word_compile_def = cake_define
        (word_to_word_config_reg_alg word_conf) asm_conf) progs))`;;
 hol4_overload "compile" "word_to_word_compile";;
 
-let full_compile_single_for_eval_def = cake_define
+let full_compile_single_for_eval_def = new_definition
   `full_compile_single_for_eval two_reg_arith reg_count alg c p =
      (let ((name_num,arg_count,prog),col_opt) = p in
      let prog = word_simp_compile_exp prog in

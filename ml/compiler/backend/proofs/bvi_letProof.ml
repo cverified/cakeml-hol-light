@@ -35,18 +35,21 @@ let _ = hol4_ancestors "bvi_letProof"
 
 hol4_overload "compile" "bvi_let_compile";;
 
-let v_rel_def = cake_define
+let v_rel_def = new_definition
   `bvi_letProof_v_rel a x y xs ys <=> (\l n. oEL n l) ys a = SOME x`;;
 hol4_overload "v_rel" "bvi_letProof_v_rel";;
 
-let env_rel_def = cake_define
-  `bvi_letProof_env_rel x1 d e1 e2 =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let env_rel_def,env_rel_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). list_size (\n. n) x0)`
+  [`bvi_letProof_env_rel x1 d e1 e2 =
         match (x1,e1,e2) with
           ([],e1,e2) -> (e1 = DROP d e2)
         | ((a :: rest),(x :: e1),(y :: e2)) ->
         bvi_letProof_v_rel a x y (x :: e1) (y :: e2) /\
           bvi_letProof_env_rel rest d e1 e2
-        | (_1,_2,_3) -> F`;;
+        | (_1,_2,_3) -> F`];;
 hol4_overload "env_rel" "bvi_letProof_env_rel";;
 
 let env_rel_length = prove

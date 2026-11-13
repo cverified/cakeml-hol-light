@@ -29,7 +29,7 @@ let _ = hol4_ancestors "bvl_handle"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let can_raise_def = cake_define_list
+let can_raise_def = define_mutual_rec
   [`can_raise (Var v:bvl_exp) = F`;
    `can_raise (If x1 x2 x3:bvl_exp) = (can_raise x1 \/ can_raise x2
   \/ can_raise x3)`;
@@ -44,20 +44,20 @@ let can_raise_def = cake_define_list
    `can_raise1 [] = F`;
    `can_raise1 (x :: xs) = (can_raise x \/ can_raise1 xs)`];;
 
-let dest_handle_Raise_def = cake_define
+let dest_handle_Raise_def = new_definition
   `dest_handle_Raise x1 =
       match x1 with
         (Raise x:bvl_exp) -> (if can_raise x then NONE else SOME x)
       | _1 -> NONE`;;
 
-let dest_handle_Let_def = cake_define
+let dest_handle_Let_def = new_definition
   `dest_handle_Let x1 =
       match x1 with
         (Let xs x:bvl_exp) -> (if can_raise1 xs then NONE else SOME
           (xs,x))
       | _2 -> NONE`;;
 
-let dest_handle_If_def = cake_define
+let dest_handle_If_def = new_definition
   `dest_handle_If x1 =
       match x1 with
         (If x1 x2 x3:bvl_exp) ->
@@ -69,8 +69,8 @@ let dest_handle_If_def = cake_define
         NONE)
       | _3 -> NONE`;;
 
-let handle_adj_vars_def = cake_define
-  `(handle_adj_vars l d (Var v:bvl_exp) = Var (if v < l then v else v +
+let handle_adj_vars_def = define_mutual_rec
+  [`(handle_adj_vars l d (Var v:bvl_exp) = Var (if v < l then v else v +
   d)) /\
    (handle_adj_vars l d (If x1 x2 x3) =
       If (handle_adj_vars l d x1) (handle_adj_vars l d x2)
@@ -79,22 +79,22 @@ let handle_adj_vars_def = cake_define
       Let (handle_adj_vars1 l d xs) (handle_adj_vars (l + LENGTH xs)
         d x2)) /\
    (handle_adj_vars l d (Handle x1 x2) =
-      Handle (handle_adj_vars l d x1) (handle_adj_vars (l + 1) d x2))
-        /\
+      Handle (handle_adj_vars l d x1) (handle_adj_vars (l + 1) d
+        x2)) /\
    (handle_adj_vars l d (Raise x1) = Raise (handle_adj_vars l d x1))
      /\
-   (handle_adj_vars l d (Op op xs) = Op op (handle_adj_vars1 l d xs))
-     /\
+   (handle_adj_vars l d (Op op xs) = Op op (handle_adj_vars1 l d
+     xs)) /\
    (handle_adj_vars l d (Tick x) = Tick (handle_adj_vars l d x)) /\
-   (handle_adj_vars l d (Force m v) = Force m (if v < l then v else v
-     + d)) /\
+   (handle_adj_vars l d (Force m v) = Force m (if v < l then v else
+     v + d)) /\
    (handle_adj_vars l d (Call t dest xs) =
       Call t dest (handle_adj_vars1 l d xs)) /\
    (handle_adj_vars1 l d [] = []) /\
    (handle_adj_vars1 l d (x :: xs) = handle_adj_vars l d x ::
-     handle_adj_vars1 l d xs)`;;
+     handle_adj_vars1 l d xs)`];;
 
-let handle_size_def = cake_define_list
+let handle_size_def = define_mutual_rec
   [`handle_size (Var v:bvl_exp) = 1`;
    `handle_size (If x1 x2 x3:bvl_exp) = 1 + handle_size x1 +
   handle_size x2 + handle_size x3`;
@@ -116,17 +116,9 @@ let handle_size_non_zero = prove
  (`0 < handle_size x`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_handleScript.sml:112-123: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let handle_simp_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\x. match x with INL a -> handle_size a | INR (INL a) ->
-     handle_size1 a | INR (INR (a,b,_4)) -> handle_size a +
-       handle_size b)`)
-  CHEAT_TAC
+let handle_simp_def = define_mutual_guess
   [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
    `handle_simp (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `handle_simp (If x1 x2 x3:bvl_exp) = If (handle_simp x1)
@@ -159,10 +151,10 @@ let handle_simp_def = cake_define_list_try_tac (fun () ->
                                 (handle_adj_vars 1 l (handle_simp
                                 x2))))))`];;
 
-let SmartLet_def = cake_define
+let SmartLet_def = new_definition
   `SmartLet xs x = (if NULL xs then x else Let xs x)`;;
 
-let LetLet_def = cake_define
+let LetLet_def = new_definition
   `LetLet env_length fvs (body:bvl_exp) =
      (let xs = GENLIST I env_length in
      let zs = FILTER (\n. IS_SOME (sptree_lookup n fvs)) xs in
@@ -172,14 +164,14 @@ let LetLet_def = cake_define
        env_length in
        Let (MAP Var zs) (SmartLet long_list body))`;;
 
-let OptionalLetLet_def = cake_define
+let OptionalLetLet_def = new_definition
   `OptionalLetLet e env_size live s (limit':num) (nr:bool) =
      (if s < limit' then ([e],live,s,nr) else
        let fvs = db_to_set live in
        let flat_live = vars_from_list (MAP FST (toAList fvs)) in
          ([(Let [] (LetLet env_size fvs e))],flat_live,0,nr))`;;
 
-let OptionalLetLet_sing_def = cake_define
+let OptionalLetLet_sing_def = new_definition
   `OptionalLetLet_sing e env_size live s (limit':num) (nr:bool) =
      (if s < limit' then (e,live,s,nr) else
        let fvs = db_to_set live in
@@ -192,7 +184,11 @@ let OptionalLetLet_sing_eq = prove
        nr)`,
   CHEAT_TAC);;
 
-let bvl_handle_compile_def = cake_define_list
+let _ = size_thms "bvl_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
+  `MEASURE (\(x0,x1,x2). bvl_exp_size1 x2)`
   [`bvl_handle_compile l n [] = (([]:bvl_exp list),db_vars_Empty,0,T)`;
    `bvl_handle_compile l n (x :: y :: xs) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile l n [x] in
@@ -249,7 +245,7 @@ hol4_overload "compile" "bvl_handle_compile";;
 
 (* HOL4 bvl_handleScript.sml:214: ML code, not ported *)
 
-let bvl_handle_compile_sing_def = cake_define_list
+let bvl_handle_compile_sing_def = define_mutual_rec
   [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then (Var
   v,Var v,1,T) else (Op (closLang_IntOp (closLang_Const (&0)))
   [],db_vars_Empty,1,T))`;
@@ -315,7 +311,7 @@ let bvl_handle_compile_sing_eq = prove
    (!es l n. compile l n es = compile_list l n es)`,
   CHEAT_TAC);;
 
-let bvl_handle_compile_exp_def = cake_define
+let bvl_handle_compile_exp_def = new_definition
   `bvl_handle_compile_exp cut_size arity e =
      HD (FST (compile cut_size arity [handle_simp
        (bvl_const_compile_exp e)]))`;;
@@ -328,7 +324,7 @@ let bvl_handle_compile_exp_eq = prove
        (bvl_const_compile_exp e)))`,
   CHEAT_TAC);;
 
-let dest_Seq_def = cake_define
+let dest_Seq_def = new_definition
   `bvl_handle_dest_Seq x1 =
         match x1 with
           (Let [e1; e2] (bvl_Var 1):bvl_exp) -> SOME (e1,e2)
@@ -343,20 +339,22 @@ let dest_Seq_pmatch = prove
   CHEAT_TAC);;
 
 let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvl_handleScript.sml:316-320: the tactic that proves the
    termination *)
-let compile_seqs_def = cake_define_wf
+let compile_seqs_def,compile_seqs_ind = define_wf
   `MEASURE (\(c,e,a). bvl_exp_size e)`
-  `compile_seqs cut_size e acc =
+  [`compile_seqs cut_size e acc =
      (match bvl_handle_dest_Seq e with NONE -> (let new_e =
        compile_exp cut_size 0 e in
                   match acc with NONE -> new_e | SOME rest -> Let
                     [new_e] (bvl_Let [] (bvl_Let [] rest))) | SOME
                     (e1,e2) ->
          compile_seqs cut_size e1
-           (SOME (compile_seqs cut_size e2 acc)))`;;
+           (SOME (compile_seqs cut_size e2 acc)))`];;
 
-let compile_any_def = cake_define
+let compile_any_def = new_definition
   `compile_any split_seq cut_size arity e =
      (if (arity = 0) /\ split_seq then
        compile_seqs cut_size e NONE else

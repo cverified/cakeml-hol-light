@@ -44,7 +44,7 @@ let _ = do_list hide_constant ["isException"; "isResult"; "parts"];;
 
 (* value relation *)
 
-let code_rel_def = cake_define
+let code_rel_def = new_definition
   `bvi_to_dataProof_code_rel (bvi_code:(num#bvi_exp) spt)
   (data_code:(num#dataLang_prog) spt) <=>
      sptree_wf bvi_code /\ sptree_wf data_code /\
@@ -60,12 +60,10 @@ hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
 *)
 
 let _ = size_thms "dataSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvi_to_dataProofScript.sml:36-48: the tactic that proves the
    termination *)
-let data_to_bvi_v_def = cake_define_list_try (fun () ->
-  `MEASURE dataSem_v_size`)
+let data_to_bvi_v_def,data_to_bvi_v_ind = define_shaped_rec
+  "nested"
   [`data_to_bvi_v (Number i:dataSem_v) = bvlSem_Number i`;
    `data_to_bvi_v (Word64 w:dataSem_v) = bvlSem_Word64 w`;
    `data_to_bvi_v (CodePtr p:dataSem_v) = bvlSem_CodePtr p`;
@@ -86,7 +84,7 @@ let data_to_bvi_v_Boolv = prove
   CHEAT_TAC);;
 
 (* Projection for references, non-injective for value arrays *)
-let data_to_bvi_ref_def = cake_define_list
+let data_to_bvi_ref_def = define_cases
   [`data_to_bvi_ref (bvlSem_ValueArray l) = ValueArray (MAP
   data_to_bvi_v l)`;
    `data_to_bvi_ref (bvlSem_ByteArray b bl) = (ByteArray b bl:'a
@@ -97,7 +95,7 @@ let data_to_bvi_ref_def = cake_define_list
           (data_to_bvi_v c) (MAP data_to_bvi_v rs)`];;
 
 (* State relation *)
-let bvi_to_dataProof_state_rel_def = cake_define
+let bvi_to_dataProof_state_rel_def = new_definition
   `bvi_to_dataProof_state_rel (s:('c,'ffi)bviSem_state)
   (t:('c,'ffi)dataSem_state) <=>
      (bviSem_state_clock s = dataSem_state_clock t) /\
@@ -169,7 +167,7 @@ let compile_part_thm = prove
   CHEAT_TAC);;
 
 (* Projection for results, injective upto `dataSem$v` *)
-let data_to_bvi_result_def = cake_define
+let data_to_bvi_result_def = new_definition
   `data_to_bvi_result x1 =
       match x1 with
         Rval vs -> Rval (MAP data_to_bvi_v vs)

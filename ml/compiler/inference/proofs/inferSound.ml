@@ -89,7 +89,7 @@ let inferSound_env_rel_complete_bind = prove
   The current relation might be wrong *)
 
 (* the set of ids n1 .... n2-1 *)
-let set_ids_def = cake_define
+let set_ids_def = new_definition
   `set_ids n1 (n2:num) = {m | n1 <= m /\ m < n2}`;;
 
 (* [local] *)

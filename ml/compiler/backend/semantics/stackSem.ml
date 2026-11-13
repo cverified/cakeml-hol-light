@@ -53,22 +53,22 @@ hol4_overload "Error" "stackSem_Error";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bit_length_def = cake_define_cheat CHEAT_TAC
-  `bit_length w = (if w = (n2w 0) then (0:num) else bit_length (w >>>
-  1) + 1)`;;
+let bit_length_def,bit_length_ind = define_guess_cheat
+  [`bit_length w = (if w = (n2w 0) then (0:num) else bit_length (w
+  >>> 1) + 1)`];;
 
-let filter_bitmap_def = cake_define
-  `filter_bitmap x1 rs =
+let filter_bitmap_def,filter_bitmap_ind = define_guess
+  [`filter_bitmap x1 rs =
         match (x1,rs) with
           ([],rs) -> SOME ([],rs)
         | ((F :: bs),(r :: rs)) -> filter_bitmap bs rs
         | ((T :: bs),(r :: rs)) ->
         (match filter_bitmap bs rs with NONE -> NONE | SOME (ts,rs')
           -> SOME (r :: ts,rs'))
-        | (_1,_2) -> NONE`;;
+        | (_1,_2) -> NONE`];;
 
-let map_bitmap_def = cake_define
-  `map_bitmap x1 ts rs =
+let map_bitmap_def,map_bitmap_ind = define_guess
+  [`map_bitmap x1 ts rs =
         match (x1,ts,rs) with
           ([],ts,rs) -> SOME ([],ts,rs)
         | ((F :: bs),ts,(r :: rs)) ->
@@ -77,7 +77,7 @@ let map_bitmap_def = cake_define
         | ((T :: bs),(t :: ts),(r :: rs)) ->
         (match map_bitmap bs ts rs with NONE -> NONE | SOME
           (xs,ys,zs) -> SOME (t :: xs,ys,zs))
-        | (_3,_4,_5) -> NONE`;;
+        | (_3,_4,_5) -> NONE`];;
 
 let filter_bitmap_LENGTH = prove
  (`!bs xs x y. (filter_bitmap bs xs = SOME (x,y)) ==> LENGTH y <=
@@ -90,7 +90,7 @@ let map_bitmap_LENGTH = prove
                    LENGTH z <= LENGTH t3`,
   CHEAT_TAC);;
 
-let read_bitmap_def = cake_define_list
+let read_bitmap_def,read_bitmap_ind = define_rec
   [`read_bitmap [] = NONE`;
    `read_bitmap ((w:'a word) :: ws) =
          (if word_msb w then
@@ -164,7 +164,7 @@ hol4_overload "state_ffi_fupd" "stackSem_state_ffi_fupd";;
 hol4_field_overload "be" "stackSem_state_be";;
 hol4_field_overload "be_fupd" "stackSem_state_be_fupd";;
 
-let stackSem_mem_store_def = cake_define
+let stackSem_mem_store_def = new_definition
   `stackSem_mem_store (addr':'a word) (w:'a word_loc)
   (s:('a,'c,'ffi)stackSem_state) =
      (if addr' IN stackSem_state_mdomain s then
@@ -172,24 +172,22 @@ let stackSem_mem_store_def = cake_define
          (stackSem_state_memory s))) s) else NONE)`;;
 hol4_overload "mem_store" "stackSem_mem_store";;
 
-let stackSem_mem_load_def = cake_define
+let stackSem_mem_load_def = new_definition
   `stackSem_mem_load (addr':'a word) (s:('a,'c,'ffi)stackSem_state) =
      (if addr' IN stackSem_state_mdomain s then
        SOME (stackSem_state_memory s addr') else NONE)`;;
 hol4_overload "mem_load" "stackSem_mem_load";;
 
-let stackSem_dec_clock_def = cake_define
+let stackSem_dec_clock_def = new_definition
   `stackSem_dec_clock (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_clock_fupd (K (stackSem_state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "stackSem_dec_clock";;
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:151-156: the tactic that proves the
    termination *)
-let stackSem_word_exp_def = cake_define_list_try (fun () ->
-  `MEASURE (wordLang_exp_size ARB o SND)`)
+let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec
+  "nested"
   [`stackSem_word_exp s (wordLang_Const w) = SOME w`;
    `stackSem_word_exp s (wordLang_Var v) =
          (match FLOOKUP (stackSem_state_regs s) v with SOME
@@ -211,12 +209,12 @@ let stackSem_word_exp_def = cake_define_list_try (fun () ->
            _22 -> NONE)`];;
 hol4_overload "word_exp" "stackSem_word_exp";;
 
-let stackSem_get_var_def = cake_define
+let stackSem_get_var_def = new_definition
   `stackSem_get_var v (s:('a,'c,'ffi)stackSem_state) = FLOOKUP
   (stackSem_state_regs s) v`;;
 hol4_overload "get_var" "stackSem_get_var";;
 
-let stackSem_get_vars_def = cake_define_list
+let stackSem_get_vars_def,stackSem_get_vars_ind = define_rec
   [`stackSem_get_vars [] s = SOME []`;
    `stackSem_get_vars (v :: vs) s =
          (match get_var v s with NONE -> NONE | SOME x ->
@@ -224,35 +222,35 @@ let stackSem_get_vars_def = cake_define_list
            xs -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "stackSem_get_vars";;
 
-let stackSem_get_fp_var_def = cake_define
+let stackSem_get_fp_var_def = new_definition
   `stackSem_get_fp_var v (s:('a,'c,'ffi)stackSem_state) = FLOOKUP
   (stackSem_state_fp_regs s) v`;;
 hol4_overload "get_fp_var" "stackSem_get_fp_var";;
 
-let stackSem_set_var_def = cake_define
+let stackSem_set_var_def = new_definition
   `stackSem_set_var v x (s:('a,'c,'ffi)stackSem_state) =
      (stackSem_state_regs_fupd (K (stackSem_state_regs s |+
        (v,x))) s)`;;
 hol4_overload "set_var" "stackSem_set_var";;
 
-let stackSem_set_fp_var_def = cake_define
+let stackSem_set_fp_var_def = new_definition
   `stackSem_set_fp_var v x (s:('a,'c,'ffi)stackSem_state) =
      (stackSem_state_fp_regs_fupd (K (stackSem_state_fp_regs s |+
        (v,x))) s)`;;
 hol4_overload "set_fp_var" "stackSem_set_fp_var";;
 
-let stackSem_set_store_def = cake_define
+let stackSem_set_store_def = new_definition
   `stackSem_set_store v x (s:('a,'c,'ffi)stackSem_state) =
   (stackSem_state_store_fupd (K (stackSem_state_store s |+ (v,x))) s)`;;
 hol4_overload "set_store" "stackSem_set_store";;
 
-let stackSem_empty_env_def = cake_define
+let stackSem_empty_env_def = new_definition
   `stackSem_empty_env (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_stack_fupd (K []) (stackSem_state_regs_fupd (K
   FEMPTY) s)`;;
 hol4_overload "empty_env" "stackSem_empty_env";;
 
-let stackSem_sh_mem_store_def = cake_define
+let stackSem_sh_mem_store_def = new_definition
   `(stackSem_sh_mem_store r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -269,7 +267,7 @@ let stackSem_sh_mem_store_def = cake_define
                (SOME Error,s)) | _23 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store" "stackSem_sh_mem_store";;
 
-let stackSem_sh_mem_load_def = cake_define
+let stackSem_sh_mem_load_def = new_definition
   `(stackSem_sh_mem_load r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -285,7 +283,7 @@ let stackSem_sh_mem_load_def = cake_define
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load" "stackSem_sh_mem_load";;
 
-let stackSem_sh_mem_store_byte_def = cake_define
+let stackSem_sh_mem_store_byte_def = new_definition
   `(stackSem_sh_mem_store_byte r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -302,7 +300,7 @@ let stackSem_sh_mem_store_byte_def = cake_define
                (SOME Error,s)) | _24 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store_byte" "stackSem_sh_mem_store_byte";;
 
-let stackSem_sh_mem_store16_def = cake_define
+let stackSem_sh_mem_store16_def = new_definition
   `(stackSem_sh_mem_store16 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -319,7 +317,7 @@ let stackSem_sh_mem_store16_def = cake_define
                (SOME Error,s)) | _25 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store16" "stackSem_sh_mem_store16";;
 
-let stackSem_sh_mem_store32_def = cake_define
+let stackSem_sh_mem_store32_def = new_definition
   `(stackSem_sh_mem_store32 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -336,7 +334,7 @@ let stackSem_sh_mem_store32_def = cake_define
                (SOME Error,s)) | _26 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store32" "stackSem_sh_mem_store32";;
 
-let stackSem_sh_mem_load_byte_def = cake_define
+let stackSem_sh_mem_load_byte_def = new_definition
   `(stackSem_sh_mem_load_byte r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -351,7 +349,7 @@ let stackSem_sh_mem_load_byte_def = cake_define
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load_byte" "stackSem_sh_mem_load_byte";;
 
-let stackSem_sh_mem_load16_def = cake_define
+let stackSem_sh_mem_load16_def = new_definition
   `(stackSem_sh_mem_load16 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -366,7 +364,7 @@ let stackSem_sh_mem_load16_def = cake_define
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load16" "stackSem_sh_mem_load16";;
 
-let stackSem_sh_mem_load32_def = cake_define
+let stackSem_sh_mem_load32_def = new_definition
   `(stackSem_sh_mem_load32 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
@@ -381,7 +379,7 @@ let stackSem_sh_mem_load32_def = cake_define
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load32" "stackSem_sh_mem_load32";;
 
-let sh_mem_op_def = cake_define_list
+let sh_mem_op_def = define_cases
   [`sh_mem_op (Load:memop) r ad (s:('a,'c,'ffi)stackSem_state) =
   sh_mem_load r ad s`;
    `sh_mem_op (Store:memop) r ad (s:('a,'c,'ffi)stackSem_state) =
@@ -399,7 +397,7 @@ let sh_mem_op_def = cake_define_list
    `sh_mem_op (asm_Store32:memop) r ad
   (s:('a,'c,'ffi)stackSem_state) = sh_mem_store32 r ad s`];;
 
-let full_read_bitmap_def = cake_define
+let full_read_bitmap_def = new_definition
   `full_read_bitmap bitmaps x2 =
         match x2 with
           wordLang_Word w ->
@@ -413,9 +411,8 @@ let full_read_bitmap_def = cake_define
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stackSem_enc_stack_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (LENGTH o SND)`)
-  CHEAT_TAC
+let stackSem_enc_stack_def,stackSem_enc_stack_ind = define_wf_cheat
+  `MEASURE (LENGTH o SND)`
   [`stackSem_enc_stack bitmaps [] = NONE`;
    `stackSem_enc_stack bitmaps (w :: ws) =
          (if w = wordLang_Word (n2w 0) then (if ws = [] then SOME []
@@ -434,9 +431,8 @@ hol4_overload "enc_stack" "stackSem_enc_stack";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stackSem_dec_stack_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (LENGTH o SND o SND)`)
-  CHEAT_TAC
+let stackSem_dec_stack_def,stackSem_dec_stack_ind = define_wf_cheat
+  `MEASURE (LENGTH o SND o SND)`
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
    `stackSem_dec_stack bitmaps ts (w :: ws) =
         (if w = wordLang_Word (n2w 0) then (if ts = [] /\ ws = []
@@ -450,7 +446,7 @@ let stackSem_dec_stack_def = cake_define_list_try_tac (fun () ->
                  rest))))`];;
 hol4_overload "dec_stack" "stackSem_dec_stack";;
 
-let stackSem_gc_def = cake_define
+let stackSem_gc_def = new_definition
   `stackSem_gc s =
      (if LENGTH (stack s) < stackSem_state_stack_space s then NONE
        else
@@ -470,7 +466,7 @@ let stackSem_gc_def = cake_define
                    stack')) s)))))))`;;
 hol4_overload "gc" "stackSem_gc";;
 
-let stackSem_has_space_def = cake_define
+let stackSem_has_space_def = new_definition
   `stackSem_has_space wl store =
      (match (wl,FLOOKUP store NextFree,FLOOKUP store TriggerGC)
        with (wordLang_Word w,SOME (wordLang_Word n),SOME
@@ -478,7 +474,7 @@ let stackSem_has_space_def = cake_define
        NONE)`;;
 hol4_overload "has_space" "stackSem_has_space";;
 
-let stackSem_alloc_def = cake_define
+let stackSem_alloc_def = new_definition
   `stackSem_alloc (w:'a word) (s:('a,'c,'ffi)stackSem_state) =
        // perform garbage collection
        (match gc (set_store AllocSize (wordLang_Word w) s) with NONE
@@ -500,13 +496,13 @@ let stackSem_alloc_def = cake_define
                             word))),stackSem_empty_env s))))`;;
 hol4_overload "alloc" "stackSem_alloc";;
 
-let stackSem_assign_def = cake_define
+let stackSem_assign_def = new_definition
   `stackSem_assign reg exp s =
      (match word_exp s exp with NONE -> NONE | SOME w -> SOME
        (set_var reg (wordLang_Word w) s))`;;
 hol4_overload "assign" "stackSem_assign";;
 
-let stackSem_inst_def = cake_define
+let stackSem_inst_def = new_definition
   `stackSem_inst i (s:('a,'c,'ffi)stackSem_state) =
      (match i with Skip -> SOME s | Const reg w -> assign reg (Const
        w) s | Arith (asm_Binop bop r1 r2 ri) ->
@@ -692,12 +688,12 @@ let stackSem_inst_def = cake_define
                s)) | NONE -> NONE | _60 -> NONE))`;;
 hol4_overload "inst" "stackSem_inst";;
 
-let stackSem_get_var_imm_def = cake_define_list
+let stackSem_get_var_imm_def = define_cases
   [`stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s = get_var n s`;
    `stackSem_get_var_imm (Imm w) s = SOME (wordLang_Word w)`];;
 hol4_overload "get_var_imm" "stackSem_get_var_imm";;
 
-let stackSem_find_code_def = cake_define_list
+let stackSem_find_code_def = define_cases
   [`stackSem_find_code (INL p) regs' code = sptree_lookup p code`;
    `stackSem_find_code (INR r) regs' code =
          (match FLOOKUP regs' r with
@@ -705,7 +701,7 @@ let stackSem_find_code_def = cake_define_list
              -> NONE)`];;
 hol4_overload "find_code" "stackSem_find_code";;
 
-let stackSem_fix_clock_def = cake_define
+let stackSem_fix_clock_def = new_definition
   `stackSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "stackSem_fix_clock";;
@@ -715,12 +711,16 @@ let stackSem_fix_clock_IMP = prove
  (`fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`,
   CHEAT_TAC);;
 
-let stackSem_STOP_def = cake_define
+let stackSem_STOP_def = new_definition
   `stackSem_STOP x = x`;;
 hol4_overload "STOP" "stackSem_STOP";;
 
-let get_labels_def = cake_define
-  `stackSem_get_labels x1 =
+let _ = size_thms "stackLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_labels_def,get_labels_ind = define_wf
+  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  [`stackSem_get_labels x1 =
         match x1 with
           stackLang_Seq p1 p2 -> stackSem_get_labels p1 UNION
             stackSem_get_labels p2
@@ -733,27 +733,31 @@ let get_labels_def = cake_define
              (match handler with NONE -> {} | SOME (r,l1,l2) ->
                (l1,l2) INSERT stackSem_get_labels r)))
         | (Halt _66) -> {}
-        | _67 -> {}`;;
+        | _67 -> {}`];;
 hol4_overload "get_labels" "stackSem_get_labels";;
 
-let loc_check_def = cake_define
+let loc_check_def = new_definition
   `loc_check code (l1,l2) <=>
      (l2 = 0 /\ l1 IN domain code) \/
      (?n e. sptree_lookup n code = SOME e /\ (l1,l2) IN
        stackSem_get_labels e)`;;
 
-let copy_words_for_pattern_def = cake_define
-  `copy_words_for_pattern (pattern:'a word) (i:num) (a:'a word) (off:'a
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let copy_words_for_pattern_def,copy_words_for_pattern_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4,x5,x6). list_size (\x. 0) x4)`
+  [`copy_words_for_pattern (pattern:'a word) (i:num) (a:'a word) (off:'a
   word) bs dm m =
      (if pattern = (n2w 0) then NONE else
      if pattern = (n2w 1) then SOME (i,a,m) else
        if a IN dm /\ i < LENGTH bs then
          let b = FAPPLY pattern 0 in
          let w = EL i bs in
-         let m = (a =+ wordLang_Word (if b then w + off else w)) m in
+         let m = (a =+ wordLang_Word (if b then w + off else w)) m
+           in
            copy_words_for_pattern
-             (pattern >>> 1) (i + 1) (a + bytes_in_word) off bs dm
-               m else NONE)`;;
+             (pattern >>> 1) (i + 1) (a + bytes_in_word) off bs
+               dm m else NONE)`];;
 
 let copy_words_for_pattern_LESS_EQ = prove
  (`!p i a f bs dm m j a1.
@@ -761,28 +765,29 @@ let copy_words_for_pattern_LESS_EQ = prove
        j`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:720-723: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let copy_words_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(i,a,f,bs,dm,m). LENGTH bs - i)`)
-  CHEAT_TAC
-  `copy_words i a off bs dm m =
+let copy_words_def,copy_words_ind = define_wf_cheat
+  `MEASURE (\(i,a,f,bs,dm,m). LENGTH bs - i)`
+  [`copy_words i a off bs dm m =
      (if LENGTH bs <= i then NONE else
        let pattern = EL i bs in
          match copy_words_for_pattern pattern (i + 1) a off bs dm m
            with NONE -> NONE | SOME (i1,a1,m1) ->
              (if word_msb pattern then copy_words i1 a1 off bs dm m1
                else
-               SOME (a1,m1)))`;;
+               SOME (a1,m1)))`];;
 
-let stackSem_unset_var_def = cake_define
+let stackSem_unset_var_def = new_definition
   `stackSem_unset_var v (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_regs_fupd (K (stackSem_state_regs s \\ v)) s`;;
 hol4_overload "unset_var" "stackSem_unset_var";;
 
-let store_const_sem_def = cake_define
+let store_const_sem_def = new_definition
   `store_const_sem t1 t2 (s:('a,'c,'ffi)stackSem_state) =
      (if ~(ALL_DISTINCT [0; 1; 2; 3; t1; t2]) then (SOME Error,s)
        else
@@ -800,20 +805,20 @@ let store_const_sem_def = cake_define
                      (wordLang_Word a) (stackSem_state_memory_fupd (K
                      m) s))))))) | _68 -> (SOME Error,s))`;;
 
-let check_store_consts_opt_def = cake_define_list
+let check_store_consts_opt_def = define_cases
   [`check_store_consts_opt t1 t2 NONE _69 = T`;
    `check_store_consts_opt t1 t2 (SOME n) c =
       (sptree_lookup n c = SOME (Seq (StoreConsts t1 t2 NONE)
         (Return 0)))`];;
 
-let stackSem_dest_Seq_def = cake_define
+let stackSem_dest_Seq_def = new_definition
   `stackSem_dest_Seq x1 =
       match x1 with
         stackLang_Seq p1 p2 -> SOME (p1,(p2:'a stackLang_prog))
       | _70 -> NONE`;;
 hol4_overload "dest_Seq" "stackSem_dest_Seq";;
 
-let stackSem_bad_fun_return_def = cake_define
+let stackSem_bad_fun_return_def = new_definition
   `stackSem_bad_fun_return x1 =
       match x1 with
         NONE -> T
@@ -822,7 +827,7 @@ let stackSem_bad_fun_return_def = cake_define
       | _73 -> F`;;
 hol4_overload "bad_fun_return" "stackSem_bad_fun_return";;
 
-let stackSem_cont_loop_def = cake_define
+let stackSem_cont_loop_def = new_definition
   `stackSem_cont_loop x1 =
       match x1 with
         NONE -> T
@@ -830,7 +835,7 @@ let stackSem_cont_loop_def = cake_define
       | _74 -> F`;;
 hol4_overload "cont_loop" "stackSem_cont_loop";;
 
-let stackSem_exit_loop_def = cake_define
+let stackSem_exit_loop_def = new_definition
   `stackSem_exit_loop res =
       match res with
         SOME (Break n) -> (if n = 0 then NONE else SOME (Break (n -
@@ -857,17 +862,9 @@ if concl stackSem_fix_clock_IMP <> `T` then
   cake_term_facts := stackSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "stackLang_prog";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:1022-1029: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let stackSem_evaluate_def = cake_define_list_try_tac (fun () ->
-  `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
-                              (\(xs,(s:('a,'c,'ffi)stackSem_state)).
-                              (stackSem_state_clock s,xs)))`)
-  CHEAT_TAC
+let stackSem_evaluate_def,stackSem_evaluate_ind = define_guess
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =
@@ -1188,7 +1185,7 @@ let stackSem_fix_clock_evaluate = prove
 
 (* observational semantics *)
 
-let stackSem_semantics_def = cake_define
+let stackSem_semantics_def = new_definition
   `stackSem_semantics start' s =
    (let prog = Call NONE (INL start') NONE in
    if ?k. let res = FST (evaluate (prog,state_clock_fupd (K k) s)) in
@@ -1214,10 +1211,10 @@ hol4_overload "semantics" "stackSem_semantics";;
 
 (* record accessors *)
 
-let read_stack_def = cake_define
+let read_stack_def = new_definition
   `read_stack s = stackSem_state_stack (s:('a,'b,'c)stackSem_state)`;;
 
-let read_stack_space_def = cake_define
+let read_stack_space_def = new_definition
   `read_stack_space s = stackSem_state_stack_space
   (s:('a,'b,'c)stackSem_state)`;;
 

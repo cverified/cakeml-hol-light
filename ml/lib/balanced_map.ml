@@ -15,43 +15,43 @@ let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
 
-let key_set_def = cake_define
+let key_set_def = new_definition
   `key_set cmp k = {k' | cmp k k' = EQUAL}`;;
 
 let balanced_map_INDUCT,balanced_map_RECURSION = define_datatype
   "balanced_map = Tip | Bin (num) ('k) ('v) (balanced_map) \
    (balanced_map)";;
 
-let ratio_def = cake_define
+let ratio_def = new_definition
   `ratio = (2:num)`;;
 
-let delta_def = cake_define
+let delta_def = new_definition
   `delta = (3:num)`;;
 
-let balanced_map_size_def = cake_define_list
+let balanced_map_size_def = define_cases
   [`balanced_map_size Tip = 0`;
    `balanced_map_size (Bin s k v l r) = s`];;
 hol4_overload "size" "balanced_map_size";;
 
-let bin_def = cake_define
+let bin_def = new_definition
   `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
   k x l r`;;
 
-let balanced_map_lookup_def = cake_define_list
+let balanced_map_lookup_def,balanced_map_lookup_ind = define_rec
   [`balanced_map_lookup cmp k Tip = NONE`;
    `balanced_map_lookup cmp k (Bin s k' v l r) =
       (match cmp k k' with LESS -> balanced_map_lookup cmp k l
         | GREATER -> balanced_map_lookup cmp k r | EQUAL -> SOME v)`];;
 hol4_overload "lookup" "balanced_map_lookup";;
 
-let empty_def = cake_define
+let empty_def = new_definition
   `balanced_map_empty = Tip`;;
 hol4_overload "empty" "balanced_map_empty";;
 
-let singleton_def = cake_define
+let singleton_def = new_definition
   `singleton k x = Bin 1 k x Tip Tip`;;
 
-let balanceL_def = cake_define
+let balanceL_def = new_definition
   `balanceL k x x3 x4 =
         match (x3,x4) with
           (Tip,Tip) ->
@@ -90,7 +90,7 @@ let balanceL_def = cake_define
        Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l'
          r'))`;;
 
-let balanceR_def = cake_define
+let balanceR_def = new_definition
   `balanceR k x x3 x4 =
         match (x3,x4) with
           (Tip,Tip) ->
@@ -127,7 +127,7 @@ let balanceR_def = cake_define
        Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl
          rr))`;;
 
-let balanced_map_insert_def = cake_define_list
+let balanced_map_insert_def,balanced_map_insert_ind = define_rec
   [`balanced_map_insert cmp k v Tip = singleton k v`;
    `balanced_map_insert cmp k v (Bin s k' v' l r) =
       (match cmp k k' with LESS -> balanceL k' v'
@@ -136,44 +136,50 @@ let balanced_map_insert_def = cake_define_list
         r)`];;
 hol4_overload "insert" "balanced_map_insert";;
 
-let insertR_def = cake_define_list
+let insertR_def,insertR_ind = define_rec
   [`insertR cmp k v Tip = singleton k v`;
    `insertR cmp k v (Bin s k' v' l r) =
       (match cmp k k' with LESS -> balanceL k' v' (insertR cmp
         k v l) r | GREATER -> balanceR k' v' l (insertR cmp k v r)
         | EQUAL -> Bin s k' v' l r)`];;
 
-let insertMax_def = cake_define_list
+let insertMax_def,insertMax_ind = define_rec
   [`insertMax k v Tip = singleton k v`;
    `insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax k
   v r)`];;
 
-let insertMin_def = cake_define_list
+let insertMin_def,insertMin_ind = define_rec
   [`insertMin k v Tip = singleton k v`;
    `insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k v
   l) r`];;
 
-let deleteFindMax_def = cake_define
-  `deleteFindMax x1 =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let deleteFindMax_def,deleteFindMax_ind = define_wf
+  `MEASURE (\x0. balanced_map_size1 (\x. 0) (\x. 0) x0)`
+  [`deleteFindMax x1 =
         match x1 with
           Bin s k x l Tip -> ((k,x),l)
         | (Bin s k x l r) ->
      (let (km,r') = deleteFindMax r in
        (km,balanceL k x l r'))
         | Tip ->
-     (ARB,Tip)`;;
+     (ARB,Tip)`];;
 
-let deleteFindMin_def = cake_define
-  `deleteFindMin x1 =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let deleteFindMin_def,deleteFindMin_ind = define_wf
+  `MEASURE (\x0. balanced_map_size1 (\x. 0) (\x. 0) x0)`
+  [`deleteFindMin x1 =
         match x1 with
           Bin s k x Tip r -> ((k,x),r)
         | (Bin s k x l r) ->
      (let (km,l') = deleteFindMin l in
        (km,balanceR k x l' r))
         | Tip ->
-     (ARB,Tip)`;;
+     (ARB,Tip)`];;
 
-let glue_def = cake_define
+let glue_def = new_definition
   `glue l r =
         match (l,r) with
           (Tip,r) -> r
@@ -185,7 +191,7 @@ let glue_def = cake_define
        let ((km,m),r') = deleteFindMin r in
          balanceL km m l r')`;;
 
-let balanced_map_delete_def = cake_define_list
+let balanced_map_delete_def,balanced_map_delete_ind = define_rec
   [`balanced_map_delete cmp k Tip = Tip`;
    `balanced_map_delete cmp k (Bin s k' v l r) =
       (match cmp k k' with LESS -> balanceR k' v
@@ -193,21 +199,21 @@ let balanced_map_delete_def = cake_define_list
         l (balanced_map_delete cmp k r) | Eq' -> glue l r)`];;
 hol4_overload "delete" "balanced_map_delete";;
 
-let trim_help_greater_def = cake_define_list
+let trim_help_greater_def,trim_help_greater_ind = define_rec
   [`trim_help_greater cmp lo (Bin s' k v' l' r) =
       (if cmp k lo = LESS \/ cmp k lo = EQUAL then
         trim_help_greater cmp lo r else
         Bin s' k v' l' r)`;
    `trim_help_greater cmp lo Tip = Tip`];;
 
-let trim_help_lesser_def = cake_define_list
+let trim_help_lesser_def,trim_help_lesser_ind = define_rec
   [`trim_help_lesser cmp hi (Bin s' k v' l r') =
       (if cmp k hi = GREATER \/ cmp k hi = EQUAL then
         trim_help_lesser cmp hi l else
         Bin s' k v' l r')`;
    `trim_help_lesser cmp lo Tip = Tip`];;
 
-let trim_help_middle_def = cake_define_list
+let trim_help_middle_def,trim_help_middle_ind = define_rec
   [`trim_help_middle cmp lo hi (Bin s' k v' l r) =
       (if cmp k lo = LESS \/ cmp k lo = EQUAL then
         trim_help_middle cmp lo hi r else if cmp k hi = GREATER \/
@@ -216,7 +222,7 @@ let trim_help_middle_def = cake_define_list
         Bin s' k v' l r)`;
    `trim_help_middle lo cmp hi Tip = Tip`];;
 
-let trim_def = cake_define
+let trim_def = new_definition
   `trim cmp x2 x3 t =
         match (x2,x3) with
           (NONE,NONE) -> t
@@ -224,8 +230,12 @@ let trim_def = cake_define
         | (NONE,(SOME hk)) -> trim_help_lesser cmp hk t
         | ((SOME lk),(SOME hk)) -> trim_help_middle cmp lk hk t`;;
 
-let link_def = cake_define
-  `link k v l r =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let link_def,link_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3).      balanced_map_size1 (\x. 0) (\x. 0) x2
+  +      balanced_map_size1 (\x. 0) (\x. 0) x3)`
+  [`link k v l r =
         match (l,r) with
           (Tip,r) -> insertMin k v r
         | (l,Tip) -> insertMax k v l
@@ -234,31 +244,34 @@ let link_def = cake_define
        balanceL kz z (link k v (Bin sizeL ky y ly ry) lz) rz else if
          delta * sizeR < sizeL then
        balanceR ky y ly (link k v ry (Bin sizeR kz z lz rz)) else
-       bin k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz))`;;
+       bin k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz))`];;
 
-let filterLt_help_def = cake_define_list
+let filterLt_help_def,filterLt_help_ind = define_rec
   [`filterLt_help cmp b Tip = Tip`;
    `filterLt_help cmp b' (Bin s kx x l r) =
       (match cmp kx b' with LESS -> link kx x l (filterLt_help
         cmp b' r) | EQUAL -> l | GREATER -> filterLt_help cmp b' l)`];;
 
-let filterLt_def = cake_define_list
+let filterLt_def = define_cases
   [`filterLt cmp NONE t = t`;
    `filterLt cmp (SOME b) t = filterLt_help cmp b t`];;
 
-let filterGt_help_def = cake_define_list
+let filterGt_help_def,filterGt_help_ind = define_rec
   [`filterGt_help cmp b Tip = Tip`;
    `filterGt_help cmp b' (Bin s kx x l r) =
       (match cmp b' kx with LESS -> link kx x (filterGt_help
         cmp b' l) r | EQUAL -> r | GREATER -> filterGt_help cmp b'
         r)`];;
 
-let filterGt_def = cake_define_list
+let filterGt_def = define_cases
   [`filterGt cmp NONE t = t`;
    `filterGt cmp (SOME b) t = filterGt_help cmp b t`];;
 
-let hedgeUnion_def = cake_define
-  `hedgeUnion cmp blo bhi t1 t2 =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let hedgeUnion_def,hedgeUnion_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). balanced_map_size1 (\x. 0) (\x. 0) x3)`
+  [`hedgeUnion cmp blo bhi t1 t2 =
         match (t1,t2) with
           (t1,Tip) -> t1
         | (Tip,(Bin _35 kx x l r)) ->
@@ -267,10 +280,10 @@ let hedgeUnion_def = cake_define
         | ((Bin s kx x l r),t2) ->
      link kx x (hedgeUnion cmp blo (SOME kx) l (trim cmp blo (SOME
        kx) t2))
-               (hedgeUnion cmp (SOME kx) bhi r (trim cmp (SOME kx)
-                 bhi t2))`;;
+               (hedgeUnion cmp (SOME kx) bhi r (trim cmp (SOME
+                 kx) bhi t2))`];;
 
-let balanced_map_union_def = cake_define
+let balanced_map_union_def = new_definition
   `balanced_map_union cmp t1 t2 =
         match (t1,t2) with
           (Tip,t2) -> t2
@@ -278,50 +291,50 @@ let balanced_map_union_def = cake_define
         | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
 hol4_overload "union" "balanced_map_union";;
 
-let foldrWithKey_def = cake_define_list
+let foldrWithKey_def,foldrWithKey_ind = define_rec
   [`foldrWithKey f z' Tip = z'`;
    `foldrWithKey f z' (Bin _37 kx x l r) =
       foldrWithKey f (f kx x (foldrWithKey f z' r)) l`];;
 
-let toAscList_def = cake_define
+let toAscList_def = new_definition
   `toAscList t = foldrWithKey (\k x xs. (k,x) :: xs) [] t`;;
 
-let compare_def = cake_define
+let compare_def = new_definition
   `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare (pair_compare
   cmp1 cmp2) (toAscList t1) (toAscList t2)`;;
 hol4_overload "compare" "balanced_map_compare";;
 
-let mapWithKey_def = cake_define_list
+let mapWithKey_def,mapWithKey_ind = define_rec
   [`mapWithKey f Tip = Tip`;
    `mapWithKey f (Bin sx kx x l r) =
          Bin sx kx (f kx x) (mapWithKey f l) (mapWithKey f r)`];;
 
-let balanced_map_map_def = cake_define
+let balanced_map_map_def = new_definition
   `balanced_map_map f t = mapWithKey (\k x. f x) t`;;
 hol4_overload "map" "balanced_map_map";;
 
-let to_fmap_def = cake_define_list
+let to_fmap_def,to_fmap_ind = define_rec
   [`to_fmap cmp Tip = FEMPTY`;
    `to_fmap cmp (Bin s k v l r) =
       (FUNION (to_fmap cmp l) (to_fmap cmp r)) |+ (key_set cmp
         k,v)`];;
 
-let balanced_def = cake_define
+let balanced_def = new_definition
   `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
 
-let structure_size_def = cake_define_list
+let structure_size_def,structure_size_ind = define_rec
   [`structure_size Tip = 0`;
    `structure_size (Bin n k v l r) = 1 + structure_size l +
   structure_size r`];;
 
-let key_ordered_def = cake_define_list
+let key_ordered_def,key_ordered_ind = define_rec
   [`key_ordered cmp k Tip res <=> T`;
    `key_ordered cmp k (Bin n k' v l r) res <=>
       cmp k k' = res /\
       key_ordered cmp k l res /\
       key_ordered cmp k r res`];;
 
-let invariant_def = cake_define_list
+let invariant_def,invariant_ind = define_rec
   [`balanced_map_invariant cmp Tip <=> T`;
    `balanced_map_invariant cmp (Bin s k v l r) <=>
       s = 1 + structure_size l + structure_size r /\
@@ -332,7 +345,7 @@ let invariant_def = cake_define_list
       balanced_map_invariant cmp r`];;
 hol4_overload "invariant" "balanced_map_invariant";;
 
-let exists_def = cake_define_list
+let exists_def,exists_ind = define_rec
   [`balanced_map_exists f Tip = F`;
    `balanced_map_exists f (Bin _38 kx x l r) =
       (if f kx x then

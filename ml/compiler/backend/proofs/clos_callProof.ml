@@ -69,13 +69,13 @@ let evaluate_GENLIST_Var_tra = prove
 
 (* HOL4 clos_callProofScript.sml:63-67: ML code, not ported *)
 
-let is_Recclosure_def = cake_define
+let is_Recclosure_def = new_definition
   `is_Recclosure x1 =
       match x1 with
         (Recclosure _6 _7 _8 _9 _10:closSem_v) -> T
       | _11 -> F`;;
 
-let every_refv_def = cake_define
+let every_refv_def = new_definition
   `every_refv P x2 =
         match x2 with
           closSem_ValueArray vs -> EVERY P vs
@@ -101,7 +101,7 @@ let free_thm = prove
 
 (* value relation *)
 
-let subg_def = cake_define
+let subg_def = new_definition
   `subg g0 g1 <=>
      subspt (FST g0) (FST g1) /\
      (!k v. ALOOKUP (SND g0) k = SOME v ==> ALOOKUP (SND g1) k = SOME
@@ -116,17 +116,17 @@ let subg_trans = prove
  (`!g1 g2 g3. subg g1 g2 /\ subg g2 g3 ==> subg g1 g3`,
   CHEAT_TAC);;
 
-let wfg'_def = cake_define
+let wfg'_def = new_definition
   `wfg' g <=>
      set_of_list (MAP FST (SND g)) SUBSET IMAGE SUC (domain (FST
        g))`;;
 
-let wfg_def = cake_define
+let wfg_def = new_definition
   `wfg g <=>
      set_of_list (MAP FST (SND g)) = IMAGE SUC (domain (FST g)) /\
      ALL_DISTINCT (MAP FST (SND g))`;;
 
-let make_g_def = cake_define
+let make_g_def = new_definition
   `make_g d code =
      (if IMAGE SUC (domain d) SUBSET (FDOM code) then
        SOME (d,MAP (\k. (FST k + 1,THE (FLOOKUP code (FST k +
@@ -162,7 +162,7 @@ let make_g_IMP_subg = prove
     subg (r1,progs1 ++ SND g0) g1`,
   CHEAT_TAC);;
 
-let recclosure_wf_def = cake_define
+let recclosure_wf_def = new_definition
   `recclosure_wf loc fns <=>
      every_Fn_SOME (MAP SND fns) /\
      every_Fn_vs_NONE (MAP SND fns) /\
@@ -170,11 +170,11 @@ let recclosure_wf_def = cake_define
        (set_of_list (code_locs (MAP SND fns))) /\
      ALL_DISTINCT (code_locs (MAP SND fns))`;;
 
-let code_includes_def = cake_define
+let code_includes_def = new_definition
   `code_includes al code <=>
      (!k v. ALOOKUP al k = SOME v ==> FLOOKUP code k = SOME v)`;;
 
-let recclosure_rel_def = cake_define
+let recclosure_rel_def = new_definition
   `recclosure_rel g l code loc fns1 fns2 <=> (?g0.
       recclosure_wf loc fns1 /\
       wfg g0 /\
@@ -201,7 +201,7 @@ let recclosure_rel_def = cake_define
           l /\
         code_includes (SND new_g) code))`;;
 
-let clos_callProof_env_rel_def = cake_define
+let clos_callProof_env_rel_def = new_definition
   `clos_callProof_env_rel R env1 env2 a es <=>
      (if LENGTH env1 = LENGTH env2 then LIST_REL R env1 env2 else
      !x. EXISTS (\(n,p). fv1 (n + a + x) p) es ==>
@@ -224,15 +224,9 @@ let env_rel_cong = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_callProofScript.sml:330-333: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let clos_callProof_v_rel_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (closSem_v_size o FST o SND o SND o SND)`)
-  CHEAT_TAC
+let clos_callProof_v_rel_def,clos_callProof_v_rel_ind = define_guess
   [`clos_callProof_v_rel g l code (closSem_Number i:closSem_v) v <=>
   v = (closSem_Number i:closSem_v)`;
    `clos_callProof_v_rel g l code (Word64 w:closSem_v) v <=> v =
@@ -267,11 +261,13 @@ hol4_overload "v_rel" "clos_callProof_v_rel";;
 (* HOL4 clos_callProofScript.sml:335: ML code, not ported *)
 
 let _ = size_thms "closSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 clos_callProofScript.sml:350-353: the tactic that proves the
    termination *)
-let wfv_def = cake_define_wf
+let wfv_def,wfv_ind = define_wf
   `MEASURE (closSem_v_size o SND o SND o SND)`
-  `wfv g l code x4 =
+  [`wfv g l code x4 =
         match x4 with
           (Closure NONE _18 _19 _20 _21:closSem_v) -> F
         | (Recclosure NONE _22 _23 _24 _25) -> F
@@ -284,11 +280,11 @@ let wfv_def = cake_define_wf
        (?fns2.
        recclosure_rel g l code loc fns fns2)
         | (closSem_Block _26 vs) -> EVERY (wfv g l code) vs
-        | _27 -> T`;;
+        | _27 -> T`];;
 
 (* HOL4 clos_callProofScript.sml:355: ML code, not ported *)
 
-let wfv_state_def = cake_define
+let wfv_state_def = new_definition
   `wfv_state g l code s <=>
      EVERY (OPTION_ALL (wfv g l code)) (closSem_state_globals s) /\
      FEVERY (every_refv (wfv g l code) o SND) (state_refs s) /\
@@ -298,7 +294,7 @@ let wfv_state_def = cake_define
 new_type_abbrev("calls_state",`: 1 spt#(num#num#closLang_exp) list`);;
 new_type_abbrev("abs_calls_state",`: 1 spt`);;
 
-let clos_callProof_state_rel_def = cake_define
+let clos_callProof_state_rel_def = new_definition
   `clos_callProof_state_rel g l (s:(1 spt#'c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (closSem_state_ffi s = closSem_state_ffi t) /\
@@ -524,7 +520,10 @@ let calls_replace_SND = prove
     calls xs g0' = (ys,(FST g,ls ++ SND g0'))`,
   CHEAT_TAC);;
 
-let insert_each'_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let insert_each'_def,insert_each'_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). list_size (pair_size (\n. n) (\x. 0)) x0)`
   [`insert_each' gt p 0 g = g`;
    `insert_each' gt p (SUC n) (g1,g2) =
        insert_each' gt (p + 2) n (sptree_insert p one g1,((p +
@@ -918,13 +917,16 @@ let env_rel_Op_Install = prove
    clos_callProof_env_rel r env env2 0 (MAP (\x. (0,x)) e1)`,
   CHEAT_TAC);;
 
-let syntax_ok_def = cake_define
+let syntax_ok_def = new_definition
   `clos_callProof_syntax_ok x <=> every_Fn_SOME x /\ every_Fn_vs_NONE
   x /\ ALL_DISTINCT (code_locs x)`;;
 hol4_overload "syntax_ok" "clos_callProof_syntax_ok";;
 
-let co_ok_def = cake_define
-  `co_ok code co full_gs k <=>
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let co_ok_def,co_ok_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
+  [`co_ok code co full_gs k <=>
      (if k = 0 then T else
        let g = FST (FST (co 0)) in
        let (cfg,exp,aux) = co 0 in
@@ -932,13 +934,13 @@ let co_ok_def = cake_define
          FST (FST (co 1)) = g' /\
          make_g g code = SOME (full_gs 0) /\
          (!i. subg (full_gs 0) (full_gs i)) /\
-         (!x i. MEM x (code_locs exp) /\ ~(x IN domain g') ==> ~(x IN
-           domain (FST (FST (co i))))) /\
+         (!x i. MEM x (code_locs exp) /\ ~(x IN domain g') ==> ~(x
+           IN domain (FST (FST (co i))))) /\
          DISJOINT (set_of_list (code_locs exp)) (domain g) /\
          DISJOINT (FDOM code) (set_of_list (MAP FST aux1)) /\
          ALL_DISTINCT (MAP FST aux1) /\
          co_ok (code |++ aux1) (misc_shift_seq 1 co)
-           (misc_shift_seq 1 full_gs) (k - 1))`;;
+           (misc_shift_seq 1 full_gs) (k - 1))`];;
 
 let co_ok_IMP_full_gs_eq_shift_seq = prove
  (`!k code co g full_gs.
@@ -957,7 +959,7 @@ let co_ok_IMP_make_g = prove
       (?x1 x2. make_g x1 x2 = SOME (full_gs k))`,
   CHEAT_TAC);;
 
-let code_inv_def = cake_define
+let code_inv_def = new_definition
   `code_inv g1_opt l1 (s_code:(num,num#closLang_exp)fmap)
          s_cc s_co t_code t_cc t_co <=>
      s_code = FEMPTY /\
@@ -986,7 +988,7 @@ let SUBMAP_FUPDATE_LIST = prove
   (MAP FST xs)) ==> f SUBMAP (f |++ xs)`,
   CHEAT_TAC);;
 
-let includes_state_def = cake_define
+let includes_state_def = new_definition
   `includes_state g1 s_compile_oracle <=>
      (?(k:num). FST (FST (s_compile_oracle k)) = FST g1)`;;
 
@@ -1091,7 +1093,7 @@ let wfg_subg_EX_helper = prove
  (`wfg g /\ P g ==> (?g2. subg g g2 /\ P g2)`,
   CHEAT_TAC);;
 
-let mk_code_g_def = cake_define
+let mk_code_g_def = new_definition
   `mk_code_g code = (list_to_num_set (MAP PRE (SET_TO_LIST (FDOM
   code))),
      fmap_to_alist code)`;;
@@ -1287,7 +1289,10 @@ let semantics_compile = prove
       closSem_semantics ffi max_app FEMPTY co cc x`,
   CHEAT_TAC);;
 
-let nth_code_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let nth_code_def,nth_code_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`clos_callProof_nth_code code co 0 = code`;
    `clos_callProof_nth_code code co (SUC k) =
       (let (cfg,exp,aux) = co 0 in
@@ -1346,7 +1351,7 @@ let calls_preserves_every_Fn_vs_NONE = prove
 
 (* obeys_max_app and no_Labels *)
 
-let state_syntax_def = cake_define
+let state_syntax_def = new_definition
   `state_syntax f ((g,xs):1 spt#(num#num#closLang_exp) list) = EVERY
   (\(x1,x2,x3). f x3) xs`;;
 

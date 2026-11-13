@@ -39,47 +39,48 @@ let PCstate0_FIELDS = define_record "PCstate0"
 (* HOL4 cmlPtreeConversionScript.sml:22: the type abbreviation M,
    which the port expands *)
 
-let empty_PCstate0_def = cake_define
+let empty_PCstate0_def = new_definition
   `empty_PCstate0 = mk_PCstate0 FEMPTY FEMPTY`;;
 
-let mpushPC_scope_def = cake_define
+let mpushPC_scope_def = new_definition
   `(mpushPC_scope:PCstate0 list->(1#PCstate0 list) option) = (\pcs.
   SOME (one,empty_PCstate0 :: pcs))`;;
 
-let fixity_lookup_def = cake_define
-  `fixity_lookup nm pcs =
+let fixity_lookup_def,fixity_lookup_ind = define_shaped_rec
+  "match"
+  [`fixity_lookup nm pcs =
      (match pcs with
          [] -> NONE | pc0 :: rest ->
            (match FLOOKUP (PCstate0_fixities pc0) nm with
-               NONE -> fixity_lookup nm rest | SOME NONE -> NONE |
-                 SOME r -> r))`;;
+               NONE -> fixity_lookup nm rest | SOME NONE -> NONE
+                 | SOME r -> r))`];;
 
 (* mfixity_lookup : mlstring -> num M
     'fails' if the mlstring has no fixity, even though it is perfectly
     reasonable for a mlstring to be nonfix.
 *)
-let mfixity_lookup_def = cake_define
+let mfixity_lookup_def = new_definition
   `(mfixity_lookup nm:PCstate0 list->(num#PCstate0 list) option) =
      (\pcs. OPTION_MAP (\r. (r,pcs)) (fixity_lookup nm pcs))`;;
 
-let mFUPD_HD_def = cake_define
+let mFUPD_HD_def = new_definition
   `mFUPD_HD f pcs =
      (match pcs with
          [] -> NONE | h :: t -> SOME (one,f h :: t))`;;
 
 (* msetfix : mlstring -> num option -> unit M *)
-let msetfix_def = cake_define
+let msetfix_def = new_definition
   `(msetfix nm fix:PCstate0 list->(1#PCstate0 list) option) =
      mFUPD_HD (\s0. PCstate0_fixities_fupd (\fm. fm |+ (nm,fix))
        s0)`;;
 
 (* mpop_anonscope : unit M *)
-let mpop_anonscope_def = cake_define
+let mpop_anonscope_def = new_definition
   `(mpopscope:PCstate0 list->(1#PCstate0 list) option) = (\pcs.
      match pcs with
        [] -> NONE | _1 :: t -> SOME (one,t))`;;
 
-let mpop_namedscope_def = cake_define
+let mpop_namedscope_def = new_definition
   `(mpop_namedscope (s:mlstring):PCstate0 list->(1#PCstate0 list)
   option) = (\pcs.
      match pcs with
@@ -102,13 +103,13 @@ hol4_overload "++" "OPTION_CHOICE";;
 (* HOL4 cmlPtreeConversionScript.sml:94: the overload lift, which the
    port expands *)
 
-let ifM_def = cake_define
+let ifM_def = new_definition
   `ifM bM tM eM =
      OPTION_BIND bM (\
         b.
         if b then tM else eM)`;;
 
-let mk_binop_def = cake_define
+let mk_binop_def = new_definition
   `mk_binop a_op a1 a2 =
      (if a_op = Short (implode "::") then ast_Con (SOME (Short
        (implode "::"))) [a1; a2] else ast_App ast_Opapp [ast_App
@@ -117,11 +118,11 @@ let mk_binop_def = cake_define
 (* HOL4 cmlPtreeConversionScript.sml:110: the overload ', which the
    port expands *)
 
-let tokcheck_def = cake_define
+let tokcheck_def = new_definition
   `tokcheck pt tok' <=> ((\f a. OPTION_BIND a f) destTOK (destLf pt)
   = SOME tok')`;;
 
-let ptree_UQTyop_def = cake_define_list
+let ptree_UQTyop_def = define_cases
   [`ptree_UQTyop (Lf _4) = NONE`;
    `ptree_UQTyop (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nUQTyOp) then NONE
@@ -133,7 +134,7 @@ let ptree_UQTyop_def = cake_define_list
               tk.
               destSymbolT tk ++ destAlphaT tk)) | _5 -> NONE)`];;
 
-let ptree_TyvarN_def = cake_define_list
+let ptree_TyvarN_def = define_cases
   [`ptree_TyvarN (Lf _7) = NONE`;
    `ptree_TyvarN (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyvarN) then NONE
@@ -141,12 +142,12 @@ let ptree_TyvarN_def = cake_define_list
         match args with
             [tyv] -> destTyvarPT tyv | _8 -> NONE)`];;
 
-let Long_Short_def = cake_define_list
+let Long_Short_def,Long_Short_ind = define_rec
   [`Long_Short tokens_End (s:mlstring) = Short s`;
    `Long_Short (Mod x xs:tokens_path) (s:mlstring) = Long x
   (Long_Short xs s)`];;
 
-let ptree_Tyop_def = cake_define_list
+let ptree_Tyop_def = define_cases
   [`ptree_Tyop (Lf _10) = NONE`;
    `ptree_Tyop (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyOp) then NONE
@@ -161,15 +162,27 @@ let ptree_Tyop_def = cake_define_list
               nm.
               SOME (Short nm)) | _11 -> NONE)`];;
 
-let tokcheckl_def = cake_define
-  `tokcheckl pts toks <=>
+let _ = size_thms "parsetree";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let tokcheckl_def,tokcheckl_ind = define_wf
+  `MEASURE (\(x0,x1). parsetree_size1 (\x. 0) (\x. 0) (\x. 0) x0)`
+  [`tokcheckl pts toks <=>
      (match (pts,toks) with
-       ([],[]) -> T | (pt :: prest,tok' :: tokrest) -> tokcheck pt
-         tok' /\ tokcheckl prest tokrest | _12 -> F)`;;
+       ([],[]) -> T | (pt :: prest,tok' :: tokrest) -> tokcheck
+         pt tok' /\ tokcheckl prest tokrest | _12 -> F)`];;
 
-let ptree_linfix_def = cake_define
-  `ptree_linfix topnt opn elnt (pt:(tokens_token,MMLnonT,locs)parsetree)
-  =
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "locs";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_linfix_def,ptree_linfix_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). parsetree_size locs_size MMLnonT_size
+  tokens_token_size x3)`
+  [`ptree_linfix topnt opn elnt
+  (pt:(tokens_token,MMLnonT,locs)parsetree) =
      (match pt with
          Lf _13 -> NONE | Nd nt' args ->
          (if FST nt' = (INL:MMLnonT->MMLnonT+num) topnt then
@@ -181,16 +194,26 @@ let ptree_linfix_def = cake_define
                  front. OPTION_BIND (elnt pt) (\
                  last.
                  SOME (front ++ [last])))) | _14 -> NONE else
-                   NONE))`;;
+                   NONE))`];;
 
-let tuplify_def = cake_define
+let tuplify_def = new_definition
   `tuplify tys =
       match tys with
         [] -> NONE
       | [ty] -> SOME ty
       | tys -> SOME (Attup tys)`;;
 
-let ptree_Type_def = cake_define_list
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_Type_def = define_mutual_wf
+  `MEASURE (sum_measure  (\(x0,x1). parsetree_size (\x. 0) MMLnonT_size
+  tokens_token_size x1) (sum_measure (\x0. parsetree_size (\x. 0)
+  MMLnonT_size tokens_token_size x0) (sum_measure (\x0. parsetree_size
+  (\x. 0) MMLnonT_size tokens_token_size x0) (\x0. parsetree_size (\x.
+  0) MMLnonT_size tokens_token_size x0))))`
   [`(ptree_Type nt' (Lf _15):ast_t option) = NONE`;
    `ptree_Type nm (Nd nt' args) =
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nm) then NONE
@@ -277,7 +300,7 @@ let ptree_Type_def = cake_define_list
                      ptys.
                      SOME (dty :: ptys)))) | _24 -> NONE))`];;
 
-let ptree_TypeName_def = cake_define
+let ptree_TypeName_def = new_definition
   `(ptree_TypeName ptree:(mlstring list#mlstring) option) =
      (match ptree with
        Lf _25 -> NONE | Nd nt' args ->
@@ -297,7 +320,7 @@ let ptree_TypeName_def = cake_define
              opn.
              SOME (tyvnms,opn)))) | _26 -> NONE else NONE))`;;
 
-let ptree_UQConstructorName_def = cake_define_list
+let ptree_UQConstructorName_def = define_cases
   [`ptree_UQConstructorName (Lf _28) = NONE`;
    `ptree_UQConstructorName (Nd nm args) =
       (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nUQConstructorName)
@@ -306,7 +329,7 @@ let ptree_UQConstructorName_def = cake_define_list
             [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a.
               OPTION_BIND a f) destTOK (destLf pt)) | _29 -> NONE)`];;
 
-let ptree_ConstructorName_def = cake_define
+let ptree_ConstructorName_def = new_definition
   `ptree_ConstructorName ast =
      (match ast with
          Lf _30 -> NONE | Nd nt' args ->
@@ -322,7 +345,7 @@ let ptree_ConstructorName_def = cake_define
                  (xs,s).
                  SOME (Long_Short xs s)) | _31 -> NONE))`;;
 
-let detuplify_def = cake_define
+let detuplify_def = new_definition
   `detuplify ty =
       match ty with
         Attup args -> args
@@ -335,7 +358,7 @@ let detuplify_pmatch = prove
        Attup args -> args | ty -> [ty])`,
   CHEAT_TAC);;
 
-let ptree_PTbase_def = cake_define
+let ptree_PTbase_def = new_definition
   `ptree_PTbase ast =
      (match ast with
          Lf _32 -> NONE | Nd nt' args ->
@@ -350,8 +373,15 @@ let ptree_PTbase_def = cake_define
                    tokcheck rpart tokens_RparT)) (
                  ptree_Type nType t) | _33 -> NONE else NONE))`;;
 
-let ptree_TbaseList_def = cake_define
-  `ptree_TbaseList ast =
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_TbaseList_def,ptree_TbaseList_ind = define_wf
+  `MEASURE (\x0. parsetree_size (\x. 0) MMLnonT_size tokens_token_size
+  x0)`
+  [`ptree_TbaseList ast =
      (match ast with
          Lf _34 -> NONE | Nd nt' args ->
          (if FST nt' = (INL:MMLnonT->MMLnonT+num) nTbaseList then
@@ -360,9 +390,9 @@ let ptree_TbaseList_def = cake_define
                  (ptree_PTbase ptb_pt) (\
                  b. OPTION_BIND (ptree_TbaseList rest_pt) (\
                  rest.
-                 SOME (b :: rest))) | _35 -> NONE else NONE))`;;
+                 SOME (b :: rest))) | _35 -> NONE else NONE))`];;
 
-let ptree_Dconstructor_def = cake_define
+let ptree_Dconstructor_def = new_definition
   `ptree_Dconstructor ast =
      (match ast with
          Lf x -> NONE | Nd nt' args ->
@@ -378,7 +408,7 @@ let ptree_Dconstructor_def = cake_define
                   types.
                   SOME (cname,types))) else NONE))`;;
 
-let ptree_DtypeDecl_def = cake_define
+let ptree_DtypeDecl_def = new_definition
   `ptree_DtypeDecl (pt:(tokens_token,MMLnonT,locs)parsetree) =
      (match pt with
          Lf _37 -> NONE | Nd nt' args ->
@@ -393,7 +423,7 @@ let ptree_DtypeDecl_def = cake_define
                  SOME (FST tynm,SND tynm,dtc)))) | _38 -> NONE
                    else NONE))`;;
 
-let ptree_TypeDec_def = cake_define
+let ptree_TypeDec_def = new_definition
   `(ptree_TypeDec ptree:((mlstring list#mlstring#(mlstring#ast_t list)
   list) list) option) =
      (match ptree with
@@ -406,7 +436,7 @@ let ptree_TypeDec_def = cake_define
                ptree_linfix nDtypeDecls tokens_AndT
                  ptree_DtypeDecl pt) | _40 -> NONE else NONE))`;;
 
-let ptree_TypeAbbrevDec_def = cake_define
+let ptree_TypeAbbrevDec_def = new_definition
   `(ptree_TypeAbbrevDec ptree:dec option) =
      (match ptree with
        Lf _41 -> NONE | Nd nt' args ->
@@ -421,7 +451,7 @@ let ptree_TypeAbbrevDec_def = cake_define
              SOME (Dtabbrev (SND nt') vars' nm typ)))) | _42 ->
                NONE else NONE))`;;
 
-let singleSymP_def = cake_define
+let singleSymP_def = new_definition
   `singleSymP P x2 =
       match x2 with
         [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f) destSymbolT ((\f
@@ -431,7 +461,7 @@ let singleSymP_def = cake_define
                          SOME (Short s)))
       | _43 -> NONE`;;
 
-let ptree_Op_def = cake_define_list
+let ptree_Op_def = define_general
   [`ptree_Op (Lf _44) = NONE`;
    `ptree_Op (Nd nt' subs) =
       (if FST nt' = (INL:MMLnonT->MMLnonT+num) nMultOps then
@@ -454,7 +484,7 @@ let ptree_Op_def = cake_define_list
           [tokens_AlphaT (implode "o")] then SOME (Short (implode
           "o")) else NONE else NONE)`];;
 
-let ptree_V_def = cake_define_list
+let ptree_V_def = define_cases
   [`ptree_V (Lf _46) = NONE`;
    `ptree_V (Nd nt' subs) =
          OPTION_IGNORE_BIND
@@ -466,7 +496,7 @@ let ptree_V_def = cake_define_list
                          destAlphaT t ++ destSymbolT t) | _47
                            -> NONE)`];;
 
-let ptree_FQV_def = cake_define_list
+let ptree_FQV_def = define_cases
   [`ptree_FQV (Lf _49) = NONE`;
    `ptree_FQV (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nFQV) then NONE
@@ -478,11 +508,11 @@ let ptree_FQV_def = cake_define_list
                       (xs,s).
                       SOME (Long_Short xs s)) | _50 -> NONE)`];;
 
-let isSymbolicConstructor_def = cake_define
+let isSymbolicConstructor_def = new_definition
   `isSymbolicConstructor s =
      SOME (s = "::")`;;
 
-let isConstructor_def = cake_define
+let isConstructor_def = new_definition
   `isConstructor s =
        ifM (isSymbolicConstructor s)
          (SOME T)
@@ -493,7 +523,7 @@ let isConstructor_def = cake_define
    consulted to reveal that the long-id given does not correspond to a
    constructor.  We do this rather than fail to make the "totality" theorem
    work *)
-let EtoPat_def = cake_define
+let EtoPat_def = new_definition
   `EtoPat x1 =
         match x1 with
           (ast_Con x args:ast_exp) -> (if NULL args then SOME
@@ -503,7 +533,7 @@ let EtoPat_def = cake_define
           n)) [])
         | _51 -> NONE`;;
 
-let ptree_OpID_def = cake_define_list
+let ptree_OpID_def = define_cases
   [`ptree_OpID (Lf _54) = NONE`;
    `ptree_OpID (Nd nt' subs) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOpID) then NONE
@@ -535,20 +565,28 @@ let ptree_OpID_def = cake_define_list
                      (Short (implode "="))) else NONE) | _56 ->
                      NONE)`];;
 
-let papply_def = cake_define
+let papply_def = new_definition
   `Papply pat arg =
      (match pat with
        ast_Pcon cn args -> ast_Pcon cn (args ++ [arg]) | _57 ->
          pat)`;;
 
-let maybe_handleRef_def = cake_define
+let maybe_handleRef_def = new_definition
   `maybe_handleRef p =
       match p with
         (ast_Pcon (SOME (Short (implode "Ref"))) [pat]:ast_pat) ->
           ast_Pref pat
       | p -> p`;;
 
-let ptree_Pattern_def = cake_define_list
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_Pattern_def = define_mutual_wf
+  `MEASURE (sum_measure  (\(x0,x1). parsetree_size (\x. 0) MMLnonT_size
+  tokens_token_size x1) (\x0. parsetree_size (\x. 0) MMLnonT_size
+  tokens_token_size x0))`
   [`ptree_Pattern nt' (Lf _58) = NONE`;
    `ptree_Pattern nt' (Nd nm args) =
         (if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE
@@ -676,7 +714,14 @@ new_type_abbrev("ptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 (* HOL4 cmlPtreeConversionScript.sml:747-748: a theorem that HOL4
    states as the value of an ML expression: ptree_Plist_thm *)
 
-let ptree_PbaseList1_def = cake_define_list
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_PbaseList1_def,ptree_PbaseList1_ind = define_wf
+  `MEASURE (\x0. parsetree_size (\x. 0) MMLnonT_size tokens_token_size
+  x0)`
   [`ptree_PbaseList1 (Lf _70) = NONE`;
    `ptree_PbaseList1 (Nd nm args) =
          (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPbaseList1) then
@@ -689,47 +734,52 @@ let ptree_PbaseList1_def = cake_define_list
                          (ptree_PbaseList1 pl_pt) | _71 ->
                            NONE)`];;
 
-let eseq_encode_def = cake_define
-  `Eseq_encode x1 =
+let _ = size_thms "ast_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let eseq_encode_def,eseq_encode_ind = define_wf
+  `MEASURE (\x0. ast_exp_size3 x0)`
+  [`Eseq_encode x1 =
         match x1 with
           [] -> NONE
         | [e] -> SOME e
         | (e :: es) ->
       OPTION_BIND (Eseq_encode es) (\
         body.
-        SOME (ast_Let NONE e body))`;;
+        SOME (ast_Let NONE e body))`];;
 
-let dest_Conk_def = cake_define
+let dest_Conk_def = new_definition
   `dest_Conk x1 k v =
         match x1 with
           (ast_Con x y:ast_exp) -> k x y
         | _72 -> v`;;
 
-let destFFIop_def = cake_define
+let destFFIop_def = new_definition
   `destFFIop x1 =
         match x1 with
           (ast_FFI s:ast_op) -> SOME s
         | _73 -> NONE`;;
 
-let strip_loc_expr_def = cake_define
-  `strip_loc_expr e =
+let strip_loc_expr_def,strip_loc_expr_ind = define_shaped_rec
+  "match"
+  [`strip_loc_expr e =
         match e with
           ast_Lannot e l ->
        (match (strip_loc_expr e) with
          (e0,_74) -> (e0,SOME l))
-        | e -> (e,NONE)`;;
+        | e -> (e,NONE)`];;
 
-let merge_locsopt_def = cake_define
+let merge_locsopt_def = new_definition
   `merge_locsopt x1 x2 =
       match (x1,x2) with
         (SOME l1,SOME l2) -> SOME (merge_locs l1 l2)
       | (_75,_76) -> NONE`;;
 
-let optLannot_def = cake_define_list
+let optLannot_def = define_cases
   [`optLannot NONE e = e`;
    `optLannot (SOME l) e = ast_Lannot e l`];;
 
-let mkAst_App_def = cake_define
+let mkAst_App_def = new_definition
   `mkAst_App a1 a2 =
      (let (a10,loc1) = strip_loc_expr a1 in
        dest_Conk a10
@@ -746,17 +796,17 @@ let mkAst_App_def = cake_define
                    ast_App opn (args ++ [a2])) | _77 -> ast_App
                    ast_Opapp [a1; a2]))`;;
 
-let dePat_def = cake_define
+let dePat_def = new_definition
   `dePat p b =
         match p with
           (ast_Pvar v:ast_pat) -> (v,b)
         | p -> ((implode ""),ast_Mat (ast_Var (Short (implode
           ""))) [(p,b)])`;;
 
-let mkFun_def = cake_define
+let mkFun_def = new_definition
   `mkFun p b = UNCURRY ast_Fun (dePat p b)`;;
 
-let ptree_Eliteral_def = cake_define_list
+let ptree_Eliteral_def = define_cases
   [`ptree_Eliteral (Lf _78) = NONE`;
    `ptree_Eliteral (Nd nt' subs) =
       OPTION_IGNORE_BIND
@@ -776,21 +826,19 @@ let ptree_Eliteral_def = cake_define_list
          OPTION_BIND (destFFIT t) (\s. SOME (ast_App (ast_FFI
            s) []))))))`];;
 
-let bind_loc_def = cake_define
+let bind_loc_def = new_definition
   `bind_loc e l' =
       match e with
         ast_Lannot e l -> ast_Lannot e l
       | e -> ast_Lannot e l'`;;
 
-let letFromPat_def = cake_define
+let letFromPat_def = new_definition
   `letFromPat p rhs body =
      (match p with
        ast_Pany -> ast_Let NONE rhs body | ast_Pvar v -> ast_Let
          (SOME v) rhs body | _79 -> ast_Mat rhs [(p,body)])`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let ptree_Expr_def = cake_define_list_cheat CHEAT_TAC
+let ptree_Expr_def = define_mutual_guess
   [`ptree_Expr ent (Lf _80) = NONE`;
    `ptree_Expr ent (Nd (nt',loc) subs) =
     OPTION_BIND (if (INL:MMLnonT->MMLnonT+num) ent = nt' then
@@ -1166,7 +1214,7 @@ let dumb2 = prove
 (* HOL4 cmlPtreeConversionScript.sml:1273-1274: a theorem that HOL4
    states as the value of an ML expression: ptree_Expr_others *)
 
-let ptree_StructName_def = cake_define_list
+let ptree_StructName_def = define_cases
   [`ptree_StructName (Lf _124) = NONE`;
    `ptree_StructName (Nd nm args) =
       (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nStructName) then
@@ -1175,7 +1223,7 @@ let ptree_StructName_def = cake_define_list
             [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a.
               OPTION_BIND a f) destTOK (destLf pt)) | _125 -> NONE)`];;
 
-let ptree_OptTypEqn_def = cake_define_list
+let ptree_OptTypEqn_def = define_cases
   [`ptree_OptTypEqn (Lf _127) = (NONE:(ast_t option) option)`;
    `ptree_OptTypEqn (Nd nt' args) =
       ((if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOptTypEqn) then
@@ -1189,7 +1237,7 @@ let ptree_OptTypEqn_def = cake_define_list
               SOME (SOME typ))) | _128 -> NONE):(ast_t option)
                 option)`];;
 
-let ptree_SpecLine_def = cake_define_list
+let ptree_SpecLine_def = define_cases
   [`ptree_SpecLine (Lf _130) = NONE`;
    `ptree_SpecLine (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLine) then
@@ -1224,7 +1272,15 @@ let ptree_SpecLine_def = cake_define_list
     // | SOME ty => Stabbrev vs nm ty)
     // (SDefinition vname ty)`];;
 
-let ptree_SpeclineList_def = cake_define_list
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "locs";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_SpeclineList_def,ptree_SpeclineList_ind = define_wf
+  `MEASURE (\x0. parsetree_size locs_size MMLnonT_size
+  tokens_token_size x0)`
   [`ptree_SpeclineList (Lf _133) = NONE`;
    `ptree_SpeclineList (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLineList) then
@@ -1241,7 +1297,7 @@ let ptree_SpeclineList_def = cake_define_list
                 SOME one))) | _134 -> NONE)
     // (sl::sll)`];;
 
-let ptree_SignatureValue_def = cake_define_list
+let ptree_SignatureValue_def = define_cases
   [`ptree_SignatureValue (Lf _136) = NONE`;
    `ptree_SignatureValue (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSignatureValue)
@@ -1253,9 +1309,17 @@ let ptree_SignatureValue_def = cake_define_list
                 [tokens_SigT; tokens_EndT])) (
               ptree_SpeclineList sll_pt) | _137 -> NONE)`];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let ptree_Decl_def = cake_define_list_cheat CHEAT_TAC
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "locs";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_Decl_def = define_mutual_wf
+  `MEASURE (sum_measure  (\x0. parsetree_size locs_size MMLnonT_size
+  tokens_token_size x0) (sum_measure  (\x0. parsetree_size locs_size
+  MMLnonT_size tokens_token_size x0) (\x0. parsetree_size locs_size
+  MMLnonT_size tokens_token_size x0)))`
   [`(ptree_Decl pt:dec option) =
         (match pt with
            Lf _138 -> NONE | Nd (nt',locs) args ->
@@ -1341,7 +1405,16 @@ let ptree_Decl_def = cake_define_list_cheat CHEAT_TAC
                   // asc
                   ds))))) | _146 -> NONE)`];;
 
-let ptree_TopLevelDecs_def = cake_define_list
+let _ = size_thms "MMLnonT";;
+let _ = size_thms "locs";;
+let _ = size_thms "parsetree";;
+let _ = size_thms "tokens_token";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ptree_TopLevelDecs_def = define_mutual_wf
+  `MEASURE (sum_measure  (\x0. parsetree_size locs_size MMLnonT_size
+  tokens_token_size x0) (\x0. parsetree_size locs_size MMLnonT_size
+  tokens_token_size x0))`
   [`ptree_TopLevelDecs (Lf _147) = NONE`;
    `ptree_TopLevelDecs (Nd nt' args) =
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs)

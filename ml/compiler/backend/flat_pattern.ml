@@ -39,26 +39,31 @@ let flat_pattern_config_FIELDS = define_record "flat_pattern_config"
    (* unit -> *)
   ];;
 
-let init_config_def = cake_define
+let init_config_def = new_definition
   `flat_pattern_init_config ph = mk_flat_pattern_config ph`;;
 hol4_overload "init_config" "flat_pattern_init_config";;
 
-let sum_string_ords_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let sum_string_ords_def,sum_string_ords_ind = define_wf
   `MEASURE (\(i,str). strlen str - i)`
-  `sum_string_ords i str = (if i < strlen str then (ORD (strsub str
-  i) - 35) + sum_string_ords (i + 1) str else 0)`;;
+  [`sum_string_ords i str = (if i < strlen str then (ORD (strsub str
+  i) - 35) + sum_string_ords (i + 1) str else 0)`];;
 
-let dec_name_to_num_def = cake_define
+let dec_name_to_num_def = new_definition
   `dec_name_to_num name = (if strlen name < 2 then 0 else if strsub
   name 0 = (CHR 46) /\ strsub name 1 = (CHR 46) then sum_string_ords
   2 name else 0)`;;
 
-let enc_num_to_name_aux_def = cake_define
-  `enc_num_to_name_aux i xs = (if i < 90 then (CHR 46) :: (CHR 46) ::
-  CHR (i + 35) :: xs else enc_num_to_name_aux (i - 90) (CHR 125 ::
-  xs))`;;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let enc_num_to_name_aux_def,enc_num_to_name_aux_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x0)`
+  [`enc_num_to_name_aux i xs = (if i < 90 then (CHR 46) :: (CHR 46)
+  :: CHR (i + 35) :: xs else enc_num_to_name_aux (i - 90) (CHR 125
+  :: xs))`];;
 
-let enc_num_to_name_def = cake_define
+let enc_num_to_name_def = new_definition
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
 (* HOL4 flat_patternScript.sml:48-52: a theorem whose statement the
@@ -69,16 +74,9 @@ let MAPi_eq_MAP = prove
   CHEAT_TAC);;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 flat_patternScript.sml:91-96: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let compile_pat_bindings_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\(t,i,m,exp). SUM (MAP (pattern_semantics_pat_size o FST)
-     m) + LENGTH m)`)
-  CHEAT_TAC
+let compile_pat_bindings_def,compile_pat_bindings_ind = define_guess
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
    `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;
@@ -118,49 +116,52 @@ let compile_pat_bindings_def = cake_define_list_try_tac (fun () ->
       (sptree_insert k one spt,Let t (SOME nm) (App t
         (flatLang_El 0) [x]) exp2))`];;
 
-let compile_pat_rhs_def = cake_define
+let compile_pat_rhs_def = new_definition
   `compile_pat_rhs t i v (p,exp) =
    SND (compile_pat_bindings t (i + 1) [(p,i,v)] exp)`;;
 
-let decode_pos_def = cake_define_list
+let decode_pos_def,decode_pos_ind = define_rec
   [`decode_pos t v EmptyPos = v`;
    `decode_pos t v (Pos i pos) = decode_pos t (App t (flatLang_El
   i) [v]) pos`];;
 
-let decode_test_def = cake_define_list
+let decode_test_def = define_cases
   [`flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t
   (flatLang_TagLenEq tag l) [v]`;
    `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v =
   App t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
 hol4_overload "decode_test" "flat_pattern_decode_test";;
 
-let simp_guard_def = cake_define
-  `simp_guard x =
+let simp_guard_def,simp_guard_ind = define_shaped_rec
+  "match"
+  [`simp_guard x =
       match x with
         pattern_semantics_Conj x y ->
      (let v = simp_guard x in
       let w = simp_guard y in
       if v = Not pattern_semantics_True \/ w = Not
         pattern_semantics_True then
-        Not pattern_semantics_True else if v = pattern_semantics_True
-          then w else if w = pattern_semantics_True then v else
-          pattern_semantics_Conj v w)
+        Not pattern_semantics_True else if v =
+          pattern_semantics_True then w else if w =
+          pattern_semantics_True then v else pattern_semantics_Conj v
+          w)
       | (pattern_semantics_Disj x y) ->
      (let v = simp_guard x in
       let w = simp_guard y in
       if v = pattern_semantics_True \/ w = pattern_semantics_True
         then
-        pattern_semantics_True else if v = Not pattern_semantics_True
-          then w else if w = Not pattern_semantics_True then v else
-          pattern_semantics_Disj v w)
+        pattern_semantics_True else if v = Not
+          pattern_semantics_True then w else if w = Not
+          pattern_semantics_True then v else pattern_semantics_Disj v
+          w)
       | (Not x) ->
      (let v = simp_guard x in
       match v with
         Not pattern_semantics_True -> pattern_semantics_True | Not w
           -> w | _41 -> Not v)
-      | x -> x`;;
+      | x -> x`];;
 
-let decode_guard_def = cake_define_list
+let decode_guard_def,decode_guard_ind = define_rec
   [`decode_guard t v (Not gd:dGuard) = App t (flatLang_Src
   ast_Equality) [decode_guard t v gd; flatLang_Bool t F]`;
    `decode_guard t v (pattern_semantics_Conj gd1 gd2) = SmartIf t
@@ -173,8 +174,9 @@ let decode_guard_def = cake_define_list
    `decode_guard t v (pattern_semantics_PosTest pos test) =
   flat_pattern_decode_test t test (decode_pos t v pos)`];;
 
-let decode_dtree_def = cake_define
-  `decode_dtree t br_spt v df x5 =
+let decode_dtree_def,decode_dtree_ind = define_shaped_rec
+  "match"
+  [`decode_dtree t br_spt v df x5 =
       match x5 with
         (pattern_semantics_Leaf n:dTree) -> (match sptree_lookup n
           br_spt with SOME br -> br | NONE -> df)
@@ -187,35 +189,38 @@ let decode_dtree_def = cake_define
    let dec2 = decode_dtree t br_spt v df dt2 in
    if guard' = pattern_semantics_True then dec1 else if guard' =
      Not pattern_semantics_True then dec2 else SmartIf t
-     (decode_guard t v guard') dec1 dec2)`;;
+     (decode_guard t v guard') dec1 dec2)`];;
 
 let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 flat_patternScript.sml:173-177: the tactic that proves the
    termination *)
-let encode_pat_def = cake_define_wf
+let encode_pat_def,encode_pat_ind = define_wf
   `MEASURE pattern_semantics_pat_size`
-  `encode_pat x1 =
+  [`encode_pat x1 =
       match x1 with
         flatLang_Pany -> pattern_semantics_Any
       | (Plit l) -> Lit l
       | (Pvar _42) -> pattern_semantics_Any
       | (flatLang_Pcon stmp ps) -> Cons
-     (match stmp with NONE -> NONE | SOME (i,NONE) -> SOME (i,NONE) |
-       SOME (i,SOME (ty,ctors)) -> SOME (i,SOME ctors))
+     (match stmp with NONE -> NONE | SOME (i,NONE) -> SOME (i,NONE)
+       | SOME (i,SOME (ty,ctors)) -> SOME (i,SOME ctors))
      (MAP encode_pat ps)
       | (Pas p v) -> encode_pat p
-      | (Pref p) -> pattern_semantics_Ref (encode_pat p)`;;
+      | (Pref p) -> pattern_semantics_Ref (encode_pat p)`];;
 
 let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 flat_patternScript.sml:197-202: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let naive_pattern_match_def = cake_define_try_tac (fun () ->
+let naive_pattern_match_def,naive_pattern_match_ind = define_wf_cheat
   `MEASURE (\x. SUM (MAP (pattern_semantics_pat_size o FST) (SND x)) +
-  LENGTH (SND x))`)
-  CHEAT_TAC
-  `naive_pattern_match t x2 =
+  LENGTH (SND x))`
+  [`naive_pattern_match t x2 =
       match x2 with
         [] -> flatLang_Bool t T
       | ((flatLang_Pany,_43) :: mats) -> naive_pattern_match t mats
@@ -229,20 +234,22 @@ let naive_pattern_match_def = cake_define_try_tac (fun () ->
       | ((Pas p i,v) :: mats) ->
      naive_pattern_match t ((p,v) :: mats)
       | ((Pcon (SOME stmp) ps,v) :: mats) ->
-     SmartIf t (App t (flatLang_TagLenEq (FST stmp) (LENGTH ps)) [v])
+     SmartIf t (App t (flatLang_TagLenEq (FST stmp) (LENGTH ps))
+       [v])
        (naive_pattern_match t (MAPi (\i p. (p,App t (flatLang_El i)
          [v])) ps ++ mats))
        (flatLang_Bool t F)
       | ((Pref p,v) :: mats) ->
-     naive_pattern_match t ((p,App t (flatLang_El 0) [v]) :: mats)`;;
+     naive_pattern_match t ((p,App t (flatLang_El 0) [v]) ::
+       mats)`];;
 
-let naive_pattern_matches_def = cake_define_list
+let naive_pattern_matches_def,naive_pattern_matches_ind = define_rec
   [`naive_pattern_matches t v [] dflt_x = dflt_x`;
    `naive_pattern_matches t v ((p,x) :: ps) dflt_x =
     SmartIf t (naive_pattern_match t [(p,v)]) x
       (naive_pattern_matches t v ps dflt_x)`];;
 
-let compile_pats_def = cake_define
+let compile_pats_def = new_definition
   `compile_pats (cfg:flat_pattern_config) naive t i v default_x ps =
    (let branches = MAP (compile_pat_rhs t i v) ps in
    if naive then
@@ -253,12 +260,12 @@ let compile_pats_def = cake_define
          pats in decode_dtree t (sptree_fromList branches) v
            default_x dt)`;;
 
-let max_dec_name_def = cake_define_list
+let max_dec_name_def,max_dec_name_ind = define_rec
   [`max_dec_name [] = 0`;
    `max_dec_name (nm :: nms) = MAX (dec_name_to_num nm)
   (max_dec_name nms)`];;
 
-let op_sets_globals_def = cake_define
+let op_sets_globals_def = new_definition
   `op_sets_globals x1 =
       match x1 with
         flatLang_GlobalVarInit n -> T
@@ -268,9 +275,7 @@ let op_sets_globals_EX = prove
  (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
   CHEAT_TAC);;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let flat_pattern_compile_exp_def = cake_define_list_cheat CHEAT_TAC
+let flat_pattern_compile_exp_def = define_mutual_guess
   [`flat_pattern_compile_exp cfg (flatLang_Var_local t vid) =
         (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =
@@ -352,7 +357,7 @@ let LENGTH_SND_compile_exps = prove
    LENGTH (SND (SND (compile_match cfg ps))) = LENGTH ps`,
   CHEAT_TAC);;
 
-let compile_dec_def = cake_define
+let compile_dec_def = new_definition
   `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;
 
 (* and the overloads that this file cannot see are back in the

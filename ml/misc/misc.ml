@@ -41,11 +41,11 @@ let _ = do_list hide_constant ["C"; "num_cmp"];;
    relation bit words string address path res_quan *)
 
 (* Total version of THE *)
-let the_def = cake_define_list
+let the_def = define_cases
   [`the _1 (SOME x) = x`;
    `the x NONE = x`];;
 
-let opt_bind_def = cake_define
+let opt_bind_def = new_definition
   `opt_bind n v e =
      (match n with NONE -> e | SOME n' -> (n',v) :: e)`;;
 
@@ -98,7 +98,10 @@ let SORTED_GENLIST_TIMES = prove
 (* this is
      read_bytearray a c gb = OPT_MMAP gb (GENLIST (λi. a + n2w i) c)
 *)
-let read_bytearray_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let read_bytearray_def,read_bytearray_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`read_bytearray a 0 get_byte' = SOME []`;
    `read_bytearray a (SUC n) get_byte' =
          (match get_byte' a with NONE -> NONE | SOME b ->
@@ -111,7 +114,7 @@ let read_bytearray_LENGTH = prove
       (read_bytearray a n f = SOME x) ==> (LENGTH x = n)`,
   CHEAT_TAC);;
 
-let shift_seq_def = cake_define
+let shift_seq_def = new_definition
   `misc_shift_seq k s = (\i. s (i + (k:num)))`;;
 hol4_overload "shift_seq" "misc_shift_seq";;
 
@@ -170,13 +173,13 @@ hol4_overload "List" "misc_List";;
 hol4_overload "Append" "misc_Append";;
 hol4_overload "Nil" "misc_Nil";;
 
-let append_aux_def = cake_define_list
+let append_aux_def,append_aux_ind = define_rec
   [`append_aux misc_Nil aux = aux`;
    `append_aux (misc_List xs) aux = xs ++ aux`;
    `append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux
   l2 aux)`];;
 
-let append_def = cake_define
+let append_def = new_definition
   `append l = append_aux l []`;;
 
 let append_aux_thm = prove
@@ -190,7 +193,7 @@ let append_thm = prove
     append misc_Nil = []`,
   CHEAT_TAC);;
 
-let SmartAppend_def = cake_define
+let SmartAppend_def = new_definition
   `SmartAppend l1 l2 =
         match (l1,l2) with
           (misc_Nil,l2) -> l2
@@ -282,11 +285,11 @@ let lemmas = prove
      (~(2 * m + 1 = 2 * n' + 2))`,
   CHEAT_TAC);;
 
-let lookup_any_def = cake_define
+let lookup_any_def = new_definition
   `lookup_any x sp d =
      (match sptree_lookup x sp with NONE -> d | SOME m -> m)`;;
 
-let fromList2_def = cake_define
+let fromList2_def = new_definition
   `fromList2 l = SND (FOLDL (\(i,t) a. (i + 2,sptree_insert i a t))
   (0,LN) l)`;;
 
@@ -372,11 +375,11 @@ let EVERY_FST_SND = prove
   (MAP SND ls)`,
   CHEAT_TAC);;
 
-let zlookup_def = cake_define
+let zlookup_def = new_definition
   `zlookup m k = (match sptree_lookup k m with NONE -> 0 | SOME k ->
   k)`;;
 
-let tlookup_def = cake_define
+let tlookup_def = new_definition
   `tlookup m k = (match sptree_lookup k m with NONE -> k | SOME k ->
   k)`;;
 
@@ -395,12 +398,12 @@ let tlookup_bij_iff = prove
   CHEAT_TAC);;
 
 (* should be composition of oEL and as-yet-undefined "THE default" *)
-let any_el_def = cake_define_list
+let any_el_def,any_el_ind = define_rec
   [`any_el n [] d = d`;
    `any_el n (x :: xs) d = (if n = 0 then x else any_el (n -
   (1:num)) xs d)`];;
 
-let update_resize_def = cake_define
+let update_resize_def = new_definition
   `update_resize ls default v n =
      (if n < LENGTH ls then
        LUPDATE v n ls else
@@ -433,10 +436,10 @@ let FOLDR_MAX_0_MAX_LIST = prove
   CHEAT_TAC);;
 
 (* never used *)
-let list_inter_def = cake_define
+let list_inter_def = new_definition
   `list_inter xs ys = FILTER (\y. MEM y xs) ys`;;
 
-let max3_def = cake_define
+let max3_def = new_definition
   `max3 (x:num) y z = (if x > y then (if z > x then z else x) else
   (if z > y then z else y))`;;
 
@@ -465,7 +468,7 @@ let MEM_ALOOKUP = prove
 
 (* TODO - candidate for move to HOL, but in simpler form without accumulator *)
 (* only used in inferProg *)
-let anub_def = cake_define_list
+let anub_def,anub_ind = define_rec
   [`anub [] acc = []`;
    `anub ((k,v) :: ls) acc =
        (if MEM k acc then anub ls acc else
@@ -565,7 +568,7 @@ let BIT_num_from_bin_list_leading = prove
   (num_from_bin_list l))`,
   CHEAT_TAC);;
 
-let least_from_def = cake_define
+let least_from_def = new_definition
   `least_from P n = (if (?x. P x /\ n <= x) then LEAST (\x. P x /\ n
   <= x) else LEAST P)`;;
 
@@ -598,7 +601,7 @@ let OPTREL_trans = prove
       x z`,
   CHEAT_TAC);;
 
-let UPDATE_LIST_def = cake_define
+let UPDATE_LIST_def = new_definition
   `UPDATE_LIST = FOLDL (hol4_C (UNCURRY UPDATE))`;;
 
 (* HOL4 miscScript.sml:1038: the overload =++, which the port writes
@@ -615,7 +618,7 @@ let APPLY_UPDATE_LIST_ALOOKUP = prove
   CHEAT_TAC);;
 
 (* should be using indexedLists$findi, or INDEX_OF *)
-let find_index_def = cake_define_list
+let find_index_def,find_index_ind = define_rec
   [`find_index _2 [] _3 = NONE`;
    `find_index y (x :: xs) n = (if x = y then SOME n else
   find_index y xs (n + 1))`];;
@@ -800,7 +803,7 @@ let FOLDL_invariant_rest = prove
   (DROP (SUC n) ls) (f x (EL n ls))) ==> P [] (FOLDL f a ls)`,
   CHEAT_TAC);;
 
-let between_def = cake_define
+let between_def = new_definition
   `between x y z <=> (x:num) <= z /\ z < y`;;
 
 let IN_between = prove
@@ -813,7 +816,7 @@ let SUC_LEAST = prove
   CHEAT_TAC);;
 
 (* never used *)
-let fmap_linv_def = cake_define
+let fmap_linv_def = new_definition
   `fmap_linv f1 f2 <=> (FDOM f2 = FRANGE f1) /\ (!x. x IN FDOM f1 ==>
   (FLOOKUP f2 (FAPPLY f1 x) = SOME x))`;;
 
@@ -1029,18 +1032,18 @@ let LIST_REL_MAP_FILTER_NEQ = prove
 
 (* move into HOL? *)
 
-let word_list_def = cake_define_list
+let word_list_def,word_list_ind = define_guess
   [`misc_word_list a [] = emp`;
    `misc_word_list a (x :: xs) = set_sep_one (a,x) * misc_word_list
   (a + bytes_in_word) xs`];;
 hol4_overload "word_list" "misc_word_list";;
 
-let word_list_exists_def = cake_define
+let word_list_exists_def = new_definition
   `word_list_exists a n =
      SEP_EXISTS (\xs. misc_word_list a xs * cond (LENGTH xs = n))`;;
 
 (* lookup_vars vs env = OPT_MMAP (\i. oEL i env) vs *)
-let lookup_vars_def = cake_define_list
+let lookup_vars_def,lookup_vars_ind = define_rec
   [`lookup_vars [] env = SOME []`;
    `lookup_vars (v :: vs) env =
          (if v < LENGTH env then
@@ -1093,7 +1096,7 @@ let MAPi_ID = prove
 (* TODO - candidate for move to HOL - though
      enumerate i0 l = MAPi (λx i. (i + i0, x)) l
 *)
-let enumerate_def = cake_define_list
+let enumerate_def,enumerate_ind = define_rec
   [`enumerate n [] = []`;
    `enumerate n (x :: xs) = (n,x) :: enumerate (n + 1) xs`];;
 
@@ -1302,7 +1305,7 @@ let MOD_MINUS = prove
   MOD k`,
   CHEAT_TAC);;
 
-let option_fold_def = cake_define_list
+let option_fold_def = define_cases
   [`option_fold f x NONE = x`;
    `option_fold f x (SOME y) = f y x`];;
 
@@ -1499,53 +1502,65 @@ let MAP_K_REPLICATE = prove
  (`MAP (K x) ls = REPLICATE (LENGTH ls) x`,
   CHEAT_TAC);;
 
-let shift_left_def = cake_define
-  `shift_left (a:'a word) n =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let shift_left_def,shift_left_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
+  [`shift_left (a:'a word) n =
    (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a)
      then (n2w 0) else if n > 32 then shift_left (a << 32) (n - 32)
-     else if n > 16 then shift_left (a << 16) (n - 16) else if n > 8
-     then shift_left (a << 8) (n - 8) else shift_left (a << 1) (n -
-     1))`;;
+     else if n > 16 then shift_left (a << 16) (n - 16) else if n >
+     8 then shift_left (a << 8) (n - 8) else shift_left (a << 1) (n
+     - 1))`];;
 
 let shift_left_rwt = prove
  (`!a n. a << n = shift_left a n`,
   CHEAT_TAC);;
 
-let shift_right_def = cake_define
-  `shift_right (a:'a word) n =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let shift_right_def,shift_right_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
+  [`shift_right (a:'a word) n =
    (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a)
-     then (n2w 0) else if n > 32 then shift_right (a >>> 32) (n - 32)
-     else if n > 16 then shift_right (a >>> 16) (n - 16) else if n >
-     8 then shift_right (a >>> 8) (n - 8) else shift_right (a >>> 1)
-     (n - 1))`;;
+     then (n2w 0) else if n > 32 then shift_right (a >>> 32) (n -
+     32) else if n > 16 then shift_right (a >>> 16) (n - 16) else
+     if n > 8 then shift_right (a >>> 8) (n - 8) else shift_right
+     (a >>> 1) (n - 1))`];;
 
 let shift_right_rwt = prove
  (`!a n. a >>> n = shift_right a n`,
   CHEAT_TAC);;
 
-let arith_shift_right_def = cake_define
-  `arith_shift_right (a:'a word) n =
-   (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a) /\
-     ~(word_msb a) then (n2w 0) else if (a = --(n2w 1)) \/ n >
-     dimindex (:'a) /\ word_msb a then --(n2w 1) else if n > 32 then
-     arith_shift_right (a >> 32) (n - 32) else if n > 16 then
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let arith_shift_right_def,arith_shift_right_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
+  [`arith_shift_right (a:'a word) n =
+   (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a)
+     /\ ~(word_msb a) then (n2w 0) else if (a = --(n2w 1)) \/ n >
+     dimindex (:'a) /\ word_msb a then --(n2w 1) else if n > 32
+     then arith_shift_right (a >> 32) (n - 32) else if n > 16 then
      arith_shift_right (a >> 16) (n - 16) else if n > 8 then
-     arith_shift_right (a >> 8) (n - 8) else arith_shift_right (a >>
-     1) (n - 1))`;;
+     arith_shift_right (a >> 8) (n - 8) else arith_shift_right (a
+     >> 1) (n - 1))`];;
 
 let arith_shift_right_rwt = prove
  (`!a n. a >> n = arith_shift_right a n`,
   CHEAT_TAC);;
 
-let any_word64_ror_def = cake_define
-  `any_word64_ror (w:word64) (n:num) =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let any_word64_ror_def,any_word64_ror_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
+  [`any_word64_ror (w:word64) (n:num) =
      (if 64 <= n then any_word64_ror w (n - 64) else
      if 32 <= n then any_word64_ror (word_ror w 32) (n - 32) else
      if 16 <= n then any_word64_ror (word_ror w 16) (n - 16) else
      if 8 <= n then any_word64_ror (word_ror w 8) (n - 8) else
      if 4 <= n then any_word64_ror (word_ror w 4) (n - 4) else
      if 2 <= n then any_word64_ror (word_ror w 2) (n - 2) else
-     if 1 <= n then word_ror w 1 else w)`;;
+     if 1 <= n then word_ror w 1 else w)`];;
 
 let word_ror_eq_any_word64_ror = prove
  (`!a n. word_ror a n = any_word64_ror a n`,
@@ -1605,7 +1620,7 @@ let the_nil_eq_cons = prove
  (`(the [] x = y :: z) <=> x = SOME (y :: z)`,
   CHEAT_TAC);;
 
-let splitlines_def = cake_define
+let splitlines_def = new_definition
   `splitlines ls =
    (let lines = FIELDS ((=) (CHR 10)) ls in
    // discard trailing newline
@@ -1690,10 +1705,10 @@ let ADD_MOD_EQ_LEMMA = prove
   CHEAT_TAC);;
 
 (* should be set l1 ⊆ set l2 *)
-let list_subset_def = cake_define
+let list_subset_def = new_definition
   `list_subset l1 l2 = EVERY (\x. MEM x l2) l1`;;
 
-let list_set_eq_def = cake_define
+let list_set_eq_def = new_definition
   `list_set_eq l1 l2 <=> list_subset l1 l2 /\ list_subset l2 l1`;;
 
 let list_subset_LENGTH = prove
@@ -1779,7 +1794,7 @@ let lnext_def =
       ASM_MESON_TAC[LDROP_SUC]]) in
   new_specification ["Lnext"] th;;
 
-let lnext_pos_def = cake_define
+let lnext_pos_def = new_definition
   `Lnext_pos (ll:num llist) = Lnext (\ll. ?k. LHD ll = SOME k /\ ~(k
   = 0)) ll`;;
 
@@ -1831,7 +1846,7 @@ let TOKENS_FLAT_MAP_SNOC = prove
   CHEAT_TAC);;
 
 (* insert a string (l1) at specified index (n) in a list (l2) *)
-let insert_atI_def = cake_define
+let insert_atI_def = new_definition
   `insert_atI l1 n l2 =
      TAKE n l2 ++ l1 ++ DROP (n + LENGTH l1) l2`;;
 
@@ -1902,7 +1917,7 @@ let BAG_ALL_DISTINCT_FOLDR_BAG_UNION = prove
 
 (* TODO - candidate for move to HOL *)
 (* N.B.: there is a different is_subsequence defined in lcsTheory; these should be merged *)
-let is_subseq_def = cake_define_list
+let is_subseq_def,is_subseq_ind = define_guess
   [`is_subseq ls [] <=> T`;
    `is_subseq [] (x :: xs) <=> F`;
    `is_subseq (y :: ys) (x :: xs) <=>
@@ -1988,7 +2003,7 @@ let LIST_REL_IMP_LAST = prove
         xs) (LAST ys)`,
   CHEAT_TAC);;
 
-let make_even_def = cake_define
+let make_even_def = new_definition
   `make_even n = (if EVEN n then n else n + 1)`;;
 
 (* [simp] *)
@@ -2056,14 +2071,14 @@ let toPath_fromList = prove
      (z,fromList t)))`,
   CHEAT_TAC);;
 
-let steps_def = cake_define_list
+let steps_def,steps_ind = define_rec
   [`steps f x [] = []`;
    `steps f x (j :: js) =
        (let y = f x j in
        let tr = steps f y js in
          ((j,y) :: tr))`];;
 
-let steps_rel_def = cake_define_list
+let steps_rel_def,steps_rel_ind = define_rec
   [`steps_rel R x [] <=> T`;
    `steps_rel R x ((j,y) :: tr) <=>
         R x j y /\
@@ -2087,7 +2102,10 @@ let LAST_MAP_SND_steps_FOLDL = prove
  (`!f x ls. LAST (x :: MAP SND (steps f x ls)) = FOLDL f x ls`,
   CHEAT_TAC);;
 
-let all_words_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let all_words_def,all_words_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
   [`all_words base 0 = {}`;
    `all_words base (SUC n) = base INSERT (all_words (base + (n2w
   1)) n)`];;
@@ -2110,7 +2128,7 @@ let read_bytearray_no_wrap = prove
    w2n ptr + len < dimword (:'a)`,
   CHEAT_TAC);;
 
-let asm_write_bytearray_def = cake_define_list
+let asm_write_bytearray_def,asm_write_bytearray_ind = define_guess
   [`asm_write_bytearray a [] (m:'a word->word8) = m`;
    `asm_write_bytearray a (x :: xs) (m:'a word->word8) = (a =+ x)
   (asm_write_bytearray (a + (n2w 1)) xs m)`];;
@@ -2161,15 +2179,20 @@ let asm_write_bytearray_EL = prove
 
 (* TODO: move to sptTheory *)
 
-let eq_shape_def = cake_define
-  `eq_shape x1 x2 =
+let _ = size_thms "spt";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let eq_shape_def,eq_shape_ind = define_wf
+  `MEASURE (\(x0,x1). spt_size (\x. 0) x0 + spt_size (\x. 0) x1)`
+  [`eq_shape x1 x2 =
       match (x1,x2) with
         (LN,LN) -> T
       | ((LS _4),(LS _5)) -> T
-      | ((BN t1 t2),(BN u1 u2)) -> (eq_shape t1 u1 /\ eq_shape t2 u2)
+      | ((BN t1 t2),(BN u1 u2)) -> (eq_shape t1 u1 /\ eq_shape t2
+        u2)
       | ((BS t1 _6 t2),(BS u1 _7 u2)) -> (eq_shape t1 u1 /\ eq_shape
         t2 u2)
-      | (_8,_9) -> F`;;
+      | (_8,_9) -> F`];;
 
 let spt_eq = prove
  (`!t1 t2.
@@ -2186,7 +2209,11 @@ let eq_shape_IMP_domain = prove
  (`!t1 t2. eq_shape t1 t2 ==> domain t1 = domain t2`,
   CHEAT_TAC);;
 
-let copy_shape_def = cake_define_list
+let _ = size_thms "spt";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let copy_shape_def,copy_shape_ind = define_wf
+  `MEASURE (\(x0,x1). spt_size (\x. 0) x0 + spt_size (\x. 0) x1)`
   [`copy_shape LN LN = LN`;
    `copy_shape LN (LS y) = LN`;
    `copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN
@@ -2276,7 +2303,7 @@ let fromList2_value = prove
 
 (* The range is the set of values taken on by an sptree.
   Not sure if these are worth moving. *)
-let range_def = cake_define
+let range_def = new_definition
   `range s = {v | ?n. sptree_lookup n s = SOME v}`;;
 
 let range_delete = prove
@@ -2339,7 +2366,7 @@ let word_sub_lt = prove
 
 (* see #521 *)
 
-let bytes_in_memory_def = cake_define_list
+let bytes_in_memory_def,bytes_in_memory_ind = define_rec
   [`bytes_in_memory a [] m dm <=> T`;
    `bytes_in_memory a ((x:word8) :: xs) m dm <=>
          (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1))
@@ -2376,7 +2403,7 @@ let bytes_in_memory_in_domain = prove
   n2w k) IN md)`,
   CHEAT_TAC);;
 
-let bytes_in_mem_def = cake_define_list
+let bytes_in_mem_def,bytes_in_mem_ind = define_rec
   [`bytes_in_mem a [] m md k <=> T`;
    `bytes_in_mem a (b :: bs) m md k <=>
          a IN md /\ ~(a IN k) /\ (m a = b) /\
@@ -2410,7 +2437,7 @@ let ALL_DISTINCT_MAP_FST_toSortedAList = prove
   CHEAT_TAC);;
 
 
-let good_dimindex_def = cake_define
+let good_dimindex_def = new_definition
   `good_dimindex (:'a) <=> dimindex (:'a) = 32 \/ dimindex (:'a) = 64`;;
 
 let good_dimindex_get_byte_set_byte = prove
@@ -2465,11 +2492,11 @@ let misc_MEM_list_size = prove
   CHEAT_TAC);;
 
 (* must be used instead of FUPDATE in defitions that go through translation *)
-let fmap_update_def = cake_define
+let fmap_update_def = new_definition
   `fmap_update f k v = f |+ (k,v)`;;
 
 (* TODO: move to HOL? *)
-let sum_cmp_def = cake_define
+let sum_cmp_def = new_definition
   `sum_cmp c1 c2 x1 x2 =
      (match x1 with INL n1 ->
          (match x2 with INL n2 -> c1 n1 n2 | INR _10 -> LESS) | INR

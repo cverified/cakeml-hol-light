@@ -911,7 +911,7 @@ let constrain_op_check_s = prove
       st')`,
   CHEAT_TAC);;
 
-let ienv_ok_def = cake_define
+let ienv_ok_def = new_definition
   `ienv_ok uvars ienv <=>
      ienv_val_ok uvars (inf_env_inf_v ienv) /\
      tenv_ctor_ok (inf_env_inf_c ienv) /\
@@ -981,7 +981,7 @@ let generalise_complete_lemma2 = prove
      |++ ts)`,
   CHEAT_TAC);;
 
-let infer_subst_var_def = cake_define
+let infer_subst_var_def = new_definition
   `infer_subst_var s t =
         match t with
           Infer_Tuvar n ->
@@ -1021,14 +1021,16 @@ let inferProps_fst_lem = prove
 
 (* Rename (type_system) type identifiers with a function *)
 let _ = size_thms "t";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2474-2481: the tactic that proves the
    termination *)
-let ts_tid_rename_def = cake_define_wf
+let ts_tid_rename_def,ts_tid_rename_ind = define_wf
   `MEASURE (\(_2,y). t_size y)`
-  `ts_tid_rename f t =
+  [`ts_tid_rename f t =
         match t with
           Tapp ts tn -> Tapp (MAP (ts_tid_rename f) ts) (f tn)
-        | t -> t`;;
+        | t -> t`];;
 
 (* HOL4 inferPropsScript.sml:2483: ML code, not ported *)
 
@@ -1039,15 +1041,17 @@ let ts_tid_rename_I = prove
 
 (* All type ids in a type belonging to a set *)
 let _ = size_thms "t";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2497-2504: the tactic that proves the
    termination *)
-let set_tids_def = cake_define_wf
+let set_tids_def,set_tids_ind = define_wf
   `MEASURE t_size`
-  `set_tids x1 =
+  [`set_tids x1 =
         match x1 with
           Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP
             set_tids ts)))
-        | _3 -> {}`;;
+        | _3 -> {}`];;
 
 (* HOL4 inferPropsScript.sml:2506: ML code, not ported *)
 
@@ -1055,7 +1059,7 @@ let set_tids_ts_tid_rename = prove
  (`!f t. set_tids (ts_tid_rename f t) = IMAGE f (set_tids t)`,
   CHEAT_TAC);;
 
-let set_tids_subset_def = cake_define
+let set_tids_subset_def = new_definition
   `set_tids_subset tids t <=> set_tids t SUBSET tids`;;
 
 let set_tids_subset_type_subst = prove
@@ -1066,12 +1070,10 @@ let set_tids_subset_type_subst = prove
   CHEAT_TAC);;
 
 let _ = size_thms "t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2547-2553: the tactic that proves the
    termination *)
-let unconvert_t_def = cake_define_list_try (fun () ->
-  `MEASURE t_size`)
+let unconvert_t_def,unconvert_t_ind = define_shaped_rec
+  "nested"
   [`unconvert_t (Tvar_db n) = Infer_Tvar_db n`;
    `unconvert_t (Tapp ts tc) = Infer_Tapp (MAP unconvert_t ts) tc`;
    `unconvert_t (Tvar v) = Infer_Tuvar ARB`];;
@@ -1080,17 +1082,19 @@ let unconvert_t_def = cake_define_list_try (fun () ->
 
 (* Properties about inferencer type identifiers *)
 let _ = size_thms "infer_t";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2561-2568: the tactic that proves the
    termination *)
-let inf_set_tids_def = cake_define_wf
+let inf_set_tids_def,inf_set_tids_ind = define_wf
   `MEASURE infer_t_size`
-  `inf_set_tids x1 =
+  [`inf_set_tids x1 =
         match x1 with
           Infer_Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP
             inf_set_tids ts)))
-        | _4 -> {}`;;
+        | _4 -> {}`];;
 
-let inf_set_tids_subset_def = cake_define
+let inf_set_tids_subset_def = new_definition
   `inf_set_tids_subset tids t <=> inf_set_tids t SUBSET tids`;;
 
 (* HOL4 inferPropsScript.sml:2574-2575: a theorem that HOL4 states as
@@ -1115,7 +1119,7 @@ let inf_set_tids_unconvert = prove
   CHEAT_TAC);;
 
 (* all the tids used in a tenv *)
-let inf_set_tids_ienv_def = cake_define
+let inf_set_tids_ienv_def = new_definition
   `inf_set_tids_ienv tids (ienv:inf_env) <=>
    nsAll (\i (ls,t). inf_set_tids_subset tids (unconvert_t t))
      (inf_env_inf_t ienv) /\
@@ -1124,11 +1128,11 @@ let inf_set_tids_ienv_def = cake_define
    nsAll (\i (n,t). inf_set_tids_subset tids t) (inf_env_inf_v
      ienv)`;;
 
-let inf_set_tids_subst_def = cake_define
+let inf_set_tids_subst_def = new_definition
   `inf_set_tids_subst tids subst <=>
    (!t. t IN FRANGE subst ==> inf_set_tids_subset tids t)`;;
 
-let prim_tids_def = cake_define
+let prim_tids_def = new_definition
   `prim_tids contain' tids <=>
      EVERY (\x. x IN tids <=> contain') (Tlist_num :: Tbool_num ::
        prim_type_nums)`;;
@@ -1405,7 +1409,7 @@ let infer_deBruijn_subst_infer_subst_walkstar = prove
    MAP (t_walkstar s) ts))`,
   CHEAT_TAC);;
 
-let remap_tenv_def = cake_define
+let remap_tenv_def = new_definition
   `remap_tenv f tenv =
    mk_type_env (nsMap (\(n,t). (n,ts_tid_rename f t)) (type_env_v
      tenv)) (nsMap (\(ls,ts,tid). (ls,MAP (ts_tid_rename f) ts,f
@@ -1469,7 +1473,7 @@ let pure_add_constraints_set_tids = prove
    inf_set_tids_subst tids s2`,
   CHEAT_TAC);;
 
-let inferProps_hide_def = cake_define
+let inferProps_hide_def = new_definition
   `inferProps_hide x = x`;;
 hol4_overload "hide" "inferProps_hide";;
 

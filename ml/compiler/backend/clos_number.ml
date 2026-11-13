@@ -25,16 +25,9 @@ let _ = hol4_ancestors "clos_number"
 (* add fresh code locations *)
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_numberScript.sml:56-64: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let renumber_code_locs_def = cake_define_list_try_tac (fun () ->
-  `inv_image (<) (\x. match x with INL p -> list_size closLang_exp_size
-     (SND p) | INR p -> closLang_exp_size (SND p))`)
-  CHEAT_TAC
+let renumber_code_locs_def = define_mutual_guess
   [`renumber_code_locs_list n [] = (n,[])`;
    `renumber_code_locs_list n (x :: xs) =
          (let (n,x) = renumber_code_locs n x in
@@ -87,7 +80,7 @@ let renumber_code_locs_length = prove
     (!(x:num) (y:closLang_exp). T)`,
   CHEAT_TAC);;
 
-let clos_number_compile_inc_def = cake_define
+let clos_number_compile_inc_def = new_definition
   `clos_number_compile_inc n xs =
      // leave space in the naming for the daisy chaining of clos_to_bvl
      (let n1 = make_even (n + MAX (LENGTH xs) 1) in
@@ -99,7 +92,7 @@ let clos_number_compile_inc_def = cake_define
           (closLang_Const (&n))) [] :: ys))`;;
 hol4_overload "compile_inc" "clos_number_compile_inc";;
 
-let ignore_table_def = cake_define
+let ignore_table_def = new_definition
   `ignore_table f st (code,aux) = (let (st',code') = f st code in
   (st',(code',aux)))`;;
 

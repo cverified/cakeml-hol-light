@@ -82,19 +82,12 @@ hol4_overload "RefPtr" "pattern_semantics_RefPtr";;
 hol4_overload "Other" "pattern_semantics_Other";;
 
 (* semantics of input *)
-let is_sibling_def = cake_define_list
+let is_sibling_def = define_cases
   [`is_sibling x NONE = T`;
    `is_sibling x (SOME l) = MEM x l`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let pattern_semantics_pmatch_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\x. match x with INL (r,p,_7) -> pattern_semantics_pat_size
-     p | INR (r,ps,_8) -> list_size pattern_semantics_pat_size ps)`)
-  CHEAT_TAC
+let pattern_semantics_pmatch_def = define_mutual_guess
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
@@ -139,7 +132,7 @@ let pattern_semantics_pmatch_def = cake_define_list_try_tac (fun () ->
 hol4_overload "pmatch" "pattern_semantics_pmatch";;
 hol4_overload "pmatch_list" "pattern_semantics_pmatch_list";;
 
-let match_def = cake_define_list
+let match_def,match_ind = define_rec
   [`pattern_semantics_match refs [] v = SOME MatchFailure`;
    `pattern_semantics_match refs ((p,e) :: rows) v =
         (match pmatch refs p v with
@@ -151,7 +144,7 @@ let match_def = cake_define_list
 
 (* semantics of output *)
 
-let dt_test_def = cake_define
+let dt_test_def = new_definition
   `dt_test x1 x2 =
       match (x1,x2) with
         ((pattern_semantics_TagLenEq t
@@ -161,8 +154,12 @@ let dt_test_def = cake_define
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
       | (_11,_12) -> NONE`;;
 
-let app_pos_def = cake_define
-  `app_pos refs x2 v =
+let _ = size_thms "position";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let app_pos_def,app_pos_ind = define_wf
+  `MEASURE (\(x0,x1,x2). position_size x1)`
+  [`app_pos refs x2 v =
         match (x2,v) with
           (EmptyPos,v) -> SOME v
         | ((Pos 0 pos),(pattern_semantics_RefPtr r)) ->
@@ -170,11 +167,12 @@ let app_pos_def = cake_define
           refs pos v)
         | ((Pos 0 pos),(pattern_semantics_Term c (x :: xs))) ->
           app_pos refs pos x
-        | ((Pos (SUC n) pos),(pattern_semantics_Term c (x :: xs))) ->
+        | ((Pos (SUC n) pos),(pattern_semantics_Term c (x :: xs)))
+          ->
        app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
-        | ((Pos _13 _14),_15) -> NONE`;;
+        | ((Pos _13 _14),_15) -> NONE`];;
 
-let dt_eval_guard_def = cake_define_list
+let dt_eval_guard_def,dt_eval_guard_ind = define_rec
   [`dt_eval_guard refs v pattern_semantics_True =
          SOME T`;
    `dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
@@ -190,7 +188,11 @@ let dt_eval_guard_def = cake_define_list
          (match dt_eval_guard refs v g1 with NONE -> NONE |
            SOME T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
-let dt_eval_def = cake_define_list
+let _ = size_thms "dTree";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let dt_eval_def,dt_eval_ind = define_wf
+  `MEASURE (\(x0,x1,x2). dTree_size x2)`
   [`dt_eval refs _16 (pattern_semantics_Leaf k:dTree) = SOME
   (MatchSuccess k)`;
    `dt_eval refs _17 (Fail:dTree) = SOME (MatchFailure)`;

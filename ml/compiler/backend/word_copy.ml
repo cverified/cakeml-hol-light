@@ -58,20 +58,20 @@ let copy_state_FIELDS = define_record "copy_state"
 hol4_field_overload "next" "copy_state_next";;
 hol4_field_overload "next_fupd" "copy_state_next_fupd";;
 
-let empty_eq_def = cake_define
+let empty_eq_def = new_definition
   `empty_eq =
      mk_copy_state LN LN [] 0`;;
 
 (* lookup representative of eq class, if it exists
   otherwise it's just the var itself *)
-let lookup_eq_def = cake_define
+let lookup_eq_def = new_definition
   `lookup_eq cs v =
    (match sptree_lookup v (copy_state_to_eq cs) with
      NONE -> v | SOME c ->
      (match sptree_lookup c (copy_state_from_eq cs) with
        NONE -> v | SOME v' -> v'))`;;
 
-let lookup_eq_imm_def = cake_define
+let lookup_eq_imm_def = new_definition
   `lookup_eq_imm cs vi =
    (match vi with
      Reg v -> Reg (lookup_eq cs v) | _1 -> vi)`;;
@@ -80,7 +80,7 @@ let lookup_eq_imm_def = cake_define
     possibly destroying the entire class
   In SSA, this should never happen, so
   we simply drop the entire eq state if it does *)
-let remove_eq_def = cake_define
+let remove_eq_def = new_definition
   `remove_eq cs v =
    (match sptree_lookup v (copy_state_to_eq cs) with
      NONE -> cs | SOME c -> empty_eq)`;;
@@ -94,12 +94,12 @@ let remove_eq_def = cake_define
       else
         cs with to_eq := to_eq) *)
 
-let remove_eqs_def = cake_define_list
+let remove_eqs_def,remove_eqs_ind = define_rec
   [`remove_eqs cs [] = cs`;
    `remove_eqs cs (v :: vs) =
         remove_eqs (remove_eq cs v) vs`];;
 
-let copy_prop_inst_def = cake_define
+let copy_prop_inst_def = new_definition
   `copy_prop_inst x1 cs =
         match x1 with
           asm_Skip -> (Skip,cs)
@@ -210,7 +210,7 @@ let copy_prop_inst_def = cake_define
 (* handle x := y by making x the new
   class representative of y.
   x must be guaranteed to not have to_eq *)
-let set_eq_def = cake_define
+let set_eq_def = new_definition
   `set_eq cs x y =
    (if is_alloc_var x /\ is_alloc_var y then
      match
@@ -234,7 +234,7 @@ let set_eq_def = cake_define
   Otherwise, reuse the existing class for y.
   Note: SSA ensures y is always an alloc_var, so the else branch is dead code.
 *)
-let set_store_eq_def = cake_define
+let set_store_eq_def = new_definition
   `set_store_eq cs s y =
    (if is_alloc_var y then
      match
@@ -250,7 +250,7 @@ let set_store_eq_def = cake_define
          cs))
        cs else empty_eq)`;;
 
-let lookup_store_eq_def = cake_define
+let lookup_store_eq_def = new_definition
   `lookup_store_eq cs s =
    (match ALOOKUP (copy_state_store_to_eq cs) s with
      NONE -> NONE | SOME c ->
@@ -258,7 +258,7 @@ let lookup_store_eq_def = cake_define
        NONE -> NONE | SOME v' -> SOME v'))`;;
 
 (* conservatively merge two equivalence classes *)
-let merge_eqs_def = cake_define
+let merge_eqs_def = new_definition
   `merge_eqs cs ds =
    mk_copy_state (inter_eq (copy_state_to_eq cs) (copy_state_to_eq
      ds)) (inter_eq (copy_state_from_eq cs) (copy_state_from_eq ds))
@@ -269,7 +269,7 @@ let merge_eqs_def = cake_define
                            (copy_state_next cs) (copy_state_next ds))`;;
 
 (* shouldn't matter whether we put y or y' in set_eq? *)
-let copy_prop_move_def = cake_define_list
+let copy_prop_move_def,copy_prop_move_ind = define_rec
   [`copy_prop_move [] cs = ([],cs)`;
    `copy_prop_move ((x,y) :: xs) cs =
         (let y' = lookup_eq cs y in
@@ -277,7 +277,7 @@ let copy_prop_move_def = cake_define_list
         let cs'' = set_eq (remove_eq cs' x) x y in
         ((x,y') :: ms,cs''))`];;
 
-let copy_prop_share_def = cake_define
+let copy_prop_share_def = new_definition
   `copy_prop_share exp cs =
      (match exp with
      Var r -> Var (lookup_eq cs r) | (wordLang_Op asm_Add [Var r;
@@ -285,8 +285,9 @@ let copy_prop_share_def = cake_define
       wordLang_Op asm_Add [Var (lookup_eq cs r); Const c] | _3 ->
         exp)`;;
 
-let copy_prop_prog_def = cake_define
-  `copy_prop_prog prog cs =
+let copy_prop_prog_def,copy_prop_prog_ind = define_shaped_rec
+  "match"
+  [`copy_prop_prog prog cs =
         match prog with
           (Skip:'a wordLang_prog) ->
        (Skip,cs)
@@ -337,8 +338,8 @@ let copy_prop_prog_def = cake_define
         | (Get n name) ->
        (match lookup_store_eq cs name with
          NONE ->
-           (Get n name,set_store_eq (remove_eq cs n) name n) | SOME v
-             ->
+           (Get n name,set_store_eq (remove_eq cs n) name n) | SOME
+             v ->
          (if ~(v = n) then
          let (xs',cs') = copy_prop_move [(n,v)] cs in
            (wordLang_Move 0 xs',cs') else (Skip,cs)))
@@ -377,9 +378,9 @@ let copy_prop_prog_def = cake_define
         | (Break k) -> (Break k,cs)
         | (Continue k) -> (Continue k,cs)
         | prog -> (prog,empty_eq)
-        // impossible?`;;
+        // impossible?`];;
 
-let copy_prop_def = cake_define
+let copy_prop_def = new_definition
   `copy_prop (e:'a wordLang_prog) =
      FST (copy_prop_prog e empty_eq)`;;
 

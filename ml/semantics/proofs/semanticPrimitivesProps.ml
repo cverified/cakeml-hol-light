@@ -58,13 +58,13 @@ let extend_dec_env_assoc = prove
     extend_dec_env (extend_dec_env env1 env2) env3`,
   CHEAT_TAC);;
 
-let shift_lookup_def = cake_define_list
+let shift_lookup_def = define_general
   [`shift_lookup Lsl = word_lsl`;
    `shift_lookup Lsr = word_lsr`;
    `shift_lookup Asr = word_asr`;
    `shift_lookup Ror = word_ror`];;
 
-let do_shift_def = cake_define
+let do_shift_def = new_definition
   `do_shift sh n x3 x4 =
         match (x3,x4) with
           (ast_W8,ast_Word8 w) -> SOME (ast_Word8 (shift_lookup sh w
@@ -274,7 +274,7 @@ let do_con_check_build_conv = prove
       v)`,
   CHEAT_TAC);;
 
-let map_error_result_def = cake_define_list
+let map_error_result_def = define_cases
   [`map_error_result f (Rraise e) = Rraise (f e)`;
    `map_error_result f (Rabort a) = Rabort a`];;
 
@@ -288,7 +288,7 @@ let map_error_result_I = prove
  (`map_error_result I e = e`,
   CHEAT_TAC);;
 
-let map_result_def = cake_define_list
+let map_result_def = define_cases
   [`map_result f1 f2 (Rval v) = Rval (f1 v)`;
    `map_result f1 f2 (Rerr e) = Rerr (map_error_result f2 e)`];;
 
@@ -303,7 +303,7 @@ let map_result_Rerr = prove
   map_error_result f2 a = e')`,
   CHEAT_TAC);;
 
-let exc_rel_def = cake_define
+let exc_rel_def = new_definition
   `exc_rel R x2 x3 =
         match (x2,x3) with
           (Rraise v1,Rraise v2) -> R v1 v2
@@ -337,7 +337,7 @@ let exc_rel_trans = prove
   exc_rel R y z ==> exc_rel R x z)`,
   CHEAT_TAC);;
 
-let result_rel_def = cake_define
+let result_rel_def = new_definition
   `semanticPrimitivesProps_result_rel R1 R2 x3 x4 =
         match (x3,x4) with
           (Rval v1,Rval v2) -> R1 v1 v2
@@ -374,15 +374,15 @@ let result_rel_trans = prove
   semanticPrimitivesProps_result_rel R1 R2 x z)`,
   CHEAT_TAC);;
 
-let every_error_result_def = cake_define_list
+let every_error_result_def = define_cases
   [`every_error_result P (Rraise e) = P e`;
    `every_error_result P (Rabort a) = T`];;
 
-let every_result_def = cake_define_list
+let every_result_def = define_cases
   [`every_result P1 P2 (Rval v) = (P1 v)`;
    `every_result P1 P2 (Rerr e) = (every_error_result P2 e)`];;
 
-let map_sv_def = cake_define_list
+let map_sv_def = define_cases
   [`map_sv f (semanticPrimitives_Refv v) = semanticPrimitives_Refv (f
   v)`;
    `map_sv _7 (semanticPrimitives_W8array w) =
@@ -392,15 +392,15 @@ let map_sv_def = cake_define_list
    `map_sv f (semanticPrimitives_Thunk m v) =
   (semanticPrimitives_Thunk m (f v))`];;
 
-let dest_Refv_def = cake_define
-  `dest_Refv (semanticPrimitives_Refv v) = v`;;
-let is_Refv_def = cake_define
+let dest_Refv_def = define_general
+  [`dest_Refv (semanticPrimitives_Refv v) = v`];;
+let is_Refv_def = new_definition
   `is_Refv x1 =
       match x1 with
         semanticPrimitives_Refv _8 -> T
       | _9 -> F`;;
 
-let sv_every_def = cake_define
+let sv_every_def = new_definition
   `sv_every P x2 =
       match x2 with
         semanticPrimitives_Refv v -> P v
@@ -408,7 +408,7 @@ let sv_every_def = cake_define
       | (semanticPrimitives_Thunk m v) -> P v
       | _10 -> T`;;
 
-let sv_rel_def = cake_define
+let sv_rel_def = new_definition
   `semanticPrimitivesProps_sv_rel R x2 x3 =
       match (x2,x3) with
         (semanticPrimitives_Refv v1,semanticPrimitives_Refv v2) -> R
@@ -458,7 +458,7 @@ let sv_rel_mono = prove
   ==> semanticPrimitivesProps_sv_rel Q x y`,
   CHEAT_TAC);;
 
-let store_v_vs_def = cake_define_list
+let store_v_vs_def = define_cases
   [`semanticPrimitivesProps_store_v_vs (semanticPrimitives_Refv v) =
   [v]`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Varray vs)
@@ -469,7 +469,7 @@ let store_v_vs_def = cake_define_list
   _15 v) = [v]`];;
 hol4_overload "store_v_vs" "semanticPrimitivesProps_store_v_vs";;
 
-let store_vs_def = cake_define
+let store_vs_def = new_definition
   `store_vs s = FLAT (MAP semanticPrimitivesProps_store_v_vs s)`;;
 
 let EVERY_sv_every_MAP_map_sv = prove
@@ -494,7 +494,7 @@ let map_sv_compose = prove
  (`map_sv f (map_sv g x) = map_sv (f o g) x`,
   CHEAT_TAC);;
 
-let map_match_def = cake_define
+let map_match_def = new_definition
   `map_match f x =
         match x with
           Match env -> Match (f env)
@@ -512,10 +512,10 @@ let find_recfun_el = prove
     find_recfun f funs = SOME (x,e)`,
   CHEAT_TAC);;
 
-let ctors_of_tdef_def = cake_define
+let ctors_of_tdef_def = new_definition
   `ctors_of_tdef (_16,_17,condefs) = MAP FST condefs`;;
 
-let ctors_of_dec_def = cake_define
+let ctors_of_dec_def = new_definition
   `ctors_of_dec x1 =
       match x1 with
         Dtype locs tds -> FLAT (MAP ctors_of_tdef tds)
@@ -524,9 +524,7 @@ let ctors_of_dec_def = cake_define
 
 (* free vars *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let FV_def = cake_define_list_cheat CHEAT_TAC
+let FV_def = define_mutual_guess
   [`FV (ast_Raise e:ast_exp) = FV e`;
    `FV (ast_Handle e pes:ast_exp) = FV e UNION FV_pes pes`;
    `FV (ast_Lit _21:ast_exp) = {}`;
@@ -566,7 +564,7 @@ let FV_defs_MAP = prove
   (set_of_list ls))`,
   CHEAT_TAC);;
 
-let FV_dec_def = cake_define_list
+let FV_dec_def = define_general
   [`FV_dec (Dlet locs p e) = FV (ast_Mat e [(p,ast_Lit ARB)])`;
    `FV_dec (Dletrec locs defs) = FV (ast_Letrec defs (ast_Lit ARB))`;
    `FV_dec (Dtype _28 _29) = {}`;

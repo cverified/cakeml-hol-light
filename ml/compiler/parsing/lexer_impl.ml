@@ -138,20 +138,17 @@ let get_token_eqn = prove
                tokens_SymbolT (implode s)))`,
   CHEAT_TAC);;
 
-let unhex_alt_def = cake_define
+let unhex_alt_def = new_definition
   `unhex_alt x = (if isHexDigit x then UNHEX x else 0)`;;
 
-let num_from_dec_string_alt_def = cake_define
+let num_from_dec_string_alt_def = new_definition
   `num_from_dec_string_alt = s2n 10 unhex_alt`;;
-let num_from_hex_string_alt_def = cake_define
+let num_from_hex_string_alt_def = new_definition
   `num_from_hex_string_alt = s2n 16 unhex_alt`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 lexer_implScript.sml:239-245: the tactic that proves the
    termination *)
-let next_sym_alt_def = cake_define_list_try (fun () ->
-  `MEASURE (LENGTH o FST)`)
+let next_sym_alt_def,next_sym_alt_ind = define_guess
   [`next_sym_alt "" _1 = NONE`;
    `next_sym_alt (c :: str) loc =
          (if c = (CHR 10) then
@@ -267,14 +264,15 @@ let next_sym_eq = prove
 
 (* lex_until_toplevel_semicolon *)
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 lexer_implScript.sml:344-347: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lexer_impl_lex_aux_def = cake_define_try_tac (fun () ->
-  `MEASURE (LENGTH o FST o SND o SND)`)
-  CHEAT_TAC
-  `lexer_impl_lex_aux acc (d:num) input loc =
+let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_wf_cheat
+  `MEASURE (LENGTH o FST o SND o SND)`
+  [`lexer_impl_lex_aux acc (d:num) input loc =
      (match next_token input loc with
        // case: end of input
        NONE -> NONE |
@@ -282,22 +280,22 @@ let lexer_impl_lex_aux_def = cake_define_try_tac (fun () ->
        SOME (token,Locs loc' loc'',rest) ->
          (let new_acc = ((token,Locs loc' loc'') :: acc) in
          let newloc = next_loc 1 loc'' in
-           if token = tokens_SemicolonT /\ (d = 0) then SOME (REVERSE
-             new_acc,newloc,rest) else
+           if token = tokens_SemicolonT /\ (d = 0) then SOME
+             (REVERSE new_acc,newloc,rest) else
              if token = tokens_LetT then lexer_impl_lex_aux
                new_acc (d + 1) rest newloc else if token =
-               tokens_StructT then lexer_impl_lex_aux new_acc (d + 1)
-               rest newloc else if token = tokens_SigT then
-               lexer_impl_lex_aux new_acc (d + 1) rest newloc else if
-               token = tokens_LparT then lexer_impl_lex_aux new_acc
-               (d + 1) rest newloc else if token = tokens_EndT then
-               lexer_impl_lex_aux new_acc (d - 1) rest newloc else if
-               token = tokens_RparT then lexer_impl_lex_aux new_acc
-               (d - 1) rest newloc else lexer_impl_lex_aux new_acc d
-               rest newloc))`;;
+               tokens_StructT then lexer_impl_lex_aux new_acc (d +
+               1) rest newloc else if token = tokens_SigT then
+               lexer_impl_lex_aux new_acc (d + 1) rest newloc else
+               if token = tokens_LparT then lexer_impl_lex_aux
+               new_acc (d + 1) rest newloc else if token =
+               tokens_EndT then lexer_impl_lex_aux new_acc (d - 1)
+               rest newloc else if token = tokens_RparT then
+               lexer_impl_lex_aux new_acc (d - 1) rest newloc else
+               lexer_impl_lex_aux new_acc d rest newloc))`];;
 hol4_overload "lex_aux" "lexer_impl_lex_aux";;
 
-let lex_until_toplevel_semicolon_def = cake_define
+let lex_until_toplevel_semicolon_def = new_definition
   `lex_until_toplevel_semicolon input = lexer_impl_lex_aux [] 0 input`;;
 
 (* [local] *)
@@ -315,14 +313,15 @@ let lex_until_toplevel_semicolon_LESS = prove
 
 (* lex_until_toplevel_semicolon_alt *)
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 lexer_implScript.sml:402-405: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_aux_alt_def = cake_define_try_tac (fun () ->
-  `MEASURE (LENGTH o FST o SND o SND)`)
-  CHEAT_TAC
-  `lex_aux_alt acc (d:num) input l =
+let lex_aux_alt_def,lex_aux_alt_ind = define_wf_cheat
+  `MEASURE (LENGTH o FST o SND o SND)`
+  [`lex_aux_alt acc (d:num) input l =
      (match next_sym input l with
        // case: end of input
        NONE -> NONE |
@@ -337,9 +336,9 @@ let lex_aux_alt_def = cake_define_try_tac (fun () ->
              lex_aux_alt new_acc (d + 1) rest newloc else if MEM
                token [OtherS ")"; OtherS "end"] then
              lex_aux_alt new_acc (d - 1) rest newloc else
-               lex_aux_alt new_acc d rest newloc))`;;
+               lex_aux_alt new_acc d rest newloc))`];;
 
-let lex_until_top_semicolon_alt_def = cake_define
+let lex_until_top_semicolon_alt_def = new_definition
   `lex_until_top_semicolon_alt input = lex_aux_alt [] 0 input`;;
 
 (* [local] *)
@@ -367,7 +366,7 @@ let token_of_sym_EQ_LEMMA = prove
   CHEAT_TAC);;
 
 
-let token_of_sym_loc_def = cake_define
+let token_of_sym_loc_def = new_definition
   `token_of_sym_loc (t,l) = (token_of_sym t,l)`;;
 
 (* HOL4 lexer_implScript.sml:460-474: a theorem that HOL4 states as
@@ -382,19 +381,21 @@ let lex_until_top_semicolon_alt_thm = prove
 
 (* lex_impl_all *)
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 lexer_implScript.sml:493-497: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_impl_all_def = cake_define_try_tac (fun () ->
-  `MEASURE (LENGTH o FST)`)
-  CHEAT_TAC
-  `lex_impl_all input l =
-     (match lex_until_toplevel_semicolon input l with NONE -> [] |
-       SOME (t,loc,input') -> t :: lex_impl_all input' loc)`;;
+let lex_impl_all_def,lex_impl_all_ind = define_wf_cheat
+  `MEASURE (LENGTH o FST)`
+  [`lex_impl_all input l =
+     (match lex_until_toplevel_semicolon input l with NONE -> []
+       | SOME (t,loc,input') -> t :: lex_impl_all input' loc)`];;
 
-let lex_aux_tokens_def = cake_define
-  `lex_aux_tokens acc (d:num) input =
+let lex_aux_tokens_def,lex_aux_tokens_ind = define_shaped_rec
+  "match"
+  [`lex_aux_tokens acc (d:num) input =
       (match input with
         [] -> NONE | (token,locs) :: rest ->
           (let new_acc = (token,locs) :: acc in
@@ -412,9 +413,9 @@ let lex_aux_tokens_def = cake_define
                 lex_aux_tokens new_acc (d - 1) rest else if token =
                   tokens_RparT then
                 lex_aux_tokens new_acc (d - 1) rest else
-                  lex_aux_tokens new_acc d rest))`;;
+                  lex_aux_tokens new_acc d rest))`];;
 
-let lex_until_toplevel_semicolon_tokens_def = cake_define
+let lex_until_toplevel_semicolon_tokens_def = new_definition
   `lex_until_toplevel_semicolon_tokens input = lex_aux_tokens [] 0
   input`;;
 
@@ -426,17 +427,18 @@ let lex_aux_tokens_LESS = prove
          rest <= LENGTH input)`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 lexer_implScript.sml:549-553: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_impl_all_tokens_def = cake_define_try_tac (fun () ->
-  `MEASURE LENGTH`)
-  CHEAT_TAC
-  `lex_impl_all_tokens input =
+let lex_impl_all_tokens_def,lex_impl_all_tokens_ind = define_wf_cheat
+  `MEASURE LENGTH`
+  [`lex_impl_all_tokens input =
       (match lex_until_toplevel_semicolon_tokens input with
         NONE -> [] | SOME (t,input) -> t :: lex_impl_all_tokens
-          input)`;;
+          input)`];;
 
 (* [local] *)
 let lex_aux_tokens_thm_1 = prove
