@@ -83,7 +83,7 @@ let word_exp_op_permute_lem = prove
   CHEAT_TAC);;
 
 (*Remove tail recursion to make proof easier...*)
-let pull_ops_simp_def = cake_define_list
+let pull_ops_simp_def,pull_ops_simp_ind = define_rec
   [`pull_ops_simp op [] = []`;
    `pull_ops_simp op (x :: xs) =
         (match x with (wordLang_Op op' ls) -> (if op = op' then
@@ -222,11 +222,13 @@ let flatten_exp_ok = prove
 
 (*All ops are 2 args. Technically, we should probably check that Sub has 2 args. However, the semantics already checks that and it will get removed later*)
 let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 word_instProofScript.sml:403-409: the tactic that proves the
    termination *)
-let binary_branch_exp_def = cake_define_wf
+let binary_branch_exp_def,binary_branch_exp_ind = define_wf
   `MEASURE (wordLang_exp_size ARB)`
-  `binary_branch_exp exp =
+  [`binary_branch_exp exp =
         match exp with
           wordLang_Op asm_Sub exps -> EVERY (binary_branch_exp) exps
         | (wordLang_Op op xs) -> (LENGTH xs = 2 /\ EVERY
@@ -234,7 +236,7 @@ let binary_branch_exp_def = cake_define_wf
         | (Load exp) -> binary_branch_exp exp
         | (Shift shift' exp nexp) -> (binary_branch_exp exp /\
           binary_branch_exp nexp)
-        | exp -> T`;;
+        | exp -> T`];;
 
 (* flatten_exp syntax *)
 (* [local] *)

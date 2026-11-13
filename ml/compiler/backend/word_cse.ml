@@ -81,32 +81,35 @@ let knowledge_FIELDS = define_record "knowledge"
 
 (* LIST COMPARISON *)
 
-let listCmp_def = cake_define
-  `(listCmp ((hd1:num) :: tl1) ((hd2:num) :: tl2) =
-    (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then GREATER
-      else Less)) /\
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let listCmp_def,listCmp_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (\n. n) x0 + list_size (\n. n) x1)`
+  [`(listCmp ((hd1:num) :: tl1) ((hd2:num) :: tl2) =
+    (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then
+      GREATER else Less)) /\
    (listCmp [] [] = Equal) /\
    (listCmp (hd1 :: tl1) [] = GREATER) /\
-   (listCmp [] (hd2 :: tl2) = Less)`;;
+   (listCmp [] (hd2 :: tl2) = Less)`];;
 
-let empty_data_def = cake_define
+let empty_data_def = new_definition
   `empty_data = mk_knowledge LN LN [] balanced_map_empty
   balanced_map_empty`;;
 
 (* Whether we're allowed to keep the data
   after writing to this register *)
-let keep_data_def = cake_define
+let keep_data_def = new_definition
   `keep_data canon (write_to_reg:num) =
      IS_NONE (lookup write_to_reg canon)`;;
 
-let invalidate_data_def = cake_define
+let invalidate_data_def = new_definition
   `invalidate_data data (write_to_reg:num) =
    (if keep_data (knowledge_to_canonical data) write_to_reg then
      data else empty_data)`;;
 
 (* Invalidate after writing each register in a list (e.g. multi-output
   instructions); empties the data if any of them is tracked. *)
-let invalidate_regs_def = cake_define_list
+let invalidate_regs_def,invalidate_regs_ind = define_rec
   [`invalidate_regs data [] = data`;
    `invalidate_regs data (r :: rs) = invalidate_regs
   (invalidate_data data r) rs`];;
@@ -114,47 +117,47 @@ let invalidate_regs_def = cake_define_list
 (* Enter an odd register that a stored fact reads into the tracked set as a
   self-mapping, so that a later write to it resets the data. Registers
   already tracked, and pre-allocated (EVEN) registers, are left alone. *)
-let register_read_def = cake_define
+let register_read_def = new_definition
   `register_read data (r:num) =
      (if ~(EVEN r) /\ keep_data (knowledge_to_canonical data) r
        then knowledge_to_canonical_fupd (K (insert r r
        (knowledge_to_canonical data))) data else data)`;;
 
-let register_reads_def = cake_define_list
+let register_reads_def,register_reads_ind = define_rec
   [`register_reads data [] = data`;
    `register_reads data (r :: rs) = register_reads (register_read
   data r) rs`];;
 
 (* REGISTER TRANSFORMATIONS *)
 
-let canonicalRegs_def = cake_define
+let canonicalRegs_def = new_definition
   `canonicalRegs (data:knowledge) (r:num) =
    lookup_any r (knowledge_to_canonical data) r`;;
 
-let canonicalRegs'_def = cake_define
+let canonicalRegs'_def = new_definition
   `canonicalRegs' avoid (data:knowledge) (r:num) =
      (let n = canonicalRegs (data:knowledge) (r:num) in
        if n = avoid then r else n)`;;
 
-let canonicalImmReg_def = cake_define_list
+let canonicalImmReg_def = define_cases
   [`canonicalImmReg data (Reg r) = Reg (canonicalRegs data r)`;
    `canonicalImmReg data (Imm w) = Imm w`];;
 
-let canonicalImmReg'_def = cake_define_list
+let canonicalImmReg'_def = define_cases
   [`canonicalImmReg' avoid data (Reg r) = Reg (canonicalRegs' avoid
   data r)`;
    `canonicalImmReg' avoid data (Imm w) = Imm w`];;
 
-let canonicalMultRegs_def = cake_define
+let canonicalMultRegs_def = new_definition
   `canonicalMultRegs (data:knowledge) (regs':num list) = MAP
   (canonicalRegs data) regs'`;;
 
-let map_insert_def = cake_define_list
+let map_insert_def,map_insert_ind = define_rec
   [`map_insert [] m = m`;
    `map_insert ((x,y) :: xs) m =
       insert x y (map_insert xs m)`];;
 
-let canonicalMoveRegs_def = cake_define
+let canonicalMoveRegs_def = new_definition
   `canonicalMoveRegs data moves =
    // Register the sources first: a register that is both a source and a
    // destination is then tracked and fails the keep_data check below, so
@@ -171,7 +174,7 @@ let canonicalMoveRegs_def = cake_define
        to_c)
        data) else empty_data)`;;
 
-let canonicalArith_def = cake_define_list
+let canonicalArith_def = define_cases
   [`canonicalArith data (asm_Binop op r1 r2 r3) =
       asm_Binop op r1 (canonicalRegs' r1 data r2)
         (canonicalImmReg' r1 data r3)`;
@@ -196,7 +199,7 @@ let canonicalArith_def = cake_define_list
       asm_SubOverflow r1 (canonicalRegs' r1 data r2)
         (canonicalRegs' r1 data r3) r4`];;
 
-let canonicalFp_def = cake_define_list
+let canonicalFp_def = define_cases
   [`canonicalFp data (FPLess r1 r2 r3) =
       FPLess r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
    `canonicalFp data (FPLessEqual r1 r2 r3) =
@@ -235,27 +238,27 @@ let canonicalFp_def = cake_define_list
 
 (* SEEN INSTRUCTIONS MEMORY *)
 
-let wordToNum_def = cake_define
+let wordToNum_def = new_definition
   `wordToNum w = w2n w`;;
 
-let shiftToNum_def = cake_define_list
+let shiftToNum_def = define_cases
   [`shiftToNum Lsl = (40:num)`;
    `shiftToNum Lsr = ((41):num)`;
    `shiftToNum Asr = ((42):num)`;
    `shiftToNum Ror = ((43):num)`];;
 
-let arithOpToNum_def = cake_define_list
+let arithOpToNum_def = define_cases
   [`arithOpToNum (Add:binop) = (35:num)`;
    `arithOpToNum (Sub:binop) = ((36):num)`;
    `arithOpToNum (And:binop) = ((37):num)`;
    `arithOpToNum (Or:binop) = ((38):num)`;
    `arithOpToNum (Xor:binop) = ((39):num)`];;
 
-let regImmToNumList_def = cake_define_list
+let regImmToNumList_def = define_cases
   [`regImmToNumList (Reg r) = [33; r + 100]`;
    `regImmToNumList (Imm w) = [34; wordToNum w]`];;
 
-let arithToNumList_def = cake_define_list
+let arithToNumList_def = define_cases
   [`arithToNumList (asm_Binop op r1 r2 ri) = [25; arithOpToNum op; r2
   + 100] ++ regImmToNumList ri`;
    `arithToNumList (asm_LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 +
@@ -272,7 +275,7 @@ let arithToNumList_def = cake_define_list
    `arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100;
   r3 + 100]`];;
 
-let memOpToNum_def = cake_define_list
+let memOpToNum_def = define_cases
   [`memOpToNum (Load:memop) = (21:num)`;
    `memOpToNum asm_Load8 = ((22):num)`;
    `memOpToNum asm_Load16 = ((46):num)`;
@@ -285,11 +288,11 @@ let memOpToNum_def = cake_define_list
 (* Key for a load fact (kept in the separate loads_mem map): the memop head
    distinguishes the load widths; the address register is stored
    canonically. *)
-let loadToNumList_def = cake_define
+let loadToNumList_def = new_definition
   `loadToNumList op (a:num) ofs = [memOpToNum op; a + 100; wordToNum
   ofs]`;;
 
-let fpToNumList_def = cake_define_list
+let fpToNumList_def = define_cases
   [`fpToNumList (FPLess r1 r2 r3) = [5; r2 + 100; r3 + 100]`;
    `fpToNumList (FPLessEqual r1 r2 r3) = [6; r2 + 100; r3 + 100]`;
    `fpToNumList (FPEqual r1 r2 r3) = [7; r2 + 100; r3 + 100]`;
@@ -308,7 +311,7 @@ let fpToNumList_def = cake_define_list
    `fpToNumList (FPToInt r1 r2) = [19; r2 + 100]`;
    `fpToNumList (FPFromInt r1 r2) = [20; r2 + 100]`];;
 
-let instToNumList_def = cake_define
+let instToNumList_def = new_definition
   `instToNumList x1 =
       match x1 with
         asm_Const r w -> [2; wordToNum w]
@@ -322,12 +325,12 @@ Each unique instruction is converted to a unique num list.
 Numbers between 0 and 99 corresponds to a unique identifier of an instruction.
 Numbers above 99 corresponds to a register or a word value.
 *)
-let OpCurrHeapToNumList_def = cake_define
+let OpCurrHeapToNumList_def = new_definition
   `OpCurrHeapToNumList op r2 = [0; arithOpToNum op; r2 + 100]`;;
 
 (* WORD CSE FUNCTIONS *)
 
-let firstRegOfArith_def = cake_define_list
+let firstRegOfArith_def = define_cases
   [`firstRegOfArith (asm_Binop _2 r _3 _4) = r`;
    `firstRegOfArith (asm_Shift _8 r _9 _10) = r`;
    `firstRegOfArith (asm_Div r _13 _14) = r`;
@@ -339,7 +342,7 @@ let firstRegOfArith_def = cake_define_list
 
 (* All registers an arith instruction writes (multi-output ops write two), so
   that every written register is invalidated. *)
-let arithWrites_def = cake_define_list
+let arithWrites_def = define_cases
   [`arithWrites (asm_Binop _34 r _35 _36) = [r]`;
    `arithWrites (asm_Shift _40 r _41 _42) = [r]`;
    `arithWrites (asm_Div r _45 _46) = [r]`;
@@ -351,7 +354,7 @@ let arithWrites_def = cake_define_list
 
 (* All registers an arith instruction reads (AddCarry also reads the
   carry-flag register r4). *)
-let arithReads_def = cake_define
+let arithReads_def = new_definition
   `arithReads x1 =
       match x1 with
         asm_Binop _60 _61 r2 (Reg r3) -> [r2; r3]
@@ -367,7 +370,7 @@ let arithReads_def = cake_define
 
 (* The general-purpose registers an fp instruction writes. Most write only
   fp-registers (disjoint from the tracked state), hence []. *)
-let fpWrites_def = cake_define
+let fpWrites_def = new_definition
   `fpWrites x1 =
       match x1 with
         FPLess r _80 _81 -> [r]
@@ -376,7 +379,7 @@ let fpWrites_def = cake_define
       | (FPMovToReg r1 r2 _86) -> [r1; r2]
       | _87 -> []`;;
 
-let add_to_data_aux_def = cake_define
+let add_to_data_aux_def = new_definition
   `add_to_data_aux data r i x =
      (match balanced_map_lookup listCmp i (knowledge_instrs_mem data)
        with SOME r' -> (let k = lookup_any r' (knowledge_to_latest data)
@@ -397,7 +400,7 @@ let add_to_data_aux_def = cake_define
                       (knowledge_instrs_mem_fupd (K (insert listCmp i
                       r (knowledge_instrs_mem data))) data)),x)))`;;
 
-let add_to_data_def = cake_define
+let add_to_data_def = new_definition
   `add_to_data data r adjusted x =
      (let i = instToNumList adjusted in
        add_to_data_aux data r i (Inst x))`;;
@@ -407,7 +410,7 @@ let add_to_data_def = cake_define
    holder's live range). The register equivalence is still recorded, so later
    instructions reading r are still canonicalised and can be CSE'd. Caller
    guards ODD r. *)
-let add_to_data_const_def = cake_define
+let add_to_data_const_def = new_definition
   `add_to_data_const data r w =
      (let i = instToNumList (Const r w) in
        match balanced_map_lookup listCmp i (knowledge_instrs_mem
@@ -424,7 +427,7 @@ let add_to_data_const_def = cake_define
                      Inst (asm_Const r w)))`;;
 
 (* As add_to_data_aux, but for the load-fact map. *)
-let add_to_load_aux_def = cake_define
+let add_to_load_aux_def = new_definition
   `add_to_load_aux data r i x =
      (match balanced_map_lookup listCmp i (knowledge_loads_mem data)
        with SOME r' -> (let k = lookup_any r' (knowledge_to_latest data)
@@ -445,7 +448,7 @@ let add_to_load_aux_def = cake_define
                       (knowledge_loads_mem_fupd (K (insert listCmp i
                       r (knowledge_loads_mem data))) data)),x)))`;;
 
-let can_mem_arith_def = cake_define
+let can_mem_arith_def = new_definition
   `can_mem_arith x1 =
       match x1 with
         asm_Binop _88 _89 r1 (Reg r2) -> (ODD r1 /\ ODD r2)
@@ -454,7 +457,7 @@ let can_mem_arith_def = cake_define
       | (Shift _94 _95 r (Imm _96)) -> ODD r
       | _97 -> F`;;
 
-let is_store_def = cake_define_list
+let is_store_def = define_cases
   [`is_store (Load:memop) = F`;
    `is_store asm_Load8 = F`;
    `is_store asm_Load16 = F`;
@@ -464,7 +467,7 @@ let is_store_def = cake_define_list
    `is_store asm_Store16 = T`;
    `is_store (asm_Store32:memop) = T`];;
 
-let word_cseInst_def = cake_define
+let word_cseInst_def = new_definition
   `word_cseInst data x2 =
         match (data,x2) with
           ((data:knowledge),asm_Skip) -> (data,Inst asm_Skip)
@@ -501,7 +504,7 @@ let word_cseInst_def = cake_define
         | (data,(asm_FP fp:'a asm_inst)) ->
         (invalidate_regs data (fpWrites fp),Inst (asm_FP fp))`;;
 
-let dest_Var_def = cake_define
+let dest_Var_def = new_definition
   `dest_Var x1 =
       match x1 with
         (Var v:'a wordLang_exp) -> SOME v
@@ -514,7 +517,7 @@ let dest_Var_def = cake_define
 
 (* First-order equality-intersection for the instruction map (written
   without higher-order functions so it can be translated by cv_trans). *)
-let bm_inter_eq_acc_def = cake_define_list
+let bm_inter_eq_acc_def,bm_inter_eq_acc_ind = define_rec
   [`bm_inter_eq_acc m2 Tip acc = acc`;
    `bm_inter_eq_acc m2 (Bin n k v l r) acc =
       bm_inter_eq_acc m2 l
@@ -522,12 +525,12 @@ let bm_inter_eq_acc_def = cake_define_list
           (if balanced_map_lookup listCmp k m2 = SOME v then
             balanced_map_insert listCmp k v acc else acc))`];;
 
-let bm_inter_eq_def = cake_define
+let bm_inter_eq_def = new_definition
   `bm_inter_eq m1 m2 = bm_inter_eq_acc m2 m1 balanced_map_empty`;;
 
 (* to_latest is reset: its entries must stay within the domain of the merged
   to_canonical, and they regenerate as soon as new facts are stored. *)
-let merge_data_def = cake_define
+let merge_data_def = new_definition
   `merge_data d1 d2 =
      mk_knowledge (inter_eq (knowledge_to_canonical d1)
        (knowledge_to_canonical d2)) LN (FILTER (\(x,v). ALOOKUP
@@ -556,7 +559,7 @@ Signification of the terms:
     b -> binop
     s -> string
 *)
-let word_cse_def = cake_define_list
+let word_cse_def,word_cse_ind = define_rec
   [`word_cse data (wordLang_Move r rs) =
         (let data' = canonicalMoveRegs data rs in
           (data',(wordLang_Move r rs:'a wordLang_prog)))`;
@@ -674,14 +677,18 @@ let word_cse_def = cake_define_list
    `word_cse data (wordLang_Continue k) = (data,wordLang_Continue
   k)`];;
 
-let word_common_subexp_elim_def = cake_define
+let word_common_subexp_elim_def = new_definition
   `word_common_subexp_elim prog =
      (let (_102,new_prog) = word_cse empty_data prog in
        new_prog)`;;
 
 (* tests *)
 
-let word_cse_Seqs_def = cake_define_list
+let _ = size_thms "wordLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_cse_Seqs_def,word_cse_Seqs_ind = define_wf
+  `MEASURE (\x0. list_size (wordLang_prog_size (\x. 0)) x0)`
   [`word_cse_Seqs [] = wordLang_Skip`;
    `word_cse_Seqs [x] = x`;
    `word_cse_Seqs (x :: y :: xs) = wordLang_Seq x (word_cse_Seqs (y

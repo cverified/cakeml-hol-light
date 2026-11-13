@@ -13,29 +13,29 @@ let _ = hol4_lib ();;
 
 let ordering_INDUCT,ordering_RECURSION = define_datatype
   "ordering = LESS | EQUAL | GREATER";;
-let pair_compare_def = cake_define
+let pair_compare_def = new_definition
   `pair_compare c1 c2 (a,b) (x,y) =
       (match c1 a x with
          EQUAL -> c2 b y | res -> res)`;;
 
-let num_compare_def = cake_define
+let num_compare_def = new_definition
   `num_compare n1 n2 =
      (if n1 = n2 then
        EQUAL else if n1 < n2 then
        LESS else
        GREATER)`;;
-let list_compare_def = cake_define
-  `list_compare cmp l1 l2 =
+let list_compare_def,list_compare_ind = define_guess
+  [`list_compare cmp l1 l2 =
         match (l1,l2) with
           ([],[]) -> EQUAL
         | ([],l2) -> LESS
         | (l1,[]) -> GREATER
         | ((x :: l1),(y :: l2)) ->
         (match cmp (x:'a) y with
-          LESS -> LESS | EQUAL -> list_compare cmp l1 l2 | GREATER
-            -> GREATER)`;;
+          LESS -> LESS | EQUAL -> list_compare cmp l1 l2 |
+            GREATER -> GREATER)`];;
 
-let invert_comparison_def = cake_define_list
+let invert_comparison_def = define_cases
   [`invert_comparison GREATER = LESS`;
    `invert_comparison LESS = GREATER`;
    `invert_comparison EQUAL = EQUAL`];;

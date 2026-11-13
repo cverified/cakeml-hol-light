@@ -40,7 +40,7 @@ let _ = do_list hide_constant ["Greater"];;
 (* The reads of a stored arith fact, tracked as self-mappings in
    to_canonical (registered at fact creation), so that a later write to any
    of them resets the data. *)
-let in_names_set_def = cake_define
+let in_names_set_def = new_definition
   `in_names_set (a:'a asm_arith) tc <=>
      EVERY (\r. sptree_lookup r tc = SOME r) (arithReads a)`;;
 
@@ -50,7 +50,7 @@ let in_names_set_def = cake_define
    branch: wf_data is established for it by the standalone syntactic theorem
    word_cse_wf_data. The (:'a) itself argument ties the quantified arith
    instructions to the state's word width. *)
-let wf_data_def = cake_define
+let wf_data_def = new_definition
   `wf_data (:'a) (data:knowledge) <=>
      (!r v.
         lookup r (knowledge_to_canonical data) = SOME v ==>
@@ -88,7 +88,7 @@ let wf_data_def = cake_define
         lookup a (knowledge_to_canonical data) = SOME a) /\
      balanced_map_invariant listCmp (knowledge_loads_mem data)`;;
 
-let sem_inv_def = cake_define
+let sem_inv_def = new_definition
   `sem_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
      (!r v.
         lookup r (knowledge_to_canonical data) = SOME v ==>
@@ -129,7 +129,7 @@ let sem_inv_def = cake_define
             (!r. wordSem_evaluate (Inst (asm_Mem op r (Addr a
               ofs)),s) = (NONE,wordSem_set_var r w s))))`;;
 
-let data_inv_def = cake_define
+let data_inv_def = new_definition
   `data_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
      wf_data (:'a) data /\ sem_inv data s`;;
 

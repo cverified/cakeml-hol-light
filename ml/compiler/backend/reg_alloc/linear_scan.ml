@@ -35,18 +35,20 @@ hol4_overload "Branch" "linear_scan_Branch";;
 hol4_overload "Seq" "linear_scan_Seq";;
 
 
-let numset_list_insert_def = cake_define_list
+let numset_list_insert_def,numset_list_insert_ind = define_rec
   [`linear_scan_numset_list_insert [] t = t`;
    `linear_scan_numset_list_insert (x :: xs) t =
   linear_scan_numset_list_insert xs (sptree_insert x one t)`];;
 hol4_overload "numset_list_insert" "linear_scan_numset_list_insert";;
 
-let numset_list_insert_nottailrec_def = cake_define_list
+let numset_list_insert_nottailrec_def,
+    numset_list_insert_nottailrec_ind =
+  define_rec
   [`numset_list_insert_nottailrec [] t = t`;
    `numset_list_insert_nottailrec (x :: xs) t = sptree_insert x one
   (numset_list_insert_nottailrec xs t)`];;
 
-let get_live_tree_def = cake_define_list
+let get_live_tree_def,get_live_tree_ind = define_rec
   [`get_live_tree (reg_alloc_Delta wr rd) =
       Seq (linear_scan_Reads rd) (linear_scan_Writes wr)`;
    `get_live_tree (reg_alloc_Set cutset) =
@@ -64,7 +66,7 @@ let get_live_tree_def = cake_define_list
       let lt1 = get_live_tree ct1 in
       Seq lt1 lt2)`];;
 
-let check_live_tree_def = cake_define_list
+let check_live_tree_def,check_live_tree_ind = define_rec
   [`check_live_tree f (linear_scan_Writes l) live flive =
       (match check_partial_col f l live flive with NONE -> NONE |
         SOME _2 ->
@@ -85,7 +87,7 @@ let check_live_tree_def = cake_define_list
         SOME (livein2,flivein2) ->
         check_live_tree f lt1 livein2 flivein2)`];;
 
-let get_live_backward_def = cake_define_list
+let get_live_backward_def,get_live_backward_ind = define_rec
   [`get_live_backward (linear_scan_Writes l) live =
       numset_list_delete l live`;
    `get_live_backward (linear_scan_Reads l) live =
@@ -98,13 +100,13 @@ let get_live_backward_def = cake_define_list
    `get_live_backward (Seq lt1 lt2:live_tree) live =
       get_live_backward lt1 (get_live_backward lt2 live)`];;
 
-let fix_domination_def = cake_define
+let fix_domination_def = new_definition
   `fix_domination lt =
        (let live = get_live_backward lt LN in
        if live = LN then lt else Seq (linear_scan_Writes (MAP FST
          (toAList live))) lt)`;;
 
-let numset_list_add_if_def = cake_define_list
+let numset_list_add_if_def,numset_list_add_if_ind = define_rec
   [`numset_list_add_if [] (v:int) s P = s`;
    `numset_list_add_if (x :: xs) (v:int) s P =
       (match sptree_lookup x s with (SOME v') ->
@@ -112,15 +114,15 @@ let numset_list_add_if_def = cake_define_list
             s) P else numset_list_add_if xs v s P) | NONE ->
           numset_list_add_if xs v (sptree_insert x v s) P)`];;
 
-let numset_list_add_if_lt_def = cake_define
+let numset_list_add_if_lt_def = new_definition
   `numset_list_add_if_lt l (v:int) s = numset_list_add_if l v s (<=)`;;
 
-let numset_list_add_if_gt_def = cake_define
+let numset_list_add_if_gt_def = new_definition
   `numset_list_add_if_gt l (v:int) s = numset_list_add_if l v s (\a
   b. b <= a)`;;
 
-let size_of_live_tree_def = cake_define
-  `(
+let size_of_live_tree_def,size_of_live_tree_ind = define_rec
+  [`(
      size_of_live_tree (linear_scan_Writes l) =
        ((&1):int)) /\ (
      size_of_live_tree (linear_scan_Reads l) =
@@ -128,9 +130,9 @@ let size_of_live_tree_def = cake_define
      size_of_live_tree (Branch lt1 lt2) =
        size_of_live_tree lt1 + size_of_live_tree lt2) /\ (
      size_of_live_tree (Seq lt1 lt2) =
-       size_of_live_tree lt1 + size_of_live_tree lt2)`;;
+       size_of_live_tree lt1 + size_of_live_tree lt2)`];;
 
-let get_intervals_def = cake_define_list
+let get_intervals_def,get_intervals_ind = define_rec
   [`get_intervals (linear_scan_Writes l) (n:int) int_beg int_end =
       (n - (&1),numset_list_add_if_lt l n
         int_beg,numset_list_add_if_gt l n int_end)`;
@@ -147,7 +149,7 @@ let get_intervals_def = cake_define_list
 
 (* compute the same thing as `get_intervals` (as says the `get_intervals_withlive_beg_eq_get_intervals_beg` theorem),
  * but has the following invariant: !r. r IN domain live ==> r NOTIN domain beg_in (as stated by the `get_intervals_withlive_live_intbeg` theorem *)
-let get_intervals_withlive_def = cake_define_list
+let get_intervals_withlive_def,get_intervals_withlive_ind = define_rec
   [`get_intervals_withlive (linear_scan_Writes l) (n:int) int_beg
   int_end live =
       (n - (&1),numset_list_add_if_lt l n
@@ -172,7 +174,7 @@ let get_intervals_withlive_def = cake_define_list
         int_beg2 int_end2 (get_live_backward lt2 live) in
       (n1,int_beg1,int_end1))`];;
 
-let check_number_property_def = cake_define_list
+let check_number_property_def,check_number_property_ind = define_rec
   [`check_number_property (P:int->1 spt->bool) (linear_scan_Writes l)
   (n:int) live =
         (let n_out = n - (&1) in
@@ -196,7 +198,8 @@ let check_number_property_def = cake_define_list
           lt2) (get_live_backward lt2 live) in
         r1 /\ r2)`];;
 
-let check_number_property_strong_def = cake_define_list
+let check_number_property_strong_def,check_number_property_strong_ind =
+  define_rec
   [`check_number_property_strong (P:int->1 spt->bool)
   (linear_scan_Writes l) (n:int) live =
         (let n_out = n - (&1) in
@@ -221,8 +224,8 @@ let check_number_property_strong_def = cake_define_list
           size_of_live_tree lt2) (get_live_backward lt2 live) in
         r1 /\ r2)`];;
 
-let check_startlive_prop_def = cake_define
-  `(
+let check_startlive_prop_def,check_startlive_prop_ind = define_rec
+  [`(
      check_startlive_prop (linear_scan_Writes l) n beg end ndef =
          (!r. MEM r l ==> (option_CASE (sptree_lookup r beg) ndef
            (\x. x) <= n /\
@@ -239,9 +242,13 @@ let check_startlive_prop_def = cake_define
          (let r2 = check_startlive_prop lt2 n beg end ndef in
          let r1 = check_startlive_prop lt1 (n - size_of_live_tree
            lt2) beg end ndef in
-         r1 /\ r2))`;;
+         r1 /\ r2))`];;
 
-let live_tree_registers_def = cake_define_list
+let _ = size_thms "live_tree";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let live_tree_registers_def,live_tree_registers_ind = define_wf
+  `MEASURE (\x0. live_tree_size x0)`
   [`live_tree_registers (linear_scan_Writes l) = set_of_list l`;
    `live_tree_registers (linear_scan_Reads l) = set_of_list l`;
    `live_tree_registers (Branch lt1 lt2:live_tree) =
@@ -249,14 +256,14 @@ let live_tree_registers_def = cake_define_list
    `live_tree_registers (Seq lt1 lt2:live_tree) =
   live_tree_registers lt1 UNION live_tree_registers lt2`];;
 
-let interval_intersect_def = cake_define
+let interval_intersect_def = new_definition
   `interval_intersect ((l1:int),(r1:int)) (l2,r2) = (l1 <= r2 /\ l2
   <= r1)`;;
 
-let point_inside_interval_def = cake_define
+let point_inside_interval_def = new_definition
   `point_inside_interval ((l:int),(r:int)) n = (l <= n /\ n <= r)`;;
 
-let check_intervals_def = cake_define
+let check_intervals_def = new_definition
   `check_intervals f int_beg int_end = (!r1 r2.
      r1 IN domain int_beg /\ r2 IN domain int_beg /\
      interval_intersect (THE (sptree_lookup r1 int_beg),THE
@@ -265,7 +272,7 @@ let check_intervals_def = cake_define
      f r1 = f r2 ==>
      r1 = r2)`;;
 
-let get_intervals_ct_aux_def = cake_define_list
+let get_intervals_ct_aux_def,get_intervals_ct_aux_ind = define_rec
   [`get_intervals_ct_aux (reg_alloc_Delta wr rd) (n:int) int_beg int_end
   live =
       (n - (&2),numset_list_add_if_lt wr n
@@ -294,7 +301,7 @@ let get_intervals_ct_aux_def = cake_define_list
         int_beg int_end live in
       get_intervals_ct_aux ct1 n2 int_beg2 int_end2 live2)`];;
 
-let get_intervals_ct_def = cake_define
+let get_intervals_ct_def = new_definition
   `get_intervals_ct ct =
        (let (n,int_beg,int_end,live) = get_intervals_ct_aux ct (&0)
          LN LN LN in
@@ -323,47 +330,47 @@ let linear_scan_hidden_state_FIELDS =
    code
    (define_monad_access_funs of ml_monadBaseLib); these are
    the definitions that it makes *)
-let get_colors_def = cake_define
+let get_colors_def = new_definition
   `get_colors = (\state. (M_success (linear_scan_hidden_state_colors
   state),state))`;;
 
-let set_colors_def = cake_define
+let set_colors_def = new_definition
   `set_colors x =
      (\state. (M_success one,linear_scan_hidden_state_colors_fupd
        (K x) state))`;;
 
-let get_int_beg_def = cake_define
+let get_int_beg_def = new_definition
   `get_int_beg = (\state. (M_success
   (linear_scan_hidden_state_int_beg state),state))`;;
 
-let set_int_beg_def = cake_define
+let set_int_beg_def = new_definition
   `set_int_beg x =
      (\state. (M_success one,linear_scan_hidden_state_int_beg_fupd
        (K x) state))`;;
 
-let get_int_end_def = cake_define
+let get_int_end_def = new_definition
   `get_int_end = (\state. (M_success
   (linear_scan_hidden_state_int_end state),state))`;;
 
-let set_int_end_def = cake_define
+let set_int_end_def = new_definition
   `set_int_end x =
      (\state. (M_success one,linear_scan_hidden_state_int_end_fupd
        (K x) state))`;;
 
-let get_sorted_regs_def = cake_define
+let get_sorted_regs_def = new_definition
   `get_sorted_regs = (\state. (M_success
   (linear_scan_hidden_state_sorted_regs state),state))`;;
 
-let set_sorted_regs_def = cake_define
+let set_sorted_regs_def = new_definition
   `set_sorted_regs x =
      (\state. (M_success
        one,linear_scan_hidden_state_sorted_regs_fupd (K x) state))`;;
 
-let get_sorted_moves_def = cake_define
+let get_sorted_moves_def = new_definition
   `get_sorted_moves = (\state. (M_success
   (linear_scan_hidden_state_sorted_moves state),state))`;;
 
-let set_sorted_moves_def = cake_define
+let set_sorted_moves_def = new_definition
   `set_sorted_moves x =
      (\state. (M_success
        one,linear_scan_hidden_state_sorted_moves_fupd (K x) state))`;;
@@ -388,72 +395,72 @@ hol4_overload "failwith" "raise_Fail";;
 (* HOL4 makes the manipulators of the fixed size arrays with
    ML code (define_MFarray_manip_funs of ml_monadBaseLib);
    these are the definitions that it makes *)
-let colors_length_def = cake_define
+let colors_length_def = new_definition
   `colors_length = Marray_length (\state.
   linear_scan_hidden_state_colors state)`;;
 
-let colors_sub_def = cake_define
+let colors_sub_def = new_definition
   `colors_sub = Marray_sub (\state. linear_scan_hidden_state_colors
   state) reg_alloc_Subscript`;;
 
-let update_colors_def = cake_define
+let update_colors_def = new_definition
   `update_colors =
      Marray_update (\state. linear_scan_hidden_state_colors state)
        (\x state. linear_scan_hidden_state_colors_fupd (K x)
          state) reg_alloc_Subscript`;;
 
-let int_beg_length_def = cake_define
+let int_beg_length_def = new_definition
   `int_beg_length = Marray_length (\state.
   linear_scan_hidden_state_int_beg state)`;;
 
-let int_beg_sub_def = cake_define
+let int_beg_sub_def = new_definition
   `int_beg_sub = Marray_sub (\state. linear_scan_hidden_state_int_beg
   state) reg_alloc_Subscript`;;
 
-let update_int_beg_def = cake_define
+let update_int_beg_def = new_definition
   `update_int_beg =
      Marray_update (\state. linear_scan_hidden_state_int_beg state)
        (\x state. linear_scan_hidden_state_int_beg_fupd (K x)
          state) reg_alloc_Subscript`;;
 
-let int_end_length_def = cake_define
+let int_end_length_def = new_definition
   `int_end_length = Marray_length (\state.
   linear_scan_hidden_state_int_end state)`;;
 
-let int_end_sub_def = cake_define
+let int_end_sub_def = new_definition
   `int_end_sub = Marray_sub (\state. linear_scan_hidden_state_int_end
   state) reg_alloc_Subscript`;;
 
-let update_int_end_def = cake_define
+let update_int_end_def = new_definition
   `update_int_end =
      Marray_update (\state. linear_scan_hidden_state_int_end state)
        (\x state. linear_scan_hidden_state_int_end_fupd (K x)
          state) reg_alloc_Subscript`;;
 
-let sorted_regs_length_def = cake_define
+let sorted_regs_length_def = new_definition
   `sorted_regs_length = Marray_length (\state.
   linear_scan_hidden_state_sorted_regs state)`;;
 
-let sorted_regs_sub_def = cake_define
+let sorted_regs_sub_def = new_definition
   `sorted_regs_sub = Marray_sub (\state.
   linear_scan_hidden_state_sorted_regs state) reg_alloc_Subscript`;;
 
-let update_sorted_regs_def = cake_define
+let update_sorted_regs_def = new_definition
   `update_sorted_regs =
      Marray_update (\state. linear_scan_hidden_state_sorted_regs
        state)
        (\x state. linear_scan_hidden_state_sorted_regs_fupd (K x)
          state) reg_alloc_Subscript`;;
 
-let sorted_moves_length_def = cake_define
+let sorted_moves_length_def = new_definition
   `sorted_moves_length = Marray_length (\state.
   linear_scan_hidden_state_sorted_moves state)`;;
 
-let sorted_moves_sub_def = cake_define
+let sorted_moves_sub_def = new_definition
   `sorted_moves_sub = Marray_sub (\state.
   linear_scan_hidden_state_sorted_moves state) reg_alloc_Subscript`;;
 
-let update_sorted_moves_def = cake_define
+let update_sorted_moves_def = new_definition
   `update_sorted_moves =
      Marray_update (\state. linear_scan_hidden_state_sorted_moves
        state)
@@ -486,7 +493,11 @@ let update_sorted_moves_def = cake_define
 
 (* HOL4 linear_scanScript.sml:398-400: ML code, not ported *)
 
-let numset_list_add_if_lt_monad_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let numset_list_add_if_lt_monad_def,numset_list_add_if_lt_monad_ind =
+  define_wf
+  `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`numset_list_add_if_lt_monad [] (v:int) =
       st_ex_return one`;
    `numset_list_add_if_lt_monad (r :: rs) (v:int) =
@@ -501,7 +512,11 @@ let numset_list_add_if_lt_monad_def = cake_define_list
             numset_list_add_if_lt_monad rs v) else
           numset_list_add_if_lt_monad rs v)`];;
 
-let numset_list_add_if_gt_monad_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let numset_list_add_if_gt_monad_def,numset_list_add_if_gt_monad_ind =
+  define_wf
+  `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`numset_list_add_if_gt_monad [] (v:int) =
       st_ex_return one`;
    `numset_list_add_if_gt_monad (r :: rs) (v:int) =
@@ -516,7 +531,12 @@ let numset_list_add_if_gt_monad_def = cake_define_list
             numset_list_add_if_gt_monad rs v) else
           numset_list_add_if_gt_monad rs v)`];;
 
-let get_intervals_ct_monad_aux_def = cake_define_list
+let _ = size_thms "clash_tree";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let get_intervals_ct_monad_aux_def,get_intervals_ct_monad_aux_ind =
+  define_wf
+  `MEASURE (\(x0,x1,x2). clash_tree_size x0)`
   [`get_intervals_ct_monad_aux (reg_alloc_Delta wr rd) (n:int) live =
       st_ex_ignore_bind
         (numset_list_add_if_lt_monad wr n) (st_ex_ignore_bind
@@ -546,7 +566,7 @@ let get_intervals_ct_monad_aux_def = cake_define_list
         (n2,live2).
         get_intervals_ct_monad_aux ct1 n2 live2)`];;
 
-let get_intervals_ct_monad_def = cake_define
+let get_intervals_ct_monad_def = new_definition
   `get_intervals_ct_monad ct =
      st_ex_bind (get_intervals_ct_monad_aux ct (&0) LN) (\
        (n,live). st_ex_ignore_bind
@@ -555,14 +575,16 @@ let get_intervals_ct_monad_def = cake_define
        (numset_list_add_if_gt_monad (MAP FST (toAList live)) n) (
        st_ex_return (n - (&1)))))`;;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 linear_scanScript.sml:514-517: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let remove_inactive_intervals_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`)
-  CHEAT_TAC
-  `remove_inactive_intervals beg st =
+let remove_inactive_intervals_def,remove_inactive_intervals_ind =
+  define_wf_cheat
+  `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`
+  [`remove_inactive_intervals beg st =
      (match linear_scan_state_active st with [] -> st_ex_return st |
        (e,r) :: activetail -> (
        if e < beg then
@@ -571,16 +593,16 @@ let remove_inactive_intervals_def = cake_define_try_tac (fun () ->
            let st' = linear_scan_state_colorpool_fupd (\l. col :: l)
              (linear_scan_state_active_fupd (K activetail) st) in
            remove_inactive_intervals beg st') else
-         st_ex_return st))`;;
+         st_ex_return st))`];;
 
-let add_active_interval_def = cake_define_list
+let add_active_interval_def,add_active_interval_ind = define_rec
   [`add_active_interval v [] = [v]`;
    `add_active_interval (v1:int#num) (v2 :: tail) =
         (if FST v1 <= FST v2 then
             v1 :: v2 :: tail else
             v2 :: (add_active_interval v1 tail))`];;
 
-let find_color_in_list_def = cake_define_list
+let find_color_in_list_def,find_color_in_list_ind = define_rec
   [`find_color_in_list [] (forbidden:1 spt) = NONE`;
    `find_color_in_list (r :: rs) (forbidden:1 spt) =
         (if sptree_lookup r forbidden = NONE then
@@ -588,7 +610,7 @@ let find_color_in_list_def = cake_define_list
           match find_color_in_list rs forbidden with NONE ->
             NONE | SOME (col,rest) -> SOME (col,r :: rest))`];;
 
-let find_color_in_colornum_def = cake_define
+let find_color_in_colornum_def = new_definition
   `find_color_in_colornum st (forbidden:1 spt) =
        (if linear_scan_state_colormax st <=
          linear_scan_state_colornum st then
@@ -596,20 +618,20 @@ let find_color_in_colornum_def = cake_define
          (linear_scan_state_colornum_fupd ((+) 1) st,SOME
            (linear_scan_state_colornum st)))`;;
 
-let find_color_def = cake_define
+let find_color_def = new_definition
   `find_color st (forbidden:1 spt) =
        (match find_color_in_list (linear_scan_state_colorpool st)
          forbidden with SOME (col,rest) ->
          (linear_scan_state_colorpool_fupd (K rest) st,SOME col) |
          NONE -> find_color_in_colornum st forbidden)`;;
 
-let spill_register_def = cake_define
+let spill_register_def = new_definition
   `spill_register st reg =
      st_ex_ignore_bind
        (update_colors reg (linear_scan_state_stacknum st)) (
        st_ex_return (linear_scan_state_stacknum_fupd ((+) 1) st))`;;
 
-let color_register_def = cake_define
+let color_register_def = new_definition
   `color_register st reg col rend =
      st_ex_ignore_bind
        (update_colors reg col) (
@@ -621,7 +643,10 @@ let color_register_def = cake_define
          st_ex_return (linear_scan_state_active_fupd
            (add_active_interval (rend,reg)) st))`;;
 
-let find_last_stealable_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let find_last_stealable_def,find_last_stealable_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\n. n)) x0)`
   [`find_last_stealable [] (forbidden:1 spt) =
         st_ex_return NONE`;
    `find_last_stealable (x :: xs) (forbidden:1 spt) =
@@ -636,7 +661,7 @@ let find_last_stealable_def = cake_define_list
                 st_ex_return (SOME (x,xs)) else
                 st_ex_return NONE)))`];;
 
-let find_spill_def = cake_define
+let find_spill_def = new_definition
   `find_spill st (forbidden:1 spt) reg rend force =
      st_ex_bind (find_last_stealable (linear_scan_state_active st)
        forbidden) (\
@@ -652,7 +677,7 @@ let find_spill_def = cake_define
              color_register st' reg stealcolor rend)) else
            spill_register st reg))`;;
 
-let linear_reg_alloc_step_aux_def = cake_define
+let linear_reg_alloc_step_aux_def = new_definition
   `linear_reg_alloc_step_aux st (forbidden:1 spt) preferred reg rend
   force =
      // TODO: this might be slow
@@ -665,7 +690,7 @@ let linear_reg_alloc_step_aux_def = cake_define
          color_register st' reg col rend | (st',NONE) -> find_spill
          st' forbidden reg rend force))`;;
 
-let linear_reg_alloc_step_pass1_def = cake_define
+let linear_reg_alloc_step_pass1_def = new_definition
   `linear_reg_alloc_step_pass1 forced moves st reg =
      st_ex_bind (int_beg_sub reg) (\
        rbeg. st_ex_bind (int_end_sub reg) (\
@@ -691,7 +716,7 @@ let linear_reg_alloc_step_pass1_def = cake_define
                linear_reg_alloc_step_aux st' forced_forbidden
                  moves_preferred reg rend F)))))`;;
 
-let linear_reg_alloc_step_pass2_def = cake_define
+let linear_reg_alloc_step_pass2_def = new_definition
   `linear_reg_alloc_step_pass2 forced moves st reg =
      st_ex_bind (int_beg_sub reg) (\
        rbeg. st_ex_bind (int_end_sub reg) (\
@@ -711,15 +736,18 @@ let linear_reg_alloc_step_pass2_def = cake_define
            moves_preferred reg rend F))))))`;;
 
 
-let linear_reg_alloc_pass1_initial_state_def = cake_define
+let linear_reg_alloc_pass1_initial_state_def = new_definition
   `linear_reg_alloc_pass1_initial_state k =
      mk_linear_scan_state [] [] LN 0 k k`;;
 
-let linear_reg_alloc_pass2_initial_state_def = cake_define
+let linear_reg_alloc_pass2_initial_state_def = new_definition
   `linear_reg_alloc_pass2_initial_state k nreg =
      mk_linear_scan_state [] [] LN k (k + nreg) (k + nreg)`;;
 
-let find_reg_exchange_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let find_reg_exchange_def,find_reg_exchange_ind = define_wf
+  `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
   [`find_reg_exchange [] exch invexch = st_ex_return (exch,invexch)`;
    `find_reg_exchange (r :: rs) exch invexch =
       st_ex_bind (colors_sub r) (\
@@ -733,7 +761,10 @@ let find_reg_exchange_def = cake_define_list
           (sptree_insert col2 fcol2 exch)) (sptree_insert fcol1
           col1 (sptree_insert fcol2 col2 invexch)))`];;
 
-let MAP_colors_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let MAP_colors_def,MAP_colors_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
   [`MAP_colors f 0 = st_ex_return one`;
    `MAP_colors f (SUC n) =
       st_ex_bind (colors_sub n) (\
@@ -741,7 +772,7 @@ let MAP_colors_def = cake_define_list
         (update_colors n (f col)) (
         MAP_colors f n))`];;
 
-let apply_reg_exchange_def = cake_define
+let apply_reg_exchange_def = new_definition
   `apply_reg_exchange phyregs =
      st_ex_bind (find_reg_exchange phyregs LN LN) (\
        (exch,invexch). st_ex_bind colors_length (\
@@ -751,7 +782,7 @@ let apply_reg_exchange_def = cake_define
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let st_ex_FOLDL_def = cake_define_list_cheat CHEAT_TAC
+let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_rec
   [`st_ex_FOLDL f e [] = st_ex_return e`;
    `st_ex_FOLDL f e (x :: xs) =
       st_ex_bind (f e x) (\
@@ -761,7 +792,7 @@ let st_ex_FOLDL_def = cake_define_list_cheat CHEAT_TAC
 (* like st_ex_FILTER, but preserve the order *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let st_ex_FILTER_good_def = cake_define_list_cheat CHEAT_TAC
+let st_ex_FILTER_good_def,st_ex_FILTER_good_ind = define_rec
   [`st_ex_FILTER_good P [] = st_ex_return []`;
    `st_ex_FILTER_good P (x :: xs) =
       st_ex_bind (P x) (\
@@ -772,7 +803,10 @@ let st_ex_FILTER_good_def = cake_define_list_cheat CHEAT_TAC
             st_ex_return (x :: filter_xs)) else
           st_ex_FILTER_good P xs)`];;
 
-let edges_to_adjlist_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let edges_to_adjlist_def,edges_to_adjlist_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (pair_size (\n. n) (\n. n)) x0)`
   [`edges_to_adjlist [] acc = st_ex_return acc`;
    `edges_to_adjlist ((a,b) :: abs') acc =
       (if a = b then
@@ -786,11 +820,11 @@ let edges_to_adjlist_def = cake_define_list
             edges_to_adjlist abs' (sptree_insert a (b :: (the
               [] (sptree_lookup a acc))) acc))))`];;
 
-let sort_moves_rev_def = cake_define
+let sort_moves_rev_def = new_definition
   `sort_moves_rev ls =
      sort (\((p:num),x) (p',x'). p < p') ls`;;
 
-let swap_regs_def = cake_define
+let swap_regs_def = new_definition
   `swap_regs i1 i2 =
      st_ex_bind (sorted_regs_sub i1) (\
        r1. st_ex_bind (sorted_regs_sub i2) (\
@@ -798,9 +832,11 @@ let swap_regs_def = cake_define
        (update_sorted_regs i1 r2) (
        update_sorted_regs i2 r1)))`;;
 
-let partition_regs_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let partition_regs_def,partition_regs_ind = define_wf
   `MEASURE (\(l,rpiv,begrpiv,r). r - l)`
-  `partition_regs l rpiv begrpiv r =
+  [`partition_regs l rpiv begrpiv r =
      (if r <= l then
        st_ex_return l else
        st_ex_bind (sorted_regs_sub l) (\
@@ -811,14 +847,15 @@ let partition_regs_def = cake_define_wf
              partition_regs (l + 1) rpiv begrpiv r else
            st_ex_ignore_bind
              (swap_regs l (r - 1)) (
-             partition_regs l rpiv begrpiv (r - 1)))))`;;
+             partition_regs l rpiv begrpiv (r - 1)))))`];;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sort_regs_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(l,r). r - l)`)
-  CHEAT_TAC
-  `sort_regs l r =
+let sort_regs_def,sort_regs_ind = define_wf_cheat
+  `MEASURE (\(l,r). r - l)`
+  [`sort_regs l r =
      (if r <= l + 1 then
        st_ex_return one else
        st_ex_bind (sorted_regs_sub l) (\
@@ -832,9 +869,12 @@ let sort_regs_def = cake_define_try_tac (fun () ->
            st_ex_return one else
            st_ex_ignore_bind
              (sort_regs l (m - 1)) (
-             sort_regs m r))))))`;;
+             sort_regs m r))))))`];;
 
-let list_to_sorted_regs_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let list_to_sorted_regs_def,list_to_sorted_regs_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`list_to_sorted_regs [] n =
         st_ex_return one`;
    `list_to_sorted_regs (r :: rs) n =
@@ -842,17 +882,19 @@ let list_to_sorted_regs_def = cake_define_list
         (update_sorted_regs n r) (
         list_to_sorted_regs rs (n + 1))`];;
 
-let sorted_regs_to_list_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let sorted_regs_to_list_def,sorted_regs_to_list_ind = define_wf
   `MEASURE (\(n,last). last - n)`
-  `sorted_regs_to_list n last =
+  [`sorted_regs_to_list n last =
      (if last <= n then
        st_ex_return [] else
        st_ex_bind (sorted_regs_sub n) (\
          r. st_ex_bind (sorted_regs_to_list (n + 1) last) (\
          l.
-         st_ex_return (r :: l))))`;;
+         st_ex_return (r :: l))))`];;
 
-let swap_moves_def = cake_define
+let swap_moves_def = new_definition
   `swap_moves i1 i2 =
      st_ex_bind (sorted_moves_sub i1) (\
        r1. st_ex_bind (sorted_moves_sub i2) (\
@@ -860,9 +902,11 @@ let swap_moves_def = cake_define
        (update_sorted_moves i1 r2) (
        update_sorted_moves i2 r1)))`;;
 
-let partition_moves_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let partition_moves_def,partition_moves_ind = define_wf
   `MEASURE (\(l,piv,r). r - l)`
-  `partition_moves l ppiv r =
+  [`partition_moves l ppiv r =
      (if r <= l then
        st_ex_return l else
        st_ex_bind (sorted_moves_sub l) (\
@@ -871,14 +915,16 @@ let partition_moves_def = cake_define_wf
            partition_moves (l + 1) ppiv r else
            st_ex_ignore_bind
              (swap_moves l (r - 1)) (
-             partition_moves l ppiv (r - 1))))`;;
+             partition_moves l ppiv (r - 1))))`];;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let linear_scan_sort_moves_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(l,r). r - l)`)
-  CHEAT_TAC
-  `linear_scan_sort_moves l r =
+let linear_scan_sort_moves_def,linear_scan_sort_moves_ind =
+  define_wf_cheat
+  `MEASURE (\(l,r). r - l)`
+  [`linear_scan_sort_moves l r =
      (if r <= l + 1 then
        st_ex_return one else
        st_ex_bind (sorted_moves_sub l) (\
@@ -890,11 +936,15 @@ let linear_scan_sort_moves_def = cake_define_try_tac (fun () ->
            st_ex_return one else
            st_ex_ignore_bind
              (linear_scan_sort_moves l (m - 1)) (
-             linear_scan_sort_moves m r)))))`;;
+             linear_scan_sort_moves m r)))))`];;
 hol4_overload "sort_moves" "linear_scan_sort_moves";;
 
 
-let list_to_sorted_moves_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let list_to_sorted_moves_def,list_to_sorted_moves_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (pair_size (\n. n) (pair_size (\n. n)
+  (\n. n))) x0)`
   [`list_to_sorted_moves [] n =
         st_ex_return one`;
    `list_to_sorted_moves (r :: rs) n =
@@ -902,17 +952,19 @@ let list_to_sorted_moves_def = cake_define_list
         (update_sorted_moves n r) (
         list_to_sorted_moves rs (n + 1))`];;
 
-let sorted_moves_to_list_def = cake_define_wf
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let sorted_moves_to_list_def,sorted_moves_to_list_ind = define_wf
   `MEASURE (\(n,len). len - n)`
-  `sorted_moves_to_list n len =
+  [`sorted_moves_to_list n len =
      (if len <= n then
        st_ex_return [] else
        st_ex_bind (sorted_moves_sub n) (\
          r. st_ex_bind (sorted_moves_to_list (n + 1) len) (\
          l.
-         st_ex_return (r :: l))))`;;
+         st_ex_return (r :: l))))`];;
 
-let linear_reg_alloc_intervals_def = cake_define
+let linear_reg_alloc_intervals_def = new_definition
   `linear_reg_alloc_intervals k forced moves reglist_unsorted =
        (let lenreg = LENGTH reglist_unsorted in
        let lenmoves = LENGTH moves in
@@ -958,7 +1010,10 @@ let linear_reg_alloc_intervals_def = cake_define
          st_end_pass2.
          apply_reg_exchange stackphyregs))))))))))))))))))))`;;
 
-let extract_coloration_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let extract_coloration_def,extract_coloration_ind = define_wf
+  `MEASURE (\(x0,x1,x2). list_size (\n. n) x1)`
   [`extract_coloration invbij [] acc = st_ex_return acc`;
    `extract_coloration invbij (r :: rs) acc =
       st_ex_bind (colors_sub r) (\
@@ -973,11 +1028,11 @@ let bijection_state_FIELDS = define_record "bijection_state"
    "nstack","num";
    "nalloc","num"];;
 
-let find_bijection_init_def = cake_define
+let find_bijection_init_def = new_definition
   `find_bijection_init =
        mk_bijection_state LN LN 0 3 1`;;
 
-let find_bijection_step_def = cake_define
+let find_bijection_step_def = new_definition
   `find_bijection_step state r =
      (if ~(sptree_lookup r (bijection_state_bij state) = NONE) then
        state else if is_phy_var r then bijection_state_nmax_fupd (K
@@ -1002,7 +1057,8 @@ let find_bijection_step_def = cake_define
          (bijection_state_nalloc state) (bijection_state_bij state)))
        state))))`;;
 
-let find_bijection_clash_tree_def = cake_define_list
+let find_bijection_clash_tree_def,find_bijection_clash_tree_ind =
+  define_rec
   [`find_bijection_clash_tree state (reg_alloc_Delta wr rd) =
       FOLDL find_bijection_step (FOLDL find_bijection_step state
         rd) wr`;
@@ -1019,7 +1075,7 @@ let find_bijection_clash_tree_def = cake_define_list
       (let state1 = find_bijection_clash_tree state ct1 in
       find_bijection_clash_tree state1 ct2)`];;
 
-let apply_bijection_def = cake_define
+let apply_bijection_def = new_definition
   `apply_bijection bij (interval:int spt) =
        foldi (\r i acc. sptree_insert (the 0 (sptree_lookup r
          bij)) i acc) 0 LN interval`;;
@@ -1036,7 +1092,7 @@ let i_linear_scan_hidden_state_FIELDS =
    "int_end","num#int";
    "sorted_regs","num#num";
    "sorted_moves","num#num#num#num"];;
-let run_i_linear_scan_hidden_state_def = cake_define
+let run_i_linear_scan_hidden_state_def = new_definition
   `run_i_linear_scan_hidden_state x state =
      run x (mk_linear_scan_hidden_state (REPLICATE (FST
        (i_linear_scan_hidden_state_colors state)) (SND
@@ -1051,7 +1107,7 @@ let run_i_linear_scan_hidden_state_def = cake_define
        (i_linear_scan_hidden_state_sorted_moves state))))`;;
 
 
-let linear_reg_alloc_and_extract_coloration_def = cake_define
+let linear_reg_alloc_and_extract_coloration_def = new_definition
   `linear_reg_alloc_and_extract_coloration ct k forced moves
   reglist_unsorted invbij nmax =
      st_ex_ignore_bind
@@ -1059,7 +1115,7 @@ let linear_reg_alloc_and_extract_coloration_def = cake_define
        (linear_reg_alloc_intervals k forced moves reglist_unsorted) (
        extract_coloration invbij reglist_unsorted LN))`;;
 
-let size_of_clash_tree_def = cake_define_list
+let size_of_clash_tree_def,size_of_clash_tree_ind = define_rec
   [`size_of_clash_tree (reg_alloc_Delta wr rd) =
       ((&2:int):int)`;
    `size_of_clash_tree (reg_alloc_Set cutset:clash_tree) =
@@ -1070,7 +1126,7 @@ let size_of_clash_tree_def = cake_define_list
    `size_of_clash_tree (Seq ct1 ct2:clash_tree) = ((
       size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`];;
 
-let run_linear_reg_alloc_intervals_def = cake_define
+let run_linear_reg_alloc_intervals_def = new_definition
   `run_linear_reg_alloc_intervals ct k forced moves
      reglist_unsorted invbij nmax =
      run_i_linear_scan_hidden_state
@@ -1080,7 +1136,7 @@ let run_linear_reg_alloc_intervals_def = cake_define
          ((nmax + 1,&1):num#int) ((nmax + 1,&1):num#int)
          (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
 
-let apply_bij_on_clash_tree_def = cake_define_list
+let apply_bij_on_clash_tree_def,apply_bij_on_clash_tree_ind = define_rec
   [`apply_bij_on_clash_tree (reg_alloc_Delta wr rd) bij =
       reg_alloc_Delta (MAP (\r. the 0 (sptree_lookup r bij)) wr)
         (MAP (\r. the 0 (sptree_lookup r bij)) rd)`;
@@ -1097,7 +1153,7 @@ let apply_bij_on_clash_tree_def = cake_define_list
         (apply_bij_on_clash_tree ct2 bij)`];;
 
 
-let linear_scan_reg_alloc_def = cake_define
+let linear_scan_reg_alloc_def = new_definition
   `linear_scan_reg_alloc k moves ct forced =
        (let bijstate = find_bijection_clash_tree find_bijection_init
          ct in

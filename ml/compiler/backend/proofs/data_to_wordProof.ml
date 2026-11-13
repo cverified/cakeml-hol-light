@@ -285,7 +285,7 @@ let compile_correct_lemma = prove
                                 s1)))`,
   CHEAT_TAC);;
 
-let state_rel_ext_def = cake_define
+let state_rel_ext_def = new_definition
   `state_rel_ext c l1 l2 s u <=>
      (?t l.
        state_rel c l1 l2 s t NONE [] /\
@@ -356,7 +356,7 @@ let state_rel_ext_with_clock = prove
    statement HOL Light does not read (tools/unstated.py):
    compile_semantics_precise *)
 
-let get_limits_def = cake_define
+let get_limits_def = new_definition
   `get_limits c (t:('a,'c,'ffi)wordSem_state) =
      mk_limits (w2n (theWord (FAPPLY (wordSem_state_store t)
        HeapLength)) DIV (dimindex (:'a) DIV 8))
@@ -747,7 +747,7 @@ let data_to_word_good_code_labels = prove
    definitions below antiquote *)
 
 (* TODO: move somewhere better *)
-let stubs_fst_def = cake_define
+let stubs_fst_def = new_definition
   `stubs_fst = MAP FST (data_to_word_stubs (:1)
                  (ARB:data_to_word_config))`;;
 

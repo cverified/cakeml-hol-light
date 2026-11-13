@@ -58,30 +58,30 @@ let shift_length_has_fp_ops = prove
     definition and verification of GC functions
    ------------------------------------------------------- *)
 
-let ptr_to_addr_def = cake_define
+let ptr_to_addr_def = new_definition
   `ptr_to_addr conf base (w:'a word) =
      base + ((w >>> (shift_length conf)) * bytes_in_word)`;;
 
-let update_addr_def = cake_define
+let update_addr_def = new_definition
   `update_addr conf fwd_ptr (old_addr:'a word) =
      ((fwd_ptr << (shift_length conf)) ||
       (word_bits (small_shift_length conf - 1) 0) old_addr)`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let memcpy_def = cake_define_cheat CHEAT_TAC
-  `memcpy w a b m dm =
+let memcpy_def,memcpy_ind = define_rec
+  [`memcpy w a b m dm =
      (if w = (n2w 0) then (b,m,T) else
-       let (b1,m1,c1) = memcpy (w - (n2w 1)) (a + bytes_in_word) (b +
-         bytes_in_word)
+       let (b1,m1,c1) = memcpy (w - (n2w 1)) (a + bytes_in_word) (b
+         + bytes_in_word)
                        ((b =+ m a) m) dm in
-         (b1,m1,(c1 /\ a IN dm /\ b IN dm)))`;;
+         (b1,m1,(c1 /\ a IN dm /\ b IN dm)))`];;
 
-let decode_length_def = cake_define
+let decode_length_def = new_definition
   `decode_length conf (w:'a word) = w >>> (dimindex (:'a) -
   data_to_word_config_len_size conf)`;;
 
-let word_gc_move_def = cake_define_list
+let word_gc_move_def = define_general
   [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) = ((Loc l1
   l2:'a word_loc),i,pa,m,(l2 = 0))`;
    `word_gc_move conf (wordLang_Word w,i,pa,old,m,dm) =
@@ -106,7 +106,7 @@ let word_gc_move_def = cake_define_list
                  (wordLang_Word (update_addr conf i
                    w),v,pa1,m1,c))`];;
 
-let word_gen_gc_partial_move_def = cake_define_list
+let word_gen_gc_partial_move_def = define_general
   [`word_gen_gc_partial_move conf (wordLang_Loc l1
   l2,i,pa,old,m,dm,gs,rs) = ((Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))`;
    `word_gen_gc_partial_move conf (wordLang_Word w,i,pa,old,m,dm,gs,rs)
@@ -135,7 +135,13 @@ let word_gen_gc_partial_move_def = cake_define_list
                    (wordLang_Word (update_addr conf i
                      w),v,pa1,m1,c))`];;
 
-let word_gc_move_roots_def = cake_define_list
+let _ = size_thms "word_loc";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gc_move_roots_def,word_gc_move_roots_ind = define_wf
+  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x.
+  0)))      (pair_size (\x. 0)      (pair_size (\x. 0) (pair_size (\x.
+  0) (pair_size (\x. 0) (\x. 0)))))      x1)`
   [`word_gc_move_roots conf ([],i,pa,old,m,dm) = ([],i,pa,m,T)`;
    `word_gc_move_roots conf (w :: ws,i,pa,old,m,dm) =
          (let (w1,i1,pa1,m1,c1) = word_gc_move conf
@@ -146,8 +152,8 @@ let word_gc_move_roots_def = cake_define_list
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_gc_move_list_def = cake_define_cheat CHEAT_TAC
-  `word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
+let word_gc_move_list_def,word_gc_move_list_ind = define_rec
+  [`word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
       let w = ((m a):'a word_loc) in
@@ -155,9 +161,18 @@ let word_gc_move_list_def = cake_define_cheat CHEAT_TAC
       let m1 = (a =+ w1) m1 in
       let (a2,i2,pa2,m2,c2) = word_gc_move_list conf (a +
         bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm) in
-        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`;;
+        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`];;
 
-let word_gen_gc_partial_move_roots_def = cake_define_list
+let _ = size_thms "word_loc";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gen_gc_partial_move_roots_def,
+    word_gen_gc_partial_move_roots_ind =
+  define_wf
+  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x.
+  0)))      (pair_size (\x. 0)      (pair_size (\x. 0)      (pair_size
+  (\x. 0)      (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0)
+  (\x. 0)))))))      x1)`
   [`word_gen_gc_partial_move_roots conf ([],i,pa,old,m,dm,gs,rs) =
   ([],i,pa,m,T)`;
    `word_gen_gc_partial_move_roots conf (w :: ws,i,pa,old,m,dm,gs,rs) =
@@ -169,17 +184,19 @@ let word_gen_gc_partial_move_roots_def = cake_define_list
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_gen_gc_partial_move_list_def = cake_define_cheat CHEAT_TAC
-  `word_gen_gc_partial_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
+let word_gen_gc_partial_move_list_def,
+    word_gen_gc_partial_move_list_ind =
+  define_rec
+  [`word_gen_gc_partial_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
       let w = ((m a):'a word_loc) in
       let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
         (w,i,pa,old,m,dm,gs,rs) in
       let m1 = (a =+ w1) m1 in
-      let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf (a +
-        bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm,gs,rs) in
-        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`;;
+      let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf (a
+        + bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm,gs,rs) in
+        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`];;
 
 let word_gen_gc_partial_move_list_zero = prove
  (`word_gen_gc_partial_move_list conf (a,(n2w 0),i,pa,old,m,dm,gs,rs)
@@ -211,8 +228,11 @@ let word_gen_gc_partial_move_list_append = prove
      (a3,i3,pa3,m3,(c2 /\ c3))))`,
   CHEAT_TAC);;
 
-let word_gc_move_loop_def = cake_define
-  `word_gc_move_loop k conf (pb,i,pa,old,m,dm,c) =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gc_move_loop_def,word_gc_move_loop_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x0)`
+  [`word_gc_move_loop k conf (pb,i,pa,old,m,dm,c) =
      (if pb = pa then (i,pa,m,c) else
      if k = 0 then (i,pa,m,F) else
        let w = m pb in
@@ -220,14 +240,15 @@ let word_gc_move_loop_def = cake_define
        let len = decode_length conf (theWord w) in
          if word_bit 2 (theWord w) then
            let pb = pb + (len + (n2w 1)) * bytes_in_word in
-             word_gc_move_loop (k - 1) conf (pb,i,pa,old,m,dm,c) else
+             word_gc_move_loop (k - 1) conf (pb,i,pa,old,m,dm,c)
+               else
            let pb = pb + bytes_in_word in
            let (pb,i1,pa1,m1,c1) = word_gc_move_list conf
              (pb,len,i,pa,old,m,dm) in
              word_gc_move_loop (k - 1) conf
-               (pb,i1,pa1,old,m1,dm,(c /\ c1)))`;;
+               (pb,i1,pa1,old,m1,dm,(c /\ c1)))`];;
 
-let word_full_gc_def = cake_define
+let word_full_gc_def = new_definition
   `word_full_gc conf (all_roots,new,(old:'a word),m,dm) =
      (let (rs,i1,pa1,m1,c1) = word_gc_move_roots conf (all_roots,(n2w
        0),new,old,m,dm) in
@@ -235,7 +256,7 @@ let word_full_gc_def = cake_define
            word_gc_move_loop (dimword (:'a)) conf
              (new,i1,pa1,old,m1,dm,c1) in (rs,i1,pa1,m1,c2))`;;
 
-let word_gc_fun_assum_def = cake_define
+let word_gc_fun_assum_def = new_definition
   `word_gc_fun_assum (conf:data_to_word_config) (s:(store_name,'a
   word_loc)fmap) <=>
      {Globals,CurrHeap,OtherHeap,HeapLength,
@@ -252,7 +273,7 @@ let word_gc_fun_assum_def = cake_define
      conf + 2 < dimindex (:'a) /\
      shift_length conf < dimindex (:'a)`;;
 
-let word_gen_gc_can_do_partial_def = cake_define
+let word_gen_gc_can_do_partial_def = new_definition
   `word_gen_gc_can_do_partial gen_sizes (s:(store_name,'a word_loc)fmap)
   <=> ~(gen_sizes = []) /\
      (let allo = theWord (FAPPLY s AllocSize) in
@@ -264,7 +285,7 @@ let word_gen_gc_can_do_partial_def = cake_define
        // still exists.
        allo <=+ endh - trig)`;;
 
-let new_trig_def = cake_define
+let new_trig_def = new_definition
   `new_trig (heap_space:'a word) (alloc_pref:'a word) gs =
      (let a = w2n alloc_pref in
      let g = w2n ((get_gen_size gs):'a word) in
@@ -281,16 +302,25 @@ let new_trig_def = cake_define
            // very unlikely and a bad choice
            n2w h)`;;
 
-let refs_to_addresses_def = cake_define
-  `refs_to_addresses x1 =
+let _ = size_thms "heap_element";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let refs_to_addresses_def,refs_to_addresses_ind = define_wf
+  `MEASURE (\x0. list_size (heap_element_size (\x. 0) (\x. 0)) x0)`
+  [`refs_to_addresses x1 =
         match x1 with
           [] -> []
         | (DataElement ptrs _1 _2 :: refs) ->
        ptrs ++ refs_to_addresses refs
-        | (_3 :: refs) -> refs_to_addresses refs`;;
+        | (_3 :: refs) -> refs_to_addresses refs`];;
 
-let word_gen_gc_partial_move_ref_list_def = cake_define
-  `word_gen_gc_partial_move_ref_list k conf
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gen_gc_partial_move_ref_list_def,
+    word_gen_gc_partial_move_ref_list_ind =
+  define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x0)`
+  [`word_gen_gc_partial_move_ref_list k conf
   (pb,i,pa,old,m,dm,c,gs,rs,re) =
      (if pb = re then (i,pa,m,c) else
      if k = 0 then (i,pa,m,F) else
@@ -301,11 +331,16 @@ let word_gen_gc_partial_move_ref_list_def = cake_define
        let (pb,i1,pa1,m1,c1) = word_gen_gc_partial_move_list conf
          (pb,len,i,pa,old,m,dm,gs,rs) in
          word_gen_gc_partial_move_ref_list (k - 1) conf
-           (pb,i1,pa1,old,m1,dm,(c /\ c1),gs,rs,re))`;;
+           (pb,i1,pa1,old,m1,dm,(c /\ c1),gs,rs,re))`];;
 
 
-let word_gen_gc_partial_move_data_def = cake_define
-  `word_gen_gc_partial_move_data conf k ((h2a:'a word),i,(pa:'a
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gen_gc_partial_move_data_def,
+    word_gen_gc_partial_move_data_ind =
+  define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
+  [`word_gen_gc_partial_move_data conf k ((h2a:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
      (if h2a = pa then (i,pa,m,T) else
      if k = 0 then (i,pa,m,F) else
@@ -325,10 +360,10 @@ let word_gen_gc_partial_move_data_def = cake_define
            let (i,pa,m,c2) = word_gen_gc_partial_move_data conf (k -
              1)
                          (h2a,i,pa,old,m,dm,gs,rs) in
-             (i,pa,m,(c /\ c1 /\ c2)))`;;
+             (i,pa,m,(c /\ c1 /\ c2)))`];;
 
 
-let word_gen_gc_partial_def = cake_define
+let word_gen_gc_partial_def = new_definition
   `word_gen_gc_partial conf (roots,(curr:'a word),new,len,m,dm,gs,rs) =
      (let refs_end = curr + len in
      let gen_start = gs >>> backend_common_word_shift (:'a) in
@@ -343,7 +378,7 @@ let word_gen_gc_partial_def = cake_define
                               (new,i,pa,curr,m,dm,gs,rs) in
        (roots,i,pa,m,(c2 /\ c3)))`;;
 
-let word_gen_gc_partial_full_def = cake_define
+let word_gen_gc_partial_full_def = new_definition
   `word_gen_gc_partial_full conf (roots,(curr:'a
   word),new,len,m,dm,gs,rs) =
      (let (roots,i,pa,m,c1) = word_gen_gc_partial conf
@@ -353,11 +388,11 @@ let word_gen_gc_partial_full_def = cake_define
      let (b1,m,c2) = memcpy cpy_length new (curr + gs) m dm in
       (roots,i,b1,m,(c1 /\ c2)))`;;
 
-let is_ref_header_def = cake_define
+let is_ref_header_def = new_definition
   `is_ref_header (v:'a word) <=> ((v && (n2w 0b1100)) = (n2w
   0b01000))`;;
 
-let word_gen_gc_move_def = cake_define_list
+let word_gen_gc_move_def = define_general
   [`word_gen_gc_move conf (wordLang_Loc l1 l2,i,pa,ib,pb,old,m,dm) =
          ((Loc l1 l2:'a word_loc),i,pa,ib,pb,m,(l2 = 0))`;
    `word_gen_gc_move conf (wordLang_Word w,i,pa,ib,pb,old,m,dm) =
@@ -393,7 +428,14 @@ let word_gen_gc_move_def = cake_define_list
                     (wordLang_Word (update_addr conf i
                       w),v,pa1,ib,pb,m1,c))`];;
 
-let word_gen_gc_move_roots_def = cake_define_list
+let _ = size_thms "word_loc";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gen_gc_move_roots_def,word_gen_gc_move_roots_ind = define_wf
+  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x.
+  0)))      (pair_size (\x. 0)      (pair_size (\x. 0)      (pair_size
+  (\x. 0)      (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0)
+  (\x. 0)))))))      x1)`
   [`word_gen_gc_move_roots conf ([],i,pa,ib,pb,old,m,dm) =
   ([],i,pa,ib,pb,m,T)`;
    `word_gen_gc_move_roots conf (w :: ws,i,pa,ib,pb,old,m,dm) =
@@ -405,8 +447,8 @@ let word_gen_gc_move_roots_def = cake_define_list
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_gen_gc_move_list_def = cake_define_cheat CHEAT_TAC
-  `word_gen_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
+let word_gen_gc_move_list_def,word_gen_gc_move_list_ind = define_rec
+  [`word_gen_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),ib,pb,old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,ib,pb,m,T) else
       let w = ((m a):'a word_loc) in
@@ -415,10 +457,13 @@ let word_gen_gc_move_list_def = cake_define_cheat CHEAT_TAC
       let m1 = (a =+ w1) m1 in
       let (a2,i2,pa2,ib,pb,m2,c2) = word_gen_gc_move_list conf (a +
         bytes_in_word,l - (n2w 1),i1,pa1,ib,pb,old,m1,dm) in
-        (a2,i2,pa2,ib,pb,m2,(a IN dm /\ c1 /\ c2)))`;;
+        (a2,i2,pa2,ib,pb,m2,(a IN dm /\ c1 /\ c2)))`];;
 
-let word_gen_gc_move_data_def = cake_define
-  `word_gen_gc_move_data conf k ((h2a:'a word),i,(pa:'a
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gen_gc_move_data_def,word_gen_gc_move_data_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
+  [`word_gen_gc_move_data conf k ((h2a:'a word),i,(pa:'a
   word),ib,pb,old,m,dm) =
      (if h2a = pa then (i,pa,ib,pb,m,T) else
      if k = 0 then (i,pa,ib,pb,m,F) else
@@ -428,18 +473,23 @@ let word_gen_gc_move_data_def = cake_define
        let l = decode_length conf (theWord v) in
          if word_bit 2 (theWord v) then
            let h2a = h2a + (l + (n2w 1)) * bytes_in_word in
-           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k - 1)
+           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k -
+             1)
                          (h2a,i,pa,ib,pb,old,m,dm) in
              (i,pa,ib,pb,m,(c /\ c2)) else
            let (h2a,i,pa,ib,pb,m,c1) = word_gen_gc_move_list conf
                          (h2a + bytes_in_word,l,i,pa,ib,pb,old,m,dm)
                            in
-           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k - 1)
+           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k -
+             1)
                          (h2a,i,pa,ib,pb,old,m,dm) in
-             (i,pa,ib,pb,m,(c /\ c1 /\ c2)))`;;
+             (i,pa,ib,pb,m,(c /\ c1 /\ c2)))`];;
 
-let word_gen_gc_move_refs_def = cake_define
-  `word_gen_gc_move_refs conf k ((r2a:'a word),(r1a:'a word),i,(pa:'a
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gen_gc_move_refs_def,word_gen_gc_move_refs_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
+  [`word_gen_gc_move_refs conf k ((r2a:'a word),(r1a:'a word),i,(pa:'a
   word),ib,pb,old,(m:'a word->'a word_loc),dm) =
      (if r2a = r1a then (r2a,i,pa,ib,pb,m,T) else
      if k = 0 then (r2a,i,pa,ib,pb,m,F) else
@@ -450,12 +500,16 @@ let word_gen_gc_move_refs_def = cake_define
        let (r2a,i,pa,ib,pb,m,c1) = word_gen_gc_move_list conf
                               (r2a +
                                 bytes_in_word,l,i,pa,ib,pb,old,m,dm) in
-       let (r2a,i,pa,ib,pb,m,c2) = word_gen_gc_move_refs conf (k - 1)
+       let (r2a,i,pa,ib,pb,m,c2) = word_gen_gc_move_refs conf (k -
+         1)
                               (r2a,r1a,i,pa,ib,pb,old,m,dm) in
-         (r2a,i,pa,ib,pb,m,(c /\ c1 /\ c2)))`;;
+         (r2a,i,pa,ib,pb,m,(c /\ c1 /\ c2)))`];;
 
-let word_gen_gc_move_loop_def = cake_define
-  `word_gen_gc_move_loop conf k ((pax:'a word),i,(pa:'a
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let word_gen_gc_move_loop_def,word_gen_gc_move_loop_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
+  [`word_gen_gc_move_loop conf k ((pax:'a word),i,(pa:'a
   word),ib,pb,pbx,old,m,dm) =
      (if pbx = pb then
        if pax = pa then
@@ -475,9 +529,9 @@ let word_gen_gc_move_loop_def = cake_define
              let (i,pa,ib,pb,m,c2) = word_gen_gc_move_loop conf (k -
                1)
                             (pax,i,pa,ib,pb',pb,old,m,dm) in
-               (i,pa,ib,pb,m,(c1 /\ c2)))`;;
+               (i,pa,ib,pb,m,(c1 /\ c2)))`];;
 
-let word_gen_gc_def = cake_define
+let word_gen_gc_def = new_definition
   `word_gen_gc conf (roots,curr,new,(len:'a word),m,dm) =
      (let new_end = new + len in
      let len = len >>> backend_common_word_shift (:'a) in
@@ -487,7 +541,7 @@ let word_gen_gc_def = cake_define
                               (new,i,pa,ib,pb,new_end,curr,m,dm) in
        (roots,i,pa,ib,pb,m,(c1 /\ c2)))`;;
 
-let glob_real_def = cake_define
+let glob_real_def = new_definition
   `glob_real c curr w =
         match w with
           wordLang_Word (w:'a word) ->
@@ -495,7 +549,7 @@ let glob_real_def = cake_define
           backend_common_word_shift (:'a)))
         | w -> w`;;
 
-let word_gc_fun_def = cake_define
+let word_gc_fun_def = new_definition
   `((word_gc_fun (conf:data_to_word_config)):('a word_loc) list#('a
   word->'a word_loc)#('a word->bool)#(store_name,'a word_loc)fmap->(('a
   word_loc) list#('a word->'a word_loc)#(store_name,'a word_loc)fmap)

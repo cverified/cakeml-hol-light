@@ -17,7 +17,7 @@ hol4_overload "Less" "LESS";;
 hol4_overload "Equal" "EQUAL";;
 hol4_overload "Greater" "GREATER";;
 
-let good_cmp_def = cake_define
+let good_cmp_def = new_definition
   `good_cmp cmp <=>
      (!x. cmp x x = EQUAL) /\
      (!x y. cmp x y = EQUAL ==> cmp y x = EQUAL) /\

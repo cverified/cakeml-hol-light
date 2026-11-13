@@ -76,74 +76,74 @@ new_type_abbrev("env_ctor",`: (mlstring,mlstring,num#stamp)namespace`);;
 new_type_abbrev("env_val",`:
    (mlstring,mlstring,semanticPrimitives_v)namespace`);;
 
-let bind_stamp_def = cake_define
+let bind_stamp_def = new_definition
   `bind_stamp = ExnStamp 0`;;
-let chr_stamp_def = cake_define
+let chr_stamp_def = new_definition
   `chr_stamp = ExnStamp 1`;;
-let div_stamp_def = cake_define
+let div_stamp_def = new_definition
   `div_stamp = ExnStamp 2`;;
-let subscript_stamp_def = cake_define
+let subscript_stamp_def = new_definition
   `subscript_stamp = ExnStamp 3`;;
 
-let bind_exn_v_def = cake_define
+let bind_exn_v_def = new_definition
   `semanticPrimitives_bind_exn_v = semanticPrimitives_Conv (SOME
   bind_stamp) []`;;
 hol4_overload "bind_exn_v" "semanticPrimitives_bind_exn_v";;
-let chr_exn_v_def = cake_define
+let chr_exn_v_def = new_definition
   `semanticPrimitives_chr_exn_v = semanticPrimitives_Conv (SOME
   chr_stamp) []`;;
 hol4_overload "chr_exn_v" "semanticPrimitives_chr_exn_v";;
-let div_exn_v_def = cake_define
+let div_exn_v_def = new_definition
   `semanticPrimitives_div_exn_v = semanticPrimitives_Conv (SOME
   div_stamp) []`;;
 hol4_overload "div_exn_v" "semanticPrimitives_div_exn_v";;
-let sub_exn_v_def = cake_define
+let sub_exn_v_def = new_definition
   `sub_exn_v = semanticPrimitives_Conv (SOME subscript_stamp) []`;;
 
-let bool_type_num_def = cake_define
+let bool_type_num_def = new_definition
   `bool_type_num = 0`;;
-let list_type_num_def = cake_define
+let list_type_num_def = new_definition
   `list_type_num = 1`;;
-let option_type_num_def = cake_define
+let option_type_num_def = new_definition
   `option_type_num = 2`;;
-let lit_type_num_def = cake_define
+let lit_type_num_def = new_definition
   `lit_type_num = 3`;;
-let id_type_num_def = cake_define
+let id_type_num_def = new_definition
   `id_type_num = 4`;;
-let ast_t_type_num_def = cake_define
+let ast_t_type_num_def = new_definition
   `ast_t_type_num = 5`;;
-let pat_type_num_def = cake_define
+let pat_type_num_def = new_definition
   `pat_type_num = 6`;;
-let lop_type_num_def = cake_define
+let lop_type_num_def = new_definition
   `lop_type_num = 7`;;
-let opn_type_num_def = cake_define
+let opn_type_num_def = new_definition
   `opn_type_num = 8`;;
-let opb_type_num_def = cake_define
+let opb_type_num_def = new_definition
   `opb_type_num = 9`;;
-let opw_type_num_def = cake_define
+let opw_type_num_def = new_definition
   `opw_type_num = 10`;;
-let shift_type_num_def = cake_define
+let shift_type_num_def = new_definition
   `shift_type_num = 11`;;
-let word_size_type_num_def = cake_define
+let word_size_type_num_def = new_definition
   `word_size_type_num = 12`;;
-let fp_uop_type_num_def = cake_define
+let fp_uop_type_num_def = new_definition
   `fp_uop_type_num = 13`;;
-let fp_bop_type_num_def = cake_define
+let fp_bop_type_num_def = new_definition
   `fp_bop_type_num = 14`;;
-let fp_top_type_num_def = cake_define
+let fp_top_type_num_def = new_definition
   `fp_top_type_num = 15`;;
-let fp_cmp_type_num_def = cake_define
+let fp_cmp_type_num_def = new_definition
   `fp_cmp_type_num = 16`;;
 
-let op_type_num_def = cake_define
+let op_type_num_def = new_definition
   `op_type_num = 20`;;
-let locn_type_num_def = cake_define
+let locn_type_num_def = new_definition
   `locn_type_num = 21`;;
-let locs_type_num_def = cake_define
+let locs_type_num_def = new_definition
   `locs_type_num = 22`;;
-let exp_type_num_def = cake_define
+let exp_type_num_def = new_definition
   `exp_type_num = 24`;;
-let dec_type_num_def = cake_define
+let dec_type_num_def = new_definition
   `dec_type_num = 25`;;
 
 (* The result of evaluation *)
@@ -178,7 +178,7 @@ hol4_overload "W8array" "semanticPrimitives_W8array";;
 hol4_overload "Varray" "semanticPrimitives_Varray";;
 hol4_overload "Thunk" "semanticPrimitives_Thunk";;
 
-let store_v_same_type_def = cake_define
+let store_v_same_type_def = new_definition
   `store_v_same_type v1 v2 =
      (match ((v1:'a store_v),(v2:'a store_v)) with
        (semanticPrimitives_Refv _1,semanticPrimitives_Refv _2) -> T |
@@ -191,17 +191,17 @@ let store_v_same_type_def = cake_define
 (* HOL4 semanticPrimitivesScript.sml:189: the type abbreviation
    store, which the port expands *)
 
-let empty_store_def = cake_define
+let empty_store_def = new_definition
   `empty_store = ([]:('a store_v) list)`;;
 
-let store_lookup_def = cake_define
+let store_lookup_def = new_definition
   `store_lookup l (st:('a store_v) list) =
      (if l < LENGTH st then SOME (EL l st) else NONE)`;;
 
-let store_alloc_def = cake_define
+let store_alloc_def = new_definition
   `store_alloc (v:'a store_v) st = (st ++ [v],LENGTH st)`;;
 
-let store_assign_def = cake_define
+let store_assign_def = new_definition
   `store_assign n (v:'a store_v) st =
      (if n < LENGTH st /\ store_v_same_type (EL n st) v then
        SOME (LUPDATE v n st) else NONE)`;;
@@ -270,20 +270,20 @@ hol4_overload "state_ffi_fupd" "semanticPrimitives_state_ffi_fupd";;
 
 (* Other primitives *)
 (* Check that a constructor is properly applied *)
-let do_con_check_def = cake_define
+let do_con_check_def = new_definition
   `do_con_check (cenv:(mlstring,mlstring,num#stamp)namespace) n_opt l
   <=>
      (match n_opt with
        NONE -> T | SOME n -> (match nsLookup cenv n with NONE -> F
          | SOME (l',v2) -> l = l'))`;;
 
-let one_con_check_def = cake_define
+let one_con_check_def = new_definition
   `one_con_check envc x2 =
       match x2 with
         (ast_Con cn es:ast_exp) -> do_con_check envc cn (LENGTH es)
       | _11 -> T`;;
 
-let build_conv_def = cake_define
+let build_conv_def = new_definition
   `build_conv (envC:(mlstring,mlstring,num#stamp)namespace) cn vs =
    (match cn with
      NONE -> SOME (semanticPrimitives_Conv NONE vs) | SOME id' ->
@@ -291,7 +291,7 @@ let build_conv_def = cake_define
          NONE -> NONE | SOME (len,stamp) -> SOME
            (semanticPrimitives_Conv (SOME stamp) vs)))`;;
 
-let lit_same_type_def = cake_define
+let lit_same_type_def = new_definition
   `lit_same_type l1 l2 <=>
       (match (l1,l2) with (ast_IntLit _12,ast_IntLit _13) -> T |
         (ast_Char _14,ast_Char _15) -> T | (ast_StrLit _16,ast_StrLit
@@ -302,24 +302,24 @@ let lit_same_type_def = cake_define
 let match_result_INDUCT,match_result_RECURSION = define_datatype
   "match_result = No_match | Match_type_error | Match ('a)";;
 
-let same_type_def = cake_define
+let same_type_def = new_definition
   `same_type x1 x2 =
         match (x1,x2) with
           (TypeStamp v0 n1,TypeStamp v1 n2) -> n1 = n2
         | ((ExnStamp v2),(ExnStamp v3)) -> T
         | (_25,_26) -> F`;;
 
-let same_ctor_def = cake_define
+let same_ctor_def = new_definition
   `same_ctor stamp1 stamp2 <=> stamp1 = (stamp2:stamp)`;;
 
-let ctor_same_type_def = cake_define
+let ctor_same_type_def = new_definition
   `semanticPrimitives_ctor_same_type c1 c2 <=>
     (match (c1,c2) with
       (NONE,NONE) -> T | (SOME stamp1,SOME stamp2) -> same_type
         stamp1 stamp2 | _27 -> F)`;;
 hol4_overload "ctor_same_type" "semanticPrimitives_ctor_same_type";;
 
-let boolv_def = cake_define
+let boolv_def = new_definition
   `semanticPrimitives_Boolv b =
      (if b then semanticPrimitives_Conv (SOME (TypeStamp (implode
        "True") bool_type_num)) [] else semanticPrimitives_Conv (SOME
@@ -337,12 +337,9 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
 let _ = size_thms "ast_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let pmatch_def = cake_define_list_try_tac (fun () ->
+let pmatch_def = define_mutual_wf
   `inv_image (<) (\x. match x with INL (s,a,p,b,c) -> ast_pat_size p |
-     INR (s,a,ps,b,c) -> list_size ast_pat_size ps)`)
-  CHEAT_TAC
+  INR (s,a,ps,b,c) -> list_size ast_pat_size ps)`
   [`semanticPrimitives_pmatch envC s (ast_Pany:ast_pat) v' env =
   Match env`;
    `semanticPrimitives_pmatch envC s (ast_Pvar x:ast_pat) v' env =
@@ -389,7 +386,7 @@ let pmatch_def = cake_define_list_try_tac (fun () ->
 hol4_overload "pmatch" "semanticPrimitives_pmatch";;
 hol4_overload "pmatch_list" "semanticPrimitives_pmatch_list";;
 
-let can_pmatch_all_def = cake_define_list
+let can_pmatch_all_def,can_pmatch_all_ind = define_rec
   [`can_pmatch_all envC refs [] v <=> T`;
    `can_pmatch_all envC refs (p :: ps) v <=>
          (if semanticPrimitives_pmatch envC refs p v [] =
@@ -397,7 +394,7 @@ let can_pmatch_all_def = cake_define_list
            v)`];;
 
 (* Bind each function of a mutually recursive set of functions to its closure *)
-let build_rec_env_def = cake_define
+let build_rec_env_def = new_definition
   `(semanticPrimitives_build_rec_env:(mlstring#mlstring#ast_exp)
   list->semanticPrimitives_v
   sem_env->(mlstring,mlstring,semanticPrimitives_v)namespace->(mlstring
@@ -408,12 +405,13 @@ let build_rec_env_def = cake_define
 hol4_overload "build_rec_env" "semanticPrimitives_build_rec_env";;
 
 (* Lookup in the list of mutually recursive functions *)
-let find_recfun_def = cake_define
-  `(find_recfun:mlstring->(mlstring#'a#'b) list->('a#'b) option) n funs
+let find_recfun_def,find_recfun_ind = define_shaped_rec
+  "match"
+  [`(find_recfun:mlstring->(mlstring#'a#'b) list->('a#'b) option) n funs
   =
    (match funs with
      [] -> NONE | (f,x,e) :: funs' -> (if f = n then SOME (x,e)
-       else find_recfun n funs'))`;;
+       else find_recfun n funs'))`];;
 
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
@@ -423,19 +421,16 @@ let _ = size_thms "semanticPrimitives_v";;
    the names that the port gives the constants *)
 (* HOL4 semanticPrimitivesScript.sml:440-444: the tactic that proves
    the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let do_eq_def = cake_define_list_try_tac (fun () ->
+let do_eq_def = define_mutual_wf
   `inv_image (<) (\x. match x with INL (v1,v2) ->
-     semanticPrimitives_v_size v1 | INR (vs1,vs2) -> list_size
-     semanticPrimitives_v_size vs1)`)
-  CHEAT_TAC
+  semanticPrimitives_v_size v1 | INR (vs1,vs2) -> list_size
+  semanticPrimitives_v_size vs1)`
   [`semanticPrimitives_do_eq (semanticPrimitives_Litv
   l1:semanticPrimitives_v) (semanticPrimitives_Litv
   l2:semanticPrimitives_v) =
@@ -487,7 +482,7 @@ hol4_overload "do_eq" "semanticPrimitives_do_eq";;
 hol4_overload "do_eq_list" "semanticPrimitives_do_eq_list";;
 
 (* Do an application *)
-let do_opapp_def = cake_define
+let do_opapp_def = new_definition
   `semanticPrimitives_do_opapp vs =
       (match vs with [semanticPrimitives_Closure env n e; v] -> SOME
         (sem_env_v_fupd (K (nsBind n v (sem_env_v env))) env,e) |
@@ -502,8 +497,12 @@ let do_opapp_def = cake_define
 hol4_overload "do_opapp" "semanticPrimitives_do_opapp";;
 
 (* If a value represents a list, get that list. Otherwise return Nothing *)
-let v_to_list_def = cake_define
-  `semanticPrimitives_v_to_list x1 =
+let _ = size_thms "semanticPrimitives_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let v_to_list_def,v_to_list_ind = define_wf
+  `MEASURE (\x0. semanticPrimitives_v_size x0)`
+  [`semanticPrimitives_v_to_list x1 =
       match x1 with
         (semanticPrimitives_Conv (SOME stamp)
           []:semanticPrimitives_v) ->
@@ -513,10 +512,10 @@ let v_to_list_def = cake_define
      (if stamp = TypeStamp (implode "::") list_type_num then
         match semanticPrimitives_v_to_list v2 with NONE -> NONE |
           SOME vs -> SOME (v1 :: vs) else NONE)
-      | _44 -> NONE`;;
+      | _44 -> NONE`];;
 hol4_overload "v_to_list" "semanticPrimitives_v_to_list";;
 
-let list_to_v_def = cake_define_list
+let list_to_v_def,list_to_v_ind = define_rec
   [`semanticPrimitives_list_to_v [] = semanticPrimitives_Conv (SOME
   (TypeStamp (implode "[]") list_type_num)) []`;
    `semanticPrimitives_list_to_v (x :: xs) =
@@ -524,8 +523,12 @@ let list_to_v_def = cake_define_list
   list_type_num)) [x; semanticPrimitives_list_to_v xs]`];;
 hol4_overload "list_to_v" "semanticPrimitives_list_to_v";;
 
-let v_to_char_list_def = cake_define
-  `semanticPrimitives_v_to_char_list x1 =
+let _ = size_thms "semanticPrimitives_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let v_to_char_list_def,v_to_char_list_ind = define_wf
+  `MEASURE (\x0. semanticPrimitives_v_size x0)`
+  [`semanticPrimitives_v_to_char_list x1 =
       match x1 with
         (semanticPrimitives_Conv (SOME stamp)
           []:semanticPrimitives_v) ->
@@ -534,79 +537,88 @@ let v_to_char_list_def = cake_define
       | (semanticPrimitives_Conv (SOME stamp)
         [semanticPrimitives_Litv (ast_Char c); v]) ->
      (if stamp = TypeStamp (implode "::") list_type_num then
-        match semanticPrimitives_v_to_char_list v with NONE -> NONE |
-          SOME cs -> SOME (STRING c cs) else NONE)
-      | _45 -> NONE`;;
+        match semanticPrimitives_v_to_char_list v with NONE -> NONE
+          | SOME cs -> SOME (STRING c cs) else NONE)
+      | _45 -> NONE`];;
 hol4_overload "v_to_char_list" "semanticPrimitives_v_to_char_list";;
 
-let vs_to_string_def = cake_define
-  `semanticPrimitives_vs_to_string x1 =
+let _ = size_thms "semanticPrimitives_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let vs_to_string_def,vs_to_string_ind = define_wf
+  `MEASURE (\x0. semanticPrimitives_v_size3 x0)`
+  [`semanticPrimitives_vs_to_string x1 =
       match x1 with
         [] -> SOME (implode "")
       | ((semanticPrimitives_Litv (ast_StrLit
         s1):semanticPrimitives_v) :: vs) ->
      (match semanticPrimitives_vs_to_string vs with NONE -> NONE |
        SOME s2 -> SOME (strcat s1 s2))
-      | (_46 :: v1) -> NONE`;;
+      | (_46 :: v1) -> NONE`];;
 hol4_overload "vs_to_string" "semanticPrimitives_vs_to_string";;
 
-let maybe_to_v_def = cake_define_list
+let maybe_to_v_def = define_cases
   [`maybe_to_v NONE = semanticPrimitives_Conv (SOME (TypeStamp
   (implode "None") option_type_num)) []`;
    `maybe_to_v (SOME v) = semanticPrimitives_Conv (SOME (TypeStamp
   (implode "Some") option_type_num)) [v]`];;
 
-let v_to_id_def = cake_define
-  `v_to_id x1 =
+let _ = size_thms "semanticPrimitives_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let v_to_id_def,v_to_id_ind = define_wf
+  `MEASURE (\x0. semanticPrimitives_v_size x0)`
+  [`v_to_id x1 =
       match x1 with
         (semanticPrimitives_Conv (SOME stamp)
-          [semanticPrimitives_Litv (ast_StrLit s)]:semanticPrimitives_v)
-          ->
+          [semanticPrimitives_Litv (ast_StrLit
+          s)]:semanticPrimitives_v) ->
       (if stamp = TypeStamp (implode "Short") id_type_num then
          SOME (Short s) else NONE)
       | (semanticPrimitives_Conv (SOME stamp)
         [semanticPrimitives_Litv (ast_StrLit s); v]) ->
       (if stamp = TypeStamp (implode "Long") id_type_num then
-         match v_to_id v with NONE -> NONE | SOME id' -> SOME (Long s
-           id') else NONE)
-      | _47 -> NONE`;;
+         match v_to_id v with NONE -> NONE | SOME id' -> SOME (Long
+           s id') else NONE)
+      | _47 -> NONE`];;
 
-let nat_to_v_def = cake_define
+let nat_to_v_def = new_definition
   `nat_to_v n = semanticPrimitives_Litv (ast_IntLit (&n))`;;
 
-let maybe_all_list_def = cake_define
-  `maybe_all_list v =
+let maybe_all_list_def,maybe_all_list_ind = define_shaped_rec
+  "match"
+  [`maybe_all_list v =
      (match v with
        [] -> SOME [] | NONE :: vs -> NONE | SOME x :: vs ->
          (match maybe_all_list vs with NONE -> NONE | SOME xs ->
-           SOME (x :: xs)))`;;
+           SOME (x :: xs)))`];;
 
-let v_to_word8_def = cake_define
+let v_to_word8_def = new_definition
   `v_to_word8 v =
      (match v with semanticPrimitives_Litv (ast_Word8 w) -> SOME w
        | _48 -> NONE)`;;
 
-let v_to_word8_list_def = cake_define
+let v_to_word8_list_def = new_definition
   `v_to_word8_list v =
      (match semanticPrimitives_v_to_list v with NONE -> NONE |
        SOME xs -> maybe_all_list (MAP v_to_word8 xs))`;;
 
-let v_to_word64_def = cake_define
+let v_to_word64_def = new_definition
   `v_to_word64 v =
      (match v with semanticPrimitives_Litv (ast_Word64 w) -> SOME
        w | _49 -> NONE)`;;
 
-let v_to_word64_list_def = cake_define
+let v_to_word64_list_def = new_definition
   `v_to_word64_list v =
      (match semanticPrimitives_v_to_list v with NONE -> NONE |
        SOME xs -> maybe_all_list (MAP v_to_word64 xs))`;;
 
-let lookup_env_def = cake_define
+let lookup_env_def = new_definition
   `lookup_env s (i,j) =
      (match oEL i (eval_oracle_state_envs s) with NONE -> NONE |
        SOME gen_envs -> oEL j gen_envs)`;;
 
-let add_decs_generation_def = cake_define
+let add_decs_generation_def = new_definition
   `add_decs_generation s =
      (match eval_decs_state_env_id_counter s with
        (cur_gen,next_id,next_gen) ->
@@ -614,13 +626,13 @@ let add_decs_generation_def = cake_define
          1))
          s)`;;
 
-let add_env_generation_def = cake_define
+let add_env_generation_def = new_definition
   `add_env_generation s = eval_oracle_state_envs_fupd (K
   (eval_oracle_state_envs s ++ [[]])) (eval_oracle_state_generation_fupd
   (K (LENGTH (eval_oracle_state_envs s)))
      s)`;;
 
-let declare_env_def = cake_define
+let declare_env_def = new_definition
   `declare_env es env =
      (match es with NONE -> NONE | SOME (EvalDecs s) ->
        (match eval_decs_state_env_id_counter s with
@@ -650,12 +662,9 @@ let declare_env_def = cake_define
 let _ = size_thms "semanticPrimitives_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let concrete_v_def = cake_define_list_try_tac (fun () ->
+let concrete_v_def = define_mutual_wf
   `MEASURE (\x. match x with INL v -> semanticPrimitives_v_size v | INR
-     vs -> list_size semanticPrimitives_v_size vs)`)
-  CHEAT_TAC
+  vs -> list_size semanticPrimitives_v_size vs)`
   [`concrete_v v <=>
          (match v with semanticPrimitives_Loc _50 _51 -> T |
            semanticPrimitives_Litv _52 -> T | semanticPrimitives_Conv
@@ -665,7 +674,7 @@ let concrete_v_def = cake_define_list_try_tac (fun () ->
    `concrete_v_list (v :: vs) <=> concrete_v v /\ concrete_v_list
   vs`];;
 
-let compiler_agrees_def = cake_define
+let compiler_agrees_def = new_definition
   `compiler_agrees (f:(num#num)#semanticPrimitives_v#dec
   list->(semanticPrimitives_v#word8 list#word64 list) option)
        args (st_v,bs_v,ws_v) <=>
@@ -675,7 +684,7 @@ let compiler_agrees_def = cake_define
          concrete_v prev_st_v | _55 -> F)`;;
 
 (* get the declarations to be evaluated in the various Eval semantics *)
-let do_eval_def = cake_define
+let do_eval_def = new_definition
   `semanticPrimitives_do_eval vs es =
      (match (es,vs) with (SOME (EvalDecs s),[semanticPrimitives_Env
        env id'; st_v; decs_v; st_v2; bs_v; ws_v]) ->
@@ -706,7 +715,7 @@ hol4_overload "do_eval" "semanticPrimitives_do_eval";;
 
 (* conclude an Eval generation *)
 
-let reset_env_generation_def = cake_define
+let reset_env_generation_def = new_definition
   `reset_env_generation prior_es es =
      (match (prior_es,es) with (SOME (EvalDecs prior_s'),SOME
        (EvalDecs s')) ->
@@ -721,7 +730,7 @@ let reset_env_generation_def = cake_define
        SOME (EvalOracle (eval_oracle_state_generation_fupd (K
          (eval_oracle_state_generation prior_s)) s)) | _57 -> es)`;;
 
-let copy_array_def = cake_define
+let copy_array_def = new_definition
   `copy_array (src,srcoff) len d =
      (if
        srcoff < (&0) \/ len < (&0) \/ LENGTH src < num_of_int (abs (I
@@ -741,21 +750,21 @@ let copy_array_def = cake_define
                  DROP (num_of_int (abs (I (dstoff + len))))
                    dst))))`;;
 
-let ws_to_chars_def = cake_define
+let ws_to_chars_def = new_definition
   `ws_to_chars (ws:word8 list) = MAP (\w. CHR (w2n w)) ws`;;
 
-let chars_to_ws_def = cake_define
+let chars_to_ws_def = new_definition
   `chars_to_ws cs = (MAP (\c. i2w (&(ORD c))) cs:word8 list)`;;
 
 (* HOL4 semanticPrimitivesScript.sml:700-737: code that the source
    has in a comment *)
 
-let shift8_lookup_def = cake_define
+let shift8_lookup_def = new_definition
   `shift8_lookup sh =
      (match sh with Lsl -> word_lsl | Lsr -> word_lsr | Asr ->
        word_asr | Ror -> (word_ror:word8->num->word8))`;;
 
-let shift64_lookup_def = cake_define
+let shift64_lookup_def = new_definition
   `shift64_lookup sh =
      (match sh with Lsl -> word_lsl | Lsr -> word_lsr | Asr ->
        word_asr | Ror -> (word_ror:word64->num->word64))`;;
@@ -771,14 +780,14 @@ let exp_or_val_INDUCT,exp_or_val_RECURSION = define_datatype
 (* HOL4 semanticPrimitivesScript.sml:764: the overload f64lit, which
    the port expands *)
 
-let xor_bytes_def = cake_define
-  `xor_bytes bs1 bs2 =
+let xor_bytes_def,xor_bytes_ind = define_guess
+  [`xor_bytes bs1 bs2 =
       match (bs1,bs2) with
         ([],bs2) -> SOME (bs2:word8 list)
       | (bs1,[]) -> NONE
       | ((b1 :: bs1),(b2 :: bs2)) ->
      (match xor_bytes bs1 bs2 with NONE -> NONE | SOME rest ->
-       SOME (word_xor b1 b2 :: rest))`;;
+       SOME (word_xor b1 b2 :: rest))`];;
 
 (* With `dest_thunk` we check 3 things:
      - The values contain exactly one reference
@@ -798,7 +807,7 @@ hol4_overload "BadRef" "semanticPrimitives_BadRef";;
 hol4_overload "NotThunk" "semanticPrimitives_NotThunk";;
 hol4_overload "IsThunk" "semanticPrimitives_IsThunk";;
 
-let dest_thunk_def = cake_define
+let dest_thunk_def = new_definition
   `semanticPrimitives_dest_thunk vs st =
       match vs with
         [(semanticPrimitives_Loc b n:semanticPrimitives_v)] ->
@@ -813,7 +822,7 @@ let dest_thunk_def = cake_define
       | vs -> semanticPrimitives_NotThunk`;;
 hol4_overload "dest_thunk" "semanticPrimitives_dest_thunk";;
 
-let update_thunk_def = cake_define
+let update_thunk_def = new_definition
   `semanticPrimitives_update_thunk x1 st x3 =
       match (x1,x3) with
         ([(semanticPrimitives_Loc F n:semanticPrimitives_v)],[v]) ->
@@ -823,13 +832,13 @@ let update_thunk_def = cake_define
       | (_60,_61) -> NONE`;;
 hol4_overload "update_thunk" "semanticPrimitives_update_thunk";;
 
-let bad_thunk_update_def = cake_define
+let bad_thunk_update_def = new_definition
   `semanticPrimitives_bad_thunk_update m v st <=>
      m = Evaluated /\ ~(semanticPrimitives_dest_thunk [v] st =
        semanticPrimitives_NotThunk)`;;
 hol4_overload "bad_thunk_update" "semanticPrimitives_bad_thunk_update";;
 
-let thunk_op_def = cake_define
+let thunk_op_def = new_definition
   `semanticPrimitives_thunk_op ((s:(semanticPrimitives_v store_v)
   list),(t:'ffi ffi_state)) th_op vs =
      (match (th_op,vs) with (AllocThunk m,[v]) ->
@@ -845,7 +854,7 @@ let thunk_op_def = cake_define
             -> NONE)`;;
 hol4_overload "thunk_op" "semanticPrimitives_thunk_op";;
 
-let check_type_def = cake_define
+let check_type_def = new_definition
   `semanticPrimitives_check_type x1 v =
       match x1 with
         ast_BoolT -> (v = semanticPrimitives_Boolv T \/ v =
@@ -861,52 +870,52 @@ let check_type_def = cake_define
         (ast_Float64 w))`;;
 hol4_overload "check_type" "semanticPrimitives_check_type";;
 
-let dest_Litv_def = cake_define
+let dest_Litv_def = new_definition
   `semanticPrimitives_dest_Litv x1 =
       match x1 with
         (semanticPrimitives_Litv v:semanticPrimitives_v) -> SOME v
       | _63 -> NONE`;;
 hol4_overload "dest_Litv" "semanticPrimitives_dest_Litv";;
 
-let the_Litv_IntLit_def = cake_define
-  `the_Litv_IntLit (semanticPrimitives_Litv (ast_IntLit
-  i):semanticPrimitives_v) = i`;;
+let the_Litv_IntLit_def = define_general
+  [`the_Litv_IntLit (semanticPrimitives_Litv (ast_IntLit
+  i):semanticPrimitives_v) = i`];;
 
-let the_Litv_Word8_def = cake_define
-  `the_Litv_Word8 (semanticPrimitives_Litv (ast_Word8
-  w):semanticPrimitives_v) = w`;;
+let the_Litv_Word8_def = define_general
+  [`the_Litv_Word8 (semanticPrimitives_Litv (ast_Word8
+  w):semanticPrimitives_v) = w`];;
 
-let the_Litv_Word64_def = cake_define
-  `the_Litv_Word64 (semanticPrimitives_Litv (ast_Word64
-  w):semanticPrimitives_v) = w`;;
+let the_Litv_Word64_def = define_general
+  [`the_Litv_Word64 (semanticPrimitives_Litv (ast_Word64
+  w):semanticPrimitives_v) = w`];;
 
-let the_Litv_Float64_def = cake_define
-  `semanticPrimitives_the_Litv_Float64 (semanticPrimitives_Litv
-  (ast_Float64 w):semanticPrimitives_v) = w`;;
+let the_Litv_Float64_def = define_general
+  [`semanticPrimitives_the_Litv_Float64 (semanticPrimitives_Litv
+  (ast_Float64 w):semanticPrimitives_v) = w`];;
 hol4_overload "the_Litv_Float64" "semanticPrimitives_the_Litv_Float64";;
 
-let the_Litv_Char_def = cake_define
-  `the_Litv_Char (semanticPrimitives_Litv (ast_Char
-  c):semanticPrimitives_v) = c`;;
+let the_Litv_Char_def = define_general
+  [`the_Litv_Char (semanticPrimitives_Litv (ast_Char
+  c):semanticPrimitives_v) = c`];;
 
-let the_Boolv_def = cake_define
+let the_Boolv_def = new_definition
   `the_Boolv v = (v = semanticPrimitives_Boolv T)`;;
 
-let num_cmp_def = cake_define_list
+let num_cmp_def = define_cases
   [`semanticPrimitives_num_cmp (ast_Lt:opb) i (j:num) = (i < (j:num))`;
    `semanticPrimitives_num_cmp ast_Leq i (j:num) = (i <= j)`;
    `semanticPrimitives_num_cmp ast_Gt i (j:num) = (i > j)`;
    `semanticPrimitives_num_cmp ast_Geq i (j:num) = (i >= j)`];;
 hol4_overload "num_cmp" "semanticPrimitives_num_cmp";;
 
-let int_cmp_def = cake_define_list
+let int_cmp_def = define_cases
   [`semanticPrimitives_int_cmp (ast_Lt:opb) i (j:int) = (i < (j:int))`;
    `semanticPrimitives_int_cmp ast_Leq i (j:int) = (i <= j)`;
    `semanticPrimitives_int_cmp ast_Gt i (j:int) = (i > j)`;
    `semanticPrimitives_int_cmp ast_Geq i (j:int) = (i >= j)`];;
 hol4_overload "int_cmp" "semanticPrimitives_int_cmp";;
 
-let str_cmp_def = cake_define
+let str_cmp_def = new_definition
   `str_cmp x1 x2 i j =
       match (x1,x2) with
         (F,(ast_Lt:opb)) -> mlstring_lt i j
@@ -918,7 +927,7 @@ let str_cmp_def = cake_define
       | (T,ast_Gt) -> fast_gt i j
       | (T,ast_Geq) -> fast_ge i j`;;
 
-let do_test_def = cake_define_list
+let do_test_def = define_cases
   [`// TODO: extend with more cases
     semanticPrimitives_do_test (Equal:test) ty v1 v2 =
       (if semanticPrimitives_check_type ty v1 /\
@@ -946,7 +955,7 @@ let do_test_def = cake_define_list
         cmp s t) | _67 -> Eq_type_error)`];;
 hol4_overload "do_test" "semanticPrimitives_do_test";;
 
-let do_arith_def = cake_define
+let do_arith_def = new_definition
   `do_arith a x2 vals =
         match x2 with
           ast_Float64T ->
@@ -1005,7 +1014,7 @@ let do_arith_def = cake_define
           (semanticPrimitives_Boolv (~(the_Boolv v1)))) | _72 -> NONE)
         | _73 -> NONE`;;
 
-let do_conversion_def = cake_define
+let do_conversion_def = new_definition
   `do_conversion v x2 x3 =
         match (x2,x3) with
           // Word to Int conversions
@@ -1048,7 +1057,7 @@ let do_conversion_def = cake_define
           (the_Litv_Word64 v))))
         | (_74,_75) -> NONE`;;
 
-let do_app_def = cake_define
+let do_app_def = new_definition
   `semanticPrimitives_do_app ((s:(semanticPrimitives_v store_v)
   list),(t:'ffi ffi_state)) op vs =
      (match (op,vs) with
@@ -1362,7 +1371,7 @@ let do_app_def = cake_define
 hol4_overload "do_app" "semanticPrimitives_do_app";;
 
 (* Do a logical operation *)
-let do_log_def = cake_define
+let do_log_def = new_definition
   `do_log l v e =
      (if l = Andalso /\ v = semanticPrimitives_Boolv T \/ l =
        Orelse /\ v = semanticPrimitives_Boolv F then SOME (Exp e)
@@ -1371,7 +1380,7 @@ let do_log_def = cake_define
        else NONE)`;;
 
 (* Do an if-then-else *)
-let do_if_def = cake_define
+let do_if_def = new_definition
   `semanticPrimitives_do_if v e1 e2 =
      (if v = semanticPrimitives_Boolv T then SOME e1 else if v =
        semanticPrimitives_Boolv F then SOME e2 else NONE)`;;
@@ -1379,13 +1388,13 @@ hol4_overload "do_if" "semanticPrimitives_do_if";;
 
 (* Semantic helpers for definitions *)
 
-let build_constrs_def = cake_define
+let build_constrs_def = new_definition
   `build_constrs stamp condefs =
      MAP (\(conN,ts). (conN,LENGTH ts,TypeStamp conN stamp))
        condefs`;;
 
 (* Build a constructor environment for the type definition tds *)
-let build_tdefs_def = cake_define_list
+let build_tdefs_def,build_tdefs_ind = define_rec
   [`build_tdefs next_stamp ([]:(mlstring list#mlstring#(mlstring#ast_t
   list) list) list) =
       ((alist_to_ns []):(mlstring,mlstring,num#stamp)namespace)`;
@@ -1395,7 +1404,7 @@ let build_tdefs_def = cake_define_list
           condefs)))):(mlstring,mlstring,num#stamp)namespace)`];;
 
 (* Checks that no constructor is defined twice in a type *)
-let check_dup_ctors_def = cake_define
+let check_dup_ctors_def = new_definition
   `check_dup_ctors ((tvs,tn,condefs):mlstring
   list#mlstring#(mlstring#ast_t list) list) <=>
      ALL_DISTINCT
@@ -1403,14 +1412,14 @@ let check_dup_ctors_def = cake_define
           ITLIST (\(n,ts) x2. if T then n :: x2 else x2) condefs
             x2)`;;
 
-let combine_dec_result_def = cake_define
+let combine_dec_result_def = new_definition
   `combine_dec_result env (r:(semanticPrimitives_v
   sem_env,'a)semanticPrimitives_result) =
      (match r with Rval env' -> Rval (mk_sem_env (nsAppend
        (sem_env_v env') (sem_env_v env)) (nsAppend (sem_env_c env')
        (sem_env_c env))) | Rerr e -> Rerr e)`;;
 
-let extend_dec_env_def = cake_define
+let extend_dec_env_def = new_definition
   `extend_dec_env new_env (env:semanticPrimitives_v sem_env) =
      mk_sem_env (nsAppend (sem_env_v new_env) (sem_env_v env))
        (nsAppend (sem_env_c new_env) (sem_env_c env))`;;

@@ -26,9 +26,7 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "clos_call"
   ["closLang"; "db_vars"];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let free_def = cake_define_list_cheat CHEAT_TAC
+let free_def,free_ind = define_rec
   [`clos_call_free [] = ([],db_vars_Empty)`;
    `clos_call_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_call_free [x] in
@@ -85,9 +83,8 @@ hol4_overload "free" "clos_call_free";;
 
 (* HOL4 clos_callScript.sml:63: ML code, not ported *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let free_sing_def = cake_define_list_cheat CHEAT_TAC
+let free_sing_def = define_mutual_shaped_rec
+  "nested"
   [`free_sing (Var t v:closLang_exp) = ((Var t v:closLang_exp),Var v)`;
    `free_sing (If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
@@ -166,7 +163,7 @@ let free_CONS = prove
  (`FST (clos_call_free (x :: xs)) = HD (FST (clos_call_free [x])) ::
   FST (clos_call_free xs)`,
   CHEAT_TAC);;
-let closed_def = cake_define
+let closed_def = new_definition
   `clos_call_closed x = (\t. t = LN) (db_to_set (SND (clos_call_free
   [x])))`;;
 hol4_overload "closed" "clos_call_closed";;
@@ -180,22 +177,31 @@ let EL_MEM_LEMMA = prove
  (`!xs i x. i < LENGTH xs /\ (x = EL i xs) ==> MEM x xs`,
   CHEAT_TAC);;
 
-let insert_each_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let insert_each_def,insert_each_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`insert_each p 0 g = g`;
    `insert_each p (SUC n) (g1,g2) = insert_each (p + 2) n
   (sptree_insert p one g1,g2)`];;
 
-let code_list_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let code_list_def,code_list_ind = define_wf
+  `MEASURE (\(x0,x1,x2). list_size (pair_size (\x. 0) (\x. 0)) x1)`
   [`code_list loc [] g = g`;
    `code_list loc ((n,p) :: xs) (g1,g2) =
          code_list (loc + 2) xs (g1,(loc + 1,n,p) :: g2)`];;
 
-let GENLIST_Var_def = cake_define
-  `GENLIST_Var t (i:num) n =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let GENLIST_Var_def,GENLIST_Var_ind = define_wf
+  `MEASURE (\(x0,x1,x2). (\n. n) x2)`
+  [`GENLIST_Var t (i:num) n =
      (if n = 0 then [] else
-       GENLIST_Var t (i + 1) (n - (1:num)) ++ [Var t (n - 1)])`;;
+       GENLIST_Var t (i + 1) (n - (1:num)) ++ [Var t (n - 1)])`];;
 
-let calls_list_def = cake_define_list
+let calls_list_def,calls_list_ind = define_rec
   [`calls_list t (i:num) loc [] = []`;
    `calls_list t (i:num) loc ((n,_7) :: xs) =
          (n,closLang_Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
@@ -207,11 +213,10 @@ let calls_list_def = cake_define_list
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let calls_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size o FST)`)
-  CHEAT_TAC
+(* HOL4 clos_callScript.sml:309-317: the tactic that proves the
+   termination *)
+let calls_def,calls_ind = define_wf
+  `MEASURE (list_size closLang_exp_size o FST)`
   [`calls [] g = ([],g)`;
    `calls ((x:closLang_exp) :: y :: xs) g =
          (let (e1,g) = calls [x] g in
@@ -306,12 +311,9 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 clos_callScript.sml:388-393: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let calls_sing_def = cake_define_list_try_tac (fun () ->
+let calls_sing_def = define_mutual_wf
   `MEASURE (\x. match x with INL (e,_26) -> closLang_exp_size e | INR
-     (es,_27) -> list_size closLang_exp_size es)`)
-  CHEAT_TAC
+  (es,_27) -> list_size closLang_exp_size es)`
   [`calls_sing (Var t v:closLang_exp) g =
          ((Var t v:closLang_exp),g)`;
    `calls_sing (If t x1 x2 x3:closLang_exp) g =
@@ -397,13 +399,13 @@ let calls_sing_eq = prove
    (!es g. calls es g = calls_sing_list es g)`,
   CHEAT_TAC);;
 
-let clos_call_compile_def = cake_define_list
+let clos_call_compile_def = define_general
   [`clos_call_compile F x = (x,(LN,[]))`;
    `clos_call_compile T x = (let (xs,g) = calls x (LN,[]) in
   (xs,g))`];;
 hol4_overload "compile" "clos_call_compile";;
 
-let clos_call_compile_inc_def = cake_define
+let clos_call_compile_inc_def = new_definition
   `clos_call_compile_inc d (e,xs) =
      (let (ea,d1,new_code) = calls e (d,[]) in
        (d1,ea,new_code))`;;
@@ -423,7 +425,7 @@ let clos_call_compile_inc_eq = prove
        (d1,ea,new_code))`,
   CHEAT_TAC);;
 
-let cond_call_compile_inc_def = cake_define
+let cond_call_compile_inc_def = new_definition
   `cond_call_compile_inc do_it = (if do_it then clos_call_compile_inc
   else CURRY I)`;;
 

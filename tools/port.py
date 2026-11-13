@@ -1689,7 +1689,7 @@ class Porter:
       '   grammar itself with the ML code of grammarLib\n'
       '   (mk_grammar_def); the port writes out what it makes *)')
     self.emit_datatype('\n' + dt)
-    self.out.append('\nlet %s_def = cake_define\n  `%s`;;'
+    self.out.append('\nlet %s_def = new_definition\n  `%s`;;'
                     % (info['gname'], fmt(gr)))
     return True
 
@@ -1991,6 +1991,7 @@ class Porter:
       for nm, txt in self.raw_overloads.items():
         try: self.ctx.overloads[nm] = self.term(txt)
         except Exception: pass
+    rawterm = None
     if key in overrides.MATCH_CLAUSES:
       # a family in which one function has the overlapping clauses:
       # the clauses of that function are one quotation with a match
@@ -2004,7 +2005,8 @@ class Porter:
           self.multi_pattern(body)):
       # one clause with a match, which HOL Light handles far better
       # than a definition by patterns on several arguments
-      term = fmt(self.match_form(body))
+      rawterm = self.match_form(body)
+      term = fmt(rawterm)
     elif (self.several_clauses(body) and
           key not in overrides.ONE_QUOTATION):
       # HOL4 typechecks every clause of a definition on its own, so
@@ -2013,9 +2015,11 @@ class Porter:
       term = None
       clauses = self.clause_form(body)
     elif key in overrides.ANNOTATE:
-      term = fmt(self.term(body, annotate=True))
+      rawterm = self.term(body, annotate=True)
+      term = fmt(rawterm)
     else:
-      term = fmt(self.term(body))
+      rawterm = self.term(body)
+      term = fmt(rawterm)
     rel = overrides.MEASURE.get(key)
     if rel is not None: rel = fmt(' '.join(rel.split()), last=1)
     # the relation that HOL4's Termination gives is for the whole
@@ -2114,8 +2118,11 @@ class Porter:
     # and the cheat may have been for something else
     if way is not None and not tac: cheat = assumed_term
     # the clauses, as the list that every way but new_definition
-    # takes (HOL4 typechecks each of them on its own)
-    body = clauses if term is None else '[`%s`]' % term
+    # takes (HOL4 typechecks each of them on its own).  A term in
+    # the list ends in `];; and not in `;;, so its last line has
+    # one character less to go on
+    body = (clauses if term is None
+            else '[`%s`]' % fmt(rawterm, width=71, last=4))
     if strat in NOT_RECURSIVE: recursive = False
     elif strat in RECURSIVE: recursive = True
     else: recursive = recursive_text(body, names)
@@ -2144,25 +2151,23 @@ class Porter:
     if assumed:
       how = 'assume_definition_rec' if recursive and not mutual \
             else 'assume_definition'
-      text = (sizes + matchnote +
-              'let %s = %s\n  "%s"\n  %s;;'
-              % (binding, how, why, body))
+      text = sizes + matchnote + letline(binding, how,
+                                         '"%s"\n  %s' % (why, body))
     elif not recursive:
       if strat in SHAPES:
-        text = (sizes + matchnote +
-                'let %s = define_shaped "%s"\n  %s;;'
-                % (bind, strat, body))
+        text = sizes + matchnote + letline(
+                 bind, 'define_shaped', '"%s"\n  %s' % (strat, body))
       elif strat == 'define_single':
-        text = (sizes + matchnote +
-                'let %s = define_general%s\n  %s;;'
-                % (bind, '_cheat' if cheat else '', body))
+        text = sizes + matchnote + letline(
+                   bind, 'define_general%s'
+                         % ('_cheat' if cheat else ''), body)
       elif term is not None and key not in overrides.ONE_QUOTATION \
            and strat != 'new_recursive_definition':
         text = sizes + 'let %s = new_definition\n  `%s`;;' % (bind,
                                                               term)
       else:
-        text = (sizes + matchnote +
-                'let %s = define_cases\n  %s;;' % (bind, body))
+        text = sizes + matchnote + letline(bind, 'define_cases',
+                                           body)
     else:
       # {one function, a family} x {a rewriting of the clauses or
       # none} x {a relation, the measure of the arguments matched
@@ -2186,8 +2191,7 @@ class Porter:
       if suffix == '_tac': args += tactext + '\n  '
       text = (sizes + (relnote if rel is not None else '') +
               termnote + (cheatnote if cheat and not tac else '') +
-              matchnote +
-              'let %s = %s\n  %s%s;;' % (binding, how, args, body))
+              matchnote + letline(binding, how, args + body))
     # the definition is followed by the overloads of HOL4, where the
     # name it gives a constant is one that other theories use too
     overloads = self.overloads_of(sorted(self.ctx.defining))
@@ -3587,7 +3591,7 @@ class Porter:
     if nm != name and text.startswith(name):
       text = nm + text[len(name):]
     bind = self.bindname(name + '_def')
-    self.out.append('let %s = cake_define\n  `%s`;;\n'
+    self.out.append('let %s = new_definition\n  `%s`;;\n'
                     % (bind, fmt(text)))
     EMITTED_DEFS.append((self.thy, nm, bind))
 
@@ -3956,6 +3960,20 @@ def overlap(p, q):
 
 def Node_list(items, tok):
   return hterm.Node('list', tok=tok.tok, items=items)
+
+
+def letline(binding, how, rest):
+  """the phrase that makes a definition.  A binding of a pair is
+     long, and the way has a long name of its own, so the two go on
+     a line each where they do not fit on one, and the two names of
+     the pair on a line each where even that is too long."""
+  head = 'let %s = %s' % (binding, how)
+  if len(head) <= 72:
+    return '%s\n  %s;;' % (head, rest)
+  if len('let %s =' % binding) <= 72:
+    return 'let %s =\n  %s\n  %s;;' % (binding, how, rest)
+  a, b = binding.split(',')
+  return 'let %s,\n    %s =\n  %s\n  %s;;' % (a, b, how, rest)
 
 
 def fmt(text, indent=3, width=72, last=3):

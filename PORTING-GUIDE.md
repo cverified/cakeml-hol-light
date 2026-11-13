@@ -1504,6 +1504,13 @@ Three things at once, and none of them a proof.
    with HOL4's own relation, which makes the definition in a minute
    with no axiom, is never reached.
 
+   *(Point 3 cannot happen any more: the chain of strategies is no
+   longer what a file calls.  A file says the way it is made, and
+   where the source gives a relation that way is `define_wf` with
+   it, which is `define_single` with the relation and nothing
+   tried before it.  Points 1 and 2 stand -- the conditions still
+   need the two size facts, and a definition still has a budget.)*
+
 ### What the port does
 
 Three overrides, all keyed on the one definition, so nothing else
@@ -2178,10 +2185,10 @@ A tactic that a wrapper of a definition takes stands as one
 argument of a curried function, so the file of the port reads
 
 ```
-let foo_def = cake_define_try_tac
-  (fun () -> `MEASURE (\x. x)`)
+let foo_def,foo_ind = define_wf_tac
+  `MEASURE (\x. x)`
   (TERM_TAC THEN REWRITE_TAC[...] THEN ARITH_TAC)
-  `foo x = ...`;;
+  [`foo x = ...`];;
 ```
 
 and so does the body of a section of the proof store, which
@@ -2190,7 +2197,7 @@ and so does the body of a section of the proof store, which
 ### What it means
 
 `THEN` is an infix of OCaml, so without the brackets the line reads
-as `(cake_define_try_tac (fun () -> ...) TERM_TAC) THEN
+as `(define_wf_tac `...` TERM_TAC) THEN
 REWRITE_TAC[...]`: the wrapper gets `TERM_TAC` as its tactic and
 the rest of the chain is applied to what the application gives --
 a function, or, while the port's theorems took their proof as the
@@ -2204,8 +2211,8 @@ Error: This expression has type thm = Hol.thm
 
 and the file does not load from that line on.  A `prove` is safe,
 its two arguments standing inside its own brackets; every curried
-wrapper of a definition (`cake_define_try_tac`, `cake_define_tac`,
-`cake_define_cheat`, `cake_define_wf`) is not.  `tmp/sectest.py`
+wrapper of a definition (`define_wf_tac`, `define_wf`,
+`define_wf_cheat`, `define_shaped_wf`) is not.  `tmp/sectest.py`
 does not catch it, because it binds the body to a name
 (`let t = <body>;;`), where a bare chain is fine; the section of
 `w2i_i2w_IMP` went through three commits that way.
@@ -2898,15 +2905,38 @@ it.  A proof that is written and too slow belongs in the attempt's
 comment, with what it needs, until it is made cheap -- which is
 where `word_eq_LESS_EQ` and `vb_eq_size_IMP_vb_size` stand.
 
-## 44. The induction of a definition that the port does not have
+## 44. The induction of a recursive definition
 
 HOL4's `Definition` gives a `foo_ind` with it, and a proof of the
-source starts `ho_match_mp_tac foo_ind`.  The port has no such
-theorem: `cake_define_try_tac` makes the constant and its clauses
-and nothing else.  Where the recursion is on a measure -- and in
-the sources that is where the termination needed a
-`WF_REL_TAC 'measure ...'` -- the induction to write by hand is a
-complete induction on that measure:
+source starts `ho_match_mp_tac foo_ind`.  **The port gives one
+too.**  Every recursive way of making a definition binds it next
+to the definition, so a file reads
+
+```ocaml
+let foo_def,foo_ind = define_wf `MEASURE (\(x,y). x)`
+  [`foo ... = ...`; ...];;
+```
+
+and `MATCH_MP_TAC foo_ind` is what `ho_match_mp_tac foo_ind` of
+the source becomes.  The statement is one antecedent per clause,
+with a hypothesis for every recursive call of that clause under
+the guards that lead to it, which is the shape HOL4 gives -- so a
+proof of the source maps onto it clause by clause.
+
+Two kinds still have none, and for those the rest of this entry
+stands.  A family that recurses through one another
+(`define_mutual_*`) has no mutual induction theorem yet
+(`ISSUES.md`).  And where the termination of a definition is
+assumed, its induction is assumed with it (`foo_ind ASSUMED` while
+the file loads, and a line in `ml/CHEATS.md`): the theorem is
+there and its statement is right, but it rests on the same
+assumption the definition does, so phase three has to pay for both
+at once.
+
+**Writing the induction by hand.**  Where the recursion is on a
+measure -- and in the sources that is where the termination needed
+a `WF_REL_TAC 'measure ...'` -- it is a complete induction on that
+measure:
 
 ```
 let aux = prove
@@ -4640,8 +4670,8 @@ that HOL4 gives.  Two things had to be put right at once:
   before the definition and `:= 8` after it (`EXTRA_BEFORE` and
   `EXTRA_AFTER`) is what the file does about it.
 
-So a `cake_define ... CHEATED` line says nothing about whether the
-termination is hard.  What tells is `tools/bin/trydef`, with
+So a `... ASSUMED` line while a file loads says nothing about
+whether the termination is hard.  What tells is `tools/bin/trydef`, with
 `S=<session>` to use a session that already holds the file:
 
 ```
@@ -5031,8 +5061,10 @@ Three things stood in the way.
 - **the strategy that makes it is `define_mutual`.**
   `define_prim_rec` and `define_match` each want one function, and
   `define_match` a scrutinee that is an argument and not a pair of
-  two, so the chain of `cake_define_gen` goes all the way to
-  `measure` and `guess`, and those call `define_mutual`.
+  two, so what is left is a measure or a guess, and those call
+  `define_mutual`.  A file writes that as `define_mutual_wf` or
+  `define_mutual_rec`, which give the definition and no induction
+  theorem (`ISSUES.md`).
 - **`derive` depaired the clause and not the specification.**  Its
   last step proves the clauses as the source gives them from the
   clauses of the mutual function, with

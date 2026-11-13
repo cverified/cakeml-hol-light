@@ -35,7 +35,7 @@ let _ = hide_overloads
 hol4_overload "prog_comp" "stack_names_prog_comp";;
 hol4_overload "comp" "stack_names_comp";;
 
-let rename_state_def = cake_define
+let rename_state_def = new_definition
   `rename_state compile_rest f s = stackSem_state_ffi_save_regs_fupd (K
   (IMAGE (tlookup f) (stackSem_state_ffi_save_regs s)))
   (stackSem_state_compile_oracle_fupd (K ((I ## stack_names_compile f ##
@@ -279,7 +279,7 @@ let compile_semantics_alt = prove
          semantics start t = semantics start s`),
   CHEAT_TAC);;
 
-let stack_namesProof_make_init_def = cake_define
+let stack_namesProof_make_init_def = new_definition
   `stack_namesProof_make_init f code oracle'
   (s:('a,'c,'ffi)stackSem_state) = stackSem_state_ffi_save_regs_fupd (K
   (IMAGE (LINV (tlookup f) UNIV) (stackSem_state_ffi_save_regs s)))

@@ -20,11 +20,15 @@ needs "compiler/backend/labLang.ml";;
 let _ = hol4_ancestors "lab_filter"
   ["labLang"];;
 
-let not_skip_def = cake_define
+let not_skip_def = new_definition
   `not_skip l = (match l with labLang_Asm (Asmi (asm_Inst asm_Skip))
   _1 _2 -> F | _3 -> T)`;;
 
-let filter_skip_def = cake_define_list
+let _ = size_thms "sec";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let filter_skip_def,filter_skip_ind = define_wf
+  `MEASURE (\x0. list_size (sec_size (\x. 0)) x0)`
   [`filter_skip [] = []`;
    `filter_skip (Section n xs :: rest) =
          Section n (FILTER not_skip xs) :: filter_skip rest`];;

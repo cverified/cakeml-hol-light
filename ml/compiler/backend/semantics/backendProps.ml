@@ -20,20 +20,20 @@ needs "semantics/typeSystem.ml";;
 let _ = hol4_ancestors "backendProps"
   ["misc"];;
 
-let state_cc_def = cake_define
+let state_cc_def = new_definition
   `state_cc f cc =
      (\(state,cfg) prog.
         let (state1,prog1) = f state prog in
           match cc cfg prog1 with NONE -> NONE | SOME
             (code,data,cfg1) -> SOME (code,data,state1,cfg1))`;;
 
-let pure_cc_def = cake_define
+let pure_cc_def = new_definition
   `pure_cc f cc =
      (\cfg prog.
         let prog1 = f prog in
           cc cfg prog1)`;;
 
-let state_co_def = cake_define
+let state_co_def = new_definition
   `state_co f co =
       (\n.
          (let
@@ -57,7 +57,7 @@ let the_F_eq = prove
  (`the F opt = (?x. (opt = SOME x) /\ x)`,
   CHEAT_TAC);;
 
-let pure_co_def = cake_define
+let pure_co_def = new_definition
   `pure_co f = I ## f`;;
 
 (* [simp] *)
@@ -86,7 +86,7 @@ let pure_cc_I = prove
 
 (* identifiers that appear in the initial state and in oracle steps
    increase monotonically in some sense. *)
-let oracle_monotonic_def = cake_define
+let oracle_monotonic_def = new_definition
   `oracle_monotonic (f:'a->'b->bool) (R:'b->'b->bool) (S:'b->bool)
   (orac:num->'a) =
      (
@@ -134,7 +134,7 @@ let oracle_monotonic_DISJOINT_init = prove
 
 (* check that an oracle with config values lists the config values that
    would be produced by the incremental compiler. *)
-let is_state_oracle_def = cake_define
+let is_state_oracle_def = new_definition
   `is_state_oracle compile_inc_f co =
      (!n.
          FST (FST (co (SUC n))) = FST (compile_inc_f (FST (FST (co
@@ -161,20 +161,23 @@ let is_state_oracle_k = prove
 
 (* constructive combinators for building up the config part of an oracle *)
 
-let syntax_to_full_oracle_def = cake_define
+let syntax_to_full_oracle_def = new_definition
   `syntax_to_full_oracle mk progs i = (mk progs i,progs i)`;;
 
-let state_orac_states_def = cake_define_list
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let state_orac_states_def,state_orac_states_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`state_orac_states f st progs 0 = st`;
    `state_orac_states f st progs (SUC n) =
       FST (f (state_orac_states f st progs n) (progs n))`];;
 
-let state_co_progs_def = cake_define
+let state_co_progs_def = new_definition
   `state_co_progs f st orac = (let
      states = state_orac_states f st orac in \i. SND (f (states i)
        (orac i)))`;;
 
-let add_state_co_def = cake_define
+let add_state_co_def = new_definition
   `add_state_co f st mk progs = (let
      states = state_orac_states f st progs in let
      next_progs = state_co_progs f st progs in let
@@ -186,7 +189,7 @@ let state_co_add_state_co = prove
   syntax_to_full_oracle mk (state_co_progs f st progs)`,
   CHEAT_TAC);;
 
-let pure_co_progs_def = cake_define
+let pure_co_progs_def = new_definition
   `pure_co_progs f (orac:num->'a) = f o orac`;;
 
 let pure_co_syntax_to_full_oracle = prove
@@ -251,11 +254,11 @@ let oracle_monotonic_state_with_inv_init = prove
 (* HOL4 backendPropsScript.sml:351-352: a theorem that HOL4 states as
    the value of an ML expression: oracle_monotonic_state_init *)
 
-let restrict_zero_def = cake_define
+let restrict_zero_def = new_definition
   `restrict_zero (labels:num#num->bool) =
      {l | l IN labels /\ SND l = 0}`;;
 
-let restrict_nonzero_def = cake_define
+let restrict_nonzero_def = new_definition
   `restrict_nonzero (labels:num#num->bool) =
      {l | l IN labels /\ ~(SND l = 0)}`;;
 
@@ -288,7 +291,7 @@ let restrict_nonzero_BIGUNION = prove
   ss)`,
   CHEAT_TAC);;
 
-let option_le_def = cake_define
+let option_le_def = new_definition
   `option_le x1 x2 =
       match (x1,x2) with
         (_1,NONE) -> T

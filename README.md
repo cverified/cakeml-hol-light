@@ -60,29 +60,72 @@ load the port or to read it.
 
 ## The shape of a definition
 
-Every definition of the port is made by `cake_define`
-(`ml/lib/define.ml`), and there are 4296 of them.  It takes the
-whole definition as one term and tries a ladder of strategies:
-`new_definition`, then the recursion theorem of the type, then
-eight ways of rearranging the clauses, then a measure, and at the
-end a guess.  Whichever works, works.
+A definition of the port says how it is made, and nothing is
+searched for while a file loads:
 
-It has a wart, and it is the first thing to say about it.  When no
-strategy works, or the time budget runs out, `cake_define`
-**assumes** the definition and records the reason in
-`ml/CHEATS.md`.  So a `cake_define` at a call site does not tell a
-reader whether a definition or an axiom came out of it; only
-`ml/CHEATS.md` does, and `length (axioms ())` counts them.  The
-same name covers both, which is exactly what one does not want.
+```ocaml
+let lookup_def,lookup_ind = define_wf `MEASURE FST`
+  [`sptree_lookup k LN = NONE`;
+   `sptree_lookup k (LS a) = (if k = 0 then SOME a else NONE)`;
+   ...];;
+```
 
-Where this is going: the port already harvests which strategy won
-each definition (`cake_strategies ()`, `tools/bin/strategies`).
-With that recorded, a file can say the primitive itself --
-`new_definition`, or `new_recursive_definition`, or a `define` with
-the measure it needed -- and `cake_define` leaves the surface of
-the port altogether, which is both faster to load and honest about
-what each line does.  An assumed definition then says so in a word
-of its own.  Comments on that plan are welcome.
+The ways are `new_definition` (HOL Light's own: no recursion, one
+clause), `define_cases` (several clauses and no recursion, by the
+recursion theorem of the type that is matched on), `define_rec`
+(structural recursion, by that same theorem), `define_general`
+(clauses that neither of those takes, by HOL Light's machinery),
+`define_wf` (the relation written out, which is what HOL4's
+`Termination` gives), `define_guess` (HOL Light finds the
+termination argument itself), `define_shaped` (clauses HOL Light
+cannot take as HOL4 writes them -- a recursion through a `MAP`, a
+pattern inside a pattern -- with the word that says which
+rewriting of them it goes through), and `assume_definition`, which
+assumes the definition and says so in its name.  `_cheat` on a
+name says the termination is assumed, `_tac` that a tactic for it
+is given, and `_mutual` that it is a family that recurses through
+itself.  The ones that say cheat or assume, and no others, add an
+axiom; `ml/CHEATS.md` lists every one and `length (axioms ())`
+counts them.
+
+Which way each definition needs was harvested from a run
+(`tools/strategies.py`, `tools/bin/strategies`): 2928 of them are
+`new_definition`, 560 need a measure, 325 the recursion theorem of
+their type, 194 that theorem without recursing, 85 HOL Light's
+machinery, 54 a nested recursion compiled, 32 a match, 31 a guess
+and 3 patterns inside patterns.
+
+Each recursive way gives the **induction theorem** with the
+definition, as HOL4 does.  That is what a proof needs to do
+induction over a recursion -- `recInduct foo_ind` and
+`ho_match_mp_tac foo_ind`, 1271 uses in the sources the port
+covers -- and HOL Light has nothing that makes one, so the port
+does (`ml/lib/induction.ml`).
+
+Its statement is read off the clauses: one antecedent per clause,
+with a hypothesis for every recursive call of that clause under
+the guards that lead to it, and a match taken apart into the
+clauses it stands for.  Nothing is proved to arrive at it.  The
+proof is well-founded induction on the relation the definition was
+made with, then the clause whose pattern the arguments match, and
+then the termination condition that was proved to make the
+definition.  A family that recurses through itself has no
+induction theorem yet (`ISSUES.md`).
+
+## Loading it without the proofs
+
+`tools/bin/abstract` loads the whole port with `ml/lib/fast.ml` in
+front of it: every definition makes its constant and **assumes**
+its equations, every induction theorem is its statement assumed,
+and every proof is skipped.  On `lib/sptree.ml` that is 0.6
+seconds against 13.
+
+Nothing is proved in such a session and `length (axioms ())` says
+nothing while it is on.  What makes it safe to develop against is
+that the statements are the same terms either way: the induction
+theorem's statement is computed from the clauses, and a real load
+computes it the same way and then proves it.  An abstract has no
+second copy of what a file says, so it cannot drift from the port.
 
 ## Writing a proof
 

@@ -28,10 +28,13 @@ let _ = hol4_ancestors "data_space"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let num_size_def = cake_define
-  `data_space_num_size (n:num) =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let num_size_def,num_size_ind = define_wf
+  `MEASURE (\x0. (\n. n) x0)`
+  [`data_space_num_size (n:num) =
      (if n < 2 EXP 32 then 2:num else 1 + data_space_num_size (n
-       DIV 2 EXP 32))`;;
+       DIV 2 EXP 32))`];;
 
 (* HOL4's basicSizeTheory has a num_size of its own (the size
    function of a numeral, which ml/lib/hol4.ml has), and this
@@ -43,7 +46,7 @@ let num_size_def = cake_define
    something false (see ISSUES.md). *)
 hol4_overload "num_size" "data_space_num_size";;
 
-let part_space_req_def = cake_define_list
+let part_space_req_def = define_cases
   [`part_space_req (W64 s:const_part) = 3`;
    `part_space_req (closLang_Int i:const_part) =
       (if num_of_int (abs i) < 2 EXP 29 then 0 else
@@ -52,7 +55,7 @@ let part_space_req_def = cake_define_list
    `part_space_req (Con t ns:const_part) =
       (let l = LENGTH ns in if l = 0 then 0 else l + 1)`];;
 
-let op_space_req_def = cake_define
+let op_space_req_def = new_definition
   `op_space_req x1 l =
         match x1 with
           closLang_MemOp closLang_Ref -> l + 1
@@ -75,13 +78,14 @@ let op_space_req_def = cake_define
 (* HOL4 data_spaceScript.sml:46-66: code that the source has in a
    comment *)
 
-let pMakeSpace_def = cake_define_list
+let pMakeSpace_def = define_cases
   [`pMakeSpace (INL c) = c`;
    `pMakeSpace (INR (k,names,c)) = dataLang_Seq (dataLang_MakeSpace
   k names) c`];;
 
-let space_def = cake_define
-  `space c =
+let space_def,space_ind = define_shaped_rec
+  "match"
+  [`space c =
         match c with
           dataLang_MakeSpace k names -> INR (k,names,dataLang_Skip)
         | (dataLang_Seq c1 c2) ->
@@ -105,7 +109,7 @@ let space_def = cake_define
                          (pMakeSpace x2))))
         | (If n c2 c3) ->
         INL (If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
-        | c -> INL c`;;
+        | c -> INL c`];;
 
 let space_pmatch = prove
  (`!c.
@@ -134,7 +138,7 @@ let space_pmatch = prove
          c -> INL c)`,
   CHEAT_TAC);;
 
-let data_space_compile_def = cake_define
+let data_space_compile_def = new_definition
   `data_space_compile c = pMakeSpace (space c)`;;
 hol4_overload "compile" "data_space_compile";;
 

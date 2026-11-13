@@ -20,7 +20,7 @@ let _ = hol4_ancestors "source_to_source"
   ["misc"; "source_let"];;
 
 
-let source_to_source_compile_def = cake_define
+let source_to_source_compile_def = new_definition
   `source_to_source_compile = source_let_compile_decs`;;
 hol4_overload "compile" "source_to_source_compile";;
 

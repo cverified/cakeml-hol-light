@@ -23,7 +23,9 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "clos_ticks"
   ["closLang"];;
 
-let clos_ticks_remove_ticks_def = cake_define_list
+let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
+  define_shaped_rec
+  "nested"
   [`clos_ticks_remove_ticks [] = []`;
    `clos_ticks_remove_ticks ((x:closLang_exp) :: y :: xs) =
          HD (clos_ticks_remove_ticks [x]) ::
@@ -63,7 +65,8 @@ let clos_ticks_remove_ticks_def = cake_define_list
            (clos_ticks_remove_ticks [x1]))]`];;
 hol4_overload "remove_ticks" "clos_ticks_remove_ticks";;
 
-let clos_ticks_remove_ticks_sing_def = cake_define_list
+let clos_ticks_remove_ticks_sing_def = define_mutual_shaped_rec
+  "nested"
   [`clos_ticks_remove_ticks_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp))`;
    `clos_ticks_remove_ticks_sing (If t x1 x2 x3:closLang_exp) =
@@ -128,7 +131,7 @@ let remove_ticks_sing_eq = prove
        [x]))) fns)`,
   CHEAT_TAC);;
 
-let clos_ticks_compile_inc_def = cake_define
+let clos_ticks_compile_inc_def = new_definition
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;
 hol4_overload "compile_inc" "clos_ticks_compile_inc";;
 

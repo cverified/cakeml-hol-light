@@ -26,11 +26,11 @@ let _ = hol4_ancestors "stack_names"
 (* HOL4 stack_namesScript.sml:14: the overload find_name, which the
    port expands *)
 
-let ri_find_name_def = cake_define_list
+let ri_find_name_def = define_cases
   [`ri_find_name f (Reg r) = Reg (tlookup f r)`;
    `ri_find_name f (Imm w) = Imm w`];;
 
-let inst_find_name_def = cake_define
+let inst_find_name_def = new_definition
   `inst_find_name f i =
      (match i with Skip -> Skip | asm_Const r w -> asm_Const (tlookup
        f r) w | Arith (asm_Binop bop d r ri) ->
@@ -61,16 +61,20 @@ let inst_find_name_def = cake_define
            | asm_FP (FPMovFromReg d r1 r2) -> asm_FP (FPMovFromReg d
            (tlookup f r1) (tlookup f r2)) | i -> i)`;;
 
-let dest_find_name_def = cake_define
+let dest_find_name_def = new_definition
   `dest_find_name f x =
       match x with
         INR r -> INR (tlookup f r)
       | x -> x`;;
 
-let stack_names_comp_def = cake_define
-  `stack_names_comp f p =
-     (match p with stackLang_Halt r -> stackLang_Halt (tlookup f r) |
-       Raise r -> Raise (tlookup f r) | stackLang_Break n ->
+let _ = size_thms "stackLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let stack_names_comp_def,stack_names_comp_ind = define_wf
+  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
+  [`stack_names_comp f p =
+     (match p with stackLang_Halt r -> stackLang_Halt (tlookup f r)
+       | Raise r -> Raise (tlookup f r) | stackLang_Break n ->
        stackLang_Break n | stackLang_Continue n -> stackLang_Continue n
        | stackLang_Return r -> stackLang_Return (tlookup f r) | Inst i
        -> Inst (inst_find_name f i) | stackLang_LocValue i l1 l2 ->
@@ -79,14 +83,15 @@ let stack_names_comp_def = cake_define
        If c r ri p1 p2 ->
          If c (tlookup f r) (ri_find_name f ri) (stack_names_comp f
            p1) (stack_names_comp f p2) | stackLang_Loop p1 ->
-           stackLang_Loop (stack_names_comp f p1) | Call ret dest exc ->
+           stackLang_Loop (stack_names_comp f p1) | Call ret dest exc
+           ->
          Call (match ret with NONE -> NONE | SOME (p1,lr,l1,l2) ->
            SOME (stack_names_comp f p1,tlookup f lr,l1,l2))
               (dest_find_name f dest)
               (match exc with NONE -> NONE | SOME (p2,l1,l2) -> SOME
-                (stack_names_comp f p2,l1,l2)) | stackLang_Install r1 r2
-                r3 r4 r5 -> stackLang_Install (tlookup f r1) (tlookup f
-                r2)
+                (stack_names_comp f p2,l1,l2)) | stackLang_Install r1
+                r2 r3 r4 r5 -> stackLang_Install (tlookup f r1)
+                (tlookup f r2)
        (tlookup f r3) (tlookup f r4) (tlookup f r5) |
          stackLang_ShMemOp op r (Addr a w) -> stackLang_ShMemOp op
          (tlookup f r) (Addr (tlookup f a) w) |
@@ -96,23 +101,23 @@ let stack_names_comp_def = cake_define
                               (tlookup f r4) (tlookup f r5) |
                                 stackLang_JumpLower r1 r2 dest ->
                                 stackLang_JumpLower (tlookup f r1)
-                                (tlookup f r2) dest | p -> p)`;;
+                                (tlookup f r2) dest | p -> p)`];;
 hol4_overload "comp" "stack_names_comp";;
 
 (* HOL4 stack_namesScript.sml:89-99: a theorem that HOL4 states as
    the value of an ML expression: comp_pmatch *)
 
-let stack_names_prog_comp_def = cake_define
+let stack_names_prog_comp_def = new_definition
   `stack_names_prog_comp f (n,p) = (n,stack_names_comp f p)`;;
 hol4_overload "prog_comp" "stack_names_prog_comp";;
 
-let stack_names_compile_def = cake_define
+let stack_names_compile_def = new_definition
   `stack_names_compile f prog = MAP (stack_names_prog_comp f) prog`;;
 hol4_overload "compile" "stack_names_compile";;
 
 (* some defaults *)
 
-let names_ok_def = cake_define
+let names_ok_def = new_definition
   `stack_names_names_ok names reg_count avoid_regs =
      (let xs = GENLIST (tlookup names) (reg_count - LENGTH
        avoid_regs) in

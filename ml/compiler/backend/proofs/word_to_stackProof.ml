@@ -266,7 +266,7 @@ let LLOOKUP_TAKE = prove
 
 (* HOL4 word_to_stackProofScript.sml:317: ML code, not ported *)
 
-let index_list_def = cake_define_list
+let index_list_def,index_list_ind = define_rec
   [`index_list [] n = []`;
    `index_list (x :: xs) n = (n + LENGTH xs,x) :: index_list xs n`];;
 
@@ -407,7 +407,7 @@ let word_to_stackProof_MIN_ADD = prove
  (`MIN m1 m2 + n = MIN (m1 + n) (m2 + n)`,
   CHEAT_TAC);;
 
-let list_LUPDATE_def = cake_define_list
+let list_LUPDATE_def,list_LUPDATE_ind = define_rec
   [`list_LUPDATE [] n ys = ys`;
    `list_LUPDATE (x :: xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE
   x n ys)`];;
@@ -503,10 +503,8 @@ let list_rearrange_I = prove
 
 (*Abstracts a stackLang stack w.r.t. wordLang's
   Note: requires assumption on dimindex(:'a) stated in state_rel *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let abs_stack_def = cake_define_cheat CHEAT_TAC
-  `abs_stack bitmaps x2 stack' x4 =
+let abs_stack_def,abs_stack_ind = define_rec
+  [`abs_stack bitmaps x2 stack' x4 =
         match (bitmaps,x2,stack',x4) with
           ((bitmaps:('a word) list),[],stack',[]) ->
        (if stack' = [wordLang_Word ((n2w 0):'a word)] then SOME []
@@ -523,8 +521,8 @@ let abs_stack_def = cake_define_cheat CHEAT_TAC
              // if the (len + 1) n ≠ len + 1 then NONE else
              let frame = TAKE len stack' in
              let rest = DROP len stack' in
-               match abs_stack bitmaps xs rest lens with NONE -> NONE
-                 | SOME ys -> SOME ((NONE,bits,frame) :: ys)))
+               match abs_stack bitmaps xs rest lens with NONE ->
+                 NONE | SOME ys -> SOME ((NONE,bits,frame) :: ys)))
         | (bitmaps,((StackFrame n l0 l (SOME _1)) :: xs),(w ::
           stack'),(len :: lens)) ->
        // Index for bitmap for a handler frame
@@ -544,7 +542,7 @@ let abs_stack_def = cake_define_cheat CHEAT_TAC
                      match abs_stack bitmaps xs rest lens with NONE
                        -> NONE | SOME ys -> SOME ((SOME
                        (loc,hv),bits,frame) :: ys))) | _2 -> NONE))
-        | (bitmaps,_3,_4,_5) -> NONE`;;
+        | (bitmaps,_3,_4,_5) -> NONE`];;
 
 (* HOL4 word_to_stackProofScript.sml:742: ML code, not ported *)
 
@@ -568,7 +566,7 @@ let abs_stack_bitmaps_prefix = prove
   CHEAT_TAC);;
 
 (*TODO this should probably be an Overload*)
-let MAP_FST_def = cake_define
+let MAP_FST_def = new_definition
   `MAP_FST f xs = MAP (\(x,y). (f x,y)) xs`;;
 
 (* [local] *)
@@ -576,11 +574,12 @@ let MAP_SND_MAP_FST = prove
  (`!xs f. MAP SND (MAP_FST f xs) = MAP SND xs`,
   CHEAT_TAC);;
 
-let adjust_names_def = cake_define
+let adjust_names_def = new_definition
   `adjust_names n = n DIV 2`;;
 
 (*handler_val counts the total number of words in the list of frames*)
-let handler_val_def = cake_define_list
+let handler_val_def,handler_val_ind = define_shaped_rec
+  "cases"
   [`handler_val [] = 1`;
    `handler_val ((NONE,_6,frame) :: stack') =
         1 + LENGTH frame + handler_val stack'`;
@@ -590,15 +589,24 @@ let handler_val_def = cake_define_list
         // + 1 for the next bitmap pointer
         4 + LENGTH frame + handler_val stack'`];;
 
-let is_handler_frame_def = cake_define
+let is_handler_frame_def = new_definition
   `is_handler_frame x1 =
         match x1 with
           StackFrame n l0 l NONE -> F
         | _9 -> T`;;
 
 (*Checks for consistency of the values*)
-let stack_rel_aux_def = cake_define
-  `stack_rel_aux k len x3 x4 =
+let _ = size_thms "stack_frame";;
+let _ = size_thms "word_loc";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let stack_rel_aux_def,stack_rel_aux_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3).      list_size (stack_frame_size (\x. 0))
+  x2 +      list_size      (pair_size       (option_size
+  (pair_size (word_loc_size (\x. 0)) (word_loc_size (\x. 0))))
+  (pair_size (list_size (\x. 0)) (list_size (word_loc_size (\x. 0)))))
+      x3)`
+  [`stack_rel_aux k len x3 x4 =
         match (x3,x4) with
           ([],[]) -> T
         | ((StackFrame n l0 l NONE :: xs),((NONE,bits,frame) ::
@@ -606,8 +614,8 @@ let stack_rel_aux_def = cake_define
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>
          adjust_names n < k + LENGTH bits /\
-         oEL ((k + LENGTH bits) - (adjust_names n + 1)) bits = SOME F
-           /\
+         oEL ((k + LENGTH bits) - (adjust_names n + 1)) bits = SOME
+           F /\
          ALOOKUP (index_list frame k) (n DIV 2) = SOME v) /\
        filter_bitmap bits (index_list frame k) = SOME (MAP_FST
          adjust_names l,[]) /\
@@ -623,20 +631,20 @@ let stack_rel_aux_def = cake_define
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>
          adjust_names n < k + LENGTH bits /\
-         oEL ((k + LENGTH bits) - (adjust_names n + 1)) bits = SOME F
-           /\
+         oEL ((k + LENGTH bits) - (adjust_names n + 1)) bits = SOME
+           F /\
          ALOOKUP (index_list frame k) (n DIV 2) = SOME v) /\
        filter_bitmap bits (index_list frame k) = SOME (MAP_FST
          adjust_names l,[]) /\
        the (LENGTH frame + 1) n = LENGTH frame + 1 /\
        stack_rel_aux k len xs stack'
-        | (_10,_11) -> F`;;
+        | (_10,_11) -> F`];;
 
-let sorted_env_def = cake_define
-  `sorted_env (StackFrame n l0 l _12) = SORTED (\x y. FST x > FST y)
-  l`;;
+let sorted_env_def = define_general
+  [`sorted_env (StackFrame n l0 l _12) = SORTED (\x y. FST x > FST
+  y) l`];;
 
-let word_to_stackProof_stack_rel_def = cake_define
+let word_to_stackProof_stack_rel_def = new_definition
   `word_to_stackProof_stack_rel k s_handler s_stack t_handler
   t_rest_of_stack t_stack_length t_bitmaps lens <=>
      EVERY sorted_env s_stack /\
@@ -660,7 +668,7 @@ hol4_overload "stack_rel" "word_to_stackProof_stack_rel";;
 
 (* Stack size as predicted by the wordLang state is a conservative estimate of the
    actual stack usage. *)
-let stack_size_rel_def = cake_define
+let stack_size_rel_def = new_definition
   `stack_size_rel f s_locals_size s_stack_limit s_stack_max s_stack
      t_stack t_stack_space (extra:num) <=>
      (~(f = 0) ==> the f s_locals_size = f) /\
@@ -685,7 +693,7 @@ let stack_size_rel_iff = prove
      f - extra)`,
   CHEAT_TAC);;
 
-let word_to_stackProof_state_rel_def = cake_define
+let word_to_stackProof_state_rel_def = new_definition
   `word_to_stackProof_state_rel ac k f f'
   (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state) lens
   extra <=>
@@ -1121,7 +1129,7 @@ let abs_stack_empty = prove
      (n2w 0)] /\ lens = []`,
   CHEAT_TAC);;
 
-let abs_frame_eq_def = cake_define
+let abs_frame_eq_def = new_definition
   `abs_frame_eq p q <=>
    FST p = FST q /\
    FST (SND p) = FST (SND q) /\
@@ -1321,7 +1329,7 @@ let alloc_IMP_alloc2 = prove
          stackSem_state_ffi t1))`,
   CHEAT_TAC);;
 
-let compile_result_def = cake_define_list
+let compile_result_def = define_cases
   [`compile_result (wordSem_Result w1 w2) = stackSem_Result w1`;
    `compile_result (wordSem_Exception w1 w2) = stackSem_Exception w1`;
    `compile_result wordSem_TimeOut = stackSem_TimeOut`;
@@ -1342,7 +1350,7 @@ let Halt_EQ_compile_result = prove
 
 (* HOL4 word_to_stackProofScript.sml:2429-2431: ML code, not ported *)
 
-let push_locals_def = cake_define
+let push_locals_def = new_definition
   `push_locals l0 l s = stack_fupd (K (StackFrame
   (wordSem_state_locals_size s) l0 l NONE :: stack s))
   (wordSem_state_locals_size_fupd (K (SOME 0))
@@ -1894,8 +1902,9 @@ let _ = size_thms "wordLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 word_to_stackProofScript.sml:4061-4066: the tactic that
    proves the termination *)
-let map_var_def = cake_define_list_try (fun () ->
-  `MEASURE (wordLang_exp_size ARB o SND)`)
+let map_var_def,map_var_ind = define_shaped_wf
+  "nested"
+  `MEASURE (wordLang_exp_size ARB o SND)`
   [`map_var f (wordLang_Var num') = Var (f num')`;
    `map_var f (wordLang_Load exp) = Load (map_var f exp)`;
    `map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f)
@@ -2973,7 +2982,7 @@ let stack_Call_NONE_not_Break_Continue = prove
    statement HOL Light does not read (tools/unstated.py):
    state_rel_IMP_semantics *)
 
-let init_state_ok_def = cake_define
+let init_state_ok_def = new_definition
   `init_state_ok ac k (t:('a,'c,'ffi)stackSem_state) coracle <=>
      4 < k /\ good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
        stackSem_state_use_stack
@@ -3004,7 +3013,7 @@ let init_state_ok_def = cake_define
            progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t)))`;;
 
-let word_to_stackProof_make_init_def = cake_define
+let word_to_stackProof_make_init_def = new_definition
   `word_to_stackProof_make_init ac k (t:('a,'c,'ffi)stackSem_state) code
   coracle =
      mk_wordSem_state (sptree_insert 0 (Loc 1 0) LN) (SOME 0)

@@ -46,7 +46,7 @@ let i_o_f = prove
 let atom_INDUCT,atom_RECURSION = define_datatype
   "atom = TC_tag (num) | DB_tag (num) | Tapp_tag | Null_tag";;
 
-let encode_infer_t_def = cake_define_list
+let encode_infer_t_def = define_mutual_rec
   [`encode_infer_t (Infer_Tvar_db n) =
       term_Const (DB_tag n)`;
    `encode_infer_t (Infer_Tapp ts tc) =
@@ -68,7 +68,7 @@ let encode_infer_t_11 = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let decode_infer_t_def = cake_define_list_cheat CHEAT_TAC
+let decode_infer_t_def = define_mutual_rec
   [`decode_infer_t (term_Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (term_Const (DB_tag n)) =
@@ -134,7 +134,7 @@ let decode_infer_t_CASE = prove
   CHEAT_TAC);;
 
 (* "Ramana Kumar unification type to CakeML type" relation *)
-let RKC_def = cake_define
+let RKC_def = new_definition
   `RKC rkt ct <=> encode_infer_t ct = rkt`;;
 
 (* [transfer_simp] *)
@@ -142,7 +142,7 @@ let surj_RKC = prove
  (`surj RKC`,
   CHEAT_TAC);;
 
-let substR_def = cake_define
+let substR_def = new_definition
   `substR fm sp <=> wfs fm /\ sptree_wf sp /\ fm = encode_infer_t o_f
   sp2fm sp`;;
 
@@ -157,7 +157,7 @@ let substR_FLOOKUP = prove
   sptree_lookup)`,
   CHEAT_TAC);;
 
-let cwfs_def = cake_define
+let cwfs_def = new_definition
   `cwfs s <=> swfs (sptree_map encode_infer_t s) /\ sptree_wf s`;;
 
 let sp2fm_map = prove
@@ -183,7 +183,7 @@ let svwalk_result_encodable = prove
    (!x. ?y. svwalk (sptree_map f fm) x = f y)`,
   CHEAT_TAC);;
 
-let cvwalk_def = cake_define
+let cvwalk_def = new_definition
   `cvwalk s n = decode_infer_t (svwalk (sptree_map encode_infer_t s)
   n)`;;
 
@@ -205,7 +205,7 @@ let term_CASE_encode = prove
 (* HOL4 unifyScript.sml:239-247: a theorem that HOL4 states as the
    value of an ML expression: cvwalk_thm *)
 
-let cwalk_def = cake_define
+let cwalk_def = new_definition
   `cwalk s it = decode_infer_t (swalk (sptree_map encode_infer_t s)
   (encode_infer_t it))`;;
 
@@ -232,7 +232,7 @@ let substR_walk = prove
 (* HOL4 unifyScript.sml:288-293: a theorem that HOL4 states as the
    value of an ML expression: cwalk_thm *)
 
-let coc_def = cake_define
+let coc_def = new_definition
   `coc s it n = soc (sptree_map encode_infer_t s) (encode_infer_t it)
   n`;;
 
@@ -251,10 +251,10 @@ let substR_oc = prove
 (* HOL4 unifyScript.sml:315-321: a theorem that HOL4 states as the
    value of an ML expression: coc_thm *)
 
-let t_vars_def = cake_define
+let t_vars_def = new_definition
   `t_vars t = vars (encode_infer_t t)`;;
 
-let cunify_def = cake_define
+let cunify_def = new_definition
   `cunify s t1 t2 = OPTION_MAP (sptree_map decode_infer_t)
                               (sunify (sptree_map encode_infer_t s)
                                 (encode_infer_t t1)
@@ -352,7 +352,7 @@ let OPTION_BIND_MAP = prove
    OPTION_BIND m (mf o f)`,
   CHEAT_TAC);;
 
-let cunifyl_def = cake_define
+let cunifyl_def = new_definition
   `cunifyl s ts1 ts2 =
    OPTION_MAP (sptree_map decode_infer_t)
               (sunify (sptree_map encode_infer_t s)
@@ -371,8 +371,9 @@ let substR_unify = prove
 let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let capply_subst_def = cake_define_list_try (fun () ->
-  `MEASURE (infer_t_size o SND)`)
+let capply_subst_def,capply_subst_ind = define_shaped_wf
+  "nested"
+  `MEASURE (infer_t_size o SND)`
   [`capply_subst s (Infer_Tuvar n) = (match sptree_lookup n s with
                               NONE -> Infer_Tuvar n | SOME it ->
                                 it)`;
@@ -408,7 +409,7 @@ let cunifyl_thm = prove
        (cunify s t1 t2) (\s'. cunifyl s' ts1 ts2) | _3 -> NONE)`,
   CHEAT_TAC);;
 
-let cwalkstar_def = cake_define
+let cwalkstar_def = new_definition
   `cwalkstar s it =
    decode_infer_t (walkstar (encode_infer_t o_f sp2fm s)
      (encode_infer_t it))`;;
@@ -470,7 +471,7 @@ let cvwalk_preserves_precond = prove
    (\n. cwfs s) x /\ cvwalk_code s x = INL y ==> (\n. cwfs s) y`,
   CHEAT_TAC);;
 
-let cvwalkR_def = cake_define
+let cvwalkR_def = new_definition
   `cvwalkR sigma = (\v v0. vR (encode_infer_t o_f sp2fm sigma) v v0)`;;
 
 let cvwalk_ensures_decrease = prove
@@ -490,7 +491,7 @@ let cvwalk_cleaned = prove
  (`!x. (\n. cwfs s) x ==> cvwalk s x = TAILREC (cvwalk_code s) x`,
   CHEAT_TAC);;
 
-let tcvwalk_def = cake_define
+let tcvwalk_def = new_definition
   `tcvwalk s n = TAILREC (cvwalk_code s) n`;;
 
 (* [local] *)
@@ -504,7 +505,7 @@ let cvwalk_eta = prove
 (* HOL4 unifyScript.sml:839-840: a theorem that HOL4 states as the
    value of an ML expression: tcvwalk_correct *)
 
-let tcwalk_def = cake_define
+let tcwalk_def = new_definition
   `tcwalk s it = (match it with
                    Infer_Tvar_db c -> Infer_Tvar_db c | Infer_Tapp
                      l n -> Infer_Tapp l n | Infer_Tuvar v -> tcvwalk
@@ -514,7 +515,7 @@ let tcwalk_correct = prove
  (`!s it. cwfs s ==> cwalk s it = tcwalk s it`,
   CHEAT_TAC);;
 
-let cocl_def = cake_define_list
+let cocl_def,cocl_ind = define_rec
   [`cocl s [] n <=> F`;
    `cocl s (i :: is) n <=> coc s i n \/ cocl s is n`];;
 
@@ -525,10 +526,10 @@ let cocl_EXISTS = prove
 (* HOL4 unifyScript.sml:866: a theorem that HOL4 states as the value
    of an ML expression: coc_thm' *)
 
-let kcoc_def = cake_define
+let kcoc_def = new_definition
   `kcoc s it n k = cwc (coc s it n) k`;;
 
-let kcocl_def = cake_define
+let kcocl_def = new_definition
   `kcocl s its n k = cwc (cocl s its n) k`;;
 
 let contify_infer_case = prove
@@ -555,7 +556,11 @@ let kcocl_Ky = prove
 
 new_type_abbrev("kcockont",`: (infer_t list) list`);;
 
-let apply_kcockont_def = cake_define_list
+let _ = size_thms "infer_t";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let apply_kcockont_def,apply_kcockont_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). list_size infer_t_size1 x2)`
   [`apply_kcockont s n [] b = b`;
    `apply_kcockont s n (ts :: rest) b =
     (if b then apply_kcockont s n rest T else kcocl s ts n
@@ -566,10 +571,10 @@ let apply_kcockontT = prove
  (`apply_kcockont s n ts T = T`,
   CHEAT_TAC);;
 
-let dfkcoc_def = cake_define
+let dfkcoc_def = new_definition
   `dfkcoc s t n k = kcoc s t n (apply_kcockont s n k)`;;
 
-let dfkcocl_def = cake_define
+let dfkcocl_def = new_definition
   `dfkcocl s ts n k = kcocl s ts n (apply_kcockont s n k)`;;
 
 (* HOL4 unifyScript.sml:941-942: a theorem that HOL4 states as the
@@ -606,7 +611,7 @@ let dfkcocl_removed = prove
 (* HOL4 unifyScript.sml:987-991: a theorem that HOL4 states as the
    value of an ML expression: kcocwl0_thm *)
 
-let kcocwl_def = cake_define
+let kcocwl_def = new_definition
   `kcocwl s n ts = apply_kcockont s n ts F`;;
 
 let kcocwl0_varcheck = prove
@@ -630,7 +635,7 @@ let kcocwl_preserves_precond = prove
          (\ts. cwfs s) y`,
   CHEAT_TAC);;
 
-let kcocwlR_def = cake_define
+let kcocwlR_def = new_definition
   `kcocwlR (s:infer_t spt) (n:num) =
    inv_image (mlt1 (walkstarR (sp2fm (sptree_map encode_infer_t s)))
      LEX (<))
@@ -665,7 +670,7 @@ let walkstarR_trans = prove
  (`walkstarR s t1 t2 /\ walkstarR s t2 t3 ==> walkstarR s t1 t3`,
   CHEAT_TAC);;
 
-let subterm_def = cake_define
+let subterm_def = new_definition
   `subterm = TC (\a b. (?t. b = term_Pair a t) \/ (?t. b = term_Pair
   t a))`;;
 
@@ -719,7 +724,7 @@ let kcocwl_cleaned = prove
  (`!x. (\v. cwfs s) x ==> kcocwl s n x = TAILREC (kcocwl_code s n) x`,
   CHEAT_TAC);;
 
-let tcocwl_def = cake_define
+let tcocwl_def = new_definition
   `tcocwl s n is = TAILREC (kcocwl_code s n) is`;;
 
 (* HOL4 unifyScript.sml:1207-1208: a theorem that HOL4 states as the
@@ -739,7 +744,7 @@ let disj2cond = prove
     tail-recursification of cwalkstar
    ---------------------------------------------------------------------- *)
 
-let cwalkstarl_def = cake_define_list
+let cwalkstarl_def,cwalkstarl_ind = define_rec
   [`cwalkstarl s [] = []`;
    `cwalkstarl s (it :: its) = cwalkstar s it :: cwalkstarl s its`];;
 
@@ -747,10 +752,10 @@ let MAP_cwalkstar = prove
  (`MAP (cwalkstar s) l = cwalkstarl s l`,
   CHEAT_TAC);;
 
-let kcwalkstar_def = cake_define
+let kcwalkstar_def = new_definition
   `kcwalkstar s it k = cwc (cwalkstar s it) k`;;
 
-let kcwalkstarl_def = cake_define
+let kcwalkstarl_def = new_definition
   `kcwalkstarl s its k = cwc (cwalkstarl s its) k`;;
 
 (* HOL4 unifyScript.sml:1247-1252: a theorem that HOL4 states as the
@@ -769,7 +774,11 @@ let kclkont_INDUCT,kclkont_RECURSION = define_datatype
   "kclkont = DBk (num) | APPk (infer_t list) (num) | UVk (num) | \
    CONSk (infer_t list) (num)";;
 
-let apply_kclkont_def = cake_define_list
+let _ = size_thms "kclkont";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let apply_kclkont_def,apply_kclkont_ind = define_wf
+  `MEASURE (\(x0,x1,x2). list_size kclkont_size x1)`
   [`apply_kclkont s [] its = its`;
    `apply_kclkont s (DBk n :: k) its = apply_kclkont s k
   (Infer_Tvar_db n :: its)`;
@@ -790,7 +799,7 @@ let kclkont_CASE = new_recursive_definition kclkont_RECURSION
    (kclkont_CASE (UVk n) dbf appf uvf consf = uvf n) /\
    (kclkont_CASE (CONSk its n) dbf appf uvf consf = consf its n)`;;
 
-let dfkcwalkstarl_def = cake_define
+let dfkcwalkstarl_def = new_definition
   `dfkcwalkstarl s t k = kcwalkstarl s t (apply_kclkont s k)`;;
 
 (* HOL4 unifyScript.sml:1298-1299: a theorem that HOL4 states as the
@@ -802,7 +811,7 @@ let dfkcwalkstarl_def = cake_define
 (* HOL4 unifyScript.sml:1308-1313: a theorem that HOL4 states as the
    value of an ML expression: dfkcwalkstarl_thm *)
 
-let kcwalkstarwl_def = cake_define_list
+let kcwalkstarwl_def = define_general
   [`kcwalkstarwl s T t k = apply_kclkont s k t`;
    `kcwalkstarwl s F t k = dfkcwalkstarl s t k`];;
 
@@ -822,15 +831,19 @@ let cwalkstar_to_dfkcwalkstarl = prove
 
 (* kcwalkstarwl_thm is the target for tailcallification *)
 
-let star_kwork_def = cake_define
-  `star_kwork x1 =
+let _ = size_thms "kclkont";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let star_kwork_def,star_kwork_ind = define_wf
+  `MEASURE (\x0. list_size kclkont_size x0)`
+  [`star_kwork x1 =
       match x1 with
         [] -> EMPTY_BAG
       | (CONSk its n :: ks) -> (BAG_UNION) ((FOLDR BAG_INSERT
         EMPTY_BAG) its) (star_kwork ks)
-      | (_4 :: ks) -> star_kwork ks`;;
+      | (_4 :: ks) -> star_kwork ks`];;
 
-let star_workbag_def = cake_define
+let star_workbag_def = new_definition
   `star_workbag v its k =
    (if v then star_kwork k else (BAG_UNION) ((FOLDR BAG_INSERT
      EMPTY_BAG) its) (star_kwork k))`;;
@@ -845,13 +858,13 @@ let FINITE_star_workbag = prove
  (`FINITE_BAG (star_workbag v its k)`,
   CHEAT_TAC);;
 
-let isCONSk_def = cake_define
+let isCONSk_def = new_definition
   `isCONSk x1 =
       match x1 with
         CONSk _5 _6 -> T
       | _7 -> F`;;
 
-let kcwalkstarwlR_def = cake_define
+let kcwalkstarwlR_def = new_definition
   `kcwalkstarwlR s =
    inv_image (mlt (inv_image
                     (walkstarR (encode_infer_t o_f sp2fm s))
@@ -906,13 +919,13 @@ let kcwalkstarwl_cleaned = prove
          (kcwalkstarwl_code s) x`,
   CHEAT_TAC);;
 
-let tcwalkstarwl_def = cake_define
+let tcwalkstarwl_def = new_definition
   `tcwalkstarwl s v its k = TAILREC (kcwalkstarwl_code s) (v,its,k)`;;
 
-let tcwalkstar_p1_def = cake_define
+let tcwalkstar_p1_def = new_definition
   `tcwalkstar_p1 s its k = tcwalkstarwl s F its k`;;
 
-let tcwalkstar_p2_def = cake_define
+let tcwalkstar_p2_def = new_definition
   `tcwalkstar_p2 s its k = tcwalkstarwl s T its k`;;
 
 (* HOL4 unifyScript.sml:1492-1503: a theorem that HOL4 states as the
@@ -928,7 +941,7 @@ let tcwalkstarwl_correct = prove
 
 (* handle tail-recursification of unify *)
 
-let kcunifyl_def = cake_define
+let kcunifyl_def = new_definition
   `kcunifyl s ts us k = cwc (cunifyl s ts us) k`;;
 
 (* HOL4 unifyScript.sml:1523-1525: a theorem that HOL4 states as the
@@ -938,7 +951,12 @@ let kcunifyl_def = cake_define
    value of an ML expression: kcunifyl_thm *)
 
 new_type_abbrev("kcunifkont",`: (infer_t list#infer_t list) list`);;
-let apply_cunifk_def = cake_define_list
+let _ = size_thms "infer_t";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let apply_cunifk_def,apply_cunifk_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (pair_size infer_t_size1 infer_t_size1)
+  x0)`
   [`apply_cunifk [] x = x`;
    `apply_cunifk ((ts,us) :: k) NONE = apply_cunifk k NONE`;
    `apply_cunifk ((ts,us) :: k) (SOME m) = kcunifyl m ts us
@@ -949,7 +967,7 @@ let apply_cunif_NONE = prove
  (`apply_cunifk k NONE = NONE`,
   CHEAT_TAC);;
 
-let dfkcunifyl_def = cake_define
+let dfkcunifyl_def = new_definition
   `dfkcunifyl s ts us k = kcunifyl s ts us (apply_cunifk k)`;;
 
 let abs_EQ_apply_cunifk = prove
@@ -966,7 +984,7 @@ let abs_EQ_apply_cunifk = prove
 (* HOL4 unifyScript.sml:1579-1582: a theorem that HOL4 states as the
    value of an ML expression: cunifywl0 *)
 
-let kcunifywl_def = cake_define
+let kcunifywl_def = new_definition
   `kcunifywl s k = apply_cunifk k (SOME s)`;;
 
 (* HOL4 unifyScript.sml:1588-1591: a theorem that HOL4 states as the
@@ -986,7 +1004,11 @@ let kcunifywl_tcallish = prove
        TAILCALL cunify_code (\(s,k). kcunifywl s k) x`,
   CHEAT_TAC);;
 
-let isvars_def = cake_define_list
+let _ = size_thms "infer_t";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let isvars_def,isvars_ind = define_wf
+  `MEASURE (\x0. infer_t_size1 x0)`
   [`isvars [] = {}`;
    `isvars (t :: ts) = vars (encode_infer_t t) UNION isvars ts`];;
 
@@ -996,7 +1018,11 @@ let FINITE_isvars = prove
   CHEAT_TAC);;
 
 
-let cplist_vars_def = cake_define_list
+let _ = size_thms "infer_t";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let cplist_vars_def,cplist_vars_ind = define_wf
+  `MEASURE (\x0. list_size (pair_size infer_t_size1 infer_t_size1) x0)`
   [`cplist_vars [] = {}`;
    `cplist_vars ((ts,us) :: rest) = isvars ts UNION isvars us UNION
   cplist_vars rest`];;
@@ -1006,7 +1032,11 @@ let FINITE_cplist_vars = prove
  (`FINITE (cplist_vars wl)`,
   CHEAT_TAC);;
 
-let PFLAT_def = cake_define_list
+let _ = size_thms "infer_t";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let PFLAT_def,PFLAT_ind = define_wf
+  `MEASURE (\x0. list_size (pair_size infer_t_size1 infer_t_size1) x0)`
   [`PFLAT [] = EMPTY_BAG`;
    `PFLAT (([],[]) :: ps) = PFLAT ps`;
    `PFLAT (([],j :: js) :: ps) =
@@ -1019,7 +1049,7 @@ let FINITE_BAG_PFLAT = prove
  (`!ps. FINITE_BAG (PFLAT ps)`,
   CHEAT_TAC);;
 
-let kcunifywlR_def = cake_define
+let kcunifywlR_def = new_definition
   `kcunifywlR ((s:infer_t spt),(wl:(infer_t list#infer_t list) list))
   (s0,wl0) <=>
      cwfs s /\ cwfs s0 /\ sp2fm s0 SUBMAP sp2fm s /\
@@ -1120,7 +1150,7 @@ let kcunifywl_cleaned = prove
        (\(s,wl). kcunifywl s wl) x = TAILREC cunify_code x`,
   CHEAT_TAC);;
 
-let tcunify_def = cake_define
+let tcunify_def = new_definition
   `tcunify s wl = TAILREC cunify_code (s,wl)`;;
 
 (* HOL4 unifyScript.sml:2007-2012: a theorem that HOL4 states as the
@@ -1141,10 +1171,10 @@ let unify_decode_right_inverse = prove
      (decode_infer_ts ts) = ts))`,
   CHEAT_TAC);;
 
-let t_wfs_def = cake_define
+let t_wfs_def = new_definition
   `t_wfs s = wfs (encode_infer_t o_f s)`;;
 
-let t_vwalk_def = cake_define
+let t_vwalk_def = new_definition
   `t_vwalk s v = decode_infer_t (vwalk (encode_infer_t o_f s) v)`;;
 
 (* [local] *)
@@ -1169,7 +1199,7 @@ let t_vwalk_eqn = prove
         Infer_Tapp ts tc | SOME (Infer_Tvar_db n) -> Infer_Tvar_db n))`,
   CHEAT_TAC);;
 
-let t_walk_def = cake_define
+let t_walk_def = new_definition
   `t_walk s t = decode_infer_t (walk (encode_infer_t o_f s)
   (encode_infer_t t))`;;
 
@@ -1179,7 +1209,7 @@ let t_walk_eqn = prove
    (!s n. t_walk s (Infer_Tvar_db n) = Infer_Tvar_db n)`,
   CHEAT_TAC);;
 
-let t_oc_def = cake_define
+let t_oc_def = new_definition
   `t_oc s t v = oc (encode_infer_t o_f s) (encode_infer_t t) v`;;
 
 (* HOL4 unifyScript.sml:2110-2141: code that the source has in a
@@ -1205,7 +1235,7 @@ let t_oc_eqn = prove
         tc -> EXISTS (\t. t_oc s t v) ts | Infer_Tvar_db n -> F))`,
   CHEAT_TAC);;
 
-let t_ext_s_check_def = cake_define
+let t_ext_s_check_def = new_definition
   `t_ext_s_check s v t =
      OPTION_MAP
        ((o_f) decode_infer_t)
@@ -1217,21 +1247,25 @@ let t_ext_s_check_eqn = prove
       (v,t)))`,
   CHEAT_TAC);;
 
-let t_unify_def = cake_define
+let t_unify_def = new_definition
   `t_unify s t1 t2 =
      OPTION_MAP
        ((o_f) decode_infer_t)
        (unify (encode_infer_t o_f s) (encode_infer_t t1)
          (encode_infer_t t2))`;;
 
-let ts_unify_def = cake_define
-  `ts_unify s x2 x3 =
+let _ = size_thms "infer_t";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ts_unify_def,ts_unify_ind = define_wf
+  `MEASURE (\(x0,x1,x2). infer_t_size1 x1 + infer_t_size1 x2)`
+  [`ts_unify s x2 x3 =
         match (x2,x3) with
           ([],[]) -> SOME s
         | ((t1 :: ts1),(t2 :: ts2)) ->
      (match t_unify s t1 t2 with NONE -> NONE | SOME s' -> ts_unify
        s' ts1 ts2)
-        | (_8,_9) -> NONE`;;
+        | (_8,_9) -> NONE`];;
 
 (* [local] *)
 let encode_walk = prove
@@ -1337,7 +1371,7 @@ let t_unify_ind = prove
       (!s ts1 ts2. t_wfs s ==> P1 s ts1 ts2)`,
   CHEAT_TAC);;
 
-let apply_subst_t_def = cake_define
+let apply_subst_t_def = new_definition
   `apply_subst_t s t = decode_infer_t (subst_APPLY (encode_infer_t
   o_f s) (encode_infer_t t))`;;
 
@@ -1353,7 +1387,7 @@ let apply_subst_t_eqn = prove
       Infer_Tvar_db n)`,
   CHEAT_TAC);;
 
-let t_walkstar_def = cake_define
+let t_walkstar_def = new_definition
   `t_walkstar s t =
      decode_infer_t (walkstar (encode_infer_t o_f s)
        (encode_infer_t t))`;;
@@ -1390,7 +1424,7 @@ let t_walkstar_ind = prove
          (!t. P t))`,
   CHEAT_TAC);;
 
-let t_collapse_def = cake_define
+let t_collapse_def = new_definition
   `t_collapse s =
      decode_infer_t o_f collapse (encode_infer_t o_f s)`;;
 
@@ -1451,7 +1485,7 @@ let t_walkstar_SUBMAP = prove
   t_walkstar s2 (t_walkstar s1 t))`,
   CHEAT_TAC);;
 
-let t_vR_def = cake_define
+let t_vR_def = new_definition
   `t_vR s = vR (encode_infer_t o_f s)`;;
 
 let t_vR_eqn = prove
@@ -1463,7 +1497,7 @@ let t_wfs_eqn = prove
  (`!s. t_wfs s = WF (t_vR s)`,
   CHEAT_TAC);;
 
-let t_rangevars_def = cake_define
+let t_rangevars_def = new_definition
   `t_rangevars s = rangevars (encode_infer_t o_f s)`;;
 
 let t_rangevars_eqn = prove
@@ -1602,7 +1636,7 @@ let t_walkstar_tuvar_props = prove
   CHEAT_TAC);;
 
 (*t_compat theorems*)
-let t_compat_def = cake_define
+let t_compat_def = new_definition
   `t_compat s s' <=>
    t_wfs s /\ t_wfs s' /\
    (!t. t_walkstar s' (t_walkstar s t) = t_walkstar s' t)`;;

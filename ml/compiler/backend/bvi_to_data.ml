@@ -67,7 +67,7 @@ let op_requires_names_pmatch = prove
      closLang_MemOp (closLang_StringCmp b cmp) -> T | _7 -> F))`,
   CHEAT_TAC);;
 
-let iAssign_def = cake_define
+let iAssign_def = new_definition
   `iAssign n1 op vs live env =
      (if op_requires_names op then
        let xs = SOME (list_to_num_set (vs ++ live ++ env)) in
@@ -94,9 +94,7 @@ let iAssign_def = cake_define
 
 let _ = do_list hide_constant ["tail"];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bvi_to_data_compile_def = cake_define_list_cheat CHEAT_TAC
+let bvi_to_data_compile_def,bvi_to_data_compile_ind = define_rec
   [`bvi_to_data_compile (n:num) (env:num list) tail live [] =
         (dataLang_Skip,([]:num list),n)`;
    `bvi_to_data_compile (n:num) (env:num list) tail live (x :: y :: xs)
@@ -195,12 +193,9 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* HOL4 bvi_to_dataScript.sml:232-237: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let compile_sing_def = cake_define_list_try_tac (fun () ->
+let compile_sing_def = define_mutual_wf
   `MEASURE (\x. match x with INL (n,env,t,l,x) -> bvi_exp_size x | INR
-     (n,env,l,xs) -> list_size bvi_exp_size xs)`)
-  CHEAT_TAC
+  (n,env,l,xs) -> list_size bvi_exp_size xs)`
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((Var
   v):bvi_exp) =
          (let var = any_el v env 0 in
@@ -338,7 +333,7 @@ let compile_SING_IMP = prove
 
 (* combine dataLang optimisations *)
 
-let optimise_def = cake_define
+let optimise_def = new_definition
   `bvi_to_data_optimise prog = data_space_compile (simp (FST
   (data_live_compile prog LN)) dataLang_Skip)`;;
 hol4_overload "optimise" "bvi_to_data_optimise";;
@@ -346,18 +341,18 @@ hol4_overload "optimise" "bvi_to_data_optimise";;
 (* the top-level compiler includes the optimisations, because the correctness
    proofs are combined *)
 
-let compile_exp_def = cake_define
+let compile_exp_def = new_definition
   `bvi_to_data_compile_exp arg_count exp =
      bvi_to_data_optimise (FST (compile arg_count (COUNT_LIST
        arg_count) T [] [exp]))`;;
 hol4_overload "compile_exp" "bvi_to_data_compile_exp";;
 
-let compile_part_def = cake_define
+let compile_part_def = new_definition
   `bvi_to_data_compile_part ((name:num),arg_count,exp) =
      (name,arg_count,bvi_to_data_compile_exp arg_count exp)`;;
 hol4_overload "compile_part" "bvi_to_data_compile_part";;
 
-let compile_prog_def = cake_define
+let compile_prog_def = new_definition
   `bvi_to_data_compile_prog prog = MAP bvi_to_data_compile_part prog`;;
 hol4_overload "compile_prog" "bvi_to_data_compile_prog";;
 

@@ -26,7 +26,7 @@ let _ = do_list hide_constant ["pmatch"];;
 
 (* fits in subset *)
 
-let can_interpret_op_def = cake_define
+let can_interpret_op_def = new_definition
   `can_interpret_op x1 l =
       match x1 with
         closLang_BlockOp (closLang_Cons tag) -> (l = 0 \/ tag < 3)
@@ -35,7 +35,7 @@ let can_interpret_op_def = cake_define
       | (closLang_BlockOp (closLang_Constant c)) -> (l = 0)
       | _1 -> F`;;
 
-let can_interpret_def = cake_define_list
+let can_interpret_def = define_mutual_rec
   [`can_interpret ((Var t n):closLang_exp) = T`;
    `can_interpret (If t e1 e2 e3:closLang_exp) =
       (can_interpret e1 /\ can_interpret e2 /\ can_interpret e3)`;
@@ -59,7 +59,7 @@ let can_interpret_def = cake_define_list
 
 (* check size *)
 
-let check_size_op_def = cake_define
+let check_size_op_def = new_definition
   `check_size_op k x2 l =
       match x2 with
         closLang_BlockOp (closLang_Cons tag) -> (if l = (0:num) then
@@ -68,7 +68,7 @@ let check_size_op_def = cake_define
       | (closLang_GlobOp (closLang_Global n)) -> k
       | _20 -> k - 1`;;
 
-let check_size_def = cake_define_list
+let check_size_def = define_mutual_rec
   [`check_size (k:num) ((Var t n):closLang_exp) = (k:num)`;
    `check_size (k:num) (If t e1 e2 e3:closLang_exp) =
       (((let k = check_size k e1 in if k = 0 then 0 else
@@ -101,12 +101,12 @@ let check_size_def = cake_define_list
       (let k = check_size k x in if k = 0 then 0 else
          check_size_list k xs)`];;
 
-let nontrivial_size_def = cake_define
+let nontrivial_size_def = new_definition
   `nontrivial_size e = (check_size 8 e = 0)`;;
 
 (* convert to const *)
 
-let to_constant_op_def = cake_define
+let to_constant_op_def = new_definition
   `to_constant_op x1 l cs =
       match x1 with
         closLang_IntOp (closLang_Const i) -> ConstCons 1 [ConstInt i]
@@ -121,12 +121,9 @@ let to_constant_op_def = cake_define
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let to_constant_def = cake_define_list_try_tac (fun () ->
+let to_constant_def = define_mutual_wf
   `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-     list_size closLang_exp_size es)`)
-  CHEAT_TAC
+  list_size closLang_exp_size es)`
   [`to_constant ((Var t n):closLang_exp) =
       ConstCons 0 [ConstInt (&n)]`;
    `to_constant (App _48 _49 e es:closLang_exp) =
@@ -171,7 +168,7 @@ let to_constant_def = cake_define_list_try_tac (fun () ->
 (* HOL4 clos_interpScript.sml:129-131: the overload CallInterpList,
    which the port expands *)
 
-let clos_interp_el_def = cake_define
+let clos_interp_el_def = new_definition
   `clos_interp_el =
      If backend_common_None (closLang_Op backend_common_None
        (closLang_BlockOp (closLang_EqualConst (closLang_Int (&0))))
@@ -187,7 +184,7 @@ let clos_interp_el_def = cake_define
          backend_common_None (closLang_BlockOp (closLang_ElemAt n))
          [x]) 1 ((Var backend_common_None) 0)])`;;
 
-let clos_interp_rev_def = cake_define
+let clos_interp_rev_def = new_definition
   `clos_interp_rev =
      If backend_common_None (closLang_Op backend_common_None
        (closLang_BlockOp (closLang_LenEq 0)) [(Var backend_common_None)
@@ -202,7 +199,7 @@ let clos_interp_rev_def = cake_define
          closLang_Op backend_common_None (closLang_BlockOp
          (closLang_ElemAt n)) [x]) 0 ((Var backend_common_None) 1)]])`;;
 
-let clos_interpreter_body_def = cake_define
+let clos_interpreter_body_def = new_definition
   `clos_interpreter_body =
        If backend_common_None ((Var backend_common_None) 1)
          (
@@ -438,7 +435,7 @@ let clos_interpreter_body_def = cake_define
        (closLang_Op backend_common_None (closLang_BlockOp
          (closLang_Cons 0)) [])))))))))))))))))`;;
 
-let clos_interpreter_def = cake_define
+let clos_interpreter_def = new_definition
   `clos_interpreter =
      closLang_Fn (implode "env") NONE NONE 1 (
      closLang_Fn (implode "exp") NONE NONE 1
@@ -446,7 +443,7 @@ let clos_interpreter_def = cake_define
 
 (* functions that insert calls to interpreter *)
 
-let opt_interp_def = cake_define
+let opt_interp_def = new_definition
   `opt_interp e =
      (if can_interpret e /\ nontrivial_size e then
        SOME ((\env x. App backend_common_None NONE (closLang_App
@@ -460,17 +457,17 @@ let opt_interp_def = cake_define
                backend_common_None (closLang_BlockOp
                (closLang_Constant (to_constant e))) [])) else NONE)`;;
 
-let opt_interp1_def = cake_define
+let opt_interp1_def = new_definition
   `opt_interp1 e =
      (match opt_interp e with SOME x -> x | NONE -> e)`;;
 
-let insert_interp1_def = cake_define
+let insert_interp1_def = new_definition
   `insert_interp1 e =
      (match opt_interp e with SOME x -> x | NONE ->
          (match e with Let t ys y -> Let backend_common_None (MAP
            opt_interp1 ys) y | _67 -> e))`;;
 
-let compile_init_def = cake_define
+let compile_init_def = new_definition
   `compile_init b =
      Let backend_common_None [closLang_Op backend_common_None
        (closLang_GlobOp closLang_AllocGlobal) [closLang_Op
@@ -483,11 +480,11 @@ let compile_init_def = cake_define
        (closLang_Op backend_common_None (closLang_GlobOp
          (closLang_SetGlobal 0)) [Var backend_common_None 1])`;;
 
-let attach_interpreter_def = cake_define
+let attach_interpreter_def = new_definition
   `attach_interpreter xs =
      compile_init (has_install_list xs) :: xs`;;
 
-let insert_interp_def = cake_define
+let insert_interp_def = new_definition
   `insert_interp xs = MAP insert_interp1 xs`;;
 
 (* pmatch versions of the op-functions *)

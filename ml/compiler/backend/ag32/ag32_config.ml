@@ -22,7 +22,7 @@ let _ = hol4_ancestors "ag32_config"
   ["asmProps"; "asmSem"; "backend"];;
 (* HOL4 ancestors outside the port: ag32_target *)
 
-let ag32_names_def = cake_define
+let ag32_names_def = new_definition
   `ag32_names = (LN:num spt)`;;
 
 (* HOL4 ag32_configScript.sml:14-15: a theorem that HOL4 states as
@@ -31,7 +31,7 @@ let ag32_names_def = cake_define
 (* HOL4 ag32_configScript.sml:17-23: the ML values that the
    definitions below antiquote *)
 
-let ag32_backend_config_def = cake_define
+let ag32_backend_config_def = new_definition
   `ag32_backend_config =
               mk_backend_config prim_src_config
                 (clos_to_bvl_default_config)

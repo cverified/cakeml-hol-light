@@ -405,7 +405,7 @@ let nsSub_nsAppend_lift = prove
       e2')`,
   CHEAT_TAC);;
 
-let alist_rel_restr_def = cake_define_list
+let alist_rel_restr_def,alist_rel_restr_ind = define_rec
   [`alist_rel_restr R l1 l2 [] <=> T`;
    `alist_rel_restr R l1 l2 (k1 :: keys) <=>
         (match ALOOKUP l1 k1 with NONE -> F | SOME v1 ->
@@ -419,7 +419,7 @@ let alist_rel_restr_thm = prove
         ALOOKUP e2 k = SOME v2 /\ R k v1 v2))`,
   CHEAT_TAC);;
 
-let alistSub_def = cake_define
+let alistSub_def = new_definition
   `alistSub R e1 e2 <=> alist_rel_restr R e1 e2 (MAP FST e1)`;;
 
 let alistSub_cong = prove
@@ -432,18 +432,19 @@ let alistSub_cong = prove
 (* HOL4 namespacePropsScript.sml:785: ML code, not ported *)
 
 let _ = size_thms "namespace";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 namespacePropsScript.sml:791-801: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let nsSub_compute_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(p,r,env,_2). namespace_size (\x. 0) (\x. 0) (\x. 0) env)`)
-  CHEAT_TAC
-  `nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
+let nsSub_compute_def,nsSub_compute_ind = define_wf_cheat
+  `MEASURE (\(p,r,env,_2). namespace_size (\x. 0) (\x. 0) (\x. 0) env)`
+  [`nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
      alistSub (\k v1 v2. R (mk_id (REVERSE path') k) v1 v2) e1V e2V
        /\
      alistSub (\k v1 v2. nsSub_compute (k :: path') R v1 v2) e1M
-       e2M`;;
+       e2M`];;
 
 let nsLookup_FOLDR_nsLift = prove
  (`!e p k. nsLookup (ITLIST nsLift p e) (mk_id p k) = nsLookup e

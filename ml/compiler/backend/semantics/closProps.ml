@@ -128,7 +128,7 @@ let evaluate_better_ind = prove
    (!(args:closSem_v list) (s1:('c,'ffi)closSem_state). P2 args s1)`,
   CHEAT_TAC);;
 
-let ref_rel_def = cake_define
+let ref_rel_def = new_definition
   `closProps_ref_rel R x2 x3 =
         match (x2,x3) with
           (closSem_ValueArray vs,closSem_ValueArray ws) -> LIST_REL R
@@ -153,11 +153,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:158-161: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let code_locs_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size)`)
-  CHEAT_TAC
+let code_locs_def,code_locs_ind = define_wf
+  `MEASURE (list_size closLang_exp_size)`
   [`code_locs [] = []`;
    `code_locs (x :: y :: xs) =
          (let c1 = code_locs [x] in
@@ -218,14 +215,15 @@ let BIGUNION_MAP_code_locs_SND_SND = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:229-232: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let contains_App_SOME_def = cake_define_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size o SND)`)
-  CHEAT_TAC
-  `contains_App_SOME max_app x2 =
+let contains_App_SOME_def,contains_App_SOME_ind = define_wf_cheat
+  `MEASURE (list_size closLang_exp_size o SND)`
+  [`contains_App_SOME max_app x2 =
         match x2 with
           [] -> F
         | (x :: y :: xs) ->
@@ -261,7 +259,7 @@ let contains_App_SOME_def = cake_define_try_tac (fun () ->
         contains_App_SOME max_app [x1] \/
         contains_App_SOME max_app [x2]
         | [closLang_Call _36 ticks dest xs] ->
-        contains_App_SOME max_app xs`;;
+        contains_App_SOME max_app xs`];;
 
 let contains_App_SOME_EXISTS = prove
  (`!ls max_app. contains_App_SOME max_app ls <=> EXISTS (\x.
@@ -273,11 +271,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:275-278: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let every_Fn_SOME_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size)`)
-  CHEAT_TAC
+let every_Fn_SOME_def,every_Fn_SOME_ind = define_wf
+  `MEASURE (list_size closLang_exp_size)`
   [`every_Fn_SOME [] <=> T`;
    `every_Fn_SOME (x :: y :: xs) <=>
          every_Fn_SOME [x] /\
@@ -326,11 +321,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:327-330: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let every_Fn_vs_NONE_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size)`)
-  CHEAT_TAC
+let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = define_wf
+  `MEASURE (list_size closLang_exp_size)`
   [`every_Fn_vs_NONE [] <=> T`;
    `every_Fn_vs_NONE (x :: y :: xs) <=>
          every_Fn_vs_NONE [x] /\
@@ -385,11 +377,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:386-389: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let every_Fn_vs_SOME_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size)`)
-  CHEAT_TAC
+let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = define_wf
+  `MEASURE (list_size closLang_exp_size)`
   [`every_Fn_vs_SOME [] <=> T`;
    `every_Fn_vs_SOME (x :: y :: xs) <=>
          every_Fn_vs_SOME [x] /\
@@ -446,8 +435,9 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:446-450: the tactic that proves the
    termination *)
-let no_mti_def = cake_define_list_try (fun () ->
-  `MEASURE closLang_exp_size`)
+let no_mti_def,no_mti_ind = define_shaped_wf
+  "nested"
+  `MEASURE closLang_exp_size`
   [`no_mti (Var t n:closLang_exp) = T`;
    `no_mti (If t e1 e2 e3:closLang_exp) <=>
         no_mti e1 /\
@@ -482,11 +472,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:473-476: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let fv_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size o SND)`)
-  CHEAT_TAC
+let fv_def,fv_ind = define_wf
+  `MEASURE (list_size closLang_exp_size o SND)`
   [`fv n [] <=> F`;
    `fv n ((x:closLang_exp) :: y :: xs) <=>
          fv n [x] \/ fv n (y :: xs)`;
@@ -520,7 +507,7 @@ let fv_nil = prove
  (`fv v [] <=> F`,
   CHEAT_TAC);;
 
-let fv1_def = cake_define
+let fv1_def = new_definition
   `fv1 v e = fv v [e]`;;
 
 (* HOL4 closPropsScript.sml:499-500: a theorem that HOL4 states as
@@ -772,41 +759,41 @@ let dest_closure_none_loc = prove
        ~(rest = []) ==> l = NONE)`,
   CHEAT_TAC);;
 
-let is_closure_def = cake_define
+let is_closure_def = new_definition
   `is_closure x1 =
         match x1 with
           (Closure _126 _127 _128 _129 _130:closSem_v) -> T
         | (Recclosure _131 _132 _133 _134 _135) -> T
         | _136 -> F`;;
 
-let clo_to_loc_def = cake_define_list
+let clo_to_loc_def = define_cases
   [`clo_to_loc (Closure l _141 _142 _143 _144:closSem_v) = l`;
    `clo_to_loc (Recclosure l _148 _149 _150 i:closSem_v) =
   OPTION_MAP ((+) (2 * i)) l`];;
 
-let clo_to_env_def = cake_define_list
+let clo_to_env_def = define_cases
   [`clo_to_env (Closure _155 _156 env _157 _158:closSem_v) = env`;
    `clo_to_env (Recclosure loc _161 env fns _162:closSem_v) =
        GENLIST (Recclosure loc [] env fns) (LENGTH fns) ++ env`];;
 
-let clo_to_partial_args_def = cake_define_list
+let clo_to_partial_args_def = define_cases
   [`clo_to_partial_args (Closure _167 args _168 _169 _170:closSem_v)
   = args`;
    `clo_to_partial_args (Recclosure _175 args _176 _177
   _178:closSem_v) = args`];;
 
-let clo_add_partial_args_def = cake_define_list
+let clo_add_partial_args_def = define_cases
   [`clo_add_partial_args args (Closure x1 args' x2 x3 x4:closSem_v) =
        Closure x1 (args ++ args') x2 x3 x4`;
    `clo_add_partial_args args (Recclosure x1 args' x2 x3 x4:closSem_v) =
        Recclosure x1 (args ++ args') x2 x3 x4`];;
 
-let clo_to_num_params_def = cake_define_list
+let clo_to_num_params_def = define_cases
   [`clo_to_num_params (Closure _183 _184 _185 n _186:closSem_v) = n`;
    `clo_to_num_params (Recclosure _190 _191 _192 fns i:closSem_v) =
   FST (EL i fns)`];;
 
-let rec_clo_ok_def = cake_define_list
+let rec_clo_ok_def = define_cases
   [`rec_clo_ok (Recclosure _196 _197 _198 fns i:closSem_v) <=> i <
   LENGTH fns`;
    `rec_clo_ok (Closure _204 _205 _206 _207 _208:closSem_v) <=> T`];;
@@ -832,7 +819,7 @@ let clo_add_partial_args_nil = prove
  (`!x. is_closure x ==> clo_add_partial_args [] x = x`,
   CHEAT_TAC);;
 
-let clo_can_apply_def = cake_define
+let clo_can_apply_def = new_definition
   `clo_can_apply loc cl num_args <=>
      LENGTH (clo_to_partial_args cl) < clo_to_num_params cl /\
      rec_clo_ok cl /\
@@ -841,7 +828,7 @@ let clo_can_apply_def = cake_define
       num_args = clo_to_num_params cl /\
       clo_to_partial_args cl = [])`;;
 
-let check_closures_def = cake_define
+let check_closures_def = new_definition
   `check_closures cl cl' <=>
      (!loc num_args.
        clo_can_apply loc cl num_args ==> clo_can_apply loc cl'
@@ -1150,7 +1137,7 @@ let evaluate_eq_nil = prove
   CHEAT_TAC);;
 
 (* finding the SetGlobal operations *)
-let op_gbag_def = cake_define
+let op_gbag_def = new_definition
   `closProps_op_gbag x1 =
       match x1 with
         closLang_GlobOp (closLang_SetGlobal n) -> BAG_INSERT n
@@ -1166,11 +1153,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:1783-1786: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let set_globals_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (sum_size closLang_exp_size (list_size closLang_exp_size))`)
-  CHEAT_TAC
+let set_globals_def = define_mutual_wf
+  `MEASURE (sum_size closLang_exp_size (list_size closLang_exp_size))`
   [`closProps_set_globals (Var _212 _213:closLang_exp) = EMPTY_BAG`;
    `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) =
   (BAG_UNION) ((BAG_UNION) (closProps_set_globals e1)
@@ -1211,11 +1195,13 @@ hol4_overload "set_globals" "closProps_set_globals";;
 
 (* value is setglobal-closure free *)
 let _ = size_thms "closSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:1809-1812: the tactic that proves the
    termination *)
-let vsgc_free_def = cake_define_wf
+let vsgc_free_def,vsgc_free_ind = define_wf
   `MEASURE closSem_v_size`
-  `vsgc_free x1 =
+  [`vsgc_free x1 =
         match x1 with
           (Closure _248 VL1 VL2 _249 body:closSem_v) ->
         closProps_set_globals body = EMPTY_BAG /\
@@ -1224,7 +1210,7 @@ let vsgc_free_def = cake_define_wf
         closProps_elist_globals (MAP SND bods) = EMPTY_BAG /\
         EVERY vsgc_free VL1 /\ EVERY vsgc_free VL2
         | (closSem_Block _252 VL) -> EVERY vsgc_free VL
-        | _253 -> T`;;
+        | _253 -> T`];;
 
 (* HOL4 closPropsScript.sml:1814-1815: a theorem that HOL4 states as
    the value of an ML expression: vsgc_free_def *)
@@ -1240,7 +1226,7 @@ let vsgc_free_Boolv = prove
   CHEAT_TAC);;
 
 (* result is setglobal-closure free *)
-let rsgc_free_def = cake_define
+let rsgc_free_def = new_definition
   `rsgc_free x1 =
         match x1 with
           Rval vs -> EVERY vsgc_free vs
@@ -1252,8 +1238,9 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:1849-1852: the tactic that proves the
    termination *)
-let esgc_free_def = cake_define_list_try (fun () ->
-  `MEASURE closLang_exp_size`)
+let esgc_free_def,esgc_free_ind = define_shaped_wf
+  "nested"
+  `MEASURE closLang_exp_size`
   [`closProps_esgc_free (Var _257 _258:closLang_exp) <=> T`;
    `closProps_esgc_free (If _260 e1 e2 e3:closLang_exp) <=>
   closProps_esgc_free e1 /\ closProps_esgc_free e2 /\
@@ -1284,7 +1271,7 @@ hol4_overload "esgc_free" "closProps_esgc_free";;
    the value of an ML expression: esgc_free_def *)
 
 (* state is setglobal-closure free *)
-let ssgc_free_def = cake_define
+let ssgc_free_def = new_definition
   `ssgc_free (s:('c,'ffi)closSem_state) <=>
      (!n m e. FLOOKUP (closSem_state_code s) n = SOME (m,e) ==>
        closProps_set_globals e = EMPTY_BAG) /\
@@ -1333,7 +1320,7 @@ let elist_globals_reverse = prove
 
 (* generic do_app compile proof *)
 
-let closProps_isClos_def = cake_define
+let closProps_isClos_def = new_definition
   `closProps_isClos x1 =
       match x1 with
         (Closure x1 x2 x3 x4 x5:closSem_v) -> T
@@ -1347,7 +1334,7 @@ let isClos_cases = prove
     (?y1 y2 y3 y4 y5. x = Recclosure y1 y2 y3 y4 y5)`,
   CHEAT_TAC);;
 
-let simple_val_rel_def = cake_define
+let simple_val_rel_def = new_definition
   `closProps_simple_val_rel vr <=>
     (!x n. vr x (closSem_Number n) <=> x = closSem_Number n) /\
     (!x p n.
@@ -1383,7 +1370,7 @@ let simple_val_rel_alt = prove
       (vr (closSem_Unit) (closSem_Unit) <=> T)`,
   CHEAT_TAC);;
 
-let simple_state_rel_def = cake_define
+let simple_state_rel_def = new_definition
   `closProps_simple_state_rel vr sr <=>
      (!s t ptr. FLOOKUP (closSem_state_refs t) ptr = NONE /\ sr s t
        ==>
@@ -1677,7 +1664,7 @@ let simple_val_rel_do_app = prove
   CHEAT_TAC);;
 
 (* generic do_install compile proof *)
-let simple_compile_state_rel_def = cake_define
+let simple_compile_state_rel_def = new_definition
   `simple_compile_state_rel vr sr comp' cr <=>
      closProps_simple_state_rel vr sr /\
      (!(s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state).
@@ -1762,7 +1749,7 @@ let initial_state_max_app = prove
       (closSem_initial_state ffi max_app code co cc k) = max_app`,
   CHEAT_TAC);;
 
-let eval_sim_def = cake_define
+let eval_sim_def = new_definition
   `closProps_eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 es2
   rel allow_fail =
      (!k res1 s2.
@@ -1808,7 +1795,7 @@ let IMP_semantics_eq_no_fail = prove
    closSem_semantics ffi max_app code1 co1 cc1 es1`,
   CHEAT_TAC);;
 
-let closProps_adj_orac_rel_def = cake_define
+let closProps_adj_orac_rel_def = new_definition
   `closProps_adj_orac_rel cc f s1 s2 <=>
       (!n x y. closSem_state_compile_oracle s1 n = (x,y) ==>
          OPTION_MAP (I ## (I ## f)) (closSem_state_compile s1 x y) =
@@ -1913,7 +1900,7 @@ let find_code_SUBMAP = prove
    closSem_find_code dest vs code2 = SOME p`,
   CHEAT_TAC);;
 
-let SUBMAP_rel_def = cake_define
+let SUBMAP_rel_def = new_definition
   `SUBMAP_rel z1 z2 <=>
      z2 = closSem_state_code_fupd (K (closSem_state_code z2)) z1 /\
        closSem_state_code z1 SUBMAP closSem_state_code z2 /\
@@ -2002,11 +1989,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3554-3560: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let obeys_max_app_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (closLang_exp_size o SND)`)
-  CHEAT_TAC
+let obeys_max_app_def,obeys_max_app_ind = define_wf
+  `MEASURE (closLang_exp_size o SND)`
   [`obeys_max_app m (Var _296 _297:closLang_exp) <=> T`;
    `obeys_max_app m (If _299 e1 e2 e3:closLang_exp) <=> obeys_max_app
   m e1 /\ obeys_max_app m e2 /\ obeys_max_app m e3`;
@@ -2036,11 +2020,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3578-3584: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let no_Labels_def = cake_define_list_try_tac (fun () ->
-  `MEASURE closLang_exp_size`)
-  CHEAT_TAC
+let no_Labels_def,no_Labels_ind = define_wf
+  `MEASURE closLang_exp_size`
   [`no_Labels (Var _334 _335:closLang_exp) <=> T`;
    `no_Labels (If _337 e1 e2 e3:closLang_exp) <=> no_Labels e1 /\
   no_Labels e2 /\ no_Labels e3`;
@@ -2068,11 +2049,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3631-3634: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let app_call_dests_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (list_size closLang_exp_size o SND)`)
-  CHEAT_TAC
+let app_call_dests_def,app_call_dests_ind = define_wf
+  `MEASURE (list_size closLang_exp_size o SND)`
   [`app_call_dests opt [] = {}`;
    `app_call_dests opt (x :: y :: xs) =
          (let c1 = app_call_dests opt [x] in
@@ -2168,11 +2146,9 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3725-3731: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let closProps_get_code_labels_def = cake_define_list_try_tac (fun () ->
-  `MEASURE closLang_exp_size`)
-  CHEAT_TAC
+let closProps_get_code_labels_def,closProps_get_code_labels_ind =
+  define_wf
+  `MEASURE closLang_exp_size`
   [`closProps_get_code_labels (Var _394 _395:closLang_exp) = {}`;
    `closProps_get_code_labels (If _397 e1 e2 e3:closLang_exp) =
         closProps_get_code_labels e1 UNION

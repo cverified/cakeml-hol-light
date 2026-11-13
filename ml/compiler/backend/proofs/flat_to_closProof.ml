@@ -97,7 +97,7 @@ hol4_overload "v_rel" "flat_to_closProof_v_rel";;
 (* HOL4 flat_to_closProofScript.sml:70: a theorem that HOL4 states as
    the value of an ML expression: env_rel_def *)
 
-let store_rel_def = cake_define
+let store_rel_def = new_definition
   `store_rel refs t_refs =
      (!i. if LENGTH refs <= i then FLOOKUP t_refs i = NONE else
            match EL i refs with semanticPrimitives_Refv v -> (?x.
@@ -111,18 +111,18 @@ let store_rel_def = cake_define
                                 -> FLOOKUP t_refs i = SOME
                                 (closSem_ByteArray bs))`;;
 
-let inc_compile_decs'_def = cake_define
+let inc_compile_decs'_def = new_definition
   `inc_compile_decs' decs = (flat_to_clos_compile_decs decs ++
      flat_to_clos_compile_decs [Con backend_common_None NONE
        []],[])`;;
 
-let install_config_rel'_def = cake_define
+let install_config_rel'_def = new_definition
   `install_config_rel' ic co cc = (
      (!i. no_Mat_decs (SND (compile_oracle ic i))) /\
      co = pure_co inc_compile_decs' o compile_oracle ic /\ compile
      ic = pure_cc inc_compile_decs' cc)`;;
 
-let flat_to_closProof_state_rel_def = cake_define
+let flat_to_closProof_state_rel_def = new_definition
   `flat_to_closProof_state_rel (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)closSem_state) <=>
      1 <= closSem_state_max_app t /\ flatSem_state_ffi
@@ -204,7 +204,7 @@ let flat_to_closProof_env_rel_APPEND = prove
        (db_prefix ++ db)`,
   CHEAT_TAC);;
 
-let initial_state'_def = cake_define
+let initial_state'_def = new_definition
   `initial_state' b ffi ma code co cc k =
      mk_closSem_state [SOME (if b then
                             Closure NONE [] [] 1 clos_interpreter
@@ -895,7 +895,7 @@ let inc_compile_decs_intro = prove
    pure_cc inc_compile_decs cc`,
   CHEAT_TAC);;
 
-let install_config_rel_def = cake_define
+let install_config_rel_def = new_definition
   `install_config_rel ic co cc <=>
      (!i. no_Mat_decs (SND (compile_oracle ic i))) /\
      co = pure_co inc_compile_decs o compile_oracle ic /\ compile

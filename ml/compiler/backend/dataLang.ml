@@ -47,7 +47,7 @@ let _ = hol4_ancestors "dataLang"
 
 
 (* --- Syntax of dataLang --- *)
-let op_space_reset_def = cake_define
+let op_space_reset_def = new_definition
   `op_space_reset x1 =
         match x1 with
           closLang_IntOp closLang_Add -> T
@@ -70,7 +70,7 @@ let op_space_reset_def = cake_define
         | (FFI _4) -> T
         | _5 -> F`;;
 
-let op_requires_names_def = cake_define
+let op_requires_names_def = new_definition
   `op_requires_names op = (op_space_reset op \/ (?n. op = FFI n) \/
                           (?new_flag. op = (closLang_MemOp
                             (closLang_CopyByte new_flag))) \/
@@ -104,7 +104,7 @@ hol4_overload "Return" "dataLang_Return";;
 hol4_overload "Tick" "dataLang_Tick";;
 hol4_overload "Force" "dataLang_Force";;
 
-let mk_ticks_def = cake_define
+let mk_ticks_def = new_definition
   `mk_ticks n e = FUNPOW (dataLang_Seq dataLang_Tick) n e`;;
 
 (* and the overloads that this file cannot see are back in the

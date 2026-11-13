@@ -47,7 +47,7 @@ def help_string():
    characters that are in it, and this text has newlines and a
    backquote in it. *)
 
-let help_string_def = cake_define
+let help_string_def = new_definition
   (mk_eq(`help_string:mlstring`,
          mk_comb(`implode`, mk_string
   (""" + body + "))));;\n")
@@ -1173,11 +1173,13 @@ TERMINATION = {
 }
 
 # the definitions whose termination the port proves with the
-# relation that HOL4 gives, handed straight to define_single.  The
-# strategy chain of cake_define_gen tries eight strategies before
-# the relation, and one of them declares the constant and then
-# fails, after which `with Failure _ when not (declared ())` tries
-# nothing more and the definition is assumed: with the relation
+# relation that HOL4 gives, handed straight to define_single.  This
+# was the way round a fault of the chain of strategies that the
+# port no longer has: a strategy it tried before the relation
+# declared the constant and then failed, after which nothing more
+# was tried and the definition was assumed.  A file says the way
+# it is made now (define_wf), so the entries here only hold: with
+# the relation
 # first there is no cheat and no axiom.
 DEFINE_REL = set([
   # the Let clause compiles the body in an environment that the
@@ -1576,7 +1578,7 @@ REPLACE = {
   # so it states the expression that HOL4 evaluates, with the
   # three versions absent and the date the empty string
   ('compiler', 'current_build_info_str_def'): r"""
-let current_build_info_str_def = cake_define
+let current_build_info_str_def = new_definition
   `current_build_info_str =
      (let commit = print_option (implode "CakeML:")
                      (NONE:mlstring option) in
@@ -1596,18 +1598,18 @@ let current_build_info_str_def = cake_define
   # argument n of CopyByteStr is Var t (2 - n) and the one of
   # CopyByteAw8 is Var t (4 - n))
   ('flat_to_clos', 'CopyByteStr_def'): r"""
-let CopyByteStr_def = cake_define
+let CopyByteStr_def = new_definition
   (mk_eq (`(CopyByteStr (t:tra)):closLang_exp`,checkT));;
 """,
   ('flat_to_clos', 'CopyByteAw8_def'): r"""
-let CopyByteAw8_def = cake_define
+let CopyByteAw8_def = new_definition
   (mk_eq (`(CopyByteAw8 (t:tra)):closLang_exp`,checkF));;
 """,
   # the compiler that the oracle relation takes is a compiler_fun,
   # whose v is the one of semanticPrimitives; the port expands the
   # abbreviation in the theory that uses it, where v is flatSem's
   ('source_to_flatProof', 'orac_rel_inner_def'): r'''
-let orac_rel_inner_def = cake_define
+let orac_rel_inner_def = new_definition
   `orac_rel_inner dec s (s_compiler:compiler_fun) (g:dec list->dec
   list) c <=>
      (!k env_id state_v decs. eval_oracle_state_oracle s k =
@@ -1627,7 +1629,7 @@ let orac_rel_inner_def = cake_define
   # the others natural numbers, which the port cannot tell from
   # the numerals of the record that gives the initial values
   ('linear_scan', 'run_linear_reg_alloc_intervals_def'): r'''
-let run_linear_reg_alloc_intervals_def = cake_define
+let run_linear_reg_alloc_intervals_def = new_definition
   `run_linear_reg_alloc_intervals ct k forced moves
      reglist_unsorted invbij nmax =
      run_i_linear_scan_hidden_state
@@ -1642,7 +1644,7 @@ let run_linear_reg_alloc_intervals_def = cake_define
   # typechecks each of them on its own (the pre version of the
   # source says the types, and this says the same ones)
   ('word_bignumProof', 'eval_ri_def'): r'''
-let eval_ri_def = cake_define_list
+let eval_ri_def = define_cases
   [`eval_ri (s:'a word_bignumProof_state) (Reg r) =
       eval_exp s ((Var r):'a wordLang_exp)`;
    `eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w`];;
@@ -1651,7 +1653,7 @@ let eval_ri_def = cake_define_list
   # negation of a truth value, which the port can only tell from
   # the type: here it is the word one (word_1comp)
   ('multiword', 'single_sub_def'): r'''
-let single_sub_def = cake_define
+let single_sub_def = new_definition
   `single_sub (x:'a word) (y:'a word) c =
      single_add x (word_1comp y) c`;;
 ''',
@@ -1661,7 +1663,7 @@ let single_sub_def = cake_define
   # computed the list); the port states the expression, with the
   # two of them instantiated, which is the same list
   ('data_to_wordProof', 'stubs_fst_def'): r'''
-let stubs_fst_def = cake_define
+let stubs_fst_def = new_definition
   `stubs_fst = MAP FST (data_to_word_stubs (:1)
                  (ARB:data_to_word_config))`;;
 ''',
@@ -1672,7 +1674,7 @@ let stubs_fst_def = cake_define
   # computed it); the port states the expression, with the type
   # and the configuration instantiated, which is the same tree
   ('data_to_word', 'AnyArith_call_tree_def'): r'''
-let AnyArith_call_tree_def = cake_define
+let AnyArith_call_tree_def = new_definition
   `AnyArith_call_tree =
      full_call_graph AnyArith_location
        (fromAList (stubs (:1)
@@ -1725,14 +1727,14 @@ let lnext_def =
   # states the numeral; the port states the expression, which is the
   # same number
   ('infer', 'start_type_id_def'): '''
-let start_type_id_def = cake_define
+let start_type_id_def = new_definition
   `start_type_id =
      ITLIST MAX (Tlist_num :: Tbool_num :: prim_type_nums) 0 + 1`;;
 ''',
   # HOL4 overloads * with the separating conjunction (and ~ with
   # SEP_HIDE, which the port does not need)
   ('set_sep', 'STAR_def'): '''
-let STAR_def = cake_define
+let STAR_def = new_definition
   `STAR p q = (\\s. ?u v. SPLIT s (u,v) /\\ p u /\\ q v)`;;
 
 overload_interface("*",
@@ -1742,9 +1744,9 @@ overload_interface("*",
   # a catch-all clause; the port uses nested conditionals, so that the
   # termination conditions have the guards that they need
   ('mergesort', 'mergesortN_def'): '''
-let mergesortN_def = cake_define_wf
+let mergesortN_def,mergesortN_ind = define_wf
   `MEASURE (\\(R,n,l). n)`
-  `mergesortN R n l =
+  [`mergesortN R n l =
      if n = 0 then [] else
      if n = 1 then (match l with [] -> [] | x :: l -> [x]) else
      if n = 2 then
@@ -1761,12 +1763,12 @@ let mergesortN_def = cake_define_wf
      let len1 = DIV2 n in
        mergesort_merge R
          (mergesortN R (DIV2 n) l)
-         (mergesortN R (n - len1) (DROP len1 l))`;;
+         (mergesortN R (n - len1) (DROP len1 l))`];;
 ''',
   ('mergesort', 'mergesortN_tail_def'): '''
-let mergesortN_tail_def = cake_define_wf
+let mergesortN_tail_def,mergesortN_tail_ind = define_wf
   `MEASURE (\\(negate,R,n,l). n)`
-  `mergesortN_tail negate R n l =
+  [`mergesortN_tail negate R n l =
      if n = 0 then [] else
      if n = 1 then (match l with [] -> [] | x :: l -> [x]) else
      if n = 2 then
@@ -1785,7 +1787,7 @@ let mergesortN_tail_def = cake_define_wf
        merge_tail neg R (mergesortN_tail neg R (DIV2 n) l)
                         (mergesortN_tail neg R (n - len1)
                                          (DROP len1 l))
-                        []`;;
+                        []`];;
 ''',
 }
 
@@ -2456,7 +2458,7 @@ let bignum_pre =
    an ALL and of an EX of but not this one.  Two functions that
    agree on the members of the two lists give the same LIST_REL, so
    a call under it is admissible, and with the proforma registered
-   cake_define makes the definition below with the measure that the
+   define_wf makes the definition below with the measure that the
    source gives.  (The other proformas stand in ml/lib/fastdef.ml;
    this one stands here because the library layer is changed in
    batches, when a file is finished.) *)
@@ -10822,7 +10824,7 @@ cake_declare "ag32_enc" `:(32)asm->word8 list`;;
 cake_declare "arm8_valid_immediate" `:binop+cmp->(64)word->bool`;;
 cake_declare "arm7_valid_immediate" `:(32)word->bool`;;
 
-let x64_config_def = cake_define
+let x64_config_def = new_definition
   `x64_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -10844,7 +10846,7 @@ let x64_config_def = cake_define
        (sw2sw (INT_MINw:(32)word) + n2w 7,
         sw2sw (INT_MAXw:(32)word) + n2w 7)`;;
 
-let arm8_config_def = cake_define
+let arm8_config_def = new_definition
   `arm8_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg
@@ -10868,7 +10870,7 @@ let arm8_config_def = cake_define
         sw2sw (INT_MAXw:(21)word) + n2w 4)
        (sw2sw (INT_MINw:(32)word),sw2sw (INT_MAXw:(32)word))`;;
 
-let mips_config_def = cake_define
+let mips_config_def = new_definition
   `mips_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -10896,7 +10898,7 @@ let mips_config_def = cake_define
        (sw2sw (INT_MINw:(32)word) + n2w 12,
         sw2sw (INT_MAXw:(32)word) + n2w 8)`;;
 
-let riscv_config_def = cake_define
+let riscv_config_def = new_definition
   `riscv_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg
@@ -10925,7 +10927,7 @@ let riscv_config_def = cake_define
         sw2sw (INT_MAXw:(21)word) + n2w 4)
        (sw2sw (INT_MINw:(32)word),n2w 2147481599)`;;
 
-let arm7_config_def = cake_define
+let arm7_config_def = new_definition
   `arm7_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -10947,7 +10949,7 @@ let arm7_config_def = cake_define
         sw2sw (INT_MAXw:(26)word) + n2w 12)
        (INT_MINw,INT_MAXw)`;;
 
-let ag32_config_def = cake_define
+let ag32_config_def = new_definition
   `ag32_config =
      mk_asm_config
        // ISA encode big_endian code_alignment link_reg avoid_regs
@@ -11213,10 +11215,10 @@ let kclkont_CASE = new_recursive_definition kclkont_RECURSION
    the n2s of this theory, while the words layer of the port is
    loaded before it *)
 
-let w2s_def = cake_define
+let w2s_def = new_definition
   `w2s b f (w:'a word) = n2s b f (w2n w)`;;
 
-let word_to_hex_string_def = cake_define
+let word_to_hex_string_def = new_definition
   `word_to_hex_string = w2s 16 HEX`;;
 ''',
   # HOL4 makes unify with new_specification, out of a theorem
@@ -11331,82 +11333,82 @@ let oc_RULES,oc_INDUCT,oc_CASES =
    translate here; these are the fp64 definitions that the CakeML
    port needs, in the order in which HOL4 generates them  *)
 
-let fp64_to_float_def = cake_define
+let fp64_to_float_def = new_definition
   `fp64_to_float (w:word64) =
      (mk_float ((63 >< 63) w) ((62 >< 52) w)
                ((51 >< 0) w)):(52,11)float`;;
 
-let float_to_fp64_def = cake_define
+let float_to_fp64_def = new_definition
   `float_to_fp64 (x:(52,11)float) =
      (((float_Sign x @@ float_Exponent x):word12) @@
       float_Significand x):word64`;;
 
-let real_to_fp64_def = cake_define
+let real_to_fp64_def = new_definition
   `real_to_fp64 mode = float_to_fp64 o real_to_float mode`;;
 
-let int_to_fp64_def = cake_define
+let int_to_fp64_def = new_definition
   `int_to_fp64 mode a = real_to_fp64 mode (real_of_int a)`;;
 
-let fp64_to_int_def = cake_define
+let fp64_to_int_def = new_definition
   `fp64_to_int mode = float_to_int mode o fp64_to_float`;;
 
-let fp64_abs_def = cake_define
+let fp64_abs_def = new_definition
   `fp64_abs = float_to_fp64 o float_abs o fp64_to_float`;;
 
-let fp64_negate_def = cake_define
+let fp64_negate_def = new_definition
   `fp64_negate = float_to_fp64 o float_negate o fp64_to_float`;;
 
-let fp64_isNan_def = cake_define
+let fp64_isNan_def = new_definition
   `fp64_isNan = float_is_nan o fp64_to_float`;;
 
-let fp64_sqrt_def = cake_define
+let fp64_sqrt_def = new_definition
   `fp64_sqrt mode =
      float_to_fp64 o SND o float_sqrt mode o fp64_to_float`;;
 
-let fp64_add_def = cake_define
+let fp64_add_def = new_definition
   `fp64_add mode a b =
      float_to_fp64 (SND (float_add mode (fp64_to_float a)
                                         (fp64_to_float b)))`;;
 
-let fp64_sub_def = cake_define
+let fp64_sub_def = new_definition
   `fp64_sub mode a b =
      float_to_fp64 (SND (float_sub mode (fp64_to_float a)
                                         (fp64_to_float b)))`;;
 
-let fp64_mul_def = cake_define
+let fp64_mul_def = new_definition
   `fp64_mul mode a b =
      float_to_fp64 (SND (float_mul mode (fp64_to_float a)
                                         (fp64_to_float b)))`;;
 
-let fp64_div_def = cake_define
+let fp64_div_def = new_definition
   `fp64_div mode a b =
      float_to_fp64 (SND (float_div mode (fp64_to_float a)
                                         (fp64_to_float b)))`;;
 
-let fp64_compare_def = cake_define
+let fp64_compare_def = new_definition
   `fp64_compare a b =
      float_compare (fp64_to_float a) (fp64_to_float b)`;;
 
-let fp64_equal_def = cake_define
+let fp64_equal_def = new_definition
   `fp64_equal a b = float_equal (fp64_to_float a) (fp64_to_float b)`;;
 
-let fp64_lessThan_def = cake_define
+let fp64_lessThan_def = new_definition
   `fp64_lessThan a b =
      float_less_than (fp64_to_float a) (fp64_to_float b)`;;
 
-let fp64_lessEqual_def = cake_define
+let fp64_lessEqual_def = new_definition
   `fp64_lessEqual a b =
      float_less_equal (fp64_to_float a) (fp64_to_float b)`;;
 
-let fp64_greaterThan_def = cake_define
+let fp64_greaterThan_def = new_definition
   `fp64_greaterThan a b =
      float_greater_than (fp64_to_float a) (fp64_to_float b)`;;
 
-let fp64_greaterEqual_def = cake_define
+let fp64_greaterEqual_def = new_definition
   `fp64_greaterEqual a b =
      float_greater_equal (fp64_to_float a) (fp64_to_float b)`;;
 
-let fp64_mul_add_def = cake_define
+let fp64_mul_add_def = new_definition
   `fp64_mul_add mode a b c =
      float_to_fp64 (SND (float_mul_add mode (fp64_to_float a)
                                             (fp64_to_float b)

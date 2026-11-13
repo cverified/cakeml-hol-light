@@ -201,7 +201,7 @@ let data_to_word_memoryProof_tag_INDUCT,
    | Word64Tag \
    // immutable word64 on the heap";;
 
-let BlockRep_def = cake_define
+let BlockRep_def = new_definition
   `BlockRep tag xs = DataElement xs (LENGTH xs) (BlockTag tag,[])`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:139: the type abbreviation
@@ -209,7 +209,7 @@ let BlockRep_def = cake_define
 (* HOL4 data_to_word_memoryProofScript.sml:140: the type abbreviation
    ml_heap, which the port expands *)
 
-let bytes_def = cake_define
+let bytes_def = new_definition
   `((Bytes is_bigendian cmp_by_contents (bs:word8 list) (ws:('a word)
   list)):('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
   list)heap_element) =
@@ -217,16 +217,16 @@ let bytes_def = cake_define
        DataElement [] (LENGTH ws) (BytesTag cmp_by_contents
          (LENGTH bs),MAP wordLang_Word ws))`;;
 
-let bignum_def = cake_define
+let bignum_def = new_definition
   `Bignum i =
      (let (sign,(payload:('a word) list)) = i2mw i in
        DataElement [] (LENGTH payload) (NumTag sign,MAP
          wordLang_Word payload))`;;
 
-let BlockNil_def = cake_define
+let BlockNil_def = new_definition
   `BlockNil n = n2w n << 4 + (n2w 2)`;;
 
-let Word64Rep_def = cake_define
+let Word64Rep_def = new_definition
   `Word64Rep (:'a) (w:word64) =
      (if dimindex (:'a) < 64 then
        DataElement [] 2 (Word64Tag,[wordLang_Word ((63 >< 32) w);
@@ -248,7 +248,7 @@ let Word64Rep_DataElement = prove
    REPEAT GEN_TAC THEN REWRITE_TAC[cake_raw "Word64Rep"] THEN
    COND_CASES_TAC THEN take_ws));;
 
-let ThunkBlock_def = cake_define
+let ThunkBlock_def = new_definition
   `ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:176-181: a theorem whose
@@ -265,7 +265,7 @@ let ThunkBlock_def = cake_define
 (* The word annotation carried by a pointer to a ref. It is 0 for ordinary
    refs, but a MutBlock must carry exactly the annotation its finalised Block
    carries, since FinaliseCons is a no-op at word level. *)
-let ref_ptr_annot_def = cake_define
+let ref_ptr_annot_def = new_definition
   `ref_ptr_annot conf x2 =
       match x2 with
         SOME (bvlSem_MutBlock tg fin l c r) ->
@@ -341,7 +341,7 @@ let v_inv_ck = cake_inductive
                      word_loc,data_to_word_memoryProof_tag#('a
                      word_loc) list)heap_element) list)))`;;
 
-let v_inv_eq = cake_define
+let v_inv_eq = new_definition
   `v_inv conf v refs (x,f,tf,heap) =
      (!ck. v_inv_ck ck conf v refs (x,f,tf,heap))`;;
 
@@ -718,15 +718,16 @@ let _ = size_thms "dataSem_v";;
    the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:389-392: the tactic that
    proves the termination *)
-let get_refs_def = cake_define_list_try (fun () ->
-  `MEASURE (dataSem_v_size)`)
+let get_refs_def,get_refs_ind = define_shaped_wf
+  "nested"
+  `MEASURE (dataSem_v_size)`
   [`get_refs (Number _3:dataSem_v) = []`;
    `get_refs (Word64 _5:dataSem_v) = []`;
    `get_refs (CodePtr _7:dataSem_v) = []`;
    `get_refs (RefPtr _9 p:dataSem_v) = [p]`;
    `get_refs (Block _12 _13 vs:dataSem_v) = FLAT (MAP get_refs vs)`];;
 
-let ref_edge_def = cake_define
+let ref_edge_def = new_definition
   `ref_edge refs x res =
      (match lookup x refs with SOME (ValueArray ys) -> MEM res
        (get_refs (Block 0 ARB ys)) | SOME (Thunk _14 v) -> MEM res
@@ -734,18 +735,18 @@ let ref_edge_def = cake_define
        c r) -> MEM res (get_refs (Block 0 ARB (l ++ [c] ++ r))) | _17
        -> F)`;;
 
-let reachable_refs_def = cake_define
+let reachable_refs_def = new_definition
   `reachable_refs roots refs t =
      (?x r. MEM x roots /\ MEM r (get_refs x) /\ RTC (ref_edge
        refs) r t)`;;
 
-let RefBlock_def = cake_define
+let RefBlock_def = new_definition
   `RefBlock xs = DataElement xs (LENGTH xs) (RefTag,[])`;;
 
 let dest_evaluated_thunk_rel = cake_inductive
   `!x. dest_evaluated_thunk_rel (ThunkBlock Evaluated x) x`;;
 
-let bc_ref_inv_def = cake_define
+let bc_ref_inv_def = new_definition
   `bc_ref_inv conf n refs (f,tf,heap,be') =
      (match (FLOOKUP f n,lookup n refs) with (SOME x,SOME (ValueArray
        ys)) ->
@@ -779,16 +780,18 @@ let bc_ref_inv_def = cake_define
 
 (* TODO: MOVE *)
 let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:451-454: the tactic that
    proves the termination *)
-let v_all_ts_def = cake_define_wf
+let v_all_ts_def,v_all_ts_ind = define_wf
   `MEASURE (dataSem_v_size)`
-  `v_all_ts x1 =
+  [`v_all_ts x1 =
       match x1 with
         (Block ts _20 xs:dataSem_v) -> ts :: FLAT (MAP v_all_ts xs)
-      | _21 -> []`;;
+      | _21 -> []`];;
 
-let find_ref_def = cake_define
+let find_ref_def = new_definition
   `find_ref x1 x =
       match x1 with
         bvlSem_ValueArray l -> MEM x l
@@ -797,24 +800,28 @@ let find_ref_def = cake_define
       | _22 -> F`;;
 
 (* TODO: MOVE *)
-let all_ts_def = cake_define
+let all_ts_def = new_definition
   `all_ts refs stack' =
      (let refs_v = {x | ?n r. sptree_lookup n refs = SOME r /\
        find_ref r x} in {ts | ?x. (x IN refs_v \/ MEM x stack') /\
        MEM ts (v_all_ts x)})`;;
 
-let be_ok_def = cake_define
+let be_ok_def = new_definition
   `be_ok b1 b2 <=> b1 = b2`;;
 
-let v_all_vs_def = cake_define
-  `v_all_vs x1 =
+let _ = size_thms "dataSem_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let v_all_vs_def,v_all_vs_ind = define_wf
+  `MEASURE (\x0. dataSem_v_size1 x0)`
+  [`v_all_vs x1 =
       match x1 with
         ((Block ts tag l:dataSem_v) :: xs) -> (Block ts tag l ::
           v_all_vs l) ++ v_all_vs xs
       | (x :: xs) -> x :: v_all_vs xs
-      | [] -> []`;;
+      | [] -> []`];;
 
-let all_vs_def = cake_define
+let all_vs_def = new_definition
   `all_vs refs stack' =
      {v | ?(n:num) l. lookup n refs = SOME (ValueArray l) /\ MEM v
        (v_all_vs l)} UNION
@@ -825,7 +832,7 @@ let all_vs_def = cake_define
                             MEM v (v_all_vs (l ++ [c] ++ r))} UNION
      {v | MEM v (v_all_vs stack')}`;;
 
-let blocks_unique_def = cake_define
+let blocks_unique_def = new_definition
   `blocks_unique ts vs =
      (!t a1 xs1 a2 xs2.
        Block t a1 xs1 IN vs /\ ~(xs1 = []) /\
@@ -833,7 +840,7 @@ let blocks_unique_def = cake_define
        a1 = a2 /\ xs1 = xs2 /\ t < ts)`;;
 
 (* THIS IS IMPORTANT *)
-let bc_stack_ref_inv_def = cake_define
+let bc_stack_ref_inv_def = new_definition
   `bc_stack_ref_inv conf ts stack' refs (roots,heap,be') =
      (?f tf.
        INJ (FAPPLY f) (FDOM f) {a | isSomeDataElement (heap_lookup a
@@ -850,28 +857,28 @@ let bc_stack_ref_inv_def = cake_define
          n IN FDOM f ==>
            bc_ref_inv conf n refs (f,tf,heap,be')))`;;
 
-let data_up_to_def = cake_define
+let data_up_to_def = new_definition
   `data_up_to a heap =
      (?h1 h2. heap_split a heap = SOME (h1,h2) /\ EVERY
        isDataElement h1)`;;
 
-let unused_space_inv_def = cake_define
+let unused_space_inv_def = new_definition
   `unused_space_inv ptr l heap <=>
      (~(l = 0) ==> (heap_lookup ptr heap = SOME (Unused (l - 1)))) /\
      ptr + l <= heap_length heap /\
      data_up_to ptr heap`;;
 
-let isMutTag_def = cake_define
+let isMutTag_def = new_definition
   `isMutTag t <=> t = RefTag \/ (?ev. t = ThunkTag ev)`;;
 
-let isRef_def = cake_define
+let isRef_def = new_definition
   `data_to_word_memoryProof_isRef x1 =
       match x1 with
         DataElement ys l (tag,qs) -> isMutTag tag
       | _23 -> F`;;
 hol4_overload "isRef" "data_to_word_memoryProof_isRef";;
 
-let gen_start_ok_def = cake_define
+let gen_start_ok_def = new_definition
   `gen_start_ok heap refs_start gen_start =
      (?h1 h2.
        heap_split gen_start heap = SOME (h1,h2) /\
@@ -880,12 +887,12 @@ let gen_start_ok_def = cake_define
            xs ==>
          p < gen_start \/ refs_start <= p))`;;
 
-let gen_state_ok_def = cake_define
-  `gen_state_ok a refs_start heap (GenState _24 starts) <=>
+let gen_state_ok_def = define_general
+  [`gen_state_ok a refs_start heap (GenState _24 starts) <=>
      EVERY (\s. s <= a) starts /\
-     EVERY (gen_start_ok heap refs_start) starts`;;
+     EVERY (gen_start_ok heap refs_start) starts`];;
 
-let gc_kind_inv_def = cake_define
+let gc_kind_inv_def = new_definition
   `gc_kind_inv c a sp sp1 (gens:gen_state) heap <=>
      (match data_to_word_config_gc_kind c with None -> (sp1 = 0) |
        Simple -> (sp1 = 0) | data_to_word_Generational sizes ->
@@ -894,7 +901,7 @@ let gc_kind_inv_def = cake_define
                  EVERY (\x. ~(data_to_word_memoryProof_isRef x))
                    h1 /\ EVERY data_to_word_memoryProof_isRef h2))`;;
 
-let abs_ml_inv_def = cake_define
+let abs_ml_inv_def = new_definition
   `abs_ml_inv conf stack' refs (roots,heap,be',a,sp,sp1,gens) limit' ts
   <=>
      roots_ok roots heap /\ heap_ok heap limit' /\
@@ -1153,7 +1160,7 @@ let EL_ADDR_MAP = prove
 
 (* HOL4 data_to_word_memoryProofScript.sml:719: ML code, not ported *)
 
-let evaluated_thunk_ptr_def = cake_define
+let evaluated_thunk_ptr_def = new_definition
   `evaluated_thunk_ptr refs n <=> (?v. lookup n refs = SOME (Thunk
   Evaluated v))`;;
 
@@ -2064,18 +2071,18 @@ let gc_heap_inline_rel = cake_inductive
        gc_heap_inline_rel inline h1 (DataElement xs n d)
          (DataElement ys n d))`;;
 
-let gc_inline_def = cake_define
+let gc_inline_def = new_definition
   `gc_inline inline (r1,h1) (r2,h2) <=>
      LIST_REL (gc_inline_rel inline h1) r1 r2 /\
      LIST_REL (gc_heap_inline_rel inline h1) h1 h2`;;
 
-let gc_related_roots_heap_def = cake_define
+let gc_related_roots_heap_def = new_definition
   `gc_related_roots_heap f (r1,h1) (r2,h2) <=>
      gc_related f h1 h2 /\
      r2 = ADDR_MAP ((FAPPLY) f) r1 /\
      (!ptr u. MEM (gc_shared_Pointer ptr u) r1 ==> ptr IN FDOM f)`;;
 
-let gc_inline_related_def = cake_define
+let gc_inline_related_def = new_definition
   `gc_inline_related inline f (r1,h1) (r2,h2) =
      (?ri hi. gc_inline inline (r1,h1) (ri,hi) /\
              gc_related_roots_heap f (ri,hi) (r2,h2))`;;
@@ -3150,7 +3157,7 @@ let data_up_to_APPEND = prove
    REWRITE_TAC[APPEND_NIL; injectivity "option"; PAIR_EQ] THEN
    MESON_TAC[]));;
 
-let all_reachable_from_roots_def = cake_define
+let all_reachable_from_roots_def = new_definition
   `all_reachable_from_roots roots heap <=>
      (!p xs l d.
         heap_lookup p heap = SOME (DataElement xs l d) ==>
@@ -3490,7 +3497,7 @@ let data_to_word_memoryProof_full_gc_thm = prove
       [ACCEPT_TAC m;
        MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL RTC_RULES))])));;
 
-let make_gc_conf_def = cake_define
+let make_gc_conf_def = new_definition
   `make_gc_conf limit' =
      (mk_gen_gc_conf limit' (isMutTag o
        FST):(data_to_word_memoryProof_tag#'a) gen_gc_conf)`;;
@@ -3957,7 +3964,7 @@ let heap_expand_not_isRef = prove
    REWRITE_TAC[ALL; isRef_def] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
 
-let reset_gens_def = cake_define
+let reset_gens_def = new_definition
   `reset_gens conf a =
      (match data_to_word_config_gc_kind conf with
        data_to_word_Generational sizes -> GenState 0 (MAP (K a)
@@ -4327,8 +4334,8 @@ let data_to_word_memoryProof_gen_gc_thm = prove
       [ACCEPT_TAC m;
        MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL RTC_RULES))])));;
 
-let has_gen_def = cake_define
-  `has_gen (GenState _26 xs) <=> ~(xs = [])`;;
+let has_gen_def = define_general
+  [`has_gen (GenState _26 xs) <=> ~(xs = [])`];;
 
 let heap_split_heap_split = prove
  (`!heap n1 n2 h1 h2 h3 h4.
@@ -5155,22 +5162,22 @@ let gen_gc_partial_thm = prove
     (* and that its state is good *)
     FIRST_ASSUM ACCEPT_TAC]));;
 
-let data_pointers_def = cake_define
-  `data_pointers x1 =
+let data_pointers_def,data_pointers_ind = define_rec
+  [`data_pointers x1 =
         match x1 with
           [] -> []
         | (DataElement x y z :: rest) ->
         0 :: MAP (\n. n + el_length (DataElement x y z))
           (data_pointers rest)
         | (x :: rest) ->
-        MAP (\n. n + el_length x) (data_pointers rest)`;;
+        MAP (\n. n + el_length x) (data_pointers rest)`];;
 
-let lookup_len_def = cake_define
+let lookup_len_def = new_definition
   `lookup_len heap p =
      (match heap_lookup p heap with NONE -> 0 | SOME x ->
        el_length x)`;;
 
-let data_length_def = cake_define
+let data_length_def = new_definition
   `data_length heap =
      SUM (MAP (lookup_len heap) (data_pointers heap))`;;
 
@@ -5565,7 +5572,7 @@ let gc_combined_thm = prove
 
 (* Write to unused heap space is fine, e.g. cons *)
 
-let heap_store_def = cake_define_list
+let heap_store_def,heap_store_ind = define_rec
   [`heap_store a y [] = ([],F)`;
    `heap_store a y (x :: xs) =
         (if a = 0 then (y ++ xs,(el_length x = heap_length y)) else
@@ -5573,20 +5580,20 @@ let heap_store_def = cake_define_list
           let (xs,c) = heap_store (a - el_length x) y xs in
             (x :: xs,c))`];;
 
-let isUnused_def = cake_define
+let isUnused_def = new_definition
   `isUnused x = (?k. x = Unused k)`;;
 
-let isSomeUnused_def = cake_define
+let isSomeUnused_def = new_definition
   `isSomeUnused x = (?k. x = SOME (Unused k))`;;
 
-let heap_store_unused_def = cake_define
+let heap_store_unused_def = new_definition
   `heap_store_unused a sp x xs =
      (if (heap_lookup a xs = SOME (Unused (sp - 1))) /\ el_length x
        <= sp then
        heap_store a (heap_expand (sp - el_length x) ++ [x]) xs
          else (xs,F))`;;
 
-let heap_store_unused_alt_def = cake_define
+let heap_store_unused_alt_def = new_definition
   `heap_store_unused_alt a sp x xs =
      (if (heap_lookup a xs = SOME (Unused (sp - 1))) /\ el_length x
        <= sp then
@@ -5611,7 +5618,7 @@ let heap_store_lemma = prove
      ASM_REWRITE_TAC[] THEN CONV_TAC(ONCE_DEPTH_CONV let_CONV) THEN
      REWRITE_TAC[PAIR_EQ]]));;
 
-let heap_store_rel_def = cake_define
+let heap_store_rel_def = new_definition
   `heap_store_rel heap heap2 <=>
      (!ptr. isSomeDataElement (heap_lookup ptr heap) ==>
             (heap_lookup ptr heap2 = heap_lookup ptr heap))`;;
@@ -7035,7 +7042,7 @@ let isDataElement_lemmas = prove
 
 (* --- Allocating multiple cons-elements in one go --- *)
 
-let list_to_BlockReps_def = cake_define_list
+let list_to_BlockReps_def,list_to_BlockReps_ind = define_rec
   [`list_to_BlockReps conf t a [] = ARB`;
    `list_to_BlockReps conf t a (h :: l) =
       (match l with
@@ -7360,7 +7367,7 @@ let v_inv_LIST_REL = prove
    MATCH_MP_TAC data_to_word_memoryProof_v_inv_lemma THEN
    ASM_SIMP_TAC[]));;
 
-let bind_each_def = cake_define_list
+let bind_each_def,bind_each_ind = define_rec
   [`bind_each tf ts (k:num) i 0 = tf`;
    `bind_each tf ts (k:num) i (SUC n) = bind_each tf (ts + 1) (k +
   i) i n |+ (ts,k)`];;
@@ -10694,10 +10701,10 @@ let v_inv_ByteArray_insert = prove
   (REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[v_inv_eq; v_inv_ByteArray_insert_lemma]));;
 
-let isRefBlock_def = cake_define
+let isRefBlock_def = new_definition
   `isRefBlock x = (?p. x = RefBlock p)`;;
 
-let RefBlock_inv_def = cake_define
+let RefBlock_inv_def = new_definition
   `RefBlock_inv heap heap2 <=>
      (!n x. (heap_lookup n heap = SOME x) /\ ~(isRefBlock x) ==>
             (heap_lookup n heap2 = SOME x)) /\
@@ -14143,7 +14150,7 @@ let blocks_unique_update_ref1 = prove
    ASM_REWRITE_TAC[] THEN CONJ_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    FIRST_ASSUM ACCEPT_TAC));;
 
-let heap_deref_def = cake_define
+let heap_deref_def = new_definition
   `(heap_deref a heap =
      (match heap_lookup a heap with SOME (DataElement xs l
        (RefTag,[])) -> SOME xs | _29 -> NONE))`;;
@@ -14726,7 +14733,7 @@ let blocks_unique_update_thunk = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
    REPEAT CONJ_TAC THEN ASM_MESON_TAC[inc]));;
 
-let thunk_deref_def = cake_define
+let thunk_deref_def = new_definition
   `(thunk_deref a heap =
      (match heap_lookup a heap with SOME (DataElement xs l
        (ThunkTag NotEvaluated,[])) -> SOME xs | _30 -> NONE))`;;
@@ -19927,7 +19934,7 @@ let new_thunk_thm = prove
 
 (* deref *)
 
-let heap_el_def = cake_define
+let heap_el_def = new_definition
   `heap_el x1 n heap =
         match x1 with
           gc_shared_Pointer a u ->
@@ -22304,36 +22311,37 @@ let heap_store_unused_alt_IMP_length = prove
     representation in memory
    ------------------------------------------------------- *)
 
-let pointer_bits_def = cake_define
-  `// pointers have tag and len bits
+let pointer_bits_def,pointer_bits_ind = define_rec
+  [`// pointers have tag and len bits
    pointer_bits conf abs_heap n =
      (match heap_lookup n abs_heap with SOME (DataElement xs l
        (BlockTag tag,[])) ->
          maxout_bits (LENGTH xs) (data_to_word_config_len_bits conf)
            (data_to_word_config_tag_bits conf + 2) ||
-         maxout_bits tag (data_to_word_config_tag_bits conf) 2 ||
-           (n2w 1) | _47 -> all_ones (data_to_word_config_len_bits
-           conf + data_to_word_config_tag_bits conf + 1) 0)`;;
+         maxout_bits tag (data_to_word_config_tag_bits conf) 2
+           || (n2w 1) | _47 -> all_ones
+           (data_to_word_config_len_bits conf +
+           data_to_word_config_tag_bits conf + 1) 0)`];;
 
-let is_all_ones_def = cake_define
+let is_all_ones_def = new_definition
   `is_all_ones m n w = ((all_ones m n && w) = all_ones m n)`;;
 
-let decode_maxout_def = cake_define
+let decode_maxout_def = new_definition
   `decode_maxout l n w =
      (if is_all_ones (n + l) n w then NONE else SOME ((word_bits
        (n + l) n) w >> n))`;;
 
-let decode_addr_def = cake_define
+let decode_addr_def = new_definition
   `decode_addr conf w =
      (decode_maxout (data_to_word_config_len_bits conf)
        (data_to_word_config_tag_bits conf + 2) w,
       decode_maxout (data_to_word_config_tag_bits conf) 2 w)`;;
 
-let get_addr_def = cake_define
+let get_addr_def = new_definition
   `get_addr conf n w =
      ((n2w n << shift_length conf) || get_lowerbits conf w)`;;
 
-let word_addr_def = cake_define
+let word_addr_def = new_definition
   `word_addr conf x2 =
         match x2 with
           gc_shared_Data (Loc l1 l2) -> Loc l1 0
@@ -22347,11 +22355,11 @@ let data_to_word_memoryProof_b2w_def = prove
  (`(b2w T = (n2w 1)) /\ (b2w F = (n2w 0))`,
   (REWRITE_TAC[b2w_def; b2n_def]));;
 
-let thunk_tag_to_bits_def = cake_define_list
+let thunk_tag_to_bits_def = define_cases
   [`thunk_tag_to_bits Evaluated = (n2w 1)`;
    `thunk_tag_to_bits NotEvaluated = (n2w 0)`];;
 
-let word_payload_def = cake_define_list
+let word_payload_def = define_cases
   [`word_payload ys l (BlockTag n) qs conf =
          (
           // header: ...00[11] here i in ...i[11] must be 0 for the GC
@@ -22455,7 +22463,7 @@ let word_payload_T_IMP = prove
                 BIT_WORD; BIT_WORD_OR] THEN
    CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[]));;
 
-let word_el_def = cake_define_list
+let word_el_def = define_cases
   [`word_el (a:'a word) (Unused l) conf = word_list_exists (a:'a
   word) (l + 1)`;
    `word_el (a:'a word) (ForwardPointer n d l) conf =
@@ -22467,7 +22475,7 @@ let word_el_def = cake_define_list
            cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\
                  decode_length conf h = n2w (LENGTH ts) /\ c))`];;
 
-let word_heap_def = cake_define_list
+let word_heap_def,word_heap_ind = define_rec
   [`word_heap a ([]:(('a word_loc,data_to_word_memoryProof_tag#('a
   word_loc) list)heap_element) list) conf = emp`;
    `word_heap a (x :: xs) conf =
@@ -22475,7 +22483,7 @@ let word_heap_def = cake_define_list
          word_heap (a + bytes_in_word * n2w (el_length x)) xs
            conf`];;
 
-let gen_starts_in_store_def = cake_define
+let gen_starts_in_store_def = new_definition
   `gen_starts_in_store c x2 x3 =
       match (x2,x3) with
         (GenState _48 gen_starts,SOME (wordLang_Word w)) ->
@@ -22496,13 +22504,13 @@ let gen_starts_in_store_IMP = prove
        SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[]) THEN
    MESON_TAC[]));;
 
-let glob_real_inv_def = cake_define
+let glob_real_inv_def = new_definition
   `glob_real_inv c (curr:'a word) globals globreal <=>
      (?w. globals = SOME (wordLang_Word w) /\
          globreal = SOME (wordLang_Word (curr + (w >>>
            (shift_length c) << backend_common_word_shift (:'a)))))`;;
 
-let heap_in_memory_store_def = cake_define
+let heap_in_memory_store_def = new_definition
   `heap_in_memory_store heap a sp sp1 gens c s m dm limit' <=>
      heap_length heap <= dimword (:'a) DIV 2 EXP shift_length c /\
      (
@@ -22534,7 +22542,7 @@ let heap_in_memory_store_def = cake_define
        (word_heap curr heap c *
         word_heap other (heap_expand limit') c) (fun2set (m,dm)))`;;
 
-let word_ml_inv_def = cake_define
+let word_ml_inv_def = new_definition
   `word_ml_inv (heap,be',a,sp,sp1,gens) limit' ts c refs stack' <=>
      (?hs. abs_ml_inv c (MAP FST stack') refs
        (hs,heap,be',a,sp,sp1,gens) limit' ts /\
@@ -22544,7 +22552,7 @@ let IMP_THE_EQ = prove
  (`x = SOME w ==> THE x = w`,
   (DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[THE]));;
 
-let memory_rel_def = cake_define
+let memory_rel_def = new_definition
   `memory_rel c be' ts refs space' st (m:'a word->'a word_loc) dm vars'
   <=>
      (?heap limit' a sp sp1 gens.
@@ -22955,7 +22963,7 @@ let get_lowerbits_LSL_shift_length = prove
                shift_length_def] THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC));;
 
-let get_real_addr_def = cake_define
+let get_real_addr_def = new_definition
   `get_real_addr conf st (w:'a word) =
      (let k = backend_common_word_shift (:'a) in
        match FLOOKUP st CurrHeap with SOME (wordLang_Word curr) ->
@@ -22967,12 +22975,12 @@ let get_real_addr_def = cake_define
                SOME (curr + (w >>> (shift_length conf) << k))) | _51
                -> NONE)`;;
 
-let get_real_offset_def = cake_define
+let get_real_offset_def = new_definition
   `get_real_offset (w:'a word) =
      (if dimindex (:'a) = 32 then SOME (w + bytes_in_word) else
        SOME (w << 1 + bytes_in_word))`;;
 
-let get_real_simple_addr_def = cake_define
+let get_real_simple_addr_def = new_definition
   `get_real_simple_addr conf st (w:'a word) =
      (match FLOOKUP st CurrHeap with SOME (wordLang_Word curr) ->
        SOME (curr + w >>> shift_length conf <<
@@ -26508,7 +26516,9 @@ let memory_rel_UpdateCons = prove
                  REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
        ACCEPT_TAC (REWRITE_RULE[GSYM eq] th))))));;
 
-let data_to_word_memoryProof_store_list_def = cake_define_list
+let data_to_word_memoryProof_store_list_def,
+    data_to_word_memoryProof_store_list_ind =
+  define_rec
   [`data_to_word_memoryProof_store_list a [] (m:'a word->'a word_loc)
   dm = SOME m`;
    `data_to_word_memoryProof_store_list a (w :: ws) (m:'a word->'a
@@ -33726,7 +33736,7 @@ let memory_rel_REPLICATE = prove
    that HOL4 states as the value of an ML expression:
    memory_rel_RefArray *)
 
-let word_of_byte_def = cake_define
+let word_of_byte_def = new_definition
   `word_of_byte (w:'a word) =
      (let w = (w << 8 || w) in
      let w = (w << 16 || w) in
@@ -34823,11 +34833,11 @@ let write_bytes_change_extra = prove
        ASM_SIMP_TAC[DIV_SUB_STEP; ARITH_RULE `0 < 4 /\ 0 < 8`] THEN
        ASM_ARITH_TAC]]));;
 
-let last_bytes_def = cake_define
-  `last_bytes k b a w be' =
+let last_bytes_def,last_bytes_ind = define_rec
+  [`last_bytes k b a w be' =
      (if k = 0 then w else
        set_byte a b (last_bytes (k - 1) b (a + (n2w 1)) w be')
-         be')`;;
+         be')`];;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10399-10403: a theorem
    that HOL4 states as the value of an ML expression: last_bytes_simp *)
@@ -36918,8 +36928,8 @@ let memory_rel_El_any = prove
      EXISTS_TAC pw THEN EXISTS_TAC x THEN EXISTS_TAC x) THEN
    ASM_REWRITE_TAC[]));;
 
-let copy_list_def = cake_define
-  `copy_list c' st k (a,x,(b:'a word),(m:'a word->'a word_loc),dm) =
+let copy_list_def,copy_list_ind = define_rec
+  [`copy_list c' st k (a,x,(b:'a word),(m:'a word->'a word_loc),dm) =
      (let c = (b IN dm) in
      let m = (b =+ x) m in
      let b = b + bytes_in_word in
@@ -36931,7 +36941,7 @@ let copy_list_def = cake_define
            let x = m (a + bytes_in_word) in
            let a = m (a + (n2w 2) * bytes_in_word) in
              if c then copy_list c' st (k - 1) (a,x,b,m,dm) else
-               NONE)))`;;
+               NONE)))`];;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10872-10965: a theorem
    that HOL4 states as the value of an ML expression: copy_list_thm *)
@@ -40329,10 +40339,10 @@ let heap_in_memory_store_UpdateByte = prove
     ub_store THEN ub_unfold THEN ub_split THEN ub_words THEN
     ub_cond THEN ub_read THEN ub_write));;
 
-let hide_memory_rel_def = cake_define
+let hide_memory_rel_def = new_definition
   `hide_memory_rel = memory_rel`;;
 
-let hide_heap_in_memory_store_def = cake_define
+let hide_heap_in_memory_store_def = new_definition
   `hide_heap_in_memory_store = heap_in_memory_store`;;
 
 (* the names of record fields that this statement uses for
@@ -43614,17 +43624,17 @@ let Num_ABS_lemmas = prove
  (`num_of_int (abs (&n)) = n /\ num_of_int (abs (--(&n))) = n`,
   (REWRITE_TAC[INT_ABS_NUM; INT_ABS_NEG; NUM_OF_INT_OF_NUM]));;
 
-let word_cmp_res_def = cake_define
+let word_cmp_res_def = new_definition
   `word_cmp_res i (j:int) =
      (if i = j then (n2w 1) else if i < j then (n2w 0) else (n2w
        2))`;;
 
 (* the termination relation is not in the HOL4 source *)
-let word_cmp_loop_def = cake_define_try_tac (fun () ->
-  `MEASURE (w2n o FST)`)
+let word_cmp_loop_def,word_cmp_loop_ind = define_wf_tac
+  `MEASURE (w2n o FST)`
   TERM_TAC
-  `word_cmp_loop (l:'a word) (a1:'a word) a2 dm (m:'a word->'a word_loc)
-  =
+  [`word_cmp_loop (l:'a word) (a1:'a word) a2 dm (m:'a word->'a
+  word_loc) =
      (if l = (n2w 0) then SOME (n2w 1) else
        if a1 IN dm /\ a2 IN dm then
          match (m a1,m a2) with (wordLang_Word w1,wordLang_Word w2)
@@ -43632,8 +43642,8 @@ let word_cmp_loop_def = cake_define_try_tac (fun () ->
              (if w1 = w2 then
                word_cmp_loop (l - (n2w 1)) (a1 - bytes_in_word)
                  (a2 - bytes_in_word) dm m else if w1 <+ w2 then
-                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _67 ->
-                   NONE else NONE)`;;
+                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _67
+                   -> NONE else NONE)`];;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13106: ML code, not ported *)
 
@@ -44525,7 +44535,7 @@ let memory_rel_Number_cmp = prove
    an ALL and of an EX of but not this one.  Two functions that
    agree on the members of the two lists give the same LIST_REL, so
    a call under it is admissible, and with the proforma registered
-   cake_define makes the definition below with the measure that the
+   define_wf makes the definition below with the measure that the
    source gives.  (The other proformas stand in ml/lib/fastdef.ml;
    this one stands here because the library layer is changed in
    batches, when a file is finished.) *)
@@ -44567,20 +44577,22 @@ let _ = admissible_extra :=
   ("ALL2",ADMISSIBLE_ALL2) :: (!admissible_extra);;
 
 let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:13255-13261: the tactic
    that proves the termination *)
-let v_same_type_def = cake_define_try_tac (fun () ->
-  `MEASURE (dataSem_v_size o FST)`)
+let v_same_type_def,v_same_type_ind = define_wf_tac
+  `MEASURE (dataSem_v_size o FST)`
   TERM_TAC
-  `v_same_type x1 x2 =
+  [`v_same_type x1 x2 =
         match (x1,x2) with
           ((Number _70:dataSem_v),(Number _71:dataSem_v)) -> T
         | ((Word64 _72),(Word64 _73)) -> T
-        | ((Block _74 t1 l1),(Block _75 t2 l2)) -> (t1 = t2 /\ LENGTH
-          l1 = LENGTH l2 ==> LIST_REL v_same_type l1 l2)
+        | ((Block _74 t1 l1),(Block _75 t2 l2)) -> (t1 = t2 /\
+          LENGTH l1 = LENGTH l2 ==> LIST_REL v_same_type l1 l2)
         | ((CodePtr _76),(CodePtr _77)) -> T
         | ((RefPtr _78 _79),(RefPtr _80 _81)) -> T
-        | (_82,_83) -> F`;;
+        | (_82,_83) -> F`];;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -44800,15 +44812,17 @@ let memory_rel_rotate3 = prove
    whose statement the port cannot state yet: v1_size_map *)
 
 let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:13421-13425: the tactic
    that proves the termination *)
-let v_depth_def = cake_define_wf
+let v_depth_def,v_depth_ind = define_wf
   `MEASURE dataSem_v_size`
-  `v_depth x1 =
+  [`v_depth x1 =
         match x1 with
           (Block _86 _87 ls:dataSem_v) -> (if NULL ls then 0 else 1)
             + MAX_LIST (MAP v_depth ls)
-        | _88 -> 0`;;
+        | _88 -> 0`];;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13427: ML code, not ported *)
 
@@ -44875,7 +44889,7 @@ let v_inv_Block_tag_limit = prove
    REWRITE_TAC[distinctness "option"] THEN
    POP_ASSUM MP_TAC THEN ARITH_TAC));;
 
-let elements_list_def = cake_define_list
+let elements_list_def,elements_list_ind = define_rec
   [`elements_list [] = T`;
    `elements_list [v] = T`;
    `elements_list (v :: w :: vs) =
@@ -46064,10 +46078,9 @@ let _ = size_thms "dataSem_v";;
    so the two sides of the clause differed by that one lambda
    (ml/lib/define.ml, "the depairing above was applied to the
    clause as it was given"). *)
-let vb_eq_size_def = cake_define_list_try_tac (fun () ->
+let vb_eq_size_def = define_mutual_wf_cheat
   `MEASURE (\x. match x with INL (refs,v1,v2) -> dataSem_v_size v1 |
-     INR (refs,l1,l2) -> list_size dataSem_v_size l1)`)
-  CHEAT_TAC
+  INR (refs,l1,l2) -> list_size dataSem_v_size l1)`
   [`vb_eq_size refs x2 x3 =
          match (x2,x3) with
            ((Block _91 t1 l1:dataSem_v),(Block _92 t2 l2:dataSem_v))
@@ -47419,14 +47432,14 @@ let memory_rel_simple_eq = prove
     blk_pre THENL [clos_case; blocks_case; blocks_case];
     refptr_branch])));;
 
-let word_header_def = cake_define
+let word_header_def = new_definition
   `word_header c st a dm m =
      (match get_real_addr c st a with NONE -> NONE | SOME a1 ->
          (if ~(a1 IN dm) then NONE else
            match m a1 with wordLang_Word x1 -> SOME (a1,x1) | _100
              -> NONE))`;;
 
-let data_to_word_memoryProof_fix_clock_def = cake_define_list
+let data_to_word_memoryProof_fix_clock_def = define_cases
   [`data_to_word_memoryProof_fix_clock ck (l:num) NONE = NONE`;
    `data_to_word_memoryProof_fix_clock ck (l:num) (SOME
   (y,(l1:num),(ck1:num))) =
@@ -47449,7 +47462,7 @@ let data_to_word_memoryProof_fix_clock_IMP = prove
    REPEAT COND_CASES_TAC THEN REPEAT STRIP_TAC THEN
    ASM_ARITH_TAC));;
 
-let word_is_clos_def = cake_define
+let word_is_clos_def = new_definition
   `word_is_clos c h <=>
      (h && (tag_mask c || (n2w 2))) = n2w (16 * closure_tag + 2) \/
      (h && (tag_mask c || (n2w 2))) = n2w (16 * partial_app_tag +
@@ -47476,13 +47489,15 @@ let _ = cake_term_facts :=
    cheat would be taken for want of time alone *)
 let _ = cake_cheat_budget := 120;;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:14020-14025: the tactic
    that proves the termination *)
-let word_eq_def = cake_define_try_tac (fun () ->
+let word_eq_def = define_mutual_wf_tac
   `MEASURE (\x. match x with INL (c,st,dm,m,l1,ck1,w1,w2) -> l1 | INR
-  (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`)
+  (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`
   TERM_TAC
-  `(word_eq c st dm m l ck w1 (w2:'a word) =
+  [`(word_eq c st dm m l ck w1 (w2:'a word) =
       (if w1 = w2 then SOME (((n2w 1):'a word),l,ck) else
       if ~(word_bit 0 w1 /\ word_bit 0 w2) then SOME ((n2w 0),l,ck)
         else
@@ -47512,22 +47527,23 @@ let word_eq_def = cake_define_try_tac (fun () ->
               if l <= w2n (decode_length c h1) then NONE else
               match word_cmp_loop (decode_length c h1)
                 (a1 + bytes_in_word * (decode_length c h1))
-                (a2 + bytes_in_word * (decode_length c h1)) dm m with
-                  NONE -> NONE | SOME res -> SOME (res,l - 1 - w2n
+                (a2 + bytes_in_word * (decode_length c h1)) dm m
+                  with NONE -> NONE | SOME res -> SOME (res,l - 1 - w2n
                   (decode_length c h1),ck))) | _101 -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else
       if ~(a1 IN dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE
         else
-        match (m a1,m a2) with (wordLang_Word w1,wordLang_Word w2) ->
-         (match fix_clock (ck - 1) (l - 1) (word_eq c st dm m (l - 1)
-           (ck - 1) w1 w2) with NONE -> NONE | SOME (x,l,ck') -> (if ~(x
-           = (n2w 1)) then SOME (x,l,ck) else
+        match (m a1,m a2) with (wordLang_Word w1,wordLang_Word w2)
+          ->
+         (match fix_clock (ck - 1) (l - 1) (word_eq c st dm m (l -
+           1) (ck - 1) w1 w2) with NONE -> NONE | SOME (x,l,ck') -> (if
+           ~(x = (n2w 1)) then SOME (x,l,ck) else
                              if l = 0 then NONE else
                               word_eq_list c st dm m (l - 1) ck (w -
                                 (n2w 1))
                               (a1 + bytes_in_word) (a2 +
-                                bytes_in_word))) | _102 -> NONE))`;;
+                                bytes_in_word))) | _102 -> NONE))`];;
 
 (* the budget of the attempt, as it was *)
 let _ = cake_cheat_budget := 8;;
@@ -47971,12 +47987,12 @@ let memory_rel_isClos = prove
      ALL_TAC] THEN
    ASM_SIMP_TAC[n2w_11] THEN ARITH_TAC));;
 
-let eq_assum_def = cake_define_list
+let eq_assum_def = define_cases
   [`eq_assum a m dm [] = T`;
    `eq_assum a m dm (v :: vs) <=>
          a IN dm /\ eq_assum (a + bytes_in_word) m dm vs`];;
 
-let eq_explode_def = cake_define_list
+let eq_explode_def,eq_explode_ind = define_rec
   [`eq_explode a m dm [] = []`;
    `eq_explode a m dm (v :: vs) = (v,m a) :: eq_explode (a +
   bytes_in_word) m dm vs`];;
@@ -51168,7 +51184,7 @@ let word_eq_thm = prove
        MP_TAC th)))) THEN
    STRIP_TAC THEN ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[]));;
 
-let word_mem_eq_def = cake_define_list
+let word_mem_eq_def,word_mem_eq_ind = define_rec
   [`word_mem_eq a [] dm m = SOME T`;
    `word_mem_eq a (x :: xs) dm m =
          (if ~(a IN dm) then NONE else
@@ -51226,7 +51242,7 @@ let word_mem_eq_thm = prove
    FIRST_X_ASSUM MATCH_MP_TAC THEN witness THEN
    ASM_REWRITE_TAC[] THEN usesep THEN REWRITE_TAC[STAR_AC]));;
 
-let bignum_words_def = cake_define
+let bignum_words_def = new_definition
   `bignum_words c i =
      (let (sign,payload) = i2mw i in
        match encode_header c (if sign then 7 else 3) (LENGTH
@@ -52954,12 +52970,14 @@ let memory_rel_ByteArray_IMP_store = prove
 
 (* copy forward *)
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:15324-15329: the tactic
    that proves the termination *)
-let word_copy_fwd_def = cake_define_try_tac (fun () ->
-  `MEASURE (w2n o FST o SND)`)
+let word_copy_fwd_def,word_copy_fwd_ind = define_wf_tac
+  `MEASURE (w2n o FST o SND)`
   TERM_TAC
-  `word_copy_fwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
+  [`word_copy_fwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
        if n <+ (n2w 2) then
@@ -52967,7 +52985,8 @@ let word_copy_fwd_def = cake_define_try_tac (fun () ->
            OPTION_BIND (mem_load_byte_aux m dm be' a)
                        (\w. mem_store_byte_aux m dm be' b w) else
          OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
-         OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 1))) (\w2.
+         OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 1)))
+           (\w2.
            if n = (n2w 2) then
              OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
              OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1))
@@ -52991,10 +53010,10 @@ let word_copy_fwd_def = cake_define_try_tac (fun () ->
        OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 3)) w4)
          (\m.
          word_copy_fwd be' (n - (n2w 4)) (a + (n2w 4)) (b + (n2w
-           4)) m dm)))))))))`;;
+           4)) m dm)))))))))`];;
 
-let list_copy_fwd_def = cake_define
-  `list_copy_fwd n xp xs yp ys =
+let list_copy_fwd_def,list_copy_fwd_ind = define_rec
+  [`list_copy_fwd n xp xs yp ys =
      (if xp + n <= LENGTH xs /\ yp + n <= LENGTH ys then
        if n = 0 then SOME ys else
        if n = 1 then SOME (LUPDATE (EL xp xs) yp ys) else
@@ -53009,11 +53028,11 @@ let list_copy_fwd_def = cake_define
                           ((LUPDATE (EL (xp + 3) xs) (yp + 3) o
                             LUPDATE (EL (xp + 2) xs) (yp + 2) o
                             LUPDATE (EL (xp + 1) xs) (yp + 1) o
-                            LUPDATE (EL (xp + 0) xs) (yp + 0)) ys)
-                              else NONE)`;;
+                            LUPDATE (EL (xp + 0) xs) (yp + 0))
+                              ys) else NONE)`];;
 
-let list_copy_fwd_alias_def = cake_define
-  `list_copy_fwd_alias n xp yp ys =
+let list_copy_fwd_alias_def,list_copy_fwd_alias_ind = define_rec
+  [`list_copy_fwd_alias n xp yp ys =
      (if xp + n <= LENGTH ys /\ yp + n <= LENGTH ys then
        if n = 0 then SOME ys else
        if n = 1 then SOME (LUPDATE (EL xp ys) yp ys) else
@@ -53028,8 +53047,8 @@ let list_copy_fwd_alias_def = cake_define
                           ((LUPDATE (EL (xp + 3) ys) (yp + 3) o
                             LUPDATE (EL (xp + 2) ys) (yp + 2) o
                             LUPDATE (EL (xp + 1) ys) (yp + 1) o
-                            LUPDATE (EL (xp + 0) ys) (yp + 0)) ys)
-                              else NONE)`;;
+                            LUPDATE (EL (xp + 0) ys) (yp + 0))
+                              ys) else NONE)`];;
 
 (* the port's own: what the four lemmas about the copy of a part of
    a byte array share.  The lemmas are three facts about the word
@@ -53459,12 +53478,14 @@ let word_copy_fwd_alias_thm = prove
 
 (* copy backward *)
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:15569-15574: the tactic
    that proves the termination *)
-let word_copy_bwd_def = cake_define_try_tac (fun () ->
-  `MEASURE (w2n o FST o SND)`)
+let word_copy_bwd_def,word_copy_bwd_ind = define_wf_tac
+  `MEASURE (w2n o FST o SND)`
   TERM_TAC
-  `word_copy_bwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
+  [`word_copy_bwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
        if n <+ (n2w 2) then
@@ -53472,7 +53493,8 @@ let word_copy_bwd_def = cake_define_try_tac (fun () ->
            OPTION_BIND (mem_load_byte_aux m dm be' a)
                        (\w. mem_store_byte_aux m dm be' b w) else
          OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
-         OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 1))) (\w2.
+         OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 1)))
+           (\w2.
            if n = (n2w 2) then
              OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
              OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1))
@@ -53496,64 +53518,64 @@ let word_copy_bwd_def = cake_define_try_tac (fun () ->
        OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 3)) w4)
          (\m.
          word_copy_bwd be' (n - (n2w 4)) (a - (n2w 4)) (b - (n2w
-           4)) m dm)))))))))`;;
+           4)) m dm)))))))))`];;
 
-let minus_def = cake_define
+let minus_def = new_definition
   `minus m n = m - (n:num)`;;
 
-let list_copy_bwd_def = cake_define
-  `list_copy_bwd (n:num) xp xs yp ys =
+let list_copy_bwd_def,list_copy_bwd_ind = define_rec
+  [`list_copy_bwd (n:num) xp xs yp ys =
      (if n <= xp + 1 /\ xp < LENGTH xs /\ n <= yp + 1 /\ yp < LENGTH
        ys then
        if n = 0 then SOME ys else
        if n = 1 then SOME (LUPDATE (EL xp xs) yp ys) else
-       if n = 2 then SOME ((LUPDATE (EL (minus xp 1) xs) (minus yp 1)
-         o
+       if n = 2 then SOME ((LUPDATE (EL (minus xp 1) xs) (minus yp
+         1) o
                             LUPDATE (EL (minus xp 0) xs) (minus yp
                               0)) ys) else
-       if n = 3 then SOME ((LUPDATE (EL (minus xp 2) xs) (minus yp 2)
-         o
-                            LUPDATE (EL (minus xp 1) xs) (minus yp 1)
-                              o
+       if n = 3 then SOME ((LUPDATE (EL (minus xp 2) xs) (minus yp
+         2) o
+                            LUPDATE (EL (minus xp 1) xs) (minus yp
+                              1) o
                             LUPDATE (EL (minus xp 0) xs) (minus yp
                               0)) ys) else
          list_copy_bwd (n - 4) (minus xp 4) xs (minus yp 4)
-                          ((LUPDATE (EL (minus xp 3) xs) (minus yp 3)
-                            o
-                            LUPDATE (EL (minus xp 2) xs) (minus yp 2)
-                              o
-                            LUPDATE (EL (minus xp 1) xs) (minus yp 1)
-                              o
-                            LUPDATE (EL (minus xp 0) xs) (minus yp
-                              0)) ys) else NONE)`;;
+                          ((LUPDATE (EL (minus xp 3) xs) (minus yp
+                            3) o
+                            LUPDATE (EL (minus xp 2) xs) (minus yp
+                              2) o
+                            LUPDATE (EL (minus xp 1) xs) (minus yp
+                              1) o
+                            LUPDATE (EL (minus xp 0) xs) (minus
+                              yp 0)) ys) else NONE)`];;
 
 (* HOL4 data_to_word_memoryProofScript.sml:15598: ML code, not ported *)
 
-let list_copy_bwd_alias_def = cake_define
-  `list_copy_bwd_alias n xp yp ys =
+let list_copy_bwd_alias_def,list_copy_bwd_alias_ind = define_rec
+  [`list_copy_bwd_alias n xp yp ys =
      (if n <= xp + 1 /\ xp < LENGTH ys /\ n <= yp + 1 /\ yp < LENGTH
        ys then
        if n = 0 then SOME ys else
        if n = 1 then SOME (LUPDATE (EL xp ys) yp ys) else
-       if n = 2 then SOME ((LUPDATE (EL (minus xp 1) ys) (minus yp 1)
-         o
+       if n = 2 then SOME ((LUPDATE (EL (minus xp 1) ys) (minus yp
+         1) o
                             LUPDATE (EL (minus xp 0) ys) (minus yp
                               0)) ys) else
-       if n = 3 then SOME ((LUPDATE (EL (minus xp 2) ys) (minus yp 2)
-         o
-                            LUPDATE (EL (minus xp 1) ys) (minus yp 1)
-                              o
+       if n = 3 then SOME ((LUPDATE (EL (minus xp 2) ys) (minus yp
+         2) o
+                            LUPDATE (EL (minus xp 1) ys) (minus yp
+                              1) o
                             LUPDATE (EL (minus xp 0) ys) (minus yp
                               0)) ys) else
          list_copy_bwd_alias (n - 4) (minus xp 4) (minus yp 4)
-                          ((LUPDATE (EL (minus xp 3) ys) (minus yp 3)
-                            o
-                            LUPDATE (EL (minus xp 2) ys) (minus yp 2)
-                              o
-                            LUPDATE (EL (minus xp 1) ys) (minus yp 1)
-                              o
-                            LUPDATE (EL (minus xp 0) ys) (minus yp
-                              0)) ys) else NONE)`;;
+                          ((LUPDATE (EL (minus xp 3) ys) (minus yp
+                            3) o
+                            LUPDATE (EL (minus xp 2) ys) (minus yp
+                              2) o
+                            LUPDATE (EL (minus xp 1) ys) (minus yp
+                              1) o
+                            LUPDATE (EL (minus xp 0) ys) (minus
+                              yp 0)) ys) else NONE)`];;
 (* HOL4 data_to_word_memoryProofScript.sml:15617-15618: ML code, not
    ported *)
 
@@ -53735,12 +53757,12 @@ let word_copy_bwd_alias_thm = prove
 
 (* copy array *)
 
-let list_copy_def = cake_define
+let list_copy_def = new_definition
   `list_copy n xp xs yp ys =
      (if yp <= xp \/ n + xp = 0 then list_copy_fwd n xp xs yp ys
        else list_copy_bwd n ((xp + n) - 1) xs ((yp + n) - 1) ys)`;;
 
-let list_copy_alias_def = cake_define
+let list_copy_alias_def = new_definition
   `list_copy_alias n xp yp ys =
      (if yp <= xp \/ n + xp = 0 then list_copy_fwd_alias n xp yp
        ys else list_copy_bwd_alias n ((xp + n) - 1) ((yp + n) - 1)
@@ -54550,7 +54572,7 @@ val (n1,(n2,n3)) = first (not o test) inputs
 
 *)
 
-let word_copy_array_def = cake_define
+let word_copy_array_def = new_definition
   `word_copy_array be' n a a1 b b1 (m:'a word->'a word_loc) dm =
      (if b1 <=+ a1 then
        word_copy_fwd be' n (a + a1) (b + b1) m dm else
@@ -55636,7 +55658,7 @@ let get_lowerbits_ptrbits = prove
        MP_TAC(MATCH_MP bits_lt (CONJ th2 th1)))) THEN
      ASM_ARITH_TAC]));;
 
-let append_writes_def = cake_define_list
+let append_writes_def,append_writes_ind = define_rec
   [`append_writes c ptr (hdr:'a word) [] l = ARB`;
    `append_writes c ptr (hdr:'a word) (x :: xs) l =
       wordLang_Word hdr :: x ::
@@ -58919,8 +58941,10 @@ let memory_rel_append = prove
 
 (* --- ML lists cannot exceed heap size: --- *)
 
-let data_to_word_memoryProof_walk_def = cake_define
-  `data_to_word_memoryProof_walk conf heap ptr n =
+let data_to_word_memoryProof_walk_def,
+    data_to_word_memoryProof_walk_ind =
+  define_rec
+  [`data_to_word_memoryProof_walk conf heap ptr n =
      (if n = 0 then [] else if n = 1 then [ptr] else
        match some (\p.
          ?x y.
@@ -58929,7 +58953,7 @@ let data_to_word_memoryProof_walk_def = cake_define
            cons_tag 2))) with
          NONE -> [] | SOME p ->
            ptr :: data_to_word_memoryProof_walk conf heap p (n -
-             1))`;;
+             1))`];;
 hol4_overload "walk" "data_to_word_memoryProof_walk";;
 
 let v_inv_v_to_list_lemma = prove
@@ -60227,12 +60251,12 @@ let v_to_list_same_LENGTH = prove
       MAP_EVERY EXISTS_TAC [addr; w1; w2]) THEN
     ASM_REWRITE_TAC[]));;
 
-let block_drop_def = cake_define
-  `block_drop x1 v =
+let block_drop_def,block_drop_ind = define_rec
+  [`block_drop x1 v =
       match (x1,v) with
         (0,v) -> SOME v
       | (SUC n,(Block ts tag [h; vl]:dataSem_v)) -> block_drop n vl
-      | (_103,_104) -> NONE`;;
+      | (_103,_104) -> NONE`];;
 
 let v_to_list_DROP = prove
  (`!vs ptr ps k v ts.
@@ -60817,7 +60841,7 @@ let memory_rel_list_limit = prove
    FIRST_ASSUM(fun le -> FIRST_ASSUM(fun dw ->
      MATCH_ACCEPT_TAC(MATCH_MP mul_le (CONJ le dw))))));;
 
-let build_part_words_def = cake_define_list
+let build_part_words_def = define_cases
   [`build_part_words c m (Int i:const_part) (offset:'a word) =
       (if small_int (:'a) i then SOME (wordLang_Word (Smallnum
         i),[]) else let (sign,ws) = i2mw i in
@@ -60851,7 +60875,7 @@ let build_part_words_def = cake_define_list
               offset ((n2w 0):'a word) (byte_len (:'a) n),MAP
               wordLang_Word (hd :: ws)) else NONE)`];;
 
-let build_words_def = cake_define_list
+let build_words_def,build_words_ind = define_rec
   [`build_words c m i [] (off:'a word) = SOME (m (i - (1:num)),[])`;
    `build_words c m i (x :: parts') (off:'a word) =
       (match build_part_words c m x off with NONE -> NONE | SOME
@@ -62061,7 +62085,7 @@ let make_ptr_add = prove
     CONV_TAC NUM_REDUCE_CONV THEN
     POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC ths) THEN ARITH_TAC));;
 
-let word_cond_add_def = cake_define
+let word_cond_add_def = new_definition
   `word_cond_add c a x3 =
       match x3 with
         (F,x) -> (x:'a word_loc)
@@ -62732,7 +62756,7 @@ let const_parts_to_words_LENGTH = prove
    REWRITE_TAC[const_parts_to_words_def] THEN
    MATCH_ACCEPT_TAC(SPEC_ALL gen)));;
 
-let good_loc_def = cake_define
+let good_loc_def = new_definition
   `good_loc code x2 =
       match x2 with
         wordLang_Loc n m -> (m = 0 /\ n IN code)
@@ -63036,7 +63060,7 @@ let memory_rel_do_build_const = prove
             (CONJ gd (CONJ (MATCH_MP si0 gd) ih)))))] in
   db_spine THENL [db_words; db_ks])));;
 
-let read_word_def = cake_define
+let read_word_def = new_definition
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;
 
 (* the port's own: the step of the loop over the words of two byte
@@ -63067,12 +63091,14 @@ let VAL_WORD_SUB_2_LT = prove
 let _ = cake_term_lemmas :=
   VAL_WORD_SUB_2_LT :: (!cake_term_lemmas);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:18378-18384: the tactic
    that proves the termination *)
-let word_xor_bytes_def = cake_define_try_tac (fun () ->
-  `MEASURE (\(a1,a2,len,dm,m). w2n len)`)
+let word_xor_bytes_def,word_xor_bytes_ind = define_wf_tac
+  `MEASURE (\(a1,a2,len,dm,m). w2n len)`
   TERM_TAC
-  `word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
+  [`word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
      (if len <+ (n2w 2) \/ ~(good_dimindex (:'a)) then
        if len = (n2w 0) then SOME m else
          let (w1a,c1) = read_word dm m a1 in
@@ -63091,21 +63117,21 @@ let word_xor_bytes_def = cake_define_try_tac (fun () ->
          if c1 /\ c2 /\ c3 /\ c4 then
            word_xor_bytes (a1 + (n2w 2) * bytes_in_word) (a2 + (n2w
              2) * bytes_in_word)
-             (len - (n2w 2)) dm m else NONE)`;;
+             (len - (n2w 2)) dm m else NONE)`];;
 
-let make_zeros_def = cake_define
+let make_zeros_def = new_definition
   `make_zeros (vals:word8 list) =
      REPLICATE (LENGTH vals DIV (dimindex (:'a) DIV 8) + 1) ((n2w
        0):'a word)`;;
 
-let xor_words_def = cake_define
-  `xor_words xs ys =
+let xor_words_def,xor_words_ind = define_rec
+  [`xor_words xs ys =
       match (xs,ys) with
         ([],ys) -> SOME ys
       | (xs,[]) -> NONE
       | ((x :: xs),(y :: ys)) ->
-     (match xor_words xs ys with NONE -> NONE | SOME rest -> SOME
-       (word_xor (x:'a word) y :: rest))`;;
+     (match xor_words xs ys with NONE -> NONE | SOME rest ->
+       SOME (word_xor (x:'a word) y :: rest))`];;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -65008,8 +65034,8 @@ let memory_rel_xor_bytes = prove
 
 (* --------- str_cmp --------- *)
 
-let word_str_cmp_loop_def = cake_define
-  `word_str_cmp_loop (a1:'a word) (a2:'a word) r1 r2 (len:'a word) dm m
+let word_str_cmp_loop_def,word_str_cmp_loop_ind = define_rec
+  [`word_str_cmp_loop (a1:'a word) (a2:'a word) r1 r2 (len:'a word) dm m
   be' ck =
      (if ck = 0 then NONE else
      if len = bytes_in_word then
@@ -65019,11 +65045,11 @@ let word_str_cmp_loop_def = cake_define
        (match mem_load_byte_aux m dm be' a2 with NONE -> NONE | SOME
          b2 ->
          (if b1 = b2 then
-           word_str_cmp_loop (a1 + (n2w 1)) (a2 + (n2w 1)) r1 r2 (len
-             - (n2w 1)) dm m be' (ck - (1:num)) else
-           SOME (w2w b1,w2w b2))))`;;
+           word_str_cmp_loop (a1 + (n2w 1)) (a2 + (n2w 1)) r1 r2
+             (len - (n2w 1)) dm m be' (ck - (1:num)) else
+           SOME (w2w b1,w2w b2))))`];;
 
-let word_str_cmp_def = cake_define
+let word_str_cmp_def = new_definition
   `word_str_cmp b (a1:'a word) (a2:'a word) dm m be' c =
      (let k = (dimindex (:'a) - data_to_word_config_len_size c -
        backend_common_word_shift (:'a)) in
@@ -65039,7 +65065,7 @@ let word_str_cmp_def = cake_define
                   bytes_in_word) l1 l2 l dm m be' (dimword (:'a)))
                   else NONE)`;;
 
-let find_diff_def = cake_define_list
+let find_diff_def,find_diff_ind = define_rec
   [`find_diff [] [] r1 r2 = (r1,r2)`;
    `find_diff (x :: xs) (y :: ys) r1 r2 = (if x = y then find_diff
   xs ys r1 r2 else (w2w x,w2w y))`];;

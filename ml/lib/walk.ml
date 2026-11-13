@@ -26,6 +26,6 @@ let VWALKR_RULES,VWALKR_INDUCT,VWALKR_CASES =
 let vwalk_def = new_definition
   `vwalk s v = @r. VWALKR s v r`;;
 
-let walk_def = cake_define
+let walk_def = new_definition
   `walk s t = (match t with term_Var v -> vwalk s v | t -> t)`;;
 hol4_overload "walk" "walk";;

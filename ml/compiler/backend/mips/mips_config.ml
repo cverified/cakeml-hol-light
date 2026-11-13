@@ -22,7 +22,7 @@ let _ = hol4_ancestors "mips_config"
   ["asmProps"; "asmSem"; "backend"];;
 (* HOL4 ancestors outside the port: mips_target *)
 
-let mips_names_def = cake_define
+let mips_names_def = new_definition
   `mips_names =
      ((
       // source can use 24 regs (r2-r24,r31),
@@ -53,7 +53,7 @@ let mips_names_def = cake_define
 (* HOL4 mips_configScript.sml:38-44: the ML values that the
    definitions below antiquote *)
 
-let mips_backend_config_def = cake_define
+let mips_backend_config_def = new_definition
   `mips_backend_config =
               mk_backend_config prim_src_config
                 (clos_to_bvl_default_config)

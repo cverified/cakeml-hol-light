@@ -26,7 +26,7 @@ let _ = hol4_ancestors "evaluate"
  * provable termination conditions. However, after termination is proved, we
  * clean up the definition (in HOL4) to remove occurrences of fix_clock. *)
 
-let fix_clock_def = cake_define
+let fix_clock_def = new_definition
   `evaluate_fix_clock s (s',res) =
      (semanticPrimitives_state_clock_fupd (K (if
        semanticPrimitives_state_clock s' <=
@@ -35,12 +35,12 @@ let fix_clock_def = cake_define
        semanticPrimitives_state_clock s)) s',res)`;;
 hol4_overload "fix_clock" "evaluate_fix_clock";;
 
-let dec_clock_def = cake_define
+let dec_clock_def = new_definition
   `evaluate_dec_clock s = (semanticPrimitives_state_clock_fupd (K
   (semanticPrimitives_state_clock s - 1)) s)`;;
 hol4_overload "dec_clock" "evaluate_dec_clock";;
 
-let do_eval_res_def = cake_define
+let do_eval_res_def = new_definition
   `do_eval_res vs s =
      (match semanticPrimitives_do_eval vs
        (semanticPrimitives_state_eval_state s) with NONE -> (s,Rerr
@@ -50,7 +50,7 @@ let do_eval_res_def = cake_define
 
 (* list_result is equivalent to map_result (\v. [v]) I, where map_result is
  * defined in evalPropsTheory *)
-let list_result_def = cake_define_list
+let list_result_def = define_cases
   [`list_result (Rval v) = Rval [v]`;
    `list_result (Rerr e) = Rerr e`];;
 
@@ -66,7 +66,7 @@ let evaluate_list_size_REVERSE = prove
  (`!xs. list_size f (REVERSE xs) = list_size f xs`,
   CHEAT_TAC);;
 
-let sing_env_def = cake_define
+let sing_env_def = new_definition
   `sing_env n v =
      (mk_sem_env (nsBind n v nsEmpty) nsEmpty:semanticPrimitives_v
        sem_env)`;;
@@ -78,21 +78,14 @@ let _ = size_thms "dec";;
    the names that the port gives the constants *)
 (* HOL4 evaluateScript.sml:268-277: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_try_tac (fun () ->
+let evaluate_def = define_mutual_wf
   `inv_image ((<) LEX (<))
-          (\x. match x with INL (s,_1,es) ->
-            (semanticPrimitives_state_clock s,list_size ast_exp_size
-              es) |
-            INR (INL (s,_2,_3,pes,_4)) ->
-              (semanticPrimitives_state_clock
-            s,list_size (pair_size ast_pat_size ast_exp_size) pes) |
-              INR
-            (INR (s,_5,ds)) -> (semanticPrimitives_state_clock
-              s,list_size
-            dec_size ds))`)
-  CHEAT_TAC
+       (\x. match x with INL (s,_1,es) ->
+         (semanticPrimitives_state_clock s,list_size ast_exp_size es) |
+         INR (INL (s,_2,_3,pes,_4)) -> (semanticPrimitives_state_clock
+         s,list_size (pair_size ast_pat_size ast_exp_size) pes) | INR
+         (INR (s,_5,ds)) -> (semanticPrimitives_state_clock s,list_size
+         dec_size ds))`
   [`evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
   semanticPrimitives_state),Rval [])`;
    `evaluate (st:'ffi semanticPrimitives_state) env (e1 :: e2 :: es) =

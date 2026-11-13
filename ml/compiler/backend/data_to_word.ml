@@ -79,41 +79,41 @@ hol4_field_overload "has_fp_ops_fupd"
 hol4_field_overload "be" "data_to_word_config_be";;
 hol4_field_overload "be_fupd" "data_to_word_config_be_fupd";;
 
-let adjust_var_def = cake_define
+let adjust_var_def = new_definition
   `adjust_var n = 2 * n + (2:num)`;;
 
-let adjust_set_def = cake_define
+let adjust_set_def = new_definition
   `adjust_set (names:'a spt) =
      ((fromAList (MAP (\(n,k). (adjust_var n,one)) (toAList
        names))):1 spt)`;;
 
-let adjust_sets_def = cake_define
+let adjust_sets_def = new_definition
   `adjust_sets (names:'a spt) =
      ((LS one,adjust_set names):1 spt#1 spt)`;;
 
-let unit_def = cake_define
+let unit_def = new_definition
   `data_to_word_Unit = wordLang_Const (n2w 2)`;;
 hol4_overload "Unit" "data_to_word_Unit";;
 
-let GiveUp_def = cake_define
+let GiveUp_def = new_definition
   `GiveUp = (Seq (Assign 1 (wordLang_Const (--(n2w 1))))
                 (Alloc 1 (adjust_sets (LN:1 spt))):'a
                   wordLang_prog)`;;
 
-let BignumHalt_def = cake_define
+let BignumHalt_def = new_definition
   `BignumHalt r = If Test r (Imm (n2w 1)) Skip GiveUp`;;
 
-let make_header_def = cake_define
+let make_header_def = new_definition
   `make_header conf tag len =
      (let l = dimindex (:'a) - data_to_word_config_len_size conf in
        (n2w len << l || tag << 2 || ((n2w 3):'a word)))`;;
 
-let tag_mask_def = cake_define
+let tag_mask_def = new_definition
   `tag_mask conf =
      (let l = dimindex (:'a) - data_to_word_config_len_size conf in
        (word_slice (l - 1) 2) (word_not ((n2w 0):'a word)))`;;
 
-let encode_header_def = cake_define
+let encode_header_def = new_definition
   `encode_header (conf:data_to_word_config) tag len =
      (if tag < 2 EXP (dimindex (:'a) - data_to_word_config_len_size
        conf - 2) /\
@@ -122,30 +122,34 @@ let encode_header_def = cake_define
         len < 2 EXP data_to_word_config_len_size conf then SOME
           ((make_header conf (n2w tag) len):'a word) else NONE)`;;
 
-let data_to_word_list_Seq_def = cake_define
-  `(data_to_word_list_Seq [] = wordLang_Skip) /\
+let _ = size_thms "wordLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let data_to_word_list_Seq_def,data_to_word_list_Seq_ind = define_wf
+  `MEASURE (\x0. list_size (wordLang_prog_size (\x. 0)) x0)`
+  [`(data_to_word_list_Seq [] = wordLang_Skip) /\
    (data_to_word_list_Seq [x] = x) /\
    (data_to_word_list_Seq (x :: y :: xs) = Seq x
-     (data_to_word_list_Seq (y :: xs)))`;;
+     (data_to_word_list_Seq (y :: xs)))`];;
 hol4_overload "list_Seq" "data_to_word_list_Seq";;
 
-let StoreEach_def = cake_define_list
+let StoreEach_def,StoreEach_ind = define_rec
   [`StoreEach v [] (offset:'a word) = wordLang_Skip`;
    `StoreEach v (x :: xs) (offset:'a word) =
          wordLang_Seq (wordLang_Store (wordLang_Op asm_Add
            [wordLang_Var v; wordLang_Const offset]) x)
              (StoreEach v xs (offset + bytes_in_word))`];;
 
-let small_shift_length_def = cake_define
+let small_shift_length_def = new_definition
   `small_shift_length conf = data_to_word_config_len_bits conf +
   data_to_word_config_tag_bits conf + 1`;;
 
-let shift_length_def = cake_define
+let shift_length_def = new_definition
   `shift_length conf = 1 + data_to_word_config_pad_bits conf +
   data_to_word_config_len_bits conf + data_to_word_config_tag_bits
   conf + 1`;;
 
-let conf_ok_def = cake_define
+let conf_ok_def = new_definition
   `conf_ok (:'a) c <=>
      shift_length c < dimindex (:'a) /\
      backend_common_word_shift (:'a) <= shift_length c /\
@@ -153,28 +157,28 @@ let conf_ok_def = cake_define
        data_to_word_config_len_size
      c + 7 < dimindex (:'a)`;;
 
-let max_heap_limit_def = cake_define
+let max_heap_limit_def = new_definition
   `max_heap_limit (:'a) c =
      MIN (dimword (:'a) DIV 2 EXP shift_length c)
          (dimword (:'a) DIV 2 EXP (backend_common_word_shift (:'a)
            + 1))`;;
 
-let all_ones_def = cake_define
+let all_ones_def = new_definition
   `all_ones m n = (if m <= n then (n2w 0) else (word_slice (m - 1) n)
   (word_not (n2w 0)))`;;
 
-let maxout_bits_def = cake_define
+let maxout_bits_def = new_definition
   `maxout_bits n rep_len k =
      (if n < 2 EXP rep_len - 1 then n2w n << k else all_ones (k +
        rep_len) k)`;;
 
-let ptr_bits_def = cake_define
+let ptr_bits_def = new_definition
   `ptr_bits conf tag len =
      (maxout_bits tag (data_to_word_config_tag_bits conf) (1 +
        data_to_word_config_len_bits conf) ||
       maxout_bits len (data_to_word_config_len_bits conf) 1)`;;
 
-let real_addr_def = cake_define
+let real_addr_def = new_definition
   `((real_addr (conf:data_to_word_config) r):'a wordLang_exp) =
      (let k = backend_common_word_shift (:'a) in
      let l = shift_length conf in
@@ -189,13 +193,13 @@ let real_addr_def = cake_define
            e (wordLang_Const (n2w n))) Lsl ((\sh e n. Shift sh e
            (wordLang_Const (n2w n))) Lsr (Var r) l) k])`;;
 
-let real_offset_def = cake_define
+let real_offset_def = new_definition
   `((real_offset (conf:data_to_word_config) r):'a wordLang_exp) =
       Op asm_Add [Const bytes_in_word;
               if dimindex (:'a) = 32 then Var r else (\sh e n.
                 Shift sh e (wordLang_Const (n2w n))) Lsl (Var r) 1]`;;
 
-let real_byte_offset_def = cake_define
+let real_byte_offset_def = new_definition
   `(real_byte_offset r:'a wordLang_exp) =
      Op asm_Add [Const bytes_in_word;
              (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
@@ -204,78 +208,78 @@ let real_byte_offset_def = cake_define
 let word_op_type_INDUCT,word_op_type_RECURSION = define_datatype
   "word_op_type = Bitwise (binop) | Carried (binop)";;
 
-let lookup_word_op_def = cake_define_list
+let lookup_word_op_def = define_cases
   [`lookup_word_op backend_common_Andw = Bitwise And`;
    `lookup_word_op backend_common_Orw = Bitwise asm_Or`;
    `lookup_word_op (Xor:opw) = Bitwise Xor`;
    `lookup_word_op (Add:opw) = Carried asm_Add`;
    `lookup_word_op (Sub:opw) = Carried asm_Sub`];;
 
-let FromList_location_def = cake_define
+let FromList_location_def = new_definition
   `FromList_location = word_num_stubs`;;
-let FromList1_location_def = cake_define
+let FromList1_location_def = new_definition
   `FromList1_location = FromList_location + 1`;;
-let RefByte_location_def = cake_define
+let RefByte_location_def = new_definition
   `RefByte_location = FromList1_location + 1`;;
-let RefArray_location_def = cake_define
+let RefArray_location_def = new_definition
   `RefArray_location = RefByte_location + 1`;;
-let replicate_location_def = cake_define
+let replicate_location_def = new_definition
   `Replicate_location = RefArray_location + 1`;;
-let AnyArith_location_def = cake_define
+let AnyArith_location_def = new_definition
   `AnyArith_location = Replicate_location + 1`;;
-let add_location_def = cake_define
+let add_location_def = new_definition
   `Add_location = AnyArith_location + 1`;;
-let sub_location_def = cake_define
+let sub_location_def = new_definition
   `Sub_location = Add_location + 1`;;
-let mul_location_def = cake_define
+let mul_location_def = new_definition
   `Mul_location = Sub_location + 1`;;
-let data_to_word_Div_location_def = cake_define
+let data_to_word_Div_location_def = new_definition
   `Div_location = Mul_location + 1`;;
-let mod_location_def = cake_define
+let mod_location_def = new_definition
   `Mod_location = Div_location + 1`;;
-let compare1_location_def = cake_define
+let compare1_location_def = new_definition
   `Compare1_location = Mod_location + 1`;;
-let compare_location_def = cake_define
+let compare_location_def = new_definition
   `Compare_location = Compare1_location + 1`;;
-let equal1_location_def = cake_define
+let equal1_location_def = new_definition
   `Equal1_location = Compare_location + 1`;;
-let equal_location_def = cake_define
+let equal_location_def = new_definition
   `Equal_location = Equal1_location + 1`;;
-let LongDiv1_location_def = cake_define
+let LongDiv1_location_def = new_definition
   `LongDiv1_location = Equal_location + 1`;;
-let LongDiv_location_def = cake_define
+let LongDiv_location_def = new_definition
   `LongDiv_location = LongDiv1_location + 1`;;
-let MemCopy_location_def = cake_define
+let MemCopy_location_def = new_definition
   `MemCopy_location = LongDiv_location + 1`;;
-let ByteCopy_location_def = cake_define
+let ByteCopy_location_def = new_definition
   `ByteCopy_location = MemCopy_location + 1`;;
-let ByteCopyAdd_location_def = cake_define
+let ByteCopyAdd_location_def = new_definition
   `ByteCopyAdd_location = ByteCopy_location + 1`;;
-let ByteCopySub_location_def = cake_define
+let ByteCopySub_location_def = new_definition
   `ByteCopySub_location = ByteCopyAdd_location + 1`;;
-let ByteCopyNew_location_def = cake_define
+let ByteCopyNew_location_def = new_definition
   `ByteCopyNew_location = ByteCopySub_location + 1`;;
-let install_location_def = cake_define
+let install_location_def = new_definition
   `Install_location = ByteCopyNew_location + 1`;;
-let InstallCode_location_def = cake_define
+let InstallCode_location_def = new_definition
   `InstallCode_location = Install_location + 1`;;
-let InstallData_location_def = cake_define
+let InstallData_location_def = new_definition
   `InstallData_location = InstallCode_location + 1`;;
-let dummy_location_def = cake_define
+let dummy_location_def = new_definition
   `Dummy_location = InstallData_location + 1`;;
-let append_location_def = cake_define
+let append_location_def = new_definition
   `Append_location = Dummy_location + 1`;;
-let AppendMainLoop_location_def = cake_define
+let AppendMainLoop_location_def = new_definition
   `AppendMainLoop_location = Append_location + 1`;;
-let AppendLenLoop_location_def = cake_define
+let AppendLenLoop_location_def = new_definition
   `AppendLenLoop_location = AppendMainLoop_location + 1`;;
-let XorLoop_location_def = cake_define
+let XorLoop_location_def = new_definition
   `XorLoop_location = AppendLenLoop_location + 1`;;
-let unused_location_def = cake_define
+let unused_location_def = new_definition
   `Unused_location = XorLoop_location + 1`;;
-let StringCmpLoop_location_def = cake_define
+let StringCmpLoop_location_def = new_definition
   `StringCmpLoop_location = Unused_location + 1`;;
-let bignum_location_def = cake_define
+let bignum_location_def = new_definition
   `Bignum_location = StringCmpLoop_location + 1`;;
 
 (* HOL4 data_to_wordScript.sml:273-274: a theorem that HOL4 states as
@@ -345,7 +349,7 @@ let bignum_location_def = cake_define
 (* HOL4 data_to_wordScript.sml:337-338: a theorem that HOL4 states as
    the value of an ML expression: StringCmpLoop_location_eq *)
 
-let SilentFFI_def = cake_define
+let SilentFFI_def = new_definition
   `SilentFFI c n names =
      (if data_to_word_config_call_empty_ffi c then
        list_Seq [Assign n (wordLang_Const (n2w 0));
@@ -354,7 +358,7 @@ let SilentFFI_def = cake_define
                  Assign 9 (wordLang_Lookup HeapLength);
                  FFI (implode "") 7 n 9 n names] else Skip)`;;
 
-let AllocVar_def = cake_define
+let AllocVar_def = new_definition
   `AllocVar c (limit':num) (names:1 spt) =
      list_Seq [Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w
        n))) Lsr (Var 1) 2);
@@ -373,7 +377,7 @@ let AllocVar_def = cake_define
                             SilentFFI c 3 (adjust_sets names)])
                               Skip]`;;
 
-let MakeBytes_def = cake_define
+let MakeBytes_def = new_definition
   `MakeBytes n =
      (list_Seq [Assign n ((\sh e n. Shift sh e (wordLang_Const (n2w
        n))) Lsr (Var n) 2);
@@ -386,16 +390,16 @@ let MakeBytes_def = cake_define
                    (wordLang_Const (n2w n))) Lsl (Var n) 32])]:'a
                    wordLang_prog)`;;
 
-let SmallLsr_def = cake_define
+let SmallLsr_def = new_definition
   `SmallLsr e n = (if n = 0 then e else (\sh e n. Shift sh e
   (wordLang_Const (n2w n))) Lsr e n)`;;
 
-let WriteLastByte_aux_def = cake_define
+let WriteLastByte_aux_def = new_definition
   `WriteLastByte_aux offset a b n p =
      If Equal n (Imm offset) Skip
        (Seq (Inst (asm_Mem asm_Store8 b (Addr a offset))) p)`;;
 
-let WriteLastBytes_def = cake_define
+let WriteLastBytes_def = new_definition
   `WriteLastBytes a b n =
      WriteLastByte_aux ((n2w 0):'a word) a b n (
        WriteLastByte_aux (n2w 1) a b n (
@@ -407,7 +411,7 @@ let WriteLastBytes_def = cake_define
                  WriteLastByte_aux (n2w 6) a b n (
                    WriteLastByte_aux (n2w 7) a b n Skip)))))))`;;
 
-let RefByte_code_def = cake_define
+let RefByte_code_def = new_definition
   `RefByte_code c =
        (let limit' = MIN (2 EXP data_to_word_config_len_size c)
          (dimword (:'a) DIV 16) in
@@ -460,7 +464,7 @@ let RefByte_code_def = cake_define
                // ret_loc, addr, v, n, ret_val
                0; 9; 4; 7; 3] NONE]:'a wordLang_prog)`;;
 
-let maxout_bits_code_def = cake_define
+let maxout_bits_code_def = new_definition
   `Maxout_bits_code rep_len k dest n =
      (If asm_Lower n (Imm (n2w (2 EXP rep_len - 1)))
        (Assign dest (Op asm_Or [Var dest; (\sh e n. Shift sh e
@@ -468,7 +472,7 @@ let maxout_bits_code_def = cake_define
        (Assign dest (Op asm_Or [Var dest; Const (all_ones (k +
          rep_len) k)])):'a wordLang_prog)`;;
 
-let make_ptr_bits_code_def = cake_define
+let make_ptr_bits_code_def = new_definition
   `Make_ptr_bits_code c tag len dest =
      (list_Seq [Assign dest (Op asm_Or
         [Const (n2w 1); (\sh e n. Shift sh e (wordLang_Const (n2w
@@ -480,7 +484,7 @@ let make_ptr_bits_code_def = cake_define
          Maxout_bits_code (data_to_word_config_len_bits c) 1 dest
            len]:'a wordLang_prog)`;;
 
-let FromList_code_def = cake_define
+let FromList_code_def = new_definition
   `FromList_code c =
      (let limit' = MIN (2 EXP data_to_word_config_len_size c)
        (dimword (:'a) DIV 16) in
@@ -504,7 +508,7 @@ let FromList_code_def = cake_define
             Call NONE (SOME FromList1_location) [0; 1; 4; 2; 3; 5]
               NONE]):'a wordLang_prog)`;;
 
-let FromList1_code_def = cake_define
+let FromList1_code_def = new_definition
   `FromList1_code c =
      // 0 = return address
      // 2 = address to write to
@@ -529,7 +533,7 @@ let FromList1_code_def = cake_define
               Call NONE (SOME FromList1_location) [0; 2; 4; 6; 8;
                 10] NONE])]:'a wordLang_prog)`;;
 
-let RefArray_code_def = cake_define
+let RefArray_code_def = new_definition
   `RefArray_code c =
          (list_Seq
            [Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
@@ -559,7 +563,7 @@ let RefArray_code_def = cake_define
                 // ret_loc, addr, v, n, ret_val
                 0; 1; 4; 2; 3] NONE]:'a wordLang_prog)`;;
 
-let replicate_code_def = cake_define
+let replicate_code_def = new_definition
   `Replicate_code =
      // 0 = return address
      // 2 = address to write to
@@ -574,7 +578,7 @@ let replicate_code_def = cake_define
                   Call NONE (SOME Replicate_location) [0; 2; 4; 6;
                     8] NONE]):'a wordLang_prog)`;;
 
-let AddNumSize_def = cake_define
+let AddNumSize_def = new_definition
   `AddNumSize c src =
      (If Equal (adjust_var src) (Imm (n2w 0)) Skip
        (If Test (adjust_var src) (Imm (n2w 1))
@@ -586,7 +590,7 @@ let AddNumSize_def = cake_define
                 (dimindex (:'a) - data_to_word_config_len_size
                   c))) 2]))):'a wordLang_prog)`;;
 
-let AnyHeader_def = cake_define
+let AnyHeader_def = new_definition
   `AnyHeader c r a t1
          // header
          t2
@@ -626,7 +630,7 @@ let AnyHeader_def = cake_define
             sh e (wordLang_Const (n2w n))) Asr (Var r) 2]);
           Assign 7 (wordLang_Const (n2w 0))])))`;;
 
-let ShiftVar_def = cake_define
+let ShiftVar_def = new_definition
   `ShiftVar sh v n =
      (if sh = Ror then
        (let m = (if n < dimindex (:'a) then n else n MOD (dimindex
@@ -639,7 +643,7 @@ let ShiftVar_def = cake_define
          ((\sh e n. Shift sh e (wordLang_Const (n2w n))) sh (Var v)
          n):'a wordLang_exp)`;;
 
-let AnyArith_code_def = cake_define
+let AnyArith_code_def = new_definition
   `AnyArith_code c = (list_Seq [
        // perform allocation
        Assign 1 (wordLang_Const (n2w 4));
@@ -712,32 +716,32 @@ let AnyArith_code_def = cake_define
                                (backend_common_word_shift (:'a))]);
        Return 0 [1]]:'a wordLang_prog)`;;
 
-let add_code_def = cake_define
+let add_code_def = new_definition
   `Add_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 0))))
                   (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
                     NONE):'a wordLang_prog)`;;
 
-let sub_code_def = cake_define
+let sub_code_def = new_definition
   `Sub_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 1))))
                   (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
                     NONE):'a wordLang_prog)`;;
 
-let mul_code_def = cake_define
+let mul_code_def = new_definition
   `Mul_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 4))))
                   (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
                     NONE):'a wordLang_prog)`;;
 
-let div_code_def = cake_define
+let div_code_def = new_definition
   `Div_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 5))))
                   (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
                     NONE):'a wordLang_prog)`;;
 
-let mod_code_def = cake_define
+let mod_code_def = new_definition
   `Mod_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 6))))
                   (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
                     NONE):'a wordLang_prog)`;;
 
-let install_code_def = cake_define
+let install_code_def = new_definition
   `Install_code c =
        (list_Seq [Assign 1 (wordLang_Lookup BitmapBuffer);
                  Assign 3 (wordLang_Lookup CodeBuffer);
@@ -746,7 +750,7 @@ let install_code_def = cake_define
                  Install 3 4 1 2 (LS one,LN);
                  Return 0 [3]]:'a wordLang_prog)`;;
 
-let InstallCode_code_def = cake_define
+let InstallCode_code_def = new_definition
   `InstallCode_code c =
         (If Test 2 (Imm (n2w 1))
          (Seq (Assign 2 (wordLang_Lookup BitmapBuffer))
@@ -763,7 +767,7 @@ let InstallCode_code_def = cake_define
                     Call NONE (SOME InstallCode_location) [0; 2;
                       4; 6] NONE]):'a wordLang_prog)`;;
 
-let InstallData_code_def = cake_define
+let InstallData_code_def = new_definition
   `InstallData_code c =
         (If Test 4 (Imm (n2w 1))
          (list_Seq [Call NONE (SOME Install_location) [0; 2; 6]
@@ -782,7 +786,7 @@ let InstallData_code_def = cake_define
                     Call NONE (SOME InstallData_location) [0; 2;
                       4; 6] NONE]):'a wordLang_prog)`;;
 
-let compare1_code_def = cake_define
+let compare1_code_def = new_definition
   `Compare1_code =
      // l is 2, a1 is 4, a2 is 6
      If Equal 2 (Imm (n2w 0))
@@ -803,7 +807,7 @@ let compare1_code_def = cake_define
                (Seq (Assign 2 (wordLang_Const (n2w 2))) (Return 0
                  [2])))])`;;
 
-let compare_code_def = cake_define
+let compare_code_def = new_definition
   `Compare_code c =
      // this code can assume that the arguments (2 and 4) are not both
      // small numbers
@@ -874,7 +878,7 @@ let compare_code_def = cake_define
                              (Seq (Assign 2 (wordLang_Const (n2w
                                0))) (Return 0 [2])))))]))`;;
 
-let equal1_code_def = cake_define
+let equal1_code_def = new_definition
   `Equal1_code =
      list_Seq [
        If Equal 2 (Imm (n2w 0))
@@ -891,7 +895,7 @@ let equal1_code_def = cake_define
        Assign 6 (Op asm_Add [Var 6; Const bytes_in_word]);
        Call NONE (SOME Equal1_location) [0; 2; 4; 6] NONE]`;;
 
-let equal_code_def = cake_define
+let equal_code_def = new_definition
   `Equal_code c =
      list_Seq [
        If Equal 2 (Reg 4)
@@ -940,7 +944,7 @@ let equal_code_def = cake_define
          (backend_common_word_shift (:'a))]);
        Call NONE (SOME Compare1_location) [0; 6; 2; 4] NONE]`;;
 
-let LongDiv_code_def = cake_define
+let LongDiv_code_def = new_definition
   `LongDiv_code c =
      (if data_to_word_config_has_longdiv c then
        list_Seq [Inst (Arith (asm_LongDiv 1 3 2 4 6));
@@ -951,7 +955,7 @@ let LongDiv_code_def = cake_define
            (Call NONE (SOME LongDiv1_location) [0; 11; 6; 10; 10;
              4; 2] NONE)))`;;
 
-let LongDiv1_code_def = cake_define
+let LongDiv1_code_def = new_definition
   `LongDiv1_code c =
      (if data_to_word_config_has_longdiv c then Skip else
        // the following code is based on multiwordTheory.single_div_loop_def
@@ -980,7 +984,7 @@ let LongDiv1_code_def = cake_define
                     Call NONE (SOME LongDiv1_location) [0; 2; 4;
                       6; 8; 10; 12] NONE]))`;;
 
-let append_code_def = cake_define
+let append_code_def = new_definition
   `Append_code c =
      (match encode_header c 0 2 with NONE -> (Skip:'a wordLang_prog)
        | SOME (header:'a word) ->
@@ -1004,7 +1008,7 @@ let append_code_def = cake_define
               Call NONE (SOME AppendMainLoop_location) [0; 1; 4;
                 3; 5; 7] NONE]))`;;
 
-let AppendMainLoop_code_def = cake_define
+let AppendMainLoop_code_def = new_definition
   `AppendMainLoop_code c =
      (list_Seq
        [Assign 1 (real_addr c 4);
@@ -1045,7 +1049,7 @@ let AppendMainLoop_code_def = cake_define
           bytes_in_word)]);
         Return 0 [3]]:'a wordLang_prog)`;;
 
-let AppendLenLoop_code_def = cake_define
+let AppendLenLoop_code_def = new_definition
   `AppendLenLoop_code c =
      If Test 2 (Imm (n2w 1))
        (list_Seq
@@ -1064,7 +1068,7 @@ let AppendLenLoop_code_def = cake_define
           Assign 4 (Op asm_Add [Var 4; Const ((n2w 12):'a word)]);
           Call NONE (SOME AppendLenLoop_location) [0; 2; 4] NONE])`;;
 
-let XorLoop_code_def = cake_define
+let XorLoop_code_def = new_definition
   `XorLoop_code =
      (If asm_Lower 6 (Imm (n2w 2))
        (If Equal 6 (Imm (n2w 0))
@@ -1094,7 +1098,7 @@ let XorLoop_code_def = cake_define
                   Call NONE (SOME XorLoop_location) [0; 2; 4; 6]
                     NONE]):'a wordLang_prog)`;;
 
-let StringCmpLoop_code_def = cake_define
+let StringCmpLoop_code_def = new_definition
   `StringCmpLoop_code =
      (If Equal 6 (Imm bytes_in_word)
        (Return 0 [8; 10])
@@ -1108,24 +1112,24 @@ let StringCmpLoop_code_def = cake_define
            Call NONE (SOME StringCmpLoop_location) [0; 2; 4; 6; 8;
              10] NONE]):'a wordLang_prog)`;;
 
-let data_to_word_get_names_def = cake_define_list
+let data_to_word_get_names_def = define_cases
   [`data_to_word_get_names NONE = LN`;
    `data_to_word_get_names (SOME x) = x`];;
 hol4_overload "get_names" "data_to_word_get_names";;
 
-let LoadWord64_def = cake_define
+let LoadWord64_def = new_definition
   `LoadWord64 c i j =
      (Assign i (wordLang_Load (Op asm_Add [real_addr c j; Const
        bytes_in_word])):'a wordLang_prog)`;;
 
-let LoadBignum_def = cake_define
+let LoadBignum_def = new_definition
   `LoadBignum c header word1' k = (list_Seq [
      Assign word1' (real_addr c k);
      Assign header (wordLang_Load (Var word1'));
      Assign word1' (wordLang_Load (Op asm_Add [Var word1'; Const
        bytes_in_word]))]:'a wordLang_prog)`;;
 
-let WriteWord64_def = cake_define
+let WriteWord64_def = new_definition
   `// also works for storing bignums of length 1
    WriteWord64 c (header:'a word) dest i =
      (list_Seq [Assign 1 (wordLang_Lookup NextFree);
@@ -1142,7 +1146,7 @@ let WriteWord64_def = cake_define
                              backend_common_word_shift (:'a));
                          Const (n2w 1)])]:'a wordLang_prog)`;;
 
-let WriteWord64_on_32_def = cake_define
+let WriteWord64_on_32_def = new_definition
   `WriteWord64_on_32 c (header:'a word) dest i1 i2 =
      (list_Seq [Assign 1 (wordLang_Lookup NextFree);
                Store (Op asm_Add [Var 1; Const bytes_in_word]) i2;
@@ -1160,7 +1164,7 @@ let WriteWord64_on_32_def = cake_define
                              backend_common_word_shift (:'a));
                          Const (n2w 1)])]:'a wordLang_prog)`;;
 
-let WriteWord32_on_32_def = cake_define
+let WriteWord32_on_32_def = new_definition
   `WriteWord32_on_32 c header dest i1 =
       list_Seq
         [Assign 1 (wordLang_Lookup NextFree);
@@ -1175,7 +1179,7 @@ let WriteWord32_on_32_def = cake_define
                  (shift_length c - backend_common_word_shift
                    (:'a)); Const ((n2w 1):'a word)])]`;;
 
-let WordOp64_on_32_def = cake_define
+let WordOp64_on_32_def = new_definition
   `WordOp64_on_32 (opw:opw) =
      (match opw with backend_common_Andw -> list_Seq [Assign 29
        (wordLang_Const (n2w 0));
@@ -1206,7 +1210,7 @@ let WordOp64_on_32_def = cake_define
                            21]);
                          Inst (Arith (asm_AddCarry 31 11 27 29))])`;;
 
-let WordShift64_on_32_def = cake_define
+let WordShift64_on_32_def = new_definition
   `WordShift64_on_32 sh n = list_Seq
      (
       // inputs in 11 and 13, writes results in 31 and 33
@@ -1237,7 +1241,7 @@ let WordShift64_on_32_def = cake_define
            0))] | Asr -> [Assign 33 (ShiftVar sh 11 (n - 32));
                     Assign 31 (ShiftVar sh 11 32)] | Ror -> []))`;;
 
-let smallnum_def = cake_define
+let smallnum_def = new_definition
   `Smallnum i =
      (if i < (&0) then (n2w 0) - n2w (num_of_int ((&4) * ((&0) -
        i))) else n2w (num_of_int ((&4) * i)))`;;
@@ -1247,7 +1251,7 @@ let smallnum_def = cake_define
 (* HOL4 data_to_wordScript.sml:1100: the overload TRUE_CONST, which
    the port expands *)
 
-let MemEqList_def = cake_define_list
+let MemEqList_def,MemEqList_ind = define_rec
   [`MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
   wordLang_prog)`;
    `MemEqList a (w :: ws) =
@@ -1256,24 +1260,24 @@ let MemEqList_def = cake_define_list
              (If Equal 5 (Imm w) (MemEqList (a + bytes_in_word)
                ws) Skip)):'a wordLang_prog)`];;
 
-let get_gen_size_def = cake_define_list
+let get_gen_size_def = define_cases
   [`get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)`;
    `get_gen_size (x :: xs) =
          (if w2n (bytes_in_word:'a word) * x < dimword (:'a)
            then bytes_in_word * n2w x else bytes_in_word * (--(n2w
            1)))`];;
 
-let fp_cmp_inst_def = cake_define_list
+let fp_cmp_inst_def = define_cases
   [`fp_cmp_inst FP_Less = FPLess 3 0 1`;
    `fp_cmp_inst FP_LessEqual = FPLessEqual 3 0 1`;
    `fp_cmp_inst FP_Greater = FPLess 3 1 0`;
    `fp_cmp_inst FP_GreaterEqual = FPLessEqual 3 1 0`;
    `fp_cmp_inst FP_Equal = FPEqual 3 0 1`];;
 
-let fp_top_inst_def = cake_define
+let fp_top_inst_def = new_definition
   `fp_top_inst FP_Fma = FPFma 0 1 2`;;
 
-let fp_bop_inst_def = cake_define
+let fp_bop_inst_def = new_definition
   `fp_bop_inst x1 =
       match x1 with
         fpSem_FP_Add -> FPAdd 0 0 1
@@ -1281,26 +1285,26 @@ let fp_bop_inst_def = cake_define
       | fpSem_FP_Mul -> FPMul 0 0 1
       | fpSem_FP_Div -> FPDiv 0 0 1`;;
 
-let fp_uop_inst_def = cake_define
+let fp_uop_inst_def = new_definition
   `fp_uop_inst x1 =
       match x1 with
         fpSem_FP_Neg -> FPNeg 1 0
       | fpSem_FP_Abs -> FPAbs 1 0
       | fpSem_FP_Sqrt -> FPSqrt 1 0`;;
 
-let arg1_def = cake_define
+let arg1_def = new_definition
   `data_to_word_arg1 vs f x = (match vs with [v1] -> f v1 | _1 -> x)`;;
 hol4_overload "arg1" "data_to_word_arg1";;
 
-let arg2_def = cake_define
+let arg2_def = new_definition
   `data_to_word_arg2 vs f x = (match vs with [v1; v2] -> f v1 v2 | _2
   -> x)`;;
 hol4_overload "arg2" "data_to_word_arg2";;
 
-let arg3_def = cake_define
+let arg3_def = new_definition
   `arg3 vs f x = (match vs with [v1; v2; v3] -> f v1 v2 v3 | _3 -> x)`;;
 
-let arg4_def = cake_define
+let arg4_def = new_definition
   `arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 |
   _4 -> x)`;;
 
@@ -1320,7 +1324,7 @@ let arg4_pmatch = prove
 
 (* HOL4 data_to_wordScript.sml:1176-1180: ML code, not ported *)
 
-let assign_Const_def = cake_define
+let assign_Const_def = new_definition
   `assign_Const i (l:num) (dest:num) =
          // bvl_to_bvi compilation ensures that all literal
          // constants fit into a machine word
@@ -1329,21 +1333,21 @@ let assign_Const_def = cake_define
            i))))),l) else (Assign (adjust_var dest) (wordLang_Const
            (n2w (num_of_int ((&4) * i)))),l):'a wordLang_prog#num)`;;
 
-let assign_SetGlobalsPtr_def = cake_define
+let assign_SetGlobalsPtr_def = new_definition
   `assign_SetGlobalsPtr (c:data_to_word_config) (l:num) (dest:num) v1 =
        ((Seq (Set Globals (Var (adjust_var v1)))
        (Seq (Set GlobReal (real_addr c (adjust_var v1)))
             (Assign (adjust_var dest) data_to_word_Unit)),l):'a
               wordLang_prog#num)`;;
 
-let assign_Global_def = cake_define
+let assign_Global_def = new_definition
   `assign_Global (c:data_to_word_config) n (l:num) (dest:num) =
        ((Assign (adjust_var dest) (wordLang_Load (Op asm_Add
          [wordLang_Lookup GlobReal;
                               Const (bytes_in_word * n2w (n +
                                 1))])),l):'a wordLang_prog#num)`;;
 
-let assign_SetGlobal_def = cake_define
+let assign_SetGlobal_def = new_definition
   `assign_SetGlobal (c:data_to_word_config) n (l:num) (dest:num) v1 =
        ((Seq (Store (Op asm_Add [wordLang_Lookup GlobReal; Const
          (bytes_in_word * n2w (n + 1))])
@@ -1351,7 +1355,7 @@ let assign_SetGlobal_def = cake_define
             (Assign (adjust_var dest) data_to_word_Unit),l):'a
               wordLang_prog#num)`;;
 
-let assign_El_def = cake_define
+let assign_El_def = new_definition
   `assign_El (c:data_to_word_config) (l:num) (dest:num) v1 v2 =
                           ((Assign (adjust_var dest)
                              (wordLang_Load (Op asm_Add [real_addr c
@@ -1359,7 +1363,7 @@ let assign_El_def = cake_define
                               real_offset c (adjust_var
                                 v2)])),l):'a wordLang_prog#num)`;;
 
-let assign_ElemAt_def = cake_define
+let assign_ElemAt_def = new_definition
   `assign_ElemAt (c:data_to_word_config) n (l:num) (dest:num) v1 =
                           ((Assign (adjust_var dest)
                              (wordLang_Load (Op asm_Add [real_addr c
@@ -1368,7 +1372,7 @@ let assign_ElemAt_def = cake_define
                               bytes_in_word * n2w n)])),l):'a
                                 wordLang_prog#num)`;;
 
-let assign_DerefByte_def = cake_define
+let assign_DerefByte_def = new_definition
   `assign_DerefByte (c:data_to_word_config) (l:num) (dest:num) v1 v2 =
           ((list_Seq [
              Assign 1 (Op asm_Add [real_addr c (adjust_var v1);
@@ -1378,7 +1382,7 @@ let assign_DerefByte_def = cake_define
                (wordLang_Const (n2w n))) Lsl (Var 3) 2)],l):'a
                wordLang_prog#num)`;;
 
-let assign_Update_def = cake_define
+let assign_Update_def = new_definition
   `assign_Update (c:data_to_word_config) (l:num) (dest:num) v1 v2 v3 =
                   ((Seq (Store (Op asm_Add [real_addr c (adjust_var
                     v1);
@@ -1387,7 +1391,7 @@ let assign_Update_def = cake_define
                        (Assign (adjust_var dest)
                          data_to_word_Unit),l):'a wordLang_prog#num)`;;
 
-let assign_UpdateThunk_def = cake_define
+let assign_UpdateThunk_def = new_definition
   `assign_UpdateThunk ev (c:data_to_word_config) (l:num) (dest:num) v1
   v2 =
        ((match ev with NotEvaluated ->
@@ -1406,7 +1410,7 @@ let assign_UpdateThunk_def = cake_define
                   Assign (adjust_var dest)
                     data_to_word_Unit],l))):'a wordLang_prog#num)`;;
 
-let assign_UpdateByte_def = cake_define
+let assign_UpdateByte_def = new_definition
   `assign_UpdateByte (c:data_to_word_config) (l:num) (dest:num) v1 v2 v3
   =
        ((list_Seq [
@@ -1418,7 +1422,7 @@ let assign_UpdateByte_def = cake_define
            Assign (adjust_var dest) data_to_word_Unit],l):'a
              wordLang_prog#num)`;;
 
-let assign_ListAppend_def = cake_define
+let assign_ListAppend_def = new_definition
   `assign_ListAppend (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
           ((match encode_header c 0 2 with NONE -> (GiveUp,l) | SOME
@@ -1430,7 +1434,7 @@ let assign_ListAppend_def = cake_define
                     [adjust_var v2; adjust_var v1] NONE):'a
                       wordLang_prog),l + 1)):'a wordLang_prog#num)`;;
 
-let assign_Cons_def = cake_define
+let assign_Cons_def = new_definition
   `assign_Cons (c:data_to_word_config) (l:num) (dest:num) tag args =
                    (if LENGTH args = 0 then
                      if tag < dimword (:'a) DIV 16 then
@@ -1459,14 +1463,14 @@ let assign_Cons_def = cake_define
                             Const (bytes_in_word * n2w (LENGTH
                               args + 1))])],l)):'a wordLang_prog#num)`;;
 
-let assign_MutCons_def = cake_define
+let assign_MutCons_def = new_definition
   `assign_MutCons (c:data_to_word_config) (l:num) (dest:num) tag args =
      (match data_to_word_config_gc_kind c with
        data_to_word_Generational _8 -> (GiveUp,l) | _9 ->
        (assign_Cons (c:data_to_word_config) (l:num) (dest:num) tag
        args:'a wordLang_prog#num))`;;
 
-let assign_ConfigGC_def = cake_define
+let assign_ConfigGC_def = new_definition
   `assign_ConfigGC (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
               ((list_Seq [SilentFFI c 3 (adjust_sets
@@ -1480,7 +1484,7 @@ let assign_ConfigGC_def = cake_define
                          Assign (adjust_var dest) (wordLang_Const
                            (n2w 2))],l):'a wordLang_prog#num)`;;
 
-let getWords_def = cake_define_list
+let getWords_def,getWords_ind = define_rec
   [`getWords [] aux = (REVERSE aux,[])`;
    `getWords (c :: cs) aux =
       (match c with (b,wordLang_Word w) -> getWords cs ((b,w)
@@ -1492,9 +1496,8 @@ let getWords_def = cake_define_list
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let StoreAnyConsts_def = cake_define_list_try_tac (fun () ->
-  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`)
-  CHEAT_TAC
+let StoreAnyConsts_def,StoreAnyConsts_ind = define_wf_cheat
+  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`
   [`StoreAnyConsts r1 r2 r3 [] v =
       Seq (Set NextFree (Var r2))
           (match SND v with Loc n _15 -> LocValue r1 n |
@@ -1511,17 +1514,17 @@ let StoreAnyConsts_def = cake_define_list_try_tac (fun () ->
                Seq (StoreConsts r2 r3 r2 r3 ws)
                    (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
 
-let lookup_mem_def = cake_define
+let lookup_mem_def = new_definition
   `lookup_mem m a =
      (match sptree_lookup a m with NONE -> (F,wordLang_Word ((n2w
        0):'a word)) | SOME x -> x)`;;
 
-let byte_len_def = cake_define
+let byte_len_def = new_definition
   `byte_len (:'a) num_bytes =
      (if dimindex (:'a) = 32 then num_bytes DIV 4 + 1 else
        num_bytes DIV 8 + 1)`;;
 
-let make_byte_header_def = cake_define
+let make_byte_header_def = new_definition
   `make_byte_header conf cmp_by_contents len =
    (let tag = (if cmp_by_contents then (n2w 0b00111) else (n2w
      0b10111)) in
@@ -1530,38 +1533,38 @@ let make_byte_header_def = cake_define
        + 8) << (dimindex (:'a) - 3 - data_to_word_config_len_size
        conf) || tag):'a word)`;;
 
-let get_lowerbits_def = cake_define
+let get_lowerbits_def = new_definition
   `get_lowerbits conf x2 =
         match x2 with
           wordLang_Word w ->
         (((word_bits (small_shift_length conf - 1) 0) w) || (n2w 1))
         | _18 -> (n2w 1)`;;
 
-let make_cons_ptr_def = cake_define
+let make_cons_ptr_def = new_definition
   `make_cons_ptr conf nf tag len =
      wordLang_Word (
              nf << (shift_length conf - backend_common_word_shift
                (:'a)) || ((n2w 1):'a word) || get_lowerbits conf
                (wordLang_Word (ptr_bits conf tag len)))`;;
 
-let make_ptr_def = cake_define
+let make_ptr_def = new_definition
   `make_ptr conf nf tag len =
      wordLang_Word (nf << (shift_length conf -
        backend_common_word_shift (:'a)) || ((n2w 1):'a word))`;;
 
-let write_bytes_def = cake_define_list
+let write_bytes_def,write_bytes_ind = define_rec
   [`write_bytes bs [] be' = []`;
    `write_bytes bs ((w:'a word) :: ws) be' =
          (let k = dimindex (:'a) DIV 8 in
            bytes_to_word k (n2w 0) bs w be' :: write_bytes
              (DROP k bs) ws be')`];;
 
-let small_int_def = cake_define
+let small_int_def = new_definition
   `small_int (:'a) i <=>
      --(&(dimword (:'a) DIV 8)) <= i /\ i < (&(dimword (:'a) DIV
        8):int)`;;
 
-let part_to_words_def = cake_define_list
+let part_to_words_def = define_cases
   [`part_to_words c m (closLang_Int i:const_part) (offset:'a word) =
       (if small_int (:'a) i then SOME ((F,wordLang_Word (Smallnum
         i)),[]) else let (sign,ws) = i2mw i in
@@ -1603,7 +1606,7 @@ let part_to_words_def = cake_define_list
                     MAP (\w. (F,wordLang_Word w)) (hd :: ws))
                       else NONE)`];;
 
-let parts_to_words_def = cake_define_list
+let parts_to_words_def,parts_to_words_ind = define_rec
   [`parts_to_words c m i [] (off:'a word) = SOME (lookup_mem m (i -
   (1:num)),[])`;
    `parts_to_words c m i (x :: parts') (off:'a word) =
@@ -1614,17 +1617,17 @@ let parts_to_words_def = cake_define_list
                    NONE -> NONE | SOME (r,ys) -> SOME (r,xs ++
                    ys)))`];;
 
-let const_parts_to_words_def = cake_define
+let const_parts_to_words_def = new_definition
   `const_parts_to_words c parts' =
      parts_to_words c LN 0 parts' (n2w 0)`;;
 
-let get_Word_def = cake_define
+let get_Word_def = new_definition
   `get_Word x1 =
       match x1 with
         wordLang_Word w -> w
       | _19 -> (n2w 0)`;;
 
-let assign_Build_def = cake_define
+let assign_Build_def = new_definition
   `assign_Build (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) ps =
      (match const_parts_to_words c ps with NONE -> (GiveUp,l) | SOME
@@ -1638,7 +1641,7 @@ let assign_Build_def = cake_define
           StoreAnyConsts (adjust_var dest) 1 3 ws w],l):'a
             wordLang_prog#num))`;;
 
-let assign_ConsExtend_def = cake_define
+let assign_ConsExtend_def = new_definition
   `assign_ConsExtend (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) tag args =
          ((match args with (old :: start' :: len :: tot :: rest) ->
@@ -1686,7 +1689,7 @@ let assign_ConsExtend_def = cake_define
                              NONE)])]),l + 1)) | _20 -> (Skip,l)):'a
                              wordLang_prog#num)`;;
 
-let assign_Ref_def = cake_define
+let assign_Ref_def = new_definition
   `assign_Ref (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) args =
            ((match encode_header c 2 (LENGTH args) with NONE ->
@@ -1710,7 +1713,7 @@ let assign_Ref_def = cake_define
                              Const (n2w 1)])],l)):'a
                                wordLang_prog#num)`;;
 
-let assign_AllocThunk_def = cake_define
+let assign_AllocThunk_def = new_definition
   `assign_AllocThunk (ev:thunk_mode) (c:data_to_word_config) (secn:num)
   (l:num) (dest:num) (names:(1 spt) option) arg =
            ((let tag = (match ev with Evaluated -> 8 + 6 |
@@ -1734,7 +1737,7 @@ let assign_AllocThunk_def = cake_define
                              Const (n2w 1)])],l)):'a
                                wordLang_prog#num)`;;
 
-let assign_RefByte_def = cake_define
+let assign_RefByte_def = new_definition
   `assign_RefByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) immutable v1 v2 =
           ((Seq
@@ -1749,7 +1752,7 @@ let assign_RefByte_def = cake_define
                     [adjust_var v1; adjust_var v2; 1] NONE):'a
                       wordLang_prog),l + 1):'a wordLang_prog#num)`;;
 
-let assign_XorByte_def = cake_define
+let assign_XorByte_def = new_definition
   `assign_XorByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
      ((list_Seq [
@@ -1767,14 +1770,14 @@ let assign_XorByte_def = cake_define
              (SOME XorLoop_location) [1; 3; 5] NONE)],l + 1):'a
                wordLang_prog#num)`;;
 
-let SetBool_def = cake_define
+let SetBool_def = new_definition
   `SetBool dest cmp r ri =
    (wordLang_If cmp r ri
       (wordLang_Assign dest (Const (n2w 18:'a word)))
       (wordLang_Assign dest (Const (n2w 2:'a word))):'a
         wordLang_prog)`;;
 
-let AssignCmp_def = cake_define_list
+let AssignCmp_def = define_cases
   [`AssignCmp dest (Lt:opb) v1 v2 = (SetBool dest asm_Lower v1 (Reg
   v2):'a wordLang_prog)`;
    `AssignCmp dest (ast_Gt:opb) v1 v2 = ((SetBool dest asm_Lower v2
@@ -1784,7 +1787,7 @@ let AssignCmp_def = cake_define_list
    `AssignCmp dest (ast_Geq:opb) v1 v2 = ((SetBool dest
   asm_NotLower v1 (Reg v2)):'a wordLang_prog)`];;
 
-let assign_StringCmp_def = cake_define
+let assign_StringCmp_def = new_definition
   `assign_StringCmp (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) (b:bool) (cmp:opb) v1 v2 =
      ((let k = (dimindex (:'a) - data_to_word_config_len_size c -
@@ -1827,7 +1830,7 @@ let assign_StringCmp_def = cake_define
            AssignCmp (adjust_var dest) cmp 5 7],l + 1):'a
              wordLang_prog#num)`;;
 
-let assign_CopyByte_def = cake_define
+let assign_CopyByte_def = new_definition
   `assign_CopyByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) args =
        ((match args with [v1; v2; v3; v4; v5] ->
@@ -1850,7 +1853,7 @@ let assign_CopyByte_def = cake_define
                      adjust_var v3] NONE):'a wordLang_prog),l + 1)
                        | _21 -> (Skip,l)):'a wordLang_prog#num)`;;
 
-let assign_RefArray_def = cake_define
+let assign_RefArray_def = new_definition
   `assign_RefArray (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
        (let limit' = MIN (2 EXP data_to_word_config_len_size c)
@@ -1868,7 +1871,7 @@ let assign_RefArray_def = cake_define
                    [adjust_var v1; adjust_var v2] NONE):'a
                      wordLang_prog],l + 1):'a wordLang_prog#num)`;;
 
-let assign_FromList_def = cake_define
+let assign_FromList_def = new_definition
   `assign_FromList (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) tag v1 v2 =
         (if encode_header c (4 * tag) 0 = (NONE:('a word) option)
@@ -1881,7 +1884,7 @@ let assign_FromList_def = cake_define
                    [adjust_var v1; adjust_var v2; 1] NONE):'a
                      wordLang_prog]),l + 1):'a wordLang_prog#num)`;;
 
-let assign_LessConstSmall_def = cake_define
+let assign_LessConstSmall_def = new_definition
   `assign_LessConstSmall (l:num) (dest:num) i v1 =
                   ((If Less (adjust_var v1) (Imm (n2w (4 * i)))
                      (Assign (adjust_var dest) (Const (n2w 18:'a
@@ -1889,7 +1892,7 @@ let assign_LessConstSmall_def = cake_define
                      (Assign (adjust_var dest) (Const (n2w 2:'a
                        word))),l):'a wordLang_prog#num)`;;
 
-let assign_BoolTest_def = cake_define
+let assign_BoolTest_def = new_definition
   `assign_BoolTest (l:num) (dest:num) (test:test) v1 v2 =
                   ((If Equal (adjust_var v1) (Reg (adjust_var v2))
                     (Assign (adjust_var dest) (Const (n2w 18:'a
@@ -1897,13 +1900,13 @@ let assign_BoolTest_def = cake_define
                     (Assign (adjust_var dest) (Const (n2w 2:'a
                       word))),l):'a wordLang_prog#num)`;;
 
-let assign_BoolNot_def = cake_define
+let assign_BoolNot_def = new_definition
   `assign_BoolNot (l:num) (dest:num) v1 =
                   ((Assign (adjust_var dest)
                      (Op Xor [Var (adjust_var v1); Const (n2w
                        16)]),l):'a wordLang_prog#num)`;;
 
-let assign_WordTest_def = cake_define
+let assign_WordTest_def = new_definition
   `assign_WordTest (l:num) (dest:num) (test:test) v1 v2 =
         (((match test with Equal -> If Equal (adjust_var v1) (Reg
           (adjust_var v2))
@@ -1925,7 +1928,7 @@ let assign_WordTest_def = cake_define
                                 (n2w 2:'a word))) | _22 ->
                                 Skip),l):'a wordLang_prog#num)`;;
 
-let assign_BoundsCheckByte_def = cake_define
+let assign_BoundsCheckByte_def = new_definition
   `assign_BoundsCheckByte (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) leq v1 v2 =
                     ((list_Seq [Assign 1
@@ -1951,7 +1954,7 @@ let assign_BoundsCheckByte_def = cake_define
                                 (n2w 2:'a word)))],l):'a
                                 wordLang_prog#num)`;;
 
-let assign_BoundsCheckArray_def = cake_define
+let assign_BoundsCheckArray_def = new_definition
   `assign_BoundsCheckArray (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
                     ((list_Seq [Assign 1
@@ -1971,7 +1974,7 @@ let assign_BoundsCheckArray_def = cake_define
                                 (n2w 2:'a word)))],l):'a
                                 wordLang_prog#num)`;;
 
-let assign_BoundsCheckBlock_def = cake_define
+let assign_BoundsCheckBlock_def = new_definition
   `assign_BoundsCheckBlock (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
                     ((list_Seq [If Test (adjust_var v1) (Imm (n2w 1))
@@ -1993,7 +1996,7 @@ let assign_BoundsCheckBlock_def = cake_define
                                 (n2w 2:'a word)))],l):'a
                                 wordLang_prog#num)`;;
 
-let assign_Equal_def = cake_define
+let assign_Equal_def = new_definition
   `assign_Equal (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [Assign 1 (Var (adjust_var v1));
@@ -2013,7 +2016,7 @@ let assign_Equal_def = cake_define
                        (Assign (adjust_var dest) (Const (n2w 2:'a
                          word))))],l + 1):'a wordLang_prog#num)`;;
 
-let assign_Less_def = cake_define
+let assign_Less_def = new_definition
   `assign_Less (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [Assign 1 (Var (adjust_var v1));
@@ -2032,7 +2035,7 @@ let assign_Less_def = cake_define
                        (Assign (adjust_var dest) (Const (n2w 2:'a
                          word))))],l + 1):'a wordLang_prog#num)`;;
 
-let assign_LessEq_def = cake_define
+let assign_LessEq_def = new_definition
   `assign_LessEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [Assign 1 (Var (adjust_var v1));
@@ -2051,7 +2054,7 @@ let assign_LessEq_def = cake_define
                        (Assign (adjust_var dest) (Const (n2w 2:'a
                          word))))],l + 1):'a wordLang_prog#num)`;;
 
-let assign_LengthBlock_def = cake_define
+let assign_LengthBlock_def = new_definition
   `assign_LengthBlock (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
                          ((If Test (adjust_var v1) (Imm (n2w 1))
@@ -2070,7 +2073,7 @@ let assign_LengthBlock_def = cake_define
                                 (wordLang_Const (n2w n))) Lsl len
                                 2))),l):'a wordLang_prog#num)`;;
 
-let assign_Length_def = cake_define
+let assign_Length_def = new_definition
   `assign_Length (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 =
                            ((Assign (adjust_var dest)
@@ -2086,7 +2089,7 @@ let assign_Length_def = cake_define
                                 (wordLang_Const (n2w n))) Lsl len
                                 2)),l):'a wordLang_prog#num)`;;
 
-let assign_LengthByte_def = cake_define
+let assign_LengthByte_def = new_definition
   `assign_LengthByte (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
              ((Assign (adjust_var dest)
@@ -2101,7 +2104,7 @@ let assign_LengthByte_def = cake_define
                    ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
                      Lsl len 2)),l):'a wordLang_prog#num)`;;
 
-let assign_TagLenEq_def = cake_define
+let assign_TagLenEq_def = new_definition
   `assign_TagLenEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) tag len v1 =
                          ((if len = 0 then
@@ -2146,7 +2149,7 @@ let assign_TagLenEq_def = cake_define
                                 (n2w 2:'a word)))],l)):'a
                                 wordLang_prog#num)`;;
 
-let assign_LenEq_def = cake_define
+let assign_LenEq_def = new_definition
   `assign_LenEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) len v1 =
                          ((if len = 0 then
@@ -2191,7 +2194,7 @@ let assign_LenEq_def = cake_define
                             (Assign (adjust_var dest) (Const (n2w
                               2:'a word)),l)):'a wordLang_prog#num)`;;
 
-let assign_TagEq_def = cake_define
+let assign_TagEq_def = new_definition
   `assign_TagEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) tag v1 =
                 ((if tag < dimword (:'a) DIV 16 then
@@ -2210,7 +2213,7 @@ let assign_TagEq_def = cake_define
                          (Const (n2w 2:'a word)),l)):'a
                          wordLang_prog#num)`;;
 
-let assign_Add_def = cake_define
+let assign_Add_def = new_definition
   `assign_Add (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [
@@ -2230,7 +2233,7 @@ let assign_Add_def = cake_define
                     Move 2 [(adjust_var dest,1)]],l + 1):'a
                       wordLang_prog#num)`;;
 
-let assign_Sub_def = cake_define
+let assign_Sub_def = new_definition
   `assign_Sub (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [
@@ -2250,7 +2253,7 @@ let assign_Sub_def = cake_define
                     Move 2 [(adjust_var dest,1)]],l + 1):'a
                       wordLang_prog#num)`;;
 
-let assign_Mult_def = cake_define
+let assign_Mult_def = new_definition
   `assign_Mult (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [Assign 1 (ShiftVar Lsr (adjust_var v1) 1);
@@ -2269,7 +2272,7 @@ let assign_Mult_def = cake_define
                     Move 2 [(adjust_var dest,1)]],l + 1):'a
                       wordLang_prog#num)`;;
 
-let assign_Div_def = cake_define
+let assign_Div_def = new_definition
   `assign_Div (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [
@@ -2306,7 +2309,7 @@ let assign_Div_def = cake_define
                   Move 2 [(adjust_var dest,1)]])],l + 2):'a
                     wordLang_prog#num)`;;
 
-let assign_Mod_def = cake_define
+let assign_Mod_def = new_definition
   `assign_Mod (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
          ((list_Seq [
@@ -2345,7 +2348,7 @@ let assign_Mod_def = cake_define
                   Move 2 [(adjust_var dest,1)]])],l + 2):'a
                     wordLang_prog#num)`;;
 
-let assign_WordOpW8_def = cake_define
+let assign_WordOpW8_def = new_definition
   `assign_WordOpW8 opw (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
             ((Assign (adjust_var dest)
@@ -2357,7 +2360,7 @@ let assign_WordOpW8_def = cake_define
                   (Op op [Var (adjust_var v1); Var (adjust_var
                     v2)]) k) k)),l):'a wordLang_prog#num)`;;
 
-let assign_WordOpW64_def = cake_define
+let assign_WordOpW64_def = new_definition
   `assign_WordOpW64 opw (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
         ((if dimindex (:'a) = 64 then
@@ -2394,7 +2397,7 @@ let assign_WordOpW64_def = cake_define
                 WriteWord64_on_32 c header dest 33 31],l))):'a
                   wordLang_prog#num)`;;
 
-let assign_WordShiftW8_def = cake_define
+let assign_WordShiftW8_def = new_definition
   `assign_WordShiftW8 sh n (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
          ((Assign (adjust_var dest)
@@ -2425,7 +2428,7 @@ let assign_WordShiftW8_def = cake_define
                       ((dimindex (:'a) - 2) - n)) (dimindex (:'a)
                         - 10)])),l):'a wordLang_prog#num)`;;
 
-let assign_WordShiftW64_def = cake_define
+let assign_WordShiftW64_def = new_definition
   `assign_WordShiftW64 sh n (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
           (let len = (if dimindex (:'a) < 64 then 2 else 1) in
@@ -2446,7 +2449,7 @@ let assign_WordShiftW64_def = cake_define
                   WriteWord64_on_32 c header dest 33 31]),l)):'a
                     wordLang_prog#num)`;;
 
-let assign_WordFromWord_def = cake_define
+let assign_WordFromWord_def = new_definition
   `assign_WordFromWord b (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
            (if b then
@@ -2473,7 +2476,7 @@ let assign_WordFromWord_def = cake_define
                               WriteWord64_on_32 c header dest 5
                                 3],l))):'a wordLang_prog#num)`;;
 
-let assign_WordFromInt_def = cake_define
+let assign_WordFromInt_def = new_definition
   `assign_WordFromInt (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
          (let len = (if dimindex (:'a) < 64 then 2 else 1) in
@@ -2551,7 +2554,7 @@ let assign_WordFromInt_def = cake_define
                         WriteWord64_on_32 c header dest 15
                           19]))])),l):'a wordLang_prog#num)`;;
 
-let assign_WordToInt_def = cake_define
+let assign_WordToInt_def = new_definition
   `assign_WordToInt (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v =
          (let len = (if dimindex (:'a) < 64 then 2 else 1) in
@@ -2586,7 +2589,7 @@ let assign_WordToInt_def = cake_define
                          (WriteWord32_on_32 c header1 dest
                            11)])],l)))):'a wordLang_prog#num)`;;
 
-let assign_FFI_def = cake_define
+let assign_FFI_def = new_definition
   `assign_FFI ffi_index (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
        (if ~(data_to_word_config_call_empty_ffi c) /\ ffi_index =
@@ -2615,7 +2618,7 @@ let assign_FFI_def = cake_define
            Assign (adjust_var dest) data_to_word_Unit],l):'a
              wordLang_prog#num)`;;
 
-let assign_EqualConst_def = cake_define
+let assign_EqualConst_def = new_definition
   `assign_EqualConst p (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v =
      (match part_to_words c LN p (n2w 0) with SOME ((F,w),_23) ->
@@ -2652,7 +2655,7 @@ let assign_EqualConst_def = cake_define
                               (adjust_var dest) (Const (n2w 2:'a
                               word)),l):'a wordLang_prog#num))`;;
 
-let assign_Install_def = cake_define
+let assign_Install_def = new_definition
   `assign_Install (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 v3 v4 =
          ((list_Seq [BignumHalt (adjust_var v3);
@@ -2683,7 +2686,7 @@ let assign_Install_def = cake_define
                        [adjust_var v1; adjust_var v2; 1] NONE)],l
                          + 1):'a wordLang_prog#num)`;;
 
-let assign_FP_cmp_def = cake_define
+let assign_FP_cmp_def = new_definition
   `assign_FP_cmp fpc (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
         ((if ~(data_to_word_config_has_fp_ops c) then (GiveUp,l) else
@@ -2717,7 +2720,7 @@ let assign_FP_cmp_def = cake_define
                 Assign (adjust_var dest) (Op asm_Add [ShiftVar Lsl
                   3 4; Const (n2w 2)])],l))):'a wordLang_prog#num)`;;
 
-let assign_FP_top_def = cake_define
+let assign_FP_top_def = new_definition
   `assign_FP_top fpt (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 v3 =
         ((if ~(data_to_word_config_has_fp_ops c) \/
@@ -2767,7 +2770,7 @@ let assign_FP_top_def = cake_define
                 WriteWord64_on_32 c header dest 5 3],l))):'a
                   wordLang_prog#num)`;;
 
-let assign_FP_bop_def = cake_define
+let assign_FP_bop_def = new_definition
   `assign_FP_bop fpb (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
         ((if ~(data_to_word_config_has_fp_ops c) then (GiveUp,l) else
@@ -2806,7 +2809,7 @@ let assign_FP_bop_def = cake_define
                 WriteWord64_on_32 c header dest 5 3],l))):'a
                   wordLang_prog#num)`;;
 
-let assign_FP_uop_def = cake_define
+let assign_FP_uop_def = new_definition
   `assign_FP_uop fpu (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
         ((if ~(data_to_word_config_has_fp_ops c) then (GiveUp,l) else
@@ -2835,7 +2838,7 @@ let assign_FP_uop_def = cake_define
                 WriteWord64_on_32 c header dest 5 3],l))):'a
                   wordLang_prog#num)`;;
 
-let assign_FinaliseCons_def = cake_define
+let assign_FinaliseCons_def = new_definition
   `assign_FinaliseCons (l:num) (dest:num) v1 =
                   ((Assign (adjust_var dest) (Var (adjust_var
                     v1)),l):'a wordLang_prog#num)`;;
@@ -2843,7 +2846,7 @@ let assign_FinaliseCons_def = cake_define
 (* HOL4 data_to_wordScript.sml:2460-2461: a theorem that HOL4 states
    as the value of an ML expression: all_assign_defs *)
 
-let assign_def = cake_define
+let assign_def = new_definition
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (op:closLang_op) (args:num list) (names:(1 spt) option) =
      (match op with closLang_IntOp (closLang_Const i) -> assign_Const
@@ -2963,7 +2966,7 @@ let assign_def = cake_define
            (Skip,l))`;;
 hol4_overload "assign" "data_to_word_assign";;
 
-let force_thunk_def = cake_define
+let force_thunk_def = new_definition
   `force_thunk (c:data_to_word_config) secn (l:num) ret loc v1 =
      ((match encode_header c (8 + 6) 1 with NONE -> (GiveUp,l) | SOME
        (header:'a word) ->
@@ -2996,8 +2999,12 @@ let force_thunk_def = cake_define
                                 NONE)]))]),l + 1):'a
                                 wordLang_prog#num)`;;
 
-let comp_def = cake_define
-  `data_to_word_comp c (secn:num) (l:num) (p:dataLang_prog) =
+let _ = size_thms "dataLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let comp_def,comp_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3). dataLang_prog_size x3)`
+  [`data_to_word_comp c (secn:num) (l:num) (p:dataLang_prog) =
      (match p with Skip -> ((Skip:'a wordLang_prog),l) | Tick ->
        (Tick,l) | Raise n -> (Raise (adjust_var n),l) | Return ns ->
        (Return 0 (MAP adjust_var ns),l) | Move n1 n2 -> (Move 0
@@ -3031,17 +3038,18 @@ let comp_def = cake_define
                  adjust_var args) NONE,l + 1) | SOME (n,p) ->
                    (let (q1,l1) = data_to_word_comp c secn (l + 2) p
                      in
-                   let handler = SOME (adjust_var n,q1,secn,l + 1) in
+                   let handler = SOME (adjust_var n,q1,secn,l + 1)
+                     in
                      (Call ret target (MAP adjust_var args)
-                       handler,l1)))))`;;
+                       handler,l1)))))`];;
 hol4_overload "comp" "data_to_word_comp";;
 
-let data_to_word_compile_part_def = cake_define
+let data_to_word_compile_part_def = new_definition
   `data_to_word_compile_part c (n,arg_count,p) = (n,arg_count + 1,FST
   (data_to_word_comp c n 2 p))`;;
 hol4_overload "compile_part" "data_to_word_compile_part";;
 
-let MemCopy_code_def = cake_define
+let MemCopy_code_def = new_definition
   `MemCopy_code =
      (If Test 2 (Reg 2) (Return 0 [8])
          (list_Seq [Assign 1 (wordLang_Load (Var 4));
@@ -3054,7 +3062,7 @@ let MemCopy_code_def = cake_define
                     Call NONE (SOME MemCopy_location) [0; 2; 4; 6;
                       8] NONE]):'a wordLang_prog)`;;
 
-let ByteCopy_code_def = cake_define
+let ByteCopy_code_def = new_definition
   `ByteCopy_code c = (list_Seq
       [Assign 4 (ShiftVar Lsr 4 2);
        Assign 6 (ShiftVar Lsr 6 2);
@@ -3073,7 +3081,7 @@ let ByteCopy_code_def = cake_define
          (Call NONE (SOME ByteCopyAdd_location) [0; 6; 2; 8; 1]
            NONE)]:'a wordLang_prog)`;;
 
-let ByteCopyAdd_code_def = cake_define
+let ByteCopyAdd_code_def = new_definition
   `ByteCopyAdd_code =
    If asm_Lower 2 (Imm (n2w 4))
      (
@@ -3117,7 +3125,7 @@ let ByteCopyAdd_code_def = cake_define
       Call NONE (SOME ByteCopyAdd_location) [0; 9; 11; 13; 8]
         NONE])`;;
 
-let ByteCopySub_code_def = cake_define
+let ByteCopySub_code_def = new_definition
   `ByteCopySub_code =
    If asm_Lower 2 (Imm (n2w 4))
      (
@@ -3161,10 +3169,10 @@ let ByteCopySub_code_def = cake_define
       Call NONE (SOME ByteCopySub_location) [0; 9; 11; 13; 8]
         NONE])`;;
 
-let ByteCopyNew_code_def = cake_define
+let ByteCopyNew_code_def = new_definition
   `ByteCopyNew_code c = (Skip:'a wordLang_prog)`;;
 
-let data_to_word_stubs_def = cake_define
+let data_to_word_stubs_def = new_definition
   `data_to_word_stubs (:'a) data_conf = [
      (FromList_location,4,((FromList_code data_conf):'a
        wordLang_prog));
@@ -3204,7 +3212,7 @@ let data_to_word_stubs_def = cake_define
        Bignum_location`;;
 hol4_overload "stubs" "data_to_word_stubs";;
 
-let stub_names_def = cake_define
+let stub_names_def = new_definition
   `data_to_word_stub_names one = [
      (FromList_location,(implode "_FromList"));
      (FromList1_location,(implode "_FromList1"));
@@ -3251,7 +3259,7 @@ let check_LongDiv_location = prove
  (`LongDiv_location = div_location`,
   CHEAT_TAC);;
 
-let data_to_word_compile_def = cake_define
+let data_to_word_compile_def = new_definition
   `data_to_word_compile data_conf word_conf asm_conf prog =
      (let data_conf =
        (data_to_word_config_has_fp_tern_fupd (K (asm_config_ISA
@@ -3263,7 +3271,7 @@ let data_to_word_compile_def = cake_define
        word_to_word_compile word_conf (asm_conf:'a asm_config) p)`;;
 hol4_overload "compile" "data_to_word_compile";;
 
-let compile_0_def = cake_define
+let compile_0_def = new_definition
   `compile_0 data_conf (asm_conf:'a asm_config) prog =
      (let data_conf = (data_to_word_config_has_fp_tern_fupd (K
        (asm_config_ISA asm_conf = ARMv7 /\
@@ -3279,15 +3287,19 @@ let compile_0_def = cake_define
 (* HOL4 data_to_wordScript.sml:2856-2867: the ML values that the
    definitions below antiquote *)
 
-let AnyArith_call_tree_def = cake_define
+let AnyArith_call_tree_def = new_definition
   `AnyArith_call_tree =
      full_call_graph AnyArith_location
        (fromAList (stubs (:1)
           (data_to_word_config_has_longdiv_fupd (K F)
              (data_to_word_config_call_empty_ffi_fupd (K F) ARB))))`;;
 
-let structure_le_def = cake_define
-  `structure_le x1 x2 =
+let _ = size_thms "call_tree";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let structure_le_def,structure_le_ind = define_wf
+  `MEASURE (\(x0,x1). call_tree_size x0 + call_tree_size x1)`
+  [`structure_le x1 x2 =
       match (x1,x2) with
         ((word_depth_Leaf:call_tree),_35) -> T
       | (_36,word_depth_Unknown) -> T
@@ -3297,7 +3309,7 @@ let structure_le_def = cake_define
      (n1 = m1 /\ structure_le t2 u2)
       | ((Branch t1 t2),(Branch u1 u2)) ->
      (structure_le t1 u1 /\ structure_le t2 u2)
-      | (_37,_38) -> F`;;
+      | (_37,_38) -> F`];;
 
 let AnyArith_call_tree_thm = prove
  (`structure_le

@@ -45,7 +45,7 @@ let EVERY_remove_fvs_SING = prove
  (`EVERY P (remove_fvs fvs [x]) <=> P (HD (remove_fvs fvs [x]))`,
   CHEAT_TAC);;
 
-let clos_fvsProof_code_rel_def = cake_define
+let clos_fvsProof_code_rel_def = new_definition
   `clos_fvsProof_code_rel fvs e1 e2 <=>
      e2 = remove_fvs fvs e1`;;
 hol4_overload "code_rel" "clos_fvsProof_code_rel";;
@@ -62,7 +62,7 @@ let code_rel_CONS_CONS = prove
 
 (* value relation *)
 
-let f_rel_def = cake_define
+let f_rel_def = new_definition
   `clos_fvsProof_f_rel fvs (a1,e1) (a2,e2) <=>
       a1 = a2 /\ clos_fvsProof_code_rel (a1 + fvs) [e1] [e2]`;;
 hol4_overload "f_rel" "clos_fvsProof_f_rel";;
@@ -110,7 +110,7 @@ let clos_fvsProof_ref_rel = cake_inductive
      clos_fvsProof_ref_rel (Thunk m v) (Thunk m w))`;;
 hol4_overload "ref_rel" "clos_fvsProof_ref_rel";;
 
-let clos_fvsProof_state_rel_def = cake_define
+let clos_fvsProof_state_rel_def = new_definition
   `clos_fvsProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\

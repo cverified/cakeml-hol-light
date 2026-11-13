@@ -127,7 +127,7 @@ let clos_numberProof_v_rel = cake_inductive
       (Recclosure p' argenv' env' es' k))`;;
 hol4_overload "v_rel" "clos_numberProof_v_rel";;
 
-let clos_numberProof_state_rel_def = cake_define
+let clos_numberProof_state_rel_def = new_definition
   `clos_numberProof_state_rel (s:(num#'c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (closSem_state_clock s = closSem_state_clock t) /\

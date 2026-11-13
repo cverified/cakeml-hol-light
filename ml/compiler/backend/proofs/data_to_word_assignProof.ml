@@ -401,7 +401,7 @@ let data_to_word_assignProof_byte_aligned_bytes_in_word = prove
     byte_aligned (bytes_in_word * (w:'a word))`,
   CHEAT_TAC);;
 
-let is_env_def = cake_define
+let is_env_def = new_definition
   `is_env st = (?n vs. st = Env n vs)`;;
 
 (* TODO: copypasta from costPropsScript *)
@@ -554,7 +554,7 @@ let v_to_list_EQ_SOME_NIL = prove
    statement HOL Light does not read (tools/unstated.py):
    InstallCode_code_thm *)
 
-let w2w_upper_def = cake_define
+let w2w_upper_def = new_definition
   `w2w_upper (w:word64) =
      (if dimindex (:'a) = 32 then ((63 >< 32) w):'a word else w2w
        w)`;;
@@ -940,7 +940,7 @@ let cut_envs_inter = prove
    statement HOL Light does not read (tools/unstated.py):
    evaluate_AppendMainLoop_code *)
 
-let data_to_word_assignProof_STOP_def = cake_define
+let data_to_word_assignProof_STOP_def = new_definition
   `data_to_word_assignProof_STOP x = x`;;
 hol4_overload "STOP" "data_to_word_assignProof_STOP";;
 
@@ -1791,7 +1791,7 @@ let eq_code_stack_max_le_mono = prove
    option_le (eq_code_stack_max a tsz) (eq_code_stack_max b tsz)`,
   CHEAT_TAC);;
 
-let sane_locals_size_def = cake_define
+let sane_locals_size_def = new_definition
   `sane_locals_size t = (state_locals_size t = sptree_lookup
   Equal_location (wordSem_state_stack_size t) \/ state_locals_size
                          t = sptree_lookup Equal1_location
@@ -1987,12 +1987,15 @@ let IMP = prove
  (`b1 \/ b2 <=> ~b1 ==> b2`,
   CHEAT_TAC);;
 
-let memcopy_def = cake_define
-  `memcopy k a1 a2 m dm =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let memcopy_def,memcopy_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
+  [`memcopy k a1 a2 m dm =
      (if k = 0 then SOME m else
        if a1 IN dm /\ a2 IN dm then
-         memcopy (k - 1) (a1 + bytes_in_word) (a2 + bytes_in_word)
-           ((a2 =+ m a1) m) dm else NONE)`;;
+         memcopy (k - 1) (a1 + bytes_in_word) (a2 +
+           bytes_in_word) ((a2 =+ m a1) m) dm else NONE)`];;
 
 (* HOL4 data_to_word_assignProofScript.sml:15279-15315: a theorem
    whose statement HOL Light does not read (tools/unstated.py):

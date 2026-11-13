@@ -102,7 +102,7 @@ let pop_env_termdep = prove
   CHEAT_TAC);;
 
 (* The t k a c parameters don't need to be existentially quantified *)
-let word_to_wordProof_code_rel_def = cake_define
+let word_to_wordProof_code_rel_def = new_definition
   `word_to_wordProof_code_rel stc ttc <=>
    (!n v. lookup n stc = SOME v ==>
           (?col t k a c.
@@ -438,7 +438,7 @@ let no_mt_code_full_compile_single = prove
 
 (*** code_rel_ext ***)
 
-let code_rel_ext_def = cake_define
+let code_rel_ext_def = new_definition
   `code_rel_ext code l <=>
    (!n p_1 p_2.
       SOME (p_1,p_2) = lookup n code ==>

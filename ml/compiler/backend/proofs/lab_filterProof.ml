@@ -32,19 +32,19 @@ let _ = hide_overloads
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let adjust_pc_def = cake_define_cheat CHEAT_TAC
-  `adjust_pc p xs =
+let adjust_pc_def,adjust_pc_ind = define_rec
+  [`adjust_pc p xs =
      (if p = 0 then 0 else
        match xs with [] -> p | (Section n [] :: rest) -> adjust_pc p
          rest | (Section n (l :: lines) :: rest) ->
            (if is_Label l then
-             adjust_pc p (Section n lines :: rest) else if not_skip l
-               then
-             adjust_pc (p - 1) (Section n lines :: rest) + 1 else
-               adjust_pc (p - 1) (Section n lines :: rest)))`;;
+             adjust_pc p (Section n lines :: rest) else if not_skip
+               l then
+             adjust_pc (p - 1) (Section n lines :: rest) + 1
+               else adjust_pc (p - 1) (Section n lines :: rest)))`];;
 
 (*All skips for the next k*)
-let all_skips_def = cake_define
+let all_skips_def = new_definition
   `all_skips pc' code k <=>
    (!x y. ~(asm_fetch_aux (pc' + k) code = SOME (labLang_Asm (Asmi
      (asm_Inst asm_Skip)) x y))) /\
@@ -109,7 +109,7 @@ let state_rw = prove
 (* HOL4 lab_filterProofScript.sml:170-197: a theorem whose statement
    HOL Light does not read (tools/unstated.py): all_skips_evaluate *)
 
-let lab_filterProof_state_rel_def = cake_define
+let lab_filterProof_state_rel_def = new_definition
   `lab_filterProof_state_rel (s1:('a,'c,'ffi)labSem_state) t1 <=>
      (?s1compile.
       s1 = compile_fupd (K s1compile) (compile_oracle_fupd (K (\n.

@@ -60,11 +60,11 @@ hol4_overload "Block" "dataSem_Block";;
 hol4_overload "CodePtr" "dataSem_CodePtr";;
 hol4_overload "RefPtr" "dataSem_RefPtr";;
 
-let dataSem_Boolv_def = cake_define
+let dataSem_Boolv_def = new_definition
   `dataSem_Boolv b = Block 0 (bool_to_tag b) []`;;
 hol4_overload "Boolv" "dataSem_Boolv";;
 
-let dataSem_Unit_def = cake_define
+let dataSem_Unit_def = new_definition
   `dataSem_Unit = Block 0 (tuple_tag) []`;;
 hol4_overload "Unit" "dataSem_Unit";;
 
@@ -155,10 +155,10 @@ hol4_field_overload "compile_oracle_fupd"
 (* HOL4 dataSemScript.sml:76-77: the ML values that the definitions
    below antiquote *)
 
-let arch_size_def = cake_define
+let arch_size_def = new_definition
   `arch_size lims = (if limits_arch_64_bit lims then 64 else 32:num)`;;
 
-let check_res_def = cake_define
+let check_res_def = new_definition
   `check_res r (n,refs,seen) =
      (if sptree_size refs <= sptree_size r then (n,refs,seen) else
        (n,r,seen))`;;
@@ -167,18 +167,21 @@ let check_res_IMP = prove
  (`!y. (n,r,s) = check_res t y ==> size r <= size t`,
   CHEAT_TAC);;
 
-let small_num_def = cake_define
+let small_num_def = new_definition
   `small_num arch64 (i:int) =
      (if arch64 then --(&(2 EXP 61)) <= i /\ i < (&(2 EXP 61))
        else --(&(2 EXP 29)) <= i /\ i < (&(2 EXP 29)))`;;
 
-let bignum_digits_def = cake_define
-  `bignum_digits arch64 n =
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let bignum_digits_def,bignum_digits_ind = define_wf
+  `MEASURE (\(x0,x1). (\n. n) x1)`
+  [`bignum_digits arch64 n =
      (if n = 0 then 0 else
        let d = (if arch64 then 64 else 32) in
-         1 + bignum_digits arch64 (n DIV 2 EXP d))`;;
+         1 + bignum_digits arch64 (n DIV 2 EXP d))`];;
 
-let bignum_size_def = cake_define
+let bignum_size_def = new_definition
   `bignum_size arch64 i =
      1 + bignum_digits arch64 (num_of_int (abs i))`;;
 
@@ -187,13 +190,10 @@ let _ = size_thms "dataSem_v";;
    the names that the port gives the constants *)
 (* HOL4 dataSemScript.sml:138-145: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let size_of_def = cake_define_list_try_tac (fun () ->
+let size_of_def,size_of_ind = define_wf
   `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
-                              (\(lims,vs,refs,seen). (sptree_size
-                              refs,vs)))`)
-  CHEAT_TAC
+                             (\(lims,vs,refs,seen). (sptree_size
+                               refs,vs)))`
   [`size_of lims [] refs seen = (0,refs,seen)`;
    `size_of lims (x :: y :: ys) refs seen =
         (let (n1,refs1,seen1) = check_res refs (size_of lims (y ::
@@ -236,15 +236,15 @@ let check_res_size_of = prove
 (* HOL4 dataSemScript.sml:160: a theorem that HOL4 states as the
    value of an ML expression: size_of_ind *)
 
-let extract_stack_def = cake_define_list
+let extract_stack_def = define_cases
   [`extract_stack (Env _22 env:dataSem_stack) = sptree_toList env`;
    `extract_stack (dataSem_Exc _23 env _24) = sptree_toList env`];;
 
-let global_to_vs_def = cake_define_list
+let global_to_vs_def = define_cases
   [`global_to_vs NONE = []`;
    `global_to_vs (SOME n) = [RefPtr T n]`];;
 
-let stack_to_vs_def = cake_define
+let stack_to_vs_def = new_definition
   `stack_to_vs (s:('c,'ffi)dataSem_state) =
      sptree_toList (dataSem_state_locals s) ++ FLAT (MAP
        extract_stack (dataSem_state_stack s)) ++ global_to_vs
@@ -252,14 +252,14 @@ let stack_to_vs_def = cake_define
 
 (* Measures the amount of space everything in a dataLang "heap" would need
    to fit in wordLang memory (over-approximation) *)
-let size_of_heap_def = cake_define
+let size_of_heap_def = new_definition
   `size_of_heap (s:('c,'ffi)dataSem_state) =
      (let (n,_25,_26) = size_of (dataSem_state_limits s) (stack_to_vs
        ((s:('c,'ffi)dataSem_state))) (dataSem_state_refs
        ((s:('c,'ffi)dataSem_state))) LN in
        n)`;;
 
-let no_thunks_in_refs_def = cake_define
+let no_thunks_in_refs_def = new_definition
   `no_thunks_in_refs refs <=> (!k e v. ~(lookup k refs = SOME (Thunk
   e v)))`;;
 
@@ -269,7 +269,7 @@ let no_thunks_in_refs_def = cake_define
 (* HOL4 dataSemScript.sml:194-195: the overload heap_peak, which the
    port expands *)
 
-let add_space_def = cake_define
+let add_space_def = new_definition
   `add_space (s:('c,'ffi)dataSem_state) k =
   dataSem_state_peak_heap_length_fupd (K ((\k s. MAX
   (dataSem_state_peak_heap_length s) (size_of_heap s + k)) k s))
@@ -284,7 +284,7 @@ let add_space_def = cake_define
    GC-root set, matching wordSem's view at the op's inner Alloc.
    stack_to_vs already covers s.locals (which, when the dataLang
    evaluator hands the state to do_app, is the NARROW cut without args). *)
-let size_of_heap_args_def = cake_define
+let size_of_heap_args_def = new_definition
   `size_of_heap_args op_args (s:('c,'ffi)dataSem_state) =
      (let (n,_27,_28) = size_of (dataSem_state_limits s) (op_args ++
        stack_to_vs ((s:('c,'ffi)dataSem_state))) (dataSem_state_refs
@@ -297,18 +297,22 @@ let size_of_heap_args_def = cake_define
 (* HOL4 dataSemScript.sml:218-219: the overload heap_peak_args, which
    the port expands *)
 
-let consume_space_def = cake_define
+let consume_space_def = new_definition
   `consume_space k (s:('c,'ffi)dataSem_state) =
      (if dataSem_state_space s < k then NONE else SOME
        (dataSem_state_space_fupd (K (dataSem_state_space s - k)) s))`;;
 
 (* Determines which operations are safe for space *)
-let allowed_op_def = cake_define
+let allowed_op_def = new_definition
   `allowed_op op _29 = (~(op = closLang_Install) /\ (!t i. ~(op =
   closLang_MemOp (closLang_MutCons t i))))`;;
 
-let dataSem_v_to_list_def = cake_define
-  `dataSem_v_to_list x1 =
+let _ = size_thms "dataSem_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let dataSem_v_to_list_def,dataSem_v_to_list_ind = define_wf
+  `MEASURE (\x0. dataSem_v_size x0)`
+  [`dataSem_v_to_list x1 =
         match x1 with
           (Block ts tag []:dataSem_v) ->
         (if tag = nil_tag then SOME [] else NONE)
@@ -316,14 +320,14 @@ let dataSem_v_to_list_def = cake_define
         (if tag = cons_tag then
           (match dataSem_v_to_list bt with SOME t -> SOME (h :: t) |
             _30 -> NONE) else NONE)
-        | _31 -> NONE`;;
+        | _31 -> NONE`];;
 hol4_overload "v_to_list" "dataSem_v_to_list";;
 
 (* HOL4 dataSemScript.sml:243-247: the overload bignum_limit, which
    the port expands *)
 
 (* Gives an upper bound to the memory consuption of an operation *)
-let space_consumed_def = cake_define
+let space_consumed_def = new_definition
   `space_consumed s x2 x3 =
         match (s,x2,x3) with
           ((s:('c,'ffi)dataSem_state),closLang_BlockOp
@@ -404,22 +408,29 @@ let space_consumed_def = cake_define
        SOME l -> SUC (LENGTH l) * 3 | NONE -> 0)
         | (s,(op:closLang_op),(vs:dataSem_v list)) -> (0:num)`;;
 
-let vb_size_def = cake_define
-  `vb_size x1 =
+let _ = size_thms "dataSem_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let vb_size_def,vb_size_ind = define_wf
+  `MEASURE (\x0. dataSem_v_size x0)`
+  [`vb_size x1 =
         match x1 with
-          (Block ts t ls:dataSem_v) -> 1 + t + SUM (MAP vb_size ls) +
-            LENGTH ls
-        | _39 -> 1`;;
+          (Block ts t ls:dataSem_v) -> 1 + t + SUM (MAP vb_size ls)
+            + LENGTH ls
+        | _39 -> 1`];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
+let _ = size_thms "dataSem_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
 (* the clauses of the source overlap -- the second one says 0 of
    every value, the Block of the first one among them -- and HOL4
    takes the first that matches, so the port writes them as a
    match, which takes the first arm (see ml/lib/define.ml, "A
    definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let vs_depth_def = cake_define_list_cheat CHEAT_TAC
+let vs_depth_def = define_mutual_wf
+  `MEASURE (sum_measure (\x0. dataSem_v_size x0) (\x0. dataSem_v_size1
+  x0))`
   [`vs_depth x1 =
          match x1 with
            (Block ts t ls:dataSem_v) -> vs_depth_list ls
@@ -428,7 +439,7 @@ let vs_depth_def = cake_define_list_cheat CHEAT_TAC
    `vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list
   xs)`];;
 
-let eq_code_stack_max_def = cake_define
+let eq_code_stack_max_def = new_definition
   `eq_code_stack_max n tsz =
    OPTION_MAP ((*) n)
      (OPTION_MAP2 MAX
@@ -437,7 +448,7 @@ let eq_code_stack_max_def = cake_define
          (lookup Equal1_location tsz)
          (lookup Compare1_location tsz)))`;;
 
-let stack_consumed_def = cake_define
+let stack_consumed_def = new_definition
   `stack_consumed sfs lims p vs =
         match (p,vs) with
           (closLang_MemOp (closLang_CopyByte _41),vs) ->
@@ -533,7 +544,7 @@ let stack_consumed_def = cake_define
 (* HOL4 dataSemScript.sml:414-417: the overload do_space_peak, which
    the port expands *)
 
-let do_space_def = cake_define
+let do_space_def = new_definition
   `do_space op vs (s:('c,'ffi)dataSem_state) =
      (if op_space_reset op then SOME
        (dataSem_state_peak_heap_length_fupd (K ((\op vs s. if
@@ -554,16 +565,16 @@ let do_space_def = cake_define
                           SOME s else consume_space (op_space_req op
                           (LENGTH vs)) s)`;;
 
-let size_of_stack_frame_def = cake_define_list
+let size_of_stack_frame_def = define_cases
   [`size_of_stack_frame (Env n _46:dataSem_stack) = n`;
    `size_of_stack_frame (dataSem_Exc n _47 _48) = OPTION_MAP ((+)
   3) n`];;
 
-let size_of_stack_def = cake_define
+let size_of_stack_def = new_definition
   `size_of_stack = FOLDR (OPTION_MAP2 (+) o size_of_stack_frame)
   (SOME 1)`;;
 
-let do_stack_def = cake_define
+let do_stack_def = new_definition
   `do_stack op vs (s:('c,'ffi)dataSem_state) =
    (let new_stack = OPTION_MAP2 (+) (stack_consumed
      (dataSem_state_stack_frame_sizes s) (dataSem_state_limits s) op vs)
@@ -578,32 +589,39 @@ let do_stack_def = cake_define
                                 (dataSem_state_limits s))) new_stack)))
      s))`;;
 
-let dataSem_v_to_bytes_def = cake_define
+let dataSem_v_to_bytes_def = new_definition
   `dataSem_v_to_bytes lv = some (\(ns:word8 list).
                      v_to_list lv = SOME (MAP (Number o (&) o w2n)
                        ns))`;;
 hol4_overload "v_to_bytes" "dataSem_v_to_bytes";;
 
-let dataSem_v_to_words_def = cake_define
+let dataSem_v_to_words_def = new_definition
   `dataSem_v_to_words lv = some (\ns. v_to_list lv = SOME (MAP Word64
   ns))`;;
 hol4_overload "v_to_words" "dataSem_v_to_words";;
 
 (* TODO: move this stuff *)
-let dataSem_isClos_def = cake_define
+let dataSem_isClos_def = new_definition
   `dataSem_isClos t1 l1 = (((t1 = closure_tag) \/ (t1 =
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "dataSem_isClos";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
+let _ = size_thms "bvlSem_ref";;
+let _ = size_thms "dataSem_v";;
+let _ = size_thms "spt";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
 (* the clauses of the source overlap -- a later one says
    Eq_type_error of a pair that an earlier one has already given a
    value -- and HOL4 takes the first that matches, so the port
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let dataSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
+let dataSem_do_eq_def = define_mutual_wf
+  `MEASURE (sum_measure  (\(x0,x1,x2).       spt_size (bvlSem_ref_size
+  (\x. 0)) x0 +       dataSem_v_size x1 +       dataSem_v_size x2)
+  (\(x0,x1,x2).      spt_size (bvlSem_ref_size (\x. 0)) x0 +
+  dataSem_v_size1 x1 +      dataSem_v_size1 x2))`
   [`dataSem_do_eq refs x2 x3 =
          match (x2,x3) with
            ((CodePtr _50:dataSem_v),_51) -> Eq_type_error
@@ -644,7 +662,7 @@ hol4_overload "do_eq_list" "dataSem_do_eq_list";;
 (* HOL4 dataSemScript.sml:499-500: the overload Error, which the port
    expands *)
 
-let dataSem_do_install_def = cake_define
+let dataSem_do_install_def = new_definition
   `dataSem_do_install vs (s:('c,'ffi)dataSem_state) =
        (match vs with [v1; v2; vl1; vl2] ->
             (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -672,7 +690,7 @@ let dataSem_do_install_def = cake_define
                              Rtype_error))`;;
 hol4_overload "do_install" "dataSem_do_install";;
 
-let dataSem_list_to_v_def = cake_define_list
+let dataSem_list_to_v_def,dataSem_list_to_v_ind = define_rec
   [`dataSem_list_to_v ts t [] = t`;
    `dataSem_list_to_v ts t (h :: l) = Block ts cons_tag [h;
   dataSem_list_to_v (ts + 1) t l]`];;
@@ -681,14 +699,14 @@ hol4_overload "list_to_v" "dataSem_list_to_v";;
 (* HOL4 dataSemScript.sml:534: the overload Block_nil, which the port
    expands *)
 
-let with_fresh_ts_def = cake_define
+let with_fresh_ts_def = new_definition
   `with_fresh_ts (s:('c,'ffi)dataSem_state) n f = (match
   dataSem_state_tstamps s with
                             SOME ts -> f ts
                               (dataSem_state_tstamps_fupd (K (SOME
                               (ts + n))) s) | NONE -> f 0 s)`;;
 
-let lim_safe_part_def = cake_define_list
+let lim_safe_part_def = define_cases
   [`lim_safe_part lims (Con tag xs:const_part) <=> (if xs = [] then tag
   < 2 EXP (arch_size lims) DIV 16 else
                               LENGTH xs < 2 EXP limits_length_limit
@@ -713,7 +731,7 @@ let lim_safe_part_def = cake_define_list
    `lim_safe_part lims (W64 w:const_part) <=> 1 <
   limits_length_limit lims`];;
 
-let lim_safe_def = cake_define
+let lim_safe_def = new_definition
   `lim_safe lims x2 xs =
         match (x2,xs) with
           (closLang_BlockOp (closLang_Cons tag),xs) ->
@@ -832,21 +850,21 @@ let lim_safe_def = cake_define
         (limits_arch_64_bit lims \/ 1 < limits_length_limit lims))
         | (_103,_104) -> T`;;
 
-let do_lim_safe = cake_define
+let do_lim_safe = new_definition
   `do_lim_safe (s:('c,'ffi)dataSem_state) op vs =
   dataSem_state_safe_for_space_fupd (K (
                              lim_safe (dataSem_state_limits s) op vs
                                /\ dataSem_state_safe_for_space s))
    s`;;
 
-let check_lim_def = cake_define
+let check_lim_def = new_definition
   `check_lim (s:('c,'ffi)dataSem_state) n =
   dataSem_state_safe_for_space_fupd (K (n < 2 EXP limits_length_limit
   (dataSem_state_limits s) /\ dataSem_state_safe_for_space
                               s))
       s`;;
 
-let dataSem_do_part_def = cake_define_list
+let dataSem_do_part_def = define_cases
   [`dataSem_do_part m (Int i:const_part) s ts = (Number i,s,ts)`;
    `dataSem_do_part m (W64 w:const_part) s ts = (Word64 w,s,ts)`;
    `dataSem_do_part m (Con t ns:const_part) s ts =
@@ -859,19 +877,19 @@ let dataSem_do_part_def = cake_define_list
         (RefPtr T ptr,insert ptr (ByteArray T bytes) s,ts))`];;
 hol4_overload "do_part" "dataSem_do_part";;
 
-let dataSem_do_build_def = cake_define_list
+let dataSem_do_build_def,dataSem_do_build_ind = define_rec
   [`dataSem_do_build m i [] s ts = (m (i - 1),s,ts)`;
    `dataSem_do_build m i (p :: rest) s ts =
       (let (x,s1,ts1) = do_part m p s ts in
         dataSem_do_build ((i =+ x) m) (i + 1) rest s1 ts1)`];;
 hol4_overload "do_build" "dataSem_do_build";;
 
-let dataSem_do_build_const_def = cake_define
+let dataSem_do_build_const_def = new_definition
   `dataSem_do_build_const xs s ts = do_build (\x. Number (&0)) 0 xs s
   ts`;;
 hol4_overload "do_build_const" "dataSem_do_build_const";;
 
-let dataSem_do_int_app_def = cake_define
+let dataSem_do_int_app_def = new_definition
   `dataSem_do_int_app x1 x2 =
       match (x1,x2) with
         ((Const n:closLang_int_op),[]) ->
@@ -896,7 +914,7 @@ let dataSem_do_int_app_def = cake_define
       | ((op:closLang_int_op),(vs:dataSem_v list)) -> NONE`;;
 hol4_overload "do_int_app" "dataSem_do_int_app";;
 
-let dataSem_do_word_app_def = cake_define
+let dataSem_do_word_app_def = new_definition
   `dataSem_do_word_app x1 ws =
         match (x1,ws) with
           (WordOpw ast_W8 opw,[(Number n1:dataSem_v); Number n2]) ->
@@ -942,7 +960,7 @@ let dataSem_do_word_app_def = cake_define
         | ((op:closLang_word_op),(vs:dataSem_v list)) -> NONE`;;
 hol4_overload "do_word_app" "dataSem_do_word_app";;
 
-let dest_Boolv_def = cake_define
+let dest_Boolv_def = new_definition
   `dest_Boolv x1 =
       match x1 with
         (Block _111 tag xs:dataSem_v) ->
@@ -957,7 +975,7 @@ hol4_overload "BadRef" "dataSem_BadRef";;
 hol4_overload "NotThunk" "dataSem_NotThunk";;
 hol4_overload "IsThunk" "dataSem_IsThunk";;
 
-let dataSem_dest_thunk_def = cake_define
+let dataSem_dest_thunk_def = new_definition
   `dataSem_dest_thunk v refs =
       match v with
         (RefPtr b ptr:dataSem_v) ->
@@ -970,28 +988,30 @@ let dataSem_dest_thunk_def = cake_define
       | v -> NotThunk`;;
 hol4_overload "dest_thunk" "dataSem_dest_thunk";;
 
-let dataSem_bad_thunk_update_def = cake_define
+let dataSem_bad_thunk_update_def = new_definition
   `dataSem_bad_thunk_update m v refs <=>
      m = Evaluated /\ ~(dest_thunk v refs = NotThunk)`;;
 hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
 
 (* mirrors bviSem$finalise_cons, but threads the timestamp counter so that
    each block produced by the finalisation gets a fresh time stamp *)
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 dataSemScript.sml:854-858: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let dataSem_finalise_cons_def = cake_define_try_tac (fun () ->
-  `MEASURE (sptree_size o FST o SND)`)
-  CHEAT_TAC
-  `dataSem_finalise_cons v refs ts =
+let dataSem_finalise_cons_def,dataSem_finalise_cons_ind =
+  define_wf_cheat
+  `MEASURE (sptree_size o FST o SND)`
+  [`dataSem_finalise_cons v refs ts =
         match v with
           (RefPtr b ptr:dataSem_v) ->
        (match lookup ptr refs with SOME (bvlSem_MutBlock tag
          finalised l c r) ->
            (if ~finalised then
-             (match dataSem_finalise_cons c (delete ptr refs) ts with
-               SOME (c',refs',ts') ->
+             (match dataSem_finalise_cons c (delete ptr refs) ts
+               with SOME (c',refs',ts') ->
                   SOME (Block (match ts' with NONE -> 0 | SOME n ->
                     n) tag (l ++ [c'] ++ r),
                         insert ptr (bvlSem_MutBlock tag T l c r)
@@ -999,10 +1019,10 @@ let dataSem_finalise_cons_def = cake_define_try_tac (fun () ->
                         OPTION_MAP SUC ts') | NONE -> NONE) else
                           NONE) | SOME res -> SOME (RefPtr b
                           ptr,refs,ts) | NONE -> NONE)
-        | v -> SOME (v,refs,ts)`;;
+        | v -> SOME (v,refs,ts)`];;
 hol4_overload "finalise_cons" "dataSem_finalise_cons";;
 
-let dataSem_do_app_aux_def = cake_define
+let dataSem_do_app_aux_def = new_definition
   `dataSem_do_app_aux op (vs:dataSem_v list) (s:('c,'ffi)dataSem_state)
   =
      (match (op,vs) with (
@@ -1477,7 +1497,7 @@ hol4_overload "do_app_aux" "dataSem_do_app_aux";;
 (* HOL4 dataSemScript.sml:1158-1162: the overload do_app_peak, which
    the port expands *)
 
-let dataSem_do_app_def = cake_define
+let dataSem_do_app_def = new_definition
   `dataSem_do_app op vs (s:('c,'ffi)dataSem_state) =
      (if op = Install then do_install vs
        (dataSem_state_stack_frame_sizes_fupd (K LN)
@@ -1493,11 +1513,11 @@ let dataSem_do_app_def = cake_define
        vs)))`;;
 hol4_overload "do_app" "dataSem_do_app";;
 
-let dataSem_get_var_def = cake_define
+let dataSem_get_var_def = new_definition
   `dataSem_get_var v = sptree_lookup v`;;
 hol4_overload "get_var" "dataSem_get_var";;
 
-let get_vars_def = cake_define_list
+let get_vars_def,get_vars_ind = define_rec
   [`dataSem_get_vars [] s = SOME []`;
    `dataSem_get_vars (v :: vs) s =
          (match get_var v s with NONE -> NONE | SOME x ->
@@ -1505,16 +1525,16 @@ let get_vars_def = cake_define_list
            -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "dataSem_get_vars";;
 
-let set_var_def = cake_define
+let set_var_def = new_definition
   `dataSem_set_var v x s = (dataSem_state_locals_fupd (K (insert v x
   (dataSem_state_locals s))) s)`;;
 hol4_overload "set_var" "dataSem_set_var";;
 
-let dataSem_dec_clock_def = cake_define
+let dataSem_dec_clock_def = new_definition
   `dataSem_dec_clock s = state_clock_fupd (K (state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "dataSem_dec_clock";;
 
-let dataSem_fix_clock_def = cake_define
+let dataSem_fix_clock_def = new_definition
   `dataSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "dataSem_fix_clock";;
@@ -1531,7 +1551,7 @@ let dataSem_LESS_EQ_dec_clock = prove
        state_clock s`,
   CHEAT_TAC);;
 
-let flush_state_def = cake_define_list
+let flush_state_def = define_general
   [`dataSem_flush_state T (s:('c,'ffi)dataSem_state) =
   dataSem_state_locals_size_fupd (K (SOME 0)) (stack_fupd (K [])
   (dataSem_state_locals_fupd (K LN) s))`;
@@ -1540,7 +1560,7 @@ let flush_state_def = cake_define_list
   (dataSem_state_locals_fupd (K LN) s)`];;
 hol4_overload "flush_state" "dataSem_flush_state";;
 
-let call_env_def = cake_define
+let call_env_def = new_definition
   `dataSem_call_env args size' (s:('c,'ffi)dataSem_state) =
      (let new_stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
                               (OPTION_MAP2 (+) (size_of_stack
@@ -1555,7 +1575,7 @@ let call_env_def = cake_define
        s))))`;;
 hol4_overload "call_env" "dataSem_call_env";;
 
-let push_env_def = cake_define_list
+let push_env_def = define_general
   [`dataSem_push_env env F (s:('c,'ffi)dataSem_state) =
         (let stack' = Env (dataSem_state_locals_size s) env :: stack
           s in let
@@ -1581,7 +1601,7 @@ let push_env_def = cake_define_list
              (stack_fupd (K stack') s))))`];;
 hol4_overload "push_env" "dataSem_push_env";;
 
-let pop_env_def = cake_define
+let pop_env_def = new_definition
   `dataSem_pop_env (s:('c,'ffi)dataSem_state) =
      (match dataSem_state_stack s with (Env ss e :: xs) ->
          SOME (dataSem_state_locals_size_fupd (K ss)
@@ -1593,7 +1613,7 @@ let pop_env_def = cake_define
            (dataSem_state_locals_fupd (K e) s)))) | _196 -> NONE)`;;
 hol4_overload "pop_env" "dataSem_pop_env";;
 
-let jump_exc_def = cake_define
+let jump_exc_def = new_definition
   `dataSem_jump_exc (s:('c,'ffi)dataSem_state) =
      (if dataSem_state_handler s < LENGTH (dataSem_state_stack s)
        then
@@ -1606,20 +1626,20 @@ let jump_exc_def = cake_define
              else NONE)`;;
 hol4_overload "jump_exc" "dataSem_jump_exc";;
 
-let cut_env_def = cake_define
+let cut_env_def = new_definition
   `dataSem_cut_env (name_set:1 spt) env =
      (if domain name_set SUBSET domain env then SOME (mk_wf (inter
        env name_set)) else NONE)`;;
 hol4_overload "cut_env" "dataSem_cut_env";;
 
-let cut_state_def = cake_define
+let cut_state_def = new_definition
   `dataSem_cut_state names (s:('c,'ffi)dataSem_state) =
      (match dataSem_cut_env names (dataSem_state_locals s) with
        NONE -> NONE | SOME env -> SOME (dataSem_state_locals_fupd (K
        env) s))`;;
 hol4_overload "cut_state" "dataSem_cut_state";;
 
-let cut_state_opt_def = cake_define
+let cut_state_opt_def = new_definition
   `dataSem_cut_state_opt names s =
      (match names with NONE -> SOME s | SOME names ->
        dataSem_cut_state names s)`;;
@@ -1636,7 +1656,7 @@ let push_env_clock = prove
      (dataSem_push_env env b s) = state_clock s`,
   CHEAT_TAC);;
 
-let dataSem_find_code_def = cake_define_list
+let dataSem_find_code_def = define_cases
   [`dataSem_find_code (SOME p) args code ssize =
          (match sptree_lookup p code with NONE -> NONE | SOME
            (arity,exp) ->
@@ -1652,18 +1672,18 @@ let dataSem_find_code_def = cake_define_list
                      -> NONE)`];;
 hol4_overload "find_code" "dataSem_find_code";;
 
-let isBool_def = cake_define
+let isBool_def = new_definition
   `isBool b x2 =
       match x2 with
         (Block _199 tag []:dataSem_v) -> (bool_to_tag b = tag)
       | _200 -> F`;;
 
-let install_sfs_def = cake_define
+let install_sfs_def = new_definition
   `install_sfs op (s:('c,'ffi)dataSem_state) =
   dataSem_state_safe_for_space_fupd (K (~(op = closLang_Install) /\
   dataSem_state_safe_for_space s)) s`;;
 
-let set_vars_def = cake_define
+let set_vars_def = new_definition
   `dataSem_set_vars ns vs s = (dataSem_state_locals_fupd (K (union
   (fromAList (ZIP ns vs)) (dataSem_state_locals s))) s)`;;
 hol4_overload "set_vars" "dataSem_set_vars";;
@@ -1690,12 +1710,9 @@ let _ = size_thms "dataLang_prog";;
    the names that the port gives the constants *)
 (* HOL4 dataSemScript.sml:1486-1495: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let dataSem_evaluate_def = cake_define_list_try_tac (fun () ->
+let dataSem_evaluate_def,dataSem_evaluate_ind = define_wf
   `(inv_image (MEASURE I LEX MEASURE dataLang_prog_size)
-                              (\(xs,s). (state_clock s,xs)))`)
-  CHEAT_TAC
+                            (\(xs,s). (state_clock s,xs)))`
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =
@@ -1847,11 +1864,11 @@ hol4_overload "evaluate" "dataSem_evaluate";;
 
 (* HOL4 dataSemScript.sml:1497: ML code, not ported *)
 
-let evaluate_safe_def = cake_define
+let evaluate_safe_def = new_definition
   `evaluate_safe c s = (let (x,s1) = evaluate (c,s) in
   dataSem_state_safe_for_space s1)`;;
 
-let evaluate_peak_def = cake_define
+let evaluate_peak_def = new_definition
   `evaluate_peak c s = (let (x,s1) = evaluate (c,s) in
   dataSem_state_peak_heap_length s1)`;;
 
@@ -1897,14 +1914,14 @@ let dataSem_fix_clock_evaluate = prove
 
 (* observational semantics *)
 
-let dataSem_initial_state_def = cake_define
+let dataSem_initial_state_def = new_definition
   `dataSem_initial_state ffi code coracle cc stamps lims ss k =
   mk_dataSem_state LN (SOME 0) [] (SOME 1) ss NONE 0 LN cc k code ffi
   0 (if stamps then SOME 0 else NONE) lims (if stamps then T else F)
   0 coracle`;;
 hol4_overload "initial_state" "dataSem_initial_state";;
 
-let dataSem_semantics_def = cake_define
+let dataSem_semantics_def = new_definition
   `dataSem_semantics init_ffi code coracle cc lims ss start' =
    (let p = Call NONE (SOME start') [] NONE in
    let init = initial_state init_ffi code coracle cc T lims ss in
@@ -1925,7 +1942,7 @@ let dataSem_semantics_def = cake_define
               (SND (evaluate (p,init k)))))) UNIV)))`;;
 hol4_overload "semantics" "dataSem_semantics";;
 
-let data_lang_safe_for_space_def = cake_define
+let data_lang_safe_for_space_def = new_definition
   `data_lang_safe_for_space init_ffi code (lims:limits) (ss:num spt)
   start' =
      (!ck.
@@ -1935,7 +1952,7 @@ let data_lang_safe_for_space_def = cake_define
          ck):(1,'ffi)dataSem_state)) in dataSem_state_safe_for_space
          s)`;;
 
-let compute_limits_def = cake_define
+let compute_limits_def = new_definition
   `compute_limits len_bits a64 fpops fptops stack_heap_limit =
       mk_limits (SND stack_heap_limit) len_bits (FST
         stack_heap_limit) a64 fpops fptops`;;

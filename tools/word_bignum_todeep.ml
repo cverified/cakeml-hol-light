@@ -399,8 +399,10 @@ let rec to_deep def =
   let deep = if is_rec then mk_Loop (rec_flag,dels,deep) else deep in
   (* store deep embedding *)
   let name = (fst (dest_const f)) ^ "_code" in
-  let code_def = cake_define (mk_eq (mk_var (name,type_of deep),
-                                     deep)) in
+  (* the constant stands for the term this code has built, which
+     is no recursion and no pattern: HOL Light's own *)
+  let code_def = new_definition (mk_eq (mk_var (name,type_of deep),
+                                        deep)) in
   let code_const = lhs (concl code_def) in
   code_defs := code_def :: (!code_defs);
   prev_trans := (f,code_const) :: (!prev_trans);

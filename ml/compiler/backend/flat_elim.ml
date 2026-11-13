@@ -29,8 +29,12 @@ let _ = hol4_ancestors "flat_elim"
 (**************************** ANALYSIS FUNCTIONS *****************************)
 
 (* is_hidden exp = T means there is no direct execution of GlobalVarLookup *)
-let is_hidden_def = cake_define
-  `is_hidden x1 =
+let _ = size_thms "flatLang_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let is_hidden_def,is_hidden_ind = define_wf
+  `MEASURE (\x0. flatLang_exp_size x0)`
+  [`is_hidden x1 =
         match x1 with
           (Raise t e:flatLang_exp) -> is_hidden e
         // raise exception
@@ -59,11 +63,11 @@ let is_hidden_def = cake_define
         // let-expression
         | (Letrec t funs e) -> is_hidden e
         // local def of mutually recursive funs
-        | _1 -> F`;;
+        | _1 -> F`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let total_pat_def = cake_define_list_cheat CHEAT_TAC
+let total_pat_def = define_mutual_rec
   [`total_pat (Pany:flatLang_pat) = T`;
    `total_pat (Pvar _3:flatLang_pat) = T`;
    `total_pat (Pcon NONE xs:flatLang_pat) = total_pat_list xs`;
@@ -75,11 +79,13 @@ let total_pat_def = cake_define_list_cheat CHEAT_TAC
 (* check if expression is pure in that it does not make any visible changes
     (other than writing to globals) *)
 let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 flat_elimScript.sml:75-80: the tactic that proves the
    termination *)
-let flat_elim_is_pure_def = cake_define_wf
+let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
   `MEASURE (\e. flatLang_exp_size e)`
-  `flat_elim_is_pure x1 =
+  [`flat_elim_is_pure x1 =
         match x1 with
           (Handle t e pes:flatLang_exp) -> flat_elim_is_pure e
         | (Lit t l) -> T
@@ -96,15 +102,14 @@ let flat_elim_is_pure_def = cake_define_wf
         | (Let t opt e1 e2) -> (flat_elim_is_pure e1 /\
           flat_elim_is_pure e2)
         | (Letrec t funs e) -> flat_elim_is_pure e
-        | _7 -> F`;;
+        | _7 -> F`];;
 hol4_overload "is_pure" "flat_elim_is_pure";;
 
 (* HOL4 flat_elimScript.sml:82: a theorem that HOL4 states as the
    value of an ML expression: is_pure_def1 *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let has_Eval_def = cake_define_list_cheat CHEAT_TAC
+let has_Eval_def = define_mutual_shaped_rec
+  "nested"
   [`has_Eval (App t op es:flatLang_exp) <=> op = flatLang_Src
   ast_Eval \/ has_Eval_list es`;
    `has_Eval (Mat _9 e pes:flatLang_exp) <=> has_Eval e \/
@@ -129,13 +134,13 @@ let has_Eval_def = cake_define_list_cheat CHEAT_TAC
    `has_Eval_funs ((_31,_32,e) :: fs) <=> has_Eval e \/
   has_Eval_funs fs`];;
 
-let dest_GlobalVarInit_def = cake_define
+let dest_GlobalVarInit_def = new_definition
   `dest_GlobalVarInit x1 =
     match x1 with
       flatLang_GlobalVarInit n -> SOME n
     | _33 -> NONE`;;
 
-let dest_GlobalVarLookup_def = cake_define
+let dest_GlobalVarLookup_def = new_definition
   `dest_GlobalVarLookup x1 =
     match x1 with
       flatLang_GlobalVarLookup n -> SOME n
@@ -152,12 +157,9 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 flat_elimScript.sml:151-156: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let find_loc_def = cake_define_list_try_tac (fun () ->
+let find_loc_def = define_mutual_wf
   `MEASURE (\e. match e with INL x -> flatLang_exp_size x | INR y ->
-     list_size flatLang_exp_size y)`)
-  CHEAT_TAC
+  list_size flatLang_exp_size y)`
   [`find_loc ((Raise _35 er):flatLang_exp) = ((find_loc er):1 spt)`;
    `find_loc (Handle _37 eh p_es:flatLang_exp) =
             ((sptree_union (find_loc eh) (find_locL (MAP SND
@@ -188,13 +190,10 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 flat_elimScript.sml:180-186: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let find_lookups_def = cake_define_list_try_tac (fun () ->
+let find_lookups_def = define_mutual_wf
   `MEASURE (\e. match e with INL x -> flatLang_exp_size x | INR
-     (y:flatLang_exp list) ->
-                    list_size flatLang_exp_size y)`)
-  CHEAT_TAC
+  (y:flatLang_exp list) ->
+                 list_size flatLang_exp_size y)`
   [`find_lookups (Raise _65 er:flatLang_exp) = find_lookups er`;
    `find_lookups (Handle _67 eh p_es:flatLang_exp) =
             sptree_union (find_lookups eh) (find_lookupsL (MAP
@@ -222,7 +221,7 @@ let find_lookups_def = cake_define_list_try_tac (fun () ->
    `find_lookupsL (e :: es) = sptree_union (find_lookups e)
   (find_lookupsL es)`];;
 
-let analyse_exp_def = cake_define
+let analyse_exp_def = new_definition
   `analyse_exp e = (let locs = (find_loc e) in let lookups =
   (find_lookups e) in
        if flat_elim_is_pure e then (
@@ -231,11 +230,11 @@ let analyse_exp_def = cake_define
            (sptree_union locs lookups,(sptree_map (K LN)
              (sptree_union locs lookups)))))`;;
 
-let code_analysis_union_def = cake_define
+let code_analysis_union_def = new_definition
   `code_analysis_union (r1,t1) (r2,t2) =
        ((sptree_union r1 r2),(num_set_tree_union t1 t2))`;;
 
-let analyse_code_def = cake_define_list
+let analyse_code_def,analyse_code_ind = define_rec
   [`analyse_code [] = (LN,LN)`;
    `analyse_code (e :: cs) =
         code_analysis_union (analyse_exp e) (analyse_code cs)`];;
@@ -243,7 +242,7 @@ let analyse_code_def = cake_define_list
 
 (**************************** REMOVAL FUNCTIONS *****************************)
 
-let keep_def = cake_define
+let keep_def = new_definition
   `keep reachable e =
        // if none of the global variables that e may assign to are in
        // the reachable set, then e is candidate for removal
@@ -253,13 +252,13 @@ let keep_def = cake_define
        (if (\t. t = LN) (inter (find_loc e) reachable) then
          (~(flat_elim_is_pure e)) else T)`;;
 
-let remove_unreachable_def = cake_define
+let remove_unreachable_def = new_definition
   `remove_unreachable reachable l = FILTER (keep reachable) l`;;
 
-let has_Eval_dec_def = cake_define
+let has_Eval_dec_def = new_definition
   `has_Eval_dec e = has_Eval e`;;
 
-let remove_flat_prog_def = cake_define
+let remove_flat_prog_def = new_definition
   `remove_flat_prog code =
      (if EXISTS has_Eval_dec code then code else
        let (r,t) = analyse_code code in

@@ -37,7 +37,7 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 let _ = hol4_ancestors "bvl_constProof"
   ["bvlProps"; "bvlSem"; "bvl_const"];;
 
-let bvl_constProof_v_rel_def = cake_define
+let bvl_constProof_v_rel_def = new_definition
   `bvl_constProof_v_rel (:'c) (:'ffi) a x y xs ys =
      (match a with Var n -> (\l n. oEL n l) ys n = SOME x | Op _1 _2
        ->
@@ -46,8 +46,15 @@ let bvl_constProof_v_rel_def = cake_define
          (Rval [x],s)) | _3 -> F)`;;
 hol4_overload "v_rel" "bvl_constProof_v_rel";;
 
-let bvl_constProof_env_rel_def = cake_define
-  `bvl_constProof_env_rel x1 x2 x3 e1 e2 =
+let _ = size_thms "bvlSem_v";;
+let _ = size_thms "bvl_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let bvl_constProof_env_rel_def,bvl_constProof_env_rel_ind = define_wf
+  `MEASURE (\(x0,x1,x2,x3,x4).      (\x. 0) x0 +      (\x. 0) x1 +
+  list_size (option_size bvl_exp_size) x2 +      bvlSem_v_size1 x3 +
+    bvlSem_v_size1 x4)`
+  [`bvl_constProof_env_rel x1 x2 x3 e1 e2 =
         match (x1,x2,x3,e1,e2) with
           ((:'c),(:'ffi),[],e1,e2) -> (e1 = e2)
         | ((:'c),(:'ffi),(NONE :: rest),(x :: e1),(y :: e2)) ->
@@ -55,7 +62,7 @@ let bvl_constProof_env_rel_def = cake_define
         | ((:'c),(:'ffi),(SOME a :: rest),(x :: e1),(y :: e2)) ->
         bvl_constProof_v_rel (:'c) (:'ffi) a x y (x :: e1) (y :: e2)
           /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
-        | (_4,_5,_6,_7,_8) -> F`;;
+        | (_4,_5,_6,_7,_8) -> F`];;
 hol4_overload "env_rel" "bvl_constProof_env_rel";;
 
 (* env_rel_length *)

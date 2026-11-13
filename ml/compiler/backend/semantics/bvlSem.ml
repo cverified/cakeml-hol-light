@@ -74,11 +74,11 @@ hol4_overload "Block" "bvlSem_Block";;
 hol4_overload "CodePtr" "bvlSem_CodePtr";;
 hol4_overload "RefPtr" "bvlSem_RefPtr";;
 
-let bvlSem_Boolv_def = cake_define
+let bvlSem_Boolv_def = new_definition
   `bvlSem_Boolv b = bvlSem_Block (bool_to_tag b) []`;;
 hol4_overload "Boolv" "bvlSem_Boolv";;
 
-let bvlSem_Unit_def = cake_define
+let bvlSem_Unit_def = new_definition
   `bvlSem_Unit = bvlSem_Block (tuple_tag) []`;;
 hol4_overload "Unit" "bvlSem_Unit";;
 
@@ -109,8 +109,12 @@ hol4_overload "state_code_fupd" "bvlSem_state_code_fupd";;
 hol4_overload "state_ffi" "bvlSem_state_ffi";;
 hol4_overload "state_ffi_fupd" "bvlSem_state_ffi_fupd";;
 
-let bvlSem_v_to_list_def = cake_define
-  `bvlSem_v_to_list x1 =
+let _ = size_thms "bvlSem_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let bvlSem_v_to_list_def,bvlSem_v_to_list_ind = define_wf
+  `MEASURE (\x0. bvlSem_v_size x0)`
+  [`bvlSem_v_to_list x1 =
         match x1 with
           (Block tag []:bvlSem_v) ->
         (if tag = nil_tag then SOME [] else NONE)
@@ -118,29 +122,33 @@ let bvlSem_v_to_list_def = cake_define
         (if tag = cons_tag then
           (match bvlSem_v_to_list bt with SOME t -> SOME (h :: t) |
             _1 -> NONE) else NONE)
-        | _2 -> NONE`;;
+        | _2 -> NONE`];;
 hol4_overload "v_to_list" "bvlSem_v_to_list";;
 
-let bvlSem_list_to_v_def = cake_define_list
+let bvlSem_list_to_v_def,bvlSem_list_to_v_ind = define_rec
   [`bvlSem_list_to_v [] = Block nil_tag []`;
    `bvlSem_list_to_v (v :: vs) = Block cons_tag [v;
   bvlSem_list_to_v vs]`];;
 hol4_overload "list_to_v" "bvlSem_list_to_v";;
 
-let isClos_def = cake_define
+let isClos_def = new_definition
   `bvlSem_isClos t1 l1 = (((t1 = closure_tag) \/ (t1 =
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "bvlSem_isClos";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
+let _ = size_thms "bvlSem_v";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
 (* the clauses of the source overlap -- a later one says
    Eq_type_error of a pair that an earlier one has already given a
    value -- and HOL4 takes the first that matches, so the port
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let bvlSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
+let bvlSem_do_eq_def = define_mutual_wf
+  `MEASURE (sum_measure (\(x0,x1,x2). (\x. 0) x0 + bvlSem_v_size x1 +
+  bvlSem_v_size x2) (\(x0,x1,x2). (\x. 0) x0 + bvlSem_v_size1 x1 +
+  bvlSem_v_size1 x2))`
   [`bvlSem_do_eq refs x2 x3 =
          match (x2,x3) with
            ((bvlSem_CodePtr _4:bvlSem_v),_5) -> Eq_type_error
@@ -180,13 +188,13 @@ hol4_overload "do_eq_list" "bvlSem_do_eq_list";;
 (* HOL4 bvlSemScript.sml:116: the overload Error, which the port
    expands *)
 
-let bvlSem_v_to_bytes_def = cake_define
+let bvlSem_v_to_bytes_def = new_definition
   `bvlSem_v_to_bytes lv = some (\(ns:word8 list).
                      v_to_list lv = SOME (MAP (Number o (&) o w2n)
                        ns))`;;
 hol4_overload "v_to_bytes" "bvlSem_v_to_bytes";;
 
-let bvlSem_v_to_words_def = cake_define
+let bvlSem_v_to_words_def = new_definition
   `bvlSem_v_to_words lv = some (\ns. v_to_list lv = SOME (MAP Word64
   ns))`;;
 hol4_overload "v_to_words" "bvlSem_v_to_words";;
@@ -194,7 +202,7 @@ hol4_overload "v_to_words" "bvlSem_v_to_words";;
 (* HOL4 bvlSemScript.sml:127: the ML values that the definitions
    below antiquote *)
 
-let bvlSem_do_install_def = cake_define
+let bvlSem_do_install_def = new_definition
   `bvlSem_do_install vs (s:('c,'ffi)bvlSem_state) =
        (match vs with [v1; v2] ->
             (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -222,7 +230,7 @@ let bvlSem_do_install_def = cake_define
                              Rtype_error))`;;
 hol4_overload "do_install" "bvlSem_do_install";;
 
-let do_part_def = cake_define_list
+let do_part_def = define_cases
   [`bvlSem_do_part m (Int i:const_part) refs = (Number i,refs)`;
    `bvlSem_do_part m (W64 w:const_part) refs = (Word64 w,refs)`;
    `bvlSem_do_part m (Con t ns:const_part) refs = (Block t (MAP m
@@ -234,19 +242,19 @@ let do_part_def = cake_define_list
           bytes):bvlSem_v bvlSem_ref))))`];;
 hol4_overload "do_part" "bvlSem_do_part";;
 
-let do_build_def = cake_define_list
+let do_build_def,do_build_ind = define_rec
   [`bvlSem_do_build m i [] refs = (m (i - 1),refs)`;
    `bvlSem_do_build m i (p :: rest) refs =
       (let (x,refs1) = bvlSem_do_part m p refs in
         bvlSem_do_build ((i =+ x) m) (i + 1) rest refs1)`];;
 hol4_overload "do_build" "bvlSem_do_build";;
 
-let do_build_const_def = cake_define
+let do_build_const_def = new_definition
   `bvlSem_do_build_const xs refs = bvlSem_do_build (\x. Number (&0))
   0 xs refs`;;
 hol4_overload "do_build_const" "bvlSem_do_build_const";;
 (* same as closSem$do_int_app *)
-let bvlSem_do_int_app_def = cake_define
+let bvlSem_do_int_app_def = new_definition
   `bvlSem_do_int_app x1 x2 =
       match (x1,x2) with
         ((closLang_Const n:closLang_int_op),[]) -> SOME (Number n)
@@ -306,7 +314,7 @@ let do_int_app_eq_some = prove
   CHEAT_TAC);;
 
 (* same as closSem$do_word_app *)
-let bvlSem_do_word_app_def = cake_define
+let bvlSem_do_word_app_def = new_definition
   `bvlSem_do_word_app x1 ws =
         match (x1,ws) with
           (WordOpw ast_W8 opw,[(Number n1:bvlSem_v); Number n2]) ->
@@ -360,7 +368,7 @@ hol4_overload "BadRef" "bvlSem_BadRef";;
 hol4_overload "NotThunk" "bvlSem_NotThunk";;
 hol4_overload "IsThunk" "bvlSem_IsThunk";;
 
-let bvlSem_dest_thunk_def = cake_define
+let bvlSem_dest_thunk_def = new_definition
   `bvlSem_dest_thunk x1 refs =
       match x1 with
         (RefPtr b ptr:bvlSem_v) ->
@@ -373,7 +381,7 @@ let bvlSem_dest_thunk_def = cake_define
       | _37 -> NotThunk`;;
 hol4_overload "dest_thunk" "bvlSem_dest_thunk";;
 
-let bvlSem_bad_thunk_update_def = cake_define
+let bvlSem_bad_thunk_update_def = new_definition
   `bvlSem_bad_thunk_update m v refs <=>
      m = Evaluated /\ ~(dest_thunk v refs = NotThunk)`;;
 hol4_overload "bad_thunk_update" "bvlSem_bad_thunk_update";;
@@ -385,7 +393,7 @@ hol4_overload "bad_thunk_update" "bvlSem_bad_thunk_update";;
     - Build now has full semantics, i.e. can handle all cases
     - Label is added *)
 
-let bvlSem_do_app_def = cake_define
+let bvlSem_do_app_def = new_definition
   `bvlSem_do_app op vs (s:('c,'ffi)bvlSem_state) =
      (match (op,vs) with (closLang_GlobOp (closLang_Global n),[]) ->
          (match get_global n (bvlSem_state_globals s) with SOME (SOME
@@ -776,13 +784,13 @@ let bvlSem_do_app_def = cake_define
                     ,bvlSem_v)semanticPrimitives_result))`;;
 hol4_overload "do_app" "bvlSem_do_app";;
 
-let bvlSem_dec_clock_def = cake_define
+let bvlSem_dec_clock_def = new_definition
   `bvlSem_dec_clock n s = state_clock_fupd (K (state_clock s - n)) s`;;
 hol4_overload "dec_clock" "bvlSem_dec_clock";;
 
 (* Functions for looking up function definitions *)
 
-let bvlSem_find_code_def = cake_define_list
+let bvlSem_find_code_def = define_cases
   [`bvlSem_find_code (SOME p) args code =
          (match sptree_lookup p code with NONE -> NONE | SOME
            (arity,exp) -> (if LENGTH args = arity then SOME
@@ -804,7 +812,7 @@ hol4_overload "find_code" "bvlSem_find_code";;
    fix_clock. At the bottom of this file, we remove all occurrences
    of fix_clock. *)
 
-let bvlSem_fix_clock_def = cake_define
+let bvlSem_fix_clock_def = new_definition
   `bvlSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "bvlSem_fix_clock";;
@@ -836,15 +844,15 @@ if concl bvlSem_fix_clock_IMP <> `T` then
   cake_term_facts := bvlSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvlSemScript.sml:660-668: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let bvlSem_evaluate_def = cake_define_try_tac (fun () ->
+let bvlSem_evaluate_def,bvlSem_evaluate_ind = define_wf
   `(inv_image (MEASURE I LEX MEASURE (list_size bvl_exp_size))
-                            (\(xs,env,s). (state_clock s,xs)))`)
-  CHEAT_TAC
-  `(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s)) /\
+                            (\(xs,env,s). (state_clock s,xs)))`
+  [`(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s))
+  /\
    (bvlSem_evaluate (x :: y :: xs,env,s) =
       (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval
         v1,s1) ->
@@ -858,7 +866,8 @@ let bvlSem_evaluate_def = cake_define_try_tac (fun () ->
         vs,s1) ->
            (if Boolv T = HD vs then bvlSem_evaluate ([x2],env,s1)
              else
-           if Boolv F = HD vs then bvlSem_evaluate ([x3],env,s1) else
+           if Boolv F = HD vs then bvlSem_evaluate ([x3],env,s1)
+             else
              (Rerr (Rabort Rtype_error),s1)) | res -> res)) /\
    (bvlSem_evaluate ([Let xs x2],env,s) =
       (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
@@ -883,9 +892,9 @@ let bvlSem_evaluate_def = cake_define_try_tac (fun () ->
       (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s) else
         let thunk_v = EL n env in
           match dest_thunk thunk_v (bvlSem_state_refs s) with BadRef
-            -> (Rerr (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
-            Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
-            IsThunk NotEvaluated f ->
+            -> (Rerr (Rabort Rtype_error),s) | NotThunk -> (Rerr
+            (Rabort Rtype_error),s) | IsThunk Evaluated v -> (Rval
+            [v],s) | IsThunk NotEvaluated f ->
               (match find_code (SOME force_loc) [thunk_v; f]
                 (bvlSem_state_code s) with NONE -> (Rerr (Rabort
                 Rtype_error),s) | SOME (args,exp) ->
@@ -898,13 +907,13 @@ let bvlSem_evaluate_def = cake_define_try_tac (fun () ->
    (bvlSem_evaluate ([Call ticks dest xs],env,s1) =
       (match fix_clock s1 (bvlSem_evaluate (xs,env,s1)) with (Rval
         vs,s) ->
-          (match find_code dest vs (bvlSem_state_code s) with NONE ->
-            (Rerr (Rabort Rtype_error),s) | SOME (args,exp) ->
+          (match find_code dest vs (bvlSem_state_code s) with NONE
+            -> (Rerr (Rabort Rtype_error),s) | SOME (args,exp) ->
                (if bvlSem_state_clock s < ticks + 1 then (Rerr
                  (Rabort Rtimeout_error),bvlSem_state_clock_fupd (K 0)
                  s) else
-                   bvlSem_evaluate ([exp],args,dec_clock (ticks +
-                     1) s))) | res -> res))`;;
+                   bvlSem_evaluate ([exp],args,dec_clock (ticks
+                     + 1) s))) | res -> res))`];;
 hol4_overload "evaluate" "bvlSem_evaluate";;
 
 (* HOL4 bvlSemScript.sml:670: ML code, not ported *)
@@ -962,12 +971,12 @@ let bvlSem_fix_clock_evaluate = prove
 
 (* observational semantics *)
 
-let bvlSem_initial_state_def = cake_define
+let bvlSem_initial_state_def = new_definition
   `bvlSem_initial_state ffi code co cc k = mk_bvlSem_state [] FEMPTY
   k cc co code ffi`;;
 hol4_overload "initial_state" "bvlSem_initial_state";;
 
-let bvlSem_semantics_def = cake_define
+let bvlSem_semantics_def = new_definition
   `bvlSem_semantics init_ffi code co cc start' =
    (let es = [Call 0 (SOME start') []] in
    let init = initial_state init_ffi code co cc in

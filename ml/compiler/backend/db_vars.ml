@@ -26,7 +26,7 @@ hol4_overload "Var" "db_vars_Var";;
 hol4_overload "Shift" "db_vars_Shift";;
 hol4_overload "Union" "db_vars_Union";;
 
-let mk_Union_def = cake_define
+let mk_Union_def = new_definition
   `mk_Union t1 t2 =
      (if t1 = db_vars_Empty then t2 else
      if t2 = db_vars_Empty then t1 else
@@ -38,7 +38,7 @@ let mk_Union_Empty = prove
   db_vars_Empty = A`,
   CHEAT_TAC);;
 
-let list_mk_Union_def = cake_define_list
+let list_mk_Union_def,list_mk_Union_ind = define_rec
   [`list_mk_Union [] = db_vars_Empty`;
    `list_mk_Union (x :: xs) = mk_Union x (list_mk_Union xs)`];;
 
@@ -48,7 +48,7 @@ let FOLDR_mk_Union_UNZIP = prove
      (ts,list_mk_Union (fvs ++ [A])))`,
   CHEAT_TAC);;
 
-let db_to_set_acc_def = cake_define_list
+let db_to_set_acc_def,db_to_set_acc_ind = define_rec
   [`db_to_set_acc (n:num) (db_vars_Empty:db_var_set) s = s`;
    `db_to_set_acc (n:num) (db_vars_Var v:db_var_set) s =
          (if v < n then s else sptree_insert (v - n) one s)`;
@@ -61,24 +61,24 @@ let wf_db_to_set_acc = prove
  (`!s n a. sptree_wf a ==> sptree_wf (db_to_set_acc n s a)`,
   CHEAT_TAC);;
 
-let db_to_set_def = cake_define
+let db_to_set_def = new_definition
   `db_to_set db = db_to_set_acc 0 db LN`;;
 
 let wf_db_to_set = prove
  (`!db. sptree_wf (db_to_set db)`,
   CHEAT_TAC);;
 
-let vars_to_list_def = cake_define
+let vars_to_list_def = new_definition
   `vars_to_list db = MAP FST (toAList (db_to_set db))`;;
 
-let vars_from_list_def = cake_define
+let vars_from_list_def = new_definition
   `vars_from_list vs = FOLDL (\s1 v. db_vars_Union (db_vars_Var v)
   s1) db_vars_Empty vs`;;
 
-let vars_flatten_def = cake_define
+let vars_flatten_def = new_definition
   `vars_flatten db = vars_from_list (vars_to_list db)`;;
 
-let has_var_def = cake_define_list
+let has_var_def,has_var_ind = define_rec
   [`has_var n (db_vars_Empty:db_var_set) <=> F`;
    `has_var n (db_vars_Var v:db_var_set) <=> (n = v)`;
    `has_var n (db_vars_Shift k d:db_var_set) <=> has_var (n + k) d`;

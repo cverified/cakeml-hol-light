@@ -41,7 +41,7 @@ def main():
   except OSError:
     print('no tmp/dry/defbind.txt: run tools/bin/dryport first')
     return 1
-  way = {}
+  way, byconst = {}, {}
   kinds = collections.Counter()
   rels = collections.Counter()
   for l in open(T + '../tmp/strategies.txt'):
@@ -52,10 +52,20 @@ def main():
     rel = '' if rel == '-' else rel
     kinds[s or '(assumed)'] += 1
     if rel: rels[s] += 1
+    byconst[c] = (s, ch == 'cheat', rel)
     if c in thy: way[(thy[c], c)] = (s, ch == 'cheat', rel)
   out = [HEAD, 'WAY = {']
   for k in sorted(way):
     out.append('  %r:\n    %r,' % (k, way[k]))
+  out.append('}')
+  out.append('')
+  out.append('# the same by the constant alone, for a definition'
+             ' the port writes')
+  out.append('# out by hand (tools/overrides.py), which has no'
+             ' theory of its own')
+  out.append('BY_CONST = {')
+  for k in sorted(byconst):
+    out.append('  %r:\n    %r,' % (k, byconst[k]))
   out.append('}')
   out.append('')
   out.append('PRIMITIVE = {k for k, v in WAY.items()'

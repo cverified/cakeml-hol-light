@@ -72,7 +72,7 @@ hol4_overload "Word" "backend_passes_Word";;
 hol4_overload "Stack" "backend_passes_Stack";;
 hol4_overload "Lab" "backend_passes_Lab";;
 
-let to_flat_all_def = cake_define
+let to_flat_all_def = new_definition
   `to_flat_all (c:backend_config) p =
      (let ps = [] in
      let ps = ps ++ [((implode
@@ -98,7 +98,7 @@ let to_flat_thm = prove
  (`SND (to_flat_all c p) = to_flat c p`,
   CHEAT_TAC);;
 
-let to_clos_all_def = cake_define
+let to_clos_all_def = new_definition
   `to_clos_all (c:backend_config) p =
      (let (ps,c,p) = to_flat_all c p in
      let p = flat_to_clos_compile_prog p in
@@ -109,7 +109,7 @@ let to_clos_thm = prove
  (`SND (to_clos_all c p) = to_clos c p`,
   CHEAT_TAC);;
 
-let to_bvl_all_def = cake_define
+let to_bvl_all_def = new_definition
   `to_bvl_all (c:backend_config) p =
      (let (ps,c,es0) = to_clos_all c p in
      let c0 = backend_config_clos_conf c in
@@ -165,7 +165,7 @@ let to_bvl_thm = prove
  (`SND (to_bvl_all c p) = to_bvl c p`,
   CHEAT_TAC);;
 
-let to_bvi_all_def = cake_define
+let to_bvi_all_def = new_definition
   `to_bvi_all (c:backend_config) p =
      (let (ps,c,p,names) = to_bvl_all c p in
      let start' = clos_to_bvl_config_start (backend_config_clos_conf
@@ -224,7 +224,7 @@ let to_bvi_thm = prove
  (`SND (to_bvi_all c p) = to_bvi c p`,
   CHEAT_TAC);;
 
-let to_data_all_def = cake_define
+let to_data_all_def = new_definition
   `to_data_all (c:backend_config) p =
      (let (ps,c,p,names) = to_bvi_all c p in
      let p = MAP (\(a,n,e). (a,n,FST (compile n (COUNT_LIST n) T []
@@ -248,7 +248,7 @@ let to_data_thm = prove
 
 (* NOTE: this definition is meant to minimize code duplication
   in the explorer pretty printing. *)
-let word_internal_all_def = cake_define
+let word_internal_all_def = new_definition
   `word_internal_all asm_conf ps names p =
      (let two_reg_arith = asm_config_two_reg_arith asm_conf in
      let p = MAP (\((name_num,arg_count,prog)).
@@ -290,7 +290,7 @@ let word_internal_all_def = cake_define
        "after remove_dead in word_alloc"),Word p names)] in
      (p,ps))`;;
 
-let to_word_all_def = cake_define
+let to_word_all_def = new_definition
   `to_word_all asm_conf (c:backend_config) p =
      (let (ps,c,p,names) = to_data_all c p in
      let word_conf = backend_config_word_to_word_conf c in
@@ -339,7 +339,7 @@ let backend_passes_to_word_thm = prove
   c p`,
   CHEAT_TAC);;
 
-let to_stack_all_def = cake_define
+let to_stack_all_def = new_definition
   `to_stack_all asm_conf (c:backend_config) p =
      (let (ps,c,p,names) = to_word_all asm_conf c p in
      let (bm,c',fs,p) = word_to_stack_compile asm_conf
@@ -355,7 +355,7 @@ let to_stack_thm = prove
   asm_conf c p`,
   CHEAT_TAC);;
 
-let to_lab_all_def = cake_define
+let to_lab_all_def = new_definition
   `to_lab_all asm_conf (c:backend_config) p =
      (let (ps,bm,c,p,names) = to_stack_all asm_conf c p in
      let stack_conf = backend_config_stack_conf c in
@@ -391,7 +391,7 @@ let to_lab_thm = prove
   p`,
   CHEAT_TAC);;
 
-let to_target_all_def = cake_define
+let to_target_all_def = new_definition
   `to_target_all asm_conf (c:backend_config) p =
      (let (ps,bm,c,p,names) = to_lab_all asm_conf c p in
      let p = filter_skip p in
@@ -404,7 +404,7 @@ let to_target_thm = prove
  (`SND (to_target_all asm_conf c p) = to_target asm_conf c p`,
   CHEAT_TAC);;
 
-let from_lab_all_def = cake_define
+let from_lab_all_def = new_definition
   `from_lab_all ps asm_conf (c:backend_config) names p (bm:('a word)
   list) =
      (let p = filter_skip p in
@@ -418,7 +418,7 @@ let from_lab_thm = prove
   names p bm`,
   CHEAT_TAC);;
 
-let from_stack_all_def = cake_define
+let from_stack_all_def = new_definition
   `from_stack_all ps (asm_conf:'a asm_config) (c:backend_config) names p
   bm =
      (let stack_conf = backend_config_stack_conf c in
@@ -453,7 +453,7 @@ let from_stack_thm = prove
   c names p bm`,
   CHEAT_TAC);;
 
-let from_word_all_def = cake_define
+let from_word_all_def = new_definition
   `from_word_all ps asm_conf (c:backend_config) names p =
      (let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
@@ -468,7 +468,7 @@ let from_word_thm = prove
   names p`,
   CHEAT_TAC);;
 
-let from_word_0_all_def = cake_define
+let from_word_0_all_def = new_definition
   `from_word_0_all ps asm_conf (c:backend_config) names p =
      (let word_conf = backend_config_word_to_word_conf c in
      let (p,ps) = word_internal_all asm_conf ps names p in
@@ -493,7 +493,7 @@ let from_word_0_thm = prove
   c names p`,
   CHEAT_TAC);;
 
-let from_data_all_def = cake_define
+let from_data_all_def = new_definition
   `from_data_all ps asm_conf c names p =
      (let data_conf = backend_config_data_conf c in
      let word_conf = backend_config_word_to_word_conf c in
@@ -529,7 +529,7 @@ let number_of_passes = prove
  (`LENGTH (FST (to_target_all asm_conf c p)) = 41`,
   CHEAT_TAC);;
 
-let any_prog_pp_def = cake_define
+let any_prog_pp_def = new_definition
   `any_prog_pp p = (match p with backend_passes_Source p ->
   source_to_strs p | backend_passes_Flat p -> flat_to_strs p | Clos
   decs funs -> clos_to_strs (decs,funs) | backend_passes_Bvl p names
@@ -538,12 +538,12 @@ let any_prog_pp_def = cake_define
   Word p names -> word_to_strs names p | backend_passes_Stack p names
   -> stack_to_strs names p | Lab p names -> lab_to_strs names p)`;;
 
-let pp_with_title_def = cake_define
+let pp_with_title_def = new_definition
   `pp_with_title pp (title,p) acc =
      Append (List [(implode "# "); title; (implode "\n\n")])
      (Append (pp p) acc)`;;
 
-let compile_tap_def = cake_define
+let compile_tap_def = new_definition
   `compile_tap asm_conf (c:backend_config) p =
      (if tap_config_explore_flag (backend_config_tap_conf c) then
        let (ps,out) = to_target_all asm_conf c p in

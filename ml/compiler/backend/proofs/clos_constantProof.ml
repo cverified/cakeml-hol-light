@@ -29,13 +29,13 @@ let _ = hol4_ancestors "clos_constantProof"
 
 (* naive implementation *)
 
-let make_part_def = cake_define
+let make_part_def = new_definition
   `make_part n p aux =
      (match ALOOKUP aux p with SOME k -> (n,k,aux) | NONE -> (n +
        1,n,(p,n) :: aux))`;;
 
-let parts_def = cake_define
-  `parts (ConstInt i) n aux = make_part n (Int i) aux /\
+let parts_def = define_mutual_rec
+  [`parts (ConstInt i) n aux = make_part n (Int i) aux /\
    parts (ConstStr s) n aux = make_part n (closLang_Str s) aux /\
    parts (ConstWord64 w) n aux = make_part n (W64 w) aux /\
    parts (ConstCons t cs) n aux =
@@ -45,36 +45,40 @@ let parts_def = cake_define
    parts_list (c :: cs) n aux =
      (let (n,r,aux) = parts c n aux in
      let (n,rs,aux) = parts_list cs n aux in
-       (n,r :: rs,aux))`;;
+       (n,r :: rs,aux))`];;
 
-let to_parts_def = cake_define
-  `to_parts (ConstInt i) = [Int i] /\
+let to_parts_def = define_cases
+  [`to_parts (ConstInt i) = [Int i] /\
    to_parts (ConstStr s) = [closLang_Str s] /\
    to_parts (ConstWord64 w) = [W64 w] /\
    to_parts (ConstCons t cs) =
      (let (n,rs,aux) = parts_list cs 0 [] in
-       REVERSE ((Con t rs) :: MAP FST aux))`;;
+       REVERSE ((Con t rs) :: MAP FST aux))`];;
 
 (* semantics *)
 
-let build_part_def = cake_define_list
+let build_part_def = define_cases
   [`build_part mem' (Int i:const_part) = ConstInt i`;
    `build_part mem' (closLang_Str s:const_part) = ConstStr s`;
    `build_part mem' (W64 w:const_part) = ConstWord64 w`;
    `build_part mem' (Con t ns:const_part) = ConstCons t (MAP mem'
   ns)`];;
 
-let build_def = cake_define_list
+let build_def,build_ind = define_rec
   [`build mem' i [] = mem' (i - 1)`;
    `build mem' i (p :: rest) = build ((i =+ build_part mem' p)
   mem') (i + 1) rest`];;
 
-let build_const_def = cake_define
+let build_const_def = new_definition
   `build_const xs = build (\x. ConstInt (&0)) 0 xs`;;
 
 (* proof *)
 
-let build_map_def = cake_define_list
+let _ = size_thms "const_part";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let build_map_def,build_map_ind = define_wf
+  `MEASURE (\(x0,x1,x2). list_size const_part_size x2)`
   [`build_map mem' i [] = mem'`;
    `build_map mem' i (p :: rest) = build_map ((i =+ build_part mem'
   p) mem') (i + 1) rest`];;
@@ -92,7 +96,7 @@ let parts_acc = prove
       parts_list cs n aux = (m,rs,res) ==> (?a. res = a ++ aux))`,
   CHEAT_TAC);;
 
-let conses_ok_def = cake_define
+let conses_ok_def = new_definition
   `conses_ok aux <=>
      (!n. n < LENGTH aux ==> (?p. EL n (REVERSE aux) = (p,n))) /\
      (!n rs m r. MEM (Con n rs,r) aux /\ MEM m rs ==> m < r)`;;
@@ -166,7 +170,7 @@ let build_const_to_parts = prove
 
 (* verification of the efficent version in clos_to_bvlTheory *)
 
-let update_tag_def = cake_define
+let update_tag_def = new_definition
   `update_tag x =
       match x with
         (Con t ns:const_part) -> Con (clos_tag_shift t) ns
@@ -176,7 +180,7 @@ let update_tag_11 = prove
  (`update_tag x = update_tag y <=> x = y`,
   CHEAT_TAC);;
 
-let good_hash_table_def = cake_define
+let good_hash_table_def = new_definition
   `good_hash_table m aux =
      (!k v. ALOOKUP aux k = SOME v <=>
            (?bucket. sptree_lookup (part_hash (update_tag k)) m =
@@ -215,19 +219,19 @@ let compile_const_thm = prove
 
 (* connection to closSem *)
 
-let build_part'_def = cake_define
-  `build_part' mem' (Int i:const_part) = closSem_Number i /\
-   build_part' mem' (closLang_Str s) = closSem_ByteVector (MAP (n2w o
-     ORD) (explode s)) /\
+let build_part'_def = define_cases
+  [`build_part' mem' (Int i:const_part) = closSem_Number i /\
+   build_part' mem' (closLang_Str s) = closSem_ByteVector (MAP (n2w
+     o ORD) (explode s)) /\
    build_part' mem' (W64 w) = Word64 w /\
-   build_part' mem' (Con t ns) = closSem_Block t (MAP mem' ns)`;;
+   build_part' mem' (Con t ns) = closSem_Block t (MAP mem' ns)`];;
 
-let build'_def = cake_define_list
+let build'_def,build'_ind = define_rec
   [`build' mem' i [] = mem' (i - 1)`;
    `build' mem' i (p :: rest) = build' ((i =+ build_part' mem' p)
   mem') (i + 1) rest`];;
 
-let build_const'_def = cake_define
+let build_const'_def = new_definition
   `build_const' xs = build' (\x. closSem_Number (&0)) 0 xs`;;
 
 let make_const_thm = prove

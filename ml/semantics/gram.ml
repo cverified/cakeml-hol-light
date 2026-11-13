@@ -28,25 +28,25 @@ let _ = hol4_ancestors "gram"
 
 (* HOL4 gramScript.sml:60-63: ML code, not ported *)
 
-let validMultSym_def = cake_define
+let validMultSym_def = new_definition
   `validMultSym s <=> "/" <<= s \/ "*" <<= s \/ "%" <<= s \/ "&" <<=
   s`;;
 
-let validAddSym_def = cake_define
+let validAddSym_def = new_definition
   `validAddSym s <=> ~(s = "") /\ HD s IN {(CHR 43),(CHR 45),(CHR 94)}
   \/
                    // caret
                    2 <= LENGTH s /\ HD s = (CHR 124)`;;
 
-let validRelSym_def = cake_define
+let validRelSym_def = new_definition
   `validRelSym s <=> "<" <<= s \/ ">" <<= s \/ (2 <= LENGTH s /\ ("="
   <<= s \/ "~" <<= s))`;;
 
-let validListSym_def = cake_define
+let validListSym_def = new_definition
   `validListSym s <=> "@" <<= s \/ (":" <<= s /\ 2 <= LENGTH s /\ ~(s
   = ":="))`;;
 
-let validPrefixSym_def = cake_define
+let validPrefixSym_def = new_definition
   `validPrefixSym s <=> s = "~" \/ "!" <<= s \/ "?" <<= s`;;
 
 let disjneq = prove
@@ -86,7 +86,7 @@ let MMLnonT_INDUCT,MMLnonT_RECURSION = define_datatype
    nDecl | nDconstructor | nDType | nConstructorName | nCompOps | \
    nAndFDecls | nAddOps";;
 
-let cmlG_def = cake_define
+let cmlG_def = new_definition
   `cmlG = mk_grammar (INL nTopLevelDecs) (FEMPTY |+ (INL
   nUQTyOp,({[grammar_TOK (tokens_AlphaT m)] | m | T} UNION
   {[grammar_TOK (tokens_SymbolT m)] | m | T})) |+ (INL
@@ -306,10 +306,10 @@ new_type_abbrev("mlptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 (* HOL4 gramScript.sml:240-252: a theorem that HOL4 states as the
    value of an ML expression: nt_distinct_ths *)
 
-let ndl_def = cake_define
+let ndl_def = new_definition
   `(Ndl n l = Nd (n,unknown_loc) l)`;;
 
-let lfl_def = cake_define
+let lfl_def = new_definition
   `(Lfl t = Lf (t,unknown_loc))`;;
 
 (* HOL4 gramScript.sml:264-275: the ML values that the definitions

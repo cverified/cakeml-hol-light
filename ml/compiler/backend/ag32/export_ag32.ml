@@ -20,7 +20,7 @@ needs "misc/misc.ml";;
 let _ = hol4_ancestors "export_ag32"
   ["export"; "mlstring"];;
 
-let ag32_export_def = cake_define
+let ag32_export_def = new_definition
   `ag32_export (ffi_names':mlstring list) bytes (data:word32 list)
   (syms:(mlstring#num#num) list) exp ret pk =
      SmartAppend

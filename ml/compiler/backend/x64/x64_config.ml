@@ -22,7 +22,7 @@ let _ = hol4_ancestors "x64_config"
   ["asmProps"; "asmSem"; "backend"];;
 (* HOL4 ancestors outside the port: x64_target *)
 
-let x64_names_def = cake_define
+let x64_names_def = new_definition
   `x64_names =
      ((
       // 16 regs, must avoid 4 and 5, names:
@@ -64,7 +64,7 @@ let x64_names_def = cake_define
 (* HOL4 x64_configScript.sml:49-50: the ML values that the
    definitions below antiquote *)
 
-let x64_backend_config_def = cake_define
+let x64_backend_config_def = new_definition
   `x64_backend_config =
               mk_backend_config prim_src_config
                 (clos_to_bvl_default_config)

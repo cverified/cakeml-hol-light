@@ -38,13 +38,14 @@ hol4_overload "listsym" "pegexec_listsym";;
 hol4_overload "done" "pegexec_done";;
 hol4_overload "failed" "pegexec_failed";;
 
-let poplist_aux_def = cake_define_list
+let poplist_aux_def,poplist_aux_ind = define_shaped_rec
+  "cases"
   [`poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t`;
    `poplist_aux acc (NONE :: t) = (acc,t)`;
    `poplist_aux acc [] = (acc,[])
     // should never happen`];;
 
-let poplistval_def = cake_define
+let poplistval_def = new_definition
   `poplistval f l = (let (values,rest) = poplist_aux [] l in
                       SOME (f values) :: rest)`;;
 
@@ -67,7 +68,7 @@ hol4_overload "Looped" "pegexec_Looped";;
 (* HOL4 pegexecScript.sml:56: the overload EOF, which the port
    expands *)
 
-let coreloop_def = cake_define
+let coreloop_def = new_definition
   `coreloop G =
     OWHILE (\s. match s with pegexec_Result _1 -> F | _2 -> T)
            (\s. match s with
@@ -183,16 +184,16 @@ let coreloop_def = cake_define
                         pegexec_Result r -> pegexec_Result r |
                         pegexec_Looped -> pegexec_Looped)`;;
 
-let peg_exec_def = cake_define
+let peg_exec_def = new_definition
   `peg_exec (G:('atok,'bnt,'cvalue,'err)peg) e i r eo errs k fk =
      (match coreloop G (pegexec_EV e i r eo errs k fk) with
          SOME r -> r | NONE -> pegexec_Looped)`;;
 
-let destResult_def = cake_define
-  `pegexec_destResult (pegexec_Result r) = r`;;
+let destResult_def = define_general
+  [`pegexec_destResult (pegexec_Result r) = r`];;
 hol4_overload "destResult" "pegexec_destResult";;
 
-let pegparse_def = cake_define
+let pegparse_def = new_definition
   `pegparse G s =
      (if wfG G then
        match pegexec_destResult (peg_exec G (start G) s [] NONE []

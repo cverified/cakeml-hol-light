@@ -668,7 +668,13 @@ let discharge_conditions (rel,tac) th =
             failwith s) in
        PROVE_HYP hth th)
     (hyp th) th in
-  the_relation := string_of_term rel; th';;
+  (* in the form a file writes it, which is without the types of
+     its subterms *)
+  let p = !print_types_of_subterms in
+  print_types_of_subterms := 0;
+  the_relation := string_of_term rel;
+  print_types_of_subterms := p;
+  th';;
 
 (* ------------------------------------------------------------------ *)
 (* Taking paired lambdas apart.                                       *)
@@ -2655,7 +2661,7 @@ let cake_cheat tm =
                 (conjuncts(snd(strip_forall tm))) in
   let name = fst(dest_var(hd fs)) in
   the_cheats := name :: !the_cheats;
-  print_string ("\ncake_define " ^ name ^ " CHEATED\n");
+  print_string ("\n" ^ name ^ " ASSUMED\n");
   note_cheat name tm;
   flush stdout;
   new_axiom (list_mk_conj cls);;

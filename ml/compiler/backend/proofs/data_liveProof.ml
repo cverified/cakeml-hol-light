@@ -32,7 +32,7 @@ let SPLIT_PAIR = prove
  (`!x y z. (x = (y,z)) <=> (y = FST x) /\ (z = SND x)`,
   CHEAT_TAC);;
 
-let state_rel_def = cake_define
+let state_rel_def = new_definition
   `data_liveProof_state_rel (s1:('a,'ffi)dataSem_state)
   (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> dataSem_state_code
      s1 = dataSem_state_code t1 /\ dataSem_state_clock s1 =

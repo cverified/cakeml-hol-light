@@ -139,7 +139,7 @@ let compile_inc_code_labels = prove
      (SND (inline_all cs prog))))`,
   CHEAT_TAC);;
 
-let cache_code_labels_def = cake_define
+let cache_code_labels_def = new_definition
   `cache_code_labels (cs:(num#bvi_exp) spt) =
      BIGUNION (set_of_list (MAP (bviProps_get_code_labels o SND)
        (sptree_toList cs)))`;;
@@ -300,7 +300,7 @@ let bvi_inlineProof_evaluate_expand_env = prove
      evaluate (xs,a ++ env,s) = evaluate (xs,a,s)`,
   CHEAT_TAC);;
 
-let in_cc_def = cake_define
+let in_cc_def = new_definition
   `bvi_inlineProof_in_cc cc =
      (\(cs,cfg) prog.
         let (cs1,prog1) = inline_all cs prog in
@@ -308,7 +308,7 @@ let in_cc_def = cake_define
             (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
 hol4_overload "in_cc" "bvi_inlineProof_in_cc";;
 
-let in_co_def = cake_define
+let in_co_def = new_definition
   `bvi_inlineProof_in_co co =
      (\n.
         let ((cs,cfg),prog) = co n in
@@ -316,7 +316,7 @@ let in_co_def = cake_define
           (cfg,prog1))`;;
 hol4_overload "in_co" "bvi_inlineProof_in_co";;
 
-let in_state_rel_def = cake_define
+let in_state_rel_def = new_definition
   `bvi_inlineProof_in_state_rel s (t:('c,'ffi)bviSem_state) <=>
   bviSem_state_refs
      t = state_refs s /\ bviSem_state_clock
@@ -580,21 +580,21 @@ let evaluate_inline = prove
 
 (* HOL4 bvi_inlineProofScript.sml:1201: a proof *)
 
-let clean_prog_def = cake_define
+let clean_prog_def = new_definition
   `clean_prog prog =
      MAP (\(name,arity,body). (name,arity,remove_ticks_exp body))
        prog`;;
 
-let remove_ticks_cc_def = cake_define
+let remove_ticks_cc_def = new_definition
   `bvi_inlineProof_remove_ticks_cc cc = (\cfg prog. cc cfg
   (clean_prog prog))`;;
 hol4_overload "remove_ticks_cc" "bvi_inlineProof_remove_ticks_cc";;
 
-let remove_ticks_co_def = cake_define
+let remove_ticks_co_def = new_definition
   `bvi_inlineProof_remove_ticks_co = (I ## clean_prog)`;;
 hol4_overload "remove_ticks_co" "bvi_inlineProof_remove_ticks_co";;
 
-let remove_state_rel_def = cake_define
+let remove_state_rel_def = new_definition
   `remove_state_rel (s:('c,'ffi)bviSem_state) (t:('c,'ffi)bviSem_state)
   <=> bviSem_state_refs
      t = bviSem_state_refs s /\ bviSem_state_clock t =

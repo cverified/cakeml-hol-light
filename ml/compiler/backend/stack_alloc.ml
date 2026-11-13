@@ -33,7 +33,7 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "stack_alloc"
   ["data_to_word"; "stackLang"];;
 
-let memcpy_code_def = cake_define
+let memcpy_code_def = new_definition
   `memcpy_code =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 0
        (Imm (n2w 0))
@@ -47,14 +47,14 @@ let memcpy_code_def = cake_define
                   (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                     (bytes_in_word))))) 3])`;;
 
-let clear_top_inst_def = cake_define
+let clear_top_inst_def = new_definition
   `clear_top_inst i n =
      (Seq ((\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w v))))) i
        (dimindex (:'a) - n - 1))
          ((\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w v))))) i
            (dimindex (:'a) - n - 1)):'a stackLang_prog)`;;
 
-let word_gc_move_code_def = cake_define
+let word_gc_move_code_def = new_definition
   `word_gc_move_code conf =
      If Test 5 (Imm ((n2w 1):'a word)) Skip
        (list_Seq
@@ -122,7 +122,7 @@ let word_gc_move_code_def = cake_define
                        (\r1 r2. Inst (Arith (asm_Binop Add r1 r1
                          (Reg r2)))) 4 6])])`;;
 
-let word_gc_move_list_code_def = cake_define
+let word_gc_move_list_code_def = new_definition
   `word_gc_move_list_code conf =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 7
        (Imm ((n2w 0):'a word))
@@ -135,7 +135,7 @@ let word_gc_move_list_code_def = cake_define
                   (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                     (bytes_in_word))))) 8])`;;
 
-let word_gc_move_loop_code_def = cake_define
+let word_gc_move_loop_code_def = new_definition
   `word_gc_move_loop_code conf =
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 3
        (Reg 8)
@@ -160,7 +160,7 @@ let word_gc_move_loop_code_def = cake_define
                                 stackLang_prog)`;;
 
 (* 7 is w, 8 is index into stack, 5 is input to word_gc_move_code *)
-let word_gc_move_bitmap_code_def = cake_define
+let word_gc_move_bitmap_code_def = new_definition
   `word_gc_move_bitmap_code conf =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotLower 7
        (Imm (n2w 2))
@@ -178,7 +178,7 @@ let word_gc_move_bitmap_code_def = cake_define
                       (bytes_in_word))))) 8]))`;;
 
 (* 9 is w, 8 is index into stack *)
-let word_gc_move_bitmaps_code_def = cake_define
+let word_gc_move_bitmaps_code_def = new_definition
   `((word_gc_move_bitmaps_code conf):'a stackLang_prog) =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotTest 0 (Reg
        0)
@@ -191,7 +191,7 @@ let word_gc_move_bitmaps_code_def = cake_define
                     v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
-let word_gc_move_roots_bitmaps_code_def = cake_define
+let word_gc_move_roots_bitmaps_code_def = new_definition
   `((word_gc_move_roots_bitmaps_code conf):'a stackLang_prog) =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotTest 9 (Reg
        9)
@@ -204,7 +204,7 @@ let word_gc_move_roots_bitmaps_code_def = cake_define
                   word_gc_move_bitmaps_code conf;
                   stackLang_StackLoadAny 9 8])`;;
 
-let word_gen_gc_move_code_def = cake_define
+let word_gen_gc_move_code_def = new_definition
   `word_gen_gc_move_code conf =
      (If Test 5 (Imm ((n2w 1):'a word)) Skip
        (list_Seq
@@ -329,7 +329,7 @@ let word_gen_gc_move_code_def = cake_define
                              r1 (Reg r2)))) 4 6])])]):'a
                              stackLang_prog)`;;
 
-let word_gen_gc_partial_move_code_def = cake_define
+let word_gen_gc_partial_move_code_def = new_definition
   `word_gen_gc_partial_move_code conf =
      // uses 0,1,2,6 as temps
      (If Test 5 (Imm ((n2w 1):'a word)) Skip
@@ -408,7 +408,7 @@ let word_gen_gc_partial_move_code_def = cake_define
                              r1 (Reg r2)))) 4 6])])))]):'a
                              stackLang_prog)`;;
 
-let word_gen_gc_move_bitmap_code_def = cake_define
+let word_gen_gc_move_bitmap_code_def = new_definition
   `word_gen_gc_move_bitmap_code conf =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotLower 7
        (Imm (n2w 2))
@@ -425,7 +425,7 @@ let word_gen_gc_move_bitmap_code_def = cake_define
                     (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                       (bytes_in_word))))) 8]))`;;
 
-let word_gen_gc_partial_move_bitmap_code_def = cake_define
+let word_gen_gc_partial_move_bitmap_code_def = new_definition
   `word_gen_gc_partial_move_bitmap_code conf =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotLower 7
        (Imm (n2w 2))
@@ -443,7 +443,7 @@ let word_gen_gc_partial_move_bitmap_code_def = cake_define
                       (bytes_in_word))))) 8]))`;;
 
 (* 9 is w, 8 is index into stack *)
-let word_gen_gc_move_bitmaps_code_def = cake_define
+let word_gen_gc_move_bitmaps_code_def = new_definition
   `((word_gen_gc_move_bitmaps_code conf):'a stackLang_prog) =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotTest 0 (Reg
        0)
@@ -456,7 +456,7 @@ let word_gen_gc_move_bitmaps_code_def = cake_define
                     v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
-let word_gen_gc_partial_move_bitmaps_code_def = cake_define
+let word_gen_gc_partial_move_bitmaps_code_def = new_definition
   `((word_gen_gc_partial_move_bitmaps_code conf):'a stackLang_prog) =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotTest 0 (Reg
        0)
@@ -469,7 +469,7 @@ let word_gen_gc_partial_move_bitmaps_code_def = cake_define
                     v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
-let word_gen_gc_move_roots_bitmaps_code_def = cake_define
+let word_gen_gc_move_roots_bitmaps_code_def = new_definition
   `((word_gen_gc_move_roots_bitmaps_code conf):'a stackLang_prog) =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotTest 9 (Reg
        9)
@@ -483,7 +483,7 @@ let word_gen_gc_move_roots_bitmaps_code_def = cake_define
                   stackLang_StackLoadAny 9 8])`;;
 
 (* 9 is w, 8 is index into stack *)
-let word_gen_gc_partial_move_roots_bitmaps_code_def = cake_define
+let word_gen_gc_partial_move_roots_bitmaps_code_def = new_definition
   `((word_gen_gc_partial_move_roots_bitmaps_code conf):'a
   stackLang_prog) =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotTest 9 (Reg
@@ -497,7 +497,7 @@ let word_gen_gc_partial_move_roots_bitmaps_code_def = cake_define
                   word_gen_gc_partial_move_bitmaps_code conf;
                   stackLang_StackLoadAny 9 8])`;;
 
-let word_gen_gc_move_list_code_def = cake_define
+let word_gen_gc_move_list_code_def = new_definition
   `word_gen_gc_move_list_code conf =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 7
        (Imm ((n2w 0):'a word))
@@ -510,7 +510,7 @@ let word_gen_gc_move_list_code_def = cake_define
                   (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                     (bytes_in_word))))) 8])`;;
 
-let word_gen_gc_partial_move_list_code_def = cake_define
+let word_gen_gc_partial_move_list_code_def = new_definition
   `word_gen_gc_partial_move_list_code conf =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 7
        (Imm ((n2w 0):'a word))
@@ -523,7 +523,7 @@ let word_gen_gc_partial_move_list_code_def = cake_define
                   (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                     (bytes_in_word))))) 8])`;;
 
-let word_gen_gc_move_data_code_def = cake_define
+let word_gen_gc_move_data_code_def = new_definition
   `word_gen_gc_move_data_code conf =
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 3
        (Reg 8)
@@ -547,7 +547,7 @@ let word_gen_gc_move_data_code_def = cake_define
                                 r1 r1 (Reg r2)))) 8 7])]):'a
                                 stackLang_prog)`;;
 
-let word_gen_gc_partial_move_ref_list_code_def = cake_define
+let word_gen_gc_partial_move_ref_list_code_def = new_definition
   `word_gen_gc_partial_move_ref_list_code conf =
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 9
        (Reg 8)
@@ -560,7 +560,7 @@ let word_gen_gc_partial_move_ref_list_code_def = cake_define
                  word_gen_gc_partial_move_list_code conf]):'a
                    stackLang_prog)`;;
 
-let word_gen_gc_partial_move_data_code_def = cake_define
+let word_gen_gc_partial_move_data_code_def = new_definition
   `word_gen_gc_partial_move_data_code conf =
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 3
        (Reg 8)
@@ -585,7 +585,7 @@ let word_gen_gc_partial_move_data_code_def = cake_define
                                 r1 r1 (Reg r2)))) 8 7])]):'a
                                 stackLang_prog)`;;
 
-let word_gen_gc_move_refs_code_def = cake_define
+let word_gen_gc_move_refs_code_def = new_definition
   `word_gen_gc_move_refs_code conf =
      // r2a in 8, r1a in 0 and Temp 4w
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 0
@@ -599,7 +599,7 @@ let word_gen_gc_move_refs_code_def = cake_define
                  word_gen_gc_move_list_code conf;
                  Get 0 (Temp (n2w 4))]):'a stackLang_prog)`;;
 
-let word_gen_gc_move_loop_code_def = cake_define
+let word_gen_gc_move_loop_code_def = new_definition
   `word_gen_gc_move_loop_code conf =
      // 7 is 0w iff pbx = pb and pax = pa, 1 is pbx (Temp 4w), 2 is pb,
      // 8 is pax, 3 is pa
@@ -656,7 +656,7 @@ let word_gen_gc_move_loop_code_def = cake_define
                      (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
                        r2)))) 7 5]))`;;
 
-let word_gc_partial_or_full_def = cake_define
+let word_gc_partial_or_full_def = new_definition
   `word_gc_partial_or_full gen_sizes partial_code full_code =
      (match gen_sizes with [] -> list_Seq ([stackLang_Get 8
        TriggerGC; stackLang_Get 7 EndOfHeap; (\r1 r2. Inst (Arith
@@ -670,7 +670,7 @@ let word_gc_partial_or_full_def = cake_define
                  (list_Seq partial_code)
                  (list_Seq full_code)])`;;
 
-let SetNewTrigger_def = cake_define
+let SetNewTrigger_def = new_definition
   `SetNewTrigger (endh:num) (ib:num) gs =
      list_Seq [(\r w. Inst (Const r w)) 1 ((get_gen_size gs):'a
        word);
@@ -692,7 +692,7 @@ let SetNewTrigger_def = cake_define
                     (Seq ((\r1 r2. Inst (Arith (asm_Binop Add r1
                       r1 (Reg r2)))) 1 ib) (Set TriggerGC 1)))]`;;
 
-let word_gc_code_def = cake_define
+let word_gc_code_def = new_definition
   `word_gc_code conf =
      (match data_to_word_config_gc_kind conf with None ->
          (list_Seq
@@ -918,35 +918,39 @@ let word_gc_code_def = cake_define
                   w)) 1 (n2w 1)) (stackLang_Halt 1)) Skip]):'a
                   stackLang_prog))`;;
 
-let stack_alloc_stubs_def = cake_define
+let stack_alloc_stubs_def = new_definition
   `stack_alloc_stubs conf = [(gc_stub_location,Seq (word_gc_code
   conf) (Return 0))]`;;
 hol4_overload "stubs" "stack_alloc_stubs";;
 
-let stack_alloc_stub_names_def = cake_define
+let stack_alloc_stub_names_def = new_definition
   `stack_alloc_stub_names one = [(gc_stub_location,(implode "_GC"))]`;;
 hol4_overload "stub_names" "stack_alloc_stub_names";;
 
 (* compiler *)
 
-let next_lab_def = cake_define
-  `next_lab (p:'a stackLang_prog) aux =
-     (match p with Seq p1 p2 -> next_lab p1 (next_lab p2 aux) | If _2
-       _3 _4 p1 p2 -> next_lab p1 (next_lab p2 aux) | Loop p -> next_lab
-       p aux | Call NONE _5 NONE -> aux | Call NONE _6 (SOME (_7,_8,l2))
-       -> MAX aux (l2 + 2) | Call (SOME (p,_9,_10,l2)) _11 NONE ->
-       next_lab p (MAX aux (l2 + 2)) | Call (SOME (p,_12,_13,l2)) _14
-       (SOME (p',_15,l3)) ->
-           next_lab p (next_lab p' ((MAX (MAX l2 l3 + 2) aux))) |
-             _16 -> aux)`;;
+let _ = size_thms "stackLang_prog";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let next_lab_def,next_lab_ind = define_wf
+  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x0)`
+  [`next_lab (p:'a stackLang_prog) aux =
+     (match p with Seq p1 p2 -> next_lab p1 (next_lab p2 aux) | If
+       _2 _3 _4 p1 p2 -> next_lab p1 (next_lab p2 aux) | Loop p ->
+       next_lab p aux | Call NONE _5 NONE -> aux | Call NONE _6 (SOME
+       (_7,_8,l2)) -> MAX aux (l2 + 2) | Call (SOME (p,_9,_10,l2)) _11
+       NONE -> next_lab p (MAX aux (l2 + 2)) | Call (SOME
+       (p,_12,_13,l2)) _14 (SOME (p',_15,l3)) ->
+           next_lab p (next_lab p' ((MAX (MAX l2 l3 + 2) aux)))
+             | _16 -> aux)`];;
 
 (* HOL4 stack_allocScript.sml:664-674: a theorem that HOL4 states as
    the value of an ML expression: next_lab_pmatch *)
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stack_alloc_comp_def = cake_define_cheat CHEAT_TAC
-  `stack_alloc_comp n m p =
+let stack_alloc_comp_def,stack_alloc_comp_ind = define_rec
+  [`stack_alloc_comp n m p =
      (match p with Seq p1 p2 ->
          (let (q1,m) = stack_alloc_comp n m p1 in
          let (q2,m) = stack_alloc_comp n m p2 in
@@ -963,20 +967,20 @@ let stack_alloc_comp_def = cake_define_cheat CHEAT_TAC
                (let (q2,m) = stack_alloc_comp n m p2 in
                  (Call (SOME (q1,lr,l1,l2)) dest (SOME
                    (q2,k1,k2)),m)))) | Alloc k -> (Call (SOME
-                   (Skip,0,n,m)) (INL gc_stub_location) NONE,m + 1) |
-                   StoreConsts k1 k2 (SOME loc) -> (Call (SOME
+                   (Skip,0,n,m)) (INL gc_stub_location) NONE,m + 1)
+                   | StoreConsts k1 k2 (SOME loc) -> (Call (SOME
                    (Skip,0,n,m)) (INL loc) NONE,m + 1) | _17 ->
-                   (p,m))`;;
+                   (p,m))`];;
 hol4_overload "comp" "stack_alloc_comp";;
 
 (* HOL4 stack_allocScript.sml:705-714: a theorem that HOL4 states as
    the value of an ML expression: comp_pmatch *)
 
-let prog_comp_def = cake_define
+let prog_comp_def = new_definition
   `stack_alloc_prog_comp (n,p) = (n,FST (comp n (next_lab p 2) p))`;;
 hol4_overload "prog_comp" "stack_alloc_prog_comp";;
 
-let stack_alloc_compile_def = cake_define
+let stack_alloc_compile_def = new_definition
   `stack_alloc_compile c prog = stubs c ++ MAP stack_alloc_prog_comp
   prog`;;
 hol4_overload "compile" "stack_alloc_compile";;

@@ -38,5 +38,5 @@ do sleep 10; done
 tmux capture-pane -p -J -S - -t hol-vq |
   sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
   grep -E 'AXIOMS-ADDED|OWN-AXIOMS|NOT PROVED'\
-'|NOT STATED|CHEATED|^Error|Warning' | tail -20
+'|NOT STATED|ASSUMED|^Error|Warning' | tail -20
 echo "verifyquick: $(( $(date +%s) - $(cat $C/tmp/vqstart.txt) ))s"

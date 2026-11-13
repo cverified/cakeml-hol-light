@@ -21,6 +21,8 @@ HEAD = re.compile(r"`\s*(?:!\s*[^.]*?\.\s*)?\(?\s*"
 
 
 def way_of(const):
+  try: return strategies.BY_CONST[const]
+  except (AttributeError, KeyError): pass
   for (thy, c), v in strategies.WAY.items():
     if c == const: return v
   return None
@@ -54,6 +56,16 @@ def rewrite(block, head, const, way):
   return how, (bind + ',' + ind if pair else bind), args
 
 
+def head_of(body, kind):
+  """the constant a block defines.  cake_define_wf writes the
+     relation first, so the name is in the quotation after it."""
+  if kind == '_wf':
+    i = body.index('`', body.index('`') + 1) + 1
+    body = body[i:]
+  m = HEAD.search(body)
+  return m.group(1) if m else None
+
+
 def block_end(s, i):
   """the index past the `;;` that ends the block that starts at i,
      counting quotations so that a `;;` inside one does not end
@@ -71,11 +83,11 @@ def convert(s, m):
   bind, kind = m.group(1), m.group(2) or ''
   end = block_end(s, m.end())
   body = s[m.end():end]
-  hm = HEAD.search(body)
-  if not hm: return None
-  way = way_of(hm.group(1))
+  const = head_of(body, kind)
+  if not const: return None
+  way = way_of(const)
   if not way: return None
-  r = rewrite(body, bind, hm.group(1), way)
+  r = rewrite(body, bind, const, way)
   if r is None:
     return 'let %s = new_definition\n%s' % (bind, body)
   how, binding, args = r
@@ -83,7 +95,7 @@ def convert(s, m):
   # and the new way takes the clauses as a list
   if kind == '_wf':
     i = body.index('`', body.index('`') + 1) + 1
-    args, body = '%s\n ' % body[:i].strip(), body[i:]
+    args, body = '%s\n  ' % body[:i].strip(), body[i:]
   if kind != '_list':
     i, j = body.index('`'), body.rindex('`')
     body = body[:i] + '[' + body[i:j + 1] + ']' + body[j + 1:]
@@ -100,8 +112,8 @@ def main():
       r"^let ([A-Za-z0-9_]+) = cake_define(_list|_wf|_gen)?\n", re.M)
   pieces, at = [], 0
   for m in pat.finditer(s):
-    hm = HEAD.search(s[m.end():block_end(s, m.end())])
-    const = hm.group(1) if hm else None
+    const = head_of(s[m.end():block_end(s, m.end())],
+                    m.group(2) or '')
     way = way_of(const) if const else None
     out.append('%-34s %-22s %s'
                % (m.group(1), const, way if way else 'NO HARVEST'))

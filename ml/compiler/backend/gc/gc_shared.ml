@@ -57,14 +57,14 @@ let gc_state_FIELDS = define_record "gc_state"
    (* old heap *)
   ];;
 
-let empty_state_def = cake_define
+let empty_state_def = new_definition
   `empty_state =
      mk_gc_state [] [] [] [] [] [] [] 0 0 T [] []
    // ; r := 0`;;
 
 (* The heap is accessed using the following lookup function. *)
 
-let el_length_def = cake_define_list
+let el_length_def = define_cases
   [`el_length (Unused l) = l + 1`;
    `el_length (ForwardPointer n d l) = l + 1`;
    `el_length (DataElement xs l data) = l + 1`];;
@@ -77,7 +77,7 @@ let el_length_GT_0 = prove
  (`!el. 1 <= el_length el`,
   CHEAT_TAC);;
 
-let heap_length_def = cake_define
+let heap_length_def = new_definition
   `heap_length heap = SUM (MAP el_length heap)`;;
 
 (* [simp] *)
@@ -93,7 +93,7 @@ let heap_length_APPEND = prove
  (`heap_length (xs ++ ys) = heap_length xs + heap_length ys`,
   CHEAT_TAC);;
 
-let heap_lookup_def = cake_define_list
+let heap_lookup_def,heap_lookup_ind = define_rec
   [`heap_lookup a [] = NONE`;
    `heap_lookup a (x :: xs) =
          (if a = 0 then SOME x else
@@ -112,7 +112,7 @@ let heap_lookup_LESS = prove
  (`!xs n. (heap_lookup n xs = SOME x) ==> n < heap_length xs`,
   CHEAT_TAC);;
 
-let heap_split_def = cake_define_list
+let heap_split_def,heap_split_ind = define_rec
   [`heap_split a [] = (if a = 0 then SOME ([],[]) else NONE)`;
    `heap_split a (el :: heap) =
         (if a = 0 then SOME ([],el :: heap) else
@@ -127,12 +127,12 @@ let heap_lookup_SPLIT = prove
                  heap_length ha))`,
   CHEAT_TAC);;
 
-let heap_drop_def = cake_define
+let heap_drop_def = new_definition
   `heap_drop n (heap:(('a,'b)heap_element) list) =
      (match heap_split n heap with NONE -> ARB | SOME (h1,h2) ->
        h2)`;;
 
-let heap_take_def = cake_define
+let heap_take_def = new_definition
   `heap_take n (heap:(('a,'b)heap_element) list) =
      (match heap_split n heap with NONE -> ARB | SOME (h1,h2) ->
        h1)`;;
@@ -145,7 +145,7 @@ let heap_split_heap_length = prove
     (h1 ++ h2 = heap)`,
   CHEAT_TAC);;
 
-let heap_segment_def = cake_define
+let heap_segment_def = new_definition
   `heap_segment (a,b) heap =
      (match heap_split a heap with NONE -> NONE | SOME (h1,heap') ->
        (if b < a then NONE else
@@ -161,39 +161,39 @@ let heap_segment_IMP = prove
     (heap_length h3 = (heap_length heap - b))`,
   CHEAT_TAC);;
 
-let heap_restrict_def = cake_define
+let heap_restrict_def = new_definition
   `heap_restrict start' end (heap:(('a,'b)heap_element) list) =
       (match heap_segment (start',end) heap with NONE -> [] | SOME
         (h1,h2,h3) -> h2)`;;
 
 (* The heap is well-formed if heap_ok *)
 
-let isDataElement_def = cake_define
+let isDataElement_def = new_definition
   `isDataElement x = (?ys l d. x = DataElement ys l d)`;;
 
-let isSomeDataElement_def = cake_define
+let isSomeDataElement_def = new_definition
   `isSomeDataElement x = (?ys l d. x = SOME (DataElement ys l d))`;;
 
-let isSomeForwardPointer_def = cake_define
+let isSomeForwardPointer_def = new_definition
   `isSomeForwardPointer x = (?ptr d l. x = SOME (ForwardPointer ptr d
   l))`;;
 
-let isSomeDataOrForward_def = cake_define
+let isSomeDataOrForward_def = new_definition
   `isSomeDataOrForward x = (isSomeForwardPointer x \/
   isSomeDataElement x)`;;
 
-let roots_ok_def = cake_define
+let roots_ok_def = new_definition
   `roots_ok roots heap =
      (!ptr u. MEM (gc_shared_Pointer ptr u) roots ==>
        isSomeDataElement (heap_lookup ptr heap))`;;
 
-let isForwardPointer_def = cake_define
+let isForwardPointer_def = new_definition
   `isForwardPointer x1 =
         match x1 with
           ForwardPointer n d l -> T
         | _1 -> F`;;
 
-let heap_ok_def = cake_define
+let heap_ok_def = new_definition
   `heap_ok heap limit' = (
      (heap_length heap = limit') /\
      (
@@ -205,7 +205,7 @@ let heap_ok_def = cake_define
         (gc_shared_Pointer ptr u) xs ==>
                      isSomeDataElement (heap_lookup ptr heap)))`;;
 
-let gc_forward_ptr_def = cake_define_list
+let gc_forward_ptr_def,gc_forward_ptr_ind = define_rec
   [`// replace cell at a with a forwardpointer to ptr
     gc_forward_ptr a [] ptr d ok = ([],F)`;
    `gc_forward_ptr a (x :: xs) ptr d ok =
@@ -230,26 +230,38 @@ let gc_forward_ptr_thm = prove
 (* HOL4 gc_sharedScript.sml:309-327: code that the source has in a
    comment *)
 
-let heap_expand_def = cake_define
+let heap_expand_def = new_definition
   `heap_expand n = (if n = 0 then [] else [Unused (n - 1)])`;;
 
-let heap_map_def = cake_define
-  `heap_map a x2 =
+let _ = size_thms "heap_element";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let heap_map_def,heap_map_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
+  [`heap_map a x2 =
         match x2 with
           [] -> FEMPTY
         | (ForwardPointer ptr d l :: xs) ->
         heap_map (a + l + 1) xs |+ (a,ptr)
-        | (x :: xs) -> heap_map (a + el_length x) xs`;;
+        | (x :: xs) -> heap_map (a + el_length x) xs`];;
 
-let heap_map1_def = cake_define
+let heap_map1_def = new_definition
   `heap_map1 heap = (\a. FAPPLY (heap_map 0 heap) a)`;;
 
-let heap_addresses_def = cake_define_list
+let _ = size_thms "heap_element";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let heap_addresses_def,heap_addresses_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
   [`heap_addresses a [] = {}`;
    `heap_addresses a (x :: xs) = a INSERT heap_addresses (a +
   el_length x) xs`];;
 
-let ADDR_MAP_def = cake_define_list
+let _ = size_thms "heap_address";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let ADDR_MAP_def,ADDR_MAP_ind = define_wf
+  `MEASURE (\(x0,x1). list_size (heap_address_size (\x. 0)) x1)`
   [`ADDR_MAP f [] = []`;
    `ADDR_MAP f (gc_shared_Data x :: xs) = (gc_shared_Data x:'a
   heap_address) :: ADDR_MAP f xs`;
@@ -270,7 +282,7 @@ let ADDR_MAP_APPEND = prove
     ADDR_MAP f (h1 ++ h2) = ADDR_MAP f h1 ++ ADDR_MAP f h2`,
   CHEAT_TAC);;
 
-let ADDR_APPLY_def = cake_define_list
+let ADDR_APPLY_def = define_cases
   [`ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d`;
    `ADDR_APPLY f (gc_shared_Data y) = (gc_shared_Data y:'a
   heap_address)`];;
@@ -280,7 +292,7 @@ let ADDR_APPLY_def = cake_define_list
 
 (* HOL4 gc_sharedScript.sml:397: ML code, not ported *)
 
-let heaps_similar_def = cake_define
+let heaps_similar_def = new_definition
   `heaps_similar heap0 heap =
      EVERY2 (\h0 h. if isForwardPointer h then
                       (el_length h = el_length h0) /\
@@ -410,7 +422,7 @@ let heap_split_0 = prove
 
 (* --- *)
 
-let gc_related_def = cake_define
+let gc_related_def = new_definition
   `gc_related (f:(num,num)fmap) heap1 heap2 = (
      INJ (FAPPLY f) (FDOM f) {a | isSomeDataElement (heap_lookup a
        heap2)} /\
@@ -425,12 +437,12 @@ let gc_related_def = cake_define
 
 (* an edge in the heap *)
 
-let gc_edge_def = cake_define
+let gc_edge_def = new_definition
   `gc_edge heap x y <=>
      (?xs l d t. (heap_lookup x heap = SOME (DataElement xs l d)) /\
                 MEM (gc_shared_Pointer y t) xs)`;;
 
-let reachable_addresses_def = cake_define
+let reachable_addresses_def = new_definition
   `reachable_addresses roots heap y =
      (?t x. MEM (gc_shared_Pointer x t) roots /\ RTC (gc_edge
        heap) x y)`;;
@@ -451,13 +463,13 @@ let CARD_heap_addresses = prove
  (`!xs n. CARD (heap_addresses n xs) = LENGTH xs`,
   CHEAT_TAC);;
 
-let heap_filter_aux_def = cake_define_list
+let heap_filter_aux_def,heap_filter_aux_ind = define_rec
   [`heap_filter_aux n P [] = []`;
    `heap_filter_aux n P (x :: xs) =
          (if n IN P then [x] else []) ++ heap_filter_aux (n +
            el_length x) P xs`];;
 
-let heap_filter_def = cake_define
+let heap_filter_def = new_definition
   `heap_filter = heap_filter_aux 0`;;
 
 let heap_filter_EMPTY = prove

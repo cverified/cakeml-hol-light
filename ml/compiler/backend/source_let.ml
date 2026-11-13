@@ -25,7 +25,7 @@ let _ = hol4_ancestors "source_let"
 (* HOL4 source_letScript.sml:12: the overload string_size, which the
    port expands *)
 
-let dest_Let_def = cake_define
+let dest_Let_def = new_definition
   `dest_Let x1 =
       match x1 with
         (ast_Let opt x y:ast_exp) -> SOME (opt,x,y)
@@ -39,7 +39,7 @@ let dest_Let_NONE = prove
  (`dest_Let z = NONE <=> (!opt x y. ~(z = ast_Let opt x y))`,
   CHEAT_TAC);;
 
-let dest_Letrec_def = cake_define
+let dest_Letrec_def = new_definition
   `dest_Letrec x1 =
       match x1 with
         (ast_Letrec funs x:ast_exp) -> SOME (funs,x)
@@ -53,7 +53,7 @@ let dest_Letrec_NONE = prove
  (`dest_Letrec z = NONE <=> (!funs x. ~(z = ast_Letrec funs x))`,
   CHEAT_TAC);;
 
-let lift_let_def = cake_define
+let lift_let_def = new_definition
   `lift_let x1 =
         match x1 with
           Dlet l p x ->
@@ -65,20 +65,22 @@ let lift_let_def = cake_define
         | _3 -> NONE`;;
 
 let _ = size_thms "dec";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 source_letScript.sml:68-73: the tactic that proves the
    termination *)
-let lift_lets_def = cake_define_wf
+let lift_lets_def,lift_lets_ind = define_wf
   `MEASURE (dec_size o SND)`
-  `lift_lets sofar d =
+  [`lift_lets sofar d =
      (match lift_let d with NONE ->
          (match sofar with [] -> NONE | _4 -> SOME (REVERSE
-           sofar,d)) | SOME (d1,d2) -> lift_lets (d1 :: sofar) d2)`;;
+           sofar,d)) | SOME (d1,d2) -> lift_lets (d1 :: sofar) d2)`];;
 
 let _ = size_thms "dec";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let source_let_compile_decs_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size dec_size)`)
+let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
+  `MEASURE (list_size dec_size)`
   [`source_let_compile_decs [] = []`;
    `source_let_compile_decs (d :: ds) =
         (match lift_lets [] d with SOME (pre,d) -> Dlocal pre [d] ::
