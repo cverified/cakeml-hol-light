@@ -34,11 +34,12 @@
    let sz = size_thms "bvl_exp" in
    (* HOL4 does this induction on the structure of an expression
       (Induct), which is an induction over the two types of the
-      family at once; HOL Light's define keeps no such theorem, so
-      the induction is on the measure the definition was made with
-      -- here a mutual one, over the size of an expression and over
-      the size of a list of them -- and every use of the hypothesis
-      leaves a side condition *)
+      family at once.  This proof was written before the port had
+      an induction theorem and goes by the measure the definition
+      was made with instead -- here a mutual one, over the size of
+      an expression and over the size of a list of them -- so
+      every use of the hypothesis leaves a side condition.  The
+      port now binds compile_sing_ind as HOL4 does *)
    let compile_CONS = prove
     (`!n x xs. bvl_const_compile n (CONS x xs) =
                APPEND (bvl_const_compile n [x])

@@ -21,10 +21,10 @@ The work has three phases:
    handful of blocks that are out are in `PENDING.md`, each with
    the reason.
 
-2. _Phase two (current):_ **everything else of the sources
-   except the proofs** -- every `Theorem` (and `Triviality`, and
-   the theorems that HOL4 binds to the value of an ML
-   expression), with its statement and its name and its
+2. _Phase two (done, but for `PENDING.md`):_ **everything else
+   of the sources except the proofs** -- every `Theorem` (and
+   `Triviality`, and the theorems that HOL4 binds to the value
+   of an ML expression), with its statement and its name and its
    attributes, and every comment, in the order of the source.
    Every proof is `CHEAT_TAC`.
 
@@ -47,14 +47,17 @@ The work has three phases:
    source says, but they are not load bearing: phase three does
    not replay HOL4's automation.
 
-3. _Phase three (later):_ the proofs.  Every `CHEAT_TAC` of
+3. _Phase three (current):_ the proofs.  Every `CHEAT_TAC` of
    phases one and two is replaced by a real proof, until
    `length (axioms ())` is 3.  Then the port is done.
 
-   **Phase three does not start until phase two is finished.**
-   Not one theory ahead, not "the easy ones first": the
-   statements are all in and the port loads, and only then does
-   a proof get written.
+   **A statement is settled before its proof is written.**  That
+   was the point of doing phase two first, and it still is the
+   rule: a proof is written for a file whose statements are all
+   in, because a statement that changes afterwards throws its
+   proof away.  Phase two is in except for what `PENDING.md`
+   says, so a file whose statements are all in may be proved;
+   one that is still missing statements gets those first.
 
    **The proofs of phase three are written by hand.**  They are
    not a mechanical conversion of HOL4's tactics: the HOL4 proof

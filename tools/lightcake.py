@@ -160,15 +160,16 @@ KIT = ['SIMP', 'FS', 'GVS', 'RW', 'CASES_ON', 'TOP_CASE_TAC',
 KITRE = re.compile(r'\b(%s)\b' % '|'.join(map(re.escape, KIT)))
 
 
-def theorems(path):
+def theorems(path, upto=None):
   """name -> the text of its block, for a file of either port"""
   try: s = open(path).read()
   except OSError: return {}
+  if upto and upto in s: s = s[:s.index(upto)]
   out = {}
-  ms = list(re.finditer(r"^let ([A-Za-z0-9_']+) = prove", s, re.M))
-  for i, m in enumerate(ms):
-    e = ms[i + 1].start() if i + 1 < len(ms) else len(s)
-    out[m.group(1)] = s[m.start():e]
+  # a block ends at its own ;;, so the comments that stand
+  # between it and the next one are no part of it
+  for m in re.finditer(r"^let ([A-Za-z0-9_']+) = prove", s, re.M):
+    out[m.group(1)] = s[m.start():block_end(s, m.end())]
   return out
 
 
@@ -202,35 +203,89 @@ def report(argv):
   return 0
 
 
-def lc_bindings():
-  """every name that LightCake itself binds, by file: a name in a
-     proof that is not one of these is HOL Light's own and this
-     port has it too"""
-  out = {}
-  for root, _, fs in os.walk(LC + 'src'):
-    for f in fs:
-      if not f.endswith('.ml'): continue
-      p = os.path.join(root, f)
-      for m in re.finditer(r"^let ([A-Za-z0-9_']+)"
-                           r"(?:,([A-Za-z0-9_']+))?\s*=", open(p).read(),
-                           re.M):
-        for g in m.groups():
-          if g: out[g] = os.path.basename(p)[:-3]
+LET = re.compile(r"^let\s+(?:rec\s+)?([A-Za-z0-9_']+)"
+                 r"((?:\s*,\s*[A-Za-z0-9_']+)*)", re.M)
+
+
+def bindings(path, upto=None):
+  """what a file binds at the top level, in the order of the
+     file: the names of each binding and the text of its block.
+     A binding that takes arguments (a tactic of LightCake's is
+     usually one) binds its name and no other"""
+  try: s = open(path).read()
+  except OSError: return []
+  if upto and upto in s: s = s[:s.index(upto)]
+  out = []
+  for m in LET.finditer(s):
+    ns = [m.group(1)] + re.findall(r"[A-Za-z0-9_']+", m.group(2))
+    out.append((ns, s[m.start():block_end(s, m.end())]))
   return out
 
 
+def lc_bindings():
+  """every name that LightCake itself binds, by file, and the
+     ones its proof kit binds.  A name of the kit is a thing this
+     port does not have whatever it binds the word to -- its
+     size_def is the size function of sptree and the kit's is the
+     one that makes such a function -- so a kit name counts as
+     missing until tools/extra/ writes this port's own"""
+  out, kit = {}, set()
+  for root, _, fs in os.walk(LC + 'src'):
+    for f in fs:
+      if not f.endswith('.ml'): continue
+      for ns, _ in bindings(os.path.join(root, f)):
+        for n in ns:
+          out[n] = f[:-3]
+          if '/kit' in root: kit.add(n)
+  return out, kit
+
+
 def ours_bindings():
-  """every name a file of this port binds"""
-  out = {}
+  """every name a file of this port binds, and the ones that
+     tools/extra/ adds to a file of it: a bridge for a name of
+     LightCake's is written there, and a port writes it into the
+     file before anything of an import"""
+  out, bridge = {}, set()
+  for d in (ML, T + 'extra'):
+    for root, _, fs in os.walk(d):
+      for f in fs:
+        if not f.endswith('.ml'): continue
+        for ns, _ in bindings(os.path.join(root, f), CUT):
+          for n in ns:
+            out.setdefault(n, f[:-3])
+            if d != ML: bridge.add(n)
+  return out, bridge
+
+
+def ours_terms():
+  """every name this port writes inside a term: what it has, as
+     against what a theory it ports would have in HOL4 (of a
+     library theory it has only the part CakeML needs)"""
+  out = set()
   for root, _, fs in os.walk(ML):
     for f in fs:
       if not f.endswith('.ml'): continue
-      p = os.path.join(root, f)
-      for m in re.finditer(r"^let ([A-Za-z0-9_']+)"
-                           r"(?:,([A-Za-z0-9_']+))?\s*=", open(p).read(),
-                           re.M):
-        for g in m.groups():
-          if g: out.setdefault(g, f[:-3])
+      s = open(os.path.join(root, f)).read()
+      if CUT in s: s = s[:s.index(CUT)]
+      for q in re.findall(r"`[^`]*`", s):
+        out |= set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", q))
+  return out
+
+
+def lc_names(d):
+  """LightCake's name for every constant, constructor, field and
+     type of the closure, mapped to this port's name for it, or
+     to None where this port has no theory for it.  Both ports
+     name after HOL4, so the HOL4 name is what joins them:
+     LightCake's doc/names.tsv says what it calls each one, and
+     this port's own renaming says what this port calls it"""
+  out = {}
+  for l in open(LC + 'doc/names.tsv'):
+    fs = l.rstrip('\n').split('\t')
+    if len(fs) < 5 or fs[2] in ('kind', 'theorem'): continue
+    thy, h4, lc = fs[1], fs[3], fs[4]
+    out[lc] = d.rename.get((thy, h4), h4) \
+              if thy in d.thy_of_file else None
   return out
 
 
@@ -241,7 +296,7 @@ def deps(argv):
   nm = argv[0]
   p = theirs_of(nm)
   if not p: print('LightCake has no %s.ml' % nm); return 1
-  lb, ob = lc_bindings(), ours_bindings()
+  (lb, _), (ob, _) = lc_bindings(), ours_bindings()
   thms = theorems(p)
   byfile = collections.Counter()
   here = ours = free = 0
@@ -261,11 +316,18 @@ def deps(argv):
   return 0
 
 
+MARK = 'The theorems of %sTheory that LightCake proves'
+# what a file of this port has of its own ends where the block
+# that an import appended to it starts: an import reads the port
+# as the port is written, not as an import before it left it
+CUT = 'Theory that LightCake proves'
+
+
 def file_head(nm, src):
   """the comment that says where the file comes from, in a box
      that the port's own files keep to"""
   body = [
-    'The theorems of %sTheory that LightCake proves and this' % nm,
+    (MARK % nm) + ' and this',
     'port needs, taken from its %s.' % src,
     '',
     'LightCake is the other HOL Light port of CakeML',
@@ -325,6 +387,103 @@ def rename(text, m):
   return text
 
 
+def subber(m, skip):
+  """one pass that renames every name of a map at once"""
+  ks = [k for k in m if k != m[k] and k not in skip]
+  if not ks: return lambda s: s
+  rx = re.compile(r"(?<![A-Za-z0-9_'])(" +
+                  '|'.join(sorted(map(re.escape, ks),
+                                  key=len, reverse=True)) +
+                  r")(?![A-Za-z0-9_'])")
+  return lambda s: rx.sub(lambda mo: m[mo.group(1)], s)
+
+
+def rename_terms(text, m, skip):
+  """the same, but only inside a quotation and never for a name
+     the block binds as a variable.  A name of the closure can be
+     a word of HOL Light or of OCaml as well -- LightCake's term
+     is this port's pattern_semantics_term, and a tactic of
+     LightCake's writes (t:term) for a term of HOL Light -- so a
+     map read off the names of the whole closure is only safe
+     where a name is the name of a thing"""
+  f = subber(m, skip)
+  return re.sub(r"`[^`]*`", lambda mo: f(mo.group(0)), text)
+
+
+def port_db():
+  """this port's own reading of the HOL4 sources, which says what
+     name it gives each thing and in what order its files load"""
+  sys.path.insert(0, T)
+  import db
+  return db.Db()
+
+
+def port_names(thy, d):
+  """every name of this port that is in the scope of its file of
+     <thy>, with the theory it comes from: a name LightCake
+     writes for a variable and this port for a constant or a type
+     cannot stand in an imported statement -- where it is a
+     constant it would not parse, and where it is a type it would
+     make this file need the theory that has it.  Only a theory
+     that loads before this one counts, which is the rule the
+     needs of a file are computed by"""
+  rank = dict((t, i) for i, (t, _, _) in enumerate(d.order))
+  out = {}
+  for nm, ts in d.defs.items():
+    for t, _ in ts:
+      if t in d.thy_of_file and d.rename.get((t, nm), nm) == nm \
+         and rank.get(t, 0) < rank.get(thy, 0):
+        out.setdefault(nm, t)
+  return out
+
+
+WORD = r"(?<![A-Za-z0-9_'])%s(?![A-Za-z0-9_'])"
+VAR = re.compile(r"[A-Za-z_][A-Za-z0-9_']*")
+
+
+def bound_names(text):
+  """the names a block binds as a variable: the ones a !, a ?, a
+     lambda or a @ has in front of its dot.  A name that is not
+     one of these is a constant, whoever defines it"""
+  out, i, n = set(), 0, len(text)
+  while i < n:
+    if text[i] not in '!?\\@': i += 1; continue
+    j, names = i + 1, []
+    while j < n:
+      if text[j] in ' \t\n(),': j += 1; continue
+      if text[j] == ':':
+        # the type of the variable, which is no name of a variable
+        d = 0
+        j += 1
+        while j < n:
+          if text[j] == '(': d += 1
+          elif text[j] == ')':
+            if not d: break
+            d -= 1
+          elif text[j] == '.' and not d: break
+          j += 1
+        continue
+      m = VAR.match(text, j)
+      if not m: break
+      names.append(m.group()); j = m.end()
+    if j < n and text[j] == '.': out |= set(names)
+    i = max(j, i + 1)
+  return out
+
+
+def unclash(text, thy, known, port):
+  """the variables of a block that this port uses for a name of
+     its own, primed until they are nobody's"""
+  done = []
+  for w in sorted(bound_names(text)):
+    if w in known or w not in port or port[w] == thy: continue
+    v = w + "'"
+    while re.search(WORD % re.escape(v), text): v += "'"
+    text = re.sub(WORD % re.escape(w), v, text)
+    done.append((w, v, port[w]))
+  return text, done
+
+
 def emit(argv):
   """tools/lightcake/<theory>.ml, which the port appends to its
      own file of that theory"""
@@ -333,36 +492,80 @@ def emit(argv):
   a, b = ours_of(nm), theirs_of(nm)
   if not a or not b:
     print('no pair of files for %s' % nm); return 1
+  d = port_db()
   m, _, _ = rename_map(nm)
-  lb, ob = lc_bindings(), ours_bindings()
-  theirs, ours = theorems(b), theorems(a)
+  # LightCake's name for a thing of the closure, under this
+  # port's name for it; the pair of files of this theory says it
+  # more precisely than the HOL4 names do, so that map wins
+  gm = dict((k, v) for k, v in lc_names(d).items() if v)
+  gm.update(m)
+  lcn, ot = lc_names(d), ours_terms()
+  (lb, kit), (ob, bridge) = lc_bindings(), ours_bindings()
+  # what this port has of its own, which is its file without the
+  # block that an import before this one appended to it
+  ours = theorems(a, MARK % nm)
+  defs = set(definitions(b))
   take, left = [], []
-  for n, body in theirs.items():
-    if n in ours: continue
-    # every name of LightCake's that the block uses has to be one
-    # this port has, one the block before it brings, or a
-    # constant that is renamed
-    need = [w for w in sorted(set(re.findall(
-              r"[A-Za-z_][A-Za-z0-9_']*", body)))
-            if w in lb and w not in ob and w not in m
-            and w not in theirs and w != n]
-    if need: left.append((n, need))
-    else: take.append((n, body))
+  # what a check of an import before this one found does not go
+  # through here (tools/bin/lightcake-check writes it)
+  bad = {}
+  try:
+    for l in open(T + 'lightcake/' + nm + '.bad'):
+      k, _, v = l.rstrip('\n').partition('\t')
+      bad[k] = v
+  except OSError: pass
+  # a name of LightCake's is there to be used once this port has
+  # the thing it names: the block before it in the file, a
+  # binding of this port, or a constant this port writes
+  have = (set(ob) - (kit - bridge)) | set(defs)
+  for ns, body in bindings(b):
+    if [n for n in ns if n in defs or n in ours]:
+      have |= set(ns); continue
+    if ns[0] in bad:
+      left.append((ns[0], ['--', bad[ns[0]]])); continue
+    need = []
+    bnd = bound_names(body)
+    for w in sorted(set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", body))):
+      if w in ns or w in bnd: continue
+      if w in lb and w not in have: need.append(w)
+      elif w in lcn and gm.get(w, lcn[w]) not in ot: need.append(w)
+    if need: left.append((ns[0], need)); continue
+    take.append((ns[0], body)); have |= set(ns)
   out = [file_head(nm, os.path.relpath(b, LC + 'src')[:-3])]
+  known, port = set(gm.values()) | set(lb), port_names(nm, d)
+  # the map of the whole closure, less what the pair of files of
+  # this theory already says
+  rest = dict((k, v) for k, v in gm.items() if k not in m)
+  clash = {}
   for n, body in take:
-    out.append(wrap72(rename(body.rstrip(), m)))
+    t = rename_terms(rename(body.rstrip(), m), rest,
+                     bound_names(body))
+    t, done = unclash(t, nm, known, port)
+    for w, v, t2 in done: clash[w] = (v, t2)
+    out.append(wrap72(t))
   if left:
-    out.append("(* What this port cannot take from LightCake's "
-               "%s yet, with the names of its own that "
-               "each proof uses:" % nm)
-    out.append('\n'.join('     %-32s %s' % (n, ' '.join(need[:6]))
-                          for n, need in left))
+    out.append("(* What this port cannot take from LightCake's %s\n"
+               "   yet, with the names of its own that each proof\n"
+               "   uses:" % nm)
+    rows = []
+    for n, need in left:
+      line = '     %-32s' % n
+      col = min(len(line), 38)
+      for w in need:
+        if len(line) + 1 + len(w) > 72 and line.strip():
+          rows.append(line.rstrip()); line = ' ' * col
+        line += ' ' + w
+      rows.append(line.rstrip())
+    out.append('\n'.join(rows))
     out.append('*)')
-  d = T + 'lightcake'
-  if not os.path.isdir(d): os.mkdir(d)
-  open(d + '/' + nm + '.ml', 'w').write('\n\n'.join(out) + '\n')
-  print('%s: %d theorems taken, %d left (tools/lightcake/%s.ml)'
+  dd = T + 'lightcake'
+  if not os.path.isdir(dd): os.mkdir(dd)
+  open(dd + '/' + nm + '.ml', 'w').write('\n\n'.join(out) + '\n')
+  print('%s: %d blocks taken, %d left (tools/lightcake/%s.ml)'
         % (nm, len(take), len(left), nm))
+  for w in sorted(clash):
+    print('   the variable %s is primed: %s has it'
+          % (w, clash[w][1]))
   return 0
 
 

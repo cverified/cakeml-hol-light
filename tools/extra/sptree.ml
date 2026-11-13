@@ -273,3 +273,12 @@ let lookup_union = prove
     ASM_CASES_TAC `k = 0` THEN ASM_CASES_TAC `EVEN k` THEN
     ASM_REWRITE_TAC[lookup_def; optcase_cond;
                     distinctness "option"]]);;
+
+(* LightCake's proofs of this theory split on the constructors of a
+   term with a tactic of their own, which in HOL Light is the cases
+   theorem of the term's type.  tools/lightcake.py takes a proof
+   that uses a name of LightCake's only where this port has the
+   name, so this is what lets those proofs in *)
+
+let SPTAUX_CASES_TAC (t:term) : tactic =
+  STRUCT_CASES_TAC (ISPEC t (cases_of (type_of t)));;

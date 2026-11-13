@@ -8,7 +8,9 @@
 # With a file (a path as tools/load.txt writes it) it stops in
 # front of that one and does not load it, which is how to develop
 # a proof of it: the port it stands on is there in a few minutes,
-# and the file itself is then loaded for real.
+# and the file itself is then loaded for real.  The ways of making
+# a definition and prove get their own names back there
+# (ml/lib/real.ml), so what is loaded after that is proved.
 #
 # NOTHING IS PROVED in such a session, and length (axioms ()) says
 # nothing about the port while it is on.  It is for developing the
@@ -31,6 +33,10 @@ for f in $(cat $C/tools/load.txt); do
   TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$C/ml/$f\";;" \
     2>&1 | grep -E "Exception|Error in" | sed "s|^|$f: |"
 done
+# in front of a file the session goes back to proving, so that
+# the file can be loaded for real
+[ -n "$upto" ] && repl-step $s "loadt \"$C/ml/lib/real.ml\";;" \
+  > /dev/null 2>&1
 repl-step $s "print_string (\"ABSTRACT \" ^
   string_of_int (length (cake_defs ())) ^ \" definitions\n\");;" \
   2>&1 | tail -2

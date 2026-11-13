@@ -4,6 +4,8 @@ comparison	Overload list_cmp
 comparison	Overload pair_cmp
 sptree	Overload isEmpty
 sptree	Overload add_pause
+sptree	line 1643 is 132 characters
+sptree	line 1698 is 127 characters
 ASCIInumbers	Overload toNum
 binary_ieee	Overload tc
 binary_ieee	Overload fsign
@@ -81,6 +83,7 @@ data_live	line 165 is 73 characters
 data_space	line 142 is 73 characters
 bvi_to_data	line 335 is 77 characters
 bvi_to_data	line 359 is 73 characters
+bvi_inline	a MEASURE override that a run does not bear out: remove_ticks_exp_def
 bvi_inline	line 10 is 73 characters
 bvi_inline	line 53 is 73 characters
 bvi_let	line 126 is 78 characters
@@ -121,7 +124,7 @@ bvl	Overload mk_elem_at
 bvl_const	ML code skipped: val tm = (SmartOp2_quotation |>    map (fn QUOTE s => Portab
 bvl_const	Theorem SmartOp2_pmatch: the ML value ^tm, which the port does not have
 bvl_const	ML code skipped: end
-bvl_const	line 578 is 73 characters
+bvl_const	line 579 is 73 characters
 bvl_handle	ML code skipped: val compile_ind = theorem"compile_ind";
 bvl_handle	line 373 is 73 characters
 bvl_to_bvi	ML code skipped: val large_int = ``268435457:int``; (* 2**28-1 *)
@@ -1456,9 +1459,9 @@ data_to_word_memoryProof	line 41359 is 75 characters
 data_to_word_memoryProof	line 41360 is 78 characters
 data_to_word_memoryProof	line 41422 is 79 characters
 data_to_word_memoryProof	line 41423 is 79 characters
-data_to_word_memoryProof	line 47548 is 73 characters
-data_to_word_memoryProof	line 60845 is 79 characters
-data_to_word_memoryProof	line 65802 is 73 characters
+data_to_word_memoryProof	line 47549 is 73 characters
+data_to_word_memoryProof	line 60846 is 79 characters
+data_to_word_memoryProof	line 65803 is 73 characters
 word_bignumProof	ML code skipped: val good_dimindex_def = miscTheory.good_dimindex_def; val en
 word_bignumProof	ML code skipped: val shift_def = backend_commonTheory.word_shift_def
 word_bignumProof	ML code skipped: val raw_eval_cases = eval_cases;

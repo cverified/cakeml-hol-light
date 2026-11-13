@@ -1,0 +1,24 @@
+#!/bin/sh
+# tryfile <file> [session] : why a file of the port fails in a
+# run, without waiting for a run.  The port the file stands on is
+# loaded as an abstract (every definition assumed, every proof
+# skipped: about five minutes), the session goes back to proving,
+# and the file itself is loaded for real, with a marker before
+# every phrase so that the report says which one fails.
+#
+# What the file stands on is assumed, so this says nothing about
+# whether the port is true -- only whether the file goes through,
+# which is what a run reports.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+. $C/tools/holenv.sh > /dev/null 2>&1
+f=$1
+s=${2:-try}
+[ -z "$f" ] && { echo "tryfile <file> [session]"; exit 1; }
+[ -f "$C/ml/$f" ] || { echo "no such file: ml/$f"; exit 1; }
+abstract $s "$f" | tail -1
+nph=$(python3 -I $C/tools/locate.py "$C/ml/$f" $C/tmp/locate.ml)
+: > $C/tmp/mark.txt
+TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$C/tmp/locate.ml\";;" \
+  2>&1 | grep -E "Exception|Error" | head -3
+echo "$f: $(tail -1 $C/tmp/mark.txt 2>/dev/null) of $nph phrases"

@@ -46103,8 +46103,9 @@ let _ = size_thms "dataSem_v";;
    (ml/lib/define.ml, "the depairing above was applied to the
    clause as it was given"). *)
 let vb_eq_size_def,vb_eq_size_ind = define_mutual_wf
-  `MEASURE (\x. match x with INL (refs,v1,v2) -> dataSem_v_size v1 |
-  INR (refs,l1,l2) -> list_size dataSem_v_size l1)`
+  `MEASURE (\x.      match x with        INL (refs,v1,v2) ->
+  dataSem_v_size v1      | INR (refs,l1,l2) -> list_size dataSem_v_size
+  l1)`
   [`vb_eq_size refs x2 x3 =
          match (x2,x3) with
            ((Block _91 t1 l1:dataSem_v),(Block _92 t2 l2:dataSem_v))

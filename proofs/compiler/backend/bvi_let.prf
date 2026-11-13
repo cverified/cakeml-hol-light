@@ -12,11 +12,12 @@
    let sz = size_thms "bvi_exp" in
    (* HOL4 does this induction with ho_match_mp_tac compile_sing_ind,
       the induction theorem that its termination proof left behind.
-      HOL Light's define keeps no such theorem, so the induction is
-      on the measure the definition was made with -- here a mutual
-      one, over the size of an expression and over the size of a
-      list of them -- and every use of the hypothesis leaves a side
-      condition. *)
+      This proof was written before the port had one and goes by
+      the measure the definition was made with instead -- here a
+      mutual one, over the size of an expression and over the size
+      of a list of them -- so every use of the hypothesis leaves a
+      side condition.  The port now binds compile_sing_ind as HOL4
+      does, so this could be the one line HOL4 writes. *)
    let compile_CONS = prove
     (`!n d x xs. bvi_let_compile n d (CONS x xs) =
                  APPEND (bvi_let_compile n d [x])

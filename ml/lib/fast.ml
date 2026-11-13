@@ -49,6 +49,46 @@ let fast_induction th =
 let fast_pair cls =
   let th = fast_clauses cls in th,fast_induction th;;
 
+(* what the ways are before this file takes their names: an
+   abstract is turned back into a session that proves by
+   loading ml/lib/real.ml, which gives them back.  The
+   template has the hand written files of ml/lib in it, so
+   they are all here already *)
+
+let real_new_definition = new_definition;;
+let real_define_cases = define_cases;;
+let real_define_general = define_general;;
+let real_define_general_cheat = define_general_cheat;;
+let real_define_shaped = define_shaped;;
+let real_assume_definition = assume_definition;;
+let real_define_rec = define_rec;;
+let real_define_wf = define_wf;;
+let real_define_wf_cheat = define_wf_cheat;;
+let real_define_wf_tac = define_wf_tac;;
+let real_define_guess = define_guess;;
+let real_define_guess_cheat = define_guess_cheat;;
+let real_define_shaped_rec = define_shaped_rec;;
+let real_define_shaped_rec_cheat = define_shaped_rec_cheat;;
+let real_define_shaped_rec_tac = define_shaped_rec_tac;;
+let real_define_shaped_wf = define_shaped_wf;;
+let real_define_shaped_wf_cheat = define_shaped_wf_cheat;;
+let real_define_shaped_wf_tac = define_shaped_wf_tac;;
+let real_define_mutual_rec = define_mutual_rec;;
+let real_define_mutual_guess = define_mutual_guess;;
+let real_define_mutual_guess_cheat = define_mutual_guess_cheat;;
+let real_define_mutual_wf = define_mutual_wf;;
+let real_define_mutual_wf_cheat = define_mutual_wf_cheat;;
+let real_define_mutual_wf_tac = define_mutual_wf_tac;;
+let real_define_mutual_shaped_rec = define_mutual_shaped_rec;;
+let real_define_mutual_shaped_rec_tac = define_mutual_shaped_rec_tac;;
+let real_define_mutual_shaped_rec_cheat =
+  define_mutual_shaped_rec_cheat;;
+let real_define_mutual_shaped_wf = define_mutual_shaped_wf;;
+let real_define_mutual_shaped_wf_tac = define_mutual_shaped_wf_tac;;
+let real_define_mutual_shaped_wf_cheat = define_mutual_shaped_wf_cheat;;
+let real_assume_definition_rec = assume_definition_rec;;
+let real_prove = prove;;
+
 (* the ways of making a definition, and the proofs: the
    ones that give a pair give the induction theorem too *)
 

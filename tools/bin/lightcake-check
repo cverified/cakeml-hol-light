@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""lightcake-check <theory> [session] : load the blocks that
+tools/lightcake.py took from LightCake one at a time, and write
+the ones that do not go through into
+tools/lightcake/<theory>.bad, which the next import leaves out.
+
+A block that fails stops a file, so a file of the import is only
+worth having when every block of it has been tried on its own.
+The session keeps the port up to the file, so the check is one
+load of the closure and then one step per block."""
+import os, re, subprocess, sys
+
+T = os.path.dirname(os.path.abspath(__file__)) + '/../'
+sys.path.insert(0, T)
+import lightcake as L
+
+BAR = '(* ' + '=' * 64 + ' *)'
+
+
+ANSI = re.compile(r'\x1b\[[0-9;]*m')
+
+
+def step(s, cmd, timeout='120'):
+  """what a step prints, without the colours that HOL Light puts
+     round a word like Error (they stand in front of it, so a
+     match that wants the start of a line never sees it)"""
+  e = dict(os.environ, TIMEOUT=timeout)
+  r = subprocess.run([T + '../../bin/repl-step', s, cmd],
+                     capture_output=True, text=True, env=e)
+  return ANSI.sub('', r.stdout + r.stderr)
+
+
+def main(argv):
+  if not argv: print(__doc__); return 1
+  nm = argv[0]
+  s = argv[1] if len(argv) > 1 else 'lcc'
+  src = T + 'lightcake/' + nm + '.ml'
+  ours = L.ours_of(nm)
+  if not os.path.exists(src) or not ours:
+    print('no import of %s' % nm); return 1
+  # the port's own file, without the block this import appended
+  text = open(ours).read()
+  mark = L.MARK % nm
+  if mark in text:
+    text = text[:text.rindex(BAR, 0, text.index(mark))]
+  base = T + '../tmp/lcbase_%s.ml' % nm
+  open(base, 'w').write(text)
+  blk = T + '../tmp/lcblk.ml'
+
+  subprocess.run([T + '../../bin/repl-kill', s],
+                 capture_output=True)
+  r = subprocess.run([T + '../../bin/repl-clone',
+                      'hol-template-cakeml', s], capture_output=True)
+  out = step(s, 'loadt "%s";;' % os.path.abspath(base), '1800')
+  if 'Error' in out or 'Exception' in out:
+    print('the port of %s does not load:' % nm)
+    print(out[-800:]); return 1
+
+  bad, gone = [], 0
+  blocks = [(ns, b) for ns, b in L.bindings(src)]
+  for i, (ns, body) in enumerate(blocks):
+    # the block, and a word that only a block that went through
+    # prints.  A step whose own text starts with a # (a #use
+    # does) ends the output of the step before it, so the
+    # answers of the steps come apart: loadt is the way to read
+    # a file here
+    open(blk, 'w').write(body + '\nprint_string "LCAKEOK";;\n')
+    out = step(s, 'loadt "%s";;' % os.path.abspath(blk))
+    if 'LCAKEOK' not in out:
+      why = ' '.join(next(
+        (l for l in out.split('\n')
+         if l.startswith('Error') or l.startswith('Exception')),
+        'no answer').split())[:120]
+      bad.append((ns[0], why))
+      print('%4d/%d  %-34s %s' % (i + 1, len(blocks), ns[0], why))
+      # a session that has died answers nothing, and every block
+      # after it would be written down as one that fails
+      if why == 'no answer':
+        gone += 1
+        if gone >= 5:
+          print('the session answers nothing: it is gone')
+          return 1
+      else: gone = 0
+      # the block is not there, so the ones after it that use it
+      # have to be tried without it
+      step(s, '();;')
+  f = T + 'lightcake/' + nm + '.bad'
+  if bad:
+    open(f, 'w').write(''.join('%s\t%s\n' % b for b in bad))
+  elif os.path.exists(f):
+    os.remove(f)
+  print('%s: %d of %d blocks do not go through'
+        % (nm, len(bad), len(blocks)))
+  return 0
+
+
+sys.exit(main(sys.argv[1:]))

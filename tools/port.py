@@ -4160,7 +4160,10 @@ def check_no_run():
      needs of a later file reloads is an error of its own)"""
   out = subprocess.run(['ps', '-eo', 'args'],
                        capture_output=True, text=True).stdout
-  if re.search(r'^[^\n]*[c]heckseq', out, re.M):
+  # the shell that runs checkseq, and not a command line that
+  # merely has the word in it (the one that starts this is often
+  # the one that starts a run after it)
+  if re.search(r'^\S*sh\s+\S*[c]heckseq(\s|$)', out, re.M):
     raise SystemExit('a run is going: ml/ must not change under it')
 
 

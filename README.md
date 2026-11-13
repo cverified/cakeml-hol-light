@@ -151,7 +151,13 @@ seconds against 13.
 `tools/bin/abstract <session> <file>` stops in front of a file
 and does not load it, which is how a proof of that file is
 developed: what it stands on is there in a few minutes, and the
-file itself is then loaded for real.
+file itself is then loaded for real.  In front of the file the
+session gets the real ways and the real `prove` back
+(`ml/lib/real.ml`), so what is loaded after that is proved.
+
+`tools/bin/tryfile <file>` is that as one command, with a marker
+before every phrase: it says which phrase of the file fails and
+why, in about five minutes instead of the hour a run takes.
 
 Nothing is proved in such a session and `length (axioms ())` says
 nothing while it is on.  What makes it safe to develop against is
@@ -197,6 +203,44 @@ credential is, and `tools/bin/lightcake-pull` asks it for a pull
 and says what came of it.  The whole of what can be asked for is
 that one pull of that one repository, so nothing of the
 credential is delegated.
+
+## Taking a proof from LightCake
+
+LightCake's HOL4 library layer is proved, and of those theories
+this port has only the definitions that CakeML needs.  What it
+proves of them can be taken:
+
+    python3 -I tools/lightcake.py import sptree
+    tools/bin/lightcake-check sptree
+
+The first writes `tools/lightcake/sptree.ml`, which a re-port
+appends to `ml/lib/sptree.ml` as it appends `tools/extra/`.  The
+statements and the proofs are LightCake's, with its constants
+under the names this port gives them: both ports name after
+HOL4, so the HOL4 name is what joins them (its `doc/names.tsv`
+and this port's own renaming).  A name of the closure can be a
+word of HOL Light as well, so that map is only used inside a
+quotation and never for a name the block binds.
+
+A block is taken only when every name it uses is one this port
+has.  A name of LightCake's **proof kit** never counts as one:
+its `size_def` makes a size function and this port's is the size
+function of sptree, so the word says nothing.  That is also what
+keeps HOL4-style tactics out -- they are all kit names.  Where
+HOL Light has something suitable, a line of `tools/extra/` says
+so and lets those proofs in: `SPTAUX_CASES_TAC` is LightCake's
+case split, and HOL Light's is `STRUCT_CASES_TAC` with
+`cases_of`.
+
+`lightcake-check` loads the blocks one at a time and writes the
+ones that do not go through into `tools/lightcake/<theory>.bad`,
+which the next import leaves out, with the reason.  A block that
+fails stops a file, so an import is only worth having when every
+block of it has been tried on its own.
+
+`tools/lightcake.py` also has `names`, `report` and `deps`,
+which say what the two ports share, how many of this port's
+cheats LightCake proves, and what a theory of it would need.
 
 The rules a proof has to keep are in `CLAUDE.md`, and the ones that
 bite are these: the statement of a theorem is not adjusted to suit
