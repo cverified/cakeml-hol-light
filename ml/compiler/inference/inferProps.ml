@@ -1070,13 +1070,10 @@ let set_tids_subset_type_subst = prove
   CHEAT_TAC);;
 
 let _ = size_thms "t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2547-2553: the tactic that proves the
    termination *)
-let unconvert_t_def,unconvert_t_ind = define_shaped_wf
+let unconvert_t_def,unconvert_t_ind = define_shaped_rec
   "nested"
-  `MEASURE t_size`
   [`unconvert_t (Tvar_db n) = Infer_Tvar_db n`;
    `unconvert_t (Tapp ts tc) = Infer_Tapp (MAP unconvert_t ts) tc`;
    `unconvert_t (Tvar v) = Infer_Tuvar ARB`];;

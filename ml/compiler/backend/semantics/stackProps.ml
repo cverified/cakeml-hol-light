@@ -953,7 +953,7 @@ let reg_bound_def,reg_bound_ind = define_wf
         | _66 -> T`];;
 
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
-let call_args_def,call_args_ind = define_rec
+let call_args_def,call_args_ind = define_guess
   [`call_args x1 ptr len ptr2 len2 ret =
         match x1 with
           ((Seq p1 p2):'a stackLang_prog) ->

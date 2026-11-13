@@ -105,11 +105,7 @@ let mk_conses_def,mk_conses_ind = define_rec
   mk_conses t pss`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let expand_def = define_mutual_wf
-  `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
-  INR ps -> list_size pattern_semantics_pat_size ps)`
+let expand_def = define_mutual_rec
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (Lit l:pattern_semantics_pat) = [(Lit
@@ -240,11 +236,7 @@ let default_mat_def,default_mat_ind = define_rec
  * -------------------------------------------------------------------- *)
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let pat_weight_def = define_mutual_wf
-  `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
-  INR ps -> list_size pattern_semantics_pat_size ps)`
+let pat_weight_def = define_mutual_rec
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
    `pat_weight (Lit l:pattern_semantics_pat) = ((0):num)`;

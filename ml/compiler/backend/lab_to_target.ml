@@ -395,7 +395,7 @@ let line_bytes_def = define_cases
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let prog_to_bytes_def,prog_to_bytes_ind = define_rec
+let prog_to_bytes_def,prog_to_bytes_ind = define_guess_cheat
   [`prog_to_bytes [] = []`;
    `prog_to_bytes (Section k [] :: xs) = prog_to_bytes xs`;
    `prog_to_bytes (Section k (y :: ys) :: xs) =
@@ -436,7 +436,7 @@ let list_add_if_fresh_def,list_add_if_fresh_ind = define_rec
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let find_ffi_names_def,find_ffi_names_ind = define_rec
+let find_ffi_names_def,find_ffi_names_ind = define_guess_cheat
   [`find_ffi_names [] = []`;
    `find_ffi_names (Section k [] :: rest) =
          find_ffi_names rest`;

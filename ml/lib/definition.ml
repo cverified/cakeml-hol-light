@@ -31,14 +31,6 @@
 (* axiom; ml/CHEATS.md lists them and length (axioms ()) counts them. *)
 (* ================================================================== *)
 
-(* the rewritings of the clauses that ml/lib/define.ml has, under
-   names that say they are rewritings of clauses and not ways of
-   writing a definition down (the names below take theirs) *)
-
-let compiled_cases = define_cases;;
-
-let match_clauses = define_match;;
-
 (* the clauses are written as separate terms because HOL4
    typechecks each of them on its own *)
 
@@ -99,8 +91,8 @@ let shaped_made shape wfs tm =
               | "maplist" -> define_maplist inner tm
               | "cond_bool" -> define_cond_bool inner tm
               | "sing" -> define_sing inner tm
-              | "cases" -> compiled_cases tm
-              | "match" -> match_clauses tm
+              | "cases" -> define_compiled_cases tm
+              | "match" -> define_match_clauses tm
               | "lift_if" -> define_lift_if inner tm
               | _ -> failwith ("define_shaped: no shape " ^ shape)));;
 
@@ -145,6 +137,16 @@ let induction_for rel tac th =
      | Cake_timeout ->
          (fin (); assumed_induction (concl th) "induction: timeout");;
 
+(* the measure of a definition that states none is computed from
+   its clauses, and that can fail where the clauses are of a shape
+   candidate_measures does not read.  It is the induction theorem
+   that wants it and not the definition, so a failure there costs
+   the theorem and not the file. *)
+
+let induction_by_measure tac th tm =
+  try induction_for (structural_measure tm) tac th
+  with Failure e -> assumed_induction (concl th) ("measure: " ^ e);;
+
 (* ------------------------------------------------------------------ *)
 (* The ways.                                                          *)
 (* ------------------------------------------------------------------ *)
@@ -185,7 +187,7 @@ let define_general_cheat cls =
 let define_rec cls =
   let tm = definition_of_clauses cls in
   let th = noted (fst (define_prim_rec tm)) in
-  th,induction_for (structural_measure tm) TERM_TAC th;;
+  th,induction_by_measure TERM_TAC th tm;;
 
 (* recursion with the relation written out *)
 
@@ -206,7 +208,7 @@ let define_wf_cheat rel cls =
 let define_guess cls =
   let tm = definition_of_clauses cls in
   let th = definition_made [] tm in
-  th,induction_for (structural_measure tm) TERM_TAC th;;
+  th,induction_by_measure TERM_TAC th tm;;
 
 let define_guess_cheat cls =
   let tm = definition_of_clauses cls in
@@ -233,7 +235,7 @@ let define_shaped_wf_cheat shape rel cls =
 let define_shaped_rec_tac shape tac cls =
   let tm = definition_of_clauses cls in
   let th = shaped_made shape [] tm in
-  th,induction_for (structural_measure tm) tac th;;
+  th,induction_by_measure tac th tm;;
 
 let define_shaped_rec shape cls =
   define_shaped_rec_tac shape TERM_TAC cls;;
@@ -245,10 +247,11 @@ let define_shaped_rec_cheat shape cls =
        "the termination of the definition is assumed";;
 
 let define_shaped shape cls =
+  let tm = definition_of_clauses cls in
   noted (fst (match shape with
-                "nested" -> define_nested (definition_of_clauses cls)
-              | "cases" -> compiled_cases (definition_of_clauses cls)
-              | "match" -> match_clauses (definition_of_clauses cls)
+                "nested" -> define_nested tm
+              | "cases" -> define_compiled_cases tm
+              | "match" -> define_match_clauses tm
               | _ -> failwith
                        ("define_shaped: no shape " ^ shape)));;
 
@@ -320,4 +323,8 @@ let find_definition_way cls =
   ignore th;
   (if !the_strategy = "" then "assume_definition" else !the_strategy),
   !the_term_cheat,
-  !the_relation;;
+  (* in the form a file writes it: a redex left in the measure is
+     reduced by the proof and not by the term a goal is built
+     from, so it is reduced here *)
+  (try string_of_term (beta_normalize (parse_term (!the_relation)))
+   with Failure _ | Noparse -> !the_relation);;

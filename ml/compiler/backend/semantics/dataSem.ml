@@ -186,14 +186,9 @@ let bignum_size_def = new_definition
      1 + bignum_digits arch64 (num_of_int (abs i))`;;
 
 let _ = size_thms "dataSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 dataSemScript.sml:138-145: the tactic that proves the
    termination *)
-let size_of_def,size_of_ind = define_wf
-  `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
-                             (\(lims,vs,refs,seen). (sptree_size
-                               refs,vs)))`
+let size_of_def,size_of_ind = define_guess
   [`size_of lims [] refs seen = (0,refs,seen)`;
    `size_of lims (x :: y :: ys) refs seen =
         (let (n1,refs1,seen1) = check_res refs (size_of lims (y ::
@@ -1706,13 +1701,9 @@ if concl dataSem_fix_clock_IMP <> `T` then
   cake_term_facts := dataSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "dataLang_prog";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 dataSemScript.sml:1486-1495: the tactic that proves the
    termination *)
-let dataSem_evaluate_def,dataSem_evaluate_ind = define_wf
-  `(inv_image (MEASURE I LEX MEASURE dataLang_prog_size)
-                            (\(xs,s). (state_clock s,xs)))`
+let dataSem_evaluate_def,dataSem_evaluate_ind = define_guess
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =

@@ -844,13 +844,9 @@ if concl bvlSem_fix_clock_IMP <> `T` then
   cake_term_facts := bvlSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "bvl_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvlSemScript.sml:660-668: the tactic that proves the
    termination *)
-let bvlSem_evaluate_def,bvlSem_evaluate_ind = define_wf
-  `(inv_image (MEASURE I LEX MEASURE (list_size bvl_exp_size))
-                            (\(xs,env,s). (state_clock s,xs)))`
+let bvlSem_evaluate_def,bvlSem_evaluate_ind = define_guess
   [`(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s))
   /\
    (bvlSem_evaluate (x :: y :: xs,env,s) =

@@ -2112,18 +2112,34 @@ class Porter:
         if k in strategies.WAY: way = strategies.WAY[k]
       if way: break
     strat, assumed_term, found_rel = way if way else ('', False, '')
-    # a run says whether the termination really was assumed, which
-    # is more than ml/CHEATS.md says: a definition is in there
-    # when the run could not make it without a cheat somewhere,
-    # and the cheat may have been for something else
-    if way is not None and not tac: cheat = assumed_term
+    # Whether the port could make the definition at all is what
+    # ml/CHEATS.md says, and not what the harvest says: the
+    # strategy recorded for a definition that nothing made is
+    # whatever the last attempt left behind, so it means nothing.
+    # A reason that starts with "termination" is the other kind,
+    # where the definition is made and only its condition assumed.
+    why = next((ASSUMED[nm] for nm in sorted(names)
+                if nm in ASSUMED), None)
+    assumed = why is not None and not why.startswith('termination')
+    if assumed:
+      strat, found_rel, assumed_term = '', '', False
+    elif why is not None:
+      cheat = True
+    why = why or 'the port cannot make this definition'
+    # and a run says whether the termination really was assumed,
+    # which is more than ml/CHEATS.md says: a definition is in
+    # there when the run needed a cheat somewhere, and the cheat
+    # may have been for something else
+    if way is not None and not tac and not assumed:
+      cheat = assumed_term
     # the clauses, as the list that every way but new_definition
     # takes (HOL4 typechecks each of them on its own).  A term in
     # the list ends in `];; and not in `;;, so its last line has
     # one character less to go on
     body = (clauses if term is None
             else '[`%s`]' % fmt(rawterm, width=71, last=4))
-    if strat in NOT_RECURSIVE: recursive = False
+    if assumed: recursive = recursive_text(body, names)
+    elif strat in NOT_RECURSIVE: recursive = False
     elif strat in RECURSIVE: recursive = True
     else: recursive = recursive_text(body, names)
     mutual = len(self.ctx.defining) > 1
@@ -2142,10 +2158,6 @@ class Porter:
       relnote = ('(* the termination relation is not in the HOL4 '
                  'source; this one is\n   what the port found for '
                  'it *)\n')
-    assumed = way is not None and strat == ''
-    why = next((ASSUMED[nm] for nm in sorted(names)
-                if nm in ASSUMED),
-               'the port cannot make this definition')
     binding = '%s,%s' % (bind, indbind) if recursive and not mutual \
               else bind
     if assumed:
@@ -2173,12 +2185,20 @@ class Porter:
       # none} x {a relation, the measure of the arguments matched
       # on, HOL Light's own guess} x {proved, assumed, a tactic}
       shape = strat if strat in SHAPES else ''
-      if strat == 'define_single' and rel is None and not shape:
-        kind = '_guess'
+      # the harvest says the way, and the presence of a relation
+      # does not: a definition that the recursion theorem of its
+      # type makes needs none even where HOL4's Termination gives
+      # one, and asking for a relation there is asking for the
+      # slow way round that the recursion theorem is the way out
+      # of.  Where the termination was assumed the relation of the
+      # source is written down all the same, so that phase three
+      # has only to put its tactic in the place of the cheat.
+      if not found_rel and not ((cheat or tac) and rel is not None):
+        rel = None
+      if shape: kind = '_wf' if rel is not None else '_rec'
+      elif strat == 'prim_rec': kind, rel = '_rec', None
       elif rel is not None: kind = '_wf'
-      elif strat == 'guess' and not shape and not cheat and not tac:
-        kind = '_guess'
-      else: kind = '_rec'
+      else: kind = '_guess'
       # a definition by the recursion theorem of its type leaves
       # no condition, so there is nothing there to assume
       if not shape and kind == '_rec': suffix = ''

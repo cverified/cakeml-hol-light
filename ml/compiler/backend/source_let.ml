@@ -65,12 +65,9 @@ let lift_let_def = new_definition
         | _3 -> NONE`;;
 
 let _ = size_thms "dec";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 source_letScript.sml:68-73: the tactic that proves the
    termination *)
-let lift_lets_def,lift_lets_ind = define_wf
-  `MEASURE (dec_size o SND)`
+let lift_lets_def,lift_lets_ind = define_guess
   [`lift_lets sofar d =
      (match lift_let d with NONE ->
          (match sofar with [] -> NONE | _4 -> SOME (REVERSE

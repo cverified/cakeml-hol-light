@@ -1022,13 +1022,10 @@ let idsexp_11 = prove
   CHEAT_TAC);;
 
 let _ = size_thms "ast_t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:1233-1237: the tactic that proves the
    termination *)
-let typesexp_def,typesexp_ind = define_shaped_wf
+let typesexp_def,typesexp_ind = define_shaped_rec
   "nested"
-  `MEASURE ast_t_size`
   [`typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode
   s)]`;
    `typesexp (Atfun t1 t2) = listsexp [SX_SYM "Atfun"; typesexp t1;
@@ -1061,13 +1058,10 @@ let litsexp_11 = prove
   CHEAT_TAC);;
 
 let _ = size_thms "ast_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 fromSexpScript.sml:1277-1284: the tactic that proves the
    termination *)
-let patsexp_def,patsexp_ind = define_shaped_wf
+let patsexp_def,patsexp_ind = define_shaped_rec
   "nested"
-  `MEASURE ast_pat_size`
   [`patsexp (ast_Pany:ast_pat) = listsexp [SX_SYM "Pany"]`;
    `patsexp (ast_Pvar s:ast_pat) = SEXSTR (explode s)`;
    `patsexp (ast_Plit l:ast_pat) = listsexp [SX_SYM "Plit"; litsexp

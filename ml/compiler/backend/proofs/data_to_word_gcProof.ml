@@ -879,16 +879,15 @@ let word_gen_gc_move_roots_thm = prove
 (* HOL4 data_to_word_gcProofScript.sml:1571-1631: a theorem that HOL4
    states as the value of an ML expression: word_gen_gc_move_list_thm *)
 
-let word_heap_parts_def = assume_definition
-  "the port cannot make this definition"
-  [`word_heap_parts conf p s xs =
+let word_heap_parts_def = new_definition
+  `word_heap_parts conf p s xs =
      word_heap p (gc_state_h1 s ++ gc_state_h2 s) conf *
      misc_word_list (p + bytes_in_word * n2w (heap_length
        (gc_state_h1 s ++ gc_state_h2 s))) xs *
      word_heap (p + bytes_in_word * n2w (heap_length (gc_state_h1 s
        ++ gc_state_h2 s) + LENGTH xs))
        (gc_state_r4 s ++ gc_state_r3 s ++ gc_state_r2 s ++
-         gc_state_r1 s) conf`];;
+         gc_state_r1 s) conf`;;
 
 let gc_move_const = prove
  (`!l s xs' s'.
@@ -989,12 +988,11 @@ let word_heap_IMP_limit = prove
     heap_length hs <= dimword (:'a) DIV (dimindex (:'a) DIV 8)`,
   CHEAT_TAC);;
 
-let muttag_header_def = assume_definition
-  "the port cannot make this definition"
-  [`muttag_header x1 =
+let muttag_header_def = new_definition
+  `muttag_header x1 =
       match x1 with
         ThunkTag e -> (thunk_tag_to_bits e << 3 || (n2w 6))
-      | _14 -> (n2w 2)`];;
+      | _14 -> (n2w 2)`;;
 
 let isMutTag_word_payload_IMP = prove
  (`!x1 x2 x3.
@@ -2056,9 +2054,8 @@ let limits_inv_def = new_definition
 (* HOL4 data_to_word_gcProofScript.sml:4501: the ML values that the
    definitions below antiquote *)
 
-let state_rel_thm = assume_definition
-  "the port cannot make this definition"
-  [`data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
+let state_rel_thm = new_definition
+  `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
   (t:('a,'c,'ffi)wordSem_state) v1 locs <=>
      (wordSem_state_ffi
       // I/O, clock and handler are the same, GC is fixed, code is compiled
@@ -2070,8 +2067,8 @@ let state_rel_thm = assume_definition
      code_oracle_rel c (dataSem_state_compile s)
        (dataSem_state_compile_oracle s) (wordSem_state_store t)
        (wordSem_state_compile
-       t) (wordSem_state_compile_oracle t)
-         (wordSem_state_code_buffer t) (wordSem_state_data_buffer t) /\
+       t) (wordSem_state_compile_oracle t) (wordSem_state_code_buffer
+         t) (wordSem_state_data_buffer t) /\
      good_dimindex (:'a) /\
      shift_length c < dimindex (:'a) /\
      IS_SOME (dataSem_state_tstamps s) /\
@@ -2082,8 +2079,8 @@ let state_rel_thm = assume_definition
       v1 = NONE ==> sptree_lookup 0 (wordSem_state_locals t) = SOME
         (Loc l1 l2)) /\
      (!n. IS_SOME (sptree_lookup n (dataSem_state_locals s)) ==>
-          IS_SOME (sptree_lookup (adjust_var n)
-            (wordSem_state_locals t))) /\
+          IS_SOME (sptree_lookup (adjust_var n) (wordSem_state_locals
+            t))) /\
      // the stacks contain the same names, have same shape
      EVERY2 data_to_word_gcProof_stack_rel (dataSem_state_stack s)
        (wordSem_state_stack t) /\
@@ -2096,8 +2093,8 @@ let state_rel_thm = assume_definition
        wordSem_state_locals_size
      t = dataSem_state_locals_size s /\
      limits_inv (dataSem_state_limits s) (FLOOKUP
-       (wordSem_state_store t) HeapLength) (wordSem_state_stack_limit
-       t) (data_to_word_config_len_size c) (has_fp_ops c)
+       (wordSem_state_store t) HeapLength) (wordSem_state_stack_limit t)
+       (data_to_word_config_len_size c) (has_fp_ops c)
        (data_to_word_config_has_fp_tern c) /\
      // there exists some GC-compatible abstraction
      memory_rel c (wordSem_state_be t) (THE (dataSem_state_tstamps
@@ -2110,7 +2107,7 @@ let state_rel_thm = assume_definition
           s)))) ++
         [(the_global (dataSem_state_global s),FAPPLY
           (wordSem_state_store t) Globals)] ++
-        flat (dataSem_state_stack s) (wordSem_state_stack t))`];;
+        flat (dataSem_state_stack s) (wordSem_state_stack t))`;;
 hol4_overload "state_rel" "data_to_word_gcProof_state_rel";;
 
 (* HOL4 data_to_word_gcProofScript.sml:4538-4539: a theorem that HOL4

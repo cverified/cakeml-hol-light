@@ -838,7 +838,7 @@ let letFromPat_def = new_definition
        ast_Pany -> ast_Let NONE rhs body | ast_Pvar v -> ast_Let
          (SOME v) rhs body | _79 -> ast_Mat rhs [(p,body)])`;;
 
-let ptree_Expr_def = define_mutual_rec
+let ptree_Expr_def = define_mutual_guess
   [`ptree_Expr ent (Lf _80) = NONE`;
    `ptree_Expr ent (Nd (nt',loc) subs) =
     OPTION_BIND (if (INL:MMLnonT->MMLnonT+num) ent = nt' then

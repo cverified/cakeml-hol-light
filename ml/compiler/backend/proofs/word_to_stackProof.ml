@@ -503,7 +503,7 @@ let list_rearrange_I = prove
 
 (*Abstracts a stackLang stack w.r.t. wordLang's
   Note: requires assumption on dimindex(:'a) stated in state_rel *)
-let abs_stack_def,abs_stack_ind = define_rec
+let abs_stack_def,abs_stack_ind = define_guess
   [`abs_stack bitmaps x2 stack' x4 =
         match (bitmaps,x2,stack',x4) with
           ((bitmaps:('a word) list),[],stack',[]) ->
@@ -1898,13 +1898,10 @@ Theorem wStackLoad_thm3 =
  |> PURE_REWRITE_RULE[wordPropsTheory.set_var_const,set_var_const]
 *)
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 word_to_stackProofScript.sml:4061-4066: the tactic that
    proves the termination *)
-let map_var_def,map_var_ind = define_shaped_wf
+let map_var_def,map_var_ind = define_shaped_rec
   "nested"
-  `MEASURE (wordLang_exp_size ARB o SND)`
   [`map_var f (wordLang_Var num') = Var (f num')`;
    `map_var f (wordLang_Load exp) = Load (map_var f exp)`;
    `map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f)

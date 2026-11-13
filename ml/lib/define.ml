@@ -1715,7 +1715,8 @@ let compile_cases fs cls =
         let vs = [mk_fst v; mk_snd v] in
         let sub = constructor_clauses clauses p
                     (fst(strip_comb(fst(hd(constructors ty))))) vs in
-        let sub = if sub = [] then failwith "define_cases" else sub in
+        let sub = if sub = [] then
+                    failwith "define_compiled_cases" else sub in
         let newargs = fst(chop_list p gargs) @ vs @
                       snd(chop_list (p + 1) gargs) in
         compile_body newargs sub
@@ -1739,8 +1740,9 @@ let compile_cases fs cls =
              mk_cond(mk_eq(v,fst nonec),a,b)
          | Some a,None -> a
          | None,Some b -> b
-         | None,None -> failwith "define_cases")
-      else failwith "define_cases: cannot take the pattern apart"
+         | None,None -> failwith "define_compiled_cases")
+      else failwith
+             "define_compiled_cases: cannot take the pattern apart"
   (* the clauses that match a constructor at a position, with the
      arguments of the constructor in its place *)
   and constructor_clauses clauses p con vs =
@@ -1763,7 +1765,7 @@ let compile_cases fs cls =
        let _,args0,_ = hd mycls in
        let n = length args0 in
        if exists (fun (_,args,_) -> length args <> n) mycls
-       then failwith "define_cases: varying arity" else
+       then failwith "define_compiled_cases: varying arity" else
        let tys,_ = splitlist dest_fun_ty (type_of f) in
        let gargs = map (fun i -> fresh_var (el i tys)) (0--(n-1)) in
        let clauses = map (fun (_,args,r) -> args,r) mycls in
@@ -1822,7 +1824,7 @@ let define_compiled fs newcls auxs =
 
 (* a definition by clauses with patterns inside patterns *)
 
-let define_cases tm =
+let define_compiled_cases tm =
   let fs = definition_heads tm in
   let cls = definition_clauses tm in
   let newcls,auxs = compile_cases fs cls in
@@ -1830,7 +1832,7 @@ let define_cases tm =
                               (map (snd o strip_forall)
                                    (conjuncts(snd(strip_forall tm)))))
             newcls
-  then failwith "define_cases: nothing to compile" else
+  then failwith "define_compiled_cases: nothing to compile" else
   let spec,consts,rws,SPLIT_TAC,_ = define_compiled fs newcls auxs in
   let derive cl =
     let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
@@ -1884,19 +1886,19 @@ let dest_match_arms =
    from them (HOL Light's match takes the first arm that matches,
    as HOL4's clauses do). *)
 
-let define_match tm =
+let define_match_clauses tm =
   let fs = definition_heads tm in
   let cls = definition_clauses tm in
-  if length fs <> 1 || length cls <> 1 then failwith "define_match"
-  else
+  if length fs <> 1 || length cls <> 1
+  then failwith "define_match_clauses" else
   let f,args,bod = hd cls in
   let hop,margs = strip_comb bod in
   if not (is_const hop && fst(dest_const hop) = "_MATCH") ||
      length margs <> 2
-  then failwith "define_match" else
+  then failwith "define_match_clauses" else
   let scrut = hd margs in
-  if not (is_var scrut && mem scrut args) then failwith "define_match"
-  else
+  if not (is_var scrut && mem scrut args)
+  then failwith "define_match_clauses" else
   let p = index scrut args in
   let arms = dest_match_arms (last margs) in
   let clauses =
@@ -2649,6 +2651,9 @@ let note_cheat name tm =
                    end_itlist (fun a b -> a ^ ", " ^ b) free ^ ")\n"));;
 
 let cake_cheat tm =
+  (* nothing made this definition, so no strategy did: what the
+     last attempt left behind is not what made it *)
+  the_strategy := ""; the_relation := ""; the_term_cheat := false;
   let fs = definition_heads tm in
   do_list (fun f ->
              let s,ty = dest_var f in
@@ -3075,7 +3080,11 @@ let cake_define_gen wf tm =
               ths @ l,th')
            fs ([],TRUTH))
     else
-      let strat s f = (the_strategy := s; f ()) in
+      (* the name of a strategy is recorded when it works and
+         not when it is tried: four of them run the whole chain
+         again on a part of the definition, and recording the
+         name first would leave the inner one behind *)
+      let strat s f = let r = f () in (the_strategy := s; r) in
       (try strat "prim_rec" (fun () -> define_prim_rec tm)
        with Failure _ when not (declared ()) ->
        try strat "nested" (fun () -> define_nested tm)
@@ -3086,9 +3095,9 @@ let cake_define_gen wf tm =
        with Failure _ when not (declared ()) ->
        try strat "sing" (fun () -> define_sing strategies tm)
        with Failure _ when not (declared ()) ->
-       try strat "cases" (fun () -> define_cases tm)
+       try strat "cases" (fun () -> define_compiled_cases tm)
        with Failure _ when not (declared ()) ->
-       try strat "match" (fun () -> define_match tm)
+       try strat "match" (fun () -> define_match_clauses tm)
        with Failure _ when not (declared ()) ->
        try strat "lift_if" (fun () -> define_lift_if strategies tm)
        with Failure _ when not (declared ()) ->

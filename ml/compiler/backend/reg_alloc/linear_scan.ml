@@ -782,7 +782,7 @@ let apply_reg_exchange_def = new_definition
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_rec
+let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_guess_cheat
   [`st_ex_FOLDL f e [] = st_ex_return e`;
    `st_ex_FOLDL f e (x :: xs) =
       st_ex_bind (f e x) (\
@@ -792,7 +792,7 @@ let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_rec
 (* like st_ex_FILTER, but preserve the order *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let st_ex_FILTER_good_def,st_ex_FILTER_good_ind = define_rec
+let st_ex_FILTER_good_def,st_ex_FILTER_good_ind = define_guess_cheat
   [`st_ex_FILTER_good P [] = st_ex_return []`;
    `st_ex_FILTER_good P (x :: xs) =
       st_ex_bind (P x) (\

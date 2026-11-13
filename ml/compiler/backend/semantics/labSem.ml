@@ -412,7 +412,7 @@ let inc_pc_def = new_definition
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let asm_code_length_def,asm_code_length_ind = define_rec
+let asm_code_length_def,asm_code_length_ind = define_guess_cheat
   [`asm_code_length [] = 0`;
    `asm_code_length (Section k [] :: xs) = asm_code_length xs`;
    `asm_code_length (Section k (y :: ys) :: xs) =
@@ -430,7 +430,7 @@ let lab_to_loc_def = define_general
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let loc_to_pc_def,loc_to_pc_ind = define_rec
+let loc_to_pc_def,loc_to_pc_ind = define_guess_cheat
   [`loc_to_pc n1 n2 [] = NONE`;
    `loc_to_pc n1 n2 (Section k xs :: ys) =
          (if (k = n1) /\ (n2 = 0) then SOME (0:num) else
@@ -554,12 +554,9 @@ let share_mem_op_def = define_cases
    `share_mem_op (asm_Store32:memop) r ad
   (s:('a,'c,'ffi)labSem_state) = share_mem_store r ad s 4`];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 labSemScript.sml:610-617: the tactic that proves the
    termination *)
-let labSem_evaluate_def,labSem_evaluate_ind = define_wf
-  `MEASURE (\s. state_clock s)`
+let labSem_evaluate_def,labSem_evaluate_ind = define_guess
   [`labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      (if labSem_state_clock s = 0 then (TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _46 _47) ->

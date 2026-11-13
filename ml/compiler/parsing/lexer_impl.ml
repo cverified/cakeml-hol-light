@@ -146,12 +146,9 @@ let num_from_dec_string_alt_def = new_definition
 let num_from_hex_string_alt_def = new_definition
   `num_from_hex_string_alt = s2n 16 unhex_alt`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 lexer_implScript.sml:239-245: the tactic that proves the
    termination *)
-let next_sym_alt_def,next_sym_alt_ind = define_wf
-  `MEASURE (LENGTH o FST)`
+let next_sym_alt_def,next_sym_alt_ind = define_guess
   [`next_sym_alt "" _1 = NONE`;
    `next_sym_alt (c :: str) loc =
          (if c = (CHR 10) then

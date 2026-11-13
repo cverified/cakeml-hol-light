@@ -25,13 +25,9 @@ let _ = hol4_ancestors "clos_number"
 (* add fresh code locations *)
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_numberScript.sml:56-64: the tactic that proves the
    termination *)
-let renumber_code_locs_def = define_mutual_wf
-  `inv_image (<) (\x. match x with INL p -> list_size closLang_exp_size
-  (SND p) | INR p -> closLang_exp_size (SND p))`
+let renumber_code_locs_def = define_mutual_guess
   [`renumber_code_locs_list n [] = (n,[])`;
    `renumber_code_locs_list n (x :: xs) =
          (let (n,x) = renumber_code_locs n x in

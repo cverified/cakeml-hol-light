@@ -94,13 +94,9 @@ let alloc_glob_count_def,alloc_glob_count_ind = define_wf
         // Impossible`];;
 
 let _ = size_thms "bvl_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_to_bviScript.sml:88-93: the tactic that proves the
    termination *)
-let global_count_sing_def = define_mutual_wf
-  `MEASURE (\x. match x with INL e -> bvl_exp_size e | INR es ->
-  list_size bvl_exp_size es)`
+let global_count_sing_def = define_mutual_rec
   [`global_count_sing ((Var _7):bvl_exp) = 0`;
    `global_count_sing (If x y z:bvl_exp) =
          global_count_sing x +
@@ -388,12 +384,9 @@ let compile_aux_def = new_definition
        1,args,bvi_let_compile_exp p)]`;;
 
 let _ = size_thms "bvl_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_to_bviScript.sml:381-387: the tactic that proves the
    termination *)
-let compile_exps_def,compile_exps_ind = define_wf
-  `MEASURE (list_size bvl_exp_size o SND)`
+let compile_exps_def,compile_exps_ind = define_guess
   [`(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
@@ -451,13 +444,9 @@ let compile_exps_def,compile_exps_ind = define_wf
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let _ = size_thms "bvl_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_to_bviScript.sml:439-446: the tactic that proves the
    termination *)
-let compile_exps_sing_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (n,e) -> bvl_exp_size e | INR (n,es)
-  -> list_size bvl_exp_size es)`
+let compile_exps_sing_def = define_mutual_guess
   [`(compile_exps_sing n (Var v:bvl_exp) = (((Var
   v):bvi_exp),misc_Nil,n)) /\
    (compile_exps_sing n (If x1 x2 x3) =

@@ -26,7 +26,7 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "clos_call"
   ["closLang"; "db_vars"];;
 
-let free_def,free_ind = define_rec
+let free_def,free_ind = define_guess
   [`clos_call_free [] = ([],db_vars_Empty)`;
    `clos_call_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_call_free [x] in
@@ -211,12 +211,9 @@ let calls_list_def,calls_list_ind = define_rec
    port cannot state yet: exp3_size_MAP_SND *)
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_callScript.sml:309-317: the tactic that proves the
    termination *)
-let calls_def,calls_ind = define_wf
-  `MEASURE (list_size closLang_exp_size o FST)`
+let calls_def,calls_ind = define_guess
   [`calls [] g = ([],g)`;
    `calls ((x:closLang_exp) :: y :: xs) g =
          (let (e1,g) = calls [x] g in
@@ -307,13 +304,9 @@ let calls_def,calls_ind = define_wf
                  (HD e1)],g))`];;
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_callScript.sml:388-393: the tactic that proves the
    termination *)
-let calls_sing_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (e,_26) -> closLang_exp_size e | INR
-  (es,_27) -> list_size closLang_exp_size es)`
+let calls_sing_def = define_mutual_guess
   [`calls_sing (Var t v:closLang_exp) g =
          ((Var t v:closLang_exp),g)`;
    `calls_sing (If t x1 x2 x3:closLang_exp) g =

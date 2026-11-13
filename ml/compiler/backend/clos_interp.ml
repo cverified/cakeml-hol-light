@@ -119,11 +119,7 @@ let to_constant_op_def = new_definition
       | _41 -> ConstInt (&0)`;;
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let to_constant_def = define_mutual_wf
-  `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-  list_size closLang_exp_size es)`
+let to_constant_def = define_mutual_guess
   [`to_constant ((Var t n):closLang_exp) =
       ConstCons 0 [ConstInt (&n)]`;
    `to_constant (App _48 _49 e es:closLang_exp) =

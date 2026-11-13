@@ -94,7 +94,7 @@ let iAssign_def = new_definition
 
 let _ = do_list hide_constant ["tail"];;
 
-let bvi_to_data_compile_def,bvi_to_data_compile_ind = define_rec
+let bvi_to_data_compile_def,bvi_to_data_compile_ind = define_guess
   [`bvi_to_data_compile (n:num) (env:num list) tail live [] =
         (dataLang_Skip,([]:num list),n)`;
    `bvi_to_data_compile (n:num) (env:num list) tail live (x :: y :: xs)
@@ -189,13 +189,9 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind = define_rec
 hol4_overload "compile" "bvi_to_data_compile";;
 
 let _ = size_thms "bvi_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvi_to_dataScript.sml:232-237: the tactic that proves the
    termination *)
-let compile_sing_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (n,env,t,l,x) -> bvi_exp_size x | INR
-  (n,env,l,xs) -> list_size bvi_exp_size xs)`
+let compile_sing_def = define_mutual_guess
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((Var
   v):bvi_exp) =
          (let var = any_el v env 0 in

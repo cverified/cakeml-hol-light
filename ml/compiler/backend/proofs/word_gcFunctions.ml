@@ -69,7 +69,7 @@ let update_addr_def = new_definition
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let memcpy_def,memcpy_ind = define_rec
+let memcpy_def,memcpy_ind = define_guess_cheat
   [`memcpy w a b m dm =
      (if w = (n2w 0) then (b,m,T) else
        let (b1,m1,c1) = memcpy (w - (n2w 1)) (a + bytes_in_word) (b
@@ -152,7 +152,7 @@ let word_gc_move_roots_def,word_gc_move_roots_ind = define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_gc_move_list_def,word_gc_move_list_ind = define_rec
+let word_gc_move_list_def,word_gc_move_list_ind = define_guess_cheat
   [`word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
@@ -186,7 +186,7 @@ let word_gen_gc_partial_move_roots_def,
    replacing the CHEAT_TAC is all that is left *)
 let word_gen_gc_partial_move_list_def,
     word_gen_gc_partial_move_list_ind =
-  define_rec
+  define_guess_cheat
   [`word_gen_gc_partial_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
@@ -447,7 +447,8 @@ let word_gen_gc_move_roots_def,word_gen_gc_move_roots_ind = define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_gen_gc_move_list_def,word_gen_gc_move_list_ind = define_rec
+let word_gen_gc_move_list_def,word_gen_gc_move_list_ind =
+  define_guess_cheat
   [`word_gen_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),ib,pb,old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,ib,pb,m,T) else

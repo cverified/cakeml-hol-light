@@ -268,14 +268,10 @@ hol4_overload "Op" "closLang_Op";;
 (* HOL4 closLangScript.sml:143: ML code, not ported *)
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 closLangScript.sml:159-168: the tactic that proves the
    termination *)
-let has_install_def = define_mutual_shaped_wf
+let has_install_def = define_mutual_shaped_rec
   "nested"
-  `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-  list_size closLang_exp_size es)`
   [`has_install ((Var t n):closLang_exp) = F`;
    `has_install (If t e1 e2 e3:closLang_exp) = (has_install e1 \/
   has_install e2 \/ has_install e3)`;

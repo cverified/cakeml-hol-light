@@ -1022,12 +1022,9 @@ hol4_overload "f_rel" "clos_knownProof_f_rel";;
    statement the port cannot state yet: v1_size_append *)
 
 let _ = size_thms "closSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_knownProofScript.sml:2614-2617: the tactic that proves
    the termination *)
-let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind = define_wf
-  `MEASURE (closSem_v_size o FST o SND o SND)`
+let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind = define_guess
   [`clos_knownProof_v_rel c g (closSem_Number i:closSem_v) v <=> v =
   (closSem_Number i:closSem_v)`;
    `clos_knownProof_v_rel c g (Word64 w:closSem_v) v <=> v = (Word64

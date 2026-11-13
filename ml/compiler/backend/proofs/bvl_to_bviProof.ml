@@ -60,13 +60,10 @@ let _ = do_list hide_constant ["str"];;
    port expands *)
 
 let _ = size_thms "bvlSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_to_bviProofScript.sml:34-38: the tactic that proves the
    termination *)
-let adjust_bv_def,adjust_bv_ind = define_shaped_wf
+let adjust_bv_def,adjust_bv_ind = define_shaped_rec
   "nested"
-  `MEASURE (bvlSem_v_size o SND)`
   [`adjust_bv b (Number i:bvlSem_v) = bvlSem_Number i`;
    `adjust_bv b (Word64 w:bvlSem_v) = bvlSem_Word64 w`;
    `adjust_bv b (RefPtr l r:bvlSem_v) = bvlSem_RefPtr l (b r)`;

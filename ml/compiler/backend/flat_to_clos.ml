@@ -470,12 +470,9 @@ let SmartCons_def = new_definition
        tag (REVERSE cs)))) [])`;;
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 flat_to_closScript.sml:331-337: the tactic that proves the
    termination *)
-let flat_to_clos_compile_def,flat_to_clos_compile_ind = define_wf
-  `MEASURE (list_size flatLang_exp_size o SND)`
+let flat_to_clos_compile_def,flat_to_clos_compile_ind = define_guess
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;

@@ -502,7 +502,7 @@ let check_type_definition_def = new_definition
 (* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the
    value of an ML expression: check_type_definition_expand *)
 
-let infer_p_def = define_mutual_rec
+let infer_p_def = define_mutual_guess
   [`infer_p l ienv (ast_Pvar n:ast_pat) =
         st_ex_bind fresh_uvar (\t.
            st_ex_return (t,[(n,t)]))`;
@@ -841,17 +841,9 @@ let constrain_op_error_msg_sanity = prove
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 inferScript.sml:1016-1025: the tactic that proves the
    termination *)
-let infer_e_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (_45,_46,e) -> ast_exp_size e | INR
-  (INL (_47,_48,es)) -> list_size ast_exp_size es | INR (INR (INL
-  (_49,_50,pes,_51,_52))) -> list_size (pair_size ast_pat_size
-  ast_exp_size) pes | INR (INR (INR (_53,_54,funs))) ->
-       list_size (pair_size mlstring_size
-            (pair_size mlstring_size ast_exp_size)) funs)`
+let infer_e_def = define_mutual_guess
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
@@ -1056,7 +1048,7 @@ let lift_ienv_def = new_definition
      mk_inf_env (nsLift mn (inf_env_inf_v ienv)) (nsLift mn
        (inf_env_inf_c ienv)) (nsLift mn (inf_env_inf_t ienv))`;;
 
-let infer_d_def = define_mutual_rec
+let infer_d_def = define_mutual_guess
   [`infer_d ienv (Dlet locs p e) =
       st_ex_bind init_state (\one. st_ex_bind get_next_uvar (\
          n. st_ex_bind (infer_e (mk_loc_err_info (SOME locs)
@@ -1276,7 +1268,7 @@ let ns_nub_def = define_mutual_shaped_rec
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let ns_to_alist_def,ns_to_alist_ind = define_rec
+let ns_to_alist_def,ns_to_alist_ind = define_guess_cheat
   [`ns_to_alist (Bind [] []) = []`;
    `ns_to_alist (Bind [] ((n,x) :: ms)) =
         MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n

@@ -306,12 +306,9 @@ let fstep_dstep = prove
  (`(!tau. ~(s = ([],[],tau))) ==> (dstep) s (fstep s)`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 parmoveScript.sml:610-638: the tactic that proves the
    termination *)
-let pmov_def,pmov_ind = define_wf
-  `MEASURE (\(mu,sigma,tau). 2 * LENGTH mu + LENGTH sigma)`
+let pmov_def,pmov_ind = define_guess
   [`pmov s = (match s with ([],[],_3) -> s | _4 -> pmov (fstep s))`];;
 
 (* HOL4 parmoveScript.sml:640: ML code, not ported *)

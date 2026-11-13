@@ -68,12 +68,9 @@ let mw_shift_def = define_cases
          (w >>> 1 || x << (dimindex (:'a) - 1)) :: mw_shift (x
            :: xs)`];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 multiwordScript.sml:1070-1076: the tactic that proves the
    termination *)
-let mw_cmp_def,mw_cmp_ind = define_wf
-  `MEASURE (LENGTH o FST)`
+let mw_cmp_def,mw_cmp_ind = define_guess
   [`mw_cmp xs ys = (if xs = [] then NONE else
                   if LAST xs = LAST ys then
                     mw_cmp (BUTLAST xs) (BUTLAST ys) else SOME

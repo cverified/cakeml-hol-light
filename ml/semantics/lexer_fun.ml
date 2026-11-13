@@ -232,12 +232,9 @@ let read_Ident_def,read_Ident_ind = define_wf_cheat
          ErrorS,loc,str))`];;
 
 (* next_sym reads the next symbol from a string, returning NONE if at eof *)
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 lexer_funScript.sml:314-320: the tactic that proves the
    termination *)
-let next_sym_def,next_sym_ind = define_wf
-  `MEASURE (LENGTH o FST)`
+let next_sym_def,next_sym_ind = define_guess
   [`next_sym "" _5 = NONE`;
    `next_sym (c :: str) loc =
          (if c = (CHR 10) then

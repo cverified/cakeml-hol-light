@@ -335,11 +335,7 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
  * pattern and value come from the same type.  Match_type_error is returned
  * when one of these conditions is violated *)
 let _ = size_thms "ast_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let pmatch_def = define_mutual_wf
-  `inv_image (<) (\x. match x with INL (s,a,p,b,c) -> ast_pat_size p |
-  INR (s,a,ps,b,c) -> list_size ast_pat_size ps)`
+let pmatch_def = define_mutual_guess
   [`semanticPrimitives_pmatch envC s (ast_Pany:ast_pat) v' env =
   Match env`;
    `semanticPrimitives_pmatch envC s (ast_Pvar x:ast_pat) v' env =
@@ -417,8 +413,6 @@ let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
 
 let _ = size_thms "semanticPrimitives_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 semanticPrimitivesScript.sml:440-444: the tactic that proves
    the termination *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
@@ -427,10 +421,7 @@ let _ = size_thms "semanticPrimitives_v";;
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let do_eq_def = define_mutual_wf
-  `inv_image (<) (\x. match x with INL (v1,v2) ->
-  semanticPrimitives_v_size v1 | INR (vs1,vs2) -> list_size
-  semanticPrimitives_v_size vs1)`
+let do_eq_def = define_mutual_guess
   [`semanticPrimitives_do_eq (semanticPrimitives_Litv
   l1:semanticPrimitives_v) (semanticPrimitives_Litv
   l2:semanticPrimitives_v) =

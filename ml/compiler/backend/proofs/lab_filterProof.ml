@@ -32,7 +32,7 @@ let _ = hide_overloads
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let adjust_pc_def,adjust_pc_ind = define_rec
+let adjust_pc_def,adjust_pc_ind = define_guess_cheat
   [`adjust_pc p xs =
      (if p = 0 then 0 else
        match xs with [] -> p | (Section n [] :: rest) -> adjust_pc p

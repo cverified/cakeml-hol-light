@@ -369,7 +369,7 @@ let loop_setup_def = new_definition
        list_next_var_rename_move ssa_ext na_ext refresh_ls in
      (Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed))`;;
 
-let ssa_cc_trans_def,ssa_cc_trans_ind = define_rec
+let ssa_cc_trans_def,ssa_cc_trans_ind = define_guess
   [`ssa_cc_trans wordLang_Skip ssa na lt = (wordLang_Skip,ssa,na)`;
    `ssa_cc_trans (wordLang_Move pri ls) ssa na lt =
         (let ls_1 = MAP FST ls in
@@ -1012,7 +1012,7 @@ let remove_dead_inst_def = new_definition
   This code is written assuming flat_exp_conventions,
     so many trivial cases are omitted.
 *)
-let remove_dead_def,remove_dead_ind = define_rec
+let remove_dead_def,remove_dead_ind = define_guess
   [`remove_dead prog live nlive lt =
         match prog with
           wordLang_Move pri ls ->
@@ -1232,7 +1232,7 @@ let get_reads_exp_def,get_reads_exp_ind = define_wf
           nexp
         | expr -> []`];;
 
-let get_clash_tree_def,get_clash_tree_ind = define_rec
+let get_clash_tree_def,get_clash_tree_ind = define_guess
   [`get_clash_tree wordLang_Skip lt = reg_alloc_Delta [] []`;
    `get_clash_tree (wordLang_Move pri ls) lt =
         reg_alloc_Delta (MAP FST ls) (MAP SND ls)`;
@@ -1518,7 +1518,7 @@ let add_call_def = new_definition
   `(add_call lr calls':1 spt) =
    sptree_union (sptree_map (\v. one) lr) calls'`;;
 
-let get_heu_def,get_heu_ind = define_rec
+let get_heu_def,get_heu_ind = define_guess
   [`get_heu fc f lr =
         match (f,lr) with
           (wordLang_Move pri ls,(lr,calls')) ->
@@ -1823,7 +1823,7 @@ let remove_temp_stack_def = new_definition
   only ever involved in stack moves *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let get_stack_only_aux_def,get_stack_only_aux_ind = define_rec
+let get_stack_only_aux_def,get_stack_only_aux_ind = define_guess_cheat
   [`get_stack_only_aux tfs prog =
         match prog with
           wordLang_Move pri ls ->

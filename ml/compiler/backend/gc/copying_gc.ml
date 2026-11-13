@@ -40,7 +40,7 @@ hol4_overload "gc_move" "copying_gc_gc_move";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_list_def,gc_move_list_ind = define_rec
+let gc_move_list_def,gc_move_list_ind = define_guess_cheat
   [`copying_gc_gc_move_list ([],h2,a,n,heap,c,limit') =
   ([],h2,a,n,heap,c)`;
    `copying_gc_gc_move_list (x :: xs,h2,a,n,heap,c,limit') =

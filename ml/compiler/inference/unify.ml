@@ -68,7 +68,7 @@ let encode_infer_t_11 = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let decode_infer_t_def = define_mutual_rec
+let decode_infer_t_def = define_mutual_guess_cheat
   [`decode_infer_t (term_Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (term_Const (DB_tag n)) =
@@ -369,11 +369,8 @@ let substR_unify = prove
   CHEAT_TAC);;
 
 let _ = size_thms "infer_t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let capply_subst_def,capply_subst_ind = define_shaped_wf
+let capply_subst_def,capply_subst_ind = define_shaped_rec
   "nested"
-  `MEASURE (infer_t_size o SND)`
   [`capply_subst s (Infer_Tuvar n) = (match sptree_lookup n s with
                               NONE -> Infer_Tuvar n | SOME it ->
                                 it)`;

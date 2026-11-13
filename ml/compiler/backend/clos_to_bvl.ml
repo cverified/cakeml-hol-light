@@ -472,13 +472,10 @@ let force_thunk_code_def = new_definition
            Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_to_bvlScript.sml:483-493: the tactic that proves the
    termination *)
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
-  define_wf
-  `MEASURE (list_size closLang_exp_size o FST o SND)`
+  define_guess
   [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
    `clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs) aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
@@ -592,13 +589,9 @@ hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 let _ = size_thms "bvl_exp";;
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_to_bvlScript.sml:575-583: the tactic that proves the
    termination *)
-let compile_exp_sing_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (_7,e,_8) -> bvl_exp_size e | INR
-  (_9,es,_10) -> list_size closLang_exp_size es)`
+let compile_exp_sing_def = define_mutual_guess
   [`compile_exp_sing max_app (Var t v:closLang_exp) aux = (((Var
   v):bvl_exp),aux)`;
    `compile_exp_sing max_app (If t x1 x2 x3:closLang_exp) aux =
@@ -848,12 +841,9 @@ let add_src_names_def,add_src_names_ind = define_rec
         1) x l))`];;
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_to_bvlScript.sml:812-817: the tactic that proves the
    termination *)
-let get_src_names_def,get_src_names_ind = define_wf
-  `MEASURE (list_size closLang_exp_size o FST)`
+let get_src_names_def,get_src_names_ind = define_guess
   [`get_src_names [] l = l`;
    `get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
   (get_src_names [x] l)`;
@@ -884,13 +874,9 @@ let get_src_names_def,get_src_names_ind = define_wf
            add_src_names n names l1)`];;
 
 let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_to_bvlScript.sml:844-851: the tactic that proves the
    termination *)
-let get_src_names_sing_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (e,_70) -> closLang_exp_size e | INR
-  (es,_71) -> list_size closLang_exp_size es)`
+let get_src_names_sing_def = define_mutual_guess
   [`get_src_names_sing (closLang_If _38 x y z) l =
       get_src_names_sing x (get_src_names_sing y
         (get_src_names_sing z l))`;

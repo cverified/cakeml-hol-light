@@ -366,7 +366,7 @@ let pat_to_display_def = define_mutual_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exp_to_display_def = define_mutual_rec
+let exp_to_display_def = define_mutual_guess_cheat
   [`exp_to_display (c:ast_exp) =
       (match c with Lit l -> displayLang_Item NONE (implode "Lit")
         [lit_to_display l] | Raise e -> displayLang_Item NONE (implode
@@ -620,11 +620,7 @@ let const_part_to_display_def = define_cases
       displayLang_Item NONE (implode "W64") [word_to_display w]`];;
 
 let _ = size_thms "const";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let const_to_display_def = define_mutual_wf
-  `MEASURE (\x. match x with INL v -> const_size v | INR v -> list_size
-  const_size v)`
+let const_to_display_def = define_mutual_rec
   [`const_to_display (ConstInt i:const) =
       displayLang_Item NONE (implode "ConstInt") [int_to_display
         i]`;
@@ -777,16 +773,9 @@ hol4_overload "commas" "presLang_commas";;
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 presLangScript.sml:744-751: the tactic that proves the
    termination *)
-let clos_to_display_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (_8,_9,e) -> flatLang_exp_size e | INR
-  (INL (_10,_11,e)) -> list_size flatLang_exp_size e | INR (INR (INL
-  (_12,_13,_14,es))) -> list_size flatLang_exp_size es | INR (INR (INR
-  (_15,_16,_17,_18,es))) -> list_size (pair_size I flatLang_exp_size)
-  es)`
+let clos_to_display_def = define_mutual_guess
   [`clos_to_display ns h (Var t n:closLang_exp) =
         displayLang_Item (SOME t) (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -947,14 +936,7 @@ let bvl_fun_to_display_def = new_definition
    port cannot state yet: MEM_bvi_exps_size *)
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let bvi_to_display_def = define_mutual_wf
-  `MEASURE (\x.
-     match x with
-       INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs)) ->
-         list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
-         list_size flatLang_exp_size xs)`
+let bvi_to_display_def = define_mutual_guess
   [`bvi_to_display ns h (Var n:bvi_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -1268,12 +1250,7 @@ let list_size_append_stack_seqs = prove
    labLang_prog_size ARB x + 1`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let stack_prog_to_display_def = define_mutual_wf
-  `MEASURE (\x.
-     match x with
-       INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`
+let stack_prog_to_display_def = define_mutual_guess
   [`stack_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item
   (implode "skip")`;
@@ -1469,11 +1446,7 @@ let MEM_append_word_seqs = prove
    the value of an ML expression: MEM_word_exps_size_ARB *)
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let word_exp_to_display_def = define_mutual_wf
-  `MEASURE (\x. match x with INL v -> wordLang_exp_size ARB v | INR v
-  -> list_size wordLang_exp_size ARB v)`
+let word_exp_to_display_def = define_mutual_rec
   [`word_exp_to_display (wordLang_Const v) = item_with_word (implode
   "Const") v`;
    `word_exp_to_display (wordLang_Var n) = item_with_num (implode
@@ -1505,11 +1478,7 @@ let num_sets_to_display_def = new_definition
      Tuple [num_set_to_display l;
             num_set_to_display r]`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let word_prog_to_display_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (k,_32) -> k | INR (INL (k,_33)) -> k
-  | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`
+let word_prog_to_display_def = define_mutual_guess
   [`word_prog_to_display 0 ns x = empty_item (implode "...")`;
    `word_prog_to_display (SUC k) ns wordLang_Skip = empty_item
   (implode "skip")`;

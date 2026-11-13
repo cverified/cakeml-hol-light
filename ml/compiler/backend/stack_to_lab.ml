@@ -63,7 +63,8 @@ hol4_overload "++" "misc_Append";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stack_to_lab_flatten_def,stack_to_lab_flatten_ind = define_rec
+let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
+  define_guess_cheat
   [`stack_to_lab_flatten t p n m conts breaks =
      (match p with Tick -> (List [(\a. labLang_Asm (Asmi a)) (Inst
        (asm_Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi

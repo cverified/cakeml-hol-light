@@ -427,13 +427,10 @@ let set_store_def = new_definition
 hol4_overload "set_store" "wordSem_set_store";;
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 wordSemScript.sml:357-362: the tactic that proves the
    termination *)
-let word_exp_def,word_exp_ind = define_shaped_wf
+let word_exp_def,word_exp_ind = define_shaped_rec
   "nested"
-  `MEASURE (wordLang_exp_size ARB o SND)`
   [`wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Const w)
   = SOME (wordLang_Word w)`;
    `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Var v) =
@@ -1145,16 +1142,9 @@ if concl wordSem_fix_clock_IMP <> `T` then
   cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "wordLang_prog";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 wordSemScript.sml:1247-1260: the tactic that proves the
    termination *)
-let wordSem_evaluate_def,wordSem_evaluate_ind = define_wf
-  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE (wordLang_prog_size
-  (K 0)))
-                  (\(xs,((s:('a,'c,'ffi)wordSem_state))).
-                    (wordSem_state_termdep s,wordSem_state_clock
-                    s,xs)))`
+let wordSem_evaluate_def,wordSem_evaluate_ind = define_guess
   [`wordSem_evaluate ((Skip:'a
   wordLang_prog),(s:('a,'c,'ffi)wordSem_state)) = (NONE,s)`;
    `wordSem_evaluate (wordLang_Alloc n names,s) =

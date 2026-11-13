@@ -324,13 +324,10 @@ let evaluate_interp_thm = prove
  * ------------------------------------------------------------------------- *)
 
 let _ = size_thms "closSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_interpProofScript.sml:1097-1099: the tactic that proves
    the termination *)
-let v_ok_def,v_ok_ind = define_shaped_wf
+let v_ok_def,v_ok_ind = define_shaped_rec
   "nested"
-  `MEASURE closSem_v_size`
   [`v_ok (closSem_Number i:closSem_v) <=> T`;
    `v_ok (Word64 w:closSem_v) <=> T`;
    `v_ok (closSem_Block n vs:closSem_v) <=> EVERY v_ok vs`;

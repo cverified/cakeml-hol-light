@@ -257,13 +257,10 @@ let do_install_def = new_definition
 hol4_overload "do_install" "closSem_do_install";;
 
 let _ = size_thms "const";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 closSemScript.sml:170-175: the tactic that proves the
    termination *)
-let make_const_def,make_const_ind = define_shaped_wf
+let make_const_def,make_const_ind = define_shaped_rec
   "nested"
-  `MEASURE const_size`
   [`make_const (ConstInt i) = closSem_Number i`;
    `make_const (ConstStr s) = closSem_ByteVector (MAP (n2w o ORD)
   (explode s))`;
@@ -967,15 +964,9 @@ let closSem_fix_clock_IMP =
 if concl closSem_fix_clock_IMP <> `T` then
   cake_term_facts := closSem_fix_clock_IMP :: (!cake_term_facts);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 closSemScript.sml:828-843: the tactic that proves the
    termination *)
-let closSem_evaluate_def = define_mutual_wf
-  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
-                   (\x. match x with INL (xs,env,s) -> (state_clock
-                     s,list_size closSem_exp_alt_size xs,0) | INR
-                     (l,f,args,s) -> (state_clock s,0,LENGTH args)))`
+let closSem_evaluate_def = define_mutual_guess
   [`closSem_evaluate ([],(env:closSem_v
   list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =

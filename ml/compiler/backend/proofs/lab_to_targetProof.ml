@@ -250,7 +250,7 @@ let labs_domain_insert = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let has_odd_inst_def,has_odd_inst_ind = define_rec
+let has_odd_inst_def,has_odd_inst_ind = define_guess_cheat
   [`has_odd_inst [] = F`;
    `has_odd_inst (Section k [] :: xs) = has_odd_inst xs`;
    `has_odd_inst (Section k (y :: ys) :: xs) <=>
@@ -365,7 +365,7 @@ let word_loc_val_def = define_cases
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let has_io_name_def,has_io_name_ind = define_rec
+let has_io_name_def,has_io_name_ind = define_guess_cheat
   [`has_io_name index [] = F`;
    `has_io_name index (Section k [] :: xs) = has_io_name index xs`;
    `has_io_name index (Section k (y :: ys) :: xs) <=>
@@ -422,7 +422,7 @@ let lines_ok_def,lines_ok_ind = define_rec
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let all_enc_ok_def,all_enc_ok_ind = define_rec
+let all_enc_ok_def,all_enc_ok_ind = define_guess_cheat
   [`all_enc_ok c labs ffis pos [] = T`;
    `all_enc_ok c labs ffis pos (Section k [] :: xs) <=>
          EVEN pos /\ all_enc_ok c labs ffis pos xs`;
@@ -513,7 +513,7 @@ hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let num_pcs_def,num_pcs_ind = define_rec
+let num_pcs_def,num_pcs_ind = define_guess_cheat
   [`num_pcs [] = (0:num)`;
    `num_pcs (Section _13 [] :: rest) = ((num_pcs rest):num)`;
    `num_pcs (Section k (x :: xs) :: rest) = ((if is_Label x then
@@ -2639,7 +2639,7 @@ let lines_enc_with_nop_append = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let all_enc_with_nop_def,all_enc_with_nop_ind = define_rec
+let all_enc_with_nop_def,all_enc_with_nop_ind = define_guess_cheat
   [`all_enc_with_nop enc labs ffis pos [] <=> T`;
    `all_enc_with_nop enc labs ffis pos (Section k [] :: xs) <=>
        all_enc_with_nop enc labs ffis pos xs`;
@@ -3099,7 +3099,7 @@ let labs_domain_compute_labels_alt = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let even_labels_def,even_labels_ind = define_rec
+let even_labels_def,even_labels_ind = define_guess_cheat
   [`even_labels pos [] <=> T`;
    `even_labels pos (Section _79 [] :: ls) <=> even_labels pos ls`;
    `even_labels pos (Section k (y :: ys) :: ls) <=>
@@ -3123,7 +3123,7 @@ let even_labels_alt = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let even_labels_strong_def,even_labels_strong_ind = define_rec
+let even_labels_strong_def,even_labels_strong_ind = define_guess_cheat
   [`even_labels_strong pos [] <=> T`;
    `even_labels_strong pos (Section _81 [] :: ls) <=>
         EVEN pos /\ even_labels_strong pos ls`;

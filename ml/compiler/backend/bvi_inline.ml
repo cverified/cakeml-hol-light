@@ -54,13 +54,9 @@ let wrapper_ok_def = new_definition
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass). *)
 let _ = size_thms "bvi_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvi_inlineScript.sml:75-80: the tactic that proves the
    termination *)
-let inline_exp_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (_2,e) -> bvi_exp_size e | INR (_3,es)
-  -> list_size bvi_exp_size es)`
+let inline_exp_def = define_mutual_guess
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
    `inline_exp cs (bvi_If x y z) =
          bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp

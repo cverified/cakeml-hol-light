@@ -116,13 +116,9 @@ let handle_size_non_zero = prove
  (`0 < handle_size x`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_handleScript.sml:112-123: the tactic that proves the
    termination *)
-let handle_simp_def = define_mutual_wf
-  `MEASURE (\x. match x with INL a -> handle_size a | INR (INL a) ->
-  handle_size1 a | INR (INR (a,b,_4)) -> handle_size a + handle_size b)`
+let handle_simp_def = define_mutual_guess
   [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
    `handle_simp (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `handle_simp (If x1 x2 x3:bvl_exp) = If (handle_simp x1)

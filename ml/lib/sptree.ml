@@ -340,12 +340,9 @@ let spts_to_alist_aux_def,spts_to_alist_aux_ind = define_shaped_rec
          T))`];;
 
 let _ = size_thms "spt";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 sptreeScript.sml:2436-2442: the tactic that proves the
    termination *)
-let spts_to_alist_def,spts_to_alist_ind = define_wf
-  `MEASURE (\(_8,xs,_9). SUM (MAP (spt_size (K 0) o SND) xs))`
+let spts_to_alist_def,spts_to_alist_ind = define_guess
   [`spts_to_alist i xs acc_cent =
      (let (i,xs,acc_cent,repeat) =
        spts_to_alist_aux i xs acc_cent [] [] F in

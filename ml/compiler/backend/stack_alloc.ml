@@ -949,7 +949,7 @@ let next_lab_def,next_lab_ind = define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stack_alloc_comp_def,stack_alloc_comp_ind = define_rec
+let stack_alloc_comp_def,stack_alloc_comp_ind = define_guess_cheat
   [`stack_alloc_comp n m p =
      (match p with Seq p1 p2 ->
          (let (q1,m) = stack_alloc_comp n m p1 in

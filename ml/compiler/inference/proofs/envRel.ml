@@ -35,13 +35,10 @@ let _ = do_list hide_constant ["id"];;
 (* ---------- Converting infer types and envs to type system ones ---------- *)
 
 let _ = size_thms "infer_t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 envRelScript.sml:16-23: the tactic that proves the
    termination *)
-let convert_t_def,convert_t_ind = define_shaped_wf
+let convert_t_def,convert_t_ind = define_shaped_rec
   "nested"
-  `MEASURE infer_t_size`
   [`convert_t (Infer_Tvar_db n) = Tvar_db n`;
    `convert_t (Infer_Tapp ts tc) = Tapp (MAP convert_t ts) tc`];;
 

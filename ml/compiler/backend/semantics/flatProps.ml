@@ -801,12 +801,9 @@ let result_vs_def = new_definition
    port cannot state yet: v_size_aux *)
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 flatPropsScript.sml:1484-1489: the tactic that proves the
    termination *)
-let no_Mat_def,no_Mat_ind = define_wf
-  `MEASURE (flatLang_exp_size)`
+let no_Mat_def,no_Mat_ind = define_guess
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
    `no_Mat (flatLang_Var_local t v) <=> T`;

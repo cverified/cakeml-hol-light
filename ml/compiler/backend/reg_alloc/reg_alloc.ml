@@ -358,7 +358,7 @@ let reg_alloc_tag_CASE =
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let st_ex_MAP_def,st_ex_MAP_ind = define_rec
+let st_ex_MAP_def,st_ex_MAP_ind = define_guess_cheat
   [`st_ex_MAP f [] = st_ex_return []`;
    `st_ex_MAP f (x :: xs) =
       st_ex_bind (f x) (\
@@ -368,7 +368,7 @@ let st_ex_MAP_def,st_ex_MAP_ind = define_rec
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let st_ex_PARTITION_def,st_ex_PARTITION_ind = define_rec
+let st_ex_PARTITION_def,st_ex_PARTITION_ind = define_guess_cheat
   [`st_ex_PARTITION P [] tt ff = st_ex_return (tt,ff)`;
    `st_ex_PARTITION P (x :: xs) tt ff =
       st_ex_bind (P x) (\
@@ -379,7 +379,7 @@ let st_ex_PARTITION_def,st_ex_PARTITION_ind = define_rec
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let st_ex_FILTER_def,st_ex_FILTER_ind = define_rec
+let st_ex_FILTER_def,st_ex_FILTER_ind = define_guess_cheat
   [`st_ex_FILTER P [] acc = st_ex_return acc`;
    `st_ex_FILTER P (x :: xs) acc =
       st_ex_bind (P x) (\

@@ -60,13 +60,10 @@ hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
 *)
 
 let _ = size_thms "dataSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvi_to_dataProofScript.sml:36-48: the tactic that proves the
    termination *)
-let data_to_bvi_v_def,data_to_bvi_v_ind = define_shaped_wf
+let data_to_bvi_v_def,data_to_bvi_v_ind = define_shaped_rec
   "nested"
-  `MEASURE dataSem_v_size`
   [`data_to_bvi_v (Number i:dataSem_v) = bvlSem_Number i`;
    `data_to_bvi_v (Word64 w:dataSem_v) = bvlSem_Word64 w`;
    `data_to_bvi_v (CodePtr p:dataSem_v) = bvlSem_CodePtr p`;

@@ -87,11 +87,7 @@ let is_sibling_def = define_cases
    `is_sibling x (SOME l) = MEM x l`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let pattern_semantics_pmatch_def = define_mutual_wf
-  `MEASURE (\x. match x with INL (r,p,_7) -> pattern_semantics_pat_size
-  p | INR (r,ps,_8) -> list_size pattern_semantics_pat_size ps)`
+let pattern_semantics_pmatch_def = define_mutual_guess
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv

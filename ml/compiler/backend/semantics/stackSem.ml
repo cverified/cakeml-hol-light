@@ -53,7 +53,7 @@ hol4_overload "Error" "stackSem_Error";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bit_length_def,bit_length_ind = define_rec
+let bit_length_def,bit_length_ind = define_guess_cheat
   [`bit_length w = (if w = (n2w 0) then (0:num) else bit_length (w
   >>> 1) + 1)`];;
 
@@ -184,13 +184,10 @@ let stackSem_dec_clock_def = new_definition
 hol4_overload "dec_clock" "stackSem_dec_clock";;
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:151-156: the tactic that proves the
    termination *)
-let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_wf
+let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec
   "nested"
-  `MEASURE (wordLang_exp_size ARB o SND)`
   [`stackSem_word_exp s (wordLang_Const w) = SOME w`;
    `stackSem_word_exp s (wordLang_Var v) =
          (match FLOOKUP (stackSem_state_regs s) v with SOME
@@ -865,14 +862,9 @@ if concl stackSem_fix_clock_IMP <> `T` then
   cake_term_facts := stackSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "stackLang_prog";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stackSemScript.sml:1022-1029: the tactic that proves the
    termination *)
-let stackSem_evaluate_def,stackSem_evaluate_ind = define_wf
-  `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
-                              (\(xs,(s:('a,'c,'ffi)stackSem_state)).
-                                (stackSem_state_clock s,xs)))`
+let stackSem_evaluate_def,stackSem_evaluate_ind = define_guess
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =

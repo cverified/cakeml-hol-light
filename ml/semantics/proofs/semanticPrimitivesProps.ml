@@ -524,7 +524,7 @@ let ctors_of_dec_def = new_definition
 
 (* free vars *)
 
-let FV_def = define_mutual_rec
+let FV_def = define_mutual_guess
   [`FV (ast_Raise e:ast_exp) = FV e`;
    `FV (ast_Handle e pes:ast_exp) = FV e UNION FV_pes pes`;
    `FV (ast_Lit _21:ast_exp) = {}`;

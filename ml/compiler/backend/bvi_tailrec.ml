@@ -454,7 +454,7 @@ let op_ty_PMATCH = prove
        branch of origin for the operation in conditionals.
 *)
 
-let scan_expr_def,scan_expr_ind = define_rec
+let scan_expr_def,scan_expr_ind = define_guess
   [`scan_expr ts loc [] = []`;
    `scan_expr ts loc (x :: y :: xs) =
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
@@ -678,7 +678,7 @@ let rewrite_PMATCH = prove
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let has_rec_def,has_rec_ind = define_rec
+let has_rec_def,has_rec_ind = define_guess_cheat
   [`has_rec loc x2 =
         match x2 with
           [] -> F

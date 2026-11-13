@@ -74,13 +74,9 @@ let MAPi_eq_MAP = prove
   CHEAT_TAC);;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 flat_patternScript.sml:91-96: the tactic that proves the
    termination *)
-let compile_pat_bindings_def,compile_pat_bindings_ind = define_wf
-  `MEASURE (\(t,i,m,exp). SUM (MAP (pattern_semantics_pat_size o FST)
-  m) + LENGTH m)`
+let compile_pat_bindings_def,compile_pat_bindings_ind = define_guess
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
    `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;
@@ -279,7 +275,7 @@ let op_sets_globals_EX = prove
  (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
   CHEAT_TAC);;
 
-let flat_pattern_compile_exp_def = define_mutual_rec
+let flat_pattern_compile_exp_def = define_mutual_guess
   [`flat_pattern_compile_exp cfg (flatLang_Var_local t vid) =
         (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =

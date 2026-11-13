@@ -106,7 +106,7 @@ let interference_ok_def = new_definition
   ms)`;;
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let all_pcs_def,all_pcs_ind = define_rec
+let all_pcs_def,all_pcs_ind = define_guess_cheat
   [`all_pcs n a k =
         match n with
           0 -> {}

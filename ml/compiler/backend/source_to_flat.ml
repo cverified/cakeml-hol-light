@@ -82,13 +82,10 @@ let compile_var_def = define_cases
    port cannot state yet: ast_pat1_size *)
 
 let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 source_to_flatScript.sml:68-72: the tactic that proves the
    termination *)
-let compile_pat_def,compile_pat_ind = define_shaped_wf
+let compile_pat_def,compile_pat_ind = define_shaped_rec
   "nested"
-  `MEASURE (pattern_semantics_pat_size o SND)`
   [`(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
    (compile_pat env Pany = Pany) /\
    (compile_pat env (Plit l) = Plit l) /\
@@ -140,14 +137,7 @@ let join_all_names_def = new_definition
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let source_to_flat_compile_exp_def = define_mutual_wf
-  `inv_image (<) (\x. match x with INL (t,x,e) -> ast_exp_size e | INR
-  (INL (t,x,es)) -> list_size ast_exp_size es | INR (INR (INL
-  (t,x,pes))) -> list_size (pair_size ast_pat_size ast_exp_size) pes |
-  INR (INR (INR (t,x,funs))) -> list_size (pair_size mlstring_size
-  (pair_size mlstring_size ast_exp_size)) funs)`
+let source_to_flat_compile_exp_def = define_mutual_guess
   [`source_to_flat_compile_exp (t:mlstring list)
   (env:source_to_flat_environment) (Raise e:ast_exp) =
         flatLang_Raise backend_common_None
@@ -415,11 +405,8 @@ let simple_dlet_def = new_definition
        (pv,v) | _12 -> NONE) | _13 -> NONE)`;;
 
 let _ = size_thms "dec";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
-  define_wf
-  `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`
+  define_guess
   [`source_to_flat_compile_decs t n next' env envs' x6 =
         match (t,x6) with
           ((t:mlstring list),[Dlet locs p e]) ->

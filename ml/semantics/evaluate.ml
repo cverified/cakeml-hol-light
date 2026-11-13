@@ -74,18 +74,9 @@ let sing_env_def = new_definition
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "dec";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 evaluateScript.sml:268-277: the tactic that proves the
    termination *)
-let evaluate_def = define_mutual_wf
-  `inv_image ((<) LEX (<))
-       (\x. match x with INL (s,_1,es) ->
-         (semanticPrimitives_state_clock s,list_size ast_exp_size es) |
-         INR (INL (s,_2,_3,pes,_4)) -> (semanticPrimitives_state_clock
-         s,list_size (pair_size ast_pat_size ast_exp_size) pes) | INR
-         (INR (s,_5,ds)) -> (semanticPrimitives_state_clock s,list_size
-         dec_size ds))`
+let evaluate_def = define_mutual_guess
   [`evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
   semanticPrimitives_state),Rval [])`;
    `evaluate (st:'ffi semanticPrimitives_state) env (e1 :: e2 :: es) =

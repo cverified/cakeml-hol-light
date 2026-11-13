@@ -61,14 +61,9 @@ let mk_Branch_def = new_definition
        word_depth_Branch t1 t2)`;;
 
 let _ = size_thms "wordLang_prog";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 word_depthScript.sml:81-86: the tactic that proves the
    termination *)
-let call_graph_def,call_graph_ind = define_wf
-  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
-         (\(funs,n,ns,total',p). (sptree_size funs,total' - LENGTH
-           ns,wordLang_prog_size (K 0) p)))`
+let call_graph_def,call_graph_ind = define_guess
   [`call_graph funs n ns total' x5 =
         match x5 with
           wordLang_Seq p1 p2 ->
