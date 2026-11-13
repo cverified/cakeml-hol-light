@@ -31,16 +31,17 @@ The work has three phases.
    comment pointing at the HOL4 lines instead; `tools/coverage.py`
    is the check.
 3. **Proofs -- under way.**  Every cheat becomes a real proof,
-   until `length (axioms ())` is 3 (HOL Light's own three).  The
-   last full run stood at **9607**.  670 proofs are in, in five
-   files.
+   until `length (axioms ())` is 3 (HOL Light's own three).
+   1262 of the port's 10543 proofs are real: 670 of them in the
+   proof store (`proofs/`), the rest written beside the port in
+   `tools/extra/` or taken from LightCake (see below).
 
 `ml/CHEATS.md` lists every assumed definition with the reason,
 `ISSUES.md` every place the port knowingly says something other
 than the source, and `PENDING.md` what is left out and why.
 
-286 files live under `ml/`: 228 are ports of CakeML sources, and 58
-in `ml/lib/` are the HOL4 library theories (and the port's own
+290 files live under `ml/`: 228 are ports of CakeML sources, and
+62 in `ml/lib/` are the HOL4 library theories (and the port's own
 support) that CakeML needs and HOL Light does not have.
 
 ## Loading it

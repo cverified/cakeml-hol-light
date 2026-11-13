@@ -10,6 +10,8 @@ The session keeps the port up to the file, so the check is one
 load of the closure and then one step per block."""
 import os, re, subprocess, sys
 
+sys.stdout.reconfigure(line_buffering=True)
+
 T = os.path.dirname(os.path.abspath(__file__)) + '/../'
 sys.path.insert(0, T)
 import lightcake as L
@@ -20,7 +22,7 @@ BAR = '(* ' + '=' * 64 + ' *)'
 ANSI = re.compile(r'\x1b\[[0-9;]*m')
 
 
-def step(s, cmd, timeout='120'):
+def step(s, cmd, timeout='90'):
   """what a step prints, without the colours that HOL Light puts
      round a word like Error (they stand in front of it, so a
      match that wants the start of a line never sees it)"""
@@ -73,17 +75,20 @@ def main(argv):
         'no answer').split())[:120]
       bad.append((ns[0], why))
       print('%4d/%d  %-34s %s' % (i + 1, len(blocks), ns[0], why))
-      # a session that has died answers nothing, and every block
-      # after it would be written down as one that fails
+      # a step that ran out of its budget leaves the session
+      # computing, and every step after it would wait behind
+      # that one; and a session that has died answers nothing at
+      # all, which would write every block after it down as one
+      # that fails
       if why == 'no answer':
-        gone += 1
-        if gone >= 5:
+        subprocess.run([T + '../../bin/repl-int', s],
+                       capture_output=True)
+        gone = 0 if 'val it' in step(s, '();;', '60') else gone + 1
+        if gone >= 3:
           print('the session answers nothing: it is gone')
           return 1
       else: gone = 0
-      # the block is not there, so the ones after it that use it
-      # have to be tried without it
-      step(s, '();;')
+
   f = T + 'lightcake/' + nm + '.bad'
   if bad:
     open(f, 'w').write(''.join('%s\t%s\n' % b for b in bad))

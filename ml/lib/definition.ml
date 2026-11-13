@@ -82,6 +82,15 @@ let noted ths =
   let th = end_itlist CONJ ths in
   cake_note_def th; note_dest_fact th; th;;
 
+(* HOL Light's own new_definition, noted like every other way.  A
+   tactic of ml/lib/tactics.ml is written before the port and
+   asks for a definition by the name of its constant, which is
+   the one thing a file cannot hand it; the ways that this file
+   has all note what they make, and the way that is HOL Light's
+   own has to note it too, or the tactic finds nothing *)
+
+let new_definition tm = noted [new_definition tm];;
+
 let definition_made wfs tm =
   let fs = definition_heads tm in
   noted (fst (if length fs = 1 then define_single wfs tm
