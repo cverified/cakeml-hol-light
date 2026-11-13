@@ -1,0 +1,67 @@
+### EVERY_isDataElement_IMP_LEMMA
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; FILTER; isDataElement_def] THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[isForwardPointer_def] THEN
+     ASM_MESON_TAC[])
+
+### FILTER_LEMMA
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[FILTER] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[NOT_CONS_NIL; CONS_11])
+
+### FINITE_heap_addresses
+  (LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[heap_addresses_def; FINITE_EMPTY; FINITE_INSERT])
+
+### heap_filter_EMPTY
+  (REWRITE_TAC[heap_filter_def] THEN
+   SUBGOAL_THEN `!(heap:((A,B)heap_element)list) n. heap_filter_aux n {}
+     heap = []`
+     (fun th -> REWRITE_TAC[th]) THEN
+   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[heap_filter_aux_def;
+     NOT_IN_EMPTY; APPEND])
+
+### heap_filter_aux_SING_ZERO
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[heap_filter_aux_def; IN_SING] THEN
+   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[ARITH_RULE `0 < n ==> ~(n = 0) /\
+     0 < n + m`; APPEND])
+
+### heap_filter_aux_heap_addresses_UNION
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[heap_filter_aux_def;
+    heap_addresses_def] THEN
+   REPEAT GEN_TAC THEN REWRITE_TAC[IN_UNION; IN_INSERT; APPEND] THEN
+   SUBGOAL_THEN
+     `(n INSERT heap_addresses (n + el_length h) t) UNION s =
+      heap_addresses (n + el_length (h:(A,B)heap_element))
+        (t:((A,B)heap_element)list)
+      UNION (n INSERT s)`
+     SUBST1_TAC THENL [SET_TAC[]; ASM_REWRITE_TAC[]])
+
+### heap_length_heap_filter
+  (REWRITE_TAC[heap_filter_def] THEN
+   MESON_TAC[heap_length_heap_filter_aux; UNION_EMPTY])
+
+### heap_length_heap_filter_INSERT
+  (REWRITE_TAC[heap_filter_def] THEN
+   SUBGOAL_THEN
+     `!(heap:((A,B)heap_element)list) n e s.
+        ~(e IN s)
+        ==> heap_length (heap_filter_aux n (e INSERT s) heap) =
+            heap_length (heap_filter_aux n {e} heap) +
+            heap_length (heap_filter_aux n s heap)`
+     (fun th -> SIMP_TAC[th]) THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[heap_filter_aux_def;
+     heap_length_NIL; ADD_CLAUSES] THEN
+   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[heap_length_APPEND; IN_INSERT;
+     IN_SING] THEN
+   ASM_CASES_TAC `n:num = e` THEN ASM_REWRITE_TAC[] THEN
+   TRY COND_CASES_TAC THEN REWRITE_TAC[heap_length_NIL] THEN ARITH_TAC)
+
+### heap_lookup_EXTEND
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[heap_lookup_def; APPEND;
+    option_DISTINCT] THEN
+   REPEAT GEN_TAC THEN REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[])
+
+### heaps_similar_REFL
+  (REWRITE_TAC[heaps_similar_def] THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[FILTER; ALL2] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[NOT_CONS_NIL])

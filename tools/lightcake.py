@@ -4,6 +4,7 @@
      python3 -I tools/lightcake.py report
      python3 -I tools/lightcake.py deps <theory>
      python3 -I tools/lightcake.py import <theory>
+     python3 -I tools/lightcake.py fill <theory>
 
 LightCake (`lightcake-src/`, see README.md) is the other port of
 CakeML to HOL Light: narrow and deep where this one is wide and
@@ -521,66 +522,102 @@ def unclash(text, thy, known, port):
   return text, done
 
 
+class Ctx:
+  """what both an import and a fill have to know about a theory:
+     the two files, the map from LightCake's names to this
+     port's, and what this port has at the point its file of the
+     theory stands at"""
+
+  def __init__(self, nm):
+    self.nm = nm
+    self.a, self.b = ours_of(nm), theirs_of(nm)
+    if not self.a or not self.b: return
+    d = self.d = port_db()
+    m, _, _ = rename_map(nm)
+    self.rank = dict((t, i) for i, (t, _, _) in enumerate(d.order))
+    self.lcn = lc_names(d, nm)
+    self.ot = ours_terms(nm, self.rank)
+    # LightCake's name for a thing of the closure, under this
+    # port's name for it; the pair of files of this theory says
+    # it more precisely than the HOL4 names do, so that map wins
+    gm = dict((k, v) for k, v in self.lcn.items() if v)
+    gm.update(m)
+    self.lb, self.kit = lc_bindings()
+    self.ob, self.bridge = ours_bindings(nm, self.rank)
+    # what this port has of its own, which is its file without
+    # the block that an import before this one appended to it
+    self.ours = theorems(self.a, MARK % nm)
+    self.defs = set(definitions(self.b))
+    # the name each port binds the definition of a constant to:
+    # LightCake's sptree_size_def is this port's size_def, and a
+    # proof that rewrites with it has to say the name this port
+    # uses.  The induction theorem of a definition goes by the
+    # same name with _ind, in both
+    obyc = {}
+    for k, v in definitions(self.a).items(): obyc.setdefault(v, k)
+    # LightCake keeps the HOL4 name of a library constant unless
+    # it had to change it (doc/library_renames.tsv), and this
+    # port has its own renaming of the same HOL4 name: that is
+    # the join for a theory doc/names.tsv does not cover
+    ourname = lambda c: self.lcn.get(c) or d.rename.get((nm, c), c)
+    for k, v in definitions(self.b).items():
+      o = m.get(v) or ourname(v)
+      if not o: continue
+      if o != v and o in self.ot: m.setdefault(v, o)
+      if o in obyc and k != obyc[o]:
+        m[k] = obyc[o]
+        if k.endswith('_def') and obyc[o].endswith('_def'):
+          m[k[:-4] + '_ind'] = obyc[o][:-4] + '_ind'
+    self.m, self.gm = m, gm
+    # a name of LightCake's is there to be used once this port
+    # has the thing it names: a block before it in the file, a
+    # binding of this port, or a constant this port writes
+    self.have = ((set(self.ob) - (self.kit - self.bridge)) |
+                 set(k for k in self.defs
+                     if k in self.ob or k in m))
+    self.known = set(gm.values()) | set(self.lb)
+    self.port = port_names(nm, d)
+    # the map of the whole closure, less what the pair of files
+    # of this theory already says
+    self.rest = dict((k, v) for k, v in gm.items() if k not in m)
+    self.bad = {}
+    try:
+      for l in open(T + 'lightcake/' + nm + '.bad'):
+        k, _, v = l.rstrip('\n').partition('\t')
+        self.bad[k] = v
+    except OSError: pass
+
+  def missing(self, ns, body):
+    """the names of LightCake's that this port has not got"""
+    need, bnd = [], bound_names(body)
+    for w in sorted(set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*",
+                                   body))):
+      if w in ns or w in bnd: continue
+      if w in self.lb and w not in self.have: need.append(w)
+      elif w in self.lcn and \
+           self.gm.get(w, self.lcn[w]) not in self.ot:
+        need.append(w)
+    return need
+
+  def ported(self, body):
+    """a block of LightCake's in this port's vocabulary"""
+    t = rename_terms(rename(body.rstrip(), self.m), self.rest,
+                     bound_names(body))
+    return unclash(t, self.nm, self.known, self.port)
+
+
 def emit(argv):
   """tools/lightcake/<theory>.ml, which the port appends to its
      own file of that theory"""
   if not argv: print('import <theory>'); return 1
   nm = argv[0]
-  a, b = ours_of(nm), theirs_of(nm)
-  if not a or not b:
+  c = Ctx(nm)
+  if not c.a or not c.b:
     print('no pair of files for %s' % nm); return 1
-  d = port_db()
-  m, _, _ = rename_map(nm)
-  rank = dict((t, i) for i, (t, _, _) in enumerate(d.order))
-  lcn, ot = lc_names(d, nm), ours_terms(nm, rank)
-  # LightCake's name for a thing of the closure, under this
-  # port's name for it; the pair of files of this theory says it
-  # more precisely than the HOL4 names do, so that map wins
-  gm = dict((k, v) for k, v in lcn.items() if v)
-  gm.update(m)
-  (lb, kit), (ob, bridge) = lc_bindings(), ours_bindings(nm, rank)
-  # what this port has of its own, which is its file without the
-  # block that an import before this one appended to it
-  ours = theorems(a, MARK % nm)
-  defs = set(definitions(b))
-  # the name each port binds the definition of a constant to:
-  # LightCake's sptree_size_def is this port's size_def, and a
-  # proof that rewrites with it has to say the name this port
-  # uses.  The induction theorem of a definition goes by the
-  # same name with _ind, in both
-  obyc = {}
-  for k, v in definitions(a).items(): obyc.setdefault(v, k)
-  # LightCake keeps the HOL4 name of a library constant unless
-  # it had to change it (doc/library_renames.tsv), and this port
-  # has its own renaming of the same HOL4 name: that is the join
-  # for a theory that doc/names.tsv does not cover
-  ourname = lambda c: lcn.get(c) or d.rename.get((nm, c), c)
-  for k, v in definitions(b).items():
-    o = m.get(v) or ourname(v)
-    if not o: continue
-    if o != v and o in ot: m.setdefault(v, o)
-    if o in obyc and k != obyc[o]:
-      m[k] = obyc[o]
-      if k.endswith('_def') and obyc[o].endswith('_def'):
-        m[k[:-4] + '_ind'] = obyc[o][:-4] + '_ind'
+  m, ob = c.m, c.ob
+  ours, defs, bad, have = c.ours, c.defs, c.bad, c.have
   take, left = [], []
-  # what a check of an import before this one found does not go
-  # through here (tools/bin/lightcake-check writes it)
-  bad = {}
-  try:
-    for l in open(T + 'lightcake/' + nm + '.bad'):
-      k, _, v = l.rstrip('\n').partition('\t')
-      bad[k] = v
-  except OSError: pass
-  # a name of LightCake's is there to be used once this port has
-  # the thing it names: the block before it in the file, a
-  # binding of this port, or a constant this port writes
-  # a definition of LightCake's own file is one this port has
-  # only where this port has it here: its is_adjacent_def is in
-  # spt_closure, which loads after sptree
-  have = ((set(ob) - (kit - bridge)) |
-          set(k for k in defs if k in ob or k in m))
-  for ns, body in bindings(b):
+  for ns, body in bindings(c.b):
     if [n for n in ns if n in defs or n in ours]:
       # a definition of LightCake's that this port makes its own
       # way, or a theorem this port proves itself: what it binds
@@ -590,24 +627,13 @@ def emit(argv):
       continue
     if ns[0] in bad:
       left.append((ns[0], ['--'] + bad[ns[0]].split())); continue
-    need = []
-    bnd = bound_names(body)
-    for w in sorted(set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", body))):
-      if w in ns or w in bnd: continue
-      if w in lb and w not in have: need.append(w)
-      elif w in lcn and gm.get(w, lcn[w]) not in ot: need.append(w)
+    need = c.missing(ns, body)
     if need: left.append((ns[0], need)); continue
     take.append((ns[0], body)); have |= set(ns)
-  out = [file_head(nm, os.path.relpath(b, LC + 'src')[:-3])]
-  known, port = set(gm.values()) | set(lb), port_names(nm, d)
-  # the map of the whole closure, less what the pair of files of
-  # this theory already says
-  rest = dict((k, v) for k, v in gm.items() if k not in m)
+  out = [file_head(nm, os.path.relpath(c.b, LC + 'src')[:-3])]
   clash = {}
   for n, body in take:
-    t = rename_terms(rename(body.rstrip(), m), rest,
-                     bound_names(body))
-    t, done = unclash(t, nm, known, port)
+    t, done = c.ported(body)
     for w, v, t2 in done: clash[w] = (v, t2)
     out.append(wrap72(t))
   if left:
@@ -636,12 +662,124 @@ def emit(argv):
   return 0
 
 
+def tactic_of(body):
+  """the tactic of a prove block: what stands after the
+     statement, without the parentheses of the call"""
+  i = body.index('prove')
+  j = body.index('(', i)
+  d, q, st, k = 0, False, False, j
+  while k < len(body):
+    ch = body[k]
+    if st:
+      if ch == '\\': k += 2; continue
+      if ch == '"': st = False
+    elif q:
+      if ch == '`': q = False
+    elif ch == '`': q = True
+    elif ch == '"': st = True
+    elif ch == '(': d += 1
+    elif ch == ')':
+      d -= 1
+      if not d: break
+    k += 1
+  inner = body[j + 1:k]
+  a = inner.index('`')
+  b = inner.index('`', a + 1)
+  rest = inner[b + 1:].lstrip()
+  if rest.startswith(','): rest = rest[1:]
+  return rest.strip()
+
+
+def reindent(tac):
+  """the tactic as the proof store writes it: in brackets of its
+     own, the first line two spaces in and the rest three, which
+     is where the bracket leaves them"""
+  ls = [l for l in tac.split('\n')]
+  pad = min((len(l) - len(l.lstrip()) for l in ls[1:] if l.strip()),
+            default=0)
+  out = ['  (' + ls[0].strip()]
+  for l in ls[1:]:
+    out.append('   ' + l[pad:].rstrip() if l.strip() else '')
+  return '\n'.join(out).rstrip() + ')'
+
+
+def lc_thm_names():
+  """LightCake's name for a theorem of the closure, under the
+     HOL4 name that both ports call it by"""
+  out = {}
+  for f in ('doc/names.tsv', 'doc/library_renames.tsv'):
+    for l in open(LC + f):
+      fs = l.rstrip('\n').split('\t')
+      if len(fs) < 5 or fs[2] != 'theorem': continue
+      out[fs[4]] = fs[3]
+  return out
+
+
+CHEATED = re.compile(r"(?:^\(\* ([A-Za-z0-9_']+)(?:\[[^\]]*\])? \*\)\n)?"
+                     r"^let ([A-Za-z0-9_']+) = prove", re.M)
+
+
+def our_cheats(path):
+  """the theorems this port states and does not prove, by the
+     HOL4 name that the proof store calls them by: the port
+     writes that name in a comment where it binds the theorem
+     under another one"""
+  s = open(path).read()
+  if CUT in s: s = s[:s.index(CUT)]
+  out = {}
+  for mo in CHEATED.finditer(s):
+    body = s[mo.start():block_end(s, mo.end())]
+    if 'CHEAT_TAC' not in body: continue
+    out[mo.group(1) or mo.group(2)] = mo.group(2)
+  return out
+
+
+def fill(argv):
+  """the proofs of LightCake's that this port can use for a
+     theorem it states and cheats, into proofs/<path>.prf"""
+  if not argv: print('fill <theory>'); return 1
+  nm = argv[0]
+  c = Ctx(nm)
+  if not c.a or not c.b:
+    print('no pair of files for %s' % nm); return 1
+  sys.path.insert(0, T)
+  import proofstore
+  mlrel = re.sub(r'^.*/ml/', '', c.a)
+  pp = proofstore.path_of(mlrel)
+  there = set(proofstore.load(mlrel))
+  h4 = lc_thm_names()
+  theirs = {}
+  for ns, body in bindings(c.b):
+    if ' = prove' not in body.split('\n')[0]: continue
+    theirs[h4.get(ns[0], ns[0])] = (ns[0], body)
+  took, left = [], []
+  for n, bind in sorted(our_cheats(c.a).items()):
+    if n in there or n not in theirs: continue
+    k, body = theirs[n]
+    need = c.missing([k], body)
+    if need: left.append((n, need)); continue
+    t, _ = c.ported(tactic_of(body))
+    took.append((n, wrap72(reindent(t))))
+  if took:
+    os.makedirs(os.path.dirname(pp), exist_ok=True)
+    old = open(pp).read().rstrip('\n') + '\n\n' \
+          if os.path.exists(pp) else ''
+    open(pp, 'w').write(
+      old + '\n\n'.join('### %s\n%s' % (n, t) for n, t in took)
+      + '\n')
+  print('%s: %d proofs of %d cheats LightCake has, %d of them '
+        'with a name this port has not got'
+        % (nm, len(took), len(took) + len(left), len(left)))
+  return 0
+
+
 def main(argv):
   if not argv: print(__doc__); return 0
   if argv[0] == 'import': return emit(argv[1:])
   if argv[0] == 'names': return names(argv[1:])
   if argv[0] == 'report': return report(argv[1:])
   if argv[0] == 'deps': return deps(argv[1:])
+  if argv[0] == 'fill': return fill(argv[1:])
   print(__doc__); return 1
 
 

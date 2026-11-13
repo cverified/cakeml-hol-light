@@ -64,7 +64,7 @@ def main(argv):
     text = text[:text.rindex(BAR, 0, text.index(mark))]
   base = T + '../tmp/lcbase_%s.ml' % nm
   open(base, 'w').write(text)
-  blk = T + '../tmp/lcblk.ml'
+  blk = T + '../tmp/lcblk_%s.ml' % s
 
   subprocess.run([T + '../../bin/repl-kill', s],
                  capture_output=True)
