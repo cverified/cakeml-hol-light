@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  grammar: ported from HOL4's
-    examples/formal-languages/context-free/grammarScript.sml  *)
+    examples/formal-languages/context-free/grammarScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/location.ml";;

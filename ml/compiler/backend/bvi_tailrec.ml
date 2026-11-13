@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  bvi_tailrec: ported from HOL4's
-    compiler/backend/bvi_tailrecScript.sml  *)
+    compiler/backend/bvi_tailrecScript.sml
+    A definition theory, with 39 definitions, 2 datatypes and 35
+    theorems.  Needed by bvi_tailrecProof.ml, bvl_to_bvi.ml,
+    bvl_to_bviProof.ml and word_bignum.ml.  *)
 (* ======================================================== *)
 
 (*

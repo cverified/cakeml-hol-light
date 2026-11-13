@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  NTproperties: ported from HOL4's
-    examples/formal-languages/context-free/NTpropertiesScript.sml  *)
+    examples/formal-languages/context-free/NTpropertiesScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by cmlNTProps.ml, gramProps.ml,
+    pegComplete.ml and pegSound.ml.  *)
 (* ======================================================== *)
 
 needs "lib/grammar.ml";;

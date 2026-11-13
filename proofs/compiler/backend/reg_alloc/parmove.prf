@@ -1,0 +1,93 @@
+### ALL_DISTINCT_pmov
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(SPECL [`p:(A option#A option) list#(A option#A option)
+     list#
+                   (A option#A option) list`;
+                 `pmov (p:(A option#A option) list#(A option#A
+                   option) list#
+                         (A option#A option) list)`]
+                           ALL_DISTINCT_steps) THEN
+   ASM_SIMP_TAC[REWRITE_RULE[IMP_IMP] dsteps_steps; pmov_dsteps])
+
+### NoRead_path
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; HD; TL; LAST;
+    windmill_cons] THEN
+   CONV_TAC NUM_REDUCE_CONV THEN
+   ASM_CASES_TAC `t:(A#A) list = []` THEN ASM_REWRITE_TAC[LENGTH]
+     THEN
+   CONV_TAC NUM_REDUCE_CONV THEN STRIP_TAC THEN
+   FIRST_ASSUM(MP_TAC o MATCH_MP path_tail) THEN
+   DISCH_THEN(MP_TAC o SPEC `FST (h:A#A)` o MATCH_MP path_imp_mem2)
+     THEN
+   ASM_MESON_TAC[])
+
+### eqenv_sym
+  (SIMP_TAC[eqenv_def])
+
+### not_use_temp_before_assign_insert
+  (GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC
+    not_use_temp_before_assign_ind THEN
+   ASM_REWRITE_TAC[not_use_temp_before_assign_def; APPEND] THEN
+   ASM_SIMP_TAC[GSYM APPEND_ASSOC; APPEND;
+     not_use_temp_before_assign_def])
+
+### parsem_nil
+  (REWRITE_TAC[FUN_EQ_THM; parsem_def; MAP; ZIP; UPDATE_LIST_THM;
+    I_THM])
+
+### pmov_not_use_temp_before_assign
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(SPECL [`p:(A option#A option) list#(A option#A option)
+     list#
+                   (A option#A option) list`;
+                 `pmov (p:(A option#A option) list#(A option#A
+                   option) list#
+                         (A option#A option) list)`]
+                           steps_not_use_temp_before_assign) THEN
+   ASM_SIMP_TAC[REWRITE_RULE[IMP_IMP] dsteps_steps; pmov_dsteps])
+
+### pmov_preserves_moves
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(SPECL [`x:A option`;
+                 `p:(A option#A option) list#(A option#A option)
+                   list#
+                    (A option#A option) list`;
+                 `pmov (p:(A option#A option) list#(A option#A
+                   option) list#
+                         (A option#A option) list)`]
+                           steps_preserves_moves) THEN
+   REWRITE_TAC[] THEN
+   ANTS_TAC THENL
+    [ASM_SIMP_TAC[REWRITE_RULE[IMP_IMP] dsteps_steps; pmov_dsteps]
+      THEN ASM_MESON_TAC[];
+     REWRITE_TAC[MEM_MAP; EXISTS_PAIR_THM] THEN MESON_TAC[FST]])
+
+### sem_final
+  (REWRITE_TAC[FUN_EQ_THM; sem_def; APPEND; parsem_nil; I_THM])
+
+### sem_init
+  (REWRITE_TAC[FUN_EQ_THM; sem_def; APPEND_NIL; REVERSE; seqsem_def])
+
+### seqsem_append
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[FUN_EQ_THM; APPEND; seqsem_def;
+    o_THM] THEN
+   SPEC_TAC(`h:A#A`,`h:A#A`) THEN REWRITE_TAC[FORALL_PAIR_THM;
+     seqsem_def] THEN
+   ASM_REWRITE_TAC[o_THM])
+
+### seqsem_move_unchanged
+  (GEN_TAC THEN MATCH_MP_TAC seqsem_ind THEN
+   SIMP_TAC[seqsem_def; APPLY_UPDATE_THM; MAP; MEM; FST] THEN
+     MESON_TAC[])
+
+### steps_correct
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(ISPECL
+     [`(mu,[],[]):(A option#A option) list#(A option#A option) list#
+                  (A option#A option) list`;
+      `([],[],tau):(A option#A option) list#(A option#A option) list#
+                   (A option#A option) list`] steps_sem) THEN
+   ASM_SIMP_TAC[wf_init] THEN DISCH_THEN(MP_TAC o SPEC `rho:A
+     option->B`) THEN
+   REWRITE_TAC[sem_def; APPEND_NIL; APPEND; REVERSE; seqsem_def;
+     parsem_nil; I_THM])

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_cse: ported from HOL4's
-    compiler/backend/word_cseScript.sml  *)
+    compiler/backend/word_cseScript.sml
+    A definition theory, with 44 definitions, 1 datatype and 10
+    theorems.  Needed by backend.ml, backend_passes.ml,
+    wordConvsProof.ml, word_cseProof.ml and word_to_word.ml.  *)
 (* ======================================================== *)
 
 (*

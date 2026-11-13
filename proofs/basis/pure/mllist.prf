@@ -1,0 +1,91 @@
+### MAPI_thm
+  (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM MAPI_thm_gen; ADD_CLAUSES;
+    ETA_AX])
+
+### MAPI_thm_gen
+  (GEN_TAC THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[MAPi_DEF; mllist_mapi_def; LET_DEF; LET_END_DEF;
+     ADD_CLAUSES] THEN
+   GEN_TAC THEN REWRITE_TAC[CONS_11] THEN
+   FIRST_X_ASSUM(MP_TAC o SPEC `x + 1`) THEN DISCH_THEN(SUBST1_TAC o
+     SYM) THEN
+   AP_THM_TAC THEN AP_TERM_TAC THEN REWRITE_TAC[FUN_EQ_THM; o_THM]
+     THEN
+   REPEAT GEN_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN ARITH_TAC)
+
+### collate_equal_thm
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[collate_def; MEM] THEN
+   STRIP_TAC THEN ASM_SIMP_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+   ASM_MESON_TAC[])
+
+### filter_rev'_lemma
+  (SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[filter_rev'_def; APPEND] THEN GEN_TAC THEN
+     COND_CASES_TAC THEN
+   REWRITE_TAC[] THEN
+   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (RAND_CONV o LAND_CONV)
+     [th]) THEN
+   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
+   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND])
+
+### filter_rev_thm
+  (REWRITE_TAC[filter_rev_def] THEN SPEC_TAC(`xs:A list`,`xs:A list`)
+    THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[filter_rev'_def; FILTER; REVERSE]
+     THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[REVERSE] THEN
+   ONCE_REWRITE_TAC[filter_rev'_lemma] THEN ASM_REWRITE_TAC[APPEND;
+     APPEND_NIL])
+
+### foldl_intro
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; foldl_def])
+
+### map_rev'_lemma
+  (SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[map_rev'_def; APPEND] THEN GEN_TAC THEN
+   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (RAND_CONV o LAND_CONV)
+     [th]) THEN
+   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
+   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND])
+
+### map_rev_thm
+  (REWRITE_TAC[map_rev_def] THEN SPEC_TAC(`xs:A list`,`xs:A list`)
+    THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[map_rev'_def; MAP; REVERSE] THEN
+   ONCE_REWRITE_TAC[map_rev'_lemma] THEN ASM_REWRITE_TAC[APPEND])
+
+### merge_tail_acc
+  (REPEAT GEN_TAC THEN REWRITE_TAC[mergetail_merge] THEN
+    COND_CASES_TAC THEN
+   REWRITE_TAC[APPEND_ASSOC])
+
+### partition_aux_thm
+  (GEN_TAC THEN LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[partition_aux_def; FILTER; APPEND_NIL; o_THM] THEN
+   REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[REVERSE; GSYM APPEND_ASSOC; APPEND])
+
+### partition_neg_thm
+  (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND])
+
+### partition_pos_thm
+  (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND])
+
+### sort_MEM
+  (REWRITE_TAC[sort_def; mergesort_tail_MEM])
+
+### sort_SORTS
+  (SIMP_TAC[SORTS_DEF; sort_PERM; sort_SORTED])
+
+### sort_set
+  (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; sort_MEM])
+
+### sort_thm
+  (REWRITE_TAC[sort_def])
+
+### tabulate_GENLIST
+  (REWRITE_TAC[tabulate_def; tabulate_aux_GENLIST; LET_DEF;
+    LET_END_DEF;
+               REVERSE; APPEND; FUNPOW_SUC_PLUS; SUB_0] THEN
+   GEN_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+   REWRITE_TAC[FUN_EQ_THM; o_THM; ADD_CLAUSES])

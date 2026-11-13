@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_known: ported from HOL4's
-    compiler/backend/clos_knownScript.sml  *)
+    compiler/backend/clos_knownScript.sml
+    A definition theory, with 29 definitions, 4 datatypes and 12
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*

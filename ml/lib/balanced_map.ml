@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  balanced_map: ported from HOL4's
-    examples/data-structures/balanced_bst/balanced_mapScript.sml  *)
+    examples/data-structures/balanced_bst/balanced_mapScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/comparison.ml";;

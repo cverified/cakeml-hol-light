@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  simpleSexpPEG: ported from HOL4's
-    examples/formal-languages/context-free/simpleSexpPEGScript.sml  *)
+    examples/formal-languages/context-free/simpleSexpPEGScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by simpleSexpParse.ml.  *)
 (* ======================================================== *)
 
 needs "lib/peg.ml";;

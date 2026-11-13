@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  stackLang: ported from HOL4's
-    compiler/backend/stackLangScript.sml  *)
+    compiler/backend/stackLangScript.sml
+    A definition theory, with 3 definitions, 2 datatypes and 2
+    theorems.  Needed by 52 files of the port.  *)
 (* ======================================================== *)
 
 (*

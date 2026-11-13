@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  multiword: ported from HOL4's
-    examples/machine-code/multiword/multiwordScript.sml  *)
+    examples/machine-code/multiword/multiwordScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 14 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/ASCIInumbers.ml";;

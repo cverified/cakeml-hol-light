@@ -1,7 +1,9 @@
 (* ======================================================== *)
 (*  unifDef: ported from HOL4's
     examples/algorithms/unification/triangular/first-order/
-      unifDefScript.sml  *)
+      unifDefScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 3 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/subst.ml";;

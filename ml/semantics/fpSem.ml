@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  fpSem: ported from HOL4's
-    semantics/fpSemScript.sml  *)
+    semantics/fpSemScript.sml
+    A definition theory, with 6 definitions, 4 datatypes and no
+    theorems.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*

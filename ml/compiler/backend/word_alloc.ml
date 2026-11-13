@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  word_alloc: ported from HOL4's
-    compiler/backend/word_allocScript.sml  *)
+    compiler/backend/word_allocScript.sml
+    A definition theory, with 68 definitions and 4 theorems.  Needed
+    by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*

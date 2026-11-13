@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  spt_closure: ported from HOL4's
-    examples/algorithms/spt_closureScript.sml  *)
+    examples/algorithms/spt_closureScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by flat_elim.ml, flat_elimProof.ml,
+    word_elim.ml and word_elimProof.ml.  *)
 (* ======================================================== *)
 
 needs "lib/sptree.ml";;

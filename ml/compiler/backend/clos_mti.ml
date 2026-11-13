@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  clos_mti: ported from HOL4's
-    compiler/backend/clos_mtiScript.sml  *)
+    compiler/backend/clos_mtiScript.sml
+    A definition theory, with 6 definitions and 12 theorems.  Needed
+    by backendProof.ml, clos_mtiProof.ml, clos_to_bvl.ml and
+    clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*

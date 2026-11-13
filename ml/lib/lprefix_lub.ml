@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  lprefix_lub: ported from HOL4's
-    examples/pl-semantics/lprefix_lub/lprefix_lubScript.sml  *)
+    examples/pl-semantics/lprefix_lub/lprefix_lubScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

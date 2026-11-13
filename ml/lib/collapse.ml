@@ -1,7 +1,9 @@
 (* ======================================================== *)
 (*  collapse: ported from HOL4's
     examples/algorithms/unification/triangular/first-order/
-      collapseScript.sml  *)
+      collapseScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by unify.ml.  *)
 (* ======================================================== *)
 
 needs "lib/subst.ml";;

@@ -1,6 +1,9 @@
 (* ======================================================== *)
 (*  word_depth: ported from HOL4's
-    compiler/backend/word_depthScript.sml  *)
+    compiler/backend/word_depthScript.sml
+    A definition theory, with 5 definitions, 1 datatype and no
+    theorems.  Needed by dataSem.ml, data_to_word.ml,
+    data_to_word_bignumProof.ml and word_depthProof.ml.  *)
 (* ======================================================== *)
 
 (*

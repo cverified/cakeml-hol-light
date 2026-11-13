@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  bvi_tmc: ported from HOL4's
-    compiler/backend/bvi_tmcScript.sml  *)
+    compiler/backend/bvi_tmcScript.sml
+    A definition theory, with 27 definitions, 1 datatype and 33
+    theorems.  Needed by bvi_tmcProof.ml and bvl_to_bvi.ml.  *)
 (* ======================================================== *)
 
 (*

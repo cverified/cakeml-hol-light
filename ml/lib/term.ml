@@ -1,7 +1,9 @@
 (* ======================================================== *)
 (*  term: ported from HOL4's
     examples/algorithms/unification/triangular/first-order/
-      termScript.sml  *)
+      termScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

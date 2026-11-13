@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  alignment: ported from HOL4's
-    src/n-bit/alignmentScript.sml  *)
+    src/n-bit/alignmentScript.sml
+    A HOL4 library theory, of which the port has the definitions
+    that CakeML needs.  Needed by 18 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

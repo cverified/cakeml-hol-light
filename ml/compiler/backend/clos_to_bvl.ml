@@ -1,6 +1,8 @@
 (* ======================================================== *)
 (*  clos_to_bvl: ported from HOL4's
-    compiler/backend/clos_to_bvlScript.sml  *)
+    compiler/backend/clos_to_bvlScript.sml
+    A definition theory, with 45 definitions, 1 datatype and 24
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
