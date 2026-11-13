@@ -2923,15 +2923,26 @@ with a hypothesis for every recursive call of that clause under
 the guards that lead to it, which is the shape HOL4 gives -- so a
 proof of the source maps onto it clause by clause.
 
-Two kinds still have none, and for those the rest of this entry
-stands.  A family that recurses through one another
-(`define_mutual_*`) has no mutual induction theorem yet
-(`ISSUES.md`).  And where the termination of a definition is
-assumed, its induction is assumed with it (`foo_ind ASSUMED` while
-the file loads, and a line in `ml/CHEATS.md`): the theorem is
-there and its statement is right, but it rests on the same
-assumption the definition does, so phase three has to pay for both
-at once.
+A **family** of functions that recurse through one another
+(`define_mutual_*`) gets the theorem HOL4 gives it: a predicate
+`P0`, `P1`, ... for each member, one antecedent per clause whose
+hypotheses are the calls to any of them, and a conclusion that is
+the conjunction of what each predicate says.  So
+
+```ocaml
+let foo_def,foo_ind = define_mutual_wf `MEASURE (sum_measure ...)`
+  [`foo ... = ... bar ...`; `bar ... = ... foo ...`; ...];;
+```
+
+and a proof does `MATCH_MP_TAC foo_ind THEN REPEAT CONJ_TAC`, one
+goal per member, as the source does.
+
+One kind still has none, and for it the rest of this entry
+stands.  Where the termination of a definition is assumed, its
+induction is assumed with it (`foo_ind ASSUMED` while the file
+loads, and a line in `ml/CHEATS.md`): the theorem is there and
+its statement is right, but it rests on the same assumption the
+definition does, so phase three has to pay for both at once.
 
 **Writing the induction by hand.**  Where the recursion is on a
 measure -- and in the sources that is where the termination needed
