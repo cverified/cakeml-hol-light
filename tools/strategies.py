@@ -37,7 +37,7 @@ WAY = {
   ('NTproperties', 'firstSet'):
     ('new_definition', False, ''),
   ('NTproperties', 'firstSetML'):
-    ('measure', True, ''),
+    ('', False, ''),
   ('NTproperties', 'nullable'):
     ('new_definition', False, ''),
   ('NTproperties', 'nullableML'):
@@ -575,7 +575,7 @@ WAY = {
   ('bviProps', 'bviProps_adj_orac_rel'):
     ('new_definition', False, ''),
   ('bviProps', 'bviProps_get_code_labels'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bviProps', 'bviProps_good_code_labels'):
     ('new_definition', False, ''),
   ('bviProps', 'bviProps_inc_clock'):
@@ -591,7 +591,7 @@ WAY = {
   ('bviSem', 'bviSem_do_install'):
     ('new_definition', False, ''),
   ('bviSem', 'bviSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bviSem', 'bviSem_finalise_cons'):
     ('measure', True, ''),
   ('bviSem', 'bviSem_fix_clock'):
@@ -615,9 +615,9 @@ WAY = {
   ('bvi_inline', 'inline_all'):
     ('prim_rec', False, ''),
   ('bvi_inline', 'inline_exp'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvi_inline', 'remove_ticks_exp'):
-    ('measure', False, 'MEASURE (\\x0. bvi_exp_size x0)'),
+    ('maplist>measure', False, 'MEASURE (\\x0. bvi_exp_size x0)'),
   ('bvi_inline', 'wrapper_ok'):
     ('new_definition', False, ''),
   ('bvi_inlineProof', 'bvi_inlineProof_in_cc'):
@@ -639,7 +639,7 @@ WAY = {
   ('bvi_let', 'bvi_let_compile_exp'):
     ('new_definition', False, ''),
   ('bvi_let', 'bvi_let_compile_sing'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). bvi_exp_size x2)'),
+    ('maplist>measure', False, 'MEASURE (\\(x0,x1,x2). bvi_exp_size x2)'),
   ('bvi_let', 'bvi_let_delete_var'):
     ('new_definition', False, ''),
   ('bvi_let', 'bvi_let_extract'):
@@ -685,7 +685,7 @@ WAY = {
   ('bvi_tailrec', 'has_rec1'):
     ('new_definition', False, ''),
   ('bvi_tailrec', 'has_rec_sing'):
-    ('prim_rec', False, ''),
+    ('', False, ''),
   ('bvi_tailrec', 'id_from_op'):
     ('new_recursive_definition', False, ''),
   ('bvi_tailrec', 'index_of'):
@@ -711,7 +711,7 @@ WAY = {
   ('bvi_tailrec', 'rewrite'):
     ('match', False, ''),
   ('bvi_tailrec', 'scan_expr'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvi_tailrec', 'scan_expr_sing'):
     ('prim_rec', False, ''),
   ('bvi_tailrec', 'term_ok'):
@@ -763,7 +763,7 @@ WAY = {
   ('bvi_tmc', 'bvi_to_cb'):
     ('new_definition', False, ''),
   ('bvi_tmc', 'bvi_to_cb_aux_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvi_tmc', 'call_to_cb'):
     ('new_definition', False, ''),
   ('bvi_tmc', 'cb_size'):
@@ -847,7 +847,7 @@ WAY = {
   ('bvi_tmcProof', 'state_ref_rel'):
     ('new_definition', False, ''),
   ('bvi_to_data', 'bvi_to_data_compile'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvi_to_data', 'bvi_to_data_compile_exp'):
     ('new_definition', False, ''),
   ('bvi_to_data', 'bvi_to_data_compile_part'):
@@ -855,7 +855,7 @@ WAY = {
   ('bvi_to_data', 'bvi_to_data_compile_prog'):
     ('new_definition', False, ''),
   ('bvi_to_data', 'bvi_to_data_compile_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvi_to_data', 'bvi_to_data_optimise'):
     ('new_definition', False, ''),
   ('bvi_to_data', 'iAssign'):
@@ -915,7 +915,7 @@ WAY = {
   ('bvlSem', 'bvlSem_do_word_app'):
     ('new_definition', False, ''),
   ('bvlSem', 'bvlSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvlSem', 'bvlSem_find_code'):
     ('new_recursive_definition', False, ''),
   ('bvlSem', 'bvlSem_fix_clock'):
@@ -993,7 +993,7 @@ WAY = {
   ('bvl_handle', 'handle_adj_vars'):
     ('prim_rec', False, ''),
   ('bvl_handle', 'handle_simp'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvl_handle', 'handle_size'):
     ('prim_rec', False, ''),
   ('bvl_handleProof', 'bvl_handleProof_env_rel'):
@@ -1011,13 +1011,13 @@ WAY = {
   ('bvl_inline', 'bvl_inline_is_rec'):
     ('measure', False, 'MEASURE (\\(x0,x1). bvl_exp_size1 x1)'),
   ('bvl_inline', 'bvl_inline_let_op'):
-    ('nested', False, ''),
+    ('', False, ''),
   ('bvl_inline', 'bvl_inline_let_op_sing'):
     ('new_definition', False, ''),
   ('bvl_inline', 'bvl_inline_optimise'):
     ('new_definition', False, ''),
   ('bvl_inline', 'bvl_inline_remove_ticks'):
-    ('nested', False, ''),
+    ('sing>nested', False, ''),
   ('bvl_inline', 'bvl_inline_remove_ticks_sing'):
     ('prim_rec', False, ''),
   ('bvl_inline', 'bvl_inline_var_list'):
@@ -1037,7 +1037,7 @@ WAY = {
   ('bvl_inline', 'tick_compile_prog'):
     ('new_definition', False, ''),
   ('bvl_inline', 'tick_inline'):
-    ('nested', False, ''),
+    ('', False, ''),
   ('bvl_inline', 'tick_inline_all'):
     ('prim_rec', False, ''),
   ('bvl_inline', 'tick_inline_sing'):
@@ -1109,7 +1109,7 @@ WAY = {
   ('bvl_to_bvi', 'bvl_to_bvi_compile'):
     ('new_definition', False, ''),
   ('bvl_to_bvi', 'bvl_to_bvi_compile_exps'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvl_to_bvi', 'bvl_to_bvi_compile_inc'):
     ('new_definition', False, ''),
   ('bvl_to_bvi', 'bvl_to_bvi_compile_inc_all'):
@@ -1131,7 +1131,7 @@ WAY = {
   ('bvl_to_bvi', 'compile_aux'):
     ('new_definition', False, ''),
   ('bvl_to_bvi', 'compile_exps_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('bvl_to_bvi', 'compile_int'):
     ('new_definition', False, ''),
   ('bvl_to_bvi', 'destLet'):
@@ -1183,7 +1183,7 @@ WAY = {
   ('closProps', 'SUBMAP_rel'):
     ('new_definition', False, ''),
   ('closProps', 'app_call_dests'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'check_closures'):
     ('new_definition', False, ''),
   ('closProps', 'clo_add_partial_args'):
@@ -1205,7 +1205,7 @@ WAY = {
   ('closProps', 'closProps_eval_sim'):
     ('new_definition', False, ''),
   ('closProps', 'closProps_get_code_labels'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'closProps_isClos'):
     ('new_definition', False, ''),
   ('closProps', 'closProps_op_gbag'):
@@ -1213,33 +1213,33 @@ WAY = {
   ('closProps', 'closProps_ref_rel'):
     ('new_definition', False, ''),
   ('closProps', 'closProps_set_globals'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'closProps_simple_state_rel'):
     ('new_definition', False, ''),
   ('closProps', 'closProps_simple_val_rel'):
     ('new_definition', False, ''),
   ('closProps', 'code_locs'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'contains_App_SOME'):
     ('measure', True, ''),
   ('closProps', 'every_Fn_SOME'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'every_Fn_vs_NONE'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'every_Fn_vs_SOME'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'fv'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'fv1'):
     ('new_definition', False, ''),
   ('closProps', 'is_closure'):
     ('new_definition', False, ''),
   ('closProps', 'no_Labels'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'no_mti'):
     ('nested', False, ''),
   ('closProps', 'obeys_max_app'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closProps', 'rec_clo_ok'):
     ('new_recursive_definition', False, ''),
   ('closProps', 'rsgc_free'):
@@ -1277,7 +1277,7 @@ WAY = {
   ('closSem', 'closSem_do_word_app'):
     ('new_definition', False, ''),
   ('closSem', 'closSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('closSem', 'closSem_exp_alt_size'):
     ('prim_rec', False, ''),
   ('closSem', 'closSem_find_code'):
@@ -1311,9 +1311,9 @@ WAY = {
   ('closSem', 'store_thunk'):
     ('new_definition', False, ''),
   ('clos_annotate', 'alt_free'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_annotate', 'alt_free_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_annotate', 'annotate_list'):
     ('new_definition', False, ''),
   ('clos_annotate', 'annotate_sing'):
@@ -1327,13 +1327,13 @@ WAY = {
   ('clos_annotate', 'clos_annotate_get_var'):
     ('new_definition', False, ''),
   ('clos_annotate', 'clos_annotate_shift'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_annotate', 'const_0'):
     ('new_definition', False, ''),
   ('clos_annotate', 'no_overlap'):
     ('measure', False, 'MEASURE (\\(x0,x1). (\\n. n) x0)'),
   ('clos_annotate', 'shift_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_annotate', 'shifted_env'):
     ('prim_rec', False, ''),
   ('clos_annotateProof', 'alt_fv'):
@@ -1345,11 +1345,11 @@ WAY = {
   ('clos_call', 'GENLIST_Var'):
     ('measure', False, 'MEASURE (\\(x0,x1,x2). (\\n. n) x2)'),
   ('clos_call', 'calls'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_call', 'calls_list'):
     ('prim_rec', False, ''),
   ('clos_call', 'calls_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_call', 'clos_call_closed'):
     ('new_definition', False, ''),
   ('clos_call', 'clos_call_compile'):
@@ -1357,13 +1357,13 @@ WAY = {
   ('clos_call', 'clos_call_compile_inc'):
     ('new_definition', False, ''),
   ('clos_call', 'clos_call_free'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_call', 'code_list'):
     ('measure', False, 'MEASURE (\\(x0,x1,x2). list_size (pair_size (\\x. 0) (\\x. 0)) x1)'),
   ('clos_call', 'cond_call_compile_inc'):
     ('new_definition', False, ''),
   ('clos_call', 'free_sing'):
-    ('nested', False, ''),
+    ('', False, ''),
   ('clos_call', 'insert_each'):
     ('measure', False, 'MEASURE (\\(x0,x1,x2). (\\n. n) x1)'),
   ('clos_callProof', 'clos_callProof_env_rel'):
@@ -1375,7 +1375,7 @@ WAY = {
   ('clos_callProof', 'clos_callProof_syntax_ok'):
     ('new_definition', False, ''),
   ('clos_callProof', 'clos_callProof_v_rel'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_callProof', 'co_ok'):
     ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x3)'),
   ('clos_callProof', 'code_includes'):
@@ -1441,9 +1441,9 @@ WAY = {
   ('clos_fvs', 'clos_fvs_compile_inc'):
     ('new_definition', False, ''),
   ('clos_fvs', 'remove_fvs'):
-    ('nested', False, ''),
+    ('sing>nested', False, ''),
   ('clos_fvs', 'remove_fvs_sing'):
-    ('nested', False, ''),
+    ('maplist>maplist>nested', False, ''),
   ('clos_fvsProof', 'clos_fvsProof_code_rel'):
     ('new_definition', False, ''),
   ('clos_fvsProof', 'clos_fvsProof_f_rel'):
@@ -1481,7 +1481,7 @@ WAY = {
   ('clos_interp', 'opt_interp1'):
     ('new_definition', False, ''),
   ('clos_interp', 'to_constant'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_interp', 'to_constant_op'):
     ('new_definition', False, ''),
   ('clos_interpProof', 'clos_interpProof_state_rel'):
@@ -1509,7 +1509,7 @@ WAY = {
   ('clos_known', 'clos_known_default_config'):
     ('new_definition', False, ''),
   ('clos_known', 'clos_known_free'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_known', 'clos_known_get_size'):
     ('new_definition', False, ''),
   ('clos_known', 'clos_known_merge'):
@@ -1533,11 +1533,11 @@ WAY = {
   ('clos_known', 'get_size_sc'):
     ('new_definition', False, ''),
   ('clos_known', 'get_size_sc_aux'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_known', 'isGlobal'):
     ('new_definition', False, ''),
   ('clos_known', 'known'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_known', 'known_compile_inc'):
     ('new_recursive_definition', False, ''),
   ('clos_known', 'known_op'):
@@ -1567,7 +1567,7 @@ WAY = {
   ('clos_knownProof', 'clos_knownProof_syntax_oracle_ok'):
     ('new_definition', False, ''),
   ('clos_knownProof', 'clos_knownProof_v_rel'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_knownProof', 'co_every_Fn_vs_NONE'):
     ('new_definition', False, ''),
   ('clos_knownProof', 'first_n_exps'):
@@ -1639,9 +1639,9 @@ WAY = {
   ('clos_letop', 'clos_letop_dest_op'):
     ('new_definition', False, ''),
   ('clos_letop', 'clos_letop_let_op'):
-    ('nested', False, ''),
+    ('', False, ''),
   ('clos_letop', 'clos_letop_let_op_sing'):
-    ('nested', False, ''),
+    ('maplist>maplist>nested', False, ''),
   ('clos_letop', 'clos_letop_var_list'):
     ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size1 x1)'),
   ('clos_letopProof', 'clos_letopProof_FMAP_REL'):
@@ -1685,7 +1685,7 @@ WAY = {
   ('clos_number', 'ignore_table'):
     ('new_definition', False, ''),
   ('clos_number', 'renumber_code_locs_list'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_numberProof', 'clos_numberProof_state_rel'):
     ('new_definition', False, ''),
   ('clos_op', 'ConjList'):
@@ -1749,9 +1749,9 @@ WAY = {
   ('clos_ticks', 'clos_ticks_compile_inc'):
     ('new_definition', False, ''),
   ('clos_ticks', 'clos_ticks_remove_ticks'):
-    ('nested', False, ''),
+    ('sing>nested', False, ''),
   ('clos_ticks', 'clos_ticks_remove_ticks_sing'):
-    ('nested', False, ''),
+    ('maplist>maplist>nested', False, ''),
   ('clos_ticksProof', 'clos_ticksProof_FMAP_REL'):
     ('new_definition', False, ''),
   ('clos_ticksProof', 'clos_ticksProof_code_rel'):
@@ -1779,7 +1779,7 @@ WAY = {
   ('clos_to_bvl', 'clos_to_bvl_compile'):
     ('new_definition', False, ''),
   ('clos_to_bvl', 'clos_to_bvl_compile_exps'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_to_bvl', 'clos_to_bvl_compile_inc'):
     ('new_definition', False, ''),
   ('clos_to_bvl', "clos_to_bvl_compile_inc'"):
@@ -1797,7 +1797,7 @@ WAY = {
   ('clos_to_bvl', 'code_merge'):
     ('measure', False, 'MEASURE (\\(x0,x1).      list_size (pair_size (\\n. n) (\\x. 0)) x0 +      list_size (pair_size (\\n. n) (\\x. 0)) x1)'),
   ('clos_to_bvl', 'code_sort'):
-    ('new_definition', False, ''),
+    ('', False, ''),
   ('clos_to_bvl', 'code_split'):
     ('prim_rec', False, ''),
   ('clos_to_bvl', 'compile_common'):
@@ -1805,7 +1805,7 @@ WAY = {
   ('clos_to_bvl', 'compile_const'):
     ('new_recursive_definition', False, ''),
   ('clos_to_bvl', 'compile_exp_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_to_bvl', 'extract_name'):
     ('new_recursive_definition', False, ''),
   ('clos_to_bvl', 'force_thunk_code'):
@@ -1819,9 +1819,9 @@ WAY = {
   ('clos_to_bvl', 'generic_app_fn_location'):
     ('new_definition', False, ''),
   ('clos_to_bvl', 'get_src_names'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_to_bvl', 'get_src_names_sing'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('clos_to_bvl', 'init_globals'):
     ('new_definition', False, ''),
   ('clos_to_bvl', 'make_name_alist'):
@@ -2039,7 +2039,7 @@ WAY = {
   ('cmlPtreeConversion', 'ptree_Eliteral'):
     ('new_recursive_definition', False, ''),
   ('cmlPtreeConversion', 'ptree_Expr'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('cmlPtreeConversion', 'ptree_FQV'):
     ('new_recursive_definition', False, ''),
   ('cmlPtreeConversion', 'ptree_Op'):
@@ -2285,7 +2285,7 @@ WAY = {
   ('dataSem', 'dataSem_do_word_app'):
     ('new_definition', False, ''),
   ('dataSem', 'dataSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('dataSem', 'dataSem_finalise_cons'):
     ('measure', True, ''),
   ('dataSem', 'dataSem_find_code'):
@@ -2353,7 +2353,7 @@ WAY = {
   ('dataSem', 'no_thunks_in_refs'):
     ('new_definition', False, ''),
   ('dataSem', 'size_of'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('dataSem', 'size_of_heap'):
     ('new_definition', False, ''),
   ('dataSem', 'size_of_heap_args'):
@@ -2880,6 +2880,8 @@ WAY = {
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'RefBlock'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'RefBlock_inv'):
+    ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'ThunkBlock'):
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'Word64Rep'):
@@ -2892,20 +2894,56 @@ WAY = {
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'all_vs'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'append_writes'):
+    ('prim_rec', False, ''),
   ('data_to_word_memoryProof', 'bc_ref_inv'):
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'bc_stack_ref_inv'):
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'be_ok'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'bignum_words'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'bind_each'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x4)'),
+  ('data_to_word_memoryProof', 'block_drop'):
+    ('measure', False, 'MEASURE (\\(x0,x1). (\\n. n) x0 + dataSem_v_size x1)'),
   ('data_to_word_memoryProof', 'blocks_unique'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'build_part_words'):
+    ('new_recursive_definition', False, ''),
+  ('data_to_word_memoryProof', 'build_words'):
+    ('prim_rec', False, ''),
+  ('data_to_word_memoryProof', 'copy_list'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x2)'),
+  ('data_to_word_memoryProof', 'data_length'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'data_pointers'):
+    ('measure', False, 'MEASURE (\\x0. list_size (heap_element_size (\\x. 0) (\\x. 0)) x0)'),
+  ('data_to_word_memoryProof', 'data_to_word_memoryProof_fix_clock'):
+    ('new_recursive_definition', False, ''),
   ('data_to_word_memoryProof', 'data_to_word_memoryProof_isRef'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'data_to_word_memoryProof_store_list'):
+    ('prim_rec', False, ''),
+  ('data_to_word_memoryProof', 'data_to_word_memoryProof_walk'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x3)'),
   ('data_to_word_memoryProof', 'data_up_to'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'decode_addr'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'decode_maxout'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'elements_list'):
+    ('measure', False, 'MEASURE (\\x0. dataSem_v_size1 x0)'),
+  ('data_to_word_memoryProof', 'eq_assum'):
+    ('prim_rec', False, ''),
+  ('data_to_word_memoryProof', 'eq_explode'):
+    ('prim_rec', False, ''),
   ('data_to_word_memoryProof', 'evaluated_thunk_ptr'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'find_diff'):
+    ('guess', False, ''),
   ('data_to_word_memoryProof', 'find_ref'):
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'gc_inline'):
@@ -2918,17 +2956,85 @@ WAY = {
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'gen_start_ok'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'gen_starts_in_store'):
+    ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'gen_state_ok'):
     ('define_single', False, ''),
+  ('data_to_word_memoryProof', 'get_addr'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'get_real_addr'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'get_real_offset'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'get_real_simple_addr'):
+    ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'get_refs'):
     ('nested', False, ''),
+  ('data_to_word_memoryProof', 'glob_real_inv'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'good_loc'):
+    ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'has_gen'):
     ('define_single', False, ''),
+  ('data_to_word_memoryProof', 'heap_deref'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'heap_el'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'heap_in_memory_store'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'heap_store'):
+    ('prim_rec', False, ''),
+  ('data_to_word_memoryProof', 'heap_store_rel'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'heap_store_unused'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'heap_store_unused_alt'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'hide_heap_in_memory_store'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'hide_memory_rel'):
+    ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'isMutTag'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'isRefBlock'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'isSomeUnused'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'isUnused'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'is_all_ones'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'last_bytes'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x0)'),
+  ('data_to_word_memoryProof', 'list_copy'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'list_copy_alias'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'list_copy_bwd'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x0)'),
+  ('data_to_word_memoryProof', 'list_copy_bwd_alias'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x0)'),
+  ('data_to_word_memoryProof', 'list_copy_fwd'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x0)'),
+  ('data_to_word_memoryProof', 'list_copy_fwd_alias'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x0)'),
+  ('data_to_word_memoryProof', 'list_to_BlockReps'):
+    ('prim_rec', False, ''),
+  ('data_to_word_memoryProof', 'lookup_len'):
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'make_gc_conf'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'make_zeros'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'memory_rel'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'minus'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'pointer_bits'):
+    ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'reachable_refs'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'read_word'):
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'ref_edge'):
     ('new_definition', False, ''),
@@ -2936,14 +3042,64 @@ WAY = {
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'reset_gens'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'thunk_deref'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'thunk_tag_to_bits'):
+    ('new_recursive_definition', False, ''),
   ('data_to_word_memoryProof', 'unused_space_inv'):
     ('new_definition', False, ''),
   ('data_to_word_memoryProof', 'v_all_ts'):
     ('measure', False, 'MEASURE dataSem_v_size'),
   ('data_to_word_memoryProof', 'v_all_vs'):
     ('measure', False, 'MEASURE (\\x0. dataSem_v_size1 x0)'),
+  ('data_to_word_memoryProof', 'v_depth'):
+    ('measure', False, 'MEASURE dataSem_v_size'),
   ('data_to_word_memoryProof', 'v_inv'):
     ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'v_same_type'):
+    ('measure', False, 'MEASURE (dataSem_v_size o FST)'),
+  ('data_to_word_memoryProof', 'vb_eq_size'):
+    ('measure', False, 'MEASURE (\\x.      match x with        INL (refs,v1,v2) -> dataSem_v_size v1      | INR (refs,l1,l2) -> list_size dataSem_v_size l1)'),
+  ('data_to_word_memoryProof', 'word_addr'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_cmp_loop'):
+    ('measure', False, 'MEASURE (w2n o FST)'),
+  ('data_to_word_memoryProof', 'word_cmp_res'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_cond_add'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_copy_array'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_copy_bwd'):
+    ('measure', False, 'MEASURE (w2n o FST o SND)'),
+  ('data_to_word_memoryProof', 'word_copy_fwd'):
+    ('measure', False, 'MEASURE (w2n o FST o SND)'),
+  ('data_to_word_memoryProof', 'word_el'):
+    ('define_single', False, ''),
+  ('data_to_word_memoryProof', 'word_eq'):
+    ('measure', False, 'MEASURE (\\x.      match x with        INL (c,st,dm,m,l1,ck1,w1,w2) -> l1      | INR (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)'),
+  ('data_to_word_memoryProof', 'word_header'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_heap'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2).      list_size      (heap_element_size       (pair_size data_to_word_memoryProof_tag_size       (list_size (word_loc_size (\\x. 0))))      (word_loc_size (\\x. 0)))      x1)'),
+  ('data_to_word_memoryProof', 'word_is_clos'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_mem_eq'):
+    ('prim_rec', False, ''),
+  ('data_to_word_memoryProof', 'word_ml_inv'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_of_byte'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_payload'):
+    ('new_recursive_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_str_cmp'):
+    ('new_definition', False, ''),
+  ('data_to_word_memoryProof', 'word_str_cmp_loop'):
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4,x5,x6,x7,x8). (\\n. n) x8)'),
+  ('data_to_word_memoryProof', 'word_xor_bytes'):
+    ('measure', False, 'MEASURE (\\(a1,a2,len,dm,m). w2n len)'),
+  ('data_to_word_memoryProof', 'xor_words'):
+    ('guess', False, ''),
   ('db_vars', 'db_to_set'):
     ('new_definition', False, ''),
   ('db_vars', 'db_to_set_acc'):
@@ -2985,7 +3141,7 @@ WAY = {
   ('evaluate', 'do_eval_res'):
     ('new_definition', False, ''),
   ('evaluate', 'evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('evaluate', 'evaluate_dec_clock'):
     ('new_definition', False, ''),
   ('evaluate', 'evaluate_fix_clock'):
@@ -3119,7 +3275,7 @@ WAY = {
   ('flatProps', 'flatProps_op_gbag'):
     ('new_definition', False, ''),
   ('flatProps', 'flatProps_set_globals'):
-    ('measure', True, ''),
+    ('', False, ''),
   ('flatProps', 'flatProps_simple_state_rel'):
     ('new_definition', False, ''),
   ('flatProps', 'flatProps_simple_val_rel'):
@@ -3129,7 +3285,7 @@ WAY = {
   ('flatProps', 'isClosure'):
     ('new_definition', False, ''),
   ('flatProps', 'no_Mat'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flatProps', 'no_Mat_decs'):
     ('prim_rec', False, ''),
   ('flatProps', 'result_vs'):
@@ -3169,7 +3325,7 @@ WAY = {
   ('flatSem', 'flatSem_do_app'):
     ('new_definition', False, ''),
   ('flatSem', 'flatSem_do_eq'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flatSem', 'flatSem_do_eval'):
     ('new_definition', False, ''),
   ('flatSem', 'flatSem_do_if'):
@@ -3179,7 +3335,7 @@ WAY = {
   ('flatSem', 'flatSem_do_test'):
     ('new_recursive_definition', False, ''),
   ('flatSem', 'flatSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flatSem', 'flatSem_exp_alt_size'):
     ('prim_rec', False, ''),
   ('flatSem', 'flatSem_fix_clock'):
@@ -3189,7 +3345,7 @@ WAY = {
   ('flatSem', 'flatSem_list_to_v'):
     ('prim_rec', False, ''),
   ('flatSem', 'flatSem_pmatch'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flatSem', 'flatSem_semantics'):
     ('new_definition', False, ''),
   ('flatSem', 'flatSem_the_Litv_Float64'):
@@ -3227,13 +3383,13 @@ WAY = {
   ('flat_elim', 'dest_GlobalVarLookup'):
     ('new_definition', False, ''),
   ('flat_elim', 'find_loc'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flat_elim', 'find_lookups'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flat_elim', 'flat_elim_is_pure'):
     ('measure', False, 'MEASURE (\\e. flatLang_exp_size e)'),
   ('flat_elim', 'has_Eval'):
-    ('nested', False, ''),
+    ('', False, ''),
   ('flat_elim', 'has_Eval_dec'):
     ('new_definition', False, ''),
   ('flat_elim', 'is_hidden'):
@@ -3245,7 +3401,7 @@ WAY = {
   ('flat_elim', 'remove_unreachable'):
     ('new_definition', False, ''),
   ('flat_elim', 'total_pat'):
-    ('measure', True, ''),
+    ('maplist>measure', True, ''),
   ('flat_elimProof', 'decs_closed'):
     ('new_definition', False, ''),
   ('flat_elimProof', 'find_env_globals'):
@@ -3267,7 +3423,7 @@ WAY = {
   ('flat_pattern', 'compile_dec'):
     ('new_definition', False, ''),
   ('flat_pattern', 'compile_pat_bindings'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flat_pattern', 'compile_pat_rhs'):
     ('new_definition', False, ''),
   ('flat_pattern', 'compile_pats'):
@@ -3287,7 +3443,7 @@ WAY = {
   ('flat_pattern', 'encode_pat'):
     ('measure', False, 'MEASURE (\\x0. flatLang_pat_size x0)'),
   ('flat_pattern', 'flat_pattern_compile_exp'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flat_pattern', 'flat_pattern_decode_test'):
     ('new_recursive_definition', False, ''),
   ('flat_pattern', 'flat_pattern_init_config'):
@@ -3335,7 +3491,7 @@ WAY = {
   ('flat_to_clos', 'flat_to_clos_arg2'):
     ('new_definition', False, ''),
   ('flat_to_clos', 'flat_to_clos_compile'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('flat_to_clos', 'flat_to_clos_compile_decs'):
     ('prim_rec', False, ''),
   ('flat_to_clos', 'flat_to_clos_compile_op'):
@@ -3433,7 +3589,7 @@ WAY = {
   ('fromSexp', 'sexpexp'):
     ('measure', True, ''),
   ('fromSexp', 'sexpexp_alt'):
-    ('measure', True, ''),
+    ('', False, ''),
   ('fromSexp', 'sexpid'):
     ('measure', True, ''),
   ('fromSexp', 'sexplist'):
@@ -3679,13 +3835,13 @@ WAY = {
   ('infer', 'inf_env_to_types_string'):
     ('new_definition', False, ''),
   ('infer', 'infer_d'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('infer', 'infer_deBruijn_inc'):
     ('nested', False, ''),
   ('infer', 'infer_deBruijn_subst'):
     ('prim_rec', False, ''),
   ('infer', 'infer_e'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('infer', 'infer_failwith'):
     ('new_definition', False, ''),
   ('infer', 'infer_guard'):
@@ -3693,7 +3849,7 @@ WAY = {
   ('infer', 'infer_init_config'):
     ('new_definition', False, ''),
   ('infer', 'infer_p'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('infer', 'infer_subst'):
     ('nested', False, ''),
   ('infer', 'infer_type_subst'):
@@ -3715,7 +3871,7 @@ WAY = {
   ('infer', 'n_fresh_uvar'):
     ('measure', False, 'MEASURE (\\x0. (\\n. n) x0)'),
   ('infer', 'ns_nub'):
-    ('nested', False, ''),
+    ('maplist>nested', False, ''),
   ('infer', 'ns_to_alist'):
     ('measure', True, ''),
   ('infer', 'op_n_args_msg'):
@@ -3779,7 +3935,7 @@ WAY = {
   ('infer_t', 'inf_type_to_string'):
     ('new_definition', False, ''),
   ('infer_t', 'inf_type_to_string_rec'):
-    ('measure', False, 'MEASURE (\\(x0,x1). infer_t_size x1)'),
+    ('maplist>measure', False, 'MEASURE (\\(x0,x1). infer_t_size x1)'),
   ('infer_t', 'infer_t_commas'):
     ('guess', False, ''),
   ('infer_t', 'ty_var_name'):
@@ -3869,7 +4025,7 @@ WAY = {
   ('labSem', 'labSem_dec_clock'):
     ('new_definition', False, ''),
   ('labSem', 'labSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('labSem', 'labSem_fp_upd'):
     ('new_recursive_definition', False, ''),
   ('labSem', 'labSem_mem_load'):
@@ -4943,7 +5099,7 @@ WAY = {
   ('multiword', 'mw_ok'):
     ('new_definition', False, ''),
   ('multiword', 'mw_shift'):
-    ('new_definition', False, ''),
+    ('', False, ''),
   ('multiword', 'mw_sub'):
     ('guess', False, ''),
   ('multiword', 'n2mw'):
@@ -5019,7 +5175,7 @@ WAY = {
   ('panLang', 'functions'):
     ('measure', False, 'MEASURE (\\x0. list_size (decl_size (\\x. 0)) x0)'),
   ('panLang', 'global_var_exp'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('panLang', 'inlinable'):
     ('new_definition', False, ''),
   ('panLang', 'is_decl'):
@@ -5053,7 +5209,7 @@ WAY = {
   ('panLang', 'store_op'):
     ('new_recursive_definition', False, ''),
   ('panLang', 'var_exp'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('panLang', 'with_shape'):
     ('prim_rec', False, ''),
   ('parmove', 'eqenv'):
@@ -5141,7 +5297,7 @@ WAY = {
   ('pattern_exh', 'exh_all'):
     ('measure', True, ''),
   ('pattern_exh', 'exh_matrix'):
-    ('measure', True, ''),
+    ('maplist>measure', True, ''),
   ('pattern_exh', 'exh_rows'):
     ('new_definition', False, ''),
   ('pattern_exh', 'exh_steps'):
@@ -5191,7 +5347,7 @@ WAY = {
   ('pattern_semantics', 'pattern_semantics_match'):
     ('prim_rec', False, ''),
   ('pattern_semantics', 'pattern_semantics_pmatch'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('peg', 'Gexprs'):
     ('new_definition', False, ''),
   ('peg', 'MAXerr'):
@@ -5273,7 +5429,7 @@ WAY = {
   ('presLang', 'asm_reg_imm_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'ast_t_to_display'):
-    ('measure', False, 'MEASURE (\\x0. ast_t_size x0)'),
+    ('', False, ''),
   ('presLang', 'attach_name'):
     ('new_recursive_definition', False, ''),
   ('presLang', 'bool_to_display'):
@@ -5281,13 +5437,13 @@ WAY = {
   ('presLang', 'bvi_fun_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'bvi_to_display'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('presLang', 'bvi_to_strs'):
     ('new_definition', False, ''),
   ('presLang', 'bvl_fun_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'bvl_to_display'):
-    ('measure', False, 'MEASURE (sum_measure (\\(x0,x1,x2). bvl_exp_size x2) (\\(x0,x1,x2,x3). bvl_exp_size1 x3))'),
+    ('maplist>measure', False, 'MEASURE (sum_measure (\\(x0,x1,x2). bvl_exp_size x2) (\\(x0,x1,x2,x3). bvl_exp_size1 x3))'),
   ('presLang', 'bvl_to_strs'):
     ('new_definition', False, ''),
   ('presLang', 'clos_dec_to_display'):
@@ -5297,7 +5453,7 @@ WAY = {
   ('presLang', 'clos_op_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'clos_to_display'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('presLang', 'clos_to_strs'):
     ('new_definition', False, ''),
   ('presLang', 'const_part_to_display'):
@@ -5319,13 +5475,13 @@ WAY = {
   ('presLang', 'empty_item'):
     ('new_definition', False, ''),
   ('presLang', 'exp_to_display'):
-    ('measure', True, ''),
+    ('', False, ''),
   ('presLang', 'flat_op_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'flat_pat_to_display'):
-    ('measure', False, 'MEASURE (\\x0. flatLang_pat_size x0)'),
+    ('', False, ''),
   ('presLang', 'flat_to_display'):
-    ('nested', False, ''),
+    ('maplist>maplist>maplist>nested', False, ''),
   ('presLang', 'flat_to_strs'):
     ('new_definition', False, ''),
   ('presLang', 'fp_bop_to_display'):
@@ -5367,7 +5523,7 @@ WAY = {
   ('presLang', 'num_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'num_to_hex'):
-    ('measure', False, 'MEASURE (\\x0. (\\n. n) x0)'),
+    ('', False, ''),
   ('presLang', 'num_to_hex_mlstring'):
     ('new_definition', False, ''),
   ('presLang', 'num_to_varn'):
@@ -5385,7 +5541,7 @@ WAY = {
   ('presLang', 'opw_to_display'):
     ('new_recursive_definition', False, ''),
   ('presLang', 'pat_to_display'):
-    ('measure', False, 'MEASURE (\\x0. ast_pat_size x0)'),
+    ('', False, ''),
   ('presLang', 'presLang_commas'):
     ('measure', False, 'MEASURE (\\x0. list_size mlstring_size x0)'),
   ('presLang', 'prim_type_to_display'):
@@ -5395,13 +5551,13 @@ WAY = {
   ('presLang', 'shift_to_display'):
     ('new_recursive_definition', False, ''),
   ('presLang', 'source_to_display_dec'):
-    ('measure', False, 'MEASURE (\\x0. dec_size x0)'),
+    ('', False, ''),
   ('presLang', 'source_to_strs'):
     ('new_definition', False, ''),
   ('presLang', 'stack_fun_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'stack_prog_to_display'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('presLang', 'stack_seqs'):
     ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
   ('presLang', 'stack_to_strs'):
@@ -5421,7 +5577,7 @@ WAY = {
   ('presLang', 'word_fun_to_display'):
     ('new_definition', False, ''),
   ('presLang', 'word_prog_to_display'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('presLang', 'word_seqs'):
     ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
   ('presLang', 'word_size_to_display'):
@@ -5777,7 +5933,7 @@ WAY = {
   ('semanticPrimitives', 'compiler_agrees'):
     ('new_definition', False, ''),
   ('semanticPrimitives', 'concrete_v'):
-    ('measure', False, 'MEASURE (\\x0. semanticPrimitives_v_size x0)'),
+    ('', False, ''),
   ('semanticPrimitives', 'copy_array'):
     ('new_definition', False, ''),
   ('semanticPrimitives', 'dec_type_num'):
@@ -5875,7 +6031,7 @@ WAY = {
   ('semanticPrimitives', 'semanticPrimitives_do_app'):
     ('new_definition', False, ''),
   ('semanticPrimitives', 'semanticPrimitives_do_eq'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('semanticPrimitives', 'semanticPrimitives_do_eval'):
     ('new_definition', False, ''),
   ('semanticPrimitives', 'semanticPrimitives_do_if'):
@@ -5891,7 +6047,7 @@ WAY = {
   ('semanticPrimitives', 'semanticPrimitives_num_cmp'):
     ('new_recursive_definition', False, ''),
   ('semanticPrimitives', 'semanticPrimitives_pmatch'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('semanticPrimitives', 'semanticPrimitives_the_Litv_Float64'):
     ('define_single', False, ''),
   ('semanticPrimitives', 'semanticPrimitives_thunk_op'):
@@ -5951,7 +6107,7 @@ WAY = {
   ('semanticPrimitives', 'xor_bytes'):
     ('guess', False, ''),
   ('semanticPrimitivesProps', 'FV'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('semanticPrimitivesProps', 'FV_dec'):
     ('define_single', False, ''),
   ('semanticPrimitivesProps', 'ctors_of_dec'):
@@ -6195,9 +6351,9 @@ WAY = {
   ('source_to_flat', 'source_to_flat_compile'):
     ('new_definition', False, ''),
   ('source_to_flat', 'source_to_flat_compile_decs'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('source_to_flat', 'source_to_flat_compile_exp'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('source_to_flat', 'source_to_flat_compile_prog'):
     ('new_definition', False, ''),
   ('source_to_flat', 'source_to_flat_empty_env'):
@@ -6389,7 +6545,7 @@ WAY = {
   ('stackProps', 'arith_name'):
     ('new_definition', False, ''),
   ('stackProps', 'call_args'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('stackProps', 'clock_neutral'):
     ('match', False, ''),
   ('stackProps', 'fixed_names'):
@@ -6473,7 +6629,7 @@ WAY = {
   ('stackSem', 'stackSem_enc_stack'):
     ('measure', True, ''),
   ('stackSem', 'stackSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('stackSem', 'stackSem_exit_loop'):
     ('new_definition', False, ''),
   ('stackSem', 'stackSem_find_code'):
@@ -6883,7 +7039,7 @@ WAY = {
   ('targetSem', 'start_pc_ok'):
     ('new_definition', False, ''),
   ('targetSem', 'targetSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('targetSem', 'target_configured'):
     ('new_definition', False, ''),
   ('term', 'pair_count'):
@@ -7435,7 +7591,7 @@ WAY = {
   ('wordSem', 'wordSem_enc_stack'):
     ('measure', False, 'MEASURE (\\x0. list_size (stack_frame_size (\\x. 0)) x0)'),
   ('wordSem', 'wordSem_evaluate'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('wordSem', 'wordSem_exit_loop'):
     ('new_definition', False, ''),
   ('wordSem', 'wordSem_find_code'):
@@ -7557,7 +7713,7 @@ WAY = {
   ('word_alloc', 'full_ssa_cc_trans'):
     ('new_definition', False, ''),
   ('word_alloc', 'get_clash_tree'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('word_alloc', 'get_coalescecost'):
     ('new_definition', False, ''),
   ('word_alloc', 'get_delta_inst'):
@@ -7565,7 +7721,7 @@ WAY = {
   ('word_alloc', 'get_forced'):
     ('measure', False, 'MEASURE (\\(x0,x1,x2). asm_config_size (\\x. 0) x0 + wordLang_prog_size (\\x. 0) x1)'),
   ('word_alloc', 'get_heu'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('word_alloc', 'get_heu_inst'):
     ('new_definition', False, ''),
   ('word_alloc', 'get_heuristics'):
@@ -7619,7 +7775,7 @@ WAY = {
   ('word_alloc', 'priority'):
     ('new_definition', False, ''),
   ('word_alloc', 'remove_dead'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('word_alloc', 'remove_dead_inst'):
     ('new_definition', False, ''),
   ('word_alloc', 'remove_dead_prog'):
@@ -7631,7 +7787,7 @@ WAY = {
   ('word_alloc', 'setup_ssa'):
     ('new_definition', False, ''),
   ('word_alloc', 'ssa_cc_trans'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('word_alloc', 'ssa_cc_trans_exp'):
     ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
   ('word_alloc', 'ssa_cc_trans_inst'):
@@ -7877,7 +8033,7 @@ WAY = {
   ('word_cseProof', 'wf_data'):
     ('new_definition', False, ''),
   ('word_depth', 'call_graph'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('word_depth', 'full_call_graph'):
     ('new_definition', False, ''),
   ('word_depth', 'max_depth'):
@@ -8151,7 +8307,7 @@ WAY = {
   ('word_to_stack', 'wStackStore'):
     ('prim_rec', False, ''),
   ('word_to_stack', 'word_to_stack_comp'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('word_to_stack', 'word_to_stack_compile'):
     ('new_definition', False, ''),
   ('word_to_stack', 'word_to_stack_compile_prog'):
@@ -8169,7 +8325,7 @@ WAY = {
   ('word_to_stackProof', 'abs_frame_eq'):
     ('new_definition', False, ''),
   ('word_to_stackProof', 'abs_stack'):
-    ('measure', False, ''),
+    ('', False, ''),
   ('word_to_stackProof', 'adjust_names'):
     ('new_definition', False, ''),
   ('word_to_stackProof', 'compile_result'):
@@ -8364,7 +8520,7 @@ BY_CONST = {
   'FOLDRi':
     ('prim_rec', False, ''),
   'FV':
-    ('measure', False, ''),
+    ('', False, ''),
   'FV_dec':
     ('define_single', False, ''),
   'FromList1_code':
@@ -8536,6 +8692,8 @@ BY_CONST = {
   'RefArray_location':
     ('new_definition', False, ''),
   'RefBlock':
+    ('new_definition', False, ''),
+  'RefBlock_inv':
     ('new_definition', False, ''),
   'RefByte_code':
     ('new_definition', False, ''),
@@ -8748,7 +8906,7 @@ BY_CONST = {
   'abs_ml_inv':
     ('new_definition', False, ''),
   'abs_stack':
-    ('measure', False, ''),
+    ('', False, ''),
   'add':
     ('new_definition', False, ''),
   'add1_lhs_const':
@@ -8926,9 +9084,9 @@ BY_CONST = {
   'allowed_op':
     ('new_definition', False, ''),
   'alt_free':
-    ('measure', False, ''),
+    ('', False, ''),
   'alt_free_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'alt_fv':
     ('new_definition', False, ''),
   'alt_fv1':
@@ -8954,7 +9112,7 @@ BY_CONST = {
   'anys':
     ('measure', False, 'MEASURE (\\x0. (\\n. n) x0)'),
   'app_call_dests':
-    ('measure', False, ''),
+    ('', False, ''),
   'app_pos':
     ('measure', False, 'MEASURE (\\(x0,x1,x2). position_size x1)'),
   'app_post':
@@ -8962,6 +9120,8 @@ BY_CONST = {
   'append':
     ('new_definition', False, ''),
   'append_aux':
+    ('prim_rec', False, ''),
+  'append_writes':
     ('prim_rec', False, ''),
   'apply_bij_on_clash_tree':
     ('prim_rec', False, ''),
@@ -9268,7 +9428,7 @@ BY_CONST = {
   'ast_pat_bindings':
     ('prim_rec', False, ''),
   'ast_t_to_display':
-    ('measure', False, 'MEASURE (\\x0. ast_t_size x0)'),
+    ('', False, ''),
   'ast_t_type_num':
     ('new_definition', False, ''),
   'attach_bitmaps':
@@ -9351,6 +9511,8 @@ BY_CONST = {
     ('measure', False, 'MEASURE (\\(x0,x1). (\\n. n) x1)'),
   'bignum_size':
     ('new_definition', False, ''),
+  'bignum_words':
+    ('new_definition', False, ''),
   'bin':
     ('new_definition', False, ''),
   'binary_branch_exp':
@@ -9359,6 +9521,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'bindNT0':
     ('new_definition', False, ''),
+  'bind_each':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x4)'),
   'bind_loc':
     ('new_definition', False, ''),
   'bind_locals':
@@ -9379,6 +9543,8 @@ BY_CONST = {
     ('guess', False, ''),
   'bits_to_word':
     ('guess', False, ''),
+  'block_drop':
+    ('measure', False, 'MEASURE (\\(x0,x1). (\\n. n) x0 + dataSem_v_size x1)'),
   'blocks_unique':
     ('new_definition', False, ''),
   'bm_inter_eq':
@@ -9427,18 +9593,22 @@ BY_CONST = {
     ('new_recursive_definition', False, ''),
   "build_part'":
     ('new_recursive_definition', False, ''),
+  'build_part_words':
+    ('new_recursive_definition', False, ''),
   'build_recc':
     ('new_definition', False, ''),
   'build_recc_lets':
     ('new_definition', False, ''),
   'build_tdefs':
     ('prim_rec', False, ''),
+  'build_words':
+    ('prim_rec', False, ''),
   'bv_ok':
     ('measure', False, 'MEASURE (bvlSem_v_size o SND)'),
   'bviProps_adj_orac_rel':
     ('new_definition', False, ''),
   'bviProps_get_code_labels':
-    ('measure', False, ''),
+    ('', False, ''),
   'bviProps_good_code_labels':
     ('new_definition', False, ''),
   'bviProps_inc_clock':
@@ -9454,7 +9624,7 @@ BY_CONST = {
   'bviSem_do_install':
     ('new_definition', False, ''),
   'bviSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'bviSem_finalise_cons':
     ('measure', True, ''),
   'bviSem_fix_clock':
@@ -9486,7 +9656,7 @@ BY_CONST = {
   'bvi_let_compile_exp':
     ('new_definition', False, ''),
   'bvi_let_compile_sing':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). bvi_exp_size x2)'),
+    ('maplist>measure', False, 'MEASURE (\\(x0,x1,x2). bvi_exp_size x2)'),
   'bvi_let_delete_var':
     ('new_definition', False, ''),
   'bvi_let_extract':
@@ -9548,13 +9718,13 @@ BY_CONST = {
   'bvi_to_cb':
     ('new_definition', False, ''),
   'bvi_to_cb_aux_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'bvi_to_dataProof_code_rel':
     ('new_definition', False, ''),
   'bvi_to_dataProof_state_rel':
     ('new_definition', False, ''),
   'bvi_to_data_compile':
-    ('measure', False, ''),
+    ('', False, ''),
   'bvi_to_data_compile_exp':
     ('new_definition', False, ''),
   'bvi_to_data_compile_part':
@@ -9562,11 +9732,11 @@ BY_CONST = {
   'bvi_to_data_compile_prog':
     ('new_definition', False, ''),
   'bvi_to_data_compile_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'bvi_to_data_optimise':
     ('new_definition', False, ''),
   'bvi_to_display':
-    ('measure', False, ''),
+    ('', False, ''),
   'bvi_to_strs':
     ('new_definition', False, ''),
   'bvlProps_get_code_labels':
@@ -9602,7 +9772,7 @@ BY_CONST = {
   'bvlSem_do_word_app':
     ('new_definition', False, ''),
   'bvlSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'bvlSem_find_code':
     ('new_recursive_definition', False, ''),
   'bvlSem_fix_clock':
@@ -9676,13 +9846,13 @@ BY_CONST = {
   'bvl_inline_is_rec':
     ('measure', False, 'MEASURE (\\(x0,x1). bvl_exp_size1 x1)'),
   'bvl_inline_let_op':
-    ('nested', False, ''),
+    ('', False, ''),
   'bvl_inline_let_op_sing':
     ('new_definition', False, ''),
   'bvl_inline_optimise':
     ('new_definition', False, ''),
   'bvl_inline_remove_ticks':
-    ('nested', False, ''),
+    ('sing>nested', False, ''),
   'bvl_inline_remove_ticks_sing':
     ('prim_rec', False, ''),
   'bvl_inline_var_list':
@@ -9702,7 +9872,7 @@ BY_CONST = {
   'bvl_to_bvi_compile':
     ('new_definition', False, ''),
   'bvl_to_bvi_compile_exps':
-    ('measure', False, ''),
+    ('', False, ''),
   'bvl_to_bvi_compile_inc':
     ('new_definition', False, ''),
   'bvl_to_bvi_compile_inc_all':
@@ -9724,7 +9894,7 @@ BY_CONST = {
   'bvl_to_bvi_stubs':
     ('new_definition', False, ''),
   'bvl_to_display':
-    ('measure', False, 'MEASURE (sum_measure (\\(x0,x1,x2). bvl_exp_size x2) (\\(x0,x1,x2,x3). bvl_exp_size1 x3))'),
+    ('maplist>measure', False, 'MEASURE (sum_measure (\\(x0,x1,x2). bvl_exp_size x2) (\\(x0,x1,x2,x3). bvl_exp_size1 x3))'),
   'bvl_to_strs':
     ('new_definition', False, ''),
   'byte_align':
@@ -9758,19 +9928,19 @@ BY_CONST = {
   'call_arg_convention':
     ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
   'call_args':
-    ('measure', False, ''),
+    ('', False, ''),
   'call_dest':
     ('new_recursive_definition', False, ''),
   'call_graph':
-    ('measure', False, ''),
+    ('', False, ''),
   'call_to_cb':
     ('new_definition', False, ''),
   'calls':
-    ('measure', False, ''),
+    ('', False, ''),
   'calls_list':
     ('prim_rec', False, ''),
   'calls_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'can':
     ('new_definition', False, ''),
   'can_extract':
@@ -9954,7 +10124,7 @@ BY_CONST = {
   'closProps_eval_sim':
     ('new_definition', False, ''),
   'closProps_get_code_labels':
-    ('measure', False, ''),
+    ('', False, ''),
   'closProps_isClos':
     ('new_definition', False, ''),
   'closProps_op_gbag':
@@ -9962,7 +10132,7 @@ BY_CONST = {
   'closProps_ref_rel':
     ('new_definition', False, ''),
   'closProps_set_globals':
-    ('measure', False, ''),
+    ('', False, ''),
   'closProps_simple_state_rel':
     ('new_definition', False, ''),
   'closProps_simple_val_rel':
@@ -9990,7 +10160,7 @@ BY_CONST = {
   'closSem_do_word_app':
     ('new_definition', False, ''),
   'closSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'closSem_exp_alt_size':
     ('prim_rec', False, ''),
   'closSem_find_code':
@@ -10022,7 +10192,7 @@ BY_CONST = {
   'clos_annotate_get_var':
     ('new_definition', False, ''),
   'clos_annotate_shift':
-    ('measure', False, ''),
+    ('', False, ''),
   'clos_approx':
     ('new_definition', False, ''),
   'clos_callProof_env_rel':
@@ -10034,7 +10204,7 @@ BY_CONST = {
   'clos_callProof_syntax_ok':
     ('new_definition', False, ''),
   'clos_callProof_v_rel':
-    ('measure', False, ''),
+    ('', False, ''),
   'clos_call_closed':
     ('new_definition', False, ''),
   'clos_call_compile':
@@ -10042,7 +10212,7 @@ BY_CONST = {
   'clos_call_compile_inc':
     ('new_definition', False, ''),
   'clos_call_free':
-    ('measure', False, ''),
+    ('', False, ''),
   'clos_dec_to_display':
     ('new_definition', False, ''),
   'clos_env':
@@ -10086,7 +10256,7 @@ BY_CONST = {
   'clos_knownProof_syntax_oracle_ok':
     ('new_definition', False, ''),
   'clos_knownProof_v_rel':
-    ('measure', False, ''),
+    ('', False, ''),
   'clos_known_closed':
     ('new_definition', False, ''),
   'clos_known_compile':
@@ -10096,7 +10266,7 @@ BY_CONST = {
   'clos_known_default_config':
     ('new_definition', False, ''),
   'clos_known_free':
-    ('measure', False, ''),
+    ('', False, ''),
   'clos_known_get_size':
     ('new_definition', False, ''),
   'clos_known_merge':
@@ -10116,9 +10286,9 @@ BY_CONST = {
   'clos_letop_dest_op':
     ('new_definition', False, ''),
   'clos_letop_let_op':
-    ('nested', False, ''),
+    ('', False, ''),
   'clos_letop_let_op_sing':
-    ('nested', False, ''),
+    ('maplist>maplist>nested', False, ''),
   'clos_letop_var_list':
     ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size1 x1)'),
   'clos_mtiProof_FMAP_REL':
@@ -10164,9 +10334,9 @@ BY_CONST = {
   'clos_ticks_compile_inc':
     ('new_definition', False, ''),
   'clos_ticks_remove_ticks':
-    ('nested', False, ''),
+    ('sing>nested', False, ''),
   'clos_ticks_remove_ticks_sing':
-    ('nested', False, ''),
+    ('maplist>maplist>nested', False, ''),
   'clos_to_bvlProof_code_installed':
     ('new_definition', False, ''),
   'clos_to_bvlProof_env_rel':
@@ -10186,7 +10356,7 @@ BY_CONST = {
   'clos_to_bvl_compile':
     ('new_definition', False, ''),
   'clos_to_bvl_compile_exps':
-    ('measure', False, ''),
+    ('', False, ''),
   'clos_to_bvl_compile_inc':
     ('new_definition', False, ''),
   "clos_to_bvl_compile_inc'":
@@ -10200,7 +10370,7 @@ BY_CONST = {
   'clos_to_bvl_init_code':
     ('new_definition', False, ''),
   'clos_to_display':
-    ('measure', False, ''),
+    ('', False, ''),
   'clos_to_strs':
     ('new_definition', False, ''),
   'closest':
@@ -10272,7 +10442,7 @@ BY_CONST = {
   'code_loaded':
     ('new_definition', False, ''),
   'code_locs':
-    ('measure', False, ''),
+    ('', False, ''),
   'code_merge':
     ('measure', False, 'MEASURE (\\(x0,x1).      list_size (pair_size (\\n. n) (\\x. 0)) x0 +      list_size (pair_size (\\n. n) (\\x. 0)) x1)'),
   'code_oracle_rel':
@@ -10282,7 +10452,7 @@ BY_CONST = {
   'code_similar':
     ('measure', False, 'MEASURE (\\(x0,x1). list_size (sec_size (\\x. 0)) x0 + list_size (sec_size (\\x. 0)) x1)'),
   'code_sort':
-    ('new_definition', False, ''),
+    ('', False, ''),
   'code_split':
     ('prim_rec', False, ''),
   'code_subset':
@@ -10342,9 +10512,9 @@ BY_CONST = {
   'compile_dec':
     ('new_definition', False, ''),
   'compile_exp_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'compile_exps_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'compile_flat':
     ('new_definition', False, ''),
   'compile_inc_post_kcompile':
@@ -10376,7 +10546,7 @@ BY_CONST = {
   'compile_pat':
     ('nested', False, ''),
   'compile_pat_bindings':
-    ('measure', False, ''),
+    ('', False, ''),
   'compile_pat_rhs':
     ('new_definition', False, ''),
   'compile_pats':
@@ -10420,7 +10590,7 @@ BY_CONST = {
   'concat_with':
     ('measure', False, 'MEASURE (\\(x0,x1). list_size (app_list_size (\\x. 0)) x0)'),
   'concrete_v':
-    ('measure', False, 'MEASURE (\\x0. semanticPrimitives_v_size x0)'),
+    ('', False, ''),
   'cond':
     ('new_definition', False, ''),
   'cond_call_compile_inc':
@@ -10497,6 +10667,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'copy_each':
     ('new_definition', False, ''),
+  'copy_list':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x2)'),
   'copy_loop':
     ('new_definition', False, ''),
   'copy_prop':
@@ -10622,7 +10794,7 @@ BY_CONST = {
   'dataSem_do_word_app':
     ('new_definition', False, ''),
   'dataSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'dataSem_finalise_cons':
     ('measure', True, ''),
   'dataSem_find_code':
@@ -10667,6 +10839,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'data_lang_safe_for_space':
     ('new_definition', False, ''),
+  'data_length':
+    ('new_definition', False, ''),
   'data_liveProof_state_rel':
     ('new_definition', False, ''),
   'data_live_compile':
@@ -10675,6 +10849,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'data_num_stubs':
     ('new_definition', False, ''),
+  'data_pointers':
+    ('measure', False, 'MEASURE (\\x0. list_size (heap_element_size (\\x. 0) (\\x. 0)) x0)'),
   'data_prog_to_display':
     ('measure', False, 'MEASURE (\\x. match x with INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)'),
   'data_section':
@@ -10723,8 +10899,14 @@ BY_CONST = {
     ('new_recursive_definition', False, ''),
   'data_to_word_list_Seq':
     ('measure', False, 'MEASURE (\\x0. list_size (wordLang_prog_size (\\x. 0)) x0)'),
+  'data_to_word_memoryProof_fix_clock':
+    ('new_recursive_definition', False, ''),
   'data_to_word_memoryProof_isRef':
     ('new_definition', False, ''),
+  'data_to_word_memoryProof_store_list':
+    ('prim_rec', False, ''),
+  'data_to_word_memoryProof_walk':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x3)'),
   'data_to_word_stub_names':
     ('new_definition', False, ''),
   'data_to_word_stubs':
@@ -10763,6 +10945,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'declare_env':
     ('new_definition', False, ''),
+  'decode_addr':
+    ('new_definition', False, ''),
   'decode_control':
     ('measure', False, 'MEASURE (\\x0. list_size char_size x0)'),
   'decode_dtree':
@@ -10772,6 +10956,8 @@ BY_CONST = {
   'decode_infer_t':
     ('measure', True, ''),
   'decode_length':
+    ('new_definition', False, ''),
+  'decode_maxout':
     ('new_definition', False, ''),
   'decode_pos':
     ('prim_rec', False, ''),
@@ -11029,6 +11215,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'el_length':
     ('new_recursive_definition', False, ''),
+  'elements_list':
+    ('measure', False, 'MEASURE (\\x0. dataSem_v_size1 x0)'),
   'emit_symbol':
     ('new_definition', False, ''),
   'emit_symbols':
@@ -11123,6 +11311,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'eq_any':
     ('new_definition', False, ''),
+  'eq_assum':
+    ('prim_rec', False, ''),
   'eq_code_stack_max':
     ('new_definition', False, ''),
   'eq_direct':
@@ -11133,6 +11323,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'eq_direct_nil':
     ('new_definition', False, ''),
+  'eq_explode':
+    ('prim_rec', False, ''),
   'eq_op':
     ('new_definition', False, ''),
   'eq_pure':
@@ -11172,7 +11364,7 @@ BY_CONST = {
   'eval_state_call_rel':
     ('new_definition', False, ''),
   'evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'evaluate_apps':
     ('prim_rec', False, ''),
   'evaluate_dec_clock':
@@ -11196,11 +11388,11 @@ BY_CONST = {
   'even_starting_locals':
     ('new_definition', False, ''),
   'every_Fn_SOME':
-    ('measure', False, ''),
+    ('', False, ''),
   'every_Fn_vs_NONE':
-    ('measure', False, ''),
+    ('', False, ''),
   'every_Fn_vs_SOME':
-    ('measure', False, ''),
+    ('', False, ''),
   'every_error_result':
     ('new_recursive_definition', False, ''),
   'every_even_colour':
@@ -11230,7 +11422,7 @@ BY_CONST = {
   'exh_all':
     ('measure', True, ''),
   'exh_matrix':
-    ('measure', True, ''),
+    ('maplist>measure', True, ''),
   'exh_rows':
     ('new_definition', False, ''),
   'exh_steps':
@@ -11246,7 +11438,7 @@ BY_CONST = {
   'exp_to_addr':
     ('new_definition', False, ''),
   'exp_to_display':
-    ('measure', True, ''),
+    ('', False, ''),
   'exp_type_num':
     ('new_definition', False, ''),
   'expand':
@@ -11405,6 +11597,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'find_color_in_list':
     ('prim_rec', False, ''),
+  'find_diff':
+    ('guess', False, ''),
   'find_dup':
     ('prim_rec', False, ''),
   'find_env_globals':
@@ -11418,11 +11612,11 @@ BY_CONST = {
   'find_last_stealable':
     ('measure', False, 'MEASURE (\\(x0,x1). list_size (pair_size (\\x. 0) (\\n. n)) x0)'),
   'find_loc':
-    ('measure', False, ''),
+    ('', False, ''),
   'find_loc_state':
     ('new_definition', False, ''),
   'find_lookups':
-    ('measure', False, ''),
+    ('', False, ''),
   'find_next_interference':
     ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x2)'),
   'find_next_newline':
@@ -11464,7 +11658,7 @@ BY_CONST = {
   'firstSet':
     ('new_definition', False, ''),
   'firstSetML':
-    ('measure', True, ''),
+    ('', False, ''),
   'first_match_col':
     ('measure', False, 'MEASURE (\\(x0,x1). list_size (\\n. n) x1)'),
   'first_n_exps':
@@ -11496,7 +11690,7 @@ BY_CONST = {
   'flatProps_op_gbag':
     ('new_definition', False, ''),
   'flatProps_set_globals':
-    ('measure', True, ''),
+    ('', False, ''),
   'flatProps_simple_state_rel':
     ('new_definition', False, ''),
   'flatProps_simple_val_rel':
@@ -11530,7 +11724,7 @@ BY_CONST = {
   'flatSem_do_app':
     ('new_definition', False, ''),
   'flatSem_do_eq':
-    ('measure', False, ''),
+    ('', False, ''),
   'flatSem_do_eval':
     ('new_definition', False, ''),
   'flatSem_do_if':
@@ -11540,7 +11734,7 @@ BY_CONST = {
   'flatSem_do_test':
     ('new_recursive_definition', False, ''),
   'flatSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'flatSem_exp_alt_size':
     ('prim_rec', False, ''),
   'flatSem_fix_clock':
@@ -11550,7 +11744,7 @@ BY_CONST = {
   'flatSem_list_to_v':
     ('prim_rec', False, ''),
   'flatSem_pmatch':
-    ('measure', False, ''),
+    ('', False, ''),
   'flatSem_semantics':
     ('new_definition', False, ''),
   'flatSem_the_Litv_Float64':
@@ -11574,11 +11768,11 @@ BY_CONST = {
   'flat_op_to_display':
     ('new_definition', False, ''),
   'flat_pat_to_display':
-    ('measure', False, 'MEASURE (\\x0. flatLang_pat_size x0)'),
+    ('', False, ''),
   'flat_patternProof_state_rel':
     ('new_definition', False, ''),
   'flat_pattern_compile_exp':
-    ('measure', False, ''),
+    ('', False, ''),
   'flat_pattern_decode_test':
     ('new_recursive_definition', False, ''),
   'flat_pattern_init_config':
@@ -11596,7 +11790,7 @@ BY_CONST = {
   'flat_to_clos_arg2':
     ('new_definition', False, ''),
   'flat_to_clos_compile':
-    ('measure', False, ''),
+    ('', False, ''),
   'flat_to_clos_compile_decs':
     ('prim_rec', False, ''),
   'flat_to_clos_compile_op':
@@ -11606,7 +11800,7 @@ BY_CONST = {
   'flat_to_clos_dest_Constant':
     ('new_definition', False, ''),
   'flat_to_display':
-    ('nested', False, ''),
+    ('maplist>maplist>maplist>nested', False, ''),
   'flat_to_strs':
     ('new_definition', False, ''),
   'flat_to_v':
@@ -11800,7 +11994,7 @@ BY_CONST = {
   'free_let':
     ('new_definition', False, ''),
   'free_sing':
-    ('nested', False, ''),
+    ('', False, ''),
   'free_var_ids':
     ('match', False, ''),
   'fresh_uvar':
@@ -11894,7 +12088,7 @@ BY_CONST = {
   'functions':
     ('measure', False, 'MEASURE (\\x0. list_size (decl_size (\\x. 0)) x0)'),
   'fv':
-    ('measure', False, ''),
+    ('', False, ''),
   'fv1':
     ('new_definition', False, ''),
   'fv_max':
@@ -11957,6 +12151,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'gen_start_ok':
     ('new_definition', False, ''),
+  'gen_starts_in_store':
+    ('new_definition', False, ''),
   'gen_state_ok':
     ('define_single', False, ''),
   'generalise':
@@ -11987,6 +12183,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'get_above_handler':
     ('new_definition', False, ''),
+  'get_addr':
+    ('new_definition', False, ''),
   'get_adj_ls':
     ('new_definition', False, ''),
   'get_avail_moves_wl':
@@ -12000,7 +12198,7 @@ BY_CONST = {
   'get_cl_env':
     ('new_definition', False, ''),
   'get_clash_tree':
-    ('measure', False, ''),
+    ('', False, ''),
   'get_coalescecost':
     ('new_definition', False, ''),
   'get_coalesced':
@@ -12026,7 +12224,7 @@ BY_CONST = {
   'get_global':
     ('new_definition', False, ''),
   'get_heu':
-    ('measure', False, ''),
+    ('', False, ''),
   'get_heu_inst':
     ('new_definition', False, ''),
   'get_heuristics':
@@ -12103,6 +12301,12 @@ BY_CONST = {
     ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x0)'),
   'get_reads_exp':
     ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+  'get_real_addr':
+    ('new_definition', False, ''),
+  'get_real_offset':
+    ('new_definition', False, ''),
+  'get_real_simple_addr':
+    ('new_definition', False, ''),
   'get_refs':
     ('nested', False, ''),
   'get_reg_value':
@@ -12118,7 +12322,7 @@ BY_CONST = {
   'get_size_sc':
     ('new_definition', False, ''),
   'get_size_sc_aux':
-    ('measure', False, ''),
+    ('', False, ''),
   'get_sorted_moves':
     ('new_definition', False, ''),
   'get_sorted_regs':
@@ -12128,9 +12332,9 @@ BY_CONST = {
   'get_spillcost':
     ('new_definition', False, ''),
   'get_src_names':
-    ('measure', False, ''),
+    ('', False, ''),
   'get_src_names_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'get_stack_heap_limit':
     ('new_definition', False, ''),
   "get_stack_heap_limit'":
@@ -12167,6 +12371,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'glob_real':
     ('new_definition', False, ''),
+  'glob_real_inv':
+    ('new_definition', False, ''),
   'global_count_sing':
     ('prim_rec', False, ''),
   'global_table':
@@ -12174,7 +12380,7 @@ BY_CONST = {
   'global_to_vs':
     ('new_recursive_definition', False, ''),
   'global_var_exp':
-    ('measure', False, ''),
+    ('', False, ''),
   'globals_approx_every_Fn_SOME':
     ('new_definition', False, ''),
   'globals_approx_every_Fn_vs_NONE':
@@ -12205,6 +12411,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'good_linear_scan_state':
     ('new_definition', False, ''),
+  'good_loc':
+    ('new_definition', False, ''),
   'good_neg_pref':
     ('new_definition', False, ''),
   'good_pref':
@@ -12234,7 +12442,7 @@ BY_CONST = {
   'handle_ok':
     ('measure', True, ''),
   'handle_simp':
-    ('measure', False, ''),
+    ('', False, ''),
   'handle_size':
     ('prim_rec', False, ''),
   'handler_slots':
@@ -12242,7 +12450,7 @@ BY_CONST = {
   'handler_val':
     ('cases', False, ''),
   'has_Eval':
-    ('nested', False, ''),
+    ('', False, ''),
   'has_Eval_dec':
     ('new_definition', False, ''),
   'has_bad_ref':
@@ -12276,14 +12484,18 @@ BY_CONST = {
   'has_rec1':
     ('new_definition', False, ''),
   'has_rec_sing':
-    ('prim_rec', False, ''),
+    ('', False, ''),
   'has_var':
     ('prim_rec', False, ''),
   'has_version_flag':
     ('new_definition', False, ''),
   'heap_addresses':
     ('measure', False, 'MEASURE (\\(x0,x1). list_size (heap_element_size (\\x. 0) (\\x. 0)) x1)'),
+  'heap_deref':
+    ('new_definition', False, ''),
   'heap_drop':
+    ('new_definition', False, ''),
+  'heap_el':
     ('new_definition', False, ''),
   'heap_element_is_ref':
     ('new_definition', False, ''),
@@ -12294,6 +12506,8 @@ BY_CONST = {
   'heap_filter_aux':
     ('prim_rec', False, ''),
   'heap_gen_ok':
+    ('new_definition', False, ''),
+  'heap_in_memory_store':
     ('new_definition', False, ''),
   'heap_length':
     ('new_definition', False, ''),
@@ -12313,6 +12527,14 @@ BY_CONST = {
     ('new_definition', False, ''),
   'heap_split':
     ('prim_rec', False, ''),
+  'heap_store':
+    ('prim_rec', False, ''),
+  'heap_store_rel':
+    ('new_definition', False, ''),
+  'heap_store_unused':
+    ('new_definition', False, ''),
+  'heap_store_unused_alt':
+    ('new_definition', False, ''),
   'heap_take':
     ('new_definition', False, ''),
   'heaps_similar':
@@ -12326,6 +12548,10 @@ BY_CONST = {
   'heu_max_all':
     ('new_definition', False, ''),
   'heu_merge_call':
+    ('new_definition', False, ''),
+  'hide_heap_in_memory_store':
+    ('new_definition', False, ''),
+  'hide_memory_rel':
     ('new_definition', False, ''),
   'hole_has_val':
     ('new_definition', False, ''),
@@ -12420,17 +12646,17 @@ BY_CONST = {
   'inf_type_to_string':
     ('new_definition', False, ''),
   'inf_type_to_string_rec':
-    ('measure', False, 'MEASURE (\\(x0,x1). infer_t_size x1)'),
+    ('maplist>measure', False, 'MEASURE (\\(x0,x1). infer_t_size x1)'),
   'inferProps_hide':
     ('new_definition', False, ''),
   'infer_d':
-    ('measure', False, ''),
+    ('', False, ''),
   'infer_deBruijn_inc':
     ('nested', False, ''),
   'infer_deBruijn_subst':
     ('prim_rec', False, ''),
   'infer_e':
-    ('measure', False, ''),
+    ('', False, ''),
   'infer_failwith':
     ('new_definition', False, ''),
   'infer_guard':
@@ -12438,7 +12664,7 @@ BY_CONST = {
   'infer_init_config':
     ('new_definition', False, ''),
   'infer_p':
-    ('measure', False, ''),
+    ('', False, ''),
   'infer_subst':
     ('nested', False, ''),
   'infer_subst_var':
@@ -12506,7 +12732,7 @@ BY_CONST = {
   'inline_all':
     ('prim_rec', False, ''),
   'inline_exp':
-    ('measure', False, ''),
+    ('', False, ''),
   'insertMax':
     ('prim_rec', False, ''),
   'insertMin':
@@ -12637,11 +12863,15 @@ BY_CONST = {
     ('new_definition', False, ''),
   'isPrefix':
     ('new_definition', False, ''),
+  'isRefBlock':
+    ('new_definition', False, ''),
   'isSomeDataElement':
     ('new_definition', False, ''),
   'isSomeDataOrForward':
     ('new_definition', False, ''),
   'isSomeForwardPointer':
+    ('new_definition', False, ''),
+  'isSomeUnused':
     ('new_definition', False, ''),
   'isString':
     ('new_definition', False, ''),
@@ -12662,6 +12892,8 @@ BY_CONST = {
   'isSymbolicConstructor':
     ('new_definition', False, ''),
   'isTyvarT':
+    ('new_definition', False, ''),
+  'isUnused':
     ('new_definition', False, ''),
   'isVar':
     ('new_definition', False, ''),
@@ -12704,6 +12936,8 @@ BY_CONST = {
   'is_Var':
     ('new_definition', False, ''),
   'is_adjacent':
+    ('new_definition', False, ''),
+  'is_all_ones':
     ('new_definition', False, ''),
   'is_alloc_var':
     ('new_definition', False, ''),
@@ -12864,7 +13098,7 @@ BY_CONST = {
   'key_val_compare':
     ('new_definition', False, ''),
   'known':
-    ('measure', False, ''),
+    ('', False, ''),
   'known_cc':
     ('new_definition', False, ''),
   'known_co':
@@ -12900,7 +13134,7 @@ BY_CONST = {
   'labSem_dec_clock':
     ('new_definition', False, ''),
   'labSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'labSem_fp_upd':
     ('new_recursive_definition', False, ''),
   'labSem_mem_load':
@@ -12969,6 +13203,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'largest':
     ('new_definition', False, ''),
+  'last_bytes':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x0)'),
   'least_from':
     ('new_definition', False, ''),
   'leftLoc':
@@ -13131,6 +13367,18 @@ BY_CONST = {
     ('prim_rec', False, ''),
   'list_compare':
     ('guess', False, ''),
+  'list_copy':
+    ('new_definition', False, ''),
+  'list_copy_alias':
+    ('new_definition', False, ''),
+  'list_copy_bwd':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x0)'),
+  'list_copy_bwd_alias':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x0)'),
+  'list_copy_fwd':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). (\\n. n) x0)'),
+  'list_copy_fwd_alias':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x0)'),
   'list_delete':
     ('prim_rec', False, ''),
   'list_id':
@@ -13159,6 +13407,8 @@ BY_CONST = {
     ('prim_rec', False, ''),
   'list_subset':
     ('new_definition', False, ''),
+  'list_to_BlockReps':
+    ('prim_rec', False, ''),
   'list_to_num_set':
     ('prim_rec', False, ''),
   'list_to_sorted_moves':
@@ -13237,6 +13487,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'lookup_inc':
     ('new_definition', False, ''),
+  'lookup_len':
+    ('new_definition', False, ''),
   'lookup_mem':
     ('new_definition', False, ''),
   'lookup_st_ex':
@@ -13308,6 +13560,8 @@ BY_CONST = {
   'make_varls':
     ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). tra_size x1 + list_size mlstring_size x3)'),
   'make_word':
+    ('new_definition', False, ''),
+  'make_zeros':
     ('new_definition', False, ''),
   'mapWithKey':
     ('prim_rec', False, ''),
@@ -13545,6 +13799,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'memory_assumption':
     ('new_definition', False, ''),
+  'memory_rel':
+    ('new_definition', False, ''),
   'merge_data':
     ('new_definition', False, ''),
   'merge_eqs':
@@ -13568,7 +13824,7 @@ BY_CONST = {
   'mergesortN':
     ('measure', False, 'MEASURE (\\(R,n,l). n)'),
   'mergesortN_tail':
-    ('measure', False, '(MEASURE:(?197773#?197777#num#?197780->num)->?197773#?197777#num#?197780->?197773#?197777#num#?197780->bool) (\\((negate:?197773),(R:?197777),n,(l:?197780)). n)'),
+    ('measure', False, 'MEASURE (\\(negate,R,n,l). n)'),
   'mergesort_merge':
     ('guess', False, ''),
   'mergesort_tail':
@@ -13578,6 +13834,8 @@ BY_CONST = {
   'mglobals_disjoint':
     ('new_definition', False, ''),
   'mglobals_extend':
+    ('new_definition', False, ''),
+  'minus':
     ('new_definition', False, ''),
   'mips_backend_config':
     ('new_definition', False, ''),
@@ -13794,7 +14052,7 @@ BY_CONST = {
   'mw_ok':
     ('new_definition', False, ''),
   'mw_shift':
-    ('new_definition', False, ''),
+    ('', False, ''),
   'mw_sub':
     ('guess', False, ''),
   'n2l':
@@ -13862,9 +14120,9 @@ BY_CONST = {
   'nlive_store':
     ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
   'no_Labels':
-    ('measure', False, ''),
+    ('', False, ''),
   'no_Mat':
-    ('measure', False, ''),
+    ('', False, ''),
   'no_Mat_decs':
     ('prim_rec', False, ''),
   'no_alloc':
@@ -13944,7 +14202,7 @@ BY_CONST = {
   'nsSub_compute':
     ('measure', True, ''),
   'ns_nub':
-    ('nested', False, ''),
+    ('maplist>nested', False, ''),
   'ns_to_alist':
     ('measure', True, ''),
   'nth':
@@ -13990,7 +14248,7 @@ BY_CONST = {
   'num_to_display':
     ('new_definition', False, ''),
   'num_to_hex':
-    ('measure', False, 'MEASURE (\\x0. (\\n. n) x0)'),
+    ('', False, ''),
   'num_to_hex_digit':
     ('new_definition', False, ''),
   'num_to_hex_mlstring':
@@ -14022,7 +14280,7 @@ BY_CONST = {
   'numset_list_insert_nottailrec':
     ('prim_rec', False, ''),
   'obeys_max_app':
-    ('measure', False, ''),
+    ('', False, ''),
   'odestSEXSTR':
     ('new_definition', False, ''),
   'odestSXNUM':
@@ -14256,7 +14514,7 @@ BY_CONST = {
   'parts_to_words':
     ('prim_rec', False, ''),
   'pat_to_display':
-    ('measure', False, 'MEASURE (\\x0. ast_pat_size x0)'),
+    ('', False, ''),
   'pat_to_guard':
     ('measure', True, ''),
   'pat_tups':
@@ -14276,7 +14534,7 @@ BY_CONST = {
   'pattern_semantics_match':
     ('prim_rec', False, ''),
   'pattern_semantics_pmatch':
-    ('measure', False, ''),
+    ('', False, ''),
   'pegComplete_stoppers':
     ('new_definition', False, ''),
   'peg_EbaseParen':
@@ -14328,6 +14586,8 @@ BY_CONST = {
   'pmov':
     ('guess', False, ''),
   'point_inside_interval':
+    ('new_definition', False, ''),
+  'pointer_bits':
     ('new_definition', False, ''),
   'poplist_aux':
     ('cases', False, ''),
@@ -14414,7 +14674,7 @@ BY_CONST = {
   'ptree_Eliteral':
     ('new_recursive_definition', False, ''),
   'ptree_Expr':
-    ('measure', False, ''),
+    ('', False, ''),
   'ptree_FQV':
     ('new_recursive_definition', False, ''),
   'ptree_Op':
@@ -14553,6 +14813,8 @@ BY_CONST = {
     ('prim_rec', False, ''),
   'read_while':
     ('match', False, ''),
+  'read_word':
+    ('new_definition', False, ''),
   'real_addr':
     ('new_definition', False, ''),
   'real_byte_offset':
@@ -14636,7 +14898,7 @@ BY_CONST = {
   'remove_colours':
     ('measure', False, 'MEASURE (\\(x0,x1). list_size (\\n. n) x0)'),
   'remove_dead':
-    ('measure', False, ''),
+    ('', False, ''),
   'remove_dead_inst':
     ('new_definition', False, ''),
   'remove_dead_prog':
@@ -14648,9 +14910,9 @@ BY_CONST = {
   'remove_flat_prog':
     ('new_definition', False, ''),
   'remove_fvs':
-    ('nested', False, ''),
+    ('sing>nested', False, ''),
   'remove_fvs_sing':
-    ('nested', False, ''),
+    ('maplist>maplist>nested', False, ''),
   'remove_inactive_intervals':
     ('measure', True, ''),
   'remove_labels':
@@ -14664,7 +14926,7 @@ BY_CONST = {
   'remove_temp_stack':
     ('new_definition', False, ''),
   'remove_ticks_exp':
-    ('measure', False, 'MEASURE (\\x0. bvi_exp_size x0)'),
+    ('maplist>measure', False, 'MEASURE (\\x0. bvi_exp_size x0)'),
   'remove_unreach':
     ('new_definition', False, ''),
   'remove_unreachable':
@@ -14676,7 +14938,7 @@ BY_CONST = {
   'rename_state':
     ('new_definition', False, ''),
   'renumber_code_locs_list':
-    ('measure', False, ''),
+    ('', False, ''),
   'replace_nil':
     ('match', False, ''),
   'req_compile_inc_addrs':
@@ -14768,7 +15030,7 @@ BY_CONST = {
   'sane_locals_size':
     ('new_definition', False, ''),
   'scan_expr':
-    ('measure', False, ''),
+    ('', False, ''),
   'scan_expr_sing':
     ('prim_rec', False, ''),
   'sec_aligned':
@@ -14846,7 +15108,7 @@ BY_CONST = {
   'semanticPrimitives_do_app':
     ('new_definition', False, ''),
   'semanticPrimitives_do_eq':
-    ('measure', False, ''),
+    ('', False, ''),
   'semanticPrimitives_do_eval':
     ('new_definition', False, ''),
   'semanticPrimitives_do_if':
@@ -14862,7 +15124,7 @@ BY_CONST = {
   'semanticPrimitives_num_cmp':
     ('new_recursive_definition', False, ''),
   'semanticPrimitives_pmatch':
-    ('measure', False, ''),
+    ('', False, ''),
   'semanticPrimitives_the_Litv_Float64':
     ('define_single', False, ''),
   'semanticPrimitives_thunk_op':
@@ -14968,7 +15230,7 @@ BY_CONST = {
   'sexpexp':
     ('measure', True, ''),
   'sexpexp_alt':
-    ('measure', True, ''),
+    ('', False, ''),
   'sexpid':
     ('measure', True, ''),
   'sexplist':
@@ -15038,7 +15300,7 @@ BY_CONST = {
   'shift_right':
     ('measure', False, 'MEASURE (\\(x0,x1). (\\n. n) x1)'),
   'shift_sing':
-    ('measure', False, ''),
+    ('', False, ''),
   'shift_to_display':
     ('new_recursive_definition', False, ''),
   'shift_type_num':
@@ -15114,7 +15376,7 @@ BY_CONST = {
   'singleton':
     ('new_definition', False, ''),
   'size_of':
-    ('measure', False, ''),
+    ('', False, ''),
   'size_of_clash_tree':
     ('prim_rec', False, ''),
   'size_of_eids':
@@ -15198,7 +15460,7 @@ BY_CONST = {
   'source_let_compile_decs':
     ('measure', False, 'MEASURE (list_size dec_size)'),
   'source_to_display_dec':
-    ('measure', False, 'MEASURE (\\x0. dec_size x0)'),
+    ('', False, ''),
   'source_to_flatProof_abort':
     ('new_definition', False, ''),
   'source_to_flatProof_invariant':
@@ -15208,9 +15470,9 @@ BY_CONST = {
   'source_to_flat_compile':
     ('new_definition', False, ''),
   'source_to_flat_compile_decs':
-    ('measure', False, ''),
+    ('', False, ''),
   'source_to_flat_compile_exp':
-    ('measure', False, ''),
+    ('', False, ''),
   'source_to_flat_compile_prog':
     ('new_definition', False, ''),
   'source_to_flat_empty_env':
@@ -15298,7 +15560,7 @@ BY_CONST = {
   'src_orac_step_invs':
     ('new_definition', False, ''),
   'ssa_cc_trans':
-    ('measure', False, ''),
+    ('', False, ''),
   'ssa_cc_trans_exp':
     ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
   'ssa_cc_trans_inst':
@@ -15366,7 +15628,7 @@ BY_CONST = {
   'stackSem_enc_stack':
     ('measure', True, ''),
   'stackSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'stackSem_exit_loop':
     ('new_definition', False, ''),
   'stackSem_find_code':
@@ -15476,7 +15738,7 @@ BY_CONST = {
   'stack_num_stubs':
     ('new_definition', False, ''),
   'stack_prog_to_display':
-    ('measure', False, ''),
+    ('', False, ''),
   'stack_rawcallProof_state_ok':
     ('new_definition', False, ''),
   'stack_rawcallProof_state_rel':
@@ -15758,7 +16020,7 @@ BY_CONST = {
   'take_until_Any':
     ('prim_rec', False, ''),
   'targetSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'target_cc_fp_regs':
     ('new_definition', False, ''),
   'target_cc_regs':
@@ -15845,16 +16107,20 @@ BY_CONST = {
     ('new_definition', False, ''),
   'threshold':
     ('new_definition', False, ''),
+  'thunk_deref':
+    ('new_definition', False, ''),
   'thunk_mode_to_display':
     ('new_recursive_definition', False, ''),
   'thunk_op_to_display':
+    ('new_recursive_definition', False, ''),
+  'thunk_tag_to_bits':
     ('new_recursive_definition', False, ''),
   'tick_before':
     ('new_definition', False, ''),
   'tick_compile_prog':
     ('new_definition', False, ''),
   'tick_inline':
-    ('nested', False, ''),
+    ('', False, ''),
   'tick_inline_all':
     ('prim_rec', False, ''),
   'tick_inline_sing':
@@ -15886,7 +16152,7 @@ BY_CONST = {
   'to_clos_all':
     ('new_definition', False, ''),
   'to_constant':
-    ('measure', False, ''),
+    ('', False, ''),
   'to_constant_op':
     ('new_definition', False, ''),
   'to_data':
@@ -15968,7 +16234,7 @@ BY_CONST = {
   'total_colour':
     ('new_definition', False, ''),
   'total_pat':
-    ('measure', True, ''),
+    ('maplist>measure', True, ''),
   'trace_oracle':
     ('new_definition', False, ''),
   'trace_to_json':
@@ -16123,6 +16389,8 @@ BY_CONST = {
     ('measure', False, 'MEASURE (\\x0. dataSem_v_size1 x0)'),
   'v_container_xs':
     ('new_recursive_definition', False, ''),
+  'v_depth':
+    ('measure', False, 'MEASURE dataSem_v_size'),
   'v_fun_abs':
     ('new_definition', False, ''),
   'v_has_Eval':
@@ -16135,6 +16403,8 @@ BY_CONST = {
     ('new_recursive_definition', False, ''),
   'v_rel_opt':
     ('new_definition', False, ''),
+  'v_same_type':
+    ('measure', False, 'MEASURE (dataSem_v_size o FST)'),
   'v_to_env_id':
     ('new_definition', False, ''),
   'v_to_flat':
@@ -16188,7 +16458,7 @@ BY_CONST = {
   'var_corr':
     ('new_definition', False, ''),
   'var_exp':
-    ('measure', False, ''),
+    ('', False, ''),
   'varb':
     ('measure', False, 'MEASURE (\\x0. term_size (\\x. 0) x0)'),
   'vars':
@@ -16199,6 +16469,10 @@ BY_CONST = {
     ('new_definition', False, ''),
   'vars_to_list':
     ('new_definition', False, ''),
+  'vb_eq_size':
+    ('measure', False, 'MEASURE (\\x.      match x with        INL (refs,v1,v2) -> dataSem_v_size v1      | INR (refs,l1,l2) -> list_size dataSem_v_size l1)'),
+  'vb_eq_sizeX':
+    ('measure', False, 'MEASURE (\\x.      match x with        INL (refs,v1,v2) -> dataSem_v_size v1      | INR (refs,l1,l2) -> list_size dataSem_v_size l1)'),
   'vb_size':
     ('measure', False, 'MEASURE (\\x0. dataSem_v_size x0)'),
   'vs_depth':
@@ -16322,7 +16596,7 @@ BY_CONST = {
   'wordSem_enc_stack':
     ('measure', False, 'MEASURE (\\x0. list_size (stack_frame_size (\\x. 0)) x0)'),
   'wordSem_evaluate':
-    ('measure', False, ''),
+    ('', False, ''),
   'wordSem_exit_loop':
     ('new_definition', False, ''),
   'wordSem_find_code':
@@ -16397,6 +16671,8 @@ BY_CONST = {
     ('new_definition', False, ''),
   'word_add_carry':
     ('new_definition', False, ''),
+  'word_addr':
+    ('new_definition', False, ''),
   'word_alloc':
     ('new_definition', False, ''),
   'word_allocProof_hide':
@@ -16421,20 +16697,36 @@ BY_CONST = {
     ('match', False, ''),
   'word_bignum_compile_exp':
     ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+  'word_cmp_loop':
+    ('measure', False, 'MEASURE (w2n o FST)'),
+  'word_cmp_res':
+    ('new_definition', False, ''),
   'word_common_subexp_elim':
     ('new_definition', False, ''),
+  'word_cond_add':
+    ('new_definition', False, ''),
+  'word_copy_array':
+    ('new_definition', False, ''),
+  'word_copy_bwd':
+    ('measure', False, 'MEASURE (w2n o FST o SND)'),
+  'word_copy_fwd':
+    ('measure', False, 'MEASURE (w2n o FST o SND)'),
   'word_cse':
     ('prim_rec', False, ''),
   'word_cseInst':
     ('new_definition', False, ''),
   'word_cse_Seqs':
     ('measure', False, 'MEASURE (\\x0. list_size (wordLang_prog_size (\\x. 0)) x0)'),
+  'word_el':
+    ('define_single', False, ''),
   'word_elimProof_code_rel':
     ('new_definition', False, ''),
   'word_elimProof_get_stack':
     ('measure', False, 'MEASURE (\\x0. list_size (stack_frame_size (\\x. 0)) x0)'),
   'word_elimProof_get_store':
     ('new_definition', False, ''),
+  'word_eq':
+    ('measure', False, 'MEASURE (\\x.      match x with        INL (c,st,dm,m,l1,ck1,w1,w2) -> l1      | INR (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)'),
   'word_exp_to_display':
     ('prim_rec', False, ''),
   'word_full_gc':
@@ -16547,11 +16839,17 @@ BY_CONST = {
     ('new_definition', False, ''),
   'word_gen_gc_partial_move_roots_bitmaps_code':
     ('new_definition', False, ''),
+  'word_header':
+    ('new_definition', False, ''),
+  'word_heap':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2).      list_size      (heap_element_size       (pair_size data_to_word_memoryProof_tag_size       (list_size (word_loc_size (\\x. 0))))      (word_loc_size (\\x. 0)))      x1)'),
   'word_heap_parts':
     ('', False, ''),
   'word_inst_is_const':
     ('new_definition', False, ''),
   'word_internal_all':
+    ('new_definition', False, ''),
+  'word_is_clos':
     ('new_definition', False, ''),
   'word_lang_safe_for_space':
     ('new_definition', False, ''),
@@ -16563,14 +16861,22 @@ BY_CONST = {
     ('new_recursive_definition', False, ''),
   'word_loc_val_byte':
     ('new_definition', False, ''),
+  'word_mem_eq':
+    ('prim_rec', False, ''),
+  'word_ml_inv':
+    ('new_definition', False, ''),
   'word_num_stubs':
+    ('new_definition', False, ''),
+  'word_of_byte':
     ('new_definition', False, ''),
   'word_of_bytes':
     ('prim_rec', False, ''),
   'word_offset':
     ('new_definition', False, ''),
+  'word_payload':
+    ('new_recursive_definition', False, ''),
   'word_prog_to_display':
-    ('measure', False, ''),
+    ('', False, ''),
   'word_seqs':
     ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
   'word_sh':
@@ -16589,6 +16895,10 @@ BY_CONST = {
     ('new_definition', False, ''),
   'word_store':
     ('new_definition', False, ''),
+  'word_str_cmp':
+    ('new_definition', False, ''),
+  'word_str_cmp_loop':
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4,x5,x6,x7,x8). (\\n. n) x8)'),
   'word_tc':
     ('new_recursive_definition', False, ''),
   'word_to_bytes':
@@ -16606,7 +16916,7 @@ BY_CONST = {
   'word_to_stackProof_state_rel':
     ('new_definition', False, ''),
   'word_to_stack_comp':
-    ('measure', False, ''),
+    ('', False, ''),
   'word_to_stack_compile':
     ('new_definition', False, ''),
   'word_to_stack_compile_prog':
@@ -16631,6 +16941,8 @@ BY_CONST = {
     ('prim_rec', False, ''),
   'word_unreach_merge_moves':
     ('new_definition', False, ''),
+  'word_xor_bytes':
+    ('measure', False, 'MEASURE (\\(a1,a2,len,dm,m). w2n len)'),
   'words_line':
     ('new_definition', False, ''),
   'wrapper_ok':
@@ -16658,6 +16970,8 @@ BY_CONST = {
   'x64_names':
     ('new_definition', False, ''),
   'xor_bytes':
+    ('guess', False, ''),
+  'xor_words':
     ('guess', False, ''),
   'zero_extend':
     ('new_definition', False, ''),

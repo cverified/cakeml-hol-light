@@ -7,6 +7,6 @@ PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
 . $C/tools/holenv.sh > /dev/null 2>&1
 s=${1:-seq}
 TIMEOUT=300 repl-step $s "#use \"$C/tools/harvest.ml\";;" > /dev/null
-TIMEOUT=300 repl-step $s \
+TIMEOUT=900 repl-step $s \
   "cake_harvest \"$C/tmp/strategies.txt\";;" 2>&1 | tail -2
 python3 -I $C/tools/mkstrategies.py
