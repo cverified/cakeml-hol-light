@@ -18,10 +18,6 @@
    DISCH_THEN(MP_TAC o SPEC `FST (h:A#A)` o MATCH_MP path_imp_mem2) THEN
    ASM_MESON_TAC[])
 
-### dsteps_steps
-  (MATCH_MP_TAC RTC_INDUCT_R THEN
-   MESON_TAC[dstep_step; wf_steps; RTC_REFL; RTC_TRANS])
-
 ### eqenv_sym
   (SIMP_TAC[eqenv_def])
 
@@ -79,10 +75,6 @@
    SIMP_TAC[seqsem_def; APPLY_UPDATE_THM; MAP; MEM; FST] THEN
      MESON_TAC[])
 
-### steps_MAP_INJ
-  (GEN_TAC THEN MATCH_MP_TAC RTC_INDUCT_R THEN
-   MESON_TAC[RTC_REFL; RTC_TRANS_R; step_MAP_INJ; step_inj_on_state])
-
 ### steps_correct
   (REPEAT STRIP_TAC THEN
    MP_TAC(ISPECL
@@ -94,8 +86,3 @@
      option->B`) THEN
    REWRITE_TAC[sem_def; APPEND_NIL; APPEND; REVERSE; seqsem_def;
      parsem_nil; I_THM])
-
-### steps_sem
-  (REWRITE_TAC[GSYM IMP_IMP] THEN MATCH_MP_TAC RTC_INDUCT_R THEN
-   REWRITE_TAC[eqenv_def] THEN
-   MESON_TAC[wf_step; REWRITE_RULE[eqenv_def] step_sem])

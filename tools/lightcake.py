@@ -221,6 +221,54 @@ def report(argv):
 LET = re.compile(r"^let\s+(?:rec\s+)?([A-Za-z0-9_']+)"
                  r"((?:\s*,\s*[A-Za-z0-9_']+)*)", re.M)
 
+# where HOL Light itself is, for the names it binds
+HLDIR = os.environ.get(
+  'HOLLIGHT', '/home/freek/.opam/hol-light/lib/hol_light') + '/'
+
+BINDER = re.compile(r"^(?:let|and)\s+(?:rec\s+)?([^=]*)=", re.M)
+
+
+OCAML = set("""let in fun function match with if then else try
+  and rec of begin end true false type val module open exception
+  assert lazy new object struct sig when as do done to for while
+  mod lor land lsl lsr asr or not""".split())
+
+_holnames = []
+
+
+def HOLNAMES():
+  """the names HOL Light binds, read once"""
+  if not _holnames: _holnames.append(hol_bindings())
+  return _holnames[0]
+
+
+def hol_bindings():
+  """every name HOL Light itself binds, in its core and in the
+     one library this port loads.  A proof of LightCake's may
+     use any of them, and a name it uses that is neither one of
+     these nor one of this port's is a name this port has not
+     got: its RTC_INDUCT_R is of Library/rstc.ml, which this
+     port does not load"""
+  out, seen = set(), set()
+  fs = ['hol_lib.ml', 'hol.ml', 'help.ml', 'database.ml',
+        'Library/words.ml']
+  while fs:
+    f = fs.pop()
+    if f in seen: continue
+    seen.add(f)
+    try: s = open(HLDIR + f, errors='replace').read()
+    except OSError: continue
+    fs += re.findall(r'loads?\s+"([^"]+)"', s)
+    fs += re.findall(r'needs\s+"([^"]+)"', s)
+    for m in BINDER.finditer(s):
+      out |= set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", m.group(1)))
+    # the kernel is a module, and what it gives is the val lines
+    # of its signature (concl, frees, type_of, ...), which no
+    # let at the start of a line declares
+    out |= set(re.findall(r"^\s*val\s+\(?\s*([A-Za-z_][A-Za-z0-9_']*)",
+                          s, re.M))
+  return out
+
 
 def bindings(path, upto=None):
   """what a file binds at the top level, in the order of the
@@ -590,12 +638,23 @@ class Ctx:
   def missing(self, ns, body):
     """the names of LightCake's that this port has not got"""
     need, bnd = [], bound_names(body)
+    # what stands outside a quotation is OCaml, so it is a name
+    # of HOL Light's or of this port's and not a variable of a
+    # term; what the block binds itself is nobody else's
+    code = set(re.findall(
+      r"[A-Za-z_][A-Za-z0-9_']*",
+      re.sub(r'"[^"]*"', ' ', re.sub(r"`[^`]*`", ' ', body))))
+    mine = set(re.findall(r"\b(?:let|fun)\s+([A-Za-z_][A-Za-z0-9_']*)",
+                          body))
     for w in sorted(set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*",
                                    body))):
-      if w in ns or w in bnd: continue
+      if w in ns or w in bnd or w in mine: continue
       if w in self.lb and w not in self.have: need.append(w)
       elif w in self.lcn and \
            self.gm.get(w, self.lcn[w]) not in self.ot:
+        need.append(w)
+      elif w in code and w not in HOLNAMES() and \
+           w not in self.have and w not in OCAML:
         need.append(w)
     return need
 

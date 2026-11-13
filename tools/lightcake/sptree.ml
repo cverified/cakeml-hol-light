@@ -937,20 +937,25 @@ let SPTAUX_FORALL_lookup_P = prove
                                       lookup_inter_EQ wf_spt_fold_union
                                       wf_union
      adjacent_domain                  is_adjacent_def
-     reachable_domain                 adjacent_domain is_reachable_def
-     reachable_LHS_NOTIN              adjacent_domain is_reachable_def
+     reachable_domain                 RTC_INDUCT_L adjacent_domain
+                                      is_reachable_def
+     reachable_LHS_NOTIN              RTC_CASES_R adjacent_domain
+                                      is_reachable_def
      rtc_is_adjacent                  -- Error: Unbound value
                                       RTC_INDUCT_L
      is_adjacent_num_set_tree_union   is_adjacent_def
                                       lookup_num_set_tree_union
                                       option_CASE
-     is_reachable_num_set_tree_union  is_adjacent_num_set_tree_union
+     is_reachable_num_set_tree_union  RTC_MONO
+                                      is_adjacent_num_set_tree_union
                                       is_reachable_def
-     closure_spt_lemma                closure_spt_def closure_spt_ind
+     closure_spt_lemma                RTC_TRANS_L closure_spt_def
+                                      closure_spt_ind
                                       domain_spt_fold_union domain_union
                                       is_adjacent_def is_reachable_def
                                       lookup_inter_alt rtc_is_adjacent
-     closure_spt_thm                  closure_spt_lemma is_reachable_def
+     closure_spt_thm                  RTC_REFL closure_spt_lemma
+                                      is_reachable_def
      _                                LENGTH_toAList cake_add_simps
                                       delete_mk_wf domain_difference
                                       domain_insert domain_inter
