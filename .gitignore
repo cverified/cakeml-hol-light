@@ -8,10 +8,12 @@ temp*.ml
 .DS_Store
 
 # The HOL4 reference material: clones of the CakeML release and of
-# HOL4 itself.  They are read-only reference, not part of this repo;
+# HOL4 itself, and of LightCake, the other port of CakeML to HOL
+# Light.  They are read-only reference, not part of this repo;
 # see README.md for how to get them.
 cakeml-src/
 hol4-src/
+lightcake-src/
 
 # Written by the tools and by a run.
 tmp/
