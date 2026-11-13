@@ -2188,7 +2188,16 @@ class Porter:
     # recorded none the file says none, and the way lets HOL
     # Light's own machinery find one.
     hol4rel = rel
-    if recursive and not handrel:
+    if recursive and (found_rel or not handrel):
+      # a relation the port writes by hand stands where a run
+      # recorded none; where a run recorded one, that is the
+      # record of what worked and it wins, and an override that
+      # says otherwise has gone stale and is reported
+      if handrel and found_rel and \
+         ' '.join(fmt(found_rel, last=1).split()) != \
+         ' '.join(rel.split()):
+        self.warn.append('a MEASURE override that a run does not '
+                         'bear out: ' + name)
       rel = fmt(found_rel, last=1) if found_rel else None
       # a measure that uses the size function of a datatype needs
       # it to be there, and this relation was not there when the
