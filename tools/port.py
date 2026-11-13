@@ -77,6 +77,13 @@ NOT_RECURSIVE = {'new_definition', 'new_recursive_definition'}
 RECURSIVE = {'prim_rec', 'nested', 'maplist', 'cond_bool', 'sing',
              'cases', 'match', 'lift_if', 'measure', 'guess'}
 
+# the strategies that are a rewriting of the clauses, because HOL
+# Light's machinery does not take them as HOL4 writes them.  The
+# word stands at the call site (define_shaped "cases" ...), so that
+# the file is as plain about those as about the rest.
+SHAPES = {'nested', 'maplist', 'cond_bool', 'sing', 'cases',
+          'match', 'lift_if'}
+
 
 def recursive_text(text, names):
   """whether the clauses recurse: a name that the definition
@@ -2080,6 +2087,13 @@ class Porter:
     # why the clauses of one function of a family are a match
     matchnote = (overrides.MATCH_CLAUSES[key][1].strip() + '\n'
                  if key in overrides.MATCH_CLAUSES else '')
+    # the pointer at HOL4's Termination tactic belongs in the file
+    # whatever way the definition is made: the port does not write
+    # the tactic, so the file says where it stands
+    if b.extra and b.extra.strip() and not termnote:
+      if wf_relation(b.extra)[1].split():
+        termnote = self.at(b, 'the tactic that proves the'
+                              ' termination', 'Termination') + '\n'
     # ---- the way the definition is made ---------------------------
     # The file says the way, and nothing is searched for while it
     # loads.  Which way each definition needed is harvested from a
@@ -2108,6 +2122,11 @@ class Porter:
     # run found where the port had to look for one itself
     if rel is None and found_rel and recursive:
       rel = fmt(found_rel, last=1)
+      # a measure that uses the size function of a datatype needs
+      # it to be there, and this relation was not there when the
+      # prelude was made
+      sizes = size_prelude(rel + ' ' +
+                           (term if term else clauses))
       relnote = ('(* the termination relation is not in the HOL4 '
                  'source; this one is\n   what the port found for '
                  'it *)\n')
@@ -2124,20 +2143,33 @@ class Porter:
               'let %s = %s\n  "%s"\n  %s;;'
               % (binding, how, why, body))
     elif not recursive:
-      if term is not None and key not in overrides.ONE_QUOTATION:
+      if strat in SHAPES:
+        text = (sizes + matchnote +
+                'let %s = define_shaped "%s"\n  %s;;'
+                % (bind, strat, body))
+      elif term is not None and key not in overrides.ONE_QUOTATION \
+           and strat != 'new_recursive_definition':
         text = sizes + 'let %s = new_definition\n  `%s`;;' % (bind,
                                                               term)
       else:
         text = (sizes + matchnote +
                 'let %s = define_cases\n  %s;;' % (bind, body))
     else:
-      # {one function, a family} x {a relation, the measure of the
-      # arguments matched on} x {proved, assumed, a tactic given}
+      # {one function, a family} x {a rewriting of the clauses or
+      # none} x {a relation, the measure of the arguments matched
+      # on, HOL Light's own guess} x {proved, assumed, a tactic}
+      shape = strat if strat in SHAPES else ''
+      if rel is not None: kind = '_wf'
+      elif strat == 'guess' and not shape and not cheat and not tac:
+        kind = '_guess'
+      else: kind = '_rec'
+      suffix = '' if kind == '_guess' else \
+               ('_tac' if tac else ('_cheat' if cheat else ''))
       how = ('define_mutual' if mutual else 'define') + \
-            ('_wf' if rel is not None else '_rec') + \
-            ('_tac' if tac else ('_cheat' if cheat else ''))
-      args = ('`%s`\n  ' % rel) if rel is not None else ''
-      if tac: args += tactext + '\n  '
+            ('_shaped' if shape else '') + kind + suffix
+      args = ('"%s"\n  ' % shape) if shape else ''
+      if rel is not None: args += '`%s`\n  ' % rel
+      if suffix == '_tac': args += tactext + '\n  '
       text = (sizes + (relnote if rel is not None else '') +
               termnote + (cheatnote if cheat and not tac else '') +
               matchnote +
