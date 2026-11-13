@@ -88,6 +88,13 @@ itself.  The ones that say cheat or assume, and no others, add an
 axiom; `ml/CHEATS.md` lists every one and `length (axioms ())`
 counts them.
 
+Three of the rewritings hand what comes out back to a way of
+making a definition, and the word says that one too, after a `>`:
+`define_shaped_rec "sing>nested"` is "read the clauses as a
+function of one element of a list, and make what comes out by the
+nested way".  So a call site says the whole of how its definition
+is made, however deep it goes.
+
 Which way each definition needs was harvested from a run
 (`tools/strategies.py`, `tools/bin/strategies`): 2928 of them are
 `new_definition`, 560 need a measure, 325 the recursion theorem of
