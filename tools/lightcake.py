@@ -240,35 +240,50 @@ def lc_bindings():
   return out, kit
 
 
-def ours_bindings():
-  """every name a file of this port binds, and the ones that
-     tools/extra/ adds to a file of it: a bridge for a name of
-     LightCake's is written there, and a port writes it into the
-     file before anything of an import"""
-  out, bridge = {}, set()
-  for d in (ML, T + 'extra'):
-    for root, _, fs in os.walk(d):
-      for f in fs:
-        if not f.endswith('.ml'): continue
-        for ns, _ in bindings(os.path.join(root, f), CUT):
-          for n in ns:
-            out.setdefault(n, f[:-3])
-            if d != ML: bridge.add(n)
-  return out, bridge
-
-
-def ours_terms():
-  """every name this port writes inside a term: what it has, as
-     against what a theory it ports would have in HOL4 (of a
-     library theory it has only the part CakeML needs)"""
-  out = set()
+def ours_files(nm, rank):
+  """the files of this port that a file of <nm> can rely on:
+     the ones that load before it, and its own.  A name this
+     port binds in a file that loads after this one is no name
+     this file can use -- its spt_closure has is_adjacent_def,
+     and sptree loads first"""
+  out = []
   for root, _, fs in os.walk(ML):
     for f in fs:
       if not f.endswith('.ml'): continue
-      s = open(os.path.join(root, f)).read()
-      if CUT in s: s = s[:s.index(CUT)]
-      for q in re.findall(r"`[^`]*`", s):
-        out |= set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", q))
+      t = f[:-3]
+      if t == nm or t not in rank or rank[t] < rank.get(nm, 0):
+        out.append(os.path.join(root, f))
+  return out
+
+
+def ours_bindings(nm, rank):
+  """every name such a file of this port binds, and the ones
+     that tools/extra/ adds to the file of <nm>: a bridge for a
+     name of LightCake's is written there, and a port writes it
+     into the file before anything of an import"""
+  out, bridge = {}, set()
+  for p in ours_files(nm, rank):
+    for ns, _ in bindings(p, CUT):
+      for n in ns: out.setdefault(n, os.path.basename(p)[:-3])
+  for f in sorted(os.listdir(T + 'extra')):
+    if f[:-3] != nm: continue
+    for ns, _ in bindings(T + 'extra/' + f, CUT):
+      for n in ns:
+        out.setdefault(n, f[:-3]); bridge.add(n)
+  return out, bridge
+
+
+def ours_terms(nm, rank):
+  """every name such a file of this port writes inside a term:
+     what it has, as against what a theory it ports would have
+     in HOL4 (of a library theory it has only the part CakeML
+     needs)"""
+  out = set()
+  for p in ours_files(nm, rank):
+    s = open(p).read()
+    if CUT in s: s = s[:s.index(CUT)]
+    for q in re.findall(r"`[^`]*`", s):
+      out |= set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", q))
   return out
 
 
@@ -296,7 +311,7 @@ def deps(argv):
   nm = argv[0]
   p = theirs_of(nm)
   if not p: print('LightCake has no %s.ml' % nm); return 1
-  (lb, _), (ob, _) = lc_bindings(), ours_bindings()
+  (lb, _), (ob, _) = lc_bindings(), ours_bindings(nm, {})
   thms = theorems(p)
   byfile = collections.Counter()
   here = ours = free = 0
@@ -499,12 +514,26 @@ def emit(argv):
   # more precisely than the HOL4 names do, so that map wins
   gm = dict((k, v) for k, v in lc_names(d).items() if v)
   gm.update(m)
-  lcn, ot = lc_names(d), ours_terms()
-  (lb, kit), (ob, bridge) = lc_bindings(), ours_bindings()
+  rank = dict((t, i) for i, (t, _, _) in enumerate(d.order))
+  lcn, ot = lc_names(d), ours_terms(nm, rank)
+  (lb, kit), (ob, bridge) = lc_bindings(), ours_bindings(nm, rank)
   # what this port has of its own, which is its file without the
   # block that an import before this one appended to it
   ours = theorems(a, MARK % nm)
   defs = set(definitions(b))
+  # the name each port binds the definition of a constant to:
+  # LightCake's sptree_size_def is this port's size_def, and a
+  # proof that rewrites with it has to say the name this port
+  # uses.  The induction theorem of a definition goes by the
+  # same name with _ind, in both
+  obyc = {}
+  for k, v in definitions(a).items(): obyc.setdefault(v, k)
+  for k, v in definitions(b).items():
+    o = gm.get(v, lcn.get(v))
+    if o and o in obyc and k != obyc[o]:
+      m[k] = obyc[o]
+      if k.endswith('_def') and obyc[o].endswith('_def'):
+        m[k[:-4] + '_ind'] = obyc[o][:-4] + '_ind'
   take, left = [], []
   # what a check of an import before this one found does not go
   # through here (tools/bin/lightcake-check writes it)

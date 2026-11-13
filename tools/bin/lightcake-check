@@ -58,6 +58,9 @@ def main(argv):
     print('the port of %s does not load:' % nm)
     print(out[-800:]); return 1
 
+  # a step after the big load reads what is left of its answer
+  # unless the session is given one to swallow first
+  step(s, '();;', '60')
   bad, gone = [], 0
   blocks = [(ns, b) for ns, b in L.bindings(src)]
   for i, (ns, body) in enumerate(blocks):

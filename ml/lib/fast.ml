@@ -31,10 +31,17 @@ let fast_constant v =
       mk_const(n,type_match gty ty [])
   with Failure _ -> (new_constant(n,ty); mk_mconst(n,ty));;
 
+(* the definition is noted as a real load notes it, so that a
+   tactic that asks for one by the name of its constant finds
+   the assumed equations.  What a real load also notes is what
+   a destructor does to the size of its argument, which only a
+   termination proof uses and an abstract proves nothing *)
+
 let fast_definition tm =
   let fs = definition_heads tm in
   let sub = map (fun v -> fast_constant v,v) fs in
-  mk_thm([],subst (filter (fun (c,v) -> c <> v) sub) tm);;
+  let th = mk_thm([],subst (filter (fun (c,v) -> c <> v) sub) tm) in
+  cake_note_def th; th;;
 
 let fast_clauses cls = fast_definition (definition_of_clauses cls);;
 
