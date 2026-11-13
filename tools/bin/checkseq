@@ -86,6 +86,12 @@ for f in "$@"; do
   printf '%s' "$out" | grep '^cake_conj_list failed' |
     sed "s|^|$f: |" >> $C/tools/conjfail.log
   [ -n "$slow" ] && e="TOO SLOW (interrupted) $e"
+  # a file that dies never reaches its own unhide_overloads, so
+  # the interface stays cut down to its ancestors and every file
+  # after it is read in a scope that no report describes: one
+  # failure then looks like fifty
+  [ -n "$e" ] && repl-step $s "unhide_overloads ();;" \
+    > /dev/null 2>&1
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
   # the scrollback is cleared after every file: one that grows
   # with the run makes the capture slower than the file itself
