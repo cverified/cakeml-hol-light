@@ -69,70 +69,108 @@ let definition_cases tm =
          vs,h,args,r)
       cls;;
 
-(* the recursive calls of a right hand side, each with the guards
-   that lead to it, outermost first and in the order they occur *)
+(* the functions a definition defines, in the order its clauses
+   bring them up, with the arity of each: one for a definition of
+   one function and several for a family that recurses through
+   itself *)
 
-let rec calls_of f n gs tm =
+let definition_functions cls =
+  rev (itlist (fun (_,h,args,_) l ->
+                 if exists (fun (g,_) -> g = h) l then l
+                 else (h,length args) :: l)
+              (rev cls) []);;
+
+(* the recursive calls of a right hand side, each with the
+   function it calls and the guards that lead to it, outermost
+   first and in the order they occur *)
+
+let rec calls_of_any fs gs tm =
   if is_cond tm then
     let c,(a,b) = dest_cond tm in
-    calls_of f n gs c @ calls_of f n (c::gs) a @
-    calls_of f n (mk_neg c::gs) b
+    calls_of_any fs gs c @ calls_of_any fs (c::gs) a @
+    calls_of_any fs (mk_neg c::gs) b
   else if is_abs tm then
-    calls_of f n gs (snd(dest_abs tm))
+    calls_of_any fs gs (snd(dest_abs tm))
   else if is_comb tm then
     let h,args = strip_comb tm in
-    let inner = itlist (fun a l -> calls_of f n gs a @ l) args [] in
-    if h = f && length args = n then (rev gs,args) :: inner
-    else inner
+    let inner = itlist (fun a l -> calls_of_any fs gs a @ l) args [] in
+    if (try assoc h fs = length args with Failure _ -> false)
+    then (h,rev gs,args) :: inner else inner
   else [];;
+
+let calls_of f n gs tm =
+  map (fun (_,gs,args) -> gs,args) (calls_of_any [f,n] gs tm);;
 
 let definition_arity tm =
   let _,_,args,_ = hd (definition_cases tm) in length args;;
 
 let is_recursive tm =
   let cls = definition_cases tm in
-  let _,f,args,_ = hd cls in
-  let n = length args in
-  exists (fun (_,_,_,r) -> calls_of f n [] r <> []) cls;;
+  let fs = definition_functions cls in
+  exists (fun (_,_,_,r) -> calls_of_any fs [] r <> []) cls;;
+
+(* the types of the arguments a function is applied to *)
+
+let definition_argtys (f,n) =
+  let tys,_ = splitlist dest_fun_ty (type_of f) in
+  if length tys < n then failwith "definition_argtys"
+  else fst (chop_list n tys);;
 
 (* ------------------------------------------------------------------ *)
 (* The statement, which is proved nothing.                            *)
 (* ------------------------------------------------------------------ *)
 
-(* the predicate, the antecedents and the conclusion, with the
-   predicate free: the theorem generalizes it at the end, so that
-   the proof can name it *)
+(* the predicate of each function, the antecedents and the
+   conclusion, with the predicates free: the theorem generalizes
+   them at the end, so that the proof can name them.  A
+   definition of one function has one predicate, called P as HOL4
+   calls it; a family has P0, P1, ... and a conclusion that is
+   the conjunction of what each of them says, which is the
+   theorem HOL4 gives such a definition. *)
 
 let induction_parts tm =
   let cls = definition_cases tm in
-  let _,f,args0,_ = hd cls in
-  let n = length args0 in
-  if exists (fun (_,g,a,_) -> g <> f || length a <> n) cls then
-    failwith "induction_parts: not one function of one arity" else
-  let tys = map type_of args0 in
+  let fs = definition_functions cls in
+  if exists (fun (_,h,a,_) ->
+               (try assoc h fs <> length a with Failure _ -> true))
+            cls then
+    failwith "induction_parts: a function of varying arity" else
   let avoid = frees tm in
-  let p = variant avoid (mk_var("P",itlist mk_fun_ty tys bool_ty)) in
-  let antecedent (vs,_,args,r) =
+  let rec preds i av fs =
+    match fs with
+      [] -> []
+    | fn :: rest ->
+        let ty = itlist mk_fun_ty (definition_argtys fn) bool_ty in
+        let nm = if i < 0 then "P" else "P" ^ string_of_int i in
+        let p = variant av (mk_var(nm,ty)) in
+        p :: preds (if i < 0 then i else i + 1) (p :: av) rest in
+  let ps = preds (if length fs = 1 then -1 else 0) avoid fs in
+  let pred_of h = assoc h (zip (map fst fs) ps) in
+  let antecedent (vs,h,args,r) =
     let hyps =
-      itlist (fun (gs,as_) l ->
-                let h = if gs = [] then list_mk_comb(p,as_)
+      itlist (fun (g,gs,as_) l ->
+                let q = pred_of g in
+                let h = if gs = [] then list_mk_comb(q,as_)
                         else mk_imp(list_mk_conj gs,
-                                    list_mk_comb(p,as_)) in
+                                    list_mk_comb(q,as_)) in
                 if exists (aconv h) l then l else h :: l)
-             (calls_of f n [] r) [] in
-    let conc = list_mk_comb(p,args) in
+             (calls_of_any fs [] r) [] in
+    let conc = list_mk_comb(pred_of h,args) in
     list_mk_forall(vs,
       if hyps = [] then conc
       else mk_imp(list_mk_conj hyps,conc)) in
-  let xs =
-    rev (itlist (fun ty l -> variant (l @ p :: avoid)
-                               (mk_var("x",ty)) :: l)
-                (rev tys) []) in
-  p,map antecedent cls,list_mk_forall(xs,list_mk_comb(p,xs));;
+  let conclusion fn p =
+    let tys = definition_argtys fn in
+    let xs =
+      rev (itlist (fun ty l -> variant (l @ ps @ avoid)
+                                 (mk_var("x",ty)) :: l)
+                  (rev tys) []) in
+    list_mk_forall(xs,list_mk_comb(p,xs)) in
+  ps,map antecedent cls,list_mk_conj (map2 conclusion fs ps);;
 
 let induction_statement tm =
-  let p,ants,conc = induction_parts tm in
-  list_mk_forall([p],mk_imp(list_mk_conj ants,conc));;
+  let ps,ants,conc = induction_parts tm in
+  list_mk_forall(ps,mk_imp(list_mk_conj ants,conc));;
 
 (* ------------------------------------------------------------------ *)
 (* The proof.                                                         *)
@@ -244,7 +282,12 @@ let rec SPLIT_PATTERNS_TAC pats (asl,w as gl) =
    termination conditions it makes true *)
 
 let prove_induction wf_th tcs tm =
-  let p,ants,conc = induction_parts tm in
+  let ps,ants,conc = induction_parts tm in
+  (* the proof below is well-founded induction on the arguments
+     of one function; a family that recurses through itself has
+     its theorem stated and not yet proved (ISSUES.md) *)
+  if length ps <> 1 then failwith "prove_induction: a family" else
+  let p = hd ps in
   let cls = definition_cases tm in
   let n = length (let _,_,a,_ = hd cls in a) in
   let pats = map (fun (_,_,a,_) -> a) cls in
