@@ -231,7 +231,12 @@ BINDER = re.compile(r"^(?:let|and)\s+(?:rec\s+)?([^=]*)=", re.M)
 OCAML = set("""let in fun function match with if then else try
   and rec of begin end true false type val module open exception
   assert lazy new object struct sig when as do done to for while
-  mod lor land lsl lsr asr or not""".split())
+  mod lor land lsl lsr asr or not
+  fst snd compare min max abs succ pred ignore incr decr ref
+  string_of_int int_of_string print_string print_newline
+  invalid_arg raise Printf Format List String Array Char Bool
+  Int Hashtbl Sys Stdlib Option Result Either Seq Buffer
+  Not_found Failure Invalid_argument Exit Some None""".split())
 
 _holnames = []
 
@@ -643,7 +648,9 @@ class Ctx:
     # term; what the block binds itself is nobody else's
     code = set(re.findall(
       r"[A-Za-z_][A-Za-z0-9_']*",
-      re.sub(r'"[^"]*"', ' ', re.sub(r"`[^`]*`", ' ', body))))
+      re.sub(r'\(\*.*?\*\)', ' ',
+             re.sub(r'"[^"]*"', ' ',
+                    re.sub(r"`[^`]*`", ' ', body)), flags=re.S)))
     mine = set(re.findall(r"\b(?:let|fun)\s+([A-Za-z_][A-Za-z0-9_']*)",
                           body))
     for w in sorted(set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*",
