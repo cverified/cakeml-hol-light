@@ -2018,11 +2018,11 @@ class Porter:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
     if rel is not None: rel = fmt(' '.join(rel.split()), last=1)
-    # the clauses of a definition are a quotation each, and the
-    # relation that HOL4's Termination gives is for all of them
-    # (the branch for one quotation takes it further down)
+    # the relation that HOL4's Termination gives is for the whole
+    # definition, whether its clauses are a quotation each or one
+    # quotation together
     termnote = ''
-    if term is None and rel is None and b.extra:
+    if rel is None and b.extra:
       wf, rest = wf_relation(b.extra)
       if wf is not None:
         rel = fmt(self.term(wf), last=1)
