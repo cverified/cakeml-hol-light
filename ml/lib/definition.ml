@@ -283,27 +283,28 @@ let define_shaped_rec_cheat shape cls =
 let define_shaped shape cls =
   shaped_made shape [] (definition_of_clauses cls);;
 
-(* a family of functions that recurse through one another.  HOL4
-   gives such a definition a mutual induction theorem; the port
-   does not make one yet (ISSUES.md), so these give the definition
-   alone and claim nothing else. *)
+(* a family of functions that recurse through one another.  The
+   way is the same one as for a definition of one function: what
+   makes the definition is the same (ml/lib/define.ml makes a
+   family one function on the sum of the arguments of its members
+   and the members of it by projection), and the induction
+   theorem is read off the clauses and proved the same way, with
+   a predicate for each member.  The names are here because a
+   file that says define_mutual_wf says something a reader wants
+   to know, and nothing searches for what kind of definition it
+   is at the call site. *)
 
-let define_mutual_wf_tac rel tac cls =
-  definition_made [(rel,tac)] (definition_of_clauses cls);;
+let define_mutual_wf_tac = define_wf_tac;;
 
-let define_mutual_wf rel cls = define_mutual_wf_tac rel TERM_TAC cls;;
+let define_mutual_wf = define_wf;;
 
-let define_mutual_wf_cheat rel cls =
-  define_mutual_wf_tac rel CHEAT_TAC cls;;
+let define_mutual_wf_cheat = define_wf_cheat;;
 
-let define_mutual_rec cls =
-  noted (fst (define_prim_rec (definition_of_clauses cls)));;
+let define_mutual_rec = define_rec;;
 
-let define_mutual_guess cls =
-  definition_made [] (definition_of_clauses cls);;
+let define_mutual_guess = define_guess;;
 
-let define_mutual_guess_cheat cls =
-  with_cheat (definition_made []) (definition_of_clauses cls);;
+let define_mutual_guess_cheat = define_guess_cheat;;
 
 (* the definition the port cannot make at all *)
 
@@ -318,20 +319,17 @@ let assume_definition_rec why cls =
 
 (* and a family whose clauses need a rewriting as well *)
 
-let define_mutual_shaped_wf_tac shape rel tac cls =
-  shaped_made shape [(rel,tac)] (definition_of_clauses cls);;
+let define_mutual_shaped_wf_tac = define_shaped_wf_tac;;
 
-let define_mutual_shaped_wf shape rel cls =
-  define_mutual_shaped_wf_tac shape rel TERM_TAC cls;;
+let define_mutual_shaped_wf = define_shaped_wf;;
 
-let define_mutual_shaped_wf_cheat shape rel cls =
-  shaped_made shape [(rel,CHEAT_TAC)] (definition_of_clauses cls);;
+let define_mutual_shaped_wf_cheat = define_shaped_wf_cheat;;
 
-let define_mutual_shaped_rec shape cls =
-  shaped_made shape [] (definition_of_clauses cls);;
+let define_mutual_shaped_rec_tac = define_shaped_rec_tac;;
 
-let define_mutual_shaped_rec_cheat shape cls =
-  with_cheat (shaped_made shape []) (definition_of_clauses cls);;
+let define_mutual_shaped_rec = define_shaped_rec;;
+
+let define_mutual_shaped_rec_cheat = define_shaped_rec_cheat;;
 
 (* ------------------------------------------------------------------ *)
 (* Which way a definition needs.                                      *)

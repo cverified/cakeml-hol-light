@@ -1548,6 +1548,7 @@ it -- and it reports the lemmas of the port's own apart (296 of
 them) so that the ones with a name of the source stand out.
 
 ## A family that recurses through itself has no induction theorem
+### -- closed the same day
 
 *2026-11-13.*  Every recursive definition of the port now gives an
 induction theorem with the definition, as HOL4 does
@@ -1558,16 +1559,34 @@ the clauses and the proof is well-founded induction on the
 relation the definition was made with.
 
 A definition of a *family* of functions that recurse through one
-another (`define_mutual_wf`) gives the definition alone.  HOL4
-gives such a family a mutual induction theorem: one predicate per
-function, one antecedent per clause, and a conjunction of
-conclusions.  The statement generalizes in the obvious way; the
-proof does not, because HOL Light's recursion machinery puts the
-relation of a family on a *sum* of the argument tuples, and the
-well-founded induction the port writes out
-(`curried_wf_induction`) is on one tuple.
+another (`define_mutual_wf`) at first gave the definition alone.
+HOL4 gives such a family a mutual induction theorem: one
+predicate per function, one antecedent per clause, and a
+conjunction of conclusions.  The statement generalizes in the
+obvious way; the proof looked as though it would not, because HOL
+Light's recursion machinery puts the relation of a family on a
+*sum* of the argument tuples and the well-founded induction the
+port wrote out was on one tuple.
 
-So a proof that wants to do induction over such a family has to
-write the induction out itself for now.  What is needed is
-`curried_wf_induction` on a sum type, which is the same argument
-with `sum_CASES` in front of it.
+It does generalize, and the port now proves it.  The induction is
+`sum_induction`, which is the same argument with the predicate
+
+```
+\v. (!a. v = INL a ==> P0 (FST a) (SND a)) /\
+    (!b. v = INR b ==> P1 b)
+```
+
+put into `WF_IND` and then rewritten with `FORALL_SUM_THM`, the
+injectivity and the distinctness of the sum, and
+`FORALL_UNWIND_THM` -- in that order, and only then with
+`FORALL_PAIR_THM`, because taking the tuple apart first turns the
+equation that says which part of the sum a value is into an
+equation of two tuples, which no longer unwinds.  What comes out
+is one antecedent per function, and the rest of the proof is what
+it was, with the clause patterns looked up by the predicate of
+the goal instead of tried all together.
+
+The sum of one type is that type, so a definition of one function
+goes through the same code; `define_mutual_wf` and the rest are
+now names for the ways themselves, kept because a file that says
+`define_mutual_wf` tells a reader something.

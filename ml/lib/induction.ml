@@ -15,6 +15,14 @@
 (* assumes what the second would have proved, so what it says a file  *)
 (* contains cannot drift from what a real load says: the statement    *)
 (* comes from one place.                                             *)
+(*                                                                    *)
+(* A family of functions that recurse through one another gets the    *)
+(* theorem HOL4 gives it: a predicate for each of them, one           *)
+(* antecedent per clause whose hypotheses are the calls to any of     *)
+(* them, and a conclusion that is the conjunction of what each        *)
+(* predicate says.  The proof is the same well-founded induction, on  *)
+(* the sum of the arguments of the members, which is what such a      *)
+(* definition is made on.                                            *)
 (* ================================================================== *)
 
 (* ------------------------------------------------------------------ *)
@@ -178,12 +186,19 @@ let induction_statement tm =
 
 let tuple_of args = end_itlist (curry mk_pair) args;;
 
-(* the type of the tuple of the arguments, which is what the
-   relation of a definition of HOL Light is on *)
+(* the tuple type of the arguments of each function, and the sum
+   of those, which is what the relation of a definition of HOL
+   Light is on: ml/lib/define.ml makes a family one function on
+   that sum and the members of it by projection, and the relation
+   HOL4 gives such a definition is on it too.  One function alone
+   is the tuple of its arguments, which is what the sum of one
+   type is. *)
 
-let definition_argtype tm =
-  let _,_,args,_ = hd (definition_cases tm) in
-  end_itlist (fun ty t -> mk_type("prod",[ty;t])) (map type_of args);;
+let definition_argtypes tm =
+  map (fun fn -> mk_tuple_type (definition_argtys fn))
+      (definition_functions (definition_cases tm));;
+
+let definition_argtype tm = mk_sumtype (definition_argtypes tm);;
 
 (* a relation that was written on its own has type variables of its
    own, and the definition is what says what they are.  A redex
@@ -200,21 +215,26 @@ let fit_relation rel tm =
     (inst (type_match (fst(dest_fun_ty(type_of rel))) vty []) rel);;
 
 (* the termination conditions, as the relation sees them: one for
-   every recursive call, under the guards that lead to it.  These
-   are the conditions HOL Light's own machinery asks for to make
-   the definition, which is why the definition has them in hand. *)
+   every recursive call, under the guards that lead to it, with
+   the arguments of the call and of the clause in the part of the
+   sum of the function they are of.  These are the conditions HOL
+   Light's own machinery asks for to make the definition, which is
+   why the definition has them in hand. *)
 
 let termination_terms rel tm =
   let cls = definition_cases tm in
-  let _,f,args0,_ = hd cls in
-  let n = length args0 in
+  let fs = definition_functions cls in
+  let dtys = map (fun fn -> mk_tuple_type (definition_argtys fn)) fs in
+  let idx f = index f (map fst fs) in
   itlist
-    (fun (vs,_,args,r) l ->
-       map (fun (gs,as_) ->
-              let c = list_mk_comb(rel,[tuple_of as_; tuple_of args]) in
+    (fun (vs,h,args,r) l ->
+       map (fun (g,gs,as_) ->
+              let c = list_mk_comb(rel,
+                        [mk_inj dtys (idx g) (tuple_of as_);
+                         mk_inj dtys (idx h) (tuple_of args)]) in
               list_mk_forall(vs,
                 if gs = [] then c else mk_imp(list_mk_conj gs,c)))
-           (calls_of f n [] r) @ l)
+           (calls_of_any fs [] r) @ l)
     cls [];;
 
 (* the components of a tuple variable, FST v, FST(SND v), ... *)
@@ -224,31 +244,68 @@ let rec tuple_components k t =
   else mk_icomb(mk_const("FST",[]),t) ::
        tuple_components (k-1) (mk_icomb(mk_const("SND",[]),t));;
 
-(* well-founded induction on the tuple of the arguments, written
-   out in the arguments and in the predicate of the statement:
-   HOL Light's WF_IND is on one argument, and a function of the
-   port takes up to eight *)
+(* what a value of a sum is, which is how the induction below
+   takes its predicate apart *)
 
-let curried_wf_induction wf_th p n =
-  let tys = fst(splitlist dest_fun_ty (type_of p)) in
-  let vty = end_itlist (fun ty t -> mk_type("prod",[ty;t])) tys in
+let FORALL_SUM_THM = prove
+ (`!P. (!s:A+B. P s) <=> (!x. P (INL x)) /\ (!y. P (INR y))`,
+  GEN_TAC THEN EQ_TAC THENL
+   [DISCH_TAC THEN ASM_REWRITE_TAC[];
+    STRIP_TAC THEN MATCH_MP_TAC sum_INDUCT THEN ASM_REWRITE_TAC[]]);;
+
+let SUM_DISTINCT = CONJ (distinctness "sum")
+  (prove(`!(a:B) (b:A). ~((INR a:A+B) = INL b)`,
+         MESON_TAC[distinctness "sum"]));;
+
+(* well-founded induction on the sum of the tuples of the
+   arguments, written out in the arguments and in the predicates
+   of the statement: HOL Light's WF_IND is on one argument, and a
+   definition of the port is of up to eight arguments and of a
+   family of functions.  The predicate says, of a value of the
+   sum, what the predicate of the function whose part it is says
+   of its arguments. *)
+
+let sum_induction wf_th ps ns =
+  let dtys =
+    map2 (fun p n ->
+            mk_tuple_type
+              (fst (chop_list n
+                      (fst (splitlist dest_fun_ty (type_of p))))))
+         ps ns in
+  let sty = mk_sumtype dtys in
   let rel = rand(concl wf_th) in
   let wf_th =
-    INST_TYPE (type_match (fst(dest_fun_ty(type_of rel))) vty [])
+    INST_TYPE (type_match (fst(dest_fun_ty(type_of rel))) sty [])
               wf_th in
-  let th = REWRITE_RULE[FORALL_PAIR_THM]
-             (REWRITE_RULE[WF_IND] wf_th) in
-  let pv,_ = dest_forall(concl th) in
-  let v = variant [p] (mk_var("v",fst(dest_fun_ty(type_of pv)))) in
-  REWRITE_RULE[FST; SND]
-    (BETA_RULE (SPEC (mk_abs(v,list_mk_comb(p,tuple_components n v)))
-                     th));;
+  let th = REWRITE_RULE[WF_IND] wf_th in
+  let v = variant ps (mk_var("v",sty)) in
+  let branch i p n =
+    let a = variant (v::ps) (mk_var("a",el i dtys)) in
+    mk_forall(a,mk_imp(mk_eq(v,mk_inj dtys i a),
+                       list_mk_comb(p,tuple_components n a))) in
+  let body =
+    list_mk_conj (map2 (fun i (p,n) -> branch i p n)
+                       (0--(length ps - 1)) (zip ps ns)) in
+  (* in two passes: the equation that says which part of the sum
+     a value is has to go before the tuple of the arguments is
+     taken apart, or it is an equation of two tuples and no
+     longer one of a variable *)
+  REWRITE_RULE[FORALL_PAIR_THM; FST; SND]
+    (REWRITE_RULE
+       [FORALL_SUM_THM; injectivity "sum"; SUM_DISTINCT;
+        FORALL_UNWIND_THM1; FORALL_UNWIND_THM2]
+       (BETA_RULE (SPEC (mk_abs(v,body)) th)));;
 
-(* the argument of the goal that a clause asks to be taken apart *)
+(* the argument of the goal that a clause asks to be taken apart.
+   A pattern of one function of a family says nothing about the
+   arguments of another, so the patterns are looked up by the
+   predicate of the goal, and a pattern of another type than the
+   argument it stands against is not one that asks for anything. *)
 
 let rec first_split pat arg =
   if is_var pat then None
-  else if is_var arg then Some arg
+  else if is_var arg then
+    (if type_of pat = type_of arg then Some arg else None)
   else
     let hp,ap = strip_comb pat and ha,aa = strip_comb arg in
     if hp <> ha || length ap <> length aa then None
@@ -272,7 +329,9 @@ let rec which_split pats args =
 
 let rec SPLIT_PATTERNS_TAC pats (asl,w as gl) =
   let c = if is_imp w && not (is_neg w) then snd(dest_imp w) else w in
-  match which_split pats (snd(strip_comb c)) with
+  let h,args = strip_comb c in
+  let ps = try assoc h pats with Failure _ -> [] in
+  match which_split ps args with
     None -> ALL_TAC gl
   | Some v ->
       (STRUCT_CASES_TAC (ISPEC v (cases_of (type_of v))) THEN
@@ -283,25 +342,25 @@ let rec SPLIT_PATTERNS_TAC pats (asl,w as gl) =
 
 let prove_induction wf_th tcs tm =
   let ps,ants,conc = induction_parts tm in
-  (* the proof below is well-founded induction on the arguments
-     of one function; a family that recurses through itself has
-     its theorem stated and not yet proved (ISSUES.md) *)
-  if length ps <> 1 then failwith "prove_induction: a family" else
-  let p = hd ps in
   let cls = definition_cases tm in
-  let n = length (let _,_,a,_ = hd cls in a) in
-  let pats = map (fun (_,_,a,_) -> a) cls in
-  let wfind = curried_wf_induction wf_th p n in
+  let fs = definition_functions cls in
+  let pats =
+    map2 (fun p (f,_) ->
+            p,map (fun (_,_,a,_) -> a)
+                  (filter (fun (_,h,_,_) -> h = f) cls))
+         ps fs in
+  let wfind = sum_induction wf_th ps (map snd fs) in
   (* MATCH_MP_TAC looks at its theorem before it sees the goal, so
      the choice between it and MATCH_ACCEPT_TAC has to wait for
      the goal *)
   let use th g =
     (try MATCH_MP_TAC th with Failure _ -> MATCH_ACCEPT_TAC th) g in
-  GEN p
+  GENL ps
    (prove(mk_imp(list_mk_conj ants,conc),
       DISCH_THEN (fun ath ->
         let aths = CONJUNCTS ath in
         MATCH_MP_TAC wfind THEN
+        REPEAT CONJ_TAC THEN
         REPEAT GEN_TAC THEN
         SPLIT_PATTERNS_TAC pats THEN
         DISCH_THEN (fun ih ->
@@ -310,11 +369,11 @@ let prove_induction wf_th tcs tm =
              the goal standing, so every way of going on has to
              close the goal or count as not having worked *)
           let close t = use t THEN ASM_REWRITE_TAC[] THEN NO_TAC in
+          let step i = MATCH_MP_TAC i THEN FIRST (map close tcs) in
           let attempt ath =
             use ath THEN
             REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
-            MATCH_MP_TAC ih THEN
-            FIRST (map close tcs) in
+            FIRST (map step (CONJUNCTS ih)) in
           FIRST (map (fun a -> attempt a THEN NO_TAC) aths)))));;
 
 (* the theorem, from a relation alone: the conditions are proved

@@ -62,28 +62,6 @@ let define_general_cheat cls = fast_clauses cls;;
 
 let define_shaped shape cls = fast_clauses cls;;
 
-let define_mutual_rec cls = fast_clauses cls;;
-
-let define_mutual_guess cls = fast_clauses cls;;
-
-let define_mutual_guess_cheat cls = fast_clauses cls;;
-
-let define_mutual_wf rel cls = fast_clauses cls;;
-
-let define_mutual_wf_cheat rel cls = fast_clauses cls;;
-
-let define_mutual_wf_tac rel tac cls = fast_clauses cls;;
-
-let define_mutual_shaped_rec shape cls = fast_clauses cls;;
-
-let define_mutual_shaped_rec_cheat shape cls = fast_clauses cls;;
-
-let define_mutual_shaped_wf shape rel cls = fast_clauses cls;;
-
-let define_mutual_shaped_wf_tac shape rel tac cls = fast_clauses cls;;
-
-let define_mutual_shaped_wf_cheat shape rel cls = fast_clauses cls;;
-
 let assume_definition why cls = fast_clauses cls;;
 
 
@@ -110,6 +88,30 @@ let define_shaped_wf shape rel cls = fast_pair cls;;
 let define_shaped_wf_cheat shape rel cls = fast_pair cls;;
 
 let define_shaped_wf_tac shape rel tac cls = fast_pair cls;;
+
+let define_mutual_rec cls = fast_pair cls;;
+
+let define_mutual_guess cls = fast_pair cls;;
+
+let define_mutual_guess_cheat cls = fast_pair cls;;
+
+let define_mutual_wf rel cls = fast_pair cls;;
+
+let define_mutual_wf_cheat rel cls = fast_pair cls;;
+
+let define_mutual_wf_tac rel tac cls = fast_pair cls;;
+
+let define_mutual_shaped_rec shape cls = fast_pair cls;;
+
+let define_mutual_shaped_rec_tac shape tac cls = fast_pair cls;;
+
+let define_mutual_shaped_rec_cheat shape cls = fast_pair cls;;
+
+let define_mutual_shaped_wf shape rel cls = fast_pair cls;;
+
+let define_mutual_shaped_wf_tac shape rel tac cls = fast_pair cls;;
+
+let define_mutual_shaped_wf_cheat shape rel cls = fast_pair cls;;
 
 let assume_definition_rec why cls = fast_pair cls;;
 

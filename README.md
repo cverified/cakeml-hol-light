@@ -116,8 +116,11 @@ clauses it stands for.  Nothing is proved to arrive at it.  The
 proof is well-founded induction on the relation the definition was
 made with, then the clause whose pattern the arguments match, and
 then the termination condition that was proved to make the
-definition.  A family that recurses through itself has no
-induction theorem yet (`ISSUES.md`).
+definition.  A family of functions that recurse through one
+another gets the theorem HOL4 gives it -- a predicate for each of
+them and a conjunction of conclusions -- by the same induction on
+the sum of the arguments of its members, which is what such a
+definition is made on.
 
 ## Loading it without the proofs
 

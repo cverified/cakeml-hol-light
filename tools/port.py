@@ -2167,10 +2167,9 @@ class Porter:
       relnote = ('(* the termination relation is not in the HOL4 '
                  'source; this one is\n   what the port found for '
                  'it *)\n')
-    binding = '%s,%s' % (bind, indbind) if recursive and not mutual \
-              else bind
+    binding = '%s,%s' % (bind, indbind) if recursive else bind
     if assumed:
-      how = 'assume_definition_rec' if recursive and not mutual \
+      how = 'assume_definition_rec' if recursive \
             else 'assume_definition'
       text = sizes + matchnote + letline(binding, how,
                                          '"%s"\n  %s' % (why, body))
@@ -2210,10 +2209,9 @@ class Porter:
       else: kind = '_guess'
       # a definition by the recursion theorem of its type leaves
       # no condition, so there is nothing there to assume; where
-      # it is a rewriting of the clauses of one function, the
-      # tactic is still the one the induction needs, and a family
-      # of them has no induction to need it
-      if kind == '_rec' and (mutual or not shape): suffix = ''
+      # it is a rewriting of the clauses, the tactic is still the
+      # one the induction theorem needs
+      if not shape and kind == '_rec': suffix = ''
       elif kind == '_guess': suffix = '_cheat' if cheat else ''
       else: suffix = '_tac' if tac else ('_cheat' if cheat else '')
       how = ('define_mutual' if mutual else 'define') + \
