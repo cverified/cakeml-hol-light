@@ -52,8 +52,7 @@ let ALL_DISTINCT_merge_moves = prove
  (`ALL_DISTINCT (MAP FST (word_unreach_merge_moves l1 l2))`,
   CHEAT_TAC);;
 
-let word_unreachProof_copy_vars_def,word_unreachProof_copy_vars_ind =
-  define_rec
+let word_unreachProof_copy_vars_def = cake_define_list
   [`word_unreachProof_copy_vars [] from to = to`;
    `word_unreachProof_copy_vars ((l,r) :: rest) from to =
       sptree_insert l (THE (sptree_lookup r from))

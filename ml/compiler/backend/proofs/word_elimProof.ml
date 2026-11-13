@@ -54,14 +54,14 @@ let remove_word_code_thm = prove
 
 (**************************** DEFINITIONS *****************************)
 
-let dest_word_loc_def = new_definition
+let dest_word_loc_def = cake_define
   `dest_word_loc x1 =
         match x1 with
           // 'a word_loc = Word ('a word) | Loc num num
         wordLang_Loc n _2 -> SOME n
         | (_3:'a word_loc) -> NONE`;;
 
-let dest_result_loc_def = new_definition
+let dest_result_loc_def = cake_define
   `dest_result_loc x1 =
         match x1 with
           SOME (wordSem_Result w ns) ->
@@ -72,7 +72,7 @@ let dest_result_loc_def = new_definition
 
 (* TODO could do alt def using toAList -
     not necessary though, may not be cleaner *)
-let get_locals_def,get_locals_ind = define_rec
+let get_locals_def = cake_define_list
   [`// locals : ('a word_loc) num_map
     get_locals (LN:('a word_loc) spt) = LN`;
    `get_locals (LS a) = (match (dest_word_loc a) with SOME n ->
@@ -104,7 +104,7 @@ let get_locals_insert = prove
   CHEAT_TAC);;
 
 (*TODO fix conflict with get_store in WordSem*)
-let word_elimProof_get_store_def = new_definition
+let word_elimProof_get_store_def = cake_define
   `// store : store_name |-> 'a word_loc
    word_elimProof_get_store (st:(store_name,'a word_loc)fmap) =
        (let locSet = SET_TO_LIST (FRANGE st) in
@@ -125,7 +125,7 @@ let get_store_update = prove
             with NONE -> {} | SOME n -> {n})`,
   CHEAT_TAC);;
 
-let get_num_wordloc_alist_def = new_definition
+let get_num_wordloc_alist_def = cake_define
   `get_num_wordloc_alist (l:(num#'a word_loc) list) =
        (let locs = MAP THE (FILTER IS_SOME (MAP (dest_word_loc o SND)
          l)) in
@@ -148,12 +148,7 @@ let get_locals_union_subset = prove
      (sptree_union (get_locals A) (get_locals B)))`,
   CHEAT_TAC);;
 
-let _ = size_thms "stack_frame";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let word_elimProof_get_stack_def,word_elimProof_get_stack_ind =
-  define_wf
-  `MEASURE (\x0. list_size (stack_frame_size (\x. 0)) x0)`
+let word_elimProof_get_stack_def = cake_define_list
   [`// stack : ('a stack_frame) list
     word_elimProof_get_stack [] = (LN:1 spt)`;
    `word_elimProof_get_stack (StackFrame lsz e0 e _5 :: xs) =
@@ -198,7 +193,7 @@ let get_stack_dec_stack = prove
      (get_stack new_stack) SUBSET domain reachable`,
   CHEAT_TAC);;
 
-let get_memory_def = new_definition
+let get_memory_def = cake_define
   `// 'a word -> 'a word_loc
    get_memory (mem':'a word->'a word_loc) (mdom:'a word->bool) =
        (let locSet = SET_TO_LIST (IMAGE mem' mdom) in
@@ -223,7 +218,7 @@ let get_memory_update = prove
             (dest_word_loc v) with NONE -> {} | SOME n -> {n})`,
   CHEAT_TAC);;
 
-let find_loc_state_def = new_definition
+let find_loc_state_def = cake_define
   `find_loc_state s =
        (let loc = (get_locals (wordSem_state_locals s)) in
        let sto = (get_store (wordSem_state_store s)) in
@@ -241,20 +236,20 @@ let domain_find_loc_state = prove
         (wordSem_state_memory s) (wordSem_state_mdomain s))`,
   CHEAT_TAC);;
 
-let word_elimProof_code_rel_def = new_definition
+let word_elimProof_code_rel_def = cake_define
   `word_elimProof_code_rel (reachable:1 spt) s_code (t_code:(num#'a
   wordLang_prog) spt) =
        (!n. n IN domain reachable ==>
            sptree_lookup n s_code = sptree_lookup n t_code)`;;
 hol4_overload "code_rel" "word_elimProof_code_rel";;
 
-let code_closed_def = new_definition
+let code_closed_def = cake_define
   `code_closed reachable c1 <=> (?code1. c1 = fromAList code1 /\
        (!n m. n IN domain reachable /\
        is_reachable (analyse_word_code code1) n m ==>
        m IN domain reachable))`;;
 
-let gc_no_new_locs_def = new_definition
+let gc_no_new_locs_def = cake_define
   `gc_no_new_locs (g:('a word_loc) list#('a word->'a word_loc)#('a
   word->bool)#(store_name,'a word_loc)fmap->(('a word_loc) list#('a
   word->'a word_loc)#(store_name,'a word_loc)fmap) option) <=> (!sta
@@ -267,7 +262,7 @@ let gc_no_new_locs_def = new_definition
          mdom) /\
        domain (get_store sto1) SUBSET domain (get_store sto))`;;
 
-let word_state_rel_def = new_definition
+let word_state_rel_def = cake_define
   `word_state_rel (reachable:1 spt) t s <=> wordSem_state_locals
        s = wordSem_state_locals t /\ wordSem_state_fp_regs
        s = wordSem_state_fp_regs t /\ wordSem_state_store

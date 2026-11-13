@@ -472,10 +472,8 @@ let rec to_deep def =
   let deep = if is_rec then mk_Loop (rec_flag,dels,deep) else deep in
   (* store deep embedding *)
   let name = (fst (dest_const f)) ^ "_code" in
-  (* the constant stands for the term this code has built, which
-     is no recursion and no pattern: HOL Light's own *)
-  let code_def = new_definition (mk_eq (mk_var (name,type_of deep),
-                                        deep)) in
+  let code_def = cake_define (mk_eq (mk_var (name,type_of deep),
+                                     deep)) in
   let code_const = lhs (concl code_def) in
   code_defs := code_def :: (!code_defs);
   prev_trans := (f,code_const) :: (!prev_trans);
@@ -503,23 +501,19 @@ let mc_use_fac_code_def = to_deep mc_use_fac_def;;
 
 (* compiler into wordLang *)
 
-let has_compiled_def = new_definition
+let has_compiled_def = cake_define
   `has_compiled code (n,code_list') =
      (match ALOOKUP code_list' code with NONE -> INR (n:num) |
        SOME (index,word_code) -> INL (index:num))`;;
 
-let code_acc_next_def = new_definition
+let code_acc_next_def = cake_define
   `code_acc_next (n,code_list') = (n + 1,code_list')`;;
 
-let install_def = new_definition
+let install_def = cake_define
   `install c (n,code_list') = (n,c :: code_list')`;;
 
-let _ = size_thms "wordLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let word_bignum_compile_exp_def,word_bignum_compile_exp_ind = define_wf
-  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`word_bignum_compile_exp x1 =
+let word_bignum_compile_exp_def = cake_define
+  `word_bignum_compile_exp x1 =
       match x1 with
         wordLang_Op b [x1; x2] -> wordLang_Op b
           [word_bignum_compile_exp x1; word_bignum_compile_exp x2]
@@ -527,33 +521,33 @@ let word_bignum_compile_exp_def,word_bignum_compile_exp_ind = define_wf
       | (Const w) -> Const w
       | (Shift sh x y) -> Shift sh (word_bignum_compile_exp x)
         (word_bignum_compile_exp y)
-      | _1 -> Const (n2w 0)`];;
+      | _1 -> Const (n2w 0)`;;
 hol4_overload "compile_exp" "word_bignum_compile_exp";;
 
-let TempIn1_def = new_definition
+let TempIn1_def = cake_define
   `TempIn1 = Temp (n2w 31)`;;
-let TempIn2_def = new_definition
+let TempIn2_def = cake_define
   `TempIn2 = Temp (n2w 30)`;;
-let TempOut_def = new_definition
+let TempOut_def = cake_define
   `TempOut = Temp (n2w 29)`;;
 
-let SeqTemp_def = new_definition
+let SeqTemp_def = cake_define
   `SeqTemp i r p = Seq (wordLang_Assign i (wordLang_Lookup (Temp (n2w
   r)))) p`;;
 
-let SeqTempImm_def = define_cases
+let SeqTempImm_def = cake_define_list
   [`SeqTempImm i (Reg r) p = SeqTemp i r p`;
    `SeqTempImm i (Imm w) p = Seq (wordLang_Assign i (wordLang_Const
   w)) p`];;
 
-let SeqTempImmNot_def = define_cases
+let SeqTempImmNot_def = cake_define_list
   [`SeqTempImmNot i (Reg r) p =
       SeqTemp i r (Seq (Assign i (wordLang_Op Xor [Var i; Const
         (word_not (n2w 0))])) p)`;
    `SeqTempImmNot i (Imm w) p = Seq (wordLang_Assign i
   (wordLang_Const (word_not w))) p`];;
 
-let SeqIndex_def = new_definition
+let SeqIndex_def = cake_define
   `SeqIndex i r arr p =
      (let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1
        -> TempIn1) in
@@ -563,10 +557,10 @@ let SeqIndex_def = new_definition
               (backend_common_word_shift (:'a))])) p:'a
               wordLang_prog)`;;
 
-let div_location_def = new_definition
+let div_location_def = cake_define
   `div_location = 23`;;
 
-let DivCode_def = new_definition
+let DivCode_def = cake_define
   `DivCode l1 l2 n1 n2 n3 n4 n5 =
      wordLang_MustTerminate
        (wordLang_Seq (wordLang_Call (SOME ([n1],(LS
@@ -574,19 +568,18 @@ let DivCode_def = new_definition
             (wordLang_Assign n2 (wordLang_Lookup (Temp (n2w
               28)))))`;;
 
-let LoadRegs_def,LoadRegs_ind = define_rec
+let LoadRegs_def = cake_define_list
   [`LoadRegs [] (p:'a wordLang_prog) = (p:'a wordLang_prog)`;
    `LoadRegs (n :: ns) (p:'a wordLang_prog) = ((Seq (Get (n + 2)
   (Temp (n2w n))) (LoadRegs ns p)):'a wordLang_prog)`];;
 
-let SaveRegs_def,SaveRegs_ind = define_rec
+let SaveRegs_def = cake_define_list
   [`SaveRegs [] = (Skip:'a wordLang_prog)`;
    `SaveRegs (n :: ns) = ((Seq (Set (Temp (n2w n)) (Var (n + 2)))
   (SaveRegs ns)):'a wordLang_prog)`];;
 
-let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
-  "match"
-  [`word_bignum_compile n l i cs x5 =
+let word_bignum_compile_def = cake_define
+  `word_bignum_compile n l i cs x5 =
         match x5 with
           word_bignum_Skip -> (wordLang_Skip,l,i,cs)
         | Continue -> (Call NONE (SOME n) [0] NONE,l,i,cs)
@@ -598,8 +591,7 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         | (Loop rec_calls vs body) ->
         (match has_compiled body cs with INL existing_index ->
             (Call (SOME ([i],(LS one,LN),Skip,n,l)) (SOME
-              existing_index) [] NONE,l + 1,i + 1,cs) | INR new_index
-              ->
+              existing_index) [] NONE,l + 1,i + 1,cs) | INR new_index ->
             (let (new_code,a,b,cs) = word_bignum_compile new_index 2
               1 (code_acc_next cs) body in
               (Call (SOME ([i],(LS one,LN),Skip,n,l)) (SOME
@@ -620,8 +612,7 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         | (Assign j e) ->
         (Seq (Assign i (word_bignum_compile_exp e)) (Set (Temp (n2w
           j)) (Var i)),l,i + 1,cs)
-        | (word_bignum_Delete _2) -> ((Skip:'a
-          wordLang_prog),l,i,cs)
+        | (word_bignum_Delete _2) -> ((Skip:'a wordLang_prog),l,i,cs)
         | word_bignum_Swap ->
         (Seq (Assign i (wordLang_Lookup (TempIn1)))
         (Seq (Set (TempIn1) (wordLang_Lookup (TempIn2)))
@@ -659,12 +650,12 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         (Seq (DivCode n l (i + 0) (i + 1) (i + 2) (i + 3) (i + 4))
         (Seq (Set (Temp (n2w r0)) (Var (i + 0)))
              (Set (Temp (n2w r1)) (Var (i + 1))))))),l + 1,i + 5,cs)
-        | _3 -> (Skip,l,i,cs)`];;
+        | _3 -> (Skip,l,i,cs)`;;
 hol4_overload "compile" "word_bignum_compile";;
 
 (* HOL4 word_bignumScript.sml:568: ML code, not ported *)
 
-let generated_bignum_stubs_def = new_definition
+let generated_bignum_stubs_def = cake_define
   `generated_bignum_stubs n =
      (let (x1,_4,_5,(_6,cs)) = word_bignum_compile n 2 1 (n + 1,[])
        mc_iop_code in

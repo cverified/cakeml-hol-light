@@ -30,7 +30,7 @@ let _ = hol4_ancestors "stack_rawcall"
 
 (* collect stack allocation information *)
 
-let seq_stack_alloc_def = new_definition
+let seq_stack_alloc_def = cake_define
   `seq_stack_alloc (p:'a stackLang_prog) =
      (match p with Seq (stackLang_StackAlloc k) _1 -> SOME k | _2
        -> NONE)`;;
@@ -41,7 +41,7 @@ let seq_stack_alloc_pmatch = prove
        -> NONE)`,
   CHEAT_TAC);;
 
-let collect_info_def,collect_info_ind = define_rec
+let collect_info_def = cake_define_list
   [`collect_info [] f = f`;
    `collect_info ((n,(b:'a stackLang_prog)) :: xs) f =
          collect_info xs (match seq_stack_alloc b with NONE ->
@@ -49,7 +49,7 @@ let collect_info_def,collect_info_ind = define_rec
 
 (* optimise based on stack allocation information *)
 
-let dest_case_def = new_definition
+let dest_case_def = cake_define
   `dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
      (match p1 with stackLang_StackFree k -> (match p2 with Call
        NONE (INL d) NONE -> SOME (k,d) | _5 -> NONE) | _6 -> NONE)`;;
@@ -60,7 +60,7 @@ let dest_case_pmatch = prove
        NONE (INL d) NONE -> SOME (k,d) | _7 -> NONE) | _8 -> NONE)`,
   CHEAT_TAC);;
 
-let comp_seq_def = new_definition
+let comp_seq_def = cake_define
   `comp_seq (p1:'a stackLang_prog) (p2:'a stackLang_prog) i (default:'a
   stackLang_prog) =
    (match dest_case p1 p2 with SOME (k,dest) ->
@@ -71,12 +71,8 @@ let comp_seq_def = new_definition
                 Seq Tick (Seq (stackLang_StackAlloc (l - k))
                   (stackLang_RawCall dest)))) | _9 -> default)`;;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_rawcall_comp i (p:'a stackLang_prog) =
+let stack_rawcall_comp_def = cake_define
+  `stack_rawcall_comp i (p:'a stackLang_prog) =
      (match p with Seq p1 p2 -> comp_seq p1 p2 i (Seq
        (stack_rawcall_comp i p1) (stack_rawcall_comp i p2)) | If c r ri
        p1 p2 -> If c r ri (stack_rawcall_comp i p1) (stack_rawcall_comp
@@ -84,13 +80,13 @@ let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf
        (p1,lr,l1,l2)) dest NONE ->
          Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest NONE |
            Call (SOME (p1,lr,l1,l2)) dest (SOME (p2,k1,k2)) ->
-         Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest
-           (SOME (stack_rawcall_comp i p2,k1,k2)) | _10 -> p)`];;
+         Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest (SOME
+           (stack_rawcall_comp i p2,k1,k2)) | _10 -> p)`;;
 hol4_overload "comp" "stack_rawcall_comp";;
 (* HOL4 stack_rawcallScript.sml:85-93: a theorem that HOL4 states as
    the value of an ML expression: comp_pmatch *)
 
-let comp_top_def = new_definition
+let comp_top_def = cake_define
   `comp_top i (p:'a stackLang_prog) =
      (match p with Seq p1 p2 -> Seq (comp i p1) (comp i p2) | _11
        -> comp i p)`;;
@@ -101,7 +97,7 @@ let comp_top_pmatch = prove
        -> comp i p)`,
   CHEAT_TAC);;
 
-let stack_rawcall_compile_def = new_definition
+let stack_rawcall_compile_def = cake_define
   `stack_rawcall_compile prog =
      (let i = collect_info prog LN in
        MAP (\(n,(b:'a stackLang_prog)). (n,comp_top i b)) prog)`;;

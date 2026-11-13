@@ -42,10 +42,7 @@ let mlsexp_token_INDUCT,mlsexp_token_RECURSION = define_datatype
 (* HOL4 mlsexpScript.sml:29: the type abbreviation result, which the
    port expands *)
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let read_string_aux_def,read_string_aux_ind = define_wf
-  `MEASURE (\(x0,x1). list_size char_size x0)`
+let read_string_aux_def = cake_define_list
   [`read_string_aux [] acc =
       INL ((implode
         "read_string_aux: unterminated string literal"),[])`;
@@ -74,7 +71,7 @@ let read_string_aux_def,read_string_aux_ind = define_wf
 (* Returns the string until a closing quote, and the rest of the input.
    Fails with an error message if closing quotes are missing or an
    unrecognised escape sequence occurs. *)
-let read_string_def = new_definition
+let read_string_def = cake_define
   `(mlsexp_read_string (input:string):mlstring#string+mlstring#string) =
      read_string_aux input []`;;
 hol4_overload "read_string" "mlsexp_read_string";;
@@ -95,7 +92,7 @@ let read_string_length = prove
 
    See usage in lex_aux as to why a "non-aux function" is exposing an
    accumulator. *)
-let read_symbol_def,read_symbol_ind = define_rec
+let read_symbol_def = cake_define_list
   [`read_symbol [] acc =
       (implode (REVERSE acc),[])`;
    `read_symbol (c :: cs) acc =
@@ -116,8 +113,9 @@ let read_symbol_length = prove
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_aux_def,lex_aux_ind = define_wf_cheat
-  `MEASURE (\(_1,input,_2). LENGTH input)`
+let lex_aux_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\(_1,input,_2). LENGTH input)`)
+  CHEAT_TAC
   [`(mlsexp_lex_aux depth [] acc:mlstring#string+mlsexp_token
   list#string) =
       (if depth = (0:num) then INR (acc,[]) else INL ((implode
@@ -157,7 +155,7 @@ let lex_aux_length = prove
 (* Tokenizes (at most) one S-expression, and returns the rest of the input.
    Fails with an error message if parentheses are unbalanced or
    read_string fails on a string literal. *)
-let lex_def = new_definition
+let lex_def = cake_define
   `(lex (input:string):mlstring#string+mlsexp_token list#string) =
      mlsexp_lex_aux 0 input []`;;
 
@@ -180,11 +178,7 @@ let test_lex = prove
      "lex_aux: too many closing parenthesis")," (1 2) ")`,
   CHEAT_TAC);;
 
-let _ = size_thms "mlsexp_token";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let parse_aux_def,parse_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2). list_size mlsexp_token_size x0)`
+let parse_aux_def = cake_define_list
   [`parse_aux [] xs s = xs`;
    `parse_aux (CLOSE :: rest) xs s = parse_aux rest [] (xs :: s)`;
    `parse_aux (OPEN :: rest) xs s =
@@ -195,7 +189,7 @@ let parse_aux_def,parse_aux_ind = define_wf
 
 (* Parses (at most) one S-expression, and returns the rest of the input.
    Fails exactly when lexing fails. *)
-let parse_def = new_definition
+let parse_def = cake_define
   `(mlsexp_parse (input:string):mlstring#string+mlsexp_sexp#string) =
      (match lex input with INL (msg,rest) -> INL (msg,rest) | INR
        (rev_toks,rest) ->
@@ -221,7 +215,7 @@ let test_parse = prove
   CHEAT_TAC);;
 
 (* Function for parsing in the style of the Standard ML basis library. *)
-let mlsexp_fromString_def = new_definition
+let mlsexp_fromString_def = cake_define
   `(mlsexp_fromString (input:mlstring):mlsexp_sexp option) =
      (match mlsexp_parse (explode input) with INL _4 -> NONE | INR
        (se,_5) -> SOME se)`;;
@@ -247,23 +241,14 @@ hol4_overload "String" "mlsexp_String";;
 hol4_overload "Append" "mlsexp_Append";;
 hol4_overload "Size" "mlsexp_Size";;
 
-let _ = size_thms "pretty";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let newlines_def,newlines_ind = define_wf
-  `MEASURE (\x0. list_size pretty_size x0)`
-  [`newlines x1 =
+let newlines_def = cake_define
+  `newlines x1 =
       match x1 with
         [] -> mlsexp_String (implode "")
       | [x] -> x
-      | (x :: xs) -> Append x T (newlines xs)`];;
+      | (x :: xs) -> Append x T (newlines xs)`;;
 
-let _ = size_thms "str_tree";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let v2pretty_def = define_mutual_wf
-  `MEASURE (sum_measure (\x0. str_tree_size x0) (\x0. str_tree_size1
-  x0))`
+let v2pretty_def = cake_define_list
   [`v2pretty v =
          (match v with mlsexp_Str s -> mlsexp_String s |
            mlsexp_GrabLine w -> mlsexp_Size 100000 (v2pretty w) |
@@ -273,26 +258,24 @@ let v2pretty_def = define_mutual_wf
          (match vs with [] -> [] | (v :: vs) -> v2pretty v ::
            vs2pretty vs)`];;
 
-let mlsexp_get_size_def,mlsexp_get_size_ind = define_shaped_rec
-  "match"
-  [`mlsexp_get_size x1 =
+let mlsexp_get_size_def = cake_define
+  `mlsexp_get_size x1 =
       match x1 with
         mlsexp_Size n x -> n
       | (Append x _6 y) -> mlsexp_get_size x + mlsexp_get_size y + 1
       | (mlsexp_Parenthesis x) -> mlsexp_get_size x + 2
-      | _7 -> 0`];;
+      | _7 -> 0`;;
 hol4_overload "get_size" "mlsexp_get_size";;
 
-let get_next_size_def,get_next_size_ind = define_shaped_rec
-  "match"
-  [`get_next_size x1 =
+let get_next_size_def = cake_define
+  `get_next_size x1 =
       match x1 with
         mlsexp_Size n x -> n
       | (Append x _8 y) -> get_next_size x
       | (mlsexp_Parenthesis x) -> get_next_size x + 2
-      | _9 -> 0`];;
+      | _9 -> 0`;;
 
-let mlsexp_annotate_def,mlsexp_annotate_ind = define_rec
+let mlsexp_annotate_def = cake_define_list
   [`mlsexp_annotate (mlsexp_String s:pretty) = mlsexp_Size (strlen s)
   (mlsexp_String s)`;
    `mlsexp_annotate (mlsexp_Parenthesis b) =
@@ -309,7 +292,7 @@ let mlsexp_annotate_def,mlsexp_annotate_ind = define_rec
   (mlsexp_annotate b)`];;
 hol4_overload "annotate" "mlsexp_annotate";;
 
-let remove_all_def,remove_all_ind = define_rec
+let remove_all_def = cake_define_list
   [`remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis
   (remove_all v)`;
    `remove_all (mlsexp_String v1:pretty) = (mlsexp_String v1:pretty)`;
@@ -317,7 +300,7 @@ let remove_all_def,remove_all_ind = define_rec
   (remove_all v3)`;
    `remove_all (mlsexp_Size v4 v5) = remove_all v5`];;
 
-let smart_remove_def,smart_remove_ind = define_rec
+let smart_remove_def = cake_define_list
   [`smart_remove i k (mlsexp_Size n b) =
       (if k + n < 70 then remove_all b else smart_remove i k b)`;
    `smart_remove i k (mlsexp_Parenthesis v) = mlsexp_Parenthesis
@@ -332,7 +315,7 @@ let smart_remove_def,smart_remove_ind = define_rec
             v3) else
           Append (smart_remove i k v2) T (smart_remove i i v3))`];;
 
-let flatten_def,flatten_ind = define_rec
+let flatten_def = cake_define_list
   [`mlsexp_flatten indent (mlsexp_Size n p) s = mlsexp_flatten indent
   p s`;
    `mlsexp_flatten indent (mlsexp_Parenthesis p) s =
@@ -344,7 +327,7 @@ let flatten_def,flatten_ind = define_rec
         " ")) :: mlsexp_flatten indent p2 s)`];;
 hol4_overload "flatten" "mlsexp_flatten";;
 
-let str_tree_to_strs_def = new_definition
+let str_tree_to_strs_def = cake_define
   `str_tree_to_strs end v = mlsexp_flatten (implode "\n")
   (smart_remove 0 0 (mlsexp_annotate (v2pretty v))) [end]`;;
 
@@ -373,30 +356,27 @@ let test2_str_tree_to_strs = prove
    Pretty printing of sexp
  *--------------------------------------------------------------*)
 
-let is_safe_char_def = new_definition
+let is_safe_char_def = cake_define
   `is_safe_char c <=> ~(MEM c "()\"\000") /\ ~(isSpace c)`;;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let str_every_def,str_every_ind = define_wf
-  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
-  [`str_every p n s =
+let str_every_def = cake_define
+  `str_every p n s =
      (if n = 0 then T else
-       p (strsub s (n - 1)) /\ str_every p (n - (1:num)) s)`];;
+       p (strsub s (n - 1)) /\ str_every p (n - (1:num)) s)`;;
 
-let make_str_safe_def = new_definition
+let make_str_safe_def = cake_define
   `make_str_safe s =
      (if s = (implode "") then implode "\"\"" else
      if str_every is_safe_char (strlen s) s then s else escape_str
        s)`;;
 
-let sexp2tree_def = define_mutual_rec
+let sexp2tree_def = cake_define_list
   [`sexp2tree (Atom s) = mlsexp_Str (make_str_safe s)`;
    `sexp2tree (Expr l) = mlsexp_Trees (sexp2trees l)`;
    `sexp2trees [] = []`;
    `sexp2trees (v :: vs) = sexp2tree v :: sexp2trees vs`];;
 
-let sexp_to_app_list_def = define_mutual_rec
+let sexp_to_app_list_def = cake_define_list
   [`sexp_to_app_list (Atom s) = misc_List [make_str_safe s]`;
    `sexp_to_app_list (Expr l) =
       Append (misc_List [(implode "(")])
@@ -409,10 +389,10 @@ let sexp_to_app_list_def = define_mutual_rec
                   (misc_Append (misc_List [(implode " ")])
                     (sexps_to_app_list vs)))`];;
 
-let sexp_to_string_def = new_definition
+let sexp_to_string_def = cake_define
   `sexp_to_string s = mlstring_concat (append (sexp_to_app_list s))`;;
 
-let sexp_to_pretty_string_def = new_definition
+let sexp_to_pretty_string_def = cake_define
   `sexp_to_pretty_string s = mlstring_concat (str_tree_to_strs
   (implode "\n") (sexp2tree s))`;;
 
@@ -420,8 +400,7 @@ let sexp_to_pretty_string_def = new_definition
    Proofs relating parsing with pretty prniting
  *--------------------------------------------------------------*)
 
-let to_tokens_def,to_tokens_ind = define_shaped_rec
-  "nested"
+let to_tokens_def = cake_define_list
   [`to_tokens (Atom a) = [SYMBOL a]`;
    `to_tokens (Expr xs) = [OPEN] ++ FLAT (MAP (\x. to_tokens x) xs)
   ++ [CLOSE]`];;

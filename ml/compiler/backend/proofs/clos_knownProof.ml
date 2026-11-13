@@ -107,7 +107,7 @@ let known_changed_globals_alt_set = prove
   CHEAT_TAC);;
 
 (* Take the first n expression lists returned by the compile oracle. *)
-let first_n_exps_def = new_definition
+let first_n_exps_def = cake_define
   `first_n_exps co n = GENLIST (FST o SND o co) n`;;
 
 let first_n_exps_shift_seq = prove
@@ -121,7 +121,7 @@ let MEM_first_n_exps = prove
 
 (* All globals set in the program and in code returned by
    the compile oracle are unique. *)
-let unique_set_globals_def = new_definition
+let unique_set_globals_def = cake_define
   `unique_set_globals es co <=>
      (!n. BAG_ALL_DISTINCT (closProps_elist_globals (es ++ FLAT
        (first_n_exps co n))))`;;
@@ -189,18 +189,15 @@ let nil_unique_set_globals = prove
 (* Value approximation is sgc free *)
 
 let _ = size_thms "val_approx";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let val_approx_sgc_free_def,val_approx_sgc_free_ind = define_wf
+let val_approx_sgc_free_def = cake_define_wf
   `MEASURE val_approx_size`
-  [`val_approx_sgc_free x1 =
+  `val_approx_sgc_free x1 =
         match x1 with
           clos_known_ClosNoInline m n -> T
         | (clos_known_Clos m n e s) -> closProps_set_globals e =
           EMPTY_BAG
-        | (clos_known_Tuple tag vas) -> EVERY val_approx_sgc_free
-          vas
-        | _1 -> T`];;
+        | (clos_known_Tuple tag vas) -> EVERY val_approx_sgc_free vas
+        | _1 -> T`;;
 
 (* HOL4 clos_knownProofScript.sml:257-258: a theorem that HOL4 states
    as the value of an ML expression: val_approx_sgc_free_def *)
@@ -210,7 +207,7 @@ let val_approx_sgc_free_merge = prove
    val_approx_sgc_free (merge a1 a2)`,
   CHEAT_TAC);;
 
-let globals_approx_sgc_free_def = new_definition
+let globals_approx_sgc_free_def = cake_define
   `globals_approx_sgc_free g <=>
    (!n a. sptree_lookup n g = SOME a ==> val_approx_sgc_free a)`;;
 
@@ -276,7 +273,7 @@ let evaluate_app_IMP_shift_seq = prove
        (closSem_state_compile_oracle s0))`,
   CHEAT_TAC);;
 
-let state_globals_approx_def = new_definition
+let state_globals_approx_def = cake_define
   `state_globals_approx s g <=>
      (!k v a.
        get_global k (closSem_state_globals s) = SOME (SOME v) /\
@@ -320,13 +317,13 @@ let state_globals_approx_coupd = prove
 
 (* Mapped globals *)
 
-let mapped_globals_def = new_definition
+let mapped_globals_def = cake_define
   `mapped_globals g =
      {i | ?v. get_global i g = SOME (SOME v)}`;;
 
 (* Extending mapped globals *)
 
-let mglobals_extend_def = new_definition
+let mglobals_extend_def = cake_define
   `mglobals_extend g1 mgs g2 <=>
       mapped_globals g2 SUBSET mapped_globals g1 UNION mgs /\
       (!k v. get_global k g2 = SOME (SOME v) /\ ~(k IN mgs) ==>
@@ -374,7 +371,7 @@ let subspt_known_op_elist_globals = prove
 
 (* fv_max *)
 
-let fv_max_def = new_definition
+let fv_max_def = cake_define
   `fv_max n xs = (!v. fv v xs ==> v < n)`;;
 
 let fv_max_SmartOp = prove
@@ -545,7 +542,7 @@ let mk_Ticks_set_globals = prove
   closProps_set_globals exp`,
   CHEAT_TAC);;
 
-let gapprox_disjoint_def = new_definition
+let gapprox_disjoint_def = cake_define
   `gapprox_disjoint g xs <=> DISJOINT (domain g) (SET_OF_BAG
   (closProps_elist_globals xs))`;;
 
@@ -557,7 +554,7 @@ let gapprox_disjoint_rw = prove
         (closProps_op_gbag opn)))`,
   CHEAT_TAC);;
 
-let oracle_gapprox_disjoint_def = new_definition
+let oracle_gapprox_disjoint_def = cake_define
   `oracle_gapprox_disjoint g co <=> (!n. gapprox_disjoint g (FST (SND
   (co n))))`;;
 
@@ -601,7 +598,7 @@ let clos_gen_noinline_val_approx_sgc_free = prove
  (`!n i fns. EVERY val_approx_sgc_free (clos_gen_noinline n i fns)`,
   CHEAT_TAC);;
 
-let loptrel_def = new_definition
+let loptrel_def = cake_define
   `loptrel fv' numargs lopt1 lopt2 <=>
       lopt2 = lopt1 \/
       lopt1 = NONE /\
@@ -702,8 +699,7 @@ let letrec_case_eq = prove
                           2 * i) (FST (EL i fns)))) (LENGTH fns)`,
   CHEAT_TAC);;
 
-let clos_knownProof_every_var_def,clos_knownProof_every_var_ind =
-  define_rec
+let clos_knownProof_every_var_def = cake_define_list
   [`clos_knownProof_every_var P (db_vars_Empty:db_var_set) = T`;
    `clos_knownProof_every_var P (Var v:db_var_set) <=> P v`;
    `clos_knownProof_every_var P (Shift k d:db_var_set) <=>
@@ -734,7 +730,7 @@ let known_preserves_fv_max = prove
   CHEAT_TAC);;
 
 (* oracle_gapprox_subspt *)
-let oracle_gapprox_subspt_def = new_definition
+let oracle_gapprox_subspt_def = cake_define
   `oracle_gapprox_subspt co <=>
      (!n. subspt (FST (FST (co n))) (FST (FST (co (SUC n)))))`;;
 
@@ -762,7 +758,7 @@ let oracle_gapprox_subspt_evaluate = prove
   CHEAT_TAC);;
 
 (* oracle_state_sgc_free *)
-let oracle_state_sgc_free_def = new_definition
+let oracle_state_sgc_free_def = cake_define
   `oracle_state_sgc_free co = (!n. globals_approx_sgc_free (FST (FST
   (co n))))`;;
 
@@ -771,13 +767,13 @@ let oracle_state_sgc_free_shift_seq = prove
   (misc_shift_seq n co))`,
   CHEAT_TAC);;
 
-let next_g_def = new_definition
+let next_g_def = cake_define
   `next_g (s:(val_approx spt#'c,'ffi)closSem_state) =
      FST (FST (closSem_state_compile_oracle s 0))`;;
 
 (**)
 
-let mglobals_disjoint_def = new_definition
+let mglobals_disjoint_def = cake_define
   `mglobals_disjoint s xs <=> DISJOINT (mapped_globals s) (SET_OF_BAG
   (closProps_elist_globals xs))`;;
 
@@ -843,7 +839,7 @@ let mglobals_disjoint_evaluate = prove
   CHEAT_TAC);;
 
 
-let gapprox_extend_def = new_definition
+let gapprox_extend_def = cake_define
   `gapprox_extend g1 gd g2 <=>
      (!i. i IN domain g2 /\ (i IN domain g1 ==> ~(sptree_lookup i g2
        = sptree_lookup i g1)) ==>
@@ -994,7 +990,7 @@ let state_oracle_domain = prove
 
 (* code relation *)
 
-let exp_rel_def = new_definition
+let exp_rel_def = cake_define
   `clos_knownProof_exp_rel c aenv g' e1 e2 <=>
      (?g0 g apx k.
        subspt g g' /\
@@ -1012,7 +1008,7 @@ let exp_rel_dec_inline_factor = prove
 
 (* value relation *)
 
-let clos_knownProof_f_rel_def = new_definition
+let clos_knownProof_f_rel_def = cake_define
   `clos_knownProof_f_rel c aenv g (n1,e1) (n2,e2) <=>
       n1 = n2 /\ clos_knownProof_exp_rel c (REPLICATE n1
         clos_known_Other ++ aenv) g e1 e2`;;
@@ -1022,9 +1018,15 @@ hol4_overload "f_rel" "clos_knownProof_f_rel";;
    statement the port cannot state yet: v1_size_append *)
 
 let _ = size_thms "closSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 clos_knownProofScript.sml:2614-2617: the tactic that proves
    the termination *)
-let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind = define_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let clos_knownProof_v_rel_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (closSem_v_size o FST o SND o SND)`)
+  CHEAT_TAC
   [`clos_knownProof_v_rel c g (closSem_Number i:closSem_v) v <=> v =
   (closSem_Number i:closSem_v)`;
    `clos_knownProof_v_rel c g (Word64 w:closSem_v) v <=> v = (Word64
@@ -1071,7 +1073,7 @@ hol4_overload "v_rel" "clos_knownProof_v_rel";;
 
 (* HOL4 clos_knownProofScript.sml:2622: ML code, not ported *)
 
-let v_rel_app_def = define_cases
+let v_rel_app_def = cake_define_list
   [`v_rel_app c g (closSem_Number i:closSem_v) v args1 <=> v_rel c g
   ((closSem_Number i:closSem_v)) v`;
    `v_rel_app c g (Word64 w:closSem_v) v args1 <=> v_rel c g ((Word64
@@ -1187,7 +1189,7 @@ let ref_rel_upd_inline_factor = prove
  (`ref_rel (clos_known_config_inline_factor_fupd (K k) c) = ref_rel c`,
   CHEAT_TAC);;
 
-let clos_knownProof_state_rel_def = new_definition
+let clos_knownProof_state_rel_def = cake_define
   `clos_knownProof_state_rel c g (s:(val_approx
   spt#'c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
@@ -1237,7 +1239,7 @@ let state_rel_subspt = prove
   g' s1 s2`,
   CHEAT_TAC);;
 
-let co_every_Fn_vs_NONE_def = new_definition
+let co_every_Fn_vs_NONE_def = cake_define
   `co_every_Fn_vs_NONE co =
      (!n exps aux. SND (co n) = (exps,aux) ==>
        every_Fn_vs_NONE exps /\
@@ -1357,7 +1359,7 @@ let known_subspt = prove
 
 
 (* Set globals in all future installs is disjoint from currently mapped globals. *)
-let state_oracle_mglobals_disjoint_def = new_definition
+let state_oracle_mglobals_disjoint_def = cake_define
   `state_oracle_mglobals_disjoint s <=> (!n. mglobals_disjoint
   (closSem_state_globals s) (FST (SND (closSem_state_compile_oracle s
   n))))`;;
@@ -1525,7 +1527,7 @@ let clos_knownProof_compile_LENGTH = prove
  (`clos_known_compile kc es = (kc',es') ==> LENGTH es' = LENGTH es`,
   CHEAT_TAC);;
 
-let clos_knownProof_syntax_ok_def = new_definition
+let clos_knownProof_syntax_ok_def = cake_define
   `clos_knownProof_syntax_ok xs <=>
      every_Fn_vs_NONE xs /\
      BAG_ALL_DISTINCT (closProps_elist_globals xs) /\
@@ -1538,7 +1540,7 @@ hol4_overload "syntax_ok" "clos_knownProof_syntax_ok";;
 (* HOL4 clos_knownProofScript.sml:5012: the ML values that the
    definitions below antiquote *)
 
-let syntax_oracle_ok_def = new_definition
+let syntax_oracle_ok_def = cake_define
   `clos_knownProof_syntax_oracle_ok c xs co conf <=>
      clos_knownProof_syntax_ok xs /\
      is_state_oracle (compile_inc c) (pure_co
@@ -1552,7 +1554,7 @@ let syntax_oracle_ok_def = new_definition
        (co n)) = [])`;;
 hol4_overload "syntax_oracle_ok" "clos_knownProof_syntax_oracle_ok";;
 
-let known_cc_def = new_definition
+let known_cc_def = cake_define
   `known_cc known_conf cc =
      (match known_conf with SOME kcfg ->
         (pure_cc clos_fvs_compile_inc
@@ -1570,7 +1572,7 @@ let known_cc_def = new_definition
                   list#(num#num#closLang_exp) list->(word8
                   list#word64 list#val_approx spt#'b) option))`;;
 
-let known_co_def = new_definition
+let known_co_def = cake_define
   `known_co known_conf (co:num->(val_approx spt#'b)#closLang_exp
   list#(num#num#closLang_exp) list) =
      (match known_conf with SOME kcfg -> (pure_co
@@ -1599,7 +1601,7 @@ let known_co_eq_pure_state = prove
        I) o co)`,
   CHEAT_TAC);;
 
-let known_mk_co_def = new_definition
+let known_mk_co_def = cake_define
   `known_mk_co kc kc' mk =
      add_state_co (if IS_SOME kc then clos_known_compile_inc (THE kc)
        else CURRY I)
@@ -1612,7 +1614,7 @@ let known_mk_co_def = new_definition
              pure_co_progs (if IS_SOME kc then clos_fvs_compile_inc
              else I)`;;
 
-let known_co_progs_def = new_definition
+let known_co_progs_def = cake_define
   `known_co_progs kc kc' =
      pure_co_progs (if IS_SOME kc then
            clos_letop_compile_inc o
@@ -1669,19 +1671,16 @@ let every_Fn_vs_NONE_mk_Ticks = prove
   CHEAT_TAC);;
 
 let _ = size_thms "val_approx";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_knownProofScript.sml:5264-5268: the tactic that proves
    the termination *)
-let val_approx_every_Fn_SOME_def,val_approx_every_Fn_SOME_ind =
-  define_wf
+let val_approx_every_Fn_SOME_def = cake_define_wf
   `MEASURE val_approx_size`
-  [`val_approx_every_Fn_SOME x1 =
+  `val_approx_every_Fn_SOME x1 =
         match x1 with
           (clos_known_Tuple _6 vs:val_approx) -> EVERY
             val_approx_every_Fn_SOME vs
         | (clos_known_Clos _7 _8 b _9) -> every_Fn_SOME [b]
-        | _10 -> T`];;
+        | _10 -> T`;;
 
 let val_approx_every_Fn_SOME_merge = prove
  (`!a b. val_approx_every_Fn_SOME a /\ val_approx_every_Fn_SOME b ==>
@@ -1694,7 +1693,7 @@ let decide_inline_every_Fn_SOME = prove
    every_Fn_SOME [e]`,
   CHEAT_TAC);;
 
-let globals_approx_every_Fn_SOME_def = new_definition
+let globals_approx_every_Fn_SOME_def = cake_define
   `globals_approx_every_Fn_SOME g =
      (!c d. sptree_lookup c g = SOME d ==>
        val_approx_every_Fn_SOME d)`;;
@@ -1721,19 +1720,16 @@ let known_every_Fn_SOME = prove
   CHEAT_TAC);;
 
 let _ = size_thms "val_approx";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 clos_knownProofScript.sml:5383-5387: the tactic that proves
    the termination *)
-let val_approx_every_Fn_vs_NONE_def,val_approx_every_Fn_vs_NONE_ind =
-  define_wf
+let val_approx_every_Fn_vs_NONE_def = cake_define_wf
   `MEASURE val_approx_size`
-  [`val_approx_every_Fn_vs_NONE x1 =
+  `val_approx_every_Fn_vs_NONE x1 =
         match x1 with
           (clos_known_Tuple _12 vs:val_approx) -> EVERY
             val_approx_every_Fn_vs_NONE vs
         | (clos_known_Clos _13 _14 b _15) -> every_Fn_vs_NONE [b]
-        | _16 -> T`];;
+        | _16 -> T`;;
 
 let val_approx_every_Fn_vs_NONE_merge = prove
  (`!a b. val_approx_every_Fn_vs_NONE a /\ val_approx_every_Fn_vs_NONE b
@@ -1747,7 +1743,7 @@ let decide_inline_every_Fn_vs_NONE = prove
    every_Fn_vs_NONE [e]`,
   CHEAT_TAC);;
 
-let globals_approx_every_Fn_vs_NONE_def = new_definition
+let globals_approx_every_Fn_vs_NONE_def = cake_define
   `globals_approx_every_Fn_vs_NONE g =
      (!c d. sptree_lookup c g = SOME d ==>
        val_approx_every_Fn_vs_NONE d)`;;
@@ -1778,17 +1774,15 @@ let known_every_Fn_vs_NONE = prove
 (* no_Labels *)
 
 let _ = size_thms "val_approx";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let val_approx_no_Labels_def,val_approx_no_Labels_ind = define_wf
+let val_approx_no_Labels_def = cake_define_wf
   `MEASURE val_approx_size`
-  [`val_approx_no_Labels x1 =
+  `val_approx_no_Labels x1 =
         match x1 with
           clos_known_ClosNoInline m n -> T
         | (clos_known_Clos m n e s) -> no_Labels e
         | (clos_known_Tuple tag vas) -> EVERY val_approx_no_Labels
           vas
-        | _17 -> T`];;
+        | _17 -> T`;;
 (* HOL4 clos_knownProofScript.sml:5516-5522: ML code, not ported *)
 
 (* HOL4 clos_knownProofScript.sml:5524-5527: a theorem that HOL4
@@ -1800,7 +1794,7 @@ let decide_inline_no_Labels = prove
    no_Labels e`,
   CHEAT_TAC);;
 
-let globals_approx_no_Labels_def = new_definition
+let globals_approx_no_Labels_def = cake_define
   `globals_approx_no_Labels g =
      (!c d. sptree_lookup c g = SOME d ==> val_approx_no_Labels d)`;;
 
@@ -1844,18 +1838,15 @@ let compile_no_Labels = prove
 (* obeys_max_app *)
 
 let _ = size_thms "val_approx";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let val_approx_obeys_max_app_def,val_approx_obeys_max_app_ind =
-  define_wf
+let val_approx_obeys_max_app_def = cake_define_wf
   `MEASURE (val_approx_size o SND)`
-  [`val_approx_obeys_max_app k x2 =
+  `val_approx_obeys_max_app k x2 =
         match x2 with
           clos_known_ClosNoInline m n -> T
         | (clos_known_Clos m n e s) -> obeys_max_app k e
         | (clos_known_Tuple tag vas) -> EVERY
           (val_approx_obeys_max_app k) vas
-        | _18 -> T`];;
+        | _18 -> T`;;
 
 let decide_inline_obeys_max_app = prove
  (`val_approx_obeys_max_app k b /\ decide_inline a b c d =
@@ -1863,7 +1854,7 @@ let decide_inline_obeys_max_app = prove
    obeys_max_app k e`,
   CHEAT_TAC);;
 
-let globals_approx_obeys_max_app_def = new_definition
+let globals_approx_obeys_max_app_def = cake_define
   `globals_approx_obeys_max_app k g =
      (!c d. sptree_lookup c g = SOME d ==>
        val_approx_obeys_max_app k d)`;;

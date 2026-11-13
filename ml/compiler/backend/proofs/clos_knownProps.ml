@@ -54,7 +54,7 @@ let merge_idem = prove
  (`merge a a = a`,
   CHEAT_TAC);;
 
-let subapprox_def = new_definition
+let subapprox_def = cake_define
   `subapprox a1 a2 <=> merge a1 a2 = a2`;;
 
 (* HOL4 clos_knownPropsScript.sml:61: ML code, not ported *)
@@ -119,7 +119,7 @@ let subapprox_Tuple = prove
   <=> tg1 = tg2 /\ LIST_REL subapprox as1 as2`,
   CHEAT_TAC);;
 
-let better_definedg_def = new_definition
+let better_definedg_def = cake_define
   `better_definedg g1 g2 <=>
      (!k. k IN domain g1 ==> k IN domain g2 /\ (subapprox) (THE
        (sptree_lookup k g1)) (THE (sptree_lookup k g2)))`;;

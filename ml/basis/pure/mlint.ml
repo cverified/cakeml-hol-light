@@ -22,7 +22,7 @@ let _ = hol4_ancestors "mlint"
   ["mlstring"];;
 (* HOL4 ancestors outside the port: gcd *)
 
-let toChar_def = new_definition
+let toChar_def = cake_define
   `toChar digit = (if digit < 10 then CHR (ORD (CHR 48) + digit) else
   CHR ((ORD (CHR 65) + digit) - 10))`;;
 
@@ -32,15 +32,15 @@ let toChar_HEX = prove
 
 (* decimal encoding is very slightly faster if we avoid dividing large big-ints
    by 10, and instead divide them by a power of 10 that fits in 28 bits *)
-let exp_for_dec_enc_def = new_definition
+let exp_for_dec_enc_def = cake_define
   `exp_for_dec_enc = 8`;;
 
 (* compatibility with previous version*)
-let padLen_DEC_def = new_definition
+let padLen_DEC_def = cake_define
   `padLen_DEC = exp_for_dec_enc`;;
 (* HOL4 mlintScript.sml:31: a theorem that HOL4 states as the value
    of an ML expression: padLen_DEC_eq *)
-let maxSmall_DEC_def1 = new_definition
+let maxSmall_DEC_def1 = cake_define
   `maxSmall_DEC = 10 EXP exp_for_dec_enc`;;
 (* HOL4 mlintScript.sml:35: a theorem that HOL4 states as the value
    of an ML expression: maxSmall_DEC_def *)
@@ -51,9 +51,9 @@ let maxSmall_DEC_def1 = new_definition
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 mlintScript.sml:45-54: the tactic that proves the termination *)
-let num_to_chars_def,num_to_chars_ind = define_wf
+let num_to_chars_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE I LEX MEASURE I)
-       (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`
+          (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`)
   [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP
   exp_for_dec_enc))
           exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)
@@ -73,13 +73,13 @@ let num_to_chars_thm = prove
      num_to_dec_string (k + (i * (10 EXP j))) ++ acc`,
   CHEAT_TAC);;
 
-let int_to_string_def = new_definition
+let int_to_string_def = cake_define
   `int_to_string neg_char i =
      (if (&0:int) <= i then implode (num_to_chars (num_of_int i) 0
        0 []) else implode (neg_char :: num_to_chars (num_of_int (abs
        i)) 0 0 []))`;;
 
-let toString_def1 = new_definition
+let toString_def1 = cake_define
   `mlint_toString i = int_to_string (CHR 126) i`;;
 hol4_overload "toString" "mlint_toString";;
 
@@ -97,7 +97,7 @@ let toString_thm = prove
   num_to_dec_string (num_of_int (abs i)))`,
   CHEAT_TAC);;
 
-let num_to_str_def = new_definition
+let num_to_str_def = cake_define
   `num_to_str (n:num) = toString (&n)`;;
 
 hol4_overload "toString" "num_to_str";;
@@ -107,10 +107,10 @@ let num_to_str_thm = prove
   CHEAT_TAC);;
 
 (* fromString Definitions *)
-let fromChar_unsafe_def = new_definition
+let fromChar_unsafe_def = cake_define
   `fromChar_unsafe char' = ORD char' - ORD (CHR 48)`;;
 
-let fromChar_def = new_definition
+let fromChar_def = cake_define
   `fromChar char' =
      (match char' with (CHR 48) -> SOME 0 | (CHR 49) -> SOME 1 |
        (CHR 50) -> SOME 2 | (CHR 51) -> SOME 3 | (CHR 52) -> SOME 4 |
@@ -123,19 +123,13 @@ let fromChar_eq_unsafe = prove
   char')`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let fromChars_range_unsafe_def,fromChars_range_unsafe_ind = define_wf
-  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
+let fromChars_range_unsafe_def = cake_define_list
   [`fromChars_range_unsafe l 0 str = 0`;
    `fromChars_range_unsafe l (SUC n) str =
       fromChars_range_unsafe l n str * 10 + fromChar_unsafe
         (strsub str (l + n))`];;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let fromChars_range_def,fromChars_range_ind = define_wf
-  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
+let fromChars_range_def = cake_define_list
   [`fromChars_range l 0 str = SOME 0`;
    `fromChars_range l (SUC n) str =
       (let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
@@ -148,41 +142,37 @@ let fromChars_range_eq_unsafe = prove
      SOME (fromChars_range_unsafe l r (implode str))`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 mlintScript.sml:188-190: the tactic that proves the
    termination *)
-let fromChars_unsafe_def,fromChars_unsafe_ind = define_wf
+let fromChars_unsafe_def = cake_define_wf
   `MEASURE FST`
-  [`fromChars_unsafe n str =
+  `fromChars_unsafe n str =
       match n with
         0 -> 0
       // Shouldn't happend
       | n ->
-     (if n <= padLen_DEC then fromChars_range_unsafe 0 n str else
-       let n' = n - padLen_DEC in let
+     (if n <= padLen_DEC then fromChars_range_unsafe 0 n str else let
+       n' = n - padLen_DEC in let
               front = fromChars_unsafe n' str * maxSmall_DEC in let
               back = fromChars_range_unsafe n' padLen_DEC str in
-                front + back)`];;
+                front + back)`;;
 (* HOL4 mlintScript.sml:191: ML code, not ported *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 mlintScript.sml:202-204: the tactic that proves the
    termination *)
-let fromChars_def,fromChars_ind = define_wf
+let fromChars_def = cake_define_wf
   `MEASURE FST`
-  [`fromChars n str =
+  `fromChars n str =
       match n with
         0 -> NONE
       // Shouldn't happend
       | n ->
-     (if n <= padLen_DEC then fromChars_range 0 n str else let n' =
-       n - padLen_DEC in let
+     (if n <= padLen_DEC then fromChars_range 0 n str else let n' = n
+       - padLen_DEC in let
               front = OPTION_MAP ((*) maxSmall_DEC) (fromChars n'
                 str) in let
               back = fromChars_range n' padLen_DEC str in
-                OPTION_MAP2 (+) front back)`];;
+                OPTION_MAP2 (+) front back)`;;
 (* HOL4 mlintScript.sml:205: ML code, not ported *)
 
 let fromChars_eq_unsafe = prove
@@ -190,7 +180,7 @@ let fromChars_eq_unsafe = prove
     fromChars n s = SOME (fromChars_unsafe n s)`,
   CHEAT_TAC);;
 
-let fromString_unsafe_def = new_definition
+let fromString_unsafe_def = cake_define
   `fromString_unsafe str =
      (if strlen str = 0 then (&0:int) else if strsub str 0 = (CHR
        126) then --(&(fromChars_unsafe (strlen str - 1)
@@ -198,7 +188,7 @@ let fromString_unsafe_def = new_definition
                                 else &(fromChars_unsafe (strlen str)
                                 str))`;;
 
-let fromString_def = new_definition
+let fromString_def = cake_define
   `mlint_fromString str =
      (if strlen str = 0 then (NONE:int option) else if strsub str 0 =
        (CHR 126) \/
@@ -212,7 +202,7 @@ let fromString_def = new_definition
                            str))`;;
 hol4_overload "fromString" "mlint_fromString";;
 
-let fromNatString_def = new_definition
+let fromNatString_def = cake_define
   `fromNatString str =
      (match fromString str with
        NONE -> NONE | SOME i -> (if (&0) <= i then SOME
@@ -339,23 +329,20 @@ let fromString_EQ_NONE = prove
   CHEAT_TAC);;
 
 (* this formulation avoids a comparsion using = for better performance *)
-let mlint_int_cmp_def = new_definition
+let mlint_int_cmp_def = cake_define
   `mlint_int_cmp i (j:int) = (if i < j then LESS else
                        if j < i then GREATER else EQUAL)`;;
 hol4_overload "int_cmp" "mlint_int_cmp";;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let num_gcd_def,num_gcd_ind = define_wf
-  `MEASURE (\(x0,x1). (\n. n) x0)`
-  [`mlint_num_gcd a b = (if a = 0 then b else mlint_num_gcd (b MOD
-  a) a)`];;
+let num_gcd_def = cake_define
+  `mlint_num_gcd a b = (if a = 0 then b else mlint_num_gcd (b MOD a)
+  a)`;;
 
 let num_gcd_eq_gcd = prove
  (`mlint_num_gcd = hol4_gcd`,
   CHEAT_TAC);;
 
-let int_gcd_def = new_definition
+let int_gcd_def = cake_define
   `mlint_int_gcd (m:int) (n:int) = (&(mlint_num_gcd (num_of_int (abs
   m)) (num_of_int (abs n))):int)`;;
 

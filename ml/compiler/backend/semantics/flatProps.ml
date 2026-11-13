@@ -364,7 +364,7 @@ let evaluate_MAP_Var_local = prove
    evaluate env s (MAP (flatLang_Var_local t) xs) = (s,Rval vs)`,
   CHEAT_TAC);;
 
-let bind_locals_list_def = new_definition
+let bind_locals_list_def = cake_define
   `bind_locals_list ts ks = MAP2 (\t x. (flatLang_Var_local t x)) ts
   ks`;;
 
@@ -416,7 +416,7 @@ let SND_SND_lemma = prove
  (`(SND x) = y <=> (?y1. x = (y1,y))`,
   CHEAT_TAC);;
 
-let flatProps_eval_sim_def = new_definition
+let flatProps_eval_sim_def = cake_define
   `flatProps_eval_sim ffi ds1 ds2 ec ec2 rel allow_fail =
      (!k res1 s2.
        evaluate_decs (flatSem_initial_state ffi k ec) ds1 =
@@ -445,7 +445,7 @@ let flatProps_IMP_semantics_eq = prove
      flatSem_semantics ec2 ffi ds2`),
   CHEAT_TAC);;
 
-let flatProps_op_gbag_def = new_definition
+let flatProps_op_gbag_def = cake_define
   `flatProps_op_gbag x1 =
       match x1 with
         flatLang_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
@@ -459,9 +459,10 @@ let _ = size_thms "flatLang_exp";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let flatProps_set_globals_def = define_mutual_wf_cheat
+let flatProps_set_globals_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\a. match a with INL e -> flatLang_exp_size e | INR es ->
-  list_size flatLang_exp_size es)`
+     list_size flatLang_exp_size es)`)
+  CHEAT_TAC
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)
@@ -491,13 +492,11 @@ hol4_overload "set_globals" "flatProps_set_globals";;
 
 
 let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 flatPropsScript.sml:850-856: the tactic that proves the
    termination *)
-let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
+let flatProps_esgc_free_def = cake_define_wf
   `MEASURE flatLang_exp_size`
-  [`flatProps_esgc_free x1 =
+  `flatProps_esgc_free x1 =
         match x1 with
           (Raise t e:flatLang_exp) -> flatProps_esgc_free e
         | (Handle t e pes) ->
@@ -516,7 +515,7 @@ let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
         | (Letrec t fs e) ->
        flatProps_esgc_free e /\ flatProps_elist_globals (MAP (SND o
          SND) fs) = EMPTY_BAG
-        | _6 -> T`];;
+        | _6 -> T`;;
 hol4_overload "esgc_free" "flatProps_esgc_free";;
 
 (* HOL4 flatPropsScript.sml:858-859: a theorem that HOL4 states as
@@ -565,7 +564,7 @@ let evaluate_decs_add_to_clock_io_events_mono_alt = prove
 
 (* generic proof support for most val_rel/state_rel examples *)
 
-let isClosure_def = new_definition
+let isClosure_def = cake_define
   `isClosure exp = (
      (?vs n x. exp = Closure vs n x) \/
      (?vs fs x. exp = Recclosure vs fs x))`;;
@@ -575,7 +574,7 @@ let isClosure_def = new_definition
 (* HOL4 flatPropsScript.sml:925-927: a theorem that HOL4 states as
    the value of an ML expression: isClosure_simps *)
 
-let simple_basic_val_rel_def = define_cases
+let simple_basic_val_rel_def = cake_define_list
   [`simple_basic_val_rel (Litv l:flatSem_v) v = (v = (Litv
   l:flatSem_v))`;
    `simple_basic_val_rel (Loc b i:flatSem_v) v = (v = (Loc b
@@ -587,7 +586,7 @@ let simple_basic_val_rel_def = define_cases
    `simple_basic_val_rel (Closure vs nm exp:flatSem_v) v = F`;
    `simple_basic_val_rel (Recclosure vs exps nm:flatSem_v) v = F`];;
 
-let v_container_xs_def = define_cases
+let v_container_xs_def = cake_define_list
   [`v_container_xs (Litv _8:flatSem_v) = []`;
    `v_container_xs (Loc _11 _12:flatSem_v) = []`;
    `v_container_xs (Conv _14 vs:flatSem_v) = vs`;
@@ -595,7 +594,7 @@ let v_container_xs_def = define_cases
    `v_container_xs (Closure vs nm exp:flatSem_v) = []`;
    `v_container_xs (Recclosure vs exps nm:flatSem_v) = []`];;
 
-let flatProps_simple_val_rel_def = new_definition
+let flatProps_simple_val_rel_def = cake_define
   `flatProps_simple_val_rel vr = (
      (!v1 v2. (vr v1 v2 ==> isClosure v1 = isClosure v2)) /\ (!v1 v2.
        ~(isClosure v1) ==> vr v1 v2 = (
@@ -614,7 +613,7 @@ let simple_val_rel_isClosure = prove
   y)`,
   CHEAT_TAC);;
 
-let flatProps_simple_state_rel_def = new_definition
+let flatProps_simple_state_rel_def = cake_define
   `flatProps_simple_state_rel vr sr <=>
      (!s t. sr s t ==> LIST_REL (semanticPrimitivesProps_sv_rel vr)
        (state_refs s) (state_refs t)) /\
@@ -733,7 +732,7 @@ let simple_do_app_thm = prove
    sr t1 t2 /\ do_app s2 op vs2 = SOME (t2,r2)))`,
   CHEAT_TAC);;
 
-let evaluate_match_def = new_definition
+let evaluate_match_def = cake_define
   `flatProps_evaluate_match env s v pes err_v =
      (match pmatch_rows pes s v with Match_type_error -> (s,Rerr
        (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise err_v)) |
@@ -783,14 +782,14 @@ let evaluate_match_CONS = prove
 (* HOL4 flatPropsScript.sml:1448: a theorem that HOL4 states as the
    value of an ML expression: flat_evaluate_def *)
 
-let flatProps_store_v_vs_def = define_cases
+let flatProps_store_v_vs_def = cake_define_list
   [`flatProps_store_v_vs (semanticPrimitives_Varray vs) = vs`;
    `flatProps_store_v_vs (semanticPrimitives_Refv v) = [v]`;
    `flatProps_store_v_vs (semanticPrimitives_Thunk m v) = [v]`;
    `flatProps_store_v_vs (semanticPrimitives_W8array xs) = []`];;
 hol4_overload "store_v_vs" "flatProps_store_v_vs";;
 
-let result_vs_def = new_definition
+let result_vs_def = cake_define
   `result_vs x1 =
       match x1 with
         Rval xs -> xs
@@ -801,9 +800,15 @@ let result_vs_def = new_definition
    port cannot state yet: v_size_aux *)
 
 let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 flatPropsScript.sml:1484-1489: the tactic that proves the
    termination *)
-let no_Mat_def,no_Mat_ind = define_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let no_Mat_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (flatLang_exp_size)`)
+  CHEAT_TAC
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
    `no_Mat (flatLang_Var_local t v) <=> T`;
@@ -820,11 +825,11 @@ let no_Mat_def,no_Mat_ind = define_guess
    `no_Mat (Letrec t funs e:flatLang_exp) <=> EVERY no_Mat (MAP
   (SND o SND) funs) /\ no_Mat e`];;
 
-let no_Mat_decs_def,no_Mat_decs_ind = define_rec
+let no_Mat_decs_def = cake_define_list
   [`no_Mat_decs [] = T`;
    `no_Mat_decs (e :: xs) = (no_Mat e /\ no_Mat_decs xs)`];;
 
-let mk_flat_install_conf_def = new_definition
+let mk_flat_install_conf_def = cake_define
   `flatProps_mk_flat_install_conf cc co =
      (mk_install_config cc co:'c install_config)`;;
 hol4_overload "mk_flat_install_conf" "flatProps_mk_flat_install_conf";;

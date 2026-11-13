@@ -62,7 +62,7 @@ let ffi_state_FIELDS = define_record "ffi_state"
 hol4_field_overload "oracle" "ffi_state_oracle";;
 hol4_field_overload "oracle_fupd" "ffi_state_oracle_fupd";;
 
-let initial_ffi_state_def = new_definition
+let initial_ffi_state_def = cake_define
   `initial_ffi_state oc' (ffi:'ffi) =
      mk_ffi_state oc' ffi []`;;
 
@@ -70,7 +70,7 @@ let ffi_result_INDUCT,ffi_result_RECURSION = define_datatype
   "ffi_result = FFI_return ('ffi ffi_state) (word8 list) | FFI_final \
    (final_event)";;
 
-let call_FFI_def = new_definition
+let call_FFI_def = cake_define
   `call_FFI (st:'ffi ffi_state) s conf bytes =
      (if ~(s = ffi_ExtCall (implode "")) then
        match ffi_state_oracle st s (ffi_state_ffi_state st) conf
@@ -116,7 +116,7 @@ hol4_overload "Fail" "ffi_Fail";;
 (* trace-based semantics can be recovered as an instance of oracle-based
  * semantics as follows. *)
 
-let trace_oracle_def = new_definition
+let trace_oracle_def = cake_define
   `trace_oracle s io_trace conf input =
      (match LHD io_trace with NONE -> Oracle_final FFI_failed | SOME
        (IO_event s' conf' bytes2) ->

@@ -70,7 +70,7 @@ let backend_config_FIELDS = define_record "backend_config"
 
 (* HOL4 backendScript.sml:32: ML code, not ported *)
 
-let attach_bitmaps_def = define_cases
+let attach_bitmaps_def = cake_define_list
   [`attach_bitmaps names c bm (SOME (bytes,c')) =
         SOME (bytes,bm,backend_config_symbols_fupd (K (MAP
           (\(n,p,l). (lookup_any n names (implode "NOTFOUND"),p,l))
@@ -79,7 +79,7 @@ let attach_bitmaps_def = define_cases
               c))`;
    `attach_bitmaps names c bm NONE = NONE`];;
 
-let backend_compile_def = new_definition
+let backend_compile_def = cake_define
   `backend_compile asm_conf c p =
      (let p = source_to_source_compile p in
      let _1 = empty_ffi (implode "finished: source_to_source") in
@@ -135,7 +135,7 @@ let backend_compile_def = new_definition
        res)`;;
 hol4_overload "compile" "backend_compile";;
 
-let to_flat_def = new_definition
+let to_flat_def = cake_define
   `to_flat c p =
      (let p = source_to_source_compile p in
      let (c',p) = source_to_flat_compile (backend_config_source_conf
@@ -143,13 +143,13 @@ let to_flat_def = new_definition
      let c = backend_config_source_conf_fupd (K c') c in
      (c,p))`;;
 
-let to_clos_def = new_definition
+let to_clos_def = cake_define
   `to_clos c p =
    (let (c,p) = to_flat c p in
    let p = flat_to_clos_compile_prog p in
    (c,p))`;;
 
-let to_bvl_def = new_definition
+let to_bvl_def = cake_define
   `to_bvl c p =
    (let (c,p) = to_clos c p in
    let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf
@@ -157,7 +157,7 @@ let to_bvl_def = new_definition
    let c = backend_config_clos_conf_fupd (K c') c in
    (c,p,names))`;;
 
-let to_bvi_def = new_definition
+let to_bvi_def = cake_define
   `to_bvi c p =
    (let (c,p,names) = to_bvl c p in
    let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
@@ -177,19 +177,19 @@ let to_bvi_def = new_definition
      (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
    (c,p,names))`;;
 
-let to_data_def = new_definition
+let to_data_def = cake_define
   `to_data c p =
    (let (c,p,names) = to_bvi c p in
    let p = bvi_to_data_compile_prog p in
    (c,p,names))`;;
 
-let to_word_0_def = new_definition
+let to_word_0_def = cake_define
   `to_word_0 asm_conf c p =
      (let (c,p,names) = to_data c p in
      let p = compile_0 (backend_config_data_conf c) asm_conf p in
        (c,p,names))`;;
 
-let to_word_def = new_definition
+let to_word_def = cake_define
   `to_word asm_conf c p =
    (let (c,p,names) = to_data c p in
    let (col,p) = data_to_word_compile (backend_config_data_conf c)
@@ -208,7 +208,7 @@ let to_word_thm = prove
    (c,p,names))`,
   CHEAT_TAC);;
 
-let to_stack_def = new_definition
+let to_stack_def = cake_define
   `to_stack asm_conf c p =
    (let (c,p,names) = to_word asm_conf c p in
    let (bm,c',fs,p) = word_to_stack_compile asm_conf
@@ -216,7 +216,7 @@ let to_stack_def = new_definition
    let c = backend_config_word_conf_fupd (K c') c in
    (bm,c,p,names))`;;
 
-let to_lab_def = new_definition
+let to_lab_def = cake_define
   `to_lab asm_conf c p =
    (let (bm,c,p,names) = to_stack asm_conf c p in
    let p = stack_to_lab_compile (backend_config_stack_conf
@@ -227,7 +227,7 @@ let to_lab_def = new_definition
      (asm_config_addr_offset asm_conf) p in
    (bm,c,(p:('a sec) list),names))`;;
 
-let to_target_def = new_definition
+let to_target_def = cake_define
   `to_target asm_conf c p =
    (let (bm,c,p,names) = to_lab asm_conf c p in
      attach_bitmaps names c bm (
@@ -238,7 +238,7 @@ let compile_eq_to_target = prove
  (`compile = to_target`,
   CHEAT_TAC);;
 
-let prim_src_config_def = new_definition
+let prim_src_config_def = cake_define
   `prim_src_config =
      (let (_11,next',env,_12,_13) = compile_decs [] 1 (next
        empty_config) source_to_flat_empty_env
@@ -249,7 +249,7 @@ let prim_src_config_def = new_definition
 (* HOL4 backendScript.sml:203: a theorem that HOL4 states as the
    value of an ML expression: prim_src_config_eq *)
 
-let prim_config_def = new_definition
+let prim_config_def = cake_define
   `prim_config =
      FST (to_flat (mk_backend_config empty_config ARB ARB ARB ARB
        ARB ARB ARB ARB ARB ARB) (prim_types_program))`;;
@@ -257,13 +257,13 @@ let prim_config_def = new_definition
 (* HOL4 backendScript.sml:210-211: a theorem that HOL4 states as the
    value of an ML expression: prim_config_eq *)
 
-let from_lab_def = new_definition
+let from_lab_def = cake_define
   `from_lab asm_conf c names p bm =
      attach_bitmaps names c bm
        (lab_to_target_compile asm_conf (backend_config_lab_conf c)
          p)`;;
 
-let from_stack_def = new_definition
+let from_stack_def = cake_define
   `from_stack asm_conf c names p bm =
    (let p = stack_to_lab_compile (backend_config_stack_conf
      c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
@@ -273,14 +273,14 @@ let from_stack_def = new_definition
      (asm_config_addr_offset asm_conf) p in
    from_lab asm_conf c names (p:('a sec) list) bm)`;;
 
-let from_word_def = new_definition
+let from_word_def = cake_define
   `from_word asm_conf c names p =
    (let (bm,c',fs,p) = word_to_stack_compile asm_conf
      (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
    let c = backend_config_word_conf_fupd (K c') c in
    from_stack asm_conf c names p bm)`;;
 
-let from_word_0_def = new_definition
+let from_word_0_def = cake_define
   `from_word_0 asm_conf c names p =
    (let (col,prog) = word_to_word_compile
      (backend_config_word_to_word_conf c) asm_conf p in
@@ -288,7 +288,7 @@ let from_word_0_def = new_definition
      word_to_word_config_col_oracle_fupd (K col) c) c in
    from_word asm_conf c names prog)`;;
 
-let from_data_def = new_definition
+let from_data_def = cake_define
   `from_data asm_conf c names p =
    (let (col,p) = data_to_word_compile (backend_config_data_conf c)
      (backend_config_word_to_word_conf c) asm_conf p in
@@ -302,12 +302,12 @@ let from_data_thm = prove
    from_word_0 asm_conf c names p)`,
   CHEAT_TAC);;
 
-let from_bvi_def = new_definition
+let from_bvi_def = cake_define
   `from_bvi asm_conf c names p =
    (let p = bvi_to_data_compile_prog p in
      from_data asm_conf c names p)`;;
 
-let from_bvl_def = new_definition
+let from_bvl_def = cake_define
   `from_bvl asm_conf c names p =
    (let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
      (clos_to_bvl_config_start (backend_config_clos_conf c))
@@ -326,19 +326,19 @@ let from_bvl_def = new_definition
      (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
    from_bvi asm_conf c names p)`;;
 
-let from_clos_def = new_definition
+let from_clos_def = cake_define
   `from_clos asm_conf c e =
    (let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf
      c) e in
    let c = backend_config_clos_conf_fupd (K c') c in
    from_bvl asm_conf c names p)`;;
 
-let from_flat_def = new_definition
+let from_flat_def = cake_define
   `from_flat asm_conf c p =
    (let p = flat_to_clos_compile_prog p in
    from_clos asm_conf c p)`;;
 
-let from_source_def = new_definition
+let from_source_def = cake_define
   `from_source asm_conf c p =
    (let p = source_to_source_compile p in
    let (c',p) = source_to_flat_compile (backend_config_source_conf c)
@@ -350,7 +350,7 @@ let compile_eq_from_source = prove
  (`compile = from_source`,
   CHEAT_TAC);;
 
-let to_livesets_0_def = new_definition
+let to_livesets_0_def = cake_define
   `to_livesets_0 asm_conf ((c:backend_config),p,(names:mlstring spt)) =
    (let word_conf = backend_config_word_to_word_conf c in
    let alg = word_to_word_config_reg_alg word_conf in
@@ -376,7 +376,7 @@ let to_livesets_0_def = new_definition
      ((asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)),data),c,names,p))`;;
 
-let to_livesets_def = new_definition
+let to_livesets_def = cake_define
   `to_livesets asm_conf c p =
      to_livesets_0 asm_conf (to_word_0 asm_conf c p)`;;
 
@@ -391,7 +391,7 @@ let to_data_conf_inv = prove
    c' = backend_config_lab_conf c`,
   CHEAT_TAC);;
 
-let from_livesets_def = new_definition
+let from_livesets_def = cake_define
   `from_livesets asm_conf ((k,data),c,names,p) =
    (let word_conf = backend_config_word_to_word_conf c in
    let (n_oracles,col) = next_n_oracle (LENGTH p)
@@ -464,7 +464,7 @@ let to_data_change_config = prove
       prog')`,
   CHEAT_TAC);;
 
-let ensure_fp_conf_ok_def = new_definition
+let ensure_fp_conf_ok_def = cake_define
   `ensure_fp_conf_ok asm_c c = data_to_word_config_has_fp_tern_fupd (K
   (asm_config_ISA asm_c = ARMv7 /\ 2 < asm_config_fp_reg_count asm_c))
   (data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count
@@ -518,14 +518,14 @@ let backend_progs_FIELDS = define_record "backend_progs"
    "lab_prog","('a sec) list";
    "target_prog","(word8 list#('a word) list) option"];;
 
-let empty_progs_def = new_definition
+let empty_progs_def = cake_define
   `empty_progs = mk_backend_progs (0,0) [] [] ([],[]) [] [] [] [] []
   [] [] (SOME ([],[]))`;;
 
-let keep_progs_def = new_definition
+let keep_progs_def = cake_define
   `keep_progs k ps = (match k with T -> ps | _15 -> [])`;;
 
-let compile_inc_progs_def = new_definition
+let compile_inc_progs_def = cake_define
   `compile_inc_progs k asm_conf c p_tup =
      (let (env_id,p) = p_tup in
      let ps = backend_progs_source_prog_fupd (K p)
@@ -584,7 +584,7 @@ let compile_inc_progs_def = new_definition
      let c = backend_config_lab_conf_fupd (match target with NONE ->
        I | SOME (_17,c') -> K c') c in
      (c,ps))`;;
-let compile_inc_progs_for_eval_def = new_definition
+let compile_inc_progs_for_eval_def = cake_define
   `compile_inc_progs_for_eval asm_conf x =
    (let (env_id,c',decs) = x in
    let (c'',ps) = compile_inc_progs T asm_conf c' (env_id,decs) in
@@ -656,18 +656,14 @@ let compile_inc_progs_for_eval_eq = prove
        OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target)`,
   CHEAT_TAC);;
 
-let _ = size_thms "ffiname";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let ffinames_to_string_list_def,ffinames_to_string_list_ind = define_wf
-  `MEASURE (\x0. list_size ffiname_size x0)`
+let ffinames_to_string_list_def = cake_define_list
   [`ffinames_to_string_list [] = []`;
    `ffinames_to_string_list ((ffi_ExtCall s:ffiname) :: rest) =
         s :: (ffinames_to_string_list rest)`;
    `ffinames_to_string_list (ffi_SharedMem _28 :: rest) =
         ffinames_to_string_list rest`];;
 
-let set_oracle_def = new_definition
+let set_oracle_def = cake_define
   `set_oracle c oracle' = backend_config_word_to_word_conf_fupd (K
   (word_to_word_config_col_oracle_fupd (K oracle')
   (backend_config_word_to_word_conf c)))

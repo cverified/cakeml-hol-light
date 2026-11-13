@@ -30,20 +30,16 @@ let _ = hol4_ancestors "word_elim"
   ["wordLang"];;
 
 
-let find_word_loc_def = new_definition
+let find_word_loc_def = cake_define
   `(find_word_loc ((name:num),_1,_2) = name)`;;
 
-let _ = size_thms "wordLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let find_word_ref_def,find_word_ref_ind = define_wf
-  `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`find_word_ref x1 =
+let find_word_ref_def = cake_define
+  `find_word_ref x1 =
         match x1 with
           wordLang_MustTerminate p -> find_word_ref p
         | (Call ret target _3 handler) -> sptree_union
-           (match target with NONE -> LN | SOME n -> (sptree_insert
-             n one LN))
+           (match target with NONE -> LN | SOME n -> (sptree_insert n
+             one LN))
                (sptree_union
                    (match ret with NONE -> LN | SOME
                      (_4,_5,ret_handler,l1,_6) ->
@@ -58,21 +54,21 @@ let find_word_ref_def,find_word_ref_ind = define_wf
            sptree_union (find_word_ref p1) (find_word_ref p2)
         | (LocValue _13 n) -> sptree_insert n one LN
         | (Loop names body exit_names) -> find_word_ref body
-        | _14 -> LN`];;
+        | _14 -> LN`;;
 
 (* HOL4 word_elimScript.sml:41: ML code, not ported *)
 
-let analyse_word_code_def,analyse_word_code_ind = define_rec
+let analyse_word_code_def = cake_define_list
   [`analyse_word_code [] = (LN:(1 spt) spt)`;
    `analyse_word_code ((n,args,prog) :: t) =
             ((sptree_insert n (find_word_ref prog)
               (analyse_word_code t)):(1 spt) spt)`];;
 
-let remove_word_code_def = new_definition
+let remove_word_code_def = cake_define
   `remove_word_code reachable l =
        FILTER (\x. IS_SOME (sptree_lookup (FST x) reachable)) l`;;
 
-let remove_word_prog_def = new_definition
+let remove_word_prog_def = cake_define
   `remove_word_prog (n:num) code =
        (let t = analyse_word_code code in
        let reachable = closure_spt (sptree_insert n one (LN:1 spt)) t

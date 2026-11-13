@@ -39,35 +39,28 @@ hol4_overload "Null" "jsonLang_Null";;
 
 hol4_overload "++" "misc_Append";;
 
-let _ = size_thms "app_list";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let concat_with_def,concat_with_ind = define_wf
-  `MEASURE (\(x0,x1). list_size (app_list_size (\x. 0)) x0)`
-  [`concat_with x1 c =
+let concat_with_def = cake_define
+  `concat_with x1 c =
         match x1 with
           [] -> misc_List []
         | [s] -> s
-        | (s :: ss) -> s ++ (c ++ concat_with ss c)`];;
+        | (s :: ss) -> s ++ (c ++ concat_with ss c)`;;
 
-let printable_def = new_definition
+let printable_def = cake_define
   `printable c <=> ORD c >= 32 /\ ORD c < 127 /\ ~(c = (CHR 34)) /\
   ~(c = (CHR 92))`;;
 
-let num_to_hex_digit_def = new_definition
+let num_to_hex_digit_def = cake_define
   `num_to_hex_digit n =
      (if n < 10 then [CHR (48 + n)] else
      if n < 16 then [CHR (55 + n)] else [])`;;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let n_rev_hex_digs,n_rev_hex_digs_ind = define_wf
-  `MEASURE (\(x0,x1). (\n. n) x0)`
+let n_rev_hex_digs = cake_define_list
   [`n_rev_hex_digs 0 x = []`;
    `n_rev_hex_digs (SUC n) x = (num_to_hex_digit (x MOD 16) ++
       n_rev_hex_digs n (x DIV 16))`];;
 
-let encode_str_def = new_definition
+let encode_str_def = cake_define
   `encode_str unicode s =
    (let s2 = explode s in
    if EVERY printable s2 then s else mlstring_concat (MAP (\c. if
@@ -75,11 +68,7 @@ let encode_str_def = new_definition
      ++ REVERSE (n_rev_hex_digs 4 (ORD c))) else mlstring_concat
      [(implode "\\"); toString (ORD c)]) s2))`;;
 
-let _ = size_thms "obj";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let json_to_mlstring_def = define_mutual_wf
-  `MEASURE (sum_measure (\x0. obj_size x0) (\x0. obj_size3 x0))`
+let json_to_mlstring_def = cake_define_list
   [`json_to_mlstring obj =
         (match obj with jsonLang_Object mems -> misc_List [(implode
           "{")] ++

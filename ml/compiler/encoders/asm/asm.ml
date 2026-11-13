@@ -207,14 +207,14 @@ let asm_config_FIELDS = define_record "asm_config"
 hol4_field_overload "link_reg" "asm_config_link_reg";;
 hol4_field_overload "link_reg_fupd" "asm_config_link_reg_fupd";;
 
-let reg_ok_def = new_definition
+let reg_ok_def = cake_define
   `reg_ok r c <=> r < asm_config_reg_count c /\ ~(MEM r
   (asm_config_avoid_regs c))`;;
 
-let fp_reg_ok_def = new_definition
+let fp_reg_ok_def = cake_define
   `fp_reg_ok d c <=> d < asm_config_fp_reg_count c`;;
 
-let reg_imm_ok_def = define_cases
+let reg_imm_ok_def = cake_define_list
   [`reg_imm_ok b (Reg r) c = reg_ok r c`;
    `reg_imm_ok b (Imm w) c =
          ((
@@ -224,7 +224,7 @@ let reg_imm_ok_def = define_cases
 
 
 (* Requires register inequality for some architectures *)
-let arith_ok_def = define_cases
+let arith_ok_def = cake_define_list
   [`arith_ok (asm_Binop b r1 r2 ri) (c:'a asm_config) <=>
          (asm_config_two_reg_arith
           // note: register to register moves can be implmented with
@@ -268,7 +268,7 @@ let arith_ok_def = define_cases
          (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c =
            RISC_V)) ==> ~(r1 = r3))`];;
 
-let fp_ok_def = define_cases
+let fp_ok_def = cake_define_list
   [`fp_ok (FPLess r d1 d2) (c:'a asm_config) <=>
           reg_ok r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_ok (FPLessEqual r d1 d2) (c:'a asm_config) <=>
@@ -314,11 +314,11 @@ let fp_ok_def = define_cases
    `fp_ok (FPFromInt d r) (c:'a asm_config) <=> fp_reg_ok r c /\
   fp_reg_ok d c`];;
 
-let cmp_ok_def = new_definition
+let cmp_ok_def = cake_define
   `cmp_ok (cmp:cmp) r ri c <=> reg_ok r c /\ reg_imm_ok (INR cmp) ri
   c`;;
 
-let offset_ok_def = new_definition
+let offset_ok_def = cake_define
   `asm_offset_ok a offset w =
    (let (min',max') = offset in min' <= w /\ w <= max' /\
      alignment_aligned a w)`;;
@@ -337,7 +337,7 @@ hol4_overload "offset_ok" "asm_offset_ok";;
 (* HOL4 asmScript.sml:284: the overload loc_offset_ok, which the port
    expands *)
 
-let inst_ok_def = new_definition
+let inst_ok_def = cake_define
   `inst_ok x1 c =
         match x1 with
           asm_Skip -> T
@@ -353,7 +353,7 @@ let inst_ok_def = new_definition
              ~(asm_config_ISA c = Ag32) else
            (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`;;
 
-let asm_ok_def = define_cases
+let asm_ok_def = cake_define_list
   [`asm_ok (asm_Inst i) c <=> inst_ok i c`;
    `asm_ok (asm_Jump w) c <=> (\c. asm_offset_ok
   (asm_config_code_alignment c) (asm_config_jump_offset c)) c w`;
@@ -369,18 +369,18 @@ let asm_ok_def = define_cases
    `asm_ok (asm_Loc r w) c <=> reg_ok r c /\ (\c. asm_offset_ok
   (asm_config_code_alignment c) (asm_config_loc_offset c)) c w`];;
 
-let word_cmp_def = define_cases
-  [`(asm_word_cmp (Equal:cmp) w1 w2 = (w1 = w2)) /\
+let word_cmp_def = cake_define
+  `(asm_word_cmp (Equal:cmp) w1 w2 = (w1 = w2)) /\
    (asm_word_cmp Less w1 w2 = (w1 < w2)) /\
    (asm_word_cmp asm_Lower w1 w2 = (w1 <+ w2)) /\
    (asm_word_cmp Test w1 w2 = ((w1 && w2) = (n2w 0))) /\
    (asm_word_cmp asm_NotEqual w1 w2 = (~(w1 = w2))) /\
    (asm_word_cmp asm_NotLess w1 w2 = ~(w1 < w2)) /\
    (asm_word_cmp asm_NotLower w1 w2 = ~(w1 <+ w2)) /\
-   (asm_word_cmp asm_NotTest w1 w2 = (~((w1 && w2) = (n2w 0))))`];;
+   (asm_word_cmp asm_NotTest w1 w2 = (~((w1 && w2) = (n2w 0))))`;;
 hol4_overload "word_cmp" "asm_word_cmp";;
 
-let is_load_def = new_definition
+let is_load_def = cake_define
   `is_load x1 =
         match x1 with
           (asm_Load:memop) -> T

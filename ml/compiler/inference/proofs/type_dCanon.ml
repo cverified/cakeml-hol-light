@@ -30,7 +30,7 @@ let _ = do_list hide_constant ["all"; "id"];;
 
 (* TODO: move *)
 
-let tenv_equiv_def = new_definition
+let tenv_equiv_def = cake_define
   `tenv_equiv tenv1 tenv2 <=>
       nsAll2 (\i v1 v2. v1 = v2) (type_env_t tenv1) (type_env_t
         tenv2) /\
@@ -105,14 +105,14 @@ let type_pe_determ_tenv_equiv = prove
 (* -- *)
 
 (* all the tids used in a tenv *)
-let set_tids_tenv_def = new_definition
+let set_tids_tenv_def = cake_define
   `set_tids_tenv tids tenv <=>
    nsAll (\i (ls,t). set_tids_subset tids t) (type_env_t tenv) /\
    nsAll (\i (ls,ts,tid). EVERY (\t. set_tids_subset tids t) ts /\
      tid IN tids) (type_env_c tenv) /\
    nsAll (\i (n,t). set_tids_subset tids t) (type_env_v tenv)`;;
 
-let type_pe_determ_canon_def = new_definition
+let type_pe_determ_canon_def = cake_define
   `type_pe_determ_canon n tenv tenvE p e <=>
    (!t1 tenv1 t2 tenv2.
      type_p 0 tenv p t1 tenv1 /\ type_e tenv tenvE e t1 /\
@@ -220,7 +220,7 @@ let type_d_canon = cake_inductive
        (decls1 + decls2) (extend_dec_tenv tenv2 tenv1))`;;
 
 (* The remapping must be identity on these numbers *)
-let good_remap_def = new_definition
+let good_remap_def = cake_define
   `good_remap f <=>
    MAP f (Tlist_num :: (Tbool_num :: prim_type_nums)) =
      Tlist_num :: (Tbool_num :: prim_type_nums)`;;
@@ -250,7 +250,7 @@ let check_type_names_ts_tid_rename = prove
      t`,
   CHEAT_TAC);;
 
-let extend_bij_def = new_definition
+let extend_bij_def = cake_define
   `extend_bij (f:num->num) g ids n v =
    (if v IN ids then
      n + g v else
@@ -329,7 +329,7 @@ let check_freevars_ts_tid_rename = prove
    check_freevars ts ls t`,
   CHEAT_TAC);;
 
-let sing_renum_def = new_definition
+let sing_renum_def = cake_define
   `sing_renum m n = (\x. if x = m then n else x)`;;
 
 (* HOL4 type_dCanonScript.sml:495-501: ML code, not ported *)
@@ -379,7 +379,7 @@ let type_op_ts_tid_rename = prove
    type_op op (MAP (ts_tid_rename f) ts) (ts_tid_rename f t))`,
   CHEAT_TAC);;
 
-let remap_tenvE_def,remap_tenvE_ind = define_rec
+let remap_tenvE_def = cake_define_list
   [`remap_tenvE f (typeSystem_Empty:tenv_val_exp) =
   (typeSystem_Empty:tenv_val_exp)`;
    `remap_tenvE f (typeSystem_Bind_tvar n e) = typeSystem_Bind_tvar n
@@ -452,7 +452,7 @@ let ts_tid_rename_LINV = prove
   (ts_tid_rename f x) = x`,
   CHEAT_TAC);;
 
-let LINVI_def = new_definition
+let LINVI_def = cake_define
   `LINVI f s y = (match LINV_OPT f s y with SOME x -> x | NONE -> f
   y)`;;
 

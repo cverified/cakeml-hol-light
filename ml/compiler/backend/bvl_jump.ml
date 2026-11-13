@@ -20,15 +20,14 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "bvl_jump"
   ["bvl"];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_jumpScript.sml:22-30: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let JumpList_def,JumpList_ind = define_wf_cheat
-  `MEASURE (LENGTH o SND)`
-  [`(JumpList n xs =
+let JumpList_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o SND)`)
+  CHEAT_TAC
+  `(JumpList n xs =
       (let l = LENGTH xs in
         if l = 0 then Op (closLang_IntOp (closLang_Const (&0))) []
           else
@@ -40,9 +39,9 @@ let JumpList_def,JumpList_ind = define_wf_cheat
             (closLang_IntOp (closLang_LessConstSmall (n + k))) [Var 0]
             else Op (closLang_IntOp closLang_Less) [Op (closLang_IntOp
             (closLang_Const (&(n + k)))) []; Var 0]) in
-            If lt (JumpList n ys) (JumpList (n + k) zs)))`];;
+            If lt (JumpList n ys) (JumpList (n + k) zs)))`;;
 
-let jump_def = new_definition
+let jump_def = cake_define
   `bvl_jump_Jump x xs = Let [x] (JumpList 0 xs)`;;
 hol4_overload "Jump" "bvl_jump_Jump";;
 

@@ -41,35 +41,35 @@ hol4_overload "FP_Div" "fpSem_FP_Div";;
 let fp_top_INDUCT,fp_top_RECURSION = define_datatype
   "fp_top = FP_Fma";;
 
-let fp_cmp_def = new_definition
+let fp_cmp_def = cake_define
   `fp_cmp cmp =
    (match cmp with ast_Lt -> fp64_lessThan | ast_Leq ->
      fp64_lessEqual | ast_Gt -> fp64_greaterThan | ast_Geq ->
      fp64_greaterEqual)`;;
 
-let fp_cmp_comp_def = new_definition
+let fp_cmp_comp_def = cake_define
   `fp_cmp_comp fop =
    (match fop with
      FP_Less -> fp64_lessThan | FP_LessEqual -> fp64_lessEqual |
        FP_Greater -> fp64_greaterThan | FP_GreaterEqual ->
        fp64_greaterEqual | FP_Equal -> fp64_equal)`;;
 
-let fp_uop_comp_def = new_definition
+let fp_uop_comp_def = cake_define
   `fp_uop_comp fop =
    (match fop with
      fpSem_FP_Abs -> fp64_abs | fpSem_FP_Neg -> fp64_negate |
        FP_Sqrt -> fp64_sqrt roundTiesToEven)`;;
 
-let fp_bop_comp_def = new_definition
+let fp_bop_comp_def = cake_define
   `fp_bop_comp fop =
    (match fop with FP_Add -> fp64_add roundTiesToEven | FP_Sub ->
      fp64_sub roundTiesToEven | FP_Mul -> fp64_mul roundTiesToEven |
      FP_Div -> fp64_div roundTiesToEven)`;;
 
-let fpfma_def = new_definition
+let fpfma_def = cake_define
   `fpfma v1 v2 v3 = fp64_mul_add roundTiesToEven v2 v3 v1`;;
 
-let fp_top_comp_def = new_definition
+let fp_top_comp_def = cake_define
   `fp_top_comp fop = fpfma`;;
 
 (* and the overloads that this file cannot see are back in the

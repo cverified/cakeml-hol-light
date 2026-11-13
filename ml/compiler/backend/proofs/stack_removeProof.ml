@@ -122,23 +122,23 @@ let word_offset_eq = prove
  (`word_offset n = bytes_in_word * n2w n`,
   CHEAT_TAC);;
 
-let memory_def = new_definition
+let memory_def = cake_define
   `memory m dm = (\s. s = fun2set (m,dm))`;;
 
-let word_list_rev_def,word_list_rev_ind = define_guess
+let word_list_rev_def = cake_define_list
   [`word_list_rev a [] = emp`;
    `word_list_rev a (x :: xs) =
          set_sep_one (a - bytes_in_word,x) * word_list_rev (a -
            bytes_in_word) xs`];;
 
-let word_store_def = new_definition
+let word_store_def = cake_define
   `word_store base store =
      word_list_rev base
        (MAP (\name. match FLOOKUP store name with NONE ->
          wordLang_Word (n2w 0) | SOME x -> x)
          stack_remove_store_list)`;;
 
-let stack_removeProof_code_rel_def = new_definition
+let stack_removeProof_code_rel_def = cake_define
   `stack_removeProof_code_rel jump off k code1 code2 <=>
      (!n prog.
        sptree_lookup n code1 = SOME prog ==>
@@ -149,16 +149,16 @@ let stack_removeProof_code_rel_def = new_definition
 hol4_overload "code_rel" "stack_removeProof_code_rel";;
 (* exact characterization for Install *)
 
-let is_SOME_Word_def = new_definition
+let is_SOME_Word_def = cake_define
   `is_SOME_Word x1 =
         match x1 with
           SOME (wordLang_Word w) -> T
         | _1 -> F`;;
 
-let the_SOME_Word_def = define_general
-  [`(the_SOME_Word (SOME (wordLang_Word w)) = w)`];;
+let the_SOME_Word_def = cake_define
+  `(the_SOME_Word (SOME (wordLang_Word w)) = w)`;;
 
-let stack_removeProof_state_rel_def = new_definition
+let stack_removeProof_state_rel_def = cake_define
   `stack_removeProof_state_rel jump off k
   (s1:('a,'c,'ffi)stackSem_state) (s2:('a,'c,'ffi)stackSem_state) <=>
   stackSem_state_use_stack
@@ -788,7 +788,7 @@ let stack_removeProof_compile_semantics = prove
 
 (* HOL4 stack_removeProofScript.sml:2624-2629: a proof *)
 
-let mem_val_def = define_cases
+let mem_val_def = cake_define_list
   [`mem_val (regs':(num,'a word_loc)fmap) (INL w) = wordLang_Word w`;
    `mem_val (regs':(num,'a word_loc)fmap) (INR n) = FAPPLY regs' n`];;
 
@@ -823,21 +823,14 @@ let star_move_lemma = prove
  (`p0 * p1 * p1' * p2 * p3 * p4 = p2 * (p1 * p1' * STAR p3 (p4 * p0))`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stack_removeProof_read_mem_def,stack_removeProof_read_mem_ind =
-  define_wf
-  `MEASURE (\(x0,x1,x2). (\n. n) x2)`
+let stack_removeProof_read_mem_def = cake_define_list
   [`stack_removeProof_read_mem a m 0 = []`;
    `stack_removeProof_read_mem a m (SUC n) =
          m a :: stack_removeProof_read_mem (a + bytes_in_word)
            m n`];;
 hol4_overload "read_mem" "stack_removeProof_read_mem";;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let addresses_def,addresses_ind = define_wf
-  `MEASURE (\(x0,x1). (\n. n) x1)`
+let addresses_def = cake_define_list
   [`addresses a 0 = {}`;
    `addresses a (SUC n) = a INSERT addresses (a + bytes_in_word) n`];;
 
@@ -906,7 +899,7 @@ let word_list_exists_addresses = prove
             n))`,
   CHEAT_TAC);;
 
-let init_reduce_def = new_definition
+let init_reduce_def = cake_define
   `init_reduce gen_gc' jump off k code bitmaps data_sp coracle
   (s:('a,'c,'ffi)stackSem_state) =
      (let heap_ptr = theWord (FAPPLY (stackSem_state_regs s) (k + 2))
@@ -954,14 +947,14 @@ let init_reduce_stack_space = prove
          data_sp coracle s8))`,
   CHEAT_TAC);;
 
-let stack_heap_limit_ok_def = new_definition
+let stack_heap_limit_ok_def = cake_define
   `stack_heap_limit_ok t (stack_lim,heap_lim) <=>
      FLOOKUP (state_store t) HeapLength = SOME (wordLang_Word (n2w
        heap_lim * (bytes_in_word:'a word))) /\
      heap_lim * (dimindex (:'a) DIV 8) < dimword (:'a) /\
      stack_lim = LENGTH (stack t)`;;
 
-let init_prop_def = new_definition
+let init_prop_def = cake_define
   `init_prop gen_gc' max_heap data_sp stack_heap_lim
   (s:('a,'c,'ffi)stackSem_state) =
      (?curr other bitmap_base len.
@@ -1027,7 +1020,7 @@ let init_prop_def = new_definition
            (fun2set (stackSem_state_memory
              s,stackSem_state_mdomain s)))`;;
 
-let init_code_pre_def = new_definition
+let init_code_pre_def = cake_define
   `init_code_pre k bitmaps data_sp s <=>
      (?ptr2 ptr3 ptr4 bitmap_ptr.
        good_dimindex (:'a) /\ 8 <= k /\ 1 IN domain (state_code s) /\
@@ -1106,11 +1099,11 @@ let fmap_simp_lemma1 = prove
  (`g |+ (0,x) |+ (5,y) |+ (0,z) = g |+ (0,z) |+ (5,y)`,
   CHEAT_TAC);;
 
-let get_stack_heap_limit''_def = new_definition
+let get_stack_heap_limit''_def = cake_define
   `get_stack_heap_limit'' (h2:num) (h3:num) (h4:num) =
      (h4 - h3 - LENGTH stack_remove_store_list,(h3 - h2) DIV 2)`;;
 
-let get_stack_heap_limit'_def = new_definition
+let get_stack_heap_limit'_def = cake_define
   `get_stack_heap_limit' max_heap p2 p3 (p4:'a word) =
      (let ptr2 = w2n p2 in
      let ptr3 = w2n p3 in
@@ -1130,7 +1123,7 @@ let get_stack_heap_limit'_def = new_definition
        get_stack_heap_limit'' (ptr2 DIV d) (w2n reg3 DIV d) (ptr4
          DIV d))`;;
 
-let get_stack_heap_limit_def = new_definition
+let get_stack_heap_limit_def = cake_define
   `get_stack_heap_limit max_heap (ptr2,ptr3,(ptr4:'a word)) =
      (let middle = ptr2 + (--(n2w 1) * ptr2 + ptr4) >>>
        (backend_common_word_shift (:'a) + 1) <<
@@ -1141,7 +1134,7 @@ let get_stack_heap_limit_def = new_definition
        ptr3 else middle) in
        get_stack_heap_limit' max_heap ptr2 adj_ptr3 ptr4)`;;
 
-let read_pointers_def = new_definition
+let read_pointers_def = cake_define
   `read_pointers s =
      (theWord (THE (FLOOKUP (stackSem_state_regs s) 2)),
       theWord (THE (FLOOKUP (stackSem_state_regs s) 3)),
@@ -1242,7 +1235,7 @@ let init_code_thm = prove
               (state_memory t,state_mdomain t0)))`,
   CHEAT_TAC);;
 
-let make_init_opt_def = new_definition
+let make_init_opt_def = cake_define
   `make_init_opt gen_gc' max_heap bitmaps data_sp coracle jump off k
   code (s:('a,'c,'ffi)stackSem_state) =
      (match evaluate (stack_remove_init_code gen_gc' max_heap k,s)
@@ -1255,7 +1248,7 @@ let make_init_opt_def = new_definition
                           (init_reduce gen_gc' jump off k code
                           bitmaps data_sp coracle t) else NONE))`;;
 
-let init_pre_def = new_definition
+let init_pre_def = cake_define
   `init_pre gen_gc' max_heap bitmaps data_sp k start' s <=>
      sptree_lookup 0 (state_code s) = SOME (Seq
        (stack_remove_init_code gen_gc' max_heap k)
@@ -1354,7 +1347,7 @@ let IMP_code_rel = prove
         code2`),
   CHEAT_TAC);;
 
-let make_init_any_def = new_definition
+let make_init_any_def = cake_define
   `make_init_any gen_gc' max_heap bitmaps data_sp coracle jump off k
   code s =
      (match make_init_opt gen_gc' max_heap bitmaps data_sp coracle
@@ -1381,7 +1374,7 @@ let make_init_any_def = new_definition
                                 (stackSem_state_regs_fupd (K (FEMPTY
                                 |+ (0,Loc 1 0))) s)))))))))))))))`;;
 
-let discharge_these_def = new_definition
+let discharge_these_def = cake_define
   `discharge_these jump off gen_gc' max_heap k start' coracle code s2
   <=>
        EVERY (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code
@@ -1400,7 +1393,7 @@ let discharge_these_def = new_definition
          ~(stackSem_state_use_alloc s2) /\ max_stack_alloc <=
          max_heap`;;
 
-let propagate_these_def = new_definition
+let propagate_these_def = cake_define
   `propagate_these s (bitmaps:('a word) list) data_sp <=>
    good_dimindex (:'a) /\
    (?ptr2 ptr3 ptr4 bitmap_ptr.

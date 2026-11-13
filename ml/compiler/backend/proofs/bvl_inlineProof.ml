@@ -33,7 +33,7 @@ let _ = hol4_ancestors "bvl_inlineProof"
 
 (* removal of ticks *)
 
-let bvl_inlineProof_state_rel_def = new_definition
+let bvl_inlineProof_state_rel_def = cake_define
   `bvl_inlineProof_state_rel (s:('c,'ffi)bvlSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
      t = bvlSem_state_compile_oracle_fupd (K ((I ##
@@ -72,14 +72,14 @@ let bvl_inlineProof_evaluate_remove_ticks = prove
 
 (* HOL4 bvl_inlineProofScript.sml:290-294: ML code, not ported *)
 
-let bvl_inlineProof_remove_ticks_cc_def = new_definition
+let bvl_inlineProof_remove_ticks_cc_def = cake_define
   `bvl_inlineProof_remove_ticks_cc cc =
      (\cfg prog'.
           cc cfg (MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks
             [x]))) prog'))`;;
 hol4_overload "remove_ticks_cc" "bvl_inlineProof_remove_ticks_cc";;
 
-let bvl_inlineProof_remove_ticks_co_def = new_definition
+let bvl_inlineProof_remove_ticks_co_def = cake_define
   `bvl_inlineProof_remove_ticks_co =
      (I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x]))))`;;
 hol4_overload "remove_ticks_co" "bvl_inlineProof_remove_ticks_co";;
@@ -163,7 +163,7 @@ let bvl_inlineProof_exp_rel = cake_inductive
                [bvl_Let ys (mk_tick (SUC ticks) y)])`;;
 hol4_overload "exp_rel" "bvl_inlineProof_exp_rel";;
 
-let bvl_inlineProof_in_cc_def = new_definition
+let bvl_inlineProof_in_cc_def = cake_define
   `bvl_inlineProof_in_cc limit' cc =
      (\(cs,cfg) prog.
          let (cs1,prog1) = tick_compile_prog limit' cs prog in
@@ -171,7 +171,7 @@ let bvl_inlineProof_in_cc_def = new_definition
              (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
 hol4_overload "in_cc" "bvl_inlineProof_in_cc";;
 
-let bvl_inlineProof_in_state_rel_def = new_definition
+let bvl_inlineProof_in_state_rel_def = cake_define
   `bvl_inlineProof_in_state_rel limit' s t <=> state_globals
      t = state_globals s /\ state_refs
      t = state_refs s /\ state_clock
@@ -320,7 +320,7 @@ let bvl_inlineProof_evaluate_inline = prove
              bvl_inlineProof_in_state_rel limit s2 t2)`),
   CHEAT_TAC);;
 
-let bvl_inlineProof_in_co_def = new_definition
+let bvl_inlineProof_in_co_def = cake_define
   `bvl_inlineProof_in_co limit' co = (\n.
        (let
           ((cs,cfg),progs) = co n in let
@@ -423,12 +423,12 @@ let semantics_tick_inline = prove
 
 (* let_op *)
 
-let let_opt_def = new_definition
+let let_opt_def = cake_define
   `let_opt split_seq cut_size (arity,prog) =
      (arity,compile_any split_seq cut_size arity (let_op_sing
        prog))`;;
 
-let let_state_rel_def = new_definition
+let let_state_rel_def = cake_define
   `let_state_rel split_seq cut_size (s:('c,'ffi)bvlSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
      t = bvlSem_state_compile_oracle_fupd (K ((I ##
@@ -487,7 +487,7 @@ let evaluate_let_op = prove
         q4 l4 s2 t2)`,
   CHEAT_TAC);;
 
-let let_op_cc_def = new_definition
+let let_op_cc_def = cake_define
   `let_op_cc q4 l4 cc =
       (\cfg prog. cc cfg (MAP (I ## let_opt q4 l4) prog))`;;
 
@@ -561,7 +561,7 @@ let must_inline_remove_ticks = prove
          must_inline p_1 limit (HD ((tick_inline cs [p_2])))`),
   CHEAT_TAC);;
 
-let let_opt_remove_def = new_definition
+let let_opt_remove_def = cake_define
   `let_opt_remove b l (arity,prog) =
      let_opt b l (arity,HD (remove_ticks [prog]))`;;
 
@@ -601,12 +601,12 @@ let comp_lemma = prove
        (I ## let_opt_remove q4 l4)`,
   CHEAT_TAC);;
 
-let bvl_inline_cc_def = new_definition
+let bvl_inline_cc_def = cake_define
   `bvl_inline_cc limit' q4 l4 cc =
      (bvl_inlineProof_in_cc limit'
        (bvl_inlineProof_remove_ticks_cc (let_op_cc q4 l4 cc)))`;;
 
-let bvl_inline_co_def = new_definition
+let bvl_inline_co_def = cake_define
   `bvl_inline_co limit' q4 l4 co =
     (\x. (I ## MAP (I ## let_opt q4 l4))
            (bvl_inlineProof_remove_ticks_co (bvl_inlineProof_in_co

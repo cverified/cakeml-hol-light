@@ -13,7 +13,7 @@ needs "lib/grammar.ml";;
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: list pred_set *)
 
-let nullable_def = new_definition
+let nullable_def = cake_define
   `nullable G sf = (\G. RTC (derive G)) G sf []`;;
 (* HOL4 NTpropertiesScript.sml:32: the overload nullableNT, which the
    port expands *)
@@ -23,9 +23,10 @@ let nullable_def = new_definition
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let nullableML_def,nullableML_ind = define_wf_cheat
+let nullableML_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
-  LENGTH`
+     LENGTH`)
+  CHEAT_TAC
   [`nullableML G seen [] = T`;
    `nullableML G seen (grammar_TOK t :: _1) = F`;
    `nullableML G seen (grammar_NT n :: rest) =
@@ -34,7 +35,7 @@ let nullableML_def,nullableML_ind = define_wf_cheat
             (n INSERT seen) r} = {} then F else nullableML G seen
             rest else F)`];;
 
-let firstSet_def = new_definition
+let firstSet_def = cake_define
   `firstSet G sf = {t | ?rest. (\G. RTC (derive G)) G sf (grammar_TOK
   t :: rest)}`;;
 
@@ -44,9 +45,10 @@ let firstSet_def = new_definition
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let firstSetML_def,firstSetML_ind = define_wf_cheat
+let firstSetML_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
-  LENGTH`
+     LENGTH`)
+  CHEAT_TAC
   [`firstSetML G seen [] = {}`;
    `firstSetML G seen (grammar_TOK t :: _2) = {t}`;
    `firstSetML G seen (grammar_NT n :: rest) =

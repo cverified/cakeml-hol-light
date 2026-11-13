@@ -32,13 +32,13 @@ let _ = hide_overloads
 hol4_overload "++" "otherwise";;
 
 (* Edge from node x to node y, in terms of an adjacency list *)
-let has_edge_def = new_definition
+let has_edge_def = cake_define
   `has_edge adjls x y <=>
    x < LENGTH adjls /\
    y < LENGTH adjls /\
    MEM y (EL x adjls)`;;
 
-let undirected_def = new_definition
+let undirected_def = cake_define
   `undirected adjls <=>
    (!x y.
      has_edge adjls x y ==>
@@ -50,7 +50,7 @@ let undirected_def = new_definition
   and that the worklists always contain legal nodes
   --- *)
 
-let good_ra_state_def = new_definition
+let good_ra_state_def = cake_define
   `good_ra_state s <=>
    LENGTH (ra_state_adj_ls s) = ra_state_dim s /\
    LENGTH (ra_state_node_tag s) = ra_state_dim s /\
@@ -71,7 +71,7 @@ let good_ra_state_def = new_definition
    undirected (ra_state_adj_ls s)`;;
 
 (* --- invariant: no two adjacent nodes have the same colour --- *)
-let no_clash_def = new_definition
+let no_clash_def = cake_define
   `no_clash adj_ls node_tag <=>
    (!x y.
      has_edge adj_ls x y ==>
@@ -83,7 +83,7 @@ let no_clash_def = new_definition
   Good preference oracle may only inspect, but not touch the state
   Moreover, it must always select a member of the input list
 *)
-let good_pref_def = new_definition
+let good_pref_def = cake_define
   `good_pref pref <=>
    (!n ks s.
      good_ra_state s ==>
@@ -371,7 +371,7 @@ let unbound_colour_correct = prove
   Good negated preference oracle may only inspect, but not touch the state
   Moreover, it must always select an element ≥ k not in the input list
 *)
-let good_neg_pref_def = new_definition
+let good_neg_pref_def = cake_define
   `good_neg_pref (k:num) pref <=>
    (!n bads s.
      good_ra_state s ==>
@@ -455,7 +455,7 @@ let good_pref_biased_pref = prove
 
 (* Checking that the bijection produced is correct *)
 
-let in_clash_tree_def,in_clash_tree_ind = define_rec
+let in_clash_tree_def = cake_define_list
   [`in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r`;
    `in_clash_tree (reg_alloc_Set names:clash_tree) x <=> x IN domain
   names`;
@@ -468,7 +468,7 @@ let in_clash_tree_def,in_clash_tree_ind = define_rec
   in_clash_tree t x \/ in_clash_tree t' x`];;
 
 (*g inverts f as an sptree *)
-let sp_inverts_def = new_definition
+let sp_inverts_def = cake_define
   `sp_inverts f g <=>
    (!m fm.
      sptree_lookup m f = SOME fm ==>
@@ -522,12 +522,12 @@ let mk_bij_aux_wf = prove
    the correctness
 *)
 (* the list represents a clique *)
-let is_clique_def = new_definition
+let is_clique_def = cake_define
   `is_clique ls adjls <=>
    (!x y. MEM x ls /\ MEM y ls /\ ~(x = y) ==>
      has_edge adjls x y)`;;
 
-let is_subgraph_def = new_definition
+let is_subgraph_def = cake_define
   `is_subgraph g h <=>
    (!x y.
      has_edge g x y ==> has_edge h x y)`;;
@@ -543,7 +543,7 @@ let is_subgraph_trans = prove
   CHEAT_TAC);;
 
 (* TODO quick sanity check: move to proof file when done *)
-let hide_def = new_definition
+let hide_def = cake_define
   `reg_allocProof_hide x = x`;;
 hol4_overload "hide" "reg_allocProof_hide";;
 
@@ -647,7 +647,7 @@ let extend_clique_succeeds = prove
 (* The col needed to get colouring satisfactory can be generated
    from the node tags
    The correctness should be a consequence of no_clash *)
-let colouring_satisfactory_def = new_definition
+let colouring_satisfactory_def = cake_define
   `colouring_satisfactory col adjls =
    (!x. x < LENGTH adjls ==>
     (!y. y < LENGTH adjls /\ MEM y (EL x adjls) ==>

@@ -27,7 +27,7 @@ needs "semantics/typeSystem.ml";;
 let _ = hol4_ancestors "semantics"
   ["cmlPtreeConversion"; "lexer_fun"; "primTypes"];;
 
-let semantics_parse_def = new_definition
+let semantics_parse_def = cake_define
   `semantics_parse toks =
      (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt =
        grammar_NT ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
@@ -44,20 +44,20 @@ let semantics_state_FIELDS = define_record "semantics_state"
    "sem_st","'ffi semanticPrimitives_state";
    "sem_env","semanticPrimitives_v sem_env"];;
 
-let can_type_prog_def = new_definition
+let can_type_prog_def = cake_define
   `can_type_prog state prog <=>
      (?new_tids new_tenv.
        DISJOINT (semantics_state_type_ids state) new_tids /\
        type_ds T (semantics_state_tenv state) prog new_tids
          new_tenv)`;;
 
-let evaluate_prog_with_clock_def = new_definition
+let evaluate_prog_with_clock_def = cake_define
   `evaluate_prog_with_clock st env k prog =
      (let (st',r) =
        evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd
          (K k) st) env prog in (semanticPrimitives_state_ffi st',r))`;;
 
-let semantics_prog_def = define_cases
+let semantics_prog_def = cake_define_list
   [`semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
         (
          // there is a clock for which evaluation terminates, either internally or via
@@ -92,7 +92,7 @@ let semantics_prog_def = define_cases
 let semantics_INDUCT,semantics_RECURSION = define_datatype
   "semantics = CannotParse | IllTyped | Execute (behaviour->bool)";;
 
-let semantics_semantics_def = new_definition
+let semantics_semantics_def = cake_define
   `semantics_semantics state prelude input =
      (match semantics_parse (lexer_fun input) with NONE ->
        CannotParse | SOME prog ->
@@ -102,7 +102,7 @@ let semantics_semantics_def = new_definition
          IllTyped))`;;
 hol4_overload "semantics" "semantics_semantics";;
 
-let semantics_init_def = new_definition
+let semantics_init_def = cake_define
   `semantics_init ffi =
      semantics_semantics (mk_semantics_state prim_tenv
        prim_type_ids (FST (THE (prim_sem_env ffi))) (SND (THE

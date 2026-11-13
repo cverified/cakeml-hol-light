@@ -73,7 +73,8 @@ ASSUMED = _assumed_set()
 # which way of the old chain of strategies means that the
 # definition recurses, which is what says whether it has an
 # induction theorem to give
-NOT_RECURSIVE = {'new_definition', 'new_recursive_definition'}
+NOT_RECURSIVE = {'new_definition', 'new_recursive_definition',
+                 'define_single', 'general'}
 RECURSIVE = {'prim_rec', 'nested', 'maplist', 'cond_bool', 'sing',
              'cases', 'match', 'lift_if', 'measure', 'guess'}
 
@@ -83,6 +84,13 @@ RECURSIVE = {'prim_rec', 'nested', 'maplist', 'cond_bool', 'sing',
 # the file is as plain about those as about the rest.
 SHAPES = {'nested', 'maplist', 'cond_bool', 'sing', 'cases',
           'match', 'lift_if'}
+
+# three of the rewritings hand what comes out back to a way of
+# making a definition, and the harvest records both names as one
+# word ("sing>nested").  What the way is called goes by the first
+# of them; the whole word is what the call site says.
+def head_way(strat):
+  return strat.split('>')[0]
 
 
 def recursive_text(text, names):
@@ -2138,9 +2146,10 @@ class Porter:
     # one character less to go on
     body = (clauses if term is None
             else '[`%s`]' % fmt(rawterm, width=71, last=4))
+    head = head_way(strat)
     if assumed: recursive = recursive_text(body, names)
-    elif strat in NOT_RECURSIVE: recursive = False
-    elif strat in RECURSIVE: recursive = True
+    elif head in NOT_RECURSIVE: recursive = False
+    elif head in RECURSIVE: recursive = True
     else: recursive = recursive_text(body, names)
     mutual = len(self.ctx.defining) > 1
     # the induction theorem that a recursive definition gives, under
@@ -2166,10 +2175,10 @@ class Porter:
       text = sizes + matchnote + letline(binding, how,
                                          '"%s"\n  %s' % (why, body))
     elif not recursive:
-      if strat in SHAPES:
+      if head in SHAPES:
         text = sizes + matchnote + letline(
                  bind, 'define_shaped', '"%s"\n  %s' % (strat, body))
-      elif strat == 'define_single':
+      elif head in ('define_single', 'general'):
         text = sizes + matchnote + letline(
                    bind, 'define_general%s'
                          % ('_cheat' if cheat else ''), body)
@@ -2184,7 +2193,7 @@ class Porter:
       # {one function, a family} x {a rewriting of the clauses or
       # none} x {a relation, the measure of the arguments matched
       # on, HOL Light's own guess} x {proved, assumed, a tactic}
-      shape = strat if strat in SHAPES else ''
+      shape = strat if head in SHAPES else ''
       # the harvest says the way, and the presence of a relation
       # does not: a definition that the recursion theorem of its
       # type makes needs none even where HOL4's Termination gives
@@ -2196,12 +2205,15 @@ class Porter:
       if not found_rel and not ((cheat or tac) and rel is not None):
         rel = None
       if shape: kind = '_wf' if rel is not None else '_rec'
-      elif strat == 'prim_rec': kind, rel = '_rec', None
+      elif head == 'prim_rec': kind, rel = '_rec', None
       elif rel is not None: kind = '_wf'
       else: kind = '_guess'
       # a definition by the recursion theorem of its type leaves
-      # no condition, so there is nothing there to assume
-      if not shape and kind == '_rec': suffix = ''
+      # no condition, so there is nothing there to assume; where
+      # it is a rewriting of the clauses of one function, the
+      # tactic is still the one the induction needs, and a family
+      # of them has no induction to need it
+      if kind == '_rec' and (mutual or not shape): suffix = ''
       elif kind == '_guess': suffix = '_cheat' if cheat else ''
       else: suffix = '_tac' if tac else ('_cheat' if cheat else '')
       how = ('define_mutual' if mutual else 'define') + \

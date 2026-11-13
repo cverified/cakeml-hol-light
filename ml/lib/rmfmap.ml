@@ -17,18 +17,18 @@ needs "lib/walkstar.ml";;
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: transfer pred_set finite_map *)
 
-let swfs_def = new_definition
+let swfs_def = cake_define
   `swfs sp = wfs (sp2fm sp)`;;
 
-let svwalk_def = new_definition
+let svwalk_def = cake_define
   `svwalk sp t = vwalk (sp2fm sp) t`;;
 
-let swalk_def = new_definition
+let swalk_def = cake_define
   `swalk sp t = walk (sp2fm sp) t`;;
 
-let soc_def = new_definition
+let soc_def = cake_define
   `soc sp t v = oc (sp2fm sp) t v`;;
 
 
-let sunify_def = new_definition
+let sunify_def = cake_define
   `sunify sp t1 t2 = OPTION_MAP fm2sp (unify (sp2fm sp) t1 t2)`;;

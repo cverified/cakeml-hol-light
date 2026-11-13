@@ -444,7 +444,7 @@ let constrain_op_complete = prove
    t = convert_t (t_walkstar s' t'))`,
   CHEAT_TAC);;
 
-let simp_tenv_invC_def = new_definition
+let simp_tenv_invC_def = cake_define
   `simp_tenv_invC s tvs tenv tenvE <=>
    (!n t.
    ALOOKUP tenvE n = SOME t ==>

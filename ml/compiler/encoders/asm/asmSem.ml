@@ -51,42 +51,42 @@ hol4_field_overload "be_fupd" "asm_state_be_fupd";;
 hol4_field_overload "failed" "asm_state_failed";;
 hol4_field_overload "failed_fupd" "asm_state_failed_fupd";;
 
-let upd_pc_def = new_definition
+let upd_pc_def = cake_define
   `asmSem_upd_pc pc' s = asm_state_pc_fupd (K pc') s`;;
 hol4_overload "upd_pc" "asmSem_upd_pc";;
-let upd_reg_def = new_definition
+let upd_reg_def = cake_define
   `asmSem_upd_reg r v s = asm_state_regs_fupd (K ((r =+ v)
   (asm_state_regs s))) s`;;
 hol4_overload "upd_reg" "asmSem_upd_reg";;
-let upd_fp_reg_def = new_definition
+let upd_fp_reg_def = cake_define
   `asmSem_upd_fp_reg r v s = asm_state_fp_regs_fupd (K ((r =+ v)
   (asm_state_fp_regs s))) s`;;
 hol4_overload "upd_fp_reg" "asmSem_upd_fp_reg";;
-let upd_mem_def = new_definition
+let upd_mem_def = cake_define
   `asmSem_upd_mem a b s = asm_state_mem_fupd (K ((a =+ b)
   (asm_state_mem s))) s`;;
 hol4_overload "upd_mem" "asmSem_upd_mem";;
-let read_reg_def = new_definition
+let read_reg_def = cake_define
   `asmSem_read_reg r s = asm_state_regs s r`;;
 hol4_overload "read_reg" "asmSem_read_reg";;
-let read_fp_reg_def = new_definition
+let read_fp_reg_def = cake_define
   `asmSem_read_fp_reg r s = asm_state_fp_regs s r`;;
 hol4_overload "read_fp_reg" "asmSem_read_fp_reg";;
-let read_mem_def = new_definition
+let read_mem_def = cake_define
   `asmSem_read_mem a s = asm_state_mem s a`;;
 hol4_overload "read_mem" "asmSem_read_mem";;
 
-let assert_def = new_definition
+let assert_def = cake_define
   `asmSem_assert b s = asm_state_failed_fupd (K (~b \/
   asm_state_failed s)) s`;;
 hol4_overload "assert" "asmSem_assert";;
 
-let reg_imm_def = define_cases
+let reg_imm_def = cake_define_list
   [`asmSem_reg_imm (Reg r) s = asmSem_read_reg r s`;
    `asmSem_reg_imm (Imm w) s = w`];;
 hol4_overload "reg_imm" "asmSem_reg_imm";;
 
-let binop_upd_def = define_general
+let binop_upd_def = cake_define_list
   [`asmSem_binop_upd r (Add:binop) w1 w2 = asmSem_upd_reg r (w1 + w2)`;
    `asmSem_binop_upd r (Sub:binop) w1 w2 = asmSem_upd_reg r (w1 - w2)`;
    `asmSem_binop_upd r (And:binop) w1 w2 = asmSem_upd_reg r (word_and
@@ -97,17 +97,17 @@ let binop_upd_def = define_general
   (word_xor w1 w2)`];;
 hol4_overload "binop_upd" "asmSem_binop_upd";;
 
-let is_test_def = new_definition
+let is_test_def = cake_define
   `is_test c <=> (c = Test) \/ (c = asm_NotTest)`;;
 
-let asmSem_word_shift_def = define_cases
+let asmSem_word_shift_def = cake_define_list
   [`asmSem_word_shift Lsl w n = w << n`;
    `asmSem_word_shift Lsr w n = w >>> n`;
    `asmSem_word_shift Asr w n = w >> n`;
    `asmSem_word_shift Ror w n = word_ror w n`];;
 hol4_overload "word_shift" "asmSem_word_shift";;
 
-let arith_upd_def = define_cases
+let arith_upd_def = cake_define_list
   [`asmSem_arith_upd (asm_Binop b r1 r2 (ri:'a asm_reg_imm)) (s:'a
   asm_state) =
          asmSem_binop_upd r1 b (asmSem_read_reg r2 s)
@@ -156,7 +156,7 @@ let arith_upd_def = define_cases
              (asmSem_upd_reg r1 (w2 - w3) s))`];;
 hol4_overload "arith_upd" "asmSem_arith_upd";;
 
-let fp_upd_def = define_cases
+let fp_upd_def = cake_define_list
   [`asmSem_fp_upd (FPLess r d1 d2) (s:'a asm_state) =
          asmSem_upd_reg r (if fp64_lessThan (asmSem_read_fp_reg
            d1 s) (asmSem_read_fp_reg d2 s) then (n2w 1) else (n2w 0))
@@ -232,14 +232,11 @@ let fp_upd_def = define_cases
              s)`];;
 hol4_overload "fp_upd" "asmSem_fp_upd";;
 
-let addr_def = define_general
-  [`asmSem_addr (Addr r offset) s = asmSem_read_reg r s + offset`];;
+let addr_def = cake_define
+  `asmSem_addr (Addr r offset) s = asmSem_read_reg r s + offset`;;
 hol4_overload "addr" "asmSem_addr";;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let read_mem_word_def,read_mem_word_ind = define_wf
-  `MEASURE (\(x0,x1,x2). (\n. n) x1)`
+let read_mem_word_def = cake_define_list
   [`read_mem_word a 0 s = (((n2w 0):'a word),s)`;
    `read_mem_word a (SUC n) s =
          (let (w,s1) = read_mem_word (if asm_state_be s then a -
@@ -247,7 +244,7 @@ let read_mem_word_def,read_mem_word_ind = define_wf
            (word_or (w << 8) (w2w (asmSem_read_mem a s1)),
               asmSem_assert (a IN asm_state_mem_domain s1) s1))`];;
 
-let mem_load_def = new_definition
+let mem_load_def = cake_define
   `asmSem_mem_load n r a s =
      (let a = asmSem_addr a s in
      let (w,s) = read_mem_word (if asm_state_be s then a + n2w (n -
@@ -256,10 +253,7 @@ let mem_load_def = new_definition
        asmSem_assert (alignment_aligned (LOG2 n) a) s)`;;
 hol4_overload "mem_load" "asmSem_mem_load";;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let write_mem_word_def,write_mem_word_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). (\n. n) x1)`
+let write_mem_word_def = cake_define_list
   [`write_mem_word a 0 w s = s`;
    `write_mem_word a (SUC n) w s =
          (let s1 = write_mem_word (if asm_state_be s then a - (n2w
@@ -267,7 +261,7 @@ let write_mem_word_def,write_mem_word_ind = define_wf
            asmSem_assert (a IN asm_state_mem_domain s1)
              (asmSem_upd_mem a (w2w w) s1))`];;
 
-let mem_store_def = new_definition
+let mem_store_def = cake_define
   `asmSem_mem_store n r a s =
      (let a = asmSem_addr a s in
      let w = asmSem_read_reg r s in
@@ -276,7 +270,7 @@ let mem_store_def = new_definition
        asmSem_assert (alignment_aligned (LOG2 n) a) s)`;;
 hol4_overload "mem_store" "asmSem_mem_store";;
 
-let mem_op_def = define_general
+let mem_op_def = cake_define_list
   [`asmSem_mem_op (asm_Load:memop) r (a:'a asm_addr) =
   asmSem_mem_load (dimindex (:'a) DIV 8) r a`;
    `asmSem_mem_op (asm_Store:memop) r (a:'a asm_addr) =
@@ -294,7 +288,7 @@ let mem_op_def = define_general
   asmSem_mem_store 4 r a`];;
 hol4_overload "mem_op" "asmSem_mem_op";;
 
-let inst_def = define_cases
+let inst_def = cake_define_list
   [`asmSem_inst asm_Skip s = s`;
    `asmSem_inst (asm_Const r imm) s = asmSem_upd_reg r imm s`;
    `asmSem_inst (asm_Arith x) s = asmSem_arith_upd x s`;
@@ -302,10 +296,10 @@ let inst_def = define_cases
    `asmSem_inst (asm_FP fp) s = asmSem_fp_upd fp s`];;
 hol4_overload "inst" "asmSem_inst";;
 
-let jump_to_offset_def = new_definition
+let jump_to_offset_def = cake_define
   `jump_to_offset w s = asmSem_upd_pc (asm_state_pc s + w) s`;;
 
-let asm_def = define_cases
+let asm_def = cake_define_list
   [`asmSem_asm (asm_Inst i) pc' s = asmSem_upd_pc pc' (asmSem_inst i
   s)`;
    `asmSem_asm (asm_Jump l) pc' s = jump_to_offset l s`;
@@ -323,7 +317,7 @@ let asm_def = define_cases
   (asmSem_upd_reg r (asm_state_pc s + l) s)`];;
 hol4_overload "asm" "asmSem_asm";;
 
-let asm_step_def = new_definition
+let asm_step_def = cake_define
   `asm_step c s1 i s2 <=>
      bytes_in_memory (asm_state_pc s1) (asm_config_encode c i)
        (asm_state_mem s1) (asm_state_mem_domain s1) /\

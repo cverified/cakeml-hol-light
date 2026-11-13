@@ -37,7 +37,7 @@ hol4_overload "compile" "clos_annotate_compile";;
 
 (* alternative definition of free_vars (fv) function *)
 
-let alt_fv_def = new_definition
+let alt_fv_def = cake_define
   `alt_fv n xs = has_var n (SND (alt_free xs))`;;
 
 let alt_free_thm = prove
@@ -88,7 +88,7 @@ let alt_fv_nil = prove
  (`alt_fv v [] <=> F`,
   CHEAT_TAC);;
 
-let alt_fv1_def = new_definition
+let alt_fv1_def = cake_define
   `alt_fv1 v e = alt_fv v [e]`;;
 
 (* HOL4 clos_annotateProofScript.sml:81-82: a theorem that HOL4
@@ -198,7 +198,7 @@ let env_ok_EXTEND_IGNORE = prove
     env_ok m (l + l1) i (env1 ++ env1') (env2 ++ env2') n`,
   CHEAT_TAC);;
 
-let clos_annotateProof_state_rel_def = new_definition
+let clos_annotateProof_state_rel_def = cake_define
   `clos_annotateProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (closSem_state_clock s = closSem_state_clock t) /\

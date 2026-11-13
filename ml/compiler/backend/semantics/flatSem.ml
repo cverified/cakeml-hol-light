@@ -95,40 +95,40 @@ hol4_overload "state_globals_fupd" "flatSem_state_globals_fupd";;
 (* HOL4 flatSemScript.sml:66: the ML values that the definitions
    below antiquote *)
 
-let list_id_def = new_definition
+let list_id_def = cake_define
   `list_id = 1`;;
 
-let flatSem_Boolv_def = new_definition
+let flatSem_Boolv_def = cake_define
   `flatSem_Boolv b = Conv (SOME ((if b then true_tag else
   false_tag),SOME bool_id)) []`;;
 hol4_overload "Boolv" "flatSem_Boolv";;
 
-let unitv_def = new_definition
+let unitv_def = cake_define
   `Unitv = Conv NONE []`;;
 
-let flatSem_bind_exn_v_def = new_definition
+let flatSem_bind_exn_v_def = cake_define
   `flatSem_bind_exn_v = Conv (SOME (bind_tag,NONE)) []`;;
 hol4_overload "bind_exn_v" "flatSem_bind_exn_v";;
 
-let flatSem_chr_exn_v_def = new_definition
+let flatSem_chr_exn_v_def = cake_define
   `flatSem_chr_exn_v = Conv (SOME (chr_tag,NONE)) []`;;
 hol4_overload "chr_exn_v" "flatSem_chr_exn_v";;
 
-let flatSem_div_exn_v_def = new_definition
+let flatSem_div_exn_v_def = cake_define
   `flatSem_div_exn_v = Conv (SOME (div_tag,NONE)) []`;;
 hol4_overload "div_exn_v" "flatSem_div_exn_v";;
 
-let subscript_exn_v_def = new_definition
+let subscript_exn_v_def = cake_define
   `subscript_exn_v = Conv (SOME (subscript_tag,NONE)) []`;;
 
-let flatSem_build_rec_env_def = new_definition
+let flatSem_build_rec_env_def = cake_define
   `flatSem_build_rec_env funs cl_env add_to_env =
      ITLIST (\(f,x,e) env'. (f,Recclosure cl_env funs f) :: env')
        funs
        add_to_env`;;
 hol4_overload "build_rec_env" "flatSem_build_rec_env";;
 
-let flatSem_ctor_same_type_def = new_definition
+let flatSem_ctor_same_type_def = cake_define
   `flatSem_ctor_same_type x1 x2 =
         match (x1,x2) with
           (SOME (_1,t),SOME (_2,t')) -> t = t'
@@ -136,13 +136,15 @@ let flatSem_ctor_same_type_def = new_definition
         | (_3,_4) -> F`;;
 hol4_overload "ctor_same_type" "flatSem_ctor_same_type";;
 
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let flatSem_do_eq_def = define_mutual_guess
+let flatSem_do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`flatSem_do_eq (Litv l1:flatSem_v) (Litv l2:flatSem_v) =
        (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
          Eq_type_error)`;
@@ -181,7 +183,7 @@ hol4_overload "do_eq" "flatSem_do_eq";;
 hol4_overload "do_eq_list" "flatSem_do_eq_list";;
 
 (* Do an application *)
-let flatSem_do_opapp_def = new_definition
+let flatSem_do_opapp_def = cake_define
   `flatSem_do_opapp vs =
    (match vs with [Closure env n e; v] ->
        SOME (flatSem_environment_v_fupd (\env. (n,v) :: env) env,e) |
@@ -194,72 +196,60 @@ let flatSem_do_opapp_def = new_definition
                 else NONE) | _57 -> NONE)`;;
 hol4_overload "do_opapp" "flatSem_do_opapp";;
 
-let _ = size_thms "flatSem_v";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let flatSem_v_to_list_def,flatSem_v_to_list_ind = define_wf
-  `MEASURE (\x0. flatSem_v_size x0)`
-  [`flatSem_v_to_list x1 =
+let flatSem_v_to_list_def = cake_define
+  `flatSem_v_to_list x1 =
         match x1 with
           (Conv (SOME (cid,tid)) []:flatSem_v) ->
       (if cid = nil_tag /\ tid = SOME list_id then
         SOME [] else NONE)
         | (Conv (SOME (cid,tid)) [v1; v2]) ->
       (if cid = cons_tag /\ tid = SOME list_id then
-        (match flatSem_v_to_list v2 with SOME vs -> SOME (v1 :: vs)
-          | NONE -> NONE) else NONE)
-        | _58 -> NONE`];;
+        (match flatSem_v_to_list v2 with SOME vs -> SOME (v1 :: vs) |
+          NONE -> NONE) else NONE)
+        | _58 -> NONE`;;
 hol4_overload "v_to_list" "flatSem_v_to_list";;
 
-let flatSem_list_to_v_def,flatSem_list_to_v_ind = define_rec
+let flatSem_list_to_v_def = cake_define_list
   [`flatSem_list_to_v [] = Conv (SOME (nil_tag,SOME list_id)) []`;
    `flatSem_list_to_v (x :: xs) =
         Conv (SOME (cons_tag,SOME list_id)) [x;
           flatSem_list_to_v xs]`];;
 hol4_overload "list_to_v" "flatSem_list_to_v";;
 
-let _ = size_thms "flatSem_v";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let flatSem_v_to_char_list_def,flatSem_v_to_char_list_ind = define_wf
-  `MEASURE (\x0. flatSem_v_size x0)`
-  [`flatSem_v_to_char_list x1 =
+let flatSem_v_to_char_list_def = cake_define
+  `flatSem_v_to_char_list x1 =
         match x1 with
           (Conv (SOME (cid,tid)) []:flatSem_v) ->
      (if cid = nil_tag /\ tid = SOME list_id then
        SOME [] else NONE)
         | (Conv (SOME (cid,tid)) [Litv (ast_Char c); v]) ->
      (if cid = cons_tag /\ tid = SOME list_id then
-       (match flatSem_v_to_char_list v with SOME cs -> SOME (c ::
-         cs) | NONE -> NONE) else NONE)
-        | _59 -> NONE`];;
+       (match flatSem_v_to_char_list v with SOME cs -> SOME (c :: cs)
+         | NONE -> NONE) else NONE)
+        | _59 -> NONE`;;
 hol4_overload "v_to_char_list" "flatSem_v_to_char_list";;
 
-let _ = size_thms "flatSem_v";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let flatSem_vs_to_string_def,flatSem_vs_to_string_ind = define_wf
-  `MEASURE (\x0. flatSem_v_size2 x0)`
-  [`flatSem_vs_to_string x1 =
+let flatSem_vs_to_string_def = cake_define
+  `flatSem_vs_to_string x1 =
         match x1 with
           [] -> SOME (implode "")
         | ((Litv (ast_StrLit s1):flatSem_v) :: vs) ->
       (match flatSem_vs_to_string vs with SOME s2 -> SOME ((\x y.
         strcat x y) s1 s2) | _60 -> NONE)
-        | _61 -> NONE`];;
+        | _61 -> NONE`;;
 hol4_overload "vs_to_string" "flatSem_vs_to_string";;
 
-let flatSem_v_to_bytes_def = new_definition
+let flatSem_v_to_bytes_def = cake_define
   `flatSem_v_to_bytes lv = some (\ns. v_to_list lv = SOME (MAP (Litv
   o ast_Word8) ns))`;;
 hol4_overload "v_to_bytes" "flatSem_v_to_bytes";;
 
-let flatSem_v_to_words_def = new_definition
+let flatSem_v_to_words_def = cake_define
   `flatSem_v_to_words lv = some (\ns. v_to_list lv = SOME (MAP (Litv
   o ast_Word64) ns))`;;
 hol4_overload "v_to_words" "flatSem_v_to_words";;
 
-let flatSem_check_type_def = new_definition
+let flatSem_check_type_def = cake_define
   `flatSem_check_type x1 v =
       match x1 with
         ast_BoolT -> (v = Boolv T \/ v = Boolv F)
@@ -271,18 +261,18 @@ let flatSem_check_type_def = new_definition
       | ast_Float64T -> (?w. v = Litv (ast_Float64 w))`;;
 hol4_overload "check_type" "flatSem_check_type";;
 
-let flatSem_dest_Litv_def = new_definition
+let flatSem_dest_Litv_def = cake_define
   `flatSem_dest_Litv x1 =
       match x1 with
         (Litv v:flatSem_v) -> SOME v
       | _62 -> NONE`;;
 hol4_overload "dest_Litv" "flatSem_dest_Litv";;
 
-let flatSem_the_Litv_Float64_def = define_general
-  [`flatSem_the_Litv_Float64 (Litv (ast_Float64 w):flatSem_v) = w`];;
+let flatSem_the_Litv_Float64_def = cake_define
+  `flatSem_the_Litv_Float64 (Litv (ast_Float64 w):flatSem_v) = w`;;
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
-let flatSem_do_test_def = define_cases
+let flatSem_do_test_def = cake_define_list
   [`flatSem_do_test (Equal:test) ty v1 v2 =
       (if check_type ty v1 /\ check_type ty v2 then
          (if ty = ast_Float64T then Eq_val (fp64_equal
@@ -305,7 +295,7 @@ let flatSem_do_test_def = define_cases
         cmp s t) | _66 -> Eq_type_error)`];;
 hol4_overload "do_test" "flatSem_do_test";;
 
-let v_to_flat_def = new_definition
+let v_to_flat_def = cake_define
   `v_to_flat x1 =
       match x1 with
         semanticPrimitives_Litv v -> flatSem_Litv v
@@ -314,7 +304,7 @@ let v_to_flat_def = new_definition
       if Conv x y = Boolv F then Boolv F else Vectorv [])
       | _67 -> Vectorv []`;;
 
-let flat_to_v_def = new_definition
+let flat_to_v_def = cake_define
   `flat_to_v x1 =
       match x1 with
         flatSem_Litv v -> semanticPrimitives_Litv v
@@ -331,7 +321,7 @@ hol4_overload "BadRef" "flatSem_BadRef";;
 hol4_overload "NotThunk" "flatSem_NotThunk";;
 hol4_overload "IsThunk" "flatSem_IsThunk";;
 
-let flatSem_dest_thunk_def = new_definition
+let flatSem_dest_thunk_def = cake_define
   `flatSem_dest_thunk vs st =
       match vs with
         [(Loc b n:flatSem_v)] ->
@@ -344,7 +334,7 @@ let flatSem_dest_thunk_def = new_definition
       | vs -> NotThunk`;;
 hol4_overload "dest_thunk" "flatSem_dest_thunk";;
 
-let flatSem_update_thunk_def = new_definition
+let flatSem_update_thunk_def = cake_define
   `flatSem_update_thunk x1 st x3 =
       match (x1,x3) with
         ([(Loc F n:flatSem_v)],[v]) ->
@@ -353,12 +343,12 @@ let flatSem_update_thunk_def = new_definition
       | (_71,_72) -> NONE`;;
 hol4_overload "update_thunk" "flatSem_update_thunk";;
 
-let flatSem_bad_thunk_update_def = new_definition
+let flatSem_bad_thunk_update_def = cake_define
   `flatSem_bad_thunk_update m v refs <=>
      m = Evaluated /\ ~(dest_thunk [v] refs = NotThunk)`;;
 hol4_overload "bad_thunk_update" "flatSem_bad_thunk_update";;
 
-let flatSem_do_app_def = new_definition
+let flatSem_do_app_def = cake_define
   `flatSem_do_app s op (vs:flatSem_v list) =
    (match (op,vs) with (flatLang_Src (ast_Shift wz sh n),[Litv w]) ->
        (match do_shift sh n wz w with NONE -> NONE | SOME w -> SOME
@@ -645,7 +635,7 @@ let flatSem_do_app_def = new_definition
      SOME (s,Rval v1) | _120 -> NONE)`;;
 hol4_overload "do_app" "flatSem_do_app";;
 
-let flatSem_do_if_def = new_definition
+let flatSem_do_if_def = cake_define
   `(flatSem_do_if v e1 e2 =
     (if v = Boolv T then
       SOME e1 else if v = Boolv F then
@@ -673,9 +663,16 @@ let pmatch_stamps_ok = cake_inductive
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
 let _ = size_thms "flatLang_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 flatSemScript.sml:704-708: the tactic that proves the
    termination *)
-let flatSem_pmatch_def = define_mutual_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flatSem_pmatch_def = cake_define_list_try_tac (fun () ->
+  `inv_image (<) (\x. match x with INL (x,p,y,z) -> flatLang_pat_size p
+     | INR (x,ps,y,z) -> list_size flatLang_pat_size ps)`)
+  CHEAT_TAC
   [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
         (Match ((x,v') :: bindings))`;
    `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
@@ -713,7 +710,7 @@ let flatSem_pmatch_def = define_mutual_guess
 hol4_overload "pmatch" "flatSem_pmatch";;
 hol4_overload "pmatch_list" "flatSem_pmatch_list";;
 
-let pmatch_rows_def,pmatch_rows_ind = define_rec
+let pmatch_rows_def = cake_define_list
   [`pmatch_rows [] s v = No_match`;
    `pmatch_rows ((p,e) :: pes) s v =
       (match pmatch s p v [] with Match_type_error ->
@@ -722,11 +719,11 @@ let pmatch_rows_def,pmatch_rows_ind = define_rec
          (match pmatch_rows pes s v with Match_type_error ->
            Match_type_error | _133 -> Match (env,p,e)))`];;
 
-let flatSem_dec_clock_def = new_definition
+let flatSem_dec_clock_def = cake_define
   `flatSem_dec_clock s = state_clock_fupd (K (state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "flatSem_dec_clock";;
 
-let flatSem_fix_clock_def = new_definition
+let flatSem_fix_clock_def = cake_define
   `flatSem_fix_clock s (s1,res) = (state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1,res)`;;
 hol4_overload "fix_clock" "flatSem_fix_clock";;
@@ -737,7 +734,7 @@ let flatSem_fix_clock_IMP = prove
   CHEAT_TAC);;
 
 
-let flatSem_do_eval_def = new_definition
+let flatSem_do_eval_def = cake_define
   `flatSem_do_eval (vs:flatSem_v list) eval_config =
    (match vs with [v1; v2] ->
        (match (flatSem_v_to_bytes v1,flatSem_v_to_words v2) with
@@ -755,7 +752,7 @@ let flatSem_do_eval_def = new_definition
                  NONE)) | _135 -> NONE) | _136 -> NONE)`;;
 hol4_overload "do_eval" "flatSem_do_eval";;
 
-let flatSem_AppUnit_def = new_definition
+let flatSem_AppUnit_def = cake_define
   `flatSem_AppUnit x = flatLang_App backend_common_None (flatLang_Src
   ast_Opapp) [x; Con backend_common_None NONE []]`;;
 hol4_overload "AppUnit" "flatSem_AppUnit";;
@@ -765,7 +762,7 @@ let _ = size_thms "flatLang_pat";;
 let _ = size_thms "lit";;
 let _ = size_thms "mlstring";;
 let _ = size_thms "tra";;
-let flatSem_exp_alt_size_def = define_mutual_rec
+let flatSem_exp_alt_size_def = cake_define_list
   [`flatSem_exp_alt_size (Raise a0 a1:flatLang_exp) = 1 + (tra_size
   a0 + flatSem_exp_alt_size a1)`;
    `flatSem_exp_alt_size (Handle a0 a1 a2:flatLang_exp) =
@@ -831,7 +828,7 @@ let pmatch_rows_Match_exp_alt_size = prove
      flatSem_exp_alt_size e < flatSem_exp3_alt_size pes`,
   CHEAT_TAC);;
 
-let dec_alt_size_def = new_definition
+let dec_alt_size_def = cake_define
   `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
 
 let flatSem_fix_clock_IMP =
@@ -851,9 +848,23 @@ let flatSem_fix_clock_IMP =
 if concl flatSem_fix_clock_IMP <> `T` then
   cake_term_facts := flatSem_fix_clock_IMP :: (!cake_term_facts);;
 
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 flatSemScript.sml:932-945: the tactic that proves the
    termination *)
-let flatSem_evaluate_def = define_mutual_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flatSem_evaluate_def = cake_define_list_try_tac (fun () ->
+  `inv_image ((<) LEX (<))
+          (\x. match x with INL (env,s,exps) -> (state_clock s,SUM
+            (MAP
+            flatSem_exp_alt_size exps) + LENGTH exps) | (INR (INL
+              (s,d)))
+            -> (state_clock s,dec_alt_size d + 1) | (INR (INR
+              (s,ds))) ->
+            (state_clock s,SUM (MAP dec_alt_size ds) + LENGTH ds +
+              1))`)
+  CHEAT_TAC
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)
   (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;
@@ -1012,12 +1023,12 @@ let flatSem_fix_clock_evaluate = prove
 (* HOL4 flatSemScript.sml:989-990: a theorem that HOL4 states as the
    value of an ML expression: evaluate_ind *)
 
-let flatSem_initial_state_def = new_definition
+let flatSem_initial_state_def = cake_define
   `flatSem_initial_state ffi k ec =
      (mk_flatSem_state k [] ffi [] ec:('c,'ffi)flatSem_state)`;;
 hol4_overload "initial_state" "flatSem_initial_state";;
 
-let flatSem_semantics_def = new_definition
+let flatSem_semantics_def = cake_define
   `flatSem_semantics (ec:'c install_config) (ffi:'ffi ffi_state) prog =
      (if ?k.
             SND (evaluate_decs (flatSem_initial_state ffi k ec) prog)

@@ -26,7 +26,7 @@ let _ = hol4_ancestors "data_live"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let is_pure_def = new_definition
+let is_pure_def = cake_define
   `data_live_is_pure x1 =
         match x1 with
           (FFI _2:closLang_op) -> F
@@ -104,8 +104,7 @@ let is_pure_pmatch = prove
        ConfigGC -> F | ThunkOp _36 -> F | _37 -> T)`,
   CHEAT_TAC);;
 
-let compile_def,compile_ind = define_shaped_rec
-  "cases"
+let compile_def = cake_define_list
   [`data_live_compile (dataLang_Skip:dataLang_prog) live =
   ((dataLang_Skip:dataLang_prog),live)`;
    `data_live_compile (dataLang_Return ns:dataLang_prog) live =

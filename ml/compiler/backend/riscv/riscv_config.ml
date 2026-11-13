@@ -22,7 +22,7 @@ let _ = hol4_ancestors "riscv_config"
   ["asmProps"; "asmSem"; "backend"];;
 (* HOL4 ancestors outside the port: riscv_target *)
 
-let riscv_names_def = new_definition
+let riscv_names_def = cake_define
   `riscv_names =
    ((
     // arguments: 10-17
@@ -62,7 +62,7 @@ let riscv_names_def = new_definition
 (* HOL4 riscv_configScript.sml:48-54: the ML values that the
    definitions below antiquote *)
 
-let riscv_backend_config_def = new_definition
+let riscv_backend_config_def = cake_define
   `riscv_backend_config =
               mk_backend_config prim_src_config
                 (clos_to_bvl_default_config)

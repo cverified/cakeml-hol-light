@@ -66,10 +66,10 @@ hol4_overload "LabAsm" "labLang_LabAsm";;
 let sec_INDUCT,sec_RECURSION = define_datatype
   "sec = Section (num) (('a line) list)";;
 
-let section_num_def = define_general
-  [`Section_num (Section k _1) = k`];;
-let section_lines_def = define_general
-  [`Section_lines (Section _2 lines) = lines`];;
+let section_num_def = cake_define
+  `Section_num (Section k _1) = k`;;
+let section_lines_def = cake_define
+  `Section_lines (Section _2 lines) = lines`;;
 
 (* A full assembly program consists of a list of sections. *)
 

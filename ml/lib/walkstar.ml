@@ -37,7 +37,7 @@ let oc_RULES,oc_INDUCT,oc_CASES =
    (!s t v u t'. u IN vars t /\ vwalk s u = t' /\ oc s t' v
       ==> oc s t v)`;;
 
-let walkstarR_def = new_definition
+let walkstarR_def = cake_define
   `walkstarR s =
     inv_image ((LEX) (TC (mlt1 (TC (vR s)))) (MEASURE pair_count))
       (\t. (varb t,t))`;;

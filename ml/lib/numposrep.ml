@@ -14,16 +14,13 @@ let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: list rich_list logroot arithmetic
    bit *)
 
-let l2n_def,l2n_ind = define_rec
+let l2n_def = cake_define_list
   [`l2n b [] = 0`;
    `l2n b (h :: t) = h MOD b + b * l2n b t`];;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let n2l_def,n2l_ind = define_wf
-  `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`n2l b n = (if n < b \/ b < 2 then [n MOD b] else n MOD b :: n2l
-  b (n DIV b))`];;
+let n2l_def = cake_define
+  `n2l b n = (if n < b \/ b < 2 then [n MOD b] else n MOD b :: n2l b
+  (n DIV b))`;;
 
-let num_from_bin_list_def = new_definition
+let num_from_bin_list_def = cake_define
   `num_from_bin_list = l2n 2 o REVERSE`;;

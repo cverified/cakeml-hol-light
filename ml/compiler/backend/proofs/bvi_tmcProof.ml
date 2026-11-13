@@ -68,7 +68,7 @@ let ref_rel = cake_inductive
        y))`;;
 hol4_overload "ref_rel" "bvi_tmcProof_ref_rel";;
 
-let bvi_tmcProof_env_rel_def = new_definition
+let bvi_tmcProof_env_rel_def = cake_define
   `bvi_tmcProof_env_rel opt f env1 env2 <=>
    (?xs ys.
      env2 = xs ++ ys /\
@@ -81,15 +81,15 @@ let bvi_tmcProof_env_rel_def = new_definition
          small_enough_int hole_idx)))`;;
 hol4_overload "env_rel" "bvi_tmcProof_env_rel";;
 
-let no_mutcons_op_def = new_definition
+let no_mutcons_op_def = cake_define
   `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp
   (closLang_MutCons tag i)))`;;
 
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let no_mutcons_def,no_mutcons_ind = define_wf
-  `MEASURE bvi_exp_size`
+let no_mutcons_def = cake_define_list_try (fun () ->
+  `MEASURE bvi_exp_size`)
   [`no_mutcons (Var n:bvi_exp) <=> T`;
    `no_mutcons (If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\ no_mutcons
   x2 /\ no_mutcons x3`;
@@ -107,7 +107,7 @@ let no_mutcons_def,no_mutcons_ind = define_wf
    `no_mutcons (Op op xs:bvi_exp) <=> no_mutcons_op op /\ EVERY
   no_mutcons xs`];;
 
-let bvi_tmcProof_code_rel_def = new_definition
+let bvi_tmcProof_code_rel_def = cake_define
   `bvi_tmcProof_code_rel c1 c2 <=>
      (!loc arity exp.
        sptree_lookup loc c1 = SOME (arity,exp) ==>
@@ -127,12 +127,12 @@ let bvi_tmcProof_code_rel_domain = prove
      bvi_tmcProof_code_rel c1 c2 ==> domain c1 SUBSET domain c2`,
   CHEAT_TAC);;
 
-let bvi_tmcProof_free_names_def = new_definition
+let bvi_tmcProof_free_names_def = cake_define
   `bvi_tmcProof_free_names n (name:num) <=> (!k. ~(n +
   bvl_to_bvi_namespaces * k = name))`;;
 hol4_overload "free_names" "bvi_tmcProof_free_names";;
 
-let bvi_tmcProof_namespace_rel_def = new_definition
+let bvi_tmcProof_namespace_rel_def = cake_define
   `bvi_tmcProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
      (!n. n IN domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
        bvl_to_bvi_namespaces = 3) n then ~(n IN domain c1) else n IN
@@ -143,7 +143,7 @@ let bvi_tmcProof_namespace_rel_def = new_definition
 hol4_overload "namespace_rel" "bvi_tmcProof_namespace_rel";;
 
 (* This should say: expression in prog satisfies no-mutblock property *)
-let bvi_tmcProof_input_condition_def = new_definition
+let bvi_tmcProof_input_condition_def = cake_define
   `bvi_tmcProof_input_condition next' prog <=>
      EVERY (bvi_tmcProof_free_names next' o FST) prog /\
      EVERY (no_mutcons o SND o SND) prog /\
@@ -154,7 +154,7 @@ let bvi_tmcProof_input_condition_def = new_definition
        3) next'`;;
 hol4_overload "input_condition" "bvi_tmcProof_input_condition";;
 
-let state_ref_rel_def = new_definition
+let state_ref_rel_def = cake_define
   `state_ref_rel f (s_refs:(num,bvlSem_v bvlSem_ref)fmap)
   (t_refs:(num,bvlSem_v bvlSem_ref)fmap) <=>
      FDOM f = FDOM s_refs /\
@@ -164,7 +164,7 @@ let state_ref_rel_def = new_definition
               bvi_tmcProof_ref_rel f v w /\
               FLOOKUP t_refs j = SOME w))`;;
 
-let fmap_inj_def = new_definition
+let fmap_inj_def = cake_define
   `fmap_inj (f:(num,num)fmap) <=>
      (!p1 p2 q. FLOOKUP f p1 = SOME q /\ FLOOKUP f p2 = SOME q ==>
        p1 = p2)`;;
@@ -180,7 +180,7 @@ let fmap_inj_update = prove
      fmap_inj (f |+ (k,v))`,
   CHEAT_TAC);;
 
-let bvi_tmcProof_state_rel_def = new_definition
+let bvi_tmcProof_state_rel_def = cake_define
   `bvi_tmcProof_state_rel f s (t:('a,'ffi)bviSem_state) <=>
      state_ref_rel f (state_refs s) (bviSem_state_refs t) /\
        bviSem_state_clock
@@ -402,7 +402,7 @@ let bvi_tmcProof_compile_each_code_rel = prove
      bvi_tmcProof_code_rel (fromAList prog) (fromAList prog2)`),
   CHEAT_TAC);;
 
-let eor_rel_def = new_definition
+let eor_rel_def = cake_define
   `eor_rel f x2 x3 =
         match (x2,x3) with
           (Exn v1,Exn v2) -> bvi_tmcProof_v_rel f v1 v2
@@ -410,7 +410,7 @@ let eor_rel_def = new_definition
           vs1 vs2
         | (_1,_2) -> F`;;
 
-let opt_res_rel_def = new_definition
+let opt_res_rel_def = cake_define
   `opt_res_rel f (r1:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result) (r2:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result) =
@@ -524,7 +524,7 @@ let state_rel_filled = prove
        |+ (k,v))) s')`,
   CHEAT_TAC);;
 
-let hole_has_val_def = new_definition
+let hole_has_val_def = cake_define
   `hole_has_val (f:(num,num)fmap) (env1:bvlSem_v list) (env2:bvlSem_v
   list) (refs:(num,bvlSem_v bvlSem_ref)fmap) c <=>
    LENGTH env2 = LENGTH env1 + 2 /\
@@ -535,7 +535,7 @@ let hole_has_val_def = new_definition
      FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag finalised
        left c right))`;;
 
-let holes_unchanged_except_def = new_definition
+let holes_unchanged_except_def = cake_define
   `holes_unchanged_except f refs refs' changed <=>
      (!ptr tag finalised left child right. ~(ptr IN FRANGE f) /\
         FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag finalised left
@@ -545,13 +545,13 @@ let holes_unchanged_except_def = new_definition
             left child' right) /\
           (~(ptr IN changed) ==> child = child')))`;;
 
-let hole_not_finalised_def = new_definition
+let hole_not_finalised_def = cake_define
   `hole_not_finalised refs ptr <=>
      (?tag left child right.
        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left child
          right))`;;
 
-let holes_still_not_finalised_def = new_definition
+let holes_still_not_finalised_def = cake_define
   `holes_still_not_finalised f (refs:('b,'c bvlSem_ref)fmap)
   (refs':('b,'c bvlSem_ref)fmap) <=>
      (!ptr. ~(ptr IN FRANGE f) /\
@@ -577,7 +577,7 @@ let holes_still_not_finalised_del = prove
      holes_still_not_finalised f refs refs'`,
   CHEAT_TAC);;
 
-let only_fresh_def = new_definition
+let only_fresh_def = cake_define
   `only_fresh (f:(num,num)fmap) (f':(num,num)fmap)
   (refs_old:(num,bvlSem_v bvlSem_ref)fmap) =
    (!n. n IN FRANGE f' /\ ~(n IN FRANGE f) ==> ~(n IN FDOM
@@ -736,15 +736,14 @@ let flookup_com_neq = prove
      m |+ (k1,v1) |+ (k2,v2) = m |+ (k2,v2) |+ (k1,v1)`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvi_tmcProofScript.sml:1095-1103: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let mb_rel_def,mb_rel_ind = define_wf_cheat
-  `MEASURE (CARD o FDOM o FST o SND o SND)`
-  [`mb_rel f x2 refs v1 v2 =
+let mb_rel_def = cake_define_try_tac (fun () ->
+  `MEASURE (CARD o FDOM o FST o SND o SND)`)
+  CHEAT_TAC
+  `mb_rel f x2 refs v1 v2 =
         match (x2,v1,v2) with
           ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(Block tag
             xs:bvlSem_v),(RefPtr b ptr:bvlSem_v)) ->
@@ -757,9 +756,9 @@ let mb_rel_def,mb_rel_ind = define_wf_cheat
                xs = left ++ [child] ++ right /\
                LIST_REL (bvi_tmcProof_v_rel f) left left' /\
                mb_rel f refs_old (refs \\ ptr) child child' /\
-               LIST_REL (bvi_tmcProof_v_rel f) right right')) | _4
-                 -> F)
-        | (_5,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`];;
+               LIST_REL (bvi_tmcProof_v_rel f) right right')) | _4 ->
+                 F)
+        | (_5,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`;;
 
 let mb_rel_cons = prove
  (`!refs_old refs ptr f tag left left' v v' right right'.
@@ -1135,7 +1134,7 @@ let wrapper_strip_tick = prove
        rewrite_wrapper loc loc_opt n x = SOME w')`,
   CHEAT_TAC);;
 
-let is_block_op_cons_def = new_definition
+let is_block_op_cons_def = cake_define
   `is_block_op_cons op <=>
      (?block_tag.
        op = closLang_BlockOp (closLang_Cons block_tag))`;;
@@ -1429,7 +1428,7 @@ let WF_I_I = prove
  (`WF (MEASURE I LEX MEASURE I)`,
   CHEAT_TAC);;
 
-let optimised_code_def = new_definition
+let optimised_code_def = cake_define
   `optimised_code loc loc_opt c1 c2 <=>
      (?arity body body_wrap body_work.
        sptree_lookup loc c1 = SOME (arity,body) /\
@@ -1505,7 +1504,7 @@ let evaluate_rewrite_tmc = prove
 
 (* HOL4 bvi_tmcProofScript.sml:3031-3106: a proof *)
 
-let hypothesis_def = new_definition
+let hypothesis_def = cake_define
   `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=>
   bviSem_state_clock
    s'' < clock ==>
@@ -1574,7 +1573,7 @@ let hypothesis_def = new_definition
                           hole_has_val f' env1' env2' (state_refs
                             t_work) res_v'))))))))`;;
 
-let alloc_hole_has_val_def = new_definition
+let alloc_hole_has_val_def = cake_define
   `alloc_hole_has_val f refs extras i_ptr c_idx c <=>
      (?hole_ptr tag left right.
        i_ptr < LENGTH extras /\ EL i_ptr
@@ -1866,7 +1865,7 @@ let find_code_rel = prove
   (* Error case *)
 (* HOL4 bvi_tmcProofScript.sml:5113-5445: a proof *)
 
-let dest_thunk_ret_rel_def = new_definition
+let dest_thunk_ret_rel_def = cake_define
   `dest_thunk_ret_rel f t1 t2 <=>
      ((t1 = BadRef /\ t2 = BadRef) \/
       (t1 = NotThunk /\ t2 = NotThunk) \/

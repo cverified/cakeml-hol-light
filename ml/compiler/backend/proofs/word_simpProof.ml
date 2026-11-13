@@ -105,11 +105,11 @@ let dest_Seq_Assign_Const_IMP = prove
 
 (* gc *)
 
-let is_gc_word_const_def = define_cases
+let is_gc_word_const_def = cake_define_list
   [`is_gc_word_const (wordLang_Loc _3 _4) = T`;
    `is_gc_word_const (wordLang_Word w) = is_gc_const w`];;
 
-let gc_fun_const_ok_def = new_definition
+let gc_fun_const_ok_def = cake_define
   `gc_fun_const_ok (f:('a word_loc) list#('a word->'a word_loc)#('a
   word->bool)#(store_name,'a word_loc)fmap->(('a word_loc) list#('a
   word->'a word_loc)#(store_name,'a word_loc)fmap) option) =
@@ -117,10 +117,10 @@ let gc_fun_const_ok_def = new_definition
        b = a) (FST x) (FST y))`;;
 
 
-let sf_gc_consts_def = define_general
-  [`sf_gc_consts (StackFrame _5 l0 sv h) (StackFrame _6 l0' sw h') =
+let sf_gc_consts_def = cake_define
+  `sf_gc_consts (StackFrame _5 l0 sv h) (StackFrame _6 l0' sw h') =
    (EVERY2 (\(ak,av) (bk,bv). (ak = bk) /\ (is_gc_word_const av
-     ==> bv = av)) sv sw /\ l0 = l0' /\ h = h')`];;
+     ==> bv = av)) sv sw /\ l0 = l0' /\ h = h')`;;
 
 (* HOL4 word_simpProofScript.sml:146-152: code that the source has in
    a comment *)
@@ -365,7 +365,7 @@ let evaluate_gc_fun_const_ok = prove
                 gc_fun_const_ok (wordSem_state_gc_fun s')`,
   CHEAT_TAC);;
 
-let get_above_handler_def = new_definition
+let get_above_handler_def = cake_define
   `get_above_handler s = (match EL (LENGTH (stack s) -
   (wordSem_state_handler s + 1)) (stack s) with StackFrame _7 _8 _9
   (SOME (h,_10,_11)) -> h)`;;

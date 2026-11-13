@@ -244,27 +244,21 @@ let fromList2_SNOC = prove
     word_ml_inv: definition and lemmas
    ------------------------------------------------------- *)
 
-let join_env_def = new_definition
+let join_env_def = cake_define
   `join_env env vs =
      MAP (\(n,v). (THE (sptree_lookup ((n - 2) DIV 2) env),v))
        (FILTER (\(n,v). ~(n = 0) /\ EVEN n) vs)`;;
 
-let _ = size_thms "dataSem_stack";;
-let _ = size_thms "stack_frame";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let flat_def,flat_ind = define_wf
-  `MEASURE (\(x0,x1).      list_size dataSem_stack_size x0 +
-  list_size (stack_frame_size (\x. 0)) x1)`
-  [`flat x1 x2 =
+let flat_def = cake_define
+  `flat x1 x2 =
         match (x1,x2) with
-          (((Env _2 env:dataSem_stack) :: xs),(StackFrame _3 _4 vs
-            _5 :: ys)) ->
+          (((Env _2 env:dataSem_stack) :: xs),(StackFrame _3 _4 vs _5
+            :: ys)) ->
         join_env env vs ++ flat xs ys
         | ((dataSem_Exc _6 env _7 :: xs),(StackFrame _8 _9 vs _10 ::
           ys)) ->
         join_env env vs ++ flat xs ys
-        | (_11,_12) -> []`];;
+        | (_11,_12) -> []`;;
 
 let flat_APPEND = prove
  (`!xs ys xs1 ys1.
@@ -547,7 +541,7 @@ let word_slice_2_3_eq_0 = prove
  (`(word_slice n 2) (n2w 3) = (n2w 0)`,
   CHEAT_TAC);;
 
-let can_select_def = new_definition
+let can_select_def = cake_define
   `can_select k n w <=> ((word_bits (k - 1) n) (w << n) = w)`;;
 
 let read_length_lemma = prove
@@ -732,13 +726,13 @@ let is_ref_header_thm = prove
     (is_ref_header (h:'a word) <=> isMutTag tt0)`,
   CHEAT_TAC);;
 
-let is_Ref_def = new_definition
+let is_Ref_def = cake_define
   `is_Ref is_ref_tag x2 =
       match x2 with
         DataElement xs l r -> is_ref_tag r
       | _13 -> F`;;
 
-let len_inv_def = new_definition
+let len_inv_def = cake_define
   `len_inv s <=>
      heap_length (gc_state_heap s) =
      heap_length (gc_state_h1 s ++ gc_state_h2 s) + gc_state_n s +
@@ -879,7 +873,7 @@ let word_gen_gc_move_roots_thm = prove
 (* HOL4 data_to_word_gcProofScript.sml:1571-1631: a theorem that HOL4
    states as the value of an ML expression: word_gen_gc_move_list_thm *)
 
-let word_heap_parts_def = new_definition
+let word_heap_parts_def = cake_define
   `word_heap_parts conf p s xs =
      word_heap p (gc_state_h1 s ++ gc_state_h2 s) conf *
      misc_word_list (p + bytes_in_word * n2w (heap_length
@@ -988,7 +982,7 @@ let word_heap_IMP_limit = prove
     heap_length hs <= dimword (:'a) DIV (dimindex (:'a) DIV 8)`,
   CHEAT_TAC);;
 
-let muttag_header_def = new_definition
+let muttag_header_def = cake_define
   `muttag_header x1 =
       match x1 with
         ThunkTag e -> (thunk_tag_to_bits e << 3 || (n2w 6))
@@ -1546,7 +1540,7 @@ let gc_partial_move_list_heap_lengths = prove
        (gc_state_h2 s1)`,
   CHEAT_TAC);;
 
-let partial_len_inv_def = new_definition
+let partial_len_inv_def = cake_define
   `partial_len_inv s <=>
      heap_length (gc_state_heap s) =
      heap_length (gc_state_h1 s ++ gc_state_h2 s) + gc_state_n s +
@@ -1706,7 +1700,7 @@ let EVERY_is_Ref_isRef = prove
   data_to_word_memoryProof_isRef refs`,
   CHEAT_TAC);;
 
-let ends_with_refs_def = new_definition
+let ends_with_refs_def = cake_define
   `ends_with_refs rs heap =
      (?h1 h2. heap_split rs heap = SOME (h1,h2) /\ EVERY
        data_to_word_memoryProof_isRef h2)`;;
@@ -1829,7 +1823,7 @@ let glob_real_inv = prove
 (* HOL4 data_to_word_gcProofScript.sml:3819-3873: a theorem that HOL4
    states as the value of an ML expression: word_gc_fun_lemma_Simple *)
 
-let do_partial_def = new_definition
+let do_partial_def = cake_define
   `do_partial c s =
      (match data_to_word_config_gc_kind c with
        data_to_word_Generational l -> word_gen_gc_can_do_partial l s
@@ -1900,7 +1894,7 @@ let new_trig_LESS_EQ = prove
        bytes_in_word * n2w k /\ k <= n)`,
   CHEAT_TAC);;
 
-let alloc_size_def = new_definition
+let alloc_size_def = cake_define
   `alloc_size k = ((if k * (dimindex (:'a) DIV 8) < dimword (:'a) then
                      n2w (k * (dimindex (:'a) DIV 8)) else (--(n2w
                        1))):'a word)`;;
@@ -1969,7 +1963,7 @@ let word_gc_fun_correct = prove
     definition of state relation
    ------------------------------------------------------- *)
 
-let data_to_word_gcProof_code_rel_def = new_definition
+let data_to_word_gcProof_code_rel_def = cake_define
   `data_to_word_gcProof_code_rel c s_code (t_code:(num#'a wordLang_prog)
   spt) <=>
      domain t_code = domain s_code UNION set_of_list (MAP FST
@@ -1982,8 +1976,8 @@ let data_to_word_gcProof_code_rel_def = new_definition
          (data_to_word_comp c n 2 prog))))`;;
 hol4_overload "code_rel" "data_to_word_gcProof_code_rel";;
 
-let stack_rel_def,stack_rel_ind = define_guess
-  [`data_to_word_gcProof_stack_rel x1 x2 =
+let stack_rel_def = cake_define
+  `data_to_word_gcProof_stack_rel x1 x2 =
         match (x1,x2) with
           ((Env s1 env:dataSem_stack),StackFrame s2 ws vs NONE) ->
         EVERY (\(x1,x2). ~(x1 = 0) /\ EVEN x1) vs /\ s1 = s2 /\
@@ -1993,19 +1987,19 @@ let stack_rel_def,stack_rel_ind = define_guess
             IS_SOME (sptree_lookup (adjust_var n) (fromAList vs)))
         | ((dataSem_Exc s1 env n),(StackFrame s2 ws vs (SOME
           (x1,x2,x3)))) ->
-        data_to_word_gcProof_stack_rel (Env s1 env) (StackFrame s2
-          ws vs NONE) /\ (x1 = n)
-        | (_16,_17) -> F`];;
+        data_to_word_gcProof_stack_rel (Env s1 env) (StackFrame s2 ws
+          vs NONE) /\ (x1 = n)
+        | (_16,_17) -> F`;;
 hol4_overload "stack_rel" "data_to_word_gcProof_stack_rel";;
 
-let the_global_def = new_definition
+let the_global_def = cake_define
   `the_global g = the (Number (&0)) (OPTION_MAP (RefPtr T) g)`;;
 
-let contains_loc_def = define_general
-  [`contains_loc (StackFrame _18 vs _19 _20) (l1,l2) = (ALOOKUP vs 0
-  = SOME (Loc l1 l2))`];;
+let contains_loc_def = cake_define
+  `contains_loc (StackFrame _18 vs _19 _20) (l1,l2) = (ALOOKUP vs 0 =
+  SOME (Loc l1 l2))`;;
 
-let code_oracle_rel_def = new_definition
+let code_oracle_rel_def = cake_define
   `code_oracle_rel c (s_compile:'c->(num#num#dataLang_prog) list->(word8
   list#word64 list#'c) option)
        s_compile_oracle t_store (t_compile:'c->(num#num#'a
@@ -2038,7 +2032,7 @@ let code_oracle_rel_NextFree = prove
    code_oracle_rel c scc sco ts tcc tco cb db`,
   CHEAT_TAC);;
 
-let limits_inv_def = new_definition
+let limits_inv_def = cake_define
   `limits_inv (lims:limits) heaplength t_stack_limit c_len_size
   c_has_fp_ops c_has_fp_tern <=> limits_stack_limit
      lims = t_stack_limit /\ limits_length_limit
@@ -2054,7 +2048,7 @@ let limits_inv_def = new_definition
 (* HOL4 data_to_word_gcProofScript.sml:4501: the ML values that the
    definitions below antiquote *)
 
-let state_rel_thm = new_definition
+let state_rel_thm = cake_define
   `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
   (t:('a,'c,'ffi)wordSem_state) v1 locs <=>
      (wordSem_state_ffi
@@ -2137,7 +2131,7 @@ let flat_NIL = prove
  (`flat [] xs = []`,
   CHEAT_TAC);;
 
-let init_store_ok_def = new_definition
+let init_store_ok_def = cake_define
   `init_store_ok c store m (dm:'a word->bool) code_buffer' data_buffer'
   <=>
      (?limit' curr.
@@ -2264,8 +2258,8 @@ let get_var_isT_OR_isF = prove
      ((isBool F x) ==> (w = wordLang_Word (n2w 2)))`,
   CHEAT_TAC);;
 
-let mk_loc_def = define_general
-  [`mk_loc (SOME (t1,d1,d2)) = wordLang_Loc d1 d2`];;
+let mk_loc_def = cake_define
+  `mk_loc (SOME (t1,d1,d2)) = wordLang_Loc d1 d2`;;
 
 let cut_env_IMP_cut_env = prove
  (`state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE locs /\
@@ -2619,7 +2613,7 @@ let mk_loc_jump_exc = prove
                 (dec_clock t)))) = Loc x0 l`,
   CHEAT_TAC);;
 
-let data_to_word_gcProof_inc_clock_def = new_definition
+let data_to_word_gcProof_inc_clock_def = cake_define
   `data_to_word_gcProof_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock t + n)) t`;;
 hol4_overload "inc_clock" "data_to_word_gcProof_inc_clock";;
@@ -2846,7 +2840,7 @@ let word_gen_gc_partial_move_IMP_isWord = prove
    isWord w1`,
   CHEAT_TAC);;
 
-let loc_ok_def = new_definition
+let loc_ok_def = cake_define
   `loc_ok x1 =
       match x1 with
         wordLang_Loc m n -> (n = 0)
@@ -2897,12 +2891,7 @@ let word_gc_fun_IMP_FILTER = prove
      stack1,m1,s1)`,
   CHEAT_TAC);;
 
-let _ = size_thms "word_loc";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let loc_merge_def,loc_merge_ind = define_wf
-  `MEASURE (\(x0,x1).      list_size (word_loc_size (\x. 0)) x0 +
-  list_size (word_loc_size (\x. 0)) x1)`
+let loc_merge_def = cake_define_list
   [`loc_merge [] ys = []`;
    `loc_merge (wordLang_Loc l1 l2 :: xs) ys = (Loc l1 l2:'a word_loc)
   :: loc_merge xs ys`;
@@ -3345,7 +3334,7 @@ let state_rel_gc_gen = prove
   CHEAT_TAC);;
 
 
-let cut_locals_def = new_definition
+let cut_locals_def = cake_define
   `cut_locals names (s:('a,'b)dataSem_state) =
      (match dataSem_cut_env names (dataSem_state_locals s) with
        SOME env -> dataSem_state_locals_fupd (K env) s | NONE ->
@@ -3857,7 +3846,7 @@ let get_vars_termdep = prove
   (wordSem_state_termdep t - 1)) t) = get_vars xs t`,
   CHEAT_TAC);;
 
-let join_env_locals_def = new_definition
+let join_env_locals_def = cake_define
   `join_env_locals sl tl =
      join_env sl (toAList (inter tl (adjust_set sl)))`;;
 

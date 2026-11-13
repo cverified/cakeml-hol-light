@@ -118,7 +118,7 @@ let filter_bitmap_map_bitmap = prove
       z = [] /\ ys1 = xs1`,
   CHEAT_TAC);;
 
-let get_bits_def = new_definition
+let get_bits_def = cake_define
   `get_bits w = GENLIST (\i. FAPPLY w i) (bit_length w - 1)`;;
 
 let bit_length_thm = prove
@@ -352,7 +352,7 @@ let word_gc_fun_thm = prove
 
 (* HOL4 stack_allocProofScript.sml:519-524: ML code, not ported *)
 
-let word_gc_move_roots_bitmaps_def = new_definition
+let word_gc_move_roots_bitmaps_def = cake_define
   `word_gc_move_roots_bitmaps conf (stack',bitmaps,i1,pa1,curr,m,dm) =
      (match enc_stack bitmaps stack' with NONE -> (ARB,ARB,ARB,ARB,F)
        | SOME wl_list ->
@@ -435,7 +435,7 @@ let gc_thm = prove
             else NONE)`,
   CHEAT_TAC);;
 
-let word_gc_move_bitmaps_def = new_definition
+let word_gc_move_bitmaps_def = cake_define
   `word_gc_move_bitmaps conf (w,stack',bitmaps,i1,pa1,curr,m,dm) =
      (match full_read_bitmap bitmaps w with NONE -> NONE | SOME bs ->
        (match filter_bitmap bs stack' with NONE -> NONE | SOME
@@ -484,7 +484,7 @@ let word_gc_move_roots_bitmaps = prove
                    ((w :: new) ++ stack',i,pa,m,(c2 /\ c3)))))`,
   CHEAT_TAC);;
 
-let word_gc_move_bitmap_def = new_definition
+let word_gc_move_bitmap_def = cake_define
   `word_gc_move_bitmap conf (w,stack',i1,pa1,curr,m,dm) =
      (let bs = get_bits w in
        match filter_bitmap bs stack' with NONE -> NONE | SOME (ts,ws)
@@ -988,7 +988,7 @@ let stack_allocProof_word_gc_fun_thm = prove
 
 (* HOL4 stack_allocProofScript.sml:1835-1840: ML code, not ported *)
 
-let word_gen_gc_move_roots_bitmaps_def = new_definition
+let word_gen_gc_move_roots_bitmaps_def = cake_define
   `word_gen_gc_move_roots_bitmaps conf
   (stack',bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
      (match enc_stack bitmaps stack' with NONE ->
@@ -1000,7 +1000,7 @@ let word_gen_gc_move_roots_bitmaps_def = new_definition
              (ARB,ARB,ARB,ARB,ARB,ARB,F) | SOME stack' ->
              (stack',i2,pa2,ib2,pb2,m2,c2)))`;;
 
-let word_gen_gc_partial_move_roots_bitmaps_def = new_definition
+let word_gen_gc_partial_move_roots_bitmaps_def = cake_define
   `word_gen_gc_partial_move_roots_bitmaps conf
   (stack',bitmaps,i1,pa1,curr,m,dm,gs,rs) =
      (match enc_stack bitmaps stack' with NONE -> (ARB,ARB,ARB,ARB,F)
@@ -1160,7 +1160,7 @@ let stack_allocProof_gc_thm = prove
               else NONE))`,
   CHEAT_TAC);;
 
-let word_gen_gc_move_bitmaps_def = new_definition
+let word_gen_gc_move_bitmaps_def = cake_define
   `word_gen_gc_move_bitmaps conf
   (w,stack',bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
      (match full_read_bitmap bitmaps w with NONE -> NONE | SOME bs ->
@@ -1173,7 +1173,7 @@ let word_gen_gc_move_bitmaps_def = new_definition
              (hd,ts1,ws') ->
                SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2))))`;;
 
-let word_gen_gc_partial_move_bitmaps_def = new_definition
+let word_gen_gc_partial_move_bitmaps_def = cake_define
   `word_gen_gc_partial_move_bitmaps conf
   (w,stack',bitmaps,i1,pa1,curr,m,dm,gs,rs) =
      (match full_read_bitmap bitmaps w with NONE -> NONE | SOME bs ->
@@ -1272,7 +1272,7 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
                      ((w :: new) ++ stack',i,pa,m,(c2 /\ c3)))))`,
   CHEAT_TAC);;
 
-let word_gen_gc_move_bitmap_def = new_definition
+let word_gen_gc_move_bitmap_def = cake_define
   `word_gen_gc_move_bitmap conf (w,stack',i1,pa1,ib1,pb1,curr,m,dm) =
      (let bs = get_bits w in
        match filter_bitmap bs stack' with NONE -> NONE | SOME (ts,ws)
@@ -1283,7 +1283,7 @@ let word_gen_gc_move_bitmap_def = new_definition
             match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2)))`;;
 
-let word_gen_gc_partial_move_bitmap_def = new_definition
+let word_gen_gc_partial_move_bitmap_def = cake_define
   `word_gen_gc_partial_move_bitmap conf
   (w,stack',i1,pa1,curr,m,dm,gs,rs) =
      (let bs = get_bits w in
@@ -2664,7 +2664,7 @@ let stack_allocProof_compile_semantics = prove
   CHEAT_TAC);;
 
 (* TODO: does this have to initialize the data_buffer to empty? *)
-let stack_allocProof_make_init_def = new_definition
+let stack_allocProof_make_init_def = cake_define
   `stack_allocProof_make_init c code oracle'
   (s:('a,'c,'ffi)stackSem_state) = stackSem_state_compile_oracle_fupd (K
   oracle') (stackSem_state_compile_fupd (K (\c. stackSem_state_compile s

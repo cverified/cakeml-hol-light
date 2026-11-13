@@ -23,62 +23,60 @@ hol4_numeral_form "SX_NUM";;
 (* HOL4 simpleSexpScript.sml:23-34: the overload nil, which the port
    expands *)
 
-let valid_first_symchar_def = new_definition
+let valid_first_symchar_def = cake_define
   `valid_first_symchar c <=>
      isGraph c /\ ~(c IN {(CHR 39),(CHR 40),(CHR 41),(CHR 46),(CHR
        34)}) /\ ~(isDigit c)`;;
 
-let valid_symchar_def = new_definition
+let valid_symchar_def = cake_define
   `valid_symchar c <=> isGraph c /\ ~(c IN {(CHR 39),(CHR 40),(CHR
   41)})`;;
 
-let valid_symbol_def = define_cases
+let valid_symbol_def = cake_define_list
   [`valid_symbol "" <=> F`;
    `valid_symbol (c :: cs) <=> valid_first_symchar c /\ EVERY
   valid_symchar cs`];;
 
-let valid_sexp_def,valid_sexp_ind = define_shaped_rec
-  "match"
-  [`valid_sexp s =
+let valid_sexp_def = cake_define
+  `valid_sexp s =
         match s with
           SX_SYM s -> valid_symbol s
         | (SX_CONS s1 s2) -> valid_sexp s1 /\ valid_sexp s2
         | (SX_STR s) -> EVERY isPrint s
-        | s -> T`];;
+        | s -> T`;;
 
-let arb_sexp_def = new_definition
+let arb_sexp_def = cake_define
   `arb_sexp = SX_NUM 0`;;
 
-let destSXNUM_def = new_definition
+let destSXNUM_def = cake_define
   `destSXNUM x1 =
       match x1 with
         SX_NUM n -> n
       | _1 -> 0`;;
 
-let destSXSYM_def = new_definition
+let destSXSYM_def = cake_define
   `destSXSYM x1 =
       match x1 with
         SX_SYM s -> s
       | _2 -> ""`;;
 
-let destSXCONS_def = new_definition
+let destSXCONS_def = cake_define
   `destSXCONS x1 =
       match x1 with
         SX_CONS a d -> (a,d)
       | _3 -> (arb_sexp,arb_sexp)`;;
 
-let strip_sxcons_def,strip_sxcons_ind = define_shaped_rec
-  "match"
-  [`strip_sxcons s =
+let strip_sxcons_def = cake_define
+  `strip_sxcons s =
      (match s with
          SX_CONS h t -> OPTION_MAP (CONS h) (strip_sxcons t) |
-           SX_SYM s -> (if s = "nil" then SOME [] else NONE) | _4
-           -> NONE)`];;
+           SX_SYM s -> (if s = "nil" then SOME [] else NONE) | _4 ->
+           NONE)`;;
 
-let sxMEM_def = new_definition
+let sxMEM_def = cake_define
   `sxMEM e s <=> (?l. strip_sxcons s = SOME l /\ MEM e l)`;;
 
-let dstrip_sexp_def = new_definition
+let dstrip_sexp_def = cake_define
   `dstrip_sexp x1 =
         match x1 with
           SX_CONS sym args ->
@@ -99,7 +97,7 @@ let sexpNT_INDUCT,sexpNT_RECURSION = define_datatype
    sxnt_grabWS | sxnt_first_symchar | sxnt_escapedstrchar | \
    sxnt_escapablechar | sxnt_digit | sxnt_WSsexp | sxnt_WS";;
 
-let sexpG_def = new_definition
+let sexpG_def = cake_define
   `sexpG = mk_grammar (INL sxnt_sexp) (FEMPTY |+ (INL
   sxnt_sexp,{[grammar_NT (INL sxnt_WSsexp); grammar_NT (INL
   sxnt_grabWS)]}) |+ (INL sxnt_WSsexp,{[grammar_NT (INL sxnt_grabWS);

@@ -337,7 +337,7 @@ let evaluate_partial_app_fn_location_code = prove
         n))],st)`,
   CHEAT_TAC);;
 
-let global_table_def = new_definition
+let global_table_def = cake_define
   `global_table max_app =
      Block tuple_tag
        (FLAT (GENLIST (\tot. GENLIST
@@ -554,13 +554,13 @@ let evaluate_partial_app_fn = prove
 
 (* value relation *)
 
-let code_installed_def = new_definition
+let code_installed_def = cake_define
   `clos_to_bvlProof_code_installed aux code =
      EVERY (\(n,num_args,exp). sptree_lookup n code = SOME
        (num_args,exp)) aux`;;
 hol4_overload "code_installed" "clos_to_bvlProof_code_installed";;
 
-let closure_code_installed_def = new_definition
+let closure_code_installed_def = cake_define
   `closure_code_installed max_app code exps_ps (env:closSem_v list) =
      EVERY (\((n,exp),p).
        n <= max_app /\ ~(n = 0) /\
@@ -612,7 +612,7 @@ let cl_rel = cake_inductive
       cl_rel max_app fs refs code (env,ys) (Recclosure (SOME loc)
         [] env exps k) (EL k rs))`;;
 
-let add_args_def = new_definition
+let add_args_def = cake_define
   `add_args x1 args' =
         match x1 with
           (Closure loc_opt args env num_args exp:closSem_v) ->
@@ -627,7 +627,7 @@ let add_args_append = prove
     add_args cl (args ++ arg_env) = add_args func args`,
   CHEAT_TAC);;
 
-let get_num_args_def = new_definition
+let get_num_args_def = cake_define
   `get_num_args x1 =
         match x1 with
           (Closure loc_opt args env num_args exp:closSem_v) ->
@@ -711,23 +711,16 @@ let clos_to_bvlProof_v_rel_Boolv = prove
 (* HOL4 clos_to_bvlProofScript.sml:984-995: a theorem that HOL4
    states as the value of an ML expression: v_rel_SIMP *)
 
-let _ = size_thms "bvlSem_v";;
-let _ = size_thms "closSem_v";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let clos_to_bvlProof_env_rel_def,clos_to_bvlProof_env_rel_ind =
-  define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4,x5). closSem_v_size1 x4 + bvlSem_v_size1
-  x5)`
-  [`clos_to_bvlProof_env_rel max_app f refs code x5 ys =
+let clos_to_bvlProof_env_rel_def = cake_define
+  `clos_to_bvlProof_env_rel max_app f refs code x5 ys =
         match (x5,ys) with
           ([],[]) -> T
         | ([],ys) -> T
         // bvl env allowed to contain extra stuff
         | ((x :: xs),[]) -> F
         | ((x :: xs),(y :: ys)) ->
-        v_rel max_app f refs code x y /\
-          clos_to_bvlProof_env_rel max_app f refs code xs ys`];;
+        v_rel max_app f refs code x y /\ clos_to_bvlProof_env_rel
+          max_app f refs code xs ys`;;
 hol4_overload "env_rel" "clos_to_bvlProof_env_rel";;
 
 (* [local] *)
@@ -765,18 +758,14 @@ let LESS_LENGTH_env_rel_IMP = prove
 (* HOL4 clos_to_bvlProofScript.sml:1045-1061: code that the source
    has in a comment *)
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let clos_to_bvlProof_nth_code_def,clos_to_bvlProof_nth_code_ind =
-  define_wf
-  `MEASURE (\(x0,x1). (\n. n) x1)`
+let clos_to_bvlProof_nth_code_def = cake_define_list
   [`clos_to_bvlProof_nth_code t_co 0 = LN`;
    `clos_to_bvlProof_nth_code t_co (SUC n) =
       sptree_union (fromAList (SND (t_co 0)))
         (clos_to_bvlProof_nth_code (misc_shift_seq 1 t_co) n)`];;
 hol4_overload "nth_code" "clos_to_bvlProof_nth_code";;
 
-let compile_oracle_inv_def = new_definition
+let compile_oracle_inv_def = cake_define
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
       s_cc = pure_cc (compile_inc max_app) t_cc /\
       t_co = pure_co (compile_inc max_app) o s_co /\
@@ -792,7 +781,7 @@ let compile_oracle_inv_def = new_definition
 (* HOL4 clos_to_bvlProofScript.sml:1083-1089: code that the source
    has in a comment *)
 
-let clos_to_bvlProof_ref_rel_def = new_definition
+let clos_to_bvlProof_ref_rel_def = cake_define
   `clos_to_bvlProof_ref_rel R x2 x3 =
         match (x2,x3) with
           (closSem_ValueArray vs,bvlSem_ValueArray ws) -> LIST_REL R
@@ -811,7 +800,7 @@ let clos_to_bvlProof_ref_rel_simp = prove
    (ref_rel R (ByteArray bs) y <=> y = ByteArray F bs)`,
   CHEAT_TAC);;
 
-let clos_to_bvlProof_state_rel_def = new_definition
+let clos_to_bvlProof_state_rel_def = cake_define
   `clos_to_bvlProof_state_rel f (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
      (closSem_state_ffi s = bvlSem_state_ffi t) /\
@@ -1072,7 +1061,7 @@ let clos_to_bvlProof_do_app_err = prove
 
 (* correctness of implemented primitives *)
 
-let eq_res_def = new_definition
+let eq_res_def = cake_define
   `eq_res x1 =
       match x1 with
         Eq_val b -> Rval [bvlSem_Boolv b]
@@ -1214,7 +1203,7 @@ let evaluate_simple_genlist_vars = prove
        env1,s)`,
   CHEAT_TAC);;
 
-let num_remaining_args_def = new_definition
+let num_remaining_args_def = cake_define
   `num_remaining_args x1 =
         match x1 with
           (Closure loc_opt args env num_args exp:closSem_v) ->
@@ -1235,7 +1224,7 @@ let dest_closure_part_app = prove
        LENGTH args <= max_app)`,
   CHEAT_TAC);;
 
-let get_loc_def = new_definition
+let get_loc_def = cake_define
   `get_loc x1 =
         match x1 with
           (Closure (SOME loc) args env num_args exp:closSem_v) ->
@@ -1244,14 +1233,14 @@ let get_loc_def = new_definition
           i)
         | _7 -> NONE`;;
 
-let get_old_args_def = new_definition
+let get_old_args_def = cake_define
   `get_old_args x1 =
         match x1 with
           (Closure loc args env num_args exp:closSem_v) -> SOME args
         | (Recclosure loc args env fns i) -> SOME args
         | _8 -> NONE`;;
 
-let get_cl_env_def = new_definition
+let get_cl_env_def = cake_define
   `get_cl_env x1 =
         match x1 with
           (Closure loc args env num_args exp:closSem_v) -> SOME env
@@ -1365,13 +1354,13 @@ let cl_rel_get_loc = prove
   CHEAT_TAC);;
 
 (* Differs from check_loc and dest_closure by not checking that max_app *)
-let check_loc'_def = define_cases
+let check_loc'_def = cake_define_list
   [`check_loc' NONE loc num_params num_args so_far <=> T`;
    `check_loc' (SOME p) loc num_params num_args so_far <=>
         (num_params = num_args) /\ (so_far = (0:num)) /\ (SOME
           p = loc)`];;
 
-let dest_closure'_def = new_definition
+let dest_closure'_def = cake_define
   `dest_closure' loc_opt f args =
      (match f with Closure loc arg_env clo_env num_args exp ->
          (if check_loc' loc_opt loc num_args (LENGTH args) (LENGTH
@@ -2014,7 +2003,7 @@ let compile_all_distinct_locs = prove
   CHEAT_TAC);;
 
 (* Initial state *)
-let clos_init_def = new_definition
+let clos_init_def = cake_define
   `clos_init max_app s <=> state_globals
    s = [] /\ state_refs s = FEMPTY /\ state_code s = FEMPTY /\
      closSem_state_max_app s = max_app`;;
@@ -2074,7 +2063,7 @@ let clos_to_bvlProof_FST_EQ_LEMMA = prove
 
 (* HOL4 clos_to_bvlProofScript.sml:6173-6177: ML code, not ported *)
 
-let clos_to_bvlProof_eval_sim_def = new_definition
+let clos_to_bvlProof_eval_sim_def = cake_define
   `clos_to_bvlProof_eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2
   start' rel =
      (!k res1 s2.
@@ -2119,7 +2108,7 @@ let clos_to_bvlProof_IMP_semantics_eq = prove
      closSem_semantics ffi max_app code1 co1 cc1 es1`),
   CHEAT_TAC);;
 
-let clos_to_bvlProof_init_code_def = new_definition
+let clos_to_bvlProof_init_code_def = cake_define
   `clos_to_bvlProof_init_code code1 code2 max_app <=>
      (!n.
         n < max_app ==>
@@ -2140,7 +2129,7 @@ let clos_to_bvlProof_init_code_def = new_definition
          clos_to_bvlProof_code_installed aux2 code2))`;;
 hol4_overload "init_code" "clos_to_bvlProof_init_code";;
 
-let chain_installed_def = new_definition
+let chain_installed_def = cake_define
   `chain_installed start' (es:closLang_exp list) code <=>
      (!i. i < LENGTH es ==> closSem_find_code (start' + i)
        ([]:closSem_v list) code =
@@ -2436,7 +2425,7 @@ let every_Fn_SOME_cond_call_compile_inc = prove
        (cond_call_compile_inc do_it x y)))))`,
   CHEAT_TAC);;
 
-let compile_common_inc_def = new_definition
+let compile_common_inc_def = cake_define
   `compile_common_inc c cc =
    (pure_cc (cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
      (clos_to_bvl_config_max_app c))
@@ -2446,7 +2435,7 @@ let compile_common_inc_def = new_definition
            c))
            (pure_cc clos_annotate_compile_inc cc)))))`;;
 
-let clos_state_cc_def = new_definition
+let clos_state_cc_def = cake_define
   `clos_state_cc inc (cc:'b->closLang_exp list#(num#num#closLang_exp)
   list->(word8 list#word64 list#'b) option) = (state_cc inc
   cc:'a#'b->closLang_exp list#(num#num#closLang_exp) list->(word8
@@ -2657,7 +2646,7 @@ let oracle_monotonic_init_subset = prove
    oracle_monotonic f R St' co`,
   CHEAT_TAC);;
 
-let compile_inc_post_kcompile_def = new_definition
+let compile_inc_post_kcompile_def = cake_define
   `compile_inc_post_kcompile c exps = compile
   (clos_to_bvl_config_known_conf c)
      (SND (renumber_code_locs_list
@@ -2790,9 +2779,8 @@ let clos_to_bvlProof_compile_prog_semantics = prove
        [Call backend_common_None 0 start []]`),
   CHEAT_TAC);;
 
-let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
-  "free: known_co:(clos_known_config)option->(num->((val_approx"
-  [`clos_to_bvlProof_syntax_oracle_ok c c' es co <=>
+let clos_to_bvlProof_syntax_oracle_ok_def = cake_define
+  `clos_to_bvlProof_syntax_oracle_ok c c' es co <=>
     (!n. SND (SND (co n)) = []) /\
     (clos_to_bvl_config_do_mti c ==> 1 <= clos_to_bvl_config_max_app
       c /\ EVERY no_mti es /\
@@ -2821,18 +2809,17 @@ let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
                     (pure_co (cond_mti_compile_inc
                       (clos_to_bvl_config_do_mti c)
                       (clos_to_bvl_config_max_app c)) o co)) /\
-        (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND
-          (co n')))) /\
+        (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
+          n')))) /\
                 EVERY closProps_esgc_free (FST (SND (co n'))))) /\
     ~(contains_App_SOME (clos_to_bvl_config_max_app c) es) /\
       clos_knownProof_syntax_ok es /\
-    (!n. ~(contains_App_SOME (clos_to_bvl_config_max_app c) (FST
-      (SND (co n)))) /\
+    (!n. ~(contains_App_SOME (clos_to_bvl_config_max_app c) (FST (SND
+      (co n)))) /\
             every_Fn_vs_NONE (FST (SND (co n)))) /\
     is_state_oracle (ignore_table clos_number_compile_inc)
-        (pure_co (cond_mti_compile_inc
-          (clos_to_bvl_config_do_mti c) (clos_to_bvl_config_max_app
-          c)) o co)`];;
+        (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
+          c) (clos_to_bvl_config_max_app c)) o co)`;;
 hol4_overload "syntax_oracle_ok" "clos_to_bvlProof_syntax_oracle_ok";;
 
 let compile_exps_IMP_acc = prove
@@ -2865,19 +2852,19 @@ let extract_name_code_locs = prove
    code_locs real_es = code_locs exps`,
   CHEAT_TAC);;
 
-let extracted_addrs_def = new_definition
+let extracted_addrs_def = cake_define
   `extracted_addrs exps = (if exps = [] then [0] else (match
   extract_name exps with
          (n,real_es) -> MAP ((+) n) (COUNT_LIST (MAX 1 (LENGTH
            real_es)))))`;;
 
-let req_compile_inc_addrs_def = new_definition
+let req_compile_inc_addrs_def = cake_define
   `req_compile_inc_addrs extra (exps,code) = extracted_addrs exps ++
      code_locs exps ++ MAP FST code ++ code_locs (MAP (SND o SND)
        code) ++
      FLAT (MAP (\f. MAP f (code_locs exps)) extra)`;;
 
-let can_extract_def = new_definition
+let can_extract_def = cake_define
   `can_extract exps = (?t n exps'.
          exps = Op t (closLang_IntOp (closLang_Const (&n))) [] ::
            exps')`;;

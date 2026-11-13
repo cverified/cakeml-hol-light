@@ -8,6 +8,9 @@
 (*   new_definition      HOL Light's own: no recursion, one clause    *)
 (*   define_cases        several clauses and no recursion, by the     *)
 (*                       recursion theorem of the type matched on     *)
+(*   define_general      a definition HOL Light's own machinery for   *)
+(*                       patterns makes, and a family that does not   *)
+(*                       recurse, which is a definition each          *)
 (*   define_rec          structural recursion, by that same theorem   *)
 (*   define_wf <rel>     recursion with the relation written out,     *)
 (*                       which is what HOL4's Termination gives       *)
@@ -18,6 +21,15 @@
 (*                       them the definition goes through             *)
 (*   assume_definition   the port cannot make the definition and      *)
 (*                       assumes it                                   *)
+(*                                                                    *)
+(* and four endings say the rest: _mutual for a family of functions   *)
+(* that recurse through one another, _cheat where the termination is  *)
+(* assumed rather than proved, _tac where the file gives the tactic   *)
+(* that discharges it, and _shaped before them all.  Three of the     *)
+(* rewritings hand what comes out back to a way of making a           *)
+(* definition, and the word says that one too, after a ">":           *)
+(* "sing>nested" is "read the clauses as a function of one element,   *)
+(* and make what comes out by the nested way".                        *)
 (*                                                                    *)
 (* Each of the recursive ones gives the induction theorem with the    *)
 (* definition, as HOL4 does, so a file writes                         *)
@@ -306,8 +318,11 @@ let assume_definition_rec why cls =
 
 (* and a family whose clauses need a rewriting as well *)
 
+let define_mutual_shaped_wf_tac shape rel tac cls =
+  shaped_made shape [(rel,tac)] (definition_of_clauses cls);;
+
 let define_mutual_shaped_wf shape rel cls =
-  shaped_made shape [(rel,TERM_TAC)] (definition_of_clauses cls);;
+  define_mutual_shaped_wf_tac shape rel TERM_TAC cls;;
 
 let define_mutual_shaped_wf_cheat shape rel cls =
   shaped_made shape [(rel,CHEAT_TAC)] (definition_of_clauses cls);;

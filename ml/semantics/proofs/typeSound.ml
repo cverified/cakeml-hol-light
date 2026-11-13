@@ -255,7 +255,7 @@ let opapp_type_sound = prove
        semanticPrimitives_do_opapp vs = SOME (env,e))`,
   CHEAT_TAC);;
 
-let store_type_extension_def = new_definition
+let store_type_extension_def = cake_define
   `store_type_extension tenvS1 tenvS2 =
    (?tenvS'. (tenvS2 = FUNION tenvS' tenvS1) /\
             (!l. (FLOOKUP tenvS' l = NONE) \/ (FLOOKUP tenvS1 l =

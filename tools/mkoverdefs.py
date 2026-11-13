@@ -33,22 +33,28 @@ def rewrite(block, head, const, way):
   strat, assumed, rel = way
   bind = head
   ind = (bind[:-4] if bind.endswith('_def') else bind) + '_ind'
-  recursive = strat not in ('new_definition',
-                            'new_recursive_definition')
+  # a rewriting of the clauses says the way what comes out is made
+  # in the same word ("sing>nested"); the first of them is what
+  # the way is called
+  first = strat.split('>')[0]
+  recursive = first not in ('new_definition', 'define_single',
+                            'new_recursive_definition', 'general')
   if strat == '':
     how, pair, args = 'assume_definition', False, '"assumed"\n  '
   elif strat == 'new_definition':
     return None                      # the name alone changes
+  elif first in ('define_single', 'general'):
+    how, pair, args = 'define_general', False, ''
   elif not recursive:
     how, pair, args = 'define_cases', False, ''
-  elif strat in ('nested', 'maplist', 'cond_bool', 'sing', 'cases',
+  elif first in ('nested', 'maplist', 'cond_bool', 'sing', 'cases',
                  'match', 'lift_if'):
     how = 'define_shaped_' + ('wf' if rel else 'rec')
     pair, args = True, '"%s"\n  ' % strat
     if rel: args += '`%s`\n  ' % rel
   elif rel:
     how, pair, args = 'define_wf', True, '`%s`\n  ' % rel
-  elif strat == 'prim_rec':
+  elif first == 'prim_rec':
     how, pair, args = 'define_rec', True, ''
   else:
     how, pair, args = 'define_guess', True, ''

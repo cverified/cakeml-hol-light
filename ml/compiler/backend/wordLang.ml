@@ -111,9 +111,9 @@ hol4_overload "DataBufferWrite" "wordLang_DataBufferWrite";;
 hol4_overload "FFI" "wordLang_FFI";;
 hol4_overload "ShareInst" "wordLang_ShareInst";;
 
-let raise_stub_location_def = new_definition
+let raise_stub_location_def = cake_define
   `raise_stub_location = word_num_stubs - 2`;;
-let wordLang_store_consts_stub_location_def = new_definition
+let wordLang_store_consts_stub_location_def = cake_define
   `wordLang_store_consts_stub_location = word_num_stubs - 1`;;
 hol4_overload "store_consts_stub_location"
   "wordLang_store_consts_stub_location";;
@@ -127,27 +127,23 @@ hol4_overload "store_consts_stub_location"
    comment *)
 
 (* Recursors for variables *)
-let _ = size_thms "wordLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let every_var_exp_def,every_var_exp_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`every_var_exp P expr =
+let every_var_exp_def = cake_define
+  `every_var_exp P expr =
         match expr with
           wordLang_Var num' -> P num'
         | (Load exp) -> every_var_exp P exp
         | (wordLang_Op wop ls) -> EVERY (every_var_exp P) ls
         | (Shift sh e1 e2) -> (every_var_exp P e1 /\ every_var_exp P
           e2)
-        | expr -> T`];;
+        | expr -> T`;;
 
-let every_var_imm_def = new_definition
+let every_var_imm_def = cake_define
   `every_var_imm P x2 =
         match x2 with
           Reg r -> P r
         | _1 -> T`;;
 
-let every_var_inst_def = new_definition
+let every_var_inst_def = cake_define
   `every_var_inst P inst' =
         match inst' with
           asm_Const reg w -> P reg
@@ -182,17 +178,13 @@ let every_var_inst_def = new_definition
         | inst' -> T`;;
 (*catchall*)
 
-let every_name_def = new_definition
+let every_name_def = cake_define
   `every_name P (t:1 spt#1 spt) <=>
    EVERY P (MAP FST (toAList (FST t))) /\
    EVERY P (MAP FST (toAList (SND t)))`;;
 
-let _ = size_thms "wordLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let every_var_def,every_var_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`wordLang_every_var P p =
+let every_var_def = cake_define
+  `wordLang_every_var P p =
         match p with
           (Skip:'a wordLang_prog) -> T
         | (wordLang_Move pri ls) -> (EVERY P (MAP FST ls) /\ EVERY P
@@ -240,16 +232,12 @@ let every_var_def,every_var_ind = define_wf
        (EVERY P (MAP FST (toAList names)) /\ wordLang_every_var P
          body /\
         EVERY P (MAP FST (toAList exit_names)))
-        | p -> T`];;
+        | p -> T`;;
 hol4_overload "every_var" "wordLang_every_var";;
 
 (*Recursor for stack variables*)
-let _ = size_thms "wordLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let every_stack_var_def,every_stack_var_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`every_stack_var P p =
+let every_stack_var_def = cake_define
+  `every_stack_var P p =
         match p with
           wordLang_FFI ffi_index cptr clen ptr len names ->
        every_name P names
@@ -274,24 +262,20 @@ let every_stack_var_def,every_stack_var_ind = define_wf
        (every_stack_var P e2 /\ every_stack_var P e3)
         | (wordLang_Loop names body exit_names) ->
        every_stack_var P body
-        | p -> T`];;
+        | p -> T`;;
 
 (*Find the maximum variable*)
-let _ = size_thms "wordLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let max_var_exp_def,max_var_exp_ind = define_wf
-  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`max_var_exp exp =
+let max_var_exp_def = cake_define
+  `max_var_exp exp =
         match exp with
           wordLang_Var num' -> num'
         | (Load exp) -> max_var_exp exp
         | (wordLang_Op wop ls) -> MAX_LIST (MAP (max_var_exp) ls)
-        | (Shift sh exp1 exp2) -> MAX (max_var_exp exp1)
-          (max_var_exp exp2)
-        | exp -> (0:num)`];;
+        | (Shift sh exp1 exp2) -> MAX (max_var_exp exp1) (max_var_exp
+          exp2)
+        | exp -> (0:num)`;;
 
-let max_var_inst_def = new_definition
+let max_var_inst_def = cake_define
   `max_var_inst x1 =
         match x1 with
           asm_Skip -> 0
@@ -326,17 +310,13 @@ let max_var_inst_def = new_definition
        (if dimindex (:'a) = 64 then r1 else MAX r1 r2)
         | _10 -> 0`;;
 
-let cutsets_max_def = new_definition
+let cutsets_max_def = cake_define
   `cutsets_max (c:1 spt#1 spt) =
      MAX (MAX_LIST (MAP FST (toAList (FST c)))) (MAX_LIST (MAP FST
        (toAList (SND c))))`;;
 
-let _ = size_thms "wordLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let max_var_def,max_var_ind = define_wf
-  `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`max_var p =
+let max_var_def = cake_define
+  `max_var p =
         match p with
           wordLang_Skip -> 0
         | (wordLang_Move pri ls) ->
@@ -384,9 +364,9 @@ let max_var_def,max_var_ind = define_wf
        max3 (MAX_LIST (MAP FST (toAList names)))
             (max_var body)
             (MAX_LIST (MAP FST (toAList exit_names)))
-        | p -> 0`];;
+        | p -> 0`;;
 
-let word_op_def = new_definition
+let word_op_def = cake_define
   `wordLang_word_op op (ws:('a word) list) =
      (match (op,ws) with (And,ws) -> SOME (ITLIST word_and ws
        (word_not (n2w 0))) | (Add,ws) -> SOME (ITLIST word_add ws
@@ -395,13 +375,13 @@ let word_op_def = new_definition
        -> SOME (w1 - w2) | _13 -> NONE)`;;
 hol4_overload "word_op" "wordLang_word_op";;
 
-let word_sh_def = new_definition
+let word_sh_def = cake_define
   `word_sh sh (w:'a word) n =
      (if ~(n = 0) /\ n >= dimindex (:'a) then NONE else
        match sh with Lsl -> SOME (w << n) | Lsr -> SOME (w >>> n)
          | Asr -> SOME (w >> n) | Ror -> SOME (word_ror w n))`;;
 
-let exp_to_addr_def = new_definition
+let exp_to_addr_def = cake_define
   `exp_to_addr x1 =
         match x1 with
           wordLang_Var ad -> SOME (Addr ad (n2w 0))

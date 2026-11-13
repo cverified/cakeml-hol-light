@@ -27,25 +27,24 @@ needs "misc/misc.ml";;
 let _ = hol4_ancestors "export"
   ["mlint"; "mlstring"; "mlvector"];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 exportScript.sml:17-20: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let split16_def,split16_ind = define_wf_cheat
-  `MEASURE (LENGTH o SND)`
-  [`split16 f xs =
+let split16_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o SND)`)
+  CHEAT_TAC
+  `split16 f xs =
         match xs with
           [] -> misc_Nil
         | xs ->
         (let xs1 = TAKE 16 xs in
         let xs2 = DROP 16 xs in
-          SmartAppend (f xs1) (split16 f xs2))`];;
+          SmartAppend (f xs1) (split16 f xs2))`;;
 
 (* HOL4 exportScript.sml:22-72: the ML values that the definitions
    below antiquote *)
-let preamble_def = new_definition
+let preamble_def = cake_define
   `preamble = ((MAP (\n. implode (n ++ "\n"))
        [("/* Preprocessor to get around Mac OS, Windows, and" ++
          " Linux differences in naming and calling conventio" ++
@@ -102,7 +101,7 @@ let preamble_def = new_definition
         "     .file        \"cake.S\"";
         ""]))`;;
 
-let data_section_def = new_definition
+let data_section_def = cake_define
   `data_section word_directive ret =
       MAP (\n. implode (n ++ "\n"))
         (["     .data";
@@ -118,7 +117,7 @@ let data_section_def = new_definition
          ["     .p2align 3";
          "cake_bitmaps:"])`;;
 
-let data_buffer_def = new_definition
+let data_buffer_def = cake_define
   `data_buffer =
       MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_bitmaps_buffer_begin)";
@@ -129,7 +128,7 @@ let data_buffer_def = new_definition
          "     .globl cdecl(cake_bitmaps_buffer_end)";
          "cdecl(cake_bitmaps_buffer_end):"]`;;
 
-let code_buffer_def = new_definition
+let code_buffer_def = cake_define
   `code_buffer =
       MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_codebuffer_begin)";
@@ -142,31 +141,30 @@ let code_buffer_def = new_definition
          "cdecl(cake_codebuffer_end):";
          "     .space 4096"]`;;
 
-let comm_strlit_def = new_definition
+let comm_strlit_def = cake_define
   `comm_strlit = (implode ",")`;;
-let newl_strlit_def = new_definition
+let newl_strlit_def = cake_define
   `newl_strlit = (implode "\n")`;;
 
-let comma_cat_def,comma_cat_ind = define_guess
-  [`comma_cat f x =
-     (match x with [] -> [newl_strlit] | [x] -> [f x;
-       newl_strlit] | (x :: xs) -> f x :: comm_strlit :: comma_cat
-       f xs)`];;
+let comma_cat_def = cake_define
+  `comma_cat f x =
+     (match x with [] -> [newl_strlit] | [x] -> [f x; newl_strlit]
+       | (x :: xs) -> f x :: comm_strlit :: comma_cat f xs)`;;
 
-let words_line_def = new_definition
+let words_line_def = cake_define
   `words_line word_directive to_string ls =
      misc_List (word_directive :: comma_cat to_string ls)`;;
 
-let word_to_string_def = new_definition
+let word_to_string_def = cake_define
   `word_to_string w = toString (w2n w)`;;
 
-let byte_to_string_def = new_definition
+let byte_to_string_def = cake_define
   `byte_to_string (b:word8) =
      implode (
                   "0x" ++ [EL (w2n b DIV 16) "0123456789ABCDEF"]
                     ++ [EL (w2n b MOD 16) "0123456789ABCDEF"])`;;
 
-let all_bytes_def = new_definition
+let all_bytes_def = cake_define
   `all_bytes = Vector (GENLIST (\n. byte_to_string (n2w n)) 256)`;;
 
 (* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the
@@ -179,14 +177,14 @@ let byte_to_string_eq = prove
 (* gas allows 0-9a-zA-Z_$. in labels as long as the first is _A-Za-z *)
 (* we prefix labels and reserve $; . is special *)
 
-let escape_sym_char_def = new_definition
+let escape_sym_char_def = cake_define
   `escape_sym_char ch = (let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
         code >= 48 /\ code <= 57 \/ code = 95 then toString ch
           else (\x y. strcat x y) ((\x y. strcat x y) (implode "$")
           (toString (code))) (implode "_"))`;;
 
-let get_sym_label_def = new_definition
+let get_sym_label_def = cake_define
   `get_sym_label (ix,appl) (name,start',len) =
      (let label = (\x y. strcat x y) ((\x y. strcat x y) ((\x y.
        strcat x y) (implode "cml_") (concat (MAP escape_sym_char
@@ -194,11 +192,11 @@ let get_sym_label_def = new_definition
        (implode "_")) (toString (ix)) in
      (ix + 1,appl ++ [(name,label,start',len)]))`;;
 
-let get_sym_labels_def = new_definition
+let get_sym_labels_def = cake_define
   `get_sym_labels syms =
      SND (FOLDL get_sym_label (0,[]) syms)`;;
 
-let emit_symbol_def = new_definition
+let emit_symbol_def = cake_define
   `emit_symbol appl (name,label,start',len) =
      misc_Append appl (misc_List
        [(\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
@@ -207,7 +205,7 @@ let emit_symbol_def = new_definition
          (start'))) (implode ", "))
        (toString (len))) (implode ")\n")])`;;
 
-let emit_symbols_def = new_definition
+let emit_symbols_def = cake_define
   `emit_symbols lsyms =
      FOLDL emit_symbol misc_Nil lsyms`;;
 

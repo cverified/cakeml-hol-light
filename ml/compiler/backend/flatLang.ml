@@ -76,7 +76,7 @@ hol4_overload "Pcon" "flatLang_Pcon";;
 hol4_overload "Pas" "flatLang_Pas";;
 hol4_overload "Pref" "flatLang_Pref";;
 
-let flatLang_pat_bindings_def = define_mutual_rec
+let flatLang_pat_bindings_def = cake_define_list
   [`flatLang_pat_bindings (Pany:flatLang_pat) = []`;
    `flatLang_pat_bindings (Pvar n:flatLang_pat) = [n]`;
    `flatLang_pat_bindings (Plit l:flatLang_pat) = []`;
@@ -139,14 +139,14 @@ hol4_overload "Letrec" "flatLang_Letrec";;
 (* HOL4 flatLangScript.sml:132-149: a theorem whose statement the
    port cannot state yet: exp_size_MEM *)
 
-let bool_id_def = new_definition
+let bool_id_def = cake_define
   `bool_id = 0`;;
 
-let flatLang_Bool_def = new_definition
+let flatLang_Bool_def = cake_define
   `flatLang_Bool t b = Con t (SOME (bool_to_tag b,SOME bool_id)) []`;;
 hol4_overload "Bool" "flatLang_Bool";;
 
-let SmartIf_def = new_definition
+let SmartIf_def = cake_define
   `SmartIf t e p q =
      (match e with
        Con _3 (SOME (tag,SOME id')) [] ->

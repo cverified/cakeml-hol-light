@@ -141,7 +141,7 @@ let ALL_DISTINCT_enumerate = prove
  (`!xs i. ALL_DISTINCT (enumerate i xs)`,
   CHEAT_TAC);;
 
-let pure_eval_to_def = new_definition
+let pure_eval_to_def = cake_define
   `pure_eval_to s env exp v = (evaluate env s [exp] = (s,Rval [v]))`;;
 
 let pmatch_list_Match_IMP_LENGTH = prove
@@ -161,7 +161,7 @@ let pmatch_list_append_Match_exists = prove
    pmatch_list s ys vs2 bindings1 = Match bindings)`,
   CHEAT_TAC);;
 
-let ALOOKUP_rel_def = new_definition
+let ALOOKUP_rel_def = cake_define
   `ALOOKUP_rel P R env1 env2 =
    (!x. P x ==> OPTREL R (ALOOKUP env1 x) (ALOOKUP env2 x))`;;
 
@@ -329,7 +329,7 @@ hol4_overload "v_rel" "flat_patternProof_v_rel";;
 (* HOL4 flat_patternProofScript.sml:688-689: the ML values that the
    definitions below antiquote *)
 
-let install_conf_rel_def = new_definition
+let install_conf_rel_def = cake_define
   `install_conf_rel pat_cfg ic1 ic2 <=>
      (install_config_compile_oracle ic2 =
          pure_co (MAP (compile_dec pat_cfg)) o
@@ -337,7 +337,7 @@ let install_conf_rel_def = new_definition
      (install_config_compile ic1 = pure_cc (MAP (compile_dec
        pat_cfg)) (install_config_compile ic2))`;;
 
-let flat_patternProof_state_rel_def = new_definition
+let flat_patternProof_state_rel_def = cake_define
   `flat_patternProof_state_rel cfg (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)flatSem_state) <=> flatSem_state_clock
      t = flatSem_state_clock s /\
@@ -367,7 +367,7 @@ let flat_patternProof_state_rel_IMP_clock = prove
 (* HOL4 flat_patternProofScript.sml:722-723: the overload nv_rel,
    which the port expands *)
 
-let match_rel_def = new_definition
+let match_rel_def = cake_define
   `match_rel N x2 x3 =
         match (x2,x3) with
           (Match env1,Match env2) -> (\N. ALOOKUP_rel (\x.
@@ -507,20 +507,18 @@ let max_dec_name_LESS_EVERY = prove
   CHEAT_TAC);;
 
 let _ = size_thms "flatSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 flat_patternProofScript.sml:974-978: the tactic that proves
    the termination *)
-let encode_val_def,encode_val_ind = define_wf
+let encode_val_def = cake_define_wf
   `MEASURE flatSem_v_size`
-  [`encode_val others =
+  `encode_val others =
       match others with
         (Litv l:flatSem_v) -> Litv l
       | (Conv stmp xs) -> pattern_semantics_Term
      (match stmp with NONE -> NONE | SOME (i,_5) -> SOME i)
      (MAP encode_val xs)
       | (Loc _6 n) -> pattern_semantics_RefPtr n
-      | others -> pattern_semantics_Other`];;
+      | others -> pattern_semantics_Other`;;
 
 let decode_test_simulation = prove
  (`dt_test test enc_v = SOME b /\
@@ -536,7 +534,7 @@ let app_pos_Term_IMP = prove
    n < LENGTH xs /\ app_pos refs pos (EL n xs) = SOME y`,
   CHEAT_TAC);;
 
-let encode_refs_def = new_definition
+let encode_refs_def = cake_define
   `encode_refs s = FUN_FMAP (\i. encode_val (match EL i (state_refs s)
   with semanticPrimitives_Refv v -> v))
      (count (LENGTH (state_refs s)) INTER {i | ?v. EL i

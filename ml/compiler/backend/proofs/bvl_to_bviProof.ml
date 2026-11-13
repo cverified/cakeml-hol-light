@@ -60,10 +60,12 @@ let _ = do_list hide_constant ["str"];;
    port expands *)
 
 let _ = size_thms "bvlSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvl_to_bviProofScript.sml:34-38: the tactic that proves the
    termination *)
-let adjust_bv_def,adjust_bv_ind = define_shaped_rec
-  "nested"
+let adjust_bv_def = cake_define_list_try (fun () ->
+  `MEASURE (bvlSem_v_size o SND)`)
   [`adjust_bv b (Number i:bvlSem_v) = bvlSem_Number i`;
    `adjust_bv b (Word64 w:bvlSem_v) = bvlSem_Word64 w`;
    `adjust_bv b (RefPtr l r:bvlSem_v) = bvlSem_RefPtr l (b r)`;
@@ -84,7 +86,7 @@ let adjust_bv_Boolv = prove
  (`adjust_bv x (Boolv b) = Boolv b`,
   CHEAT_TAC);;
 
-let aux_code_installed_def,aux_code_installed_ind = define_rec
+let aux_code_installed_def = cake_define_list
   [`aux_code_installed [] t <=> T`;
    `aux_code_installed ((name,arg_count,body) :: rest) t <=>
          (sptree_lookup name t = SOME (arg_count,body)) /\
@@ -108,7 +110,7 @@ let aux_code_installed_subspt = prove
 (* HOL4 bvl_to_bviProofScript.sml:79: the overload in_ns_1, which the
    port expands *)
 
-let bvl_to_bviProof_names_ok_def = new_definition
+let bvl_to_bviProof_names_ok_def = cake_define
   `bvl_to_bviProof_names_ok s_code t_code s_oracle <=>
      (!n k prog. s_oracle n = (k,prog) ==>
                  EVERY (\(name,arity,exp). handle_ok [exp]) prog) /\
@@ -121,7 +123,7 @@ let bvl_to_bviProof_names_ok_def = new_definition
                    domain s_code)))`;;
 hol4_overload "names_ok" "bvl_to_bviProof_names_ok";;
 
-let bvl_to_bviProof_state_rel_def = new_definition
+let bvl_to_bviProof_state_rel_def = cake_define
   `bvl_to_bviProof_state_rel (b:num->num) s (t:('c,'ffi)bviSem_state)
   <=>
      INJ b (FDOM (state_refs s)) (FDOM (bviSem_state_refs t)) /\
@@ -204,18 +206,16 @@ let state_rel_FLOOKUP_Thunk = prove
   CHEAT_TAC);;
 
 let _ = size_thms "bvlSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 bvl_to_bviProofScript.sml:172-176: the tactic that proves the
    termination *)
-let bv_ok_def,bv_ok_ind = define_wf
+let bv_ok_def = cake_define_wf
   `MEASURE (bvlSem_v_size o SND)`
-  [`bv_ok refs x2 =
+  `bv_ok refs x2 =
         match (refs,x2) with
           ((refs:(num,bvlSem_v bvlSem_ref)fmap),(RefPtr l
             r:bvlSem_v)) -> r IN FDOM refs
         | (refs,(Block tag vs)) -> EVERY (bv_ok refs) vs
-        | (refs,_1) -> T`];;
+        | (refs,_1) -> T`;;
 
 (* HOL4 bvl_to_bviProofScript.sml:178: ML code, not ported *)
 
@@ -244,7 +244,7 @@ let bv_ok_IMP_adjust_bv_eq = prove
        (adjust_bv b2 a1 = adjust_bv b3 a1)`,
   CHEAT_TAC);;
 
-let state_ok_def = new_definition
+let state_ok_def = cake_define
   `bvl_to_bviProof_state_ok (s:('c,'ffi)bvlSem_state) <=>
      EVERY (\x. match x with NONE -> T | SOME v -> bv_ok
        (bvlSem_state_refs s) v) (bvlSem_state_globals s) /\
@@ -746,7 +746,7 @@ let compile_exps_aux_sorted = prove
      aux)) /\ n <= n1`,
   CHEAT_TAC);;
 
-let in_ns_def = new_definition
+let in_ns_def = cake_define
   `in_ns k n <=> n MOD bvl_to_bvi_namespaces = k`;;
 
 (* [simp] *)
@@ -1042,7 +1042,7 @@ let ODD_lemma = prove
  (`ODD (2 * n + k) = ODD k`,
   CHEAT_TAC);;
 
-let full_cc_def = new_definition
+let full_cc_def = cake_define
   `full_cc c cc =
      (let limit' = bvl_to_bvi_config_inline_size_limit c in
      let split = bvl_to_bvi_config_split_main_at_seq c in
@@ -1054,7 +1054,7 @@ let full_cc_def = new_definition
              c))
              (state_cc bvi_inline_compile_inc cc)))))`;;
 
-let full_co_def = new_definition
+let full_co_def = cake_define
   `full_co c co =
      (let limit' = bvl_to_bvi_config_inline_size_limit c in
      let split = bvl_to_bvi_config_split_main_at_seq c in

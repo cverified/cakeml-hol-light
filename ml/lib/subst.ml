@@ -14,20 +14,20 @@ let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: pred_set relation finite_map
    While prim_rec arithmetic bag list *)
 
-let rangevars_def = new_definition
+let rangevars_def = cake_define
   `rangevars s = BIGUNION (IMAGE vars (FRANGE s))`;;
 
-let substvars_def = new_definition
+let substvars_def = cake_define
   `substvars s = FDOM s UNION rangevars s`;;
 
-let vR_def = new_definition
+let vR_def = cake_define
   `vR s y x = (match FLOOKUP s x with SOME t -> y IN vars t | _1 ->
   F)`;;
 
-let wfs_def = new_definition
+let wfs_def = cake_define
   `wfs s = WF (vR s)`;;
 
-let subst_APPLY_def,subst_APPLY_ind = define_rec
+let subst_APPLY_def = cake_define_list
   [`subst_APPLY s (term_Var v) = (match FLOOKUP s v with NONE ->
   (term_Var v:'a term) | SOME t -> t)`;
    `subst_APPLY s (term_Pair t1 t2) = term_Pair (subst_APPLY s t1)

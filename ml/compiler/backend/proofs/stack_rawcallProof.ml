@@ -45,7 +45,7 @@ let _ = hol4_ancestors "stack_rawcallProof"
 (* HOL4 stack_rawcallProofScript.sml:21: the type abbreviation prog,
    which the port expands *)
 
-let stack_rawcallProof_state_ok_def = new_definition
+let stack_rawcallProof_state_ok_def = cake_define
   `stack_rawcallProof_state_ok i code <=>
      (!n v.
        sptree_lookup n i = SOME v ==>
@@ -53,7 +53,7 @@ let stack_rawcallProof_state_ok_def = new_definition
          v) p)))`;;
 hol4_overload "state_ok" "stack_rawcallProof_state_ok";;
 
-let stack_rawcallProof_state_rel_def = new_definition
+let stack_rawcallProof_state_rel_def = cake_define
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
        // co cc

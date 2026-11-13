@@ -728,10 +728,10 @@ let update_sorted_moves_eqn = prove
 
 (* HOL4 linear_scanProofScript.sml:2130: ML code, not ported *)
 
-let lookup_default_id_def = new_definition
+let lookup_default_id_def = cake_define
   `lookup_default_id s x = option_CASE (sptree_lookup x s) x (\x. x)`;;
 
-let find_reg_exchange_step_def = new_definition
+let find_reg_exchange_step_def = cake_define
   `find_reg_exchange_step colors r (exch,invexch) =
        (let col1 = EL r colors in
        let fcol1 = r DIV 2 in
@@ -756,7 +756,7 @@ let lookup_default_id_insert = prove
      else lookup_default_id s k1)`,
   CHEAT_TAC);;
 
-let id_def = new_definition
+let id_def = cake_define
   `linear_scanProof_id x = x`;;
 hol4_overload "id" "linear_scanProof_id";;
 
@@ -880,14 +880,14 @@ let apply_reg_exchange_correct = prove
       (linear_scan_hidden_state_colors sth))))`,
   CHEAT_TAC);;
 
-let less_FST_def = new_definition
+let less_FST_def = cake_define
   `less_FST (x:int#num) y = (FST x <= FST y)`;;
 
 let transitive_less_FST = prove
  (`transitive less_FST`,
   CHEAT_TAC);;
 
-let good_linear_scan_state_def = new_definition
+let good_linear_scan_state_def = cake_define
   `good_linear_scan_state st sth l (pos:int) forced mincol = (
        LENGTH (linear_scan_hidden_state_int_beg sth) = LENGTH
          (linear_scan_hidden_state_colors sth) /\ LENGTH
@@ -1027,7 +1027,7 @@ let forced_update_stack_color_lemma = prove
   CHEAT_TAC);;
 
 (* TODO: this should be part of the standard library, but I couldn't find it *)
-let IS_SPARSE_SUBLIST_def,IS_SPARSE_SUBLIST_ind = define_guess
+let IS_SPARSE_SUBLIST_def = cake_define_list
   [`IS_SPARSE_SUBLIST [] l2 = T`;
    `IS_SPARSE_SUBLIST (x :: xs) [] = F`;
    `IS_SPARSE_SUBLIST (x :: xs) (y :: ys) =
@@ -1120,7 +1120,7 @@ let spill_register_invariants = prove
    st <= EL reg (linear_scan_hidden_state_colors sthout))`,
   CHEAT_TAC);;
 
-let edges_to_adjlist_step_def = new_definition
+let edges_to_adjlist_step_def = cake_define
   `edges_to_adjlist_step sth (a,b) acc =
      (if a = b then
        acc else if ((<) LEX (<=)) (EL a
@@ -1138,14 +1138,14 @@ let edges_to_adjlist_FOLDL = prove
      edges_to_adjlist_step sth pair acc) acc forced),sth)`,
   CHEAT_TAC);;
 
-let forbidden_is_from_forced_def = new_definition
+let forbidden_is_from_forced_def = cake_define
   `forbidden_is_from_forced forced (int_beg:int list) reg forbidden =
        (!reg2. (~(reg = reg2) /\ (MEM (reg2,reg) forced \/ MEM
          (reg,reg2) forced) /\
        ((<) LEX (<=)) (EL reg2 int_beg,reg2) (EL reg int_beg,reg))
          <=> MEM reg2 forbidden)`;;
 
-let forbidden_is_from_forced_sublist_def = new_definition
+let forbidden_is_from_forced_sublist_def = cake_define
   `forbidden_is_from_forced_sublist l forced (int_beg:int list) reg
   forbidden =
        (!reg2. (~(reg = reg2) /\ (MEM (reg2,reg) forced \/ MEM
@@ -1153,13 +1153,13 @@ let forbidden_is_from_forced_sublist_def = new_definition
        ((<) LEX (<=)) (EL reg2 int_beg,reg2) (EL reg int_beg,reg))
          <=> (MEM reg2 forbidden /\ MEM reg l))`;;
 
-let forbidden_is_from_forced_list_def = new_definition
+let forbidden_is_from_forced_list_def = cake_define
   `forbidden_is_from_forced_list forced l reg forbidden =
        (!reg2. MEM reg2 l /\
               (MEM (reg2,reg) forced \/ MEM (reg,reg2) forced) ==>
               MEM reg2 forbidden)`;;
 
-let forbidden_is_from_map_color_forced_def = new_definition
+let forbidden_is_from_map_color_forced_def = cake_define
   `forbidden_is_from_map_color_forced forced l colors reg (forbidden:1
   spt) =
        (!reg2. MEM reg2 l /\
@@ -1335,7 +1335,7 @@ let st_ex_MAP_colors_sub = prove
      (linear_scan_hidden_state_colors sth)) l),sth)`,
   CHEAT_TAC);;
 
-let phystack_on_stack_def = new_definition
+let phystack_on_stack_def = cake_define
   `phystack_on_stack l st sth =
      (!r. MEM r l /\ is_phy_var r /\ 2 *
        linear_scan_state_colormax st <= r ==>
@@ -1412,7 +1412,7 @@ let linear_reg_alloc_step_pass2_invariants = prove
   CHEAT_TAC);;
 
 (* TODO: move *)
-let intbeg_less_def = new_definition
+let intbeg_less_def = cake_define
   `intbeg_less (int_beg:int list) r1 r2 = ((<) LEX (<=)) (EL r1
   int_beg,r1) (EL r2 int_beg,r2)`;;
 
@@ -1863,7 +1863,7 @@ let linear_reg_alloc_intervals_correct = prove
      (linear_scan_hidden_state_colors sth))`,
   CHEAT_TAC);;
 
-let good_bijection_state_def = new_definition
+let good_bijection_state_def = cake_define
   `good_bijection_state st regset = (
        regset = domain (bijection_state_bij st) /\
        (
@@ -1938,7 +1938,7 @@ let find_bijection_init_invariants = prove
  (`good_bijection_state find_bijection_init EMPTY`,
   CHEAT_TAC);;
 
-let sptree_eq_list_def = new_definition
+let sptree_eq_list_def = cake_define
   `sptree_eq_list (s:int spt) l = (!i.
      i < LENGTH l ==>
      ((&0) < EL i l <=> sptree_lookup i s = NONE) /\

@@ -29,13 +29,12 @@ let _ = hol4_ancestors "gc_combined"
 let gen_state_INDUCT,gen_state_RECURSION = define_datatype
   "gen_state = GenState (num) (num list)";;
 
-let make_partial_conf_def = define_general
-  [`make_partial_conf (conf:'a gen_gc_conf) (GenState _1 gen_starts) rs
-  =
+let make_partial_conf_def = cake_define
+  `make_partial_conf (conf:'a gen_gc_conf) (GenState _1 gen_starts) rs =
      mk_gen_gc_partial_conf (gen_gc_conf_limit conf)
-       (gen_gc_conf_isRef conf) (HD gen_starts) rs`];;
+       (gen_gc_conf_isRef conf) (HD gen_starts) rs`;;
 
-let gc_combined_def = new_definition
+let gc_combined_def = cake_define
   `gc_combined conf x2 x3 =
       match (x2,x3) with
         ((None:gc_kind),(roots,heap,(gs:gen_state),_2,_3)) ->

@@ -35,7 +35,7 @@ let asm_deterministic = prove
 
 (* -- well-formedness of encoding -- *)
 
-let offset_monotonic_def = new_definition
+let offset_monotonic_def = cake_define
   `offset_monotonic enc c a1 a2 i1 i2 <=>
    asm_ok i1 c /\ asm_ok i2 c ==>
    ((n2w 0) <= a1 /\ (n2w 0) <= a2 /\ a1 <= a2 ==> LENGTH (enc i1) <=
@@ -43,7 +43,7 @@ let offset_monotonic_def = new_definition
    (a1 < (n2w 0) /\ a2 < (n2w 0) /\ a2 <= a1 ==> LENGTH (enc i1)
      <= LENGTH (enc i2))`;;
 
-let enc_ok_def = new_definition
+let enc_ok_def = cake_define
   `enc_ok (c:'a asm_config) <=>
      (
       // code alignment and length
@@ -78,7 +78,7 @@ let target_FIELDS = define_record "target"
 hol4_field_overload "next" "target_next";;
 hol4_field_overload "next_fupd" "target_next_fupd";;
 
-let target_state_rel_def = new_definition
+let target_state_rel_def = cake_define
   `target_state_rel t s ms <=> target_state_ok
    t ms /\ (target_get_pc t ms = asm_state_pc s) /\
    (!a. a IN asm_state_mem_domain s ==> (target_get_byte t ms a =
@@ -89,7 +89,7 @@ let target_state_rel_def = new_definition
    (!i. i < asm_config_fp_reg_count (target_config t) ==>
      (target_get_fp_reg t ms i = asm_state_fp_regs s i))`;;
 
-let target_ok_def = new_definition
+let target_ok_def = cake_define
   `target_ok t <=>
    enc_ok (target_config t) /\
    (!ms1 ms2 s.
@@ -101,41 +101,35 @@ let target_ok_def = new_definition
      (!a. a IN asm_state_mem_domain s ==> target_get_byte t ms1 a
        = target_get_byte t ms2 a))`;;
 
-let interference_ok_def = new_definition
+let interference_ok_def = cake_define
   `interference_ok env proj <=> (!(i:num) ms. proj (env i ms) = proj
   ms)`;;
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let all_pcs_def,all_pcs_ind = define_guess_cheat
-  [`all_pcs n a k =
+let all_pcs_def = cake_define_cheat CHEAT_TAC
+  `all_pcs n a k =
         match n with
           0 -> {}
         | n -> a INSERT all_pcs (n - (2 EXP k)) (a + n2w (2 EXP
-          k)) k`];;
+          k)) k`;;
 
 let all_pcs_thm = prove
  (`all_pcs n a k = {a + n2w (i * (2 EXP k)) | i | i * (2 EXP k) < n}`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let asserts_def,asserts_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
+let asserts_def = cake_define_list
   [`asserts 0 next' ms _1 Q <=> Q (next' 0 ms)`;
    `asserts (SUC n) next' ms P Q <=>
          (let ms' = next' (SUC n) ms in P ms' /\ asserts n
            next' ms' P Q)`];;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let asserts2_def,asserts2_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`(asserts2 n fi fc ms P =
+let asserts2_def = cake_define
+  `(asserts2 n fi fc ms P =
     (if n = 0 then T else
       P ms (fc ms) /\
-      asserts2 (n - 1) fi fc (fi n (fc ms)) P))`];;
+      asserts2 (n - 1) fi fc (fi n (fc ms)) P))`;;
 
-let encoder_correct_def = new_definition
+let encoder_correct_def = cake_define
   `encoder_correct t <=>
      target_ok t /\
      (!s1 i s2 ms.

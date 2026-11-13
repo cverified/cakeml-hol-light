@@ -24,20 +24,16 @@ let _ = hol4_ancestors "clos_letop"
 
 (* let_op -- a function that optimises Let [...] (Op op [Var ...]) *)
 
-let _ = size_thms "closLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let clos_letop_var_list_def,clos_letop_var_list_ind = define_wf
-  `MEASURE (\(x0,x1,x2). closLang_exp_size1 x1)`
-  [`clos_letop_var_list n x2 x3 =
+let clos_letop_var_list_def = cake_define
+  `clos_letop_var_list n x2 x3 =
         match (x2,x3) with
           ([],[]) -> T
         | (((Var t m:closLang_exp) :: xs),(y :: ys)) -> ((m = n) /\
           clos_letop_var_list (n + 1) xs ys)
-        | (_1,_2) -> F`];;
+        | (_1,_2) -> F`;;
 hol4_overload "var_list" "clos_letop_var_list";;
 
-let clos_letop_dest_op_def = new_definition
+let clos_letop_dest_op_def = cake_define
   `clos_letop_dest_op x1 args =
         match x1 with
           (closLang_Op t op xs:closLang_exp) -> (if
@@ -45,8 +41,9 @@ let clos_letop_dest_op_def = new_definition
         | _3 -> NONE`;;
 hol4_overload "dest_op" "clos_letop_dest_op";;
 
-let clos_letop_let_op_def,clos_letop_let_op_ind = define_shaped_rec
-  "nested"
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let clos_letop_let_op_def = cake_define_list_cheat CHEAT_TAC
   [`clos_letop_let_op [] = []`;
    `clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
          HD (clos_letop_let_op [x]) :: clos_letop_let_op (y ::
@@ -92,8 +89,12 @@ let LENGTH_let_op = prove
   CHEAT_TAC);;
 
 let _ = size_thms "closLang_exp";;
-let clos_letop_let_op_sing_def = define_mutual_shaped_rec
-  "nested"
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let clos_letop_let_op_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL x -> closLang_exp_size x | INR (INL x)
+     -> list_size closLang_exp_size x | INR (INR x) -> list_size
+     (pair_size (\x. x) closLang_exp_size) x)`)
   [`clos_letop_let_op_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp))`;
    `clos_letop_let_op_sing (If t x1 x2 x3:closLang_exp) =
@@ -145,7 +146,7 @@ let let_op_sing_eq = prove
        fns)`,
   CHEAT_TAC);;
 
-let clos_letop_compile_inc_def = new_definition
+let clos_letop_compile_inc_def = cake_define
   `clos_letop_compile_inc (e,xs) = (clos_letop_let_op e,[])`;;
 hol4_overload "compile_inc" "clos_letop_compile_inc";;
 

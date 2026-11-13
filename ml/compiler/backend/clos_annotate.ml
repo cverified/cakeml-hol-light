@@ -27,19 +27,18 @@ let _ = hol4_ancestors "clos_annotate"
 
 (* alt_free calculates free variable annotations, and replaces unused lets with dummies *)
 
-let const_0_def = new_definition
+let const_0_def = cake_define
   `const_0 t = closLang_Op t (closLang_IntOp (closLang_Const (&0)))
   []`;;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let no_overlap_def,no_overlap_ind = define_wf
-  `MEASURE (\(x0,x1). (\n. n) x0)`
+let no_overlap_def = cake_define_list
   [`no_overlap 0 l <=> T`;
    `no_overlap (SUC n) l <=>
          (if has_var n l then F else no_overlap n l)`];;
 
-let alt_free_def,alt_free_ind = define_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let alt_free_def = cake_define_list_cheat CHEAT_TAC
   [`alt_free [] = ([],db_vars_Empty)`;
    `alt_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = alt_free [x] in
@@ -101,7 +100,15 @@ let alt_free_def,alt_free_ind = define_guess
            ([closLang_Call t ticks dest c1],l1))`];;
 
 let _ = size_thms "closLang_exp";;
-let alt_free_sing_def = define_mutual_guess
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let alt_free_sing_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR (INL
+     es) -> list_size closLang_exp_size es | INR (INR (_7,fns)) ->
+     list_size (pair_size (\x. x) closLang_exp_size) fns)`)
+  CHEAT_TAC
   [`alt_free_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp),Var v)`;
    `alt_free_sing (If t x1 x2 x3:closLang_exp) =
@@ -200,17 +207,19 @@ let alt_free_CONS = prove
 
 (* shift renames variables to use only those in the annotations *)
 
-let get_var_def = new_definition
+let get_var_def = cake_define
   `clos_annotate_get_var m l i v =
      (if v < l then v else l + zlookup i (v - l))`;;
 hol4_overload "get_var" "clos_annotate_get_var";;
 
-let shifted_env_def,shifted_env_ind = define_rec
+let shifted_env_def = cake_define_list
   [`shifted_env (n:num) [] = LN`;
    `shifted_env (n:num) (x :: xs) = sptree_insert x (n:num)
   (shifted_env (n + 1) xs)`];;
 
-let shift_def,shift_ind = define_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let shift_def = cake_define_list_cheat CHEAT_TAC
   [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;
    `clos_annotate_shift ((x:closLang_exp) :: y :: xs) (m:num) (l:num)
   (i:num spt) =
@@ -282,7 +291,17 @@ let shift_def,shift_ind = define_guess
 hol4_overload "shift" "clos_annotate_shift";;
 
 let _ = size_thms "closLang_exp";;
-let shift_sing_def = define_mutual_guess
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let shift_sing_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\x. match x with INL (e,_8,_9,_10) -> closLang_exp_size e |
+     INR (INL (es,_11,_12,_13)) -> list_size closLang_exp_size es |
+       INR
+     (INR (_14,_15,_16,l)) -> list_size (pair_size (\x. x)
+     closLang_exp_size) l)`)
+  CHEAT_TAC
   [`shift_sing (Var t v:closLang_exp) (m:num) (l:num) (i:num spt) =
          Var t (clos_annotate_get_var m l i v)`;
    `shift_sing (If t x1 x2 x3:closLang_exp) (m:num) (l:num) (i:num spt)
@@ -383,29 +402,29 @@ let HD_shift = prove
 
 (* main functions *)
 
-let annotate_def = new_definition
+let annotate_def = cake_define
   `clos_annotate_annotate arity xs = clos_annotate_shift (FST
   (alt_free xs)) 0 arity LN`;;
 hol4_overload "annotate" "clos_annotate_annotate";;
 
-let clos_annotate_compile_def = new_definition
+let clos_annotate_compile_def = cake_define
   `clos_annotate_compile prog =
      MAP (\(n,args,exp). (n,args,HD (clos_annotate_annotate args
        [exp]))) prog`;;
 hol4_overload "compile" "clos_annotate_compile";;
 
-let clos_annotate_compile_inc_def = new_definition
+let clos_annotate_compile_inc_def = cake_define
   `clos_annotate_compile_inc (e,aux) = (clos_annotate_annotate 0
   e,clos_annotate_compile aux)`;;
 hol4_overload "compile_inc" "clos_annotate_compile_inc";;
 
 (* cv versions *)
 
-let annotate_sing_def = new_definition
+let annotate_sing_def = cake_define
   `annotate_sing arity x = shift_sing (FST (alt_free_sing x)) 0 arity
   LN`;;
 
-let annotate_list_def = new_definition
+let annotate_list_def = cake_define
   `annotate_list arity xs = shift_list (FST (alt_free_list xs)) 0
   arity LN`;;
 

@@ -96,12 +96,12 @@ let asm_fetch_aux_no_label = prove
    asm_fetch_aux pc' code = SOME (Label l1 l2 x) ==> F`,
   CHEAT_TAC);;
 
-let dest_to_loc_def = new_definition
+let dest_to_loc_def = cake_define
   `dest_to_loc regs' dest =
      (match dest with INL p -> p | INR r -> (match FAPPLY regs' r
        with wordLang_Loc loc _1 -> loc))`;;
 
-let dest_to_loc'_def = new_definition
+let dest_to_loc'_def = cake_define
   `dest_to_loc' regs' dest =
      (match dest with INL p -> p | INR r -> (match regs' r with
        wordLang_Loc loc _2 -> loc))`;;
@@ -138,9 +138,7 @@ let word_cmp_negate = prove
 
 (* -- Lemmas about code_installed, loc_to_pc and asm_fetch_aux -- *)
 
-let stack_to_labProof_code_installed_def,
-    stack_to_labProof_code_installed_ind =
-  define_rec
+let stack_to_labProof_code_installed_def = cake_define_list
   [`stack_to_labProof_code_installed n [] code = T`;
    `stack_to_labProof_code_installed n (x :: xs) code <=>
        (if is_Label x then
@@ -263,7 +261,7 @@ let ALOOKUP_PARTITION = prove
    ~(MEM n (MAP FST ls1)))`,
   CHEAT_TAC);;
 
-let code_installed'_def,code_installed'_ind = define_rec
+let code_installed'_def = cake_define_list
   [`code_installed' n [] code <=> T`;
    `code_installed' n (x :: xs) code <=>
          (if is_Label x then code_installed' n xs code else
@@ -299,7 +297,7 @@ let asm_fetch_aux_add = prove
         (Section pos ys :: rest) = asm_fetch_aux pc' rest`,
   CHEAT_TAC);;
 
-let labs_correct_def,labs_correct_ind = define_rec
+let labs_correct_def = cake_define_list
   [`labs_correct n [] code <=> T`;
    `labs_correct n (x :: xs) code <=>
          (if is_Label x then labs_correct n xs code /\
@@ -345,7 +343,7 @@ let labs_correct_hd = prove
      (Section n (extra ++ l) :: code)`,
   CHEAT_TAC);;
 
-let labels_ok_def = new_definition
+let labels_ok_def = cake_define
   `labels_ok code <=>
    // Section names are distinct
    ALL_DISTINCT (MAP (\s. match s with Section n _7 -> n) code) /\
@@ -389,7 +387,7 @@ let code_installed_prog_to_section = prove
 
 (* -- End code_installed lemmas  -- *)
 
-let stack_to_labProof_state_rel_def = new_definition
+let stack_to_labProof_state_rel_def = cake_define
   `stack_to_labProof_state_rel (s:('a,'c,'ffi)stackSem_state)
   (t:('a,'c,'ffi)labSem_state) <=>
      (!n v. FLOOKUP (stackSem_state_regs s) n = SOME v ==>
@@ -545,7 +543,7 @@ let result_view_INDUCT,result_view_RECURSION = define_datatype
   "result_view = Vloc (num) (num) | Vcont (num) (num) | Vtimeout | \
    Verr";;
 
-let result_view_def = new_definition
+let result_view_def = cake_define
   `result_view x1 l cs bs =
         match x1 with
           stackSem_Result (wordLang_Loc n1 n2) -> Vloc n1 n2
@@ -555,14 +553,14 @@ let result_view_def = new_definition
         | (Break n) -> Vloc l (find_lab n bs)
         | _11 -> Verr`;;
 
-let halt_word_view_def = new_definition
+let halt_word_view_def = cake_define
   `halt_word_view x1 =
         match x1 with
           wordLang_Word (n2w 0) -> Halt ffi_Success
         | (wordLang_Word _12) -> Halt ffi_Resource_limit_hit
         | _13 -> Error`;;
 
-let halt_view_def = new_definition
+let halt_view_def = cake_define
   `halt_view x1 =
         match x1 with
           SOME (Halt w) -> SOME (halt_word_view w)
@@ -648,7 +646,7 @@ let every_is_some_loc_to_pc_prefix = prove
    statement HOL Light does not read (tools/unstated.py):
    flatten_call_correct *)
 
-let halt_assum_def = new_definition
+let halt_assum_def = cake_define
   `halt_assum (:'ffi#'c) code <=>
     (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s
@@ -662,7 +660,7 @@ let halt_assum_def = new_definition
    statement HOL Light does not read (tools/unstated.py):
    flatten_semantics *)
 
-let stack_to_labProof_make_init_def = new_definition
+let stack_to_labProof_make_init_def = cake_define
   `stack_to_labProof_make_init code coracle regs' save_regs
   (s:('a,'c,'ffi)labSem_state) =
      (mk_stackSem_state (FEMPTY |++ (MAP (\r. r,(\r s.
@@ -686,7 +684,7 @@ hol4_overload "make_init" "stack_to_labProof_make_init";;
 (* HOL4 stack_to_labProofScript.sml:3054: the overload
    stack_remove_compile, which the port expands *)
 
-let full_make_init_def = new_definition
+let full_make_init_def = cake_define
   `full_make_init stack_conf data_conf max_heap sp offset bitmaps code
   s4 save_regs data_sp coracle =
    (let ggc = is_gen_gc (data_to_word_config_gc_kind data_conf) in
@@ -733,7 +731,7 @@ let full_make_init_compile = prove
         (stack_to_lab_config_jump a) e d) p)))) o MAP prog_comp)`,
   CHEAT_TAC);;
 
-let memory_assumption_def = new_definition
+let memory_assumption_def = cake_define
   `memory_assumption rnames (bitmaps:('a word) list) data_sp t =
      (?ptr2 ptr3 ptr4 bitmap_ptr.
        (\r s. labSem_state_regs s r) (tlookup rnames 2) t =
@@ -876,7 +874,7 @@ let stack_to_lab_compile_lab_pres = prove
    labels_ok (compile c c2 c3 sp offset prog)`,
   CHEAT_TAC);;
 
-let stack_to_labProof_good_code_def = new_definition
+let stack_to_labProof_good_code_def = cake_define
   `stack_to_labProof_good_code sp code <=>
     ALL_DISTINCT (MAP FST code) /\
     EVERY (\(k,prog). stack_num_stubs <= k /\ alloc_arg prog) code /\
@@ -889,7 +887,7 @@ let stack_to_labProof_good_code_def = new_definition
        ALL_DISTINCT (extract_labels p)) code`;;
 hol4_overload "good_code" "stack_to_labProof_good_code";;
 
-let contain_def = new_definition
+let contain_def = cake_define
   `contain b = Abbrev b`;;
 
 (* HOL4 stack_to_labProofScript.sml:3365-3615: a theorem whose
@@ -997,12 +995,8 @@ let full_make_init_has_fp_ops = prove
        mheap sp offset bitmaps code s save_regs dsp cor`,
   CHEAT_TAC);;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`complex_get_code_labels x1 =
+let complex_get_code_labels_def = cake_define
+  `complex_get_code_labels x1 =
         match x1 with
           stackLang_Seq p1 p2 -> complex_get_code_labels p1 UNION
             complex_get_code_labels p2
@@ -1018,7 +1012,7 @@ let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
         | (LocValue i l1 l2) -> {(l1,l2)}
         | (stackLang_RawCall l) -> {(l,1)}
         | (stackLang_JumpLower n m l) -> {(l,0)}
-        | _24 -> {}`];;
+        | _24 -> {}`;;
 
 (* [local] *)
 let complex_flatten_labels = prove

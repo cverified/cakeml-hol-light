@@ -22,7 +22,7 @@ let _ = hol4_ancestors "bvi_tmc"
   ["backend_common"; "bvi"];;
 (* HOL4 ancestors outside the port: integer *)
 
-let bvi_tmc_pure_op_def = new_definition
+let bvi_tmc_pure_op_def = cake_define
   `bvi_tmc_pure_op x1 x2 =
         match (x1,x2) with
           ((closLang_Label _2:closLang_op),_3) -> F
@@ -40,7 +40,11 @@ let bvi_tmc_pure_op_def = new_definition
 hol4_overload "pure_op" "bvi_tmc_pure_op";;
 
 let _ = size_thms "bvi_exp";;
-let pure_exp_def = define_mutual_rec
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let pure_exp_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_42,e) -> bvi_exp_size e | INR
+     (_43,es) -> list_size bvi_exp_size es)`)
   [`pure_exp n (Var v:bvi_exp) = (v < n)`;
    `pure_exp n (If e1 e2 e3:bvi_exp) = F`;
    `pure_exp n (Let es e:bvi_exp) = (pure_exp n e /\ pure_exps n es)`;
@@ -99,7 +103,7 @@ let pure_exps_append = prove
      pure_exps n (es1 ++ es2)`,
   CHEAT_TAC);;
 
-let dest_Cons_def = new_definition
+let dest_Cons_def = cake_define
   `bvi_tmc_dest_Cons x1 =
       match x1 with
         closLang_BlockOp (closLang_Cons block_tag) -> SOME block_tag
@@ -119,7 +123,7 @@ let call_block_INDUCT,call_block_RECURSION = define_datatype
   "call_block = CallBlock (num) (num list) (call_block) (num list) | \
    RCall (num) (num list)";;
 
-let bind_def,bind_ind = define_rec
+let bind_def = cake_define_list
   [`bvi_tmc_bind (n:num) [] = ([],n)`;
    `bvi_tmc_bind (n:num) (_45 :: t) =
        (match bvi_tmc_bind (n + 1) t with (vs,n') -> (n ::
@@ -132,11 +136,11 @@ let bind_size = prove
      LENGTH args = LENGTH vs`,
   CHEAT_TAC);;
 
-let shift_vars_def,shift_vars_ind = define_rec
+let shift_vars_def = cake_define_list
   [`shift_vars (n:num) [] = []`;
    `shift_vars (n:num) (h :: t) = (h + (n:num)) :: shift_vars n t`];;
 
-let shift_cb_def,shift_cb_ind = define_rec
+let shift_cb_def = cake_define_list
   [`shift_cb n (RCall ts args) = RCall ts (shift_vars n args)`;
    `shift_cb n (CallBlock tag l c r) =
        (let l' = shift_vars n l in
@@ -144,7 +148,7 @@ let shift_cb_def,shift_cb_ind = define_rec
        let r' = shift_vars n r in
          CallBlock tag l' c' r')`];;
 
-let call_to_cb_def = new_definition
+let call_to_cb_def = cake_define
   `call_to_cb loc call_ts call_loc call_args' call_h =
    (if call_loc = SOME loc /\ call_h = NONE then
      match bvi_tmc_bind 0 call_args' with (vs,_46) ->
@@ -177,7 +181,14 @@ let shift_cb_dist = prove
    If an effectful operation appears right of the recursive call, the expression is not eligible for transformation and NONE is returned.
    If multiple recursive calls are found, all but the last are let bound. *)
 let _ = size_thms "bvi_exp";;
-let bvi_to_cb_aux_def = define_mutual_guess
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let bvi_to_cb_aux_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\x. match x with INL (_58,_59,_60,e) -> bvi_exp_size e |
+     INR (_61,_62,_63,es) -> list_size bvi_exp_size es)`)
+  CHEAT_TAC
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
        (match call_to_cb loc t loc' args h with SOME (bs,cb) ->
          SOME (bs,INR (CallBlock tag [] cb [])) | _49 -> NONE)`;
@@ -226,7 +237,7 @@ let bvi_to_cb_aux_def = define_mutual_guess
                (let cb' = CallBlock tag (0 :: l) child r in
                  SOME (h :: bs2,INR cb')) | _57 -> NONE))`];;
 
-let wf_vars_def = new_definition
+let wf_vars_def = cake_define
   `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
 
 let wf_vars_empty = prove
@@ -273,7 +284,7 @@ let wf_vars_bind = prove
      wf_vars (n + LENGTH bs) vs`,
   CHEAT_TAC);;
 
-let wf_cb_def,wf_cb_ind = define_rec
+let wf_cb_def = cake_define_list
   [`wf_cb n (RCall ts args) =
        wf_vars n args`;
    `wf_cb n (CallBlock tag left child right) =
@@ -336,7 +347,7 @@ let bvi_to_cb_aux_wf_inr_lemma = prove
 (* HOL4 bvi_tmcScript.sml:490: a theorem that HOL4 states as the
    value of an ML expression: bvi_to_cb_aux_wf_inr *)
 
-let bvi_to_cb_def = new_definition
+let bvi_to_cb_def = cake_define
   `bvi_to_cb n loc x3 =
         match x3 with
           (Call call_ts call_loc call_args' call_h:bvi_exp) ->
@@ -365,7 +376,7 @@ let bvi_to_cb_cases = prove
   CHEAT_TAC);;
 
 (* Convert back to BlockOp Cons for comparing semantics *)
-let cb_to_bvi_def,cb_to_bvi_ind = define_rec
+let cb_to_bvi_def = cake_define_list
   [`cb_to_bvi loc (CallBlock tag l child r) =
          (let l' = MAP (\n. Var n) l in
          let child' = cb_to_bvi loc child in
@@ -397,7 +408,7 @@ let bvi_to_cb_size = prove
 
 (* Phase 2 - Transformations. *)
 
-let mut_cons_def = new_definition
+let mut_cons_def = cake_define
   `mut_cons t l r =
      (let l' = MAP (\n. Var n) l in
      let hole' = Op (closLang_IntOp (closLang_Const (&0))) [] in
@@ -406,30 +417,29 @@ let mut_cons_def = new_definition
      Op (closLang_MemOp (closLang_MutCons t i)) (l' ++ [hole'] ++
        r'))`;;
 
-let finalise_cons_def = new_definition
+let finalise_cons_def = cake_define
   `bvi_tmc_finalise_cons i_top_ptr = Op (closLang_MemOp
   closLang_FinaliseCons) [Var i_top_ptr]`;;
 hol4_overload "finalise_cons" "bvi_tmc_finalise_cons";;
 
-let fill_hole_def = new_definition
+let fill_hole_def = cake_define
   `fill_hole i_ptr i_idx exp = Op (closLang_MemOp
   closLang_UpdateCons) [exp; Var i_idx; Var i_ptr]`;;
 
-let optimise_call_def = new_definition
+let optimise_call_def = cake_define
   `optimise_call call_ts loc_opt call_args' exp_ptr exp_idx =
    (let args = MAP (\n. Var n) call_args' ++ [exp_ptr; exp_idx] in
      Call call_ts (SOME loc_opt) args NONE)`;;
 
-let update_cons_def = new_definition
+let update_cons_def = cake_define
   `update_cons exp_ptr exp_idx exp_val = Op (closLang_MemOp
   closLang_UpdateCons) [exp_val; exp_idx; exp_ptr]`;;
 
-let cb_size_def,cb_size_ind = define_shaped_rec
-  "match"
-  [`cb_size x1 =
+let cb_size_def = cake_define
+  `cb_size x1 =
       match x1 with
         CallBlock _67 _68 x _69 -> cb_size x + 1
-      | _70 -> 0`];;
+      | _70 -> 0`;;
 
 (* [local] *)
 let call_block_size_shift = prove
@@ -442,8 +452,9 @@ let call_block_size_shift = prove
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let cb_to_bvi_worker_aux_def,cb_to_bvi_worker_aux_ind = define_wf_cheat
-  `MEASURE (cb_size o FST)`
+let cb_to_bvi_worker_aux_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (cb_size o FST)`)
+  CHEAT_TAC
   [`cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (Var ptr) (Op
          (closLang_IntOp (closLang_Const (&idx))) [])`;
@@ -462,8 +473,7 @@ let shift_cb_zero = prove
 (* Same as cb_to_bvi_worker_aux, but with the shift carried as an accumulator
    so that the recursion is on a subterm of the call block.  This version is
    the one used by the cv translation. *)
-let cb_to_bvi_worker_aux_alt_def,cb_to_bvi_worker_aux_alt_ind =
-  define_rec
+let cb_to_bvi_worker_aux_alt_def = cake_define_list
   [`cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args') loc_opt ptr
   idx =
        optimise_call call_ts loc_opt (shift_vars sh call_args') (Var
@@ -489,7 +499,7 @@ let cb_to_bvi_worker_aux_eq = prove
    cb_to_bvi_worker_aux_alt 0 cb loc_opt ptr idx`,
   CHEAT_TAC);;
 
-let cb_to_bvi_worker_def = define_cases
+let cb_to_bvi_worker_def = cake_define_list
   [`cb_to_bvi_worker (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (Var ptr) (Var
          idx)`;
@@ -499,7 +509,7 @@ let cb_to_bvi_worker_def = define_cases
            (cb_to_bvi_worker_aux (shift_cb 2 child) loc_opt 1
              (LENGTH right)))`];;
 
-let cb_to_bvi_wrapper_def = new_definition
+let cb_to_bvi_wrapper_def = cake_define
   `(cb_to_bvi_wrapper tag left child right loc_opt =
     Let [mut_cons tag left right] (
         Let [cb_to_bvi_worker_aux (shift_cb 1 child) loc_opt 0
@@ -507,9 +517,8 @@ let cb_to_bvi_wrapper_def = new_definition
         (bvi_tmc_finalise_cons 1)))`;;
 
 (* Expression rewriting *)
-let rewrite_wrapper_def,rewrite_wrapper_ind = define_shaped_rec
-  "match"
-  [`rewrite_wrapper loc loc_opt n x4 =
+let rewrite_wrapper_def = cake_define
+  `rewrite_wrapper loc loc_opt n x4 =
         match x4 with
           (Var n:bvi_exp) -> NONE
         | (If xi xt xe) ->
@@ -519,24 +528,23 @@ let rewrite_wrapper_def,rewrite_wrapper_ind = define_shaped_rec
          -> SOME (If xi yt xe) | (NONE,SOME ye) -> SOME (If xi xt ye) |
          (SOME yt,SOME ye) -> SOME (If xi yt ye))
         | (Let xs x) ->
-       (match rewrite_wrapper loc loc_opt (n + LENGTH xs) x with
-         NONE -> NONE | SOME y -> SOME (Let xs y))
+       (match rewrite_wrapper loc loc_opt (n + LENGTH xs) x with NONE
+         -> NONE | SOME y -> SOME (Let xs y))
         | (Raise x) -> NONE
         | (Tick x) -> OPTION_MAP Tick (rewrite_wrapper loc loc_opt n
           x)
         | (Force _71 n) -> NONE
         | (Call t d args h) -> NONE
         | (Op op op_args) ->
-       (match bvi_to_cb n loc (Op op op_args) with SOME
-         (bs,CallBlock tag left child right) ->
+       (match bvi_to_cb n loc (Op op op_args) with SOME (bs,CallBlock
+         tag left child right) ->
            SOME (Let bs (cb_to_bvi_wrapper tag left child right
              loc_opt)) | _72 -> NONE)
-        | _73 -> NONE`];;
+        | _73 -> NONE`;;
 
 (* Assumes that the function can and should be optimised - has been checked by rewrite_wrapper. *)
-let rewrite_worker_def,rewrite_worker_ind = define_shaped_rec
-  "match"
-  [`rewrite_worker loc loc_opt i_old_ptr i_old_idx n expr =
+let rewrite_worker_def = cake_define
+  `rewrite_worker loc loc_opt i_old_ptr i_old_idx n expr =
         match expr with
           (If xi xt xe:bvi_exp) ->
        (let yt = rewrite_worker loc loc_opt i_old_ptr i_old_idx n xt
@@ -552,8 +560,8 @@ let rewrite_worker_def,rewrite_worker_ind = define_shaped_rec
         | (Op op op_args) ->
       (match bvi_to_cb n loc (Op op op_args) with SOME (bs,cb) ->
           (let offset = LENGTH bs in
-             Let bs (cb_to_bvi_worker cb loc_opt (offset +
-               i_old_ptr) (offset + i_old_idx))) | NONE ->
+             Let bs (cb_to_bvi_worker cb loc_opt (offset + i_old_ptr)
+               (offset + i_old_idx))) | NONE ->
           fill_hole i_old_ptr i_old_idx (Op op op_args))
         | (Tick x) ->
        Tick (rewrite_worker loc loc_opt i_old_ptr i_old_idx n x)
@@ -564,9 +572,9 @@ let rewrite_worker_def,rewrite_worker_ind = define_shaped_rec
                 i_old_ptr) (offset + i_old_idx))) | NONE ->
            fill_hole i_old_ptr i_old_idx (Call ts l args h))
         | expr ->
-      fill_hole i_old_ptr i_old_idx expr`];;
+      fill_hole i_old_ptr i_old_idx expr`;;
 
-let bvi_tmc_compile_exp_def = new_definition
+let bvi_tmc_compile_exp_def = cake_define
   `bvi_tmc_compile_exp (loc:num) (next':num) (arity:num) (exp:bvi_exp) =
      (match rewrite_wrapper loc next' arity exp with NONE -> NONE |
        SOME exp_wrapper ->
@@ -575,7 +583,7 @@ let bvi_tmc_compile_exp_def = new_definition
        SOME (exp_wrapper,exp_worker)))`;;
 hol4_overload "compile_exp" "bvi_tmc_compile_exp";;
 
-let bvi_tmc_compile_each_def,bvi_tmc_compile_each_ind = define_rec
+let bvi_tmc_compile_each_def = cake_define_list
   [`bvi_tmc_compile_each next' [] = (next',[])`;
    `bvi_tmc_compile_each next' ((loc,arity,exp) :: xs) =
         (match bvi_tmc_compile_exp loc next' arity exp with NONE ->
@@ -588,7 +596,7 @@ let bvi_tmc_compile_each_def,bvi_tmc_compile_each_ind = define_rec
               2,exp_worker) :: ys)))`];;
 hol4_overload "compile_each" "bvi_tmc_compile_each";;
 
-let bvi_tmc_compile_prog_def = new_definition
+let bvi_tmc_compile_prog_def = cake_define
   `bvi_tmc_compile_prog do_it next' xs =
      (if do_it then bvi_tmc_compile_each next' xs else (next',xs))`;;
 hol4_overload "compile_prog" "bvi_tmc_compile_prog";;

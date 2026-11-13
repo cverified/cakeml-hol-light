@@ -66,15 +66,12 @@ let ctor_INDUCT,ctor_RECURSION = define_datatype
    | RefC \
    // a RefPtr";;
 
-let ctor_arity_def = define_cases
+let ctor_arity_def = cake_define_list
   [`ctor_arity (TagC t a) = a`;
    `ctor_arity (TupC a) = a`;
    `ctor_arity RefC = 1`];;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let anys_def,anys_ind = define_wf
-  `MEASURE (\x0. (\n. n) x0)`
+let anys_def = cake_define_list
   [`anys 0 = []`;
    `anys (SUC n) = pattern_semantics_Any :: anys n`];;
 
@@ -87,25 +84,29 @@ let anys_def,anys_ind = define_wf
    the patterns in expand p does.
  * -------------------------------------------------------------------- *)
 
-let add_head_def,add_head_ind = define_rec
+let add_head_def = cake_define_list
   [`add_head x [] = []`;
    `add_head x (ys :: yss) = (x :: ys) :: add_head x yss`];;
 
-let mk_prods_def,mk_prods_ind = define_rec
+let mk_prods_def = cake_define_list
   [`mk_prods [] ys = []`;
    `mk_prods (x :: xs) ys = add_head x ys ++ mk_prods xs ys`];;
 
-let mk_refs_def,mk_refs_ind = define_rec
+let mk_refs_def = cake_define_list
   [`mk_refs [] = []`;
    `mk_refs (p :: ps) = pattern_semantics_Ref p :: mk_refs ps`];;
 
-let mk_conses_def,mk_conses_ind = define_rec
+let mk_conses_def = cake_define_list
   [`mk_conses t [] = []`;
    `mk_conses t (ps :: pss) = pattern_semantics_Cons t ps ::
   mk_conses t pss`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-let expand_def = define_mutual_rec
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let expand_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
+     INR ps -> list_size pattern_semantics_pat_size ps)`)
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (Lit l:pattern_semantics_pat) = [(Lit
@@ -118,11 +119,11 @@ let expand_def = define_mutual_rec
    `expand_list [] = [[]]`;
    `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
 
-let mk_rows_def,mk_rows_ind = define_rec
+let mk_rows_def = cake_define_list
   [`mk_rows [] = []`;
    `mk_rows (p :: ps) = [p] :: mk_rows ps`];;
 
-let or_rows_def,or_rows_ind = define_rec
+let or_rows_def = cake_define_list
   [`or_rows [] = []`;
    `or_rows ((p,e) :: rows) = mk_rows (expand p) ++ or_rows rows`];;
 
@@ -136,16 +137,16 @@ let or_rows_def,or_rows_ind = define_rec
    literal pattern.
  * -------------------------------------------------------------------- *)
 
-let tag_ctors_def,tag_ctors_ind = define_rec
+let tag_ctors_def = cake_define_list
   [`tag_ctors [] = []`;
    `tag_ctors ((t,a) :: sibs) = TagC t a :: tag_ctors sibs`];;
 
-let ctor_nub_def,ctor_nub_ind = define_rec
+let ctor_nub_def = cake_define_list
   [`ctor_nub [] = []`;
    `ctor_nub (x :: xs) = (if MEM x xs then ctor_nub xs else x ::
   ctor_nub xs)`];;
 
-let ctors_of_def = new_definition
+let ctors_of_def = cake_define
   `ctors_of x1 =
       match x1 with
         (pattern_semantics_Any:pattern_semantics_pat) -> NONE
@@ -157,24 +158,20 @@ let ctors_of_def = new_definition
       | (pattern_semantics_Cons (SOME (t,SOME sibs)) qs) ->
      SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`;;
 
-let ctor_keep_def,ctor_keep_ind = define_rec
+let ctor_keep_def = cake_define_list
   [`ctor_keep [] ys = []`;
    `ctor_keep (x :: xs) ys =
       (if MEM x ys then x :: ctor_keep xs ys else ctor_keep xs
         ys)`];;
 
-let ctor_inter_def = new_definition
+let ctor_inter_def = cake_define
   `ctor_inter xs ys =
       match (xs,ys) with
         (NONE,ys) -> ys
       | (xs,NONE) -> xs
       | ((SOME xs),(SOME ys)) -> SOME (ctor_keep xs ys)`;;
 
-let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let col_ctors_def,col_ctors_ind = define_wf
-  `MEASURE (\x0. list_size pattern_semantics_pat_size1 x0)`
+let col_ctors_def = cake_define_list
   [`col_ctors [] = NONE`;
    `col_ctors ([] :: rows) = col_ctors rows`;
    `col_ctors ((p :: _5) :: rows) = ctor_inter (ctors_of p)
@@ -190,7 +187,7 @@ let col_ctors_def,col_ctors_ind = define_wf
    wildcard, dropping the head pattern.
  * -------------------------------------------------------------------- *)
 
-let spec_row_def = new_definition
+let spec_row_def = cake_define
   `spec_row c x2 =
       match x2 with
         [] -> []
@@ -205,22 +202,22 @@ let spec_row_def = new_definition
       | ((Lit l) :: rest) -> []
       | ((Or p q) :: rest) -> []`;;
 
-let spec_mat_def,spec_mat_ind = define_rec
+let spec_mat_def = cake_define_list
   [`spec_mat c [] = []`;
    `spec_mat c (r :: rows) = spec_row c r ++ spec_mat c rows`];;
 
-let spec_mats_def,spec_mats_ind = define_rec
+let spec_mats_def = cake_define_list
   [`spec_mats [] rows = []`;
    `spec_mats (c :: cs) rows = spec_mat c rows :: spec_mats cs rows`];;
 
-let default_row_def = new_definition
+let default_row_def = cake_define
   `default_row x1 =
       match x1 with
         ((pattern_semantics_Any:pattern_semantics_pat) :: rest) ->
           [rest]
       | _6 -> []`;;
 
-let default_mat_def,default_mat_ind = define_rec
+let default_mat_def = cake_define_list
   [`default_mat [] = []`;
    `default_mat (r :: rows) = default_row r ++ default_mat rows`];;
 
@@ -236,7 +233,11 @@ let default_mat_def,default_mat_ind = define_rec
  * -------------------------------------------------------------------- *)
 
 let _ = size_thms "pattern_semantics_pat";;
-let pat_weight_def = define_mutual_rec
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let pat_weight_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
+     INR ps -> list_size pattern_semantics_pat_size ps)`)
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
    `pat_weight (Lit l:pattern_semantics_pat) = ((0):num)`;
@@ -249,19 +250,19 @@ let pat_weight_def = define_mutual_rec
    `pats_weight [] = 0`;
    `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
 
-let mat_weight_def,mat_weight_ind = define_rec
+let mat_weight_def = cake_define_list
   [`mat_weight [] = 0`;
    `mat_weight (r :: rows) = pats_weight r + mat_weight rows`];;
 
-let mat_len_def,mat_len_ind = define_rec
+let mat_len_def = cake_define_list
   [`mat_len [] = 0`;
    `mat_len (r :: rows) = LENGTH r + mat_len rows`];;
 
-let mats_weight_def,mats_weight_ind = define_rec
+let mats_weight_def = cake_define_list
   [`mats_weight [] = 0`;
    `mats_weight (m :: ms) = MAX (mat_weight m) (mats_weight ms)`];;
 
-let mats_len_def,mats_len_ind = define_rec
+let mats_len_def = cake_define_list
   [`mats_len [] = 0`;
    `mats_len (m :: ms) = MAX (mat_len m) (mats_len ms)`];;
 
@@ -341,11 +342,13 @@ let mat_len_default_mat_less = prove
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_matrix_def = define_mutual_wf_cheat
+let exh_matrix_def = cake_define_list_try_tac (fun () ->
   `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`
+          (\x. match x with INL rows -> (mat_weight rows,mat_len
+            rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
+              ms,LENGTH
+            ms + 1))`)
+  CHEAT_TAC
   [`exh_matrix [] = F`;
    `exh_matrix (r :: rows) =
       (if NULL r then T else
@@ -355,7 +358,7 @@ let exh_matrix_def = define_mutual_wf_cheat
    `exh_mats [] = T`;
    `exh_mats (m :: ms) = (exh_matrix m /\ exh_mats ms)`];;
 
-let exh_rows_def = new_definition
+let exh_rows_def = cake_define
   `exh_rows rows = exh_matrix (or_rows rows)`;;
 
 
@@ -380,11 +383,13 @@ let exh_rows_def = new_definition
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_steps_def = define_mutual_wf_cheat
+let exh_steps_def = cake_define_list_try_tac (fun () ->
   `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`
+          (\x. match x with INL rows -> (mat_weight rows,mat_len
+            rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
+              ms,LENGTH
+            ms + 1))`)
+  CHEAT_TAC
   [`exh_steps [] = (1:num)`;
    `exh_steps (r :: rows) =
       (((if NULL r then 1 else
@@ -406,8 +411,9 @@ let exh_steps_list_append = prove
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_all_def,exh_all_ind = define_wf_cheat
-  `MEASURE exh_steps_list`
+let exh_all_def = cake_define_list_try_tac (fun () ->
+  `MEASURE exh_steps_list`)
+  CHEAT_TAC
   [`exh_all [] = T`;
    `exh_all ([] :: ms) = F`;
    `exh_all ((r :: rows) :: ms) =
@@ -453,7 +459,7 @@ let exh_rows_eq = prove
    makes the case analysis below disappear into two rewrite rules.
  * ---------------------------------------------------------------------- *)
 
-let pand_def = define_cases
+let pand_def = cake_define_list
   [`pand PMatchSuccess y = y`;
    `pand PMatchFailure y = (if y = PTypeFailure then PTypeFailure
   else PMatchFailure)`;
@@ -627,7 +633,7 @@ let expand_thm = prove
    which is exactly when Ref does not type-fail.
  * ---------------------------------------------------------------------- *)
 
-let dest_val_def = new_definition
+let dest_val_def = cake_define
   `dest_val refs x2 =
       match x2 with
         pattern_semantics_Term (SOME t) vs -> SOME (TagC t (LENGTH

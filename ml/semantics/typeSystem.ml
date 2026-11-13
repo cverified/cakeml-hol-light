@@ -38,109 +38,108 @@ let t_INDUCT,t_RECURSION = define_datatype
 
 
 (* Some abbreviations *)
-let tarray_num_def = new_definition
+let tarray_num_def = cake_define
   `(((Tarray_num:num):num) = ((0:num)))`;;
 
-let tbool_num_def = new_definition
+let tbool_num_def = cake_define
   `(((Tbool_num:num):num) = ((1:num)))`;;
 
-let tchar_num_def = new_definition
+let tchar_num_def = cake_define
   `(((Tchar_num:num):num) = ((2:num)))`;;
 
-let texn_num_def = new_definition
+let texn_num_def = cake_define
   `(((Texn_num:num):num) = ((3:num)))`;;
 
-let tfn_num_def = new_definition
+let tfn_num_def = cake_define
   `(((Tfn_num:num):num) = ((4:num)))`;;
 
-let tint_num_def = new_definition
+let tint_num_def = cake_define
   `(((Tint_num:num):num) = ((5:num)))`;;
 
-let tlist_num_def = new_definition
+let tlist_num_def = cake_define
   `(((Tlist_num:num):num) = ((6:num)))`;;
 
-let tref_num_def = new_definition
+let tref_num_def = cake_define
   `(((Tref_num:num):num) = ((7:num)))`;;
 
-let tstring_num_def = new_definition
+let tstring_num_def = cake_define
   `(((Tstring_num:num):num) = ((8:num)))`;;
 
-let ttup_num_def = new_definition
+let ttup_num_def = cake_define
   `(((Ttup_num:num):num) = ((9:num)))`;;
 
-let tvector_num_def = new_definition
+let tvector_num_def = cake_define
   `(((Tvector_num:num):num) = ((10:num)))`;;
 
-let tword64_num_def = new_definition
+let tword64_num_def = cake_define
   `(((Tword64_num:num):num) = ((11:num)))`;;
 
-let tword8_num_def = new_definition
+let tword8_num_def = cake_define
   `(((Tword8_num:num):num) = ((12:num)))`;;
 
-let tword8array_num_def = new_definition
+let tword8array_num_def = cake_define
   `(((Tword8array_num:num):num) = ((13:num)))`;;
 
-let tdouble_num_def = new_definition
+let tdouble_num_def = cake_define
   `(((Tdouble_num:num):num) = ((14:num)))`;;
 
 (* The numbers for the primitive types *)
-let prim_type_nums_def = new_definition
+let prim_type_nums_def = cake_define
   `(prim_type_nums:num list) =
    [Tarray_num; Tchar_num; Texn_num; Tfn_num; Tint_num; Tref_num;
      Tstring_num;
     Ttup_num; Tvector_num; Tword64_num; Tword8_num;
       Tword8array_num; Tdouble_num]`;;
 
-let tarray_def = new_definition
+let tarray_def = cake_define
   `((Tarray:t->t) t = (Tapp [t] Tarray_num))`;;
 
-let tbool_def = new_definition
+let tbool_def = cake_define
   `((Tbool:t) = (Tapp [] Tbool_num))`;;
 
-let tchar_def = new_definition
+let tchar_def = cake_define
   `((Tchar:t) = (Tapp [] Tchar_num))`;;
 
-let texn_def = new_definition
+let texn_def = cake_define
   `((Texn:t) = (Tapp [] Texn_num))`;;
 
-let tfn_def = new_definition
+let tfn_def = cake_define
   `((Tfn:t->t->t) t1 t2 = (Tapp [t1; t2] Tfn_num))`;;
 
-let tint_def = new_definition
+let tint_def = cake_define
   `((Tint:t) = (Tapp [] Tint_num))`;;
 
-let tlist_def = new_definition
+let tlist_def = cake_define
   `((Tlist:t->t) t = (Tapp [t] Tlist_num))`;;
 
-let tref_def = new_definition
+let tref_def = cake_define
   `((Tref:t->t) t = (Tapp [t] Tref_num))`;;
 
-let tstring_def = new_definition
+let tstring_def = cake_define
   `((Tstring:t) = (Tapp [] Tstring_num))`;;
 
-let ttup_def = new_definition
+let ttup_def = cake_define
   `((Ttup:t list->t) ts = (Tapp ts Ttup_num))`;;
 
-let tvector_def = new_definition
+let tvector_def = cake_define
   `((Tvector:t->t) t = (Tapp [t] Tvector_num))`;;
 
-let tword64_def = new_definition
+let tword64_def = cake_define
   `((Tword64:t) = (Tapp [] Tword64_num))`;;
 
-let tword8_def = new_definition
+let tword8_def = cake_define
   `((Tword8:t) = (Tapp [] Tword8_num))`;;
 
-let tword8array_def = new_definition
+let tword8array_def = cake_define
   `((Tword8array:t) = (Tapp [] Tword8array_num))`;;
 
-let tdouble_def = new_definition
+let tdouble_def = cake_define
   `((Tdouble:t) = (Tapp [] Tdouble_num))`;;
 
 (* Check that the free type variables are in the given list. Every deBruijn
  * variable must be smaller than the first argument. So if it is 0, no deBruijn
  * indices are permitted. *)
-let check_freevars_def,check_freevars_ind = define_shaped_rec
-  "nested"
+let check_freevars_def = cake_define_list
   [`(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar tv) =
        (MEM tv tvs)`;
    `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tapp ts tn)
@@ -149,8 +148,7 @@ let check_freevars_def,check_freevars_ind = define_shaped_rec
    `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar_db
   n) = (n < dbmax)`];;
 
-let check_freevars_ast_def,check_freevars_ast_ind = define_shaped_rec
-  "nested"
+let check_freevars_ast_def = cake_define_list
   [`(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv) =
        (MEM tv tvs)`;
    `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts) =
@@ -161,8 +159,7 @@ let check_freevars_ast_def,check_freevars_ast_ind = define_shaped_rec
        (EVERY (check_freevars_ast tvs) ts)`];;
 
 (* Simultaneous substitution of types for type variables in a type *)
-let type_subst_def,type_subst_ind = define_shaped_rec
-  "nested"
+let type_subst_def = cake_define_list
   [`(type_subst:(mlstring,t)fmap->t->t) s (Tvar tv) =
        ((match FLOOKUP s tv with
           NONE -> Tvar tv | SOME (t) -> t))`;
@@ -172,8 +169,7 @@ let type_subst_def,type_subst_ind = define_shaped_rec
 
 (* Increment the deBruijn indices in a type by n levels, skipping all levels
  * less than skip. *)
-let deBruijn_inc_def,deBruijn_inc_ind = define_shaped_rec
-  "nested"
+let deBruijn_inc_def = cake_define_list
   [`(deBruijn_inc:num->num->t->t) skip n (Tvar tv) = (Tvar tv)`;
    `(deBruijn_inc:num->num->t->t) skip n (Tvar_db m) =
        (if m < skip then
@@ -183,8 +179,7 @@ let deBruijn_inc_def,deBruijn_inc_ind = define_shaped_rec
   (deBruijn_inc skip n) ts) tn)`];;
 
 (* skip the lowest given indices and replace the next (LENGTH ts) with the given types and reduce all the higher ones *)
-let deBruijn_subst_def,deBruijn_subst_ind = define_shaped_rec
-  "nested"
+let deBruijn_subst_def = cake_define_list
   [`(deBruijn_subst:num->t list->t->t) skip ts (Tvar tv) = (Tvar tv)`;
    `(deBruijn_subst:num->t list->t->t) skip ts (Tvar_db n) =
        (if ~(n < skip) /\ (n < (LENGTH ts + skip)) then
@@ -207,13 +202,13 @@ hol4_overload "Bind_name" "typeSystem_Bind_name";;
 
 
 (*val bind_tvar : nat -> tenv_val_exp -> tenv_val_exp*)
-let bind_tvar_def = new_definition
+let bind_tvar_def = cake_define
   `((bind_tvar:num->tenv_val_exp->tenv_val_exp) tvs tenvE = (if tvs =
   (0:num) then tenvE else typeSystem_Bind_tvar tvs tenvE))`;;
 
 
 (*val opt_bind_name : maybe varN -> nat -> t -> tenv_val_exp -> tenv_val_exp*)
-let opt_bind_name_def = new_definition
+let opt_bind_name_def = cake_define
   `((opt_bind_name:mlstring option->num->t->tenv_val_exp->tenv_val_exp)
   n tvs t tenvE =
      ((match n with
@@ -222,7 +217,7 @@ let opt_bind_name_def = new_definition
 
 
 (*val tveLookup : varN -> nat -> tenv_val_exp -> maybe (nat * t)*)
-let tveLookup_def,tveLookup_ind = define_rec
+let tveLookup_def = cake_define_list
   [`(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
   (typeSystem_Empty:tenv_val_exp) = NONE`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
@@ -247,7 +242,7 @@ let type_env_FIELDS = define_record "type_env"
 
 
 (*val extend_dec_tenv : type_env -> type_env -> type_env*)
-let extend_dec_tenv_def = new_definition
+let extend_dec_tenv_def = cake_define
   `((extend_dec_tenv:type_env->type_env->type_env) tenv' tenv =
      (mk_type_env (nsAppend (type_env_v tenv') (type_env_v tenv))
        (nsAppend (type_env_c tenv') (type_env_c tenv)) (nsAppend
@@ -255,7 +250,7 @@ let extend_dec_tenv_def = new_definition
 
 
 (*val lookup_varE : id modN varN -> tenv_val_exp -> maybe (nat * t)*)
-let lookup_varE_def = new_definition
+let lookup_varE_def = cake_define
   `((lookup_varE:(mlstring,mlstring)namespace_id->tenv_val_exp->(num#t)
   option) id' tenvE =
      ((match id' with
@@ -263,7 +258,7 @@ let lookup_varE_def = new_definition
 
 
 (*val lookup_var : id modN varN -> tenv_val_exp -> type_env -> maybe (nat * t)*)
-let lookup_var_def = new_definition
+let lookup_var_def = cake_define
   `((lookup_var:(mlstring
   ,mlstring)namespace_id->tenv_val_exp->type_env->(num#t) option) id'
   tenvE tenv =
@@ -272,7 +267,7 @@ let lookup_var_def = new_definition
 
 
 (*val num_tvs : tenv_val_exp -> nat*)
-let num_tvs_def,num_tvs_ind = define_rec
+let num_tvs_def = cake_define_list
   [`(num_tvs:tenv_val_exp->num) (typeSystem_Empty:tenv_val_exp) =
   ((0:num))`;
    `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) =
@@ -282,7 +277,7 @@ let num_tvs_def,num_tvs_ind = define_rec
 
 
 (*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp -> tenv_val_exp*)
-let bind_var_list_def,bind_var_list_ind = define_rec
+let bind_var_list_def = cake_define_list
   [`(bind_var_list:num->(mlstring#t)
   list->tenv_val_exp->tenv_val_exp) tvs [] tenvE = tenvE`;
    `(bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp)
@@ -315,7 +310,7 @@ let bind_var_list_def,bind_var_list_ind = define_rec
  * - the set of type identity stamps defined here
  * - the environment of new stuff declared here *)
 
-let t_of_def = new_definition
+let t_of_def = cake_define
   `t_of x1 =
       match x1 with
         ast_BoolT -> Tbool
@@ -326,7 +321,7 @@ let t_of_def = new_definition
       | (ast_WordT ast_W64) -> Tword64
       | ast_Float64T -> Tdouble`;;
 
-let supported_test_def = new_definition
+let supported_test_def = cake_define
   `supported_test x1 ty =
       match x1 with
         (Equal:test) -> T
@@ -334,7 +329,7 @@ let supported_test_def = new_definition
         ast_W8; ast_Float64T; ast_StrT]
       | _3 -> (ty = ast_StrT)`;;
 
-let supported_arith_def = new_definition
+let supported_arith_def = cake_define
   `supported_arith a x2 =
         match x2 with
           (ast_IntT:prim_type) ->
@@ -352,7 +347,7 @@ let supported_arith_def = new_definition
         (if MEM a [ast_Not] then SOME 1 else NONE)
         | (ty:prim_type) -> NONE`;;
 
-let supported_conversion_def = new_definition
+let supported_conversion_def = cake_define
   `supported_conversion x1 x2 =
         match (x1,x2) with
           // Word to Int conversions
@@ -374,7 +369,7 @@ let supported_conversion_def = new_definition
 
 (* Check that the operator can have type (t1 -> ... -> tn -> t) *)
 (*val type_op : op -> list t -> t -> bool*)
-let type_op_def = new_definition
+let type_op_def = cake_define
   `(type_op:ast_op->t list->t->bool) op ts t =
      (match (op,ts) with
         (ast_Opapp,[t1; t2]) -> t1 = Tfn t2 t | (ast_Shift ast_W8 _5
@@ -434,8 +429,7 @@ let type_op_def = new_definition
           [t1] ctor; t2]) -> (ctor = Tlist_num) /\ (t2 = Tapp [t1]
           ctor) /\ (t = t2) | _9 -> F)`;;
 
-let check_type_names_def,check_type_names_ind = define_shaped_rec
-  "nested"
+let check_type_names_def = cake_define_list
   [`(check_type_names:(mlstring,mlstring,mlstring
   list#t)namespace->ast_t->bool) tenvT (Atvar tv) =
        T`;
@@ -452,8 +446,7 @@ let check_type_names_def,check_type_names_ind = define_shaped_rec
       EVERY (check_type_names tenvT) ts)`];;
 
 (* Substitution of type names for the type they abbreviate *)
-let type_name_subst_def,type_name_subst_ind = define_shaped_rec
-  "nested"
+let type_name_subst_def = cake_define_list
   [`(type_name_subst:(mlstring,mlstring,mlstring
   list#t)namespace->ast_t->t) tenvT (Atvar tv) = (Tvar tv)`;
    `(type_name_subst:(mlstring,mlstring,mlstring
@@ -476,7 +469,7 @@ let type_name_subst_def,type_name_subst_ind = define_shaped_rec
  * type are included in the type's type parameters. Also check that all of the
  * types mentioned are in scope. *)
 (*val check_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> bool*)
-let check_ctor_tenv_def,check_ctor_tenv_ind = define_rec
+let check_ctor_tenv_def = cake_define_list
   [`(check_ctor_tenv:(mlstring,mlstring,mlstring
   list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list)
   list) list->bool) tenvT [] = T`;
@@ -495,14 +488,8 @@ let check_ctor_tenv_def,check_ctor_tenv_ind = define_rec
 
 
 (*val build_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> list nat -> tenv_ctor*)
-let _ = size_thms "ast_t";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
-  `MEASURE (\(x0,x1,x2).      list_size      (pair_size (\x. 0)
-  (pair_size (\x. 0) (list_size (pair_size (\x. 0) ast_t_size1))))
-  x1)`
-  [`build_ctor_tenv tenvT x2 x3 =
+let build_ctor_tenv_def = cake_define
+  `build_ctor_tenv tenvT x2 x3 =
         match (x2,x3) with
           ([],[]) -> (alist_to_ns [])
         | (((tvs,tn,ctors) :: tds),(id' :: ids)) ->
@@ -514,16 +501,12 @@ let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
              (\(cn,ts). (cn,(tvs,MAP (type_name_subst tenvT)
                ts,id')))
              ctors))))
-        | (_15,_16) -> (alist_to_ns [])`];;
+        | (_15,_16) -> (alist_to_ns [])`;;
 
 
 (* For the value restriction on let-based polymorphism *)
-let _ = size_thms "ast_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let is_value_def,is_value_ind = define_wf
-  `MEASURE (\x0. ast_exp_size x0)`
-  [`is_value x1 =
+let is_value_def = cake_define
+  `is_value x1 =
         match x1 with
           (ast_Lit _18:ast_exp) -> T
         | (ast_Con _19 es) -> (EVERY is_value es)
@@ -531,7 +514,7 @@ let is_value_def,is_value_ind = define_wf
         | (ast_Fun _21 _22) -> T
         | (ast_Tannot e _23) -> (is_value e)
         | (ast_Lannot e _24) -> (is_value e)
-        | _25 -> F`];;
+        | _25 -> F`;;
 
 let type_p = cake_inductive
   `(!tvs tenv t.
@@ -703,14 +686,14 @@ let type_e = cake_inductive
      bindings))`;;
 
 (*val tenv_add_tvs : nat -> alist varN t -> alist varN (nat * t)*)
-let tenv_add_tvs_def = new_definition
+let tenv_add_tvs_def = cake_define
   `((tenv_add_tvs:num->(mlstring#t) list->(mlstring#num#t) list) tvs
   bindings =
      (MAP (\(n,t). (n,(tvs,t))) bindings))`;;
 
 
 (*val type_pe_determ : type_env -> tenv_val_exp -> pat -> exp -> bool*)
-let type_pe_determ_def = new_definition
+let type_pe_determ_def = cake_define
   `((type_pe_determ:type_env->tenv_val_exp->ast_pat->ast_exp->bool) tenv
   tenvE p e =
      (!t1 tenv1 t2 tenv2.
@@ -720,7 +703,7 @@ let type_pe_determ_def = new_definition
 
 
 (*val tscheme_inst : (nat * t) -> (nat * t) -> bool*)
-let tscheme_inst_def = new_definition
+let tscheme_inst_def = cake_define
   `((tscheme_inst:num#t->num#t->bool) (tvs_spec,t_spec)
   (tvs_impl,t_impl) =
      (?subst.
@@ -730,7 +713,7 @@ let tscheme_inst_def = new_definition
       (deBruijn_subst ((0:num)) subst t_impl = t_spec)))`;;
 
 
-let tenvLift_def = new_definition
+let tenvLift_def = cake_define
   `((tenvLift:mlstring->type_env->type_env) mn tenv =
      (mk_type_env (nsLift mn (type_env_v tenv)) (nsLift mn
        (type_env_c tenv)) (nsLift mn (type_env_t tenv))))`;;
@@ -928,13 +911,13 @@ let weak_tenvT n (tvs_spec, t_spec) (tvs_impl, t_impl) =
    t_spec = Tapp (List.map Tvar tvs_spec) (TC_name n))
    *)
 
-let tscheme_inst2_def = new_definition
+let tscheme_inst2_def = cake_define
   `((tscheme_inst2:'a->num#t->num#t->bool) _26 ts1 ts2 =
   (tscheme_inst ts1 ts2))`;;
 
 
 (*val weak_tenv : type_env -> type_env -> bool*)
-let weak_tenv_def = new_definition
+let weak_tenv_def = cake_define
   `((weak_tenv:type_env->type_env->bool) tenv_impl tenv_spec =
      (nsSub tscheme_inst2 (type_env_v tenv_spec) (type_env_v
        tenv_impl) /\

@@ -46,22 +46,22 @@ let pegresult_INDUCT,pegresult_RECURSION = define_datatype
    (locs) ('e)";;
 hol4_overload "Success" "peg_Success";;
 hol4_overload "Failure" "peg_Failure";;
-let isSuccess_def = define_cases
+let isSuccess_def = cake_define_list
   [`isSuccess (peg_Success _4 _5 _6) = T`;
    `isSuccess (peg_Failure _7 _8) = F`];;
-let isFailure_def = define_cases
+let isFailure_def = cake_define_list
   [`isFailure (peg_Success _12 _13 _14) = F`;
    `isFailure (peg_Failure _15 _16) = T`];;
 
-let resultmap_def = define_cases
+let resultmap_def = cake_define_list
   [`resultmap f (peg_Success a c eo) = peg_Success a (f c) eo`;
    `resultmap f (peg_Failure fl fe) = peg_Failure fl fe`];;
 
-let MAXerr_def = new_definition
+let MAXerr_def = cake_define
   `MAXerr (fl1,fe1) (fl2,fe2) =
    (if locsle fl1 fl2 then (fl2,fe2) else (fl1,fe1))`;;
 
-let optmax_def = new_definition
+let optmax_def = cake_define
   `optmax f x2 x3 =
       match (x2,x3) with
         (NONE,NONE) -> NONE
@@ -70,7 +70,7 @@ let optmax_def = new_definition
       | ((SOME x),(SOME y)) -> SOME (f x y)`;;
 
 (* HOL4 pegScript.sml:84: the overload EOF, which the port expands *)
-let sloc_def = define_cases
+let sloc_def = cake_define_list
   [`sloc [] = (Locs EOFpt EOFpt)`;
    `sloc (h :: t) = SND h`];;
 let peg_eval = cake_inductive
@@ -203,11 +203,7 @@ let wfpeg = cake_inductive
        e2 f)) /\
      (!e f. wfpeg G e /\ ~(peg0 G e) ==> wfpeg G (peg_rpt e f)))`;;
 
-let _ = size_thms "pegsym";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let subexprs_def,subexprs_ind = define_wf
-  `MEASURE (\x0. pegsym_size (\x. 0) (\x. 0) (\x. 0) (\x. 0) x0)`
+let subexprs_def = cake_define_list
   [`subexprs (peg_any f1) = {peg_any f1}`;
    `subexprs (peg_empty c) = {peg_empty c}`;
    `subexprs (peg_tok t f2) = {peg_tok t f2}`;
@@ -221,23 +217,23 @@ let subexprs_def,subexprs_ind = define_wf
           e2)`;
    `subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e`];;
 
-let gexprs_def = new_definition
+let gexprs_def = cake_define
   `Gexprs G = BIGUNION (IMAGE subexprs (start G INSERT FRANGE
   (peg_rules G)))`;;
 
-let wfG_def = new_definition
+let wfG_def = cake_define
   `wfG G <=> (!e. e IN Gexprs G ==> wfpeg G e)`;;
-let pegf_def = new_definition
+let pegf_def = cake_define
   `peg_pegf sym f = peg_seq sym (peg_empty ARB) (\l1 l2. f l1)`;;
 hol4_overload "pegf" "peg_pegf";;
 
-let ignoreL_def = new_definition
+let ignoreL_def = cake_define
   `ignoreL s1 s2 = peg_seq s1 s2 (\a b. b)`;;
 
-let ignoreR_def = new_definition
+let ignoreR_def = cake_define
   `ignoreR s1 s2 = peg_seq s1 s2 (\a b. a)`;;
 
-let choicel_def,choicel_ind = define_rec
+let choicel_def = cake_define_list
   [`peg_choicel [] = peg_not (peg_empty ARB) ARB`;
    `peg_choicel (h :: t) = peg_choice h (peg_choicel t) (\s.
   sum_CASE s I I)`];;

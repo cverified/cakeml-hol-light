@@ -122,7 +122,7 @@ let decide_ty_simp = prove
    ty1 = ty3 /\ ty2 = ty3 /\ ~(ty3 = bvi_tailrec_Any)`,
   CHEAT_TAC);;
 
-let ty_rel_def = new_definition
+let ty_rel_def = cake_define
   `ty_rel = LIST_REL
      (\v t. (t = Int ==> (?k. v = bvlSem_Number k)) /\
             (t = List ==> (?ys. bvlSem_v_to_list v = SOME ys)))`;;
@@ -175,7 +175,7 @@ let term_ok_SING = prove
            bvlSem_v_to_list v = SOME ys) | _1 -> T))`,
   CHEAT_TAC);;
 
-let op_id_val_def = define_cases
+let op_id_val_def = cake_define_list
   [`op_id_val bvi_tailrec_Plus = bvlSem_Number (&0)`;
    `op_id_val bvi_tailrec_Times = bvlSem_Number (&1)`;
    `op_id_val (Append:assoc_op) = bvlSem_Block nil_tag []`;
@@ -187,7 +187,7 @@ let scan_expr_not_Noop = prove
        bvi_tailrec_Noop)`,
   CHEAT_TAC);;
 
-let bvi_tailrecProof_env_rel_def = new_definition
+let bvi_tailrecProof_env_rel_def = cake_define
   `bvi_tailrecProof_env_rel ty opt acc env1 env2 <=>
      isPREFIX env1 env2 /\
      (opt ==>
@@ -202,7 +202,7 @@ hol4_overload "env_rel" "bvi_tailrecProof_env_rel";;
 (* HOL4 bvi_tailrecProofScript.sml:274: the overload in_ns_2, which
    the port expands *)
 
-let bvi_tailrecProof_code_rel_def = new_definition
+let bvi_tailrecProof_code_rel_def = cake_define
   `bvi_tailrecProof_code_rel c1 c2 <=>
      (!loc arity exp op.
        sptree_lookup loc c1 = SOME (arity,exp) ==>
@@ -351,7 +351,7 @@ let scan_expr_op_type = prove
            NONE -> T) ys`,
   CHEAT_TAC);;
 
-let optimized_code_def = new_definition
+let optimized_code_def = cake_define
   `optimized_code loc arity exp n c op =
      (?exp_aux exp_opt.
          compile_exp loc n arity exp = SOME (exp_aux,exp_opt) /\
@@ -369,7 +369,7 @@ let compile_each_LENGTH = prove
   prog`,
   CHEAT_TAC);;
 
-let free_names_def = new_definition
+let free_names_def = cake_define
   `bvi_tailrecProof_free_names n (name:num) <=> (!k. ~(n +
   bvl_to_bvi_namespaces * k = name))`;;
 hol4_overload "free_names" "bvi_tailrecProof_free_names";;
@@ -516,7 +516,7 @@ let compile_prog_ALL_DISTINCT = prove
    EVERY (bvi_tailrecProof_free_names n1 o FST) ys`,
   CHEAT_TAC);;
 
-let namespace_rel_def = new_definition
+let namespace_rel_def = cake_define
   `bvi_tailrecProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
      (!n. n IN domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
        bvl_to_bvi_namespaces = 2) n then ~(n IN domain c1) else n IN
@@ -526,7 +526,7 @@ let namespace_rel_def = new_definition
      (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
 hol4_overload "namespace_rel" "bvi_tailrecProof_namespace_rel";;
 
-let input_condition_def = new_definition
+let input_condition_def = cake_define
   `bvi_tailrecProof_input_condition next' prog <=>
      EVERY (bvi_tailrecProof_free_names next' o FST) prog /\
     ALL_DISTINCT (MAP FST prog) /\
@@ -536,7 +536,7 @@ let input_condition_def = new_definition
       2) next'`;;
 hol4_overload "input_condition" "bvi_tailrecProof_input_condition";;
 
-let bvi_tailrecProof_state_rel_def = new_definition
+let bvi_tailrecProof_state_rel_def = cake_define
   `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=>
   bviSem_state_refs
      t = state_refs s /\ bviSem_state_clock

@@ -12,8 +12,8 @@ needs "lib/sptree.ml";;
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: finite_map transfer pred_set *)
 
-let sp2fm_def = new_definition
+let sp2fm_def = cake_define
   `sp2fm sp = FUN_FMAP (\k. THE (sptree_lookup k sp)) (domain sp)`;;
 
-let fm2sp_def = new_definition
+let fm2sp_def = cake_define
   `fm2sp fm = ITFMAP sptree_insert fm LN`;;

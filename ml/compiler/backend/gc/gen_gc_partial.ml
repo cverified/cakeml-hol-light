@@ -37,7 +37,7 @@ hol4_field_overload "limit_fupd" "gen_gc_partial_conf_limit_fupd";;
 hol4_field_overload "isRef" "gen_gc_partial_conf_isRef";;
 hol4_field_overload "isRef_fupd" "gen_gc_partial_conf_isRef_fupd";;
 
-let gen_gc_partial_gc_move_def = define_cases
+let gen_gc_partial_gc_move_def = cake_define_list
   [`gen_gc_partial_gc_move conf state (gc_shared_Data d) =
   ((gc_shared_Data d:'a heap_address),state)`;
    `gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
@@ -79,8 +79,7 @@ let gen_gc_partial_gc_move_IMP = prove
     (gc_state_r1 state1 = gc_state_r1 state)`,
   CHEAT_TAC);;
 
-let gen_gc_partial_gc_move_list_def,gen_gc_partial_gc_move_list_ind =
-  define_rec
+let gen_gc_partial_gc_move_list_def = cake_define_list
   [`gen_gc_partial_gc_move_list conf state [] = ([],state)`;
    `gen_gc_partial_gc_move_list conf state (x :: xs) =
         (let (x,state) = gc_move conf state x in
@@ -102,17 +101,15 @@ let gen_gc_partial_gc_move_list_IMP = prove
     (gc_state_r1 state1 = gc_state_r1 state)`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 gen_gc_partialScript.sml:113-119: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
-  define_wf_cheat
+let gen_gc_partial_gc_move_data_def = cake_define_try_tac (fun () ->
   `MEASURE (\(conf,state). limit conf - heap_length (gc_state_h1
-  state))`
-  [`(gen_gc_partial_gc_move_data conf state =
+  state))`)
+  CHEAT_TAC
+  `(gen_gc_partial_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
        (if limit conf < heap_length (gc_state_h1 state ++ (h :: h2))
          then gc_state_ok_fupd (K F) state else
@@ -120,11 +117,11 @@ let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
           (let (xs,state) = gc_move_list conf state xs in
           let h1 = gc_state_h1 state ++ [DataElement xs l d] in
           let h2 = TL (gc_state_h2 state) in
-          let ok = (gc_state_ok state /\ ~(gc_state_h2 state = [])
-            /\ (HD (gc_state_h2 state) = h)) in
-            gen_gc_partial_gc_move_data conf (gc_state_ok_fupd
-              (K ok) (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K
-              h1) state)))) | _5 -> gc_state_ok_fupd (K F) state)))`];;
+          let ok = (gc_state_ok state /\ ~(gc_state_h2 state = []) /\
+            (HD (gc_state_h2 state) = h)) in
+            gen_gc_partial_gc_move_data conf (gc_state_ok_fupd (K
+              ok) (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1)
+              state)))) | _5 -> gc_state_ok_fupd (K F) state)))`;;
 hol4_overload "gc_move_data" "gen_gc_partial_gc_move_data";;
 
 let gc_move_data_IMP = prove
@@ -137,20 +134,15 @@ let gc_move_data_IMP = prove
     (gc_state_r4 state1 = gc_state_r4 state)`,
   CHEAT_TAC);;
 
-let _ = size_thms "heap_element";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let gc_move_ref_list_def,gc_move_ref_list_ind = define_wf
-  `MEASURE (\(x0,x1,x2). list_size (heap_element_size (\x. 0) (\x. 0))
-  x2)`
-  [`gc_move_ref_list conf state x3 =
+let gc_move_ref_list_def = cake_define
+  `gc_move_ref_list conf state x3 =
         match x3 with
           [] -> ([],state)
         | (DataElement ptrs l d :: xs) ->
        (let (ptrs',state) = gc_move_list conf state ptrs in
        let (xs,state) = gc_move_ref_list conf state xs in
          (DataElement ptrs' l d :: xs,state))
-        | (x :: xs) -> (x :: xs,gc_state_ok_fupd (K F) state)`];;
+        | (x :: xs) -> (x :: xs,gc_state_ok_fupd (K F) state)`;;
 
 (* [local] *)
 let gc_move_ref_list_IMP = prove
@@ -165,7 +157,7 @@ let gc_move_ref_list_IMP = prove
       isSomeDataElement (heap_lookup ptr refs1))`,
   CHEAT_TAC);;
 
-let partial_gc_def = new_definition
+let partial_gc_def = cake_define
   `partial_gc conf (roots,heap) =
      (match heap_segment (gen_gc_partial_conf_gen_start
        conf,gen_gc_partial_conf_refs_start conf) heap with NONE ->
@@ -202,7 +194,7 @@ let partial_gc_IMP = prove
   CHEAT_TAC);;
 
 (* Pointers between current and old generations are correct *)
-let heap_gen_ok_def = new_definition
+let heap_gen_ok_def = cake_define
   `heap_gen_ok heap conf <=>
      (?old current refs. gen_gc_partial_conf_gen_start
        conf <= gen_gc_partial_conf_refs_start conf /\
@@ -235,7 +227,7 @@ let data_sort_INDUCT,data_sort_RECURSION = define_datatype
    | Real ('b) \
    // data or pointer to current generation";;
 
-let to_gen_heap_address_def = define_cases
+let to_gen_heap_address_def = cake_define_list
   [`to_gen_heap_address conf (gc_shared_Data a) = gc_shared_Data
   (Real a)`;
    `to_gen_heap_address conf (gc_shared_Pointer ptr a) =
@@ -246,7 +238,7 @@ let to_gen_heap_address_def = define_cases
           gc_shared_Pointer (ptr -
             gen_gc_partial_conf_gen_start conf) (Real a))`];;
 
-let to_gen_conf_def = new_definition
+let to_gen_conf_def = cake_define
   `to_gen_conf (conf:'a gen_gc_partial_conf) =
      (mk_gen_gc_conf (gen_gc_partial_conf_limit conf -
        gen_gc_partial_conf_gen_start conf -
@@ -254,7 +246,7 @@ let to_gen_conf_def = new_definition
        gen_gc_partial_conf_refs_start conf))
        (gen_gc_partial_conf_isRef conf):'a gen_gc_conf)`;;
 
-let to_gen_heap_element_def = define_cases
+let to_gen_heap_element_def = cake_define_list
   [`to_gen_heap_element conf (Unused n) = Unused n`;
    `to_gen_heap_element conf (ForwardPointer ptr a l) =
         ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf)
@@ -262,7 +254,7 @@ let to_gen_heap_element_def = define_cases
    `to_gen_heap_element conf (DataElement ptrs l d) =
         DataElement (MAP (to_gen_heap_address conf) ptrs) l d`];;
 
-let to_gen_heap_list_def = new_definition
+let to_gen_heap_list_def = cake_define
   `to_gen_heap_list conf heap =
      MAP (to_gen_heap_element conf) heap`;;
 
@@ -272,13 +264,13 @@ let to_gen_heap_list_heap_length = prove
    heap_length (to_gen_heap_list conf xs) = heap_length xs`,
   CHEAT_TAC);;
 
-let to_gen_heap_def = new_definition
+let to_gen_heap_def = cake_define
   `to_gen_heap conf heap =
      to_gen_heap_list conf
          (heap_restrict (gen_gc_partial_conf_gen_start conf)
            (gen_gc_partial_conf_refs_start conf) heap)`;;
 
-let to_gen_state_def = new_definition
+let to_gen_state_def = cake_define
   `to_gen_state conf state = gc_state_heap0_fupd (K (to_gen_heap conf
   (gc_state_heap0 state))) (gc_state_heap_fupd (K (to_gen_heap conf
   (gc_state_heap state))) (gc_state_ok_fupd (K (gc_state_ok state))
@@ -290,22 +282,17 @@ let to_gen_state_def = new_definition
   (gc_state_h1 state)))
      empty_state))))))))))`;;
 
-let to_gen_roots_def = new_definition
+let to_gen_roots_def = cake_define
   `to_gen_roots conf roots =
      MAP (to_gen_heap_address conf) roots`;;
 
-let _ = size_thms "heap_element";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let refs_to_roots_def,refs_to_roots_ind = define_wf
-  `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
-  [`refs_to_roots conf x2 =
+let refs_to_roots_def = cake_define
+  `refs_to_roots conf x2 =
         match x2 with
           [] -> []
         | (DataElement ptrs _6 _7 :: refs) ->
-       MAP (to_gen_heap_address conf) ptrs ++ refs_to_roots conf
-         refs
-        | (_8 :: refs) -> refs_to_roots conf refs`];;
+       MAP (to_gen_heap_address conf) ptrs ++ refs_to_roots conf refs
+        | (_8 :: refs) -> refs_to_roots conf refs`;;
 
 let RootsRefs = cake_inductive
   `(RootsRefs [] []) /\
@@ -341,13 +328,13 @@ out    o ----> o
 last step: need a relation <---
  *)
 
-let heap_element_is_ref_def = new_definition
+let heap_element_is_ref_def = cake_define
   `heap_element_is_ref conf x2 =
         match x2 with
           DataElement xs l d -> isRef conf d
         | _12 -> F`;;
 
-let gen_inv_def = new_definition
+let gen_inv_def = cake_define
   `gen_inv (conf:'b gen_gc_partial_conf) heap =
   (gen_gc_partial_conf_gen_start
      conf <= gen_gc_partial_conf_refs_start conf /\
@@ -371,7 +358,7 @@ let gen_inv_def = new_definition
          ptr < gen_gc_partial_conf_gen_start conf \/
            gen_gc_partial_conf_refs_start conf <= ptr)))`;;
 
-let has_old_ptr_def = new_definition
+let has_old_ptr_def = cake_define
   `has_old_ptr conf hs ptr <=>
      (?xs l d u.
        MEM (DataElement xs l d) hs /\ MEM (gc_shared_Pointer ptr u)
@@ -387,7 +374,7 @@ let has_old_ptr_APPEND = prove
 
 (* HOL4 gen_gc_partialScript.sml:399-400: ML code, not ported *)
 
-let all_old_ptrs_def = new_definition
+let all_old_ptrs_def = cake_define
   `all_old_ptrs conf xs ptr <=>
      (?u. MEM (gc_shared_Pointer ptr u) xs /\
          (ptr < gen_gc_partial_conf_gen_start conf \/
@@ -398,7 +385,7 @@ let has_old_ptr_simp = prove
  (`has_old_ptr conf [DataElement xs x1 x2] = all_old_ptrs conf xs`,
   CHEAT_TAC);;
 
-let sim_inv_def = new_definition
+let sim_inv_def = cake_define
   `sim_inv conf (heap0:(('a,'b)heap_element) list)
   (state:('a,'b)gc_state) <=>
      gen_inv conf (gc_state_heap state) /\
@@ -775,7 +762,7 @@ let partial_gc_simulation = prove
        gc_state_ok state1`,
   CHEAT_TAC);;
 
-let f_old_ptrs_def = new_definition
+let f_old_ptrs_def = cake_define
   `f_old_ptrs conf heap =
      {a |
           isSomeDataElement (heap_lookup a heap) /\ (a <
@@ -791,7 +778,7 @@ let f_old_ptrs_finite = prove
 (* HOL4 gen_gc_partialScript.sml:1315-1316: a theorem that HOL4
    states as the value of an ML expression: f_old_ptrs_finite_open *)
 
-let new_f_def = new_definition
+let new_f_def = cake_define
   `new_f f conf heap =
      FUNION (FUN_FMAP I (f_old_ptrs conf heap))
             (FUN_FMAP (\a. gen_gc_partial_conf_gen_start conf +
@@ -1178,14 +1165,14 @@ let heap_lookup_by_f_isSomeData_lemma = prove
        l d))`,
   CHEAT_TAC);;
 
-let similar_ptr_def = new_definition
+let similar_ptr_def = cake_define
   `similar_ptr conf x1 x2 =
         match (x1,x2) with
           (gc_shared_Pointer p1 d1,gc_shared_Pointer p2 d2) -> (d2 =
             d1)
         | (x1,x2) -> (x1 = x2)`;;
 
-let similar_data_def = new_definition
+let similar_data_def = cake_define
   `similar_data conf x y =
         match (x,y) with
           (DataElement xs1 l1 d1,DataElement xs2 l2 d2) ->
@@ -1279,7 +1266,7 @@ let gc_move_ref_list_heap_length' = prove
       (heap_length xs' = heap_length xs)`,
   CHEAT_TAC);;
 
-let has_bad_ref_def = new_definition
+let has_bad_ref_def = cake_define
   `has_bad_ref c s <=>
      (?xs l d. MEM (DataElement xs l d) (gc_state_h1 s ++ gc_state_h2
        s) /\ isRef c d) \/
@@ -1288,7 +1275,7 @@ let has_bad_ref_def = new_definition
        (heap_lookup n (gc_state_heap s) = SOME (DataElement xs l
          d)) /\ isRef c d)`;;
 
-let balanced_state_def = new_definition
+let balanced_state_def = cake_define
   `balanced_state c s <=>
      (
       heap_length (FILTER isForwardPointer (gc_state_heap s)) =
@@ -1302,7 +1289,7 @@ let balanced_state_def = new_definition
          heap_length (FILTER isDataElement old) +
          heap_length (FILTER isDataElement refs))`;;
 
-let simple_rel_def = new_definition
+let simple_rel_def = cake_define
   `simple_rel c s1 s2 <=>
      (gc_state_old s2 = gc_state_old s1) /\
      (heap_length (gc_state_h1 s2 ++ gc_state_h2 s2 ++ heap_expand

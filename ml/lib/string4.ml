@@ -56,14 +56,14 @@ cake_term_facts :=
    let, so the definitions inline the FST and the SND of the SPLITP,
    and the form that HOL4 states is derived from that *)
 
-let TOKENS_aux,TOKENS_ind = define_wf
+let TOKENS_aux = cake_define_wf
   `MEASURE (LENGTH o SND)`
-  [`(TOKENS P ([]:(A)list) = []) /\
+  `(TOKENS P ([]:(A)list) = []) /\
    (TOKENS P (h :: t) =
       if NULL (FST (SPLITP P (h :: t)))
       then TOKENS P (TL (SND (SPLITP P (h :: t))))
       else FST (SPLITP P (h :: t)) ::
-           TOKENS P (SND (SPLITP P (h :: t))))`];;
+           TOKENS P (SND (SPLITP P (h :: t))))`;;
 
 let TOKENS_def = prove
  (`(TOKENS P ([]:(A)list) = []) /\
@@ -79,16 +79,16 @@ let TOKENS_def = prove
   REWRITE_TAC[FORALL_PAIR_THM; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[FST; SND]);;
 
-let FIELDS_aux,FIELDS_ind = define_wf
+let FIELDS_aux = cake_define_wf
   `MEASURE (LENGTH o SND)`
-  [`(FIELDS P ([]:(A)list) = [[]]) /\
+  `(FIELDS P ([]:(A)list) = [[]]) /\
    (FIELDS P (h :: t) =
       if NULL (FST (SPLITP P (h :: t)))
       then [] :: FIELDS P (TL (SND (SPLITP P (h :: t))))
       else if NULL (SND (SPLITP P (h :: t)))
            then [FST (SPLITP P (h :: t))]
            else FST (SPLITP P (h :: t)) ::
-                FIELDS P (TL (SND (SPLITP P (h :: t)))))`];;
+                FIELDS P (TL (SND (SPLITP P (h :: t)))))`;;
 
 let FIELDS_def = prove
  (`(FIELDS P ([]:(A)list) = [[]]) /\

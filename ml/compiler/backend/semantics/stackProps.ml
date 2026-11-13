@@ -483,19 +483,16 @@ let stackProps_evaluate_add_clock_io_events_mono = prove
        s))))`,
   CHEAT_TAC);;
 
-let clock_neutral_def,clock_neutral_ind = define_shaped_rec
-  "match"
-  [`clock_neutral r =
+let clock_neutral_def = cake_define
+  `clock_neutral r =
         match r with
-          stackLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral
-            p2
+          stackLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
         | (LocValue _1 _2 _3) -> T
         | (Halt _4) -> T
         | (Inst _5) -> T
         | (Skip) -> T
-        | (If _6 _7 _8 p1 p2) -> clock_neutral p1 /\ clock_neutral
-          p2
-        | r -> F`];;
+        | (If _6 _7 _8 p1 p2) -> clock_neutral p1 /\ clock_neutral p2
+        | r -> F`;;
 
 (* [local] *)
 let inst_clock_neutral = prove
@@ -554,13 +551,8 @@ let dec_stack_length = prove
    LENGTH orig_stack = LENGTH new_stack`,
   CHEAT_TAC);;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stackProps_extract_labels_def,stackProps_extract_labels_ind =
-  define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`stackProps_extract_labels x1 =
+let stackProps_extract_labels_def = cake_define
+  `stackProps_extract_labels x1 =
         match x1 with
           stackLang_Call ret dest h ->
        (match ret with
@@ -574,9 +566,8 @@ let stackProps_extract_labels_def,stackProps_extract_labels_ind =
         | (Seq s1 s2) ->
        stackProps_extract_labels s1 ++ stackProps_extract_labels s2
         | (If cmp r1 ri e2 e3) ->
-       (stackProps_extract_labels e2 ++ stackProps_extract_labels
-         e3)
-        | _10 -> []`];;
+       (stackProps_extract_labels e2 ++ stackProps_extract_labels e3)
+        | _10 -> []`;;
 hol4_overload "extract_labels" "stackProps_extract_labels";;
 
 let find_code_IMP_get_labels = prove
@@ -584,31 +575,26 @@ let find_code_IMP_get_labels = prove
     stackSem_get_labels e SUBSET loc_check code`,
   CHEAT_TAC);;
 
-let addr_ok_def = define_general
-  [`addr_ok op (Addr a w) c <=>
+let addr_ok_def = cake_define
+  `addr_ok op (Addr a w) c <=>
    (reg_ok a c /\
     (if op IN {Load,Store,asm_Load32,asm_Store32} then (\c.
       asm_offset_ok 0 (asm_config_addr_offset c)) c w else if op IN
       {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
       (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
-      else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w))`];;
+      else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w))`;;
 
 (* TODO: This is not updated for Install, CBW and DBW *)
 (* asm_ok out of stack_names *)
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stack_asm_ok_def,stack_asm_ok_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_asm_ok c x2 =
+let stack_asm_ok_def = cake_define
+  `stack_asm_ok c x2 =
         match x2 with
           ((Inst i):'a stackLang_prog) -> inst_ok i c
         | (stackLang_ShMemOp op r ad) -> reg_ok r c /\ addr_ok op ad
           c
         | (CodeBufferWrite r1 r2) -> r1 < asm_config_reg_count c /\
-          r2 < asm_config_reg_count c /\ ~(MEM r1
-          (asm_config_avoid_regs c)) /\ ~(MEM r2 (asm_config_avoid_regs
-          c))
+          r2 < asm_config_reg_count c /\ ~(MEM r1 (asm_config_avoid_regs
+          c)) /\ ~(MEM r2 (asm_config_avoid_regs c))
         | (Seq p1 p2) -> stack_asm_ok c p1 /\ stack_asm_ok c p2
         | (If cmp n r p p') -> stack_asm_ok c p /\ stack_asm_ok c p'
         | (Loop p) -> stack_asm_ok c p
@@ -617,25 +603,25 @@ let stack_asm_ok_def,stack_asm_ok_ind = define_wf
         | (Return n) -> n < asm_config_reg_count c /\ ~(MEM n
           (asm_config_avoid_regs c))
         | (Call r tar h) ->
-       (match tar with INR r -> r < asm_config_reg_count c /\ ~(MEM
-         r (asm_config_avoid_regs c)) | _11 -> T) /\
+       (match tar with INR r -> r < asm_config_reg_count c /\ ~(MEM r
+         (asm_config_avoid_regs c)) | _11 -> T) /\
        (match r with SOME (p,_12,_13,_14) -> stack_asm_ok c p /\
          (match h with
          SOME (p',_15,_16) -> stack_asm_ok c p' | _17 -> T) | _18 ->
            T)
-        | _19 -> T`];;
+        | _19 -> T`;;
 
-let reg_name_def = new_definition
+let reg_name_def = cake_define
   `reg_name r c <=>
    r < asm_config_reg_count c - LENGTH (asm_config_avoid_regs c)`;;
 
 (* inst requirements just before stack_names *)
 
-let reg_imm_name_def = define_cases
+let reg_imm_name_def = cake_define_list
   [`reg_imm_name b (Reg r) c <=> reg_name r c`;
    `reg_imm_name b (Imm w) c <=> asm_config_valid_imm c b w`];;
 
-let arith_name_def = new_definition
+let arith_name_def = cake_define
   `arith_name x1 c =
         match (x1,c) with
           (asm_Binop b r1 r2 ri,(c:'a asm_config)) ->
@@ -685,7 +671,7 @@ let arith_name_def = new_definition
 
 (* We could actually almost use fp_ok, except this needs to check reg_ok for
    some registers as well *)
-let fp_name_def = define_cases
+let fp_name_def = cake_define_list
   [`fp_name (FPLess r d1 d2) (c:'a asm_config) <=>
           reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_name (FPLessEqual r d1 d2) (c:'a asm_config) <=>
@@ -731,16 +717,16 @@ let fp_name_def = define_cases
    `fp_name (FPFromInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
   /\ fp_reg_ok d2 c`];;
 
-let addr_name_def = define_general
-  [`addr_name m (Addr r w) c <=>
+let addr_name_def = cake_define
+  `addr_name m (Addr r w) c <=>
    reg_name r c /\
    (if m IN {Load,Store,asm_Load32,asm_Store32} then (\c.
      asm_offset_ok 0 (asm_config_addr_offset c)) c w else if m IN
      {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
-     (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
-     else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`];;
+     (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32) else
+     (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`;;
 
-let inst_name_def = new_definition
+let inst_name_def = cake_define
   `inst_name c x2 =
         match x2 with
           asm_Const r w -> reg_name r c
@@ -749,12 +735,8 @@ let inst_name_def = new_definition
         | (asm_FP f) -> fp_name f c
         | _20 -> T`;;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stack_asm_name_def,stack_asm_name_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_asm_name c x2 =
+let stack_asm_name_def = cake_define
+  `stack_asm_name c x2 =
         match x2 with
           ((Inst i):'a stackLang_prog) -> inst_name c i
         | (OpCurrHeap b r1 r2) ->
@@ -765,8 +747,8 @@ let stack_asm_name_def,stack_asm_name_ind = define_wf
         | (CodeBufferWrite r1 r2) -> reg_name r1 c /\ reg_name r2 c
         | (DataBufferWrite r1 r2) -> reg_name r1 c /\ reg_name r2 c
         | (Seq p1 p2) -> stack_asm_name c p1 /\ stack_asm_name c p2
-        | (If cmp n r p p') -> stack_asm_name c p /\ stack_asm_name
-          c p'
+        | (If cmp n r p p') -> stack_asm_name c p /\ stack_asm_name c
+          p'
         | (Loop p) -> stack_asm_name c p
         | (Raise n) -> reg_name n c
         | (Return n) -> reg_name n c
@@ -776,21 +758,17 @@ let stack_asm_name_def,stack_asm_name_ind = define_wf
          (match h with
          SOME (p',_25,_26) -> stack_asm_name c p' | _27 -> T) | _28
            -> T)
-        | _29 -> T`];;
+        | _29 -> T`;;
 
-let fixed_names_def = new_definition
+let fixed_names_def = cake_define
   `fixed_names names c =
    (if asm_config_ISA c = x86_64 then
      tlookup names 3 = 2 /\
      tlookup names 4 = 1 /\
      tlookup names 0 = 0 else T)`;;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stack_asm_remove_def,stack_asm_remove_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_asm_remove c x2 =
+let stack_asm_remove_def = cake_define
+  `stack_asm_remove c x2 =
         match x2 with
           ((Get n s):'a stackLang_prog) -> reg_name n c
         | (OpCurrHeap binop v src) -> reg_name v c /\ reg_name src c
@@ -814,9 +792,9 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
         | (Call r tar h) ->
        (match r with SOME (p,_31,_32,_33) -> stack_asm_remove c p /\
          (match h with
-         SOME (p',_34,_35) -> stack_asm_remove c p' | _36 -> T) |
-           _37 -> T)
-        | _38 -> T`];;
+         SOME (p',_34,_35) -> stack_asm_remove c p' | _36 -> T) | _37
+           -> T)
+        | _38 -> T`;;
 
 (* Various syntactic properties required for correctness of the stackLang passes
   All of these are trivially preserved from word_to_stack until the pass that
@@ -827,12 +805,8 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
    TODO: this can also be a semantic check...
 *)
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let alloc_arg_def,alloc_arg_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`alloc_arg x1 =
+let alloc_arg_def = cake_define
+  `alloc_arg x1 =
         match x1 with
           stackLang_Alloc v -> (v = 1)
         | ((Seq p1 p2):'a stackLang_prog) ->
@@ -842,31 +816,29 @@ let alloc_arg_def,alloc_arg_ind = define_wf
         | (Loop p1) ->
         alloc_arg p1
         | (Call x1 _39 x2) ->
-        (match x1 with SOME (y,r,_40,_41) -> alloc_arg y | NONE ->
-          T) /\
+        (match x1 with SOME (y,r,_40,_41) -> alloc_arg y | NONE -> T)
+          /\
         (match x2 with SOME (y,_42,_43) -> alloc_arg y | NONE -> T)
-        | _44 -> T`];;
+        | _44 -> T`;;
 
 (* stack_remove requires that all register arguments are bounded by k *)
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stackPropsScript.sml:1027-1031: the tactic that proves the
    termination *)
-let reg_bound_exp_def,reg_bound_exp_ind = define_wf
+let reg_bound_exp_def = cake_define_wf
   `MEASURE ((wordLang_exp_size ARB) o FST)`
-  [`reg_bound_exp x1 k =
+  `reg_bound_exp x1 k =
         match x1 with
           wordLang_Var n -> n < k
         | (Load e) -> reg_bound_exp e k
-        | (Shift _45 e1 e2) -> reg_bound_exp e1 k /\ reg_bound_exp
-          e2 k
+        | (Shift _45 e1 e2) -> reg_bound_exp e1 k /\ reg_bound_exp e2
+          k
         | (wordLang_Lookup _46) -> F
         | (wordLang_Op _47 es) -> EVERY (\e. reg_bound_exp e k) es
-        | _48 -> T`];;
+        | _48 -> T`;;
 
-let reg_bound_inst_def = new_definition
+let reg_bound_inst_def = cake_define
   `reg_bound_inst x1 k =
         match x1 with
           asm_Mem _49 n (Addr a _50) -> n < k /\ a < k
@@ -893,12 +865,8 @@ let reg_bound_inst_def = new_definition
         | (asm_FP (FPMovFromReg d r1 r2)) -> r1 < k /\ r2 < k
         | _56 -> T`;;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let reg_bound_def,reg_bound_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x0)`
-  [`reg_bound x1 k =
+let reg_bound_def = cake_define
+  `reg_bound x1 k =
         match x1 with
           stackLang_Halt v1 ->
         v1 < k
@@ -950,11 +918,13 @@ let reg_bound_def,reg_bound_ind = define_wf
         | (stackLang_StackLoadAny r r2) -> r < k /\ r2 < k
         | (stackLang_StackStore r n) -> r < k
         | (stackLang_StackStoreAny r r2) -> r < k /\ r2 < k
-        | _66 -> T`];;
+        | _66 -> T`;;
 
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
-let call_args_def,call_args_ind = define_guess
-  [`call_args x1 ptr len ptr2 len2 ret =
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let call_args_def = cake_define_cheat CHEAT_TAC
+  `call_args x1 ptr len ptr2 len2 ret =
         match x1 with
           ((Seq p1 p2):'a stackLang_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
@@ -975,21 +945,16 @@ let call_args_def,call_args_ind = define_guess
                ptr2 len2 ret | NONE -> T))
         | (Install ptr' len' _72 _73 ret') ->
         ptr' = ptr /\ len' = len /\ ret' = ret
-        | _74 -> T`];;
+        | _74 -> T`;;
 
 (* TODO: remove "stack_" prefix from these functions *)
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stack_get_handler_labels_def,stack_get_handler_labels_ind =
-  define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_get_handler_labels n x2 =
+let stack_get_handler_labels_def = cake_define
+  `stack_get_handler_labels n x2 =
         match x2 with
           stackLang_Call r d h ->
-       (match r with SOME (x,_75,_76) -> stack_get_handler_labels n
-         x UNION
+       (match r with SOME (x,_75,_76) -> stack_get_handler_labels n x
+         UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)}
            else {}) UNION (stack_get_handler_labels n x) | _77 -> {}) |
            _78 -> {})
@@ -998,22 +963,17 @@ let stack_get_handler_labels_def,stack_get_handler_labels_ind =
         | (If _79 _80 _81 p1 p2) -> stack_get_handler_labels n p1
           UNION stack_get_handler_labels n p2
         | (Loop p) -> stack_get_handler_labels n p
-        | _82 -> {}`];;
+        | _82 -> {}`;;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stackProps_get_code_labels_def,stackProps_get_code_labels_ind =
-  define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`stackProps_get_code_labels x1 =
+let stackProps_get_code_labels_def = cake_define
+  `stackProps_get_code_labels x1 =
         match x1 with
           stackLang_Call r d h ->
        (match d with INL x -> {(x,0)} | _83 -> {}) UNION
-       (match r with SOME (x,_84,_85) -> stackProps_get_code_labels
-         x | _86 -> {}) UNION
-       (match h with SOME (x,_87,_88) -> stackProps_get_code_labels
-         x | _89 -> {})
+       (match r with SOME (x,_84,_85) -> stackProps_get_code_labels x
+         | _86 -> {}) UNION
+       (match h with SOME (x,_87,_88) -> stackProps_get_code_labels x
+         | _89 -> {})
         | (Seq p1 p2) -> stackProps_get_code_labels p1 UNION
           stackProps_get_code_labels p2
         | (If _90 _91 _92 p1 p2) -> stackProps_get_code_labels p1
@@ -1023,11 +983,11 @@ let stackProps_get_code_labels_def,stackProps_get_code_labels_ind =
         | (stackLang_RawCall t) -> {(t,1)}
         | (LocValue _95 l1 l2) -> {(l1,l2)}
         | (StoreConsts _96 _97 (SOME l)) -> {(l,0)}
-        | _98 -> {}`];;
+        | _98 -> {}`;;
 hol4_overload "get_code_labels" "stackProps_get_code_labels";;
 
 (* elabs gives a set of existing code labels *)
-let stack_good_code_labels_def = new_definition
+let stack_good_code_labels_def = cake_define
   `stack_good_code_labels p elabs <=>
    BIGUNION (IMAGE stackProps_get_code_labels (set_of_list (MAP SND
      p))) SUBSET
@@ -1038,7 +998,7 @@ let stack_good_code_labels_def = new_definition
    IMAGE (\n. n,1) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,1)
      elabs`;;
 
-let stack_good_handler_labels_def = new_definition
+let stack_good_handler_labels_def = cake_define
   `stack_good_handler_labels p <=>
    restrict_nonzero (BIGUNION (IMAGE stackProps_get_code_labels
      (set_of_list (MAP SND p)))) SUBSET
@@ -1046,37 +1006,29 @@ let stack_good_handler_labels_def = new_definition
      pp) p)) UNION
    IMAGE (\n. n,1) (set_of_list (MAP FST p))`;;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stackProps_no_install_def,stackProps_no_install_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`stackProps_no_install x1 =
+let stackProps_no_install_def = cake_define
+  `stackProps_no_install x1 =
         match x1 with
           stackLang_Call r d h ->
        ((match r with SOME (x,_99,_100) -> stackProps_no_install x |
          _101 -> T) /\
-        (match h with SOME (x,_102,_103) -> stackProps_no_install x
-          | _104 -> T))
+        (match h with SOME (x,_102,_103) -> stackProps_no_install x |
+          _104 -> T))
         | (Seq p1 p2) -> (stackProps_no_install p1 /\
           stackProps_no_install p2)
         | (If _105 _106 _107 p1 p2) -> (stackProps_no_install p1 /\
           stackProps_no_install p2)
         | (Loop p) -> stackProps_no_install p
         | (Install _108 _109 _110 _111 _112) -> F
-        | _113 -> T`];;
+        | _113 -> T`;;
 hol4_overload "no_install" "stackProps_no_install";;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let no_shmemop_def,no_shmemop_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`no_shmemop x1 =
+let no_shmemop_def = cake_define
+  `no_shmemop x1 =
         match x1 with
           stackLang_Call r d h ->
-       ((match r with SOME (x,_114,_115) -> no_shmemop x | _116 ->
-         T) /\
+       ((match r with SOME (x,_114,_115) -> no_shmemop x | _116 -> T)
+         /\
         (match h with SOME (x,_117,_118) -> no_shmemop x | _119 ->
           T))
         | (Seq p1 p2) -> (no_shmemop p1 /\ no_shmemop p2)
@@ -1084,7 +1036,7 @@ let no_shmemop_def,no_shmemop_ind = define_wf
           p2)
         | (Loop p) -> no_shmemop p
         | (stackLang_ShMemOp _123 _124 _125) -> F
-        | _126 -> T`];;
+        | _126 -> T`;;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

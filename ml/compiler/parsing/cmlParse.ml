@@ -30,7 +30,7 @@ let _ = hol4_ancestors "cmlParse"
 (* HOL4 cmlParseScript.sml:13: the overload cmlpegexec, which the
    port expands *)
 
-let cmlParse_destResult_def = new_definition
+let cmlParse_destResult_def = cake_define
   `cmlParse_destResult x1 =
       match x1 with
         pegexec_Result (peg_Success [] x eo) -> peg_Success [] x eo
@@ -43,7 +43,7 @@ hol4_overload "destResult" "cmlParse_destResult";;
 
 (* HOL4 cmlParseScript.sml:23: the type abbreviation M, which the
    port expands *)
-let pegresult_bind_def = new_definition
+let pegresult_bind_def = cake_define
   `(pegresult_bind (f:(tokens_token#locs) list->((tokens_token#locs)
   list,'a,string)pegresult) (g:'a->(tokens_token#locs)
   list->((tokens_token#locs)
@@ -54,7 +54,7 @@ let pegresult_bind_def = new_definition
        peg_Success toks' x eo -> g x toks' | peg_Failure fl fe ->
          peg_Failure fl fe)`;;
 
-let pegresult_choice_def = new_definition
+let pegresult_choice_def = cake_define
   `(pegresult_choice (f:(tokens_token#locs) list->((tokens_token#locs)
   list,'a,string)pegresult) (g:(tokens_token#locs)
   list->((tokens_token#locs)
@@ -65,11 +65,11 @@ let pegresult_choice_def = new_definition
        peg_Success toks' x eo -> peg_Success toks' x eo | _6 -> g
          toks)`;;
 
-let toks_to_loc_def = define_cases
+let toks_to_loc_def = cake_define_list
   [`toks_to_loc [] = unknown_loc`;
    `toks_to_loc ((h,L) :: _7) = L`];;
 
-let pegresult_guard_def = new_definition
+let pegresult_guard_def = cake_define
   `(pegresult_guard b:(tokens_token#locs) list->((tokens_token#locs)
   list,1,string)pegresult) =
    (\toks. if b then peg_Success toks one NONE else peg_Failure
@@ -77,13 +77,13 @@ let pegresult_guard_def = new_definition
 
 hol4_overload "++" "pegresult_choice";;
 
-let optlift_def = define_general
+let optlift_def = cake_define_list
   [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
   list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
   "Option = NONE")`;
    `optlift (SOME a) = (\toks. peg_Success toks a NONE)`];;
 
-let cmlParseExpr_def = new_definition
+let cmlParseExpr_def = cake_define
   `cmlParseExpr = pegresult_bind (destResult o (\n t. peg_exec cmlPEG
   (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\
      pts. pegresult_bind (optlift (oHD pts)) (\
@@ -91,7 +91,7 @@ let cmlParseExpr_def = new_definition
      ast.
      (\a inp. peg_Success inp a NONE) ast)))`;;
 
-let parse_prog_def = new_definition
+let parse_prog_def = cake_define
   `parse_prog =
      pegresult_bind (destResult o (\n t. peg_exec cmlPEG (cmlPEG_pnt
        n) t [] NONE [] pegexec_done pegexec_failed) nTopLevelDecs) (\

@@ -203,7 +203,7 @@ let not_nullable_seql_input_CONS = prove
    (?ht l t. i0 = (ht,l) :: t /\ LENGTH i <= LENGTH t)`,
   CHEAT_TAC);;
 
-let sym2peg_def = define_cases
+let sym2peg_def = cake_define_list
   [`sym2peg (grammar_TOK tk) = cmlPEG_tokeq tk`;
    `sym2peg (grammar_NT N) = peg_nt N I`];;
 
@@ -219,12 +219,7 @@ let list_case_lemma = prove
   CHEAT_TAC);;
 
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let left_insert1_def,left_insert1_ind = define_wf
-  `MEASURE (\(x0,x1). parsetree_size locs_size (\x. 0) (\x. 0) x1)`
+let left_insert1_def = cake_define_list
   [`left_insert1 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
    `left_insert1 pt (Nd (n,l0) subs) =
          (match subs with
@@ -257,10 +252,10 @@ let ptree_loc_left_insert1 = prove
         merge_locs (ptree_loc subpt) (ptree_loc pt)`,
   CHEAT_TAC);;
 
-let leftLoc_def = define_general
-  [`leftLoc (Locs l1 _1) = l1`];;
-let rightLoc_def = define_general
-  [`rightLoc (Locs _2 l2) = l2`];;
+let leftLoc_def = cake_define
+  `leftLoc (Locs l1 _1) = l1`;;
+let rightLoc_def = cake_define
+  `rightLoc (Locs _2 l2) = l2`;;
 
 let merge_locs_LR = prove
  (`merge_locs l1 l2 = Locs (leftLoc l1) (rightLoc l2)`,
@@ -326,12 +321,7 @@ let eapp_reassociated = prove
           left_insert1 bpt' pt')`,
   CHEAT_TAC);;
 
-let _ = size_thms "MMLnonT";;
-let _ = size_thms "parsetree";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let leftmost_def,leftmost_ind = define_wf
-  `MEASURE (\x0. parsetree_size (\x. 0) MMLnonT_size (\x. 0) x0)`
+let leftmost_def = cake_define_list
   [`leftmost (Lf s) = Lf s`;
    `leftmost (Nd (n,l) args) =
       (if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) nTbase then
@@ -340,12 +330,7 @@ let leftmost_def,leftmost_ind = define_wf
             [] -> Nd (n,l) args | h :: _4 -> leftmost h)`];;
 
 (* pt is a Tbase, and n will be DType all the way down *)
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let left_insert2_def,left_insert2_ind = define_wf
-  `MEASURE (\(x0,x1). parsetree_size locs_size (\x. 0) (\x. 0) x1)`
+let left_insert2_def = cake_define_list
   [`left_insert2 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
    `left_insert2 pt (Nd (n,l0) subs) =
          (match subs with
@@ -439,13 +424,7 @@ let dtype_reassociated = prove
 *)
 
 
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let left_insert_def,left_insert_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). parsetree_size locs_size (\x. 0) (\x. 0)
-  x0)`
+let left_insert_def = cake_define_list
   [`left_insert (Lf (tk,l)) p sep c = Lf (tk,merge_locs (ptree_loc c)
   l)`;
    `left_insert (Nd (n,l) subs) p sep c =
@@ -548,7 +527,7 @@ let peg_eval_NT = prove
 
 (* HOL4 pegCompleteScript.sml:734-737: ML code, not ported *)
 
-let nestoppers_def = new_definition
+let nestoppers_def = cake_define
   `nestoppers =
       UNIV DIFF
         ({tokens_AndalsoT,tokens_ArrowT,tokens_BarT,tokens_ColonT
@@ -569,7 +548,7 @@ let nestoppers_def = new_definition
                    firstSet cmlG [(\nt'. grammar_NT
                    ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])`;;
 
-let stoppers_def = new_definition
+let stoppers_def = cake_define
   `pegComplete_stoppers x1 =
         match x1 with
           nAndFDecls -> nestoppers DELETE tokens_AndT

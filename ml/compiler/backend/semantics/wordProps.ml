@@ -1904,7 +1904,7 @@ let stack_size_eq2 = prove
 (*--Stack Swap Lemma--*)
 
 (*Stacks look the same to the GC except for the keys (e.g. recoloured and in order)*)
-let s_frame_val_eq_def = new_definition
+let s_frame_val_eq_def = cake_define
   `s_frame_val_eq x1 x2 =
         match (x1,x2) with
           (StackFrame n ls1 ls NONE,StackFrame n' ls1' ls' NONE) ->
@@ -1920,21 +1920,16 @@ let s_frame_val_eq_def2 = prove
         ls' y') <=> MAP SND ls = MAP SND ls' /\ y = y' /\ n = n')`,
   CHEAT_TAC);;
 
-let _ = size_thms "stack_frame";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let s_val_eq_def,s_val_eq_ind = define_wf
-  `MEASURE (\(x0,x1).      list_size (stack_frame_size (\x. 0)) x0 +
-    list_size (stack_frame_size (\x. 0)) x1)`
-  [`s_val_eq x1 x2 =
+let s_val_eq_def = cake_define
+  `s_val_eq x1 x2 =
         match (x1,x2) with
           ([],[]) -> T
         | ((x :: xs),(y :: ys)) -> (s_val_eq xs ys /\
                               s_frame_val_eq x y)
-        | (_11,_12) -> F`];;
+        | (_11,_12) -> F`;;
 
 (*Stacks look the same except for the values of the GC-ed cutsets (e.g. result of gc)*)
-let s_frame_key_eq_def = new_definition
+let s_frame_key_eq_def = cake_define
   `s_frame_key_eq x1 x2 =
         match (x1,x2) with
           (StackFrame n ls0 ls NONE,StackFrame n' ls0' ls' NONE) ->
@@ -1951,18 +1946,13 @@ let s_frame_key_eq_def2 = prove
         /\ n = n')`,
   CHEAT_TAC);;
 
-let _ = size_thms "stack_frame";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let s_key_eq_def,s_key_eq_ind = define_wf
-  `MEASURE (\(x0,x1).      list_size (stack_frame_size (\x. 0)) x0 +
-    list_size (stack_frame_size (\x. 0)) x1)`
-  [`s_key_eq x1 x2 =
+let s_key_eq_def = cake_define
+  `s_key_eq x1 x2 =
         match (x1,x2) with
           ([],[]) -> T
         | ((x :: xs),(y :: ys)) -> (s_key_eq xs ys /\
                               s_frame_key_eq x y)
-        | (_15,_16) -> F`];;
+        | (_15,_16) -> F`;;
 
 let s_key_eq_def2 = prove
  (`!l1 l2.
@@ -2340,7 +2330,7 @@ let permute_swap_lemma = prove
   CHEAT_TAC);;
 
 (* Locals extend lemma *)
-let locals_rel_def = new_definition
+let locals_rel_def = cake_define
   `locals_rel temp (s:('a word_loc) spt) t <=> (!x. x < temp ==>
   sptree_lookup x s = sptree_lookup x t)`;;
 
@@ -2521,7 +2511,7 @@ let locals_rel_evaluate_thm = prove
 
 (* HOL4 wordPropsScript.sml:3867: a proof *)
 
-let gc_fun_ok_def = new_definition
+let gc_fun_ok_def = cake_define
   `gc_fun_ok (f:('a word_loc) list#('a word->'a word_loc)#('a
   word->bool)#(store_name,'a word_loc)fmap->(('a word_loc) list#('a
   word->'a word_loc)#(store_name,'a word_loc)fmap) option) =
@@ -2703,7 +2693,7 @@ let evaluate_stack_limit_stack_max = prove
      s2) > wordSem_state_stack_limit s2`,
   CHEAT_TAC);;
 
-let wordProps_inc_clock_def = new_definition
+let wordProps_inc_clock_def = cake_define
   `wordProps_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock t + n)) t`;;
 hol4_overload "inc_clock" "wordProps_inc_clock";;
@@ -2761,7 +2751,7 @@ let env_to_list_ALL_DISTINCT_FST = prove
  (`ALL_DISTINCT (MAP FST (FST (env_to_list y perm)))`,
   CHEAT_TAC);;
 
-let no_alloc_code_def = new_definition
+let no_alloc_code_def = cake_define
   `no_alloc_code (code:(num#'a wordLang_prog) spt) <=>
    (!k n p. sptree_lookup k code = SOME (n,p) ==> no_alloc p)`;;
 
@@ -2772,7 +2762,7 @@ let no_alloc_find_code = prove
      no_alloc expr`,
   CHEAT_TAC);;
 
-let no_install_code_def = new_definition
+let no_install_code_def = cake_define
   `no_install_code (code:(num#'a wordLang_prog) spt) <=>
        (!k n p. sptree_lookup k code = SOME (n,p) ==>
          wordConvs_no_install p)`;;
@@ -2797,7 +2787,7 @@ let get_code_labels_not_created = prove
      x) [] NONE)) /\ ~(sp = LocValue 0 x)) p))`,
   CHEAT_TAC);;
 
-let no_mt_code_def = new_definition
+let no_mt_code_def = cake_define
   `no_mt_code (code:(num#'a wordLang_prog) spt) <=>
    (!k n p. sptree_lookup k code = SOME (n,p) ==> no_mt p)`;;
 

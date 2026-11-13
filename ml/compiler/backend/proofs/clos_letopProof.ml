@@ -45,7 +45,7 @@ let HD_let_op_SING = prove
        LENGTH (clos_letop_let_op [x]) = 1`,
   CHEAT_TAC);;
 
-let clos_letopProof_code_rel_def = new_definition
+let clos_letopProof_code_rel_def = cake_define
   `clos_letopProof_code_rel e1 e2 <=>
      e2 = clos_letop_let_op e1`;;
 hol4_overload "code_rel" "clos_letopProof_code_rel";;
@@ -64,7 +64,7 @@ let clos_letopProof_code_rel_CONS_CONS = prove
 
 (* value relation *)
 
-let clos_letopProof_f_rel_def = new_definition
+let clos_letopProof_f_rel_def = cake_define
   `clos_letopProof_f_rel (a1,e1) (a2,e2) <=>
       a1 = a2 /\ clos_letopProof_code_rel [e1] [e2]`;;
 hol4_overload "f_rel" "clos_letopProof_f_rel";;
@@ -111,14 +111,14 @@ let clos_letopProof_ref_rel = cake_inductive
      clos_letopProof_ref_rel (Thunk m v) (Thunk m w))`;;
 hol4_overload "ref_rel" "clos_letopProof_ref_rel";;
 
-let FMAP_REL_def = new_definition
+let FMAP_REL_def = cake_define
   `clos_letopProof_FMAP_REL r f1 f2 <=>
      FDOM f1 = FDOM f2 /\
      (!k v. FLOOKUP f1 k = SOME v ==>
            (?v2. FLOOKUP f2 k = SOME v2 /\ r v v2))`;;
 hol4_overload "FMAP_REL" "clos_letopProof_FMAP_REL";;
 
-let clos_letopProof_state_rel_def = new_definition
+let clos_letopProof_state_rel_def = cake_define
   `clos_letopProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\

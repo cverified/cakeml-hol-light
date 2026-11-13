@@ -104,7 +104,7 @@ let LET_FORALL_ELIM' = prove
  (`LET f v <=> (!) (hol4_S ((==>) o (=) v) f)`,
   CHEAT_TAC);;
 (* TODO: can we have a global for this *)
-let word_allocProof_hide_def = new_definition
+let word_allocProof_hide_def = cake_define
   `word_allocProof_hide x = x`;;
 hol4_overload "hide" "word_allocProof_hide";;
 
@@ -139,12 +139,8 @@ let INJ_ALL_DISTINCT_MAP = prove
  *)
 
 (* colouring_ok correctness proof *)
-let _ = size_thms "wordLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let colouring_ok_def,colouring_ok_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). wordLang_prog_size (\x. 0) x1)`
-  [`colouring_ok f prog live lt =
+let colouring_ok_def = cake_define
+  `colouring_ok f prog live lt =
         match prog with
           wordLang_Seq s1 s2 ->
        // Normal live sets
@@ -186,13 +182,13 @@ let colouring_ok_def,colouring_ok_ind = define_wf
        // live before must be fine, and clash set must be fine
        (let lset = get_live prog live lt in
        let iset = sptree_union (get_writes prog) live in
-         INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV)`];;
+         INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV)`;;
 
 (*Equivalence on everything except permutation and locals*)
 (* should we add local_size here? may be no, as locals are not included *)
 (*TODO this definition is bad for automation remove it with
 t = s with (...)*)
-let word_state_eq_rel_def = new_definition
+let word_state_eq_rel_def = cake_define
   `word_state_eq_rel (s:('a,'c,'ffi)wordSem_state)
   (t:('a,'c,'ffi)wordSem_state) <=> wordSem_state_fp_regs
    t = wordSem_state_fp_regs s /\ wordSem_state_store
@@ -221,7 +217,7 @@ let word_state_eq_rel_def = new_definition
 (*tlocs is a supermap of slocs under f for everything in a given
   live set*)
 
-let strong_locals_rel_def = new_definition
+let strong_locals_rel_def = cake_define
   `strong_locals_rel f ls slocs tlocs <=>
    (!n v.
      n IN ls /\ sptree_lookup n slocs = SOME v ==>
@@ -950,7 +946,7 @@ let clash_tree_colouring_ok = prove
 (* HOL4 word_allocProofScript.sml:3301: a proof *)
 
 (*Actually, it should probably be exactly 0,2,4,6...*)
-let even_starting_locals_def = new_definition
+let even_starting_locals_def = cake_define
   `even_starting_locals (locs:('a word_loc) spt) <=>
      (!x. x IN domain locs ==> is_phy_var x)`;;
 
@@ -1028,7 +1024,7 @@ let apply_colour_exp_I = prove
   CHEAT_TAC);;
 
 (* Dead code removal *)
-let live_store_rel_def = new_definition
+let live_store_rel_def = cake_define
   `live_store_rel nlive sstore tstore <=>
    (!n. ~(n IN set_of_list nlive) ==>
      FLOOKUP sstore n = FLOOKUP tstore n)`;;
@@ -1044,12 +1040,8 @@ let live_store_rel_FLOOKUP_store = prove
    FLOOKUP tstore s = FLOOKUP sstore s`,
   CHEAT_TAC);;
 
-let _ = size_thms "wordLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let nlive_store_def,nlive_store_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`nlive_store nlive x2 =
+let nlive_store_def = cake_define
+  `nlive_store nlive x2 =
         match x2 with
           wordLang_Op _16 ls ->
          EVERY (nlive_store nlive) ls
@@ -1058,7 +1050,7 @@ let nlive_store_def,nlive_store_ind = define_wf
        nlive_store nlive e
         | (Shift _17 e1 e2) ->
        nlive_store nlive e1 /\ nlive_store nlive e2
-        | _18 -> T`];;
+        | _18 -> T`;;
 
 (* [local] *)
 let strong_locals_rel_I_get_var = prove
@@ -1357,7 +1349,7 @@ let evaluate_remove_dead_prog = prove
 
 (*This might not be the optimal invariant.. because it is very
   restrictive on the ssa_mapping*)
-let ssa_locals_rel_def = new_definition
+let ssa_locals_rel_def = cake_define
   `ssa_locals_rel na ssa st_locs cst_locs =
    ((!x y. sptree_lookup x ssa = SOME y ==> y IN domain cst_locs) /\
    (!x y. sptree_lookup x st_locs = SOME y ==>
@@ -1369,7 +1361,7 @@ let ssa_locals_rel_def = new_definition
   1) The remapped keys are ALL_DISTINCT
   2) The remap keyset is bounded, and no phy vars
 *)
-let ssa_map_ok_def = new_definition
+let ssa_map_ok_def = cake_define
   `ssa_map_ok na ssa =
    (!x y. sptree_lookup x ssa = SOME y ==>
      ~(is_phy_var y) /\ y < na)`;;
@@ -2170,7 +2162,7 @@ let evaluate_ssa_reconcile = prove
        (wordSem_state_locals cst'))`,
   CHEAT_TAC);;
 
-let lt_ok_def = new_definition
+let lt_ok_def = cake_define
   `lt_ok lt <=>
      EVERY (\(tgt_ssa,names,exit_names).
        INJ (option_lookup tgt_ssa) (domain names) UNIV /\

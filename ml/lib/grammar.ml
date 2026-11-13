@@ -16,7 +16,7 @@ let grammar_symbol_INDUCT,grammar_symbol_RECURSION = define_datatype
 hol4_overload "TOK" "grammar_TOK";;
 hol4_overload "NT" "grammar_NT";;
 
-let destTOK_def = new_definition
+let destTOK_def = cake_define
   `grammar_destTOK x1 =
         match x1 with
           (grammar_TOK tk,_1) -> SOME tk
@@ -35,47 +35,43 @@ let parsetree_INDUCT,parsetree_RECURSION = define_datatype
   "parsetree = Lf (('a,'b)grammar_symbol#'locs) | Nd (('b+num)#'locs) \
    (parsetree list)";;
 
-let ptree_loc_def = define_cases
+let ptree_loc_def = cake_define_list
   [`ptree_loc (Lf (_3,l)) = l`;
    `ptree_loc (Nd (_4,l) _5) = l`];;
 
-let ptree_list_loc_def = new_definition
+let ptree_list_loc_def = cake_define
   `ptree_list_loc l = merge_list_locs (MAP ptree_loc l)`;;
 
-let ptree_head_def = define_cases
+let ptree_head_def = cake_define_list
   [`ptree_head (Lf (tok',l)) = tok'`;
    `ptree_head (Nd (nt',l) children) = grammar_NT nt'`];;
 
-let valid_ptree_def,valid_ptree_ind = define_shaped_rec
-  "nested"
+let valid_ptree_def = cake_define_list
   [`valid_ptree G (Lf _6) <=> T`;
    `valid_ptree G (Nd (nt',l) children) <=>
         nt' IN FDOM (grammar_rules G) /\ MAP ptree_head children IN
           FAPPLY (grammar_rules G) nt' /\
         (!pt. pt IN set_of_list children ==> valid_ptree G pt)`];;
 
-let ptree_fringe_def,ptree_fringe_ind = define_shaped_rec
-  "nested"
+let ptree_fringe_def = cake_define_list
   [`ptree_fringe (Lf (t,_7)) = [t]`;
    `ptree_fringe (Nd _8 children) = FLAT (MAP ptree_fringe
   children)`];;
 
-let real_fringe_def,real_fringe_ind = define_shaped_rec
-  "nested"
+let real_fringe_def = cake_define_list
   [`real_fringe (Lf t) = [t]`;
    `real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl)`];;
 
-let valid_locs_def,valid_locs_ind = define_shaped_rec
-  "nested"
+let valid_locs_def = cake_define_list
   [`valid_locs (Lf _9) <=> T`;
    `valid_locs (Nd (_10,l) children) <=>
          l = merge_list_locs (MAP ptree_loc children) /\
          (!pt. MEM pt children ==> valid_locs pt)`];;
 
-let valid_lptree_def = new_definition
+let valid_lptree_def = cake_define
   `valid_lptree G pt <=> valid_locs pt /\ valid_ptree G pt`;;
 
-let derive_def = new_definition
+let derive_def = cake_define
   `derive G sf1 sf2 <=>
      (?p sym rhs s. sf1 = p ++ [grammar_NT sym] ++ s /\ sf2 = p ++
        rhs ++ s /\

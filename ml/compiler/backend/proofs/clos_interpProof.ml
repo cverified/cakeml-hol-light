@@ -33,7 +33,7 @@ let _ = hol4_ancestors "clos_interpProof"
    correctness of interpreter
  * ------------------------------------------------------------------------- *)
 
-let clos_interpProof_state_rel_def = new_definition
+let clos_interpProof_state_rel_def = cake_define
   `clos_interpProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
@@ -54,7 +54,7 @@ let clos_interpProof_state_rel_def = new_definition
        [] 1 clos_interpreter))`;;
 hol4_overload "state_rel" "clos_interpProof_state_rel";;
 
-let state_rel_1_def = new_definition
+let state_rel_1_def = cake_define
   `state_rel_1 (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
        closSem_state_code
@@ -87,7 +87,7 @@ let do_app_oHD_globals = prove
    oHD (closSem_state_globals s2) = SOME (SOME x)`,
   CHEAT_TAC);;
 
-let interp_assum_def = new_definition
+let interp_assum_def = cake_define
   `interp_assum (:'c) (:'ffi) c <=>
      (!xs s1 env (t1:('c,'ffi)closSem_state) res s2. state_clock
        s1 <= c /\
@@ -324,10 +324,12 @@ let evaluate_interp_thm = prove
  * ------------------------------------------------------------------------- *)
 
 let _ = size_thms "closSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 clos_interpProofScript.sml:1097-1099: the tactic that proves
    the termination *)
-let v_ok_def,v_ok_ind = define_shaped_rec
-  "nested"
+let v_ok_def = cake_define_list_try (fun () ->
+  `MEASURE closSem_v_size`)
   [`v_ok (closSem_Number i:closSem_v) <=> T`;
    `v_ok (Word64 w:closSem_v) <=> T`;
    `v_ok (closSem_Block n vs:closSem_v) <=> EVERY v_ok vs`;
@@ -339,14 +341,14 @@ let v_ok_def,v_ok_ind = define_shaped_rec
         EVERY v_ok env1 /\ EVERY v_ok vs1 /\ i < LENGTH fns1 /\
         EVERY ((~) o has_install o SND) fns1`];;
 
-let res_ok_def = new_definition
+let res_ok_def = cake_define
   `res_ok x1 =
       match x1 with
         Rerr (Rabort _2) -> T
       | (Rerr (Rraise v)) -> v_ok v
       | (Rval v) -> EVERY v_ok v`;;
 
-let state_rel'_def = new_definition
+let state_rel'_def = cake_define
   `state_rel' (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
        closSem_state_code

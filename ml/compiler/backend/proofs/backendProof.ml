@@ -111,7 +111,7 @@ let byte_aligned_MOD = prove
 
 (* HOL4 backendProofScript.sml:51: ML code, not ported *)
 
-let backend_config_ok_def = new_definition
+let backend_config_ok_def = cake_define
   `backend_config_ok (asm_conf:'a asm_config) (c:backend_config) <=>
   backend_config_source_conf
      c = prim_src_config /\
@@ -191,7 +191,7 @@ let backend_config_ok_call_empty_ffi = prove
     backend_config_ok asm_conf cc`,
   CHEAT_TAC);;
 
-let mc_init_ok_def = new_definition
+let mc_init_ok_def = cake_define
   `mc_init_ok asm_conf c mc <=>
    EVERY (\r. MEM (tlookup (stack_to_lab_config_reg_names
      (backend_config_stack_conf c)) ((r + asm_config_reg_count
@@ -261,7 +261,7 @@ let mc_init_ok_call_empty_ffi = prove
     mc_init_ok asm_conf cc`,
   CHEAT_TAC);;
 
-let heap_regs_def = new_definition
+let heap_regs_def = cake_define
   `heap_regs reg_names =
      (tlookup reg_names 2,tlookup reg_names 4)`;;
 
@@ -343,17 +343,17 @@ let word_list_exists_imp = prove
 
 (* HOL4 backendProofScript.sml:308-315: ML code, not ported *)
 
-let cake_configs_def = new_definition
+let cake_configs_def = cake_define
   `cake_configs asm_conf c source =
    state_orac_states (compile_inc_progs T asm_conf) c source`;;
 
-let cake_orac_def = new_definition
+let cake_orac_def = cake_define
   `cake_orac asm_conf c source f g i =
      (let c = cake_configs asm_conf c source i in
      let (_1,progs) = compile_inc_progs T asm_conf c (source i) in
      (f c,g progs))`;;
 
-let config_tuple2_def = new_definition
+let config_tuple2_def = cake_define
   `config_tuple2 c = (bvl_to_bvi_config_inlines (backend_config_bvl_conf
   c),bvl_to_bvi_config_next_name1 (backend_config_bvl_conf
   c),bvl_to_bvi_config_next_name2 (backend_config_bvl_conf
@@ -362,7 +362,7 @@ let config_tuple2_def = new_definition
        c),word_to_stack_config_bitmaps_length (backend_config_word_conf
      c),backend_config_lab_conf c)`;;
 
-let config_tuple1_def = new_definition
+let config_tuple1_def = cake_define
   `config_tuple1 c = (backend_config_source_conf
   c,clos_to_bvl_config_next_loc (backend_config_clos_conf c),
      option_val_approx_spt (clos_to_bvl_config_known_conf
@@ -757,7 +757,7 @@ let bvl_num_stubs_LE_bvi_prog = prove
 (* HOL4 backendProofScript.sml:1003-1005: a theorem that HOL4 states
    as the value of an ML expression: stack_to_lab_orac_eq_std_sym *)
 
-let state_co_fun_def = new_definition
+let state_co_fun_def = cake_define
   `state_co_fun f_inc x =
      (let ((cfg1,cfg2),p) = x in
      let (_2,p') = f_inc cfg1 p in
@@ -1318,7 +1318,7 @@ let to_lab_good_code_lemma = prove
 max_print_depth := 20
 *)
 
-let compute_stack_frame_sizes_def = new_definition
+let compute_stack_frame_sizes_def = cake_define
   `compute_stack_frame_sizes c word_prog =
      (let reg_count = asm_config_reg_count c - LENGTH
        (asm_config_avoid_regs c) - 5 in
@@ -1338,10 +1338,10 @@ let compute_stack_frame_sizes_thm = prove
            (misc_Nil,0)))) (fromAList word_prog))`,
   CHEAT_TAC);;
 
-let is_64_bits_def = new_definition
+let is_64_bits_def = cake_define
   `is_64_bits (:'a) <=> (dimindex (:'a) = 64)`;;
 
-let is_safe_for_space_def = new_definition
+let is_safe_for_space_def = cake_define
   `backendProof_is_safe_for_space ffi asm_conf c prog stack_heap_limit =
      (let data_prog = FST (SND (to_data c prog)) in
      let word_prog = FST (SND (to_word (asm_conf:'a asm_config) c
@@ -1410,7 +1410,7 @@ let IMP_is_safe_for_space = prove
        ffi asm_conf c prog stack_heap_limit`,
   CHEAT_TAC);;
 
-let read_limits_def = new_definition
+let read_limits_def = cake_define
   `backendProof_read_limits (asm_conf:'a asm_config) (c:backend_config)
   mc ms =
      get_stack_heap_limit
@@ -1446,7 +1446,7 @@ let state_co_inc_compile_has_flat_comp = prove
      (cake_orac asm_conf c' src config_tuple1 g)`,
   CHEAT_TAC);;
 
-let add_eval_state_def = define_cases
+let add_eval_state_def = cake_define_list
   [`add_eval_state NONE s0 = s0`;
    `add_eval_state (SOME ci) s0 =
   semanticPrimitives_state_eval_state_fupd (K (SOME (mk_init_eval_state
@@ -1459,7 +1459,7 @@ let add_eval_state_ffi = prove
   CHEAT_TAC);;
 
 
-let opt_eval_config_wf_def = define_cases
+let opt_eval_config_wf_def = cake_define_list
   [`opt_eval_config_wf asm_conf c' (SOME ci) =
   (compiler_instance_compiler_fun
       ci = compile_inc_progs_for_eval asm_conf /\
@@ -1467,7 +1467,7 @@ let opt_eval_config_wf_def = define_cases
         compiler_instance_init_state ci = c')`;
    `opt_eval_config_wf asm_conf c' NONE = T`];;
 
-let backend_from_data_tuple_cc_def = new_definition
+let backend_from_data_tuple_cc_def = cake_define
   `backend_from_data_tuple_cc asm_conf (c:backend_config) cfg =
      OPTION_MAP (I ## MAP upper_w2w ## I) o
        (\progs.
@@ -1504,7 +1504,7 @@ let backend_from_data_tuple_cc_def = new_definition
                MAP (compile_part (ensure_fp_conf_ok asm_conf
                  (backend_config_data_conf c)))`;;
 
-let backend_from_flat_tuple_cc_def = new_definition
+let backend_from_flat_tuple_cc_def = cake_define
   `backend_from_flat_tuple_cc asm_conf (c:backend_config) =
      pure_cc inc_compile_decs
        (compile_common_inc (backend_config_clos_conf c)
@@ -1838,8 +1838,8 @@ let compile_correct_is_safe_for_space = prove
      semantics_prog s env prog)`),
   CHEAT_TAC);;
 
-let the_EvalDecs_def = define_general
-  [`the_EvalDecs (EvalDecs x) = x`];;
+let the_EvalDecs_def = cake_define
+  `the_EvalDecs (EvalDecs x) = x`;;
 
 let compile_correct_eval = prove
  (`compile asm_conf c prog = SOME (bytes,bitmaps,c') ==>

@@ -36,28 +36,28 @@ hol4_overload "Shift" "wordLang_Shift";;
 *)
 
 (*Pull all nested arguments with the same op up*)
-let pull_ops_def,pull_ops_ind = define_rec
+let pull_ops_def = cake_define_list
   [`pull_ops op [] acc = acc`;
    `pull_ops op (x :: xs) acc =
         (match x with (wordLang_Op op' ls) -> (if op = op' then
           pull_ops op xs (ls ++ acc) else pull_ops op xs (x ::
           acc)) | _2 -> pull_ops op xs (x :: acc))`];;
 
-let word_inst_is_const_def = new_definition
+let word_inst_is_const_def = cake_define
   `word_inst_is_const x1 =
         match x1 with
           wordLang_Const w -> T
         | _3 -> F`;;
 hol4_overload "is_const" "word_inst_is_const";;
 
-let rm_const_def = new_definition
+let rm_const_def = cake_define
   `rm_const x1 =
         match x1 with
           wordLang_Const w -> w
         // Make it total
         | _4 -> (n2w 0)`;;
 
-let convert_sub_def = new_definition
+let convert_sub_def = cake_define
   `convert_sub ls =
         match ls with
           [wordLang_Const w1; Const w2] -> Const (w1 - w2)
@@ -73,7 +73,7 @@ let convert_sub_pmatch = prove
        asm_Sub ls)`,
   CHEAT_TAC);;
 
-let op_consts_def = new_definition
+let op_consts_def = cake_define
   `op_consts x1 =
         match x1 with
           (And:binop) -> wordLang_Const (word_not (n2w 0))
@@ -87,7 +87,7 @@ let op_consts_pmatch = prove
   CHEAT_TAC);;
 
 (* Returns a definite value *)
-let reduce_const_def = new_definition
+let reduce_const_def = cake_define
   `reduce_const op w rest =
    (if w = (n2w 0) then
      if op = Add \/ op = Or \/ op = Xor then
@@ -97,7 +97,7 @@ let reduce_const_def = new_definition
        Const (n2w 0) else wordLang_Op op (Const w :: rest) else
          wordLang_Op op (Const w :: rest))`;;
 
-let optimize_consts_def = new_definition
+let optimize_consts_def = cake_define
   `optimize_consts op ls =
    (let (const_ls,nconst_ls) = PARTITION word_inst_is_const ls in
      match const_ls with
@@ -108,13 +108,11 @@ let optimize_consts_def = new_definition
 (* If this expression contains a constant it should
     be head of the output operation list *)
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 word_instScript.sml:122-129: the tactic that proves the
    termination *)
-let pull_exp_def,pull_exp_ind = define_wf
+let pull_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB)`
-  [`pull_exp exp =
+  `pull_exp exp =
         match exp with
           wordLang_Op asm_Sub ls ->
        (let new_ls = MAP pull_exp ls in
@@ -130,7 +128,7 @@ let pull_exp_def,pull_exp_ind = define_wf
         | (wordLang_Load exp) -> wordLang_Load (pull_exp exp)
         | (wordLang_Shift shift' exp nexp) -> wordLang_Shift shift'
           (pull_exp exp) (pull_exp nexp)
-        | exp -> exp`];;
+        | exp -> exp`;;
 
 let pull_exp_pmatch = prove
  (`!(exp:'a wordLang_exp).
@@ -157,13 +155,11 @@ let pull_exp_pmatch = prove
 c d
 *)
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 word_instScript.sml:171-177: the tactic that proves the
    termination *)
-let flatten_exp_def,flatten_exp_ind = define_wf
+let flatten_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB)`
-  [`flatten_exp exp =
+  `flatten_exp exp =
         match exp with
           wordLang_Op asm_Sub exps -> wordLang_Op asm_Sub (MAP
             flatten_exp exps)
@@ -174,7 +170,7 @@ let flatten_exp_def,flatten_exp_ind = define_wf
         | (Load exp) -> Load (flatten_exp exp)
         | (Shift shift' exp nexp) -> Shift shift' (flatten_exp exp)
           (flatten_exp nexp)
-        | exp -> exp`];;
+        | exp -> exp`;;
 
 
 (* HOL4 word_instScript.sml:180-197: code that the source has in a
@@ -182,7 +178,7 @@ let flatten_exp_def,flatten_exp_ind = define_wf
 (* HOL4 word_instScript.sml:198-204: code that the source has in a
    comment *)
 
-let is_Lookup_CurrHeap_def = new_definition
+let is_Lookup_CurrHeap_def = cake_define
   `is_Lookup_CurrHeap x1 =
       match x1 with
         wordLang_Lookup CurrHeap -> T
@@ -207,13 +203,11 @@ let is_Lookup_CurrHeap_pmatch = prove
 *)
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 word_instScript.sml:294-300: the tactic that proves the
    termination *)
-let inst_select_exp_def,inst_select_exp_ind = define_wf
+let inst_select_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB o SND o SND o SND)`
-  [`inst_select_exp c tar temp x4 =
+  `inst_select_exp c tar temp x4 =
         match (c,tar,temp,x4) with
           ((c:'a asm_config),(tar:num),(temp:num),wordLang_Load exp)
             ->
@@ -247,8 +241,7 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
        match e2 with Const w ->
          // t = r op const
          (if asm_config_valid_imm c (INL op) w then
-           Seq p1 (Inst (Arith (asm_Binop op tar temp (Imm w))))
-             else
+           Seq p1 (Inst (Arith (asm_Binop op tar temp (Imm w)))) else
           // t = r + const --> t = r - const
           if op = Add /\ asm_config_valid_imm c (INL Sub) (--w) then
            Seq p1 (Inst (Arith (asm_Binop asm_Sub tar temp (Imm
@@ -267,15 +260,15 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
                (let prog = inst_select_exp c temp temp exp in
                  if n = 0 then
                    Seq prog (wordLang_Move 0 [tar,temp]) else
-                    Seq prog (Inst (Arith (asm_Shift sh tar temp
-                      (Imm (n2w n)))))) else
+                    Seq prog (Inst (Arith (asm_Shift sh tar temp (Imm
+                      (n2w n)))))) else
                Inst (asm_Const tar (n2w 0))) | _13 ->
          (let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
-         Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg
-           (temp + 1))))))))
+         Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg (temp
+           + 1))))))))
         // Make it total
-        | (_14,_15,_16,_17) -> Skip`];;
+        | (_14,_15,_16,_17) -> Skip`;;
 
 let inst_select_exp_pmatch = prove
  (`!c tar temp exp.
@@ -350,12 +343,8 @@ EVAL ``(pull_exp (Op And [Const (99w:64 word); Op Add [Op Add [];Op Or []]]))``
 *)
 
 (*Flattens all expressions in program, temp must a fresh var*)
-let _ = size_thms "wordLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let inst_select_def,inst_select_ind = define_wf
-  `MEASURE (\(x0,x1,x2). wordLang_prog_size (\x. 0) x2)`
-  [`inst_select c temp prog =
+let inst_select_def = cake_define
+  `inst_select c temp prog =
         match prog with
           wordLang_Assign v exp ->
        (inst_select_exp c v temp o flatten_exp o pull_exp) exp
@@ -413,7 +402,7 @@ let inst_select_def,inst_select_ind = define_wf
        Call retsel dest args handlersel)
         | (Loop names body exit_names) ->
        Loop names (inst_select c temp body) exit_names
-        | prog -> prog`];;
+        | prog -> prog`;;
 
 let inst_select_pmatch = prove
  (`!c temp prog.
@@ -476,12 +465,8 @@ let inst_select_pmatch = prove
 (*
   Convert all 3 register instructions to 2 register instructions
 *)
-let _ = size_thms "wordLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let three_to_two_reg_def,three_to_two_reg_ind = define_wf
-  `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`three_to_two_reg prog =
+let three_to_two_reg_def = cake_define
+  `three_to_two_reg prog =
         match prog with
           wordLang_Inst (Arith (asm_Binop bop r1 r2 ri)) ->
        Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Binop bop r1
@@ -490,14 +475,14 @@ let three_to_two_reg_def,three_to_two_reg_ind = define_wf
        Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Shift l r1 r1
          n)))
         | (Inst (Arith (asm_AddCarry r1 r2 r3 r4))) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddCarry r1
-         r1 r3 r4)))
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddCarry r1 r1
+         r3 r4)))
         | (Inst (Arith (asm_AddOverflow r1 r2 r3 r4))) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddOverflow
-         r1 r1 r3 r4)))
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddOverflow r1
+         r1 r3 r4)))
         | (Inst (Arith (asm_SubOverflow r1 r2 r3 r4))) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_SubOverflow
-         r1 r1 r3 r4)))
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_SubOverflow r1
+         r1 r3 r4)))
         | (OpCurrHeap bop r1 r2) ->
        Seq (wordLang_Move 0 [r1,r2]) (OpCurrHeap bop r1 r1)
         | (Seq p1 p2) ->
@@ -518,7 +503,7 @@ let three_to_two_reg_def,three_to_two_reg_ind = define_wf
        Call retsel dest args handlersel)
         | (Loop names body exit_names) ->
        Loop names (three_to_two_reg body) exit_names
-        | prog -> prog`];;
+        | prog -> prog`;;
 
 let three_to_two_reg_pmatch = prove
  (`!prog.
@@ -555,7 +540,7 @@ let three_to_two_reg_pmatch = prove
      Loop names (three_to_two_reg body) exit_names | prog -> prog)`,
   CHEAT_TAC);;
 
-let three_to_two_reg_prog_def = new_definition
+let three_to_two_reg_prog_def = cake_define
   `three_to_two_reg_prog b prog =
      (if b then three_to_two_reg prog else prog)`;;
 

@@ -32,7 +32,7 @@ let _ = hol4_ancestors "primTypes"
 
 (* The ordering in the following is important. The stamps generated from the
    exceptions and types must match those in semanticPrimitives *)
-let prim_types_program_def = new_definition
+let prim_types_program_def = cake_define
   `prim_types_program =
     [Dexn unknown_loc (implode "Bind") [];
      Dexn unknown_loc (implode "Chr") [];
@@ -46,19 +46,19 @@ let prim_types_program_def = new_definition
                "'a"); Atapp [Atvar (implode "'a")] (Short (implode
                "list"))])])]]`;;
 
-let add_to_sem_env_def = new_definition
+let add_to_sem_env_def = cake_define
   `add_to_sem_env ((st:'ffi semanticPrimitives_state),env) prog =
    (match evaluate_evaluate_decs st env prog with
      (st,Rval env') -> SOME (st,extend_dec_env env' env) |
        (st,Rerr _1) -> NONE)`;;
 
-let prim_sem_env_def = new_definition
+let prim_sem_env_def = cake_define
   `prim_sem_env (ffi:'ffi ffi_state) =
    add_to_sem_env
    (mk_semanticPrimitives_state 0 [] ffi 0 0 NONE,
     mk_sem_env nsEmpty nsEmpty) prim_types_program`;;
 
-let prim_tenv_def = new_definition
+let prim_tenv_def = cake_define
   `prim_tenv =
       mk_type_env nsEmpty
           (alist_to_ns
@@ -98,7 +98,7 @@ let prim_tenv_def = new_definition
                 ((implode "word8array"),[],Tapp []
                   Tword8array_num)]))`;;
 
-let prim_type_ids_def = new_definition
+let prim_type_ids_def = cake_define
   `prim_type_ids = set_of_list (Tlist_num :: Tbool_num ::
   prim_type_nums)`;;
 

@@ -202,7 +202,7 @@ hol4_overload "FunApp" "ast_FunApp";;
 hol4_overload "Force" "ast_Force";;
 hol4_overload "Simple" "ast_Simple";;
 
-let getOpClass_def = new_definition
+let getOpClass_def = cake_define
   `getOpClass op =
    (match op with ast_Opapp -> ast_FunApp | ast_Eval -> ast_EvalOp
      | ast_ThunkOp t -> (if t = ForceThunk then ast_Force else
@@ -314,7 +314,7 @@ let dec_INDUCT,dec_RECURSION = define_datatype
    Denv (mlstring)";;
 
 (* Computes the bindings of a pattern *)
-let pat_bindings_def = define_mutual_rec
+let pat_bindings_def = cake_define_list
   [`ast_pat_bindings (ast_Pany:ast_pat) = []`;
    `ast_pat_bindings (ast_Pvar n:ast_pat) = [n]`;
    `ast_pat_bindings (ast_Plit l:ast_pat) = []`;
@@ -329,8 +329,7 @@ let pat_bindings_def = define_mutual_rec
 hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
-let every_exp_def,every_exp_ind = define_shaped_rec
-  "nested"
+let every_exp_def = cake_define_list
   [`every_exp p (ast_Raise e:ast_exp) <=>
                  p ((ast_Raise e:ast_exp)) /\ every_exp p e`;
    `every_exp p (ast_Handle e pes:ast_exp) <=>
@@ -368,16 +367,16 @@ let every_exp_def,every_exp_ind = define_shaped_rec
                  p ((ast_Letrec funs e:ast_exp)) /\ every_exp p
                    e /\ EVERY (\(n,v,e). every_exp p e) funs`];;
 
-let seqs_def,seqs_ind = define_rec
+let seqs_def = cake_define_list
   [`ast_Seqs [] = ast_Con NONE []`;
    `ast_Seqs (x :: xs) = ast_Let NONE x (ast_Seqs xs)`];;
 hol4_overload "Seqs" "ast_Seqs";;
 
-let apps_def,apps_ind = define_rec
+let apps_def = cake_define_list
   [`Apps f [] = f`;
    `Apps f (x :: xs) = Apps (ast_App ast_Opapp [f; x]) xs`];;
 
-let funs_def,funs_ind = define_rec
+let funs_def = cake_define_list
   [`Funs [] e = e`;
    `Funs (x :: xs) e = ast_Fun x (Funs xs e)`];;
 

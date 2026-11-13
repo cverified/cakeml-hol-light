@@ -38,7 +38,16 @@ let fast_definition tm =
 
 let fast_clauses cls = fast_definition (definition_of_clauses cls);;
 
-let fast_induction th = mk_thm([],induction_statement (concl th));;
+(* the statement is read off the clauses, and a real load reads it
+   the same way; where it cannot be read off, a real load binds
+   nothing either (ISSUES.md) *)
+
+let fast_induction th =
+  try mk_thm([],induction_statement (concl th))
+  with Failure _ -> TRUTH;;
+
+let fast_pair cls =
+  let th = fast_clauses cls in th,fast_induction th;;
 
 (* the ways of making a definition, and the proofs: the
    ones that give a pair give the induction theorem too *)
@@ -70,6 +79,8 @@ let define_mutual_shaped_rec shape cls = fast_clauses cls;;
 let define_mutual_shaped_rec_cheat shape cls = fast_clauses cls;;
 
 let define_mutual_shaped_wf shape rel cls = fast_clauses cls;;
+
+let define_mutual_shaped_wf_tac shape rel tac cls = fast_clauses cls;;
 
 let define_mutual_shaped_wf_cheat shape rel cls = fast_clauses cls;;
 

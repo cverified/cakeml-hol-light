@@ -30,34 +30,33 @@ let _ = hol4_ancestors "pattern_comp"
 
 (* moving constant patterns up *)
 
-let is_const_row_def = new_definition
+let is_const_row_def = cake_define
   `is_const_row x1 =
       match x1 with
         ((pattern_semantics_Cons _2 pats:pattern_semantics_pat),x) ->
           NULL pats
       | _3 -> F`;;
 
-let is_Any_def,is_Any_ind = define_shaped_rec
-  "match"
-  [`is_Any x1 =
+let is_Any_def = cake_define
+  `is_Any x1 =
       match x1 with
         (pattern_semantics_Any:pattern_semantics_pat) -> T
       | (Or p1 p2) -> (is_Any p1 \/ is_Any p2)
-      | _4 -> F`];;
+      | _4 -> F`;;
 
-let is_Or_row_def = new_definition
+let is_Or_row_def = cake_define
   `is_Or_row x1 =
       match x1 with
         ((Or p1 p2:pattern_semantics_pat),_5) -> T
       | _6 -> F`;;
 
-let take_until_Any_def,take_until_Any_ind = define_rec
+let take_until_Any_def = cake_define_list
   [`take_until_Any [] = []`;
    `take_until_Any ((p,x) :: xs) =
       (if is_Any p then [(p,x)] else (p,x) :: take_until_Any
         xs)`];;
 
-let move_const_up_def = new_definition
+let move_const_up_def = cake_define
   `move_const_up rows =
      (let new_rows = take_until_Any rows in
        if 5 <= LENGTH new_rows \/ EXISTS is_Or_row new_rows then
@@ -130,17 +129,12 @@ let pattern_comp_pmatch_list_LENGTH = prove
 
 (* replace last pattern with Any (used if rows are exhaustive) *)
 
-let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let insert_Any_def,insert_Any_ind = define_wf
-  `MEASURE (\x0. list_size (pair_size pattern_semantics_pat_size (\x.
-  0)) x0)`
-  [`insert_Any x1 =
+let insert_Any_def = cake_define
+  `insert_Any x1 =
       match x1 with
         [] -> []
       | [p,x] -> [(pattern_semantics_Any,x)]
-      | (x :: xs) -> x :: insert_Any xs`];;
+      | (x :: xs) -> x :: insert_Any xs`;;
 
 let match_insert_Any = prove
  (`!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
@@ -153,25 +147,25 @@ let match_insert_Any = prove
 
 (* turning the pattern rows into code *)
 
-let is_True_def = new_definition
+let is_True_def = cake_define
   `is_True x1 =
       match x1 with
         pattern_semantics_True -> T
       | _8 -> F`;;
 
-let mk_Disj_def = new_definition
+let mk_Disj_def = cake_define
   `mk_Disj p q = (if is_True p \/ is_True q then
   pattern_semantics_True else pattern_semantics_Disj p q)`;;
 
-let mk_Conj_def = new_definition
+let mk_Conj_def = cake_define
   `mk_Conj p q =
      (if is_True p then q else
      if is_True q then p else pattern_semantics_Conj p q)`;;
 
-let mk_If_def = new_definition
+let mk_If_def = cake_define
   `mk_If g p q = (if is_True g then p else If g p q)`;;
 
-let get_pos_def,get_pos_ind = define_rec
+let get_pos_def = cake_define_list
   [`get_pos [] = EmptyPos`;
    `get_pos (n :: ns) = Pos n (get_pos ns)`];;
 
@@ -180,9 +174,10 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let pat_to_guard_def = define_mutual_wf_cheat
+let pat_to_guard_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_11,p) -> pattern_semantics_pat_size
-  p | INR (_12,k,p) -> list_size pattern_semantics_pat_size p)`
+     p | INR (_12,k,p) -> list_size pattern_semantics_pat_size p)`)
+  CHEAT_TAC
   [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =
   pattern_semantics_True`;
    `pat_to_guard l (Lit r:pattern_semantics_pat) =
@@ -204,13 +199,13 @@ let pat_to_guard_def = define_mutual_wf_cheat
    `pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
   (pats_to_guard l (k + 1) ps)`];;
 
-let pats_to_code_def,pats_to_code_ind = define_rec
+let pats_to_code_def = cake_define_list
   [`pats_to_code [] = Fail`;
    `pats_to_code ((p,x) :: rows) =
       mk_If (pat_to_guard [] p) (pattern_semantics_Leaf x)
         (pats_to_code rows)`];;
 
-let pattern_comp_walk_def,pattern_comp_walk_ind = define_rec
+let pattern_comp_walk_def = cake_define_list
   [`pattern_comp_walk [] x refs = SOME x`;
    `pattern_comp_walk (n :: ns) x refs =
       (match x with (pattern_semantics_Term t xs) -> (if n < LENGTH
@@ -221,7 +216,7 @@ let pattern_comp_walk_def,pattern_comp_walk_ind = define_rec
                           NONE) | _16 -> NONE)`];;
 hol4_overload "walk" "pattern_comp_walk";;
 
-let walk_list_def = new_definition
+let walk_list_def = cake_define
   `walk_list ns x refs =
      (match pattern_comp_walk ns x refs with SOME
        (pattern_semantics_Term _17 vs) -> SOME vs | _18 -> NONE)`;;
@@ -284,7 +279,7 @@ let pat_to_code_thm = prove
 
 (* plug all the parts together *)
 
-let pattern_comp_comp_def = new_definition
+let pattern_comp_comp_def = cake_define
   `pattern_comp_comp rows =
      (let rows0 = move_const_up rows in
      let rows1 = (if exh_rows rows0 then insert_Any rows0 else rows0)

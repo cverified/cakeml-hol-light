@@ -57,7 +57,7 @@ let _ = hide_overloads
    "compile","word_to_word_compile";
    "data_buffer","data_buffer"];;
 
-let compile_state_def = new_definition
+let compile_state_def = cake_define
   `compile_state clk c s = wordSem_state_compile_fupd (K c)
   (wordSem_state_compile_oracle_fupd (K ((I ## (MAP (I ## I ##
   remove_must_terminate))) o wordSem_state_compile_oracle s))

@@ -39,7 +39,7 @@ hol4_overload "List" "displayLang_List";;
 (* HOL4 displayLangScript.sml:21: ML code, not ported *)
 
 (* display_to_json *)
-let trace_to_json_def,trace_to_json_ind = define_rec
+let trace_to_json_def = cake_define_list
   [`trace_to_json (backend_common_Cons tra num') =
         jsonLang_Object [((implode "name"),String (implode "Cons"));
           ((implode "num"),String (toString num'));
@@ -62,14 +62,13 @@ let trace_to_json_def,trace_to_json_ind = define_rec
    port cannot state yet: MEM_sExp_size *)
 
 (* Converts a display expression to JSON *)
-let display_to_json_def,display_to_json_ind = define_shaped_rec
-  "nested"
-  [`(display_to_json (displayLang_Item tra name es) =
+let display_to_json_def = cake_define
+  `(display_to_json (displayLang_Item tra name es) =
      (let es' = MAP display_to_json es in
      let props = [((implode "name"),String name); ((implode
        "args"),jsonLang_Array es')] in
-     let props' = (match tra with NONE -> props | SOME t ->
-       ((implode "trace"),trace_to_json t) :: props) in
+     let props' = (match tra with NONE -> props | SOME t -> ((implode
+       "trace"),trace_to_json t) :: props) in
        jsonLang_Object props')) /\
    (display_to_json (String s:sExp) = String s) /\
    (display_to_json (displayLang_Tuple es) =
@@ -77,9 +76,9 @@ let display_to_json_def,display_to_json_ind = define_shaped_rec
        jsonLang_Object [((implode "isTuple"),jsonLang_Bool T);
          ((implode "elements"),jsonLang_Array es')])) /\
     (display_to_json (List es) = jsonLang_Array (MAP
-      display_to_json es))`];;
+      display_to_json es))`;;
 
-let display_to_str_tree_def = define_mutual_rec
+let display_to_str_tree_def = cake_define_list
   [`display_to_str_tree (displayLang_Item tra name es) =
          mlsexp_Trees (mlsexp_Str name ::
            display_to_str_tree_list es)`;

@@ -48,26 +48,26 @@ let loc_err_info_FIELDS = define_record "loc_err_info"
   ["loc","locs option";
    "err","(mlstring,mlstring,mlstring list#t)namespace"];;
 
-let failwith_def = new_definition
+let failwith_def = cake_define
   `(infer_failwith:loc_err_info->'a->'b->('c,locs option#'a)exc#'b) l
   msg =
      (\s. (M_failure (loc_err_info_loc l,msg),s))`;;
 hol4_overload "failwith" "infer_failwith";;
 
-let guard_def = new_definition
+let guard_def = cake_define
   `infer_guard P l msg = (if P then st_ex_return one else
   infer_failwith l msg)`;;
 hol4_overload "guard" "infer_guard";;
 
-let read_def = new_definition
+let read_def = cake_define
   `(read:'a->('a,'b)exc#'a) =
    (\s. (M_success s,s))`;;
 
-let write_def = new_definition
+let write_def = cake_define
   `(write:'a->'a->(1,'b)exc#'a) v =
    (\s. (M_success one,v))`;;
 
-let lookup_st_ex_def = new_definition
+let lookup_st_ex_def = cake_define
   `lookup_st_ex l err id' ienv st =
      (match nsLookup ienv id' with NONE -> (M_failure
        (loc_err_info_loc l,mlstring_concat [(implode "Undefined ");
@@ -79,39 +79,36 @@ let infer_st_FIELDS = define_record "infer_st"
    "subst","(num,infer_t)fmap";
    "next_id","num"];;
 
-let fresh_uvar_def = new_definition
+let fresh_uvar_def = cake_define
   `(fresh_uvar:infer_st->(infer_t,'a)exc#infer_st) =
    (\s. (M_success (Infer_Tuvar (infer_st_next_uvar
      s)),infer_st_next_uvar_fupd (K (infer_st_next_uvar s + 1)) s))`;;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let n_fresh_uvar_def,n_fresh_uvar_ind = define_wf
-  `MEASURE (\x0. (\n. n) x0)`
-  [`n_fresh_uvar (n:num) =
+let n_fresh_uvar_def = cake_define
+  `n_fresh_uvar (n:num) =
    (if n = 0 then
      st_ex_return [] else
      st_ex_bind fresh_uvar (\v. st_ex_bind (n_fresh_uvar (n - 1)) (\
         vs.
-        st_ex_return (v :: vs))))`];;
+        st_ex_return (v :: vs))))`;;
 
-let n_fresh_id_def = new_definition
+let n_fresh_id_def = cake_define
   `n_fresh_id n =
    (\s.
    (M_success (GENLIST (\x. infer_st_next_id s + x)
      n),infer_st_next_id_fupd (K (infer_st_next_id s + n)) s))`;;
 
 (* Doesn't reset the ID component *)
-let init_infer_state_def = new_definition
+let init_infer_state_def = cake_define
   `init_infer_state st = infer_st_subst_fupd (K FEMPTY)
   (infer_st_next_uvar_fupd (K 0) st)`;;
 
-let init_state_def = new_definition
+let init_state_def = cake_define
   `init_state =
    (\st.
      (M_success one,init_infer_state st))`;;
 
-let add_constraint_def = new_definition
+let add_constraint_def = cake_define
   `add_constraint (l:loc_err_info) t1 t2 =
    (\st.
      match t_unify (infer_st_subst st) t1 t2 with NONE ->
@@ -125,12 +122,8 @@ let add_constraint_def = new_definition
                                 t2)]),st) | SOME s ->
            (M_success one,infer_st_subst_fupd (K s) st))`;;
 
-let _ = size_thms "infer_t";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let add_constraints_def,add_constraints_ind = define_wf
-  `MEASURE (\(x0,x1,x2). infer_t_size1 x1 + infer_t_size1 x2)`
-  [`add_constraints l x2 x3 =
+let add_constraints_def = cake_define
+  `add_constraints l x2 x3 =
         match (x2,x3) with
           ([],[]) ->
      st_ex_return one
@@ -141,18 +134,18 @@ let add_constraints_def,add_constraints_ind = define_wf
         st_ex_return one))
         | (_1,_2) ->
      infer_failwith l ((implode
-       "Internal error: Bad call to add_constraints"))`];;
+       "Internal error: Bad call to add_constraints"))`;;
 
-let get_next_uvar_def = new_definition
+let get_next_uvar_def = cake_define
   `get_next_uvar =
      (\st. (M_success (infer_st_next_uvar st),st))`;;
 
-let apply_subst_def = new_definition
+let apply_subst_def = cake_define
   `apply_subst t =
      st_ex_bind read (\st.
         st_ex_return (t_walkstar (infer_st_subst st) t))`;;
 
-let apply_subst_list_def = new_definition
+let apply_subst_list_def = cake_define
   `apply_subst_list ts =
      st_ex_bind read (\st.
         st_ex_return (MAP (t_walkstar (infer_st_subst st)) ts))`;;
@@ -169,7 +162,7 @@ let inf_env_FIELDS = define_record "inf_env"
 (* Generalise the unification variables greater than m, starting at deBruijn index n.
  * Return how many were generalised, the generalised type, and a substitution
  * that describes the generalisation *)
-let generalise_def = define_mutual_rec
+let generalise_def = cake_define_list
   [`generalise m n s (Infer_Tapp ts tc) =
       (let (num_gen,s',ts') = generalise_list m n s ts in
         (num_gen,s',Infer_Tapp ts' tc))`;
@@ -189,7 +182,7 @@ let generalise_def = define_mutual_rec
         in
         (num_gen + num_gen',s'',t' :: ts'))`];;
 
-let infer_type_subst_def = define_mutual_rec
+let infer_type_subst_def = cake_define_list
   [`infer_type_subst s (Tvar tv) =
       (match ALOOKUP s tv with SOME t -> t | NONE ->
         Infer_Tvar_db 0)`;
@@ -214,7 +207,7 @@ let infer_type_subst_alt = prove
      Infer_Tapp (MAP (infer_type_subst s) ts) tn)`,
   CHEAT_TAC);;
 
-let infer_deBruijn_subst_def = define_mutual_rec
+let infer_deBruijn_subst_def = cake_define_list
   [`infer_deBruijn_subst s (Infer_Tvar_db n) =
       (if n < LENGTH s then
         EL n s else
@@ -241,12 +234,9 @@ let infer_deBruijn_subst_alt = prove
      Infer_Tuvar n)`,
   CHEAT_TAC);;
 
-let _ = size_thms "ast_t";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let type_name_check_subst_def = define_mutual_wf
-  `MEASURE (sum_measure (\(x0,x1,x2,x3,x4). ast_t_size x4)
-  (\(x0,x1,x2,x3,x4). ast_t_size1 x4))`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let type_name_check_subst_def = cake_define_list_cheat CHEAT_TAC
   [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
         st_ex_ignore_bind
           (infer_guard (MEM tv fvs) l (err_string_f tv)) (
@@ -310,12 +300,7 @@ let st_ex_bind_triple = prove
 
 (* HOL4 inferScript.sml:307-312: ML code, not ported *)
 
-let _ = size_thms "ast_t";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let type_name_check_sub_def = define_mutual_wf
-  `MEASURE (sum_measure (\(x0,x1,x2,x3). ast_t_size x3)
-  (\(x0,x1,x2,x3). ast_t_size1 x3))`
+let type_name_check_sub_def = cake_define_list
   [`type_name_check_sub l tenvT fvs (Atvar tv) =
             (\s. if MEM tv fvs then (M_success (Tvar tv),s) else
               (M_failure (loc_err_info_loc l,INR tv),s))`;
@@ -414,15 +399,11 @@ let ignore_bind_type_name_check_subst = prove
       (x,INL r),s) -> (M_failure (x,r),s) | (M_success y,s) -> gs s))`,
   CHEAT_TAC);;
 
-let find_dup_def,find_dup_ind = define_rec
+let find_dup_def = cake_define_list
   [`find_dup [] = NONE`;
    `find_dup (x :: xs) = (if MEM x xs then SOME x else find_dup xs)`];;
 
-let _ = size_thms "loc_err_info";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let check_dups_def,check_dups_ind = define_wf
-  `MEASURE (\(x0,x1,x2). loc_err_info_size x0)`
+let check_dups_def = cake_define_list
   [`check_dups l f [] = st_ex_return one`;
    `check_dups l f (h :: t) =
          (if MEM h t then
@@ -436,13 +417,7 @@ let check_dups_eq_find_dup = prove
        (loc_err_info_loc l,f x),s))`,
   CHEAT_TAC);;
 
-let _ = size_thms "ast_t";;
-let _ = size_thms "mlstring";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let check_ctor_types_def,check_ctor_types_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). list_size (pair_size mlstring_size
-  ast_t_size1) x3)`
+let check_ctor_types_def = cake_define_list
   [`check_ctor_types l tenvT tvs [] = st_ex_return one`;
    `check_ctor_types l tenvT tvs ((cn,ts) :: ctors) =
         st_ex_ignore_bind
@@ -458,14 +433,7 @@ let check_ctor_types_def,check_ctor_types_ind = define_wf
 (* HOL4 inferScript.sml:475-476: a theorem that HOL4 states as the
    value of an ML expression: check_ctor_types_expand *)
 
-let _ = size_thms "ast_t";;
-let _ = size_thms "mlstring";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let check_ctors_def,check_ctors_ind = define_wf
-  `MEASURE (\(x0,x1,x2).      list_size      (pair_size (list_size
-  mlstring_size)      (pair_size mlstring_size      (list_size
-  (pair_size mlstring_size ast_t_size1))))      x2)`
+let check_ctors_def = cake_define_list
   [`check_ctors l tenvT [] = st_ex_return one`;
    `check_ctors l tenvT ((tvs,tn,ctors) :: tds) =
         st_ex_ignore_bind
@@ -487,7 +455,7 @@ let check_ctors_def,check_ctors_ind = define_wf
 (* HOL4 inferScript.sml:495-497: a theorem that HOL4 states as the
    value of an ML expression: check_ctors_expand *)
 
-let check_type_definition_def = new_definition
+let check_type_definition_def = cake_define
   `check_type_definition l tenvT tds =
      st_ex_ignore_bind
        (check_dups l
@@ -502,7 +470,9 @@ let check_type_definition_def = new_definition
 (* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the
    value of an ML expression: check_type_definition_expand *)
 
-let infer_p_def = define_mutual_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let infer_p_def = cake_define_list_cheat CHEAT_TAC
   [`infer_p l ienv (ast_Pvar n:ast_pat) =
         st_ex_bind fresh_uvar (\t.
            st_ex_return (t,[(n,t)]))`;
@@ -580,11 +550,11 @@ let option_case_rand = prove
 (* HOL4 inferScript.sml:584-589: a theorem that HOL4 states as the
    value of an ML expression: infer_p_expand *)
 
-let word_tc_def = define_cases
+let word_tc_def = cake_define_list
   [`word_tc ast_W8 = Tword8_num`;
    `word_tc (ast_W64:word_size) = Tword64_num`];;
 
-let op_to_string_def = new_definition
+let op_to_string_def = cake_define
   `op_to_string x1 =
         match x1 with
           (ast_Shift _6 _7 _8:ast_op) -> ((implode "Shift"),1)
@@ -640,7 +610,7 @@ let op_to_string_def = new_definition
 
 (* HOL4 inferScript.sml:646: the overload Tem, which the port expands *)
 
-let t_num_of_def = new_definition
+let t_num_of_def = cake_define
   `t_num_of x1 =
       match x1 with
         ast_BoolT -> Tbool_num
@@ -651,7 +621,7 @@ let t_num_of_def = new_definition
       | (ast_WordT ast_W64) -> Tword64_num
       | ast_Float64T -> Tdouble_num`;;
 
-let op_simple_constraints_def = new_definition
+let op_simple_constraints_def = cake_define
   `op_simple_constraints op =
      (match op with ast_Arith a ty -> (match supported_arith a ty
        with NONE -> (F,[],(Infer_Tapp []) Tbool_num) | SOME arity ->
@@ -709,7 +679,7 @@ let op_simple_constraints_def = new_definition
              [(Infer_Tapp []) Tstring_num] Tlist_num],(Infer_Tapp [])
              Tstring_num) | _19 -> (F,[],(Infer_Tapp []) Tbool_num))`;;
 
-let op_n_args_msg_def = new_definition
+let op_n_args_msg_def = cake_define
   `op_n_args_msg op n =
      (let (ops,args) = op_to_string op in
      mlstring_concat [(implode "Primitive "); ops; (implode
@@ -717,7 +687,7 @@ let op_n_args_msg_def = new_definition
          toString (&n); (implode " arguments, but expects ");
          toString (&args)])`;;
 
-let constrain_op_def = new_definition
+let constrain_op_def = cake_define
   `constrain_op l op ts s =
      (let (simple,op_arg_ts,op_ret_t) = op_simple_constraints op in
      if simple then
@@ -841,9 +811,20 @@ let constrain_op_error_msg_sanity = prove
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 inferScript.sml:1016-1025: the tactic that proves the
    termination *)
-let infer_e_def = define_mutual_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let infer_e_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\x. match x with INL (_45,_46,e) -> ast_exp_size e | INR
+     (INL (_47,_48,es)) -> list_size ast_exp_size es | INR (INR (INL
+     (_49,_50,pes,_51,_52))) -> list_size (pair_size ast_pat_size
+     ast_exp_size) pes | INR (INR (INR (_53,_54,funs))) ->
+          list_size (pair_size mlstring_size
+               (pair_size mlstring_size ast_exp_size)) funs)`)
+  CHEAT_TAC
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
@@ -1037,18 +1018,20 @@ let FUN_EQ_THM_state = prove
 (* HOL4 inferScript.sml:1033-1038: a theorem that HOL4 states as the
    value of an ML expression: infer_e_expand *)
 
-let extend_dec_ienv_def = new_definition
+let extend_dec_ienv_def = cake_define
   `extend_dec_ienv ienv' ienv =
       mk_inf_env (nsAppend (inf_env_inf_v ienv') (inf_env_inf_v
         ienv)) (nsAppend (inf_env_inf_c ienv') (inf_env_inf_c ienv))
         (nsAppend (inf_env_inf_t ienv') (inf_env_inf_t ienv))`;;
 
-let lift_ienv_def = new_definition
+let lift_ienv_def = cake_define
   `lift_ienv mn ienv =
      mk_inf_env (nsLift mn (inf_env_inf_v ienv)) (nsLift mn
        (inf_env_inf_c ienv)) (nsLift mn (inf_env_inf_t ienv))`;;
 
-let infer_d_def = define_mutual_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let infer_d_def = cake_define_list_cheat CHEAT_TAC
   [`infer_d ienv (Dlet locs p e) =
       st_ex_bind init_state (\one. st_ex_bind get_next_uvar (\
          n. st_ex_bind (infer_e (mk_loc_err_info (SOME locs)
@@ -1168,17 +1151,17 @@ let infer_d_def = define_mutual_guess
    value of an ML expression: infer_d_expand *)
 
 (* The starting Id should be greater than Tlist_num :: (Tbool_num :: prim_type_nums) *)
-let start_type_id_def = new_definition
+let start_type_id_def = cake_define
   `start_type_id =
      ITLIST MAX (Tlist_num :: Tbool_num :: prim_type_nums) 0 + 1`;;
 
-let infertype_prog_def = new_definition
+let infertype_prog_def = cake_define
   `infertype_prog ienv prog =
      (match FST (infer_ds ienv prog (init_infer_state (mk_infer_st
        0 FEMPTY start_type_id))) with M_success new_ienv -> M_success
        (extend_dec_ienv new_ienv ienv) | M_failure x -> M_failure x)`;;
 
-let infertype_prog_inc_def = new_definition
+let infertype_prog_inc_def = cake_define
   `infertype_prog_inc (ienv,next_id) prog =
    (match infer_ds ienv prog (init_infer_state (mk_infer_st ARB ARB
      next_id)) with
@@ -1186,7 +1169,7 @@ let infertype_prog_inc_def = new_definition
      (M_success (extend_dec_ienv new_ienv ienv,infer_st_next_id
        st)) | (M_failure x,_55) -> M_failure x)`;;
 
-let infer_init_config_def = new_definition
+let infer_init_config_def = cake_define
   `(infer_init_config:inf_env) =
      mk_inf_env nsEmpty (type_env_c prim_tenv) (type_env_t
        prim_tenv)`;;
@@ -1195,8 +1178,7 @@ hol4_overload "init_config" "infer_init_config";;
 (* The following aren't needed to run the inferencer, but are useful in the proofs
  * about it *)
 
-let infer_deBruijn_inc_def,infer_deBruijn_inc_ind = define_shaped_rec
-  "nested"
+let infer_deBruijn_inc_def = cake_define_list
   [`infer_deBruijn_inc n (Infer_Tvar_db m) =
         Infer_Tvar_db (m + n)`;
    `infer_deBruijn_inc n (Infer_Tapp ts tn) =
@@ -1204,8 +1186,7 @@ let infer_deBruijn_inc_def,infer_deBruijn_inc_ind = define_shaped_rec
    `infer_deBruijn_inc n (Infer_Tuvar m) =
         Infer_Tuvar m`];;
 
-let infer_subst_def,infer_subst_ind = define_shaped_rec
-  "nested"
+let infer_subst_def = cake_define_list
   [`infer_subst s (Infer_Tvar_db n) = Infer_Tvar_db n`;
    `infer_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (infer_subst
   s) ts) tc`;
@@ -1213,24 +1194,23 @@ let infer_subst_def,infer_subst_ind = define_shaped_rec
         (match FLOOKUP s n with
             NONE -> Infer_Tuvar n | SOME m -> Infer_Tvar_db m)`];;
 
-let pure_add_constraints_def,pure_add_constraints_ind = define_rec
+let pure_add_constraints_def = cake_define_list
   [`pure_add_constraints s [] s' = (s = s')`;
    `pure_add_constraints s1 ((t1,t2) :: rest) s' =
       (?s2. (t_unify s1 t1 t2 = SOME s2) /\
            pure_add_constraints s2 rest s')`];;
 
-let check_t_def,check_t_ind = define_shaped_rec
-  "nested"
+let check_t_def = cake_define_list
   [`check_t n uvars (Infer_Tuvar v) = (v IN uvars)`;
    `check_t n uvars (Infer_Tvar_db n') =
         (n' < n)`;
    `check_t n uvars (Infer_Tapp ts tc) = EVERY (check_t n uvars) ts`];;
 
-let ienv_val_ok_def = new_definition
+let ienv_val_ok_def = cake_define
   `ienv_val_ok uvars env =
      nsAll (\x (tvs,t). check_t tvs uvars t) env`;;
 
-let check_s_def = new_definition
+let check_s_def = cake_define
   `check_s tvs uvs s =
      (!uv. uv IN FDOM s ==> check_t tvs uvs (FAPPLY s uv))`;;
 
@@ -1238,7 +1218,7 @@ let check_s_def = new_definition
  * s2, and s2 is required to be complete in that it assigns to (at least) all
  * the uvars ≤ next_uvar, and when we apply it to any uvar, we get back a type
  * without any uvars in it. *)
-let sub_completion_def = new_definition
+let sub_completion_def = cake_define
   `sub_completion tvs next_uvar s1 extra_constraints s2 =
      (pure_add_constraints s1 extra_constraints s2 /\
       (count next_uvar SUBSET FDOM s2) /\
@@ -1253,14 +1233,14 @@ let sub_completion_def = new_definition
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let alist_nub_def,alist_nub_ind = define_wf_cheat
-  `MEASURE LENGTH`
+let alist_nub_def = cake_define_list_try_tac (fun () ->
+  `MEASURE LENGTH`)
+  CHEAT_TAC
   [`alist_nub [] = []`;
    `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
   FST t)) xs)`];;
 
-let ns_nub_def = define_mutual_shaped_rec
-  "nested"
+let ns_nub_def = cake_define_list
   [`ns_nub (Bind xs ys) = Bind (alist_nub xs) (alist_nub
   (inner_ns_nubs ys))`;
    `inner_ns_nubs [] = []`;
@@ -1268,7 +1248,7 @@ let ns_nub_def = define_mutual_shaped_rec
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let ns_to_alist_def,ns_to_alist_ind = define_guess_cheat
+let ns_to_alist_def = cake_define_list_cheat CHEAT_TAC
   [`ns_to_alist (Bind [] []) = []`;
    `ns_to_alist (Bind [] ((n,x) :: ms)) =
         MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n
@@ -1277,7 +1257,7 @@ let ns_to_alist_def,ns_to_alist_ind = define_guess_cheat
    `ns_to_alist (Bind ((s,x) :: xs) m) = (s,x) :: ns_to_alist (Bind
   xs m)`];;
 
-let inf_env_to_types_string_def = new_definition
+let inf_env_to_types_string_def = cake_define
   `inf_env_to_types_string s =
      (let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
      let xs = MAP (\(n,_56,t). mlstring_concat [n; (implode ": ");

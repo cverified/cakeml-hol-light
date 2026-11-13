@@ -59,17 +59,14 @@ let step_rules = cake_inductive
 
 (* invariant on states *)
 
-let windmill_def = new_definition
+let windmill_def = cake_define
   `windmill (moves:('a#'a) list) = ALL_DISTINCT (MAP FST moves)`;;
 
 let windmill_cons = prove
  (`windmill (x :: ls) <=> ~(MEM (FST x) (MAP FST ls)) /\ windmill ls`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let path_def,path_ind = define_wf
-  `MEASURE (\x0. list_size (pair_size (\x. 0) (\x. 0)) x0)`
+let path_def = cake_define_list
   [`parmove_path [] <=> T`;
    `parmove_path [_1] <=> T`;
    `parmove_path ((c,b') :: (b,a) :: p) <=>
@@ -105,7 +102,7 @@ let NoRead_path = prove
     (\mu dn. ~(MEM dn (MAP SND mu))) (TL sigma) (FST (HD sigma))`,
   CHEAT_TAC);;
 
-let parmove_wf_def = new_definition
+let parmove_wf_def = cake_define
   `parmove_wf (mu,sigma,tau) <=>
      windmill (mu ++ sigma) /\
      EVERY IS_SOME (MAP FST mu) /\
@@ -135,7 +132,7 @@ let wf_steps = prove
 
 (* semantics of moves *)
 
-let parsem_def = new_definition
+let parsem_def = cake_define
   `parsem mu rho = UPDATE_LIST rho (ZIP (MAP FST mu) (MAP (rho o SND)
   mu))`;;
 
@@ -182,10 +179,7 @@ let parsem_MAP_INJ = prove
           x) = parsem ms (r o f) x)`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let seqsem_def,seqsem_ind = define_wf
-  `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\x. 0)) x0)`
+let seqsem_def = cake_define_list
   [`seqsem [] rho = rho`;
    `seqsem ((d,s) :: tau) rho = seqsem tau ((d =+ rho s) rho)`];;
 
@@ -201,7 +195,7 @@ let seqsem_move_unchanged = prove
 
 (* semantics of the state *)
 
-let sem_def = new_definition
+let sem_def = cake_define
   `sem (mu,sigma,tau) rho = parsem (mu ++ sigma) (seqsem (REVERSE
   tau) rho)`;;
 
@@ -215,7 +209,7 @@ let sem_final = prove
 
 (* semantic preservation *)
 
-let eqenv_def = new_definition
+let eqenv_def = cake_define
   `eqenv rho1 rho2 <=> (!r. IS_SOME r ==> (rho1 r = rho2 r))`;;
 (* HOL4 parmoveScript.sml:361: ML code, not ported *)
 (* HOL4 parmoveScript.sml:362: the overload ≡, which the port writes
@@ -285,7 +279,7 @@ let dsteps_steps = prove
 
 (* functional algorithm *)
 
-let fstep_def = new_definition
+let fstep_def = cake_define
   `fstep st =
    (match st with ([],[],_2) -> st | ((d,s) :: t,[],l) ->
      (if s = d then (t,[],l) else (t,[(d,s)],l)) | (t,(d,s) :: b,l)
@@ -308,8 +302,9 @@ let fstep_dstep = prove
 
 (* HOL4 parmoveScript.sml:610-638: the tactic that proves the
    termination *)
-let pmov_def,pmov_ind = define_guess
-  [`pmov s = (match s with ([],[],_3) -> s | _4 -> pmov (fstep s))`];;
+let pmov_def = cake_define_wf
+  `MEASURE (\(mu,sigma,tau). 2 * LENGTH mu + LENGTH sigma)`
+  `pmov s = (match s with ([],[],_3) -> s | _4 -> pmov (fstep s))`;;
 
 (* HOL4 parmoveScript.sml:640: ML code, not ported *)
 
@@ -323,7 +318,7 @@ let pmov_final = prove
 
 (* The top-level parallel move compiler *)
 
-let parmove_def = new_definition
+let parmove_def = cake_define
   `parmove (xs:('a#'a) list) =
      REVERSE (SND (SND (pmov (MAP (\(x,y). (SOME x,SOME y))
        xs,[],[]))))`;;
@@ -358,18 +353,13 @@ let MEM_MAP_SND_parmove = prove
 
 (* the compiler does not use uninitialised temporaries *)
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let not_use_temp_before_assign_def,not_use_temp_before_assign_ind =
-  define_wf
-  `MEASURE (\x0. list_size (pair_size (option_size (\x. 0))
-  (option_size (\x. 0))) x0)`
-  [`not_use_temp_before_assign x1 =
+let not_use_temp_before_assign_def = cake_define
+  `not_use_temp_before_assign x1 =
         match x1 with
           [] -> T
         | ((d,NONE) :: ls) -> F
         | ((NONE,s) :: ls) -> T
-        | ((d,s) :: ls) -> not_use_temp_before_assign ls`];;
+        | ((d,s) :: ls) -> not_use_temp_before_assign ls`;;
 
 let not_use_temp_before_assign_append = prove
  (`!l1 l2.
@@ -454,7 +444,7 @@ let ALL_DISTINCT_parmove = prove
 
 (* the compiler retains all non-trivial moves *)
 
-let state_to_list_def = new_definition
+let state_to_list_def = cake_define
   `state_to_list p = APPEND (FST p) (FST (SND p)) ++ SND (SND p)`;;
 
 let step_preserves_moves = prove
@@ -482,10 +472,10 @@ let parmove_preserves_moves = prove
 
 (* mapping an injective function over compiled moves *)
 
-let map_state_def = new_definition
+let map_state_def = cake_define
   `map_state f = (let m = MAP (f ## f) in m ## m ## m)`;;
 
-let inj_on_state_def = new_definition
+let inj_on_state_def = cake_define
   `inj_on_state f p =
       (let ls0 = state_to_list p in
       let ls = MAP FST ls0 ++ MAP SND ls0 in

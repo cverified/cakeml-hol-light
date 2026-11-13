@@ -86,7 +86,7 @@ let FILTER_MAPi_ID = prove
 
 
 (* bind locals with an arbitrary trace *)
-let bind_locals_def = new_definition
+let bind_locals_def = cake_define
   `bind_locals ts locals comp_map =
      nsBindList (MAP2 (\t x. (x,source_to_flat_Local t x)) ts
        locals) comp_map`;;
@@ -123,28 +123,28 @@ let submap_fupdate_flookup = prove
  (`(f |+ (x,y) SUBMAP g <=> FLOOKUP g x = SOME y /\ f \\ x SUBMAP g)`,
   CHEAT_TAC);;
 
-let has_bools_def = new_definition
+let has_bools_def = cake_define
   `has_bools genv <=>
      FLOOKUP genv ((true_tag,SOME bool_id),0) = SOME (TypeStamp
        (implode "True") bool_type_num) /\
      FLOOKUP genv ((false_tag,SOME bool_id),0) = SOME (TypeStamp
        (implode "False") bool_type_num)`;;
 
-let has_lists_def = new_definition
+let has_lists_def = cake_define
   `has_lists genv <=>
      FLOOKUP genv ((cons_tag,SOME list_id),2) = SOME (TypeStamp
        (implode "::") list_type_num) /\
      FLOOKUP genv ((nil_tag,SOME list_id),0) = SOME (TypeStamp
        (implode "[]") list_type_num)`;;
 
-let has_exns_def = new_definition
+let has_exns_def = cake_define
   `has_exns genv <=>
      FLOOKUP genv ((div_tag,NONE),0) = SOME div_stamp /\
      FLOOKUP genv ((chr_tag,NONE),0) = SOME chr_stamp /\
      FLOOKUP genv ((subscript_tag,NONE),0) = SOME subscript_stamp /\
      FLOOKUP genv ((bind_tag,NONE),0) = SOME bind_stamp`;;
 
-let genv_c_ok_def = new_definition
+let genv_c_ok_def = cake_define
   `genv_c_ok genv_c <=>
      has_bools genv_c /\
      has_exns genv_c /\
@@ -159,7 +159,7 @@ let genv_c_ok_def = new_definition
        FLOOKUP genv_c (cn2,l2) = SOME stamp ==>
        cn1 = cn2 /\ l1 = l2)`;;
 
-let genv_c_tys_ok_def = new_definition
+let genv_c_tys_ok_def = cake_define
   `genv_c_tys_ok genv_c genv_tys <=>
    (!cn ty_id arity.
      ((cn,SOME ty_id),arity) IN FDOM genv_c ==>
@@ -339,7 +339,7 @@ let source_to_flatProof_env_rel_el = prove
            env_i1)))`,
   CHEAT_TAC);;
 
-let subglobals_def = new_definition
+let subglobals_def = cake_define
   `subglobals g1 g2 <=>
      LENGTH g1 <= LENGTH g2 /\
      (!n. n < LENGTH g1 /\ IS_SOME (EL n g1) ==> EL n g1 = EL n
@@ -526,7 +526,7 @@ let env_all_rel_weak = prove
     env_all_rel genv' map' env env' locals`,
   CHEAT_TAC);;
 
-let source_to_flatProof_match_result_rel_def = new_definition
+let source_to_flatProof_match_result_rel_def = cake_define
   `source_to_flatProof_match_result_rel genv env' x3 x4 =
         match (x3,x4) with
           (Match env,Match env_i1) ->
@@ -945,7 +945,7 @@ let evaluate_foldr_let_err = prove
      evaluate env s [ITLIST (Let t NONE) exps e] = (s',Rerr x)`,
   CHEAT_TAC);;
 
-let env_domain_eq_def = new_definition
+let env_domain_eq_def = cake_define
   `env_domain_eq (var_map:source_to_flat_environment) (env:'a sem_env)
   <=>
      nsDom (source_to_flat_environment_v var_map) = nsDom (sem_env_v
@@ -977,7 +977,7 @@ let global_env_inv_append = prove
 
 (* HOL4 source_to_flatProofScript.sml:2022: ML code, not ported *)
 
-let idx_prev_def = new_definition
+let idx_prev_def = cake_define
   `idx_prev idx idx2 <=> next_indices_vidx
    idx <= next_indices_vidx idx2 /\ next_indices_tidx idx <=
      next_indices_tidx idx2 /\ next_indices_eidx idx <=
@@ -998,7 +998,7 @@ let idx_types_FORALL = prove
  (`(!x. P x) = (P Idx_Var /\ P Idx_Type /\ P Idx_Exn)`,
   CHEAT_TAC);;
 
-let ALL_DISJOINT_DEF = new_definition
+let ALL_DISJOINT_DEF = cake_define
   `ALL_DISJOINT xs <=>
    (!i j. i < LENGTH xs /\ j < LENGTH xs /\ ~(i = j) ==> EL i xs
      INTER EL j xs = {})`;;
@@ -1009,7 +1009,7 @@ let ALL_DISJOINT_CONS = prove
      UNION y :: zs)))`,
   CHEAT_TAC);;
 
-let idx_block_def = new_definition
+let idx_block_def = cake_define
   `idx_block start_idx end_idx =
    {(i,Idx_Var) | next_indices_vidx start_idx <= i /\ i <
      next_indices_vidx end_idx} UNION
@@ -1018,13 +1018,13 @@ let idx_block_def = new_definition
    {(i,Idx_Exn) | next_indices_eidx start_idx <= i /\ i <
      next_indices_eidx end_idx}`;;
 
-let idx_final_block_def = new_definition
+let idx_final_block_def = cake_define
   `idx_final_block start_idx =
    {(i,Idx_Var) | next_indices_vidx start_idx <= i} UNION
    {(i,Idx_Type) | next_indices_tidx start_idx <= i} UNION
    {(i,Idx_Exn) | next_indices_eidx start_idx <= i}`;;
 
-let genv_allocated_idxs_def = new_definition
+let genv_allocated_idxs_def = cake_define
   `genv_allocated_idxs genv =
       {(i,Idx_Var) | i < LENGTH (global_env_v genv) /\ ~(EL i
         (global_env_v genv) = NONE)} UNION
@@ -1036,12 +1036,12 @@ let genv_allocated_idxs_def = new_definition
 
 (* simple invariants on env generations and stores: allocation from the
    next field will always be free *)
-let env_gen_inv_def = new_definition
+let env_gen_inv_def = cake_define
   `env_gen_inv (e:environment_generation_store) =
      (domain (environment_generation_store_envs e) SUBSET count
        (environment_generation_store_next e))`;;
 
-let env_store_inv_def = new_definition
+let env_store_inv_def = cake_define
   `env_store_inv (e:environment_store) =
      (domain (environment_store_env_gens e) SUBSET count
        (environment_store_next e))`;;
@@ -1058,7 +1058,7 @@ let inc_compile_prog_env_submap = prove
    optional decode function provided. The state
    part of the oracle sequence should be what is produced by repeatedly
    applying compile_prog *)
-let src_orac_step_invs_def = new_definition
+let src_orac_step_invs_def = cake_define
   `src_orac_step_invs ci (g:dec list->dec list) eval_state =
    (match (ci,eval_state) with (NONE,NONE) -> T | (SOME dec,SOME
      (EvalOracle s)) -> (
@@ -1071,7 +1071,7 @@ let src_orac_step_invs_def = new_definition
 
 (* the flatLang oracle is derived from the source oracle by compile_prog,
    and the two compile oracles agree also *)
-let orac_rel_inner_def = new_definition
+let orac_rel_inner_def = cake_define
   `orac_rel_inner dec s (s_compiler:compiler_fun) (g:dec list->dec
   list) c <=>
      (!k env_id state_v decs. eval_oracle_state_oracle s k =
@@ -1087,7 +1087,7 @@ let orac_rel_inner_def = new_definition
                (st_v2,bytes,words) /\
              (!x2. dec st_v2 = SOME x2 ==> SND x2 = f_st)))))`;;
 
-let orac_rel_def = new_definition
+let orac_rel_def = cake_define
   `orac_rel interp g src_eval flat_eval <=> (match (interp,src_eval)
   with (_5,NONE) -> T | (SOME dec,SOME (EvalOracle s)) -> (
      ?s_compiler. eval_oracle_state_custom_do_eval
@@ -1100,20 +1100,20 @@ let orac_rel_SOME_eval = prove
    interp = SOME dec /\ eval_state = EvalOracle orac_st)`,
   CHEAT_TAC);;
 
-let src_orac_next_cfg_inner_def = new_definition
+let src_orac_next_cfg_inner_def = cake_define
   `src_orac_next_cfg_inner interp orac_0 = (match (interp,orac_0) with
   (SOME dec,(env_id,state_v,decs)) ->
        (match dec state_v with SOME (c,x) -> SOME c | _7 -> NONE)
          | _8 -> NONE)`;;
 
-let src_orac_next_cfg_def = new_definition
+let src_orac_next_cfg_def = cake_define
   `src_orac_next_cfg interp eval_state = (match eval_state with SOME
   (EvalOracle s) -> src_orac_next_cfg_inner interp (oracle s 0) | _9
   -> NONE)`;;
 
 (* every env stored in the eval state is related to a concrete env
    representation in the next oracle state *)
-let src_orac_env_invs_def = new_definition
+let src_orac_env_invs_def = cake_define
   `src_orac_env_invs interp genv eval_state = (match eval_state with
   NONE -> T | SOME (EvalOracle s) ->
      (?c. src_orac_next_cfg interp eval_state = SOME c /\
@@ -1129,12 +1129,12 @@ let src_orac_env_invs_def = new_definition
          global_env_inv genv comp_map {} (EL id' (EL g_id (envs
            s)))))) | _10 -> F)`;;
 
-let src_orac_gen_inv_def = new_definition
+let src_orac_gen_inv_def = cake_define
   `src_orac_gen_inv eval_state = (match eval_state with NONE -> T | SOME
   (EvalOracle s) -> generation
      s < LENGTH (envs s))`;;
 
-let src_orac_invs_def = new_definition
+let src_orac_invs_def = cake_define
   `src_orac_invs interp g genv eval_state <=>
    src_orac_step_invs interp g eval_state /\
    src_orac_env_invs interp genv eval_state /\
@@ -1152,7 +1152,7 @@ let src_orac_invs_weak = prove
    generation in oracle state - this one is tricky, because it will stop
    being true for a while if some declaration are never executed because
    of an exception that is later handled *)
-let env_gen_rel_def = new_definition
+let env_gen_rel_def = cake_define
   `env_gen_rel gen eval_state = (match eval_state with NONE -> T | SOME
   (EvalOracle s) -> environment_generation_store_generation
          gen = generation s /\ generation
@@ -1161,7 +1161,7 @@ let env_gen_rel_def = new_definition
 
 (* the oracle state is in the future, where this generation
    has already been compiled and its environments saved *)
-let env_gen_future_rel_def = new_definition
+let env_gen_future_rel_def = cake_define
   `env_gen_future_rel interp gen eval_state =
      (match src_orac_next_cfg interp eval_state with SOME c ->
        (?gen_final.
@@ -1184,7 +1184,7 @@ let env_gen_future_rel_def = new_definition
      - other blocks may be on the stack of dec blocks being evaluated
    all of those blocks of indices are disjoint, and they are also disjoint
    from those indices that have actually been initialised. *)
-let idx_range_rel_def = new_definition
+let idx_range_rel_def = cake_define
   `idx_range_rel interp genv s_n_ts s_n_en s_eval idxs <=>
      (?idx end_idx fin_idx other_blocks.
      idxs = (idx,end_idx,other_blocks) /\
@@ -1202,17 +1202,17 @@ let idx_range_rel_def = new_definition
 (* in eval mode, the length of the allocated globals space will end at the
    next vidx available for the next compilation. if no eval config, we've
    lost that information, but the prior end index will be before *)
-let fin_idx_match_def = new_definition
+let fin_idx_match_def = cake_define
   `fin_idx_match len end_idx next_cfg = (match next_cfg with NONE ->
   next_indices_vidx end_idx <= len | SOME c -> next_indices_vidx
   (source_to_flat_config_next c) = len)`;;
 
-let eval_ref_inv_def = new_definition
+let eval_ref_inv_def = cake_define
   `eval_ref_inv first_global first_ref <=>
    first_global = [SOME (Loc T 0)] /\
    (?v. first_ref = [semanticPrimitives_Refv v])`;;
 
-let source_to_flatProof_invariant_def = new_definition
+let source_to_flatProof_invariant_def = cake_define
   `source_to_flatProof_invariant interp g gen genv idxs s s_i1 <=>
      genv_c_ok (global_env_c genv) /\
      genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
@@ -1236,7 +1236,7 @@ let source_to_flatProof_invariant_def = new_definition
 hol4_overload "invariant" "source_to_flatProof_invariant";;
 
 (* subsequent oracle config will still have the previous envs in store *)
-let orac_config_envs_subspt_def = new_definition
+let orac_config_envs_subspt_def = cake_define
   `orac_config_envs_subspt interp es1 es2 <=>
      OPTREL (\c c'. subspt (environment_store_env_gens
        (source_to_flat_config_envs c)) (environment_store_env_gens (envs
@@ -1257,7 +1257,7 @@ let orac_config_envs_subspt_refl = prove
 (* this relation holds over any successful evaluate or evaluate_decs
    - the eval generation stack will be back to the same generation
 *)
-let eval_state_call_rel_def = new_definition
+let eval_state_call_rel_def = cake_define
   `eval_state_call_rel es1 es2 <=>
      (match es1 with SOME (EvalOracle s1) -> (?s2. es2 = SOME
        (EvalOracle s2) /\ generation
@@ -1275,7 +1275,7 @@ let eval_state_call_rel_refl = prove
  (`eval_state_call_rel es1 es1`,
   CHEAT_TAC);;
 
-let orac_forward_rel_def = new_definition
+let orac_forward_rel_def = cake_define
   `orac_forward_rel interp es1 es2 <=>
    orac_config_envs_subspt interp es1 es2 /\
    eval_state_call_rel es1 es2`;;
@@ -1812,7 +1812,7 @@ let invariant_IMP_s_rel = prove
   s_rel genv st st'`,
   CHEAT_TAC);;
 
-let source_to_flatProof_abort_def = new_definition
+let source_to_flatProof_abort_def = cake_define
   `source_to_flatProof_abort r <=> (match r with Rerr (Rabort a) -> T
   | _20 -> F)`;;
 hol4_overload "abort" "source_to_flatProof_abort";;
@@ -2085,7 +2085,7 @@ let env_gen_future_rel_forward = prove
 
 (* HOL4 source_to_flatProofScript.sml:5231: a proof *)
 
-let init_eval_state_ok_def = new_definition
+let init_eval_state_ok_def = cake_define
   `init_eval_state_ok x1 =
         match x1 with
           NONE -> T
@@ -2093,7 +2093,7 @@ let init_eval_state_ok_def = new_definition
         | (SOME (EvalOracle s)) -> generation
        s = 0 /\ envs s = [[]]`;;
 
-let init_genv_ty_els_def = new_definition
+let init_genv_ty_els_def = cake_define
   `init_genv_ty_els = [
      (bool_id,[(false_tag,0,TypeStamp (implode "False")
        bool_type_num);
@@ -2102,7 +2102,7 @@ let init_genv_ty_els_def = new_definition
        list_type_num);
          (nil_tag,0,TypeStamp (implode "[]") list_type_num)])]`;;
 
-let init_genv_els_def = new_definition
+let init_genv_els_def = cake_define
   `init_genv_els = FLAT (MAP (\(id',xs).
          MAP (\(tag,arity,stamp). (((tag,SOME id'),arity),stamp)) xs)
      init_genv_ty_els) ++ [
@@ -2111,7 +2111,7 @@ let init_genv_els_def = new_definition
      (((subscript_tag,NONE),0),subscript_stamp);
      (((bind_tag,NONE),0),bind_stamp)]`;;
 
-let init_genv_def = new_definition
+let init_genv_def = cake_define
   `init_genv = mk_global_env [] (FEMPTY |++ init_genv_els) (FEMPTY
   |++ MAP (I ## MAP (I ## FST)) init_genv_ty_els)`;;
 
@@ -2123,13 +2123,13 @@ let init_genv_tys_ok = prove
  (`genv_c_tys_ok (global_env_c init_genv) (global_env_tys init_genv)`,
   CHEAT_TAC);;
 
-let init_genv_next = new_definition
+let init_genv_next = cake_define
   `init_genv_next = mk_next_indices 0 (SUC (MAX_LIST (MAP (\v. match
   SND v with TypeStamp _22 i -> i | _23 -> 0) init_genv_els))) (SUC
   (MAX_LIST (MAP (\v. match SND v with ExnStamp i -> i | _24 -> 0)
   init_genv_els)))`;;
 
-let init_global_env_inv_def = new_definition
+let init_global_env_inv_def = cake_define
   `init_global_env_inv genv comp_map env <=> sem_env_v
    env = nsEmpty /\
    (match sem_env_c env with Bind ns ms -> ms = [] /\
@@ -2147,7 +2147,7 @@ let init_global_env_inv_imp = prove
    global_env_inv genv comp_map {} env`,
   CHEAT_TAC);;
 
-let precondition1_def = new_definition
+let precondition1_def = cake_define
   `precondition1 interp g s1 env1 conf eval_conf prog <=>
    src_orac_step_invs interp g (semanticPrimitives_state_eval_state
      s1) /\
@@ -2247,7 +2247,7 @@ let compile_flat_correct = prove
    semantics ec2 ffi (compile_flat cfg prog)`,
   CHEAT_TAC);;
 
-let precondition_def = new_definition
+let precondition_def = cake_define
   `precondition interp s env cfg ec prog <=>
    (?ec1 g. precondition1 interp g s env cfg ec1 prog /\
      install_conf_rel (source_to_flat_config_pattern_cfg cfg) ec1
@@ -2359,11 +2359,9 @@ let source_to_flatProof_mem_size_lemma = prove
   CHEAT_TAC);;
 
 let _ = size_thms "dec";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let num_bindings_def,num_bindings_ind = define_wf
+let num_bindings_def = cake_define_wf
   `MEASURE dec_size`
-  [`num_bindings x1 =
+  `num_bindings x1 =
         match x1 with
           Dlet _27 p e ->
         (match simple_dlet p e with SOME _28 -> 0 | _29 -> LENGTH
@@ -2373,7 +2371,7 @@ let num_bindings_def,num_bindings_ind = define_wf
         | (Dlocal lds ds) ->
            SUM (MAP num_bindings lds) + SUM (MAP num_bindings ds)
         | (Denv _32) -> 1
-        | _33 -> 0`];;
+        | _33 -> 0`;;
 
 let compile_decs_num_bindings = prove
  (`!t n next' env envs' decs n' next' env' envs' decs'.

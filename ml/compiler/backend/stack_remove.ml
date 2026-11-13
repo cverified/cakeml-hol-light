@@ -33,13 +33,13 @@ let _ = do_list hide_constant ["dummy"; "gc"; "gen_gc"];;
 
 (* -- compiler -- *)
 
-let max_stack_alloc_def = new_definition
+let max_stack_alloc_def = cake_define
   `max_stack_alloc = 255`;;
 
-let word_offset_def = new_definition
+let word_offset_def = cake_define
   `word_offset n = (n2w (dimindex (:'a) DIV 8 * n):'a word)`;;
 
-let store_list_def = new_definition
+let store_list_def = cake_define
   `stack_remove_store_list = [NextFree; EndOfHeap; HeapLength;
   OtherHeap; TriggerGC;
                  AllocSize; Handler; Globals; GlobReal; ProgStart;
@@ -61,24 +61,24 @@ let store_list_def = new_definition
                  Temp (n2w 30); Temp (n2w 31)]`;;
 hol4_overload "store_list" "stack_remove_store_list";;
 
-let store_pos_def = new_definition
+let store_pos_def = cake_define
   `store_pos name =
      (match INDEX_FIND 0 (\n. n = name) stack_remove_store_list
        with NONE -> 0 | SOME (i,_1) -> i + 1)`;;
 
-let store_length_def = new_definition
+let store_length_def = cake_define
   `store_length =
      (if EVEN (LENGTH stack_remove_store_list) then LENGTH
        stack_remove_store_list else LENGTH stack_remove_store_list +
        1)`;;
 
-let store_offset_def = new_definition
+let store_offset_def = cake_define
   `store_offset name = (n2w 0) - word_offset (store_pos name)`;;
 
-let stack_err_lab_def = new_definition
+let stack_err_lab_def = cake_define
   `stack_err_lab = 2`;;
 
-let halt_inst_def = new_definition
+let halt_inst_def = cake_define
   `halt_inst w = stackLang_Seq ((\r w. Inst (asm_Const r w)) 1 w)
   (stackLang_Halt 1)`;;
 
@@ -88,7 +88,7 @@ let halt_inst_def = new_definition
     k+2 is CurrHeap (which is kept in a register for improved speed)
 *)
 
-let single_stack_alloc_def = new_definition
+let single_stack_alloc_def = cake_define
   `single_stack_alloc jump k n =
      (if jump then
        stackLang_Seq (stackLang_Inst (Arith (asm_Binop asm_Sub k k
@@ -99,78 +99,70 @@ let single_stack_alloc_def = new_definition
            (stackLang_If asm_Lower k (Reg (k + 1)) (halt_inst (n2w
              2)) stackLang_Skip))`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stack_removeScript.sml:85-87: the tactic that proves the
    termination *)
-let stack_alloc_def,stack_alloc_ind = define_wf
+let stack_alloc_def = cake_define_wf
   `MEASURE (SND o SND)`
-  [`stack_alloc jump k n =
+  `stack_alloc jump k n =
      (if n = 0 then Skip else
      if n <= max_stack_alloc then single_stack_alloc jump k n else
        stackLang_Seq (single_stack_alloc jump k max_stack_alloc)
-           (stack_alloc jump k (n - max_stack_alloc)))`];;
+           (stack_alloc jump k (n - max_stack_alloc)))`;;
 
-let single_stack_free_def = new_definition
+let single_stack_free_def = cake_define
   `single_stack_free k n =
      stackLang_Inst (Arith (asm_Binop asm_Add k k (Imm
        (word_offset n))))`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stack_removeScript.sml:100-102: the tactic that proves the
    termination *)
-let stack_free_def,stack_free_ind = define_wf
+let stack_free_def = cake_define_wf
   `MEASURE SND`
-  [`stack_remove_stack_free k n =
+  `stack_remove_stack_free k n =
      (if n = 0 then Skip else
      if n <= max_stack_alloc then single_stack_free k n else
        stackLang_Seq (single_stack_free k max_stack_alloc)
-           (stack_remove_stack_free k (n - max_stack_alloc)))`];;
+           (stack_remove_stack_free k (n - max_stack_alloc)))`;;
 hol4_overload "stack_free" "stack_remove_stack_free";;
 
 (* upshift the stack pointer *)
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stack_removeScript.sml:112-114: the tactic that proves the
    termination *)
-let upshift_def,upshift_ind = define_wf
+let upshift_def = cake_define_wf
   `MEASURE SND`
-  [`upshift r n =
+  `upshift r n =
      (if n <= max_stack_alloc then
        (Inst (Arith (asm_Binop asm_Add r r (Imm (word_offset
          n))))):'a stackLang_prog else
        stackLang_Seq (stackLang_Inst (Arith (asm_Binop asm_Add r r
          (Imm (word_offset max_stack_alloc)))))
-       (upshift r (n - max_stack_alloc)))`];;
+       (upshift r (n - max_stack_alloc)))`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 stack_removeScript.sml:123-125: the tactic that proves the
    termination *)
-let downshift_def,downshift_ind = define_wf
+let downshift_def = cake_define_wf
   `MEASURE SND`
-  [`downshift r n =
+  `downshift r n =
      (if n <= max_stack_alloc then
        (Inst (Arith (asm_Binop asm_Sub r r (Imm (word_offset
          n))))):'a stackLang_prog else
        stackLang_Seq (stackLang_Inst (Arith (asm_Binop asm_Sub r r
          (Imm (word_offset max_stack_alloc)))))
-       (downshift r (n - max_stack_alloc)))`];;
+       (downshift r (n - max_stack_alloc)))`;;
 
 (* Shifts k up and down to store r into n*)
-let stack_store_def = new_definition
+let stack_store_def = cake_define
   `stack_store k r n =
       stackLang_Seq (upshift k n)
      (stackLang_Seq (stackLang_Inst (asm_Mem asm_Store r (Addr k
        (n2w 0)))) (downshift k n))`;;
 
-let stack_load_def = new_definition
+let stack_load_def = cake_define
   `stack_load r n =
      (stackLang_Seq (upshift r n) (stackLang_Inst (asm_Mem
        asm_Load r (Addr r (n2w 0)))):'a stackLang_prog)`;;
 
-let copy_each_def = new_definition
+let copy_each_def = cake_define
   `copy_each t1 t2 =
      (\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 1 (Imm (n2w 1))
@@ -188,7 +180,7 @@ let copy_each_def = new_definition
                   (\r1. Inst (Arith (asm_Binop asm_Add r1 r1 (Imm
                     (bytes_in_word))))) 2])`;;
 
-let copy_loop_def = new_definition
+let copy_loop_def = cake_define
   `copy_loop t1 t2 =
      stackLang_list_Seq [(\r a. Inst (asm_Mem asm_Load r (Addr a (n2w
        0)))) 1 t2;
@@ -203,12 +195,8 @@ let copy_loop_def = new_definition
                               r1 (Imm (bytes_in_word))))) t2]);
                copy_each t1 t2]`;;
 
-let _ = size_thms "stackLang_prog";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let stack_remove_comp_def,stack_remove_comp_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). stackLang_prog_size (\x. 0) x3)`
-  [`stack_remove_comp jump off k (p:'a stackLang_prog) =
+let stack_remove_comp_def = cake_define
+  `stack_remove_comp jump off k (p:'a stackLang_prog) =
      (match p with
        // remove store accesses
        stackLang_Get r name ->
@@ -234,8 +222,8 @@ let stack_remove_comp_def,stack_remove_comp_ind = define_wf
          Inst (asm_Mem asm_Load r (Addr k w)) else
          stackLang_Seq ((\dest src. Inst (Arith (asm_Binop asm_Or
            dest src (Reg src)))) r k) (stack_load r n)) |
-           stackLang_DataBufferWrite r1 r2 -> Inst (asm_Mem asm_Store
-           r2 (Addr r1 (n2w 0))) |
+           stackLang_DataBufferWrite r1 r2 -> Inst (asm_Mem asm_Store r2
+           (Addr r1 (n2w 0))) |
        // remove data buffer
        stackLang_StackLoadAny r i -> stackLang_Seq (stackLang_Seq
          ((\dest src. Inst (Arith (asm_Binop asm_Or dest src (Reg
@@ -259,34 +247,34 @@ let stack_remove_comp_def,stack_remove_comp_ind = define_wf
                              ((\r v. Inst (Arith (asm_Shift Lsr r r
                                (Imm (n2w v))))) r
                                (backend_common_word_shift (:'a))) |
-                               stackLang_StackSetSize r ->
-                               stackLang_Seq ((\r v. Inst (Arith
-                               (asm_Shift Lsl r r (Imm (n2w v))))) r
+                               stackLang_StackSetSize r -> stackLang_Seq
+                               ((\r v. Inst (Arith (asm_Shift Lsl r r
+                               (Imm (n2w v))))) r
                                (backend_common_word_shift (:'a)))
                              (stackLang_Seq ((\dest src. Inst (Arith
-                               (asm_Binop asm_Or dest src (Reg src))))
-                               k (k + 1)) ((\r1 r2. Inst (Arith
-                               (asm_Binop asm_Add r1 r1 (Reg r2)))) k
-                               r)) | stackLang_BitmapLoad r v ->
+                               (asm_Binop asm_Or dest src (Reg src)))) k
+                               (k + 1)) ((\r1 r2. Inst (Arith (asm_Binop
+                               asm_Add r1 r1 (Reg r2)))) k r)) |
+                               stackLang_BitmapLoad r v ->
          stackLang_list_Seq [Inst (asm_Mem asm_Load r (Addr (k + 1)
            (store_offset BitmapBase)));
-                   (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1
-                     (Reg r2)))) r v;
+                   (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1 (Reg
+                     r2)))) r v;
                    (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w
                      v))))) r (backend_common_word_shift (:'a));
                    Inst (asm_Mem asm_Load r (Addr r (n2w 0)))] |
                      stackLang_StoreConsts t1 t2 _2 ->
          stackLang_list_Seq [Inst (asm_Mem asm_Load t2 (Addr (k + 1)
            (store_offset BitmapBase)));
-                   (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1
-                     (Reg r2)))) t2 1;
+                   (\r1 r2. Inst (Arith (asm_Binop asm_Add r1 r1 (Reg
+                     r2)))) t2 1;
                    (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w
                      v))))) t2 (backend_common_word_shift (:'a));
                    copy_loop t1 t2;
-                   (\dest src. Inst (Arith (asm_Binop asm_Or dest
-                     src (Reg src)))) t1 1;
-                   (\dest src. Inst (Arith (asm_Binop asm_Or dest
-                     src (Reg src)))) t2 1] |
+                   (\dest src. Inst (Arith (asm_Binop asm_Or dest src
+                     (Reg src)))) t1 1;
+                   (\dest src. Inst (Arith (asm_Binop asm_Or dest src
+                     (Reg src)))) t2 1] |
        // for the rest, just leave it unchanged
        stackLang_Seq p1 p2 -> stackLang_Seq (stack_remove_comp jump
          off k p1) (stack_remove_comp jump off k p2) | If c r ri p1 p2
@@ -296,23 +284,19 @@ let stack_remove_comp_def,stack_remove_comp_ind = define_wf
          dest exc ->
          Call (match ret with NONE -> NONE | SOME (p1,lr,l1,l2) ->
            SOME (stack_remove_comp jump off k p1,lr,l1,l2))
-           dest (match exc with NONE -> NONE | SOME (p2,l1,l2)
-             -> SOME (stack_remove_comp jump off k p2,l1,l2)) | p
-             -> p)`];;
+           dest (match exc with NONE -> NONE | SOME (p2,l1,l2) ->
+             SOME (stack_remove_comp jump off k p2,l1,l2)) | p -> p)`;;
 hol4_overload "comp" "stack_remove_comp";;
 
-let stack_remove_prog_comp_def = new_definition
+let stack_remove_prog_comp_def = cake_define
   `stack_remove_prog_comp jump off k (n,p) = (n,stack_remove_comp
   jump off k p)`;;
 hol4_overload "prog_comp" "stack_remove_prog_comp";;
 
 (* -- init code -- *)
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let store_list_code_def,store_list_code_ind = define_wf
-  `MEASURE (\(x0,x1,x2). list_size (sum_size (\n. n) (\x. 0)) x2)`
-  [`(store_list_code a t [] = Skip) /\
+let store_list_code_def = cake_define
+  `(store_list_code a t [] = Skip) /\
    (store_list_code a t (INL w :: xs) =
      stackLang_Seq (stackLang_list_Seq [(\r w. Inst (asm_Const r w))
        t w; (\r a. Inst (asm_Mem asm_Store r (Addr a (n2w 0)))) t a;
@@ -323,10 +307,10 @@ let store_list_code_def,store_list_code_ind = define_wf
      stackLang_Seq (stackLang_list_Seq [(\r a. Inst (asm_Mem
        asm_Store r (Addr a (n2w 0)))) i a; (\r1. Inst (Arith (asm_Binop
        asm_Add r1 r1 (Imm (bytes_in_word))))) a])
-         (store_list_code a t xs))`];;
+         (store_list_code a t xs))`;;
 
 (* k+1 is base, k is stack pointer, discards 0 *)
-let init_memory_def = new_definition
+let init_memory_def = cake_define
   `init_memory k xs =
      stackLang_list_Seq [(\r w. Inst (asm_Const r w)) 0
        bytes_in_word;
@@ -337,7 +321,7 @@ let init_memory_def = new_definition
                  k;
                store_list_code (k + 1) 0 xs]`;;
 
-let store_init_def = new_definition
+let store_init_def = cake_define
   `store_init gen_gc' (k:num) = UPDATE_LIST (K (INL (n2w 0)))
        [(CurrHeap,INR (k + 2));
         (GlobReal,INR (k + 2));
@@ -358,7 +342,7 @@ let store_init_def = new_definition
     reg 3: first address in stack (and one past last address of heap)
     reg 4: one past last address of stack *)
 
-let stack_remove_init_code_def = new_definition
+let stack_remove_init_code_def = cake_define
   `stack_remove_init_code gen_gc' max_heap k =
      (let max_heap = (if max_heap * w2n (bytes_in_word:'a word) <
        dimword (:'a) then n2w max_heap * bytes_in_word else (n2w 0) -
@@ -456,14 +440,14 @@ let stack_remove_init_code_def = new_definition
                  stackLang_LocValue 0 1 0])`;;
 hol4_overload "init_code" "stack_remove_init_code";;
 
-let init_stubs_def = new_definition
+let init_stubs_def = cake_define
   `init_stubs gen_gc' max_heap k start' =
      [(0,stackLang_Seq (stack_remove_init_code gen_gc' max_heap k)
        (stackLang_Call NONE (INL start') NONE));
       (1,halt_inst (n2w 0));
       (2,halt_inst (n2w 2))]`;;
 
-let stack_remove_stub_names_def = new_definition
+let stack_remove_stub_names_def = cake_define
   `stack_remove_stub_names one = [
      (0,implode "_Init");
      (1,implode "_Halt0");
@@ -481,7 +465,7 @@ let check_init_stubs_length = prove
 
 (* -- full compiler -- *)
 
-let stack_remove_compile_def = new_definition
+let stack_remove_compile_def = cake_define
   `stack_remove_compile jump off gen_gc' max_heap k start' prog =
      init_stubs gen_gc' max_heap k start' ++
      MAP (stack_remove_prog_comp jump off k) prog`;;

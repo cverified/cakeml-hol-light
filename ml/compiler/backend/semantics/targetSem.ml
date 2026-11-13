@@ -79,11 +79,11 @@ hol4_field_overload "ptr2_reg_fupd" "machine_config_ptr2_reg_fupd";;
 hol4_field_overload "len2_reg" "machine_config_len2_reg";;
 hol4_field_overload "len2_reg_fupd" "machine_config_len2_reg_fupd";;
 
-let apply_oracle_def = new_definition
+let apply_oracle_def = cake_define
   `apply_oracle oracle' x =
      (oracle' (0:num) x,misc_shift_seq 1 oracle')`;;
 
-let encoded_bytes_in_mem_def = new_definition
+let encoded_bytes_in_mem_def = cake_define
   `encoded_bytes_in_mem c pc' m md <=>
      (?i k. k * (2 EXP asm_config_code_alignment c) < LENGTH
        (asm_config_encode c i) /\
@@ -92,7 +92,7 @@ let encoded_bytes_in_mem_def = new_definition
            (asm_config_encode c i))
          m md)`;;
 
-let read_ffi_bytearray_def = new_definition
+let read_ffi_bytearray_def = cake_define
   `read_ffi_bytearray mc ptr_reg' len_reg' ms =
      read_bytearray (target_get_reg (machine_config_target mc) ms
        ptr_reg')
@@ -102,14 +102,14 @@ let read_ffi_bytearray_def = new_definition
            SOME (target_get_byte (machine_config_target mc) ms a)
              else NONE)`;;
 
-let read_ffi_bytearrays_def = new_definition
+let read_ffi_bytearrays_def = cake_define
   `read_ffi_bytearrays mc ms =
      (read_ffi_bytearray mc (machine_config_ptr_reg mc)
        (machine_config_len_reg mc) ms,
       read_ffi_bytearray mc (machine_config_ptr2_reg mc)
         (machine_config_len2_reg mc) ms)`;;
 
-let is_valid_mapped_read_def = new_definition
+let is_valid_mapped_read_def = cake_define
   `is_valid_mapped_read pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
@@ -125,7 +125,7 @@ let is_valid_mapped_read_def = new_definition
          (Inst (asm_Mem asm_Load32 r ad)))
          (target_get_byte t ms) md) else F)`;;
 
-let is_valid_mapped_write_def = new_definition
+let is_valid_mapped_write_def = cake_define
   `is_valid_mapped_write pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
@@ -141,9 +141,11 @@ let is_valid_mapped_write_def = new_definition
            (Inst (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md) else F)`;;
 
-let targetSem_evaluate_def,targetSem_evaluate_ind = define_guess
-  [`targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi
-  ffi_state) k (ms:'a) =
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let targetSem_evaluate_def = cake_define_cheat CHEAT_TAC
+  `targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state)
+  k (ms:'a) =
      (if k = 0 then (TimeOut,ms,ffi) else
        if (target_get_pc (machine_config_target mc) ms) IN
          (machine_config_prog_addresses mc DIFF (set_of_list
@@ -195,8 +197,7 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = define_guess
                        (match op with MappedRead ->
                               (match a with Addr r off ->
                               (let ad = target_get_reg
-                                (machine_config_target mc) ms r + off
-                                in
+                                (machine_config_target mc) ms r + off in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
                               (ad IN machine_config_shared_addresses
@@ -210,9 +211,8 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = define_guess
                                 (machine_config_ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome ->
-                              (Halt (ffi_FFI_outcome
-                                outcome),ms,ffi) | FFI_return new_ffi
-                                new_bytes ->
+                              (Halt (ffi_FFI_outcome outcome),ms,ffi)
+                                | FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -244,9 +244,8 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = define_guess
                                 else word_to_bytes_aux (w2n nb) w F) ++
                                 (word_to_bytes ad F)) with FFI_final
                                 outcome ->
-                              (Halt (ffi_FFI_outcome
-                                outcome),ms,ffi) | FFI_return new_ffi
-                                new_bytes ->
+                              (Halt (ffi_FFI_outcome outcome),ms,ffi)
+                                | FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -273,10 +272,10 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = define_guess
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
                                 (1:num)) ms1)) | _3 ->
-                                (Error,ms,ffi)))))`];;
+                                (Error,ms,ffi)))))`;;
 hol4_overload "evaluate" "targetSem_evaluate";;
 
-let machine_sem_def = define_cases
+let machine_sem_def = cake_define_list
   [`machine_sem mc st ms (ffi_Terminate t io_list) <=>
          (?k ms' st'.
            evaluate mc st k ms = (Halt t,ms',st') /\
@@ -294,7 +293,7 @@ let machine_sem_def = define_cases
 
 (* define what it means for code to be loaded and ready to run *)
 
-let code_loaded_def = new_definition
+let code_loaded_def = cake_define
   `code_loaded (bytes:word8 list) (mc:('a,'b,'c)machine_config) (ms:'b)
   <=>
      read_bytearray (target_get_pc (machine_config_target mc) ms)
@@ -305,7 +304,7 @@ let code_loaded_def = new_definition
 
 (* target_configured: target and mc_conf are compatible
    will be proved at the top-level by creating an appropriate t *)
-let target_configured_def = new_definition
+let target_configured_def = cake_define
   `target_configured (t:'a asm_state) mc_conf <=>
      ~(asm_state_failed t) /\ asm_state_be
      // (!q n.
@@ -323,11 +322,11 @@ let target_configured_def = new_definition
         (machine_config_target mc_conf)) with NONE -> T | SOME r ->
         asm_state_lr t = r)`;;
 
-let get_reg_value_def = define_cases
+let get_reg_value_def = cake_define_list
   [`get_reg_value NONE w f = w`;
    `get_reg_value (SOME v) _4 f = f v`];;
 
-let mmio_pcs_min_index_def = new_definition
+let mmio_pcs_min_index_def = cake_define
   `mmio_pcs_min_index ffi_names' =
    some (\x.
      ((x <= LENGTH ffi_names') /\
@@ -337,7 +336,7 @@ let mmio_pcs_min_index_def = new_definition
           (?op. EL j ffi_names' = ffi_SharedMem op))))`;;
 
 (* start_pc_ok: machine configuration's saved pcs and initial pc are ok *)
-let start_pc_ok_def = new_definition
+let start_pc_ok_def = cake_define
   `start_pc_ok mc_conf pc' <=> ~(machine_config_halt_pc
      mc_conf IN machine_config_prog_addresses mc_conf) /\
        ~(machine_config_ccache_pc
@@ -382,7 +381,7 @@ let start_pc_ok_def = new_definition
    all other registers (including all FP registers) are unconstrained.
    A SharedMem transition performs the mapped load/store and touches
    nothing else. *)
-let ffi_interfer_ok_def = new_definition
+let ffi_interfer_ok_def = cake_define
   `ffi_interfer_ok pc' mc_conf <=>
      (!ms2 k index new_bytes t1 bytes bytes2 i.
         index < LENGTH (ffi_names mc_conf) /\
@@ -456,7 +455,7 @@ let ffi_interfer_ok_def = new_definition
 (* ccache_interfer_ok: a cache-clear transition must satisfy the same
    per-call promises, additionally preserving ptr_reg and leaving all
    program memory unchanged *)
-let ccache_interfer_ok_def = new_definition
+let ccache_interfer_ok_def = cake_define
   `ccache_interfer_ok pc' mc_conf <=>
      (!ms2 t1 k a1 a2.
         target_state_rel (machine_config_target mc_conf)
@@ -488,7 +487,7 @@ let ccache_interfer_ok_def = new_definition
 (* post_ffi_asm / post_ccache_asm: the canonical asm-level successor
    state after an FFI / cache-clear transition -- caller-saved
    registers and all FP registers are taken from the machine state *)
-let post_ffi_asm_def = new_definition
+let post_ffi_asm_def = cake_define
   `post_ffi_asm (mc_conf:('a,'state,'b)machine_config) (t1:'a asm_state)
                 new_bytes (ms':'state) = asm_state_pc_fupd (K
                   (asm_state_regs t1 (match asm_config_link_reg
@@ -508,7 +507,7 @@ let post_ffi_asm_def = new_definition
                            (machine_config_target mc_conf) ms' a))
      t1)))`;;
 
-let post_ccache_asm_def = new_definition
+let post_ccache_asm_def = cake_define
   `post_ccache_asm (mc_conf:('a,'state,'b)machine_config) (t1:'a
   asm_state) (ms':'state) = asm_state_pc_fupd (K (asm_state_regs t1
   (match asm_config_link_reg (target_config (machine_config_target
@@ -534,7 +533,7 @@ let post_ccache_asm_def = new_definition
   these are all destined to be assumptions on the top-level correctness theorem
 *)
 
-let good_init_state_def = new_definition
+let good_init_state_def = cake_define
   `good_init_state (mc_conf:('a,'state,'b)machine_config) ms bytes
      cbspace
      t m dm sdm <=>
@@ -579,7 +578,7 @@ let good_init_state_def = new_definition
    the first address of the CakeML heap and the first address past the CakeML stack
    i.e., the range of the data memory
 *)
-let installed_def = new_definition
+let installed_def = cake_define
   `installed bytes cbspace bitmaps data_sp ffi_names' (r1,r2)
   (mc_conf:('a,'state,'b)machine_config) shmem_extra ms <=>
      (?t m bitmap_ptr bitmaps_dm sdm.

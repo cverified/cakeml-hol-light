@@ -51,7 +51,7 @@ let HD_remove_ticks_SING = prove
 
 (* code relation *)
 
-let clos_ticksProof_code_rel_def = new_definition
+let clos_ticksProof_code_rel_def = cake_define
   `clos_ticksProof_code_rel e1 e2 <=>
      e2 = clos_ticks_remove_ticks e1`;;
 hol4_overload "code_rel" "clos_ticksProof_code_rel";;
@@ -78,7 +78,7 @@ let clos_ticksProof_code_rel_CONS_CONS = prove
 
 (* value relation *)
 
-let clos_ticksProof_f_rel_def = new_definition
+let clos_ticksProof_f_rel_def = cake_define
   `clos_ticksProof_f_rel (a1,e1) (a2,e2) <=>
       a1 = a2 /\ clos_ticksProof_code_rel [e1] [e2]`;;
 hol4_overload "f_rel" "clos_ticksProof_f_rel";;
@@ -125,14 +125,14 @@ let clos_ticksProof_ref_rel = cake_inductive
      clos_ticksProof_ref_rel (Thunk m v) (Thunk m w))`;;
 hol4_overload "ref_rel" "clos_ticksProof_ref_rel";;
 
-let clos_ticksProof_FMAP_REL_def = new_definition
+let clos_ticksProof_FMAP_REL_def = cake_define
   `clos_ticksProof_FMAP_REL r f1 f2 <=>
      FDOM f1 = FDOM f2 /\
      (!k v. FLOOKUP f1 k = SOME v ==>
            (?v2. FLOOKUP f2 k = SOME v2 /\ r v v2))`;;
 hol4_overload "FMAP_REL" "clos_ticksProof_FMAP_REL";;
 
-let clos_ticksProof_state_rel_def = new_definition
+let clos_ticksProof_state_rel_def = cake_define
   `clos_ticksProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
@@ -155,8 +155,7 @@ hol4_overload "state_rel" "clos_ticksProof_state_rel";;
 
 (* eval remove ticks *)
 
-let clos_ticksProof_mk_Ticks_def,clos_ticksProof_mk_Ticks_ind =
-  define_rec
+let clos_ticksProof_mk_Ticks_def = cake_define_list
   [`clos_ticksProof_mk_Ticks [] (e:closLang_exp) = e`;
    `clos_ticksProof_mk_Ticks (t :: tr) (e:closLang_exp) =
   closLang_Tick t (clos_ticksProof_mk_Ticks tr e)`];;

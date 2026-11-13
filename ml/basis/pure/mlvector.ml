@@ -32,28 +32,28 @@ let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
 (* HOL4 mlvectorScript.sml:13-14: a theorem that HOL4 states as the
    value of an ML expression: sub_def *)
 
-let sub_unsafe_def,sub_unsafe_ind = define_guess
-  [`// same as sub_def, but translator targets Vsub_unsafe
-   sub_unsafe (Vector l) n = EL n l`];;
+let sub_unsafe_def = cake_define
+  `// same as sub_def, but translator targets Vsub_unsafe
+   sub_unsafe (Vector l) n = EL n l`;;
 
 (* HOL4 mlvectorScript.sml:20-21: a theorem that HOL4 states as the
    value of an ML expression: length_def *)
 
-let mlvector_tabulate_def = new_definition
+let mlvector_tabulate_def = cake_define
   `mlvector_tabulate n f = Vector (GENLIST f n)`;;
 hol4_overload "tabulate" "mlvector_tabulate";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let toList_aux_def,toList_aux_ind = define_wf
+let toList_aux_def = cake_define_wf
   `MEASURE (\(vec,n). length vec - n)`
-  [`toList_aux vec n =
-   (if length (vec) <= n then [] else sub vec n :: toList_aux
-     vec (n + 1))`];;
+  `toList_aux vec n =
+   (if length (vec) <= n then [] else sub vec n :: toList_aux vec
+     (n + 1))`;;
 
 (* HOL4 mlvectorScript.sml:36: ML code, not ported *)
 
-let mlvector_toList_def = new_definition
+let mlvector_toList_def = cake_define
   `mlvector_toList vec = toList_aux vec 0`;;
 hol4_overload "toList" "mlvector_toList";;
 
@@ -84,7 +84,7 @@ let toList_fromList = prove
  (`(toList (fromList l) = l) /\ (fromList (toList v) = v)`,
   CHEAT_TAC);;
 
-let update_def = new_definition
+let update_def = cake_define
   `update vec i x = Vector (LUPDATE x i (toList (vec)))`;;
 
 let update_thm = prove
@@ -93,15 +93,15 @@ let update_thm = prove
   CHEAT_TAC);;
 
 
-let mlvector_concat_def = new_definition
+let mlvector_concat_def = cake_define
   `mlvector_concat l = Vector (FLAT (MAP toList l))`;;
 hol4_overload "concat" "mlvector_concat";;
 
-let mlvector_map_def = new_definition
+let mlvector_map_def = cake_define
   `mlvector_map vec f = Vector (MAP f (toList vec))`;;
 hol4_overload "map" "mlvector_map";;
 
-let mlvector_mapi_def = new_definition
+let mlvector_mapi_def = cake_define
   `mlvector_mapi vec f = Vector (MAPi f (toList vec))`;;
 hol4_overload "mapi" "mlvector_mapi";;
 
@@ -112,16 +112,13 @@ let less_than_length_thm = prove
   (LENGTH ys = n))`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let mlvector_foldli_aux_def,mlvector_foldli_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
+let mlvector_foldli_aux_def = cake_define_list
   [`mlvector_foldli_aux f e vec n 0 = e`;
    `mlvector_foldli_aux f e vec n (SUC len) = mlvector_foldli_aux f
   (f n (sub vec n) e) vec (n + 1) len`];;
 hol4_overload "foldli_aux" "mlvector_foldli_aux";;
 
-let mlvector_foldli_def = new_definition
+let mlvector_foldli_def = cake_define
   `mlvector_foldli f e vec = foldli_aux f e vec 0 (length vec)`;;
 hol4_overload "foldli" "mlvector_foldli";;
 
@@ -137,15 +134,12 @@ let mlvector_foldli_thm = prove
  (`!f e vec. foldli f e vec = mllist_foldli f e (toList vec)`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let foldl_aux_def,foldl_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
+let foldl_aux_def = cake_define_list
   [`foldl_aux f e vec n 0 = e`;
    `foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n))
   vec (n + 1) len`];;
 
-let mlvector_foldl_def = new_definition
+let mlvector_foldl_def = cake_define
   `mlvector_foldl f e vec = foldl_aux f e vec 0 (length vec)`;;
 hol4_overload "foldl" "mlvector_foldl";;
 
@@ -160,15 +154,12 @@ let foldl_thm = prove
   CHEAT_TAC);;
 
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let foldri_aux_def,foldri_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
+let foldri_aux_def = cake_define_list
   [`foldri_aux f e vec 0 = e`;
    `foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec
   len) e) vec len`];;
 
-let foldri_def = new_definition
+let foldri_def = cake_define
   `foldri f e vec = foldri_aux f e vec (length vec)`;;
 
 
@@ -183,15 +174,12 @@ let foldri_thm = prove
   CHEAT_TAC);;
 
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let foldr_aux_def,foldr_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
+let foldr_aux_def = cake_define_list
   [`foldr_aux f e vec 0 = e`;
    `foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e)
   vec len`];;
 
-let foldr_def = new_definition
+let foldr_def = cake_define
   `foldr f e vec = foldr_aux f e vec (length vec)`;;
 
 (* [local] *)
@@ -205,30 +193,24 @@ let foldr_thm = prove
   CHEAT_TAC);;
 
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let findi_aux_def,findi_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
+let findi_aux_def = cake_define_list
   [`findi_aux f vec n 0 = NONE`;
    `findi_aux f vec n (SUC len) =
       (if f n (sub vec n) then SOME (n,(sub vec n)) else
         findi_aux f vec (n + 1) len)`];;
 
-let mlvector_findi_def = new_definition
+let mlvector_findi_def = cake_define
   `mlvector_findi f vec = findi_aux f vec 0 (length vec)`;;
 hol4_overload "findi" "mlvector_findi";;
 
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let find_aux_def,find_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
+let find_aux_def = cake_define_list
   [`find_aux f vec n 0 = NONE`;
    `find_aux f vec n (SUC len) =
       (if f (sub vec n) then SOME (sub vec n) else find_aux f
         vec (n + 1) len)`];;
 
-let find_def = new_definition
+let find_def = cake_define
   `find f vec = find_aux f vec 0 (length vec)`;;
 
 (* [local] *)
@@ -242,16 +224,13 @@ let find_thm = prove
   CHEAT_TAC);;
 
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let exists_aux_def,exists_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
+let exists_aux_def = cake_define_list
   [`exists_aux f vec n 0 = F`;
    `exists_aux f vec n (SUC len) =
         (if f (sub vec n) then T else exists_aux f vec (n + 1)
           len)`];;
 
-let mlvector_exists_def = new_definition
+let mlvector_exists_def = cake_define
   `mlvector_exists f vec = exists_aux f vec 0 (length vec)`;;
 
 (* [local] *)
@@ -265,16 +244,13 @@ let exists_thm = prove
  (`!f vec. mlvector_exists f vec = EXISTS f (toList vec)`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let all_aux_def,all_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
+let all_aux_def = cake_define_list
   [`all_aux f vec n 0 = T`;
    `all_aux f vec n (SUC len) =
         (if f (sub vec n) then all_aux f vec (n + 1) len else
           F)`];;
 
-let all_def = new_definition
+let all_def = cake_define
   `all f vec = all_aux f vec 0 (length vec)`;;
 
 (* [local] *)
@@ -288,10 +264,7 @@ let all_thm = prove
  (`!f vec. all f vec = EVERY f (toList vec)`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let mlvector_collate_aux_def,mlvector_collate_aux_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4,x5). (\n. n) x5)`
+let mlvector_collate_aux_def = cake_define_list
   [`mlvector_collate_aux f vec1 vec2 n ord 0 = ord`;
    `mlvector_collate_aux f vec1 vec2 n ord (SUC len) =
         (if f (sub vec1 n) (sub vec2 n) = EQUAL then
@@ -299,7 +272,7 @@ let mlvector_collate_aux_def,mlvector_collate_aux_ind = define_wf
           (sub vec1 n) (sub vec2 n))`];;
 hol4_overload "collate_aux" "mlvector_collate_aux";;
 
-let mlvector_collate_def = new_definition
+let mlvector_collate_def = cake_define
   `mlvector_collate f vec1 vec2 =
    (if (length vec1) < (length vec2) then mlvector_collate_aux f
      vec1 vec2 0 LESS (length vec1) else if (length vec2) < (length

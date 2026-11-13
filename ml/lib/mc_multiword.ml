@@ -46,7 +46,7 @@ let mc_compare_def,mc_compare_pre_def =
             list#('a word) list+num#'a word#('a word) list#('a word)
             list)#bool`;;
 
-let mc_header_def = new_definition
+let mc_header_def = cake_define
   `mc_header (s,(xs:('a word) list)) = n2w (LENGTH xs * 2) + (if s
   then (n2w 1) else (n2w 0):'a word)`;;
 
@@ -74,7 +74,7 @@ let mc_icompare_def,mc_icompare_pre_def =
             list#('a word) list+num#'a word#('a word) list#('a word)
             list)#bool`;;
 
-let single_add_word_def = new_definition
+let single_add_word_def = cake_define
   `single_add_word w1 w2 c =
      (let (z,c) = single_add w1 w2 (~(c = ((n2w 0):'a word))) in
        ((z:'a word),((b2w c):'a word)))`;;
@@ -163,7 +163,7 @@ let mc_add_def,mc_add_pre_def =
           list+num#'a word#'a word#'a word#'a word#'a word#('a word)
           list#('a word) list#('a word) list)#bool`;;
 
-let single_sub_word_def = new_definition
+let single_sub_word_def = cake_define
   `single_sub_word w1 w2 c =
      (let (z,c) = single_sub w1 w2 (~(c = ((n2w 0):'a word))) in
        ((z:'a word),((b2w c):'a word)))`;;
@@ -469,7 +469,7 @@ let mc_imul_def,mc_imul_pre_def =
                list#('a word) list+num#'a word#('a word) list#('a
                word) list#('a word) list)#bool`;;
 
-let single_div_pre_def = new_definition
+let single_div_pre_def = cake_define
   `single_div_pre r2 r0 r9 <=> ~(r9 = ((n2w 0x0):'a word)) /\
      (w2n r2 * dimword (:'a) + w2n r0) DIV w2n r9 < dimword (:'a)`;;
 
@@ -1362,13 +1362,11 @@ let mc_fac_final_def,mc_fac_final_pre_def =
         (INR (l,r1),cond')):num#'a word#'a word->(num#'a word#'a
           word+num#'a word)#bool`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 mc_multiwordScript.sml:4196-4212: the tactic that proves the
    termination *)
-let mc_fac_def,mc_fac_ind = define_wf
+let mc_fac_def = cake_define_wf
   `MEASURE FST`
-  [`mc_fac ((l:num),(r1:'a word)) =
+  `mc_fac ((l:num),(r1:'a word)) =
      (let l0 = l in
      let (l,r0,r1,r2,r3) = mc_fac_init ((l:num),(r1:'a word)) in
      let l = MIN l l0 in
@@ -1382,15 +1380,13 @@ let mc_fac_def,mc_fac_ind = define_wf
          if l = 0 then (l,r1) else
          let (r2,(l,r1)) = (r2,mc_fac (l - 1,r1)) in
          let (l,r1) = mc_fac_final (l,r1,r2) in
-           (l,r1))`];;
+           (l,r1))`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 mc_multiwordScript.sml:4214-4233: the tactic that proves the
    termination *)
-let mc_fac_pre_def,mc_fac_pre_ind = define_wf
+let mc_fac_pre_def = cake_define_wf
   `MEASURE FST`
-  [`mc_fac_pre ((l:num),(r1:'a word)) =
+  `mc_fac_pre ((l:num),(r1:'a word)) =
      (let l0 = l in
      let cond' = mc_fac_init_pre ((l:num),(r1:'a word)) in
      let (l,r0,r1,r2,r3) = mc_fac_init ((l:num),(r1:'a word)) in
@@ -1407,7 +1403,7 @@ let mc_fac_pre_def,mc_fac_pre_ind = define_wf
          let cond' = (mc_fac_pre (l - 1,r1) /\ cond') in
          let cond' = (mc_fac_final_pre (l,r1,r2) /\ cond') in
          let (l,r1) = mc_fac_final (l,r1,r2) in
-           cond')`];;
+           cond')`;;
 
 let mc_use_fac_def,mc_use_fac_pre_def =
   tailrec_define "mc_use_fac"

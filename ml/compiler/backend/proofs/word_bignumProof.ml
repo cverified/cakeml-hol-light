@@ -53,12 +53,8 @@ hol4_field_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
 hol4_overload "state_clock" "word_bignumProof_state_clock";;
 hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
 
-let _ = size_thms "wordLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let eval_exp_def,eval_exp_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`eval_exp s (wordLang_Const w) = w /\
+let eval_exp_def = cake_define
+  `eval_exp s (wordLang_Const w) = w /\
    eval_exp s (Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
    eval_exp s (wordLang_Op asm_Add [x1; x2]) = eval_exp s x1 +
      eval_exp s x2 /\
@@ -66,8 +62,8 @@ let eval_exp_def,eval_exp_ind = define_wf
      eval_exp s x2 /\
    eval_exp s (wordLang_Op And [x1; x2]) = word_and (eval_exp s x1)
      (eval_exp s x2) /\
-   eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s
-     x1) (eval_exp s x2) /\
+   eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s x1)
+     (eval_exp s x2) /\
    eval_exp s (wordLang_Op Xor [x1; x2]) = word_xor (eval_exp s x1)
      (eval_exp s x2) /\
    eval_exp s (Shift Lsl x1 x2) = eval_exp s x1 << (w2n (eval_exp s
@@ -77,42 +73,38 @@ let eval_exp_def,eval_exp_ind = define_wf
    eval_exp s (Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n (eval_exp s
      x2)) /\
    eval_exp s (Shift Ror x1 x2) = word_ror (eval_exp s x1) (w2n
-     (eval_exp s x2))`];;
+     (eval_exp s x2))`;;
 
-let _ = size_thms "wordLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let eval_exp_pre_def,eval_exp_pre_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`eval_exp_pre s x2 =
+let eval_exp_pre_def = cake_define
+  `eval_exp_pre s x2 =
         match x2 with
           wordLang_Const w -> T
         | (Var v) -> v IN FDOM (word_bignumProof_state_regs s)
-        | (wordLang_Op _1 [x; y]) -> eval_exp_pre s x /\
-          eval_exp_pre s y
+        | (wordLang_Op _1 [x; y]) -> eval_exp_pre s x /\ eval_exp_pre
+          s y
         | (Shift sh x1 x2) ->
         eval_exp_pre s x1 /\ eval_exp_pre s x2 /\ (w2n (eval_exp s
           x2) < 32)
-        | _2 -> F`];;
+        | _2 -> F`;;
 
-let eval_ri_pre_def = define_cases
+let eval_ri_pre_def = cake_define_list
   [`eval_ri_pre (s:'a word_bignumProof_state) (Reg r) <=>
   eval_exp_pre (s:'a word_bignumProof_state) ((Var r):'a
   wordLang_exp)`;
    `eval_ri_pre (s:'a word_bignumProof_state) (Imm (w:'a word)) <=>
   T`];;
 
-let eval_ri_def = define_cases
+let eval_ri_def = cake_define_list
   [`eval_ri (s:'a word_bignumProof_state) (Reg r) =
       eval_exp s ((Var r):'a wordLang_exp)`;
    `eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w`];;
 
-let word_bignumProof_dec_clock_def = new_definition
+let word_bignumProof_dec_clock_def = cake_define
   `word_bignumProof_dec_clock s = state_clock_fupd (K (state_clock s
   - 1)) s`;;
 hol4_overload "dec_clock" "word_bignumProof_dec_clock";;
 
-let reg_write_def = define_cases
+let reg_write_def = cake_define_list
   [`reg_write v NONE (s:'a word_bignumProof_state) =
   word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s
   \\ v)) s`;
@@ -120,18 +112,18 @@ let reg_write_def = define_cases
   word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs
   s |+ (n,v))) s`];;
 
-let delete_vars_def,delete_vars_ind = define_rec
+let delete_vars_def = cake_define_list
   [`delete_vars [] s = s`;
    `delete_vars (v :: vs) s = reg_write v NONE (delete_vars vs s)`];;
 
-let array_write_def = new_definition
+let array_write_def = cake_define
   `array_write n v s = word_bignumProof_state_arrays_fupd (K ((n =+
   v) (word_bignumProof_state_arrays s))) s`;;
 
-let clock_write_def = new_definition
+let clock_write_def = cake_define
   `clock_write l s = state_clock_fupd (K l) s`;;
 
-let copy_vars_def,copy_vars_ind = define_rec
+let copy_vars_def = cake_define_list
   [`word_bignumProof_copy_vars [] s t = SOME t`;
    `word_bignumProof_copy_vars (n :: ns) s t =
          (match FLOOKUP s n with NONE -> NONE | SOME x ->
@@ -259,7 +251,7 @@ let Eval_NONE_IMP = prove
 
 (* verification of compiler to wordLang *)
 
-let array_rel_def = new_definition
+let array_rel_def = cake_define
   `array_rel arr v1 v2 v3 m dm frame =
      (?a1 a2 a3 rest1 rest2.
        v1 = SOME (wordLang_Word a1) /\
@@ -274,11 +266,11 @@ let array_rel_def = new_definition
        (misc_word_list a3 (MAP wordLang_Word (arr Out)) * frame)
          (fun2set (m,dm)))`;;
 
-let code_subset_def = new_definition
+let code_subset_def = cake_define
   `code_subset (n1,cs1) (n2,cs2) <=>
      (!n v. ALOOKUP cs1 n = SOME v ==> ALOOKUP cs2 n = SOME v)`;;
 
-let word_bignumProof_code_rel_def = new_definition
+let word_bignumProof_code_rel_def = cake_define
   `word_bignumProof_code_rel cs code <=>
      (!prog n p2.
         ALOOKUP (SND cs) prog = SOME (n,p2) ==>
@@ -288,7 +280,7 @@ let word_bignumProof_code_rel_def = new_definition
           code_subset cs2 cs))`;;
 hol4_overload "code_rel" "word_bignumProof_code_rel";;
 
-let div_code_assum_def = new_definition
+let div_code_assum_def = cake_define
   `div_code_assum (:'ffi) (:'c) code =
      (!(t1:('a,'c,'ffi)wordSem_state) n l i0 i1 i2 i3 i4 w3 w4 w5
        ret_val.
@@ -319,7 +311,7 @@ let div_code_assum_def = new_definition
 (* HOL4 word_bignumProofScript.sml:244: the overload max_var_name,
    which the port expands *)
 
-let word_bignumProof_state_rel_def = new_definition
+let word_bignumProof_state_rel_def = cake_define
   `word_bignumProof_state_rel s (t:('a,'c,'ffi)wordSem_state) cs t0
   frame <=> state_clock
      // clock related
@@ -381,22 +373,17 @@ let word_bignumProof_state_rel_delete_vars = prove
           frame`,
   CHEAT_TAC);;
 
-let _ = size_thms "wordLang_exp";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let exp_ok_def,exp_ok_ind = define_wf
-  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`exp_ok x1 =
+let exp_ok_def = cake_define
+  `exp_ok x1 =
         match x1 with
           wordLang_Const _4 -> T
         | (Var i) -> i < (25)
         | (wordLang_Op _5 [x; y]) -> exp_ok x /\ exp_ok y
         | (Shift sh e n) -> exp_ok e
-        | _6 -> F`];;
+        | _6 -> F`;;
 
-let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
-  "match"
-  [`syntax_ok_aux x1 =
+let syntax_ok_aux_def = cake_define
+  `syntax_ok_aux x1 =
       match x1 with
         word_bignum_Loop r vs body -> syntax_ok_aux body
       | (word_bignum_LoopBody body) -> F
@@ -423,9 +410,9 @@ let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
       n3 < (25) /\ n4 < (25) /\ n5 < (25)
       | (word_bignum_Rec save_regs _8) ->
       EVERY (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs
-      | _9 -> T`];;
+      | _9 -> T`;;
 
-let word_bignumProof_syntax_ok_def = new_definition
+let word_bignumProof_syntax_ok_def = cake_define
   `word_bignumProof_syntax_ok p =
       match p with
         word_bignum_LoopBody body -> syntax_ok_aux body
@@ -556,10 +543,7 @@ let b2n_if = prove
  (`b2n b = (if ~b then 0 else 1)`,
   CHEAT_TAC);;
 (*Is this worth the hassle*)
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let list_update_def,list_update_ind = define_wf
-  `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
+let list_update_def = cake_define_list
   [`list_update [] ys t = t`;
    `list_update (x :: xs) (y :: ys) t = sptree_insert x y
   (list_update xs ys t)`;
@@ -591,7 +575,7 @@ let domain_list_update = prove
   domain t`,
   CHEAT_TAC);;
 
-let list_store_def,list_store_ind = define_rec
+let list_store_def = cake_define_list
   [`list_store [] ys s = s`;
    `list_store (x :: xs) ys s = (list_store xs (TL ys) s) |+ (Temp
   (n2w x),HD ys)`];;
@@ -715,7 +699,7 @@ let word_bignumProof_compile_thm = prove
                        t1)))`,
   CHEAT_TAC);;
 
-let good_code_def = new_definition
+let good_code_def = cake_define
   `word_bignumProof_good_code cs3 =
      (!prog n p2.
        MEM (prog,n,p2) (SND cs3) ==>
@@ -748,7 +732,7 @@ let MEM_compile = prove
 
 (* HOL4 word_bignumProofScript.sml:1335: ML code, not ported *)
 
-let corr_def = new_definition
+let corr_def = cake_define
   `Corr prog (s:'a word_bignumProof_state) s1 p <=>
      (p ==> word_bignumProof_Eval NONE s prog s1)`;;
 
@@ -899,7 +883,7 @@ let Corr_If = prove
         else q2))`,
   CHEAT_TAC);;
 
-let loop_app_def = new_definition
+let loop_app_def = cake_define
   `loop_app f g x =
      (match f x with INL s -> (INL (dec_clock s),(g x /\
        ~(state_clock s = 0))) | INR s -> (INR s,g x))`;;
@@ -912,7 +896,7 @@ let Corr_LoopBody = prove
                               (SHORT_TAILREC_PRE (loop_app f q) s))`,
   CHEAT_TAC);;
 
-let tick_before_def = new_definition
+let tick_before_def = cake_define
   `tick_before vs f s =
      (if state_clock s = 0 then (s,F) else f (delete_vars vs
        (dec_clock s)))`;;

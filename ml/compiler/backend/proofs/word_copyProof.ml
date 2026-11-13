@@ -67,7 +67,7 @@ let _ = hide_overloads
 (* HOL4 word_copyProofScript.sml:10: the ML values that the
    definitions below antiquote *)
 
-let CPstate_inv_def = new_definition
+let CPstate_inv_def = cake_define
   `CPstate_inv cs = (
     (
      // cs.next is a fresh class
@@ -158,7 +158,7 @@ let lookup_eqI = prove
    lookup_eq cs v = r`,
   CHEAT_TAC);;
 
-let both_alloc_vars_def = new_definition
+let both_alloc_vars_def = cake_define
   `both_alloc_vars (t,s) = (is_alloc_var t /\ is_alloc_var s)`;;
 
 let lookup_eq_set_eq_not_alloc_var = prove
@@ -205,7 +205,7 @@ let lookup_eq_set_eqD = prove
    (~(r = t) ==> r = lookup_eq cs v)`,
   CHEAT_TAC);;
 
-let CPstate_models_def = new_definition
+let CPstate_models_def = cake_define
   `CPstate_models cs S <=>
    (!v c vrep.
      sptree_lookup v (copy_state_to_eq cs) = SOME c ==>

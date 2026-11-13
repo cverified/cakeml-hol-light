@@ -74,9 +74,10 @@ let _ = size_thms "flatSem_v";;
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let find_v_globals_def = define_mutual_wf_cheat
+let find_v_globals_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
-  list_size flatSem_v_size y)`
+     list_size flatSem_v_size y)`)
+  CHEAT_TAC
   [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _4 e:flatSem_v) =
@@ -157,13 +158,8 @@ let find_v_globals_list_to_v = prove
         reachable`,
   CHEAT_TAC);;
 
-let _ = size_thms "flatSem_v";;
-let _ = size_thms "store_v";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let find_refs_globals_def,find_refs_globals_ind = define_wf
-  `MEASURE (\x0. list_size (store_v_size flatSem_v_size) x0)`
-  [`find_refs_globals x1 =
+let find_refs_globals_def = cake_define
+  `find_refs_globals x1 =
         match x1 with
           (semanticPrimitives_Refv a :: t) ->
            sptree_union (find_v_globals a) (find_refs_globals t)
@@ -172,7 +168,7 @@ let find_refs_globals_def,find_refs_globals_ind = define_wf
         | (semanticPrimitives_Thunk _8 a :: t) ->
            sptree_union (find_v_globals a) (find_refs_globals t)
         | (_9 :: t) -> find_refs_globals t
-        | [] -> LN`];;
+        | [] -> LN`;;
 
 (* HOL4 flat_elimProofScript.sml:225: ML code, not ported *)
 
@@ -231,11 +227,11 @@ let find_refs_globals_APPEND = prove
       sptree_union (find_refs_globals refs) (find_refs_globals new)`,
   CHEAT_TAC);;
 
-let find_env_globals_def = new_definition
+let find_env_globals_def = cake_define
   `find_env_globals env = find_v_globalsL (MAP SND
   (flatSem_environment_v env))`;;
 
-let find_result_globals_def = new_definition
+let find_result_globals_def = cake_define
   `find_result_globals x1 =
         match x1 with
           SOME (Rraise v) -> find_v_globals v
@@ -243,7 +239,7 @@ let find_result_globals_def = new_definition
 
 (* HOL4 flat_elimProofScript.sml:294: ML code, not ported *)
 
-let find_sem_prim_res_globals_def = define_cases
+let find_sem_prim_res_globals_def = cake_define_list
   [`find_sem_prim_res_globals (Rerr e:(flatSem_v
   list,flatSem_v)semanticPrimitives_result) =
             find_result_globals (SOME e)`;
@@ -253,15 +249,14 @@ let find_sem_prim_res_globals_def = define_cases
    definitions below antiquote *)
 
 let _ = size_thms "flatSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 flat_elimProofScript.sml:317-324: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let v_has_Eval_def1,v_has_Eval_def1_ind = define_wf_cheat
-  `MEASURE flatSem_v_size`
-  [`v_has_Eval x1 =
+let v_has_Eval_def1 = cake_define_try_tac (fun () ->
+  `MEASURE flatSem_v_size`)
+  CHEAT_TAC
+  `v_has_Eval x1 =
         match x1 with
           (Closure env _12 e:flatSem_v) -> (has_Eval e \/
        EXISTS v_has_Eval (MAP SND (flatSem_environment_v env)))
@@ -270,13 +265,13 @@ let v_has_Eval_def1,v_has_Eval_def1_ind = define_wf_cheat
        (EXISTS v_has_Eval (MAP SND (flatSem_environment_v env)) \/
          EXISTS has_Eval (MAP (SND o SND) nm_es))
         | (Vectorv vl) -> EXISTS v_has_Eval vl
-        | _15 -> F`];;
+        | _15 -> F`;;
 
 (* HOL4 flat_elimProofScript.sml:326: a theorem that HOL4 states as
    the value of an ML expression: v_has_Eval_def *)
 
 (* s_g = state globals, t_g = removed state globals *)
-let globals_rel_def = new_definition
+let globals_rel_def = cake_define
   `globals_rel (reachable:1 spt) s_g t_g <=>
        LENGTH s_g = LENGTH t_g /\
        (!n.
@@ -298,7 +293,7 @@ let globals_rel_trans = prove
         ==> globals_rel reachable s1 s3`,
   CHEAT_TAC);;
 
-let decs_closed_def = new_definition
+let decs_closed_def = cake_define
   `decs_closed (reachable:1 spt) decs <=> (!r t.
    analyse_code decs = (r,t) ==> domain r SUBSET domain reachable /\
      (!n m.
@@ -316,7 +311,7 @@ let decs_closed_reduce_HD = prove
   CHEAT_TAC);;
 
 (* s = state, t = removed state *)
-let flat_state_rel_def = new_definition
+let flat_state_rel_def = cake_define
   `flat_state_rel reachable (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)flatSem_state) <=> flatSem_state_clock
      s = flatSem_state_clock t /\ flatSem_state_refs s =

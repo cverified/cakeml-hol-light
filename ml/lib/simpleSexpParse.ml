@@ -17,32 +17,26 @@ needs "lib/simpleSexpPEG.ml";;
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: list pair string *)
 
-let parse_sexp_def = new_definition
+let parse_sexp_def = cake_define
   `parse_sexp s =
      OPTION_BIND (pegparse sexpPEG s)
        (\(rest,sx). OPTION_IGNORE_BIND (OPTION_GUARD (rest = []))
          (SOME (FST sx)))`;;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let escape_string_def,escape_string_ind = define_wf
-  `MEASURE (\x0. list_size char_size x0)`
-  [`escape_string s =
+let escape_string_def = cake_define
+  `escape_string s =
      (match s with "" -> "" | (CHR 92) :: s -> "\\\\" ++
-       escape_string s | (CHR 34) :: s -> "\\\"" ++ escape_string s
-       | c :: s -> c :: (escape_string s))`];;
+       escape_string s | (CHR 34) :: s -> "\\\"" ++ escape_string s |
+       c :: s -> c :: (escape_string s))`;;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let print_space_separated_def,print_space_separated_ind = define_wf
-  `MEASURE (\x0. list_size (list_size char_size) x0)`
-  [`print_space_separated x1 =
+let print_space_separated_def = cake_define
+  `print_space_separated x1 =
         match x1 with
           [] -> ""
         | [x] -> x
-        | (x :: xs) -> x ++ " " ++ print_space_separated xs`];;
+        | (x :: xs) -> x ++ " " ++ print_space_separated xs`;;
 
-let strip_dot_def,strip_dot_ind = define_rec
+let strip_dot_def = cake_define_list
   [`strip_dot (SX_NUM n) = ([],SOME (SX_NUM n))`;
    `strip_dot (SX_STR s) = ([],SOME (SX_STR s))`;
    `strip_dot (SX_SYM s) =
@@ -51,15 +45,14 @@ let strip_dot_def,strip_dot_ind = define_rec
   ls,n))`];;
 
 let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
 (* HOL4 simpleSexpParseScript.sml:260-268: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let print_sexp_def,print_sexp_ind = define_wf_cheat
-  `MEASURE simpleSexp_sexp_size`
-  [`print_sexp s =
+let print_sexp_def = cake_define_try_tac (fun () ->
+  `MEASURE simpleSexp_sexp_size`)
+  CHEAT_TAC
+  `print_sexp s =
         match s with
           SX_SYM s -> s
         | (SX_NUM n) -> num_to_dec_string n
@@ -72,4 +65,4 @@ let print_sexp_def,print_sexp_ind = define_wf_cheat
           print_sexp ls) ++ ")") | SOME last ->
           "(" ++ print_space_separated (MAP print_sexp ls) ++ " . "
             ++
-          print_sexp last ++ ")")`];;
+          print_sexp last ++ ")")`;;

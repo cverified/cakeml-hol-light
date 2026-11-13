@@ -172,19 +172,18 @@ let struct_info_FIELDS = define_record "struct_info"
 (* HOL4 panLangScript.sml:131-137: a theorem whose statement the port
    cannot state yet: MEM_IMP_shape_size *)
 
-let is_wf_shape_def,is_wf_shape_ind = define_shaped_rec
-  "nested"
+let is_wf_shape_def = cake_define_list
   [`is_wf_shape ctxt One = T`;
    `is_wf_shape ctxt (Comb shs) = EVERY (is_wf_shape ctxt) shs`;
    `is_wf_shape ctxt (Named nm) =
       (match ALOOKUP ctxt nm with SOME flds -> T | NONE -> F)`];;
 
-let is_wf_flds_def,is_wf_flds_ind = define_rec
+let is_wf_flds_def = cake_define_list
   [`is_wf_flds ctxt [] = T`;
    `is_wf_flds ctxt ((fld,sh) :: flds) =
       (is_wf_shape ctxt sh /\ is_wf_flds ctxt flds)`];;
 
-let is_wf_ctxt_def,is_wf_ctxt_ind = define_rec
+let is_wf_ctxt_def = cake_define_list
   [`is_wf_ctxt [] = T`;
    `is_wf_ctxt ((nm,info) :: ctxt') = (
       (ALOOKUP ctxt' nm = NONE) /\
@@ -193,9 +192,7 @@ let is_wf_ctxt_def,is_wf_ctxt_ind = define_rec
 
 (* For passes with Nameds *)
 let _ = size_thms "struct_info";;
-let size_of_sh_with_ctxt_def,size_of_sh_with_ctxt_ind =
-  define_shaped_rec
-  "nested"
+let size_of_sh_with_ctxt_def = cake_define_list
   [`size_of_sh_with_ctxt ctxt One = 1`;
    `size_of_sh_with_ctxt ctxt (Comb shapes) = SUM (MAP
   (size_of_sh_with_ctxt ctxt) shapes)`;
@@ -205,18 +202,13 @@ let size_of_sh_with_ctxt_def,size_of_sh_with_ctxt_ind =
     // should not happen`];;
 
 (* For passes after Nameds are compiled away eg pan_to_crep *)
-let size_of_shape_def,size_of_shape_ind = define_shaped_rec
-  "nested"
+let size_of_shape_def = cake_define_list
   [`size_of_shape One = 1`;
    `size_of_shape (Comb shapes) = SUM (MAP size_of_shape shapes)`;
    `size_of_shape (Named name) = 1
     // should not happen`];;
 
-let _ = size_thms "shape";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let shape_to_str_def,shape_to_str_ind = define_wf
-  `MEASURE (\x0. shape_size x0)`
+let shape_to_str_def = cake_define_list
   [`shape_to_str One = implode "1"`;
    `shape_to_str (Comb []) = implode "{}"`;
    `// should never happen
@@ -227,7 +219,7 @@ let shape_to_str_def,shape_to_str_ind = define_wf
               [implode "}"])`;
    `shape_to_str (Named nm) = nm`];;
 
-let shape_val_def = define_mutual_rec
+let shape_val_def = cake_define_list
   [`shape_val One = Const (n2w 0)`;
    `shape_val (Comb shapes) = panLang_RStruct (shape_vals shapes)`;
    `shape_val (Named nm) = Const (n2w 0)`;
@@ -239,19 +231,18 @@ let shape_val_def = define_mutual_rec
    cannot state yet: MEM_IMP_exp_size *)
 
 
-let nested_seq_def,nested_seq_ind = define_rec
+let nested_seq_def = cake_define_list
   [`nested_seq [] = Skip`;
    `nested_seq (e :: es) = panLang_Seq e (nested_seq es)`];;
 
-let with_shape_def,with_shape_ind = define_rec
+let with_shape_def = cake_define_list
   [`with_shape [] _1 = []`;
    `with_shape (sh :: shs) e =
          TAKE (size_of_shape sh) e :: with_shape shs (DROP
            (size_of_shape sh) e)`];;
 
-let exp_ids_def,exp_ids_ind = define_shaped_rec
-  "match"
-  [`exp_ids x1 =
+let exp_ids_def = cake_define
+  `exp_ids x1 =
         match x1 with
           panLang_Skip -> ([]:mlstring list)
         | (Raise e _2) -> [e]
@@ -259,36 +250,42 @@ let exp_ids_def,exp_ids_ind = define_shaped_rec
         | (panLang_Seq p q) -> exp_ids p ++ exp_ids q
         | (If _6 p q) -> exp_ids p ++ exp_ids q
         | (panLang_While _7 p) -> exp_ids p
-        | (Call (SOME (_8,(SOME (e,_9,ep)))) _10 _11) -> e ::
-          exp_ids ep
+        | (Call (SOME (_8,(SOME (e,_9,ep)))) _10 _11) -> e :: exp_ids
+          ep
         | (panLang_DecCall _12 _13 _14 _15 p) -> exp_ids p
-        | _16 -> []`];;
+        | _16 -> []`;;
 
-let is_decl_def = new_definition
+let is_decl_def = cake_define
   `is_decl x1 =
       match x1 with
         Decl sh v e -> T
       | _17 -> F`;;
 
-let is_exn_decl_def = new_definition
+let is_exn_decl_def = cake_define
   `is_exn_decl x1 =
       match x1 with
         ExnDecl eid sh -> T
       | _18 -> F`;;
 
-let is_name_def = new_definition
+let is_name_def = cake_define
   `is_name x1 =
       match x1 with
         Name _19 _20 -> T
       | _21 -> F`;;
 
-let size_of_eids_def = new_definition
+let size_of_eids_def = cake_define
   `size_of_eids prog = LENGTH (FILTER is_exn_decl prog)`;;
 
 let _ = size_thms "panLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 panLangScript.sml:271-276: the tactic that proves the
    termination *)
-let var_exp_def,var_exp_ind = define_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let var_exp_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\e. panLang_exp_size ARB e)`)
+  CHEAT_TAC
   [`var_exp (panLang_Const w) = ([]:mlstring list)`;
    `var_exp (panLang_Var panLang_Local v) = (([v]):mlstring list)`;
    `var_exp (panLang_Var panLang_Global v) = (([]):mlstring list)`;
@@ -314,9 +311,15 @@ let var_exp_def,var_exp_ind = define_guess
    `var_exp panLang_BytesInWord = (([]):mlstring list)`];;
 
 let _ = size_thms "panLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 panLangScript.sml:292-298: the tactic that proves the
    termination *)
-let global_var_exp_def,global_var_exp_ind = define_guess
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let global_var_exp_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\e. panLang_exp_size ARB e)`)
+  CHEAT_TAC
   [`global_var_exp (panLang_Const w) = ([]:mlstring list)`;
    `global_var_exp (panLang_Var panLang_Local v) = (([]):mlstring
   list)`;
@@ -343,29 +346,25 @@ let global_var_exp_def,global_var_exp_ind = define_guess
    `global_var_exp (panLang_Shift sh e1 e2) = ((global_var_exp e1
   ++ global_var_exp e2):mlstring list)`];;
 
-let load_op_def = define_cases
-  [`load_op Op8 = asm_Load8 /\
+let load_op_def = cake_define
+  `load_op Op8 = asm_Load8 /\
    load_op Op16 = asm_Load16 /\
    load_op OpW = Load /\
-   load_op Op32 = Load32`];;
+   load_op Op32 = Load32`;;
 
-let store_op_def = define_cases
-  [`store_op Op8 = asm_Store8 /\
+let store_op_def = cake_define
+  `store_op Op8 = asm_Store8 /\
    store_op Op16 = asm_Store16 /\
    store_op OpW = Store /\
-   store_op Op32 = Store32`];;
+   store_op Op32 = Store32`;;
 
-let is_function_def = new_definition
+let is_function_def = cake_define
   `is_function x1 =
       match x1 with
         Function _22 -> T
       | _23 -> F`;;
 
-let _ = size_thms "decl";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let functions_def,functions_ind = define_wf
-  `MEASURE (\x0. list_size (decl_size (\x. 0)) x0)`
+let functions_def = cake_define_list
   [`functions [] = []`;
    `functions (Function fi :: fs) =
     (fun_decl_name fi,fun_decl_params fi,fun_decl_body
@@ -374,20 +373,15 @@ let functions_def,functions_ind = define_wf
    `functions (ExnDecl _27 _28 :: fs) = functions fs`;
    `functions (Name _29 _30 :: fs) = functions fs`];;
 
-let _ = size_thms "decl";;
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let exceptions_def,exceptions_ind = define_wf
-  `MEASURE (\x0. list_size (decl_size (\x. 0)) x0)`
+let exceptions_def = cake_define_list
   [`exceptions [] = []`;
    `exceptions (Function fi :: fs) = exceptions fs`;
    `exceptions (Decl _31 _32 _33 :: fs) = exceptions fs`;
    `exceptions (ExnDecl eid sh :: fs) = (eid,sh) :: exceptions fs`;
    `exceptions (Name _34 _35 :: fs) = exceptions fs`];;
 
-let fun_ids_def,fun_ids_ind = define_shaped_rec
-  "match"
-  [`fun_ids x1 =
+let fun_ids_def = cake_define
+  `fun_ids x1 =
         match x1 with
           panLang_Dec _39 _40 _41 p -> fun_ids p
         | (panLang_Seq p q) -> fun_ids p ++ fun_ids q
@@ -397,17 +391,15 @@ let fun_ids_def,fun_ids_ind = define_shaped_rec
           fun_ids ep
         | (Call _48 nm _49) -> [nm]
         | (panLang_DecCall _50 _51 nm _52 p) -> nm :: fun_ids p
-        | _53 -> []`];;
+        | _53 -> []`;;
 
-let free_var_ids_def,free_var_ids_ind = define_shaped_rec
-  "match"
-  [`free_var_ids x1 =
+let free_var_ids_def = cake_define
+  `free_var_ids x1 =
         match x1 with
           panLang_Dec vn sh e p -> var_exp e ++ FILTER ((\x y. ~(x =
             y)) vn) (free_var_ids p)
         | (panLang_Seq p q) -> free_var_ids p ++ free_var_ids q
-        | (If g p q) -> var_exp g ++ free_var_ids p ++ free_var_ids
-          q
+        | (If g p q) -> var_exp g ++ free_var_ids p ++ free_var_ids q
         | (panLang_While g p) -> var_exp g ++ free_var_ids p
         | (panLang_Assign vk v e) ->
       (if vk = panLang_Local then
@@ -427,8 +419,7 @@ let free_var_ids_def,free_var_ids_ind = define_shaped_rec
         v :: var_exp e else
         var_exp e)
         | (panLang_ShMemStore os e1 e2) -> var_exp e1 ++ var_exp e2
-        | (panLang_Call (SOME (NONE,SOME (_54,vn,ep))) _55 args) ->
-          (
+        | (panLang_Call (SOME (NONE,SOME (_54,vn,ep))) _55 args) -> (
       vn :: free_var_ids ep) ++
       FLAT (MAP var_exp args)
         | (panLang_Call (SOME (SOME (vk,vn),SOME (_56,en,ep))) _57
@@ -444,9 +435,9 @@ let free_var_ids_def,free_var_ids_ind = define_shaped_rec
         | (panLang_Call NONE _60 args) -> FLAT (MAP var_exp args)
         | (panLang_DecCall vn _61 _62 args p) -> (vn :: free_var_ids
           p) ++ FLAT (MAP var_exp args)
-        | _63 -> []`];;
+        | _63 -> []`;;
 
-let inlinable_def = new_definition
+let inlinable_def = cake_define
   `inlinable x1 =
       match x1 with
         Function fi -> fun_decl_inline fi

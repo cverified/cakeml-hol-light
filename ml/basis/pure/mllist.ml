@@ -23,12 +23,12 @@ let _ = hol4_ancestors "mllist" [];;
 
 let _ = do_list hide_constant ["length"; "negate"];;
 
-let intersperse_def,intersperse_ind = define_guess
-  [`intersperse sep x2 =
+let intersperse_def = cake_define
+  `intersperse sep x2 =
       match x2 with
         [] -> []
       | [x] -> [x]
-      | (x :: xs) -> x :: sep :: intersperse sep xs`];;
+      | (x :: xs) -> x :: sep :: intersperse sep xs`;;
 
 (* ===== TODO: TO BE PORTED TO HOL (better theorems for mergesort_tail) ===== *)
 let merge_tail_MEM = prove
@@ -86,7 +86,7 @@ let mergesortN_tail_PERM = prove
   CHEAT_TAC);;
 (* ^^^^^ TO BE PORTED TO HOL ^^^^^ *)
 
-let sort_def = new_definition
+let sort_def = cake_define
   `sort = mergesort_tail`;;
 
 let sort_thm = prove
@@ -120,30 +120,30 @@ let sort_set = prove
  (`set_of_list (sort R ls) = set_of_list ls`,
   CHEAT_TAC);;
 
-let getItem_def = define_cases
+let getItem_def = cake_define_list
   [`getItem [] = NONE`;
    `getItem (h :: t) = SOME (h,t)`];;
 
-let nth_def = new_definition
+let nth_def = cake_define
   `nth l i = EL i l`;;
 
-let take_def = new_definition
+let take_def = cake_define
   `take l i = TAKE i l`;;
 
-let drop_def = new_definition
+let drop_def = cake_define
   `drop l i = DROP i l`;;
 
-let takeUntil_def,takeUntil_ind = define_rec
+let takeUntil_def = cake_define_list
   [`takeUntil p [] = []`;
    `takeUntil p (x :: xs) = (if p x then [] else x :: takeUntil p
   xs)`];;
 
-let dropUntil_def,dropUntil_ind = define_rec
+let dropUntil_def = cake_define_list
   [`dropUntil p [] = []`;
    `dropUntil p (x :: xs) = (if p x then x :: xs else dropUntil p
   xs)`];;
 
-let mllist_mapi_def,mllist_mapi_ind = define_rec
+let mllist_mapi_def = cake_define_list
   [`mllist_mapi f (n:num) [] = []`;
    `mllist_mapi f (n:num) (h :: t) = (let y = f n h in (y ::
   (mllist_mapi f (n + 1) t)))`];;
@@ -158,7 +158,7 @@ let MAPI_thm = prove
  (`!f l. MAPi f l = mllist_mapi f 0 l`,
   CHEAT_TAC);;
 
-let mapPartial_def,mapPartial_ind = define_rec
+let mapPartial_def = cake_define_list
   [`mllist_mapPartial f [] = []`;
    `mllist_mapPartial f (h :: t) = (match (f h) with
         NONE -> mllist_mapPartial f t | (SOME x) -> x ::
@@ -179,13 +179,13 @@ let FIND_thm = prove
    (!h t. FIND f (h :: t) = (if f h then SOME h else FIND f t))`,
   CHEAT_TAC);;
 
-let partition_aux_def,partition_aux_ind = define_rec
+let partition_aux_def = cake_define_list
   [`partition_aux f [] pos neg =
         (REVERSE pos,REVERSE neg)`;
    `partition_aux f (h :: t) pos neg = (if f h then partition_aux f
   t (h :: pos) neg else partition_aux f t pos (h :: neg))`];;
 
-let partition_def = new_definition
+let partition_def = cake_define
   `partition (f:'a->bool) l = partition_aux f l [] []`;;
 
 (* [local] *)
@@ -204,18 +204,18 @@ let partition_neg_thm = prove
  (`!f l. SND (partition f l) = FILTER ((~) o f) l`,
   CHEAT_TAC);;
 
-let foldl_def,foldl_ind = define_rec
+let foldl_def = cake_define_list
   [`mllist_foldl f e [] = e`;
    `mllist_foldl f e (h :: t) = mllist_foldl f (f h e) t`];;
 hol4_overload "foldl" "mllist_foldl";;
 
-let foldli_aux_def,foldli_aux_ind = define_rec
+let foldli_aux_def = cake_define_list
   [`mllist_foldli_aux f e n [] = e`;
    `mllist_foldli_aux f e n (h :: t) = mllist_foldli_aux f (f n h
   e) (SUC n) t`];;
 hol4_overload "foldli_aux" "mllist_foldli_aux";;
 
-let foldli_def = new_definition
+let foldli_def = cake_define
   `mllist_foldli f e l = mllist_foldli_aux f e 0 l`;;
 hol4_overload "foldli" "mllist_foldli";;
 
@@ -239,19 +239,17 @@ let foldli_thm = prove
    (in addition to the translator-generated ones)
    (the CF specs allow more general arguments f) *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-let tabulate_aux_def,tabulate_aux_ind = define_wf
+let tabulate_aux_def = cake_define_wf
   `MEASURE (\(n,m,_1,_2). m - n)`
-  [`tabulate_aux n m f acc =
+  `tabulate_aux n m f acc =
      (let b = (n >= m) in
      if b then REVERSE acc else
        let v = f n in
        let n = n + 1 in
        let acc = v :: acc in
-       tabulate_aux n m f acc)`];;
+       tabulate_aux n m f acc)`;;
 
-let tabulate_def = new_definition
+let tabulate_def = cake_define
   `mllist_tabulate n f = (let l = [] in tabulate_aux 0 n f l)`;;
 hol4_overload "tabulate" "mllist_tabulate";;
 
@@ -264,7 +262,7 @@ let tabulate_GENLIST = prove
  (`!n. mllist_tabulate n f = GENLIST f n`,
   CHEAT_TAC);;
 
-let collate_def,collate_ind = define_guess
+let collate_def = cake_define_list
   [`mllist_collate f [] [] = EQUAL`;
    `mllist_collate f [] (h :: t) = LESS`;
    `mllist_collate f (h :: t) [] = GREATER`;
@@ -288,7 +286,7 @@ let collate_long_thm = prove
         (mllist_collate f l1 l2 = GREATER)`,
   CHEAT_TAC);;
 
-let cpn_to_reln_def = new_definition
+let cpn_to_reln_def = cake_define
   `cpn_to_reln f x1 x2 = (f x1 x2 = LESS)`;;
 
 let collate_cpn_reln_thm = prove
@@ -298,7 +296,7 @@ let collate_cpn_reln_thm = prove
   CHEAT_TAC);;
 
 (* from std_preludeLib *)
-let LENGTH_AUX_def,LENGTH_AUX_ind = define_rec
+let LENGTH_AUX_def = cake_define_list
   [`LENGTH_AUX [] (n:num) = (n:num)`;
    `LENGTH_AUX (x :: xs) (n:num) = ((LENGTH_AUX xs (n + 1)):num)`];;
 
@@ -310,11 +308,11 @@ let LENGTH_AUX_def,LENGTH_AUX_ind = define_rec
 
 (* tail-recursive MAP *)
 
-let map_rev'_def,map_rev'_ind = define_rec
+let map_rev'_def = cake_define_list
   [`map_rev' f [] acc = acc`;
    `map_rev' f (x :: xs) acc = map_rev' f xs (f x :: acc)`];;
 
-let map_rev_def = new_definition
+let map_rev_def = cake_define
   `map_rev f xs = map_rev' f xs []`;;
 
 (* [local] *)
@@ -328,12 +326,12 @@ let map_rev_thm = prove
 
 (* tail-recursive FILTER *)
 
-let filter_rev'_def,filter_rev'_ind = define_rec
+let filter_rev'_def = cake_define_list
   [`filter_rev' P [] acc = acc`;
    `filter_rev' P (h :: t) acc = (if P h then filter_rev' P t (h ::
   acc) else filter_rev' P t acc)`];;
 
-let filter_rev_def = new_definition
+let filter_rev_def = cake_define
   `filter_rev P xs = filter_rev' P xs []`;;
 
 (* [local] *)
@@ -347,11 +345,11 @@ let filter_rev_thm = prove
 
 (* tail-recursive FLAT *)
 
-let flat_rev'_def,flat_rev'_ind = define_rec
+let flat_rev'_def = cake_define_list
   [`flat_rev' [] acc = acc`;
    `flat_rev' (x :: xs) acc = flat_rev' xs (REV x acc)`];;
 
-let flat_rev_def = new_definition
+let flat_rev_def = cake_define
   `flat_rev xs = flat_rev' xs []`;;
 
 (* [local] *)

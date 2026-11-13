@@ -32,7 +32,7 @@ let _ = hol4_ancestors "flat_to_clos"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let dest_pat_def = new_definition
+let dest_pat_def = cake_define
   `dest_pat x1 =
       match x1 with
         [(Pvar v:flatLang_pat),h] -> SOME ((v:mlstring),h)
@@ -48,7 +48,7 @@ let dest_pat_thm = prove
  (`dest_pat pes = SOME (p_1,p_2) <=> pes = [(Pvar p_1,p_2)]`,
   CHEAT_TAC);;
 
-let compile_lit_def = new_definition
+let compile_lit_def = cake_define
   `compile_lit t l =
      closLang_Op t
       (match l with ast_IntLit i -> closLang_IntOp (closLang_Const
@@ -59,7 +59,7 @@ let compile_lit_def = new_definition
         (closLang_Constant (ConstWord64 w)) | ast_Float64 w ->
         closLang_BlockOp (closLang_Constant (ConstWord64 w))) []`;;
 
-let flat_to_clos_arg1_def = new_definition
+let flat_to_clos_arg1_def = cake_define
   `flat_to_clos_arg1 xs f =
      (match xs with [x] -> f x | _3 -> closLang_Let
        backend_common_None xs (closLang_Var backend_common_None 0))`;;
@@ -71,7 +71,7 @@ let arg1_pmatch = prove
        backend_common_None xs (closLang_Var backend_common_None 0))`,
   CHEAT_TAC);;
 
-let flat_to_clos_arg2_def = new_definition
+let flat_to_clos_arg2_def = cake_define
   `flat_to_clos_arg2 xs f =
      (match xs with [x; y] -> f x y | _5 -> closLang_Let
        backend_common_None xs (closLang_Var backend_common_None 0))`;;
@@ -136,13 +136,13 @@ let checkF =
           (closLang_BlockOp (closLang_Cons subscript_tag)) [])))`
   (var_fun 4);;
 
-let CopyByteStr_def = new_definition
+let CopyByteStr_def = cake_define
   (mk_eq (`(CopyByteStr (t:tra)):closLang_exp`,checkT));;
 
-let CopyByteAw8_def = new_definition
+let CopyByteAw8_def = cake_define
   (mk_eq (`(CopyByteAw8 (t:tra)):closLang_exp`,checkF));;
 
-let compile_arith_def = new_definition
+let compile_arith_def = cake_define
   `compile_arith t (a:ast_arith) ty xs =
      (match ty with ast_IntT -> (match a with Add -> closLang_Op t
        (closLang_IntOp closLang_Add) xs | Sub -> closLang_Op t
@@ -204,7 +204,7 @@ let compile_arith_def = new_definition
                                 backend_common_None xs (Var
                                 backend_common_None 0))`;;
 
-let flat_to_clos_compile_op_def = new_definition
+let flat_to_clos_compile_op_def = cake_define
   `flat_to_clos_compile_op t op xs =
      (match op with TagLenEq tag n -> closLang_Op t (closLang_BlockOp
        (closLang_TagLenEq tag n)) xs | LenEq n -> closLang_Op t
@@ -404,12 +404,12 @@ let flat_to_clos_compile_op_def = new_definition
                              backend_common_None 0))`;;
 hol4_overload "compile_op" "flat_to_clos_compile_op";;
 
-let join_strings_def = new_definition
+let join_strings_def = cake_define
   `join_strings (x:mlstring) y =
      (if strlen x = 0 then y else mlstring_concat [x; implode "_";
        y])`;;
 
-let dest_nop_def = new_definition
+let dest_nop_def = cake_define
   `dest_nop op e =
      (if op = flatLang_Src (ast_FromTo ast_IntT (ast_WordT ast_W8))
        then
@@ -431,7 +431,7 @@ let dest_nop_thm = prove
        [x]])`,
   CHEAT_TAC);;
 
-let flat_to_clos_dest_Constant_def = new_definition
+let flat_to_clos_dest_Constant_def = cake_define
   `flat_to_clos_dest_Constant x1 =
       match x1 with
         (closLang_Op t (closLang_BlockOp (closLang_Constant c))
@@ -453,14 +453,14 @@ let flat_to_clos_dest_Constant_pmatch = prove
        (ConstCons n []) | _21 -> NONE)`,
   CHEAT_TAC);;
 
-let dest_Constants_def,dest_Constants_ind = define_rec
+let dest_Constants_def = cake_define_list
   [`dest_Constants [] = SOME []`;
    `dest_Constants (c :: cs) =
       (match flat_to_clos_dest_Constant c with NONE -> NONE |
         SOME x -> (match dest_Constants cs with NONE -> NONE | SOME
         xs -> SOME (x :: xs)))`];;
 
-let SmartCons_def = new_definition
+let SmartCons_def = cake_define
   `SmartCons t tag xs =
      (if NULL xs then closLang_Op t (closLang_BlockOp (closLang_Cons
        tag)) [] else
@@ -470,9 +470,13 @@ let SmartCons_def = new_definition
        tag (REVERSE cs)))) [])`;;
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 flat_to_closScript.sml:331-337: the tactic that proves the
-   termination *)
-let flat_to_clos_compile_def,flat_to_clos_compile_ind = define_guess
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flat_to_clos_compile_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size flatLang_exp_size o SND)`)
+  CHEAT_TAC
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;
@@ -517,18 +521,18 @@ let flat_to_clos_compile_def,flat_to_clos_compile_ind = define_guess
               (HD (flat_to_clos_compile new_m [e]))])`];;
 hol4_overload "compile" "flat_to_clos_compile";;
 
-let compile_decs_def,compile_decs_ind = define_rec
+let compile_decs_def = cake_define_list
   [`flat_to_clos_compile_decs [] = []`;
    `flat_to_clos_compile_decs (e :: xs) = flat_to_clos_compile []
   [e] ++ flat_to_clos_compile_decs xs`];;
 hol4_overload "compile_decs" "flat_to_clos_compile_decs";;
 
-let flat_to_clos_compile_prog_def = new_definition
+let flat_to_clos_compile_prog_def = cake_define
   `flat_to_clos_compile_prog xs =
      attach_interpreter (flat_to_clos_compile_decs xs)`;;
 hol4_overload "compile_prog" "flat_to_clos_compile_prog";;
 
-let inc_compile_decs_def = new_definition
+let inc_compile_decs_def = cake_define
   `inc_compile_decs decs =
      (let xs = flat_to_clos_compile_decs decs ++
        flat_to_clos_compile_decs [Con backend_common_None NONE []] in

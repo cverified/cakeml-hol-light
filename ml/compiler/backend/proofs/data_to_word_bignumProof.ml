@@ -148,7 +148,7 @@ let word_bit_if_1_0 = prove
  (`word_bit 0 (if b then (n2w 1) else (n2w 0)) <=> b`,
   CHEAT_TAC);;
 
-let get_iop_def = new_definition
+let get_iop_def = cake_define
   `get_iop (n:num) =
      (if n = 0 then multiword_Add else
      if n = 1 then multiword_Sub else
@@ -156,7 +156,7 @@ let get_iop_def = new_definition
      if n = 5 then multiword_Div else
                    multiword_Mod)`;;
 
-let data_to_word_bignumProof_int_op_def = new_definition
+let data_to_word_bignumProof_int_op_def = cake_define
   `data_to_word_bignumProof_int_op op_index (i:int) (j:int) =
      (if op_index = 0 then SOME (i + j) else
      if op_index = 1 then SOME (i - j) else
@@ -300,7 +300,7 @@ let TWO_LESS_MustTerminate_limit = prove
     ~(MustTerminate_limit (:'a) <= 1)`,
   CHEAT_TAC);;
 
-let arith_location_def = new_definition
+let arith_location_def = cake_define
   `Arith_location index =
      (if index = 0 then Add_location else
      if index = 1 then Sub_location else
@@ -313,7 +313,7 @@ let push_env_code = prove
       (push_env y NONE t) = state_code t`,
   CHEAT_TAC);;
 
-let arith_code_def = new_definition
+let arith_code_def = cake_define
   `Arith_code index =
      Seq (Assign 6 (wordLang_Const (n2w (4 * index))))
        (Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;

@@ -16,5 +16,5 @@ needs "lib/walkstar.ml";;
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: finite_map pred_set *)
 
-let collapse_def = new_definition
+let collapse_def = cake_define
   `collapse s = FUN_FMAP (\v. walkstar s (term_Var v)) (FDOM s)`;;
