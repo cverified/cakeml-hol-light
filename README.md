@@ -241,6 +241,24 @@ which the next import leaves out, with the reason.  A block that
 fails stops a file, so an import is only worth having when every
 block of it has been tried on its own.
 
+A theorem this port **states and cheats** is the other half.
+`tools/lightcake.py fill <theory>` writes LightCake's proof of
+it into `proofs/<path>.prf`, under the same name rule, and the
+port splices it in at the next re-port.  97 of the 402 cheats
+LightCake proves can be filled as things stand (mlstring 48,
+mllist 17, backendProps 13, gc_shared 10, parmove 12).  The
+check is `TOLERANT=1 tools/bin/tryfile <file>`, which loads
+every theorem of the file in a try and reports all of them that
+fail rather than the first, and `lightcake.py drop <theory>
+<name>...` takes those sections out again.
+
+Whether a name exists is read off the sources: this port's
+files that load before the one being written, LightCake's own
+blocks that have been taken, and HOL Light's own bindings and
+kernel signature.  A proof that uses `Library/rstc.ml`'s
+`RTC_INDUCT_L` is left out with that as the reason, because
+this port does not load that library.
+
 `tools/lightcake.py` also has `names`, `report` and `deps`,
 which say what the two ports share, how many of this port's
 cheats LightCake proves, and what a theory of it would need.
