@@ -3431,9 +3431,13 @@ let cake_conj_list cls =
            (fun ty ins ->
               try tyunify ins (hd tys) ty
               with Failure _ ->
+                (* the types as the unification has them by now,
+                   which is what clashes: the two as the clauses
+                   were parsed may unify on their own *)
                 failwith (nm ^ " has the types " ^
-                          string_of_type (hd tys) ^ " and " ^
-                          string_of_type ty))
+                          string_of_type (type_subst ins (hd tys)) ^
+                          " and " ^
+                          string_of_type (type_subst ins ty)))
            (tl tys) ins)
       names [] in
   list_mk_conj (map (inst ins) cls);;

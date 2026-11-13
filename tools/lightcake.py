@@ -287,20 +287,28 @@ def ours_terms(nm, rank):
   return out
 
 
-def lc_names(d):
+def lc_names(d, thy0=None):
   """LightCake's name for every constant, constructor, field and
      type of the closure, mapped to this port's name for it, or
      to None where this port has no theory for it.  Both ports
      name after HOL4, so the HOL4 name is what joins them:
      LightCake's doc/names.tsv says what it calls each one, and
-     this port's own renaming says what this port calls it"""
+     this port's own renaming says what this port calls it.
+
+     One name can stand in several theories -- LightCake's size
+     is sptree's and this port's sptree_size -- so the theory
+     being imported is read first, and a theory this port does
+     not have never puts out one it does"""
   out = {}
-  for l in open(LC + 'doc/names.tsv'):
-    fs = l.rstrip('\n').split('\t')
-    if len(fs) < 5 or fs[2] in ('kind', 'theorem'): continue
-    thy, h4, lc = fs[1], fs[3], fs[4]
-    out[lc] = d.rename.get((thy, h4), h4) \
-              if thy in d.thy_of_file else None
+  for f in ('doc/names.tsv', 'doc/library_renames.tsv'):
+    for l in open(LC + f):
+      fs = l.rstrip('\n').split('\t')
+      if len(fs) < 5 or fs[2] in ('kind', 'theorem'): continue
+      thy, h4, lc = fs[1], fs[3], fs[4]
+      v = d.rename.get((thy, h4), h4) \
+          if thy in d.thy_of_file else None
+      if thy == thy0 or lc not in out or (out[lc] is None and v):
+        out[lc] = v
   return out
 
 
@@ -509,13 +517,13 @@ def emit(argv):
     print('no pair of files for %s' % nm); return 1
   d = port_db()
   m, _, _ = rename_map(nm)
+  rank = dict((t, i) for i, (t, _, _) in enumerate(d.order))
+  lcn, ot = lc_names(d, nm), ours_terms(nm, rank)
   # LightCake's name for a thing of the closure, under this
   # port's name for it; the pair of files of this theory says it
   # more precisely than the HOL4 names do, so that map wins
-  gm = dict((k, v) for k, v in lc_names(d).items() if v)
+  gm = dict((k, v) for k, v in lcn.items() if v)
   gm.update(m)
-  rank = dict((t, i) for i, (t, _, _) in enumerate(d.order))
-  lcn, ot = lc_names(d), ours_terms(nm, rank)
   (lb, kit), (ob, bridge) = lc_bindings(), ours_bindings(nm, rank)
   # what this port has of its own, which is its file without the
   # block that an import before this one appended to it
@@ -528,9 +536,16 @@ def emit(argv):
   # same name with _ind, in both
   obyc = {}
   for k, v in definitions(a).items(): obyc.setdefault(v, k)
+  # LightCake keeps the HOL4 name of a library constant unless
+  # it had to change it (doc/library_renames.tsv), and this port
+  # has its own renaming of the same HOL4 name: that is the join
+  # for a theory that doc/names.tsv does not cover
+  ourname = lambda c: lcn.get(c) or d.rename.get((nm, c), c)
   for k, v in definitions(b).items():
-    o = gm.get(v, lcn.get(v))
-    if o and o in obyc and k != obyc[o]:
+    o = m.get(v) or ourname(v)
+    if not o: continue
+    if o != v and o in ot: m.setdefault(v, o)
+    if o in obyc and k != obyc[o]:
       m[k] = obyc[o]
       if k.endswith('_def') and obyc[o].endswith('_def'):
         m[k[:-4] + '_ind'] = obyc[o][:-4] + '_ind'
@@ -546,10 +561,19 @@ def emit(argv):
   # a name of LightCake's is there to be used once this port has
   # the thing it names: the block before it in the file, a
   # binding of this port, or a constant this port writes
-  have = (set(ob) - (kit - bridge)) | set(defs)
+  # a definition of LightCake's own file is one this port has
+  # only where this port has it here: its is_adjacent_def is in
+  # spt_closure, which loads after sptree
+  have = ((set(ob) - (kit - bridge)) |
+          set(k for k in defs if k in ob or k in m))
   for ns, body in bindings(b):
     if [n for n in ns if n in defs or n in ours]:
-      have |= set(ns); continue
+      # a definition of LightCake's that this port makes its own
+      # way, or a theorem this port proves itself: what it binds
+      # is there only where this port binds it too
+      have |= set(n for n in ns
+                  if n in ob or n in m or n in ours)
+      continue
     if ns[0] in bad:
       left.append((ns[0], ['--', bad[ns[0]]])); continue
     need = []

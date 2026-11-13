@@ -849,14 +849,6 @@ let SPTAUX_domain_bits = prove
               ARITH_RULE `2 * m + 2 = 2 * x + 2 <=> x = m`;
               UNWIND_THM2]);;
 
-let set_domain_list = prove
- (`set_of_list (domain_list t) = domain (t:A spt)`,
-  SPEC_TAC(`t:A spt`,`t:A spt`) THEN MATCH_MP_TAC spt_INDUCT THEN
-  ASM_REWRITE_TAC[domain_list_def; domain_def; set_of_list;
-    SET_OF_LIST_APPEND;
-                  SET_OF_LIST_MAP] THEN
-  SET_TAC[]);;
-
 let FINITE_domain = prove
  (`FINITE (domain (t:A spt))`,
   SPEC_TAC(`t:A spt`,`t:A spt`) THEN MATCH_MP_TAC spt_INDUCT THEN
@@ -864,12 +856,12 @@ let FINITE_domain = prove
                FINITE_EMPTY]);;
 
 let size_insert = prove
- (`!k (v:A) m. size (sptree_insert k v m) =
-               if k IN domain m then size m else size m + 1`,
+ (`!k (v:A) m. sptree_size (sptree_insert k v m) =
+               if k IN domain m then sptree_size m else sptree_size m +
+                 1`,
   MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `m:A spt` THEN
-  ASM_REWRITE_TAC[SPTAUX_insert_bits; sptree_size_def;
-    SPTAUX_domain_bits;
+  ASM_REWRITE_TAC[SPTAUX_insert_bits; size_def; SPTAUX_domain_bits;
                   CONJUNCT1 domain_def; NOT_IN_EMPTY] THEN
   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
@@ -932,10 +924,9 @@ let SPTAUX_card_images = prove
   ARITH_TAC);;
 
 let size_domain = prove
- (`!t:A spt. size t = CARD (domain t)`,
+ (`!t:A spt. sptree_size t = CARD (domain t)`,
   MATCH_MP_TAC spt_INDUCT THEN
-  ASM_SIMP_TAC[sptree_size_def; domain_def; SPTAUX_card_images;
-    FINITE_domain;
+  ASM_SIMP_TAC[size_def; domain_def; SPTAUX_card_images; FINITE_domain;
                CARD_CLAUSES; CARD_SING] THEN ARITH_TAC);;
 
 let domain_delete = prove
@@ -974,27 +965,6 @@ let SPTAUX_lrnext_pos = prove
  (`!i. ~(lrnext i = 0)`,
   MATCH_MP_TAC SPTAUX_bit_induction THEN
   ASM_REWRITE_TAC[SPTAUX_lrnext_bits; MULT_EQ_0; ARITH]);;
-
-let spt_acc_thm = prove
- (`spt_acc i k =
-   if k = 0 then i
-   else spt_acc (i + if EVEN k then 2 * lrnext i else lrnext i) ((k - 1)
-     DIV 2)`,
-  SPTAUX_CASES_TAC `k:num` THEN REWRITE_TAC[spt_acc_def; NOT_SUC;
-    SUC_SUB1]);;
-
-let spt_acc_eqn = prove
- (`!k i. spt_acc i k = lrnext i * k + i`,
-  MATCH_MP_TAC SPTAUX_bit_induction THEN
-  CONJ_TAC THENL [REWRITE_TAC[spt_acc_def] THEN ARITH_TAC; ALL_TAC] THEN
-  CONJ_TAC THEN X_GEN_TAC `m:num` THEN DISCH_TAC THEN GEN_TAC THEN
-  ONCE_REWRITE_TAC[spt_acc_thm] THEN
-  ASM_REWRITE_TAC[SPTAUX_BIT_RW; SPTAUX_lrlemma1; SPTAUX_lrlemma2] THEN
-  ARITH_TAC);;
-
-let spt_acc_0 = prove
- (`!k. spt_acc 0 k = k`,
-  REWRITE_TAC[spt_acc_eqn; SPTAUX_lrnext_bits] THEN ARITH_TAC);;
 
 let SPTAUX_foldi_thm = REWRITE_RULE[LET_DEF; LET_END_DEF] foldi_def;;
 
@@ -1112,15 +1082,14 @@ let toListA_append = prove
   REWRITE_TAC[GSYM SPTAUX_toListA_APPEND; APPEND]);;
 
 let SPTAUX_LENGTH_toListA = prove
- (`!t:A spt acc. LENGTH (toListA acc t) = size t + LENGTH acc`,
+ (`!t:A spt acc. LENGTH (toListA acc t) = sptree_size t + LENGTH acc`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[toListA_def; sptree_size_def; LENGTH] THEN
-    ARITH_TAC);;
+  ASM_REWRITE_TAC[toListA_def; size_def; LENGTH] THEN ARITH_TAC);;
 
 let size_zero_empty = prove
- (`!x:A spt. size x = 0 <=> domain x = EMPTY`,
+ (`!x:A spt. sptree_size x = 0 <=> domain x = EMPTY`,
   MATCH_MP_TAC spt_INDUCT THEN
-  ASM_REWRITE_TAC[sptree_size_def; domain_def; ADD_EQ_0; ARITH;
+  ASM_REWRITE_TAC[size_def; domain_def; ADD_EQ_0; ARITH;
                   NOT_INSERT_EMPTY; EMPTY_UNION; IMAGE_EQ_EMPTY] THEN
   MESON_TAC[]);;
 
@@ -1373,8 +1342,9 @@ let delete_fail = prove
     REWRITE_TAC[domain_delete] THEN SET_TAC[]]);;
 
 let size_delete = prove
- (`!n t:A spt. size (sptree_delete n t) =
-               if sptree_lookup n t = NONE then size t else size t - 1`,
+ (`!n t:A spt. sptree_size (sptree_delete n t) =
+               if sptree_lookup n t = NONE then sptree_size t else
+                 sptree_size t - 1`,
   REWRITE_TAC[size_domain; domain_delete; lookup_NONE_domain] THEN
   SIMP_TAC[CARD_DELETE; FINITE_domain] THEN MESON_TAC[]);;
 
@@ -1384,8 +1354,8 @@ let lookup_fromList_outside = prove
   SIMP_TAC[lookup_fromList; GSYM NOT_LT]);;
 
 let IMP_size_LESS_size = prove
- (`!x y:A spt. subspt x y /\ ~(domain x = domain y) ==> size x < size
-   y`,
+ (`!x y:A spt. subspt x y /\ ~(domain x = domain y) ==> sptree_size x <
+   sptree_size y`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[size_domain] THEN
   MATCH_MP_TAC CARD_PSUBSET THEN REWRITE_TAC[FINITE_domain; PSUBSET]
     THEN
@@ -1486,7 +1456,7 @@ let SPTAUX_BIT_LT = prove
   ARITH_TAC);;
 
 let size_map = prove
- (`size (sptree_map (f:A->B) t) = size t`,
+ (`sptree_size (sptree_map (f:A->B) t) = sptree_size t`,
   REWRITE_TAC[size_domain; domain_map]);;
 
 let SPTAUX_EXISTS_lookup_P = prove
@@ -1527,20 +1497,6 @@ let SPTAUX_FORALL_lookup_P = prove
               FORALL_UNWIND_THM1; FORALL_UNWIND_THM2] THEN
   MESON_TAC[]);;
 
-let adjacent_domain = prove
- (`!tree x y. is_adjacent tree x y ==> x IN domain tree`,
-  REWRITE_TAC[is_adjacent_def; domain_lookup] THEN MESON_TAC[]);;
-
-let reachable_domain = prove
- (`!tree x y. is_reachable tree x y ==> (x = y \/ x IN domain tree)`,
-  GEN_TAC THEN REWRITE_TAC[is_reachable_def] THEN
-  MATCH_MP_TAC RTC_INDUCT_L THEN MESON_TAC[adjacent_domain]);;
-
-let reachable_LHS_NOTIN = prove
- (`!tree n x. is_reachable tree n x /\ ~(n IN domain tree) ==> n = x`,
-  REWRITE_TAC[is_reachable_def] THEN ONCE_REWRITE_TAC[RTC_CASES_R] THEN
-  MESON_TAC[adjacent_domain]);;
-
 let rtc_is_adjacent = prove
  (`(!k. k IN t ==> !n. (is_adjacent fullTree k n ==> n IN t)) ==>
    !x y. RTC (is_adjacent fullTree) x y ==> x IN t ==> y IN t`,
@@ -1572,6 +1528,7 @@ let rtc_is_adjacent = prove
      lookup_inter_EQ                  lookup_inter option_CASE
      lookup_inter_assoc               lookup_inter option_CASE
      lookup_difference                SPTAUX_BITS_TAC spt_CASE
+     set_domain_list                  domain_list_def
      IN_domain                        SPTAUX_BITS_TAC
      lookup_inter_alt                 lookup_inter option_CASE
      domain_union                     option_CASE
@@ -1580,9 +1537,13 @@ let rtc_is_adjacent = prove
      domain_difference                lookup_difference
      domain_sing                      domain_insert v
      domain_fromList                  count_DEF
+     spt_acc_thm                      spt_acc_def
+     spt_acc_eqn                      spt_acc_def spt_acc_thm
+     spt_acc_0                        spt_acc_eqn
      lookup_mapi0                     SPTAUX_BITS_TAC option_CASE
+                                      spt_acc_eqn
      lookup_mapi                      OPTION_MAP_DEF lookup_mapi0
-                                      option_CASE
+                                      option_CASE spt_acc_0
      SPTAUX_MEM_foldi                 CONS
      MEM_toAList                      SPTAUX_MEM_foldi v
      SPTAUX_ALOOKUP_MEM               ALOOKUP_DEF v
@@ -1680,7 +1641,7 @@ let rtc_is_adjacent = prove
                                       SPTAUX_spt_size_left_right
                                       SPTAUX_spts_to_alist_aux_thm SUM
                                       spt_size_def
-     spts_to_alist_def                pair_CASE
+     spts_to_alist_def                SPTAUX_spts_to_alist_eqn pair_CASE
      SPTAUX_LENGTH_COUNT_LIST         COUNT_LIST_DEF
      SPTAUX_ALOOKUP_ZIP_MAP_SUC       ALOOKUP_DEF
      SPTAUX_ALOOKUP_ZIP_COUNT_LIST    ALOOKUP_DEF COUNT_LIST_DEF
@@ -1692,32 +1653,42 @@ let rtc_is_adjacent = prove
      SPTAUX_closure_spt_size          domain_spt_fold_union domain_union
                                       lookup_inter_EQ size_diff_less
      closure_spt_ind                  RVEQ_TAC SPTAUX_closure_spt_size
-     num_set_tree_union_empty         spt_CASE
-     wf_num_set_tree_union            num_set_tree_union_empty spt_CASE
-     domain_num_set_tree_union        spt_CASE
-     num_set_tree_union_sym           spt_CASE union_num_set_sym
+     num_set_tree_union_empty         num_set_tree_union_def spt_CASE
+     wf_num_set_tree_union            num_set_tree_union_def
+                                      num_set_tree_union_empty spt_CASE
+     domain_num_set_tree_union        num_set_tree_union_def spt_CASE
+     num_set_tree_union_sym           num_set_tree_union_def spt_CASE
+                                      union_num_set_sym
      lookup_num_set_tree_union        SPTAUX_BITS_TAC
-                                      SPTAUX_optcase_lemma option_CASE
+                                      SPTAUX_optcase_lemma
+                                      num_set_tree_union_def option_CASE
                                       spt_CASE
      wf_spt_fold_union                wf_union
-     wf_closure_spt                   closure_spt_ind lookup_inter_EQ
-                                      wf_spt_fold_union wf_union
-     is_adjacent_num_set_tree_union   lookup_num_set_tree_union
+     wf_closure_spt                   closure_spt_def closure_spt_ind
+                                      lookup_inter_EQ wf_spt_fold_union
+                                      wf_union
+     adjacent_domain                  is_adjacent_def
+     reachable_domain                 adjacent_domain is_reachable_def
+     reachable_LHS_NOTIN              adjacent_domain is_reachable_def
+     is_adjacent_num_set_tree_union   is_adjacent_def
+                                      lookup_num_set_tree_union
                                       option_CASE
      is_reachable_num_set_tree_union  is_adjacent_num_set_tree_union
-     closure_spt_lemma                closure_spt_ind
+                                      is_reachable_def
+     closure_spt_lemma                closure_spt_def closure_spt_ind
                                       domain_spt_fold_union domain_union
+                                      is_adjacent_def is_reachable_def
                                       lookup_inter_alt
-     closure_spt_thm                  closure_spt_lemma
+     closure_spt_thm                  closure_spt_lemma is_reachable_def
      _                                LENGTH_toAList cake_add_simps
                                       delete_mk_wf domain_difference
                                       domain_insert domain_inter
                                       domain_mapi domain_mk_wf
                                       domain_union insert_mk_wf inter_LN
-                                      inter_eq inter_mk_wf isEmpty_union
-                                      lookup_mk_wf map_map_K mk_wf_eq
-                                      size_fromList size_mapi
-                                      subspt_union union_LN union_mk_wf
-                                      wf_inter
+                                      inter_eq inter_mk_wf isEmpty_def
+                                      isEmpty_union lookup_mk_wf
+                                      map_map_K mk_wf_eq size_fromList
+                                      size_mapi subspt_union union_LN
+                                      union_mk_wf wf_inter
 
 *)
