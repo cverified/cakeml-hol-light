@@ -80,21 +80,43 @@ let definition_made wfs tm =
    pattern, a function of one element of a list, a condition that
    is a boolean of the recursive calls.  ml/lib/define.ml has a
    rewriting of the clauses for each of those, and the word says
-   which one this definition goes through. *)
+   which one this definition goes through.
 
-let shaped_made shape wfs tm =
-  let inner tm =
+   Three of the rewritings hand what comes out back to a way of
+   making a definition, and which way that is is a second choice:
+   the word says both, separated by a ">", so that "sing>nested"
+   is "read the clauses as a function of one element, and make
+   what comes out by the nested way".  Nothing is searched for
+   either way. *)
+
+let shape_head shape =
+  try let i = String.index shape '>' in
+      String.sub shape 0 i,
+      String.sub shape (i + 1) (String.length shape - i - 1)
+  with Not_found -> shape,"";;
+
+let rec made_by shape wfs tm =
+  let head,rest = shape_head shape in
+  let plain tm =
     if length (definition_heads tm) = 1 then define_single wfs tm
     else define_mutual wfs tm in
-  noted (fst (match shape with
-                "nested" -> define_nested tm
-              | "maplist" -> define_maplist inner tm
-              | "cond_bool" -> define_cond_bool inner tm
-              | "sing" -> define_sing inner tm
-              | "cases" -> define_compiled_cases tm
-              | "match" -> define_match_clauses tm
-              | "lift_if" -> define_lift_if inner tm
-              | _ -> failwith ("define_shaped: no shape " ^ shape)));;
+  let inner tm =
+    if rest = "" then plain tm else made_by rest wfs tm in
+  match head with
+    "" | "new_definition" -> [new_definition tm],TRUTH
+  | "define_single" | "general" -> plain tm
+  | "prim_rec" | "new_recursive_definition" -> define_prim_rec tm
+  | "nested" -> define_nested tm
+  | "maplist" -> define_maplist inner tm
+  | "cond_bool" -> define_cond_bool inner tm
+  | "sing" -> define_sing inner tm
+  | "cases" -> define_compiled_cases tm
+  | "match" -> define_match_clauses tm
+  | "lift_if" -> define_lift_if inner tm
+  | "measure" | "guess" -> plain tm
+  | _ -> failwith ("define_shaped: no shape " ^ head);;
+
+let shaped_made shape wfs tm = noted (fst (made_by shape wfs tm));;
 
 (* ------------------------------------------------------------------ *)
 (* The induction theorem.                                             *)
@@ -247,13 +269,7 @@ let define_shaped_rec_cheat shape cls =
        "the termination of the definition is assumed";;
 
 let define_shaped shape cls =
-  let tm = definition_of_clauses cls in
-  noted (fst (match shape with
-                "nested" -> define_nested tm
-              | "cases" -> define_compiled_cases tm
-              | "match" -> define_match_clauses tm
-              | _ -> failwith
-                       ("define_shaped: no shape " ^ shape)));;
+  shaped_made shape [] (definition_of_clauses cls);;
 
 (* a family of functions that recurse through one another.  HOL4
    gives such a definition a mutual induction theorem; the port

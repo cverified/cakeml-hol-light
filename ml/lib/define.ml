@@ -3070,21 +3070,36 @@ let cake_define_gen wf tm =
                (the_strategy := "define_single";
                 define_single [] tm)))
        else
-         itlist
-           (fun f (l,th) ->
-              let mycls = filter (fun cl ->
-                            fst(strip_comb(lhs(snd(strip_forall cl)))) =
-                              f)
-                            (conjuncts(snd(strip_forall tm))) in
-              let ths,th' = define_single [] (list_mk_conj mycls) in
-              ths @ l,th')
-           fs ([],TRUTH))
+         (* a family that does not recurse is a definition each,
+            which is both what the port writes and much faster
+            than one mutual definition of them all *)
+         let r =
+           itlist
+             (fun f (l,th) ->
+                let mycls = filter (fun cl ->
+                              fst(strip_comb(lhs(snd(strip_forall cl))))
+                                = f)
+                              (conjuncts(snd(strip_forall tm))) in
+                let ths,th' = define_single [] (list_mk_conj mycls) in
+                ths @ l,th')
+             fs ([],TRUTH) in
+         (the_strategy := "general"; r))
     else
       (* the name of a strategy is recorded when it works and
          not when it is tried: four of them run the whole chain
          again on a part of the definition, and recording the
-         name first would leave the inner one behind *)
-      let strat s f = let r = f () in (the_strategy := s; r) in
+         name first would leave the inner one behind.  What such
+         a one needs is both names, because the rewriting of the
+         clauses and the way of making what comes out are two
+         choices and a file has to say them both: they are
+         written as one word, "sing>nested". *)
+      let strat s f =
+        the_strategy := "";
+        let r = f () in
+        the_strategy :=
+          (if !the_strategy = "" then s
+           else s ^ ">" ^ !the_strategy);
+        r in
       (try strat "prim_rec" (fun () -> define_prim_rec tm)
        with Failure _ when not (declared ()) ->
        try strat "nested" (fun () -> define_nested tm)
