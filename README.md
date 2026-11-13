@@ -187,11 +187,16 @@ port never copies code out of them.
 
 `lightcake-src/` is a third one: LightCake, the other port of
 CakeML to HOL Light.  It is somebody else's private repository,
-so the port has no credential for it and none is wanted.
-`tools/bin/lightcake-puller`, which Freek starts in a shell of
-his own, holds his; `tools/bin/lightcake-pull` asks it for a pull
+and its owner has put a read-only deploy key on it, so the clone
+pulls on its own (`core.sshCommand` points at the key, as the
+push of this repo does at its own).
+
+Where there is no such key, `tools/bin/lightcake-puller` is the
+way: its owner starts it in a shell of his own, where his
+credential is, and `tools/bin/lightcake-pull` asks it for a pull
 and says what came of it.  The whole of what can be asked for is
-that one pull of that one repository.
+that one pull of that one repository, so nothing of the
+credential is delegated.
 
 The rules a proof has to keep are in `CLAUDE.md`, and the ones that
 bite are these: the statement of a theorem is not adjusted to suit
