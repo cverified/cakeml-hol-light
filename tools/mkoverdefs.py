@@ -7,6 +7,10 @@
    like every other definition does.  This rewrites the ones that
    still say cake_define, from what a run harvested
    (tools/strategies.py); without --write it only reports.
+
+   With --check it reads the blocks that are on the new surface
+   already and says which of them name a way that the harvest
+   does not, which is what a re-harvest has to be read against.
 """
 import io, os, re, sys
 
@@ -109,7 +113,58 @@ def convert(s, m):
                                    body.lstrip())
 
 
+# the ways the blocks are already written in, and what stands
+# between the name of the way and the clauses: a shape is a
+# string, a relation a quotation, and assume_definition takes the
+# reason as a string
+def args_of(how):
+  n = []
+  if how.startswith('define_shaped') or \
+     '_shaped_' in how: n.append('"')
+  if how.startswith('assume_definition'): n.append('"')
+  if how.endswith('_wf') or '_wf_' in how: n.append('`')
+  return n
+
+
+def head_new(body, how):
+  """the constant a block of the new surface defines"""
+  i = 0
+  for kind in args_of(how):
+    i = body.index(kind, i) + 1
+    i = body.index(kind, i) + 1
+  m = HEAD.search(body[i:])
+  return m.group(1) if m else None
+
+
+def check():
+  """what the blocks of the new surface say against what the
+     harvest says they need"""
+  s = io.open(T + 'overrides.py', encoding='utf-8').read()
+  pat = re.compile(r"^let ([A-Za-z0-9_]+)(?:,[A-Za-z0-9_]+)? = "
+                   r"(new_definition|define_[a-z_0-9]+|"
+                   r"assume_definition(?:_rec)?)\n", re.M)
+  n, bad = 0, 0
+  for m in pat.finditer(s):
+    how = m.group(2)
+    if how in ('define_datatype', 'define_record'): continue
+    n += 1
+    body = s[m.end():block_end(s, m.end())]
+    const = head_new(body, how)
+    way = way_of(const) if const else None
+    if way is None:
+      print('%-32s %-24s NO HARVEST' % (m.group(1), how)); continue
+    r = rewrite(body, m.group(1), const, way)
+    want = 'new_definition' if r is None else r[0]
+    if want != how:
+      bad += 1
+      print('%-32s %-24s the harvest says %s'
+            % (m.group(1), how, want))
+  print('%d of %d blocks say a way the harvest does not' % (bad, n))
+  return 0
+
+
 def main():
+  if '--check' in sys.argv: return check()
   write = '--write' in sys.argv
   p = T + 'overrides.py'
   s = io.open(p, encoding='utf-8').read()
