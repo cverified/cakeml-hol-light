@@ -102,6 +102,24 @@ their type, 194 that theorem without recursing, 85 HOL Light's
 machinery, 54 a nested recursion compiled, 32 a match, 31 a guess
 and 3 patterns inside patterns.
 
+**Writing a new definition.**  `find_definition_way` runs the
+chain of strategies that the port used to run on every load, and
+`print_definition_way` says what it found as the line a file
+writes:
+
+```ocaml
+# print_definition_way [`w [] = []`;
+    `w (x :: y :: xs) = HD (w [x]) :: w (y :: xs)`;
+    `w [x] = [x + 1]`];;
+
+let w_def,w_ind = define_shaped_rec
+  "sing>new_definition"
+  [`...`];;
+```
+
+It makes the definition as a side effect, so it belongs in a
+session of its own; no file of the port calls it.
+
 Each recursive way gives the **induction theorem** with the
 definition, as HOL4 does.  That is what a proof needs to do
 induction over a recursion -- `recInduct foo_ind` and

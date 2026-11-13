@@ -357,3 +357,53 @@ let find_definition_way cls =
      from, so it is reduced here *)
   (try string_of_term (beta_normalize (parse_term (!the_relation)))
    with Failure _ | Noparse -> !the_relation);;
+
+(* the same, as the line that a file would write for it, which is
+   what there is to copy into one.  The clauses stand for
+   themselves. *)
+
+let the_shapes =
+  ["nested"; "maplist"; "cond_bool"; "sing"; "cases"; "match";
+   "lift_if"];;
+
+let definition_way_call cls =
+  let tm = definition_of_clauses cls in
+  let name = definition_name tm in
+  let fs = definition_functions (definition_cases tm) in
+  let recursive = is_recursive tm in
+  let mutual = length fs > 1 in
+  let way,cheat,rel = find_definition_way cls in
+  let head = fst (shape_head way) in
+  let shaped = mem head the_shapes in
+  let how,args =
+    if way = "assume_definition" then
+      (if recursive then "assume_definition_rec" else
+       "assume_definition"),"\"why\"\n  "
+    else if not recursive then
+      (if shaped then "define_shaped","\"" ^ way ^ "\"\n  "
+       else if head = "new_definition" then "new_definition",""
+       else if head = "define_single" || head = "general" then
+         ("define_general" ^ (if cheat then "_cheat" else "")),""
+       else "define_cases","")
+    else
+      let kind,args =
+        if shaped then
+          (if rel = "" then "_rec","\"" ^ way ^ "\"\n  "
+           else "_wf","\"" ^ way ^ "\"\n  `" ^ rel ^ "`\n  ")
+        else if head = "prim_rec" then "_rec",""
+        else if rel <> "" then "_wf","`" ^ rel ^ "`\n  "
+        else "_guess","" in
+      let suffix =
+        if kind = "_rec" && not shaped then ""
+        else if cheat then "_cheat" else "" in
+      ("define" ^ (if mutual then "_mutual" else "") ^
+       (if shaped then "_shaped" else "") ^ kind ^ suffix),args in
+  let binding =
+    if recursive && how <> "assume_definition"
+    then name ^ "_def," ^ name ^ "_ind" else name ^ "_def" in
+  "let " ^ binding ^ " = " ^ how ^ "\n  " ^ args ^
+  (if how = "new_definition" then "`...`;;" else "[`...`];;");;
+
+let print_definition_way cls =
+  print_string ("\n" ^ definition_way_call cls ^ "\n");
+  flush stdout;;
