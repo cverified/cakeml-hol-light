@@ -148,6 +148,11 @@ its equations, every induction theorem is its statement assumed,
 and every proof is skipped.  On `lib/sptree.ml` that is 0.6
 seconds against 13.
 
+`tools/bin/abstract <session> <file>` stops in front of a file
+and does not load it, which is how a proof of that file is
+developed: what it stands on is there in a few minutes, and the
+file itself is then loaded for real.
+
 Nothing is proved in such a session and `length (axioms ())` says
 nothing while it is on.  What makes it safe to develop against is
 that the statements are the same terms either way: the induction
