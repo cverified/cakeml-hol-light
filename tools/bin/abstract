@@ -1,0 +1,29 @@
+#!/bin/sh
+# abstract [session] : load the whole port into a session as an
+# abstract -- every definition makes its constant and assumes its
+# equations, every induction theorem is its statement assumed, and
+# every proof is skipped.  About ten minutes against the two hours
+# a real load takes.
+#
+# NOTHING IS PROVED in such a session, and length (axioms ()) says
+# nothing about the port while it is on.  It is for developing the
+# next proof against the port, and for reading a statement; what
+# makes it safe to rely on is that the statements are the same
+# terms either way (ml/lib/fast.ml).
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+. $C/tools/holenv.sh > /dev/null 2>&1
+s=${1:-abs}
+repl-kill $s > /dev/null 2>&1
+rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
+repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
+  echo "abstract: cannot clone the template"; exit 1; }
+repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" > /dev/null 2>&1
+python3 -I $C/tools/loadorder.py > $C/tools/load.txt
+for f in $(cat $C/tools/load.txt); do
+  TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$C/ml/$f\";;" \
+    2>&1 | grep -E "Exception|Error in" | sed "s|^|$f: |"
+done
+repl-step $s "print_string (\"ABSTRACT \" ^
+  string_of_int (length (cake_defs ())) ^ \" definitions\n\");;" \
+  2>&1 | tail -2

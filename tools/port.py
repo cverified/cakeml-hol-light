@@ -2108,6 +2108,11 @@ class Porter:
         if k in strategies.WAY: way = strategies.WAY[k]
       if way: break
     strat, assumed_term, found_rel = way if way else ('', False, '')
+    # a run says whether the termination really was assumed, which
+    # is more than ml/CHEATS.md says: a definition is in there
+    # when the run could not make it without a cheat somewhere,
+    # and the cheat may have been for something else
+    if way is not None and not tac: cheat = assumed_term
     # the clauses, as the list that every way but new_definition
     # takes (HOL4 typechecks each of them on its own)
     body = clauses if term is None else '[`%s`]' % term
@@ -2163,8 +2168,11 @@ class Porter:
       elif strat == 'guess' and not shape and not cheat and not tac:
         kind = '_guess'
       else: kind = '_rec'
-      suffix = '' if kind == '_guess' else \
-               ('_tac' if tac else ('_cheat' if cheat else ''))
+      # a definition by the recursion theorem of its type leaves
+      # no condition, so there is nothing there to assume
+      if not shape and kind == '_rec': suffix = ''
+      elif kind == '_guess': suffix = '_cheat' if cheat else ''
+      else: suffix = '_tac' if tac else ('_cheat' if cheat else '')
       how = ('define_mutual' if mutual else 'define') + \
             ('_shaped' if shape else '') + kind + suffix
       args = ('"%s"\n  ' % shape) if shape else ''

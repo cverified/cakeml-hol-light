@@ -1,0 +1,22 @@
+#!/bin/sh
+# newdefs : put the new definition layer in place and port every
+# file with it.  Run it when no run is going: it writes into ml/.
+#
+#   1. harvest how each definition of the port was made, from the
+#      session of the run that has just finished (hol-seq)
+#   2. put ml/lib/induction.ml and ml/lib/definition.ml in place
+#      and make the template again
+#   3. port every theory with the new surface
+#
+# Then tools/bin/runall says whether it all loads.
+set -e
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+echo "== harvest =="
+strategies "${1:-seq}"
+echo "== the layer =="
+retemplate
+echo "== the port =="
+python3 -I tools/portall.py
