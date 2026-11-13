@@ -1153,7 +1153,7 @@ not there.
 
 The port binds `evaluate_def` to the clauses **as the definition was
 made**, with `fix_clock` in them, because that is the theorem that
-`cake_define_list_try_tac` returns.  A proof that unfolds it and
+`define_mutual_wf` returns.  A proof that unfolds it and
 then expands `fix_clock` by its definition is left with
 
 ```
@@ -1436,7 +1436,7 @@ way.  The check that a session is sound is the load log itself:
 cake_conj_list failed: bvi_let_compile has the types
   ?391533->?391532->(?391534)list->(?391535)list and
   (num)list->num->(bvi_exp)list->(bvl_exp)list
-cake_define bvi_let_compile CHEATED (clause by clause)
+bvi_let_compile ASSUMED (clause by clause)
 ```
 
 `(bvl_exp)list` in the type of a `bvi_let` constant says it, and so
@@ -2369,7 +2369,7 @@ list of clauses, and the clauses of each named constant are one
 entry of that list:
 
 ```ocaml
-let do_eq_def = cake_define_list_cheat CHEAT_TAC
+let do_eq_def = define_mutual_wf `...`
   [`dataSem_do_eq refs v1 v2 = match (v1,v2) with ...`;
    `dataSem_do_eq_list refs l1 l2 = match (l1,l2) with ...`];;
 ```
@@ -2580,7 +2580,7 @@ let r2_induct =
 
 and, where no field is taken apart, the measure that the
 definition was made with (`MEASURE (\(conf,state). ...)` of the
-`cake_define_try_tac`), with `list_mk_icomb` for the constants so
+`define_wf`), with `list_mk_icomb` for the constants so
 that the types are the goal's:
 
 ```ocaml
@@ -5296,3 +5296,42 @@ never had it.
 The five tests of all of this are in `tools/smoke.ml`
 (`SMOKEANCESTORS`, `SMOKEANCLIB`, `SMOKEANCONLY`, `SMOKEANCTWICE`
 and `SMOKEANCBACK`), which a cycle runs on the rebuilt template.
+
+## 116. Writing a definition that is not in a file yet
+
+A file of the port says how each of its definitions is made
+(`new_definition`, `define_cases`, `define_rec`, `define_general`,
+`define_wf`, `define_guess`, `define_shaped`, and the `_cheat`,
+`_tac` and `_mutual` forms of them -- `README.md` lists what each
+means).  Nothing searches while a file loads, which is the point:
+a definition that says `define_wf` with a relation says what it
+needs, and the reader and the loader see the same thing.
+
+So writing a new one means knowing which way it takes, and the
+answer is not obvious from the clauses.  `find_definition_way`
+(`ml/lib/definition.ml`) is what finds out.  It runs the chain of
+strategies that `cake_define` is, in a session of its own, and
+gives back the word and the relation that the call site should
+write:
+
+```ocaml
+find_definition_way
+  [`foo [] = 0`; `foo (CONS h t) = SUC (foo t)`];;
+(* ("prim_rec", false, "")  ->  define_rec *)
+```
+
+The word maps on to the way like this: `new_definition` and
+`new_recursive_definition` are `new_definition` and
+`define_cases`; `prim_rec` is `define_rec`; `define_single` is
+`define_general` where it does not recurse and `define_guess`
+where it does; `measure` and `guess` are `define_wf` with the
+relation it gives and `define_guess`; and `nested`, `maplist`,
+`cond_bool`, `sing`, `cases`, `match` and `lift_if` are
+`define_shaped` with that word.  A second component of `true` says
+the termination was assumed, which is the `_cheat` form.
+
+It makes the definition as a side effect, so it belongs in a
+scratch session and never in a file.  `tools/bin/strategies`
+harvests the same thing from a whole run, which is where
+`tools/strategies.py` comes from and how `tools/port.py` knows
+what to write.

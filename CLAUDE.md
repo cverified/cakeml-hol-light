@@ -137,25 +137,33 @@ cheat, and a cheat that another cheat depends on is fine.
   gets on with the next statement.  What it costs is visible
   and counted the whole time: `ml/CHEATS.md` lists every one
   with the reason, and `length (axioms())` counts them.  There
-  are three kinds, and the first two are the good ones:
+  are four kinds, and the first three are the good ones.  Each of
+  them says so where it stands, so a file is read for what it
+  assumes and not only `ml/CHEATS.md`:
 
   - a _theorem of the source_ is assumed: its statement is
     stated, with its name, and `CHEAT_TAC` stands where HOL4's
     proof is.  This is what phase two does, and what phase
     three turns into a proof, one theorem at a time.
-  - the _termination_ of a definition is assumed (`CHEAT_TAC` on
-    the condition), and the definition itself is made: the
-    constant is introduced by `new_specification`, it has the
+  - the _termination_ of a definition is assumed (a way whose
+    name ends in `_cheat`), and the definition itself is made:
+    the constant is introduced by `new_specification`, it has the
     right type, and its clauses are theorems.  One axiom, and
     everything after it can be ported as if the definition were
     there, because it is.
-  - the _definition_ is assumed (`cake_cheat`), or the constant
-    is declared without a value (`cake_declare`), because HOL
-    Light cannot make the definition at all: the body has a type
-    variable that the constant's type does not reflect, or it
-    uses a constant that the port does not have.  These are the
-    ones to work on, and they need a decision or a missing piece
-    ported, not a proof.
+  - the _induction theorem_ of a definition is assumed, which is
+    what happens when its termination is: the statement is read
+    off the clauses either way and is right, but it rests on the
+    same assumption the definition does.  One axiom, and the load
+    says `foo_ind ASSUMED`.
+  - the _definition_ is assumed (`assume_definition`, with the
+    reason as its first argument), or the constant is declared
+    without a value (`cake_declare`), because HOL Light cannot
+    make the definition at all: the body has a type variable that
+    the constant's type does not reflect, or it uses a constant
+    that the port does not have.  These are the ones to work on,
+    and they need a decision or a missing piece ported, not a
+    proof.
 
   Paying the debt back is phase three, with HOL4's own proof (or
   its `Termination` tactic) to transliterate.
