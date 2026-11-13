@@ -4,9 +4,11 @@
 #
 #   1. harvest how each definition of the port was made, from the
 #      session of the run that has just finished (hol-seq)
-#   2. put ml/lib/induction.ml and ml/lib/definition.ml in place
+#   2. say which of the definition blocks that overrides.py
+#      writes by hand name a way that the harvest does not
+#   3. put ml/lib/induction.ml and ml/lib/definition.ml in place
 #      and make the template again
-#   3. port every theory with the new surface
+#   4. port every theory with the new surface
 #
 # Then tools/bin/runall says whether it all loads.
 set -e
@@ -16,6 +18,8 @@ cd $C
 . tools/holenv.sh > /dev/null 2>&1
 echo "== harvest =="
 strategies "${1:-seq}"
+echo "== the blocks the port writes by hand =="
+python3 -I tools/mkoverdefs.py --check
 echo "== the layer =="
 retemplate
 echo "== the port =="
