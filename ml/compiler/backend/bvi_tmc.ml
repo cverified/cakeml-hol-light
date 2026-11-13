@@ -39,7 +39,11 @@ let bvi_tmc_pure_op_def = new_definition
         | ((ThunkOp _19),_20) -> F`;;
 hol4_overload "pure_op" "bvi_tmc_pure_op";;
 
-let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL (_42,e) -> bvi_exp_size e | INR
+       (_43,es) -> list_size bvi_exp_size es)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 let pure_exp_def,pure_exp_ind = define_mutual_rec
   [`pure_exp n (Var v:bvi_exp) = (v < n)`;
    `pure_exp n (If e1 e2 e3:bvi_exp) = F`;
@@ -176,7 +180,6 @@ let shift_cb_dist = prove
    If a recursive call is found, returns all extracted/let-bound expressions and (INR) the call block.
    If an effectful operation appears right of the recursive call, the expression is not eligible for transformation and NONE is returned.
    If multiple recursive calls are found, all but the last are let bound. *)
-let _ = size_thms "bvi_exp";;
 let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
@@ -437,14 +440,16 @@ let call_block_size_shift = prove
  (`!x n. cb_size (shift_cb n x) = cb_size x`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (cb_size o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bvi_tmcScript.sml:644-647: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let cb_to_bvi_worker_aux_def,cb_to_bvi_worker_aux_ind = define_wf_cheat
-  `MEASURE (cb_size o FST)`
+let cb_to_bvi_worker_aux_def,cb_to_bvi_worker_aux_ind =
+  define_guess_cheat
   [`cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (Var ptr) (Op
          (closLang_IntOp (closLang_Const (&idx))) [])`;

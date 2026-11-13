@@ -101,13 +101,15 @@ let add_parens_def = new_definition
        x; (implode ")")] else x)`;;
 
 let _ = size_thms "infer_t";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
+       -> list_size infer_t_size ts)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 let inf_type_to_string_rec_def,inf_type_to_string_rec_ind =
   define_mutual_shaped_wf
   "maplist>measure"
-  `MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
-  -> list_size infer_t_size ts)`
+  `MEASURE (\(x0,x1). infer_t_size x1)`
   [`inf_type_to_string_rec tys (Infer_Tuvar n) =
         (mlstring_concat [(implode "_"); mlint_toString (&n)],0)`;
    `inf_type_to_string_rec tys (Infer_Tvar_db n) =

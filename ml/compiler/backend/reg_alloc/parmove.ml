@@ -306,6 +306,10 @@ let fstep_dstep = prove
  (`(!tau. ~(s = ([],[],tau))) ==> (dstep) s (fstep s)`,
   CHEAT_TAC);;
 
+(* the termination relation that HOL4 gives is
+     MEASURE (\(mu,sigma,tau). 2 * LENGTH mu + LENGTH sigma)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 parmoveScript.sml:610-638: the tactic that proves the
    termination *)
 let pmov_def,pmov_ind = define_guess

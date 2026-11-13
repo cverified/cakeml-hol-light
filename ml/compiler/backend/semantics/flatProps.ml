@@ -452,7 +452,6 @@ let flatProps_op_gbag_def = new_definition
       | _4 -> EMPTY_BAG`;;
 hol4_overload "op_gbag" "flatProps_op_gbag";;
 
-let _ = size_thms "flatLang_exp";;
 let flatProps_set_globals_def,flatProps_set_globals_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -794,7 +793,6 @@ let result_vs_def = new_definition
 (* HOL4 flatPropsScript.sml:1463-1469: a theorem whose statement the
    port cannot state yet: v_size_aux *)
 
-let _ = size_thms "flatLang_exp";;
 let no_Mat_def,no_Mat_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;

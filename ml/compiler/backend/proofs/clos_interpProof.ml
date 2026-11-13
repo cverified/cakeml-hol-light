@@ -323,7 +323,10 @@ let evaluate_interp_thm = prove
    not has_install ignores compiler oracle
  * ------------------------------------------------------------------------- *)
 
-let _ = size_thms "closSem_v";;
+(* the termination relation that HOL4 gives is
+     MEASURE closSem_v_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 clos_interpProofScript.sml:1097-1099: the tactic that proves
    the termination *)
 let v_ok_def,v_ok_ind = define_shaped_rec

@@ -110,14 +110,15 @@ let read_symbol_length = prove
 
 (* By tracking the depth, we can ensure we only lex one S-expression at a
    time. *)
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(_1,input,_2). LENGTH input)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 mlsexpScript.sml:131-137: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_aux_def,lex_aux_ind = define_wf_cheat
-  `MEASURE (\(_1,input,_2). LENGTH input)`
+let lex_aux_def,lex_aux_ind = define_guess_cheat
   [`(mlsexp_lex_aux depth [] acc:mlstring#string+mlsexp_token
   list#string) =
       (if depth = (0:num) then INR (acc,[]) else INL ((implode

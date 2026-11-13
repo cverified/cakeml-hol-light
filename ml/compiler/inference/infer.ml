@@ -841,9 +841,6 @@ let constrain_op_error_msg_sanity = prove
      IS_PREFIX (explode msg) "Thunk"`,
   CHEAT_TAC);;
 
-let _ = size_thms "ast_exp";;
-let _ = size_thms "ast_pat";;
-let _ = size_thms "mlstring";;
 let infer_e_def,infer_e_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`infer_e l ienv (ast_Raise e:ast_exp) =
@@ -1250,14 +1247,15 @@ let sub_completion_def = new_definition
 
 (* printing of types *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE LENGTH
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 inferScript.sml:1243-1245: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let alist_nub_def,alist_nub_ind = define_wf_cheat
-  `MEASURE LENGTH`
+let alist_nub_def,alist_nub_ind = define_guess_cheat
   [`alist_nub [] = []`;
    `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
   FST t)) xs)`];;

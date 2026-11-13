@@ -34,13 +34,16 @@ let num_set_tree_union_def,num_set_tree_union_ind = define_rec
                 BS (num_set_tree_union t1 t1') (sptree_union a b)
                     (num_set_tree_union t2 t2')):(1 spt) spt)`];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+let _ = size_thms "spt";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\(r,t). sptree_size (difference (spt_fold sptree_union LN
+       t) r))
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 spt_closureScript.sml:90-99: the tactic that proves the
    termination *)
 let closure_spt_def,closure_spt_ind = define_wf
-  `MEASURE (\(r,t). sptree_size (difference (spt_fold sptree_union LN
-  t) r))`
+  `MEASURE (\(x0,x1). spt_size (spt_size (\x. 0)) x1)`
   [`closure_spt (reachable:1 spt) tree =
      (let sets = inter tree reachable in
      let nodes = spt_fold sptree_union LN sets in

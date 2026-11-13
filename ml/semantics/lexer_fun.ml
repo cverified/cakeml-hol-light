@@ -99,15 +99,16 @@ let read_char_as_3digits_reduces = prove
      LENGTH str0 = LENGTH str + 3`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_funScript.sml:122-126: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lexer_fun_read_string_def,lexer_fun_read_string_ind =
-  define_wf_cheat
-  `MEASURE (LENGTH o FST)`
+  define_guess_cheat
   [`lexer_fun_read_string str s (loc:locn) =
      (if str = "" then (ErrorS,loc,"") else
      if HD str = (CHR 34) then (StringS s,loc,TL str) else
@@ -203,14 +204,15 @@ let read_Ident_ret_def = new_definition
        (OtherS n,new_loc,rest) else
        (LongS (REVERSE acc) n,new_loc,rest))`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_funScript.sml:247-251: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let read_Ident_def,read_Ident_ind = define_wf_cheat
-  `MEASURE (LENGTH o FST)`
+let read_Ident_def,read_Ident_ind = define_guess_cheat
   [`read_Ident [] loc acc = (ErrorS,loc,[])`;
    `read_Ident (c :: str) loc acc =
       (if is_single_char_symbol c then
@@ -232,6 +234,10 @@ let read_Ident_def,read_Ident_ind = define_wf_cheat
          ErrorS,loc,str))`];;
 
 (* next_sym reads the next symbol from a string, returning NONE if at eof *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_funScript.sml:314-320: the tactic that proves the
    termination *)
 let next_sym_def,next_sym_ind = define_guess
@@ -438,14 +444,15 @@ let next_token_LESS = prove
 
 (* top-level lexer specification *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_funScript.sml:516-518: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lexer_fun_aux_def,lexer_fun_aux_ind = define_wf_cheat
-  `MEASURE (LENGTH o FST)`
+let lexer_fun_aux_def,lexer_fun_aux_ind = define_guess_cheat
   [`lexer_fun_aux input loc =
      (match next_token input loc with NONE -> [] | SOME (token,Locs
        loc' loc'',rest_of_input) ->
@@ -489,14 +496,16 @@ let toplevel_semi_dex_non0 = prove
  (`!i d toks j. (toplevel_semi_dex i d toks = SOME j) ==> 0 < j`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE LENGTH
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_funScript.sml:570-578: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let split_top_level_semi_def,split_top_level_semi_ind = define_wf_cheat
-  `MEASURE LENGTH`
+let split_top_level_semi_def,split_top_level_semi_ind =
+  define_guess_cheat
   [`(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i ->
         TAKE i toks :: split_top_level_semi (DROP i toks)))`];;

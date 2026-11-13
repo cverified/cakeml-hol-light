@@ -67,16 +67,16 @@ let find_loc_EVERY_isEmpty = prove
 (* HOL4 flat_elimProofScript.sml:99-105: a theorem whose statement
    the port cannot state yet: SUM_MAP_v3_size *)
 
-let _ = size_thms "flatSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
+       list_size flatSem_v_size y)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 flat_elimProofScript.sml:118-126: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let find_v_globals_def,find_v_globals_ind = define_mutual_wf_cheat
-  `MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
-  list_size flatSem_v_size y)`
+let find_v_globals_def,find_v_globals_ind = define_mutual_guess_cheat
   [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _4 e:flatSem_v) =
@@ -252,15 +252,15 @@ let find_sem_prim_res_globals_def = define_cases
 (* HOL4 flat_elimProofScript.sml:303-306: the ML values that the
    definitions below antiquote *)
 
-let _ = size_thms "flatSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE flatSem_v_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 flat_elimProofScript.sml:317-324: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let v_has_Eval_def1,v_has_Eval_def1_ind = define_wf_cheat
-  `MEASURE flatSem_v_size`
+let v_has_Eval_def1,v_has_Eval_def1_ind = define_guess_cheat
   [`v_has_Eval x1 =
         match x1 with
           (Closure env _12 e:flatSem_v) -> (has_Eval e \/

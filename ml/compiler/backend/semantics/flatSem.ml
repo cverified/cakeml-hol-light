@@ -673,7 +673,6 @@ let pmatch_stamps_ok = cake_inductive
      // tuples
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
-let _ = size_thms "flatLang_pat";;
 let flatSem_pmatch_def,flatSem_pmatch_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =

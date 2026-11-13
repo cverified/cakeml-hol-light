@@ -91,7 +91,12 @@ let LENGTH_let_op = prove
  (`!xs. LENGTH (clos_letop_let_op xs) = LENGTH xs`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL x -> closLang_exp_size x | INR (INL x)
+       -> list_size closLang_exp_size x | INR (INR x) -> list_size
+       (pair_size (\x. x) closLang_exp_size) x)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 let clos_letop_let_op_sing_def,clos_letop_let_op_sing_ind =
   define_mutual_shaped_rec
   "maplist>maplist>nested"

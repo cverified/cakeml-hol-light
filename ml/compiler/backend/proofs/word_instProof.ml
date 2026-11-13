@@ -222,12 +222,14 @@ let flatten_exp_ok = prove
 
 (*All ops are 2 args. Technically, we should probably check that Sub has 2 args. However, the semantics already checks that and it will get removed later*)
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (wordLang_exp_size ARB)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 word_instProofScript.sml:403-409: the tactic that proves the
    termination *)
 let binary_branch_exp_def,binary_branch_exp_ind = define_wf
-  `MEASURE (wordLang_exp_size ARB)`
+  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
   [`binary_branch_exp exp =
         match exp with
           wordLang_Op asm_Sub exps -> EVERY (binary_branch_exp) exps

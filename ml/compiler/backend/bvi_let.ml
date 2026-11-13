@@ -101,15 +101,15 @@ cake_term_facts := list_size_BUTLAST :: list_size_LAST ::
                    (!cake_term_facts);;
 cake_cheat_budget := 300;;
 
-let _ = size_thms "bvi_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (list_size bvi_exp_size o SND o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bvi_letScript.sml:110-116: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
-  `MEASURE (list_size bvi_exp_size o SND o SND)`
+let bvi_let_compile_def,bvi_let_compile_ind = define_guess_cheat
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;

@@ -148,7 +148,6 @@ let ref_rel_simp = prove
      b))`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 let code_locs_def,code_locs_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`code_locs [] = []`;
@@ -210,15 +209,15 @@ let BIGUNION_MAP_code_locs_SND_SND = prove
     set_of_list (code_locs (MAP (SND o SND) xs))`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (list_size closLang_exp_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 closPropsScript.sml:229-232: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let contains_App_SOME_def,contains_App_SOME_ind = define_wf_cheat
-  `MEASURE (list_size closLang_exp_size o SND)`
+let contains_App_SOME_def,contains_App_SOME_ind = define_guess_cheat
   [`contains_App_SOME max_app x2 =
         match x2 with
           [] -> F
@@ -262,7 +261,6 @@ let contains_App_SOME_EXISTS = prove
   contains_App_SOME max_app [x]) ls`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`every_Fn_SOME [] <=> T`;
@@ -308,7 +306,6 @@ let every_Fn_SOME_APPEND = prove
  (`every_Fn_SOME (l1 ++ l2) <=> every_Fn_SOME l1 /\ every_Fn_SOME l2`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`every_Fn_vs_NONE [] <=> T`;
@@ -360,7 +357,6 @@ let every_Fn_vs_NONE_APPEND = prove
   every_Fn_vs_NONE l2`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`every_Fn_vs_SOME [] <=> T`;
@@ -414,7 +410,10 @@ let every_Fn_vs_SOME_APPEND = prove
 (* HOL4 closPropsScript.sml:410-415: a theorem whose statement the
    port cannot state yet: exp1_size_rw *)
 
-let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE closLang_exp_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 closPropsScript.sml:446-450: the tactic that proves the
    termination *)
 let no_mti_def,no_mti_ind = define_shaped_rec
@@ -448,7 +447,6 @@ let no_mti_def,no_mti_ind = define_shaped_rec
    `no_mti (closLang_Op t op es) <=>
         EVERY no_mti es`];;
 
-let _ = size_thms "closLang_exp";;
 let fv_def,fv_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`fv n [] <=> F`;
@@ -1125,7 +1123,6 @@ hol4_overload "op_gbag" "closProps_op_gbag";;
 (* HOL4 closPropsScript.sml:1761-1765: a theorem whose statement the
    port cannot state yet: exp2_size_rw *)
 
-let _ = size_thms "closLang_exp";;
 let set_globals_def,set_globals_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`closProps_set_globals (Var _212 _213:closLang_exp) = EMPTY_BAG`;
@@ -1206,7 +1203,10 @@ let rsgc_free_def = new_definition
         | (Rerr (Rabort _254)) -> T
         | (Rerr (Rraise v)) -> vsgc_free v`;;
 
-let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE closLang_exp_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 closPropsScript.sml:1849-1852: the tactic that proves the
    termination *)
 let esgc_free_def,esgc_free_ind = define_shaped_rec
@@ -1954,7 +1954,6 @@ let evaluate_code_SUBMAP = prove
     SUBMAP_rel s1 s2))`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`obeys_max_app m (Var _296 _297:closLang_exp) <=> T`;
@@ -1981,7 +1980,6 @@ let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec
 (* HOL4 closPropsScript.sml:3562-3564: a theorem that HOL4 states as
    the value of an ML expression: obeys_max_app_def *)
 
-let _ = size_thms "closLang_exp";;
 let no_Labels_def,no_Labels_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`no_Labels (Var _334 _335:closLang_exp) <=> T`;
@@ -2006,7 +2004,6 @@ let no_Labels_def,no_Labels_ind = assume_definition_rec
 (* HOL4 closPropsScript.sml:3586-3588: a theorem that HOL4 states as
    the value of an ML expression: no_Labels_def *)
 
-let _ = size_thms "closLang_exp";;
 let app_call_dests_def,app_call_dests_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`app_call_dests opt [] = {}`;
@@ -2099,7 +2096,6 @@ let any_dests_call_dests_app_dests = prove
   (app_call_dests (SOME F)) xs`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 let closProps_get_code_labels_def,closProps_get_code_labels_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

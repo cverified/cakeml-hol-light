@@ -93,7 +93,11 @@ let alloc_glob_count_def,alloc_glob_count_ind = define_wf
         | [_6] -> 0
         // Impossible`];;
 
-let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL e -> bvl_exp_size e | INR es ->
+       list_size bvl_exp_size es)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bvl_to_bviScript.sml:88-93: the tactic that proves the
    termination *)
 let global_count_sing_def,global_count_sing_ind = define_mutual_rec
@@ -383,7 +387,6 @@ let compile_aux_def = new_definition
      List [(bvl_num_stubs + bvl_to_bvi_namespaces * k +
        1,args,bvi_let_compile_exp p)]`;;
 
-let _ = size_thms "bvl_exp";;
 let compile_exps_def,compile_exps_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
@@ -442,7 +445,6 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
                  NONE],aux1,n1)))`];;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
-let _ = size_thms "bvl_exp";;
 let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`(compile_exps_sing n (Var v:bvl_exp) = (((Var

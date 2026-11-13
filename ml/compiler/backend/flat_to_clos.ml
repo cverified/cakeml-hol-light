@@ -469,7 +469,6 @@ let SmartCons_def = new_definition
        closLang_Op t (closLang_BlockOp (closLang_Constant (ConstCons
        tag (REVERSE cs)))) [])`;;
 
-let _ = size_thms "flatLang_exp";;
 let flat_to_clos_compile_def,flat_to_clos_compile_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

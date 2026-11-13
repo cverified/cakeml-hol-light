@@ -2166,18 +2166,42 @@ class Porter:
     # the induction theorem that a recursive definition gives, under
     # the name HOL4 gives it (foo_def comes with foo_ind)
     indbind = (bind[:-4] if bind.endswith('_def') else bind) + '_ind'
-    # the relation: the one HOL4's Termination gives, or the one the
-    # run found where the port had to look for one itself
-    if rel is None and found_rel and recursive:
-      rel = fmt(found_rel, last=1)
+    # the relation that the file writes is the one a run used,
+    # because that is the one that is known to work.  HOL4's
+    # Termination gives one too and the port translates it, but
+    # the two are not always the same: HOL4's machinery is not
+    # HOL Light's and the relation it wants may be of no use
+    # here.  A relation that does not work makes the definition
+    # fail over it whether its conditions are proved or assumed,
+    # so where the two differ the source's stays in the comment
+    # above and the one that works is written down.  Where a run
+    # recorded none the file says none, and the way lets HOL
+    # Light's own machinery find one.
+    hol4rel = rel
+    if recursive and not tac:
+      rel = fmt(found_rel, last=1) if found_rel else None
       # a measure that uses the size function of a datatype needs
       # it to be there, and this relation was not there when the
       # prelude was made
-      sizes = size_prelude(rel + ' ' +
+      sizes = size_prelude((rel or '') + ' ' +
                            (term if term else clauses))
-      relnote = ('(* the termination relation is not in the HOL4 '
-                 'source; this one is\n   what the port found for '
-                 'it *)\n')
+      def inset(r):
+        return '\n'.join('     ' + l for l in r.split('\n')).lstrip()
+      if rel is not None and hol4rel is None:
+        relnote = ('(* the termination relation is not in the HOL4 '
+                   'source; this one is\n   what the port found for '
+                   'it *)\n')
+      elif hol4rel is not None and rel is not None and \
+           ' '.join(rel.split()) != ' '.join(hol4rel.split()):
+        relnote = ('(* the termination relation that HOL4 gives is\n'
+                   '     %s\n   which is not one that HOL Light '
+                   'takes here; the one\n   below is what the port '
+                   'found for it *)\n' % inset(hol4rel))
+      elif hol4rel is not None and rel is None:
+        relnote = ('(* the termination relation that HOL4 gives is\n'
+                   '     %s\n   which is not one that HOL Light '
+                   'takes here, so the\n   port lets its own '
+                   'machinery find one *)\n' % inset(hol4rel))
     binding = '%s,%s' % (bind, indbind) if recursive else bind
     if assumed:
       how = 'assume_definition_rec' if recursive \
@@ -2230,7 +2254,8 @@ class Porter:
       args = ('"%s"\n  ' % shape) if shape else ''
       if rel is not None: args += '`%s`\n  ' % rel
       if suffix == '_tac': args += tactext + '\n  '
-      text = (sizes + (relnote if rel is not None else '') +
+      text = (sizes + (relnote if rel is not None or
+                       hol4rel is not None else '') +
               termnote + (cheatnote if cheat and not tac else '') +
               matchnote + letline(binding, how, args + body))
     # the definition is followed by the overloads of HOL4, where the

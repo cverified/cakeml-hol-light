@@ -1021,7 +1021,6 @@ hol4_overload "f_rel" "clos_knownProof_f_rel";;
 (* HOL4 clos_knownProofScript.sml:2578-2582: a theorem whose
    statement the port cannot state yet: v1_size_append *)
 
-let _ = size_thms "closSem_v";;
 let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

@@ -73,7 +73,6 @@ let MAPi_eq_MAP = prove
  (`MAPi (\n x. f x) xs = MAP f xs`,
   CHEAT_TAC);;
 
-let _ = size_thms "pattern_semantics_pat";;
 let compile_pat_bindings_def,compile_pat_bindings_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -191,13 +190,15 @@ let decode_dtree_def,decode_dtree_ind = define_shaped_rec
      Not pattern_semantics_True then dec2 else SmartIf t
      (decode_guard t v guard') dec1 dec2)`];;
 
-let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+let _ = size_thms "flatLang_pat";;
+(* the termination relation that HOL4 gives is
+     MEASURE pattern_semantics_pat_size
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 flat_patternScript.sml:173-177: the tactic that proves the
    termination *)
 let encode_pat_def,encode_pat_ind = define_wf
-  `MEASURE pattern_semantics_pat_size`
+  `MEASURE (\x0. flatLang_pat_size x0)`
   [`encode_pat x1 =
       match x1 with
         flatLang_Pany -> pattern_semantics_Any
@@ -210,16 +211,16 @@ let encode_pat_def,encode_pat_ind = define_wf
       | (Pas p v) -> encode_pat p
       | (Pref p) -> pattern_semantics_Ref (encode_pat p)`];;
 
-let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. SUM (MAP (pattern_semantics_pat_size o FST) (SND x)) +
+       LENGTH (SND x))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 flat_patternScript.sml:197-202: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let naive_pattern_match_def,naive_pattern_match_ind = define_wf_cheat
-  `MEASURE (\x. SUM (MAP (pattern_semantics_pat_size o FST) (SND x)) +
-  LENGTH (SND x))`
+let naive_pattern_match_def,naive_pattern_match_ind = define_guess_cheat
   [`naive_pattern_match t x2 =
       match x2 with
         [] -> flatLang_Bool t T

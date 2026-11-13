@@ -118,7 +118,6 @@ let to_constant_op_def = new_definition
        (tag + 5) [cs])
       | _41 -> ConstInt (&0)`;;
 
-let _ = size_thms "closLang_exp";;
 let to_constant_def,to_constant_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`to_constant ((Var t n):closLang_exp) =

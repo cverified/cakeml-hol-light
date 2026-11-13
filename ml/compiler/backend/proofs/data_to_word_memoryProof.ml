@@ -713,7 +713,10 @@ let MEM_IMP_v_size = prove
    MATCH_MP_TAC(ARITH_RULE `a <= b ==> a < 1 + b`) THEN
    MATCH_MP_TAC misc_MEM_list_size THEN ASM_REWRITE_TAC[]));;
 
-let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives is
+     MEASURE (dataSem_v_size)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 data_to_word_memoryProofScript.sml:389-392: the tactic that
    proves the termination *)
 let get_refs_def,get_refs_ind = define_shaped_rec
@@ -777,12 +780,14 @@ let bc_ref_inv_def = new_definition
 
 (* TODO: MOVE *)
 let _ = size_thms "dataSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (dataSem_v_size)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 data_to_word_memoryProofScript.sml:451-454: the tactic that
    proves the termination *)
 let v_all_ts_def,v_all_ts_ind = define_wf
-  `MEASURE (dataSem_v_size)`
+  `MEASURE dataSem_v_size`
   [`v_all_ts x1 =
       match x1 with
         (Block ts _20 xs:dataSem_v) -> ts :: FLAT (MAP v_all_ts xs)
@@ -46098,8 +46103,9 @@ let _ = size_thms "dataSem_v";;
    (ml/lib/define.ml, "the depairing above was applied to the
    clause as it was given"). *)
 let vb_eq_size_def,vb_eq_size_ind = define_mutual_wf
-  `MEASURE (\x. match x with INL (refs,v1,v2) -> dataSem_v_size v1 |
-  INR (refs,l1,l2) -> list_size dataSem_v_size l1)`
+  `MEASURE (\x.      match x with        INL (refs,v1,v2) ->
+  dataSem_v_size v1      | INR (refs,l1,l2) -> list_size dataSem_v_size
+  l1)`
   [`vb_eq_size refs x2 x3 =
          match (x2,x3) with
            ((Block _91 t1 l1:dataSem_v),(Block _92 t2 l2:dataSem_v))

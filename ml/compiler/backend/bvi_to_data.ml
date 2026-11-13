@@ -190,7 +190,6 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind =
                  (Call ret (SOME dest) vs NONE))) c2,v,n2))`];;
 hol4_overload "compile" "bvi_to_data_compile";;
 
-let _ = size_thms "bvi_exp";;
 let compile_sing_def,compile_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((Var

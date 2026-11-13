@@ -1490,14 +1490,15 @@ let getWords_def,getWords_ind = define_rec
       (match c with (b,wordLang_Word w) -> getWords cs ((b,w)
         :: aux) | _11 -> (REVERSE aux,c :: cs))`];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 data_to_wordScript.sml:1349-1358: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let StoreAnyConsts_def,StoreAnyConsts_ind = define_wf_cheat
-  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`
+let StoreAnyConsts_def,StoreAnyConsts_ind = define_guess_cheat
   [`StoreAnyConsts r1 r2 r3 [] v =
       Seq (Set NextFree (Var r2))
           (match SND v with Loc n _15 -> LocValue r1 n |

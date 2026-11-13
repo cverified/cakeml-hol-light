@@ -102,16 +102,17 @@ let gen_gc_partial_gc_move_list_IMP = prove
     (gc_state_r1 state1 = gc_state_r1 state)`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(conf,state). limit conf - heap_length (gc_state_h1
+       state))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 gen_gc_partialScript.sml:113-119: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
-  define_wf_cheat
-  `MEASURE (\(conf,state). limit conf - heap_length (gc_state_h1
-  state))`
+  define_guess_cheat
   [`(gen_gc_partial_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
        (if limit conf < heap_length (gc_state_h1 state ++ (h :: h2))

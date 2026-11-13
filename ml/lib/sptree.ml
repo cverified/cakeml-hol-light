@@ -339,7 +339,10 @@ let spts_to_alist_aux_def,spts_to_alist_aux_ind = define_shaped_rec
            acc_left)
          T))`];;
 
-let _ = size_thms "spt";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\(_8,xs,_9). SUM (MAP (spt_size (K 0) o SND) xs))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 sptreeScript.sml:2436-2442: the tactic that proves the
    termination *)
 let spts_to_alist_def,spts_to_alist_ind = define_guess

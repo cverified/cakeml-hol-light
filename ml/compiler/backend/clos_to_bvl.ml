@@ -471,7 +471,6 @@ let force_thunk_code_def = new_definition
          (bvl_Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0;
            Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
-let _ = size_thms "closLang_exp";;
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -586,8 +585,6 @@ hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
-let _ = size_thms "bvl_exp";;
-let _ = size_thms "closLang_exp";;
 let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`compile_exp_sing max_app (Var t v:closLang_exp) aux = (((Var
@@ -759,12 +756,15 @@ let code_split_def,code_split_ind = define_rec
   [`code_split [] xs ys = (xs,ys)`;
    `code_split (z :: zs) xs ys = code_split zs (z :: ys) xs`];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 clos_to_bvlScript.sml:725-727: the tactic that proves the
    termination *)
 let code_merge_def,code_merge_ind = define_wf
-  `MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)`
+  `MEASURE (\(x0,x1).      list_size (pair_size (\n. n) (\x. 0)) x0 +
+     list_size (pair_size (\n. n) (\x. 0)) x1)`
   [`code_merge xs ys =
      (match (xs,ys) with ([],[]) -> [] | ([],_8) -> ys | (_9,[]) ->
        xs | (x1 :: xs1,y1 :: ys1) ->
@@ -839,7 +839,6 @@ let add_src_names_def,add_src_names_ind = define_rec
         (mlstring_concat [x; implode "_clos"]) (sptree_insert (n +
         1) x l))`];;
 
-let _ = size_thms "closLang_exp";;
 let get_src_names_def,get_src_names_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`get_src_names [] l = l`;
@@ -871,7 +870,6 @@ let get_src_names_def,get_src_names_ind = assume_definition_rec
          match loc_opt with NONE -> l1 | SOME n ->
            add_src_names n names l1)`];;
 
-let _ = size_thms "closLang_exp";;
 let get_src_names_sing_def,get_src_names_sing_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

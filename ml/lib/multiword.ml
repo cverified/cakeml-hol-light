@@ -69,6 +69,10 @@ let mw_shift_def,mw_shift_ind = assume_definition_rec
          (w >>> 1 || x << (dimindex (:'a) - 1)) :: mw_shift (x
            :: xs)`];;
 
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 multiwordScript.sml:1070-1076: the tactic that proves the
    termination *)
 let mw_cmp_def,mw_cmp_ind = define_guess

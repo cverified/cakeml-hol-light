@@ -308,15 +308,15 @@ let sexplist_CONG = prove
 (* HOL4 fromSexpScript.sml:431: the overload guard, which the port
    expands *)
 
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (simpleSexp_sexp_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:442-445: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpid_def,sexpid_ind = define_wf_cheat
-  `MEASURE (simpleSexp_sexp_size o SND)`
+let sexpid_def,sexpid_ind = define_guess_cheat
   [`sexpid p s =
      OPTION_BIND (dstrip_sexp s) (\
         (nm,args).
@@ -328,15 +328,15 @@ let sexpid_def,sexpid_ind = define_wf_cheat
                (OPTION_MAP2 Long (odestSEXSTR (EL 0 args))
                  (sexpid p (EL 1 args)))))`];;
 
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE simpleSexp_sexp_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:461-465: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_def,sexptype_ind = define_wf_cheat
-  `MEASURE simpleSexp_sexp_size`
+let sexptype_def,sexptype_ind = define_guess_cheat
   [`sexptype s =
      OPTION_BIND (dstrip_sexp s) (\
         (s,args).
@@ -356,16 +356,16 @@ let sexptype_def,sexptype_ind = define_wf_cheat
                       (sexpid odestSEXSTR (EL 1 args)))))`];;
 
 (* translator friendly version for bootstrapping *)
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     inv_image (MEASURE simpleSexp_sexp_size)
+                        (\x. match x with INL y -> y | INR y -> y)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:493-498: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_alt_def,sexptype_alt_ind = define_mutual_wf_cheat
-  `inv_image (MEASURE simpleSexp_sexp_size)
-                   (\x. match x with INL y -> y | INR y -> y)`
+let sexptype_alt_def,sexptype_alt_ind = define_mutual_guess_cheat
   [`sexptype_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Atvar" /\ LENGTH args = 1 then
@@ -428,15 +428,15 @@ let sexplit_def = new_definition
 
 (* don't require Pvar constructors; bare strings can be pattern variables.
    Unclear if this sort of special-casing is ever likely to be helpful *)
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE simpleSexp_sexp_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:582-594: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_def,sexppat_ind = define_wf_cheat
-  `MEASURE simpleSexp_sexp_size`
+let sexppat_def,sexppat_ind = define_guess_cheat
   [`sexppat s =
      OPTION_MAP ast_Pvar (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
@@ -465,16 +465,16 @@ let sexppat_def,sexppat_ind = define_wf_cheat
                (sexptype (EL 1 args))))`];;
 
 (* translator friendly version for bootstrapping *)
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     inv_image (MEASURE simpleSexp_sexp_size) (\x. match x with INL y ->
+       y | INR y -> y)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:629-633: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_alt_def,sexppat_alt_ind = define_mutual_wf_cheat
-  `inv_image (MEASURE simpleSexp_sexp_size) (\x. match x with INL y ->
-  y | INR y -> y)`
+let sexppat_alt_def,sexppat_alt_ind = define_mutual_guess_cheat
   [`sexppat_alt s =
         OPTION_MAP ast_Pvar (odestSEXSTR s) ++
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
@@ -675,15 +675,15 @@ let sexplocn_def = new_definition
               (sexplocpt (EL 0 ls))
               (sexplocpt (EL 1 ls))))`;;
 
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE simpleSexp_sexp_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:875-881: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpexp_def,sexpexp_ind = define_wf_cheat
-  `MEASURE simpleSexp_sexp_size`
+let sexpexp_def,sexpexp_ind = define_guess_cheat
   [`sexpexp s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
@@ -757,7 +757,6 @@ let sexpexp_def,sexpexp_ind = define_wf_cheat
                (sexplocn (EL 1 args))))`];;
 
 (* translator friendly version for bootstrapping *)
-let _ = size_thms "simpleSexp_sexp";;
 let sexpexp_alt_def,sexpexp_alt_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`sexpexp_alt s =
@@ -861,15 +860,15 @@ let sexptype_def_def = new_definition
        (sexppair odestSEXSTR
          (sexplist (sexppair odestSEXSTR (sexplist sexptype)))))`;;
 
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE simpleSexp_sexp_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:1104-1108: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_def,sexpdec_ind = define_wf_cheat
-  `MEASURE simpleSexp_sexp_size`
+let sexpdec_def,sexpdec_ind = define_guess_cheat
   [`sexpdec s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
@@ -915,16 +914,16 @@ let sexpdec_def,sexpdec_ind = define_wf_cheat
                  (sexplist sexpdec (EL 1 args))))`];;
 
 (* translator friendly version for bootstrapping *)
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     inv_image (MEASURE simpleSexp_sexp_size)
+            (\x. match x with INL y -> y | INR y -> y)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:1153-1160: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_alt_def,sexpdec_alt_ind = define_mutual_wf_cheat
-  `inv_image (MEASURE simpleSexp_sexp_size)
-       (\x. match x with INL y -> y | INR y -> y)`
+let sexpdec_alt_def,sexpdec_alt_ind = define_mutual_guess_cheat
   [`sexpdec_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Dlet" /\ LENGTH args = 3 then
@@ -1012,7 +1011,10 @@ let idsexp_11 = prove
  (`!i1 i2. idsexp i1 = idsexp i2 <=> i1 = i2`,
   CHEAT_TAC);;
 
-let _ = size_thms "ast_t";;
+(* the termination relation that HOL4 gives is
+     MEASURE ast_t_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:1233-1237: the tactic that proves the
    termination *)
 let typesexp_def,typesexp_ind = define_shaped_rec
@@ -1048,7 +1050,10 @@ let litsexp_11 = prove
  (`!l1 l2. litsexp l1 = litsexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
 
-let _ = size_thms "ast_pat";;
+(* the termination relation that HOL4 gives is
+     MEASURE ast_pat_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 fromSexpScript.sml:1277-1284: the tactic that proves the
    termination *)
 let patsexp_def,patsexp_ind = define_shaped_rec

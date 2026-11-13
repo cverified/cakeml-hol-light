@@ -265,16 +265,17 @@ let cons_measure_lemma = prove
      (closLang_ElemAt i)) [y]:closLang_exp) = 0)`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (SUM o MAP (\(x,y). 1 + cons_measure x + cons_measure y +
+                                   (if cons_measure x < cons_measure y
+                                     then 1 else 0)))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 clos_opScript.sml:294-317: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let eq_pure_list_def,eq_pure_list_ind = define_wf_cheat
-  `MEASURE (SUM o MAP (\(x,y). 1 + cons_measure x + cons_measure y +
-                              (if cons_measure x < cons_measure y
-                                then 1 else 0)))`
+let eq_pure_list_def,eq_pure_list_ind = define_guess_cheat
   [`eq_pure_list x1 =
       match x1 with
         [] -> misc_Nil

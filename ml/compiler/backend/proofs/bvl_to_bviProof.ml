@@ -59,7 +59,10 @@ let _ = do_list hide_constant ["str"];;
 (* HOL4 bvl_to_bviProofScript.sml:26: the overload nss, which the
    port expands *)
 
-let _ = size_thms "bvlSem_v";;
+(* the termination relation that HOL4 gives is
+     MEASURE (bvlSem_v_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bvl_to_bviProofScript.sml:34-38: the tactic that proves the
    termination *)
 let adjust_bv_def,adjust_bv_ind = define_shaped_rec

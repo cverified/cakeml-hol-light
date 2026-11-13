@@ -185,7 +185,6 @@ let bignum_size_def = new_definition
   `bignum_size arch64 i =
      1 + bignum_digits arch64 (num_of_int (abs i))`;;
 
-let _ = size_thms "dataSem_v";;
 let size_of_def,size_of_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`size_of lims [] refs seen = (0,refs,seen)`;
@@ -989,15 +988,16 @@ hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
 
 (* mirrors bviSem$finalise_cons, but threads the timestamp counter so that
    each block produced by the finalisation gets a fresh time stamp *)
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (sptree_size o FST o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 dataSemScript.sml:854-858: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let dataSem_finalise_cons_def,dataSem_finalise_cons_ind =
-  define_wf_cheat
-  `MEASURE (sptree_size o FST o SND)`
+  define_guess_cheat
   [`dataSem_finalise_cons v refs ts =
         match v with
           (RefPtr b ptr:dataSem_v) ->
@@ -1699,7 +1699,6 @@ let dataSem_fix_clock_IMP =
 if concl dataSem_fix_clock_IMP <> `T` then
   cake_term_facts := dataSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let _ = size_thms "dataLang_prog";;
 let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`dataSem_evaluate

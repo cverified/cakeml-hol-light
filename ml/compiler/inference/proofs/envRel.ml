@@ -34,7 +34,10 @@ let _ = do_list hide_constant ["id"];;
 
 (* ---------- Converting infer types and envs to type system ones ---------- *)
 
-let _ = size_thms "infer_t";;
+(* the termination relation that HOL4 gives is
+     MEASURE infer_t_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 envRelScript.sml:16-23: the tactic that proves the
    termination *)
 let convert_t_def,convert_t_ind = define_shaped_rec

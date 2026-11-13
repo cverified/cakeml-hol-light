@@ -101,7 +101,6 @@ let alt_free_def,alt_free_ind = assume_definition_rec
          (let (c1,l1) = alt_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
 
-let _ = size_thms "closLang_exp";;
 let alt_free_sing_def,alt_free_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`alt_free_sing (Var t v:closLang_exp) = ((Var t
@@ -284,7 +283,6 @@ let shift_def,shift_ind = assume_definition_rec
            ([closLang_Call t ticks dest c1]))`];;
 hol4_overload "shift" "clos_annotate_shift";;
 
-let _ = size_thms "closLang_exp";;
 let shift_sing_def,shift_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`shift_sing (Var t v:closLang_exp) (m:num) (l:num) (i:num spt) =

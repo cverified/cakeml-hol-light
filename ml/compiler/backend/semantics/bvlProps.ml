@@ -524,14 +524,16 @@ let bEvery_EVERY = prove
  (`!ls. bEvery P ls <=> EVERY (\e. bEvery P [e]) ls`,
   CHEAT_TAC);;
 
-let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE flatLang_exp_size
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 bvlPropsScript.sml:888-895: the tactic that proves the
    termination *)
 let bvlProps_get_code_labels_def,bvlProps_get_code_labels_ind =
   define_wf
-  `MEASURE flatLang_exp_size`
+  `MEASURE (\x0. bvl_exp_size x0)`
   [`bvlProps_get_code_labels (bvl_Var _2) = {}`;
    `bvlProps_get_code_labels (If e1 e2 e3:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2 UNION

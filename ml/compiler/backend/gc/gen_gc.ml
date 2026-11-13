@@ -99,15 +99,16 @@ let gc_move_list_IMP = prove
     (IS_SUFFIX (gc_state_r4 state') (gc_state_r4 state))`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(conf,state). gen_gc_conf_limit conf - heap_length
+       (gc_state_h1 state))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 gen_gcScript.sml:123-129: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_data_def,gc_move_data_ind = define_wf_cheat
-  `MEASURE (\(conf,state). gen_gc_conf_limit conf - heap_length
-  (gc_state_h1 state))`
+let gc_move_data_def,gc_move_data_ind = define_guess_cheat
   [`(gen_gc_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
        (if gen_gc_conf_limit conf < heap_length (gc_state_h1 state
@@ -123,14 +124,15 @@ let gc_move_data_def,gc_move_data_ind = define_wf_cheat
               state)))) | _5 -> gc_state_ok_fupd (K F) state)))`];;
 hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(conf,state). heap_length (gc_state_r2 state))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 gen_gcScript.sml:143-147: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_refs_def,gc_move_refs_ind = define_wf_cheat
-  `MEASURE (\(conf,state). heap_length (gc_state_r2 state))`
+let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
   [`// maybe more refs (r4 could have more)
    gc_move_refs conf state =
      (match gc_state_r2 state with [] -> gc_state_r1_fupd (K

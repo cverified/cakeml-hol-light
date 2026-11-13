@@ -183,7 +183,10 @@ let stackSem_dec_clock_def = new_definition
   stackSem_state_clock_fupd (K (stackSem_state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "stackSem_dec_clock";;
 
-let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (wordLang_exp_size ARB o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 stackSemScript.sml:151-156: the tactic that proves the
    termination *)
 let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec
@@ -405,14 +408,15 @@ let full_read_bitmap_def = new_definition
           (n2w 1))) bitmaps))
         | _27 -> NONE`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 stackSemScript.sml:330-334: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stackSem_enc_stack_def,stackSem_enc_stack_ind = define_wf_cheat
-  `MEASURE (LENGTH o SND)`
+let stackSem_enc_stack_def,stackSem_enc_stack_ind = define_guess_cheat
   [`stackSem_enc_stack bitmaps [] = NONE`;
    `stackSem_enc_stack bitmaps (w :: ws) =
          (if w = wordLang_Word (n2w 0) then (if ws = [] then SOME []
@@ -425,14 +429,15 @@ let stackSem_enc_stack_def,stackSem_enc_stack_ind = define_wf_cheat
                     NONE -> NONE | SOME rs -> SOME (ts ++ rs))))`];;
 hol4_overload "enc_stack" "stackSem_enc_stack";;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o SND o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 stackSemScript.sml:349-354: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stackSem_dec_stack_def,stackSem_dec_stack_ind = define_wf_cheat
-  `MEASURE (LENGTH o SND o SND)`
+let stackSem_dec_stack_def,stackSem_dec_stack_ind = define_guess_cheat
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
    `stackSem_dec_stack bitmaps ts (w :: ws) =
         (if w = wordLang_Word (n2w 0) then (if ts = [] /\ ws = []
@@ -765,14 +770,15 @@ let copy_words_for_pattern_LESS_EQ = prove
        j`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(i,a,f,bs,dm,m). LENGTH bs - i)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 stackSemScript.sml:720-723: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let copy_words_def,copy_words_ind = define_wf_cheat
-  `MEASURE (\(i,a,f,bs,dm,m). LENGTH bs - i)`
+let copy_words_def,copy_words_ind = define_guess_cheat
   [`copy_words i a off bs dm m =
      (if LENGTH bs <= i then NONE else
        let pattern = EL i bs in
@@ -861,7 +867,6 @@ let stackSem_fix_clock_IMP =
 if concl stackSem_fix_clock_IMP <> `T` then
   cake_term_facts := stackSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let _ = size_thms "stackLang_prog";;
 let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =

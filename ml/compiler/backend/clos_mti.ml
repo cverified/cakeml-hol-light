@@ -90,15 +90,15 @@ let collect_apps_size = prove
       list_size closLang_exp_size args + closLang_exp_size e`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (list_size closLang_exp_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 clos_mtiScript.sml:144-153: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let intro_multi_def,intro_multi_ind = define_wf_cheat
-  `MEASURE (list_size closLang_exp_size o SND)`
+let intro_multi_def,intro_multi_ind = define_guess_cheat
   [`intro_multi max_app x2 =
         match x2 with
           [] -> []

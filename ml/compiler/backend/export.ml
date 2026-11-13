@@ -27,14 +27,15 @@ needs "misc/misc.ml";;
 let _ = hol4_ancestors "export"
   ["mlint"; "mlstring"; "mlvector"];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 exportScript.sml:17-20: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let split16_def,split16_ind = define_wf_cheat
-  `MEASURE (LENGTH o SND)`
+let split16_def,split16_ind = define_guess_cheat
   [`split16 f xs =
         match xs with
           [] -> misc_Nil

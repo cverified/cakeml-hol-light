@@ -108,12 +108,14 @@ let optimize_consts_def = new_definition
 (* If this expression contains a constant it should
     be head of the output operation list *)
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (wordLang_exp_size ARB)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 word_instScript.sml:122-129: the tactic that proves the
    termination *)
 let pull_exp_def,pull_exp_ind = define_wf
-  `MEASURE (wordLang_exp_size ARB)`
+  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
   [`pull_exp exp =
         match exp with
           wordLang_Op asm_Sub ls ->
@@ -157,12 +159,14 @@ let pull_exp_pmatch = prove
 c d
 *)
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (wordLang_exp_size ARB)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 word_instScript.sml:171-177: the tactic that proves the
    termination *)
 let flatten_exp_def,flatten_exp_ind = define_wf
-  `MEASURE (wordLang_exp_size ARB)`
+  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
   [`flatten_exp exp =
         match exp with
           wordLang_Op asm_Sub exps -> wordLang_Op asm_Sub (MAP

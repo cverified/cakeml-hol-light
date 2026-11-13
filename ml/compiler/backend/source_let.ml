@@ -64,7 +64,10 @@ let lift_let_def = new_definition
              funs,Dlet l p x) | NONE -> NONE))
         | _3 -> NONE`;;
 
-let _ = size_thms "dec";;
+(* the termination relation that HOL4 gives is
+     MEASURE (dec_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 source_letScript.sml:68-73: the tactic that proves the
    termination *)
 let lift_lets_def,lift_lets_ind = define_guess

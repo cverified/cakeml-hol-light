@@ -575,15 +575,16 @@ let get_intervals_ct_monad_def = new_definition
        (numset_list_add_if_gt_monad (MAP FST (toAList live)) n) (
        st_ex_return (n - (&1)))))`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 linear_scanScript.sml:514-517: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let remove_inactive_intervals_def,remove_inactive_intervals_ind =
-  define_wf_cheat
-  `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`
+  define_guess_cheat
   [`remove_inactive_intervals beg st =
      (match linear_scan_state_active st with [] -> st_ex_return st |
        (e,r) :: activetail -> (
@@ -849,12 +850,13 @@ let partition_regs_def,partition_regs_ind = define_wf
              (swap_regs l (r - 1)) (
              partition_regs l rpiv begrpiv (r - 1)))))`];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(l,r). r - l)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sort_regs_def,sort_regs_ind = define_wf_cheat
-  `MEASURE (\(l,r). r - l)`
+let sort_regs_def,sort_regs_ind = define_guess_cheat
   [`sort_regs l r =
      (if r <= l + 1 then
        st_ex_return one else
@@ -917,13 +919,14 @@ let partition_moves_def,partition_moves_ind = define_wf
              (swap_moves l (r - 1)) (
              partition_moves l ppiv (r - 1))))`];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(l,r). r - l)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let linear_scan_sort_moves_def,linear_scan_sort_moves_ind =
-  define_wf_cheat
-  `MEASURE (\(l,r). r - l)`
+  define_guess_cheat
   [`linear_scan_sort_moves l r =
      (if r <= l + 1 then
        st_ex_return one else

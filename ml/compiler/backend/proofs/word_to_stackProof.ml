@@ -1898,7 +1898,10 @@ Theorem wStackLoad_thm3 =
  |> Q.INST [`t`|->`set_var v1 v2 t`]
  |> PURE_REWRITE_RULE[wordPropsTheory.set_var_const,set_var_const]
 *)
-let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (wordLang_exp_size ARB o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 word_to_stackProofScript.sml:4061-4066: the tactic that
    proves the termination *)
 let map_var_def,map_var_ind = define_shaped_rec

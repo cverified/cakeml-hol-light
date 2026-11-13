@@ -467,7 +467,6 @@ let bviProps_evaluate_genlist_vars = prove
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;
 
-let _ = size_thms "flatLang_exp";;
 let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

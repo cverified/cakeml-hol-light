@@ -175,14 +175,14 @@ let get_pos_def,get_pos_ind = define_rec
   [`get_pos [] = EmptyPos`;
    `get_pos (n :: ns) = Pos n (get_pos ns)`];;
 
-let _ = size_thms "pattern_semantics_pat";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL (_11,p) -> pattern_semantics_pat_size
+       p | INR (_12,k,p) -> list_size pattern_semantics_pat_size p)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let pat_to_guard_def,pat_to_guard_ind = define_mutual_wf_cheat
-  `MEASURE (\x. match x with INL (_11,p) -> pattern_semantics_pat_size
-  p | INR (_12,k,p) -> list_size pattern_semantics_pat_size p)`
+let pat_to_guard_def,pat_to_guard_ind = define_mutual_guess_cheat
   [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =
   pattern_semantics_True`;
    `pat_to_guard l (Lit r:pattern_semantics_pat) =

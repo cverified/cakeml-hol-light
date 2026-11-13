@@ -153,7 +153,6 @@ let dest_GlobalVarLookup_def = new_definition
 (* HOL4 flat_elimScript.sml:122-129: a theorem whose statement the
    port cannot state yet: exp_size_map_snd_snd *)
 
-let _ = size_thms "flatLang_exp";;
 let find_loc_def,find_loc_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`find_loc ((Raise _35 er):flatLang_exp) = ((find_loc er):1 spt)`;
@@ -181,7 +180,6 @@ let find_loc_def,find_loc_ind = assume_definition_rec
    `find_locL [] = LN`;
    `find_locL (e :: es) = sptree_union (find_loc e) (find_locL es)`];;
 
-let _ = size_thms "flatLang_exp";;
 let find_lookups_def,find_lookups_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`find_lookups (Raise _65 er:flatLang_exp) = find_lookups er`;

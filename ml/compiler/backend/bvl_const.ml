@@ -287,12 +287,13 @@ let delete_var_pmatch = prove
          x)`,
   (GEN_TAC THEN REWRITE_TAC[bvl_const_delete_var_def]));;
 
-let _ = size_thms "bvl_exp";;
-(* the termination relation is not in the HOL4 source *)
+(* the termination relation that HOL4 gives is
+     MEASURE (list_size bvl_exp_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
-  `MEASURE (list_size bvl_exp_size o SND)`
+let bvl_const_compile_def,bvl_const_compile_ind = define_guess_cheat
   [`bvl_const_compile env [] = []`;
    `bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
   ++ bvl_const_compile env (y :: xs)`;

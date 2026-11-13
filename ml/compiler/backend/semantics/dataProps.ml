@@ -42,17 +42,17 @@ let OPTION_CASE_OPTION_MAP = prove
  (`(option_CASE (OPTION_MAP f a) e g) = option_CASE a e (g o f)`,
   CHEAT_TAC);;
 
-let _ = size_thms "dataSem_v";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     (inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
+                                  (\(lims,vs,refs). (sptree_size
+                                    refs,vs)))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 dataPropsScript.sml:43-48: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let approx_of_def,approx_of_ind = define_wf_cheat
-  `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
-                             (\(lims,vs,refs). (sptree_size
-                               refs,vs)))`
+let approx_of_def,approx_of_ind = define_guess_cheat
   [`approx_of lims x2 refs =
         match x2 with
           [] -> 0

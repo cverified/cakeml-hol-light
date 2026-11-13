@@ -426,7 +426,10 @@ let set_store_def = new_definition
   (wordSem_state_store_fupd (K (wordSem_state_store s |+ (v,x))) s)`;;
 hol4_overload "set_store" "wordSem_set_store";;
 
-let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (wordLang_exp_size ARB o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 wordSemScript.sml:357-362: the tactic that proves the
    termination *)
 let word_exp_def,word_exp_ind = define_shaped_rec
@@ -1141,7 +1144,6 @@ let wordSem_fix_clock_IMP =
 if concl wordSem_fix_clock_IMP <> `T` then
   cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let _ = size_thms "wordLang_prog";;
 let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`wordSem_evaluate ((Skip:'a

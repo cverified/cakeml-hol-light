@@ -736,14 +736,15 @@ let flookup_com_neq = prove
      m |+ (k1,v1) |+ (k2,v2) = m |+ (k2,v2) |+ (k1,v1)`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (CARD o FDOM o FST o SND o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bvi_tmcProofScript.sml:1095-1103: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let mb_rel_def,mb_rel_ind = define_wf_cheat
-  `MEASURE (CARD o FDOM o FST o SND o SND)`
+let mb_rel_def,mb_rel_ind = define_guess_cheat
   [`mb_rel f x2 refs v1 v2 =
         match (x2,v1,v2) with
           ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(Block tag

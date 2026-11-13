@@ -71,9 +71,6 @@ let sing_env_def = new_definition
      (mk_sem_env (nsBind n v nsEmpty) nsEmpty:semanticPrimitives_v
        sem_env)`;;
 
-let _ = size_thms "ast_exp";;
-let _ = size_thms "ast_pat";;
-let _ = size_thms "dec";;
 let evaluate_def,evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi

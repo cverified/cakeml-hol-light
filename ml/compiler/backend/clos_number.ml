@@ -24,7 +24,6 @@ let _ = hol4_ancestors "clos_number"
 
 (* add fresh code locations *)
 
-let _ = size_thms "closLang_exp";;
 let renumber_code_locs_def,renumber_code_locs_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

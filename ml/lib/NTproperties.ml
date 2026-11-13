@@ -17,15 +17,16 @@ let nullable_def = new_definition
   `nullable G sf = (\G. RTC (derive G)) G sf []`;;
 (* HOL4 NTpropertiesScript.sml:32: the overload nullableNT, which the
    port expands *)
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
+       LENGTH
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 NTpropertiesScript.sml:120-132: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let nullableML_def,nullableML_ind = define_wf_cheat
-  `MEASURE (\s. CARD (FDOM (grammar_rules G) DIFF s)) LEX MEASURE
-  LENGTH`
+let nullableML_def,nullableML_ind = define_guess_cheat
   [`nullableML G seen [] = T`;
    `nullableML G seen (grammar_TOK t :: _1) = F`;
    `nullableML G seen (grammar_NT n :: rest) =

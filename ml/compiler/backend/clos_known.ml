@@ -43,7 +43,6 @@ let _ = do_list hide_constant ["all"; "pmatch"];;
 
 (* This definition is written to short-circuit,
    i.e. exit as soon as possible. *)
-let _ = size_thms "closLang_exp";;
 let get_size_sc_aux_def,get_size_sc_aux_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`get_size_sc_aux n [] = n`;
@@ -498,7 +497,6 @@ let decide_inline_LetInline = prove
        clos_known_config_inline_factor c`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 let known_def,known_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`known c [] vs (g:val_approx spt) = ([],g)`;

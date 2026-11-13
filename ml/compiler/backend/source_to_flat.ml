@@ -81,7 +81,10 @@ let compile_var_def = define_cases
 (* HOL4 source_to_flatScript.sml:51-55: a theorem whose statement the
    port cannot state yet: ast_pat1_size *)
 
-let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives is
+     MEASURE (pattern_semantics_pat_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 source_to_flatScript.sml:68-72: the tactic that proves the
    termination *)
 let compile_pat_def,compile_pat_ind = define_shaped_rec
@@ -134,9 +137,6 @@ let join_all_names_def = new_definition
      (match xs with [x] -> x | _7 -> mlstring_concat
        (join_all_names_aux xs []))`;;
 
-let _ = size_thms "ast_exp";;
-let _ = size_thms "ast_pat";;
-let _ = size_thms "mlstring";;
 let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -406,7 +406,6 @@ let simple_dlet_def = new_definition
      (match p with ast_Pvar pv -> (match e with ast_Var v -> SOME
        (pv,v) | _12 -> NONE) | _13 -> NONE)`;;
 
-let _ = size_thms "dec";;
 let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

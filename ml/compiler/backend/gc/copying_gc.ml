@@ -51,14 +51,15 @@ let gc_move_list_def,gc_move_list_ind = define_guess_cheat
            (x :: xs,h2,a,n,heap,c))`];;
 hol4_overload "gc_move_list" "copying_gc_gc_move_list";;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 copying_gcScript.sml:50-53: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_loop_def,gc_move_loop_ind = define_wf_cheat
-  `MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)`
+let gc_move_loop_def,gc_move_loop_ind = define_guess_cheat
   [`copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') =
   (h1,a,n,heap,c)`;
    `copying_gc_gc_move_loop (h1,h :: h2,a,n,heap,c,limit') =

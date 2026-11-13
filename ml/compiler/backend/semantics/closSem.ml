@@ -256,7 +256,10 @@ let do_install_def = new_definition
                              Rtype_error),s))`;;
 hol4_overload "do_install" "closSem_do_install";;
 
-let _ = size_thms "const";;
+(* the termination relation that HOL4 gives is
+     MEASURE const_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 closSemScript.sml:170-175: the tactic that proves the
    termination *)
 let make_const_def,make_const_ind = define_shaped_rec

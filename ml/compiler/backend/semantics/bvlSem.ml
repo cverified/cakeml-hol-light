@@ -843,7 +843,6 @@ let bvlSem_fix_clock_IMP =
 if concl bvlSem_fix_clock_IMP <> `T` then
   cake_term_facts := bvlSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let _ = size_thms "bvl_exp";;
 let bvlSem_evaluate_def,bvlSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s))

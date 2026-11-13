@@ -267,7 +267,11 @@ hol4_overload "Op" "closLang_Op";;
 
 (* HOL4 closLangScript.sml:143: ML code, not ported *)
 
-let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
+       list_size closLang_exp_size es)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 closLangScript.sml:159-168: the tactic that proves the
    termination *)
 let has_install_def,has_install_ind = define_mutual_shaped_rec

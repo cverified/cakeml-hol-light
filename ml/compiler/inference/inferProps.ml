@@ -1069,7 +1069,10 @@ let set_tids_subset_type_subst = prove
    set_tids_subset tids (type_subst s t)`,
   CHEAT_TAC);;
 
-let _ = size_thms "t";;
+(* the termination relation that HOL4 gives is
+     MEASURE t_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 inferPropsScript.sml:2547-2553: the tactic that proves the
    termination *)
 let unconvert_t_def,unconvert_t_ind = define_shaped_rec

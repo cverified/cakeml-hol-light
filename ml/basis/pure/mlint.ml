@@ -48,12 +48,14 @@ let maxSmall_DEC_def1 = new_definition
 (* HOL4 mlintScript.sml:37-38: the ML values that the definitions
    below antiquote *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     inv_image (MEASURE I LEX MEASURE I)
+            (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 mlintScript.sml:45-54: the tactic that proves the termination *)
 let num_to_chars_def,num_to_chars_ind = define_wf
-  `inv_image (MEASURE I LEX MEASURE I)
-       (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`
+  `MEASURE (\(x0,x1,x2,x3). (\n. n) x0)`
   [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP
   exp_for_dec_enc))
           exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)

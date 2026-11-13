@@ -316,7 +316,6 @@ let id_to_display_def,id_to_display_ind = define_rec
       displayLang_Item NONE (implode "Long") [String n;
         id_to_display i]`];;
 
-let _ = size_thms "ast_t";;
 let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`ast_t_to_display c =
@@ -331,7 +330,6 @@ let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
    `ast_t_to_display_list (x :: xs) =
         ast_t_to_display x :: ast_t_to_display_list xs`];;
 
-let _ = size_thms "pattern_semantics_pat";;
 let pat_to_display_def,pat_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`pat_to_display (c:ast_pat) =
@@ -413,7 +411,6 @@ let exp_to_display_def,exp_to_display_ind = assume_definition_rec
                exp_to_display e] ::
         fun_to_display_list xs`];;
 
-let _ = size_thms "dec";;
 let source_to_display_dec_def,source_to_display_dec_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -463,7 +460,6 @@ let opt_con_to_display_def = new_definition
   "ConIdUntyped") c | SOME (c,SOME t) -> item_with_nums (implode
   "ConIdTyped") [c; t])`;;
 
-let _ = size_thms "pattern_semantics_pat";;
 let flat_pat_to_display_def,flat_pat_to_display_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -606,7 +602,11 @@ let const_part_to_display_def = define_cases
    `const_part_to_display (W64 w:const_part) =
       displayLang_Item NONE (implode "W64") [word_to_display w]`];;
 
-let _ = size_thms "const";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL v -> const_size v | INR v -> list_size
+       const_size v)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 let const_to_display_def,const_to_display_ind = define_mutual_rec
   [`const_to_display (ConstInt i:const) =
       displayLang_Item NONE (implode "ConstInt") [int_to_display
@@ -759,7 +759,6 @@ hol4_overload "commas" "presLang_commas";;
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
-let _ = size_thms "flatLang_exp";;
 let clos_to_display_def,clos_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`clos_to_display ns h (Var t n:closLang_exp) =
@@ -858,16 +857,19 @@ let clos_dec_to_display_def = new_definition
 (* HOL4 presLangScript.sml:769-774: a theorem whose statement the
    port cannot state yet: MEM_bvl_exps_size *)
 
-let _ = size_thms "flatLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x.
+          match x with
+            INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs)) ->
+              list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
+              list_size flatLang_exp_size xs)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 let bvl_to_display_def,bvl_to_display_ind = define_mutual_shaped_wf
   "maplist>measure"
-  `MEASURE (\x.
-     match x with
-       INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs)) ->
-         list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
-         list_size flatLang_exp_size xs)`
+  `MEASURE (sum_measure (\(x0,x1,x2). bvl_exp_size x2) (\(x0,x1,x2,x3).
+  bvl_exp_size1 x3))`
   [`bvl_to_display ns h (Var n:bvl_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -922,7 +924,6 @@ let bvl_fun_to_display_def = new_definition
 (* HOL4 presLangScript.sml:829-834: a theorem whose statement the
    port cannot state yet: MEM_bvi_exps_size *)
 
-let _ = size_thms "flatLang_exp";;
 let bvi_to_display_def,bvi_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bvi_to_display ns h (Var n:bvi_exp) =
@@ -1020,9 +1021,8 @@ let list_size_append_data_seqs = prove
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let data_prog_to_display_def,data_prog_to_display_ind = define_mutual_wf
-  `MEASURE (\x.
-     match x with
-       INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`
+  `MEASURE (\x. match x with INL (k,_20,_21) -> k | INR (k,_22,_23) ->
+  k)`
   [`data_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `data_prog_to_display (SUC k) ns prog =
           (match prog with dataLang_Skip -> empty_item (implode
@@ -1435,7 +1435,11 @@ let MEM_append_word_seqs = prove
 (* HOL4 presLangScript.sml:1311-1312: a theorem that HOL4 states as
    the value of an ML expression: MEM_word_exps_size_ARB *)
 
-let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL v -> wordLang_exp_size ARB v | INR v
+       -> list_size wordLang_exp_size ARB v)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 let word_exp_to_display_def,word_exp_to_display_ind = define_mutual_rec
   [`word_exp_to_display (wordLang_Const v) = item_with_word (implode
   "Const") v`;

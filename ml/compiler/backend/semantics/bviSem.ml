@@ -88,14 +88,16 @@ let bvl_to_bvi_def = new_definition
   s))
      t))`;;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (CARD o FDOM o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bviSemScript.sml:69-77: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bviSem_finalise_cons_def,bviSem_finalise_cons_ind = define_wf_cheat
-  `MEASURE (CARD o FDOM o SND)`
+let bviSem_finalise_cons_def,bviSem_finalise_cons_ind =
+  define_guess_cheat
   [`bviSem_finalise_cons v refs =
         match v with
           (RefPtr b ptr:bvlSem_v) ->
@@ -287,7 +289,6 @@ let bviSem_fix_clock_IMP =
 if concl bviSem_fix_clock_IMP <> `T` then
   cake_term_facts := bviSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let _ = size_thms "flatLang_exp";;
 let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v

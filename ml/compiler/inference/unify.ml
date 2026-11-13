@@ -368,7 +368,10 @@ let substR_unify = prove
   cunify`,
   CHEAT_TAC);;
 
-let _ = size_thms "infer_t";;
+(* the termination relation that HOL4 gives is
+     MEASURE (infer_t_size o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 let capply_subst_def,capply_subst_ind = define_shaped_rec
   "nested"
   [`capply_subst s (Infer_Tuvar n) = (match sptree_lookup n s with

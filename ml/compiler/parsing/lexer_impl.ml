@@ -146,6 +146,10 @@ let num_from_dec_string_alt_def = new_definition
 let num_from_hex_string_alt_def = new_definition
   `num_from_hex_string_alt = s2n 16 unhex_alt`;;
 
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_implScript.sml:239-245: the tactic that proves the
    termination *)
 let next_sym_alt_def,next_sym_alt_ind = define_guess
@@ -264,14 +268,15 @@ let next_sym_eq = prove
 
 (* lex_until_toplevel_semicolon *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST o SND o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_implScript.sml:344-347: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_wf_cheat
-  `MEASURE (LENGTH o FST o SND o SND)`
+let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_guess_cheat
   [`lexer_impl_lex_aux acc (d:num) input loc =
      (match next_token input loc with
        // case: end of input
@@ -313,14 +318,15 @@ let lex_until_toplevel_semicolon_LESS = prove
 
 (* lex_until_toplevel_semicolon_alt *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST o SND o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_implScript.sml:402-405: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_aux_alt_def,lex_aux_alt_ind = define_wf_cheat
-  `MEASURE (LENGTH o FST o SND o SND)`
+let lex_aux_alt_def,lex_aux_alt_ind = define_guess_cheat
   [`lex_aux_alt acc (d:num) input l =
      (match next_sym input l with
        // case: end of input
@@ -381,14 +387,15 @@ let lex_until_top_semicolon_alt_thm = prove
 
 (* lex_impl_all *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o FST)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_implScript.sml:493-497: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_impl_all_def,lex_impl_all_ind = define_wf_cheat
-  `MEASURE (LENGTH o FST)`
+let lex_impl_all_def,lex_impl_all_ind = define_guess_cheat
   [`lex_impl_all input l =
      (match lex_until_toplevel_semicolon input l with NONE -> []
        | SOME (t,loc,input') -> t :: lex_impl_all input' loc)`];;
@@ -427,14 +434,15 @@ let lex_aux_tokens_LESS = prove
          rest <= LENGTH input)`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE LENGTH
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 lexer_implScript.sml:549-553: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_impl_all_tokens_def,lex_impl_all_tokens_ind = define_wf_cheat
-  `MEASURE LENGTH`
+let lex_impl_all_tokens_def,lex_impl_all_tokens_ind = define_guess_cheat
   [`lex_impl_all_tokens input =
       (match lex_until_toplevel_semicolon_tokens input with
         NONE -> [] | SOME (t,input) -> t :: lex_impl_all_tokens

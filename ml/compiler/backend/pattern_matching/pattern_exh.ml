@@ -104,7 +104,11 @@ let mk_conses_def,mk_conses_ind = define_rec
    `mk_conses t (ps :: pss) = pattern_semantics_Cons t ps ::
   mk_conses t pss`];;
 
-let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
+       INR ps -> list_size pattern_semantics_pat_size ps)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 let expand_def,expand_ind = define_mutual_rec
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
@@ -235,7 +239,11 @@ let default_mat_def,default_mat_ind = define_rec
    the total number of columns.
  * -------------------------------------------------------------------- *)
 
-let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
+       INR ps -> list_size pattern_semantics_pat_size ps)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 let pat_weight_def,pat_weight_ind = define_mutual_rec
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
@@ -335,18 +343,19 @@ let mat_len_default_mat_less = prove
    The matrix algorithm and the entry point.
  * -------------------------------------------------------------------- *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     inv_image ((<) LEX (<) LEX (<))
+            (\x. match x with INL rows -> (mat_weight rows,mat_len
+              rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
+              ms + 1))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 pattern_exhScript.sml:377-389: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_matrix_def,exh_matrix_ind = define_mutual_shaped_wf_cheat
+let exh_matrix_def,exh_matrix_ind = define_mutual_shaped_rec_cheat
   "maplist>measure"
-  `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`
   [`exh_matrix [] = F`;
    `exh_matrix (r :: rows) =
       (if NULL r then T else
@@ -375,17 +384,18 @@ let exh_rows_def = new_definition
    step exh_all makes consumes one of those steps.
  * -------------------------------------------------------------------- *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     inv_image ((<) LEX (<) LEX (<))
+            (\x. match x with INL rows -> (mat_weight rows,mat_len
+              rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
+              ms + 1))
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 pattern_exhScript.sml:420-432: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_steps_def,exh_steps_ind = define_mutual_wf_cheat
-  `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`
+let exh_steps_def,exh_steps_ind = define_mutual_guess_cheat
   [`exh_steps [] = (1:num)`;
    `exh_steps (r :: rows) =
       (((if NULL r then 1 else
@@ -401,14 +411,15 @@ let exh_steps_list_append = prove
   exh_steps_list ys`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE exh_steps_list
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 pattern_exhScript.sml:448-452: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_all_def,exh_all_ind = define_wf_cheat
-  `MEASURE exh_steps_list`
+let exh_all_def,exh_all_ind = define_guess_cheat
   [`exh_all [] = T`;
    `exh_all ([] :: ms) = F`;
    `exh_all ((r :: rows) :: ms) =

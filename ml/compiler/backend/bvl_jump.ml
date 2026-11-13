@@ -20,14 +20,15 @@ needs "semantics/ast.ml";;
 let _ = hol4_ancestors "bvl_jump"
   ["bvl"];;
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bvl_jumpScript.sml:22-30: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let JumpList_def,JumpList_ind = define_wf_cheat
-  `MEASURE (LENGTH o SND)`
+let JumpList_def,JumpList_ind = define_guess_cheat
   [`(JumpList n xs =
       (let l = LENGTH xs in
         if l = 0 then Op (closLang_IntOp (closLang_Const (&0))) []

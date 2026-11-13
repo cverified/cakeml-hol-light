@@ -850,12 +850,14 @@ let alloc_arg_def,alloc_arg_ind = define_wf
 (* stack_remove requires that all register arguments are bounded by k *)
 
 let _ = size_thms "wordLang_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE ((wordLang_exp_size ARB) o FST)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 stackPropsScript.sml:1027-1031: the tactic that proves the
    termination *)
 let reg_bound_exp_def,reg_bound_exp_ind = define_wf
-  `MEASURE ((wordLang_exp_size ARB) o FST)`
+  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x0)`
   [`reg_bound_exp x1 k =
         match x1 with
           wordLang_Var n -> n < k

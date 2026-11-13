@@ -334,7 +334,6 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
  * number of arguments, and constructors in corresponding positions in the
  * pattern and value come from the same type.  Match_type_error is returned
  * when one of these conditions is violated *)
-let _ = size_thms "ast_pat";;
 let pmatch_def,pmatch_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`semanticPrimitives_pmatch envC s (ast_Pany:ast_pat) v' env =
@@ -413,7 +412,6 @@ let find_recfun_def,find_recfun_ind = define_shaped_rec
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
 
-let _ = size_thms "semanticPrimitives_v";;
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
@@ -650,7 +648,6 @@ let declare_env_def = new_definition
 
 (* Concrete, or first-order values, which do not contain code closures and
    are unchanged by many compiler phases. *)
-let _ = size_thms "semanticPrimitives_v";;
 let concrete_v_def,concrete_v_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`concrete_v v <=>

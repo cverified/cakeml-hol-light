@@ -60,7 +60,6 @@ let mk_Branch_def = new_definition
      if t2 = word_depth_Unknown then t2 else
        word_depth_Branch t1 t2)`;;
 
-let _ = size_thms "wordLang_prog";;
 let call_graph_def,call_graph_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`call_graph funs n ns total' x5 =

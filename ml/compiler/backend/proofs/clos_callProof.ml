@@ -223,7 +223,6 @@ let env_rel_cong = prove
   env1 env2 a es`,
   CHEAT_TAC);;
 
-let _ = size_thms "closSem_v";;
 let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

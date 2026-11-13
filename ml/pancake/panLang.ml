@@ -285,7 +285,6 @@ let is_name_def = new_definition
 let size_of_eids_def = new_definition
   `size_of_eids prog = LENGTH (FILTER is_exn_decl prog)`;;
 
-let _ = size_thms "panLang_exp";;
 let var_exp_def,var_exp_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`var_exp (panLang_Const w) = ([]:mlstring list)`;
@@ -312,7 +311,6 @@ let var_exp_def,var_exp_ind = assume_definition_rec
    `var_exp panLang_TopAddr = (([]):mlstring list)`;
    `var_exp panLang_BytesInWord = (([]):mlstring list)`];;
 
-let _ = size_thms "panLang_exp";;
 let global_var_exp_def,global_var_exp_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`global_var_exp (panLang_Const w) = ([]:mlstring list)`;

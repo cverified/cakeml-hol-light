@@ -59,7 +59,10 @@ hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
    timestamp information (note this make the function non-injective)
 *)
 
-let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives is
+     MEASURE dataSem_v_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 bvi_to_dataProofScript.sml:36-48: the tactic that proves the
    termination *)
 let data_to_bvi_v_def,data_to_bvi_v_ind = define_shaped_rec

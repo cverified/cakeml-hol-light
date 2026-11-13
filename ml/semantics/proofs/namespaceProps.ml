@@ -431,15 +431,15 @@ let alistSub_cong = prove
 
 (* HOL4 namespacePropsScript.sml:785: ML code, not ported *)
 
-let _ = size_thms "namespace";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(p,r,env,_2). namespace_size (\x. 0) (\x. 0) (\x. 0) env)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 namespacePropsScript.sml:791-801: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let nsSub_compute_def,nsSub_compute_ind = define_wf_cheat
-  `MEASURE (\(p,r,env,_2). namespace_size (\x. 0) (\x. 0) (\x. 0) env)`
+let nsSub_compute_def,nsSub_compute_ind = define_guess_cheat
   [`nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
      alistSub (\k v1 v2. R (mk_id (REVERSE path') k) v1 v2) e1V e2V
        /\

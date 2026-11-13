@@ -50,15 +50,15 @@ let strip_dot_def,strip_dot_ind = define_rec
    `strip_dot (SX_CONS a d) = (let (ls,n) = strip_dot d in (a ::
   ls,n))`];;
 
-let _ = size_thms "simpleSexp_sexp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE simpleSexp_sexp_size
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
 (* HOL4 simpleSexpParseScript.sml:260-268: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let print_sexp_def,print_sexp_ind = define_wf_cheat
-  `MEASURE simpleSexp_sexp_size`
+let print_sexp_def,print_sexp_ind = define_guess_cheat
   [`print_sexp s =
         match s with
           SX_SYM s -> s
