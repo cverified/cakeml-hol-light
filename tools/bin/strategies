@@ -6,11 +6,7 @@ C=/home/freek/claude/hol-light/cakeml
 PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
 . $C/tools/holenv.sh > /dev/null 2>&1
 s=${1:-seq}
+TIMEOUT=300 repl-step $s "#use \"$C/tools/harvest.ml\";;" > /dev/null
 TIMEOUT=300 repl-step $s \
-  "let cake_out = open_out \"$C/tmp/strategies.txt\" in
-   do_list (fun (n,w) ->
-     output_string cake_out (n ^ \" \" ^ w ^ \"\\n\"))
-     (cake_strategies ());
-   close_out cake_out;
-   length (cake_strategies ());;" 2>&1 | tail -2
+  "cake_harvest \"$C/tmp/strategies.txt\";;" 2>&1 | tail -2
 python3 -I $C/tools/mkstrategies.py

@@ -620,6 +620,16 @@ let the_cond_why = ref "";;
 
 let the_strategy = ref "";;
 
+(* with which relation it made the definition, and whether the
+   termination condition was assumed instead of proved.  With the
+   strategy, this is what a call site would have to say to make
+   the definition again without searching for the way a second
+   time, which is what a run harvests it for. *)
+
+let the_relation = ref "";;
+
+let the_term_cheat = ref false;;
+
 let cond_kind h =
   let b = if is_exists h then snd(dest_exists h) else h in
   let c = if is_conj b then rand b else b in
@@ -628,7 +638,7 @@ let cond_kind h =
   with Failure _ -> "?";;
 
 let discharge_conditions (rel,tac) th =
-  itlist
+  let th' = itlist
     (fun h th ->
        let gtac =
          if is_exists h then
@@ -657,7 +667,8 @@ let discharge_conditions (rel,tac) th =
                cake_log_term h);
             failwith s) in
        PROVE_HYP hth th)
-    (hyp th) th;;
+    (hyp th) th in
+  the_relation := string_of_term rel; th';;
 
 (* ------------------------------------------------------------------ *)
 (* Taking paired lambdas apart.                                       *)
@@ -795,6 +806,7 @@ let discharge_cheat th =
   match !the_cheat_tac with
     None -> failwith "discharge_cheat"
   | Some tac ->
+      the_term_cheat := true;
       itlist (fun h th -> PROVE_HYP (prove(h,tac)) th) (hyp th) th;;
 
 (* ------------------------------------------------------------------ *)
@@ -3680,9 +3692,17 @@ let cake_defs () = rev (!the_defs);;
    harvests so that the files can say the primitive itself where
    HOL Light has one (tools/bin/strategies) *)
 
-let the_strategies = ref ([]:(string * string) list);;
+let the_strategies =
+  ref ([]:(string * (string * bool * string)) list);;
 
 let cake_strategies () = rev (!the_strategies);;
+
+(* every entry point starts a definition by forgetting what the
+   one before it did, so that what is harvested is what this
+   definition needed and not what the previous one left behind *)
+
+let cake_begin () =
+  the_strategy := ""; the_relation := ""; the_term_cheat := false;;
 
 let cake_note_strategy th =
   (try let h = fst(strip_comb(lhs(snd(strip_forall
@@ -3690,7 +3710,9 @@ let cake_note_strategy th =
        if is_const h then
          let n = fst(dest_const h) in
          if not (can (assoc n) (!the_strategies)) then
-           the_strategies := (n, !the_strategy) :: !the_strategies
+           the_strategies :=
+             (n,(!the_strategy,!the_term_cheat,!the_relation)) ::
+             (!the_strategies)
    with Failure _ -> ());;
 
 let cake_def name =
@@ -3702,40 +3724,59 @@ let cake_def name =
    wrappers call the function of that name as it stands above *)
 
 let cake_define tm =
+  cake_begin ();
   let th = cake_define tm in
   cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_gen wf tm =
+  cake_begin ();
   let th = cake_define_gen wf tm in
   cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_list cls =
+  cake_begin ();
   let th = cake_define_list cls in
   cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_wf rel tm =
-  let th = cake_define_wf rel tm in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_wf rel tm in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_list_wf rel cls =
-  let th = cake_define_list_wf rel cls in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_list_wf rel cls in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_list_try f cls =
-  let th = cake_define_list_try f cls in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_list_try f cls in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_tac rt tm =
-  let th = cake_define_tac rt tm in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_tac rt tm in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_cheat tac tm =
-  let th = cake_define_cheat tac tm in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_cheat tac tm in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_try_tac f tac tm =
-  let th = cake_define_try_tac f tac tm in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_try_tac f tac tm in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_list_cheat tac cls =
-  let th = cake_define_list_cheat tac cls in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_list_cheat tac cls in
+  cake_note_def th; cake_note_strategy th; th;;
 
 let cake_define_list_try_tac f tac cls =
-  let th = cake_define_list_try_tac f tac cls in cake_note_def th; th;;
+  cake_begin ();
+  let th = cake_define_list_try_tac f tac cls in
+  cake_note_def th; cake_note_strategy th; th;;
 
 (* an inductive definition gives three theorems (the rules, the
    induction and the cases), and the rules are what names the
