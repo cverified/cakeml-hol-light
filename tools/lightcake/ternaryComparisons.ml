@@ -58,10 +58,8 @@ let ordering_distinct2 = prove
    yet, with the names of its own that each proof
    uses:
 
-     ordering_INDUCT                  cake_type
      ordering_case_def                case_def
      ordering_case_eq                 case_eq
-     list_compare_ind                 cake_ind
      compare_equal                    ordering_case_def
      list_merge_ind                   cake_ind
      _                                bool_compare_def cake_add_simps

@@ -1,0 +1,29 @@
+#!/bin/sh
+# lightcake-fill <theory> [session] : fill the cheats of a file
+# of the port with the proofs LightCake has for them.  It fills,
+# ports, loads the file with every theorem in a try so that
+# every proof that does not go through is reported and not only
+# the first, takes those out of the store again, and ports once
+# more.
+#
+# The whole loop, because a proof is only worth storing when it
+# has been run against what this port states: the statement is
+# this port's and the proof is LightCake's, and the two are only
+# known to fit by trying them.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+t=$1
+s=${2:-lcf}
+[ -z "$t" ] && { echo "lightcake-fill <theory> [session]"; exit 1; }
+f=$(python3 -I $C/tools/lightcake.py where "$t") || exit 1
+python3 -I $C/tools/lightcake.py fill "$t" || exit 1
+python3 -I $C/tools/portall.py > /dev/null || exit 1
+: > $C/tmp/unstated.txt
+TOLERANT=1 tryfile "$f" $s
+bad=$(cut -f2 $C/tmp/unstated.txt 2>/dev/null | sort -u)
+if [ -n "$bad" ]; then
+  python3 -I $C/tools/lightcake.py drop "$t" $bad || exit 1
+  python3 -I $C/tools/portall.py > /dev/null || exit 1
+fi
+repl-kill $s > /dev/null 2>&1
+python3 -I $C/tools/lines.py | tail -1

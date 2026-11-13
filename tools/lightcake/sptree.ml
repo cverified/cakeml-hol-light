@@ -54,19 +54,6 @@ let SPTAUX_BIT_RW = prove
   DISCH_THEN(MP_TAC o AP_TERM `EVEN`) THEN
   REWRITE_TAC[EVEN_ADD; EVEN_MULT; ARITH]);;
 
-let lookup_ind = prove
- (`!P. (!k. P k (LN:A spt)) /\ (!k (a:A). P k (LS a)) /\
-       (!k t1 t2. (~(k = 0) ==> P ((k - 1) DIV 2) (if EVEN k then t1
-         else t2))
-                  ==> P k (BN t1 t2)) /\
-       (!k t1 (a:A) t2.
-          (~(k = 0) ==> P ((k - 1) DIV 2) (if EVEN k then t1 else t2))
-          ==> P k (BS t1 a t2))
-       ==> !k t. P k t`,
-  GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC num_WF THEN
-  X_GEN_TAC `k:num` THEN DISCH_TAC THEN MATCH_MP_TAC spt_INDUCT THEN
-  ASM_MESON_TAC[SPTAUX_DIV2_LT]);;
-
 let lookup_rwts = prove
  (`sptree_lookup k (LN:A spt) = NONE /\
    sptree_lookup 0 (LS (a:A)) = SOME a /\
@@ -745,14 +732,12 @@ let SPTAUX_FORALL_lookup_P = prove
    yet, with the names of its own that each proof
    uses:
 
-     spt_INDUCT                       cake_type
      spt_CASE                         case_def
      spt_case_eq                      case_eq
      spt_size_def                     size_def
      SPTAUX_TC_TAC                    WF_REL_THMS
      SPTAUX_BITS_TAC                  term
      SPTAUX_CASES_TAC                 CASES_ON term
-     insert_ind                       cake_ind
      wf_insert                        -- Exception: Failure "TAC_PROOF:
                                       Unsolved goals".
      isEmpty_union                    spt_CASE
@@ -865,7 +850,6 @@ let SPTAUX_FORALL_lookup_P = prove
                                       union_insert_LN
      map_map_K                        K_THM
      lookup_map_K                     K_THM OPTION_MAP_DEF lookup_map
-     alist_insert_ind                 CONS
      lookup_alist_insert              ALOOKUP_DEF option_CASE
      domain_alist_insert              domain_insert
      alist_insert_append              -- no answer
@@ -888,7 +872,6 @@ let SPTAUX_FORALL_lookup_P = prove
      SPTAUX_delete_delete_lt          SPTAUX_BITS_TAC
      delete_delete                    SPTAUX_delete_delete_lt
                                       SPTAUX_delete_delete_same
-     list_size_APPEND                 list_size
      size_map                         -- Error: Unbound value
                                       size_domain
      size_mapi                        domain_mapi size_domain
@@ -909,7 +892,6 @@ let SPTAUX_FORALL_lookup_P = prove
                                       SPTAUX_spt_size_left_right
                                       SPTAUX_spts_to_alist_aux_thm SUM
                                       spt_size_def
-     spts_to_alist_def                SPTAUX_spts_to_alist_eqn pair_CASE
      SPTAUX_LENGTH_COUNT_LIST         COUNT_LIST_DEF
      SPTAUX_ALOOKUP_ZIP_MAP_SUC       ALOOKUP_DEF
      SPTAUX_ALOOKUP_ZIP_COUNT_LIST    ALOOKUP_DEF COUNT_LIST_DEF

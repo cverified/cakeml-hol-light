@@ -6,6 +6,7 @@
      python3 -I tools/lightcake.py import <theory>
      python3 -I tools/lightcake.py fill <theory>
      python3 -I tools/lightcake.py drop <theory> <name>...
+     python3 -I tools/lightcake.py where <theory>
 
 LightCake (`lightcake-src/`, see README.md) is the other port of
 CakeML to HOL Light: narrow and deep where this one is wide and
@@ -32,6 +33,14 @@ blocks found does not go through
 (`tools/bin/lightcake-check`, which writes
 `tools/lightcake/<theory>.bad`) is left out with the reason.
 
+`fill` writes the proofs LightCake has for the theorems this
+port states and cheats into `proofs/<path>.prf`, which a re-port
+splices into the file; `drop` takes a proof of the store out
+again, under either name it goes by.  `tools/bin/lightcake-take`
+and `tools/bin/lightcake-fill` are the two loops that do it with
+the check in them, and nothing of either reaches `ml/` until
+every block of it has been run.
+
 `names` prints the map of a theory (or the count for every
 theory); `report` says, for every file both ports have, how many
 theorems are shared, how many of this port's cheats LightCake
@@ -50,10 +59,17 @@ LC = T + '../lightcake-src/'
 # the relation of a define_wf in a quotation of its own, so the
 # constant is the first name of the quotation that holds a clause
 # -- which is the one that is a list, or the last one.
+MAKER = (r"cake_def|cake_def_wf|cake_defn|new_definition|"
+         r"new_recursive_definition|new_specification|"
+         r"define_[a-z_0-9]+|assume_definition[a-z_]*")
 BIND = re.compile(r"^let ([A-Za-z0-9_']+)(?:,[A-Za-z0-9_']+)? = "
-                  r"(cake_def|cake_def_wf|cake_defn|new_definition|"
-                  r"define_[a-z_0-9]+|assume_definition[a-z_]*)\b",
-                  re.M)
+                  r"(" + MAKER + r")\b", re.M)
+# LightCake makes the definition in a let of the block and then
+# proves the form it uses, so the maker is not on the line of
+# the binding: that block is a definition all the same
+INNER = re.compile(r"^let ([A-Za-z0-9_']+)(?:,[A-Za-z0-9_']+)? ="
+                   r"\s+let [A-Za-z0-9_']+ = (" + MAKER + r")\b",
+                   re.M)
 HEAD = re.compile(r"`\s*(?:!\s*[^.]*?\.\s*)?\(*\s*"
                   r"([A-Za-z_][A-Za-z0-9_']*)")
 
@@ -91,15 +107,19 @@ def constant_of(body, how):
   return m.group(1) if m else None
 
 
-def definitions(path):
-  """binding -> constant, for a file of either port"""
+def definitions(path, upto=None):
+  """binding -> constant, for a file of either port.  A file of
+     this port is read up to the block an import appended to it,
+     or the import would be read back as what this port says"""
   try: s = open(path).read()
   except OSError: return {}
+  if upto and upto in s: s = s[:s.index(upto)]
   out = {}
-  for m in BIND.finditer(s):
-    body = s[m.end():block_end(s, m.end())]
-    c = constant_of(body, m.group(2))
-    if c: out.setdefault(m.group(1), c)
+  for r in (BIND, INNER):
+    for m in r.finditer(s):
+      body = s[m.end():block_end(s, m.end())]
+      c = constant_of(body, m.group(2))
+      if c: out.setdefault(m.group(1), c)
   return out
 
 
@@ -129,7 +149,7 @@ def rename_map(name):
      them has"""
   a, b = ours_of(name), theirs_of(name)
   if not a or not b: return None, None, None
-  ours, theirs = definitions(a), definitions(b)
+  ours, theirs = definitions(a, CUT), definitions(b)
   both = {theirs[k]: ours[k] for k in theirs if k in ours}
   only_theirs = sorted(k for k in theirs if k not in ours)
   only_ours = sorted(k for k in ours if k not in theirs)
@@ -592,6 +612,14 @@ class Ctx:
     m, _, _ = rename_map(nm)
     self.rank = dict((t, i) for i, (t, _, _) in enumerate(d.order))
     self.lcn = lc_names(d, nm)
+    # the port's own file of the theory is what says how the
+    # port names the theory's constants, and it says it more
+    # precisely than the HOL4 name does: this port's
+    # tailrec_TAILREC is HOL4's tailrec$TAILREC under the name
+    # LightCake gives it too, while TAILREC is While's, which
+    # is another constant of this port altogether
+    for k in set(definitions(self.a, CUT).values()):
+      if self.lcn.get(k) not in (None, k): self.lcn[k] = k
     self.ot = ours_terms(nm, self.rank)
     # LightCake's name for a thing of the closure, under this
     # port's name for it; the pair of files of this theory says
@@ -610,7 +638,8 @@ class Ctx:
     # uses.  The induction theorem of a definition goes by the
     # same name with _ind, in both
     obyc = {}
-    for k, v in definitions(self.a).items(): obyc.setdefault(v, k)
+    for k, v in definitions(self.a, CUT).items():
+      obyc.setdefault(v, k)
     # LightCake keeps the HOL4 name of a library constant unless
     # it had to change it (doc/library_renames.tsv), and this
     # port has its own renaming of the same HOL4 name: that is
@@ -687,10 +716,14 @@ def emit(argv):
   ours, defs, bad, have = c.ours, c.defs, c.bad, c.have
   take, left = [], []
   for ns, body in bindings(c.b):
-    if [n for n in ns if n in defs or n in ours]:
+    if [n for n in ns
+        if n in defs or n in ours
+        or (n != '_' and n in ob and n not in c.bridge)]:
       # a definition of LightCake's that this port makes its own
-      # way, or a theorem this port proves itself: what it binds
-      # is there only where this port binds it too
+      # way, or a name this port binds itself: what it binds is
+      # there only where this port binds it too.  Taking such a
+      # block would shadow this port's binding of the name, and
+      # every later file reads the name as this port writes it
       have |= set(n for n in ns
                   if n in ob or n in m or n in ours)
       continue
@@ -788,19 +821,24 @@ CHEATED = re.compile(r"(?:^\(\* ([A-Za-z0-9_']+)(?:\[[^\]]*\])? \*\)\n)?"
                      r"^let ([A-Za-z0-9_']+) = prove", re.M)
 
 
-def our_cheats(path):
-  """the theorems this port states and does not prove, by the
-     HOL4 name that the proof store calls them by: the port
-     writes that name in a comment where it binds the theorem
-     under another one"""
+def our_thms(path, cheats=False):
+  """the theorems this port states, by the HOL4 name that the
+     proof store calls them by, mapped to the name this port
+     binds them under: the port writes the HOL4 name in a
+     comment where the two are not the same.  With <cheats> only
+     the ones this port states and does not prove"""
   s = open(path).read()
   if CUT in s: s = s[:s.index(CUT)]
   out = {}
   for mo in CHEATED.finditer(s):
     body = s[mo.start():block_end(s, mo.end())]
-    if 'CHEAT_TAC' not in body: continue
+    if cheats and 'CHEAT_TAC' not in body: continue
     out[mo.group(1) or mo.group(2)] = mo.group(2)
   return out
+
+
+def our_cheats(path):
+  return our_thms(path, True)
 
 
 def fill(argv):
@@ -846,9 +884,13 @@ def drop(argv):
   """the sections of a proof store that a check says do not go
      through, taken out again"""
   if len(argv) < 2: print('drop <theory> <name>...'); return 1
-  nm, names = argv[0], set(argv[1:])
+  nm = argv[0]
   a = ours_of(nm)
   if not a: print('no file for %s' % nm); return 1
+  # a check names a theorem as this port binds it and the store
+  # names it as HOL4 does, so either name takes it out
+  byb = dict((b, n) for n, b in our_thms(a).items())
+  names = set(byb.get(n, n) for n in argv[1:])
   sys.path.insert(0, T)
   import proofstore
   pp = proofstore.path_of(re.sub(r'^.*/ml/', '', a))
@@ -866,8 +908,19 @@ def drop(argv):
   return 0
 
 
+def where(argv):
+  """the file of this port that holds a theory, as the port
+     names it: what tools/bin/tryfile takes"""
+  if not argv: print('where <theory>'); return 1
+  a = ours_of(argv[0])
+  if not a: print('no file for %s' % argv[0], file=sys.stderr); return 1
+  print(os.path.relpath(a, ML))
+  return 0
+
+
 def main(argv):
   if not argv: print(__doc__); return 0
+  if argv[0] == 'where': return where(argv[1:])
   if argv[0] == 'import': return emit(argv[1:])
   if argv[0] == 'names': return names(argv[1:])
   if argv[0] == 'report': return report(argv[1:])

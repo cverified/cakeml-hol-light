@@ -323,10 +323,6 @@ let n2w_def = prove
     THEN
   MESON_TAC[]);;
 
-let word_index = prove
- (`!n i. i < dimindex(:N) ==> (bit i (word n:N word) <=> numbit i n)`,
-  SIMP_TAC[BIT_WORD; numbit]);;
-
 let word_index_n2w = prove
  (`!n i. bit i (word n:N word) <=> if i < dimindex(:N) then numbit i n
    else F`,
@@ -913,13 +909,6 @@ let BIT_WORD_BITS = prove
   ASM_CASES_TAC `bit (i + l) (w:N word)` THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o ONCE_REWRITE_RULE[BIT_GUARD]) THEN ARITH_TAC);;
 
-let BIT_WORD_SLICE = prove
- (`!h l (w:N word) i. bit i (word_slice h l w) <=> l <= i /\ i <= h /\
-   bit i w`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[word_slice; BIT_WORD_OF_BITS; IN] THEN
-  ASM_CASES_TAC `bit i (w:N word)` THEN ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM(MP_TAC o ONCE_REWRITE_RULE[BIT_GUARD]) THEN ARITH_TAC);;
-
 let word_bits_subword = prove
  (`!h l (w:N word). word_bits h l w = word_subword w (l,(h + 1) - l):N
    word`,
@@ -1194,27 +1183,6 @@ let word_slice_alt_def = prove
        w):N word`,
   REWRITE_TAC[word_slice_alt]);;
 
-let BIT_WORD_SLICE_ALT = prove
- (`!h l (w:N word) i. bit i (word_slice_alt h l w) <=> l <= i /\ i < h
-   /\ bit i w`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[word_slice_alt; BIT_WORD_OF_BITS; IN]
-    THEN
-  MESON_TAC[BIT_GUARD]);;
-
-let word_to_bytes_aux_DEF = new_recursive_definition num_RECURSION
-  `(word_to_bytes_aux 0 (w:N word) be = []:byte list) /\
-   (word_to_bytes_aux (SUC n) w be =
-      APPEND (word_to_bytes_aux n w be) [get_byte (word n:N word) w
-        be])`;;
-
-let word_to_bytes_aux_def = prove
- (`(!(w:N word) be. word_to_bytes_aux 0 w be = []:byte list) /\
-   (!n (w:N word) be.
-      word_to_bytes_aux (SUC n) w be =
-      APPEND (word_to_bytes_aux n w be) [get_byte (word n:N word) w
-        be])`,
-  REWRITE_TAC[word_to_bytes_aux_DEF]);;
-
 let NUMBIT_MUL_2EXP = prove
  (`!i k n. numbit i (n * 2 EXP k) <=> k <= i /\ numbit (i - k) n`,
   REPEAT GEN_TAC THEN
@@ -1421,7 +1389,6 @@ let SIZES_THMS = prove
      word_lsr_n2w                     BIT_ATOM_CASES_TAC
      WORD_BITS_LSL                    BIT_ATOM_CASES_TAC
      w2w_LSL                          BIT_ATOM_CASES_TAC
-     BITWISE_def                      op
      BITWISE_LT_2EXP                  BITWISE_def SBIT_def
      NUMBIT_BITWISE                   BITWISE_LT_2EXP BITWISE_def
                                       SBIT_def
@@ -1443,7 +1410,6 @@ let SIZES_THMS = prove
      byte_index_def                   byte_index_DEF
      get_byte_def                     get_byte_DEF
      set_byte_def                     set_byte_DEF
-     word_of_bytes_DEF                CONS
      word_of_bytes_def                CONS word_of_bytes_DEF
      bytes_to_word_def                bytes_to_word_DEF list_CASE
      set_byte_change_a                byte_index_DEF set_byte_DEF
@@ -1452,6 +1418,7 @@ let SIZES_THMS = prove
      BYTE_INDEX_BOUND                 byte_index_DEF
      get_byte_set_byte                BYTE_INDEX_BOUND get_byte_DEF
                                       set_byte_DEF
+     word_to_bytes_aux_def            word_to_bytes_aux_DEF
      word_to_bytes_def                word_to_bytes_DEF
      align_def                        align_DEF
      aligned_def                      aligned_DEF
@@ -1491,7 +1458,8 @@ let SIZES_THMS = prove
      FCP_T_F                          K_THM
      word_lo_def                      nzcv_DEF v
      word_lt_def                      nzcv_DEF v
-     LOG2_CONV                        Comb LOG2_UNIQUE _ failwith find v
+     LOG2_CONV                        Comb Const LOG2_UNIQUE Num _
+                                      failwith find power_num
      _                                FCP_T_F aligned_add_pow
                                       cake_add_simps
 

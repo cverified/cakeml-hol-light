@@ -213,12 +213,17 @@ LightCake's HOL4 library layer is proved, and of those theories
 this port has only the definitions that CakeML needs.  What it
 proves of them can be taken:
 
-    python3 -I tools/lightcake.py import sptree
-    tools/bin/lightcake-check sptree
+    tools/bin/lightcake-take sptree
 
-The first writes `tools/lightcake/sptree.ml`, which a re-port
-appends to `ml/lib/sptree.ml` as it appends `tools/extra/`.  The
-statements and the proofs are LightCake's, with its constants
+which imports, tries every block of the import on its own,
+imports again without the ones that do not go through, and
+writes the file.  The import itself is the file
+`tools/lightcake/sptree.ml`, which a re-port appends to
+`ml/lib/sptree.ml` as it appends `tools/extra/`.  Nothing of it
+reaches `ml/` until every block of it has been run, because a
+block that fails stops the file it is in.
+
+The statements and the proofs are LightCake's, with its constants
 under the names this port gives them: both ports name after
 HOL4, so the HOL4 name is what joins them (its `doc/names.tsv`
 and this port's own renaming).  A name of the closure can be a
@@ -226,7 +231,21 @@ word of HOL Light as well, so that map is only used inside a
 quotation and never for a name the block binds.
 
 A block is taken only when every name it uses is one this port
-has.  A name of LightCake's **proof kit** never counts as one:
+has, and never when it **binds** one this port binds: a block
+that did would shadow what this port says, and every later file
+reads the name as this port writes it.  So a definition of
+LightCake's is never taken -- this port makes its own, its own
+way -- and neither is a theorem that this port states itself.
+
+Which name is which is read off the two files, and the file of
+this port is what says how this port names the theory's
+constants: this port's `tailrec_TAILREC` is HOL4's
+`tailrec$TAILREC` under the name LightCake gives it too, while
+`TAILREC` is `While`'s, which is another constant altogether.
+A file of this port is read up to the block an import appended
+to it, or the import would be read back as what this port says.
+
+A name of LightCake's **proof kit** never counts as one it has:
 its `size_def` makes a size function and this port's is the size
 function of sptree, so the word says nothing.  That is also what
 keeps HOL4-style tactics out -- they are all kit names.  Where
@@ -235,22 +254,27 @@ so and lets those proofs in: `SPTAUX_CASES_TAC` is LightCake's
 case split, and HOL Light's is `STRUCT_CASES_TAC` with
 `cases_of`.
 
-`lightcake-check` loads the blocks one at a time and writes the
-ones that do not go through into `tools/lightcake/<theory>.bad`,
-which the next import leaves out, with the reason.  A block that
-fails stops a file, so an import is only worth having when every
-block of it has been tried on its own.
+`lightcake-check`, which the loop runs, loads the blocks one at
+a time and writes the ones that do not go through into
+`tools/lightcake/<theory>.bad`, which the next import leaves
+out, with the reason.
 
-A theorem this port **states and cheats** is the other half.
-`tools/lightcake.py fill <theory>` writes LightCake's proof of
-it into `proofs/<path>.prf`, under the same name rule, and the
-port splices it in at the next re-port.  97 of the 402 cheats
-LightCake proves can be filled as things stand (mlstring 48,
-mllist 17, backendProps 13, gc_shared 10, parmove 12).  The
-check is `TOLERANT=1 tools/bin/tryfile <file>`, which loads
-every theorem of the file in a try and reports all of them that
-fail rather than the first, and `lightcake.py drop <theory>
-<name>...` takes those sections out again.
+A theorem this port **states and cheats** is the other half:
+
+    tools/bin/lightcake-fill mlstring
+
+writes LightCake's proof of it into `proofs/<path>.prf`, under
+the same name rule, ports, loads the file with every theorem in
+a try so that every proof that does not go through is reported
+and not only the first, takes those out of the store again, and
+ports once more.  Here the statement is this port's and the
+proof is LightCake's, and the only way to know that the two fit
+is to run them: this port's `implode_STRCAT` is about `STRCAT`
+where LightCake's is about `APPEND`, and LightCake's proof does
+not reach it.  The two halves of the loop are also there on
+their own (`lightcake.py fill`, `TOLERANT=1 tools/bin/tryfile
+<file>`, `lightcake.py drop <theory> <name>...`), and `drop`
+takes either name a theorem goes by.
 
 Whether a name exists is read off the sources: this port's
 files that load before the one being written, LightCake's own
