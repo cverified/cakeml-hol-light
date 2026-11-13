@@ -27,7 +27,7 @@ The work has three phases.
 2. **Statements -- done.**  Every `Theorem`, `Triviality` and
    ML-bound theorem of the sources, with its name, its statement
    and its attributes, in the order of the source, with `CHEAT_TAC`
-   where HOL4 has a proof.  693 theorems are not stated but have a
+   where HOL4 has a proof.  715 theorems are not stated but have a
    comment pointing at the HOL4 lines instead; `tools/coverage.py`
    is the check.
 3. **Proofs -- under way.**  Every cheat becomes a real proof,

@@ -1,0 +1,20 @@
+#!/bin/sh
+# lightcake-take <theory> [session] : take what LightCake proves
+# of a theory into the port.  It imports what this port has every
+# name for, tries every block of that on its own, imports again
+# without the ones that do not go through, and writes the file.
+#
+# The whole loop, because an import is only worth having when
+# every block of it has been tried: a block that fails stops the
+# file it is in.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+t=$1
+s=${2:-lcc}
+[ -z "$t" ] && { echo "lightcake-take <theory> [session]"; exit 1; }
+rm -f $C/tools/lightcake/$t.bad
+python3 -I $C/tools/lightcake.py import $t || exit 1
+python3 -I $C/tools/bin/lightcake-check $t $s || exit 1
+python3 -I $C/tools/lightcake.py import $t || exit 1
+python3 -I $C/tools/port.py $t > /dev/null || exit 1
+python3 -I $C/tools/lines.py | tail -1
