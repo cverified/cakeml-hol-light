@@ -2,6 +2,8 @@
 
      python3 -I tools/lightcake.py names [<theory>]
      python3 -I tools/lightcake.py report
+     python3 -I tools/lightcake.py deps <theory>
+     python3 -I tools/lightcake.py import <theory>
 
 LightCake (`lightcake-src/`, see README.md) is the other port of
 CakeML to HOL Light: narrow and deep where this one is wide and
@@ -10,18 +12,30 @@ listTheory, finite_mapTheory, sptreeTheory and the rest -- and of
 those theories this port has only the definitions that CakeML
 needs.  So they are what it has to give.
 
-Both ports keep HOL4's name for the **binding** of a definition
-(`lookup_def`) and for a theorem, and both rename the **constant**
-where a name would clash: this port writes `sptree_lookup` where
-LightCake writes `lookup`.  So the two vocabularies line up
-binding for binding, and the map from its constants to this
-port's falls out of the definitions of a file without any table.
+What joins the two vocabularies is the HOL4 name, because both
+ports name after HOL4: LightCake's `doc/names.tsv` and
+`doc/library_renames.tsv` say what it calls each thing of the
+closure, and this port's own renaming says what this port calls
+it.  Where both ports have the file of a theory, the pair of
+files says it more precisely still, binding for binding.
 
-`names` prints that map for a theory (or the count for every
+`import` writes `tools/lightcake/<theory>.ml`, which a re-port
+appends to this port's own file of that theory.  A block is
+taken only when every name it uses is one this port has **at
+that point in the load order**, and a name of LightCake's proof
+kit is never one of those: that is what keeps HOL4-style tactics
+out, and `tools/extra/<theory>.ml` is where HOL Light's own way
+of doing what such a name does is written.  What a check of the
+blocks found does not go through
+(`tools/bin/lightcake-check`, which writes
+`tools/lightcake/<theory>.bad`) is left out with the reason.
+
+`names` prints the map of a theory (or the count for every
 theory); `report` says, for every file both ports have, how many
 theorems are shared, how many of this port's cheats LightCake
 proves, and how many of its proofs use a tactic of its own HOL4
-kit rather than HOL Light's.
+kit rather than HOL Light's; `deps` says what a theory of it
+would need.
 """
 import os, re, sys, collections
 
@@ -575,7 +589,7 @@ def emit(argv):
                   if n in ob or n in m or n in ours)
       continue
     if ns[0] in bad:
-      left.append((ns[0], ['--', bad[ns[0]]])); continue
+      left.append((ns[0], ['--'] + bad[ns[0]].split())); continue
     need = []
     bnd = bound_names(body)
     for w in sorted(set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", body))):

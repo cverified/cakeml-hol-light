@@ -4,8 +4,6 @@ comparison	Overload list_cmp
 comparison	Overload pair_cmp
 sptree	Overload isEmpty
 sptree	Overload add_pause
-sptree	line 1643 is 132 characters
-sptree	line 1698 is 127 characters
 ASCIInumbers	Overload toNum
 binary_ieee	Overload tc
 binary_ieee	Overload fsign

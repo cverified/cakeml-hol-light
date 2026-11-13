@@ -20,6 +20,8 @@ import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import db as dbmod, hol4, port as portmod
 
+T = os.path.dirname(os.path.abspath(__file__)) + '/'
+
 BANNER = '(* ======================================================== *)'
 
 
@@ -48,8 +50,18 @@ def base(path):
 def what_it_is(db, thy, kind, blocks):
   """the sentence that says what the file is"""
   if kind == 'lib':
-    return ('A HOL4 library theory, of which the port has the '
-            'definitions that CakeML needs.')
+    s = ('A HOL4 library theory, of which the port has the '
+         'definitions that CakeML needs')
+    # and, where tools/lightcake.py has written one, the
+    # theorems of it that LightCake proves
+    n = 0
+    try:
+      n = len(re.findall(r"^let [A-Za-z0-9_']+ = prove",
+                         open(T + 'lightcake/' + thy + '.ml').read(),
+                         re.M))
+    except OSError: pass
+    return s + ('.' if not n
+                else ', and %d theorems of it from LightCake.' % n)
   cnt = {}
   for b in blocks:
     cnt[b.kind] = cnt.get(b.kind, 0) + 1

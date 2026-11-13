@@ -75,7 +75,8 @@ def main(argv):
       why = ' '.join(next(
         (l for l in out.split('\n')
          if l.startswith('Error') or l.startswith('Exception')),
-        'no answer').split())[:120]
+        'no answer').replace(os.path.abspath(blk),
+                             'the block').split())[:100]
       bad.append((ns[0], why))
       print('%4d/%d  %-34s %s' % (i + 1, len(blocks), ns[0], why))
       # a step that ran out of its budget leaves the session

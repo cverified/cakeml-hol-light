@@ -1,0 +1,15 @@
+wf_insert	Exception: Failure "TAC_PROOF: Unsolved goals".
+size_domain	Exception:
+SPTAUX_ALL_DISTINCT_CARD	Exception: Failure "find_term".
+spt_eq_thm	Error in included file the block
+wf_fromAList	Error: Unbound value wf_insert
+num_set_domain_eq	Error: Unbound value spt_eq_thm
+delete_fail	Error: Unbound value spt_eq_thm
+size_delete	Error: Unbound value size_domain
+IMP_size_LESS_size	Error: Unbound value size_domain
+alist_insert_append	no answer
+wf_fromList	Error: Unbound value wf_insert
+wf_list_to_num_set	Error: Unbound value wf_insert
+insert_unchanged	Exception: Failure "TAC_PROOF: Unsolved goals".
+size_map	Error: Unbound value size_domain
+rtc_is_adjacent	Error: Unbound value RTC_INDUCT_L
