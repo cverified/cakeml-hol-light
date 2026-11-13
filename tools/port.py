@@ -2111,13 +2111,17 @@ class Porter:
     # loads.  Which way each definition needed is harvested from a
     # run (tools/strategies.py); where no run has seen one yet its
     # shape says what to write, and the next run says whether that
-    # was right.
+    # was right.  overrides.WAY has the ones the harvest gets
+    # wrong -- a relation it found holds in the session of a run,
+    # where every theory's names are in scope, and a file has only
+    # its own.
     portname = lambda c: self.ctx.names.get((self.thy, c), c)
     names = set(map(portname, self.ctx.defining))
     way = None
     for c in sorted(self.ctx.defining):
       for k in ((self.thy, portname(c)), (self.thy, c)):
-        if k in strategies.WAY: way = strategies.WAY[k]
+        if k in overrides.WAY: way = overrides.WAY[k]
+        elif k in strategies.WAY: way = strategies.WAY[k]
       if way: break
     strat, assumed_term, found_rel = way if way else ('', False, '')
     # Whether the port could make the definition at all is what

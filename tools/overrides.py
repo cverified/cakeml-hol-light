@@ -1037,6 +1037,18 @@ MATCH_FORM = set([
 # the port writes is the list of clauses of the definition with the
 # clauses of the named constants written as one clause with a match
 # each.  The text is the comment that goes over the definition.
+# how a definition is made, where the way that a run harvested
+# (tools/strategies.py) does not work when a file says it: the
+# relation that the run found is printed and read back, and a
+# name of it may mean something else in the file's own scope
+# than it did in the session of a run, where every theory is.
+# (theory, constant) -> (strategy, whether the termination is
+# assumed, the relation), as tools/strategies.py has them; the
+# empty relation leaves the way to find its own.
+WAY = {
+}
+
+
 MATCH_CLAUSES = {
   # the mutual vb_eq_size/vb_eq_size_list of
   # data_to_word_memoryProof, which is the same shape as the do_eq
