@@ -436,12 +436,14 @@ def file_head(nm, src):
 
 
 
-def wrap72(text):
+def wrap72(text, wide=72):
   """LightCake writes wider lines than this port allows, so a
      line over 72 characters is broken at a space.  A break
      inside a quotation is harmless (a term is the same term
      whatever its whitespace); one inside a string of OCaml is
-     not, so those spans are left alone."""
+     not, so those spans are left alone.  A proof of the store
+     is written with three characters after it (the bracket and
+     the ;; that the port puts there), so it asks for less"""
   def spans(l):
     """the stretches of the line that are an OCaml string"""
     out, i = [], 0
@@ -455,10 +457,10 @@ def wrap72(text):
   for line in text.split('\n'):
     ind = len(line) - len(line.lstrip())
     cont = ' ' * (ind + 2)
-    while len(line) > 72:
+    while len(line) > wide:
       sp = spans(line)
       cut = -1
-      for i in range(min(72, len(line) - 1), ind, -1):
+      for i in range(min(wide, len(line) - 1), ind, -1):
         if line[i] == ' ' and not any(a < i < b for a, b in sp):
           cut = i; break
       if cut < 0: break
@@ -826,7 +828,7 @@ def fill(argv):
     need = c.missing([k], body)
     if need: left.append((n, need)); continue
     t, _ = c.ported(tactic_of(body))
-    took.append((n, wrap72(reindent(t))))
+    took.append((n, wrap72(reindent(t), 69)))
   if took:
     os.makedirs(os.path.dirname(pp), exist_ok=True)
     old = open(pp).read().rstrip('\n') + '\n\n' \

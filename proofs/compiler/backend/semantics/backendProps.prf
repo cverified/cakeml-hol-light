@@ -11,8 +11,8 @@
    EQ_TAC THEN REPEAT STRIP_TAC THENL
     [ASM_REWRITE_TAC[];
      ASM_REWRITE_TAC[ONE];
-     STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN ASM_REWRITE_TAC[GSYM
-       ONE]])
+     STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+       ASM_REWRITE_TAC[GSYM ONE]])
 
 ### is_state_oracle_shift_imp
   (REWRITE_TAC[is_state_oracle_def; shift_seq_def; ADD_CLAUSES] THEN
@@ -25,7 +25,8 @@
     [FIRST_X_ASSUM(MP_TAC o SPECL [`i' + i:num`; `j + i:num`; `x:B`;
       `y:B`] o
        check (fun th -> is_forall(concl th) &&
-                        length(fst(strip_forall(concl th))) = 4)) THEN
+                        length(fst(strip_forall(concl th))) = 4))
+                          THEN
      ASM_REWRITE_TAC[LT_ADD_RCANCEL];
      SUBGOAL_THEN `(x:B) IN f ((co:num->A) (i - 1)) \/ x IN St`
        STRIP_ASSUME_TAC
@@ -34,7 +35,8 @@
        FIRST_X_ASSUM(MP_TAC o SPECL [`i - 1`; `i' + i:num`; `x:B`;
          `y:B`] o
          check (fun th -> is_forall(concl th) &&
-                          length(fst(strip_forall(concl th))) = 4)) THEN
+                          length(fst(strip_forall(concl th))) = 4))
+                            THEN
        ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
          ASM_ARITH_TAC;
        ASM_MESON_TAC[]]])
@@ -59,7 +61,8 @@
   (MESON_TAC[restrict_nonzero_SUBSET; SUBSET_TRANS])
 
 ### restrict_nonzero_left_union
-  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_UNION; IN_ELIM_THM] THEN
+  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_UNION; IN_ELIM_THM]
+    THEN
    MESON_TAC[])
 
 ### restrict_nonzero_mono
@@ -67,7 +70,8 @@
     MESON_TAC[])
 
 ### restrict_nonzero_right_union
-  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_UNION; IN_ELIM_THM] THEN
+  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_UNION; IN_ELIM_THM]
+    THEN
    MESON_TAC[])
 
 ### state_orac_states_inv
@@ -77,6 +81,6 @@
    MAP_EVERY EXISTS_TAC
     [`state_orac_states (f_inc:S->Q->S#R) st (orac:num->Q) i`;
      `(orac:num->Q) i`;
-     `SND ((f_inc:S->Q->S#R) (state_orac_states f_inc st orac i) (orac
-       i))`] THEN
+     `SND ((f_inc:S->Q->S#R) (state_orac_states f_inc st orac i)
+       (orac i))`] THEN
    ASM_REWRITE_TAC[PAIR])

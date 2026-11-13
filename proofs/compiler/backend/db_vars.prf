@@ -6,7 +6,8 @@
    MESON_TAC[])
 
 ### has_var_vars_flatten
-  (REWRITE_TAC[vars_flatten_def; MEM_vars_from_list; MEM_vars_to_list])
+  (REWRITE_TAC[vars_flatten_def; MEM_vars_from_list;
+    MEM_vars_to_list])
 
 ### lookup_db_to_set
   (REWRITE_TAC[lookup_db_to_set_acc; db_to_set_def; lookup_def;
@@ -14,7 +15,8 @@
    COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT])
 
 ### lookup_db_to_set_Shift
-  (REWRITE_TAC[db_to_set_def; db_to_set_acc_def; lookup_db_to_set_acc;
+  (REWRITE_TAC[db_to_set_def; db_to_set_acc_def;
+    lookup_db_to_set_acc;
    lookup_def; ADD_CLAUSES])
 
 ### lookup_db_to_set_acc

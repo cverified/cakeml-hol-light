@@ -10,6 +10,7 @@
   about the compiler backend.
 *)
 
+needs "lib/regexp_compiler.ml";;
 needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 
@@ -80,7 +81,7 @@ let pure_co_I = prove
 
 let pure_cc_I = prove
  (`pure_cc I = I`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM; pure_cc_def; I_THM; LET_DEF; LET_END_DEF]));;
 
 (* somewhat generic wrappers for defining standard properties about oracles *)
 
@@ -111,7 +112,7 @@ let oracle_monotonic_subset = prove
  (`((St' SUBSET St) /\ (!n. f' (co' n) SUBSET f (co n))) ==>
    oracle_monotonic f R St co ==>
    oracle_monotonic f' R St' co'`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[oracle_monotonic_def; SUBSET] THEN MESON_TAC[]));;
 
 let oracle_monotonic_shift_subset = prove
  (`((St' SUBSET (IMAGE ((+) (i:num)) St UNION count i)) /\
@@ -124,7 +125,27 @@ let oracle_monotonic_shift_seq = prove
  (`!i. (oracle_monotonic f R St co /\ i > 0 /\
      St' SUBSET f (co (i - 1)) UNION St ==>
      oracle_monotonic f R St' (misc_shift_seq i co))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[oracle_monotonic_def; shift_seq_def; SUBSET; IN_UNION]
+    THEN
+   REPEAT STRIP_TAC THENL
+    [FIRST_X_ASSUM(MP_TAC o SPECL [`i' + i:num`; `j + i:num`; `x:B`;
+      `y:B`] o
+       check (fun th -> is_forall(concl th) &&
+                        length(fst(strip_forall(concl th))) = 4))
+                          THEN
+     ASM_REWRITE_TAC[LT_ADD_RCANCEL];
+     SUBGOAL_THEN `(x:B) IN f ((co:num->A) (i - 1)) \/ x IN St`
+       STRIP_ASSUME_TAC
+     THENL
+      [ASM_MESON_TAC[];
+       FIRST_X_ASSUM(MP_TAC o SPECL [`i - 1`; `i' + i:num`; `x:B`;
+         `y:B`] o
+         check (fun th -> is_forall(concl th) &&
+                          length(fst(strip_forall(concl th))) = 4))
+                            THEN
+       ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
+         ASM_ARITH_TAC;
+       ASM_MESON_TAC[]]]));;
 
 let oracle_monotonic_DISJOINT_init = prove
  (`!i.
@@ -145,19 +166,30 @@ let is_state_oracle_shift = prove
    (is_state_oracle compile_inc_f (misc_shift_seq 1 co) /\
          FST (FST (co 1)) = FST (compile_inc_f (FST (FST (co 0)))
            (SND (co 0))))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_state_oracle_def; shift_seq_def; GSYM ADD1] THEN
+   EQ_TAC THEN REPEAT STRIP_TAC THENL
+    [ASM_REWRITE_TAC[];
+     ASM_REWRITE_TAC[ONE];
+     STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
+       ASM_REWRITE_TAC[GSYM ONE]]));;
 
 let is_state_oracle_shift_imp = prove
  (`is_state_oracle compile_inc_f co ==>
    is_state_oracle compile_inc_f (misc_shift_seq n co)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_state_oracle_def; shift_seq_def; ADD_CLAUSES] THEN
+   SIMP_TAC[]));;
 
 let is_state_oracle_k = prove
  (`!k. is_state_oracle compile_inc_f co ==>
    (?st oth_st prog.
      co k = ((st,oth_st),prog) /\ FST (FST (co (SUC k))) = FST
        (compile_inc_f st prog))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_state_oracle_def] THEN REPEAT STRIP_TAC THEN
+   MAP_EVERY EXISTS_TAC
+    [`FST (FST ((co:num->(S#C)#P) k))`; `SND (FST ((co:num->(S#C)#P)
+      k))`;
+     `SND ((co:num->(S#C)#P) k)`] THEN
+   ASM_REWRITE_TAC[PAIR]));;
 
 (* constructive combinators for building up the config part of an oracle *)
 
@@ -226,7 +258,15 @@ let state_orac_states_inv = prove
    (!st prog st' prog'. f_inc st prog = (st',prog') /\ P st ==> P
      st') ==>
    P (state_orac_states f_inc st orac i)`,
-  CHEAT_TAC);;
+  (STRIP_TAC THEN SPEC_TAC(`i:num`,`i:num`) THEN
+   INDUCT_TAC THEN ASM_REWRITE_TAC[state_orac_states_def] THEN
+   FIRST_X_ASSUM MATCH_MP_TAC THEN
+   MAP_EVERY EXISTS_TAC
+    [`state_orac_states (f_inc:S->Q->S#R) st (orac:num->Q) i`;
+     `(orac:num->Q) i`;
+     `SND ((f_inc:S->Q->S#R) (state_orac_states f_inc st orac i)
+       (orac i))`] THEN
+   ASM_REWRITE_TAC[PAIR]));;
 
 let oracle_monotonic_state_with_inv = prove
  (`!P n_f. P (FST (FST (orac 0))) /\
@@ -264,32 +304,41 @@ let restrict_nonzero_def = new_definition
 
 let restrict_nonzero_SUBSET = prove
  (`restrict_nonzero l SUBSET l`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_ELIM_THM] THEN
+    MESON_TAC[]));;
 
 let restrict_nonzero_SUBSET_left = prove
  (`s SUBSET t ==>
    restrict_nonzero s SUBSET t`,
-  CHEAT_TAC);;
+  (MESON_TAC[restrict_nonzero_SUBSET; SUBSET_TRANS]));;
 
 let restrict_nonzero_left_union = prove
  (`restrict_nonzero s SUBSET a UNION b ==>
    restrict_nonzero s SUBSET restrict_nonzero a UNION b`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_UNION; IN_ELIM_THM]
+    THEN
+   MESON_TAC[]));;
 
 let restrict_nonzero_right_union = prove
  (`restrict_nonzero s SUBSET a UNION b ==>
    restrict_nonzero s SUBSET a UNION restrict_nonzero b`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_UNION; IN_ELIM_THM]
+    THEN
+   MESON_TAC[]));;
 
 let restrict_nonzero_mono = prove
  (`s SUBSET t ==>
    restrict_nonzero s SUBSET restrict_nonzero t`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[restrict_nonzero_def; SUBSET; IN_ELIM_THM] THEN
+    MESON_TAC[]));;
 
 let restrict_nonzero_BIGUNION = prove
  (`restrict_nonzero (BIGUNION ss) = BIGUNION (IMAGE restrict_nonzero
   ss)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[restrict_nonzero_def; EXTENSION; IN_UNIONS;
+    EXISTS_IN_IMAGE;
+               IN_ELIM_THM] THEN
+   MESON_TAC[]));;
 
 let option_le_def = new_definition
   `option_le x1 x2 =

@@ -1,5 +1,8 @@
 location	Overload end_locn
 location	Overload unknown_locn
+ternaryComparisons	line 42 is 77 characters
+toto	line 97 is 79 characters
+toto	line 103 is 74 characters
 comparison	Overload list_cmp
 comparison	Overload pair_cmp
 sptree	Overload isEmpty
@@ -36,7 +39,7 @@ misc	line 1917 is 92 characters
 misc	line 2492 is 78 characters
 misc	line 2525 is 73 characters
 mllist	line 31 is 80 characters
-mllist	line 364 is 73 characters
+mllist	line 405 is 73 characters
 mlstring	ML code skipped: val cpn_distinct = TypeBase.distinct_of ``:ordering`` val cp
 mlstring	ML code skipped: val _ = add_strliteral_form{inj=“implode”, ldelim = "«"};
 mlstring	Overload strlit
@@ -46,12 +49,12 @@ mlstring	ML code skipped: val flip_ord_def = ternaryComparisonsTheory.invert_com
 mlstring	Overload flip_ord
 mlstring	Overload size_limit
 mlstring	line 9 is 78 characters
-mlstring	line 30 is 75 characters
-mlstring	line 31 is 81 characters
-mlstring	line 38 is 74 characters
-mlstring	line 49 is 89 characters
-mlstring	line 50 is 84 characters
-mlstring	line 977 is 73 characters
+mlstring	line 31 is 75 characters
+mlstring	line 32 is 81 characters
+mlstring	line 39 is 74 characters
+mlstring	line 50 is 89 characters
+mlstring	line 51 is 84 characters
+mlstring	line 1066 is 73 characters
 ast	line 106 is 76 characters
 ast	line 108 is 83 characters
 ast	line 219 is 86 characters
@@ -66,7 +69,7 @@ backend_common	line 94 is 80 characters
 backend_common	line 95 is 80 characters
 backend_common	line 96 is 79 characters
 backend_common	line 100 is 80 characters
-backend_common	line 176 is 74 characters
+backend_common	line 181 is 74 characters
 closLang	ML code skipped: val exp_size_def = definition"exp_size_def";
 closLang	Theorem exp1_size_lemma: the auxiliary size function exp1_size
 closLang	line 172 is 73 characters
@@ -858,8 +861,8 @@ word_elim	line 10 is 76 characters
 asmProps	ML code skipped: local   fun genlist f 0 = []     | genlist f n = genlist f (
 asmProps	ML code skipped: local   fun gen_rw n =     ``asserts2 ^(numSyntax.term_of_in
 backendProps	ML code skipped: val conjs = MATCH_MP quotientTheory.EQ_IMPLIES (SPEC_ALL ora
-backendProps	line 83 is 78 characters
-backendProps	line 160 is 75 characters
+backendProps	line 84 is 78 characters
+backendProps	line 192 is 75 characters
 bvlProps	ML code skipped: val s = ``(s:('c,'ffi) bvlSem$state)``
 bvlProps	ML code skipped: val case_eq_thms = LIST_CONJ   (CaseEq "eq_result" :: CaseEq
 bvlProps	ML code skipped: fun split_tac q = Cases_on q \\ Cases_on `q` \\ FULL_SIMP_TA
@@ -900,7 +903,7 @@ bvi_inlineProof	line 522 is 74 characters
 bvi_inlineProof	line 523 is 73 characters
 bvi_inlineProof	line 890 is 73 characters
 namespaceProps	ML code skipped: val _ = DefnBase.export_cong "alistSub_cong";
-namespaceProps	line 615 is 73 characters
+namespaceProps	line 616 is 73 characters
 semanticPrimitivesProps	ML code skipped: val eqs = LIST_CONJ (map TypeBase.case_eq_of   [``:op``, ``:
 semanticPrimitivesProps	Overload SFV
 semanticPrimitivesProps	line 617 is 73 characters

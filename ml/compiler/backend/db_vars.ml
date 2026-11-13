@@ -99,16 +99,33 @@ let lookup_db_to_set_acc = prove
  (`!d n k s.
      sptree_lookup n (db_to_set_acc k d s) =
        (if has_var (n + k) d then SOME one else sptree_lookup n s)`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC db_var_set_INDUCT THEN
+   REWRITE_TAC[has_var_def; db_to_set_acc_def] THEN REPEAT STRIP_TAC
+     THENL
+    [COND_CASES_TAC THEN REWRITE_TAC[lookup_insert] THENL
+      [SUBGOAL_THEN `~(n + k = a)` (fun th -> REWRITE_TAC[th]) THEN
+        ASM_ARITH_TAC;
+       SUBGOAL_THEN `n = a - k <=> n + k = a` (fun th ->
+         REWRITE_TAC[th]) THEN
+       ASM_ARITH_TAC];
+     ASM_REWRITE_TAC[ADD_ASSOC];
+     ASM_REWRITE_TAC[] THEN
+     MAP_EVERY ASM_CASES_TAC [`has_var (n + k) a0`; `has_var (n + k)
+       a1`] THEN
+     ASM_REWRITE_TAC[]]));;
 
 let lookup_db_to_set = prove
  (`has_var n d = (sptree_lookup n (db_to_set d) = SOME one)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[lookup_db_to_set_acc; db_to_set_def; lookup_def;
+    ADD_CLAUSES] THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]));;
 
 let lookup_db_to_set_Shift = prove
  (`sptree_lookup n (db_to_set (db_vars_Shift k s)) = sptree_lookup (n
   + k) (db_to_set s)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[db_to_set_def; db_to_set_acc_def;
+    lookup_db_to_set_acc;
+   lookup_def; ADD_CLAUSES]));;
 
 let MEM_vars_to_list = prove
  (`MEM n (vars_to_list d) = has_var n d`,
@@ -119,16 +136,18 @@ let has_var_FOLDL_Union = prove
  (`!vs n s. has_var n (FOLDL (\s1 v. db_vars_Union (db_vars_Var v) s1) s
   vs) <=>
               MEM n vs \/ has_var n s`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; MEM; has_var_def] THEN
+   MESON_TAC[]));;
 
 let MEM_vars_from_list = prove
  (`!vs n. has_var n (vars_from_list vs) <=> MEM n vs`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[vars_from_list_def; has_var_FOLDL_Union; has_var_def]));;
 
 (* [simp] *)
 let has_var_vars_flatten = prove
  (`has_var n (vars_flatten d) = has_var n d`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[vars_flatten_def; MEM_vars_from_list;
+    MEM_vars_to_list]));;
 
 let ALL_DISTINCT_vars_to_list = prove
  (`ALL_DISTINCT (vars_to_list d)`,

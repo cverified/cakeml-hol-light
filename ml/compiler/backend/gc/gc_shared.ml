@@ -337,7 +337,10 @@ let heap_lookup_PREFIX = prove
 let heap_lookup_EXTEND = prove
  (`!xs n ys x. (heap_lookup n xs = SOME x) ==>
                 (heap_lookup n (xs ++ ys) = SOME x)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[heap_lookup_def; APPEND;
+    option_DISTINCT] THEN
+   REPEAT GEN_TAC THEN REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[]));;
 
 let heap_map_APPEND = prove
  (`!xs n ys. (heap_map n (xs ++ ys)) =
@@ -375,11 +378,14 @@ let heap_similar_Data_IMP_DataOrForward = prove
 let FILTER_LEMMA = prove
  (`!heap. (FILTER isForwardPointer heap = []) ==>
            (FILTER (\h. ~(isForwardPointer h)) heap = heap)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[FILTER] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[NOT_CONS_NIL; CONS_11]));;
 
 let heaps_similar_REFL = prove
  (`!xs. (FILTER isForwardPointer xs = []) ==> heaps_similar xs xs`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[heaps_similar_def] THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[FILTER; ALL2] THEN COND_CASES_TAC THEN
+   ASM_REWRITE_TAC[NOT_CONS_NIL]));;
 
 let heap_map_EMPTY = prove
  (`!xs n. (FILTER isForwardPointer xs = []) ==> (FDOM (heap_map n xs)
@@ -399,7 +405,10 @@ let heap_length_heap_expand = prove
 let EVERY_isDataElement_IMP_LEMMA = prove
  (`!heap2. EVERY isDataElement heap2 ==> (FILTER isForwardPointer
   heap2 = [])`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; FILTER; isDataElement_def]
+    THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[isForwardPointer_def] THEN
+     ASM_MESON_TAC[]));;
 
 let isSome_heap_looukp_IMP_APPEND = prove
  (`!xs ptr. isSomeDataElement (heap_lookup ptr xs) ==>
@@ -457,7 +466,8 @@ let heap_addresses_LESS = prove
 
 let FINITE_heap_addresses = prove
  (`!xs n. FINITE (heap_addresses n xs)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[heap_addresses_def; FINITE_EMPTY; FINITE_INSERT]));;
 
 let CARD_heap_addresses = prove
  (`!xs n. CARD (heap_addresses n xs) = LENGTH xs`,
@@ -474,7 +484,12 @@ let heap_filter_def = new_definition
 
 let heap_filter_EMPTY = prove
  (`!heap. heap_filter {} heap = []`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[heap_filter_def] THEN
+   SUBGOAL_THEN `!(heap:((A,B)heap_element)list) n. heap_filter_aux n
+     {} heap = []`
+     (fun th -> REWRITE_TAC[th]) THEN
+   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[heap_filter_aux_def;
+     NOT_IN_EMPTY; APPEND]));;
 
 (* [local] *)
 let heap_length_heap_filter_INSERT = prove
@@ -483,7 +498,21 @@ let heap_length_heap_filter_INSERT = prove
      (heap_length (heap_filter (e INSERT s) heap) =
       heap_length (heap_filter {e} heap) + heap_length (heap_filter
         s heap))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[heap_filter_def] THEN
+   SUBGOAL_THEN
+     `!(heap:((A,B)heap_element)list) n e s.
+        ~(e IN s)
+        ==> heap_length (heap_filter_aux n (e INSERT s) heap) =
+            heap_length (heap_filter_aux n {e} heap) +
+            heap_length (heap_filter_aux n s heap)`
+     (fun th -> SIMP_TAC[th]) THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[heap_filter_aux_def;
+     heap_length_NIL; ADD_CLAUSES] THEN
+   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[heap_length_APPEND; IN_INSERT;
+     IN_SING] THEN
+   ASM_CASES_TAC `n:num = e` THEN ASM_REWRITE_TAC[] THEN
+   TRY COND_CASES_TAC THEN REWRITE_TAC[heap_length_NIL] THEN
+     ARITH_TAC));;
 
 (* HOL4 gc_sharedScript.sml:706-712: a theorem that HOL4 states as
    the value of an ML expression: heap_filter_aux_ADD_SING *)
@@ -491,7 +520,10 @@ let heap_length_heap_filter_INSERT = prove
 (* [local] *)
 let heap_filter_aux_SING_ZERO = prove
  (`!heap n. 0 < n ==> (heap_filter_aux n {0} heap = [])`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[heap_filter_aux_def; IN_SING]
+    THEN
+   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[ARITH_RULE `0 < n ==> ~(n = 0)
+     /\ 0 < n + m`; APPEND]));;
 
 (* [local] *)
 let heap_lookup_IMP_heap_filter = prove
@@ -523,7 +555,8 @@ let heap_length_heap_filter = prove
  (`!heap.
       heap_length (heap_filter (heap_addresses 0 heap) heap) =
       heap_length heap`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[heap_filter_def] THEN
+   MESON_TAC[heap_length_heap_filter_aux; UNION_EMPTY]));;
 
 let heap_filter_aux_APPEND = prove
  (`!xs ys n s.
@@ -534,7 +567,15 @@ let heap_filter_aux_APPEND = prove
 
 let heap_filter_aux_heap_addresses_UNION = prove
  (`!xs n s. heap_filter_aux n (heap_addresses n xs UNION s) xs = xs`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[heap_filter_aux_def;
+    heap_addresses_def] THEN
+   REPEAT GEN_TAC THEN REWRITE_TAC[IN_UNION; IN_INSERT; APPEND] THEN
+   SUBGOAL_THEN
+     `(n INSERT heap_addresses (n + el_length h) t) UNION s =
+      heap_addresses (n + el_length (h:(A,B)heap_element))
+        (t:((A,B)heap_element)list)
+      UNION (n INSERT s)`
+     SUBST1_TAC THENL [SET_TAC[]; ASM_REWRITE_TAC[]]));;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

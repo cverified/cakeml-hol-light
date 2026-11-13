@@ -2,7 +2,7 @@
 (*  binary_ieee: ported from HOL4's
     src/floating-point/binary_ieeeScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 12 files of the port.  *)
+    that CakeML needs.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/integer_word.ml";;
