@@ -97,11 +97,13 @@ nested way".  So a call site says the whole of how its definition
 is made, however deep it goes.
 
 Which way each definition needs was harvested from a run
-(`tools/strategies.py`, `tools/bin/strategies`): 2928 of them are
-`new_definition`, 560 need a measure, 325 the recursion theorem of
-their type, 194 that theorem without recursing, 85 HOL Light's
-machinery, 54 a nested recursion compiled, 32 a match, 31 a guess
-and 3 patterns inside patterns.
+(`tools/strategies.py`, `tools/bin/strategies`): of the 4184 it
+has, 2862 are `new_definition`, 481 need a measure (406 of them
+with the relation a run found), 332 the recursion theorem of
+their type, 197 that theorem without recursing, 103 are assumed,
+86 need HOL Light's machinery, 41 a nested recursion compiled,
+33 a guess, 32 a match and 3 a case split; 14 go through a
+rewriting of the clauses and say both ways in one word.
 
 **Writing a new definition.**  `find_definition_way` runs the
 chain of strategies that the port used to run on every load, and
