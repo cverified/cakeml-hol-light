@@ -137,6 +137,9 @@ let join_all_names_def = new_definition
      (match xs with [x] -> x | _7 -> mlstring_concat
        (join_all_names_aux xs []))`;;
 
+let _ = size_thms "ast_exp";;
+let _ = size_thms "ast_pat";;
+let _ = size_thms "mlstring";;
 let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

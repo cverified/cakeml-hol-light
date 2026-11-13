@@ -53,6 +53,7 @@ let wrapper_ok_def = new_definition
 (* [cs] is a cache of code-table entries.  The correctness invariant
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass). *)
+let _ = size_thms "bvi_exp";;
 let inline_exp_def,inline_exp_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
@@ -95,16 +96,14 @@ let inline_all_def,inline_all_ind = define_rec
            (cs2,(name,arity,body) :: prog2))`];;
 
 let _ = size_thms "bvi_exp";;
-(* the termination relation that HOL4 gives is
-     MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
-       list_size bvi_exp_size es)
-   which is not one that HOL Light takes here; the one
-   below is what the port found for it *)
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvi_inlineScript.sml:115-120: the tactic that proves the
    termination *)
 let remove_ticks_exp_def,remove_ticks_exp_ind = define_mutual_shaped_wf
   "maplist>measure"
-  `MEASURE (\x0. bvi_exp_size x0)`
+  `MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
+  list_size bvi_exp_size es)`
   [`remove_ticks_exp (bvi_Var n) = bvi_Var n`;
    `remove_ticks_exp (bvi_If x y z) =
          bvi_If (remove_ticks_exp x) (remove_ticks_exp y)

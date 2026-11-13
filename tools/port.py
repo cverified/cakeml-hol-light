@@ -2029,6 +2029,9 @@ class Porter:
       rawterm = self.term(body)
       term = fmt(rawterm)
     rel = overrides.MEASURE.get(key)
+    # a relation that the port writes by hand is a decision and
+    # stands; every other one is what a run recorded
+    handrel = rel is not None
     if rel is not None: rel = fmt(' '.join(rel.split()), last=1)
     # the relation that HOL4's Termination gives is for the whole
     # definition, whether its clauses are a quotation each or one
@@ -2178,7 +2181,7 @@ class Porter:
     # recorded none the file says none, and the way lets HOL
     # Light's own machinery find one.
     hol4rel = rel
-    if recursive and not tac:
+    if recursive and not handrel:
       rel = fmt(found_rel, last=1) if found_rel else None
       # a measure that uses the size function of a datatype needs
       # it to be there, and this relation was not there when the

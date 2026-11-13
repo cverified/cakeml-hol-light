@@ -94,15 +94,15 @@ let let_ok_def = new_definition
             xs) [b]
         | _1 -> F`;;
 
-(* the termination relation that HOL4 gives is
-     MEASURE (list_size bvl_exp_size)
-   which is not one that HOL Light takes here, so the
-   port lets its own machinery find one *)
+let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvl_handleProofScript.sml:186-190: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let handle_ok_def,handle_ok_ind = define_guess_cheat
+let handle_ok_def,handle_ok_ind = define_wf_cheat
+  `MEASURE (list_size bvl_exp_size)`
   [`handle_ok [] <=> T`;
    `handle_ok ((x:bvl_exp) :: y :: xs) <=>
          handle_ok [x] /\ handle_ok (y :: xs)`;

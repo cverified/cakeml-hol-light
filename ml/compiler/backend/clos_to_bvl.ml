@@ -471,6 +471,7 @@ let force_thunk_code_def = new_definition
          (bvl_Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0;
            Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
+let _ = size_thms "closLang_exp";;
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -585,6 +586,8 @@ hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
+let _ = size_thms "bvl_exp";;
+let _ = size_thms "closLang_exp";;
 let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`compile_exp_sing max_app (Var t v:closLang_exp) aux = (((Var
@@ -839,6 +842,7 @@ let add_src_names_def,add_src_names_ind = define_rec
         (mlstring_concat [x; implode "_clos"]) (sptree_insert (n +
         1) x l))`];;
 
+let _ = size_thms "closLang_exp";;
 let get_src_names_def,get_src_names_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`get_src_names [] l = l`;
@@ -870,6 +874,7 @@ let get_src_names_def,get_src_names_ind = assume_definition_rec
          match loc_opt with NONE -> l1 | SOME n ->
            add_src_names n names l1)`];;
 
+let _ = size_thms "closLang_exp";;
 let get_src_names_sing_def,get_src_names_sing_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"

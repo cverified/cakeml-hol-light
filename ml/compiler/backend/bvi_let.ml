@@ -101,15 +101,15 @@ cake_term_facts := list_size_BUTLAST :: list_size_LAST ::
                    (!cake_term_facts);;
 cake_cheat_budget := 300;;
 
-(* the termination relation that HOL4 gives is
-     MEASURE (list_size bvi_exp_size o SND o SND)
-   which is not one that HOL Light takes here, so the
-   port lets its own machinery find one *)
+let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:110-116: the tactic that proves the
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bvi_let_compile_def,bvi_let_compile_ind = define_guess_cheat
+let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
+  `MEASURE (list_size bvi_exp_size o SND o SND)`
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;
@@ -158,15 +158,17 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_guess_cheat
 hol4_overload "compile" "bvi_let_compile";;
 
 let _ = size_thms "bvi_exp";;
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
+       (_12,_13,es) -> list_size bvi_exp_size es)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 (* HOL4 bvi_letScript.sml:158-168: the tactic that proves the
    termination *)
 let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
   define_mutual_shaped_wf_tac
   "maplist>measure"
-  `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
-  (_12,_13,es) -> list_size bvi_exp_size es)`
+  `MEASURE (\(x0,x1,x2). bvi_exp_size x2)`
   TERM_TAC
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Var (v + n)

@@ -86,7 +86,7 @@ bvi_inline	line 53 is 73 characters
 bvi_let	line 126 is 78 characters
 bvi_let	line 147 is 87 characters
 bvi_let	line 148 is 83 characters
-bvi_let	line 181 is 78 characters
+bvi_let	line 183 is 78 characters
 bvi_tailrec	Theorem MEM_exp_size_imp: the auxiliary size function exp2_size
 bvi_tailrec	ML code skipped: val test1_tm = ``Let [] (Call 0 (SOME 0) [] NONE)``
 bvi_tailrec	ML code skipped: val test2_tm = ``Op (IntOp Add) [Call 0 (SOME 0) [] NONE; Va
@@ -121,14 +121,14 @@ bvl	Overload mk_elem_at
 bvl_const	ML code skipped: val tm = (SmartOp2_quotation |>    map (fn QUOTE s => Portab
 bvl_const	Theorem SmartOp2_pmatch: the ML value ^tm, which the port does not have
 bvl_const	ML code skipped: end
-bvl_const	line 579 is 73 characters
+bvl_const	line 578 is 73 characters
 bvl_handle	ML code skipped: val compile_ind = theorem"compile_ind";
 bvl_handle	line 373 is 73 characters
 bvl_to_bvi	ML code skipped: val large_int = ``268435457:int``; (* 2**28-1 *)
 bvl_to_bvi	Overload num_stubs
 bvl_to_bvi	Overload nss
-bvl_to_bvi	line 353 is 92 characters
-bvl_to_bvi	line 367 is 84 characters
+bvl_to_bvi	line 351 is 92 characters
+bvl_to_bvi	line 365 is 84 characters
 bvl_to_bvi	line 650 is 73 characters
 clos_annotate	line 26 is 90 characters
 clos_call	ML code skipped: val free_ind = theorem "free_ind";
@@ -178,7 +178,7 @@ clos_to_bvl	line 41 is 76 characters
 clos_to_bvl	line 384 is 73 characters
 clos_to_bvl	line 395 is 75 characters
 clos_to_bvl	line 397 is 78 characters
-clos_to_bvl	line 998 is 73 characters
+clos_to_bvl	line 1003 is 73 characters
 asm	Overload addr_offset_ok
 asm	Overload hw_offset_ok
 asm	Overload byte_offset_ok
@@ -409,7 +409,7 @@ flatLang	Theorem exp3_size: the auxiliary size function exp3_size
 flatLang	Theorem exp_size_MAP: the auxiliary size function exp6_size
 flatLang	Theorem exp_size_MEM: the auxiliary size function exp6_size
 flatLang	line 166 is 73 characters
-flat_to_clos	line 547 is 73 characters
+flat_to_clos	line 548 is 73 characters
 mlint	ML code skipped: val exp_thm = EVAL ``10n ** exp_for_dec_enc`` val exp_tm = r
 mlint	ML code skipped: val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
 mlint	ML code skipped: val fromChars_ind = theorem"fromChars_ind"
@@ -492,7 +492,7 @@ pattern_exh	line 783 is 75 characters
 pattern_exh	line 785 is 76 characters
 flat_pattern	Theorem pat1_size: the auxiliary size function pat1_size
 source_to_flat	Theorem ast_pat1_size: the auxiliary size function pat1_size
-source_to_flat	line 592 is 73 characters
+source_to_flat	line 595 is 73 characters
 presLang	Overload list_to_display
 presLang	Overload option_to_display
 presLang	Theorem MEM_pat_size: the auxiliary size function pat1_size
@@ -1456,9 +1456,9 @@ data_to_word_memoryProof	line 41359 is 75 characters
 data_to_word_memoryProof	line 41360 is 78 characters
 data_to_word_memoryProof	line 41422 is 79 characters
 data_to_word_memoryProof	line 41423 is 79 characters
-data_to_word_memoryProof	line 47549 is 73 characters
-data_to_word_memoryProof	line 60846 is 79 characters
-data_to_word_memoryProof	line 65803 is 73 characters
+data_to_word_memoryProof	line 47548 is 73 characters
+data_to_word_memoryProof	line 60845 is 79 characters
+data_to_word_memoryProof	line 65802 is 73 characters
 word_bignumProof	ML code skipped: val good_dimindex_def = miscTheory.good_dimindex_def; val en
 word_bignumProof	ML code skipped: val shift_def = backend_commonTheory.word_shift_def
 word_bignumProof	ML code skipped: val raw_eval_cases = eval_cases;

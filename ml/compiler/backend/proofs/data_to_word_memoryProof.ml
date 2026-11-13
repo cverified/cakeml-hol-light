@@ -46103,9 +46103,8 @@ let _ = size_thms "dataSem_v";;
    (ml/lib/define.ml, "the depairing above was applied to the
    clause as it was given"). *)
 let vb_eq_size_def,vb_eq_size_ind = define_mutual_wf
-  `MEASURE (\x.      match x with        INL (refs,v1,v2) ->
-  dataSem_v_size v1      | INR (refs,l1,l2) -> list_size dataSem_v_size
-  l1)`
+  `MEASURE (\x. match x with INL (refs,v1,v2) -> dataSem_v_size v1 |
+  INR (refs,l1,l2) -> list_size dataSem_v_size l1)`
   [`vb_eq_size refs x2 x3 =
          match (x2,x3) with
            ((Block _91 t1 l1:dataSem_v),(Block _92 t2 l2:dataSem_v))
@@ -47519,8 +47518,8 @@ let _ = cake_cheat_budget := 120;;
 (* HOL4 data_to_word_memoryProofScript.sml:14020-14025: the tactic
    that proves the termination *)
 let word_eq_def,word_eq_ind = define_mutual_wf_tac
-  `MEASURE (\x. match x with INL (c,st,dm,m,l1,ck1,w1,w2) -> l1 | INR
-  (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`
+  `MEASURE (\x.      match x with        INL (c,st,dm,m,l1,ck1,w1,w2)
+  -> l1      | INR (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`
   TERM_TAC
   [`(word_eq c st dm m l ck w1 (w2:'a word) =
       (if w1 = w2 then SOME (((n2w 1):'a word),l,ck) else

@@ -211,6 +211,7 @@ let calls_list_def,calls_list_ind = define_rec
 (* HOL4 clos_callScript.sml:226-230: a theorem whose statement the
    port cannot state yet: exp3_size_MAP_SND *)
 
+let _ = size_thms "closLang_exp";;
 let calls_def,calls_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`calls [] g = ([],g)`;
