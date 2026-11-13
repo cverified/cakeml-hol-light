@@ -1546,3 +1546,28 @@ things with one name.  `tools/attrs.py` is the check -- it counts
 the statements of a name against the bindings the source has of
 it -- and it reports the lemmas of the port's own apart (296 of
 them) so that the ones with a name of the source stand out.
+
+## A family that recurses through itself has no induction theorem
+
+*2026-11-13.*  Every recursive definition of the port now gives an
+induction theorem with the definition, as HOL4 does
+(`ml/lib/induction.ml`, `foo_def,foo_ind = define_wf ...`), and a
+file that only needs the side effects assumes it instead of
+proving it, from the same statement.  The statement is read off
+the clauses and the proof is well-founded induction on the
+relation the definition was made with.
+
+A definition of a *family* of functions that recurse through one
+another (`define_mutual_wf`) gives the definition alone.  HOL4
+gives such a family a mutual induction theorem: one predicate per
+function, one antecedent per clause, and a conjunction of
+conclusions.  The statement generalizes in the obvious way; the
+proof does not, because HOL Light's recursion machinery puts the
+relation of a family on a *sum* of the argument tuples, and the
+well-founded induction the port writes out
+(`curried_wf_induction`) is on one tuple.
+
+So a proof that wants to do induction over such a family has to
+write the induction out itself for now.  What is needed is
+`curried_wf_induction` on a sum type, which is the same argument
+with `sum_CASES` in front of it.

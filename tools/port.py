@@ -50,6 +50,45 @@ def _cheat_set():
   return out
 
 CHEATS = _cheat_set()
+
+
+# the definitions that a run could not make at all, with the reason
+# it gave (ml/CHEATS.md, which a run writes).  These say so at the
+# call site, with assume_definition, because that is what they are;
+# a cheat for the termination cannot help, as it cannot introduce a
+# constant.
+def _assumed_set():
+  f = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), 'ml', 'CHEATS.md')
+  out = {}
+  try: rows = open(f)
+  except OSError: return out
+  for l in rows:
+    m = re.match(r'\| `([^`]*)` \| `([^`]*)` \| (.*) \|', l)
+    if m: out.setdefault(m.group(1), m.group(3).strip())
+  return out
+
+ASSUMED = _assumed_set()
+
+# which way of the old chain of strategies means that the
+# definition recurses, which is what says whether it has an
+# induction theorem to give
+NOT_RECURSIVE = {'new_definition', 'new_recursive_definition'}
+RECURSIVE = {'prim_rec', 'nested', 'maplist', 'cond_bool', 'sing',
+             'cases', 'match', 'lift_if', 'measure', 'guess'}
+
+
+def recursive_text(text, names):
+  """whether the clauses recurse: a name that the definition
+     defines occurs in them more often than it heads a clause"""
+  heads = 0
+  for m in re.finditer(r"(?:`|/\\)\s*(?:\(\s*)?"
+                       r"(?:!\s*[^.]*?\.\s*)?(?:\(\s*)?"
+                       r"([A-Za-z_][A-Za-z0-9_']*)", text):
+    if m.group(1) in names: heads += 1
+  uses = sum(len(re.findall(r"\b%s\b" % re.escape(nm), text))
+             for nm in names)
+  return uses > heads
 hterm.NAME_MAP = overrides.NAME_MAP
 hterm.TYPE_MAP = overrides.TYPE_MAP
 
@@ -2041,103 +2080,68 @@ class Porter:
     # why the clauses of one function of a family are a match
     matchnote = (overrides.MATCH_CLAUSES[key][1].strip() + '\n'
                  if key in overrides.MATCH_CLAUSES else '')
-    # the definitions whose termination the port proves with the
-    # relation that HOL4 gives, by handing it to define_single
-    # instead of to cake_define_gen: the strategies that the chain
-    # of cake_define_gen tries before the relation declare the
-    # constant and then fail, and after that no strategy is tried
-    # (overrides.DEFINE_REL)
-    if ((self.thy, name) in overrides.DEFINE_REL
-        and term is None and rel is not None):
-      text = (sizes + relnote + termnote +
-              '(* the port proves the termination with that '
-              'relation, which\n'
-              '   define_single takes as it stands: the strategies '
-              'that\n'
-              '   cake_define_gen tries before it declare the '
-              'constant and\n'
-              '   leave it no chance (a minute, which is what this '
-              'costs) *)\n'
-              'let %s =\n'
-              '  let th = end_itlist CONJ (fst (define_single\n'
-              '    [(`%s`,\n'
-              '      TERM_TAC)]\n'
-              '    (cake_conj_list\n'
-              '  %s))) in\n'
-              '  (note_dest_fact th; cake_note_def th; th);;'
-              % (bind, fmt(rel, last=2), clauses))
-    elif cheat and term is None and rel is not None:
-      text = (sizes + relnote + termnote + cheatnote + matchnote +
-              'let %s = cake_define_list_try_tac (fun () ->\n  `%s`)\n'
-              '  %s\n  %s;;'
-              % (bind, fmt(rel, last=2), tactext, clauses))
-    elif cheat and term is None:
-      text = (sizes + cheatnote + matchnote +
-              'let %s = cake_define_list_cheat %s\n'
-              '  %s;;' % (bind, tactext, clauses))
-    elif cheat and rel is not None:
-      text = (sizes + relnote + cheatnote +
-              'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
-              '  %s\n  `%s`;;' % (bind, rel, tactext, term))
-    elif cheat and b.extra is not None and wf_relation(b.extra)[0]:
-      wf, rest = wf_relation(b.extra)
-      wftext = fmt(self.term(wf), last=1)
-      note = '' if not rest.split() else \
-             self.at(b, 'the tactic that proves the termination',
-                     'Termination') + '\n'
-      text = (size_prelude(wftext + ' ' + term) + note + cheatnote +
-              'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
-              '  %s\n  `%s`;;' % (bind, wftext, tactext, term))
-    elif cheat:
-      text = (sizes + cheatnote +
-              'let %s = cake_define_cheat %s\n'
-              '  `%s`;;' % (bind, tactext, term))
-    elif term is None and rel is not None:
-      # the relation of a Termination is parsed in a function, so
-      # that one that does not typecheck is no error of the file
-      # the last line of the relation ends with a quote and a
-      # bracket, so it is two characters shorter
-      how = ('cake_define_list_try (fun () ->\n  `%s`)'
-             % fmt(rel, last=2)
-             if termnote or key not in overrides.MEASURE
-             else 'cake_define_list_wf\n  `%s`' % rel)
-      text = (sizes + relnote + termnote + matchnote +
-              'let %s = %s\n  %s;;' % (bind, how, clauses))
-    elif term is None:
+    # ---- the way the definition is made ---------------------------
+    # The file says the way, and nothing is searched for while it
+    # loads.  Which way each definition needed is harvested from a
+    # run (tools/strategies.py); where no run has seen one yet its
+    # shape says what to write, and the next run says whether that
+    # was right.
+    portname = lambda c: self.ctx.names.get((self.thy, c), c)
+    names = set(map(portname, self.ctx.defining))
+    way = None
+    for c in sorted(self.ctx.defining):
+      for k in ((self.thy, portname(c)), (self.thy, c)):
+        if k in strategies.WAY: way = strategies.WAY[k]
+      if way: break
+    strat, assumed_term, found_rel = way if way else ('', False, '')
+    # the clauses, as the list that every way but new_definition
+    # takes (HOL4 typechecks each of them on its own)
+    body = clauses if term is None else '[`%s`]' % term
+    if strat in NOT_RECURSIVE: recursive = False
+    elif strat in RECURSIVE: recursive = True
+    else: recursive = recursive_text(body, names)
+    mutual = len(self.ctx.defining) > 1
+    # the induction theorem that a recursive definition gives, under
+    # the name HOL4 gives it (foo_def comes with foo_ind)
+    indbind = (bind[:-4] if bind.endswith('_def') else bind) + '_ind'
+    # the relation: the one HOL4's Termination gives, or the one the
+    # run found where the port had to look for one itself
+    if rel is None and found_rel and recursive:
+      rel = fmt(found_rel, last=1)
+      relnote = ('(* the termination relation is not in the HOL4 '
+                 'source; this one is\n   what the port found for '
+                 'it *)\n')
+    assumed = way is not None and strat == ''
+    why = next((ASSUMED[nm] for nm in sorted(names)
+                if nm in ASSUMED),
+               'the port cannot make this definition')
+    binding = '%s,%s' % (bind, indbind) if recursive and not mutual \
+              else bind
+    if assumed:
+      how = 'assume_definition_rec' if recursive and not mutual \
+            else 'assume_definition'
       text = (sizes + matchnote +
-              'let %s = cake_define_list\n  %s;;' % (bind, clauses))
-    elif rel is not None:
-      text = (sizes + relnote +
-              'let %s = cake_define_wf\n  `%s`\n'
-              '  `%s`;;' % (bind, rel, term))
-    elif b.extra is None:
-      # where HOL Light's own new_definition is what the definition
-      # is, the file says it (tools/strategies.py, which a run
-      # harvests); the chain of strategies is for the rest
-      how = ('new_definition'
-             if any((self.thy, c) in strategies.PRIMITIVE
-                    for c in dbmod.definition_names(b.body, b.name))
-             else 'cake_define')
-      text = sizes + 'let %s = %s\n  `%s`;;' % (bind, how, term)
-    else:
-      wf, rest = wf_relation(b.extra)
-      if wf is None:
-        self.warn.append(f'{name}: no WF_REL_TAC in the Termination')
-        text = (sizes +
-                self.at(b, 'the Termination, which has no'
-                           ' WF_REL_TAC in it', 'Termination') +
-                '\nlet %s = cake_define\n  `%s`;;' % (bind, term))
+              'let %s = %s\n  "%s"\n  %s;;'
+              % (binding, how, why, body))
+    elif not recursive:
+      if term is not None and key not in overrides.ONE_QUOTATION:
+        text = sizes + 'let %s = new_definition\n  `%s`;;' % (bind,
+                                                              term)
       else:
-        wftext = fmt(self.term(wf), last=1)
-        # the tactic that proves the goals of the relation is of no
-        # use to the port, but it is kept as a comment where there
-        # is one
-        note = '' if not rest.split() else \
-               self.at(b, 'the tactic that proves the termination',
-                       'Termination') + '\n'
-        text = (size_prelude(wftext + ' ' + term) + note +
-                'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
-                % (bind, wftext, term))
+        text = (sizes + matchnote +
+                'let %s = define_cases\n  %s;;' % (bind, body))
+    else:
+      # {one function, a family} x {a relation, the measure of the
+      # arguments matched on} x {proved, assumed, a tactic given}
+      how = ('define_mutual' if mutual else 'define') + \
+            ('_wf' if rel is not None else '_rec') + \
+            ('_tac' if tac else ('_cheat' if cheat else ''))
+      args = ('`%s`\n  ' % rel) if rel is not None else ''
+      if tac: args += tactext + '\n  '
+      text = (sizes + (relnote if rel is not None else '') +
+              termnote + (cheatnote if cheat and not tac else '') +
+              matchnote +
+              'let %s = %s\n  %s%s;;' % (binding, how, args, body))
     # the definition is followed by the overloads of HOL4, where the
     # name it gives a constant is one that other theories use too
     overloads = self.overloads_of(sorted(self.ctx.defining))
