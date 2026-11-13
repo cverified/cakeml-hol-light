@@ -82,6 +82,17 @@ let noted ths =
   let th = end_itlist CONJ ths in
   cake_note_def th; note_dest_fact th; th;;
 
+(* the names of the family that is being defined.  A rewriting of
+   the clauses has to invent a name for a function it introduces,
+   and the one name it may not take is one of these: presLang
+   defines flat_to_display and the flat_to_display_list that the
+   map of it would be called, and by the time the rewriting gets
+   there the clauses of that one have been taken out of the term
+   (ml/lib/define.ml, the_defining) *)
+
+let defining tm =
+  the_defining := map (fst o dest_var) (definition_heads tm);;
+
 (* HOL Light's own new_definition, noted like every other way.  A
    tactic of ml/lib/tactics.ml is written before the port and
    asks for a definition by the name of its constant, which is
@@ -92,6 +103,7 @@ let noted ths =
 let new_definition tm = noted [new_definition tm];;
 
 let definition_made wfs tm =
+  defining tm;
   let fs = definition_heads tm in
   noted (fst (if length fs = 1 then define_single wfs tm
                                else define_mutual wfs tm));;
@@ -137,7 +149,8 @@ let rec made_by shape wfs tm =
   | "measure" | "guess" -> plain tm
   | _ -> failwith ("define_shaped: no shape " ^ head);;
 
-let shaped_made shape wfs tm = noted (fst (made_by shape wfs tm));;
+let shaped_made shape wfs tm =
+  defining tm; noted (fst (made_by shape wfs tm));;
 
 (* ------------------------------------------------------------------ *)
 (* The induction theorem.                                             *)
@@ -196,8 +209,9 @@ let induction_by_measure tac th tm =
 
 (* several clauses and no recursion *)
 
-let define_cases cls = noted (fst (define_prim_rec
-                                     (definition_of_clauses cls)));;
+let define_cases cls =
+  let tm = definition_of_clauses cls in
+  defining tm; noted (fst (define_prim_rec tm));;
 
 (* several clauses and no recursion that neither new_definition
    nor the recursion theorem of the type takes: HOL Light's own
@@ -208,6 +222,7 @@ let define_cases cls = noted (fst (define_prim_rec
    one mutual definition of them all *)
 
 let general_made tm =
+  defining tm;
   let fs = definition_heads tm in
   if length fs = 1 then noted (fst (define_single [] tm)) else
   let clause_of f =
@@ -229,6 +244,7 @@ let define_general_cheat cls =
 
 let define_rec cls =
   let tm = definition_of_clauses cls in
+  defining tm;
   let th = noted (fst (define_prim_rec tm)) in
   th,induction_by_measure TERM_TAC th tm;;
 
