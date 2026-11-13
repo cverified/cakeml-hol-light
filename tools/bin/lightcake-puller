@@ -1,0 +1,51 @@
+#!/bin/sh
+# lightcake-puller : the half of the LightCake clone that runs as
+# Freek.  LightCake is John's repo and the port has no credential
+# for it; this has Freek's, because he starts it in a shell of
+# his own.  It does one thing and takes no argument: when
+# tmp/pull-lightcake appears it clones or fast-forwards
+# lightcake-src, says what came of it in tmp/pull-lightcake.log,
+# and takes the request away again.
+#
+#   tools/bin/lightcake-puller          (in Freek's own shell)
+#
+# So the whole of what can be asked for is this one pull of this
+# one repository.  Nothing else of GitHub is reachable through
+# it, and no key of Freek's is anywhere the port can read.
+#
+# With LIGHTCAKE=... it pulls another repository instead, and
+# with EVERY=<seconds> it also pulls of its own accord that
+# often, so that the clone keeps up without being asked.
+C=/home/freek/claude/hol-light/cakeml
+REPO=${LIGHTCAKE:-git@github.com:hol-light-family/LightCake}
+D=$C/lightcake-src
+REQ=$C/tmp/pull-lightcake
+LOG=$C/tmp/pull-lightcake.log
+mkdir -p $C/tmp
+pull() {
+  {
+    echo "--- $(date '+%Y-%m-%d %H:%M:%S') $1"
+    if [ -d "$D/.git" ]; then
+      git -C "$D" pull --ff-only 2>&1
+    else
+      git clone "$REPO" "$D" 2>&1
+    fi
+    echo "HEAD $(git -C "$D" log -1 --format='%h %cd %s' \
+      --date=short 2>&1)"
+  } >> "$LOG" 2>&1
+}
+echo "lightcake-puller: watching $REQ"
+echo "  the clone is $D"
+echo "  what it does is written to $LOG"
+echo "  ^C to stop"
+last=0
+while true; do
+  if [ -e "$REQ" ]; then
+    pull "(asked for)"; rm -f "$REQ"; last=$(date +%s)
+  elif [ -n "$EVERY" ]; then
+    now=$(date +%s)
+    [ $((now - last)) -ge "$EVERY" ] && { pull "(of itself)";
+                                          last=$now; }
+  fi
+  sleep 5
+done

@@ -185,6 +185,14 @@ the reference material:
 Both are in `.gitignore`: they are read-only reference, and the
 port never copies code out of them.
 
+`lightcake-src/` is a third one: LightCake, the other port of
+CakeML to HOL Light.  It is somebody else's private repository,
+so the port has no credential for it and none is wanted.
+`tools/bin/lightcake-puller`, which Freek starts in a shell of
+his own, holds his; `tools/bin/lightcake-pull` asks it for a pull
+and says what came of it.  The whole of what can be asked for is
+that one pull of that one repository.
+
 The rules a proof has to keep are in `CLAUDE.md`, and the ones that
 bite are these: the statement of a theorem is not adjusted to suit
 a proof; a proof is written as a HOL Light proof, by hand, and is

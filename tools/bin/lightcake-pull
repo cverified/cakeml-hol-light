@@ -1,0 +1,25 @@
+#!/bin/sh
+# lightcake-pull : ask the puller that Freek runs to bring
+# lightcake-src up to date, and say what came of it.  The pull
+# itself is his (tools/bin/lightcake-puller); this only rings the
+# bell and waits for the request to be taken away again.
+#
+# WAIT=<seconds> is how long to wait for an answer (30 by
+# default).  No answer means the puller is not running.
+C=/home/freek/claude/hol-light/cakeml
+REQ=$C/tmp/pull-lightcake
+LOG=$C/tmp/pull-lightcake.log
+mkdir -p $C/tmp
+date '+%Y-%m-%d %H:%M:%S' > "$REQ"
+n=0
+while [ -e "$REQ" ] && [ $n -lt "${WAIT:-30}" ]; do
+  sleep 1; n=$((n + 1))
+done
+if [ -e "$REQ" ]; then
+  rm -f "$REQ"
+  echo "lightcake-pull: nobody answered in ${WAIT:-30}s."
+  echo "  Freek starts the puller in a shell of his own with:"
+  echo "    tools/bin/lightcake-puller"
+  exit 1
+fi
+tail -20 "$LOG"
