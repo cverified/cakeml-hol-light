@@ -1,6 +1,10 @@
 #!/bin/sh
 # tryfile <file> [session] : why a file of the port fails in a
-# run, without waiting for a run.  The port the file stands on is
+# run, without waiting for a run.  With TOLERANT=1 every theorem
+# of the file is loaded in a try, so that the file loads on and
+# every one that fails is reported -- which is the check to run
+# after a batch of proofs, where the first failure is not the
+# whole answer.  The port the file stands on is
 # loaded as an abstract (every definition assumed, every proof
 # skipped: about five minutes), the session goes back to proving,
 # and the file itself is loaded for real, with a marker before
@@ -17,8 +21,17 @@ s=${2:-try}
 [ -z "$f" ] && { echo "tryfile <file> [session]"; exit 1; }
 [ -f "$C/ml/$f" ] || { echo "no such file: ml/$f"; exit 1; }
 abstract $s "$f" | tail -1
-nph=$(python3 -I $C/tools/locate.py "$C/ml/$f" $C/tmp/locate.ml)
 : > $C/tmp/mark.txt
+if [ "$TOLERANT" = 1 ]; then
+  # every theorem in a try, so that the file loads on and every
+  # one that fails is logged and not only the first
+  : > $C/tmp/unstated.txt
+  nph=$(python3 -I $C/tools/tolerant.py "$C/ml/$f" $C/tmp/locate.ml \
+          mark)
+else
+  nph=$(python3 -I $C/tools/locate.py "$C/ml/$f" $C/tmp/locate.ml)
+fi
 TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$C/tmp/locate.ml\";;" \
   2>&1 | grep -E "Exception|Error" | head -3
+[ "$TOLERANT" = 1 ] && cut -c1-100 $C/tmp/unstated.txt
 echo "$f: $(tail -1 $C/tmp/mark.txt 2>/dev/null) of $nph phrases"

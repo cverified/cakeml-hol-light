@@ -5,6 +5,7 @@
      python3 -I tools/lightcake.py deps <theory>
      python3 -I tools/lightcake.py import <theory>
      python3 -I tools/lightcake.py fill <theory>
+     python3 -I tools/lightcake.py drop <theory> <name>...
 
 LightCake (`lightcake-src/`, see README.md) is the other port of
 CakeML to HOL Light: narrow and deep where this one is wide and
@@ -839,6 +840,30 @@ def fill(argv):
   return 0
 
 
+def drop(argv):
+  """the sections of a proof store that a check says do not go
+     through, taken out again"""
+  if len(argv) < 2: print('drop <theory> <name>...'); return 1
+  nm, names = argv[0], set(argv[1:])
+  a = ours_of(nm)
+  if not a: print('no file for %s' % nm); return 1
+  sys.path.insert(0, T)
+  import proofstore
+  pp = proofstore.path_of(re.sub(r'^.*/ml/', '', a))
+  if not os.path.exists(pp): print('no store for %s' % nm); return 1
+  out, keep, gone = [], True, []
+  for l in open(pp).read().split('\n'):
+    m = re.match(r'^###[ \t]+(\S+)[ \t]*$', l)
+    if m:
+      keep = m.group(1) not in names
+      if not keep: gone.append(m.group(1))
+    if keep: out.append(l)
+  open(pp, 'w').write('\n'.join(out).strip('\n') + '\n')
+  print('%s: %d sections taken out%s'
+        % (nm, len(gone), (': ' + ' '.join(gone)) if gone else ''))
+  return 0
+
+
 def main(argv):
   if not argv: print(__doc__); return 0
   if argv[0] == 'import': return emit(argv[1:])
@@ -846,6 +871,7 @@ def main(argv):
   if argv[0] == 'report': return report(argv[1:])
   if argv[0] == 'deps': return deps(argv[1:])
   if argv[0] == 'fill': return fill(argv[1:])
+  if argv[0] == 'drop': return drop(argv[1:])
   print(__doc__); return 1
 
 
