@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  bvi: ported from HOL4's
-    compiler/backend/bviScript.sml
-    A definition theory, with no definitions, 1 datatype and no
-    theorems.  Needed by 10 files of the port.  *)
+    compiler/backend/bviScript.sml  *)
 (* ======================================================== *)
 
 (*

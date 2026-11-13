@@ -54,6 +54,19 @@ T = os.path.dirname(os.path.abspath(__file__)) + '/'
 ML = T + '../ml/'
 LC = T + '../lightcake-src/'
 
+# the sources are read over and over -- once for every theory
+# the question is asked of -- and nothing writes one while this
+# runs, so each file is read once
+_TEXT = {}
+
+
+def text_of(path):
+  """what a file holds, read once"""
+  if path not in _TEXT:
+    try: _TEXT[path] = open(path).read()
+    except OSError: _TEXT[path] = None
+  return _TEXT[path]
+
 # a definition block of either port: the binding, then the first
 # quotation, whose first name is the constant.  This port writes
 # the relation of a define_wf in a quotation of its own, so the
@@ -72,6 +85,18 @@ INNER = re.compile(r"^let ([A-Za-z0-9_']+)(?:,[A-Za-z0-9_']+)? ="
                    re.M)
 HEAD = re.compile(r"`\s*(?:!\s*[^.]*?\.\s*)?\(*\s*"
                   r"([A-Za-z_][A-Za-z0-9_']*)")
+
+
+_MLF = []
+
+
+def ml_files():
+  """every file of this port, found once"""
+  if not _MLF:
+    for root, _, fs in os.walk(ML):
+      for f in sorted(fs):
+        if f.endswith('.ml'): _MLF.append(os.path.join(root, f))
+  return _MLF
 
 
 def block_end(s, i):
@@ -111,8 +136,8 @@ def definitions(path, upto=None):
   """binding -> constant, for a file of either port.  A file of
      this port is read up to the block an import appended to it,
      or the import would be read back as what this port says"""
-  try: s = open(path).read()
-  except OSError: return {}
+  s = text_of(path)
+  if s is None: return {}
   if upto and upto in s: s = s[:s.index(upto)]
   out = {}
   for r in (BIND, INNER):
@@ -138,8 +163,8 @@ def theirs_of(name):
 
 
 def ours_of(name):
-  for root, _, fs in os.walk(ML):
-    if name + '.ml' in fs: return os.path.join(root, name + '.ml')
+  for p in ml_files():
+    if os.path.basename(p) == name + '.ml': return p
   return None
 
 
@@ -198,8 +223,8 @@ KITRE = re.compile(r'\b(%s)\b' % '|'.join(map(re.escape, KIT)))
 
 def theorems(path, upto=None):
   """name -> the text of its block, for a file of either port"""
-  try: s = open(path).read()
-  except OSError: return {}
+  s = text_of(path)
+  if s is None: return {}
   if upto and upto in s: s = s[:s.index(upto)]
   out = {}
   # a block ends at its own ;;, so the comments that stand
@@ -301,14 +326,30 @@ def bindings(path, upto=None):
      file: the names of each binding and the text of its block.
      A binding that takes arguments (a tactic of LightCake's is
      usually one) binds its name and no other"""
-  try: s = open(path).read()
-  except OSError: return []
+  s = text_of(path)
+  if s is None: return []
   if upto and upto in s: s = s[:s.index(upto)]
   out = []
   for m in LET.finditer(s):
     ns = [m.group(1)] + re.findall(r"[A-Za-z0-9_']+", m.group(2))
     out.append((ns, s[m.start():block_end(s, m.end())]))
   return out
+
+
+_LCF = []
+
+
+def lc_files():
+  """every file of LightCake that is not of its proof kit"""
+  if not _LCF:
+    for root, _, fs in os.walk(LC + 'src'):
+      if '/kit' in root: continue
+      for f in sorted(fs):
+        if f.endswith('.ml'): _LCF.append(os.path.join(root, f))
+  return _LCF
+
+
+_LCB = []
 
 
 def lc_bindings():
@@ -318,6 +359,7 @@ def lc_bindings():
      size_def is the size function of sptree and the kit's is the
      one that makes such a function -- so a kit name counts as
      missing until tools/extra/ writes this port's own"""
+  if _LCB: return _LCB[0]
   out, kit = {}, set()
   for root, _, fs in os.walk(LC + 'src'):
     for f in fs:
@@ -326,7 +368,11 @@ def lc_bindings():
         for n in ns:
           out[n] = f[:-3]
           if '/kit' in root: kit.add(n)
+  _LCB.append((out, kit))
   return out, kit
+
+
+_OTERMS = {}
 
 
 def ours_files(nm, rank):
@@ -336,12 +382,10 @@ def ours_files(nm, rank):
      this file can use -- its spt_closure has is_adjacent_def,
      and sptree loads first"""
   out = []
-  for root, _, fs in os.walk(ML):
-    for f in fs:
-      if not f.endswith('.ml'): continue
-      t = f[:-3]
-      if t == nm or t not in rank or rank[t] < rank.get(nm, 0):
-        out.append(os.path.join(root, f))
+  for p in ml_files():
+    t = os.path.basename(p)[:-3]
+    if t == nm or t not in rank or rank[t] < rank.get(nm, 0):
+      out.append(p)
   return out
 
 
@@ -369,11 +413,17 @@ def ours_terms(nm, rank):
      needs)"""
   out = set()
   for p in ours_files(nm, rank):
-    s = open(p).read()
-    if CUT in s: s = s[:s.index(CUT)]
-    for q in re.findall(r"`[^`]*`", s):
-      out |= set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", q))
+    if p not in _OTERMS:
+      s = text_of(p)
+      if CUT in s: s = s[:s.index(CUT)]
+      _OTERMS[p] = set(w for q in re.findall(r"`[^`]*`", s)
+                       for w in re.findall(r"[A-Za-z_][A-Za-z0-9_']*",
+                                           q))
+    out |= _OTERMS[p]
   return out
+
+
+_LCN = {}
 
 
 def lc_names(d, thy0=None):
@@ -388,6 +438,7 @@ def lc_names(d, thy0=None):
      is sptree's and this port's sptree_size -- so the theory
      being imported is read first, and a theory this port does
      not have never puts out one it does"""
+  if thy0 in _LCN: return dict(_LCN[thy0])
   out = {}
   for f in ('doc/names.tsv', 'doc/library_renames.tsv'):
     for l in open(LC + f):
@@ -398,6 +449,7 @@ def lc_names(d, thy0=None):
           if thy in d.thy_of_file else None
       if thy == thy0 or lc not in out or (out[lc] is None and v):
         out[lc] = v
+  _LCN[thy0] = dict(out)
   return out
 
 
@@ -637,22 +689,29 @@ class Ctx:
     # proof that rewrites with it has to say the name this port
     # uses.  The induction theorem of a definition goes by the
     # same name with _ind, in both
+    # ... and a proof of a theory names the definition of a
+    # constant of any theory before it, so the two maps are of
+    # the whole closure, with the pair of files of this theory
+    # read first and winning
     obyc = {}
-    for k, v in definitions(self.a, CUT).items():
-      obyc.setdefault(v, k)
+    for p in [self.a] + ours_files(nm, self.rank):
+      for k, v in definitions(p, CUT).items(): obyc.setdefault(v, k)
     # LightCake keeps the HOL4 name of a library constant unless
     # it had to change it (doc/library_renames.tsv), and this
     # port has its own renaming of the same HOL4 name: that is
     # the join for a theory doc/names.tsv does not cover
     ourname = lambda c: self.lcn.get(c) or d.rename.get((nm, c), c)
-    for k, v in definitions(self.b).items():
+    theirs = list(definitions(self.b).items())
+    for f in lc_files():
+      if f != self.b: theirs += list(definitions(f).items())
+    for k, v in theirs:
       o = m.get(v) or ourname(v)
       if not o: continue
       if o != v and o in self.ot: m.setdefault(v, o)
       if o in obyc and k != obyc[o]:
-        m[k] = obyc[o]
+        m.setdefault(k, obyc[o])
         if k.endswith('_def') and obyc[o].endswith('_def'):
-          m[k[:-4] + '_ind'] = obyc[o][:-4] + '_ind'
+          m.setdefault(k[:-4] + '_ind', obyc[o][:-4] + '_ind')
     self.m, self.gm = m, gm
     # a name of LightCake's is there to be used once this port
     # has the thing it names: a block before it in the file, a
@@ -827,7 +886,7 @@ def our_thms(path, cheats=False):
      binds them under: the port writes the HOL4 name in a
      comment where the two are not the same.  With <cheats> only
      the ones this port states and does not prove"""
-  s = open(path).read()
+  s = text_of(path)
   if CUT in s: s = s[:s.index(CUT)]
   out = {}
   for mo in CHEATED.finditer(s):
@@ -865,8 +924,13 @@ def fill(argv):
     k, body = theirs[n]
     need = c.missing([k], body)
     if need: left.append((n, need)); continue
-    t, _ = c.ported(tactic_of(body))
-    took.append((n, wrap72(reindent(t), 69)))
+    # the whole block is read, and the tactic taken out of it
+    # after: a variable of the statement that this port primes
+    # (its start is start', because start is a name of its own)
+    # is primed in the tactic that names it too, and the binder
+    # that says it is a variable stands in the statement
+    t, _ = c.ported(body)
+    took.append((n, wrap72(reindent(tactic_of(t)), 69)))
   if took:
     os.makedirs(os.path.dirname(pp), exist_ok=True)
     old = open(pp).read().rstrip('\n') + '\n\n' \

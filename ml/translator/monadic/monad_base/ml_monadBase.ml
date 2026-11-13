@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  ml_monadBase: ported from HOL4's
-    translator/monadic/monad_base/ml_monadBaseScript.sml
-    A definition theory, with 26 definitions, 2 datatypes and 27
-    theorems.  Needed by 18 files of the port.  *)
+    translator/monadic/monad_base/ml_monadBaseScript.sml  *)
 (* ======================================================== *)
 
 (*

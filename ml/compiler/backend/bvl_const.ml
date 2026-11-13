@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  bvl_const: ported from HOL4's
-    compiler/backend/bvl_constScript.sml
-    A definition theory, with 13 definitions and 12 theorems.
-    Needed by 11 files of the port.  *)
+    compiler/backend/bvl_constScript.sml  *)
 (* ======================================================== *)
 
 (*

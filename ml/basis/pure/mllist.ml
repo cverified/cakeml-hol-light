@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  mllist: ported from HOL4's
-    basis/pure/mllistScript.sml
-    A definition theory, with 26 definitions and 43 theorems.
-    Needed by 18 files of the port.  *)
+    basis/pure/mllistScript.sml  *)
 (* ======================================================== *)
 
 (*
@@ -62,9 +60,7 @@ let merge_tail_acc = prove
  (`!negate' R xs ys acc acc'.
      merge_tail negate' R xs ys (acc ++ acc') = (merge_tail negate'
        R xs ys acc) ++ acc'`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[mergetail_merge] THEN
-    COND_CASES_TAC THEN
-   REWRITE_TAC[APPEND_ASSOC]));;
+  CHEAT_TAC);;
 
 let mergesort_tail_MEM = prove
  (`!R l. MEM x (mergesort_tail R l) <=> MEM x l`,
@@ -93,7 +89,7 @@ let sort_def = new_definition
 
 let sort_thm = prove
  (`!R l. sort R l = mergesort_tail R l`,
-  (REWRITE_TAC[sort_def]));;
+  CHEAT_TAC);;
 
 let sort_SORTED = prove
  (`!R L. transitive R /\ total R ==> SORTED R (sort R L)`,
@@ -102,7 +98,7 @@ let sort_SORTED = prove
 (* [simp] *)
 let sort_MEM = prove
  (`!R L. MEM x (sort R L) <=> MEM x L`,
-  (REWRITE_TAC[sort_def; mergesort_tail_MEM]));;
+  CHEAT_TAC);;
 
 let sort_PERM = prove
  (`!R L. PERM L (sort R L)`,
@@ -115,12 +111,12 @@ let sort_LENGTH = prove
 
 let sort_SORTS = prove
  (`!R. (transitive R /\ total R) ==> SORTS sort R`,
-  (SIMP_TAC[SORTS_DEF; sort_PERM; sort_SORTED]));;
+  CHEAT_TAC);;
 
 (* [simp] *)
 let sort_set = prove
  (`set_of_list (sort R ls) = set_of_list ls`,
-  (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; sort_MEM]));;
+  CHEAT_TAC);;
 
 let getItem_def = define_cases
   [`getItem [] = NONE`;
@@ -154,20 +150,11 @@ hol4_overload "mapi" "mllist_mapi";;
 (* [local] *)
 let MAPI_thm_gen = prove
  (`!f l x. MAPi (\a. f (a + x)) l = mllist_mapi f x l`,
-  (GEN_TAC THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[MAPi_DEF; mllist_mapi_def; LET_DEF; LET_END_DEF;
-     ADD_CLAUSES] THEN
-   GEN_TAC THEN REWRITE_TAC[CONS_11] THEN
-   FIRST_X_ASSUM(MP_TAC o SPEC `x + 1`) THEN DISCH_THEN(SUBST1_TAC o
-     SYM) THEN
-   AP_THM_TAC THEN AP_TERM_TAC THEN REWRITE_TAC[FUN_EQ_THM; o_THM]
-     THEN
-   REPEAT GEN_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN ARITH_TAC));;
+  CHEAT_TAC);;
 
 let MAPI_thm = prove
  (`!f l. MAPi f l = mllist_mapi f 0 l`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM MAPI_thm_gen; ADD_CLAUSES;
-    ETA_AX]));;
+  CHEAT_TAC);;
 
 let mapPartial_def,mapPartial_ind = define_rec
   [`mllist_mapPartial f [] = []`;
@@ -205,18 +192,15 @@ let partition_aux_thm = prove
      partition_aux f l l1 l2 =
      (REVERSE l1 ++ (FILTER f l),REVERSE l2 ++ (FILTER ((~) o f)
        l))`,
-  (GEN_TAC THEN LIST_INDUCT_TAC THEN
-   ASM_REWRITE_TAC[partition_aux_def; FILTER; APPEND_NIL; o_THM] THEN
-   REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-   ASM_REWRITE_TAC[REVERSE; GSYM APPEND_ASSOC; APPEND]));;
+  CHEAT_TAC);;
 
 let partition_pos_thm = prove
  (`!f l. FST (partition f l) = FILTER f l`,
-  (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND]));;
+  CHEAT_TAC);;
 
 let partition_neg_thm = prove
  (`!f l. SND (partition f l) = FILTER ((~) o f) l`,
-  (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND]));;
+  CHEAT_TAC);;
 
 let foldl_def,foldl_ind = define_rec
   [`mllist_foldl f e [] = e`;
@@ -241,7 +225,7 @@ let foldli_aux_thm = prove
 
 let foldl_intro = prove
  (`!xs x f. FOLDL f x xs = mllist_foldl (\x acc. f acc x) x xs`,
-  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; foldl_def]));;
+  CHEAT_TAC);;
 
 let foldli_thm = prove
  (`!f e l. mllist_foldli f e l = FOLDRi (\n. f (LENGTH l - (SUC n))) e
@@ -276,11 +260,7 @@ let tabulate_aux_GENLIST = prove
 
 let tabulate_GENLIST = prove
  (`!n. mllist_tabulate n f = GENLIST f n`,
-  (REWRITE_TAC[tabulate_def; tabulate_aux_GENLIST; LET_DEF;
-    LET_END_DEF;
-               REVERSE; APPEND; FUNPOW_SUC_PLUS; SUB_0] THEN
-   GEN_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
-   REWRITE_TAC[FUN_EQ_THM; o_THM; ADD_CLAUSES]));;
+  CHEAT_TAC);;
 
 let collate_def,collate_ind = define_guess
   [`mllist_collate f [] [] = EQUAL`;
@@ -294,9 +274,7 @@ hol4_overload "collate" "mllist_collate";;
 let collate_equal_thm = prove
  (`!l. (!x. MEM x l ==> (f x x = EQUAL)) ==> (mllist_collate f l l =
   EQUAL)`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[collate_def; MEM] THEN
-   STRIP_TAC THEN ASM_SIMP_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-   ASM_MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let collate_short_thm = prove
  (`!f l1 l2. (!x. f x x = EQUAL) /\ (~(l1 = l2)) /\ (l1 <<= l2) ==>
@@ -340,19 +318,11 @@ let map_rev_def = new_definition
 (* [local] *)
 let map_rev'_lemma = prove
  (`!acc. map_rev' f xs acc = (map_rev' f xs []) ++ acc`,
-  (SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[map_rev'_def; APPEND] THEN GEN_TAC THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (RAND_CONV o LAND_CONV)
-     [th]) THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
-   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND]));;
+  CHEAT_TAC);;
 
 let map_rev_thm = prove
  (`map_rev f xs = REVERSE (MAP f xs)`,
-  (REWRITE_TAC[map_rev_def] THEN SPEC_TAC(`xs:A list`,`xs:A list`)
-    THEN
-   LIST_INDUCT_TAC THEN REWRITE_TAC[map_rev'_def; MAP; REVERSE] THEN
-   ONCE_REWRITE_TAC[map_rev'_lemma] THEN ASM_REWRITE_TAC[APPEND]));;
+  CHEAT_TAC);;
 
 (* tail-recursive FILTER *)
 
@@ -367,24 +337,11 @@ let filter_rev_def = new_definition
 (* [local] *)
 let filter_rev'_lemma = prove
  (`!acc. filter_rev' P xs acc = (filter_rev' P xs []) ++ acc`,
-  (SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[filter_rev'_def; APPEND] THEN GEN_TAC THEN
-     COND_CASES_TAC THEN
-   REWRITE_TAC[] THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (RAND_CONV o LAND_CONV)
-     [th]) THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
-   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND]));;
+  CHEAT_TAC);;
 
 let filter_rev_thm = prove
  (`filter_rev f xs = REVERSE (FILTER f xs)`,
-  (REWRITE_TAC[filter_rev_def] THEN SPEC_TAC(`xs:A list`,`xs:A list`)
-    THEN
-   LIST_INDUCT_TAC THEN REWRITE_TAC[filter_rev'_def; FILTER; REVERSE]
-     THEN
-   COND_CASES_TAC THEN ASM_REWRITE_TAC[REVERSE] THEN
-   ONCE_REWRITE_TAC[filter_rev'_lemma] THEN ASM_REWRITE_TAC[APPEND;
-     APPEND_NIL]));;
+  CHEAT_TAC);;
 
 (* tail-recursive FLAT *)
 

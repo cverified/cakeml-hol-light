@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  data_simp: ported from HOL4's
-    compiler/backend/data_simpScript.sml
-    A definition theory, with 2 definitions and no theorems.  Needed
-    by backend_passes.ml, bvi_to_data.ml, dataSem.ml and
-    data_simpProof.ml.  *)
+    compiler/backend/data_simpScript.sml  *)
 (* ======================================================== *)
 
 (*

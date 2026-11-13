@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  ASCIInumbers: ported from HOL4's
-    src/string/ASCIInumbersScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 9 files of the port.  *)
+    src/string/ASCIInumbersScript.sml  *)
 (* ======================================================== *)
 
 needs "lib/numposrep.ml";;

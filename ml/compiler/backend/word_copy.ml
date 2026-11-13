@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  word_copy: ported from HOL4's
-    compiler/backend/word_copyScript.sml
-    A definition theory, with 14 definitions, 1 datatype and no
-    theorems.  Needed by backend.ml, backend_passes.ml,
-    wordConvsProof.ml, word_copyProof.ml and word_to_word.ml.  *)
+    compiler/backend/word_copyScript.sml  *)
 (* ======================================================== *)
 
 (*

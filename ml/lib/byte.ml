@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  byte: ported from HOL4's
-    src/n-bit/byteScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 19 files of the port.  *)
+    src/n-bit/byteScript.sml  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

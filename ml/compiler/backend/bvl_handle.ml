@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  bvl_handle: ported from HOL4's
-    compiler/backend/bvl_handleScript.sml
-    A definition theory, with 17 definitions and 8 theorems.  Needed
-    by backend_passes.ml, bvl_handleProof.ml, bvl_inline.ml,
-    bvl_inlineProof.ml and bvl_to_bvi.ml.  *)
+    compiler/backend/bvl_handleScript.sml  *)
 (* ======================================================== *)
 
 (*

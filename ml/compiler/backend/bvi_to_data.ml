@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  bvi_to_data: ported from HOL4's
-    compiler/backend/bvi_to_dataScript.sml
-    A definition theory, with 7 definitions and 10 theorems.  Needed
-    by 6 files of the port.  *)
+    compiler/backend/bvi_to_dataScript.sml  *)
 (* ======================================================== *)
 
 (*

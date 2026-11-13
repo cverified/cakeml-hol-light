@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  wordLang: ported from HOL4's
-    compiler/backend/wordLangScript.sml
-    A definition theory, with 15 definitions, 3 datatypes and 3
-    theorems.  Needed by 41 files of the port.  *)
+    compiler/backend/wordLangScript.sml  *)
 (* ======================================================== *)
 
 (*

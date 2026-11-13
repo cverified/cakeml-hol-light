@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  linear_scan: ported from HOL4's
-    compiler/backend/reg_alloc/linear_scanScript.sml
-    A definition theory, with 67 definitions, 4 datatypes and 5
-    theorems.  Needed by 6 files of the port.  *)
+    compiler/backend/reg_alloc/linear_scanScript.sml  *)
 (* ======================================================== *)
 
 (*

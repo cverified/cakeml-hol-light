@@ -1,9 +1,6 @@
 (* ======================================================== *)
 (*  ternaryComparisons: ported from HOL4's
-    src/sort/ternaryComparisonsScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 7 theorems of it from LightCake.  Needed
-    by 11 files of the port.  *)
+    src/sort/ternaryComparisonsScript.sml  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)
@@ -101,10 +98,8 @@ let ordering_distinct2 = prove
    yet, with the names of its own that each proof
    uses:
 
-     ordering_INDUCT                  cake_type
      ordering_case_def                case_def
      ordering_case_eq                 case_eq
-     list_compare_ind                 cake_ind
      compare_equal                    ordering_case_def
      list_merge_ind                   cake_ind
      _                                bool_compare_def cake_add_simps

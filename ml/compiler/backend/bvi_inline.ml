@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  bvi_inline: ported from HOL4's
-    compiler/backend/bvi_inlineScript.sml
-    A definition theory, with 8 definitions and 5 theorems.  Needed
-    by bvi_inlineProof.ml, bvl_to_bvi.ml and bvl_to_bviProof.ml.  *)
+    compiler/backend/bvi_inlineScript.sml  *)
 (* ======================================================== *)
 
 (*

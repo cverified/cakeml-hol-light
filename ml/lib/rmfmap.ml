@@ -1,9 +1,7 @@
 (* ======================================================== *)
 (*  rmfmap: ported from HOL4's
     examples/algorithms/unification/triangular/first-order/
-      compilation/rmfmapScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by tcallUnif.ml and unify.ml.  *)
+      compilation/rmfmapScript.sml  *)
 (* ======================================================== *)
 
 needs "lib/fmsp.ml";;

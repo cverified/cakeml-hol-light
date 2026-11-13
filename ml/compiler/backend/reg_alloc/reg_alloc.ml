@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  reg_alloc: ported from HOL4's
-    compiler/backend/reg_alloc/reg_allocScript.sml
-    A definition theory, with 88 definitions, 5 datatypes and 6
-    theorems.  Needed by 12 files of the port.  *)
+    compiler/backend/reg_alloc/reg_allocScript.sml  *)
 (* ======================================================== *)
 
 (*

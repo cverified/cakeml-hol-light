@@ -1,8 +1,6 @@
 (* ======================================================== *)
 (*  regexp_compiler: ported from HOL4's
-    examples/formal-languages/regular/regexp_compilerScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 8 files of the port.  *)
+    examples/formal-languages/regular/regexp_compilerScript.sml  *)
 (* ======================================================== *)
 
 needs "lib/balanced_map.ml";;

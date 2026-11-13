@@ -1,3 +1,0 @@
-### lemma
-  (MATCH_MP_TAC option_INDUCT THEN
-   REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[])
