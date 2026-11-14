@@ -423,7 +423,6 @@ CON_BODY = {
   # compile_pat reads an ast pattern and builds a flatLang one,
   # and the two have Pany, Pvar, Plit, Pcon, Pas and Pref
   ('source_to_flat', 'compile_pat_def'): {'*': 'flatLang'},
-  ('source_to_flat', 'compile_pat_sing_def'): {'*': 'flatLang'},
   # call_graph matches on a wordLang program and builds a
   # call_tree, and both have Call
   ('word_depth', 'call_graph_def'): {'Call': 'word_depth'},
@@ -459,7 +458,6 @@ CON_BODY = {
   # builds a stackLang one
   ('word_to_stack', 'wInst_def'): {'Inst': 'stackLang'},
   ('word_to_stack', 'comp_def'): STACKLANG_PROG,
-  ('word_to_stack', 'comp_sing_def'): STACKLANG_PROG,
   # word_bignum's compile reads its mini language and builds a
   # wordLang program, and the two share Skip, Seq, If, Call and
   # the rest
@@ -768,7 +766,6 @@ LOCAL_NAMES = {
   # asmSem's; backend_common's is the number of bits of a word
   ('labSem', 'word_shift'): 'asmSem_word_shift',
   ('stackSem', 'word_shift'): 'asmSem_word_shift',
-  ('wordSem', 'word_shift'): 'asmSem_word_shift',
   # compile_pes reads the patterns of an ast expression, so the
   # pat_bindings it takes of one is ast's and not flatLang's
   ('source_to_flat', 'pat_bindings'): 'pat_bindings',
@@ -1663,8 +1660,6 @@ CON_OF = {
   # says of three of the seven clauses and leaves to the type of
   # the function in the other four (CON_BODY says the bodies)
   ('source_to_flat', 'compile_pat_def'):
-    {'Pany': 'ast', 'Plit': 'ast', 'Pref': 'ast', 'Pas': 'ast'},
-  ('source_to_flat', 'compile_pat_sing_def'):
     {'Pany': 'ast', 'Plit': 'ast', 'Pref': 'ast', 'Pas': 'ast'},
   # these match on an opw, whose constructors the port calls after
   # backend_common, and build wordLang programs whose Op takes the
