@@ -1629,6 +1629,8 @@ CON_OF = {
   # closLang has an Int of a const_part
   ('bvi_tailrec', 'arg_ty_def'):
     {'Int': 'bvi_tailrec', 'List': 'bvi_tailrec'},
+  ('bvi_tailrec', 'op_ty_def'):
+    {'Int': 'bvi_tailrec', 'List': 'bvi_tailrec'},
   # flatten gives an app_list of lab programs, so its List and
   # its Append are misc's (the match is on a variable, so the
   # patterns of its arms have neither)

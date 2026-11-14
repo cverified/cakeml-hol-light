@@ -1789,7 +1789,26 @@ class Printer:
     tok = e.tok
     fresh = tok is not None and tok.pos not in self.done
     if fresh: self.done.add(tok.pos)
-    s = self.pr0(e, prec)
+    # a type that the source qualifies says the theory of the
+    # constructors under it: HOL4 writes ((Var v):bvi$exp) in the
+    # body of a clause exactly to say which Var it is
+    qual = None
+    if e.kind in ('typed', 'rawtyped'):
+      try:
+        qt = parse_type_text(' '.join(t.text for t in e.ty))
+        if qt[0] == 'op' and '$' in str(qt[1]):
+          qual = {str(qt[1]).split('$')[0]}
+      except Exception:
+        qual = None
+    if qual is None:
+      s = self.pr0(e, prec)
+    else:
+      was = self.ctx.armtys
+      self.ctx.armtys = qual
+      try:
+        s = self.pr0(e, prec)
+      finally:
+        self.ctx.armtys = was
     return layout(tok, s) if fresh else s
 
   def paren(self, s, inner, outer):
