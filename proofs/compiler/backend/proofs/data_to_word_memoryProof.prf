@@ -3,6 +3,18 @@
 ### ZIP_REPLICATE
   (INDUCT_TAC THEN ASM_REWRITE_TAC[REPLICATE; ZIP])
 
+### MEM_EL_APPEND_MID
+  (* where the n-th element sits is settled by EL_APPEND twice:
+     inside l, the one element [c], or inside r *)
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[EL_APPEND; LENGTH_APPEND; LENGTH; ARITH] THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
+   [ASM_SIMP_TAC[MEM_EL];
+    ASM_SIMP_TAC[ARITH_RULE `~(n < m) /\ n < m + 1 ==> n - m = 0`;
+                 EL; HD];
+    DISJ2_TAC THEN DISJ2_TAC THEN MATCH_MP_TAC MEM_EL THEN
+    ASM_ARITH_TAC])
+
 ### MAX_LIST_sum_bound
   (* HOL4's SUM is ITLIST (+) l 0 in the port (ml/lib/hol4.ml), so
      its clauses come first *)

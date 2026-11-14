@@ -1,6 +1,19 @@
-### MAPI_thm
-  (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM MAPI_thm_gen; ADD_CLAUSES;
-    ETA_AX])
+### merge_tail_acc
+  (REPEAT GEN_TAC THEN REWRITE_TAC[mergetail_merge] THEN
+    COND_CASES_TAC THEN
+   REWRITE_TAC[APPEND_ASSOC])
+
+### sort_thm
+  (REWRITE_TAC[sort_def])
+
+### sort_MEM
+  (REWRITE_TAC[sort_def; mergesort_tail_MEM])
+
+### sort_SORTS
+  (SIMP_TAC[SORTS_DEF; sort_PERM; sort_SORTED])
+
+### sort_set
+  (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; sort_MEM])
 
 ### MAPI_thm_gen
   (GEN_TAC THEN LIST_INDUCT_TAC THEN
@@ -13,18 +26,9 @@
      THEN
    REPEAT GEN_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN ARITH_TAC)
 
-### collate_equal_thm
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[collate_def; MEM] THEN
-   STRIP_TAC THEN ASM_SIMP_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-   ASM_MESON_TAC[])
-
-### foldl_intro
-  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; foldl_def])
-
-### merge_tail_acc
-  (REPEAT GEN_TAC THEN REWRITE_TAC[mergetail_merge] THEN
-    COND_CASES_TAC THEN
-   REWRITE_TAC[APPEND_ASSOC])
+### MAPI_thm
+  (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM MAPI_thm_gen; ADD_CLAUSES;
+    ETA_AX])
 
 ### partition_aux_thm
   (GEN_TAC THEN LIST_INDUCT_TAC THEN
@@ -32,23 +36,14 @@
    REPEAT GEN_TAC THEN COND_CASES_TAC THEN
    ASM_REWRITE_TAC[REVERSE; GSYM APPEND_ASSOC; APPEND])
 
-### partition_neg_thm
-  (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND])
-
 ### partition_pos_thm
   (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND])
 
-### sort_MEM
-  (REWRITE_TAC[sort_def; mergesort_tail_MEM])
+### partition_neg_thm
+  (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND])
 
-### sort_SORTS
-  (SIMP_TAC[SORTS_DEF; sort_PERM; sort_SORTED])
-
-### sort_set
-  (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; sort_MEM])
-
-### sort_thm
-  (REWRITE_TAC[sort_def])
+### foldl_intro
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; foldl_def])
 
 ### tabulate_GENLIST
   (REWRITE_TAC[tabulate_def; tabulate_aux_GENLIST; LET_DEF;
@@ -56,3 +51,52 @@
                REVERSE; APPEND; FUNPOW_SUC_PLUS; SUB_0] THEN
    GEN_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
    REWRITE_TAC[FUN_EQ_THM; o_THM; ADD_CLAUSES])
+
+### collate_equal_thm
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[collate_def; MEM] THEN
+   STRIP_TAC THEN ASM_SIMP_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+   ASM_MESON_TAC[])
+
+### map_rev'_lemma
+  (* map_rev' builds the reverse of the map in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs f acc. map_rev' f xs acc = APPEND (REVERSE (MAP f xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[map_rev'_def; MAP; REVERSE; APPEND;
+                     GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[ gen; APPEND_NIL])
+
+### map_rev_thm
+  (* map_rev' builds the reverse of the map in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs f acc. map_rev' f xs acc = APPEND (REVERSE (MAP f xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[map_rev'_def; MAP; REVERSE; APPEND;
+                     GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[map_rev_def; gen; APPEND_NIL])
+
+### filter_rev'_lemma
+  (* filter_rev' builds the reverse of the filter in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs P acc.
+        filter_rev' P xs acc = APPEND (REVERSE (FILTER P xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[filter_rev'_def; FILTER; REVERSE; APPEND] THEN
+     REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[REVERSE; APPEND; GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[ gen; APPEND_NIL])
+
+### filter_rev_thm
+  (* filter_rev' builds the reverse of the filter in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs P acc.
+        filter_rev' P xs acc = APPEND (REVERSE (FILTER P xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[filter_rev'_def; FILTER; REVERSE; APPEND] THEN
+     REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[REVERSE; APPEND; GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[filter_rev_def; gen; APPEND_NIL])

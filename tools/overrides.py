@@ -1028,6 +1028,10 @@ PLAIN_APPEND = {
   # the code of a clause is a list of expressions; only the
   # auxiliary code beside it is an app_list
   ('bvl_to_bvi', 'compile_exps_def'): set(['c1']),
+  # this one stands in front of the Overload that makes ++ the
+  # SmartAppend of an app_list, so its one ++ is the list append
+  # (HOL4 bvl_to_bviScript.sml:298 against 323)
+  ('bvl_to_bvi', 'compile_op_def'): True,
 }
 
 WORD_NOT = set([

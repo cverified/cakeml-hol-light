@@ -1,5 +1,19 @@
-### GSPEC_applied
-  (REWRITE_TAC[IN])
+### paireq
+  (MESON_TAC[PAIR; FST; SND])
+
+### GSPEC_INTER
+  (* the n-th pair of f is split by paireq, and then the two sides
+     say the same of it: Q of x, and Q of the FST that x is *)
+  (REWRITE_TAC[hol4_GSPEC; hol4_S; o_THM] THEN
+   GEN_REWRITE_TAC I [EXTENSION] THEN
+   REWRITE_TAC[IN_INTER; IN_ELIM_THM; IN; paireq] THEN
+   GEN_TAC THEN REWRITE_TAC[LEFT_AND_EXISTS_THM] THEN
+   EQ_TAC THEN MATCH_MP_TAC MONO_EXISTS THEN GEN_TAC THEN
+   STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+   ASM_REWRITE_TAC[])
 
 ### RIGHT_INTER_OVER_UNION
   (SET_TAC[])
+
+### GSPEC_applied
+  (REWRITE_TAC[IN])

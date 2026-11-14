@@ -1,14 +1,5 @@
-### disjImpI
-  (MESON_TAC[])
-
-### elim_det
-  (MESON_TAC[])
-
-### elim_disjineq
-  (MESON_TAC[])
-
-### leftLoc_merge_locs
-  (REWRITE_TAC[merge_locs_LR; leftLoc_def])
+### ptree_loc_mkNd
+  (REWRITE_TAC[mkNd_def; ptree_loc_def])
 
 ### merge_locs_LR
   (REPEAT GEN_TAC THEN
@@ -16,8 +7,32 @@
      [`l1:locs`; `l2:locs`] THEN
    REWRITE_TAC[merge_locs_def; leftLoc_def; rightLoc_def])
 
-### ptree_loc_mkNd
-  (REWRITE_TAC[mkNd_def; ptree_loc_def])
+### leftLoc_merge_locs
+  (REWRITE_TAC[merge_locs_LR; leftLoc_def])
 
 ### rightLoc_merge_locs
   (REWRITE_TAC[merge_locs_LR; rightLoc_def])
+
+### elim_disjineq
+  (MESON_TAC[])
+
+### elim_det
+  (MESON_TAC[])
+
+### FST_EQ
+  (MESON_TAC[PAIR; FST; SND])
+
+### FST_NEQ
+  (MESON_TAC[PAIR; FST; SND])
+
+### ALL_FST_NEQ
+  (MESON_TAC[PAIR; FST; SND])
+
+### FST_IN
+  (MESON_TAC[PAIR; FST; SND])
+
+### FST_NOTIN
+  (MESON_TAC[PAIR; FST; SND])
+
+### disjImpI
+  (MESON_TAC[])

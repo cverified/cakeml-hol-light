@@ -1,14 +1,17 @@
 ### FADISJ_EQ_IMP'
   (MESON_TAC[])
 
+### valid_ptree_mkNd
+  (REWRITE_TAC[mkNd_def; valid_ptree_def; IN_SET_OF_LIST])
+
 ### ptree_fringemkNd
   (REWRITE_TAC[mkNd_def; ptree_fringe_def])
-
-### real_fringe_mkNd
-  (REWRITE_TAC[mkNd_def; real_fringe_def])
 
 ### valid_locs_mkNd
   (REWRITE_TAC[mkNd_def; valid_locs_def; ptree_list_loc_def])
 
-### valid_ptree_mkNd
-  (REWRITE_TAC[mkNd_def; valid_ptree_def; IN_SET_OF_LIST])
+### real_fringe_mkNd
+  (REWRITE_TAC[mkNd_def; real_fringe_def])
+
+### pair_EQ_components
+  (MESON_TAC[PAIR; FST; SND])
