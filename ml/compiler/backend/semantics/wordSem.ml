@@ -546,8 +546,9 @@ let key_val_compare_def = new_definition
        (a = a' /\
          (match b with
            wordLang_Word x -> (match b' with wordLang_Word y -> x
-             <= y | _53 -> T) | asm_Loc a b -> (match b' with asm_Loc
-             a' b' -> (a > a') \/ (a = a' /\ b >= b') | _54 -> F))))`;;
+             <= y | _53 -> T) | wordLang_Loc a b -> (match b' with
+             asm_Loc a' b' -> (a > a') \/ (a = a' /\ b >= b') | _54
+             -> F))))`;;
 
 (*
 EVAL ``key_val_compare (1,Loc 3 4) (1,Loc 1 2)``
@@ -765,7 +766,7 @@ let set_fp_var_def = new_definition
 
 let wordSem_inst_def = new_definition
   `wordSem_inst i (s:('a,'c,'ffi)wordSem_state) =
-     (match i with wordLang_Skip -> SOME s | asm_Const reg w ->
+     (match i with asm_Skip -> SOME s | asm_Const reg w ->
        wordSem_assign reg (wordLang_Const w) s | asm_Arith (asm_Binop
        bop r1 r2 ri) ->
          wordSem_assign r1

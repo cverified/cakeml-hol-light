@@ -452,7 +452,7 @@ let stackSem_assign_def = new_definition
 
 let stackSem_inst_def = new_definition
   `stackSem_inst i (s:('a,'c,'ffi)stackSem_state) =
-     (match i with stackLang_Skip -> SOME s | asm_Const reg w ->
+     (match i with asm_Skip -> SOME s | asm_Const reg w ->
        stackSem_assign reg (asm_Const w) s | asm_Arith (asm_Binop bop r1
        r2 ri) ->
          (if bop = asm_Or /\ ri = Reg r2 then

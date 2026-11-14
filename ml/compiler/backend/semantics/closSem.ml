@@ -289,8 +289,8 @@ let do_word_app_def = new_definition
           n2]) ->
           (if (&0) <= n1 /\ n1 < (&256) /\ (&0) <= n2 /\ n2 < (&256)
             then
-             (match test with closLang_Equal -> SOME (closSem_Boolv
-               (n1 = n2)) | ast_Compare cmp -> SOME (closSem_Boolv
+             (match test with ast_Equal -> SOME (closSem_Boolv (n1 =
+               n2)) | ast_Compare cmp -> SOME (closSem_Boolv
                (semanticPrimitives_int_cmp cmp n1 n2)) | _22 -> NONE)
                else NONE)
         | ((WordShift ast_W8 sh n),[closSem_Number i]) ->

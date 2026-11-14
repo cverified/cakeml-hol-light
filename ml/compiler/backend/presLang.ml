@@ -335,26 +335,26 @@ let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
 let pat_to_display_def,pat_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`pat_to_display (c:ast_pat) =
-      (match c with flatLang_Pany -> displayLang_Item NONE (implode
-          "Pany") [] | flatLang_Pvar v -> displayLang_Item NONE (implode
-          "Pvar") [displayLang_String v] | flatLang_Plit l ->
+      (match c with ast_Pany -> displayLang_Item NONE (implode
+          "Pany") [] | ast_Pvar v -> displayLang_Item NONE (implode
+          "Pvar") [displayLang_String v] | ast_Plit l ->
           displayLang_Item NONE (implode "Plit") [lit_to_display l] |
-          flatLang_Pcon opt_id pats ->
+          ast_Pcon opt_id pats ->
           displayLang_Item NONE (implode "Pcon") [(\f opt. match opt
               with NONE -> empty_item (implode "none") | SOME opt' ->
               displayLang_Item NONE (implode "some") [f opt'])
               id_to_display opt_id;
                             displayLang_Tuple
-                                (pat_to_display_list pats)] |
-                                flatLang_Pas t v -> displayLang_Item
-                                NONE (implode "Pas") [pat_to_display
-                                t; displayLang_String v] |
-                                flatLang_Pref t -> displayLang_Item
-                                NONE (implode "Pref") [pat_to_display
-                                t] | ast_Ptannot x y ->
+                                (pat_to_display_list pats)] | ast_Pas
+                                t v -> displayLang_Item NONE (implode
+                                "Pas") [pat_to_display t;
+                                displayLang_String v] | ast_Pref t ->
                                 displayLang_Item NONE (implode
-                                "Ptannot") [pat_to_display x;
-                                ast_t_to_display y])`;
+                                "Pref") [pat_to_display t] |
+                                ast_Ptannot x y -> displayLang_Item
+                                NONE (implode "Ptannot")
+                                [pat_to_display x; ast_t_to_display
+                                y])`;
    `pat_to_display_list [] = []`;
    `pat_to_display_list (CONS x xs) = CONS (pat_to_display x)
     (pat_to_display_list xs)`];;
@@ -362,18 +362,18 @@ let pat_to_display_def,pat_to_display_ind = assume_definition_rec
 let exp_to_display_def,exp_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`exp_to_display (c:ast_exp) =
-      (match c with pattern_semantics_Lit l -> displayLang_Item NONE
-          (implode "Lit") [lit_to_display l] | wordLang_Raise e ->
-          displayLang_Item NONE (implode "Raise") [exp_to_display e] |
-          closLang_Con opt_id es -> displayLang_Item NONE (implode
-          "Con") [(\f opt. match opt with NONE -> empty_item (implode
-          "none") | SOME opt' -> displayLang_Item NONE (implode "some")
-          [f opt']) id_to_display opt_id;
+      (match c with ast_Lit l -> displayLang_Item NONE (implode
+          "Lit") [lit_to_display l] | ast_Raise e -> displayLang_Item
+          NONE (implode "Raise") [exp_to_display e] | ast_Con opt_id es
+          -> displayLang_Item NONE (implode "Con") [(\f opt. match opt
+          with NONE -> empty_item (implode "none") | SOME opt' ->
+          displayLang_Item NONE (implode "some") [f opt']) id_to_display
+          opt_id;
                               displayLang_Tuple (exp_to_display_list
-                                  es)] | db_vars_Var id' ->
-                                  displayLang_Item NONE (implode "Var")
-                                  [id_to_display id'] | ast_Fun n e ->
-                                  displayLang_Item NONE (implode "Fun")
+                                  es)] | ast_Var id' -> displayLang_Item
+                                  NONE (implode "Var") [id_to_display
+                                  id'] | ast_Fun n e -> displayLang_Item
+                                  NONE (implode "Fun")
                                   [displayLang_String n; exp_to_display
                                   e] | ast_App op es -> displayLang_Item
                                   NONE (implode "App") (CONS
@@ -382,14 +382,13 @@ let exp_to_display_def,exp_to_display_ind = assume_definition_rec
                                   lop e1 e2 -> displayLang_Item NONE
                                   (implode "Log") [lop_to_display lop;
                               exp_to_display e1;
-                              exp_to_display e2] |
-                                  pattern_semantics_If e1 e2 e3 ->
-                                  displayLang_Item NONE (implode "If")
-                                  [exp_to_display e1;
+                              exp_to_display e2] | ast_If e1 e2 e3
+                                  -> displayLang_Item NONE (implode
+                                  "If") [exp_to_display e1;
                               exp_to_display e2;
-                              exp_to_display e3] | closLang_Let
-                                  n_opt e1 e2 -> displayLang_Item NONE
-                                  (implode "Let")
+                              exp_to_display e3] | ast_Let n_opt e1
+                                  e2 -> displayLang_Item NONE (implode
+                                  "Let")
           [(\f opt. match opt with NONE -> empty_item (implode
               "none") | SOME opt' -> displayLang_Item NONE (implode
               "some") [f opt']) displayLang_String n_opt;
@@ -398,7 +397,7 @@ let exp_to_display_def,exp_to_display_ind = assume_definition_rec
           displayLang_Item NONE (implode "Mat")
           [exp_to_display e;
            displayLang_Tuple (pat_exp_to_display_list pats)] |
-               bvl_Handle e pats ->
+               ast_Handle e pats ->
           displayLang_Item NONE (implode "Handle")
           [exp_to_display e;
            displayLang_Tuple (pat_exp_to_display_list pats)] |
@@ -1075,7 +1074,7 @@ let data_prog_to_display_def,data_prog_to_display_ind = define_wf
           (match prog with dataLang_Skip -> empty_item (implode
               "skip") | dataLang_Move x y -> displayLang_Tuple
             [num_to_display x; displayLang_String (implode ":=");
-                num_to_display y] | wordLang_Call rets target args NONE
+                num_to_display y] | dataLang_Call rets target args NONE
                 -> displayLang_Item NONE (implode "call")
             [(\f opt. match opt with NONE -> empty_item (implode
                 "none") | SOME opt' -> displayLang_Item NONE (implode
@@ -1086,7 +1085,7 @@ let data_prog_to_display_def,data_prog_to_display_ind = define_wf
                 displayLang_String (attach_name ns target);
                 (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
                     args;
-                empty_item (implode "none")] | wordLang_Call rets
+                empty_item (implode "none")] | dataLang_Call rets
                     target args (SOME (v,handler)) -> displayLang_Item
                     NONE (implode "call")
             [(\f opt. match opt with NONE -> empty_item (implode
@@ -1118,22 +1117,21 @@ let data_prog_to_display_def,data_prog_to_display_ind = define_wf
                 (\f opt. match opt with NONE -> empty_item (implode
                     "none") | SOME opt' -> displayLang_Item NONE
                     (implode "some") [f opt']) num_set_to_display n_set]
-                    | wordLang_Seq x y ->
+                    | dataLang_Seq x y ->
             (let xs = append (misc_Append (data_seqs x) (data_seqs
                 y)) in
                separate_lines (implode "seq")
-                   (data_prog_to_display_list k ns xs)) |
-                   pattern_semantics_If n x y -> displayLang_Item NONE
-                   (implode "if")
+                   (data_prog_to_display_list k ns xs)) | dataLang_If n
+                   x y -> displayLang_Item NONE (implode "if")
             [num_to_display n; data_prog_to_display k ns x;
                 data_prog_to_display k ns y] | dataLang_MakeSpace n ns
                 -> displayLang_Item NONE (implode "make_space")
             [num_to_display n; num_set_to_display ns] |
-                wordLang_Raise n -> displayLang_Item NONE (implode
-                "raise") [num_to_display n] | stackLang_Return ns ->
+                dataLang_Raise n -> displayLang_Item NONE (implode
+                "raise") [num_to_display n] | dataLang_Return ns ->
                 displayLang_Item NONE (implode "return") [(\f xs.
                 displayLang_Tuple (MAP f xs)) num_to_display ns] |
-                wordLang_Tick -> empty_item (implode "tick"))`;
+                dataLang_Tick -> empty_item (implode "tick"))`;
    `data_prog_to_display_list k ns [] = []`;
    `data_prog_to_display_list k ns (CONS x xs) =
         (match k with
@@ -1151,9 +1149,9 @@ let data_fun_to_display_def = new_definition
 
 let asm_binop_to_display_def = new_definition
   `asm_binop_to_display op = (match op with asm_Add -> empty_item
-  (implode "Add") | closLang_Sub -> empty_item (implode "Sub") |
-  asm_And -> empty_item (implode "And") | asm_Or -> empty_item
-  (implode "Or") | asm_Xor -> empty_item (implode "Xor"))`;;
+  (implode "Add") | asm_Sub -> empty_item (implode "Sub") | asm_And
+  -> empty_item (implode "And") | asm_Or -> empty_item (implode "Or")
+  | asm_Xor -> empty_item (implode "Xor"))`;;
 
 let asm_reg_imm_to_display_def = new_definition
   `asm_reg_imm_to_display reg_imm' = (match reg_imm' with Reg reg ->
@@ -1196,13 +1194,13 @@ let asm_memop_to_display_def = new_definition
   empty_item (implode "Store32"))`;;
 
 let asm_cmp_to_display_def = new_definition
-  `asm_cmp_to_display op = (match op with closLang_Equal ->
-  empty_item (implode "Equal") | asm_Lower -> empty_item (implode
-  "Lower") | closLang_Less -> empty_item (implode "Less") | asm_Test
-  -> empty_item (implode "Test") | asm_NotEqual -> empty_item
-  (implode "NotEqual") | asm_NotLower -> empty_item (implode
-  "NotLower") | asm_NotLess -> empty_item (implode "NotLess") |
-  asm_NotTest -> empty_item (implode "NotTest"))`;;
+  `asm_cmp_to_display op = (match op with asm_Equal -> empty_item
+  (implode "Equal") | asm_Lower -> empty_item (implode "Lower") |
+  asm_Less -> empty_item (implode "Less") | asm_Test -> empty_item
+  (implode "Test") | asm_NotEqual -> empty_item (implode "NotEqual")
+  | asm_NotLower -> empty_item (implode "NotLower") | asm_NotLess ->
+  empty_item (implode "NotLess") | asm_NotTest -> empty_item (implode
+  "NotTest"))`;;
 
 let asm_fp_to_display_def = new_definition
   `asm_fp_to_display op = (match op with FPLess n1 n2 n3 ->
@@ -1238,16 +1236,14 @@ let asm_inst_to_display_def = new_definition
 
 let asm_asm_to_display_def = new_definition
   `asm_asm_to_display inst' = (match inst' with asm_Inst i ->
-  asm_inst_to_display i | labLang_Jump w -> item_with_word (implode
-  "Jump") w | labLang_JumpCmp c r to w -> displayLang_Item NONE (implode
-  "JumpCmp")
+  asm_inst_to_display i | asm_Jump w -> item_with_word (implode "Jump")
+  w | asm_JumpCmp c r to w -> displayLang_Item NONE (implode "JumpCmp")
        [asm_cmp_to_display c; num_to_display r;
          asm_reg_imm_to_display to;
-        word_to_display w] | labLang_Call w -> item_with_word
-          (implode "Call") w | asm_JumpReg r -> item_with_num
-          (implode "JumpReg>") r | wordLang_Loc r w ->
-          displayLang_Item NONE (implode "Loc") [num_to_display r;
-          word_to_display w])`;;
+        word_to_display w] | asm_Call w -> item_with_word (implode
+          "Call") w | asm_JumpReg r -> item_with_num (implode
+          "JumpReg>") r | asm_Loc r w -> displayLang_Item NONE
+          (implode "Loc") [num_to_display r; word_to_display w])`;;
 
 (* stackLang *)
 
@@ -1456,8 +1452,8 @@ let lab_asm_to_display_def = new_definition
            [num_to_display r; displayLang_String (attach_name ns
              (SOME s)); num_to_display n] | labLang_CallFFI name ->
              displayLang_Item NONE (implode "call_FFI") [string_imp
-             name] | stackLang_Install -> empty_item (implode
-             "install") | stackLang_Halt -> empty_item (implode
+             name] | labLang_Install -> empty_item (implode
+             "install") | labLang_Halt -> empty_item (implode
              "halt"))`;;
 
 let lab_line_to_display_def = new_definition

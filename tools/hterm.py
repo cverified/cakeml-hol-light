@@ -1167,6 +1167,8 @@ class Ctx:
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.auxsize = {}                  # HOL4's expN_size -> term
     self.head_for = None               # a head already resolved
+    self.arm_thys = None               # the theories of a match
+    self.armtys = None                 # ... of the one being printed
     self.intnums = False               # are numerals integers here?
     self.intneg = False                # is $~ the negation of an int?
     self.intvars = set()               # variables holding integers
@@ -2319,13 +2321,39 @@ class Printer:
         # not (closSem's do_app matches on [Number i] in one arm
         # and on (MemOp (ElemAt i)) in another)
         vs = self.ctx.armvars.get(id(b))
-        if not vs: return self.pr(p, 15) + ' -> ' + self.pr(b, 2)
         old = self.ctx.intvars
-        self.ctx.intvars = old | vs
+        if vs: self.ctx.intvars = old | vs
         try:
-          return self.pr(p, 15) + ' -> ' + self.pr(b, 2)
+          # the theory that the patterns say is the theory of the
+          # patterns: the body of an arm may be about anything
+          # (bvi_tailrec matches a bvi expression and gives the
+          # Int of its own v_ty)
+          oldt = self.ctx.armtys
+          self.ctx.armtys = armts
+          try:
+            ps = self.pr(p, 15)
+          finally:
+            self.ctx.armtys = oldt
+          return ps + ' -> ' + self.pr(b, 2)
         finally:
           self.ctx.intvars = old
+      # the scrutinee of a match has one type, so the heads of the
+      # patterns are constructors of one theory: a name that
+      # several have is the one of the theory that has them all
+      # (closSem matches a word_test on Equal and on Compare, and
+      # only ast has both)
+      armts = None
+      if self.ctx.arm_thys is not None:
+        cs = []
+        for p, _ in e.arms:
+          q = p
+          while q.kind == 'paren': q = q.e
+          if q.kind == 'typed' or q.kind == 'rawtyped': q = q.e
+          while q.kind == 'paren': q = q.e
+          h = strip_app(q)[0] if q.kind == 'app' else q
+          if h.kind == 'id': cs.append(h.name.split('$')[-1])
+        ts = self.ctx.arm_thys(cs)
+        if ts: armts = ts
       arms = ' | '.join(arm(p, b) for p, b in e.arms)
       return self.paren('match ' + self.pr(e.s, 15) + ' with ' + arms,
                         1, prec)

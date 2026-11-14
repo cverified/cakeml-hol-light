@@ -300,8 +300,8 @@ let bvlSem_do_word_app_def = new_definition
           n2]) ->
           (if (&0) <= n1 /\ n1 < (&256) /\ (&0) <= n2 /\ n2 < (&256)
             then
-             (match test with closLang_Equal -> SOME (bvlSem_Boolv
-               (n1 = n2)) | ast_Compare cmp -> SOME (bvlSem_Boolv
+             (match test with ast_Equal -> SOME (bvlSem_Boolv (n1 =
+               n2)) | ast_Compare cmp -> SOME (bvlSem_Boolv
                (semanticPrimitives_int_cmp cmp n1 n2)) | _31 -> NONE)
                else NONE)
         | ((WordShift ast_W8 sh n),[bvlSem_Number i]) ->
@@ -639,9 +639,8 @@ let bvlSem_do_app_def = new_definition
            (closLang_TagLenEq n l),[bvlSem_Block tag xs]) ->
          Rval (bvlSem_Boolv (tag = n /\ LENGTH xs = l),s) |
            (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
-         (match p with clos_known_Int i -> (match x1 with
-           bvlSem_Number j -> Rval (bvlSem_Boolv (i = j),s) | _81 ->
-           ((Rerr (Rabort
+         (match p with closLang_Int i -> (match x1 with bvlSem_Number
+           j -> Rval (bvlSem_Boolv (i = j),s) | _81 -> ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)) | closLang_W64 i ->
            (match x1 with bvlSem_Word64 j -> Rval (bvlSem_Boolv (i =

@@ -528,7 +528,7 @@ presLang	ML code skipped: val bvl_test =   “concat $ append $ bvl_to_strs     
 presLang	ML code skipped: val bvi_test =   “concat $ append $ bvi_to_strs      (insert
 presLang	ML code skipped: val data_test =   “concat $ append $ data_to_strs      (inse
 presLang	ML code skipped: val lab_test =   “concat $ append $ lab_to_strs      (insert
-presLang	line 631 is 73 characters
+presLang	line 630 is 73 characters
 typeSystem	line 28 is 81 characters
 typeSystem	line 29 is 79 characters
 typeSystem	line 133 is 75 characters
@@ -637,7 +637,7 @@ bvlSem	ML code skipped: val s = ``(s:('c,'ffi) bvlSem$state)``
 bvlSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 bvlSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
 bvlSem	line 47 is 79 characters
-bvlSem	line 957 is 78 characters
+bvlSem	line 956 is 78 characters
 bviSem	Overload num_stubs
 bviSem	ML code skipped: val s = ``(s:('c,'ffi) bviSem$state)``;
 bviSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
@@ -843,8 +843,8 @@ gen_gc_partial	line 96 is 73 characters
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1213 is 86 characters
-wordSem	line 1340 is 75 characters
+wordSem	line 1214 is 86 characters
+wordSem	line 1341 is 75 characters
 targetSem	line 62 is 86 characters
 targetSem	line 331 is 74 characters
 targetSem	line 527 is 79 characters

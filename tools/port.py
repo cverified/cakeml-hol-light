@@ -320,6 +320,7 @@ class Porter:
                          ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy),
                          defnames=db.defnames_for(thy))
+    self.ctx.arm_thys = self.arm_thys
     # HOL4's auxiliary size functions of a datatype family
     # (exp1_size, exp2_size, ...), as the term the port writes
     # for each (overrides.AUX_SIZE)
@@ -2462,6 +2463,17 @@ class Porter:
     go(e)
     return e
 
+  def arm_thys(self, names):
+    """the theories that have every one of these constructors,
+       which is what the patterns of a match say about its
+       scrutinee (tools/hterm.py prints the arms with it)"""
+    ts = None
+    for n in names:
+      s = {t for t, k in self.db.defs.get(n, []) if k == 'con'}
+      if not s: continue
+      ts = s if ts is None else ts & s
+    return ts or set()
+
   def con_thy(self, nm, kinds=('con',), arity=None):
     """the theory whose constant of this name is meant.  Where the
        name is ambiguous it is the theory whose constructor takes
@@ -2483,8 +2495,14 @@ class Porter:
     if arity is not None:
       ts = [x for x in ts
             if self.db.con_arity(x, n) == arity] or ts
+    # the patterns of the match that is being printed say the
+    # theory more precisely than the block does, so they come
+    # first; the block narrows what is left where it can
+    if kinds == ('con',) and self.ctx.armtys:
+      ts = [x for x in ts if x in self.ctx.armtys] or ts
     if kinds == ('con',) and self.contys:
-      ts = [x for x in ts if x in self.contys] or ts
+      narrow = [x for x in ts if x in self.contys]
+      if narrow: ts = narrow
     if not ts: return None
     # a file is about a language and its name says which one:
     # CakeML calls a pass after the language it reads (bvl_const,

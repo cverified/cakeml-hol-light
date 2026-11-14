@@ -1349,14 +1349,14 @@ let WordOp64_on_32_def = new_definition
                            wordLang_Var 23]);
                          wordLang_Assign 31 (wordLang_Op
                            backend_common_Xor [wordLang_Var 11;
-                           wordLang_Var 21])] | word_bignum_Add ->
+                           wordLang_Var 21])] | backend_common_Add ->
                            data_to_word_list_Seq [wordLang_Assign 29
                            (wordLang_Const (n2w 0));
                          wordLang_Assign 27 (wordLang_Const (n2w 0));
                          wordLang_Inst (asm_Arith (asm_AddCarry 33 13
                            23 29));
                          wordLang_Inst (asm_Arith (asm_AddCarry 31 11
-                           21 29))] | word_bignum_Sub ->
+                           21 29))] | backend_common_Sub ->
                            data_to_word_list_Seq [wordLang_Assign 29
                            (wordLang_Const (n2w 1));
                          wordLang_Assign 27 (wordLang_Op
@@ -2647,9 +2647,10 @@ let assign_WordOpW64_def = new_definition
                  (wordLang_Seq (wordLang_Assign 3
                    (wordLang_Op (match opw with
                            backend_common_Andw -> ast_And |
-                             backend_common_Orw -> ast_Or | ast_Xor ->
-                             ast_Xor | ast_Add -> ast_Add | ast_Sub ->
-                             ast_Sub)
+                             backend_common_Orw -> ast_Or |
+                             backend_common_Xor -> ast_Xor |
+                             backend_common_Add -> ast_Add |
+                             backend_common_Sub -> ast_Sub)
                           [wordLang_Load
                              (wordLang_Op asm_Add
                               [real_addr c (adjust_var v1);
@@ -3204,19 +3205,20 @@ let assign_def = new_definition
        args (assign_UpdateByte c l dest) (wordLang_Skip,l) |
        closLang_MemOp closLang_FinaliseCons -> data_to_word_arg1 args
        (assign_FinaliseCons l dest) (wordLang_Skip,l) | closLang_BlockOp
-       ast_ListAppend -> data_to_word_arg2 args (assign_ListAppend c
-       secn l dest names) (wordLang_Skip,l) | closLang_BlockOp
+       closLang_ListAppend -> data_to_word_arg2 args (assign_ListAppend
+       c secn l dest names) (wordLang_Skip,l) | closLang_BlockOp
        (closLang_Cons tag) -> assign_Cons c l dest tag args |
        closLang_MemOp (closLang_MutCons tag _30) -> assign_MutCons c l
-       dest tag args | closLang_MemOp ast_ConfigGC -> data_to_word_arg2
-       args (assign_ConfigGC c secn l dest names) (wordLang_Skip,l) |
-       closLang_BlockOp (closLang_Build parts') -> assign_Build c secn l
-       dest names parts' | closLang_BlockOp (closLang_ConsExtend tag) ->
-       assign_ConsExtend c secn l dest names tag args | closLang_MemOp
-       closLang_Ref -> assign_Ref c secn l dest names args | ast_ThunkOp
-       (AllocThunk ev) -> data_to_word_arg1 args (assign_AllocThunk ev c
-       secn l dest names) (wordLang_Skip,l) | ast_ThunkOp (UpdateThunk
-       ev) -> data_to_word_arg2 args (assign_UpdateThunk ev c l dest)
+       dest tag args | closLang_MemOp closLang_ConfigGC ->
+       data_to_word_arg2 args (assign_ConfigGC c secn l dest names)
+       (wordLang_Skip,l) | closLang_BlockOp (closLang_Build parts') ->
+       assign_Build c secn l dest names parts' | closLang_BlockOp
+       (closLang_ConsExtend tag) -> assign_ConsExtend c secn l dest
+       names tag args | closLang_MemOp closLang_Ref -> assign_Ref c secn
+       l dest names args | closLang_ThunkOp (AllocThunk ev) ->
+       data_to_word_arg1 args (assign_AllocThunk ev c secn l dest names)
+       (wordLang_Skip,l) | closLang_ThunkOp (UpdateThunk ev) ->
+       data_to_word_arg2 args (assign_UpdateThunk ev c l dest)
        (wordLang_Skip,l) | closLang_MemOp (closLang_RefByte imm) ->
        data_to_word_arg2 args (assign_RefByte c secn l dest names imm)
        (wordLang_Skip,l) | closLang_MemOp closLang_XorByte ->
@@ -3293,21 +3295,21 @@ let assign_def = new_definition
            (assign_WordFromInt c secn l dest names) (wordLang_Skip,l)
            | closLang_WordOp (WordToInt) -> data_to_word_arg1 args
            (assign_WordToInt c secn l dest names) (wordLang_Skip,l) |
-           ast_FFI ffi_index -> data_to_word_arg2 args (assign_FFI
-           ffi_index c secn l dest names) (wordLang_Skip,l) |
-           closLang_BlockOp (closLang_EqualConst p) ->
-           data_to_word_arg1 args (assign_EqualConst p c secn l dest
-           names) (wordLang_Skip,l) | wordLang_Install -> arg4 args
-           (assign_Install c secn l dest names) (wordLang_Skip,l) |
-           closLang_WordOp (FP_cmp fpc) -> data_to_word_arg2 args
-           (assign_FP_cmp fpc c secn l dest names) (wordLang_Skip,l)
-           | closLang_WordOp (FP_top fpt) -> arg3 args (assign_FP_top
-           fpt c secn l dest names) (wordLang_Skip,l) |
-           closLang_WordOp (FP_bop fpb) -> data_to_word_arg2 args
-           (assign_FP_bop fpb c secn l dest names) (wordLang_Skip,l)
-           | closLang_WordOp (FP_uop fpu) -> data_to_word_arg1 args
-           (assign_FP_uop fpu c secn l dest names) (wordLang_Skip,l)
-           | _31 -> (wordLang_Skip,l))`;;
+           closLang_FFI ffi_index -> data_to_word_arg2 args
+           (assign_FFI ffi_index c secn l dest names)
+           (wordLang_Skip,l) | closLang_BlockOp (closLang_EqualConst
+           p) -> data_to_word_arg1 args (assign_EqualConst p c secn l
+           dest names) (wordLang_Skip,l) | closLang_Install -> arg4
+           args (assign_Install c secn l dest names)
+           (wordLang_Skip,l) | closLang_WordOp (FP_cmp fpc) ->
+           data_to_word_arg2 args (assign_FP_cmp fpc c secn l dest
+           names) (wordLang_Skip,l) | closLang_WordOp (FP_top fpt) ->
+           arg3 args (assign_FP_top fpt c secn l dest names)
+           (wordLang_Skip,l) | closLang_WordOp (FP_bop fpb) ->
+           data_to_word_arg2 args (assign_FP_bop fpb c secn l dest
+           names) (wordLang_Skip,l) | closLang_WordOp (FP_uop fpu) ->
+           data_to_word_arg1 args (assign_FP_uop fpu c secn l dest
+           names) (wordLang_Skip,l) | _31 -> (wordLang_Skip,l))`;;
 
 let force_thunk_def = new_definition
   `force_thunk (c:data_to_word_config) secn (l:num) ret loc v1 =
@@ -3352,15 +3354,15 @@ let _ = size_thms "dataLang_prog";;
 let comp_def,comp_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). dataLang_prog_size x3)`
   [`data_to_word_comp c (secn:num) (l:num) (p:dataLang_prog) =
-     (match p with wordLang_Skip -> ((wordLang_Skip:'a
-       wordLang_prog),l) | wordLang_Tick -> (wordLang_Tick,l) |
-       ast_Raise n -> (ast_Raise (adjust_var n),l) | dataLang_Return ns
-       -> (wordLang_Return 0 (MAP adjust_var ns),l) | wordLang_Move n1
-       n2 -> (wordLang_Move 0 [(adjust_var n1,adjust_var n2)],l) |
-       wordLang_Seq p1 p2 ->
+     (match p with dataLang_Skip -> ((wordLang_Skip:'a
+       wordLang_prog),l) | dataLang_Tick -> (wordLang_Tick,l) |
+       dataLang_Raise n -> (ast_Raise (adjust_var n),l) |
+       dataLang_Return ns -> (wordLang_Return 0 (MAP adjust_var ns),l)
+       | dataLang_Move n1 n2 -> (wordLang_Move 0 [(adjust_var
+       n1,adjust_var n2)],l) | dataLang_Seq p1 p2 ->
          (let (q1,l1) = data_to_word_comp c secn l p1 in
          let (q2,l2) = data_to_word_comp c secn l1 p2 in
-           (wordLang_Seq q1 q2,l2)) | ast_If n p1 p2 ->
+           (wordLang_Seq q1 q2,l2)) | dataLang_If n p1 p2 ->
          (let (q1,l1) = data_to_word_comp c secn l p1 in
          let (q2,l2) = data_to_word_comp c secn l1 p2 in
            (wordLang_If ast_Equal (adjust_var n) (Imm (n2w 18)) q1
@@ -3379,7 +3381,7 @@ let comp_def,comp_ind = define_wf
                  wordLang_Skip),l)) | dataLang_Assign dest op args
                    names -> data_to_word_assign c secn l dest op args
                    names | dataLang_Force ret loc v -> force_thunk c
-                   secn l ret loc v | wordLang_Call ret target args
+                   secn l ret loc v | dataLang_Call ret target args
                    handler ->
          (match ret with NONE -> (wordLang_Call NONE target (CONS 0
            (MAP adjust_var args)) NONE,l) | SOME (ns,names) ->

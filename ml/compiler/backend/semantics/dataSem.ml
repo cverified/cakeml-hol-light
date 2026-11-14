@@ -903,10 +903,10 @@ let dataSem_do_word_app_def = new_definition
           n2]) ->
           (if (&0) <= n1 /\ n1 < (&256) /\ (&0) <= n2 /\ n2 < (&256)
             then
-             (match test with closLang_Equal -> SOME (dataSem_Boolv
-               (n1 = n2)) | ast_Compare multiword_Lt -> SOME
-               (dataSem_Boolv (n1 < n2)) | ast_Compare ast_Leq -> SOME
-               (dataSem_Boolv (n1 <= n2)) | _105 -> NONE) else NONE)
+             (match test with ast_Equal -> SOME (dataSem_Boolv (n1 =
+               n2)) | ast_Compare ast_Lt -> SOME (dataSem_Boolv (n1 <
+               n2)) | ast_Compare ast_Leq -> SOME (dataSem_Boolv (n1 <=
+               n2)) | _105 -> NONE) else NONE)
         | ((WordShift ast_W8 sh n),[dataSem_Number i]) ->
           (match some (\(w:word8). i = &(w2n w)) with NONE -> NONE |
             SOME w -> SOME (dataSem_Number (&(w2n (shift_lookup sh w

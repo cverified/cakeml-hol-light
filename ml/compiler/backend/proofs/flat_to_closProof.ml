@@ -102,8 +102,8 @@ let store_rel_def = new_definition
      (!i. if LENGTH refs <= i then FLOOKUP t_refs i = NONE else
            match EL i refs with semanticPrimitives_Refv v -> (?x.
              FLOOKUP t_refs i = SOME (closSem_ValueArray [x]) /\
-             flat_to_closProof_v_rel v x) | closSem_Thunk m v -> (?x.
-             FLOOKUP t_refs i = SOME (closSem_Thunk m x) /\
+             flat_to_closProof_v_rel v x) | semanticPrimitives_Thunk m v
+             -> (?x. FLOOKUP t_refs i = SOME (closSem_Thunk m x) /\
              flat_to_closProof_v_rel v x) | semanticPrimitives_Varray vs
              -> (?xs. FLOOKUP t_refs i = SOME (closSem_ValueArray xs) /\
                               ALL2 flat_to_closProof_v_rel vs xs)

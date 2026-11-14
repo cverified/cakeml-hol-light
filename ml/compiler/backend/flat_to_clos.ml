@@ -136,19 +136,19 @@ let CopyByteAw8_def = new_definition
 
 let compile_arith_def = new_definition
   `compile_arith t (a:ast_arith) ty xs =
-     (match ty with ast_IntT -> (match a with closLang_Add ->
-       closLang_Op t (closLang_IntOp closLang_Add) xs | closLang_Sub ->
-       closLang_Op t (closLang_IntOp closLang_Sub) xs | ast_Mul ->
-       closLang_Op t (closLang_IntOp closLang_Mult) xs | closLang_Div ->
-       closLang_Let t xs (flatLang_If t (closLang_Op t (closLang_BlockOp
-       closLang_Equal) [closLang_Var t 0; closLang_Op t (closLang_IntOp
-       (closLang_Const (&0))) []])
+     (match ty with ast_IntT -> (match a with ast_Add -> closLang_Op
+       t (closLang_IntOp closLang_Add) xs | ast_Sub -> closLang_Op t
+       (closLang_IntOp closLang_Sub) xs | ast_Mul -> closLang_Op t
+       (closLang_IntOp closLang_Mult) xs | ast_Div -> closLang_Let t xs
+       (flatLang_If t (closLang_Op t (closLang_BlockOp closLang_Equal)
+       [closLang_Var t 0; closLang_Op t (closLang_IntOp (closLang_Const
+       (&0))) []])
                               (flatLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 div_tag)) []))
                               (closLang_Op t (closLang_IntOp
                                 closLang_Div) [closLang_Var t 0;
-                                closLang_Var t 1])) | closLang_Mod ->
+                                closLang_Var t 1])) | ast_Mod ->
                                 closLang_Let t xs (flatLang_If t
                                 (closLang_Op t (closLang_BlockOp
                                 closLang_Equal) [closLang_Var t 0;
@@ -169,34 +169,31 @@ let compile_arith_def = new_definition
                                 closLang_Op t (closLang_WordOp
                                 (FP_uop fpSem_FP_Neg)) xs | ast_Sqrt
                                 -> closLang_Op t (closLang_WordOp
-                                (FP_uop fpSem_FP_Sqrt)) xs |
-                                closLang_Add -> closLang_Op t
-                                (closLang_WordOp (FP_bop
-                                fpSem_FP_Add)) xs | closLang_Sub ->
-                                closLang_Op t (closLang_WordOp
+                                (FP_uop fpSem_FP_Sqrt)) xs | ast_Add
+                                -> closLang_Op t (closLang_WordOp
+                                (FP_bop fpSem_FP_Add)) xs | ast_Sub
+                                -> closLang_Op t (closLang_WordOp
                                 (FP_bop fpSem_FP_Sub)) xs | ast_Mul
                                 -> closLang_Op t (closLang_WordOp
-                                (FP_bop fpSem_FP_Mul)) xs |
-                                closLang_Div -> closLang_Op t
-                                (closLang_WordOp (FP_bop
-                                fpSem_FP_Div)) xs | ast_FMA ->
-                                closLang_Op t (closLang_WordOp
+                                (FP_bop fpSem_FP_Mul)) xs | ast_Div
+                                -> closLang_Op t (closLang_WordOp
+                                (FP_bop fpSem_FP_Div)) xs | ast_FMA
+                                -> closLang_Op t (closLang_WordOp
                                 (FP_top FP_Fma)) xs | _8 ->
                                 closLang_Let backend_common_None xs
                                 (closLang_Var backend_common_None 0))
                                 | ast_WordT ws -> (match a with
-                                closLang_Add -> closLang_Op t
+                                ast_Add -> closLang_Op t
                                 (closLang_WordOp (WordOpw ws
-                                backend_common_Add)) xs |
-                                closLang_Sub -> closLang_Op t
-                                (closLang_WordOp (WordOpw ws
-                                backend_common_Sub)) xs | ast_And ->
+                                backend_common_Add)) xs | ast_Sub ->
                                 closLang_Op t (closLang_WordOp
-                                (WordOpw ws backend_common_Andw)) xs
-                                | ast_Or -> closLang_Op t
+                                (WordOpw ws backend_common_Sub)) xs |
+                                ast_And -> closLang_Op t
                                 (closLang_WordOp (WordOpw ws
-                                backend_common_Orw)) xs |
-                                backend_common_Xor -> closLang_Op t
+                                backend_common_Andw)) xs | ast_Or ->
+                                closLang_Op t (closLang_WordOp
+                                (WordOpw ws backend_common_Orw)) xs |
+                                ast_Xor -> closLang_Op t
                                 (closLang_WordOp (WordOpw ws
                                 backend_common_Xor)) xs | _9 ->
                                 closLang_Let backend_common_None xs

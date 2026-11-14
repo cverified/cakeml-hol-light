@@ -61,7 +61,7 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
   define_guess_cheat
   [`stack_to_lab_flatten t p n m conts breaks =
      (match p with stackLang_Tick -> (misc_List [(\a. labLang_Asm
-       (Asmi a)) (asm_Inst (asm_Skip)) [] 0],F,m) | asm_Inst a ->
+       (Asmi a)) (asm_Inst (asm_Skip)) [] 0],F,m) | stackLang_Inst a ->
        (misc_List [(\a. labLang_Asm (Asmi a)) (asm_Inst a) [] 0],F,m) |
        stackLang_Halt _1 -> (misc_List [labLang_LabAsm labLang_Halt
        (n2w 0) [] 0],T,m) | stackLang_Seq p1 p2 ->

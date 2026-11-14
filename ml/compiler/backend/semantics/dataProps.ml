@@ -1031,7 +1031,7 @@ let funpow_dec_clock_clock = prove
   CHEAT_TAC);;
 
 let evaluate_mk_ticks = prove
- (`!p s n.
+ (`!FUNPOW s n.
     dataSem_evaluate (mk_ticks n p,s) =
     (if state_clock s < n then
       (SOME (Rerr (Rabort

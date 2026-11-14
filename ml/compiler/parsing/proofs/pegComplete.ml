@@ -845,7 +845,7 @@ let stoppers_def = new_definition
         | nPatternList ->
         UNIV DIFF
           ({tokens_CommaT,tokens_LparT,tokens_UnderbarT,tokens_LbrackT
-          ,tokens_ColonT,NN,tokens_StarT,tokens_AsT,
+          ,tokens_ColonT,tokens_ArrowT,tokens_StarT,tokens_AsT,
                     tokens_OpT} UNION
                    {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}
                      UNION {tokens_LongidT s1 s2 | T} UNION
