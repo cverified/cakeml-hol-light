@@ -403,6 +403,13 @@ CON_BODY = {
   # call_graph matches on a wordLang program and builds a
   # call_tree, and both have Call
   ('word_depth', 'call_graph_def'): {'Call': 'word_depth'},
+  # bvl_to_bvi reads bvl and builds bvi, and the two share Call,
+  # Var, Op, Let, If, Raise, Tick and Handle: the bodies are bvi
+  ('bvl_to_bvi', 'compile_exps_def'): {'*': 'bvi'},
+  ('bvl_to_bvi', 'compile_exps_sing_def'): {'*': 'bvi'},
+  # clos_to_bvl reads closLang and builds bvl
+  ('clos_to_bvl', 'compile_exps_def'): {'*': 'bvl'},
+  ('clos_to_bvl', 'compile_exps_sing_def'): {'*': 'bvl'},
   ('wordSem', 'evaluate_def'): {'*': 'wordSem'},
   ('stackSem', 'evaluate_def'): {'*': 'stackSem'},
   # bvi_to_data's compile matches on a bvi expression and builds a
@@ -1518,7 +1525,33 @@ ONE_QUOTATION = set([
 # its scope (stack_remove's single_stack_free builds the Inst of
 # stackLang, and the port is loaded in one namespace, where the
 # Inst of wordLang comes later)
+# the constructors of a bvi expression and of a bvl one, for the
+# definitions that build nothing else
+BVI_EXP = dict((c, 'bvi') for c in
+               ['Var', 'If', 'Let', 'Raise', 'Tick', 'Call',
+                'Force', 'Op', 'LetCall', 'Return'])
+BVL_EXP = dict((c, 'bvl') for c in
+               ['Var', 'If', 'Let', 'Raise', 'Handle', 'Tick',
+                'Call', 'Force', 'Op'])
+
 CON_OF = {
+  # the code that bvl_to_bvi builds for the primitives is bvi and
+  # nothing else: these definitions have no bvl pattern in them.
+  # The names are written out rather than taken with a wildcard,
+  # which only reaches a definition that is printed as clauses
+  ('bvl_to_bvi', 'AllocGlobal_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'CopyGlobals_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'InitGlobals_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'ListLength_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'FromListByte_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'ToListByte_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'SumListLength_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'ConcatByte_code_def'): BVI_EXP,
+  ('bvl_to_bvi', 'compile_op_def'): BVI_EXP,
+  # the type that arg_ty gives is bvi_tailrec's own v_ty, and
+  # closLang has an Int of a const_part
+  ('bvi_tailrec', 'arg_ty_def'):
+    {'Int': 'bvi_tailrec', 'List': 'bvi_tailrec'},
   # flatten gives an app_list of lab programs, so its List and
   # its Append are misc's (the match is on a variable, so the
   # patterns of its arms have neither)
@@ -1756,6 +1789,36 @@ ML_PORTED = {
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # a value of semanticPrimitives and a value of flatSem have the
+  # same constructor names, and one clause of these uses both: the
+  # comparison is of the value it reads and the result is of the
+  # one it builds, so neither a rule for the definition nor one
+  # for the clause can say it
+  ('flatSem', 'v_to_flat_def'): r"""
+let v_to_flat_def = new_definition
+  `v_to_flat x1 =
+      match x1 with
+        semanticPrimitives_Litv v -> flatSem_Litv v
+      | (semanticPrimitives_Conv x y) ->
+     (if semanticPrimitives_Conv x y = semanticPrimitives_Boolv T then
+       flatSem_Boolv T else
+      if semanticPrimitives_Conv x y = semanticPrimitives_Boolv F then
+        flatSem_Boolv F else flatSem_Vectorv [])
+      | _67 -> flatSem_Vectorv []`;;
+""",
+  ('flatSem', 'flat_to_v_def'): r"""
+let flat_to_v_def = new_definition
+  `flat_to_v x1 =
+      match x1 with
+        flatSem_Litv v -> semanticPrimitives_Litv v
+      | (flatSem_Conv x y) ->
+     (if flatSem_Conv x y = flatSem_Boolv T then
+       semanticPrimitives_Boolv T else
+      if flatSem_Conv x y = flatSem_Boolv F then
+        semanticPrimitives_Boolv F else
+          semanticPrimitives_Vectorv [])
+      | _68 -> semanticPrimitives_Vectorv []`;;
+""",
   ('compiler', 'help_string_def'): help_string(),
   # HOL4 states the string that EVAL computes from the git commit
   # of CakeML, the one of HOL4, the version of PolyML and the time
@@ -11753,4 +11816,29 @@ CON_FILE = {
 DEF_NAMES = {
   ('presLang', 'num_to_display_def'): {'toString': 'num_to_str'},
   ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
+}
+
+
+# DEF_PATCH: a spot of a definition that no rule can resolve,
+# where writing the whole definition out (REPLACE) would hide
+# what the port does with the rest of it.  The port raises where
+# a patch does not apply, so a patch cannot go quietly stale.
+DEF_PATCH = {
+  # compile_exps reads a bvl expression and builds a bvi one, and
+  # the patterns say bvl themselves; no bvi_to_data Call stands
+  # in these, so the bodies are the bvi one wherever they say Call
+  ('bvl_to_bvi', 'compile_exps_def'): [
+    ('dataLang_Call', 'bvi_Call'),
+  ],
+  ('bvl_to_bvi', 'compile_exps_sing_def'): [
+    ('dataLang_Call', 'bvi_Call'),
+  ],
+  # the second component of the result is a db_var_set and the
+  # first a list of bvl expressions; bvl's Var and db_vars' Var
+  # both take one argument, so only the place says which it is
+  ('bvl_handle', 'compile_def'): [
+    ('([bvl_Var v],bvl_Var v,1,T)', '([bvl_Var v],db_vars_Var v,1,T)'),
+    ('([(bvl_Force m v:bvl_exp)],bvl_Var v,1,F)',
+     '([(bvl_Force m v:bvl_exp)],db_vars_Var v,1,F)'),
+  ],
 }

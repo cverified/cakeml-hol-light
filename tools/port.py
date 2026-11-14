@@ -2376,6 +2376,16 @@ class Porter:
       EMITTED_DEFS.append((self.thy,
                            self.ctx.names.get((self.thy, c), c),
                            bind))
+    # a spot of a definition that no rule can resolve: the second
+    # component of the result of bvl_handle's compile is a
+    # db_var_set and the first a list of bvl expressions, and
+    # bvl's Var and db_vars' Var both take one argument, so
+    # nothing but the place says which is which.  A patch that
+    # does not apply is an error and not a silence
+    for was, now in overrides.DEF_PATCH.get(key, []):
+      if was not in text:
+        raise SyntaxError('DEF_PATCH does not apply: ' + was[:40])
+      text = text.replace(was, now)
     # HOL4's [simp] on a definition says that its equations belong
     # to the set that its simplifier reaches for, which the port
     # says with a call after the definition, as it does for a
@@ -4093,6 +4103,16 @@ class Porter:
     # the relations that the block defines are overloads of HOL4
     # as the constants of a Definition are
     overloads = self.overloads_of(defined)
+    # a spot of a definition that no rule can resolve: the second
+    # component of the result of bvl_handle's compile is a
+    # db_var_set and the first a list of bvl expressions, and
+    # bvl's Var and db_vars' Var both take one argument, so
+    # nothing but the place says which is which.  A patch that
+    # does not apply is an error and not a silence
+    for was, now in overrides.DEF_PATCH.get(key, []):
+      if was not in text:
+        raise SyntaxError('DEF_PATCH does not apply: ' + was[:40])
+      text = text.replace(was, now)
     # HOL4's [simp] on a definition says that its equations belong
     # to the set that its simplifier reaches for, which the port
     # says with a call after the definition, as it does for a
