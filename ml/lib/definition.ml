@@ -308,6 +308,9 @@ let define_shaped_wf_tac_clauses shape rel tac cls =
 let define_shaped_wf_tac shape rel tac tm =
   define_shaped_wf_tac_clauses shape rel tac [tm];;
 
+let define_shaped_wf_clauses shape rel cls =
+  define_shaped_wf_tac_clauses shape rel TERM_TAC cls;;
+
 let define_shaped_wf shape rel tm =
   define_shaped_wf_tac_clauses shape rel TERM_TAC [tm];;
 
