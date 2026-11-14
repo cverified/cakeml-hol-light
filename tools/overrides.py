@@ -915,6 +915,18 @@ INT_NUMERALS = set([
 # The library layer has them under a name of their own and the
 # statements that mean them say so here.
 THM_NAMES = {
+  # the prog_size of these is the one of the language the seqs
+  # are of, which the port read as labLang's
+  ('presLang', 'MEM_append_data_seqs'):
+    {'prog_size': 'dataLang_prog_size'},
+  ('presLang', 'list_size_append_data_seqs'):
+    {'prog_size': 'dataLang_prog_size'},
+  ('presLang', 'MEM_append_stack_seqs'):
+    {'prog_size': 'stackLang_prog_size'},
+  ('presLang', 'list_size_append_stack_seqs'):
+    {'prog_size': 'stackLang_prog_size'},
+  ('presLang', 'MEM_append_word_seqs'):
+    {'prog_size': 'wordLang_prog_size'},
   # presLang reads five languages, so an auxiliary size function
   # of one name is a different one in each of its theorems: the
   # name says the size itself here
@@ -1690,6 +1702,14 @@ CON_OF = {
   # Skip is asm's where every other Skip of the file is the one of
   # a stackLang program
   ('stack_names', 'inst_find_name_def'): {'Skip': 'asm'},
+  # the seqs of a program give an app_list of misc, as the Append
+  # of their other arm does
+  ('presLang', 'data_seqs_def'): {'List': 'misc'},
+  ('presLang', 'stack_seqs_def'): {'List': 'misc'},
+  ('presLang', 'word_seqs_def'): {'List': 'misc'},
+  # the Cons of om_tra is the one of a trace of backend_common,
+  # and pattern_semantics has a Cons of its own
+  ('source_to_flat', 'om_tra_def'): {'Cons': 'backend_common'},
   # the patterns of compile_pat are ast patterns, which the source
   # says of three of the seven clauses and leaves to the type of
   # the function in the other four (CON_BODY says the bodies)
