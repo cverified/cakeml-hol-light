@@ -457,6 +457,9 @@ CON_CLAUSE = {
 # stack_to_labProof is the state of stackSem everywhere except in
 # make_init, which builds one out of a state of labSem)
 FIELD_VAR_DEF = {
+  # bvl_to_bvi takes the refs, the clock and the ffi of a state of
+  # bvlSem and puts them in one of bviSem
+  ('bviSem', 'bvl_to_bvi_def'): {'s': 'bvlSem_state'},
   ('stack_to_labProof', 'make_init_def'): {'s': 'labSem_state'},
   # the s2 of this statement is the state of labSem that the
   # semantics is taken of, where the s2 of the statements about
@@ -1596,6 +1599,14 @@ CON_OF = {
   ('word_bignum', 'SeqTempImmNot_def'): WORDLANG_PROG,
   ('word_bignum', 'SeqIndex_def'): WORDLANG_PROG,
   ('word_bignum', 'DivCode_def'): WORDLANG_PROG,
+  # load_op gives the memop of asm that a pancake operation is,
+  # and panLang has a Load and a Load32 of its own
+  ('panLang', 'load_op_def'):
+    {'Load': 'asm', 'Load8': 'asm', 'Load16': 'asm',
+     'Load32': 'asm'},
+  ('panLang', 'store_op_def'):
+    {'Store': 'asm', 'Store8': 'asm', 'Store16': 'asm',
+     'Store32': 'asm'},
   # compile_arith matches on an ast arithmetic operation and
   # builds a closLang expression
   ('flat_to_clos', 'compile_arith_def'):
