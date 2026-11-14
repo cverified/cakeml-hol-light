@@ -865,6 +865,8 @@ class Porter:
       self.annotate(cl, not annotate)
     oldwild = self.ctx.lone_wild
     self.ctx.lone_wild = hterm.count_wild(e) == 1
+    oldloose = self.ctx.loose_rhs
+    self.ctx.loose_rhs = hterm.lone_eqn(e)
     try:
       out = self.two_pass(lambda: hterm.Printer(self.ctx).pr(e, 0))
       if defn: self.note_ownrec(e)
@@ -876,6 +878,7 @@ class Porter:
       self.ctx.intvars = oldint
       self.ctx.fieldvar = oldfv
       self.ctx.lone_wild = oldwild
+      self.ctx.loose_rhs = oldloose
 
   def two_pass(self, f):
     """print a term, and where it reads a field of a record type
@@ -3469,13 +3472,18 @@ class Porter:
     while e.kind == 'paren': e = e.e
     if not (e.kind == 'infix' and e.op in ('=', '<=>')):
       return p.pr(cl, 0)
+    # the right hand side of the clause ends the quotation, so a
+    # conditional, a let or a match there needs no brackets
+    rr = e.r
+    while rr.kind == 'paren': rr = rr.e
+    rp = 0 if rr.kind in ('cond', 'let', 'case') else 13
     lhs = p.pr(e.l, 13)
     # an override that names the constructors itself is in the
     # scope of the whole definition already; only the ones that
     # the wildcard gives are put in for the right hand side
     if not self.conof_wild and not self.conbody:
       return '%s %s %s' % (lhs, e.op,
-                           p.pr(self.conof_arity(e.r), 13))
+                           p.pr(self.conof_arity(e.r), rp))
     old = {}
     was = {}
     body = dict(self.conof) if self.conof_wild else {}
@@ -3486,7 +3494,7 @@ class Porter:
       was[nm] = self.ctx.names.get((self.thy, nm))
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     try:
-      rhs = p.pr(self.conof_arity(e.r), 13)
+      rhs = p.pr(self.conof_arity(e.r), rp)
     finally:
       for nm in body:
         if old[nm]: self.ctx.overloaded.add(nm)
@@ -3577,6 +3585,8 @@ class Porter:
         # single wildcard in it is the _ that the source writes
         oldw = self.ctx.lone_wild
         self.ctx.lone_wild = hterm.count_wild(cl) == 1
+        oldl = self.ctx.loose_rhs
+        self.ctx.loose_rhs = hterm.lone_eqn(cl)
         try:
           cls.append(fmt(self.pr_clause(p,
                            self.annotate(cl, True, atys)),
@@ -3584,6 +3594,7 @@ class Porter:
         finally:
           self.conbody = was
           self.ctx.lone_wild = oldw
+          self.ctx.loose_rhs = oldl
       # a comment that has no token of the clause to stand before
       # (one at the end of it) goes at the end of that clause
       starts = [(hterm.first_tok(cl).pos
@@ -3904,7 +3915,14 @@ class Porter:
         self.ctx.lone_wild = sum(
           hterm.count_wild(args[i]) for i in pats) == 1
         try:
-          pat = ','.join(pr.pr(args[i], 2) for i in pats)
+          # the brackets that the source puts round the pattern of
+          # a clause are the ones that its application needs
+          # (is_pure (IntOp Add) = F), and the match that the port
+          # writes of the clauses needs none
+          def bare(a):
+            while a.kind == 'paren': a = a.e
+            return a
+          pat = ','.join(pr.pr(bare(args[i]), 2) for i in pats)
         finally:
           self.ctx.lone_wild = wasw
         if len(pats) > 1: pat = '(' + pat + ')'

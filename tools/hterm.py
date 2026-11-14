@@ -1038,6 +1038,17 @@ def dtarg_texts(alt):
   return out
 
 
+def lone_eqn(e):
+  """is this term one equation, so that nothing follows its right
+     hand side in the quotation?"""
+  while True:
+    if not isinstance(e, Node): return False
+    if e.kind == 'paren': e = e.e
+    elif e.kind == 'quant' and e.q == '!': e = e.body
+    else: break
+  return e.kind == 'infix' and e.op in ('=', '<=>')
+
+
 def count_wild(e):
   """the number of wildcards of a pattern"""
   if not isinstance(e, Node): return 0
@@ -1206,6 +1217,10 @@ class Ctx:
     self.lone_wild = False             # is the pattern that is
                                        # printed now one with a
                                        # single wildcard in it?
+    self.loose_rhs = False             # may the right hand side
+                                       # of the equation that the
+                                       # whole quotation is stand
+                                       # without its brackets?
     self.iffeq = False                 # is <=> plain equality?
     self.thy = thy
     self.wild = 0
@@ -2361,6 +2376,17 @@ class Printer:
           return self.paren('APPEND ' + l + ' ' +
                             self.pr(e.r, APP), PRE_APP, prec)
       _, assoc, hop, hprec = INFIX[op]
+      # the whole quotation is this equation, so nothing follows
+      # its right hand side and a conditional, a let or a match
+      # there needs no brackets (tools/port.py sets this)
+      if hop == '=' and self.ctx.loose_rhs:
+        self.ctx.loose_rhs = False
+        rr = e.r
+        while rr.kind == 'paren': rr = rr.e
+        if rr.kind in ('cond', 'let', 'case') and hprec is not None:
+          lp = hprec + 1 if assoc != 'l' else hprec
+          return self.paren(self.pr(e.l, lp) + ' = ' +
+                            self.pr(e.r, 0), hprec, prec)
       # an infix that HOL Light does not have is written as an
       # application of the constant that HOL4 overloads it with
       if hprec is None:
