@@ -11852,6 +11852,12 @@ CON_FILE = {
 # port writes the constant, so the definition says which.
 DEF_NAMES = {
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
+  # the toString of the length of a list is num_to_str, which the
+  # port writes as toString of the injection in some places and
+  # left without one in two
+  ('infer', 'type_name_check_sub_def'): {'toString': 'num_to_str'},
+  ('infer', 'type_name_check_subst_def'):
+    {'toString': 'num_to_str'},
   ('export', 'word_to_string_def'): {'toString': 'num_to_str'},
   ('presLang', 'num_to_display_def'): {'toString': 'num_to_str'},
   ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
