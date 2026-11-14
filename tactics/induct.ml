@@ -132,9 +132,7 @@ let induction_shape ith =
       (conjuncts (lhand (snd (strip_forall (concl ith)))));;
 
 let INDUCT_ON_TAC : term -> tactic =
-  fun t (asl,w as g) ->
-    if not (is_var t) then
-      failwith "INDUCT_ON_TAC: not a variable" else
+  let go t (asl,w as g) =
     let ty = type_of t in
     let ith = induction_for_type ty (induction_of ty) in
     let rec ntac n tac = if n <= 0 then ALL_TAC
@@ -151,7 +149,15 @@ let INDUCT_ON_TAC : term -> tactic =
     (MAP_EVERY (fun th -> UNDISCH_TAC (concl th)) deps THEN
      SPEC_TAC (t,t) THEN
      MATCH_MP_TAC ith THEN
-     split (induction_shape ith)) g;;
+     split (induction_shape ith)) g in
+  fun t g ->
+    if not (is_var t) then
+      failwith "INDUCT_ON_TAC: not a variable" else
+    (* the variable may still be bound in the goal, as it is in
+       `!l. P l` -- Rocq's `induction l` wants it in the context
+       and HOL4's `Induct_on` does not care, and neither does this *)
+    ((if vfree_in t (snd g) then ALL_TAC else X_GEN_TAC t)
+     THEN go t) g;;
 
 (* The strong scheme: a goal that is a conjunction of statements, one
    about each type of a family, is exactly what the family's own

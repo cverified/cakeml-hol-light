@@ -1,0 +1,31 @@
+\DOC simp_ss
+
+\TYPE {simp_ss : unit -> simpset}
+
+\SYNOPSIS
+The simp set as a HOL Light simpset.
+
+\DESCRIBE
+A call {simp_ss ()} returns the declared rules as a {simpset}: HOL
+Light's {basic_ss} extended with everything that {add_simp} has been
+given. It is what {SIMPS_CONV} runs, and it is there for a proof that
+wants one of the other simplification entry points -- {ONCE_SIMPLIFY_CONV},
+a different prover for the conditions, or a simpset of its own built on
+top of it.
+
+The simpset is extended as rules are declared, not built on demand, so
+asking for it costs nothing.
+
+\FAILURE
+Never fails.
+
+\EXAMPLE
+{
+  # SIMPLIFY_CONV (simp_ss ()) [ADD_CLAUSES] `count (Call Nil)`;;
+  val it : thm = |- count (Call Nil) = 0
+}
+
+\SEEALSO
+add_simp, basic_ss, SIMPLIFY_CONV, simps, SIMPS_CONV, ss_of_thms.
+
+\ENDDOC

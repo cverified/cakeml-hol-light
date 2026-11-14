@@ -1,0 +1,33 @@
+\DOC simps
+
+\TYPE {simps : unit -> thm list}
+
+\SYNOPSIS
+The theorems that have been declared into the simp set.
+
+\DESCRIBE
+A call {simps ()} returns the declared theorems, in the order in which
+they were declared.
+
+The simp set is global. Inside the load of a development that is
+deterministic, because the files load in one order; in a session where
+something extra has been loaded by hand, a proof sees that too. {simps ()}
+is there so that a proof can say what it saw.
+
+\FAILURE
+Never fails.
+
+\EXAMPLE
+{
+  # simps ();;
+  val it : thm list = []
+
+  # add_simps (CONJUNCTS count);;
+  # length (simps ());;
+  val it : int = 4
+}
+
+\SEEALSO
+add_simp, add_simps, del_simp, simp_ss.
+
+\ENDDOC

@@ -1,0 +1,48 @@
+\DOC INDUCT_ON_TAC
+
+\TYPE {INDUCT_ON_TAC : term -> tactic}
+
+\SYNOPSIS
+Induction on a variable of any inductive type.
+
+\DESCRIBE
+Given a variable {x} of an inductive type, {INDUCT_ON_TAC x} reduces the
+goal to one subgoal per constructor of that type, with the arguments of
+the constructor fixed and the induction hypotheses assumed. It is Rocq's
+{induction x} and Isabelle's {induct x}.
+
+The assumptions that mention {x} are taken into the goal before the
+induction, or the induction hypothesis would be too weak to use them.
+That is what Rocq's {induction x} does with what depends on {x} as well.
+
+Where the variable is still bound in the goal, as it is in {`!l. P l`},
+it is fixed first, so a goal in either shape may be given.
+
+Where the type belongs to a family that was defined together, the scheme
+is the weak one (see {induction_for_type}): induction on an {exp} whose
+{Call} holds an {elist} gives no hypothesis about the list.
+{INDUCT_FAMILY_TAC} is the strong scheme.
+
+\FAILURE
+Fails if the term is not a variable, if its type is not an inductive
+type, or if the variable is neither free in the goal nor the one the goal
+is universally quantified over.
+
+\EXAMPLE
+{
+  # g `forall l:(A)list. LENGTH (APPEND l l) = 2 * LENGTH l`;;
+  # e (INDUCT_ON_TAC `l:(A)list`);;
+  val it : goalstack = 2 subgoals (2 total)
+
+    0 [`LENGTH (APPEND a1 a1) = 2 * LENGTH a1`]
+
+  `LENGTH (APPEND (CONS a0 a1) (CONS a0 a1)) = 2 * LENGTH (CONS a0 a1)`
+
+  `LENGTH (APPEND [] []) = 2 * LENGTH []`
+}
+
+\SEEALSO
+CASES_ON_TAC, INDUCT_FAMILY_TAC, induction_for_type, INDUCT_TAC,
+LIST_INDUCT_TAC.
+
+\ENDDOC

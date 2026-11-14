@@ -1,0 +1,30 @@
+\DOC SIMPS_CONV
+
+\TYPE {SIMPS_CONV : thm list -> conv}
+
+\SYNOPSIS
+Simplify a term with the simp set and some more theorems.
+
+\DESCRIBE
+{SIMPS_CONV thl tm} simplifies {tm} with the rules that have been
+declared with {add_simp}, with the theorems of {thl} on top of them, and
+with HOL Light's built-in simplifications. It is {SIMPLIFY_CONV (simp_ss
+()) thl}, so it is conditional contextual rewriting and everything
+{SIMP_CONV} says applies.
+
+\FAILURE
+Fails if the term cannot be simplified, as {SIMP_CONV} does.
+
+\EXAMPLE
+{
+  # SIMPS_CONV [ADD_CLAUSES] `count (Call (Cons (Num 3) Nil))`;;
+  val it : thm = |- count (Call (Cons (Num 3) Nil)) = 1
+
+  # SIMPS_CONV [] `Num 3 = Call Nil`;;
+  val it : thm = |- Num 3 = Call Nil <=> false
+}
+
+\SEEALSO
+add_simp, SIMP_CONV, simp_ss, SIMPS_RULE, SIMPS_TAC.
+
+\ENDDOC

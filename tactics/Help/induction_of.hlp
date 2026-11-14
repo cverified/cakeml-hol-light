@@ -1,0 +1,35 @@
+\DOC induction_of
+
+\TYPE {induction_of : hol_type -> thm}
+
+\SYNOPSIS
+The induction theorem of an inductive type.
+
+\DESCRIBE
+A call {induction_of ty} returns the induction theorem that was proved
+when the type {ty} was defined, out of {inductive_type_store}; for {num}
+it returns {num_INDUCTION}.
+
+Where {ty} belongs to a family of types that were defined together, the
+theorem is the one of the whole family: a predicate for each type of the
+family, and a conclusion that is the conjunction of what each predicate
+says. That is the theorem {INDUCT_FAMILY_TAC} uses;
+{induction_for_type} cuts it down to the one type.
+
+\FAILURE
+Fails if {ty} is not a type that was defined by {define_type}, or {num}.
+
+\EXAMPLE
+{
+  # induction_of `:(A)list`;;
+  val it : thm =
+    |- forall P.
+           P [] /\ (forall a0 a1. P a1 ==> P (CONS a0 a1))
+           ==> (forall x. P x)
+}
+
+\SEEALSO
+cases_of, INDUCT_FAMILY_TAC, induction_for_type, induction_shape,
+inductive_type_store, INDUCT_ON_TAC.
+
+\ENDDOC

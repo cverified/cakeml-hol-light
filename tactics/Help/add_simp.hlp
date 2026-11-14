@@ -1,0 +1,47 @@
+\DOC add_simp
+
+\TYPE {add_simp : thm -> unit}
+
+\SYNOPSIS
+Declare a theorem into the simp set.
+
+\DESCRIBE
+A call {add_simp th} adds {th} to the set of simplification rules that
+{SIMPS_CONV}, {SIMPS_RULE}, {SIMPS_TAC} and {ASM_SIMPS_TAC} use, as
+Isabelle's {[simp]} and Lean's {@[simp]} do. The theorem is processed
+into rewrites the way {SIMP_CONV} would process it, so a conditional
+equation, a conjunction of equations and a plain fact are all allowed.
+
+The set is global, as {basic_rewrites} is, and it is a set you declare
+into as you go rather than one you pass about. {extend_basic_rewrites}
+is the nearest thing HOL Light has, but that is the set {REWRITE_TAC}
+silently uses everywhere, so adding a rule to it changes every proof in
+the session; this set is only used where it is asked for.
+
+The cost of adding is one insertion into the term net, and the cost of
+using the set does not depend on how big it is -- which is why a
+development may declare thousands of rules and still simplify quickly.
+{SIMP_TAC thl} builds a net out of {thl} on every call, so the same rules
+passed as a list would be rebuilt every time.
+
+\FAILURE
+Never fails.
+
+\EXAMPLE
+{
+  # add_simps (CONJUNCTS count);;
+  val it : unit = ()
+
+  # SIMPS_CONV [ADD_CLAUSES] `count (Call (Cons (Num 3) Nil))`;;
+  val it : thm = |- count (Call (Cons (Num 3) Nil)) = 1
+}
+
+\COMMENTS
+A rule that loops will loop every proof that simplifies afterwards;
+{del_simp} takes one out again.
+
+\SEEALSO
+add_simps, add_type_simps, ASM_SIMPS_TAC, del_simp,
+extend_basic_rewrites, simps, SIMPS_TAC.
+
+\ENDDOC

@@ -1,0 +1,36 @@
+\DOC del_simp
+
+\TYPE {del_simp : thm -> unit}
+
+\SYNOPSIS
+Take a theorem out of the simp set.
+
+\DESCRIBE
+A call {del_simp th} removes from the simp set every theorem that is
+{th}, compared as {equals_thm} compares -- the same hypotheses and the
+same conclusion. A term net does not forget, so the net is built again
+from the theorems that are left, which costs as much as declaring all of
+them did.
+
+It is here for the rule that turned out to loop or to rewrite the wrong
+way, not for everyday use.
+
+\FAILURE
+Never fails; removes nothing if no declared theorem is {th}.
+
+\EXAMPLE
+{
+  # length (simps ());;
+  val it : int = 6
+
+  # del_simp (distinctness "exp");;
+  val it : unit = ()
+
+  # length (simps ());;
+  val it : int = 5
+}
+
+\SEEALSO
+add_simp, add_simps, equals_thm, simps.
+
+\ENDDOC

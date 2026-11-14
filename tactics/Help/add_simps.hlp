@@ -1,0 +1,28 @@
+\DOC add_simps
+
+\TYPE {add_simps : thm list -> unit}
+
+\SYNOPSIS
+Declare several theorems into the simp set.
+
+\DESCRIBE
+{add_simps thl} is {add_simp} for each theorem of {thl}, in one call and
+with one extension of the term net. It is what to use for the clauses of
+a definition, which come as a conjunction: {add_simps (CONJUNCTS th)}.
+
+\FAILURE
+Never fails.
+
+\EXAMPLE
+{
+  # add_simps (CONJUNCTS count);;
+  val it : unit = ()
+
+  # length (simps ());;
+  val it : int = 4
+}
+
+\SEEALSO
+add_simp, add_type_simps, del_simp, simps.
+
+\ENDDOC

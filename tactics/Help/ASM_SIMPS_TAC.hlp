@@ -1,0 +1,26 @@
+\DOC ASM_SIMPS_TAC
+
+\TYPE {ASM_SIMPS_TAC : thm list -> tactic}
+
+\SYNOPSIS
+Simplify the goal with the simp set, the assumptions and some more
+theorems.
+
+\DESCRIBE
+{ASM_SIMPS_TAC thl} is {SIMPS_TAC} with the assumptions of the goal added
+to the rewrites; it is {ASM SIMPS_TAC}.
+
+\FAILURE
+Fails if the goal cannot be simplified.
+
+\EXAMPLE
+{
+  # g `forall x. x = Num 3 ==> count x = 1`;;
+  # e (REPEAT STRIP_TAC THEN ASM_SIMPS_TAC[]);;
+  val it : goalstack = No subgoals
+}
+
+\SEEALSO
+add_simp, ASM, ASM_SIMP_TAC, SIMPS_TAC.
+
+\ENDDOC

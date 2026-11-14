@@ -1,0 +1,35 @@
+\DOC induction_shape
+
+\TYPE {induction_shape : thm -> (int * int) list}
+
+\SYNOPSIS
+How the goals of an induction come: variables and hypotheses per case.
+
+\DESCRIBE
+A call {induction_shape ith} returns one pair per premise of the
+induction theorem {ith}: how many variables that premise binds, and how
+many hypotheses it has under them. For lists that is {[(0,0); (2,1)]} --
+the base case binds nothing and assumes nothing, and the step binds the
+head and the tail and assumes the hypothesis about the tail.
+
+Counting the cases off the theorem is what lets a tactic split them
+exactly. {REPEAT CONJ_TAC} would go on into a goal that is itself a
+conjunction, which is what proving two things by one induction looks
+like.
+
+\FAILURE
+Fails if {ith} is not of the shape of an induction theorem.
+
+\EXAMPLE
+{
+  # induction_shape (induction_of `:(A)list`);;
+  val it : (int * int) list = [(0, 0); (2, 1)]
+}
+
+\USES
+{INDUCT_ON_TAC} and {INDUCT_FAMILY_TAC} split their goals with it.
+
+\SEEALSO
+INDUCT_FAMILY_TAC, induction_of, INDUCT_ON_TAC.
+
+\ENDDOC

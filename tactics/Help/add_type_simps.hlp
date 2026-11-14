@@ -1,0 +1,34 @@
+\DOC add_type_simps
+
+\TYPE {add_type_simps : string -> unit}
+
+\SYNOPSIS
+Declare the distinctness and injectivity of a type into the simp set.
+
+\DESCRIBE
+A call {add_type_simps "ty"} declares the two theorems that a proof about
+the datatype {ty} always wants: that its constructors are distinct and
+that they are injective. HOL Light proves both when the type is defined
+and keeps them in {distinctness_store} and {injectivity_store}, so this
+is a lookup and not a proof.
+
+A type with one constructor has no distinctness theorem and a type whose
+constructors take no arguments has no injectivity theorem; whichever
+exists is declared and the other is passed over.
+
+\FAILURE
+Never fails, not even for a name that is no type.
+
+\EXAMPLE
+{
+  # add_type_simps "exp";;
+  val it : unit = ()
+
+  # SIMPS_CONV [] `Num 3 = Call Nil`;;
+  val it : thm = |- Num 3 = Call Nil <=> false
+}
+
+\SEEALSO
+add_simps, distinctness, injectivity, simps.
+
+\ENDDOC

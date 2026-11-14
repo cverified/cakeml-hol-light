@@ -1,0 +1,24 @@
+\DOC SIMPS_RULE
+
+\TYPE {SIMPS_RULE : thm list -> thm -> thm}
+
+\SYNOPSIS
+Simplify the conclusion of a theorem with the simp set.
+
+\DESCRIBE
+{SIMPS_RULE thl th} simplifies the conclusion of {th} with the declared
+simp rules and the theorems of {thl}. It is {CONV_RULE (SIMPS_CONV thl)}.
+
+\FAILURE
+Never fails, though it may leave the theorem as it was.
+
+\EXAMPLE
+{
+  # SIMPS_RULE [ADD_CLAUSES] (REFL `count (Call (Cons (Num 3) Nil))`);;
+  val it : thm = |- true
+}
+
+\SEEALSO
+add_simp, SIMP_RULE, SIMPS_CONV, SIMPS_TAC.
+
+\ENDDOC

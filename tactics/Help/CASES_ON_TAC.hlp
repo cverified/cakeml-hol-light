@@ -1,0 +1,61 @@
+\DOC CASES_ON_TAC
+
+\TYPE {CASES_ON_TAC : term -> tactic}
+
+\SYNOPSIS
+Case analysis on a term of any inductive type.
+
+\DESCRIBE
+Given a term {t} of an inductive type, {CASES_ON_TAC t} splits the goal
+into one goal per constructor of that type, with the arguments of the
+constructor as fresh variables.
+
+Where {t} is a variable, the equation that says which constructor it is
+is substituted away everywhere, in the goal and in the assumptions both:
+the variable is gone and the constructor stands in its place. That is
+what {destruct} does in Rocq and what a proof about a datatype wants.
+
+Where {t} is not a variable the substitution may not reach every
+occurrence of it, so the equation is kept as an assumption as well --
+Rocq's {destruct (f x) eqn:H} -- without which the proof would have no
+way back to the term it split.
+
+{INDUCT_TAC} is the naturals and {LIST_INDUCT_TAC} is lists; this takes a
+term and works for every inductive type, by looking the type up with
+{cases_of}.
+
+\FAILURE
+Fails if the type of {t} is not an inductive type.
+
+\EXAMPLE
+A variable: the two cases have it replaced.
+{
+  # g `forall l:(A)list. LENGTH l = 0 \/ 0 < LENGTH l`;;
+  # e GEN_TAC;;
+  # e (CASES_ON_TAC `l:(A)list`);;
+  val it : goalstack = 2 subgoals (2 total)
+
+  `LENGTH (CONS a0 a1) = 0 \/ 0 < LENGTH (CONS a0 a1)`
+
+  `LENGTH [] = 0 \/ 0 < LENGTH []`
+}
+\noindent A compound term: the equation stays, because the {l} of the
+right hand side is not touched.
+{
+  # g `forall l:(A)list. LENGTH (TL l) <= LENGTH l`;;
+  # e (GEN_TAC THEN CASES_ON_TAC `TL (l:(A)list)`);;
+  val it : goalstack = 2 subgoals (2 total)
+
+    0 [`TL l = CONS a0 a1`]
+
+  `LENGTH (CONS a0 a1) <= LENGTH l`
+
+    0 [`TL l = []`]
+
+  `LENGTH [] <= LENGTH l`
+}
+
+\SEEALSO
+cases_of, INDUCT_ON_TAC, STRUCT_CASES_TAC.
+
+\ENDDOC

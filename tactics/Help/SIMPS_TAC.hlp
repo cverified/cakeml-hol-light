@@ -1,0 +1,30 @@
+\DOC SIMPS_TAC
+
+\TYPE {SIMPS_TAC : thm list -> tactic}
+
+\SYNOPSIS
+Simplify the goal with the simp set and some more theorems.
+
+\DESCRIBE
+{SIMPS_TAC thl} simplifies the goal with the rules that have been
+declared with {add_simp} and the theorems of {thl}. It is {CONV_TAC
+(SIMPS_CONV thl)}, so it solves the goal where the simplification reaches
+{true}.
+
+To simplify with the assumptions of the goal as well, use
+{ASM_SIMPS_TAC}.
+
+\FAILURE
+Fails if the goal cannot be simplified.
+
+\EXAMPLE
+{
+  # g `count (Call (Cons (Num 3) Nil)) = 1`;;
+  # e (SIMPS_TAC [ADD_CLAUSES]);;
+  val it : goalstack = No subgoals
+}
+
+\SEEALSO
+add_simp, ASM_SIMPS_TAC, SIMP_TAC, SIMPS_CONV, SIMPS_RULE.
+
+\ENDDOC

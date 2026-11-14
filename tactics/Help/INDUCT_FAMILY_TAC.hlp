@@ -1,0 +1,54 @@
+\DOC INDUCT_FAMILY_TAC
+
+\TYPE {INDUCT_FAMILY_TAC : tactic}
+
+\SYNOPSIS
+Simultaneous induction over a family of types defined together.
+
+\DESCRIBE
+A goal that is a conjunction of statements, one about each type of a
+family of datatypes that were defined together, is exactly what the
+induction theorem of that family concludes. {INDUCT_FAMILY_TAC} aims
+that theorem at such a goal and splits the premises into one subgoal
+each, with the arguments of the constructor fixed and the induction
+hypotheses assumed.
+
+This is the induction a proof about mutually recursive syntax needs, and
+what {INDUCT_ON_TAC} cannot give: there the predicates of the other types
+of the family are taken to be true, so the hypotheses about them are
+lost. Rocq writes such a scheme out with {Scheme ... with ...}; HOL4
+calls it {Induct_on} with the conjunction already there.
+
+\FAILURE
+Fails unless every conjunct of the goal is universally quantified over a
+variable, and the type of the first of them is an inductive type whose
+induction theorem matches the goal.
+
+\EXAMPLE
+With {exp} and {elist} defined together and {count}/{lcount} recursive
+over both:
+{
+  # g `(forall e. 0 < count e) /\ (forall l. 0 <= lcount l)`;;
+  # e INDUCT_FAMILY_TAC;;
+  val it : goalstack = 4 subgoals (4 total)
+
+    0 [`0 < count a0`]
+    1 [`0 <= lcount a1`]
+
+  `0 <= lcount (Cons a0 a1)`
+
+  `0 <= lcount Nil`
+
+    0 [`0 <= lcount a`]
+
+  `0 < count (Call a)`
+
+  `0 < count (Num a)`
+}
+\noindent The {Call} case carries the hypothesis about the {elist} in it,
+which is the point of the strong scheme.
+
+\SEEALSO
+induction_for_type, induction_of, induction_shape, INDUCT_ON_TAC.
+
+\ENDDOC

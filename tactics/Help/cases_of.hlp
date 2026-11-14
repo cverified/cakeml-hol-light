@@ -1,0 +1,40 @@
+\DOC cases_of
+
+\TYPE {cases_of : hol_type -> thm}
+
+\SYNOPSIS
+The cases theorem of an inductive type.
+
+\DESCRIBE
+A call {cases_of ty} returns the theorem that says that every element of
+the type {ty} is one of the constructors of {ty} applied to something.
+HOL Light proves that theorem from the induction theorem in its store
+(see {cases}); this looks it up by the name of the type, derives it once
+and keeps it, because a development that splits on a type a thousand
+times should pay for it once.
+
+Where {ty} belongs to a family of types that were defined together,
+{cases} gives the theorems of all of them at once and this returns the
+conjunct about {ty} itself. A pair has one constructor and no cases
+theorem of its own, and {PAIR_SURJECTIVE} is returned for it.
+
+\FAILURE
+Fails if {ty} is not a type that was defined by {define_type}, or one of
+{num} and {prod}.
+
+\EXAMPLE
+{
+  # cases_of `:(A)list`;;
+  val it : thm = |- forall x. x = [] \/ (exists a0 a1. x = CONS a0 a1)
+
+  # cases_of `:num`;;
+  val it : thm = |- forall m. m = 0 \/ (exists n. m = SUC n)
+}
+
+\USES
+It is what {CASES_ON_TAC} splits a term with.
+
+\SEEALSO
+cases, CASES_ON_TAC, distinctness, induction_of, injectivity.
+
+\ENDDOC

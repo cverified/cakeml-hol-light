@@ -1,0 +1,48 @@
+\DOC induction_for_type
+
+\TYPE {induction_for_type : hol_type -> thm -> thm}
+
+\SYNOPSIS
+The induction theorem of one type of a family of them.
+
+\DESCRIBE
+The induction theorem of a family of datatypes that were defined
+together is about all of them at once, with a predicate for each, which
+{MATCH_MP_TAC} cannot aim at a goal about one of them. A call
+{induction_for_type ty ith} takes the predicates of the other types to be
+trivially true and simplifies, which leaves the theorem for {ty} alone,
+with the premises that were only about the other types gone. For a
+family of one type it is the theorem itself.
+
+What that costs is the hypotheses about the other types: induction on an
+{exp} whose {Call} holds an {elist} gives no hypothesis about the list,
+because the predicate on lists was taken to be true. That is the weak
+scheme, and it is what {induction} on one of a family gives in Rocq as
+well; {INDUCT_FAMILY_TAC} is the strong one.
+
+\FAILURE
+Fails if no conclusion of {ith} is about the type {ty}.
+
+\EXAMPLE
+With {exp} and {elist} defined together:
+{
+  # induction_of `:exp`;;
+  val it : thm =
+    |- forall P0 P1.
+           (forall a. P0 (Num a)) /\
+           (forall a. P1 a ==> P0 (Call a)) /\
+           P1 Nil /\
+           (forall a0 a1. P0 a0 /\ P1 a1 ==> P1 (Cons a0 a1))
+           ==> (forall x0. P0 x0) /\ (forall x1. P1 x1)
+
+  # induction_for_type `:exp` (induction_of `:exp`);;
+  val it : thm =
+    |- forall P0.
+           (forall a. P0 (Num a)) /\ (forall a. P0 (Call a))
+           ==> (forall x0. P0 x0)
+}
+
+\SEEALSO
+INDUCT_FAMILY_TAC, induction_of, INDUCT_ON_TAC.
+
+\ENDDOC
