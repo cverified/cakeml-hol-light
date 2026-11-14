@@ -11918,6 +11918,13 @@ AUX_SIZE = {
   # wordLang's exp_size takes the size of the type variable, so
   # the one of a list of them is the composition
   ('wordLang', 'exp1_size'): '(list_size o wordLang_exp_size)',
+  ('displayLang', 'sExp1_size'): 'list_size sExp_size',
+  ('bvi_tailrec', 'exp2_size'): 'list_size bvi_exp_size',
+  # v3_size is the size of one (mlstring # v) of flatSem
+  ('flat_elimProof', 'v3_size'):
+    'pair_size mlstring_size flatSem_v_size',
+  ('data_to_word_memoryProof', 'v1_size'):
+    'list_size dataSem_v_size',
 }
 
 
