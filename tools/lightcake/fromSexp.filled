@@ -1,7 +1,6 @@
 SEXSTR_11
 SEXSTR_remove
 SEXSTR_valid
-UNHEX_lt16
 arithsexp_11
 arithsexp_sexparith
 decode_prim_type_prim_typesexp
@@ -24,4 +23,3 @@ sexpexp_alt_intro1
 sexplist_listsexp_rwt
 sexppat_alt_intro1
 sexptype_alt_intro1
-strip_sxcons_thm

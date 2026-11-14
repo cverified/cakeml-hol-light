@@ -1,0 +1,3 @@
+all_thm	PROOF Failure("Unparsed input following term")
+exists_thm	PROOF Failure("Unparsed input following term")
+less_than_length_thm	PROOF Failure("EXISTS_TAC: expected type :(?895069)list but got :(A)list")

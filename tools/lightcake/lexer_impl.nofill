@@ -1,1 +1,2 @@
+EVERY_isDigit_imp	PROOF Failure("MATCH_MP_TAC: No match")
 EVERY_isHexDigit_imp	PROOF Failure("MATCH_MP_TAC: No match")

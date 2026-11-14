@@ -133,7 +133,6 @@ let backend_compile_def = new_definition
          (p:('a sec) list)) in
      let _10 = empty_ffi (implode "finished: lab_to_target") in
        res)`;;
-hol4_overload "compile" "backend_compile";;
 
 let to_flat_def = new_definition
   `to_flat c p =
@@ -201,7 +200,7 @@ let to_word_def = new_definition
 let to_word_thm = prove
  (`to_word asm_conf c p =
    (let (c,p,names) = to_word_0 asm_conf c p in
-   let (col,p) = compile (backend_config_word_to_word_conf c)
+   let (col,p) = backend_compile (backend_config_word_to_word_conf c)
      asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
@@ -235,13 +234,13 @@ let to_target_def = new_definition
          asm_conf (backend_config_lab_conf c) p))`;;
 
 let compile_eq_to_target = prove
- (`compile = to_target`,
+ (`backend_compile = to_target`,
   CHEAT_TAC);;
 
 let prim_src_config_def = new_definition
   `prim_src_config =
-     (let (_11,next',env,_12,_13) = compile_decs [] 1 (next
-       empty_config) source_to_flat_empty_env
+     (let (_11,next',env,_12,_13) = source_to_flat_compile_decs [] 1
+       (next empty_config) source_to_flat_empty_env
          ARB prim_types_program in
      (source_to_flat_config_mod_env_fupd (K env) (next_fupd (K
        next') empty_config)))`;;
@@ -347,7 +346,7 @@ let from_source_def = new_definition
    from_flat asm_conf c p)`;;
 
 let compile_eq_from_source = prove
- (`compile = from_source`,
+ (`backend_compile = from_source`,
   CHEAT_TAC);;
 
 let to_livesets_0_def = new_definition
@@ -437,12 +436,12 @@ let from_word_0_to_livesets_0 = prove
   CHEAT_TAC);;
 
 let compile_oracle = prove
- (`from_livesets asm_conf (to_livesets asm_conf c p) = compile
+ (`from_livesets asm_conf (to_livesets asm_conf c p) = backend_compile
   asm_conf c p`,
   CHEAT_TAC);;
 
 let compile_oracle_word_0 = prove
- (`compile asm_conf c p =
+ (`backend_compile asm_conf c p =
    (let (c,p,names) = to_word_0 asm_conf c p in
    from_word_0 asm_conf c names p)`,
   CHEAT_TAC);;
@@ -538,8 +537,8 @@ let compile_inc_progs_def = new_definition
      let p = inc_compile_decs p in
      let ps = backend_progs_clos_prog_fupd (K ((keep_progs k ##
        keep_progs k) p)) ps in
-     let (c',p) = clos_to_bvl_compile_inc (backend_config_clos_conf
-       c) p in
+     let (c',p) = clos_to_bvl_clos_to_bvl_compile_inc
+       (backend_config_clos_conf c) p in
      let c = backend_config_clos_conf_fupd (K c') c in
      let ps = backend_progs_bvl_prog_fupd (K (keep_progs k p)) ps in
      let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf
@@ -550,7 +549,7 @@ let compile_inc_progs_def = new_definition
      let ps = backend_progs_data_prog_fupd (K (keep_progs k p)) ps in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c)
        in
-     let p = MAP (compile_part dc) p in
+     let p = MAP (data_to_word_compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
      let p = MAP (\p. full_compile_single (asm_config_two_reg_arith
@@ -610,8 +609,8 @@ let compile_inc_progs_for_eval_eq = prove
      let c = backend_config_source_conf_fupd (K c') c in
      let p = inc_compile_decs p in
      let _19 = empty_ffi (implode "finished: flat_to_clos") in
-     let (c',p) = clos_to_bvl_compile_inc (backend_config_clos_conf
-       c) p in
+     let (c',p) = clos_to_bvl_clos_to_bvl_compile_inc
+       (backend_config_clos_conf c) p in
      let _20 = empty_ffi (implode "finished: clos_to_bvl") in
      let c = backend_config_clos_conf_fupd (K c') c in
      let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf
@@ -622,7 +621,7 @@ let compile_inc_progs_for_eval_eq = prove
      let _22 = empty_ffi (implode "finished: bvi_to_data") in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c)
        in
-     let p = MAP (compile_part dc) p in
+     let p = MAP (data_to_word_compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
      let p = MAP (\p. full_compile_single_for_eval

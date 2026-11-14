@@ -17,11 +17,9 @@ needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
-needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/targetProps.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
@@ -30,7 +28,6 @@ needs "lib/byte.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
@@ -56,8 +53,10 @@ let _ = hide_overloads
 
 (* [local] *)
 let evaluate_ignore_clocks = prove
- (`evaluate mc_conf ffi k ms = (r1,ms1,st1) /\ ~(r1 = TimeOut) /\
-     evaluate mc_conf ffi k' ms = (r2,ms2,st2) /\ ~(r2 = TimeOut) ==>
+ (`labSem_evaluate mc_conf ffi k ms = (r1,ms1,st1) /\ ~(r1 =
+  targetSem_TimeOut) /\
+     labSem_evaluate mc_conf ffi k' ms = (r2,ms2,st2) /\ ~(r2 =
+       targetSem_TimeOut) ==>
      (r1,ms1,st1) = (r2,ms2,st2)`,
   CHEAT_TAC);;
 
@@ -140,7 +139,7 @@ let shift_interfer_0 = prove
 
 (* [local] *)
 let upd_pc_with_pc = prove
- (`upd_pc (asm_state_pc s1) s1 = (s1:'a asm_state)`,
+ (`labSem_upd_pc (asm_state_pc s1) s1 = (s1:'a asm_state)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -157,13 +156,13 @@ let evaluate_nop_steps = prove
        c = asm_state_mem_domain s1 /\
        ffi_entry_pcs_disjoint c s1
          (n * LENGTH (asm_config_encode (target_config
-           (machine_config_target c)) (Inst asm_Skip))) /\
+           (machine_config_target c)) (asm_Inst asm_Skip))) /\
        interference_ok (machine_config_next_interfer c) (target_proj
          (machine_config_target c) (asm_state_mem_domain s1)) /\
        bytes_in_memory (asm_state_pc s1)
          (FLAT (REPLICATE n (asm_config_encode (target_config
-           (machine_config_target c)) (Inst asm_Skip)))) (asm_state_mem
-           s1) (asm_state_mem_domain
+           (machine_config_target c)) (asm_Inst asm_Skip))))
+           (asm_state_mem s1) (asm_state_mem_domain
          s1) /\
        (match link_reg (target_config (machine_config_target c)) with
          NONE -> T | SOME r -> asm_state_lr s1 = r) /\
@@ -175,15 +174,15 @@ let evaluate_nop_steps = prove
          (ms1:'state) ==>
        (?l ms2.
          !k.
-           (evaluate c io (k + l) ms1 =
-            evaluate (shift_interfer l c) io k ms2) /\
+           (labSem_evaluate c io (k + l) ms1 =
+            labSem_evaluate (shift_interfer l c) io k ms2) /\
            (find_next_interference c io (k + l) ms1 =
             find_next_interference (shift_interfer l c) io k ms2) /\
            target_state_rel (machine_config_target c)
-             (upd_pc
+             (labSem_upd_pc
                (asm_state_pc s1 +
                 n2w (n * LENGTH (asm_config_encode (target_config
-                  (machine_config_target c)) (Inst asm_Skip)))) s1)
+                  (machine_config_target c)) (asm_Inst asm_Skip)))) s1)
              ms2)`,
   CHEAT_TAC);;
 
@@ -209,11 +208,11 @@ let asm_step_IMP_evaluate_step_nop = prove
       s2 = asmSem_asm i (asm_state_pc s1 + n2w (LENGTH bytes)) s1 /\
       target_state_rel (machine_config_target c) (s1:'a asm_state)
         (ms1:'state) /\
-      (!x. ~(i = Call x)) ==>
+      (!x. ~(i = asm_Call x)) ==>
       (?l ms2.
         !k.
-          (evaluate c io (k + l) ms1 =
-           evaluate (shift_interfer l c) io k ms2) /\
+          (labSem_evaluate c io (k + l) ms1 =
+           labSem_evaluate (shift_interfer l c) io k ms2) /\
           (find_next_interference c io (k + l) ms1 =
            find_next_interference (shift_interfer l c) io k ms2) /\
           target_state_rel (machine_config_target c) s2 ms2 /\ ~(l
@@ -390,18 +389,18 @@ let line_ok_def = new_definition
         (LENGTH bytes = l) /\ asm_ok (cbw_to_asm b) c
         | (c,(labLang_LabAsm labLang_Halt w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + ffi_offset) in
-          enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
-        | (c,(labLang_LabAsm Install w bytes l)) ->
+          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c)
+        | (c,(labLang_LabAsm labLang_Install w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + 2 * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
+          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c)
         | (c,(labLang_LabAsm (labLang_CallFFI index) w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + (3 + get_ffi_index
           ffis (ffi_ExtCall index)) * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
-        | (c,(labLang_LabAsm (Call v24) w bytes l)) ->
+          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c)
+        | (c,(labLang_LabAsm (asm_Call v24) w bytes l)) ->
         F
         // Call not yet supported
         | (c,(labLang_LabAsm a w bytes l)) ->
@@ -503,12 +502,12 @@ let lab_to_targetProof_good_code_def = new_definition
     ALL sec_ends_with_label code /\
     ALL sec_labels_ok code /\
     ALL_DISTINCT (MAP Section_num code) /\
-    ALL (ALL_DISTINCT o extract_labels o Section_lines) code /\
+    ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines) code
+      /\
     DISJOINT (domain labs) (set_of_list (MAP Section_num code)) /\
-    restrict_nonzero (get_labels code) SUBSET get_code_labels code
-      UNION labs_domain labs /\
+    restrict_nonzero (labProps_get_labels code) SUBSET
+      labProps_get_code_labels code UNION labs_domain labs /\
     (\c ls. ALL (sec_ok_pre c) ls) c code`;;
-hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -640,7 +639,7 @@ let no_install_or_no_share_mem_def = new_definition
   `no_install_or_no_share_mem code ffi_names' <=>
     (no_share_mem_inst code /\
      ALL (\x. ?s. x = ffi_ExtCall s) ffi_names') \/
-     no_install code`;;
+     labProps_no_install code`;;
 
 (* The lab-level oracles record the register residues that the machine run
    starting from ms actually leaves behind: the k-th entry of each family is
@@ -1024,7 +1023,6 @@ let lab_to_targetProof_state_rel_def = new_definition
        (machine_config_ffi_entry_pcs mc_conf) /\
      no_install_or_no_share_mem code2 (machine_config_ffi_names
        mc_conf)`;;
-hol4_overload "state_rel" "lab_to_targetProof_state_rel";;
 
 let oracle_tie_clock = prove
  (`oracle_tie mc_conf ms s1 ==>
@@ -1033,8 +1031,9 @@ let oracle_tie_clock = prove
 
 (* state_rel_clock *)
 let lab_to_targetProof_state_rel_clock = prove
- (`state_rel x s1 t1 ms ==>
-     state_rel x (labSem_state_clock_fupd (K k) s1) (t1) ms`,
+ (`lab_to_targetProof_state_rel x s1 t1 ms ==>
+     lab_to_targetProof_state_rel x (labSem_state_clock_fupd (K k)
+       s1) (t1) ms`,
   CHEAT_TAC);;
 
 let share_mem_state_rel_shift_interfer = prove
@@ -1054,8 +1053,9 @@ let share_mem_domain_code_rel_shift_interfer = prove
   CHEAT_TAC);;
 
 let state_rel_shift_interfer = prove
- (`state_rel (mc_conf,code2,labs,p) s1 t1 x ==>
-     state_rel (shift_interfer l mc_conf,code2,labs,p) s1 t1 x`,
+ (`lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 x ==>
+     lab_to_targetProof_state_rel (shift_interfer l
+       mc_conf,code2,labs,p) s1 t1 x`,
   CHEAT_TAC);;
 
 (* bytes_in_memory lemmas *)
@@ -1158,17 +1158,18 @@ let IMP_bytes_in_memory_Jump = prove
          labs ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (Jump jtarget) l bytes
-         n)) ==>
+       (asm_fetch s1 = SOME (labLang_LabAsm (asm_Jump jtarget) l
+         bytes n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          (enc = asm_config_encode (target_config
-           (machine_config_target mc_conf)) (Jump tt)) /\
+           (machine_config_target mc_conf)) (asm_Jump tt)) /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-         asm_ok (Jump tt) (target_config (machine_config_target
+         asm_ok (asm_Jump tt) (target_config
+           (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
@@ -1183,17 +1184,18 @@ let IMP_bytes_in_memory_JumpCmp = prove
          labs ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri
+       (asm_fetch s1 = SOME (labLang_LabAsm (asm_JumpCmp cmp rr ri
          jtarget) l bytes n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          (enc = asm_config_encode (target_config
-           (machine_config_target mc_conf)) (JumpCmp cmp rr ri tt)) /\
+           (machine_config_target mc_conf)) (asm_JumpCmp cmp rr ri tt))
+           /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-         asm_ok (JumpCmp cmp rr ri tt) (target_config
+         asm_ok (asm_JumpCmp cmp rr ri tt) (target_config
            (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
@@ -1209,20 +1211,20 @@ let IMP_bytes_in_memory_JumpCmp_1 = prove
          labs ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri
+       (asm_fetch s1 = SOME (labLang_LabAsm (asm_JumpCmp cmp rr ri
          jtarget) l bytes n)) ==>
        (?tt bytes.
          (tt = n2w (find_pos jtarget labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          enc_with_nop (asm_config_encode (target_config
-           (machine_config_target mc_conf))) (JumpCmp cmp rr ri tt)
+           (machine_config_target mc_conf))) (asm_JumpCmp cmp rr ri tt)
            bytes /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
          (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
            (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-         asm_ok (JumpCmp cmp rr ri tt) (target_config
+         asm_ok (asm_JumpCmp cmp rr ri tt) (target_config
            (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
@@ -1240,8 +1242,8 @@ let IMP_bytes_in_memory_Call = prove
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain
          (t1:'a asm_state)) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (Call ww) l bytes n))
-         ==>
+       (asm_fetch s1 = SOME (labLang_LabAsm (asm_Call ww) l bytes
+         n)) ==>
        F`),
   CHEAT_TAC);;
 
@@ -1256,19 +1258,19 @@ let IMP_bytes_in_memory_LocValue = prove
          labs ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (LocValue reg
+       (asm_fetch s1 = SOME (labLang_LabAsm (labLang_LocValue reg
          (labLang_Lab l1 l2)) l bytes n)) ==>
        (?tt bytes.
          (tt = n2w (find_pos (labLang_Lab l1 l2) labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          enc_with_nop (asm_config_encode (target_config
-           (machine_config_target mc_conf))) (Loc reg tt) bytes /\
+           (machine_config_target mc_conf))) (asm_Loc reg tt) bytes /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
          (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
            (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-         asm_ok (Loc reg tt) (target_config
+         asm_ok (asm_Loc reg tt) (target_config
            (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
@@ -1288,7 +1290,7 @@ let IMP_bytes_in_memory_Inst = prove
          len)) ==>
        (?bytes.
          enc_with_nop (asm_config_encode (target_config
-           (machine_config_target mc_conf))) (Inst i) bytes /\
+           (machine_config_target mc_conf))) (asm_Inst i) bytes /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
@@ -1298,7 +1300,8 @@ let IMP_bytes_in_memory_Inst = prove
              (labSem_state_mem_domain s1) /\
          (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
            (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-         asm_ok (Inst i) (target_config (machine_config_target
+         asm_ok (asm_Inst i) (target_config
+           (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
@@ -1317,8 +1320,8 @@ let IMP_bytes_in_memory_Cbw = prove
          ==>
        (?bytes.
          enc_with_nop (asm_config_encode (target_config
-           (machine_config_target mc_conf))) (Inst (asm_Mem asm_Store8
-           r2 (Addr r1 (n2w 0)))) bytes /\
+           (machine_config_target mc_conf))) (asm_Inst (asm_Mem
+           asm_Store8 r2 (Addr r1 (n2w 0)))) bytes /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
@@ -1328,8 +1331,8 @@ let IMP_bytes_in_memory_Cbw = prove
              (labSem_state_mem_domain s1) /\
          (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
            (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-         asm_ok (Inst (asm_Mem asm_Store8 r2 (Addr r1 (n2w 0))))
-           (target_config (machine_config_target
+         asm_ok (asm_Inst (asm_Mem asm_Store8 r2 (Addr r1 (n2w
+           0)))) (target_config (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
@@ -1351,11 +1354,12 @@ let IMP_bytes_in_memory_CallFFI = prove
            + (3 + get_ffi_index ffi_names (ffi_ExtCall name)) *
            ffi_offset)) /\
          (enc = asm_config_encode (target_config
-           (machine_config_target mc_conf)) (Jump tt)) /\
+           (machine_config_target mc_conf)) (asm_Jump tt)) /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-         asm_ok (Jump tt) (target_config (machine_config_target
+         asm_ok (asm_Jump tt) (target_config
+           (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
@@ -1376,11 +1380,12 @@ let IMP_bytes_in_memory_Halt = prove
          (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
            + ffi_offset)) /\
          (enc = asm_config_encode (target_config
-           (machine_config_target mc_conf)) (Jump tt)) /\
+           (machine_config_target mc_conf)) (asm_Jump tt)) /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-         asm_ok (Jump tt) (target_config (machine_config_target
+         asm_ok (asm_Jump tt) (target_config
+           (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
@@ -1395,16 +1400,18 @@ let IMP_bytes_in_memory_Install = prove
          labs ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm Install c l n)) ==>
+       (asm_fetch s1 = SOME (labLang_LabAsm labLang_Install c l n))
+         ==>
        (?tt enc.
          (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
            + 2 * ffi_offset)) /\
          (enc = asm_config_encode (target_config
-           (machine_config_target mc_conf)) (Jump tt)) /\
+           (machine_config_target mc_conf)) (asm_Jump tt)) /\
          bytes_in_memory ((p:'a word) + n2w (pos_val
            (labSem_state_pc s1) 0 code2))
            enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
-         asm_ok (Jump tt) (target_config (machine_config_target
+         asm_ok (asm_Jump tt) (target_config
+           (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
 
@@ -1451,7 +1458,7 @@ let IMP_bytes_in_memory_ShareMem = prove
          (ShareMem mop r ad)
          bytes (LENGTH bytes)) /\
        enc_with_nop (asm_config_encode (target_config
-         (machine_config_target mc_conf))) (Inst (asm_Mem mop r ad))
+         (machine_config_target mc_conf))) (asm_Inst (asm_Mem mop r ad))
          bytes /\
        bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
          s1) 0 code2))
@@ -1462,7 +1469,7 @@ let IMP_bytes_in_memory_ShareMem = prove
            (labSem_state_mem_domain s1) /\
        (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
          (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
-       asm_ok (Inst (asm_Mem mop r ad)) (target_config
+       asm_ok (asm_Inst (asm_Mem mop r ad)) (target_config
          (machine_config_target
          (mc_conf:('a,'state,'b)machine_config))))`),
   CHEAT_TAC);;
@@ -1480,7 +1487,8 @@ let bytes_in_mem_IMP_memory = prove
 (* [local] *)
 let read_bytearray_state_rel = prove
  (`!n a x.
-       state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
+       lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1
+         /\
        (read_bytearray a n (mem_load_byte_aux (labSem_state_mem s1)
          (labSem_state_mem_domain s1) (labSem_state_be s1)) = SOME x)
          ==>
@@ -1524,8 +1532,8 @@ let write_bytearray_NOT_Loc = prove
  (`!xs c1 s1 a c.
        (labSem_state_mem s1 a = wordLang_Word c) ==>
          ~((write_bytearray c1 xs (labSem_state_mem s1)
-         (labSem_state_mem_domain s1) (labSem_state_be s1)) a = Loc n
-         n0)`,
+         (labSem_state_mem_domain s1) (labSem_state_be s1)) a =
+         asm_Loc n n0)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1693,8 +1701,8 @@ let byte_align_64_IMP = prove
 (* The lab and asm versions should be in their individual props *)
 (* [simp] *)
 let arith_upd_fp_regs = prove
- (`(fp_regs (arith_upd a s) = fp_regs s /\ fp_regs
-   (arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
+ (`(fp_regs (labSem_arith_upd a s) = fp_regs s /\ fp_regs
+   (labSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:2068-2096: a theorem whose
@@ -1784,10 +1792,11 @@ let EVEN_add_AND = prove
 
 (* [local] *)
 let word_cmp_lemma = prove
- (`state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-     (word_cmp cmp (labSem_state_regs s1 rr) (reg_imm ri s1) = SOME
-       x) ==>
-     (x = word_cmp cmp (asm_state_regs t1 rr) (reg_imm ri t1))`,
+ (`lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
+     (wordSem_word_cmp cmp (labSem_state_regs s1 rr) (labSem_reg_imm
+       ri s1) = SOME x) ==>
+     (x = wordSem_word_cmp cmp (asm_state_regs t1 rr)
+       (labSem_reg_imm ri t1))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2062,8 +2071,8 @@ let code_similar_MAP_Section_num = prove
 
 let code_similar_extract_labels = prove
  (`!code1 code2. code_similar code1 code2 ==>
-   MAP (extract_labels o Section_lines) code1 =
-   MAP (extract_labels o Section_lines) code2`,
+   MAP (labProps_extract_labels o Section_lines) code1 =
+   MAP (labProps_extract_labels o Section_lines) code2`,
   CHEAT_TAC);;
 
 let code_similar_loc_to_pc = prove
@@ -2275,27 +2284,30 @@ let line_encd_def = new_definition
           labLang_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
         | (labLang_LabAsm labLang_Halt _40 bytes len) ->
-       enc (Jump (--(n2w (pos + ffi_offset)))) = bytes /\
+       enc (asm_Jump (--(n2w (pos + ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm Install _41 bytes len) ->
-       enc (Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
+        | (labLang_LabAsm labLang_Install _41 bytes len) ->
+       enc (asm_Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (labLang_CallFFI s) _42 bytes len) ->
-       enc (Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) +
-         3) * ffi_offset)))) = bytes /\
+       enc (asm_Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall
+         s) + 3) * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (Jump l) _43 bytes len) ->
-       enc (Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
+        | (labLang_LabAsm (asm_Jump l) _43 bytes len) ->
+       enc (asm_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes
+         /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (JumpCmp a b c l) _44 bytes len) ->
-       enc (JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos))) =
-         bytes /\
+        | (labLang_LabAsm (asm_JumpCmp a b c l) _44 bytes len) ->
+       enc (asm_JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos)))
+         = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (LocValue k l) _45 bytes len) ->
-       enc (Loc k (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
+        | (labLang_LabAsm (labLang_LocValue k l) _45 bytes len) ->
+       enc (asm_Loc k (n2w (find_pos l labs) + --(n2w pos))) = bytes
+         /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (Call l) _46 bytes len) ->
-       enc (Call (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
+        | (labLang_LabAsm (asm_Call l) _46 bytes len) ->
+       enc (asm_Call (n2w (find_pos l labs) + --(n2w pos))) = bytes
+         /\
        LENGTH bytes <= len
         | _47 -> T`;;
 
@@ -2484,7 +2496,7 @@ let all_encd0_aligned = prove
    enc_ok c /\ enc = asm_config_encode c /\
    (\enc l. ALL (sec_encd0 enc) l) enc code /\
    ALL sec_label_zero code ==>
-   ALL (sec_aligned (LENGTH (enc (Inst asm_Skip)))) code`,
+   ALL (sec_aligned (LENGTH (enc (asm_Inst asm_Skip)))) code`,
   CHEAT_TAC);;
 
 (* aligned preservation *)
@@ -2596,27 +2608,28 @@ let line_enc_with_nop_def = new_definition
           labLang_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
         | (labLang_LabAsm labLang_Halt _56 bytes len) ->
-       enc_with_nop enc (Jump (--(n2w (pos + ffi_offset)))) bytes /\
-       LENGTH bytes = len
-        | (labLang_LabAsm Install _57 bytes len) ->
-       enc_with_nop enc (Jump (--(n2w (pos + 2 * ffi_offset)))) bytes
+       enc_with_nop enc (asm_Jump (--(n2w (pos + ffi_offset)))) bytes
          /\
        LENGTH bytes = len
+        | (labLang_LabAsm labLang_Install _57 bytes len) ->
+       enc_with_nop enc (asm_Jump (--(n2w (pos + 2 * ffi_offset))))
+         bytes /\
+       LENGTH bytes = len
         | (labLang_LabAsm (labLang_CallFFI s) _58 bytes len) ->
-       enc_with_nop enc (Jump (--(n2w (pos + (get_ffi_index ffis
+       enc_with_nop enc (asm_Jump (--(n2w (pos + (get_ffi_index ffis
          (ffi_ExtCall s) + 3) * ffi_offset)))) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (Jump l) _59 bytes len) ->
-       enc_with_nop enc (Jump (n2w (find_pos l labs) + --(n2w pos)))
-         bytes /\
+        | (labLang_LabAsm (asm_Jump l) _59 bytes len) ->
+       enc_with_nop enc (asm_Jump (n2w (find_pos l labs) + --(n2w
+         pos))) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (JumpCmp a b c l) _60 bytes len) ->
-       enc_with_nop enc (JumpCmp a b c (n2w (find_pos l labs) +
+        | (labLang_LabAsm (asm_JumpCmp a b c l) _60 bytes len) ->
+       enc_with_nop enc (asm_JumpCmp a b c (n2w (find_pos l labs) +
          --(n2w pos))) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (LocValue k l) _61 bytes len) ->
-       enc_with_nop enc (Loc k (n2w (find_pos l labs) + --(n2w pos)))
-         bytes /\
+        | (labLang_LabAsm (labLang_LocValue k l) _61 bytes len) ->
+       enc_with_nop enc (asm_Loc k (n2w (find_pos l labs) + --(n2w
+         pos))) bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm _62 _63 bytes len) -> LENGTH bytes = len
         | (labLang_Label _64 _65 len) -> len = 0`;;
@@ -2709,12 +2722,12 @@ let lines_ok_lines_enc_with_nop = prove
 (* establishing enc_with_nop *)
 
 let enc_with_nop_pad_bytes_length = prove
- (`enc_with_nop enc x (pad_bytes (enc x) (LENGTH (enc x)) (enc (Inst
-  asm_Skip)))`,
+ (`enc_with_nop enc x (pad_bytes (enc x) (LENGTH (enc x)) (enc
+  (asm_Inst asm_Skip)))`,
   CHEAT_TAC);;
 
 let enc_with_nop_pad_bytes = prove
- (`nop = enc (Inst asm_Skip) /\ LENGTH (enc x) <= len /\
+ (`nop = enc (asm_Inst asm_Skip) /\ LENGTH (enc x) <= len /\
    LENGTH (enc x) MOD (LENGTH nop) = 0 /\
    len MOD (LENGTH nop) = 0 /\
    0 < LENGTH nop ==> enc_with_nop enc x (pad_bytes (enc x) len
@@ -2723,15 +2736,15 @@ let enc_with_nop_pad_bytes = prove
 
 let lines_enc_with_nop_add_nop = prove
  (`!enc labs ffis pos ls.
-    LENGTH (enc (Inst asm_Skip)) = 1 /\
+    LENGTH (enc (asm_Inst asm_Skip)) = 1 /\
     lines_enc_with_nop enc labs ffis pos (REVERSE ls) ==>
     lines_enc_with_nop enc labs ffis pos
-      (REVERSE (add_nop (enc (Inst asm_Skip)) ls))`,
+      (REVERSE (add_nop (enc (asm_Inst asm_Skip)) ls))`,
   CHEAT_TAC);;
 
 let lines_enc_with_nop_pad_section1 = prove
  (`!nop code aux pos.
-    nop = enc (Inst asm_Skip) /\ LENGTH nop = 1 /\
+    nop = enc (asm_Inst asm_Skip) /\ LENGTH nop = 1 /\
     lines_encd enc labs ffis (pos + (SUM (MAP line_len aux))) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
     ~(ALL is_Label aux) /\
@@ -2741,7 +2754,7 @@ let lines_enc_with_nop_pad_section1 = prove
 
 let lines_enc_with_nop_pad_section01 = prove
  (`!nop code aux pos.
-    nop = enc (Inst asm_Skip) /\ 0 < LENGTH nop /\
+    nop = enc (asm_Inst asm_Skip) /\ 0 < LENGTH nop /\
     ALL (line_aligned (LENGTH nop)) code /\
     lines_encd enc labs ffis (pos + SUM (MAP line_len aux)) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
@@ -2751,7 +2764,7 @@ let lines_enc_with_nop_pad_section01 = prove
 
 let lines_enc_with_nop_pad_section0 = prove
  (`!nop code aux pos.
-    nop = enc (Inst asm_Skip) /\ 0 < LENGTH nop /\
+    nop = enc (asm_Inst asm_Skip) /\ 0 < LENGTH nop /\
     ALL (line_aligned (LENGTH nop)) code /\
     lines_encd enc labs ffis (pos + SUM (MAP line_len aux)) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
@@ -2761,7 +2774,7 @@ let lines_enc_with_nop_pad_section0 = prove
 
 let lines_enc_with_nop_pad_section = prove
  (`!nop code aux pos.
-    nop = enc (Inst asm_Skip) /\ LENGTH nop = 1 /\
+    nop = enc (asm_Inst asm_Skip) /\ LENGTH nop = 1 /\
     lines_encd enc labs ffis (pos + SUM (MAP line_len aux)) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
     ALL is_Label aux /\ ALL label_one code /\ label_prefix_zero code
@@ -2771,7 +2784,7 @@ let lines_enc_with_nop_pad_section = prove
 
 let all_enc_with_nop_pad_code = prove
  (`!nop code pos.
-   0 < LENGTH nop /\ nop = enc (Inst asm_Skip) /\
+   0 < LENGTH nop /\ nop = enc (asm_Inst asm_Skip) /\
    (~(LENGTH nop = 1) ==> ALL (sec_aligned (LENGTH nop)) code /\ ALL
      sec_label_zero code) /\
    ALL sec_label_one code /\
@@ -2911,7 +2924,6 @@ let lab_to_targetProof_offset_ok_def,lab_to_targetProof_offset_ok_ind =
        lines_offset_ok labs ffis pos ls /\
        lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP
          line_len ls)) ss`];;
-hol4_overload "offset_ok" "lab_to_targetProof_offset_ok";;
 
 (* HOL4 lab_to_targetProofScript.sml:4892: ML code, not ported *)
 
@@ -2926,7 +2938,7 @@ let enc_lines_again_simp_offset_ok = prove
 let enc_secs_again_offset_ok = prove
  (`!pos labs ffis enc ls res ok.
     enc_secs_again pos labs ffis enc ls = (res,ok) ==>
-    offset_ok labs ffis pos res`,
+    lab_to_targetProof_offset_ok labs ffis pos res`,
   CHEAT_TAC);;
 
 (* offset_ok preservation *)
@@ -2948,8 +2960,8 @@ let offset_ok_pad_code = prove
     ALL sec_label_one code /\
     ALL sec_label_prefix_zero code /\
     all_lab_len_pos_ok pos code /\
-    offset_ok labs ffis pos code ==>
-    offset_ok labs ffis pos (pad_code nop code)`,
+    lab_to_targetProof_offset_ok labs ffis pos code ==>
+    lab_to_targetProof_offset_ok labs ffis pos (pad_code nop code)`,
   CHEAT_TAC);;
 
 (* invariant: referenced labels exist *)
@@ -2993,12 +3005,13 @@ let sec_get_zero_labs_acc_eq_sec_get_zero_labels = prove
 (* [local] *)
 let get_zero_labs_acc_eq_get_zero_labels = prove
  (`domain (ITLIST sec_get_zero_labs_acc code acc) =
-   IMAGE FST (restrict_zero (get_labels code)) UNION domain acc`,
+   IMAGE FST (restrict_zero (labProps_get_labels code)) UNION
+     domain acc`,
   CHEAT_TAC);;
 
 let zero_labs_acc_exist_eq = prove
  (`zero_labs_acc_exist labs code <=>
-   restrict_zero (get_labels code) SUBSET labs_domain labs`,
+   restrict_zero (labProps_get_labels code) SUBSET labs_domain labs`,
   CHEAT_TAC);;
 
 (* labs_exist preservation *)
@@ -3049,8 +3062,8 @@ let line_similar_line_get_code_labels = prove
   CHEAT_TAC);;
 
 let code_similar_get_code_labels = prove
- (`!c1 c2. code_similar c1 c2 ==> get_code_labels c1 = get_code_labels
-  c2`,
+ (`!c1 c2. code_similar c1 c2 ==> labProps_get_code_labels c1 =
+  labProps_get_code_labels c2`,
   CHEAT_TAC);;
 
 let line_labs_exist_get_labels = prove
@@ -3065,7 +3078,7 @@ let sec_labs_exist_get_labels = prove
 
 let all_labs_exist_get_labels = prove
  (`(\labs code. ALL (sec_labs_exist labs) code) labs code <=>
-  get_labels code SUBSET labs_domain labs`,
+  labProps_get_labels code SUBSET labs_domain labs`,
   CHEAT_TAC);;
 
 let line_similar_line_get_labels = prove
@@ -3074,12 +3087,14 @@ let line_similar_line_get_labels = prove
   CHEAT_TAC);;
 
 let code_similar_get_labels = prove
- (`!c1 c2. code_similar c1 c2 ==> get_labels c1 = get_labels c2`,
+ (`!c1 c2. code_similar c1 c2 ==> labProps_get_labels c1 =
+  labProps_get_labels c2`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let get_labels_upd_lab_len = prove
- (`get_labels (upd_lab_len pos code) = get_labels code`,
+ (`labProps_get_labels (upd_lab_len pos code) = labProps_get_labels
+  code`,
   CHEAT_TAC);;
 
 let section_labels_line_get_code_labels = prove
@@ -3095,7 +3110,7 @@ let labs_domain_compute_labels_alt = prove
      ALL_DISTINCT (MAP Section_num code) /\
      DISJOINT (domain labs) (set_of_list (MAP Section_num code)) ==>
      labs_domain (compute_labels_alt pos code labs) =
-     get_code_labels code UNION labs_domain labs`,
+     labProps_get_code_labels code UNION labs_domain labs`,
   CHEAT_TAC);;
 
 (* invariant: labels aligned at even positions *)
@@ -3145,7 +3160,7 @@ let even_labels_ends_imp_strong = prove
 
 let ALOOKUP_section_labels_ignore = prove
  (`!pos lines acc.
-   ~(MEM n2 (MAP SND (extract_labels lines))) ==>
+   ~(MEM n2 (MAP SND (labProps_extract_labels lines))) ==>
    ALOOKUP (SND (section_labels pos lines acc)) n2 =
    ALOOKUP acc n2`,
   CHEAT_TAC);;
@@ -3201,7 +3216,7 @@ let all_enc_ok_pre_light_imp_all_enc_ok = prove
     (\c ls. ALL (sec_ok_light c) ls) c code /\
     even_labels_strong pos code /\
     (\labs code. ALL (sec_labs_exist labs) code) labs code /\
-    offset_ok labs ffis pos code ==>
+    lab_to_targetProof_offset_ok labs ffis pos code ==>
     all_enc_ok c labs ffis pos code`,
   CHEAT_TAC);;
 
@@ -3226,7 +3241,7 @@ let ALOOKUP_section_labels = prove
    ALL (sec_label_ok n1) lines /\
    ALL line_length_ok lines /\
    ALL label_zero lines /\
-   ALL_DISTINCT (extract_labels lines) /\
+   ALL_DISTINCT (labProps_extract_labels lines) /\
    sec_loc_to_pc n2 lines = SOME pc' /\ ~(n2 = 0) ==>
    (?i.
      ALOOKUP (SND (section_labels pos lines acc)) n2 = SOME i /\
@@ -3241,8 +3256,8 @@ let lab_lookup_compute_labels_test = prove
  (`!pos sec_list acc l1 l2 x2 c labs ffis nop.
        ALL sec_labels_ok sec_list /\
        ALL_DISTINCT (MAP Section_num sec_list) /\
-       ALL (ALL_DISTINCT o extract_labels o Section_lines) sec_list
-         /\
+       ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines)
+         sec_list /\
        ALL sec_label_zero sec_list /\
        all_enc_ok c labs ffis pos sec_list /\
        loc_to_pc l1 l2 sec_list = SOME x2 ==>
@@ -3453,13 +3468,14 @@ let remove_labels_loop_thm = prove
      ALL sec_ends_with_label code /\
      ALL sec_labels_ok code /\
      ALL_DISTINCT (MAP Section_num code) /\
-     ALL (ALL_DISTINCT o extract_labels o Section_lines) code /\
+     ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines)
+       code /\
      DISJOINT (domain init_labs) (set_of_list (MAP Section_num code))
        /\
      // TODO this is stronger:
      // get_labels code ⊆ get_code_labels code ∪ labs_domain init_labs ∧
-     restrict_nonzero (get_labels code) SUBSET get_code_labels code
-       UNION labs_domain init_labs /\
+     restrict_nonzero (labProps_get_labels code) SUBSET
+       labProps_get_code_labels code UNION labs_domain init_labs /\
      (\c ls. ALL (sec_ok_pre c) ls) c code /\
      // new loop invariant
      (\enc l. ALL (sec_encd0 enc) l) (asm_config_encode c) code /\
@@ -3502,11 +3518,12 @@ let remove_labels_thm = prove
      ALL sec_ends_with_label code /\
      ALL sec_labels_ok code /\
      ALL_DISTINCT (MAP Section_num code) /\
-     ALL (ALL_DISTINCT o extract_labels o Section_lines) code /\
+     ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines)
+       code /\
      DISJOINT (domain init_labs) (set_of_list (MAP Section_num
        code)) /\
-     restrict_nonzero (get_labels code) SUBSET get_code_labels code
-       UNION labs_domain init_labs /\
+     restrict_nonzero (labProps_get_labels code) SUBSET
+       labProps_get_code_labels code UNION labs_domain init_labs /\
      (\c ls. ALL (sec_ok_pre c) ls) conf code /\
      EVEN init_pos /\
      (!l1 l2. OPTION_ALL EVEN (lab_lookup l1 l2 init_labs)) ==>
@@ -3524,18 +3541,18 @@ let remove_labels_thm = prove
 let compute_labels_alt_domain_labs = prove
  (`!pos code labs.
      domain (compute_labels_alt pos code labs) =
-     IMAGE FST (get_code_labels code) UNION domain labs`,
+     IMAGE FST (labProps_get_code_labels code) UNION domain labs`,
   CHEAT_TAC);;
 
 let remove_labels_loop_domain_labs = prove
  (`!a b c d e f g h. remove_labels_loop a b c d e f = SOME (g,h) ==>
-   domain h = IMAGE FST (get_code_labels f) UNION domain d`,
+   domain h = IMAGE FST (labProps_get_code_labels f) UNION domain d`,
   CHEAT_TAC);;
 
 let remove_labels_domain_labs = prove
  (`remove_labels c t k init_labs f p = SOME (q,labs) ==>
-   domain labs = IMAGE FST (get_code_labels p) UNION domain
-     init_labs`,
+   domain labs = IMAGE FST (labProps_get_code_labels p) UNION
+     domain init_labs`,
   CHEAT_TAC);;
 
 (** End syntactic stuff **)
@@ -3600,7 +3617,8 @@ let all_enc_ok_append = prove
 let extract_labels_loc_to_pc = prove
  (`!l1 l2 code.
    ALL sec_labels_ok code /\
-   MEM (l1,l2) (FLAT (MAP (extract_labels o Section_lines) code)) ==>
+   MEM (l1,l2) (FLAT (MAP (labProps_extract_labels o Section_lines)
+     code)) ==>
    (?y. loc_to_pc l1 l2 code = SOME y)`,
   CHEAT_TAC);;
 
@@ -3908,7 +3926,8 @@ let mmio_pcs_min_index_is_SOME = prove
 let no_share_mem_lemma = prove
  (cake_as_vars (fun () ->
     `mmio_pcs_min_index ffi_names = SOME i /\
-     asm_fetch_aux pc code = SOME (labLang_LabAsm Install c l n) /\
+     asm_fetch_aux pc code = SOME (labLang_LabAsm labLang_Install c
+       l n) /\
      no_install_or_no_share_mem code ffi_names ==>
      i = LENGTH ffi_names`),
   CHEAT_TAC);;
@@ -3960,8 +3979,8 @@ let no_share_mem_APPEND = prove
   CHEAT_TAC);;
 
 let no_install_APPEND_IMP = prove
- (`no_install (APPEND code secs) ==>
-   no_install code /\ no_install secs`,
+ (`labProps_no_install (APPEND code secs) ==>
+   labProps_no_install code /\ labProps_no_install secs`,
   CHEAT_TAC);;
 
 let code_similar_IMP_both_no_share_mem = prove
@@ -4132,7 +4151,7 @@ let oracle_tie_ccache_residues = prove
 let init_ok_def = new_definition
   `init_ok (mc_conf,p) s ms <=>
      (?code2 labs t1.
-       state_rel (mc_conf,code2,labs,p) s t1 ms /\
+       lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s t1 ms /\
        oracle_tie mc_conf ms s)`;;
 
 (* HOL4 lab_to_targetProofScript.sml:9364-9526: a theorem whose
@@ -4174,7 +4193,6 @@ let make_init_def = new_definition
        (target_config (machine_config_target mc_conf)) with SOME n -> n
        | _82 -> 0)
    // Initialize with code buffer empty`;;
-hol4_overload "make_init" "lab_to_targetProof_make_init";;
 
 let oracle_tie_make_init = prove
  (`oracle_tie mc_conf ms
@@ -4509,7 +4527,7 @@ let IMP_state_rel_make_init = prove
          target_get_pc (machine_config_target
               mc_conf) ms) (TAKE i (machine_config_ffi_entry_pcs
                 mc_conf)))) ==>
-    state_rel
+    lab_to_targetProof_state_rel
       ((mc_conf:('a,'state,'b)machine_config),code2,labs,target_get_pc
       (machine_config_target
         mc_conf) ms)
@@ -4607,18 +4625,21 @@ let MAP_Section_num_filter_skip = prove
 
 (* [simp] *)
 let filter_skip_extract_labels = prove
- (`!code. MAP (extract_labels o Section_lines) (filter_skip code) =
-   MAP (extract_labels o Section_lines) code`,
+ (`!code. MAP (labProps_extract_labels o Section_lines) (filter_skip
+  code) =
+   MAP (labProps_extract_labels o Section_lines) code`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let get_code_labels_filter_skip = prove
- (`!code. get_code_labels (filter_skip code) = get_code_labels code`,
+ (`!code. labProps_get_code_labels (filter_skip code) =
+  labProps_get_code_labels code`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let get_labels_filter_skip = prove
- (`!code. get_labels (filter_skip code) = get_labels code`,
+ (`!code. labProps_get_labels (filter_skip code) = labProps_get_labels
+  code`,
   CHEAT_TAC);;
 
 let implements_intro_gen = prove

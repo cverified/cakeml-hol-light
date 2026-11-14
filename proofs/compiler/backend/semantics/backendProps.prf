@@ -43,50 +43,6 @@
     THEN
    MESON_TAC[])
 
-### FST_pure_co
-  (CASES_ON_TAC `x:C#P` THEN REWRITE_TAC[pure_co_def; PAIR_MAP_THM;
-    FST; I_THM])
-
-### SND_pure_co
-  (CASES_ON_TAC `x:C#P` THEN REWRITE_TAC[pure_co_def; PAIR_MAP_THM;
-    SND])
-
-### oracle_monotonic_shift_subset
-  (REWRITE_TAC[oracle_monotonic_def; SUBSET; IN_UNION; IN_IMAGE;
-    count_def;
-               IN_ELIM_THM] THEN
-   REPEAT STRIP_TAC THENL
-    [SUBGOAL_THEN `?x0. x = i + x0 /\ x0 IN (f:A->num->bool)
-      ((co:num->A) i')`
-     STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-     SUBGOAL_THEN `?y0. y = i + y0 /\ y0 IN (f:A->num->bool)
-       ((co:num->A) j)`
-     STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-     ASM_REWRITE_TAC[LT_ADD_LCANCEL] THEN ASM_MESON_TAC[];
-     SUBGOAL_THEN `?y0. y = i + y0 /\ y0 IN (f:A->num->bool)
-       ((co:num->A) i')`
-     STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-     SUBGOAL_THEN `(?x0. x = i + x0 /\ x0 IN St) \/ x < i`
-       STRIP_ASSUME_TAC THENL
-      [ASM_MESON_TAC[];
-       ASM_REWRITE_TAC[LT_ADD_LCANCEL] THEN ASM_MESON_TAC[];
-       ASM_ARITH_TAC]])
-
-### oracle_monotonic_state_with_inv_init
-  (REPEAT GEN_TAC THEN STRIP_TAC THEN
-   MATCH_MP_TAC oracle_monotonic_state_with_inv THEN
-   MAP_EVERY EXISTS_TAC [`P:S->bool`; `n_f:S->num`] THEN
-   FIRST_ASSUM(MP_TAC o SPECL [`st0:S`; `prog0:Q`; `st:S`; `prog:R`]
-     o
-     check (is_forall o concl)) THEN
-   ANTS_TAC THENL [ASM_REWRITE_TAC[]; STRIP_TAC] THEN
-   ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[SUBSET])
-
 ### pure_co_I
   (REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; pure_co_def;
     PAIR_MAP_THM; I_THM])
-
-### pure_co_comb_pure_co
-  (REWRITE_TAC[FUN_EQ_THM; o_THM; pure_co_def] THEN GEN_TAC THEN
-   CASES_ON_TAC `(co:A->C#P) x` THEN REWRITE_TAC[PAIR_MAP_THM; I_THM;
-     o_THM])

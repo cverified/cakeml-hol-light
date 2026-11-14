@@ -12,13 +12,11 @@
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_inst.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/typeSystem.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -75,7 +73,7 @@ let convert_sub_ok = prove
 (*In general, any permutation works*)
 (* [local] *)
 let word_exp_op_permute_lem = prove
- (`~(op = Sub) ==>
+ (`~(op = asm_Sub) ==>
      (!ls ls'.
      PERM ls ls' ==>
      wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp s
@@ -99,7 +97,7 @@ let pull_ops_simp_pull_ops_perm = prove
 
 (* [local] *)
 let pull_ops_simp_pull_ops_word_exp = prove
- (`~(op = Sub) ==>
+ (`~(op = asm_Sub) ==>
      wordSem_word_exp s (wordLang_Op op (pull_ops op ls [])) =
        wordSem_word_exp s (wordLang_Op op (pull_ops_simp op ls))`,
   CHEAT_TAC);;
@@ -108,7 +106,7 @@ let pull_ops_simp_pull_ops_word_exp = prove
 
 (* [local] *)
 let word_exp_op_mono = prove
- (`~(op = Sub) ==>
+ (`~(op = asm_Sub) ==>
      wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp s
        (wordLang_Op op ls') ==>
      wordSem_word_exp s (wordLang_Op op (CONS x ls)) =
@@ -127,7 +125,7 @@ let the_words_append = prove
 
 (* [local] *)
 let word_exp_op_op = prove
- (`~(op = Sub) ==>
+ (`~(op = asm_Sub) ==>
      (!ls ls'.
      wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp s
        (wordLang_Op op ls') ==>
@@ -138,7 +136,7 @@ let word_exp_op_op = prove
 
 (* [local] *)
 let pull_ops_ok = prove
- (`~(op = Sub) ==>
+ (`~(op = asm_Sub) ==>
      (!ls. wordSem_word_exp s (wordLang_Op op (pull_ops op ls [])) =
             wordSem_word_exp s (wordLang_Op op ls))`,
   CHEAT_TAC);;
@@ -147,10 +145,10 @@ let pull_ops_ok = prove
 
 (* [local] *)
 let word_exp_swap_head = prove
- (`!B. ~(op = Sub) ==>
+ (`!B. ~(op = asm_Sub) ==>
    wordSem_word_exp s (wordLang_Op op A) = SOME (wordLang_Word w) ==>
    wordSem_word_exp s (wordLang_Op op (APPEND B A)) =
-     wordSem_word_exp s (wordLang_Op op (CONS (Const w) B))`,
+     wordSem_word_exp s (wordLang_Op op (CONS (wordLang_Const w) B))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -161,7 +159,7 @@ let EVERY_is_const_word_exp = prove
 
 (* [local] *)
 let all_consts_simp = prove
- (`~(op = Sub) ==>
+ (`~(op = asm_Sub) ==>
      (!ls.
      ALL word_inst_is_const ls ==>
      wordSem_word_exp s (wordLang_Op op ls) =
@@ -171,14 +169,15 @@ let all_consts_simp = prove
 
 (* [local] *)
 let word_exp_reduce_const = prove
- (`wordSem_word_exp s (wordLang_Op op (CONS (Const w) rest)) = SOME x
-  ==>
+ (`wordSem_word_exp s (wordLang_Op op (CONS (wordLang_Const w) rest)) =
+  SOME x ==>
    wordSem_word_exp s (reduce_const op w rest) = SOME x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let optimize_consts_ok = prove
- (`~(op = Sub) /\ wordSem_word_exp s (wordLang_Op op ls) = SOME x ==>
+ (`~(op = asm_Sub) /\ wordSem_word_exp s (wordLang_Op op ls) = SOME x
+  ==>
      wordSem_word_exp s (optimize_consts op ls) = SOME x`,
   CHEAT_TAC);;
 
@@ -237,9 +236,9 @@ let binary_branch_exp_def,binary_branch_exp_ind = define_wf
           wordLang_Op asm_Sub exps -> ALL (binary_branch_exp) exps
         | (wordLang_Op op xs) -> (LENGTH xs = 2 /\ ALL
           (binary_branch_exp) xs)
-        | (Load exp) -> binary_branch_exp exp
-        | (Shift shift' exp nexp) -> (binary_branch_exp exp /\
-          binary_branch_exp nexp)
+        | (wordLang_Load exp) -> binary_branch_exp exp
+        | (wordLang_Shift shift' exp nexp) -> (binary_branch_exp exp
+          /\ binary_branch_exp nexp)
         | exp -> T`];;
 
 (* flatten_exp syntax *)
@@ -298,9 +297,10 @@ let inst_select_thm = prove
      (res,wordSem_state_locals_fupd (K loc') rst) /\
    (match res with
      NONE -> locals_rel temp (wordSem_state_locals rst) loc' | SOME
-       (Break _3) -> locals_rel temp (wordSem_state_locals rst) loc' |
-       SOME (Continue _4) -> locals_rel temp (wordSem_state_locals
-       rst) loc' | SOME _5 -> wordSem_state_locals rst = loc'))`,
+       (wordSem_Break _3) -> locals_rel temp (wordSem_state_locals
+       rst) loc' | SOME (wordSem_Continue _4) -> locals_rel temp
+       (wordSem_state_locals rst) loc' | SOME _5 ->
+       wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;
 
 (* HOL4 word_instProofScript.sml:751-767: a proof *)
@@ -343,26 +343,26 @@ let inst_select_Loop_helper = prove
             (res,wordSem_state_locals_fupd (K loc') rst) /\
           (match res with
             NONE -> locals_rel temp (wordSem_state_locals rst) loc' |
-              SOME (Break _6) -> locals_rel temp (wordSem_state_locals
-              rst) loc' | SOME (Continue _7) -> locals_rel temp
-              (wordSem_state_locals rst) loc' | SOME _8 ->
-              wordSem_state_locals rst = loc'))) /\
-     wordSem_evaluate (Loop names prog exit_names,s) = (res,rst) /\
-       ~(res = SOME wordSem_Error) /\
+              SOME (wordSem_Break _6) -> locals_rel temp
+              (wordSem_state_locals rst) loc' | SOME (wordSem_Continue
+              _7) -> locals_rel temp (wordSem_state_locals rst) loc' |
+              SOME _8 -> wordSem_state_locals rst = loc'))) /\
+     wordSem_evaluate (wordLang_Loop names prog exit_names,s) =
+       (res,rst) /\ ~(res = SOME wordSem_Error) /\
      wordLang_every_var (\x. x < temp) prog /\
      every_name (\x. x < temp) (names,LN) /\
      every_name (\x. x < temp) (exit_names,LN) /\
      locals_rel temp (wordSem_state_locals s) loc ==>
      (?loc'.
-       wordSem_evaluate (Loop names (inst_select c temp prog)
-         exit_names,wordSem_state_locals_fupd (K loc)
+       wordSem_evaluate (wordLang_Loop names (inst_select c temp
+         prog) exit_names,wordSem_state_locals_fupd (K loc)
                  s) = (res,wordSem_state_locals_fupd (K loc') rst) /\
        (match res with
          NONE -> locals_rel temp (wordSem_state_locals rst) loc' |
-           SOME (Break _9) -> locals_rel temp (wordSem_state_locals
-           rst) loc' | SOME (Continue _10) -> locals_rel temp
-           (wordSem_state_locals rst) loc' | SOME _11 ->
-           wordSem_state_locals rst = loc'))`,
+           SOME (wordSem_Break _9) -> locals_rel temp
+           (wordSem_state_locals rst) loc' | SOME (wordSem_Continue
+           _10) -> locals_rel temp (wordSem_state_locals rst) loc' |
+           SOME _11 -> wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;
 
 (* HOL4 word_instProofScript.sml:1133-1138: a proof *)
@@ -377,9 +377,9 @@ let three_to_two_reg_Loop = prove
         wordSem_evaluate (prog,v) = (res,s') /\ ~(res = SOME
           wordSem_Error) ==>
         wordSem_evaluate (three_to_two_reg prog,v) = (res,s')) /\
-     wordSem_evaluate (Loop names prog exit_names,s) = (res,s') /\
-       ~(res = SOME wordSem_Error) ==>
-     wordSem_evaluate (Loop names (three_to_two_reg prog)
+     wordSem_evaluate (wordLang_Loop names prog exit_names,s) =
+       (res,s') /\ ~(res = SOME wordSem_Error) ==>
+     wordSem_evaluate (wordLang_Loop names (three_to_two_reg prog)
        exit_names,s) = (res,s')`,
   CHEAT_TAC);;
 

@@ -2,7 +2,7 @@
 (*  multiword: ported from HOL4's
     examples/machine-code/multiword/multiwordScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 14 files of the port.  *)
+    that CakeML needs.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/ASCIInumbers.ml";;
@@ -88,14 +88,6 @@ let mw_op_INDUCT,mw_op_RECURSION = define_datatype
   "mw_op = multiword_Add | multiword_Sub | multiword_Mul | \
    multiword_Div | multiword_Mod | multiword_Lt | multiword_Eq | \
    multiword_Dec";;
-hol4_overload "Add" "multiword_Add";;
-hol4_overload "Sub" "multiword_Sub";;
-hol4_overload "Mul" "multiword_Mul";;
-hol4_overload "Div" "multiword_Div";;
-hol4_overload "Mod" "multiword_Mod";;
-hol4_overload "Lt" "multiword_Lt";;
-hol4_overload "Eq" "multiword_Eq";;
-hol4_overload "Dec" "multiword_Dec";;
 
 let int_op_def = define_cases
   [`multiword_int_op (multiword_Add:mw_op) (i:int) (j:int) = ((i +
@@ -114,7 +106,6 @@ let int_op_def = define_cases
   (&1) else (&0):int):int)`;
    `multiword_int_op (multiword_Dec:mw_op) (i:int) (j:int) =
   ((&0):int)`];;
-hol4_overload "int_op" "multiword_int_op";;
 
 let single_div_loop_def,single_div_loop_ind = define_guess
   [`single_div_loop ((k:'a word),(ns:('a word) list),(m:'a word),(is:('a

@@ -39,7 +39,6 @@ mlstring_lt_antisym
 mlstring_lt_cases
 mlstring_lt_nonrefl
 mlstring_lt_trans
-splitl_SPLITL
 str_findi_range
 strcat_assoc
 strcat_nil

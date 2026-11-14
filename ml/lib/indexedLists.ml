@@ -20,7 +20,6 @@ let findi_def,findi_ind = define_rec
   [`indexedLists_findi x [] = 0`;
    `indexedLists_findi x (CONS h t) = (if x = h then 0 else 1 +
   indexedLists_findi x t)`];;
-hol4_overload "findi" "indexedLists_findi";;
 
 let LIST_RELi_rules = cake_inductive
   `LIST_RELi R [] [] /\

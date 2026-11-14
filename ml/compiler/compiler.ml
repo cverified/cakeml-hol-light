@@ -22,11 +22,9 @@ needs "compiler/backend/arm7/export_arm7.ml";;
 needs "compiler/backend/arm8/arm8_config.ml";;
 needs "compiler/backend/arm8/export_arm8.ml";;
 needs "compiler/backend/backend.ml";;
-needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/data_to_word.ml";;
-needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/mips/export_mips.ml";;
 needs "compiler/backend/mips/mips_config.ml";;
 needs "compiler/backend/riscv/export_riscv.ml";;
@@ -39,7 +37,6 @@ needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
 needs "lib/errorMonad.ml";;
-needs "lib/integer_word.ml";;
 needs "lib/location.ml";;
 needs "lib/multiword.ml";;
 needs "lib/peg.ml";;
@@ -320,10 +317,10 @@ let locs_to_string_def = new_definition
              (match endl with POSN r1 c1 -> (if r1 = r then c1 else
                len) | _3 -> len) in
            let underline =
-             concat (APPEND (REPLICATE c (implode " ")) (REPLICATE
-               ((stop - c) + 1) (implode [CHR 94]))) in
-             concat [(implode "line "); toString (r + 1); (implode
-               "\n\n");
+             mlstring_concat (APPEND (REPLICATE c (implode " "))
+               (REPLICATE ((stop - c) + 1) (implode [CHR 94]))) in
+             mlstring_concat [(implode "line "); mlint_toString (r +
+               (&1)); (implode "\n\n");
                      line; (implode "\n");
                      underline; (implode "\n")]) | _4 -> implode
                        "unknown location")`;;
@@ -343,8 +340,8 @@ let parse_cml_input_def = new_definition
   `parse_cml_input input =
      (match parse_prog (lexer_fun input) with peg_Failure l _5 ->
        INL ((\x y. strcat x y) (implode "Parsing failed at ")
-       (locs_to_string (implode input) (SOME l))) | Success _6 x _7
-       -> INR x)`;;
+       (locs_to_string (implode input) (SOME l))) | peg_Success _6 x
+       _7 -> INR x)`;;
 
 let compiler_compile_def = new_definition
   `compiler_compile c prelude input =
@@ -362,14 +359,15 @@ let compiler_compile_def = new_definition
             (compiler_config_inferencer_config c) else infertype_prog
             (compiler_config_inferencer_config c) full_prog) with
             M_failure (locs,msg) ->
-            (M_failure (TypeError (concat [msg; (implode " at ");
+            (M_failure (TypeError (mlstring_concat [msg; (implode
+              " at ");
                 locs_to_string (implode input) locs])),misc_Nil) |
                   M_success ic ->
            (let _10 = empty_ffi (implode "finished: type inference")
              in
            if compiler_config_only_print_types c then
-             (M_failure (TypeError (concat (APPEND (APPEND [(implode
-               "\n")]
+             (M_failure (TypeError (mlstring_concat (APPEND (APPEND
+               [(implode "\n")]
                               (inf_env_to_types_string ic))
                               [(implode "\n")]))),misc_Nil) else if
                                 compiler_config_only_print_sexp c then
@@ -380,7 +378,6 @@ let compiler_compile_def = new_definition
              (compiler_config_backend_config c) full_prog with
              (NONE,td) -> (M_failure AssembleError,td) | (SOME
              (bytes,data,c),td) -> (M_success (bytes,data,c),td))))`;;
-hol4_overload "compile" "compiler_compile";;
 
 cake_declare "parse_topdecs_to_ast"
   `:string -> (('a)decl)list + (mlstring#locs)list`;;
@@ -395,8 +392,8 @@ let compile_pancake_def = new_definition
   `compile_pancake asm_conf c input =
    (let _11 = empty_ffi (implode "finished: start up") in
    match parse_topdecs_to_ast input with INR errs ->
-     ((M_failure (ParseError (concat
-        (MAP (\(msg,loc). concat [msg; (implode " at ");
+     ((M_failure (ParseError (mlstring_concat
+        (MAP (\(msg,loc). mlstring_concat [msg; (implode " at ");
                               locs_to_string (implode input) (SOME
                                 loc); (implode "\n")])
             errs)))),misc_Nil,[]) | INL funs ->
@@ -413,27 +410,28 @@ let compile_pancake_def = new_definition
 (* The top-level compiler *)
 let error_to_str_def = define_cases
   [`error_to_str (ParseError s) =
-         concat [(implode "### ERROR: parse error\n"); s;
-           (implode "\n")]`;
+         mlstring_concat [(implode "### ERROR: parse error\n");
+           s; (implode "\n")]`;
    `error_to_str (TypeError s) =
          // if the first char in the message is a newline char then it isn't an error
          (if (if strlen s = 0 then T else
              if strsub s 0 = (CHR 10) then F else T) then
-           concat [(implode "### ERROR: type error\n"); s;
-             (implode "\n")] else s)`;
-   `error_to_str (ConfigError s) = concat [(implode
+           mlstring_concat [(implode "### ERROR: type error\n");
+             s; (implode "\n")] else s)`;
+   `error_to_str (ConfigError s) = mlstring_concat [(implode
   "### ERROR: config error\n"); s; (implode "\n")]`;
    `error_to_str AssembleError = (implode
   "### ERROR: assembly error\n")`;
    `error_to_str (StaticError e) =
         (match e with
-          ScopeErr s -> concat [(implode
+          ScopeErr s -> mlstring_concat [(implode
             "### ERROR: scope error\n"); s; (implode "\n")] |
-            WarningErr s -> concat [(implode "# WARNING:\n"); s;
-            (implode "\n")] | GenErr s -> concat [(implode
-            "### ERROR: static error\n"); s; (implode "\n")] |
-            ShapeErr s -> concat [(implode
-            "### ERROR: shape error\n"); s; (implode "\n")])`];;
+            WarningErr s -> mlstring_concat [(implode
+            "# WARNING:\n"); s; (implode "\n")] | GenErr s ->
+            mlstring_concat [(implode "### ERROR: static error\n");
+            s; (implode "\n")] | ShapeErr s -> mlstring_concat
+            [(implode "### ERROR: shape error\n"); s; (implode
+            "\n")])`];;
 
 let is_error_msg_def = new_definition
   `is_error_msg x = isPrefix (implode "###") x`;;
@@ -457,7 +455,7 @@ let find_str_def,find_str_ind = define_rec
   [`find_str flag [] = NONE`;
    `find_str flag (CONS x xs) =
         (if isPrefix flag x then
-          SOME (extract x (strlen flag) NONE) else
+          SOME (mlstring_extract x (strlen flag) NONE) else
           find_str flag xs)`];;
 
 (* Finds all occurences of the flag as a prefix, returning
@@ -465,8 +463,8 @@ let find_str_def,find_str_ind = define_rec
 let find_strs_def,find_strs_ind = define_rec
   [`find_strs flag [] = []`;
    `find_strs flag (CONS x xs) =
-        (if isPrefix flag x then CONS (extract x (strlen flag) NONE)
-          (find_strs flag xs) else
+        (if isPrefix flag x then CONS (mlstring_extract x (strlen
+          flag) NONE) (find_strs flag xs) else
           find_strs flag xs)`];;
 
 (* If flag is not present then F, else if it is present then
@@ -476,7 +474,7 @@ let find_bool_def = new_definition
    (match find_str flag ls with
      NONE -> INL default | SOME rest ->
      (match parse_bool rest with
-       SOME b -> INL b | NONE -> INR (concat [(implode
+       SOME b -> INL b | NONE -> INR (mlstring_concat [(implode
          "Unable to parse as bool: "); rest; (implode " for flag: ");
          flag])))`;;
 
@@ -487,20 +485,20 @@ let find_num_def = new_definition
    (match find_str flag ls with
      NONE -> INL default | SOME rest ->
    (match parse_num rest with
-     SOME n -> INL n | NONE -> INR (concat [(implode
+     SOME n -> INL n | NONE -> INR (mlstring_concat [(implode
        "Unable to parse as num: "); rest; (implode " for flag: ");
        flag])))`;;
 
 let get_err_str_def = define_cases
   [`get_err_str (INL n) = (implode "")`;
-   `get_err_str (INR n) = concat [n; (implode "\n")]`];;
+   `get_err_str (INR n) = mlstring_concat [n; (implode "\n")]`];;
 
 (* All the numbers must parse *)
 let parse_num_list_def,parse_num_list_ind = define_rec
   [`parse_num_list [] = INL []`;
    `parse_num_list (CONS x xs) =
          (match parse_num x with
-           NONE -> INR (concat [(implode
+           NONE -> INR (mlstring_concat [(implode
              "Unable to parse as num: "); x]) | SOME n ->
            (match parse_num_list xs with
              INR s -> INR s | INL ns -> INL (CONS n ns)))`];;
@@ -556,13 +554,13 @@ let parse_clos_conf_def = new_definition
            (clos_to_bvl_config_do_call_fupd (K c)
            (clos_to_bvl_config_known_conf_fupd (K (SOME (mk_config x
            i))) (clos_to_bvl_config_do_mti_fupd (K m) clos)))) | _13 ->
-           INR (concat [get_err_str max_body_size])) else
+           INR (mlstring_concat [get_err_str max_body_size])) else
      (INL
        (clos_to_bvl_config_max_app_fupd (K n)
          (clos_to_bvl_config_do_call_fupd (K c)
          (clos_to_bvl_config_known_conf_fupd (K NONE)
          (clos_to_bvl_config_do_mti_fupd (K m) clos)))))) | _14 ->
-     INR (concat [get_err_str multi;
+     INR (mlstring_concat [get_err_str multi;
                   get_err_str known';
                   get_err_str inline_factor;
                   get_err_str call;
@@ -590,7 +588,7 @@ let parse_bvl_conf_def = new_definition
          (bvl_to_bvi_config_exp_cut_fupd (K e)
          (bvl_to_bvi_config_inline_size_limit_fupd (K i) bvl))))) | _15
          ->
-     INR (concat [get_err_str inlinesz;
+     INR (mlstring_concat [get_err_str inlinesz;
                   get_err_str expcut;
                   get_err_str splitmain;
                   get_err_str tmc;
@@ -609,15 +607,16 @@ let parse_gc_def = new_definition
   `parse_gc ls default =
    (match find_str (implode "--gc=") ls with
      NONE -> INL default | SOME rest ->
-     (if rest = (implode "none") then INL None else if rest =
-       (implode "simple") then INL Simple else if isPrefix (implode
-       "gen") rest then
-       match parse_nums (extract rest (strlen (implode "gen")) NONE)
-         with
+     (if rest = (implode "none") then INL data_to_word_None else if
+       rest = (implode "simple") then INL data_to_word_Simple else if
+       isPrefix (implode "gen") rest then
+       match parse_nums (mlstring_extract rest (strlen (implode
+         "gen")) NONE) with
          INL ls -> INL (data_to_word_Generational ls) | INR s ->
-         INR (concat [(implode "Error parsing GenGC argument: ");
-           s]) else INR (concat [(implode
-           "Unrecognized GC option: "); rest])))`;;
+         INR (mlstring_concat [(implode
+           "Error parsing GenGC argument: "); s]) else INR
+           (mlstring_concat [(implode "Unrecognized GC option: ");
+           rest])))`;;
 
 (*
 EVAL ``parse_gc [«--gc=gen1234,1234,1234»] def``
@@ -655,7 +654,7 @@ let parse_data_conf_def = new_definition
          (data_to_word_config_pad_bits_fupd (K pb)
          (data_to_word_config_len_bits_fupd (K lb)
          (data_to_word_config_tag_bits_fupd (K tb) data)))))) | _16 ->
-      INR (concat [get_err_str tag_bits;
+      INR (mlstring_concat [get_err_str tag_bits;
                    get_err_str len_bits;
                    get_err_str pad_bits;
                    get_err_str len_size;
@@ -709,7 +708,7 @@ let extend_conf_def = new_definition
          (backend_config_word_to_word_conf_fupd (K wtw)
          (backend_config_bvl_conf_fupd (K bvl)
          (backend_config_clos_conf_fupd (K clos) conf))))))) | _19 ->
-       INR (concat [get_err_str clos;
+       INR (mlstring_concat [get_err_str clos;
                 get_err_str bvl;
                 get_err_str wtw;
                 get_err_str data;
@@ -903,8 +902,8 @@ let parse_target_64_def = new_definition
        (mips_backend_config,mips_export,mips_config) else if rest =
        (implode "riscv") then INL
        (riscv_backend_config,riscv_export,riscv_config) else INR
-       (concat [(implode "Unrecognized 64-bit target option: ");
-       rest])))`;;
+       (mlstring_concat [(implode
+       "Unrecognized 64-bit target option: "); rest])))`;;
 
 (* Defaults to arm7 if no target given *)
 let parse_target_32_def = new_definition
@@ -915,8 +914,9 @@ let parse_target_32_def = new_definition
      (if rest = (implode "arm7") then INL
        (arm7_backend_config,arm7_export,arm7_config) else if rest =
        (implode "ag32") then INL
-       (ag32_backend_config,ag32_export,ag32_config) else INR (concat
-       [(implode "Unrecognized 32-bit target option: "); rest])))`;;
+       (ag32_backend_config,ag32_export,ag32_config) else INR
+       (mlstring_concat [(implode
+       "Unrecognized 32-bit target option: "); rest])))`;;
 
 let parse_top_config_def = new_definition
   `parse_top_config ls =
@@ -932,7 +932,7 @@ let parse_top_config_def = new_definition
      (INL sexp,INL prelude,INL typeinference,INL mainreturn) ->
        INL
          (sexp,prelude,typeinference,onlyprinttypes,sexpprint,mainreturn
-         ,nowarnings) | _20 -> INR (concat [
+         ,nowarnings) | _20 -> INR (mlstring_concat [
                 get_err_str sexp;
                 get_err_str prelude;
                 get_err_str typeinference;
@@ -952,7 +952,7 @@ let has_pancake_flag_def = new_definition
 
 let format_compiler_result_def = define_cases
   [`format_compiler_result bytes_export (M_failure err) =
-      ((List []:mlstring app_list),error_to_str err)`;
+      ((misc_List []:mlstring app_list),error_to_str err)`;
    `format_compiler_result bytes_export (M_success ((bytes:word8
   list),(data:('a word) list),(c:backend_config))) =
       (bytes_export (the [] (lab_to_target_config_ffi_names
@@ -981,8 +981,8 @@ let compile_64_def = new_definition
      match ext_conf with
        INL ext_conf ->
          (let compiler_conf =
-           mk_compiler_config init_config ext_conf aconf sexp prelude
-             typeinfer onlyprinttypes sexpprint in
+           mk_compiler_config infer_init_config ext_conf aconf sexp
+             prelude typeinfer onlyprinttypes sexpprint in
          (match compiler_compile compiler_conf basis input with
            (M_success (bytes,data,c),td) ->
              (add_tap_output td (export
@@ -993,38 +993,38 @@ let compile_64_def = new_definition
                  bytes data (backend_config_symbols c)
                    (backend_config_exported c) mainret F),
                implode "") | (M_failure err,td) -> (add_tap_output td
-                 (List []),error_to_str err))) | INR err ->
-     (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
-       _21 ->
-     (List [],error_to_str (ConfigError (concat [get_err_str
-       confexp; get_err_str topconf]))))`;;
+                 (misc_List []),error_to_str err))) | INR err ->
+     (misc_List [],error_to_str (ConfigError (get_err_str
+       ext_conf)))) | _21 ->
+     (misc_List [],error_to_str (ConfigError (mlstring_concat
+       [get_err_str confexp; get_err_str topconf]))))`;;
 
 let pancake_backend_conf_def = new_definition
   `pancake_backend_conf c = backend_config_data_conf_fupd (K
-  (data_to_word_config_gc_kind_fupd (K None) (backend_config_data_conf
-  c)))
+  (data_to_word_config_gc_kind_fupd (K data_to_word_None)
+  (backend_config_data_conf c)))
      c`;;
 
 let compile_pancake_64_def = new_definition
   `compile_pancake_64 cl input =
    (let confexp = parse_target_64 cl in
-   match confexp with INR err -> (List [],error_to_str (ConfigError
-     err)) | INL (conf,export,aconf) ->
+   match confexp with INR err -> (misc_List [],error_to_str
+     (ConfigError err)) | INL (conf,export,aconf) ->
        (let topconf = parse_top_config cl in
-       match (topconf) with INR err -> (List [],error_to_str
+       match (topconf) with INR err -> (misc_List [],error_to_str
          (ConfigError err)) | INL
          (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret
          ,nowarn) ->
            (let ext_conf = extend_conf cl conf in
            match ext_conf with INR err ->
-               (List [],error_to_str (ConfigError (get_err_str
+               (misc_List [],error_to_str (ConfigError (get_err_str
                  ext_conf))) | INL ext_conf ->
                (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with
                  (M_failure err,td,warns) ->
-                   (List [],concat (MAP error_to_str (CONS err (if
-                     nowarn then [] else warns)))) | (M_success
-                     (bytes,data,c),td,warns) ->
+                   (misc_List [],mlstring_concat (MAP error_to_str
+                     (CONS err (if nowarn then [] else warns)))) |
+                     (M_success (bytes,data,c),td,warns) ->
                    (add_tap_output td
                      (export (ffinames_to_string_list
                        (the [] (lab_to_target_config_ffi_names
@@ -1032,8 +1032,8 @@ let compile_pancake_64_def = new_definition
                          (backend_config_symbols c)
                          (backend_config_exported
                        c) mainret T),
-                    concat (MAP error_to_str (if nowarn then []
-                      else warns)))))))`;;
+                    mlstring_concat (MAP error_to_str (if nowarn
+                      then [] else warns)))))))`;;
 
 (* PENDING: the file system of the basis library, which the port does
    not have (add_stdout, add_stderr, fastForwardFD) *)
@@ -1051,8 +1051,8 @@ let compile_32_def = new_definition
      match ext_conf with
        INL ext_conf ->
          (let compiler_conf =
-           mk_compiler_config init_config ext_conf aconf sexp prelude
-             typeinfer onlyprinttypes sexpprint in
+           mk_compiler_config infer_init_config ext_conf aconf sexp
+             prelude typeinfer onlyprinttypes sexpprint in
          (match compiler_compile compiler_conf basis input with
            (M_success (bytes,data,c),td) ->
              (add_tap_output td (export
@@ -1061,33 +1061,33 @@ let compile_32_def = new_definition
                    (backend_config_lab_conf c))))
                  bytes data (backend_config_symbols c)
                    (backend_config_exported c) mainret F),
-               implode "") | (M_failure err,td) -> (List
+               implode "") | (M_failure err,td) -> (misc_List
                  [],error_to_str err))) | INR err ->
-     (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
-       _22 ->
-     (List [],error_to_str (ConfigError (concat [get_err_str
-       confexp; get_err_str topconf]))))`;;
+     (misc_List [],error_to_str (ConfigError (get_err_str
+       ext_conf)))) | _22 ->
+     (misc_List [],error_to_str (ConfigError (mlstring_concat
+       [get_err_str confexp; get_err_str topconf]))))`;;
 
 let compile_pancake_32_def = new_definition
   `compile_pancake_32 cl input =
    (let confexp = parse_target_32 cl in
-   match confexp with INR err -> (List [],error_to_str (ConfigError
-     err)) | INL (conf,export,aconf) ->
+   match confexp with INR err -> (misc_List [],error_to_str
+     (ConfigError err)) | INL (conf,export,aconf) ->
        (let topconf = parse_top_config cl in
-       match (topconf) with INR err -> (List [],error_to_str
+       match (topconf) with INR err -> (misc_List [],error_to_str
          (ConfigError err)) | INL
          (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret
          ,nowarn) ->
            (let ext_conf = extend_conf cl conf in
            match ext_conf with INR err ->
-               (List [],error_to_str (ConfigError (get_err_str
+               (misc_List [],error_to_str (ConfigError (get_err_str
                  ext_conf))) | INL ext_conf ->
                (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with
                  (M_failure err,td,warns) ->
-                   (List [],concat (MAP error_to_str (CONS err (if
-                     nowarn then [] else warns)))) | (M_success
-                     (bytes,data,c),td,warns) ->
+                   (misc_List [],mlstring_concat (MAP error_to_str
+                     (CONS err (if nowarn then [] else warns)))) |
+                     (M_success (bytes,data,c),td,warns) ->
                    (add_tap_output td
                      (export (ffinames_to_string_list
                        (the [] (lab_to_target_config_ffi_names
@@ -1095,8 +1095,8 @@ let compile_pancake_32_def = new_definition
                          (backend_config_symbols c)
                          (backend_config_exported
                        c) mainret T),
-                    concat (MAP error_to_str (if nowarn then []
-                      else warns)))))))`;;
+                    mlstring_concat (MAP error_to_str (if nowarn
+                      then [] else warns)))))))`;;
 
 (* PENDING: the file system of the basis library, which the port does
    not have (add_stdout, add_stderr, fastForwardFD) *)

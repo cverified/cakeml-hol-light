@@ -117,8 +117,8 @@ let mk_binop_def = new_definition
    port expands *)
 
 let tokcheck_def = new_definition
-  `tokcheck pt tok' <=> ((\f a. OPTION_BIND a f) destTOK (destLf pt)
-  = SOME tok')`;;
+  `tokcheck pt tok' <=> ((\f a. OPTION_BIND a f) tokenUtils_destTOK
+  (destLf pt) = SOME tok')`;;
 
 let ptree_UQTyop_def = define_cases
   [`ptree_UQTyop (Lf _4) = NONE`;
@@ -128,7 +128,7 @@ let ptree_UQTyop_def = define_cases
         match args with
             [pt] ->
             OPTION_BIND (destLf pt) (\
-              lf. OPTION_BIND (destTOK lf) (\
+              lf. OPTION_BIND (tokenUtils_destTOK lf) (\
               tk. OPTION_CHOICE (destSymbolT tk) (destAlphaT
                 tk))) | _5 -> NONE)`];;
 
@@ -142,7 +142,7 @@ let ptree_TyvarN_def = define_cases
 
 let Long_Short_def,Long_Short_ind = define_rec
   [`Long_Short tokens_End (s:mlstring) = Short s`;
-   `Long_Short (Mod x xs:tokens_path) (s:mlstring) = Long x
+   `Long_Short (ast_Mod x xs:tokens_path) (s:mlstring) = Long x
   (Long_Short xs s)`];;
 
 let ptree_Tyop_def = define_cases
@@ -152,8 +152,8 @@ let ptree_Tyop_def = define_cases
         else
         match args with
             [pt] -> OPTION_CHOICE (OPTION_BIND ((\f a. OPTION_BIND a
-              f) destLongidT ((\f a. OPTION_BIND a f) destTOK (destLf
-              pt))) (\
+              f) destLongidT ((\f a. OPTION_BIND a f) tokenUtils_destTOK
+              (destLf pt))) (\
               (xs,s).
               SOME (Long_Short xs s)))
             (OPTION_BIND (ptree_UQTyop pt) (\
@@ -325,7 +325,8 @@ let ptree_UQConstructorName_def = define_cases
         then NONE else
         match args with
             [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a.
-              OPTION_BIND a f) destTOK (destLf pt)) | _29 -> NONE)`];;
+              OPTION_BIND a f) tokenUtils_destTOK (destLf pt)) |
+              _29 -> NONE)`];;
 
 let ptree_ConstructorName_def = new_definition
   `ptree_ConstructorName ast =
@@ -339,7 +340,7 @@ let ptree_ConstructorName_def = new_definition
                  s.
                  SOME (Short s)))
                (OPTION_BIND ((\f a. OPTION_BIND a f) destLongidT ((\f
-                 a. OPTION_BIND a f) destTOK (destLf pt))) (\
+                 a. OPTION_BIND a f) tokenUtils_destTOK (destLf pt))) (\
                  (xs,s).
                  SOME (Long_Short xs s))) | _31 -> NONE))`;;
 
@@ -453,7 +454,7 @@ let singleSymP_def = new_definition
   `singleSymP P x2 =
       match x2 with
         [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f) destSymbolT ((\f
-          a. OPTION_BIND a f) destTOK (destLf pt))) (\s.
+          a. OPTION_BIND a f) tokenUtils_destTOK (destLf pt))) (\s.
           OPTION_IGNORE_BIND
                          (OPTION_GUARD (P s)) (
                          SOME (Short s)))
@@ -490,8 +491,8 @@ let ptree_V_def = define_cases
              (
            match subs with
               [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f)
-                destTOK (destLf pt)) (\t. OPTION_CHOICE (destAlphaT
-                t) (destSymbolT t)) | _47 -> NONE)`];;
+                tokenUtils_destTOK (destLf pt)) (\t. OPTION_CHOICE
+                (destAlphaT t) (destSymbolT t)) | _47 -> NONE)`];;
 
 let ptree_FQV_def = define_cases
   [`ptree_FQV (Lf _49) = NONE`;
@@ -501,8 +502,8 @@ let ptree_FQV_def = define_cases
         match args with
             [pt] -> OPTION_CHOICE (OPTION_MAP Short (ptree_V pt))
                     (OPTION_BIND ((\f a. OPTION_BIND a f)
-                      destLongidT ((\f a. OPTION_BIND a f) destTOK
-                      (destLf pt))) (\
+                      destLongidT ((\f a. OPTION_BIND a f)
+                      tokenUtils_destTOK (destLf pt))) (\
                       (xs,s).
                       SOME (Long_Short xs s))) | _50 -> NONE)`];;
 
@@ -599,7 +600,7 @@ let ptree_Pattern_def,ptree_Pattern_ind = define_mutual_wf
               (OPTION_BIND (ptree_V vic) (\vname. SOME (ast_Pvar
                 vname))))
               (OPTION_BIND (destLf vic) (\
-                lf. OPTION_BIND (destTOK lf) (\
+                lf. OPTION_BIND (tokenUtils_destTOK lf) (\
                 t.
                 (OPTION_CHOICE (OPTION_CHOICE (OPTION_BIND (destIntT
                   t) (\i. SOME (ast_Plit (ast_IntLit i))))
@@ -812,7 +813,7 @@ let ptree_Eliteral_def = define_cases
         (OPTION_GUARD (LENGTH subs = 1 /\ FST nt' =
           (INL:MMLnonT->MMLnonT+num) nEliteral)) (OPTION_BIND (destLf
           (HD subs)) (\
-        lf. OPTION_BIND (destTOK lf) (\
+        lf. OPTION_BIND (tokenUtils_destTOK lf) (\
         t.
         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
           (OPTION_BIND (destIntT t) (\i. SOME (ast_Lit (ast_IntLit i))))
@@ -1196,8 +1197,7 @@ let dumb1 = prove
 (* [local] *)
 let dumb2 = prove
  (`COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`,
-  (GEN_TAC THEN BOOL_CASES_TAC `gd:bool` THEN
-   REWRITE_TAC[OPTION_IGNORE_BIND; OPTION_GUARD; OPTION_BIND]));;
+  CHEAT_TAC);;
 (* HOL4 cmlPtreeConversionScript.sml:1259-1262: a theorem that HOL4
    states as the value of an ML expression: ptree_Expr_def' *)
 
@@ -1214,7 +1214,8 @@ let ptree_StructName_def = define_cases
         NONE else
         match args with
             [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a.
-              OPTION_BIND a f) destTOK (destLf pt)) | _125 -> NONE)`];;
+              OPTION_BIND a f) tokenUtils_destTOK (destLf pt)) |
+              _125 -> NONE)`];;
 
 let ptree_OptTypEqn_def = define_cases
   [`ptree_OptTypEqn (Lf _127) = (NONE:(ast_t option) option)`;

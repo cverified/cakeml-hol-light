@@ -11,10 +11,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
@@ -26,7 +22,6 @@ needs "compiler/backend/proofs/word_bignumProof.ml";;
 needs "compiler/backend/proofs/word_depthProof.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
@@ -67,7 +62,9 @@ let _ = hide_overloads
   ["failed","pegexec_failed"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
-hol4_overload "cut_env" "wordSem_cut_env";;
+(* HOL4 data_to_word_bignumProofScript.sml:22: an overload that the
+   source brings to the front: cut_env, written out as
+   wordSem_cut_env *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:26-27: a proof *)
 
@@ -86,7 +83,8 @@ let word_list_IMP_store_list = prove
 
 let word_exp_set_var_ShiftVar_lemma = prove
  (`wordSem_word_exp t (ShiftVar sow v n) =
-    (match lookup v (state_locals t) with SOME (wordLang_Word w) ->
+    (match sptree_lookup v (state_locals t) with SOME (wordLang_Word
+      w) ->
         OPTION_MAP wordLang_Word
           (match sow with Lsl -> SOME (w << n) | Lsr -> SOME (w >>>
             n) | Asr -> SOME (w >> n) | Ror -> SOME (word_ror w n)) |
@@ -101,9 +99,10 @@ let i2mw_small_int_IMP_0 = prove
   CHEAT_TAC);;
 
 let state_rel_Number_small_int = prove
- (`state_rel c r1 r2 s t (SOME [x]) locs /\ small_int (:'a) i ==>
-    state_rel c r1 r2 s t (SOME [(Number i,wordLang_Word (Smallnum
-      i:'a word))]) locs`,
+ (`data_to_word_gcProof_state_rel c r1 r2 s t (SOME [x]) locs /\
+  small_int (:'a) i ==>
+    data_to_word_gcProof_state_rel c r1 r2 s t (SOME
+      [(dataSem_Number i,wordLang_Word (Smallnum i:'a word))]) locs`,
   CHEAT_TAC);;
 
 let heap_lookup_Unused_Bignum = prove
@@ -113,8 +112,9 @@ let heap_lookup_Unused_Bignum = prove
   CHEAT_TAC);;
 
 let push_env_insert_0 = prove
- (`push_env (insert 0 x LN,LN) NONE t = wordSem_state_permute_fupd (K
-  (\n. wordSem_state_permute t (n + 1))) (state_stack_max_fupd (K
+ (`wordSem_push_env (sptree_insert 0 x LN,LN) NONE t =
+  wordSem_state_permute_fupd (K (\n. wordSem_state_permute t (n + 1)))
+  (state_stack_max_fupd (K
                 (OPTION_MAP2 MAX (state_stack_max t)
                   (stack_size (CONS (StackFrame (state_locals_size t)
                     [(0,x)] [] NONE) (stack t))))) (stack_fupd (K (CONS
@@ -141,7 +141,7 @@ let SND_i2mw_NIL = prove
   CHEAT_TAC);;
 
 let word_cmp_Test_1 = prove
- (`word_cmp (Test:cmp) w (n2w 1) <=> ~(word_bit 0 w)`,
+ (`wordSem_word_cmp (asm_Test:cmp) w (n2w 1) <=> ~(word_bit 0 w)`,
   CHEAT_TAC);;
 
 let word_bit_if_1_0 = prove
@@ -163,7 +163,6 @@ let data_to_word_bignumProof_int_op_def = new_definition
      if op_index = 4 then SOME (i * j) else
      if op_index = 5 /\ ~(j = (&0)) then SOME (i / j) else
      if op_index = 6 /\ ~(j = (&0)) then SOME (i % j) else NONE)`;;
-hol4_overload "int_op" "data_to_word_bignumProof_int_op";;
 
 let get_sign_word_lemma = prove
  (`good_dimindex (:'a) ==> ((n2w 1) && x >>> 4) = (if word_bit 4 x
@@ -205,8 +204,8 @@ let lt_dimindex_MOD_dimword = prove
 let get_real_addr_lemma = prove
  (`shift_length c < dimindex (:'a) /\
     good_dimindex (:'a) /\
-    get_var v (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word
-      ptr_w) /\
+    wordSem_get_var v (t:('a,'c,'ffi)wordSem_state) = SOME
+      (wordLang_Word ptr_w) /\
     get_real_addr c (wordSem_state_store t) ptr_w = SOME x ==>
     wordSem_word_exp t (real_addr c v) = SOME (wordLang_Word (x:'a
       word))`,
@@ -219,7 +218,8 @@ let memory_rel_lookup = prove
     `memory_rel c be ts refs s st m dm
         (APPEND (join_env l1 (toAList (inter l2 (adjust_set l1))))
           xs) /\
-      lookup n l1 = SOME x /\ lookup (adjust_var n) l2 = SOME w ==>
+      sptree_lookup n l1 = SOME x /\ sptree_lookup (adjust_var n)
+        l2 = SOME w ==>
       memory_rel c be ts refs s st m dm
        (CONS (x,w) (APPEND (join_env l1 (toAList (inter l2
          (adjust_set l1)))) xs))`),
@@ -234,13 +234,15 @@ let memory_rel_lookup = prove
    AnyHeader_thm *)
 
 let state_rel_set_store_Temp = prove
- (`state_rel c l1 l2 s (wordSem_set_store (Temp tmp) w t) vs locs =
-   state_rel c l1 l2 s t vs locs`,
+ (`data_to_word_gcProof_state_rel c l1 l2 s (wordSem_set_store (Temp
+  tmp) w t) vs locs =
+   data_to_word_gcProof_state_rel c l1 l2 s t vs locs`,
   CHEAT_TAC);;
 
 let state_rel_IMP_num_size_limit = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    get_var k (state_locals s) = SOME (Number i) ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 s
+  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
+    wordSem_get_var k (state_locals s) = SOME (dataSem_Number i) ==>
     LENGTH (SND (i2mw i):('a word) list) < dimword (:'a) DIV 16`,
   CHEAT_TAC);;
 
@@ -260,8 +262,9 @@ let MustTerminate_limit_SUB_2 = prove
   CHEAT_TAC);;
 
 let cut_env_fromList_sing = prove
- (`cut_env (fromList [one]) (insert 0 (Loc l1 l2) LN) =
-    SOME (insert 0 (Loc l1 l2) LN)`,
+ (`wordSem_cut_env (sptree_fromList [one]) (sptree_insert 0
+  (wordLang_Loc l1 l2) LN) =
+    SOME (sptree_insert 0 (wordLang_Loc l1 l2) LN)`,
   CHEAT_TAC);;
 
 let single_div_pre_IMP_single_div_full = prove
@@ -284,15 +287,16 @@ let IMP_LESS_MustTerminate_limit = prove
    evaluate_LongDiv_code *)
 
 let div_code_assum_thm = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 s
+  (t:('a,'c,'ffi)wordSem_state) NONE locs ==>
     div_code_assum (:'ffi) (:'c) (wordSem_state_code t)`,
   CHEAT_TAC);;
 
 let IMP_bignum_code_rel = prove
- (`compile Bignum_location 2 1 (Bignum_location + 1,[])
+ (`data_to_word_compile Bignum_location 2 1 (Bignum_location + 1,[])
              mc_iop_code = (xx1,xx2,xx3,xx4,xx5) /\
-    state_rel c l1 l2 s t NONE locs ==>
-    code_rel (xx4,xx5) (state_code t)`,
+    data_to_word_gcProof_state_rel c l1 l2 s t NONE locs ==>
+    data_to_word_gcProof_code_rel (xx4,xx5) (state_code t)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -311,17 +315,20 @@ let arith_location_def = new_definition
 
 let push_env_code = prove
  (`state_code
-      (push_env y NONE t) = state_code t`,
+      (wordSem_push_env y NONE t) = state_code t`,
   CHEAT_TAC);;
 
 let arith_code_def = new_definition
   `Arith_code index =
-     Seq (Assign 6 (wordLang_Const (n2w (4 * index))))
-       (Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
+     word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const (n2w (4 *
+       index))))
+       (wordLang_Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
+         NONE)`;;
 
 let lookup_Arith_location = prove
- (`state_rel c l1 l2 x t NONE locs /\ int_op index i1 i2 = SOME r ==>
-    lookup (Arith_location index) (state_code t) = SOME
+ (`data_to_word_gcProof_state_rel c l1 l2 x t NONE locs /\
+  data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
+    sptree_lookup (Arith_location index) (state_code t) = SOME
       (3,Arith_code index)`,
   CHEAT_TAC);;
 

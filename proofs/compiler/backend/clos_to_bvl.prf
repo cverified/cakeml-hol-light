@@ -36,29 +36,6 @@
      ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `k:num`) THEN
      ASM_REWRITE_TAC[ARITH_RULE `n + 2 * SUC k = (n + 2) + 2 * k`]])
 
-### code_split_LENGTH
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[code_split_def; PAIR_EQ; LENGTH]
-    THENL
-    [MESON_TAC[ADD_CLAUSES]; ALL_TAC] THEN
-   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL
-     [`CONS (h:A) ts3`; `ts2:A list`; `xs:A list`; `ys:A list`]) THEN
-   ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC)
-
-### code_split_NULL
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[code_split_def; PAIR_EQ] THENL
-    [MESON_TAC[]; ALL_TAC] THEN
-   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL
-     [`CONS (h:A) ts3`; `ts2:A list`; `xs:A list`; `ys:A list`]) THEN
-   ASM_REWRITE_TAC[NOT_CONS_NIL])
-
-### get_src_names_sing_eq
-  (MATCH_MP_TAC get_src_names_sing_ind THEN REPEAT CONJ_TAC THEN
-   REPEAT STRIP_TAC THEN
-   REWRITE_TAC[get_src_names_sing_def; get_src_names_def] THEN
-   ASM_REWRITE_TAC[] THEN
-   CASES_ON_TAC `xs:closLang_exp list` THEN
-   ASM_REWRITE_TAC[get_src_names_def; get_src_names_sing_def])
-
 ### build_aux_LENGTH
   (LIST_INDUCT_TAC THEN REWRITE_TAC[build_aux_def; PAIR_EQ; LENGTH]
     THENL

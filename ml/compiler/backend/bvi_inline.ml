@@ -2,7 +2,7 @@
 (*  bvi_inline: ported from HOL4's
     compiler/backend/bvi_inlineScript.sml
     A definition theory, with 8 definitions and 5 theorems.  Needed
-    by bvi_inlineProof.ml, bvl_to_bvi.ml and bvl_to_bviProof.ml.  *)
+    by bvi_inlineProof.ml and bvl_to_bvi.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -15,9 +15,7 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
-needs "compiler/backend/closLang.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -135,69 +133,71 @@ let compile_inc_def = new_definition
      (let (cs1,prog1) = inline_all cs prog in
        (cs1,MAP (\(name,arity,body).
                    (name,arity,remove_ticks_exp body)) prog1))`;;
-hol4_overload "compile_inc" "bvi_inline_compile_inc";;
 
 let bvi_inline_compile_prog_def = new_definition
   `bvi_inline_compile_prog prog = bvi_inline_compile_inc LN prog`;;
-hol4_overload "compile_prog" "bvi_inline_compile_prog";;
 
 let canonical_four_result_wrapper = prove
  (`wrapper_ok 10 3
-     (bvi_LetCall 4 0 11 (list_of_seq Var 3)
+     (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
        (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE
-         (list_of_seq Var 4))))`,
+         (list_of_seq bvi_Var 4))))`,
   (REWRITE_TAC[wrapper_ok_def; canonical_wrapper_def] THEN
    CONV_TAC NUM_REDUCE_CONV));;
 
 let malformed_wrappers_rejected = prove
  (`~(wrapper_ok 10 3
-       (bvi_LetCall 4 0 10 (list_of_seq Var 3)
+       (bvi_LetCall 4 0 10 (list_of_seq bvi_Var 3)
          (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           Var 4)))) /\
+           bvi_Var 4)))) /\
    ~(wrapper_ok 10 3
-       (bvi_LetCall 4 0 11 [Var 0; Var 2; Var 1]
+       (bvi_LetCall 4 0 11 [bvi_Var 0; bvi_Var 2; bvi_Var 1]
          (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           Var 4)))) /\
+           bvi_Var 4)))) /\
    ~(wrapper_ok 10 3
-       (bvi_LetCall 4 0 11 (list_of_seq Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [Var 0; Var 1;
-           Var 2]))) /\
-   ~(wrapper_ok 10 3 (bvi_Return (list_of_seq Var 3)))`,
+       (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [bvi_Var 0;
+           bvi_Var 1; bvi_Var 2]))) /\
+   ~(wrapper_ok 10 3 (bvi_Return (list_of_seq bvi_Var 3)))`,
   CHEAT_TAC);;
 
 let inline_boundary_examples = prove
  (`inline_exp (sptree_insert 10 (3,
-       bvi_LetCall 4 0 11 (list_of_seq Var 3)
+       bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
          (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           Var 4))) LN) (Call 2 (SOME 10) [Var 4; Var 5; Var 6]
-           NONE:bvi_exp) =
-       Let [Var 4; Var 5; Var 6]
+           bvi_Var 4))) LN) (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5;
+           bvi_Var 6] NONE:bvi_exp) =
+       bvi_Let [bvi_Var 4; bvi_Var 5; bvi_Var 6]
          (bvi_mk_tick 3
-           (bvi_LetCall 4 0 11 (list_of_seq Var 3)
+           (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
              (bvi_Op (closLang_BlockOp (closLang_Cons 7))
-               (list_of_seq Var 4)))) /\
+               (list_of_seq bvi_Var 4)))) /\
    inline_exp (sptree_insert 10 (3,
-       bvi_LetCall 4 0 11 (list_of_seq Var 3)
+       bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
          (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           Var 4))) LN)
-     (Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0))) =
-       Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0)) /\
+           bvi_Var 4))) LN)
+     (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME
+       (bvi_Var 0))) =
+       bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME
+         (bvi_Var 0)) /\
    inline_exp (sptree_insert 10 (3,
-       bvi_LetCall 4 0 11 (list_of_seq Var 3)
+       bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
          (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           Var 4))) LN)
-     (bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return [Var 0]))
-       =
-       bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return [Var
-         0])`,
+           bvi_Var 4))) LN)
+     (bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6]
+       (bvi_Return [bvi_Var 0])) =
+       bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6]
+         (bvi_Return [bvi_Var 0])`,
   CHEAT_TAC);;
 
 let final_tick_cleanup_example = prove
- (`remove_ticks_exp (Tick (bvi_Call 2 (SOME 10) [Tick (bvi_Var 0)]
-       (SOME (bvi_LetCall 1 3 11 [Tick (bvi_Var 1)] (bvi_Return [Var
-         0])))):bvi_exp) =
-     Call 0 (SOME 10) [Var 0]
-       (SOME (bvi_LetCall 1 0 11 [Var 1] (bvi_Return [Var 0])))`,
+ (`remove_ticks_exp (bvi_Tick (bvi_Call 2 (SOME 10) [bvi_Tick (bvi_Var
+  0)]
+       (SOME (bvi_LetCall 1 3 11 [bvi_Tick (bvi_Var 1)] (bvi_Return
+         [bvi_Var 0])))):bvi_exp) =
+     bvi_Call 0 (SOME 10) [bvi_Var 0]
+       (SOME (bvi_LetCall 1 0 11 [bvi_Var 1] (bvi_Return [bvi_Var
+         0])))`,
   (REWRITE_TAC[remove_ticks_exp_def; OPTION_MAP]));;
 
 (* and the overloads that this file cannot see are back in the

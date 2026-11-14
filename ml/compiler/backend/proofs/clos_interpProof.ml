@@ -18,7 +18,6 @@ needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
@@ -50,9 +49,8 @@ let clos_interpProof_state_rel_def = new_definition
        closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o closSem_state_compile_oracle
        s /\
-     oHD (closSem_state_globals s) = SOME (SOME (Closure NONE []
-       [] 1 clos_interpreter))`;;
-hol4_overload "state_rel" "clos_interpProof_state_rel";;
+     oHD (closSem_state_globals s) = SOME (SOME (closSem_Closure
+       NONE [] [] 1 clos_interpreter))`;;
 
 let state_rel_1_def = new_definition
   `state_rel_1 (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
@@ -82,7 +80,7 @@ let OPTREL_eq' = prove
   CHEAT_TAC);;
 
 let do_app_oHD_globals = prove
- (`do_app p vs s1 = Rval (v,s2) ==>
+ (`closSem_do_app p vs s1 = Rval (v,s2) ==>
    oHD (closSem_state_globals s1) = SOME (SOME x) ==>
    oHD (closSem_state_globals s2) = SOME (SOME x)`,
   CHEAT_TAC);;
@@ -129,20 +127,21 @@ let evaluate_Global_0 = prove
  (`clos_interpProof_state_rel s t ==>
    closSem_evaluate ([closLang_Op tr (closLang_GlobOp
      (closLang_Global 0)) []],env,state_clock_fupd (K k) t) =
-     (Rval [Closure NONE [] [] 1 clos_interpreter],state_clock_fupd
-       (K k) t)`,
+     (Rval [closSem_Closure NONE [] [] 1
+       clos_interpreter],state_clock_fupd (K k) t)`,
   CHEAT_TAC);;
 
 let v_to_list_list_to_v = prove
- (`!a. v_to_list (list_to_v a) = SOME a`,
+ (`!a. closSem_v_to_list (closSem_list_to_v a) = SOME a`,
   CHEAT_TAC);;
 
 let clos_interp_el_thm = prove
  (`!n env rest cl_env.
      n < LENGTH env /\ 1 <= closSem_state_max_app t4 ==>
      (?c. closSem_evaluate
-           ([clos_interp_el],CONS (list_to_v env) (CONS
-             (closSem_Number (&n)) (CONS (Recclosure NONE [] cl_env
+           ([clos_interp_el],CONS (closSem_list_to_v env) (CONS
+             (closSem_Number (&n)) (CONS (closSem_Recclosure NONE []
+             cl_env
               [(1,closLang_Fn (implode "") NONE NONE 1
                 clos_interp_el)] 0) rest)),state_clock_fupd (K (c +
                 state_clock t4))
@@ -153,13 +152,13 @@ let clos_interp_rev_thm = prove
  (`!a env rest cl_env.
      1 <= closSem_state_max_app t4 ==>
      closSem_evaluate
-       ([clos_interp_rev],CONS (list_to_v env) (CONS (list_to_v a)
-         (CONS (Recclosure NONE [] cl_env
+       ([clos_interp_rev],CONS (closSem_list_to_v env) (CONS
+         (closSem_list_to_v a) (CONS (closSem_Recclosure NONE [] cl_env
               [(1,closLang_Fn (implode "") NONE NONE 1
                 clos_interp_rev)] 0) rest)),state_clock_fupd (K (2 *
                 LENGTH a + state_clock t4))
             t4) =
-      (Rval [list_to_v (APPEND (REVERSE a) env)],t4)`,
+      (Rval [closSem_list_to_v (APPEND (REVERSE a) env)],t4)`,
   CHEAT_TAC);;
 
 (* HOL4 clos_interpProofScript.sml:171-172: the ML values that the
@@ -189,8 +188,8 @@ let clos_interpreter_correct = prove
       (?c t5.
         closSem_evaluate ([clos_interpreter_body],
                   [make_const (to_constant e); closSem_Block 0 [];
-                    list_to_v env],closSem_state_clock_fupd (K (c +
-                    closSem_state_clock t4))
+                    closSem_list_to_v env],closSem_state_clock_fupd (K
+                    (c + closSem_state_clock t4))
                   t4) = (r,t5) /\
         clos_interpProof_state_rel s5 t5)) /\
    (!es env (s4:('c,'ffi)closSem_state) (t4:('c,'ffi)closSem_state) r
@@ -203,12 +202,12 @@ let clos_interpreter_correct = prove
       (?c t5 r5.
         closSem_evaluate ([clos_interpreter_body],
                   [make_const (to_constant_list es); closSem_Block 1
-                    []; list_to_v env],closSem_state_clock_fupd (K (c +
-                    closSem_state_clock t4))
+                    []; closSem_list_to_v env],closSem_state_clock_fupd
+                    (K (c + closSem_state_clock t4))
                   t4) = (r5,t5) /\
         clos_interpProof_state_rel s5 t5 /\
-        (match r with Rval vs -> r5 = Rval [list_to_v vs] | _1 -> r
-          = r5)))`,
+        (match r with Rval vs -> r5 = Rval [closSem_list_to_v vs] |
+          _1 -> r = r5)))`,
   CHEAT_TAC);;
 
 let opt_interp_thm = prove
@@ -279,10 +278,10 @@ let state_rel_refs_clocks_eqs = prove
 (* state_rel_update_thunk[local] *)
 let clos_interpProof_state_rel_update_thunk = prove
  (`clos_interpProof_state_rel s1 s2 ==>
-     update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = SOME
-       refs1 ==>
-       (?refs2. update_thunk [closSem_RefPtr v ptr] (state_refs s2)
-         vs = SOME refs2 /\
+     closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs =
+       SOME refs1 ==>
+       (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
+         (state_refs s2) vs = SOME refs2 /\
                clos_interpProof_state_rel (state_refs_fupd (K
                  refs1) s1) (state_refs_fupd (K refs2) s2))`,
   CHEAT_TAC);;
@@ -330,13 +329,13 @@ let evaluate_interp_thm = prove
 let v_ok_def,v_ok_ind = define_shaped_rec
   "nested"
   [`v_ok (closSem_Number i:closSem_v) <=> T`;
-   `v_ok (Word64 w:closSem_v) <=> T`;
+   `v_ok (closSem_Word64 w:closSem_v) <=> T`;
    `v_ok (closSem_Block n vs:closSem_v) <=> ALL v_ok vs`;
    `v_ok (closSem_ByteVector ws) <=> T`;
    `v_ok (closSem_RefPtr b n:closSem_v) <=> T`;
-   `v_ok (Closure loco vs1 env1 n bod1:closSem_v) <=>
+   `v_ok (closSem_Closure loco vs1 env1 n bod1:closSem_v) <=>
         ~(has_install bod1) /\ ALL v_ok env1 /\ ALL v_ok vs1`;
-   `v_ok (Recclosure loco vs1 env1 fns1 i:closSem_v) <=>
+   `v_ok (closSem_Recclosure loco vs1 env1 fns1 i:closSem_v) <=>
         ALL v_ok env1 /\ ALL v_ok vs1 /\ i < LENGTH fns1 /\
         ALL ((~) o has_install o SND) fns1`];;
 
@@ -362,7 +361,7 @@ let state_rel'_def = new_definition
      s = closSem_state_refs t /\
      FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> ALL v_ok vs)
        (closSem_state_refs t) /\
-     FEVERY (\(k,v). !m w. v = Thunk m w ==> v_ok w)
+     FEVERY (\(k,v). !m w. v = closSem_Thunk m w ==> v_ok w)
        (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
        closSem_state_compile_oracle

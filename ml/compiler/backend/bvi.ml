@@ -2,7 +2,7 @@
 (*  bvi: ported from HOL4's
     compiler/backend/bviScript.sml
     A definition theory, with no definitions, 1 datatype and no
-    theorems.  Needed by 10 files of the port.  *)
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -64,16 +64,6 @@ let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
    bvi_LetCall (num) (num) (num) (bvi_exp list) (bvi_exp) | \
    // return-multi-value: returns values of given expressions\n\
    bvi_Return (bvi_exp list)";;
-hol4_overload "Var" "bvi_Var";;
-hol4_overload "If" "bvi_If";;
-hol4_overload "Let" "bvi_Let";;
-hol4_overload "Raise" "bvi_Raise";;
-hol4_overload "Tick" "bvi_Tick";;
-hol4_overload "Call" "bvi_Call";;
-hol4_overload "Force" "bvi_Force";;
-hol4_overload "Op" "bvi_Op";;
-hol4_overload "LetCall" "bvi_LetCall";;
-hol4_overload "Return" "bvi_Return";;
 
 (* HOL4 bviScript.sml:59: the overload mk_unit, which the port
    expands *)

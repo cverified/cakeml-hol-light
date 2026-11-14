@@ -12,9 +12,6 @@
 needs "compiler/backend/backend_common.ml";;
 (* for word_add_carry *)
 needs "compiler/backend/bvi_to_data.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
@@ -27,8 +24,6 @@ needs "compiler/backend/proofs/data_to_word_memoryProof.ml";;
 needs "compiler/backend/proofs/word_bignumProof.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/bvlSem.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
@@ -39,7 +34,6 @@ needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
-needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
@@ -47,7 +41,6 @@ needs "lib/sptree.ml";;
 needs "lib/term.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
@@ -97,7 +90,7 @@ let get_vars_SING = prove
   CHEAT_TAC);;
 
 let state_rel_IMP_tstamps = prove
- (`state_rel c l1 l2 x t p locs ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 x t p locs ==>
    (?next_stamp. dataSem_state_tstamps x = SOME next_stamp)`,
   CHEAT_TAC);;
 
@@ -140,9 +133,9 @@ let cut_env_lookup = prove
 
 let cut_env_get_vars_get_vars = prove
  (`!vs ws ws'.
-     cut_env kept_names (state_locals t) = SOME y /\
-     get_vars vs (state_locals_fupd (K y) t) = SOME ws /\
-     get_vars vs t = SOME ws' ==>
+     wordSem_cut_env kept_names (state_locals t) = SOME y /\
+     wordSem_get_vars vs (state_locals_fupd (K y) t) = SOME ws /\
+     wordSem_get_vars vs t = SOME ws' ==>
      ws = ws'`,
   CHEAT_TAC);;
 
@@ -154,9 +147,9 @@ let memory_rel_lookup_var_IMP = prove
        (APPEND (join_env ll
           (toAList (inter (wordSem_state_locals t) (adjust_set
             ll)))) envs) /\
-      get_vars n ll = SOME x /\
-      get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) =
-        SOME w ==>
+      wordSem_get_vars n ll = SOME x /\
+      wordSem_get_vars (MAP adjust_var n)
+        (t:('a,'c,'ffi)wordSem_state) = SOME w ==>
       memory_rel c be ts refs sp st m dm
         (APPEND (APPEND (ZIP x w)
          (join_env ll
@@ -165,7 +158,7 @@ let memory_rel_lookup_var_IMP = prove
   CHEAT_TAC);;
 
 let get_real_offset_lemma = prove
- (`get_var v t = SOME (wordLang_Word i_w) /\
+ (`wordSem_get_var v t = SOME (wordLang_Word i_w) /\
     good_dimindex (:'a) /\
     get_real_offset i_w = SOME y ==>
     wordSem_word_exp t (real_offset c v) = SOME (wordLang_Word
@@ -173,9 +166,9 @@ let get_real_offset_lemma = prove
   CHEAT_TAC);;
 
 let state_rel_push_env_loc = prove
- (`state_rel c n l s (call_env args b (push_env (y1,y2) NONE t)) ys
-  (CONS (l1,l2) locs) ==>
-   sptree_lookup 0 y1 = SOME (Loc l1 l2)`,
+ (`data_to_word_gcProof_state_rel c n l s (wordSem_call_env args b
+  (wordSem_push_env (y1,y2) NONE t)) ys (CONS (l1,l2) locs) ==>
+   sptree_lookup 0 y1 = SOME (wordLang_Loc l1 l2)`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:190-239: a theorem whose
@@ -183,8 +176,8 @@ let state_rel_push_env_loc = prove
    evaluate_IMP_domain_union *)
 
 let get_real_byte_offset_lemma = prove
- (`get_var v t = SOME (wordLang_Word (w:'a word)) /\ good_dimindex (:'a)
-  ==>
+ (`wordSem_get_var v t = SOME (wordLang_Word (w:'a word)) /\
+  good_dimindex (:'a) ==>
    wordSem_word_exp t (real_byte_offset v) = SOME (wordLang_Word
      (bytes_in_word + (w >>> 2)))`,
   CHEAT_TAC);;
@@ -218,15 +211,16 @@ let reorder_2_lemma = prove
 
 let get_vars_adjust_var = prove
  (`ODD k ==>
-    get_vars (MAP adjust_var args) (state_locals_fupd (K (insert k w
-      s)) t) =
-    get_vars (MAP adjust_var args) (state_locals_fupd (K s) t)`,
+    wordSem_get_vars (MAP adjust_var args) (state_locals_fupd (K
+      (sptree_insert k w s)) t) =
+    wordSem_get_vars (MAP adjust_var args) (state_locals_fupd (K s)
+      t)`,
   CHEAT_TAC);;
 
 let get_vars_with_store = prove
- (`!args. get_vars args (wordSem_state_store_fupd (K s)
+ (`!args. wordSem_get_vars args (wordSem_state_store_fupd (K s)
   (state_locals_fupd (K (state_locals t)) t)) =
-           get_vars args t`,
+           wordSem_get_vars args t`,
   CHEAT_TAC);;
 
 let word_less_lemma1 = prove
@@ -252,8 +246,10 @@ let data_to_word_assignProof_LESS_DIV_16_IMP = prove
 let lookup_loc_lemma = prove
  (`env_to_list y2 permute = (l',permute') /\
    cut_envs (adjust_sets keep_names) locals = SOME (y1,y2) /\
-   sptree_lookup 0 (union y2 y1) = SOME (Loc l1 l2) ==>
-   ALOOKUP l' 0 = NONE /\ sptree_lookup 0 y1 = SOME (Loc l1 l2)`,
+   sptree_lookup 0 (sptree_union y2 y1) = SOME (wordLang_Loc l1 l2)
+     ==>
+   ALOOKUP l' 0 = NONE /\ sptree_lookup 0 y1 = SOME (wordLang_Loc
+     l1 l2)`,
   CHEAT_TAC);;
 
 let word_exp_real_addr = prove
@@ -261,8 +257,9 @@ let word_exp_real_addr = prove
     shift_length c < dimindex (:'a) /\ good_dimindex (:'a) /\
     sptree_lookup (adjust_var a1) (wordSem_state_locals
       (t:('a,'c,'ffi)wordSem_state)) = SOME (wordLang_Word ptr_w) ==>
-    (!w. wordSem_word_exp (wordSem_state_locals_fupd (K (insert 1
-      (wordLang_Word (w:'a word)) (wordSem_state_locals t))) t)
+    (!w. wordSem_word_exp (wordSem_state_locals_fupd (K
+      (sptree_insert 1 (wordLang_Word (w:'a word)) (wordSem_state_locals
+      t))) t)
           (real_addr c (adjust_var a1)) = SOME (wordLang_Word a))`,
   CHEAT_TAC);;
 
@@ -274,9 +271,9 @@ let word_exp_real_addr_2 = prove
       (wordLang_Word ptr_w) ==>
     (!w1 w2.
       wordSem_word_exp
-        (wordSem_state_locals_fupd (K (insert 3 (wordLang_Word (w1:'a
-          word)) (insert 1 (wordLang_Word w2) (wordSem_state_locals
-          t)))) t)
+        (wordSem_state_locals_fupd (K (sptree_insert 3 (wordLang_Word
+          (w1:'a word)) (sptree_insert 1 (wordLang_Word w2)
+          (wordSem_state_locals t)))) t)
         (real_addr c (adjust_var a1)) = SOME (wordLang_Word a))`,
   CHEAT_TAC);;
 
@@ -304,12 +301,12 @@ let IMP_read_bytearray_GENLIST = prove
   CHEAT_TAC);;
 
 let lookup_IMP_insert_EQ = prove
- (`!t x y. sptree_lookup x t = SOME y ==> insert x y t = t`,
+ (`!t x y. sptree_lookup x t = SOME y ==> sptree_insert x y t = t`,
   CHEAT_TAC);;
 
 (* set_vars_sing *)
 let data_to_word_assignProof_set_vars_sing = prove
- (`set_vars [n] [w] t = set_var n w t`,
+ (`wordSem_set_vars [n] [w] t = wordSem_set_var n w t`,
   CHEAT_TAC);;
 
 let NONNEG_INT = prove
@@ -342,9 +339,10 @@ let FOUR_MUL_LSL = prove
    evaluate_BignumHalt2 *)
 
 let state_rel_get_var_Number_IMP_alt = prove
- (`!k i. state_rel c l1 l2 s t NONE locs /\
-          get_var k (state_locals s) = SOME (Number i) /\
-          get_var (2 * k + 2) t = SOME a1 ==>
+ (`!k i. data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
+          wordSem_get_var k (state_locals s) = SOME (dataSem_Number
+            i) /\
+          wordSem_get_var (2 * k + 2) t = SOME a1 ==>
           (?(w:'a word). a1 = wordLang_Word w /\ FAPPLY w 0 =
             ~(small_int (:'a) i))`,
   CHEAT_TAC);;
@@ -402,14 +400,14 @@ let data_to_word_assignProof_byte_aligned_bytes_in_word = prove
   CHEAT_TAC);;
 
 let is_env_def = new_definition
-  `is_env st = (?n vs. st = Env n vs)`;;
+  `is_env st = (?n vs. st = dataSem_Env n vs)`;;
 
 (* TODO: copypasta from costPropsScript *)
 let size_of_Number_head = prove
  (`!vs lims refs seen n b.
    small_num (limits_arch_64_bit lims) n ==>
-   (size_of lims (CONS (Number n) vs) refs seen = size_of lims vs
-     refs seen)`,
+   (size_of lims (CONS (dataSem_Number n) vs) refs seen = size_of
+     lims vs refs seen)`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:707-710: a theorem that
@@ -431,30 +429,31 @@ let size_of_seen_SUBSET = prove
 let size_of_seen_Block = prove
  (`!lims vs refs seen n1 refs1 seen1 ts tag l.
     size_of lims vs refs seen = (n1,refs1,seen1) ==>
-    (MEM (Block ts tag l) vs /\ ~(l = []) ==>
+    (MEM (dataSem_Block ts tag l) vs /\ ~(l = []) ==>
      sptree_lookup ts seen1 = SOME one)`,
   CHEAT_TAC);;
 
 let size_of_cons_seen_Block = prove
  (`!lims vs refs seen ts tag l.
-    MEM (Block ts tag l) vs ==>
-    size_of lims (CONS (Block ts tag l) vs) refs seen = size_of
-      lims vs refs seen`,
+    MEM (dataSem_Block ts tag l) vs ==>
+    size_of lims (CONS (dataSem_Block ts tag l) vs) refs seen =
+      size_of lims vs refs seen`,
   CHEAT_TAC);;
 
 let state_rel_IMP_test_zero = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) vs locs /\
-    get_var i (state_locals s) = SOME (Number n) ==>
-    (?w. get_var (adjust_var i) t = SOME (wordLang_Word w) /\ (w =
-      (n2w 0) <=> (n = (&0))))`,
+ (`data_to_word_gcProof_state_rel c l1 l2 s
+  (t:('a,'c,'ffi)wordSem_state) vs locs /\
+    wordSem_get_var i (state_locals s) = SOME (dataSem_Number n) ==>
+    (?w. wordSem_get_var (adjust_var i) t = SOME (wordLang_Word w)
+      /\ (w = (n2w 0) <=> (n = (&0))))`,
   CHEAT_TAC);;
 
 let state_rel_get_var_Number_IMP = prove
- (`state_rel c l1 l2 s t vs locs /\
-    get_var i (state_locals s) = SOME (Number (&n)) /\ small_int
-      (:'a) (&n) ==>
-    (?w. get_var (adjust_var i) t = SOME (wordLang_Word (Smallnum
-      (&n):'a word)))`,
+ (`data_to_word_gcProof_state_rel c l1 l2 s t vs locs /\
+    wordSem_get_var i (state_locals s) = SOME (dataSem_Number (&n))
+      /\ small_int (:'a) (&n) ==>
+    (?w. wordSem_get_var (adjust_var i) t = SOME (wordLang_Word
+      (Smallnum (&n):'a word)))`,
   CHEAT_TAC);;
 
 let EXP_LEMMA1 = prove
@@ -513,18 +512,18 @@ let Num_ABS_AND = prove
 
 (* cut_names_adjust_set_insert_1 *)
 let data_to_word_assignProof_cut_names_adjust_set_insert_1 = prove
- (`cut_names (adjust_set x) (insert 1 w l) =
+ (`cut_names (adjust_set x) (sptree_insert 1 w l) =
     cut_names (adjust_set x) l`,
   CHEAT_TAC);;
 
 (* cut_names_adjust_set_insert_3 *)
 let data_to_word_assignProof_cut_names_adjust_set_insert_3 = prove
- (`cut_names (adjust_set x) (insert 3 w l) =
+ (`cut_names (adjust_set x) (sptree_insert 3 w l) =
     cut_names (adjust_set x) l`,
   CHEAT_TAC);;
 
 let cut_names_adjust_set_insert_5 = prove
- (`cut_names (adjust_set x) (insert 5 w l) =
+ (`cut_names (adjust_set x) (sptree_insert 5 w l) =
     cut_names (adjust_set x) l`,
   CHEAT_TAC);;
 
@@ -535,19 +534,21 @@ let word_bit_test_0 = prove
 (* [local] *)
 let MAP_Number_11_w2n_word8 = prove
  (`!ns ns'.
-     MAP (Number o (&) o w2n) ns = MAP (Number o (&) o w2n) ns' <=>
+     MAP (dataSem_Number o (&) o w2n) ns = MAP (dataSem_Number o (&)
+       o w2n) ns' <=>
      ns = (ns':word8 list)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let MAP_Word64_11 = prove
  (`!ns ns'.
-     MAP (Word64) ns = MAP (Word64) ns' <=>
+     MAP (dataSem_Word64) ns = MAP (dataSem_Word64) ns' <=>
      ns = ns'`,
   CHEAT_TAC);;
 
 let v_to_list_EQ_SOME_NIL = prove
- (`v_to_list hv1 = SOME [] <=> (?ts. hv1 = Block ts 0 [])`,
+ (`dataSem_v_to_list hv1 = SOME [] <=> (?ts. hv1 = dataSem_Block ts 0
+  [])`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:1845-1962: a theorem whose
@@ -575,8 +576,8 @@ let w2w_upper_upper_w2w = prove
 
 (* [local] *)
 let MAP_FST_MAP_compile_part = prove
- (`!full_list. MAP FST (MAP (compile_part c) full_list) = MAP FST
-  full_list`,
+ (`!full_list. MAP FST (MAP (data_to_word_compile_part c) full_list) =
+  MAP FST full_list`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -592,7 +593,7 @@ let memory_rel_ignore_buffers = prove
 
 (* [local] *)
 let compile_part_loc_IMP = prove
- (`compile_part c (a1,a2) = (n,x) ==> n = a1`,
+ (`data_to_word_compile_part c (a1,a2) = (n,x) ==> n = a1`,
   CHEAT_TAC);;
 
 let consume_space_stack_max = prove
@@ -609,25 +610,27 @@ let do_app_aux_safe_for_space_mono = prove
   CHEAT_TAC);;
 
 let do_app_safe_for_space_allowed_op = prove
- (`do_app op xs s = Rval (r,s1) /\ dataSem_state_safe_for_space
+ (`dataSem_do_app op xs s = Rval (r,s1) /\ dataSem_state_safe_for_space
    s1 ==>
    allowed_op op (LENGTH xs)`,
   CHEAT_TAC);;
 
 let state_rel_cut_state_opt_SOME = prove
- (`state_rel c l1 l2 s t NONE locs /\
-   get_vars args (state_locals s) = SOME vals /\
-   cut_state_opt (SOME kept_names) s = SOME x ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
+   wordSem_get_vars args (state_locals s) = SOME vals /\
+   wordSem_cut_state_opt (SOME kept_names) s = SOME x ==>
    (?y ws.
-     cut_env (adjust_sets kept_names) (state_locals t) = SOME y /\
-     get_vars (MAP adjust_var args) t = SOME ws /\
+     wordSem_cut_env (adjust_sets kept_names) (state_locals t) = SOME
+       y /\
+     wordSem_get_vars (MAP adjust_var args) t = SOME ws /\
      LENGTH args = LENGTH vals /\ LENGTH args = LENGTH ws /\
-     state_rel c l1 l2 x t NONE locs /\
-     state_rel c l1 l2 x (state_locals_fupd (K y) t) NONE locs)`,
+     data_to_word_gcProof_state_rel c l1 l2 x t NONE locs /\
+     data_to_word_gcProof_state_rel c l1 l2 x (state_locals_fupd (K
+       y) t) NONE locs)`,
   CHEAT_TAC);;
 
 let cut_state_opt_SOME_eq = prove
- (`cut_state_opt (SOME names) s = SOME x ==>
+ (`wordSem_cut_state_opt (SOME names) s = SOME x ==>
    x = state_locals_fupd (K (mk_wf (inter (state_locals s) names)))
      s`,
   CHEAT_TAC);;
@@ -636,9 +639,11 @@ let cut_state_opt_SOME_eq = prove
    ported *)
 
 let state_rel_cut_state_opt_set_var = prove
- (`state_rel c l1 l2 (set_var dest v s2) r NONE locs /\
-   cut_state_opt (SOME names) s2 = SOME s2_cut ==>
-   state_rel c l1 l2 (set_var dest v s2_cut) r NONE locs`,
+ (`data_to_word_gcProof_state_rel c l1 l2 (wordSem_set_var dest v s2) r
+  NONE locs /\
+   wordSem_cut_state_opt (SOME names) s2 = SOME s2_cut ==>
+   data_to_word_gcProof_state_rel c l1 l2 (wordSem_set_var dest v
+     s2_cut) r NONE locs`,
   CHEAT_TAC);;
 
 (* cut_env is idempotent: cutting the same names twice gives the same result. *)
@@ -670,7 +675,7 @@ let join_env_submap_MEM = prove
 (* The three heap-store FLOOKUPs follow directly from state_rel.
    Reusable in any op that needs to inspect t.store.{NextFree,CurrHeap,HeapLength}. *)
 let state_rel_FLOOKUP_heap = prove
- (`state_rel c l1 l2 s t NONE locs ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 s t NONE locs ==>
    (?nf cu hl.
      FLOOKUP (wordSem_state_store t) NextFree = SOME (wordLang_Word
        nf) /\
@@ -688,7 +693,7 @@ let state_rel_FLOOKUP_heap = prove
 let evaluate_SilentFFI_3 = prove
  (`data_to_word_config_call_empty_ffi
      c /\
-     state_rel c l1 l2 s t NONE locs /\
+     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
      wordSem_cut_env (adjust_sets ns) (state_locals t) = SOME env ==>
      wordSem_evaluate (SilentFFI c 3 (adjust_sets ns),t) =
        (NONE,state_ffi_fupd (K (state_ffi t))
@@ -700,7 +705,8 @@ let evaluate_SilentFFI_3 = prove
 
 let size_of_app_Number = prove
  (`!xs ys lims i refs seen.
-     size_of lims (APPEND xs (CONS (Number i) ys)) refs seen =
+     size_of lims (APPEND xs (CONS (dataSem_Number i) ys)) refs seen
+       =
      (let (n,refs',seen') = size_of lims (APPEND xs ys) refs seen in
      let k = (if small_num (limits_arch_64_bit lims) i then 0 else
        bignum_size (limits_arch_64_bit lims) i) in
@@ -717,7 +723,7 @@ let toList_delete_split = prove
 
 let size_of_heap_delete_Number_LE = prove
  (`!k s i.
-     sptree_lookup k (state_locals s) = SOME (Number i) ==>
+     sptree_lookup k (state_locals s) = SOME (dataSem_Number i) ==>
      size_of_heap (state_locals_fupd (K (sptree_delete k
        (state_locals s))) s) <= size_of_heap s`,
   CHEAT_TAC);;
@@ -738,7 +744,8 @@ let size_of_heap_FOLDR_delete_Number_LE = prove
  (`!ks L (state:('a,'b)dataSem_state).
      sptree_wf L /\
      (!k. MEM k ks ==> sptree_lookup k L = NONE \/
-                       (?i. sptree_lookup k L = SOME (Number i))) ==>
+                       (?i. sptree_lookup k L = SOME (dataSem_Number
+                         i))) ==>
      size_of_heap (dataSem_state_locals_fupd (K (ITLIST sptree_delete
        ks L)) state) <=
      size_of_heap (dataSem_state_locals_fupd (K L) state)`,
@@ -776,7 +783,7 @@ let memory_rel_get_num = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\
       n < dimword (:'a) DIV 8 /\ good_dimindex (:'a) /\
-      MEM (Number (&n),(a:'a word_loc)) vars ==>
+      MEM (dataSem_Number (&n),(a:'a word_loc)) vars ==>
       (?w. a = wordLang_Word w /\ w >>> 2 = n2w n)`),
   CHEAT_TAC);;
 
@@ -787,25 +794,27 @@ let IN_domain_adjust_set_inter = prove
   CHEAT_TAC);;
 
 let get_var_to_word_exp = prove
- (`get_var r s = SOME (wordLang_Word w) ==>
-   wordSem_word_exp s (Op Add [Var r; Const (n2w 0)]) = SOME
-     (wordLang_Word (w + (n2w 0))) /\
-   wordSem_word_exp s (Op Add [Var r; Const (n2w 1)]) = SOME
-     (wordLang_Word (w + (n2w 1))) /\
-   wordSem_word_exp s (Op Add [Var r; Const (n2w 2)]) = SOME
-     (wordLang_Word (w + (n2w 2))) /\
-   wordSem_word_exp s (Op Add [Var r; Const (n2w 3)]) = SOME
-     (wordLang_Word (w + (n2w 3)))`,
+ (`wordSem_get_var r s = SOME (wordLang_Word w) ==>
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
+     wordLang_Const (n2w 0)]) = SOME (wordLang_Word (w + (n2w 0))) /\
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
+     wordLang_Const (n2w 1)]) = SOME (wordLang_Word (w + (n2w 1))) /\
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
+     wordLang_Const (n2w 2)]) = SOME (wordLang_Word (w + (n2w 2))) /\
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
+     wordLang_Const (n2w 3)]) = SOME (wordLang_Word (w + (n2w 3)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let word_exp_set = prove
- (`(wordSem_word_exp s (wordLang_Op Add [Var n; Const c]) =
-   (match get_var n s with
+ (`(wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var n;
+  wordLang_Const c]) =
+   (match wordSem_get_var n s with
      SOME (wordLang_Word w) -> SOME (wordLang_Word (w + c)) | _3 ->
        NONE)) /\
-   (wordSem_word_exp s (Op Sub [Var n; Const c]) =
-   (match get_var n s with
+   (wordSem_word_exp s (wordLang_Op word_bignum_Sub [wordLang_Var n;
+     wordLang_Const c]) =
+   (match wordSem_get_var n s with
      SOME (wordLang_Word w) -> SOME (wordLang_Word (w - c)) | _4 ->
        NONE))`,
   CHEAT_TAC);;
@@ -819,16 +828,17 @@ let good_dimindex_w2w_byte = prove
 (* [local] *)
 let set_var_consts = prove
  (`wordSem_state_memory
-     (set_var r v s) = wordSem_state_memory s /\
+     (wordSem_set_var r v s) = wordSem_state_memory s /\
        wordSem_state_mdomain
-     (set_var r v s) = wordSem_state_mdomain s /\ be
-     (set_var r v s) = be s /\ state_code
-     (set_var r v s) = state_code s`,
+     (wordSem_set_var r v s) = wordSem_state_mdomain s /\ be
+     (wordSem_set_var r v s) = be s /\ state_code
+     (wordSem_set_var r v s) = state_code s`,
   CHEAT_TAC);;
 
 (* [local] *)
 let get_var_consts = prove
- (`get_var r (wordSem_state_memory_fupd (K m) s) = get_var r s`,
+ (`wordSem_get_var r (wordSem_state_memory_fupd (K m) s) =
+  wordSem_get_var r s`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:2977-3088: a theorem whose
@@ -841,13 +851,14 @@ let get_var_consts = prove
 
 let push_env_store = prove
  (`wordSem_state_store
-      (push_env x y s) = wordSem_state_store s /\
+      (wordSem_push_env x y s) = wordSem_state_store s /\
         wordSem_state_memory
-       (push_env x y s) = wordSem_state_memory s /\
+       (wordSem_push_env x y s) = wordSem_state_memory s /\
          wordSem_state_mdomain
-       (push_env x y s) = wordSem_state_mdomain s /\ state_code
-       (push_env x y s) = state_code s /\ be
-       (push_env x y s) = be s`,
+       (wordSem_push_env x y s) = wordSem_state_mdomain s /\
+         state_code
+       (wordSem_push_env x y s) = state_code s /\ be
+       (wordSem_push_env x y s) = be s`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -864,14 +875,14 @@ let IS_SOME_lookup = prove
   CHEAT_TAC);;
 
 let IN_adjust_var_lemma = prove
- (`cut_env kept_names s_locals = SOME x /\
+ (`wordSem_cut_env kept_names s_locals = SOME x /\
    cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
    n IN domain x ==>
    adjust_var n IN domain y2`,
   CHEAT_TAC);;
 
 let cut_env_envs_lookup_lookup = prove
- (`cut_env kept_names s_locals = SOME x /\
+ (`wordSem_cut_env kept_names s_locals = SOME x /\
    cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
    k IN domain (adjust_set x) ==>
    (?v. sptree_lookup k t_locals = SOME v /\
@@ -886,25 +897,26 @@ let env_to_list_domain = prove
 let cut_envs_lookup_0 = prove
  (`cut_envs (adjust_sets names) t_locals = SOME (y1,y2) /\
    env_to_list y2 p = (q,r') /\
-   sptree_lookup 0 t_locals = SOME (Loc l1 l2) ==>
+   sptree_lookup 0 t_locals = SOME (wordLang_Loc l1 l2) ==>
    ALOOKUP q 0 = NONE /\
-   sptree_lookup 0 y1 = SOME (Loc l1 l2)`,
+   sptree_lookup 0 y1 = SOME (wordLang_Loc l1 l2)`,
   CHEAT_TAC);;
 
 let cut_envs_domain_IN = prove
  (`cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
-   cut_env kept_names s_locals = SOME x /\
+   wordSem_cut_env kept_names s_locals = SOME x /\
    n IN domain x ==>
    adjust_var n IN domain y2`,
   CHEAT_TAC);;
 
 let inter_union_distrib = prove
- (`!x y z. inter (union x y) z = union (inter x z) (inter y z)`,
+ (`!x y z. inter (sptree_union x y) z = sptree_union (inter x z)
+  (inter y z)`,
   CHEAT_TAC);;
 
 let cut_envs_inter = prove
  (`cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
-   cut_env kept_names s_locals = SOME x ==>
+   wordSem_cut_env kept_names s_locals = SOME x ==>
    inter (fromAList (toAList y1)) (adjust_set x) = LN`,
   CHEAT_TAC);;
 
@@ -942,7 +954,6 @@ let cut_envs_inter = prove
 
 let data_to_word_assignProof_STOP_def = new_definition
   `data_to_word_assignProof_STOP x = x`;;
-hol4_overload "STOP" "data_to_word_assignProof_STOP";;
 
 (* HOL4 data_to_word_assignProofScript.sml:5045-5277: a theorem whose
    statement HOL Light does not read (tools/unstated.py):
@@ -958,8 +969,8 @@ hol4_overload "STOP" "data_to_word_assignProof_STOP";;
 
 let v_to_list_block_drop = prove
  (`!k v l.
-    v_to_list v = SOME l /\ k < LENGTH l ==> v_to_list (THE
-      (block_drop k v)) = SOME (DROP k l)`,
+    dataSem_v_to_list v = SOME l /\ k < LENGTH l ==>
+      dataSem_v_to_list (THE (block_drop k v)) = SOME (DROP k l)`,
   CHEAT_TAC);;
 
 let OPTION_MAP2_NONE_THM = prove
@@ -988,24 +999,25 @@ let cut_state_refs_same = prove
    assign_ListAppend *)
 
 let do_app_AllocThunk = prove
- (`do_app (ThunkOp (AllocThunk m):closLang_op) [v] x =
+ (`dataSem_do_app (closLang_ThunkOp (AllocThunk m):closLang_op) [v] x =
     (match consume_space (1 + 1) x with
       NONE -> Rerr (Rabort Rtype_error) | SOME s1 ->
-      (if bad_thunk_update m v (state_refs s1) then Rerr (Rabort
-        Rtype_error) else
+      (if dataSem_bad_thunk_update m v (state_refs s1) then Rerr
+        (Rabort Rtype_error) else
       Rval
-      (RefPtr F (minimal ptr. ~(ptr IN domain (state_refs
+      (dataSem_RefPtr F (minimal ptr. ~(ptr IN domain (state_refs
         s1))),state_stack_max_fupd (K (state_stack_max (
              do_stack
-               (ThunkOp (AllocThunk m)) [v]
-               (do_lim_safe s1 (ThunkOp (AllocThunk m)) [v]))))
-                 (dataSem_state_safe_for_space_fupd (K
+               (closLang_ThunkOp (AllocThunk m)) [v]
+               (do_lim_safe s1 (closLang_ThunkOp (AllocThunk m))
+                 [v])))) (dataSem_state_safe_for_space_fupd (K
                  (dataSem_state_safe_for_space (
              do_stack
-               (ThunkOp (AllocThunk m)) [v]
-               (do_lim_safe s1 (ThunkOp (AllocThunk m)) [v]))))
-                 (state_refs_fupd (K (insert (minimal ptr. ~(ptr IN
-                 domain (state_refs s1))) (Thunk m v) (state_refs s1)))
+               (closLang_ThunkOp (AllocThunk m)) [v]
+               (do_lim_safe s1 (closLang_ThunkOp (AllocThunk m))
+                 [v])))) (state_refs_fupd (K (sptree_insert (minimal
+                 ptr. ~(ptr IN domain (state_refs s1))) (bvlSem_Thunk m
+                 v) (state_refs s1)))
          s1)))))`,
   CHEAT_TAC);;
 
@@ -1022,8 +1034,8 @@ let configGC_size_of_heap_LE = prove
  (`!ns s x k1 k2 i1 i2 (state:('a,'b)dataSem_state).
      dataSem_cut_state_opt (SOME (sptree_insert k2 one (sptree_insert
        k1 one ns))) s = SOME x /\
-     sptree_lookup k1 (state_locals x) = SOME (Number i1) /\
-     sptree_lookup k2 (state_locals x) = SOME (Number i2) /\
+     sptree_lookup k1 (state_locals x) = SOME (dataSem_Number i1) /\
+     sptree_lookup k2 (state_locals x) = SOME (dataSem_Number i2) /\
        dataSem_state_refs
      state = state_refs s /\ dataSem_state_limits state =
        dataSem_state_limits s /\ dataSem_state_stack
@@ -1044,7 +1056,7 @@ let configGC_size_of_heap_LE = prove
 (* The single narrow cut state IS cut_locals of the original: alloc_lemma's
    size_of_heap (cut_locals ns s) is exactly size_of_heap x. *)
 let cut_state_opt_IMP_cut_locals = prove
- (`cut_state_opt (SOME ns) s = SOME x ==> cut_locals ns s = x`,
+ (`wordSem_cut_state_opt (SOME ns) s = SOME x ==> cut_locals ns s = x`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:6520-6701: a theorem whose
@@ -1056,12 +1068,13 @@ let cut_state_opt_IMP_cut_locals = prove
    assign_WordToInt *)
 
 let push_env_tstamps = prove
- (`!x t s. dataSem_state_tstamps (push_env x t s) =
+ (`!x t s. dataSem_state_tstamps (wordSem_push_env x t s) =
   dataSem_state_tstamps s`,
   CHEAT_TAC);;
 
 let dec_clock_tstamps = prove
- (`!s. dataSem_state_tstamps (dec_clock s) = dataSem_state_tstamps s`,
+ (`!s. dataSem_state_tstamps (word_bignumProof_dec_clock s) =
+  dataSem_state_tstamps s`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:6964-7041: a theorem whose
@@ -1080,8 +1093,8 @@ let dec_clock_tstamps = prove
    the same for the empty and nonempty cases), regardless of tstamps. *)
 (* [local] *)
 let do_app_FromList_stack_max = prove
- (`do_app (closLang_BlockOp (closLang_FromList tag)) vals s = Rval
-  (v,s') ==> state_stack_max
+ (`dataSem_do_app (closLang_BlockOp (closLang_FromList tag)) vals s =
+  Rval (v,s') ==> state_stack_max
    s' = OPTION_MAP2 MAX (state_stack_max s)
      (OPTION_MAP2 (+)
         (stack_consumed (dataSem_state_stack_frame_sizes s)
@@ -1098,9 +1111,10 @@ let do_app_FromList_stack_max = prove
    them out so it parses without the abbreviation. *)
 (* [local] *)
 let do_app_FromList_safe = prove
- (`v_to_list v2 = SOME ys /\
-   do_app (closLang_BlockOp (closLang_FromList tag)) [Number
-     (&(LENGTH ys)); v2] (s:('c,'ffi)dataSem_state) = Rval (v,s') ==>
+ (`dataSem_v_to_list v2 = SOME ys /\
+   dataSem_do_app (closLang_BlockOp (closLang_FromList tag))
+     [dataSem_Number (&(LENGTH ys)); v2] (s:('c,'ffi)dataSem_state) =
+     Rval (v,s') ==>
    (dataSem_state_safe_for_space s' <=>
     (((small_num (limits_arch_64_bit (dataSem_state_limits s))
       (&(LENGTH ys)) /\
@@ -1112,8 +1126,9 @@ let do_app_FromList_safe = prove
        4 * tag < 2 EXP arch_size (dataSem_state_limits s) DIV 16) /\
       (dataSem_state_safe_for_space s /\
        no_thunks_in_refs (dataSem_state_refs s) /\
-       size_of_heap_args [Number (&(LENGTH ys)); v2] s + (LENGTH ys +
-         1) <= limits_heap_limit (dataSem_state_limits s))) /\
+       size_of_heap_args [dataSem_Number (&(LENGTH ys)); v2] s +
+         (LENGTH ys + 1) <= limits_heap_limit (dataSem_state_limits s)))
+         /\
      the F (OPTION_MAP ((>) (stack_limit (dataSem_state_limits s)))
        (OPTION_MAP2 (+) (OPTION_MAP2 MAX (sptree_lookup
          FromList_location (dataSem_state_stack_frame_sizes s))
@@ -1131,11 +1146,12 @@ let do_app_FromList_safe = prove
    fields because x and s_pop agree on locals/refs/tstamps/.... *)
 (* [local] *)
 let do_app_FromList_eq = prove
- (`v_to_list v2 = SOME ys /\
-   do_app (closLang_BlockOp (closLang_FromList tag)) [Number
-     (&(LENGTH ys)); v2] (s:('c,'ffi)dataSem_state) = Rval (v,s') ==>
-   (?ts'. v = Block ts' tag ys) /\ dataSem_state_space s' = 0 /\
-     state_refs
+ (`dataSem_v_to_list v2 = SOME ys /\
+   dataSem_do_app (closLang_BlockOp (closLang_FromList tag))
+     [dataSem_Number (&(LENGTH ys)); v2] (s:('c,'ffi)dataSem_state) =
+     Rval (v,s') ==>
+   (?ts'. v = dataSem_Block ts' tag ys) /\ dataSem_state_space s' = 0
+     /\ state_refs
    s' = dataSem_state_refs s /\ state_code s' = dataSem_state_code s
      /\ state_ffi s' = dataSem_state_ffi s /\ state_handler s' =
      dataSem_state_handler s /\ state_locals
@@ -1156,20 +1172,21 @@ let do_app_FromList_eq = prove
    := insert k v t.locals` field update inside the dec_clock. *)
 (* [local] *)
 let call_env_push_env_dec_clock_lift_locals = prove
- (`call_env (args:('a word_loc) list) b (push_env (y1,y2) NONE
+ (`wordSem_call_env (args:('a word_loc) list) b (wordSem_push_env
+  (y1,y2) NONE
      (wordSem_dec_clock (wordSem_state_termdep_fupd (K tp)
        (wordSem_state_clock_fupd (K ck') (wordSem_state_locals_fupd (K
-       (insert k v (wordSem_state_locals t)))
+       (sptree_insert k v (wordSem_state_locals t)))
        (t:('a,'c,'ffi)wordSem_state)))))) = wordSem_state_termdep_fupd
        (K tp) (state_clock_fupd (K (ck' - 1))
-   (call_env args b (push_env (y1,y2) NONE t)))`,
+   (wordSem_call_env args b (wordSem_push_env (y1,y2) NONE t)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let call_env_push_env_dec_clock_stack_max = prove
  (`state_stack_max
-     (call_env args ls (push_env env F (dec_clock
-       (s:('c,'ffi)dataSem_state)))) =
+     (wordSem_call_env args ls (wordSem_push_env env F
+       (word_bignumProof_dec_clock (s:('c,'ffi)dataSem_state)))) =
        OPTION_MAP2 MAX
          (OPTION_MAP2 MAX (dataSem_state_stack_max s)
             (OPTION_MAP2 (((+)):num->num->num)
@@ -1220,17 +1237,18 @@ let the_F_not_option_le = prove
    assign_RefByte's Success arm. *)
 (* [local] *)
 let do_app_RefByte_eq = prove
- (`do_app (closLang_MemOp (closLang_RefByte fl)) [Number i; Number
-  (&(w2n (w:word8)))] (s:('c,'ffi)dataSem_state) = Rval (v,s') ==>
-   (?ptr. v = RefPtr T ptr /\ ptr = (minimal p. ~(p IN domain
+ (`dataSem_do_app (closLang_MemOp (closLang_RefByte fl)) [dataSem_Number
+  i; dataSem_Number (&(w2n (w:word8)))] (s:('c,'ffi)dataSem_state) =
+  Rval (v,s') ==>
+   (?ptr. v = dataSem_RefPtr T ptr /\ ptr = (minimal p. ~(p IN domain
      (dataSem_state_refs s))) /\ (&0) <= i /\
          s' = dataSem_state_peak_heap_length_fupd (K
                   ((\k op_args s. MAX (dataSem_state_peak_heap_length
                     s) (size_of_heap_args op_args s + k))
                     (space_consumed s (closLang_MemOp
                       (closLang_RefByte fl))
-                       [Number i; Number (&(w2n w))])
-                    [Number i; Number (&(w2n w))] s))
+                       [dataSem_Number i; dataSem_Number (&(w2n w))])
+                    [dataSem_Number i; dataSem_Number (&(w2n w))] s))
                       (dataSem_state_safe_for_space_fupd (K
                   (((num_of_int i DIV (arch_size
                     (dataSem_state_limits s) DIV 8) <
@@ -1249,8 +1267,10 @@ let do_app_RefByte_eq = prove
                      limits_heap_limit (dataSem_state_limits s))
                       (space_consumed s (closLang_MemOp
                         (closLang_RefByte fl))
-                         [Number i; Number (&(w2n w))])
-                      [Number i; Number (&(w2n w))] s) /\
+                         [dataSem_Number i; dataSem_Number (&(w2n
+                           w))])
+                      [dataSem_Number i; dataSem_Number (&(w2n w))]
+                        s) /\
                    the F
                      (OPTION_MAP ((>) (stack_limit
                        (dataSem_state_limits s)))
@@ -1259,14 +1279,16 @@ let do_app_RefByte_eq = prove
                              (dataSem_state_stack_frame_sizes s)
                              (dataSem_state_limits s)
                               (closLang_MemOp (closLang_RefByte fl))
-                                [Number i; Number (&(w2n w))])
+                                [dataSem_Number i; dataSem_Number (&(w2n
+                                w))])
                            (OPTION_MAP2 (+) (size_of_stack
                              (dataSem_state_stack s))
                              (dataSem_state_locals_size
                               s)))))) (dataSem_state_space_fupd (K 0)
-                                (dataSem_state_refs_fupd (K (insert ptr
-                                (ByteArray fl (REPLICATE (num_of_int i)
-                                w)) (dataSem_state_refs s)))
+                                (dataSem_state_refs_fupd (K
+                                (sptree_insert ptr (bvlSem_ByteArray fl
+                                (REPLICATE (num_of_int i) w))
+                                (dataSem_state_refs s)))
                                 (dataSem_state_stack_max_fupd (K
                   (OPTION_MAP2 MAX (dataSem_state_stack_max s)
                     (OPTION_MAP2 (+)
@@ -1274,7 +1296,8 @@ let do_app_RefByte_eq = prove
                          (dataSem_state_stack_frame_sizes s)
                          (dataSem_state_limits s)
                           (closLang_MemOp (closLang_RefByte fl))
-                            [Number i; Number (&(w2n w))])
+                            [dataSem_Number i; dataSem_Number (&(w2n
+                            w))])
                        (OPTION_MAP2 (+) (size_of_stack
                          (dataSem_state_stack s))
                          (dataSem_state_locals_size s))))) s)))))`,
@@ -1285,12 +1308,13 @@ let do_app_RefByte_eq = prove
    evaluate_IMP_domain_union (which has outer-with). *)
 (* [local] *)
 let call_env_push_env_dec_clock_lift = prove
- (`call_env (args:('a word_loc) list) b (push_env (y1,y2) NONE
+ (`wordSem_call_env (args:('a word_loc) list) b (wordSem_push_env
+  (y1,y2) NONE
      (wordSem_dec_clock (wordSem_state_termdep_fupd (K tp)
        (wordSem_state_clock_fupd (K ck')
        (t:('a,'c,'ffi)wordSem_state))))) = wordSem_state_termdep_fupd (K
        tp) (state_clock_fupd (K (ck' - 1))
-   (call_env args b (push_env (y1,y2) NONE t)))`,
+   (wordSem_call_env args b (wordSem_push_env (y1,y2) NONE t)))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:7889-8149: a theorem whose
@@ -1298,17 +1322,17 @@ let call_env_push_env_dec_clock_lift = prove
    assign_RefByte *)
 
 let lookup_set_var = prove
- (`sptree_lookup x (state_locals (set_var x y z)) = SOME y`,
+ (`sptree_lookup x (state_locals (wordSem_set_var x y z)) = SOME y`,
   CHEAT_TAC);;
 
 (* [local] *)
 let lookup_2_call_env = prove
- (`sptree_lookup 0 (state_locals (call_env (CONS x ts) a1 a2)) = SOME x
-  /\
-   sptree_lookup 2 (state_locals (call_env (CONS x (CONS y ts)) a1
-     a2)) = SOME y /\
-   sptree_lookup 4 (state_locals (call_env (CONS x (CONS y (CONS z
-     ts))) a1 a2)) = SOME z`,
+ (`sptree_lookup 0 (state_locals (wordSem_call_env (CONS x ts) a1 a2)) =
+  SOME x /\
+   sptree_lookup 2 (state_locals (wordSem_call_env (CONS x (CONS y
+     ts)) a1 a2)) = SOME y /\
+   sptree_lookup 4 (state_locals (wordSem_call_env (CONS x (CONS y
+     (CONS z ts))) a1 a2)) = SOME z`,
   CHEAT_TAC);;
 
 (* Binary (two-argument) instance of AllocVar_thm_nary, used by assign_RefArray. *)
@@ -1440,10 +1464,11 @@ let all_ones_and_ptr_bits_tag_0 = prove
    assign_LenEq *)
 
 let state_rel_upd_safe_pkheap = prove
- (`!c l1 l2 s lcl hpk r locs. state_rel c l1 l2 (state_stack_max_fupd (K
-  NONE) (dataSem_state_space_fupd (K 0) (state_locals_fupd (K lcl) s)))
+ (`!c l1 l2 s lcl hpk r locs. data_to_word_gcProof_state_rel c l1 l2
+  (state_stack_max_fupd (K NONE) (dataSem_state_space_fupd (K 0)
+  (state_locals_fupd (K lcl) s)))
                 r NONE locs <=>
-   state_rel c l1 l2
+   data_to_word_gcProof_state_rel c l1 l2
                 (dataSem_state_peak_heap_length_fupd (K hpk)
                   (dataSem_state_safe_for_space_fupd (K F)
                   (dataSem_state_space_fupd (K 0) (state_stack_max_fupd
@@ -1468,20 +1493,20 @@ let state_rel_upd_safe_pkheap = prove
 
 (* [simp] *)
 let state_rel_ignore_safe_for_space = prove
- (`state_rel c l1 l2 (dataSem_state_safe_for_space_fupd (K m)
-  (dataSem_state_space_fupd (K s) (state_locals_fupd (K l) x))) r t locs
-  <=>
-   state_rel c l1 l2 (dataSem_state_space_fupd (K s)
-     (state_locals_fupd (K l) x)) r t locs`,
+ (`data_to_word_gcProof_state_rel c l1 l2
+  (dataSem_state_safe_for_space_fupd (K m) (dataSem_state_space_fupd (K
+  s) (state_locals_fupd (K l) x))) r t locs <=>
+   data_to_word_gcProof_state_rel c l1 l2 (dataSem_state_space_fupd
+     (K s) (state_locals_fupd (K l) x)) r t locs`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let state_rel_peak_heap_length = prove
- (`state_rel c l1 l2 (dataSem_state_peak_heap_length_fupd (K m)
-  (dataSem_state_space_fupd (K s) (state_locals_fupd (K l) x))) r t locs
-  <=>
-   state_rel c l1 l2 (dataSem_state_space_fupd (K s)
-     (state_locals_fupd (K l) x)) r t locs`,
+ (`data_to_word_gcProof_state_rel c l1 l2
+  (dataSem_state_peak_heap_length_fupd (K m) (dataSem_state_space_fupd
+  (K s) (state_locals_fupd (K l) x))) r t locs <=>
+   data_to_word_gcProof_state_rel c l1 l2 (dataSem_state_space_fupd
+     (K s) (state_locals_fupd (K l) x)) r t locs`,
   CHEAT_TAC);;
 
 (* opt_map_plus_zero_id[simp] *)
@@ -1499,8 +1524,8 @@ let small_num_small_int = prove
    variables of its own are read as variables *)
 let memory_rel_small_int = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (Number i,wordLang_Word
-  (w:'a word)) vars) /\
+    `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number
+  i,wordLang_Word (w:'a word)) vars) /\
      word_bit 0 w /\ good_dimindex (:'a) ==>
      ~(small_int (:'a) i)`),
   CHEAT_TAC);;
@@ -1531,7 +1556,8 @@ let data_to_word_assignProof_OPTION_MAP2_NONE = prove
   CHEAT_TAC);;
 
 let state_rel_IMP_arch_64_bit = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) xs locs ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 s
+  (t:('a,'c,'ffi)wordSem_state) xs locs ==>
    (limits_arch_64_bit (dataSem_state_limits s) = (dimindex (:'a) =
      64))`,
   CHEAT_TAC);;
@@ -1596,8 +1622,9 @@ let word_bit_lsr_dimindex_1 = prove
   CHEAT_TAC);;
 
 let state_rel_Number_IMP = prove
- (`state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-    get_var a1 (state_locals s) = SOME (Number i1) /\
+ (`data_to_word_gcProof_state_rel c l1 l2 s
+  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
+    wordSem_get_var a1 (state_locals s) = SOME (dataSem_Number i1) /\
     sptree_lookup (adjust_var a1) (wordSem_state_locals t) = SOME v1
       ==>
     (?w1. (v1 = wordLang_Word w1) /\
@@ -1660,13 +1687,15 @@ let IN_adjust_set_IN = prove
    assign_BoundsCheckByte *)
 
 let assign_LessConstSmall = prove
- (`assign c secn l dest (closLang_IntOp (closLang_LessConstSmall i))
-  args names =
-      (match args with [v1] -> (If Less (adjust_var v1) (Imm (n2w (4
-        * i)))
-                  (Assign (adjust_var dest) (Const (n2w 18:'a word)))
-                  (Assign (adjust_var dest) (Const (n2w 2:'a
-                    word))),l) | _5 -> ((Skip:'a wordLang_prog),l))`,
+ (`wordSem_assign c secn l dest (closLang_IntOp (closLang_LessConstSmall
+  i)) args names =
+      (match args with [v1] -> (word_bignum_If asm_Less (adjust_var
+        v1) (Imm (n2w (4 * i)))
+                  (word_bignum_Assign (adjust_var dest)
+                    (wordLang_Const (n2w 18:'a word)))
+                  (word_bignum_Assign (adjust_var dest)
+                    (wordLang_Const (n2w 2:'a word))),l) | _5 ->
+                    ((word_bignum_Skip:'a wordLang_prog),l))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:11464-11503: a theorem
@@ -1691,12 +1720,12 @@ let assign_LessConstSmall = prove
 
 let word_exp_insert = prove
  (`(~(m = n) ==>
-     (wordSem_word_exp (state_locals_fupd (K (insert n w
+     (wordSem_word_exp (state_locals_fupd (K (sptree_insert n w
        (state_locals t))) t) (real_addr c m) =
       wordSem_word_exp t (real_addr c m))) /\
     (~(m IN {n,n1}) ==>
-     (wordSem_word_exp (state_locals_fupd (K (insert n w (insert n1
-       w1 (state_locals t)))) t) (real_addr c m) =
+     (wordSem_word_exp (state_locals_fupd (K (sptree_insert n w
+       (sptree_insert n1 w1 (state_locals t)))) t) (real_addr c m) =
       wordSem_word_exp t (real_addr c m)))`,
   CHEAT_TAC);;
 
@@ -1706,26 +1735,26 @@ let word_exp_insert = prove
 
 let word_cmp_Less_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (word_cmp Less (word_cmp_res i i') ((n2w 1):'a word) <=>
-             i < i')`,
+           (wordSem_word_cmp asm_Less (word_cmp_res i i') ((n2w
+             1):'a word) <=> i < i')`,
   CHEAT_TAC);;
 
 let word_cmp_NotLess_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res i
-             i') <=> (i <= i'))`,
+           (wordSem_word_cmp asm_NotLess ((n2w 1):'a word)
+             (word_cmp_res i i') <=> (i <= i'))`,
   CHEAT_TAC);;
 
 let word_cmp_not_NotLess_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (~(word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res
-             i i')) <=> (i' < i))`,
+           (~(wordSem_word_cmp asm_NotLess ((n2w 1):'a word)
+             (word_cmp_res i i')) <=> (i' < i))`,
   CHEAT_TAC);;
 
 let not_word_cmp_Less_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (~(word_cmp Less (word_cmp_res i i') ((n2w 1):'a word))
-             <=> (i' <= i))`,
+           (~(wordSem_word_cmp asm_Less (word_cmp_res i i') ((n2w
+             1):'a word)) <=> (i' <= i))`,
   CHEAT_TAC);;
 
 let IMP_spt_eq = prove
@@ -1734,8 +1763,8 @@ let IMP_spt_eq = prove
   CHEAT_TAC);;
 
 let env_to_list_cut_env_IMP = prove
- (`env_to_list x (wordSem_state_permute t) = (l,permute) /\ cut_env y s
-  = SOME x ==>
+ (`env_to_list x (wordSem_state_permute t) = (l,permute) /\
+  wordSem_cut_env y s = SOME x ==>
     (fromAList l = x)`,
   CHEAT_TAC);;
 
@@ -1753,7 +1782,8 @@ let dimword_LESS_MustTerminate_limit = prove
    assign_LessEq *)
 
 let word_exp_set_var_ShiftVar = prove
- (`wordSem_word_exp (set_var v (wordLang_Word w) t) (ShiftVar sow v n) =
+ (`wordSem_word_exp (wordSem_set_var v (wordLang_Word w) t) (ShiftVar
+  sow v n) =
     OPTION_MAP wordLang_Word (match sow with Lsl -> SOME (w << n) |
       Lsr -> SOME (w >>> n) | Asr -> SOME (w >> n) | Ror -> SOME
       (word_ror w n))`,
@@ -1923,20 +1953,20 @@ let fp_greater = prove
 
 (* do_app_Ref *)
 let data_to_word_assignProof_do_app_Ref = prove
- (`do_app (closLang_MemOp closLang_Ref) vals x =
+ (`dataSem_do_app (closLang_MemOp closLang_Ref) vals x =
     (match consume_space (LENGTH vals + 1) x with
       NONE -> Rerr (Rabort Rtype_error) | SOME s1 ->
       Rval
-      (RefPtr T (minimal ptr. ~(ptr IN domain (state_refs
+      (dataSem_RefPtr T (minimal ptr. ~(ptr IN domain (state_refs
         s1))),state_stack_max_fupd (K (state_stack_max
              (do_stack (closLang_MemOp closLang_Ref) vals
                (do_lim_safe s1 (closLang_MemOp closLang_Ref) vals))))
                (dataSem_state_safe_for_space_fupd (K
                (dataSem_state_safe_for_space (do_stack (closLang_MemOp
                closLang_Ref) vals (do_lim_safe s1 (closLang_MemOp
-               closLang_Ref) vals)))) (state_refs_fupd (K (insert
+               closLang_Ref) vals)))) (state_refs_fupd (K (sptree_insert
                (minimal ptr. ~(ptr IN domain (state_refs s1)))
-               (ValueArray vals) (state_refs s1)))
+               (bvlSem_ValueArray vals) (state_refs s1)))
          s1))))`,
   CHEAT_TAC);;
 
@@ -2009,7 +2039,7 @@ let memcopy_def,memcopy_ind = define_wf
 (* get_vars_IMP_domain *)
 let data_to_word_assignProof_get_vars_IMP_domain = prove
  (`!xs s y.
-      get_vars xs s = SOME y ==>
+      wordSem_get_vars xs s = SOME y ==>
       ALL (\x. x IN domain s) xs`,
   CHEAT_TAC);;
 
@@ -2047,7 +2077,7 @@ let get_vars_cut_env = prove
 let word_exp_real_addr_some_value = prove
  (`FLOOKUP (wordSem_state_store s3) CurrHeap = SOME (wordLang_Word curr)
   /\
-    get_var a s3 = SOME (wordLang_Word ww) /\
+    wordSem_get_var a s3 = SOME (wordLang_Word ww) /\
     good_dimindex (:'a) /\ shift_length c < dimindex (:'a) ==>
     (?wx. wordSem_word_exp (s3:('a,'c,'ffi)wordSem_state)
       (real_addr c a) = SOME (wordLang_Word wx))`,
@@ -2075,12 +2105,13 @@ let memory_rel_store_list_to_unused = prove
   CHEAT_TAC);;
 
 let get_vars_delete_lemma = prove
- (`!t7. get_vars (MAP adjust_var t7) (state_locals_fupd (K
-               (insert 9 x9
-                 (insert 7 x7
-                    (insert 5 x5
-                       (insert 1 x1 (state_locals s1)))))) s1) =
-      get_vars (MAP adjust_var t7) s1`,
+ (`!t7. wordSem_get_vars (MAP adjust_var t7) (state_locals_fupd (K
+               (sptree_insert 9 x9
+                 (sptree_insert 7 x7
+                    (sptree_insert 5 x5
+                       (sptree_insert 1 x1 (state_locals s1)))))) s1)
+                         =
+      wordSem_get_vars (MAP adjust_var t7) s1`,
   CHEAT_TAC);;
 
 let INTRO_IS_SOME = prove
@@ -2094,8 +2125,8 @@ let STAR_fun2set_IMP_SEP_T = prove
 let IMP_memcopy_lemma = prove
  (`memory_rel c (be s1) ts (state_refs x) sp (wordSem_state_store s1) m1
   (wordSem_state_mdomain s1)
-      (CONS (Block ts' n' l',wordLang_Word w_ptr) (APPEND (ZIP ys7
-        ws1) vars)) /\
+      (CONS (dataSem_Block ts' n' l',wordLang_Word w_ptr) (APPEND
+        (ZIP ys7 ws1) vars)) /\
     startptr < LENGTH l' /\ LENGTH ys7 = LENGTH ws1 /\ good_dimindex
       (:'a) /\
     sptree_lookup (adjust_var a1) (state_locals s1) = SOME
@@ -2104,7 +2135,7 @@ let IMP_memcopy_lemma = prove
       (wordLang_Word wx) ==>
     memory_rel c (be s1) ts (state_refs x) sp (wordSem_state_store
       s1) m1 (wordSem_state_mdomain s1)
-      (CONS (Block ts' n' l',wordLang_Word w_ptr)
+      (CONS (dataSem_Block ts' n' l',wordLang_Word w_ptr)
        (APPEND (ZIP (APPEND ys7 [EL startptr l']) (APPEND ws1 [m1 (wx
          + bytes_in_word + bytes_in_word * n2w startptr)])) vars)) /\
     (wx + bytes_in_word + bytes_in_word * n2w startptr) IN
@@ -2115,8 +2146,8 @@ let IMP_memcopy = prove
  (`!len startptr m1 m2 ws1 ys7 k ts.
          memory_rel c (be s1) ts (state_refs x) sp
            (wordSem_state_store s1) m1 (wordSem_state_mdomain s1)
-           (CONS (Block ts' n' l',wordLang_Word w_ptr) (APPEND (ZIP
-             ys7 ws1) vars)) /\
+           (CONS (dataSem_Block ts' n' l',wordLang_Word w_ptr)
+             (APPEND (ZIP ys7 ws1) vars)) /\
          (misc_word_list nfree (CONS (wordLang_Word full_header) ws1)
            *
           word_list_exists
@@ -2152,7 +2183,7 @@ let IMP_memcopy = prove
 (* cut_envs_adjust_sets_insert_ODD *)
 let data_to_word_assignProof_cut_envs_adjust_sets_insert_ODD = prove
  (`ODD n ==>
-   cut_envs (adjust_sets names) (insert n w t) =
+   cut_envs (adjust_sets names) (sptree_insert n w t) =
    cut_envs (adjust_sets names) t`,
   CHEAT_TAC);;
 
@@ -2204,7 +2235,7 @@ let store_list_word_cond_add_IMP = prove
    evaluate_StoreAnyConsts *)
 
 let do_build_const_IMP_SOME = prove
- (`do_build_const parts x (SOME ts) = (v,vs,ts1) ==>
+ (`dataSem_do_build_const parts x (SOME ts) = (v,vs,ts1) ==>
    (?ts2. ts1 = SOME ts2)`,
   CHEAT_TAC);;
 

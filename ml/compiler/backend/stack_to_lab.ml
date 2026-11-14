@@ -12,10 +12,7 @@
   of goto-like jumps.
 *)
 
-needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_alloc.ml";;
@@ -24,9 +21,7 @@ needs "compiler/backend/stack_rawcall.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -40,16 +35,16 @@ let _ = hol4_ancestors "stack_to_lab"
    expands *)
 
 let compile_jump_def = define_cases
-  [`compile_jump (INL n) = labLang_LabAsm (Jump (labLang_Lab n 0))
-  (n2w 0) [] 0`;
+  [`compile_jump (INL n) = labLang_LabAsm (labLang_Jump (labLang_Lab
+  n 0)) (n2w 0) [] 0`;
    `compile_jump (INR r) = (\a. labLang_Asm (Asmi a)) (asm_JumpReg
   r) [] 0`];;
 
 let negate_def = define_cases
-  [`negate (Less:cmp) = asm_NotLess`;
-   `negate (Equal:cmp) = asm_NotEqual`;
+  [`negate (asm_Less:cmp) = asm_NotLess`;
+   `negate (asm_Equal:cmp) = asm_NotEqual`;
    `negate asm_Lower = asm_NotLower`;
-   `negate (Test:cmp) = asm_NotTest`;
+   `negate (asm_Test:cmp) = asm_NotTest`;
    `negate asm_NotLess = asm_Less`;
    `negate asm_NotEqual = asm_Equal`;
    `negate asm_NotLower = asm_Lower`;
@@ -67,98 +62,115 @@ let find_lab_def = new_definition
 let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
   define_guess_cheat
   [`stack_to_lab_flatten t p n m conts breaks =
-     (match p with Tick -> (List [(\a. labLang_Asm (Asmi a)) (Inst
-       (asm_Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi
-       a)) (Inst a) [] 0],F,m) | Halt _1 -> (List [labLang_LabAsm
-       labLang_Halt (n2w 0) [] 0],T,m) | Seq p1 p2 ->
+     (match p with stackLang_Tick -> (bvi_tailrec_List [(\a.
+       labLang_Asm (Asmi a)) (stackLang_Inst (asm_Skip)) [] 0],F,m) |
+       stackLang_Inst a -> (bvi_tailrec_List [(\a. labLang_Asm (Asmi
+       a)) (stackLang_Inst a) [] 0],F,m) | labLang_Halt _1 ->
+       (bvi_tailrec_List [labLang_LabAsm labLang_Halt (n2w 0) []
+       0],T,m) | stackLang_Seq p1 p2 ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
            breaks in
          let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts breaks
            in
-           if t then (misc_Append (misc_Append xs (List [Label n 1
-             0])) ys,(nr1 \/ nr2),m) else (misc_Append xs ys,(nr1 \/
-             nr2),m)) | If c r ri p1 p2 ->
+           if t then (misc_Append (misc_Append xs (bvi_tailrec_List
+             [labLang_Label n 1 0])) ys,(nr1 \/ nr2),m) else
+             (misc_Append xs ys,(nr1 \/ nr2),m)) | stackLang_If c r ri
+             p1 p2 ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
            breaks in
          let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts breaks
            in
-           if (p1 = Skip) /\ (p2 = Skip) then (List [],F,m) else if
-             p1 = Skip then
-             (misc_Append (misc_Append (List [labLang_LabAsm
-               (JumpCmp c r ri (labLang_Lab n m)) (n2w 0) [] 0]) ys)
-              (List [Label n m 0]),F,m + 1) else if p2 = Skip then
-             (misc_Append (misc_Append (List [labLang_LabAsm
-               (JumpCmp (negate c) r ri (labLang_Lab n m)) (n2w 0) []
-               0]) xs)
-              (List [Label n m 0]),F,m + 1) else if nr1 then
-             (misc_Append (misc_Append (misc_Append (List
-               [labLang_LabAsm (JumpCmp (negate c) r ri (labLang_Lab n
-               m)) (n2w 0) [] 0]) xs)
-              (List [Label n m 0])) ys,nr2,m + 1) else if nr2 then
-             (misc_Append (misc_Append (misc_Append (List
-               [labLang_LabAsm (JumpCmp c r ri (labLang_Lab n m)) (n2w
-               0) [] 0]) ys)
-              (List [Label n m 0])) xs,nr1,m + 1) else
+           if (p1 = stackLang_Skip) /\ (p2 = stackLang_Skip) then
+             (bvi_tailrec_List [],F,m) else if p1 = stackLang_Skip then
+             (misc_Append (misc_Append (bvi_tailrec_List
+               [labLang_LabAsm (labLang_JumpCmp c r ri (labLang_Lab n
+               m)) (n2w 0) [] 0]) ys)
+              (bvi_tailrec_List [labLang_Label n m 0]),F,m + 1) else
+                if p2 = stackLang_Skip then
+             (misc_Append (misc_Append (bvi_tailrec_List
+               [labLang_LabAsm (labLang_JumpCmp (negate c) r ri
+               (labLang_Lab n m)) (n2w 0) [] 0]) xs)
+              (bvi_tailrec_List [labLang_Label n m 0]),F,m + 1) else
+                if nr1 then
+             (misc_Append (misc_Append (misc_Append
+               (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp
+               (negate c) r ri (labLang_Lab n m)) (n2w 0) [] 0]) xs)
+              (bvi_tailrec_List [labLang_Label n m 0])) ys,nr2,m +
+                1) else if nr2 then
+             (misc_Append (misc_Append (misc_Append
+               (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp c r
+               ri (labLang_Lab n m)) (n2w 0) [] 0]) ys)
+              (bvi_tailrec_List [labLang_Label n m 0])) xs,nr1,m +
+                1) else
              (misc_Append (misc_Append (misc_Append (misc_Append
-               (List [labLang_LabAsm (JumpCmp c r ri (labLang_Lab n m))
-               (n2w 0) [] 0]) ys)
-              (List [labLang_LabAsm (Jump (labLang_Lab n (m + 1)))
-                (n2w 0) [] 0; Label n m 0])) xs)
-              (List [Label n (m + 1) 0]),(nr1 /\ nr2),m + 2)) | Loop
-                p1 ->
+               (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp c r
+               ri (labLang_Lab n m)) (n2w 0) [] 0]) ys)
+              (bvi_tailrec_List [labLang_LabAsm (labLang_Jump
+                (labLang_Lab n (m + 1))) (n2w 0) [] 0; labLang_Label n
+                m 0])) xs)
+              (bvi_tailrec_List [labLang_Label n (m + 1) 0]),(nr1 /\
+                nr2),m + 2)) | stackLang_Loop p1 ->
          (let cont_lab = m in
          let break_lab = m + 1 in
          let (xs,_2,m) = stack_to_lab_flatten F p1 n (m + 2) (CONS
            cont_lab conts) (CONS break_lab breaks) in
-           (misc_Append (misc_Append (List [Label n cont_lab 0])
+           (misc_Append (misc_Append (bvi_tailrec_List
+             [labLang_Label n cont_lab 0])
             xs)
-            (List [labLang_LabAsm (Jump (labLang_Lab n cont_lab))
-              (n2w 0) [] 0;
-                  Label n break_lab 0]),F,m)) | Raise r -> (List
-                    [(\a. labLang_Asm (Asmi a)) (asm_JumpReg r) []
-                    0],T,m) | Return r -> (List [(\a. labLang_Asm (Asmi
-                    a)) (asm_JumpReg r) [] 0],T,m) | Break k -> (List
-                    [labLang_LabAsm (Jump (labLang_Lab n (find_lab k
-                    breaks))) (n2w 0) [] 0],T,m) | Continue k -> (List
-                    [labLang_LabAsm (Jump (labLang_Lab n (find_lab k
-                    conts))) (n2w 0) [] 0],T,m) | stackLang_RawCall n
-                    -> (List [labLang_LabAsm (Jump (labLang_Lab n 1))
-                    (n2w 0) [] 0],T,m) | Call NONE dest handler ->
-                    (List [compile_jump dest],T,m) | Call (SOME
-                    (p1,lr,l1,l2)) dest handler ->
+            (bvi_tailrec_List [labLang_LabAsm (labLang_Jump
+              (labLang_Lab n cont_lab)) (n2w 0) [] 0;
+                  labLang_Label n break_lab 0]),F,m)) |
+                    stackLang_Raise r -> (bvi_tailrec_List [(\a.
+                    labLang_Asm (Asmi a)) (asm_JumpReg r) [] 0],T,m) |
+                    stackLang_Return r -> (bvi_tailrec_List [(\a.
+                    labLang_Asm (Asmi a)) (asm_JumpReg r) [] 0],T,m) |
+                    stackLang_Break k -> (bvi_tailrec_List
+                    [labLang_LabAsm (labLang_Jump (labLang_Lab n
+                    (find_lab k breaks))) (n2w 0) [] 0],T,m) |
+                    stackLang_Continue k -> (bvi_tailrec_List
+                    [labLang_LabAsm (labLang_Jump (labLang_Lab n
+                    (find_lab k conts))) (n2w 0) [] 0],T,m) |
+                    stackLang_RawCall n -> (bvi_tailrec_List
+                    [labLang_LabAsm (labLang_Jump (labLang_Lab n 1))
+                    (n2w 0) [] 0],T,m) | labLang_Call NONE dest handler
+                    -> (bvi_tailrec_List [compile_jump dest],T,m) |
+                    labLang_Call (SOME (p1,lr,l1,l2)) dest handler ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
            breaks in
-         let prefix = misc_Append (List [labLang_LabAsm (LocValue lr
-           (labLang_Lab l1 l2)) (n2w 0) [] 0;
-                  compile_jump dest; Label l1 l2 0]) xs in
+         let prefix = misc_Append (bvi_tailrec_List [labLang_LabAsm
+           (labLang_LocValue lr (labLang_Lab l1 l2)) (n2w 0) [] 0;
+                  compile_jump dest; labLang_Label l1 l2 0]) xs in
          (match handler with NONE -> (prefix,nr1,m) | SOME
            (p2,k1,k2) ->
              (let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts
                breaks in
-               (misc_Append prefix (misc_Append (misc_Append (List
-                 [labLang_LabAsm (Jump (labLang_Lab n m)) (n2w 0) [] 0;
-                 Label k1 k2 0])
-               ys) (List [Label n m 0])),(nr1 /\ nr2),m + 1)))) |
-                 stackLang_JumpLower r1 r2 target ->
-         (List [labLang_LabAsm (JumpCmp asm_Lower r1 (Reg r2)
-           (labLang_Lab target 0)) (n2w 0) [] 0],F,m) | FFI ffi_index
-           _3 _4 _5 _6 lr -> (List [labLang_LabAsm (LocValue lr
+               (misc_Append prefix (misc_Append (misc_Append
+                 (bvi_tailrec_List [labLang_LabAsm (labLang_Jump
+                 (labLang_Lab n m)) (n2w 0) [] 0; labLang_Label k1 k2
+                 0])
+               ys) (bvi_tailrec_List [labLang_Label n m 0])),(nr1 /\
+                 nr2),m + 1)))) | stackLang_JumpLower r1 r2 target ->
+         (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp
+           asm_Lower r1 (Reg r2) (labLang_Lab target 0)) (n2w 0) []
+           0],F,m) | stackLang_FFI ffi_index _3 _4 _5 _6 lr ->
+           (bvi_tailrec_List [labLang_LabAsm (labLang_LocValue lr
            (labLang_Lab n m)) (n2w 0) [] 0;
                               labLang_LabAsm (labLang_CallFFI
                                 ffi_index) (n2w 0) [] 0;
-                              Label n m 0],F,m + 1) | LocValue i l1
-                                l2 -> (List [labLang_LabAsm (LocValue i
-                                (labLang_Lab l1 l2)) (n2w 0) [] 0],F,m)
-                                | Install _7 _8 _9 _10 ret ->
-       (List [labLang_LabAsm (LocValue ret (labLang_Lab n m)) (n2w
-         0) [] 0;
-       labLang_LabAsm Install (n2w 0) [] 0;
-       Label n m 0],F,m + 1) | stackLang_ShMemOp op r ad -> (List
-         [labLang_Asm (ShareMem op r ad) [] 0],F,m) | CodeBufferWrite
-         r1 r2 ->
-       (List [labLang_Asm (Cbw r1 r2) [] 0],F,m) | _11 -> (List
-         [],F,m))`];;
-hol4_overload "flatten" "stack_to_lab_flatten";;
+                              labLang_Label n m 0],F,m + 1) |
+                                labLang_LocValue i l1 l2 ->
+                                (bvi_tailrec_List [labLang_LabAsm
+                                (labLang_LocValue i (labLang_Lab l1
+                                l2)) (n2w 0) [] 0],F,m) |
+                                labLang_Install _7 _8 _9 _10 ret ->
+       (bvi_tailrec_List [labLang_LabAsm (labLang_LocValue ret
+         (labLang_Lab n m)) (n2w 0) [] 0;
+       labLang_LabAsm labLang_Install (n2w 0) [] 0;
+       labLang_Label n m 0],F,m + 1) | stackLang_ShMemOp op r ad ->
+         (bvi_tailrec_List [labLang_Asm (ShareMem op r ad) [] 0],F,m) |
+         stackLang_CodeBufferWrite r1 r2 ->
+       (bvi_tailrec_List [labLang_Asm (Cbw r1 r2) [] 0],F,m) |
+         _11 -> (bvi_tailrec_List [],F,m))`];;
 (* HOL4 stack_to_labScript.sml:115-124: a theorem that HOL4 states as
    the value of an ML expression: flatten_pmatch *)
 
@@ -172,8 +184,9 @@ let prog_to_section_def = new_definition
   `prog_to_section (n,p) =
      (let (lines,_13,m) = (stack_to_lab_flatten T p n (next_lab p 2)
        [] []) in
-       Section n (append (Append lines
-         (misc_List [Label n (if is_Seq p then m else 1) 0]))))`;;
+       Section n (append (bvi_tailrec_Append lines
+         (misc_List [labLang_Label n (if is_Seq p then m else 1)
+           0]))))`;;
 
 let is_gen_gc_def = new_definition
   `is_gen_gc x1 =
@@ -200,7 +213,6 @@ let stack_to_lab_compile_def = new_definition
      let prog = stack_names_compile (stack_to_lab_config_reg_names
        stack_conf) prog in
        MAP prog_to_section prog)`;;
-hol4_overload "compile" "stack_to_lab_compile";;
 
 let compile_no_stubs_def = new_definition
   `compile_no_stubs f jump offset sp prog =

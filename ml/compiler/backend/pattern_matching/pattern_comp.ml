@@ -17,7 +17,6 @@ needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_exh.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -42,13 +41,13 @@ let is_Any_def,is_Any_ind = define_shaped_rec
   [`is_Any x1 =
       match x1 with
         (pattern_semantics_Any:pattern_semantics_pat) -> T
-      | (Or p1 p2) -> (is_Any p1 \/ is_Any p2)
+      | (pattern_semantics_Or p1 p2) -> (is_Any p1 \/ is_Any p2)
       | _4 -> F`];;
 
 let is_Or_row_def = new_definition
   `is_Or_row x1 =
       match x1 with
-        ((Or p1 p2:pattern_semantics_pat),_5) -> T
+        ((pattern_semantics_Or p1 p2:pattern_semantics_pat),_5) -> T
       | _6 -> F`;;
 
 let take_until_Any_def,take_until_Any_ind = define_rec
@@ -67,7 +66,8 @@ let move_const_up_def = new_definition
          (FILTER (\x. ~(is_const_row x)) new_rows))`;;
 
 let is_Any_pmatch = prove
- (`!p. is_Any p ==> ~(pmatch refs p v = PMatchFailure)`,
+ (`!p. is_Any p ==> ~(pattern_semantics_pmatch refs p v =
+  PMatchFailure)`,
   CHEAT_TAC);;
 
 let match_take_until_Any = prove
@@ -96,13 +96,14 @@ let pmatchResult_case_NONE = prove
 
 let is_const_row_lemma = prove
  (`(!t. ~(v = pattern_semantics_Term t [])) /\ is_const_row (p_1,p_2) /\
-  ~(pmatch refs p_1 v = PTypeFailure) ==>
-   pmatch refs p_1 v = PMatchFailure`,
+  ~(pattern_semantics_pmatch refs p_1 v = PTypeFailure) ==>
+   pattern_semantics_pmatch refs p_1 v = PMatchFailure`,
   CHEAT_TAC);;
 
 let not_is_const_row = prove
  (`~(is_const_row (p,x)) /\ ~(is_Or_row (p,x)) /\ ~(is_Any p) ==>
-  ~(pmatch refs p (pattern_semantics_Term t []) = PMatchSuccess)`,
+  ~(pattern_semantics_pmatch refs p (pattern_semantics_Term t []) =
+  PMatchSuccess)`,
   CHEAT_TAC);;
 
 let EVERY_take_until_Any = prove
@@ -124,8 +125,8 @@ let match_move_const_up = prove
 
 (* pmatch_list_LENGTH *)
 let pattern_comp_pmatch_list_LENGTH = prove
- (`!ps vs. ~(pmatch_list refs ps vs = PTypeFailure) ==> LENGTH vs =
-  LENGTH ps`,
+ (`!ps vs. ~(pattern_semantics_pmatch_list refs ps vs = PTypeFailure)
+  ==> LENGTH vs = LENGTH ps`,
   CHEAT_TAC);;
 
 (* replace last pattern with Any (used if rows are exhaustive) *)
@@ -169,7 +170,8 @@ let mk_Conj_def = new_definition
      if is_True q then p else pattern_semantics_Conj p q)`;;
 
 let mk_If_def = new_definition
-  `mk_If g p q = (if is_True g then p else If g p q)`;;
+  `mk_If g p q = (if is_True g then p else pattern_semantics_If g p
+  q)`;;
 
 let get_pos_def,get_pos_ind = define_rec
   [`get_pos [] = EmptyPos`;
@@ -185,7 +187,7 @@ let get_pos_def,get_pos_ind = define_rec
 let pat_to_guard_def,pat_to_guard_ind = define_mutual_guess_cheat
   [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =
   pattern_semantics_True`;
-   `pat_to_guard l (Lit r:pattern_semantics_pat) =
+   `pat_to_guard l (pattern_semantics_Lit r:pattern_semantics_pat) =
   pattern_semantics_PosTest (get_pos (REVERSE l))
   (pattern_semantics_LitEq r)`;
    `pat_to_guard l (pattern_semantics_Cons NONE
@@ -195,8 +197,8 @@ let pat_to_guard_def,pat_to_guard_ind = define_mutual_guess_cheat
       mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
         (pattern_semantics_TagLenEq t (LENGTH pats)))
           (pats_to_guard l 0 pats)`;
-   `pat_to_guard l (Or p1 p2:pattern_semantics_pat) = mk_Disj
-  (pat_to_guard l p1) (pat_to_guard l p2)`;
+   `pat_to_guard l (pattern_semantics_Or p1 p2:pattern_semantics_pat)
+  = mk_Disj (pat_to_guard l p1) (pat_to_guard l p2)`;
    `pat_to_guard l (pattern_semantics_Ref p:pattern_semantics_pat) =
   pat_to_guard (CONS 0 l) p`;
    `pats_to_guard l k [] = pattern_semantics_True`;
@@ -205,7 +207,7 @@ let pat_to_guard_def,pat_to_guard_ind = define_mutual_guess_cheat
   l) p) (pats_to_guard l (k + 1) ps)`];;
 
 let pats_to_code_def,pats_to_code_ind = define_rec
-  [`pats_to_code [] = Fail`;
+  [`pats_to_code [] = pattern_semantics_Fail`;
    `pats_to_code (CONS (p,x) rows) =
       mk_If (pat_to_guard [] p) (pattern_semantics_Leaf x)
         (pats_to_code rows)`];;
@@ -219,7 +221,6 @@ let pattern_comp_walk_def,pattern_comp_walk_ind = define_rec
                         match FLOOKUP refs p with SOME y ->
                           pattern_comp_walk ns y refs | _15 ->
                           NONE) | _16 -> NONE)`];;
-hol4_overload "walk" "pattern_comp_walk";;
 
 let walk_list_def = new_definition
   `walk_list ns x refs =
@@ -258,21 +259,23 @@ let dt_eval_guard_mk_Conj = prove
   CHEAT_TAC);;
 
 let dt_eval_guard_pat_to_guard = prove
- (`(!l p x. ~(pmatch refs p x = PTypeFailure) /\
+ (`(!l p x. ~(pattern_semantics_pmatch refs p x = PTypeFailure) /\
      pattern_comp_walk (REVERSE l) v refs = SOME x ==>
      dt_eval_guard refs v (pat_to_guard l p) =
-       SOME (pmatch refs p x = PMatchSuccess)) /\
-   (!l k ps xs ys. ~(pmatch_list refs ps xs = PTypeFailure) /\ LENGTH
-     ys = k /\
+       SOME (pattern_semantics_pmatch refs p x = PMatchSuccess)) /\
+   (!l k ps xs ys. ~(pattern_semantics_pmatch_list refs ps xs =
+     PTypeFailure) /\ LENGTH ys = k /\
      walk_list (REVERSE l) v refs = SOME (APPEND ys xs) /\ LENGTH xs
        = LENGTH ps ==>
      dt_eval_guard refs v (pats_to_guard l k ps) =
-       SOME (pmatch_list refs ps xs = PMatchSuccess))`,
+       SOME (pattern_semantics_pmatch_list refs ps xs =
+         PMatchSuccess))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let mk_If_thm = prove
- (`dt_eval refs v (mk_If g p q) = dt_eval refs v (If g p q)`,
+ (`dt_eval refs v (mk_If g p q) = dt_eval refs v (pattern_semantics_If
+  g p q)`,
   CHEAT_TAC);;
 
 let pat_to_code_thm = prove
@@ -290,7 +293,6 @@ let pattern_comp_comp_def = new_definition
      let rows1 = (if exh_rows rows0 then insert_Any rows0 else rows0)
        in
        pats_to_code rows1)`;;
-hol4_overload "comp" "pattern_comp_comp";;
 
 let comp_thm = prove
  (`~(pattern_semantics_match refs rows v = NONE) ==>

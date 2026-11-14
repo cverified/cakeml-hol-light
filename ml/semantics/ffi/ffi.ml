@@ -2,7 +2,7 @@
 (*  ffi: ported from HOL4's
     semantics/ffi/ffiScript.sml
     A definition theory, with 3 definitions, 10 datatypes and no
-    theorems.  Needed by 52 files of the port.  *)
+    theorems.  Needed by 48 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -36,8 +36,6 @@ let shmem_op_INDUCT,shmem_op_RECURSION = define_datatype
 
 let ffiname_INDUCT,ffiname_RECURSION = define_datatype
   "ffiname = ffi_ExtCall (mlstring) | ffi_SharedMem (shmem_op)";;
-hol4_overload "ExtCall" "ffi_ExtCall";;
-hol4_overload "SharedMem" "ffi_SharedMem";;
 
 (* HOL4 ffiScript.sml:31: the type abbreviation oracle_function,
    which the port expands *)
@@ -90,9 +88,6 @@ let call_FFI_def = new_definition
 let outcome_INDUCT,outcome_RECURSION = define_datatype
   "outcome = ffi_Success | ffi_Resource_limit_hit | ffi_FFI_outcome \
    (final_event)";;
-hol4_overload "Success" "ffi_Success";;
-hol4_overload "Resource_limit_hit" "ffi_Resource_limit_hit";;
-hol4_overload "FFI_outcome" "ffi_FFI_outcome";;
 
 (* A program can Diverge, Terminate, or Fail. We prove that Fail is
    avoided. For Diverge and Terminate, we keep track of what I/O
@@ -110,9 +105,6 @@ let behaviour_INDUCT,behaviour_RECURSION = define_datatype
    // Failure is a behaviour which we prove cannot occur for any\n\
    // well-typed program.\n\
    ffi_Fail";;
-hol4_overload "Diverge" "ffi_Diverge";;
-hol4_overload "Terminate" "ffi_Terminate";;
-hol4_overload "Fail" "ffi_Fail";;
 
 (* trace-based semantics can be recovered as an instance of oracle-based
  * semantics as follows. *)

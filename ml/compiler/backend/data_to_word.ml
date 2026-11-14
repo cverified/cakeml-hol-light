@@ -2,7 +2,7 @@
 (*  data_to_word: ported from HOL4's
     compiler/backend/data_to_wordScript.sml
     A definition theory, with 201 definitions, 3 datatypes and 40
-    theorems.  Needed by 21 files of the port.  *)
+    theorems.  Needed by 20 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -45,9 +45,6 @@ let gc_kind_INDUCT,gc_kind_RECURSION = define_datatype
    data_to_word_None | data_to_word_Simple | \
    data_to_word_Generational (num list) \
    // sizes of generations, smallest first";;
-hol4_overload "None" "data_to_word_None";;
-hol4_overload "Simple" "data_to_word_Simple";;
-hol4_overload "Generational" "data_to_word_Generational";;
 
 let data_to_word_config_FIELDS = define_record "data_to_word_config"
   ["tag_bits","num";
@@ -93,15 +90,16 @@ let adjust_sets_def = new_definition
 
 let unit_def = new_definition
   `data_to_word_Unit = wordLang_Const (n2w 2)`;;
-hol4_overload "Unit" "data_to_word_Unit";;
 
 let GiveUp_def = new_definition
-  `GiveUp = (Seq (Assign 1 (wordLang_Const (--(n2w 1))))
-                (Alloc 1 (adjust_sets (LN:1 spt))):'a
+  `GiveUp = (word_bignum_Seq (word_bignum_Assign 1 (wordLang_Const
+  (--(n2w 1))))
+                (wordLang_Alloc 1 (adjust_sets (LN:1 spt))):'a
                   wordLang_prog)`;;
 
 let BignumHalt_def = new_definition
-  `BignumHalt r = If Test r (Imm (n2w 1)) Skip GiveUp`;;
+  `BignumHalt r = word_bignum_If asm_Test r (Imm (n2w 1))
+  word_bignum_Skip GiveUp`;;
 
 let make_header_def = new_definition
   `make_header conf tag len =
@@ -129,9 +127,8 @@ let data_to_word_list_Seq_def,data_to_word_list_Seq_ind = define_wf
   `MEASURE (\x0. list_size (wordLang_prog_size (\x. 0)) x0)`
   [`(data_to_word_list_Seq [] = wordLang_Skip) /\
    (data_to_word_list_Seq [x] = x) /\
-   (data_to_word_list_Seq (CONS x (CONS y xs)) = Seq x
-     (data_to_word_list_Seq (CONS y xs)))`];;
-hol4_overload "list_Seq" "data_to_word_list_Seq";;
+   (data_to_word_list_Seq (CONS x (CONS y xs)) = word_bignum_Seq
+     x (data_to_word_list_Seq (CONS y xs)))`];;
 
 let StoreEach_def,StoreEach_ind = define_rec
   [`StoreEach v [] (offset:'a word) = wordLang_Skip`;
@@ -184,36 +181,40 @@ let real_addr_def = new_definition
      let l = shift_length conf in
        if k = l /\ data_to_word_config_len_bits conf = 0 /\
          data_to_word_config_tag_bits conf = 0 then
-         Op asm_Add [wordLang_Lookup CurrHeap; Op asm_Sub [Var r;
-           Const (n2w 1)]] else if k <= data_to_word_config_pad_bits
-           conf + 1 then
-         Op asm_Add [wordLang_Lookup CurrHeap; (\sh e n. Shift sh e
-           (wordLang_Const (n2w n))) Lsr (Var r) (l - k)] else
-         Op asm_Add [wordLang_Lookup CurrHeap; (\sh e n. Shift sh
-           e (wordLang_Const (n2w n))) Lsl ((\sh e n. Shift sh e
-           (wordLang_Const (n2w n))) Lsr (Var r) l) k])`;;
+         wordLang_Op asm_Add [wordLang_Lookup CurrHeap; wordLang_Op
+           asm_Sub [wordLang_Var r; word_depth_Const (n2w 1)]] else if k
+           <= data_to_word_config_pad_bits conf + 1 then
+         wordLang_Op asm_Add [wordLang_Lookup CurrHeap; (\sh e n.
+           wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr
+           (wordLang_Var r) (l - k)] else
+         wordLang_Op asm_Add [wordLang_Lookup CurrHeap; (\sh e n.
+           wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl ((\sh e
+           n. wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr
+           (wordLang_Var r) l) k])`;;
 
 let real_offset_def = new_definition
   `((real_offset (conf:data_to_word_config) r):'a wordLang_exp) =
-      Op asm_Add [Const bytes_in_word;
-              if dimindex (:'a) = 32 then Var r else (\sh e n.
-                Shift sh e (wordLang_Const (n2w n))) Lsl (Var r) 1]`;;
+      wordLang_Op asm_Add [word_depth_Const bytes_in_word;
+              if dimindex (:'a) = 32 then wordLang_Var r else (\sh
+                e n. wordLang_Shift sh e (wordLang_Const (n2w n)))
+                Lsl (wordLang_Var r) 1]`;;
 
 let real_byte_offset_def = new_definition
   `(real_byte_offset r:'a wordLang_exp) =
-     Op asm_Add [Const bytes_in_word;
-             (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
-               (Var r) 2]`;;
+     wordLang_Op asm_Add [word_depth_Const bytes_in_word;
+             (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+               n))) Lsr (wordLang_Var r) 2]`;;
 
 let word_op_type_INDUCT,word_op_type_RECURSION = define_datatype
   "word_op_type = Bitwise (binop) | Carried (binop)";;
 
 let lookup_word_op_def = define_cases
-  [`lookup_word_op backend_common_Andw = Bitwise And`;
+  [`lookup_word_op backend_common_Andw = Bitwise asm_And`;
    `lookup_word_op backend_common_Orw = Bitwise asm_Or`;
-   `lookup_word_op (Xor:opw) = Bitwise Xor`;
-   `lookup_word_op (Add:opw) = Carried asm_Add`;
-   `lookup_word_op (Sub:opw) = Carried asm_Sub`];;
+   `lookup_word_op (backend_common_Xor:opw) = Bitwise
+  backend_common_Xor`;
+   `lookup_word_op (word_bignum_Add:opw) = Carried asm_Add`;
+   `lookup_word_op (word_bignum_Sub:opw) = Carried asm_Sub`];;
 
 let FromList_location_def = new_definition
   `FromList_location = word_num_stubs`;;
@@ -352,52 +353,64 @@ let bignum_location_def = new_definition
 let SilentFFI_def = new_definition
   `SilentFFI c n names =
      (if data_to_word_config_call_empty_ffi c then
-       list_Seq [Assign n (wordLang_Const (n2w 0));
-                 Assign 7 (Op asm_Sub [wordLang_Lookup NextFree;
-                   wordLang_Lookup CurrHeap]);
-                 Assign 9 (wordLang_Lookup HeapLength);
-                 FFI (implode "") 7 n 9 n names] else Skip)`;;
+       data_to_word_list_Seq [word_bignum_Assign n (wordLang_Const
+         (n2w 0));
+                 word_bignum_Assign 7 (wordLang_Op asm_Sub
+                   [wordLang_Lookup NextFree; wordLang_Lookup
+                   CurrHeap]);
+                 word_bignum_Assign 9 (wordLang_Lookup HeapLength);
+                 wordLang_FFI (implode "") 7 n 9 n names] else
+                   word_bignum_Skip)`;;
 
 let AllocVar_def = new_definition
   `AllocVar c (limit':num) (names:1 spt) =
-     list_Seq [Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w
-       n))) Lsr (Var 1) 2);
-               If asm_Lower 1 (Imm (n2w limit'))
-                 (Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w
-                   n))) Lsl (Op asm_Add [Var 1; Const (n2w 1)])
+     data_to_word_list_Seq [word_bignum_Assign 1 ((\sh e n.
+       wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr (wordLang_Var
+       1) 2);
+               word_bignum_If asm_Lower 1 (Imm (n2w limit'))
+                 (word_bignum_Assign 1 ((\sh e n. wordLang_Shift sh e
+                   (wordLang_Const (n2w n))) Lsl (wordLang_Op asm_Add
+                   [wordLang_Var 1; word_depth_Const (n2w 1)])
                    (backend_common_word_shift (:'a))))
-                 (Assign 1 (wordLang_Const (--((n2w 1):'a word))));
-               Assign 3 (Op asm_Sub [wordLang_Lookup TriggerGC;
-                 wordLang_Lookup NextFree]);
-               If asm_Lower 3 (Reg 1)
-                 (list_Seq [SilentFFI c 3 (FST (adjust_sets names),
-                              insert 1 one (SND (adjust_sets
+                 (word_bignum_Assign 1 (wordLang_Const (--((n2w 1):'a
+                   word))));
+               word_bignum_Assign 3 (wordLang_Op asm_Sub
+                 [wordLang_Lookup TriggerGC; wordLang_Lookup NextFree]);
+               word_bignum_If asm_Lower 3 (Reg 1)
+                 (data_to_word_list_Seq [SilentFFI c 3 (FST
+                   (adjust_sets names),
+                              sptree_insert 1 one (SND (adjust_sets
                                 names)));
-                            Alloc 1 (adjust_sets names);
+                            wordLang_Alloc 1 (adjust_sets names);
                             SilentFFI c 3 (adjust_sets names)])
-                              Skip]`;;
+                              word_bignum_Skip]`;;
 
 let MakeBytes_def = new_definition
   `MakeBytes n =
-     (list_Seq [Assign n ((\sh e n. Shift sh e (wordLang_Const (n2w
-       n))) Lsr (Var n) 2);
-               Assign n (Op asm_Or [Var n; (\sh e n. Shift sh e
-                 (wordLang_Const (n2w n))) Lsl (Var n) 8]);
-               Assign n (Op asm_Or [Var n; (\sh e n. Shift sh e
-                 (wordLang_Const (n2w n))) Lsl (Var n) 16]);
-               if dimindex (:'a) = 32 then Skip else
-                 Assign n (Op asm_Or [Var n; (\sh e n. Shift sh e
-                   (wordLang_Const (n2w n))) Lsl (Var n) 32])]:'a
-                   wordLang_prog)`;;
+     (data_to_word_list_Seq [word_bignum_Assign n ((\sh e n.
+       wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr (wordLang_Var
+       n) 2);
+               word_bignum_Assign n (wordLang_Op asm_Or [wordLang_Var
+                 n; (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                 n))) Lsl (wordLang_Var n) 8]);
+               word_bignum_Assign n (wordLang_Op asm_Or [wordLang_Var
+                 n; (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                 n))) Lsl (wordLang_Var n) 16]);
+               if dimindex (:'a) = 32 then word_bignum_Skip else
+                 word_bignum_Assign n (wordLang_Op asm_Or
+                   [wordLang_Var n; (\sh e n. wordLang_Shift sh e
+                   (wordLang_Const (n2w n))) Lsl (wordLang_Var n)
+                   32])]:'a wordLang_prog)`;;
 
 let SmallLsr_def = new_definition
-  `SmallLsr e n = (if n = 0 then e else (\sh e n. Shift sh e
+  `SmallLsr e n = (if n = 0 then e else (\sh e n. wordLang_Shift sh e
   (wordLang_Const (n2w n))) Lsr e n)`;;
 
 let WriteLastByte_aux_def = new_definition
   `WriteLastByte_aux offset a b n p =
-     If Equal n (Imm offset) Skip
-       (Seq (Inst (asm_Mem asm_Store8 b (Addr a offset))) p)`;;
+     word_bignum_If asm_Equal n (Imm offset) word_bignum_Skip
+       (word_bignum_Seq (wordLang_Inst (asm_Mem asm_Store8 b (Addr
+         a offset))) p)`;;
 
 let WriteLastBytes_def = new_definition
   `WriteLastBytes a b n =
@@ -405,79 +418,92 @@ let WriteLastBytes_def = new_definition
        WriteLastByte_aux (n2w 1) a b n (
          WriteLastByte_aux (n2w 2) a b n (
            WriteLastByte_aux (n2w 3) a b n (
-             if dimindex (:'a) = 32 then Skip else
+             if dimindex (:'a) = 32 then word_bignum_Skip else
              WriteLastByte_aux (n2w 4) a b n (
                WriteLastByte_aux (n2w 5) a b n (
                  WriteLastByte_aux (n2w 6) a b n (
-                   WriteLastByte_aux (n2w 7) a b n Skip)))))))`;;
+                   WriteLastByte_aux (n2w 7) a b n
+                     word_bignum_Skip)))))))`;;
 
 let RefByte_code_def = new_definition
   `RefByte_code c =
        (let limit' = MIN (2 EXP data_to_word_config_len_size c)
          (dimword (:'a) DIV 16) in
-       let h = Op asm_Add [(\sh e n. Shift sh e (wordLang_Const (n2w
-         n))) Lsr (Var 2) 2; Const bytes_in_word] in
+       let h = wordLang_Op asm_Add [(\sh e n. wordLang_Shift sh e
+         (wordLang_Const (n2w n))) Lsr (wordLang_Var 2) 2;
+         word_depth_Const bytes_in_word] in
        let x = SmallLsr h (dimindex (:'a) - 63) in
-       let y = (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl h
-         (dimindex (:'a) - backend_common_word_shift (:'a) -
+       let y = (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+         n))) Lsl h (dimindex (:'a) - backend_common_word_shift (:'a) -
          data_to_word_config_len_size c) in
-         list_Seq
+         data_to_word_list_Seq
            [BignumHalt 2;
-            Assign 1 x;
+            word_bignum_Assign 1 x;
             AllocVar c limit' (sptree_fromList [one; one; one]);
             // compute length
-            Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-              Lsr h (backend_common_word_shift (:'a)));
-            Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-              Lsl (Var 5) 2);
-            Assign 9 (wordLang_Lookup NextFree);
+            word_bignum_Assign 5 ((\sh e n. wordLang_Shift sh e
+              (wordLang_Const (n2w n))) Lsr h (backend_common_word_shift
+              (:'a)));
+            word_bignum_Assign 7 ((\sh e n. wordLang_Shift sh e
+              (wordLang_Const (n2w n))) Lsl (wordLang_Var 5) 2);
+            word_bignum_Assign 9 (wordLang_Lookup NextFree);
             // adjust end of heap
-            Assign 1 (Op asm_Add [Var 9;
-                              (\sh e n. Shift sh e (wordLang_Const
-                                (n2w n))) Lsl (Var 5)
+            word_bignum_Assign 1 (wordLang_Op asm_Add [wordLang_Var
+              9;
+                              (\sh e n. wordLang_Shift sh e
+                                (wordLang_Const (n2w n))) Lsl
+                                (wordLang_Var 5)
                                 (backend_common_word_shift (:'a))]);
-            Set NextFree (Op asm_Add [Var 1; Const bytes_in_word]);
+            wordLang_Set NextFree (wordLang_Op asm_Add [wordLang_Var
+              1; word_depth_Const bytes_in_word]);
             // 3 := return value
-            Assign 3 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
-              (n2w n))) Lsl (Op asm_Sub [Var 9; wordLang_Lookup
+            word_bignum_Assign 3 (wordLang_Op asm_Or [(\sh e n.
+              wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl
+              (wordLang_Op asm_Sub [wordLang_Var 9; wordLang_Lookup
               CurrHeap])
                 (shift_length c - backend_common_word_shift (:'a));
-                  Const ((n2w 1):'a word)]);
+                  word_depth_Const ((n2w 1):'a word)]);
             // compute header
-            Assign 5 (Op asm_Or [Op asm_Or [y; Const (n2w 7)]; Var
-              6]);
+            word_bignum_Assign 5 (wordLang_Op asm_Or [wordLang_Op
+              asm_Or [y; word_depth_Const (n2w 7)]; wordLang_Var 6]);
             // compute repeated byte
             MakeBytes 4;
             // store header
-            Store (Var 9) 5;
+            word_bignum_Store (wordLang_Var 9) 5;
             // write last word of byte array
-            Assign 11 (Op And [(\sh e n. Shift sh e (wordLang_Const
-              (n2w n))) Lsr (Var 2) 2;
-                              Const (bytes_in_word - (n2w 1))]);
-            Assign 13 (wordLang_Const (n2w 0));
-            Store (Var 1) 13;
+            word_bignum_Assign 11 (wordLang_Op asm_And [(\sh e n.
+              wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr
+              (wordLang_Var 2) 2;
+                              word_depth_Const (bytes_in_word - (n2w
+                                1))]);
+            word_bignum_Assign 13 (wordLang_Const (n2w 0));
+            word_bignum_Store (wordLang_Var 1) 13;
             WriteLastBytes 1 4 11;
-            Assign 7 (Op asm_Sub [Var 7; Const (n2w 4)]);
+            word_bignum_Assign 7 (wordLang_Op asm_Sub [wordLang_Var
+              7; word_depth_Const (n2w 4)]);
             // write rest of byte array
-            Call NONE (SOME Replicate_location)
+            word_depth_Call NONE (SOME Replicate_location)
               [
                // ret_loc, addr, v, n, ret_val
                0; 9; 4; 7; 3] NONE]:'a wordLang_prog)`;;
 
 let maxout_bits_code_def = new_definition
   `Maxout_bits_code rep_len k dest n =
-     (If asm_Lower n (Imm (n2w (2 EXP rep_len - 1)))
-       (Assign dest (Op asm_Or [Var dest; (\sh e n. Shift sh e
-         (wordLang_Const (n2w n))) Lsl (Var n) k]))
-       (Assign dest (Op asm_Or [Var dest; Const (all_ones (k +
-         rep_len) k)])):'a wordLang_prog)`;;
+     (word_bignum_If asm_Lower n (Imm (n2w (2 EXP rep_len - 1)))
+       (word_bignum_Assign dest (wordLang_Op asm_Or [wordLang_Var
+         dest; (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w n)))
+         Lsl (wordLang_Var n) k]))
+       (word_bignum_Assign dest (wordLang_Op asm_Or [wordLang_Var
+         dest; word_depth_Const (all_ones (k + rep_len) k)])):'a
+         wordLang_prog)`;;
 
 let make_ptr_bits_code_def = new_definition
   `Make_ptr_bits_code c tag len dest =
-     (list_Seq [Assign dest (Op asm_Or
-        [Const (n2w 1); (\sh e n. Shift sh e (wordLang_Const (n2w
-          n))) Lsl (Op asm_Sub [wordLang_Lookup NextFree;
-          wordLang_Lookup CurrHeap])
+     (data_to_word_list_Seq [word_bignum_Assign dest (wordLang_Op
+       asm_Or
+        [word_depth_Const (n2w 1); (\sh e n. wordLang_Shift sh e
+          (wordLang_Const (n2w n))) Lsl (wordLang_Op asm_Sub
+          [wordLang_Lookup NextFree; wordLang_Lookup CurrHeap])
             (shift_length c - backend_common_word_shift (:'a))]);
          Maxout_bits_code (data_to_word_config_tag_bits c) (1 +
            data_to_word_config_len_bits c) dest tag;
@@ -488,25 +514,28 @@ let FromList_code_def = new_definition
   `FromList_code c =
      (let limit' = MIN (2 EXP data_to_word_config_len_size c)
        (dimword (:'a) DIV 16) in
-     let h = (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl (Var
-       2) (dimindex (:'a) - data_to_word_config_len_size c - 2) in
-       If Equal 2 (Imm (n2w 0))
-         (list_Seq [Assign 6 (Op asm_Add [Var 6; Const ((n2w 2):'a
+     let h = (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w n)))
+       Lsl (wordLang_Var 2) (dimindex (:'a) -
+       data_to_word_config_len_size c - 2) in
+       word_bignum_If asm_Equal 2 (Imm (n2w 0))
+         (data_to_word_list_Seq [word_bignum_Assign 6 (wordLang_Op
+           asm_Add [wordLang_Var 6; word_depth_Const ((n2w 2):'a
            word)]);
-                    Return 0 [6]])
-         (list_Seq
+                    wordLang_Return 0 [6]])
+         (data_to_word_list_Seq
            [BignumHalt 2;
-            Assign 1 (Var 2); AllocVar c limit' (sptree_fromList
-              [one; one; one]);
-            Assign 1 (wordLang_Lookup NextFree);
-            Assign 5 (Op asm_Or [h; Const (n2w 3); Var 6]);
-            Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-              Lsr (Var 2) 2);
-            Assign 9 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-              Lsr (Var 6) 4);
+            word_bignum_Assign 1 (wordLang_Var 2); AllocVar c limit'
+              (sptree_fromList [one; one; one]);
+            word_bignum_Assign 1 (wordLang_Lookup NextFree);
+            word_bignum_Assign 5 (wordLang_Op asm_Or [h;
+              word_depth_Const (n2w 3); wordLang_Var 6]);
+            word_bignum_Assign 7 ((\sh e n. wordLang_Shift sh e
+              (wordLang_Const (n2w n))) Lsr (wordLang_Var 2) 2);
+            word_bignum_Assign 9 ((\sh e n. wordLang_Shift sh e
+              (wordLang_Const (n2w n))) Lsr (wordLang_Var 6) 4);
             Make_ptr_bits_code c 9 7 3;
-            Call NONE (SOME FromList1_location) [0; 1; 4; 2; 3; 5]
-              NONE]):'a wordLang_prog)`;;
+            word_depth_Call NONE (SOME FromList1_location) [0; 1;
+              4; 2; 3; 5] NONE]):'a wordLang_prog)`;;
 
 let FromList1_code_def = new_definition
   `FromList1_code c =
@@ -516,49 +545,58 @@ let FromList1_code_def = new_definition
      // 6 = how many left to write
      // 8 = value to be returned
      // 10 = first thing to write
-     (list_Seq
-       [Store (Var 2) 10;
-        Assign 2 (Op asm_Add [Var 2; Const bytes_in_word]);
-        If Equal 6 (Imm (n2w 0))
-          (list_Seq
-             [Set NextFree (Var 2);
-              Return 0 [8]])
-          (list_Seq
-             [Assign 4 (real_addr c 4);
-              Assign 10 (wordLang_Load (Op asm_Add [Var 4; Const
+     (data_to_word_list_Seq
+       [word_bignum_Store (wordLang_Var 2) 10;
+        word_bignum_Assign 2 (wordLang_Op asm_Add [wordLang_Var 2;
+          word_depth_Const bytes_in_word]);
+        word_bignum_If asm_Equal 6 (Imm (n2w 0))
+          (data_to_word_list_Seq
+             [wordLang_Set NextFree (wordLang_Var 2);
+              wordLang_Return 0 [8]])
+          (data_to_word_list_Seq
+             [word_bignum_Assign 4 (real_addr c 4);
+              word_bignum_Assign 10 (wordLang_Load (wordLang_Op
+                asm_Add [wordLang_Var 4; word_depth_Const
                 bytes_in_word]));
-              Assign 4 (wordLang_Load (Op asm_Add [Var 4; Const ((n2w
-                2) * bytes_in_word)]));
-              Assign 6 (Op asm_Sub [Var 6; Const (n2w 4)]);
-              Call NONE (SOME FromList1_location) [0; 2; 4; 6; 8;
-                10] NONE])]:'a wordLang_prog)`;;
+              word_bignum_Assign 4 (wordLang_Load (wordLang_Op
+                asm_Add [wordLang_Var 4; word_depth_Const ((n2w 2) *
+                bytes_in_word)]));
+              word_bignum_Assign 6 (wordLang_Op asm_Sub [wordLang_Var
+                6; word_depth_Const (n2w 4)]);
+              word_depth_Call NONE (SOME FromList1_location) [0;
+                2; 4; 6; 8; 10] NONE])]:'a wordLang_prog)`;;
 
 let RefArray_code_def = new_definition
   `RefArray_code c =
-         (list_Seq
-           [Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-             Lsl (Op asm_Add [((\sh e n. Shift sh e (wordLang_Const (n2w
-             n))) Lsr (Var 2) 2); Const (n2w 1)])
+         (data_to_word_list_Seq
+           [word_bignum_Assign 1 ((\sh e n. wordLang_Shift sh e
+             (wordLang_Const (n2w n))) Lsl (wordLang_Op asm_Add [((\sh e
+             n. wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr
+             (wordLang_Var 2) 2); word_depth_Const (n2w 1)])
                        (backend_common_word_shift (:'a)));
-            Set TriggerGC (Op asm_Sub [wordLang_Lookup TriggerGC; Var
-              1]);
-            Assign 1 (Op asm_Sub [wordLang_Lookup EndOfHeap; Var 1]);
-            Set EndOfHeap (Var 1);
+            wordLang_Set TriggerGC (wordLang_Op asm_Sub
+              [wordLang_Lookup TriggerGC; wordLang_Var 1]);
+            word_bignum_Assign 1 (wordLang_Op asm_Sub
+              [wordLang_Lookup EndOfHeap; wordLang_Var 1]);
+            wordLang_Set EndOfHeap (wordLang_Var 1);
             // 3 := return value
-            Assign 3 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
-              (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+            word_bignum_Assign 3 (wordLang_Op asm_Or [(\sh e n.
+              wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl
+              (wordLang_Op asm_Sub [wordLang_Var 1; wordLang_Lookup
               CurrHeap])
                 (shift_length c - backend_common_word_shift (:'a));
-                  Const ((n2w 1):'a word)]);
+                  word_depth_Const ((n2w 1):'a word)]);
             // compute header
-            Assign 5 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
-              (n2w n))) Lsl (Var 2)
+            word_bignum_Assign 5 (wordLang_Op asm_Or [(\sh e n.
+              wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl
+              (wordLang_Var 2)
                               (dimindex (:'a) -
                                 data_to_word_config_len_size c - 2);
-                             Const (make_header c (n2w 2) 0)]);
+                             word_depth_Const (make_header c (n2w 2)
+                               0)]);
             // store header
-            Store (Var 1) 5;
-            Call NONE (SOME Replicate_location)
+            word_bignum_Store (wordLang_Var 1) 5;
+            word_depth_Call NONE (SOME Replicate_location)
                [
                 // ret_loc, addr, v, n, ret_val
                 0; 1; 4; 2; 3] NONE]:'a wordLang_prog)`;;
@@ -570,23 +608,28 @@ let replicate_code_def = new_definition
      // 4 = what to write at each location
      // 6 = how many left to write
      // 8 = value to be returned
-     (If Equal 6 (Imm (n2w 0)) (Return 0 [8])
-       (list_Seq [Assign 2 (Op asm_Add [Var 2; Const
-         (bytes_in_word)]);
-                  Store (Var 2) 4;
-                  Assign 6 (Op asm_Sub [Var 6; Const (n2w 4)]);
-                  Call NONE (SOME Replicate_location) [0; 2; 4; 6;
-                    8] NONE]):'a wordLang_prog)`;;
+     (word_bignum_If asm_Equal 6 (Imm (n2w 0)) (wordLang_Return 0
+       [8])
+       (data_to_word_list_Seq [word_bignum_Assign 2 (wordLang_Op
+         asm_Add [wordLang_Var 2; word_depth_Const (bytes_in_word)]);
+                  word_bignum_Store (wordLang_Var 2) 4;
+                  word_bignum_Assign 6 (wordLang_Op asm_Sub
+                    [wordLang_Var 6; word_depth_Const (n2w 4)]);
+                  word_depth_Call NONE (SOME Replicate_location)
+                    [0; 2; 4; 6; 8] NONE]):'a wordLang_prog)`;;
 
 let AddNumSize_def = new_definition
   `AddNumSize c src =
-     (If Equal (adjust_var src) (Imm (n2w 0)) Skip
-       (If Test (adjust_var src) (Imm (n2w 1))
-          (Assign 1 (Op asm_Add [Var 1; Const (n2w 4)]))
-        (Assign 1 (Op asm_Add [Var 1;
-          ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl ((\sh e
-            n. Shift sh e (wordLang_Const (n2w n))) Lsr
-             (Load (real_addr c (adjust_var src)))
+     (word_bignum_If asm_Equal (adjust_var src) (Imm (n2w 0))
+       word_bignum_Skip
+       (word_bignum_If asm_Test (adjust_var src) (Imm (n2w 1))
+          (word_bignum_Assign 1 (wordLang_Op asm_Add [wordLang_Var 1;
+            word_depth_Const (n2w 4)]))
+        (word_bignum_Assign 1 (wordLang_Op asm_Add [wordLang_Var 1;
+          ((\sh e n. wordLang_Shift sh e (wordLang_Const (n2w n)))
+            Lsl ((\sh e n. wordLang_Shift sh e (wordLang_Const (n2w n)))
+            Lsr
+             (word_bignum_Load (real_addr c (adjust_var src)))
                 (dimindex (:'a) - data_to_word_config_len_size
                   c))) 2]))):'a wordLang_prog)`;;
 
@@ -597,649 +640,809 @@ let AnyHeader_def = new_definition
            // pointer
            t3 =
      // payload
-     If Equal r (Imm ((n2w 0):'a word))
-       (list_Seq [Assign 7 (wordLang_Const (n2w 0));
-                  Set (Temp t1) (Var r);
-                  Set (Temp t2) (Var r);
-                  Set (Temp t3) (Var r)])
-    (If asm_NotTest r (Imm (n2w 1))
-       (list_Seq
-         [Assign 7 (real_addr c r);
-          Set (Temp t2) (Op asm_Add [Var 7; Const bytes_in_word]);
-          Set (Temp t1) (Op asm_Add
-            [(\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl ((\sh
-              e n. Shift sh e (wordLang_Const (n2w n))) Lsr (Load (Var
-              7)) ((dimindex (:'a)) - data_to_word_config_len_size c))
-              1;
-             Op And [Const (n2w 1); (\sh e n. Shift sh e
-               (wordLang_Const (n2w n))) Lsr (Load (Var 7)) 4]]);
-          Set (Temp t3) (wordLang_Const (n2w 0))])
-    (If asm_NotLess r (Imm (n2w 0))
-       (list_Seq
-         [Set (Temp t1) (wordLang_Const (n2w 2));
-          Set (Temp t2) (wordLang_Lookup (if a then OtherHeap else
-            NextFree));
-          Set (Temp t3) ((\sh e n. Shift sh e (wordLang_Const (n2w
-            n))) Lsr (Var r) 2);
-          Assign 7 (wordLang_Const (n2w 0))])
-       (list_Seq
-         [Set (Temp t1) (wordLang_Const (n2w 3));
-          Set (Temp t2) (wordLang_Lookup (if a then OtherHeap else
-            NextFree));
-          Set (Temp t3) (Op asm_Sub [Const (n2w 0); (\sh e n. Shift
-            sh e (wordLang_Const (n2w n))) Asr (Var r) 2]);
-          Assign 7 (wordLang_Const (n2w 0))])))`;;
+     word_bignum_If asm_Equal r (Imm ((n2w 0):'a word))
+       (data_to_word_list_Seq [word_bignum_Assign 7 (wordLang_Const
+         (n2w 0));
+                  wordLang_Set (Temp t1) (wordLang_Var r);
+                  wordLang_Set (Temp t2) (wordLang_Var r);
+                  wordLang_Set (Temp t3) (wordLang_Var r)])
+    (word_bignum_If asm_NotTest r (Imm (n2w 1))
+       (data_to_word_list_Seq
+         [word_bignum_Assign 7 (real_addr c r);
+          wordLang_Set (Temp t2) (wordLang_Op asm_Add [wordLang_Var
+            7; word_depth_Const bytes_in_word]);
+          wordLang_Set (Temp t1) (wordLang_Op asm_Add
+            [(\sh e n. wordLang_Shift sh e (wordLang_Const (n2w n)))
+              Lsl ((\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+              n))) Lsr (word_bignum_Load (wordLang_Var 7)) ((dimindex
+              (:'a)) - data_to_word_config_len_size c)) 1;
+             wordLang_Op asm_And [word_depth_Const (n2w 1); (\sh e n.
+               wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr
+               (word_bignum_Load (wordLang_Var 7)) 4]]);
+          wordLang_Set (Temp t3) (wordLang_Const (n2w 0))])
+    (word_bignum_If asm_NotLess r (Imm (n2w 0))
+       (data_to_word_list_Seq
+         [wordLang_Set (Temp t1) (wordLang_Const (n2w 2));
+          wordLang_Set (Temp t2) (wordLang_Lookup (if a then
+            OtherHeap else NextFree));
+          wordLang_Set (Temp t3) ((\sh e n. wordLang_Shift sh e
+            (wordLang_Const (n2w n))) Lsr (wordLang_Var r) 2);
+          word_bignum_Assign 7 (wordLang_Const (n2w 0))])
+       (data_to_word_list_Seq
+         [wordLang_Set (Temp t1) (wordLang_Const (n2w 3));
+          wordLang_Set (Temp t2) (wordLang_Lookup (if a then
+            OtherHeap else NextFree));
+          wordLang_Set (Temp t3) (wordLang_Op asm_Sub
+            [word_depth_Const (n2w 0); (\sh e n. wordLang_Shift sh e
+            (wordLang_Const (n2w n))) Asr (wordLang_Var r) 2]);
+          word_bignum_Assign 7 (wordLang_Const (n2w 0))])))`;;
 
 let ShiftVar_def = new_definition
   `ShiftVar sh v n =
      (if sh = Ror then
        (let m = (if n < dimindex (:'a) then n else n MOD (dimindex
          (:'a))) in
-          if m = 0 then Var v else (\sh e n. Shift sh e
-            (wordLang_Const (n2w n))) sh (Var v) m) else if n = 0 then
-            Var v else if dimindex (:'a) <= n then
-       if sh = Asr then (\sh e n. Shift sh e (wordLang_Const (n2w
-         n))) sh (Var v) (dimindex (:'a) - 1) else Const (n2w 0) else
-         ((\sh e n. Shift sh e (wordLang_Const (n2w n))) sh (Var v)
-         n):'a wordLang_exp)`;;
+          if m = 0 then wordLang_Var v else (\sh e n. wordLang_Shift
+            sh e (wordLang_Const (n2w n))) sh (wordLang_Var v) m) else
+            if n = 0 then wordLang_Var v else if dimindex (:'a) <= n
+            then
+       if sh = Asr then (\sh e n. wordLang_Shift sh e
+         (wordLang_Const (n2w n))) sh (wordLang_Var v) (dimindex
+         (:'a) - 1) else word_depth_Const (n2w 0) else ((\sh e n.
+         wordLang_Shift sh e (wordLang_Const (n2w n))) sh
+         (wordLang_Var v) n):'a wordLang_exp)`;;
 
 let AnyArith_code_def = new_definition
-  `AnyArith_code c = (list_Seq [
+  `AnyArith_code c = (data_to_word_list_Seq [
        // perform allocation
-       Assign 1 (wordLang_Const (n2w 4));
+       word_bignum_Assign 1 (wordLang_Const (n2w 4));
        AddNumSize c 0;
        AddNumSize c 1;
-       Set (Temp (n2w 29)) (Var 1);
+       wordLang_Set (Temp (n2w 29)) (wordLang_Var 1);
        AllocVar c (2 EXP data_to_word_config_len_size c)
          (sptree_fromList [one; one; one]);
        // convert smallnums to bignum if necessary
        AnyHeader c 2 F (n2w 0) (n2w 31) (n2w 12);
        AnyHeader c 4 T (n2w 1) (n2w 30) (n2w 11);
-       Get 1 (Temp (n2w 11));
-       Store (wordLang_Lookup OtherHeap) 1;
-       Get 1 (Temp (n2w 12));
-       Store (wordLang_Lookup NextFree) 1;
-       Get 1 (Temp (n2w 29));
-       Assign 2 (wordLang_Lookup NextFree);
-       Set (Temp (n2w 29)) (Var 2);
-       Set (Temp (n2w 3)) ((\sh e n. Shift sh e (wordLang_Const (n2w
-         n))) Lsr (Var 6) 2);
-       Assign 3 (wordLang_Const (n2w 0));
+       wordLang_Get 1 (Temp (n2w 11));
+       word_bignum_Store (wordLang_Lookup OtherHeap) 1;
+       wordLang_Get 1 (Temp (n2w 12));
+       word_bignum_Store (wordLang_Lookup NextFree) 1;
+       wordLang_Get 1 (Temp (n2w 29));
+       word_bignum_Assign 2 (wordLang_Lookup NextFree);
+       wordLang_Set (Temp (n2w 29)) (wordLang_Var 2);
+       wordLang_Set (Temp (n2w 3)) ((\sh e n. wordLang_Shift sh e
+         (wordLang_Const (n2w n))) Lsr (wordLang_Var 6) 2);
+       word_bignum_Assign 3 (wordLang_Const (n2w 0));
        // zero out result array
-       Call (SOME ([0],(sptree_fromList
-         [one],LN),Skip,AnyArith_location,2))
+       word_depth_Call (SOME ([0],(sptree_fromList
+         [one],LN),word_bignum_Skip,AnyArith_location,2))
          (SOME Replicate_location) [2; 3; 1; 0] NONE;
        // perform bignum calculation
-       Set (Temp (n2w 29)) (Op asm_Add [wordLang_Lookup (Temp (n2w
-         29)); Const bytes_in_word]);
-       Call (SOME ([1],(sptree_fromList
-         [one],LN),Skip,AnyArith_location,3))
+       wordLang_Set (Temp (n2w 29)) (wordLang_Op asm_Add
+         [wordLang_Lookup (Temp (n2w 29)); word_depth_Const
+         bytes_in_word]);
+       word_depth_Call (SOME ([1],(sptree_fromList
+         [one],LN),word_bignum_Skip,AnyArith_location,3))
          (SOME Bignum_location) [] NONE;
        // convert bignum to smallnum if possible without loss of info
-       Get 1 (Temp (n2w 10));
-       If Test 1 (Reg 1) (Return 0 [1]) Skip;
-       Assign 3 (wordLang_Load (Op asm_Add [wordLang_Lookup NextFree;
-         Const bytes_in_word]));
-       If Equal 1 (Imm (n2w 2))
-         (Seq (Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w
-           n))) Lsr (Var 3) (dimindex (:'a) - 3)))
-              (If Test 5 (Reg 5)
-                 (Seq (Assign 1 ((\sh e n. Shift sh e (wordLang_Const
-                   (n2w n))) Lsl (Var 3) 2))
-                      (Return 0 [1]))
-                 Skip))
-         (If Equal 1 (Imm (n2w 3))
-           (Seq (Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w
-             n))) Lsr (Op asm_Sub [Var 3; Const (n2w 1)])
+       wordLang_Get 1 (Temp (n2w 10));
+       word_bignum_If asm_Test 1 (Reg 1) (wordLang_Return 0 [1])
+         word_bignum_Skip;
+       word_bignum_Assign 3 (wordLang_Load (wordLang_Op asm_Add
+         [wordLang_Lookup NextFree; word_depth_Const bytes_in_word]));
+       word_bignum_If asm_Equal 1 (Imm (n2w 2))
+         (word_bignum_Seq (word_bignum_Assign 5 ((\sh e n.
+           wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr
+           (wordLang_Var 3) (dimindex (:'a) - 3)))
+              (word_bignum_If asm_Test 5 (Reg 5)
+                 (word_bignum_Seq (word_bignum_Assign 1 ((\sh e n.
+                   wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl
+                   (wordLang_Var 3) 2))
+                      (wordLang_Return 0 [1]))
+                 word_bignum_Skip))
+         (word_bignum_If asm_Equal 1 (Imm (n2w 3))
+           (word_bignum_Seq (word_bignum_Assign 5 ((\sh e n.
+             wordLang_Shift sh e (wordLang_Const (n2w n))) Lsr
+             (wordLang_Op asm_Sub [wordLang_Var 3; word_depth_Const (n2w
+             1)])
                              (dimindex (:'a) - 3)))
-                (If Test 5 (Reg 5)
-                   (Seq (Assign 1 (Op asm_Sub [Const (n2w 0); (\sh e
-                     n. Shift sh e (wordLang_Const (n2w n))) Lsl (Var 3)
-                     2]))
-                        (Return 0 [1]))
-                   Skip))
-           (Assign 5 (wordLang_Const (n2w 0))));
+                (word_bignum_If asm_Test 5 (Reg 5)
+                   (word_bignum_Seq (word_bignum_Assign 1
+                     (wordLang_Op asm_Sub [word_depth_Const (n2w 0);
+                     (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                     n))) Lsl (wordLang_Var 3) 2]))
+                        (wordLang_Return 0 [1]))
+                   word_bignum_Skip))
+           (word_bignum_Assign 5 (wordLang_Const (n2w 0))));
        // return the bignum
-       Assign 5 (wordLang_Lookup NextFree);
-       Assign 6 (ShiftVar Lsr 1 1);
-       Assign 8 (Op And [Var 1; Const (n2w 1)]);
-       Assign 7 (Op asm_Or [Const (n2w 0b1111);
+       word_bignum_Assign 5 (wordLang_Lookup NextFree);
+       word_bignum_Assign 6 (ShiftVar Lsr 1 1);
+       word_bignum_Assign 8 (wordLang_Op asm_And [wordLang_Var 1;
+         word_depth_Const (n2w 1)]);
+       word_bignum_Assign 7 (wordLang_Op asm_Or [word_depth_Const
+         (n2w 0b1111);
                         ShiftVar Lsl 6 (dimindex (:'a) -
                           data_to_word_config_len_size c);
                         ShiftVar Lsl 8 4]);
-       Store (Var 5) 7;
-       Assign 1 (Op asm_Sub [Var 5; wordLang_Lookup CurrHeap]);
-       Assign 1 (Op asm_Or [ShiftVar Lsl 1 (shift_length c -
-         backend_common_word_shift (:'a)); Const (n2w 1)]);
-       Set NextFree (Op asm_Add [Var 5; Const bytes_in_word;
+       word_bignum_Store (wordLang_Var 5) 7;
+       word_bignum_Assign 1 (wordLang_Op asm_Sub [wordLang_Var 5;
+         wordLang_Lookup CurrHeap]);
+       word_bignum_Assign 1 (wordLang_Op asm_Or [ShiftVar Lsl 1
+         (shift_length c - backend_common_word_shift (:'a));
+         word_depth_Const (n2w 1)]);
+       wordLang_Set NextFree (wordLang_Op asm_Add [wordLang_Var 5;
+         word_depth_Const bytes_in_word;
                              ShiftVar Lsl 6
                                (backend_common_word_shift (:'a))]);
-       Return 0 [1]]:'a wordLang_prog)`;;
+       wordLang_Return 0 [1]]:'a wordLang_prog)`;;
 
 let add_code_def = new_definition
-  `Add_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 0))))
-                  (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
-                    NONE):'a wordLang_prog)`;;
+  `Add_code = (word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const
+  (n2w (4 * 0))))
+                  (word_depth_Call NONE (SOME AnyArith_location)
+                    [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
 let sub_code_def = new_definition
-  `Sub_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 1))))
-                  (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
-                    NONE):'a wordLang_prog)`;;
+  `Sub_code = (word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const
+  (n2w (4 * 1))))
+                  (word_depth_Call NONE (SOME AnyArith_location)
+                    [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
 let mul_code_def = new_definition
-  `Mul_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 4))))
-                  (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
-                    NONE):'a wordLang_prog)`;;
+  `Mul_code = (word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const
+  (n2w (4 * 4))))
+                  (word_depth_Call NONE (SOME AnyArith_location)
+                    [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
 let div_code_def = new_definition
-  `Div_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 5))))
-                  (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
-                    NONE):'a wordLang_prog)`;;
+  `Div_code = (word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const
+  (n2w (4 * 5))))
+                  (word_depth_Call NONE (SOME AnyArith_location)
+                    [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
 let mod_code_def = new_definition
-  `Mod_code = (Seq (Assign 6 (wordLang_Const (n2w (4 * 6))))
-                  (Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
-                    NONE):'a wordLang_prog)`;;
+  `Mod_code = (word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const
+  (n2w (4 * 6))))
+                  (word_depth_Call NONE (SOME AnyArith_location)
+                    [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
 let install_code_def = new_definition
   `Install_code c =
-       (list_Seq [Assign 1 (wordLang_Lookup BitmapBuffer);
-                 Assign 3 (wordLang_Lookup CodeBuffer);
-                 Set BitmapBuffer (Var 2);
-                 Set CodeBuffer (Var 4);
-                 Install 3 4 1 2 (LS one,LN);
-                 Return 0 [3]]:'a wordLang_prog)`;;
+       (data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Lookup
+         BitmapBuffer);
+                 word_bignum_Assign 3 (wordLang_Lookup CodeBuffer);
+                 wordLang_Set BitmapBuffer (wordLang_Var 2);
+                 wordLang_Set CodeBuffer (wordLang_Var 4);
+                 wordLang_Install 3 4 1 2 (LS one,LN);
+                 wordLang_Return 0 [3]]:'a wordLang_prog)`;;
 
 let InstallCode_code_def = new_definition
   `InstallCode_code c =
-        (If Test 2 (Imm (n2w 1))
-         (Seq (Assign 2 (wordLang_Lookup BitmapBuffer))
-              (Call NONE (SOME InstallData_location) [0; 2; 4; 6]
-                NONE))
-         (list_Seq [Assign 3 (real_addr c 2);
-                    Assign 2 (wordLang_Load (Op asm_Add [Var 3; Const
+        (word_bignum_If asm_Test 2 (Imm (n2w 1))
+         (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Lookup
+           BitmapBuffer))
+              (word_depth_Call NONE (SOME InstallData_location) [0;
+                2; 4; 6] NONE))
+         (data_to_word_list_Seq [word_bignum_Assign 3 (real_addr c
+           2);
+                    word_bignum_Assign 2 (wordLang_Load (wordLang_Op
+                      asm_Add [wordLang_Var 3; word_depth_Const
                       bytes_in_word]));
-                    Assign 2 (ShiftVar Lsr 2 2);
-                    CodeBufferWrite 6 2;
-                    Assign 6 (Op asm_Add [Var 6; Const (n2w 1)]);
-                    Assign 2 (wordLang_Load (Op asm_Add [Var 3; Const
-                      ((n2w 2) * bytes_in_word)]));
-                    Call NONE (SOME InstallCode_location) [0; 2;
-                      4; 6] NONE]):'a wordLang_prog)`;;
+                    word_bignum_Assign 2 (ShiftVar Lsr 2 2);
+                    wordLang_CodeBufferWrite 6 2;
+                    word_bignum_Assign 6 (wordLang_Op asm_Add
+                      [wordLang_Var 6; word_depth_Const (n2w 1)]);
+                    word_bignum_Assign 2 (wordLang_Load (wordLang_Op
+                      asm_Add [wordLang_Var 3; word_depth_Const ((n2w 2)
+                      * bytes_in_word)]));
+                    word_depth_Call NONE (SOME
+                      InstallCode_location) [0; 2; 4; 6] NONE]):'a
+                      wordLang_prog)`;;
 
 let InstallData_code_def = new_definition
   `InstallData_code c =
-        (If Test 4 (Imm (n2w 1))
-         (list_Seq [Call NONE (SOME Install_location) [0; 2; 6]
-           NONE])
-         (list_Seq [Assign 3 (real_addr c 4);
-                    Assign 4 (wordLang_Load (Op asm_Add [Var 3; Const
+        (word_bignum_If asm_Test 4 (Imm (n2w 1))
+         (data_to_word_list_Seq [word_depth_Call NONE (SOME
+           Install_location) [0; 2; 6] NONE])
+         (data_to_word_list_Seq [word_bignum_Assign 3 (real_addr c
+           4);
+                    word_bignum_Assign 4 (wordLang_Load (wordLang_Op
+                      asm_Add [wordLang_Var 3; word_depth_Const
                       bytes_in_word]));
-                    Assign 4 (real_addr c 4);
-                    Assign 4 (wordLang_Load (Op asm_Add [Var 4; Const
+                    word_bignum_Assign 4 (real_addr c 4);
+                    word_bignum_Assign 4 (wordLang_Load (wordLang_Op
+                      asm_Add [wordLang_Var 4; word_depth_Const
                       bytes_in_word]));
-                    DataBufferWrite 2 4;
-                    Assign 2 (Op asm_Add [Var 2; Const
-                      bytes_in_word]);
-                    Assign 4 (wordLang_Load (Op asm_Add [Var 3; Const
-                      ((n2w 2) * bytes_in_word)]));
-                    Call NONE (SOME InstallData_location) [0; 2;
-                      4; 6] NONE]):'a wordLang_prog)`;;
+                    wordLang_DataBufferWrite 2 4;
+                    word_bignum_Assign 2 (wordLang_Op asm_Add
+                      [wordLang_Var 2; word_depth_Const bytes_in_word]);
+                    word_bignum_Assign 4 (wordLang_Load (wordLang_Op
+                      asm_Add [wordLang_Var 3; word_depth_Const ((n2w 2)
+                      * bytes_in_word)]));
+                    word_depth_Call NONE (SOME
+                      InstallData_location) [0; 2; 4; 6] NONE]):'a
+                      wordLang_prog)`;;
 
 let compare1_code_def = new_definition
   `Compare1_code =
      // l is 2, a1 is 4, a2 is 6
-     If Equal 2 (Imm (n2w 0))
-       (Seq (Assign 2 (wordLang_Const (n2w 1))) (Return 0 [2]))
-       (list_Seq
-          [Assign 8 (wordLang_Load (Var 4));
-           Assign 9 (wordLang_Load (Var 6));
-           If Equal 8 (Reg 9)
-             (list_Seq
-                [Assign 2 (Op asm_Sub [Var 2; Const (n2w 1)]);
-                 Assign 4 (Op asm_Sub [Var 4; Const bytes_in_word]);
-                 Assign 6 (Op asm_Sub [Var 6; Const bytes_in_word]);
-                 Call NONE (SOME Compare1_location) [0; 2; 4; 6]
-                   NONE])
-             (If asm_Lower 8 (Reg 9)
-               (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return 0
-                 [2]))
-               (Seq (Assign 2 (wordLang_Const (n2w 2))) (Return 0
+     word_bignum_If asm_Equal 2 (Imm (n2w 0))
+       (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const (n2w
+         1))) (wordLang_Return 0 [2]))
+       (data_to_word_list_Seq
+          [word_bignum_Assign 8 (wordLang_Load (wordLang_Var 4));
+           word_bignum_Assign 9 (wordLang_Load (wordLang_Var 6));
+           word_bignum_If asm_Equal 8 (Reg 9)
+             (data_to_word_list_Seq
+                [word_bignum_Assign 2 (wordLang_Op asm_Sub
+                  [wordLang_Var 2; word_depth_Const (n2w 1)]);
+                 word_bignum_Assign 4 (wordLang_Op asm_Sub
+                   [wordLang_Var 4; word_depth_Const bytes_in_word]);
+                 word_bignum_Assign 6 (wordLang_Op asm_Sub
+                   [wordLang_Var 6; word_depth_Const bytes_in_word]);
+                 word_depth_Call NONE (SOME Compare1_location) [0; 2;
+                   4; 6] NONE])
+             (word_bignum_If asm_Lower 8 (Reg 9)
+               (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const
+                 (n2w 0))) (wordLang_Return 0 [2]))
+               (word_bignum_Seq (word_bignum_Assign 2
+                 (wordLang_Const (n2w 2))) (wordLang_Return 0
                  [2])))])`;;
 
 let compare_code_def = new_definition
   `Compare_code c =
      // this code can assume that the arguments (2 and 4) are not both
      // small numbers
-     If Test 2 (Imm (n2w 1))
+     word_bignum_If asm_Test 2 (Imm (n2w 1))
        (
         // 1st arg is small number, means that 2nd must be bigum
-        list_Seq [Assign 1 (wordLang_Load (real_addr c 4));
+        data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Load
+          (real_addr c 4));
                   // loads header of 2nd arg
-                  If Test 1 (Imm (n2w 16))
-                    (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return
-                      0 [2]))
-                    (Seq (Assign 2 (wordLang_Const (n2w 2))) (Return
-                      0 [2]))])
-    (If Test 4 (Imm (n2w 1))
+                  word_bignum_If asm_Test 1 (Imm (n2w 16))
+                    (word_bignum_Seq (word_bignum_Assign 2
+                      (wordLang_Const (n2w 0))) (wordLang_Return 0 [2]))
+                    (word_bignum_Seq (word_bignum_Assign 2
+                      (wordLang_Const (n2w 2))) (wordLang_Return 0
+                      [2]))])
+    (word_bignum_If asm_Test 4 (Imm (n2w 1))
        (
         // 2nd arg is small number: 1st must be bigum
-        list_Seq [Assign 1 (wordLang_Load (real_addr c 2));
+        data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Load
+          (real_addr c 2));
                   // loads header of 1st arg
-                  If Test 1 (Imm ((n2w 16):'a word))
-                    (Seq (Assign 2 (wordLang_Const (n2w 2))) (Return
-                      0 [2]))
-                    (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return
-                      0 [2]))])
-       (list_Seq [Assign 11 (real_addr c 2);
-                  Assign 1 (wordLang_Load (Var 11));
+                  word_bignum_If asm_Test 1 (Imm ((n2w 16):'a word))
+                    (word_bignum_Seq (word_bignum_Assign 2
+                      (wordLang_Const (n2w 2))) (wordLang_Return 0 [2]))
+                    (word_bignum_Seq (word_bignum_Assign 2
+                      (wordLang_Const (n2w 0))) (wordLang_Return 0
+                      [2]))])
+       (data_to_word_list_Seq [word_bignum_Assign 11 (real_addr c 2);
+                  word_bignum_Assign 1 (wordLang_Load (wordLang_Var
+                    11));
                   // loads header of 1st arg
-                  Assign 13 (real_addr c 4);
-                  Assign 3 (wordLang_Load (Var 13));
+                  word_bignum_Assign 13 (real_addr c 4);
+                  word_bignum_Assign 3 (wordLang_Load (wordLang_Var
+                    13));
                   // loads header of 2nd arg
-                  Assign 6 ((\sh e n. Shift sh e (wordLang_Const (n2w
-                    n))) Lsr (Var 1) ((dimindex (:'a) -
-                    data_to_word_config_len_size c)));
-                  Assign 8 ((\sh e n. Shift sh e (wordLang_Const (n2w
-                    n))) Lsr (Var 3) ((dimindex (:'a) -
-                    data_to_word_config_len_size c)));
-                  If Equal 1 (Reg 3)
+                  word_bignum_Assign 6 ((\sh e n. wordLang_Shift sh e
+                    (wordLang_Const (n2w n))) Lsr (wordLang_Var 1)
+                    ((dimindex (:'a) - data_to_word_config_len_size
+                    c)));
+                  word_bignum_Assign 8 ((\sh e n. wordLang_Shift sh e
+                    (wordLang_Const (n2w n))) Lsr (wordLang_Var 3)
+                    ((dimindex (:'a) - data_to_word_config_len_size
+                    c)));
+                  word_bignum_If asm_Equal 1 (Reg 3)
                     (
                      // headers are the same
-                     list_Seq
-                      [Assign 2 (Op asm_Add [Var 11; (\sh e n. Shift
-                        sh e (wordLang_Const (n2w n))) Lsl (Var 6)
+                     data_to_word_list_Seq
+                      [word_bignum_Assign 2 (wordLang_Op asm_Add
+                        [wordLang_Var 11; (\sh e n. wordLang_Shift sh e
+                        (wordLang_Const (n2w n))) Lsl (wordLang_Var 6)
                         (backend_common_word_shift (:'a))]);
-                       Assign 4 (Op asm_Add [Var 13; (\sh e n. Shift
-                         sh e (wordLang_Const (n2w n))) Lsl (Var 6)
+                       word_bignum_Assign 4 (wordLang_Op asm_Add
+                         [wordLang_Var 13; (\sh e n. wordLang_Shift sh e
+                         (wordLang_Const (n2w n))) Lsl (wordLang_Var 6)
                          (backend_common_word_shift (:'a))]);
-                       If Test 1 (Imm (n2w 16))
-                        (Call NONE (SOME Compare1_location) [0; 6; 2;
-                          4] NONE)
-                        (Call NONE (SOME Compare1_location) [0; 6; 4;
-                          2] NONE)])
+                       word_bignum_If asm_Test 1 (Imm (n2w 16))
+                        (word_depth_Call NONE (SOME
+                          Compare1_location) [0; 6; 2; 4] NONE)
+                        (word_depth_Call NONE (SOME
+                          Compare1_location) [0; 6; 4; 2] NONE)])
                     (
                      // headers are not the same
-                     If Test 1 (Imm (n2w 16))
-                       (If Test 3 (Imm (n2w 16))
-                          (If asm_Lower 6 (Reg 8)
-                             (Seq (Assign 2 (wordLang_Const (n2w 0)))
-                               (Return 0 [2]))
-                             (Seq (Assign 2 (wordLang_Const (n2w 2)))
-                               (Return 0 [2])))
-                          (Seq (Assign 2 (wordLang_Const (n2w 2)))
-                            (Return 0 [2])))
-                       (If Test 3 (Imm (n2w 16))
-                          (Seq (Assign 2 (wordLang_Const (n2w 0)))
-                            (Return 0 [2]))
-                          (If asm_Lower 6 (Reg 8)
-                             (Seq (Assign 2 (wordLang_Const (n2w 2)))
-                               (Return 0 [2]))
-                             (Seq (Assign 2 (wordLang_Const (n2w
-                               0))) (Return 0 [2])))))]))`;;
+                     word_bignum_If asm_Test 1 (Imm (n2w 16))
+                       (word_bignum_If asm_Test 3 (Imm (n2w 16))
+                          (word_bignum_If asm_Lower 6 (Reg 8)
+                             (word_bignum_Seq (word_bignum_Assign 2
+                               (wordLang_Const (n2w 0)))
+                               (wordLang_Return 0 [2]))
+                             (word_bignum_Seq (word_bignum_Assign 2
+                               (wordLang_Const (n2w 2)))
+                               (wordLang_Return 0 [2])))
+                          (word_bignum_Seq (word_bignum_Assign 2
+                            (wordLang_Const (n2w 2))) (wordLang_Return 0
+                            [2])))
+                       (word_bignum_If asm_Test 3 (Imm (n2w 16))
+                          (word_bignum_Seq (word_bignum_Assign 2
+                            (wordLang_Const (n2w 0))) (wordLang_Return 0
+                            [2]))
+                          (word_bignum_If asm_Lower 6 (Reg 8)
+                             (word_bignum_Seq (word_bignum_Assign 2
+                               (wordLang_Const (n2w 2)))
+                               (wordLang_Return 0 [2]))
+                             (word_bignum_Seq (word_bignum_Assign
+                               2 (wordLang_Const (n2w 0)))
+                               (wordLang_Return 0 [2])))))]))`;;
 
 let equal1_code_def = new_definition
   `Equal1_code =
-     list_Seq [
-       If Equal 2 (Imm (n2w 0))
-         (Seq (Assign 2 (wordLang_Const (n2w 1))) (Return 0 [2]))
-           Skip;
-       Assign 1 (wordLang_Load (Var 4));
-       Assign 3 (wordLang_Load (Var 6));
-       Call (SOME ([5],(list_insert [0; 2; 4; 6]
-         LN,LN),Skip,Equal1_location,2))
+     data_to_word_list_Seq [
+       word_bignum_If asm_Equal 2 (Imm (n2w 0))
+         (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const (n2w
+           1))) (wordLang_Return 0 [2])) word_bignum_Skip;
+       word_bignum_Assign 1 (wordLang_Load (wordLang_Var 4));
+       word_bignum_Assign 3 (wordLang_Load (wordLang_Var 6));
+       word_depth_Call (SOME ([5],(list_insert [0; 2; 4; 6]
+         LN,LN),word_bignum_Skip,Equal1_location,2))
          (SOME Equal_location) [1; 3] NONE;
-       If Equal 5 (Imm (n2w 1)) Skip (Return 0 [5]);
-       Assign 2 (Op asm_Sub [Var 2; Const (n2w 1)]);
-       Assign 4 (Op asm_Add [Var 4; Const bytes_in_word]);
-       Assign 6 (Op asm_Add [Var 6; Const bytes_in_word]);
-       Call NONE (SOME Equal1_location) [0; 2; 4; 6] NONE]`;;
+       word_bignum_If asm_Equal 5 (Imm (n2w 1)) word_bignum_Skip
+         (wordLang_Return 0 [5]);
+       word_bignum_Assign 2 (wordLang_Op asm_Sub [wordLang_Var 2;
+         word_depth_Const (n2w 1)]);
+       word_bignum_Assign 4 (wordLang_Op asm_Add [wordLang_Var 4;
+         word_depth_Const bytes_in_word]);
+       word_bignum_Assign 6 (wordLang_Op asm_Add [wordLang_Var 6;
+         word_depth_Const bytes_in_word]);
+       word_depth_Call NONE (SOME Equal1_location) [0; 2; 4; 6]
+         NONE]`;;
 
 let equal_code_def = new_definition
   `Equal_code c =
-     list_Seq [
-       If Equal 2 (Reg 4)
-         (Seq (Assign 2 (wordLang_Const ((n2w 1):'a word))) (Return 0
-           [2])) Skip;
-       Assign 1 (Op And [Var 2; Var 4]);
-       If Test 1 (Imm (n2w 1))
-         (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return 0 [2]))
-           Skip;
-       Assign 20 (real_addr c 2);
-       Assign 40 (real_addr c 4);
-       Assign 21 (wordLang_Load (Var 20));
-       Assign 41 (wordLang_Load (Var 40));
-       If Test 21 (Imm (n2w 0b1100)) (list_Seq
-           [Assign 1 (Op And [Var 21; Const (tag_mask c || (n2w
-             2))]);
-            If Equal 1 (Imm (n2w (16 * closure_tag + 2)))
-              (Seq (Assign 2 (wordLang_Const (n2w 1))) (Return 0
-                [2])) Skip;
-            If Equal 1 (Imm (n2w (16 * partial_app_tag + 2)))
-              (Seq (Assign 2 (wordLang_Const (n2w 1))) (Return 0
-                [2])) Skip;
-            If Equal 21 (Reg 41)
-              Skip (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return 0
-                [2]));
-            Assign 6 (ShiftVar Lsr 21 ((dimindex (:'a) -
+     data_to_word_list_Seq [
+       word_bignum_If asm_Equal 2 (Reg 4)
+         (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const ((n2w
+           1):'a word))) (wordLang_Return 0 [2])) word_bignum_Skip;
+       word_bignum_Assign 1 (wordLang_Op asm_And [wordLang_Var 2;
+         wordLang_Var 4]);
+       word_bignum_If asm_Test 1 (Imm (n2w 1))
+         (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const (n2w
+           0))) (wordLang_Return 0 [2])) word_bignum_Skip;
+       word_bignum_Assign 20 (real_addr c 2);
+       word_bignum_Assign 40 (real_addr c 4);
+       word_bignum_Assign 21 (wordLang_Load (wordLang_Var 20));
+       word_bignum_Assign 41 (wordLang_Load (wordLang_Var 40));
+       word_bignum_If asm_Test 21 (Imm (n2w 0b1100))
+         (data_to_word_list_Seq
+           [word_bignum_Assign 1 (wordLang_Op asm_And [wordLang_Var
+             21; word_depth_Const (tag_mask c || (n2w 2))]);
+            word_bignum_If asm_Equal 1 (Imm (n2w (16 * closure_tag +
+              2)))
+              (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const
+                (n2w 1))) (wordLang_Return 0 [2])) word_bignum_Skip;
+            word_bignum_If asm_Equal 1 (Imm (n2w (16 *
+              partial_app_tag + 2)))
+              (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const
+                (n2w 1))) (wordLang_Return 0 [2])) word_bignum_Skip;
+            word_bignum_If asm_Equal 21 (Reg 41)
+              word_bignum_Skip (word_bignum_Seq (word_bignum_Assign 2
+                (wordLang_Const (n2w 0))) (wordLang_Return 0 [2]));
+            word_bignum_Assign 6 (ShiftVar Lsr 21 ((dimindex (:'a) -
               data_to_word_config_len_size c)));
-            Assign 20 (Op asm_Add [Var 20; Const bytes_in_word]);
-            Assign 40 (Op asm_Add [Var 40; Const bytes_in_word]);
-            Call NONE (SOME Equal1_location) [0; 6; 20; 40] NONE])
-         Skip;
-       If Equal 21 (Reg 41) Skip
-         (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return 0 [2]));
-       If Test 21 (Imm (n2w 4))
-         (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return 0 [2]))
-           Skip;
-       Assign 1 (Op And [Var 21; Const (n2w 24)]);
-       If Equal 1 (Imm (n2w 16))
-         (Seq (Assign 2 (wordLang_Const (n2w 0))) (Return 0 [2]))
-           Skip;
-       Assign 6 (ShiftVar Lsr 21 ((dimindex (:'a) -
+            word_bignum_Assign 20 (wordLang_Op asm_Add [wordLang_Var
+              20; word_depth_Const bytes_in_word]);
+            word_bignum_Assign 40 (wordLang_Op asm_Add [wordLang_Var
+              40; word_depth_Const bytes_in_word]);
+            word_depth_Call NONE (SOME Equal1_location) [0; 6; 20;
+              40] NONE])
+         word_bignum_Skip;
+       word_bignum_If asm_Equal 21 (Reg 41) word_bignum_Skip
+         (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const (n2w
+           0))) (wordLang_Return 0 [2]));
+       word_bignum_If asm_Test 21 (Imm (n2w 4))
+         (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const (n2w
+           0))) (wordLang_Return 0 [2])) word_bignum_Skip;
+       word_bignum_Assign 1 (wordLang_Op asm_And [wordLang_Var 21;
+         word_depth_Const (n2w 24)]);
+       word_bignum_If asm_Equal 1 (Imm (n2w 16))
+         (word_bignum_Seq (word_bignum_Assign 2 (wordLang_Const (n2w
+           0))) (wordLang_Return 0 [2])) word_bignum_Skip;
+       word_bignum_Assign 6 (ShiftVar Lsr 21 ((dimindex (:'a) -
          data_to_word_config_len_size c)));
-       Assign 2 (Op asm_Add [Var 20; ShiftVar Lsl 6
-         (backend_common_word_shift (:'a))]);
-       Assign 4 (Op asm_Add [Var 40; ShiftVar Lsl 6
-         (backend_common_word_shift (:'a))]);
-       Call NONE (SOME Compare1_location) [0; 6; 2; 4] NONE]`;;
+       word_bignum_Assign 2 (wordLang_Op asm_Add [wordLang_Var 20;
+         ShiftVar Lsl 6 (backend_common_word_shift (:'a))]);
+       word_bignum_Assign 4 (wordLang_Op asm_Add [wordLang_Var 40;
+         ShiftVar Lsl 6 (backend_common_word_shift (:'a))]);
+       word_depth_Call NONE (SOME Compare1_location) [0; 6; 2; 4]
+         NONE]`;;
 
 let LongDiv_code_def = new_definition
   `LongDiv_code c =
      (if data_to_word_config_has_longdiv c then
-       list_Seq [Inst (Arith (asm_LongDiv 1 3 2 4 6));
-                 Set (Temp (n2w 28)) (Var 3);
-                 Return 0 [1]] else
-       Seq (Assign 10 (wordLang_Const ((n2w 0):'a word)))
-      (Seq (Assign 11 (wordLang_Const (n2w (dimindex (:'a)))))
-           (Call NONE (SOME LongDiv1_location) [0; 11; 6; 10; 10;
-             4; 2] NONE)))`;;
+       data_to_word_list_Seq [wordLang_Inst (asm_Arith (asm_LongDiv 1
+         3 2 4 6));
+                 wordLang_Set (Temp (n2w 28)) (wordLang_Var 3);
+                 wordLang_Return 0 [1]] else
+       word_bignum_Seq (word_bignum_Assign 10 (wordLang_Const ((n2w
+         0):'a word)))
+      (word_bignum_Seq (word_bignum_Assign 11 (wordLang_Const (n2w
+        (dimindex (:'a)))))
+           (word_depth_Call NONE (SOME LongDiv1_location) [0; 11;
+             6; 10; 10; 4; 2] NONE)))`;;
 
 let LongDiv1_code_def = new_definition
   `LongDiv1_code c =
-     (if data_to_word_config_has_longdiv c then Skip else
+     (if data_to_word_config_has_longdiv c then word_bignum_Skip else
        // the following code is based on multiwordTheory.single_div_loop_def
-       If Test 2 (Reg 2)
-         (Seq (Set (Temp (n2w 28)) (Var 10):'a wordLang_prog) (Return
-           0 [8]))
-         (list_Seq [Assign 6 (Op asm_Or [ShiftVar Lsr 6 1;
+       word_bignum_If asm_Test 2 (Reg 2)
+         (word_bignum_Seq (wordLang_Set (Temp (n2w 28)) (wordLang_Var
+           10):'a wordLang_prog) (wordLang_Return 0 [8]))
+         (data_to_word_list_Seq [word_bignum_Assign 6 (wordLang_Op
+           asm_Or [ShiftVar Lsr 6 1;
                               ShiftVar Lsl 4 (dimindex (:'a) - 1)]);
-                    Assign 4 (ShiftVar Lsr 4 1);
-                    Assign 8 (ShiftVar Lsl 8 1);
-                    Assign 2 (Op asm_Sub [Var 2; Const ((n2w 1):'a
+                    word_bignum_Assign 4 (ShiftVar Lsr 4 1);
+                    word_bignum_Assign 8 (ShiftVar Lsl 8 1);
+                    word_bignum_Assign 2 (wordLang_Op asm_Sub
+                      [wordLang_Var 2; word_depth_Const ((n2w 1):'a
                       word)]);
-                    If asm_Lower 12 (Reg 4)
-                      (Call NONE (SOME LongDiv1_location)
-                        [0; 2; 4; 6; 8; 10; 12] NONE) Skip;
-                    If Equal 12 (Reg 4)
-                      (If asm_Lower 10 (Reg 6)
-                         (Call NONE (SOME LongDiv1_location)
-                            [0; 2; 4; 6; 8; 10; 12] NONE) Skip) Skip;
-                    Assign 8 (Op asm_Add [Var 8; Const (n2w 1)]);
-                    Assign 16 (Op Xor [Var 6; Const (--(n2w 1))]);
-                    Assign 14 (Op Xor [Var 4; Const (--(n2w 1))]);
-                    Assign 1 (wordLang_Const (n2w 1));
-                    Inst (Arith (asm_AddCarry 10 10 16 1));
-                    Inst (Arith (asm_AddCarry 12 12 14 1));
-                    Call NONE (SOME LongDiv1_location) [0; 2; 4;
-                      6; 8; 10; 12] NONE]))`;;
+                    word_bignum_If asm_Lower 12 (Reg 4)
+                      (word_depth_Call NONE (SOME LongDiv1_location)
+                        [0; 2; 4; 6; 8; 10; 12] NONE)
+                          word_bignum_Skip;
+                    word_bignum_If asm_Equal 12 (Reg 4)
+                      (word_bignum_If asm_Lower 10 (Reg 6)
+                         (word_depth_Call NONE (SOME
+                           LongDiv1_location)
+                            [0; 2; 4; 6; 8; 10; 12] NONE)
+                              word_bignum_Skip) word_bignum_Skip;
+                    word_bignum_Assign 8 (wordLang_Op asm_Add
+                      [wordLang_Var 8; word_depth_Const (n2w 1)]);
+                    word_bignum_Assign 16 (wordLang_Op
+                      backend_common_Xor [wordLang_Var 6;
+                      word_depth_Const (--(n2w 1))]);
+                    word_bignum_Assign 14 (wordLang_Op
+                      backend_common_Xor [wordLang_Var 4;
+                      word_depth_Const (--(n2w 1))]);
+                    word_bignum_Assign 1 (wordLang_Const (n2w 1));
+                    wordLang_Inst (asm_Arith (asm_AddCarry 10 10 16
+                      1));
+                    wordLang_Inst (asm_Arith (asm_AddCarry 12 12 14
+                      1));
+                    word_depth_Call NONE (SOME LongDiv1_location)
+                      [0; 2; 4; 6; 8; 10; 12] NONE]))`;;
 
 let append_code_def = new_definition
   `Append_code c =
-     (match encode_header c 0 2 with NONE -> (Skip:'a wordLang_prog)
-       | SOME (header:'a word) ->
-         If Test 4 (Imm (n2w 1)) (Return 0 [2])
-           (list_Seq
-             [Set (Temp (n2w 0)) (Var 2);
-              Set (Temp (n2w 1)) (Var 4);
-              Assign 1 (wordLang_Lookup NextFree);
-              Assign 3 (wordLang_Const header);
-              Assign 5 (Op asm_Sub [wordLang_Lookup TriggerGC; Var
-                1]);
-              Assign 7 (Op asm_Or [(\sh e n. Shift sh e
-                (wordLang_Const (n2w n))) Lsl (Op asm_Sub [Var 1;
-                wordLang_Lookup CurrHeap])
+     (match encode_header c 0 2 with NONE -> (word_bignum_Skip:'a
+       wordLang_prog) | SOME (header:'a word) ->
+         word_bignum_If asm_Test 4 (Imm (n2w 1)) (wordLang_Return 0
+           [2])
+           (data_to_word_list_Seq
+             [wordLang_Set (Temp (n2w 0)) (wordLang_Var 2);
+              wordLang_Set (Temp (n2w 1)) (wordLang_Var 4);
+              word_bignum_Assign 1 (wordLang_Lookup NextFree);
+              word_bignum_Assign 3 (wordLang_Const header);
+              word_bignum_Assign 5 (wordLang_Op asm_Sub
+                [wordLang_Lookup TriggerGC; wordLang_Var 1]);
+              word_bignum_Assign 7 (wordLang_Op asm_Or [(\sh e n.
+                wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl
+                (wordLang_Op asm_Sub [wordLang_Var 1; wordLang_Lookup
+                CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
-                              Const ((n2w 1) || (word_bits
+                              word_depth_Const ((n2w 1) || (word_bits
                                 (small_shift_length c - 1) 0)
                               (ptr_bits c 0 2))]);
-              Set (Temp (n2w 2)) (Var 7);
-              Call NONE (SOME AppendMainLoop_location) [0; 1; 4;
-                3; 5; 7] NONE]))`;;
+              wordLang_Set (Temp (n2w 2)) (wordLang_Var 7);
+              word_depth_Call NONE (SOME AppendMainLoop_location)
+                [0; 1; 4; 3; 5; 7] NONE]))`;;
 
 let AppendMainLoop_code_def = new_definition
   `AppendMainLoop_code c =
-     (list_Seq
-       [Assign 1 (real_addr c 4);
-        Assign 3 (wordLang_Load (Op asm_Add [Var 1; Const
-          bytes_in_word]));
-        Assign 5 (wordLang_Load (Op asm_Add [Var 1; Const ((n2w 2) *
+     (data_to_word_list_Seq
+       [word_bignum_Assign 1 (real_addr c 4);
+        word_bignum_Assign 3 (wordLang_Load (wordLang_Op asm_Add
+          [wordLang_Var 1; word_depth_Const bytes_in_word]));
+        word_bignum_Assign 5 (wordLang_Load (wordLang_Op asm_Add
+          [wordLang_Var 1; word_depth_Const ((n2w 2) *
           bytes_in_word)]));
-        If asm_Lower 8 (Imm ((n2w 3) * bytes_in_word))
+        word_bignum_If asm_Lower 8 (Imm ((n2w 3) * bytes_in_word))
           (
            // unlucky case: GC is needed
-           Seq (Assign 1 (wordLang_Const (n2w 0)))
-               (Call NONE (SOME AppendLenLoop_location) [0; 4; 1]
-                 NONE)) Skip;
-        Store (Var 2) 6;
-        Store (Op asm_Add [Var 2; Const bytes_in_word]) 3;
-        If Test 5 (Imm (n2w 1)) Skip
+           word_bignum_Seq (word_bignum_Assign 1 (wordLang_Const (n2w
+             0)))
+               (word_depth_Call NONE (SOME AppendLenLoop_location)
+                 [0; 4; 1] NONE)) word_bignum_Skip;
+        word_bignum_Store (wordLang_Var 2) 6;
+        word_bignum_Store (wordLang_Op asm_Add [wordLang_Var 2;
+          word_depth_Const bytes_in_word]) 3;
+        word_bignum_If asm_Test 5 (Imm (n2w 1)) word_bignum_Skip
           (
            // cons case:
-           list_Seq
-            [Assign 10 (Op asm_Add [Var 10;
-               Const (n2w (3 * 2 EXP shift_length c))]);
-             Assign 8 (Op asm_Sub [Var 8; Const ((n2w 3) *
-               bytes_in_word)]);
-             Store (Op asm_Add [Var 2; Const ((n2w 2) *
-               bytes_in_word)]) 10;
-             Assign 2 (Op asm_Add [Var 2; Const ((n2w 3) *
-               bytes_in_word)]);
-             Call NONE (SOME AppendMainLoop_location) [0; 2; 5; 6; 8;
-               10] NONE]);
+           data_to_word_list_Seq
+            [word_bignum_Assign 10 (wordLang_Op asm_Add [wordLang_Var
+              10;
+               word_depth_Const (n2w (3 * 2 EXP shift_length c))]);
+             word_bignum_Assign 8 (wordLang_Op asm_Sub [wordLang_Var
+               8; word_depth_Const ((n2w 3) * bytes_in_word)]);
+             word_bignum_Store (wordLang_Op asm_Add [wordLang_Var 2;
+               word_depth_Const ((n2w 2) * bytes_in_word)]) 10;
+             word_bignum_Assign 2 (wordLang_Op asm_Add [wordLang_Var
+               2; word_depth_Const ((n2w 3) * bytes_in_word)]);
+             word_depth_Call NONE (SOME AppendMainLoop_location) [0;
+               2; 5; 6; 8; 10] NONE]);
         // nil case
-        Assign 1 (wordLang_Lookup (Temp (n2w 0)));
+        word_bignum_Assign 1 (wordLang_Lookup (Temp (n2w 0)));
         // arg 2 to append
-        Assign 3 (wordLang_Lookup (Temp (n2w 2)));
+        word_bignum_Assign 3 (wordLang_Lookup (Temp (n2w 2)));
         // ret value
-        Store (Op asm_Add [Var 2; Const ((n2w 2) * bytes_in_word)])
-          1;
-        Set NextFree (Op asm_Add [Var 2; Const ((n2w 3) *
-          bytes_in_word)]);
-        Return 0 [3]]:'a wordLang_prog)`;;
+        word_bignum_Store (wordLang_Op asm_Add [wordLang_Var 2;
+          word_depth_Const ((n2w 2) * bytes_in_word)]) 1;
+        wordLang_Set NextFree (wordLang_Op asm_Add [wordLang_Var 2;
+          word_depth_Const ((n2w 3) * bytes_in_word)]);
+        wordLang_Return 0 [3]]:'a wordLang_prog)`;;
 
 let AppendLenLoop_code_def = new_definition
   `AppendLenLoop_code c =
-     If Test 2 (Imm (n2w 1))
-       (list_Seq
-         [Assign 1 (Op asm_Sub [wordLang_Lookup TriggerGC;
-           wordLang_Lookup NextFree]);
-          Assign 1 (Op asm_Add [Var 4; ShiftVar Lsr 1
-            (backend_common_word_shift (:'a) - 2)]);
-          Assign 4 (wordLang_Lookup (Temp (n2w 0)));
-          Assign 2 (wordLang_Lookup (Temp (n2w 1)));
+     word_bignum_If asm_Test 2 (Imm (n2w 1))
+       (data_to_word_list_Seq
+         [word_bignum_Assign 1 (wordLang_Op asm_Sub [wordLang_Lookup
+           TriggerGC; wordLang_Lookup NextFree]);
+          word_bignum_Assign 1 (wordLang_Op asm_Add [wordLang_Var 4;
+            ShiftVar Lsr 1 (backend_common_word_shift (:'a) - 2)]);
+          word_bignum_Assign 4 (wordLang_Lookup (Temp (n2w 0)));
+          word_bignum_Assign 2 (wordLang_Lookup (Temp (n2w 1)));
           AllocVar c (dimword (:'a) DIV 8 - 1) (sptree_fromList [one;
             one]);
-          Call NONE (SOME Append_location) [0; 4; 2] NONE])
-       (list_Seq
-         [Assign 2 (wordLang_Load (Op asm_Add [real_addr c 2; Const
-           ((n2w 2) * bytes_in_word)]));
-          Assign 4 (Op asm_Add [Var 4; Const ((n2w 12):'a word)]);
-          Call NONE (SOME AppendLenLoop_location) [0; 2; 4] NONE])`;;
+          word_depth_Call NONE (SOME Append_location) [0; 4; 2]
+            NONE])
+       (data_to_word_list_Seq
+         [word_bignum_Assign 2 (wordLang_Load (wordLang_Op asm_Add
+           [real_addr c 2; word_depth_Const ((n2w 2) *
+           bytes_in_word)]));
+          word_bignum_Assign 4 (wordLang_Op asm_Add [wordLang_Var 4;
+            word_depth_Const ((n2w 12):'a word)]);
+          word_depth_Call NONE (SOME AppendLenLoop_location) [0;
+            2; 4] NONE])`;;
 
 let XorLoop_code_def = new_definition
   `XorLoop_code =
-     (If asm_Lower 6 (Imm (n2w 2))
-       (If Equal 6 (Imm (n2w 0))
-          (list_Seq [Assign 1 (wordLang_Const (n2w 2));
-                     Return 0 [1]])
-          (list_Seq [Assign 5 (wordLang_Load (Var 4));
-                     Assign 3 (wordLang_Load (Var 2));
-                     Assign 7 (Op Xor [Var 5; Var 3]);
-                     Store (Var 2) 7;
-                     Assign 1 (wordLang_Const (n2w 2));
-                     Return 0 [1]]))
-       (list_Seq [Assign 5 (wordLang_Load (Var 4));
-                  Assign 3 (wordLang_Load (Var 2));
-                  Assign 9 (wordLang_Load (Op asm_Add [Var 4; Const
+     (word_bignum_If asm_Lower 6 (Imm (n2w 2))
+       (word_bignum_If asm_Equal 6 (Imm (n2w 0))
+          (data_to_word_list_Seq [word_bignum_Assign 1
+            (wordLang_Const (n2w 2));
+                     wordLang_Return 0 [1]])
+          (data_to_word_list_Seq [word_bignum_Assign 5 (wordLang_Load
+            (wordLang_Var 4));
+                     word_bignum_Assign 3 (wordLang_Load
+                       (wordLang_Var 2));
+                     word_bignum_Assign 7 (wordLang_Op
+                       backend_common_Xor [wordLang_Var 5; wordLang_Var
+                       3]);
+                     word_bignum_Store (wordLang_Var 2) 7;
+                     word_bignum_Assign 1 (wordLang_Const (n2w 2));
+                     wordLang_Return 0 [1]]))
+       (data_to_word_list_Seq [word_bignum_Assign 5 (wordLang_Load
+         (wordLang_Var 4));
+                  word_bignum_Assign 3 (wordLang_Load (wordLang_Var
+                    2));
+                  word_bignum_Assign 9 (wordLang_Load (wordLang_Op
+                    asm_Add [wordLang_Var 4; word_depth_Const
                     bytes_in_word]));
-                  Assign 7 (wordLang_Load (Op asm_Add [Var 2; Const
+                  word_bignum_Assign 7 (wordLang_Load (wordLang_Op
+                    asm_Add [wordLang_Var 2; word_depth_Const
                     bytes_in_word]));
-                  Assign 6 (Op asm_Sub [Var 6; Const (n2w 2)]);
-                  Assign 5 (Op Xor [Var 5; Var 3]);
-                  Assign 9 (Op Xor [Var 9; Var 7]);
-                  Store (Var 2) 5;
-                  Store (Op asm_Add [Var 2; Const bytes_in_word]) 9;
-                  Assign 4 (Op asm_Add [Var 4; Const ((n2w 2) *
+                  word_bignum_Assign 6 (wordLang_Op asm_Sub
+                    [wordLang_Var 6; word_depth_Const (n2w 2)]);
+                  word_bignum_Assign 5 (wordLang_Op
+                    backend_common_Xor [wordLang_Var 5; wordLang_Var
+                    3]);
+                  word_bignum_Assign 9 (wordLang_Op
+                    backend_common_Xor [wordLang_Var 9; wordLang_Var
+                    7]);
+                  word_bignum_Store (wordLang_Var 2) 5;
+                  word_bignum_Store (wordLang_Op asm_Add
+                    [wordLang_Var 2; word_depth_Const bytes_in_word]) 9;
+                  word_bignum_Assign 4 (wordLang_Op asm_Add
+                    [wordLang_Var 4; word_depth_Const ((n2w 2) *
                     bytes_in_word)]);
-                  Assign 2 (Op asm_Add [Var 2; Const ((n2w 2) *
+                  word_bignum_Assign 2 (wordLang_Op asm_Add
+                    [wordLang_Var 2; word_depth_Const ((n2w 2) *
                     bytes_in_word)]);
-                  Call NONE (SOME XorLoop_location) [0; 2; 4; 6]
-                    NONE]):'a wordLang_prog)`;;
+                  word_depth_Call NONE (SOME XorLoop_location) [0;
+                    2; 4; 6] NONE]):'a wordLang_prog)`;;
 
 let StringCmpLoop_code_def = new_definition
   `StringCmpLoop_code =
-     (If Equal 6 (Imm bytes_in_word)
-       (Return 0 [8; 10])
-       (list_Seq
-          [Inst (asm_Mem asm_Load8 1 (Addr 2 (n2w 0)));
-           Inst (asm_Mem asm_Load8 3 (Addr 4 (n2w 0)));
-           If asm_NotEqual 1 (Reg 3) (Return 0 [1; 3]) Skip;
-           Assign 2 (Op asm_Add [Var 2; Const (n2w 1)]);
-           Assign 4 (Op asm_Add [Var 4; Const (n2w 1)]);
-           Assign 6 (Op asm_Sub [Var 6; Const (n2w 1)]);
-           Call NONE (SOME StringCmpLoop_location) [0; 2; 4; 6; 8;
-             10] NONE]):'a wordLang_prog)`;;
+     (word_bignum_If asm_Equal 6 (Imm bytes_in_word)
+       (wordLang_Return 0 [8; 10])
+       (data_to_word_list_Seq
+          [wordLang_Inst (asm_Mem asm_Load8 1 (Addr 2 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Load8 3 (Addr 4 (n2w 0)));
+           word_bignum_If asm_NotEqual 1 (Reg 3) (wordLang_Return 0
+             [1; 3]) word_bignum_Skip;
+           word_bignum_Assign 2 (wordLang_Op asm_Add [wordLang_Var 2;
+             word_depth_Const (n2w 1)]);
+           word_bignum_Assign 4 (wordLang_Op asm_Add [wordLang_Var 4;
+             word_depth_Const (n2w 1)]);
+           word_bignum_Assign 6 (wordLang_Op asm_Sub [wordLang_Var 6;
+             word_depth_Const (n2w 1)]);
+           word_depth_Call NONE (SOME StringCmpLoop_location) [0;
+             2; 4; 6; 8; 10] NONE]):'a wordLang_prog)`;;
 
 let data_to_word_get_names_def = define_cases
   [`data_to_word_get_names NONE = LN`;
    `data_to_word_get_names (SOME x) = x`];;
-hol4_overload "get_names" "data_to_word_get_names";;
 
 let LoadWord64_def = new_definition
   `LoadWord64 c i j =
-     (Assign i (wordLang_Load (Op asm_Add [real_addr c j; Const
-       bytes_in_word])):'a wordLang_prog)`;;
+     (word_bignum_Assign i (wordLang_Load (wordLang_Op asm_Add
+       [real_addr c j; word_depth_Const bytes_in_word])):'a
+       wordLang_prog)`;;
 
 let LoadBignum_def = new_definition
-  `LoadBignum c header word1' k = (list_Seq [
-     Assign word1' (real_addr c k);
-     Assign header (wordLang_Load (Var word1'));
-     Assign word1' (wordLang_Load (Op asm_Add [Var word1'; Const
-       bytes_in_word]))]:'a wordLang_prog)`;;
+  `LoadBignum c header word1' k = (data_to_word_list_Seq [
+     word_bignum_Assign word1' (real_addr c k);
+     word_bignum_Assign header (wordLang_Load (wordLang_Var word1'));
+     word_bignum_Assign word1' (wordLang_Load (wordLang_Op asm_Add
+       [wordLang_Var word1'; word_depth_Const bytes_in_word]))]:'a
+       wordLang_prog)`;;
 
 let WriteWord64_def = new_definition
   `// also works for storing bignums of length 1
    WriteWord64 c (header:'a word) dest i =
-     (list_Seq [Assign 1 (wordLang_Lookup NextFree);
-               Store (Op asm_Add [Var 1; Const bytes_in_word]) i;
-               Assign 3 (wordLang_Const header);
-               Store (Var 1) 3;
-               Set NextFree (Op asm_Add [Var 1; Const ((n2w 2) *
+     (data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Lookup
+       NextFree);
+               word_bignum_Store (wordLang_Op asm_Add [wordLang_Var
+                 1; word_depth_Const bytes_in_word]) i;
+               word_bignum_Assign 3 (wordLang_Const header);
+               word_bignum_Store (wordLang_Var 1) 3;
+               wordLang_Set NextFree (wordLang_Op asm_Add
+                 [wordLang_Var 1; word_depth_Const ((n2w 2) *
                  bytes_in_word)]);
-               Assign (adjust_var dest)
-                 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
-                   (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
-                   CurrHeap])
+               word_bignum_Assign (adjust_var dest)
+                 (wordLang_Op asm_Or [(\sh e n. wordLang_Shift sh e
+                   (wordLang_Const (n2w n))) Lsl (wordLang_Op asm_Sub
+                   [wordLang_Var 1; wordLang_Lookup CurrHeap])
                            (shift_length c -
                              backend_common_word_shift (:'a));
-                         Const (n2w 1)])]:'a wordLang_prog)`;;
+                         word_depth_Const (n2w 1)])]:'a
+                           wordLang_prog)`;;
 
 let WriteWord64_on_32_def = new_definition
   `WriteWord64_on_32 c (header:'a word) dest i1 i2 =
-     (list_Seq [Assign 1 (wordLang_Lookup NextFree);
-               Store (Op asm_Add [Var 1; Const bytes_in_word]) i2;
-               Store (Op asm_Add [Var 1; Const ((n2w 2) *
-                 bytes_in_word)]) i1;
-               Assign 3 (wordLang_Const header);
-               Store (Var 1) 3;
-               Set NextFree (Op asm_Add [Var 1; Const ((n2w 3) *
+     (data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Lookup
+       NextFree);
+               word_bignum_Store (wordLang_Op asm_Add [wordLang_Var
+                 1; word_depth_Const bytes_in_word]) i2;
+               word_bignum_Store (wordLang_Op asm_Add [wordLang_Var
+                 1; word_depth_Const ((n2w 2) * bytes_in_word)]) i1;
+               word_bignum_Assign 3 (wordLang_Const header);
+               word_bignum_Store (wordLang_Var 1) 3;
+               wordLang_Set NextFree (wordLang_Op asm_Add
+                 [wordLang_Var 1; word_depth_Const ((n2w 3) *
                  bytes_in_word)]);
-               Assign (adjust_var dest)
-                 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
-                   (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
-                   CurrHeap])
+               word_bignum_Assign (adjust_var dest)
+                 (wordLang_Op asm_Or [(\sh e n. wordLang_Shift sh e
+                   (wordLang_Const (n2w n))) Lsl (wordLang_Op asm_Sub
+                   [wordLang_Var 1; wordLang_Lookup CurrHeap])
                            (shift_length c -
                              backend_common_word_shift (:'a));
-                         Const (n2w 1)])]:'a wordLang_prog)`;;
+                         word_depth_Const (n2w 1)])]:'a
+                           wordLang_prog)`;;
 
 let WriteWord32_on_32_def = new_definition
   `WriteWord32_on_32 c header dest i1 =
-      list_Seq
-        [Assign 1 (wordLang_Lookup NextFree);
-         Store (Op asm_Add [Var 1; Const bytes_in_word]) i1;
-         Assign 3 (wordLang_Const header); Store (Var 1) 3;
-         Set NextFree (Op asm_Add [Var 1; Const ((n2w 2) *
-           bytes_in_word)]);
-         Assign (adjust_var dest)
-           (Op asm_Or
-              [(\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl (Op
-                asm_Sub [Var 1; wordLang_Lookup CurrHeap])
+      data_to_word_list_Seq
+        [word_bignum_Assign 1 (wordLang_Lookup NextFree);
+         word_bignum_Store (wordLang_Op asm_Add [wordLang_Var 1;
+           word_depth_Const bytes_in_word]) i1;
+         word_bignum_Assign 3 (wordLang_Const header);
+           word_bignum_Store (wordLang_Var 1) 3;
+         wordLang_Set NextFree (wordLang_Op asm_Add [wordLang_Var 1;
+           word_depth_Const ((n2w 2) * bytes_in_word)]);
+         word_bignum_Assign (adjust_var dest)
+           (wordLang_Op asm_Or
+              [(\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                n))) Lsl (wordLang_Op asm_Sub [wordLang_Var 1;
+                wordLang_Lookup CurrHeap])
                  (shift_length c - backend_common_word_shift
-                   (:'a)); Const ((n2w 1):'a word)])]`;;
+                   (:'a)); word_depth_Const ((n2w 1):'a word)])]`;;
 
 let WordOp64_on_32_def = new_definition
   `WordOp64_on_32 (opw:opw) =
-     (match opw with backend_common_Andw -> list_Seq [Assign 29
-       (wordLang_Const (n2w 0));
-                         Assign 27 (wordLang_Const (n2w 0));
-                         Assign 33 (Op And [Var 13; Var 23]);
-                         Assign 31 (Op And [Var 11; Var 21])] |
-                           backend_common_Orw -> list_Seq [Assign 29
-                           (wordLang_Const (n2w 0));
-                         Assign 27 (wordLang_Const (n2w 0));
-                         Assign 33 (Op asm_Or [Var 13; Var 23]);
-                         Assign 31 (Op asm_Or [Var 11; Var 21])] |
-                           Xor -> list_Seq [Assign 29 (wordLang_Const
-                           (n2w 0));
-                         Assign 27 (wordLang_Const (n2w 0));
-                         Assign 33 (Op Xor [Var 13; Var 23]);
-                         Assign 31 (Op Xor [Var 11; Var 21])] | Add
-                           -> list_Seq [Assign 29 (wordLang_Const (n2w
+     (match opw with backend_common_Andw -> data_to_word_list_Seq
+       [word_bignum_Assign 29 (wordLang_Const (n2w 0));
+                         word_bignum_Assign 27 (wordLang_Const (n2w
                            0));
-                         Assign 27 (wordLang_Const (n2w 0));
-                         Inst (Arith (asm_AddCarry 33 13 23 29));
-                         Inst (Arith (asm_AddCarry 31 11 21 29))] |
-                           Sub -> list_Seq [Assign 29 (wordLang_Const
-                           (n2w 1));
-                         Assign 27 (Op Xor [Const (--(n2w 1)); Var
-                           23]);
-                         Inst (Arith (asm_AddCarry 33 13 27 29));
-                         Assign 27 (Op Xor [Const (--(n2w 1)); Var
-                           21]);
-                         Inst (Arith (asm_AddCarry 31 11 27 29))])`;;
+                         word_bignum_Assign 33 (wordLang_Op asm_And
+                           [wordLang_Var 13; wordLang_Var 23]);
+                         word_bignum_Assign 31 (wordLang_Op asm_And
+                           [wordLang_Var 11; wordLang_Var 21])] |
+                           backend_common_Orw -> data_to_word_list_Seq
+                           [word_bignum_Assign 29 (wordLang_Const (n2w
+                           0));
+                         word_bignum_Assign 27 (wordLang_Const (n2w
+                           0));
+                         word_bignum_Assign 33 (wordLang_Op asm_Or
+                           [wordLang_Var 13; wordLang_Var 23]);
+                         word_bignum_Assign 31 (wordLang_Op asm_Or
+                           [wordLang_Var 11; wordLang_Var 21])] |
+                           backend_common_Xor -> data_to_word_list_Seq
+                           [word_bignum_Assign 29 (wordLang_Const (n2w
+                           0));
+                         word_bignum_Assign 27 (wordLang_Const (n2w
+                           0));
+                         word_bignum_Assign 33 (wordLang_Op
+                           backend_common_Xor [wordLang_Var 13;
+                           wordLang_Var 23]);
+                         word_bignum_Assign 31 (wordLang_Op
+                           backend_common_Xor [wordLang_Var 11;
+                           wordLang_Var 21])] | word_bignum_Add ->
+                           data_to_word_list_Seq [word_bignum_Assign 29
+                           (wordLang_Const (n2w 0));
+                         word_bignum_Assign 27 (wordLang_Const (n2w
+                           0));
+                         wordLang_Inst (asm_Arith (asm_AddCarry 33 13
+                           23 29));
+                         wordLang_Inst (asm_Arith (asm_AddCarry 31 11
+                           21 29))] | word_bignum_Sub ->
+                           data_to_word_list_Seq [word_bignum_Assign 29
+                           (wordLang_Const (n2w 1));
+                         word_bignum_Assign 27 (wordLang_Op
+                           backend_common_Xor [word_depth_Const (--(n2w
+                           1)); wordLang_Var 23]);
+                         wordLang_Inst (asm_Arith (asm_AddCarry 33 13
+                           27 29));
+                         word_bignum_Assign 27 (wordLang_Op
+                           backend_common_Xor [word_depth_Const (--(n2w
+                           1)); wordLang_Var 21]);
+                         wordLang_Inst (asm_Arith (asm_AddCarry 31
+                           11 27 29))])`;;
 
 let WordShift64_on_32_def = new_definition
-  `WordShift64_on_32 sh n = list_Seq
+  `WordShift64_on_32 sh n = data_to_word_list_Seq
      (
       // inputs in 11 and 13, writes results in 31 and 33
       if sh = Ror then
        (let n = n MOD 64 in
          (if n < 32 then
-            [Assign 33 (Op asm_Or [ShiftVar Lsl 11 (32 - n);
+            [word_bignum_Assign 33 (wordLang_Op asm_Or [ShiftVar Lsl
+              11 (32 - n);
                               ShiftVar Lsr 13 n]);
-             Assign 31 (Op asm_Or [ShiftVar Lsl 13 (32 - n);
+             word_bignum_Assign 31 (wordLang_Op asm_Or [ShiftVar Lsl
+               13 (32 - n);
                               ShiftVar Lsr 11 n])] else
-            [Assign 33 (Op asm_Or [ShiftVar Lsl 13 (64 - n);
+            [word_bignum_Assign 33 (wordLang_Op asm_Or [ShiftVar Lsl
+              13 (64 - n);
                               ShiftVar Lsr 11 (n - 32)]);
-             Assign 31 (Op asm_Or [ShiftVar Lsl 11 (64 - n);
+             word_bignum_Assign 31 (wordLang_Op asm_Or [ShiftVar Lsl
+               11 (64 - n);
                               ShiftVar Lsr 13 (n - 32)])])) else
        if n < 32 then
-         (match sh with Lsl -> [Assign 33 (ShiftVar sh 13 n);
-                    Assign 31 (Op asm_Or [ShiftVar Lsr 13 (32 - n);
-                              ShiftVar sh 11 n])] | Lsr -> [Assign 33
-                                (Op asm_Or [ShiftVar Lsl 11 (32 - n);
+         (match sh with Lsl -> [word_bignum_Assign 33 (ShiftVar sh 13
+           n);
+                    word_bignum_Assign 31 (wordLang_Op asm_Or
+                      [ShiftVar Lsr 13 (32 - n);
+                              ShiftVar sh 11 n])] | Lsr ->
+                                [word_bignum_Assign 33 (wordLang_Op
+                                asm_Or [ShiftVar Lsl 11 (32 - n);
                               ShiftVar sh 13 n]);
-                    Assign 31 (ShiftVar sh 11 n)] | Asr -> [Assign 33
-                      (Op asm_Or [ShiftVar Lsl 11 (32 - n);
+                    word_bignum_Assign 31 (ShiftVar sh 11 n)] | Asr
+                      -> [word_bignum_Assign 33 (wordLang_Op asm_Or
+                      [ShiftVar Lsl 11 (32 - n);
                               ShiftVar Lsr 13 n]);
-                    Assign 31 (ShiftVar sh 11 n)] | Ror -> []) else
-         (match sh with Lsl -> [Assign 33 (wordLang_Const (n2w 0));
-           Assign 31 (ShiftVar sh 13 (n - 32))] | Lsr -> [Assign 33
-           (ShiftVar sh 11 (n - 32)); Assign 31 (wordLang_Const (n2w
-           0))] | Asr -> [Assign 33 (ShiftVar sh 11 (n - 32));
-                    Assign 31 (ShiftVar sh 11 32)] | Ror -> []))`;;
+                    word_bignum_Assign 31 (ShiftVar sh 11 n)] | Ror
+                      -> []) else
+         (match sh with Lsl -> [word_bignum_Assign 33 (wordLang_Const
+           (n2w 0)); word_bignum_Assign 31 (ShiftVar sh 13 (n - 32))] |
+           Lsr -> [word_bignum_Assign 33 (ShiftVar sh 11 (n - 32));
+           word_bignum_Assign 31 (wordLang_Const (n2w 0))] | Asr ->
+           [word_bignum_Assign 33 (ShiftVar sh 11 (n - 32));
+                    word_bignum_Assign 31 (ShiftVar sh 11 32)] |
+                      Ror -> []))`;;
 
 let smallnum_def = new_definition
   `Smallnum i =
@@ -1252,13 +1455,14 @@ let smallnum_def = new_definition
    the port expands *)
 
 let MemEqList_def,MemEqList_ind = define_rec
-  [`MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
-  wordLang_prog)`;
+  [`MemEqList a [] = (word_bignum_Assign 1 (word_depth_Const (n2w
+  18:'a word)):'a wordLang_prog)`;
    `MemEqList a (CONS w ws) =
-         ((Seq (Assign 5 (wordLang_Load (Op asm_Add [Var 3; Const
-           a])))
-             (If Equal 5 (Imm w) (MemEqList (a + bytes_in_word)
-               ws) Skip)):'a wordLang_prog)`];;
+         ((word_bignum_Seq (word_bignum_Assign 5 (wordLang_Load
+           (wordLang_Op asm_Add [wordLang_Var 3; word_depth_Const a])))
+             (word_bignum_If asm_Equal 5 (Imm w) (MemEqList (a
+               + bytes_in_word) ws) word_bignum_Skip)):'a
+               wordLang_prog)`];;
 
 let get_gen_size_def = define_cases
   [`get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)`;
@@ -1294,12 +1498,10 @@ let fp_uop_inst_def = new_definition
 
 let arg1_def = new_definition
   `data_to_word_arg1 vs f x = (match vs with [v1] -> f v1 | _1 -> x)`;;
-hol4_overload "arg1" "data_to_word_arg1";;
 
 let arg2_def = new_definition
   `data_to_word_arg2 vs f x = (match vs with [v1; v2] -> f v1 v2 | _2
   -> x)`;;
-hol4_overload "arg2" "data_to_word_arg2";;
 
 let arg3_def = new_definition
   `arg3 vs f x = (match vs with [v1; v2; v3] -> f v1 v2 v3 | _3 -> x)`;;
@@ -1328,99 +1530,109 @@ let assign_Const_def = new_definition
   `assign_Const i (l:num) (dest:num) =
          // bvl_to_bvi compilation ensures that all literal
          // constants fit into a machine word
-         (if i < (&0) then (Assign (adjust_var dest)
+         (if i < (&0) then (word_bignum_Assign (adjust_var dest)
            (wordLang_Const ((n2w 0) - n2w (num_of_int ((&4) * ((&0) -
-           i))))),l) else (Assign (adjust_var dest) (wordLang_Const
-           (n2w (num_of_int ((&4) * i)))),l):'a wordLang_prog#num)`;;
+           i))))),l) else (word_bignum_Assign (adjust_var dest)
+           (wordLang_Const (n2w (num_of_int ((&4) * i)))),l):'a
+           wordLang_prog#num)`;;
 
 let assign_SetGlobalsPtr_def = new_definition
   `assign_SetGlobalsPtr (c:data_to_word_config) (l:num) (dest:num) v1 =
-       ((Seq (Set Globals (Var (adjust_var v1)))
-       (Seq (Set GlobReal (real_addr c (adjust_var v1)))
-            (Assign (adjust_var dest) data_to_word_Unit)),l):'a
-              wordLang_prog#num)`;;
+       ((word_bignum_Seq (wordLang_Set Globals (wordLang_Var
+         (adjust_var v1)))
+       (word_bignum_Seq (wordLang_Set GlobReal (real_addr c
+         (adjust_var v1)))
+            (word_bignum_Assign (adjust_var dest)
+              data_to_word_Unit)),l):'a wordLang_prog#num)`;;
 
 let assign_Global_def = new_definition
   `assign_Global (c:data_to_word_config) n (l:num) (dest:num) =
-       ((Assign (adjust_var dest) (wordLang_Load (Op asm_Add
-         [wordLang_Lookup GlobReal;
-                              Const (bytes_in_word * n2w (n +
-                                1))])),l):'a wordLang_prog#num)`;;
+       ((word_bignum_Assign (adjust_var dest) (wordLang_Load
+         (wordLang_Op asm_Add [wordLang_Lookup GlobReal;
+                              word_depth_Const (bytes_in_word *
+                                n2w (n + 1))])),l):'a
+                                wordLang_prog#num)`;;
 
 let assign_SetGlobal_def = new_definition
   `assign_SetGlobal (c:data_to_word_config) n (l:num) (dest:num) v1 =
-       ((Seq (Store (Op asm_Add [wordLang_Lookup GlobReal; Const
-         (bytes_in_word * n2w (n + 1))])
+       ((word_bignum_Seq (word_bignum_Store (wordLang_Op asm_Add
+         [wordLang_Lookup GlobReal; word_depth_Const (bytes_in_word *
+         n2w (n + 1))])
                    (adjust_var v1))
-            (Assign (adjust_var dest) data_to_word_Unit),l):'a
-              wordLang_prog#num)`;;
+            (word_bignum_Assign (adjust_var dest)
+              data_to_word_Unit),l):'a wordLang_prog#num)`;;
 
 let assign_El_def = new_definition
   `assign_El (c:data_to_word_config) (l:num) (dest:num) v1 v2 =
-                          ((Assign (adjust_var dest)
-                             (wordLang_Load (Op asm_Add [real_addr c
-                               (adjust_var v1);
+                          ((word_bignum_Assign (adjust_var dest)
+                             (wordLang_Load (wordLang_Op asm_Add
+                               [real_addr c (adjust_var v1);
                               real_offset c (adjust_var
                                 v2)])),l):'a wordLang_prog#num)`;;
 
 let assign_ElemAt_def = new_definition
   `assign_ElemAt (c:data_to_word_config) n (l:num) (dest:num) v1 =
-                          ((Assign (adjust_var dest)
-                             (wordLang_Load (Op asm_Add [real_addr c
-                               (adjust_var v1);
-                              Const (bytes_in_word +
+                          ((word_bignum_Assign (adjust_var dest)
+                             (wordLang_Load (wordLang_Op asm_Add
+                               [real_addr c (adjust_var v1);
+                              word_depth_Const (bytes_in_word +
                               bytes_in_word * n2w n)])),l):'a
                                 wordLang_prog#num)`;;
 
 let assign_DerefByte_def = new_definition
   `assign_DerefByte (c:data_to_word_config) (l:num) (dest:num) v1 v2 =
-          ((list_Seq [
-             Assign 1 (Op asm_Add [real_addr c (adjust_var v1);
+          ((data_to_word_list_Seq [
+             word_bignum_Assign 1 (wordLang_Op asm_Add [real_addr c
+               (adjust_var v1);
                               real_byte_offset (adjust_var v2)]);
-             Inst (asm_Mem asm_Load8 3 (Addr 1 (n2w 0)));
-             Assign (adjust_var dest) ((\sh e n. Shift sh e
-               (wordLang_Const (n2w n))) Lsl (Var 3) 2)],l):'a
-               wordLang_prog#num)`;;
+             wordLang_Inst (asm_Mem asm_Load8 3 (Addr 1 (n2w 0)));
+             word_bignum_Assign (adjust_var dest) ((\sh e n.
+               wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl
+               (wordLang_Var 3) 2)],l):'a wordLang_prog#num)`;;
 
 let assign_Update_def = new_definition
   `assign_Update (c:data_to_word_config) (l:num) (dest:num) v1 v2 v3 =
-                  ((Seq (Store (Op asm_Add [real_addr c (adjust_var
-                    v1);
+                  ((word_bignum_Seq (word_bignum_Store (wordLang_Op
+                    asm_Add [real_addr c (adjust_var v1);
                               real_offset c (adjust_var v2)])
                               (adjust_var v3))
-                       (Assign (adjust_var dest)
+                       (word_bignum_Assign (adjust_var dest)
                          data_to_word_Unit),l):'a wordLang_prog#num)`;;
 
 let assign_UpdateThunk_def = new_definition
   `assign_UpdateThunk ev (c:data_to_word_config) (l:num) (dest:num) v1
   v2 =
        ((match ev with NotEvaluated ->
-            (Seq (Store (Op asm_Add [real_addr c (adjust_var v1);
-                              Const bytes_in_word])
+            (word_bignum_Seq (word_bignum_Store (wordLang_Op asm_Add
+              [real_addr c (adjust_var v1);
+                              word_depth_Const bytes_in_word])
                         (adjust_var v2))
-                 (Assign (adjust_var dest) data_to_word_Unit),l) |
-                   Evaluated ->
+                 (word_bignum_Assign (adjust_var dest)
+                   data_to_word_Unit),l) | Evaluated ->
             (match encode_header c (8 + 6) 1 with NONE -> (GiveUp,l)
-              | SOME (header:'a word) -> (list_Seq
-                 [Assign 1 (real_addr c (adjust_var v1));
-                  Assign 3 (wordLang_Const header);
-                  Store (Var 1) 3;
-                  Store (Op asm_Add [Var 1; Const bytes_in_word])
+              | SOME (header:'a word) -> (data_to_word_list_Seq
+                 [word_bignum_Assign 1 (real_addr c (adjust_var v1));
+                  word_bignum_Assign 3 (wordLang_Const header);
+                  word_bignum_Store (wordLang_Var 1) 3;
+                  word_bignum_Store (wordLang_Op asm_Add
+                    [wordLang_Var 1; word_depth_Const bytes_in_word])
                     (adjust_var v2);
-                  Assign (adjust_var dest)
+                  word_bignum_Assign (adjust_var dest)
                     data_to_word_Unit],l))):'a wordLang_prog#num)`;;
 
 let assign_UpdateByte_def = new_definition
   `assign_UpdateByte (c:data_to_word_config) (l:num) (dest:num) v1 v2 v3
   =
-       ((list_Seq [
-           Assign 1 (Op asm_Add [real_addr c (adjust_var v1);
+       ((data_to_word_list_Seq [
+           word_bignum_Assign 1 (wordLang_Op asm_Add [real_addr c
+             (adjust_var v1);
                              real_byte_offset (adjust_var v2)]);
-           Assign 3 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-             Lsr (Var (adjust_var v3)) 2);
-           Inst (asm_Mem asm_Store8 3 (Addr 1 (n2w 0)));
-           Assign (adjust_var dest) data_to_word_Unit],l):'a
-             wordLang_prog#num)`;;
+           word_bignum_Assign 3 ((\sh e n. wordLang_Shift sh e
+             (wordLang_Const (n2w n))) Lsr (wordLang_Var (adjust_var
+             v3)) 2);
+           wordLang_Inst (asm_Mem asm_Store8 3 (Addr 1 (n2w 0)));
+           word_bignum_Assign (adjust_var dest)
+             data_to_word_Unit],l):'a wordLang_prog#num)`;;
 
 let assign_ListAppend_def = new_definition
   `assign_ListAppend (c:data_to_word_config) (secn:num) (l:num)
@@ -1429,7 +1641,7 @@ let assign_ListAppend_def = new_definition
             (header:'a word) ->
             ((wordLang_MustTerminate
               (wordLang_Call (SOME ([adjust_var dest],adjust_sets
-                (data_to_word_get_names names),Skip,secn,l))
+                (data_to_word_get_names names),word_bignum_Skip,secn,l))
                  (SOME Append_location)
                     [adjust_var v2; adjust_var v1] NONE):'a
                       wordLang_prog),l + 1)):'a wordLang_prog#num)`;;
@@ -1438,30 +1650,37 @@ let assign_Cons_def = new_definition
   `assign_Cons (c:data_to_word_config) (l:num) (dest:num) tag args =
                    (if LENGTH args = 0 then
                      if tag < dimword (:'a) DIV 16 then
-                       (Assign (adjust_var dest) (wordLang_Const (n2w
-                         (16 * tag + 2))),l) else (GiveUp,l) else
+                       (word_bignum_Assign (adjust_var dest)
+                         (wordLang_Const (n2w (16 * tag + 2))),l) else
+                         (GiveUp,l) else
                      (
                       // tag is too big to be represented
                       match encode_header c (4 * tag) (LENGTH args)
                         with NONE -> (GiveUp,l) | SOME (header:'a word)
-                        -> (list_Seq
-                         [Assign 1 (wordLang_Lookup NextFree);
-                          Assign 3 (wordLang_Const header);
+                        -> (data_to_word_list_Seq
+                         [word_bignum_Assign 1 (wordLang_Lookup
+                           NextFree);
+                          word_bignum_Assign 3 (wordLang_Const
+                            header);
                           StoreEach 1 (CONS 3 (MAP adjust_var args))
                             (n2w 0);
-                          Assign (adjust_var dest)
-                            (Op asm_Or [(\sh e n. Shift sh e
-                              (wordLang_Const (n2w n))) Lsl (Op asm_Sub
-                              [Var 1; wordLang_Lookup CurrHeap])
+                          word_bignum_Assign (adjust_var dest)
+                            (wordLang_Op asm_Or [(\sh e n.
+                              wordLang_Shift sh e (wordLang_Const (n2w
+                              n))) Lsl (wordLang_Op asm_Sub
+                              [wordLang_Var 1; wordLang_Lookup
+                              CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
-                              Const ((n2w 1) ||
+                              word_depth_Const ((n2w 1) ||
                               (word_bits (small_shift_length c - 1)
                                 0)
                               (ptr_bits c tag (LENGTH args)))]);
-                          Set NextFree (Op asm_Add [Var 1;
-                            Const (bytes_in_word * n2w (LENGTH
-                              args + 1))])],l)):'a wordLang_prog#num)`;;
+                          wordLang_Set NextFree (wordLang_Op asm_Add
+                            [wordLang_Var 1;
+                            word_depth_Const (bytes_in_word * n2w
+                              (LENGTH args + 1))])],l)):'a
+                              wordLang_prog#num)`;;
 
 let assign_MutCons_def = new_definition
   `assign_MutCons (c:data_to_word_config) (l:num) (dest:num) tag args =
@@ -1473,16 +1692,18 @@ let assign_MutCons_def = new_definition
 let assign_ConfigGC_def = new_definition
   `assign_ConfigGC (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-              ((list_Seq [SilentFFI c 3 (adjust_sets
+              ((data_to_word_list_Seq [SilentFFI c 3 (adjust_sets
                 (data_to_word_get_names names));
-                         Assign 1 (wordLang_Const (n2w 0));
-                         Alloc 1 (adjust_sets (data_to_word_get_names
-                           names));
+                         word_bignum_Assign 1 (wordLang_Const (n2w
+                           0));
+                         wordLang_Alloc 1 (adjust_sets
+                           (data_to_word_get_names names));
                          // runs GC
                          SilentFFI c 3 (adjust_sets
                            (data_to_word_get_names names));
-                         Assign (adjust_var dest) (wordLang_Const
-                           (n2w 2))],l):'a wordLang_prog#num)`;;
+                         word_bignum_Assign (adjust_var dest)
+                           (wordLang_Const (n2w 2))],l):'a
+                           wordLang_prog#num)`;;
 
 let getWords_def,getWords_ind = define_rec
   [`getWords [] aux = (REVERSE aux,[])`;
@@ -1500,20 +1721,23 @@ let getWords_def,getWords_ind = define_rec
    replacing the CHEAT_TAC is all that is left *)
 let StoreAnyConsts_def,StoreAnyConsts_ind = define_guess_cheat
   [`StoreAnyConsts r1 r2 r3 [] v =
-      Seq (Set NextFree (Var r2))
-          (match SND v with Loc n _15 -> LocValue r1 n |
-            wordLang_Word w -> Assign r1 (if FST v then Op asm_Add
-            [Const w; Var r3] else (Const w)))`;
+      word_bignum_Seq (wordLang_Set NextFree (wordLang_Var r2))
+          (match SND v with wordLang_Loc n _15 ->
+            wordLang_LocValue r1 n | wordLang_Word w ->
+            word_bignum_Assign r1 (if FST v then wordLang_Op asm_Add
+            [word_depth_Const w; wordLang_Var r3] else
+            (word_depth_Const w)))`;
    `StoreAnyConsts r1 r2 r3 (CONS v vs) w =
-      (match ((SND v):'a word_loc) with Loc n _16 -> list_Seq
-        [LocValue r1 n;
-                             Store (Var r2) r1;
-                             Assign r2 (Op asm_Add [Var r2; Const
-                               bytes_in_word]);
+      (match ((SND v):'a word_loc) with wordLang_Loc n _16 ->
+        data_to_word_list_Seq [wordLang_LocValue r1 n;
+                             word_bignum_Store (wordLang_Var r2) r1;
+                             word_bignum_Assign r2 (wordLang_Op
+                               asm_Add [wordLang_Var r2;
+                               word_depth_Const bytes_in_word]);
                              StoreAnyConsts r1 r2 r3 vs w] | _17 ->
                                (let (ws,vs1) = getWords (CONS v vs) []
                                in
-               Seq (StoreConsts r2 r3 r2 r3 ws)
+               word_bignum_Seq (wordLang_StoreConsts r2 r3 r2 r3 ws)
                    (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
 
 let lookup_mem_def = new_definition
@@ -1586,7 +1810,7 @@ let part_to_words_def = define_cases
                               (ptr_bits c t (LENGTH ns) || (n2w
                                 1)))),CONS (F,wordLang_Word hd) (MAP
                                 (lookup_mem m) ns)))`;
-   `part_to_words c m (W64 w:const_part) (offset:'a word) =
+   `part_to_words c m (closLang_W64 w:const_part) (offset:'a word) =
       (let ws = (if dimindex (:'a) < 64 then [((63 >< 32) w); ((31
         >< 0) w)] else [((63 >< 0) w):'a word]) in
          match encode_header c 3 (LENGTH ws) with NONE -> NONE |
@@ -1613,7 +1837,7 @@ let parts_to_words_def,parts_to_words_ind = define_rec
    `parts_to_words c m i (CONS x parts') (off:'a word) =
       (match part_to_words c m x off with NONE -> NONE | SOME (w,xs)
         ->
-        (match parts_to_words c (insert i w m) (i + 1) parts'
+        (match parts_to_words c (sptree_insert i w m) (i + 1) parts'
                  (off + bytes_in_word * n2w (LENGTH xs)) with
                    NONE -> NONE | SOME (r,ys) -> SOME (r,APPEND xs
                    ys)))`];;
@@ -1633,10 +1857,11 @@ let assign_Build_def = new_definition
   (names:(1 spt) option) ps =
      (match const_parts_to_words c ps with NONE -> (GiveUp,l) | SOME
        (w,ws) ->
-       ((list_Seq
-         [Assign 1 (wordLang_Lookup NextFree);
-          Assign 3 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-            Lsl (Op asm_Sub [Var 1; wordLang_Lookup CurrHeap])
+       ((data_to_word_list_Seq
+         [word_bignum_Assign 1 (wordLang_Lookup NextFree);
+          word_bignum_Assign 3 ((\sh e n. wordLang_Shift sh e
+            (wordLang_Const (n2w n))) Lsl (wordLang_Op asm_Sub
+            [wordLang_Var 1; wordLang_Lookup CurrHeap])
                      (shift_length c - backend_common_word_shift
                        (:'a)));
           StoreAnyConsts (adjust_var dest) 1 3 ws w],l):'a
@@ -1651,70 +1876,81 @@ let assign_ConsExtend_def = new_definition
               NONE -> (GiveUp,l) | SOME header ->
                (let limit' = MIN (2 EXP data_to_word_config_len_size
                  c) (dimword (:'a) DIV 16) in
-               let h = (\sh e n. Shift sh e (wordLang_Const (n2w n)))
-                 Lsl (Var (adjust_var tot))
+               let h = (\sh e n. wordLang_Shift sh e (wordLang_Const
+                 (n2w n))) Lsl (wordLang_Var (adjust_var tot))
                          (dimindex (:'a) -
                            data_to_word_config_len_size c - 2) in
-                 (list_Seq
+                 (data_to_word_list_Seq
                    [BignumHalt (adjust_var tot);
-                    Assign 1 (Var (adjust_var tot));
+                    word_bignum_Assign 1 (wordLang_Var (adjust_var
+                      tot));
                     AllocVar c limit' (list_insert args
                       (data_to_word_get_names names));
-                    Assign 1 (wordLang_Lookup NextFree);
-                    Assign 5 (Op asm_Or [h; Const header]);
-                    Assign 7 ((\sh e n. Shift sh e (wordLang_Const
-                      (n2w n))) Lsr (Var (adjust_var tot)) 2);
-                    Assign 9 (wordLang_Const (n2w tag));
+                    word_bignum_Assign 1 (wordLang_Lookup NextFree);
+                    word_bignum_Assign 5 (wordLang_Op asm_Or [h;
+                      word_depth_Const header]);
+                    word_bignum_Assign 7 ((\sh e n. wordLang_Shift sh
+                      e (wordLang_Const (n2w n))) Lsr (wordLang_Var
+                      (adjust_var tot)) 2);
+                    word_bignum_Assign 9 (wordLang_Const (n2w tag));
                     StoreEach 1 (CONS 5 (MAP adjust_var rest)) (n2w
                       0);
                     Make_ptr_bits_code c 9 7 3;
-                    Set NextFree (Op asm_Add [Var 1; Const
-                      bytes_in_word;
-                      (\sh e n. Shift sh e (wordLang_Const (n2w n)))
-                        Lsl (Var 7) (backend_common_word_shift (:'a))]);
-                    Assign 15 (Var (adjust_var len));
-                    Assign 13 (Op asm_Add [Var 1;
-                      Const (bytes_in_word * n2w (LENGTH rest +
-                        1))]);
-                    Assign 11 (Op asm_Add [real_addr c (adjust_var
-                      old);
-                      Const bytes_in_word;
+                    wordLang_Set NextFree (wordLang_Op asm_Add
+                      [wordLang_Var 1; word_depth_Const bytes_in_word;
+                      (\sh e n. wordLang_Shift sh e (wordLang_Const
+                        (n2w n))) Lsl (wordLang_Var 7)
+                        (backend_common_word_shift (:'a))]);
+                    word_bignum_Assign 15 (wordLang_Var (adjust_var
+                      len));
+                    word_bignum_Assign 13 (wordLang_Op asm_Add
+                      [wordLang_Var 1;
+                      word_depth_Const (bytes_in_word * n2w (LENGTH
+                        rest + 1))]);
+                    word_bignum_Assign 11 (wordLang_Op asm_Add
+                      [real_addr c (adjust_var old);
+                      word_depth_Const bytes_in_word;
                       ShiftVar Lsl (adjust_var start')
                         (backend_common_word_shift (:'a) - 2)]);
-                    If Test 15 (Reg 15) (Assign (adjust_var dest)
-                      (Var 3)) (list_Seq [
+                    word_bignum_If asm_Test 15 (Reg 15)
+                      (word_bignum_Assign (adjust_var dest)
+                      (wordLang_Var 3)) (data_to_word_list_Seq [
                       wordLang_MustTerminate
                         (wordLang_Call (SOME ([adjust_var
                           dest],adjust_sets (data_to_word_get_names
                           names),
-                              Skip,secn,l))
+                              word_bignum_Skip,secn,l))
                            (SOME MemCopy_location) [15; 11; 13; 3]
-                             NONE)])]),l + 1)) | _20 -> (Skip,l)):'a
+                             NONE)])]),l + 1)) | _20 ->
+                             (word_bignum_Skip,l)):'a
                              wordLang_prog#num)`;;
 
 let assign_Ref_def = new_definition
   `assign_Ref (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) args =
            ((match encode_header c 2 (LENGTH args) with NONE ->
-             (GiveUp,l) | SOME (header:'a word) -> (list_Seq
-                  [Set TriggerGC (Op asm_Sub [wordLang_Lookup
-                    TriggerGC;
-                      Const (bytes_in_word * n2w (LENGTH args +
-                        1))]);
-                   Assign 1 (Op asm_Sub [wordLang_Lookup EndOfHeap;
-                      Const (bytes_in_word * n2w (LENGTH args +
-                        1))]);
-                   Set EndOfHeap (Var 1);
-                   Assign 3 (wordLang_Const header);
+             (GiveUp,l) | SOME (header:'a word) ->
+             (data_to_word_list_Seq
+                  [wordLang_Set TriggerGC (wordLang_Op asm_Sub
+                    [wordLang_Lookup TriggerGC;
+                      word_depth_Const (bytes_in_word * n2w (LENGTH
+                        args + 1))]);
+                   word_bignum_Assign 1 (wordLang_Op asm_Sub
+                     [wordLang_Lookup EndOfHeap;
+                      word_depth_Const (bytes_in_word * n2w (LENGTH
+                        args + 1))]);
+                   wordLang_Set EndOfHeap (wordLang_Var 1);
+                   word_bignum_Assign 3 (wordLang_Const header);
                    StoreEach 1 (CONS 3 (MAP adjust_var args)) (n2w
                      0);
-                   Assign (adjust_var dest)
-                     (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
-                       (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+                   word_bignum_Assign (adjust_var dest)
+                     (wordLang_Op asm_Or [(\sh e n. wordLang_Shift sh
+                       e (wordLang_Const (n2w n))) Lsl (wordLang_Op
+                       asm_Sub [wordLang_Var 1; wordLang_Lookup
                        CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
-                             Const (n2w 1)])],l)):'a
+                             word_depth_Const (n2w 1)])],l)):'a
                                wordLang_prog#num)`;;
 
 let assign_AllocThunk_def = new_definition
@@ -1723,35 +1959,37 @@ let assign_AllocThunk_def = new_definition
            ((let tag = (match ev with Evaluated -> 8 + 6 |
              NotEvaluated -> 0 + 6) in
             match encode_header c tag 1 with NONE -> (GiveUp,l) |
-              SOME (header:'a word) -> (list_Seq
-                  [Set TriggerGC (Op asm_Sub [wordLang_Lookup
-                    TriggerGC;
-                      Const (bytes_in_word * (n2w 2))]);
-                   Assign 1 (Op asm_Sub [wordLang_Lookup EndOfHeap;
-                      Const (bytes_in_word * (n2w 2))]);
-                   Set EndOfHeap (Var 1);
-                   Assign 3 (wordLang_Const header);
+              SOME (header:'a word) -> (data_to_word_list_Seq
+                  [wordLang_Set TriggerGC (wordLang_Op asm_Sub
+                    [wordLang_Lookup TriggerGC;
+                      word_depth_Const (bytes_in_word * (n2w 2))]);
+                   word_bignum_Assign 1 (wordLang_Op asm_Sub
+                     [wordLang_Lookup EndOfHeap;
+                      word_depth_Const (bytes_in_word * (n2w 2))]);
+                   wordLang_Set EndOfHeap (wordLang_Var 1);
+                   word_bignum_Assign 3 (wordLang_Const header);
                    StoreEach 1 [3; adjust_var arg] (n2w 0);
-                   Assign (adjust_var dest)
-                     (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
-                       (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+                   word_bignum_Assign (adjust_var dest)
+                     (wordLang_Op asm_Or [(\sh e n. wordLang_Shift sh
+                       e (wordLang_Const (n2w n))) Lsl (wordLang_Op
+                       asm_Sub [wordLang_Var 1; wordLang_Lookup
                        CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
-                             Const (n2w 1)])],l)):'a
+                             word_depth_Const (n2w 1)])],l)):'a
                                wordLang_prog#num)`;;
 
 let assign_RefByte_def = new_definition
   `assign_RefByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) immutable v1 v2 =
-          ((Seq
-            (Assign 1 (wordLang_Const (if immutable then (n2w 0) else
-              (n2w 16))))
+          ((word_bignum_Seq
+            (word_bignum_Assign 1 (wordLang_Const (if immutable then
+              (n2w 0) else (n2w 16))))
             (
              // n.b. this would have been better done with Set Temp
              wordLang_MustTerminate
               (wordLang_Call (SOME ([adjust_var dest],adjust_sets
-                (data_to_word_get_names names),Skip,secn,l))
+                (data_to_word_get_names names),word_bignum_Skip,secn,l))
                  (SOME RefByte_location)
                     [adjust_var v1; adjust_var v2; 1] NONE):'a
                       wordLang_prog),l + 1):'a wordLang_prog#num)`;;
@@ -1759,31 +1997,33 @@ let assign_RefByte_def = new_definition
 let assign_XorByte_def = new_definition
   `assign_XorByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-     ((list_Seq [
-         Assign 1 (real_addr c (adjust_var v1));
-         Assign 3 (real_addr c (adjust_var v2));
-         Assign 5 (SmallLsr (Load (Var 3)) (dimindex (:'a) -
+     ((data_to_word_list_Seq [
+         word_bignum_Assign 1 (real_addr c (adjust_var v1));
+         word_bignum_Assign 3 (real_addr c (adjust_var v2));
+         word_bignum_Assign 5 (SmallLsr (word_bignum_Load
+           (wordLang_Var 3)) (dimindex (:'a) -
            data_to_word_config_len_size c));
-         Assign 1 (Op asm_Add [Var 1; Const bytes_in_word]);
-         Assign 3 (Op asm_Add [Var 3; Const (bytes_in_word:'a
-           word)]);
+         word_bignum_Assign 1 (wordLang_Op asm_Add [wordLang_Var 1;
+           word_depth_Const bytes_in_word]);
+         word_bignum_Assign 3 (wordLang_Op asm_Add [wordLang_Var 3;
+           word_depth_Const (bytes_in_word:'a word)]);
          wordLang_MustTerminate
            (wordLang_Call
              (SOME ([adjust_var dest],adjust_sets
-               (data_to_word_get_names names),Skip,secn,l))
+               (data_to_word_get_names names),word_bignum_Skip,secn,l))
              (SOME XorLoop_location) [1; 3; 5] NONE)],l + 1):'a
                wordLang_prog#num)`;;
 
 let SetBool_def = new_definition
   `SetBool dest cmp r ri =
    (wordLang_If cmp r ri
-      (wordLang_Assign dest (Const (n2w 18:'a word)))
-      (wordLang_Assign dest (Const (n2w 2:'a word))):'a
+      (wordLang_Assign dest (word_depth_Const (n2w 18:'a word)))
+      (wordLang_Assign dest (word_depth_Const (n2w 2:'a word))):'a
         wordLang_prog)`;;
 
 let AssignCmp_def = define_cases
-  [`AssignCmp dest (Lt:opb) v1 v2 = (SetBool dest asm_Lower v1 (Reg
-  v2):'a wordLang_prog)`;
+  [`AssignCmp dest (multiword_Lt:opb) v1 v2 = (SetBool dest asm_Lower
+  v1 (Reg v2):'a wordLang_prog)`;
    `AssignCmp dest (ast_Gt:opb) v1 v2 = ((SetBool dest asm_Lower v2
   (Reg v1)):'a wordLang_prog)`;
    `AssignCmp dest (ast_Leq:opb) v1 v2 = ((SetBool dest asm_NotLower
@@ -1796,39 +2036,46 @@ let assign_StringCmp_def = new_definition
   (dest:num) (names:(1 spt) option) (b:bool) (cmp:opb) v1 v2 =
      ((let k = (dimindex (:'a) - data_to_word_config_len_size c -
        backend_common_word_shift (:'a)) in
-       list_Seq [
-           Assign 1 (real_addr c (adjust_var v1));
+       data_to_word_list_Seq [
+           word_bignum_Assign 1 (real_addr c (adjust_var v1));
            // address to header
-           Assign 3 (real_addr c (adjust_var v2));
+           word_bignum_Assign 3 (real_addr c (adjust_var v2));
            // address to header
-           Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-             Lsr (Load (Var 1)) k);
+           word_bignum_Assign 5 ((\sh e n. wordLang_Shift sh e
+             (wordLang_Const (n2w n))) Lsr (word_bignum_Load
+             (wordLang_Var 1)) k);
            // len + bytes_in_word
-           Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-             Lsr (Load (Var 3)) k);
+           word_bignum_Assign 7 ((\sh e n. wordLang_Shift sh e
+             (wordLang_Const (n2w n))) Lsr (word_bignum_Load
+             (wordLang_Var 3)) k);
            (
             // len + bytes_in_word
             if b then
-              If Equal 5 (Reg 7)
-                 (list_Seq
-                  [Assign 11 (Op asm_Add [Var 1; Const
-                    bytes_in_word]);
-                   Assign 13 (Op asm_Add [Var 3; Const
-                     bytes_in_word]);
+              word_bignum_If asm_Equal 5 (Reg 7)
+                 (data_to_word_list_Seq
+                  [word_bignum_Assign 11 (wordLang_Op asm_Add
+                    [wordLang_Var 1; word_depth_Const bytes_in_word]);
+                   word_bignum_Assign 13 (wordLang_Op asm_Add
+                     [wordLang_Var 3; word_depth_Const bytes_in_word]);
                    wordLang_MustTerminate
                    (wordLang_Call (SOME ([5; 7],adjust_sets
-                     (data_to_word_get_names names),Skip,secn,l))
+                     (data_to_word_get_names
+                     names),word_bignum_Skip,secn,l))
                          (SOME StringCmpLoop_location) [11; 13; 7; 7;
                            7] NONE)])
-                 Skip else
-              list_Seq
-              [Assign 11 (Op asm_Add [Var 1; Const bytes_in_word]);
-               Assign 13 (Op asm_Add [Var 3; Const bytes_in_word]);
-               Assign 9 (Var 5);
-               If asm_Lower 7 (Reg 5) (Assign 9 (Var 7)) Skip;
+                 word_bignum_Skip else
+              data_to_word_list_Seq
+              [word_bignum_Assign 11 (wordLang_Op asm_Add
+                [wordLang_Var 1; word_depth_Const bytes_in_word]);
+               word_bignum_Assign 13 (wordLang_Op asm_Add
+                 [wordLang_Var 3; word_depth_Const bytes_in_word]);
+               word_bignum_Assign 9 (wordLang_Var 5);
+               word_bignum_If asm_Lower 7 (Reg 5) (word_bignum_Assign
+                 9 (wordLang_Var 7)) word_bignum_Skip;
                wordLang_MustTerminate
                (wordLang_Call (SOME ([5; 7],adjust_sets
-                 (data_to_word_get_names names),Skip,secn,l))
+                 (data_to_word_get_names
+                 names),word_bignum_Skip,secn,l))
                      (SOME StringCmpLoop_location) [11; 13; 9; 5; 7]
                        NONE)]);
            AssignCmp (adjust_var dest) cmp 5 7],l + 1):'a
@@ -1842,7 +2089,7 @@ let assign_CopyByte_def = new_definition
              // alloc_new is F
              (wordLang_MustTerminate
               (wordLang_Call (SOME ([adjust_var dest],adjust_sets
-                (data_to_word_get_names names),Skip,secn,l))
+                (data_to_word_get_names names),word_bignum_Skip,secn,l))
                  (SOME ByteCopy_location)
                     [adjust_var v1; adjust_var v2; adjust_var v3;
                      adjust_var v4; adjust_var v5] NONE):'a
@@ -1851,26 +2098,27 @@ let assign_CopyByte_def = new_definition
              // alloc_new is T
              (wordLang_MustTerminate
               (wordLang_Call (SOME ([adjust_var dest],adjust_sets
-                (data_to_word_get_names names),Skip,secn,l))
+                (data_to_word_get_names names),word_bignum_Skip,secn,l))
                  (SOME ByteCopyNew_location)
                     [adjust_var v1; adjust_var v2;
                      adjust_var v3] NONE):'a wordLang_prog),l + 1)
-                       | _21 -> (Skip,l)):'a wordLang_prog#num)`;;
+                       | _21 -> (word_bignum_Skip,l)):'a
+                       wordLang_prog#num)`;;
 
 let assign_RefArray_def = new_definition
   `assign_RefArray (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
        (let limit' = MIN (2 EXP data_to_word_config_len_size c)
          (dimword (:'a) DIV 16) in
-          (list_Seq
+          (data_to_word_list_Seq
            [
            BignumHalt (adjust_var v1);
-           Move 0 [(1,adjust_var v1)];
+           wordLang_Move 0 [(1,adjust_var v1)];
            AllocVar c limit' (list_insert [v1; v2]
              (data_to_word_get_names names));
            wordLang_MustTerminate
              (wordLang_Call (SOME ([adjust_var dest],adjust_sets
-               (data_to_word_get_names names),Skip,secn,l))
+               (data_to_word_get_names names),word_bignum_Skip,secn,l))
                 (SOME RefArray_location)
                    [adjust_var v1; adjust_var v2] NONE):'a
                      wordLang_prog],l + 1):'a wordLang_prog#num)`;;
@@ -1880,489 +2128,567 @@ let assign_FromList_def = new_definition
   (names:(1 spt) option) tag v1 v2 =
         (if encode_header c (4 * tag) 0 = (NONE:('a word) option)
           then (GiveUp,l) else
-          (wordLang_MustTerminate (list_Seq [
-             Assign 1 (wordLang_Const (n2w (16 * tag)));
-             (Call (SOME ([adjust_var dest],adjust_sets
-               (data_to_word_get_names names),Skip,secn,l))
+          (wordLang_MustTerminate (data_to_word_list_Seq [
+             word_bignum_Assign 1 (wordLang_Const (n2w (16 * tag)));
+             (word_depth_Call (SOME ([adjust_var dest],adjust_sets
+               (data_to_word_get_names names),word_bignum_Skip,secn,l))
                 (SOME FromList_location)
                    [adjust_var v1; adjust_var v2; 1] NONE):'a
                      wordLang_prog]),l + 1):'a wordLang_prog#num)`;;
 
 let assign_LessConstSmall_def = new_definition
   `assign_LessConstSmall (l:num) (dest:num) i v1 =
-                  ((If Less (adjust_var v1) (Imm (n2w (4 * i)))
-                     (Assign (adjust_var dest) (Const (n2w 18:'a
-                       word)))
-                     (Assign (adjust_var dest) (Const (n2w 2:'a
-                       word))),l):'a wordLang_prog#num)`;;
+                  ((word_bignum_If asm_Less (adjust_var v1) (Imm (n2w
+                    (4 * i)))
+                     (word_bignum_Assign (adjust_var dest)
+                       (word_depth_Const (n2w 18:'a word)))
+                     (word_bignum_Assign (adjust_var dest)
+                       (word_depth_Const (n2w 2:'a word))),l):'a
+                       wordLang_prog#num)`;;
 
 let assign_BoolTest_def = new_definition
   `assign_BoolTest (l:num) (dest:num) (test:test) v1 v2 =
-                  ((If Equal (adjust_var v1) (Reg (adjust_var v2))
-                    (Assign (adjust_var dest) (Const (n2w 18:'a
-                      word)))
-                    (Assign (adjust_var dest) (Const (n2w 2:'a
-                      word))),l):'a wordLang_prog#num)`;;
+                  ((word_bignum_If asm_Equal (adjust_var v1) (Reg
+                    (adjust_var v2))
+                    (word_bignum_Assign (adjust_var dest)
+                      (word_depth_Const (n2w 18:'a word)))
+                    (word_bignum_Assign (adjust_var dest)
+                      (word_depth_Const (n2w 2:'a word))),l):'a
+                      wordLang_prog#num)`;;
 
 let assign_BoolNot_def = new_definition
   `assign_BoolNot (l:num) (dest:num) v1 =
-                  ((Assign (adjust_var dest)
-                     (Op Xor [Var (adjust_var v1); Const (n2w
+                  ((word_bignum_Assign (adjust_var dest)
+                     (wordLang_Op backend_common_Xor [wordLang_Var
+                       (adjust_var v1); word_depth_Const (n2w
                        16)]),l):'a wordLang_prog#num)`;;
 
 let assign_WordTest_def = new_definition
   `assign_WordTest (l:num) (dest:num) (test:test) v1 v2 =
-        (((match test with Equal -> If Equal (adjust_var v1) (Reg
-          (adjust_var v2))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word))) | ast_Compare Lt -> If
-                                asm_Lower (adjust_var v1) (Reg
-                                (adjust_var v2))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word))) | ast_Compare ast_Leq -> If
+        (((match test with asm_Equal -> word_bignum_If asm_Equal
+          (adjust_var v1) (Reg (adjust_var v2))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 2:'a word))) |
+                                ast_Compare multiword_Lt ->
+                                word_bignum_If asm_Lower (adjust_var v1)
+                                (Reg (adjust_var v2))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 2:'a word))) |
+                                ast_Compare ast_Leq -> word_bignum_If
                                 asm_NotLower (adjust_var v2) (Reg
                                 (adjust_var v1))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const
-                                (n2w 2:'a word))) | _22 ->
-                                Skip),l):'a wordLang_prog#num)`;;
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var
+                                dest) (word_depth_Const (n2w 2:'a
+                                word))) | _22 ->
+                                word_bignum_Skip),l):'a
+                                wordLang_prog#num)`;;
 
 let assign_BoundsCheckByte_def = new_definition
   `assign_BoundsCheckByte (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) leq v1 v2 =
-                    ((list_Seq [Assign 1
+                    ((data_to_word_list_Seq [word_bignum_Assign 1
                               (let addr' = real_addr c (adjust_var
                                 v1) in
-                              let header = Load addr' in
+                              let header = word_bignum_Load addr' in
                               let extra = (if dimindex (:'a) = 32
                                 then 2 else 3) in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c - extra
                                 in
-                              Op asm_Sub [(\sh e n. Shift sh e
-                                (wordLang_Const (n2w n))) Lsr header k;
-                                Const bytes_in_word]);
-                              Assign 3 (ShiftVar Ror (adjust_var v2)
-                                2);
-                              (if leq then If asm_NotLower 1 (Reg 3)
-                                else
-                              If asm_Lower 3 (Reg 1))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const
-                                (n2w 2:'a word)))],l):'a
-                                wordLang_prog#num)`;;
+                              wordLang_Op asm_Sub [(\sh e n.
+                                wordLang_Shift sh e (wordLang_Const (n2w
+                                n))) Lsr header k; word_depth_Const
+                                bytes_in_word]);
+                              word_bignum_Assign 3 (ShiftVar Ror
+                                (adjust_var v2) 2);
+                              (if leq then word_bignum_If
+                                asm_NotLower 1 (Reg 3) else
+                              word_bignum_If asm_Lower 3 (Reg 1))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var
+                                dest) (word_depth_Const (n2w 2:'a
+                                word)))],l):'a wordLang_prog#num)`;;
 
 let assign_BoundsCheckArray_def = new_definition
   `assign_BoundsCheckArray (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
-                    ((list_Seq [Assign 1
+                    ((data_to_word_list_Seq [word_bignum_Assign 1
                               (let addr' = real_addr c (adjust_var
                                 v1) in
-                              let header = Load addr' in
+                              let header = word_bignum_Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              (\sh e n. Shift sh e (wordLang_Const
-                                (n2w n))) Lsr header k);
-                              Assign 3 (ShiftVar Ror (adjust_var v2)
-                                2);
-                              If asm_Lower 3 (Reg 1)
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const
-                                (n2w 2:'a word)))],l):'a
-                                wordLang_prog#num)`;;
+                              (\sh e n. wordLang_Shift sh e
+                                (wordLang_Const (n2w n))) Lsr header k);
+                              word_bignum_Assign 3 (ShiftVar Ror
+                                (adjust_var v2) 2);
+                              word_bignum_If asm_Lower 3 (Reg 1)
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var
+                                dest) (word_depth_Const (n2w 2:'a
+                                word)))],l):'a wordLang_prog#num)`;;
 
 let assign_BoundsCheckBlock_def = new_definition
   `assign_BoundsCheckBlock (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
-                    ((list_Seq [If Test (adjust_var v1) (Imm (n2w 1))
-                              (Assign 1 (wordLang_Const (n2w 0)))
-                              (Assign 1
+                    ((data_to_word_list_Seq [word_bignum_If asm_Test
+                      (adjust_var v1) (Imm (n2w 1))
+                              (word_bignum_Assign 1 (wordLang_Const
+                                (n2w 0)))
+                              (word_bignum_Assign 1
                               (let addr' = real_addr c (adjust_var
                                 v1) in
-                              let header = Load addr' in
+                              let header = word_bignum_Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              (\sh e n. Shift sh e (wordLang_Const
-                                (n2w n))) Lsr header k));
-                              Assign 3 (ShiftVar Ror (adjust_var v2)
-                                2);
-                              If asm_Lower 3 (Reg 1)
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const
-                                (n2w 2:'a word)))],l):'a
-                                wordLang_prog#num)`;;
+                              (\sh e n. wordLang_Shift sh e
+                                (wordLang_Const (n2w n))) Lsr header
+                                k));
+                              word_bignum_Assign 3 (ShiftVar Ror
+                                (adjust_var v2) 2);
+                              word_bignum_If asm_Lower 3 (Reg 1)
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var
+                                dest) (word_depth_Const (n2w 2:'a
+                                word)))],l):'a wordLang_prog#num)`;;
 
 let assign_Equal_def = new_definition
   `assign_Equal (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [Assign 1 (Var (adjust_var v1));
-                    Assign 3 (Var (adjust_var v2));
-                    Assign 5 (Op And [Var 1; Var 3]);
-                    If Test 5 (Imm (n2w 1)) Skip
-                      (If Equal 1 (Reg 3) Skip
-                        (Seq (wordLang_MustTerminate
+         ((data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Var
+           (adjust_var v1));
+                    word_bignum_Assign 3 (wordLang_Var (adjust_var
+                      v2));
+                    word_bignum_Assign 5 (wordLang_Op asm_And
+                      [wordLang_Var 1; wordLang_Var 3]);
+                    word_bignum_If asm_Test 5 (Imm (n2w 1))
+                      word_bignum_Skip
+                      (word_bignum_If asm_Equal 1 (Reg 3)
+                        word_bignum_Skip
+                        (word_bignum_Seq (wordLang_MustTerminate
                            (wordLang_Call (SOME ([1],adjust_sets
                              (data_to_word_get_names
-                             names),Skip,secn,l))
+                             names),word_bignum_Skip,secn,l))
                               (SOME Equal_location) [1; 3] NONE))
-                           (Assign 3 (wordLang_Const (n2w 1)))));
-                    (If Equal 1 (Reg 3)
-                       (Assign (adjust_var dest) (Const (n2w 18:'a
-                         word)))
-                       (Assign (adjust_var dest) (Const (n2w 2:'a
-                         word))))],l + 1):'a wordLang_prog#num)`;;
+                           (word_bignum_Assign 3 (wordLang_Const (n2w
+                             1)))));
+                    (word_bignum_If asm_Equal 1 (Reg 3)
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 18:'a word)))
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 2:'a word))))],l +
+                         1):'a wordLang_prog#num)`;;
 
 let assign_Less_def = new_definition
   `assign_Less (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [Assign 1 (Var (adjust_var v1));
-                    Assign 3 (Var (adjust_var v2));
-                    Assign 5 (Op asm_Or [Var 1; Var 3]);
-                    If Test 5 (Imm (n2w 1)) Skip
-                      (Seq (wordLang_MustTerminate
+         ((data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Var
+           (adjust_var v1));
+                    word_bignum_Assign 3 (wordLang_Var (adjust_var
+                      v2));
+                    word_bignum_Assign 5 (wordLang_Op asm_Or
+                      [wordLang_Var 1; wordLang_Var 3]);
+                    word_bignum_If asm_Test 5 (Imm (n2w 1))
+                      word_bignum_Skip
+                      (word_bignum_Seq (wordLang_MustTerminate
                            (wordLang_Call (SOME ([1],adjust_sets
                              (data_to_word_get_names
-                             names),Skip,secn,l))
+                             names),word_bignum_Skip,secn,l))
                               (SOME Compare_location) [1; 3] NONE))
-                           (Assign 3 (wordLang_Const (n2w 1))));
-                    (If Less 1 (Reg 3)
-                       (Assign (adjust_var dest) (Const (n2w 18:'a
-                         word)))
-                       (Assign (adjust_var dest) (Const (n2w 2:'a
-                         word))))],l + 1):'a wordLang_prog#num)`;;
+                           (word_bignum_Assign 3 (wordLang_Const (n2w
+                             1))));
+                    (word_bignum_If asm_Less 1 (Reg 3)
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 18:'a word)))
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 2:'a word))))],l +
+                         1):'a wordLang_prog#num)`;;
 
 let assign_LessEq_def = new_definition
   `assign_LessEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [Assign 1 (Var (adjust_var v1));
-                    Assign 3 (Var (adjust_var v2));
-                    Assign 5 (Op asm_Or [Var 1; Var 3]);
-                    If Test 5 (Imm (n2w 1)) Skip
-                      (Seq (wordLang_MustTerminate
+         ((data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Var
+           (adjust_var v1));
+                    word_bignum_Assign 3 (wordLang_Var (adjust_var
+                      v2));
+                    word_bignum_Assign 5 (wordLang_Op asm_Or
+                      [wordLang_Var 1; wordLang_Var 3]);
+                    word_bignum_If asm_Test 5 (Imm (n2w 1))
+                      word_bignum_Skip
+                      (word_bignum_Seq (wordLang_MustTerminate
                            (wordLang_Call (SOME ([1],adjust_sets
                              (data_to_word_get_names
-                             names),Skip,secn,l))
+                             names),word_bignum_Skip,secn,l))
                               (SOME Compare_location) [1; 3] NONE))
-                           (Assign 3 (wordLang_Const (n2w 1))));
-                    (If asm_NotLess 3 (Reg 1)
-                       (Assign (adjust_var dest) (Const (n2w 18:'a
-                         word)))
-                       (Assign (adjust_var dest) (Const (n2w 2:'a
-                         word))))],l + 1):'a wordLang_prog#num)`;;
+                           (word_bignum_Assign 3 (wordLang_Const (n2w
+                             1))));
+                    (word_bignum_If asm_NotLess 3 (Reg 1)
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 18:'a word)))
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 2:'a word))))],l +
+                         1):'a wordLang_prog#num)`;;
 
 let assign_LengthBlock_def = new_definition
   `assign_LengthBlock (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
-                         ((If Test (adjust_var v1) (Imm (n2w 1))
-                            (Assign (adjust_var dest) (wordLang_Const
-                              (n2w 0)))
-                            (Assign (adjust_var dest)
+                         ((word_bignum_If asm_Test (adjust_var v1)
+                           (Imm (n2w 1))
+                            (word_bignum_Assign (adjust_var dest)
+                              (wordLang_Const (n2w 0)))
+                            (word_bignum_Assign (adjust_var dest)
                               (let addr' = real_addr c (adjust_var
                                 v1) in
-                              let header = Load addr' in
+                              let header = word_bignum_Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              let len = (\sh e n. Shift sh e
+                              let len = (\sh e n. wordLang_Shift sh e
                                 (wordLang_Const (n2w n))) Lsr header k
                                 in
-                              ((\sh e n. Shift sh e
+                              ((\sh e n. wordLang_Shift sh e
                                 (wordLang_Const (n2w n))) Lsl len
                                 2))),l):'a wordLang_prog#num)`;;
 
 let assign_Length_def = new_definition
   `assign_Length (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 =
-                           ((Assign (adjust_var dest)
+                           ((word_bignum_Assign (adjust_var dest)
                               (let addr' = real_addr c (adjust_var
                                 v1) in
-                              let header = Load addr' in
+                              let header = word_bignum_Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              let len = (\sh e n. Shift sh e
+                              let len = (\sh e n. wordLang_Shift sh e
                                 (wordLang_Const (n2w n))) Lsr header k
                                 in
-                              ((\sh e n. Shift sh e
+                              ((\sh e n. wordLang_Shift sh e
                                 (wordLang_Const (n2w n))) Lsl len
                                 2)),l):'a wordLang_prog#num)`;;
 
 let assign_LengthByte_def = new_definition
   `assign_LengthByte (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
-             ((Assign (adjust_var dest)
+             ((word_bignum_Assign (adjust_var dest)
                 (let addr' = real_addr c (adjust_var v1) in
-                 let header = Load addr' in
+                 let header = word_bignum_Load addr' in
                  let k = dimindex (:'a) - backend_common_word_shift
                    (:'a) - data_to_word_config_len_size c in
-                 let fakelen = (\sh e n. Shift sh e (wordLang_Const
-                   (n2w n))) Lsr header k in
-                 let len = Op asm_Sub [fakelen; Const bytes_in_word]
-                   in
-                   ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-                     Lsl len 2)),l):'a wordLang_prog#num)`;;
+                 let fakelen = (\sh e n. wordLang_Shift sh e
+                   (wordLang_Const (n2w n))) Lsr header k in
+                 let len = wordLang_Op asm_Sub [fakelen;
+                   word_depth_Const bytes_in_word] in
+                   ((\sh e n. wordLang_Shift sh e (wordLang_Const
+                     (n2w n))) Lsl len 2)),l):'a wordLang_prog#num)`;;
 
 let assign_TagLenEq_def = new_definition
   `assign_TagLenEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) tag len v1 =
                          ((if len = 0 then
                             if tag < dimword (:'a) DIV 16 then
-                              (If Equal (adjust_var v1) (Imm (n2w (16
-                                * tag + 2)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word))),l) else (Assign (adjust_var
-                                dest) (Const (n2w 2:'a word)),l) else if
-                                tag < 2 EXP data_to_word_config_tag_bits
-                                c - 1 /\
+                              (word_bignum_If asm_Equal (adjust_var
+                                v1) (Imm (n2w (16 * tag + 2)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 2:'a word))),l)
+                                else (word_bignum_Assign (adjust_var
+                                dest) (word_depth_Const (n2w 2:'a
+                                word)),l) else if tag < 2 EXP
+                                data_to_word_config_tag_bits c - 1 /\
                               len < 2 EXP
                                 data_to_word_config_len_bits c - 1 then
-                            (Seq
-                              (Assign 1 (Op And
-                              [Var (adjust_var v1);
-                              Const (all_ones
+                            (word_bignum_Seq
+                              (word_bignum_Assign 1 (wordLang_Op
+                                asm_And
+                              [wordLang_Var (adjust_var v1);
+                              word_depth_Const (all_ones
                                 (data_to_word_config_len_bits c +
                                 data_to_word_config_tag_bits c + 1)
                                 0)]))
-                              (If Equal 1 (Imm (ptr_bits c tag len ||
-                                (n2w 1)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word)))),l) else
+                              (word_bignum_If asm_Equal 1 (Imm
+                                (ptr_bits c tag len || (n2w 1)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 2:'a word)))),l)
+                                else
                             match encode_header c (4 * tag) len with
-                              NONE -> (Assign (adjust_var dest) (Const
-                              (n2w 2:'a word)),l) | SOME h ->
-                              (list_Seq
-                              [Assign 1 (wordLang_Const (n2w 0));
-                              If Test (adjust_var v1) (Imm (n2w 1))
-                                Skip
-                              (Assign 1 (wordLang_Load (real_addr c
-                                (adjust_var v1))));
-                              If Equal 1 (Imm h)
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const
-                                (n2w 2:'a word)))],l)):'a
-                                wordLang_prog#num)`;;
+                              NONE -> (word_bignum_Assign (adjust_var
+                              dest) (word_depth_Const (n2w 2:'a
+                              word)),l) | SOME h ->
+                              (data_to_word_list_Seq
+                              [word_bignum_Assign 1 (wordLang_Const
+                                (n2w 0));
+                              word_bignum_If asm_Test (adjust_var v1)
+                                (Imm (n2w 1)) word_bignum_Skip
+                              (word_bignum_Assign 1 (wordLang_Load
+                                (real_addr c (adjust_var v1))));
+                              word_bignum_If asm_Equal 1 (Imm h)
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var
+                                dest) (word_depth_Const (n2w 2:'a
+                                word)))],l)):'a wordLang_prog#num)`;;
 
 let assign_LenEq_def = new_definition
   `assign_LenEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) len v1 =
                          ((if len = 0 then
-                            (If Test (adjust_var v1) (Imm (n2w 1))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word))),l) else if len < 2 EXP
+                            (word_bignum_If asm_Test (adjust_var v1)
+                              (Imm (n2w 1))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 2:'a word))),l)
+                                else if len < 2 EXP
                                 data_to_word_config_len_bits c - 1 then
-                            (Seq
-                              (Assign 1 (Op And
-                              [Var (adjust_var v1);
-                              Const (all_ones
+                            (word_bignum_Seq
+                              (word_bignum_Assign 1 (wordLang_Op
+                                asm_And
+                              [wordLang_Var (adjust_var v1);
+                              word_depth_Const (all_ones
                                 (data_to_word_config_len_bits c + 1)
                                 0)]))
-                              (If Equal 1 (Imm (ptr_bits c 0 len ||
-                                (n2w 1)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word)))),l) else if len < dimword
-                                (:'a) then
-                            (list_Seq
-                              [Assign 1 (wordLang_Const (n2w 0));
-                              If Test (adjust_var v1) (Imm (n2w 1))
-                                Skip
-                              (Assign 1
+                              (word_bignum_If asm_Equal 1 (Imm
+                                (ptr_bits c 0 len || (n2w 1)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 2:'a word)))),l)
+                                else if len < dimword (:'a) then
+                            (data_to_word_list_Seq
+                              [word_bignum_Assign 1 (wordLang_Const
+                                (n2w 0));
+                              word_bignum_If asm_Test (adjust_var v1)
+                                (Imm (n2w 1)) word_bignum_Skip
+                              (word_bignum_Assign 1
                               (let addr' = real_addr c (adjust_var
                                 v1) in
-                              let header = Load addr' in
+                              let header = word_bignum_Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              let len = (\sh e n. Shift sh e
+                              let len = (\sh e n. wordLang_Shift sh e
                                 (wordLang_Const (n2w n))) Lsr header k
                                 in
                               len));
-                              If Equal 1 (Imm (n2w len))
-                              (Assign (adjust_var dest) (Const (n2w
-                                18:'a word)))
-                              (Assign (adjust_var dest) (Const (n2w
-                                2:'a word)))],l) else
-                            (Assign (adjust_var dest) (Const (n2w
-                              2:'a word)),l)):'a wordLang_prog#num)`;;
+                              word_bignum_If asm_Equal 1 (Imm (n2w
+                                len))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 18:'a word)))
+                              (word_bignum_Assign (adjust_var dest)
+                                (word_depth_Const (n2w 2:'a word)))],l)
+                                else
+                            (word_bignum_Assign (adjust_var dest)
+                              (word_depth_Const (n2w 2:'a
+                              word)),l)):'a wordLang_prog#num)`;;
 
 let assign_TagEq_def = new_definition
   `assign_TagEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) tag v1 =
                 ((if tag < dimword (:'a) DIV 16 then
-                  (list_Seq
-                    [Assign 1 (Var (adjust_var v1));
-                     If Test (adjust_var v1) (Imm (n2w 1)) Skip
-                       (Assign 1 (let v = adjust_var v1 in
-                              let h = Load (real_addr c v) in
-                              Op And [h; Const (tag_mask c || (n2w
+                  (data_to_word_list_Seq
+                    [word_bignum_Assign 1 (wordLang_Var (adjust_var
+                      v1));
+                     word_bignum_If asm_Test (adjust_var v1) (Imm
+                       (n2w 1)) word_bignum_Skip
+                       (word_bignum_Assign 1 (let v = adjust_var v1
+                         in
+                              let h = word_bignum_Load (real_addr c
+                                v) in
+                              wordLang_Op asm_And [h;
+                                word_depth_Const (tag_mask c || (n2w
                                 2))]));
-                     If Equal 1 (Imm (n2w (16 * tag + 2)))
-                       (Assign (adjust_var dest) (Const (n2w 18:'a
-                         word)))
-                       (Assign (adjust_var dest) (Const (n2w 2:'a
-                         word)))],l) else (Assign (adjust_var dest)
-                         (Const (n2w 2:'a word)),l)):'a
+                     word_bignum_If asm_Equal 1 (Imm (n2w (16 * tag +
+                       2)))
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 18:'a word)))
+                       (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 2:'a word)))],l) else
+                         (word_bignum_Assign (adjust_var dest)
+                         (word_depth_Const (n2w 2:'a word)),l)):'a
                          wordLang_prog#num)`;;
 
 let assign_Add_def = new_definition
   `assign_Add (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [
+         ((data_to_word_list_Seq [
                     // perform addition
-                    Inst (Arith (asm_AddOverflow 1 (adjust_var v1)
+                    wordLang_Inst (asm_Arith (asm_AddOverflow 1
+                      (adjust_var v1)
                               (adjust_var v2) 3));
                     // or together bits of overflow flag, and the two inputs
-                    Assign 3 (Op asm_Or [Var 3; Var (adjust_var v1);
-                      Var (adjust_var v2)]);
+                    word_bignum_Assign 3 (wordLang_Op asm_Or
+                      [wordLang_Var 3; wordLang_Var (adjust_var v1);
+                      wordLang_Var (adjust_var v2)]);
                     // if the least significant bit is set, then bignum is needed
-                    If Test 3 (Imm (n2w 1)) Skip
+                    word_bignum_If asm_Test 3 (Imm (n2w 1))
+                      word_bignum_Skip
                      (wordLang_MustTerminate
                        (wordLang_Call (SOME ([1],adjust_sets
-                         (data_to_word_get_names names),Skip,secn,l))
+                         (data_to_word_get_names
+                         names),word_bignum_Skip,secn,l))
                          (SOME Add_location) [adjust_var v1;
                            adjust_var v2] NONE));
-                    Move 2 [(adjust_var dest,1)]],l + 1):'a
-                      wordLang_prog#num)`;;
+                    wordLang_Move 2 [(adjust_var dest,1)]],l +
+                      1):'a wordLang_prog#num)`;;
 
 let assign_Sub_def = new_definition
   `assign_Sub (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [
+         ((data_to_word_list_Seq [
                     // perform subtraction
-                    Inst (Arith (asm_SubOverflow 1 (adjust_var v1)
+                    wordLang_Inst (asm_Arith (asm_SubOverflow 1
+                      (adjust_var v1)
                               (adjust_var v2) 3));
                     // or together bits of overflow flag, and the two inputs
-                    Assign 3 (Op asm_Or [Var 3; Var (adjust_var v1);
-                      Var (adjust_var v2)]);
+                    word_bignum_Assign 3 (wordLang_Op asm_Or
+                      [wordLang_Var 3; wordLang_Var (adjust_var v1);
+                      wordLang_Var (adjust_var v2)]);
                     // if the least significant bit is set, then bignum is needed
-                    If Test 3 (Imm (n2w 1)) Skip
+                    word_bignum_If asm_Test 3 (Imm (n2w 1))
+                      word_bignum_Skip
                      (wordLang_MustTerminate
                        (wordLang_Call (SOME ([1],adjust_sets
-                         (data_to_word_get_names names),Skip,secn,l))
+                         (data_to_word_get_names
+                         names),word_bignum_Skip,secn,l))
                          (SOME Sub_location) [adjust_var v1;
                            adjust_var v2] NONE));
-                    Move 2 [(adjust_var dest,1)]],l + 1):'a
-                      wordLang_prog#num)`;;
+                    wordLang_Move 2 [(adjust_var dest,1)]],l +
+                      1):'a wordLang_prog#num)`;;
 
 let assign_Mult_def = new_definition
   `assign_Mult (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [Assign 1 (ShiftVar Lsr (adjust_var v1) 1);
-                    Inst (Arith (asm_LongMul 3 1 1 (adjust_var v2)));
-                    Assign 3 (Op asm_Or [Var 3;
-                              Op And [Const (n2w 1);
-                              Op asm_Or [Var (adjust_var v1); Var
+         ((data_to_word_list_Seq [word_bignum_Assign 1 (ShiftVar Lsr
+           (adjust_var v1) 1);
+                    wordLang_Inst (asm_Arith (asm_LongMul 3 1 1
+                      (adjust_var v2)));
+                    word_bignum_Assign 3 (wordLang_Op asm_Or
+                      [wordLang_Var 3;
+                              wordLang_Op asm_And [word_depth_Const
+                                (n2w 1);
+                              wordLang_Op asm_Or [wordLang_Var
+                                (adjust_var v1); wordLang_Var
                                 (adjust_var v2)]]]);
-                    Assign 1 (ShiftVar Lsr 1 1);
-                    If Equal 3 (Imm (n2w 0)) Skip
+                    word_bignum_Assign 1 (ShiftVar Lsr 1 1);
+                    word_bignum_If asm_Equal 3 (Imm (n2w 0))
+                      word_bignum_Skip
                       (wordLang_MustTerminate
                         (wordLang_Call (SOME ([1],adjust_sets
-                          (data_to_word_get_names names),Skip,secn,l))
+                          (data_to_word_get_names
+                          names),word_bignum_Skip,secn,l))
                          (SOME Mul_location) [adjust_var v1;
                            adjust_var v2] NONE));
-                    Move 2 [(adjust_var dest,1)]],l + 1):'a
-                      wordLang_prog#num)`;;
+                    wordLang_Move 2 [(adjust_var dest,1)]],l +
+                      1):'a wordLang_prog#num)`;;
 
 let assign_Div_def = new_definition
   `assign_Div (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [
-            Assign 1 (Op asm_Or [Var (adjust_var v1); Var (adjust_var
-              v2)]);
-            Assign 1 (Op asm_Or [Var 1; ShiftVar Lsr 1 (dimindex
-              (:'a) - 1)]);
-            If Test 1 (Imm ((n2w 1):'a word))
+         ((data_to_word_list_Seq [
+            word_bignum_Assign 1 (wordLang_Op asm_Or [wordLang_Var
+              (adjust_var v1); wordLang_Var (adjust_var v2)]);
+            word_bignum_Assign 1 (wordLang_Op asm_Or [wordLang_Var 1;
+              ShiftVar Lsr 1 (dimindex (:'a) - 1)]);
+            word_bignum_If asm_Test 1 (Imm ((n2w 1):'a word))
               (if data_to_word_config_has_div c then
-                 list_Seq [Inst (Arith (asm_Div 1 (adjust_var v1)
-                   (adjust_var v2)));
-                           Assign (adjust_var dest) (ShiftVar Lsl 1
-                             2)] else if data_to_word_config_has_longdiv
-                             c then
-                 list_Seq [Assign 1 (wordLang_Const (n2w 0));
-                           Inst (Arith (asm_LongDiv 1 3 1 (adjust_var
-                             v1) (adjust_var v2)));
-                           Assign (adjust_var dest) (ShiftVar Lsl 1
-                             2)] else
-                 list_Seq
-                   [Assign 1 (wordLang_Const (n2w 0));
+                 data_to_word_list_Seq [wordLang_Inst (asm_Arith
+                   (asm_Div 1 (adjust_var v1) (adjust_var v2)));
+                           word_bignum_Assign (adjust_var dest)
+                             (ShiftVar Lsl 1 2)] else if
+                             data_to_word_config_has_longdiv c then
+                 data_to_word_list_Seq [word_bignum_Assign 1
+                   (wordLang_Const (n2w 0));
+                           wordLang_Inst (asm_Arith (asm_LongDiv 1 3
+                             1 (adjust_var v1) (adjust_var v2)));
+                           word_bignum_Assign (adjust_var dest)
+                             (ShiftVar Lsl 1 2)] else
+                 data_to_word_list_Seq
+                   [word_bignum_Assign 1 (wordLang_Const (n2w 0));
                     wordLang_MustTerminate
                      (wordLang_Call (SOME ([1],adjust_sets
-                       (data_to_word_get_names names),Skip,secn,l + 1))
+                       (data_to_word_get_names
+                       names),word_bignum_Skip,secn,l + 1))
                        (SOME LongDiv_location)
                          [1; adjust_var v1; adjust_var v2] NONE);
-                    Assign (adjust_var dest) (ShiftVar Lsl 1 2)])
-              (list_Seq
+                    word_bignum_Assign (adjust_var dest) (ShiftVar
+                      Lsl 1 2)])
+              (data_to_word_list_Seq
                  [wordLang_MustTerminate
                     (wordLang_Call (SOME ([1],adjust_sets
-                      (data_to_word_get_names names),Skip,secn,l))
+                      (data_to_word_get_names
+                      names),word_bignum_Skip,secn,l))
                        (SOME Div_location) [adjust_var v1; adjust_var
                          v2] NONE);
-                  Move 2 [(adjust_var dest,1)]])],l + 2):'a
-                    wordLang_prog#num)`;;
+                  wordLang_Move 2 [(adjust_var dest,1)]])],l +
+                    2):'a wordLang_prog#num)`;;
 
 let assign_Mod_def = new_definition
   `assign_Mod (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 =
-         ((list_Seq [
-            Assign 1 (Op asm_Or [Var (adjust_var v1); Var (adjust_var
-              v2)]);
-            Assign 1 (Op asm_Or [Var 1; ShiftVar Lsr 1 (dimindex
-              (:'a) - 1)]);
-            If Test 1 (Imm ((n2w 1):'a word))
+         ((data_to_word_list_Seq [
+            word_bignum_Assign 1 (wordLang_Op asm_Or [wordLang_Var
+              (adjust_var v1); wordLang_Var (adjust_var v2)]);
+            word_bignum_Assign 1 (wordLang_Op asm_Or [wordLang_Var 1;
+              ShiftVar Lsr 1 (dimindex (:'a) - 1)]);
+            word_bignum_If asm_Test 1 (Imm ((n2w 1):'a word))
               (if data_to_word_config_has_div c then
-                 list_Seq [Inst (Arith (asm_Div 1 (adjust_var v1)
-                   (adjust_var v2)));
-                           Inst (Arith (asm_LongMul 3 1 1 (adjust_var
-                             v2)));
-                           Assign (adjust_var dest)
-                             (Op asm_Sub [Var (adjust_var v1); Var
-                               1])] else if
-                               data_to_word_config_has_longdiv c then
-                 list_Seq [Assign 1 (wordLang_Const (n2w 0));
-                           Inst (Arith (asm_LongDiv 1 3 1 (adjust_var
-                             v1) (adjust_var v2)));
-                           Move 2 [(adjust_var dest,3)]] else
-                 list_Seq
-                   [Assign 1 (wordLang_Const (n2w 0));
+                 data_to_word_list_Seq [wordLang_Inst (asm_Arith
+                   (asm_Div 1 (adjust_var v1) (adjust_var v2)));
+                           wordLang_Inst (asm_Arith (asm_LongMul 3 1
+                             1 (adjust_var v2)));
+                           word_bignum_Assign (adjust_var dest)
+                             (wordLang_Op asm_Sub [wordLang_Var
+                               (adjust_var v1); wordLang_Var 1])] else
+                               if data_to_word_config_has_longdiv c then
+                 data_to_word_list_Seq [word_bignum_Assign 1
+                   (wordLang_Const (n2w 0));
+                           wordLang_Inst (asm_Arith (asm_LongDiv 1 3
+                             1 (adjust_var v1) (adjust_var v2)));
+                           wordLang_Move 2 [(adjust_var dest,3)]]
+                             else
+                 data_to_word_list_Seq
+                   [word_bignum_Assign 1 (wordLang_Const (n2w 0));
                     wordLang_MustTerminate
                      (wordLang_Call (SOME ([1],adjust_sets
-                       (data_to_word_get_names names),Skip,secn,l + 1))
+                       (data_to_word_get_names
+                       names),word_bignum_Skip,secn,l + 1))
                        (SOME LongDiv_location)
                          [1; adjust_var v1; adjust_var v2] NONE);
-                    Get (adjust_var dest) (Temp (n2w 28))])
-              (list_Seq
+                    wordLang_Get (adjust_var dest) (Temp (n2w 28))])
+              (data_to_word_list_Seq
                  [wordLang_MustTerminate
                     (wordLang_Call (SOME ([1],adjust_sets
-                      (data_to_word_get_names names),Skip,secn,l))
+                      (data_to_word_get_names
+                      names),word_bignum_Skip,secn,l))
                        (SOME Mod_location) [adjust_var v1; adjust_var
                          v2] NONE);
-                  Move 2 [(adjust_var dest,1)]])],l + 2):'a
-                    wordLang_prog#num)`;;
+                  wordLang_Move 2 [(adjust_var dest,1)]])],l +
+                    2):'a wordLang_prog#num)`;;
 
 let assign_WordOpW8_def = new_definition
   `assign_WordOpW8 opw (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
-            ((Assign (adjust_var dest)
-             (match lookup_word_op opw with Bitwise op -> Op op [Var
-               (adjust_var v1); Var (adjust_var v2)] | Carried op ->
-               (let k = dimindex (:'a) - 10 in
-                (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
-                  ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
-                  (Op op [Var (adjust_var v1); Var (adjust_var
-                    v2)]) k) k)),l):'a wordLang_prog#num)`;;
+            ((word_bignum_Assign (adjust_var dest)
+             (match lookup_word_op opw with Bitwise op -> wordLang_Op
+               op [wordLang_Var (adjust_var v1); wordLang_Var
+               (adjust_var v2)] | Carried op -> (let k = dimindex (:'a)
+               - 10 in
+                (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                  n))) Lsr ((\sh e n. wordLang_Shift sh e
+                  (wordLang_Const (n2w n))) Lsl
+                  (wordLang_Op op [wordLang_Var (adjust_var v1);
+                    wordLang_Var (adjust_var v2)]) k) k)),l):'a
+                    wordLang_prog#num)`;;
 
 let assign_WordOpW64_def = new_definition
   `assign_WordOpW64 opw (c:data_to_word_config) (secn:num) (l:num)
@@ -2370,33 +2696,39 @@ let assign_WordOpW64_def = new_definition
         ((if dimindex (:'a) = 64 then
           (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
-                 (Seq (Assign 3
-                   (Op (match opw with
-                           backend_common_Andw -> And |
-                             backend_common_Orw -> Or | Xor -> Xor | Add
-                             -> Add | Sub -> Sub)
-                          [Load
-                             (Op asm_Add
+                 (word_bignum_Seq (word_bignum_Assign 3
+                   (wordLang_Op (match opw with
+                           backend_common_Andw -> asm_And |
+                             backend_common_Orw -> asm_Or |
+                             backend_common_Xor -> backend_common_Xor |
+                             word_bignum_Add -> word_bignum_Add |
+                             word_bignum_Sub -> word_bignum_Sub)
+                          [word_bignum_Load
+                             (wordLang_Op asm_Add
                               [real_addr c (adjust_var v1);
-                              Const bytes_in_word]);
-                           Load
-                             (Op asm_Add
+                              word_depth_Const bytes_in_word]);
+                           word_bignum_Load
+                             (wordLang_Op asm_Add
                               [real_addr c (adjust_var v2);
-                              Const bytes_in_word])]))
+                              word_depth_Const bytes_in_word])]))
                     (WriteWord64 c header dest 3),l)) else
           (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
             header ->
-             (list_Seq [
-                Assign 15 (real_addr c (adjust_var v1));
-                Assign 17 (real_addr c (adjust_var v2));
-                Assign 11 (wordLang_Load (Op asm_Add [Var 15; Const
+             (data_to_word_list_Seq [
+                word_bignum_Assign 15 (real_addr c (adjust_var v1));
+                word_bignum_Assign 17 (real_addr c (adjust_var v2));
+                word_bignum_Assign 11 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const
                   bytes_in_word]));
-                Assign 13 (wordLang_Load (Op asm_Add [Var 15; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Assign 21 (wordLang_Load (Op asm_Add [Var 17; Const
+                word_bignum_Assign 13 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                word_bignum_Assign 21 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const
                   bytes_in_word]));
-                Assign 23 (wordLang_Load (Op asm_Add [Var 17; Const
-                  ((n2w 2) * bytes_in_word)]));
+                word_bignum_Assign 23 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
                 WordOp64_on_32 opw;
                 WriteWord64_on_32 c header dest 33 31],l))):'a
                   wordLang_prog#num)`;;
@@ -2404,31 +2736,37 @@ let assign_WordOpW64_def = new_definition
 let assign_WordShiftW8_def = new_definition
   `assign_WordShiftW8 sh n (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
-         ((Assign (adjust_var dest)
+         ((word_bignum_Assign (adjust_var dest)
             (match sh with Lsl ->
-               (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
-                 ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
-                   (Var (adjust_var v1)) (dimindex (:'a) - 10 + (MIN n
-                   8)))
+               (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                 n))) Lsr
+                 ((\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                   n))) Lsl (wordLang_Var (adjust_var v1)) (dimindex
+                   (:'a) - 10 + (MIN n 8)))
                  (dimindex (:'a) - 10) | Lsr ->
-               (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
-                 ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
-                   (Var (adjust_var v1)) ((MIN n 8) + 2)) 2 | Asr ->
-               (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
-                 ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
-                    ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
-                      Asr
-                       ((\sh e n. Shift sh e (wordLang_Const (n2w
-                         n))) Lsl (Var (adjust_var v1)) (dimindex (:'a)
-                         - 10))
+               (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                 n))) Lsl
+                 ((\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                   n))) Lsr (wordLang_Var (adjust_var v1)) ((MIN n 8) +
+                   2)) 2 | Asr ->
+               (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                 n))) Lsl
+                 ((\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+                   n))) Lsr
+                    ((\sh e n. wordLang_Shift sh e (wordLang_Const
+                      (n2w n))) Asr
+                       ((\sh e n. wordLang_Shift sh e (wordLang_Const
+                         (n2w n))) Lsl (wordLang_Var (adjust_var v1))
+                         (dimindex (:'a) - 10))
                        (MIN n 8))
                     (dimindex (:'a) - 8)) 2 | Ror ->
                (let n = n MOD 8 in
-                  Op asm_Or
-                   [(\sh e n. Shift sh e (wordLang_Const (n2w n)))
-                     Lsl (ShiftVar Lsr (adjust_var v1) (n + 2)) 2;
-                    (\sh e n. Shift sh e (wordLang_Const (n2w n)))
-                      Lsr (ShiftVar Lsl (adjust_var v1)
+                  wordLang_Op asm_Or
+                   [(\sh e n. wordLang_Shift sh e (wordLang_Const
+                     (n2w n))) Lsl (ShiftVar Lsr (adjust_var v1) (n +
+                     2)) 2;
+                    (\sh e n. wordLang_Shift sh e (wordLang_Const
+                      (n2w n))) Lsr (ShiftVar Lsl (adjust_var v1)
                       ((dimindex (:'a) - 2) - n)) (dimindex (:'a)
                         - 10)])),l):'a wordLang_prog#num)`;;
 
@@ -2439,16 +2777,19 @@ let assign_WordShiftW64_def = new_definition
           (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
              ((if len = 1 then
-                list_Seq
+                data_to_word_list_Seq
                   [LoadWord64 c 3 (adjust_var v1);
-                   Assign 3 (ShiftVar sh 3 n);
+                   word_bignum_Assign 3 (ShiftVar sh 3 n);
                    WriteWord64 c header dest 3] else
-                list_Seq [
-                  Assign 15 (real_addr c (adjust_var v1));
-                  Assign 11 (wordLang_Load (Op asm_Add [Var 15; Const
+                data_to_word_list_Seq [
+                  word_bignum_Assign 15 (real_addr c (adjust_var
+                    v1));
+                  word_bignum_Assign 11 (wordLang_Load (wordLang_Op
+                    asm_Add [wordLang_Var 15; word_depth_Const
                     bytes_in_word]));
-                  Assign 13 (wordLang_Load (Op asm_Add [Var 15; Const
-                    ((n2w 2) * bytes_in_word)]));
+                  word_bignum_Assign 13 (wordLang_Load (wordLang_Op
+                    asm_Add [wordLang_Var 15; word_depth_Const ((n2w 2)
+                    * bytes_in_word)]));
                   WordShift64_on_32 sh n;
                   WriteWord64_on_32 c header dest 33 31]),l)):'a
                     wordLang_prog#num)`;;
@@ -2457,26 +2798,31 @@ let assign_WordFromWord_def = new_definition
   `assign_WordFromWord b (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
            (if b then
-             (list_Seq [Assign 1 (real_addr c (adjust_var v1));
-                        Assign 1 (wordLang_Load (Op asm_Add [Var 1;
-                          Const (if dimindex (:'a) = 32 then (n2w 2)
-                            * bytes_in_word else bytes_in_word)]));
-                        Assign 1 (Op And [Var 1; Const (n2w 255)]);
-                        Assign (adjust_var dest) (ShiftVar Lsl 1
-                          2)],l) else
+             (data_to_word_list_Seq [word_bignum_Assign 1 (real_addr
+               c (adjust_var v1));
+                        word_bignum_Assign 1 (wordLang_Load
+                          (wordLang_Op asm_Add [wordLang_Var 1;
+                          word_depth_Const (if dimindex (:'a) = 32
+                            then (n2w 2) * bytes_in_word else
+                            bytes_in_word)]));
+                        word_bignum_Assign 1 (wordLang_Op asm_And
+                          [wordLang_Var 1; word_depth_Const (n2w 255)]);
+                        word_bignum_Assign (adjust_var dest)
+                          (ShiftVar Lsl 1 2)],l) else
            (let
               len = (if dimindex (:'a) < 64 then 2 else 1) in
               match encode_header c 3 len with
                 NONE -> (GiveUp,l) | SOME header ->
                  (if len = 1 then
-                    (list_Seq [Assign 3 ((\sh e n. Shift sh e
-                      (wordLang_Const (n2w n))) Lsr (Var (adjust_var
-                      v1)) 2);
+                    (data_to_word_list_Seq [word_bignum_Assign 3
+                      ((\sh e n. wordLang_Shift sh e (wordLang_Const
+                      (n2w n))) Lsr (wordLang_Var (adjust_var v1)) 2);
                               WriteWord64 c header dest 3],l) else
-                    (list_Seq [Assign 5 ((\sh e n. Shift sh e
-                      (wordLang_Const (n2w n))) Lsr (Var (adjust_var
-                      v1)) 2);
-                              Assign 3 (wordLang_Const (n2w 0));
+                    (data_to_word_list_Seq [word_bignum_Assign 5
+                      ((\sh e n. wordLang_Shift sh e (wordLang_Const
+                      (n2w n))) Lsr (wordLang_Var (adjust_var v1)) 2);
+                              word_bignum_Assign 3 (wordLang_Const
+                                (n2w 0));
                               WriteWord64_on_32 c header dest 5
                                 3],l))):'a wordLang_prog#num)`;;
 
@@ -2487,74 +2833,93 @@ let assign_WordFromInt_def = new_definition
          (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
            (header:'a word) ->
             (if len = 1 then
-              Seq
+              word_bignum_Seq
                 (
                  // put the word value into 3
-                 If Test (adjust_var v1) (Imm (n2w 1))
+                 word_bignum_If asm_Test (adjust_var v1) (Imm (n2w
+                   1))
                      (
                       // smallnum case
-                      Assign 3 ((\sh e n. Shift sh e (wordLang_Const
-                        (n2w n))) Asr (Var (adjust_var v1)) 2))
+                      word_bignum_Assign 3 ((\sh e n. wordLang_Shift
+                        sh e (wordLang_Const (n2w n))) Asr (wordLang_Var
+                        (adjust_var v1)) 2))
                     (
                      // bignum case
-                     Seq
+                     word_bignum_Seq
                       (LoadBignum c 1 3 (adjust_var v1))
-                      (If Test 1 (Imm (n2w 16)) Skip
-                         (Assign 3 (Op asm_Sub [Const (n2w 0); Var
+                      (word_bignum_If asm_Test 1 (Imm (n2w 16))
+                        word_bignum_Skip
+                         (word_bignum_Assign 3 (wordLang_Op asm_Sub
+                           [word_depth_Const (n2w 0); wordLang_Var
                            3])))))
-                (WriteWord64 c header dest 3) else If Test
-                  (adjust_var v1) (Imm (n2w 1))
-               (list_Seq [
-                 Assign 3 ((\sh e n. Shift sh e (wordLang_Const (n2w
-                   n))) Asr (Var (adjust_var v1)) 2);
-                 Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w
-                   n))) Asr (Var (adjust_var v1)) 31);
+                (WriteWord64 c header dest 3) else word_bignum_If
+                  asm_Test (adjust_var v1) (Imm (n2w 1))
+               (data_to_word_list_Seq [
+                 word_bignum_Assign 3 ((\sh e n. wordLang_Shift sh e
+                   (wordLang_Const (n2w n))) Asr (wordLang_Var
+                   (adjust_var v1)) 2);
+                 word_bignum_Assign 5 ((\sh e n. wordLang_Shift sh e
+                   (wordLang_Const (n2w n))) Asr (wordLang_Var
+                   (adjust_var v1)) 31);
                  WriteWord64_on_32 c header dest 3 5])
-               (list_Seq [
-                 Assign 1 (real_addr c (adjust_var v1));
-                 Assign 3 (wordLang_Load (Var 1));
-                 Assign 5 (wordLang_Load (Op asm_Add [Var 1; Const
+               (data_to_word_list_Seq [
+                 word_bignum_Assign 1 (real_addr c (adjust_var v1));
+                 word_bignum_Assign 3 (wordLang_Load (wordLang_Var
+                   1));
+                 word_bignum_Assign 5 (wordLang_Load (wordLang_Op
+                   asm_Add [wordLang_Var 1; word_depth_Const
                    bytes_in_word]));
-                 Assign 7 (ShiftVar Lsr 3 (dimindex (:'a) -
-                   data_to_word_config_len_size c));
-                 If Equal 7 (Imm (n2w 1))
+                 word_bignum_Assign 7 (ShiftVar Lsr 3 (dimindex (:'a)
+                   - data_to_word_config_len_size c));
+                 word_bignum_If asm_Equal 7 (Imm (n2w 1))
                    (
                     // bignum of length 1
-                    If Test 3 (Imm (n2w 16))
+                    word_bignum_If asm_Test 3 (Imm (n2w 16))
                      (
                       // positive case
-                      Seq (Assign 9 (wordLang_Const (n2w 0)))
+                      word_bignum_Seq (word_bignum_Assign 9
+                        (wordLang_Const (n2w 0)))
                           (WriteWord64_on_32 c header dest 5 9))
                      (
                       // negative case
-                      Seq (Assign 9 (wordLang_Const (word_not (n2w
-                        0))))
-                     (Seq (Assign 5 (Op asm_Sub [Const (n2w 0); Var
-                       5]))
+                      word_bignum_Seq (word_bignum_Assign 9
+                        (wordLang_Const (word_not (n2w 0))))
+                     (word_bignum_Seq (word_bignum_Assign 5
+                       (wordLang_Op asm_Sub [word_depth_Const (n2w 0);
+                       wordLang_Var 5]))
                           (WriteWord64_on_32 c header dest 5 9))))
                    (
                     // longer bignum
-                    If Test 3 (Imm (n2w 16))
+                    word_bignum_If asm_Test 3 (Imm (n2w 16))
                      (
                       // positive case
-                      Seq (Assign 9 (wordLang_Load
-                            (Op asm_Add [Var 1; Const ((n2w 2) *
+                      word_bignum_Seq (word_bignum_Assign 9
+                        (wordLang_Load
+                            (wordLang_Op asm_Add [wordLang_Var 1;
+                              word_depth_Const ((n2w 2) *
                               bytes_in_word)])))
                           (WriteWord64_on_32 c header dest 5 9))
                      (
                       // negative case -- messy
-                      list_Seq
-                       [Assign 11 (wordLang_Const (n2w 0));
-                        Assign 13 (wordLang_Const (n2w 1));
-                        Assign 9 (wordLang_Load
-                          (Op asm_Add [Var 1; Const ((n2w 2) *
+                      data_to_word_list_Seq
+                       [word_bignum_Assign 11 (wordLang_Const (n2w
+                         0));
+                        word_bignum_Assign 13 (wordLang_Const (n2w
+                          1));
+                        word_bignum_Assign 9 (wordLang_Load
+                          (wordLang_Op asm_Add [wordLang_Var 1;
+                            word_depth_Const ((n2w 2) *
                             bytes_in_word)]));
-                        Assign 5 (Op Xor [Const (word_not (n2w 0));
-                          Var 5]);
-                        Assign 9 (Op Xor [Const (word_not (n2w 0));
-                          Var 9]);
-                        Inst (Arith (asm_AddCarry 15 11 5 13));
-                        Inst (Arith (asm_AddCarry 19 11 9 13));
+                        word_bignum_Assign 5 (wordLang_Op
+                          backend_common_Xor [word_depth_Const (word_not
+                          (n2w 0)); wordLang_Var 5]);
+                        word_bignum_Assign 9 (wordLang_Op
+                          backend_common_Xor [word_depth_Const (word_not
+                          (n2w 0)); wordLang_Var 9]);
+                        wordLang_Inst (asm_Arith (asm_AddCarry 15 11
+                          5 13));
+                        wordLang_Inst (asm_Arith (asm_AddCarry 19 11
+                          9 13));
                         WriteWord64_on_32 c header dest 15
                           19]))])),l):'a wordLang_prog#num)`;;
 
@@ -2565,31 +2930,38 @@ let assign_WordToInt_def = new_definition
          (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
            header ->
               (if len = 1 then
-                (list_Seq [LoadWord64 c 3 (adjust_var v);
-                           Assign 1 ((\sh e n. Shift sh e
-                             (wordLang_Const (n2w n))) Lsr (Var 3) 61);
-                           If Equal 1 (Imm (n2w 0))
-                             (Assign (adjust_var dest) ((\sh e n.
-                               Shift sh e (wordLang_Const (n2w n))) Lsl
-                               (Var 3) 2))
+                (data_to_word_list_Seq [LoadWord64 c 3 (adjust_var
+                  v);
+                           word_bignum_Assign 1 ((\sh e n.
+                             wordLang_Shift sh e (wordLang_Const (n2w
+                             n))) Lsr (wordLang_Var 3) 61);
+                           word_bignum_If asm_Equal 1 (Imm (n2w 0))
+                             (word_bignum_Assign (adjust_var dest)
+                               ((\sh e n. wordLang_Shift sh e
+                               (wordLang_Const (n2w n))) Lsl
+                               (wordLang_Var 3) 2))
                              (WriteWord64 c header dest 3)],l) else
                (match encode_header c 3 1 with NONE -> (GiveUp,l) |
                  SOME header1 ->
-                  (list_Seq [
-                   Assign 15 (real_addr c (adjust_var v));
-                   Assign 13 (wordLang_Load (Op asm_Add [Var 15;
-                     Const bytes_in_word]));
-                   Assign 11 (wordLang_Load (Op asm_Add [Var 15;
-                     Const ((n2w 2) * bytes_in_word)]));
-                   If asm_NotEqual 13 (Imm (n2w 0))
+                  (data_to_word_list_Seq [
+                   word_bignum_Assign 15 (real_addr c (adjust_var
+                     v));
+                   word_bignum_Assign 13 (wordLang_Load (wordLang_Op
+                     asm_Add [wordLang_Var 15; word_depth_Const
+                     bytes_in_word]));
+                   word_bignum_Assign 11 (wordLang_Load (wordLang_Op
+                     asm_Add [wordLang_Var 15; word_depth_Const ((n2w 2)
+                     * bytes_in_word)]));
+                   word_bignum_If asm_NotEqual 13 (Imm (n2w 0))
                      (WriteWord64_on_32 c header dest 13 11)
-                     (list_Seq [
-                       Assign 1 ((\sh e n. Shift sh e (wordLang_Const
-                         (n2w n))) Lsr (Var 11) 29);
-                       If Equal 1 (Imm (n2w 0))
-                         (Assign (adjust_var dest) ((\sh e n. Shift
-                           sh e (wordLang_Const (n2w n))) Lsl (Var 11)
-                           2))
+                     (data_to_word_list_Seq [
+                       word_bignum_Assign 1 ((\sh e n. wordLang_Shift
+                         sh e (wordLang_Const (n2w n))) Lsr
+                         (wordLang_Var 11) 29);
+                       word_bignum_If asm_Equal 1 (Imm (n2w 0))
+                         (word_bignum_Assign (adjust_var dest) ((\sh
+                           e n. wordLang_Shift sh e (wordLang_Const (n2w
+                           n))) Lsl (wordLang_Var 11) 2))
                          (WriteWord32_on_32 c header1 dest
                            11)])],l)))):'a wordLang_prog#num)`;;
 
@@ -2597,95 +2969,114 @@ let assign_FFI_def = new_definition
   `assign_FFI ffi_index (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
        (if ~(data_to_word_config_call_empty_ffi c) /\ ffi_index =
-         (implode "") then (Assign (adjust_var dest)
+         (implode "") then (word_bignum_Assign (adjust_var dest)
          data_to_word_Unit,l) else
          let addr1 = real_addr c (adjust_var v1) in
-         let header1 = Load addr1 in
+         let header1 = word_bignum_Load addr1 in
          let k = dimindex (:'a) - backend_common_word_shift (:'a) -
            data_to_word_config_len_size c in
-         let fakelen1 = (\sh e n. Shift sh e (wordLang_Const (n2w
-           n))) Lsr header1 k in
+         let fakelen1 = (\sh e n. wordLang_Shift sh e (wordLang_Const
+           (n2w n))) Lsr header1 k in
          let addr2 = real_addr c (adjust_var v2) in
-         let header2 = Load addr2 in
-         let fakelen2 = (\sh e n. Shift sh e (wordLang_Const (n2w
-           n))) Lsr header2 k in
+         let header2 = word_bignum_Load addr2 in
+         let fakelen2 = (\sh e n. wordLang_Shift sh e (wordLang_Const
+           (n2w n))) Lsr header2 k in
          (
-         list_Seq [
-           Assign 1 (Op asm_Add [addr1; Const bytes_in_word]);
-           Assign 3 (Op asm_Sub [fakelen1; Const bytes_in_word]);
-           Assign 5 (if ffi_index = (implode "") then Const (n2w 0)
-             else (Op asm_Add [addr2; Const bytes_in_word]));
-           Assign 7 (if ffi_index = (implode "") then Const (n2w 0)
-             else (Op asm_Sub [fakelen2; Const bytes_in_word]));
-           FFI ffi_index 1 3 5 7 (adjust_sets (match names with SOME
-             names -> names | NONE -> LN));
-           Assign (adjust_var dest) data_to_word_Unit],l):'a
-             wordLang_prog#num)`;;
+         data_to_word_list_Seq [
+           word_bignum_Assign 1 (wordLang_Op asm_Add [addr1;
+             word_depth_Const bytes_in_word]);
+           word_bignum_Assign 3 (wordLang_Op asm_Sub [fakelen1;
+             word_depth_Const bytes_in_word]);
+           word_bignum_Assign 5 (if ffi_index = (implode "") then
+             word_depth_Const (n2w 0) else (wordLang_Op asm_Add [addr2;
+             word_depth_Const bytes_in_word]));
+           word_bignum_Assign 7 (if ffi_index = (implode "") then
+             word_depth_Const (n2w 0) else (wordLang_Op asm_Sub
+             [fakelen2; word_depth_Const bytes_in_word]));
+           wordLang_FFI ffi_index 1 3 5 7 (adjust_sets (match names
+             with SOME names -> names | NONE -> LN));
+           word_bignum_Assign (adjust_var dest)
+             data_to_word_Unit],l):'a wordLang_prog#num)`;;
 
 let assign_EqualConst_def = new_definition
   `assign_EqualConst p (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v =
      (match part_to_words c LN p (n2w 0) with SOME ((F,w),_23) ->
-         (If Equal (adjust_var v) (Imm (get_Word w))
-                     (Assign (adjust_var dest) (Const (n2w 18:'a
-                       word)))
-                     (Assign (adjust_var dest) (Const (n2w 2:'a
-                       word))),l) | SOME (_24,words) ->
-         ((match p with closLang_Int _25 -> If Test (adjust_var v)
-           (Imm (n2w 1))
-                        (Assign (adjust_var dest) (Const (n2w 2:'a
-                          word)))
-                        (list_Seq
-                           [Assign 1 (Const (n2w 2:'a word));
-                            Assign 3 (real_addr c (adjust_var v));
+         (word_bignum_If asm_Equal (adjust_var v) (Imm (get_Word w))
+                     (word_bignum_Assign (adjust_var dest)
+                       (word_depth_Const (n2w 18:'a word)))
+                     (word_bignum_Assign (adjust_var dest)
+                       (word_depth_Const (n2w 2:'a word))),l) | SOME
+                       (_24,words) ->
+         ((match p with closLang_Int _25 -> word_bignum_If asm_Test
+           (adjust_var v) (Imm (n2w 1))
+                        (word_bignum_Assign (adjust_var dest)
+                          (word_depth_Const (n2w 2:'a word)))
+                        (data_to_word_list_Seq
+                           [word_bignum_Assign 1 (word_depth_Const
+                             (n2w 2:'a word));
+                            word_bignum_Assign 3 (real_addr c
+                              (adjust_var v));
                             MemEqList (n2w 0) (MAP (get_Word o SND)
                               words);
-                            Assign (adjust_var dest) (Var 1)]) | W64
-                              _26 -> (list_Seq
-                           [Assign 1 (Const (n2w 2:'a word));
-                            Assign 3 (Op asm_Add [real_addr c
-                              (adjust_var v);
-                              Const bytes_in_word]);
+                            word_bignum_Assign (adjust_var dest)
+                              (wordLang_Var 1)]) | closLang_W64 _26 ->
+                              (data_to_word_list_Seq
+                           [word_bignum_Assign 1 (word_depth_Const
+                             (n2w 2:'a word));
+                            word_bignum_Assign 3 (wordLang_Op asm_Add
+                              [real_addr c (adjust_var v);
+                              word_depth_Const bytes_in_word]);
                             MemEqList (n2w 0) (MAP (get_Word o SND)
                               (TL words));
-                            Assign (adjust_var dest) (Var 1)]) |
-                              closLang_Str _27 -> (list_Seq
-                           [Assign 1 (Const (n2w 2:'a word));
-                            Assign 3 (real_addr c (adjust_var v));
+                            word_bignum_Assign (adjust_var dest)
+                              (wordLang_Var 1)]) | closLang_Str _27 ->
+                              (data_to_word_list_Seq
+                           [word_bignum_Assign 1 (word_depth_Const
+                             (n2w 2:'a word));
+                            word_bignum_Assign 3 (real_addr c
+                              (adjust_var v));
                             MemEqList (n2w 0) (MAP (get_Word o SND)
                               words);
-                            Assign (adjust_var dest) (Var 1)]) |
-                              _28 -> Skip),l) | _29 -> ((Assign
-                              (adjust_var dest) (Const (n2w 2:'a
+                            word_bignum_Assign (adjust_var dest)
+                              (wordLang_Var 1)]) | _28 ->
+                              word_bignum_Skip),l) | _29 ->
+                              ((word_bignum_Assign (adjust_var dest)
+                              (word_depth_Const (n2w 2:'a
                               word)),l):'a wordLang_prog#num))`;;
 
 let assign_Install_def = new_definition
   `assign_Install (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 v2 v3 v4 =
-         ((list_Seq [BignumHalt (adjust_var v3);
+         ((data_to_word_list_Seq [BignumHalt (adjust_var v3);
                     // length must be smallint
                     BignumHalt (adjust_var v4);
                     // length must be smallint
-                    Assign 1 (wordLang_Lookup BitmapBuffer);
-                    Assign 3 (Op asm_Sub [wordLang_Lookup
-                      BitmapBufferEnd; Var 1]);
-                    Assign 5 (ShiftVar Lsr (adjust_var v4) 2);
-                    Assign 3 (ShiftVar Lsr 3
+                    word_bignum_Assign 1 (wordLang_Lookup
+                      BitmapBuffer);
+                    word_bignum_Assign 3 (wordLang_Op asm_Sub
+                      [wordLang_Lookup BitmapBufferEnd; wordLang_Var
+                      1]);
+                    word_bignum_Assign 5 (ShiftVar Lsr (adjust_var
+                      v4) 2);
+                    word_bignum_Assign 3 (ShiftVar Lsr 3
                       (backend_common_word_shift (:'a)));
-                    If asm_Lower 3 (Reg 5)
+                    word_bignum_If asm_Lower 3 (Reg 5)
                             // too little data space
-                            GiveUp Skip;
-                    Assign 1 (wordLang_Lookup CodeBuffer);
-                    Assign 3 (Op asm_Sub [wordLang_Lookup
-                      CodeBufferEnd; Var 1]);
-                    Assign 5 (ShiftVar Lsr (adjust_var v3) 2);
-                    If asm_Lower 3 (Reg 5)
+                            GiveUp word_bignum_Skip;
+                    word_bignum_Assign 1 (wordLang_Lookup
+                      CodeBuffer);
+                    word_bignum_Assign 3 (wordLang_Op asm_Sub
+                      [wordLang_Lookup CodeBufferEnd; wordLang_Var 1]);
+                    word_bignum_Assign 5 (ShiftVar Lsr (adjust_var
+                      v3) 2);
+                    word_bignum_If asm_Lower 3 (Reg 5)
                             // too little code space
-                            GiveUp Skip;
+                            GiveUp word_bignum_Skip;
                     wordLang_MustTerminate
                      (wordLang_Call (SOME ([adjust_var dest],
                         adjust_sets (data_to_word_get_names
-                          names),Skip,secn,l))
+                          names),word_bignum_Skip,secn,l))
                      (SOME InstallCode_location)
                        [adjust_var v1; adjust_var v2; 1] NONE)],l
                          + 1):'a wordLang_prog#num)`;;
@@ -2695,34 +3086,42 @@ let assign_FP_cmp_def = new_definition
   (dest:num) (names:(1 spt) option) v1 v2 =
         ((if ~(data_to_word_config_has_fp_ops c) then (GiveUp,l) else
          if dimindex (:'a) = 64 then
-            ((list_Seq [
-                Assign 3 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v1); Const
-                              bytes_in_word]));
-                Assign 5 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v2); Const
-                              bytes_in_word]));
-                Inst (asm_FP (FPMovFromReg 0 3 3));
-                Inst (asm_FP (FPMovFromReg 1 5 5));
-                Inst (asm_FP (fp_cmp_inst fpc));
-                Assign (adjust_var dest) (Op asm_Add [ShiftVar Lsl 3
-                  4; Const (n2w 2)])],l)) else
-            ((list_Seq [
-                Assign 15 (real_addr c (adjust_var v1));
-                Assign 17 (real_addr c (adjust_var v2));
-                Assign 11 (wordLang_Load (Op asm_Add [Var 15; Const
+            ((data_to_word_list_Seq [
+                word_bignum_Assign 3 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v1);
+                              word_depth_Const bytes_in_word]));
+                word_bignum_Assign 5 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v2);
+                              word_depth_Const bytes_in_word]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 3 3));
+                wordLang_Inst (asm_FP (FPMovFromReg 1 5 5));
+                wordLang_Inst (asm_FP (fp_cmp_inst fpc));
+                word_bignum_Assign (adjust_var dest) (wordLang_Op
+                  asm_Add [ShiftVar Lsl 3 4; word_depth_Const (n2w
+                  2)])],l)) else
+            ((data_to_word_list_Seq [
+                word_bignum_Assign 15 (real_addr c (adjust_var v1));
+                word_bignum_Assign 17 (real_addr c (adjust_var v2));
+                word_bignum_Assign 11 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const
                   bytes_in_word]));
-                Assign 13 (wordLang_Load (Op asm_Add [Var 15; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Assign 21 (wordLang_Load (Op asm_Add [Var 17; Const
+                word_bignum_Assign 13 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                word_bignum_Assign 21 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const
                   bytes_in_word]));
-                Assign 23 (wordLang_Load (Op asm_Add [Var 17; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Inst (asm_FP (FPMovFromReg 0 13 11));
-                Inst (asm_FP (FPMovFromReg 1 23 21));
-                Inst (asm_FP (fp_cmp_inst fpc));
-                Assign (adjust_var dest) (Op asm_Add [ShiftVar Lsl
-                  3 4; Const (n2w 2)])],l))):'a wordLang_prog#num)`;;
+                word_bignum_Assign 23 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 13 11));
+                wordLang_Inst (asm_FP (FPMovFromReg 1 23 21));
+                wordLang_Inst (asm_FP (fp_cmp_inst fpc));
+                word_bignum_Assign (adjust_var dest) (wordLang_Op
+                  asm_Add [ShiftVar Lsl 3 4; word_depth_Const (n2w
+                  2)])],l))):'a wordLang_prog#num)`;;
 
 let assign_FP_top_def = new_definition
   `assign_FP_top fpt (c:data_to_word_config) (secn:num) (l:num)
@@ -2732,45 +3131,54 @@ let assign_FP_top_def = new_definition
          if dimindex (:'a) = 64 then
           (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
-             (list_Seq [
-                Assign 3 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v1); Const
-                              bytes_in_word]));
-                Assign 5 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v2); Const
-                              bytes_in_word]));
-                Assign 7 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v3); Const
-                              bytes_in_word]));
-                Inst (asm_FP (FPMovFromReg 0 3 3));
-                Inst (asm_FP (FPMovFromReg 1 5 5));
-                Inst (asm_FP (FPMovFromReg 2 7 7));
-                Inst (asm_FP (fp_top_inst fpt));
-                Inst (asm_FP (FPMovToReg 3 5 0));
+             (data_to_word_list_Seq [
+                word_bignum_Assign 3 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v1);
+                              word_depth_Const bytes_in_word]));
+                word_bignum_Assign 5 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v2);
+                              word_depth_Const bytes_in_word]));
+                word_bignum_Assign 7 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v3);
+                              word_depth_Const bytes_in_word]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 3 3));
+                wordLang_Inst (asm_FP (FPMovFromReg 1 5 5));
+                wordLang_Inst (asm_FP (FPMovFromReg 2 7 7));
+                wordLang_Inst (asm_FP (fp_top_inst fpt));
+                wordLang_Inst (asm_FP (FPMovToReg 3 5 0));
                 WriteWord64 c header dest 3],l)) else
           (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
             header ->
-             (list_Seq [
-                Assign 15 (real_addr c (adjust_var v1));
-                Assign 17 (real_addr c (adjust_var v2));
-                Assign 19 (real_addr c (adjust_var v3));
-                Assign 11 (wordLang_Load (Op asm_Add [Var 15; Const
+             (data_to_word_list_Seq [
+                word_bignum_Assign 15 (real_addr c (adjust_var v1));
+                word_bignum_Assign 17 (real_addr c (adjust_var v2));
+                word_bignum_Assign 19 (real_addr c (adjust_var v3));
+                word_bignum_Assign 11 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const
                   bytes_in_word]));
-                Assign 13 (wordLang_Load (Op asm_Add [Var 15; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Assign 21 (wordLang_Load (Op asm_Add [Var 17; Const
+                word_bignum_Assign 13 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                word_bignum_Assign 21 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const
                   bytes_in_word]));
-                Assign 23 (wordLang_Load (Op asm_Add [Var 17; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Assign 31 (wordLang_Load (Op asm_Add [Var 19; Const
+                word_bignum_Assign 23 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                word_bignum_Assign 31 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 19; word_depth_Const
                   bytes_in_word]));
-                Assign 33 (wordLang_Load (Op asm_Add [Var 19; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Inst (asm_FP (FPMovFromReg 0 13 11));
-                Inst (asm_FP (FPMovFromReg 1 23 21));
-                Inst (asm_FP (FPMovFromReg 2 33 31));
-                Inst (asm_FP (fp_top_inst fpt));
-                Inst (asm_FP (FPMovToReg 5 3 0));
+                word_bignum_Assign 33 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 19; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 13 11));
+                wordLang_Inst (asm_FP (FPMovFromReg 1 23 21));
+                wordLang_Inst (asm_FP (FPMovFromReg 2 33 31));
+                wordLang_Inst (asm_FP (fp_top_inst fpt));
+                wordLang_Inst (asm_FP (FPMovToReg 5 3 0));
                 WriteWord64_on_32 c header dest 5 3],l))):'a
                   wordLang_prog#num)`;;
 
@@ -2781,35 +3189,41 @@ let assign_FP_bop_def = new_definition
          if dimindex (:'a) = 64 then
           (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
-             (list_Seq [
-                Assign 3 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v1); Const
-                              bytes_in_word]));
-                Assign 5 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v2); Const
-                              bytes_in_word]));
-                Inst (asm_FP (FPMovFromReg 0 3 3));
-                Inst (asm_FP (FPMovFromReg 1 5 5));
-                Inst (asm_FP (fp_bop_inst fpb));
-                Inst (asm_FP (FPMovToReg 3 5 0));
+             (data_to_word_list_Seq [
+                word_bignum_Assign 3 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v1);
+                              word_depth_Const bytes_in_word]));
+                word_bignum_Assign 5 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v2);
+                              word_depth_Const bytes_in_word]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 3 3));
+                wordLang_Inst (asm_FP (FPMovFromReg 1 5 5));
+                wordLang_Inst (asm_FP (fp_bop_inst fpb));
+                wordLang_Inst (asm_FP (FPMovToReg 3 5 0));
                 WriteWord64 c header dest 3],l)) else
           (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
             header ->
-             (list_Seq [
-                Assign 15 (real_addr c (adjust_var v1));
-                Assign 17 (real_addr c (adjust_var v2));
-                Assign 11 (wordLang_Load (Op asm_Add [Var 15; Const
+             (data_to_word_list_Seq [
+                word_bignum_Assign 15 (real_addr c (adjust_var v1));
+                word_bignum_Assign 17 (real_addr c (adjust_var v2));
+                word_bignum_Assign 11 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const
                   bytes_in_word]));
-                Assign 13 (wordLang_Load (Op asm_Add [Var 15; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Assign 21 (wordLang_Load (Op asm_Add [Var 17; Const
+                word_bignum_Assign 13 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                word_bignum_Assign 21 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const
                   bytes_in_word]));
-                Assign 23 (wordLang_Load (Op asm_Add [Var 17; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Inst (asm_FP (FPMovFromReg 0 13 11));
-                Inst (asm_FP (FPMovFromReg 1 23 21));
-                Inst (asm_FP (fp_bop_inst fpb));
-                Inst (asm_FP (FPMovToReg 5 3 0));
+                word_bignum_Assign 23 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 17; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 13 11));
+                wordLang_Inst (asm_FP (FPMovFromReg 1 23 21));
+                wordLang_Inst (asm_FP (fp_bop_inst fpb));
+                wordLang_Inst (asm_FP (FPMovToReg 5 3 0));
                 WriteWord64_on_32 c header dest 5 3],l))):'a
                   wordLang_prog#num)`;;
 
@@ -2820,32 +3234,36 @@ let assign_FP_uop_def = new_definition
          if dimindex (:'a) = 64 then
           (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
-             (list_Seq [
-                Assign 3 (wordLang_Load (Op asm_Add
-                            [real_addr c (adjust_var v1); Const
-                              bytes_in_word]));
-                Inst (asm_FP (FPMovFromReg 0 3 3));
-                Inst (asm_FP (fp_uop_inst fpu));
-                Inst (asm_FP (FPMovToReg 3 5 1));
+             (data_to_word_list_Seq [
+                word_bignum_Assign 3 (wordLang_Load (wordLang_Op
+                  asm_Add
+                            [real_addr c (adjust_var v1);
+                              word_depth_Const bytes_in_word]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 3 3));
+                wordLang_Inst (asm_FP (fp_uop_inst fpu));
+                wordLang_Inst (asm_FP (FPMovToReg 3 5 1));
                 WriteWord64 c header dest 3],l)) else
           (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
             header ->
-             (list_Seq [
-                Assign 15 (real_addr c (adjust_var v1));
-                Assign 11 (wordLang_Load (Op asm_Add [Var 15; Const
+             (data_to_word_list_Seq [
+                word_bignum_Assign 15 (real_addr c (adjust_var v1));
+                word_bignum_Assign 11 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const
                   bytes_in_word]));
-                Assign 13 (wordLang_Load (Op asm_Add [Var 15; Const
-                  ((n2w 2) * bytes_in_word)]));
-                Inst (asm_FP (FPMovFromReg 0 13 11));
-                Inst (asm_FP (fp_uop_inst fpu));
-                Inst (asm_FP (FPMovToReg 5 3 1));
+                word_bignum_Assign 13 (wordLang_Load (wordLang_Op
+                  asm_Add [wordLang_Var 15; word_depth_Const ((n2w 2) *
+                  bytes_in_word)]));
+                wordLang_Inst (asm_FP (FPMovFromReg 0 13 11));
+                wordLang_Inst (asm_FP (fp_uop_inst fpu));
+                wordLang_Inst (asm_FP (FPMovToReg 5 3 1));
                 WriteWord64_on_32 c header dest 5 3],l))):'a
                   wordLang_prog#num)`;;
 
 let assign_FinaliseCons_def = new_definition
   `assign_FinaliseCons (l:num) (dest:num) v1 =
-                  ((Assign (adjust_var dest) (Var (adjust_var
-                    v1)),l):'a wordLang_prog#num)`;;
+                  ((word_bignum_Assign (adjust_var dest)
+                    (wordLang_Var (adjust_var v1)),l):'a
+                    wordLang_prog#num)`;;
 
 (* HOL4 data_to_wordScript.sml:2460-2461: a theorem that HOL4 states
    as the value of an ML expression: all_assign_defs *)
@@ -2854,151 +3272,169 @@ let assign_def = new_definition
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (op:closLang_op) (args:num list) (names:(1 spt) option) =
      (match op with closLang_IntOp (closLang_Const i) -> assign_Const
-       i l dest | closLang_GlobOp closLang_GlobalsPtr -> (Assign
-       (adjust_var dest) (wordLang_Lookup Globals),l) | closLang_GlobOp
-       closLang_SetGlobalsPtr -> data_to_word_arg1 args
-       (assign_SetGlobalsPtr c l dest) (Skip,l) | closLang_GlobOp
-       (closLang_SetGlobal n) -> data_to_word_arg1 args
-       (assign_SetGlobal c n l dest) (Skip,l) | closLang_GlobOp
-       (closLang_Global n) -> assign_Global c n l dest | closLang_MemOp
-       closLang_El -> data_to_word_arg2 args (assign_El c l dest)
-       (Skip,l) | closLang_BlockOp (closLang_ElemAt n) ->
-       data_to_word_arg1 args (assign_ElemAt c n l dest) (Skip,l) |
-       closLang_MemOp closLang_DerefByte -> data_to_word_arg2 args
-       (assign_DerefByte c l dest) (Skip,l) | closLang_MemOp
-       closLang_Update -> arg3 args (assign_Update c l dest) (Skip,l) |
+       i l dest | closLang_GlobOp closLang_GlobalsPtr ->
+       (word_bignum_Assign (adjust_var dest) (wordLang_Lookup
+       Globals),l) | closLang_GlobOp closLang_SetGlobalsPtr ->
+       data_to_word_arg1 args (assign_SetGlobalsPtr c l dest)
+       (word_bignum_Skip,l) | closLang_GlobOp (closLang_SetGlobal n) ->
+       data_to_word_arg1 args (assign_SetGlobal c n l dest)
+       (word_bignum_Skip,l) | closLang_GlobOp (closLang_Global n) ->
+       assign_Global c n l dest | closLang_MemOp closLang_El ->
+       data_to_word_arg2 args (assign_El c l dest) (word_bignum_Skip,l)
+       | closLang_BlockOp (closLang_ElemAt n) -> data_to_word_arg1 args
+       (assign_ElemAt c n l dest) (word_bignum_Skip,l) | closLang_MemOp
+       closLang_DerefByte -> data_to_word_arg2 args (assign_DerefByte c
+       l dest) (word_bignum_Skip,l) | closLang_MemOp closLang_Update ->
+       arg3 args (assign_Update c l dest) (word_bignum_Skip,l) |
        closLang_MemOp closLang_UpdateCons -> arg3 args (assign_Update c
-       l dest) (Skip,l) | closLang_MemOp closLang_UpdateByte -> arg3
-       args (assign_UpdateByte c l dest) (Skip,l) | closLang_MemOp
-       closLang_FinaliseCons -> data_to_word_arg1 args
-       (assign_FinaliseCons l dest) (Skip,l) | closLang_BlockOp
-       ListAppend -> data_to_word_arg2 args (assign_ListAppend c secn l
-       dest names) (Skip,l) | closLang_BlockOp (closLang_Cons tag) ->
-       assign_Cons c l dest tag args | closLang_MemOp (closLang_MutCons
-       tag _30) -> assign_MutCons c l dest tag args | closLang_MemOp
-       ConfigGC -> data_to_word_arg2 args (assign_ConfigGC c secn l dest
-       names) (Skip,l) | closLang_BlockOp (closLang_Build parts') ->
-       assign_Build c secn l dest names parts' | closLang_BlockOp
-       (closLang_ConsExtend tag) -> assign_ConsExtend c secn l dest
-       names tag args | closLang_MemOp closLang_Ref -> assign_Ref c secn
-       l dest names args | ThunkOp (AllocThunk ev) -> data_to_word_arg1
-       args (assign_AllocThunk ev c secn l dest names) (Skip,l) |
-       ThunkOp (UpdateThunk ev) -> data_to_word_arg2 args
-       (assign_UpdateThunk ev c l dest) (Skip,l) | closLang_MemOp
-       (closLang_RefByte imm) -> data_to_word_arg2 args (assign_RefByte
-       c secn l dest names imm) (Skip,l) | closLang_MemOp
-       closLang_XorByte -> data_to_word_arg2 args (assign_XorByte c secn
-       l dest names) (Skip,l) | closLang_MemOp (closLang_StringCmp b
-       cmp) -> data_to_word_arg2 args (assign_StringCmp c secn l dest
-       names b cmp) (Skip,l) | closLang_Label n -> (LocValue (adjust_var
-       dest) n,l) | closLang_MemOp (closLang_CopyByte alloc_new) ->
-       assign_CopyByte c secn l dest names args | closLang_MemOp
-       closLang_RefArray -> data_to_word_arg2 args (assign_RefArray c
-       secn l dest names) (Skip,l) | closLang_BlockOp (closLang_BoolTest
-       test) -> data_to_word_arg2 args (assign_BoolTest l dest test)
-       (Skip,l) | closLang_BlockOp closLang_BoolNot -> data_to_word_arg1
-       args (assign_BoolNot l dest) (Skip,l) | closLang_WordOp (WordTest
-       ws test) -> data_to_word_arg2 args (assign_WordTest l dest test)
-       (Skip,l) | closLang_BlockOp (closLang_FromList tag) ->
-       data_to_word_arg2 args (assign_FromList c secn l dest names tag)
-       (Skip,l) | closLang_IntOp (closLang_LessConstSmall i) ->
-       data_to_word_arg1 args (assign_LessConstSmall l dest i) (Skip,l)
-       | closLang_MemOp (closLang_BoundsCheckByte leq) ->
+       l dest) (word_bignum_Skip,l) | closLang_MemOp closLang_UpdateByte
+       -> arg3 args (assign_UpdateByte c l dest) (word_bignum_Skip,l) |
+       closLang_MemOp closLang_FinaliseCons -> data_to_word_arg1 args
+       (assign_FinaliseCons l dest) (word_bignum_Skip,l) |
+       closLang_BlockOp closLang_ListAppend -> data_to_word_arg2 args
+       (assign_ListAppend c secn l dest names) (word_bignum_Skip,l) |
+       closLang_BlockOp (closLang_Cons tag) -> assign_Cons c l dest tag
+       args | closLang_MemOp (closLang_MutCons tag _30) ->
+       assign_MutCons c l dest tag args | closLang_MemOp
+       closLang_ConfigGC -> data_to_word_arg2 args (assign_ConfigGC c
+       secn l dest names) (word_bignum_Skip,l) | closLang_BlockOp
+       (closLang_Build parts') -> assign_Build c secn l dest names
+       parts' | closLang_BlockOp (closLang_ConsExtend tag) ->
+       assign_ConsExtend c secn l dest names tag args | closLang_MemOp
+       closLang_Ref -> assign_Ref c secn l dest names args |
+       closLang_ThunkOp (AllocThunk ev) -> data_to_word_arg1 args
+       (assign_AllocThunk ev c secn l dest names) (word_bignum_Skip,l) |
+       closLang_ThunkOp (UpdateThunk ev) -> data_to_word_arg2 args
+       (assign_UpdateThunk ev c l dest) (word_bignum_Skip,l) |
+       closLang_MemOp (closLang_RefByte imm) -> data_to_word_arg2 args
+       (assign_RefByte c secn l dest names imm) (word_bignum_Skip,l) |
+       closLang_MemOp closLang_XorByte -> data_to_word_arg2 args
+       (assign_XorByte c secn l dest names) (word_bignum_Skip,l) |
+       closLang_MemOp (closLang_StringCmp b cmp) -> data_to_word_arg2
+       args (assign_StringCmp c secn l dest names b cmp)
+       (word_bignum_Skip,l) | closLang_Label n -> (wordLang_LocValue
+       (adjust_var dest) n,l) | closLang_MemOp (closLang_CopyByte
+       alloc_new) -> assign_CopyByte c secn l dest names args |
+       closLang_MemOp closLang_RefArray -> data_to_word_arg2 args
+       (assign_RefArray c secn l dest names) (word_bignum_Skip,l) |
+       closLang_BlockOp (closLang_BoolTest test) -> data_to_word_arg2
+       args (assign_BoolTest l dest test) (word_bignum_Skip,l) |
+       closLang_BlockOp closLang_BoolNot -> data_to_word_arg1 args
+       (assign_BoolNot l dest) (word_bignum_Skip,l) | closLang_WordOp
+       (WordTest ws test) -> data_to_word_arg2 args (assign_WordTest l
+       dest test) (word_bignum_Skip,l) | closLang_BlockOp
+       (closLang_FromList tag) -> data_to_word_arg2 args
+       (assign_FromList c secn l dest names tag) (word_bignum_Skip,l) |
+       closLang_IntOp (closLang_LessConstSmall i) -> data_to_word_arg1
+       args (assign_LessConstSmall l dest i) (word_bignum_Skip,l) |
+       closLang_MemOp (closLang_BoundsCheckByte leq) ->
          data_to_word_arg2 args (assign_BoundsCheckByte c secn l dest
-           names leq) (Skip,l) | closLang_MemOp
+           names leq) (word_bignum_Skip,l) | closLang_MemOp
            closLang_BoundsCheckArray ->
          data_to_word_arg2 args (assign_BoundsCheckArray c secn l
-           dest names) (Skip,l) | closLang_BlockOp
+           dest names) (word_bignum_Skip,l) | closLang_BlockOp
            closLang_BoundsCheckBlock ->
          data_to_word_arg2 args (assign_BoundsCheckBlock c secn l
-           dest names) (Skip,l) | closLang_BlockOp closLang_Equal ->
-           data_to_word_arg2 args (assign_Equal c secn l dest names)
-           (Skip,l) | closLang_IntOp closLang_Less -> data_to_word_arg2
-           args (assign_Less c secn l dest names) (Skip,l) |
-           closLang_IntOp closLang_LessEq -> data_to_word_arg2 args
-           (assign_LessEq c secn l dest names) (Skip,l) |
-           closLang_BlockOp closLang_LengthBlock -> data_to_word_arg1
-           args (assign_LengthBlock c secn l dest names) (Skip,l) |
-           closLang_MemOp closLang_Length -> data_to_word_arg1 args
-           (assign_Length c secn l dest names) (Skip,l) | closLang_MemOp
-           closLang_LengthByte -> data_to_word_arg1 args
-           (assign_LengthByte c secn l dest names) (Skip,l) |
-           closLang_BlockOp (closLang_TagLenEq tag len) ->
+           dest names) (word_bignum_Skip,l) | closLang_BlockOp
+           closLang_Equal -> data_to_word_arg2 args (assign_Equal c secn
+           l dest names) (word_bignum_Skip,l) | closLang_IntOp
+           closLang_Less -> data_to_word_arg2 args (assign_Less c secn l
+           dest names) (word_bignum_Skip,l) | closLang_IntOp
+           closLang_LessEq -> data_to_word_arg2 args (assign_LessEq c
+           secn l dest names) (word_bignum_Skip,l) | closLang_BlockOp
+           closLang_LengthBlock -> data_to_word_arg1 args
+           (assign_LengthBlock c secn l dest names) (word_bignum_Skip,l)
+           | closLang_MemOp closLang_Length -> data_to_word_arg1 args
+           (assign_Length c secn l dest names) (word_bignum_Skip,l) |
+           closLang_MemOp closLang_LengthByte -> data_to_word_arg1 args
+           (assign_LengthByte c secn l dest names) (word_bignum_Skip,l)
+           | closLang_BlockOp (closLang_TagLenEq tag len) ->
          data_to_word_arg1 args (assign_TagLenEq c secn l dest
-           names tag len) (Skip,l) | closLang_BlockOp (closLang_LenEq
-           len) -> data_to_word_arg1 args (assign_LenEq c secn l dest
-           names len) (Skip,l) | closLang_BlockOp (closLang_TagEq
+           names tag len) (word_bignum_Skip,l) | closLang_BlockOp
+           (closLang_LenEq len) -> data_to_word_arg1 args
+           (assign_LenEq c secn l dest names len)
+           (word_bignum_Skip,l) | closLang_BlockOp (closLang_TagEq
            tag) -> data_to_word_arg1 args (assign_TagEq c secn l dest
-           names tag) (Skip,l) | closLang_IntOp closLang_Add ->
-           data_to_word_arg2 args (assign_Add c secn l dest names)
-           (Skip,l) | closLang_IntOp closLang_Sub ->
-           data_to_word_arg2 args (assign_Sub c secn l dest names)
-           (Skip,l) | closLang_IntOp closLang_Mult ->
-           data_to_word_arg2 args (assign_Mult c secn l dest names)
-           (Skip,l) | closLang_IntOp closLang_Div ->
-           data_to_word_arg2 args (assign_Div c secn l dest names)
-           (Skip,l) | closLang_IntOp closLang_Mod ->
-           data_to_word_arg2 args (assign_Mod c secn l dest names)
-           (Skip,l) | closLang_WordOp (WordOpw ast_W8 opw) ->
-           data_to_word_arg2 args (assign_WordOpW8 opw c secn l dest
-           names) (Skip,l) | closLang_WordOp (WordOpw ast_W64 opw) ->
-           data_to_word_arg2 args (assign_WordOpW64 opw c secn l dest
-           names) (Skip,l) | closLang_WordOp (WordShift ast_W8 sh n)
-           -> data_to_word_arg1 args (assign_WordShiftW8 sh n c secn
-           l dest names) (Skip,l) | closLang_WordOp (WordShift
-           ast_W64 sh n) -> data_to_word_arg1 args
-           (assign_WordShiftW64 sh n c secn l dest names) (Skip,l) |
+           names tag) (word_bignum_Skip,l) | closLang_IntOp
+           closLang_Add -> data_to_word_arg2 args (assign_Add c secn
+           l dest names) (word_bignum_Skip,l) | closLang_IntOp
+           closLang_Sub -> data_to_word_arg2 args (assign_Sub c secn
+           l dest names) (word_bignum_Skip,l) | closLang_IntOp
+           closLang_Mult -> data_to_word_arg2 args (assign_Mult c
+           secn l dest names) (word_bignum_Skip,l) | closLang_IntOp
+           closLang_Div -> data_to_word_arg2 args (assign_Div c secn
+           l dest names) (word_bignum_Skip,l) | closLang_IntOp
+           closLang_Mod -> data_to_word_arg2 args (assign_Mod c secn
+           l dest names) (word_bignum_Skip,l) | closLang_WordOp
+           (WordOpw ast_W8 opw) -> data_to_word_arg2 args
+           (assign_WordOpW8 opw c secn l dest names)
+           (word_bignum_Skip,l) | closLang_WordOp (WordOpw ast_W64
+           opw) -> data_to_word_arg2 args (assign_WordOpW64 opw c
+           secn l dest names) (word_bignum_Skip,l) | closLang_WordOp
+           (WordShift ast_W8 sh n) -> data_to_word_arg1 args
+           (assign_WordShiftW8 sh n c secn l dest names)
+           (word_bignum_Skip,l) | closLang_WordOp (WordShift ast_W64
+           sh n) -> data_to_word_arg1 args (assign_WordShiftW64 sh n
+           c secn l dest names) (word_bignum_Skip,l) |
            closLang_WordOp (WordFromWord b) -> data_to_word_arg1 args
-           (assign_WordFromWord b c secn l dest names) (Skip,l) |
-           closLang_WordOp (WordFromInt) -> data_to_word_arg1 args
-           (assign_WordFromInt c secn l dest names) (Skip,l) |
-           closLang_WordOp (WordToInt) -> data_to_word_arg1 args
-           (assign_WordToInt c secn l dest names) (Skip,l) | FFI
-           ffi_index -> data_to_word_arg2 args (assign_FFI ffi_index
-           c secn l dest names) (Skip,l) | closLang_BlockOp
+           (assign_WordFromWord b c secn l dest names)
+           (word_bignum_Skip,l) | closLang_WordOp (WordFromInt) ->
+           data_to_word_arg1 args (assign_WordFromInt c secn l dest
+           names) (word_bignum_Skip,l) | closLang_WordOp (WordToInt)
+           -> data_to_word_arg1 args (assign_WordToInt c secn l dest
+           names) (word_bignum_Skip,l) | wordLang_FFI ffi_index ->
+           data_to_word_arg2 args (assign_FFI ffi_index c secn l dest
+           names) (word_bignum_Skip,l) | closLang_BlockOp
            (closLang_EqualConst p) -> data_to_word_arg1 args
-           (assign_EqualConst p c secn l dest names) (Skip,l) |
-           Install -> arg4 args (assign_Install c secn l dest names)
-           (Skip,l) | closLang_WordOp (FP_cmp fpc) ->
-           data_to_word_arg2 args (assign_FP_cmp fpc c secn l dest
-           names) (Skip,l) | closLang_WordOp (FP_top fpt) -> arg3
-           args (assign_FP_top fpt c secn l dest names) (Skip,l) |
-           closLang_WordOp (FP_bop fpb) -> data_to_word_arg2 args
-           (assign_FP_bop fpb c secn l dest names) (Skip,l) |
-           closLang_WordOp (FP_uop fpu) -> data_to_word_arg1 args
-           (assign_FP_uop fpu c secn l dest names) (Skip,l) | _31 ->
-           (Skip,l))`;;
-hol4_overload "assign" "data_to_word_assign";;
+           (assign_EqualConst p c secn l dest names)
+           (word_bignum_Skip,l) | wordLang_Install -> arg4 args
+           (assign_Install c secn l dest names) (word_bignum_Skip,l)
+           | closLang_WordOp (FP_cmp fpc) -> data_to_word_arg2 args
+           (assign_FP_cmp fpc c secn l dest names)
+           (word_bignum_Skip,l) | closLang_WordOp (FP_top fpt) ->
+           arg3 args (assign_FP_top fpt c secn l dest names)
+           (word_bignum_Skip,l) | closLang_WordOp (FP_bop fpb) ->
+           data_to_word_arg2 args (assign_FP_bop fpb c secn l dest
+           names) (word_bignum_Skip,l) | closLang_WordOp (FP_uop fpu)
+           -> data_to_word_arg1 args (assign_FP_uop fpu c secn l dest
+           names) (word_bignum_Skip,l) | _31 -> (word_bignum_Skip,l))`;;
 
 let force_thunk_def = new_definition
   `force_thunk (c:data_to_word_config) secn (l:num) ret loc v1 =
      ((match encode_header c (8 + 6) 1 with NONE -> (GiveUp,l) | SOME
        (header:'a word) ->
-      If Test (adjust_var v1) (Imm (n2w 1))
-        (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-          (dest,_32) -> Assign (adjust_var dest) (Var (adjust_var v1)))
-        (list_Seq
-           [Assign 1 (real_addr c (adjust_var v1));
-            Assign 3 (Op And [Load (Var 1); Const (n2w 0b111100)]);
-            If Equal 3 (Imm (n2w ((8 + 6) * 4)))
+      word_bignum_If asm_Test (adjust_var v1) (Imm (n2w 1))
+        (match ret with NONE -> wordLang_Return 0 [adjust_var v1] |
+          SOME (dest,_32) -> word_bignum_Assign (adjust_var dest)
+          (wordLang_Var (adjust_var v1)))
+        (data_to_word_list_Seq
+           [word_bignum_Assign 1 (real_addr c (adjust_var v1));
+            word_bignum_Assign 3 (wordLang_Op asm_And
+              [word_bignum_Load (wordLang_Var 1); word_depth_Const (n2w
+              0b111100)]);
+            word_bignum_If asm_Equal 3 (Imm (n2w ((8 + 6) * 4)))
               (match ret with NONE ->
-                  list_Seq
-                    [Assign 1 (wordLang_Load (Op asm_Add [Var 1;
-                      Const bytes_in_word]));
-                     Return 0 [1]] | SOME (dest,_33) ->
-                   Assign (adjust_var dest)
-                          (wordLang_Load (Op asm_Add [Var 1; Const
+                  data_to_word_list_Seq
+                    [word_bignum_Assign 1 (wordLang_Load (wordLang_Op
+                      asm_Add [wordLang_Var 1; word_depth_Const
+                      bytes_in_word]));
+                     wordLang_Return 0 [1]] | SOME (dest,_33) ->
+                   word_bignum_Assign (adjust_var dest)
+                          (wordLang_Load (wordLang_Op asm_Add
+                            [wordLang_Var 1; word_depth_Const
                             bytes_in_word])))
-            (If asm_NotEqual 3 (Imm (n2w ((0 + 6) * 4)))
-              (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-                (dest,_34) -> Assign (adjust_var dest) (Var (adjust_var
-                v1)))
-              (list_Seq
-                 [Assign 5 (wordLang_Load (Op asm_Add [Var 1; Const
+            (word_bignum_If asm_NotEqual 3 (Imm (n2w ((0 + 6) * 4)))
+              (match ret with NONE -> wordLang_Return 0 [adjust_var
+                v1] | SOME (dest,_34) -> word_bignum_Assign (adjust_var
+                dest) (wordLang_Var (adjust_var v1)))
+              (data_to_word_list_Seq
+                 [word_bignum_Assign 5 (wordLang_Load (wordLang_Op
+                   asm_Add [wordLang_Var 1; word_depth_Const
                    bytes_in_word]));
-                  (match ret with NONE -> Call NONE (SOME loc) [0;
-                    adjust_var v1; 5] NONE | SOME (r,ns) -> Call (SOME
-                    ([adjust_var r],adjust_sets ns,Skip,secn,l))
+                  (match ret with NONE -> word_depth_Call NONE (SOME
+                    loc) [0; adjust_var v1; 5] NONE | SOME (r,ns) ->
+                    word_depth_Call (SOME ([adjust_var r],adjust_sets
+                    ns,word_bignum_Skip,secn,l))
                               (SOME loc) [adjust_var v1; 5]
                                 NONE)]))]),l + 1):'a
                                 wordLang_prog#num)`;;
@@ -3009,172 +3445,194 @@ let _ = size_thms "dataLang_prog";;
 let comp_def,comp_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). dataLang_prog_size x3)`
   [`data_to_word_comp c (secn:num) (l:num) (p:dataLang_prog) =
-     (match p with Skip -> ((Skip:'a wordLang_prog),l) | Tick ->
-       (Tick,l) | Raise n -> (Raise (adjust_var n),l) | Return ns ->
-       (Return 0 (MAP adjust_var ns),l) | Move n1 n2 -> (Move 0
-       [(adjust_var n1,adjust_var n2)],l) | Seq p1 p2 ->
+     (match p with word_bignum_Skip -> ((word_bignum_Skip:'a
+       wordLang_prog),l) | wordLang_Tick -> (wordLang_Tick,l) |
+       wordLang_Raise n -> (wordLang_Raise (adjust_var n),l) |
+       wordLang_Return ns -> (wordLang_Return 0 (MAP adjust_var ns),l)
+       | wordLang_Move n1 n2 -> (wordLang_Move 0 [(adjust_var
+       n1,adjust_var n2)],l) | word_bignum_Seq p1 p2 ->
          (let (q1,l1) = data_to_word_comp c secn l p1 in
          let (q2,l2) = data_to_word_comp c secn l1 p2 in
-           (Seq q1 q2,l2)) | If n p1 p2 ->
+           (word_bignum_Seq q1 q2,l2)) | word_bignum_If n p1 p2 ->
          (let (q1,l1) = data_to_word_comp c secn l p1 in
          let (q2,l2) = data_to_word_comp c secn l1 p2 in
-           (If Equal (adjust_var n) (Imm (n2w 18)) q1 q2,l2)) |
-             dataLang_MakeSpace n names ->
+           (word_bignum_If asm_Equal (adjust_var n) (Imm (n2w 18))
+             q1 q2,l2)) | dataLang_MakeSpace n names ->
          (let k = dimindex (:'a) DIV 8 in
          let w = n2w (n * k) in
          let w = (if w2n w = n * k then w else word_not (n2w 0)) in
-           (Seq (Assign 1 (Op asm_Sub [wordLang_Lookup TriggerGC;
-             wordLang_Lookup NextFree]))
-                (If asm_Lower 1 (Imm w)
-                  (list_Seq [SilentFFI c 3 (adjust_sets names);
-                             Assign 1 (wordLang_Const w);
-                             Alloc 1 (adjust_sets names);
+           (word_bignum_Seq (word_bignum_Assign 1 (wordLang_Op
+             asm_Sub [wordLang_Lookup TriggerGC; wordLang_Lookup
+             NextFree]))
+                (word_bignum_If asm_Lower 1 (Imm w)
+                  (data_to_word_list_Seq [SilentFFI c 3 (adjust_sets
+                    names);
+                             word_bignum_Assign 1 (wordLang_Const
+                               w);
+                             wordLang_Alloc 1 (adjust_sets names);
                              SilentFFI c 3 (adjust_sets names)])
-                 Skip),l)) | Assign dest op args names ->
-                   data_to_word_assign c secn l dest op args names |
-                   Force ret loc v -> force_thunk c secn l ret loc v |
-                   Call ret target args handler ->
-         (match ret with NONE -> (Call NONE target (CONS 0 (MAP
-           adjust_var args)) NONE,l) | SOME (ns,names) ->
+                 word_bignum_Skip),l)) | word_bignum_Assign dest op
+                   args names -> data_to_word_assign c secn l dest op
+                   args names | dataLang_Force ret loc v -> force_thunk
+                   c secn l ret loc v | word_depth_Call ret target args
+                   handler ->
+         (match ret with NONE -> (word_depth_Call NONE target (CONS
+           0 (MAP adjust_var args)) NONE,l) | SOME (ns,names) ->
              (let ret = SOME (MAP adjust_var ns,adjust_sets
-               names,Skip,secn,l) in
-               match handler with NONE -> (Call ret target (MAP
-                 adjust_var args) NONE,l + 1) | SOME (n,p) ->
+               names,word_bignum_Skip,secn,l) in
+               match handler with NONE -> (word_depth_Call ret
+                 target (MAP adjust_var args) NONE,l + 1) | SOME (n,p)
+                 ->
                    (let (q1,l1) = data_to_word_comp c secn (l + 2) p
                      in
                    let handler = SOME (adjust_var n,q1,secn,l + 1)
                      in
-                     (Call ret target (MAP adjust_var args)
-                       handler,l1)))))`];;
-hol4_overload "comp" "data_to_word_comp";;
+                     (word_depth_Call ret target (MAP adjust_var
+                       args) handler,l1)))))`];;
 
 let data_to_word_compile_part_def = new_definition
   `data_to_word_compile_part c (n,arg_count,p) = (n,arg_count + 1,FST
   (data_to_word_comp c n 2 p))`;;
-hol4_overload "compile_part" "data_to_word_compile_part";;
 
 let MemCopy_code_def = new_definition
   `MemCopy_code =
-     (If Test 2 (Reg 2) (Return 0 [8])
-         (list_Seq [Assign 1 (wordLang_Load (Var 4));
-                    Assign 2 (Op asm_Sub [Var 2; Const (n2w 4)]);
-                    Assign 4 (Op asm_Add [Var 4; Const
-                      bytes_in_word]);
-                    Store (Var 6) 1;
-                    Assign 6 (Op asm_Add [Var 6; Const
-                      bytes_in_word]);
-                    Call NONE (SOME MemCopy_location) [0; 2; 4; 6;
-                      8] NONE]):'a wordLang_prog)`;;
+     (word_bignum_If asm_Test 2 (Reg 2) (wordLang_Return 0 [8])
+         (data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Load
+           (wordLang_Var 4));
+                    word_bignum_Assign 2 (wordLang_Op asm_Sub
+                      [wordLang_Var 2; word_depth_Const (n2w 4)]);
+                    word_bignum_Assign 4 (wordLang_Op asm_Add
+                      [wordLang_Var 4; word_depth_Const bytes_in_word]);
+                    word_bignum_Store (wordLang_Var 6) 1;
+                    word_bignum_Assign 6 (wordLang_Op asm_Add
+                      [wordLang_Var 6; word_depth_Const bytes_in_word]);
+                    word_depth_Call NONE (SOME MemCopy_location)
+                      [0; 2; 4; 6; 8] NONE]):'a wordLang_prog)`;;
 
 let ByteCopy_code_def = new_definition
-  `ByteCopy_code c = (list_Seq
-      [Assign 4 (ShiftVar Lsr 4 2);
-       Assign 6 (ShiftVar Lsr 6 2);
-       Assign 10 (ShiftVar Lsr 10 2);
-       Assign 1 data_to_word_Unit;
-       Assign 2 (Op asm_Add [real_addr c 2; Const bytes_in_word; Var
-         4]);
-       Assign 8 (Op asm_Add [real_addr c 8; Const bytes_in_word; Var
-         10]);
-       If asm_Lower 4 (Reg 10)
-         (list_Seq [Assign 3 (Op asm_Sub [Var 6; Const (n2w 1)]);
-                    Assign 2 (Op asm_Add [Var 2; Var 3]);
-                    Assign 8 (Op asm_Add [Var 8; Var 3]);
-                    Call NONE (SOME ByteCopySub_location) [0; 6; 2;
-                      8; 1] NONE])
-         (Call NONE (SOME ByteCopyAdd_location) [0; 6; 2; 8; 1]
-           NONE)]:'a wordLang_prog)`;;
+  `ByteCopy_code c = (data_to_word_list_Seq
+      [word_bignum_Assign 4 (ShiftVar Lsr 4 2);
+       word_bignum_Assign 6 (ShiftVar Lsr 6 2);
+       word_bignum_Assign 10 (ShiftVar Lsr 10 2);
+       word_bignum_Assign 1 data_to_word_Unit;
+       word_bignum_Assign 2 (wordLang_Op asm_Add [real_addr c 2;
+         word_depth_Const bytes_in_word; wordLang_Var 4]);
+       word_bignum_Assign 8 (wordLang_Op asm_Add [real_addr c 8;
+         word_depth_Const bytes_in_word; wordLang_Var 10]);
+       word_bignum_If asm_Lower 4 (Reg 10)
+         (data_to_word_list_Seq [word_bignum_Assign 3 (wordLang_Op
+           asm_Sub [wordLang_Var 6; word_depth_Const (n2w 1)]);
+                    word_bignum_Assign 2 (wordLang_Op asm_Add
+                      [wordLang_Var 2; wordLang_Var 3]);
+                    word_bignum_Assign 8 (wordLang_Op asm_Add
+                      [wordLang_Var 8; wordLang_Var 3]);
+                    word_depth_Call NONE (SOME ByteCopySub_location)
+                      [0; 6; 2; 8; 1] NONE])
+         (word_depth_Call NONE (SOME ByteCopyAdd_location) [0; 6;
+           2; 8; 1] NONE)]:'a wordLang_prog)`;;
 
 let ByteCopyAdd_code_def = new_definition
   `ByteCopyAdd_code =
-   If asm_Lower 2 (Imm (n2w 4))
+   word_bignum_If asm_Lower 2 (Imm (n2w 4))
      (
        // n <+ 4w
-       If asm_Lower 2 (Imm (n2w 2))
+       word_bignum_If asm_Lower 2 (Imm (n2w 2))
        (
          // n <+ 2w
-         If Equal 2 (Imm (n2w 0)) (Return 0 [8])
+         word_bignum_If asm_Equal 2 (Imm (n2w 0)) (wordLang_Return 0
+           [8])
          (
            // n = 0w
-           list_Seq [
-             Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
-             Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-             Return 0 [8]]))
-       (list_Seq [
-         Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
-         Inst (asm_Mem asm_Load8 3 (Addr 4 (n2w 1)));
-         If Equal 2 (Imm (n2w 2))
-           (list_Seq [
-             Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-             Inst (asm_Mem asm_Store8 3 (Addr 6 (n2w 1)));
-             Return 0 [8]])
-           (list_Seq [
-             Inst (asm_Mem asm_Load8 5 (Addr 4 (n2w 2)));
-             Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-             Inst (asm_Mem asm_Store8 3 (Addr 6 (n2w 1)));
-             Inst (asm_Mem asm_Store8 5 (Addr 6 (n2w 2)));
-             Return 0 [8]])]))
-     (list_Seq [
-      Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
-      Inst (asm_Mem asm_Load8 3 (Addr 4 (n2w 1)));
-      Inst (asm_Mem asm_Load8 5 (Addr 4 (n2w 2)));
-      Inst (asm_Mem asm_Load8 7 (Addr 4 (n2w 3)));
-      Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-      Inst (asm_Mem asm_Store8 3 (Addr 6 (n2w 1)));
-      Inst (asm_Mem asm_Store8 5 (Addr 6 (n2w 2)));
-      Inst (asm_Mem asm_Store8 7 (Addr 6 (n2w 3)));
-      Assign 9 (Op asm_Sub [Var 2; Const (n2w 4)]);
-      Assign 11 (Op asm_Add [Var 4; Const (n2w 4)]);
-      Assign 13 (Op asm_Add [Var 6; Const (n2w 4)]);
-      Call NONE (SOME ByteCopyAdd_location) [0; 9; 11; 13; 8]
-        NONE])`;;
+           data_to_word_list_Seq [
+             wordLang_Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
+             wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+             wordLang_Return 0 [8]]))
+       (data_to_word_list_Seq [
+         wordLang_Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
+         wordLang_Inst (asm_Mem asm_Load8 3 (Addr 4 (n2w 1)));
+         word_bignum_If asm_Equal 2 (Imm (n2w 2))
+           (data_to_word_list_Seq [
+             wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+             wordLang_Inst (asm_Mem asm_Store8 3 (Addr 6 (n2w 1)));
+             wordLang_Return 0 [8]])
+           (data_to_word_list_Seq [
+             wordLang_Inst (asm_Mem asm_Load8 5 (Addr 4 (n2w 2)));
+             wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+             wordLang_Inst (asm_Mem asm_Store8 3 (Addr 6 (n2w 1)));
+             wordLang_Inst (asm_Mem asm_Store8 5 (Addr 6 (n2w 2)));
+             wordLang_Return 0 [8]])]))
+     (data_to_word_list_Seq [
+      wordLang_Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
+      wordLang_Inst (asm_Mem asm_Load8 3 (Addr 4 (n2w 1)));
+      wordLang_Inst (asm_Mem asm_Load8 5 (Addr 4 (n2w 2)));
+      wordLang_Inst (asm_Mem asm_Load8 7 (Addr 4 (n2w 3)));
+      wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+      wordLang_Inst (asm_Mem asm_Store8 3 (Addr 6 (n2w 1)));
+      wordLang_Inst (asm_Mem asm_Store8 5 (Addr 6 (n2w 2)));
+      wordLang_Inst (asm_Mem asm_Store8 7 (Addr 6 (n2w 3)));
+      word_bignum_Assign 9 (wordLang_Op asm_Sub [wordLang_Var 2;
+        word_depth_Const (n2w 4)]);
+      word_bignum_Assign 11 (wordLang_Op asm_Add [wordLang_Var 4;
+        word_depth_Const (n2w 4)]);
+      word_bignum_Assign 13 (wordLang_Op asm_Add [wordLang_Var 6;
+        word_depth_Const (n2w 4)]);
+      word_depth_Call NONE (SOME ByteCopyAdd_location) [0; 9; 11;
+        13; 8] NONE])`;;
 
 let ByteCopySub_code_def = new_definition
   `ByteCopySub_code =
-   If asm_Lower 2 (Imm (n2w 4))
+   word_bignum_If asm_Lower 2 (Imm (n2w 4))
      (
        // n <+ 4w
-       If asm_Lower 2 (Imm (n2w 2))
+       word_bignum_If asm_Lower 2 (Imm (n2w 2))
        (
          // n <+ 2w
-         If Equal 2 (Imm (n2w 0)) (Return 0 [8])
+         word_bignum_If asm_Equal 2 (Imm (n2w 0)) (wordLang_Return 0
+           [8])
          (
            // n = 0w
-           list_Seq [
-             Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
-             Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-             Return 0 [8]]))
-       (list_Seq [
-         Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
-         Inst (asm_Mem asm_Load8 3 (Addr 4 (--(n2w 1))));
-         If Equal 2 (Imm (n2w 2))
-           (list_Seq [
-             Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-             Inst (asm_Mem asm_Store8 3 (Addr 6 (--(n2w 1))));
-             Return 0 [8]])
-           (list_Seq [
-             Inst (asm_Mem asm_Load8 5 (Addr 4 (--(n2w 2))));
-             Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-             Inst (asm_Mem asm_Store8 3 (Addr 6 (--(n2w 1))));
-             Inst (asm_Mem asm_Store8 5 (Addr 6 (--(n2w 2))));
-             Return 0 [8]])]))
-     (list_Seq [
-      Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
-      Inst (asm_Mem asm_Load8 3 (Addr 4 (--(n2w 1))));
-      Inst (asm_Mem asm_Load8 5 (Addr 4 (--(n2w 2))));
-      Inst (asm_Mem asm_Load8 7 (Addr 4 (--(n2w 3))));
-      Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
-      Inst (asm_Mem asm_Store8 3 (Addr 6 (--(n2w 1))));
-      Inst (asm_Mem asm_Store8 5 (Addr 6 (--(n2w 2))));
-      Inst (asm_Mem asm_Store8 7 (Addr 6 (--(n2w 3))));
-      Assign 9 (Op asm_Sub [Var 2; Const (n2w 4)]);
-      Assign 11 (Op asm_Sub [Var 4; Const (n2w 4)]);
-      Assign 13 (Op asm_Sub [Var 6; Const (n2w 4)]);
-      Call NONE (SOME ByteCopySub_location) [0; 9; 11; 13; 8]
-        NONE])`;;
+           data_to_word_list_Seq [
+             wordLang_Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
+             wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+             wordLang_Return 0 [8]]))
+       (data_to_word_list_Seq [
+         wordLang_Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
+         wordLang_Inst (asm_Mem asm_Load8 3 (Addr 4 (--(n2w 1))));
+         word_bignum_If asm_Equal 2 (Imm (n2w 2))
+           (data_to_word_list_Seq [
+             wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+             wordLang_Inst (asm_Mem asm_Store8 3 (Addr 6 (--(n2w
+               1))));
+             wordLang_Return 0 [8]])
+           (data_to_word_list_Seq [
+             wordLang_Inst (asm_Mem asm_Load8 5 (Addr 4 (--(n2w
+               2))));
+             wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+             wordLang_Inst (asm_Mem asm_Store8 3 (Addr 6 (--(n2w
+               1))));
+             wordLang_Inst (asm_Mem asm_Store8 5 (Addr 6 (--(n2w
+               2))));
+             wordLang_Return 0 [8]])]))
+     (data_to_word_list_Seq [
+      wordLang_Inst (asm_Mem asm_Load8 1 (Addr 4 (n2w 0)));
+      wordLang_Inst (asm_Mem asm_Load8 3 (Addr 4 (--(n2w 1))));
+      wordLang_Inst (asm_Mem asm_Load8 5 (Addr 4 (--(n2w 2))));
+      wordLang_Inst (asm_Mem asm_Load8 7 (Addr 4 (--(n2w 3))));
+      wordLang_Inst (asm_Mem asm_Store8 1 (Addr 6 (n2w 0)));
+      wordLang_Inst (asm_Mem asm_Store8 3 (Addr 6 (--(n2w 1))));
+      wordLang_Inst (asm_Mem asm_Store8 5 (Addr 6 (--(n2w 2))));
+      wordLang_Inst (asm_Mem asm_Store8 7 (Addr 6 (--(n2w 3))));
+      word_bignum_Assign 9 (wordLang_Op asm_Sub [wordLang_Var 2;
+        word_depth_Const (n2w 4)]);
+      word_bignum_Assign 11 (wordLang_Op asm_Sub [wordLang_Var 4;
+        word_depth_Const (n2w 4)]);
+      word_bignum_Assign 13 (wordLang_Op asm_Sub [wordLang_Var 6;
+        word_depth_Const (n2w 4)]);
+      word_depth_Call NONE (SOME ByteCopySub_location) [0; 9; 11;
+        13; 8] NONE])`;;
 
 let ByteCopyNew_code_def = new_definition
-  `ByteCopyNew_code c = (Skip:'a wordLang_prog)`;;
+  `ByteCopyNew_code c = (word_bignum_Skip:'a wordLang_prog)`;;
 
 let data_to_word_stubs_def = new_definition
   `data_to_word_stubs (:'a) data_conf = APPEND [
@@ -3203,7 +3661,7 @@ let data_to_word_stubs_def = new_definition
      (AppendMainLoop_location,6,AppendMainLoop_code data_conf);
      (AppendLenLoop_location,3,AppendLenLoop_code data_conf);
      (XorLoop_location,4,XorLoop_code);
-     (Unused_location,6,Skip);
+     (Unused_location,6,word_bignum_Skip);
      (
       // TODO: use next time new stub is needed
       StringCmpLoop_location,6,StringCmpLoop_code);
@@ -3212,9 +3670,8 @@ let data_to_word_stubs_def = new_definition
      (ByteCopyAdd_location,5,ByteCopyAdd_code);
      (ByteCopySub_location,5,ByteCopySub_code);
      (ByteCopyNew_location,4,ByteCopyNew_code data_conf);
-     (Dummy_location,0,Skip)] (generated_bignum_stubs
+     (Dummy_location,0,word_bignum_Skip)] (generated_bignum_stubs
        Bignum_location)`;;
-hol4_overload "stubs" "data_to_word_stubs";;
 
 let stub_names_def = new_definition
   `data_to_word_stub_names one = APPEND [
@@ -3252,7 +3709,6 @@ let stub_names_def = new_definition
      (Dummy_location,(implode "_Dummy"))] (list_of_seq (\i. (i +
        Bignum_location,(implode "_Bignum")))
      (data_num_stubs - Bignum_location))`;;
-hol4_overload "stub_names" "data_to_word_stub_names";;
 
 let check_stubs_length = prove
  (`word_num_stubs + LENGTH (data_to_word_stubs (:'a) c) =
@@ -3273,7 +3729,6 @@ let data_to_word_compile_def = new_definition
      let p = APPEND (data_to_word_stubs (:'a) data_conf) (MAP
        (data_to_word_compile_part data_conf) prog) in
        word_to_word_compile word_conf (asm_conf:'a asm_config) p)`;;
-hol4_overload "compile" "data_to_word_compile";;
 
 let compile_0_def = new_definition
   `compile_0 data_conf (asm_conf:'a asm_config) prog =
@@ -3309,11 +3764,11 @@ let structure_le_def,structure_le_ind = define_wf
       match (x1,x2) with
         ((word_depth_Leaf:call_tree),_35) -> T
       | (_36,word_depth_Unknown) -> T
-      | ((Const k1 t1),(Const k2 t2)) ->
+      | ((word_depth_Const k1 t1),(word_depth_Const k2 t2)) ->
      (k1 <= k2 /\ structure_le t1 t2)
-      | ((Call n1 t2),(Call m1 u2)) ->
+      | ((word_depth_Call n1 t2),(word_depth_Call m1 u2)) ->
      (n1 = m1 /\ structure_le t2 u2)
-      | ((Branch t1 t2),(Branch u1 u2)) ->
+      | ((word_depth_Branch t1 t2),(word_depth_Branch u1 u2)) ->
      (structure_le t1 u1 /\ structure_le t2 u2)
       | (_37,_38) -> F`];;
 

@@ -2,7 +2,7 @@
 (*  semantics: ported from HOL4's
     semantics/semanticsScript.sml
     A definition theory, with 6 definitions, 2 datatypes and no
-    theorems.  Needed by 11 files of the port.  *)
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -34,7 +34,6 @@ let semantics_parse_def = new_definition
                    real_fringe pt = MAP (grammar_TOK ## I) toks)
                      with NONE -> NONE | SOME p -> ptree_TopLevelDecs
                      p)`;;
-hol4_overload "parse" "semantics_parse";;
 
 let semantics_state_FIELDS = define_record "semantics_state"
   [(* Type system state *)
@@ -100,7 +99,6 @@ let semantics_semantics_def = new_definition
          (semantics_prog (semantics_state_sem_st state)
          (semantics_state_sem_env state) (APPEND prelude prog)) else
          IllTyped))`;;
-hol4_overload "semantics" "semantics_semantics";;
 
 let semantics_init_def = new_definition
   `semantics_init ffi =

@@ -70,7 +70,8 @@ let _ = hide_overloads
    "compile","word_to_word_compile";
    "data_buffer","data_buffer"];;
 
-hol4_overload "Set" "wordLang_Set";;
+(* HOL4 wordPropsScript.sml:10: an overload that the source brings to
+   the front: Set, written out as wordLang_Set *)
 
 (*
 Main lemmas:
@@ -2461,10 +2462,11 @@ let locals_rel_evaluate_thm = prove
        wordSem_evaluate (prog,wordSem_state_locals_fupd (K loc) st) =
          (res,wordSem_state_locals_fupd (K loc') rst) /\
        (match res with NONE -> locals_rel temp
-         (wordSem_state_locals rst) loc' | SOME (Break _17) ->
+         (wordSem_state_locals rst) loc' | SOME (wordSem_Break _17) ->
          locals_rel temp (wordSem_state_locals rst) loc' | SOME
-         (Continue _18) -> locals_rel temp (wordSem_state_locals rst)
-         loc' | SOME _19 -> wordSem_state_locals rst = loc'))`,
+         (wordSem_Continue _18) -> locals_rel temp
+         (wordSem_state_locals rst) loc' | SOME _19 ->
+         wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;
 
 (* HOL4 wordPropsScript.sml:3622-3627: a proof *)
@@ -2706,7 +2708,6 @@ let evaluate_stack_limit_stack_max = prove
 let wordProps_inc_clock_def = new_definition
   `wordProps_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock t + n)) t`;;
-hol4_overload "inc_clock" "wordProps_inc_clock";;
 
 (* [simp] *)
 let inc_clock_0 = prove
@@ -2794,7 +2795,7 @@ let no_install_evaluate_const_code = prove
 let get_code_labels_not_created = prove
  (`!p x. (x IN wordConvs_get_code_labels p) <=>
    (~(not_created_subprogs (\sp. ~(sp = (wordLang_Call NONE (SOME
-     x) [] NONE)) /\ ~(sp = LocValue 0 x)) p))`,
+     x) [] NONE)) /\ ~(sp = wordLang_LocValue 0 x)) p))`,
   CHEAT_TAC);;
 
 let no_mt_code_def = new_definition
@@ -2887,8 +2888,8 @@ let permute_swap_lemma3 = prove
 
 (* [simp] *)
 let word_cmp_Word_Word = prove
- (`word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME (word_cmp
-  cmp c c')`,
+ (`wordSem_word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME
+  (wordSem_word_cmp cmp c c')`,
   CHEAT_TAC);;
 
 (* and the names that this file reads as variables are constants again *)

@@ -13,10 +13,8 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "lib/comparison.ml";;
 needs "lib/indexedLists.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -48,16 +46,15 @@ let dest_Constant_def = new_definition
       | (closLang_BlockOp (closLang_Constant (ConstInt c))) -> SOME
         (closLang_Int c)
       | (closLang_BlockOp (closLang_Constant (ConstWord64 c))) ->
-        SOME (W64 c)
+        SOME (closLang_W64 c)
       | _3 -> NONE`;;
-hol4_overload "dest_Constant" "clos_op_dest_Constant";;
 
 let dest_Constant_pmatch = prove
  (`clos_op_dest_Constant x = (match x with closLang_BlockOp
   (closLang_Constant (ConstStr c)) -> SOME (closLang_Str c) |
   closLang_BlockOp (closLang_Constant (ConstInt c)) -> SOME
   (closLang_Int c) | closLang_BlockOp (closLang_Constant (ConstWord64
-  c)) -> SOME (W64 c) | _4 -> NONE)`,
+  c)) -> SOME (closLang_W64 c) | _4 -> NONE)`,
   CHEAT_TAC);;
 
 let clos_op_dest_Cons_def = new_definition
@@ -65,7 +62,6 @@ let clos_op_dest_Cons_def = new_definition
       match x1 with
         closLang_BlockOp (closLang_Cons i) -> SOME i
       | _5 -> NONE`;;
-hol4_overload "dest_Cons" "clos_op_dest_Cons";;
 
 let dest_Cons_pmatch = prove
  (`clos_op_dest_Cons x = (match x with closLang_BlockOp (closLang_Cons
@@ -174,36 +170,36 @@ let clos_op_int_op_def = new_definition
        i)) else
      if op = closLang_IntOp closLang_LessEq then SOME (MakeBool (j <=
        i)) else
-     if op = closLang_IntOp Greater then SOME (MakeBool (i < j)) else
+     if op = closLang_IntOp closLang_Greater then SOME (MakeBool (i <
+       j)) else
      if op = closLang_IntOp closLang_GreaterEq then SOME (MakeBool (i
        <= j)) else
      if op = closLang_BlockOp closLang_Equal then SOME (MakeBool
        (j = i)) else NONE)`;;
-hol4_overload "int_op" "clos_op_int_op";;
 
 let cons_op_def = new_definition
   `cons_op op t xs =
      (match dest_ElemAt op with SOME n -> (if n < LENGTH xs then
-                    SOME (Let backend_common_None xs (Var
-                      backend_common_None (LENGTH xs - (n + 1)))) else
-                      NONE) | NONE ->
-     (match dest_TagLenEq op with SOME (n,l) -> SOME (Let
+                    SOME (closLang_Let backend_common_None xs
+                      (closLang_Var backend_common_None (LENGTH xs - (n
+                      + 1)))) else NONE) | NONE ->
+     (match dest_TagLenEq op with SOME (n,l) -> SOME (closLang_Let
        backend_common_None xs (MakeBool (n = t /\ LENGTH xs = l))) |
        NONE ->
-     (match dest_TagEq op with SOME n -> SOME (Let
+     (match dest_TagEq op with SOME n -> SOME (closLang_Let
        backend_common_None xs (MakeBool (n = t))) | NONE ->
-     (match dest_LenEq op with SOME l -> SOME (Let
+     (match dest_LenEq op with SOME l -> SOME (closLang_Let
        backend_common_None xs (MakeBool (LENGTH xs = l))) | NONE ->
        NONE))))`;;
 
 let is_Var_def = new_definition
   `is_Var x1 =
       match x1 with
-        (Var _19 _20:closLang_exp) -> T
+        (closLang_Var _19 _20:closLang_exp) -> T
       | _21 -> F`;;
 
 let is_Var_pmatch = prove
- (`is_Var x = (match x with Var _22 _23 -> T | _24 -> F)`,
+ (`is_Var x = (match x with closLang_Var _22 _23 -> T | _24 -> F)`,
   CHEAT_TAC);;
 
 let eq_direct_nil_def = new_definition
@@ -307,8 +303,8 @@ let ConjList_def,ConjList_ind = define_wf
       match x1 with
         [] -> MakeBool T
       | [x] -> x
-      | (CONS x xs) -> If backend_common_None x (ConjList xs)
-        (MakeBool F)`];;
+      | (CONS x xs) -> closLang_If backend_common_None x
+        (ConjList xs) (MakeBool F)`];;
 
 let eq_pure_def = new_definition
   `eq_pure x y = ConjList (append (eq_pure_list [(x,y)]))`;;
@@ -316,22 +312,22 @@ let eq_pure_def = new_definition
 (* [local] *)
 let eq_pure_list_test = prove
  (`append (eq_pure_list
-          [(Var backend_common_None 5,
+          [(closLang_Var backend_common_None 5,
             closLang_Op backend_common_None (closLang_BlockOp
               (closLang_Cons 70)) [closLang_Op backend_common_None
               (closLang_IntOp (closLang_Const (&2))) []; closLang_Op
               backend_common_None (closLang_BlockOp (closLang_Cons 4))
               []])]) =
      [closLang_Op backend_common_None (closLang_BlockOp
-       (closLang_TagLenEq 70 2)) [Var backend_common_None 5];
+       (closLang_TagLenEq 70 2)) [closLang_Var backend_common_None 5];
       closLang_Op backend_common_None (closLang_BlockOp
         (closLang_TagLenEq 4 0)) [closLang_Op backend_common_None
-        (closLang_BlockOp (closLang_ElemAt 0)) [Var backend_common_None
-        5]];
+        (closLang_BlockOp (closLang_ElemAt 0)) [closLang_Var
+        backend_common_None 5]];
       closLang_Op backend_common_None (closLang_BlockOp
         (closLang_EqualConst (closLang_Int (&2)))) [closLang_Op
         backend_common_None (closLang_BlockOp (closLang_ElemAt 1))
-        [Var backend_common_None 5]]]`,
+        [closLang_Var backend_common_None 5]]]`,
   CHEAT_TAC);;
 
 let dont_lift_def = new_definition
@@ -362,14 +358,14 @@ let lift_exps_def,lift_exps_ind = define_wf
                    | NONE ->
               (let (xs,n1,binds) = lift_exps xs (n + 1) (APPEND
                 binds [x]) in
-                (CONS (Var backend_common_None n)
+                (CONS (closLang_Var backend_common_None n)
                   xs,n1,binds)))`];;
 
 let eq_any_def = new_definition
   `eq_any x y =
      (match lift_exps [x; y] 0 [] with (CONS x (CONS y
-       _26),_27,binds) -> SOME (Let backend_common_None binds
-       (eq_pure x y)) | _28 -> NONE)`;;
+       _26),_27,binds) -> SOME (closLang_Let backend_common_None
+       binds (eq_pure x y)) | _28 -> NONE)`;;
 
 let eq_op_def = new_definition
   `eq_op x y =
@@ -392,7 +388,6 @@ let clos_op_SmartOp_def = new_definition
   `clos_op_SmartOp tra op xs =
      (match SmartOp' tra op xs with NONE -> closLang_Op tra op xs
        | SOME x -> x)`;;
-hol4_overload "SmartOp" "clos_op_SmartOp";;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

@@ -39,9 +39,6 @@ let _ = hol4_ancestors "targetSem"
 let machine_result_INDUCT,machine_result_RECURSION = define_datatype
   "machine_result = targetSem_Halt (outcome) | targetSem_Error | \
    targetSem_TimeOut";;
-hol4_overload "Halt" "targetSem_Halt";;
-hol4_overload "Error" "targetSem_Error";;
-hol4_overload "TimeOut" "targetSem_TimeOut";;
 
 let machine_config_FIELDS = define_record "machine_config"
   ["prog_addresses","'a word->bool";
@@ -113,32 +110,32 @@ let is_valid_mapped_read_def = new_definition
   `is_valid_mapped_read pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (Inst (asm_Mem asm_Load8 r ad)))
+         (wordLang_Inst (asm_Mem asm_Load8 r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 0) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (Inst (asm_Mem asm_Load r ad)))
+         (wordLang_Inst (asm_Mem asm_Load r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 2) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (Inst (asm_Mem asm_Load16 r ad)))
+         (wordLang_Inst (asm_Mem asm_Load16 r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 4) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (Inst (asm_Mem asm_Load32 r ad)))
+         (wordLang_Inst (asm_Mem asm_Load32 r ad)))
          (target_get_byte t ms) md) else F)`;;
 
 let is_valid_mapped_write_def = new_definition
   `is_valid_mapped_write pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (Inst (asm_Mem asm_Store8 r ad)))
+           (wordLang_Inst (asm_Mem asm_Store8 r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 0) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (Inst (asm_Mem asm_Store r ad)))
+           (wordLang_Inst (asm_Mem asm_Store r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 2) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (Inst (asm_Mem asm_Store16 r ad)))
+           (wordLang_Inst (asm_Mem asm_Store16 r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 4) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (Inst (asm_Mem asm_Store32 r ad)))
+           (wordLang_Inst (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md) else F)`;;
 
 let targetSem_evaluate_def,targetSem_evaluate_ind =
@@ -146,7 +143,7 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
   "termination (CHEAT_TAC)"
   [`targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi
   ffi_state) k (ms:'a) =
-     (if k = 0 then (TimeOut,ms,ffi) else
+     (if k = 0 then (targetSem_TimeOut,ms,ffi) else
        if (target_get_pc (machine_config_target mc) ms) IN
          (machine_config_prog_addresses mc DIFF (set_of_list
          (machine_config_ffi_entry_pcs mc))) then
@@ -168,14 +165,16 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
                       (machine_config_target
                     mc) ms x) then
                targetSem_evaluate mc ffi (k - 1) ms2 else
-               (Error,ms,ffi) else (Error,ms,ffi) else if
-                 target_get_pc (machine_config_target mc) ms =
-                 machine_config_halt_pc mc then
+               (targetSem_Error,ms,ffi) else
+                 (targetSem_Error,ms,ffi) else if target_get_pc
+                 (machine_config_target mc) ms = machine_config_halt_pc
+                 mc then
          ((if target_get_reg (machine_config_target mc) ms
-           (machine_config_ptr_reg mc) = (n2w 0) then Halt ffi_Success
-           else Halt ffi_Resource_limit_hit),ms,ffi) else if
-           target_get_pc (machine_config_target mc) ms =
-           machine_config_ccache_pc mc then
+           (machine_config_ptr_reg mc) = (n2w 0) then targetSem_Halt
+           ffi_Success else targetSem_Halt
+           ffi_Resource_limit_hit),ms,ffi) else if target_get_pc
+           (machine_config_target mc) ms = machine_config_ccache_pc mc
+           then
          let (ms1,new_oracle) =
            apply_oracle (machine_config_ccache_interfer mc)
              (target_get_reg (machine_config_target mc) ms
@@ -188,12 +187,12 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
            targetSem_evaluate mc ffi (k - 1) ms1 else
          match find_index (target_get_pc (machine_config_target mc)
            ms) (machine_config_ffi_entry_pcs mc) 0 with NONE ->
-           (Error,ms,ffi) | SOME ffi_index ->
+           (targetSem_Error,ms,ffi) | SOME ffi_index ->
              (match EL ffi_index (machine_config_ffi_names mc) with
                ffi_SharedMem op ->
                   (match ALOOKUP (machine_config_mmio_info mc)
-                    ffi_index with NONE -> (Error,ms,ffi) | SOME
-                    (nb,a,reg,pc') ->
+                    ffi_index with NONE -> (targetSem_Error,ms,ffi) |
+                    SOME (nb,a,reg,pc') ->
                        (match op with MappedRead ->
                               (match a with Addr r off ->
                               (let ad = target_get_reg
@@ -212,7 +211,7 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
                                 (machine_config_ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome ->
-                              (Halt (ffi_FFI_outcome
+                              (targetSem_Halt (ffi_FFI_outcome
                                 outcome),ms,ffi) | FFI_return new_ffi
                                 new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
@@ -222,7 +221,8 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
                                 machine_config_ffi_interfer_fupd (K
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
-                                (1:num)) ms1)) else (Error,ms,ffi)))) |
+                                (1:num)) ms1)) else
+                                (targetSem_Error,ms,ffi)))) |
                                 MappedWrite ->
                               (match a with Addr r off ->
                               (let ad = (target_get_reg
@@ -246,7 +246,7 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
                                 else word_to_bytes_aux (w2n nb) w F)
                                 (word_to_bytes ad F)) with FFI_final
                                 outcome ->
-                              (Halt (ffi_FFI_outcome
+                              (targetSem_Halt (ffi_FFI_outcome
                                 outcome),ms,ffi) | FFI_return new_ffi
                                 new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
@@ -256,17 +256,20 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
                                 machine_config_ffi_interfer_fupd (K
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
-                                (1:num)) ms1)) else (Error,ms,ffi))))))
-                                | ffi_ExtCall _1 ->
+                                (1:num)) ms1)) else
+                                (targetSem_Error,ms,ffi)))))) |
+                                ffi_ExtCall _1 ->
                   (match ALOOKUP (machine_config_mmio_info mc)
-                    ffi_index with SOME _2 -> (Error,ms,ffi) | NONE ->
+                    ffi_index with SOME _2 -> (targetSem_Error,ms,ffi)
+                    | NONE ->
                        (match read_ffi_bytearrays mc ms with (SOME
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
                               (machine_config_ffi_names mc)) bytes
-                              bytes2 with FFI_final outcome -> (Halt
-                              (ffi_FFI_outcome outcome),ms,ffi) |
-                              FFI_return new_ffi new_bytes ->
+                              bytes2 with FFI_final outcome ->
+                              (targetSem_Halt (ffi_FFI_outcome
+                              outcome),ms,ffi) | FFI_return new_ffi
+                              new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -275,24 +278,25 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
                                 (1:num)) ms1)) | _3 ->
-                                (Error,ms,ffi)))))`];;
-hol4_overload "evaluate" "targetSem_evaluate";;
+                                (targetSem_Error,ms,ffi)))))`];;
 
 let machine_sem_def = define_cases
   [`machine_sem mc st ms (ffi_Terminate t io_list) <=>
          (?k ms' st'.
-           evaluate mc st k ms = (Halt t,ms',st') /\
-             ffi_state_io_events
+           targetSem_evaluate mc st k ms = (targetSem_Halt
+             t,ms',st') /\ ffi_state_io_events
            st' = io_list)`;
    `machine_sem mc st ms (ffi_Diverge io_trace) <=>
-         (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
+         (!k. ?ms' st'. targetSem_evaluate mc st k ms =
+           (targetSem_TimeOut,ms',st')) /\
          lprefix_lub
            (IMAGE
-             (\k. fromList (ffi_state_io_events (SND (SND (evaluate
-               mc st k ms))))) UNIV)
+             (\k. fromList (ffi_state_io_events (SND (SND
+               (targetSem_evaluate mc st k ms))))) UNIV)
            io_trace`;
    `machine_sem mc st ms (ffi_Fail:behaviour) <=>
-         (?k. FST (evaluate mc st k ms) = Error)`];;
+         (?k. FST (targetSem_evaluate mc st k ms) =
+           targetSem_Error)`];;
 
 (* define what it means for code to be loaded and ready to run *)
 

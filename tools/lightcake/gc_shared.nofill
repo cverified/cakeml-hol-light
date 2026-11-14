@@ -1,3 +1,7 @@
+ADDR_MAP_APPEND	PROOF Failure("TAC_PROOF: Unsolved goals")
+ADDR_MAP_LENGTH	PROOF Failure("solve_goal: Too deep")
+MEM_ADDR_MAP	PROOF Failure("solve_goal: Too deep")
 heap_filter_EMPTY	PROOF Failure("TAC_PROOF: Unsolved goals")
 heap_filter_aux_heap_addresses_UNION	PROOF Failure("TAC_PROOF: Unsolved goals")
 heap_length_heap_filter_INSERT	PROOF Failure("ARITH_RULE `(heap_length:((?1117445,?1117446)heap_element)list->num)\n[(h:(?1117445,?1117446)heap_element)] +\n(heap_length:((?1117445,?1117446)h
+heap_split_0	PROOF Failure("GEN_TAC")

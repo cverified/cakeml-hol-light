@@ -22,7 +22,6 @@ needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -142,10 +141,11 @@ let ALL_DISTINCT_enumerate = prove
   CHEAT_TAC);;
 
 let pure_eval_to_def = new_definition
-  `pure_eval_to s env exp v = (evaluate env s [exp] = (s,Rval [v]))`;;
+  `pure_eval_to s env exp v = (flatSem_evaluate env s [exp] = (s,Rval
+  [v]))`;;
 
 let pmatch_list_Match_IMP_LENGTH = prove
- (`!xs ys env env' s. pmatch_list s xs ys env = Match env' ==>
+ (`!xs ys env env' s. flatSem_pmatch_list s xs ys env = Match env' ==>
    LENGTH xs = LENGTH ys`,
   CHEAT_TAC);;
 
@@ -155,10 +155,11 @@ let APPEND_LENGTH_EQ = prove
   CHEAT_TAC);;
 
 let pmatch_list_append_Match_exists = prove
- (`(pmatch_list s (APPEND xs ys) vs pre_bindings = Match bindings) =
+ (`(flatSem_pmatch_list s (APPEND xs ys) vs pre_bindings = Match
+  bindings) =
    (?vs1 vs2 bindings1. vs = APPEND vs1 vs2 /\
-   pmatch_list s xs vs1 pre_bindings = Match bindings1 /\
-   pmatch_list s ys vs2 bindings1 = Match bindings)`,
+   flatSem_pmatch_list s xs vs1 pre_bindings = Match bindings1 /\
+   flatSem_pmatch_list s ys vs2 bindings1 = Match bindings)`,
   CHEAT_TAC);;
 
 let ALOOKUP_rel_def = new_definition
@@ -233,14 +234,14 @@ let pat_bindings_evaluate_FOLDR_lemma = prove
    (!x. MEM x xs ==> (!env2.
      ALOOKUP_rel (\x. ~(x IN new_names)) (=) (flatSem_environment_v
        env2) (flatSem_environment_v env) ==>
-     evaluate env2 s [g x] = (s,Rval [h x]))) ==>
+     flatSem_evaluate env2 s [g x] = (s,Rval [h x]))) ==>
    (!env2.
    ALOOKUP_rel (\x. ~(x IN new_names)) (=) (flatSem_environment_v
      env2) (flatSem_environment_v env) ==>
-   evaluate env2 s
+   flatSem_evaluate env2 s
      [ITLIST (\x exp. flatLang_Let t (f x) (g x) exp) xs exp] =
-   evaluate (flatSem_environment_v_fupd (K (APPEND (MAP (\x. (THE (f
-     x),h x)) (REVERSE xs)) (flatSem_environment_v env2))) env2)
+   flatSem_evaluate (flatSem_environment_v_fupd (K (APPEND (MAP (\x.
+     (THE (f x),h x)) (REVERSE xs)) (flatSem_environment_v env2))) env2)
          s [exp])`,
   CHEAT_TAC);;
 
@@ -266,9 +267,9 @@ let compile_pat_bindings_simulation = prove
  (`!t i n_bindings exp exp2 spt s vs pre_bindings bindings env s2 res
   vset.
    compile_pat_bindings t i n_bindings exp = (spt,exp2) /\
-   pmatch_list s (MAP FST n_bindings) vs pre_bindings = Match
+   flatSem_pmatch_list s (MAP FST n_bindings) vs pre_bindings = Match
      bindings /\
-   evaluate env s [exp2] = (s2,res) /\
+   flatSem_evaluate env s [exp2] = (s2,res) /\
    ALL2 (\(_1,k,v_exp) v. !env2.
          k IN domain spt /\
          ALOOKUP_rel ((\k. k > j /\ k < i) o dec_name_to_num) (=)
@@ -280,10 +281,10 @@ let compile_pat_bindings_simulation = prove
    ALOOKUP_rel ((\k. k < j) o dec_name_to_num) (=)
      (flatSem_environment_v env)
      (APPEND pre_bindings base_vs) /\
-   ALL (\(p,k,_2). ALL (\nm. dec_name_to_num nm < j) (pat_bindings p)
-     /\
+   ALL (\(p,k,_2). ALL (\nm. dec_name_to_num nm < j)
+     (flatLang_pat_bindings p) /\
          j < k /\ k < i) n_bindings ==>
-   (?env2. evaluate env2 s [exp] = (s2,res) /\
+   (?env2. flatSem_evaluate env2 s [exp] = (s2,res) /\
    ALOOKUP_rel ((\k. k < j) o dec_name_to_num) (=)
      (flatSem_environment_v env2) (APPEND bindings base_vs))`,
   CHEAT_TAC);;
@@ -319,8 +320,6 @@ let flat_patternProof_v_rel = cake_inductive
       ALOOKUP_rel (\x. dec_name_to_num x < N) flat_patternProof_v_rel
         (flatSem_environment_v env1) (flatSem_environment_v env2) ==>
       flat_patternProof_env_rel N env1 env2)`;;
-hol4_overload "env_rel" "flat_patternProof_env_rel";;
-hol4_overload "v_rel" "flat_patternProof_v_rel";;
 
 (* HOL4 flat_patternProofScript.sml:680-686: a theorem that HOL4
    states as the value of an ML expression: v_rel_l_cases *)
@@ -348,7 +347,6 @@ let flat_patternProof_state_rel_def = new_definition
        (flatSem_state_globals t) /\
      install_conf_rel cfg (flatSem_state_eval_config s)
        (flatSem_state_eval_config t)`;;
-hol4_overload "state_rel" "flat_patternProof_state_rel";;
 
 (* state_rel_initial_state *)
 let flat_patternProof_state_rel_initial_state = prove
@@ -428,38 +426,38 @@ let ALOOKUP_rel_MAP_same = prove
   CHEAT_TAC);;
 
 let do_opapp_thm = prove
- (`do_opapp vs1 = SOME (env1,exp) /\ ALL2 flat_patternProof_v_rel vs1
-  vs2 ==>
+ (`flatSem_do_opapp vs1 = SOME (env1,exp) /\ ALL2
+  flat_patternProof_v_rel vs1 vs2 ==>
    (?i sg exp' env2 cfg. flat_pattern_compile_exp cfg exp =
      (i,sg,exp') /\
-   flat_patternProof_env_rel (i + 1) env1 env2 /\ do_opapp vs2 =
-     SOME (env2,exp'))`,
+   flat_patternProof_env_rel (i + 1) env1 env2 /\ flatSem_do_opapp
+     vs2 = SOME (env2,exp'))`,
   CHEAT_TAC);;
 
 let do_opapp_thm_REVERSE = prove
- (`do_opapp (REVERSE vs1) = SOME (env1,exp) /\ ALL2
+ (`flatSem_do_opapp (REVERSE vs1) = SOME (env1,exp) /\ ALL2
   flat_patternProof_v_rel vs1 vs2 ==>
    (?i sg exp' env2 cfg.
    flat_pattern_compile_exp cfg exp = (i,sg,exp') /\
    flat_patternProof_env_rel (i + 1) env1 env2 /\
-   do_opapp (REVERSE vs2) = SOME (env2,exp'))`,
+   flatSem_do_opapp (REVERSE vs2) = SOME (env2,exp'))`,
   CHEAT_TAC);;
 
 let pmatch_thm = prove
  (`(!(s:('c,'ffi)flatSem_state) p v vs r s1 v1 vs1.
-     pmatch s p v vs = r /\ ~(r = Match_type_error) /\
+     flatSem_pmatch s p v vs = r /\ ~(r = Match_type_error) /\
      flat_patternProof_state_rel cfg s s1 /\
      flat_patternProof_v_rel v v1 /\
      (\N. ALOOKUP_rel (\x. dec_name_to_num x < N)
-       flat_patternProof_v_rel) N vs vs1 ==> (?r1. pmatch s1 p v1 vs1 =
-       r1 /\ match_rel N r r1)) /\
+       flat_patternProof_v_rel) N vs vs1 ==> (?r1. flatSem_pmatch s1 p
+       v1 vs1 = r1 /\ match_rel N r r1)) /\
    (!(s:('c,'ffi)flatSem_state) ps v vs r s1 v1 vs1.
-     pmatch_list s ps v vs = r /\ ~(r = Match_type_error) /\
+     flatSem_pmatch_list s ps v vs = r /\ ~(r = Match_type_error) /\
      flat_patternProof_state_rel cfg s s1 /\
      ALL2 flat_patternProof_v_rel v v1 /\
      (\N. ALOOKUP_rel (\x. dec_name_to_num x < N)
-       flat_patternProof_v_rel) N vs vs1 ==> (?r1. pmatch_list s1 ps
-       v1 vs1 = r1 /\ match_rel N r r1))`,
+       flat_patternProof_v_rel) N vs vs1 ==> (?r1. flatSem_pmatch_list
+       s1 ps v1 vs1 = r1 /\ match_rel N r r1))`,
   CHEAT_TAC);;
 
 let simple_val_rel_step_isClosure = prove
@@ -481,19 +479,19 @@ let flat_patternProof_simple_state_rel = prove
    states as the value of an ML expression: do_app_thm *)
 
 let do_app_thm_REVERSE = prove
- (`do_app s1 op (REVERSE vs1) = SOME (t1,r1) /\
+ (`flatSem_do_app s1 op (REVERSE vs1) = SOME (t1,r1) /\
    flat_patternProof_state_rel cfg s1 s2 /\ ALL2
      flat_patternProof_v_rel vs1 vs2 ==>
    (?t2 r2. semanticPrimitivesProps_result_rel
      flat_patternProof_v_rel flat_patternProof_v_rel r1 r2 /\
-   flat_patternProof_state_rel cfg t1 t2 /\ do_app s2 op (REVERSE
-     vs2) = SOME (t2,r2))`,
+   flat_patternProof_state_rel cfg t1 t2 /\ flatSem_do_app s2 op
+     (REVERSE vs2) = SOME (t2,r2))`,
   CHEAT_TAC);;
 
 let do_if_helper = prove
- (`do_if b x y = SOME e /\ flat_patternProof_v_rel b b' ==>
-   ((b' = Boolv T) = (b = Boolv T)) /\ ((b' = Boolv F) = (b = Boolv
-     F))`,
+ (`flatSem_do_if b x y = SOME e /\ flat_patternProof_v_rel b b' ==>
+   ((b' = flatSem_Boolv T) = (b = flatSem_Boolv T)) /\ ((b' =
+     flatSem_Boolv F) = (b = flatSem_Boolv F))`,
   CHEAT_TAC);;
 
 let MAX_LIST_LESS_EVERY = prove
@@ -514,19 +512,19 @@ let encode_val_def,encode_val_ind = define_wf
   `MEASURE flatSem_v_size`
   [`encode_val others =
       match others with
-        (Litv l:flatSem_v) -> Litv l
-      | (Conv stmp xs) -> pattern_semantics_Term
+        (flatSem_Litv l:flatSem_v) -> flatSem_Litv l
+      | (flatSem_Conv stmp xs) -> pattern_semantics_Term
      (match stmp with NONE -> NONE | SOME (i,_5) -> SOME i)
      (MAP encode_val xs)
-      | (Loc _6 n) -> pattern_semantics_RefPtr n
+      | (flatSem_Loc _6 n) -> pattern_semantics_RefPtr n
       | others -> pattern_semantics_Other`];;
 
 let decode_test_simulation = prove
  (`dt_test test enc_v = SOME b /\
    pure_eval_to s env x v /\
    enc_v = encode_val v ==>
-   pure_eval_to s env (flat_pattern_decode_test tr test x) (Boolv
-     b)`,
+   pure_eval_to s env (flat_pattern_decode_test tr test x)
+     (flatSem_Boolv b)`,
   CHEAT_TAC);;
 
 let app_pos_Term_IMP = prove
@@ -560,34 +558,36 @@ let decode_pos_simulation = prove
 
 (* do_eq_Boolv *)
 let flat_patternProof_do_eq_Boolv = prove
- (`do_eq (Boolv x) (Boolv y) = Eq_val (x = y)`,
+ (`flatSem_do_eq (flatSem_Boolv x) (flatSem_Boolv y) = Eq_val (x = y)`,
   CHEAT_TAC);;
 
 let do_if_Boolv = prove
- (`do_if (Boolv x) y z = SOME (if x then y else z)`,
+ (`flatSem_do_if (flatSem_Boolv x) y z = SOME (if x then y else z)`,
   CHEAT_TAC);;
 
 (* evaluate_Bool *)
 let flat_patternProof_evaluate_Bool = prove
- (`evaluate env s [flatLang_Bool t b] = (s,Rval [Boolv b])`,
+ (`flatSem_evaluate env s [flatLang_Bool t b] = (s,Rval [flatSem_Boolv
+  b])`,
   CHEAT_TAC);;
 
 let SmartIf_thm = prove
  (`SmartIf t e p q =
      (if ?t. e = flatLang_Bool t T then p else
      if ?t. e = flatLang_Bool t F then q else
-     If t e p q)`,
+     pattern_semantics_If t e p q)`,
   CHEAT_TAC);;
 
 let evaluate_SmartIf = prove
- (`evaluate env s [SmartIf t x y z] = evaluate env s [If t x y z]`,
+ (`flatSem_evaluate env s [SmartIf t x y z] = flatSem_evaluate env s
+  [pattern_semantics_If t x y z]`,
   CHEAT_TAC);;
 
 let decode_guard_simulation = prove
  (`!b.
    dt_eval_guard (encode_refs s) (encode_val y) gd = SOME b /\
    pure_eval_to s env x y ==>
-   pure_eval_to s env (decode_guard tr x gd) (Boolv b)`,
+   pure_eval_to s env (decode_guard tr x gd) (flatSem_Boolv b)`,
   CHEAT_TAC);;
 
 let simp_guard_thm = prove
@@ -598,8 +598,8 @@ let simp_guard_thm = prove
 let decode_dtree_simulation = prove
  (`dt_eval (encode_refs s) (encode_val y) dtree = SOME v /\
    pure_eval_to s env x y ==>
-   evaluate env s [decode_dtree tr exps x default_x dtree] =
-   evaluate env s [match v with MatchSuccess i -> (match
+   flatSem_evaluate env s [decode_dtree tr exps x default_x dtree] =
+   flatSem_evaluate env s [match v with MatchSuccess i -> (match
      sptree_lookup i exps with
      SOME exp -> exp | NONE -> default_x) | _8 -> default_x]`,
   CHEAT_TAC);;
@@ -626,7 +626,7 @@ let pmatch_rows_encode = prove
      (MAPi (\j (p,_10). (encode_pat p,j + j_offs)) pats)
          (encode_val v)) with NONE -> F | SOME (MatchSuccess n) ->
            (?i env. n = i + j_offs /\ i < LENGTH pats /\
-         pmatch s (FST (EL i pats)) v [] = Match env /\
+         flatSem_pmatch s (FST (EL i pats)) v [] = Match env /\
          pmatch_rows pats s v = Match (env,EL i pats)) | _9 ->
            pmatch_rows pats s v = No_match)`,
   CHEAT_TAC);;
@@ -634,10 +634,10 @@ let pmatch_rows_encode = prove
 let naive_pattern_match_correct = prove
  (`!t mats vs bindings exp res.
     ALL2 (pure_eval_to s env) (MAP SND mats) vs /\
-    pmatch_list s (MAP FST mats) vs bindings = res /\ ~(res =
+    flatSem_pmatch_list s (MAP FST mats) vs bindings = res /\ ~(res =
       Match_type_error) /\
     naive_pattern_match t mats = exp ==>
-    pure_eval_to s env exp (Boolv (~(res = No_match)))`,
+    pure_eval_to s env exp (flatSem_Boolv (~(res = No_match)))`,
   CHEAT_TAC);;
 
 (* HOL4 flat_patternProofScript.sml:1308-1312: a theorem that HOL4
@@ -649,8 +649,10 @@ let naive_pattern_matches_correct = prove
    naive_pattern_matches t x mats dflt = exp /\
    pure_eval_to s env x v /\
    pmatch_rows mats s v = res /\ ~(res = Match_type_error) ==>
-   evaluate env s [exp] = (match res with Match (_11,_12,exp) ->
-       evaluate env s [exp] | _13 -> evaluate env s [dflt])`,
+   flatSem_evaluate env s [exp] = (match res with Match (_11,_12,exp)
+     ->
+       flatSem_evaluate env s [exp] | _13 -> flatSem_evaluate env s
+         [dflt])`,
   CHEAT_TAC);;
 
 let pmatch_rows_same_FST = prove
@@ -668,8 +670,9 @@ let pmatch_rows_same_FST = prove
 let evaluate_compile_pats = prove
  (`~(pmatch_rows pats s v = Match_type_error) /\
    pure_eval_to s env exp v ==>
-   evaluate env s [compile_pats cfg naive t N exp default_x pats] =
-   evaluate env s [match pmatch_rows pats s v with Match
+   flatSem_evaluate env s [compile_pats cfg naive t N exp default_x
+     pats] =
+   flatSem_evaluate env s [match pmatch_rows pats s v with Match
      (env',p',e') -> compile_pat_rhs t N exp (p',e') | _14 ->
      default_x]`,
   CHEAT_TAC);;
@@ -697,24 +700,24 @@ let compile_match_EL = prove
    (?exp_i sg exp'.
    flat_pattern_compile_exp cfg exp = (exp_i,sg,exp') /\
    EL i pats2 = (pat,exp') /\
-   exp_i <= k /\ max_dec_name (pat_bindings pat) <= k)`,
+   exp_i <= k /\ max_dec_name (flatLang_pat_bindings pat) <= k)`,
   CHEAT_TAC);;
 
 let evaluate_compile_pat_rhs = prove
- (`evaluate (flatSem_environment_v_fupd f env3) s
+ (`flatSem_evaluate (flatSem_environment_v_fupd f env3) s
      [compile_pat_rhs tr N (flatLang_Var_local tr (enc_num_to_name
        N))
      (p,exp)] = (t,res) /\
-   pmatch s p v [] = Match bindings /\
+   flatSem_pmatch s p v [] = Match bindings /\
    flat_patternProof_env_rel M env1 env2 /\
    (\N. ALOOKUP_rel (\x. dec_name_to_num x < N)
      flat_patternProof_v_rel) M l_bindings bindings /\
    f (flatSem_environment_v env3) = CONS (enc_num_to_name N,v)
      (flatSem_environment_v env2) /\
    N <= M /\
-   max_dec_name (pat_bindings p) < N - 1 ==>
+   max_dec_name (flatLang_pat_bindings p) < N - 1 ==>
    (?ext_env.
-   evaluate ext_env s [exp] = (t,res) /\
+   flatSem_evaluate ext_env s [exp] = (t,res) /\
    flat_patternProof_env_rel (N - 1) (flatSem_environment_v_fupd (K
      (APPEND l_bindings (flatSem_environment_v env1))) env1) ext_env)`,
   CHEAT_TAC);;
@@ -722,7 +725,8 @@ let evaluate_compile_pat_rhs = prove
 (* state_rel_dec_clock *)
 let flat_patternProof_state_rel_dec_clock = prove
  (`flat_patternProof_state_rel cfg s1 s2 ==>
-  flat_patternProof_state_rel cfg (dec_clock s1) (dec_clock s2)`,
+  flat_patternProof_state_rel cfg (flatSem_dec_clock s1)
+  (flatSem_dec_clock s2)`,
   CHEAT_TAC);;
 
 let OPTION_ALL_FORALL = prove
@@ -730,12 +734,12 @@ let OPTION_ALL_FORALL = prove
   CHEAT_TAC);;
 
 let do_eval_thm = prove
- (`do_eval xs (flatSem_state_eval_config s) = SOME (decs,eval_config,rv)
-  /\
+ (`flatSem_do_eval xs (flatSem_state_eval_config s) = SOME
+  (decs,eval_config,rv) /\
    flat_patternProof_state_rel cfg s t /\
    ALL2 flat_patternProof_v_rel xs ys ==>
    (?rv' decs' eval_config'.
-   do_eval ys (flatSem_state_eval_config t) = SOME
+   flatSem_do_eval ys (flatSem_state_eval_config t) = SOME
      (decs',eval_config',rv') /\
    flat_patternProof_state_rel cfg (flatSem_state_eval_config_fupd (K
      eval_config) s)
@@ -746,14 +750,14 @@ let do_eval_thm = prove
 
 (* evaluate_decs_sing *)
 let flat_patternProof_evaluate_decs_sing = prove
- (`evaluate_decs s [d] = evaluate_dec s d`,
+ (`flatSem_evaluate_decs s [d] = evaluate_dec s d`,
   CHEAT_TAC);;
 
 (* HOL4 flat_patternProofScript.sml:1541: ML code, not ported *)
 
 let compile_exps_evaluate = prove
  (`(!env1 ((s1:('c,'ffi)flatSem_state)) xs t1 r1 i sg ys N env2 s2 cfg.
-     evaluate env1 s1 xs = (t1,r1) /\
+     flatSem_evaluate env1 s1 xs = (t1,r1) /\
      flat_pattern_compile_exps cfg xs = (i,sg,ys) /\
      flat_patternProof_env_rel N env1 env2 /\
        flat_patternProof_state_rel s_cfg s1 s2 /\ i < N /\ ~(r1 = Rerr
@@ -762,14 +766,14 @@ let compile_exps_evaluate = prove
        semanticPrimitivesProps_result_rel (ALL2
          flat_patternProof_v_rel) flat_patternProof_v_rel r1 r2 /\
        flat_patternProof_state_rel s_cfg t1 t2 /\
-       evaluate env2 s2 ys = (t2,r2))) /\
+       flatSem_evaluate env2 s2 ys = (t2,r2))) /\
    (!((s1:('c,'ffi)flatSem_state)) decs s2 t1 cfg decs' res.
-     evaluate_decs s1 decs = (t1,res) /\
+     flatSem_evaluate_decs s1 decs = (t1,res) /\
      decs' = MAP (compile_dec cfg) decs /\
      flat_patternProof_state_rel s_cfg s1 s2 /\ ~(res = SOME (Rabort
        Rtype_error)) ==>
      (?t2 res'.
-       evaluate_decs s2 decs' = (t2,res') /\
+       flatSem_evaluate_decs s2 decs' = (t2,res') /\
        OPTREL (exc_rel flat_patternProof_v_rel) res res' /\
        flat_patternProof_state_rel s_cfg t1 t2))`,
   CHEAT_TAC);;
@@ -782,7 +786,7 @@ let compile_decs_eval_sim = prove
 
 let compile_decs_semantics = prove
  (`install_conf_rel cfg ic1 ic2 /\ ~(flatSem_semantics ic1 ffi prog =
-  Fail) ==>
+  pattern_semantics_Fail) ==>
    flatSem_semantics ic1 ffi prog =
    flatSem_semantics ic2 ffi (MAP (compile_dec cfg1) prog)`,
   CHEAT_TAC);;

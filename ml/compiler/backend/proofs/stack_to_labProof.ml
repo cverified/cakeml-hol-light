@@ -11,9 +11,6 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/labLang.ml";;
@@ -24,8 +21,6 @@ needs "compiler/backend/proofs/stack_rawcallProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/proofs/word_to_stackProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
-needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
@@ -41,16 +36,11 @@ needs "compiler/backend/stack_to_lab.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
-needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
-needs "lib/toto.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -83,17 +73,17 @@ let _ = hide_overloads
 
 let word_sh_word_shift = prove
  (`word_sh a (b:'a word) c = SOME z ==> c < dimindex (:'a) /\ z =
-  word_shift a b c`,
+  backend_common_word_shift a b c`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let assert_T = prove
- (`assert T s = s`,
+ (`labSem_assert T s = s`,
   CHEAT_TAC);;
 
 let asm_fetch_aux_no_label = prove
  (`!pc' code.
-   asm_fetch_aux pc' code = SOME (Label l1 l2 x) ==> F`,
+   asm_fetch_aux pc' code = SOME (labLang_Label l1 l2 x) ==> F`,
   CHEAT_TAC);;
 
 let dest_to_loc_def = new_definition
@@ -110,8 +100,8 @@ let dest_to_loc'_def = new_definition
    variables of its own are read as variables *)
 let find_code_lookup = prove
  (cake_as_vars (fun () ->
-    `find_code dest regs code = SOME p ==>
-      lookup (dest_to_loc regs dest) code = SOME p /\
+    `stackSem_find_code dest regs code = SOME p ==>
+      sptree_lookup (dest_to_loc regs dest) code = SOME p /\
       (!r. dest = INR r ==> r IN FDOM regs)`),
   CHEAT_TAC);;
 
@@ -122,12 +112,13 @@ let not_is_Label_compile_jump = prove
 
 (* [simp] *)
 let word_cmp_not_NONE = prove
- (`~(word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) = NONE)`,
+ (`~(wordSem_word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) =
+  NONE)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let word_cmp_negate_alt = prove
- (`asm_word_cmp (negate cmp) w1 w2 <=> ~(word_cmp cmp w1 w2)`,
+ (`asm_word_cmp (negate cmp) w1 w2 <=> ~(wordSem_word_cmp cmp w1 w2)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -144,12 +135,11 @@ let stack_to_labProof_code_installed_def,
   [`stack_to_labProof_code_installed n [] code = T`;
    `stack_to_labProof_code_installed n (CONS x xs) code <=>
        (if is_Label x then
-         (match x with Label l1 l2 _4 -> loc_to_pc l1 l2 code = SOME
-           n) /\
+         (match x with labLang_Label l1 l2 _4 -> loc_to_pc l1 l2
+           code = SOME n) /\
          stack_to_labProof_code_installed n xs code else
          asm_fetch_aux n code = SOME x /\
          stack_to_labProof_code_installed (n + 1) xs code)`];;
-hol4_overload "code_installed" "stack_to_labProof_code_installed";;
 
 let code_installed_append_imp = prove
  (`!l1 pc' l2 code. stack_to_labProof_code_installed pc' (APPEND l1 l2)
@@ -164,7 +154,7 @@ let code_installed_get_labels_IMP = prove
  (`!top e n q cs bs pc'.
        stack_to_labProof_code_installed pc' (append (FST
          (stack_to_lab_flatten top e n q cs bs))) c /\
-       (l1,l2) IN get_labels e ==>
+       (l1,l2) IN labProps_get_labels e ==>
        (?v. loc_to_pc l1 l2 c = SOME v)`,
   CHEAT_TAC);;
 
@@ -304,8 +294,9 @@ let labs_correct_def,labs_correct_ind = define_rec
   [`labs_correct n [] code <=> T`;
    `labs_correct n (CONS x xs) code <=>
          (if is_Label x then labs_correct n xs code /\
-           (match x with Label l1 l2 v2 -> loc_to_pc l1 l2 code
-             = SOME n | _6 -> T) else labs_correct (n + 1) xs code)`];;
+           (match x with labLang_Label l1 l2 v2 -> loc_to_pc l1
+             l2 code = SOME n | _6 -> T) else labs_correct (n + 1)
+             xs code)`];;
 
 (* HOL4 stack_to_labProofScript.sml:391: ML code, not ported *)
 
@@ -339,9 +330,9 @@ let code_installed_prog_to_section_lemma = prove
 
 let labs_correct_hd = prove
  (`!extra l.
-   ALL_DISTINCT (extract_labels (APPEND extra l)) /\
-   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (extract_labels (APPEND extra
-     l)) ==>
+   ALL_DISTINCT (stackProps_extract_labels (APPEND extra l)) /\
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (stackProps_extract_labels
+     (APPEND extra l)) ==>
    labs_correct (LENGTH (FILTER (\x. ~(is_Label x)) extra)) l (CONS
      (Section n (APPEND extra l)) code)`,
   CHEAT_TAC);;
@@ -351,7 +342,7 @@ let labels_ok_def = new_definition
    // Section names are distinct
    ALL_DISTINCT (MAP (\s. match s with Section n _7 -> n) code) /\
    ALL (\s. match s with Section n lines ->
-     (let labs = extract_labels lines in
+     (let labs = stackProps_extract_labels lines in
      ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) labs /\
      ALL_DISTINCT labs)) code`;;
 
@@ -360,7 +351,8 @@ let labels_ok_imp = prove
    labels_ok code ==>
    ALL sec_labels_ok code /\
    ALL_DISTINCT (MAP Section_num code) /\
-   ALL (ALL_DISTINCT o extract_labels o Section_lines) code`,
+   ALL (ALL_DISTINCT o stackProps_extract_labels o Section_lines)
+     code`,
   CHEAT_TAC);;
 
 let labels_ok_labs_correct = prove
@@ -403,7 +395,8 @@ let stack_to_labProof_state_rel_def = new_definition
      t = stackSem_state_be s /\ labSem_state_ffi
      t = stackSem_state_ffi s /\ labSem_state_clock
      t = stackSem_state_clock s /\
-     (!n prog. lookup n (stackSem_state_code s) = SOME prog ==>
+     (!n prog. sptree_lookup n (stackSem_state_code s) = SOME prog
+       ==>
        call_args prog (labSem_state_ptr_reg t) (labSem_state_len_reg
          t) (labSem_state_ptr2_reg t) (labSem_state_len2_reg t)
          (labSem_state_link_reg t) /\
@@ -442,18 +435,18 @@ let stack_to_labProof_state_rel_def = new_definition
            t) (labSem_state_ptr2_reg t) (labSem_state_len2_reg t)
            (labSem_state_link_reg t) /\
          ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
-           (extract_labels p) /\
-         ALL_DISTINCT (extract_labels p)) ps /\
+           (stackProps_extract_labels p) /\
+         ALL_DISTINCT (stackProps_extract_labels p)) ps /\
          // This last conjunct might not be necessary
          ALL_DISTINCT (MAP FST ps)) /\
      ~(stackSem_state_use_stack s) /\
      ~(stackSem_state_use_store s) /\
      ~(stackSem_state_use_alloc s) /\
      good_dimindex (:'a)`;;
-hol4_overload "state_rel" "stack_to_labProof_state_rel";;
 
 let loc_check_IMP_loc_to_pc = prove
- (`loc_check (stackSem_state_code s) (l1,l2) /\ state_rel s t1 ==>
+ (`loc_check (stackSem_state_code s) (l1,l2) /\
+  stack_to_labProof_state_rel s t1 ==>
     (?v. loc_to_pc l1 l2 (labSem_state_code t1) = SOME v)`,
   CHEAT_TAC);;
 
@@ -465,25 +458,28 @@ let loc_check_IMP_loc_to_pc = prove
    variables of its own are read as variables *)
 let state_rel_with_pc = prove
  (cake_as_vars (fun () ->
-    `state_rel s t ==> state_rel s (upd_pc pc t)`),
+    `stack_to_labProof_state_rel s t ==> stack_to_labProof_state_rel s
+  (labSem_upd_pc pc t)`),
   CHEAT_TAC);;
 
 (* state_rel_with_clock *)
 let stack_to_labProof_state_rel_with_clock = prove
- (`state_rel s t ==> state_rel (stackSem_state_clock_fupd (K k) s)
-  (labSem_state_clock_fupd (K k) t)`,
+ (`stack_to_labProof_state_rel s t ==> stack_to_labProof_state_rel
+  (stackSem_state_clock_fupd (K k) s) (labSem_state_clock_fupd (K k)
+  t)`,
   CHEAT_TAC);;
 
 let set_var_upd_reg = prove
- (`state_rel s t ==>
-   state_rel (set_var a b s) (upd_reg a b t)`,
+ (`stack_to_labProof_state_rel s t ==>
+   stack_to_labProof_state_rel (stackSem_set_var a b s)
+     (labSem_upd_reg a b t)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let set_var_Word_upd_reg = prove
- (`state_rel s t ==>
-   state_rel (set_var a (wordLang_Word b) s) (upd_reg a
-     (wordLang_Word b) t)`,
+ (`stack_to_labProof_state_rel s t ==>
+   stack_to_labProof_state_rel (stackSem_set_var a (wordLang_Word
+     b) s) (labSem_upd_reg a (wordLang_Word b) t)`,
   CHEAT_TAC);;
 
 (* HOL4 stack_to_labProofScript.sml:690-696: a theorem whose
@@ -491,12 +487,13 @@ let set_var_Word_upd_reg = prove
    set_fp_var_upd_fp_reg *)
 
 let mem_store_upd_mem = prove
- (`state_rel s t /\ mem_store x y s = SOME s1 ==>
-   state_rel s1 (upd_mem x y t)`,
+ (`stack_to_labProof_state_rel s t /\ stackSem_mem_store x y s = SOME s1
+  ==>
+   stack_to_labProof_state_rel s1 (labSem_upd_mem x y t)`,
   CHEAT_TAC);;
 
 let state_rel_read_reg_FLOOKUP_regs = prove
- (`state_rel s t /\
+ (`stack_to_labProof_state_rel s t /\
    FLOOKUP (stackSem_state_regs s) x = SOME y ==>
    y = labSem_state_regs t x`,
   CHEAT_TAC);;
@@ -506,9 +503,9 @@ let state_rel_read_reg_FLOOKUP_regs = prove
    state_rel_read_fp_reg_FLOOKUP_fp_regs *)
 
 let state_rel_get_var_imm = prove
- (`state_rel s t /\
-   get_var_imm r s = SOME x ==>
-   reg_imm r t = x`,
+ (`stack_to_labProof_state_rel s t /\
+   stackSem_get_var_imm r s = SOME x ==>
+   labSem_reg_imm r t = x`,
   CHEAT_TAC);;
 
 (* inst_correct *)
@@ -516,9 +513,9 @@ let state_rel_get_var_imm = prove
    variables of its own are read as variables *)
 let stack_to_labProof_inst_correct = prove
  (cake_as_vars (fun () ->
-    `inst i s1 = SOME s2 /\
-     state_rel s1 t1 ==>
-     state_rel s2 (asm_inst i t1)`),
+    `stackSem_inst i s1 = SOME s2 /\
+     stack_to_labProof_state_rel s1 t1 ==>
+     stack_to_labProof_state_rel s2 (asm_inst i t1)`),
   CHEAT_TAC);;
 
 let flatten_leq = prove
@@ -527,12 +524,12 @@ let flatten_leq = prove
 
 (* [local] *)
 let NOT_bad_fun_return_IMP_SOME = prove
- (`~(bad_fun_return q) ==> (?n. q = SOME n)`,
+ (`~(stackSem_bad_fun_return q) ==> (?n. q = SOME n)`,
   CHEAT_TAC);;
 
 let no_ret_correct = prove
  (`!t p y z cs bs. FST (SND (stack_to_lab_flatten t p y z cs bs)) ==>
-  (!s. IS_SOME (FST (evaluate (p,s))))`,
+  (!s. IS_SOME (FST (stackSem_evaluate (p,s))))`,
   CHEAT_TAC);;
 
 (* HOL4 stack_to_labProofScript.sml:926: the ML values that the
@@ -550,25 +547,25 @@ let result_view_def = new_definition
   `result_view x1 l cs bs =
         match x1 with
           stackSem_Result (wordLang_Loc n1 n2) -> Vloc n1 n2
-        | (Exception (wordLang_Loc n1 n2)) -> Vloc n1 n2
-        | TimeOut -> Vtimeout
-        | (Continue n) -> Vcont l (find_lab n cs)
-        | (Break n) -> Vloc l (find_lab n bs)
+        | (stackSem_Exception (wordLang_Loc n1 n2)) -> Vloc n1 n2
+        | stackSem_TimeOut -> Vtimeout
+        | (stackSem_Continue n) -> Vcont l (find_lab n cs)
+        | (stackSem_Break n) -> Vloc l (find_lab n bs)
         | _11 -> Verr`;;
 
 let halt_word_view_def = new_definition
   `halt_word_view x1 =
         match x1 with
-          wordLang_Word (n2w 0) -> Halt ffi_Success
-        | (wordLang_Word _12) -> Halt ffi_Resource_limit_hit
-        | _13 -> Error`;;
+          wordLang_Word (n2w 0) -> stackSem_Halt ffi_Success
+        | (wordLang_Word _12) -> stackSem_Halt ffi_Resource_limit_hit
+        | _13 -> stackSem_Error`;;
 
 let halt_view_def = new_definition
   `halt_view x1 =
         match x1 with
-          SOME (Halt w) -> SOME (halt_word_view w)
-        | (SOME (FinalFFI outcome)) -> SOME (Halt (ffi_FFI_outcome
-          outcome))
+          SOME (stackSem_Halt w) -> SOME (halt_word_view w)
+        | (SOME (stackSem_FinalFFI outcome)) -> SOME (stackSem_Halt
+          (ffi_FFI_outcome outcome))
         | _14 -> NONE`;;
 
 (* HOL4 stack_to_labProofScript.sml:966-1017: a proof *)
@@ -582,32 +579,32 @@ let next_lab_non_zero = prove
 
 let stack_to_lab_lab_pres = prove
  (`!t p n nl cs bs.
-     ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) (extract_labels
-       p) /\
-     ALL_DISTINCT (extract_labels p) /\ ~t /\
+     ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
+       (stackProps_extract_labels p) /\
+     ALL_DISTINCT (stackProps_extract_labels p) /\ ~t /\
      next_lab p 2 <= nl ==>
      (let (cp,nr,nl') = stack_to_lab_flatten t p n nl cs bs in
        ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
-         (extract_labels (append cp)) /\
-       ALL_DISTINCT (extract_labels (append cp)) /\
-       (!lab. MEM lab (extract_labels (append cp)) ==> MEM lab
-         (extract_labels p) \/
+         (stackProps_extract_labels (append cp)) /\
+       ALL_DISTINCT (stackProps_extract_labels (append cp)) /\
+       (!lab. MEM lab (stackProps_extract_labels (append cp)) ==> MEM
+         lab (stackProps_extract_labels p) \/
                               (nl <= SND lab /\ SND lab < nl')) /\
        nl <= nl')`,
   CHEAT_TAC);;
 
 let stack_to_lab_lab_pres_T = prove
  (`!t p n nl cs bs.
-   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) (extract_labels
-     p) /\
-   ALL_DISTINCT (extract_labels p) /\ t /\
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
+     (stackProps_extract_labels p) /\
+   ALL_DISTINCT (stackProps_extract_labels p) /\ t /\
    next_lab p 2 <= nl ==>
    (let (cp,nr,nl') = stack_to_lab_flatten t p n nl cs bs in
-   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (extract_labels (append cp))
-     /\
-   ALL_DISTINCT (extract_labels (append cp)) /\
-   (!lab. MEM lab (extract_labels (append cp)) ==>
-        MEM lab (extract_labels p) \/ SND lab < nl') /\
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (stackProps_extract_labels
+     (append cp)) /\
+   ALL_DISTINCT (stackProps_extract_labels (append cp)) /\
+   (!lab. MEM lab (stackProps_extract_labels (append cp)) ==>
+        MEM lab (stackProps_extract_labels p) \/ SND lab < nl') /\
    nl <= nl')`,
   CHEAT_TAC);;
 
@@ -619,7 +616,7 @@ let flatten_T_F = prove
 
 let prog_to_section_labels_ok = prove
  (`ALL (\(n,p).
-            let labs = extract_labels p in
+            let labs = stackProps_extract_labels p in
               ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs
                 /\
               ALL_DISTINCT labs) prog /\
@@ -654,8 +651,9 @@ let halt_assum_def = new_definition
     (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s
         = 0) ==>
-      (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt
-        (wordLang_Word (n2w 0))),t) /\ stackSem_state_ffi
+      (?t. stackSem_evaluate (labLang_Call NONE (INL 1) NONE,s) =
+        (SOME (stackSem_Halt (wordLang_Word (n2w 0))),t) /\
+        stackSem_state_ffi
           t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
 
@@ -674,7 +672,6 @@ let stack_to_labProof_make_init_def = new_definition
        (labSem_state_code_buffer s) ARB ARB F F F (labSem_state_clock
        s) code (labSem_state_ffi s) save_regs (labSem_state_be
        s):('a,'c,'ffi)stackSem_state)`;;
-hol4_overload "make_init" "stack_to_labProof_make_init";;
 
 (* HOL4 stack_to_labProofScript.sml:3047-3049: ML code, not ported *)
 
@@ -694,23 +691,25 @@ let full_make_init_def = new_definition
    let jump = stack_to_lab_config_jump stack_conf in
    let code1 = stack_alloc_compile data_conf (stack_rawcall_compile
      code) in
-   let code2 = compile jump offset ggc max_heap sp
+   let code2 = stack_to_lab_compile jump offset ggc max_heap sp
      InitGlobals_location code1 in
-   let code3 = fromAList (compile (stack_to_lab_config_reg_names
-     stack_conf) code2) in
-   let coracle1 = (I ## MAP prog_comp ## I) o coracle in
-   let coracle2 = (I ## MAP (prog_comp jump offset sp) ## I) o
-     coracle1 in
-   let coracle3 = (I ## compile (stack_to_lab_config_reg_names
-     stack_conf) ## I) o coracle2 in
-   let s3 = make_init code3 coracle3 (MAP (tlookup
+   let code3 = fromAList (stack_to_lab_compile
+     (stack_to_lab_config_reg_names stack_conf) code2) in
+   let coracle1 = (I ## MAP stack_alloc_prog_comp ## I) o coracle in
+   let coracle2 = (I ## MAP (stack_alloc_prog_comp jump offset sp) ##
+     I) o coracle1 in
+   let coracle3 = (I ## stack_to_lab_compile
+     (stack_to_lab_config_reg_names stack_conf) ## I) o coracle2 in
+   let s3 = stack_to_labProof_make_init code3 coracle3 (MAP (tlookup
      (stack_to_lab_config_reg_names stack_conf)) [2; 3; 4]) save_regs s4
      in
-   let s2 = make_init (stack_to_lab_config_reg_names stack_conf)
-     (fromAList code2) coracle2 s3 in
+   let s2 = stack_to_labProof_make_init
+     (stack_to_lab_config_reg_names stack_conf) (fromAList code2)
+     coracle2 s3 in
    let s1 = make_init_any ggc max_heap bitmaps data_sp coracle1 jump
      offset sp (fromAList code1) s2 in
-     (make_init data_conf (fromAList code) coracle s1,
+     (stack_to_labProof_make_init data_conf (fromAList code) coracle
+       s1,
       make_init_opt ggc max_heap bitmaps data_sp coracle1 jump
         offset sp (fromAList code1) s2))`;;
 
@@ -729,9 +728,10 @@ let full_make_init_ffi = prove
 let full_make_init_compile = prove
  (`compile
       (FST (full_make_init a b c d e f g h i j k)) =
-      (\c. (\p. compile h c (MAP prog_to_section (MAP (prog_comp
-        (stack_to_lab_config_reg_names a)) (MAP (prog_comp
-        (stack_to_lab_config_jump a) e d) p)))) o MAP prog_comp)`,
+      (\c. (\p. compile h c (MAP prog_to_section (MAP
+        (stack_alloc_prog_comp (stack_to_lab_config_reg_names a)) (MAP
+        (stack_alloc_prog_comp (stack_to_lab_config_jump a) e d) p))))
+        o MAP stack_alloc_prog_comp)`,
   CHEAT_TAC);;
 
 let memory_assumption_def = new_definition
@@ -762,7 +762,8 @@ let memory_assumption_def = new_definition
        ptr2 <=+ ptr4 /\ byte_aligned ptr2 /\
        byte_aligned ptr4 /\ byte_aligned bitmap_ptr /\
        (n2w 1024) * bytes_in_word <=+ ptr4 - ptr2 /\
-      (word_list bitmap_ptr (MAP wordLang_Word bitmaps) *
+      (word_to_stack_word_list bitmap_ptr (MAP wordLang_Word bitmaps)
+        *
        word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
          bitmaps)) data_sp *
        word_list_exists ptr2
@@ -774,7 +775,7 @@ let memory_assumption_def = new_definition
 let halt_assum_lemma = prove
  (`halt_assum (:'ffi#'c)
       (fromAList (stack_names_compile f
-        (compile jump off gen max_heap k l code)))`,
+        (stack_to_lab_compile jump off gen max_heap k l code)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -788,10 +789,10 @@ let FLOOKUP_regs = prove
    variables of its own are read as variables *)
 let state_rel_make_init = prove
  (cake_as_vars (fun () ->
-    `state_rel (make_init code coracle regs save_regs s)
-  (s:('a,'c,'ffi)labSem_state) <=>
+    `stack_to_labProof_state_rel (stack_to_labProof_make_init code
+  coracle regs save_regs s) (s:('a,'c,'ffi)labSem_state) <=>
       (!n prog.
-       lookup n code = SOME (prog) ==>
+       sptree_lookup n code = SOME (prog) ==>
        call_args prog (labSem_state_ptr_reg s)
          (labSem_state_len_reg s) (labSem_state_ptr2_reg s)
          (labSem_state_len2_reg s) (labSem_state_link_reg s) /\
@@ -811,8 +812,8 @@ let state_rel_make_init = prove
                   (labSem_state_len_reg s) (labSem_state_ptr2_reg s)
                   (labSem_state_len2_reg s) (labSem_state_link_reg s) /\
                 ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
-                  (extract_labels p) /\
-                ALL_DISTINCT (extract_labels p)) ps /\
+                  (stackProps_extract_labels p) /\
+                ALL_DISTINCT (stackProps_extract_labels p)) ps /\
            ALL_DISTINCT (MAP FST ps)) (coracle k)) /\
              ~(labSem_state_link_reg
       s = labSem_state_len_reg s) /\ ~(labSem_state_link_reg s =
@@ -836,7 +837,8 @@ let state_rel_make_init = prove
 
 (* [local] *)
 let MAP_FST_compile_compile = prove
- (`MAP FST (compile jump off gen max_heap k InitGlobals_location
+ (`MAP FST (stack_to_lab_compile jump off gen max_heap k
+  InitGlobals_location
                (stack_alloc_compile c
                   (stack_rawcall_compile code))) = CONS 0 (CONS 1
                     (CONS 2 (CONS gc_stub_location (MAP FST code))))`,
@@ -862,19 +864,19 @@ let stack_to_labProof_MAP_prog_to_section_FST = prove
 (* [local] *)
 let extract_label_store_list_code = prove
  (`!a t ls.
-   extract_labels (store_list_code a t ls) = []`,
+   stackProps_extract_labels (store_list_code a t ls) = []`,
   CHEAT_TAC);;
 
 let stack_to_lab_compile_lab_pres = prove
  (`ALL (\n. ~(n = 0) /\ ~(n = 1) /\ ~(n = 2) /\ ~(n = gc_stub_location))
   (MAP FST prog) /\
    ALL (\(n,p).
-            let labs = extract_labels p in
+            let labs = stackProps_extract_labels p in
               ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs
                 /\
               ALL_DISTINCT labs) prog /\
    ALL_DISTINCT (MAP FST prog) ==>
-   labels_ok (compile c c2 c3 sp offset prog)`,
+   labels_ok (stack_to_lab_compile c c2 c3 sp offset prog)`,
   CHEAT_TAC);;
 
 let stack_to_labProof_good_code_def = new_definition
@@ -886,9 +888,8 @@ let stack_to_labProof_good_code_def = new_definition
     ALL
     (\(n,p).
        ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
-         (extract_labels p) /\
-       ALL_DISTINCT (extract_labels p)) code`;;
-hol4_overload "good_code" "stack_to_labProof_good_code";;
+         (stackProps_extract_labels p) /\
+       ALL_DISTINCT (stackProps_extract_labels p)) code`;;
 
 let contain_def = new_definition
   `contain b = Abbrev b`;;
@@ -938,19 +939,20 @@ let stack_to_lab_compile_all_enc_ok = prove
      good_dimindex (:'a) /\
    asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
    (!n. n <= max_stack_alloc ==> asm_config_valid_imm
-   c (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
+   c (INL word_bignum_Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
      asm_config_valid_imm
-   c (INL Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
+   c (INL word_bignum_Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
      asm_config_valid_imm
-   c (INL Add) (n2w 1) /\ asm_config_valid_imm c (INL Sub) (n2w 1) /\
-     asm_config_valid_imm
-   c (INL Add) (n2w 4) /\ asm_config_valid_imm c (INL Add) (n2w 8) /\
+   c (INL word_bignum_Add) (n2w 1) /\ asm_config_valid_imm c (INL
+     word_bignum_Sub) (n2w 1) /\ asm_config_valid_imm
+   c (INL word_bignum_Add) (n2w 4) /\ asm_config_valid_imm c (INL
+     word_bignum_Add) (n2w 8) /\
    (!s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset s))
      /\ reg_name 10 c /\
    reg_name (sp + 2) c /\ reg_name (sp + 1) c /\ reg_name sp c /\
    conf_ok (:'a) c2 /\ ~(sp = 0) ==>
-   (\c ls. ALL (sec_ok_pre c) ls) c (compile c1 c2 c3 sp
-     (asm_config_addr_offset c) prog)`,
+   (\c ls. ALL (sec_ok_pre c) ls) c (stack_to_lab_compile c1 c2 c3
+     sp (asm_config_addr_offset c) prog)`,
   CHEAT_TAC);;
 
 let IMP_init_store_ok = prove
@@ -975,7 +977,8 @@ let IMP_init_state_ok = prove
         (post_alloc_conventions kkk o SND o SND) progs /\
       ALL (flat_exp_conventions o SND o SND) progs /\
       ALL ((\y. ~(raise_stub_location = y)) o FST) progs /\
-      ALL ((\y. ~(store_consts_stub_location = y)) o FST) progs /\
+      ALL ((\y. ~(wordLang_store_consts_stub_location = y)) o FST)
+        progs /\
       (n = 0 ==> bm0 = LENGTH bitmaps)) (word_oracle n)) /\
    stack_oracle =
    (\n.
@@ -1007,16 +1010,16 @@ let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
         match x1 with
           stackLang_Seq p1 p2 -> complex_get_code_labels p1 UNION
             complex_get_code_labels p2
-        | (If _19 _20 _21 p1 p2) -> complex_get_code_labels p1 UNION
-          complex_get_code_labels p2
-        | (Call ret dest handler) ->
+        | (word_bignum_If _19 _20 _21 p1 p2) ->
+          complex_get_code_labels p1 UNION complex_get_code_labels p2
+        | (labLang_Call ret dest handler) ->
         (match dest with INL x -> {(x,0)} | _22 -> {}) UNION
         (match ret with NONE -> {} | SOME (r,_23,l1,l2) -> (l1,l2)
           INSERT (complex_get_code_labels r UNION
              (match handler with NONE -> {} | SOME (r,l1,l2) ->
                (l1,l2) INSERT complex_get_code_labels r)))
-        | (Loop p) -> complex_get_code_labels p
-        | (LocValue i l1 l2) -> {(l1,l2)}
+        | (word_bignum_Loop p) -> complex_get_code_labels p
+        | (labLang_LocValue i l1 l2) -> {(l1,l2)}
         | (stackLang_RawCall l) -> {(l,1)}
         | (stackLang_JumpLower n m l) -> {(l,0)}
         | _24 -> {}`];;
@@ -1028,7 +1031,8 @@ let complex_flatten_labels = prove
      bs))) in
    UNIONS (IMAGE line_get_labels pp) SUBSET
    (n,0) INSERT
-   (n,(if t /\ (?p1 p2. p = Seq p1 p2) then 1 else 0)) INSERT (
+   (n,(if t /\ (?p1 p2. p = reg_alloc_Seq p1 p2) then 1 else 0))
+     INSERT (
    set_of_list (MAP (\l. (n,l)) (APPEND cs bs)) UNION
    IMAGE (\n2. (n,n2)) (UNIONS (IMAGE line_get_code_labels pp)) UNION
    complex_get_code_labels p)`,
@@ -1042,21 +1046,22 @@ let flatten_labels = prove
      UNIONS (IMAGE line_get_labels (set_of_list (append l))) SUBSET
      set_of_list (MAP (\l. (n,l)) (APPEND cs bs)) UNION
      sec_get_code_labels (Section n (append l)) UNION
-     get_code_labels m`,
+     stackProps_get_code_labels m`,
   CHEAT_TAC);;
 
 let get_labels_MAP_prog_to_section_SUBSET_code_labels_lemma = prove
  (`!p. ALL sec_labels_ok (MAP prog_to_section p) ==>
-    get_labels (MAP prog_to_section p) SUBSET
-    get_code_labels (MAP prog_to_section p) UNION
-    UNIONS (IMAGE get_code_labels (set_of_list (MAP SND p)))`,
+    labProps_get_labels (MAP prog_to_section p) SUBSET
+    stackProps_get_code_labels (MAP prog_to_section p) UNION
+    UNIONS (IMAGE stackProps_get_code_labels (set_of_list (MAP SND
+      p)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let prog_to_section_preserves_MAP_FST = prove
  (`!p.
      IMAGE (\n. n,0) (set_of_list (MAP FST p)) SUBSET
-     get_code_labels (MAP prog_to_section p)`,
+     stackProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let prog_to_section_labels = prove
@@ -1076,20 +1081,20 @@ let MAP_prog_to_section_preserves_handler_labels = prove
  (`!p.
     UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp)
       p)) SUBSET
-    get_code_labels (MAP prog_to_section p)`,
+    stackProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let one_prog_section = prove
  (`IMAGE (\n. (n,1)) (set_of_list (MAP FST p)) SUBSET
-   get_code_labels (MAP prog_to_section p)`,
+   stackProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let get_labels_MAP_prog_to_section_SUBSET_code_labels = prove
  (`!p.
      ALL sec_labels_ok (MAP prog_to_section p) /\
       stack_good_code_labels p elabs ==>
-      get_labels (MAP prog_to_section p) SUBSET
-      get_code_labels (MAP prog_to_section p) UNION
+      labProps_get_labels (MAP prog_to_section p) SUBSET
+      stackProps_get_code_labels (MAP prog_to_section p) UNION
       IMAGE (\n. n,0) elabs UNION
       IMAGE (\n. n,1) elabs`,
   CHEAT_TAC);;
@@ -1114,8 +1119,8 @@ let stack_names_get_code_labels = prove
 (* stack_remove *)
 (* get_code_labels_comp[local] *)
 let stack_to_labProof_get_code_labels_comp = prove
- (`!a b c p. get_code_labels (comp a b c p) SUBSET (stack_err_lab,0)
-  INSERT get_code_labels p`,
+ (`!a b c p. stackProps_get_code_labels (stack_alloc_comp a b c p)
+  SUBSET (stack_err_lab,0) INSERT stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1123,14 +1128,15 @@ let stack_to_labProof_get_code_labels_comp = prove
    variables of its own are read as variables *)
 let init_stubs_labels = prove
  (cake_as_vars (fun () ->
-    `ALL (\p. get_code_labels p SUBSET (set_of_list [(1,0);
+    `ALL (\p. stackProps_get_code_labels p SUBSET (set_of_list [(1,0);
   (start,0)])) (MAP SND (init_stubs ggc mh k start))`),
   CHEAT_TAC);;
 
 (* ---- stack_names  ----*)
 (* [local] *)
 let stack_names_get_code_labels_comp = prove
- (`!f p. get_code_labels (stack_names_comp f p) = get_code_labels p`,
+ (`!f p. stackProps_get_code_labels (stack_names_comp f p) =
+  stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1155,20 +1161,21 @@ let stack_names_stack_good_code_labels = prove
 (* [local] *)
 let stack_remove_get_code_labels_comp = prove
  (`!a b c p.
-   get_code_labels (comp a b c p) SUBSET (stack_err_lab,0) INSERT
-     get_code_labels p`,
+   stackProps_get_code_labels (stack_alloc_comp a b c p) SUBSET
+     (stack_err_lab,0) INSERT stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_remove_stack_get_handler_labels_comp = prove
  (`!a b c p m.
-   stack_get_handler_labels m (comp a b c p) =
+   stack_get_handler_labels m (stack_alloc_comp a b c p) =
    stack_get_handler_labels m p`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_remove_init_code_labels = prove
- (`x IN get_code_labels (init_code ggc mh sp) ==> x = (1,0)`,
+ (`x IN stackProps_get_code_labels (stack_remove_init_code ggc mh sp)
+  ==> x = (1,0)`,
   CHEAT_TAC);;
 
 let stack_remove_stack_good_code_labels = prove
@@ -1187,28 +1194,28 @@ let stack_remove_stack_good_code_labels_incr = prove
  (`!prog.
    stack_err_lab IN elabs /\
    stack_good_code_labels prog elabs ==>
-   stack_good_code_labels (MAP (prog_comp jump offset sp) prog)
-     elabs`,
+   stack_good_code_labels (MAP (stack_alloc_prog_comp jump offset
+     sp) prog) elabs`,
   CHEAT_TAC);;
 
 (* --- stack_alloc ---- *)
 (* [local] *)
 let stack_alloc_get_code_labels_comp = prove
  (`!n m p pp mm.
-   get_code_labels (FST (comp n m p)) SUBSET (gc_stub_location,0)
-     INSERT get_code_labels p`,
+   stackProps_get_code_labels (FST (stack_alloc_comp n m p)) SUBSET
+     (gc_stub_location,0) INSERT stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_alloc_stack_get_handler_labels_comp = prove
  (`!n m p pp mm.
-   stack_get_handler_labels i (FST (comp n m p)) =
+   stack_get_handler_labels i (FST (stack_alloc_comp n m p)) =
      stack_get_handler_labels i p`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_alloc_init_code_labels = prove
- (`get_code_labels (word_gc_code c) = {}`,
+ (`stackProps_get_code_labels (word_gc_code c) = {}`,
   CHEAT_TAC);;
 
 let stack_alloc_stack_good_code_labels = prove
@@ -1225,16 +1232,17 @@ let stack_alloc_stack_good_code_labels_incr = prove
  (`!prog.
    gc_stub_location IN elabs /\
    stack_good_code_labels prog elabs ==>
-   stack_good_code_labels (MAP prog_comp prog) elabs`,
+   stack_good_code_labels (MAP stack_alloc_prog_comp prog) elabs`,
   CHEAT_TAC);;
 
 let IN_get_code_labels_comp_top_lemma = prove
  (`!i q p_1 p_2.
-     ((p_1,p_2) IN get_code_labels (stack_rawcall_comp i q) ==>
-      (?k. (p_1,k) IN get_code_labels q /\
+     ((p_1,p_2) IN stackProps_get_code_labels (stack_rawcall_comp i
+       q) ==>
+      (?k. (p_1,k) IN stackProps_get_code_labels q /\
           (~(p_2 = k) ==> p_2 = 1 /\ k = 0 /\ p_1 IN domain i))) /\
-     ((p_1,p_2) IN get_code_labels (comp_top i q) ==>
-      (?k. (p_1,k) IN get_code_labels q /\
+     ((p_1,p_2) IN stackProps_get_code_labels (comp_top i q) ==>
+      (?k. (p_1,k) IN stackProps_get_code_labels q /\
           (~(p_2 = k) ==> p_2 = 1 /\ k = 0 /\ p_1 IN domain i)))`,
   CHEAT_TAC);;
 
@@ -1245,8 +1253,9 @@ let IN_domain_collect_info = prove
   CHEAT_TAC);;
 
 let IN_get_code_labels_comp_top = prove
- (`(p_1,p_2) IN get_code_labels (comp_top (collect_info prog LN) q) ==>
-   (?k. (p_1,k) IN get_code_labels q /\
+ (`(p_1,p_2) IN stackProps_get_code_labels (comp_top (collect_info prog
+  LN) q) ==>
+   (?k. (p_1,k) IN stackProps_get_code_labels q /\
        (~(p_2 = k) ==> p_2 = 1 /\ k = 0 /\ MEM p_1 (MAP FST prog)))`,
   CHEAT_TAC);;
 
@@ -1257,13 +1266,14 @@ let stack_rawcall_stack_good_code_labels = prove
 
 (* stack_to_lab *)
 let stack_to_lab_stack_good_code_labels = prove
- (`compile stack_conf data_conf max_heap sp offset prog = prog' /\
+ (`stack_to_lab_compile stack_conf data_conf max_heap sp offset prog =
+  prog' /\
    MEM InitGlobals_location (MAP FST prog) /\
    stack_good_code_labels prog elabs /\
    ALL sec_labels_ok prog' ==>
    // TODO: pretty sure this is only ever used with elabs = {}
-   get_labels prog' SUBSET get_code_labels prog' UNION IMAGE (\n.
-     n,0) elabs UNION IMAGE (\n. n,1) elabs`,
+   labProps_get_labels prog' SUBSET stackProps_get_code_labels
+     prog' UNION IMAGE (\n. n,0) elabs UNION IMAGE (\n. n,1) elabs`,
   CHEAT_TAC);;
 
 let stack_to_lab_stack_good_code_labels_incr = prove
@@ -1272,8 +1282,8 @@ let stack_to_lab_stack_good_code_labels_incr = prove
    compile_no_stubs f jump offset sp prog = prog' /\
    stack_good_code_labels prog elabs /\
    ALL sec_labels_ok prog' ==>
-   get_labels prog' SUBSET get_code_labels prog' UNION IMAGE (\n.
-     n,0) elabs UNION IMAGE (\n. n,1) elabs`,
+   labProps_get_labels prog' SUBSET stackProps_get_code_labels
+     prog' UNION IMAGE (\n. n,0) elabs UNION IMAGE (\n. n,1) elabs`,
   CHEAT_TAC);;
 
 (* nonzero restricted code labels *)
@@ -1281,8 +1291,9 @@ let nonzero_get_labels_MAP_prog_to_section_SUBSET_code_labels = prove
  (`!p.
       ALL sec_labels_ok (MAP prog_to_section p) /\
       stack_good_handler_labels p ==>
-      restrict_nonzero (get_labels (MAP prog_to_section p)) SUBSET
-      get_code_labels (MAP prog_to_section p)`,
+      restrict_nonzero (labProps_get_labels (MAP prog_to_section p))
+        SUBSET
+      stackProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let stack_names_stack_good_handler_labels = prove
@@ -1308,7 +1319,8 @@ let stack_good_handler_labels_append = prove
 let stack_remove_stack_good_handler_labels_incr = prove
  (`!prog.
    stack_good_handler_labels prog ==>
-   stack_good_handler_labels (MAP (prog_comp jump offset sp) prog)`,
+   stack_good_handler_labels (MAP (stack_alloc_prog_comp jump
+     offset sp) prog)`,
   CHEAT_TAC);;
 
 let stack_remove_stack_good_handler_labels = prove
@@ -1321,7 +1333,7 @@ let stack_remove_stack_good_handler_labels = prove
 let stack_alloc_stack_good_handler_labels_incr = prove
  (`!prog.
    stack_good_handler_labels prog ==>
-   stack_good_handler_labels (MAP prog_comp prog)`,
+   stack_good_handler_labels (MAP stack_alloc_prog_comp prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_stack_good_handler_labels = prove
@@ -1336,23 +1348,26 @@ let stack_rawcall_stack_good_handler_labels = prove
   CHEAT_TAC);;
 
 let stack_to_lab_stack_good_handler_labels = prove
- (`compile stack_conf data_conf max_heap sp offset prog = prog' /\
+ (`stack_to_lab_compile stack_conf data_conf max_heap sp offset prog =
+  prog' /\
    stack_good_handler_labels prog /\
    ALL sec_labels_ok prog' ==>
-   restrict_nonzero (get_labels prog') SUBSET get_code_labels prog'`,
+   restrict_nonzero (labProps_get_labels prog') SUBSET
+     stackProps_get_code_labels prog'`,
   CHEAT_TAC);;
 
 let stack_to_lab_stack_good_handler_labels_incr = prove
  (`compile_no_stubs f jump offset sp prog = prog' /\
    stack_good_handler_labels prog /\
    ALL sec_labels_ok prog' ==>
-   restrict_nonzero (get_labels prog') SUBSET get_code_labels prog'`,
+   restrict_nonzero (labProps_get_labels prog') SUBSET
+     stackProps_get_code_labels prog'`,
   CHEAT_TAC);;
 
 (*** no_shmemop ***)
 
 let stack_rawcall_comp_no_shmemop = prove
- (`!i p. no_shmemop p ==> no_shmemop (comp i p)`,
+ (`!i p. no_shmemop p ==> no_shmemop (stack_alloc_comp i p)`,
   CHEAT_TAC);;
 
 let stack_rawcall_comp_top_no_shmemop = prove
@@ -1361,17 +1376,17 @@ let stack_rawcall_comp_top_no_shmemop = prove
 
 let stack_rawcall_compile_no_shmemop = prove
  (`!prog. ALL (\(a,p). no_shmemop p) prog ==>
-       ALL (\(a,p). no_shmemop p) (compile prog)`,
+       ALL (\(a,p). no_shmemop p) (stack_to_lab_compile prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_comp_no_shmemop = prove
- (`!n m p. no_shmemop p ==> no_shmemop (FST (comp n m p))`,
+ (`!n m p. no_shmemop p ==> no_shmemop (FST (stack_alloc_comp n m p))`,
   CHEAT_TAC);;
 
 let stack_alloc_prog_comp_no_shmemop = prove
  (`!prog.
    ALL (\(a,p). no_shmemop p) prog ==>
-   ALL (\(a,p). no_shmemop p) (MAP prog_comp prog)`,
+   ALL (\(a,p). no_shmemop p) (MAP stack_alloc_prog_comp prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_compile_no_shmemop = prove
@@ -1391,7 +1406,7 @@ let downshift_no_shmemop = prove
 
 (* [simp] *)
 let stack_free_no_shmemop = prove
- (`!k n. no_shmemop (stack_free k n)`,
+ (`!k n. no_shmemop (word_to_stack_stack_free k n)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -1400,11 +1415,13 @@ let stack_alloc_no_shmemop = prove
   CHEAT_TAC);;
 
 let stack_remove_comp_no_shmemop = prove
- (`!jump off k p. no_shmemop p ==> no_shmemop (comp jump off k p)`,
+ (`!jump off k p. no_shmemop p ==> no_shmemop (stack_alloc_comp jump
+  off k p)`,
   CHEAT_TAC);;
 
 let stack_remove_prog_comp_no_shmemop = prove
- (`!p. no_shmemop p ==> no_shmemop (SND (prog_comp jump off k (n,p)))`,
+ (`!p. no_shmemop p ==> no_shmemop (SND (stack_alloc_prog_comp jump
+  off k (n,p)))`,
   CHEAT_TAC);;
 
 let stack_remove_compile_no_shmemop = prove
@@ -1420,7 +1437,7 @@ let stack_names_comp_no_shmemop = prove
 let stack_names_prog_comp_no_shmemop = prove
  (`!prog.
    ALL (\(a,p). no_shmemop p) prog ==>
-   ALL (\(a,p). no_shmemop p) (MAP (prog_comp f) prog)`,
+   ALL (\(a,p). no_shmemop p) (MAP (stack_alloc_prog_comp f) prog)`,
   CHEAT_TAC);;
 
 let stack_names_compile_no_shmemop = prove
@@ -1452,13 +1469,15 @@ let prog_to_section_no_share_mem_inst = prove
 let compile_no_share_mem_inst = prove
  (`!prog prog'.
    ALL (\(a,p). no_shmemop p) prog /\
-   compile stack_conf data_conf max_heap sp offset prog = prog' ==>
+   stack_to_lab_compile stack_conf data_conf max_heap sp offset prog
+     = prog' ==>
    no_share_mem_inst prog'`,
   CHEAT_TAC);;
 
 let stack_remove_prog_comp_no_shmemop_MAP = prove
  (`ALL (\(a,p). no_shmemop p) prog ==>
-   ALL (\(a,p). no_shmemop p) (MAP (prog_comp jump offset sp) prog)`,
+   ALL (\(a,p). no_shmemop p) (MAP (stack_alloc_prog_comp jump
+     offset sp) prog)`,
   CHEAT_TAC);;
 
 let compile_no_stubs_no_share_mem_inst = prove
@@ -1470,107 +1489,119 @@ let compile_no_stubs_no_share_mem_inst = prove
 (*** no_install ***)
 
 let stack_rawcall_comp_no_install = prove
- (`!i p. no_install p ==> no_install (comp i p)`,
+ (`!i p. stackProps_no_install p ==> stackProps_no_install
+  (stack_alloc_comp i p)`,
   CHEAT_TAC);;
 
 let stack_rawcall_comp_top_no_install = prove
- (`!p. no_install p ==> no_install (comp_top i p)`,
+ (`!p. stackProps_no_install p ==> stackProps_no_install (comp_top i
+  p)`,
   CHEAT_TAC);;
 
 let stack_rawcall_compile_no_install = prove
- (`!prog. ALL (\(a,p). no_install p) prog ==>
-       ALL (\(a,p). no_install p) (compile prog)`,
+ (`!prog. ALL (\(a,p). stackProps_no_install p) prog ==>
+       ALL (\(a,p). stackProps_no_install p) (stack_to_lab_compile
+         prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_comp_no_install = prove
- (`!n m p. no_install p ==> no_install (FST (comp n m p))`,
+ (`!n m p. stackProps_no_install p ==> stackProps_no_install (FST
+  (stack_alloc_comp n m p))`,
   CHEAT_TAC);;
 
 let stack_alloc_prog_comp_no_install = prove
  (`!prog.
-   ALL (\(a,p). no_install p) prog ==>
-   ALL (\(a,p). no_install p) (MAP prog_comp prog)`,
+   ALL (\(a,p). stackProps_no_install p) prog ==>
+   ALL (\(a,p). stackProps_no_install p) (MAP stack_alloc_prog_comp
+     prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_compile_no_install = prove
- (`ALL (\(a,p). no_install p) prog ==>
-   ALL (\(a,p). no_install p) (stack_alloc_compile data prog)`,
+ (`ALL (\(a,p). stackProps_no_install p) prog ==>
+   ALL (\(a,p). stackProps_no_install p) (stack_alloc_compile data
+     prog)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let upshift_no_install = prove
- (`!k n. no_install (upshift k n)`,
+ (`!k n. stackProps_no_install (upshift k n)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let downshift_no_install = prove
- (`!k n. no_install (downshift k n)`,
+ (`!k n. stackProps_no_install (downshift k n)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let stack_free_no_install = prove
- (`!k n. no_install (stack_free k n)`,
+ (`!k n. stackProps_no_install (word_to_stack_stack_free k n)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let stack_alloc_no_install = prove
- (`!jump k n. no_install (stack_alloc jump k n)`,
+ (`!jump k n. stackProps_no_install (stack_alloc jump k n)`,
   CHEAT_TAC);;
 
 let stack_remove_comp_no_install = prove
- (`!jump off k p. no_install p ==> no_install (comp jump off k p)`,
+ (`!jump off k p. stackProps_no_install p ==> stackProps_no_install
+  (stack_alloc_comp jump off k p)`,
   CHEAT_TAC);;
 
 let stack_remove_prog_comp_no_install = prove
- (`!p. no_install p ==> no_install (SND (prog_comp jump off k (n,p)))`,
+ (`!p. stackProps_no_install p ==> stackProps_no_install (SND
+  (stack_alloc_prog_comp jump off k (n,p)))`,
   CHEAT_TAC);;
 
 let stack_remove_compile_no_install = prove
- (`ALL (\(a,p). no_install p) prog ==>
-   ALL (\(a,p). no_install p) (stack_remove_compile jump offset
-     gckind mh sp loc prog)`,
+ (`ALL (\(a,p). stackProps_no_install p) prog ==>
+   ALL (\(a,p). stackProps_no_install p) (stack_remove_compile jump
+     offset gckind mh sp loc prog)`,
   CHEAT_TAC);;
 
 let stack_names_comp_no_install = prove
- (`!f p. no_install p ==> no_install (stack_names_comp f p)`,
+ (`!f p. stackProps_no_install p ==> stackProps_no_install
+  (stack_names_comp f p)`,
   CHEAT_TAC);;
 
 let stack_names_prog_comp_no_install = prove
  (`!prog.
-   ALL (\(a,p). no_install p) prog ==>
-   ALL (\(a,p). no_install p) (MAP (prog_comp f) prog)`,
+   ALL (\(a,p). stackProps_no_install p) prog ==>
+   ALL (\(a,p). stackProps_no_install p) (MAP
+     (stack_alloc_prog_comp f) prog)`,
   CHEAT_TAC);;
 
 let stack_names_compile_no_install = prove
- (`ALL (\(a,p). no_install p) prog ==>
-   ALL (\(a,p). no_install p) (stack_names_compile names prog)`,
+ (`ALL (\(a,p). stackProps_no_install p) prog ==>
+   ALL (\(a,p). stackProps_no_install p) (stack_names_compile names
+     prog)`,
   CHEAT_TAC);;
 
 let flatten_no_install = prove
  (`!t p n m cs bs.
-       no_install p ==>
-       ALL (\ln. !w bytes l. ~(ln = labLang_LabAsm Install w bytes
-         l))
+       stackProps_no_install p ==>
+       ALL (\ln. !w bytes l. ~(ln = labLang_LabAsm labLang_Install w
+         bytes l))
              (append (FST (stack_to_lab_flatten t p n m cs bs)))`,
   CHEAT_TAC);;
 
 let asm_fetch_aux_no_install_CONS = prove
  (`!xs.
-   ALL (\ln. !w bytes l. ~(ln = labLang_LabAsm Install w bytes l)) xs
-     /\
-   no_install ls ==>
-   no_install (CONS (Section k xs) ls)`,
+   ALL (\ln. !w bytes l. ~(ln = labLang_LabAsm labLang_Install w
+     bytes l)) xs /\
+   stackProps_no_install ls ==>
+   stackProps_no_install (CONS (Section k xs) ls)`,
   CHEAT_TAC);;
 
 let prog_to_section_no_install = prove
- (`!prog. ALL (\(a,p). no_install p) prog ==>
-          no_install (MAP prog_to_section prog)`,
+ (`!prog. ALL (\(a,p). stackProps_no_install p) prog ==>
+          stackProps_no_install (MAP prog_to_section prog)`,
   CHEAT_TAC);;
 
 let stack_to_lab_compile_no_install = prove
  (`!prog prog'.
-   ALL (\(a,p). no_install p) prog /\
-   compile stack_conf data_conf max_heap sp offset prog = prog' ==>
+   ALL (\(a,p). stackProps_no_install p) prog /\
+   stack_to_lab_compile stack_conf data_conf max_heap sp offset prog
+     = prog' ==>
    labProps_no_install prog'`,
   CHEAT_TAC);;
 

@@ -13,7 +13,6 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
-needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/flat_elimProof.ml";;
 needs "compiler/backend/proofs/flat_patternProof.ml";;
@@ -51,7 +50,7 @@ let _ = do_list hide_constant ["gc"; "id"; "path"; "vars"];;
 
 (* [local] *)
 let compile_exps_length = prove
- (`LENGTH (compile_exps t m es) = LENGTH es`,
+ (`LENGTH (source_to_flat_compile_exps t m es) = LENGTH es`,
   CHEAT_TAC);;
 
 let mapi_map = prove
@@ -152,8 +151,8 @@ let genv_c_ok_def = new_definition
      (!cn1 cn2 l1 l2 stamp1 stamp2.
        FLOOKUP genv_c (cn1,l1) = SOME stamp1 /\
        FLOOKUP genv_c (cn2,l2) = SOME stamp2 ==>
-       (ctor_same_type (SOME stamp1) (SOME stamp2) <=> ctor_same_type
-         (SOME cn1) (SOME cn2))) /\
+       (flatSem_ctor_same_type (SOME stamp1) (SOME stamp2) <=>
+         flatSem_ctor_same_type (SOME cn1) (SOME cn2))) /\
      (!cn1 cn2 l1 l2 stamp.
        FLOOKUP genv_c (cn1,l1) = SOME stamp /\
        FLOOKUP genv_c (cn2,l2) = SOME stamp ==>
@@ -168,17 +167,17 @@ let genv_c_tys_ok_def = new_definition
 
 let source_to_flatProof_v_rel = cake_inductive
   `(!genv lit.
-     source_to_flatProof_v_rel genv ((Litv lit):semanticPrimitives_v)
-       ((Litv lit):flatSem_v)) /\
+     source_to_flatProof_v_rel genv ((flatSem_Litv
+       lit):semanticPrimitives_v) ((flatSem_Litv lit):flatSem_v)) /\
    (!genv cn cn' vs vs'.
      ALL2 (source_to_flatProof_v_rel genv) vs vs' /\
      FLOOKUP (global_env_c genv) (cn',LENGTH vs) = SOME cn ==>
-     source_to_flatProof_v_rel genv (Conv (SOME cn) vs) (Conv (SOME
-       cn') vs')) /\
+     source_to_flatProof_v_rel genv (flatSem_Conv (SOME cn) vs)
+       (flatSem_Conv (SOME cn') vs')) /\
    (!genv vs vs'.
      ALL2 (source_to_flatProof_v_rel genv) vs vs' ==>
-     source_to_flatProof_v_rel genv (Conv NONE vs) (Conv NONE vs'))
-       /\
+     source_to_flatProof_v_rel genv (flatSem_Conv NONE vs)
+       (flatSem_Conv NONE vs')) /\
    (!genv comp_map env env_v_local x e env_v_local' t ts.
      source_to_flatProof_env_rel genv env_v_local
        (flatSem_environment_v env_v_local') /\
@@ -186,10 +185,10 @@ let source_to_flatProof_v_rel = cake_inductive
        (flatSem_environment_v env_v_local'))) env /\
      LENGTH ts = LENGTH (flatSem_environment_v env_v_local') + 1 ==>
      source_to_flatProof_v_rel genv
-       (Closure (sem_env_v_fupd (K (nsAppend env_v_local (sem_env_v
-         env))) env) x e)
-       (Closure env_v_local' x
-         (compile_exp t
+       (flatSem_Closure (sem_env_v_fupd (K (nsAppend env_v_local
+         (sem_env_v env))) env) x e)
+       (flatSem_Closure env_v_local' x
+         (source_to_flat_compile_exp t
            (source_to_flat_environment_v_fupd (K (bind_locals ts
              (CONS x (MAP FST (flatSem_environment_v env_v_local')))
              (source_to_flat_environment_v comp_map))) comp_map)
@@ -204,9 +203,9 @@ let source_to_flatProof_v_rel = cake_inductive
      LENGTH ts = LENGTH funs + LENGTH (flatSem_environment_v
        env_v_local') ==>
      source_to_flatProof_v_rel genv
-       (Recclosure (sem_env_v_fupd (K (nsAppend env_v_local
+       (flatSem_Recclosure (sem_env_v_fupd (K (nsAppend env_v_local
          (sem_env_v env))) env) funs x)
-       (Recclosure env_v_local'
+       (flatSem_Recclosure env_v_local'
          (compile_funs t
            (source_to_flat_environment_v_fupd (K (bind_locals ts
              (APPEND (MAP FST funs) (MAP FST (flatSem_environment_v
@@ -230,24 +229,27 @@ let source_to_flatProof_v_rel = cake_inductive
           n < LENGTH (global_env_v genv) /\
           find_recfun x funs = SOME (y,e) /\
           EL n (global_env_v genv) =
-            SOME (Closure flat_env y
-                   (compile_exp t2 (source_to_flat_environment_v_fupd
-                     (K (nsBindList (CONS (y,source_to_flat_Local t3 y)
-                     new_vars) (source_to_flat_environment_v comp_map)))
-                     comp_map) e)))) ==>
+            SOME (flatSem_Closure flat_env y
+                   (source_to_flat_compile_exp t2
+                     (source_to_flat_environment_v_fupd (K (nsBindList
+                     (CONS (y,source_to_flat_Local t3 y) new_vars)
+                     (source_to_flat_environment_v comp_map))) comp_map)
+                     e)))) ==>
      source_to_flatProof_v_rel genv
-       (Recclosure env funs x)
-       (Closure flat_env y
-         (compile_exp t1
+       (flatSem_Recclosure env funs x)
+       (flatSem_Closure flat_env y
+         (source_to_flat_compile_exp t1
            (source_to_flat_environment_v_fupd (K (nsBindList (CONS
              (y,source_to_flat_Local t2 y) new_vars)
              (source_to_flat_environment_v comp_map))) comp_map)
            e))) /\
    (!genv loc b.
-     source_to_flatProof_v_rel genv (Loc b loc) (Loc b (loc + 1))) /\
+     source_to_flatProof_v_rel genv (flatSem_Loc b loc) (flatSem_Loc
+       b (loc + 1))) /\
    (!genv vs vs'.
      ALL2 (source_to_flatProof_v_rel genv) vs vs' ==>
-     source_to_flatProof_v_rel genv (Vectorv vs) (Vectorv vs')) /\
+     source_to_flatProof_v_rel genv (flatSem_Vectorv vs)
+       (flatSem_Vectorv vs')) /\
    (!genv.
      source_to_flatProof_env_rel genv nsEmpty []) /\
    (!genv x v env env' v'.
@@ -274,8 +276,6 @@ let source_to_flatProof_v_rel = cake_inductive
          (!ty_id ctors. ty_gp = SOME (ty_id,ctors) ==>
              FLOOKUP (global_env_tys genv) ty_id = SOME ctors))) ==>
      global_env_inv genv comp_map shadowers env)`;;
-hol4_overload "env_rel" "source_to_flatProof_env_rel";;
-hol4_overload "v_rel" "source_to_flatProof_v_rel";;
 
 (* HOL4 source_to_flatProofScript.sml:275-334: code that the source
    has in a comment *)
@@ -290,7 +290,7 @@ hol4_overload "v_rel" "source_to_flatProof_v_rel";;
    states as the value of an ML expression: v_rel_global_eqn *)
 
 let env_rel_LIST_REL = prove
- (`!xs ys. env_rel genv (alist_to_ns xs) ys <=>
+ (`!xs ys. source_to_flatProof_env_rel genv (alist_to_ns xs) ys <=>
    ALL2 (\x y. FST x = FST y /\ source_to_flatProof_v_rel genv (SND
      x) (SND y)) xs ys`,
   CHEAT_TAC);;
@@ -298,7 +298,7 @@ let env_rel_LIST_REL = prove
 (* [local] *)
 let env_rel_dom = prove
  (`!genv env env'.
-     env_rel genv env env' ==>
+     source_to_flatProof_env_rel genv env env' ==>
      (?l. env = alist_to_ns l /\ MAP FST l = MAP FST env')`,
   CHEAT_TAC);;
 
@@ -306,7 +306,7 @@ let env_rel_dom = prove
 let env_rel_lookup = prove
  (`!genv env x v env'.
      ALOOKUP env x = SOME v /\
-     env_rel genv (alist_to_ns env) env' ==>
+     source_to_flatProof_env_rel genv (alist_to_ns env) env' ==>
      (?v'.
        source_to_flatProof_v_rel genv v v' /\
        ALOOKUP env' x = SOME v')`,
@@ -315,14 +315,15 @@ let env_rel_lookup = prove
 (* env_rel_append[local] *)
 let source_to_flatProof_env_rel_append = prove
  (`!genv env1 env2 env1' env2'.
-     env_rel genv env1 env1' /\
-     env_rel genv env2 env2' ==>
-     env_rel genv (nsAppend env1 env2) (APPEND env1' env2')`,
+     source_to_flatProof_env_rel genv env1 env1' /\
+     source_to_flatProof_env_rel genv env2 env2' ==>
+     source_to_flatProof_env_rel genv (nsAppend env1 env2) (APPEND
+       env1' env2')`,
   CHEAT_TAC);;
 
 (* [local] *)
 let env_rel_one = prove
- (`env_rel genv (nsBind a b nsEmpty) xs <=>
+ (`source_to_flatProof_env_rel genv (nsBind a b nsEmpty) xs <=>
    (?v. xs = [(a,v)] /\ source_to_flatProof_v_rel genv b v)`,
   CHEAT_TAC);;
 
@@ -332,7 +333,7 @@ let env_rel_one = prove
 (* env_rel_el[local] *)
 let source_to_flatProof_env_rel_el = prove
  (`!genv env env_i1.
-     env_rel genv (alist_to_ns env) env_i1 <=>
+     source_to_flatProof_env_rel genv (alist_to_ns env) env_i1 <=>
      LENGTH env = LENGTH env_i1 /\
      (!n. n < LENGTH env ==>
          (FST (EL n env) = FST (EL n env_i1)) /\
@@ -374,11 +375,11 @@ let v_rel_weakening = prove
          subglobals (global_env_v genv) (global_env_v genv') ==>
            source_to_flatProof_v_rel genv' v v')) /\
     (!genv env env'.
-     env_rel genv env env' ==>
+     source_to_flatProof_env_rel genv env env' ==>
      (!genv'. global_env_c genv = global_env_c genv' /\
        global_env_tys genv = global_env_tys genv' /\
          subglobals (global_env_v genv) (global_env_v genv') ==>
-           env_rel genv' env env')) /\
+           source_to_flatProof_env_rel genv' env env')) /\
     (!genv comp_map shadowers env.
      global_env_inv genv comp_map shadowers env ==>
      (!genv'. global_env_c genv = global_env_c genv' /\
@@ -396,11 +397,11 @@ let v_rel_weakening2 = prove
       genv = global_env_v genv' ==>
     source_to_flatProof_v_rel genv' v v')) /\
    (!genv env env'.
-    env_rel genv env env' ==>
+    source_to_flatProof_env_rel genv env env' ==>
     (!gc'. global_env_c genv SUBMAP global_env_c genv' /\
       global_env_tys genv SUBMAP global_env_tys genv' /\ global_env_v
       genv = global_env_v genv' ==>
-    env_rel genv' env env')) /\
+    source_to_flatProof_env_rel genv' env env')) /\
    (!genv comp_map shadowers env.
     global_env_inv genv comp_map shadowers env ==>
     (!gc'. global_env_c genv SUBMAP global_env_c genv' /\
@@ -425,11 +426,11 @@ let v_rel_weak = prove
 
 let env_rel_weak = prove
  (`!genv env env' genv'.
-   env_rel genv env env' /\ global_env_c
+   source_to_flatProof_env_rel genv env env' /\ global_env_c
    genv SUBMAP global_env_c genv' /\ global_env_tys
    genv SUBMAP global_env_tys genv' /\
    subglobals (global_env_v genv) (global_env_v genv') ==>
-   env_rel genv' env env'`,
+   source_to_flatProof_env_rel genv' env env'`,
   CHEAT_TAC);;
 
 let global_env_inv_weak = prove
@@ -452,19 +453,18 @@ let result_rel = cake_inductive
    (!genv a.
      source_to_flatProof_result_rel f genv (Rerr (Rabort a)) (Rerr
        (Rabort a)))`;;
-hol4_overload "result_rel" "source_to_flatProof_result_rel";;
 
 (* [local] *)
 let result_rel_eqns = prove
  (`(!genv v r.
-     result_rel f genv (Rval v) r <=>
+     source_to_flatProof_result_rel f genv (Rval v) r <=>
        (?v'. f genv v v' /\ r = Rval v')) /\
     (!genv v r.
-     result_rel f genv (Rerr (Rraise v)) r <=>
+     source_to_flatProof_result_rel f genv (Rerr (Rraise v)) r <=>
        (?v'. source_to_flatProof_v_rel genv v v' /\ r = Rerr (Rraise
          v'))) /\
     (!genv v r a.
-     result_rel f genv (Rerr (Rabort a)) r <=>
+     source_to_flatProof_result_rel f genv (Rerr (Rabort a)) r <=>
        r = Rerr (Rabort a))`,
   CHEAT_TAC);;
 
@@ -484,33 +484,31 @@ let sv_rel = cake_inductive
      source_to_flatProof_v_rel genv v v' ==>
      source_to_flatProof_sv_rel genv (semanticPrimitives_Thunk m
        v) (semanticPrimitives_Thunk m v'))`;;
-hol4_overload "sv_rel" "source_to_flatProof_sv_rel";;
 
 (* [local] *)
 let sv_rel_weak = prove
  (`!genv sv sv' genv'.
-    sv_rel genv sv sv' /\ global_env_c
+    source_to_flatProof_sv_rel genv sv sv' /\ global_env_c
     genv SUBMAP global_env_c genv' /\ global_env_tys
     genv SUBMAP global_env_tys genv' /\
     subglobals (global_env_v genv) (global_env_v genv') ==>
-    sv_rel genv' sv sv'`,
+    source_to_flatProof_sv_rel genv' sv sv'`,
   CHEAT_TAC);;
 
 let s_rel = cake_inductive
   `(!genv s s'.
      ~(NULL (state_refs s')) /\
-     ALL2 (sv_rel genv) (state_refs s) (TL (state_refs s')) /\
-       state_clock
+     ALL2 (source_to_flatProof_sv_rel genv) (state_refs s) (TL
+       (state_refs s')) /\ state_clock
      s = state_clock s' /\ state_ffi
      s = state_ffi s' ==>
      source_to_flatProof_s_rel genv s s')`;;
-hol4_overload "s_rel" "source_to_flatProof_s_rel";;
 
 let env_all_rel = cake_inductive
   `(!genv map' env_v_local env env' locals.
      (?l. env_v_local = alist_to_ns l /\ MAP FST l = locals) /\
      global_env_inv genv map' (set_of_list locals) env /\
-     env_rel genv env_v_local env' ==>
+     source_to_flatProof_env_rel genv env_v_local env' ==>
      env_all_rel genv map'
        (mk_sem_env (nsAppend env_v_local (sem_env_v env)) (sem_env_c
          env))
@@ -531,16 +529,14 @@ let source_to_flatProof_match_result_rel_def = new_definition
   `source_to_flatProof_match_result_rel genv env' x3 x4 =
         match (x3,x4) with
           (Match env,Match env_i1) ->
-        (?env''. env = APPEND env'' env' /\ env_rel genv (alist_to_ns
-          env'') env_i1)
+        (?env''. env = APPEND env'' env' /\
+          source_to_flatProof_env_rel genv (alist_to_ns env'') env_i1)
         | (No_match,No_match) -> T
         | (Match_type_error,_1) -> T
         | (_2,_3) -> F`;;
-hol4_overload "match_result_rel"
-  "source_to_flatProof_match_result_rel";;
 
 let match_result_rel_imp = prove
- (`match_result_rel genv env m1 m2 ==>
+ (`source_to_flatProof_match_result_rel genv env m1 m2 ==>
    (m1 = Match_type_error \/
      (m1 = No_match /\ m2 = No_match) \/ (?env1 env2. m1 = Match
        env1 /\ m2 = Match env2))`,
@@ -552,15 +548,15 @@ let match_result_rel_imp = prove
 let source_to_flatProof_do_eq = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
     (!v1 v2 r v1_i1 v2_i1.
-     do_eq v1 v2 = r /\
+     flatSem_do_eq v1 v2 = r /\
      source_to_flatProof_v_rel genv v1 v1_i1 /\
      source_to_flatProof_v_rel genv v2 v2_i1 ==>
-     do_eq v1_i1 v2_i1 = r) /\
+     flatSem_do_eq v1_i1 v2_i1 = r) /\
     (!vs1 vs2 r vs1_i1 vs2_i1.
-     do_eq_list vs1 vs2 = r /\
+     flatSem_do_eq_list vs1 vs2 = r /\
      ALL2 (source_to_flatProof_v_rel genv) vs1 vs1_i1 /\
      ALL2 (source_to_flatProof_v_rel genv) vs2 vs2_i1 ==>
-     do_eq_list vs1_i1 vs2_i1 = r)`,
+     flatSem_do_eq_list vs1_i1 vs2_i1 = r)`,
   CHEAT_TAC);;
 
 let genv_lookup_nil = prove
@@ -582,8 +578,8 @@ let source_to_flatProof_v_to_char_list = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
     (!v1 v2 vs1.
      source_to_flatProof_v_rel genv v1 v2 /\
-     v_to_char_list v1 = SOME vs1 ==>
-     v_to_char_list v2 = SOME vs1)`,
+     flatSem_v_to_char_list v1 = SOME vs1 ==>
+     flatSem_v_to_char_list v2 = SOME vs1)`,
   CHEAT_TAC);;
 
 (* v_to_list[local] *)
@@ -591,9 +587,9 @@ let source_to_flatProof_v_to_list = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
     (!v1 v2 vs1.
      source_to_flatProof_v_rel genv v1 v2 /\
-     v_to_list v1 = SOME vs1 ==>
+     flatSem_v_to_list v1 = SOME vs1 ==>
      (?vs2.
-       v_to_list v2 = SOME vs2 /\
+       flatSem_v_to_list v2 = SOME vs2 /\
        ALL2 (source_to_flatProof_v_rel genv) vs1 vs2))`,
   CHEAT_TAC);;
 
@@ -601,17 +597,21 @@ let source_to_flatProof_v_to_list = prove
 let source_to_flatProof_vs_to_string = prove
  (`!v1 v2 s.
      ALL2 (source_to_flatProof_v_rel genv) v1 v2 ==>
-     vs_to_string v1 = SOME s ==>
-     vs_to_string v2 = SOME s`,
+     flatSem_vs_to_string v1 = SOME s ==>
+     flatSem_vs_to_string v2 = SOME s`,
   CHEAT_TAC);;
 
 (* [local] *)
 let v_rel_lems = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
-     (!b. source_to_flatProof_v_rel genv (Boolv b) (Boolv b)) /\
-     source_to_flatProof_v_rel genv div_exn_v div_exn_v /\
-     source_to_flatProof_v_rel genv chr_exn_v chr_exn_v /\
-     source_to_flatProof_v_rel genv bind_exn_v bind_exn_v /\
+     (!b. source_to_flatProof_v_rel genv (flatSem_Boolv b)
+       (flatSem_Boolv b)) /\
+     source_to_flatProof_v_rel genv flatSem_div_exn_v
+       flatSem_div_exn_v /\
+     source_to_flatProof_v_rel genv flatSem_chr_exn_v
+       flatSem_chr_exn_v /\
+     source_to_flatProof_v_rel genv flatSem_bind_exn_v
+       flatSem_bind_exn_v /\
      source_to_flatProof_v_rel genv sub_exn_v subscript_exn_v`,
   CHEAT_TAC);;
 
@@ -620,7 +620,8 @@ let source_to_flatProof_list_to_v_v_rel = prove
  (`!xs ys.
      has_lists (global_env_c genv) /\ ALL2 (source_to_flatProof_v_rel
        genv) xs ys ==>
-       source_to_flatProof_v_rel genv (list_to_v xs) (list_to_v ys)`,
+       source_to_flatProof_v_rel genv (flatSem_list_to_v xs)
+         (flatSem_list_to_v ys)`,
   CHEAT_TAC);;
 
 let LIST_REL_IMP_EL2 = prove
@@ -643,71 +644,71 @@ let NOT_NULL_EQ = prove
 (* v_rel_check_type *)
 let source_to_flatProof_v_rel_check_type = prove
  (`source_to_flatProof_v_rel genv v1 w1 /\ genv_c_ok (global_env_c
-  genv) /\ check_type ty v1 ==> check_type ty w1`,
+  genv) /\ flatSem_check_type ty v1 ==> flatSem_check_type ty w1`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_test_lemma = prove
- (`do_test test ty v1 v2 = Eq_val b /\
+ (`flatSem_do_test test ty v1 v2 = Eq_val b /\
    genv_c_ok (global_env_c genv) /\
    source_to_flatProof_v_rel genv v1 w1 /\ source_to_flatProof_v_rel
      genv v2 w2 ==>
-   do_test test ty w1 w2 = Eq_val b`,
+   flatSem_do_test test ty w1 w2 = Eq_val b`,
   CHEAT_TAC);;
 
 let check_type_IMP_v_rel = prove
- (`check_type ty v /\ genv_c_ok (global_env_c genv) ==>
+ (`flatSem_check_type ty v /\ genv_c_ok (global_env_c genv) ==>
   source_to_flatProof_v_rel genv v (v_to_flat v)`,
   CHEAT_TAC);;
 
 let check_type_v_rel_flat_to_v = prove
- (`check_type ty v /\ source_to_flatProof_v_rel genv v y /\ genv_c_ok
-  (global_env_c genv) ==> flat_to_v y = v`,
+ (`flatSem_check_type ty v /\ source_to_flatProof_v_rel genv v y /\
+  genv_c_ok (global_env_c genv) ==> flat_to_v y = v`,
   CHEAT_TAC);;
 
 let check_type_v_rel_MAP_flat_to_v = prove
  (`!v y.
-     ALL (check_type ty) v /\ ALL2 (source_to_flatProof_v_rel genv) v
-       y /\ genv_c_ok (global_env_c genv) ==>
+     ALL (flatSem_check_type ty) v /\ ALL2 (source_to_flatProof_v_rel
+       genv) v y /\ genv_c_ok (global_env_c genv) ==>
      MAP flat_to_v y = v`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_arith_INL = prove
- (`ALL (check_type ty) vs /\ genv_c_ok (global_env_c genv) /\
+ (`ALL (flatSem_check_type ty) vs /\ genv_c_ok (global_env_c genv) /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
    do_arith a ty vs = SOME (INL exn) ==>
-   exn = div_exn_v /\
-   ALL (check_type ty) (MAP flat_to_v vs_i1) /\
+   exn = flatSem_div_exn_v /\
+   ALL (flatSem_check_type ty) (MAP flat_to_v vs_i1) /\
    (?e. do_arith a ty (MAP flat_to_v vs_i1) = SOME (INL e))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_arith_INR = prove
- (`ALL (check_type ty) vs /\ genv_c_ok (global_env_c genv) /\
+ (`ALL (flatSem_check_type ty) vs /\ genv_c_ok (global_env_c genv) /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
    do_arith a ty vs = SOME (INR r) ==>
-   ALL (check_type ty) (MAP flat_to_v vs_i1) /\
+   ALL (flatSem_check_type ty) (MAP flat_to_v vs_i1) /\
    (?r'. do_arith a ty (MAP flat_to_v vs_i1) = SOME (INR r') /\
         source_to_flatProof_v_rel genv r (v_to_flat r'))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_conversion_INL = prove
- (`check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
+ (`flatSem_check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
    source_to_flatProof_v_rel genv v v_i1 /\
    do_conversion v ty1 ty2 = SOME (INL exn) ==>
-   exn = chr_exn_v /\
-   check_type ty1 (flat_to_v v_i1) /\
+   exn = flatSem_chr_exn_v /\
+   flatSem_check_type ty1 (flat_to_v v_i1) /\
    (?e. do_conversion (flat_to_v v_i1) ty1 ty2 = SOME (INL e))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_conversion_INR = prove
- (`check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
+ (`flatSem_check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
    source_to_flatProof_v_rel genv v v_i1 /\
    do_conversion v ty1 ty2 = SOME (INR r) ==>
-   check_type ty1 (flat_to_v v_i1) /\
+   flatSem_check_type ty1 (flat_to_v v_i1) /\
    (?r'. do_conversion (flat_to_v v_i1) ty1 ty2 = SOME (INR r') /\
         source_to_flatProof_v_rel genv r (v_to_flat r'))`,
   CHEAT_TAC);;
@@ -718,22 +719,25 @@ let do_conversion_INR = prove
 (* do_app[local] *)
 let source_to_flatProof_do_app = prove
  (`!genv s1 s2 op vs r ((s1_i1:('f_orac_st,'ffi)flatSem_state)) vs_i1.
-     do_app s1 op vs = SOME (s2,r) /\
-     ALL2 (sv_rel genv) (FST s1) (TL (flatSem_state_refs s1_i1)) /\
+     flatSem_do_app s1 op vs = SOME (s2,r) /\
+     ALL2 (source_to_flatProof_sv_rel genv) (FST s1) (TL
+       (flatSem_state_refs s1_i1)) /\
      ~(NULL (flatSem_state_refs s1_i1)) /\
      ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
      SND s1 = flatSem_state_ffi s1_i1 /\
      genv_c_ok (global_env_c genv) /\ ~(op = ast_AallocEmpty) /\ ~(op
        = ast_Env_id) ==>
       (?r_i1 s2_i1.
-        ALL2 (sv_rel genv) (FST s2) (TL (state_refs s2_i1)) /\
+        ALL2 (source_to_flatProof_sv_rel genv) (FST s2) (TL
+          (state_refs s2_i1)) /\
         ~(NULL (state_refs s2_i1)) /\
         SND s2 = state_ffi s2_i1 /\ flatSem_state_globals
         s1_i1 = flatSem_state_globals s2_i1 /\
         TAKE 1 (flatSem_state_refs s1_i1) = TAKE 1 (state_refs s2_i1)
           /\
-        result_rel source_to_flatProof_v_rel genv r r_i1 /\
-        do_app s1_i1 (astOp_to_flatOp op) vs_i1 = SOME
+        source_to_flatProof_result_rel source_to_flatProof_v_rel genv
+          r r_i1 /\
+        flatSem_do_app s1_i1 (astOp_to_flatOp op) vs_i1 = SOME
           (s2_i1,r_i1))`,
   CHEAT_TAC);;
 
@@ -742,7 +746,7 @@ let find_recfun = prove
  (`!x funs e comp_map y t.
      find_recfun x funs = SOME (y,e) ==>
      find_recfun x (compile_funs t comp_map funs) =
-       SOME (y,compile_exp (CONS x t)
+       SOME (y,source_to_flat_compile_exp (CONS x t)
          (source_to_flat_environment_v_fupd (K (nsBind y
          (source_to_flat_Local backend_common_None y)
          (source_to_flat_environment_v comp_map))) comp_map) e)`,
@@ -751,24 +755,25 @@ let find_recfun = prove
 (* [local] *)
 let do_app_rec_help = prove
  (`!genv comp_map env_v_local env_v_local' env_v_top funs t.
-     env_rel genv env_v_local (flatSem_environment_v env_v_local') /\
+     source_to_flatProof_env_rel genv env_v_local
+       (flatSem_environment_v env_v_local') /\
      global_env_inv genv comp_map (set_of_list (MAP FST
        (flatSem_environment_v env_v_local'))) env' /\
      LENGTH ts = LENGTH funs' + LENGTH (flatSem_environment_v
        env_v_local') ==>
-      env_rel genv
+      source_to_flatProof_env_rel genv
         (alist_to_ns
            (MAP
               (\(f,n,e).
                  (f,
-                  Recclosure
+                  flatSem_Recclosure
                     (sem_env_v_fupd (K (nsAppend env_v_local
                       (sem_env_v env'))) env')
                     funs' f)) funs))
         (MAP
            (\(fn,n,e).
               (fn,
-               Recclosure env_v_local'
+               flatSem_Recclosure env_v_local'
                  (compile_funs t
                     (source_to_flat_environment_v_fupd (K
                       (ITLIST (\(x,v) e. nsBind x v e)
@@ -812,8 +817,8 @@ let global_env_inv_extend2 = prove
 (* [local] *)
 let lookup_build_rec_env_lem = prove
  (`!x cl_env funs' funs.
-     ALOOKUP (MAP (\(fn,n,e). (fn,Recclosure cl_env funs' fn)) funs)
-       x = SOME v ==>
+     ALOOKUP (MAP (\(fn,n,e). (fn,flatSem_Recclosure cl_env funs'
+       fn)) funs) x = SOME v ==>
      v = semanticPrimitives_Recclosure cl_env funs' x`,
   CHEAT_TAC);;
 
@@ -831,15 +836,16 @@ let do_opapp = prove
       (?comp_map env_i1 locals t1 ts.
         env_all_rel genv comp_map env env_i1 locals /\
         LENGTH ts = LENGTH locals /\
-        flatSem_do_opapp vs_i1 = SOME (env_i1,compile_exp t1
+        flatSem_do_opapp vs_i1 = SOME
+          (env_i1,source_to_flat_compile_exp t1
           (source_to_flat_environment_v_fupd (K (bind_locals ts locals
           (source_to_flat_environment_v comp_map))) comp_map) e))`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let pat_bindings_compile_pat = prove
- (`!comp_map (p:ast_pat). pat_bindings (compile_pat comp_map p) =
-  pat_bindings p`,
+ (`!comp_map (p:ast_pat). flatLang_pat_bindings (compile_pat comp_map
+  p) = flatLang_pat_bindings p`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -849,16 +855,16 @@ let eta2 = prove
 
 (* [local] *)
 let ctor_same_type_refl = prove
- (`ctor_same_type x x`,
+ (`flatSem_ctor_same_type x x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let ctor_same_type_SND = prove
- (`ctor_same_type (SOME x) (SOME y) = (SND x = SND y)`,
+ (`flatSem_ctor_same_type (SOME x) (SOME y) = (SND x = SND y)`,
   CHEAT_TAC);;
 
 let genv_c_ok_pmatch_stamps_ok = prove
- (`s_rel genv s t /\
+ (`source_to_flatProof_s_rel genv s t /\
    nsLookup comp_map_c nm = SOME (flat_cn,ty_gp) /\
    same_type src_stamp src_stamp' /\
    genv_c_ok (global_env_c genv) /\
@@ -890,7 +896,7 @@ let source_to_flatProof_pmatch = prove
  (`(!cenv s p v env r env' env'' env_i1
   (s_i1:('f_orac_st,'ffi)flatSem_state) v_i1 st'.
     semanticPrimitives_pmatch cenv s p v env = r /\
-    s_rel genv st' s_i1 /\
+    source_to_flatProof_s_rel genv st' s_i1 /\
     global_env_inv genv comp_map2 shadowers senv /\
     genv_c_ok (global_env_c genv) /\
     genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
@@ -900,14 +906,14 @@ let source_to_flatProof_pmatch = prove
     s_i1 = global_env_v genv /\
     s = state_refs st' /\
     source_to_flatProof_v_rel genv v v_i1 /\
-    env_rel genv (alist_to_ns env') env_i1 ==>
+    source_to_flatProof_env_rel genv (alist_to_ns env') env_i1 ==>
     (?r_i1.
       flatSem_pmatch s_i1 (compile_pat comp_map p) v_i1 env_i1 = r_i1
         /\
-      match_result_rel genv env'' r r_i1)) /\
+      source_to_flatProof_match_result_rel genv env'' r r_i1)) /\
    (!cenv s ps vs env r env' env'' env_i1
      (s_i1:('f_orac_st,'ffi)flatSem_state) vs_i1 st'.
-    pmatch_list cenv s ps vs env = r /\
+    flatSem_pmatch_list cenv s ps vs env = r /\
     global_env_inv genv comp_map2 shadowers senv /\
     genv_c_ok (global_env_c genv) /\
     genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
@@ -915,14 +921,14 @@ let source_to_flatProof_pmatch = prove
     comp_map2 = source_to_flat_environment_c comp_map /\
     env = APPEND env' env'' /\ flatSem_state_globals
     s_i1 = global_env_v genv /\
-    s_rel genv st' s_i1 /\
+    source_to_flatProof_s_rel genv st' s_i1 /\
     s = state_refs st' /\
     ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
-    env_rel genv (alist_to_ns env') env_i1 ==>
+    source_to_flatProof_env_rel genv (alist_to_ns env') env_i1 ==>
     (?r_i1.
-      pmatch_list s_i1 (MAP (compile_pat comp_map) ps) vs_i1 env_i1 =
-        r_i1 /\
-      match_result_rel genv env'' r r_i1))`,
+      flatSem_pmatch_list s_i1 (MAP (compile_pat comp_map) ps) vs_i1
+        env_i1 = r_i1 /\
+      source_to_flatProof_match_result_rel genv env'' r r_i1))`,
   CHEAT_TAC);;
 
 (* compiler correctness *)
@@ -942,7 +948,8 @@ let env_updated_lem = prove
 let evaluate_foldr_let_err = prove
  (`!env s s' exps e x.
      flatSem_evaluate env s exps = (s',Rerr x) ==>
-     evaluate env s [ITLIST (Let t NONE) exps e] = (s',Rerr x)`,
+     flatSem_evaluate env s [ITLIST (flatLang_Let t NONE) exps e] =
+       (s',Rerr x)`,
   CHEAT_TAC);;
 
 let env_domain_eq_def = new_definition
@@ -1209,14 +1216,14 @@ let fin_idx_match_def = new_definition
 
 let eval_ref_inv_def = new_definition
   `eval_ref_inv first_global first_ref <=>
-   first_global = [SOME (Loc T 0)] /\
+   first_global = [SOME (flatSem_Loc T 0)] /\
    (?v. first_ref = [semanticPrimitives_Refv v])`;;
 
 let source_to_flatProof_invariant_def = new_definition
   `source_to_flatProof_invariant interp g gen genv idxs s s_i1 <=>
      genv_c_ok (global_env_c genv) /\
      genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
-     s_rel genv s s_i1 /\
+     source_to_flatProof_s_rel genv s s_i1 /\
      idx_range_rel interp genv
        (semanticPrimitives_state_next_type_stamp s)
        (semanticPrimitives_state_next_exn_stamp
@@ -1233,7 +1240,6 @@ let source_to_flatProof_invariant_def = new_definition
        idxs))
          (src_orac_next_cfg interp
            (semanticPrimitives_state_eval_state s))`;;
-hol4_overload "invariant" "source_to_flatProof_invariant";;
 
 (* subsequent oracle config will still have the previous envs in store *)
 let orac_config_envs_subspt_def = new_definition
@@ -1324,24 +1330,26 @@ let invariant_dec_clock = prove
  (`source_to_flatProof_invariant interp g gen genv env st1 st2 ==>
   state_clock
    st1 = state_clock st2 /\
-   source_to_flatProof_invariant interp g gen genv env (dec_clock
-     st1) (dec_clock st2)`,
+   source_to_flatProof_invariant interp g gen genv env
+     (flatSem_dec_clock st1) (flatSem_dec_clock st2)`,
   CHEAT_TAC);;
 
 let v_rel_Bool_eqn = prove
  (`genv_c_ok (global_env_c genv) ==> (source_to_flatProof_v_rel genv
-  (Boolv b) v <=> (v = Boolv b))`,
+  (flatSem_Boolv b) v <=> (v = flatSem_Boolv b))`,
   CHEAT_TAC);;
 
 (* evaluate_Bool *)
 let source_to_flatProof_evaluate_Bool = prove
- (`s_rel genv s s' /\ genv_c_ok (global_env_c genv) ==>
-   evaluate env s' [flatLang_Bool t b] = (s',Rval [Boolv b])`,
+ (`source_to_flatProof_s_rel genv s s' /\ genv_c_ok (global_env_c genv)
+  ==>
+   flatSem_evaluate env s' [flatLang_Bool t b] = (s',Rval
+     [flatSem_Boolv b])`,
   CHEAT_TAC);;
 
 (* Boolv_11 *)
 let source_to_flatProof_Boolv_11 = prove
- (`(Boolv b = Boolv b') = (b = b')`,
+ (`(flatSem_Boolv b = flatSem_Boolv b') = (b = b')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1432,9 +1440,9 @@ let pmatch_invariant = prove
      source_to_flat_environment_c
    comp_map2 = source_to_flat_environment_c comp_map /\
    source_to_flatProof_v_rel genv v v' ==>
-   match_result_rel genv [] (pmatch (sem_env_c env) (state_refs st) p
-     v [])
-     (pmatch st' (compile_pat comp_map p) v' [])`,
+   source_to_flatProof_match_result_rel genv [] (flatSem_pmatch
+     (sem_env_c env) (state_refs st) p v [])
+     (flatSem_pmatch st' (compile_pat comp_map p) v' [])`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1501,7 +1509,8 @@ let ALOOKUP_alloc_defs = prove
 (* [local] *)
 let global_env_inv_extend = prove
  (`!pat_env genv pat_env' tt g1 g2.
-     env_rel genv (alist_to_ns pat_env) pat_env' /\ global_env_v
+     source_to_flatProof_env_rel genv (alist_to_ns pat_env) pat_env'
+       /\ global_env_v
      genv = APPEND (APPEND g1 (MAP SOME (REVERSE (MAP SND
        pat_env')))) g2 /\
      ALL_DISTINCT (MAP FST pat_env) ==>
@@ -1513,12 +1522,12 @@ let global_env_inv_extend = prove
   CHEAT_TAC);;
 
 let LIST_REL_sv_rel_weak = prove
- (`ALL2 (sv_rel genv) vs vs' /\
+ (`ALL2 (source_to_flatProof_sv_rel genv) vs vs' /\
    subglobals (global_env_v genv) (global_env_v genv') /\
      global_env_c
    genv SUBMAP global_env_c genv' /\ global_env_tys
    genv SUBMAP global_env_tys genv' ==>
-   ALL2 (sv_rel genv') vs vs'`,
+   ALL2 (source_to_flatProof_sv_rel genv') vs vs'`,
   CHEAT_TAC);;
 
 let idx_range_rel_v_REPLICATE_NONE = prove
@@ -1539,8 +1548,8 @@ let invariant_make_varls = prove
    vars = REVERSE (MAP FST (flatSem_environment_v env)) /\
    ALL_DISTINCT (MAP FST (flatSem_environment_v env)) ==>
    (?genv' st''.
-   evaluate env st' [make_varls n t vidx vars] = (st'',Rval [Unitv])
-     /\
+   flatSem_evaluate env st' [make_varls n t vidx vars] = (st'',Rval
+     [Unitv]) /\
    source_to_flatProof_invariant interp g gen genv'
      (next_indices_vidx_fupd (K (next_indices_vidx idx + LENGTH vars))
      idx,end_idx,others)
@@ -1548,8 +1557,8 @@ let invariant_make_varls = prove
    genv' = global_env_c genv /\ global_env_tys
    genv' = global_env_tys genv /\
    subglobals (global_env_v genv) (global_env_v genv') /\
-   (!env1 tt. env_rel genv' (alist_to_ns env1) (flatSem_environment_v
-     env) ==>
+   (!env1 tt. source_to_flatProof_env_rel genv' (alist_to_ns env1)
+     (flatSem_environment_v env) ==>
      global_env_inv genv'
        (mk_source_to_flat_environment nsEmpty (alist_to_ns
          (alloc_defs tt vidx (REVERSE (MAP FST (flatSem_environment_v
@@ -1568,8 +1577,8 @@ let genv_c_ok_extend = prove
      (same_type (ExnStamp 0) stamp <=> SND cn = NONE) /\
      (!cn' arity' stamp'. FLOOKUP c_ext (cn',arity') = SOME stamp'
        ==>
-       (same_type stamp stamp' <=> ctor_same_type (SOME cn) (SOME
-         cn')) /\
+       (same_type stamp stamp' <=> flatSem_ctor_same_type (SOME cn)
+         (SOME cn')) /\
        (stamp = stamp' ==> (cn = cn' /\ arity = arity'))) /\
      (!cn' arity' stamp'. FLOOKUP c (cn',arity') = SOME stamp' ==>
        ~(stamp = stamp') /\
@@ -1657,13 +1666,13 @@ let subglobals_add_NONE = prove
 
 let do_eval = prove
  (`!vs'.
-   do_eval vs (semanticPrimitives_state_eval_state s) = SOME
+   flatSem_do_eval vs (semanticPrimitives_state_eval_state s) = SOME
      (env,decs,eval_state) /\
    source_to_flatProof_invariant interp g gen genv idxs s t /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs' ==>
    (?genv' env_id c decs' eval_config' c' idx end_idx fin_idx other.
    idxs = (idx,end_idx,other) /\
-   do_eval (DROP 4 vs') (flatSem_state_eval_config t) = SOME
+   flatSem_do_eval (DROP 4 vs') (flatSem_state_eval_config t) = SOME
      (decs',eval_config',Unitv) /\
    LENGTH vs' = 6 /\
    inc_compile_prog env_id c decs = (c',decs') /\ ~(decs' = []) /\
@@ -1812,25 +1821,25 @@ let nsLookup_nsBind_If = prove
 
 let invariant_IMP_s_rel = prove
  (`source_to_flatProof_invariant interp g gen genv idx st st' ==>
-  s_rel genv st st'`,
+  source_to_flatProof_s_rel genv st st'`,
   CHEAT_TAC);;
 
 let source_to_flatProof_abort_def = new_definition
   `source_to_flatProof_abort r <=> (match r with Rerr (Rabort a) -> T
   | _20 -> F)`;;
-hol4_overload "abort" "source_to_flatProof_abort";;
 
 (* [local] *)
 let not_abort_IMP_cases = prove
- (`(~(abort r) ==> P) ==>
-   ((?a. r = Rerr (Rabort a)) \/ (~(abort r) /\ P))`,
+ (`(~(source_to_flatProof_abort r) ==> P) ==>
+   ((?a. r = Rerr (Rabort a)) \/ (~(source_to_flatProof_abort r) /\
+     P))`,
   CHEAT_TAC);;
 
 (* abort_simps[simp] *)
 let source_to_flatProof_abort_simps = prove
- (`abort (Rerr (Rabort a)) = T /\
-   abort (Rerr (Rraise e)) = F /\
-   abort (Rval v) = F`,
+ (`source_to_flatProof_abort (Rerr (Rabort a)) = T /\
+   source_to_flatProof_abort (Rerr (Rraise e)) = F /\
+   source_to_flatProof_abort (Rval v) = F`,
   CHEAT_TAC);;
 
 (* compile_correct *)
@@ -1844,14 +1853,15 @@ let source_to_flatProof_compile_correct = prove
      LENGTH ts = LENGTH locals /\
      env_gen_rel gen (semanticPrimitives_state_eval_state s) /\ ~(r =
        Rerr (Rabort Rtype_error)) /\
-     es_i1 = compile_exps t (source_to_flat_environment_v_fupd (K
-       (bind_locals ts locals (source_to_flat_environment_v comp_map)))
-       comp_map) es ==>
+     es_i1 = source_to_flat_compile_exps t
+       (source_to_flat_environment_v_fupd (K (bind_locals ts locals
+       (source_to_flat_environment_v comp_map))) comp_map) es ==>
      (?s'_i1 r_i1 genv'.
      flatSem_evaluate env_i1 s_i1 es_i1 = (s'_i1,r_i1) /\
-     result_rel (ALL2 o source_to_flatProof_v_rel) genv' r r_i1 /\
-     s_rel genv' s' s'_i1 /\
-     (~(abort r) ==>
+     source_to_flatProof_result_rel (ALL2 o
+       source_to_flatProof_v_rel) genv' r r_i1 /\
+     source_to_flatProof_s_rel genv' s' s'_i1 /\
+     (~(source_to_flatProof_abort r) ==>
        source_to_flatProof_invariant interp g gen genv' idxs s' s'_i1
          /\
        env_gen_rel gen (semanticPrimitives_state_eval_state s') /\
@@ -1879,9 +1889,10 @@ let source_to_flatProof_compile_correct = prove
      (?s'_i1 r_i1 genv'.
      flatProps_evaluate_match env_i1 s_i1 v_i1 pes_i1 err_v_i1 =
        (s'_i1,r_i1) /\
-     result_rel (ALL2 o source_to_flatProof_v_rel) genv' r r_i1 /\
-     s_rel genv' s' s'_i1 /\
-     (~(abort r) ==>
+     source_to_flatProof_result_rel (ALL2 o
+       source_to_flatProof_v_rel) genv' r r_i1 /\
+     source_to_flatProof_s_rel genv' s' s'_i1 /\
+     (~(source_to_flatProof_abort r) ==>
        source_to_flatProof_invariant interp g gen genv' idxs s' s'_i1
          /\
        env_gen_rel gen (semanticPrimitives_state_eval_state s') /\
@@ -1906,8 +1917,8 @@ let source_to_flatProof_compile_correct = prove
      idx_prev idx' end_idx ==>
      (?((s1_i1:('f_orac_st,'ffi)flatSem_state)) genv' r_i1.
      flatSem_evaluate_decs s_i1 ds_i1 = (s1_i1,r_i1) /\
-     s_rel genv' s' s1_i1 /\
-     (~(abort r) ==>
+     source_to_flatProof_s_rel genv' s' s1_i1 /\
+     (~(source_to_flatProof_abort r) ==>
        source_to_flatProof_invariant interp g gen' genv'
          (idx',end_idx,os) s' s1_i1 /\
        orac_forward_rel interp (semanticPrimitives_state_eval_state
@@ -1925,8 +1936,8 @@ let source_to_flatProof_compile_correct = prove
        r = Rerr err ==>
        (?err_i1.
          r_i1 = SOME err_i1 /\
-         result_rel (\a b (c:'a). T) genv' (Rerr err) (Rerr
-           err_i1)))))`,
+         source_to_flatProof_result_rel (\a b (c:'a). T) genv'
+           (Rerr err) (Rerr err_i1)))))`,
   CHEAT_TAC);;
 
 (* HOL4 source_to_flatProofScript.sml:3869-3870: ML code, not ported *)
@@ -1969,14 +1980,15 @@ let declare_env_store_env_id = prove
      (match sptree_lookup id gen' with NONE -> F | SOME e ->
      global_env_inv genv e {} env))) ==>
    (?y.
-   evaluate_decs s_i1 [store_env_id gen_id id] =
+   flatSem_evaluate_decs s_i1 [store_env_id gen_id id] =
      (flatSem_state_refs_fupd (K (CONS (semanticPrimitives_Refv y)
        (TL (flatSem_state_refs s_i1)))) s_i1,NONE) /\
    source_to_flatProof_invariant interp g
      (environment_generation_store_next_fupd (K
      (environment_generation_store_next gen + 1)) gen) genv idxs
      (semanticPrimitives_state_eval_state_fupd (K es2) st) s_i1 /\
-   (?xs. flatSem_state_globals s_i1 = CONS (SOME (Loc T 0)) xs) /\
+   (?xs. flatSem_state_globals s_i1 = CONS (SOME (flatSem_Loc T 0))
+     xs) /\
    source_to_flatProof_v_rel genv x y /\
    orac_forward_rel interp (semanticPrimitives_state_eval_state st)
      es2)`,
@@ -1985,11 +1997,14 @@ let declare_env_store_env_id = prove
 (* [local] *)
 let pmatch_rows_drop_4 = prove
  (`LENGTH vs = 6 ==>
-   pmatch_rows [(Pcon NONE [Pany; Pany; Pany; Pany; Pvar b; Pvar
+   pmatch_rows [(flatLang_Pcon NONE [flatLang_Pany; flatLang_Pany;
+     flatLang_Pany; flatLang_Pany; flatLang_Pvar b; flatLang_Pvar
      w],exp)]
-     st (Conv NONE vs) =
+     st (flatSem_Conv NONE vs) =
    Match ([(w,LAST vs); (b,EL 4 vs)],
-     Pcon NONE [Pany; Pany; Pany; Pany; Pvar b; Pvar w],exp)`,
+     flatLang_Pcon NONE [flatLang_Pany; flatLang_Pany;
+       flatLang_Pany; flatLang_Pany; flatLang_Pvar b; flatLang_Pvar
+       w],exp)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2027,7 +2042,8 @@ let drop_4_via_el = prove
 
 (* [local] *)
 let abort_compile_dec_result = prove
- (`abort (combine_dec_result env r) = abort r`,
+ (`source_to_flatProof_abort (combine_dec_result env r) =
+  source_to_flatProof_abort r`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2194,15 +2210,15 @@ let precondition_stamp_helper = prove
 let invariant_begin_alloc_blanks = prove
  (`precondition1 interp g s1 env1 cfg eval_conf prog /\
    cfg' = FST (source_to_flat_compile_prog cfg prog) /\
-   init_globs = CONS (SOME (Loc T 0)) (REPLICATE (next_indices_vidx
-     (next cfg') - 1) NONE) ==>
+   init_globs = CONS (SOME (flatSem_Loc T 0)) (REPLICATE
+     (next_indices_vidx (next cfg') - 1) NONE) ==>
    source_to_flatProof_invariant interp g
      (mk_environment_generation_store 0 (next (envs cfg)) LN)
      (global_env_v_fupd (K init_globs) init_genv)
      (next_indices_vidx_fupd (K 1) (next cfg),next cfg',{})
      s1
      (flatSem_state_globals_fupd (K init_globs) (state_refs_fupd (K
-       [semanticPrimitives_Refv (Conv NONE [])])
+       [semanticPrimitives_Refv (flatSem_Conv NONE [])])
        (flatSem_initial_state (state_ffi s1) (state_clock s1)
        eval_conf)))`,
   CHEAT_TAC);;
@@ -2210,17 +2226,18 @@ let invariant_begin_alloc_blanks = prove
 let compile_prog_correct = prove
  (`precondition1 interp g s env cfg eval_conf ds /\
    source_to_flat_compile_prog cfg ds = (cfg',ds') /\
-   evaluate_decs s env ds = (s',r) /\ ~(r = Rerr (Rabort
+   flatSem_evaluate_decs s env ds = (s',r) /\ ~(r = Rerr (Rabort
      Rtype_error)) ==>
    (?s_i1 s_i1' genv' r_i1.
    s_i1 = flatSem_initial_state (state_ffi s) (state_clock s)
      eval_conf /\
-   evaluate_decs s_i1 ds' = (s_i1',r_i1) /\
-   s_rel genv' s' s_i1' /\
+   flatSem_evaluate_decs s_i1 ds' = (s_i1',r_i1) /\
+   source_to_flatProof_s_rel genv' s' s_i1' /\
    (!res. r = Rval res ==> r_i1 = NONE) /\
    (!err. r = Rerr err ==> (?err'. r_i1 = SOME err' /\
-         ~(err' = Rabort Rtype_error) /\ result_rel (\a (b:1)
-           (c:1). T) genv' (Rerr err) (Rerr err'))))`,
+         ~(err' = Rabort Rtype_error) /\
+           source_to_flatProof_result_rel (\a (b:1) (c:1). T) genv'
+           (Rerr err) (Rerr err'))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2234,18 +2251,19 @@ let SND_eq = prove
 let source_to_flatProof_compile_prog_semantics = prove
  (cake_as_vars (fun () ->
     `precondition1 interp g s1 env1 conf eval_conf prog ==>
-      ~(semantics_prog s1 env1 prog Fail) ==>
+      ~(semantics_prog s1 env1 prog ffi_Fail) ==>
       semantics_prog s1 env1 prog
-         (semantics eval_conf (state_ffi s1)
+         (flatSem_semantics eval_conf (state_ffi s1)
              (SND (source_to_flat_compile_prog conf prog)))`),
   CHEAT_TAC);;
 
 (* - connect semantics theorems of flat-to-flat passes --------------------- *)
 
 let compile_flat_correct = prove
- (`install_conf_rel cfg ec1 ec2 /\ ~(semantics ec1 ffi prog = Fail) ==>
-   semantics ec1 ffi prog =
-   semantics ec2 ffi (compile_flat cfg prog)`,
+ (`install_conf_rel cfg ec1 ec2 /\ ~(flatSem_semantics ec1 ffi prog =
+  ffi_Fail) ==>
+   flatSem_semantics ec1 ffi prog =
+   flatSem_semantics ec2 ffi (compile_flat cfg prog)`,
   CHEAT_TAC);;
 
 let precondition_def = new_definition
@@ -2260,10 +2278,10 @@ let precondition_def = new_definition
 let source_to_flatProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `precondition interp s env cfg ec prog ==>
-     ~(semantics_prog s env prog Fail) ==>
+     ~(semantics_prog s env prog ffi_Fail) ==>
      semantics_prog s env prog
-        (semantics ec (state_ffi s) (SND (source_to_flat_compile
-          cfg prog)))`),
+        (flatSem_semantics ec (state_ffi s) (SND
+          (source_to_flat_compile cfg prog)))`),
   CHEAT_TAC);;
 
 (* - esgc_free theorems for compile_exp ------------------------------------ *)
@@ -2275,12 +2293,14 @@ let op_gbag_astOp_to_flatOp = prove
 (* compile_exp_esgc_free *)
 let source_to_flatProof_compile_exp_esgc_free = prove
  (`(!tra env exp.
-      flatProps_esgc_free (compile_exp tra env exp) /\
-      flatProps_set_globals (compile_exp tra env exp) = EMPTY_BAG) /\
+      flatProps_esgc_free (source_to_flat_compile_exp tra env exp) /\
+      flatProps_set_globals (source_to_flat_compile_exp tra env exp)
+        = EMPTY_BAG) /\
    (!tra env exps.
-      ALL flatProps_esgc_free (compile_exps tra env exps) /\
-      flatProps_elist_globals (compile_exps tra env exps) =
-        EMPTY_BAG) /\
+      ALL flatProps_esgc_free (source_to_flat_compile_exps tra env
+        exps) /\
+      flatProps_elist_globals (source_to_flat_compile_exps tra env
+        exps) = EMPTY_BAG) /\
    (!tra env pes.
       ALL flatProps_esgc_free (MAP SND (compile_pes tra env pes)) /\
       flatProps_elist_globals (MAP SND (compile_pes tra env pes)) =
@@ -2367,7 +2387,7 @@ let num_bindings_def,num_bindings_ind = define_wf
         match x1 with
           Dlet _27 p e ->
         (match simple_dlet p e with SOME _28 -> 0 | _29 -> LENGTH
-          (pat_bindings p))
+          (flatLang_pat_bindings p))
         | (Dletrec _30 f) -> LENGTH f
         | (Dmod _31 ds) -> SUM (MAP num_bindings ds)
         | (Dlocal lds ds) ->

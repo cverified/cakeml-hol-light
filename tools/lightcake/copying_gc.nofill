@@ -1,1 +1,3 @@
+full_gc_LENGTH	PROOF Failure("ISPECL")
 gc_inv_init	PROOF Failure("TAC_PROOF: Unsolved goals")
+heap_addresses_SNOC	PROOF Failure("TAC_PROOF: Unsolved goals")

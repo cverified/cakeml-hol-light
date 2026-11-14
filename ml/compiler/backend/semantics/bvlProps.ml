@@ -2,7 +2,7 @@
 (*  bvlProps: ported from HOL4's
     compiler/backend/semantics/bvlPropsScript.sml
     A proof theory about bvl.ml, with 7 definitions and 65 theorems.
-    Needed by 12 files of the port.  *)
+    Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -14,9 +14,7 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -46,7 +44,7 @@ let with_same_clock = prove
 (* [simp] *)
 let dec_clock_with_code = prove
  (`bvlSem_dec_clock n (bvlSem_state_code_fupd (K c) s) =
-  state_code_fupd (K c) (dec_clock n s)`,
+  state_code_fupd (K c) (bvlSem_dec_clock n s)`,
   CHEAT_TAC);;
 
 (* HOL4 bvlPropsScript.sml:34-42: ML code, not ported *)
@@ -56,9 +54,10 @@ let dec_clock_with_code = prove
 
 (* [local] *)
 let do_app_split_list = prove
- (`do_app op vs s = res <=>
-   vs = [] /\ do_app op [] s = res \/
-   (?v vs1. vs = CONS v vs1 /\ do_app op (CONS v vs1) s = res)`,
+ (`bvlSem_do_app op vs s = res <=>
+   vs = [] /\ bvlSem_do_app op [] s = res \/
+   (?v vs1. vs = CONS v vs1 /\ bvlSem_do_app op (CONS v vs1) s =
+     res)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -74,11 +73,11 @@ let pair_lam_lem = prove
    value of an ML expression: do_app_cases_err *)
 
 let do_app_Rval_swap = prove
- (`do_app op a (s1:('a,'b)bvlSem_state) = Rval (x0,x1) /\ ~(op =
+ (`bvlSem_do_app op a (s1:('a,'b)bvlSem_state) = Rval (x0,x1) /\ ~(op =
   closLang_Install) /\
     (domain (bvlSem_state_code s1)) SUBSET (domain (bvlSem_state_code
       t1)) ==>
-    do_app op a
+    bvlSem_do_app op a
       (bvlSem_state_ffi_fupd (K (bvlSem_state_ffi s1))
         (bvlSem_state_clock_fupd (K (bvlSem_state_clock s1))
         (bvlSem_state_refs_fupd (K (bvlSem_state_refs s1))
@@ -94,7 +93,7 @@ let do_app_Rval_swap = prove
 let do_app_with_code = prove
  (`bvlSem_do_app op vs s = Rval (r,s') /\ ~(op = closLang_Install) ==>
    domain (bvlSem_state_code s) SUBSET domain c ==>
-   do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
+   bvlSem_do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
      (bvlSem_state_compile_fupd (K cc) (bvlSem_state_code_fupd (K c)
      s))) =
         Rval (r,compile_oracle_fupd (K co) (compile_fupd (K cc)
@@ -102,11 +101,11 @@ let do_app_with_code = prove
   CHEAT_TAC);;
 
 let do_app_Rerr_swap = prove
- (`do_app op a (s1:('a,'b)bvlSem_state) = Rerr e /\ ~(op =
+ (`bvlSem_do_app op a (s1:('a,'b)bvlSem_state) = Rerr e /\ ~(op =
   closLang_Install) /\
    (domain (bvlSem_state_code t1)) SUBSET (domain (bvlSem_state_code
      s1)) ==>
-   do_app op a
+   bvlSem_do_app op a
     (bvlSem_state_ffi_fupd (K (bvlSem_state_ffi s1))
       (bvlSem_state_clock_fupd (K (bvlSem_state_clock s1))
       (bvlSem_state_refs_fupd (K (bvlSem_state_refs s1))
@@ -118,7 +117,7 @@ let do_app_with_code_err_not_Install = prove
  (`bvlSem_do_app op vs s = Rerr e /\ ~(op = closLang_Install) ==>
    (domain c SUBSET domain (bvlSem_state_code s) \/ ~(e = Rabort
      Rtype_error)) ==>
-   do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
+   bvlSem_do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
      (bvlSem_state_compile_fupd (K cc) (bvlSem_state_code_fupd (K c)
      s))) = Rerr e`,
   CHEAT_TAC);;
@@ -127,27 +126,28 @@ let do_app_with_code_err = prove
  (`bvlSem_do_app op vs s = Rerr e ==>
    (domain c = domain (bvlSem_state_code s) \/ ~(e = Rabort
      Rtype_error)) ==>
-   do_app op vs (bvlSem_state_code_fupd (K c) s) = Rerr e`,
+   bvlSem_do_app op vs (bvlSem_state_code_fupd (K c) s) = Rerr e`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let initial_state_simp = prove
  (`state_code
-      (initial_state f c co cc k) = c /\ state_ffi
-      (initial_state f c co cc k) = f /\ state_clock
-      (initial_state f c co cc k) = k /\ compile
-      (initial_state f c co cc k) = cc /\ compile_oracle
-      (initial_state f c co cc k) = co /\ state_refs
-      (initial_state f c co cc k) = FEMPTY /\ state_globals
-      (initial_state f c co cc k) = []`,
+      (bvlSem_initial_state f c co cc k) = c /\ state_ffi
+      (bvlSem_initial_state f c co cc k) = f /\ state_clock
+      (bvlSem_initial_state f c co cc k) = k /\ compile
+      (bvlSem_initial_state f c co cc k) = cc /\ compile_oracle
+      (bvlSem_initial_state f c co cc k) = co /\ state_refs
+      (bvlSem_initial_state f c co cc k) = FEMPTY /\ state_globals
+      (bvlSem_initial_state f c co cc k) = []`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let initial_state_with_simp = prove
  (`state_clock_fupd (K k1)
-      (initial_state f c co cc k) = initial_state f c co cc k1 /\
-        state_code_fupd (K c1)
-      (initial_state f c co cc k) = initial_state f c1 co cc k`,
+      (bvlSem_initial_state f c co cc k) = bvlSem_initial_state f c
+        co cc k1 /\ state_code_fupd (K c1)
+      (bvlSem_initial_state f c co cc k) = bvlSem_initial_state f
+        c1 co cc k`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -157,20 +157,20 @@ let bool_to_tag_11 = prove
 
 (* Boolv_11[simp] *)
 let boolv_11 = prove
- (`bvlSem_Boolv b1 = Boolv b2 <=> b1 = b2`,
+ (`bvlSem_Boolv b1 = bvlSem_Boolv b2 <=> b1 = b2`,
   CHEAT_TAC);;
 
 let find_code_EVERY_IMP = prove
- (`(find_code dest a (bvlSem_state_code (r:('c,'ffi)bvlSem_state)) =
-  SOME (q,t)) ==>
+ (`(bvlSem_find_code dest a (bvlSem_state_code
+  (r:('c,'ffi)bvlSem_state)) = SOME (q,t)) ==>
     ALL P a ==> ALL P q`,
   CHEAT_TAC);;
 
 let do_app_err = prove
- (`do_app op vs s = Rerr e ==>
+ (`bvlSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = FFI i /\ e = Rabort
-                               (Rffi_error x))`,
+                             (?i x. op = closLang_FFI i /\ e =
+                               Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
 (* HOL4 bvlPropsScript.sml:213-223: a theorem that HOL4 states as the
@@ -180,41 +180,42 @@ let do_app_err = prove
    value of an ML expression: evaluate_LENGTH *)
 
 let evaluate_IMP_LENGTH = prove
- (`(evaluate (xs,s,env) = (Rval res,s1)) ==> (LENGTH xs = LENGTH res)`,
+ (`(bvlSem_evaluate (xs,s,env) = (Rval res,s1)) ==> (LENGTH xs =
+  LENGTH res)`,
   CHEAT_TAC);;
 
 let evaluate_CONS = prove
- (`evaluate (CONS x xs,env,s) =
-      (match evaluate ([x],env,s) with (Rval v,s2) ->
-         (match evaluate (xs,env,s2) with (Rval vs,s1) -> (Rval
-           (CONS (HD v) vs),s1) | t -> t) | t -> t)`,
+ (`bvlSem_evaluate (CONS x xs,env,s) =
+      (match bvlSem_evaluate ([x],env,s) with (Rval v,s2) ->
+         (match bvlSem_evaluate (xs,env,s2) with (Rval vs,s1) ->
+           (Rval (CONS (HD v) vs),s1) | t -> t) | t -> t)`,
   CHEAT_TAC);;
 
 let evaluate_SNOC = prove
  (`!xs env s x.
-      evaluate (SNOC x xs,env,s) =
-      (match evaluate (xs,env,s) with (Rval vs,s2) ->
-         (match evaluate ([x],env,s2) with (Rval v,s1) -> (Rval
-           (APPEND vs v),s1) | t -> t) | t -> t)`,
+      bvlSem_evaluate (SNOC x xs,env,s) =
+      (match bvlSem_evaluate (xs,env,s) with (Rval vs,s2) ->
+         (match bvlSem_evaluate ([x],env,s2) with (Rval v,s1) ->
+           (Rval (APPEND vs v),s1) | t -> t) | t -> t)`,
   CHEAT_TAC);;
 
 let evaluate_APPEND = prove
  (`!xs env s ys.
-      evaluate (APPEND xs ys,env,s) =
-      (match evaluate (xs,env,s) with
+      bvlSem_evaluate (APPEND xs ys,env,s) =
+      (match bvlSem_evaluate (xs,env,s) with
         (Rval vs,s2) ->
-          (match evaluate (ys,env,s2) with
+          (match bvlSem_evaluate (ys,env,s2) with
              (Rval ws,s1) -> (Rval (APPEND vs ws),s1) | res -> res)
                | res -> res)`,
   CHEAT_TAC);;
 
 let evaluate_SING = prove
- (`(evaluate ([x],env,s) = (Rval a,p1)) ==> (?d1. a = [d1])`,
+ (`(bvlSem_evaluate ([x],env,s) = (Rval a,p1)) ==> (?d1. a = [d1])`,
   CHEAT_TAC);;
 
 let evaluate_code = prove
  (`!xs env s1 vs s2.
-     (evaluate (xs,env,s1) = (vs,s2)) ==>
+     (bvlSem_evaluate (xs,env,s1) = (vs,s2)) ==>
      (?n. compile_oracle
        s2 = misc_shift_seq n (compile_oracle s1) /\ state_code
        s2 = FOLDL sptree_union (state_code s1) (MAP (fromAList o SND)
@@ -223,43 +224,43 @@ let evaluate_code = prove
 
 let evaluate_mono = prove
  (`!xs env s1 vs s2.
-     (evaluate (xs,env,s1) = (vs,s2)) ==>
+     (bvlSem_evaluate (xs,env,s1) = (vs,s2)) ==>
      subspt (state_code s1) (state_code s2)`,
   CHEAT_TAC);;
 
 let evaluate_mk_tick = prove
  (`!exp env s n.
-     evaluate ([mk_tick n exp],env,s) =
+     bvlSem_evaluate ([mk_tick n exp],env,s) =
      (if bvlSem_state_clock s < n then
        (Rerr (Rabort Rtimeout_error),bvlSem_state_clock_fupd (K 0) s)
          else
-       evaluate ([exp],env,dec_clock n s))`,
+       bvlSem_evaluate ([exp],env,bvlSem_dec_clock n s))`,
   CHEAT_TAC);;
 
 let evaluate_MAP_Const = prove
  (`!exps.
-     evaluate (MAP (K (Op (closLang_IntOp (closLang_Const i)) []))
-       (exps:'a list),env,t1) =
-     (Rval (MAP (K (Number i)) exps),t1)`,
+     bvlSem_evaluate (MAP (K (bvl_Op (closLang_IntOp (closLang_Const
+       i)) [])) (exps:'a list),env,t1) =
+     (Rval (MAP (K (bvlSem_Number i)) exps),t1)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let evaluate_Bool = prove
- (`evaluate ([Bool b],env,s) = (Rval [Boolv b],s)`,
+ (`bvlSem_evaluate ([bvl_Bool b],env,s) = (Rval [bvlSem_Boolv b],s)`,
   CHEAT_TAC);;
 
 (* HOL4 bvlPropsScript.sml:417: a proof *)
 
 let evaluate_expand_env = prove
- (`!xs a s env. ~(FST (evaluate (xs,a,s)) = Rerr (Rabort Rtype_error))
-  ==>
-     (evaluate (xs,APPEND a env,s) = evaluate (xs,a,s))`,
+ (`!xs a s env. ~(FST (bvlSem_evaluate (xs,a,s)) = Rerr (Rabort
+  Rtype_error)) ==>
+     (bvlSem_evaluate (xs,APPEND a env,s) = bvlSem_evaluate
+       (xs,a,s))`,
   CHEAT_TAC);;
 
 let inc_clock_def = new_definition
   `bvlProps_inc_clock ck s = bvlSem_state_clock_fupd (K
   (bvlSem_state_clock s + ck)) s`;;
-hol4_overload "inc_clock" "bvlProps_inc_clock";;
 
 (* [simp] *)
 let inc_clock_code = prove
@@ -297,96 +298,100 @@ let inc_clock_add = prove
 
 (* [simp] *)
 let dec_clock_code = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_code (dec_clock n s) =
+ (`!n ((s:('c,'ffi)bvlSem_state)). state_code (bvlSem_dec_clock n s) =
   bvlSem_state_code s`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let dec_clock_refs = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_refs (dec_clock n s) =
+ (`!n ((s:('c,'ffi)bvlSem_state)). state_refs (bvlSem_dec_clock n s) =
   bvlSem_state_refs s`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let dec_clock_ffi = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_ffi (dec_clock n s) =
+ (`!n ((s:('c,'ffi)bvlSem_state)). state_ffi (bvlSem_dec_clock n s) =
   bvlSem_state_ffi s`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let dec_clock0 = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). dec_clock 0 s = s`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_dec_clock 0 s = s`,
   CHEAT_TAC);;
 
 let do_app_change_clock = prove
- (`(do_app op args s1 = Rval (res,s2)) ==>
-   (do_app op args (state_clock_fupd (K ck) s1) = Rval
+ (`(bvlSem_do_app op args s1 = Rval (res,s2)) ==>
+   (bvlSem_do_app op args (state_clock_fupd (K ck) s1) = Rval
      (res,state_clock_fupd (K ck) s2))`,
   CHEAT_TAC);;
 
 let do_app_change_clock_err = prove
- (`(do_app op args s1 = Rerr e) ==>
-   (do_app op args (state_clock_fupd (K ck) s1) = Rerr e)`,
+ (`(bvlSem_do_app op args s1 = Rerr e) ==>
+   (bvlSem_do_app op args (state_clock_fupd (K ck) s1) = Rerr e)`,
   CHEAT_TAC);;
 
 let evaluate_add_clock = prove
  (`!exps env s1 res s2.
-     evaluate (exps,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+     bvlSem_evaluate (exps,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
        Rtimeout_error)) ==>
-     (!ck. evaluate (exps,env,bvlProps_inc_clock ck s1) =
+     (!ck. bvlSem_evaluate (exps,env,bvlProps_inc_clock ck s1) =
        (res,bvlProps_inc_clock ck s2))`,
   CHEAT_TAC);;
 
 let evaluate_add_clock_initial_state = prove
- (`evaluate (es,env,initial_state ffi code co cc k) = (r,s') /\ ~(r =
-  Rerr (Rabort Rtimeout_error)) ==>
+ (`bvlSem_evaluate (es,env,bvlSem_initial_state ffi code co cc k) =
+  (r,s') /\ ~(r = Rerr (Rabort Rtimeout_error)) ==>
     (!extra.
-      evaluate (es,env,initial_state ffi code co cc (k + extra)) =
+      bvlSem_evaluate (es,env,bvlSem_initial_state ffi code co cc (k
+        + extra)) =
       (r,state_clock_fupd (K (state_clock s' + extra)) s'))`,
   CHEAT_TAC);;
 
 let do_app_io_events_mono = prove
- (`do_app op vs s1 = Rval (x,s2) ==> ffi_state_io_events (state_ffi
+ (`bvlSem_do_app op vs s1 = Rval (x,s2) ==> ffi_state_io_events
+  (state_ffi
    s1) <<= ffi_state_io_events (state_ffi s2)`,
   CHEAT_TAC);;
 
 let evaluate_io_events_mono = prove
  (`!exps env s1 res s2.
-     evaluate (exps,env,s1) = (res,s2) ==> ffi_state_io_events
+     bvlSem_evaluate (exps,env,s1) = (res,s2) ==> ffi_state_io_events
        (state_ffi
      s1) <<= ffi_state_io_events (state_ffi s2)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_app_inc_clock = prove
- (`do_app op vs (bvlProps_inc_clock x y) =
+ (`bvlSem_do_app op vs (bvlProps_inc_clock x y) =
     map_result (\(v,s). (v,bvlSem_state_clock_fupd (K (x +
-      state_clock y)) s)) I (do_app op vs y)`,
+      state_clock y)) s)) I (bvlSem_do_app op vs y)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let dec_clock_1_inc_clock = prove
- (`~(x = 0) ==> dec_clock 1 (bvlProps_inc_clock x s) =
+ (`~(x = 0) ==> bvlSem_dec_clock 1 (bvlProps_inc_clock x s) =
   bvlProps_inc_clock (x - 1) s`,
   CHEAT_TAC);;
 
 (* [local] *)
 let dec_clock_1_inc_clock2 = prove
  (`~(bvlSem_state_clock
-     s = 0) ==> dec_clock 1 (bvlProps_inc_clock x s) =
-       bvlProps_inc_clock x (dec_clock 1 s)`,
+     s = 0) ==> bvlSem_dec_clock 1 (bvlProps_inc_clock x s) =
+       bvlProps_inc_clock x (bvlSem_dec_clock 1 s)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let dec_clock_inc_clock = prove
- (`~(bvlSem_state_clock s < n) ==> dec_clock n (bvlProps_inc_clock x
-  s) = bvlProps_inc_clock x (dec_clock n s)`,
+ (`~(bvlSem_state_clock s < n) ==> bvlSem_dec_clock n
+  (bvlProps_inc_clock x s) = bvlProps_inc_clock x (bvlSem_dec_clock n
+  s)`,
   CHEAT_TAC);;
 
 let evaluate_add_to_clock_io_events_mono = prove
  (`!exps env s extra. ffi_state_io_events (state_ffi
-    (SND (evaluate (exps,env,s)))) <<= ffi_state_io_events (state_ffi
-    (SND (evaluate (exps,env,bvlProps_inc_clock extra s))))`,
+    (SND (bvlSem_evaluate (exps,env,s)))) <<= ffi_state_io_events
+      (state_ffi
+    (SND (bvlSem_evaluate (exps,env,bvlProps_inc_clock extra s))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -401,21 +406,23 @@ let take_drop_lem = prove
 let evaluate_genlist_vars = prove
  (`!skip env n st.
     n + skip <= LENGTH env ==>
-    evaluate (list_of_seq (\arg. Var (arg + skip)) n,env,st) =
+    bvlSem_evaluate (list_of_seq (\arg. bvl_Var (arg + skip))
+      n,env,st) =
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;
 
 let evaluate_var_reverse = prove
  (`!xs env ys (st:('c,'ffi)bvlSem_state).
-   evaluate (MAP Var xs,env,st) = (Rval ys,st) ==>
-   evaluate (REVERSE (MAP Var xs),env,st) = (Rval (REVERSE ys),st)`,
+   bvlSem_evaluate (MAP bvl_Var xs,env,st) = (Rval ys,st) ==>
+   bvlSem_evaluate (REVERSE (MAP bvl_Var xs),env,st) = (Rval
+     (REVERSE ys),st)`,
   CHEAT_TAC);;
 
 let evaluate_genlist_vars_rev = prove
  (`!skip env n st.
      n + skip <= LENGTH env ==>
-     evaluate (REVERSE (list_of_seq (\arg. Var (arg + skip))
-       n),env,st) =
+     bvlSem_evaluate (REVERSE (list_of_seq (\arg. bvl_Var (arg +
+       skip)) n),env,st) =
      (Rval (REVERSE (TAKE n (DROP skip env))),st)`,
   CHEAT_TAC);;
 
@@ -427,19 +434,19 @@ let do_build_SUBSET = prove
   CHEAT_TAC);;
 
 let do_app_refs_SUBSET = prove
- (`(do_app op a r = Rval (q,t)) ==> FDOM (state_refs r) SUBSET FDOM
-  (state_refs t)`,
+ (`(bvlSem_do_app op a r = Rval (q,t)) ==> FDOM (state_refs r) SUBSET
+  FDOM (state_refs t)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_refs_SUBSET_lemma = prove
  (`!xs env s. FDOM (bvlSem_state_refs s) SUBSET FDOM (state_refs (SND
-  (evaluate (xs,env,s))))`,
+  (bvlSem_evaluate (xs,env,s))))`,
   CHEAT_TAC);;
 
 let evaluate_refs_SUBSET = prove
- (`(evaluate (xs,env,s) = (res,t)) ==> FDOM (bvlSem_state_refs s)
-  SUBSET FDOM (state_refs t)`,
+ (`(bvlSem_evaluate (xs,env,s) = (res,t)) ==> FDOM (bvlSem_state_refs
+  s) SUBSET FDOM (state_refs t)`,
   CHEAT_TAC);;
 
 let bvlProps_get_vars_def,bvlProps_get_vars_ind = define_rec
@@ -448,21 +455,20 @@ let bvlProps_get_vars_def,bvlProps_get_vars_ind = define_rec
          (if n < LENGTH env then
            (match bvlProps_get_vars ns env with NONE -> NONE |
              SOME vs -> SOME (CONS (EL n env) vs)) else NONE)`];;
-hol4_overload "get_vars" "bvlProps_get_vars";;
 
 let isVar_def = new_definition
   `isVar x1 =
         match x1 with
-          ((Var n):bvl_exp) -> T
+          ((bvl_Var n):bvl_exp) -> T
         | _1 -> F`;;
 
 let destVar_def = define_general
-  [`(destVar ((Var n):bvl_exp) = n)`];;
+  [`(destVar ((bvl_Var n):bvl_exp) = n)`];;
 
 let evaluate_Var_list = prove
  (`!l. ALL isVar l ==>
-       (evaluate (l,env,s) = (Rerr (Rabort Rtype_error),s)) \/
-       (?vs. (evaluate (l,env,s) = (Rval vs,s)) /\
+       (bvlSem_evaluate (l,env,s) = (Rerr (Rabort Rtype_error),s)) \/
+       (?vs. (bvlSem_evaluate (l,env,s) = (Rval vs,s)) /\
             (bvlProps_get_vars (MAP destVar l) env = SOME vs) /\
             (LENGTH vs = LENGTH l))`,
   CHEAT_TAC);;
@@ -477,18 +483,19 @@ let bVarBound_def,bVarBound_ind = define_wf
   [`bVarBound n [] <=> T`;
    `bVarBound n (CONS (x:bvl_exp) (CONS y xs)) <=>
          bVarBound n [x] /\ bVarBound n (CONS y xs)`;
-   `bVarBound n [(Var v:bvl_exp)] <=> v < n`;
-   `bVarBound n [(If x1 x2 x3:bvl_exp)] <=>
+   `bVarBound n [(bvl_Var v:bvl_exp)] <=> v < n`;
+   `bVarBound n [(bvl_If x1 x2 x3:bvl_exp)] <=>
          bVarBound n [x1] /\ bVarBound n [x2] /\ bVarBound n [x3]`;
-   `bVarBound n [(Let xs x2:bvl_exp)] <=>
+   `bVarBound n [(bvl_Let xs x2:bvl_exp)] <=>
          bVarBound n xs /\ bVarBound (n + LENGTH xs) [x2]`;
-   `bVarBound n [(Raise x1:bvl_exp)] <=> bVarBound n [x1]`;
-   `bVarBound n [(Tick x1:bvl_exp)] <=> bVarBound n [x1]`;
-   `bVarBound n [(Op op xs:bvl_exp)] <=> bVarBound n xs`;
-   `bVarBound n [(Force loc v:bvl_exp)] <=> v < n`;
-   `bVarBound n [(Handle x1 x2:bvl_exp)] <=>
+   `bVarBound n [(bvl_Raise x1:bvl_exp)] <=> bVarBound n [x1]`;
+   `bVarBound n [(bvl_Tick x1:bvl_exp)] <=> bVarBound n [x1]`;
+   `bVarBound n [(bvl_Op op xs:bvl_exp)] <=> bVarBound n xs`;
+   `bVarBound n [(bvl_Force loc v:bvl_exp)] <=> v < n`;
+   `bVarBound n [(bvl_Handle x1 x2:bvl_exp)] <=>
          bVarBound n [x1] /\ bVarBound (n + 1) [x2]`;
-   `bVarBound n [(Call ticks dest xs:bvl_exp)] <=> bVarBound n xs`];;
+   `bVarBound n [(bvl_Call ticks dest xs:bvl_exp)] <=> bVarBound n
+  xs`];;
 
 let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
@@ -500,22 +507,26 @@ let bEvery_def,bEvery_ind = define_wf
   [`bEvery P [] <=> T`;
    `bEvery P (CONS (x:bvl_exp) (CONS y xs)) <=>
          bEvery P [x] /\ bEvery P (CONS y xs)`;
-   `bEvery P [(Var v:bvl_exp)] <=> P ((Var v:bvl_exp))`;
-   `bEvery P [(If x1 x2 x3:bvl_exp)] <=> P ((If x1 x2 x3:bvl_exp)) /\
+   `bEvery P [(bvl_Var v:bvl_exp)] <=> P ((bvl_Var v:bvl_exp))`;
+   `bEvery P [(bvl_If x1 x2 x3:bvl_exp)] <=> P ((bvl_If x1 x2
+  x3:bvl_exp)) /\
          bEvery P [x1] /\ bEvery P [x2] /\ bEvery P [x3]`;
-   `bEvery P [(Let xs x2:bvl_exp)] <=> P ((Let xs x2:bvl_exp)) /\
+   `bEvery P [(bvl_Let xs x2:bvl_exp)] <=> P ((bvl_Let xs x2:bvl_exp))
+  /\
          bEvery P xs /\ bEvery P [x2]`;
-   `bEvery P [(Raise x1:bvl_exp)] <=> P ((Raise x1:bvl_exp)) /\
+   `bEvery P [(bvl_Raise x1:bvl_exp)] <=> P ((bvl_Raise x1:bvl_exp))
+  /\ bEvery P [x1]`;
+   `bEvery P [(bvl_Tick x1:bvl_exp)] <=> P ((bvl_Tick x1:bvl_exp)) /\
   bEvery P [x1]`;
-   `bEvery P [(Tick x1:bvl_exp)] <=> P ((Tick x1:bvl_exp)) /\ bEvery
-  P [x1]`;
-   `bEvery P [(Force m n:bvl_exp)] <=> P ((Force m n:bvl_exp))`;
-   `bEvery P [(Op op xs:bvl_exp)] <=> P ((Op op xs:bvl_exp)) /\
-  bEvery P xs`;
-   `bEvery P [(Handle x1 x2:bvl_exp)] <=> P ((Handle x1 x2:bvl_exp)) /\
+   `bEvery P [(bvl_Force m n:bvl_exp)] <=> P ((bvl_Force m
+  n:bvl_exp))`;
+   `bEvery P [(bvl_Op op xs:bvl_exp)] <=> P ((bvl_Op op xs:bvl_exp))
+  /\ bEvery P xs`;
+   `bEvery P [(bvl_Handle x1 x2:bvl_exp)] <=> P ((bvl_Handle x1
+  x2:bvl_exp)) /\
          bEvery P [x1] /\ bEvery P [x2]`;
-   `bEvery P [(Call ticks dest xs:bvl_exp)] <=> P ((Call ticks dest
-  xs:bvl_exp)) /\ bEvery P xs`];;
+   `bEvery P [(bvl_Call ticks dest xs:bvl_exp)] <=> P ((bvl_Call
+  ticks dest xs:bvl_exp)) /\ bEvery P xs`];;
 
 let bVarBound_EVERY = prove
  (`!ls. bVarBound P ls <=> ALL (\e. bVarBound P [e]) ls`,
@@ -536,25 +547,25 @@ let bvlProps_get_code_labels_def,bvlProps_get_code_labels_ind =
   define_wf
   `MEASURE (\x0. bvl_exp_size x0)`
   [`bvlProps_get_code_labels (bvl_Var _2) = {}`;
-   `bvlProps_get_code_labels (If e1 e2 e3:bvl_exp) =
+   `bvlProps_get_code_labels (bvl_If e1 e2 e3:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2 UNION
   bvlProps_get_code_labels e3`;
-   `bvlProps_get_code_labels (Let es e:bvl_exp) = UNIONS (set_of_list
-  (MAP bvlProps_get_code_labels es)) UNION bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (Raise e:bvl_exp) =
+   `bvlProps_get_code_labels (bvl_Let es e:bvl_exp) = UNIONS
+  (set_of_list (MAP bvlProps_get_code_labels es)) UNION
   bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (Handle e1 e2:bvl_exp) =
+   `bvlProps_get_code_labels (bvl_Raise e:bvl_exp) =
+  bvlProps_get_code_labels e`;
+   `bvlProps_get_code_labels (bvl_Handle e1 e2:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2`;
-   `bvlProps_get_code_labels (Tick e:bvl_exp) =
+   `bvlProps_get_code_labels (bvl_Tick e:bvl_exp) =
   bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (Force loc v:bvl_exp) = {loc}`;
-   `bvlProps_get_code_labels (Call _4 d es:bvl_exp) = (match d with
-  NONE -> {} | SOME n -> {n}) UNION UNIONS (set_of_list (MAP
+   `bvlProps_get_code_labels (bvl_Force loc v:bvl_exp) = {loc}`;
+   `bvlProps_get_code_labels (bvl_Call _4 d es:bvl_exp) = (match d
+  with NONE -> {} | SOME n -> {n}) UNION UNIONS (set_of_list (MAP
   bvlProps_get_code_labels es))`;
-   `bvlProps_get_code_labels (Op op es:bvl_exp) =
+   `bvlProps_get_code_labels (bvl_Op op es:bvl_exp) =
   assign_get_code_label op UNION UNIONS (set_of_list (MAP
   bvlProps_get_code_labels es))`];;
-hol4_overload "get_code_labels" "bvlProps_get_code_labels";;
 
 (* HOL4 bvlPropsScript.sml:897-898: a theorem that HOL4 states as the
    value of an ML expression: get_code_labels_def *)

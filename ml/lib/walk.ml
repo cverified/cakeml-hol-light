@@ -28,4 +28,3 @@ let vwalk_def = new_definition
 
 let walk_def = new_definition
   `walk s t = (match t with term_Var v -> vwalk s v | t -> t)`;;
-hol4_overload "walk" "walk";;

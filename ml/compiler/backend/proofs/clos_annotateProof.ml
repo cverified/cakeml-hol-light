@@ -17,7 +17,6 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -30,8 +29,11 @@ let _ = hol4_ancestors "clos_annotateProof"
   ["backendProps"; "closProps"; "closSem"; "clos_annotate"; "db_vars"];;
 
 
-hol4_overload "do_app" "closSem_do_app";;
-hol4_overload "compile" "clos_annotate_compile";;
+(* HOL4 clos_annotateProofScript.sml:11-12: an overload that the
+   source brings to the front: do_app, written out as closSem_do_app *)
+(* HOL4 clos_annotateProofScript.sml:11-12: an overload that the
+   source brings to the front: compile, written out as
+   clos_annotate_compile *)
 
 (* HOL4 clos_annotateProofScript.sml:14-15: ML code, not ported *)
 
@@ -50,35 +52,35 @@ let alt_fv = prove
  (`(!n. alt_fv n [] <=> F) /\
     (!y xs x n. alt_fv n (CONS x (CONS y xs)) <=> alt_fv n [x] \/
       alt_fv n (CONS y xs)) /\
-    (!v0 v n. alt_fv n [Var v0 v] <=> n = v) /\
+    (!v0 v n. alt_fv n [db_vars_Var v0 v] <=> n = v) /\
     (!x3 x2 x1 v1 n.
-      alt_fv n [If v1 x1 x2 x3] <=> alt_fv n [x1] \/ alt_fv n [x2] \/
-        alt_fv n [x3]) /\
+      alt_fv n [flatLang_If v1 x1 x2 x3] <=> alt_fv n [x1] \/ alt_fv
+        n [x2] \/ alt_fv n [x3]) /\
     (!xs x2 v2 n.
-      alt_fv n [Let v2 xs x2] <=>
+      alt_fv n [flatLang_Let v2 xs x2] <=>
         (if no_overlap (LENGTH xs) (SND (alt_free [x2])) /\ ALL pure
           xs then
           alt_fv (n + LENGTH xs) [x2] else
           alt_fv n xs \/ alt_fv (n + LENGTH xs) [x2])) /\
-    (!x1 v3 n. alt_fv n [Raise v3 x1] <=> alt_fv n [x1]) /\
+    (!x1 v3 n. alt_fv n [flatLang_Raise v3 x1] <=> alt_fv n [x1]) /\
     (!x1 v4 n. alt_fv n [closLang_Tick v4 x1] <=> alt_fv n [x1]) /\
     (!xs v5 op n. alt_fv n [closLang_Op v5 op xs] <=> alt_fv n xs) /\
     (!x2 x1 v6 n loc_opt.
-       alt_fv n [App v6 loc_opt x1 x2] <=> alt_fv n [x1] \/ alt_fv n
-         x2) /\
+       alt_fv n [flatLang_App v6 loc_opt x1 x2] <=> alt_fv n [x1] \/
+         alt_fv n x2) /\
     (!x1 vs v7 num_args n loc.
        alt_fv n [closLang_Fn v7 loc vs num_args x1] <=> alt_fv (n +
          num_args) [x1]) /\
     (!x1 vs v8 n loc fns.
-       alt_fv n [Letrec v8 loc vs fns x1] <=>
+       alt_fv n [flatLang_Letrec v8 loc vs fns x1] <=>
          // if clos_annotate$no_overlap (LENGTH fns) (SND (alt_free [x1])) then
          // alt_fv (n + LENGTH fns) [x1]
          // else
          EX (\(num_args,x). alt_fv (n + num_args + LENGTH fns) [x])
            fns \/
          alt_fv (n + LENGTH fns) [x1]) /\
-    (!x2 x1 v9 n. alt_fv n [Handle v9 x1 x2] <=> alt_fv n [x1] \/
-      alt_fv (n + 1) [x2]) /\
+    (!x2 x1 v9 n. alt_fv n [flatLang_Handle v9 x1 x2] <=> alt_fv n
+      [x1] \/ alt_fv (n + 1) [x2]) /\
     (!xs v10 ticks n dest. alt_fv n [closLang_Call v10 ticks dest
       xs] <=> alt_fv n xs)`,
   CHEAT_TAC);;
@@ -113,7 +115,8 @@ let alt_fv_REPLICATE = prove
 
 let clos_annotateProof_v_rel = cake_inductive
   `(clos_annotateProof_v_rel (closSem_Number j) (closSem_Number j)) /\
-   (clos_annotateProof_v_rel (Word64 w) (Word64 w)) /\
+   (clos_annotateProof_v_rel (closSem_Word64 w) (closSem_Word64 w))
+     /\
    (ALL2 clos_annotateProof_v_rel (xs:closSem_v list) (ys:closSem_v
      list) ==>
     clos_annotateProof_v_rel (closSem_Block t xs) (closSem_Block t
@@ -127,8 +130,8 @@ let clos_annotateProof_v_rel = cake_inductive
          env_ok m 0 i env env' (n - num_args)) /\
     every_Fn_vs_NONE [c] /\
     (LENGTH env = m) /\ ALL2 clos_annotateProof_v_rel vals vals' ==>
-    clos_annotateProof_v_rel (Closure p vals env num_args c) (Closure
-      p vals' env' num_args c')) /\
+    clos_annotateProof_v_rel (closSem_Closure p vals env num_args c)
+      (closSem_Closure p vals' env' num_args c')) /\
    (ALL2 (\(num_args,c1) (num_args',c1').
       ?m i.
         (num_args' = num_args) /\
@@ -140,8 +143,8 @@ let clos_annotateProof_v_rel = cake_inductive
         every_Fn_vs_NONE [c1] /\
         (LENGTH env = m)) cs cs' /\
     ALL2 clos_annotateProof_v_rel vals vals' /\ index < LENGTH cs ==>
-    clos_annotateProof_v_rel (Recclosure p vals env cs index)
-      (Recclosure p vals' env' cs' index)) /\
+    clos_annotateProof_v_rel (closSem_Recclosure p vals env cs index)
+      (closSem_Recclosure p vals' env' cs' index)) /\
    (l + m <= n ==>
     env_ok m l i (env2:closSem_v list) (env2':closSem_v list) n) /\
    (n < l /\ clos_annotateProof_v_rel (EL n env2) (EL n env2') /\
@@ -153,15 +156,16 @@ let clos_annotateProof_v_rel = cake_inductive
     l + v < LENGTH env2' /\
     clos_annotateProof_v_rel (EL n env2) (EL (l + v) env2') ==>
     env_ok m l i env2 env2' n)`;;
-hol4_overload "v_rel" "clos_annotateProof_v_rel";;
 
 (* HOL4 clos_annotateProofScript.sml:148-164: a theorem that HOL4
    states as the value of an ML expression: v_rel_simp *)
 
 (* [simp] *)
 let v_rel_Boolv = prove
- (`(clos_annotateProof_v_rel x (Boolv b) <=> (x = Boolv b)) /\
-    (clos_annotateProof_v_rel (Boolv b) x <=> (x = Boolv b))`,
+ (`(clos_annotateProof_v_rel x (closSem_Boolv b) <=> (x = closSem_Boolv
+  b)) /\
+    (clos_annotateProof_v_rel (closSem_Boolv b) x <=> (x =
+      closSem_Boolv b))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -221,7 +225,6 @@ let clos_annotateProof_state_rel_def = new_definition
          (clos_annotate_shift (FST (alt_free [c])) 0 arity LN = [c2])
            /\
          (FLOOKUP (closSem_state_code t) name = SOME (arity,c2))))`;;
-hol4_overload "state_rel" "clos_annotateProof_state_rel";;
 
 let state_rel_max_app = prove
  (`clos_annotateProof_state_rel s t ==> closSem_state_max_app s =
@@ -256,17 +259,18 @@ let compile_append = prove
 (* list_to_v_v_rel *)
 let clos_annotateProof_list_to_v_v_rel = prove
  (`!xs ys. ALL2 clos_annotateProof_v_rel xs ys ==>
-  clos_annotateProof_v_rel (list_to_v xs) (list_to_v ys)`,
+  clos_annotateProof_v_rel (closSem_list_to_v xs) (closSem_list_to_v
+  ys)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let v_to_list = prove
  (`!h h'.
        clos_annotateProof_v_rel h h' ==>
-       (v_to_list h = NONE /\
-        v_to_list h' = NONE) \/
-       (?x x'. (v_to_list h = SOME x) /\
-              (v_to_list h' = SOME x') /\
+       (closSem_v_to_list h = NONE /\
+        closSem_v_to_list h' = NONE) \/
+       (?x x'. (closSem_v_to_list h = SOME x) /\
+              (closSem_v_to_list h' = SOME x') /\
               ALL2 clos_annotateProof_v_rel x x')`,
   CHEAT_TAC);;
 
@@ -274,12 +278,12 @@ let v_to_list = prove
 let clos_annotateProof_do_app_lemma = prove
  (`clos_annotateProof_state_rel s t /\ ALL2 clos_annotateProof_v_rel xs
   ys ==>
-   (match do_app opp xs s with
+   (match closSem_do_app opp xs s with
      Rval (x,s1) ->
        (?y t1. clos_annotateProof_v_rel x y /\
-         clos_annotateProof_state_rel s1 t1 /\ do_app opp ys t = Rval
-         (y,t1)) | Rerr err1 ->
-       (?err2. do_app opp ys t = Rerr err2 /\ exc_rel
+         clos_annotateProof_state_rel s1 t1 /\ closSem_do_app opp ys t =
+         Rval (y,t1)) | Rerr err1 ->
+       (?err2. closSem_do_app opp ys t = Rerr err2 /\ exc_rel
          clos_annotateProof_v_rel err1 err2))`,
   CHEAT_TAC);;
 
@@ -287,8 +291,8 @@ let clos_annotateProof_do_app_lemma = prove
 let do_app_thm = prove
  (`clos_annotateProof_state_rel s1 t1 /\ ALL2 clos_annotateProof_v_rel
   xs ys /\
-    (do_app op xs s1 = Rval (v,s2)) ==>
-    (?w t2. (do_app op ys t1 = Rval (w,t2)) /\
+    (closSem_do_app op xs s1 = Rval (v,s2)) ==>
+    (?w t2. (closSem_do_app op ys t1 = Rval (w,t2)) /\
            clos_annotateProof_v_rel v w /\
              clos_annotateProof_state_rel s2 t2)`,
   CHEAT_TAC);;
@@ -301,16 +305,19 @@ let v_rel_Number = prove
      closSem_Number i)) /\
    (clos_annotateProof_v_rel (closSem_ByteVector ws) x <=> (x =
      closSem_ByteVector ws)) /\
-   (clos_annotateProof_v_rel x (Word64 w) <=> (x = Word64 w)) /\
-   (clos_annotateProof_v_rel (Word64 w) x <=> (x = Word64 w))`,
+   (clos_annotateProof_v_rel x (closSem_Word64 w) <=> (x =
+     closSem_Word64 w)) /\
+   (clos_annotateProof_v_rel (closSem_Word64 w) x <=> (x =
+     closSem_Word64 w))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_app_err_thm = prove
  (`clos_annotateProof_state_rel s1 t1 /\ ALL2 clos_annotateProof_v_rel
   xs ys /\
-    do_app op xs s1 = Rerr err /\ (~(err = Rabort Rtype_error)) ==>
-      (?w. do_app op ys t1 = Rerr w /\
+    closSem_do_app op xs s1 = Rerr err /\ (~(err = Rabort
+      Rtype_error)) ==>
+      (?w. closSem_do_app op ys t1 = Rerr w /\
            exc_rel clos_annotateProof_v_rel err w)`,
   CHEAT_TAC);;
 
@@ -416,10 +423,10 @@ let state_rel_clocks_eqs = prove
 let rel_update_thunk = prove
  (`clos_annotateProof_state_rel s1 s2 /\
    ALL2 clos_annotateProof_v_rel vs ys ==>
-     (update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = SOME
-       refs1 ==>
-        (?refs2. update_thunk [closSem_RefPtr v ptr] (state_refs s2)
-          ys = SOME refs2 /\
+     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs
+       = SOME refs1 ==>
+        (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
+          (state_refs s2) ys = SOME refs2 /\
                 clos_annotateProof_state_rel (state_refs_fupd (K
                   refs1) s1) (state_refs_fupd (K refs2) s2)))`,
   CHEAT_TAC);;

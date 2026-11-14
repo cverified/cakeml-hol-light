@@ -53,6 +53,7 @@ let w2s_def = new_definition
 let word_to_hex_string_def = new_definition
   `word_to_hex_string = w2s 16 HEX`;;
 
-hol4_overload "toString" "num_to_dec_string";;
+(* HOL4 ASCIInumbersScript.sml:231: the overload toString, which the
+   port expands *)
 (* HOL4 ASCIInumbersScript.sml:232: the overload toNum, which the
    port expands *)

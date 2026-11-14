@@ -1,6 +1,8 @@
 ALL_DISTINCT_pmov	PROOF Failure("SPECL")
 NoRead_path	PROOF Failure("SPEC")
+not_use_temp_before_assign_append	PROOF Stack overflow
 not_use_temp_before_assign_insert	PROOF Failure("MATCH_MP_TAC: No match")
+not_use_temp_before_assign_thm	PROOF Stack overflow
 pmov_not_use_temp_before_assign	PROOF Failure("SPECL")
 pmov_preserves_moves	PROOF Failure("SPECL")
 seqsem_append	PROOF Failure("TAC_PROOF: Unsolved goals")

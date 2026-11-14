@@ -140,7 +140,6 @@ let source_evalProof_env_rel_def = new_definition
      (!nm x y. nsLookup (sem_env_v env) nm = SOME x /\ nsLookup
        (sem_env_v env') nm = SOME y ==>
          v_rel' x y)`;;
-hol4_overload "env_rel" "source_evalProof_env_rel";;
 
 let env_rel_mono_rel = prove
  (`(!y z. R y z ==> R' y z) ==>
@@ -250,7 +249,6 @@ let source_evalProof_v_rel = cake_inductive
      (semanticPrimitives_Litv l)) /\
    (source_evalProof_v_rel es (semanticPrimitives_Loc br n)
      (semanticPrimitives_Loc br n))`;;
-hol4_overload "v_rel" "source_evalProof_v_rel";;
 
 (* HOL4 source_evalProofScript.sml:229-237: a theorem that HOL4
    states as the value of an ML expression: v_rel_l_simps *)
@@ -306,7 +304,6 @@ let s_rel_def = new_definition
            eval_oracle_state_generation
    orac_s' < LENGTH (eval_oracle_state_envs orac_s') /\
    recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle orac_s'))`;;
-hol4_overload "s_rel" "source_evalProof_s_rel";;
 
 let orac_s_def = new_definition
   `orac_s x1 =
@@ -374,7 +371,6 @@ let match_result_rel_def = new_definition
   `source_evalProof_match_result_rel nerr R mr1 mr2 <=> (match mr1
   with No_match -> mr2 = No_match | Match_type_error -> nerr \/ mr2 =
   Match_type_error | Match x -> (?y. mr2 = Match y /\ R x y))`;;
-hol4_overload "match_result_rel" "source_evalProof_match_result_rel";;
 
 let store_lookup_rel = prove
  (`ALL2 (semanticPrimitivesProps_sv_rel R) refs refs' ==>
@@ -674,7 +670,6 @@ let declare_env_sim = prove
 let abort_def = new_definition
   `source_evalProof_abort r <=> (match r with Rerr (Rabort a) -> T |
   _9 -> F)`;;
-hol4_overload "abort" "source_evalProof_abort";;
 
 (* [simp] *)
 let abort_simps = prove

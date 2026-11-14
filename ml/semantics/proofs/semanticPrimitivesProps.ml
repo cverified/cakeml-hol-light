@@ -2,7 +2,7 @@
 (*  semanticPrimitivesProps: ported from HOL4's
     semantics/proofs/semanticPrimitivesPropsScript.sml
     A proof theory about semanticPrimitives.ml, with 20 definitions
-    and 61 theorems.  Needed by 28 files of the port.  *)
+    and 61 theorems.  Needed by 27 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -343,7 +343,6 @@ let result_rel_def = new_definition
           (Rval v1,Rval v2) -> R1 v1 v2
         | ((Rerr e1),(Rerr e2)) -> exc_rel R2 e1 e2
         | (_5,_6) -> F`;;
-hol4_overload "result_rel" "semanticPrimitivesProps_result_rel";;
 
 (* [simp] *)
 let result_rel_Rval = prove
@@ -420,7 +419,6 @@ let sv_rel_def = new_definition
       | ((semanticPrimitives_Thunk m1 v1),(semanticPrimitives_Thunk
         m2 v2)) -> (m1 = m2 /\ R v1 v2)
       | (_11,_12) -> F`;;
-hol4_overload "sv_rel" "semanticPrimitivesProps_sv_rel";;
 
 (* [simp] *)
 let sv_rel_refl = prove
@@ -467,7 +465,6 @@ let store_v_vs_def = define_cases
   _13) = []`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk
   _15 v) = [v]`];;
-hol4_overload "store_v_vs" "semanticPrimitivesProps_store_v_vs";;
 
 let store_vs_def = new_definition
   `store_vs s = FLAT (MAP semanticPrimitivesProps_store_v_vs s)`;;

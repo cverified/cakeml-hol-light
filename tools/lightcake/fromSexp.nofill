@@ -1,0 +1,2 @@
+UNHEX_lt16	PROOF Failure("ARITH_RULE `ORD c >= 48 /\\ ORD c <= 57 \\/\nORD c >= 97 /\\ ORD c <= 102 \\/\nORD c >= 65 /\\ ORD c <= 70\n==> (let n = ORD c in\n if ORD (CHR 4
+strip_sxcons_thm	a check of the fill

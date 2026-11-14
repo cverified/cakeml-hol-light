@@ -14,13 +14,10 @@ needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/pegexec.ml";;
 needs "misc/misc.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
@@ -51,7 +48,6 @@ let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
         | CONS (labLang_Label l1 l2 _2) xs -> CONS (l1,l2)
           (labProps_extract_labels xs)
         | (CONS x xs) -> labProps_extract_labels xs`];;
-hol4_overload "extract_labels" "labProps_extract_labels";;
 
 (* HOL4 labPropsScript.sml:18: ML code, not ported *)
 
@@ -65,8 +61,8 @@ let labs_of_def = new_definition
   `labs_of x1 =
       match x1 with
         labLang_LocValue _4 (labLang_Lab n1 n2) -> {(n1,n2)}
-      | (Jump (labLang_Lab n1 n2)) -> {(n1,n2)}
-      | (JumpCmp _5 _6 _7 (labLang_Lab n1 n2)) -> {(n1,n2)}
+      | (labLang_Jump (labLang_Lab n1 n2)) -> {(n1,n2)}
+      | (labLang_JumpCmp _5 _6 _7 (labLang_Lab n1 n2)) -> {(n1,n2)}
       | _8 -> {}`;;
 
 let line_get_labels_def = new_definition
@@ -82,7 +78,6 @@ let sec_get_labels_def = define_general
 let labProps_get_labels_def = new_definition
   `labProps_get_labels code = UNIONS (IMAGE sec_get_labels
   (set_of_list code))`;;
-hol4_overload "get_labels" "labProps_get_labels";;
 
 let get_labels_cons = prove
  (`labProps_get_labels (CONS x xs) = sec_get_labels x UNION
@@ -104,7 +99,6 @@ let sec_get_code_labels_def = define_general
 let labProps_get_code_labels_def = new_definition
   `labProps_get_code_labels code = UNIONS (IMAGE sec_get_code_labels
   (set_of_list code))`;;
-hol4_overload "get_code_labels" "labProps_get_code_labels";;
 
 (* [simp] *)
 let get_code_labels_nil = prove
@@ -122,7 +116,7 @@ let sec_ends_with_label_def = define_general
 
 (* [simp] *)
 let reg_imm_with_clock = prove
- (`reg_imm r (state_clock_fupd (K z) s) = reg_imm r s`,
+ (`labSem_reg_imm r (state_clock_fupd (K z) s) = labSem_reg_imm r s`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -142,7 +136,7 @@ let labProps_with_same_clock = prove
   CHEAT_TAC);;
 
 let inc_pc_dec_clock = prove
- (`inc_pc (dec_clock x) = dec_clock (inc_pc x)`,
+ (`inc_pc (labSem_dec_clock x) = labSem_dec_clock (inc_pc x)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -388,27 +382,28 @@ let read_reg_align_dm = prove
 
 (* [simp] *)
 let upd_reg_align_dm = prove
- (`upd_reg x y (align_dm s) = align_dm (upd_reg x y s)`,
+ (`labSem_upd_reg x y (align_dm s) = align_dm (labSem_upd_reg x y s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let upd_mem_align_dm = prove
- (`upd_mem x y (align_dm s) = align_dm (upd_mem x y s)`,
+ (`labSem_upd_mem x y (align_dm s) = align_dm (labSem_upd_mem x y s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let binop_upd_align_dm = prove
- (`binop_upd x y z w (align_dm s) = align_dm (binop_upd x y z w s)`,
+ (`labSem_binop_upd x y z w (align_dm s) = align_dm (labSem_binop_upd
+  x y z w s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let reg_imm_align_dm = prove
- (`reg_imm r (align_dm s) = reg_imm r s`,
+ (`labSem_reg_imm r (align_dm s) = labSem_reg_imm r s`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let assert_align_dm = prove
- (`assert b (align_dm s) = align_dm (assert b s)`,
+ (`labSem_assert b (align_dm s) = align_dm (labSem_assert b s)`,
   CHEAT_TAC);;
 
 (* HOL4 labPropsScript.sml:517-522: a theorem whose statement HOL
@@ -507,7 +502,7 @@ let inc_pc_align_dm = prove
 
 (* [simp] *)
 let upd_pc_align_dm = prove
- (`upd_pc p (align_dm s) = align_dm (upd_pc p s)`,
+ (`labSem_upd_pc p (align_dm s) = align_dm (labSem_upd_pc p s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -603,27 +598,28 @@ let read_reg_align_sdm = prove
 
 (* [simp] *)
 let upd_reg_align_sdm = prove
- (`upd_reg x y (align_sdm s) = align_sdm (upd_reg x y s)`,
+ (`labSem_upd_reg x y (align_sdm s) = align_sdm (labSem_upd_reg x y s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let upd_mem_align_sdm = prove
- (`upd_mem x y (align_sdm s) = align_sdm (upd_mem x y s)`,
+ (`labSem_upd_mem x y (align_sdm s) = align_sdm (labSem_upd_mem x y s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let binop_upd_align_sdm = prove
- (`binop_upd x y z w (align_sdm s) = align_sdm (binop_upd x y z w s)`,
+ (`labSem_binop_upd x y z w (align_sdm s) = align_sdm
+  (labSem_binop_upd x y z w s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let reg_imm_align_sdm = prove
- (`reg_imm r (align_sdm s) = reg_imm r s`,
+ (`labSem_reg_imm r (align_sdm s) = labSem_reg_imm r s`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let assert_align_sdm = prove
- (`assert b (align_sdm s) = align_sdm (assert b s)`,
+ (`labSem_assert b (align_sdm s) = align_sdm (labSem_assert b s)`,
   CHEAT_TAC);;
 
 (* HOL4 labPropsScript.sml:946-951: a theorem whose statement HOL
@@ -678,7 +674,7 @@ let inc_pc_align_sdm = prove
 
 (* [simp] *)
 let upd_pc_align_sdm = prove
- (`upd_pc p (align_sdm s) = align_sdm (upd_pc p s)`,
+ (`labSem_upd_pc p (align_sdm s) = align_sdm (labSem_upd_pc p s)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -804,8 +800,7 @@ let get_code_labels_extract_labels = prove
 let no_install_def = new_definition
   `labProps_no_install code <=>
    (!p w bytes l. ~(asm_fetch_aux p code =
-       SOME (labLang_LabAsm Install w bytes l)))`;;
-hol4_overload "no_install" "labProps_no_install";;
+       SOME (labLang_LabAsm labLang_Install w bytes l)))`;;
 
 let no_share_mem_inst_def = new_definition
   `no_share_mem_inst code <=>

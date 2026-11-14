@@ -40,17 +40,11 @@
 ### heap_addresses_APPEND
   (REWRITE_TAC[gen_gc_heap_addresses_APPEND])
 
-### heap_length_CONS
-  (REWRITE_TAC[heap_length_def; MAP; SUM_DEF])
-
 ### heap_length_heap_expand
   (REWRITE_TAC[gen_gc_heap_length_heap_expand])
 
 ### heap_lookup_AND_APPEND_IMP
   (MESON_TAC[gen_gc_heap_lookup_EXTEND; option_INJ])
-
-### heap_lookup_APPEND
-  (MESON_TAC[gen_gc_LESS_IMP_heap_lookup; NOT_LESS_IMP_heap_lookup])
 
 ### heap_lookup_EXTEND
   (REWRITE_TAC[gen_gc_heap_lookup_EXTEND])

@@ -12,13 +12,11 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
-needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/byte.ml";;
 needs "misc/misc.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/typeSystem.ml";;
 
@@ -700,8 +698,9 @@ let evaluate_EQ_evaluate_lemma = prove
              (machine_config_prog_addresses c DIFF set_of_list
              (machine_config_ffi_entry_pcs c))) ==>
        (?ms2.
-         !k. (evaluate c io (k + (n + 1)) ms1 =
-              evaluate (shift_interfer (n + 1) c) io k ms2) /\
+         !k. (targetSem_evaluate c io (k + (n + 1)) ms1 =
+              targetSem_evaluate (shift_interfer (n + 1) c) io k ms2)
+                /\
              (find_next_interference c io (k + (n + 1)) ms1 =
               find_next_interference (shift_interfer (n + 1) c) io k
                 ms2) /\
@@ -727,8 +726,9 @@ let asm_step_IMP_evaluate_step_find_next = prove
            i))) s1) /\
        target_state_rel (machine_config_target c) (s1:'a asm_state)
          (ms1:'state) ==>
-       (?l ms2. !k. (evaluate c io (k + l) ms1 =
-                    evaluate (shift_interfer l c) io k ms2) /\
+       (?l ms2. !k. (targetSem_evaluate c io (k + l) ms1 =
+                    targetSem_evaluate (shift_interfer l c) io k ms2)
+                      /\
                    (find_next_interference c io (k + l) ms1 =
                     find_next_interference (shift_interfer l c) io k
                       ms2) /\
@@ -754,8 +754,8 @@ let asm_step_IMP_evaluate_step = prove
        target_state_rel (machine_config_target c) (s1:'a asm_state)
          (ms1:'state) ==>
        (?l ms2.
-         (!k. evaluate c io (k + l) ms1 =
-              evaluate (shift_interfer l c) io k ms2) /\
+         (!k. targetSem_evaluate c io (k + l) ms1 =
+              targetSem_evaluate (shift_interfer l c) io k ms2) /\
          target_state_rel (machine_config_target c)
            (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH
              (asm_config_encode (target_config (machine_config_target
@@ -767,23 +767,25 @@ let asm_step_IMP_evaluate_step = prove
 (* evaluate_add_clock *)
 let targetProps_evaluate_add_clock = prove
  (`!mc_conf ffi k ms k1 r ms1 st1.
-    evaluate mc_conf ffi k ms = (r,ms1,st1) /\ ~(r = TimeOut) ==>
-    evaluate mc_conf ffi (k + k1) ms = (r,ms1,st1)`,
+    targetSem_evaluate mc_conf ffi k ms = (r,ms1,st1) /\ ~(r =
+      targetSem_TimeOut) ==>
+    targetSem_evaluate mc_conf ffi (k + k1) ms = (r,ms1,st1)`,
   CHEAT_TAC);;
 
 (* evaluate_io_events_mono *)
 let targetProps_evaluate_io_events_mono = prove
  (`!mc_conf ffi k ms. ffi_state_io_events
-     ffi <<= ffi_state_io_events (SND (SND (evaluate mc_conf ffi k
-       ms)))`,
+     ffi <<= ffi_state_io_events (SND (SND (targetSem_evaluate
+       mc_conf ffi k ms)))`,
   CHEAT_TAC);;
 
 (* evaluate_add_clock_io_events_mono *)
 let targetProps_evaluate_add_clock_io_events_mono = prove
  (`!mc_conf ffi k ms k'.
    k <= k' ==> ffi_state_io_events
-   (SND (SND (evaluate mc_conf ffi k ms))) <<= ffi_state_io_events
-   (SND (SND (evaluate mc_conf ffi k' ms)))`,
+   (SND (SND (targetSem_evaluate mc_conf ffi k ms))) <<=
+     ffi_state_io_events
+   (SND (SND (targetSem_evaluate mc_conf ffi k' ms)))`,
   CHEAT_TAC);;
 
 let machine_sem_total = prove

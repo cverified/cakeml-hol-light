@@ -1,0 +1,3 @@
+HD_compile	PROOF Failure("SPECL")
+LENGTH_compile	PROOF Failure("ARITH_RULE `LENGTH (compile m [e]) = SUC 0 ==> LENGTH (compile m [a]) = SUC 0`: REAL_ARITH `~(&0 <= real_of_int _2225412 /\\\n &0 <= real_of_int 
+compile_NOT_NIL	PROOF Failure("TAC_PROOF: Unsolved goals")

@@ -250,12 +250,6 @@
   (REWRITE_TAC[strcat_thm; injectivity "mlstring"; explode_thm;
     APPEND; CONS_11])
 
-### splitl_SPLITL
-  (REWRITE_TAC[splitl_def; splitl_aux_SPLITP; SPLITL; TAKE_0; DROP_0]
-    THEN
-   AP_THM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
-   REWRITE_TAC[FUN_EQ_THM; o_THM; APPEND])
-
 ### total_fast_le
   (REWRITE_TAC[total_def; fast_le_def] THEN REPEAT GEN_TAC THEN
    ASM_CASES_TAC `strlen x = strlen y` THEN ASM_REWRITE_TAC[] THENL

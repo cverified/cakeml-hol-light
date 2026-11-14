@@ -9,10 +9,8 @@ NOT_IN_heap_addresses_less
 gc_forward_ptr_ok
 heap_addresses_APPEND
 heap_addresses_APPEND_IN
-heap_length_CONS
 heap_length_heap_expand
 heap_lookup_AND_APPEND_IMP
-heap_lookup_APPEND
 heap_lookup_EXTEND
 heap_lookup_IMP_MEM
 heap_lookup_LENGTH

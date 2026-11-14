@@ -34,13 +34,14 @@ let ffi_offset_def = new_definition
 (* basic assemble function *)
 
 let lab_inst_def = define_cases
-  [`(lab_inst w (labLang_Jump _2) = Jump w) /\
-   (lab_inst w (JumpCmp c r ri _3) = JumpCmp c r ri w) /\
-   (lab_inst w (Call _4) = Call w) /\
+  [`(lab_inst w (labLang_Jump _2) = labLang_Jump w) /\
+   (lab_inst w (labLang_JumpCmp c r ri _3) = labLang_JumpCmp c r ri
+     w) /\
+   (lab_inst w (labLang_Call _4) = labLang_Call w) /\
    (lab_inst w (labLang_LocValue r _5) = asm_Loc r (w:'a word)) /\
-   (lab_inst w (labLang_Halt) = Jump w) /\
-   (lab_inst w (labLang_Install) = Jump w) /\
-   (lab_inst w (labLang_CallFFI n) = Jump w)`];;
+   (lab_inst w (labLang_Halt) = labLang_Jump w) /\
+   (lab_inst w (labLang_Install) = labLang_Jump w) /\
+   (lab_inst w (labLang_CallFFI n) = labLang_Jump w)`];;
 
 let cbw_to_asm_def = new_definition
   `cbw_to_asm a =
@@ -110,8 +111,8 @@ let get_label_def = new_definition
   `get_label x1 =
         match x1 with
           labLang_Jump l -> l
-        | (JumpCmp c r ri l) -> l
-        | (Call l) -> l
+        | (labLang_JumpCmp c r ri l) -> l
+        | (labLang_Call l) -> l
         | (labLang_LocValue r l) -> l
         // cannot happen
         | _18 -> labLang_Lab 0 0`;;
@@ -215,12 +216,12 @@ let line_ok_light_def = new_definition
           ((c:'a asm_config),labLang_Label _21 _22 l) -> T
         | (c,(labLang_Asm b bytes l)) -> T
         | (c,(labLang_LabAsm labLang_Halt w bytes l)) ->
-        asm_ok (Jump w) c
+        asm_ok (labLang_Jump w) c
         | (c,(labLang_LabAsm labLang_Install w bytes l)) ->
-        asm_ok (Jump w) c
+        asm_ok (labLang_Jump w) c
         | (c,(labLang_LabAsm (labLang_CallFFI index) w bytes l)) ->
-        asm_ok (Jump w) c
-        | (c,(labLang_LabAsm (Call v24) w bytes l)) ->
+        asm_ok (labLang_Jump w) c
+        | (c,(labLang_LabAsm (labLang_Call v24) w bytes l)) ->
         F
         // Call not yet supported
         | (c,(labLang_LabAsm a w bytes l)) ->
@@ -314,9 +315,9 @@ let zero_labs_acc_of_def = new_definition
         match x1 with
           labLang_LocValue _28 (labLang_Lab n1 n2) ->
        (if n2 = 0 then sptree_insert n1 one acc else acc)
-        | (Jump (labLang_Lab n1 n2)) ->
+        | (labLang_Jump (labLang_Lab n1 n2)) ->
        (if n2 = 0 then sptree_insert n1 one acc else acc)
-        | (JumpCmp _29 _30 _31 (labLang_Lab n1 n2)) ->
+        | (labLang_JumpCmp _29 _30 _31 (labLang_Lab n1 n2)) ->
        (if n2 = 0 then sptree_insert n1 one acc else acc)
         | _32 -> acc`;;
 
@@ -530,7 +531,6 @@ let compile_lab_def = new_definition
 let lab_to_target_compile_def = new_definition
   `lab_to_target_compile asm_conf c sec_list = compile_lab asm_conf c
   (filter_skip sec_list)`;;
-hol4_overload "compile" "lab_to_target_compile";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

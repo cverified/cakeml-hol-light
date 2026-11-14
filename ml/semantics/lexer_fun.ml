@@ -136,7 +136,6 @@ let lexer_fun_read_string_def,lexer_fun_read_string_ind =
                               (next_loc 4 loc) else
                                 (ErrorS,loc,TL str)) | _2 ->
                                 (ErrorS,loc,TL str))`];;
-hol4_overload "read_string" "lexer_fun_read_string";;
 
 let read_string_thm = prove
  (`!s t l l' x1 x2. (lexer_fun_read_string s t l = (x1,l',x2)) ==>

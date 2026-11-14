@@ -18,14 +18,12 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -78,7 +76,9 @@ let _ = hide_overloads
 (* HOL4 word_allocProofScript.sml:13-15: ML code, not ported *)
 
 let _ = do_list hide_constant ["mem"];;
-hol4_overload "numset_list_insert" "word_alloc_numset_list_insert";;
+(* HOL4 word_allocProofScript.sml:21-24: an overload that the source
+   brings to the front: numset_list_insert, written out as
+   word_alloc_numset_list_insert *)
 
 (*TODO: Move?*)
 let SUBSET_OF_INSERT = prove
@@ -106,7 +106,6 @@ let LET_FORALL_ELIM' = prove
 (* TODO: can we have a global for this *)
 let word_allocProof_hide_def = new_definition
   `word_allocProof_hide x = x`;;
-hol4_overload "hide" "word_allocProof_hide";;
 
 (* [local] *)
 let INJ_IMP_IMAGE_DIFF = prove
@@ -153,7 +152,7 @@ let colouring_ok_def,colouring_ok_ind = define_wf
          INJ f (domain s1_live) UNIV /\
          // Internal clash sets
          colouring_ok f s2 live lt /\ colouring_ok f s1 s2_live lt)
-        | (If cmp r1 ri e2 e3) ->
+        | (wordLang_If cmp r1 ri e2 e3) ->
        (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
        let union_live = sptree_union e2_live e3_live in
@@ -164,11 +163,13 @@ let colouring_ok_def,colouring_ok_ind = define_wf
          INJ f (domain merged) UNIV /\
          // Internal clash sets
          colouring_ok f e2 live lt /\ colouring_ok f e3 live lt)
-        | (Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h) ->
-       (let args_set = numset_list_insert args LN in
+        | (wordLang_Call (SOME (v,cutset,ret_handler,l1,l2)) dest
+          args h) ->
+       (let args_set = word_alloc_numset_list_insert args LN in
        let all_names' = sptree_union (SND cutset) (FST cutset) in
        INJ f (domain (sptree_union all_names' args_set)) UNIV /\
-       INJ f (domain (numset_list_insert v all_names')) UNIV /\
+       INJ f (domain (word_alloc_numset_list_insert v all_names'))
+         UNIV /\
        // returning handler
        colouring_ok f ret_handler live lt /\
        (
@@ -178,7 +179,7 @@ let colouring_ok_def,colouring_ok_ind = define_wf
            colouring_ok f prog live lt))
         | (wordLang_MustTerminate p) ->
        colouring_ok f p live lt
-        | (Loop names body exit_names) ->
+        | (wordLang_Loop names body exit_names) ->
        (INJ f (domain names) UNIV /\
        INJ f (domain exit_names) UNIV /\
        colouring_ok f body names (CONS (names,exit_names) lt))
@@ -236,8 +237,8 @@ let strong_locals_rel_subset_domain = prove
 (* domain_numset_list_insert *)
 let word_allocProof_domain_numset_list_insert = prove
  (`!ls locs.
-   domain (numset_list_insert ls locs) = domain locs UNION
-     set_of_list ls`,
+   domain (word_alloc_numset_list_insert ls locs) = domain locs
+     UNION set_of_list ls`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -625,11 +626,11 @@ let strong_locals_rel_extend_aux = prove
 (* [local] *)
 let evaluate_apply_colour_Loop_helper = prove
  (`!(st:('a,'c,'ffi)wordSem_state) cst f names body exit_names live lt.
-     colouring_ok f (Loop names body exit_names) live lt /\
+     colouring_ok f (wordLang_Loop names body exit_names) live lt /\
      word_state_eq_rel st cst /\
      strong_locals_rel f
-       (domain (get_live (Loop names body exit_names) live lt))
-         (wordSem_state_locals
+       (domain (get_live (wordLang_Loop names body exit_names) live
+         lt)) (wordSem_state_locals
        st) (wordSem_state_locals cst) /\
      (!(st:('a,'c,'ffi)wordSem_state) cst f live lt.
         colouring_ok f body live lt /\
@@ -648,12 +649,12 @@ let evaluate_apply_colour_Loop_helper = prove
                  NONE ->
                    strong_locals_rel f (domain live)
                      (wordSem_state_locals rst) (wordSem_state_locals
-                     rcst) | SOME (Break n) ->
+                     rcst) | SOME (wordSem_Break n) ->
                    (match oEL n lt with SOME (_3,exit_names) ->
                         strong_locals_rel f (domain exit_names)
                           (wordSem_state_locals
                           rst) (wordSem_state_locals rcst) | NONE ->
-                            T) | SOME (Continue n) ->
+                            T) | SOME (wordSem_Continue n) ->
                    (match oEL n lt with SOME (names,_4) ->
                         strong_locals_rel f (domain names)
                           (wordSem_state_locals
@@ -662,25 +663,26 @@ let evaluate_apply_colour_Loop_helper = prove
                             wordSem_state_locals rcst))))) ==>
      (?perm'.
        (let (res,rst) = wordSem_evaluate
-                          (Loop names body
+                          (wordLang_Loop names body
                             exit_names,wordSem_state_permute_fupd (K
                             perm')
                            st) in
           res = SOME wordSem_Error \/
           (let (res',rcst) = wordSem_evaluate
                               (apply_colour f
-                              (Loop names body exit_names),cst) in
+                              (wordLang_Loop names body
+                                exit_names),cst) in
             res = res' /\ word_state_eq_rel rst rcst /\
             (match res with
               NONE ->
                 strong_locals_rel f (domain live)
                   (wordSem_state_locals rst) (wordSem_state_locals rcst)
-                  | SOME (Break n) ->
+                  | SOME (wordSem_Break n) ->
                 (match oEL n lt with SOME (_6,exit_names) ->
                      strong_locals_rel f (domain exit_names)
                        (wordSem_state_locals
                        rst) (wordSem_state_locals rcst) | NONE -> T)
-                         | SOME (Continue n) ->
+                         | SOME (wordSem_Continue n) ->
                 (match oEL n lt with SOME (names,_7) ->
                      strong_locals_rel f (domain names)
                        (wordSem_state_locals
@@ -706,11 +708,12 @@ let evaluate_apply_colour = prove
      (match res with
        NONE -> strong_locals_rel f (domain live)
          (wordSem_state_locals
-               rst) (wordSem_state_locals rcst) | SOME (Break n) ->
+               rst) (wordSem_state_locals rcst) | SOME (wordSem_Break
+                 n) ->
          (match oEL n lt with SOME (_9,exit_names) ->
               strong_locals_rel f (domain exit_names)
                 (wordSem_state_locals rst) (wordSem_state_locals rcst) |
-                NONE -> T) | SOME (Continue n) ->
+                NONE -> T) | SOME (wordSem_Continue n) ->
          (match oEL n lt with SOME (names,_10) ->
               strong_locals_rel f (domain names)
                 (wordSem_state_locals rst) (wordSem_state_locals rcst)
@@ -835,9 +838,9 @@ let wf_insert_swap = prove
 let numset_list_insert_swap = prove
  (`!ls h live.
    sptree_wf live ==>
-   sptree_wf (numset_list_insert ls live) /\
-   numset_list_insert ls (sptree_insert h one live) =
-   sptree_insert h one (numset_list_insert ls live)`,
+   sptree_wf (word_alloc_numset_list_insert ls live) /\
+   word_alloc_numset_list_insert ls (sptree_insert h one live) =
+   sptree_insert h one (word_alloc_numset_list_insert ls live)`,
   CHEAT_TAC);;
 
 (* check_partial_col_INJ *)
@@ -848,7 +851,7 @@ let word_allocProof_check_partial_col_INJ = prove
    INJ f (domain live) UNIV /\
    check_partial_col f ls live flive = SOME (live',flive') ==>
    sptree_wf live' /\
-   live' = numset_list_insert ls live /\
+   live' = word_alloc_numset_list_insert ls live /\
    INJ f (domain live') UNIV /\
    domain flive' = IMAGE f (domain live')`,
   CHEAT_TAC);;
@@ -861,8 +864,8 @@ let domain_insert_eq_union = prove
 
 (* [local] *)
 let domain_numset_list_insert_eq_union = prove
- (`domain (numset_list_insert ls live) = domain (sptree_union
-  (numset_list_insert ls LN) live)`,
+ (`domain (word_alloc_numset_list_insert ls live) = domain
+  (sptree_union (word_alloc_numset_list_insert ls LN) live)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -874,7 +877,7 @@ let get_reads_exp_get_live_exp = prove
 (* [local] *)
 let lookup_numset_list_insert = prove
  (`!ls n t.
-   sptree_lookup n (numset_list_insert ls t) =
+   sptree_lookup n (word_alloc_numset_list_insert ls t) =
    (if MEM n ls then SOME one else sptree_lookup n t)`,
   CHEAT_TAC);;
 
@@ -883,7 +886,7 @@ let numset_list_insert_eq_UNION = prove
  (`!t t' ls.
    sptree_wf t /\ sptree_wf t' /\
    domain t' = set_of_list ls ==>
-   numset_list_insert ls t =
+   word_alloc_numset_list_insert ls t =
    sptree_union t' t`,
   CHEAT_TAC);;
 
@@ -935,7 +938,7 @@ let clash_tree_colouring_ok = prove
    check_clash_tree f (get_clash_tree prog lt) live flive = SOME
      (livein,flivein) ==>
    // very slow when this is not hidden...
-   hide (sptree_wf livein /\
+   word_allocProof_hide (sptree_wf livein /\
    INJ f (domain livein) UNIV /\
    colouring_ok f prog live lt /\
    livein = get_live prog live lt /\
@@ -1017,9 +1020,9 @@ let word_alloc_correct = prove
      res = res' /\
      word_state_eq_rel rst rcst /\
      (match res with
-       NONE -> T | SOME (Break _12) -> T | SOME (Continue _13) -> T
-         | SOME _14 -> wordSem_state_locals rst = wordSem_state_locals
-         rcst))`,
+       NONE -> T | SOME (wordSem_Break _12) -> T | SOME
+         (wordSem_Continue _13) -> T | SOME _14 ->
+         wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1054,9 +1057,9 @@ let nlive_store_def,nlive_store_ind = define_wf
           wordLang_Op _16 ls ->
          ALL (nlive_store nlive) ls
         | (wordLang_Lookup s) -> ~(s IN set_of_list nlive)
-        | (Load e) ->
+        | (wordLang_Load e) ->
        nlive_store nlive e
-        | (Shift _17 e1 e2) ->
+        | (wordLang_Shift _17 e1 e2) ->
        nlive_store nlive e1 /\ nlive_store nlive e2
         | _18 -> T`];;
 
@@ -1184,9 +1187,11 @@ let evaluate_remove_dead_Loop_helper = prove
      strong_locals_rel I (domain livein) (wordSem_state_locals st) t
        /\
      live_store_rel nlivein (wordSem_state_store st) tstore /\
-     wordSem_evaluate (Loop names body exit_names,st) = (res,rst) /\
+     wordSem_evaluate (wordLang_Loop names body exit_names,st) =
+       (res,rst) /\
      flat_exp_conventions body /\
-     remove_dead (Loop names body exit_names) live nlive lt =
+     remove_dead (wordLang_Loop names body exit_names) live nlive lt
+       =
        (prog',livein,nlivein) /\
      nlivein = [] /\ ~(res = SOME wordSem_Error) /\
      (!(st':('a,'c,'ffi)wordSem_state) t' tstore' prog'' livein'
@@ -1208,13 +1213,13 @@ let evaluate_remove_dead_Loop_helper = prove
                strong_locals_rel I (domain names)
                  (wordSem_state_locals rst') t'' /\
                live_store_rel [] (wordSem_state_store rst') tstore''
-                 | SOME (Break n) -> wordSem_state_store
+                 | SOME (wordSem_Break n) -> wordSem_state_store
                rst' = tstore'' /\
                (match oEL n (CONS (names,exit_names) lt) with
                   SOME (_19,exit_names) ->
                     strong_locals_rel I (domain exit_names)
                       (wordSem_state_locals rst') t'' | NONE -> T) |
-                      SOME (Continue n) -> wordSem_state_store
+                      SOME (wordSem_Continue n) -> wordSem_state_store
                rst' = tstore'' /\
                (match oEL n (CONS (names,exit_names) lt) with
                   SOME (names,_20) ->
@@ -1232,13 +1237,13 @@ let evaluate_remove_dead_Loop_helper = prove
             strong_locals_rel I (domain live) (wordSem_state_locals
               rst) t' /\
             live_store_rel nlive (wordSem_state_store rst) tstore' |
-              SOME (Break n) -> wordSem_state_store
+              SOME (wordSem_Break n) -> wordSem_state_store
             rst = tstore' /\
             (match oEL n lt with
                SOME (_22,exit_names) ->
                  strong_locals_rel I (domain exit_names)
                    (wordSem_state_locals rst) t' | NONE -> T) | SOME
-                   (Continue n) -> wordSem_state_store
+                   (wordSem_Continue n) -> wordSem_state_store
             rst = tstore' /\
             (match oEL n lt with
                SOME (names,_23) ->
@@ -1266,13 +1271,13 @@ let evaluate_remove_dead = prove
          strong_locals_rel I (domain live) (wordSem_state_locals rst)
            t' /\
          live_store_rel nlive (wordSem_state_store rst) tstore' |
-           SOME (Break n) -> wordSem_state_store
+           SOME (wordSem_Break n) -> wordSem_state_store
          rst = tstore' /\
          (match oEL n lt with
             SOME (_25,exit_names) ->
               strong_locals_rel I (domain exit_names)
                 (wordSem_state_locals rst) t' | NONE -> T) | SOME
-                (Continue n) -> wordSem_state_store
+                (wordSem_Continue n) -> wordSem_state_store
          rst = tstore' /\
          (match oEL n lt with
             SOME (names,_26) ->
@@ -1347,8 +1352,9 @@ let evaluate_remove_dead_prog = prove
      wordSem_evaluate (remove_dead_prog prog,st) =
        (res,wordSem_state_locals_fupd (K t') rst) /\
      (match res with
-        NONE -> T | SOME (Break _28) -> T | SOME (Continue _29) ->
-          T | SOME _30 -> wordSem_state_locals rst = t'))`,
+        NONE -> T | SOME (wordSem_Break _28) -> T | SOME
+          (wordSem_Continue _29) -> T | SOME _30 ->
+          wordSem_state_locals rst = t'))`,
   CHEAT_TAC);;
 
 (*SSA Proof*)
@@ -2190,8 +2196,8 @@ let foldr_insert_const_swap = prove
 (* [local] *)
 let evaluate_fake_const_chain = prove
  (`!rs (cst:('a,'b,'c)wordSem_state).
-     wordSem_evaluate (ITLIST Seq (MAP (\r. (fake_move r):'a
-       wordLang_prog) rs) Skip,cst) =
+     wordSem_evaluate (ITLIST linear_scan_Seq (MAP (\r. (fake_move
+       r):'a wordLang_prog) rs) wordLang_Skip,cst) =
        (NONE,wordSem_state_locals_fupd (K (ITLIST (\r loc.
          sptree_insert r (wordLang_Word (n2w 0)) loc) rs
          (wordSem_state_locals cst))) cst)`,
@@ -2200,8 +2206,9 @@ let evaluate_fake_const_chain = prove
 (* [local] *)
 let evaluate_fake_const_chain_locals = prove
  (`!rs (cst:('a,'b,'c)wordSem_state).
-     let rcst = SND (wordSem_evaluate (ITLIST Seq
-       (MAP (\r. (fake_move r):'a wordLang_prog) rs) Skip,cst)) in
+     let rcst = SND (wordSem_evaluate (ITLIST linear_scan_Seq
+       (MAP (\r. (fake_move r):'a wordLang_prog) rs)
+         wordLang_Skip,cst)) in
      word_state_eq_rel cst rcst /\
      domain (wordSem_state_locals rcst) = domain
        (wordSem_state_locals cst) UNION set_of_list rs /\
@@ -2246,7 +2253,8 @@ let loop_setup_correct = prove
 (* [local] *)
 let evaluate_seq_collapse = prove
  (`wordSem_evaluate (P,s) = (NONE,t) ==>
-   wordSem_evaluate (Seq P Q,s) = wordSem_evaluate (Q,t)`,
+   wordSem_evaluate (linear_scan_Seq P Q,s) = wordSem_evaluate
+     (Q,t)`,
   CHEAT_TAC);;
 
 (* fromAList (MAP f (toAList LN)) behaves like LN in cut_env. *)
@@ -2302,13 +2310,13 @@ let ssa_cc_trans_Loop_helper = prove
                 (match res with
                   NONE -> ssa_locals_rel naB ssaB
                     (wordSem_state_locals rst) (wordSem_state_locals
-                    rcst) | SOME (Break n) ->
+                    rcst) | SOME (wordSem_Break n) ->
                     (match oEL n lt' with
                        NONE -> T | SOME (tgt_ssa,_31,exit_names) ->
                          strong_locals_rel (option_lookup tgt_ssa)
                            (domain exit_names) (wordSem_state_locals
                              rst) (wordSem_state_locals rcst)) | SOME
-                             (Continue n') ->
+                             (wordSem_Continue n') ->
                     (match oEL n' lt' with
                        NONE -> T | SOME (tgt_ssa,names,_32) ->
                          strong_locals_rel (option_lookup tgt_ssa)
@@ -2317,15 +2325,15 @@ let ssa_cc_trans_Loop_helper = prove
                              wordSem_state_locals rst =
                              wordSem_state_locals rcst))))) ==>
      (let back_moves = ssa_reconcile ssa' ssa_refreshed names in
-     let body_final = (if back_moves = Skip then body' else Seq body'
-       back_moves) in
+     let body_final = (if back_moves = wordLang_Skip then body' else
+       linear_scan_Seq body' back_moves) in
      let ssa_names = apply_nummap_key (option_lookup ssa_refreshed)
        names in
      let ssa_exit = apply_nummap_key (option_lookup ssa_refreshed)
        exit_names in
      !res' rcst.
-       wordSem_evaluate (Loop ssa_names body_final ssa_exit,cst) =
-         (res',rcst) ==>
+       wordSem_evaluate (wordLang_Loop ssa_names body_final
+         ssa_exit,cst) = (res',rcst) ==>
        (?perm'.
          (\(res,rst).
              res = SOME wordSem_Error \/
@@ -2334,13 +2342,13 @@ let ssa_cc_trans_Loop_helper = prove
                NONE -> ssa_locals_rel na' (inter ssa_refreshed
                  exit_names) (wordSem_state_locals
                          rst) (wordSem_state_locals rcst) | SOME
-                           (Break n) ->
+                           (wordSem_Break n) ->
                  (match oEL n lt with
                     NONE -> T | SOME (tgt_ssa,_34,exit_names) ->
                       strong_locals_rel (option_lookup tgt_ssa)
                         (domain exit_names) (wordSem_state_locals
                           rst) (wordSem_state_locals rcst)) | SOME
-                          (Continue n') ->
+                          (wordSem_Continue n') ->
                  (match oEL n' lt with
                     NONE -> T | SOME (tgt_ssa,names,_35) ->
                       strong_locals_rel (option_lookup tgt_ssa)
@@ -2348,7 +2356,7 @@ let ssa_cc_trans_Loop_helper = prove
                           (wordSem_state_locals rcst)) | SOME _36 ->
                           wordSem_state_locals rst =
                           wordSem_state_locals rcst))
-           (wordSem_evaluate (Loop names body
+           (wordSem_evaluate (wordLang_Loop names body
              exit_names,wordSem_state_permute_fupd (K perm') st))))`,
   CHEAT_TAC);;
 
@@ -2382,13 +2390,13 @@ let ssa_cc_trans_correct = prove
      (match res with
        NONE ->
          ssa_locals_rel na' ssa' (wordSem_state_locals rst)
-           (wordSem_state_locals rcst) | SOME (Break n) ->
+           (wordSem_state_locals rcst) | SOME (wordSem_Break n) ->
          (match oEL n lt with
             SOME (tgt_ssa,_37,exit_names) ->
               strong_locals_rel (option_lookup tgt_ssa) (domain
                 exit_names) (wordSem_state_locals
                 rst) (wordSem_state_locals rcst) | NONE -> T) | SOME
-                  (Continue n) ->
+                  (wordSem_Continue n) ->
          (match oEL n lt with
             SOME (tgt_ssa,names,_38) ->
               strong_locals_rel (option_lookup tgt_ssa) (domain
@@ -2564,9 +2572,9 @@ let full_ssa_cc_trans_correct = prove
       res = res' /\
       word_state_eq_rel rst rcst /\
       (match res with
-        NONE -> T | SOME (Break _40) -> T | SOME (Continue _41) ->
-          T | SOME _42 -> wordSem_state_locals rst =
-          wordSem_state_locals rcst))`,
+        NONE -> T | SOME (wordSem_Break _40) -> T | SOME
+          (wordSem_Continue _41) -> T | SOME _42 ->
+          wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 
 (* Prove that the ssa form sets up pre_alloc_conventions
@@ -2607,20 +2615,20 @@ let union_apply_nummaps_key = prove
 
 (* [local] *)
 let fake_seq_pre_alloc_conventions = prove
- (`!ls. pre_alloc_conventions (ITLIST Seq (MAP (\r. fake_move r) ls)
-  Skip)`,
+ (`!ls. pre_alloc_conventions (ITLIST linear_scan_Seq (MAP (\r.
+  fake_move r) ls) wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_every_inst_distinct_tar_reg = prove
- (`!ls. every_inst distinct_tar_reg (ITLIST Seq (MAP (\r. fake_move r)
-  ls) Skip)`,
+ (`!ls. every_inst distinct_tar_reg (ITLIST linear_scan_Seq (MAP (\r.
+  fake_move r) ls) wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_full_inst_ok_less = prove
- (`!c ls. full_inst_ok_less c (ITLIST Seq (MAP (\r. fake_move r) ls)
-  Skip)`,
+ (`!c ls. full_inst_ok_less c (ITLIST linear_scan_Seq (MAP (\r.
+  fake_move r) ls) wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2721,8 +2729,8 @@ let full_ssa_cc_trans_distinct_tar_reg = prove
 (* [local] *)
 let exp_to_addr_ShareInst = prove
  (`exp_to_addr exp = SOME (Addr n c) <=>
-     ((exp = Var n /\ c = (n2w 0)) \/ (exp = wordLang_Op asm_Add
-       [Var n; Const c]))`,
+     ((exp = wordLang_Var n /\ c = (n2w 0)) \/ (exp = wordLang_Op
+       asm_Add [wordLang_Var n; wordLang_Const c]))`,
   CHEAT_TAC);;
 
 (* [local] *)

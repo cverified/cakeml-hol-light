@@ -2,8 +2,8 @@
 (*  mlsexp: ported from HOL4's
     basis/pure/mlsexpScript.sml
     A definition theory, with 25 definitions, 4 datatypes and 25
-    theorems.  Needed by compiler.ml, compilerProof.ml,
-    displayLang.ml and presLang.ml.  *)
+    theorems.  Needed by compiler.ml, displayLang.ml and
+    presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -77,7 +77,6 @@ let read_string_aux_def,read_string_aux_ind = define_wf
 let read_string_def = new_definition
   `(mlsexp_read_string (input:string):mlstring#string+mlstring#string) =
      read_string_aux input []`;;
-hol4_overload "read_string" "mlsexp_read_string";;
 
 let read_string_aux_length = prove
  (`!input acc.
@@ -147,7 +146,6 @@ let lex_aux_def,lex_aux_ind = define_guess_cheat
         match read_symbol cs [c] with (s,rest) ->
             (if depth = 0 then INR ([SYMBOL s],rest) else
               mlsexp_lex_aux depth rest (CONS (SYMBOL s) acc)))`];;
-hol4_overload "lex_aux" "mlsexp_lex_aux";;
 
 let lex_aux_length = prove
  (`!depth input acc e rest.
@@ -203,7 +201,6 @@ let parse_def = new_definition
          (match parse_aux rev_toks [] [] with [] -> INL ((implode
            "parse: empty input"),rest) | (CONS v _3) -> INR
            (v,rest)))`;;
-hol4_overload "parse" "mlsexp_parse";;
 
 let parse_IMP_LENGTH_LESS = prove
  (`!input x rest. mlsexp_parse input = INR (x,rest) ==> LENGTH rest <
@@ -227,7 +224,6 @@ let mlsexp_fromString_def = new_definition
   `(mlsexp_fromString (input:mlstring):mlsexp_sexp option) =
      (match mlsexp_parse (explode input) with INL _4 -> NONE | INR
        (se,_5) -> SOME se)`;;
-hol4_overload "fromString" "mlsexp_fromString";;
 
 (*--------------------------------------------------------------*
    Pretty printing of str_tree
@@ -236,18 +232,11 @@ hol4_overload "fromString" "mlsexp_fromString";;
 let str_tree_INDUCT,str_tree_RECURSION = define_datatype
   "str_tree = mlsexp_Str (mlstring) | mlsexp_Trees (str_tree list) | \
    mlsexp_GrabLine (str_tree)";;
-hol4_overload "Str" "mlsexp_Str";;
-hol4_overload "Trees" "mlsexp_Trees";;
-hol4_overload "GrabLine" "mlsexp_GrabLine";;
 
 let pretty_INDUCT,pretty_RECURSION = define_datatype
   "pretty = mlsexp_Parenthesis (pretty) | mlsexp_String (mlstring) | \
    mlsexp_Append (pretty) (bool) (pretty) | mlsexp_Size (num) \
    (pretty)";;
-hol4_overload "Parenthesis" "mlsexp_Parenthesis";;
-hol4_overload "String" "mlsexp_String";;
-hol4_overload "Append" "mlsexp_Append";;
-hol4_overload "Size" "mlsexp_Size";;
 
 let _ = size_thms "pretty";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -258,7 +247,7 @@ let newlines_def,newlines_ind = define_wf
       match x1 with
         [] -> mlsexp_String (implode "")
       | [x] -> x
-      | (CONS x xs) -> Append x T (newlines xs)`];;
+      | (CONS x xs) -> mlsexp_Append x T (newlines xs)`];;
 
 let _ = size_thms "str_tree";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -280,17 +269,17 @@ let mlsexp_get_size_def,mlsexp_get_size_ind = define_shaped_rec
   [`mlsexp_get_size x1 =
       match x1 with
         mlsexp_Size n x -> n
-      | (Append x _6 y) -> mlsexp_get_size x + mlsexp_get_size y + 1
+      | (mlsexp_Append x _6 y) -> mlsexp_get_size x +
+        mlsexp_get_size y + 1
       | (mlsexp_Parenthesis x) -> mlsexp_get_size x + 2
       | _7 -> 0`];;
-hol4_overload "get_size" "mlsexp_get_size";;
 
 let get_next_size_def,get_next_size_ind = define_shaped_rec
   "match"
   [`get_next_size x1 =
       match x1 with
         mlsexp_Size n x -> n
-      | (Append x _8 y) -> get_next_size x
+      | (mlsexp_Append x _8 y) -> get_next_size x
       | (mlsexp_Parenthesis x) -> get_next_size x + 2
       | _9 -> 0`];;
 
@@ -301,22 +290,21 @@ let mlsexp_annotate_def,mlsexp_annotate_ind = define_rec
       (let b = mlsexp_annotate b in
          mlsexp_Size (mlsexp_get_size b + 2) (mlsexp_Parenthesis
            b))`;
-   `mlsexp_annotate (Append b1 n b2:pretty) =
+   `mlsexp_annotate (mlsexp_Append b1 n b2:pretty) =
       (let b1 = mlsexp_annotate b1 in
        let b2 = mlsexp_annotate b2 in
           (
            // Size (get_size b1 + get_size b2 + 1)
-           Append b1 n b2))`;
+           mlsexp_Append b1 n b2))`;
    `mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n
   (mlsexp_annotate b)`];;
-hol4_overload "annotate" "mlsexp_annotate";;
 
 let remove_all_def,remove_all_ind = define_rec
   [`remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis
   (remove_all v)`;
    `remove_all (mlsexp_String v1:pretty) = (mlsexp_String v1:pretty)`;
-   `remove_all (Append v2 _11 v3:pretty) = Append (remove_all v2) F
-  (remove_all v3)`;
+   `remove_all (mlsexp_Append v2 _11 v3:pretty) = mlsexp_Append
+  (remove_all v2) F (remove_all v3)`;
    `remove_all (mlsexp_Size v4 v5) = remove_all v5`];;
 
 let smart_remove_def,smart_remove_ind = define_rec
@@ -326,13 +314,14 @@ let smart_remove_def,smart_remove_ind = define_rec
   (smart_remove (i + 1) (k + 1) v)`;
    `smart_remove i k (mlsexp_String v1:pretty) = (mlsexp_String
   v1:pretty)`;
-   `smart_remove i k (Append v2 b v3:pretty) =
+   `smart_remove i k (mlsexp_Append v2 b v3:pretty) =
       (let n2 = mlsexp_get_size v2 in
       let n3 = get_next_size v3 in
         if k + n2 + n3 < 50 then
-          Append (smart_remove i k v2) F (smart_remove i (k + n2)
-            v3) else
-          Append (smart_remove i k v2) T (smart_remove i i v3))`];;
+          mlsexp_Append (smart_remove i k v2) F (smart_remove i (k +
+            n2) v3) else
+          mlsexp_Append (smart_remove i k v2) T (smart_remove i
+            i v3))`];;
 
 let flatten_def,flatten_ind = define_rec
   [`mlsexp_flatten indent (mlsexp_Size n p) s = mlsexp_flatten indent
@@ -341,10 +330,9 @@ let flatten_def,flatten_ind = define_rec
   "(") (mlsexp_flatten (mlstring_concat [indent; (implode "   ")]) p
   (CONS (implode ")") s))`;
    `mlsexp_flatten indent (mlsexp_String t:pretty) s = CONS t s`;
-   `mlsexp_flatten indent (Append p1 b p2:pretty) s =
+   `mlsexp_flatten indent (mlsexp_Append p1 b p2:pretty) s =
       mlsexp_flatten indent p1 (CONS (if b then indent else
         (implode " ")) (mlsexp_flatten indent p2 s))`];;
-hol4_overload "flatten" "mlsexp_flatten";;
 
 let str_tree_to_strs_def = new_definition
   `str_tree_to_strs end v = mlsexp_flatten (implode "\n")
@@ -401,12 +389,12 @@ let sexp2tree_def,sexp2tree_ind = define_mutual_rec
 let sexp_to_app_list_def,sexp_to_app_list_ind = define_mutual_rec
   [`sexp_to_app_list (Atom s) = misc_List [make_str_safe s]`;
    `sexp_to_app_list (Expr l) =
-      Append (misc_List [(implode "(")])
+      mlsexp_Append (misc_List [(implode "(")])
              (misc_Append (sexps_to_app_list l) (misc_List
                [(implode ")")]))`;
    `sexps_to_app_list [] = misc_List []`;
    `sexps_to_app_list (CONS v vs) =
-      (if NULL vs then sexp_to_app_list v else Append
+      (if NULL vs then sexp_to_app_list v else mlsexp_Append
         (sexp_to_app_list v)
                   (misc_Append (misc_List [(implode " ")])
                     (sexps_to_app_list vs)))`];;
@@ -585,11 +573,11 @@ let parse_sexp_to_pretty_string = prove
   CHEAT_TAC);;
 
 let fromString_sexp_to_string = prove
- (`fromString (sexp_to_string x) = SOME x`,
+ (`mlsexp_fromString (sexp_to_string x) = SOME x`,
   CHEAT_TAC);;
 
 let fromString_sexp_to_pretty_string = prove
- (`fromString (sexp_to_pretty_string x) = SOME x`,
+ (`mlsexp_fromString (sexp_to_pretty_string x) = SOME x`,
   CHEAT_TAC);;
 
 (* and the overloads that this file cannot see are back in the

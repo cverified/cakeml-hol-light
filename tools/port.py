@@ -270,6 +270,9 @@ def shorten(text, width=72):
   return out[:i] + QUOTE + ' ' + out[i:] if i >= 0 else out + ' ' + QUOTE
 
 
+UNRESOLVED = {}   # theory -> name -> how often it stayed bare
+
+
 class Porter:
   def __init__(self, db, thy):
     self.db = db
@@ -307,6 +310,10 @@ class Porter:
                          ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy),
                          defnames=db.defnames_for(thy))
+    # a name HOL4 overloads is written out as the constant it
+    # means in this theory, so that HOL Light has one name per
+    # constant and nothing is resolved while a file loads
+    self.ctx.resolve = self.resolve_overload
     self.ctx.fieldvar = self.fieldvar
     self.ctx.recdflt = dict(overrides.FIELD_DEFAULT)
     # a name that LOCAL_NAMES gives this theory is written as that
@@ -339,6 +346,7 @@ class Porter:
     self.anc_comments = {}  # a comment of the Ancestors block
     self.restore = set()   # the infixes to put back at the end
     self.conof_said = {}   # the theory an override gives a name
+    self.front_thy = {}    # and the one a bring_to_front gives it
     self.conof_arities = {}  # the theory per number of arguments
     self.conof_wild = False  # did the override use the wildcard?
     self.conbody = {}      # the constructors of the body only
@@ -673,7 +681,14 @@ class Porter:
         out.append(self.at(b, 'an overload that the source brings to'
                               ' the front: %s' % nm))
       else:
-        out.append('hol4_overload "%s" "%s";;' % (nm, new))
+        # the port writes the constant out wherever the name
+        # stands, so what the source brings to the front is a
+        # resolution of that name from here on and not a
+        # declaration of HOL Light's
+        self.front_thy[nm] = thy.group(1)
+        out.append(self.at(
+          b, 'an overload that the source brings to the front: %s,'
+             ' written out as %s' % (nm, new)))
     return out
 
   def bindname(self, name):
@@ -1848,10 +1863,9 @@ class Porter:
       # not in the interface of HOL Light, and the overload that
       # another theory declares for its own constant hides it
       if new == nm and not self.is_const(nm): continue
-      text = 'hol4_overload "%s" "%s";;' % (nm, new)
-      if len(text) > 72:
-        text = 'hol4_overload "%s"\n  "%s";;' % (nm, new)
-      out.append(text)
+      # nothing: the port writes the constant out wherever the
+      # name stands, so HOL Light needs no overload of it
+      _ = new
     return out
 
   def in_thy(self, thy, f):
@@ -2393,6 +2407,7 @@ class Porter:
     t, n = nm.split('$') if '$' in nm else (None, nm)
     if n in self.conof_said: return self.conof_said[n]
     if t: return t
+    if n in self.front_thy: return self.front_thy[n]
     anc = self.db.scope(self.thy) | {self.thy}
     ts = [x for x, k in self.db.defs.get(n, [])
           if k in kinds and x in anc]
@@ -2426,6 +2441,25 @@ class Porter:
     ts = [x for x in ts if dist.get(x, 99) == near] or ts
     rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
     return max(ts, key=lambda x: rank.get(x, -1))
+
+  def resolve_overload(self, nm):
+    """the constant that an overloaded name means here: the
+       one HOL4's own resolution would take, which con_thy
+       works out.  None where this port cannot tell, and the
+       name is then left as it stands"""
+    try:
+      t = self.con_thy(nm, ('con', 'def', 'rel'))
+    except Exception:
+      t = None
+    if not t: return None
+    # the map keys a name of this theory itself without the
+    # theory in front of it, as hterm.Ctx.name reads it
+    r = self.ctx.names.get((t, nm))
+    if r is None and t == self.thy: r = self.ctx.names.get(nm)
+    if r is None:
+      UNRESOLVED[self.thy][nm] = UNRESOLVED.setdefault(
+        self.thy, {}).get(nm, 0) + 1
+    return r
 
   def const_name(self, nm):
     """the name that the port gives the constant that a name of a
@@ -3560,13 +3594,10 @@ class Porter:
     if m and m.group(1).split() == m.group(3).split():
       txt = m.group(2)
     # an overload of one constant whose name other theories of the
-    # port use for a constant of their own is an overload in HOL
-    # Light as well; expanding it would resolve the name the wrong
-    # way where another theory means its own constant
-    if b.name and self.is_overloaded(b.name, txt):
-      c = self.ctx.name(txt.strip())
-      self.out.append('hol4_overload "%s" "%s";;' % (b.name, c))
-      return
+    # port use for a constant of their own was an overload in HOL
+    # Light as well; now the port writes every such name out as
+    # the constant it means, so this one is expanded like any
+    # other overload of a source
     # an overload of a symbolic infix the source declared itself is
     # written as an application of the constant it stands for
     if (b.name in hterm.OWN_INFIX and
@@ -4183,6 +4214,19 @@ def port(thy, db=None):
   text = p.run()
   text = '\n'.join(l.rstrip() for l in text.split('\n'))
   text = re.sub(r'\n\n\n+', '\n\n\n', text).strip('\n')
+  # a line that is still too long after everything that wrapped it
+  # (a statement whose closing `), goes on after the wrapping) is
+  # broken here; a comment of a source keeps its length
+  out, incomment = [], False
+  for l in text.split('\n'):
+    if not incomment and len(l) > 72 and '(*' not in l \
+       and '//' not in l:
+      w = wrap(l, 0, 72)
+      l = w if max(len(x) for x in w.split('\n')) <= 72 else l
+    if '(*' in l and '*)' not in l.split('(*')[-1]: incomment = True
+    elif '*)' in l: incomment = False
+    out.append(l)
+  text = '\n'.join(out)
   for i, l in enumerate(text.split('\n')):
     if len(l) > 72:
       p.warn.append('line %d is %d characters' % (i + 1, len(l)))

@@ -1,3 +1,8 @@
+FST_pure_co	PROOF Failure("TAC_PROOF: Unsolved goals")
+SND_pure_co	PROOF Failure("TAC_PROOF: Unsolved goals")
 is_state_oracle_k	PROOF Failure("EXISTS_TAC: expected type :?814376 but got :S")
 oracle_monotonic_shift_seq	PROOF Failure("tryfind")
+oracle_monotonic_shift_subset	PROOF Failure("solve_goal: Too deep")
+oracle_monotonic_state_with_inv_init	PROOF Failure("EXISTS_TAC: expected type :?843964->bool but got :S->bool")
+pure_co_comb_pure_co	PROOF Failure("TAC_PROOF: Unsolved goals")
 state_orac_states_inv	PROOF Failure("EXISTS_TAC: expected type :?814861 but got :S")

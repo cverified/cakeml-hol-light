@@ -2,7 +2,7 @@
 (*  pattern_semantics: ported from HOL4's
     compiler/backend/pattern_matching/pattern_semanticsScript.sml
     A definition theory, with 7 definitions, 5 datatypes and no
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -35,39 +35,23 @@ let pattern_semantics_pat_INDUCT,pattern_semantics_pat_RECURSION =
    (pattern_semantics_pat) (pattern_semantics_pat) | \
    pattern_semantics_Lit (lit) | pattern_semantics_Ref \
    (pattern_semantics_pat)";;
-hol4_overload "Any" "pattern_semantics_Any";;
-hol4_overload "Cons" "pattern_semantics_Cons";;
-hol4_overload "Or" "pattern_semantics_Or";;
-hol4_overload "Lit" "pattern_semantics_Lit";;
-hol4_overload "Ref" "pattern_semantics_Ref";;
 
 (* output syntax *)
 
 let dTest_INDUCT,dTest_RECURSION = define_datatype
   "dTest = pattern_semantics_TagLenEq (num) (num) | \
    pattern_semantics_LitEq (lit)";;
-hol4_overload "TagLenEq" "pattern_semantics_TagLenEq";;
-hol4_overload "LitEq" "pattern_semantics_LitEq";;
 
 let dGuard_INDUCT,dGuard_RECURSION = define_datatype
   "dGuard = pattern_semantics_PosTest (position) (dTest) | \
    pattern_semantics_Not (dGuard) | pattern_semantics_Conj (dGuard) \
    (dGuard) | pattern_semantics_Disj (dGuard) (dGuard) | \
    pattern_semantics_True";;
-hol4_overload "PosTest" "pattern_semantics_PosTest";;
-hol4_overload "Not" "pattern_semantics_Not";;
-hol4_overload "Conj" "pattern_semantics_Conj";;
-hol4_overload "Disj" "pattern_semantics_Disj";;
-hol4_overload "True" "pattern_semantics_True";;
 
 let dTree_INDUCT,dTree_RECURSION = define_datatype
   "dTree = pattern_semantics_Leaf (num) | pattern_semantics_Fail | \
    pattern_semantics_TypeFail | pattern_semantics_If (dGuard) (dTree) \
    (dTree)";;
-hol4_overload "Leaf" "pattern_semantics_Leaf";;
-hol4_overload "Fail" "pattern_semantics_Fail";;
-hol4_overload "TypeFail" "pattern_semantics_TypeFail";;
-hol4_overload "If" "pattern_semantics_If";;
 
 (* semantic values *)
 
@@ -76,10 +60,6 @@ let pattern_semantics_term_INDUCT,pattern_semantics_term_RECURSION =
   "pattern_semantics_term = pattern_semantics_Term (num option) \
    (pattern_semantics_term list) | pattern_semantics_Litv (lit) | \
    pattern_semantics_RefPtr (num) | pattern_semantics_Other";;
-hol4_overload "Term" "pattern_semantics_Term";;
-hol4_overload "Litv" "pattern_semantics_Litv";;
-hol4_overload "RefPtr" "pattern_semantics_RefPtr";;
-hol4_overload "Other" "pattern_semantics_Other";;
 
 (* semantics of input *)
 let is_sibling_def = define_cases
@@ -91,7 +71,8 @@ let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
   "termination (CHEAT_TAC)"
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
-   `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
+   `pattern_semantics_pmatch refs (pattern_semantics_Lit
+  l:pattern_semantics_pat) (pattern_semantics_Litv
   l':pattern_semantics_term) =
          (if ~(lit_same_type l l') then PTypeFailure else
          if l = l' then PMatchSuccess else PMatchFailure)`;
@@ -110,7 +91,8 @@ let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
   r:pattern_semantics_term) =
         (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v
           -> pattern_semantics_pmatch refs p v)`;
-   `pattern_semantics_pmatch refs (Or p1 p2:pattern_semantics_pat) t =
+   `pattern_semantics_pmatch refs (pattern_semantics_Or p1
+  p2:pattern_semantics_pat) t =
         (match pattern_semantics_pmatch refs p1 t with
            PMatchSuccess -> (match pattern_semantics_pmatch refs p2
              t with
@@ -130,13 +112,11 @@ let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
                               PTypeFailure -> PTypeFailure | _6
                                 -> PMatchFailure) | PTypeFailure ->
                                 PTypeFailure)`];;
-hol4_overload "pmatch" "pattern_semantics_pmatch";;
-hol4_overload "pmatch_list" "pattern_semantics_pmatch_list";;
 
 let match_def,match_ind = define_rec
   [`pattern_semantics_match refs [] v = SOME MatchFailure`;
    `pattern_semantics_match refs (CONS (p,e) rows) v =
-        (match pmatch refs p v with
+        (match pattern_semantics_pmatch refs p v with
            PMatchSuccess ->
              (match pattern_semantics_match refs rows v with
                NONE -> NONE | SOME _10 -> SOME (MatchSuccess
@@ -151,7 +131,7 @@ let dt_test_def = new_definition
         ((pattern_semantics_TagLenEq t
           l:dTest),pattern_semantics_Term (SOME c) args) ->
      SOME (t = c /\ l = LENGTH args)
-      | ((pattern_semantics_LitEq l1),(Litv l2)) ->
+      | ((pattern_semantics_LitEq l1),(pattern_semantics_Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
       | (_11,_12) -> NONE`;;
 
@@ -179,7 +159,7 @@ let dt_eval_guard_def,dt_eval_guard_ind = define_rec
    `dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
          (match app_pos refs pos v with NONE -> NONE | SOME x ->
            dt_test test x)`;
-   `dt_eval_guard refs v (Not g:dGuard) =
+   `dt_eval_guard refs v (pattern_semantics_Not g:dGuard) =
          (match dt_eval_guard refs v g with NONE -> NONE | SOME b
            -> SOME (~b))`;
    `dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
@@ -196,9 +176,10 @@ let dt_eval_def,dt_eval_ind = define_wf
   `MEASURE (\(x0,x1,x2). dTree_size x2)`
   [`dt_eval refs _16 (pattern_semantics_Leaf k:dTree) = SOME
   (MatchSuccess k)`;
-   `dt_eval refs _17 (Fail:dTree) = SOME (MatchFailure)`;
+   `dt_eval refs _17 (pattern_semantics_Fail:dTree) = SOME
+  (MatchFailure)`;
    `dt_eval refs _18 pattern_semantics_TypeFail = NONE`;
-   `dt_eval refs v (If guard' dt1 dt2:dTree) =
+   `dt_eval refs v (pattern_semantics_If guard' dt1 dt2:dTree) =
          (match dt_eval_guard refs v guard' with NONE -> NONE |
            SOME b -> dt_eval refs v (if b then dt1 else dt2))`];;
 

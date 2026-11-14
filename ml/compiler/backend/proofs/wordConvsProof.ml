@@ -13,7 +13,6 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
 needs "compiler/backend/word_copy.ml";;
@@ -25,8 +24,6 @@ needs "compiler/backend/word_simp.ml";;
 needs "compiler/backend/word_to_word.ml";;
 needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -197,7 +194,7 @@ let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
 (* [local] *)
 let extract_labels_SmartSeq = prove
  (`wordConvs_extract_labels (SmartSeq p1 p2) =
-  wordConvs_extract_labels (Seq p1 p2)`,
+  wordConvs_extract_labels (wordLang_Seq p1 p2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -208,7 +205,7 @@ let extract_labels_Seq_assoc_lemma = prove
 
 (* [local] *)
 let extract_labels_Seq_assoc = prove
- (`wordConvs_extract_labels (Seq_assoc Skip p) =
+ (`wordConvs_extract_labels (Seq_assoc wordLang_Skip p) =
   wordConvs_extract_labels p`,
   CHEAT_TAC);;
 
@@ -255,19 +252,21 @@ let labels_rel_append_imp = prove
    in which nothing is duplicated. *)
 (* [local] *)
 let const_fp_loop_dummy_cases = prove
- (`const_fp_loop (If cmp lhs rhs (Raise 1) (Raise 2)) cs = (p2,cs2) ==>
+ (`const_fp_loop (wordLang_If cmp lhs rhs (wordLang_Raise 1)
+  (wordLang_Raise 2)) cs = (p2,cs2) ==>
    (dest_Raise_num p2 = 1 /\
-   (!br1 br2. const_fp_loop (If cmp lhs rhs br1 br2) cs =
+   (!br1 br2. const_fp_loop (wordLang_If cmp lhs rhs br1 br2) cs =
      const_fp_loop br1 cs)) \/
    (dest_Raise_num p2 = 2 /\
-   (!br1 br2. const_fp_loop (If cmp lhs rhs br1 br2) cs =
+   (!br1 br2. const_fp_loop (wordLang_If cmp lhs rhs br1 br2) cs =
      const_fp_loop br2 cs)) \/
    (dest_Raise_num p2 = 0)`,
   CHEAT_TAC);;
 
 (* dest_If_thm[local] *)
 let wordConvsProof_dest_If_thm = prove
- (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = If g1 g2 g3 g4 g5`,
+ (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = wordLang_If g1 g2 g3 g4
+  g5`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -275,7 +274,8 @@ let labels_rel_hoist2 = prove
  (`!N p1 interm dummy' p2 s.
    try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
    dest_If p2 = SOME (cmp,lhs,rhs,br1,br2) ==>
-   dummy' = If cmp lhs rhs (Raise 1) (Raise 2) ==>
+   dummy' = wordLang_If cmp lhs rhs (wordLang_Raise 1)
+     (wordLang_Raise 2) ==>
    wordConvs_extract_labels interm = [] ==>
    labels_rel (APPEND (wordConvs_extract_labels p1)
      (wordConvs_extract_labels p2))
@@ -621,30 +621,32 @@ let fake_moves_no_labs = prove
 
 (* [local] *)
 let fake_seq_no_labs = prove
- (`!ls. wordConvs_extract_labels (ITLIST Seq (MAP (\r. fake_move r)
-  ls) Skip) = []`,
+ (`!ls. wordConvs_extract_labels (ITLIST wordLang_Seq (MAP (\r.
+  fake_move r) ls) wordLang_Skip) = []`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_get_code_labels = prove
- (`!ls. wordConvs_get_code_labels (ITLIST Seq (MAP (\r. fake_move r)
-  ls) Skip) = {}`,
+ (`!ls. wordConvs_get_code_labels (ITLIST wordLang_Seq (MAP (\r.
+  fake_move r) ls) wordLang_Skip) = {}`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_good_handlers = prove
- (`!ls. good_handlers n (ITLIST Seq (MAP (\r. fake_move r) ls) Skip)`,
+ (`!ls. good_handlers n (ITLIST wordLang_Seq (MAP (\r. fake_move r)
+  ls) wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_flat_exp_conventions = prove
- (`!ls. flat_exp_conventions (ITLIST Seq (MAP (\r. fake_move r) ls)
-  Skip)`,
+ (`!ls. flat_exp_conventions (ITLIST wordLang_Seq (MAP (\r. fake_move
+  r) ls) wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_wf_cutsets = prove
- (`!ls. wf_cutsets (ITLIST Seq (MAP (\r. fake_move r) ls) Skip)`,
+ (`!ls. wf_cutsets (ITLIST wordLang_Seq (MAP (\r. fake_move r) ls)
+  wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -722,8 +724,8 @@ let fake_moves_not_created_subprogs = prove
 
 (* [local] *)
 let fake_seq_not_created_subprogs = prove
- (`!ls. not_created_subprogs P (ITLIST Seq (MAP (\r. fake_move r) ls)
-  Skip)`,
+ (`!ls. not_created_subprogs P (ITLIST wordLang_Seq (MAP (\r.
+  fake_move r) ls) wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -799,8 +801,8 @@ let word_good_handlers_full_ssa_cc_trans = prove
 (* [local] *)
 let flat_exp_conventions_ShareInst = prove
  (`flat_exp_conventions (wordLang_ShareInst op v exp) <=>
-     ((?v c. exp = wordLang_Op asm_Add [Var v; Const c]) \/ (?v.
-       exp = Var v))`,
+     ((?v c. exp = wordLang_Op asm_Add [wordLang_Var v;
+       wordLang_Const c]) \/ (?v. exp = wordLang_Var v))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1030,35 +1032,37 @@ let flat_exp_conventions_copy_prop = prove
 
 (* [local] *)
 let copy_prop_prog_not_alloc_var_aux1 = prove
- (`(!x. ~(is_alloc_var x) ==> lookup x (copy_state_to_eq cs) = NONE) ==>
+ (`(!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
+  cs) = NONE) ==>
    ~(is_alloc_var x) ==>
-   lookup x (copy_state_to_eq (remove_eq cs y)) = NONE`,
+   balanced_map_lookup x (copy_state_to_eq (remove_eq cs y)) = NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
 let copy_prop_prog_not_alloc_var_aux2 = prove
  (`!cs.
-   (!x. ~(is_alloc_var x) ==> lookup x (copy_state_to_eq cs) = NONE)
-     ==>
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
+     cs) = NONE) ==>
    ~(is_alloc_var x) ==>
-   lookup x (copy_state_to_eq (remove_eqs cs yy)) = NONE`,
+   balanced_map_lookup x (copy_state_to_eq (remove_eqs cs yy)) =
+     NONE`,
   CHEAT_TAC);;
 
 (* trivial and tedious *)
 (* [local] *)
 let copy_prop_prog_not_alloc_var = prove
  (`!p cs.
-   (!x. ~(is_alloc_var x) ==> lookup x (copy_state_to_eq cs) = NONE)
-     ==>
-   (!x. ~(is_alloc_var x) ==> lookup x (copy_state_to_eq (SND
-     (copy_prop_prog p cs))) = NONE)`,
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
+     cs) = NONE) ==>
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x
+     (copy_state_to_eq (SND (copy_prop_prog p cs))) = NONE)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let pre_alloc_conventions_copy_prop_aux = prove
  (`!p cs.
-   (!x. ~(is_alloc_var x) ==> lookup x (copy_state_to_eq cs) = NONE)
-     ==>
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
+     cs) = NONE) ==>
    pre_alloc_conventions p ==>
    pre_alloc_conventions (FST (copy_prop_prog p cs))`,
   CHEAT_TAC);;
@@ -1220,7 +1224,7 @@ let remove_unreach_not_created_subprogs = prove
 (* [local] *)
 let extract_labels_SimpSeq = prove
  (`set_of_list (wordConvs_extract_labels (SimpSeq p1 p2)) SUBSET
-  set_of_list (wordConvs_extract_labels (Seq p1 p2))`,
+  set_of_list (wordConvs_extract_labels (wordLang_Seq p1 p2))`,
   CHEAT_TAC);;
 
 (* [local] *)

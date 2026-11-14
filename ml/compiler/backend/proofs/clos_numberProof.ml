@@ -16,7 +16,6 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sorting.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -28,11 +27,16 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = hol4_ancestors "clos_numberProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_number"];;
 
-hol4_overload "lookup" "sptree_lookup";;
-hol4_overload "insert" "sptree_insert";;
-hol4_overload "delete" "sptree_delete";;
-hol4_overload "map" "sptree_map";;
-hol4_overload "wf" "sptree_wf";;
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
+   brings to the front: lookup, written out as sptree_lookup *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
+   brings to the front: insert, written out as sptree_insert *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
+   brings to the front: delete, written out as sptree_delete *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
+   brings to the front: map, written out as sptree_map *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
+   brings to the front: wf, written out as sptree_wf *)
 
 (* properties of renumber_code_locs *)
 
@@ -100,7 +104,8 @@ let renumber_code_locs_list_els = prove
 let clos_numberProof_v_rel = cake_inductive
   `(clos_numberProof_v_rel max_app (closSem_Number j) (closSem_Number
   j)) /\
-   (clos_numberProof_v_rel max_app (Word64 w) (Word64 w)) /\
+   (clos_numberProof_v_rel max_app (closSem_Word64 w) (closSem_Word64
+     w)) /\
    (ALL2 (clos_numberProof_v_rel max_app) (xs:closSem_v list)
      (ys:closSem_v list) ==>
     clos_numberProof_v_rel max_app (closSem_Block t xs)
@@ -113,17 +118,16 @@ let clos_numberProof_v_rel = cake_inductive
     ALL2 (clos_numberProof_v_rel max_app) argenv argenv' /\
     ~(contains_App_SOME max_app [c]) /\
     c' = SND (renumber_code_locs n c) ==>
-    clos_numberProof_v_rel max_app (Closure p argenv env num_args c)
-      (Closure p' argenv' env' num_args c')) /\
+    clos_numberProof_v_rel max_app (closSem_Closure p argenv env
+      num_args c) (closSem_Closure p' argenv' env' num_args c')) /\
    (
     ALL2 (clos_numberProof_v_rel max_app) env env' /\
     ALL2 (clos_numberProof_v_rel max_app) argenv argenv' /\
     ~(contains_App_SOME max_app (MAP SND es)) /\
     es' = ZIP (MAP FST es) (SND (renumber_code_locs_list n (MAP SND
       es))) ==>
-    clos_numberProof_v_rel max_app (Recclosure p argenv env es k)
-      (Recclosure p' argenv' env' es' k))`;;
-hol4_overload "v_rel" "clos_numberProof_v_rel";;
+    clos_numberProof_v_rel max_app (closSem_Recclosure p argenv
+      env es k) (closSem_Recclosure p' argenv' env' es' k))`;;
 
 let clos_numberProof_state_rel_def = new_definition
   `clos_numberProof_state_rel (s:(num#'c,'ffi)closSem_state)
@@ -145,7 +149,6 @@ let clos_numberProof_state_rel_def = new_definition
           ~(contains_App_SOME (closSem_state_max_app s) (FST (SND
             (closSem_state_compile_oracle s n))))) /\ closSem_state_code
      s = FEMPTY /\ closSem_state_code t = FEMPTY`;;
-hol4_overload "state_rel" "clos_numberProof_state_rel";;
 
 (* state_rel_max_app[local] *)
 let clos_numberProof_state_rel_max_app = prove
@@ -189,8 +192,10 @@ let state_rel_code = prove
 
 (* v_rel_Boolv[simp] *)
 let clos_numberProof_v_rel_Boolv = prove
- (`(clos_numberProof_v_rel max_app x (Boolv b) <=> (x = Boolv b)) /\
-    (clos_numberProof_v_rel max_app (Boolv b) x <=> (x = Boolv b))`,
+ (`(clos_numberProof_v_rel max_app x (closSem_Boolv b) <=> (x =
+  closSem_Boolv b)) /\
+    (clos_numberProof_v_rel max_app (closSem_Boolv b) x <=> (x =
+      closSem_Boolv b))`,
   CHEAT_TAC);;
 
 (* v_rel_Unit[simp] *)
@@ -245,14 +250,15 @@ let helper = prove
 
 (* [local] *)
 let v_rel_Boolv_mono = prove
- (`(x <=> y) ==> (clos_numberProof_v_rel max_app (Boolv x) (Boolv y))`,
+ (`(x <=> y) ==> (clos_numberProof_v_rel max_app (closSem_Boolv x)
+  (closSem_Boolv y))`,
   CHEAT_TAC);;
 
 (* v_to_list[local] *)
 let clos_numberProof_v_to_list = prove
  (`!x y. clos_numberProof_v_rel max_app x y ==>
            OPTREL (ALL2 (clos_numberProof_v_rel max_app))
-             (v_to_list x) (v_to_list y)`,
+             (closSem_v_to_list x) (closSem_v_to_list y)`,
   CHEAT_TAC);;
 
 (* simple_val_rel *)
@@ -273,15 +279,15 @@ let clos_numberProof_simple_state_rel = prove
 let clos_numberProof_do_app_lemma = prove
  (`clos_numberProof_state_rel s t /\ ALL2 (clos_numberProof_v_rel
   (closSem_state_max_app s)) xs ys ==>
-    (match do_app opp xs s with
+    (match closSem_do_app opp xs s with
       Rval (x,s1) ->
         (?y t1.
           clos_numberProof_v_rel (closSem_state_max_app s) x y /\
           (closSem_state_max_app s1 = closSem_state_max_app s /\
             clos_numberProof_state_rel s1 t1) /\
-          do_app opp ys t = Rval (y,t1)) | Rerr err1 ->
+          closSem_do_app opp ys t = Rval (y,t1)) | Rerr err1 ->
         (?err2.
-          do_app opp ys t = Rerr err2 /\
+          closSem_do_app opp ys t = Rerr err2 /\
           exc_rel (clos_numberProof_v_rel (closSem_state_max_app
             s)) err1 err2))`,
   CHEAT_TAC);;
@@ -290,7 +296,8 @@ let clos_numberProof_do_app_lemma = prove
 let clos_numberProof_list_to_v_v_rel = prove
  (`!xs ys.
      ALL2 (clos_numberProof_v_rel ap) xs ys ==>
-       clos_numberProof_v_rel ap (list_to_v xs) (list_to_v ys)`,
+       clos_numberProof_v_rel ap (closSem_list_to_v xs)
+       (closSem_list_to_v ys)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -299,10 +306,10 @@ let do_app = prove
      ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) x1 x2
        ==>
      (!err.
-       do_app op x1 s1 = (Rerr err) ==>
-       do_app op x2 s2 = (Rerr err)) /\
-     (!v1 w1. do_app op x1 s1 = Rval (v1,w1) ==>
-              (?v2 w2. do_app op x2 s2 = Rval (v2,w2) /\
+       closSem_do_app op x1 s1 = (Rerr err) ==>
+       closSem_do_app op x2 s2 = (Rerr err)) /\
+     (!v1 w1. closSem_do_app op x1 s1 = Rval (v1,w1) ==>
+              (?v2 w2. closSem_do_app op x2 s2 = Rval (v2,w2) /\
                       clos_numberProof_v_rel (closSem_state_max_app
                         s1) v1 v2 /\ clos_numberProof_state_rel w1
                         w2))`,
@@ -363,10 +370,10 @@ let lookup_vars_SOME_related_env = prove
 let clos_numberProof_rel_update_thunk = prove
  (`clos_numberProof_state_rel s1 s2 /\
    ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) vs ys /\
-   update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = SOME
-     refs1 ==>
-     (?refs2. update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys
-       = SOME refs2 /\
+   closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs =
+     SOME refs1 ==>
+     (?refs2. closSem_update_thunk [closSem_RefPtr v ptr] (state_refs
+       s2) ys = SOME refs2 /\
              clos_numberProof_state_rel (state_refs_fupd (K refs1)
                s1) (state_refs_fupd (K refs2) s2))`,
   CHEAT_TAC);;

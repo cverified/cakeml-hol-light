@@ -2,7 +2,7 @@
 (*  misc: ported from HOL4's
     misc/miscScript.sml
     A definition theory, with 50 definitions, 1 datatype and 393
-    theorems.  Needed by 96 files of the port.  *)
+    theorems.  Needed by 94 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -116,7 +116,6 @@ let read_bytearray_LENGTH = prove
 
 let shift_seq_def = new_definition
   `misc_shift_seq k s = (\i. s (i + (k:num)))`;;
-hol4_overload "shift_seq" "misc_shift_seq";;
 
 (* TODO: Used once in all of CakeML: could probably be pushed back to use-site*)
 let SUM_SET_IN_LT = prove
@@ -169,9 +168,6 @@ let IMAGE_SUC_SUBSET_UNION = prove
 let app_list_INDUCT,app_list_RECURSION = define_datatype
   "app_list = misc_List ('a list) | misc_Append (app_list) (app_list) \
    | misc_Nil";;
-hol4_overload "List" "misc_List";;
-hol4_overload "Append" "misc_Append";;
-hol4_overload "Nil" "misc_Nil";;
 
 let append_aux_def,append_aux_ind = define_rec
   [`append_aux misc_Nil aux = aux`;
@@ -1035,7 +1031,6 @@ let word_list_def,word_list_ind = define_guess
   [`misc_word_list a [] = emp`;
    `misc_word_list a (CONS x xs) = set_sep_one (a,x) *
   misc_word_list (a + bytes_in_word) xs`];;
-hol4_overload "word_list" "misc_word_list";;
 
 let word_list_exists_def = new_definition
   `word_list_exists a n =

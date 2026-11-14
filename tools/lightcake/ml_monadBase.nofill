@@ -1,0 +1,1 @@
+dref_cons_state	PROOF Failure("ARITH_RULE `n < (LENGTH:(?538748)list->num) (state:(?538748)list)\n==> SUC (LENGTH state) - n - 1 = SUC (LENGTH state - n - 1)`: REAL_ARITH `~(&0

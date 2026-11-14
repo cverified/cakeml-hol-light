@@ -637,6 +637,14 @@ RENAME_CONST = {
   # constant: the definition would be parsed with the overloads
   # that the other theories declared for theirs before it
   ('semantics', 'semantics'): 'semantics_semantics',
+
+  # clos_to_bvl has a compile_inc and a clos_to_bvl_compile_inc,
+  # and the theory in front of the first gives the name of the
+  # second; the second takes the theory in front of it as well,
+  # as its binding does
+  ('clos_to_bvl', 'compile_inc'): 'clos_to_bvl_compile_inc',
+  ('clos_to_bvl', 'clos_to_bvl_compile_inc'):
+    'clos_to_bvl_clos_to_bvl_compile_inc',
 }
 
 # the constant that a name means in one theory of the port, where

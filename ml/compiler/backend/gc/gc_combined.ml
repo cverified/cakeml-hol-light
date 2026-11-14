@@ -10,13 +10,11 @@
   One function that can run any of the GC algorithms.
 *)
 
-needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -38,9 +36,10 @@ let make_partial_conf_def = define_general
 let gc_combined_def = new_definition
   `gc_combined conf x2 x3 =
       match (x2,x3) with
-        ((None:gc_kind),(roots,heap,(gs:gen_state),_2,_3)) ->
+        ((data_to_word_None:gc_kind),(roots,heap,(gs:gen_state),_2
+          ,_3)) ->
      (roots,heap,0,0,gs,T)
-      | (Simple,(roots,heap,gs,_4,_5)) ->
+      | (data_to_word_Simple,(roots,heap,gs,_4,_5)) ->
      (let (roots,heap,a,c) = full_gc (roots,heap,limit conf) in
         (roots,APPEND heap (heap_expand (limit conf - a)),a,limit
           conf - a,gs,c))

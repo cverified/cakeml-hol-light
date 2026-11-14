@@ -93,7 +93,6 @@ let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
               (source_let_compile_decs ds2))
               (source_let_compile_decs ds) | _6 -> CONS d
               (source_let_compile_decs ds)))`];;
-hol4_overload "compile_decs" "source_let_compile_decs";;
 
 (*
 val test3 = EVAL “

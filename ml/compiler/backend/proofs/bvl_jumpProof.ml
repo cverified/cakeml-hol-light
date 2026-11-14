@@ -12,7 +12,6 @@
 needs "compiler/backend/bvl_jump.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
@@ -27,15 +26,17 @@ let _ = hol4_ancestors "bvl_jumpProof"
 let evaluate_JumpList = prove
  (`!n xs k.
        k < LENGTH xs ==>
-       (evaluate ([JumpList n xs],CONS (Number (&(n + k))) env,s) =
-        evaluate ([EL k xs],CONS (Number (&(n + k))) env,s))`,
+       (bvlSem_evaluate ([JumpList n xs],CONS (bvlSem_Number (&(n +
+         k))) env,s) =
+        bvlSem_evaluate ([EL k xs],CONS (bvlSem_Number (&(n + k)))
+          env,s))`,
   CHEAT_TAC);;
 
 let evaluate_Jump = prove
- (`(evaluate ([x],env,s) = (Rval [Number (&n)],t)) /\
+ (`(bvlSem_evaluate ([x],env,s) = (Rval [bvlSem_Number (&n)],t)) /\
     n < LENGTH xs ==>
-    (evaluate ([bvl_jump_Jump x xs],env,s) =
-     evaluate ([EL n xs],CONS (Number (&n)) env,t))`,
+    (bvlSem_evaluate ([bvl_jump_Jump x xs],env,s) =
+     bvlSem_evaluate ([EL n xs],CONS (bvlSem_Number (&n)) env,t))`,
   CHEAT_TAC);;
 
 let bvl_get_code_labels_JumpList = prove

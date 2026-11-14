@@ -14,9 +14,7 @@ needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/errorMonad.ml";;
-needs "lib/integer_word.ml";;
 needs "lib/peg.ml";;
-needs "lib/term.ml";;
 needs "misc/misc.ml";;
 needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
@@ -50,12 +48,10 @@ let failwith_def = new_definition
   `(infer_failwith:loc_err_info->'a->'b->('c,locs option#'a)exc#'b) l
   msg =
      (\s. (M_failure (loc_err_info_loc l,msg),s))`;;
-hol4_overload "failwith" "infer_failwith";;
 
 let guard_def = new_definition
   `infer_guard P l msg = (if P then st_ex_return one else
   infer_failwith l msg)`;;
-hol4_overload "guard" "infer_guard";;
 
 let read_def = new_definition
   `(read:'a->('a,'b)exc#'a) =
@@ -274,9 +270,9 @@ let type_name_check_subst_def,type_name_check_subst_ind =
                      (mlstring_concat [(implode
                        "Type constructor "); id_to_string tc; (implode
                        " given ");
-                              toString (&(LENGTH ts)); (implode
-                                " arguments, but expected ");
-                              toString (&(LENGTH tvs'))])) (
+                              mlint_toString (&(LENGTH ts));
+                                (implode " arguments, but expected ");
+                              mlint_toString (&(LENGTH tvs'))])) (
           st_ex_return (type_subst (alist_to_fmap (ZIP tvs' ts'))
             t'))))`;
    `type_name_check_subst_list l f tenvT fvs [] = st_ex_return []`;
@@ -361,10 +357,10 @@ let type_name_check_sub_def,type_name_check_sub_ind = define_mutual_wf
                               (mlstring_concat
                               [(implode "Type constructor ");
                                 id_to_string tc;
-                              (implode " given "); toString (LENGTH
-                                ts);
+                              (implode " given "); mlint_toString
+                                (LENGTH ts);
                               (implode " arguments, but expected ");
-                              toString (LENGTH y)])),s)) |
+                              mlint_toString (LENGTH y)])),s)) |
                                 (M_failure x,s) -> (M_failure x,s)) |
                                 (M_failure x,s) -> (M_failure x,s))`;
    `type_name_check_sub_list l tenvT fvs [] = (\s. (M_success [],s))`;
@@ -542,10 +538,10 @@ let infer_p_def,infer_p_ind = assume_definition_rec
                  (infer_guard (LENGTH ts'' = LENGTH ts) l
                        (mlstring_concat [(implode "Constructor ");
                          id_to_string cn; (implode " given ");
-                              toString (&(LENGTH ts'')); (implode
-                                " arguments, but expected ");
-                              toString (&(LENGTH ts))])) (st_ex_bind
-                                (add_constraints l ts'' (MAP
+                              mlint_toString (&(LENGTH ts''));
+                                (implode " arguments, but expected ");
+                              mlint_toString (&(LENGTH ts))]))
+                                (st_ex_bind (add_constraints l ts'' (MAP
                                 (infer_type_subst (ZIP tvs' ts')) ts))
                                 (\
                  one.
@@ -720,8 +716,8 @@ let op_n_args_msg_def = new_definition
      (let (ops,args) = op_to_string op in
      mlstring_concat [(implode "Primitive "); ops; (implode
        " given ");
-         toString (&n); (implode " arguments, but expects ");
-         toString (&args)])`;;
+         mlint_toString (&n); (implode " arguments, but expects ");
+         mlint_toString (&args)])`;;
 
 let constrain_op_def = new_definition
   `constrain_op l op ts s =
@@ -871,7 +867,7 @@ let infer_e_def,infer_e_ind = assume_definition_rec
         st_ex_return (Infer_Tapp [] Tword64_num)`;
    `infer_e l ienv (ast_Lit (ast_Float64 _44):ast_exp) =
         st_ex_return (Infer_Tapp [] Tdouble_num)`;
-   `infer_e l ienv (Var id':ast_exp) =
+   `infer_e l ienv (ast_Var id':ast_exp) =
         st_ex_bind (lookup_st_ex l (implode "variable") id'
           (inf_env_inf_v ienv)) (\(tvs,t). st_ex_bind (n_fresh_uvar tvs)
           (\
@@ -890,10 +886,10 @@ let infer_e_def,infer_e_ind = assume_definition_rec
                  (infer_guard (LENGTH ts'' = LENGTH ts) l
                        (mlstring_concat [(implode "Constructor ");
                          id_to_string cn; (implode " given ");
-                              toString (&(LENGTH ts'')); (implode
-                                " arguments, but expected ");
-                              toString (&(LENGTH ts))])) (st_ex_bind
-                                (add_constraints l ts'' (MAP
+                              mlint_toString (&(LENGTH ts''));
+                                (implode " arguments, but expected ");
+                              mlint_toString (&(LENGTH ts))]))
+                                (st_ex_bind (add_constraints l ts'' (MAP
                                 (infer_type_subst (ZIP tvs' ts')) ts))
                                 (\
                 one.
@@ -1195,7 +1191,6 @@ let infer_init_config_def = new_definition
   `(infer_init_config:inf_env) =
      mk_inf_env nsEmpty (type_env_c prim_tenv) (type_env_t
        prim_tenv)`;;
-hol4_overload "init_config" "infer_init_config";;
 
 (* The following aren't needed to run the inferencer, but are useful in the proofs
  * about it *)

@@ -1,1 +1,2 @@
+alistSub_cong	PROOF Failure("solve_goal: Too deep")
 lemma	PROOF Failure("MATCH_MP_TAC: No match")

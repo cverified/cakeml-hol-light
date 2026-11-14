@@ -13,10 +13,8 @@
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_depth.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -44,7 +42,8 @@ let OPTION_MAP2_SOME_0 = prove
   CHEAT_TAC);;
 
 let max_depth_mk_Branch = prove
- (`!t1 t2. max_depth s (mk_Branch t1 t2) = max_depth s (Branch t1 t2)`,
+ (`!t1 t2. max_depth s (mk_Branch t1 t2) = max_depth s
+  (word_depth_Branch t1 t2)`,
   CHEAT_TAC);;
 
 let MEM_max_depth_graphs = prove
@@ -102,9 +101,9 @@ let max_depth_call_graph_lemma = prove
        (call_graph funs n ns (sptree_size funs2) prog) = NONE) ==>
        wordSem_state_stack_size
       s1 = wordSem_state_stack_size s /\
-      ((res = NONE \/ (?k. res = SOME (Break k)) \/ (?k. res = SOME
-        (Continue k))) ==> wordSem_state_locals_size s1 =
-        wordSem_state_locals_size s))`,
+      ((res = NONE \/ (?k. res = SOME (wordSem_Break k)) \/ (?k.
+        res = SOME (wordSem_Continue k))) ==>
+        wordSem_state_locals_size s1 = wordSem_state_locals_size s))`,
   CHEAT_TAC);;
 
 (* HOL4 word_depthProofScript.sml:290-382: a proof *)
@@ -140,9 +139,9 @@ let max_depth_call_graph = prove
   CHEAT_TAC);;
 
 let max_depth_Call_SOME = prove
- (`wordSem_evaluate (Call (SOME (n1,n2,Skip,n3,n4)) (SOME dest) args
-  NONE,s) = (res,s1) /\ ~(res = SOME wordSem_Error) /\ subspt funs
-  (wordSem_state_code s) ==>
+ (`wordSem_evaluate (word_depth_Call (SOME (n1,n2,wordLang_Skip,n3,n4))
+  (SOME dest) args NONE,s) = (res,s1) /\ ~(res = SOME wordSem_Error) /\
+  subspt funs (wordSem_state_code s) ==>
    option_le (wordSem_state_stack_max s1)
      (OPTION_MAP2 MAX (wordSem_state_stack_max s)
        (OPTION_MAP2 (+) (wordSem_state_locals_size s)
@@ -152,8 +151,9 @@ let max_depth_Call_SOME = prove
   CHEAT_TAC);;
 
 let max_depth_Call_NONE = prove
- (`wordSem_evaluate (Call NONE (SOME dest) args NONE,s) = (res,s1) /\
-  ~(res = SOME wordSem_Error) /\ subspt funs (wordSem_state_code s) ==>
+ (`wordSem_evaluate (word_depth_Call NONE (SOME dest) args NONE,s) =
+  (res,s1) /\ ~(res = SOME wordSem_Error) /\ subspt funs
+  (wordSem_state_code s) ==>
    option_le (wordSem_state_stack_max s1)
      (OPTION_MAP2 MAX (wordSem_state_stack_max s)
        (OPTION_MAP2 (+) (stack_size (stack s))

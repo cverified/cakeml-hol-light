@@ -10,11 +10,8 @@
   This compilation pass removes trivially unreachable code.
 *)
 
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -28,8 +25,8 @@ let _ = hol4_ancestors "word_unreach"
 let dest_Seq_Move_def = new_definition
   `dest_Seq_Move x1 =
       match x1 with
-        wordLang_Move n l -> SOME (n,l,Skip)
-      | (Seq (wordLang_Move n l) rest) -> SOME (n,l,rest)
+        wordLang_Move n l -> SOME (n,l,wordLang_Skip)
+      | (wordLang_Seq (wordLang_Move n l) rest) -> SOME (n,l,rest)
       | _1 -> NONE`;;
 
 let word_unreach_merge_moves_def = new_definition
@@ -37,22 +34,22 @@ let word_unreach_merge_moves_def = new_definition
      (let l2' = MAP (\(x,y). match ALOOKUP l1 y with NONE -> (x,y) |
        SOME v -> (x,v)) l2 in
        anub (APPEND l2' l1) ([]:num list))`;;
-hol4_overload "merge_moves" "word_unreach_merge_moves";;
 
 let SimpSeq_def = new_definition
   `SimpSeq p1 (p2:'a wordLang_prog) =
-     (let default = Seq p1 p2 in
-       if p2 = Skip then p1 else
-         match p1 with Skip -> p2 | Raise _2 -> p1 | Return _3 _4 ->
-           p1 | Break _5 -> p1 | Continue _6 -> p1 | wordLang_Move n1 l1
-           ->
+     (let default = wordLang_Seq p1 p2 in
+       if p2 = wordLang_Skip then p1 else
+         match p1 with wordLang_Skip -> p2 | wordLang_Raise _2 -> p1
+           | wordLang_Return _3 _4 -> p1 | wordLang_Break _5 -> p1 |
+           wordLang_Continue _6 -> p1 | wordLang_Move n1 l1 ->
              (match dest_Seq_Move p2 with NONE -> default | SOME
                (n2,l2,rest) ->
                     // if n1 ≠ n2 then default else
                     (let l = word_unreach_merge_moves l1 l2 in
-                      if rest = Skip then wordLang_Move (MAX n1
-                        n2) l else Seq (wordLang_Move (MAX n1 n2) l)
-                        rest)) | _7 -> default)`;;
+                      if rest = wordLang_Skip then wordLang_Move
+                        (MAX n1 n2) l else wordLang_Seq
+                        (wordLang_Move (MAX n1 n2) l) rest)) | _7 ->
+                        default)`;;
 
 let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -62,31 +59,31 @@ let seq_assoc_right_def,seq_assoc_right_ind = define_wf
   [`Seq_assoc_right p1 acc =
         match p1 with
           wordLang_Skip -> acc
-        | (Seq q1 q2) ->
+        | (wordLang_Seq q1 q2) ->
         Seq_assoc_right q1 (Seq_assoc_right q2 acc)
-        | (If v n r q1 q2) ->
-        SimpSeq (If v n r (Seq_assoc_right q1 Skip) (Seq_assoc_right
-          q2 Skip)) acc
+        | (wordLang_If v n r q1 q2) ->
+        SimpSeq (wordLang_If v n r (Seq_assoc_right q1
+          wordLang_Skip) (Seq_assoc_right q2 wordLang_Skip)) acc
         | (wordLang_MustTerminate q) ->
-        SimpSeq (wordLang_MustTerminate (Seq_assoc_right q Skip))
-          acc
-        | (Call ret_prog dest args handler) ->
-        (match ret_prog with NONE -> Call ret_prog dest args handler
-          | SOME (x1,x2,q1,x3,x4) ->
-            SimpSeq (Call (SOME (x1,x2,Seq_assoc_right q1
-              Skip,x3,x4))
+        SimpSeq (wordLang_MustTerminate (Seq_assoc_right q
+          wordLang_Skip)) acc
+        | (wordLang_Call ret_prog dest args handler) ->
+        (match ret_prog with NONE -> wordLang_Call ret_prog dest
+          args handler | SOME (x1,x2,q1,x3,x4) ->
+            SimpSeq (wordLang_Call (SOME (x1,x2,Seq_assoc_right q1
+              wordLang_Skip,x3,x4))
               dest args
                  (match handler with NONE -> NONE | SOME
                    (y1,q2,y2,y3) -> SOME (y1,Seq_assoc_right q2
-                   Skip,y2,y3))) acc)
-        | (Loop names body exit_names) ->
-        SimpSeq (Loop names (Seq_assoc_right body Skip) exit_names)
-          acc
+                   wordLang_Skip,y2,y3))) acc)
+        | (wordLang_Loop names body exit_names) ->
+        SimpSeq (wordLang_Loop names (Seq_assoc_right body
+          wordLang_Skip) exit_names) acc
         | p1 -> SimpSeq p1 acc`];;
 
 let remove_unreach_def = new_definition
   `remove_unreach (e:'a wordLang_prog) =
-     Seq_assoc_right e Skip`;;
+     Seq_assoc_right e wordLang_Skip`;;
 
 (* [local] *)
 let remove_unreach_test = prove

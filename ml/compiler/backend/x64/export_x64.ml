@@ -117,7 +117,6 @@ let startup_def = new_definition
         (implode "#if defined(__WIN32)\n");
         (implode "     .endfunc\n");
         (implode "#endif\n")]))))`;;
-hol4_overload "startup" "export_x64_startup";;
 
 let ffi_asm_def,ffi_asm_ind = define_rec
   [`export_x64_ffi_asm [] = misc_Nil`;
@@ -129,7 +128,6 @@ let ffi_asm_def,ffi_asm_ind = define_rec
              ")\n");
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_x64_ffi_asm ffis)`];;
-hol4_overload "ffi_asm" "export_x64_ffi_asm";;
 
 (* HOL4 export_x64Script.sml:87-115: the ML values that the
    definitions below antiquote *)
@@ -185,13 +183,11 @@ let export_func_def = new_definition
       (implode "#if defined(__WIN32)\n");
       (implode "     .endfunc\n");
       (implode "#endif\n")])`;;
-hol4_overload "export_func" "export_x64_export_func";;
 
 let export_funcs_def = new_definition
   `export_x64_export_funcs lsyms exp =
      FOLDL export_x64_export_func misc_Nil (FILTER ((C MEM exp) o
        FST) lsyms)`;;
-hol4_overload "export_funcs" "export_x64_export_funcs";;
 
 let x64_export_def = new_definition
   `x64_export ffi_names' bytes (data:word64 list) syms exp ret pk =

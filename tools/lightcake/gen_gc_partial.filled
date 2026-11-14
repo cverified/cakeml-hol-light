@@ -14,7 +14,6 @@ gc_move_list_ok
 gc_move_list_ok'
 gc_move_list_r1
 gc_move_ok
-gc_move_ref_list_heap_length
 gc_move_ref_list_heap_length'
 has_old_ptr_APPEND
 heap_lookup_GT_FALSE

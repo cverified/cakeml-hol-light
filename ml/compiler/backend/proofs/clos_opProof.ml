@@ -14,7 +14,6 @@ needs "compiler/backend/clos_op.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -34,7 +33,8 @@ let list_split3 = prove
 
 (* [local] *)
 let evaluate_MakeBool = prove
- (`!b. closSem_evaluate ([MakeBool b],vs,s) = (Rval [Boolv b],s)`,
+ (`!b. closSem_evaluate ([MakeBool b],vs,s) = (Rval [closSem_Boolv
+  b],s)`,
   CHEAT_TAC);;
 
 let dest_Op_thm = prove
@@ -59,7 +59,7 @@ let dest_Constant_thm = prove
      x = closLang_BlockOp (closLang_Constant (ConstInt j)) /\ i =
        closLang_Int j \/
      x = closLang_BlockOp (closLang_Constant (ConstWord64 w)) /\ i
-       = W64 w)`,
+       = closLang_W64 w)`,
   CHEAT_TAC);;
 
 let dest_Cons_thm = prove
@@ -142,14 +142,14 @@ let lift_exps_thm = prove
 let lift_exps_Let = prove
  (`lift_exps [x] 0 [] = ([y],n,binds) /\
    closSem_evaluate ([x],env,s1) = (res,s2) ==>
-   closSem_evaluate ([Let backend_common_None binds y],env,s1) =
-     (res,s2)`,
+   closSem_evaluate ([closLang_Let backend_common_None binds
+     y],env,s1) = (res,s2)`,
   CHEAT_TAC);;
 
 let simple_exp = cake_inductive
-  `(!t i. simple_exp (Var t i)) /\
+  `(!t i. simple_exp (closLang_Var t i)) /\
    (!t x y z. simple_exp x /\ simple_exp y /\ simple_exp z ==>
-     simple_exp (If t x y z)) /\
+     simple_exp (closLang_If t x y z)) /\
    (!t i. simple_exp (closLang_Op t (closLang_IntOp (closLang_Const
      i)) [])) /\
    (!t i. simple_exp (closLang_Op t (closLang_BlockOp
@@ -165,7 +165,7 @@ let simple_exp = cake_inductive
    (!t i x. simple_exp x ==> simple_exp (closLang_Op t
      (closLang_BlockOp (closLang_EqualConst (closLang_Str i))) [x])) /\
    (!t i x. simple_exp x ==> simple_exp (closLang_Op t
-     (closLang_BlockOp (closLang_EqualConst (W64 i))) [x])) /\
+     (closLang_BlockOp (closLang_EqualConst (closLang_W64 i))) [x])) /\
    (!t i x. simple_exp x ==> simple_exp (closLang_Op t
      (closLang_BlockOp (closLang_ElemAt i)) [x])) /\
    (!t x y. simple_exp x /\ simple_exp y ==> simple_exp (closLang_Op
@@ -188,29 +188,29 @@ let lift_exps_simple_exp = prove
 
 let evaluate_ConjList_append_F = prove
  (`!xs ys.
-     closSem_evaluate ([ConjList xs],env1,r) = (Rval [Boolv F],r) /\
-       ALL pure xs ==>
+     closSem_evaluate ([ConjList xs],env1,r) = (Rval [closSem_Boolv
+       F],r) /\ ALL pure xs ==>
      closSem_evaluate ([ConjList (APPEND xs ys)],env1,r) = (Rval
-       [Boolv F],(r:('c,'ffi)closSem_state))`,
+       [closSem_Boolv F],(r:('c,'ffi)closSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_append_T = prove
  (`!xs ys.
-     closSem_evaluate ([ConjList xs],env1,r) = (Rval [Boolv T],r) /\
-       ALL pure xs ==>
+     closSem_evaluate ([ConjList xs],env1,r) = (Rval [closSem_Boolv
+       T],r) /\ ALL pure xs ==>
      closSem_evaluate ([ConjList (APPEND xs ys)],env1,r) =
      closSem_evaluate ([ConjList
        ys],env1,(r:('c,'ffi)closSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_F = prove
- (`closSem_evaluate ([x],env,r) = (Rval [Boolv F],r) ==>
-   closSem_evaluate ([ConjList (CONS x xs)],env,r) = (Rval [Boolv
-     F],r)`,
+ (`closSem_evaluate ([x],env,r) = (Rval [closSem_Boolv F],r) ==>
+   closSem_evaluate ([ConjList (CONS x xs)],env,r) = (Rval
+     [closSem_Boolv F],r)`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_T = prove
- (`closSem_evaluate ([x],env,r) = (Rval [Boolv T],r) /\
+ (`closSem_evaluate ([x],env,r) = (Rval [closSem_Boolv T],r) /\
    closSem_evaluate ([ConjList xs],env,r) = res ==>
    closSem_evaluate ([ConjList (CONS x xs)],env,r) = res`,
   CHEAT_TAC);;
@@ -242,8 +242,9 @@ let simpl_exp_Cons_EL = prove
 let eq_pure_thm = prove
  (`closSem_evaluate ([x1; y1],env1,r) = (Rval [h1; h2],r) /\ simple_exp
   x1 /\ simple_exp y1 /\
-   do_eq h1 h2 = Eq_val b ==>
-   closSem_evaluate ([eq_pure x1 y1],env1,r) = (Rval [Boolv b],r)`,
+   closSem_do_eq h1 h2 = Eq_val b ==>
+   closSem_evaluate ([eq_pure x1 y1],env1,r) = (Rval [closSem_Boolv
+     b],r)`,
   CHEAT_TAC);;
 
 (* SmartOp_thm *)
@@ -263,7 +264,7 @@ let red_rel = cake_inductive
          closLang_BlockOp (closLang_TagLenEq t1 t2); closLang_BlockOp
            (closLang_LenEq n); closLang_BlockOp (closLang_TagEq tag);
          closLang_BlockOp (closLang_EqualConst (closLang_Str s));
-         closLang_BlockOp (closLang_EqualConst (W64 w));
+         closLang_BlockOp (closLang_EqualConst (closLang_W64 w));
          closLang_BlockOp (closLang_EqualConst (closLang_Int i));
          closLang_BlockOp (closLang_Constant (ConstInt i));
          closLang_BlockOp (closLang_Constant (ConstStr s));
@@ -271,16 +272,16 @@ let red_rel = cake_inductive
        red_rel [closLang_Op t op xs] ys)) /\
    ((red_rel [] [])) /\
    ((!x. red_rel [x] [x])) /\
-   ((!v t. red_rel [Var t v] [])) /\
+   ((!v t. red_rel [closLang_Var t v] [])) /\
    ((!x y zs x1 x2.
        red_rel [x] x1 /\ red_rel (CONS y zs) x2 ==>
        red_rel (CONS x (CONS y zs)) (APPEND x1 x2))) /\
    ((!xs x x1 t.
        red_rel xs x1 /\ red_rel [x] [] ==>
-       red_rel [Let t xs x] x1)) /\
+       red_rel [closLang_Let t xs x] x1)) /\
    ((!x y z x1 x2 x3.
        red_rel [x] x1 /\ red_rel [y] x2 /\ red_rel [z] x3 ==>
-       red_rel [If t x y z] (APPEND (APPEND x1 x2) x3)))`;;
+       red_rel [closLang_If t x y z] (APPEND (APPEND x1 x2) x3)))`;;
 
 (* HOL4 clos_opProofScript.sml:733-734: a theorem that HOL4 states as
    the value of an ML expression: red_rel_nil *)

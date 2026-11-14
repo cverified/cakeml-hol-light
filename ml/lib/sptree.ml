@@ -3,7 +3,7 @@
     src/finite_maps/sptreeScript.sml
     A HOL4 library theory, of which the port has the definitions
     that CakeML needs, and 88 theorems of it from LightCake.  Needed
-    by 106 files of the port.  *)
+    by 105 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/indexedLists.ml";;
@@ -31,7 +31,6 @@ let wf_def,wf_ind = define_rec
   = LN) t1 /\ (\t. t = LN) t2)`;
    `sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\
   ~((\t. t = LN) t1 /\ (\t. t = LN) t2)`];;
-hol4_overload "wf" "sptree_wf";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -47,7 +46,6 @@ let lookup_def,lookup_ind = define_wf
    `sptree_lookup k (BS t1 a t2) =
          (if k = 0 then SOME a else sptree_lookup ((k - 1) DIV
            2) (if EVEN k then t1 else t2))`];;
-hol4_overload "lookup" "sptree_lookup";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -70,7 +68,6 @@ let insert_def,insert_ind = define_wf
          (if k = 0 then BS t1 a t2 else if EVEN k then BS
            (sptree_insert ((k - 1) DIV 2) a t1) a' t2 else BS t1 a'
            (sptree_insert ((k - 1) DIV 2) a t2))`];;
-hol4_overload "insert" "sptree_insert";;
 
 let mk_BN_def = new_definition
   `mk_BN t1 t2 =
@@ -95,19 +92,16 @@ let delete_def,delete_ind = define_rec
          (if k = 0 then BN t1 t2 else if EVEN k then
            mk_BS (sptree_delete ((k - 1) DIV 2) t1) a t2 else
            mk_BS t1 a (sptree_delete ((k - 1) DIV 2) t2))`];;
-hol4_overload "delete" "sptree_delete";;
 
 let fromList_def = new_definition
   `sptree_fromList l = SND (FOLDL (\(i,t) a. (i + 1,sptree_insert i a
   t)) (0,LN) l)`;;
-hol4_overload "fromList" "sptree_fromList";;
 
 let size_def,size_ind = define_rec
   [`sptree_size LN = 0`;
    `sptree_size (LS a) = 1`;
    `sptree_size (BN t1 t2) = sptree_size t1 + sptree_size t2`;
    `sptree_size (BS t1 a t2) = sptree_size t1 + sptree_size t2 + 1`];;
-hol4_overload "size" "sptree_size";;
 
 let union_def,union_ind = define_rec
   [`sptree_union LN t = t`;
@@ -124,7 +118,6 @@ let union_def,union_ind = define_rec
            BN t1' t2' -> BS (sptree_union t1 t1') a (sptree_union
            t2 t2') | BS t1' a' t2' -> BS (sptree_union t1 t1') a
            (sptree_union t2 t2'))`];;
-hol4_overload "union" "sptree_union";;
 
 let inter_def,inter_ind = define_rec
   [`inter LN t = LN`;
@@ -220,7 +213,6 @@ let mapi0_def,mapi0_ind = define_rec
 
 let mapi_def = new_definition
   `sptree_mapi f pt = mapi0 f 0 pt`;;
-hol4_overload "mapi" "sptree_mapi";;
 
 let toAList_def = new_definition
   `toAList = foldi (\k v a. CONS (k,v) a) 0 []`;;
@@ -233,7 +225,6 @@ let toListA_def,toListA_ind = define_rec
 
 let toList_def = new_definition
   `sptree_toList m = toListA [] m`;;
-hol4_overload "toList" "sptree_toList";;
 
 let mk_wf_def,mk_wf_ind = define_rec
   [`mk_wf LN = LN`;
@@ -251,7 +242,6 @@ let map_def,map_ind = define_rec
    `sptree_map f (BN t1 t2) = BN (sptree_map f t1) (sptree_map f t2)`;
    `sptree_map f (BS t1 a t2) = BS (sptree_map f t1) (f a)
   (sptree_map f t2)`];;
-hol4_overload "map" "sptree_map";;
 
 let spt_left_def = define_cases
   [`spt_left LN = LN`;

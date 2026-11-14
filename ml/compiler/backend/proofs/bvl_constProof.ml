@@ -24,7 +24,6 @@ needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
@@ -39,12 +38,11 @@ let _ = hol4_ancestors "bvl_constProof"
 
 let bvl_constProof_v_rel_def = new_definition
   `bvl_constProof_v_rel (:'c) (:'ffi) a x y xs ys =
-     (match a with Var n -> (\l n. oEL n l) ys n = SOME x | Op _1 _2
-       ->
+     (match a with bvl_Var n -> (\l n. oEL n l) ys n = SOME x |
+       bvl_Op _1 _2 ->
        (x = y) /\
-       (!(s:('c,'ffi)bvlSem_state) env. evaluate ([a],env,s) =
-         (Rval [x],s)) | _3 -> F)`;;
-hol4_overload "v_rel" "bvl_constProof_v_rel";;
+       (!(s:('c,'ffi)bvlSem_state) env. bvlSem_evaluate
+         ([a],env,s) = (Rval [x],s)) | _3 -> F)`;;
 
 let _ = size_thms "bvlSem_v";;
 let _ = size_thms "bvl_exp";;
@@ -64,7 +62,6 @@ let bvl_constProof_env_rel_def,bvl_constProof_env_rel_ind = define_wf
         bvl_constProof_v_rel (:'c) (:'ffi) a x y (CONS x e1) (CONS y
           e2) /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
         | (_4,_5,_6,_7,_8) -> F`];;
-hol4_overload "env_rel" "bvl_constProof_env_rel";;
 
 (* env_rel_length *)
 let bvl_constProof_env_rel_length = prove
@@ -185,9 +182,10 @@ let bvl_constProof_env_rel_LOOKUP_SOME = prove
 (* evaluate_delete_var_Rerr_SING *)
 let bvl_constProof_evaluate_delete_var_Rerr_SING = prove
  (`!x s r e env2.
-      evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
-        ==>
-      evaluate ([bvl_const_delete_var x],env2,s) = (Rerr e,r)`,
+      bvlSem_evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort
+        Rtype_error) ==>
+      bvlSem_evaluate ([bvl_const_delete_var x],env2,s) = (Rerr
+        e,r)`,
   (* delete_var changes a Var and nothing else, and a Var that
      evaluates to an error is out of range, which is the one error
      that this theorem leaves out *)
@@ -207,9 +205,10 @@ let bvl_constProof_evaluate_delete_var_Rerr_SING = prove
 (* evaluate_delete_var_Rerr[local] *)
 let bvl_constProof_evaluate_delete_var_Rerr = prove
  (`!xs s r e env2.
-       evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
-         ==>
-       evaluate (MAP bvl_const_delete_var xs,env2,s) = (Rerr e,r)`,
+       bvlSem_evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort
+         Rtype_error) ==>
+       bvlSem_evaluate (MAP bvl_const_delete_var xs,env2,s) = (Rerr
+         e,r)`,
   (let dv = bvl_const_delete_var_def in
    let ev = bvlSem_evaluate_def in
    let da = bvlSem_do_app_def in
@@ -289,10 +288,11 @@ let bvl_constProof_evaluate_delete_var_Rerr = prove
 (* evaluate_delete_var_Rval[local] *)
 let bvl_constProof_evaluate_delete_var_Rval = prove
  (`!xs env2 s a r ax env.
-       evaluate (xs,env2,(s:('c,'ffi)bvlSem_state)) = (Rval a,r) /\
+       bvlSem_evaluate (xs,env2,(s:('c,'ffi)bvlSem_state)) = (Rval
+         a,r) /\
        bvl_constProof_env_rel (:'c) (:'ffi) ax env env2 ==>
-       (?b. evaluate (MAP bvl_const_delete_var xs,env2,s) = (Rval
-         b,r) /\
+       (?b. bvlSem_evaluate (MAP bvl_const_delete_var xs,env2,s) =
+         (Rval b,r) /\
            bvl_constProof_env_rel (:'c) (:'ffi) (APPEND
              (bvl_const_extract_list xs) ax) (APPEND a env) (APPEND b
              env2))`,
@@ -539,8 +539,8 @@ let evaluate_EQ_NIL = prove
 
 (* [local] *)
 let dest_simple_eq = prove
- (`dest_simple h = SOME y <=> (h = Op (closLang_IntOp (closLang_Const
-  y)) [])`,
+ (`dest_simple h = SOME y <=> (h = bvl_Op (closLang_IntOp
+  (closLang_Const y)) [])`,
   (* the case split of HOL4 is the split along the patterns of the
      match, which EVERY_CASE_TAC makes (PORTING-GUIDE.md entry 1) *)
   (let ds = dest_simple_def in
@@ -562,7 +562,7 @@ let dest_simple_eq = prove
 (* [local] *)
 let case_op_const_eq = prove
  (`case_op_const exp = SOME x <=>
-   (?op x1 n2. x = (op,x1,n2) /\ (exp = Op op [x1; Op
+   (?op x1 n2. x = (op,x1,n2) /\ (exp = bvl_Op op [x1; bvl_Op
      (closLang_IntOp (closLang_Const n2)) []]))`,
   (let coc = case_op_const_def in
    let con_rws =
@@ -584,9 +584,9 @@ let case_op_const_eq = prove
 (* [local] *)
 let SmartOp_flip_thm = prove
  (`(op',x1',x2') = SmartOp_flip op x1 x2 /\
-   evaluate ([Op op [x1; x2]],env,s) = (res,s2) /\ ~(res = Rerr
-     (Rabort Rtype_error)) ==>
-   evaluate ([Op op' [x1'; x2']],env,s) = (res,s2)`,
+   bvlSem_evaluate ([bvl_Op op [x1; x2]],env,s) = (res,s2) /\ ~(res =
+     Rerr (Rabort Rtype_error)) ==>
+   bvlSem_evaluate ([bvl_Op op' [x1'; x2']],env,s) = (res,s2)`,
   (* SmartOp_flip moves a constant from the left of an operation to
      the right, which costs nothing because a constant cannot fail
      and leaves the state alone, and the operations it does it for
@@ -706,9 +706,9 @@ let SmartOp_flip_thm = prove
 
 (* [local] *)
 let SmartOp2_thm = prove
- (`evaluate ([Op op [x1; x2]],env,s) = (res,s2) /\ ~(res = Rerr (Rabort
-  Rtype_error)) ==>
-   evaluate ([SmartOp2 (op,x1,x2)],env,s) = (res,s2)`,
+ (`bvlSem_evaluate ([bvl_Op op [x1; x2]],env,s) = (res,s2) /\ ~(res =
+  Rerr (Rabort Rtype_error)) ==>
+   bvlSem_evaluate ([SmartOp2 (op,x1,x2)],env,s) = (res,s2)`,
   (* The constant folding, which is where the work of this file is:
      SmartOp2 looks at eleven operations and at the shape of the two
      expressions, and every expression it builds has to evaluate to
@@ -1049,9 +1049,9 @@ let SmartOp2_thm = prove
    shapes THEN ((SOLVED fold) ORELSE use_folds)));;
 
 let SmartOp1_thm = prove
- (`evaluate ([Op op [x]],env,s) = (res,s2) /\ ~(res = Rerr (Rabort
-  Rtype_error)) ==>
-   evaluate ([SmartOp1 op x],env,s) = (res,s2)`,
+ (`bvlSem_evaluate ([bvl_Op op [x]],env,s) = (res,s2) /\ ~(res = Rerr
+  (Rabort Rtype_error)) ==>
+   bvlSem_evaluate ([SmartOp1 op x],env,s) = (res,s2)`,
   (* SmartOp1 folds an equality with a constant into a boolean *)
   (let ev = bvlSem_evaluate_def in
    let da = bvlSem_do_app_def in
@@ -1118,9 +1118,9 @@ let SmartOp1_thm = prove
    AP_TERM_TAC THEN MATCH_ACCEPT_TAC EQ_SYM_EQ));;
 
 let SmartOp_thm = prove
- (`evaluate ([Op op xs],env,s) = (res,s2) /\ ~(res = Rerr (Rabort
-  Rtype_error)) ==>
-    evaluate ([SmartOp op xs],env,s) = (res,s2)`,
+ (`bvlSem_evaluate ([bvl_Op op xs],env,s) = (res,s2) /\ ~(res = Rerr
+  (Rabort Rtype_error)) ==>
+    bvlSem_evaluate ([bvl_const_SmartOp op xs],env,s) = (res,s2)`,
   (* and SmartOp itself is the three of them: two expressions go
      through the flip and then SmartOp2, one through SmartOp1, and
      anything else is left alone *)
@@ -1145,10 +1145,11 @@ let SmartOp_thm = prove
 (* evaluate_env_rel *)
 let bvl_constProof_evaluate_env_rel = prove
  (`!xs env1 (s1:('c,'ffi)bvlSem_state) ax env2 res s2 ys.
-      (evaluate (xs,env1,s1) = (res,s2)) /\
+      (bvlSem_evaluate (xs,env1,s1) = (res,s2)) /\
       bvl_constProof_env_rel (:'c) (:'ffi) ax env1 env2 /\ ~(res =
         Rerr (Rabort Rtype_error)) ==>
-      (evaluate (compile ax xs,env2,s1) = (res,s2))`,
+      (bvlSem_evaluate (bvl_const_compile ax xs,env2,s1) =
+        (res,s2))`,
   ((* ---- the pieces ---------------------------------------------- *)
    let cp = bvl_const_compile_def in
    let ev = bvlSem_evaluate_def in
@@ -1646,9 +1647,9 @@ let bvl_constProof_evaluate_env_rel = prove
 
 (* compile_thm *)
 let bvl_constProof_compile_thm = prove
- (`!xs env (s1:('c,'ffi)bvlSem_state) res s2 ys. (evaluate (xs,env,s1)
-  = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==> (evaluate
-  (compile [] xs,env,s1) = (res,s2))`,
+ (`!xs env (s1:('c,'ffi)bvlSem_state) res s2 ys. (bvlSem_evaluate
+  (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
+  (bvlSem_evaluate (bvl_const_compile [] xs,env,s1) = (res,s2))`,
   (* evaluate_env_rel at ax = [], where env_rel [] env env is
      env = env.  The environment is taken out of the goal: the
      state of the statement has type variables of its own
@@ -1668,8 +1669,9 @@ let bvl_constProof_compile_thm = prove
 
 (* evaluate_compile_exp *)
 let bvl_constProof_evaluate_compile_exp = prove
- (`evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
-    evaluate ([bvl_const_compile_exp d],env,s) = (r,t)`,
+ (`bvlSem_evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort
+  Rtype_error)) ==>
+    bvlSem_evaluate ([bvl_const_compile_exp d],env,s) = (r,t)`,
   (* the compiled list of one is a singleton, so compile_exp is its
      head, and compile_thm is the theorem about the whole list *)
   (let ce = bvl_const_compile_exp_def in
@@ -1780,7 +1782,7 @@ let SmartOp2_code_labels = prove
 
 let SmartOp1_code_labels = prove
  (`bvlProps_get_code_labels (SmartOp1 op x) = bvlProps_get_code_labels
-  (Op op [x])`,
+  (bvl_Op op [x])`,
   (* SmartOp1 folds an equality with a constant, and then both
      sides have no labels at all *)
   (let so1 = SmartOp1_def in
@@ -1814,7 +1816,7 @@ let SmartOp1_code_labels = prove
 
 (* [simp] *)
 let SmartOp_code_labels = prove
- (`bvlProps_get_code_labels (SmartOp op xs) =
+ (`bvlProps_get_code_labels (bvl_const_SmartOp op xs) =
    assign_get_code_label op UNION UNIONS (set_of_list (MAP
      bvlProps_get_code_labels xs))`,
   (let so = SmartOp_def in

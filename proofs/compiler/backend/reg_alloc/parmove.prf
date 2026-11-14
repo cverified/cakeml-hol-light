@@ -10,33 +10,3 @@
 
 ### sem_init
   (REWRITE_TAC[FUN_EQ_THM; sem_def; APPEND_NIL; REVERSE; seqsem_def])
-
-### not_use_temp_before_assign_append
-  (MATCH_MP_TAC not_use_temp_before_assign_ind THEN
-   ASM_REWRITE_TAC[not_use_temp_before_assign_def; APPEND; MAP; ALL;
-     IS_SOME; FST])
-
-### not_use_temp_before_assign_thm
-  (MATCH_MP_TAC not_use_temp_before_assign_ind THEN
-   REWRITE_TAC[not_use_temp_before_assign_def; MAP; find_index_def;
-     FST; SND;
-               distinctness "option"; option_INJ; ARITH] THEN
-   REPEAT CONJ_TAC THENL
-    [REWRITE_TAC[FORALL_UNWIND_THM1; LT];
-     REPEAT STRIP_TAC THEN EXISTS_TAC `0` THEN
-     FIRST_ASSUM(MP_TAC o MATCH_MP find_index_LESS_LENGTH) THEN
-       ARITH_TAC;
-     GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN
-     REWRITE_TAC[GEN_ALL(INST [`1`,`k:num`] (SPEC_ALL
-       find_index_shift_0))] THEN
-     SPEC_TAC(`find_index NONE (MAP SND (ls:(A option#B option)
-       list)) 0`, `o1:num option`) THEN
-     SPEC_TAC(`find_index NONE (MAP FST (ls:(A option#B option)
-       list)) 0`, `o2:num option`) THEN
-     MATCH_MP_TAC option_INDUCT THEN CONJ_TAC THENL [ALL_TAC;
-       GEN_TAC] THEN
-     MATCH_MP_TAC option_INDUCT THEN
-     REWRITE_TAC[OPTION_MAP; option_DISTINCT; option_INJ;
-       FORALL_UNWIND_THM1;
-                 UNWIND_THM1] THEN
-     (ARITH_TAC ORELSE MESON_TAC[])])

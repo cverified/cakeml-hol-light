@@ -76,7 +76,6 @@ let export_riscv_startup_def = new_definition
          [(implode "     j       cake_main\n")]))
      (misc_List
        [(implode "\n")]))))`;;
-hol4_overload "startup" "export_riscv_startup";;
 
 let export_riscv_ffi_asm_def,export_riscv_ffi_asm_ind = define_rec
   [`export_riscv_ffi_asm [] = misc_Nil`;
@@ -86,7 +85,6 @@ let export_riscv_ffi_asm_def,export_riscv_ffi_asm_ind = define_rec
            (implode "     tail cdecl(ffi"); ffi; (implode ")\n");
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_riscv_ffi_asm ffis)`];;
-hol4_overload "ffi_asm" "export_riscv_ffi_asm";;
 
 (* HOL4 export_riscvScript.sml:65-89: the ML values that the
    definitions below antiquote *)
@@ -110,13 +108,11 @@ let export_riscv_export_func_def = new_definition
       (implode "     j       cake_enter\n");
              name; (implode "_jmp:\n");
       (implode "     j       "); label; (implode "\n")])`;;
-hol4_overload "export_func" "export_riscv_export_func";;
 
 let export_riscv_export_funcs_def = new_definition
   `export_riscv_export_funcs lsyms exp =
      FOLDL export_riscv_export_func misc_Nil (FILTER ((C MEM exp)
        o FST) lsyms)`;;
-hol4_overload "export_funcs" "export_riscv_export_funcs";;
 
 let riscv_export_def = new_definition
   `riscv_export ffi_names' bytes (data:word64 list) syms exp ret pk =

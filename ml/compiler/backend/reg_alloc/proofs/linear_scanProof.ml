@@ -756,7 +756,6 @@ let lookup_default_id_insert = prove
 
 let id_def = new_definition
   `linear_scanProof_id x = x`;;
-hol4_overload "id" "linear_scanProof_id";;
 
 let find_reg_exchange_FOLDR_correct = prove
  (`!l colors exch invexch k.
@@ -1681,7 +1680,8 @@ let sort_moves_correct = prove
  (`!l r sth.
    l <= LENGTH (linear_scan_hidden_state_sorted_moves sth) /\
    r <= LENGTH (linear_scan_hidden_state_sorted_moves sth) ==>
-   (?sthout. sort_moves l r sth = (M_success one,sthout) /\
+   (?sthout. linear_scan_sort_moves l r sth = (M_success one,sthout)
+     /\
    sthout = linear_scan_hidden_state_sorted_moves_fupd (K
      (linear_scan_hidden_state_sorted_moves sthout)) sth /\
    LENGTH (linear_scan_hidden_state_sorted_moves sthout) = LENGTH
@@ -1920,12 +1920,12 @@ let in_clash_tree_set_eq = prove
   set_of_list r) /\
    (!names. in_clash_tree (reg_alloc_Set names) = domain names) /\
    (!name_opt t1 t2.
-    in_clash_tree (Branch name_opt t1 t2) =
+    in_clash_tree (linear_scan_Branch name_opt t1 t2) =
     (match name_opt with SOME names -> domain names UNION
       in_clash_tree t1 UNION in_clash_tree t2 | NONE -> in_clash_tree t1
       UNION in_clash_tree t2)) /\
-   (!t1 t2. in_clash_tree (Seq t1 t2) = in_clash_tree t1 UNION
-     in_clash_tree t2)`,
+   (!t1 t2. in_clash_tree (linear_scan_Seq t1 t2) = in_clash_tree
+     t1 UNION in_clash_tree t2)`,
   CHEAT_TAC);;
 
 let find_bijection_clash_tree_invariants = prove

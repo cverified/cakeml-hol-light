@@ -546,7 +546,6 @@ let is_subgraph_trans = prove
 (* TODO quick sanity check: move to proof file when done *)
 let hide_def = new_definition
   `reg_allocProof_hide x = x`;;
-hol4_overload "hide" "reg_allocProof_hide";;
 
 (* [local] *)
 let GT_TRANS = prove

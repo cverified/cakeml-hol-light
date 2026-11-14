@@ -13,15 +13,12 @@ let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: list pred_set finite_map relation *)
 let grammar_symbol_INDUCT,grammar_symbol_RECURSION = define_datatype
   "grammar_symbol = grammar_TOK ('a) | grammar_NT ('b+num)";;
-hol4_overload "TOK" "grammar_TOK";;
-hol4_overload "NT" "grammar_NT";;
 
 let destTOK_def = new_definition
   `grammar_destTOK x1 =
         match x1 with
           (grammar_TOK tk,_1) -> SOME tk
         | _2 -> NONE`;;
-hol4_overload "destTOK" "grammar_destTOK";;
 
 let grammar_FIELDS = define_record "grammar"
   ["start","'b+num";

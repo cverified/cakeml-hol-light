@@ -1,10 +1,8 @@
-FIND_thm
 MAPI_thm
 MAPI_thm_gen
 collate_equal_thm
 foldl_intro
 foldli_thm
-index_find_thm
 merge_tail_acc
 partition_aux_thm
 partition_neg_thm

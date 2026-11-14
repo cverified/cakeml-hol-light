@@ -1477,7 +1477,6 @@ let pure_add_constraints_set_tids = prove
 
 let inferProps_hide_def = new_definition
   `inferProps_hide x = x`;;
-hol4_overload "hide" "inferProps_hide";;
 
 let infer_p_inf_set_tids = prove
  (`(!l cenv p st t env st'.

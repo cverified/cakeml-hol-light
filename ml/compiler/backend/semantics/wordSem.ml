@@ -2,7 +2,7 @@
 (*  wordSem: ported from HOL4's
     compiler/backend/semantics/wordSemScript.sml
     A definition theory, with 77 definitions, 4 datatypes and 16
-    theorems.  Needed by 31 files of the port.  *)
+    theorems.  Needed by 28 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -18,7 +18,6 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
-needs "lib/comparison.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
@@ -28,7 +27,6 @@ needs "lib/machine_ieee.ml";;
 needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 (* for call_FFI *)
 needs "semantics/fpSem.ml";;
@@ -89,16 +87,16 @@ let isWord_exists = prove
 let wordSem_word_cmp_def = new_definition
   `wordSem_word_cmp x1 x2 x3 =
         match (x1,x2,x3) with
-          ((Equal:cmp),wordLang_Word w1,wordLang_Word w2) -> SOME (w1
-            = w2)
-        | (Less,(wordLang_Word w1),(wordLang_Word w2)) -> SOME (w1 <
-          w2)
+          ((asm_Equal:cmp),wordLang_Word w1,wordLang_Word w2) -> SOME
+            (w1 = w2)
+        | (asm_Less,(wordLang_Word w1),(wordLang_Word w2)) -> SOME
+          (w1 < w2)
         | (asm_Lower,(wordLang_Word w1),(wordLang_Word w2)) -> SOME
           (w1 <+ w2)
-        | (Test,(wordLang_Word w1),(wordLang_Word w2)) -> SOME ((w1
-          && w2) = (n2w 0))
-        | (Test,(Loc _3 n),(wordLang_Word w2)) -> (if ~(n = 0) then
-          NONE else if w2 = (n2w 1) then SOME T else NONE)
+        | (asm_Test,(wordLang_Word w1),(wordLang_Word w2)) -> SOME
+          ((w1 && w2) = (n2w 0))
+        | (asm_Test,(wordLang_Loc _3 n),(wordLang_Word w2)) -> (if
+          ~(n = 0) then NONE else if w2 = (n2w 1) then SOME T else NONE)
         | (asm_NotEqual,(wordLang_Word w1),(wordLang_Word w2)) ->
           SOME (~(w1 = w2))
         | (asm_NotLess,(wordLang_Word w1),(wordLang_Word w2)) -> SOME
@@ -107,15 +105,14 @@ let wordSem_word_cmp_def = new_definition
           SOME (~(w1 <+ w2))
         | (asm_NotTest,(wordLang_Word w1),(wordLang_Word w2)) -> SOME
           (~((w1 && w2) = (n2w 0)))
-        | (asm_NotTest,(Loc _4 n),(wordLang_Word w2)) -> (if ~(n = 0)
-          then NONE else if w2 = (n2w 1) then SOME F else NONE)
+        | (asm_NotTest,(wordLang_Loc _4 n),(wordLang_Word w2)) -> (if
+          ~(n = 0) then NONE else if w2 = (n2w 1) then SOME F else NONE)
         | (_5,_6,_7) -> NONE`;;
-hol4_overload "word_cmp" "wordSem_word_cmp";;
 
 let mem_load_32_def = new_definition
   `mem_load_32 m dm be' (w:'a word) =
-   (if alignment_aligned 2 w then match m (byte_align w) with Loc _8
-     _9 -> NONE | wordLang_Word v ->
+   (if alignment_aligned 2 w then match m (byte_align w) with
+     wordLang_Loc _8 _9 -> NONE | wordLang_Word v ->
             (if byte_align w IN dm then SOME (word_of_bytes be' ((n2w
               0):word32)
               [get_byte w v be'; get_byte (w + (n2w 1)) v be';
@@ -143,8 +140,8 @@ let mem_store_32_def = new_definition
 let mem_load_32_alt = prove
  (cake_as_vars (fun () ->
     `mem_load_32 m dm be (w:'a word) =
-     (if alignment_aligned 2 w then match m (byte_align w) with Loc
-       _13 _14 -> NONE | wordLang_Word v ->
+     (if alignment_aligned 2 w then match m (byte_align w) with
+       wordLang_Loc _13 _14 -> NONE | wordLang_Word v ->
               (if byte_align w IN dm then
                 let b0 = get_byte w v be in
                 let b1 = get_byte (w + (n2w 1)) v be in
@@ -189,8 +186,8 @@ let mem_store_32_alt = prove
 
 let mem_load_byte_aux_def = new_definition
   `mem_load_byte_aux m dm be' w =
-     (match m (byte_align w) with Loc _17 _18 -> NONE | wordLang_Word
-       v ->
+     (match m (byte_align w) with wordLang_Loc _17 _18 -> NONE |
+       wordLang_Word v ->
          (if byte_align w IN dm then SOME (get_byte w v be') else
            NONE))`;;
 
@@ -319,28 +316,18 @@ let wordSem_result_INDUCT,wordSem_result_RECURSION = define_datatype
    (num) | wordSem_Continue (num) | wordSem_TimeOut | \
    wordSem_NotEnoughSpace | wordSem_FinalFFI (final_event) | \
    wordSem_Error";;
-hol4_overload "Result" "wordSem_Result";;
-hol4_overload "Exception" "wordSem_Exception";;
-hol4_overload "Break" "wordSem_Break";;
-hol4_overload "Continue" "wordSem_Continue";;
-hol4_overload "TimeOut" "wordSem_TimeOut";;
-hol4_overload "NotEnoughSpace" "wordSem_NotEnoughSpace";;
-hol4_overload "FinalFFI" "wordSem_FinalFFI";;
-hol4_overload "Error" "wordSem_Error";;
 
 let isResult_def = new_definition
   `wordSem_isResult x1 =
         match x1 with
           wordSem_Result a b -> T
         | _25 -> F`;;
-hol4_overload "isResult" "wordSem_isResult";;
 
 let isException_def = new_definition
   `wordSem_isException x1 =
         match x1 with
           wordSem_Exception a b -> T
         | _26 -> F`;;
-hol4_overload "isException" "wordSem_isException";;
 
 (* HOL4 wordSemScript.sml:260: the ML values that the definitions
    below antiquote *)
@@ -348,7 +335,6 @@ hol4_overload "isException" "wordSem_isException";;
 let wordSem_dec_clock_def = new_definition
   `wordSem_dec_clock (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock s - 1)) s`;;
-hol4_overload "dec_clock" "wordSem_dec_clock";;
 
 let wordSem_fix_clock_def = new_definition
   `wordSem_fix_clock old_s (res,new_s) =
@@ -356,7 +342,6 @@ let wordSem_fix_clock_def = new_definition
        old_s)) (wordSem_state_clock_fupd (K (if wordSem_state_clock
        old_s < wordSem_state_clock new_s then wordSem_state_clock
        old_s else wordSem_state_clock new_s)) new_s))`;;
-hol4_overload "fix_clock" "wordSem_fix_clock";;
 
 let is_word_def = new_definition
   `is_word x1 =
@@ -374,13 +359,11 @@ let wordSem_mem_store_def = new_definition
      (if addr' IN wordSem_state_mdomain s then
        SOME (wordSem_state_memory_fupd (K ((addr' =+ w)
          (wordSem_state_memory s))) s) else NONE)`;;
-hol4_overload "mem_store" "wordSem_mem_store";;
 
 let wordSem_mem_load_def = new_definition
   `wordSem_mem_load (addr':'a word) (s:('a,'c,'ffi)wordSem_state) =
      (if addr' IN wordSem_state_mdomain s then
        SOME (wordSem_state_memory s addr') else NONE)`;;
-hol4_overload "mem_load" "wordSem_mem_load";;
 
 let the_words_def,the_words_ind = define_rec
   [`the_words [] = SOME []`;
@@ -391,7 +374,6 @@ let the_words_def,the_words_ind = define_rec
 let wordSem_get_var_def = new_definition
   `wordSem_get_var v (s:('a,'c,'ffi)wordSem_state) = sptree_lookup v
   (wordSem_state_locals s)`;;
-hol4_overload "get_var" "wordSem_get_var";;
 
 let wordSem_get_vars_def,wordSem_get_vars_ind = define_rec
   [`wordSem_get_vars [] (s:('a,'c,'ffi)wordSem_state) = SOME []`;
@@ -399,35 +381,29 @@ let wordSem_get_vars_def,wordSem_get_vars_ind = define_rec
          (match wordSem_get_var v s with NONE -> NONE | SOME x
            -> (match wordSem_get_vars vs s with NONE -> NONE | SOME
            xs -> SOME (CONS x xs)))`];;
-hol4_overload "get_vars" "wordSem_get_vars";;
 
 let wordSem_set_var_def = new_definition
   `wordSem_set_var v x (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_locals_fupd (K (sptree_insert v x
        (wordSem_state_locals s))) s)`;;
-hol4_overload "set_var" "wordSem_set_var";;
 
 let unset_var_def = new_definition
   `wordSem_unset_var v (s:('a,'c,'ffi)wordSem_state) =
   (wordSem_state_locals_fupd (K (sptree_delete v
   (wordSem_state_locals s))) s)`;;
-hol4_overload "unset_var" "wordSem_unset_var";;
 
 let wordSem_set_vars_def = new_definition
   `wordSem_set_vars vs xs (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_locals_fupd (K (alist_insert vs xs
        (wordSem_state_locals s))) s)`;;
-hol4_overload "set_vars" "wordSem_set_vars";;
 
 let get_store_def = new_definition
   `wordSem_get_store v (s:('a,'c,'ffi)wordSem_state) = (FLOOKUP
   (wordSem_state_store s) v)`;;
-hol4_overload "get_store" "wordSem_get_store";;
 
 let set_store_def = new_definition
   `wordSem_set_store v x (s:('a,'c,'ffi)wordSem_state) =
   (wordSem_state_store_fupd (K (wordSem_state_store s |+ (v,x))) s)`;;
-hol4_overload "set_store" "wordSem_set_store";;
 
 (* the termination relation that HOL4 gives is
      MEASURE (wordLang_exp_size ARB o SND)
@@ -458,7 +434,6 @@ let word_exp_def,word_exp_ind = define_shaped_rec
            wexp1) with (SOME (wordLang_Word w),SOME (wordLang_Word
            w1)) -> OPTION_MAP wordLang_Word (word_sh sh w (w2n w1))
            | _39 -> NONE)`];;
-hol4_overload "word_exp" "wordSem_word_exp";;
 
 (* Flushes the locals and (optionally) the store *)
 let wordSem_flush_state_def = define_general
@@ -469,7 +444,6 @@ let wordSem_flush_state_def = define_general
    `wordSem_flush_state F (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_locals_size_fupd (K (SOME 0))
   (wordSem_state_locals_fupd (K LN) s)`];;
-hol4_overload "flush_state" "wordSem_flush_state";;
 
 let sh_mem_store_def = new_definition
   `wordSem_sh_mem_store (a:'a word) (w:'a word)
@@ -483,7 +457,6 @@ let sh_mem_store_def = new_definition
                        T s) | FFI_return new_ffi new_bytes ->
                        (NONE,(wordSem_state_ffi_fupd (K new_ffi) s))
                        else (SOME wordSem_Error,s))`;;
-hol4_overload "sh_mem_store" "wordSem_sh_mem_store";;
 
 let sh_mem_load_def = new_definition
   `wordSem_sh_mem_load (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
@@ -491,7 +464,6 @@ let sh_mem_load_def = new_definition
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
          MappedRead) [(n2w 0):word8]
                      (word_to_bytes a F)) else NONE)`;;
-hol4_overload "sh_mem_load" "wordSem_sh_mem_load";;
 
 let sh_mem_store_byte_def = new_definition
   `wordSem_sh_mem_store_byte (a:'a word) (w:'a word)
@@ -505,7 +477,6 @@ let sh_mem_store_byte_def = new_definition
            outcome),wordSem_flush_state T s) | FFI_return new_ffi
            new_bytes -> (NONE,(wordSem_state_ffi_fupd (K new_ffi) s))
            else (SOME wordSem_Error,s))`;;
-hol4_overload "sh_mem_store_byte" "wordSem_sh_mem_store_byte";;
 
 let sh_mem_store16_def = new_definition
   `wordSem_sh_mem_store16 (a:'a word) (w:'a word)
@@ -519,7 +490,6 @@ let sh_mem_store16_def = new_definition
            outcome),wordSem_flush_state T s) | FFI_return new_ffi
            new_bytes -> (NONE,(wordSem_state_ffi_fupd (K new_ffi) s))
            else (SOME wordSem_Error,s))`;;
-hol4_overload "sh_mem_store16" "wordSem_sh_mem_store16";;
 
 let sh_mem_store32_def = new_definition
   `wordSem_sh_mem_store32 (a:'a word) (w:'a word)
@@ -533,7 +503,6 @@ let sh_mem_store32_def = new_definition
            outcome),wordSem_flush_state T s) | FFI_return new_ffi
            new_bytes -> (NONE,(wordSem_state_ffi_fupd (K new_ffi) s))
            else (SOME wordSem_Error,s))`;;
-hol4_overload "sh_mem_store32" "wordSem_sh_mem_store32";;
 
 let sh_mem_load_byte_def = new_definition
   `wordSem_sh_mem_load_byte (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
@@ -541,7 +510,6 @@ let sh_mem_load_byte_def = new_definition
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
          MappedRead) [(n2w 1):word8]
                      (word_to_bytes a F)) else NONE)`;;
-hol4_overload "sh_mem_load_byte" "wordSem_sh_mem_load_byte";;
 
 let sh_mem_load16_def = new_definition
   `wordSem_sh_mem_load16 (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
@@ -549,7 +517,6 @@ let sh_mem_load16_def = new_definition
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
          MappedRead) [(n2w 2):word8]
                      (word_to_bytes a F)) else NONE)`;;
-hol4_overload "sh_mem_load16" "wordSem_sh_mem_load16";;
 
 let sh_mem_load32_def = new_definition
   `wordSem_sh_mem_load32 (a:'a word) (s:('a,'c,'ffi)wordSem_state) =
@@ -557,7 +524,6 @@ let sh_mem_load32_def = new_definition
        SOME (call_FFI (wordSem_state_ffi s) (ffi_SharedMem
          MappedRead) [(n2w 4):word8]
                      (word_to_bytes a F)) else NONE)`;;
-hol4_overload "sh_mem_load32" "wordSem_sh_mem_load32";;
 
 (* set variable given the output from ShareLoad(Byte) *)
 let sh_mem_set_var_def = new_definition
@@ -571,7 +537,7 @@ let sh_mem_set_var_def = new_definition
         | (_40,s) -> (SOME wordSem_Error,s)`;;
 
 let share_inst_def = define_cases
-  [`share_inst (Load:memop) v ad s = sh_mem_set_var
+  [`share_inst (wordLang_Load:memop) v ad s = sh_mem_set_var
   (wordSem_sh_mem_load ad s) v s`;
    `share_inst asm_Load8 v ad s = sh_mem_set_var
   (wordSem_sh_mem_load_byte ad s) v s`;
@@ -579,9 +545,9 @@ let share_inst_def = define_cases
   (wordSem_sh_mem_load16 ad s) v s`;
    `share_inst (asm_Load32:memop) v ad s = sh_mem_set_var
   (wordSem_sh_mem_load32 ad s) v s`;
-   `share_inst (Store:memop) v ad s = (match wordSem_get_var v s with
-  SOME (wordLang_Word v) -> wordSem_sh_mem_store ad v s | _47 ->
-  (SOME wordSem_Error,s))`;
+   `share_inst (wordLang_Store:memop) v ad s = (match wordSem_get_var
+  v s with SOME (wordLang_Word v) -> wordSem_sh_mem_store ad v s |
+  _47 -> (SOME wordSem_Error,s))`;
    `share_inst asm_Store8 v ad s = (match wordSem_get_var v s with
   SOME (wordLang_Word v) -> wordSem_sh_mem_store_byte ad v s | _48 ->
   (SOME wordSem_Error,s))`;
@@ -599,7 +565,6 @@ let wordSem_call_env_def = new_definition
   (wordSem_state_stack s)) size'))) (wordSem_state_locals_size_fupd (K
   size') (wordSem_state_locals_fupd (K (fromList2 args))
      s))`;;
-hol4_overload "call_env" "wordSem_call_env";;
 
 let list_rearrange_def = new_definition
   `list_rearrange mover xs =
@@ -621,8 +586,9 @@ let key_val_compare_def = new_definition
        (a = a' /\
          (match b with
            wordLang_Word x -> (match b' with wordLang_Word y -> x
-             <= y | _53 -> T) | Loc a b -> (match b' with Loc a' b'
-             -> (a > a') \/ (a = a' /\ b >= b') | _54 -> F))))`;;
+             <= y | _53 -> T) | wordLang_Loc a b -> (match b' with
+             wordLang_Loc a' b' -> (a > a') \/ (a = a' /\ b >= b') |
+             _54 -> F))))`;;
 
 (*
 EVAL ``key_val_compare (1,Loc 3 4) (1,Loc 1 2)``
@@ -663,7 +629,6 @@ let wordSem_push_env_def = define_cases
               (wordSem_state_stack_max s) (stack_size stack')))
               (wordSem_state_stack_fupd (K stack')
           s))))`];;
-hol4_overload "push_env" "wordSem_push_env";;
 
 let wordSem_pop_env_def = new_definition
   `wordSem_pop_env (s:('a,'c,'ffi)wordSem_state) =
@@ -678,7 +643,6 @@ let wordSem_pop_env_def = new_definition
             (wordSem_state_stack_fupd (K xs)
             (wordSem_state_locals_fupd (K (sptree_union (fromAList e)
             (fromAList e0))) s)))) | _57 -> NONE)`;;
-hol4_overload "pop_env" "wordSem_pop_env";;
 
 (* push_env_clock[local] *)
 let wordSem_push_env_clock = prove
@@ -704,7 +668,6 @@ let wordSem_jump_exc_def = new_definition
              (wordSem_state_locals_fupd (K (sptree_union (fromAList
              e) (fromAList e0))) (wordSem_state_handler_fupd (K n)
              s))),l1,l2) | _58 -> NONE else NONE)`;;
-hol4_overload "jump_exc" "wordSem_jump_exc";;
 
 let cut_names_def = new_definition
   `cut_names name_set env =
@@ -721,7 +684,6 @@ let wordSem_cut_env_def = new_definition
   `wordSem_cut_env (name_sets:1 spt#1 spt) env =
      (match cut_envs name_sets env with SOME (e1,e2) -> SOME
        (sptree_union e2 e1) | _60 -> NONE)`;;
-hol4_overload "cut_env" "wordSem_cut_env";;
 (* -- *)
 
 let wordSem_cut_state_def = new_definition
@@ -729,13 +691,11 @@ let wordSem_cut_state_def = new_definition
      (match wordSem_cut_env names (wordSem_state_locals s) with
        NONE -> NONE | SOME env -> SOME (wordSem_state_locals_fupd (K
        env) s))`;;
-hol4_overload "cut_state" "wordSem_cut_state";;
 
 let wordSem_cut_state_opt_def = new_definition
   `wordSem_cut_state_opt names (s:('a,'c,'ffi)wordSem_state) =
      (match names with NONE -> SOME s | SOME names ->
        wordSem_cut_state names s)`;;
-hol4_overload "cut_state_opt" "wordSem_cut_state_opt";;
 
 let wordSem_find_code_def = define_cases
   [`wordSem_find_code (SOME p) args code ssize =
@@ -744,12 +704,11 @@ let wordSem_find_code_def = define_cases
            (args,exp,sptree_lookup p ssize) else NONE))`;
    `wordSem_find_code NONE args code ssize =
          (if args = [] then NONE else
-           match LAST args with Loc loc 0 ->
+           match LAST args with wordLang_Loc loc 0 ->
                (match sptree_lookup loc code with NONE -> NONE
                  | SOME (arity,exp) -> (if LENGTH args = arity + 1
                  then SOME (BUTLAST args,exp,sptree_lookup loc
                  ssize) else NONE)) | other -> NONE)`];;
-hol4_overload "find_code" "wordSem_find_code";;
 
 let _ = size_thms "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -759,7 +718,6 @@ let enc_stack_def,enc_stack_ind = define_wf
   [`wordSem_enc_stack [] = []`;
    `wordSem_enc_stack (CONS (StackFrame n _61 l handler) st) =
   APPEND (MAP SND l) (wordSem_enc_stack st)`];;
-hol4_overload "enc_stack" "wordSem_enc_stack";;
 
 let _ = size_thms "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -775,7 +733,6 @@ let dec_stack_def,dec_stack_ind = define_wf
             -> NONE | SOME s -> SOME (CONS (StackFrame n l0
               (ZIP (MAP FST l) (TAKE (LENGTH l) xs)) handler) s))
         | (_62,_63) -> NONE`];;
-hol4_overload "dec_stack" "wordSem_dec_stack";;
 
 let gc_def = new_definition
   `// gc runs the garbage collector algorithm
@@ -789,7 +746,6 @@ let gc_def = new_definition
              SOME (wordSem_state_memory_fupd (K m)
                (wordSem_state_store_fupd (K st)
                (wordSem_state_stack_fupd (K stack') s)))))`;;
-hol4_overload "gc" "wordSem_gc";;
 
 let has_space_def = new_definition
   `wordSem_has_space wl (s:('a,'c,'ffi)wordSem_state) =
@@ -797,7 +753,6 @@ let has_space_def = new_definition
        TriggerGC s) with (wordLang_Word w,SOME (wordLang_Word n),SOME
        (wordLang_Word l)) -> SOME (w2n w <= w2n (l - n)) | _64 ->
        NONE)`;;
-hol4_overload "has_space" "wordSem_has_space";;
 
 (* to_ask: should we not update stack size here?  *)
 let alloc_def = new_definition
@@ -835,71 +790,72 @@ let alloc_def = new_definition
                           SOME
                             wordSem_NotEnoughSpace
                             ,wordSem_flush_state T s))))))`;;
-hol4_overload "alloc" "wordSem_alloc";;
 
 let wordSem_assign_def = new_definition
   `wordSem_assign reg exp (s:('a,'c,'ffi)wordSem_state) =
      (match wordSem_word_exp s exp with NONE -> NONE | SOME w ->
        SOME (wordSem_set_var reg w s))`;;
-hol4_overload "assign" "wordSem_assign";;
 
 let get_fp_var_def = new_definition
   `wordSem_get_fp_var v (s:('a,'c,'ffi)wordSem_state) = FLOOKUP
   (wordSem_state_fp_regs s) v`;;
-hol4_overload "get_fp_var" "wordSem_get_fp_var";;
 
 let set_fp_var_def = new_definition
   `wordSem_set_fp_var v x (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_fp_regs_fupd (K (wordSem_state_fp_regs s |+
        (v,x))) s)`;;
-hol4_overload "set_fp_var" "wordSem_set_fp_var";;
 
 let wordSem_inst_def = new_definition
   `wordSem_inst i (s:('a,'c,'ffi)wordSem_state) =
-     (match i with Skip -> SOME s | Const reg w -> wordSem_assign reg
-       (Const w) s | Arith (asm_Binop bop r1 r2 ri) ->
+     (match i with wordLang_Skip -> SOME s | wordLang_Const reg w ->
+       wordSem_assign reg (wordLang_Const w) s | asm_Arith (asm_Binop
+       bop r1 r2 ri) ->
          wordSem_assign r1
-           (wordLang_Op bop [Var r2; match ri with Reg r3 -> Var r3 |
-             Imm w -> Const w]) s | Arith (asm_Shift sh r1 r2 ri) ->
+           (wordLang_Op bop [wordLang_Var r2; match ri with Reg r3 ->
+             wordLang_Var r3 | Imm w -> wordLang_Const w]) s | asm_Arith
+             (asm_Shift sh r1 r2 ri) ->
          wordSem_assign r1
-           (Shift sh (Var r2) (match ri with Reg r3 -> Var r3 | Imm w
-             -> Const w)) s | Arith (asm_Div r1 r2 r3) ->
+           (wordLang_Shift sh (wordLang_Var r2) (match ri with Reg r3
+             -> wordLang_Var r3 | Imm w -> wordLang_Const w)) s |
+             asm_Arith (asm_Div r1 r2 r3) ->
         (let vs = wordSem_get_vars [r3; r2] s in
         match vs with
         SOME [wordLang_Word q; wordLang_Word w2] ->
           (if ~(q = (n2w 0)) then
             SOME (wordSem_set_var r1 (wordLang_Word (w2 / q)) s) else
-              NONE) | _65 -> NONE) | Arith (asm_AddCarry r1 r2 r3 r4) ->
+              NONE) | _65 -> NONE) | asm_Arith (asm_AddCarry r1 r2 r3
+              r4) ->
          (let vs = wordSem_get_vars [r2; r3; r4] s in
          match vs with
          SOME [wordLang_Word l; wordLang_Word r; wordLang_Word c] ->
            (let (res,co) = word_add_carry l r c in
              SOME (wordSem_set_var r4 (wordLang_Word co)
                (wordSem_set_var r1 (wordLang_Word res) s))) | _66 ->
-               NONE) | Arith (asm_AddOverflow r1 r2 r3 r4) ->
+               NONE) | asm_Arith (asm_AddOverflow r1 r2 r3 r4) ->
          (let vs = wordSem_get_vars [r2; r3] s in
          match vs with
          SOME [wordLang_Word w2; wordLang_Word w3] ->
            SOME (wordSem_set_var r4 (wordLang_Word (if ~(w2i (w2 +
              w3) = w2i w2 + w2i w3) then (n2w 1) else (n2w 0)))
                   (wordSem_set_var r1 (wordLang_Word (w2 + w3)) s)) |
-                    _67 -> NONE) | Arith (asm_SubOverflow r1 r2 r3 r4)
-                    ->
+                    _67 -> NONE) | asm_Arith (asm_SubOverflow r1 r2 r3
+                    r4) ->
          (let vs = wordSem_get_vars [r2; r3] s in
          match vs with
          SOME [wordLang_Word w2; wordLang_Word w3] ->
            SOME (wordSem_set_var r4 (wordLang_Word (if ~(w2i (w2 -
              w3) = w2i w2 - w2i w3) then (n2w 1) else (n2w 0)))
                   (wordSem_set_var r1 (wordLang_Word (w2 - w3)) s)) |
-                    _68 -> NONE) | Arith (asm_LongMul r1 r2 r3 r4) ->
+                    _68 -> NONE) | asm_Arith (asm_LongMul r1 r2 r3 r4)
+                    ->
          (let vs = wordSem_get_vars [r3; r4] s in
          match vs with
          SOME [wordLang_Word w3; wordLang_Word w4] ->
           (let r = w2n w3 * w2n w4 in
             SOME (wordSem_set_var r2 (wordLang_Word (n2w r))
               (wordSem_set_var r1 (wordLang_Word (n2w (r DIV dimword
-              (:'a)))) s))) | _69 -> NONE) | Arith (asm_LongDiv r1 r2 r3
-              r4 r5) ->
+              (:'a)))) s))) | _69 -> NONE) | asm_Arith (asm_LongDiv r1
+              r2 r3 r4 r5) ->
         (let vs = wordSem_get_vars [r3; r4; r5] s in
         match vs with
         SOME [wordLang_Word w3; wordLang_Word w4; wordLang_Word w5]
@@ -912,43 +868,43 @@ let wordSem_inst_def = new_definition
               (wordSem_set_var r2 (wordLang_Word (n2w (n MOD d))) s))
               else NONE) | _70 -> NONE) | asm_Mem asm_Load r (Addr a w)
               ->
-        (match wordSem_word_exp s (wordLang_Op asm_Add [Var a; Const
-          w]) with SOME (wordLang_Word w) ->
+        (match wordSem_word_exp s (wordLang_Op asm_Add [wordLang_Var
+          a; wordLang_Const w]) with SOME (wordLang_Word w) ->
             (match wordSem_mem_load w s with NONE -> NONE | SOME w ->
               SOME (wordSem_set_var r w s)) | _71 -> NONE) | asm_Mem
               asm_Load8 r (Addr a w) ->
-        (match wordSem_word_exp s (wordLang_Op asm_Add [Var a; Const
-          w]) with SOME (wordLang_Word w) ->
+        (match wordSem_word_exp s (wordLang_Op asm_Add [wordLang_Var
+          a; wordLang_Const w]) with SOME (wordLang_Word w) ->
             (match mem_load_byte_aux (wordSem_state_memory s)
               (wordSem_state_mdomain s) (wordSem_state_be s) w with NONE
               -> NONE | SOME w -> SOME (wordSem_set_var r (wordLang_Word
               (w2w w)) s)) | _72 -> NONE) | asm_Mem asm_Load16 _73 _74
               -> NONE | asm_Mem asm_Load32 r (Addr a w) ->
-        (match wordSem_word_exp s (wordLang_Op asm_Add [Var a; Const
-          w]) with SOME (wordLang_Word w) ->
+        (match wordSem_word_exp s (wordLang_Op asm_Add [wordLang_Var
+          a; wordLang_Const w]) with SOME (wordLang_Word w) ->
             (match mem_load_32 (wordSem_state_memory s)
               (wordSem_state_mdomain s) (wordSem_state_be s) w with NONE
               -> NONE | SOME w -> SOME (wordSem_set_var r (wordLang_Word
               (w2w w)) s)) | _75 -> NONE) | asm_Mem asm_Store r (Addr a
               w) ->
-        (match (wordSem_word_exp s (wordLang_Op asm_Add [Var a; Const
-          w]),wordSem_get_var r s) with (SOME (wordLang_Word a),SOME w)
-          ->
+        (match (wordSem_word_exp s (wordLang_Op asm_Add [wordLang_Var
+          a; wordLang_Const w]),wordSem_get_var r s) with (SOME
+          (wordLang_Word a),SOME w) ->
              (match wordSem_mem_store a w s with SOME s1 -> SOME s1 |
                NONE -> NONE) | _76 -> NONE) | asm_Mem asm_Store8 r (Addr
                a w) ->
-        (match (wordSem_word_exp s (wordLang_Op asm_Add [Var a; Const
-          w]),wordSem_get_var r s) with (SOME (wordLang_Word a),SOME
-          (wordLang_Word w)) ->
+        (match (wordSem_word_exp s (wordLang_Op asm_Add [wordLang_Var
+          a; wordLang_Const w]),wordSem_get_var r s) with (SOME
+          (wordLang_Word a),SOME (wordLang_Word w)) ->
              (match mem_store_byte_aux (wordSem_state_memory s)
                (wordSem_state_mdomain s) (wordSem_state_be s) a (w2w w)
                with SOME new_m -> SOME (wordSem_state_memory_fupd (K
                new_m) s) | NONE -> NONE) | _77 -> NONE) | asm_Mem
                asm_Store16 _78 _79 -> NONE | asm_Mem asm_Store32 r (Addr
                a w) ->
-        (match (wordSem_word_exp s (wordLang_Op asm_Add [Var a; Const
-          w]),wordSem_get_var r s) with (SOME (wordLang_Word a),SOME
-          (wordLang_Word w)) ->
+        (match (wordSem_word_exp s (wordLang_Op asm_Add [wordLang_Var
+          a; wordLang_Const w]),wordSem_get_var r s) with (SOME
+          (wordLang_Word a),SOME (wordLang_Word w)) ->
              (match mem_store_32 (wordSem_state_memory s)
                (wordSem_state_mdomain s) (wordSem_state_be s) a (w2w w)
                with SOME new_m -> SOME (wordSem_state_memory_fupd (K
@@ -1040,14 +996,12 @@ let wordSem_inst_def = new_definition
              v:'a word) in
              SOME (wordSem_set_fp_var d1 (int_to_fp64
                roundTiesToEven i) s)) | NONE -> NONE | _96 -> NONE))`;;
-hol4_overload "inst" "wordSem_inst";;
 
 let get_var_imm_def = define_cases
   [`wordSem_get_var_imm ((Reg n):'a asm_reg_imm)
   (s:('a,'c,'ffi)wordSem_state) = wordSem_get_var n s`;
    `wordSem_get_var_imm (Imm w) (s:('a,'c,'ffi)wordSem_state) =
   SOME (wordLang_Word w)`];;
-hol4_overload "get_var_imm" "wordSem_get_var_imm";;
 
 let add_ret_loc_def = define_cases
   [`add_ret_loc NONE xs = xs`;
@@ -1100,32 +1054,29 @@ let const_writes_def,const_writes_ind = define_wf
 
 let STOP_def = new_definition
   `wordSem_STOP x = x`;;
-hol4_overload "STOP" "wordSem_STOP";;
 
 let bad_fun_return_def = new_definition
   `wordSem_bad_fun_return x1 =
       match x1 with
         NONE -> T
-      | (SOME (Break _97)) -> T
-      | (SOME (Continue _98)) -> T
+      | (SOME (wordSem_Break _97)) -> T
+      | (SOME (wordSem_Continue _98)) -> T
       | _99 -> F`;;
-hol4_overload "bad_fun_return" "wordSem_bad_fun_return";;
 
 let cont_loop_def = new_definition
   `wordSem_cont_loop x1 =
       match x1 with
         NONE -> T
-      | (SOME (Continue n)) -> (n = 0)
+      | (SOME (wordSem_Continue n)) -> (n = 0)
       | _100 -> F`;;
-hol4_overload "cont_loop" "wordSem_cont_loop";;
 
 let exit_loop_def = new_definition
   `wordSem_exit_loop res =
       match res with
-        SOME (Break n) -> SOME (Break (n - 1))
-      | (SOME (Continue n)) -> SOME (Continue (n - 1))
+        SOME (wordSem_Break n) -> SOME (wordSem_Break (n - 1))
+      | (SOME (wordSem_Continue n)) -> SOME (wordSem_Continue (n -
+        1))
       | res -> res`;;
-hol4_overload "exit_loop" "wordSem_exit_loop";;
 
 let wordSem_fix_clock_IMP =
   try prove
@@ -1149,7 +1100,7 @@ if concl wordSem_fix_clock_IMP <> `T` then
 
 let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`wordSem_evaluate ((Skip:'a
+  [`wordSem_evaluate ((wordLang_Skip:'a
   wordLang_prog),(s:('a,'c,'ffi)wordSem_state)) = (NONE,s)`;
    `wordSem_evaluate (wordLang_Alloc n names,s) =
          (match wordSem_get_var n s with SOME (wordLang_Word w)
@@ -1190,8 +1141,8 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
            wordSem_Error,s) | SOME w -> (NONE,wordSem_set_store v w
            s))`;
    `wordSem_evaluate (wordLang_OpCurrHeap b dst src,s) =
-         (match wordSem_word_exp s (wordLang_Op b [Var src;
-           wordLang_Lookup CurrHeap]) with NONE -> (SOME
+         (match wordSem_word_exp s (wordLang_Op b [wordLang_Var
+           src; wordLang_Lookup CurrHeap]) with NONE -> (SOME
            wordSem_Error,s) | SOME w -> (NONE,wordSem_set_var dst w
            s))`;
    `wordSem_evaluate (wordLang_Store exp v,s) =
@@ -1223,23 +1174,27 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
              (res,s1))`;
    `wordSem_evaluate (wordLang_Return n ms,s) =
          (match (wordSem_get_var n s,wordSem_get_vars ms s) with
-           (SOME (Loc l1 l2),SOME ys) -> (SOME (wordSem_Result
-           (wordLang_Loc l1 l2) ys),wordSem_flush_state F s) | _115
-           -> (SOME wordSem_Error,s))`;
+           (SOME (wordLang_Loc l1 l2),SOME ys) -> (SOME
+           (wordSem_Result (wordLang_Loc l1 l2)
+           ys),wordSem_flush_state F s) | _115 -> (SOME
+           wordSem_Error,s))`;
    `wordSem_evaluate (wordLang_Raise n,s) =
          (match wordSem_get_var n s with NONE -> (SOME
            wordSem_Error,s) | SOME w ->
            (match wordSem_jump_exc s with NONE -> (SOME
              wordSem_Error,s) | SOME (s,l1,l2) -> (SOME
              (wordSem_Exception (wordLang_Loc l1 l2) w)),s))`;
-   `wordSem_evaluate (wordLang_Break k,s) = (SOME (Break k),s)`;
-   `wordSem_evaluate (wordLang_Continue k,s) = (SOME (Continue k),s)`;
+   `wordSem_evaluate (wordLang_Break k,s) = (SOME (wordSem_Break
+  k),s)`;
+   `wordSem_evaluate (wordLang_Continue k,s) = (SOME
+  (wordSem_Continue k),s)`;
    `wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var_imm ri s) with
           (SOME x,SOME y) ->
-         (match word_cmp cmp x y with SOME T -> wordSem_evaluate
-           (c1,s) | SOME F -> wordSem_evaluate (c2,s) | NONE -> (SOME
-           wordSem_Error,s)) | _118 -> (SOME wordSem_Error,s))`;
+         (match wordSem_word_cmp cmp x y with SOME T ->
+           wordSem_evaluate (c1,s) | SOME F -> wordSem_evaluate
+           (c2,s) | NONE -> (SOME wordSem_Error,s)) | _118 -> (SOME
+           wordSem_Error,s))`;
    `wordSem_evaluate (wordLang_Loop names c exit_names,s) =
          (match wordSem_cut_state (names,LN) s with NONE -> (SOME
            wordSem_Error,s) | SOME s ->
@@ -1248,16 +1203,17 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                if wordSem_cont_loop res then
                  (if wordSem_state_clock s1 = 0 then (SOME
                    wordSem_TimeOut,wordSem_flush_state T s1) else
-                    wordSem_evaluate (wordSem_STOP ((Loop names c
-                      exit_names:'a wordLang_prog)),wordSem_dec_clock
-                      s1)) else if res = SOME (Break 0) then
+                    wordSem_evaluate (wordSem_STOP ((wordLang_Loop
+                      names c exit_names:'a
+                      wordLang_prog)),wordSem_dec_clock s1)) else if res
+                      = SOME (wordSem_Break 0) then
                  match wordSem_cut_state (exit_names,LN) s1 with
                    NONE -> (SOME wordSem_Error,s1) | SOME s2 ->
                    (NONE,s2) else (wordSem_exit_loop res,s1)))`;
    `wordSem_evaluate (wordLang_LocValue r l1,s) =
          (if l1 IN domain (wordSem_state_code s) then
-           (NONE,wordSem_set_var r (Loc l1 0) s) else (SOME
-             wordSem_Error,s))`;
+           (NONE,wordSem_set_var r (wordLang_Loc l1 0) s) else
+             (SOME wordSem_Error,s))`;
    `wordSem_evaluate (wordLang_Install ptr len dptr dlen names,s) =
         (match wordSem_cut_env names (wordSem_state_locals s) with
           NONE -> (SOME wordSem_Error,s) | SOME env ->
@@ -1281,10 +1237,10 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                   (wordSem_state_stack_max_fupd (K NONE)
                   (wordSem_state_compile_oracle_fupd (K new_oracle)
                   (wordSem_state_fp_regs_fupd (K FEMPTY)
-                  (wordSem_state_locals_fupd (K (sptree_insert ptr (Loc
-                  k 0) env)) (wordSem_state_code_fupd (K (sptree_union
-                  (wordSem_state_code s) (fromAList progs)))
-                  (wordSem_state_data_buffer_fupd (K db)
+                  (wordSem_state_locals_fupd (K (sptree_insert ptr
+                  (wordLang_Loc k 0) env)) (wordSem_state_code_fupd (K
+                  (sptree_union (wordSem_state_code s) (fromAList
+                  progs))) (wordSem_state_data_buffer_fupd (K db)
                   (wordSem_state_code_buffer_fupd (K cb)
                     s))))))) in
                   (
@@ -1388,9 +1344,9 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                               (wordSem_push_env envs' handler
                                 (wordSem_dec_clock s)))) with (SOME
                                 (wordSem_Result x ys),s2) ->
-                              (if ~(x = Loc l1 l2) \/ ~(LENGTH ys =
-                                LENGTH n) then (SOME wordSem_Error,s2)
-                                else
+                              (if ~(x = wordLang_Loc l1 l2) \/
+                                ~(LENGTH ys = LENGTH n) then (SOME
+                                wordSem_Error,s2) else
                               (match wordSem_pop_env s2 with NONE ->
                                 (SOME wordSem_Error,s2) | SOME s1 ->
                               (if domain (wordSem_state_locals s1) =
@@ -1403,8 +1359,8 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                               // if handler is present, then handle exc
                               NONE -> (SOME (wordSem_Exception x
                                 y),s2) | SOME (n,h,l1,l2) ->
-                              (if ~(x = Loc l1 l2) then (SOME
-                                wordSem_Error,s2) else
+                              (if ~(x = wordLang_Loc l1 l2) then
+                                (SOME wordSem_Error,s2) else
                               (if domain (wordSem_state_locals
                                 s2) = domain (FST envs') UNION
                                 domain (SND envs') then
@@ -1412,11 +1368,11 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                                 n y s2) else (SOME
                                 wordSem_Error,s2)))) | (NONE,s) ->
                                 (SOME wordSem_Error,s) | (SOME
-                                (Break _157),s) -> (SOME
-                                wordSem_Error,s) | (SOME (Continue
-                                _158),s) -> (SOME wordSem_Error,s)
-                                | res -> res)))))))`];;
-hol4_overload "evaluate" "wordSem_evaluate";;
+                                (wordSem_Break _157),s) -> (SOME
+                                wordSem_Error,s) | (SOME
+                                (wordSem_Continue _158),s) -> (SOME
+                                wordSem_Error,s) | res ->
+                                res)))))))`];;
 
 (* We prove that the clock never increases and that termdep is constant. *)
 
@@ -1480,11 +1436,11 @@ let wordSem_fix_clock_evaluate = prove
 
 let wordSem_semantics_def = new_definition
   `wordSem_semantics (s:('a,'c,'ffi)wordSem_state) start' =
-   (let prog = Call NONE (SOME start') [0] NONE in
+   (let prog = wordLang_Call NONE (SOME start') [0] NONE in
    if ?k. match FST (wordSem_evaluate (prog,wordSem_state_clock_fupd
      (K k) s)) with SOME (wordSem_Exception _159 _160) -> T | SOME
-     (wordSem_Result ret _161) -> ~(ret = Loc 1 0) | SOME wordSem_Error
-     -> T | NONE -> T | _162 -> F then ffi_Fail else
+     (wordSem_Result ret _161) -> ~(ret = wordLang_Loc 1 0) | SOME
+     wordSem_Error -> T | NONE -> T | _162 -> F then ffi_Fail else
      match some (\res.
        ?k t r outcome.
          wordSem_evaluate (prog,wordSem_state_clock_fupd (K k) s) =
@@ -1501,11 +1457,10 @@ let wordSem_semantics_def = new_definition
               (wordSem_state_ffi
                (SND (wordSem_evaluate
                  (prog,wordSem_state_clock_fupd (K k) s)))))) UNIV)))`;;
-hol4_overload "semantics" "wordSem_semantics";;
 
 let word_lang_safe_for_space_def = new_definition
   `word_lang_safe_for_space (s:('a,'c,'ffi)wordSem_state) start' =
-     (let prog = Call NONE (SOME start') [0] NONE in
+     (let prog = wordLang_Call NONE (SOME start') [0] NONE in
        (!k res t. wordSem_evaluate (prog,wordSem_state_clock_fupd (K
          k) s) = (res,t) ==>
          (?max'. wordSem_state_stack_max t = SOME max' /\ max' <=

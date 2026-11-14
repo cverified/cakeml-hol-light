@@ -2,7 +2,7 @@
 (*  evaluate: ported from HOL4's
     semantics/evaluateScript.sml
     A definition theory, with 6 definitions and 13 theorems.  Needed
-    by 31 files of the port.  *)
+    by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -33,12 +33,10 @@ let fix_clock_def = new_definition
        semanticPrimitives_state_clock s then
        semanticPrimitives_state_clock s' else
        semanticPrimitives_state_clock s)) s',res)`;;
-hol4_overload "fix_clock" "evaluate_fix_clock";;
 
 let dec_clock_def = new_definition
   `evaluate_dec_clock s = (semanticPrimitives_state_clock_fupd (K
   (semanticPrimitives_state_clock s - 1)) s)`;;
-hol4_overload "dec_clock" "evaluate_dec_clock";;
 
 let do_eval_res_def = new_definition
   `do_eval_res vs s =
@@ -314,9 +312,6 @@ let evaluate_def,evaluate_ind = assume_definition_rec
         (st1,Rval env1) -> evaluate_evaluate_decs st1
           (extend_dec_env env1 env) ds | (st1,Rerr v7) -> (st1,Rerr
           v7))`];;
-hol4_overload "evaluate" "evaluate";;
-hol4_overload "evaluate_decs" "evaluate_evaluate_decs";;
-hol4_overload "evaluate_match" "evaluate_evaluate_match";;
 
 (* tidy up evalute_def and evaluate_ind *)
 

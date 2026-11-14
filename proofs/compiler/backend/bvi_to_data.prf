@@ -10,12 +10,3 @@
   (DISCH_THEN (MP_TAC o MATCH_MP compile_LENGTH) THEN
    REWRITE_TAC[LENGTH; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN
      MESON_TAC[])
-
-### compile_exp_eq
-  (SUBGOAL_THEN `?c v k. bvi_to_data_compile_sing arg_count
-    (COUNT_LIST arg_count) T [] ast_exp =
-                         (c,v,k)` STRIP_ASSUME_TAC THENL
-    [MESON_TAC[PAIR_SURJECTIVE]; ALL_TAC] THEN
-   FIRST_ASSUM (MP_TAC o MATCH_MP (CONJUNCT1 compile_sing_eq)) THEN
-   ASM_REWRITE_TAC[compile_exp_def] THEN DISCH_THEN SUBST1_TAC THEN
-   REWRITE_TAC[])

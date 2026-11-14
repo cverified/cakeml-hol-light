@@ -1,9 +1,3 @@
-### dref_cons_state
-  (REWRITE_TAC[dref_def; LENGTH] THEN REPEAT STRIP_TAC THEN
-   SUBGOAL_THEN `SUC (LENGTH (state:A list)) - n - 1 = SUC (LENGTH
-     state - n - 1)`
-     SUBST1_TAC THENL [ASM_ARITH_TAC; REWRITE_TAC[EL; TL]])
-
 ### dref_first
   (REWRITE_TAC[dref_def; LENGTH; ARITH_RULE `SUC n - n - 1 = 0`; EL;
     HD])

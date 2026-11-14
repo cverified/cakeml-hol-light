@@ -15,7 +15,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -35,12 +34,12 @@ let make_part_def = new_definition
        1,n,CONS (p,n) aux))`;;
 
 let parts_def,parts_ind = define_mutual_rec
-  [`parts (ConstInt i) n aux = make_part n (Int i) aux /\
+  [`parts (ConstInt i) n aux = make_part n (closLang_Int i) aux /\
    parts (ConstStr s) n aux = make_part n (closLang_Str s) aux /\
-   parts (ConstWord64 w) n aux = make_part n (W64 w) aux /\
+   parts (ConstWord64 w) n aux = make_part n (closLang_W64 w) aux /\
    parts (ConstCons t cs) n aux =
      (let (n,rs,aux) = parts_list cs n aux in
-        make_part n (Con t rs) aux) /\
+        make_part n (closLang_Con t rs) aux) /\
    parts_list [] n aux = (n,[],aux) /\
    parts_list (CONS c cs) n aux =
      (let (n,r,aux) = parts c n aux in
@@ -48,21 +47,21 @@ let parts_def,parts_ind = define_mutual_rec
        (n,CONS r rs,aux))`];;
 
 let to_parts_def = define_cases
-  [`to_parts (ConstInt i) = [Int i] /\
+  [`to_parts (ConstInt i) = [closLang_Int i] /\
    to_parts (ConstStr s) = [closLang_Str s] /\
-   to_parts (ConstWord64 w) = [W64 w] /\
+   to_parts (ConstWord64 w) = [closLang_W64 w] /\
    to_parts (ConstCons t cs) =
      (let (n,rs,aux) = parts_list cs 0 [] in
-       REVERSE (CONS (Con t rs) (MAP FST aux)))`];;
+       REVERSE (CONS (closLang_Con t rs) (MAP FST aux)))`];;
 
 (* semantics *)
 
 let build_part_def = define_cases
-  [`build_part mem' (Int i:const_part) = ConstInt i`;
+  [`build_part mem' (closLang_Int i:const_part) = ConstInt i`;
    `build_part mem' (closLang_Str s:const_part) = ConstStr s`;
-   `build_part mem' (W64 w:const_part) = ConstWord64 w`;
-   `build_part mem' (Con t ns:const_part) = ConstCons t (MAP mem'
-  ns)`];;
+   `build_part mem' (closLang_W64 w:const_part) = ConstWord64 w`;
+   `build_part mem' (closLang_Con t ns:const_part) = ConstCons t
+  (MAP mem' ns)`];;
 
 let build_def,build_ind = define_rec
   [`build mem' i [] = mem' (i - 1)`;
@@ -100,10 +99,11 @@ let parts_acc = prove
 let conses_ok_def = new_definition
   `conses_ok aux <=>
      (!n. n < LENGTH aux ==> (?p. EL n (REVERSE aux) = (p,n))) /\
-     (!n rs m r. MEM (Con n rs,r) aux /\ MEM m rs ==> m < r)`;;
+     (!n rs m r. MEM (closLang_Con n rs,r) aux /\ MEM m rs ==> m <
+       r)`;;
 
 let IMP_conses_ok_CONS = prove
- (`(!n rs. x = Con n rs ==> ALL (\m. m < LENGTH aux) rs) ==>
+ (`(!n rs. x = closLang_Con n rs ==> ALL (\m. m < LENGTH aux) rs) ==>
    conses_ok aux ==> conses_ok (CONS (x,LENGTH aux) aux)`,
   CHEAT_TAC);;
 
@@ -128,7 +128,7 @@ let ALOOKUP_conses_ok_IMP = prove
      MAP FST (REVERSE aux) = APPEND (APPEND (MAP FST (REVERSE xs))
        [x]) (MAP FST (REVERSE ys)) /\
      LENGTH xs = r /\ r < LENGTH aux /\
-     (!t ys y. x = Con t ys /\ MEM y ys ==> y < r))`,
+     (!t ys y. x = closLang_Con t ys /\ MEM y ys ==> y < r))`,
   CHEAT_TAC);;
 
 let parts_thm = prove
@@ -174,7 +174,8 @@ let build_const_to_parts = prove
 let update_tag_def = new_definition
   `update_tag x =
       match x with
-        (Con t ns:const_part) -> Con (clos_tag_shift t) ns
+        (closLang_Con t ns:const_part) -> closLang_Con
+          (clos_tag_shift t) ns
       | x -> x`;;
 
 let update_tag_11 = prove
@@ -221,11 +222,12 @@ let compile_const_thm = prove
 (* connection to closSem *)
 
 let build_part'_def = define_cases
-  [`build_part' mem' (Int i:const_part) = closSem_Number i /\
+  [`build_part' mem' (closLang_Int i:const_part) = closSem_Number i /\
    build_part' mem' (closLang_Str s) = closSem_ByteVector (MAP (n2w
      o ORD) (explode s)) /\
-   build_part' mem' (W64 w) = Word64 w /\
-   build_part' mem' (Con t ns) = closSem_Block t (MAP mem' ns)`];;
+   build_part' mem' (closLang_W64 w) = closSem_Word64 w /\
+   build_part' mem' (closLang_Con t ns) = closSem_Block t (MAP
+     mem' ns)`];;
 
 let build'_def,build'_ind = define_rec
   [`build' mem' i [] = mem' (i - 1)`;

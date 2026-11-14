@@ -17,10 +17,8 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_simp.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -38,27 +36,27 @@ let _ = do_list hide_constant ["addr"; "dummy"];;
 (** verification of Seq_assoc **)
 
 let evaluate_SmartSeq = prove
- (`wordSem_evaluate (SmartSeq p1 p2,s) = wordSem_evaluate (Seq p1
-  p2,(s:('a,'c,'ffi)wordSem_state))`,
+ (`wordSem_evaluate (SmartSeq p1 p2,s) = wordSem_evaluate
+  (wordLang_Seq p1 p2,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 (* evaluate_Seq_Skip *)
 let word_simpProof_evaluate_Seq_Skip = prove
- (`!p1 s. wordSem_evaluate (wordLang_Seq p1 Skip,s) = wordSem_evaluate
-  (p1,(s:('a,'c,'ffi)wordSem_state))`,
+ (`!p1 s. wordSem_evaluate (wordLang_Seq p1 wordLang_Skip,s) =
+  wordSem_evaluate (p1,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_Skip_Seq = prove
- (`wordSem_evaluate (wordLang_Seq Skip p,s) = wordSem_evaluate
-  (p,(s:('a,'c,'ffi)wordSem_state))`,
+ (`wordSem_evaluate (wordLang_Seq wordLang_Skip p,s) =
+  wordSem_evaluate (p,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_Loop_body_cong = prove
  (`!(s:('a,'c,'ffi)wordSem_state) names c c' exit_names.
    (!(v:('a,'c,'ffi)wordSem_state). wordSem_evaluate (c',v) =
      wordSem_evaluate (c,v)) ==>
-   wordSem_evaluate (Loop names c' exit_names,s) = wordSem_evaluate
-     (Loop names c exit_names,s)`,
+   wordSem_evaluate (wordLang_Loop names c' exit_names,s) =
+     wordSem_evaluate (wordLang_Loop names c exit_names,s)`,
   CHEAT_TAC);;
 
 let evaluate_Loop_body_cong_gc = prove
@@ -66,37 +64,38 @@ let evaluate_Loop_body_cong_gc = prove
    (!(v:('a,'c,'ffi)wordSem_state). R (wordSem_state_gc_fun v) ==>
      wordSem_evaluate (c',v) = wordSem_evaluate (c,v)) ==>
    R (wordSem_state_gc_fun s) ==>
-   wordSem_evaluate (Loop names c' exit_names,s) = wordSem_evaluate
-     (Loop names c exit_names,s)`,
+   wordSem_evaluate (wordLang_Loop names c' exit_names,s) =
+     wordSem_evaluate (wordLang_Loop names c exit_names,s)`,
   CHEAT_TAC);;
 
 let evaluate_Seq_assoc_lemma = prove
  (`!p1 p2 s. wordSem_evaluate (Seq_assoc p1 p2,s) = wordSem_evaluate
-  (Seq p1 p2,(s:('a,'c,'ffi)wordSem_state))`,
+  (wordLang_Seq p1 p2,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_Seq_assoc = prove
- (`!p s. wordSem_evaluate (Seq_assoc Skip p,s) = wordSem_evaluate
-  (p,(s:('a,'c,'ffi)wordSem_state))`,
+ (`!p s. wordSem_evaluate (Seq_assoc wordLang_Skip p,s) =
+  wordSem_evaluate (p,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 let dest_If_Eq_Imm_thm = prove
  (`dest_If_Eq_Imm x2 = SOME (n,w,p1,p2) <=>
-    x2 = If Equal n (Imm w) p1 p2`,
+    x2 = wordLang_If asm_Equal n (Imm w) p1 p2`,
   CHEAT_TAC);;
 
 let dest_If_thm = prove
- (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = If g1 g2 g3 g4 g5`,
+ (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = wordLang_If g1 g2 g3 g4
+  g5`,
   CHEAT_TAC);;
 
 let dest_Seq_IMP = prove
  (`word_simp_dest_Seq p1 = (x1,x2) ==> wordSem_evaluate (p1,s) =
-  wordSem_evaluate (Seq x1 x2,(s:('a,'c,'ffi)wordSem_state))`,
+  wordSem_evaluate (wordLang_Seq x1 x2,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 let dest_Seq_Assign_Const_IMP = prove
  (`dest_Seq_Assign_Const v p = SOME (q,w) ==>
-    wordSem_evaluate (p,s) = wordSem_evaluate (Seq q
+    wordSem_evaluate (p,s) = wordSem_evaluate (wordLang_Seq q
       (wordLang_Assign v (wordLang_Const
       w)),(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
@@ -155,7 +154,7 @@ let const_fp_exp_word_exp = prove
 let const_fp_exp_word_exp_const = prove
  (`!e cs s c. (!v w. sptree_lookup v cs = SOME w ==> wordSem_get_var v s
   = SOME (wordLang_Word w)) /\
-              const_fp_exp e cs = Const c ==>
+              const_fp_exp e cs = wordLang_Const c ==>
               wordSem_word_exp s e = SOME (wordLang_Word c)`,
   CHEAT_TAC);;
 
@@ -484,10 +483,10 @@ let evaluate_sf_gc_consts = prove
        s < LENGTH (stack s) ==>
        ALL2 sf_gc_consts (LASTN (wordSem_state_handler s) (stack s))
          (stack s') /\ wordSem_state_handler
-       s' = get_above_handler s | SOME (Break _16) ->
+       s' = get_above_handler s | SOME (wordSem_Break _16) ->
        ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
-       s' = wordSem_state_handler s | SOME (Continue _17) ->
+       s' = wordSem_state_handler s | SOME (wordSem_Continue _17) ->
        ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
        s' = wordSem_state_handler s | _18 -> T)`,
@@ -554,15 +553,16 @@ let evaluate_try_if_hoist2 = prove
  (`!N p1 interm dummy' p2 s.
    try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
    gc_fun_const_ok (wordSem_state_gc_fun s) ==>
-   wordSem_evaluate (p3,s) = wordSem_evaluate (Seq (Seq p1 interm)
-     p2,s)`,
+   wordSem_evaluate (p3,s) = wordSem_evaluate (wordLang_Seq
+     (wordLang_Seq p1 interm) p2,s)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_try_if_hoist1 = prove
  (`try_if_hoist1 p1 p2 = SOME p3 ==>
    gc_fun_const_ok (wordSem_state_gc_fun s) ==>
-   wordSem_evaluate (p3,s) = wordSem_evaluate (Seq p1 p2,s)`,
+   wordSem_evaluate (p3,s) = wordSem_evaluate (wordLang_Seq p1
+     p2,s)`,
   CHEAT_TAC);;
 
 let evaluate_simp_duplicate_if = prove

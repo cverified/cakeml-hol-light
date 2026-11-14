@@ -2,7 +2,7 @@
 (*  clos_known: ported from HOL4's
     compiler/backend/clos_knownScript.sml
     A definition theory, with 29 definitions, 4 datatypes and 12
-    theorems.  Needed by 7 files of the port.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -25,7 +25,6 @@ needs "compiler/backend/clos_ticks.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -50,20 +49,20 @@ let get_size_sc_aux_def,get_size_sc_aux_ind = assume_definition_rec
          (if n = 0 then n else
            let n = get_size_sc_aux n [x] in if n = 0 then n else
              get_size_sc_aux n (CONS y xs))`;
-   `get_size_sc_aux n [(Var t v:closLang_exp)] = n - 1`;
-   `get_size_sc_aux n [(If t x1 x2 x3:closLang_exp)] =
+   `get_size_sc_aux n [(db_vars_Var t v:closLang_exp)] = n - 1`;
+   `get_size_sc_aux n [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
          let n = get_size_sc_aux n [x2] in if n = 0 then 0 else
            get_size_sc_aux n [x3])`;
-   `get_size_sc_aux n [(Let t xs x2:closLang_exp)] =
+   `get_size_sc_aux n [(closLang_Let t xs x2:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n xs in if n = 0 then 0 else
            get_size_sc_aux n [x2])`;
-   `get_size_sc_aux n [(Raise t x1:closLang_exp)] =
+   `get_size_sc_aux n [(closLang_Raise t x1:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n [x1])`;
-   `get_size_sc_aux n [(Handle t x1 x2:closLang_exp)] =
+   `get_size_sc_aux n [(closLang_Handle t x1 x2:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
            get_size_sc_aux n [x2])`;
@@ -78,12 +77,13 @@ let get_size_sc_aux_def,get_size_sc_aux_ind = assume_definition_rec
    `get_size_sc_aux n [closLang_Fn t loc_opt ws_opt num_args x1] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n [x1])`;
-   `get_size_sc_aux n [(Letrec t loc_opt ws_opt fns x1:closLang_exp)] =
+   `get_size_sc_aux n [(closLang_Letrec t loc_opt ws_opt fns
+  x1:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n (MAP SND fns) in if n = 0 then 0
            else
            get_size_sc_aux n [x1])`;
-   `get_size_sc_aux n [(App t loc_opt x1 xs:closLang_exp)] =
+   `get_size_sc_aux n [(closLang_App t loc_opt x1 xs:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
            get_size_sc_aux n xs)`];;
@@ -103,15 +103,15 @@ let get_size_aux_def,get_size_aux_ind = define_wf
   [`get_size_aux [] = 0`;
    `get_size_aux (CONS x (CONS y xs)) =
          get_size_aux [x] + get_size_aux (CONS y xs)`;
-   `get_size_aux [(Var t v:closLang_exp)] = 1`;
-   `get_size_aux [(If t x1 x2 x3:closLang_exp)] =
+   `get_size_aux [(db_vars_Var t v:closLang_exp)] = 1`;
+   `get_size_aux [(closLang_If t x1 x2 x3:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux [x2] + get_size_aux
            [x3]`;
-   `get_size_aux [(Let t xs x2:closLang_exp)] =
+   `get_size_aux [(closLang_Let t xs x2:closLang_exp)] =
          1 + get_size_aux xs + get_size_aux [x2]`;
-   `get_size_aux [(Raise t x1:closLang_exp)] =
+   `get_size_aux [(closLang_Raise t x1:closLang_exp)] =
          1 + get_size_aux [x1]`;
-   `get_size_aux [(Handle t x1 x2:closLang_exp)] =
+   `get_size_aux [(closLang_Handle t x1 x2:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux [x2]`;
    `get_size_aux [(closLang_Op t op xs:closLang_exp)] =
          1 + get_size_aux xs`;
@@ -121,16 +121,16 @@ let get_size_aux_def,get_size_aux_ind = define_wf
          1 + get_size_aux xs`;
    `get_size_aux [closLang_Fn t loc_opt ws_opt num_args x1] =
          1 + get_size_aux [x1]`;
-   `get_size_aux [(Letrec t loc_opt ws_opt fns x1:closLang_exp)] =
+   `get_size_aux [(closLang_Letrec t loc_opt ws_opt fns
+  x1:closLang_exp)] =
          1 + get_size_aux (MAP SND fns) + get_size_aux [x1]`;
-   `get_size_aux [(App t loc_opt x1 xs:closLang_exp)] =
+   `get_size_aux [(closLang_App t loc_opt x1 xs:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux xs`];;
 
 (* HOL4 clos_knownScript.sml:104: ML code, not ported *)
 
 let get_size_def = new_definition
   `clos_known_get_size e = get_size_aux [e]`;;
-hol4_overload "get_size" "clos_known_get_size";;
 
 let get_size_sc_aux_correct = prove
  (`!xs limit' n. get_size_sc_aux limit' xs = limit' - get_size_aux xs`,
@@ -158,54 +158,56 @@ let clos_known_free_def,clos_known_free_ind = assume_definition_rec
          (let (c1,l1) = clos_known_free [x] in
          let (c2,l2) = clos_known_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2))`;
-   `clos_known_free [(Var t v:closLang_exp)] = ([(Var t
-  v:closLang_exp)],Var v)`;
-   `clos_known_free [(If t x1 x2 x3:closLang_exp)] =
+   `clos_known_free [(db_vars_Var t v:closLang_exp)] = ([(db_vars_Var
+  t v:closLang_exp)],db_vars_Var v)`;
+   `clos_known_free [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free [x2] in
          let (c3,l3) = clos_known_free [x3] in
-           ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
-             l2 l3)))`;
-   `clos_known_free [(Let t xs x2:closLang_exp)] =
+           ([closLang_If t (HD c1) (HD c2) (HD c3)],mk_Union l1
+             (mk_Union l2 l3)))`;
+   `clos_known_free [(closLang_Let t xs x2:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
          let (c2,l2) = clos_known_free [x2] in
-           ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs)
-             l2)))`;
-   `clos_known_free [(Raise t x1:closLang_exp)] =
+           ([closLang_Let t c1 (HD c2)],mk_Union l1
+             (db_vars_Shift (LENGTH xs) l2)))`;
+   `clos_known_free [(closLang_Raise t x1:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
-           ([Raise t (HD c1)],l1))`;
+           ([closLang_Raise t (HD c1)],l1))`;
    `clos_known_free [(closLang_Tick t x1:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
            ([closLang_Tick t (HD c1)],l1))`;
    `clos_known_free [(closLang_Op t op xs:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
            ([closLang_Op t op c1],l1))`;
-   `clos_known_free [(App t loc_opt x1 xs2:closLang_exp)] =
+   `clos_known_free [(closLang_App t loc_opt x1 xs2:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free xs2 in
-           ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
+           ([closLang_App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
    `clos_known_free [closLang_Fn t loc _1 num_args x1] =
          (let (c1,l1) = clos_known_free [x1] in
-         let l2 = Shift num_args l1 in
+         let l2 = db_vars_Shift num_args l1 in
            ([closLang_Fn t loc (SOME (vars_to_list l2)) num_args
              (HD c1)],l2))`;
-   `clos_known_free [(Letrec t loc _3 fns x1:closLang_exp)] =
+   `clos_known_free [(closLang_Letrec t loc _3 fns x1:closLang_exp)] =
          (let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = clos_known_free [x] in
-                              ((n,HD c),Shift (n + m) l)) fns in
+                              ((n,HD c),db_vars_Shift (n + m) l))
+                                fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = clos_known_free [x1] in
-           ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
-            mk_Union l1 (Shift (LENGTH fns) l2)))`;
-   `clos_known_free [(Handle t x1 x2:closLang_exp)] =
+           ([closLang_Letrec t loc (SOME (vars_to_list l1)) c1 (HD
+             c2)],
+            mk_Union l1 (db_vars_Shift (LENGTH fns) l2)))`;
+   `clos_known_free [(closLang_Handle t x1 x2:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free [x2] in
-           ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
+           ([closLang_Handle t (HD c1) (HD c2)],mk_Union l1
+             (db_vars_Shift 1 l2)))`;
    `clos_known_free [(closLang_Call t ticks dest xs:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
-hol4_overload "free" "clos_known_free";;
 
 (* HOL4 clos_knownScript.sml:175-220: code that the source has in a
    comment *)
@@ -213,7 +215,6 @@ hol4_overload "free" "clos_known_free";;
 let clos_known_closed_def = new_definition
   `clos_known_closed x = (\t. t = LN) (db_to_set (SND
   (clos_known_free [x])))`;;
-hol4_overload "closed" "clos_known_closed";;
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -224,17 +225,17 @@ let contains_closures_def,contains_closures_ind = define_wf
    `contains_closures (CONS x (CONS y xs)) =
         (if contains_closures [x] then T else
           contains_closures (CONS y xs))`;
-   `contains_closures [(Var t v:closLang_exp)] = F`;
-   `contains_closures [(If t x1 x2 x3:closLang_exp)] =
+   `contains_closures [(db_vars_Var t v:closLang_exp)] = F`;
+   `contains_closures [(closLang_If t x1 x2 x3:closLang_exp)] =
          (if contains_closures [x1] then T else
          if contains_closures [x2] then T else
            contains_closures [x3])`;
-   `contains_closures [(Let t xs x2:closLang_exp)] =
+   `contains_closures [(closLang_Let t xs x2:closLang_exp)] =
          (if contains_closures xs then T else
            contains_closures [x2])`;
-   `contains_closures [(Raise t x1:closLang_exp)] = contains_closures
-  [x1]`;
-   `contains_closures [(Handle t x1 x2:closLang_exp)] =
+   `contains_closures [(closLang_Raise t x1:closLang_exp)] =
+  contains_closures [x1]`;
+   `contains_closures [(closLang_Handle t x1 x2:closLang_exp)] =
          (if contains_closures [x1] then T else
            contains_closures [x2])`;
    `contains_closures [(closLang_Op t op xs:closLang_exp)] =
@@ -244,9 +245,9 @@ let contains_closures_def,contains_closures_ind = define_wf
    `contains_closures [(closLang_Call t ticks dest xs:closLang_exp)]
   = contains_closures xs`;
    `contains_closures [closLang_Fn t loc_opt ws_opt num_args x1] = T`;
-   `contains_closures [(Letrec t loc_opt ws_opt fns x1:closLang_exp)]
-  = T`;
-   `contains_closures [(App t loc_opt x1 xs:closLang_exp)] =
+   `contains_closures [(closLang_Letrec t loc_opt ws_opt fns
+  x1:closLang_exp)] = T`;
+   `contains_closures [(closLang_App t loc_opt x1 xs:closLang_exp)] =
          (if contains_closures [x1] then T else
            contains_closures xs)`];;
 
@@ -277,12 +278,6 @@ let val_approx_INDUCT,val_approx_RECURSION = define_datatype
    // unknown\n\
    | clos_known_Impossible \
    // value 'returned' by Raise";;
-hol4_overload "ClosNoInline" "clos_known_ClosNoInline";;
-hol4_overload "Clos" "clos_known_Clos";;
-hol4_overload "Tuple" "clos_known_Tuple";;
-hol4_overload "Int" "clos_known_Int";;
-hol4_overload "Other" "clos_known_Other";;
-hol4_overload "Impossible" "clos_known_Impossible";;
 (* HOL4 clos_knownScript.sml:276: ML code, not ported *)
 
 let _ = size_thms "val_approx";;
@@ -305,10 +300,9 @@ let clos_known_merge_def,clos_known_merge_ind = define_wf
           s2)) ->
         (if m1 = m2 /\ n1 = n2 /\ e1 = e2 /\ s1 = s2 then
           clos_known_Clos m1 n1 e1 s1 else clos_known_Other)
-        | ((Int i),(Int j)) -> (if i = j then Int i else
-          clos_known_Other)
+        | ((clos_known_Int i),(clos_known_Int j)) -> (if i = j then
+          clos_known_Int i else clos_known_Other)
         | (_4,_5) -> clos_known_Other`];;
-hol4_overload "merge" "clos_known_merge";;
 
 (* HOL4 clos_knownScript.sml:294-295: a theorem that HOL4 states as
    the value of an ML expression: merge_def *)
@@ -337,15 +331,15 @@ let merge_tup_def,merge_tup_ind = define_wf
           ->
         (if m1 = m2 /\ n1 = n2 /\ e1 = e2 /\ s1 = s2 then
           clos_known_Clos m1 n1 e1 s1 else clos_known_Other)
-        | (Int i,Int j) -> (if i = j then Int i else
-          clos_known_Other)
+        | (clos_known_Int i,clos_known_Int j) -> (if i = j then
+          clos_known_Int i else clos_known_Other)
         | (_6,_7) -> clos_known_Other`];;
 
 (* HOL4 clos_knownScript.sml:323-342: code that the source has in a
    comment *)
 
 let merge_alt = prove
- (`!x y. merge x y = merge_tup (x,y)`,
+ (`!x y. clos_known_merge x y = merge_tup (x,y)`,
   CHEAT_TAC);;
 
 let known_op_def = new_definition
@@ -359,12 +353,13 @@ let known_op_def = new_definition
         (match as with [] -> (clos_known_Other,g) | (CONS a xs) ->
           (match sptree_lookup n g with NONE ->
             (clos_known_Other,sptree_insert n a g) | SOME other ->
-            (clos_known_Other,sptree_insert n (merge other a) g)))
+            (clos_known_Other,sptree_insert n (clos_known_merge other a)
+            g)))
         | (closLang_BlockOp (closLang_Cons tg)) -> (clos_known_Tuple
           tg as,g)
-        | (closLang_IntOp (closLang_Const i)) -> (Int i,g)
+        | (closLang_IntOp (closLang_Const i)) -> (clos_known_Int i,g)
         | (closLang_MemOp closLang_El) ->
-        (match as with [clos_known_Tuple _8 xs; Int i] ->
+        (match as with [clos_known_Tuple _8 xs; clos_known_Int i] ->
             (if (&0) <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
               xs,g) else (clos_known_Other,g)) | CONS
               clos_known_Impossible xs -> (clos_known_Impossible,g) |
@@ -384,11 +379,11 @@ let known_op_pmatch = prove
      (match as with [] -> (clos_known_Other,g) | (CONS a xs) ->
         (match sptree_lookup n g with NONE ->
           (clos_known_Other,sptree_insert n a g) | SOME other ->
-          (clos_known_Other,sptree_insert n (merge other a) g))) |
-          closLang_BlockOp (closLang_Cons tg) -> (clos_known_Tuple tg
-          as,g) | closLang_IntOp (closLang_Const i) -> (Int i,g) |
-          closLang_MemOp closLang_El ->
-     (match as with [clos_known_Tuple _11 xs; Int i] ->
+          (clos_known_Other,sptree_insert n (clos_known_merge other a)
+          g))) | closLang_BlockOp (closLang_Cons tg) ->
+          (clos_known_Tuple tg as,g) | closLang_IntOp (closLang_Const i)
+          -> (clos_known_Int i,g) | closLang_MemOp closLang_El ->
+     (match as with [clos_known_Tuple _11 xs; clos_known_Int i] ->
           (if (&0) <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
             xs,g) else (clos_known_Other,g)) | CONS
             clos_known_Impossible xs -> (clos_known_Impossible,g) |
@@ -433,7 +428,7 @@ let isGlobal_pmatch = prove
 let gO_destApx_def = new_definition
   `gO_destApx x1 =
         match x1 with
-          (Int i:val_approx) -> gO_Int i
+          (clos_known_Int i:val_approx) -> gO_Int i
         | (clos_known_Tuple tag args) -> (if NULL args then
           gO_NullTuple tag else gO_None)
         | _19 -> gO_None`;;
@@ -445,7 +440,6 @@ let mk_Ticks_def,mk_Ticks_ind = define_wf
   [`clos_known_mk_Ticks t tc n e =
      (if n = 0 then e else clos_known_mk_Ticks t (tc + 1) (n -
        1) (closLang_Tick (mk_cons t tc) e))`];;
-hol4_overload "mk_Ticks" "clos_known_mk_Ticks";;
 
 let inliningDecision_INDUCT,inliningDecision_RECURSION = define_datatype
   "inliningDecision = inlD_Nothing | inlD_Annotate (num) | \
@@ -474,7 +468,6 @@ let clos_known_default_config_def = new_definition
   `clos_known_default_config max_app = mk_config
   (default_max_body_size max_app default_inline_factor)
   default_inline_factor`;;
-hol4_overload "default_config" "clos_known_default_config";;
 
 let dec_inline_factor_def = new_definition
   `dec_inline_factor c = clos_known_config_inline_factor_fupd (K
@@ -514,36 +507,40 @@ let known_def,known_ind = assume_definition_rec
          (let (eas1,g) = known c [x] vs g in
          let (eas2,g) = known c (CONS y xs) vs g in
            (APPEND eas1 eas2,g))`;
-   `known c [(Var t v:closLang_exp)] vs (g:val_approx spt) =
-         ([((Var t v:closLang_exp),any_el v vs
+   `known c [(db_vars_Var t v:closLang_exp)] vs (g:val_approx spt) =
+         ([((db_vars_Var t v:closLang_exp),any_el v vs
            clos_known_Other)],g)`;
-   `known c [(If t x1 x2 x3:closLang_exp)] vs (g:val_approx spt) =
+   `known c [(closLang_If t x1 x2 x3:closLang_exp)] vs (g:val_approx
+  spt) =
          (let (ea1,g) = known c [x1] vs g in
          let (ea2,g) = known c [x2] vs g in
          let (ea3,g) = known c [x3] vs g in
          let (e1,a1) = HD ea1 in
          let (e2,a2) = HD ea2 in
          let (e3,a3) = HD ea3 in
-           ([(If t e1 e2 e3),merge a2 a3],g))`;
-   `known c [(Let t xs x2:closLang_exp)] vs (g:val_approx spt) =
+           ([(closLang_If t e1 e2 e3),clos_known_merge a2 a3],g))`;
+   `known c [(closLang_Let t xs x2:closLang_exp)] vs (g:val_approx spt)
+  =
          (let (ea1,g) = known c xs vs g in
          let (ea2,g) = known c [x2] (APPEND (MAP SND ea1) vs) g in
          let (e2,a2) = HD ea2 in
-           ([(Let t (MAP FST ea1) e2,a2)],g))`;
-   `known c [(Raise t x1:closLang_exp)] vs (g:val_approx spt) =
+           ([(closLang_Let t (MAP FST ea1) e2,a2)],g))`;
+   `known c [(closLang_Raise t x1:closLang_exp)] vs (g:val_approx spt) =
          (let (ea1,g) = known c [x1] vs g in
          let (e1,a1) = HD ea1 in
-           ([(Raise t e1,clos_known_Impossible)],g))`;
+           ([(closLang_Raise t e1,clos_known_Impossible)],g))`;
    `known c [(closLang_Tick t x1:closLang_exp)] vs (g:val_approx spt) =
          (let (ea1,g) = known c [x1] vs g in
          let (e1,a1) = HD ea1 in
            ([(closLang_Tick t e1,a1)],g))`;
-   `known c [(Handle t x1 x2:closLang_exp)] vs (g:val_approx spt) =
+   `known c [(closLang_Handle t x1 x2:closLang_exp)] vs (g:val_approx
+  spt) =
          (let (ea1,g) = known c [x1] vs g in
          let (ea2,g) = known c [x2] (CONS clos_known_Other vs) g in
          let (e1,a1) = HD ea1 in
          let (e2,a2) = HD ea2 in
-           ([(Handle t e1 e2,merge a1 a2)],g))`;
+           ([(closLang_Handle t e1 e2,clos_known_merge a1
+             a2)],g))`;
    `known c [(closLang_Call t ticks dest xs:closLang_exp)] vs
   (g:val_approx spt) =
          (let (ea1,g) = known c xs vs g in
@@ -557,17 +554,18 @@ let known_def,known_ind = assume_definition_rec
                match gO_destApx a with gO_None -> clos_op_SmartOp t
                  op | gO_Int i -> closLang_Op t (closLang_IntOp
                  (closLang_Const i)) | gO_NullTuple tag -> closLang_Op t
-                 (closLang_BlockOp (Cons tag)) else clos_op_SmartOp t
-                 op) (MAP FST ea1) in
+                 (closLang_BlockOp (closLang_Cons tag)) else
+                 clos_op_SmartOp t op) (MAP FST ea1) in
            ([(e,a)],g))`;
-   `known c [(App t loc_opt x xs:closLang_exp)] vs (g:val_approx spt) =
+   `known c [(closLang_App t loc_opt x xs:closLang_exp)] vs
+  (g:val_approx spt) =
          (let (ea2,g) = known c xs vs g in
          let (ea1,g) = known c [x] vs g in
          let (e1,a1) = HD ea1 in
            match decide_inline c a1 loc_opt (LENGTH xs) with
-             inlD_Nothing -> ([(App t loc_opt e1 (MAP FST
+             inlD_Nothing -> ([(closLang_App t loc_opt e1 (MAP FST
              ea2),clos_known_Other)],g) | inlD_Annotate new_loc ->
-             ([(App t (SOME new_loc) e1 (MAP FST
+             ([(closLang_App t (SOME new_loc) e1 (MAP FST
              ea2),clos_known_Other)],g) | inlD_LetInline body ->
                  (let (eabody,_23) = known (dec_inline_factor c)
                    [body] (MAP SND ea2) g in
@@ -575,13 +573,14 @@ let known_def,known_ind = assume_definition_rec
                    if pure x then
                      ([(
                         // We don't have to evaluate x
-                        Let (mk_cons t 0) (MAP FST ea2)
+                        closLang_Let (mk_cons t 0) (MAP FST ea2)
                               (clos_known_mk_Ticks t 1 (LENGTH xs)
                                 ebody),abody)],g) else
                      ([(
                         // We need to evaluate x for its side-effects,
                         // but we must do so after evaluating the args.
-                        Let (mk_cons t 0) (SNOC e1 (MAP FST ea2))
+                        closLang_Let (mk_cons t 0) (SNOC e1 (MAP FST
+                          ea2))
                               (clos_known_mk_Ticks t 1 (LENGTH
                                 xs) ebody),abody)],g)))`;
    `known c [closLang_Fn t loc_opt ws_opt num_args x1] vs (g:val_approx
@@ -593,7 +592,7 @@ let known_def,known_ind = assume_definition_rec
               (match loc_opt with SOME loc -> clos_approx
                 (clos_known_config_inline_max_body_size c) loc
                 num_args x1 | NONE -> clos_known_Other))],g))`;
-   `known c [(Letrec t loc_opt _25 fns x1:closLang_exp)] vs
+   `known c [(closLang_Letrec t loc_opt _25 fns x1:closLang_exp)] vs
   (g:val_approx spt) =
          (let clos = (match loc_opt with
                        NONE -> REPLICATE (LENGTH fns)
@@ -608,7 +607,8 @@ let known_def,known_ind = assume_definition_rec
                           (num_args,FST (HD (FST res)))) fns in
          let (ea1,g) = known c [x1] (APPEND clos vs) g in
          let (e1,a1) = HD ea1 in
-           ([(Letrec t loc_opt NONE new_fns e1,a1)],g))`];;
+           ([(closLang_Letrec t loc_opt NONE new_fns
+             e1,a1)],g))`];;
 
 let known_LENGTH = prove
  (`!limit' es vs g. LENGTH (FST (known limit' es vs g)) = LENGTH es`,
@@ -636,13 +636,11 @@ let clos_known_compile_def = define_cases
       let es2 = clos_letop_let_op es1 in
         (SOME (clos_known_config_val_approx_spt_fupd (K g)
           c),es2))`];;
-hol4_overload "compile" "clos_known_compile";;
 
 let clos_known_compile_inc_def = new_definition
   `clos_known_compile_inc c g (es,xs) =
      (let (eas,g') = known (reset_inline_factor c) es [] g in
        (g',MAP FST eas,xs))`;;
-hol4_overload "compile_inc" "clos_known_compile_inc";;
 
 let known_static_conf_def = new_definition
   `known_static_conf kc = (match kc with NONE -> NONE | SOME kc ->
@@ -683,10 +681,12 @@ val const2 = ``Op None (IntOp (Const 2)) []``;
 
 
 (* fn f x => f x *)
-val apply = ``Fn None (SOME 0) NONE 2 (App ^t0 NONE (Var None 0) [Var None 1])``;
+val apply = ``Fn None (SOME 0) NONE 2 (App ^t0 NONE (Var None 0) [Var
+  None 1])``;
 
 (* fn x => x + 1 *)
-val succ = ``Fn None (SOME 2) NONE 1 (Op None (IntOp Add) [Var None 0; ^const1])``;
+val succ = ``Fn None (SOME 2) NONE 1 (Op None (IntOp Add) [Var None 0;
+  ^const1])``;
 
 (* -------------------------------*)
 
@@ -696,7 +696,8 @@ val example_direct = ``App ^t1 NONE ^apply [^succ; ^const2]``;
 val inline_direct = ``clos_known$compile T ^example_direct``;
 EVAL inline_direct;
 
-val exp = ``Let None [^const1; ^const2] (Op None (IntOp Add) [Var None 0; Var None 1])``
+val exp = ``Let None [^const1; ^const2] (Op None (IntOp Add) [Var None
+  0; Var None 1])``
 
 EVAL ``clos_letop$let_op [^exp]``;
 
@@ -709,7 +710,8 @@ in
   apply succ 1
 end
 *)
-val example_local = ``Let None [^apply; ^succ] (App ^t1 NONE (Var None 0) [Var None 1; ^const1])``;
+val example_local = ``Let None [^apply; ^succ] (App ^t1 NONE (Var None
+  0) [Var None 1; ^const1])``;
 val inlined_local = EVAL ``clos_known$compile T ^example_local``;
 
 val inline_local = ``clos_known$compile T ^example_local``;
@@ -732,7 +734,8 @@ in
   (Global 0) (Global 1) 1
 end
 *)
-val example_global = ``Let None [^sg_apply; ^sg_succ] (App ^t1 NONE ^g_apply [^g_succ; ^const1])``;
+val example_global = ``Let None [^sg_apply; ^sg_succ] (App ^t1 NONE
+  ^g_apply [^g_succ; ^const1])``;
 
 val inline_global = ``clos_known$compile T ^example_global``;
 

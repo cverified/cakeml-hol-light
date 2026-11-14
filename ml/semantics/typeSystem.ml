@@ -10,7 +10,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -201,9 +200,6 @@ let tenv_val_exp_INDUCT,tenv_val_exp_RECURSION = define_datatype
    typeSystem_Bind_tvar (num) (tenv_val_exp) | \
    // The number is how many de Bruijn type variables the typescheme binds\n\
    typeSystem_Bind_name (mlstring) (num) (t) (tenv_val_exp)";;
-hol4_overload "Empty" "typeSystem_Empty";;
-hol4_overload "Bind_tvar" "typeSystem_Bind_tvar";;
-hol4_overload "Bind_name" "typeSystem_Bind_name";;
 
 
 (*val bind_tvar : nat -> tenv_val_exp -> tenv_val_exp*)
@@ -329,7 +325,7 @@ let t_of_def = new_definition
 let supported_test_def = new_definition
   `supported_test x1 ty =
       match x1 with
-        (Equal:test) -> T
+        (ast_Equal:test) -> T
       | (ast_Compare _2) -> MEM ty [ast_IntT; ast_CharT; ast_WordT
         ast_W8; ast_Float64T; ast_StrT]
       | _3 -> (ty = ast_StrT)`;;

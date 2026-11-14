@@ -39,7 +39,6 @@ let cmlParse_destResult_def = new_definition
       | (pegexec_Result (peg_Failure fl fe)) -> peg_Failure fl fe
       | _5 -> peg_Failure unknown_loc
         "Something catastrophic happened"`;;
-hol4_overload "destResult" "cmlParse_destResult";;
 
 (* HOL4 cmlParseScript.sml:23: the type abbreviation M, which the
    port expands *)
@@ -82,8 +81,8 @@ let optlift_def = define_general
    `optlift (SOME a) = (\toks. peg_Success toks a NONE)`];;
 
 let cmlParseExpr_def = new_definition
-  `cmlParseExpr = pegresult_bind (destResult o (\n t. peg_exec cmlPEG
-  (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\
+  `cmlParseExpr = pegresult_bind (cmlParse_destResult o (\n t. peg_exec
+  cmlPEG (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\
      pts. pegresult_bind (optlift (oHD pts)) (\
      pt. pegresult_bind (optlift (ptree_Expr nE pt)) (\
      ast.
@@ -91,8 +90,9 @@ let cmlParseExpr_def = new_definition
 
 let parse_prog_def = new_definition
   `parse_prog =
-     pegresult_bind (destResult o (\n t. peg_exec cmlPEG (cmlPEG_pnt
-       n) t [] NONE [] pegexec_done pegexec_failed) nTopLevelDecs) (\
+     pegresult_bind (cmlParse_destResult o (\n t. peg_exec cmlPEG
+       (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed)
+       nTopLevelDecs) (\
        pts. pegresult_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;

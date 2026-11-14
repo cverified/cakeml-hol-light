@@ -59,7 +59,6 @@ let substring_def = define_general
 let concat_def = new_definition
   `mlstring_concat l = implode (FLAT (MAP (\s. match s with implode x
   -> x) l))`;;
-hol4_overload "concat" "mlstring_concat";;
 
 (* [simp] *)
 let concat_nil = prove
@@ -139,7 +138,6 @@ let extract_def = new_definition
      (if strlen s <= i then implode [] else match opt with
          SOME x -> substring s i (MIN (strlen s - i) x) | NONE ->
            substring s i (strlen s - i))`;;
-hol4_overload "extract" "mlstring_extract";;
 
 let strlen_extract_le = prove
  (`!s x y. strlen (mlstring_extract s x y) <= strlen s - x`,
@@ -235,16 +233,17 @@ let concatWith_def = new_definition
 let chr_to_str_def = new_definition
   `chr_to_str (c:char) = implode [c]`;;
 
-hol4_overload "toString" "chr_to_str";;
+(* HOL4 mlstringScript.sml:270: the overload toString, which the port
+   expands *)
 
 (* [simp] *)
 let explode_toString = prove
- (`explode (toString c) = [c]`,
+ (`explode (integer_word_toString c) = [c]`,
   (REWRITE_TAC[chr_to_str_def; explode_thm]));;
 
 (* [simp] *)
 let strlen_toString = prove
- (`strlen (toString c) = 1`,
+ (`strlen (integer_word_toString c) = 1`,
   (REWRITE_TAC[chr_to_str_def; strlen_def; LENGTH; ONE]));;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -291,10 +290,7 @@ let splitl_aux_SPLITP = prove
 
 let splitl_SPLITL = prove
  (`splitl P s = (implode ## implode) (SPLITL P (explode s))`,
-  (REWRITE_TAC[splitl_def; splitl_aux_SPLITP; SPLITL; TAKE_0; DROP_0]
-    THEN
-   AP_THM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
-   REWRITE_TAC[FUN_EQ_THM; o_THM; APPEND]));;
+  CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -358,8 +354,8 @@ let TOKENS_eq_tokens = prove
 let tokens_append = prove
  (`!P s1 x s2.
     P x ==>
-      (tokens P (strcat (strcat s1 (toString x)) s2) = APPEND
-        (tokens P s1) (tokens P s2))`,
+      (tokens P (strcat (strcat s1 (integer_word_toString x)) s2) =
+        APPEND (tokens P s1) (tokens P s2))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
@@ -379,7 +375,7 @@ let tokens_alt_aux_def,tokens_alt_aux_ind = define_wf
 
 let substring_1_strsub = prove
  (`i < strlen s ==>
-   substring s i 1 = toString (strsub s i)`,
+   substring s i 1 = integer_word_toString (strsub s i)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -638,7 +634,6 @@ let mlstring_compare_def = new_definition
   compare_aux s1 s2 LESS 0 (strlen s1) else if (strlen s2) < (strlen
   s1) then compare_aux s1 s2 GREATER 0 (strlen s2) else compare_aux
   s1 s2 EQUAL 0 (strlen s2))`;;
-hol4_overload "compare" "mlstring_compare";;
 
 let mlstring_lt_def = new_definition
   `mlstring_lt s1 s2 <=> (mlstring_compare s1 s2 = LESS)`;;
@@ -932,7 +927,6 @@ let collate_aux_def,collate_aux_ind = define_wf
         (if f (strsub s1 n) (strsub s2 n) = EQUAL then
           mlstring_collate_aux f s1 s2 ord (n + 1) len else f
           (strsub s1 n) (strsub s2 n))`];;
-hol4_overload "collate_aux" "mlstring_collate_aux";;
 
 let mlstring_collate_def = new_definition
   `mlstring_collate f s1 s2 =
@@ -940,7 +934,6 @@ let mlstring_collate_def = new_definition
      LESS 0 (strlen s1) else if (strlen s2) < (strlen s1) then
      mlstring_collate_aux f s1 s2 GREATER 0 (strlen s2) else
      mlstring_collate_aux f s1 s2 EQUAL 0 (strlen s2))`;;
-hol4_overload "collate" "mlstring_collate";;
 
 
 (* [local] *)
@@ -968,8 +961,8 @@ let collate_aux_greater_thm = prove
   CHEAT_TAC);;
 
 let collate_thm = prove
- (`!f s1 s2. collate f s1 s2 = mllist_collate f (explode s1) (explode
-  s2)`,
+ (`!f s1 s2. mlstring_collate f s1 s2 = mllist_collate f (explode s1)
+  (explode s2)`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[mlstring_collate_def] THEN
    REPEAT COND_CASES_TAC THEN
    ASM_SIMP_TAC[collate_aux_greater_thm; collate_aux_equal_thm;

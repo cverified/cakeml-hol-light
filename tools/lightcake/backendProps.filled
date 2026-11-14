@@ -1,13 +1,8 @@
-FST_pure_co
-SND_pure_co
 is_state_oracle_shift
 is_state_oracle_shift_imp
-oracle_monotonic_shift_subset
-oracle_monotonic_state_with_inv_init
 oracle_monotonic_subset
 pure_cc_I
 pure_co_I
-pure_co_comb_pure_co
 restrict_nonzero_BIGUNION
 restrict_nonzero_SUBSET
 restrict_nonzero_SUBSET_left

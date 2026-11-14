@@ -1,2 +1,4 @@
 BIJ_IMP_FLOOKUP_SOME	PROOF Stdlib.Sys.Break
+heap_length_CONS	PROOF Failure("TAC_PROOF: Unsolved goals")
+heap_lookup_APPEND	a check of the fill
 heap_lookup_IMP_heap_addresses_GEN	PROOF Failure("tryfind")

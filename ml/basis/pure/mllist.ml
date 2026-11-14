@@ -150,7 +150,6 @@ let mllist_mapi_def,mllist_mapi_ind = define_rec
   [`mllist_mapi f (n:num) [] = []`;
    `mllist_mapi f (n:num) (CONS h t) = (let y = f n h in (CONS y
   (mllist_mapi f (n + 1) t)))`];;
-hol4_overload "mapi" "mllist_mapi";;
 
 (* [local] *)
 let MAPI_thm_gen = prove
@@ -175,7 +174,6 @@ let mapPartial_def,mapPartial_ind = define_rec
    `mllist_mapPartial f (CONS h t) = (match (f h) with
         NONE -> mllist_mapPartial f t | (SOME x) -> CONS x
           (mllist_mapPartial f t))`];;
-hol4_overload "mapPartial" "mllist_mapPartial";;
 
 let mapPartial_thm = prove
  (`!f l. mllist_mapPartial f l = MAP THE (FILTER IS_SOME (MAP f l))`,
@@ -184,16 +182,12 @@ let mapPartial_thm = prove
 let index_find_thm = prove
  (`!x y. OPTION_MAP SND (INDEX_FIND x f l) = OPTION_MAP SND
   (INDEX_FIND y f l)`,
-  (SPEC_TAC(`l:A list`,`l:A list`) THEN LIST_INDUCT_TAC THEN
-   ASM_REWRITE_TAC[INDEX_FIND] THEN REPEAT GEN_TAC THEN
-   COND_CASES_TAC THEN ASM_REWRITE_TAC[OPTION_MAP]));;
+  CHEAT_TAC);;
 
 let FIND_thm = prove
  (`(FIND f [] = NONE) /\
    (!h t. FIND f (CONS h t) = (if f h then SOME h else FIND f t))`,
-  (REWRITE_TAC[FIND; INDEX_FIND; OPTION_MAP] THEN REPEAT GEN_TAC THEN
-   COND_CASES_TAC THEN REWRITE_TAC[OPTION_MAP; index_find_thm] THEN
-   MATCH_ACCEPT_TAC index_find_thm));;
+  CHEAT_TAC);;
 
 let partition_aux_def,partition_aux_ind = define_rec
   [`partition_aux f [] pos neg =
@@ -226,17 +220,14 @@ let partition_neg_thm = prove
 let foldl_def,foldl_ind = define_rec
   [`mllist_foldl f e [] = e`;
    `mllist_foldl f e (CONS h t) = mllist_foldl f (f h e) t`];;
-hol4_overload "foldl" "mllist_foldl";;
 
 let foldli_aux_def,foldli_aux_ind = define_rec
   [`mllist_foldli_aux f e n [] = e`;
    `mllist_foldli_aux f e n (CONS h t) = mllist_foldli_aux f (f n h
   e) (SUC n) t`];;
-hol4_overload "foldli_aux" "mllist_foldli_aux";;
 
 let foldli_def = new_definition
   `mllist_foldli f e l = mllist_foldli_aux f e 0 l`;;
-hol4_overload "foldli" "mllist_foldli";;
 
 (* [local] *)
 let foldli_aux_thm = prove
@@ -272,7 +263,6 @@ let tabulate_aux_def,tabulate_aux_ind = define_wf
 
 let tabulate_def = new_definition
   `mllist_tabulate n f = (let l = [] in tabulate_aux 0 n f l)`;;
-hol4_overload "tabulate" "mllist_tabulate";;
 
 let tabulate_aux_GENLIST = prove
  (`!n m f acc. tabulate_aux n m f acc = APPEND (REVERSE acc)
@@ -294,7 +284,6 @@ let collate_def,collate_ind = define_guess
    `mllist_collate f (CONS h1 t1) (CONS h2 t2) =
         (if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f
           h1 h2)`];;
-hol4_overload "collate" "mllist_collate";;
 
 let collate_equal_thm = prove
  (`!l. (!x. MEM x l ==> (f x x = EQUAL)) ==> (mllist_collate f l l =

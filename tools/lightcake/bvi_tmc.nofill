@@ -1,1 +1,3 @@
+bind_size	PROOF Failure("find_term")
 call_block_size_shift	PROOF Stack overflow
+wf_vars_bind	PROOF Failure("find_term")

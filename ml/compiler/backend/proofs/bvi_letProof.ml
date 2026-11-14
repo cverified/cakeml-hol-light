@@ -2,7 +2,7 @@
 (*  bvi_letProof: ported from HOL4's
     compiler/backend/proofs/bvi_letProofScript.sml
     A proof theory about bvi_let.ml, with 2 definitions and 19
-    theorems.  Needed by bvl_to_bviProof.ml and compilerProof.ml.  *)
+    theorems.  Needed by bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -33,11 +33,11 @@ needs "semantics/typeSystem.ml";;
 let _ = hol4_ancestors "bvi_letProof"
   ["bviProps"; "bviSem"; "bvi_let"];;
 
-hol4_overload "compile" "bvi_let_compile";;
+(* HOL4 bvi_letProofScript.sml:10: an overload that the source brings
+   to the front: compile, written out as bvi_let_compile *)
 
 let v_rel_def = new_definition
   `bvi_letProof_v_rel a x y xs ys <=> (\l n. oEL n l) ys a = SOME x`;;
-hol4_overload "v_rel" "bvi_letProof_v_rel";;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -50,7 +50,6 @@ let env_rel_def,env_rel_ind = define_wf
         bvi_letProof_v_rel a x y (CONS x e1) (CONS y e2) /\
           bvi_letProof_env_rel rest d e1 e2
         | (_1,_2,_3) -> F`];;
-hol4_overload "env_rel" "bvi_letProof_env_rel";;
 
 let env_rel_length = prove
  (`!ax env env2. bvi_letProof_env_rel ax d env env2 ==> LENGTH env <=
@@ -113,9 +112,9 @@ let env_rel_LOOKUP_SOME = prove
 
 let evaluate_delete_var_Rerr_SING = prove
  (`!x s r e env2.
-      evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
-        ==>
-      evaluate ([delete_var x],env2,s) = (Rerr e,r)`,
+      bviSem_evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort
+        Rtype_error) ==>
+      bviSem_evaluate ([bvi_let_delete_var x],env2,s) = (Rerr e,r)`,
   (let dv = delete_var_def in
    let ev = bviSem_evaluate_def in
    REPEAT GEN_TAC THEN
@@ -132,9 +131,10 @@ let evaluate_delete_var_Rerr_SING = prove
 (* [local] *)
 let evaluate_delete_var_Rerr = prove
  (`!xs s r e env2.
-       evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
-         ==>
-       evaluate (MAP delete_var xs,env2,s) = (Rerr e,r)`,
+       bviSem_evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort
+         Rtype_error) ==>
+       bviSem_evaluate (MAP bvi_let_delete_var xs,env2,s) = (Rerr
+         e,r)`,
   (let dv = delete_var_def in
    let ev = bviSem_evaluate_def in
    let da = bviSem_do_app_def in
@@ -216,11 +216,13 @@ let evaluate_delete_var_Rerr = prove
 (* [local] *)
 let evaluate_delete_var_Rval = prove
  (`!xs env2 s a r ax env d.
-       evaluate (xs,env2,(s:('c,'ffi)bviSem_state)) = (Rval a,r) /\
+       bviSem_evaluate (xs,env2,(s:('c,'ffi)bviSem_state)) = (Rval
+         a,r) /\
        bvi_letProof_env_rel ax d env env2 ==>
-       (?b. evaluate (MAP delete_var xs,env2,s) = (Rval b,r) /\
-           bvi_letProof_env_rel (APPEND (extract_list xs) ax) d
-             (APPEND a env) (APPEND b env2))`,
+       (?b. bviSem_evaluate (MAP bvi_let_delete_var xs,env2,s) =
+         (Rval b,r) /\
+           bvi_letProof_env_rel (APPEND (bvi_let_extract_list xs)
+             ax) d (APPEND a env) (APPEND b env2))`,
   (let rty = `:(bvlSem_v list,exn_or_ret)
                 semanticPrimitives_result` in
    let dv = delete_var_def in
@@ -353,11 +355,11 @@ let evaluate_delete_var_Rval = prove
    [var_branch; nonvar_branch]));;
 
 let evaluate_SNOC_Rval = prove
- (`evaluate (SNOC x y,env,s) = (Rval a,r) ==>
+ (`bviSem_evaluate (SNOC x y,env,s) = (Rval a,r) ==>
     (?a1 a2 r1.
       a = SNOC a1 a2 /\ LENGTH y = LENGTH a2 /\
-      evaluate (y,env,s) = (Rval a2,r1) /\
-      evaluate ([x],env,r1) = (Rval [a1],r))`,
+      bviSem_evaluate (y,env,s) = (Rval a2,r1) /\
+      bviSem_evaluate ([x],env,r1) = (Rval [a1],r))`,
   (ONCE_REWRITE_TAC[bviProps_evaluate_SNOC] THEN EVERY_CASE_TAC THEN
    REWRITE_TAC[PAIR_EQ; distinctness "semanticPrimitives_result";
                injectivity "semanticPrimitives_result"] THEN
@@ -370,15 +372,15 @@ let evaluate_SNOC_Rval = prove
                        ASM_REWRITE_TAC[SNOC; APPEND])]));;
 
 let compile_CONS = prove
- (`compile ax d (CONS x xs) = APPEND (compile ax d [x]) (compile ax d
-  xs)`,
+ (`bvi_let_compile ax d (CONS x xs) = APPEND (bvi_let_compile ax d
+  [x]) (bvi_let_compile ax d xs)`,
   (let compile_def = bvi_let_compile_def in
    STRUCT_CASES_TAC(ISPEC `xs:bvi_exp list` list_CASES) THEN
    REWRITE_TAC[compile_def; APPEND_NIL]));;
 
 let compile_APPEND = prove
- (`!xs ys ax d. compile ax d (APPEND xs ys) = APPEND (compile ax d xs)
-  (compile ax d ys)`,
+ (`!xs ys ax d. bvi_let_compile ax d (APPEND xs ys) = APPEND
+  (bvi_let_compile ax d xs) (bvi_let_compile ax d ys)`,
   (let compile_def = bvi_let_compile_def in
    LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; compile_def] THEN
    ONCE_REWRITE_TAC[compile_CONS] THEN
@@ -449,10 +451,11 @@ let env_rel_REPLICATE_0 = prove
 
 let evaluate_env_rel = prove
  (`!xs env1 (s1:('c,'ffi)bviSem_state) ax env2 res s2 ys d.
-      (evaluate (xs,env1,s1) = (res,s2)) /\
+      (bviSem_evaluate (xs,env1,s1) = (res,s2)) /\
       bvi_letProof_env_rel ax d env1 env2 /\ ~(res = Rerr (Rabort
         Rtype_error)) ==>
-      (evaluate (compile ax d xs,env2,s1) = (res,s2))`,
+      (bviSem_evaluate (bvi_let_compile ax d xs,env2,s1) =
+        (res,s2))`,
   ((* ---- the pieces ---------------------------------------------- *)
    let cp = bvi_let_compile_def in
    let ev = bviSem_evaluate_def in
@@ -898,9 +901,9 @@ let evaluate_env_rel = prove
 (* HOL4 bvi_letProofScript.sml:389: a proof *)
 
 let compile_thm = prove
- (`!xs env (s1:('c,'ffi)bviSem_state) res s2 ys. (evaluate (xs,env,s1)
-  = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==> (evaluate
-  (compile [] 0 xs,env,s1) = (res,s2))`,
+ (`!xs env (s1:('c,'ffi)bviSem_state) res s2 ys. (bviSem_evaluate
+  (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
+  (bviSem_evaluate (bvi_let_compile [] 0 xs,env,s1) = (res,s2))`,
   (* evaluate_env_rel at ax = [] and d = 0, where env_rel [] 0 env
      env is env = DROP 0 env.  The terms are taken out of the goal:
      the state of the statement has type variables of its own
@@ -919,8 +922,9 @@ let compile_thm = prove
          (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne))))))));;
 
 let evaluate_compile_exp = prove
- (`evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
-    evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`,
+ (`bviSem_evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort
+  Rtype_error)) ==>
+    bviSem_evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`,
   (let ce = bvi_let_compile_exp_def in
    let er = env_rel_def in
    (* compile_exp x is the one expression that compile makes of the
@@ -953,7 +957,8 @@ let evaluate_compile_exp = prove
 
 (* [simp] *)
 let dest_var_code_labels = prove
- (`!x. get_code_labels (delete_var x) = get_code_labels x`,
+ (`!x. bviProps_get_code_labels (bvi_let_delete_var x) =
+  bviProps_get_code_labels x`,
   (let dv = delete_var_def in
    let gcl = bviProps_get_code_labels_def in
    let agcl = assign_get_code_label_def in
@@ -967,9 +972,9 @@ let dest_var_code_labels = prove
                UNION_EMPTY; EMPTY_UNION]));;
 
 let compile_code_labels = prove
- (`!x y z. UNIONS (set_of_list (MAP get_code_labels (bvi_let_compile x y
-  z))) =
-           UNIONS (set_of_list (MAP get_code_labels z))`,
+ (`!x y z. UNIONS (set_of_list (MAP bviProps_get_code_labels
+  (bvi_let_compile x y z))) =
+           UNIONS (set_of_list (MAP bviProps_get_code_labels z))`,
   (let cp = bvi_let_compile_def in
    let gcl = bviProps_get_code_labels_def in
    let sz = size_thms "bvi_exp" in
@@ -1125,7 +1130,8 @@ let compile_code_labels = prove
    variables of its own are read as variables *)
 let compile_exp_code_labels = prove
  (cake_as_vars (fun () ->
-    `!x. get_code_labels (bvi_let_compile_exp x) = get_code_labels x`),
+    `!x. bviProps_get_code_labels (bvi_let_compile_exp x) =
+  bviProps_get_code_labels x`),
   (let ce = bvi_let_compile_exp_def in
    (* compile_exp is the head of the compiled singleton, so its
       labels are the labels of the list that compile_code_labels

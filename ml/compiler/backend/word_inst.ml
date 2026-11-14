@@ -14,7 +14,6 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -25,7 +24,8 @@ let _ = hol4_ancestors "word_inst"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-hol4_overload "Shift" "wordLang_Shift";;
+(* HOL4 word_instScript.sml:11-12: an overload that the source brings
+   to the front: Shift, written out as wordLang_Shift *)
 
 (*Scheme:
 1) Pull all nested ops and consts as far up as possible and convert
@@ -48,7 +48,6 @@ let word_inst_is_const_def = new_definition
         match x1 with
           wordLang_Const w -> T
         | _3 -> F`;;
-hol4_overload "is_const" "word_inst_is_const";;
 
 let rm_const_def = new_definition
   `rm_const x1 =
@@ -60,42 +59,46 @@ let rm_const_def = new_definition
 let convert_sub_def = new_definition
   `convert_sub ls =
         match ls with
-          [wordLang_Const w1; Const w2] -> Const (w1 - w2)
-        | [x; Const w] -> wordLang_Op asm_Add [Const (--w); x]
+          [wordLang_Const w1; wordLang_Const w2] -> wordLang_Const
+            (w1 - w2)
+        | [x; wordLang_Const w] -> wordLang_Op asm_Add
+          [wordLang_Const (--w); x]
         | ls -> wordLang_Op asm_Sub ls`;;
 
 let convert_sub_pmatch = prove
  (`!l.
    convert_sub l =
    (match l with
-     [Const w1; Const w2] -> Const (w1 - w2) | [x; Const w] ->
-       wordLang_Op asm_Add [Const (--w); x] | ls -> wordLang_Op
-       asm_Sub ls)`,
+     [wordLang_Const w1; wordLang_Const w2] -> wordLang_Const (w1 -
+       w2) | [x; wordLang_Const w] -> wordLang_Op asm_Add
+       [wordLang_Const (--w); x] | ls -> wordLang_Op asm_Sub ls)`,
   CHEAT_TAC);;
 
 let op_consts_def = new_definition
   `op_consts x1 =
         match x1 with
-          (And:binop) -> wordLang_Const (word_not (n2w 0))
+          (asm_And:binop) -> wordLang_Const (word_not (n2w 0))
         | _5 -> wordLang_Const (n2w 0)`;;
 
 let op_consts_pmatch = prove
  (`!op.
    op_consts op =
    (match op with
-     And -> Const (word_not (n2w 0)) | _6 -> Const (n2w 0))`,
+     asm_And -> wordLang_Const (word_not (n2w 0)) | _6 ->
+       wordLang_Const (n2w 0))`,
   CHEAT_TAC);;
 
 (* Returns a definite value *)
 let reduce_const_def = new_definition
   `reduce_const op w rest =
    (if w = (n2w 0) then
-     if op = Add \/ op = Or \/ op = Xor then
+     if op = asm_Add \/ op = asm_Or \/ op = asm_Xor then
        match rest with
-         [] -> Const w | [x] -> x | _7 -> wordLang_Op op rest else if
-           op = And then
-       Const (n2w 0) else wordLang_Op op (CONS (Const w) rest)
-         else wordLang_Op op (CONS (Const w) rest))`;;
+         [] -> wordLang_Const w | [x] -> x | _7 -> wordLang_Op op
+           rest else if op = asm_And then
+       wordLang_Const (n2w 0) else wordLang_Op op (CONS
+         (wordLang_Const w) rest) else wordLang_Op op (CONS
+         (wordLang_Const w) rest))`;;
 
 let optimize_consts_def = new_definition
   `optimize_consts op ls =
@@ -144,9 +147,10 @@ let pull_exp_pmatch = prove
        wordLang_Op op [x] -> pull_exp x | wordLang_Op op ls -> (
      let new_ls = MAP pull_exp ls in
      let pull_ls = pull_ops op new_ls [] in
-       optimize_consts op pull_ls) | Load exp -> Load (pull_exp
-         exp) | Shift sh exp nexp -> Shift sh (pull_exp exp) (pull_exp
-         nexp) | exp -> exp)`,
+       optimize_consts op pull_ls) | wordLang_Load exp ->
+         wordLang_Load (pull_exp exp) | wordLang_Shift sh exp nexp ->
+         wordLang_Shift sh (pull_exp exp) (pull_exp nexp) | exp ->
+         exp)`,
   CHEAT_TAC);;
 
 (*Flatten list expressions to trees -- of the form:
@@ -175,9 +179,9 @@ let flatten_exp_def,flatten_exp_ind = define_wf
         | (wordLang_Op op [x]) -> flatten_exp x
         | (wordLang_Op op (CONS x xs)) -> wordLang_Op op
           [flatten_exp (wordLang_Op op xs); flatten_exp x]
-        | (Load exp) -> Load (flatten_exp exp)
-        | (Shift shift' exp nexp) -> Shift shift' (flatten_exp exp)
-          (flatten_exp nexp)
+        | (wordLang_Load exp) -> wordLang_Load (flatten_exp exp)
+        | (wordLang_Shift shift' exp nexp) -> wordLang_Shift shift'
+          (flatten_exp exp) (flatten_exp nexp)
         | exp -> exp`];;
 
 
@@ -221,124 +225,132 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
         match (c,tar,temp,x4) with
           ((c:'a asm_config),(tar:num),(temp:num),wordLang_Load exp)
             ->
-       (match exp with wordLang_Op asm_Add [exp'; Const w] ->
+       (match exp with wordLang_Op asm_Add [exp'; wordLang_Const w]
+         ->
          (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
            then
            let prog = inst_select_exp c temp temp exp' in
-             Seq prog (Inst (asm_Mem asm_Load tar (Addr temp w)))
-               else
+             wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Load tar
+               (Addr temp w))) else
            let prog = inst_select_exp c temp temp exp in
-             Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
-               0)))))) | _11 ->
+             wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Load tar
+               (Addr temp ((n2w 0)))))) | _11 ->
          (let prog = inst_select_exp c temp temp exp in
-         Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
-           0)))))))
-        | (c,(tar:num),(temp:num),(Const w)) -> (Inst (asm_Const tar
-          w))
-        | (c,(tar:num),(temp:num),(Var v)) ->
+         wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Load tar
+           (Addr temp ((n2w 0)))))))
+        | (c,(tar:num),(temp:num),(wordLang_Const w)) ->
+          (wordLang_Inst (asm_Const tar w))
+        | (c,(tar:num),(temp:num),(wordLang_Var v)) ->
        wordLang_Move 0 [tar,v]
         | (c,tar,temp,(wordLang_Lookup store_name)) ->
-       Get tar store_name
+       wordLang_Get tar store_name
         // All ops are binary branching
         | (c,tar,temp,(wordLang_Op op [e1; e2])) ->
        (if is_Lookup_CurrHeap e2 then
          (let p1 = inst_select_exp c temp temp e1 in
-           Seq p1 (OpCurrHeap op tar temp)) else if
-             is_Lookup_CurrHeap e1 /\ ~(op = Sub) then
+           wordLang_Seq p1 (wordLang_OpCurrHeap op tar temp)) else
+             if is_Lookup_CurrHeap e1 /\ ~(op = asm_Sub) then
          (let p2 = inst_select_exp c temp temp e2 in
-           Seq p2 (OpCurrHeap op tar temp)) else
+           wordLang_Seq p2 (wordLang_OpCurrHeap op tar temp)) else
        let p1 = inst_select_exp c temp temp e1 in
-       match e2 with Const w ->
+       match e2 with wordLang_Const w ->
          // t = r op const
          (if asm_config_valid_imm c (INL op) w then
-           Seq p1 (Inst (Arith (asm_Binop op tar temp (Imm w))))
-             else
+           wordLang_Seq p1 (wordLang_Inst (asm_Arith (asm_Binop op
+             tar temp (Imm w)))) else
           // t = r + const --> t = r - const
-          if op = Add /\ asm_config_valid_imm c (INL Sub) (--w) then
-           Seq p1 (Inst (Arith (asm_Binop asm_Sub tar temp (Imm
-             (--w))))) else
+          if op = asm_Add /\ asm_config_valid_imm c (INL asm_Sub)
+            (--w) then
+           wordLang_Seq p1 (wordLang_Inst (asm_Arith (asm_Binop
+             asm_Sub tar temp (Imm (--w))))) else
            // no immediates
-           let p2 = Inst (asm_Const (temp + 1) w) in
-           Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
-             (temp + 1))))))) | _12 ->
+           let p2 = wordLang_Inst (asm_Const (temp + 1) w) in
+           wordLang_Seq p1 (wordLang_Seq p2 (wordLang_Inst
+             (asm_Arith (asm_Binop op tar temp (Reg (temp + 1))))))) |
+             _12 ->
          (let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
-         Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
-           (temp + 1))))))))
-        | (c,tar,temp,(Shift sh exp e1)) ->
-       (match e1 with Const shift_len ->
+         wordLang_Seq p1 (wordLang_Seq p2 (wordLang_Inst (asm_Arith
+           (asm_Binop op tar temp (Reg (temp + 1))))))))
+        | (c,tar,temp,(wordLang_Shift sh exp e1)) ->
+       (match e1 with wordLang_Const shift_len ->
            (let n = w2n shift_len in
              if (n < dimindex (:'a)) then
                (let prog = inst_select_exp c temp temp exp in
                  if n = 0 then
-                   Seq prog (wordLang_Move 0 [tar,temp]) else
-                    Seq prog (Inst (Arith (asm_Shift sh tar temp
-                      (Imm (n2w n)))))) else
-               Inst (asm_Const tar (n2w 0))) | _13 ->
+                   wordLang_Seq prog (wordLang_Move 0 [tar,temp])
+                     else
+                    wordLang_Seq prog (wordLang_Inst (asm_Arith
+                      (asm_Shift sh tar temp (Imm (n2w n)))))) else
+               wordLang_Inst (asm_Const tar (n2w 0))) | _13 ->
          (let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
-         Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg
-           (temp + 1))))))))
+         wordLang_Seq p (wordLang_Seq p1 (wordLang_Inst (asm_Arith
+           (asm_Shift sh tar temp (Reg (temp + 1))))))))
         // Make it total
-        | (_14,_15,_16,_17) -> Skip`];;
+        | (_14,_15,_16,_17) -> wordLang_Skip`];;
 
 let inst_select_exp_pmatch = prove
  (`!c tar temp exp.
    inst_select_exp (c:'a asm_config) tar temp exp =
    (match exp with
-     Load (wordLang_Op asm_Add [exp'; Const w]) ->
+     wordLang_Load (wordLang_Op asm_Add [exp'; wordLang_Const w]) ->
        (if asm_offset_ok 0 (asm_config_addr_offset c) w then
          let prog = inst_select_exp c temp temp exp' in
-           Seq prog (Inst (asm_Mem asm_Load tar (Addr temp w))) else
+           wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Load tar
+             (Addr temp w))) else
          (let prog = inst_select_exp c temp temp (wordLang_Op asm_Add
-           [exp'; Const w]) in
-           Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
-             0))))))) | Load exp ->
+           [exp'; wordLang_Const w]) in
+           wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Load tar
+             (Addr temp ((n2w 0))))))) | wordLang_Load exp ->
        (let prog = inst_select_exp c temp temp exp in
-       Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w 0))))))
-         | Const w -> Inst (asm_Const tar w) | Var v ->
+       wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Load tar (Addr
+         temp ((n2w 0)))))) | wordLang_Const w -> wordLang_Inst
+         (asm_Const tar w) | wordLang_Var v ->
      wordLang_Move 0 [tar,v] | wordLang_Lookup store_name ->
-     Get tar store_name |
+     wordLang_Get tar store_name |
      // All ops are binary branching
      wordLang_Op op [e1; e2] ->
      (if is_Lookup_CurrHeap e2 then
        (let p1 = inst_select_exp c temp temp e1 in
-         Seq p1 (OpCurrHeap op tar temp)) else if is_Lookup_CurrHeap
-           e1 /\ ~(op = Sub) then
+         wordLang_Seq p1 (wordLang_OpCurrHeap op tar temp)) else if
+           is_Lookup_CurrHeap e1 /\ ~(op = asm_Sub) then
        (let p2 = inst_select_exp c temp temp e2 in
-         Seq p2 (OpCurrHeap op tar temp)) else
+         wordLang_Seq p2 (wordLang_OpCurrHeap op tar temp)) else
       match e2 with
-       Const w ->
+       wordLang_Const w ->
        // t = r op const
        (if asm_config_valid_imm c (INL op) w then
-         Seq (inst_select_exp c temp temp e1) (Inst (Arith (asm_Binop
-           op tar temp (Imm w)))) else
+         wordLang_Seq (inst_select_exp c temp temp e1) (wordLang_Inst
+           (asm_Arith (asm_Binop op tar temp (Imm w)))) else
         // t = r + const --> t = r - const
-        if op = Add /\ asm_config_valid_imm c (INL Sub) (--w) then
-         Seq (inst_select_exp c temp temp e1) (Inst (Arith (asm_Binop
-           asm_Sub tar temp (Imm (--w))))) else
+        if op = asm_Add /\ asm_config_valid_imm c (INL asm_Sub) (--w)
+          then
+         wordLang_Seq (inst_select_exp c temp temp e1) (wordLang_Inst
+           (asm_Arith (asm_Binop asm_Sub tar temp (Imm (--w))))) else
          // no immediates
-         let p2 = Inst (asm_Const (temp + 1) w) in
-         Seq (inst_select_exp c temp temp e1) (Seq p2 (Inst (Arith
-           (asm_Binop op tar temp (Reg (temp + 1))))))) | _18 ->
+         let p2 = wordLang_Inst (asm_Const (temp + 1) w) in
+         wordLang_Seq (inst_select_exp c temp temp e1) (wordLang_Seq
+           p2 (wordLang_Inst (asm_Arith (asm_Binop op tar temp (Reg
+           (temp + 1))))))) | _18 ->
        (let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
-       Seq (inst_select_exp c temp temp e1) (Seq p2 (Inst (Arith
-         (asm_Binop op tar temp (Reg (temp + 1)))))))) | Shift sh exp e1
-         ->
-    (match e1 with Const shift_len ->
+       wordLang_Seq (inst_select_exp c temp temp e1) (wordLang_Seq p2
+         (wordLang_Inst (asm_Arith (asm_Binop op tar temp (Reg (temp +
+         1)))))))) | wordLang_Shift sh exp e1 ->
+    (match e1 with wordLang_Const shift_len ->
          (let n = w2n shift_len in
            if (n < dimindex (:'a)) then
              (let prog = inst_select_exp c temp temp exp in
                if n = 0 then
-                 Seq prog (wordLang_Move 0 [tar,temp]) else
-                  Seq prog (Inst (Arith (asm_Shift sh tar temp (Imm
-                    (n2w n)))))) else
-             Inst (asm_Const tar (n2w 0))) | _19 ->
+                 wordLang_Seq prog (wordLang_Move 0 [tar,temp]) else
+                  wordLang_Seq prog (wordLang_Inst (asm_Arith
+                    (asm_Shift sh tar temp (Imm (n2w n)))))) else
+             wordLang_Inst (asm_Const tar (n2w 0))) | _19 ->
        (let p = inst_select_exp c temp temp exp in
        let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
-       Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg (temp +
-         1)))))))) |
+       wordLang_Seq p (wordLang_Seq p1 (wordLang_Inst (asm_Arith
+         (asm_Shift sh tar temp (Reg (temp + 1)))))))) |
      // Make it total
-     _20 -> Skip)`,
+     _20 -> wordLang_Skip)`,
   CHEAT_TAC);;
 
 (*
@@ -363,33 +375,35 @@ let inst_select_def,inst_select_ind = define_wf
         match prog with
           wordLang_Assign v exp ->
        (inst_select_exp c v temp o flatten_exp o pull_exp) exp
-        | (Set store exp) ->
+        | (wordLang_Set store exp) ->
        (let prog = (inst_select_exp c temp temp o flatten_exp o
          pull_exp) exp in
-       Seq prog (Set store (Var temp)))
-        | (Store exp var) ->
+       wordLang_Seq prog (wordLang_Set store (wordLang_Var temp)))
+        | (wordLang_Store exp var) ->
        (let exp = (flatten_exp o pull_exp) exp in
-       match exp with wordLang_Op asm_Add [exp'; Const w] ->
+       match exp with wordLang_Op asm_Add [exp'; wordLang_Const w]
+         ->
          (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
            then
            let prog = inst_select_exp c temp temp exp' in
-             Seq prog (Inst (asm_Mem asm_Store var (Addr temp w)))
-               else
+             wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Store var
+               (Addr temp w))) else
            let prog = inst_select_exp c temp temp exp in
-             Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
-               0)))))) | _21 ->
+             wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Store var
+               (Addr temp ((n2w 0)))))) | _21 ->
          (let prog = inst_select_exp c temp temp exp in
-         Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
-           0)))))))
-        | (Seq p1 p2) ->
-       Seq (inst_select c temp p1) (inst_select c temp p2)
+         wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Store var
+           (Addr temp ((n2w 0)))))))
+        | (wordLang_Seq p1 p2) ->
+       wordLang_Seq (inst_select c temp p1) (inst_select c temp p2)
         | (wordLang_MustTerminate p1) ->
        wordLang_MustTerminate (inst_select c temp p1)
         | (wordLang_ShareInst op v exp) ->
        (let exp = (flatten_exp o pull_exp) exp in
-       match exp with wordLang_Op asm_Add [exp'; Const w] ->
-         (if ((op = Load \/ op = Store) /\ (\c. asm_offset_ok 0
-           (asm_config_addr_offset c)) c w) \/
+       match exp with wordLang_Op asm_Add [exp'; wordLang_Const w]
+         ->
+         (if ((op = wordLang_Load \/ op = wordLang_Store) /\ (\c.
+           asm_offset_ok 0 (asm_config_addr_offset c)) c w) \/
              ((op = asm_Load32 \/ op = asm_Store32) /\ (\c.
                asm_offset_ok 0 (asm_config_addr_offset c)) c w) \/
              ((op = asm_Load16 \/ op = asm_Store16) /\ (\c.
@@ -397,15 +411,18 @@ let inst_select_def,inst_select_ind = define_wf
              ((op = asm_Load8 \/ op = asm_Store8) /\ (\c.
                asm_offset_ok 0 (asm_config_byte_offset c)) c w) then
            let prog = inst_select_exp c temp temp exp' in
-             Seq prog (wordLang_ShareInst op v (wordLang_Op asm_Add
-               [Var temp; Const w])) else
+             wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Op
+               asm_Add [wordLang_Var temp; wordLang_Const w])) else
            let prog = inst_select_exp c temp temp exp in
-             Seq prog (wordLang_ShareInst op v (Var temp))) | _22 ->
+             wordLang_Seq prog (wordLang_ShareInst op v
+               (wordLang_Var temp))) | _22 ->
          (let prog = inst_select_exp c temp temp exp in
-         Seq prog (wordLang_ShareInst op v (Var temp))))
-        | (If cmp r1 ri c1 c2) ->
-       If cmp r1 ri (inst_select c temp c1) (inst_select c temp c2)
-        | (Call ret dest args handler) ->
+         wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Var
+           temp))))
+        | (wordLang_If cmp r1 ri c1 c2) ->
+       wordLang_If cmp r1 ri (inst_select c temp c1) (inst_select c
+         temp c2)
+        | (wordLang_Call ret dest args handler) ->
        (let retsel =
          (match ret with
            NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
@@ -414,41 +431,43 @@ let inst_select_def,inst_select_ind = define_wf
          (match handler with
            NONE -> NONE | SOME (n,h,l1,l2) -> SOME (n,inst_select c
              temp h,l1,l2)) in
-       Call retsel dest args handlersel)
-        | (Loop names body exit_names) ->
-       Loop names (inst_select c temp body) exit_names
+       wordLang_Call retsel dest args handlersel)
+        | (wordLang_Loop names body exit_names) ->
+       wordLang_Loop names (inst_select c temp body) exit_names
         | prog -> prog`];;
 
 let inst_select_pmatch = prove
  (`!c temp prog.
    inst_select c temp prog =
    (match prog with wordLang_Assign v exp ->
-     (inst_select_exp c v temp o flatten_exp o pull_exp) exp | Set
-       store exp ->
+     (inst_select_exp c v temp o flatten_exp o pull_exp) exp |
+       wordLang_Set store exp ->
      (let prog = (inst_select_exp c temp temp o flatten_exp o
        pull_exp) exp in
-     Seq prog (Set store (Var temp))) | Store exp var ->
+     wordLang_Seq prog (wordLang_Set store (wordLang_Var temp))) |
+       wordLang_Store exp var ->
      (let exp = (flatten_exp o pull_exp) exp in
-     match exp with wordLang_Op asm_Add [exp'; Const w] ->
+     match exp with wordLang_Op asm_Add [exp'; wordLang_Const w] ->
        (if asm_offset_ok 0 (asm_config_addr_offset c) w then
          let prog = inst_select_exp c temp temp exp' in
-           Seq prog (Inst (asm_Mem asm_Store var (Addr temp w))) else
+           wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Store var
+             (Addr temp w))) else
          let prog = inst_select_exp c temp temp exp in
-           Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
-             0)))))) | _23 ->
+           wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Store var
+             (Addr temp ((n2w 0)))))) | _23 ->
        (let prog = inst_select_exp c temp temp exp in
-       Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
-         0))))))) | Seq p1 p2 ->
-     Seq (inst_select c temp p1) (inst_select c temp p2) |
+       wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Store var (Addr
+         temp ((n2w 0))))))) | wordLang_Seq p1 p2 ->
+     wordLang_Seq (inst_select c temp p1) (inst_select c temp p2) |
        wordLang_MustTerminate p1 ->
-     wordLang_MustTerminate (inst_select c temp p1) | (If cmp r1 ri
-       c1 c2) ->
-       If cmp r1 ri (inst_select c temp c1) (inst_select c temp c2) |
-         wordLang_ShareInst op var exp ->
+     wordLang_MustTerminate (inst_select c temp p1) | (wordLang_If
+       cmp r1 ri c1 c2) ->
+       wordLang_If cmp r1 ri (inst_select c temp c1) (inst_select c
+         temp c2) | wordLang_ShareInst op var exp ->
      (let exp = (flatten_exp o pull_exp) exp in
-     match exp with wordLang_Op asm_Add [exp'; Const w] ->
-       (if ((op = Load \/ op = Store) /\ asm_offset_ok 0
-         (asm_config_addr_offset c) w) \/
+     match exp with wordLang_Op asm_Add [exp'; wordLang_Const w] ->
+       (if ((op = wordLang_Load \/ op = wordLang_Store) /\
+         asm_offset_ok 0 (asm_config_addr_offset c) w) \/
            ((op = asm_Load32 \/ op = asm_Store32) /\ asm_offset_ok 0
              (asm_config_addr_offset c) w) \/
            ((op = asm_Load16 \/ op = asm_Store16) /\ asm_offset_ok 0
@@ -456,13 +475,14 @@ let inst_select_pmatch = prove
            ((op = asm_Load8 \/ op = asm_Store8) /\ asm_offset_ok 0
              (asm_config_byte_offset c) w) then
          let prog = inst_select_exp c temp temp exp' in
-           Seq prog (wordLang_ShareInst op var (wordLang_Op asm_Add
-             [Var temp; Const w])) else
+           wordLang_Seq prog (wordLang_ShareInst op var (wordLang_Op
+             asm_Add [wordLang_Var temp; wordLang_Const w])) else
          let prog = inst_select_exp c temp temp exp in
-           Seq prog (wordLang_ShareInst op var (Var temp))) | _24 ->
+           wordLang_Seq prog (wordLang_ShareInst op var (wordLang_Var
+             temp))) | _24 ->
        (let prog = inst_select_exp c temp temp exp in
-       Seq prog (wordLang_ShareInst op var (Var temp)))) | (Call ret
-         dest args handler) ->
+       wordLang_Seq prog (wordLang_ShareInst op var (wordLang_Var
+         temp)))) | (wordLang_Call ret dest args handler) ->
      (let retsel =
        (match ret with
          NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
@@ -471,10 +491,10 @@ let inst_select_pmatch = prove
        (match handler with
          NONE -> NONE | SOME (n,h,l1,l2) -> SOME (n,inst_select c
            temp h,l1,l2)) in
-     Call retsel dest args handlersel) | (Loop names body exit_names)
-       ->
-     Loop names (inst_select c temp body) exit_names | prog ->
-       prog)`,
+     wordLang_Call retsel dest args handlersel) | (wordLang_Loop
+       names body exit_names) ->
+     wordLang_Loop names (inst_select c temp body) exit_names |
+       prog -> prog)`,
   CHEAT_TAC);;
 
 (*
@@ -487,30 +507,34 @@ let three_to_two_reg_def,three_to_two_reg_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
   [`three_to_two_reg prog =
         match prog with
-          wordLang_Inst (Arith (asm_Binop bop r1 r2 ri)) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Binop bop r1
-         r1 ri)))
-        | (Inst (Arith (asm_Shift l r1 r2 n))) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Shift l r1 r1
-         n)))
-        | (Inst (Arith (asm_AddCarry r1 r2 r3 r4))) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddCarry r1
-         r1 r3 r4)))
-        | (Inst (Arith (asm_AddOverflow r1 r2 r3 r4))) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddOverflow
-         r1 r1 r3 r4)))
-        | (Inst (Arith (asm_SubOverflow r1 r2 r3 r4))) ->
-       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_SubOverflow
-         r1 r1 r3 r4)))
-        | (OpCurrHeap bop r1 r2) ->
-       Seq (wordLang_Move 0 [r1,r2]) (OpCurrHeap bop r1 r1)
-        | (Seq p1 p2) ->
-       Seq (three_to_two_reg p1) (three_to_two_reg p2)
+          wordLang_Inst (asm_Arith (asm_Binop bop r1 r2 ri)) ->
+       wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst
+         (asm_Arith (asm_Binop bop r1 r1 ri)))
+        | (wordLang_Inst (asm_Arith (asm_Shift l r1 r2 n))) ->
+       wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst
+         (asm_Arith (asm_Shift l r1 r1 n)))
+        | (wordLang_Inst (asm_Arith (asm_AddCarry r1 r2 r3 r4))) ->
+       wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst
+         (asm_Arith (asm_AddCarry r1 r1 r3 r4)))
+        | (wordLang_Inst (asm_Arith (asm_AddOverflow r1 r2 r3 r4)))
+          ->
+       wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst
+         (asm_Arith (asm_AddOverflow r1 r1 r3 r4)))
+        | (wordLang_Inst (asm_Arith (asm_SubOverflow r1 r2 r3 r4)))
+          ->
+       wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst
+         (asm_Arith (asm_SubOverflow r1 r1 r3 r4)))
+        | (wordLang_OpCurrHeap bop r1 r2) ->
+       wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_OpCurrHeap
+         bop r1 r1)
+        | (wordLang_Seq p1 p2) ->
+       wordLang_Seq (three_to_two_reg p1) (three_to_two_reg p2)
         | (wordLang_MustTerminate p1) ->
        wordLang_MustTerminate (three_to_two_reg p1)
-        | (If cmp r1 ri c1 c2) ->
-       If cmp r1 ri (three_to_two_reg c1) (three_to_two_reg c2)
-        | (Call ret dest args handler) ->
+        | (wordLang_If cmp r1 ri c1 c2) ->
+       wordLang_If cmp r1 ri (three_to_two_reg c1) (three_to_two_reg
+         c2)
+        | (wordLang_Call ret dest args handler) ->
        (let retsel =
          (match ret with
            NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
@@ -519,33 +543,39 @@ let three_to_two_reg_def,three_to_two_reg_ind = define_wf
          (match handler with
            NONE -> NONE | SOME (n,h,l1,l2) -> SOME
              (n,three_to_two_reg h,l1,l2)) in
-       Call retsel dest args handlersel)
-        | (Loop names body exit_names) ->
-       Loop names (three_to_two_reg body) exit_names
+       wordLang_Call retsel dest args handlersel)
+        | (wordLang_Loop names body exit_names) ->
+       wordLang_Loop names (three_to_two_reg body) exit_names
         | prog -> prog`];;
 
 let three_to_two_reg_pmatch = prove
  (`!prog.
    three_to_two_reg prog =
-   (match prog with (Inst (Arith (asm_Binop bop r1 r2 ri))) ->
-     Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Binop bop r1 r1
-       ri))) | (Inst (Arith (asm_Shift l r1 r2 n))) ->
-     Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Shift l r1 r1
-       n))) | (Inst (Arith (asm_AddCarry r1 r2 r3 r4))) ->
-     Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddCarry r1 r1
-       r3 r4))) | (Inst (Arith (asm_AddOverflow r1 r2 r3 r4))) ->
-     Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddOverflow r1
-       r1 r3 r4))) | (Inst (Arith (asm_SubOverflow r1 r2 r3 r4))) ->
-     Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_SubOverflow r1
-       r1 r3 r4))) | (OpCurrHeap bop r1 r2) ->
-     Seq (wordLang_Move 0 [r1,r2]) (OpCurrHeap bop r1 r1) | (Seq p1
-       p2) ->
-     Seq (three_to_two_reg p1) (three_to_two_reg p2) |
+   (match prog with (wordLang_Inst (asm_Arith (asm_Binop bop r1 r2
+     ri))) ->
+     wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst (asm_Arith
+       (asm_Binop bop r1 r1 ri))) | (wordLang_Inst (asm_Arith (asm_Shift
+       l r1 r2 n))) ->
+     wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst (asm_Arith
+       (asm_Shift l r1 r1 n))) | (wordLang_Inst (asm_Arith (asm_AddCarry
+       r1 r2 r3 r4))) ->
+     wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst (asm_Arith
+       (asm_AddCarry r1 r1 r3 r4))) | (wordLang_Inst (asm_Arith
+       (asm_AddOverflow r1 r2 r3 r4))) ->
+     wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst (asm_Arith
+       (asm_AddOverflow r1 r1 r3 r4))) | (wordLang_Inst (asm_Arith
+       (asm_SubOverflow r1 r2 r3 r4))) ->
+     wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst (asm_Arith
+       (asm_SubOverflow r1 r1 r3 r4))) | (wordLang_OpCurrHeap bop r1 r2)
+       ->
+     wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_OpCurrHeap bop
+       r1 r1) | (wordLang_Seq p1 p2) ->
+     wordLang_Seq (three_to_two_reg p1) (three_to_two_reg p2) |
        (wordLang_MustTerminate p1) ->
-     wordLang_MustTerminate (three_to_two_reg p1) | (If cmp r1 ri c1
-       c2) ->
-     If cmp r1 ri (three_to_two_reg c1) (three_to_two_reg c2) | (Call
-       ret dest args handler) ->
+     wordLang_MustTerminate (three_to_two_reg p1) | (wordLang_If cmp
+       r1 ri c1 c2) ->
+     wordLang_If cmp r1 ri (three_to_two_reg c1) (three_to_two_reg
+       c2) | (wordLang_Call ret dest args handler) ->
      (let retsel =
        (match ret with
          NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
@@ -554,9 +584,10 @@ let three_to_two_reg_pmatch = prove
        (match handler with
          NONE -> NONE | SOME (n,h,l1,l2) -> SOME (n,three_to_two_reg
            h,l1,l2)) in
-     Call retsel dest args handlersel) | (Loop names body exit_names)
-       ->
-     Loop names (three_to_two_reg body) exit_names | prog -> prog)`,
+     wordLang_Call retsel dest args handlersel) | (wordLang_Loop
+       names body exit_names) ->
+     wordLang_Loop names (three_to_two_reg body) exit_names | prog
+       -> prog)`,
   CHEAT_TAC);;
 
 let three_to_two_reg_prog_def = new_definition

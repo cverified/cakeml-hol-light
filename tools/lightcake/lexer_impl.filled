@@ -1,5 +1,4 @@
 EVERY_IMPLODE
-EVERY_isDigit_imp
 lex_until_top_semicolon_alt_LESS
 lex_until_toplevel_semicolon_LESS
 lexer_correct

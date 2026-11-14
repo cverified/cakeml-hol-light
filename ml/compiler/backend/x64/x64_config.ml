@@ -12,7 +12,6 @@
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -33,23 +32,23 @@ let x64_names_def = new_definition
       // the third(3) in rdx(r3), the fourth(4) in rcx(2), the fifth(5)
       // in r8 and the sixth in r9.
       // Callee-saved regs: r12-r15, rbx
-      insert 1 7 o
+      balanced_map_insert 1 7 o
       // arg 1
-      insert 2 6 o
+      balanced_map_insert 2 6 o
       // arg 2
-      insert 3 2 o
-      insert 4 1 o
-      insert 5 8 o
-      insert 6 9 o
-      insert 11 14 o
-      insert 12 13 o
-      insert 13 12 o
+      balanced_map_insert 3 2 o
+      balanced_map_insert 4 1 o
+      balanced_map_insert 5 8 o
+      balanced_map_insert 6 9 o
+      balanced_map_insert 11 14 o
+      balanced_map_insert 12 13 o
+      balanced_map_insert 13 12 o
       // the rest just ensures that the mapping is well-formed
-      insert 7 3 o
-      insert 8 15 o
-      insert 9 11 o
-      insert 14 4 o
-      insert 15 5) LN:num spt)`;;
+      balanced_map_insert 7 3 o
+      balanced_map_insert 8 15 o
+      balanced_map_insert 9 11 o
+      balanced_map_insert 14 4 o
+      balanced_map_insert 15 5) LN:num spt)`;;
 
 (* HOL4 x64_configScript.sml:38-39: a theorem that HOL4 states as the
    value of an ML expression: x64_names_def *)
@@ -69,8 +68,9 @@ let x64_backend_config_def = new_definition
               mk_backend_config prim_src_config
                 (clos_to_bvl_default_config)
                 (bvl_to_bvi_default_config) (mk_data_to_word_config 4
-                4 2 32 F T T F F F Simple) (mk_word_to_word_config 2
-                []) (mk_word_to_stack_config 0 LN)
+                4 2 32 F T T F F F data_to_word_Simple)
+                (mk_word_to_word_config 2 [])
+                (mk_word_to_stack_config 0 LN)
                 (mk_stack_to_lab_config x64_names T F)
                 (mk_lab_to_target_config LN [] 0 5 NONE [] 104729) []
                 default_tap_config []`;;

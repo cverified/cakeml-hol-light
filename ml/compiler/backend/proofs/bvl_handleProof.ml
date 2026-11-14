@@ -9,17 +9,13 @@
   Correctness proof for bvl_handle
 *)
 
-needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/bvl_handle.ml";;
-needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "compiler/backend/proofs/bvl_constProof.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -31,9 +27,11 @@ let _ = hol4_ancestors "bvl_handleProof"
 
 let can_raise_thm = prove
  (`(!e env s (s:('a,'b)bvlSem_state).
-     evaluate ([e],env,s) = (Rerr (Rraise a),r) ==> can_raise e) /\
+     bvlSem_evaluate ([e],env,s) = (Rerr (Rraise a),r) ==> can_raise
+       e) /\
    (!es env s (s:('a,'b)bvlSem_state).
-     evaluate (es,env,s) = (Rerr (Rraise a),r) ==> can_raise1 es)`,
+     bvlSem_evaluate (es,env,s) = (Rerr (Rraise a),r) ==>
+       can_raise1 es)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -44,54 +42,56 @@ let handle_adj_vars_0 = prove
 
 let evaluate_handle_adj_vars_lemma = prove
  (`(!x xs a env (r:('a,'b)bvlSem_state).
-      evaluate ([handle_adj_vars (LENGTH xs) (LENGTH a) x],APPEND xs
-        (APPEND a env),r) =
-      evaluate ([x],APPEND xs env,r)) /\
+      bvlSem_evaluate ([handle_adj_vars (LENGTH xs) (LENGTH a)
+        x],APPEND xs (APPEND a env),r) =
+      bvlSem_evaluate ([x],APPEND xs env,r)) /\
    (!x xs a env (r:('a,'b)bvlSem_state).
-      evaluate (handle_adj_vars1 (LENGTH xs) (LENGTH a) x,APPEND xs
-        (APPEND a env),r) =
-      evaluate (x,APPEND xs env,r))`,
+      bvlSem_evaluate (handle_adj_vars1 (LENGTH xs) (LENGTH a)
+        x,APPEND xs (APPEND a env),r) =
+      bvlSem_evaluate (x,APPEND xs env,r))`,
   CHEAT_TAC);;
 
 let evaluate_handle_adj_vars = prove
  (`!xs l a env r.
      l <= LENGTH env ==>
-     evaluate ([handle_adj_vars (LENGTH xs) (l + LENGTH a) x2],APPEND
-       xs (APPEND a env),r) =
-     evaluate ([handle_adj_vars (LENGTH xs) l x2],APPEND xs env,r)`,
+     bvlSem_evaluate ([handle_adj_vars (LENGTH xs) (l + LENGTH a)
+       x2],APPEND xs (APPEND a env),r) =
+     bvlSem_evaluate ([handle_adj_vars (LENGTH xs) l x2],APPEND xs
+       env,r)`,
   CHEAT_TAC);;
 
 let handle_adj_vars_evaluate = prove
- (`(!env. evaluate ([x1],env,r) = evaluate ([x2],env,r)) /\ d + l <=
-  LENGTH env ==>
-   evaluate ([handle_adj_vars d l x1],env,r) = evaluate
-     ([handle_adj_vars d l x2],env,r)`,
+ (`(!env. bvlSem_evaluate ([x1],env,r) = bvlSem_evaluate ([x2],env,r))
+  /\ d + l <= LENGTH env ==>
+   bvlSem_evaluate ([handle_adj_vars d l x1],env,r) =
+     bvlSem_evaluate ([handle_adj_vars d l x2],env,r)`,
   CHEAT_TAC);;
 
 let evaluate_handle_simp = prove
  (`(!x env (s:('a,'b)bvlSem_state).
-      evaluate ([handle_simp x],env,s) =
-      evaluate ([x],env,s)) /\
+      bvlSem_evaluate ([handle_simp x],env,s) =
+      bvlSem_evaluate ([x],env,s)) /\
    (!xs env (s:('a,'b)bvlSem_state).
-      evaluate (handle_simp_list xs,env,s) =
-      evaluate (xs,env,s)) /\
+      bvlSem_evaluate (handle_simp_list xs,env,s) =
+      bvlSem_evaluate (xs,env,s)) /\
    (!x1 x2 l env (s:('a,'b)bvlSem_state).
       l <= LENGTH env ==>
-      evaluate ([make_handle x1 x2 l],env,s) =
-      evaluate ([Handle x1 (handle_adj_vars 1 l x2)],env,s))`,
+      bvlSem_evaluate ([make_handle x1 x2 l],env,s) =
+      bvlSem_evaluate ([bvl_Handle x1 (handle_adj_vars 1 l
+        x2)],env,s))`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let evaluate_SmartLet = prove
- (`bvlSem_evaluate ([SmartLet xs x],env,s) = evaluate ([Let xs
-  x],env,s)`,
+ (`bvlSem_evaluate ([SmartLet xs x],env,s) = bvlSem_evaluate ([bvl_Let
+  xs x],env,s)`,
   CHEAT_TAC);;
 
 let let_ok_def = new_definition
   `let_ok x1 =
         match x1 with
-          (Let xs b:bvl_exp) -> ALL isVar xs /\ bVarBound (LENGTH xs)
-            [b]
+          (bvl_Let xs b:bvl_exp) -> ALL isVar xs /\ bVarBound (LENGTH
+            xs) [b]
         | _1 -> F`;;
 
 let _ = size_thms "bvl_exp";;
@@ -106,23 +106,23 @@ let handle_ok_def,handle_ok_ind = define_wf_cheat
   [`handle_ok [] <=> T`;
    `handle_ok (CONS (x:bvl_exp) (CONS y xs)) <=>
          handle_ok [x] /\ handle_ok (CONS y xs)`;
-   `handle_ok [(Var v:bvl_exp)] <=> T`;
-   `handle_ok [(If x1 x2 x3:bvl_exp)] <=>
+   `handle_ok [(db_vars_Var v:bvl_exp)] <=> T`;
+   `handle_ok [(bvl_If x1 x2 x3:bvl_exp)] <=>
          handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]`;
-   `handle_ok [(Let xs x2:bvl_exp)] <=>
+   `handle_ok [(bvl_Let xs x2:bvl_exp)] <=>
          (if LENGTH xs = 0 then
-           let_ok x2 /\ (!ys y. x2 = Let ys y ==> handle_ok [y])
+           let_ok x2 /\ (!ys y. x2 = bvl_Let ys y ==> handle_ok [y])
              else
            handle_ok xs /\ handle_ok [x2])`;
-   `handle_ok [(Raise x1:bvl_exp)] <=> handle_ok [x1]`;
-   `handle_ok [(Tick x1:bvl_exp)] <=> handle_ok [x1]`;
-   `handle_ok [(Op op xs:bvl_exp)] <=> handle_ok xs`;
-   `handle_ok [(Handle x1 x2:bvl_exp)] <=>
-         (match x1 with Let xs b ->
+   `handle_ok [(bvl_Raise x1:bvl_exp)] <=> handle_ok [x1]`;
+   `handle_ok [(bvl_Tick x1:bvl_exp)] <=> handle_ok [x1]`;
+   `handle_ok [(bvl_Op op xs:bvl_exp)] <=> handle_ok xs`;
+   `handle_ok [(bvl_Handle x1 x2:bvl_exp)] <=>
+         (match x1 with bvl_Let xs b ->
              ALL isVar xs /\ bVarBound (LENGTH xs) [b] /\
              handle_ok [b] /\ handle_ok [x2] | _4 -> F)`;
-   `handle_ok [(Force loc n:bvl_exp)] <=> T`;
-   `handle_ok [(Call ticks dest xs:bvl_exp)] <=> handle_ok xs`];;
+   `handle_ok [(bvl_Force loc n:bvl_exp)] <=> T`;
+   `handle_ok [(bvl_Call ticks dest xs:bvl_exp)] <=> handle_ok xs`];;
 
 (* HOL4 bvl_handleProofScript.sml:192-195: a theorem that HOL4 states
    as the value of an ML expression: evaluate_GENLIST *)
@@ -130,21 +130,21 @@ let handle_ok_def,handle_ok_ind = define_wf_cheat
 let bvl_handleProof_env_rel_def = new_definition
   `bvl_handleProof_env_rel l env env1 =
      LIST_RELi (\i v1 v2. has_var i l ==> v1 = v2) env env1`;;
-hol4_overload "env_rel" "bvl_handleProof_env_rel";;
 
 let env_rel_mk_Union = prove
- (`!env env1. env_rel (mk_Union lx ly) env env1 <=>
-               env_rel lx env env1 /\ env_rel ly env env1`,
+ (`!env env1. bvl_handleProof_env_rel (mk_Union lx ly) env env1 <=>
+               bvl_handleProof_env_rel lx env env1 /\
+                 bvl_handleProof_env_rel ly env env1`,
   CHEAT_TAC);;
 
 (* env_rel_length *)
 let bvl_handleProof_env_rel_length = prove
- (`env_rel l env env1 ==> LENGTH env1 = LENGTH env`,
+ (`bvl_handleProof_env_rel l env env1 ==> LENGTH env1 = LENGTH env`,
   CHEAT_TAC);;
 
 let env_rel_MAPi = prove
- (`env_rel l1 env (MAPi (\i v. if has_var i l1 then v else Number
-  (&0)) env)`,
+ (`bvl_handleProof_env_rel l1 env (MAPi (\i v. if has_var i l1 then v
+  else bvlSem_Number (&0)) env)`,
   CHEAT_TAC);;
 
 let IMP_EL_SING = prove
@@ -163,15 +163,15 @@ let IS_SOME_lookup_db_to_set = prove
 
 let evaluate_LetLet = prove
  (`(!env2 extra.
-       env_rel l1 env env2 ==> evaluate ([y],APPEND env2 extra,s1) =
-         res) /\
-    env_rel l1 env env1 ==>
-    evaluate ([LetLet (LENGTH env) (db_to_set l1) y],APPEND env1
-      extra,s1) = res`,
+       bvl_handleProof_env_rel l1 env env2 ==> bvlSem_evaluate
+         ([y],APPEND env2 extra,s1) = res) /\
+    bvl_handleProof_env_rel l1 env env1 ==>
+    bvlSem_evaluate ([LetLet (LENGTH env) (db_to_set l1) y],APPEND
+      env1 extra,s1) = res`,
   CHEAT_TAC);;
 
 let env_rel_refl = prove
- (`env_rel l env env`,
+ (`bvl_handleProof_env_rel l env env`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -186,10 +186,10 @@ let OptionalLetLet_IMP = prove
  (cake_as_vars (fun () ->
     `(ys,l,s',nr') = OptionalLetLet y (LENGTH env) lx s1 limit nr /\
        (!env2 extra.
-         env_rel l env env2 ==> evaluate ([y],APPEND env2 extra,s)
-           = res) /\
-       env_rel l env env1 /\ b ==>
-       evaluate (ys,APPEND env1 extra,s) = res /\ b`),
+         bvl_handleProof_env_rel l env env2 ==> bvlSem_evaluate
+           ([y],APPEND env2 extra,s) = res) /\
+       bvl_handleProof_env_rel l env env1 /\ b ==>
+       bvlSem_evaluate (ys,APPEND env1 extra,s) = res /\ b`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -197,7 +197,8 @@ let OptionalLetLet_IMP = prove
 let OptionalLetLet_limit = prove
  (cake_as_vars (fun () ->
     `(ys,l,s',nr') = OptionalLetLet e (LENGTH env) lx s1 limit nr /\
-      env_rel l env env1 ==> env_rel lx env env1`),
+      bvl_handleProof_env_rel l env env1 ==>
+        bvl_handleProof_env_rel lx env env1`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -216,38 +217,40 @@ let bvl_handleProof_compile_correct = bvi_to_dataProof_compile_correct;;
 
 (* compile_correct[allow_rebind] *)
 let bvl_handleProof_compile_correct = prove
- (`(evaluate ([x],env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
+ (`(bvlSem_evaluate ([x],env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
   Rtype_error)) /\
     k = LENGTH env ==>
-    (evaluate ([compile_exp l k x],env,s1) = (res,s2))`,
+    (bvlSem_evaluate ([bvl_handle_compile_exp l k x],env,s1) =
+      (res,s2))`,
   CHEAT_TAC);;
 
 let dest_Seq_thm = prove
  (`!x. bvl_handle_dest_Seq x = SOME (y0,y1) <=>
-        x = Let [y0; y1] (bvl_Var 1)`,
+        x = bvl_Let [y0; y1] (bvl_Var 1)`,
   CHEAT_TAC);;
 
 let compile_seqs_correct = prove
  (`!l x acc s1 s2 s3 res res3.
-      evaluate ([x],[],s1) = (res,s2) /\
+      bvlSem_evaluate ([x],[],s1) = (res,s2) /\
       (!y r. acc = SOME y /\ res = Rval r ==> ~(res3 = Rerr (Rabort
         Rtype_error)) /\
-             evaluate ([y],[],s2) = (res3,s3)) /\ ~(res = Rerr
+             bvlSem_evaluate ([y],[],s2) = (res3,s3)) /\ ~(res = Rerr
                (Rabort Rtype_error)) ==>
-      evaluate ([compile_seqs l x acc],[],s1) =
+      bvlSem_evaluate ([compile_seqs l x acc],[],s1) =
         (if acc = NONE then (res,s2) else
           match res with Rval _5 -> (res3,s3) | _6 -> (res,s2))`,
   CHEAT_TAC);;
 
 let compile_any_correct = prove
- (`(evaluate ([x],env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
+ (`(bvlSem_evaluate ([x],env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
   Rtype_error)) /\
     k = LENGTH env ==>
-    (evaluate ([compile_any split_seq l k x],env,s1) = (res,s2))`,
+    (bvlSem_evaluate ([compile_any split_seq l k x],env,s1) =
+      (res,s2))`,
   CHEAT_TAC);;
 
 let compile_IMP_LENGTH = prove
- (`compile l n xs = (ys,l1,s1) ==> LENGTH ys = LENGTH xs`,
+ (`bvl_handle_compile l n xs = (ys,l1,s1) ==> LENGTH ys = LENGTH xs`,
   CHEAT_TAC);;
 
 let bVarBound_CONS = prove
@@ -273,7 +276,7 @@ let ALOOKUP_MAPi = prove
 
 (* [simp] *)
 let bVarBound_SmartLet = prove
- (`bVarBound m [SmartLet x xs] = bVarBound m [Let x xs]`,
+ (`bVarBound m [SmartLet x xs] = bVarBound m [bvl_Let x xs]`,
   CHEAT_TAC);;
 
 let bVarBound_LetLet = prove
@@ -289,15 +292,15 @@ let bVarBound_OptionalLetLet = prove
   CHEAT_TAC);;
 
 let bVarBound_compile = prove
- (`!l n xs m. n <= m ==> bVarBound m (FST (compile l n xs))`,
+ (`!l n xs m. n <= m ==> bVarBound m (FST (bvl_handle_compile l n xs))`,
   CHEAT_TAC);;
 
 let compile_IMP_bVarBound = prove
- (`compile l n xs = (ys,l2,s2) ==> bVarBound n ys`,
+ (`bvl_handle_compile l n xs = (ys,l2,s2) ==> bVarBound n ys`,
   CHEAT_TAC);;
 
 let compile_exp_bVarBound = prove
- (`bVarBound n [compile_exp l n x]`,
+ (`bVarBound n [bvl_handle_compile_exp l n x]`,
   CHEAT_TAC);;
 
 let compile_seqs_bVarBound = prove
@@ -311,8 +314,8 @@ let bEvery_CONS = prove
   CHEAT_TAC);;
 
 let handle_ok_Var_Const_list = prove
- (`ALL (\x. ?v i. x = Var v \/ x = Op (closLang_IntOp (closLang_Const
-  i)) []) xs ==> handle_ok xs`,
+ (`ALL (\x. ?v i. x = db_vars_Var v \/ x = bvl_Op (closLang_IntOp
+  (closLang_Const i)) []) xs ==> handle_ok xs`,
   CHEAT_TAC);;
 
 let handle_ok_SmartLet = prove
@@ -325,11 +328,11 @@ let handle_ok_OptionalLetLet = prove
   CHEAT_TAC);;
 
 let compile_handle_ok = prove
- (`!l n xs. handle_ok (FST (compile l n xs))`,
+ (`!l n xs. handle_ok (FST (bvl_handle_compile l n xs))`,
   CHEAT_TAC);;
 
 let compile_exp_handle_ok = prove
- (`handle_ok [compile_exp l n x]`,
+ (`handle_ok [bvl_handle_compile_exp l n x]`,
   CHEAT_TAC);;
 
 let compile_seqs_handle_ok = prove
@@ -393,8 +396,8 @@ let get_code_labels_handle_simp = prove
    variables of its own are read as variables *)
 let bvl_handleProof_compile_exp_code_labels = prove
  (cake_as_vars (fun () ->
-    `!a b c. bvlProps_get_code_labels (compile_exp a b c) SUBSET
-  bvlProps_get_code_labels c`),
+    `!a b c. bvlProps_get_code_labels (bvl_handle_compile_exp a b c)
+  SUBSET bvlProps_get_code_labels c`),
   CHEAT_TAC);;
 
 let compile_seqs_code_labels = prove

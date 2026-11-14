@@ -9,18 +9,15 @@
   Shallow embedding of garbage collector implementation
 *)
 
-needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/proofs/word_simpProof.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -82,8 +79,8 @@ let decode_length_def = new_definition
   data_to_word_config_len_size conf)`;;
 
 let word_gc_move_def = define_general
-  [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) = ((Loc l1
-  l2:'a word_loc),i,pa,m,(l2 = 0))`;
+  [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) =
+  ((wordLang_Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))`;
    `word_gc_move conf (wordLang_Word w,i,pa,old,m,dm) =
          (if (w && (n2w 1)) = (n2w 0) then ((wordLang_Word w:'a
            word_loc),i,pa,m,T) else
@@ -108,7 +105,8 @@ let word_gc_move_def = define_general
 
 let word_gen_gc_partial_move_def = define_general
   [`word_gen_gc_partial_move conf (wordLang_Loc l1
-  l2,i,pa,old,m,dm,gs,rs) = ((Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))`;
+  l2,i,pa,old,m,dm,gs,rs) = ((wordLang_Loc l1 l2:'a
+  word_loc),i,pa,m,(l2 = 0))`;
    `word_gen_gc_partial_move conf (wordLang_Word w,i,pa,old,m,dm,gs,rs)
   =
        (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word w,i,pa,m,T)
@@ -395,7 +393,7 @@ let is_ref_header_def = new_definition
 
 let word_gen_gc_move_def = define_general
   [`word_gen_gc_move conf (wordLang_Loc l1 l2,i,pa,ib,pb,old,m,dm) =
-         ((Loc l1 l2:'a word_loc),i,pa,ib,pb,m,(l2 = 0))`;
+         ((wordLang_Loc l1 l2:'a word_loc),i,pa,ib,pb,m,(l2 = 0))`;
    `word_gen_gc_move conf (wordLang_Word w,i,pa,ib,pb,old,m,dm) =
          (if ((n2w 1) && w) = (n2w 0) then ((wordLang_Word w:'a
            word_loc),i,pa,ib,pb,m,T) else
@@ -561,11 +559,13 @@ let word_gc_fun_def = new_definition
       let old = theWord (FAPPLY s CurrHeap) in
       let len = theWord (FAPPLY s HeapLength) in
       let all_roots = CONS (FAPPLY s Globals) roots in
-        match data_to_word_config_gc_kind conf with None ->
+        match data_to_word_config_gc_kind conf with data_to_word_None
+          ->
          (let s1 = s |++ [(NextFree,wordLang_Word old);
                           (TriggerGC,wordLang_Word old);
                           (EndOfHeap,wordLang_Word old)] in
-            if c1 then SOME (roots,m,s1) else NONE) | Simple ->
+            if c1 then SOME (roots,m,s1) else NONE) |
+              data_to_word_Simple ->
          (let (roots1,i1,pa1,m1,c2) =
             word_full_gc conf (all_roots,new,old,m,dm) in
           let s1 = s |++ [(CurrHeap,wordLang_Word new);

@@ -12,10 +12,8 @@
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_unreach.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -32,20 +30,20 @@ let _ = hol4_ancestors "word_unreachProof"
 
 (* evaluate_Skip_Seq *)
 let word_unreachProof_evaluate_Skip_Seq = prove
- (`wordSem_evaluate (wordLang_Seq Skip p,s) = wordSem_evaluate
-  (p,(s:('a,'c,'ffi)wordSem_state))`,
+ (`wordSem_evaluate (wordLang_Seq wordLang_Skip p,s) =
+  wordSem_evaluate (p,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 (* evaluate_Seq_Skip *)
 let word_unreachProof_evaluate_Seq_Skip = prove
- (`!p1 s. wordSem_evaluate (wordLang_Seq p1 Skip,s) = wordSem_evaluate
-  (p1,(s:('a,'c,'ffi)wordSem_state))`,
+ (`!p1 s. wordSem_evaluate (wordLang_Seq p1 wordLang_Skip,s) =
+  wordSem_evaluate (p1,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 (* evaluate_Seq_assoc *)
 let word_unreachProof_evaluate_Seq_assoc = prove
- (`wordSem_evaluate (wordLang_Seq p1 (Seq p2 p3),s) = wordSem_evaluate
-  (Seq (Seq p1 p2) p3,s)`,
+ (`wordSem_evaluate (wordLang_Seq p1 (wordLang_Seq p2 p3),s) =
+  wordSem_evaluate (wordLang_Seq (wordLang_Seq p1 p2) p3,s)`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_merge_moves = prove
@@ -58,7 +56,6 @@ let word_unreachProof_copy_vars_def,word_unreachProof_copy_vars_ind =
    `word_unreachProof_copy_vars (CONS (l,r) rest) from to =
       sptree_insert l (THE (sptree_lookup r from))
         (word_unreachProof_copy_vars rest from to)`];;
-hol4_overload "copy_vars" "word_unreachProof_copy_vars";;
 
 let copy_vars_append = prove
  (`!xs ys from to.
@@ -122,23 +119,25 @@ let IMP_EVERY_MAP_SND_anub = prove
 
 let merge_moves_Skip = prove
  (`!l1 l2 s res s1.
-     wordSem_evaluate (Seq (wordLang_Move n1 l1) (wordLang_Move n2
-       l2),s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
+     wordSem_evaluate (wordLang_Seq (wordLang_Move n1 l1)
+       (wordLang_Move n2 l2),s) = (res,s1) /\ ~(res = SOME
+       wordSem_Error) ==>
      wordSem_evaluate (wordLang_Move m (word_unreach_merge_moves l1
        l2),s) = (res,s1)`,
   CHEAT_TAC);;
 
 let merge_moves_thm = prove
  (`!p l1 l2 s res s1.
-     wordSem_evaluate (Seq (wordLang_Move n1 l1) (Seq (wordLang_Move
-       n2 l2) p),s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
-     wordSem_evaluate (Seq (wordLang_Move m
+     wordSem_evaluate (wordLang_Seq (wordLang_Move n1 l1)
+       (wordLang_Seq (wordLang_Move n2 l2) p),s) = (res,s1) /\ ~(res =
+       SOME wordSem_Error) ==>
+     wordSem_evaluate (wordLang_Seq (wordLang_Move m
        (word_unreach_merge_moves l1 l2)) p,s) = (res,s1)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_SimpSeq = prove
- (`wordSem_evaluate (Seq p1 p2,s) = (res,s1) /\ ~(res = SOME
+ (`wordSem_evaluate (wordLang_Seq p1 p2,s) = (res,s1) /\ ~(res = SOME
   wordSem_Error) ==>
    wordSem_evaluate (SimpSeq p1 p2,s) = (res,s1)`,
   CHEAT_TAC);;
@@ -146,15 +145,16 @@ let evaluate_SimpSeq = prove
 (* [local] *)
 let push_env_handler = prove
  (`wordSem_push_env x' (match handler with NONE -> NONE | SOME
-  (y1,q2,y2,y3) -> SOME (y1,Seq_assoc_right q2 Skip,y2,y3))
+  (y1,q2,y2,y3) -> SOME (y1,Seq_assoc_right q2 wordLang_Skip,y2,y3))
   (wordSem_dec_clock s) =
    wordSem_push_env x' handler (wordSem_dec_clock s)`,
   CHEAT_TAC);;
 
 let evaluate_Seq_assoc_right_lemma = prove
  (`!p1 p2 s res s1.
-     wordSem_evaluate (Seq p1 p2,(s:('a,'c,'ffi)wordSem_state)) =
-       (res,s1) /\ ~(res = SOME wordSem_Error) ==>
+     wordSem_evaluate (wordLang_Seq p1
+       p2,(s:('a,'c,'ffi)wordSem_state)) = (res,s1) /\ ~(res = SOME
+       wordSem_Error) ==>
      wordSem_evaluate (Seq_assoc_right p1 p2,s) = (res,s1)`,
   CHEAT_TAC);;
 
@@ -164,10 +164,11 @@ let evaluate_Loop_body_eq = prove
   wordLang_prog),s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
                wordSem_evaluate ((p2:'a wordLang_prog),s) = (res,s1))
                  ==>
-   (!(s:('a,'b,'c)wordSem_state) res s1. wordSem_evaluate (Loop names
-     p1 exit_names,s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
-              wordSem_evaluate (Loop names p2 exit_names,s) =
-                (res,s1))`,
+   (!(s:('a,'b,'c)wordSem_state) res s1. wordSem_evaluate
+     (wordLang_Loop names p1 exit_names,s) = (res,s1) /\ ~(res = SOME
+     wordSem_Error) ==>
+              wordSem_evaluate (wordLang_Loop names p2
+                exit_names,s) = (res,s1))`,
   CHEAT_TAC);;
 
 (* HOL4 word_unreachProofScript.sml:351-364: a proof *)

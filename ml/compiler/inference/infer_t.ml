@@ -94,7 +94,6 @@ let infer_t_commas_def,infer_t_commas_ind = define_guess
         [] -> []
       | [x] -> [x]
       | (CONS x ys) -> CONS x (CONS c (infer_t_commas c ys))`];;
-hol4_overload "commas" "infer_t_commas";;
 
 let add_parens_def = new_definition
   `add_parens threshold' (x,n) =

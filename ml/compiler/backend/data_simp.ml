@@ -24,9 +24,7 @@
     Seq (Seq x1 x2) x3 --> Seq x1 (Seq x2 x3)
 *)
 
-needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -45,13 +43,13 @@ let simp_def,simp_ind = define_shaped_rec
         match c1 with
           (dataLang_Skip:dataLang_prog) -> c
         | (dataLang_Return n) -> dataLang_Return n
-        | (Raise n) -> Raise n
+        | (dataLang_Raise n) -> dataLang_Raise n
         | (dataLang_Seq c1 c2) -> simp c1 (simp c2 c)
-        | (If n c2 c3) ->
-        pSeq (If n (simp c2 dataLang_Skip) (simp c3 dataLang_Skip))
-          c
-        | (Call ret dest args (SOME (v,handler))) ->
-        pSeq (Call ret dest args (SOME (v,simp handler
+        | (dataLang_If n c2 c3) ->
+        pSeq (dataLang_If n (simp c2 dataLang_Skip) (simp c3
+          dataLang_Skip)) c
+        | (dataLang_Call ret dest args (SOME (v,handler))) ->
+        pSeq (dataLang_Call ret dest args (SOME (v,simp handler
           dataLang_Skip))) c
         | c1 -> pSeq c1 c`];;
 

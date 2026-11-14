@@ -223,11 +223,7 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
 let EVERY_isDigit_imp = prove
  (`ALL isDigit x ==>
    MAP UNHEX x = MAP unhex_alt x`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; MAP; CONS_11] THEN STRIP_TAC
-    THEN
-   ASM_SIMP_TAC[unhex_alt_def] THEN
-   RULE_ASSUM_TAC(REWRITE_RULE[isDigit]) THEN
-   ASM_REWRITE_TAC[isHexDigit]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let toNum_rw = prove
@@ -304,7 +300,6 @@ let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_guess_cheat
                rest newloc else if token = tokens_RparT then
                lexer_impl_lex_aux new_acc (d - 1) rest newloc else
                lexer_impl_lex_aux new_acc d rest newloc))`];;
-hol4_overload "lex_aux" "lexer_impl_lex_aux";;
 
 let lex_until_toplevel_semicolon_def = new_definition
   `lex_until_toplevel_semicolon input = lexer_impl_lex_aux [] 0 input`;;

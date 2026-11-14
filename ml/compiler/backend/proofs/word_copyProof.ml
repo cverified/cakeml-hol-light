@@ -13,12 +13,10 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_copy.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -413,17 +411,17 @@ let CPstate_modelsD_get_var_imm = prove
 let CPstate_modelsD_Var = prove
  (`CPstate_inv cs /\
    CPstate_models cs st ==>
-   wordSem_word_exp st (Var (lookup_eq cs x)) = wordSem_word_exp st
-     (Var x)`,
+   wordSem_word_exp st (wordLang_Var (lookup_eq cs x)) =
+     wordSem_word_exp st (wordLang_Var x)`,
   CHEAT_TAC);;
 
 let CPstate_modelsD_lookup_eq_imm = prove
  (`CPstate_inv cs ==>
    CPstate_models cs st ==>
-   wordSem_word_exp st (match lookup_eq_imm cs x with Reg r -> Var r
-     | Imm w -> Const w) =
-   wordSem_word_exp st (match x with Reg r -> Var r | Imm w ->
-     Const w)`,
+   wordSem_word_exp st (match lookup_eq_imm cs x with Reg r ->
+     wordLang_Var r | Imm w -> wordLang_Const w) =
+   wordSem_word_exp st (match x with Reg r -> wordLang_Var r | Imm
+     w -> wordLang_Const w)`,
   CHEAT_TAC);;
 
 let MAP_get_var_eqD = prove
@@ -529,13 +527,14 @@ let copy_prop_move_correct = prove
 
 let word_exp_cong_Var = prove
  (`wordSem_get_var x' st = wordSem_get_var x st ==>
-   wordSem_word_exp st (Var x') = wordSem_word_exp st (Var x)`,
+   wordSem_word_exp st (wordLang_Var x') = wordSem_word_exp st
+     (wordLang_Var x)`,
   CHEAT_TAC);;
 
 let word_exp_cong_Load = prove
  (`wordSem_word_exp st addr' = wordSem_word_exp st addr ==>
-   wordSem_word_exp st (Load addr') = wordSem_word_exp st (Load
-     addr)`,
+   wordSem_word_exp st (wordLang_Load addr') = wordSem_word_exp st
+     (wordLang_Load addr)`,
   CHEAT_TAC);;
 
 let word_exp_cong_Op = prove
@@ -547,8 +546,8 @@ let word_exp_cong_Op = prove
 let word_exp_cong_Shift = prove
  (`wordSem_word_exp st e' = wordSem_word_exp st e ==>
    wordSem_word_exp st e2' = wordSem_word_exp st e2 ==>
-   wordSem_word_exp st (Shift sh e' e2') = wordSem_word_exp st
-     (Shift sh e e2)`,
+   wordSem_word_exp st (wordLang_Shift sh e' e2') =
+     wordSem_word_exp st (wordLang_Shift sh e e2)`,
   CHEAT_TAC);;
 
 (* HOL4 word_copyProofScript.sml:872-895: a proof *)
@@ -570,7 +569,8 @@ let copy_prop_inst_eval = prove
    CPstate_inv cs ==>
    CPstate_models cs st ==>
    (prog',cs') = copy_prop_inst ins cs ==>
-   wordSem_evaluate (prog',st) = wordSem_evaluate (Inst ins,st)`,
+   wordSem_evaluate (prog',st) = wordSem_evaluate (wordLang_Inst
+     ins,st)`,
   CHEAT_TAC);;
 
 let remove_eq_comm = prove
@@ -581,7 +581,7 @@ let copy_prop_inst_correct = prove
  (`CPstate_inv cs /\
    CPstate_models cs st /\
    copy_prop_inst ins cs = (prog',cs') /\
-   wordSem_evaluate (Inst ins,st) = (err,st') ==>
+   wordSem_evaluate (wordLang_Inst ins,st) = (err,st') ==>
    wordSem_evaluate (prog',st) = (err,st') /\
    (err = NONE ==> CPstate_models cs' st')`,
   CHEAT_TAC);;
@@ -670,9 +670,10 @@ let evaluate_Loop_body_cong_err = prove
         wordSem_evaluate (c,v) = (res,s') /\ ~(res = SOME
           wordSem_Error) ==>
         wordSem_evaluate (c',v) = (res,s')) /\
-     wordSem_evaluate (Loop names c exit_names,s) = (res,s') /\ ~(res
-       = SOME wordSem_Error) ==>
-     wordSem_evaluate (Loop names c' exit_names,s) = (res,s')`,
+     wordSem_evaluate (wordLang_Loop names c exit_names,s) = (res,s')
+       /\ ~(res = SOME wordSem_Error) ==>
+     wordSem_evaluate (wordLang_Loop names c' exit_names,s) =
+       (res,s')`,
   CHEAT_TAC);;
 
 let copy_prop_correct = prove

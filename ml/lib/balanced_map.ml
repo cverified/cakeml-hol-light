@@ -31,7 +31,6 @@ let delta_def = new_definition
 let balanced_map_size_def = define_cases
   [`balanced_map_size Tip = 0`;
    `balanced_map_size (Bin s k v l r) = s`];;
-hol4_overload "size" "balanced_map_size";;
 
 let bin_def = new_definition
   `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
@@ -42,11 +41,9 @@ let balanced_map_lookup_def,balanced_map_lookup_ind = define_rec
    `balanced_map_lookup cmp k (Bin s k' v l r) =
       (match cmp k k' with LESS -> balanced_map_lookup cmp k l
         | GREATER -> balanced_map_lookup cmp k r | EQUAL -> SOME v)`];;
-hol4_overload "lookup" "balanced_map_lookup";;
 
 let empty_def = new_definition
   `balanced_map_empty = Tip`;;
-hol4_overload "empty" "balanced_map_empty";;
 
 let singleton_def = new_definition
   `singleton k x = Bin 1 k x Tip Tip`;;
@@ -134,7 +131,6 @@ let balanced_map_insert_def,balanced_map_insert_ind = define_rec
         (balanced_map_insert cmp k v l) r | GREATER -> balanceR k'
         v' l (balanced_map_insert cmp k v r) | EQUAL -> Bin s k v l
         r)`];;
-hol4_overload "insert" "balanced_map_insert";;
 
 let insertR_def,insertR_ind = define_rec
   [`insertR cmp k v Tip = singleton k v`;
@@ -197,7 +193,6 @@ let balanced_map_delete_def,balanced_map_delete_ind = define_rec
       (match cmp k k' with LESS -> balanceR k' v
         (balanced_map_delete cmp k l) r | GREATER -> balanceL k' v
         l (balanced_map_delete cmp k r) | Eq' -> glue l r)`];;
-hol4_overload "delete" "balanced_map_delete";;
 
 let trim_help_greater_def,trim_help_greater_ind = define_rec
   [`trim_help_greater cmp lo (Bin s' k v' l' r) =
@@ -289,7 +284,6 @@ let balanced_map_union_def = new_definition
           (Tip,t2) -> t2
         | (t1,Tip) -> t1
         | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
-hol4_overload "union" "balanced_map_union";;
 
 let foldrWithKey_def,foldrWithKey_ind = define_rec
   [`foldrWithKey f z' Tip = z'`;
@@ -302,7 +296,6 @@ let toAscList_def = new_definition
 let compare_def = new_definition
   `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare (pair_compare
   cmp1 cmp2) (toAscList t1) (toAscList t2)`;;
-hol4_overload "compare" "balanced_map_compare";;
 
 let mapWithKey_def,mapWithKey_ind = define_rec
   [`mapWithKey f Tip = Tip`;
@@ -311,7 +304,6 @@ let mapWithKey_def,mapWithKey_ind = define_rec
 
 let balanced_map_map_def = new_definition
   `balanced_map_map f t = mapWithKey (\k x. f x) t`;;
-hol4_overload "map" "balanced_map_map";;
 
 let to_fmap_def,to_fmap_ind = define_rec
   [`to_fmap cmp Tip = FEMPTY`;
@@ -343,7 +335,6 @@ let invariant_def,invariant_ind = define_rec
       balanced (balanced_map_size l) (balanced_map_size r) /\
       balanced_map_invariant cmp l /\
       balanced_map_invariant cmp r`];;
-hol4_overload "invariant" "balanced_map_invariant";;
 
 let exists_def,exists_ind = define_rec
   [`balanced_map_exists f Tip = F`;

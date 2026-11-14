@@ -94,7 +94,6 @@ let export_arm8_startup_def = new_definition
      (misc_List
        [(implode "     .ltorg\n");
         (implode "\n")]))))`;;
-hol4_overload "startup" "export_arm8_startup";;
 
 let export_arm8_ffi_asm_def,export_arm8_ffi_asm_ind = define_rec
   [`export_arm8_ffi_asm [] = misc_Nil`;
@@ -104,7 +103,6 @@ let export_arm8_ffi_asm_def,export_arm8_ffi_asm_ind = define_rec
            (implode "     b     cdecl(ffi"); ffi; (implode ")\n");
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_arm8_ffi_asm ffis)`];;
-hol4_overload "ffi_asm" "export_arm8_ffi_asm";;
 
 (* HOL4 export_arm8Script.sml:82-106: the ML values that the
    definitions below antiquote *)
@@ -130,13 +128,11 @@ let export_arm8_export_func_def = new_definition
       (implode "     b      cake_enter\n");
              name; (implode "_jmp:\n");
       (implode "     b      "); label; (implode "\n")])`;;
-hol4_overload "export_func" "export_arm8_export_func";;
 
 let export_arm8_export_funcs_def = new_definition
   `export_arm8_export_funcs lsyms exp =
      FOLDL export_arm8_export_func misc_Nil (FILTER ((C MEM exp) o
        FST) lsyms)`;;
-hol4_overload "export_funcs" "export_arm8_export_funcs";;
 
 let arm8_export_def = new_definition
   `arm8_export ffi_names' bytes (data:word64 list) syms exp ret pk =

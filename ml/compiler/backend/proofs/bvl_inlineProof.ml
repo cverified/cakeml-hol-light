@@ -13,12 +13,10 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
-needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/proofs/bvl_handleProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -37,15 +35,14 @@ let bvl_inlineProof_state_rel_def = new_definition
   `bvl_inlineProof_state_rel (s:('c,'ffi)bvlSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
      t = bvlSem_state_compile_oracle_fupd (K ((I ##
-       MAP (I ## I ## (\x. HD (remove_ticks [x])))) o
+       MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x])))) o
          bvlSem_state_compile_oracle s)) (bvlSem_state_compile_fupd (K
          (bvlSem_state_compile t)) (bvlSem_state_code_fupd (K
-         (sptree_map (I ## (\x. HD (remove_ticks [x])))
+         (sptree_map (I ## (\x. HD (bvl_inline_remove_ticks [x])))
          (bvlSem_state_code s))) s)) /\ bvlSem_state_compile
      s = (\cfg prog. bvlSem_state_compile t cfg
-                    (MAP (I ## I ## (\x. HD (remove_ticks [x])))
-                      prog))`;;
-hol4_overload "state_rel" "bvl_inlineProof_state_rel";;
+                    (MAP (I ## I ## (\x. HD
+                      (bvl_inline_remove_ticks [x]))) prog))`;;
 
 (* HOL4 bvl_inlineProofScript.sml:25: ML code, not ported *)
 
@@ -54,18 +51,20 @@ hol4_overload "state_rel" "bvl_inlineProof_state_rel";;
 (* [local] *)
 let do_app_lemma = prove
  (`bvl_inlineProof_state_rel t' r ==>
-     (match do_app op (REVERSE a) r with Rerr err -> do_app op
-       (REVERSE a) t' = Rerr err | Rval (v,r2) -> (?t2.
+     (match bvlSem_do_app op (REVERSE a) r with Rerr err ->
+       bvlSem_do_app op (REVERSE a) t' = Rerr err | Rval (v,r2) -> (?t2.
        bvl_inlineProof_state_rel t2 r2 /\
-                           do_app op (REVERSE a) t' = Rval (v,t2)))`,
+                           bvlSem_do_app op (REVERSE a) t' = Rval
+                             (v,t2)))`,
   CHEAT_TAC);;
 
 (* evaluate_remove_ticks *)
 let bvl_inlineProof_evaluate_remove_ticks = prove
  (`!k xs env s (t:('c,'ffi)bvlSem_state) res s'.
       bvl_inlineProof_state_rel t s /\ state_clock s = k /\
-      evaluate (remove_ticks xs,env,s) = (res,s') ==>
-      (?ck t'. evaluate (xs,env,bvlSem_state_clock_fupd (K
+      bvlSem_evaluate (bvl_inline_remove_ticks xs,env,s) = (res,s')
+        ==>
+      (?ck t'. bvlSem_evaluate (xs,env,bvlSem_state_clock_fupd (K
         (bvlSem_state_clock t + ck)) t) = (res,t') /\
               bvl_inlineProof_state_rel t' s')`,
   CHEAT_TAC);;
@@ -77,27 +76,26 @@ let bvl_inlineProof_remove_ticks_cc_def = new_definition
      (\cfg prog'.
           cc cfg (MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks
             [x]))) prog'))`;;
-hol4_overload "remove_ticks_cc" "bvl_inlineProof_remove_ticks_cc";;
 
 let bvl_inlineProof_remove_ticks_co_def = new_definition
   `bvl_inlineProof_remove_ticks_co =
      (I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x]))))`;;
-hol4_overload "remove_ticks_co" "bvl_inlineProof_remove_ticks_co";;
 
 (* evaluate_compile_prog *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let bvl_inlineProof_evaluate_compile_prog = prove
  (cake_as_vars (fun () ->
-    `evaluate ([Call 0 (SOME start) []],[],
-               initial_state ffi0 (sptree_map
-                  (I ## (\x. HD (remove_ticks [x]))) prog)
+    `bvlSem_evaluate ([bvl_Call 0 (SOME start) []],[],
+               bvlSem_initial_state ffi0 (sptree_map
+                  (I ## (\x. HD (bvl_inline_remove_ticks [x])))
+                    prog)
                   (bvl_inlineProof_remove_ticks_co o co) cc k) =
                     (r,s) ==>
      (?ck (s2:('c,'ffi)bvlSem_state).
-       evaluate
-        ([Call 0 (SOME start) []],[],
-          initial_state ffi0 prog co
+       bvlSem_evaluate
+        ([bvl_Call 0 (SOME start) []],[],
+          bvlSem_initial_state ffi0 prog co
             (bvl_inlineProof_remove_ticks_cc cc) (k + ck)) = (r,s2) /\
             bvlSem_state_ffi
        s2 = state_ffi s)`),
@@ -111,16 +109,17 @@ let FST_EQ_LEMMA = prove
    variables of its own are read as variables *)
 let semantics_remove_ticks = prove
  (cake_as_vars (fun () ->
-    `semantics ffi (sptree_map (I ## (\x. HD (remove_ticks [x]))) prog)
-  (bvl_inlineProof_remove_ticks_co o co)
+    `bvlSem_semantics ffi (sptree_map (I ## (\x. HD
+  (bvl_inline_remove_ticks [x]))) prog) (bvl_inlineProof_remove_ticks_co
+  o co)
                    cc start =
-     semantics (ffi:'b ffi_state) prog co
+     bvlSem_semantics (ffi:'b ffi_state) prog co
        (bvl_inlineProof_remove_ticks_cc cc) start`),
   CHEAT_TAC);;
 
 let remove_ticks_CONS = prove
- (`!xs x. bvl_inline_remove_ticks (CONS x xs) = CONS (HD (remove_ticks
-  [x])) (remove_ticks xs)`,
+ (`!xs x. bvl_inline_remove_ticks (CONS x xs) = CONS (HD
+  (bvl_inline_remove_ticks [x])) (bvl_inline_remove_ticks xs)`,
   CHEAT_TAC);;
 
 (* correctness of tick_inline *)
@@ -162,7 +161,6 @@ let bvl_inlineProof_exp_rel = cake_inductive
     bvl_inlineProof_exp_rel cs [x] [y] ==>
     bvl_inlineProof_exp_rel cs [bvl_Call ticks (SOME n) xs]
                [bvl_Let ys (mk_tick (SUC ticks) y)])`;;
-hol4_overload "exp_rel" "bvl_inlineProof_exp_rel";;
 
 let bvl_inlineProof_in_cc_def = new_definition
   `bvl_inlineProof_in_cc limit' cc =
@@ -170,7 +168,6 @@ let bvl_inlineProof_in_cc_def = new_definition
          let (cs1,prog1) = tick_compile_prog limit' cs prog in
            match cc cfg prog1 with NONE -> NONE | SOME
              (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
-hol4_overload "in_cc" "bvl_inlineProof_in_cc";;
 
 let bvl_inlineProof_in_state_rel_def = new_definition
   `bvl_inlineProof_in_state_rel limit' s t <=> state_globals
@@ -191,7 +188,6 @@ let bvl_inlineProof_in_state_rel_def = new_definition
         (?exp2. sptree_lookup k (state_code t) = SOME (arity,exp2) /\
                bvl_inlineProof_exp_rel (state_code s) [exp]
                  [exp2]))`;;
-hol4_overload "in_state_rel" "bvl_inlineProof_in_state_rel";;
 
 let subspt_exp_rel = prove
  (`!s1 s2 xs ys. subspt s1 s2 /\ bvl_inlineProof_exp_rel s1 xs ys ==>
@@ -297,10 +293,12 @@ let tick_compile_prog_IMP_exp_rel = prove
 let bvl_inlineProof_in_do_app_lemma = prove
  (cake_as_vars (fun () ->
     `bvl_inlineProof_in_state_rel limit s1 t1 ==>
-       (match do_app op a s1 with Rerr err -> (~(err = Rabort
-         Rtype_error) ==> do_app op a t1 = Rerr err) | Rval (v,s2) ->
-         (?t2. bvl_inlineProof_in_state_rel limit s2 t2 /\
-                             do_app op a t1 = Rval (v,t2)))`),
+       (match bvlSem_do_app op a s1 with Rerr err -> (~(err =
+         Rabort Rtype_error) ==> bvlSem_do_app op a t1 = Rerr err) |
+         Rval (v,s2) -> (?t2. bvl_inlineProof_in_state_rel limit s2 t2
+         /\
+                             bvlSem_do_app op a t1 = Rval
+                               (v,t2)))`),
   CHEAT_TAC);;
 
 (* exp_rel_refl *)
@@ -316,9 +314,9 @@ let bvl_inlineProof_evaluate_inline = prove
     `!es env s1 res t1 s2 es2.
         bvl_inlineProof_in_state_rel limit s1 t1 /\
           bvl_inlineProof_exp_rel (bvlSem_state_code s1) es es2 /\
-        evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
-          Rtype_error)) ==>
-        (?t2. evaluate (es2,env,t1) = (res,t2) /\
+        bvlSem_evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr
+          (Rabort Rtype_error)) ==>
+        (?t2. bvlSem_evaluate (es2,env,t1) = (res,t2) /\
              bvl_inlineProof_in_state_rel limit s2 t2)`),
   CHEAT_TAC);;
 
@@ -328,7 +326,6 @@ let bvl_inlineProof_in_co_def = new_definition
           ((cs,cfg),progs) = co n in let
           (cs1,progs) = tick_compile_prog limit' cs progs in
           (cfg,progs)))`;;
-hol4_overload "in_co" "bvl_inlineProof_in_co";;
 
 let MAP_FST_tick_inline_all = prove
  (`!limit' cs prog.
@@ -390,18 +387,18 @@ let subspt_tick_inline = prove
    variables of its own are read as variables *)
 let in_evaluate_Call = prove
  (cake_as_vars (fun () ->
-    `evaluate
-          ([Call 0 (SOME start) []],env,
-           initial_state ffi0 (fromAList prog) co
+    `bvlSem_evaluate
+          ([bvl_Call 0 (SOME start) []],env,
+           bvlSem_initial_state ffi0 (fromAList prog) co
              (bvl_inlineProof_in_cc limit cc1) k) = (res,s2) /\
          FST (FST (co 0)) = FST (tick_compile_prog limit LN prog)
            /\
          ALL_DISTINCT (MAP FST prog) /\ ~(res = Rerr (Rabort
            Rtype_error)) ==>
          (?t2.
-           evaluate
-             ([Call 0 (SOME start) []],env,
-              initial_state ffi0
+           bvlSem_evaluate
+             ([bvl_Call 0 (SOME start) []],env,
+              bvlSem_initial_state ffi0
                (fromAList (SND (tick_compile_prog limit LN prog)))
                  (bvl_inlineProof_in_co limit co) cc1 k) =
              (res,t2) /\ bvlSem_state_ffi s2 = bvlSem_state_ffi
@@ -413,13 +410,13 @@ let in_evaluate_Call = prove
 let semantics_tick_inline = prove
  (cake_as_vars (fun () ->
     `FST (FST (co 0)) = FST (tick_compile_prog limit LN prog) /\
-         ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
-           prog) co (bvl_inlineProof_in_cc limit cc) start = ffi_Fail)
-           ==>
-         semantics ffi (fromAList (SND (tick_compile_prog limit LN
-           prog)))
+         ALL_DISTINCT (MAP FST prog) ==> ~(bvlSem_semantics ffi
+           (fromAList prog) co (bvl_inlineProof_in_cc limit cc) start =
+           ffi_Fail) ==>
+         bvlSem_semantics ffi (fromAList (SND (tick_compile_prog
+           limit LN prog)))
                        (bvl_inlineProof_in_co limit co) cc start =
-         semantics (ffi:'b ffi_state) (fromAList prog) co
+         bvlSem_semantics (ffi:'b ffi_state) (fromAList prog) co
            (bvl_inlineProof_in_cc limit cc) start`),
   CHEAT_TAC);;
 
@@ -427,8 +424,8 @@ let semantics_tick_inline = prove
 
 let let_opt_def = new_definition
   `let_opt split_seq cut_size (arity,prog) =
-     (arity,compile_any split_seq cut_size arity (let_op_sing
-       prog))`;;
+     (arity,compile_any split_seq cut_size arity
+       (bvl_inline_let_op_sing prog))`;;
 
 let let_state_rel_def = new_definition
   `let_state_rel split_seq cut_size (s:('c,'ffi)bvlSem_state)
@@ -448,46 +445,48 @@ let let_state_rel_def = new_definition
 
 (* [simp] *)
 let HD_let_op = prove
- (`[HD (let_op [x:bvl_exp])] = let_op [x]`,
+ (`[HD (bvl_inline_let_op [x:bvl_exp])] = bvl_inline_let_op [x]`,
   CHEAT_TAC);;
 
 let let_op_sing_thm = prove
- (`let_op_sing (x:bvl_exp) = HD (let_op [x])`,
+ (`bvl_inline_let_op_sing (x:bvl_exp) = HD (bvl_inline_let_op [x])`,
   CHEAT_TAC);;
 
 let var_list_IMP_evaluate = prove
  (`!a2 a1 l (xs:bvl_exp list) (s:('a,'b)bvlSem_state).
-         var_list (LENGTH a1) l xs /\ LENGTH xs = LENGTH a2 ==>
-         evaluate (l,APPEND (APPEND a1 a2) env,s) = (Rval a2,s)`,
+         bvl_inline_var_list (LENGTH a1) l xs /\ LENGTH xs = LENGTH
+           a2 ==>
+         bvlSem_evaluate (l,APPEND (APPEND a1 a2) env,s) = (Rval
+           a2,s)`,
   CHEAT_TAC);;
 
 (* var_list_IMP_evaluate *)
 let bvl_inlineProof_var_list_IMP_evaluate = prove
- (`var_list 0 l xs /\ LENGTH (xs:bvl_exp list) = LENGTH a ==>
-       evaluate (l,APPEND a env,(s:('a,'b)bvlSem_state)) = (Rval
-         a,s)`,
+ (`bvl_inline_var_list 0 l xs /\ LENGTH (xs:bvl_exp list) = LENGTH a ==>
+       bvlSem_evaluate (l,APPEND a env,(s:('a,'b)bvlSem_state)) =
+         (Rval a,s)`,
   CHEAT_TAC);;
 
 (* LENGTH_let_op *)
 let bvl_inlineProof_LENGTH_let_op = prove
- (`!(xs:bvl_exp list). LENGTH (let_op xs) = LENGTH xs`,
+ (`!(xs:bvl_exp list). LENGTH (bvl_inline_let_op xs) = LENGTH xs`,
   CHEAT_TAC);;
 
 (* do_app_lemma[local] *)
 let bvl_inlineProof_do_app_lemma = prove
  (`let_state_rel q4 l4 s1 t1 ==>
-     (match do_app op a s1 with Rerr err -> do_app op a t1 = Rerr err
-       | Rval (v,s2) -> (?t2. let_state_rel q4 l4 s2 t2 /\
-                           do_app op a t1 = Rval (v,t2)))`,
+     (match bvlSem_do_app op a s1 with Rerr err -> bvlSem_do_app op a
+       t1 = Rerr err | Rval (v,s2) -> (?t2. let_state_rel q4 l4 s2 t2 /\
+                           bvlSem_do_app op a t1 = Rval (v,t2)))`,
   CHEAT_TAC);;
 
 let evaluate_let_op = prove
  (`!es env s1 res t1 s2.
       let_state_rel q4 l4 s1 t1 /\
-      evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+      bvlSem_evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
         Rtype_error)) ==>
-      (?t2. evaluate (let_op es,env,t1) = (res,t2) /\ let_state_rel
-        q4 l4 s2 t2)`,
+      (?t2. bvlSem_evaluate (bvl_inline_let_op es,env,t1) =
+        (res,t2) /\ let_state_rel q4 l4 s2 t2)`,
   CHEAT_TAC);;
 
 let let_op_cc_def = new_definition
@@ -499,13 +498,14 @@ let let_op_cc_def = new_definition
    variables of its own are read as variables *)
 let let_evaluate_Call = prove
  (cake_as_vars (fun () ->
-    `evaluate ([Call 0 (SOME start) []],[],
-                initial_state ffi0 prog co (let_op_cc q4 l4 cc) k)
-                  = (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
+    `bvlSem_evaluate ([bvl_Call 0 (SOME start) []],[],
+                bvlSem_initial_state ffi0 prog co (let_op_cc q4 l4
+                  cc) k) = (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
       (?(s2:('c,'ffi)bvlSem_state).
-        evaluate
-         ([Call 0 (SOME start) []],[],
-           initial_state ffi0 (sptree_map (let_opt q4 l4) prog)
+        bvlSem_evaluate
+         ([bvl_Call 0 (SOME start) []],[],
+           bvlSem_initial_state ffi0 (sptree_map (let_opt q4 l4)
+             prog)
              ((I ## MAP (I ## let_opt q4 l4)) o co)
              cc k) = (r,s2) /\ bvlSem_state_ffi
         s2 = state_ffi s /\ state_clock s = bvlSem_state_clock
@@ -516,18 +516,20 @@ let let_evaluate_Call = prove
    variables of its own are read as variables *)
 let semantics_let_op = prove
  (cake_as_vars (fun () ->
-    `~(semantics ffi prog co (let_op_cc q4 l4 cc) start = ffi_Fail) ==>
-         semantics ffi (sptree_map (let_opt q4 l4) prog)
+    `~(bvlSem_semantics ffi prog co (let_op_cc q4 l4 cc) start =
+  ffi_Fail) ==>
+         bvlSem_semantics ffi (sptree_map (let_opt q4 l4) prog)
                        ((I ## MAP (I ## let_opt q4 l4)) o co) cc
                          start =
-         semantics (ffi:'b ffi_state) prog co (let_op_cc q4 l4
-           cc) start`),
+         bvlSem_semantics (ffi:'b ffi_state) prog co (let_op_cc
+           q4 l4 cc) start`),
   CHEAT_TAC);;
 
 (* combined theorems *)
 
 let remove_ticks_mk_tick = prove
- (`!n r. remove_ticks [mk_tick n r] = remove_ticks [r]`,
+ (`!n r. bvl_inline_remove_ticks [mk_tick n r] =
+  bvl_inline_remove_ticks [r]`,
   CHEAT_TAC);;
 
 let is_small_aux_0 = prove
@@ -542,8 +544,8 @@ let is_small_aux_CONS = prove
   CHEAT_TAC);;
 
 let is_small_aux_remove_ticks = prove
- (`!limit' d. is_small_aux limit' (remove_ticks d) = is_small_aux
-  limit' d`,
+ (`!limit' d. is_small_aux limit' (bvl_inline_remove_ticks d) =
+  is_small_aux limit' d`,
   CHEAT_TAC);;
 
 let is_rec_CONS = prove
@@ -552,7 +554,7 @@ let is_rec_CONS = prove
   CHEAT_TAC);;
 
 let is_rec_remove_ticks = prove
- (`!p_1 xs. bvl_inline_is_rec p_1 (remove_ticks xs) =
+ (`!p_1 xs. bvl_inline_is_rec p_1 (bvl_inline_remove_ticks xs) =
   bvl_inline_is_rec p_1 xs`,
   CHEAT_TAC);;
 
@@ -560,13 +562,14 @@ let is_rec_remove_ticks = prove
    variables of its own are read as variables *)
 let must_inline_remove_ticks = prove
  (cake_as_vars (fun () ->
-    `must_inline p_1 limit (HD (remove_ticks (tick_inline cs [p_2]))) =
+    `must_inline p_1 limit (HD (bvl_inline_remove_ticks (tick_inline cs
+  [p_2]))) =
          must_inline p_1 limit (HD ((tick_inline cs [p_2])))`),
   CHEAT_TAC);;
 
 let let_opt_remove_def = new_definition
   `let_opt_remove b l (arity,prog) =
-     let_opt b l (arity,HD (remove_ticks [prog]))`;;
+     let_opt b l (arity,HD (bvl_inline_remove_ticks [prog]))`;;
 
 let map_fromAList_HASH = prove
  (`sptree_map f (fromAList ls) = fromAList (MAP (I ## f) ls)`,
@@ -585,22 +588,24 @@ let map_fromAList = prove
 let inline_ticks = prove
  (cake_as_vars (fun () ->
     `FST (FST (co 0)) = (FST (tick_compile_prog limit LN prog)) /\
-         ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
-           prog) co
+         ALL_DISTINCT (MAP FST prog) ==> ~(bvlSem_semantics ffi
+           (fromAList prog) co
            (bvl_inlineProof_in_cc limit
              (bvl_inlineProof_remove_ticks_cc cc)) start = ffi_Fail) ==>
-         semantics ffi (fromAList (MAP (I ## I ## (\x. HD
-           (remove_ticks [x])))
+         bvlSem_semantics ffi (fromAList (MAP (I ## I ## (\x. HD
+           (bvl_inline_remove_ticks [x])))
                               (SND (tick_compile_prog limit LN
                                 prog))))
            (bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co
              limit co) cc start =
-         semantics ffi (fromAList prog) co (bvl_inlineProof_in_cc
-           limit (bvl_inlineProof_remove_ticks_cc cc)) start`),
+         bvlSem_semantics ffi (fromAList prog) co
+           (bvl_inlineProof_in_cc limit
+           (bvl_inlineProof_remove_ticks_cc cc)) start`),
   CHEAT_TAC);;
 
 let comp_lemma = prove
- (`(I ## let_opt q4 l4) o (I ## I ## (\x. HD (remove_ticks [x]))) =
+ (`(I ## let_opt q4 l4) o (I ## I ## (\x. HD (bvl_inline_remove_ticks
+  [x]))) =
        (I ## let_opt_remove q4 l4)`,
   CHEAT_TAC);;
 
@@ -619,7 +624,8 @@ let MAP_optimise = prove
  (`!prog.
          MAP (bvl_inline_optimise o1 o2) prog =
          MAP (I ## let_opt o1 o2)
-           (MAP (I ## I ## (\x. HD (remove_ticks [x]))) prog)`,
+           (MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x])))
+             prog)`,
   CHEAT_TAC);;
 
 (* state_cc_compile_inc_eq *)
@@ -627,7 +633,7 @@ let MAP_optimise = prove
    variables of its own are read as variables *)
 let bvl_inlineProof_state_cc_compile_inc_eq = prove
  (cake_as_vars (fun () ->
-    `(state_cc (compile_inc limit o1 o2) cc) =
+    `(state_cc (bvl_inline_compile_inc limit o1 o2) cc) =
         (bvl_inlineProof_in_cc limit
           (bvl_inlineProof_remove_ticks_cc (let_op_cc o1 o2 cc)))`),
   CHEAT_TAC);;
@@ -637,7 +643,7 @@ let bvl_inlineProof_state_cc_compile_inc_eq = prove
    variables of its own are read as variables *)
 let bvl_inlineProof_state_co_compile_inc_eq = prove
  (cake_as_vars (fun () ->
-    `(state_co (compile_inc limit o1 o2) co) =
+    `(state_co (bvl_inline_compile_inc limit o1 o2) co) =
         ((I ## MAP (I ## let_opt o1 o2)) o
           bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co
           limit co)`),
@@ -648,16 +654,17 @@ let bvl_inlineProof_state_co_compile_inc_eq = prove
    variables of its own are read as variables *)
 let bvl_inlineProof_compile_prog_semantics = prove
  (cake_as_vars (fun () ->
-    `compile_prog limit o1 o2 prog = (s1,prog1) /\
+    `bvl_inline_compile_prog limit o1 o2 prog = (s1,prog1) /\
       FST (FST (co 0)) = s1 /\
-      ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
-        prog) co (state_cc (compile_inc limit o1 o2) cc)
+      ALL_DISTINCT (MAP FST prog) ==> ~(bvlSem_semantics ffi
+        (fromAList prog) co (state_cc (bvl_inline_compile_inc limit o1
+        o2) cc)
         start = ffi_Fail) ==>
-      semantics ffi (fromAList prog1) (state_co (compile_inc limit
-        o1 o2) co) cc
+      bvlSem_semantics ffi (fromAList prog1) (state_co
+        (bvl_inline_compile_inc limit o1 o2) co) cc
         start =
-      semantics ffi (fromAList prog) co (state_cc (compile_inc
-        limit o1 o2) cc)
+      bvlSem_semantics ffi (fromAList prog) co (state_cc
+        (bvl_inline_compile_inc limit o1 o2) cc)
         start`),
   CHEAT_TAC);;
 
@@ -666,7 +673,7 @@ let handle_ok_optimise = prove
   CHEAT_TAC);;
 
 let compile_prog_handle_ok = prove
- (`compile_prog l b i prog = (inlines,prog3) ==>
+ (`bvl_inline_compile_prog l b i prog = (inlines,prog3) ==>
     handle_ok (MAP (SND o SND) prog3)`,
   CHEAT_TAC);;
 
@@ -676,30 +683,31 @@ let MAP_FST_MAP_optimise = prove
   CHEAT_TAC);;
 
 let compile_prog_names = prove
- (`compile_prog l b i prog = (inlines,prog3) ==>
+ (`bvl_inline_compile_prog l b i prog = (inlines,prog3) ==>
     MAP FST prog3 = MAP FST prog`,
   CHEAT_TAC);;
 
 let var_list_code_labels_imp = prove
- (`!n x y. var_list n x y ==> UNIONS (set_of_list (MAP
+ (`!n x y. bvl_inline_var_list n x y ==> UNIONS (set_of_list (MAP
   bvlProps_get_code_labels x)) = {}`,
   CHEAT_TAC);;
 
 let let_op_code_labels = prove
- (`!x. UNIONS (set_of_list (MAP bvlProps_get_code_labels (let_op x)))
-  = UNIONS (set_of_list (MAP bvlProps_get_code_labels x))`,
+ (`!x. UNIONS (set_of_list (MAP bvlProps_get_code_labels
+  (bvl_inline_let_op x))) = UNIONS (set_of_list (MAP
+  bvlProps_get_code_labels x))`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let let_op_sing_code_labels = prove
- (`bvlProps_get_code_labels (let_op_sing x) = bvlProps_get_code_labels
-  x`,
+ (`bvlProps_get_code_labels (bvl_inline_let_op_sing x) =
+  bvlProps_get_code_labels x`,
   CHEAT_TAC);;
 
 let remove_ticks_code_labels = prove
  (`!x.
-     UNIONS (set_of_list (MAP bvlProps_get_code_labels (remove_ticks
-       x))) =
+     UNIONS (set_of_list (MAP bvlProps_get_code_labels
+       (bvl_inline_remove_ticks x))) =
      UNIONS (set_of_list (MAP bvlProps_get_code_labels x))`,
   CHEAT_TAC);;
 

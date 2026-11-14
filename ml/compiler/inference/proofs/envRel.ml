@@ -394,7 +394,6 @@ let envRel_env_rel_def = new_definition
        (type_env_v tenv) x = NONE) /\
     env_rel_sound FEMPTY ienv tenv typeSystem_Empty /\
     env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
-hol4_overload "env_rel" "envRel_env_rel";;
 
 (* [simp] *)
 let lookup_varE_empty = prove

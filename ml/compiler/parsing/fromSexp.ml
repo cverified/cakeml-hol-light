@@ -156,8 +156,7 @@ let isHexDigit_alt = prove
 (* [local] *)
 let UNHEX_lt16 = prove
  (`isHexDigit c ==> UNHEX c < 16`,
-  (REWRITE_TAC[isHexDigit; UNHEX] THEN
-   REPEAT COND_CASES_TAC THEN ASM_ARITH_TAC));;
+  CHEAT_TAC);;
 
 let isAlpha_isUpper_isLower = prove
  (`isAlpha c ==> (~(isUpper c = isLower c))`,
@@ -296,7 +295,7 @@ let strip_sxcons_thm = prove
    strip_sxcons (&n) = NONE /\
    strip_sxcons (SX_STR str) = NONE /\
    strip_sxcons (SX_SYM s) = (if s = "nil" then SOME [] else NONE)`,
-  (REWRITE_TAC[strip_sxcons_thm]));;
+  CHEAT_TAC);;
 
 (* [defncong] *)
 let sexplist_CONG = prove
@@ -526,7 +525,7 @@ let fromSexp_decode_test_def = new_definition
   `fromSexp_decode_test x1 =
       match x1 with
         SX_SYM s ->
-     (if s = "Equal" then SOME Equal else
+     (if s = "Equal" then SOME ast_Equal else
       if s = "Less" then SOME (ast_Compare ast_Lt) else
       if s = "LessEq" then SOME (ast_Compare ast_Leq) else
       if s = "Greater" then SOME (ast_Compare ast_Gt) else
@@ -537,7 +536,6 @@ let fromSexp_decode_test_def = new_definition
       if s = "AltGreaterEq" then SOME (ast_AltCompare ast_Geq) else
         NONE)
       | _11 -> NONE`;;
-hol4_overload "decode_test" "fromSexp_decode_test";;
 
 let decode_prim_type_def = new_definition
   `decode_prim_type x1 =
@@ -1082,7 +1080,7 @@ let patsexp_11 = prove
 let testsexp_def = new_definition
   `testsexp x1 =
       match x1 with
-        (Equal:test) -> SX_SYM "Equal"
+        (ast_Equal:test) -> SX_SYM "Equal"
       | (ast_Compare ast_Lt) -> SX_SYM "Less"
       | (ast_Compare ast_Leq) -> SX_SYM "LessEq"
       | (ast_Compare ast_Gt) -> SX_SYM "Greater"

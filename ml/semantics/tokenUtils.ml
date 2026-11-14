@@ -111,7 +111,6 @@ let tokenUtils_destTOK_def = new_definition
         match x1 with
           grammar_TOK t -> SOME t
         | _27 -> NONE`;;
-hol4_overload "destTOK" "tokenUtils_destTOK";;
 
 let destAlphaT_def = new_definition
   `destAlphaT x1 =

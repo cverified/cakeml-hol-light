@@ -9,11 +9,9 @@
   Correctness proof for data_simp
 *)
 
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
-needs "semantics/evaluate.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -24,29 +22,33 @@ let _ = hol4_ancestors "data_simpProof"
 
 (* [local] *)
 let evaluate_Seq_Skip = prove
- (`!c s. evaluate ((Seq c Skip:dataLang_prog),s) = evaluate (c,s)`,
+ (`!c s. dataSem_evaluate ((dataLang_Seq c
+  dataLang_Skip:dataLang_prog),s) = dataSem_evaluate (c,s)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_pSeq = prove
- (`evaluate (pSeq c1 c2,s) = evaluate (Seq c1 c2,s)`,
+ (`dataSem_evaluate (pSeq c1 c2,s) = dataSem_evaluate (dataLang_Seq c1
+  c2,s)`,
   CHEAT_TAC);;
 
 (* The Seq-with-Skip continuation is the identity on a result pair: the
    inner lambda from unfolding `evaluate (Seq _ Skip)` collapses. *)
 (* [local] *)
 let lam_skip_id = prove
- (`(\(res,s1). if res = NONE then evaluate (Skip,s1) else (res,s1)) x
-  = x`,
+ (`(\(res,s1). if res = NONE then dataSem_evaluate (dataLang_Skip,s1)
+  else (res,s1)) x = x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_simp = prove
- (`!c1 s c2. evaluate (simp c1 c2,s) = evaluate (Seq c1 c2,s)`,
+ (`!c1 s c2. dataSem_evaluate (simp c1 c2,s) = dataSem_evaluate
+  (dataLang_Seq c1 c2,s)`,
   CHEAT_TAC);;
 
 let simp_correct = prove
- (`!c s. evaluate (simp c Skip,s) = evaluate (c,s)`,
+ (`!c s. dataSem_evaluate (simp c dataLang_Skip,s) = dataSem_evaluate
+  (c,s)`,
   CHEAT_TAC);;
 
 let get_code_labels_simp = prove

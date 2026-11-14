@@ -3,7 +3,7 @@
     examples/algorithms/unification/triangular/first-order/
       termScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 10 files of the port.  *)
+    that CakeML needs.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)
@@ -15,9 +15,6 @@ let _ = hol4_lib ();;
 
 let term_INDUCT,term_RECURSION = define_datatype
   "term = term_Var (num) | term_Pair (term) (term) | term_Const ('a)";;
-hol4_overload "Var" "term_Var";;
-hol4_overload "Pair" "term_Pair";;
-hol4_overload "Const" "term_Const";;
 
 let pair_count_def,pair_count_ind = define_rec
   [`pair_count (term_Var v) = 0`;

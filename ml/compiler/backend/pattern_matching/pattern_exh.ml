@@ -38,7 +38,6 @@
 needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -114,10 +113,10 @@ let mk_conses_def,mk_conses_ind = define_rec
 let expand_def,expand_ind = define_mutual_rec
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
-   `expand (Lit l:pattern_semantics_pat) = [(Lit
-  l:pattern_semantics_pat)]`;
-   `expand (Or p q:pattern_semantics_pat) = APPEND (expand p) (expand
-  q)`;
+   `expand (pattern_semantics_Lit l:pattern_semantics_pat) =
+  [(pattern_semantics_Lit l:pattern_semantics_pat)]`;
+   `expand (pattern_semantics_Or p q:pattern_semantics_pat) = APPEND
+  (expand p) (expand q)`;
    `expand (pattern_semantics_Ref p:pattern_semantics_pat) = mk_refs
   (expand p)`;
    `expand (pattern_semantics_Cons t ps:pattern_semantics_pat) =
@@ -157,8 +156,8 @@ let ctors_of_def = new_definition
   `ctors_of x1 =
       match x1 with
         (pattern_semantics_Any:pattern_semantics_pat) -> NONE
-      | (Lit _1) -> NONE
-      | (Or _2 _3) -> NONE
+      | (pattern_semantics_Lit _1) -> NONE
+      | (pattern_semantics_Or _2 _3) -> NONE
       | (pattern_semantics_Ref _4) -> SOME [RefC]
       | (pattern_semantics_Cons NONE qs) -> SOME [TupC (LENGTH qs)]
       | (pattern_semantics_Cons (SOME (t,NONE)) qs) -> NONE
@@ -210,8 +209,8 @@ let spec_row_def = new_definition
      (if c = TagC (FST ts) (LENGTH qs) then [APPEND qs rest] else [])
       | (CONS (pattern_semantics_Ref q) rest) -> (if c = RefC then
         [CONS q rest] else [])
-      | (CONS (Lit l) rest) -> []
-      | (CONS (Or p q) rest) -> []`;;
+      | (CONS (pattern_semantics_Lit l) rest) -> []
+      | (CONS (pattern_semantics_Or p q) rest) -> []`;;
 
 let spec_mat_def,spec_mat_ind = define_rec
   [`spec_mat c [] = []`;
@@ -254,9 +253,10 @@ let default_mat_def,default_mat_ind = define_rec
 let pat_weight_def,pat_weight_ind = define_mutual_rec
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
-   `pat_weight (Lit l:pattern_semantics_pat) = ((0):num)`;
-   `pat_weight (Or p q:pattern_semantics_pat) = ((1 + pat_weight p +
-  pat_weight q):num)`;
+   `pat_weight (pattern_semantics_Lit l:pattern_semantics_pat) =
+  ((0):num)`;
+   `pat_weight (pattern_semantics_Or p q:pattern_semantics_pat) = ((1
+  + pat_weight p + pat_weight q):num)`;
    `pat_weight (pattern_semantics_Ref p:pattern_semantics_pat) = ((1
   + pat_weight p):num)`;
    `pat_weight (pattern_semantics_Cons t ps:pattern_semantics_pat) =
@@ -518,35 +518,39 @@ let pand_assoc = prove
 
 (* [local,simp] *)
 let pmatch_Any = prove
- (`pmatch refs (pattern_semantics_Any:pattern_semantics_pat) v =
-  PMatchSuccess`,
+ (`pattern_semantics_pmatch refs
+  (pattern_semantics_Any:pattern_semantics_pat) v = PMatchSuccess`,
   (REWRITE_TAC[pattern_semantics_pmatch_def]));;
 
 (* [local,simp] *)
 let pmatch_list_nil = prove
- (`pmatch_list refs [] [] = PMatchSuccess /\
-   pmatch_list refs [] (CONS v vs) = PTypeFailure /\
-   pmatch_list refs (CONS p ps) [] = PTypeFailure`,
+ (`pattern_semantics_pmatch_list refs [] [] = PMatchSuccess /\
+   pattern_semantics_pmatch_list refs [] (CONS v vs) = PTypeFailure
+     /\
+   pattern_semantics_pmatch_list refs (CONS p ps) [] = PTypeFailure`,
   (REWRITE_TAC[pattern_semantics_pmatch_def]));;
 
 (* [local,simp] *)
 let pmatch_list_cons = prove
- (`pmatch_list refs (CONS p ps) (CONS v vs) =
-   pand (pmatch refs p v) (pmatch_list refs ps vs)`,
+ (`pattern_semantics_pmatch_list refs (CONS p ps) (CONS v vs) =
+   pand (pattern_semantics_pmatch refs p v)
+     (pattern_semantics_pmatch_list refs ps vs)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let pmatch_list_LENGTH = prove
- (`!ps vs. ~(pmatch_list refs ps vs = PTypeFailure) ==> LENGTH ps =
-  LENGTH vs`,
+ (`!ps vs. ~(pattern_semantics_pmatch_list refs ps vs = PTypeFailure)
+  ==> LENGTH ps = LENGTH vs`,
   CHEAT_TAC);;
 
 (* [local] *)
 let pmatch_list_append = prove
  (`!ps us qs ws refs.
      LENGTH ps = LENGTH us ==>
-     pmatch_list refs (APPEND ps qs) (APPEND us ws) =
-     pand (pmatch_list refs ps us) (pmatch_list refs qs ws)`,
+     pattern_semantics_pmatch_list refs (APPEND ps qs) (APPEND us ws)
+       =
+     pand (pattern_semantics_pmatch_list refs ps us)
+       (pattern_semantics_pmatch_list refs qs ws)`,
   CHEAT_TAC);;
 
 (* [local,simp] *)
@@ -559,7 +563,7 @@ let LENGTH_anys = prove
 (* [local,simp] *)
 let pmatch_list_anys = prove
  (`!n as refs.
-     pmatch_list refs (anys n) as =
+     pattern_semantics_pmatch_list refs (anys n) as =
      (if LENGTH as = n then PMatchSuccess else PTypeFailure)`,
   CHEAT_TAC);;
 
@@ -649,15 +653,17 @@ let LENGTH_expand_list = prove
 (* [local] *)
 let expand_thm = prove
  (`(!p q refs v.
-      MEM q (expand p) /\ ~(pmatch refs p v = PTypeFailure) ==>
-        ~(pmatch refs q v = PTypeFailure) /\
-      (pmatch refs q v = PMatchSuccess ==> pmatch refs p v =
-        PMatchSuccess)) /\
+      MEM q (expand p) /\ ~(pattern_semantics_pmatch refs p v =
+        PTypeFailure) ==> ~(pattern_semantics_pmatch refs q v =
+        PTypeFailure) /\
+      (pattern_semantics_pmatch refs q v = PMatchSuccess ==>
+        pattern_semantics_pmatch refs p v = PMatchSuccess)) /\
    (!ps qs refs vs.
-      MEM qs (expand_list ps) /\ ~(pmatch_list refs ps vs =
-        PTypeFailure) ==> ~(pmatch_list refs qs vs = PTypeFailure) /\
-      (pmatch_list refs qs vs = PMatchSuccess ==>
-       pmatch_list refs ps vs = PMatchSuccess))`,
+      MEM qs (expand_list ps) /\ ~(pattern_semantics_pmatch_list refs
+        ps vs = PTypeFailure) ==> ~(pattern_semantics_pmatch_list refs
+        qs vs = PTypeFailure) /\
+      (pattern_semantics_pmatch_list refs qs vs = PMatchSuccess ==>
+       pattern_semantics_pmatch_list refs ps vs = PMatchSuccess))`,
   CHEAT_TAC);;
 
 
@@ -679,7 +685,7 @@ let dest_val_def = new_definition
         vs),vs)
       | (pattern_semantics_RefPtr r) -> (match FLOOKUP refs r with
         NONE -> NONE | SOME w -> SOME (RefC,[w]))
-      | (Litv l) -> NONE
+      | (pattern_semantics_Litv l) -> NONE
       | pattern_semantics_Other -> NONE`;;
 
 (* [local] *)
@@ -703,7 +709,8 @@ let LENGTH_dest_val = prove
 
 (* [local] *)
 let ctors_of_thm = prove
- (`ctors_of p = SOME xs /\ ~(pmatch refs p v = PTypeFailure) ==>
+ (`ctors_of p = SOME xs /\ ~(pattern_semantics_pmatch refs p v =
+  PTypeFailure) ==>
    (?c as. dest_val refs v = SOME (c,as) /\ MEM c xs)`,
   CHEAT_TAC);;
 
@@ -713,7 +720,8 @@ let ctors_of_thm = prove
 let col_ctors_thm = prove
  (`!M cs refs v vs.
      col_ctors M = SOME cs /\
-     ALL (\r. ~(pmatch_list refs r (CONS v vs) = PTypeFailure)) M ==>
+     ALL (\r. ~(pattern_semantics_pmatch_list refs r (CONS v vs) =
+       PTypeFailure)) M ==>
      (?c as. dest_val refs v = SOME (c,as) /\ MEM c cs)`,
   CHEAT_TAC);;
 
@@ -733,8 +741,8 @@ let col_ctors_thm = prove
 let spec_row_thm = prove
  (`!c r row refs v vs as.
      dest_val refs v = SOME (c,as) /\ MEM row (spec_row c r) ==>
-     pmatch_list refs row (APPEND as vs) = pmatch_list refs r (CONS
-       v vs)`,
+     pattern_semantics_pmatch_list refs row (APPEND as vs) =
+       pattern_semantics_pmatch_list refs r (CONS v vs)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -742,23 +750,24 @@ let spec_mat_MEM = prove
  (`!M c as refs v vs row.
      dest_val refs v = SOME (c,as) /\ MEM row (spec_mat c M) ==>
      (?r. MEM r M /\
-         pmatch_list refs row (APPEND as vs) = pmatch_list refs r
-           (CONS v vs))`,
+         pattern_semantics_pmatch_list refs row (APPEND as vs) =
+           pattern_semantics_pmatch_list refs r (CONS v vs))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let default_row_thm = prove
  (`!r row refs v vs.
      MEM row (default_row r) ==>
-     pmatch_list refs row vs = pmatch_list refs r (CONS v vs)`,
+     pattern_semantics_pmatch_list refs row vs =
+       pattern_semantics_pmatch_list refs r (CONS v vs)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let default_mat_MEM = prove
  (`!M refs v vs row.
      MEM row (default_mat M) ==>
-     (?r. MEM r M /\ pmatch_list refs row vs = pmatch_list refs r
-       (CONS v vs))`,
+     (?r. MEM r M /\ pattern_semantics_pmatch_list refs row vs =
+       pattern_semantics_pmatch_list refs r (CONS v vs))`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[default_mat_def; MEM; MEM_APPEND]
     THEN
    REPEAT STRIP_TAC THENL
@@ -783,13 +792,16 @@ let default_mat_MEM = prove
 (* [local] *)
 let exh_matrix_thm = prove
  (`(!M refs vs.
-      exh_matrix M /\ ALL (\r. ~(pmatch_list refs r vs =
-        PTypeFailure)) M ==>
-      EX (\r. pmatch_list refs r vs = PMatchSuccess) M) /\
+      exh_matrix M /\ ALL (\r. ~(pattern_semantics_pmatch_list refs r
+        vs = PTypeFailure)) M ==>
+      EX (\r. pattern_semantics_pmatch_list refs r vs =
+        PMatchSuccess) M) /\
    (!ms m refs vs.
       exh_mats ms /\ MEM m ms /\
-      ALL (\r. ~(pmatch_list refs r vs = PTypeFailure)) m ==>
-      EX (\r. pmatch_list refs r vs = PMatchSuccess) m)`,
+      ALL (\r. ~(pattern_semantics_pmatch_list refs r vs =
+        PTypeFailure)) m ==>
+      EX (\r. pattern_semantics_pmatch_list refs r vs =
+        PMatchSuccess) m)`,
   CHEAT_TAC);;
 
 
@@ -800,29 +812,34 @@ let exh_matrix_thm = prove
 (* [local] *)
 let match_no_PTypeFailure = prove
  (`!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
-          ALL (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows`,
+          ALL (\(p,e). ~(pattern_semantics_pmatch refs p v =
+            PTypeFailure)) rows`,
   CHEAT_TAC);;
 
 (* [local] *)
 let match_EXISTS = prove
  (`!rows. ~(pattern_semantics_match refs rows v = NONE) /\
-          EX (\(p,e). pmatch refs p v = PMatchSuccess) rows ==>
-            ~(pattern_semantics_match refs rows v = SOME MatchFailure)`,
+          EX (\(p,e). pattern_semantics_pmatch refs p v =
+            PMatchSuccess) rows ==> ~(pattern_semantics_match refs
+            rows v = SOME MatchFailure)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let or_rows_ok = prove
- (`!rows. ALL (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows ==>
-          ALL (\r. ~(pmatch_list refs r [v] = PTypeFailure))
-            (or_rows rows)`,
+ (`!rows. ALL (\(p,e). ~(pattern_semantics_pmatch refs p v =
+  PTypeFailure)) rows ==>
+          ALL (\r. ~(pattern_semantics_pmatch_list refs r [v] =
+            PTypeFailure)) (or_rows rows)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let or_rows_hit = prove
- (`!rows. ALL (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows /\
-          EX (\r. pmatch_list refs r [v] = PMatchSuccess) (or_rows
-            rows) ==>
-          EX (\(p,e). pmatch refs p v = PMatchSuccess) rows`,
+ (`!rows. ALL (\(p,e). ~(pattern_semantics_pmatch refs p v =
+  PTypeFailure)) rows /\
+          EX (\r. pattern_semantics_pmatch_list refs r [v] =
+            PMatchSuccess) (or_rows rows) ==>
+          EX (\(p,e). pattern_semantics_pmatch refs p v =
+            PMatchSuccess) rows`,
   CHEAT_TAC);;
 
 

@@ -2,7 +2,7 @@
 (*  peg: ported from HOL4's
     examples/formal-languages/context-free/pegScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 25 files of the port.  *)
+    that CakeML needs.  Needed by 24 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/grammar.ml";;
@@ -19,15 +19,6 @@ let pegsym_INDUCT,pegsym_RECURSION = define_datatype
    (pegsym) (pegsym) ('c->'c->'c) | peg_choice (pegsym) (pegsym) \
    ('c+'c->'c) | peg_rpt (pegsym) ('c list->'c) | peg_not (pegsym) \
    ('c) | peg_error ('e)";;
-hol4_overload "empty" "peg_empty";;
-hol4_overload "any" "peg_any";;
-hol4_overload "tok" "peg_tok";;
-hol4_overload "nt" "peg_nt";;
-hol4_overload "seq" "peg_seq";;
-hol4_overload "choice" "peg_choice";;
-hol4_overload "rpt" "peg_rpt";;
-hol4_overload "not" "peg_not";;
-hol4_overload "error" "peg_error";;
 
 let peg_FIELDS = define_record "peg"
   ["start","('a,'b,'c,'e)pegsym";
@@ -44,8 +35,6 @@ hol4_field_overload "rules_fupd" "peg_rules_fupd";;
 let pegresult_INDUCT,pegresult_RECURSION = define_datatype
   "pegresult = peg_Success ('a) ('c) ((locs#'e) option) | peg_Failure \
    (locs) ('e)";;
-hol4_overload "Success" "peg_Success";;
-hol4_overload "Failure" "peg_Failure";;
 let isSuccess_def = define_cases
   [`isSuccess (peg_Success _4 _5 _6) = T`;
    `isSuccess (peg_Failure _7 _8) = F`];;
@@ -229,7 +218,6 @@ let wfG_def = new_definition
   `wfG G <=> (!e. e IN Gexprs G ==> wfpeg G e)`;;
 let pegf_def = new_definition
   `peg_pegf sym f = peg_seq sym (peg_empty ARB) (\l1 l2. f l1)`;;
-hol4_overload "pegf" "peg_pegf";;
 
 let ignoreL_def = new_definition
   `ignoreL s1 s2 = peg_seq s1 s2 (\a b. b)`;;
@@ -241,4 +229,3 @@ let choicel_def,choicel_ind = define_rec
   [`peg_choicel [] = peg_not (peg_empty ARB) ARB`;
    `peg_choicel (CONS h t) = peg_choice h (peg_choicel t) (\s.
   sum_CASE s I I)`];;
-hol4_overload "choicel" "peg_choicel";;

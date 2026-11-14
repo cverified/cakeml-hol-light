@@ -27,17 +27,12 @@ let live_tree_INDUCT,live_tree_RECURSION = define_datatype
   "live_tree = linear_scan_Writes (num list) | linear_scan_Reads (num \
    list) | linear_scan_Branch (live_tree) (live_tree) | \
    linear_scan_Seq (live_tree) (live_tree)";;
-hol4_overload "Writes" "linear_scan_Writes";;
-hol4_overload "Reads" "linear_scan_Reads";;
-hol4_overload "Branch" "linear_scan_Branch";;
-hol4_overload "Seq" "linear_scan_Seq";;
 
 
 let numset_list_insert_def,numset_list_insert_ind = define_rec
   [`linear_scan_numset_list_insert [] t = t`;
    `linear_scan_numset_list_insert (CONS x xs) t =
   linear_scan_numset_list_insert xs (sptree_insert x one t)`];;
-hol4_overload "numset_list_insert" "linear_scan_numset_list_insert";;
 
 let numset_list_insert_nottailrec_def,
     numset_list_insert_nottailrec_ind =
@@ -48,7 +43,8 @@ let numset_list_insert_nottailrec_def,
 
 let get_live_tree_def,get_live_tree_ind = define_rec
   [`get_live_tree (reg_alloc_Delta wr rd) =
-      Seq (linear_scan_Reads rd) (linear_scan_Writes wr)`;
+      linear_scan_Seq (linear_scan_Reads rd) (linear_scan_Writes
+        wr)`;
    `get_live_tree (reg_alloc_Set cutset) =
       (let cutlist = MAP FST (toAList cutset) in
       linear_scan_Reads cutlist)`;
@@ -57,12 +53,13 @@ let get_live_tree_def,get_live_tree_ind = define_rec
       let lt2 = get_live_tree ct2 in
       match optcutset with SOME cutset ->
           (let cutlist = MAP FST (toAList cutset) in
-          Seq (linear_scan_Reads cutlist) (Branch lt1 lt2)) |
-            NONE -> (Branch lt1 lt2))`;
+          linear_scan_Seq (linear_scan_Reads cutlist)
+            (linear_scan_Branch lt1 lt2)) | NONE ->
+            (linear_scan_Branch lt1 lt2))`;
    `get_live_tree (reg_alloc_Seq ct1 ct2) =
       (let lt2 = get_live_tree ct2 in
       let lt1 = get_live_tree ct1 in
-      Seq lt1 lt2)`];;
+      linear_scan_Seq lt1 lt2)`];;
 
 let check_live_tree_def,check_live_tree_ind = define_rec
   [`check_live_tree f (linear_scan_Writes l) live flive =
@@ -73,14 +70,15 @@ let check_live_tree_def,check_live_tree_ind = define_rec
       SOME (livein,flivein)))`;
    `check_live_tree f (linear_scan_Reads l) live flive =
       check_partial_col f l live flive`;
-   `check_live_tree f (Branch lt1 lt2:live_tree) live flive =
+   `check_live_tree f (linear_scan_Branch lt1 lt2:live_tree) live flive
+  =
       (match check_live_tree f lt1 live flive with NONE -> NONE |
         SOME (livein1,flivein1) ->
       (match check_live_tree f lt2 live flive with NONE -> NONE |
         SOME (livein2,flivein2) ->
       check_partial_col f (MAP FST (toAList (difference livein2
         livein1))) livein1 flivein1))`;
-   `check_live_tree f (Seq lt1 lt2:live_tree) live flive =
+   `check_live_tree f (linear_scan_Seq lt1 lt2:live_tree) live flive =
       (match check_live_tree f lt2 live flive with NONE -> NONE |
         SOME (livein2,flivein2) ->
         check_live_tree f lt1 livein2 flivein2)`];;
@@ -90,19 +88,19 @@ let get_live_backward_def,get_live_backward_ind = define_rec
       numset_list_delete l live`;
    `get_live_backward (linear_scan_Reads l) live =
       linear_scan_numset_list_insert l live`;
-   `get_live_backward (Branch lt1 lt2:live_tree) live =
+   `get_live_backward (linear_scan_Branch lt1 lt2:live_tree) live =
       (let live1 = get_live_backward lt1 live in
       let live2 = get_live_backward lt2 live in
       linear_scan_numset_list_insert (MAP FST (toAList
         (difference live2 live1))) live1)`;
-   `get_live_backward (Seq lt1 lt2:live_tree) live =
+   `get_live_backward (linear_scan_Seq lt1 lt2:live_tree) live =
       get_live_backward lt1 (get_live_backward lt2 live)`];;
 
 let fix_domination_def = new_definition
   `fix_domination lt =
        (let live = get_live_backward lt LN in
-       if live = LN then lt else Seq (linear_scan_Writes (MAP FST
-         (toAList live))) lt)`;;
+       if live = LN then lt else linear_scan_Seq
+         (linear_scan_Writes (MAP FST (toAList live))) lt)`;;
 
 let numset_list_add_if_def,numset_list_add_if_ind = define_rec
   [`numset_list_add_if [] (v:int) s P = s`;
@@ -125,9 +123,9 @@ let size_of_live_tree_def,size_of_live_tree_ind = define_rec
        ((&1):int)) /\ (
      size_of_live_tree (linear_scan_Reads l) =
        ((&1):int)) /\ (
-     size_of_live_tree (Branch lt1 lt2) =
+     size_of_live_tree (linear_scan_Branch lt1 lt2) =
        size_of_live_tree lt1 + size_of_live_tree lt2) /\ (
-     size_of_live_tree (Seq lt1 lt2) =
+     size_of_live_tree (linear_scan_Seq lt1 lt2) =
        size_of_live_tree lt1 + size_of_live_tree lt2)`];;
 
 let get_intervals_def,get_intervals_ind = define_rec
@@ -136,11 +134,13 @@ let get_intervals_def,get_intervals_ind = define_rec
         int_beg,numset_list_add_if_gt l n int_end)`;
    `get_intervals (linear_scan_Reads l) (n:int) int_beg int_end =
       (n - (&1),int_beg,numset_list_add_if_gt l n int_end)`;
-   `get_intervals (Branch lt1 lt2:live_tree) (n:int) int_beg int_end =
+   `get_intervals (linear_scan_Branch lt1 lt2:live_tree) (n:int) int_beg
+  int_end =
       (let (n2,int_beg2,int_end2) = get_intervals lt2 n int_beg
         int_end in
       get_intervals lt1 n2 int_beg2 int_end2)`;
-   `get_intervals (Seq lt1 lt2:live_tree) (n:int) int_beg int_end =
+   `get_intervals (linear_scan_Seq lt1 lt2:live_tree) (n:int) int_beg
+  int_end =
       (let (n2,int_beg2,int_end2) = get_intervals lt2 n int_beg
         int_end in
       get_intervals lt1 n2 int_beg2 int_end2)`];;
@@ -156,16 +156,16 @@ let get_intervals_withlive_def,get_intervals_withlive_ind = define_rec
   live =
       (n - (&1),numset_list_delete l
         int_beg,numset_list_add_if_gt l n int_end)`;
-   `get_intervals_withlive (Branch lt1 lt2:live_tree) (n:int) int_beg
-  int_end live =
+   `get_intervals_withlive (linear_scan_Branch lt1 lt2:live_tree)
+  (n:int) int_beg int_end live =
       (let (n2,int_beg2,int_end2) = get_intervals_withlive lt2 n
         int_beg int_end live in
       let (n1,int_beg1,int_end1) = get_intervals_withlive lt1 n2
         (difference int_beg2 live) int_end2 live in
       (n1,difference int_beg1 (sptree_union (get_live_backward
         lt1 live) (get_live_backward lt2 live)),int_end1))`;
-   `get_intervals_withlive (Seq lt1 lt2:live_tree) (n:int) int_beg
-  int_end live =
+   `get_intervals_withlive (linear_scan_Seq lt1 lt2:live_tree) (n:int)
+  int_beg int_end live =
       (let (n2,int_beg2,int_end2) = get_intervals_withlive lt2 n
         int_beg int_end live in
       let (n1,int_beg1,int_end1) = get_intervals_withlive lt1 n2
@@ -183,14 +183,14 @@ let check_number_property_def,check_number_property_ind = define_rec
         (let n_out = n - (&1) in
         let live_out = linear_scan_numset_list_insert l live in
         P n_out live_out)`;
-   `check_number_property (P:int->1 spt->bool) (Branch lt1
+   `check_number_property (P:int->1 spt->bool) (linear_scan_Branch lt1
   lt2:live_tree) (n:int) live =
         (let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - (size_of_live_tree
           lt2)) live in
         r1 /\ r2)`;
-   `check_number_property (P:int->1 spt->bool) (Seq lt1 lt2:live_tree)
-  (n:int) live =
+   `check_number_property (P:int->1 spt->bool) (linear_scan_Seq lt1
+  lt2:live_tree) (n:int) live =
         (let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - size_of_live_tree
           lt2) (get_live_backward lt2 live) in
@@ -208,15 +208,16 @@ let check_number_property_strong_def,check_number_property_strong_ind =
         (let n_out = n - (&1) in
         let live_out = linear_scan_numset_list_insert l live in
         P n_out live_out)`;
-   `check_number_property_strong (P:int->1 spt->bool) (Branch lt1
-  lt2:live_tree) (n:int) live =
+   `check_number_property_strong (P:int->1 spt->bool)
+  (linear_scan_Branch lt1 lt2:live_tree) (n:int) live =
         (let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n -
           (size_of_live_tree lt2)) live in
-        r1 /\ r2 /\ P (n - (size_of_live_tree (Branch lt1 lt2)))
-          (get_live_backward (Branch lt1 lt2) live))`;
-   `check_number_property_strong (P:int->1 spt->bool) (Seq lt1
-  lt2:live_tree) (n:int) live =
+        r1 /\ r2 /\ P (n - (size_of_live_tree (linear_scan_Branch
+          lt1 lt2))) (get_live_backward (linear_scan_Branch lt1 lt2)
+          live))`;
+   `check_number_property_strong (P:int->1 spt->bool) (linear_scan_Seq
+  lt1 lt2:live_tree) (n:int) live =
         (let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n -
           size_of_live_tree lt2) (get_live_backward lt2 live) in
@@ -231,12 +232,13 @@ let check_startlive_prop_def,check_startlive_prop_ind = define_rec
                            v)))) /\ (
      check_startlive_prop (linear_scan_Reads l) n beg end ndef =
          T) /\ (
-     check_startlive_prop (Branch lt1 lt2) n beg end ndef =
+     check_startlive_prop (linear_scan_Branch lt1 lt2) n beg end
+       ndef =
          (let r2 = check_startlive_prop lt2 n beg end ndef in
          let r1 = check_startlive_prop lt1 (n - (size_of_live_tree
            lt2)) beg end ndef in
          r1 /\ r2)) /\ (
-     check_startlive_prop (Seq lt1 lt2) n beg end ndef =
+     check_startlive_prop (linear_scan_Seq lt1 lt2) n beg end ndef =
          (let r2 = check_startlive_prop lt2 n beg end ndef in
          let r1 = check_startlive_prop lt1 (n - size_of_live_tree
            lt2) beg end ndef in
@@ -249,9 +251,9 @@ let live_tree_registers_def,live_tree_registers_ind = define_wf
   `MEASURE (\x0. live_tree_size x0)`
   [`live_tree_registers (linear_scan_Writes l) = set_of_list l`;
    `live_tree_registers (linear_scan_Reads l) = set_of_list l`;
-   `live_tree_registers (Branch lt1 lt2:live_tree) =
+   `live_tree_registers (linear_scan_Branch lt1 lt2:live_tree) =
   live_tree_registers lt1 UNION live_tree_registers lt2`;
-   `live_tree_registers (Seq lt1 lt2:live_tree) =
+   `live_tree_registers (linear_scan_Seq lt1 lt2:live_tree) =
   live_tree_registers lt1 UNION live_tree_registers lt2`];;
 
 let interval_intersect_def = new_definition
@@ -385,7 +387,8 @@ let set_sorted_moves_def = new_definition
    second time here (define_monad_exception_functions of
    ml_monadBaseLib); they are the same as the ones that
    reg_alloc makes, which the port uses *)
-hol4_overload "failwith" "raise_Fail";;
+(* HOL4 linear_scanScript.sml:356: the overload failwith, which the
+   port expands *)
 
 (* HOL4 linear_scanScript.sml:358-359: the ML values that the
    definitions below antiquote *)
@@ -937,7 +940,6 @@ let linear_scan_sort_moves_def,linear_scan_sort_moves_ind =
            st_ex_ignore_bind
              (linear_scan_sort_moves l (m - 1)) (
              linear_scan_sort_moves m r)))))`];;
-hol4_overload "sort_moves" "linear_scan_sort_moves";;
 
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -981,8 +983,8 @@ let linear_reg_alloc_intervals_def = new_definition
            r) phyregs)) (\
          stackphyregs. st_ex_ignore_bind
          (list_to_sorted_moves moves 0) (st_ex_ignore_bind
-         (sort_moves 0 lenmoves) (st_ex_bind (sorted_moves_to_list 0
-           lenmoves) (\
+         (linear_scan_sort_moves 0 lenmoves) (st_ex_bind
+           (sorted_moves_to_list 0 lenmoves) (\
          smoves. st_ex_bind (edges_to_adjlist (MAP SND smoves) LN) (\
          moves_adjlist. st_ex_bind (edges_to_adjlist forced LN) (\
          forced_adjlist. st_ex_bind (st_ex_FOLDL
@@ -1064,14 +1066,15 @@ let find_bijection_clash_tree_def,find_bijection_clash_tree_ind =
         rd) wr`;
    `find_bijection_clash_tree state (reg_alloc_Set cutset:clash_tree) =
       foldi (\r v acc. find_bijection_step acc r) 0 state cutset`;
-   `find_bijection_clash_tree state (Branch optcutset ct1
+   `find_bijection_clash_tree state (linear_scan_Branch optcutset ct1
   ct2:clash_tree) =
       (let state1 = find_bijection_clash_tree state ct1 in
       let state2 = find_bijection_clash_tree state1 ct2 in
         match optcutset with NONE -> state2 | SOME cutset ->
           foldi (\r v acc. find_bijection_step acc r) 0 state2
             cutset)`;
-   `find_bijection_clash_tree state (Seq ct1 ct2:clash_tree) =
+   `find_bijection_clash_tree state (linear_scan_Seq ct1 ct2:clash_tree)
+  =
       (let state1 = find_bijection_clash_tree state ct1 in
       find_bijection_clash_tree state1 ct2)`];;
 
@@ -1120,10 +1123,11 @@ let size_of_clash_tree_def,size_of_clash_tree_ind = define_rec
       ((&2:int):int)`;
    `size_of_clash_tree (reg_alloc_Set cutset:clash_tree) =
       ((&1:int):int)`;
-   `size_of_clash_tree (Branch optcutset ct1 ct2:clash_tree) = ((
+   `size_of_clash_tree (linear_scan_Branch optcutset ct1 ct2:clash_tree)
+  = ((
       (if IS_SOME optcutset then (&1) else (&0)) +
         size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`;
-   `size_of_clash_tree (Seq ct1 ct2:clash_tree) = ((
+   `size_of_clash_tree (linear_scan_Seq ct1 ct2:clash_tree) = ((
       size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`];;
 
 let run_linear_reg_alloc_intervals_def = new_definition
@@ -1143,12 +1147,13 @@ let apply_bij_on_clash_tree_def,apply_bij_on_clash_tree_ind = define_rec
    `apply_bij_on_clash_tree (reg_alloc_Set cutset:clash_tree) bij =
       reg_alloc_Set (foldi (\r _18 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN cutset)`;
-   `apply_bij_on_clash_tree (Branch optcutset ct1 ct2:clash_tree) bij =
+   `apply_bij_on_clash_tree (linear_scan_Branch optcutset ct1
+  ct2:clash_tree) bij =
       reg_alloc_Branch (OPTION_MAP (foldi (\r _34 acc.
         sptree_insert (the 0 (sptree_lookup r bij)) one acc) 0 LN)
         optcutset) (apply_bij_on_clash_tree ct1 bij)
         (apply_bij_on_clash_tree ct2 bij)`;
-   `apply_bij_on_clash_tree (Seq ct1 ct2:clash_tree) bij =
+   `apply_bij_on_clash_tree (linear_scan_Seq ct1 ct2:clash_tree) bij =
       reg_alloc_Seq (apply_bij_on_clash_tree ct1 bij)
         (apply_bij_on_clash_tree ct2 bij)`];;
 

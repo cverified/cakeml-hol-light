@@ -915,7 +915,6 @@ let stoppers_def = new_definition
         | nTyVarList -> {tokens_RparT}
         | nOptionalSignatureAscription -> UNIV DELETE tokens_SealT
         | _9 -> UNIV`;;
-hol4_overload "stoppers" "pegComplete_stoppers";;
 
 (* HOL4 pegCompleteScript.sml:897: ML code, not ported *)
 

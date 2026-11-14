@@ -2,7 +2,7 @@
 (*  comparison: ported from HOL4's
     src/finite_maps/comparisonScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 32 files of the port.  *)
+    that CakeML needs.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/ternaryComparisons.ml";;
@@ -13,9 +13,12 @@ needs "lib/toto.ml";;
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: option pair string list
    arithmetic *)
-hol4_overload "Less" "LESS";;
-hol4_overload "Equal" "EQUAL";;
-hol4_overload "Greater" "GREATER";;
+(* HOL4 comparisonScript.sml:13: the overload Less, which the port
+   expands *)
+(* HOL4 comparisonScript.sml:14: the overload Equal, which the port
+   expands *)
+(* HOL4 comparisonScript.sml:15: the overload Greater, which the port
+   expands *)
 
 let good_cmp_def = new_definition
   `good_cmp cmp <=>
@@ -36,4 +39,5 @@ let good_cmp_def = new_definition
 (* HOL4 comparisonScript.sml:58: the overload pair_cmp, which the
    port expands *)
 
-hol4_overload "num_cmp" "num_compare";;
+(* HOL4 comparisonScript.sml:68: the overload num_cmp, which the port
+   expands *)

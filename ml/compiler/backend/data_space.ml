@@ -47,12 +47,12 @@ let num_size_def,num_size_ind = define_wf
 hol4_overload "num_size" "data_space_num_size";;
 
 let part_space_req_def = define_cases
-  [`part_space_req (W64 s:const_part) = 3`;
+  [`part_space_req (closLang_W64 s:const_part) = 3`;
    `part_space_req (closLang_Int i:const_part) =
       (if num_of_int (abs i) < 2 EXP 29 then 0 else
         data_space_num_size (num_of_int (abs i)))`;
    `part_space_req (closLang_Str s:const_part) = strlen s DIV 4 + 2`;
-   `part_space_req (Con t ns:const_part) =
+   `part_space_req (closLang_Con t ns:const_part) =
       (let l = LENGTH ns in if l = 0 then 0 else l + 1)`];;
 
 let op_space_req_def = new_definition
@@ -72,7 +72,7 @@ let op_space_req_def = new_definition
         | (closLang_WordOp (FP_uop _5)) -> 3
         | (closLang_WordOp (FP_bop _6)) -> 3
         | (closLang_WordOp (FP_top _7)) -> 3
-        | (ThunkOp (AllocThunk _8)) -> l + 1
+        | (closLang_ThunkOp (AllocThunk _8)) -> l + 1
         | _9 -> 0`;;
 
 (* HOL4 data_spaceScript.sml:46-66: code that the source has in a
@@ -107,8 +107,9 @@ let space_def,space_ind = define_shaped_rec
                        dataLang_Seq (dataLang_Assign dest op args
                          NONE) c4) | _11 -> INL (dataLang_Seq d1
                          (pMakeSpace x2))))
-        | (If n c2 c3) ->
-        INL (If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
+        | (dataLang_If n c2 c3) ->
+        INL (dataLang_If n (pMakeSpace (space c2)) (pMakeSpace
+          (space c3)))
         | c -> INL c`];;
 
 let space_pmatch = prove
@@ -133,14 +134,13 @@ let space_pmatch = prove
                      list_insert args (sptree_delete dest names2),
                      dataLang_Seq (dataLang_Assign dest op args NONE)
                        c4) | _13 -> INL (dataLang_Seq d1 (pMakeSpace
-                       x2)))) | If n c2 c3 ->
-       INL (If n (pMakeSpace (space c2)) (pMakeSpace (space c3))) |
-         c -> INL c)`,
+                       x2)))) | dataLang_If n c2 c3 ->
+       INL (dataLang_If n (pMakeSpace (space c2)) (pMakeSpace
+         (space c3))) | c -> INL c)`,
   CHEAT_TAC);;
 
 let data_space_compile_def = new_definition
   `data_space_compile c = pMakeSpace (space c)`;;
-hol4_overload "compile" "data_space_compile";;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

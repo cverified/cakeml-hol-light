@@ -21,10 +21,6 @@ let _ = hol4_ancestors "db_vars" [];;
 let db_var_set_INDUCT,db_var_set_RECURSION = define_datatype
   "db_var_set = db_vars_Empty | db_vars_Var (num) | db_vars_Shift \
    (num) (db_var_set) | db_vars_Union (db_var_set) (db_var_set)";;
-hol4_overload "Empty" "db_vars_Empty";;
-hol4_overload "Var" "db_vars_Var";;
-hol4_overload "Shift" "db_vars_Shift";;
-hol4_overload "Union" "db_vars_Union";;
 
 let mk_Union_def = new_definition
   `mk_Union t1 t2 =

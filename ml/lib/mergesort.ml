@@ -2,8 +2,7 @@
 (*  mergesort: ported from HOL4's
     src/sort/mergesortScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by clos_knownProof.ml,
-    clos_knownProps.ml, mllist.ml and regexp_compiler.ml.  *)
+    that CakeML needs.  Needed by mllist.ml and regexp_compiler.ml.  *)
 (* ======================================================== *)
 
 needs "lib/sorting.ml";;
@@ -41,7 +40,6 @@ let merge_def,merge_ind = define_guess
         | ((CONS x l1),(CONS y l2)) ->
        (if R x y then CONS x (mergesort_merge R l1 (CONS y l2))
          else CONS y (mergesort_merge R (CONS x l1) l2))`];;
-hol4_overload "merge" "mergesort_merge";;
 
 let mergesortN_def,mergesortN_ind = define_wf
   `MEASURE (\(R,n,l). n)`

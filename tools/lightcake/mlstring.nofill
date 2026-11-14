@@ -1,1 +1,2 @@
 compare_aux_refl	PROOF Failure("typechecking error (overload resolution)")
+splitl_SPLITL	PROOF Failure("AP_THM_TAC")

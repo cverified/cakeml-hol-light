@@ -2,7 +2,7 @@
 (*  wordConvs: ported from HOL4's
     compiler/backend/semantics/wordConvsScript.sml
     A definition theory, with 22 definitions and 23 theorems.
-    Needed by 15 files of the port.  *)
+    Needed by 14 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -10,7 +10,6 @@
 *)
 
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
@@ -137,22 +136,22 @@ let flat_exp_conventions_def,flat_exp_conventions_ind = define_wf
         match x1 with
           // These should be converted to Insts
         wordLang_Assign v exp -> F
-        | (Store exp num') -> F
+        | (wordLang_Store exp num') -> F
         // The only place where top level (expression) vars are allowed
-        | (Set store_name (Var r)) -> T
-        | (Set store_name _1) -> F
-        | (wordLang_ShareInst op v (Var r)) -> T
-        | (wordLang_ShareInst op v (wordLang_Op asm_Add [Var r;
-          Const c])) -> T
+        | (reg_alloc_Set store_name (wordLang_Var r)) -> T
+        | (reg_alloc_Set store_name _1) -> F
+        | (wordLang_ShareInst op v (wordLang_Var r)) -> T
+        | (wordLang_ShareInst op v (wordLang_Op asm_Add
+          [wordLang_Var r; wordLang_Const c])) -> T
         | (wordLang_ShareInst op v _2) -> F
-        | (Seq p1 p2) ->
+        | (reg_alloc_Seq p1 p2) ->
        flat_exp_conventions p1 /\ flat_exp_conventions p2
-        | (Loop names c exit_names) ->
+        | (wordLang_Loop names c exit_names) ->
        flat_exp_conventions c
-        | (If cmp r1 ri e2 e3) ->
+        | (wordLang_If cmp r1 ri e2 e3) ->
        flat_exp_conventions e2 /\ flat_exp_conventions e3
         | (wordLang_MustTerminate p) -> flat_exp_conventions p
-        | (Call ret dest args h) ->
+        | (wordLang_Call ret dest args h) ->
        ((match ret with
          NONE -> T | SOME (v,cutset,ret_handler,l1,l2) ->
            flat_exp_conventions ret_handler) /\
@@ -168,30 +167,31 @@ let inst_ok_less_def = new_definition
           ((c:'a asm_config),asm_Arith (asm_Binop b r1 r2 (Imm w)))
             -> asm_config_valid_imm
        c (INL b) w
-        | (c,(Arith (asm_Shift l r1 r2 (Imm i)))) ->
+        | (c,(asm_Arith (asm_Shift l r1 r2 (Imm i)))) ->
        (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i < dimindex (:'a))
-        | (c,(Arith (asm_Div r1 r2 r3))) ->
+        | (c,(asm_Arith (asm_Div r1 r2 r3))) ->
        (asm_config_ISA c IN {ARMv8,MIPS,RISC_V})
-        | (c,(Arith (asm_LongMul r1 r2 r3 r4))) ->
+        | (c,(asm_Arith (asm_LongMul r1 r2 r3 r4))) ->
        ((asm_config_ISA c = ARMv7 ==> ~(r1 = r2)) /\
        (asm_config_ISA c = ARMv8 \/ asm_config_ISA c = RISC_V \/
          asm_config_ISA c = Ag32 ==> ~(r1 = r3) /\ ~(r1 = r4)))
-        | (c,(Arith (asm_LongDiv r1 r2 r3 r4 r5))) ->
+        | (c,(asm_Arith (asm_LongDiv r1 r2 r3 r4 r5))) ->
        (asm_config_ISA c = x86_64)
-        | (c,(Arith (asm_AddCarry r1 r2 r3 r4))) ->
+        | (c,(asm_Arith (asm_AddCarry r1 r2 r3 r4))) ->
        (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
          ==> ~(r1 = r3) /\ ~(r1 = r4))
-        | (c,(Arith (asm_AddOverflow r1 r2 r3 r4))) ->
+        | (c,(asm_Arith (asm_AddOverflow r1 r2 r3 r4))) ->
        (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
          ==> ~(r1 = r3))
-        | (c,(Arith (asm_SubOverflow r1 r2 r3 r4))) ->
+        | (c,(asm_Arith (asm_SubOverflow r1 r2 r3 r4))) ->
        (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
          ==> ~(r1 = r3))
         | (c,(asm_Mem m r (Addr r' w))) ->
         (if m IN
-          {Load,Store,asm_Load16,asm_Store16,asm_Load32,asm_Store32}
-          then (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w else
-          if m IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
+          {wordLang_Load,wordLang_Store,asm_Load16,asm_Store16
+          ,asm_Load32,asm_Store32} then (\c. asm_offset_ok 0
+          (asm_config_addr_offset c)) c w else if m IN
+          {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
           (asm_config_hw_offset c)) c w else (\c. asm_offset_ok 0
           (asm_config_byte_offset c)) c w)
         | (c,(asm_FP (FPLess r d1 d2))) -> fp_reg_ok d1 c /\
@@ -241,11 +241,11 @@ let distinct_tar_reg_def = new_definition
   `distinct_tar_reg x1 =
         match x1 with
           asm_Arith (asm_Binop bop r1 r2 ri) -> ~(ri = Reg r1)
-        | (Arith (asm_Shift l r1 r2 ri)) -> ~(ri = Reg r1)
-        | (Arith (asm_AddCarry r1 r2 r3 r4)) -> ~(r1 = r3) /\ ~(r1 =
-          r4)
-        | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
-        | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
+        | (asm_Arith (asm_Shift l r1 r2 ri)) -> ~(ri = Reg r1)
+        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> ~(r1 = r3) /\
+          ~(r1 = r4)
+        | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
+        | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
         | _6 -> T`;;
 
 (***
@@ -255,10 +255,10 @@ let two_reg_inst_def = new_definition
   `two_reg_inst x1 =
         match x1 with
           asm_Arith (asm_Binop bop r1 r2 ri) -> (r1 = r2)
-        | (Arith (asm_Shift l r1 r2 ri)) -> (r1 = r2)
-        | (Arith (asm_AddCarry r1 r2 r3 r4)) -> (r1 = r2)
-        | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> (r1 = r2)
-        | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> (r1 = r2)
+        | (asm_Arith (asm_Shift l r1 r2 ri)) -> (r1 = r2)
+        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> (r1 = r2)
+        | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) -> (r1 = r2)
+        | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) -> (r1 = r2)
         | _7 -> T`;;
 
 (*** Recursor over instructions ***)
@@ -270,14 +270,16 @@ let every_inst_def,every_inst_ind = define_wf
   [`every_inst P prog =
         match prog with
           wordLang_Inst i -> P i
-        | (Seq p1 p2) -> (every_inst P p1 /\ every_inst P p2)
-        | (Loop names c exit_names) ->
+        | (reg_alloc_Seq p1 p2) -> (every_inst P p1 /\ every_inst P
+          p2)
+        | (wordLang_Loop names c exit_names) ->
        every_inst P c
-        | (If cmp r1 ri c1 c2) -> every_inst P c1 /\ every_inst P c2
-        | (OpCurrHeap bop r1 r2) -> P (Arith (asm_Binop bop r1 r2
-          (Reg r2)))
+        | (wordLang_If cmp r1 ri c1 c2) -> every_inst P c1 /\
+          every_inst P c2
+        | (wordLang_OpCurrHeap bop r1 r2) -> P (asm_Arith (asm_Binop
+          bop r1 r2 (Reg r2)))
         | (wordLang_MustTerminate p) -> every_inst P p
-        | (Call ret dest args handler) -> (match ret with
+        | (wordLang_Call ret dest args handler) -> (match ret with
            NONE -> T | SOME (n,names,ret_handler,l1,l2) ->
              every_inst P ret_handler /\
          (match handler with
@@ -293,23 +295,24 @@ let full_inst_ok_less_def,full_inst_ok_less_ind = define_wf
   [`full_inst_ok_less c prog =
         match prog with
           wordLang_Inst i -> inst_ok_less c i
-        | (Seq p1 p2) ->
+        | (reg_alloc_Seq p1 p2) ->
        (full_inst_ok_less c p1 /\ full_inst_ok_less c p2)
-        | (Loop names p exit_names) ->
+        | (wordLang_Loop names p exit_names) ->
        (full_inst_ok_less c p)
-        | (If cmp r1 ri c1 c2) ->
+        | (wordLang_If cmp r1 ri c1 c2) ->
        (full_inst_ok_less c c1 /\ full_inst_ok_less c c2)
         | (wordLang_MustTerminate p) -> full_inst_ok_less c p
-        | (Call ret dest args handler) -> (match ret with
+        | (wordLang_Call ret dest args handler) -> (match ret with
            NONE -> T | SOME (n,names,ret_handler,l1,l2) ->
              full_inst_ok_less c ret_handler /\
          (match handler with
            NONE -> T | SOME (n,h,l1,l2) -> full_inst_ok_less c h))
         | (wordLang_ShareInst op r ad) ->
        (match exp_to_addr ad with SOME (Addr _8 w) ->
-         (if op IN {Load,Store,asm_Load32,asm_Store32} then (\c.
-           asm_offset_ok 0 (asm_config_addr_offset c)) c w else if op
-           IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
+         (if op IN
+           {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
+           (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w else if
+           op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
            (asm_config_hw_offset c)) c w else (\c. asm_offset_ok 0
            (asm_config_byte_offset c)) c w) | NONE -> F)
         | prog -> T`];;
@@ -327,8 +330,8 @@ let wf_cutsets_def,wf_cutsets_ind = define_wf
   [`wf_cutsets x1 =
         match x1 with
           wordLang_Alloc n s -> wf_names s
-        | (Install _9 _10 _11 _12 s) -> wf_names s
-        | (Call ret dest args h) ->
+        | (wordLang_Install _9 _10 _11 _12 s) -> wf_names s
+        | (wordLang_Call ret dest args h) ->
        (match ret with
          NONE -> T | SOME (v,cutset,ret_handler,l1,l2) ->
          wf_names cutset /\
@@ -336,13 +339,13 @@ let wf_cutsets_def,wf_cutsets_ind = define_wf
          (match h with
            NONE -> T | SOME (v,prog,l1,l2) ->
            wf_cutsets prog))
-        | (FFI x1 y1 x2 y2 z args) -> wf_names args
+        | (wordLang_FFI x1 y1 x2 y2 z args) -> wf_names args
         | (wordLang_MustTerminate s) -> wf_cutsets s
-        | (Seq s1 s2) ->
+        | (reg_alloc_Seq s1 s2) ->
        (wf_cutsets s1 /\ wf_cutsets s2)
-        | (Loop names p exit_names) ->
+        | (wordLang_Loop names p exit_names) ->
        sptree_wf names /\ sptree_wf exit_names /\ wf_cutsets p
-        | (If cmp r1 ri e2 e3) ->
+        | (wordLang_If cmp r1 ri e2 e3) ->
        (wf_cutsets e2 /\
         wf_cutsets e3)
         | _13 -> T`];;
@@ -352,15 +355,15 @@ let inst_arg_convention_def = new_definition
   `inst_arg_convention x1 =
         match x1 with
           asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r4 = 0
-        | (Arith (asm_Shift _14 _15 _16 (Reg r))) -> r = 8
+        | (asm_Arith (asm_Shift _14 _15 _16 (Reg r))) -> r = 8
         // Note: these are not necessary
-        | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> r4 = 0
-        | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> r4 = 0
-        | (Arith (asm_LongMul r1 r2 r3 r4)) -> r1 = 6 /\ r2 = 0 /\ r3
-          = 0 /\ r4 = 4
+        | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) -> r4 = 0
+        | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) -> r4 = 0
+        | (asm_Arith (asm_LongMul r1 r2 r3 r4)) -> r1 = 6 /\ r2 = 0
+          /\ r3 = 0 /\ r4 = 4
         // LongDiv follows conventions for x86 as it is the only possibility
-        | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> r1 = 0 /\ r2 = 6 /\
-          r3 = 6 /\ r4 = 0
+        | (asm_Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> r1 = 0 /\ r2 =
+          6 /\ r3 = 6 /\ r4 = 0
         | _17 -> T`;;
 
 (*** Calling conventions ***)
@@ -373,16 +376,18 @@ let call_arg_convention_def,call_arg_convention_ind = define_wf
         match p with
           wordLang_Inst i ->
        inst_arg_convention i
-        | (Return x ys) -> (ys = list_of_seq (\x. 2 * (x + 1))
-          (LENGTH ys))
-        | (Raise y) -> (y = 2)
-        | (Install ptr len _18 _19 _20) -> (ptr = 2 /\ len = 4)
-        | (FFI x ptr len ptr2 len2 args) -> (ptr = 2 /\ len = 4 /\
+        | (wordLang_Return x ys) -> (ys = list_of_seq (\x. 2 * (x +
+          1)) (LENGTH ys))
+        | (wordLang_Raise y) -> (y = 2)
+        | (wordLang_Install ptr len _18 _19 _20) -> (ptr = 2 /\ len
+          = 4)
+        | (wordLang_FFI x ptr len ptr2 len2 args) -> (ptr = 2 /\ len
+          = 4 /\
                               ptr2 = 6 /\ len2 = 8)
-        | (Alloc n s) -> (n = 2)
-        | (StoreConsts a b c d ws) ->
+        | (wordLang_Alloc n s) -> (n = 2)
+        | (wordLang_StoreConsts a b c d ws) ->
        ((a = 0) /\ (b = 2) /\ (c = 4) /\ (d = 6))
-        | (Call ret dest args h) ->
+        | (wordLang_Call ret dest args h) ->
        (match ret with
          NONE -> args = list_of_seq (\x. 2 * x) (LENGTH args) | SOME
            (vs,cutset,ret_handler,l1,l2) ->
@@ -395,11 +400,11 @@ let call_arg_convention_def,call_arg_convention_ind = define_wf
          (v = 2) /\ call_arg_convention prog))
         | (wordLang_MustTerminate s1) ->
        call_arg_convention s1
-        | (Seq s1 s2) ->
+        | (reg_alloc_Seq s1 s2) ->
        (call_arg_convention s1 /\ call_arg_convention s2)
-        | (Loop names p exit_names) ->
+        | (wordLang_Loop names p exit_names) ->
        call_arg_convention p
-        | (If cmp r1 ri e2 e3) ->
+        | (wordLang_If cmp r1 ri e2 e3) ->
        (call_arg_convention e2 /\
         call_arg_convention e3)
         | p -> T`];;
@@ -435,15 +440,14 @@ let extract_labels_def,extract_labels_ind = define_wf
          (let h_rest = wordConvs_extract_labels prog in APPEND
            (APPEND [(l1,l2); (l1',l2')] ret_rest) h_rest))))
         | (wordLang_MustTerminate s1) -> wordConvs_extract_labels s1
-        | (Seq s1 s2) -> APPEND (wordConvs_extract_labels s1)
-          (wordConvs_extract_labels s2)
-        | (Loop names p exit_names) ->
+        | (reg_alloc_Seq s1 s2) -> APPEND (wordConvs_extract_labels
+          s1) (wordConvs_extract_labels s2)
+        | (wordLang_Loop names p exit_names) ->
        wordConvs_extract_labels p
-        | (If cmp r1 ri e2 e3) ->
+        | (wordLang_If cmp r1 ri e2 e3) ->
        (APPEND (wordConvs_extract_labels e2)
          (wordConvs_extract_labels e3))
         | _21 -> []`];;
-hol4_overload "extract_labels" "wordConvs_extract_labels";;
 
 (*** Property on max_var ***)
 (* [local] *)
@@ -473,15 +477,16 @@ let get_code_labels_def,get_code_labels_ind = define_wf
          wordConvs_get_code_labels x | _27 -> {}) UNION
        (match h with SOME (_28,x,l1,l2) -> wordConvs_get_code_labels
          x | _29 -> {})
-        | (Seq p1 p2) -> wordConvs_get_code_labels p1 UNION
-          wordConvs_get_code_labels p2
-        | (Loop names p exit_names) -> wordConvs_get_code_labels p
-        | (If _30 _31 _32 p1 p2) -> wordConvs_get_code_labels p1
+        | (reg_alloc_Seq p1 p2) -> wordConvs_get_code_labels p1
           UNION wordConvs_get_code_labels p2
+        | (wordLang_Loop names p exit_names) ->
+          wordConvs_get_code_labels p
+        | (wordLang_If _30 _31 _32 p1 p2) ->
+          wordConvs_get_code_labels p1 UNION wordConvs_get_code_labels
+          p2
         | (wordLang_MustTerminate p) -> wordConvs_get_code_labels p
-        | (LocValue _33 l1) -> {l1}
+        | (wordLang_LocValue _33 l1) -> {l1}
         | _34 -> {}`];;
-hol4_overload "get_code_labels" "wordConvs_get_code_labels";;
 
 (*** TODO: This seems like it must have been established before
   handler labels point only within the current table entry
@@ -499,9 +504,10 @@ let good_handlers_def,good_handlers_ind = define_wf
            /\
        (match h with SOME (_39,x,l1,_40) -> l1 = n /\ good_handlers
          n x | _41 -> T))
-        | (Seq p1 p2) -> good_handlers n p1 /\ good_handlers n p2
-        | (Loop names p exit_names) -> good_handlers n p
-        | (If _42 _43 _44 p1 p2) -> good_handlers n p1 /\
+        | (reg_alloc_Seq p1 p2) -> good_handlers n p1 /\
+          good_handlers n p2
+        | (wordLang_Loop names p exit_names) -> good_handlers n p
+        | (wordLang_If _42 _43 _44 p1 p2) -> good_handlers n p1 /\
           good_handlers n p2
         | (wordLang_MustTerminate p) -> good_handlers n p
         | _45 -> T`];;
@@ -512,7 +518,6 @@ let good_code_labels_def = new_definition
    (UNIONS (set_of_list (MAP (\(n,m,pp). (wordConvs_get_code_labels
      pp)) p))) SUBSET
    (set_of_list (MAP FST p) UNION elabs)`;;
-hol4_overload "good_code_labels" "wordConvs_good_code_labels";;
 
 (*** not_created_subprogs ***)
 
@@ -526,26 +531,29 @@ let not_created_subprogs_def,not_created_subprogs_ind = define_wf
   [`not_created_subprogs P x2 =
       match x2 with
         (wordLang_MustTerminate p:'a wordLang_prog) ->
-     (P (wordLang_MustTerminate (Skip:'a wordLang_prog)) /\
+     (P (wordLang_MustTerminate (wordLang_Skip:'a wordLang_prog)) /\
        not_created_subprogs P p)
-      | (Seq p1 p2) -> (not_created_subprogs P p1 /\
+      | (reg_alloc_Seq p1 p2) -> (not_created_subprogs P p1 /\
      not_created_subprogs P p2)
-      | (Loop names c exit_names) ->
+      | (wordLang_Loop names c exit_names) ->
      (not_created_subprogs P c)
-      | (If _46 _47 _48 p1 p2) -> (not_created_subprogs P p1 /\
+      | (wordLang_If _46 _47 _48 p1 p2) -> (not_created_subprogs P
+        p1 /\
      not_created_subprogs P p2)
       | (wordLang_Call r dest args h) ->
      (P (wordLang_Call NONE dest [] NONE) /\
      (match r with NONE -> T | SOME (_49,_50,p,_51) ->
        not_created_subprogs P p) /\
      (match h with NONE -> T | SOME (_52,p,h1,_53) ->
-         P (wordLang_Call NONE NONE [] (SOME (0,Skip,h1,0))) /\
+         P (wordLang_Call NONE NONE [] (SOME
+           (0,wordLang_Skip,h1,0))) /\
          not_created_subprogs P p))
-      | (Alloc _54 _55) -> P (Alloc 0 (LN,LN))
-      | (LocValue _56 l) -> P (LocValue 0 l)
+      | (wordLang_Alloc _54 _55) -> P (wordLang_Alloc 0 (LN,LN))
+      | (wordLang_LocValue _56 l) -> P (wordLang_LocValue 0 l)
       | (wordLang_ShareInst _57 _58 _59) -> P (wordLang_ShareInst
-        ARB 0 (Var 0))
-      | (Install _60 _61 _62 _63 _64) -> P (Install 0 0 0 0 (LN,LN))
+        ARB 0 (wordLang_Var 0))
+      | (wordLang_Install _60 _61 _62 _63 _64) -> P
+        (wordLang_Install 0 0 0 0 (LN,LN))
       | _65 -> T`];;
 
 (* HOL4 wordConvsScript.sml:558-562: a theorem that HOL4 states as
@@ -557,8 +565,8 @@ let not_created_subprogs_def,not_created_subprogs_ind = define_wf
    below antiquote *)
 
 let no_alloc_subprogs_def = new_definition
-  `no_alloc p = not_created_subprogs (((\x y. ~(x = y)) (Alloc 0
-  (LN,LN)))) p`;;
+  `no_alloc p = not_created_subprogs (((\x y. ~(x = y))
+  (wordLang_Alloc 0 (LN,LN)))) p`;;
 
 (* HOL4 wordConvsScript.sml:572-574: a theorem that HOL4 states as
    the value of an ML expression: no_alloc_def *)
@@ -568,8 +576,7 @@ let no_alloc_subprogs_def = new_definition
 
 let no_install_subprogs_def = new_definition
   `wordConvs_no_install p = not_created_subprogs (((\x y. ~(x = y))
-  (Install 0 0 0 0 (LN,LN)))) p`;;
-hol4_overload "no_install" "wordConvs_no_install";;
+  (wordLang_Install 0 0 0 0 (LN,LN)))) p`;;
 
 (* HOL4 wordConvsScript.sml:582-584: a theorem that HOL4 states as
    the value of an ML expression: no_install_def *)
@@ -593,7 +600,7 @@ let no_mt_subprogs_def = new_definition
 
 let no_share_inst_subprogs_def = new_definition
   `no_share_inst p = not_created_subprogs (((\x y. ~(x = y))
-  (wordLang_ShareInst ARB 0 (Var 0)))) p`;;
+  (wordLang_ShareInst ARB 0 (wordLang_Var 0)))) p`;;
 
 (* HOL4 wordConvsScript.sml:606-608: a theorem that HOL4 states as
    the value of an ML expression: no_share_inst_def *)

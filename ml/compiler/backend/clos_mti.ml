@@ -14,7 +14,6 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -65,10 +64,10 @@ let collect_apps_def,collect_apps_ind = define_wf
   `MEASURE (\(x0,x1,x2). closLang_exp_size x2)`
   [`collect_apps max_app args e =
         match e with
-          (App tra NONE e es:closLang_exp) ->
+          (closLang_App tra NONE e es:closLang_exp) ->
        (if LENGTH args + LENGTH es <= max_app then
          collect_apps max_app (APPEND args es) e else
-         (args,App tra NONE e es))
+         (args,closLang_App tra NONE e es))
         | e -> (args,e)`];;
 
 (* HOL4 clos_mtiScript.sml:70: ML code, not ported *)
@@ -105,30 +104,30 @@ let intro_multi_def,intro_multi_ind = define_guess_cheat
         | (CONS e1 (CONS e2 es)) -> CONS (HD (intro_multi max_app
           [e1])) (CONS (HD (intro_multi max_app [e2])) (intro_multi
           max_app es))
-        | [(Var t n:closLang_exp)] -> [Var t n]
-        | [If t e1 e2 e3] ->
-      [If t (HD (intro_multi max_app [e1]))
+        | [(closLang_Var t n:closLang_exp)] -> [closLang_Var t n]
+        | [closLang_If t e1 e2 e3] ->
+      [closLang_If t (HD (intro_multi max_app [e1]))
             (HD (intro_multi max_app [e2]))
             (HD (intro_multi max_app [e3]))]
-        | [Let t es e] ->
-       [Let t (intro_multi max_app es) (HD (intro_multi max_app
-         [e]))]
-        | [Raise t e] ->
-       [Raise t (HD (intro_multi max_app [e]))]
-        | [Handle t e1 e2] ->
-       [Handle t (HD (intro_multi max_app [e1])) (HD (intro_multi
-         max_app [e2]))]
+        | [closLang_Let t es e] ->
+       [closLang_Let t (intro_multi max_app es) (HD (intro_multi
+         max_app [e]))]
+        | [closLang_Raise t e] ->
+       [closLang_Raise t (HD (intro_multi max_app [e]))]
+        | [closLang_Handle t e1 e2] ->
+       [closLang_Handle t (HD (intro_multi max_app [e1])) (HD
+         (intro_multi max_app [e2]))]
         | [closLang_Tick t e] ->
        [closLang_Tick t (HD (intro_multi max_app [e]))]
         | [closLang_Call t ticks n es] ->
        [closLang_Call t ticks n (intro_multi max_app es)]
-        | [App t NONE e es] ->
+        | [closLang_App t NONE e es] ->
        (let (es',e') = collect_apps max_app es e in
-         [App t NONE (HD (intro_multi max_app [e'])) (intro_multi
-           max_app es')])
-        | [App t (SOME l) e es] ->
-       [App t (SOME l) (HD (intro_multi max_app [e])) (intro_multi
-         max_app es)]
+         [closLang_App t NONE (HD (intro_multi max_app [e']))
+           (intro_multi max_app es')])
+        | [closLang_App t (SOME l) e es] ->
+       [closLang_App t (SOME l) (HD (intro_multi max_app [e]))
+         (intro_multi max_app es)]
         | [closLang_Fn t NONE NONE num_args e] ->
        (let (num_args',e') = collect_args max_app num_args e in
          [closLang_Fn t NONE NONE num_args' (HD (intro_multi max_app
@@ -136,20 +135,20 @@ let intro_multi_def,intro_multi_ind = define_guess_cheat
         | [closLang_Fn t loc fvs num_args e] ->
          [closLang_Fn t loc fvs num_args (HD (intro_multi max_app
            [e]))]
-        | [Letrec t NONE NONE funs e] ->
-       [Letrec t NONE NONE (MAP (\(num_args,e).
+        | [closLang_Letrec t NONE NONE funs e] ->
+       [closLang_Letrec t NONE NONE (MAP (\(num_args,e).
                               let (num_args',e') = collect_args
                                 max_app num_args e in
                               (num_args',HD (intro_multi max_app
                                 [e'])))
                              funs)
                (HD (intro_multi max_app [e]))]
-        | [Letrec t (SOME loc) fvs funs e] ->
-        [Letrec t (SOME loc) fvs funs (HD (intro_multi max_app
-          [e]))]
-        | [Letrec t NONE (SOME fvs) funs e] ->
-        [Letrec t NONE (SOME fvs) funs (HD (intro_multi max_app
-          [e]))]
+        | [closLang_Letrec t (SOME loc) fvs funs e] ->
+        [closLang_Letrec t (SOME loc) fvs funs (HD (intro_multi
+          max_app [e]))]
+        | [closLang_Letrec t NONE (SOME fvs) funs e] ->
+        [closLang_Letrec t NONE (SOME fvs) funs (HD (intro_multi
+          max_app [e]))]
         | [closLang_Op t op es] ->
        [closLang_Op t op (intro_multi max_app es)]`];;
 
@@ -192,12 +191,10 @@ let intro_multi_idem = prove
 let clos_mti_compile_def = define_general
   [`clos_mti_compile F max_app exps = exps`;
    `clos_mti_compile T max_app exps = intro_multi max_app exps`];;
-hol4_overload "compile" "clos_mti_compile";;
 
 let clos_mti_compile_inc_def = new_definition
   `clos_mti_compile_inc max_app (e,es) =
      (intro_multi max_app e,[])`;;
-hol4_overload "compile_inc" "clos_mti_compile_inc";;
 
 let cond_mti_compile_inc_def = new_definition
   `cond_mti_compile_inc do_it max_app =

@@ -15,7 +15,6 @@ needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -48,7 +47,6 @@ let EVERY_remove_fvs_SING = prove
 let clos_fvsProof_code_rel_def = new_definition
   `clos_fvsProof_code_rel fvs e1 e2 <=>
      e2 = remove_fvs fvs e1`;;
-hol4_overload "code_rel" "clos_fvsProof_code_rel";;
 
 let code_rel_IMP_LENGTH = prove
  (`!xs ys. clos_fvsProof_code_rel fvs xs ys ==> LENGTH xs = LENGTH ys`,
@@ -66,11 +64,10 @@ let code_rel_CONS_CONS = prove
 let f_rel_def = new_definition
   `clos_fvsProof_f_rel fvs (a1,e1) (a2,e2) <=>
       a1 = a2 /\ clos_fvsProof_code_rel (a1 + fvs) [e1] [e2]`;;
-hol4_overload "f_rel" "clos_fvsProof_f_rel";;
 
 let clos_fvsProof_v_rel = cake_inductive
   `(!i. clos_fvsProof_v_rel (closSem_Number i) (closSem_Number i)) /\
-   (!w. clos_fvsProof_v_rel (Word64 w) (Word64 w)) /\
+   (!w. clos_fvsProof_v_rel (closSem_Word64 w) (closSem_Word64 w)) /\
    (!w. clos_fvsProof_v_rel (closSem_ByteVector w)
      (closSem_ByteVector w)) /\
    (!n b. clos_fvsProof_v_rel (closSem_RefPtr b n) (closSem_RefPtr b
@@ -83,16 +80,15 @@ let clos_fvsProof_v_rel = cake_inductive
       ALL2 clos_fvsProof_v_rel env1 env2 /\
       ALL2 clos_fvsProof_v_rel args1 args2 /\
       clos_fvsProof_code_rel (LENGTH env1 + num_args) [e1] [e2] ==>
-        clos_fvsProof_v_rel (Closure loc args1 env1 num_args e1)
-          (Closure loc args2 env2 num_args e2)) /\
+        clos_fvsProof_v_rel (closSem_Closure loc args1 env1 num_args
+          e1) (closSem_Closure loc args2 env2 num_args e2)) /\
    (!loc args1 args2 env1 env2 k.
       ALL2 clos_fvsProof_v_rel env1 env2 /\
       ALL2 clos_fvsProof_v_rel args1 args2 /\
       ALL2 (clos_fvsProof_f_rel (LENGTH env1 + LENGTH funs1)) funs1
         funs2 ==>
-        clos_fvsProof_v_rel (Recclosure loc args1 env1 funs1 k)
-          (Recclosure loc args2 env2 funs2 k))`;;
-hol4_overload "v_rel" "clos_fvsProof_v_rel";;
+        clos_fvsProof_v_rel (closSem_Recclosure loc args1 env1
+          funs1 k) (closSem_Recclosure loc args2 env2 funs2 k))`;;
 
 (* HOL4 clos_fvsProofScript.sml:81-93: a theorem that HOL4 states as
    the value of an ML expression: v_rel_simps *)
@@ -108,8 +104,8 @@ let clos_fvsProof_ref_rel = cake_inductive
        (closSem_ValueArray ys)) /\
    (!m v w.
      clos_fvsProof_v_rel v w ==>
-     clos_fvsProof_ref_rel (Thunk m v) (Thunk m w))`;;
-hol4_overload "ref_rel" "clos_fvsProof_ref_rel";;
+     clos_fvsProof_ref_rel (closSem_Thunk m v) (closSem_Thunk m
+       w))`;;
 
 let clos_fvsProof_state_rel_def = new_definition
   `clos_fvsProof_state_rel (s:('c,'ffi)closSem_state)
@@ -124,13 +120,12 @@ let clos_fvsProof_state_rel_def = new_definition
      t = closSem_state_ffi s /\
      ALL2 (OPTREL clos_fvsProof_v_rel) (closSem_state_globals s)
        (closSem_state_globals t) /\
-     fmap_rel ref_rel (closSem_state_refs s) (closSem_state_refs t)
-       /\ closSem_state_compile
+     fmap_rel clos_fvsProof_ref_rel (closSem_state_refs s)
+       (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc clos_fvs_compile_inc (closSem_state_compile t) /\
        closSem_state_compile_oracle
      t = pure_co clos_fvs_compile_inc o
        closSem_state_compile_oracle s`;;
-hol4_overload "state_rel" "clos_fvsProof_state_rel";;
 
 (* *)
 
@@ -138,9 +133,9 @@ hol4_overload "state_rel" "clos_fvsProof_state_rel";;
 let clos_fvsProof_v_rel_IMP_v_to_bytes_lemma = prove
  (`!x y.
      clos_fvsProof_v_rel x y ==>
-     (!ns. (v_to_list x = SOME (MAP (closSem_Number o (&) o
+     (!ns. (closSem_v_to_list x = SOME (MAP (closSem_Number o (&) o
        (w2n:word8->num)) ns)) <=>
-          (v_to_list y = SOME (MAP (closSem_Number o (&) o
+          (closSem_v_to_list y = SOME (MAP (closSem_Number o (&) o
             (w2n:word8->num)) ns)))`,
   CHEAT_TAC);;
 
@@ -154,8 +149,8 @@ let v_rel_IMP_v_to_bytes = prove
 let clos_fvsProof_v_rel_IMP_v_to_words_lemma = prove
  (`!x y.
      clos_fvsProof_v_rel x y ==>
-     (!ns. (v_to_list x = SOME (MAP Word64 ns)) <=>
-          (v_to_list y = SOME (MAP Word64 ns)))`,
+     (!ns. (closSem_v_to_list x = SOME (MAP closSem_Word64 ns)) <=>
+          (closSem_v_to_list y = SOME (MAP closSem_Word64 ns)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -183,10 +178,10 @@ let clos_fvsProof_find_code_lemma = prove
 
 let dest_closure_SOME_IMP = prove
  (`dest_closure max_app loc_opt f2 xs = SOME x ==>
-    (?loc arg_env clo_env num_args e. f2 = Closure loc arg_env
-      clo_env num_args e) \/
-    (?loc arg_env clo_env fns i. f2 = Recclosure loc arg_env
-      clo_env fns i)`,
+    (?loc arg_env clo_env num_args e. f2 = closSem_Closure loc
+      arg_env clo_env num_args e) \/
+    (?loc arg_env clo_env fns i. f2 = closSem_Recclosure loc
+      arg_env clo_env fns i)`,
   CHEAT_TAC);;
 
 let dest_closure_SOME_Full_app = prove
@@ -211,12 +206,13 @@ let simple_state_rel = prove
 (* do_app_lemma[local] *)
 let clos_fvsProof_do_app_lemma = prove
  (`clos_fvsProof_state_rel s t /\ ALL2 clos_fvsProof_v_rel xs ys ==>
-   (match do_app opp xs s with Rerr err1 -> (?err2. do_app opp ys t =
-     Rerr err2 /\
+   (match closSem_do_app opp xs s with Rerr err1 -> (?err2.
+     closSem_do_app opp ys t = Rerr err2 /\
                            exc_rel clos_fvsProof_v_rel err1 err2) |
                              Rval (x,s1) -> (?y t1. clos_fvsProof_v_rel
                              x y /\ clos_fvsProof_state_rel s1 t1 /\
-                              do_app opp ys t = Rval (y,t1)))`,
+                              closSem_do_app opp ys t = Rval
+                                (y,t1)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -237,12 +233,12 @@ let do_install_lemma = prove
 (* state_rel_opt_rel_refs[local] *)
 let clos_fvsProof_state_rel_opt_rel_refs = prove
  (`(clos_fvsProof_state_rel s1 s2 /\ FLOOKUP (state_refs s1) n = r1 ==>
-      (?r2. FLOOKUP (state_refs s2) n = r2 /\ OPTREL ref_rel r1 r2))
-        /\
+      (?r2. FLOOKUP (state_refs s2) n = r2 /\ OPTREL
+        clos_fvsProof_ref_rel r1 r2)) /\
    (clos_fvsProof_state_rel s1 s2 /\ FLOOKUP (state_refs s2) n = r2
      ==>
-      (?r1. FLOOKUP (state_refs s1) n = r1 /\ OPTREL ref_rel r1
-        r2))`,
+      (?r1. FLOOKUP (state_refs s1) n = r1 /\ OPTREL
+        clos_fvsProof_ref_rel r1 r2))`,
   CHEAT_TAC);;
 
 (* state_rel_clocks_eqs[local] *)
@@ -260,14 +256,14 @@ let clos_fvsProof_state_rel_dec_clock = prove
 let clos_fvsProof_rel_update_thunk = prove
  (`clos_fvsProof_state_rel s1 s2 /\
    ALL2 clos_fvsProof_v_rel vs ys ==>
-     (update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = NONE
-       ==>
-        update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys =
-          NONE) /\
-     (update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = SOME
-       refs1 ==>
-        (?refs2. update_thunk [closSem_RefPtr v ptr] (state_refs s2)
-          ys = SOME refs2 /\
+     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs
+       = NONE ==>
+        closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s2)
+          ys = NONE) /\
+     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs
+       = SOME refs1 ==>
+        (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
+          (state_refs s2) ys = SOME refs2 /\
                 clos_fvsProof_state_rel (state_refs_fupd (K refs1)
                   s1) (state_refs_fupd (K refs2) s2)))`,
   CHEAT_TAC);;

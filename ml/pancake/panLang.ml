@@ -53,12 +53,9 @@ let panop_INDUCT,panop_RECURSION = define_datatype
    // Div |\n\
    panLang_Mul \
    // | Mod";;
-hol4_overload "Mul" "panLang_Mul";;
 
 let varkind_INDUCT,varkind_RECURSION = define_datatype
   "varkind = panLang_Local | panLang_Global";;
-hol4_overload "Local" "panLang_Local";;
-hol4_overload "Global" "panLang_Global";;
 
 let panLang_exp_INDUCT,panLang_exp_RECURSION = define_datatype
   "panLang_exp = panLang_Const ('a word) | panLang_Var (varkind) \
@@ -72,29 +69,12 @@ let panLang_exp_INDUCT,panLang_exp_RECURSION = define_datatype
    (panLang_exp list) | panLang_Cmp (cmp) (panLang_exp) (panLang_exp) \
    | panLang_Shift (ast_shift) (panLang_exp) (panLang_exp) | \
    panLang_BaseAddr | panLang_TopAddr | panLang_BytesInWord";;
-hol4_overload "Const" "panLang_Const";;
-hol4_overload "Var" "panLang_Var";;
-hol4_overload "RStruct" "panLang_RStruct";;
-hol4_overload "RField" "panLang_RField";;
-hol4_overload "NStruct" "panLang_NStruct";;
-hol4_overload "NField" "panLang_NField";;
-hol4_overload "Load" "panLang_Load";;
-hol4_overload "Load32" "panLang_Load32";;
-hol4_overload "LoadByte" "panLang_LoadByte";;
-hol4_overload "Op" "panLang_Op";;
-hol4_overload "Panop" "panLang_Panop";;
-hol4_overload "Cmp" "panLang_Cmp";;
-hol4_overload "Shift" "panLang_Shift";;
-hol4_overload "BaseAddr" "panLang_BaseAddr";;
-hol4_overload "TopAddr" "panLang_TopAddr";;
-hol4_overload "BytesInWord" "panLang_BytesInWord";;
 
 let opsize_INDUCT,opsize_RECURSION = define_datatype
   "opsize = Op8 | OpW | Op32 | Op16";;
 
 let primop_INDUCT,primop_RECURSION = define_datatype
   "primop = panLang_AddCarry";;
-hol4_overload "AddCarry" "panLang_AddCarry";;
 
 let panLang_prog_INDUCT,panLang_prog_RECURSION = define_datatype
   "panLang_prog = panLang_Skip | panLang_Dec (mlstring) (shape) ('a \
@@ -123,27 +103,6 @@ let panLang_prog_INDUCT,panLang_prog_RECURSION = define_datatype
    panLang_exp) | panLang_ShMemLoad (opsize) (varkind) (mlstring) ('a \
    panLang_exp) | panLang_ShMemStore (opsize) ('a panLang_exp) ('a \
    panLang_exp) | panLang_Tick | panLang_Annot (mlstring) (mlstring)";;
-hol4_overload "Skip" "panLang_Skip";;
-hol4_overload "Dec" "panLang_Dec";;
-hol4_overload "Assign" "panLang_Assign";;
-hol4_overload "Primitive" "panLang_Primitive";;
-hol4_overload "Store" "panLang_Store";;
-hol4_overload "Store32" "panLang_Store32";;
-hol4_overload "StoreByte" "panLang_StoreByte";;
-hol4_overload "Seq" "panLang_Seq";;
-hol4_overload "If" "panLang_If";;
-hol4_overload "While" "panLang_While";;
-hol4_overload "Break" "panLang_Break";;
-hol4_overload "Continue" "panLang_Continue";;
-hol4_overload "Call" "panLang_Call";;
-hol4_overload "DecCall" "panLang_DecCall";;
-hol4_overload "ExtCall" "panLang_ExtCall";;
-hol4_overload "Raise" "panLang_Raise";;
-hol4_overload "Return" "panLang_Return";;
-hol4_overload "ShMemLoad" "panLang_ShMemLoad";;
-hol4_overload "ShMemStore" "panLang_ShMemStore";;
-hol4_overload "Tick" "panLang_Tick";;
-hol4_overload "Annot" "panLang_Annot";;
 
 let fun_decl_FIELDS = define_record "fun_decl"
   ["name","mlstring";
@@ -229,9 +188,9 @@ let shape_to_str_def,shape_to_str_ind = define_wf
    `shape_to_str (Named nm) = nm`];;
 
 let shape_val_def,shape_val_ind = define_mutual_rec
-  [`shape_val One = Const (n2w 0)`;
+  [`shape_val One = panLang_Const (n2w 0)`;
    `shape_val (Comb shapes) = panLang_RStruct (shape_vals shapes)`;
-   `shape_val (Named nm) = Const (n2w 0)`;
+   `shape_val (Named nm) = panLang_Const (n2w 0)`;
    `// should never happen
     shape_vals [] = []`;
    `shape_vals (CONS sh shs) = CONS (shape_val sh) (shape_vals shs)`];;
@@ -241,7 +200,7 @@ let shape_val_def,shape_val_ind = define_mutual_rec
 
 
 let nested_seq_def,nested_seq_ind = define_rec
-  [`nested_seq [] = Skip`;
+  [`nested_seq [] = panLang_Skip`;
    `nested_seq (CONS e es) = panLang_Seq e (nested_seq es)`];;
 
 let with_shape_def,with_shape_ind = define_rec
@@ -254,13 +213,13 @@ let exp_ids_def,exp_ids_ind = define_shaped_rec
   [`exp_ids x1 =
         match x1 with
           panLang_Skip -> ([]:mlstring list)
-        | (Raise e _2) -> [e]
+        | (panLang_Raise e _2) -> [e]
         | (panLang_Dec _3 _4 _5 p) -> exp_ids p
         | (panLang_Seq p q) -> APPEND (exp_ids p) (exp_ids q)
-        | (If _6 p q) -> APPEND (exp_ids p) (exp_ids q)
+        | (panLang_If _6 p q) -> APPEND (exp_ids p) (exp_ids q)
         | (panLang_While _7 p) -> exp_ids p
-        | (Call (SOME (_8,(SOME (e,_9,ep)))) _10 _11) -> CONS e
-          (exp_ids ep)
+        | (panLang_Call (SOME (_8,(SOME (e,_9,ep)))) _10 _11) ->
+          CONS e (exp_ids ep)
         | (panLang_DecCall _12 _13 _14 _15 p) -> exp_ids p
         | _16 -> []`];;
 
@@ -342,14 +301,14 @@ let global_var_exp_def,global_var_exp_ind = assume_definition_rec
 let load_op_def = define_cases
   [`load_op Op8 = asm_Load8 /\
    load_op Op16 = asm_Load16 /\
-   load_op OpW = Load /\
-   load_op Op32 = Load32`];;
+   load_op OpW = panLang_Load /\
+   load_op Op32 = panLang_Load32`];;
 
 let store_op_def = define_cases
   [`store_op Op8 = asm_Store8 /\
    store_op Op16 = asm_Store16 /\
-   store_op OpW = Store /\
-   store_op Op32 = Store32`];;
+   store_op OpW = panLang_Store /\
+   store_op Op32 = panLang_Store32`];;
 
 let is_function_def = new_definition
   `is_function x1 =
@@ -388,11 +347,11 @@ let fun_ids_def,fun_ids_ind = define_shaped_rec
         match x1 with
           panLang_Dec _39 _40 _41 p -> fun_ids p
         | (panLang_Seq p q) -> APPEND (fun_ids p) (fun_ids q)
-        | (If _42 p q) -> APPEND (fun_ids p) (fun_ids q)
+        | (panLang_If _42 p q) -> APPEND (fun_ids p) (fun_ids q)
         | (panLang_While _43 p) -> fun_ids p
-        | (Call (SOME (_44,(SOME (_45,_46,ep)))) nm _47) -> CONS nm
-          (fun_ids ep)
-        | (Call _48 nm _49) -> [nm]
+        | (panLang_Call (SOME (_44,(SOME (_45,_46,ep)))) nm _47) ->
+          CONS nm (fun_ids ep)
+        | (panLang_Call _48 nm _49) -> [nm]
         | (panLang_DecCall _50 _51 nm _52 p) -> CONS nm (fun_ids p)
         | _53 -> []`];;
 
@@ -404,19 +363,20 @@ let free_var_ids_def,free_var_ids_ind = define_shaped_rec
             y. ~(x = y)) vn) (free_var_ids p))
         | (panLang_Seq p q) -> APPEND (free_var_ids p) (free_var_ids
           q)
-        | (If g p q) -> APPEND (APPEND (var_exp g) (free_var_ids p))
-          (free_var_ids q)
+        | (panLang_If g p q) -> APPEND (APPEND (var_exp g)
+          (free_var_ids p)) (free_var_ids q)
         | (panLang_While g p) -> APPEND (var_exp g) (free_var_ids p)
         | (panLang_Assign vk v e) ->
       (if vk = panLang_Local then CONS v (var_exp e) else
         var_exp e)
         | (panLang_Primitive v pop es) -> CONS v (FLAT (MAP var_exp
           es))
-        | (Store e1 e2) -> APPEND (var_exp e1) (var_exp e2)
-        | (Store32 e1 e2) -> APPEND (var_exp e1) (var_exp e2)
+        | (panLang_Store e1 e2) -> APPEND (var_exp e1) (var_exp e2)
+        | (panLang_Store32 e1 e2) -> APPEND (var_exp e1) (var_exp
+          e2)
         | (panLang_StoreByte e1 e2) -> APPEND (var_exp e1) (var_exp
           e2)
-        | (Raise eid e) -> var_exp e
+        | (panLang_Raise eid e) -> var_exp e
         | (panLang_Return e) -> var_exp e
         | (panLang_ExtCall fn e1 e2 e3 e4) -> APPEND (APPEND (APPEND
           (var_exp e1) (var_exp e2)) (var_exp e3)) (var_exp e4)

@@ -49,10 +49,6 @@
 ### sexptype_alt_intro1
   (REWRITE_TAC[FUN_EQ_THM; sexptype_alt_intro])
 
-### UNHEX_lt16
-  (REWRITE_TAC[isHexDigit; UNHEX] THEN
-   REPEAT COND_CASES_TAC THEN ASM_ARITH_TAC)
-
 ### arithsexp_11
   (SUBGOAL_THEN `!x. sexparith (arithsexp x) = SOME x` MP_TAC THENL
    [GEN_TAC THEN CASES_ON_TAC `x:ast_arith` THEN
@@ -107,6 +103,3 @@
    REPEAT COND_CASES_TAC THEN
    REWRITE_TAC[option_DISTINCT; option_INJ] THEN
    DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[arithsexp_def])
-
-### strip_sxcons_thm
-  (REWRITE_TAC[strip_sxcons_thm])

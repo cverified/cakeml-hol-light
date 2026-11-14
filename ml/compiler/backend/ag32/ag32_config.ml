@@ -12,7 +12,6 @@
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -36,8 +35,9 @@ let ag32_backend_config_def = new_definition
               mk_backend_config prim_src_config
                 (clos_to_bvl_default_config)
                 (bvl_to_bvi_default_config) (mk_data_to_word_config 0
-                0 1 20 F F F F F F Simple) (mk_word_to_word_config 2
-                []) (mk_word_to_stack_config 0 LN)
+                0 1 20 F F F F F F data_to_word_Simple)
+                (mk_word_to_word_config 2 [])
+                (mk_word_to_stack_config 0 LN)
                 (mk_stack_to_lab_config ag32_names T F)
                 (mk_lab_to_target_config LN [] 0 5 NONE [] 104729) []
                 default_tap_config []`;;

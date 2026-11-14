@@ -2,7 +2,7 @@
 (*  asm: ported from HOL4's
     compiler/encoders/asm/asmScript.sml
     A definition theory, with 11 definitions, 11 datatypes and no
-    theorems.  Needed by 63 files of the port.  *)
+    theorems.  Needed by 55 files of the port.  *)
 (* ======================================================== *)
 
 (* -------------------------------------------------------------------------
@@ -92,23 +92,10 @@ let asm_reg_imm_INDUCT,asm_reg_imm_RECURSION = define_datatype
 
 let binop_INDUCT,binop_RECURSION = define_datatype
   "binop = asm_Add | asm_Sub | asm_And | asm_Or | asm_Xor";;
-hol4_overload "Add" "asm_Add";;
-hol4_overload "Sub" "asm_Sub";;
-hol4_overload "And" "asm_And";;
-hol4_overload "Or" "asm_Or";;
-hol4_overload "Xor" "asm_Xor";;
 
 let cmp_INDUCT,cmp_RECURSION = define_datatype
   "cmp = asm_Equal | asm_Lower | asm_Less | asm_Test | asm_NotEqual | \
    asm_NotLower | asm_NotLess | asm_NotTest";;
-hol4_overload "Equal" "asm_Equal";;
-hol4_overload "Lower" "asm_Lower";;
-hol4_overload "Less" "asm_Less";;
-hol4_overload "Test" "asm_Test";;
-hol4_overload "NotEqual" "asm_NotEqual";;
-hol4_overload "NotLower" "asm_NotLower";;
-hol4_overload "NotLess" "asm_NotLess";;
-hol4_overload "NotTest" "asm_NotTest";;
 
 let asm_arith_INDUCT,asm_arith_RECURSION = define_datatype
   "asm_arith = asm_Binop (binop) (num) (num) ('a asm_reg_imm) | \
@@ -117,14 +104,6 @@ let asm_arith_INDUCT,asm_arith_RECURSION = define_datatype
    (num) (num) (num) (num) (num) | asm_AddCarry (num) (num) (num) \
    (num) | asm_AddOverflow (num) (num) (num) (num) | asm_SubOverflow \
    (num) (num) (num) (num)";;
-hol4_overload "Binop" "asm_Binop";;
-hol4_overload "Shift" "asm_Shift";;
-hol4_overload "Div" "asm_Div";;
-hol4_overload "LongMul" "asm_LongMul";;
-hol4_overload "LongDiv" "asm_LongDiv";;
-hol4_overload "AddCarry" "asm_AddCarry";;
-hol4_overload "AddOverflow" "asm_AddOverflow";;
-hol4_overload "SubOverflow" "asm_SubOverflow";;
 
 let fp_INDUCT,fp_RECURSION = define_datatype
   "fp = \
@@ -152,34 +131,15 @@ let asm_addr_INDUCT,asm_addr_RECURSION = define_datatype
 let memop_INDUCT,memop_RECURSION = define_datatype
   "memop = asm_Load | asm_Load8 | asm_Load16 | asm_Load32 | asm_Store \
    | asm_Store8 | asm_Store16 | asm_Store32";;
-hol4_overload "Load" "asm_Load";;
-hol4_overload "Load8" "asm_Load8";;
-hol4_overload "Load16" "asm_Load16";;
-hol4_overload "Load32" "asm_Load32";;
-hol4_overload "Store" "asm_Store";;
-hol4_overload "Store8" "asm_Store8";;
-hol4_overload "Store16" "asm_Store16";;
-hol4_overload "Store32" "asm_Store32";;
 
 let asm_inst_INDUCT,asm_inst_RECURSION = define_datatype
   "asm_inst = asm_Skip | asm_Const (num) ('a word) | asm_Arith ('a \
    asm_arith) | asm_Mem (memop) (num) ('a asm_addr) | asm_FP (fp)";;
-hol4_overload "Skip" "asm_Skip";;
-hol4_overload "Const" "asm_Const";;
-hol4_overload "Arith" "asm_Arith";;
-hol4_overload "Mem" "asm_Mem";;
-hol4_overload "FP" "asm_FP";;
 
 let asm_INDUCT,asm_RECURSION = define_datatype
   "asm = asm_Inst ('a asm_inst) | asm_Jump ('a word) | asm_JumpCmp \
    (cmp) (num) ('a asm_reg_imm) ('a word) | asm_Call ('a word) | \
    asm_JumpReg (num) | asm_Loc (num) ('a word)";;
-hol4_overload "Inst" "asm_Inst";;
-hol4_overload "Jump" "asm_Jump";;
-hol4_overload "JumpCmp" "asm_JumpCmp";;
-hol4_overload "Call" "asm_Call";;
-hol4_overload "JumpReg" "asm_JumpReg";;
-hol4_overload "Loc" "asm_Loc";;
 
 (* -- ASM target-specific configuration -- *)
 
@@ -219,7 +179,7 @@ let reg_imm_ok_def = define_cases
    `reg_imm_ok b (Imm w) c =
          ((
            // Always permit Xor by -1 in order to provide 1's complement
-           b = INL Xor) /\ (w = --(n2w 1)) \/
+           b = INL asm_Xor) /\ (w = --(n2w 1)) \/
              asm_config_valid_imm c b w)`];;
 
 
@@ -229,7 +189,7 @@ let arith_ok_def = define_cases
          (asm_config_two_reg_arith
           // note: register to register moves can be implmented with
           // "Or" on "two_reg_arith" architectures.
-          c ==> (r1 = r2) \/ (b = Or) /\ (ri = Reg r2)) /\
+          c ==> (r1 = r2) \/ (b = asm_Or) /\ (ri = Reg r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\ reg_imm_ok (INL b) ri c`;
    `arith_ok (asm_Shift l r1 r2 ri) (c:'a asm_config) <=>
          (asm_config_two_reg_arith c ==> (r1 = r2)) /\
@@ -322,7 +282,6 @@ let offset_ok_def = new_definition
   `asm_offset_ok a offset w =
    (let (min',max') = offset in min' <= w /\ w <= max' /\
      alignment_aligned a w)`;;
-hol4_overload "offset_ok" "asm_offset_ok";;
 
 (* HOL4 asmScript.sml:279: the overload addr_offset_ok, which the
    port expands *)
@@ -342,7 +301,7 @@ let inst_ok_def = new_definition
         match x1 with
           asm_Skip -> T
         | (asm_Const r w) -> reg_ok r c
-        | (Arith x) -> arith_ok x c
+        | (asm_Arith x) -> arith_ok x c
         | (asm_FP x) -> fp_ok x c
         | (asm_Mem m r1 (Addr r2 w):'a asm_inst) ->
         reg_ok r1 c /\ reg_ok r2 c /\
@@ -370,15 +329,14 @@ let asm_ok_def = define_cases
   (asm_config_code_alignment c) (asm_config_loc_offset c)) c w`];;
 
 let word_cmp_def = define_cases
-  [`(asm_word_cmp (Equal:cmp) w1 w2 = (w1 = w2)) /\
-   (asm_word_cmp Less w1 w2 = (w1 < w2)) /\
+  [`(asm_word_cmp (asm_Equal:cmp) w1 w2 = (w1 = w2)) /\
+   (asm_word_cmp asm_Less w1 w2 = (w1 < w2)) /\
    (asm_word_cmp asm_Lower w1 w2 = (w1 <+ w2)) /\
-   (asm_word_cmp Test w1 w2 = ((w1 && w2) = (n2w 0))) /\
+   (asm_word_cmp asm_Test w1 w2 = ((w1 && w2) = (n2w 0))) /\
    (asm_word_cmp asm_NotEqual w1 w2 = (~(w1 = w2))) /\
    (asm_word_cmp asm_NotLess w1 w2 = ~(w1 < w2)) /\
    (asm_word_cmp asm_NotLower w1 w2 = ~(w1 <+ w2)) /\
    (asm_word_cmp asm_NotTest w1 w2 = (~((w1 && w2) = (n2w 0))))`];;
-hol4_overload "word_cmp" "asm_word_cmp";;
 
 let is_load_def = new_definition
   `is_load x1 =

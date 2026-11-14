@@ -15,7 +15,6 @@ needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -37,7 +36,6 @@ let _ = hol4_ancestors "clos_mtiProof"
 let clos_mtiProof_code_rel_def = new_definition
   `clos_mtiProof_code_rel max_app e1 e2 <=>
      ALL no_mti e1 /\ (e2 = intro_multi max_app e1)`;;
-hol4_overload "code_rel" "clos_mtiProof_code_rel";;
 
 (* code_rel_IMP_LENGTH *)
 let clos_mtiProof_code_rel_IMP_LENGTH = prove
@@ -74,12 +72,12 @@ let clos_mtiProof_f_rel_def = new_definition
        clos_mtiProof_code_rel max_app [b1] [e2] /\ a2 <= max_app /\
          no_mti b1 /\
        a1 = 1 /\ e1 = mk_Fns ts b1 /\ a2 = LENGTH ts + 1)`;;
-hol4_overload "f_rel" "clos_mtiProof_f_rel";;
 
 let clos_mtiProof_v_rel = cake_inductive
   `(!i. clos_mtiProof_v_rel (max_app:num) (closSem_Number i)
   (closSem_Number i)) /\
-   (!w. clos_mtiProof_v_rel max_app (Word64 w) (Word64 w)) /\
+   (!w. clos_mtiProof_v_rel max_app (closSem_Word64 w)
+     (closSem_Word64 w)) /\
    (!w. clos_mtiProof_v_rel max_app (closSem_ByteVector w)
      (closSem_ByteVector w)) /\
    (!n b. clos_mtiProof_v_rel max_app (closSem_RefPtr b n)
@@ -94,15 +92,16 @@ let clos_mtiProof_v_rel = cake_inductive
       ALL2 (clos_mtiProof_v_rel max_app) env1 env2 /\
       ALL2 (clos_mtiProof_v_rel max_app) args1 args2 ==>
       clos_mtiProof_v_rel max_app
-        (Closure NONE [] (APPEND args1 env1) 1 (mk_Fns ts e1))
-        (Closure NONE args2 env2 arg_count e2)) /\
+        (closSem_Closure NONE [] (APPEND args1 env1) 1 (mk_Fns ts
+          e1))
+        (closSem_Closure NONE args2 env2 arg_count e2)) /\
    (!env1 funs1 env2 funs2 n.
       ALL2 (clos_mtiProof_f_rel max_app) funs1 funs2 /\
       ALL2 (clos_mtiProof_v_rel max_app) env1 env2 /\
       n < LENGTH funs2 ==>
       clos_mtiProof_v_rel max_app
-        (Recclosure NONE [] env1 funs1 n)
-        (Recclosure NONE [] env2 funs2 n)) /\
+        (closSem_Recclosure NONE [] env1 funs1 n)
+        (closSem_Recclosure NONE [] env2 funs2 n)) /\
    (!args1 env1 funs1 args2 env2 funs2 n recc ts e1 e2 arg_count.
       ALL2 (clos_mtiProof_f_rel max_app) funs1 funs2 /\
       ALL2 (clos_mtiProof_v_rel max_app) env1 env2 /\
@@ -112,13 +111,12 @@ let clos_mtiProof_v_rel = cake_inductive
       1 + LENGTH ts + LENGTH args1 = arg_count /\
       clos_mtiProof_code_rel max_app [e1] [e2] /\
       ALL2 (clos_mtiProof_v_rel max_app) recc
-           (list_of_seq (Recclosure NONE [] env2 funs2) (LENGTH
-             funs2)) ==>
+           (list_of_seq (closSem_Recclosure NONE [] env2 funs2)
+             (LENGTH funs2)) ==>
       clos_mtiProof_v_rel max_app
-        (Closure NONE [] (APPEND (APPEND args1 recc) env1) 1 (mk_Fns
-          ts e1))
-        (Recclosure NONE args2 env2 funs2 n))`;;
-hol4_overload "v_rel" "clos_mtiProof_v_rel";;
+        (closSem_Closure NONE [] (APPEND (APPEND args1 recc) env1) 1
+          (mk_Fns ts e1))
+        (closSem_Recclosure NONE args2 env2 funs2 n))`;;
 
 let v_rel_opt_def = new_definition
   `v_rel_opt max_app x2 x3 =
@@ -136,8 +134,8 @@ let clos_mtiProof_ref_rel = cake_inductive
        (closSem_ValueArray ys)) /\
    (!m v w.
      clos_mtiProof_v_rel max_app v w ==>
-     clos_mtiProof_ref_rel max_app (Thunk m v) (Thunk m w))`;;
-hol4_overload "ref_rel" "clos_mtiProof_ref_rel";;
+     clos_mtiProof_ref_rel max_app (closSem_Thunk m v)
+       (closSem_Thunk m w))`;;
 
 (* HOL4 clos_mtiProofScript.sml:128-132: a theorem that HOL4 states
    as the value of an ML expression: ref_rel_simps *)
@@ -147,7 +145,6 @@ let clos_mtiProof_FMAP_REL_def = new_definition
      FDOM f1 = FDOM f2 /\
      (!k v. FLOOKUP f1 k = SOME v ==>
            (?v2. FLOOKUP f2 k = SOME v2 /\ r v v2))`;;
-hol4_overload "FMAP_REL" "clos_mtiProof_FMAP_REL";;
 
 (* state relation *)
 
@@ -170,14 +167,13 @@ let clos_mtiProof_state_rel_def = new_definition
      t = closSem_state_ffi s /\
      ALL2 (v_rel_opt (closSem_state_max_app s))
        (closSem_state_globals s) (closSem_state_globals t) /\
-     clos_mtiProof_FMAP_REL (ref_rel (closSem_state_max_app s))
-       (closSem_state_refs s) (closSem_state_refs t) /\
-       closSem_state_compile
+     clos_mtiProof_FMAP_REL (clos_mtiProof_ref_rel
+       (closSem_state_max_app s)) (closSem_state_refs s)
+       (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc (clos_mti_compile_inc (closSem_state_max_app s))
        (closSem_state_compile t) /\ closSem_state_compile_oracle
      t = pure_co (clos_mti_compile_inc (closSem_state_max_app s))
        o closSem_state_compile_oracle s`;;
-hol4_overload "state_rel" "clos_mtiProof_state_rel";;
 
 (* state_rel_max_app[local] *)
 let clos_mtiProof_state_rel_max_app = prove
@@ -208,10 +204,10 @@ let collect_args_ok_IMP = prove
 (* dest_closure_SOME_IMP *)
 let clos_mtiProof_dest_closure_SOME_IMP = prove
  (`dest_closure max_app loc_opt f2 xs = SOME x ==>
-    (?loc arg_env clo_env num_args e. f2 = Closure loc arg_env
-      clo_env num_args e) \/
-    (?loc arg_env clo_env fns i. f2 = Recclosure loc arg_env
-      clo_env fns i)`,
+    (?loc arg_env clo_env num_args e. f2 = closSem_Closure loc
+      arg_env clo_env num_args e) \/
+    (?loc arg_env clo_env fns i. f2 = closSem_Recclosure loc
+      arg_env clo_env fns i)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -237,8 +233,8 @@ let collect_apps_cons = prove
 
 let mk_Apps_def,mk_Apps_ind = define_rec
   [`mk_Apps e [] = e`;
-   `mk_Apps e (CONS (t,other) ts) = App t NONE (mk_Apps e ts)
-  [other]`];;
+   `mk_Apps e (CONS (t,other) ts) = flatLang_App t NONE (mk_Apps e
+  ts) [other]`];;
 
 let collect_apps_IMP_mk_Apps = prove
  (`!e max_app (acc:closLang_exp list) other e3.
@@ -321,7 +317,7 @@ let evaluate_apps_Clos_timeout = prove
  (`!ys ts s1 e1 env. state_clock
        s1 < LENGTH ys /\ LENGTH ys <= LENGTH ts /\
        1 <= closSem_state_max_app s1 ==>
-       evaluate_apps (Closure NONE [] env 1 (mk_Fns ts e1))
+       evaluate_apps (closSem_Closure NONE [] env 1 (mk_Fns ts e1))
          ys s1 = (Rerr (Rabort Rtimeout_error),state_clock_fupd (K
            0) s1)`,
   CHEAT_TAC);;
@@ -331,7 +327,7 @@ let evaluate_apps_Clos_timeout_alt = prove
  (`!ys ts s1 e1 env. state_clock
        s1 <= LENGTH ts /\ LENGTH ts < LENGTH ys /\
        1 <= closSem_state_max_app s1 ==>
-       evaluate_apps (Closure NONE [] env 1 (mk_Fns ts e1))
+       evaluate_apps (closSem_Closure NONE [] env 1 (mk_Fns ts e1))
          ys s1 = (Rerr (Rabort Rtimeout_error),state_clock_fupd (K
            0) s1)`,
   CHEAT_TAC);;
@@ -341,8 +337,9 @@ let evaluate_apps_Clos_short = prove
  (`!ys ts s1 e1 env.
        LENGTH ys <= state_clock s1 /\ LENGTH ys <= LENGTH ts /\
        1 <= closSem_state_max_app s1 ==>
-       evaluate_apps (Closure NONE [] env 1 (mk_Fns ts e1)) ys s1 =
-          (Rval [Closure NONE [] (APPEND ys env) 1
+       evaluate_apps (closSem_Closure NONE [] env 1 (mk_Fns ts e1))
+         ys s1 =
+          (Rval [closSem_Closure NONE [] (APPEND ys env) 1
                     (mk_Fns (DROP (LENGTH ys) ts) e1)],
            closSem_dec_clock (LENGTH ys) s1)`,
   CHEAT_TAC);;
@@ -352,7 +349,8 @@ let evaluate_apps_Clos_long = prove
  (`!ys ts s1 e1 env.
        LENGTH ts < state_clock s1 /\ LENGTH ts < LENGTH ys /\
        1 <= closSem_state_max_app s1 ==>
-       evaluate_apps (Closure NONE [] env 1 (mk_Fns ts e1)) ys s1 =
+       evaluate_apps (closSem_Closure NONE [] env 1 (mk_Fns ts e1))
+         ys s1 =
          (match closSem_evaluate ([e1],APPEND (REVERSE (TAKE (1 +
            LENGTH ts) (REVERSE ys))) env,
                  closSem_dec_clock (1 + LENGTH ts) s1) with (Rval
@@ -390,26 +388,26 @@ let clos_mtiProof_simple_state_rel = prove
 (* state_rel_opt_rel_refs[local] *)
 let clos_mtiProof_state_rel_opt_rel_refs = prove
  (`(clos_mtiProof_state_rel s1 s2 /\ FLOOKUP (state_refs s1) n = r1 ==>
-      (?r2. FLOOKUP (state_refs s2) n = r2 /\ OPTREL (ref_rel
-        (closSem_state_max_app s1)) r1 r2)) /\
+      (?r2. FLOOKUP (state_refs s2) n = r2 /\ OPTREL
+        (clos_mtiProof_ref_rel (closSem_state_max_app s1)) r1 r2)) /\
    (clos_mtiProof_state_rel s1 s2 /\ FLOOKUP (state_refs s2) n = r2
      ==>
-      (?r1. FLOOKUP (state_refs s1) n = r1 /\ OPTREL (ref_rel
-        (closSem_state_max_app s1)) r1 r2))`,
+      (?r1. FLOOKUP (state_refs s1) n = r1 /\ OPTREL
+        (clos_mtiProof_ref_rel (closSem_state_max_app s1)) r1 r2))`,
   CHEAT_TAC);;
 
 (* rel_update_thunk[local] *)
 let clos_mtiProof_rel_update_thunk = prove
  (`clos_mtiProof_state_rel s1 s2 /\
    ALL2 (clos_mtiProof_v_rel (closSem_state_max_app s1)) vs ys ==>
-     (update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys = NONE
-       ==>
-        update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs =
-          NONE) /\
-     (update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys = SOME
-       refs2 ==>
-        (?refs1. update_thunk [closSem_RefPtr v ptr] (state_refs s1)
-          vs = SOME refs1 /\
+     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys
+       = NONE ==>
+        closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1)
+          vs = NONE) /\
+     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys
+       = SOME refs2 ==>
+        (?refs1. closSem_update_thunk [closSem_RefPtr v ptr]
+          (state_refs s1) vs = SOME refs1 /\
                 clos_mtiProof_state_rel (state_refs_fupd (K refs1)
                   s1) (state_refs_fupd (K refs2) s2)))`,
   CHEAT_TAC);;
@@ -420,14 +418,15 @@ let clos_mtiProof_rel_update_thunk = prove
 let clos_mtiProof_do_app_lemma = prove
  (`clos_mtiProof_state_rel s (t:('c,'ffi)closSem_state) /\ ALL2
   (clos_mtiProof_v_rel (closSem_state_max_app s)) xs ys ==>
-     (match do_app opp ys t with Rerr err2 -> (?err1. do_app opp xs s
-       = Rerr err1 /\
+     (match closSem_do_app opp ys t with Rerr err2 -> (?err1.
+       closSem_do_app opp xs s = Rerr err1 /\
                             exc_rel (clos_mtiProof_v_rel
                               (closSem_state_max_app s)) err1 err2) |
                               Rval (y,t1) -> (?x s1. clos_mtiProof_v_rel
                               (closSem_state_max_app s) x y /\
                               clos_mtiProof_state_rel s1 t1 /\
-                             do_app opp xs s = Rval (x,s1)))`,
+                             closSem_do_app opp xs s = Rval
+                               (x,s1)))`,
   CHEAT_TAC);;
 
 (* v_rel_IMP_v_to_bytes[local] *)

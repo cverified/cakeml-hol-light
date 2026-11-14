@@ -2,7 +2,7 @@
 (*  stackLang: ported from HOL4's
     compiler/backend/stackLangScript.sml
     A definition theory, with 3 definitions, 2 datatypes and 2
-    theorems.  Needed by 52 files of the port.  *)
+    theorems.  Needed by 34 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -89,40 +89,6 @@ let stackLang_prog_INDUCT,stackLang_prog_RECURSION = define_datatype
    | stackLang_BitmapLoad (num) (num) \
    // load word from read-only region\n\
    | stackLang_Halt (num)";;
-hol4_overload "Skip" "stackLang_Skip";;
-hol4_overload "Inst" "stackLang_Inst";;
-hol4_overload "Get" "stackLang_Get";;
-hol4_overload "Set" "stackLang_Set";;
-hol4_overload "OpCurrHeap" "stackLang_OpCurrHeap";;
-hol4_overload "Call" "stackLang_Call";;
-hol4_overload "Seq" "stackLang_Seq";;
-hol4_overload "If" "stackLang_If";;
-hol4_overload "Loop" "stackLang_Loop";;
-hol4_overload "JumpLower" "stackLang_JumpLower";;
-hol4_overload "Alloc" "stackLang_Alloc";;
-hol4_overload "StoreConsts" "stackLang_StoreConsts";;
-hol4_overload "Raise" "stackLang_Raise";;
-hol4_overload "Return" "stackLang_Return";;
-hol4_overload "Break" "stackLang_Break";;
-hol4_overload "Continue" "stackLang_Continue";;
-hol4_overload "FFI" "stackLang_FFI";;
-hol4_overload "Tick" "stackLang_Tick";;
-hol4_overload "LocValue" "stackLang_LocValue";;
-hol4_overload "Install" "stackLang_Install";;
-hol4_overload "ShMemOp" "stackLang_ShMemOp";;
-hol4_overload "CodeBufferWrite" "stackLang_CodeBufferWrite";;
-hol4_overload "DataBufferWrite" "stackLang_DataBufferWrite";;
-hol4_overload "RawCall" "stackLang_RawCall";;
-hol4_overload "StackAlloc" "stackLang_StackAlloc";;
-hol4_overload "StackFree" "stackLang_StackFree";;
-hol4_overload "StackStore" "stackLang_StackStore";;
-hol4_overload "StackStoreAny" "stackLang_StackStoreAny";;
-hol4_overload "StackLoad" "stackLang_StackLoad";;
-hol4_overload "StackLoadAny" "stackLang_StackLoadAny";;
-hol4_overload "StackGetSize" "stackLang_StackGetSize";;
-hol4_overload "StackSetSize" "stackLang_StackSetSize";;
-hol4_overload "BitmapLoad" "stackLang_BitmapLoad";;
-hol4_overload "Halt" "stackLang_Halt";;
 
 (* HOL4 stackLangScript.sml:68: the overload While, which the port
    expands *)
@@ -163,18 +129,15 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let list_Seq_def,list_Seq_ind = define_wf
   `MEASURE (\x0. list_size (stackLang_prog_size (\x. 0)) x0)`
-  [`stackLang_list_Seq [] = Skip`;
+  [`stackLang_list_Seq [] = stackLang_Skip`;
    `stackLang_list_Seq [x] = x`;
    `stackLang_list_Seq (CONS x (CONS y xs)) = stackLang_Seq x
   (stackLang_list_Seq (CONS y xs))`];;
-hol4_overload "list_Seq" "stackLang_list_Seq";;
 
 let gc_stub_location_def = new_definition
   `gc_stub_location = stack_num_stubs - 1`;;
 let store_consts_stub_location_def = new_definition
   `stackLang_store_consts_stub_location = gc_stub_location - 1`;;
-hol4_overload "store_consts_stub_location"
-  "stackLang_store_consts_stub_location";;
 (* HOL4 stackLangScript.sml:98-99: a theorem that HOL4 states as the
    value of an ML expression: gc_stub_location_eq *)
 (* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as

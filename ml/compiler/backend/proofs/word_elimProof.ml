@@ -87,12 +87,13 @@ let get_locals_def,get_locals_ind = define_rec
 
 let domain_get_locals_lookup = prove
  (`!n t. n IN domain (get_locals t) <=> (?k n1. sptree_lookup k t =
-  SOME (Loc n n1))`,
+  SOME (wordLang_Loc n n1))`,
   CHEAT_TAC);;
 
 let get_locals_insert_Loc = prove
  (`!k n1 n0 (locals:('a word_loc) spt).
-      domain (get_locals (sptree_insert k (Loc n1 n0) locals)) SUBSET
+      domain (get_locals (sptree_insert k (wordLang_Loc n1 n0)
+        locals)) SUBSET
           domain (get_locals locals) UNION {n1}`,
   CHEAT_TAC);;
 
@@ -111,18 +112,17 @@ let word_elimProof_get_store_def = new_definition
        let locList = MAP THE (FILTER IS_SOME (MAP dest_word_loc
          locSet)) in
        FOLDL (\acc loc. sptree_insert loc one acc) LN locList)`;;
-hol4_overload "get_store" "word_elimProof_get_store";;
 
 let domain_get_store = prove
- (`!n store. n IN domain (get_store store) <=>
-      (?k n1. FLOOKUP store k = SOME (Loc n n1))`,
+ (`!n store. n IN domain (word_elimProof_get_store store) <=>
+      (?k n1. FLOOKUP store k = SOME (wordLang_Loc n n1))`,
   CHEAT_TAC);;
 
 let get_store_update = prove
  (`!store k v.
-      domain (get_store (store |+ (k,v))) SUBSET
-          domain (get_store store) UNION (match dest_word_loc v
-            with NONE -> {} | SOME n -> {n})`,
+      domain (word_elimProof_get_store (store |+ (k,v))) SUBSET
+          domain (word_elimProof_get_store store) UNION (match
+            dest_word_loc v with NONE -> {} | SOME n -> {n})`,
   CHEAT_TAC);;
 
 let get_num_wordloc_alist_def = new_definition
@@ -132,7 +132,7 @@ let get_num_wordloc_alist_def = new_definition
        FOLDL (\acc loc. sptree_insert loc one acc) LN locs)`;;
 
 let get_num_wordloc_alist_thm = prove
- (`!n e l. (?n0. MEM (Loc n n0) (MAP SND l)) <=>
+ (`!n e l. (?n0. MEM (wordLang_Loc n n0) (MAP SND l)) <=>
       n IN domain (get_num_wordloc_alist l)`,
   CHEAT_TAC);;
 
@@ -160,32 +160,34 @@ let word_elimProof_get_stack_def,word_elimProof_get_stack_ind =
             ((sptree_union (sptree_union (get_num_wordloc_alist
               e0) (get_num_wordloc_alist e))
               (word_elimProof_get_stack xs)):1 spt)`];;
-hol4_overload "get_stack" "word_elimProof_get_stack";;
 
 (* HOL4 word_elimProofScript.sml:210: ML code, not ported *)
 
 let get_stack_hd_thm = prove
  (`!stack' dr l0 l opt t.
-      domain (get_stack stack') SUBSET dr /\
+      domain (word_elimProof_get_stack stack') SUBSET dr /\
       stack' = CONS (StackFrame lsz l l0 opt) t ==> domain
         (get_locals (sptree_union (fromAList l0) (fromAList l))) SUBSET
         dr /\
-        domain (get_stack t) SUBSET dr`,
+        domain (word_elimProof_get_stack t) SUBSET dr`,
   CHEAT_TAC);;
 
 let get_stack_LASTN = prove
- (`!stack' n. domain (get_stack (LASTN n stack')) SUBSET domain
-  (get_stack stack')`,
+ (`!stack' n. domain (word_elimProof_get_stack (LASTN n stack'))
+  SUBSET domain (word_elimProof_get_stack stack')`,
   CHEAT_TAC);;
 
 let get_stack_CONS = prove
- (`!h t. domain (get_stack [h]) SUBSET domain (get_stack (CONS h t)) /\
-      domain (get_stack t) SUBSET domain (get_stack (CONS h t))`,
+ (`!h t. domain (word_elimProof_get_stack [h]) SUBSET domain
+  (word_elimProof_get_stack (CONS h t)) /\
+      domain (word_elimProof_get_stack t) SUBSET domain
+        (word_elimProof_get_stack (CONS h t))`,
   CHEAT_TAC);;
 
 let get_stack_enc_stack = prove
  (`!stack' reachable.
-   domain (get_stack stack') SUBSET domain reachable ==> (!e.
+   domain (word_elimProof_get_stack stack') SUBSET domain reachable
+     ==> (!e.
    MEM e (wordSem_enc_stack stack') ==> (match dest_word_loc e with
      NONE -> {} | SOME n -> {n}) SUBSET
       domain reachable)`,
@@ -193,10 +195,11 @@ let get_stack_enc_stack = prove
 
 let get_stack_dec_stack = prove
  (`!locs stack' reachable new_stack.
-   (!n n0. MEM (Loc n n0) locs ==> n IN domain reachable) /\
-   domain (get_stack stack') SUBSET domain reachable /\
+   (!n n0. MEM (wordLang_Loc n n0) locs ==> n IN domain reachable) /\
+   domain (word_elimProof_get_stack stack') SUBSET domain reachable
+     /\
    wordSem_dec_stack locs stack' = SOME new_stack ==> domain
-     (get_stack new_stack) SUBSET domain reachable`,
+     (word_elimProof_get_stack new_stack) SUBSET domain reachable`,
   CHEAT_TAC);;
 
 let get_memory_def = new_definition
@@ -214,7 +217,7 @@ let FINITE_mdom_mem = prove
 let domain_get_memory = prove
  (`!mem' (mdom:'a word->bool) n.
      n IN domain (get_memory mem' mdom) <=>
-       (?k n1. k IN mdom /\ mem' k = Loc n n1)`,
+       (?k n1. k IN mdom /\ mem' k = wordLang_Loc n n1)`,
   CHEAT_TAC);;
 
 let get_memory_update = prove
@@ -227,8 +230,9 @@ let get_memory_update = prove
 let find_loc_state_def = new_definition
   `find_loc_state s =
        (let loc = (get_locals (wordSem_state_locals s)) in
-       let sto = (get_store (wordSem_state_store s)) in
-       let sta = (get_stack (stack s)) in
+       let sto = (word_elimProof_get_store (wordSem_state_store s))
+         in
+       let sta = (word_elimProof_get_stack (stack s)) in
        let mem' = (get_memory (wordSem_state_memory s)
          (wordSem_state_mdomain s)) in
        sptree_union (sptree_union loc sto) (sptree_union sta
@@ -237,9 +241,10 @@ let find_loc_state_def = new_definition
 let domain_find_loc_state = prove
  (`!s. domain (find_loc_state s) =
       domain (get_locals (wordSem_state_locals s)) UNION domain
-        (get_store (wordSem_state_store s)) UNION
-      domain (get_stack (stack s)) UNION domain (get_memory
-        (wordSem_state_memory s) (wordSem_state_mdomain s))`,
+        (word_elimProof_get_store (wordSem_state_store s)) UNION
+      domain (word_elimProof_get_stack (stack s)) UNION domain
+        (get_memory (wordSem_state_memory s) (wordSem_state_mdomain
+        s))`,
   CHEAT_TAC);;
 
 let word_elimProof_code_rel_def = new_definition
@@ -247,7 +252,6 @@ let word_elimProof_code_rel_def = new_definition
   wordLang_prog) spt) =
        (!n. n IN domain reachable ==>
            sptree_lookup n s_code = sptree_lookup n t_code)`;;
-hol4_overload "code_rel" "word_elimProof_code_rel";;
 
 let code_closed_def = new_definition
   `code_closed reachable c1 <=> (?code1. c1 = fromAList code1 /\
@@ -263,10 +267,12 @@ let gc_no_new_locs_def = new_definition
        (g (wordSem_enc_stack sta,mem',mdom,sto) = SOME
          (wl,mem1,sto1)) /\
         wordSem_dec_stack wl sta = SOME sta1 ==>
-       domain (get_stack sta1) SUBSET domain (get_stack sta) /\
+       domain (word_elimProof_get_stack sta1) SUBSET domain
+         (word_elimProof_get_stack sta) /\
        domain (get_memory mem1 mdom) SUBSET domain (get_memory mem'
          mdom) /\
-       domain (get_store sto1) SUBSET domain (get_store sto))`;;
+       domain (word_elimProof_get_store sto1) SUBSET domain
+         (word_elimProof_get_store sto))`;;
 
 let word_state_rel_def = new_definition
   `word_state_rel (reachable:1 spt) t s <=> wordSem_state_locals
@@ -313,8 +319,8 @@ let get_vars_locals = prove
 
 let get_vars_get_locals = prove
  (`!args s x n n1.
-   wordSem_get_vars args s = SOME x /\ MEM (Loc n n1) x ==> n IN
-     domain (get_locals (wordSem_state_locals s))`,
+   wordSem_get_vars args s = SOME x /\ MEM (wordLang_Loc n n1) x
+     ==> n IN domain (get_locals (wordSem_state_locals s))`,
   CHEAT_TAC);;
 
 let get_locals_fromList2 = prove
@@ -348,9 +354,9 @@ let get_memory_write_bytearray_lemma = prove
 let stack_list_rearrange_lemma = prove
  (`!s dr locs opt lsz.
       domain (get_locals (wordSem_state_locals s)) SUBSET dr /\
-      domain (get_stack (stack s)) SUBSET dr ==>
-      domain (get_stack (CONS (StackFrame lsz (toAList (inter
-        (wordSem_state_locals s) n)) (list_rearrange
+      domain (word_elimProof_get_stack (stack s)) SUBSET dr ==>
+      domain (word_elimProof_get_stack (CONS (StackFrame lsz (toAList
+        (inter (wordSem_state_locals s) n)) (list_rearrange
         (wordSem_state_permute s 0)
    (sort key_val_compare (toAList (inter (wordSem_state_locals s)
      locs)))) opt) (stack s))) SUBSET dr`,
@@ -512,7 +518,8 @@ let word_state_rel_alloc = prove
 
 let const_writes_eq_Loc = prove
  (`!words a c m k l1 l2.
-     const_writes a c words m k = Loc l1 l2 ==> m k = Loc l1 l2`,
+     const_writes a c words m k = wordLang_Loc l1 l2 ==> m k =
+       wordLang_Loc l1 l2`,
   CHEAT_TAC);;
 (*TODO move*)
 let push_env_def2 = prove
@@ -608,7 +615,8 @@ let word_removal_lemma = prove
 
 let word_removal_thm = prove
  (`!start' state result new_state r reachable code1.
-      wordSem_evaluate (Call NONE (SOME start') [0] NONE,state) =
+      wordSem_evaluate (wordLang_Call NONE (SOME start') [0]
+        NONE,state) =
           (result,new_state) /\ ~(result = SOME wordSem_Error) /\
             wordSem_state_code state = fromAList code1 /\
       domain (find_loc_state state) SUBSET domain reachable /\
@@ -617,7 +625,7 @@ let word_removal_thm = prove
         (analyse_word_code code1) /\
       ALL_DISTINCT (MAP FST code1) /\ no_install_code
         (wordSem_state_code state) ==> (?s.
-          wordSem_evaluate (Call NONE (SOME start') [0]
+          wordSem_evaluate (wordLang_Call NONE (SOME start') [0]
             NONE,wordSem_state_code_fupd (K
                   (fromAList (remove_word_code reachable code1)))
               state) = (result,s))`,

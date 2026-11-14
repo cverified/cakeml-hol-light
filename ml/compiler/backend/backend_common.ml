@@ -2,7 +2,7 @@
 (*  backend_common: ported from HOL4's
     compiler/backend/backend_commonScript.sml
     A definition theory, with 28 definitions, 2 datatypes and 3
-    theorems.  Needed by 67 files of the port.  *)
+    theorems.  Needed by 60 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -22,11 +22,6 @@ let _ = hol4_ancestors "backend_common" [];;
 let opw_INDUCT,opw_RECURSION = define_datatype
   "opw = backend_common_Andw | backend_common_Orw | \
    backend_common_Xor | backend_common_Add | backend_common_Sub";;
-hol4_overload "Andw" "backend_common_Andw";;
-hol4_overload "Orw" "backend_common_Orw";;
-hol4_overload "Xor" "backend_common_Xor";;
-hol4_overload "Add" "backend_common_Add";;
-hol4_overload "Sub" "backend_common_Sub";;
 
 (* Small general definition *)
 let small_enough_int_def = new_definition
@@ -79,10 +74,6 @@ let tra_INDUCT,tra_RECURSION = define_datatype
    | backend_common_Cons (tra) (num) | backend_common_Union (tra) \
    (tra) | backend_common_None \
    // Dead trace, do not make traces at all";;
-hol4_overload "SourceLoc" "backend_common_SourceLoc";;
-hol4_overload "Cons" "backend_common_Cons";;
-hol4_overload "Union" "backend_common_Union";;
-hol4_overload "None" "backend_common_None";;
 
 (* The code below replaces "Cons" in hol output with the chosen symbol *)
 (* HOL4 backend_commonScript.sml:83: ML code, not ported *)
@@ -165,7 +156,6 @@ let word_shift_def = new_definition
      // to be sure that LOG doesn't unnecessarily end up in the
      // generated CakeML code
      (if dimindex (:'a) = 32 then 2 else 3:num)`;;
-hol4_overload "word_shift" "backend_common_word_shift";;
 
 let upper_w2w_def = new_definition
   `upper_w2w (w:'a word) =

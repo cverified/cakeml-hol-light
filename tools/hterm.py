@@ -1142,6 +1142,7 @@ class Ctx:
     self.tynames = tynames or {} # the same for the type names
     self.con_argty = con_argty or {}  # (con,index) -> type text
     self.overloaded = overloaded or set()  # names HOL4 overloads
+    self.resolve = None    # what such a name means here
     self.defnames = defnames or set()  # the constants in scope
     self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
@@ -1217,7 +1218,17 @@ class Ctx:
     # and everything else the name that HOL4 overloads with it
     if n in self.defining:
       return self.names.get((self.thy, n), self.names.get(n, n))
-    if n in self.overloaded: return n
+    # a name HOL4 overloads is written out as the constant it
+    # means here: HOL Light has one namespace and no theory
+    # scope, so Var of closLang is closLang_Var and Var of bvl is
+    # bvl_Var, and nothing has to resolve anything while a file
+    # loads.  tools/port.py gives the resolver, which picks the
+    # theory HOL4's own overload resolution would
+    if n in self.overloaded:
+      if self.resolve is not None:
+        r = self.resolve(n)
+        if r: return r
+      return n
     # the size function of a datatype is called after the type, so
     # it follows the name that the port gives the type (HOL4's
     # exp_size of closLang is closLang_exp_size)

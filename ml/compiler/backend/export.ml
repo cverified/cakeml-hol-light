@@ -15,7 +15,6 @@ needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/data_space.ml";;
-needs "lib/integer_word.ml";;
 needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
@@ -159,7 +158,7 @@ let words_line_def = new_definition
      misc_List (CONS word_directive (comma_cat to_string ls))`;;
 
 let word_to_string_def = new_definition
-  `word_to_string w = toString (w2n w)`;;
+  `word_to_string w = mlint_toString (w2n w)`;;
 
 let byte_to_string_def = new_definition
   `byte_to_string (b:word8) =
@@ -189,16 +188,16 @@ let byte_to_string_eq = prove
 let escape_sym_char_def = new_definition
   `escape_sym_char ch = (let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
-        code >= 48 /\ code <= 57 \/ code = 95 then toString ch
-          else (\x y. strcat x y) ((\x y. strcat x y) (implode "$")
-          (toString (code))) (implode "_"))`;;
+        code >= 48 /\ code <= 57 \/ code = 95 then mlint_toString
+          ch else (\x y. strcat x y) ((\x y. strcat x y) (implode
+          "$") (mlint_toString (code))) (implode "_"))`;;
 
 let get_sym_label_def = new_definition
   `get_sym_label (ix,appl) (name,start',len) =
      (let label = (\x y. strcat x y) ((\x y. strcat x y) ((\x y.
-       strcat x y) (implode "cml_") (concat (MAP escape_sym_char
-       (explode name))))
-       (implode "_")) (toString (ix)) in
+       strcat x y) (implode "cml_") (mlvector_concat (MAP
+       escape_sym_char (explode name))))
+       (implode "_")) (mlint_toString (ix)) in
      (ix + 1,APPEND appl [(name,label,start',len)]))`;;
 
 let get_sym_labels_def = new_definition
@@ -210,9 +209,9 @@ let emit_symbol_def = new_definition
      misc_Append appl (misc_List
        [(\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
          ((\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
-         (implode "    makesym(") label) (implode ", ")) (toString
+         (implode "    makesym(") label) (implode ", ")) (mlint_toString
          (start'))) (implode ", "))
-       (toString (len))) (implode ")\n")])`;;
+       (mlint_toString (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = new_definition
   `emit_symbols lsyms =

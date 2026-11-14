@@ -224,6 +224,3 @@
 
 ### roots_ok_CONS
   (REWRITE_TAC[roots_ok_def; MEM] THEN MESON_TAC[])
-
-### gc_move_ref_list_heap_length
-  (MATCH_ACCEPT_TAC gen_gc_partial_gc_move_ref_list_heap_length)

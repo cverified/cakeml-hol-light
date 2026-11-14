@@ -13,5 +13,3 @@ let _ = hol4_lib ();;
 
 let errorMonad_error_INDUCT,errorMonad_error_RECURSION = define_datatype
   "errorMonad_error = errorMonad_return ('a) | errorMonad_error ('e)";;
-hol4_overload "return" "errorMonad_return";;
-hol4_overload "error" "errorMonad_error";;

@@ -15,7 +15,6 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/balanced_map.ml";;
-needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
@@ -87,10 +86,10 @@ let listCmp_def,listCmp_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0 + list_size (\n. n) x1)`
   [`(listCmp (CONS (hd1:num) tl1) (CONS (hd2:num) tl2) =
     (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then
-      GREATER else Less)) /\
-   (listCmp [] [] = Equal) /\
+      GREATER else asm_Less)) /\
+   (listCmp [] [] = asm_Equal) /\
    (listCmp (CONS hd1 tl1) [] = GREATER) /\
-   (listCmp [] (CONS hd2 tl2) = Less)`];;
+   (listCmp [] (CONS hd2 tl2) = asm_Less)`];;
 
 let empty_data_def = new_definition
   `empty_data = mk_knowledge LN LN [] balanced_map_empty
@@ -100,7 +99,7 @@ let empty_data_def = new_definition
   after writing to this register *)
 let keep_data_def = new_definition
   `keep_data canon (write_to_reg:num) =
-     IS_NONE (lookup write_to_reg canon)`;;
+     IS_NONE (balanced_map_lookup write_to_reg canon)`;;
 
 let invalidate_data_def = new_definition
   `invalidate_data data (write_to_reg:num) =
@@ -120,7 +119,7 @@ let invalidate_regs_def,invalidate_regs_ind = define_rec
 let register_read_def = new_definition
   `register_read data (r:num) =
      (if ~(EVEN r) /\ keep_data (knowledge_to_canonical data) r
-       then knowledge_to_canonical_fupd (K (insert r r
+       then knowledge_to_canonical_fupd (K (balanced_map_insert r r
        (knowledge_to_canonical data))) data else data)`;;
 
 let register_reads_def,register_reads_ind = define_rec
@@ -155,7 +154,7 @@ let canonicalMultRegs_def = new_definition
 let map_insert_def,map_insert_ind = define_rec
   [`map_insert [] m = m`;
    `map_insert (CONS (x,y) xs) m =
-      insert x y (map_insert xs m)`];;
+      balanced_map_insert x y (map_insert xs m)`];;
 
 let canonicalMoveRegs_def = new_definition
   `canonicalMoveRegs data moves =
@@ -248,11 +247,11 @@ let shiftToNum_def = define_cases
    `shiftToNum Ror = ((43):num)`];;
 
 let arithOpToNum_def = define_cases
-  [`arithOpToNum (Add:binop) = (35:num)`;
-   `arithOpToNum (Sub:binop) = ((36):num)`;
-   `arithOpToNum (And:binop) = ((37):num)`;
-   `arithOpToNum (Or:binop) = ((38):num)`;
-   `arithOpToNum (Xor:binop) = ((39):num)`];;
+  [`arithOpToNum (asm_Add:binop) = (35:num)`;
+   `arithOpToNum (asm_Sub:binop) = ((36):num)`;
+   `arithOpToNum (asm_And:binop) = ((37):num)`;
+   `arithOpToNum (asm_Or:binop) = ((38):num)`;
+   `arithOpToNum (asm_Xor:binop) = ((39):num)`];;
 
 let regImmToNumList_def = define_cases
   [`regImmToNumList (Reg r) = [33; r + 100]`;
@@ -276,11 +275,11 @@ let arithToNumList_def = define_cases
   r3 + 100]`];;
 
 let memOpToNum_def = define_cases
-  [`memOpToNum (Load:memop) = (21:num)`;
+  [`memOpToNum (wordLang_Load:memop) = (21:num)`;
    `memOpToNum asm_Load8 = ((22):num)`;
    `memOpToNum asm_Load16 = ((46):num)`;
    `memOpToNum (asm_Load32:memop) = ((44):num)`;
-   `memOpToNum (Store:memop) = ((23):num)`;
+   `memOpToNum (wordLang_Store:memop) = ((23):num)`;
    `memOpToNum asm_Store8 = ((47):num)`;
    `memOpToNum asm_Store16 = ((24):num)`;
    `memOpToNum (asm_Store32:memop) = ((45):num)`];;
@@ -315,7 +314,7 @@ let instToNumList_def = new_definition
   `instToNumList x1 =
       match x1 with
         asm_Const r w -> [2; wordToNum w]
-      | (Arith a) -> CONS 3 (arithToNumList a)
+      | (asm_Arith a) -> CONS 3 (arithToNumList a)
       | (asm_FP fp) -> CONS 4 (fpToNumList fp)
       | _1 -> [1]`;;
 
@@ -359,9 +358,9 @@ let arithReads_def = new_definition
       match x1 with
         asm_Binop _60 _61 r2 (Reg r3) -> [r2; r3]
       | (asm_Binop _62 _63 r2 (Imm _64)) -> [r2]
-      | (Shift _65 _66 r2 (Reg r3)) -> [r2; r3]
-      | (Shift _67 _68 r2 (Imm _69)) -> [r2]
-      | (Div _70 r2 r3) -> [r2; r3]
+      | (wordLang_Shift _65 _66 r2 (Reg r3)) -> [r2; r3]
+      | (wordLang_Shift _67 _68 r2 (Imm _69)) -> [r2]
+      | (asm_Div _70 r2 r3) -> [r2; r3]
       | (asm_LongMul _71 _72 r3 r4) -> [r3; r4]
       | (asm_LongDiv _73 _74 r3 r4 r5) -> [r3; r4; r5]
       | (asm_AddCarry _75 r2 r3 r4) -> [r2; r3; r4]
@@ -386,24 +385,27 @@ let add_to_data_aux_def = new_definition
        r' in
                     if EVEN r then
                       (data,wordLang_Move 0 [(r,k)]) else
-                      (knowledge_to_latest_fupd (K (insert r' r
-                        (knowledge_to_latest data)))
-                        (knowledge_to_canonical_fupd (K (insert r r'
+                      (knowledge_to_latest_fupd (K
+                        (balanced_map_insert r' r (knowledge_to_latest
+                        data))) (knowledge_to_canonical_fupd (K
+                        (balanced_map_insert r r'
                         (knowledge_to_canonical data)))
                         data),wordLang_Move 0 [(r,k)])) | NONE -> (if
                         EVEN r then
                     (data,x) else
-                    (knowledge_to_latest_fupd (K (insert r r
-                      (knowledge_to_latest data)))
-                      (knowledge_to_canonical_fupd (K (insert r r
+                    (knowledge_to_latest_fupd (K
+                      (balanced_map_insert r r (knowledge_to_latest
+                      data))) (knowledge_to_canonical_fupd (K
+                      (balanced_map_insert r r
                       (knowledge_to_canonical data)))
-                      (knowledge_instrs_mem_fupd (K (insert listCmp i
-                      r (knowledge_instrs_mem data))) data)),x)))`;;
+                      (knowledge_instrs_mem_fupd (K
+                      (balanced_map_insert listCmp i r
+                      (knowledge_instrs_mem data))) data)),x)))`;;
 
 let add_to_data_def = new_definition
   `add_to_data data r adjusted x =
      (let i = instToNumList adjusted in
-       add_to_data_aux data r i (Inst x))`;;
+       add_to_data_aux data r i (wordLang_Inst x))`;;
 
 (* As add_to_data, but for constants: a constant is rematerialisable for free,
    so a repeated Const is NOT replaced by a Move (which would only extend the
@@ -412,19 +414,21 @@ let add_to_data_def = new_definition
    guards ODD r. *)
 let add_to_data_const_def = new_definition
   `add_to_data_const data r w =
-     (let i = instToNumList (Const r w) in
+     (let i = instToNumList (wordLang_Const r w) in
        match balanced_map_lookup listCmp i (knowledge_instrs_mem
-         data) with SOME r' -> (knowledge_to_latest_fupd (K (insert r' r
-         (knowledge_to_latest data))) (knowledge_to_canonical_fupd (K
-         (insert r r' (knowledge_to_canonical data))) data),
-                     Inst (asm_Const r w)) | NONE ->
-                       (knowledge_to_latest_fupd (K (insert r r
-                       (knowledge_to_latest data)))
-                       (knowledge_to_canonical_fupd (K (insert r r
-                       (knowledge_to_canonical data)))
-                       (knowledge_instrs_mem_fupd (K (insert listCmp i r
+         data) with SOME r' -> (knowledge_to_latest_fupd (K
+         (balanced_map_insert r' r (knowledge_to_latest data)))
+         (knowledge_to_canonical_fupd (K (balanced_map_insert r r'
+         (knowledge_to_canonical data))) data),
+                     wordLang_Inst (asm_Const r w)) | NONE ->
+                       (knowledge_to_latest_fupd (K (balanced_map_insert
+                       r r (knowledge_to_latest data)))
+                       (knowledge_to_canonical_fupd (K
+                       (balanced_map_insert r r (knowledge_to_canonical
+                       data))) (knowledge_instrs_mem_fupd (K
+                       (balanced_map_insert listCmp i r
                        (knowledge_instrs_mem data))) data)),
-                     Inst (asm_Const r w)))`;;
+                     wordLang_Inst (asm_Const r w)))`;;
 
 (* As add_to_data_aux, but for the load-fact map. *)
 let add_to_load_aux_def = new_definition
@@ -434,35 +438,38 @@ let add_to_load_aux_def = new_definition
        r' in
                     if EVEN r then
                       (data,wordLang_Move 0 [(r,k)]) else
-                      (knowledge_to_latest_fupd (K (insert r' r
-                        (knowledge_to_latest data)))
-                        (knowledge_to_canonical_fupd (K (insert r r'
+                      (knowledge_to_latest_fupd (K
+                        (balanced_map_insert r' r (knowledge_to_latest
+                        data))) (knowledge_to_canonical_fupd (K
+                        (balanced_map_insert r r'
                         (knowledge_to_canonical data)))
                         data),wordLang_Move 0 [(r,k)])) | NONE -> (if
                         EVEN r then
                     (data,x) else
-                    (knowledge_to_latest_fupd (K (insert r r
-                      (knowledge_to_latest data)))
-                      (knowledge_to_canonical_fupd (K (insert r r
+                    (knowledge_to_latest_fupd (K
+                      (balanced_map_insert r r (knowledge_to_latest
+                      data))) (knowledge_to_canonical_fupd (K
+                      (balanced_map_insert r r
                       (knowledge_to_canonical data)))
-                      (knowledge_loads_mem_fupd (K (insert listCmp i
-                      r (knowledge_loads_mem data))) data)),x)))`;;
+                      (knowledge_loads_mem_fupd (K
+                      (balanced_map_insert listCmp i r
+                      (knowledge_loads_mem data))) data)),x)))`;;
 
 let can_mem_arith_def = new_definition
   `can_mem_arith x1 =
       match x1 with
         asm_Binop _88 _89 r1 (Reg r2) -> (ODD r1 /\ ODD r2)
       | (asm_Binop _90 _91 r1 (Imm _92)) -> ODD r1
-      | (Div _93 r1 r2) -> (ODD r1 /\ ODD r2)
-      | (Shift _94 _95 r (Imm _96)) -> ODD r
+      | (asm_Div _93 r1 r2) -> (ODD r1 /\ ODD r2)
+      | (wordLang_Shift _94 _95 r (Imm _96)) -> ODD r
       | _97 -> F`;;
 
 let is_store_def = define_cases
-  [`is_store (Load:memop) = F`;
+  [`is_store (wordLang_Load:memop) = F`;
    `is_store asm_Load8 = F`;
    `is_store asm_Load16 = F`;
    `is_store (asm_Load32:memop) = F`;
-   `is_store (Store:memop) = T`;
+   `is_store (wordLang_Store:memop) = T`;
    `is_store asm_Store8 = T`;
    `is_store asm_Store16 = T`;
    `is_store (asm_Store32:memop) = T`];;
@@ -470,12 +477,13 @@ let is_store_def = define_cases
 let word_cseInst_def = new_definition
   `word_cseInst data x2 =
         match (data,x2) with
-          ((data:knowledge),asm_Skip) -> (data,Inst asm_Skip)
-        | (data,(Const r w)) ->
+          ((data:knowledge),asm_Skip) -> (data,wordLang_Inst
+            asm_Skip)
+        | (data,(wordLang_Const r w)) ->
         (let data = invalidate_data data r in
-          if EVEN r then (data,Inst (asm_Const r w)) else
+          if EVEN r then (data,wordLang_Inst (asm_Const r w)) else
             add_to_data_const data r w)
-        | (data,(Arith a)) ->
+        | (data,(asm_Arith a)) ->
         (let r = firstRegOfArith a in
         let data = invalidate_regs data (arithWrites a) in
         let a' = canonicalArith data a in
@@ -483,31 +491,33 @@ let word_cseInst_def = new_definition
           // A fact whose reads include the written register would not describe
           // the post-state, so it is not stored.
           if can_mem_arith a' /\ ~(MEM r rds) then
-            add_to_data (register_reads data rds) r (Arith a') (Arith
-              a) else
-            (data,Inst (Arith a)))
+            add_to_data (register_reads data rds) r (asm_Arith a')
+              (asm_Arith a) else
+            (data,wordLang_Inst (asm_Arith a)))
         | (data,(asm_Mem op r (Addr a ofs))) ->
         (if is_store op then
           (knowledge_loads_mem_fupd (K balanced_map_empty)
            // A store writes no register, but it writes memory: all load facts
            // are invalidated. Register-only facts survive.
-           data,Inst (asm_Mem op r (Addr a ofs))) else
+           data,wordLang_Inst (asm_Mem op r (Addr a ofs))) else
           let data = invalidate_data data r in
             // A load fact whose address is the written register (a = r) would
             // not describe the post-state; EVEN names are never tracked.
-            if EVEN r \/ EVEN a \/ a = r then (data,Inst (asm_Mem op
-              r (Addr a ofs))) else
+            if EVEN r \/ EVEN a \/ a = r then (data,wordLang_Inst
+              (asm_Mem op r (Addr a ofs))) else
               let a' = canonicalRegs' r data a in
                 add_to_load_aux (register_read data a') r
                   (loadToNumList op a' ofs)
-                              (Inst (asm_Mem op r (Addr a ofs))))
+                              (wordLang_Inst (asm_Mem op r (Addr a
+                                ofs))))
         | (data,(asm_FP fp:'a asm_inst)) ->
-        (invalidate_regs data (fpWrites fp),Inst (asm_FP fp))`;;
+        (invalidate_regs data (fpWrites fp),wordLang_Inst (asm_FP
+          fp))`;;
 
 let dest_Var_def = new_definition
   `dest_Var x1 =
       match x1 with
-        (Var v:'a wordLang_exp) -> SOME v
+        (wordLang_Var v:'a wordLang_exp) -> SOME v
       | _98 -> NONE`;;
 
 (* IF-JOIN MERGE
@@ -570,19 +580,20 @@ let word_cse_def,word_cse_ind = define_rec
         (let data = invalidate_data data r in
           match ALOOKUP (knowledge_gets_mem data) x with NONE -> (if
             EVEN r then (data,wordLang_Get r x) else
-                      (knowledge_to_latest_fupd (K (insert r r
-                        (knowledge_to_latest data)))
-                        (knowledge_to_canonical_fupd (K (insert r r
-                        (knowledge_to_canonical data)))
-                        (knowledge_gets_mem_fupd (K (CONS (x,r)
+                      (knowledge_to_latest_fupd (K
+                        (balanced_map_insert r r (knowledge_to_latest
+                        data))) (knowledge_to_canonical_fupd (K
+                        (balanced_map_insert r r (knowledge_to_canonical
+                        data))) (knowledge_gets_mem_fupd (K (CONS (x,r)
                         (knowledge_gets_mem data))) data)),
                        wordLang_Get r x)) | SOME k -> (if EVEN r
                          then (data,wordLang_Move 1 [(r,lookup_any k
                          (knowledge_to_latest data) k)]) else
-                      (knowledge_to_latest_fupd (K (insert k r
-                        (knowledge_to_latest data)))
-                        (knowledge_to_canonical_fupd (K (insert r k
-                        (knowledge_to_canonical data))) data),
+                      (knowledge_to_latest_fupd (K
+                        (balanced_map_insert k r (knowledge_to_latest
+                        data))) (knowledge_to_canonical_fupd (K
+                        (balanced_map_insert r k (knowledge_to_canonical
+                        data))) data),
                        wordLang_Move 1 [(r,lookup_any k
                          (knowledge_to_latest data) k)])))`;
    `word_cse data (wordLang_Set x e) =
@@ -597,9 +608,10 @@ let word_cse_def,word_cse_ind = define_rec
               // any write to it, for a fact of little value.
               SOME v -> (if EVEN v then (knowledge_gets_mem_fupd (K
                 new_gets_mem) data,wordLang_Set x e) else
-                          (knowledge_to_canonical_fupd (K (insert v
-                            (lookup_any v (knowledge_to_canonical data)
-                            v) (knowledge_to_canonical
+                          (knowledge_to_canonical_fupd (K
+                            (balanced_map_insert v (lookup_any v
+                            (knowledge_to_canonical data) v)
+                            (knowledge_to_canonical
                               data))) (knowledge_gets_mem_fupd (K
                                 (CONS (x,canonicalRegs data v)
                                 new_gets_mem)) data),
@@ -617,7 +629,7 @@ let word_cse_def,word_cse_ind = define_rec
         (let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data p2 in
           (merge_data data1 data2,wordLang_If c r1 r2 p1' p2'))`;
-   `word_cse data ((OpCurrHeap b r1 r2):'a wordLang_prog) =
+   `word_cse data ((wordLang_OpCurrHeap b r1 r2):'a wordLang_prog) =
         (let data = invalidate_data data r1 in
           // r2 = r1 reads the register the instruction overwrites; such a fact
           // would not describe the post-state, so it is not stored.
@@ -693,18 +705,19 @@ let word_cse_Seqs_def,word_cse_Seqs_ind = define_wf
    `word_cse_Seqs [x] = x`;
    `word_cse_Seqs (CONS x (CONS y xs)) = wordLang_Seq x
   (word_cse_Seqs (CONS y xs))`];;
-hol4_overload "Seqs" "word_cse_Seqs";;
 
 (* [local] *)
 let test_latest_name_used = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
-           Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)));
-           Inst (Arith (asm_Binop asm_Add 13 1 (Reg 1)))]) =
-     Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 11 1 (Reg
+             1)));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 13 1 (Reg
+             1)))]) =
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_Move 0 [(9,7)];
            wordLang_Move 0 [(11,9)];
            wordLang_Move 0 [(13,11)]]`,
@@ -713,17 +726,18 @@ let test_latest_name_used = prove
 (* [local] *)
 let test_get_set = prove
  (`word_common_subexp_elim
-     (Seqs [Get 1 NextFree;
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           Set NextFree (Var 7);
-           Get 9 NextFree;
-           Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)));
-           Get 33 NextFree;
-           Get 35 NextFree;
-           Get 37 NextFree]) =
-     Seqs [Get 1 NextFree;
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           Set NextFree (Var 7);
+     (word_cse_Seqs [wordLang_Get 1 NextFree;
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_Set NextFree (wordLang_Var 7);
+           wordLang_Get 9 NextFree;
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 11 1 (Reg
+             1)));
+           wordLang_Get 33 NextFree;
+           wordLang_Get 35 NextFree;
+           wordLang_Get 37 NextFree]) =
+     word_cse_Seqs [wordLang_Get 1 NextFree;
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_Set NextFree (wordLang_Var 7);
            wordLang_Move 1 [(9,7)];
            wordLang_Move 0 [(11,9)];
            wordLang_Move 1 [(33,11)];
@@ -736,92 +750,107 @@ let test_get_set = prove
 (* [local] *)
 let test_pattern_match_and_cons = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (Arith (asm_Shift Lsr 301 297 (Imm ((n2w
-       9):word64))));
-           OpCurrHeap asm_Add 305 301;
-           Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
+     (word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Shift Lsr 301 297
+       (Imm ((n2w 9):word64))));
+           wordLang_OpCurrHeap asm_Add 305 301;
+           wordLang_Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
            wordLang_Move 0 [(313,297)];
-           Inst (Arith (asm_Shift Lsr 317 313 (Imm (n2w 9))));
-           OpCurrHeap asm_Add 321 317;
-           Inst (asm_Mem asm_Load 325 (Addr 321 (n2w 16)));
+           wordLang_Inst (asm_Arith (asm_Shift Lsr 317 313 (Imm (n2w
+             9))));
+           wordLang_OpCurrHeap asm_Add 321 317;
+           wordLang_Inst (asm_Mem asm_Load 325 (Addr 321 (n2w 16)));
            wordLang_Move 0 [(329,313)];
-           Inst (Arith (asm_Shift Lsr 333 329 (Imm (n2w 9))));
-           OpCurrHeap asm_Add 337 333;
-           Inst (asm_Mem asm_Load 341 (Addr 337 (n2w 24)));
-           Get 345 NextFree;
-           Inst (asm_Const 349 (n2w 0x200000003));
+           wordLang_Inst (asm_Arith (asm_Shift Lsr 333 329 (Imm (n2w
+             9))));
+           wordLang_OpCurrHeap asm_Add 337 333;
+           wordLang_Inst (asm_Mem asm_Load 341 (Addr 337 (n2w 24)));
+           wordLang_Get 345 NextFree;
+           wordLang_Inst (asm_Const 349 (n2w 0x200000003));
            wordLang_Move 0 [(353,345)];
-           Inst (asm_Mem asm_Store 349 (Addr 353 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Store 349 (Addr 353 (n2w 0)));
            wordLang_Move 0 [(357,353)];
-           Inst (asm_Mem asm_Store 325 (Addr 357 (n2w 8)));
+           wordLang_Inst (asm_Mem asm_Store 325 (Addr 357 (n2w 8)));
            wordLang_Move 0 [(361,357)];
-           Inst (asm_Mem asm_Store 341 (Addr 361 (n2w 16)));
+           wordLang_Inst (asm_Mem asm_Store 341 (Addr 361 (n2w 16)));
            wordLang_Move 0 [(365,361)];
-           OpCurrHeap asm_Sub 369 365;
-           Inst (Arith (asm_Shift Lsl 373 369 (Imm (n2w 9))));
-           Inst (Arith (asm_Binop asm_Or 377 373 (Imm (n2w 5))));
+           wordLang_OpCurrHeap asm_Sub 369 365;
+           wordLang_Inst (asm_Arith (asm_Shift Lsl 373 369 (Imm (n2w
+             9))));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Or 377 373 (Imm
+             (n2w 5))));
            wordLang_Move 0 [(381,365)];
-           Inst (Arith (asm_Binop asm_Add 385 381 (Imm (n2w 24))));
-           Set NextFree (Var 385);
-           Get 389 NextFree;
-           Inst (asm_Const 393 (n2w 0x200000003));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 385 381 (Imm
+             (n2w 24))));
+           wordLang_Set NextFree (wordLang_Var 385);
+           wordLang_Get 389 NextFree;
+           wordLang_Inst (asm_Const 393 (n2w 0x200000003));
            wordLang_Move 0 [(397,389)];
-           Inst (asm_Mem asm_Store 393 (Addr 397 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Store 393 (Addr 397 (n2w 0)));
            wordLang_Move 0 [(401,397)];
-           Inst (asm_Mem asm_Store 309 (Addr 401 (n2w 8)));
+           wordLang_Inst (asm_Mem asm_Store 309 (Addr 401 (n2w 8)));
            wordLang_Move 0 [(405,401)];
-           Inst (asm_Mem asm_Store 377 (Addr 405 (n2w 16)));
+           wordLang_Inst (asm_Mem asm_Store 377 (Addr 405 (n2w 16)));
            wordLang_Move 0 [(409,405)];
-           OpCurrHeap asm_Sub 413 409;
-           Inst (Arith (asm_Shift Lsl 417 413 (Imm (n2w 9))));
-           Inst (Arith (asm_Binop asm_Or 421 417 (Imm (n2w 5))));
+           wordLang_OpCurrHeap asm_Sub 413 409;
+           wordLang_Inst (asm_Arith (asm_Shift Lsl 417 413 (Imm (n2w
+             9))));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Or 421 417 (Imm
+             (n2w 5))));
            wordLang_Move 0 [(425,409)];
-           Inst (Arith (asm_Binop asm_Add 429 425 (Imm (n2w 24))));
-           Set NextFree (Var 429);
-           wordLang_Move 0 [(2,421)]; Return 273 [2]]) =
-     Seqs [Inst (Arith (asm_Shift Lsr 301 297 (Imm (n2w 9))));
-           OpCurrHeap asm_Add 305 301;
-           Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 429 425 (Imm
+             (n2w 24))));
+           wordLang_Set NextFree (wordLang_Var 429);
+           wordLang_Move 0 [(2,421)]; wordLang_Return 273 [2]]) =
+     word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Shift Lsr 301 297
+       (Imm (n2w 9))));
+           wordLang_OpCurrHeap asm_Add 305 301;
+           wordLang_Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
            wordLang_Move 0 [(313,297)];
            wordLang_Move 0 [(317,301)];
            wordLang_Move 0 [(321,305)];
-           Inst (asm_Mem asm_Load 325 (Addr 321 (n2w 16)));
+           wordLang_Inst (asm_Mem asm_Load 325 (Addr 321 (n2w 16)));
            wordLang_Move 0 [(329,313)];
            wordLang_Move 0 [(333,317)];
            wordLang_Move 0 [(337,321)];
-           Inst (asm_Mem asm_Load 341 (Addr 337 (n2w 24)));
-           Get 345 NextFree;
-           Inst (asm_Const 349 (n2w 0x200000003));
+           wordLang_Inst (asm_Mem asm_Load 341 (Addr 337 (n2w 24)));
+           wordLang_Get 345 NextFree;
+           wordLang_Inst (asm_Const 349 (n2w 0x200000003));
            wordLang_Move 0 [(353,345)];
-           Inst (asm_Mem asm_Store 349 (Addr 353 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Store 349 (Addr 353 (n2w 0)));
            wordLang_Move 0 [(357,353)];
-           Inst (asm_Mem asm_Store 325 (Addr 357 (n2w 8)));
+           wordLang_Inst (asm_Mem asm_Store 325 (Addr 357 (n2w 8)));
            wordLang_Move 0 [(361,357)];
-           Inst (asm_Mem asm_Store 341 (Addr 361 (n2w 16)));
+           wordLang_Inst (asm_Mem asm_Store 341 (Addr 361 (n2w 16)));
            wordLang_Move 0 [(365,361)];
-           OpCurrHeap asm_Sub 369 365;
-           Inst (Arith (asm_Shift Lsl 373 369 (Imm (n2w 9))));
-           Inst (Arith (asm_Binop asm_Or 377 373 (Imm (n2w 5))));
+           wordLang_OpCurrHeap asm_Sub 369 365;
+           wordLang_Inst (asm_Arith (asm_Shift Lsl 373 369 (Imm (n2w
+             9))));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Or 377 373 (Imm
+             (n2w 5))));
            wordLang_Move 0 [(381,365)];
-           Inst (Arith (asm_Binop asm_Add 385 381 (Imm (n2w 24))));
-           Set NextFree (Var 385);
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 385 381 (Imm
+             (n2w 24))));
+           wordLang_Set NextFree (wordLang_Var 385);
            wordLang_Move 1 [(389,385)];
-           Inst (asm_Const 393 (n2w 0x200000003));
+           wordLang_Inst (asm_Const 393 (n2w 0x200000003));
            wordLang_Move 0 [(397,389)];
-           Inst (asm_Mem asm_Store 393 (Addr 397 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Store 393 (Addr 397 (n2w 0)));
            wordLang_Move 0 [(401,397)];
-           Inst (asm_Mem asm_Store 309 (Addr 401 (n2w 8)));
+           wordLang_Inst (asm_Mem asm_Store 309 (Addr 401 (n2w 8)));
            wordLang_Move 0 [(405,401)];
-           Inst (asm_Mem asm_Store 377 (Addr 405 (n2w 16)));
+           wordLang_Inst (asm_Mem asm_Store 377 (Addr 405 (n2w 16)));
            wordLang_Move 0 [(409,405)];
-           OpCurrHeap asm_Sub 413 409;
-           Inst (Arith (asm_Shift Lsl 417 413 (Imm (n2w 9))));
-           Inst (Arith (asm_Binop asm_Or 421 417 (Imm (n2w 5))));
+           wordLang_OpCurrHeap asm_Sub 413 409;
+           wordLang_Inst (asm_Arith (asm_Shift Lsl 417 413 (Imm (n2w
+             9))));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Or 421 417 (Imm
+             (n2w 5))));
            wordLang_Move 0 [(425,409)];
-           Inst (Arith (asm_Binop asm_Add 429 425 (Imm (n2w 24))));
-           Set NextFree (Var 429);
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 429 425 (Imm
+             (n2w 24))));
+           wordLang_Set NextFree (wordLang_Var 429);
            wordLang_Move 0 [(2,421)];
-           Return 273 [2]]`,
+           wordLang_Return 273 [2]]`,
   CHEAT_TAC);;
 
 (* Loads from the same canonical address at the same width are CSE'd (and a
@@ -831,20 +860,25 @@ let test_pattern_match_and_cons = prove
 (* [local] *)
 let test_load_cse = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (asm_Mem asm_Load 9 (Addr 7 ((n2w 0):word64)));
-           Inst (Arith (asm_Shift Lsr 11 9 (Imm (n2w 29))));
-           Inst (asm_Mem asm_Load 13 (Addr 7 (n2w 0)));
-           Inst (Arith (asm_Shift Lsr 15 13 (Imm (n2w 29))));
-           Inst (asm_Mem asm_Load8 17 (Addr 7 (n2w 0)));
-           Inst (asm_Mem asm_Store 15 (Addr 7 (n2w 0)));
-           Inst (asm_Mem asm_Load 19 (Addr 7 (n2w 0)))]) =
-     Seqs [Inst (asm_Mem asm_Load 9 (Addr 7 (n2w 0)));
-           Inst (Arith (asm_Shift Lsr 11 9 (Imm (n2w 29))));
+     (word_cse_Seqs [wordLang_Inst (asm_Mem asm_Load 9 (Addr 7 ((n2w
+       0):word64)));
+           wordLang_Inst (asm_Arith (asm_Shift Lsr 11 9 (Imm (n2w
+             29))));
+           wordLang_Inst (asm_Mem asm_Load 13 (Addr 7 (n2w 0)));
+           wordLang_Inst (asm_Arith (asm_Shift Lsr 15 13 (Imm (n2w
+             29))));
+           wordLang_Inst (asm_Mem asm_Load8 17 (Addr 7 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Store 15 (Addr 7 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Load 19 (Addr 7 (n2w 0)))]) =
+     word_cse_Seqs [wordLang_Inst (asm_Mem asm_Load 9 (Addr 7 (n2w
+       0)));
+           wordLang_Inst (asm_Arith (asm_Shift Lsr 11 9 (Imm (n2w
+             29))));
            wordLang_Move 0 [(13,9)];
            wordLang_Move 0 [(15,11)];
-           Inst (asm_Mem asm_Load8 17 (Addr 7 (n2w 0)));
-           Inst (asm_Mem asm_Store 15 (Addr 7 (n2w 0)));
-           Inst (asm_Mem asm_Load 19 (Addr 7 (n2w 0)))]`,
+           wordLang_Inst (asm_Mem asm_Load8 17 (Addr 7 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Store 15 (Addr 7 (n2w 0)));
+           wordLang_Inst (asm_Mem asm_Load 19 (Addr 7 (n2w 0)))]`,
   CHEAT_TAC);;
 
 (* Set CurrHeap conservatively resets all knowledge (it is not emitted by
@@ -853,26 +887,28 @@ let test_load_cse = prove
 (* [local] *)
 let test_set_currheap = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           OpCurrHeap asm_Add 3 1;
-           Set CurrHeap (Var 7);
-           Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
-           OpCurrHeap asm_Add 5 1]) =
-     Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           OpCurrHeap asm_Add 3 1;
-           Set CurrHeap (Var 7);
-           Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
-           OpCurrHeap asm_Add 5 1]`,
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_OpCurrHeap asm_Add 3 1;
+           wordLang_Set CurrHeap (wordLang_Var 7);
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+           wordLang_OpCurrHeap asm_Add 5 1]) =
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_OpCurrHeap asm_Add 3 1;
+           wordLang_Set CurrHeap (wordLang_Var 7);
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+           wordLang_OpCurrHeap asm_Add 5 1]`,
   CHEAT_TAC);;
 
 (* A repeated LocValue of the same label is CSE'd to a Move. *)
 (* [local] *)
 let test_locvalue = prove
  (`word_common_subexp_elim
-     (Seqs [LocValue 7 100; LocValue 9 100]) =
-     Seqs [LocValue 7 100; wordLang_Move 0 [(9,7)]]`,
+     (word_cse_Seqs [wordLang_LocValue 7 100; wordLang_LocValue 9
+       100]) =
+     word_cse_Seqs [wordLang_LocValue 7 100; wordLang_Move 0
+       [(9,7)]]`,
   CHEAT_TAC);;
 
 (* LongMul clobbers both outputs (7 and 9), so the value previously stored in
@@ -880,12 +916,16 @@ let test_locvalue = prove
 (* [local] *)
 let test_multi_output_invalidation = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
-           Inst (Arith (asm_LongMul 7 9 3 5));
-           Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)))]) =
-     Seqs [Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
-           Inst (Arith (asm_LongMul 7 9 3 5));
-           Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)))]`,
+     (word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1
+       (Reg 1)));
+           wordLang_Inst (asm_Arith (asm_LongMul 7 9 3 5));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 11 1 (Reg
+             1)))]) =
+     word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1
+       (Reg 1)));
+           wordLang_Inst (asm_Arith (asm_LongMul 7 9 3 5));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 11 1 (Reg
+             1)))]`,
   CHEAT_TAC);;
 
 (* An instruction that reads the register it writes is not stored as a fact,
@@ -893,10 +933,14 @@ let test_multi_output_invalidation = prove
 (* [local] *)
 let test_self_read_not_cse = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (Arith (asm_Binop asm_Add 7 7 (Imm (n2w 1))));
-           Inst (Arith (asm_Binop asm_Add 9 7 (Imm (n2w 1))))]) =
-     Seqs [Inst (Arith (asm_Binop asm_Add 7 7 (Imm (n2w 1))));
-           Inst (Arith (asm_Binop asm_Add 9 7 (Imm (n2w 1))))]`,
+     (word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 7
+       (Imm (n2w 1))));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 7 (Imm (n2w
+             1))))]) =
+     word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 7
+       (Imm (n2w 1))));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 7 (Imm
+             (n2w 1))))]`,
   CHEAT_TAC);;
 
 (* Facts valid after both arms of an If survive the join: the Add fact
@@ -904,16 +948,18 @@ let test_self_read_not_cse = prove
 (* [local] *)
 let test_if_merge = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           If Equal 1 (Imm (n2w 0))
-              (Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1))))
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_If asm_Equal 1 (Imm (n2w 0))
+              (wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
+                1))))
               (wordLang_Move 0 [(11,7)]);
-           Inst (Arith (asm_Binop asm_Add 13 1 (Reg 1)))]) =
-     Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           If Equal 1 (Imm (n2w 0)) (wordLang_Move 0 [(9,7)])
-             (wordLang_Move 0 [(11,7)]);
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 13 1 (Reg
+             1)))]) =
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_If asm_Equal 1 (Imm (n2w 0)) (wordLang_Move 0
+             [(9,7)]) (wordLang_Move 0 [(11,7)]);
            wordLang_Move 0 [(13,7)]]`,
   CHEAT_TAC);;
 
@@ -922,16 +968,19 @@ let test_if_merge = prove
 (* [local] *)
 let test_if_merge_clobber = prove
  (`word_common_subexp_elim
-     (Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           If Equal 1 (Imm (n2w 0))
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_If asm_Equal 1 (Imm (n2w 0))
               (wordLang_Move 0 [(7,3)])
-              Skip;
-           Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)))]) =
-     Seqs [Inst (asm_Const 1 (n2w 0));
-           Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           If Equal 1 (Imm (n2w 0)) (wordLang_Move 0 [(7,3)]) Skip;
-           Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)))]`,
+              wordLang_Skip;
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
+             1)))]) =
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+           wordLang_If asm_Equal 1 (Imm (n2w 0)) (wordLang_Move 0
+             [(7,3)]) wordLang_Skip;
+           wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
+             1)))]`,
   CHEAT_TAC);;
 
 (* HOL4 word_cseScript.sml:905: ML code, not ported *)

@@ -65,12 +65,11 @@ let gen_gc_partial_gc_move_def = define_cases
                    (ForwardPointer ptr _3 l) -> (gc_shared_Pointer
                    ptr d,state) | _4 -> (gc_shared_Pointer ptr
                    d,gc_state_ok_fupd (K F) state)))`];;
-hol4_overload "gc_move" "gen_gc_partial_gc_move";;
 
 (* gc_move_IMP *)
 let gen_gc_partial_gc_move_IMP = prove
  (`!x x' state state1.
-    (gc_move conf state x = (x',state1)) ==>
+    (gen_gc_partial_gc_move conf state x = (x',state1)) ==>
     (gc_state_old state1 = gc_state_old state) /\
     (gc_state_h1 state1 = gc_state_h1 state) /\
     (gc_state_r4 state1 = gc_state_r4 state) /\
@@ -83,16 +82,15 @@ let gen_gc_partial_gc_move_list_def,gen_gc_partial_gc_move_list_ind =
   define_rec
   [`gen_gc_partial_gc_move_list conf state [] = ([],state)`;
    `gen_gc_partial_gc_move_list conf state (CONS x xs) =
-        (let (x,state) = gc_move conf state x in
+        (let (x,state) = gen_gc_partial_gc_move conf state x in
         let (xs,state) = gen_gc_partial_gc_move_list conf state xs
           in
           (CONS x xs,state))`];;
-hol4_overload "gc_move_list" "gen_gc_partial_gc_move_list";;
 
 (* gc_move_list_IMP *)
 let gen_gc_partial_gc_move_list_IMP = prove
  (`!xs xs' state state1.
-    (gc_move_list conf state xs = (xs',state1)) ==>
+    (gen_gc_partial_gc_move_list conf state xs = (xs',state1)) ==>
     (LENGTH xs = LENGTH xs') /\
     (gc_state_old state1 = gc_state_old state) /\
     (gc_state_h1 state1 = gc_state_h1 state) /\
@@ -118,7 +116,8 @@ let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
        (if limit conf < heap_length (APPEND (gc_state_h1 state)
          (CONS h h2)) then gc_state_ok_fupd (K F) state else
         match h with DataElement xs l d ->
-          (let (xs,state) = gc_move_list conf state xs in
+          (let (xs,state) = gen_gc_partial_gc_move_list conf state
+            xs in
           let h1 = APPEND (gc_state_h1 state) [DataElement xs l d]
             in
           let h2 = TL (gc_state_h2 state) in
@@ -127,11 +126,10 @@ let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
             gen_gc_partial_gc_move_data conf (gc_state_ok_fupd
               (K ok) (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K
               h1) state)))) | _5 -> gc_state_ok_fupd (K F) state)))`];;
-hol4_overload "gc_move_data" "gen_gc_partial_gc_move_data";;
 
 let gc_move_data_IMP = prove
  (`!conf state state1.
-    (gc_move_data conf state = state1) ==>
+    (gen_gc_partial_gc_move_data conf state = state1) ==>
     (gc_state_old state1 = gc_state_old state) /\
     (gc_state_r1 state1 = gc_state_r1 state) /\
     (gc_state_r2 state1 = gc_state_r2 state) /\
@@ -149,7 +147,8 @@ let gc_move_ref_list_def,gc_move_ref_list_ind = define_wf
         match x3 with
           [] -> ([],state)
         | CONS (DataElement ptrs l d) xs ->
-       (let (ptrs',state) = gc_move_list conf state ptrs in
+       (let (ptrs',state) = gen_gc_partial_gc_move_list conf state
+         ptrs in
        let (xs,state) = gc_move_ref_list conf state xs in
          (CONS (DataElement ptrs' l d) xs,state))
         | (CONS x xs) -> (CONS x xs,gc_state_ok_fupd (K F)
@@ -181,12 +180,13 @@ let partial_gc_def = new_definition
              refs) (gc_state_old_fupd (K old) (gc_state_heap_fupd (K
              heap) empty_state)))) in
        // process roots:
-       let (roots,state) = gc_move_list conf state roots in
+       let (roots,state) = gen_gc_partial_gc_move_list conf state
+         roots in
        // process references:
        let (refs',state) = gc_move_ref_list conf state refs in
        // process rest:
-       let state = gc_move_data conf (gc_state_r2_fupd (K [])
-         (gc_state_r1_fupd (K refs') state)) in
+       let state = gen_gc_partial_gc_move_data conf (gc_state_r2_fupd
+         (K []) (gc_state_r1_fupd (K refs') state)) in
          (roots,state)))`;;
 
 (* [local] *)
@@ -443,7 +443,7 @@ let heap_segment_length = prove
 (* [local] *)
 let gc_move_simulation = prove
  (`!ptr ptr' state state' ptr1' state1'.
-     (gc_move conf state ptr = (ptr',state')) /\
+     (gen_gc_partial_gc_move conf state ptr = (ptr',state')) /\
      (!ptr' u. (ptr = gc_shared_Pointer ptr' u) ==> ptr' <
        heap_length (gc_state_heap state)) /\
      (heap_length (gc_state_heap state) = limit conf) /\
@@ -466,39 +466,39 @@ let gc_forward_ptr_heap_length = prove
   CHEAT_TAC);;
 
 let gc_move_heap_length = prove
- (`(gc_move conf state h = (x,state')) ==> (heap_length (gc_state_heap
-  state) = heap_length (gc_state_heap state'))`,
+ (`(gen_gc_partial_gc_move conf state h = (x,state')) ==> (heap_length
+  (gc_state_heap state) = heap_length (gc_state_heap state'))`,
   CHEAT_TAC);;
 
 (* gc_move_list_heap_length *)
 let gen_gc_partial_gc_move_list_heap_length = prove
- (`!h x state state'. (gc_move_list conf state h = (x,state')) ==>
-  (heap_length (gc_state_heap state) = heap_length (gc_state_heap
-  state'))`,
+ (`!h x state state'. (gen_gc_partial_gc_move_list conf state h =
+  (x,state')) ==> (heap_length (gc_state_heap state) = heap_length
+  (gc_state_heap state'))`,
   CHEAT_TAC);;
 
 let gc_move_ref_list_heap_length = prove
  (`!h x state state'.
    (gc_move_ref_list conf state h = (x,state')) ==> (heap_length
      (gc_state_heap state) = heap_length (gc_state_heap state'))`,
-  (MATCH_ACCEPT_TAC gen_gc_partial_gc_move_ref_list_heap_length));;
+  CHEAT_TAC);;
 
 let gc_move_ok' = prove
- (`(gc_move conf state x = (x',state')) /\ gc_state_ok state' ==>
-  gc_state_ok state`,
+ (`(gen_gc_partial_gc_move conf state x = (x',state')) /\ gc_state_ok
+  state' ==> gc_state_ok state`,
   CHEAT_TAC);;
 
 (* gc_move_ok *)
 let gen_gc_partial_gc_move_ok = prove
- (`(gc_move conf state x = (x',state')) /\ gc_state_ok state' /\
-  (!ptr' u. (x = gc_shared_Pointer ptr' u) ==> ptr' < heap_length
-  (gc_state_heap state)) ==> gc_state_ok state`,
+ (`(gen_gc_partial_gc_move conf state x = (x',state')) /\ gc_state_ok
+  state' /\ (!ptr' u. (x = gc_shared_Pointer ptr' u) ==> ptr' <
+  heap_length (gc_state_heap state)) ==> gc_state_ok state`,
   CHEAT_TAC);;
 
 let gc_move_list_ok' = prove
  (`!xs xs' state state'.
-    (gc_move_list conf state xs = (xs',state')) /\ gc_state_ok state'
-      ==> gc_state_ok
+    (gen_gc_partial_gc_move_list conf state xs = (xs',state')) /\
+      gc_state_ok state' ==> gc_state_ok
       state`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
     PAIR_EQ] THENL
@@ -520,7 +520,7 @@ let gc_move_list_ok' = prove
 (* gc_move_list_ok *)
 let gen_gc_partial_gc_move_list_ok = prove
  (`!xs xs' state state'.
-    (gc_move_list conf state xs = (xs',state')) /\
+    (gen_gc_partial_gc_move_list conf state xs = (xs',state')) /\
       gc_state_ok state' /\ (!ptr' u. MEM (gc_shared_Pointer ptr' u)
         xs ==> ptr' < heap_length (gc_state_heap state)) ==> gc_state_ok
       state`,
@@ -535,15 +535,15 @@ let gc_move_ref_list_ok' = prove
 
 let gc_move_data_ok' = prove
  (`!conf state state'.
-     (gc_move_data conf state = state') /\ gc_state_ok state' ==>
-       gc_state_ok
+     (gen_gc_partial_gc_move_data conf state = state') /\ gc_state_ok
+       state' ==> gc_state_ok
        state`,
   CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_list_simulation = prove
  (`!ptr ptr' state state' ptr1' state1'.
-     (gc_move_list conf state ptr = (ptr',state')) /\
+     (gen_gc_partial_gc_move_list conf state ptr = (ptr',state')) /\
      sim_inv conf heap0 state /\
      (!ptr' u. MEM (gc_shared_Pointer ptr' u) ptr ==> ptr' <
        heap_length (gc_state_heap state)) /\
@@ -590,7 +590,8 @@ let to_gen_heap_list_NIL = prove
 (* [local] *)
 let gc_move_data_r1 = prove
  (`!refs state conf. gc_state_r1
-     (gc_move_data conf (gc_state_r1_fupd (K refs) state)) = refs`,
+     (gen_gc_partial_gc_move_data conf (gc_state_r1_fupd (K refs)
+       state)) = refs`,
   (MESON_TAC[gc_move_data_IMP]));;
 
 (* [local] *)
@@ -600,7 +601,7 @@ let gc_move_ref_list_simulation = prove
      gc_move_ref_list conf (state:('b,'a)gc_state)
        (refs0:(('b,'a)heap_element) list) = (refs1,state1)) /\
    (
-     gc_move_list (to_gen_conf conf)
+     gen_gc_partial_gc_move_list (to_gen_conf conf)
                  (to_gen_state conf state)
                  (refs_to_roots conf refs0) = (refs1',state1')) /\
                    gc_state_ok state1' /\
@@ -618,13 +619,14 @@ let gc_move_ref_list_simulation = prove
 
 (* [local] *)
 let gc_move_list_r1 = prove
- (`!s0 xs ys s1. (gc_move_list conf s0 xs = (ys,s1)) ==> (gc_state_r1
-  s1 = gc_state_r1 s0)`,
+ (`!s0 xs ys s1. (gen_gc_partial_gc_move_list conf s0 xs = (ys,s1))
+  ==> (gc_state_r1 s1 = gc_state_r1 s0)`,
   (MESON_TAC[gen_gc_partial_gc_move_list_IMP]));;
 
 (* gc_move_data_r1[local] *)
 let gen_gc_partial_gc_move_data_r1 = prove
- (`(gc_move_data conf (gc_state_r1_fupd (K refs') state') = state1) ==>
+ (`(gen_gc_partial_gc_move_data conf (gc_state_r1_fupd (K refs') state')
+  = state1) ==>
    (gc_state_r1 state1 = refs')`,
   CHEAT_TAC);;
 
@@ -659,7 +661,7 @@ let gc_forward_ptr_data_pres = prove
 
 (* [local] *)
 let gc_move_data_pres = prove
- (`(gc_move conf state x = (x1,state1)) ==> (
+ (`(gen_gc_partial_gc_move conf state x = (x1,state1)) ==> (
          MEM (DataElement xs l dd) (APPEND (gc_state_heap state1)
            (gc_state_h2 state1)) = MEM (DataElement xs l dd) (APPEND
            (gc_state_heap state) (gc_state_h2 state)))`,
@@ -668,7 +670,7 @@ let gc_move_data_pres = prove
 (* [local] *)
 let gc_move_list_data_pres = prove
  (`!x conf state x1 state1 xs l dd.
-    (gc_move_list conf state x = (x1,state1)) ==> (
+    (gen_gc_partial_gc_move_list conf state x = (x1,state1)) ==> (
          MEM (DataElement xs l dd) (APPEND (gc_state_heap state1)
            (gc_state_h2 state1)) = MEM (DataElement xs l dd) (APPEND
            (gc_state_heap state) (gc_state_h2 state)))`,
@@ -686,7 +688,7 @@ let gc_move_ref_list_data_pres = prove
 (* [local] *)
 let gc_move_data_simulation = prove
  (`!conf state heap0 state' ptr1' state1'.
-     (gc_move_data conf state = state') /\
+     (gen_gc_partial_gc_move_data conf state = state') /\
      sim_inv conf heap0 state /\
      (!ptrs l d ptr' u. MEM (gc_shared_Pointer ptr' u) ptrs /\ MEM
        (DataElement ptrs l d) (APPEND (gc_state_h2 state) (gc_state_heap
@@ -702,58 +704,60 @@ let gc_move_data_simulation = prove
 
 (* [local] *)
 let gc_move_with_refs = prove
- (`!l. (gc_move conf (gc_state_r1_fupd (K refs) state) l =
-        (let (xs,s) = gc_move conf state l in (xs,gc_state_r1_fupd
-          (K refs) s)))`,
+ (`!l. (gen_gc_partial_gc_move conf (gc_state_r1_fupd (K refs) state) l
+  =
+        (let (xs,s) = gen_gc_partial_gc_move conf state l in
+          (xs,gc_state_r1_fupd (K refs) s)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_with_refs' = prove
- (`!l. (gc_move conf (gc_state_r1_fupd (K refs) (gc_state_r2_fupd (K [])
-  state)) l =
-        (let (xs,s) = gc_move conf state l in (xs,gc_state_r1_fupd
-          (K refs) (gc_state_r2_fupd (K []) s))))`,
+ (`!l. (gen_gc_partial_gc_move conf (gc_state_r1_fupd (K refs)
+  (gc_state_r2_fupd (K []) state)) l =
+        (let (xs,s) = gen_gc_partial_gc_move conf state l in
+          (xs,gc_state_r1_fupd (K refs) (gc_state_r2_fupd (K []) s))))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_list_with_refs = prove
  (`!l state.
-     (gc_move_list conf (gc_state_r1_fupd (K refs) state) l =
-     (let (xs,s) = gc_move_list conf state l in
+     (gen_gc_partial_gc_move_list conf (gc_state_r1_fupd (K refs)
+       state) l =
+     (let (xs,s) = gen_gc_partial_gc_move_list conf state l in
        (xs,gc_state_r1_fupd (K refs) s)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_list_with_refs' = prove
  (`!l state.
-     (gc_move_list conf (gc_state_r1_fupd (K refs) (gc_state_r2_fupd
-       (K []) state)) l =
-      (let (xs,s) = gc_move_list conf state l in
+     (gen_gc_partial_gc_move_list conf (gc_state_r1_fupd (K refs)
+       (gc_state_r2_fupd (K []) state)) l =
+      (let (xs,s) = gen_gc_partial_gc_move_list conf state l in
         (xs,gc_state_r1_fupd (K refs) (gc_state_r2_fupd (K []) s))))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_data_with_refs = prove
  (`!conf state refs.
-     (gc_move_data conf (gc_state_r1_fupd (K refs) state) =
-       gc_state_r1_fupd (K refs)
-     (gc_move_data conf state))`,
+     (gen_gc_partial_gc_move_data conf (gc_state_r1_fupd (K refs)
+       state) = gc_state_r1_fupd (K refs)
+     (gen_gc_partial_gc_move_data conf state))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_data_with_refs' = prove
  (`!conf state refs.
-    (gc_move_data conf (gc_state_r1_fupd (K refs) (gc_state_r2_fupd
-      (K []) state)) = gc_state_r1_fupd (K refs) (gc_state_r2_fupd (K
-      [])
-    (gc_move_data conf state)))`,
+    (gen_gc_partial_gc_move_data conf (gc_state_r1_fupd (K refs)
+      (gc_state_r2_fupd (K []) state)) = gc_state_r1_fupd (K refs)
+      (gc_state_r2_fupd (K [])
+    (gen_gc_partial_gc_move_data conf state)))`,
   CHEAT_TAC);;
 
 (* gc_move_data_h2[local] *)
 let gen_gc_partial_gc_move_data_h2 = prove
  (`!conf state. gc_state_ok
-     (gc_move_data conf state) ==>
-     (gc_state_h2 (gc_move_data conf state) = [])`,
+     (gen_gc_partial_gc_move_data conf state) ==>
+     (gc_state_h2 (gen_gc_partial_gc_move_data conf state) = [])`,
   CHEAT_TAC);;
 
 (* gc_move_ref_list_heap_length[local] *)
@@ -766,7 +770,7 @@ let gen_gc_partial_gc_move_ref_list_heap_length = prove
 (* gc_move_data_r1[local] *)
 let gen_gc_partial_gc_move_data_r1 = prove
  (`gc_state_r1
-     (gc_move_data conf state) = gc_state_r1 state`,
+     (gen_gc_partial_gc_move_data conf state) = gc_state_r1 state`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1312,7 +1316,7 @@ let new_f_old_parts = prove
 (* [local] *)
 let gc_move_list_similar = prove
  (`!xs state1 ys state2.
-     (gc_move_list conf state1 xs = (ys,state2)) ==>
+     (gen_gc_partial_gc_move_list conf state1 xs = (ys,state2)) ==>
      ALL2 (similar_ptr conf) xs ys`,
   CHEAT_TAC);;
 
@@ -1352,7 +1356,7 @@ let partial_gc_related = prove
 (* gc_move_list_length *)
 let gen_gc_partial_gc_move_list_length = prove
  (`!xs xs' state state'.
-      (gc_move_list conf state xs = (xs',state')) ==>
+      (gen_gc_partial_gc_move_list conf state xs = (xs',state')) ==>
       (LENGTH xs' = LENGTH xs)`,
   CHEAT_TAC);;
 
@@ -1479,13 +1483,15 @@ let heap_segment_gc_forward_ptr = prove
 
 let gc_move_inv = prove
  (`!xs xs' s1 s2.
-      (gc_move c s1 xs = (xs',s2)) /\ gc_state_ok s2 ==>
+      (gen_gc_partial_gc_move c s1 xs = (xs',s2)) /\ gc_state_ok s2
+        ==>
       simple_rel c s1 s2`,
   CHEAT_TAC);;
 
 let gc_move_list_inv = prove
  (`!xs xs' s1 s2.
-      (gc_move_list c s1 xs = (xs',s2)) /\ gc_state_ok s2 ==>
+      (gen_gc_partial_gc_move_list c s1 xs = (xs',s2)) /\ gc_state_ok
+        s2 ==>
       simple_rel c s1 s2`,
   CHEAT_TAC);;
 

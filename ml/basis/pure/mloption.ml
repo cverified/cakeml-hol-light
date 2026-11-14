@@ -24,11 +24,9 @@ let getOpt_def = assume_definition
 
 let filter_def = new_definition
   `mloption_filter f a = (if f a then SOME (a) else NONE)`;;
-hol4_overload "filter" "mloption_filter";;
 
 let mloption_mapPartial_def = new_definition
   `mloption_mapPartial f opt = OPTION_BIND opt f`;;
-hol4_overload "mapPartial" "mloption_mapPartial";;
 
 let compose_def = new_definition
   `compose f g a = (match g a with
@@ -43,7 +41,6 @@ let mloption_compare_def = new_definition
      (match x with NONE -> (match y with NONE -> EQUAL | _1 ->
        LESS) | SOME vx -> (match y with NONE -> GREATER | SOME vy ->
        f vx vy))`;;
-hol4_overload "compare" "mloption_compare";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

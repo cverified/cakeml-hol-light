@@ -77,7 +77,6 @@ let export_mips_startup_def = new_definition
      (misc_List
        [(implode "     nop\n");
         (implode "\n")]))))`;;
-hol4_overload "startup" "export_mips_startup";;
 
 let export_mips_ffi_asm_def,export_mips_ffi_asm_ind = define_rec
   [`export_mips_ffi_asm [] = misc_Nil`;
@@ -89,7 +88,6 @@ let export_mips_ffi_asm_def,export_mips_ffi_asm_ind = define_rec
            (implode "     jr     $t9\n");
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_mips_ffi_asm ffis)`];;
-hol4_overload "ffi_asm" "export_mips_ffi_asm";;
 
 (* HOL4 export_mipsScript.sml:66-92: the ML values that the
    definitions below antiquote *)
@@ -113,13 +111,11 @@ let export_mips_export_func_def = new_definition
       (implode "     j       cake_enter\n");
              name; (implode "_jmp:\n");
       (implode "     j       "); label; (implode "\n")])`;;
-hol4_overload "export_func" "export_mips_export_func";;
 
 let export_mips_export_funcs_def = new_definition
   `export_mips_export_funcs lsyms exp =
      FOLDL export_mips_export_func misc_Nil (FILTER ((C MEM exp) o
        FST) lsyms)`;;
-hol4_overload "export_funcs" "export_mips_export_funcs";;
 
 let mips_export_def = new_definition
   `mips_export ffi_names' bytes (data:word64 list) syms exp ret pk =

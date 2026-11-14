@@ -89,7 +89,6 @@ let int_to_string_def = new_definition
 
 let toString_def1 = new_definition
   `mlint_toString i = int_to_string (CHR 126) i`;;
-hol4_overload "toString" "mlint_toString";;
 
 (* HOL4 mlintScript.sml:95: a theorem that HOL4 states as the value
    of an ML expression: toString_def *)
@@ -101,23 +100,19 @@ let int_to_string_thm = prove
   CHEAT_TAC);;
 
 let toString_thm = prove
- (`toString i = implode (APPEND (if i < (&0:int) then "~" else "")
-  (num_to_dec_string (num_of_int (abs i))))`,
-  (GEN_TAC THEN REWRITE_TAC[toString_def1; int_to_string_thm] THEN
-   COND_CASES_TAC THEN REWRITE_TAC[] THEN
-   AP_TERM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
-   REWRITE_TAC[CONS_11; CHR] THEN CONV_TAC NUM_REDUCE_CONV));;
+ (`mlint_toString i = implode (APPEND (if i < (&0:int) then "~" else
+  "") (num_to_dec_string (num_of_int (abs i))))`,
+  CHEAT_TAC);;
 
 let num_to_str_def = new_definition
-  `num_to_str (n:num) = toString (&n)`;;
+  `num_to_str (n:num) = mlint_toString (&n)`;;
 
-hol4_overload "toString" "num_to_str";;
+(* HOL4 mlintScript.sml:115: the overload toString, which the port
+   expands *)
 
 let num_to_str_thm = prove
  (`num_to_str n = implode (num_to_dec_string n)`,
-  (REWRITE_TAC[num_to_str_def; toString_thm; INT_ABS_NUM;
-    NUM_OF_INT_OF_NUM;
-   INT_OF_NUM_LT; LT; APPEND]));;
+  CHEAT_TAC);;
 
 (* fromString Definitions *)
 let fromChar_unsafe_def = new_definition
@@ -223,11 +218,10 @@ let fromString_def = new_definition
                          (substring str 1 (strlen str - 1))) else
                            OPTION_MAP (&) (fromChars (strlen str)
                            str))`;;
-hol4_overload "fromString" "mlint_fromString";;
 
 let fromNatString_def = new_definition
   `fromNatString str =
-     (match fromString str with
+     (match mlint_fromString str with
        NONE -> NONE | SOME i -> (if (&0) <= i then SOME
          (num_of_int i) else NONE))`;;
 
@@ -298,7 +292,7 @@ let fromString_thm = prove
        (CHR 43)) ==> ALL isDigit str) /\
      (HD str = (CHR 126) \/ HD str = (CHR 45) \/ HD str = (CHR 43)
        ==> ALL isDigit (DROP 1 str) /\ LENGTH str >= 2) ==>
-       fromString (implode str) = SOME
+       mlint_fromString (implode str) = SOME
          (if HD str = (CHR 126) \/ HD str = (CHR 45) then
            --(&(num_from_dec_string (DROP 1 str))) else if HD str =
            (CHR 43) then &(num_from_dec_string (DROP 1 str)) else
@@ -309,46 +303,46 @@ let fromString_thm = prove
    value of an ML expression: fromString_eq_unsafe *)
 
 let fromString_toString_Num = prove
- (`(&0) <= n ==> fromString (implode (num_to_dec_string (num_of_int
-  n))) = SOME n`,
+ (`(&0) <= n ==> mlint_fromString (implode (num_to_dec_string
+  (num_of_int n))) = SOME n`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fromString_helper = prove
- (`HD (toString (i:num)) = c ==> isDigit c`,
+ (`HD (mlint_toString (i:num)) = c ==> isDigit c`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fromString_hd = prove
- (`HD (toString (i:num)) = c ==> isDigit c`,
+ (`HD (mlint_toString (i:num)) = c ==> isDigit c`,
   CHEAT_TAC);;
 
 (* [local] *)
 let toString_len = prove
- (`LENGTH (toString (i:num)) + 1 >= 2`,
+ (`LENGTH (mlint_toString (i:num)) + 1 >= 2`,
   CHEAT_TAC);;
 
 (* [local] *)
 let toString_len_1 = prove
- (`~(HD (toString (i:num)) = (CHR 126)) /\
-   ~(HD (toString (i:num)) = (CHR 45)) /\
-   ~(HD (toString (i:num)) = (CHR 43))`,
+ (`~(HD (mlint_toString (i:num)) = (CHR 126)) /\
+   ~(HD (mlint_toString (i:num)) = (CHR 45)) /\
+   ~(HD (mlint_toString (i:num)) = (CHR 43))`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let fromString_int_to_string = prove
  (`neg_char = (CHR 126) \/ neg_char = (CHR 45) ==>
-   fromString (int_to_string neg_char i) = SOME i`,
+   mlint_fromString (int_to_string neg_char i) = SOME i`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let fromString_toString = prove
- (`!(i:int). fromString (toString i) = SOME i`,
+ (`!(i:int). mlint_fromString (mlint_toString i) = SOME i`,
   (SIMP_TAC[toString_def1; fromString_int_to_string]));;
 
 (* [simp] *)
 let fromNatString_toString = prove
- (`!(n:num). fromNatString (toString n) = SOME n`,
+ (`!(n:num). fromNatString (mlint_toString n) = SOME n`,
   CHEAT_TAC);;
 
 let fromChar_IS_SOME_IFF = prove
@@ -368,14 +362,13 @@ let fromChars_IS_SOME_IFF = prove
 let fromString_EQ_NONE = prove
  (`~(isDigit c) /\ ~(c = (CHR 43)) /\ ~(c = (CHR 126)) /\ ~(c = (CHR
   45)) ==>
-   fromString (implode (CONS c x)) = NONE`,
+   mlint_fromString (implode (CONS c x)) = NONE`,
   CHEAT_TAC);;
 
 (* this formulation avoids a comparsion using = for better performance *)
 let mlint_int_cmp_def = new_definition
   `mlint_int_cmp i (j:int) = (if i < j then LESS else
                        if j < i then GREATER else EQUAL)`;;
-hol4_overload "int_cmp" "mlint_int_cmp";;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -418,7 +411,7 @@ let num_to_str_every = prove
   CHEAT_TAC);;
 
 let num_to_str_imp_cons = prove
- (`toString (i:num) = implode s ==>
+ (`mlint_toString (i:num) = implode s ==>
    (?x xs. s = CONS x xs /\ 48 <= ORD x /\ ORD x <= 57 /\ ALL (\x.
      48 <= ORD x /\ ORD x <= 57) xs)`,
   (REPEAT STRIP_TAC THEN
@@ -430,8 +423,8 @@ let num_to_str_imp_cons = prove
 
 let num_to_str_APPEND_11 = prove
  (`APPEND s1 (CONS x1 xs1) = APPEND s2 (CONS x2 xs2) /\
-   toString n1 = implode s1 /\
-   toString n2 = implode s2 /\
+   mlint_toString n1 = implode s1 /\
+   mlint_toString n2 = implode s2 /\
    ~(48 <= ORD x1 /\ ORD x1 <= 57) /\
    ~(48 <= ORD x2 /\ ORD x2 <= 57) ==>
    n1 = n2 /\ CONS x1 xs1 = CONS x2 xs2`,

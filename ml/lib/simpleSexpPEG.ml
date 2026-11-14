@@ -14,14 +14,12 @@ let _ = hol4_lib ();;
 
 let tokeq_def = new_definition
   `simpleSexpPEG_tokeq t = peg_tok ((=) t) (K (SX_SYM [t]))`;;
-hol4_overload "tokeq" "simpleSexpPEG_tokeq";;
 let grabWS_def = new_definition
   `grabWS s = ignoreL (peg_rpt (peg_tok isSpace (K arb_sexp)) (K
   arb_sexp)) s`;;
 
 let pnt_def = new_definition
   `simpleSexpPEG_pnt ntsym = peg_nt (INL ntsym) I`;;
-hol4_overload "pnt" "simpleSexpPEG_pnt";;
 
 let replace_nil_def,replace_nil_ind = define_shaped_rec
   "match"
@@ -34,17 +32,14 @@ let replace_nil_def,replace_nil_ind = define_shaped_rec
 let sumID_def = define_cases
   [`simpleSexpPEG_sumID (INL x) = x`;
    `simpleSexpPEG_sumID (INR y) = y`];;
-hol4_overload "sumID" "simpleSexpPEG_sumID";;
 let simpleSexpPEG_choicel_def,simpleSexpPEG_choicel_ind = define_rec
   [`simpleSexpPEG_choicel [] = peg_not (peg_empty arb_sexp) arb_sexp`;
    `simpleSexpPEG_choicel (CONS h t) = peg_choice h
   (simpleSexpPEG_choicel t) simpleSexpPEG_sumID`];;
-hol4_overload "choicel" "simpleSexpPEG_choicel";;
 
 let simpleSexpPEG_pegf_def = new_definition
   `simpleSexpPEG_pegf sym f = peg_seq sym (peg_empty arb_sexp) (\l1
   l2. f l1)`;;
-hol4_overload "pegf" "simpleSexpPEG_pegf";;
 
 let sexpPEG_def = new_definition
   `(sexpPEG:(char,sexpNT,simpleSexp_sexp,string)peg) =
@@ -59,7 +54,7 @@ let sexpPEG_def = new_definition
                   (peg_not (peg_any (K arb_sexp)) arb_sexp)
                   (K (K arb_sexp))));
              (INL sxnt_sexp0,
-              choicel [
+              simpleSexpPEG_choicel [
                   simpleSexpPEG_pnt sxnt_sexpnum; ignoreL
                     (simpleSexpPEG_tokeq (CHR 40)) (simpleSexpPEG_pnt
                     sxnt_sexpseq);
@@ -67,23 +62,24 @@ let sexpPEG_def = new_definition
                       (simpleSexpPEG_pnt sxnt_strcontents))
                         (peg_choice (simpleSexpPEG_tokeq (CHR 34))
                         (peg_error "Expected \"") simpleSexpPEG_sumID);
-                  pegf (ignoreL (simpleSexpPEG_tokeq (CHR 39))
-                    (grabWS (simpleSexpPEG_pnt sxnt_sexp0)))
+                  simpleSexpPEG_pegf (ignoreL (simpleSexpPEG_tokeq
+                    (CHR 39)) (grabWS (simpleSexpPEG_pnt sxnt_sexp0)))
                        (\s. (SX_CONS (SX_SYM "quote") (SX_CONS (s)
                          (SX_SYM "nil"))));
                   simpleSexpPEG_pnt sxnt_sexpsym]);
              (INL sxnt_sexpseq,
-              choicel [
-                  pegf (grabWS (simpleSexpPEG_tokeq (CHR 41))) (K
-                    (SX_SYM "nil"));
+              simpleSexpPEG_choicel [
+                  simpleSexpPEG_pegf (grabWS (simpleSexpPEG_tokeq
+                    (CHR 41))) (K (SX_SYM "nil"));
                   peg_seq (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
                       (peg_seq
                        (peg_rpt (grabWS (simpleSexpPEG_pnt
                          sxnt_sexp0))
                         (FOLDR SX_CONS (SX_SYM "nil")))
-                       (choicel [
-                           pegf (grabWS (simpleSexpPEG_tokeq (CHR
-                             41))) (K (SX_SYM "nil"));
+                       (simpleSexpPEG_choicel [
+                           simpleSexpPEG_pegf (grabWS
+                             (simpleSexpPEG_tokeq (CHR 41))) (K (SX_SYM
+                             "nil"));
                               ignoreR (ignoreL (grabWS
                                 (simpleSexpPEG_tokeq (CHR 46)))
                               (grabWS (simpleSexpPEG_pnt
@@ -118,11 +114,11 @@ let sexpPEG_def = new_definition
                   (SX_STR o FOLDR (\s a. APPEND (destSXSYM s) a)
                     []));
              (INL sxnt_strchar,
-              choicel [ignoreL (simpleSexpPEG_tokeq (CHR 92))
-                (simpleSexpPEG_pnt sxnt_escapedstrchar);
+              simpleSexpPEG_choicel [ignoreL (simpleSexpPEG_tokeq
+                (CHR 92)) (simpleSexpPEG_pnt sxnt_escapedstrchar);
                   simpleSexpPEG_pnt sxnt_normstrchar]);
              (INL sxnt_escapedstrchar,
-              choicel [simpleSexpPEG_tokeq (CHR 92);
+              simpleSexpPEG_choicel [simpleSexpPEG_tokeq (CHR 92);
                 simpleSexpPEG_tokeq (CHR 34); peg_error
                 "Illegal string-escape"]);
              (INL sxnt_normstrchar,

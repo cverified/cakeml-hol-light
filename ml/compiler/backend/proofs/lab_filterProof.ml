@@ -119,7 +119,6 @@ let lab_filterProof_state_rel_def = new_definition
         (filter_skip (state_code t1))) t1))) /\ compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
      ~(failed t1)`;;
-hol4_overload "state_rel" "lab_filterProof_state_rel";;
 
 (* [local] *)
 let adjust_pc_all_skips = prove

@@ -10,12 +10,9 @@
   combination of parsing, type inference, compiler backend.
 *)
 
-needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/proofs/backendProof.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/proofs/lab_to_targetProof.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/compiler.ml";;
 needs "compiler/inference/infer.ml";;
@@ -27,7 +24,6 @@ needs "compiler/inference/proofs/type_dCanon.ml";;
 needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/proofs/pegComplete.ml";;
 needs "compiler/parsing/proofs/pegSound.ml";;
-needs "lib/peg.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
@@ -50,7 +46,8 @@ let _ = hol4_ancestors "compilerProof"
 
 let config_ok_def = new_definition
   `config_ok (cc:'a compiler_config) mc <=>
-     env_rel prim_tenv (compiler_config_inferencer_config cc) /\
+     envRel_env_rel prim_tenv (compiler_config_inferencer_config cc)
+       /\
      inf_set_tids_ienv prim_type_ids
        (compiler_config_inferencer_config cc) /\
      // TODO: ok?
@@ -76,7 +73,7 @@ let initial_condition_def = new_definition
        FRANGE ((SND o SND) o_f ctMap) SUBSET semantics_state_type_ids
          st) /\
      // TODO: is this OK?
-     env_rel (semantics_state_tenv st)
+     envRel_env_rel (semantics_state_tenv st)
        (compiler_config_inferencer_config cc) /\
        semantics_state_type_ids
      // TODO: are these consistent (with the rest)? necessary?
@@ -96,12 +93,14 @@ let initial_condition_def = new_definition
        (compiler_config_backend_config cc) mc`;;
 
 let parse_prog_correct = prove
- (`(parse_prog s = peg_Failure y1 y2 ==> parse s = NONE) /\
-   (parse_prog s = Success x1 a x2 ==> parse s = SOME a)`,
+ (`(parse_prog s = peg_Failure y1 y2 ==> semantics_parse s = NONE) /\
+   (parse_prog s = ffi_Success x1 a x2 ==> semantics_parse s = SOME
+     a)`,
   CHEAT_TAC);;
 
 let infertype_prog_correct = prove
- (`env_rel (semantics_state_tenv st) ienv /\ semantics_state_type_ids
+ (`envRel_env_rel (semantics_state_tenv st) ienv /\
+  semantics_state_type_ids
    st = count start_type_id /\
    inf_set_tids_ienv (count start_type_id) ienv /\
    set_tids_tenv (count start_type_id) (semantics_state_tenv st) ==>
@@ -119,29 +118,28 @@ let compilerProof_read_limits_def = new_definition
   `compilerProof_read_limits cc mc ms = backendProof_read_limits
   (compiler_config_asm_config cc) (compiler_config_backend_config cc)
   mc ms`;;
-hol4_overload "read_limits" "compilerProof_read_limits";;
 
 let compilerProof_is_safe_for_space_def = new_definition
   `compilerProof_is_safe_for_space ffi cc =
   backendProof_is_safe_for_space ffi (compiler_config_asm_config cc)
   (compiler_config_backend_config cc)`;;
-hol4_overload "is_safe_for_space" "compilerProof_is_safe_for_space";;
 
 let compile_correct_gen = prove
  (`!(st:'ffi semantics_state) (cc:'a compiler_config) prelude input mc
   data_sp cbspace.
     initial_condition st cc mc ==>
     (match FST (compiler_compile cc prelude input) with M_failure
-      (ParseError e) -> semantics st prelude input = CannotParse |
-      M_failure (TypeError e) -> semantics st prelude input = IllTyped |
-      M_failure AssembleError -> T |
+      (ParseError e) -> semantics_semantics st prelude input =
+      CannotParse | M_failure (TypeError e) -> semantics_semantics st
+      prelude input = IllTyped | M_failure AssembleError -> T |
       // see theorem about to_lab to avoid AssembleError
       M_failure (ConfigError e) -> T |
       // configuration string is malformed
       M_success (code,data,c) ->
       (?behaviours source_decs.
-        (semantics st prelude input = Execute behaviours) /\
-        parse (lexer_fun input) = SOME source_decs /\
+        (semantics_semantics st prelude input = Execute behaviours)
+          /\
+        semantics_parse (lexer_fun input) = SOME source_decs /\
         (!ms.
           installed code cbspace data data_sp (ffi_names
             (backend_config_lab_conf c))
@@ -152,10 +150,10 @@ let compile_correct_gen = prove
             machine_sem mc (state_ffi (semantics_state_sem_st st)) ms
               SUBSET
               extend_with_resource_limit'
-                (is_safe_for_space (state_ffi (semantics_state_sem_st
-                  st)) cc
-                   (APPEND prelude source_decs) (read_limits cc mc
-                     ms))
+                (compilerProof_is_safe_for_space (state_ffi
+                  (semantics_state_sem_st st)) cc
+                   (APPEND prelude source_decs)
+                     (compilerProof_read_limits cc mc ms))
                 behaviours)))`,
   CHEAT_TAC);;
 
@@ -174,7 +172,7 @@ let compilerProof_compile_correct_lemma = prove
        M_success (code,data,c) ->
        (?behaviours source_decs.
          (semantics_init ffi prelude input = Execute behaviours) /\
-         parse (lexer_fun input) = SOME source_decs /\
+         semantics_parse (lexer_fun input) = SOME source_decs /\
          (!ms.
            installed code cbspace data data_sp (ffi_names
              (backend_config_lab_conf c)) (heap_regs
@@ -184,9 +182,9 @@ let compilerProof_compile_correct_lemma = prove
              c)) ms ==>
              machine_sem mc ffi ms SUBSET
                extend_with_resource_limit'
-                 (is_safe_for_space ffi cc
-                    (APPEND prelude source_decs) (read_limits cc mc
-                      ms))
+                 (compilerProof_is_safe_for_space ffi cc
+                    (APPEND prelude source_decs)
+                      (compilerProof_read_limits cc mc ms))
                  behaviours)))`,
   CHEAT_TAC);;
 
@@ -198,12 +196,13 @@ let compile_correct_safe_for_space = prove
        ==>
        (?behaviours source_decs.
          (semantics_init ffi prelude input = Execute behaviours) /\
-         parse (lexer_fun input) = SOME source_decs /\
+         semantics_parse (lexer_fun input) = SOME source_decs /\
          (!ms.
-           is_safe_for_space ffi cc (APPEND prelude source_decs)
+           compilerProof_is_safe_for_space ffi cc (APPEND prelude
+             source_decs)
              (
               // cost semantics
-              read_limits cc mc ms) /\
+              compilerProof_read_limits cc mc ms) /\
            installed code cbspace data data_sp (ffi_names
              (backend_config_lab_conf c))
              (heap_regs (stack_to_lab_config_reg_names
@@ -242,7 +241,7 @@ let compilerProof_compile_correct = prove
    for the one without the ⊆ and extend_with_resource_limit *)
 
 let type_config_ok = prove
- (`env_rel prim_tenv infer_init_config /\
+ (`envRel_env_rel prim_tenv infer_init_config /\
    inf_set_tids_ienv prim_type_ids infer_init_config`,
   CHEAT_TAC);;
 

@@ -15,12 +15,9 @@
   Removes unreachable functions from the code.
 *)
 
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
    bring, which are the ones that its statements read: the
@@ -41,7 +38,7 @@ let find_word_ref_def,find_word_ref_ind = define_wf
   [`find_word_ref x1 =
         match x1 with
           wordLang_MustTerminate p -> find_word_ref p
-        | (Call ret target _3 handler) -> sptree_union
+        | (wordLang_Call ret target _3 handler) -> sptree_union
            (match target with NONE -> LN | SOME n -> (sptree_insert
              n one LN))
                (sptree_union
@@ -52,12 +49,13 @@ let find_word_ref_def,find_word_ref_ind = define_wf
                    (match handler with NONE -> LN | SOME
                      (_7,ex_handler,_8,_9) -> find_word_ref
                      (ex_handler)))
-        | (Seq p1 p2) -> sptree_union (find_word_ref p1)
+        | (wordLang_Seq p1 p2) -> sptree_union (find_word_ref p1)
           (find_word_ref p2)
-        | (If _10 _11 _12 p1 p2) ->
+        | (wordLang_If _10 _11 _12 p1 p2) ->
            sptree_union (find_word_ref p1) (find_word_ref p2)
-        | (LocValue _13 n) -> sptree_insert n one LN
-        | (Loop names body exit_names) -> find_word_ref body
+        | (wordLang_LocValue _13 n) -> sptree_insert n one LN
+        | (wordLang_Loop names body exit_names) -> find_word_ref
+          body
         | _14 -> LN`];;
 
 (* HOL4 word_elimScript.sml:41: ML code, not ported *)

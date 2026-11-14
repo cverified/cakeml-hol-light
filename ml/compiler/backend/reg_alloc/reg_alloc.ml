@@ -207,8 +207,6 @@ let set_stack_def = new_definition
 (* Data type for the exceptions *)
 let state_exn_INDUCT,state_exn_RECURSION = define_datatype
   "state_exn = reg_alloc_Fail (string) | reg_alloc_Subscript";;
-hol4_overload "Fail" "reg_alloc_Fail";;
-hol4_overload "Subscript" "reg_alloc_Subscript";;
 
 (* Monadic functions to handle the exceptions *)
 (* HOL4 makes the functions of the exception type state_exn with ML
@@ -217,7 +215,7 @@ hol4_overload "Subscript" "reg_alloc_Subscript";;
    makes *)
 let raise_Fail_def = new_definition
   `raise_Fail e1 =
-     (\state. (M_failure (Fail e1),state))`;;
+     (\state. (M_failure (reg_alloc_Fail e1),state))`;;
 
 let raise_Subscript_def = new_definition
   `raise_Subscript =
@@ -229,7 +227,7 @@ let handle_Fail_def = new_definition
        match x state with (res,state) ->
          match res with M_success y -> (M_success y,state)
          | M_failure e ->
-           (match e with Fail e1 -> f e1 state |
+           (match e with reg_alloc_Fail e1 -> f e1 state |
              reg_alloc_Subscript -> (M_failure
              reg_alloc_Subscript,state)))`;;
 
@@ -239,10 +237,12 @@ let handle_Subscript_def = new_definition
        match x state with (res,state) ->
          match res with M_success y -> (M_success y,state)
          | M_failure e ->
-           (match e with Fail e1 -> (M_failure (Fail e1),state) |
-             reg_alloc_Subscript -> f state))`;;
+           (match e with reg_alloc_Fail e1 -> (M_failure
+             (reg_alloc_Fail e1),state) | reg_alloc_Subscript -> f
+             state))`;;
 
-hol4_overload "failwith" "raise_Fail";;
+(* HOL4 reg_allocScript.sml:107: the overload failwith, which the
+   port expands *)
 
 (* HOL4 reg_allocScript.sml:109-110: the ML values that the
    definitions below antiquote *)
@@ -525,7 +525,6 @@ let split_degree_def = new_definition
 let sort_moves_def = new_definition
   `reg_alloc_sort_moves ls =
      sort (\((p:num),x) (p',x'). p > p') ls`;;
-hol4_overload "sort_moves" "reg_alloc_sort_moves";;
 
 (* merge two sorted lists *)
 (* the termination relation is not in the HOL4 source; this one is
@@ -1137,10 +1136,6 @@ let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
    | reg_alloc_Branch ((1 spt) option) (clash_tree) (clash_tree) | \
    reg_alloc_Seq (clash_tree) (clash_tree) \
    // Binary branch, with an optional liveset at the head";;
-hol4_overload "Delta" "reg_alloc_Delta";;
-hol4_overload "Set" "reg_alloc_Set";;
-hol4_overload "Branch" "reg_alloc_Branch";;
-hol4_overload "Seq" "reg_alloc_Seq";;
 
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def,numset_list_delete_ind = define_rec
@@ -1425,8 +1420,6 @@ let resort_moves_def = new_definition
 
 let algorithm_INDUCT,algorithm_RECURSION = define_datatype
   "algorithm = reg_alloc_Simple | reg_alloc_IRC";;
-hol4_overload "Simple" "reg_alloc_Simple";;
-hol4_overload "IRC" "reg_alloc_IRC";;
 
 (* Read-only version of coalesce_parent: follows the coalesce chain
    to the root without path compression. Safe for use in biased_pref
@@ -1522,8 +1515,8 @@ let do_reg_alloc_def = new_definition
        (MAP (update_move (sp_default ta)) moves)) (\
      moves0. st_ex_bind (st_ex_FILTER (\(_18,(x,y)).
        full_consistency_ok k x y) moves0 []) (\
-     moves. st_ex_bind (do_alloc1 (if alg = Simple then [] else
-       moves) scost k) (\
+     moves. st_ex_bind (do_alloc1 (if alg = reg_alloc_Simple then []
+       else moves) scost k) (\
      ls. st_ex_bind (st_ex_return (resort_moves (moves_to_sp moves0
        LN))) (\
      mvs. st_ex_ignore_bind
