@@ -10,6 +10,11 @@ theory and the name of the source, which is what the port has
 when it writes the block.  A proof that fails is in the harvest
 too (a cheat proves nothing but it is a cheat, not a failure), so
 only a message of the parser counts.
+
+The entries are grouped by what the parser said, with one of its
+messages in front of each group: a statement is won back by
+putting that right, so the table says what to work on and not
+only which statements are out.
 """
 import sys, os, re, collections
 
@@ -58,8 +63,20 @@ def main():
     out.append((thy, nm, msg))
   print(open(T + 'unstated.py').read().split('NAMES = set([')[0]
         + 'NAMES = set([')
-  for thy, nm, msg in out:
-    m = ' '.join(msg.split())[:60]
+  # grouped by what the parser said, so that the table says what
+  # has to be put right and not only which statements are out
+  def why(msg):
+    m = ' '.join(msg.split())
+    for k in PARSE:
+      if k in m: return (k, m[:120])
+    return ('', m[:120])
+  rows = sorted(out, key=lambda r: (why(r[2])[0], r[0], r[1]))
+  last = None
+  for thy, nm, msg in rows:
+    k, m = why(msg)
+    if k != last:
+      print('  # %s' % m)
+      last = k
     print("  ('%s', '%s')," % (thy, nm))
   print('])')
   print('# %d statements' % len(out), file=sys.stderr)

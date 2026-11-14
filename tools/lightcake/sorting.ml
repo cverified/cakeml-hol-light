@@ -126,31 +126,6 @@ let PERM_EQUIVALENCE_ALT_DEF = prove
   REWRITE_TAC[FUN_EQ_THM] THEN MESON_TAC[PERM_REFL; PERM_SYM;
     PERM_TRANS]);;
 
-let LSORTAUX_ALL_DISTINCT_FILTER = prove
- (`!l:A list. ALL_DISTINCT l ==> !x. MEM x l ==> FILTER ((=) x) l =
-   [x]`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[ALL_DISTINCT; MEM; FILTER] THEN
-  STRIP_TAC THEN X_GEN_TAC `x:A` THEN DISCH_TAC THEN
-  ASM_CASES_TAC `x:A = h` THENL
-   [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[CONS_11] THEN
-    ASM_MESON_TAC[LSORTAUX_MEM_FILTER_EQ];
-    ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]]);;
-
-let PERM_ALL_DISTINCT = prove
- (`!l1 l2:A list.
-     ALL_DISTINCT l1 /\ ALL_DISTINCT l2 /\ (!x. MEM x l1 <=> MEM x l2)
-     ==> PERM l1 l2`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[PERM_DEF] THEN X_GEN_TAC `x:A` THEN
-  ASM_CASES_TAC `MEM (x:A) l1` THENL
-   [SUBGOAL_THEN `MEM (x:A) l2` ASSUME_TAC THENL [ASM_MESON_TAC[];
-     ALL_TAC] THEN
-    ASM_SIMP_TAC[LSORTAUX_ALL_DISTINCT_FILTER];
-    SUBGOAL_THEN `~MEM (x:A) l2` MP_TAC THENL [ASM_MESON_TAC[]; ALL_TAC]
-      THEN
-    UNDISCH_TAC `~MEM (x:A) l1` THEN REWRITE_TAC[LSORTAUX_MEM_FILTER_EQ]
-      THEN
-    SIMP_TAC[]]);;
-
 let SORTED_NIL = prove
  (`!R. SORTED R ([]:A list)`,
   REWRITE_TAC[SORTED_DEF]);;
@@ -307,6 +282,10 @@ let LSORTAUX_EQ_LIST_OF_SEQ = prove
      PERM_lifts_monotonicities        PERM_APPEND
                                       PERM_lifts_transitive_relations
      ALL_DISTINCT_PERM                PERM_STRONG_IND
+     LSORTAUX_ALL_DISTINCT_FILTER     -- Error in included file the
+                                      block
+     PERM_ALL_DISTINCT                -- Error: Unbound value
+                                      LSORTAUX_ALL_DISTINCT_FILTER
      PERM_MAP                         PERM_CONS_IFF PERM_IND
                                       PERM_SWAP_AT_FRONT
      PERM_SUM                         PERM_IND
@@ -341,7 +320,7 @@ let LSORTAUX_EQ_LIST_OF_SEQ = prove
      greater_sorted_eq                CONS SORTED_EQ
      SORTED_ALL_DISTINCT              SORTED_EQ
      sorted_filter                    SORTED_FILTER
-     SORTED_ALL_DISTINCT_LIST_TO_SET_EQ SORTED_PERM_EQ
+     SORTED_ALL_DISTINCT_LIST_TO_SET_EQ PERM_ALL_DISTINCT SORTED_PERM_EQ
      LSORTAUX_PERM_BIJ_EL             PERM_IND
      PERM_BIJ                         LSORTAUX_PERM_BIJ_EL
      _                                PERM_CONS_IFF PERM_REVERSE_EQ
