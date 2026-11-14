@@ -486,6 +486,14 @@ FIELD_VAR_DEF = {
   # bvl_to_bvi takes the refs, the clock and the ffi of a state of
   # bvlSem and puts them in one of bviSem
   ('bviSem', 'bvl_to_bvi_def'): {'s': 'bvlSem_state'},
+  # and the x of these is the state of bviSem that bvi_to_bvl
+  # reads, where the field on the left of the equation is the one
+  # of the state of bvlSem that it gives
+  ('bviProps', 'bvi_to_bvl_refs'): {'x': 'bviSem_state'},
+  ('bviProps', 'bvi_to_bvl_code'): {'x': 'bviSem_state'},
+  ('bviProps', 'bvi_to_bvl_clock'): {'x': 'bviSem_state'},
+  ('bviProps', 'bvi_to_bvl_ffi'): {'x': 'bviSem_state'},
+  ('bviProps', 'bvi_to_bvl_to_bvi_with_ffi'): {'x': 'bviSem_state'},
   ('stack_to_labProof', 'make_init_def'): {'s': 'labSem_state'},
   # the s2 of this statement is the state of labSem that the
   # semantics is taken of, where the s2 of the statements about
@@ -898,6 +906,13 @@ THM_NAMES = {
   ('unify', 'swalk_encode_infer_ts_EQ_VAR'): {'Var': 'term_Var'},
   ('unify', 'subterm_thm'):
     {'Var': 'term_Var', 'Pair': 'term_Pair', 'Const': 'term_Const'},
+  # these relate the partial collector with the full one, so the
+  # gc_move_list and the heap_ok that take what to_gen_conf and
+  # to_gen_state give are gen_gc's
+  ('gen_gc_partial', 'gc_move_ref_list_simulation'):
+    {'gc_move_list': 'gen_gc_gc_move_list'},
+  ('gen_gc_partial', 'heap_ok_simulation'):
+    {'gc_move_list': 'gen_gc_gc_move_list'},
   # the toList and the fromList of a sparse tree, where the name
   # resolves to the one of a lazy list (ml/lib/llist.ml)
   ('misc', 'tlookup_bij_suff'): {'toList': 'sptree_toList'},
